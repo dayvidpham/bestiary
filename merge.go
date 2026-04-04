@@ -1,25 +1,35 @@
 package bestiary
 
+// modelKey is a composite key used to deduplicate models across providers.
+// A model with the same ID may exist under multiple providers with different
+// pricing and capabilities; each (ID, Provider) pair is a distinct entry.
+type modelKey struct {
+	ID       ModelID
+	Provider Provider
+}
+
 // MergeModels merges static and cached model lists.
-// Deduplicates by ModelID. When both sources have the same ID,
-// the entry with the more recent LastSynced timestamp wins.
-// Since LastSynced uses RFC3339 UTC format, lexicographic string
-// comparison correctly determines recency.
+// Deduplicates by (ModelID, Provider) pair. When both sources have the same
+// (ID, Provider), the entry with the more recent LastSynced timestamp wins.
+// Models with the same ID but different providers are kept as distinct entries.
+// Since LastSynced uses RFC3339 UTC format, lexicographic string comparison
+// correctly determines recency.
 func MergeModels(static, cached []ModelInfo) []ModelInfo {
-	seen := make(map[ModelID]ModelInfo, len(static)+len(cached))
+	seen := make(map[modelKey]ModelInfo, len(static)+len(cached))
 
 	for _, m := range static {
-		seen[m.ID] = m
+		seen[modelKey{m.ID, m.Provider}] = m
 	}
 
 	for _, m := range cached {
-		if existing, ok := seen[m.ID]; ok {
+		key := modelKey{m.ID, m.Provider}
+		if existing, ok := seen[key]; ok {
 			// RFC3339 UTC timestamps sort lexicographically — later timestamp wins.
 			if m.LastSynced > existing.LastSynced {
-				seen[m.ID] = m
+				seen[key] = m
 			}
 		} else {
-			seen[m.ID] = m
+			seen[key] = m
 		}
 	}
 

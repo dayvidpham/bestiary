@@ -204,9 +204,9 @@ func formatModelYAML(w io.Writer, model ModelInfo) error {
 
 // --- Table ---
 
-const tableHeader = "%-40s  %-12s  %-16s  %9s  %9s  %12s\n"
-const tableRow = "%-40s  %-12s  %-16s  %9d  %9d  %12s\n"
-const tableSep = "%-40s  %-12s  %-16s  %9s  %9s  %12s\n"
+const tableHeader = "%-40s  %-12s  %-16s  %9s  %9s  %6s  %5s  %12s\n"
+const tableRow = "%-40s  %-12s  %-16s  %9d  %9d  %6s  %5s  %12s\n"
+const tableSep = "%-40s  %-12s  %-16s  %9s  %9s  %6s  %5s  %12s\n"
 
 func costStr(p *float64) string {
 	if p == nil {
@@ -215,9 +215,16 @@ func costStr(p *float64) string {
 	return fmt.Sprintf("$%.2f", *p)
 }
 
+func boolCol(b bool) string {
+	if b {
+		return "yes"
+	}
+	return "no"
+}
+
 func printTableHeader(w io.Writer) {
 	fmt.Fprintf(w, tableHeader,
-		"ID", "Provider", "Family", "Context", "MaxOutput", "CostIn/MTok",
+		"ID", "Provider", "Family", "Context", "MaxOutput", "Reason", "Tools", "CostIn/MTok",
 	)
 	fmt.Fprintf(w, tableSep,
 		strings.Repeat("-", 40),
@@ -225,6 +232,8 @@ func printTableHeader(w io.Writer) {
 		strings.Repeat("-", 16),
 		strings.Repeat("-", 9),
 		strings.Repeat("-", 9),
+		strings.Repeat("-", 6),
+		strings.Repeat("-", 5),
 		strings.Repeat("-", 12),
 	)
 }
@@ -236,6 +245,8 @@ func printTableModelRow(w io.Writer, m ModelInfo) {
 		m.Family,
 		m.ContextWindow,
 		m.MaxOutput,
+		boolCol(m.Reasoning),
+		boolCol(m.ToolCall),
 		costStr(m.CostInputPerMTok),
 	)
 }

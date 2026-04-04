@@ -393,6 +393,69 @@ func TestCapability_RoundTrip(t *testing.T) {
 	})
 }
 
+// TestCompositeKey_SameIDDifferentProviders verifies that inserting the same
+// model_id under two different providers produces two distinct rows in the
+// store, and both are retrievable via QueryModels and QueryModelsByID.
+func TestCompositeKey_SameIDDifferentProviders(t *testing.T) {
+	ctx := context.Background()
+	s := openMemStore(t)
+
+	anthropicModel := testModel("shared-model", bestiary.ProviderAnthropic)
+	anthropicModel.DisplayName = "Shared Model (Anthropic)"
+
+	openaiModel := testModel("shared-model", bestiary.ProviderOpenAI)
+	openaiModel.DisplayName = "Shared Model (OpenAI)"
+
+	if err := s.UpsertModels(ctx, []bestiary.ModelInfo{anthropicModel, openaiModel}); err != nil {
+		t.Fatalf("UpsertModels: %v", err)
+	}
+
+	// QueryModels with no filter should return both rows.
+	all, err := s.QueryModels(ctx, "")
+	if err != nil {
+		t.Fatalf("QueryModels: %v", err)
+	}
+	if len(all) != 2 {
+		t.Fatalf("QueryModels returned %d rows, want 2 (one per provider)", len(all))
+	}
+
+	// QueryModelsByID should return all providers for the given ID.
+	variants, err := s.QueryModelsByID(ctx, bestiary.ModelID("shared-model"))
+	if err != nil {
+		t.Fatalf("QueryModelsByID: %v", err)
+	}
+	if len(variants) != 2 {
+		t.Fatalf("QueryModelsByID returned %d rows, want 2", len(variants))
+	}
+	providers := make(map[bestiary.Provider]string)
+	for _, m := range variants {
+		providers[m.Provider] = m.DisplayName
+	}
+	if providers[bestiary.ProviderAnthropic] != "Shared Model (Anthropic)" {
+		t.Errorf("anthropic variant: DisplayName = %q, want %q",
+			providers[bestiary.ProviderAnthropic], "Shared Model (Anthropic)")
+	}
+	if providers[bestiary.ProviderOpenAI] != "Shared Model (OpenAI)" {
+		t.Errorf("openai variant: DisplayName = %q, want %q",
+			providers[bestiary.ProviderOpenAI], "Shared Model (OpenAI)")
+	}
+}
+
+// TestQueryModelsByID_NotFound verifies that QueryModelsByID returns an empty
+// slice (not an error) when no model with the given ID is cached.
+func TestQueryModelsByID_NotFound(t *testing.T) {
+	ctx := context.Background()
+	s := openMemStore(t)
+
+	variants, err := s.QueryModelsByID(ctx, bestiary.ModelID("no-such-model"))
+	if err != nil {
+		t.Fatalf("QueryModelsByID returned unexpected error: %v", err)
+	}
+	if len(variants) != 0 {
+		t.Errorf("QueryModelsByID: got %d results, want 0", len(variants))
+	}
+}
+
 // TestUpsertModels_SecondUpsertUpdates verifies that upserting the same model ID
 // twice results in the second version being stored.
 func TestUpsertModels_SecondUpsertUpdates(t *testing.T) {

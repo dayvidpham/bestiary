@@ -113,6 +113,72 @@ func TestFormatModel_Table(t *testing.T) {
 	}
 }
 
+// TestFormatModel_Table_ReasoningToolCallColumns verifies that the Reason and
+// Tools columns appear in the table header and that their values are rendered
+// as "yes" or "no" for boolean fields.
+func TestFormatModel_Table_ReasoningToolCallColumns(t *testing.T) {
+	var buf bytes.Buffer
+	model := bestiary.ModelInfo{
+		ID:        "reason-tool-model",
+		Provider:  "testprovider",
+		Reasoning: true,
+		ToolCall:  false,
+	}
+
+	err := bestiary.FormatModel(&buf, model, bestiary.FormatTable)
+	if err != nil {
+		t.Fatalf("FormatModel(Table) returned error: %v", err)
+	}
+
+	output := string(buf.Bytes())
+
+	// Header must include both new column names.
+	if !strings.Contains(output, "Reason") {
+		t.Errorf("table header missing 'Reason' column\nGot:\n%s", output)
+	}
+	if !strings.Contains(output, "Tools") {
+		t.Errorf("table header missing 'Tools' column\nGot:\n%s", output)
+	}
+
+	// Row values: Reasoning=true → "yes", ToolCall=false → "no".
+	if !strings.Contains(output, "yes") {
+		t.Errorf("table row missing 'yes' for Reasoning=true\nGot:\n%s", output)
+	}
+	if !strings.Contains(output, "no") {
+		t.Errorf("table row missing 'no' for ToolCall=false\nGot:\n%s", output)
+	}
+}
+
+// TestFormatModels_Table_BothBoolColumns verifies that FormatModels renders
+// Reason/Tools columns for each row in a multi-model table.
+func TestFormatModels_Table_BothBoolColumns(t *testing.T) {
+	var buf bytes.Buffer
+	models := []bestiary.ModelInfo{
+		{ID: "m1", Provider: "p", Reasoning: true, ToolCall: true},
+		{ID: "m2", Provider: "p", Reasoning: false, ToolCall: false},
+	}
+
+	err := bestiary.FormatModels(&buf, models, bestiary.FormatTable)
+	if err != nil {
+		t.Fatalf("FormatModels(Table) returned error: %v", err)
+	}
+
+	output := string(buf.Bytes())
+	if !strings.Contains(output, "Reason") {
+		t.Errorf("table missing 'Reason' header\nGot:\n%s", output)
+	}
+	if !strings.Contains(output, "Tools") {
+		t.Errorf("table missing 'Tools' header\nGot:\n%s", output)
+	}
+	// Both "yes" (from m1) and "no" (from m2) should appear.
+	if !strings.Contains(output, "yes") {
+		t.Errorf("table missing 'yes' value\nGot:\n%s", output)
+	}
+	if !strings.Contains(output, "no") {
+		t.Errorf("table missing 'no' value\nGot:\n%s", output)
+	}
+}
+
 func TestFormatModels_InvalidFormat(t *testing.T) {
 	var buf bytes.Buffer
 	models := testModels()

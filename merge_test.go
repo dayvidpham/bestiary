@@ -14,6 +14,15 @@ func mkModel(id, lastSynced string) bestiary.ModelInfo {
 	}
 }
 
+// helper: create a minimal ModelInfo with ID, Provider, and LastSynced set.
+func mkModelWithProvider(id, provider, lastSynced string) bestiary.ModelInfo {
+	return bestiary.ModelInfo{
+		ID:         bestiary.ModelID(id),
+		Provider:   bestiary.Provider(provider),
+		LastSynced: lastSynced,
+	}
+}
+
 func TestMergeModels_CachedWins(t *testing.T) {
 	static := []bestiary.ModelInfo{mkModel("a", "2024-01-01T00:00:00Z")}
 	cached := []bestiary.ModelInfo{mkModel("a", "2024-06-01T00:00:00Z")}
@@ -109,5 +118,57 @@ func TestMergeModels_TimestampTie(t *testing.T) {
 	}
 	if result[0].ID != "a" {
 		t.Errorf("expected model ID 'a', got %q", result[0].ID)
+	}
+}
+
+// TestMergeModels_SameIDDifferentProvider verifies that two models sharing the
+// same model ID but belonging to different providers are treated as distinct
+// entries and both survive the merge (no deduplication across providers).
+func TestMergeModels_SameIDDifferentProvider(t *testing.T) {
+	ts := "2024-01-01T00:00:00Z"
+	static := []bestiary.ModelInfo{
+		mkModelWithProvider("shared-model", "anthropic", ts),
+	}
+	cached := []bestiary.ModelInfo{
+		mkModelWithProvider("shared-model", "openai", ts),
+	}
+
+	result := bestiary.MergeModels(static, cached)
+
+	if len(result) != 2 {
+		t.Fatalf("expected 2 models (same ID, different providers), got %d", len(result))
+	}
+	providers := make(map[bestiary.Provider]bool)
+	for _, m := range result {
+		if m.ID != "shared-model" {
+			t.Errorf("unexpected model ID %q, want 'shared-model'", m.ID)
+		}
+		providers[m.Provider] = true
+	}
+	if !providers["anthropic"] {
+		t.Error("expected provider 'anthropic' in result")
+	}
+	if !providers["openai"] {
+		t.Error("expected provider 'openai' in result")
+	}
+}
+
+// TestMergeModels_SameIDSameProviderDedup verifies that two models with the
+// same (ID, Provider) pair are deduplicated, with the more recent one winning.
+func TestMergeModels_SameIDSameProviderDedup(t *testing.T) {
+	static := []bestiary.ModelInfo{
+		mkModelWithProvider("m", "anthropic", "2024-01-01T00:00:00Z"),
+	}
+	cached := []bestiary.ModelInfo{
+		mkModelWithProvider("m", "anthropic", "2024-06-01T00:00:00Z"),
+	}
+
+	result := bestiary.MergeModels(static, cached)
+
+	if len(result) != 1 {
+		t.Fatalf("expected 1 model (same ID+provider deduped), got %d", len(result))
+	}
+	if result[0].LastSynced != "2024-06-01T00:00:00Z" {
+		t.Errorf("expected cached (newer) to win, got LastSynced=%q", result[0].LastSynced)
 	}
 }

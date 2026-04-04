@@ -14,7 +14,7 @@ import (
 )
 
 const schemaSQL = `CREATE TABLE IF NOT EXISTS models (
-    model_id          TEXT PRIMARY KEY,
+    model_id          TEXT NOT NULL,
     provider          TEXT NOT NULL,
     display_name      TEXT NOT NULL,
     family            TEXT NOT NULL DEFAULT '',
@@ -37,7 +37,8 @@ const schemaSQL = `CREATE TABLE IF NOT EXISTS models (
     knowledge         TEXT NOT NULL DEFAULT '',
     modalities_input  TEXT NOT NULL DEFAULT '',
     modalities_output TEXT NOT NULL DEFAULT '',
-    last_synced       TEXT NOT NULL
+    last_synced       TEXT NOT NULL,
+    PRIMARY KEY (model_id, provider)
 );`
 
 // Store is a SQLite-backed cache for AI model metadata.
@@ -209,8 +210,11 @@ func (s *Store) QueryModels(ctx context.Context, provider Provider) ([]ModelInfo
 	return models, nil
 }
 
-// QueryModel returns the single model with the given ID, or ErrNotFound if
-// no model with that ID exists in the store.
+// QueryModel returns the first model found with the given ID, or ErrNotFound
+// if no model with that ID exists in the store.
+// Note: with the composite (model_id, provider) primary key, multiple rows may
+// share the same model_id across different providers. Use QueryModelsByID to
+// retrieve all provider variants for a given model ID.
 func (s *Store) QueryModel(ctx context.Context, id ModelID) (ModelInfo, error) {
 	const query = `SELECT
 		model_id, provider, display_name, family,
@@ -221,7 +225,8 @@ func (s *Store) QueryModel(ctx context.Context, id ModelID) (ModelInfo, error) {
 		modalities_input, modalities_output,
 		last_synced
 	FROM models
-	WHERE model_id = ?1`
+	WHERE model_id = ?1
+	LIMIT 1`
 
 	var found bool
 	var result ModelInfo
@@ -240,6 +245,34 @@ func (s *Store) QueryModel(ctx context.Context, id ModelID) (ModelInfo, error) {
 		return ModelInfo{}, &ErrNotFound{What: "model", Key: string(id)}
 	}
 	return result, nil
+}
+
+// QueryModelsByID returns all cached models with the given ID across all
+// providers. Returns an empty slice (not an error) if none are found.
+func (s *Store) QueryModelsByID(ctx context.Context, id ModelID) ([]ModelInfo, error) {
+	const query = `SELECT
+		model_id, provider, display_name, family,
+		context_window, max_output,
+		reasoning, tool_call, attachment, temperature, structured_output, interleaved, interleaved_config, open_weights,
+		cost_input, cost_output, cost_reasoning, cost_cache_read, cost_cache_write,
+		release_date, knowledge,
+		modalities_input, modalities_output,
+		last_synced
+	FROM models
+	WHERE model_id = ?1`
+
+	var models []ModelInfo
+	err := sqlitex.Execute(s.conn, query, &sqlitex.ExecOptions{
+		Args: []any{string(id)},
+		ResultFunc: func(stmt *sqlite.Stmt) error {
+			models = append(models, scanModelInfo(stmt))
+			return nil
+		},
+	})
+	if err != nil {
+		return nil, fmt.Errorf("bestiary: QueryModelsByID(%q): %w", string(id), err)
+	}
+	return models, nil
 }
 
 // --- helpers ---
