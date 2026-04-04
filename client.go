@@ -2,6 +2,9 @@ package bestiary
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
+	"io"
 	"net/http"
 	"time"
 )
@@ -77,11 +80,88 @@ func NewClient(opts ...ClientOption) *Client {
 // LastSynced on each returned ModelInfo is left empty; the caller must set it
 // when persisting the results.
 func (c *Client) FetchModels(ctx context.Context) ([]ModelInfo, error) {
-	return nil, nil // implemented in L3
+	var lastErr error
+	for attempt := 0; attempt <= c.retries; attempt++ {
+		// Honour context cancellation between retry waits.
+		if attempt > 0 {
+			select {
+			case <-ctx.Done():
+				return nil, ctx.Err()
+			case <-time.After(time.Duration(attempt) * time.Second):
+			}
+		}
+
+		models, err := c.fetchOnce(ctx)
+		if err == nil {
+			return models, nil
+		}
+		lastErr = err
+	}
+	return nil, &ErrAPIUnavailable{
+		URL:      c.baseURL,
+		Attempts: c.retries + 1,
+		Cause:    lastErr,
+	}
+}
+
+// fetchOnce performs a single HTTP GET and returns the parsed model list.
+// It enforces a 10 MB body limit and returns a descriptive error on any
+// non-200 status, read failure, or JSON decode failure.
+func (c *Client) fetchOnce(ctx context.Context) ([]ModelInfo, error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, c.baseURL, nil)
+	if err != nil {
+		return nil, fmt.Errorf("bestiary: Client.fetchOnce: create request for %s: %w", c.baseURL, err)
+	}
+
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("bestiary: Client.fetchOnce: HTTP GET %s: %w", c.baseURL, err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf(
+			"bestiary: Client.fetchOnce: unexpected HTTP status %d from %s; expected 200 OK",
+			resp.StatusCode, c.baseURL,
+		)
+	}
+
+	const maxBodyBytes = 10 * 1024 * 1024 // 10 MB
+	body, err := io.ReadAll(io.LimitReader(resp.Body, maxBodyBytes))
+	if err != nil {
+		return nil, fmt.Errorf("bestiary: Client.fetchOnce: read response body from %s: %w", c.baseURL, err)
+	}
+
+	var apiResp wireResponse
+	if err := json.Unmarshal(body, &apiResp); err != nil {
+		return nil, fmt.Errorf(
+			"bestiary: Client.fetchOnce: decode JSON from %s: %w"+
+				" (body may have been truncated at 10 MB limit)",
+			c.baseURL, err,
+		)
+	}
+
+	var models []ModelInfo
+	for providerSlug, prov := range apiResp {
+		for _, wm := range prov.Models {
+			models = append(models, toModelInfo(providerSlug, wm))
+		}
+	}
+	return models, nil
 }
 
 // FetchModelsByProvider fetches all models and returns only those from the
 // given provider. It is a convenience wrapper around FetchModels.
 func (c *Client) FetchModelsByProvider(ctx context.Context, p Provider) ([]ModelInfo, error) {
-	return nil, nil // implemented in L3
+	all, err := c.FetchModels(ctx)
+	if err != nil {
+		return nil, err
+	}
+	filtered := make([]ModelInfo, 0, len(all))
+	for _, m := range all {
+		if m.Provider == p {
+			filtered = append(filtered, m)
+		}
+	}
+	return filtered, nil
 }
