@@ -458,6 +458,45 @@ func TestQueryModelsByID_NotFound(t *testing.T) {
 	}
 }
 
+// TestUpsertModels_EmptySlice verifies that calling UpsertModels with an empty
+// slice is a no-op: it returns no error and leaves the store unchanged.
+func TestUpsertModels_EmptySlice(t *testing.T) {
+	ctx := context.Background()
+
+	// Use a file-backed store in a temp dir to ensure isolation.
+	dir := t.TempDir()
+	path := dir + "/models.db"
+	s, err := bestiary.OpenStore(path)
+	if err != nil {
+		t.Fatalf("OpenStore: %v", err)
+	}
+	t.Cleanup(func() {
+		if err := s.Close(); err != nil {
+			t.Errorf("Store.Close: %v", err)
+		}
+	})
+
+	// Insert a known model so we can verify the store is unchanged afterwards.
+	initial := []bestiary.ModelInfo{testModel("pre-existing", bestiary.ProviderAnthropic)}
+	if err := s.UpsertModels(ctx, initial); err != nil {
+		t.Fatalf("UpsertModels (initial): %v", err)
+	}
+
+	// Upsert with empty slice must not error.
+	if err := s.UpsertModels(ctx, []bestiary.ModelInfo{}); err != nil {
+		t.Fatalf("UpsertModels(empty): expected no error, got: %v", err)
+	}
+
+	// Store must still contain exactly the one pre-existing model.
+	got, err := s.QueryModels(ctx, "")
+	if err != nil {
+		t.Fatalf("QueryModels: %v", err)
+	}
+	if len(got) != 1 {
+		t.Errorf("QueryModels after empty upsert: got %d models, want 1", len(got))
+	}
+}
+
 // TestUpsertModels_SecondUpsertUpdates verifies that upserting the same model ID
 // twice results in the second version being stored.
 func TestUpsertModels_SecondUpsertUpdates(t *testing.T) {

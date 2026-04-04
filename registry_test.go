@@ -120,6 +120,37 @@ func TestModelsByFamily(t *testing.T) {
 	}
 }
 
+// TestStaticModels_ThreeProviders verifies that the static registry contains
+// models from exactly the three known API providers: Anthropic, Google, OpenAI.
+// NOTE: This test will fail until go generate ./... has been run.
+func TestStaticModels_ThreeProviders(t *testing.T) {
+	models := bestiary.StaticModels()
+	if len(models) == 0 {
+		t.Fatal("StaticModels: expected non-empty slice; run 'go generate ./...' first")
+	}
+
+	seen := make(map[bestiary.Provider]struct{})
+	for _, m := range models {
+		seen[m.Provider] = struct{}{}
+	}
+
+	const wantCount = 3
+	if len(seen) != wantCount {
+		t.Errorf("StaticModels: expected exactly %d unique providers (anthropic, google, openai), got %d: %v",
+			wantCount, len(seen), seen)
+	}
+
+	for _, want := range []bestiary.Provider{
+		bestiary.ProviderAnthropic,
+		bestiary.ProviderGoogle,
+		bestiary.ProviderOpenAI,
+	} {
+		if _, ok := seen[want]; !ok {
+			t.Errorf("StaticModels: provider %q not found in static registry", want)
+		}
+	}
+}
+
 // TestStaticModels_HaveLastSynced verifies that every model in the static
 // registry has a non-empty LastSynced field.
 // NOTE: This test will fail until go generate ./... has been run.

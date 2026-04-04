@@ -7,6 +7,9 @@ import "fmt"
 //
 // What identifies the resource kind (e.g., "model"), and Key is the lookup
 // value that was not found. Use errors.As to extract structured fields.
+//
+// ErrNotFound has no Unwrap method by design: it is a sentinel-style error with
+// no wrapped cause. Use errors.As to match.
 type ErrNotFound struct {
 	// What describes the resource kind that was not found (e.g., "model").
 	What string

@@ -77,7 +77,10 @@ func runList(provider string, format bestiary.OutputFormat, dbPath string) error
 		store, err := bestiary.OpenStore(path)
 		if err == nil {
 			defer store.Close()
-			cached, _ = store.QueryModels(context.Background(), bestiary.Provider(provider))
+			cached, err = store.QueryModels(context.Background(), bestiary.Provider(provider))
+			if err != nil {
+				return fmt.Errorf("query cached models: %w", err)
+			}
 		}
 		// If store can't be opened, cached remains nil — static-only is fine.
 	}

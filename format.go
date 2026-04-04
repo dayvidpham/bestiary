@@ -126,13 +126,6 @@ func writeYAMLCapability(sb *strings.Builder, indent, key string, c Capability) 
 	}
 }
 
-func writeYAMLModalityList(sb *strings.Builder, indent, key string, ms []Modality) {
-	fmt.Fprintf(sb, "%s%s:\n", indent, key)
-	for _, m := range ms {
-		fmt.Fprintf(sb, "%s  - %s\n", indent, m.String())
-	}
-}
-
 func writeYAMLModalities(sb *strings.Builder, indent string, mods Modalities) {
 	fmt.Fprintf(sb, "%sModalities:\n", indent)
 	fmt.Fprintf(sb, "%s  Input:\n", indent)
@@ -204,9 +197,9 @@ func formatModelYAML(w io.Writer, model ModelInfo) error {
 
 // --- Table ---
 
+// tableHeader is the format string for the header and separator rows (all %s args).
 const tableHeader = "%-40s  %-12s  %-16s  %9s  %9s  %6s  %5s  %12s\n"
 const tableRow = "%-40s  %-12s  %-16s  %9d  %9d  %6s  %5s  %12s\n"
-const tableSep = "%-40s  %-12s  %-16s  %9s  %9s  %6s  %5s  %12s\n"
 
 func costStr(p *float64) string {
 	if p == nil {
@@ -226,7 +219,7 @@ func printTableHeader(w io.Writer) {
 	fmt.Fprintf(w, tableHeader,
 		"ID", "Provider", "Family", "Context", "MaxOutput", "Reason", "Tools", "CostIn/MTok",
 	)
-	fmt.Fprintf(w, tableSep,
+	fmt.Fprintf(w, tableHeader,
 		strings.Repeat("-", 40),
 		strings.Repeat("-", 12),
 		strings.Repeat("-", 16),

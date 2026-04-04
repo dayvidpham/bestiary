@@ -73,6 +73,37 @@ func TestFormatModel_JSON(t *testing.T) {
 			t.Errorf("FormatModel(JSON) output missing expected value %q", field)
 		}
 	}
+
+	// Verify structural keys are present in the JSON object.
+	// ModelInfo has no json tags so field names match the struct field names exactly.
+	var decoded map[string]any
+	if err := json.Unmarshal(output, &decoded); err != nil {
+		t.Fatalf("FormatModel(JSON): unmarshal for structural check: %v", err)
+	}
+	requiredKeys := []string{
+		"ID",
+		"Provider",
+		"DisplayName",
+		"Family",
+		"ContextWindow",
+		"MaxOutput",
+		"LastSynced",
+	}
+	for _, key := range requiredKeys {
+		if _, ok := decoded[key]; !ok {
+			t.Errorf("FormatModel(JSON): expected structural key %q not found in output; present keys: %v",
+				key, jsonKeysOf(decoded))
+		}
+	}
+}
+
+// jsonKeysOf returns the keys of m as a slice (for diagnostic messages).
+func jsonKeysOf(m map[string]any) []string {
+	keys := make([]string, 0, len(m))
+	for k := range m {
+		keys = append(keys, k)
+	}
+	return keys
 }
 
 func TestFormatModels_YAML(t *testing.T) {

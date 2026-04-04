@@ -1,5 +1,10 @@
 package bestiary
 
+import (
+	"slices"
+	"strings"
+)
+
 // modelKey is a composite key used to deduplicate models across providers.
 // A model with the same ID may exist under multiple providers with different
 // pricing and capabilities; each (ID, Provider) pair is a distinct entry.
@@ -37,5 +42,15 @@ func MergeModels(static, cached []ModelInfo) []ModelInfo {
 	for _, m := range seen {
 		out = append(out, m)
 	}
+
+	// Sort for deterministic output: primary key = Provider, secondary key = ID.
+	// Without sorting, map iteration order is non-deterministic.
+	slices.SortFunc(out, func(a, b ModelInfo) int {
+		if c := strings.Compare(string(a.Provider), string(b.Provider)); c != 0 {
+			return c
+		}
+		return strings.Compare(string(a.ID), string(b.ID))
+	})
+
 	return out
 }

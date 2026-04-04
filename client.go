@@ -71,7 +71,7 @@ func NewClient(opts ...ClientOption) *Client {
 
 // FetchModels retrieves all model metadata from the models.dev API.
 // It retries on transient failures (non-2xx responses or network errors) up to
-// c.retries additional times with exponential backoff, honouring ctx between
+// c.retries additional times with linear backoff, honouring ctx between
 // attempts.
 //
 // On final failure it returns *ErrAPIUnavailable so callers can use errors.As

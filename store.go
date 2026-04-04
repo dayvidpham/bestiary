@@ -298,6 +298,8 @@ func (s *Store) Close() error {
 // UpsertModels inserts or replaces the given models in the store.
 // It sets LastSynced to the current UTC time in RFC3339 format for each model.
 // All upserts run inside a single transaction.
+//
+// ctx is accepted for API compatibility; zombiezen.com/go/sqlite does not support per-operation context cancellation.
 func (s *Store) UpsertModels(ctx context.Context, models []ModelInfo) error {
 	endFn := sqlitex.Transaction(s.conn)
 
@@ -365,6 +367,8 @@ func (s *Store) UpsertModels(ctx context.Context, models []ModelInfo) error {
 // QueryModels returns all cached models. If provider is non-empty, results are
 // filtered to only models from that provider. An empty provider string returns
 // ALL models regardless of provider.
+//
+// ctx is accepted for API compatibility; zombiezen.com/go/sqlite does not support per-operation context cancellation.
 func (s *Store) QueryModels(ctx context.Context, provider Provider) ([]ModelInfo, error) {
 	var (
 		query string
@@ -416,6 +420,8 @@ func (s *Store) QueryModels(ctx context.Context, provider Provider) ([]ModelInfo
 // Note: with the composite (model_id, provider) primary key, multiple rows may
 // share the same model_id across different providers. Use QueryModelsByID to
 // retrieve all provider variants for a given model ID.
+//
+// ctx is accepted for API compatibility; zombiezen.com/go/sqlite does not support per-operation context cancellation.
 func (s *Store) QueryModel(ctx context.Context, id ModelID) (ModelInfo, error) {
 	const query = `SELECT
 		model_id, provider, display_name, family,
@@ -450,6 +456,8 @@ func (s *Store) QueryModel(ctx context.Context, id ModelID) (ModelInfo, error) {
 
 // QueryModelsByID returns all cached models with the given ID across all
 // providers. Returns an empty slice (not an error) if none are found.
+//
+// ctx is accepted for API compatibility; zombiezen.com/go/sqlite does not support per-operation context cancellation.
 func (s *Store) QueryModelsByID(ctx context.Context, id ModelID) ([]ModelInfo, error) {
 	const query = `SELECT
 		model_id, provider, display_name, family,
