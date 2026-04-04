@@ -18,6 +18,8 @@ import (
 
 // sampleWireJSON is the canonical mock payload used across tests.
 // It represents the exact shape returned by models.dev/api.json.
+// Includes two models: one with boolean interleaved and one with object interleaved
+// to exercise the polymorphic parsing path.
 const sampleWireJSON = `{
   "anthropic": {
     "models": {
@@ -37,13 +39,28 @@ const sampleWireJSON = `{
         "cost": {"input": 15.0, "output": 75.0, "reasoning": 0.0},
         "limit": {"context": 200000, "output": 32000},
         "modalities": {"input": ["text", "image"], "output": ["text"]}
+      },
+      "claude-reasoning-model": {
+        "id": "claude-reasoning-model",
+        "name": "Claude Reasoning Model",
+        "family": "claude",
+        "reasoning": true,
+        "tool_call": true,
+        "attachment": false,
+        "temperature": false,
+        "structured_output": false,
+        "interleaved": {"field": "reasoning_details"},
+        "open_weights": false,
+        "release_date": "2025-08-01",
+        "knowledge": "2025-03"
       }
     }
   }
 }`
 
 // TestFetchModels_ValidJSON verifies that FetchModels correctly maps every
-// field from the wire JSON to a ModelInfo value.
+// field from the wire JSON to a ModelInfo value, including both bool and
+// object forms of the polymorphic interleaved field.
 func TestFetchModels_ValidJSON(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
@@ -56,15 +73,22 @@ func TestFetchModels_ValidJSON(t *testing.T) {
 	if err != nil {
 		t.Fatalf("FetchModels: unexpected error: %v", err)
 	}
-	if len(models) != 1 {
-		t.Fatalf("expected 1 model, got %d", len(models))
+	if len(models) != 2 {
+		t.Fatalf("expected 2 models, got %d", len(models))
 	}
 
-	m := models[0]
-
-	if string(m.ID) != "claude-opus-4-6" {
-		t.Errorf("ID: got %q, want %q", m.ID, "claude-opus-4-6")
+	// Build map for order-independent lookup.
+	byID := make(map[bestiary.ModelID]bestiary.ModelInfo, len(models))
+	for _, m := range models {
+		byID[m.ID] = m
 	}
+
+	// --- claude-opus-4-6: standard fields + bool interleaved: false ---
+	m, ok := byID["claude-opus-4-6"]
+	if !ok {
+		t.Fatal("model claude-opus-4-6 not found in results")
+	}
+
 	if string(m.Provider) != "anthropic" {
 		t.Errorf("Provider: got %q, want %q", m.Provider, "anthropic")
 	}
@@ -104,6 +128,13 @@ func TestFetchModels_ValidJSON(t *testing.T) {
 	if m.Knowledge != "2024-12" {
 		t.Errorf("Knowledge: got %q, want %q", m.Knowledge, "2024-12")
 	}
+	// Interleaved: bool false → Capability{Supported: false}
+	if m.Interleaved.Supported {
+		t.Error("Interleaved.Supported: expected false for bool false")
+	}
+	if m.Interleaved.Config != nil {
+		t.Errorf("Interleaved.Config: expected nil, got %v", m.Interleaved.Config)
+	}
 	// Modalities
 	if len(m.Modalities.Input) != 2 {
 		t.Errorf("Modalities.Input length: got %d, want 2", len(m.Modalities.Input))
@@ -114,6 +145,21 @@ func TestFetchModels_ValidJSON(t *testing.T) {
 	// LastSynced must be empty — caller sets it on persist
 	if m.LastSynced != "" {
 		t.Errorf("LastSynced: expected empty string, got %q", m.LastSynced)
+	}
+
+	// --- claude-reasoning-model: object interleaved → Capability{true, config} ---
+	rm, ok := byID["claude-reasoning-model"]
+	if !ok {
+		t.Fatal("model claude-reasoning-model not found in results")
+	}
+	if !rm.Interleaved.Supported {
+		t.Error("claude-reasoning-model Interleaved.Supported: expected true for object interleaved")
+	}
+	if rm.Interleaved.Config == nil {
+		t.Fatal("claude-reasoning-model Interleaved.Config: expected non-nil map")
+	}
+	if got := rm.Interleaved.Config["field"]; got != "reasoning_details" {
+		t.Errorf("Interleaved.Config[\"field\"]: got %q, want \"reasoning_details\"", got)
 	}
 }
 

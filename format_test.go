@@ -122,3 +122,60 @@ func TestFormatModels_InvalidFormat(t *testing.T) {
 		t.Error("FormatModels with unknown format should return an error, got nil")
 	}
 }
+
+// TestFormatModel_YAML_Capability verifies that a Capability with config
+// is rendered with sub-fields in YAML output.
+func TestFormatModel_YAML_Capability(t *testing.T) {
+	var buf bytes.Buffer
+	model := bestiary.ModelInfo{
+		ID:          "cap-model",
+		Provider:    "testprovider",
+		DisplayName: "Cap Model",
+		Family:      "test",
+		Interleaved: bestiary.Capability{
+			Supported: true,
+			Config:    map[string]string{"field": "reasoning_details"},
+		},
+		LastSynced: "2024-01-01T00:00:00Z",
+	}
+
+	err := bestiary.FormatModel(&buf, model, bestiary.FormatYAML)
+	if err != nil {
+		t.Fatalf("FormatModel(YAML) returned error: %v", err)
+	}
+
+	output := buf.String()
+	if !strings.Contains(output, "Interleaved:") {
+		t.Errorf("YAML output missing Interleaved key\nGot:\n%s", output)
+	}
+	if !strings.Contains(output, "supported: true") {
+		t.Errorf("YAML output missing 'supported: true'\nGot:\n%s", output)
+	}
+	if !strings.Contains(output, "reasoning_details") {
+		t.Errorf("YAML output missing 'reasoning_details'\nGot:\n%s", output)
+	}
+}
+
+// TestFormatModel_YAML_CapabilityBoolFalse verifies that a Capability with no
+// config renders as a plain bool in YAML output.
+func TestFormatModel_YAML_CapabilityBoolFalse(t *testing.T) {
+	var buf bytes.Buffer
+	model := bestiary.ModelInfo{
+		ID:          "cap-false-model",
+		Provider:    "testprovider",
+		DisplayName: "Cap False Model",
+		Family:      "test",
+		Interleaved: bestiary.Capability{Supported: false},
+		LastSynced:  "2024-01-01T00:00:00Z",
+	}
+
+	err := bestiary.FormatModel(&buf, model, bestiary.FormatYAML)
+	if err != nil {
+		t.Fatalf("FormatModel(YAML) returned error: %v", err)
+	}
+
+	output := buf.String()
+	if !strings.Contains(output, "Interleaved: false") {
+		t.Errorf("YAML output should contain 'Interleaved: false'\nGot:\n%s", output)
+	}
+}

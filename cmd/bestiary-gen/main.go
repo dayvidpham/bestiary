@@ -214,6 +214,23 @@ func fetchModels(ctx context.Context) ([]bestiary.ModelInfo, error) {
 	return models, nil
 }
 
+// parseCapabilityRaw converts a polymorphic JSON field to a bestiary.Capability.
+// The field may be: absent/null/empty → {false}, bool → {b}, object → {true, config}.
+func parseCapabilityRaw(raw json.RawMessage) bestiary.Capability {
+	if len(raw) == 0 {
+		return bestiary.Capability{}
+	}
+	var b bool
+	if err := json.Unmarshal(raw, &b); err == nil {
+		return bestiary.Capability{Supported: b}
+	}
+	var cfg map[string]string
+	if err := json.Unmarshal(raw, &cfg); err == nil {
+		return bestiary.Capability{Supported: true, Config: cfg}
+	}
+	return bestiary.Capability{}
+}
+
 // genToModelInfo converts a genWireModel to bestiary.ModelInfo.
 // LastSynced is intentionally left empty — the caller stamps it.
 func genToModelInfo(providerSlug string, wm genWireModel) bestiary.ModelInfo {
@@ -230,8 +247,8 @@ func genToModelInfo(providerSlug string, wm genWireModel) bestiary.ModelInfo {
 		OpenWeights:      wm.OpenWeights,
 		ReleaseDate:      wm.ReleaseDate,
 		Knowledge:        wm.Knowledge,
-		// interleaved field: parse bool from raw JSON if present; default false.
-		Interleaved: parseBoolRaw(wm.Interleaved),
+		// interleaved field: polymorphic bool or object.
+		Interleaved: parseCapabilityRaw(wm.Interleaved),
 		LastSynced:  "",
 	}
 
@@ -257,20 +274,6 @@ func genToModelInfo(providerSlug string, wm genWireModel) bestiary.ModelInfo {
 	}
 
 	return info
-}
-
-// parseBoolRaw extracts a bool from a json.RawMessage.
-// Returns true only when the raw value is the JSON literal "true".
-// Any other value (object, null, false, absent) returns false.
-func parseBoolRaw(raw json.RawMessage) bool {
-	if len(raw) == 0 {
-		return false
-	}
-	var b bool
-	if err := json.Unmarshal(raw, &b); err != nil {
-		return false
-	}
-	return b
 }
 
 // genToModalities converts string slices from the API into the typed Modalities
@@ -335,7 +338,7 @@ func generateSource(models []bestiary.ModelInfo) ([]byte, error) {
 		fmt.Fprintf(&buf, "\t\tAttachment:            %v,\n", m.Attachment)
 		fmt.Fprintf(&buf, "\t\tTemperature:           %v,\n", m.Temperature)
 		fmt.Fprintf(&buf, "\t\tStructuredOutput:      %v,\n", m.StructuredOutput)
-		fmt.Fprintf(&buf, "\t\tInterleaved:           %v,\n", m.Interleaved)
+		fmt.Fprintf(&buf, "\t\tInterleaved:           %s,\n", capabilityExpr(m.Interleaved))
 		fmt.Fprintf(&buf, "\t\tOpenWeights:           %v,\n", m.OpenWeights)
 		fmt.Fprintf(&buf, "\t\tCostInputPerMTok:      %s,\n", float64PtrExpr(m.CostInputPerMTok))
 		fmt.Fprintf(&buf, "\t\tCostOutputPerMTok:     %s,\n", float64PtrExpr(m.CostOutputPerMTok))
@@ -379,6 +382,27 @@ func providerExpr(p bestiary.Provider) string {
 	default:
 		return fmt.Sprintf("Provider(%q)", string(p))
 	}
+}
+
+// capabilityExpr renders a bestiary.Capability as a Go composite literal.
+// When Config is nil it emits: Capability{Supported: <bool>}
+// When Config is non-nil it emits: Capability{Supported: true, Config: map[string]string{...}}
+func capabilityExpr(c bestiary.Capability) string {
+	if len(c.Config) == 0 {
+		return fmt.Sprintf("Capability{Supported: %v}", c.Supported)
+	}
+	var sb strings.Builder
+	sb.WriteString("Capability{Supported: true, Config: map[string]string{")
+	i := 0
+	for k, v := range c.Config {
+		if i > 0 {
+			sb.WriteString(", ")
+		}
+		fmt.Fprintf(&sb, "%q: %q", k, v)
+		i++
+	}
+	sb.WriteString("}}")
+	return sb.String()
 }
 
 // float64PtrExpr renders a *float64 as either "nil" or "f64(<value>)".

@@ -19,6 +19,7 @@ func testModel(id string, provider bestiary.Provider) bestiary.ModelInfo {
 		MaxOutput:     4096,
 		Reasoning:     true,
 		ToolCall:      true,
+		Interleaved:   bestiary.Capability{Supported: false},
 		Modalities: bestiary.Modalities{
 			Input:  []bestiary.Modality{bestiary.ModalityText, bestiary.ModalityImage},
 			Output: []bestiary.Modality{bestiary.ModalityText},
@@ -322,6 +323,74 @@ func TestModalities_RoundTrip(t *testing.T) {
 			t.Errorf("Output[1] = %v, want audio", got.Modalities.Output[1])
 		}
 	}
+}
+
+// TestCapability_RoundTrip verifies that Capability values (both plain bool and
+// object-with-config form) survive a upsert + query cycle unchanged.
+func TestCapability_RoundTrip(t *testing.T) {
+	ctx := context.Background()
+	s := openMemStore(t)
+
+	// Model with interleaved supported=false, no config.
+	mFalse := testModel("cap-false", bestiary.ProviderAnthropic)
+	mFalse.Interleaved = bestiary.Capability{Supported: false}
+
+	// Model with interleaved supported=true, no config.
+	mTrue := testModel("cap-true", bestiary.ProviderAnthropic)
+	mTrue.Interleaved = bestiary.Capability{Supported: true}
+
+	// Model with interleaved supported=true, config present.
+	mConfig := testModel("cap-config", bestiary.ProviderAnthropic)
+	mConfig.Interleaved = bestiary.Capability{
+		Supported: true,
+		Config:    map[string]string{"field": "reasoning_details"},
+	}
+
+	if err := s.UpsertModels(ctx, []bestiary.ModelInfo{mFalse, mTrue, mConfig}); err != nil {
+		t.Fatalf("UpsertModels: %v", err)
+	}
+
+	t.Run("false no config", func(t *testing.T) {
+		got, err := s.QueryModel(ctx, bestiary.ModelID("cap-false"))
+		if err != nil {
+			t.Fatalf("QueryModel: %v", err)
+		}
+		if got.Interleaved.Supported {
+			t.Error("Interleaved.Supported: expected false")
+		}
+		if got.Interleaved.Config != nil {
+			t.Errorf("Interleaved.Config: expected nil, got %v", got.Interleaved.Config)
+		}
+	})
+
+	t.Run("true no config", func(t *testing.T) {
+		got, err := s.QueryModel(ctx, bestiary.ModelID("cap-true"))
+		if err != nil {
+			t.Fatalf("QueryModel: %v", err)
+		}
+		if !got.Interleaved.Supported {
+			t.Error("Interleaved.Supported: expected true")
+		}
+		if got.Interleaved.Config != nil {
+			t.Errorf("Interleaved.Config: expected nil, got %v", got.Interleaved.Config)
+		}
+	})
+
+	t.Run("true with config", func(t *testing.T) {
+		got, err := s.QueryModel(ctx, bestiary.ModelID("cap-config"))
+		if err != nil {
+			t.Fatalf("QueryModel: %v", err)
+		}
+		if !got.Interleaved.Supported {
+			t.Error("Interleaved.Supported: expected true")
+		}
+		if got.Interleaved.Config == nil {
+			t.Fatal("Interleaved.Config: expected non-nil map")
+		}
+		if v := got.Interleaved.Config["field"]; v != "reasoning_details" {
+			t.Errorf("Interleaved.Config[\"field\"]: got %q, want \"reasoning_details\"", v)
+		}
+	})
 }
 
 // TestUpsertModels_SecondUpsertUpdates verifies that upserting the same model ID

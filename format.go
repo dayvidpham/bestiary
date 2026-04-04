@@ -112,6 +112,20 @@ func writeYAMLFloat64Ptr(sb *strings.Builder, indent, key string, p *float64) {
 	}
 }
 
+func writeYAMLCapability(sb *strings.Builder, indent, key string, c Capability) {
+	if c.Config == nil {
+		fmt.Fprintf(sb, "%s%s: %t\n", indent, key, c.Supported)
+		return
+	}
+	// Config present — render as a sub-object.
+	fmt.Fprintf(sb, "%s%s:\n", indent, key)
+	fmt.Fprintf(sb, "%s  supported: %t\n", indent, c.Supported)
+	fmt.Fprintf(sb, "%s  config:\n", indent)
+	for k, v := range c.Config {
+		fmt.Fprintf(sb, "%s    %s: %q\n", indent, k, v)
+	}
+}
+
 func writeYAMLModalityList(sb *strings.Builder, indent, key string, ms []Modality) {
 	fmt.Fprintf(sb, "%s%s:\n", indent, key)
 	for _, m := range ms {
@@ -144,7 +158,7 @@ func modelToYAML(m ModelInfo, indent string) string {
 	writeYAMLBool(&sb, indent, "Attachment", m.Attachment)
 	writeYAMLBool(&sb, indent, "Temperature", m.Temperature)
 	writeYAMLBool(&sb, indent, "StructuredOutput", m.StructuredOutput)
-	writeYAMLBool(&sb, indent, "Interleaved", m.Interleaved)
+	writeYAMLCapability(&sb, indent, "Interleaved", m.Interleaved)
 	writeYAMLBool(&sb, indent, "OpenWeights", m.OpenWeights)
 	writeYAMLFloat64Ptr(&sb, indent, "CostInputPerMTok", m.CostInputPerMTok)
 	writeYAMLFloat64Ptr(&sb, indent, "CostOutputPerMTok", m.CostOutputPerMTok)

@@ -35,6 +35,8 @@ type wireProvider struct {
 // All 17 fields are captured with JSON tags that match the API schema exactly.
 // Boolean capability fields use flexBool because the models.dev API occasionally
 // returns objects or strings instead of booleans for some providers.
+// Interleaved uses json.RawMessage because it is polymorphic: some providers
+// send a bool and others send an object ({"field": "reasoning_details"}).
 type wireModel struct {
 	ID               string          `json:"id"`
 	Name             string          `json:"name"`
@@ -44,7 +46,7 @@ type wireModel struct {
 	Attachment       flexBool        `json:"attachment"`
 	Temperature      flexBool        `json:"temperature"`
 	StructuredOutput flexBool        `json:"structured_output"`
-	Interleaved      flexBool        `json:"interleaved"`
+	Interleaved      json.RawMessage `json:"interleaved"`
 	OpenWeights      flexBool        `json:"open_weights"`
 	ReleaseDate      string          `json:"release_date"`
 	Knowledge        string          `json:"knowledge"`
@@ -76,6 +78,29 @@ type wireModalities struct {
 	Output []string `json:"output"`
 }
 
+// parseCapability converts a polymorphic JSON field to a Capability.
+// The field may be:
+//   - absent/null/empty → Capability{Supported: false}
+//   - bool false → Capability{Supported: false}
+//   - bool true → Capability{Supported: true}
+//   - object (e.g. {"field": "reasoning_details"}) → Capability{Supported: true, Config: ...}
+func parseCapability(raw json.RawMessage) Capability {
+	if len(raw) == 0 {
+		return Capability{}
+	}
+	// Try bool first.
+	var b bool
+	if err := json.Unmarshal(raw, &b); err == nil {
+		return Capability{Supported: b}
+	}
+	// Try object — an object means capability IS supported, with config.
+	var cfg map[string]string
+	if err := json.Unmarshal(raw, &cfg); err == nil {
+		return Capability{Supported: true, Config: cfg}
+	}
+	return Capability{}
+}
+
 // toModelInfo converts a wire-level model entry to the public ModelInfo type.
 // providerSlug is the map key from wireResponse (e.g., "anthropic").
 // LastSynced is intentionally left empty — callers set it on persist.
@@ -90,7 +115,7 @@ func toModelInfo(providerSlug string, wm wireModel) ModelInfo {
 		Attachment:       bool(wm.Attachment),
 		Temperature:      bool(wm.Temperature),
 		StructuredOutput: bool(wm.StructuredOutput),
-		Interleaved:      bool(wm.Interleaved),
+		Interleaved:      parseCapability(wm.Interleaved),
 		OpenWeights:      bool(wm.OpenWeights),
 		ReleaseDate:      wm.ReleaseDate,
 		Knowledge:        wm.Knowledge,

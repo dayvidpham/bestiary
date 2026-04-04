@@ -2,6 +2,7 @@ package bestiary
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -25,6 +26,7 @@ const schemaSQL = `CREATE TABLE IF NOT EXISTS models (
     temperature       INTEGER NOT NULL DEFAULT 0,
     structured_output INTEGER NOT NULL DEFAULT 0,
     interleaved       INTEGER NOT NULL DEFAULT 0,
+    interleaved_config TEXT NOT NULL DEFAULT '',
     open_weights      INTEGER NOT NULL DEFAULT 0,
     cost_input        REAL,
     cost_output       REAL,
@@ -105,7 +107,7 @@ func (s *Store) UpsertModels(ctx context.Context, models []ModelInfo) error {
 	const upsertSQL = `INSERT OR REPLACE INTO models (
 		model_id, provider, display_name, family,
 		context_window, max_output,
-		reasoning, tool_call, attachment, temperature, structured_output, interleaved, open_weights,
+		reasoning, tool_call, attachment, temperature, structured_output, interleaved, interleaved_config, open_weights,
 		cost_input, cost_output, cost_reasoning, cost_cache_read, cost_cache_write,
 		release_date, knowledge,
 		modalities_input, modalities_output,
@@ -113,11 +115,11 @@ func (s *Store) UpsertModels(ctx context.Context, models []ModelInfo) error {
 	) VALUES (
 		?1, ?2, ?3, ?4,
 		?5, ?6,
-		?7, ?8, ?9, ?10, ?11, ?12, ?13,
-		?14, ?15, ?16, ?17, ?18,
-		?19, ?20,
-		?21, ?22,
-		?23
+		?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14,
+		?15, ?16, ?17, ?18, ?19,
+		?20, ?21,
+		?22, ?23,
+		?24
 	)`
 
 	for i := range models {
@@ -135,7 +137,8 @@ func (s *Store) UpsertModels(ctx context.Context, models []ModelInfo) error {
 				boolToInt(m.Attachment),
 				boolToInt(m.Temperature),
 				boolToInt(m.StructuredOutput),
-				boolToInt(m.Interleaved),
+				boolToInt(m.Interleaved.Supported),
+				capabilityConfigToString(m.Interleaved.Config),
 				boolToInt(m.OpenWeights),
 				derefFloat64(m.CostInputPerMTok),
 				derefFloat64(m.CostOutputPerMTok),
@@ -170,7 +173,7 @@ func (s *Store) QueryModels(ctx context.Context, provider Provider) ([]ModelInfo
 		query = `SELECT
 			model_id, provider, display_name, family,
 			context_window, max_output,
-			reasoning, tool_call, attachment, temperature, structured_output, interleaved, open_weights,
+			reasoning, tool_call, attachment, temperature, structured_output, interleaved, interleaved_config, open_weights,
 			cost_input, cost_output, cost_reasoning, cost_cache_read, cost_cache_write,
 			release_date, knowledge,
 			modalities_input, modalities_output,
@@ -181,7 +184,7 @@ func (s *Store) QueryModels(ctx context.Context, provider Provider) ([]ModelInfo
 		query = `SELECT
 			model_id, provider, display_name, family,
 			context_window, max_output,
-			reasoning, tool_call, attachment, temperature, structured_output, interleaved, open_weights,
+			reasoning, tool_call, attachment, temperature, structured_output, interleaved, interleaved_config, open_weights,
 			cost_input, cost_output, cost_reasoning, cost_cache_read, cost_cache_write,
 			release_date, knowledge,
 			modalities_input, modalities_output,
@@ -212,7 +215,7 @@ func (s *Store) QueryModel(ctx context.Context, id ModelID) (ModelInfo, error) {
 	const query = `SELECT
 		model_id, provider, display_name, family,
 		context_window, max_output,
-		reasoning, tool_call, attachment, temperature, structured_output, interleaved, open_weights,
+		reasoning, tool_call, attachment, temperature, structured_output, interleaved, interleaved_config, open_weights,
 		cost_input, cost_output, cost_reasoning, cost_cache_read, cost_cache_write,
 		release_date, knowledge,
 		modalities_input, modalities_output,
@@ -247,6 +250,27 @@ func boolToInt(b bool) int {
 		return 1
 	}
 	return 0
+}
+
+// capabilityConfigToString serialises a Capability.Config map to a JSON string
+// for TEXT column storage. Returns "" when cfg is nil or empty.
+func capabilityConfigToString(cfg map[string]string) string {
+	if len(cfg) == 0 {
+		return ""
+	}
+	b, _ := json.Marshal(cfg)
+	return string(b)
+}
+
+// configFromString deserialises a JSON string back to a map[string]string.
+// Returns nil for an empty string. Malformed JSON is silently ignored (returns nil).
+func configFromString(s string) map[string]string {
+	if s == "" {
+		return nil
+	}
+	var cfg map[string]string
+	_ = json.Unmarshal([]byte(s), &cfg)
+	return cfg
 }
 
 // derefFloat64 converts *float64 to any: nil → nil (SQL NULL), non-nil → float64 value.
@@ -302,11 +326,14 @@ func scanModelInfo(stmt *sqlite.Stmt) ModelInfo {
 		Attachment:       stmt.GetBool("attachment"),
 		Temperature:      stmt.GetBool("temperature"),
 		StructuredOutput: stmt.GetBool("structured_output"),
-		Interleaved:      stmt.GetBool("interleaved"),
-		OpenWeights:      stmt.GetBool("open_weights"),
-		ReleaseDate:      stmt.GetText("release_date"),
-		Knowledge:        stmt.GetText("knowledge"),
-		LastSynced:       stmt.GetText("last_synced"),
+		Interleaved: Capability{
+			Supported: stmt.GetBool("interleaved"),
+			Config:    configFromString(stmt.GetText("interleaved_config")),
+		},
+		OpenWeights: stmt.GetBool("open_weights"),
+		ReleaseDate: stmt.GetText("release_date"),
+		Knowledge:   stmt.GetText("knowledge"),
+		LastSynced:  stmt.GetText("last_synced"),
 	}
 
 	// Nullable REAL fields.

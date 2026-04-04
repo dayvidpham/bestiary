@@ -5,6 +5,14 @@ package bestiary
 // ModelID is the canonical identifier for an AI model (e.g., "claude-3-5-sonnet-20241022").
 type ModelID string
 
+// Capability represents a model capability that may carry additional configuration.
+// For most capabilities, Supported is the only relevant field. For interleaved,
+// Config may hold additional details (e.g., {"field": "reasoning_details"}).
+type Capability struct {
+	Supported bool
+	Config    map[string]string // nil when no extra config
+}
+
 // ModelInfo holds metadata for a single AI model as returned by the models.dev API.
 type ModelInfo struct {
 	ID                    ModelID
@@ -18,7 +26,7 @@ type ModelInfo struct {
 	Attachment            bool
 	Temperature           bool
 	StructuredOutput      bool
-	Interleaved           bool
+	Interleaved           Capability
 	OpenWeights           bool
 	CostInputPerMTok      *float64
 	CostOutputPerMTok     *float64
