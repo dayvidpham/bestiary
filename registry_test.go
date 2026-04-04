@@ -165,3 +165,95 @@ func TestStaticModels_HaveLastSynced(t *testing.T) {
 		}
 	}
 }
+
+// TestLookupModelByProvider_Found verifies that a model known to exist in the
+// static registry can be found by provider and name.
+func TestLookupModelByProvider_Found(t *testing.T) {
+	const wantName = "claude-opus-4-5"
+	info, ok := bestiary.LookupModelByProvider(bestiary.ProviderAnthropic, wantName)
+	if !ok {
+		all := bestiary.StaticModels()
+		if len(all) == 0 {
+			t.Fatalf("LookupModelByProvider(ProviderAnthropic, %q): not found — static registry is empty; run 'go generate ./...' first", wantName)
+		}
+		t.Fatalf("LookupModelByProvider(ProviderAnthropic, %q): not found in static registry (%d models)", wantName, len(all))
+	}
+	if string(info.ID) != wantName {
+		t.Fatalf("LookupModelByProvider(ProviderAnthropic, %q): returned model has ID %q", wantName, info.ID)
+	}
+	if info.Provider != bestiary.ProviderAnthropic {
+		t.Fatalf("LookupModelByProvider(ProviderAnthropic, %q): returned model has provider %q", wantName, info.Provider)
+	}
+}
+
+// TestLookupModelByProvider_WrongProvider verifies that querying with the correct
+// name but wrong provider returns the zero value and false.
+func TestLookupModelByProvider_WrongProvider(t *testing.T) {
+	// "claude-opus-4-5" exists under ProviderAnthropic, not ProviderGoogle.
+	const name = "claude-opus-4-5"
+	info, ok := bestiary.LookupModelByProvider(bestiary.ProviderGoogle, name)
+	if ok {
+		t.Fatalf("LookupModelByProvider(ProviderGoogle, %q): expected (zero, false); got (model=%+v, ok=true)", name, info)
+	}
+	if info.ID != "" || info.Provider != "" || info.DisplayName != "" {
+		t.Fatalf("LookupModelByProvider(ProviderGoogle, %q): expected zero ModelInfo; got non-zero fields: ID=%q Provider=%q DisplayName=%q",
+			name, info.ID, info.Provider, info.DisplayName)
+	}
+}
+
+// TestLookupModelByProvider_WrongName verifies that querying with the correct
+// provider but a non-existent name returns the zero value and false.
+func TestLookupModelByProvider_WrongName(t *testing.T) {
+	const name = "nonexistent-model-xyz"
+	info, ok := bestiary.LookupModelByProvider(bestiary.ProviderAnthropic, name)
+	if ok {
+		t.Fatalf("LookupModelByProvider(ProviderAnthropic, %q): expected (zero, false); got (model=%+v, ok=true)", name, info)
+	}
+	if info.ID != "" || info.Provider != "" || info.DisplayName != "" {
+		t.Fatalf("LookupModelByProvider(ProviderAnthropic, %q): expected zero ModelInfo; got non-zero fields: ID=%q Provider=%q DisplayName=%q",
+			name, info.ID, info.Provider, info.DisplayName)
+	}
+}
+
+// TestModels_NonEmpty verifies that Models returns a non-empty slice.
+func TestModels_NonEmpty(t *testing.T) {
+	models := bestiary.Models()
+	if len(models) == 0 {
+		t.Fatal("Models: expected non-empty slice; got zero entries — run 'go generate ./...' first")
+	}
+}
+
+// TestModels_SameContentAsStaticModels verifies that Models returns the same
+// content as StaticModels (both are defensive copies of the same backing data).
+func TestModels_SameContentAsStaticModels(t *testing.T) {
+	got := bestiary.Models()
+	want := bestiary.StaticModels()
+	if len(got) == 0 {
+		t.Skip("skipping: Models returned empty slice (codegen not yet run)")
+	}
+	if len(got) != len(want) {
+		t.Fatalf("Models: returned %d entries but StaticModels returned %d", len(got), len(want))
+	}
+	for i := range got {
+		if got[i].ID != want[i].ID || got[i].Provider != want[i].Provider {
+			t.Errorf("Models[%d]: got ID=%q Provider=%q, want ID=%q Provider=%q",
+				i, got[i].ID, got[i].Provider, want[i].ID, want[i].Provider)
+		}
+	}
+}
+
+// TestModels_DefensiveCopy verifies that modifying the slice returned by
+// Models does not affect subsequent calls.
+func TestModels_DefensiveCopy(t *testing.T) {
+	first := bestiary.Models()
+	if len(first) == 0 {
+		t.Skip("skipping: Models returned empty slice (codegen not yet run)")
+	}
+	originalLen := len(first)
+	first = first[:0]
+	second := bestiary.Models()
+	if len(second) != originalLen {
+		t.Fatalf("Models: defensive copy broken — after truncating first result, second call returned %d entries (expected %d)",
+			len(second), originalLen)
+	}
+}

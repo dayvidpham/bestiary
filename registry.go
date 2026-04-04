@@ -43,3 +43,22 @@ func ModelsByFamily(family string) []ModelInfo {
 	}
 	return out
 }
+
+// LookupModelByProvider searches the static registry for a model matching both
+// the given provider and name (model ID string). It returns the model and true
+// if found, or the zero value and false otherwise.
+func LookupModelByProvider(p Provider, name string) (ModelInfo, bool) {
+	for _, m := range staticModels {
+		if m.Provider == p && string(m.ID) == name {
+			return m, true
+		}
+	}
+	return ModelInfo{}, false
+}
+
+// Models returns all available models. It delegates to StaticModels and returns
+// a defensive copy so callers cannot mutate the registry. This is the preferred
+// API for external callers; StaticModels is an implementation detail.
+func Models() []ModelInfo {
+	return StaticModels()
+}
