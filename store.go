@@ -13,6 +13,16 @@ import (
 	"zombiezen.com/go/sqlite/sqlitex"
 )
 
+// currentSchemaVersion is the schema version this build expects.
+// Bump this whenever a migration is added.
+const currentSchemaVersion = 2
+
+// schemaMetaSQL creates the schema_meta table used to track migration state.
+// Safe to run on any existing database (CREATE TABLE IF NOT EXISTS).
+const schemaMetaSQL = `CREATE TABLE IF NOT EXISTS schema_meta (version INTEGER NOT NULL);`
+
+// schemaSQL defines the current (v2) models table schema.
+// Used only for fresh databases; existing databases go through migrateSchema.
 const schemaSQL = `CREATE TABLE IF NOT EXISTS models (
     model_id          TEXT NOT NULL,
     provider          TEXT NOT NULL,
@@ -64,11 +74,15 @@ func DefaultDBPath() (string, error) {
 }
 
 // OpenStore opens (or creates) the SQLite database at path.
-// The models table is created if it does not already exist.
+// It applies any pending schema migrations before returning.
 // Caller must call Close when done.
 func OpenStore(path string) (*Store, error) {
-	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
-		return nil, fmt.Errorf("bestiary: OpenStore: create parent dirs for %s: %w", path, err)
+	// ":memory:" has no directory component; os.MkdirAll(".", …) is harmless but
+	// we skip it for in-memory databases to avoid creating a stray directory.
+	if path != ":memory:" {
+		if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+			return nil, fmt.Errorf("bestiary: OpenStore: create parent dirs for %s: %w", path, err)
+		}
 	}
 
 	conn, err := sqlite.OpenConn(path)
@@ -76,12 +90,199 @@ func OpenStore(path string) (*Store, error) {
 		return nil, fmt.Errorf("bestiary: OpenStore: open %s: %w", path, err)
 	}
 
-	if err := sqlitex.ExecuteTransient(conn, schemaSQL, nil); err != nil {
+	// Ensure schema_meta exists — safe on fresh and existing DBs.
+	if err := sqlitex.ExecuteTransient(conn, schemaMetaSQL, nil); err != nil {
 		_ = conn.Close()
-		return nil, fmt.Errorf("bestiary: OpenStore: create schema in %s: %w", path, err)
+		return nil, fmt.Errorf("bestiary: OpenStore: create schema_meta in %s: %w", path, err)
+	}
+
+	// Read current schema version (0 if no row exists).
+	version, err := getSchemaVersion(conn)
+	if err != nil {
+		_ = conn.Close()
+		return nil, fmt.Errorf("bestiary: OpenStore: read schema version from %s: %w", path, err)
+	}
+
+	// Apply any pending migrations.
+	if version < currentSchemaVersion {
+		if err := migrateSchema(conn, version); err != nil {
+			_ = conn.Close()
+			return nil, fmt.Errorf("bestiary: OpenStore: migrate %s from v%d: %w", path, version, err)
+		}
 	}
 
 	return &Store{conn: conn, path: path}, nil
+}
+
+// getSchemaVersion reads the stored schema version from schema_meta.
+// Returns 0 if the table is empty (legacy DB or brand-new DB).
+func getSchemaVersion(conn *sqlite.Conn) (int, error) {
+	var version int
+	var found bool
+	err := sqlitex.Execute(conn, "SELECT version FROM schema_meta LIMIT 1", &sqlitex.ExecOptions{
+		ResultFunc: func(stmt *sqlite.Stmt) error {
+			version = int(stmt.GetInt64("version"))
+			found = true
+			return nil
+		},
+	})
+	if err != nil {
+		return 0, fmt.Errorf("bestiary: getSchemaVersion: %w", err)
+	}
+	if !found {
+		return 0, nil // No version row → treat as version 0.
+	}
+	return version, nil
+}
+
+// setSchemaVersion replaces the single schema_meta row with version.
+func setSchemaVersion(conn *sqlite.Conn, version int) error {
+	if err := sqlitex.ExecuteTransient(conn, "DELETE FROM schema_meta", nil); err != nil {
+		return fmt.Errorf("bestiary: setSchemaVersion: clear schema_meta: %w", err)
+	}
+	return sqlitex.Execute(conn, "INSERT INTO schema_meta (version) VALUES (?1)",
+		&sqlitex.ExecOptions{Args: []any{version}})
+}
+
+// tableExists reports whether a table with name exists in the database.
+func tableExists(conn *sqlite.Conn, name string) (bool, error) {
+	var exists bool
+	err := sqlitex.Execute(conn,
+		"SELECT 1 FROM sqlite_master WHERE type='table' AND name=?1",
+		&sqlitex.ExecOptions{
+			Args: []any{name},
+			ResultFunc: func(stmt *sqlite.Stmt) error {
+				exists = true
+				return nil
+			},
+		})
+	return exists, err
+}
+
+// columnExists reports whether column exists in table.
+func columnExists(conn *sqlite.Conn, table, column string) (bool, error) {
+	var exists bool
+	err := sqlitex.Execute(conn,
+		fmt.Sprintf("SELECT 1 FROM pragma_table_info('%s') WHERE name=?1", table),
+		&sqlitex.ExecOptions{
+			Args: []any{column},
+			ResultFunc: func(stmt *sqlite.Stmt) error {
+				exists = true
+				return nil
+			},
+		})
+	return exists, err
+}
+
+// migrateSchema applies all migrations needed to bring the database from
+// fromVersion to currentSchemaVersion, then records the new version.
+func migrateSchema(conn *sqlite.Conn, fromVersion int) error {
+	hasModels, err := tableExists(conn, "models")
+	if err != nil {
+		return fmt.Errorf("bestiary: migrateSchema: check models table: %w", err)
+	}
+
+	if !hasModels {
+		// Fresh database — create the current schema directly.
+		if err := sqlitex.ExecuteTransient(conn, schemaSQL, nil); err != nil {
+			return fmt.Errorf("bestiary: migrateSchema: create models table: %w", err)
+		}
+	} else if fromVersion < 2 {
+		// Existing database with v0/v1 schema needs migration to v2.
+		// SQLite cannot ALTER PRIMARY KEY, so we recreate the table.
+		if err := migrateToV2(conn); err != nil {
+			return fmt.Errorf("bestiary: migrateSchema: v%d→v2: %w", fromVersion, err)
+		}
+	}
+
+	if err := setSchemaVersion(conn, currentSchemaVersion); err != nil {
+		return fmt.Errorf("bestiary: migrateSchema: set version: %w", err)
+	}
+	return nil
+}
+
+// migrateToV2 upgrades an existing models table to the v2 schema:
+//   - Adds interleaved_config column (if missing).
+//   - Changes PRIMARY KEY from (model_id) to (model_id, provider).
+//
+// SQLite does not support altering a primary key in place, so the migration
+// creates a new table, copies data, and renames.
+func migrateToV2(conn *sqlite.Conn) error {
+	endFn := sqlitex.Transaction(conn)
+	var err error
+	defer endFn(&err)
+
+	// Create the replacement table with the v2 schema.
+	const createNewSQL = `CREATE TABLE IF NOT EXISTS models_new (
+    model_id          TEXT NOT NULL,
+    provider          TEXT NOT NULL,
+    display_name      TEXT NOT NULL,
+    family            TEXT NOT NULL DEFAULT '',
+    context_window    INTEGER NOT NULL DEFAULT 0,
+    max_output        INTEGER NOT NULL DEFAULT 0,
+    reasoning         INTEGER NOT NULL DEFAULT 0,
+    tool_call         INTEGER NOT NULL DEFAULT 0,
+    attachment        INTEGER NOT NULL DEFAULT 0,
+    temperature       INTEGER NOT NULL DEFAULT 0,
+    structured_output INTEGER NOT NULL DEFAULT 0,
+    interleaved       INTEGER NOT NULL DEFAULT 0,
+    interleaved_config TEXT NOT NULL DEFAULT '',
+    open_weights      INTEGER NOT NULL DEFAULT 0,
+    cost_input        REAL,
+    cost_output       REAL,
+    cost_reasoning    REAL,
+    cost_cache_read   REAL,
+    cost_cache_write  REAL,
+    release_date      TEXT NOT NULL DEFAULT '',
+    knowledge         TEXT NOT NULL DEFAULT '',
+    modalities_input  TEXT NOT NULL DEFAULT '',
+    modalities_output TEXT NOT NULL DEFAULT '',
+    last_synced       TEXT NOT NULL,
+    PRIMARY KEY (model_id, provider)
+)`
+	err = sqlitex.ExecuteTransient(conn, createNewSQL, nil)
+	if err != nil {
+		return fmt.Errorf("create models_new: %w", err)
+	}
+
+	// Determine whether the old table already has the interleaved_config column.
+	hasConfig, err := columnExists(conn, "models", "interleaved_config")
+	if err != nil {
+		return fmt.Errorf("check interleaved_config column: %w", err)
+	}
+
+	// Copy rows from old table, supplying '' for interleaved_config if absent.
+	var copySQL string
+	if hasConfig {
+		copySQL = `INSERT OR IGNORE INTO models_new SELECT * FROM models`
+	} else {
+		copySQL = `INSERT OR IGNORE INTO models_new
+            SELECT model_id, provider, display_name, family,
+                context_window, max_output,
+                reasoning, tool_call, attachment, temperature, structured_output, interleaved, '' ,
+                open_weights,
+                cost_input, cost_output, cost_reasoning, cost_cache_read, cost_cache_write,
+                release_date, knowledge,
+                modalities_input, modalities_output,
+                last_synced
+            FROM models`
+	}
+	err = sqlitex.ExecuteTransient(conn, copySQL, nil)
+	if err != nil {
+		return fmt.Errorf("copy data to models_new: %w", err)
+	}
+
+	// Drop the old table and promote models_new.
+	err = sqlitex.ExecuteTransient(conn, `DROP TABLE models`, nil)
+	if err != nil {
+		return fmt.Errorf("drop old models table: %w", err)
+	}
+	err = sqlitex.ExecuteTransient(conn, `ALTER TABLE models_new RENAME TO models`, nil)
+	if err != nil {
+		return fmt.Errorf("rename models_new to models: %w", err)
+	}
+
+	return nil
 }
 
 // Close closes the underlying SQLite connection.
