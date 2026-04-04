@@ -40,7 +40,8 @@ func TestStaticModels_DefensiveCopy(t *testing.T) {
 // NOTE: This test will fail until go generate ./... has been run.
 func TestLookupModel_Known(t *testing.T) {
 	// Pick a model ID that is stable in the Anthropic catalogue.
-	const wantID bestiary.ModelID = "claude-opus-4-6-20250514"
+	// claude-opus-4-20250514 is the dated release slug for Claude Opus 4.
+	const wantID bestiary.ModelID = "claude-opus-4-20250514"
 
 	info, ok := bestiary.LookupModel(wantID)
 	if !ok {
