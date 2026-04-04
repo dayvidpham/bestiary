@@ -25,17 +25,17 @@ func TestBestiarySchemaVersion_Semver(t *testing.T) {
 }
 
 // TestUpstreamSchemaVersion_Format verifies that UpstreamSchemaVersion matches
-// the YYYY.MM.DD-hex12 format (e.g. "2026.04.04-fd776194f63d").
+// the YYYY.MM.DD-sha256 format (e.g. "2026.04.04-<64 hex chars>").
 func TestUpstreamSchemaVersion_Format(t *testing.T) {
-	re := regexp.MustCompile(`^\d{4}\.\d{2}\.\d{2}-[0-9a-f]{12}$`)
+	re := regexp.MustCompile(`^\d{4}\.\d{2}\.\d{2}-[0-9a-f]{64}$`)
 	if !re.MatchString(bestiary.UpstreamSchemaVersion) {
 		t.Errorf(
-			"UpstreamSchemaVersion %q does not match YYYY.MM.DD-hex12 format;\n"+
+			"UpstreamSchemaVersion %q does not match YYYY.MM.DD-sha256 format;\n"+
 				"  what went wrong: value does not satisfy regexp %q\n"+
 				"  why: const was set to a non-conforming string in version.go\n"+
 				"  where: bestiary.UpstreamSchemaVersion (version.go)\n"+
-				"  how to fix: set UpstreamSchemaVersion to a string like \"2026.04.04-fd776194f63d\""+
-				" (12 lowercase hex characters 0-9, a-f only; uppercase is rejected)",
+				"  how to fix: set UpstreamSchemaVersion to a string like "+
+				"\"2026.04.04-<full 64-char lowercase hex SHA-256>\"",
 			bestiary.UpstreamSchemaVersion, re.String(),
 		)
 	}

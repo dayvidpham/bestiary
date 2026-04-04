@@ -6,10 +6,10 @@ package bestiary
 const BestiarySchemaVersion = "0.0.1"
 
 // UpstreamSchemaVersion identifies the exact snapshot of the models.dev schema
-// that this bestiary schema was derived from. Format: YYYY.MM.DD-sha256first12
-// where sha256first12 is the first 12 lowercase hex characters (0-9, a-f) of
-// the upstream schema file's SHA-256 hash. Uppercase hex is not accepted.
-const UpstreamSchemaVersion = "2026.04.04-fd776194f63d"
+// that this bestiary schema was derived from. Format: YYYY.MM.DD-sha256
+// where sha256 is the full 64 lowercase hex character SHA-256 hash of the
+// upstream schema file (packages/core/src/schema.ts).
+const UpstreamSchemaVersion = "2026.04.04-fd776194f63d717cce255cdfcff5ceaf18dccfe404a54f824a4b00afd354a8c6"
 
 // UpstreamGitCommit is the short Git commit hash of the models.dev repository
 // revision that corresponds to UpstreamSchemaVersion.
