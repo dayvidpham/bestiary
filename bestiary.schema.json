@@ -1,0 +1,173 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/dayvidpham/bestiary/bestiary.schema.json",
+  "title": "ModelInfo",
+  "description": "Metadata for a single AI model as produced by the bestiary CLI JSON formatter.",
+  "version": "1.0.0",
+  "type": "object",
+  "properties": {
+    "ID": {
+      "description": "Canonical model identifier (e.g. \"claude-3-5-sonnet-20241022\").",
+      "type": "string"
+    },
+    "Provider": {
+      "description": "Organization that hosts or publishes the model (e.g. \"anthropic\").",
+      "type": "string"
+    },
+    "DisplayName": {
+      "description": "Human-readable model name.",
+      "type": "string"
+    },
+    "Family": {
+      "description": "Model family or series name.",
+      "type": "string"
+    },
+    "ContextWindow": {
+      "description": "Maximum number of tokens the model can process in a single request.",
+      "type": "integer",
+      "minimum": 0
+    },
+    "MaxOutput": {
+      "description": "Maximum number of tokens the model can generate in a single response.",
+      "type": "integer",
+      "minimum": 0
+    },
+    "Reasoning": {
+      "description": "Whether the model supports chain-of-thought or extended reasoning.",
+      "type": "boolean"
+    },
+    "ToolCall": {
+      "description": "Whether the model supports tool/function calling.",
+      "type": "boolean"
+    },
+    "Attachment": {
+      "description": "Whether the model supports file attachments.",
+      "type": "boolean"
+    },
+    "Temperature": {
+      "description": "Whether the model exposes a temperature parameter.",
+      "type": "boolean"
+    },
+    "StructuredOutput": {
+      "description": "Whether the model supports structured JSON output.",
+      "type": "boolean"
+    },
+    "Interleaved": {
+      "description": "Polymorphic capability for interleaved reasoning. Supported indicates whether the capability is active; Config holds optional configuration (e.g. {\"field\": \"reasoning_details\"}).",
+      "type": "object",
+      "properties": {
+        "Supported": {
+          "description": "Whether the interleaved capability is enabled.",
+          "type": "boolean"
+        },
+        "Config": {
+          "description": "Optional capability configuration key-value pairs, or null if not applicable.",
+          "oneOf": [
+            { "type": "object", "additionalProperties": { "type": "string" } },
+            { "type": "null" }
+          ]
+        }
+      },
+      "required": ["Supported", "Config"]
+    },
+    "OpenWeights": {
+      "description": "Whether the model weights are publicly available.",
+      "type": "boolean"
+    },
+    "CostInputPerMTok": {
+      "description": "Cost in USD per million input tokens, or null if unknown.",
+      "oneOf": [
+        { "type": "number", "minimum": 0 },
+        { "type": "null" }
+      ]
+    },
+    "CostOutputPerMTok": {
+      "description": "Cost in USD per million output tokens, or null if unknown.",
+      "oneOf": [
+        { "type": "number", "minimum": 0 },
+        { "type": "null" }
+      ]
+    },
+    "CostReasoningPerMTok": {
+      "description": "Cost in USD per million reasoning tokens, or null if unknown.",
+      "oneOf": [
+        { "type": "number", "minimum": 0 },
+        { "type": "null" }
+      ]
+    },
+    "CostCacheReadPerMTok": {
+      "description": "Cost in USD per million cache-read tokens, or null if unknown.",
+      "oneOf": [
+        { "type": "number", "minimum": 0 },
+        { "type": "null" }
+      ]
+    },
+    "CostCacheWritePerMTok": {
+      "description": "Cost in USD per million cache-write tokens, or null if unknown.",
+      "oneOf": [
+        { "type": "number", "minimum": 0 },
+        { "type": "null" }
+      ]
+    },
+    "ReleaseDate": {
+      "description": "Model release date string as provided by the upstream API (e.g. \"2024-01-01\").",
+      "type": "string"
+    },
+    "Knowledge": {
+      "description": "Knowledge cutoff date string as provided by the upstream API.",
+      "type": "string"
+    },
+    "Modalities": {
+      "description": "Input and output modalities supported by the model.",
+      "type": "object",
+      "properties": {
+        "Input": {
+          "description": "Modality types accepted as input (e.g. [\"text\", \"image\"]).",
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": ["text", "image", "pdf", "audio", "video"]
+          }
+        },
+        "Output": {
+          "description": "Modality types produced as output.",
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": ["text", "image", "pdf", "audio", "video"]
+          }
+        }
+      },
+      "required": ["Input", "Output"]
+    },
+    "LastSynced": {
+      "description": "RFC3339 timestamp of when this model record was last fetched from the upstream API.",
+      "type": "string"
+    }
+  },
+  "required": [
+    "ID",
+    "Provider",
+    "DisplayName",
+    "Family",
+    "ContextWindow",
+    "MaxOutput",
+    "Reasoning",
+    "ToolCall",
+    "Attachment",
+    "Temperature",
+    "StructuredOutput",
+    "Interleaved",
+    "OpenWeights",
+    "CostInputPerMTok",
+    "CostOutputPerMTok",
+    "CostReasoningPerMTok",
+    "CostCacheReadPerMTok",
+    "CostCacheWritePerMTok",
+    "ReleaseDate",
+    "Knowledge",
+    "Modalities",
+    "LastSynced"
+  ],
+  "additionalProperties": false
+}
