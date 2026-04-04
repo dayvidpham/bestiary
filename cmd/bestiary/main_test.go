@@ -1,6 +1,9 @@
 package main
 
 import (
+	"bytes"
+	"io"
+	"os"
 	"strings"
 	"testing"
 )
@@ -31,14 +34,44 @@ func TestRun_UnknownCommand(t *testing.T) {
 	}
 }
 
-// TestRun_List verifies that the list subcommand succeeds when given an isolated
-// --db-path backed by a temporary directory (so no real user state is touched).
+// TestRun_List verifies that the list subcommand succeeds and writes table output
+// when given an isolated --db-path backed by a temporary directory (so no real
+// user state is touched).
 func TestRun_List(t *testing.T) {
 	tmpDB := t.TempDir() + "/test.db"
 
-	err := run([]string{"list", "--db-path", tmpDB})
+	// Capture os.Stdout so we can assert on the output content.
+	// Read from the pipe concurrently to avoid deadlock when output
+	// exceeds the OS pipe buffer (~64KB) — the static registry is large.
+	old := os.Stdout
+	r, w, err := os.Pipe()
 	if err != nil {
-		t.Fatalf("run([\"list\", \"--db-path\", %q]) returned unexpected error: %v", tmpDB, err)
+		t.Fatalf("os.Pipe(): %v", err)
+	}
+	os.Stdout = w
+
+	var buf bytes.Buffer
+	done := make(chan struct{})
+	go func() {
+		io.Copy(&buf, r)
+		close(done)
+	}()
+
+	runErr := run([]string{"list", "--db-path", tmpDB})
+
+	w.Close()
+	os.Stdout = old
+	<-done
+
+	output := buf.String()
+
+	if runErr != nil {
+		t.Fatalf("run([\"list\", \"--db-path\", %q]) returned unexpected error: %v", tmpDB, runErr)
+	}
+	// The default format is JSON; static registry is non-empty so the output
+	// must contain the "Provider" field key.
+	if !strings.Contains(output, "Provider") {
+		t.Errorf("run([\"list\"]) output does not contain \"Provider\"; got %q", output)
 	}
 }
 
@@ -49,9 +82,10 @@ func TestRun_ShowNoID(t *testing.T) {
 	if err == nil {
 		t.Fatal("run([]string{\"show\"}) returned nil; expected an error about missing model ID")
 	}
-	// The error should give enough context to guide the caller.
+	// The error should give enough context to guide the caller toward the
+	// correct usage, specifically mentioning usage instructions or model-id.
 	msg := err.Error()
-	if msg == "" {
-		t.Error("run([]string{\"show\"}) returned a non-nil but empty error message")
+	if !strings.Contains(strings.ToLower(msg), "usage") && !strings.Contains(strings.ToLower(msg), "model") {
+		t.Errorf("run([]string{\"show\"}) error = %q; expected message to contain \"usage\" or \"model\"", msg)
 	}
 }

@@ -34,7 +34,8 @@ func TestUpstreamSchemaVersion_Format(t *testing.T) {
 				"  what went wrong: value does not satisfy regexp %q\n"+
 				"  why: const was set to a non-conforming string in version.go\n"+
 				"  where: bestiary.UpstreamSchemaVersion (version.go)\n"+
-				"  how to fix: set UpstreamSchemaVersion to a string like \"2026.04.04-fd776194f63d\"",
+				"  how to fix: set UpstreamSchemaVersion to a string like \"2026.04.04-fd776194f63d\""+
+				" (12 lowercase hex characters 0-9, a-f only; uppercase is rejected)",
 			bestiary.UpstreamSchemaVersion, re.String(),
 		)
 	}
