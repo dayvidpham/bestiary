@@ -1,8 +1,26 @@
 package bestiary
 
+import "encoding/json"
+
 // Wire types for JSON deserialization from models.dev API.
 // These types are unexported (package-internal); consumers use the public
 // ModelInfo type returned by Client.FetchModels.
+
+// flexBool tolerates polymorphic JSON fields that are sometimes a boolean and
+// sometimes an object or string in the models.dev API. When the value is a JSON
+// boolean it is decoded normally; any other JSON type is silently treated as false.
+type flexBool bool
+
+func (fb *flexBool) UnmarshalJSON(data []byte) error {
+	var b bool
+	if err := json.Unmarshal(data, &b); err == nil {
+		*fb = flexBool(b)
+		return nil
+	}
+	// Non-boolean value (object, string, etc.) — treat as false.
+	*fb = false
+	return nil
+}
 
 // wireResponse is the top-level API response — a map from provider slug to
 // provider object.
@@ -15,17 +33,19 @@ type wireProvider struct {
 
 // wireModel represents a single model entry as returned by models.dev.
 // All 17 fields are captured with JSON tags that match the API schema exactly.
+// Boolean capability fields use flexBool because the models.dev API occasionally
+// returns objects or strings instead of booleans for some providers.
 type wireModel struct {
 	ID               string          `json:"id"`
 	Name             string          `json:"name"`
 	Family           string          `json:"family"`
-	Reasoning        bool            `json:"reasoning"`
-	ToolCall         bool            `json:"tool_call"`
-	Attachment       bool            `json:"attachment"`
-	Temperature      bool            `json:"temperature"`
-	StructuredOutput bool            `json:"structured_output"`
-	Interleaved      bool            `json:"interleaved"`
-	OpenWeights      bool            `json:"open_weights"`
+	Reasoning        flexBool        `json:"reasoning"`
+	ToolCall         flexBool        `json:"tool_call"`
+	Attachment       flexBool        `json:"attachment"`
+	Temperature      flexBool        `json:"temperature"`
+	StructuredOutput flexBool        `json:"structured_output"`
+	Interleaved      flexBool        `json:"interleaved"`
+	OpenWeights      flexBool        `json:"open_weights"`
 	ReleaseDate      string          `json:"release_date"`
 	Knowledge        string          `json:"knowledge"`
 	Cost             *wireCost       `json:"cost"`
@@ -65,13 +85,13 @@ func toModelInfo(providerSlug string, wm wireModel) ModelInfo {
 		Provider:         Provider(providerSlug),
 		DisplayName:      wm.Name,
 		Family:           wm.Family,
-		Reasoning:        wm.Reasoning,
-		ToolCall:         wm.ToolCall,
-		Attachment:       wm.Attachment,
-		Temperature:      wm.Temperature,
-		StructuredOutput: wm.StructuredOutput,
-		Interleaved:      wm.Interleaved,
-		OpenWeights:      wm.OpenWeights,
+		Reasoning:        bool(wm.Reasoning),
+		ToolCall:         bool(wm.ToolCall),
+		Attachment:       bool(wm.Attachment),
+		Temperature:      bool(wm.Temperature),
+		StructuredOutput: bool(wm.StructuredOutput),
+		Interleaved:      bool(wm.Interleaved),
+		OpenWeights:      bool(wm.OpenWeights),
 		ReleaseDate:      wm.ReleaseDate,
 		Knowledge:        wm.Knowledge,
 		LastSynced:       "", // caller sets on persist
