@@ -3,7 +3,9 @@ package bestiary_test
 import (
 	"context"
 	"errors"
+	"strings"
 	"testing"
+	"time"
 
 	"github.com/dayvidpham/bestiary"
 )
@@ -489,5 +491,80 @@ func TestUpsertModels_SecondUpsertUpdates(t *testing.T) {
 	}
 	if len(all) != 1 {
 		t.Errorf("QueryModels returned %d rows after double-upsert, want 1", len(all))
+	}
+}
+
+// TestDefaultDBPath verifies that DefaultDBPath returns an XDG-based path when
+// XDG_CACHE_HOME is set, and falls back to ~/.cache/bestiary/models.db otherwise.
+func TestDefaultDBPath(t *testing.T) {
+	t.Run("XDG_CACHE_HOME set", func(t *testing.T) {
+		tmpDir := t.TempDir()
+		t.Setenv("XDG_CACHE_HOME", tmpDir)
+
+		got, err := bestiary.DefaultDBPath()
+		if err != nil {
+			t.Fatalf("DefaultDBPath() returned unexpected error: %v", err)
+		}
+		// Path must be rooted under the XDG_CACHE_HOME we set.
+		if !strings.HasPrefix(got, tmpDir) {
+			t.Errorf("DefaultDBPath() = %q; want path rooted under XDG_CACHE_HOME %q", got, tmpDir)
+		}
+		// Path must end with the expected relative components.
+		if !strings.HasSuffix(got, "bestiary/models.db") {
+			t.Errorf("DefaultDBPath() = %q; want suffix %q", got, "bestiary/models.db")
+		}
+	})
+
+	t.Run("XDG_CACHE_HOME unset falls back to home cache", func(t *testing.T) {
+		t.Setenv("XDG_CACHE_HOME", "")
+
+		got, err := bestiary.DefaultDBPath()
+		if err != nil {
+			t.Fatalf("DefaultDBPath() returned unexpected error: %v", err)
+		}
+		// The fallback path must still end with the canonical sub-path.
+		if !strings.HasSuffix(got, "bestiary/models.db") {
+			t.Errorf("DefaultDBPath() fallback = %q; want suffix %q", got, "bestiary/models.db")
+		}
+		// Fallback path must pass through .cache.
+		if !strings.Contains(got, ".cache") {
+			t.Errorf("DefaultDBPath() fallback = %q; expected path to contain %q", got, ".cache")
+		}
+	})
+}
+
+// TestUpsertModels_StampsLastSynced verifies that UpsertModels sets the
+// LastSynced field to the current UTC time, and that the value is a valid
+// RFC3339 timestamp within the last 60 seconds.
+func TestUpsertModels_StampsLastSynced(t *testing.T) {
+	ctx := context.Background()
+	s := openMemStore(t)
+
+	before := time.Now().UTC().Add(-time.Second)
+
+	m := testModel("ts-model", bestiary.ProviderAnthropic)
+	if err := s.UpsertModels(ctx, []bestiary.ModelInfo{m}); err != nil {
+		t.Fatalf("UpsertModels: %v", err)
+	}
+
+	after := time.Now().UTC().Add(time.Second)
+
+	got, err := s.QueryModel(ctx, bestiary.ModelID("ts-model"))
+	if err != nil {
+		t.Fatalf("QueryModel: %v", err)
+	}
+
+	if got.LastSynced == "" {
+		t.Fatal("LastSynced is empty; expected RFC3339 timestamp")
+	}
+
+	ts, err := time.Parse(time.RFC3339, got.LastSynced)
+	if err != nil {
+		t.Fatalf("LastSynced %q is not a valid RFC3339 timestamp: %v", got.LastSynced, err)
+	}
+
+	if ts.Before(before) || ts.After(after) {
+		t.Errorf("LastSynced %q is not within the expected time window [%s, %s]",
+			got.LastSynced, before.Format(time.RFC3339), after.Format(time.RFC3339))
 	}
 }

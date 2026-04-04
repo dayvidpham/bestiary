@@ -245,3 +245,78 @@ func TestFormatModel_YAML_CapabilityBoolFalse(t *testing.T) {
 		t.Errorf("YAML output should contain 'Interleaved: false'\nGot:\n%s", output)
 	}
 }
+
+// TestFormatModel_YAML validates that FormatModel with FormatYAML produces output
+// containing the expected top-level YAML keys for a ModelInfo fixture.
+// Validation is string-based only (no yaml.v3 dependency).
+func TestFormatModel_YAML(t *testing.T) {
+	var buf bytes.Buffer
+	model := bestiary.ModelInfo{
+		ID:          bestiary.ModelID("yaml-test-model"),
+		Provider:    "testprovider",
+		DisplayName: "YAML Test Model",
+		Family:      "yaml-family",
+		LastSynced:  "2024-03-01T00:00:00Z",
+	}
+
+	err := bestiary.FormatModel(&buf, model, bestiary.FormatYAML)
+	if err != nil {
+		t.Fatalf("FormatModel(YAML) returned unexpected error: %v", err)
+	}
+
+	output := buf.String()
+	for _, wantKey := range []string{"ID:", "Provider:", "DisplayName:", "Family:"} {
+		if !strings.Contains(output, wantKey) {
+			t.Errorf("FormatModel(YAML) output missing expected key %q\nGot:\n%s", wantKey, output)
+		}
+	}
+
+	// Verify the model values appear in the output.
+	for _, wantVal := range []string{"yaml-test-model", "testprovider", "YAML Test Model", "yaml-family"} {
+		if !strings.Contains(output, wantVal) {
+			t.Errorf("FormatModel(YAML) output missing expected value %q\nGot:\n%s", wantVal, output)
+		}
+	}
+}
+
+// TestFormatModels_Table validates that FormatModels with FormatTable produces a
+// table with a header row containing column names and data rows for each model.
+func TestFormatModels_Table(t *testing.T) {
+	var buf bytes.Buffer
+	models := []bestiary.ModelInfo{
+		{
+			ID:            bestiary.ModelID("table-model-1"),
+			Provider:      "providerA",
+			DisplayName:   "Table Model 1",
+			Family:        "table-family",
+			ContextWindow: 32000,
+			MaxOutput:     2048,
+		},
+		{
+			ID:       bestiary.ModelID("table-model-2"),
+			Provider: "providerB",
+			Family:   "other-family",
+		},
+	}
+
+	err := bestiary.FormatModels(&buf, models, bestiary.FormatTable)
+	if err != nil {
+		t.Fatalf("FormatModels(Table) returned unexpected error: %v", err)
+	}
+
+	output := buf.String()
+
+	// Header must contain the expected column names.
+	for _, header := range []string{"Provider", "Family"} {
+		if !strings.Contains(output, header) {
+			t.Errorf("FormatModels(Table) output missing header column %q\nGot:\n%s", header, output)
+		}
+	}
+
+	// Model data must appear in the rows.
+	for _, val := range []string{"table-model-1", "providerA", "table-model-2", "providerB"} {
+		if !strings.Contains(output, val) {
+			t.Errorf("FormatModels(Table) output missing expected value %q\nGot:\n%s", val, output)
+		}
+	}
+}
