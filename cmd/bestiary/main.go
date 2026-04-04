@@ -1,8 +1,13 @@
 package main
 
 import (
+	"context"
+	"errors"
+	"flag"
 	"fmt"
 	"os"
+
+	"github.com/dayvidpham/bestiary"
 )
 
 func main() {
@@ -13,5 +18,154 @@ func main() {
 }
 
 func run(args []string) error {
-	return nil // stub — implemented in L3
+	if len(args) == 0 {
+		return fmt.Errorf("usage: bestiary <list|show|sync> [flags]")
+	}
+
+	cmd := args[0]
+	fs := flag.NewFlagSet(cmd, flag.ContinueOnError)
+	provider := fs.String("provider", "", "filter by provider slug")
+	format := fs.String("format", "json", "output format: json, yaml, table")
+	dbPath := fs.String("db-path", "", "SQLite database path (default: XDG_CACHE_HOME/bestiary/models.db)")
+
+	if err := fs.Parse(args[1:]); err != nil {
+		return err
+	}
+
+	switch cmd {
+	case "list":
+		return runList(*provider, bestiary.OutputFormat(*format), *dbPath)
+	case "show":
+		if fs.NArg() < 1 {
+			return fmt.Errorf("usage: bestiary show <model-id> [flags]")
+		}
+		return runShow(fs.Arg(0), bestiary.OutputFormat(*format), *dbPath)
+	case "sync":
+		return runSync(*provider, bestiary.OutputFormat(*format), *dbPath)
+	default:
+		return fmt.Errorf("unknown command %q; supported commands: list, show, sync", cmd)
+	}
+}
+
+// resolveDBPath returns dbPath if non-empty, otherwise calls DefaultDBPath().
+func resolveDBPath(dbPath string) (string, error) {
+	if dbPath != "" {
+		return dbPath, nil
+	}
+	path, err := bestiary.DefaultDBPath()
+	if err != nil {
+		return "", fmt.Errorf("resolve default DB path: %w", err)
+	}
+	return path, nil
+}
+
+// runList lists models from static registry merged with any cached models.
+// Gracefully falls back to static-only if the store cannot be opened.
+func runList(provider string, format bestiary.OutputFormat, dbPath string) error {
+	// Fetch static models, optionally filtered by provider.
+	var static []bestiary.ModelInfo
+	if provider != "" {
+		static = bestiary.ModelsByProvider(bestiary.Provider(provider))
+	} else {
+		static = bestiary.StaticModels()
+	}
+
+	// Attempt to open store for cached models — fall back gracefully on error.
+	var cached []bestiary.ModelInfo
+	path, err := resolveDBPath(dbPath)
+	if err == nil {
+		store, err := bestiary.OpenStore(path)
+		if err == nil {
+			defer store.Close()
+			cached, _ = store.QueryModels(context.Background(), bestiary.Provider(provider))
+		}
+		// If store can't be opened, cached remains nil — static-only is fine.
+	}
+
+	merged := bestiary.MergeModels(static, cached)
+	return bestiary.FormatModels(os.Stdout, merged, format)
+}
+
+// runShow looks up a model by ID in static registry and/or cache.
+// Returns the entry with the more-recent LastSynced, or ErrNotFound.
+// Gracefully falls back to static-only if the store cannot be opened.
+func runShow(id string, format bestiary.OutputFormat, dbPath string) error {
+	mid := bestiary.ModelID(id)
+
+	staticModel, inStatic := bestiary.LookupModel(mid)
+
+	// Attempt cached lookup — graceful fallback if store unavailable.
+	var cachedModel bestiary.ModelInfo
+	var inCached bool
+
+	path, err := resolveDBPath(dbPath)
+	if err == nil {
+		store, err := bestiary.OpenStore(path)
+		if err == nil {
+			defer store.Close()
+			m, err := store.QueryModel(context.Background(), mid)
+			if err == nil {
+				cachedModel = m
+				inCached = true
+			} else {
+				var notFound *bestiary.ErrNotFound
+				if !errors.As(err, &notFound) {
+					// Real store error — surface it.
+					return fmt.Errorf("store query: %w", err)
+				}
+			}
+		}
+		// Store open error → static-only.
+	}
+
+	switch {
+	case !inStatic && !inCached:
+		return &bestiary.ErrNotFound{What: "model", Key: id}
+	case inStatic && !inCached:
+		return bestiary.FormatModel(os.Stdout, staticModel, format)
+	case !inStatic && inCached:
+		return bestiary.FormatModel(os.Stdout, cachedModel, format)
+	default:
+		// Both found — pick the more-recent LastSynced.
+		pick := staticModel
+		if cachedModel.LastSynced > staticModel.LastSynced {
+			pick = cachedModel
+		}
+		return bestiary.FormatModel(os.Stdout, pick, format)
+	}
+}
+
+// runSync fetches live model data from the API, persists to store, and prints results.
+// Unlike list/show, sync requires a functional store (no graceful fallback).
+func runSync(provider string, format bestiary.OutputFormat, dbPath string) error {
+	ctx := context.Background()
+
+	path, err := resolveDBPath(dbPath)
+	if err != nil {
+		return fmt.Errorf("sync: %w", err)
+	}
+
+	client := bestiary.NewClient()
+
+	var fetched []bestiary.ModelInfo
+	if provider != "" {
+		fetched, err = client.FetchModelsByProvider(ctx, bestiary.Provider(provider))
+	} else {
+		fetched, err = client.FetchModels(ctx)
+	}
+	if err != nil {
+		return fmt.Errorf("sync: fetch models: %w", err)
+	}
+
+	store, err := bestiary.OpenStore(path)
+	if err != nil {
+		return fmt.Errorf("sync: open store at %s: %w", path, err)
+	}
+	defer store.Close()
+
+	if err := store.UpsertModels(ctx, fetched); err != nil {
+		return fmt.Errorf("sync: persist models: %w", err)
+	}
+
+	return bestiary.FormatModels(os.Stdout, fetched, format)
 }
