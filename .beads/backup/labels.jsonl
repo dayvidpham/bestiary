@@ -90,6 +90,7 @@
 {"issue_id":"bestiary-vtd","label":"aura:p9-impl:s9-slice"}
 {"issue_id":"bestiary-wa2","label":"aura:p3-plan:s3-propose"}
 {"issue_id":"bestiary-wa2","label":"aura:p6-plan:s6-ratify"}
+{"issue_id":"bestiary-wia","label":"aura:p11-user:s11-uat"}
 {"issue_id":"bestiary-wkv","label":"aura:p10-impl:s10-review"}
 {"issue_id":"bestiary-wkv","label":"aura:severity:minor"}
 {"issue_id":"bestiary-wqo","label":"aura:p4-plan:s4-review"}
