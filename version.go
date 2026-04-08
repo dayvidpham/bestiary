@@ -3,7 +3,7 @@ package bestiary
 // BestiarySchemaVersion is the semantic version of the bestiary JSON Schema.
 // It follows semver (major.minor.patch) and must be incremented whenever the
 // schema changes in a backward-incompatible way.
-const BestiarySchemaVersion = "0.0.1"
+const BestiarySchemaVersion = "0.1.0"
 
 // UpstreamSchemaVersion identifies the exact snapshot of the models.dev schema
 // that this bestiary schema was derived from. Format: YYYY.MM.DD-sha256
