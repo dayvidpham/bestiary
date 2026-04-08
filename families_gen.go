@@ -2,7 +2,7 @@
 
 package bestiary
 
-// Family identifies the model family from the models.dev API (e.g., "claude-opus").
+// Family identifies the model family from the models.dev API.
 // It is a named string type for type safety, following the same pattern as Provider.
 type Family string
 
