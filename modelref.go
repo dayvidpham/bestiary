@@ -9,7 +9,7 @@ package bestiary
 type ModelRef struct {
 	Provider  Provider // Hosting provider
 	RawFamily Family   // API family field verbatim (e.g., "claude-opus")
-	Family    string   // Empty until normalization epoch
+	Family    string   // Empty until normalization epoch. TODO: determine if normalized family uses Family type or a distinct NormalizedFamily type.
 	Variant   string   // Empty until normalization epoch
 	Date      string   // Release date from ModelInfo.ReleaseDate (e.g., "2025-05-14")
 }
