@@ -46,6 +46,7 @@
 {"issue_id":"bestiary-9u1","label":"aura:p4-plan:s4-review"}
 {"issue_id":"bestiary-aat","label":"aura:p5-user:s5-uat"}
 {"issue_id":"bestiary-axj","label":"aura:p3-plan:s3-propose"}
+{"issue_id":"bestiary-axj","label":"aura:p6-plan:s6-ratify"}
 {"issue_id":"bestiary-bba","label":"aura:p9-impl:s9-slice"}
 {"issue_id":"bestiary-bkx","label":"aura:p4-plan:s4-review"}
 {"issue_id":"bestiary-bl1","label":"aura:p2-user:s2_1-elicit"}
@@ -74,6 +75,7 @@
 {"issue_id":"bestiary-gzl","label":"aura:p9-impl:s9-slice"}
 {"issue_id":"bestiary-h8h","label":"aura:p9-impl:s9-slice"}
 {"issue_id":"bestiary-hyf","label":"aura:p9-impl:s9-slice"}
+{"issue_id":"bestiary-iky","label":"aura:p7-plan:s7-handoff"}
 {"issue_id":"bestiary-j35","label":"aura:p4-plan:s4-review"}
 {"issue_id":"bestiary-j5r","label":"aura:p3-plan:s3-propose"}
 {"issue_id":"bestiary-j5r","label":"aura:superseded"}
