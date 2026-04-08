@@ -109,7 +109,7 @@ func toModelInfo(providerSlug string, wm wireModel) ModelInfo {
 		ID:               ModelID(wm.ID),
 		Provider:         Provider(providerSlug),
 		DisplayName:      wm.Name,
-		Family:           wm.Family,
+		Family:           Family(wm.Family),
 		Reasoning:        bool(wm.Reasoning),
 		ToolCall:         bool(wm.ToolCall),
 		Attachment:       bool(wm.Attachment),

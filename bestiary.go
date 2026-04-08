@@ -18,7 +18,7 @@ type ModelInfo struct {
 	ID                    ModelID
 	Provider              Provider
 	DisplayName           string
-	Family                string
+	Family                Family
 	ContextWindow         int
 	MaxOutput             int
 	Reasoning             bool

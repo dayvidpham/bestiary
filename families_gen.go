@@ -2,8 +2,9 @@
 
 package bestiary
 
-// Family is the raw API family string for a model.
-type Family = string
+// Family identifies the model family from the models.dev API (e.g., "claude-opus").
+// It is a named string type for type safety, following the same pattern as Provider.
+type Family string
 
 const (
 	FamilyAllam             Family = "allam"

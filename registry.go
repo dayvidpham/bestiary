@@ -34,7 +34,7 @@ func ModelsByProvider(p Provider) []ModelInfo {
 }
 
 // ModelsByFamily returns all static models belonging to the given family.
-func ModelsByFamily(family string) []ModelInfo {
+func ModelsByFamily(family Family) []ModelInfo {
 	var out []ModelInfo
 	for _, m := range staticModels {
 		if m.Family == family {

@@ -491,7 +491,7 @@ func collectFamilies(models []bestiary.ModelInfo, provMeta map[string]providerAP
 	seen := make(map[string]struct{})
 	for _, m := range models {
 		if m.Family != "" {
-			seen[m.Family] = struct{}{}
+			seen[string(m.Family)] = struct{}{}
 		}
 	}
 	out := make([]string, 0, len(seen))
@@ -526,7 +526,7 @@ func genToModelInfo(providerSlug string, wm genWireModel) bestiary.ModelInfo {
 		ID:               bestiary.ModelID(wm.ID),
 		Provider:         bestiary.Provider(providerSlug),
 		DisplayName:      wm.Name,
-		Family:           wm.Family,
+		Family:           bestiary.Family(wm.Family),
 		Reasoning:        wm.Reasoning,
 		ToolCall:         wm.ToolCall,
 		Attachment:       wm.Attachment,

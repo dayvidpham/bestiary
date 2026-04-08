@@ -8,7 +8,7 @@ package bestiary
 // stable anchor for cross-provider queries and future normalization work.
 type ModelRef struct {
 	Provider  Provider // Hosting provider
-	RawFamily string   // API family field verbatim (e.g., "claude-opus")
+	RawFamily Family   // API family field verbatim (e.g., "claude-opus")
 	Family    string   // Empty until normalization epoch
 	Variant   string   // Empty until normalization epoch
 	Date      string   // Release date from ModelInfo.ReleaseDate (e.g., "2025-05-14")
@@ -31,7 +31,7 @@ func (m ModelInfo) Ref() ModelRef {
 // the given family string. The family parameter matches the raw API family
 // field (e.g., "claude-opus", "gemini-flash"). The returned slice contains
 // no duplicates. If no models match, a nil slice is returned.
-func ProvidersForFamily(family string) []Provider {
+func ProvidersForFamily(family Family) []Provider {
 	seen := make(map[Provider]struct{})
 	var out []Provider
 	for _, m := range staticModels {
