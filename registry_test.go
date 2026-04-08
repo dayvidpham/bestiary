@@ -89,12 +89,12 @@ func TestModelsByProvider(t *testing.T) {
 	}
 }
 
-// TestModelsByProvider_Empty verifies that filtering by an unknown provider
+// TestModelsByProvider_Empty verifies that filtering by a truly unknown provider
 // returns an empty (nil/zero-length) slice without panicking.
 func TestModelsByProvider_Empty(t *testing.T) {
-	models := bestiary.ModelsByProvider(bestiary.Provider("openrouter"))
+	models := bestiary.ModelsByProvider(bestiary.Provider("definitely-not-a-real-provider-xyz"))
 	if len(models) != 0 {
-		t.Fatalf("ModelsByProvider(\"openrouter\"): expected empty slice; got %d entries", len(models))
+		t.Fatalf("ModelsByProvider(\"definitely-not-a-real-provider-xyz\"): expected empty slice; got %d entries", len(models))
 	}
 }
 
@@ -120,33 +120,48 @@ func TestModelsByFamily(t *testing.T) {
 	}
 }
 
-// TestStaticModels_ThreeProviders verifies that the static registry contains
-// models from exactly the three known API providers: Anthropic, Google, OpenAI.
-// NOTE: This test will fail until go generate ./... has been run.
-func TestStaticModels_ThreeProviders(t *testing.T) {
-	models := bestiary.StaticModels()
-	if len(models) == 0 {
-		t.Fatal("StaticModels: expected non-empty slice; run 'go generate ./...' first")
+// TestStaticModels_AllHaveKnownProvider verifies that every model in the static
+// registry has a provider that IsKnown() accepts.
+func TestStaticModels_AllHaveKnownProvider(t *testing.T) {
+	for _, m := range bestiary.StaticModels() {
+		if !m.Provider.IsKnown() {
+			t.Errorf("model %q has unknown provider %q", m.ID, m.Provider)
+		}
 	}
+}
 
-	seen := make(map[bestiary.Provider]struct{})
-	for _, m := range models {
-		seen[m.Provider] = struct{}{}
+// TestStaticModels_NoDuplicateKeys verifies that no (ModelID, Provider) pair
+// appears more than once in the static registry.
+func TestStaticModels_NoDuplicateKeys(t *testing.T) {
+	type key struct {
+		ID bestiary.ModelID
+		P  bestiary.Provider
 	}
-
-	const wantCount = 3
-	if len(seen) != wantCount {
-		t.Errorf("StaticModels: expected exactly %d unique providers (anthropic, google, openai), got %d: %v",
-			wantCount, len(seen), seen)
+	seen := make(map[key]struct{})
+	for _, m := range bestiary.StaticModels() {
+		k := key{m.ID, m.Provider}
+		if _, dup := seen[k]; dup {
+			t.Errorf("duplicate (ID, Provider): (%q, %q)", m.ID, m.Provider)
+		}
+		seen[k] = struct{}{}
 	}
+}
 
-	for _, want := range []bestiary.Provider{
+// TestStaticModels_ContainsCoreProviders is a regression guard ensuring the
+// three core providers (Anthropic, Google, OpenAI) actually appear in the
+// static registry after codegen (Reviewer B-4 requirement).
+func TestStaticModels_ContainsCoreProviders(t *testing.T) {
+	seen := make(map[bestiary.Provider]bool)
+	for _, m := range bestiary.StaticModels() {
+		seen[m.Provider] = true
+	}
+	for _, core := range []bestiary.Provider{
 		bestiary.ProviderAnthropic,
 		bestiary.ProviderGoogle,
 		bestiary.ProviderOpenAI,
 	} {
-		if _, ok := seen[want]; !ok {
-			t.Errorf("StaticModels: provider %q not found in static registry", want)
+		if !seen[core] {
+			t.Errorf("core provider %q not found in static registry", core)
 		}
 	}
 }

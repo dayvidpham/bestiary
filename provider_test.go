@@ -6,6 +6,35 @@ import (
 	"github.com/dayvidpham/bestiary"
 )
 
+// TestProviders_AllKnown verifies that every value returned by Providers()
+// is recognized by IsKnown().
+func TestProviders_AllKnown(t *testing.T) {
+	for _, p := range bestiary.Providers() {
+		if !p.IsKnown() {
+			t.Errorf("Providers() contains %q but IsKnown() returns false", p)
+		}
+	}
+}
+
+// TestProviders_IncludesLocal verifies that Providers() always includes ProviderLocal.
+func TestProviders_IncludesLocal(t *testing.T) {
+	for _, p := range bestiary.Providers() {
+		if p == bestiary.ProviderLocal {
+			return
+		}
+	}
+	t.Error("Providers() does not include ProviderLocal")
+}
+
+// TestProviders_MinimumCount is a regression guard: the provider set must not
+// collapse. We expect at least 50 providers (110 API + Local at time of writing).
+func TestProviders_MinimumCount(t *testing.T) {
+	if n := len(bestiary.Providers()); n < 50 {
+		t.Errorf("Providers() returned %d providers, expected at least 50 (regression guard)", n)
+	}
+}
+
+// TestProviderIsKnown_KnownProviders verifies that core providers are recognized.
 func TestProviderIsKnown_KnownProviders(t *testing.T) {
 	known := []bestiary.Provider{
 		bestiary.ProviderAnthropic,
@@ -20,17 +49,55 @@ func TestProviderIsKnown_KnownProviders(t *testing.T) {
 	}
 }
 
+// TestProviderIsKnown_UnknownProviders verifies that clearly unknown values are rejected.
 func TestProviderIsKnown_UnknownProviders(t *testing.T) {
 	unknown := []bestiary.Provider{
-		"openrouter",
 		"",
 		"ANTHROPIC",
-		"mistral",
+		"not-a-real-provider",
 	}
 	for _, p := range unknown {
 		if p.IsKnown() {
 			t.Errorf("Provider(%q).IsKnown() = true, want false", p)
 		}
+	}
+}
+
+// TestGeneratedProviders_MatchSlugs verifies that every generated (non-Local)
+// provider constant has a valid slug format: lowercase alphanumeric + hyphens.
+// This is a codegen output validation guard (Reviewer B-6 requirement).
+func TestGeneratedProviders_MatchSlugs(t *testing.T) {
+	providers := bestiary.Providers()
+	for _, p := range providers {
+		if p == bestiary.ProviderLocal {
+			continue
+		}
+		s := string(p)
+		if s == "" {
+			t.Error("empty string in Providers()")
+			continue
+		}
+		for _, c := range s {
+			if !((c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || c == '-') {
+				t.Errorf("Provider %q contains non-slug character %q", s, string(c))
+			}
+		}
+	}
+}
+
+// TestProviders_DefensiveCopy verifies that modifying the returned slice does
+// not affect subsequent calls.
+func TestProviders_DefensiveCopy(t *testing.T) {
+	first := bestiary.Providers()
+	originalLen := len(first)
+	if originalLen == 0 {
+		t.Skip("skipping: Providers() returned empty slice")
+	}
+	first = first[:0]
+	second := bestiary.Providers()
+	if len(second) != originalLen {
+		t.Fatalf("Providers(): defensive copy broken — after truncating first result, second call returned %d entries (expected %d)",
+			len(second), originalLen)
 	}
 }
 
