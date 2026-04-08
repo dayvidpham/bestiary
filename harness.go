@@ -25,6 +25,14 @@ var knownHarnesses = [...]Harness{
 	HarnessAntigravity,
 }
 
+// Harnesses returns all known Harness values. The returned slice is a
+// defensive copy — modifying it does not affect the package state.
+func Harnesses() []Harness {
+	out := make([]Harness, len(knownHarnesses))
+	copy(out, knownHarnesses[:])
+	return out
+}
+
 // IsKnown reports whether h is one of the six declared Harness constants.
 func (h Harness) IsKnown() bool {
 	for _, known := range knownHarnesses {

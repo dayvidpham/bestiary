@@ -95,3 +95,26 @@ func TestHarness_UnmarshalText_NilReceiver(t *testing.T) {
 		t.Fatal("UnmarshalText on nil receiver: got nil error, want error")
 	}
 }
+
+func TestHarnesses_AllKnown(t *testing.T) {
+	for _, h := range bestiary.Harnesses() {
+		if !h.IsKnown() {
+			t.Errorf("Harnesses() returned %q which IsKnown() = false", h)
+		}
+	}
+}
+
+func TestHarnesses_Count(t *testing.T) {
+	if got := len(bestiary.Harnesses()); got != 6 {
+		t.Errorf("len(Harnesses()) = %d, want 6", got)
+	}
+}
+
+func TestHarnesses_DefensiveCopy(t *testing.T) {
+	first := bestiary.Harnesses()
+	first[0] = "tampered"
+	second := bestiary.Harnesses()
+	if second[0] == "tampered" {
+		t.Error("Harnesses() returned a non-defensive copy: mutation affected subsequent call")
+	}
+}
