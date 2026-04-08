@@ -112,6 +112,13 @@ func TestFilterFlags_MutualExclusivity(t *testing.T) {
 
 // TestFilterFlags_ProviderInclusion verifies that -only-providers filters model
 // data while leaving the provider constant list unaffected (tested via applyFilter).
+//
+// Filter asymmetry: in run(), allSlugs is populated from the full (unfiltered)
+// model set and passed to generateProvidersSource BEFORE applyFilter is called.
+// applyFilter only narrows the model data passed to generateSource (the static
+// model list). The constant generation path is therefore independent of any
+// filter; TestProviders_MinimumCount in provider_test.go asserts that all 110+
+// provider constants are present regardless of any filter applied here.
 func TestFilterFlags_ProviderInclusion(t *testing.T) {
 	only, except, err := parseFlags([]string{"-only-providers=anthropic,google"})
 	if err != nil {
