@@ -27,6 +27,9 @@ func run(args []string) error {
 	provider := fs.String("provider", "", "filter by provider slug")
 	format := fs.String("format", "json", "output format: json, yaml, table")
 	dbPath := fs.String("db-path", "", "SQLite database path (default: XDG_CACHE_HOME/bestiary/models.db)")
+	// --scheme is show-only; defined here so the shared flagset parses it.
+	// Accepted values: canonical, huggingface, purl, raw. Empty means auto-detect.
+	scheme := fs.String("scheme", "", "scheme for model ID resolution: canonical, huggingface, purl, raw (default: auto-detect)")
 
 	if err := fs.Parse(args[1:]); err != nil {
 		return err
@@ -37,9 +40,9 @@ func run(args []string) error {
 		return runList(*provider, bestiary.OutputFormat(*format), *dbPath)
 	case "show":
 		if fs.NArg() < 1 {
-			return fmt.Errorf("usage: bestiary show <model-id> [flags]")
+			return fmt.Errorf("usage: bestiary show <model-id> [--scheme=<canonical|huggingface|purl|raw>] [flags]")
 		}
-		return runShow(fs.Arg(0), bestiary.OutputFormat(*format), *dbPath)
+		return runShow(fs.Arg(0), bestiary.OutputFormat(*format), *dbPath, *scheme)
 	case "sync":
 		return runSync(*provider, bestiary.OutputFormat(*format), *dbPath)
 	default:
@@ -89,53 +92,94 @@ func runList(provider string, format bestiary.OutputFormat, dbPath string) error
 	return bestiary.FormatModels(os.Stdout, merged, format)
 }
 
-// runShow looks up a model by ID in static registry and/or cache.
-// Returns the entry with the more-recent LastSynced, or ErrNotFound.
-// Gracefully falls back to static-only if the store cannot be opened.
-func runShow(id string, format bestiary.OutputFormat, dbPath string) error {
-	mid := bestiary.ModelID(id)
+// runShow resolves a model by input string using Resolve (auto-detects scheme
+// from input prefix unless --scheme is given) and prints it in the requested
+// format. Three Resolve outcomes are handled:
+//
+//   - Single canonical (cross-provider OK): print the best (most-recent) entry.
+//   - *ErrAmbiguous: print a candidate table to stderr and return non-zero.
+//   - *ErrNotFound: return the error directly.
+//
+// The static registry is authoritative for scheme-based lookups; the SQLite
+// cache is consulted for most-recent-wins selection. Falls back to static-only
+// when the store cannot be opened.
+func runShow(input string, format bestiary.OutputFormat, dbPath string, schemeFlag string) error {
+	// Build Resolve options from the --scheme flag.
+	var resolveOpts []bestiary.ResolveOption
+	if schemeFlag != "" {
+		s, err := bestiary.ParseScheme(schemeFlag)
+		if err != nil {
+			return err
+		}
+		resolveOpts = append(resolveOpts, bestiary.WithScheme(s))
+	}
 
-	staticModel, inStatic := bestiary.LookupModel(mid)
+	refs, resolveErr := bestiary.Resolve(input, resolveOpts...)
+	if resolveErr != nil {
+		var ambig *bestiary.ErrAmbiguous
+		if errors.As(resolveErr, &ambig) {
+			// Print a candidate table to stderr; do not pollute stdout.
+			bestiary.FormatAmbiguous(os.Stderr, ambig)
+			return fmt.Errorf("ambiguous input %q matched %d canonicals — use --scheme=raw or refine input", input, len(ambig.Candidates))
+		}
+		// ErrNotFound or other errors pass through directly.
+		return resolveErr
+	}
 
-	// Attempt cached lookup — graceful fallback if store unavailable.
-	var cachedModel bestiary.ModelInfo
-	var inCached bool
-
-	path, err := resolveDBPath(dbPath)
-	if err == nil {
-		store, err := bestiary.OpenStore(path)
-		if err == nil {
+	// Resolve returned one or more refs (cross-provider hosting of same canonical).
+	// Gather full ModelInfo for each ref from static registry and/or cache.
+	// Pick the best entry: prefer the one with the most-recent LastSynced.
+	//
+	// Try to open the store for cached data; fall back gracefully on error.
+	var cachedByID map[bestiary.ModelID]bestiary.ModelInfo
+	path, dbErr := resolveDBPath(dbPath)
+	if dbErr == nil {
+		store, openErr := bestiary.OpenStore(path)
+		if openErr == nil {
 			defer store.Close()
-			m, err := store.QueryModel(context.Background(), mid)
-			if err == nil {
-				cachedModel = m
-				inCached = true
-			} else {
-				var notFound *bestiary.ErrNotFound
-				if !errors.As(err, &notFound) {
-					// Real store error — surface it.
-					return fmt.Errorf("store query: %w", err)
+			// Query all cached models; build lookup map by model ID.
+			all, qErr := store.QueryModels(context.Background(), "")
+			if qErr == nil {
+				cachedByID = make(map[bestiary.ModelID]bestiary.ModelInfo, len(all))
+				for _, m := range all {
+					cachedByID[m.ID] = m
 				}
 			}
 		}
-		// Store open error → static-only.
 	}
 
-	switch {
-	case !inStatic && !inCached:
-		return &bestiary.ErrNotFound{What: "model", Key: id}
-	case inStatic && !inCached:
-		return bestiary.FormatModel(os.Stdout, staticModel, format)
-	case !inStatic && inCached:
-		return bestiary.FormatModel(os.Stdout, cachedModel, format)
-	default:
-		// Both found — pick the more-recent LastSynced.
-		pick := staticModel
-		if cachedModel.LastSynced > staticModel.LastSynced {
-			pick = cachedModel
+	var best bestiary.ModelInfo
+	found := false
+	for _, ref := range refs {
+		staticModel, inStatic := bestiary.LookupModel(ref.ID)
+		cachedModel, inCached := cachedByID[ref.ID]
+
+		var candidate bestiary.ModelInfo
+		switch {
+		case inStatic && inCached:
+			if cachedModel.LastSynced > staticModel.LastSynced {
+				candidate = cachedModel
+			} else {
+				candidate = staticModel
+			}
+		case inStatic:
+			candidate = staticModel
+		case inCached:
+			candidate = cachedModel
+		default:
+			continue
 		}
-		return bestiary.FormatModel(os.Stdout, pick, format)
+
+		if !found || candidate.LastSynced > best.LastSynced {
+			best = candidate
+			found = true
+		}
 	}
+
+	if !found {
+		return &bestiary.ErrNotFound{What: "model", Key: input}
+	}
+	return bestiary.FormatModel(os.Stdout, best, format)
 }
 
 // runSync fetches live model data from the API, persists to store, and prints results.
