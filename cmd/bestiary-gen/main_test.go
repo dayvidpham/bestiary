@@ -272,8 +272,9 @@ func minimalAPIJSON(t *testing.T) []byte {
 	return b
 }
 
-// TestCacheDirFlag verifies that --cache-dir <tmpdir> causes bestiary-gen to
-// write api_response.json to the given directory (not the default one).
+// TestCacheDirFlag verifies that bestiary-gen --cache-dir <tmpdir> writes
+// api_response.json into the given directory (not the default .bestiary-gen-cache).
+// This test exercises the full run() code path end-to-end via apiURL override.
 func TestCacheDirFlag(t *testing.T) {
 	// Serve a minimal API response over HTTP.
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -283,37 +284,51 @@ func TestCacheDirFlag(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	// Point apiURL at the test server by temporarily overriding the package-level
-	// constant via a helper that swaps it for the duration of the test.
-	// Since apiURL is a const, we test cacheAPIResponse + fetchModelsWithRaw directly.
+	// Override the package-level apiURL var so run() fetches from the test server.
+	origURL := apiURL
+	apiURL = srv.URL
+	defer func() { apiURL = origURL }()
 
+	// run() writes generated .go files to the working directory; use a temp dir
+	// as cwd so we don't pollute the repo root.
 	tmpDir := t.TempDir()
+	origDir, err := os.Getwd()
+	if err != nil {
+		t.Fatalf("getwd: %v", err)
+	}
+	if err := os.Chdir(tmpDir); err != nil {
+		t.Fatalf("chdir to tmpDir: %v", err)
+	}
+	defer func() { _ = os.Chdir(origDir) }()
 
-	// Write the response to the tmp dir, simulating what run() does after fetch.
-	raw := minimalAPIJSON(t)
-	if err := cacheAPIResponse(raw, tmpDir); err != nil {
-		t.Fatalf("cacheAPIResponse: %v", err)
+	cacheDir := filepath.Join(tmpDir, "my-custom-cache")
+
+	// Call run() with --cache-dir pointing to our custom directory.
+	if err := run([]string{"-cache-dir=" + cacheDir}); err != nil {
+		t.Fatalf("run(-cache-dir=%s): unexpected error: %v", cacheDir, err)
 	}
 
-	// Assert the file was written to tmpDir, not defaultCacheDir.
-	wantPath := filepath.Join(tmpDir, cacheFile)
-	if _, err := os.Stat(wantPath); err != nil {
-		t.Fatalf("cache file not written to --cache-dir %q: %v", tmpDir, err)
+	// Assert api_response.json was written to cacheDir (not defaultCacheDir).
+	wantPath := filepath.Join(cacheDir, cacheFile)
+	info, statErr := os.Stat(wantPath)
+	if statErr != nil {
+		t.Fatalf("cache file not written to --cache-dir %q: %v", cacheDir, statErr)
+	}
+	if info.Size() == 0 {
+		t.Fatalf("cache file at %q is empty; expected non-empty JSON", wantPath)
 	}
 
-	// Assert the default cache dir was NOT written to (no side-effects).
-	defaultPath := filepath.Join(defaultCacheDir, cacheFile)
+	// Assert the default cache dir was NOT created (no side-effects).
+	defaultPath := filepath.Join(tmpDir, defaultCacheDir)
 	if _, statErr := os.Stat(defaultPath); statErr == nil {
-		// The default path may already exist (repo has a cached file);
-		// compare mod times or just confirm tmpDir file exists — the key
-		// assertion is that cacheAPIResponse honoured the dir argument.
-		// So this branch is intentionally a no-op (not an error).
-		_ = defaultPath
+		t.Errorf("default cache dir %q was created; run() should only write to --cache-dir", defaultPath)
 	}
 }
 
 // TestNoFetch_HitsCache verifies that --no-fetch reads from a pre-populated
 // cache file without making any HTTP request.
+// The httptest.Server is wired into apiURL so that if fetchModelsWithRaw ever
+// makes an outbound request, the contacted flag trips.
 func TestNoFetch_HitsCache(t *testing.T) {
 	tmpDir := t.TempDir()
 	raw := minimalAPIJSON(t)
@@ -331,6 +346,11 @@ func TestNoFetch_HitsCache(t *testing.T) {
 		http.Error(w, "should not be called", http.StatusInternalServerError)
 	}))
 	defer srv.Close()
+
+	// Override apiURL so any accidental HTTP fetch would hit our guard server.
+	origURL := apiURL
+	apiURL = srv.URL
+	defer func() { apiURL = origURL }()
 
 	// fetchModelsWithRaw with noFetch=true must read from cache, not contact srv.
 	gotRaw, models, provMeta, err := fetchModelsWithRaw(context.Background(), tmpDir, true)
@@ -352,7 +372,8 @@ func TestNoFetch_HitsCache(t *testing.T) {
 }
 
 // TestNoFetch_MissingCache_ActionableError verifies that --no-fetch with a
-// missing cache file returns an *ErrCacheMiss with all required actionable fields.
+// missing cache file returns an *ErrCacheMiss with all 6 required actionable
+// fields: What, Why, Where, When, what-it-means, how-to-fix.
 func TestNoFetch_MissingCache_ActionableError(t *testing.T) {
 	tmpDir := t.TempDir()
 	// Deliberately do NOT create api_response.json in tmpDir.
@@ -368,19 +389,33 @@ func TestNoFetch_MissingCache_ActionableError(t *testing.T) {
 		t.Fatalf("expected *ErrCacheMiss, got %T: %v", err, err)
 	}
 
-	// Path must contain the expected cache file location.
+	// All 6 actionability fields must be present in the error message.
 	wantPath := filepath.Join(tmpDir, cacheFile)
 	absWant, _ := filepath.Abs(wantPath)
 	msg := cacheMiss.Error()
 
-	if !strings.Contains(msg, absWant) {
-		t.Errorf("error message missing expected path %q:\n%s", absWant, msg)
+	// (1) What: describes what went wrong — the missing/empty cache file.
+	if !strings.Contains(msg, "cached api_response.json missing or empty") {
+		t.Errorf("error message missing 'What' field (cached api_response.json missing or empty):\n%s", msg)
 	}
+	// (2) Why: explains the cause — --no-fetch was set.
 	if !strings.Contains(msg, "--no-fetch") {
-		t.Errorf("error message missing '--no-fetch' reason:\n%s", msg)
+		t.Errorf("error message missing 'Why' field (--no-fetch):\n%s", msg)
 	}
-	// Remediation hint: must tell the user how to fix it.
+	// (3) Where: the file path that was missing.
+	if !strings.Contains(msg, absWant) {
+		t.Errorf("error message missing 'Where' field (path %q):\n%s", absWant, msg)
+	}
+	// (4) When: the step at which it failed.
+	if !strings.Contains(msg, "fetchModelsWithRaw") {
+		t.Errorf("error message missing 'When' field (fetchModelsWithRaw):\n%s", msg)
+	}
+	// (5) What it means: consequence for the caller.
+	if !strings.Contains(msg, "cannot proceed without API data") {
+		t.Errorf("error message missing 'what-it-means' field (cannot proceed without API data):\n%s", msg)
+	}
+	// (6) How to fix: actionable remediation.
 	if !strings.Contains(msg, "re-run without --no-fetch") {
-		t.Errorf("error message missing remediation hint 're-run without --no-fetch':\n%s", msg)
+		t.Errorf("error message missing 'how-to-fix' field (re-run without --no-fetch):\n%s", msg)
 	}
 }
