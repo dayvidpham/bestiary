@@ -8,8 +8,25 @@ import (
 	"github.com/dayvidpham/bestiary"
 )
 
+// TestBestiarySchemaVersion_Exact asserts that BestiarySchemaVersion equals
+// exactly "0.0.2" — the version introduced by the normalization epoch (SLICE-7).
+// Update this test when a new schema version is released.
+func TestBestiarySchemaVersion_Exact(t *testing.T) {
+	const want = "0.0.2"
+	if bestiary.BestiarySchemaVersion != want {
+		t.Errorf(
+			"BestiarySchemaVersion = %q, want %q;\n"+
+				"  what went wrong: schema version constant does not match expected value\n"+
+				"  why: version.go was not updated for this schema epoch, or was bumped too far\n"+
+				"  where: bestiary.BestiarySchemaVersion (version.go)\n"+
+				"  how to fix: set BestiarySchemaVersion = %q in version.go",
+			bestiary.BestiarySchemaVersion, want, want,
+		)
+	}
+}
+
 // TestBestiarySchemaVersion_Semver verifies that BestiarySchemaVersion matches
-// the semver major.minor.patch format (e.g. "1.0.0").
+// the semver major.minor.patch format (e.g. "0.0.2").
 func TestBestiarySchemaVersion_Semver(t *testing.T) {
 	re := regexp.MustCompile(`^\d+\.\d+\.\d+$`)
 	if !re.MatchString(bestiary.BestiarySchemaVersion) {
@@ -18,7 +35,7 @@ func TestBestiarySchemaVersion_Semver(t *testing.T) {
 				"  what went wrong: value does not satisfy regexp %q\n"+
 				"  why: const was set to a non-semver string in version.go\n"+
 				"  where: bestiary.BestiarySchemaVersion (version.go)\n"+
-				"  how to fix: set BestiarySchemaVersion to a string like \"1.0.0\"",
+				"  how to fix: set BestiarySchemaVersion to a string like \"0.0.2\"",
 			bestiary.BestiarySchemaVersion, re.String(),
 		)
 	}
