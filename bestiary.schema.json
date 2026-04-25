@@ -22,6 +22,18 @@
       "description": "Model family or series name.",
       "type": "string"
     },
+    "NormalizedFamily": {
+      "description": "Canonical family identifier extracted from Family (or inferred from ID when Family is empty). Populated at codegen time.",
+      "type": "string"
+    },
+    "NormalizedVariant": {
+      "description": "Variant suffix extracted from Family (e.g. \"opus-4\", \"pro\", \"flash\"). Empty when the model has no variant. Populated at codegen time.",
+      "type": "string"
+    },
+    "NormalizedDate": {
+      "description": "Release date extracted from the model ID or ReleaseDate field in YYYY-MM-DD format. Empty when no date is found. Populated at codegen time.",
+      "type": "string"
+    },
     "ContextWindow": {
       "description": "Maximum number of tokens the model can process in a single request.",
       "type": "integer",
@@ -150,6 +162,9 @@
     "Provider",
     "DisplayName",
     "Family",
+    "NormalizedFamily",
+    "NormalizedVariant",
+    "NormalizedDate",
     "ContextWindow",
     "MaxOutput",
     "Reasoning",

@@ -400,6 +400,13 @@ func run(args []string) error {
 		return err
 	}
 
+	// Post-condition: verify families_gen.go contains a named Family type (not an alias).
+	// This guards against a regression where the codegen template accidentally emits
+	// "type Family = string" (alias) instead of "type Family string" (named type).
+	if err := validateGeneratedFamilyType(outputFamiliesPath); err != nil {
+		return err
+	}
+
 	fmt.Fprintf(os.Stdout,
 		"bestiary-gen: wrote %s with %d models (%d providers), %s with %d constants, %s with %d constants at %s\n",
 		outputPath, len(filtered), countUniqueProviders(filtered),
@@ -913,6 +920,54 @@ func modalityExpr(m bestiary.Modality) string {
 	default:
 		return fmt.Sprintf("Modality(%d)", int(m))
 	}
+}
+
+// validateGeneratedFamilyType reads the generated file at path and asserts that it
+// contains a named Family type declaration ("type Family string") and does NOT
+// contain a type alias declaration ("type Family = string").
+//
+// This post-condition guards against a regression where the codegen template
+// accidentally emits an alias instead of a named type, which would break the
+// Family methods defined in family.go (methods cannot be attached to aliases of
+// built-in types defined in another package).
+//
+// Returns a detailed actionable error when either assertion fails.
+func validateGeneratedFamilyType(path string) error {
+	src, err := os.ReadFile(path)
+	if err != nil {
+		return fmt.Errorf(
+			"validateGeneratedFamilyType: read %s: %w\n"+
+				"  What: could not read the generated families file\n"+
+				"  Why: the file may not have been written yet or is inaccessible\n"+
+				"  Where: %s\n"+
+				"  How to fix: ensure generateFamiliesSource wrote the file before this validation runs",
+			path, err, path,
+		)
+	}
+	namedDecl := []byte("type Family string")
+	aliasDecl := []byte("type Family = string")
+
+	if !bytes.Contains(src, namedDecl) {
+		return fmt.Errorf(
+			"validateGeneratedFamilyType: named-type declaration not found in %s\n"+
+				"  What: expected %q but did not find it\n"+
+				"  Why: the generateFamiliesSource template may have changed\n"+
+				"  Where: %s\n"+
+				"  How to fix: ensure generateFamiliesSource emits \"type Family string\" (no '=' sign)",
+			path, string(namedDecl), path,
+		)
+	}
+	if bytes.Contains(src, aliasDecl) {
+		return fmt.Errorf(
+			"validateGeneratedFamilyType: alias declaration found in %s\n"+
+				"  What: found %q — this is a type alias, not a named type\n"+
+				"  Why: the generateFamiliesSource template emitted an alias instead of a named type\n"+
+				"  Where: %s\n"+
+				"  How to fix: change the template to emit \"type Family string\" (remove the '=' sign)",
+			path, string(aliasDecl), path,
+		)
+	}
+	return nil
 }
 
 func truncate(s string, max int) string {
