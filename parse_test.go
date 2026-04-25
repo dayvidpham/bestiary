@@ -460,6 +460,48 @@ func TestExtractDate_FromID(t *testing.T) {
 	}
 }
 
+// TestExtractDate_CalendarValidation checks that structurally-matching but
+// semantically-invalid dates (e.g. month 99, day 99) are rejected.
+// bestiary-2jqs: ExtractDate must use time.Parse round-trip to validate range.
+func TestExtractDate_CalendarValidation(t *testing.T) {
+	t.Parallel()
+
+	cases := []struct {
+		name        string
+		id          bestiary.ModelID
+		releaseDate string
+		want        string
+	}{
+		// Invalid month — 99 is not a real month.
+		{"YYYY-MM-DD month 99 rejected", "model-9999-99-01", "", ""},
+		// Invalid day — 99 is not a real day.
+		{"YYYY-MM-DD day 99 rejected", "model-9999-01-99", "", ""},
+		// Both invalid.
+		{"YYYY-MM-DD month+day invalid", "model-9999-99-99", "", ""},
+		// Compact form with invalid month.
+		{"YYYYMMDD month 99 rejected", "model-99999901", "", ""},
+		// Valid edge: last day of a real month.
+		{"valid 2025-01-31", "model-2025-01-31", "", "2025-01-31"},
+		// Valid compact.
+		{"valid compact 20250101", "x-20250101", "", "2025-01-01"},
+		// February 29 on non-leap year rejected (Go's time.Parse rejects this).
+		{"Feb 29 non-leap year rejected", "model-2023-02-29", "", ""},
+		// February 29 on a leap year accepted.
+		{"Feb 29 leap year accepted", "model-2024-02-29", "", "2024-02-29"},
+	}
+
+	for _, tc := range cases {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			got := bestiary.ExtractDate(tc.id, tc.releaseDate)
+			if got != tc.want {
+				t.Errorf("ExtractDate(%q, %q) = %q, want %q", tc.id, tc.releaseDate, got, tc.want)
+			}
+		})
+	}
+}
+
 // ----------------------------------------------------------------------------
 // InferFamilyFromID tests
 // ----------------------------------------------------------------------------

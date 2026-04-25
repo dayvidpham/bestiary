@@ -8,6 +8,7 @@ import (
 	"sort"
 	"strings"
 	"sync"
+	"time"
 	"unicode"
 )
 
@@ -286,17 +287,28 @@ func ExtractDate(id ModelID, releaseDate string) string {
 // extractDateFromString scans s for a YYYY-MM-DD or YYYYMMDD date pattern.
 // Returns normalized YYYY-MM-DD on match, or "" when no date is found.
 // YYYY-MM-DD is tried first (higher precision/readability); YYYYMMDD second.
+//
+// Calendar validation: the regex narrows candidates to structurally valid
+// digit sequences, but time.Parse("2006-01-02", ...) is used as the final
+// gate. Inputs like "9999-99-99" (invalid month/day) are rejected and ""
+// is returned. Only dates parseable by the standard library are accepted.
 func extractDateFromString(s string) string {
 	if s == "" {
 		return ""
 	}
 	// Try YYYY-MM-DD first (it's unambiguous and common in model IDs).
 	if m := reYYYYDashMMDashDD.FindStringSubmatch(s); m != nil {
-		return m[1] + "-" + m[2] + "-" + m[3]
+		candidate := m[1] + "-" + m[2] + "-" + m[3]
+		if _, err := time.Parse("2006-01-02", candidate); err == nil {
+			return candidate
+		}
 	}
 	// Try compact YYYYMMDD (e.g. "claude-opus-4-20250514").
 	if m := reYYYYMMDD.FindStringSubmatch(s); m != nil {
-		return m[1] + "-" + m[2] + "-" + m[3]
+		candidate := m[1] + "-" + m[2] + "-" + m[3]
+		if _, err := time.Parse("2006-01-02", candidate); err == nil {
+			return candidate
+		}
 	}
 	return ""
 }
