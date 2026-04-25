@@ -1,0 +1,30 @@
+{
+  "_comment": "Ordered list of versioned-variant regex patterns. Each pattern is tried in order; the first match wins. Patterns extract a (base_family, variant) tuple from a raw family string that contains a version component. All patterns are anchored (full-string match). Named capture groups: 'base' = normalized family, 'variant' = version/variant suffix.",
+  "patterns": [
+    {
+      "name": "v-prefix",
+      "description": "Matches <base>-v<MAJOR>.<MINOR>(optional suffix): e.g. 'mimo-v2.5', 'mimo-v2.5-pro'",
+      "regex": "^(?P<base>.+)-(?P<variant>v\\d+\\.\\d+(?:-.+)?)$"
+    },
+    {
+      "name": "k-prefix",
+      "description": "Matches <base>-k<MAJOR>.<MINOR>: e.g. 'kimi-k2.5', 'kimi-k2.6'",
+      "regex": "^(?P<base>.+)-(?P<variant>k\\d+\\.\\d+)$"
+    },
+    {
+      "name": "m-prefix",
+      "description": "Matches <base>-m<MAJOR>.<MINOR>: e.g. 'minimax-m2.5', 'minimax-m2.7'",
+      "regex": "^(?P<base>.+)-(?P<variant>m\\d+\\.\\d+)$"
+    },
+    {
+      "name": "no-prefix",
+      "description": "Matches <base><MAJOR>.<MINOR> with no separator: e.g. 'qwen3.5', 'qwen3.6'",
+      "regex": "^(?P<base>[a-zA-Z][a-zA-Z0-9]*)(?P<variant>\\d+\\.\\d+)$"
+    },
+    {
+      "name": "hyphen-version",
+      "description": "Matches <base>-<N>(-<N>)* trailing numeric version with hyphens: e.g. 'claude-opus-4-5' where trailing -4-5 is the version. Greedily extracts non-numeric prefix as base.",
+      "regex": "^(?P<base>[a-zA-Z][a-zA-Z0-9]*(?:-[a-zA-Z][a-zA-Z0-9]*)*)-(?P<variant>\\d+(?:-\\d+)*)$"
+    }
+  ]
+}
