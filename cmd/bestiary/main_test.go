@@ -89,3 +89,174 @@ func TestRun_ShowNoID(t *testing.T) {
 		t.Errorf("run([]string{\"show\"}) error = %q; expected message to contain \"usage\" or \"model\"", msg)
 	}
 }
+
+// captureStdout redirects os.Stdout to a pipe, calls fn, then restores
+// os.Stdout and returns the accumulated output. Safe for concurrent use
+// within a single test.
+func captureStdout(t *testing.T, fn func()) string {
+	t.Helper()
+	old := os.Stdout
+	r, w, err := os.Pipe()
+	if err != nil {
+		t.Fatalf("captureStdout: os.Pipe(): %v", err)
+	}
+	os.Stdout = w
+
+	var buf bytes.Buffer
+	done := make(chan struct{})
+	go func() {
+		io.Copy(&buf, r)
+		close(done)
+	}()
+
+	fn()
+
+	w.Close()
+	os.Stdout = old
+	<-done
+	return buf.String()
+}
+
+// captureStderr redirects os.Stderr to a pipe, calls fn, then restores
+// os.Stderr and returns the accumulated output.
+func captureStderr(t *testing.T, fn func()) string {
+	t.Helper()
+	old := os.Stderr
+	r, w, err := os.Pipe()
+	if err != nil {
+		t.Fatalf("captureStderr: os.Pipe(): %v", err)
+	}
+	os.Stderr = w
+
+	var buf bytes.Buffer
+	done := make(chan struct{})
+	go func() {
+		io.Copy(&buf, r)
+		close(done)
+	}()
+
+	fn()
+
+	w.Close()
+	os.Stderr = old
+	<-done
+	return buf.String()
+}
+
+// TestShow_SchemeRaw verifies that bestiary show <raw-id> (no scheme flag,
+// auto-detect falls through to SchemeRaw exact match) resolves a model and
+// prints its JSON to stdout.
+//
+// "claude-opus-4-1" is a known model ID in the static registry.
+func TestShow_SchemeRaw(t *testing.T) {
+	tmpDB := t.TempDir() + "/test.db"
+
+	var runErr error
+	out := captureStdout(t, func() {
+		runErr = run([]string{"show", "--db-path", tmpDB, "claude-opus-4-1"})
+	})
+
+	if runErr != nil {
+		t.Fatalf("run show claude-opus-4-1 returned error: %v", runErr)
+	}
+	if !strings.Contains(out, "claude-opus-4-1") {
+		t.Errorf("show output does not contain model ID %q; got %q", "claude-opus-4-1", out)
+	}
+}
+
+// TestShow_SchemeHuggingFace verifies that bestiary show <provider>/<raw-id>
+// auto-detects SchemeHuggingFace (two slash-separated segments, no "pkg:" prefix)
+// and resolves the model by stripping the provider prefix.
+//
+// "anthropic/claude-opus-4-1" should resolve to "claude-opus-4-1".
+func TestShow_SchemeHuggingFace(t *testing.T) {
+	tmpDB := t.TempDir() + "/test.db"
+
+	var runErr error
+	out := captureStdout(t, func() {
+		runErr = run([]string{"show", "--db-path", tmpDB, "anthropic/claude-opus-4-1"})
+	})
+
+	if runErr != nil {
+		t.Fatalf("run show anthropic/claude-opus-4-1 returned error: %v", runErr)
+	}
+	if !strings.Contains(out, "claude-opus-4-1") {
+		t.Errorf("show output does not contain model ID %q; got %q", "claude-opus-4-1", out)
+	}
+}
+
+// TestShow_SchemePURL verifies that bestiary show pkg:huggingface/<provider>/<raw-id>
+// auto-detects SchemePURL and resolves the model by stripping both the
+// "pkg:huggingface/" prefix and the provider segment.
+//
+// "pkg:huggingface/anthropic/claude-opus-4-1" should resolve to "claude-opus-4-1".
+func TestShow_SchemePURL(t *testing.T) {
+	tmpDB := t.TempDir() + "/test.db"
+
+	var runErr error
+	out := captureStdout(t, func() {
+		runErr = run([]string{"show", "--db-path", tmpDB, "pkg:huggingface/anthropic/claude-opus-4-1"})
+	})
+
+	if runErr != nil {
+		t.Fatalf("run show pkg:huggingface/anthropic/claude-opus-4-1 returned error: %v", runErr)
+	}
+	if !strings.Contains(out, "claude-opus-4-1") {
+		t.Errorf("show output does not contain model ID %q; got %q", "claude-opus-4-1", out)
+	}
+}
+
+// TestShow_Ambiguous verifies that an under-specified input that matches multiple
+// distinct canonical triples produces:
+//  1. A candidate table on stderr (header, rows, footer).
+//  2. A non-zero exit (non-nil error returned by run).
+//  3. Nothing on stdout (table goes to stderr only).
+//
+// "claude" with --scheme=canonical matches claude/opus, claude/sonnet, claude/haiku, etc.
+func TestShow_Ambiguous(t *testing.T) {
+	tmpDB := t.TempDir() + "/test.db"
+
+	var runErr error
+	var errOut string
+	out := captureStdout(t, func() {
+		errOut = captureStderr(t, func() {
+			runErr = run([]string{"show", "--scheme", "canonical", "--db-path", tmpDB, "claude"})
+		})
+	})
+
+	// run must return a non-nil error (non-zero exit in main).
+	if runErr == nil {
+		t.Fatal("run show --scheme canonical claude returned nil error; expected non-zero exit for ambiguous input")
+	}
+
+	// stderr must contain the header with the input name.
+	if !strings.Contains(errOut, "claude") {
+		t.Errorf("stderr does not contain input %q; got %q", "claude", errOut)
+	}
+	// stderr must contain the column headers.
+	if !strings.Contains(errOut, "Canonical") || !strings.Contains(errOut, "Provider") || !strings.Contains(errOut, "Raw ID") {
+		t.Errorf("stderr does not contain expected column headers; got %q", errOut)
+	}
+	// stderr must contain the remediation footer.
+	if !strings.Contains(errOut, "--scheme=raw") {
+		t.Errorf("stderr does not contain remediation hint %q; got %q", "--scheme=raw", errOut)
+	}
+	// stdout must be empty — the candidate table goes to stderr only.
+	if out != "" {
+		t.Errorf("stdout should be empty for ambiguous input; got %q", out)
+	}
+}
+
+// TestShow_NotFound verifies that bestiary show with a model ID that does not
+// exist in the static registry returns a non-nil error containing "not found".
+func TestShow_NotFound(t *testing.T) {
+	tmpDB := t.TempDir() + "/test.db"
+
+	err := run([]string{"show", "--db-path", tmpDB, "definitely-not-a-real-model-id-xyz"})
+	if err == nil {
+		t.Fatal("run show nonexistent-model returned nil; expected ErrNotFound")
+	}
+	if !strings.Contains(err.Error(), "not found") {
+		t.Errorf("error = %q; expected to contain %q", err.Error(), "not found")
+	}
+}
