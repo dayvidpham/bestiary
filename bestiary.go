@@ -20,19 +20,22 @@ type Capability struct {
 // parse.ExtractDate, and parse.InferFamilyFromID. They are zero-value for models
 // loaded from the SQLite cache (pre-normalization epoch) until a sync is performed.
 type ModelInfo struct {
-	ID                    ModelID
-	Provider              Provider
-	DisplayName           string
-	Family                Family
+	ID          ModelID
+	Provider    Provider
+	DisplayName string
+	Family      Family
+
+	// Codegen-baked normalization (Slice 2b — IP-2 contract for Slices 3, 5, 7)
+
 	// NormalizedFamily is the canonical family identifier extracted from Family
 	// (or inferred from ID when Family is empty). Populated at codegen time.
-	NormalizedFamily  Family
+	NormalizedFamily Family
 	// NormalizedVariant is the variant suffix extracted from Family (e.g. "opus-4",
 	// "pro", "flash"). Empty when the model has no variant. Populated at codegen time.
 	NormalizedVariant string
 	// NormalizedDate is the release date extracted from the model ID or ReleaseDate
 	// field, in YYYY-MM-DD format. Empty when no date is found. Populated at codegen time.
-	NormalizedDate    string
+	NormalizedDate        string
 	ContextWindow         int
 	MaxOutput             int
 	Reasoning             bool

@@ -1,6 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://github.com/dayvidpham/bestiary/bestiary.schema.json",
+  "$comment": "Schema additions made by SLICE-2b (forward-looking) to keep TestJSONOutput_ConformsToSchema green on HEAD. SLICE-7 (bestiary-0ug0) is the canonical owner of this file and will (a) bump $id/version to 0.0.2, (b) verify these property additions are sufficient, (c) finalize MIGRATION_v0.0.1_to_v0.0.2.md.",
   "title": "ModelInfo",
   "description": "Metadata for a single AI model as produced by the bestiary CLI JSON formatter.",
   "version": "1.0.0",
