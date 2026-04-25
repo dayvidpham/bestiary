@@ -69,32 +69,21 @@ func TestModelConstants_RoundTrip(t *testing.T) {
 	}
 }
 
-// TestModelConstants_ValuesAreRawIDs verifies two properties of ModelIDs() output:
-//  1. Defensive copy: mutating the returned slice does not affect subsequent calls.
-//  2. Values are raw API model IDs (e.g. "claude-opus-4-20250514"), not Go
-//     identifier strings — values must never start with "Model_".
+// TestModelConstants_ValuesAreRawIDs verifies that values are raw API model IDs
+// (e.g. "claude-opus-4-20250514"), not Go identifier strings — values must never
+// start with "Model_".
 //
-// Note: codegen idempotency (re-running `go generate` produces the same output)
+// Note: Defensive copy is verified separately by TestModelIDs_DefensiveCopy.
+// Codegen idempotency (re-running `go generate` produces the same output)
 // is verified by the golden-file tests in cmd/bestiary-gen, which capture the
-// full generated source. This test only checks runtime properties of ModelIDs().
+// full generated source. This test only checks runtime value format of ModelIDs().
 func TestModelConstants_ValuesAreRawIDs(t *testing.T) {
-	ids1 := bestiary.ModelIDs()
-	ids2 := bestiary.ModelIDs()
+	ids := bestiary.ModelIDs()
 
-	if len(ids1) == 0 {
+	if len(ids) == 0 {
 		t.Skip("ModelIDs() returned empty; skipping — run go generate ./... first")
 	}
 
-	// Verify defensive copy: mutating ids1 does not affect ids2.
-	if len(ids1) > 0 {
-		ids1[0] = "mutated"
-		if len(ids2) > 0 && ids2[0] == "mutated" {
-			t.Error("ModelIDs(): not a defensive copy — mutating slice[0] affected the next call")
-		}
-	}
-
-	// Re-fetch for the value format check.
-	ids := bestiary.ModelIDs()
 	for _, id := range ids {
 		if id == "" {
 			t.Errorf("ModelIDs() contains empty ModelID value")
