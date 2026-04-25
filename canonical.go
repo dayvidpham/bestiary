@@ -102,10 +102,10 @@ func ParseScheme(s string) (CanonicalScheme, error) {
 	default:
 		return SchemeCanonical, fmt.Errorf(
 			"bestiary: unrecognized scheme %q\n"+
-				"  What: %q is not a valid CanonicalScheme\n"+
-				"  Why: only %q, %q, %q, and %q are accepted\n"+
-				"  Where: ParseScheme\n"+
-				"  How to fix: pass one of the accepted scheme strings",
+				"  what: %q is not a valid CanonicalScheme\n"+
+				"  why: only %q, %q, %q, and %q are accepted\n"+
+				"  where: ParseScheme\n"+
+				"  how to fix: pass one of the accepted scheme strings",
 			s, s, "canonical", "huggingface", "purl", "raw",
 		)
 	}

@@ -18,6 +18,9 @@ type resolveConfig struct {
 //   - "pkg:huggingface/" prefix → SchemePURL
 //   - "<word>/<word>" two-segment form (no "pkg:" prefix) → SchemeHuggingFace
 //   - Otherwise → SchemeRaw (exact model ID lookup)
+//
+// SchemeCanonical is never auto-detected. Callers must pass
+// WithScheme(SchemeCanonical) explicitly to use canonical-family matching.
 func WithScheme(s CanonicalScheme) ResolveOption {
 	return func(c *resolveConfig) {
 		c.scheme = &s
@@ -47,6 +50,10 @@ func WithScheme(s CanonicalScheme) ResolveOption {
 //   - "<provider>/<id>" (two slash segments, no "pkg:" prefix) → SchemeHuggingFace:
 //     strip provider prefix, match raw ID
 //   - Otherwise → SchemeRaw: exact model ID match
+//
+// SchemeCanonical is never auto-detected. To use canonical-family matching
+// (e.g. resolving "claude" to all claude-family models), callers must
+// explicitly pass WithScheme(SchemeCanonical).
 //
 // Use WithScheme to override auto-detection.
 func Resolve(input string, opts ...ResolveOption) ([]ModelRef, error) {
@@ -90,9 +97,9 @@ func Resolve(input string, opts ...ResolveOption) ([]ModelRef, error) {
 	// distinct models (claude/opus, claude/sonnet) remain distinct and trigger
 	// ErrAmbiguous as intended.
 	//
-	// isExactIDMatch is true when every match returned by matchModels has the same
+	// exactIDInput is true when every match returned by matchModels has the same
 	// model ID as the matchInput — which is the case for an exact static ID lookup.
-	isExactIDMatch := scheme == SchemeCanonical && isExactIDInput(matchInput, matches)
+	exactIDInput := scheme == SchemeCanonical && isExactIDInput(matchInput, matches)
 
 	type groupKey struct {
 		id      ModelID // non-empty for ID-based grouping
@@ -105,7 +112,7 @@ func Resolve(input string, opts ...ResolveOption) ([]ModelRef, error) {
 
 	for _, ref := range matches {
 		var key groupKey
-		if scheme == SchemeRaw || scheme == SchemeHuggingFace || scheme == SchemePURL || isExactIDMatch {
+		if scheme == SchemeRaw || scheme == SchemeHuggingFace || scheme == SchemePURL || exactIDInput {
 			// Group by model ID: cross-provider hosting of the same raw ID.
 			key = groupKey{id: ref.ID}
 		} else {

@@ -67,7 +67,7 @@ func (r ModelRef) Format(s CanonicalScheme) string {
 //
 //	<provider>/<raw-id>
 func (r ModelRef) formatCanonical() string {
-	if string(r.Family) == "" {
+	if r.Family == "" {
 		// Fall back to provider-specific representation.
 		return fmt.Sprintf("%s/%s", r.Provider, r.ID)
 	}
