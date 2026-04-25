@@ -2,6 +2,7 @@ package bestiary_test
 
 import (
 	"encoding/json"
+	"strings"
 	"testing"
 
 	"github.com/dayvidpham/bestiary"
@@ -45,24 +46,48 @@ func TestDesignation_ZeroValue(t *testing.T) {
 	}
 }
 
-func TestDesignation_Fields(t *testing.T) {
-	d := bestiary.Designation{
+// TestDesignation_JSONRoundTrip verifies that a Designation survives JSON
+// marshal → unmarshal with all fields intact. This exercises the observable
+// serialization behavior (MarshalJSON on Scheme and Rating) rather than just
+// struct field wiring.
+func TestDesignation_JSONRoundTrip(t *testing.T) {
+	original := bestiary.Designation{
 		Value:    "anthropic/claude/opus@2025-05-14",
 		Scheme:   bestiary.SchemeCanonical,
 		Provider: bestiary.ProviderAnthropic,
 		Rating:   bestiary.AcceptabilityAdmitted,
 	}
-	if d.Value != "anthropic/claude/opus@2025-05-14" {
-		t.Errorf("Designation.Value = %q, want %q", d.Value, "anthropic/claude/opus@2025-05-14")
+
+	b, err := json.Marshal(original)
+	if err != nil {
+		t.Fatalf("json.Marshal(Designation) error: %v", err)
 	}
-	if d.Scheme != bestiary.SchemeCanonical {
-		t.Errorf("Designation.Scheme = %v, want SchemeCanonical", d.Scheme)
+
+	var got bestiary.Designation
+	if err := json.Unmarshal(b, &got); err != nil {
+		t.Fatalf("json.Unmarshal(Designation) error: %v", err)
 	}
-	if d.Provider != bestiary.ProviderAnthropic {
-		t.Errorf("Designation.Provider = %q, want ProviderAnthropic", d.Provider)
+
+	if got.Value != original.Value {
+		t.Errorf("Value: got %q, want %q", got.Value, original.Value)
 	}
-	if d.Rating != bestiary.AcceptabilityAdmitted {
-		t.Errorf("Designation.Rating = %v, want AcceptabilityAdmitted", d.Rating)
+	if got.Scheme != original.Scheme {
+		t.Errorf("Scheme: got %v, want %v", got.Scheme, original.Scheme)
+	}
+	if got.Provider != original.Provider {
+		t.Errorf("Provider: got %q, want %q", got.Provider, original.Provider)
+	}
+	if got.Rating != original.Rating {
+		t.Errorf("Rating: got %v, want %v", got.Rating, original.Rating)
+	}
+
+	// Verify that Scheme and Rating are serialized as strings (not numbers).
+	s := string(b)
+	if !strings.Contains(s, `"canonical"`) {
+		t.Errorf("expected Scheme to serialize as %q in JSON; got: %s", "canonical", s)
+	}
+	if !strings.Contains(s, `"admitted"`) {
+		t.Errorf("expected Rating to serialize as %q in JSON; got: %s", "admitted", s)
 	}
 }
 
