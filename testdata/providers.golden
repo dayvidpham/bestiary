@@ -22,6 +22,7 @@ cohere
 cortecs
 deepinfra
 deepseek
+digitalocean
 dinference
 drun
 evroc
@@ -37,6 +38,7 @@ google-vertex
 google-vertex-anthropic
 groq
 helicone
+hpc-ai
 huggingface
 iflowcn
 inception
@@ -80,6 +82,7 @@ poe
 privatemode-ai
 qihang-ai
 qiniu-ai
+regolo-ai
 requesty
 sap-ai-core
 scaleway
@@ -90,6 +93,7 @@ stepfun
 submodel
 synthetic
 tencent-coding-plan
+tencent-tokenhub
 the-grid-ai
 togetherai
 upstage
@@ -98,6 +102,7 @@ venice
 vercel
 vivgrid
 vultr
+wafer.ai
 wandb
 xai
 xiaomi

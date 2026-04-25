@@ -27,6 +27,7 @@ const (
 	ProviderCortecs                Provider = "cortecs"
 	ProviderDeepinfra              Provider = "deepinfra"
 	ProviderDeepSeek               Provider = "deepseek"
+	ProviderDigitalOcean           Provider = "digitalocean"
 	ProviderDInference             Provider = "dinference"
 	ProviderDrun                   Provider = "drun"
 	ProviderEvroc                  Provider = "evroc"
@@ -42,6 +43,7 @@ const (
 	ProviderGoogleVertexAnthropic  Provider = "google-vertex-anthropic"
 	ProviderGroq                   Provider = "groq"
 	ProviderHelicone               Provider = "helicone"
+	ProviderHpcAI                  Provider = "hpc-ai"
 	ProviderHuggingface            Provider = "huggingface"
 	ProviderIflowcn                Provider = "iflowcn"
 	ProviderInception              Provider = "inception"
@@ -84,6 +86,7 @@ const (
 	ProviderPrivatemodeAI          Provider = "privatemode-ai"
 	ProviderQiHangAI               Provider = "qihang-ai"
 	ProviderQiniuAI                Provider = "qiniu-ai"
+	ProviderRegoloAI               Provider = "regolo-ai"
 	ProviderRequesty               Provider = "requesty"
 	ProviderSAPAICore              Provider = "sap-ai-core"
 	ProviderScaleway               Provider = "scaleway"
@@ -94,6 +97,7 @@ const (
 	ProviderSubmodel               Provider = "submodel"
 	ProviderSynthetic              Provider = "synthetic"
 	ProviderTencentCodingPlan      Provider = "tencent-coding-plan"
+	ProviderTencentTokenHub        Provider = "tencent-tokenhub"
 	ProviderTheGridAI              Provider = "the-grid-ai"
 	ProviderTogetherai             Provider = "togetherai"
 	ProviderUpstage                Provider = "upstage"
@@ -102,6 +106,7 @@ const (
 	ProviderVercel                 Provider = "vercel"
 	ProviderVivgrid                Provider = "vivgrid"
 	ProviderVultr                  Provider = "vultr"
+	ProviderWaferAI                Provider = "wafer.ai"
 	ProviderWandb                  Provider = "wandb"
 	ProviderXAI                    Provider = "xai"
 	ProviderXiaomi                 Provider = "xiaomi"
@@ -142,6 +147,7 @@ var knownProviders = [...]Provider{
 	ProviderCortecs,
 	ProviderDeepinfra,
 	ProviderDeepSeek,
+	ProviderDigitalOcean,
 	ProviderDInference,
 	ProviderDrun,
 	ProviderEvroc,
@@ -157,6 +163,7 @@ var knownProviders = [...]Provider{
 	ProviderGoogleVertexAnthropic,
 	ProviderGroq,
 	ProviderHelicone,
+	ProviderHpcAI,
 	ProviderHuggingface,
 	ProviderIflowcn,
 	ProviderInception,
@@ -199,6 +206,7 @@ var knownProviders = [...]Provider{
 	ProviderPrivatemodeAI,
 	ProviderQiHangAI,
 	ProviderQiniuAI,
+	ProviderRegoloAI,
 	ProviderRequesty,
 	ProviderSAPAICore,
 	ProviderScaleway,
@@ -209,6 +217,7 @@ var knownProviders = [...]Provider{
 	ProviderSubmodel,
 	ProviderSynthetic,
 	ProviderTencentCodingPlan,
+	ProviderTencentTokenHub,
 	ProviderTheGridAI,
 	ProviderTogetherai,
 	ProviderUpstage,
@@ -217,6 +226,7 @@ var knownProviders = [...]Provider{
 	ProviderVercel,
 	ProviderVivgrid,
 	ProviderVultr,
+	ProviderWaferAI,
 	ProviderWandb,
 	ProviderXAI,
 	ProviderXiaomi,

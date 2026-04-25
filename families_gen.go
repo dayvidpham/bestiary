@@ -7,6 +7,7 @@ package bestiary
 type Family string
 
 const (
+	FamilyHy                Family = "Hy"
 	FamilyAllam             Family = "allam"
 	FamilyAllenai           Family = "allenai"
 	FamilyAura              Family = "aura"
@@ -30,9 +31,11 @@ const (
 	FamilyCommandR          Family = "command-r"
 	FamilyDallE             Family = "dall-e"
 	FamilyDeepseek          Family = "deepseek"
+	FamilyDeepseekFlash     Family = "deepseek-flash"
 	FamilyDeepseekThinking  Family = "deepseek-thinking"
 	FamilyDevstral          Family = "devstral"
 	FamilyDistilbert        Family = "distilbert"
+	FamilyElephant          Family = "elephant"
 	FamilyElevenlabs        Family = "elevenlabs"
 	FamilyErnie             Family = "ernie"
 	FamilyFlux              Family = "flux"
@@ -64,6 +67,7 @@ const (
 	FamilyGroq              Family = "groq"
 	FamilyHermes            Family = "hermes"
 	FamilyHunyuan           Family = "hunyuan"
+	FamilyHy3Free           Family = "hy3-free"
 	FamilyIdeogram          Family = "ideogram"
 	FamilyImagen            Family = "imagen"
 	FamilyIndictrans        Family = "indictrans"
@@ -73,8 +77,11 @@ const (
 	FamilyKatCoder          Family = "kat-coder"
 	FamilyKimi              Family = "kimi"
 	FamilyKimiFree          Family = "kimi-free"
+	FamilyKimiK25           Family = "kimi-k2.5"
+	FamilyKimiK26           Family = "kimi-k2.6"
 	FamilyKimiThinking      Family = "kimi-thinking"
 	FamilyLing              Family = "ling"
+	FamilyLingFlashFree     Family = "ling-flash-free"
 	FamilyLiquid            Family = "liquid"
 	FamilyLlama             Family = "llama"
 	FamilyLongcat           Family = "longcat"
@@ -89,10 +96,12 @@ const (
 	FamilyMercury           Family = "mercury"
 	FamilyMimo              Family = "mimo"
 	FamilyMimoFlashFree     Family = "mimo-flash-free"
-	FamilyMimoOmni          Family = "mimo-omni"
 	FamilyMimoOmniFree      Family = "mimo-omni-free"
-	FamilyMimoPro           Family = "mimo-pro"
 	FamilyMimoProFree       Family = "mimo-pro-free"
+	FamilyMimoV2Omni        Family = "mimo-v2-omni"
+	FamilyMimoV2Pro         Family = "mimo-v2-pro"
+	FamilyMimoV25           Family = "mimo-v2.5"
+	FamilyMimoV25Pro        Family = "mimo-v2.5-pro"
 	FamilyMinimax           Family = "minimax"
 	FamilyMinimaxFree       Family = "minimax-free"
 	FamilyMinimaxM25        Family = "minimax-m2.5"
@@ -131,6 +140,8 @@ const (
 	FamilyQvq               Family = "qvq"
 	FamilyQwen              Family = "qwen"
 	FamilyQwenFree          Family = "qwen-free"
+	FamilyQwen35            Family = "qwen3.5"
+	FamilyQwen36            Family = "qwen3.6"
 	FamilyQwerky            Family = "qwerky"
 	FamilyRay               Family = "ray"
 	FamilyRecraft           Family = "recraft"
@@ -139,7 +150,6 @@ const (
 	FamilyRnj               Family = "rnj"
 	FamilyRunway            Family = "runway"
 	FamilySeed              Family = "seed"
-	FamilySkywork           Family = "skywork"
 	FamilySmartTurn         Family = "smart-turn"
 	FamilySolarMini         Family = "solar-mini"
 	FamilySolarPro          Family = "solar-pro"
@@ -170,6 +180,7 @@ const (
 
 // allFamilies is the complete list of family values from the models.dev API.
 var allFamilies = [...]Family{
+	"Hy",
 	"allam",
 	"allenai",
 	"aura",
@@ -193,9 +204,11 @@ var allFamilies = [...]Family{
 	"command-r",
 	"dall-e",
 	"deepseek",
+	"deepseek-flash",
 	"deepseek-thinking",
 	"devstral",
 	"distilbert",
+	"elephant",
 	"elevenlabs",
 	"ernie",
 	"flux",
@@ -227,6 +240,7 @@ var allFamilies = [...]Family{
 	"groq",
 	"hermes",
 	"hunyuan",
+	"hy3-free",
 	"ideogram",
 	"imagen",
 	"indictrans",
@@ -236,8 +250,11 @@ var allFamilies = [...]Family{
 	"kat-coder",
 	"kimi",
 	"kimi-free",
+	"kimi-k2.5",
+	"kimi-k2.6",
 	"kimi-thinking",
 	"ling",
+	"ling-flash-free",
 	"liquid",
 	"llama",
 	"longcat",
@@ -252,10 +269,12 @@ var allFamilies = [...]Family{
 	"mercury",
 	"mimo",
 	"mimo-flash-free",
-	"mimo-omni",
 	"mimo-omni-free",
-	"mimo-pro",
 	"mimo-pro-free",
+	"mimo-v2-omni",
+	"mimo-v2-pro",
+	"mimo-v2.5",
+	"mimo-v2.5-pro",
 	"minimax",
 	"minimax-free",
 	"minimax-m2.5",
@@ -294,6 +313,8 @@ var allFamilies = [...]Family{
 	"qvq",
 	"qwen",
 	"qwen-free",
+	"qwen3.5",
+	"qwen3.6",
 	"qwerky",
 	"ray",
 	"recraft",
@@ -302,7 +323,6 @@ var allFamilies = [...]Family{
 	"rnj",
 	"runway",
 	"seed",
-	"skywork",
 	"smart-turn",
 	"solar-mini",
 	"solar-pro",
