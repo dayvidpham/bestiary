@@ -29,18 +29,19 @@ import (
 // casingOverrides maps lowercase token → preferred uppercase form.
 // Applied when blending the API name field does not yield a recognisable token.
 var casingOverrides = map[string]string{
-	"ai":  "AI",
-	"api": "API",
-	"gpt": "GPT",
-	"llm": "LLM",
-	"io":  "IO",
-	"sap": "SAP",
-	"ovh": "OVH",
-	"cn":  "CN",
-	"ams": "AMS",
-	"sgp": "SGP",
-	"xai": "XAI",
-	"aws": "AWS",
+	"ai":      "AI",
+	"api":     "API",
+	"chatgpt": "ChatGPT",
+	"gpt":     "GPT",
+	"llm":     "LLM",
+	"io":      "IO",
+	"sap":     "SAP",
+	"ovh":     "OVH",
+	"cn":      "CN",
+	"ams":     "AMS",
+	"sgp":     "SGP",
+	"xai":     "XAI",
+	"aws":     "AWS",
 }
 
 // slugToIdentifier converts a provider/family slug (e.g. "amazon-bedrock", "xai",
@@ -225,14 +226,24 @@ type flagResult struct {
 }
 
 // parseFlags parses os.Args[1:] (or a provided slice) for all supported flags.
-// Returns an error if both -only-providers and -all-providers-except are specified
-// simultaneously (mutually exclusive).
+// Both single-hyphen (-flag) and double-hyphen (--flag) forms are accepted for
+// all flags. Returns an error if both -only-providers and -all-providers-except
+// are specified simultaneously (mutually exclusive).
 func parseFlags(args []string) (flagResult, error) {
 	var res flagResult
 	res.cacheDir = defaultCacheDir // default: backward-compatible
 
+	// normalizeFlag strips a leading double-hyphen to a single hyphen so that
+	// "--flag" is treated identically to "-flag" throughout the switch below.
+	normalizeFlag := func(s string) string {
+		if strings.HasPrefix(s, "--") {
+			return s[1:] // "--foo" → "-foo"
+		}
+		return s
+	}
+
 	for i := 0; i < len(args); i++ {
-		arg := args[i]
+		arg := normalizeFlag(args[i])
 		var val string
 		switch {
 		case strings.HasPrefix(arg, "-only-providers="):
@@ -613,8 +624,11 @@ func parseCapabilityRaw(raw json.RawMessage) bestiary.Capability {
 // Normalized fields are populated at this stage by invoking
 // bestiary.ParseFamilyWithVersion, bestiary.ExtractVersionFromID (primary
 // source for NormalizedVersion when the family field does not embed a
-// version), bestiary.ExtractDate, and bestiary.InferFamilyFromID so that
-// models_static_gen.go carries baked normalization data at compile time.
+// version), bestiary.ExtractDate, and bestiary.InferFamilyFromIDWithVariant
+// (for models with an empty family field) so that models_static_gen.go
+// carries baked normalization data at compile time with consistent
+// (NormalizedFamily, NormalizedVariant, NormalizedVersion) across providers
+// regardless of whether raw_family is empty or populated (SLICE-FIX-2, B5/B6).
 func genToModelInfo(providerSlug string, wm genWireModel) bestiary.ModelInfo {
 	// Derive normalized family, variant, and version.
 	rawFamily := bestiary.Family(wm.Family)
@@ -633,13 +647,14 @@ func genToModelInfo(providerSlug string, wm genWireModel) bestiary.ModelInfo {
 		}
 	} else {
 		// ~25% of models have an empty Family field — infer from the model ID.
-		// InferFamilyFromID returns the first token; no version extraction here.
-		normFamily = bestiary.InferFamilyFromID(bestiary.ModelID(wm.ID), bestiary.Provider(providerSlug))
-		// Also attempt version extraction from the model ID for the empty-family
-		// case. We pass the inferred family as the prefix to strip.
-		if normFamily != "" {
-			normVersion = bestiary.ExtractVersionFromID(bestiary.ModelID(wm.ID), normFamily)
-		}
+		// InferFamilyFromIDWithVariant applies the same suffix/pattern logic as
+		// ParseFamilyWithVersion, ensuring consistent (NormalizedFamily,
+		// NormalizedVariant, NormalizedVersion) across providers that have
+		// empty vs. populated raw_family for the same model ID (SLICE-FIX-2, B5/B6).
+		normFamily, normVariant, normVersion = bestiary.InferFamilyFromIDWithVariant(
+			bestiary.ModelID(wm.ID),
+			bestiary.Provider(providerSlug),
+		)
 	}
 
 	// Derive normalized date from model ID (primary) or release date (fallback).
@@ -1072,7 +1087,7 @@ func tokenToConstPart(tok string) string {
 	return strings.ToUpper(lower[:1]) + lower[1:]
 }
 
-// nameForCanonical derives the Model_* constant name for a single ModelInfo.
+// nameForCanonical derives the Model__* constant name for a single ModelInfo.
 //
 // The slugToConst map (slug → Go constant name, e.g. "openai" → "ProviderOpenAI")
 // is used to resolve the provider suffix with the correct display casing.
@@ -1083,11 +1098,17 @@ func tokenToConstPart(tok string) string {
 //  2. Strip any provider prefix from the raw ID (anything up to and including "/").
 //  3. Determine if the NormalizedDate is embedded in the raw ID (all forms:
 //     YYYYMMDD, YYYY-MM-DD, MM-YYYY, MM-DD). Strip that form from the end of the ID.
-//  4. Split remaining raw ID on "-" and ".".
-//  5. Map each token through tokenToConstPart.
-//  6. Join with "_", prefix "Model_<ProviderSuffix>_".
-//  7. Append YYYYMMDD date (hyphens removed from NormalizedDate) when non-empty
-//     AND the date was found in the raw ID.
+//  4. If NormalizedVersion is non-empty, compute a version segment ("4.5" → "4_5")
+//     and strip the version tokens from the end of the ID (before the date).
+//  5. Split remaining raw ID on non-alphanumeric characters; map each token through
+//     tokenToConstPart.
+//  6. Join all parts with "__" (double underscore), prefix "Model__<ProviderSuffix>__".
+//  7. If a version segment was produced, append "__<version>".
+//  8. Append "__YYYYMMDD" when the date was found in the raw ID.
+//
+// Naming: Model__<Provider>__<Family>__<Variant>?__<Version>?__<Date>?
+// Double underscores separate top-level segments; single underscores appear only
+// within a segment (e.g. version "4.5" → "4_5", date always YYYYMMDD).
 //
 // Returns "" when the skip rule applies (NormalizedFamily == "").
 func nameForCanonical(m bestiary.ModelInfo) string {
@@ -1141,6 +1162,35 @@ func nameForCanonicalWithMap(m bestiary.ModelInfo, slugToConst map[string]string
 	rawIDForDate := strings.ReplaceAll(rawID, "@", "-")
 	rawIDStripped, dateFoundInID := stripDateFromID(rawIDForDate, m.NormalizedDate, dateCompact)
 
+	// Compute version segment: NormalizedVersion "4.5" → "4_5".
+	// If NormalizedVersion is non-empty, strip the version tokens from the end of
+	// rawIDStripped (they appear immediately before the date in the raw ID).
+	versionSegment := ""
+	if m.NormalizedVersion != "" {
+		// Convert "4.5" → "4_5" (dots to underscores; no hyphens expected in NormalizedVersion).
+		versionSegment = strings.ReplaceAll(m.NormalizedVersion, ".", "_")
+
+		// Strip the version portion from rawIDStripped. The version appears in the
+		// raw ID as hyphen-separated digits/tokens (e.g. "4-5" for version "4.5").
+		// We try the hyphenated form and the dotted form as suffixes.
+		versionHyphen := strings.ReplaceAll(m.NormalizedVersion, ".", "-")
+		for _, vSuffix := range []string{versionHyphen, m.NormalizedVersion} {
+			if vSuffix == "" {
+				continue
+			}
+			if strings.HasSuffix(rawIDStripped, "-"+vSuffix) {
+				rawIDStripped = strings.TrimSuffix(rawIDStripped, "-"+vSuffix)
+				rawIDStripped = strings.TrimRight(rawIDStripped, "-.")
+				break
+			}
+			if strings.HasSuffix(rawIDStripped, "."+vSuffix) {
+				rawIDStripped = strings.TrimSuffix(rawIDStripped, "."+vSuffix)
+				rawIDStripped = strings.TrimRight(rawIDStripped, "-.")
+				break
+			}
+		}
+	}
+
 	// Split on any non-alphanumeric character to produce clean identifier tokens.
 	// This handles all separator styles: hyphens, dots, colons, underscores, slashes,
 	// at-signs, etc. found in the wild across various provider model ID formats.
@@ -1159,9 +1209,14 @@ func nameForCanonicalWithMap(m bestiary.ModelInfo, slugToConst map[string]string
 		}
 	}
 
-	name := "Model_" + provSuffix + "_" + strings.Join(parts, "_")
+	// Join parts with double underscores (between-component separator).
+	// Single underscores appear only within a segment (e.g. version "4_5").
+	name := "Model__" + provSuffix + "__" + strings.Join(parts, "__")
+	if versionSegment != "" {
+		name += "__" + versionSegment
+	}
 	if dateFoundInID && dateCompact != "" {
-		name += "_" + dateCompact
+		name += "__" + dateCompact
 	}
 	return name
 }
@@ -1280,8 +1335,10 @@ func resolveCollisions(names []string, models []bestiary.ModelInfo) []string {
 
 		if allDistinct {
 			// Version suffix disambiguates all colliders.
+			// Use "__" to separate the version disambiguation suffix from the base name
+			// (consistent with the Model__<Provider>__<...> double-underscore template).
 			for _, c := range cands {
-				result[c.pos] = baseName + "_" + c.vSuffix
+				result[c.pos] = baseName + "__" + c.vSuffix
 			}
 		} else {
 			// (b) Sequential suffix fallback.
@@ -1394,7 +1451,7 @@ func extractVersionSegment(m bestiary.ModelInfo) string {
 }
 
 // generateConstantsSource generates models_constants_gen.go containing one
-// Model_* constant per eligible model in the static data, plus a ModelIDs()
+// Model__* constant per eligible model in the static data, plus a ModelIDs()
 // function returning a defensive copy.
 //
 // slugToConst maps provider slug → Go constant name (e.g. "openai" → "ProviderOpenAI").
@@ -1402,7 +1459,9 @@ func extractVersionSegment(m bestiary.ModelInfo) string {
 // Pass nil to use the slug directly with slugToIdentifier (less accurate casing).
 //
 // Eligibility: NormalizedFamily must be non-empty.
-// Naming: Model_<ProviderSuffix>_<tokenized-ID-without-date>_<YYYYMMDD>
+// Naming: Model__<Provider>__<Family>__<Variant>?__<Version>?__<Date>?
+// Double underscores separate top-level segments; single underscores appear only
+// within a segment (e.g. version "4.5" → "4_5").
 // Collision resolution: two-pass (version suffix → sequential suffix).
 func generateConstantsSource(models []bestiary.ModelInfo, slugToConst map[string]string) ([]byte, error) {
 	// Build candidate names.
@@ -1440,12 +1499,13 @@ func generateConstantsSource(models []bestiary.ModelInfo, slugToConst map[string
 	buf.WriteString("package bestiary\n\n")
 
 	if len(entries) > 0 {
-		buf.WriteString("// Model_* constants provide compile-time references to every eligible model\n")
+		buf.WriteString("// Model__* constants provide compile-time references to every eligible model\n")
 		buf.WriteString("// in the static model registry. Names follow the pattern:\n")
-		buf.WriteString("//   Model_<Provider>_<Family>_<Variant>_<Date>?\n")
+		buf.WriteString("//   Model__<Provider>__<Family>__<Variant>?__<Version>?__<Date>?\n")
 		buf.WriteString("// where each component uses the same casing rules as Provider and Family\n")
-		buf.WriteString("// constants. Underscores separate components; within-component characters\n")
-		buf.WriteString("// are preserved (e.g. \"4o\" stays \"4o\", not \"4_o\").\n")
+		buf.WriteString("// constants. Double underscores separate top-level components; single\n")
+		buf.WriteString("// underscores appear only within a component (e.g. version \"4.5\" → \"4_5\",\n")
+		buf.WriteString("// \"4o\" stays \"4o\" within a component).\n")
 		buf.WriteString("const (\n")
 		for _, e := range entries {
 			fmt.Fprintf(&buf, "\t%s ModelID = %q\n", e.constName, e.modelID)
@@ -1454,7 +1514,7 @@ func generateConstantsSource(models []bestiary.ModelInfo, slugToConst map[string
 	}
 
 	// allModelConstants: backing array for ModelIDs().
-	buf.WriteString("// allModelConstants is the complete list of generated Model_* constants.\n")
+	buf.WriteString("// allModelConstants is the complete list of generated Model__* constants.\n")
 	buf.WriteString("var allModelConstants = [...]ModelID{\n")
 	for _, e := range entries {
 		fmt.Fprintf(&buf, "\t%s,\n", e.constName)

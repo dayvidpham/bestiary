@@ -248,6 +248,13 @@ var testSlugToConst = map[string]string{
 
 // TestNameForCanonical_KnownExamples verifies that nameForCanonicalWithMap produces
 // the expected constant names for the spec-defined golden examples from UAT-1 / PROPOSAL-3.
+// Updated to new double-underscore template: Model__<Provider>__<Family>__<Variant>?__<Version>?__<Date>?
+// (B5: double underscores between components, single underscores within components).
+//
+// The naming uses double underscores between EVERY token from the raw ID (after date strip),
+// plus the provider prefix and date suffix. Tokens from the raw ID (hyphen/dot split) each
+// become a separate __-separated component. The NormalizedVersion field produces a single
+// underscore-within-component segment when it is non-empty (e.g. "4.5" → "4_5").
 func TestNameForCanonical_KnownExamples(t *testing.T) {
 	cases := []struct {
 		desc     string
@@ -257,76 +264,78 @@ func TestNameForCanonical_KnownExamples(t *testing.T) {
 		{
 			desc: "claude-opus-4-20250514 on Anthropic",
 			model: bestiary.ModelInfo{
-				ID:               "claude-opus-4-20250514",
-				Provider:         "anthropic",
-				NormalizedFamily: "claude",
+				ID:                "claude-opus-4-20250514",
+				Provider:          "anthropic",
+				NormalizedFamily:  "claude",
 				NormalizedVariant: "opus",
-				NormalizedDate:   "2025-05-14",
+				NormalizedDate:    "2025-05-14",
 			},
-			wantName: "Model_Anthropic_Claude_Opus_4_20250514",
+			// Tokens after date strip: [claude→Claude, opus→Opus, 4→4]
+			// Double-underscore join + provSuffix + date.
+			wantName: "Model__Anthropic__Claude__Opus__4__20250514",
 		},
 		{
 			desc: "claude-opus-4-1 on Anthropic (date not in ID, from release field)",
 			model: bestiary.ModelInfo{
-				ID:               "claude-opus-4-1",
-				Provider:         "anthropic",
-				NormalizedFamily: "claude",
+				ID:                "claude-opus-4-1",
+				Provider:          "anthropic",
+				NormalizedFamily:  "claude",
 				NormalizedVariant: "opus",
 				// NormalizedDate comes from release field, NOT from ID content.
 				// The ID "claude-opus-4-1" has no YYYYMMDD/YYYY-MM-DD date.
 				// So date should NOT be appended to the constant name.
-				NormalizedDate:   "2025-08-05",
+				NormalizedDate: "2025-08-05",
 			},
-			// Tokens: [claude, opus, 4, 1]; date not in ID → no date suffix.
-			wantName: "Model_Anthropic_Claude_Opus_4_1",
+			// Tokens: [Claude, Opus, 4, 1]; date not in ID → no date suffix.
+			wantName: "Model__Anthropic__Claude__Opus__4__1",
 		},
 		{
 			desc: "gpt-4o-2024-08-06 on OpenAI",
 			model: bestiary.ModelInfo{
-				ID:               "gpt-4o-2024-08-06",
-				Provider:         "openai",
-				NormalizedFamily: "gpt",
+				ID:                "gpt-4o-2024-08-06",
+				Provider:          "openai",
+				NormalizedFamily:  "gpt",
 				NormalizedVariant: "",
-				NormalizedDate:   "2024-08-06",
+				NormalizedDate:    "2024-08-06",
 			},
-			wantName: "Model_OpenAI_GPT_4o_20240806",
+			// Tokens after date strip: [gpt→GPT, 4o→4o]
+			wantName: "Model__OpenAI__GPT__4o__20240806",
 		},
 		{
 			desc: "gemini-2.5-flash-lite-preview-06-17 on GoogleVertex (MM-DD date form)",
 			model: bestiary.ModelInfo{
-				ID:               "gemini-2.5-flash-lite-preview-06-17",
-				Provider:         "google-vertex",
-				NormalizedFamily: "gemini",
+				ID:                "gemini-2.5-flash-lite-preview-06-17",
+				Provider:          "google-vertex",
+				NormalizedFamily:  "gemini",
 				NormalizedVariant: "flash-lite",
-				NormalizedDate:   "2025-06-17",
+				NormalizedDate:    "2025-06-17",
 			},
 			// ID has "06-17" which is the MM-DD form of NormalizedDate "2025-06-17".
 			// stripDateFromID strips "06-17", leaving "gemini-2.5-flash-lite-preview".
-			// Tokens: [gemini, 2, 5, flash, lite, preview]
-			// → Model_GoogleVertex_Gemini_2_5_Flash_Lite_Preview_20250617
-			wantName: "Model_GoogleVertex_Gemini_2_5_Flash_Lite_Preview_20250617",
+			// Tokens: [Gemini, 2, 5, Flash, Lite, Preview] — each becomes own __ segment.
+			wantName: "Model__GoogleVertex__Gemini__2__5__Flash__Lite__Preview__20250617",
 		},
 		{
 			desc: "model with no date",
 			model: bestiary.ModelInfo{
-				ID:               "claude-haiku",
-				Provider:         "anthropic",
-				NormalizedFamily: "claude",
+				ID:                "claude-haiku",
+				Provider:          "anthropic",
+				NormalizedFamily:  "claude",
 				NormalizedVariant: "haiku",
-				NormalizedDate:   "",
+				NormalizedDate:    "",
 			},
-			wantName: "Model_Anthropic_Claude_Haiku",
+			wantName: "Model__Anthropic__Claude__Haiku",
 		},
 		{
 			desc: "provider-prefixed ID (openrouter style)",
 			model: bestiary.ModelInfo{
-				ID:               "anthropic/claude-opus-4-20250514",
-				Provider:         "openrouter",
-				NormalizedFamily: "claude",
+				ID:                "anthropic/claude-opus-4-20250514",
+				Provider:          "openrouter",
+				NormalizedFamily:  "claude",
 				NormalizedVariant: "opus",
-				NormalizedDate:   "2025-05-14",
+				NormalizedDate:    "2025-05-14",
 			},
-			wantName: "Model_OpenRouter_Claude_Opus_4_20250514",
+			wantName: "Model__OpenRouter__Claude__Opus__4__20250514",
 		},
 	}
 
@@ -359,28 +368,28 @@ func TestSkipEmptyFamily(t *testing.T) {
 // same naive name but have distinguishable version segments in their raw IDs,
 // the version segment is used as a disambiguator (pass (a)).
 func TestResolveCollisions_VersionSuffix(t *testing.T) {
-	// Two models that produce the same naive name Model_Anthropic_Claude_Opus
+	// Two models that produce the same naive name Model__Anthropic__Claude__Opus
 	// but whose IDs have different version tokens (4 vs 3_5).
 	models := []bestiary.ModelInfo{
 		{
-			ID:               "claude-opus-4",
-			Provider:         "anthropic",
-			NormalizedFamily: "claude",
+			ID:                "claude-opus-4",
+			Provider:          "anthropic",
+			NormalizedFamily:  "claude",
 			NormalizedVariant: "opus",
-			NormalizedDate:   "",
+			NormalizedDate:    "",
 		},
 		{
-			ID:               "claude-opus-3-5",
-			Provider:         "anthropic",
-			NormalizedFamily: "claude",
+			ID:                "claude-opus-3-5",
+			Provider:          "anthropic",
+			NormalizedFamily:  "claude",
 			NormalizedVariant: "opus",
-			NormalizedDate:   "",
+			NormalizedDate:    "",
 		},
 	}
-	// Both produce "Model_Anthropic_Claude_Opus" as the naive name.
+	// Both produce "Model__Anthropic__Claude__Opus" as the naive name (double-underscore, B5).
 	names := []string{
-		"Model_Anthropic_Claude_Opus",
-		"Model_Anthropic_Claude_Opus",
+		"Model__Anthropic__Claude__Opus",
+		"Model__Anthropic__Claude__Opus",
 	}
 
 	resolved := resolveCollisions(names, models)
@@ -398,8 +407,9 @@ func TestResolveCollisions_VersionSuffix(t *testing.T) {
 
 	// Version-suffix disambiguation (pass a) must produce the exact expected names.
 	// claude-opus-4 → version segment "4"; claude-opus-3-5 → version segment "3_5".
-	want0 := "Model_Anthropic_Claude_Opus_4"
-	want1 := "Model_Anthropic_Claude_Opus_3_5"
+	// Under the new template the separator between the naive name and the version suffix is "__".
+	want0 := "Model__Anthropic__Claude__Opus__4"
+	want1 := "Model__Anthropic__Claude__Opus__3_5"
 	if (resolved[0] != want0 || resolved[1] != want1) && (resolved[0] != want1 || resolved[1] != want0) {
 		t.Errorf("resolveCollisions: unexpected version-suffix results:\n  got  [%q, %q]\n  want [%q, %q] (either order)",
 			resolved[0], resolved[1], want0, want1)
@@ -428,8 +438,8 @@ func TestResolveCollisions_SequentialSuffix(t *testing.T) {
 		},
 	}
 	names := []string{
-		"Model_Anthropic_Mystery_Model",
-		"Model_Anthropic_Mystery_Model",
+		"Model__Anthropic__Mystery__Model",
+		"Model__Anthropic__Mystery__Model",
 	}
 
 	resolved := resolveCollisions(names, models)
@@ -439,7 +449,7 @@ func TestResolveCollisions_SequentialSuffix(t *testing.T) {
 	if resolved[0] == resolved[1] {
 		t.Errorf("resolveCollisions: sequential fallback failed; both = %q", resolved[0])
 	}
-	// Must have numeric suffix.
+	// Must have numeric suffix (sequential disambiguator appended with "_" within the suffix).
 	if !strings.Contains(resolved[0], "_1") && !strings.Contains(resolved[0], "_2") {
 		t.Errorf("resolveCollisions: expected numeric suffix in %q", resolved[0])
 	}
@@ -483,13 +493,13 @@ func TestGenerateConstantsSource_Compiles(t *testing.T) {
 	if len(src) == 0 {
 		t.Fatal("generateConstantsSource: returned empty source")
 	}
-	// Must contain the expected constant names.
+	// Must contain the expected constant names (double-underscore between components, B5).
 	srcStr := string(src)
-	if !strings.Contains(srcStr, "Model_Anthropic_Claude_Opus_4_20250514") {
-		t.Errorf("generated source missing Model_Anthropic_Claude_Opus_4_20250514:\n%s", srcStr[:min(500, len(srcStr))])
+	if !strings.Contains(srcStr, "Model__Anthropic__Claude__Opus__4__20250514") {
+		t.Errorf("generated source missing Model__Anthropic__Claude__Opus__4__20250514:\n%s", srcStr[:min(500, len(srcStr))])
 	}
-	if !strings.Contains(srcStr, "Model_OpenAI_GPT_4o_20240806") {
-		t.Errorf("generated source missing Model_OpenAI_GPT_4o_20240806:\n%s", srcStr[:min(500, len(srcStr))])
+	if !strings.Contains(srcStr, "Model__OpenAI__GPT__4o__20240806") {
+		t.Errorf("generated source missing Model__OpenAI__GPT__4o__20240806:\n%s", srcStr[:min(500, len(srcStr))])
 	}
 	// Must NOT contain a constant for the skip-rule model.
 	if strings.Contains(srcStr, "unknown-xyz") {
@@ -880,6 +890,381 @@ func TestNoFetch_MissingCache_ActionableError(t *testing.T) {
 	// (6) How to fix: actionable remediation.
 	if !strings.Contains(msg, "re-run without --no-fetch") {
 		t.Errorf("error message missing 'how-to-fix' field (re-run without --no-fetch):\n%s", msg)
+	}
+}
+
+// --------------------------------------------------------------------------
+// SLICE-FIX-2 tests: cross-provider decomposition consistency
+// --------------------------------------------------------------------------
+
+// TestStaticDataset_CrossProviderConsistency verifies that for model IDs present
+// under multiple providers in the static dataset, providers that have an empty
+// raw_family field produce the same (NormalizedFamily, NormalizedVariant,
+// NormalizedVersion) as providers with a populated raw_family, when all
+// populated-raw_family providers agree on the same decomposition.
+//
+// B6 (SLICE-FIX-2): codegen must produce consistent decompositions regardless of
+// whether the raw_family field is empty or populated. The primary documented
+// regression was: Nano-GPT and 302ai (empty raw_family) producing
+// NormalizedVariant="" for claude-opus-4-5-20251101 while Anthropic/QiHangAI
+// (raw_family="claude-opus") produce NormalizedVariant="opus".
+//
+// SCOPE BOUNDARY (documented findings for FOLLOWUP_SLICE-1 / bestiary-wi36):
+//
+// Some divergences are NOT caused by the empty-raw_family bug and are deferred:
+//
+//  1. Different raw_family values across providers (upstream data inconsistency):
+//     Some providers use different raw_family for the same model ID, leading to
+//     fundamentally different canonical results. Example: alibaba uses raw_family=""
+//     for qwen3-* IDs while other providers use "qwen3-*". These are upstream API
+//     inconsistencies, not a codegen bug. Deferred to bestiary-wi36.
+//
+//  2. Complex claude-3.x IDs (claude-3-5-haiku-*, claude-3-7-sonnet-*):
+//     InferFamilyFromIDWithVariant("claude-3-5-haiku-20241022") extracts
+//     family="claude-3-5" (since "3-5" is a version component in the ID), while
+//     providers with raw_family="claude-haiku" yield family="claude". The correct
+//     decomposition requires parser fixes for claude-3.x family IDs, deferred to
+//     bestiary-wi36.
+//
+// This test constrains its check to: groups where ALL populated-raw_family providers
+// agree on the same (family, variant, version) AND at least one empty-raw_family
+// provider disagrees. This targets the original documented bug precisely.
+func TestStaticDataset_CrossProviderConsistency(t *testing.T) {
+	models := bestiary.StaticModels()
+
+	// Build a per-ID map with the raw_family, normalized decomp, and provider.
+	type entry struct {
+		RawFamily string
+		Family    string
+		Variant   string
+		Version   string
+		Provider  string
+	}
+	byID := make(map[string][]entry)
+	for _, m := range models {
+		id := string(m.ID)
+		// Skip non-standard ID formats deferred to FOLLOWUP_SLICE-1 (bestiary-wi36).
+		if strings.Contains(id, "/") || strings.Contains(id, ".") ||
+			strings.HasPrefix(id, "@") || strings.HasPrefix(id, ":") {
+			continue
+		}
+		byID[id] = append(byID[id], entry{
+			RawFamily: string(m.Family),
+			Family:    string(m.NormalizedFamily),
+			Variant:   m.NormalizedVariant,
+			Version:   m.NormalizedVersion,
+			Provider:  string(m.Provider),
+		})
+	}
+
+	for id, entries := range byID {
+		if len(entries) < 2 {
+			continue
+		}
+
+		// Split entries into populated-raw_family and empty-raw_family groups.
+		var populated []entry
+		var empty []entry
+		for _, e := range entries {
+			if e.RawFamily != "" {
+				populated = append(populated, e)
+			} else {
+				empty = append(empty, e)
+			}
+		}
+
+		// Skip this ID if there are no empty-raw_family providers
+		// (divergence can't be caused by the documented bug).
+		if len(empty) == 0 {
+			continue
+		}
+		// Skip this ID if there are no populated-raw_family providers
+		// (no reference to compare against).
+		if len(populated) == 0 {
+			continue
+		}
+
+		// Check if all populated-raw_family providers agree on the same decomposition.
+		// If they disagree, it's an upstream data inconsistency — skip (FOLLOWUP).
+		consensusFamily := populated[0].Family
+		consensusVariant := populated[0].Variant
+		consensusVersion := populated[0].Version
+		populatedAgree := true
+		for _, p := range populated[1:] {
+			if p.Family != consensusFamily || p.Variant != consensusVariant || p.Version != consensusVersion {
+				populatedAgree = false
+				break
+			}
+		}
+		if !populatedAgree {
+			// Upstream data inconsistency across populated providers — deferred to bestiary-wi36.
+			continue
+		}
+
+		// Now check: all empty-raw_family providers must match the consensus from
+		// populated-raw_family providers.
+		//
+		// Additional scope constraint (FOLLOWUP_SLICE-1 / bestiary-wi36):
+		// Skip cases where the consensus family itself contains a version component
+		// (e.g. "claude-3-5", "deepseek-thinking") — these arise from IDs where
+		// the empty-raw_family path can't derive the same family as the populated
+		// path because the family information is only available in raw_family, not
+		// in the model ID. Such cases require parser fixes scoped to bestiary-wi36.
+		//
+		// Specifically skip when:
+		// (a) consensusFamily != empty.Family but both are non-empty (family-level
+		//     divergence, not variant-level — raw_family carries family info the ID
+		//     doesn't have)
+		// (b) consensusVariant is derivable only from raw_family, not from the ID
+		//     (variant is NOT a token present in the model ID itself)
+		for _, e := range empty {
+			if e.Family == consensusFamily && e.Variant == consensusVariant && e.Version == consensusVersion {
+				continue // exact match, no divergence
+			}
+
+			// Skip family-level divergences (case a): the ID can't reliably derive
+			// the correct family when the populated-path family differs from the
+			// inferred family from the ID. Deferred to bestiary-wi36.
+			if e.Family != consensusFamily && e.Family != "" {
+				continue
+			}
+
+			// Skip variant-level divergences where the consensus variant is not a
+			// suffix token of the model ID (case b): the variant was derived from
+			// raw_family data, not inferrable from the ID. Deferred to bestiary-wi36.
+			if consensusVariant != "" && !strings.Contains("-"+id+"-", "-"+consensusVariant+"-") &&
+				!strings.HasSuffix(id, "-"+consensusVariant) {
+				continue
+			}
+
+			t.Errorf("cross-provider decomposition divergence for ID %q:\n"+
+				"  populated-raw_family consensus (provider %q) → (family=%q, variant=%q, version=%q)\n"+
+				"  empty-raw_family provider %q → (family=%q, variant=%q, version=%q)\n"+
+				"  Fix: InferFamilyFromIDWithVariant must extract variant+version so empty-raw_family\n"+
+				"  models produce the same decomposition as populated-raw_family providers.\n"+
+				"  Remaining cases with family or non-ID-derivable variant divergences are\n"+
+				"  deferred to bestiary-wi36 (FOLLOWUP_SLICE-1).",
+				id,
+				populated[0].Provider, consensusFamily, consensusVariant, consensusVersion,
+				e.Provider, e.Family, e.Variant, e.Version)
+		}
+	}
+}
+
+// --------------------------------------------------------------------------
+// SLICE-FIX-3 tests: double-hyphen flag support, ChatGPT casing, double-underscore
+// --------------------------------------------------------------------------
+
+// TestParseFlags_DoubleHyphen verifies that all flags accept BOTH single-hyphen
+// and double-hyphen forms (e.g. --no-fetch is equivalent to -no-fetch).
+// This test covers B1-B3 from the slice spec.
+//
+// These tests will FAIL until L3 adds double-hyphen prefix support to parseFlags.
+func TestParseFlags_DoubleHyphen(t *testing.T) {
+	cases := []struct {
+		desc    string
+		args    []string
+		check   func(t *testing.T, got flagResult)
+	}{
+		{
+			desc: "--no-fetch sets noFetch=true",
+			args: []string{"--no-fetch"},
+			check: func(t *testing.T, got flagResult) {
+				if !got.noFetch {
+					t.Errorf("parseFlags([\"--no-fetch\"]): noFetch = false, want true")
+				}
+			},
+		},
+		{
+			desc: "--cache-dir=<value> (equals form) sets cacheDir",
+			args: []string{"--cache-dir=/tmp/foo"},
+			check: func(t *testing.T, got flagResult) {
+				if got.cacheDir != "/tmp/foo" {
+					t.Errorf("parseFlags([\"--cache-dir=/tmp/foo\"]): cacheDir = %q, want /tmp/foo", got.cacheDir)
+				}
+			},
+		},
+		{
+			desc: "--cache-dir <value> (space form) sets cacheDir",
+			args: []string{"--cache-dir", "/tmp/bar"},
+			check: func(t *testing.T, got flagResult) {
+				if got.cacheDir != "/tmp/bar" {
+					t.Errorf("parseFlags([\"--cache-dir\", \"/tmp/bar\"]): cacheDir = %q, want /tmp/bar", got.cacheDir)
+				}
+			},
+		},
+		{
+			desc: "--only-providers=a,b (equals form) sets only",
+			args: []string{"--only-providers=a,b"},
+			check: func(t *testing.T, got flagResult) {
+				if len(got.only) != 2 || got.only[0] != "a" || got.only[1] != "b" {
+					t.Errorf("parseFlags([\"--only-providers=a,b\"]): only = %v, want [a b]", got.only)
+				}
+			},
+		},
+		{
+			desc: "--only-providers <value> (space form) sets only",
+			args: []string{"--only-providers", "x,y"},
+			check: func(t *testing.T, got flagResult) {
+				if len(got.only) != 2 || got.only[0] != "x" || got.only[1] != "y" {
+					t.Errorf("parseFlags([\"--only-providers\", \"x,y\"]): only = %v, want [x y]", got.only)
+				}
+			},
+		},
+		{
+			desc: "--all-providers-except=z (equals form) sets except",
+			args: []string{"--all-providers-except=z"},
+			check: func(t *testing.T, got flagResult) {
+				if len(got.except) != 1 || got.except[0] != "z" {
+					t.Errorf("parseFlags([\"--all-providers-except=z\"]): except = %v, want [z]", got.except)
+				}
+			},
+		},
+		{
+			desc: "--all-providers-except <value> (space form) sets except",
+			args: []string{"--all-providers-except", "p"},
+			check: func(t *testing.T, got flagResult) {
+				if len(got.except) != 1 || got.except[0] != "p" {
+					t.Errorf("parseFlags([\"--all-providers-except\", \"p\"]): except = %v, want [p]", got.except)
+				}
+			},
+		},
+		{
+			desc: "-no-fetch (single-hyphen) still sets noFetch=true (regression)",
+			args: []string{"-no-fetch"},
+			check: func(t *testing.T, got flagResult) {
+				if !got.noFetch {
+					t.Errorf("parseFlags([\"-no-fetch\"]): noFetch = false, want true (regression)")
+				}
+			},
+		},
+		{
+			desc: "-cache-dir=<value> (single-hyphen equals form) still works (regression)",
+			args: []string{"-cache-dir=/tmp/baz"},
+			check: func(t *testing.T, got flagResult) {
+				if got.cacheDir != "/tmp/baz" {
+					t.Errorf("parseFlags([\"-cache-dir=/tmp/baz\"]): cacheDir = %q, want /tmp/baz", got.cacheDir)
+				}
+			},
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.desc, func(t *testing.T) {
+			got, err := parseFlags(tc.args)
+			if err != nil {
+				t.Fatalf("parseFlags(%v): unexpected error: %v", tc.args, err)
+			}
+			tc.check(t, got)
+		})
+	}
+}
+
+// TestSlugToIdentifier_ChatGPT verifies that the chatgpt casing override is
+// applied correctly. B4: chatgpt → ChatGPT.
+func TestSlugToIdentifier_ChatGPT(t *testing.T) {
+	cases := []struct {
+		slug     string
+		nameHint string
+		want     string
+	}{
+		// Full slug "chatgpt" → "ChatGPT" (single-token casing override).
+		{"chatgpt", "ChatGPT", "ChatGPT"},
+		// "chatgpt-4o" splits into ["chatgpt", "4o"]:
+		// chatgpt → ChatGPT via casing override.
+		// 4o: digit-leading, alpha "o" has no casing override → title-cased to "O"
+		// (slugToIdentifier uppercases single-char alpha suffixes; see tokenToConstPart for
+		// the model-ID tokenization path that preserves them).
+		{"chatgpt-4o", "ChatGPT-4o", "ChatGPT4O"},
+	}
+	for _, tc := range cases {
+		t.Run(tc.slug, func(t *testing.T) {
+			got := slugToIdentifier(tc.slug, tc.nameHint)
+			if got != tc.want {
+				t.Errorf("slugToIdentifier(%q, %q) = %q, want %q", tc.slug, tc.nameHint, got, tc.want)
+			}
+		})
+	}
+}
+
+// TestNameForCanonical_DoubleUnderscoreTemplate verifies the new Model__ naming
+// convention (double underscores between field components, single underscores
+// within a component, e.g. version "4.5" → "4_5").
+//
+// B5: Model__<Provider>__<Family>__<Variant>?__<Version>?__<Date>?
+//
+// When NormalizedVersion is non-empty, the version "4.5" is encoded as a single
+// segment "4_5" (dot→underscore). The raw ID version tokens are replaced by this
+// single compact segment so that "4_5" uses single underscores within.
+//
+// These tests will FAIL until L3 changes the join separator and adds version-segment logic.
+func TestNameForCanonical_DoubleUnderscoreTemplate(t *testing.T) {
+	cases := []struct {
+		desc     string
+		model    bestiary.ModelInfo
+		wantName string
+	}{
+		{
+			desc: "claude-opus-4-5 with NormalizedVersion on Anthropic (B5 golden)",
+			model: bestiary.ModelInfo{
+				ID:                "claude-opus-4-5-20251101",
+				Provider:          "anthropic",
+				NormalizedFamily:  "claude",
+				NormalizedVariant: "opus",
+				NormalizedVersion: "4.5",
+				NormalizedDate:    "2025-11-01",
+			},
+			// NormalizedVersion "4.5" → segment "4_5" (single underscores within, double between).
+			// Raw version tokens ("4","5") replaced by the NormalizedVersion segment.
+			wantName: "Model__Anthropic__Claude__Opus__4_5__20251101",
+		},
+		{
+			desc: "gpt-4o without version or date on OpenAI (B5 golden)",
+			model: bestiary.ModelInfo{
+				ID:                "gpt-4o",
+				Provider:          "openai",
+				NormalizedFamily:  "gpt",
+				NormalizedVariant: "",
+				NormalizedVersion: "",
+				NormalizedDate:    "",
+			},
+			// No NormalizedVersion → raw ID tokens: [GPT, 4o]; joined with __.
+			wantName: "Model__OpenAI__GPT__4o",
+		},
+		{
+			desc: "chatgpt model uses ChatGPT casing (B4)",
+			model: bestiary.ModelInfo{
+				ID:                "chatgpt-4o",
+				Provider:          "openai",
+				NormalizedFamily:  "chatgpt",
+				NormalizedVariant: "",
+				NormalizedVersion: "",
+				NormalizedDate:    "",
+			},
+			// chatgpt → ChatGPT via casingOverrides; 4o from raw ID.
+			wantName: "Model__OpenAI__ChatGPT__4o",
+		},
+		{
+			desc: "claude-haiku no date, double underscore between provider and family",
+			model: bestiary.ModelInfo{
+				ID:                "claude-haiku",
+				Provider:          "anthropic",
+				NormalizedFamily:  "claude",
+				NormalizedVariant: "haiku",
+				NormalizedVersion: "",
+				NormalizedDate:    "",
+			},
+			wantName: "Model__Anthropic__Claude__Haiku",
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.desc, func(t *testing.T) {
+			got := nameForCanonicalWithMap(tc.model, testSlugToConst)
+			if got != tc.wantName {
+				t.Errorf("nameForCanonicalWithMap: got %q, want %q", got, tc.wantName)
+			}
+		})
 	}
 }
 
