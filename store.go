@@ -630,6 +630,66 @@ func (s *Store) QueryModelsByID(ctx context.Context, id ModelID) ([]ModelInfo, e
 	return models, nil
 }
 
+// QueryByCanonical returns ModelInfo entries matching the (family, variant, date)
+// canonical triple. Cross-provider results are returned as a slice. Empty params
+// match any value (e.g., variant="" matches all variants for the given family).
+// Returns an empty slice (not an error) when no matching models are found.
+//
+// The query uses idx_canonical for efficient lookup when family is non-empty.
+//
+// ctx is accepted for API compatibility; zombiezen.com/go/sqlite does not support per-operation context cancellation.
+func (s *Store) QueryByCanonical(ctx context.Context, family Family, variant, date string) ([]ModelInfo, error) {
+	// Build a dynamic WHERE clause: only include predicates for non-empty params.
+	// Empty params match any value (no filter applied for that column).
+	var conditions []string
+	var args []any
+	paramIdx := 1
+
+	if family != "" {
+		conditions = append(conditions, fmt.Sprintf("family = ?%d", paramIdx))
+		args = append(args, string(family))
+		paramIdx++
+	}
+	if variant != "" {
+		conditions = append(conditions, fmt.Sprintf("variant = ?%d", paramIdx))
+		args = append(args, variant)
+		paramIdx++
+	}
+	if date != "" {
+		conditions = append(conditions, fmt.Sprintf("date = ?%d", paramIdx))
+		args = append(args, date)
+		paramIdx++
+	}
+
+	query := `SELECT
+		model_id, provider, display_name, raw_family, family, variant, date,
+		context_window, max_output,
+		reasoning, tool_call, attachment, temperature, structured_output, interleaved, interleaved_config, open_weights,
+		cost_input, cost_output, cost_reasoning, cost_cache_read, cost_cache_write,
+		release_date, knowledge,
+		modalities_input, modalities_output,
+		last_synced
+	FROM models`
+
+	if len(conditions) > 0 {
+		query += "\n\tWHERE " + strings.Join(conditions, " AND ")
+	}
+
+	var models []ModelInfo
+	err := sqlitex.Execute(s.conn, query, &sqlitex.ExecOptions{
+		Args: args,
+		ResultFunc: func(stmt *sqlite.Stmt) error {
+			models = append(models, scanModelInfo(stmt))
+			return nil
+		},
+	})
+	if err != nil {
+		return nil, fmt.Errorf("bestiary: QueryByCanonical(family=%q, variant=%q, date=%q): %w",
+			string(family), variant, date, err)
+	}
+	return models, nil
+}
+
 // --- helpers ---
 
 // boolToInt converts a bool to 0 or 1 for SQLite INTEGER storage.
