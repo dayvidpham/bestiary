@@ -1,6 +1,9 @@
 package bestiary
 
-import "fmt"
+import (
+	"fmt"
+	"strings"
+)
 
 // ErrNotFound is returned when a requested resource cannot be located in the
 // local store or remote API.
@@ -47,4 +50,50 @@ func (e *ErrAPIUnavailable) Error() string {
 // traverse the error chain.
 func (e *ErrAPIUnavailable) Unwrap() error {
 	return e.Cause
+}
+
+// ErrAmbiguous is returned by Resolve when the input string matches models with
+// two or more distinct Canonical identities (e.g., "claude" matches claude/opus,
+// claude/sonnet, and claude/haiku simultaneously).
+//
+// It is distinct from cross-provider hosting: if multiple providers host the
+// same Canonical, Resolve returns []ModelRef with err == nil.
+//
+// What: the raw input string that triggered the ambiguity.
+// Scheme: the CanonicalScheme used during resolution.
+// Candidates: the list of ModelRefs that matched, one per distinct Canonical.
+//
+// Use errors.As to extract structured fields. The Error() message names:
+//  1. what went wrong (ambiguous input),
+//  2. why (multiple distinct canonicals matched),
+//  3. where (Resolve),
+//  4. what the caller can do (refine input or use --scheme=raw).
+type ErrAmbiguous struct {
+	// Input is the raw string passed to Resolve.
+	Input string
+	// Scheme is the CanonicalScheme that was active during resolution.
+	Scheme CanonicalScheme
+	// Candidates lists all matching ModelRefs, grouped by distinct Canonical.
+	Candidates []ModelRef
+}
+
+// Error implements the error interface with an actionable message.
+func (e *ErrAmbiguous) Error() string {
+	var sb strings.Builder
+	fmt.Fprintf(&sb,
+		"bestiary: ambiguous model input %q (scheme=%s) matched %d distinct canonical(s)\n",
+		e.Input, e.Scheme, len(e.Candidates),
+	)
+	sb.WriteString("  What: input matches multiple distinct model canonicals\n")
+	sb.WriteString("  Why: the input string is a prefix or substring shared by several models\n")
+	sb.WriteString("  Where: Resolve\n")
+	if len(e.Candidates) > 0 {
+		sb.WriteString("  Candidates:\n")
+		for _, c := range e.Candidates {
+			fmt.Fprintf(&sb, "    - %s/%s (provider: %s)\n",
+				string(c.Family), c.Variant, c.Provider)
+		}
+	}
+	sb.WriteString("  How to fix: refine the input to a more specific model ID, or use --scheme=raw with an exact API ID")
+	return sb.String()
 }

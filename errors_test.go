@@ -3,6 +3,7 @@ package bestiary_test
 import (
 	"errors"
 	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/dayvidpham/bestiary"
@@ -103,4 +104,111 @@ func TestErrAPIUnavailable_WrappedErrorsAs(t *testing.T) {
 	if target.Attempts != 5 {
 		t.Errorf("target.Attempts = %d, want 5", target.Attempts)
 	}
+}
+
+// TestErrAmbiguous_Format verifies the Error() message format for various
+// candidate list sizes: empty, single, and multi-candidate.
+func TestErrAmbiguous_Format(t *testing.T) {
+	t.Run("empty_candidates", func(t *testing.T) {
+		err := &bestiary.ErrAmbiguous{
+			Input:      "claude",
+			Scheme:     bestiary.SchemeCanonical,
+			Candidates: nil,
+		}
+		msg := err.Error()
+		if msg == "" {
+			t.Fatal("ErrAmbiguous.Error() returned empty string")
+		}
+		// Must mention the input and convey ambiguity.
+		if !containsAll(msg, "claude", "ambiguous") {
+			t.Errorf("ErrAmbiguous.Error() = %q; must mention input and 'ambiguous'", msg)
+		}
+	})
+
+	t.Run("single_candidate", func(t *testing.T) {
+		err := &bestiary.ErrAmbiguous{
+			Input:  "claude",
+			Scheme: bestiary.SchemeCanonical,
+			Candidates: []bestiary.ModelRef{
+				{
+					Provider: bestiary.ProviderAnthropic,
+					Family:   "claude",
+					Variant:  "opus",
+				},
+			},
+		}
+		msg := err.Error()
+		if !containsAll(msg, "claude", "anthropic") {
+			t.Errorf("ErrAmbiguous.Error() = %q; must mention candidate family/provider", msg)
+		}
+	})
+
+	t.Run("multi_candidate", func(t *testing.T) {
+		err := &bestiary.ErrAmbiguous{
+			Input:  "claude",
+			Scheme: bestiary.SchemeCanonical,
+			Candidates: []bestiary.ModelRef{
+				{Provider: bestiary.ProviderAnthropic, Family: "claude", Variant: "opus"},
+				{Provider: bestiary.ProviderAnthropic, Family: "claude", Variant: "sonnet"},
+				{Provider: bestiary.ProviderAnthropic, Family: "claude", Variant: "haiku"},
+			},
+		}
+		msg := err.Error()
+		// Must mention how-to-fix guidance.
+		if !containsAll(msg, "How to fix", "refine") {
+			t.Errorf("ErrAmbiguous.Error() = %q; must include how-to-fix guidance", msg)
+		}
+		// Must list all 3 variants.
+		if !containsAll(msg, "opus", "sonnet", "haiku") {
+			t.Errorf("ErrAmbiguous.Error() = %q; must list all candidate variants", msg)
+		}
+	})
+}
+
+func TestErrAmbiguous_ErrorsAs(t *testing.T) {
+	err := &bestiary.ErrAmbiguous{
+		Input:  "gpt",
+		Scheme: bestiary.SchemeRaw,
+		Candidates: []bestiary.ModelRef{
+			{Provider: bestiary.ProviderOpenAI, Family: "gpt", Variant: "4o"},
+		},
+	}
+	var target *bestiary.ErrAmbiguous
+	if !errors.As(err, &target) {
+		t.Fatal("errors.As(*ErrAmbiguous) = false, want true")
+	}
+	if target.Input != "gpt" {
+		t.Errorf("target.Input = %q, want %q", target.Input, "gpt")
+	}
+	if target.Scheme != bestiary.SchemeRaw {
+		t.Errorf("target.Scheme = %v, want SchemeRaw", target.Scheme)
+	}
+	if len(target.Candidates) != 1 {
+		t.Errorf("len(target.Candidates) = %d, want 1", len(target.Candidates))
+	}
+}
+
+func TestErrAmbiguous_WrappedErrorsAs(t *testing.T) {
+	inner := &bestiary.ErrAmbiguous{
+		Input:  "gemini",
+		Scheme: bestiary.SchemeCanonical,
+	}
+	wrapped := fmt.Errorf("resolution failed: %w", inner)
+	var target *bestiary.ErrAmbiguous
+	if !errors.As(wrapped, &target) {
+		t.Fatal("errors.As on wrapped ErrAmbiguous = false, want true")
+	}
+	if target.Input != "gemini" {
+		t.Errorf("target.Input = %q, want %q", target.Input, "gemini")
+	}
+}
+
+// containsAll reports whether s contains every substring in subs.
+func containsAll(s string, subs ...string) bool {
+	for _, sub := range subs {
+		if !strings.Contains(s, sub) {
+			return false
+		}
+	}
+	return true
 }
