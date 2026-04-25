@@ -1,6 +1,7 @@
 package bestiary_test
 
 import (
+	"encoding/json"
 	"errors"
 	"testing"
 
@@ -103,5 +104,78 @@ func TestCanonicalScheme_IotaOrder(t *testing.T) {
 	}
 	if int(bestiary.SchemeRaw) != 3 {
 		t.Errorf("SchemeRaw = %d, want 3", int(bestiary.SchemeRaw))
+	}
+}
+
+func TestCanonicalScheme_JSON_RoundTrip(t *testing.T) {
+	schemes := []bestiary.CanonicalScheme{
+		bestiary.SchemeCanonical,
+		bestiary.SchemeHuggingFace,
+		bestiary.SchemePURL,
+		bestiary.SchemeRaw,
+	}
+	for _, s := range schemes {
+		b, err := json.Marshal(s)
+		if err != nil {
+			t.Errorf("json.Marshal(%v) error: %v", s, err)
+			continue
+		}
+		var got bestiary.CanonicalScheme
+		if err := json.Unmarshal(b, &got); err != nil {
+			t.Errorf("json.Unmarshal(%s) error: %v", b, err)
+			continue
+		}
+		if got != s {
+			t.Errorf("round-trip %v: got %v", s, got)
+		}
+	}
+}
+
+func TestCanonicalScheme_UnmarshalJSON_CaseInsensitive(t *testing.T) {
+	tests := []struct {
+		input string
+		want  bestiary.CanonicalScheme
+	}{
+		{`"CANONICAL"`, bestiary.SchemeCanonical},
+		{`"Canonical"`, bestiary.SchemeCanonical},
+		{`"HUGGINGFACE"`, bestiary.SchemeHuggingFace},
+		{`"HuggingFace"`, bestiary.SchemeHuggingFace},
+		{`"PURL"`, bestiary.SchemePURL},
+		{`"Purl"`, bestiary.SchemePURL},
+		{`"RAW"`, bestiary.SchemeRaw},
+		{`"Raw"`, bestiary.SchemeRaw},
+	}
+	for _, tt := range tests {
+		var got bestiary.CanonicalScheme
+		if err := json.Unmarshal([]byte(tt.input), &got); err != nil {
+			t.Errorf("Unmarshal(%s) error: %v", tt.input, err)
+			continue
+		}
+		if got != tt.want {
+			t.Errorf("Unmarshal(%s) = %v, want %v", tt.input, got, tt.want)
+		}
+	}
+}
+
+func TestCanonicalScheme_UnmarshalJSON_RejectsBadInput(t *testing.T) {
+	tests := []struct {
+		desc  string
+		input string
+	}{
+		{"wrong type: number", `42`},
+		{"wrong type: null", `null`},
+		{"unknown string value", `"bogus"`},
+	}
+	for _, tt := range tests {
+		var got bestiary.CanonicalScheme
+		err := json.Unmarshal([]byte(tt.input), &got)
+		if err == nil {
+			t.Errorf("Unmarshal(%s) [%s] succeeded with %v, want error", tt.input, tt.desc, got)
+			continue
+		}
+		msg := err.Error()
+		if msg == "" {
+			t.Errorf("Unmarshal(%s) [%s] returned empty error message", tt.input, tt.desc)
+		}
 	}
 }
