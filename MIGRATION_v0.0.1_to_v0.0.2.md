@@ -436,27 +436,41 @@ from the API response using `ParseFamilyWithVersion` and `ExtractVersionFromID`.
 
 ---
 
-## 8. NEW Model_* constants (ModelIDs function)
+## 8. NEW Model__* constants (ModelIDs function)
 
 **Nature:** Additive; generated constants file `models_constants_gen.go`.
 
-`cmd/bestiary-gen` now emits a `Model_*` constant for every model in the static
+`cmd/bestiary-gen` now emits a `Model__*` constant for every model in the static
 registry. Constants follow the naming pattern:
 
 ```
-Model_<Provider>_<Family>_<Variant>_<Date>?
+Model__<Provider>__<Family>__<Variant>?__<Version>?__<Date>?
 ```
 
+**Double underscores** separate top-level components (Provider, Family, Variant,
+Version, Date). **Single underscores** appear only *within* a component — for
+example, version `4.5` is encoded as `4_5`, preserving the dot-to-underscore
+conversion inside the version segment.
+
 where each component uses the same casing as the `Provider` and `Family` types
-(PascalCase preserved). Underscores separate components; within-component
-characters are preserved.
+(PascalCase preserved). Casing overrides include `chatgpt → ChatGPT`, `gpt → GPT`,
+`ai → AI`, and others.
 
 **Examples:**
 ```go
 const (
-    Model_Anthropic_Claude_Opus_20250514 ModelID = "claude-opus-4-20250514"
-    Model_Google_Gemini_Flash            ModelID = "gemini-2.0-flash"
-    Model_OpenAI_Gpt_4o                  ModelID = "gpt-4o"
+    // Anthropic claude-opus-4-5-20251101: family=Claude, variant=Opus,
+    // version=4_5 (from NormalizedVersion "4.5"), date=20251101.
+    Model__Anthropic__Claude__Opus__4_5__20251101 ModelID = "claude-opus-4-5-20251101"
+
+    // OpenAI chatgpt-4o-latest: ChatGPT casing via casingOverrides entry.
+    Model__OpenAI__ChatGPT__4o__Latest           ModelID = "chatgpt-4o-latest"
+
+    // Google gemini-2.0-flash: no version or date in ID.
+    Model__Google__Gemini__2__0__Flash           ModelID = "gemini-2.0-flash"
+
+    // OpenAI gpt-4o: no date.
+    Model__OpenAI__GPT__4o                       ModelID = "gpt-4o"
 )
 ```
 
@@ -468,11 +482,17 @@ existing `registry.go:StaticModels()` function).
 renamed**. PascalCase is preserved — no breaking change to existing constant
 references.
 
+**`bestiary-gen` flag parser:** Both single-hyphen (`-flag`) and double-hyphen
+(`--flag`) forms are accepted for all flags: `--no-fetch`, `--cache-dir`,
+`--only-providers`, `--all-providers-except`.
+
 **Fix-up steps:**
 - These are new exports; no existing API changes.
 - Update `go generate ./...` to regenerate `models_constants_gen.go` after any
   upstream API update (`bestiary-gen` fetches the current model list).
 - Do not edit `models_constants_gen.go` by hand — it is owned by `cmd/bestiary-gen`.
+- If you referenced `Model_Anthropic_*` constants from a previous version, update
+  to the new `Model__Anthropic__*` form (double underscores between every segment).
 
 ---
 
