@@ -260,9 +260,9 @@ func formatModelTable(w io.Writer, model ModelInfo) error {
 
 // --- ErrAmbiguous candidate table ---
 
-// ambiguousCandidateHeader is the format string for the 3-column candidate table
-// rendered when Resolve returns *ErrAmbiguous.
-const ambiguousCandidateHeader = "%-40s  %-14s  %-40s\n"
+// ambiguousCandidateRow is the format string for every row (header, separator,
+// and data rows) in the 3-column candidate table rendered when Resolve returns
+// *ErrAmbiguous. All rows share the same column widths.
 const ambiguousCandidateRow = "%-40s  %-14s  %-40s\n"
 
 // FormatAmbiguous writes a human-readable disambiguation table for e to w.
@@ -280,8 +280,8 @@ const ambiguousCandidateRow = "%-40s  %-14s  %-40s\n"
 // ErrAmbiguous that the caller surfaces to the user.
 func FormatAmbiguous(w io.Writer, e *ErrAmbiguous) {
 	fmt.Fprintf(w, "bestiary: input %q matched multiple canonicals\n\n", e.Input)
-	fmt.Fprintf(w, ambiguousCandidateHeader, "Canonical", "Provider", "Raw ID")
-	fmt.Fprintf(w, ambiguousCandidateHeader,
+	fmt.Fprintf(w, ambiguousCandidateRow, "Canonical", "Provider", "Raw ID")
+	fmt.Fprintf(w, ambiguousCandidateRow,
 		strings.Repeat("-", 40),
 		strings.Repeat("-", 14),
 		strings.Repeat("-", 40),
