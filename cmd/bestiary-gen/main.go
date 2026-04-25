@@ -1089,21 +1089,35 @@ func nameForCanonicalWithMap(m bestiary.ModelInfo, slugToConst map[string]string
 
 	rawID := string(m.ID)
 
-	// Strip provider prefix (e.g., "anthropic/", "google/").
-	if idx := strings.IndexByte(rawID, '/'); idx >= 0 {
+	// Strip any leading path segments from the raw ID.
+	// Some providers use multi-segment paths in model IDs:
+	//   - "accounts/fireworks/models/deepseek-v3p1" → strip "accounts/fireworks/models/"
+	//   - "workers-ai/@cf/meta/llama-3.1-8b-instruct" → strip "workers-ai/@cf/meta/"
+	//   - "@cf/meta/llama-3.1-8b-instruct" → strip "@cf/meta/"
+	//   - "anthropic/claude-opus-4-20250514" → strip "anthropic/"
+	// We strip everything up to and including the last "/" to get just the model name.
+	if idx := strings.LastIndexByte(rawID, '/'); idx >= 0 {
 		rawID = rawID[idx+1:]
 	}
+	// Strip a leading "@" if present (e.g. "@cf/..." already stripped to "..." above,
+	// but catch remaining "@" characters in ID suffixes).
+	rawID = strings.TrimLeft(rawID, "@")
 
 	// Compute date segment (compact form, no hyphens).
 	dateCompact := strings.ReplaceAll(m.NormalizedDate, "-", "") // YYYYMMDD or ""
 
 	// Strip the date from the raw ID and remember if we found it
 	// (we only append the date constant if the ID actually contains the date).
-	rawIDStripped, dateFoundInID := stripDateFromID(rawID, m.NormalizedDate, dateCompact)
+	// Note: Google Vertex Anthropic uses "@" as date separator (e.g. "claude-opus-4@20250514").
+	// We must also strip the "@YYYYMMDD" form.
+	rawIDForDate := strings.ReplaceAll(rawID, "@", "-")
+	rawIDStripped, dateFoundInID := stripDateFromID(rawIDForDate, m.NormalizedDate, dateCompact)
 
-	// Split on hyphens and dots; convert each token.
+	// Split on any non-alphanumeric character to produce clean identifier tokens.
+	// This handles all separator styles: hyphens, dots, colons, underscores, slashes,
+	// at-signs, etc. found in the wild across various provider model ID formats.
 	tokens := strings.FieldsFunc(rawIDStripped, func(r rune) bool {
-		return r == '-' || r == '.'
+		return !unicode.IsLetter(r) && !unicode.IsDigit(r)
 	})
 
 	var parts []string
@@ -1297,19 +1311,23 @@ func resolveCollisions(names []string, models []bestiary.ModelInfo) []string {
 func extractVersionSegment(m bestiary.ModelInfo) string {
 	rawID := string(m.ID)
 
-	// Strip provider prefix.
-	if idx := strings.IndexByte(rawID, '/'); idx >= 0 {
+	// Strip any leading path segments (same logic as nameForCanonicalWithMap).
+	if idx := strings.LastIndexByte(rawID, '/'); idx >= 0 {
 		rawID = rawID[idx+1:]
 	}
+	rawID = strings.TrimLeft(rawID, "@")
 
 	dateCompact := strings.ReplaceAll(m.NormalizedDate, "-", "")
 
-	// Strip date from end using the same logic as nameForCanonical.
-	rawIDStripped, _ := stripDateFromID(rawID, m.NormalizedDate, dateCompact)
+	// Normalize "@" date separator (Google Vertex Anthropic style).
+	rawIDForDate := strings.ReplaceAll(rawID, "@", "-")
 
-	// Tokenize.
+	// Strip date from end using the same logic as nameForCanonical.
+	rawIDStripped, _ := stripDateFromID(rawIDForDate, m.NormalizedDate, dateCompact)
+
+	// Tokenize — split on any non-alphanumeric character.
 	tokens := strings.FieldsFunc(rawIDStripped, func(r rune) bool {
-		return r == '-' || r == '.'
+		return !unicode.IsLetter(r) && !unicode.IsDigit(r)
 	})
 
 	// Strip known family tokens.
@@ -1402,7 +1420,7 @@ func generateConstantsSource(models []bestiary.ModelInfo, slugToConst map[string
 		buf.WriteString(")\n\n")
 	}
 
-	// allModelConstants: backing array for Models().
+	// allModelConstants: backing array for ModelIDs().
 	buf.WriteString("// allModelConstants is the complete list of generated Model_* constants.\n")
 	buf.WriteString("var allModelConstants = [...]ModelID{\n")
 	for _, e := range entries {
@@ -1410,10 +1428,14 @@ func generateConstantsSource(models []bestiary.ModelInfo, slugToConst map[string
 	}
 	buf.WriteString("}\n\n")
 
-	// Models() defensive copy.
-	buf.WriteString("// Models returns all generated Model_* constants as a defensive copy.\n")
+	// ModelIDs() defensive copy.
+	// NOTE: Models() in registry.go returns []ModelInfo (full metadata). This function
+	// returns []ModelID (the constant values only). The distinct name avoids a compile-
+	// time conflict with the existing registry.go:Models() function.
+	buf.WriteString("// ModelIDs returns all generated Model_* constant values as a defensive copy.\n")
 	buf.WriteString("// Mutating the returned slice does not affect future calls.\n")
-	buf.WriteString("func Models() []ModelID {\n")
+	buf.WriteString("// See Models() in registry.go for the full ModelInfo slice.\n")
+	buf.WriteString("func ModelIDs() []ModelID {\n")
 	buf.WriteString("\tout := make([]ModelID, len(allModelConstants))\n")
 	buf.WriteString("\tcopy(out, allModelConstants[:])\n")
 	buf.WriteString("\treturn out\n")

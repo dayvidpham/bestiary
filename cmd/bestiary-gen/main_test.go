@@ -491,9 +491,9 @@ func TestGenerateConstantsSource_Compiles(t *testing.T) {
 	if strings.Contains(srcStr, "unknown-xyz") {
 		t.Errorf("generated source should not contain skip-rule model 'unknown-xyz'")
 	}
-	// Must contain Models() function.
-	if !strings.Contains(srcStr, "func Models()") {
-		t.Errorf("generated source missing Models() function")
+	// Must contain ModelIDs() function (named to avoid clash with registry.go:Models() []ModelInfo).
+	if !strings.Contains(srcStr, "func ModelIDs()") {
+		t.Errorf("generated source missing ModelIDs() function")
 	}
 }
 
