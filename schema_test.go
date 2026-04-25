@@ -381,10 +381,16 @@ func TestResolve_ErrAmbiguous(t *testing.T) {
 	// canonical triples (Family+Variant+Date) match a non-exact-ID input.
 	_, err := bestiary.Resolve("claude", bestiary.WithScheme(bestiary.SchemeCanonical))
 	if err == nil {
-		// Possibly matched exactly one canonical — only fail if there are known
-		// multiple claude variants in the static registry.
-		t.Logf("Resolve(\"claude\") returned no error — static registry may have only one claude canonical")
-		return
+		// The static registry must always contain multiple claude variants (opus, sonnet, haiku, etc.).
+		// If Resolve returns nil here, the registry has shrunk below the expected threshold — surface
+		// this as a hard failure so registry regressions are caught immediately.
+		t.Fatal(
+			"Resolve(\"claude\", SchemeCanonical) returned nil error, want *ErrAmbiguous;\n" +
+				"  what went wrong: no ambiguity detected for a family name that matches many claude variants\n" +
+				"  why: the static registry must contain at least 2 distinct canonical triples for 'claude' (opus, sonnet, haiku, ...)\n" +
+				"  where: schema_test.go TestResolve_ErrAmbiguous\n" +
+				"  how to fix: check that models_static_gen.go still contains claude-opus, claude-sonnet, and claude-haiku entries; re-run go generate ./... if the static data shrank",
+		)
 	}
 
 	var ambig *bestiary.ErrAmbiguous
