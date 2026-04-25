@@ -191,41 +191,6 @@ func TestProviders_GoldenFile(t *testing.T) {
 }
 
 // --------------------------------------------------------------------------
-// Families() tests
-// --------------------------------------------------------------------------
-
-// TestFamilies_AllNonEmpty verifies no empty string in Families().
-func TestFamilies_AllNonEmpty(t *testing.T) {
-	for _, f := range bestiary.Families() {
-		if f == "" {
-			t.Error("Families() contains an empty string")
-		}
-	}
-}
-
-// TestFamilies_MinimumCount is a regression guard: the family set must not
-// collapse. We expect at least 50 families (~159 at time of writing).
-func TestFamilies_MinimumCount(t *testing.T) {
-	if n := len(bestiary.Families()); n < 50 {
-		t.Errorf("Families() returned %d families, want >= 50", n)
-	}
-}
-
-// TestFamilies_DefensiveCopy verifies that modifying the returned slice does
-// not affect subsequent calls (allFamilies is an array; copy must be returned).
-func TestFamilies_DefensiveCopy(t *testing.T) {
-	a := bestiary.Families()
-	b := bestiary.Families()
-	if len(a) == 0 {
-		t.Fatal("Families() returned empty")
-	}
-	a[0] = "MODIFIED"
-	if b[0] == "MODIFIED" {
-		t.Error("Families() returned a reference to internal state")
-	}
-}
-
-// --------------------------------------------------------------------------
 // helpers
 // --------------------------------------------------------------------------
 

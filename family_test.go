@@ -10,6 +10,41 @@ import (
 	"github.com/dayvidpham/bestiary"
 )
 
+// --------------------------------------------------------------------------
+// Families() property tests (migrated from provider_test.go — bestiary-49xa)
+// --------------------------------------------------------------------------
+
+// TestFamilies_AllNonEmpty verifies no empty string in Families().
+func TestFamilies_AllNonEmpty(t *testing.T) {
+	for _, f := range bestiary.Families() {
+		if f == "" {
+			t.Error("Families() contains an empty string")
+		}
+	}
+}
+
+// TestFamilies_MinimumCount is a regression guard: the family set must not
+// collapse. We expect at least 50 families (~159 at time of writing).
+func TestFamilies_MinimumCount(t *testing.T) {
+	if n := len(bestiary.Families()); n < 50 {
+		t.Errorf("Families() returned %d families, want >= 50", n)
+	}
+}
+
+// TestFamilies_DefensiveCopy verifies that modifying the returned slice does
+// not affect subsequent calls (allFamilies is an array; copy must be returned).
+func TestFamilies_DefensiveCopy(t *testing.T) {
+	a := bestiary.Families()
+	b := bestiary.Families()
+	if len(a) == 0 {
+		t.Fatal("Families() returned empty")
+	}
+	a[0] = "MODIFIED"
+	if b[0] == "MODIFIED" {
+		t.Error("Families() returned a reference to internal state")
+	}
+}
+
 // TestFamily_IsKnown verifies positive and negative cases for Family.IsKnown().
 func TestFamily_IsKnown(t *testing.T) {
 	t.Run("known families are recognized", func(t *testing.T) {
@@ -70,30 +105,37 @@ func TestFamily_String(t *testing.T) {
 	}
 }
 
-// TestFamily_RoundTrip verifies that MarshalText → UnmarshalText is idempotent.
+// TestFamily_RoundTrip verifies that MarshalText → UnmarshalText is idempotent
+// for both known and unknown Family values.
 func TestFamily_RoundTrip(t *testing.T) {
-	families := []bestiary.Family{
-		bestiary.FamilyClaude,
-		bestiary.FamilyGemini,
-		bestiary.FamilyGPT,
-		bestiary.FamilyLlama,
-		bestiary.FamilyMistral,
-		bestiary.FamilyDeepseek,
+	cases := []struct {
+		name   string
+		family bestiary.Family
+	}{
+		{"claude", bestiary.FamilyClaude},
+		{"gemini", bestiary.FamilyGemini},
+		{"gpt", bestiary.FamilyGPT},
+		{"llama", bestiary.FamilyLlama},
+		{"mistral", bestiary.FamilyMistral},
+		{"deepseek", bestiary.FamilyDeepseek},
+		// Unknown family: permissive contract must round-trip unknown values.
+		{"unknown", bestiary.Family("totally-unknown-family-xyz")},
 	}
-	for _, f := range families {
-		b, err := f.MarshalText()
-		if err != nil {
-			t.Errorf("Family(%q).MarshalText() error = %v", f, err)
-			continue
-		}
-		var got bestiary.Family
-		if err := got.UnmarshalText(b); err != nil {
-			t.Errorf("Family.UnmarshalText(%q) error = %v", b, err)
-			continue
-		}
-		if got != f {
-			t.Errorf("round-trip: got %q, want %q", got, f)
-		}
+	for _, tc := range cases {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			b, err := tc.family.MarshalText()
+			if err != nil {
+				t.Fatalf("Family(%q).MarshalText() error = %v", tc.family, err)
+			}
+			var got bestiary.Family
+			if err := got.UnmarshalText(b); err != nil {
+				t.Fatalf("Family.UnmarshalText(%q) error = %v", b, err)
+			}
+			if got != tc.family {
+				t.Errorf("round-trip: got %q, want %q", got, tc.family)
+			}
+		})
 	}
 }
 
@@ -117,6 +159,25 @@ func TestFamily_UnmarshalUnknownAccepted(t *testing.T) {
 		if string(f) != s {
 			t.Errorf("Family.UnmarshalText(%q): got %q, want %q", s, f, s)
 		}
+	}
+}
+
+// TestFamily_UnmarshalText_NilReceiver verifies the nil-receiver guard in
+// UnmarshalText. The guard `if f == nil` protects against a direct call on
+// a typed nil *Family pointer. A nil interface value can never dispatch to
+// a method in Go, so this test exercises the concrete-pointer nil path.
+//
+// The intent of the guard is defensive: it produces an actionable error instead
+// of a nil-pointer dereference when a caller passes a nil pointer directly.
+func TestFamily_UnmarshalText_NilReceiver(t *testing.T) {
+	var f *bestiary.Family // typed nil concrete pointer
+	err := f.UnmarshalText([]byte("claude"))
+	if err == nil {
+		t.Error("Family.UnmarshalText on nil receiver: want error, got nil")
+	}
+	msg := err.Error()
+	if msg == "" {
+		t.Error("Family.UnmarshalText on nil receiver: error message is empty")
 	}
 }
 
