@@ -57,6 +57,8 @@
 {"issue_id":"bestiary-346","label":"aura:p9-impl:s9-slice"}
 {"issue_id":"bestiary-35qs","label":"aura:p10-impl:s10-review"}
 {"issue_id":"bestiary-35qs","label":"aura:severity:minor"}
+{"issue_id":"bestiary-36uf","label":"aura:p10-impl:s10-review"}
+{"issue_id":"bestiary-36uf","label":"aura:severity:important"}
 {"issue_id":"bestiary-3anm","label":"aura:p10-impl:s10-review"}
 {"issue_id":"bestiary-3cmo","label":"aura:p10-impl:s10-review"}
 {"issue_id":"bestiary-3cmo","label":"aura:severity:minor"}
@@ -75,6 +77,8 @@
 {"issue_id":"bestiary-411t","label":"aura:severity:minor"}
 {"issue_id":"bestiary-417","label":"aura:p1-user:s1_1-classify"}
 {"issue_id":"bestiary-417","label":"aura:p7-plan:s7-handoff"}
+{"issue_id":"bestiary-43zc","label":"aura:p10-impl:s10-review"}
+{"issue_id":"bestiary-43zc","label":"aura:severity:minor"}
 {"issue_id":"bestiary-47i","label":"aura:p4-plan:s4-review"}
 {"issue_id":"bestiary-49xa","label":"aura:p10-impl:s10-review"}
 {"issue_id":"bestiary-4c2g","label":"aura:p10-impl:s10-review"}
@@ -265,6 +269,8 @@
 {"issue_id":"bestiary-cave","label":"aura:p10-impl:s10-review"}
 {"issue_id":"bestiary-ccfg","label":"aura:p10-impl:s10-review"}
 {"issue_id":"bestiary-ccfg","label":"aura:severity:minor"}
+{"issue_id":"bestiary-cctq","label":"aura:p10-impl:s10-review"}
+{"issue_id":"bestiary-cctq","label":"aura:severity:minor"}
 {"issue_id":"bestiary-cd3","label":"aura:p9-impl:s9-slice"}
 {"issue_id":"bestiary-cef","label":"aura:p9-impl:s9-slice"}
 {"issue_id":"bestiary-cg9","label":"aura:p4-plan:s4-review"}
@@ -273,6 +279,8 @@
 {"issue_id":"bestiary-cn2","label":"aura:axis:test_quality"}
 {"issue_id":"bestiary-cn2","label":"aura:p4-plan:s4-review"}
 {"issue_id":"bestiary-cn2","label":"aura:vote:accept"}
+{"issue_id":"bestiary-cnvz","label":"aura:p10-impl:s10-review"}
+{"issue_id":"bestiary-cnvz","label":"aura:severity:blocker"}
 {"issue_id":"bestiary-cp0r","label":"aura:p10-impl:s10-review"}
 {"issue_id":"bestiary-cp0r","label":"aura:severity:blocker"}
 {"issue_id":"bestiary-cp2r","label":"aura:p10-impl:s10-review"}
@@ -298,6 +306,8 @@
 {"issue_id":"bestiary-dyq6","label":"aura:p10-impl:s10-review"}
 {"issue_id":"bestiary-dyq6","label":"aura:severity:important"}
 {"issue_id":"bestiary-e5n","label":"aura:p9-impl:s9-slice"}
+{"issue_id":"bestiary-e61a","label":"aura:p10-impl:s10-review"}
+{"issue_id":"bestiary-e61a","label":"aura:severity:important"}
 {"issue_id":"bestiary-e7rq","label":"aura:p10-impl:s10-review"}
 {"issue_id":"bestiary-e7rq","label":"aura:severity:blocker"}
 {"issue_id":"bestiary-e7ru","label":"aura:p10-impl:s10-review"}
@@ -318,6 +328,8 @@
 {"issue_id":"bestiary-el0","label":"aura:p4-plan:s4-review"}
 {"issue_id":"bestiary-el0","label":"aura:review:axis-a"}
 {"issue_id":"bestiary-el0","label":"aura:review:vote-revise"}
+{"issue_id":"bestiary-eq7w","label":"aura:p10-impl:s10-review"}
+{"issue_id":"bestiary-eq7w","label":"aura:severity:minor"}
 {"issue_id":"bestiary-est","label":"aura:p10-impl:cycle-1-clean"}
 {"issue_id":"bestiary-est","label":"aura:p9-impl:s9-slice"}
 {"issue_id":"bestiary-eu36","label":"aura:severity:blocker"}
@@ -421,6 +433,8 @@
 {"issue_id":"bestiary-k1g9","label":"aura:severity:minor"}
 {"issue_id":"bestiary-kigz","label":"aura:p10-impl:s10-review"}
 {"issue_id":"bestiary-kigz","label":"aura:severity:important"}
+{"issue_id":"bestiary-kk3t","label":"aura:p10-impl:s10-review"}
+{"issue_id":"bestiary-kk3t","label":"aura:severity:minor"}
 {"issue_id":"bestiary-ktj","label":"aura:p10-impl:cycle-1-clean"}
 {"issue_id":"bestiary-ktj","label":"aura:p9-impl:s9-slice"}
 {"issue_id":"bestiary-l3pj","label":"aura:p10-impl:s10-review"}
@@ -579,6 +593,7 @@
 {"issue_id":"bestiary-wa2","label":"aura:p6-plan:s6-ratify"}
 {"issue_id":"bestiary-wegq","label":"aura:p10-impl:s10-review"}
 {"issue_id":"bestiary-weps","label":"aura:severity:important"}
+{"issue_id":"bestiary-wi36","label":"aura:epic-followup"}
 {"issue_id":"bestiary-wia","label":"aura:p11-user:s11-uat"}
 {"issue_id":"bestiary-wkv","label":"aura:p10-impl:s10-review"}
 {"issue_id":"bestiary-wkv","label":"aura:severity:minor"}
