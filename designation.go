@@ -91,10 +91,10 @@ func parseRating(s string) (AcceptabilityRating, error) {
 	default:
 		return AcceptabilityAdmitted, fmt.Errorf(
 			"bestiary: unrecognized acceptability rating %q\n"+
-				"  What: %q is not a valid AcceptabilityRating\n"+
-				"  Why: only %q, %q, and %q are accepted\n"+
-				"  Where: parseRating\n"+
-				"  How to fix: pass one of the accepted rating strings",
+				"  what: %q is not a valid AcceptabilityRating\n"+
+				"  why: only %q, %q, and %q are accepted\n"+
+				"  where: parseRating\n"+
+				"  how to fix: pass one of the accepted rating strings",
 			s, s, "admitted", "preferred", "deprecated",
 		)
 	}

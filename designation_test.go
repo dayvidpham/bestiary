@@ -1,6 +1,7 @@
 package bestiary_test
 
 import (
+	"encoding/json"
 	"testing"
 
 	"github.com/dayvidpham/bestiary"
@@ -71,5 +72,75 @@ func TestDesignation_AdmittedIsDefault(t *testing.T) {
 	var rating bestiary.AcceptabilityRating
 	if rating != bestiary.AcceptabilityAdmitted {
 		t.Errorf("zero AcceptabilityRating = %v, want AcceptabilityAdmitted (zero iota)", rating)
+	}
+}
+
+func TestAcceptabilityRating_JSON_RoundTrip(t *testing.T) {
+	ratings := []bestiary.AcceptabilityRating{
+		bestiary.AcceptabilityAdmitted,
+		bestiary.AcceptabilityPreferred,
+		bestiary.AcceptabilityDeprecated,
+	}
+	for _, r := range ratings {
+		b, err := json.Marshal(r)
+		if err != nil {
+			t.Errorf("json.Marshal(%v) error: %v", r, err)
+			continue
+		}
+		var got bestiary.AcceptabilityRating
+		if err := json.Unmarshal(b, &got); err != nil {
+			t.Errorf("json.Unmarshal(%s) error: %v", b, err)
+			continue
+		}
+		if got != r {
+			t.Errorf("round-trip %v: got %v", r, got)
+		}
+	}
+}
+
+func TestAcceptabilityRating_UnmarshalJSON_CaseInsensitive(t *testing.T) {
+	tests := []struct {
+		input string
+		want  bestiary.AcceptabilityRating
+	}{
+		{`"ADMITTED"`, bestiary.AcceptabilityAdmitted},
+		{`"Admitted"`, bestiary.AcceptabilityAdmitted},
+		{`"PREFERRED"`, bestiary.AcceptabilityPreferred},
+		{`"Preferred"`, bestiary.AcceptabilityPreferred},
+		{`"DEPRECATED"`, bestiary.AcceptabilityDeprecated},
+		{`"Deprecated"`, bestiary.AcceptabilityDeprecated},
+	}
+	for _, tt := range tests {
+		var got bestiary.AcceptabilityRating
+		if err := json.Unmarshal([]byte(tt.input), &got); err != nil {
+			t.Errorf("Unmarshal(%s) error: %v", tt.input, err)
+			continue
+		}
+		if got != tt.want {
+			t.Errorf("Unmarshal(%s) = %v, want %v", tt.input, got, tt.want)
+		}
+	}
+}
+
+func TestAcceptabilityRating_UnmarshalJSON_RejectsBadInput(t *testing.T) {
+	tests := []struct {
+		desc  string
+		input string
+	}{
+		{"wrong type: number", `42`},
+		{"wrong type: null", `null`},
+		{"unknown string value", `"bogus"`},
+	}
+	for _, tt := range tests {
+		var got bestiary.AcceptabilityRating
+		err := json.Unmarshal([]byte(tt.input), &got)
+		if err == nil {
+			t.Errorf("Unmarshal(%s) [%s] succeeded with %v, want error", tt.input, tt.desc, got)
+			continue
+		}
+		msg := err.Error()
+		if msg == "" {
+			t.Errorf("Unmarshal(%s) [%s] returned empty error message", tt.input, tt.desc)
+		}
 	}
 }
