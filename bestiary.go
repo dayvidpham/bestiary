@@ -33,9 +33,11 @@ type ModelInfo struct {
 	// NormalizedVariant is the variant suffix extracted from Family (e.g. "opus",
 	// "pro", "flash-lite"). Empty when the model has no variant. Populated at codegen time.
 	NormalizedVariant string
-	// NormalizedVersion is the model version extracted from the family string
-	// (e.g. "4.5" for "claude-opus-4-5", "2.5" for "gemini-2.5-flash"). Empty
-	// when the model has no separable version. Populated at codegen time.
+	// NormalizedVersion is the model version extracted from the model ID
+	// (primary source, e.g. "claude-opus-4-5-20251101" → "4.5") or, when the
+	// family string itself carries a version component, from the family string
+	// (fallback, e.g. "gemini-2.5-flash" → "2.5"). Empty when no separable
+	// version is found. Populated at codegen time.
 	NormalizedVersion string
 	// NormalizedDate is the release date extracted from the model ID or ReleaseDate
 	// field, in YYYY-MM-DD format. Empty when no date is found. Populated at codegen time.

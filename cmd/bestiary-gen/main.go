@@ -611,9 +611,10 @@ func parseCapabilityRaw(raw json.RawMessage) bestiary.Capability {
 // LastSynced is intentionally left empty — the caller stamps it.
 //
 // Normalized fields are populated at this stage by invoking
-// bestiary.ParseFamilyWithVersion, bestiary.ExtractDate, and
-// bestiary.InferFamilyFromID so that models_static_gen.go carries baked
-// normalization data at compile time.
+// bestiary.ParseFamilyWithVersion, bestiary.ExtractVersionFromID (primary
+// source for NormalizedVersion when the family field does not embed a
+// version), bestiary.ExtractDate, and bestiary.InferFamilyFromID so that
+// models_static_gen.go carries baked normalization data at compile time.
 func genToModelInfo(providerSlug string, wm genWireModel) bestiary.ModelInfo {
 	// Derive normalized family, variant, and version.
 	rawFamily := bestiary.Family(wm.Family)

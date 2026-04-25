@@ -20,6 +20,7 @@ URD `bestiary-rjf`, PROPOSAL-3 `bestiary-1oq`.
 5. [NEW Resolve API + ErrAmbiguous error type](#5-new-resolve-api)
 6. [NEW parse package: ParseFamily, ExtractDate, InferFamilyFromID](#6-new-parse-package)
 7. [SQLite v2→v3: column renames + idx_canonical index](#7-sqlite-v2v3-migration)
+7b. [SQLite v3→v4: version column + idx_canonical rebuild](#7b-sqlite-v3v4-version-column--idx_canonical-rebuild)
 8. [NEW Model_* constants (ModelIDs function)](#8-new-model_-constants)
 9. [CLI: bestiary show --scheme flag; bestiary-gen --cache-dir and --no-fetch](#9-cli-changes)
 
@@ -135,7 +136,7 @@ these four new keys.
 2. Update any JSON Schema validators that use `additionalProperties: false` on
    `ModelInfo`-shaped objects — add the four new property declarations.
 3. For models loaded from a pre-v4 SQLite cache, `NormalizedFamily/Variant/Version/Date`
-   will be empty strings until `bestiary sync` is re-run (see Section 7).
+   will be empty strings until `bestiary sync` is re-run (see Section 7b for v3→v4 migration; Section 7 for v2→v3).
 
 ---
 
