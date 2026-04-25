@@ -581,20 +581,41 @@ func parseCapabilityRaw(raw json.RawMessage) bestiary.Capability {
 
 // genToModelInfo converts a genWireModel to bestiary.ModelInfo.
 // LastSynced is intentionally left empty — the caller stamps it.
+//
+// Normalized fields are populated at this stage by invoking parse.ParseFamily,
+// parse.ExtractDate, and parse.InferFamilyFromID so that models_static_gen.go
+// carries baked normalization data at compile time.
 func genToModelInfo(providerSlug string, wm genWireModel) bestiary.ModelInfo {
+	// Derive normalized family and variant.
+	rawFamily := bestiary.Family(wm.Family)
+	var normFamily bestiary.Family
+	var normVariant string
+	if rawFamily != "" {
+		normFamily, normVariant = bestiary.ParseFamily(rawFamily)
+	} else {
+		// ~25% of models have an empty Family field — infer from the model ID.
+		normFamily = bestiary.InferFamilyFromID(bestiary.ModelID(wm.ID), bestiary.Provider(providerSlug))
+	}
+
+	// Derive normalized date from model ID (primary) or release date (fallback).
+	normDate := bestiary.ExtractDate(bestiary.ModelID(wm.ID), wm.ReleaseDate)
+
 	info := bestiary.ModelInfo{
-		ID:               bestiary.ModelID(wm.ID),
-		Provider:         bestiary.Provider(providerSlug),
-		DisplayName:      wm.Name,
-		Family:           bestiary.Family(wm.Family),
-		Reasoning:        wm.Reasoning,
-		ToolCall:         wm.ToolCall,
-		Attachment:       wm.Attachment,
-		Temperature:      wm.Temperature,
-		StructuredOutput: wm.StructuredOutput,
-		OpenWeights:      wm.OpenWeights,
-		ReleaseDate:      wm.ReleaseDate,
-		Knowledge:        wm.Knowledge,
+		ID:                bestiary.ModelID(wm.ID),
+		Provider:          bestiary.Provider(providerSlug),
+		DisplayName:       wm.Name,
+		Family:            rawFamily,
+		NormalizedFamily:  normFamily,
+		NormalizedVariant: normVariant,
+		NormalizedDate:    normDate,
+		Reasoning:         wm.Reasoning,
+		ToolCall:          wm.ToolCall,
+		Attachment:        wm.Attachment,
+		Temperature:       wm.Temperature,
+		StructuredOutput:  wm.StructuredOutput,
+		OpenWeights:       wm.OpenWeights,
+		ReleaseDate:       wm.ReleaseDate,
+		Knowledge:         wm.Knowledge,
 		// interleaved field: polymorphic bool or object.
 		Interleaved: parseCapabilityRaw(wm.Interleaved),
 		LastSynced:  "",
@@ -670,6 +691,9 @@ func generateSource(models []bestiary.ModelInfo, slugToConst map[string]string) 
 		fmt.Fprintf(&buf, "\t\tProvider:              %s,\n", providerExpr(m.Provider, slugToConst))
 		fmt.Fprintf(&buf, "\t\tDisplayName:           %q,\n", m.DisplayName)
 		fmt.Fprintf(&buf, "\t\tFamily:                %q,\n", m.Family)
+		fmt.Fprintf(&buf, "\t\tNormalizedFamily:      %q,\n", m.NormalizedFamily)
+		fmt.Fprintf(&buf, "\t\tNormalizedVariant:     %q,\n", m.NormalizedVariant)
+		fmt.Fprintf(&buf, "\t\tNormalizedDate:        %q,\n", m.NormalizedDate)
 		fmt.Fprintf(&buf, "\t\tContextWindow:         %d,\n", m.ContextWindow)
 		fmt.Fprintf(&buf, "\t\tMaxOutput:             %d,\n", m.MaxOutput)
 		fmt.Fprintf(&buf, "\t\tReasoning:             %v,\n", m.Reasoning)
