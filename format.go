@@ -257,3 +257,41 @@ func formatModelTable(w io.Writer, model ModelInfo) error {
 	printTableModelRow(w, model)
 	return nil
 }
+
+// --- ErrAmbiguous candidate table ---
+
+// ambiguousCandidateHeader is the format string for the 3-column candidate table
+// rendered when Resolve returns *ErrAmbiguous.
+const ambiguousCandidateHeader = "%-40s  %-14s  %-40s\n"
+const ambiguousCandidateRow = "%-40s  %-14s  %-40s\n"
+
+// FormatAmbiguous writes a human-readable disambiguation table for e to w.
+//
+// Output format (written to w, typically os.Stderr):
+//
+//	bestiary: input "<input>" matched multiple canonicals
+//	<header row>
+//	<separator row>
+//	<one row per candidate>
+//	use --scheme=raw or refine input
+//
+// The function always returns nil; write errors are silently swallowed because
+// this is advisory stderr output — a write failure should not mask the real
+// ErrAmbiguous that the caller surfaces to the user.
+func FormatAmbiguous(w io.Writer, e *ErrAmbiguous) {
+	fmt.Fprintf(w, "bestiary: input %q matched multiple canonicals\n\n", e.Input)
+	fmt.Fprintf(w, ambiguousCandidateHeader, "Canonical", "Provider", "Raw ID")
+	fmt.Fprintf(w, ambiguousCandidateHeader,
+		strings.Repeat("-", 40),
+		strings.Repeat("-", 14),
+		strings.Repeat("-", 40),
+	)
+	for _, c := range e.Candidates {
+		fmt.Fprintf(w, ambiguousCandidateRow,
+			c.Format(SchemeCanonical),
+			string(c.Provider),
+			string(c.ID),
+		)
+	}
+	fmt.Fprintf(w, "\nuse --scheme=raw or refine input\n")
+}
