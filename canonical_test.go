@@ -3,6 +3,7 @@ package bestiary_test
 import (
 	"encoding/json"
 	"errors"
+	"strings"
 	"testing"
 
 	"github.com/dayvidpham/bestiary"
@@ -83,12 +84,29 @@ func TestParseScheme_ErrorIsActionable(t *testing.T) {
 	if err == nil {
 		t.Fatal("ParseScheme(\"badscheme\") returned nil error, want error")
 	}
-	// Error should mention the bad input and how to fix it.
 	msg := err.Error()
 	if msg == "" {
-		t.Error("ParseScheme error message is empty")
+		t.Fatal("ParseScheme error message is empty")
 	}
-	_ = errors.Unwrap(err) // just ensure it doesn't panic
+
+	// The error must mention the bad input.
+	if !strings.Contains(msg, "badscheme") {
+		t.Errorf("error message does not contain the bad input %q:\n  %s", "badscheme", msg)
+	}
+
+	// The error must name all 4 valid scheme strings.
+	for _, scheme := range []string{"canonical", "huggingface", "purl", "raw"} {
+		if !strings.Contains(msg, scheme) {
+			t.Errorf("error message does not mention valid scheme %q:\n  %s", scheme, msg)
+		}
+	}
+
+	// The error must include a how-to-fix hint.
+	if !strings.Contains(msg, "how to fix") {
+		t.Errorf("error message missing 'how to fix' guidance:\n  %s", msg)
+	}
+
+	_ = errors.Unwrap(err) // must not panic
 }
 
 func TestCanonicalScheme_IotaOrder(t *testing.T) {

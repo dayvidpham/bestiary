@@ -1,7 +1,6 @@
 package bestiary_test
 
 import (
-	"strings"
 	"testing"
 
 	"github.com/dayvidpham/bestiary"
@@ -328,8 +327,8 @@ func TestFormatCanonical_WithFamilyAndDate(t *testing.T) {
 		Date:     "2024-08-06",
 	}
 	got := ref.Format(bestiary.SchemeCanonical)
-	// Family only + date: "openai/gpt@2024-08-06"
-	if !strings.Contains(got, "openai") || !strings.Contains(got, "gpt") || !strings.Contains(got, "2024-08-06") {
-		t.Errorf("Format(SchemeCanonical) = %q; want to contain provider, family, and date", got)
+	want := "openai/gpt@2024-08-06"
+	if got != want {
+		t.Errorf("Format(SchemeCanonical) = %q, want %q", got, want)
 	}
 }
