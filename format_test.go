@@ -310,6 +310,38 @@ func TestFormatModel_YAML(t *testing.T) {
 	}
 }
 
+// TestFormatModel_YAML_NormalizedFields verifies that the YAML serializer emits
+// NormalizedFamily, NormalizedVariant, and NormalizedDate alongside the other
+// fields, matching the JSON path (bestiary-v1jf).
+func TestFormatModel_YAML_NormalizedFields(t *testing.T) {
+	var buf bytes.Buffer
+	model := bestiary.ModelInfo{
+		ID:                bestiary.ModelID("claude-opus-4-20250514"),
+		Provider:          bestiary.ProviderAnthropic,
+		DisplayName:       "Claude Opus 4",
+		Family:            "claude-opus",
+		NormalizedFamily:  "claude",
+		NormalizedVariant: "opus",
+		NormalizedDate:    "2025-05-14",
+		LastSynced:        "2025-05-14T00:00:00Z",
+	}
+
+	err := bestiary.FormatModel(&buf, model, bestiary.FormatYAML)
+	if err != nil {
+		t.Fatalf("FormatModel(YAML) returned error: %v", err)
+	}
+
+	output := buf.String()
+	for _, want := range []string{
+		"NormalizedFamily:", "NormalizedVariant:", "NormalizedDate:",
+		"claude", "opus", "2025-05-14",
+	} {
+		if !strings.Contains(output, want) {
+			t.Errorf("FormatModel(YAML) output missing %q\nGot:\n%s", want, output)
+		}
+	}
+}
+
 // TestFormatModels_Table validates that FormatModels with FormatTable produces a
 // table with a header row containing column names and data rows for each model.
 func TestFormatModels_Table(t *testing.T) {
