@@ -610,18 +610,21 @@ func parseCapabilityRaw(raw json.RawMessage) bestiary.Capability {
 // genToModelInfo converts a genWireModel to bestiary.ModelInfo.
 // LastSynced is intentionally left empty — the caller stamps it.
 //
-// Normalized fields are populated at this stage by invoking bestiary.ParseFamily,
-// bestiary.ExtractDate, and bestiary.InferFamilyFromID so that models_static_gen.go
-// carries baked normalization data at compile time.
+// Normalized fields are populated at this stage by invoking
+// bestiary.ParseFamilyWithVersion, bestiary.ExtractDate, and
+// bestiary.InferFamilyFromID so that models_static_gen.go carries baked
+// normalization data at compile time.
 func genToModelInfo(providerSlug string, wm genWireModel) bestiary.ModelInfo {
-	// Derive normalized family and variant.
+	// Derive normalized family, variant, and version.
 	rawFamily := bestiary.Family(wm.Family)
 	var normFamily bestiary.Family
 	var normVariant string
+	var normVersion string
 	if rawFamily != "" {
-		normFamily, normVariant = bestiary.ParseFamily(rawFamily)
+		normFamily, normVariant, normVersion = bestiary.ParseFamilyWithVersion(rawFamily)
 	} else {
 		// ~25% of models have an empty Family field — infer from the model ID.
+		// InferFamilyFromID returns the first token; no version extraction here.
 		normFamily = bestiary.InferFamilyFromID(bestiary.ModelID(wm.ID), bestiary.Provider(providerSlug))
 	}
 
@@ -635,6 +638,7 @@ func genToModelInfo(providerSlug string, wm genWireModel) bestiary.ModelInfo {
 		Family:            rawFamily,
 		NormalizedFamily:  normFamily,
 		NormalizedVariant: normVariant,
+		NormalizedVersion: normVersion,
 		NormalizedDate:    normDate,
 		Reasoning:         wm.Reasoning,
 		ToolCall:          wm.ToolCall,
@@ -721,6 +725,7 @@ func generateSource(models []bestiary.ModelInfo, slugToConst map[string]string) 
 		fmt.Fprintf(&buf, "\t\tFamily:                %q,\n", m.Family)
 		fmt.Fprintf(&buf, "\t\tNormalizedFamily:      %q,\n", m.NormalizedFamily)
 		fmt.Fprintf(&buf, "\t\tNormalizedVariant:     %q,\n", m.NormalizedVariant)
+		fmt.Fprintf(&buf, "\t\tNormalizedVersion:     %q,\n", m.NormalizedVersion)
 		fmt.Fprintf(&buf, "\t\tNormalizedDate:        %q,\n", m.NormalizedDate)
 		fmt.Fprintf(&buf, "\t\tContextWindow:         %d,\n", m.ContextWindow)
 		fmt.Fprintf(&buf, "\t\tMaxOutput:             %d,\n", m.MaxOutput)

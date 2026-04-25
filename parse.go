@@ -287,6 +287,125 @@ func ParseFamily(raw Family) (Family, string) {
 	return raw, ""
 }
 
+// ParseFamilyWithVersion takes a raw API family value and returns
+// (Family, variant, version) — a three-way decomposition that separates the
+// semantic model version (e.g. "4.5") from the variant (e.g. "opus").
+//
+// This is an additive companion to ParseFamily. For inputs that ParseFamily
+// already handles correctly (overrides, v/k/m/no-prefix patterns, suffix
+// stripping), the family and variant return values are identical to ParseFamily.
+// The new third return value extracts the numeric version component when the
+// raw family string embeds one via the hyphen-version pattern or a dot-version
+// tail (e.g. "gemini-2.5-flash").
+//
+// Resolution order (first match wins):
+//  1. family_overrides table — no version for override entries.
+//  2. hyphen-version pattern — converts hyphenated digits to dot notation:
+//     "claude-opus-4-5" → (claude, opus, 4.5); "llama-3-1" → (llama, "", 3.1).
+//  3. Other versioned patterns (v/k/m/no-prefix) — version stays in variant, version="".
+//  4. Suffix stripping + dot-version detection:
+//     "gemini-2.5-flash" → suffix strip yields base="gemini-2.5"; detect "-N.M"
+//     tail → (gemini, flash, 2.5).
+//  5. Dot-version fallback: "gemini-2.5" → (gemini, "", 2.5).
+//  6. Pure fallback — same as ParseFamily, version="".
+//
+// ParseFamilyWithVersion is deterministic. Empty raw returns ("", "", "").
+func ParseFamilyWithVersion(raw Family) (Family, string, string) {
+	if raw == "" {
+		return "", "", ""
+	}
+
+	pd, err := loadParseData()
+	if err != nil {
+		// Fail closed: same rationale as ParseFamily.
+		return raw, "", ""
+	}
+
+	// Step 1: Check explicit overrides table. No version for override entries —
+	// overrides encode stable (family, variant) pairs without a version component.
+	if ov, ok := pd.overrides[raw]; ok {
+		return ov.Family, ov.Variant, ""
+	}
+
+	rawStr := string(raw)
+
+	// Step 2: Try versioned-variant patterns.
+	for _, cp := range pd.patterns {
+		m := cp.re.FindStringSubmatch(rawStr)
+		if m == nil {
+			continue
+		}
+		base := m[cp.baseIdx]
+		variantStr := m[cp.variantIdx]
+
+		if cp.Name == "hyphen-version" {
+			// Convert hyphen-separated digit tokens to dot notation.
+			// e.g. "4-5" → "4.5"; "3-1" → "3.1"; "4" → "4".
+			version := strings.ReplaceAll(variantStr, "-", ".")
+
+			if ov, ok := pd.overrides[Family(base)]; ok {
+				// The base has a known decomposition; the numeric version is extracted
+				// separately from the override's variant.
+				// e.g. "claude-opus-4-5": base="claude-opus" → (claude, opus), version="4.5"
+				return ov.Family, ov.Variant, version
+			}
+			// Base not in overrides; treat base as the family directly.
+			// e.g. "llama-3-1": base="llama" → (llama, "", "3.1")
+			return Family(base), "", version
+		}
+
+		// For all other patterns (v-prefix, k-prefix, m-prefix, no-prefix):
+		// the version-like string (e.g. "k2.5", "3.5") stays in the variant field
+		// as ParseFamily returns it. These encode version in their own notation and
+		// separating them from the "variant" concept adds no value at this time.
+		// version remains "".
+		return Family(base), variantStr, ""
+	}
+
+	// Step 3: Suffix stripping + dot-version detection.
+	// "gemini-2.5-flash": suffix "-flash" → base="gemini-2.5" → extractDotVersion → (gemini, "2.5")
+	for _, suffix := range pd.suffixes {
+		if strings.HasSuffix(rawStr, suffix) {
+			trimmedBase := rawStr[:len(rawStr)-len(suffix)]
+			variantSuffix := suffix[1:] // strip leading "-"
+			if baseWithoutVer, ver := extractDotVersion(trimmedBase); ver != "" {
+				return Family(baseWithoutVer), variantSuffix, ver
+			}
+			return Family(trimmedBase), variantSuffix, ""
+		}
+	}
+
+	// Step 4: Dot-version fallback.
+	// "gemini-2.5" → (gemini, "", "2.5")
+	if baseWithoutVer, ver := extractDotVersion(rawStr); ver != "" {
+		return Family(baseWithoutVer), "", ver
+	}
+
+	// Step 5: Pure fallback — return raw unchanged, no version.
+	return raw, "", ""
+}
+
+// extractDotVersion detects a trailing "-N.M" version suffix in s and splits
+// it off. Returns (base, "N.M") when found, or (s, "") when not.
+//
+// Examples:
+//
+//	"gemini-2.5" → ("gemini", "2.5")
+//	"somemodel-10.3" → ("somemodel", "10.3")
+//	"gpt-4o" → ("gpt-4o", "")  (no dot in the version token)
+func extractDotVersion(s string) (string, string) {
+	m := reDotVersionSuffix.FindStringSubmatch(s)
+	if m == nil {
+		return s, ""
+	}
+	return m[1], m[2]
+}
+
+// reDotVersionSuffix matches a string of the form "<base>-<MAJOR>.<MINOR>"
+// where base is one or more alphanumeric segments separated by hyphens.
+// The version must end the string (no trailing suffix).
+var reDotVersionSuffix = regexp.MustCompile(`^(.+)-(\d+\.\d+)$`)
+
 // ExtractDate extracts a date string from a model ID or release date field,
 // normalizing to the YYYY-MM-DD form.
 //

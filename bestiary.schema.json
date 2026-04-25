@@ -30,6 +30,10 @@
       "description": "Variant suffix extracted from Family (e.g. \"opus-4\", \"pro\", \"flash\"). Empty when the model has no variant. Populated at codegen time.",
       "type": "string"
     },
+    "NormalizedVersion": {
+      "description": "Model version extracted from the family string (e.g. \"4.5\" for claude-opus-4-5, \"2.5\" for gemini-2.5-flash). Empty when the model has no separable version. Populated at codegen time.",
+      "type": "string"
+    },
     "NormalizedDate": {
       "description": "Release date extracted from the model ID or ReleaseDate field in YYYY-MM-DD format. Empty when no date is found. Populated at codegen time.",
       "type": "string"
@@ -164,6 +168,7 @@
     "Family",
     "NormalizedFamily",
     "NormalizedVariant",
+    "NormalizedVersion",
     "NormalizedDate",
     "ContextWindow",
     "MaxOutput",

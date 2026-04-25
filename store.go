@@ -58,8 +58,14 @@ const schemaSQL = `CREATE TABLE IF NOT EXISTS models (
 // indexSQL creates the canonical lookup index used by QueryByCanonical.
 // The (family, variant, version) prefix is used for all non-empty canonical
 // axis predicates; provider is included to support composite-key scan pruning.
-// Safe to run on any database that already has the models table.
+// Safe to run on any database that already has the models table (v4+).
 const indexSQL = `CREATE INDEX IF NOT EXISTS idx_canonical ON models(family, variant, version, provider);`
+
+// indexV3SQL is the v3 canonical index, used only by migrateToV3 to create
+// a temporary (family, variant, provider) index on databases being upgraded
+// from v2 to v3. The subsequent migrateToV4 call will drop this index and
+// recreate it as indexSQL (adding version).
+const indexV3SQL = `CREATE INDEX IF NOT EXISTS idx_canonical ON models(family, variant, provider);`
 
 // CanonicalFilter selects models by their parsed canonical axes.
 // Empty fields act as wildcards: an empty Family matches any family, an
@@ -209,8 +215,8 @@ func migrateSchema(conn *sqlite.Conn, fromVersion int) error {
 		if err := sqlitex.ExecuteTransient(conn, schemaSQL, nil); err != nil {
 			return fmt.Errorf("bestiary: migrateSchema: create models table: %w", err)
 		}
-		// Create the canonical index on fresh DBs; migrateToV3 handles this
-		// for upgrade paths, but the fresh path skips that function entirely.
+		// Create the canonical index on fresh DBs; upgrade paths handle their
+		// own index creation inside each migrateToVN function.
 		if err := sqlitex.ExecuteTransient(conn, indexSQL, nil); err != nil {
 			return fmt.Errorf("bestiary: migrateSchema: create idx_canonical: %w", err)
 		}
@@ -220,14 +226,25 @@ func migrateSchema(conn *sqlite.Conn, fromVersion int) error {
 		if err := migrateToV2(conn); err != nil {
 			return fmt.Errorf("bestiary: migrateSchema: v%d→v2: %w", fromVersion, err)
 		}
-		// Fall through: v2 DB still needs migration to v3 below.
+		// Fall through: v2 DB still needs migration to v3 then v4.
 		if err := migrateToV3(conn); err != nil {
 			return fmt.Errorf("bestiary: migrateSchema: v2→v3: %w", err)
 		}
+		if err := migrateToV4(conn); err != nil {
+			return fmt.Errorf("bestiary: migrateSchema: v3→v4: %w", err)
+		}
 	} else if fromVersion < 3 {
-		// v2 database needs migration to v3.
+		// v2 database needs migration to v3, then v4.
 		if err := migrateToV3(conn); err != nil {
 			return fmt.Errorf("bestiary: migrateSchema: v2→v3: %w", err)
+		}
+		if err := migrateToV4(conn); err != nil {
+			return fmt.Errorf("bestiary: migrateSchema: v3→v4: %w", err)
+		}
+	} else if fromVersion < 4 {
+		// v3 database needs migration to v4.
+		if err := migrateToV4(conn); err != nil {
+			return fmt.Errorf("bestiary: migrateSchema: v3→v4: %w", err)
 		}
 	}
 
@@ -437,10 +454,54 @@ func migrateToV3(conn *sqlite.Conn) error {
 		}
 	}
 
-	// Create the canonical index for QueryByCanonical to use.
+	// Create the v3 canonical index (family, variant, provider).
+	// migrateToV4 will subsequently drop and recreate this as (family, variant, version, provider).
+	err = sqlitex.ExecuteTransient(conn, indexV3SQL, nil)
+	if err != nil {
+		return fmt.Errorf("create idx_canonical (v3): %w", err)
+	}
+
+	return nil
+}
+
+// migrateToV4 upgrades an existing v3 models table to the v4 schema:
+//   - Adds `version TEXT NOT NULL DEFAULT ''` column for the model version
+//     extracted from the family string (e.g. "4.5" for claude-opus-4-5).
+//   - Drops the v3 idx_canonical (family, variant, provider) index and
+//     recreates it as (family, variant, version, provider) so that version
+//     is a first-class lookup axis.
+//
+// SQLite supports ADD COLUMN via ALTER TABLE for NOT NULL columns with a
+// constant DEFAULT value, so table-recreate is not required here.
+// The new column defaults to '' for all existing rows; a subsequent sync
+// operation will backfill NormalizedVersion from the parser.
+func migrateToV4(conn *sqlite.Conn) error {
+	endFn := sqlitex.Transaction(conn)
+	var err error
+	defer endFn(&err)
+
+	// Step 1: Add the version column (defaults to '' for all existing rows).
+	err = sqlitex.ExecuteTransient(conn,
+		`ALTER TABLE models ADD COLUMN version TEXT NOT NULL DEFAULT ''`, nil)
+	if err != nil {
+		return fmt.Errorf("add version column: %w\n"+
+			"  What: v3→v4 migration failed to add the version column\n"+
+			"  Why: ALTER TABLE rejected — column may already exist or schema is corrupt\n"+
+			"  Where: store.go migrateToV4\n"+
+			"  How to fix: inspect the database schema; if already on v4, this is a version mismatch bug",
+			err)
+	}
+
+	// Step 2: Drop the v3 idx_canonical (covers family, variant, provider).
+	err = sqlitex.ExecuteTransient(conn, `DROP INDEX IF EXISTS idx_canonical`, nil)
+	if err != nil {
+		return fmt.Errorf("drop old idx_canonical: %w", err)
+	}
+
+	// Step 3: Recreate idx_canonical with version as a key column.
 	err = sqlitex.ExecuteTransient(conn, indexSQL, nil)
 	if err != nil {
-		return fmt.Errorf("create idx_canonical: %w", err)
+		return fmt.Errorf("create new idx_canonical (v4): %w", err)
 	}
 
 	return nil
@@ -470,7 +531,7 @@ func (s *Store) UpsertModels(ctx context.Context, models []ModelInfo) error {
 	now := time.Now().UTC().Format(time.RFC3339)
 
 	const upsertSQL = `INSERT OR REPLACE INTO models (
-		model_id, provider, display_name, raw_family, family, variant, date,
+		model_id, provider, display_name, raw_family, family, variant, version, date,
 		context_window, max_output,
 		reasoning, tool_call, attachment, temperature, structured_output, interleaved, interleaved_config, open_weights,
 		cost_input, cost_output, cost_reasoning, cost_cache_read, cost_cache_write,
@@ -478,13 +539,13 @@ func (s *Store) UpsertModels(ctx context.Context, models []ModelInfo) error {
 		modalities_input, modalities_output,
 		last_synced
 	) VALUES (
-		?1, ?2, ?3, ?4, ?5, ?6, ?7,
-		?8, ?9,
-		?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17,
-		?18, ?19, ?20, ?21, ?22,
-		?23, ?24,
-		?25, ?26,
-		?27
+		?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8,
+		?9, ?10,
+		?11, ?12, ?13, ?14, ?15, ?16, ?17, ?18,
+		?19, ?20, ?21, ?22, ?23,
+		?24, ?25,
+		?26, ?27,
+		?28
 	)`
 
 	for i := range models {
@@ -497,6 +558,7 @@ func (s *Store) UpsertModels(ctx context.Context, models []ModelInfo) error {
 				string(m.Family),
 				string(m.NormalizedFamily),
 				m.NormalizedVariant,
+				m.NormalizedVersion,
 				m.NormalizedDate,
 				m.ContextWindow,
 				m.MaxOutput,
@@ -541,7 +603,7 @@ func (s *Store) QueryModels(ctx context.Context, provider Provider) ([]ModelInfo
 
 	if provider == "" {
 		query = `SELECT
-			model_id, provider, display_name, raw_family, family, variant, date,
+			model_id, provider, display_name, raw_family, family, variant, version, date,
 			context_window, max_output,
 			reasoning, tool_call, attachment, temperature, structured_output, interleaved, interleaved_config, open_weights,
 			cost_input, cost_output, cost_reasoning, cost_cache_read, cost_cache_write,
@@ -552,7 +614,7 @@ func (s *Store) QueryModels(ctx context.Context, provider Provider) ([]ModelInfo
 		args = nil
 	} else {
 		query = `SELECT
-			model_id, provider, display_name, raw_family, family, variant, date,
+			model_id, provider, display_name, raw_family, family, variant, version, date,
 			context_window, max_output,
 			reasoning, tool_call, attachment, temperature, structured_output, interleaved, interleaved_config, open_weights,
 			cost_input, cost_output, cost_reasoning, cost_cache_read, cost_cache_write,
@@ -588,7 +650,7 @@ func (s *Store) QueryModels(ctx context.Context, provider Provider) ([]ModelInfo
 // ctx is accepted for API compatibility; zombiezen.com/go/sqlite does not support per-operation context cancellation.
 func (s *Store) QueryModel(ctx context.Context, id ModelID) (ModelInfo, error) {
 	const query = `SELECT
-		model_id, provider, display_name, raw_family, family, variant, date,
+		model_id, provider, display_name, raw_family, family, variant, version, date,
 		context_window, max_output,
 		reasoning, tool_call, attachment, temperature, structured_output, interleaved, interleaved_config, open_weights,
 		cost_input, cost_output, cost_reasoning, cost_cache_read, cost_cache_write,
@@ -624,7 +686,7 @@ func (s *Store) QueryModel(ctx context.Context, id ModelID) (ModelInfo, error) {
 // ctx is accepted for API compatibility; zombiezen.com/go/sqlite does not support per-operation context cancellation.
 func (s *Store) QueryModelsByID(ctx context.Context, id ModelID) ([]ModelInfo, error) {
 	const query = `SELECT
-		model_id, provider, display_name, raw_family, family, variant, date,
+		model_id, provider, display_name, raw_family, family, variant, version, date,
 		context_window, max_output,
 		reasoning, tool_call, attachment, temperature, structured_output, interleaved, interleaved_config, open_weights,
 		cost_input, cost_output, cost_reasoning, cost_cache_read, cost_cache_write,
@@ -674,6 +736,11 @@ func (s *Store) QueryByCanonical(ctx context.Context, f CanonicalFilter) ([]Mode
 		args = append(args, f.Variant)
 		paramIdx++
 	}
+	if f.Version != "" {
+		conditions = append(conditions, fmt.Sprintf("version = ?%d", paramIdx))
+		args = append(args, f.Version)
+		paramIdx++
+	}
 	if f.Date != "" {
 		conditions = append(conditions, fmt.Sprintf("date = ?%d", paramIdx))
 		args = append(args, f.Date)
@@ -681,7 +748,7 @@ func (s *Store) QueryByCanonical(ctx context.Context, f CanonicalFilter) ([]Mode
 	}
 
 	query := `SELECT
-		model_id, provider, display_name, raw_family, family, variant, date,
+		model_id, provider, display_name, raw_family, family, variant, version, date,
 		context_window, max_output,
 		reasoning, tool_call, attachment, temperature, structured_output, interleaved, interleaved_config, open_weights,
 		cost_input, cost_output, cost_reasoning, cost_cache_read, cost_cache_write,
@@ -703,8 +770,8 @@ func (s *Store) QueryByCanonical(ctx context.Context, f CanonicalFilter) ([]Mode
 		},
 	})
 	if err != nil {
-		return nil, fmt.Errorf("bestiary: QueryByCanonical(family=%q, variant=%q, date=%q): %w",
-			string(f.Family), f.Variant, f.Date, err)
+		return nil, fmt.Errorf("bestiary: QueryByCanonical(family=%q, variant=%q, version=%q, date=%q): %w",
+			string(f.Family), f.Variant, f.Version, f.Date, err)
 	}
 	return models, nil
 }
@@ -788,6 +855,7 @@ func scanModelInfo(stmt *sqlite.Stmt) ModelInfo {
 		Family:            Family(stmt.GetText("raw_family")),
 		NormalizedFamily:  Family(stmt.GetText("family")),
 		NormalizedVariant: stmt.GetText("variant"),
+		NormalizedVersion: stmt.GetText("version"),
 		NormalizedDate:    stmt.GetText("date"),
 		ContextWindow:     int(stmt.GetInt64("context_window")),
 		MaxOutput:         int(stmt.GetInt64("max_output")),

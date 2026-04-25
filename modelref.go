@@ -62,28 +62,47 @@ func (r ModelRef) Format(s CanonicalScheme) string {
 
 // formatCanonical produces the SchemeCanonical string.
 //
-// When Family is populated the form is:
+// When Family is populated the form is built from the non-empty segments:
 //
-//	<provider>/<family>/<variant>@<date>   (variant or date omitted if empty)
+//	<provider>/<family>[/<variant>][/<version>][@<date>]
 //
-// When Family is empty the provider-specific raw form is used:
+// Segment inclusion rules:
+//   - Family empty: fall back to "<provider>/<raw-id>"
+//   - Variant only appended when non-empty
+//   - Version only appended when non-empty (requires Variant to precede it, or
+//     placed directly after Family when Variant is empty)
+//   - Date only appended as "@<date>" suffix when non-empty
 //
-//	<provider>/<raw-id>
+// Full example matrix (p = provider, f = family, v = variant, ver = version, d = date):
+//
+//	(f)                          → p/f
+//	(f,d)                        → p/f@d
+//	(f,v)                        → p/f/v
+//	(f,v,d)                      → p/f/v@d
+//	(f,ver)                      → p/f/ver
+//	(f,ver,d)                    → p/f/ver@d
+//	(f,v,ver)                    → p/f/v/ver
+//	(f,v,ver,d)                  → p/f/v/ver@d
 func (r ModelRef) formatCanonical() string {
 	if r.Family == "" {
 		// Fall back to provider-specific representation.
 		return fmt.Sprintf("%s/%s", r.Provider, r.ID)
 	}
-	if r.Variant == "" && r.Date == "" {
-		return fmt.Sprintf("%s/%s", r.Provider, r.Family)
+
+	// Build path segments after family.
+	// Variant (if any) comes first, then Version (if any).
+	path := string(r.Family)
+	if r.Variant != "" {
+		path += "/" + r.Variant
 	}
-	if r.Variant == "" {
-		return fmt.Sprintf("%s/%s@%s", r.Provider, r.Family, r.Date)
+	if r.Version != "" {
+		path += "/" + r.Version
 	}
-	if r.Date == "" {
-		return fmt.Sprintf("%s/%s/%s", r.Provider, r.Family, r.Variant)
+
+	if r.Date != "" {
+		return fmt.Sprintf("%s/%s@%s", r.Provider, path, r.Date)
 	}
-	return fmt.Sprintf("%s/%s/%s@%s", r.Provider, r.Family, r.Variant, r.Date)
+	return fmt.Sprintf("%s/%s", r.Provider, path)
 }
 
 // String implements fmt.Stringer.
