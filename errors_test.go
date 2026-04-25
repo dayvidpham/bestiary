@@ -165,6 +165,35 @@ func TestErrAmbiguous_Format(t *testing.T) {
 	})
 }
 
+// TestErrAmbiguous_AllSixActionableLabels verifies that ErrAmbiguous.Error()
+// contains all 6 actionable-error elements from [C-actionable-errors]:
+// What, Why, Where, When, What it means for caller, and How to fix.
+// Regression: bestiary-wegq (Reviewer A, cycle 2).
+func TestErrAmbiguous_AllSixActionableLabels(t *testing.T) {
+	err := &bestiary.ErrAmbiguous{
+		Input:  "claude",
+		Scheme: bestiary.SchemeCanonical,
+		Candidates: []bestiary.ModelRef{
+			{Provider: bestiary.ProviderAnthropic, Family: "claude", Variant: "opus"},
+			{Provider: bestiary.ProviderAnthropic, Family: "claude", Variant: "sonnet"},
+		},
+	}
+	msg := err.Error()
+	labels := []string{
+		"What:",
+		"Why:",
+		"Where:",
+		"When:",
+		"What it means for caller:",
+		"How to fix:",
+	}
+	for _, label := range labels {
+		if !strings.Contains(msg, label) {
+			t.Errorf("ErrAmbiguous.Error() missing label %q\nfull message:\n%s", label, msg)
+		}
+	}
+}
+
 func TestErrAmbiguous_ErrorsAs(t *testing.T) {
 	err := &bestiary.ErrAmbiguous{
 		Input:  "gpt",

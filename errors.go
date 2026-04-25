@@ -63,11 +63,14 @@ func (e *ErrAPIUnavailable) Unwrap() error {
 // Scheme: the CanonicalScheme used during resolution.
 // Candidates: the list of ModelRefs that matched, one per distinct Canonical.
 //
-// Use errors.As to extract structured fields. The Error() message names:
-//  1. what went wrong (ambiguous input),
-//  2. why (multiple distinct canonicals matched),
-//  3. where (Resolve),
-//  4. what the caller can do (refine input or use --scheme=raw).
+// Use errors.As to extract structured fields. The Error() message names all 6
+// actionable-error elements per [C-actionable-errors]:
+//  1. What went wrong (ambiguous input),
+//  2. Why it happened (multiple distinct canonicals matched),
+//  3. Where it failed (Resolve),
+//  4. When it failed (during model lookup / resolution step),
+//  5. What it means for the caller (the query cannot be resolved unambiguously),
+//  6. How to fix it (refine input or use --scheme=raw).
 type ErrAmbiguous struct {
 	// Input is the raw string passed to Resolve.
 	Input string
@@ -78,6 +81,8 @@ type ErrAmbiguous struct {
 }
 
 // Error implements the error interface with an actionable message.
+// All 6 elements from the [C-actionable-errors] constraint are present:
+// What, Why, Where, When, What it means for the caller, and How to fix.
 func (e *ErrAmbiguous) Error() string {
 	var sb strings.Builder
 	fmt.Fprintf(&sb,
@@ -87,6 +92,8 @@ func (e *ErrAmbiguous) Error() string {
 	sb.WriteString("  What: input matches multiple distinct model canonicals\n")
 	sb.WriteString("  Why: the input string is a prefix or substring shared by several models\n")
 	sb.WriteString("  Where: Resolve\n")
+	sb.WriteString("  When: during model lookup — after scheme detection, before returning results\n")
+	sb.WriteString("  What it means for caller: the query is underspecified; no single model can be returned\n")
 	if len(e.Candidates) > 0 {
 		sb.WriteString("  Candidates:\n")
 		for _, c := range e.Candidates {
