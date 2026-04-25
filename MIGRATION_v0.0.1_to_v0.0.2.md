@@ -49,10 +49,15 @@ const BestiarySchemaVersion = "0.0.2"
 "$id": "https://github.com/dayvidpham/bestiary/bestiary.schema.json",
 "version": "1.0.0"
 
-// After
-"$id": "https://github.com/dayvidpham/bestiary/bestiary.schema.json@0.0.2",
+// After (bare $id — version carried by the "version" field, not the URI)
+"$id": "https://github.com/dayvidpham/bestiary/bestiary.schema.json",
 "version": "0.0.2"
 ```
+
+The `@0.0.2` URI suffix used during development was non-idiomatic: the `@`
+character is not a valid URI path character and confuses URI resolvers (ajv,
+jsonschema-rs, VS Code). The `"version"` field is the canonical location for
+the schema version string; `$id` remains a stable bare URL.
 
 **Fix-up steps for downstream consumers:**
 - If you pin `BestiarySchemaVersion == "0.0.1"` anywhere, update to `"0.0.2"`.
