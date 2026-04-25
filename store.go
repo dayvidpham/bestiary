@@ -15,13 +15,13 @@ import (
 
 // currentSchemaVersion is the schema version this build expects.
 // Bump this whenever a migration is added.
-const currentSchemaVersion = 3
+const currentSchemaVersion = 4
 
 // schemaMetaSQL creates the schema_meta table used to track migration state.
 // Safe to run on any existing database (CREATE TABLE IF NOT EXISTS).
 const schemaMetaSQL = `CREATE TABLE IF NOT EXISTS schema_meta (version INTEGER NOT NULL);`
 
-// schemaSQL defines the current (v3) models table schema.
+// schemaSQL defines the current (v4) models table schema.
 // Used only for fresh databases; existing databases go through migrateSchema.
 const schemaSQL = `CREATE TABLE IF NOT EXISTS models (
     model_id          TEXT NOT NULL,
@@ -30,6 +30,7 @@ const schemaSQL = `CREATE TABLE IF NOT EXISTS models (
     raw_family        TEXT NOT NULL DEFAULT '',
     family            TEXT NOT NULL DEFAULT '',
     variant           TEXT NOT NULL DEFAULT '',
+    version           TEXT NOT NULL DEFAULT '',
     date              TEXT NOT NULL DEFAULT '',
     context_window    INTEGER NOT NULL DEFAULT 0,
     max_output        INTEGER NOT NULL DEFAULT 0,
@@ -55,18 +56,20 @@ const schemaSQL = `CREATE TABLE IF NOT EXISTS models (
 );`
 
 // indexSQL creates the canonical lookup index used by QueryByCanonical.
-// The (family, variant) prefix is used for all non-empty family/variant
-// predicates; provider is included to support composite-key scan pruning.
+// The (family, variant, version) prefix is used for all non-empty canonical
+// axis predicates; provider is included to support composite-key scan pruning.
 // Safe to run on any database that already has the models table.
-const indexSQL = `CREATE INDEX IF NOT EXISTS idx_canonical ON models(family, variant, provider);`
+const indexSQL = `CREATE INDEX IF NOT EXISTS idx_canonical ON models(family, variant, version, provider);`
 
 // CanonicalFilter selects models by their parsed canonical axes.
 // Empty fields act as wildcards: an empty Family matches any family, an
-// empty Variant matches any variant, and an empty Date matches any date.
+// empty Variant matches any variant, an empty Version matches any version,
+// and an empty Date matches any date.
 // This is the parameter type for Store.QueryByCanonical.
 type CanonicalFilter struct {
 	Family  Family
 	Variant string
+	Version string
 	Date    string
 }
 

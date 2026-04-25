@@ -188,7 +188,7 @@
   "$defs": {
     "ModelRef": {
       "title": "ModelRef",
-      "description": "The canonical identity of a model. The 6-field tuple (ID, Provider, RawFamily, Family, Variant, Date) is the stable anchor for cross-provider queries, canonical formatting, and the normalization pipeline.",
+      "description": "The canonical identity of a model. The 7-field tuple (ID, Provider, RawFamily, Family, Variant, Version, Date) is the stable anchor for cross-provider queries, canonical formatting, and the normalization pipeline.",
       "type": "object",
       "properties": {
         "ID": {
@@ -211,12 +211,16 @@
           "description": "Canonical variant suffix (e.g. \"opus\", \"sonnet\", \"haiku\"). Empty when the model has no variant.",
           "type": "string"
         },
+        "Version": {
+          "description": "Model version extracted from the family string (e.g. \"4.5\" for claude-opus-4-5, \"2.5\" for gemini-2.5-flash). Empty when the model has no separable version.",
+          "type": "string"
+        },
         "Date": {
           "description": "Release date in YYYY-MM-DD format extracted from the model ID. Empty if none was found.",
           "type": "string"
         }
       },
-      "required": ["ID", "Provider", "RawFamily", "Family", "Variant", "Date"]
+      "required": ["ID", "Provider", "RawFamily", "Family", "Variant", "Version", "Date"]
     },
     "CanonicalScheme": {
       "title": "CanonicalScheme",
