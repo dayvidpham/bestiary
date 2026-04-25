@@ -15,19 +15,22 @@ import (
 
 // currentSchemaVersion is the schema version this build expects.
 // Bump this whenever a migration is added.
-const currentSchemaVersion = 2
+const currentSchemaVersion = 3
 
 // schemaMetaSQL creates the schema_meta table used to track migration state.
 // Safe to run on any existing database (CREATE TABLE IF NOT EXISTS).
 const schemaMetaSQL = `CREATE TABLE IF NOT EXISTS schema_meta (version INTEGER NOT NULL);`
 
-// schemaSQL defines the current (v2) models table schema.
+// schemaSQL defines the current (v3) models table schema.
 // Used only for fresh databases; existing databases go through migrateSchema.
 const schemaSQL = `CREATE TABLE IF NOT EXISTS models (
     model_id          TEXT NOT NULL,
     provider          TEXT NOT NULL,
     display_name      TEXT NOT NULL,
+    raw_family        TEXT NOT NULL DEFAULT '',
     family            TEXT NOT NULL DEFAULT '',
+    variant           TEXT NOT NULL DEFAULT '',
+    date              TEXT NOT NULL DEFAULT '',
     context_window    INTEGER NOT NULL DEFAULT 0,
     max_output        INTEGER NOT NULL DEFAULT 0,
     reasoning         INTEGER NOT NULL DEFAULT 0,
@@ -193,6 +196,15 @@ func migrateSchema(conn *sqlite.Conn, fromVersion int) error {
 		if err := migrateToV2(conn); err != nil {
 			return fmt.Errorf("bestiary: migrateSchema: v%d→v2: %w", fromVersion, err)
 		}
+		// Fall through: v2 DB still needs migration to v3 below.
+		if err := migrateToV3(conn); err != nil {
+			return fmt.Errorf("bestiary: migrateSchema: v2→v3: %w", err)
+		}
+	} else if fromVersion < 3 {
+		// v2 database needs migration to v3.
+		if err := migrateToV3(conn); err != nil {
+			return fmt.Errorf("bestiary: migrateSchema: v2→v3: %w", err)
+		}
 	}
 
 	if err := setSchemaVersion(conn, currentSchemaVersion); err != nil {
@@ -285,6 +297,137 @@ func migrateToV2(conn *sqlite.Conn) error {
 	return nil
 }
 
+// migrateToV3 upgrades an existing v2 models table to the v3 schema:
+//   - Renames existing `family` column to `raw_family`.
+//   - Adds NEW `family` (parsed canonical family), `variant`, and `date` columns.
+//   - Backfills family/variant/date by re-running ParseFamily and ExtractDate on each row.
+//   - Creates idx_canonical index on (family, variant, provider) for QueryByCanonical.
+//
+// SQLite does not support renaming columns prior to 3.25, so the migration
+// creates a new table, copies data, renames, and then backfills.
+func migrateToV3(conn *sqlite.Conn) error {
+	endFn := sqlitex.Transaction(conn)
+	var err error
+	defer endFn(&err)
+
+	// Create the replacement table with the v3 schema.
+	const createNewSQL = `CREATE TABLE IF NOT EXISTS models_new (
+    model_id          TEXT NOT NULL,
+    provider          TEXT NOT NULL,
+    display_name      TEXT NOT NULL,
+    raw_family        TEXT NOT NULL DEFAULT '',
+    family            TEXT NOT NULL DEFAULT '',
+    variant           TEXT NOT NULL DEFAULT '',
+    date              TEXT NOT NULL DEFAULT '',
+    context_window    INTEGER NOT NULL DEFAULT 0,
+    max_output        INTEGER NOT NULL DEFAULT 0,
+    reasoning         INTEGER NOT NULL DEFAULT 0,
+    tool_call         INTEGER NOT NULL DEFAULT 0,
+    attachment        INTEGER NOT NULL DEFAULT 0,
+    temperature       INTEGER NOT NULL DEFAULT 0,
+    structured_output INTEGER NOT NULL DEFAULT 0,
+    interleaved       INTEGER NOT NULL DEFAULT 0,
+    interleaved_config TEXT NOT NULL DEFAULT '',
+    open_weights      INTEGER NOT NULL DEFAULT 0,
+    cost_input        REAL,
+    cost_output       REAL,
+    cost_reasoning    REAL,
+    cost_cache_read   REAL,
+    cost_cache_write  REAL,
+    release_date      TEXT NOT NULL DEFAULT '',
+    knowledge         TEXT NOT NULL DEFAULT '',
+    modalities_input  TEXT NOT NULL DEFAULT '',
+    modalities_output TEXT NOT NULL DEFAULT '',
+    last_synced       TEXT NOT NULL,
+    PRIMARY KEY (model_id, provider)
+)`
+	err = sqlitex.ExecuteTransient(conn, createNewSQL, nil)
+	if err != nil {
+		return fmt.Errorf("create models_new: %w", err)
+	}
+
+	// Copy rows from old v2 table: map old family → raw_family; new columns default to ''.
+	const copySQL = `INSERT OR IGNORE INTO models_new
+        SELECT model_id, provider, display_name,
+            family AS raw_family, '' AS family, '' AS variant, '' AS date,
+            context_window, max_output,
+            reasoning, tool_call, attachment, temperature, structured_output,
+            interleaved, interleaved_config,
+            open_weights,
+            cost_input, cost_output, cost_reasoning, cost_cache_read, cost_cache_write,
+            release_date, knowledge,
+            modalities_input, modalities_output,
+            last_synced
+        FROM models`
+	err = sqlitex.ExecuteTransient(conn, copySQL, nil)
+	if err != nil {
+		return fmt.Errorf("copy data to models_new: %w", err)
+	}
+
+	// Drop the old table and promote models_new.
+	err = sqlitex.ExecuteTransient(conn, `DROP TABLE models`, nil)
+	if err != nil {
+		return fmt.Errorf("drop old models table: %w", err)
+	}
+	err = sqlitex.ExecuteTransient(conn, `ALTER TABLE models_new RENAME TO models`, nil)
+	if err != nil {
+		return fmt.Errorf("rename models_new to models: %w", err)
+	}
+
+	// Backfill: read each row and re-parse family/variant/date.
+	// We collect (model_id, provider, raw_family, release_date) then UPDATE in a second pass.
+	type rowKey struct {
+		modelID     string
+		provider    string
+		rawFamily   string
+		releaseDate string
+	}
+	var rows []rowKey
+	err = sqlitex.Execute(conn, `SELECT model_id, provider, raw_family, release_date FROM models`,
+		&sqlitex.ExecOptions{
+			ResultFunc: func(stmt *sqlite.Stmt) error {
+				rows = append(rows, rowKey{
+					modelID:     stmt.GetText("model_id"),
+					provider:    stmt.GetText("provider"),
+					rawFamily:   stmt.GetText("raw_family"),
+					releaseDate: stmt.GetText("release_date"),
+				})
+				return nil
+			},
+		})
+	if err != nil {
+		return fmt.Errorf("read rows for backfill: %w", err)
+	}
+
+	const backfillSQL = `UPDATE models SET family = ?1, variant = ?2, date = ?3
+        WHERE model_id = ?4 AND provider = ?5`
+	for _, r := range rows {
+		parsedFamily, variant := ParseFamily(Family(r.rawFamily))
+		date := ExtractDate(ModelID(r.modelID), r.releaseDate)
+		err = sqlitex.Execute(conn, backfillSQL, &sqlitex.ExecOptions{
+			Args: []any{
+				string(parsedFamily),
+				variant,
+				date,
+				r.modelID,
+				r.provider,
+			},
+		})
+		if err != nil {
+			return fmt.Errorf("backfill row (%s, %s): %w", r.modelID, r.provider, err)
+		}
+	}
+
+	// Create the canonical index for QueryByCanonical to use.
+	err = sqlitex.ExecuteTransient(conn,
+		`CREATE INDEX IF NOT EXISTS idx_canonical ON models(family, variant, provider)`, nil)
+	if err != nil {
+		return fmt.Errorf("create idx_canonical: %w", err)
+	}
+
+	return nil
+}
+
 // Close closes the underlying SQLite connection.
 func (s *Store) Close() error {
 	if s.conn == nil {
@@ -309,7 +452,7 @@ func (s *Store) UpsertModels(ctx context.Context, models []ModelInfo) error {
 	now := time.Now().UTC().Format(time.RFC3339)
 
 	const upsertSQL = `INSERT OR REPLACE INTO models (
-		model_id, provider, display_name, family,
+		model_id, provider, display_name, raw_family, family, variant, date,
 		context_window, max_output,
 		reasoning, tool_call, attachment, temperature, structured_output, interleaved, interleaved_config, open_weights,
 		cost_input, cost_output, cost_reasoning, cost_cache_read, cost_cache_write,
@@ -317,13 +460,13 @@ func (s *Store) UpsertModels(ctx context.Context, models []ModelInfo) error {
 		modalities_input, modalities_output,
 		last_synced
 	) VALUES (
-		?1, ?2, ?3, ?4,
-		?5, ?6,
-		?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14,
-		?15, ?16, ?17, ?18, ?19,
-		?20, ?21,
-		?22, ?23,
-		?24
+		?1, ?2, ?3, ?4, ?5, ?6, ?7,
+		?8, ?9,
+		?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17,
+		?18, ?19, ?20, ?21, ?22,
+		?23, ?24,
+		?25, ?26,
+		?27
 	)`
 
 	for i := range models {
@@ -334,6 +477,9 @@ func (s *Store) UpsertModels(ctx context.Context, models []ModelInfo) error {
 				string(m.Provider),
 				m.DisplayName,
 				string(m.Family),
+				string(m.NormalizedFamily),
+				m.NormalizedVariant,
+				m.NormalizedDate,
 				m.ContextWindow,
 				m.MaxOutput,
 				boolToInt(m.Reasoning),
@@ -377,7 +523,7 @@ func (s *Store) QueryModels(ctx context.Context, provider Provider) ([]ModelInfo
 
 	if provider == "" {
 		query = `SELECT
-			model_id, provider, display_name, family,
+			model_id, provider, display_name, raw_family, family, variant, date,
 			context_window, max_output,
 			reasoning, tool_call, attachment, temperature, structured_output, interleaved, interleaved_config, open_weights,
 			cost_input, cost_output, cost_reasoning, cost_cache_read, cost_cache_write,
@@ -388,7 +534,7 @@ func (s *Store) QueryModels(ctx context.Context, provider Provider) ([]ModelInfo
 		args = nil
 	} else {
 		query = `SELECT
-			model_id, provider, display_name, family,
+			model_id, provider, display_name, raw_family, family, variant, date,
 			context_window, max_output,
 			reasoning, tool_call, attachment, temperature, structured_output, interleaved, interleaved_config, open_weights,
 			cost_input, cost_output, cost_reasoning, cost_cache_read, cost_cache_write,
@@ -424,7 +570,7 @@ func (s *Store) QueryModels(ctx context.Context, provider Provider) ([]ModelInfo
 // ctx is accepted for API compatibility; zombiezen.com/go/sqlite does not support per-operation context cancellation.
 func (s *Store) QueryModel(ctx context.Context, id ModelID) (ModelInfo, error) {
 	const query = `SELECT
-		model_id, provider, display_name, family,
+		model_id, provider, display_name, raw_family, family, variant, date,
 		context_window, max_output,
 		reasoning, tool_call, attachment, temperature, structured_output, interleaved, interleaved_config, open_weights,
 		cost_input, cost_output, cost_reasoning, cost_cache_read, cost_cache_write,
@@ -460,7 +606,7 @@ func (s *Store) QueryModel(ctx context.Context, id ModelID) (ModelInfo, error) {
 // ctx is accepted for API compatibility; zombiezen.com/go/sqlite does not support per-operation context cancellation.
 func (s *Store) QueryModelsByID(ctx context.Context, id ModelID) ([]ModelInfo, error) {
 	const query = `SELECT
-		model_id, provider, display_name, family,
+		model_id, provider, display_name, raw_family, family, variant, date,
 		context_window, max_output,
 		reasoning, tool_call, attachment, temperature, structured_output, interleaved, interleaved_config, open_weights,
 		cost_input, cost_output, cost_reasoning, cost_cache_read, cost_cache_write,
@@ -554,20 +700,23 @@ func modalitiesFromString(s string) []Modality {
 }
 
 // scanModelInfo reads a ModelInfo from the current prepared statement row.
-// Column order must match the SELECT in QueryModels / QueryModel.
+// Column order must match the SELECT in QueryModels / QueryModel / QueryByCanonical.
 func scanModelInfo(stmt *sqlite.Stmt) ModelInfo {
 	m := ModelInfo{
-		ID:               ModelID(stmt.GetText("model_id")),
-		Provider:         Provider(stmt.GetText("provider")),
-		DisplayName:      stmt.GetText("display_name"),
-		Family:           Family(stmt.GetText("family")),
-		ContextWindow:    int(stmt.GetInt64("context_window")),
-		MaxOutput:        int(stmt.GetInt64("max_output")),
-		Reasoning:        stmt.GetBool("reasoning"),
-		ToolCall:         stmt.GetBool("tool_call"),
-		Attachment:       stmt.GetBool("attachment"),
-		Temperature:      stmt.GetBool("temperature"),
-		StructuredOutput: stmt.GetBool("structured_output"),
+		ID:                ModelID(stmt.GetText("model_id")),
+		Provider:          Provider(stmt.GetText("provider")),
+		DisplayName:       stmt.GetText("display_name"),
+		Family:            Family(stmt.GetText("raw_family")),
+		NormalizedFamily:  Family(stmt.GetText("family")),
+		NormalizedVariant: stmt.GetText("variant"),
+		NormalizedDate:    stmt.GetText("date"),
+		ContextWindow:     int(stmt.GetInt64("context_window")),
+		MaxOutput:         int(stmt.GetInt64("max_output")),
+		Reasoning:         stmt.GetBool("reasoning"),
+		ToolCall:          stmt.GetBool("tool_call"),
+		Attachment:        stmt.GetBool("attachment"),
+		Temperature:       stmt.GetBool("temperature"),
+		StructuredOutput:  stmt.GetBool("structured_output"),
 		Interleaved: Capability{
 			Supported: stmt.GetBool("interleaved"),
 			Config:    configFromString(stmt.GetText("interleaved_config")),

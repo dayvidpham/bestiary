@@ -116,13 +116,13 @@ func TestMigration_V1toV2(t *testing.T) {
 	}
 	defer store.Close()
 
-	// Version must be 2 after migration.
+	// Version must be currentSchemaVersion (3) after migration.
 	version, err := getSchemaVersion(store.conn)
 	if err != nil {
 		t.Fatalf("getSchemaVersion after migration: %v", err)
 	}
-	if version != 2 {
-		t.Errorf("post-migration version = %d, want 2", version)
+	if version != currentSchemaVersion {
+		t.Errorf("post-migration version = %d, want %d", version, currentSchemaVersion)
 	}
 
 	ctx := context.Background()
@@ -194,7 +194,7 @@ func TestMigration_V2Idempotent(t *testing.T) {
 		t.Fatalf("DB file missing after first open: %v", err)
 	}
 
-	// Second open — must not error and must see version 2 and the existing row.
+	// Second open — must not error and must see currentSchemaVersion and the existing row.
 	{
 		store, err := OpenStore(dbPath)
 		if err != nil {
@@ -206,8 +206,8 @@ func TestMigration_V2Idempotent(t *testing.T) {
 		if err != nil {
 			t.Fatalf("getSchemaVersion on second open: %v", err)
 		}
-		if version != 2 {
-			t.Errorf("version after second open = %d, want 2", version)
+		if version != currentSchemaVersion {
+			t.Errorf("version after second open = %d, want %d", version, currentSchemaVersion)
 		}
 
 		ctx := context.Background()
