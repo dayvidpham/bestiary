@@ -572,6 +572,181 @@ func TestDefaultDBPath(t *testing.T) {
 	})
 }
 
+// testCanonicalModel returns a ModelInfo with the given canonical normalization fields set.
+// It uses testModel as a base and overrides NormalizedFamily, NormalizedVariant, NormalizedDate.
+func testCanonicalModel(id string, provider bestiary.Provider, rawFamily, normFamily, variant, date string) bestiary.ModelInfo {
+	m := testModel(id, provider)
+	m.Family = bestiary.Family(rawFamily)
+	m.NormalizedFamily = bestiary.Family(normFamily)
+	m.NormalizedVariant = variant
+	m.NormalizedDate = date
+	return m
+}
+
+// TestQueryByCanonical_CrossProvider inserts the same canonical (claude, opus, 2025-05-14)
+// under 3 providers and asserts QueryByCanonical returns all 3 rows.
+func TestQueryByCanonical_CrossProvider(t *testing.T) {
+	ctx := context.Background()
+	s := openMemStore(t)
+
+	models := []bestiary.ModelInfo{
+		testCanonicalModel("claude-opus-4-20250514", bestiary.ProviderAnthropic, "claude-opus", "claude", "opus", "2025-05-14"),
+		testCanonicalModel("claude-opus-4-20250514", bestiary.Provider("amazon"), "claude-opus", "claude", "opus", "2025-05-14"),
+		testCanonicalModel("claude-opus-4-20250514", bestiary.Provider("azure"), "claude-opus", "claude", "opus", "2025-05-14"),
+		// Different canonical: should NOT be returned
+		testCanonicalModel("claude-sonnet-4-20250514", bestiary.ProviderAnthropic, "claude-sonnet", "claude", "sonnet", "2025-05-14"),
+	}
+	if err := s.UpsertModels(ctx, models); err != nil {
+		t.Fatalf("UpsertModels: %v", err)
+	}
+
+	got, err := s.QueryByCanonical(ctx, bestiary.Family("claude"), "opus", "2025-05-14")
+	if err != nil {
+		t.Fatalf("QueryByCanonical: %v", err)
+	}
+	if len(got) != 3 {
+		t.Fatalf("QueryByCanonical: got %d results, want 3", len(got))
+	}
+	// All results must have the same canonical.
+	for _, m := range got {
+		if m.NormalizedFamily != "claude" {
+			t.Errorf("NormalizedFamily = %q, want %q", m.NormalizedFamily, "claude")
+		}
+		if m.NormalizedVariant != "opus" {
+			t.Errorf("NormalizedVariant = %q, want %q", m.NormalizedVariant, "opus")
+		}
+		if m.NormalizedDate != "2025-05-14" {
+			t.Errorf("NormalizedDate = %q, want %q", m.NormalizedDate, "2025-05-14")
+		}
+	}
+}
+
+// TestQueryByCanonical_NotFound verifies that a query for a non-existent canonical
+// returns an empty slice and no error.
+func TestQueryByCanonical_NotFound(t *testing.T) {
+	ctx := context.Background()
+	s := openMemStore(t)
+
+	if err := s.UpsertModels(ctx, []bestiary.ModelInfo{
+		testCanonicalModel("claude-opus-4-20250514", bestiary.ProviderAnthropic, "claude-opus", "claude", "opus", "2025-05-14"),
+	}); err != nil {
+		t.Fatalf("UpsertModels: %v", err)
+	}
+
+	got, err := s.QueryByCanonical(ctx, bestiary.Family("nonexistent"), "v1", "2099-01-01")
+	if err != nil {
+		t.Fatalf("QueryByCanonical returned unexpected error: %v", err)
+	}
+	if len(got) != 0 {
+		t.Errorf("QueryByCanonical: got %d results, want 0", len(got))
+	}
+}
+
+// TestQueryByCanonical_PartialMatch verifies that empty params act as wildcards:
+// empty variant matches all variants for a given family.
+func TestQueryByCanonical_PartialMatch(t *testing.T) {
+	ctx := context.Background()
+	s := openMemStore(t)
+
+	if err := s.UpsertModels(ctx, []bestiary.ModelInfo{
+		testCanonicalModel("claude-opus-4-20250514", bestiary.ProviderAnthropic, "claude-opus", "claude", "opus", "2025-05-14"),
+		testCanonicalModel("claude-sonnet-4-20250815", bestiary.ProviderAnthropic, "claude-sonnet", "claude", "sonnet", "2025-08-15"),
+		testCanonicalModel("claude-haiku-4-20250307", bestiary.ProviderAnthropic, "claude-haiku", "claude", "haiku", "2025-03-07"),
+		testCanonicalModel("gpt-4o", bestiary.ProviderOpenAI, "gpt-4o", "gpt", "4o", ""),
+	}); err != nil {
+		t.Fatalf("UpsertModels: %v", err)
+	}
+
+	// Empty variant + empty date: match all claude models.
+	got, err := s.QueryByCanonical(ctx, bestiary.Family("claude"), "", "")
+	if err != nil {
+		t.Fatalf("QueryByCanonical(claude, empty, empty): %v", err)
+	}
+	if len(got) != 3 {
+		t.Fatalf("QueryByCanonical(claude): got %d results, want 3", len(got))
+	}
+	for _, m := range got {
+		if m.NormalizedFamily != "claude" {
+			t.Errorf("unexpected family %q in results", m.NormalizedFamily)
+		}
+	}
+
+	// Empty family + specific variant: matches any family with that variant.
+	got2, err := s.QueryByCanonical(ctx, "", "opus", "")
+	if err != nil {
+		t.Fatalf("QueryByCanonical(empty, opus, empty): %v", err)
+	}
+	if len(got2) != 1 {
+		t.Fatalf("QueryByCanonical(empty, opus, empty): got %d, want 1", len(got2))
+	}
+	if got2[0].NormalizedVariant != "opus" {
+		t.Errorf("variant = %q, want %q", got2[0].NormalizedVariant, "opus")
+	}
+
+	// All empty: returns all models.
+	all, err := s.QueryByCanonical(ctx, "", "", "")
+	if err != nil {
+		t.Fatalf("QueryByCanonical(empty, empty, empty): %v", err)
+	}
+	if len(all) != 4 {
+		t.Fatalf("QueryByCanonical all-empty: got %d, want 4", len(all))
+	}
+}
+
+// TestQueryByCanonical_NormalDataIntegrity verifies that values returned by
+// QueryByCanonical match exactly what was written by UpsertModels.
+func TestQueryByCanonical_NormalDataIntegrity(t *testing.T) {
+	ctx := context.Background()
+	s := openMemStore(t)
+
+	want := testCanonicalModel("gemini-2-5-flash-preview-04-17", bestiary.ProviderGoogle,
+		"gemini-2-5-flash", "gemini", "flash", "2025-04-17")
+	want.DisplayName = "Gemini 2.5 Flash Preview"
+	want.ContextWindow = 1048576
+	want.MaxOutput = 65536
+
+	if err := s.UpsertModels(ctx, []bestiary.ModelInfo{want}); err != nil {
+		t.Fatalf("UpsertModels: %v", err)
+	}
+
+	results, err := s.QueryByCanonical(ctx, bestiary.Family("gemini"), "flash", "2025-04-17")
+	if err != nil {
+		t.Fatalf("QueryByCanonical: %v", err)
+	}
+	if len(results) != 1 {
+		t.Fatalf("got %d results, want 1", len(results))
+	}
+	got := results[0]
+
+	if got.ID != want.ID {
+		t.Errorf("ID = %q, want %q", got.ID, want.ID)
+	}
+	if got.Provider != want.Provider {
+		t.Errorf("Provider = %q, want %q", got.Provider, want.Provider)
+	}
+	if got.DisplayName != want.DisplayName {
+		t.Errorf("DisplayName = %q, want %q", got.DisplayName, want.DisplayName)
+	}
+	if got.Family != want.Family {
+		t.Errorf("Family (raw_family) = %q, want %q", got.Family, want.Family)
+	}
+	if got.NormalizedFamily != want.NormalizedFamily {
+		t.Errorf("NormalizedFamily = %q, want %q", got.NormalizedFamily, want.NormalizedFamily)
+	}
+	if got.NormalizedVariant != want.NormalizedVariant {
+		t.Errorf("NormalizedVariant = %q, want %q", got.NormalizedVariant, want.NormalizedVariant)
+	}
+	if got.NormalizedDate != want.NormalizedDate {
+		t.Errorf("NormalizedDate = %q, want %q", got.NormalizedDate, want.NormalizedDate)
+	}
+	if got.ContextWindow != want.ContextWindow {
+		t.Errorf("ContextWindow = %d, want %d", got.ContextWindow, want.ContextWindow)
+	}
+	if got.MaxOutput != want.MaxOutput {
+		t.Errorf("MaxOutput = %d, want %d", got.MaxOutput, want.MaxOutput)
+	}
+}
+
 // TestUpsertModels_StampsLastSynced verifies that UpsertModels sets the
 // LastSynced field to the current UTC time, and that the value is a valid
 // RFC3339 timestamp within the last 60 seconds.
