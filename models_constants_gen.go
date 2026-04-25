@@ -8672,9 +8672,12 @@ var allModelConstants = [...]ModelID{
 	Model_Zhipuai_Glm_5v_Turbo,
 }
 
-// ModelIDs returns all generated Model_* constant values as a defensive copy.
-// Mutating the returned slice does not affect future calls.
-// See Models() in registry.go for the full ModelInfo slice.
+// ModelIDs returns the canonical Model_<...> constant values from the codegen
+// pipeline. The name diverges from PROPOSAL-3's spec (Models() []ModelID) to
+// avoid clashing with registry.go:Models() []ModelInfo. See bestiary-p6l5.
+//
+// The returned slice is a defensive copy; mutating it does not affect future calls.
+// See Models() in registry.go for the full ModelInfo slice (metadata + constants).
 func ModelIDs() []ModelID {
 	out := make([]ModelID, len(allModelConstants))
 	copy(out, allModelConstants[:])

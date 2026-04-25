@@ -59,6 +59,8 @@ func LookupModelByProvider(p Provider, name string) (ModelInfo, bool) {
 // Models returns all available models. It delegates to StaticModels and returns
 // a defensive copy so callers cannot mutate the registry. This is the preferred
 // API for external callers; StaticModels is an implementation detail.
+//
+// See ModelIDs() (in models_constants_gen.go) for the canonical Model_* constant slice.
 func Models() []ModelInfo {
 	return StaticModels()
 }

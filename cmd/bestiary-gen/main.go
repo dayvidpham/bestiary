@@ -1432,9 +1432,12 @@ func generateConstantsSource(models []bestiary.ModelInfo, slugToConst map[string
 	// NOTE: Models() in registry.go returns []ModelInfo (full metadata). This function
 	// returns []ModelID (the constant values only). The distinct name avoids a compile-
 	// time conflict with the existing registry.go:Models() function.
-	buf.WriteString("// ModelIDs returns all generated Model_* constant values as a defensive copy.\n")
-	buf.WriteString("// Mutating the returned slice does not affect future calls.\n")
-	buf.WriteString("// See Models() in registry.go for the full ModelInfo slice.\n")
+	buf.WriteString("// ModelIDs returns the canonical Model_<...> constant values from the codegen\n")
+	buf.WriteString("// pipeline. The name diverges from PROPOSAL-3's spec (Models() []ModelID) to\n")
+	buf.WriteString("// avoid clashing with registry.go:Models() []ModelInfo. See bestiary-p6l5.\n")
+	buf.WriteString("//\n")
+	buf.WriteString("// The returned slice is a defensive copy; mutating it does not affect future calls.\n")
+	buf.WriteString("// See Models() in registry.go for the full ModelInfo slice (metadata + constants).\n")
 	buf.WriteString("func ModelIDs() []ModelID {\n")
 	buf.WriteString("\tout := make([]ModelID, len(allModelConstants))\n")
 	buf.WriteString("\tcopy(out, allModelConstants[:])\n")
