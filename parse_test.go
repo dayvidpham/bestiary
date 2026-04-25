@@ -243,12 +243,15 @@ func TestParseFamily_Empty(t *testing.T) {
 // TestParseFamily_Determinism verifies that ParseFamily is deterministic:
 // running it 100 times on the same input always produces identical output.
 // This guards against any map-iteration-order leakage.
+// MINOR bestiary-s36u: includes a suffix-stripping input.
 func TestParseFamily_Determinism(t *testing.T) {
 	t.Parallel()
 
 	inputs := []bestiary.Family{
 		"claude-opus", "kimi-k2.5", "qwen3.5", "gemini-flash-lite",
 		"gpt-codex-spark", "claude-opus-4-5", "", "llama",
+		// suffix-stripping path (bestiary-s36u): ensure determinism on Step 3.
+		"foo-mini",
 	}
 
 	for _, raw := range inputs {
@@ -264,6 +267,152 @@ func TestParseFamily_Determinism(t *testing.T) {
 				if v != firstVariant {
 					t.Errorf("ParseFamily(%q) iteration %d: variant = %q, want %q (non-deterministic)", raw, i, v, firstVariant)
 				}
+			}
+		})
+	}
+}
+
+// TestParseFamily_SuffixStripping covers all 30 entries in variant_suffixes.json.
+// Inputs are chosen to NOT appear in family_overrides.json and to NOT match any
+// versioned-variant pattern, so they route past Steps 1 and 2 and reach the
+// suffix-stripping loop at parse.go:257-264.
+//
+// BLOCKER bestiary-jtbj: suffix-stripping path had zero test coverage.
+func TestParseFamily_SuffixStripping(t *testing.T) {
+	t.Parallel()
+
+	cases := []struct {
+		name        string
+		raw         bestiary.Family
+		wantFamily  bestiary.Family
+		wantVariant string
+	}{
+		// All 30 suffix entries from variant_suffixes.json (listed longest-first
+		// in the JSON, but initParseData re-sorts by length so the order here
+		// is documentary only).
+		{"deep-research", "widget-deep-research", "widget", "deep-research"},
+		{"codex-spark", "acme-codex-spark", "acme", "codex-spark"},
+		{"codex-mini", "baz-codex-mini", "baz", "codex-mini"},
+		{"flash-lite", "acme-flash-lite", "acme", "flash-lite"},
+		{"codex", "acme-codex", "acme", "codex"},
+		{"thinking", "acme-thinking", "acme", "thinking"},
+		{"instruct", "acme-instruct", "acme", "instruct"},
+		{"vision", "acme-vision", "acme", "vision"},
+		{"embed", "acme-embed", "acme", "embed"},
+		{"embedding", "acme-embedding", "acme", "embedding"},
+		{"mini", "foo-mini", "foo", "mini"},
+		{"pro", "foo-pro", "foo", "pro"},
+		{"flash", "foo-flash", "foo", "flash"},
+		{"lite", "foo-lite", "foo", "lite"},
+		{"turbo", "foo-turbo", "foo", "turbo"},
+		{"base", "foo-base", "foo", "base"},
+		{"ultra", "foo-ultra", "foo", "ultra"},
+		{"large", "foo-large", "foo", "large"},
+		{"medium", "foo-medium", "foo", "medium"},
+		{"small", "foo-small", "foo", "small"},
+		{"spark", "foo-spark", "foo", "spark"},
+		{"nano", "foo-nano", "foo", "nano"},
+		{"free", "foo-free", "foo", "free"},
+		{"beta", "foo-beta", "foo", "beta"},
+		{"nemo", "foo-nemo", "foo", "nemo"},
+		{"oss", "foo-oss", "foo", "oss"},
+		{"image", "foo-image", "foo", "image"},
+		{"coder", "foo-coder", "foo", "coder"},
+		{"-r", "foo-r", "foo", "r"},
+		{"-a", "foo-a", "foo", "a"},
+		// Multi-suffix input proving longest-first ordering: "-codex-mini" must
+		// match before "-mini" would, yielding variant="codex-mini" not "mini".
+		{"longest-first: codex-mini beats mini", "baz-codex-mini", "baz", "codex-mini"},
+	}
+
+	for _, tc := range cases {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			gotFamily, gotVariant := bestiary.ParseFamily(tc.raw)
+			if gotFamily != tc.wantFamily {
+				t.Errorf("ParseFamily(%q) family = %q, want %q", tc.raw, gotFamily, tc.wantFamily)
+			}
+			if gotVariant != tc.wantVariant {
+				t.Errorf("ParseFamily(%q) variant = %q, want %q", tc.raw, gotVariant, tc.wantVariant)
+			}
+		})
+	}
+}
+
+// TestParseFamily_VPrefix covers the v-prefix versioned-variant pattern using
+// base values NOT present in family_overrides.json.
+//
+// IMPORTANT bestiary-ave7: v-prefix path was previously uncovered — all v-prefix
+// inputs in TestParseFamily_Overrides were intercepted by the overrides table.
+func TestParseFamily_VPrefix(t *testing.T) {
+	t.Parallel()
+
+	cases := []struct {
+		name        string
+		raw         bestiary.Family
+		wantFamily  bestiary.Family
+		wantVariant string
+	}{
+		// "somebase" is not in family_overrides.json; routes through v-prefix pattern.
+		{"somebase-v3.0", "somebase-v3.0", "somebase", "v3.0"},
+		// Multi-part variant (v-prefix with a trailing suffix).
+		{"thing-v2.5-pro", "thing-v2.5-pro", "thing", "v2.5-pro"},
+		// Single-part base with v-prefix version.
+		{"widget-v10.0", "widget-v10.0", "widget", "v10.0"},
+	}
+
+	for _, tc := range cases {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			gotFamily, gotVariant := bestiary.ParseFamily(tc.raw)
+			if gotFamily != tc.wantFamily {
+				t.Errorf("ParseFamily(%q) family = %q, want %q", tc.raw, gotFamily, tc.wantFamily)
+			}
+			if gotVariant != tc.wantVariant {
+				t.Errorf("ParseFamily(%q) variant = %q, want %q", tc.raw, gotVariant, tc.wantVariant)
+			}
+		})
+	}
+}
+
+// TestParseFamily_HyphenVersion_NoOverride covers the else-branch of the
+// hyphen-version pattern handler (parse.go:249): when the extracted base is NOT
+// found in the overrides table, the function returns (Family(base), variant)
+// directly.
+//
+// IMPORTANT bestiary-resh: only previous case was "claude-opus-4-5" whose base
+// "claude-opus" IS in overrides, leaving the else-branch unreachable in tests.
+func TestParseFamily_HyphenVersion_NoOverride(t *testing.T) {
+	t.Parallel()
+
+	cases := []struct {
+		name        string
+		raw         bestiary.Family
+		wantFamily  bestiary.Family
+		wantVariant string
+	}{
+		// The hyphen-version regex base group only captures alpha-leading segments:
+		// ^(?P<base>[a-zA-Z][a-zA-Z0-9]*(?:-[a-zA-Z][a-zA-Z0-9]*)*)-(?P<variant>\d+(?:-\d+)*)$
+		// For "llama-3-1": base="llama" (only alpha segment), variant="3-1".
+		// "llama" is not in family_overrides.json → else-branch fires → returns
+		// (Family("llama"), "3-1") directly without consulting overrides further.
+		{"llama-3-1 base not in overrides", "llama-3-1", "llama", "3-1"},
+		// "phi" is not in family_overrides.json; else-branch returns (Family("phi"), "4-5").
+		{"phi-4-5 base not in overrides", "phi-4-5", "phi", "4-5"},
+	}
+
+	for _, tc := range cases {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			gotFamily, gotVariant := bestiary.ParseFamily(tc.raw)
+			if gotFamily != tc.wantFamily {
+				t.Errorf("ParseFamily(%q) family = %q, want %q", tc.raw, gotFamily, tc.wantFamily)
+			}
+			if gotVariant != tc.wantVariant {
+				t.Errorf("ParseFamily(%q) variant = %q, want %q", tc.raw, gotVariant, tc.wantVariant)
 			}
 		})
 	}

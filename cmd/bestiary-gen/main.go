@@ -139,12 +139,6 @@ func familyConstName(slug string, nameHint string) string {
 	return "Family" + slugToIdentifier(slug, nameHint)
 }
 
-// CLI filter flags (set by parseFlags).
-var (
-	onlyProviders    []string // -only-providers: inclusion list (empty = all)
-	excludeProviders []string // -all-providers-except: exclusion list (empty = none)
-)
-
 // Output paths are relative to the module root (where go generate is run from).
 const (
 	outputPath          = "models_static_gen.go"
@@ -154,7 +148,10 @@ const (
 	cacheFile           = "api_response.json"
 )
 
-const apiURL = "https://models.dev/api.json"
+// apiURL is the endpoint bestiary-gen fetches from. Declared as a var (not const)
+// so tests can override it to point at an httptest.Server without build tags or
+// dual code paths.
+var apiURL = "https://models.dev/api.json"
 
 // --------------------------------------------------------------------------
 // Private wire types for JSON deserialization from models.dev
