@@ -8,6 +8,7 @@ import (
 	"sort"
 	"strings"
 	"sync"
+	"unicode"
 )
 
 //go:embed parse/data/*.json
@@ -207,7 +208,63 @@ func initParseData() (*parseData, error) {
 // ParseFamily is deterministic: the same input always produces the same output.
 // Empty raw returns ("", "").
 func ParseFamily(raw Family) (Family, string) {
-	panic("not yet implemented — bodies land in L4")
+	if raw == "" {
+		return "", ""
+	}
+
+	pd, err := loadParseData()
+	if err != nil {
+		// Fail closed: if data cannot be loaded, return the raw value unchanged.
+		// This should only happen in pathological build configurations.
+		return raw, ""
+	}
+
+	// Step 1: Check explicit overrides table.
+	if ov, ok := pd.overrides[raw]; ok {
+		return ov.Family, ov.Variant
+	}
+
+	rawStr := string(raw)
+
+	// Step 2: Try versioned-variant patterns (in order).
+	for _, cp := range pd.patterns {
+		m := cp.re.FindStringSubmatch(rawStr)
+		if m == nil {
+			continue
+		}
+		base := m[cp.baseIdx]
+		variant := m[cp.variantIdx]
+
+		// For hyphen-version pattern, look up the base in overrides.
+		// e.g. "claude-opus-4-5": base="claude-opus", version="4-5"
+		//   → overrides["claude-opus"] = {family:"claude", variant:"opus"}
+		//   → result: family="claude", variant="opus-4-5"
+		if cp.Name == "hyphen-version" {
+			if ov, ok := pd.overrides[Family(base)]; ok {
+				combined := variant
+				if ov.Variant != "" {
+					combined = ov.Variant + "-" + variant
+				}
+				return ov.Family, combined
+			}
+			// No override for the base; return base as family.
+			return Family(base), variant
+		}
+
+		return Family(base), variant
+	}
+
+	// Step 3: Suffix stripping (longest-first is already ensured by initParseData).
+	for _, suffix := range pd.suffixes {
+		if strings.HasSuffix(rawStr, suffix) {
+			base := rawStr[:len(rawStr)-len(suffix)]
+			variant := suffix[1:] // strip leading "-"
+			return Family(base), variant
+		}
+	}
+
+	// Step 4: Fallback — return raw unchanged with empty variant.
+	return raw, ""
 }
 
 // ExtractDate extracts a date string from a model ID or release date field,
@@ -220,7 +277,28 @@ func ParseFamily(raw Family) (Family, string) {
 // Returns "" when no date is found in either field.
 // The returned string always uses the YYYY-MM-DD format (hyphens added for YYYYMMDD).
 func ExtractDate(id ModelID, releaseDate string) string {
-	panic("not yet implemented — bodies land in L4")
+	if d := extractDateFromString(string(id)); d != "" {
+		return d
+	}
+	return extractDateFromString(releaseDate)
+}
+
+// extractDateFromString scans s for a YYYY-MM-DD or YYYYMMDD date pattern.
+// Returns normalized YYYY-MM-DD on match, or "" when no date is found.
+// YYYY-MM-DD is tried first (higher precision/readability); YYYYMMDD second.
+func extractDateFromString(s string) string {
+	if s == "" {
+		return ""
+	}
+	// Try YYYY-MM-DD first (it's unambiguous and common in model IDs).
+	if m := reYYYYDashMMDashDD.FindStringSubmatch(s); m != nil {
+		return m[1] + "-" + m[2] + "-" + m[3]
+	}
+	// Try compact YYYYMMDD (e.g. "claude-opus-4-20250514").
+	if m := reYYYYMMDD.FindStringSubmatch(s); m != nil {
+		return m[1] + "-" + m[2] + "-" + m[3]
+	}
+	return ""
 }
 
 // InferFamilyFromID is the empty-family fallback for models whose API family field
@@ -236,7 +314,19 @@ func ExtractDate(id ModelID, releaseDate string) string {
 // The provider parameter is reserved for future provider-specific heuristics
 // and is not currently used.
 func InferFamilyFromID(id ModelID, p Provider) Family {
-	panic("not yet implemented — bodies land in L4")
+	if id == "" {
+		return ""
+	}
+	tokens := splitAndStripVersionTail(string(id))
+	if len(tokens) == 0 {
+		return ""
+	}
+	// Take the first token as the family, but only if it begins with a letter.
+	first := tokens[0]
+	if first == "" || !unicode.IsLetter(rune(first[0])) {
+		return ""
+	}
+	return Family(first)
 }
 
 // splitAndStripVersionTail splits s on "-" and removes trailing tokens that are
@@ -256,8 +346,8 @@ func splitAndStripVersionTail(s string) []string {
 	return tokens
 }
 
-// isVersionToken returns true when tok is a purely-numeric token or looks like
-// a date component (8-digit YYYYMMDD or 4-digit year).
+// isVersionToken returns true when tok is a purely-numeric token (all digits).
+// Used to strip trailing version components from model IDs.
 func isVersionToken(tok string) bool {
 	if tok == "" {
 		return false
@@ -269,3 +359,10 @@ func isVersionToken(tok string) bool {
 	}
 	return true
 }
+
+// reYYYYMMDD matches an 8-digit date string not preceded or followed by a digit.
+// Captured as YYYY, MM, DD in groups 1, 2, 3.
+var reYYYYMMDD = regexp.MustCompile(`(?:^|[^0-9])(\d{4})(\d{2})(\d{2})(?:$|[^0-9])`)
+
+// reYYYYDashMMDashDD matches YYYY-MM-DD date strings.
+var reYYYYDashMMDashDD = regexp.MustCompile(`(\d{4})-(\d{2})-(\d{2})`)
