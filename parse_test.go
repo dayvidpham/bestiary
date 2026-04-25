@@ -175,8 +175,9 @@ func TestParseFamily_VersionedPatterns(t *testing.T) {
 		// k-prefix (BDD acceptance criterion).
 		{"kimi-k2.5 via k-prefix", "kimi-k2.5", "kimi", "k2.5"},
 		{"kimi-k2.6 via k-prefix", "kimi-k2.6", "kimi", "k2.6"},
-		// m-prefix.
-		{"minimax-m2.5 (not in overrides, fallthrough to pattern)", "minimax-m2.5", "minimax", "m2.5"},
+		// m-prefix via pattern only — "someai-m3.0" is NOT in family_overrides.json,
+		// so it falls through to the m-prefix versioned-variant pattern.
+		{"someai-m3.0 (not in overrides, m-prefix pattern)", "someai-m3.0", "someai", "m3.0"},
 		// no-prefix (BDD acceptance criterion).
 		{"qwen3.5 via no-prefix", "qwen3.5", "qwen", "3.5"},
 		{"qwen3.6 via no-prefix", "qwen3.6", "qwen", "3.6"},
