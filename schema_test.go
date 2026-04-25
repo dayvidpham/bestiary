@@ -258,20 +258,24 @@ func TestModelRef_AllFields_Present(t *testing.T) {
 // $defs/AcceptabilityRating enum in bestiary.schema.json.
 //
 // Accepted values: "admitted", "preferred", "deprecated".
+// Also validates that Scheme serializes to its expected string wire value,
+// matching the $defs/CanonicalScheme enum.
 func TestDesignation_AllAcceptabilityRatings(t *testing.T) {
 	cases := []struct {
-		rating bestiary.AcceptabilityRating
-		want   string
+		rating     bestiary.AcceptabilityRating
+		want       string
+		scheme     bestiary.CanonicalScheme
+		wantScheme string
 	}{
-		{bestiary.AcceptabilityAdmitted, "admitted"},
-		{bestiary.AcceptabilityPreferred, "preferred"},
-		{bestiary.AcceptabilityDeprecated, "deprecated"},
+		{bestiary.AcceptabilityAdmitted, "admitted", bestiary.SchemeRaw, "raw"},
+		{bestiary.AcceptabilityPreferred, "preferred", bestiary.SchemeCanonical, "canonical"},
+		{bestiary.AcceptabilityDeprecated, "deprecated", bestiary.SchemeHuggingFace, "huggingface"},
 	}
 
 	for _, tc := range cases {
 		d := bestiary.Designation{
 			Value:    "test-model",
-			Scheme:   bestiary.SchemeRaw,
+			Scheme:   tc.scheme,
 			Provider: "testprovider",
 			Rating:   tc.rating,
 		}
@@ -286,19 +290,47 @@ func TestDesignation_AllAcceptabilityRatings(t *testing.T) {
 			t.Fatalf("json.Unmarshal(Designation) failed: %v", err)
 		}
 
-		// Schema specifies AcceptabilityRating as a string enum.
-		// AcceptabilityRating.String() returns the correct enum value,
-		// but Go marshals int to JSON number by default — so we validate
-		// that Rating.String() matches the schema's expected string value.
-		ratingStr := tc.rating.String()
-		if ratingStr != tc.want {
+		// Assert Rating wire value is a string matching the schema enum.
+		ratingWire, ok := got["Rating"]
+		if !ok {
 			t.Errorf(
-				"AcceptabilityRating(%d).String() = %q, want %q;\n"+
-					"  what went wrong: rating String() method does not return the schema enum value\n"+
-					"  why: AcceptabilityRating constants or String() method may have changed\n"+
+				"Designation JSON missing \"Rating\" field for rating %v;\n"+
+					"  what went wrong: Rating key absent from marshaled output\n"+
+					"  why: AcceptabilityRating.MarshalJSON may not be implemented\n"+
 					"  where: schema_test.go TestDesignation_AllAcceptabilityRatings\n"+
-					"  how to fix: ensure AcceptabilityRating.String() returns %q for this constant",
-				int(tc.rating), ratingStr, tc.want, tc.want,
+					"  how to fix: implement MarshalJSON on AcceptabilityRating to emit a string",
+				tc.rating,
+			)
+		} else if ratingStr, ok := ratingWire.(string); !ok || ratingStr != tc.want {
+			t.Errorf(
+				"Designation[Rating] wire value = %v (%T), want string %q;\n"+
+					"  what went wrong: AcceptabilityRating serializes as non-string or wrong value\n"+
+					"  why: MarshalJSON must call String() and emit the result as a JSON string\n"+
+					"  where: schema_test.go TestDesignation_AllAcceptabilityRatings\n"+
+					"  how to fix: ensure AcceptabilityRating.MarshalJSON returns json.Marshal(r.String())",
+				ratingWire, ratingWire, tc.want,
+			)
+		}
+
+		// Assert Scheme wire value is a string matching the schema enum.
+		schemeWire, ok := got["Scheme"]
+		if !ok {
+			t.Errorf(
+				"Designation JSON missing \"Scheme\" field for scheme %v;\n"+
+					"  what went wrong: Scheme key absent from marshaled output\n"+
+					"  why: CanonicalScheme.MarshalJSON may not be implemented\n"+
+					"  where: schema_test.go TestDesignation_AllAcceptabilityRatings\n"+
+					"  how to fix: implement MarshalJSON on CanonicalScheme to emit a string",
+				tc.scheme,
+			)
+		} else if schemeStr, ok := schemeWire.(string); !ok || schemeStr != tc.wantScheme {
+			t.Errorf(
+				"Designation[Scheme] wire value = %v (%T), want string %q;\n"+
+					"  what went wrong: CanonicalScheme serializes as non-string or wrong value\n"+
+					"  why: MarshalJSON must call String() and emit the result as a JSON string\n"+
+					"  where: schema_test.go TestDesignation_AllAcceptabilityRatings\n"+
+					"  how to fix: ensure CanonicalScheme.MarshalJSON returns json.Marshal(s.String())",
+				schemeWire, schemeWire, tc.wantScheme,
 			)
 		}
 
