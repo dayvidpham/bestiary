@@ -342,6 +342,46 @@ func TestFormatModel_YAML_NormalizedFields(t *testing.T) {
 	}
 }
 
+// TestFormatModel_JSON_NormalizedVersion verifies that a ModelInfo with a
+// non-empty NormalizedVersion field round-trips correctly through JSON
+// serialization. This is the MINOR coverage gap identified in bestiary-5dd0.
+func TestFormatModel_JSON_NormalizedVersion(t *testing.T) {
+	var buf bytes.Buffer
+	model := bestiary.ModelInfo{
+		ID:                "claude-opus-4-5-20251101",
+		Provider:          bestiary.ProviderAnthropic,
+		DisplayName:       "Claude Opus 4.5",
+		Family:            "claude-opus",
+		NormalizedFamily:  "claude",
+		NormalizedVariant: "opus",
+		NormalizedVersion: "4.5",
+		NormalizedDate:    "2025-11-01",
+		LastSynced:        "2025-11-01T00:00:00Z",
+	}
+
+	if err := bestiary.FormatModel(&buf, model, bestiary.FormatJSON); err != nil {
+		t.Fatalf("FormatModel(JSON) returned error: %v", err)
+	}
+
+	output := buf.Bytes()
+	if !json.Valid(output) {
+		t.Errorf("FormatModel(JSON) produced invalid JSON:\n%s", output)
+	}
+
+	var decoded map[string]any
+	if err := json.Unmarshal(output, &decoded); err != nil {
+		t.Fatalf("FormatModel(JSON): unmarshal failed: %v", err)
+	}
+
+	v, ok := decoded["NormalizedVersion"]
+	if !ok {
+		t.Fatalf("FormatModel(JSON): NormalizedVersion missing from output; present keys: %v", jsonKeysOf(decoded))
+	}
+	if s, ok := v.(string); !ok || s != "4.5" {
+		t.Errorf("FormatModel(JSON): NormalizedVersion = %v (%T), want %q", v, v, "4.5")
+	}
+}
+
 // TestFormatModels_Table validates that FormatModels with FormatTable produces a
 // table with a header row containing column names and data rows for each model.
 func TestFormatModels_Table(t *testing.T) {

@@ -149,20 +149,21 @@ func TestJSONOutput_ConformsToSchema(t *testing.T) {
 }
 
 // TestJSONOutput_NormalizedFields_Populated verifies that a ModelInfo fixture
-// with NormalizedFamily, NormalizedVariant, and NormalizedDate set to non-empty
-// values round-trips correctly through JSON marshaling.
+// with NormalizedFamily, NormalizedVariant, NormalizedVersion, and NormalizedDate
+// set to non-empty values round-trips correctly through JSON marshaling.
 //
-// This exercises the codegen-baked normalization path that SLICE-2b introduced.
+// This exercises the codegen-baked normalization path that SLICE-FIX-1 introduced.
 func TestJSONOutput_NormalizedFields_Populated(t *testing.T) {
 	cost := 2.5
 	fixture := bestiary.ModelInfo{
-		ID:                    "claude-opus-4-20250514",
+		ID:                    "claude-opus-4-5-20251101",
 		Provider:              "anthropic",
-		DisplayName:           "Claude Opus 4",
+		DisplayName:           "Claude Opus 4.5",
 		Family:                "claude-opus",
 		NormalizedFamily:      "claude",
 		NormalizedVariant:     "opus",
-		NormalizedDate:        "2025-05-14",
+		NormalizedVersion:     "4.5",
+		NormalizedDate:        "2025-11-01",
 		ContextWindow:         200000,
 		MaxOutput:             32000,
 		Reasoning:             true,
@@ -177,13 +178,13 @@ func TestJSONOutput_NormalizedFields_Populated(t *testing.T) {
 		CostReasoningPerMTok:  nil,
 		CostCacheReadPerMTok:  nil,
 		CostCacheWritePerMTok: nil,
-		ReleaseDate:           "2025-05-14",
+		ReleaseDate:           "2025-11-01",
 		Knowledge:             "2025-01",
 		Modalities: bestiary.Modalities{
 			Input:  []bestiary.Modality{bestiary.ModalityText, bestiary.ModalityImage},
 			Output: []bestiary.Modality{bestiary.ModalityText},
 		},
-		LastSynced: "2025-05-14T12:00:00Z",
+		LastSynced: "2025-11-01T12:00:00Z",
 	}
 
 	var buf bytes.Buffer
@@ -199,7 +200,8 @@ func TestJSONOutput_NormalizedFields_Populated(t *testing.T) {
 	checks := map[string]string{
 		"NormalizedFamily":  "claude",
 		"NormalizedVariant": "opus",
-		"NormalizedDate":    "2025-05-14",
+		"NormalizedVersion": "4.5",
+		"NormalizedDate":    "2025-11-01",
 	}
 	for field, want := range checks {
 		v, ok := got[field]

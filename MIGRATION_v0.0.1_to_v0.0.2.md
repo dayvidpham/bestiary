@@ -14,8 +14,8 @@ URD `bestiary-rjf`, PROPOSAL-3 `bestiary-1oq`.
 ## Table of Contents
 
 1. [Schema version bump 0.0.1 → 0.0.2](#1-schema-version-bump-001--002)
-2. [ModelInfo new fields: NormalizedFamily, NormalizedVariant, NormalizedDate](#2-modelinfo-new-fields)
-3. [ModelRef shape: 6 fields (added ID)](#3-modelref-shape-6-fields)
+2. [ModelInfo new fields: NormalizedFamily, NormalizedVariant, NormalizedVersion, NormalizedDate](#2-modelinfo-new-fields)
+3. [ModelRef shape: 7 fields (added ID + Version)](#3-modelref-shape-7-fields)
 4. [NEW types: CanonicalScheme, Designation, AcceptabilityRating](#4-new-types)
 5. [NEW Resolve API + ErrAmbiguous error type](#5-new-resolve-api)
 6. [NEW parse package: ParseFamily, ExtractDate, InferFamilyFromID](#6-new-parse-package)
@@ -70,11 +70,12 @@ the schema version string; `$id` remains a stable bare URL.
 
 **Nature:** Additive; no existing fields removed or renamed.
 
-Three codegen-baked normalization fields have been added to `ModelInfo`
+Four codegen-baked normalization fields have been added to `ModelInfo`
 (`bestiary.go`). They are populated at code-generation time by
-`cmd/bestiary-gen` invoking `parse.ParseFamily`, `parse.ExtractDate`, and
-`parse.InferFamilyFromID`. They are zero-value (`""`) for models loaded from a
-pre-v3 SQLite cache until a `bestiary sync` is performed.
+`cmd/bestiary-gen` invoking `parse.ParseFamilyWithVersion`, `parse.ExtractDate`,
+`parse.InferFamilyFromID`, and (since SLICE-FIX-1 cycle 2) `parse.ExtractVersionFromID`.
+They are zero-value (`""`) for models loaded from a pre-v4 SQLite cache until a
+`bestiary sync` is performed.
 
 **Before (`ModelInfo`):**
 ```go
@@ -96,9 +97,10 @@ type ModelInfo struct {
     DisplayName string
     Family      Family
 
-    // Codegen-baked normalization (Slice 2b)
+    // Codegen-baked normalization (SLICE-FIX-1)
     NormalizedFamily  Family  // canonical family (e.g. "claude")
     NormalizedVariant string  // variant suffix (e.g. "opus", "sonnet")
+    NormalizedVersion string  // model version (e.g. "4.5", "4.6", "2.5"); see note below
     NormalizedDate    string  // YYYY-MM-DD date from model ID or ReleaseDate
 
     ContextWindow int
@@ -106,37 +108,47 @@ type ModelInfo struct {
 }
 ```
 
+**NOTE on NormalizedVersion:** The version is extracted from the model ID
+(e.g. `"claude-opus-4-5-20251101"` → `"4.5"`) because the upstream models.dev
+API family strings do not embed version numbers (`"claude-opus"` not
+`"claude-opus-4-5"`). After SLICE-FIX-1 cycle 2, NormalizedVersion is populated
+for approximately 636 of 4325 static models. Models whose IDs carry no separable
+version component will have `NormalizedVersion: ""`.
+
 **JSON wire impact:**
 ```json
 // New fields appear in all JSON outputs (FormatModel, FormatModels):
 {
   "NormalizedFamily":  "claude",
   "NormalizedVariant": "opus",
-  "NormalizedDate":    "2025-05-14"
+  "NormalizedVersion": "4.5",
+  "NormalizedDate":    "2025-11-01"
 }
 ```
 
-All three new fields are declared `required` in `bestiary.schema.json`. Consumers
+All four new fields are declared `required` in `bestiary.schema.json`. Consumers
 that previously used `additionalProperties: false` validation will need to accept
-these three new keys.
+these four new keys.
 
 **Fix-up steps:**
-1. Update any JSON deserialization struct definitions to include the three new fields.
+1. Update any JSON deserialization struct definitions to include all four new fields.
 2. Update any JSON Schema validators that use `additionalProperties: false` on
-   `ModelInfo`-shaped objects — add the three new property declarations.
-3. For models loaded from a pre-v3 SQLite cache, `NormalizedFamily/Variant/Date`
+   `ModelInfo`-shaped objects — add the four new property declarations.
+3. For models loaded from a pre-v4 SQLite cache, `NormalizedFamily/Variant/Version/Date`
    will be empty strings until `bestiary sync` is re-run (see Section 7).
 
 ---
 
-## 3. ModelRef shape: 6 fields
+## 3. ModelRef shape: 7 fields
 
-**Nature:** Additive; `ID` field is new. Other 5 fields (`Provider`, `RawFamily`,
-`Family`, `Variant`, `Date`) were present in the previous shape.
+**Nature:** Additive; `ID` and `Version` fields are new. Other 5 fields
+(`Provider`, `RawFamily`, `Family`, `Variant`, `Date`) were present in the
+previous shape.
 
-`ModelRef` (`modelref.go`) now carries a 6-field tuple. The new `ID` field
-stores the original API model identifier (e.g. `"claude-opus-4-20250514"`)
-providing a stable anchor for cross-provider queries.
+`ModelRef` (`modelref.go`) now carries a 7-field tuple. The `ID` field stores
+the original API model identifier (e.g. `"claude-opus-4-5-20251101"`), and
+`Version` carries the extracted model version (e.g. `"4.5"`), providing
+the full context needed to distinguish `claude-opus-4-5` from `claude-opus-4-6`.
 
 **Before (`ModelRef`):**
 ```go
@@ -157,18 +169,27 @@ type ModelRef struct {
     RawFamily Family   // API family verbatim
     Family    Family   // canonical family after normalization
     Variant   string   // canonical variant suffix
+    Version   string   // NEW — model version (e.g. "4.5", "4.6", "2.5"); "" if none
     Date      string   // YYYY-MM-DD release date
 }
 ```
 
-`ModelInfo.Ref()` populates all 6 fields from the static registry. The
-`Format(CanonicalScheme)` and `Designations()` methods are unchanged in
-semantics; `Format(SchemeRaw)` now returns `string(r.ID)`.
+`ModelInfo.Ref()` populates all 7 fields from the static registry. The
+`Format(SchemeCanonical)` method now includes Version in the path when present:
+- With Version: `<provider>/<family>/<variant>/<version>@<date>`
+  e.g. `anthropic/claude/opus/4.5@2025-11-01`
+- Without Version: `<provider>/<family>/<variant>@<date>` (unchanged)
+  e.g. `anthropic/claude/opus@2025-05-14`
+
+`Format(SchemeRaw)` returns `string(r.ID)`.
 
 **Fix-up steps:**
-1. Update any `ModelRef` struct literals — add `ID: m.ID` when constructing manually.
+1. Update any `ModelRef` struct literals — add `ID: m.ID` and `Version: m.NormalizedVersion`
+   when constructing manually.
 2. Update code that accesses `ModelRef` fields to use `r.ID` instead of
    indirect lookups through `RawFamily` when the raw model ID is needed.
+3. Update any canonical-form string comparisons to expect the Version segment
+   when the model carries a version (see `formatCanonical` in `modelref.go`).
 
 ---
 
@@ -378,6 +399,39 @@ func (s *Store) QueryByCanonical(ctx context.Context, family Family, variant str
    SQLite version compatibility.
 4. Update any raw SQL queries targeting the `family` column — it is now
    `raw_family`. Use the new `family` column for normalized lookups.
+
+---
+
+## 7b. SQLite v3→v4: version column + idx_canonical rebuild
+
+**Nature:** Data migration; automatic on first `OpenStore` call after upgrading.
+
+The SQLite `models` table schema was upgraded from v3 to v4 as part of SLICE-FIX-1.
+
+| Column / Index | v3 | v4 | Notes |
+|---|---|---|---|
+| `version` | — | NEW `TEXT NOT NULL DEFAULT ''` | extracted model version (e.g. "4.5") |
+| `idx_canonical` | `(family, variant, provider)` | rebuilt as `(family, variant, version, provider)` | powers QueryByCanonical with version lookup |
+
+The Go migration (`store.go` → `migrateToV4()`) uses the `ALTER TABLE ADD COLUMN`
+approach (appropriate for adding a single `TEXT NOT NULL DEFAULT ''` column in
+SQLite ≥ 3.0). A reference SQL file is available at `migrations/v3_to_v4.sql`.
+
+**Migration is automatic:** `OpenStore(path)` detects the current schema version
+from `schema_meta` and runs `migrateToV4()` when version < 4. No manual action
+is required on upgrade.
+
+**After migration, `version` column is empty string** until `bestiary sync` is
+run. A sync re-populates all four normalized columns (including the new `version`)
+from the API response using `ParseFamilyWithVersion` and `ExtractVersionFromID`.
+
+**Fix-up steps:**
+1. No manual migration needed; upgrade is automatic.
+2. After upgrading the Go module, run `bestiary sync` to populate the new `version` column.
+3. If you manage external SQLite databases (not via `OpenStore`), apply
+   `migrations/v3_to_v4.sql` to add the `version` column and rebuild `idx_canonical`.
+4. Update any raw SQL queries that use `idx_canonical` for ordering/filtering —
+   the index now covers `(family, variant, version, provider)`.
 
 ---
 
