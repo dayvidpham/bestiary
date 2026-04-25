@@ -401,6 +401,131 @@ func extractDotVersion(s string) (string, string) {
 	return m[1], m[2]
 }
 
+// ExtractVersionFromID extracts a numeric version (e.g. "4.5", "4.6", "2.5",
+// "4o") from a model ID after stripping the known family prefix. Returns ""
+// if no version-like token follows the family prefix.
+//
+// This is the ID-as-authoritative-source companion to ParseFamilyWithVersion.
+// It is called by codegen (genToModelInfo) when ParseFamilyWithVersion on the
+// raw family field yields an empty version — which is the common case because
+// the upstream models.dev API family strings do not embed version numbers
+// ("claude-opus" not "claude-opus-4-5"). The model ID is where the version
+// lives ("claude-opus-4-5-20251101", "claude-opus-4-6").
+//
+// Algorithm:
+//  1. Strip "<rawFamily>-" from the start of id. If the ID does not begin
+//     with that prefix, return "".
+//  2. Strip any trailing compact date (YYYYMMDD or YYYY-MM-DD) from the
+//     remainder, since those are not version tokens.
+//  3. From the remaining string, attempt version extraction:
+//     a. All-hyphen-separated-digit tokens (e.g. "4-5") → dot-join → "4.5"
+//     b. Dot-version suffix (e.g. "2.5") → return directly
+//     c. Single alphanumeric-suffix token (e.g. "4o") → return as-is
+//     d. Otherwise → return ""
+//
+// Examples:
+//
+//	ExtractVersionFromID("claude-opus-4-5-20251101", "claude-opus") → "4.5"
+//	ExtractVersionFromID("claude-opus-4-6-20250514", "claude-opus") → "4.6"
+//	ExtractVersionFromID("claude-opus-4-6",          "claude-opus") → "4.6"
+//	ExtractVersionFromID("gemini-2.5-flash",         "gemini")      → "2.5"
+//	ExtractVersionFromID("gpt-4o",                   "gpt")         → "4o"
+//	ExtractVersionFromID("claude-opus",              "claude-opus") → ""
+//	ExtractVersionFromID("claude-3-5-sonnet-20241022","claude")     → ""  (non-version interleaved tokens)
+func ExtractVersionFromID(id ModelID, rawFamily Family) string {
+	if id == "" || rawFamily == "" {
+		return ""
+	}
+	idStr := string(id)
+	prefix := string(rawFamily) + "-"
+	if !strings.HasPrefix(idStr, prefix) {
+		return ""
+	}
+	// remainder: everything after the "<family>-" prefix.
+	remainder := idStr[len(prefix):]
+	if remainder == "" {
+		return ""
+	}
+
+	// Strip trailing compact date (YYYYMMDD or YYYY-MM-DD) from the remainder.
+	// We do this on the full remainder string so the date suffix does not
+	// contaminate version token detection.
+	remainder = stripTrailingDate(remainder)
+	if remainder == "" {
+		return ""
+	}
+
+	// Path (a): all tokens are purely numeric → hyphen-separated digits → dot-join.
+	// e.g. "4-5" → "4.5"; "4-6" → "4.6"; "3-1" → "3.1"
+	if reHyphenDigits.MatchString(remainder) {
+		return strings.ReplaceAll(remainder, "-", ".")
+	}
+
+	// Path (b): dot-version — the remainder is itself a "N.M" string (after date strip).
+	// e.g. "2.5" left by "gemini-2.5-flash" after prefix strip and no date present.
+	// We only have the remainder after <family>- so this handles single dot-version tokens.
+	if reBareVersion.MatchString(remainder) {
+		return remainder
+	}
+
+	// Path (c): single alphanumeric-suffix token (e.g. "4o" from "gpt-4o").
+	// Must start with a digit and contain only alphanumeric characters (no hyphens).
+	// Must not be a pure-alpha word (which would be a variant, not a version).
+	if reAlphaNumVersion.MatchString(remainder) {
+		return remainder
+	}
+
+	// Path (d): multi-segment remainder with a dot-version prefix.
+	// e.g. "2.5-flash" from "gemini-2.5-flash" after stripping "gemini-"
+	// Extract the leading dot-version segment.
+	if idx := strings.Index(remainder, "-"); idx > 0 {
+		lead := remainder[:idx]
+		if reBareVersion.MatchString(lead) {
+			return lead
+		}
+	}
+
+	return ""
+}
+
+// stripTrailingDate removes a trailing compact (YYYYMMDD) or dash-separated
+// (YYYY-MM-DD) date from s. Returns s unchanged if no date is found at the end.
+func stripTrailingDate(s string) string {
+	// Try YYYY-MM-DD at the end: last three hyphen-joined segments totalling 10 chars.
+	if m := reTrailingDashDate.FindStringIndex(s); m != nil {
+		trimmed := s[:m[0]]
+		return strings.TrimRight(trimmed, "-")
+	}
+	// Try compact YYYYMMDD at the end.
+	if m := reTrailingCompactDate.FindStringIndex(s); m != nil {
+		trimmed := s[:m[0]]
+		return strings.TrimRight(trimmed, "-")
+	}
+	return s
+}
+
+// reHyphenDigits matches strings that are entirely hyphen-separated digit groups.
+// e.g. "4-5", "3-1", "4-6", "10-3" — but NOT "4o", "2.5", "flash"
+var reHyphenDigits = regexp.MustCompile(`^\d+(?:-\d+)*$`)
+
+// reBareVersion matches a bare "N.M" dot-version with optional additional segments.
+// e.g. "2.5", "10.3" — but NOT "4o", "4-5", "flash"
+var reBareVersion = regexp.MustCompile(`^\d+\.\d+$`)
+
+// reAlphaNumVersion matches a single token that starts with a digit and contains
+// only alphanumeric characters (letters and digits). This captures version
+// suffixes like "4o" (gpt-4o) that are not purely numeric and have no separators.
+// Must not be purely alphabetic (that would be a variant word, not a version).
+var reAlphaNumVersion = regexp.MustCompile(`^\d[a-zA-Z0-9]*$`)
+
+// reTrailingDashDate matches a YYYY-MM-DD date at the end of a string,
+// optionally preceded by a hyphen.
+var reTrailingDashDate = regexp.MustCompile(`-?\d{4}-\d{2}-\d{2}$`)
+
+// reTrailingCompactDate matches a compact YYYYMMDD date at the end of a string,
+// optionally preceded by a hyphen.
+var reTrailingCompactDate = regexp.MustCompile(`-?\d{8}$`)
+
 // reDotVersionSuffix matches a string of the form "<base>-<MAJOR>.<MINOR>"
 // where base is one or more alphanumeric segments separated by hyphens.
 // The version must end the string (no trailing suffix).

@@ -537,3 +537,41 @@ func TestFormatCanonical_AllCombinations(t *testing.T) {
 		})
 	}
 }
+
+// TestFormatCanonical_StaticRegistry_Claude_Opus_4_5 is an integration test
+// that pulls claude-opus-4-5-20251101 from the static registry (populated by
+// go generate ./... via codegen) and asserts the canonical form includes the
+// version "4.5". This verifies the end-to-end production code path:
+// codegen → models_static_gen.go NormalizedVersion → Ref() → formatCanonical.
+//
+// Before cycle-2 fix: formatted as "anthropic/claude/opus@2025-11-01" (no version).
+// After cycle-2 fix: formatted as "anthropic/claude/opus/4.5@2025-11-01".
+//
+// This test asserts the BLOCKER resolution from bestiary-5eh8.
+func TestFormatCanonical_StaticRegistry_Claude_Opus_4_5(t *testing.T) {
+	const targetID = "claude-opus-4-5-20251101"
+	const wantCanonical = "anthropic/claude/opus/4.5@2025-11-01"
+
+	m, found := bestiary.LookupModelByProvider(bestiary.ProviderAnthropic, targetID)
+	if !found {
+		// The model may only be present under a third-party provider in this
+		// epoch. Fall back to any provider that carries this ID.
+		m2, found2 := bestiary.LookupModel(bestiary.ModelID(targetID))
+		if !found2 {
+			t.Skipf("model %q not found in static registry — run go generate ./... to refresh", targetID)
+		}
+		m = m2
+	}
+
+	ref := m.Ref()
+	if ref.Version == "" {
+		t.Errorf("Ref().Version is empty for %q — NormalizedVersion not populated by codegen; want version extracted from model ID", targetID)
+	}
+	if ref.Version != "4.5" {
+		t.Errorf("Ref().Version = %q, want %q", ref.Version, "4.5")
+	}
+	got := ref.Format(bestiary.SchemeCanonical)
+	if got != wantCanonical {
+		t.Errorf("Format(SchemeCanonical) = %q, want %q", got, wantCanonical)
+	}
+}

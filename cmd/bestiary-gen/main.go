@@ -622,10 +622,23 @@ func genToModelInfo(providerSlug string, wm genWireModel) bestiary.ModelInfo {
 	var normVersion string
 	if rawFamily != "" {
 		normFamily, normVariant, normVersion = bestiary.ParseFamilyWithVersion(rawFamily)
+		if normVersion == "" {
+			// The raw family field (e.g. "claude-opus") does not embed a version.
+			// Fall back to extracting the version from the model ID, which is the
+			// authoritative source for version numbers per team-lead arbitration
+			// (bestiary-5eh8). Example: "claude-opus-4-5-20251101" with family
+			// "claude-opus" yields version "4.5".
+			normVersion = bestiary.ExtractVersionFromID(bestiary.ModelID(wm.ID), rawFamily)
+		}
 	} else {
 		// ~25% of models have an empty Family field — infer from the model ID.
 		// InferFamilyFromID returns the first token; no version extraction here.
 		normFamily = bestiary.InferFamilyFromID(bestiary.ModelID(wm.ID), bestiary.Provider(providerSlug))
+		// Also attempt version extraction from the model ID for the empty-family
+		// case. We pass the inferred family as the prefix to strip.
+		if normFamily != "" {
+			normVersion = bestiary.ExtractVersionFromID(bestiary.ModelID(wm.ID), normFamily)
+		}
 	}
 
 	// Derive normalized date from model ID (primary) or release date (fallback).

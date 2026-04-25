@@ -669,6 +669,101 @@ func TestParseFamilyWithVersion_Empty(t *testing.T) {
 	}
 }
 
+// TestParseFamilyWithVersion_AlphanumericVersion covers inputs where the version
+// suffix is alphanumeric (e.g. "4o") rather than purely numeric (e.g. "4-5").
+// The "4o" pattern is structurally different from hyphen-numeric patterns:
+// it does not match the hyphen-version regex, so it falls through to the pure
+// fallback. ParseFamilyWithVersion returns the raw value unchanged for these inputs.
+//
+// NOTE: "gpt-4o" → ("gpt-4o", "", "") because "4o" is not recognized as a
+// separable version by any current pattern (it is not matched by hyphen-version
+// which requires purely numeric trailing tokens, and the no-prefix pattern
+// requires an embedded dot). Callers that need the version for gpt-4o models
+// should use ExtractVersionFromID instead, which handles this case.
+func TestParseFamilyWithVersion_AlphanumericVersion(t *testing.T) {
+	t.Parallel()
+
+	cases := []struct {
+		name        string
+		raw         bestiary.Family
+		wantFamily  bestiary.Family
+		wantVariant string
+		wantVersion string
+	}{
+		// "gpt-4o": "4o" is alphanumeric — no pattern strips it; full fallback.
+		// The family field "gpt-4o" is what models.dev actually returns for this model.
+		{"gpt-4o", "gpt-4o", "gpt-4o", "", ""},
+		// "chatgpt-4o-latest": "-latest" is not in the variant_suffixes list and
+		// the trailing token is non-numeric, so full fallback applies.
+		{"chatgpt-4o-latest", "chatgpt-4o-latest", "chatgpt-4o-latest", "", ""},
+	}
+
+	for _, tc := range cases {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			gotFamily, gotVariant, gotVersion := bestiary.ParseFamilyWithVersion(tc.raw)
+			if gotFamily != tc.wantFamily {
+				t.Errorf("ParseFamilyWithVersion(%q) family = %q, want %q", tc.raw, gotFamily, tc.wantFamily)
+			}
+			if gotVariant != tc.wantVariant {
+				t.Errorf("ParseFamilyWithVersion(%q) variant = %q, want %q", tc.raw, gotVariant, tc.wantVariant)
+			}
+			if gotVersion != tc.wantVersion {
+				t.Errorf("ParseFamilyWithVersion(%q) version = %q, want %q", tc.raw, gotVersion, tc.wantVersion)
+			}
+		})
+	}
+}
+
+// TestExtractVersionFromID covers the ExtractVersionFromID helper introduced in
+// cycle 2 (BLOCKER bestiary-5eh8). The helper extracts the version from the
+// model ID when the raw family field does not embed one.
+func TestExtractVersionFromID(t *testing.T) {
+	t.Parallel()
+
+	cases := []struct {
+		name      string
+		id        bestiary.ModelID
+		rawFamily bestiary.Family
+		want      string
+	}{
+		// Required L3 cases per team-lead brief (bestiary-5eh8).
+		{"claude-opus-4-5-20251101", "claude-opus-4-5-20251101", "claude-opus", "4.5"},
+		{"claude-opus-4-6-20250514", "claude-opus-4-6-20250514", "claude-opus", "4.6"},
+		{"gemini-2.5-flash",         "gemini-2.5-flash",         "gemini",      "2.5"},
+		{"claude-opus no version",   "claude-opus",              "claude-opus", ""},
+
+		// Additional coverage.
+		// gpt-4o: single alphanumeric token "4o" after stripping "gpt-"
+		{"gpt-4o", "gpt-4o", "gpt", "4o"},
+		// claude-opus-4-6 without date
+		{"claude-opus-4-6 no date", "claude-opus-4-6", "claude-opus", "4.6"},
+		// ID that exactly equals family: no trailing version
+		{"id equals family", "claude-opus", "claude-opus", ""},
+		// Empty inputs
+		{"empty id", "", "claude-opus", ""},
+		{"empty family", "claude-opus-4-5", "", ""},
+		// ID without the family prefix: no match
+		{"no prefix match", "gpt-4o", "claude-opus", ""},
+		// gemini-2.5: pure dot-version remainder
+		{"gemini-2.5", "gemini-2.5", "gemini", "2.5"},
+		// Trailing YYYY-MM-DD date stripped before version extraction
+		{"claude-opus-4-6-2026-02-05", "claude-opus-4-6-2026-02-05", "claude-opus", "4.6"},
+	}
+
+	for _, tc := range cases {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			got := bestiary.ExtractVersionFromID(tc.id, tc.rawFamily)
+			if got != tc.want {
+				t.Errorf("ExtractVersionFromID(%q, %q) = %q, want %q", tc.id, tc.rawFamily, got, tc.want)
+			}
+		})
+	}
+}
+
 // TestParseFamilyWithVersion_BackwardCompat verifies that non-versioned inputs
 // produce the same (family, variant) as ParseFamily, with version="".
 func TestParseFamilyWithVersion_BackwardCompat(t *testing.T) {
