@@ -1,10 +1,9 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://github.com/dayvidpham/bestiary/bestiary.schema.json",
-  "$comment": "Schema additions made by SLICE-2b (forward-looking) to keep TestJSONOutput_ConformsToSchema green on HEAD. SLICE-7 (bestiary-0ug0) is the canonical owner of this file and will (a) bump $id/version to 0.0.2, (b) verify these property additions are sufficient, (c) finalize MIGRATION_v0.0.1_to_v0.0.2.md.",
+  "$id": "https://github.com/dayvidpham/bestiary/bestiary.schema.json@0.0.2",
   "title": "ModelInfo",
   "description": "Metadata for a single AI model as produced by the bestiary CLI JSON formatter.",
-  "version": "1.0.0",
+  "version": "0.0.2",
   "type": "object",
   "properties": {
     "ID": {
@@ -185,5 +184,86 @@
     "Modalities",
     "LastSynced"
   ],
-  "additionalProperties": false
+  "additionalProperties": false,
+  "$defs": {
+    "ModelRef": {
+      "title": "ModelRef",
+      "description": "The canonical identity of a model. The 6-field tuple (ID, Provider, RawFamily, Family, Variant, Date) is the stable anchor for cross-provider queries, canonical formatting, and the normalization pipeline.",
+      "type": "object",
+      "properties": {
+        "ID": {
+          "description": "Original API model identifier (e.g. \"claude-opus-4-20250514\"). Corresponds to the ModelID type in Go.",
+          "type": "string"
+        },
+        "Provider": {
+          "description": "Organization that hosts or publishes the model (e.g. \"anthropic\").",
+          "type": "string"
+        },
+        "RawFamily": {
+          "description": "API family field verbatim as returned by the upstream API (e.g. \"claude-opus\").",
+          "type": "string"
+        },
+        "Family": {
+          "description": "Canonical family identifier after normalization (e.g. \"claude\"). Empty if not yet normalized.",
+          "type": "string"
+        },
+        "Variant": {
+          "description": "Canonical variant suffix (e.g. \"opus\", \"sonnet\", \"haiku\"). Empty when the model has no variant.",
+          "type": "string"
+        },
+        "Date": {
+          "description": "Release date in YYYY-MM-DD format extracted from the model ID. Empty if none was found.",
+          "type": "string"
+        }
+      },
+      "required": ["ID", "Provider", "RawFamily", "Family", "Variant", "Date"]
+    },
+    "CanonicalScheme": {
+      "title": "CanonicalScheme",
+      "description": "Identifies the string serialization format for a ModelRef. Controls how model identity is expressed as a string (e.g. for CLI output, SBOM generation, or HuggingFace Hub lookups).",
+      "type": "string",
+      "enum": ["canonical", "huggingface", "purl", "raw"],
+      "x-enum-descriptions": {
+        "canonical": "Slash-separated canonical form: <provider>/<family>/<variant>@<date>. Variant and date segments are omitted when empty. Falls back to <provider>/<raw-id> when Family is empty.",
+        "huggingface": "HuggingFace Hub form: <provider>/<raw-id>. Matches the repo-id used by the HuggingFace Hub API.",
+        "purl": "Package URL (purl-spec + ECMA-427) form: pkg:huggingface/<provider>/<raw-id>.",
+        "raw": "Original API model ID verbatim (ModelRef.ID as a string)."
+      }
+    },
+    "AcceptabilityRating": {
+      "title": "AcceptabilityRating",
+      "description": "Classifies a Designation by its acceptability status, following ISO 1087 terminology principles. All designations generated in the normalization epoch default to 'admitted'. Promotion to 'preferred' and assignment of 'deprecated' are deferred to a follow-up curation epoch.",
+      "type": "string",
+      "enum": ["admitted", "preferred", "deprecated"],
+      "x-enum-descriptions": {
+        "admitted": "Default rating. The designation is recognized and may be used, but is not the preferred form.",
+        "preferred": "The designation is the recommended form. No designations are promoted to Preferred in the current epoch.",
+        "deprecated": "The designation is no longer recommended. No designations are deprecated in the current epoch."
+      }
+    },
+    "Designation": {
+      "title": "Designation",
+      "description": "Pairs a model identity string with its serialization scheme, hosting provider, and acceptability rating. A single ModelRef may have multiple Designations: a canonical form, a raw API ID form, and optionally provider-specific alias forms.",
+      "type": "object",
+      "properties": {
+        "Value": {
+          "description": "The serialized model identifier under the given Scheme.",
+          "type": "string"
+        },
+        "Scheme": {
+          "description": "The serialization scheme used to produce Value.",
+          "$ref": "#/$defs/CanonicalScheme"
+        },
+        "Provider": {
+          "description": "The hosting provider associated with this designation. For cross-scheme designations (e.g. raw) the Provider is the original model's hosting provider.",
+          "type": "string"
+        },
+        "Rating": {
+          "description": "Classifies acceptability. All epoch-generated designations are 'admitted'; promotion is deferred.",
+          "$ref": "#/$defs/AcceptabilityRating"
+        }
+      },
+      "required": ["Value", "Scheme", "Provider", "Rating"]
+    }
+  }
 }
