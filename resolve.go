@@ -77,10 +77,25 @@ func Resolve(input string, opts ...ResolveOption) ([]ModelRef, error) {
 	// This avoids false ErrAmbiguous when normalization differences across
 	// providers produce slightly different (Family, Variant) tuples for the same ID.
 	//
-	// For SchemeCanonical and others, group by Canonical triple
-	// (NormalizedFamily, NormalizedVariant, NormalizedDate).
+	// For SchemeCanonical with an exact-ID input: use the same ID-based grouping
+	// as SchemeRaw. When the caller supplies an exact model ID like
+	// "claude-opus-4-20250514" with WithScheme(SchemeCanonical), normalizing the
+	// NormalizedVariant across providers can produce divergent tuples for what is
+	// semantically one model (e.g., Family="claude"/Variant="opus" from providers
+	// with a family field vs. Family="claude"/Variant="" from providers without
+	// one). Grouping by model ID instead collapses these spurious differences.
+	//
+	// For SchemeCanonical with a non-exact-ID input (e.g., "claude" to match
+	// multiple family members), group by Canonical triple so that genuinely
+	// distinct models (claude/opus, claude/sonnet) remain distinct and trigger
+	// ErrAmbiguous as intended.
+	//
+	// isExactIDMatch is true when every match returned by matchModels has the same
+	// model ID as the matchInput — which is the case for an exact static ID lookup.
+	isExactIDMatch := scheme == SchemeCanonical && isExactIDInput(matchInput, matches)
+
 	type groupKey struct {
-		id      ModelID // non-empty for SchemeRaw grouping
+		id      ModelID // non-empty for ID-based grouping
 		family  Family
 		variant string
 		date    string
@@ -90,11 +105,11 @@ func Resolve(input string, opts ...ResolveOption) ([]ModelRef, error) {
 
 	for _, ref := range matches {
 		var key groupKey
-		if scheme == SchemeRaw || scheme == SchemeHuggingFace || scheme == SchemePURL {
+		if scheme == SchemeRaw || scheme == SchemeHuggingFace || scheme == SchemePURL || isExactIDMatch {
 			// Group by model ID: cross-provider hosting of the same raw ID.
 			key = groupKey{id: ref.ID}
 		} else {
-			// Group by Canonical triple for SchemeCanonical.
+			// Group by Canonical triple for SchemeCanonical non-exact inputs.
 			key = groupKey{family: ref.Family, variant: ref.Variant, date: ref.Date}
 		}
 		if _, exists := byGroup[key]; !exists {
@@ -186,6 +201,22 @@ func matchModels(matchInput string, scheme CanonicalScheme) []ModelRef {
 		}
 	}
 	return out
+}
+
+// isExactIDInput reports whether every ref in matches has a model ID equal to
+// matchInput. This is used to detect an exact-ID lookup in SchemeCanonical mode
+// so that cross-provider normalization divergence does not produce a false
+// ErrAmbiguous. See the grouping comment in Resolve for the full rationale.
+func isExactIDInput(matchInput string, matches []ModelRef) bool {
+	if len(matches) == 0 {
+		return false
+	}
+	for _, ref := range matches {
+		if string(ref.ID) != matchInput {
+			return false
+		}
+	}
+	return true
 }
 
 // modelMatches reports whether model m matches matchInput under scheme.
