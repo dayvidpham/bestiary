@@ -34,9 +34,10 @@ func TestModelConstants_Unique(t *testing.T) {
 		}
 	}
 
-	// The full list must be large enough to be credible (sanity check).
-	// With 4000+ models across 100+ providers, we expect at least 1000 constants.
-	const minExpected = 1000
+	// The full list must be large enough to be credible (regression guard).
+	// At time of writing (2026-04-25) the generated registry contains 4327 constants.
+	// A floor of 4000 catches silent codegen collapses while allowing natural growth.
+	const minExpected = 4000
 	if len(ids) < minExpected {
 		t.Errorf("ModelIDs() returned only %d constants; expected at least %d — "+
 			"re-run go generate ./... to regenerate models_constants_gen.go", len(ids), minExpected)
@@ -68,15 +69,15 @@ func TestModelConstants_RoundTrip(t *testing.T) {
 	}
 }
 
-// TestModelConstants_NamingStable verifies that Model_* constant names follow
-// the required naming convention:
-//   - Every constant starts with "Model_"
-//   - Underscores are the only separator (no hyphens, no spaces)
-//   - Constant names are non-empty
+// TestModelConstants_ValuesAreRawIDs verifies two properties of ModelIDs() output:
+//  1. Defensive copy: mutating the returned slice does not affect subsequent calls.
+//  2. Values are raw API model IDs (e.g. "claude-opus-4-20250514"), not Go
+//     identifier strings — values must never start with "Model_".
 //
-// NamingStable also ensures idempotency: calling ModelIDs() twice returns the
-// same values (defensive copy — mutation of one does not affect the other).
-func TestModelConstants_NamingStable(t *testing.T) {
+// Note: codegen idempotency (re-running `go generate` produces the same output)
+// is verified by the golden-file tests in cmd/bestiary-gen, which capture the
+// full generated source. This test only checks runtime properties of ModelIDs().
+func TestModelConstants_ValuesAreRawIDs(t *testing.T) {
 	ids1 := bestiary.ModelIDs()
 	ids2 := bestiary.ModelIDs()
 
@@ -92,7 +93,7 @@ func TestModelConstants_NamingStable(t *testing.T) {
 		}
 	}
 
-	// Re-fetch for the naming check.
+	// Re-fetch for the value format check.
 	ids := bestiary.ModelIDs()
 	for _, id := range ids {
 		if id == "" {
@@ -100,7 +101,7 @@ func TestModelConstants_NamingStable(t *testing.T) {
 			continue
 		}
 		s := string(id)
-		// ModelIDs() should return raw API model ID values (e.g. "claude-opus-4-20250514"),
+		// ModelIDs() must return raw API model ID values (e.g. "claude-opus-4-20250514"),
 		// NOT Go identifier strings (the constant names live in the generated source).
 		// The constant names all start with "Model_"; the values never should.
 		if strings.HasPrefix(s, "Model_") {
