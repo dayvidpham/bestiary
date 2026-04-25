@@ -214,7 +214,7 @@ func TestJSONOutput_NormalizedFields_Populated(t *testing.T) {
 }
 
 // TestModelRef_AllFields_Present validates that ModelRef can be JSON-marshaled
-// with all 6 fields present and round-trips correctly.
+// with all 7 fields present and round-trips correctly.
 //
 // ModelRef is documented in the $defs/ModelRef section of bestiary.schema.json.
 func TestModelRef_AllFields_Present(t *testing.T) {
@@ -224,6 +224,7 @@ func TestModelRef_AllFields_Present(t *testing.T) {
 		RawFamily: "claude-opus",
 		Family:    "claude",
 		Variant:   "opus",
+		Version:   "",
 		Date:      "2025-05-14",
 	}
 
@@ -237,8 +238,8 @@ func TestModelRef_AllFields_Present(t *testing.T) {
 		t.Fatalf("json.Unmarshal(ModelRef) failed: %v", err)
 	}
 
-	// All 6 schema fields must be present.
-	required := []string{"ID", "Provider", "RawFamily", "Family", "Variant", "Date"}
+	// All 7 schema fields must be present.
+	required := []string{"ID", "Provider", "RawFamily", "Family", "Variant", "Version", "Date"}
 	for _, field := range required {
 		if _, ok := got[field]; !ok {
 			t.Errorf(
@@ -342,6 +343,7 @@ func TestDesignation_AllAcceptabilityRatings(t *testing.T) {
 				Provider: "anthropic",
 				Family:   "claude",
 				Variant:  "opus",
+				Version:  "",
 				Date:     "2025-05-14",
 			}
 			designations := ref.Designations()

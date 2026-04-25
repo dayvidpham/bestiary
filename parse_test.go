@@ -566,3 +566,134 @@ func TestInferFamilyFromID(t *testing.T) {
 		})
 	}
 }
+
+// ----------------------------------------------------------------------------
+// ParseFamilyWithVersion tests
+// (SLICE-FIX-1-L2: tests FAIL until L3 implementation exists)
+// ----------------------------------------------------------------------------
+
+// TestParseFamilyWithVersion_Core covers the primary acceptance criteria from
+// the slice spec: hyphen-versioned families split into (family, variant, version).
+//
+// BDD criterion: "claude-opus-4-5" → (family=claude, variant=opus, version=4.5).
+// Version uses dot separator (4.5) not hyphen (4-5).
+func TestParseFamilyWithVersion_Core(t *testing.T) {
+	t.Parallel()
+
+	cases := []struct {
+		name        string
+		raw         bestiary.Family
+		wantFamily  bestiary.Family
+		wantVariant string
+		wantVersion string
+	}{
+		// Primary UAT-2 criterion: claude families with versioned hyphen suffix.
+		{"claude-opus-4-5", "claude-opus-4-5", "claude", "opus", "4.5"},
+		{"claude-opus-4-6", "claude-opus-4-6", "claude", "opus", "4.6"},
+		{"claude-sonnet-4-5", "claude-sonnet-4-5", "claude", "sonnet", "4.5"},
+		{"claude-haiku-4-5", "claude-haiku-4-5", "claude", "haiku", "4.5"},
+		// No version: vanilla overrides — version should be empty.
+		{"claude-opus no version", "claude-opus", "claude", "opus", ""},
+		{"claude-haiku no version", "claude-haiku", "claude", "haiku", ""},
+		// Single version segment (single numeric after dash).
+		{"llama-3-1 two parts", "llama-3-1", "llama", "", "3.1"},
+		// phi-4-5: base "phi" not in overrides → family=phi, variant empty, version=4.5.
+		{"phi-4-5", "phi-4-5", "phi", "", "4.5"},
+	}
+
+	for _, tc := range cases {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			gotFamily, gotVariant, gotVersion := bestiary.ParseFamilyWithVersion(tc.raw)
+			if gotFamily != tc.wantFamily {
+				t.Errorf("ParseFamilyWithVersion(%q) family = %q, want %q", tc.raw, gotFamily, tc.wantFamily)
+			}
+			if gotVariant != tc.wantVariant {
+				t.Errorf("ParseFamilyWithVersion(%q) variant = %q, want %q", tc.raw, gotVariant, tc.wantVariant)
+			}
+			if gotVersion != tc.wantVersion {
+				t.Errorf("ParseFamilyWithVersion(%q) version = %q, want %q", tc.raw, gotVersion, tc.wantVersion)
+			}
+		})
+	}
+}
+
+// TestParseFamilyWithVersion_Gemini covers Gemini models which use a
+// major.minor version in their family string.
+func TestParseFamilyWithVersion_Gemini(t *testing.T) {
+	t.Parallel()
+
+	cases := []struct {
+		name        string
+		raw         bestiary.Family
+		wantFamily  bestiary.Family
+		wantVariant string
+		wantVersion string
+	}{
+		// gemini-2.5-flash: base=gemini, version=2.5 (from no-prefix pattern), variant=flash (override).
+		// The raw family "gemini-flash" is in overrides → (gemini, flash).
+		// But "gemini-2.5-flash" must parse via versioned patterns.
+		// Design: gemini-2.5-flash → family=gemini, variant=flash, version=2.5.
+		{"gemini-2.5-flash", "gemini-2.5-flash", "gemini", "flash", "2.5"},
+		// gemini-2.5 → no variant, version=2.5.
+		{"gemini-2.5", "gemini-2.5", "gemini", "", "2.5"},
+		// gemini-flash (no version): family=gemini, variant=flash, version empty.
+		{"gemini-flash no version", "gemini-flash", "gemini", "flash", ""},
+	}
+
+	for _, tc := range cases {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			gotFamily, gotVariant, gotVersion := bestiary.ParseFamilyWithVersion(tc.raw)
+			if gotFamily != tc.wantFamily {
+				t.Errorf("ParseFamilyWithVersion(%q) family = %q, want %q", tc.raw, gotFamily, tc.wantFamily)
+			}
+			if gotVariant != tc.wantVariant {
+				t.Errorf("ParseFamilyWithVersion(%q) variant = %q, want %q", tc.raw, gotVariant, tc.wantVariant)
+			}
+			if gotVersion != tc.wantVersion {
+				t.Errorf("ParseFamilyWithVersion(%q) version = %q, want %q", tc.raw, gotVersion, tc.wantVersion)
+			}
+		})
+	}
+}
+
+// TestParseFamilyWithVersion_Empty verifies that empty input returns all-empty results.
+func TestParseFamilyWithVersion_Empty(t *testing.T) {
+	t.Parallel()
+	gotFamily, gotVariant, gotVersion := bestiary.ParseFamilyWithVersion("")
+	if gotFamily != "" || gotVariant != "" || gotVersion != "" {
+		t.Errorf("ParseFamilyWithVersion(\"\") = (%q, %q, %q), want all empty", gotFamily, gotVariant, gotVersion)
+	}
+}
+
+// TestParseFamilyWithVersion_BackwardCompat verifies that non-versioned inputs
+// produce the same (family, variant) as ParseFamily, with version="".
+func TestParseFamilyWithVersion_BackwardCompat(t *testing.T) {
+	t.Parallel()
+
+	cases := []bestiary.Family{
+		"claude-opus", "claude-haiku", "gpt-mini", "gemini-flash",
+		"kimi-k2.5", "qwen3.5", "llama",
+	}
+
+	for _, raw := range cases {
+		raw := raw
+		t.Run(string(raw), func(t *testing.T) {
+			t.Parallel()
+			wantFamily, wantVariant := bestiary.ParseFamily(raw)
+			gotFamily, gotVariant, gotVersion := bestiary.ParseFamilyWithVersion(raw)
+			if gotFamily != wantFamily {
+				t.Errorf("ParseFamilyWithVersion(%q) family = %q, ParseFamily says %q", raw, gotFamily, wantFamily)
+			}
+			if gotVariant != wantVariant {
+				t.Errorf("ParseFamilyWithVersion(%q) variant = %q, ParseFamily says %q", raw, gotVariant, wantVariant)
+			}
+			if gotVersion != "" {
+				t.Errorf("ParseFamilyWithVersion(%q) version = %q, want empty for non-versioned input", raw, gotVersion)
+			}
+		})
+	}
+}

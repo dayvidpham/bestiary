@@ -11,8 +11,9 @@ import (
 )
 
 // testModel returns a ModelInfo suitable for round-trip testing.
-// NormalizedFamily, NormalizedVariant, and NormalizedDate are set to non-zero
-// values so that round-trip tests prove these fields survive persistence.
+// NormalizedFamily, NormalizedVariant, NormalizedVersion, and NormalizedDate are
+// set to non-zero values so that round-trip tests prove these fields survive
+// persistence.
 func testModel(id string, provider bestiary.Provider) bestiary.ModelInfo {
 	return bestiary.ModelInfo{
 		ID:                bestiary.ModelID(id),
@@ -21,6 +22,7 @@ func testModel(id string, provider bestiary.Provider) bestiary.ModelInfo {
 		Family:            "test-family",
 		NormalizedFamily:  "test",
 		NormalizedVariant: "family",
+		NormalizedVersion: "",
 		NormalizedDate:    "2026-01-01",
 		ContextWindow:     128000,
 		MaxOutput:         4096,
@@ -619,6 +621,7 @@ func testCanonicalModel(id string, provider bestiary.Provider, rawFamily, normFa
 	m.Family = bestiary.Family(rawFamily)
 	m.NormalizedFamily = bestiary.Family(normFamily)
 	m.NormalizedVariant = variant
+	m.NormalizedVersion = ""
 	m.NormalizedDate = date
 	return m
 }

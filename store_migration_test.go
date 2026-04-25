@@ -313,8 +313,8 @@ func TestMigration_FreshDB_Idempotent(t *testing.T) {
 
 // TestMigration_V2Idempotent opens the same v2 database (created by createV2DB)
 // twice and verifies that the second open does not re-migrate, the schema
-// version remains currentSchemaVersion (3), and data is preserved.
-// This exercises the v2→v3 migration path specifically for idempotency: the
+// version remains currentSchemaVersion, and data is preserved.
+// This exercises the v2→v3→v4 migration path specifically for idempotency: the
 // first open migrates, the second open must be a no-op.
 func TestMigration_V2Idempotent(t *testing.T) {
 	dir := t.TempDir()
@@ -379,8 +379,8 @@ func TestMigration_V2toV3_PreservesData(t *testing.T) {
 	}
 	defer store.Close()
 
-	if ver, _ := getSchemaVersion(store.conn); ver != 3 {
-		t.Errorf("schema version = %d, want 3", ver)
+	if ver, _ := getSchemaVersion(store.conn); ver != currentSchemaVersion {
+		t.Errorf("schema version = %d, want %d", ver, currentSchemaVersion)
 	}
 
 	ctx := context.Background()
@@ -530,8 +530,8 @@ func TestMigration_V2toV3_Idempotent(t *testing.T) {
 		if err != nil {
 			t.Fatalf("getSchemaVersion on second open: %v", err)
 		}
-		if version != 3 {
-			t.Errorf("version after second open = %d, want 3", version)
+		if version != currentSchemaVersion {
+			t.Errorf("version after second open = %d, want %d", version, currentSchemaVersion)
 		}
 
 		ctx := context.Background()
@@ -623,10 +623,10 @@ func TestMigration_V2toV3_EdgeCases(t *testing.T) {
 
 // TestMigration_V2toV3_IndexUsed verifies that EXPLAIN QUERY PLAN for the
 // actual QueryByCanonical predicate shape (family, variant, date) references
-// the idx_canonical index. The index covers (family, variant, provider); SQLite
-// uses the (family, variant) prefix as a range scan and treats date as a
-// residual filter. This test asserts that the index is reachable from the
-// migrated-DB code path (separate from the fresh-DB path tested elsewhere).
+// the idx_canonical index. The index covers (family, variant, version, provider);
+// SQLite uses the (family, variant, version) prefix as a range scan and treats
+// date as a residual filter. This test asserts that the index is reachable from
+// the migrated-DB code path (separate from the fresh-DB path tested elsewhere).
 func TestMigration_V2toV3_IndexUsed(t *testing.T) {
 	dir := t.TempDir()
 	dbPath := filepath.Join(dir, "test.db")
@@ -670,5 +670,301 @@ func TestMigration_V2toV3_IndexUsed(t *testing.T) {
 	if !found {
 		t.Errorf("idx_canonical not referenced in query plan; plan:\n%s",
 			strings.Join(planLines, "\n"))
+	}
+}
+
+// ---------------------------------------------------------------------------
+// v3 → v4 migration tests
+// (SLICE-FIX-1-L2: tests FAIL until L3 implements migrateToV4 + version column wiring)
+// ---------------------------------------------------------------------------
+
+// v3Schema is the v3 schema: has raw_family, family, variant, date columns but
+// no version column. Used to create test databases for v3→v4 migration testing.
+const v3Schema = `CREATE TABLE models (
+    model_id          TEXT NOT NULL,
+    provider          TEXT NOT NULL,
+    display_name      TEXT NOT NULL,
+    raw_family        TEXT NOT NULL DEFAULT '',
+    family            TEXT NOT NULL DEFAULT '',
+    variant           TEXT NOT NULL DEFAULT '',
+    date              TEXT NOT NULL DEFAULT '',
+    context_window    INTEGER NOT NULL DEFAULT 0,
+    max_output        INTEGER NOT NULL DEFAULT 0,
+    reasoning         INTEGER NOT NULL DEFAULT 0,
+    tool_call         INTEGER NOT NULL DEFAULT 0,
+    attachment        INTEGER NOT NULL DEFAULT 0,
+    temperature       INTEGER NOT NULL DEFAULT 0,
+    structured_output INTEGER NOT NULL DEFAULT 0,
+    interleaved       INTEGER NOT NULL DEFAULT 0,
+    interleaved_config TEXT NOT NULL DEFAULT '',
+    open_weights      INTEGER NOT NULL DEFAULT 0,
+    cost_input        REAL,
+    cost_output       REAL,
+    cost_reasoning    REAL,
+    cost_cache_read   REAL,
+    cost_cache_write  REAL,
+    release_date      TEXT NOT NULL DEFAULT '',
+    knowledge         TEXT NOT NULL DEFAULT '',
+    modalities_input  TEXT NOT NULL DEFAULT '',
+    modalities_output TEXT NOT NULL DEFAULT '',
+    last_synced       TEXT NOT NULL,
+    PRIMARY KEY (model_id, provider)
+)`
+
+// v3IndexSQL is the v3 canonical index (family, variant, provider) — without version.
+const v3IndexSQL = `CREATE INDEX IF NOT EXISTS idx_canonical ON models(family, variant, provider)`
+
+// createV3DB writes a v3-schema SQLite database to path with schema_meta (version=3)
+// and inserts rows with the given fields. The rows slice contains
+// (model_id, provider, raw_family, family, variant, date) tuples.
+func createV3DB(t *testing.T, path string, rows []struct {
+	modelID, provider, rawFamily, family, variant, date string
+}) {
+	t.Helper()
+	conn, err := sqlite.OpenConn(path)
+	if err != nil {
+		t.Fatalf("createV3DB: open %s: %v", path, err)
+	}
+	defer conn.Close()
+
+	if err := sqlitex.ExecuteTransient(conn, schemaMetaSQL, nil); err != nil {
+		t.Fatalf("createV3DB: create schema_meta: %v", err)
+	}
+	if err := sqlitex.Execute(conn, "INSERT INTO schema_meta (version) VALUES (?1)",
+		&sqlitex.ExecOptions{Args: []any{3}}); err != nil {
+		t.Fatalf("createV3DB: insert schema version: %v", err)
+	}
+	if err := sqlitex.ExecuteTransient(conn, v3Schema, nil); err != nil {
+		t.Fatalf("createV3DB: create table: %v", err)
+	}
+	if err := sqlitex.ExecuteTransient(conn, v3IndexSQL, nil); err != nil {
+		t.Fatalf("createV3DB: create v3 index: %v", err)
+	}
+	for _, r := range rows {
+		err := sqlitex.Execute(conn,
+			`INSERT INTO models (model_id, provider, display_name, raw_family, family, variant, date, last_synced)
+            VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, '2026-01-01T00:00:00Z')`,
+			&sqlitex.ExecOptions{Args: []any{
+				r.modelID, r.provider, r.modelID + "-display",
+				r.rawFamily, r.family, r.variant, r.date,
+			}})
+		if err != nil {
+			t.Fatalf("createV3DB: insert row (%s, %s): %v", r.modelID, r.provider, err)
+		}
+	}
+}
+
+// TestMigration_V3toV4_PreservesData creates a v3 database with two rows,
+// migrates to v4 via OpenStore, and asserts:
+//   - Schema version is 4 (currentSchemaVersion).
+//   - Both rows are preserved.
+//   - The new `version` column exists with default ''.
+//   - Existing canonical fields (family, variant, date) are unchanged.
+func TestMigration_V3toV4_PreservesData(t *testing.T) {
+	dir := t.TempDir()
+	dbPath := filepath.Join(dir, "v3.db")
+
+	createV3DB(t, dbPath, []struct {
+		modelID, provider, rawFamily, family, variant, date string
+	}{
+		{"claude-opus-4-20250514", "anthropic", "claude-opus", "claude", "opus", "2025-05-14"},
+		{"gemini-flash", "google", "gemini-flash", "gemini", "flash", ""},
+	})
+
+	store, err := OpenStore(dbPath)
+	if err != nil {
+		t.Fatalf("OpenStore (v3→v4 migration): %v", err)
+	}
+	defer store.Close()
+
+	// Schema version must be 4.
+	version, err := getSchemaVersion(store.conn)
+	if err != nil {
+		t.Fatalf("getSchemaVersion: %v", err)
+	}
+	if version != currentSchemaVersion {
+		t.Errorf("post-migration version = %d, want %d", version, currentSchemaVersion)
+	}
+
+	ctx := context.Background()
+	all, err := store.QueryModels(ctx, "")
+	if err != nil {
+		t.Fatalf("QueryModels after v3→v4: %v", err)
+	}
+	if len(all) != 2 {
+		t.Fatalf("expected 2 rows preserved, got %d", len(all))
+	}
+
+	byID := make(map[ModelID]ModelInfo, len(all))
+	for _, m := range all {
+		byID[m.ID] = m
+	}
+
+	// Check claude row: existing fields preserved, version defaults to ''.
+	if m, ok := byID["claude-opus-4-20250514"]; ok {
+		if m.NormalizedFamily != "claude" {
+			t.Errorf("claude: NormalizedFamily = %q, want %q", m.NormalizedFamily, "claude")
+		}
+		if m.NormalizedVariant != "opus" {
+			t.Errorf("claude: NormalizedVariant = %q, want %q", m.NormalizedVariant, "opus")
+		}
+		if m.NormalizedDate != "2025-05-14" {
+			t.Errorf("claude: NormalizedDate = %q, want %q", m.NormalizedDate, "2025-05-14")
+		}
+		// Version column defaults to '' for migrated rows.
+		if m.NormalizedVersion != "" {
+			t.Errorf("claude: NormalizedVersion = %q, want '' (default from migration)", m.NormalizedVersion)
+		}
+	} else {
+		t.Error("claude-opus-4-20250514 not found after v3→v4 migration")
+	}
+
+	// Check gemini row.
+	if m, ok := byID["gemini-flash"]; ok {
+		if m.NormalizedFamily != "gemini" {
+			t.Errorf("gemini: NormalizedFamily = %q, want %q", m.NormalizedFamily, "gemini")
+		}
+		if m.NormalizedVersion != "" {
+			t.Errorf("gemini: NormalizedVersion = %q, want '' (default from migration)", m.NormalizedVersion)
+		}
+	} else {
+		t.Error("gemini-flash not found after v3→v4 migration")
+	}
+}
+
+// TestMigration_V3toV4_VersionColumnExists verifies that the `version` column
+// actually exists in the models table after migration (schema-level assertion).
+func TestMigration_V3toV4_VersionColumnExists(t *testing.T) {
+	dir := t.TempDir()
+	dbPath := filepath.Join(dir, "v3.db")
+
+	createV3DB(t, dbPath, []struct {
+		modelID, provider, rawFamily, family, variant, date string
+	}{
+		{"m1", "anthropic", "claude-opus", "claude", "opus", ""},
+	})
+
+	store, err := OpenStore(dbPath)
+	if err != nil {
+		t.Fatalf("OpenStore: %v", err)
+	}
+	defer store.Close()
+
+	exists, err := columnExists(store.conn, "models", "version")
+	if err != nil {
+		t.Fatalf("columnExists: %v", err)
+	}
+	if !exists {
+		t.Error(
+			"version column missing from models table after v3→v4 migration;\n" +
+				"  What: v3→v4 migration did not add the version column\n" +
+				"  Why: migrateToV4 was not called or did not execute the ALTER TABLE\n" +
+				"  Where: store.go migrateToV4 / migrateSchema\n" +
+				"  How to fix: ensure migrateSchema calls migrateToV4 when fromVersion < 4",
+		)
+	}
+}
+
+// TestMigration_V3toV4_IndexRebuilt verifies that after migration the
+// idx_canonical index covers (family, variant, version, provider) — i.e., the
+// new index is wider than the v3 index which only had (family, variant, provider).
+//
+// We check this by inspecting EXPLAIN QUERY PLAN for a query that predicates on
+// version; if the index is used, it covers the version column.
+func TestMigration_V3toV4_IndexRebuilt(t *testing.T) {
+	dir := t.TempDir()
+	dbPath := filepath.Join(dir, "v3.db")
+
+	createV3DB(t, dbPath, []struct {
+		modelID, provider, rawFamily, family, variant, date string
+	}{
+		{"claude-opus-4-5", "anthropic", "claude-opus-4-5", "claude", "opus", ""},
+	})
+
+	store, err := OpenStore(dbPath)
+	if err != nil {
+		t.Fatalf("OpenStore: %v", err)
+	}
+	defer store.Close()
+
+	// EXPLAIN QUERY PLAN with version in the predicate.
+	var planLines []string
+	err = sqlitex.Execute(store.conn,
+		`EXPLAIN QUERY PLAN SELECT * FROM models WHERE family = ?1 AND variant = ?2 AND version = ?3`,
+		&sqlitex.ExecOptions{
+			Args: []any{"claude", "opus", "4.5"},
+			ResultFunc: func(stmt *sqlite.Stmt) error {
+				planLines = append(planLines, stmt.GetText("detail"))
+				return nil
+			},
+		})
+	if err != nil {
+		t.Fatalf("EXPLAIN QUERY PLAN: %v", err)
+	}
+
+	var found bool
+	for _, line := range planLines {
+		if strings.Contains(line, "idx_canonical") {
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Errorf("idx_canonical not referenced in query plan after v3→v4 migration;\n"+
+			"  plan:\n%s\n"+
+			"  What: idx_canonical does not cover the version column\n"+
+			"  Why: v3→v4 migration did not drop and recreate the index\n"+
+			"  How to fix: ensure migrateToV4 drops idx_canonical and recreates with (family,variant,version,provider)",
+			strings.Join(planLines, "\n"))
+	}
+}
+
+// TestNormalizedVersion_RoundTrip verifies that NormalizedVersion survives
+// a UpsertModels + QueryModel round-trip.
+// This test FAILS until L3 wires the version column into upsert and scan.
+func TestNormalizedVersion_RoundTrip(t *testing.T) {
+	store, err := OpenStore(":memory:")
+	if err != nil {
+		t.Fatalf("OpenStore: %v", err)
+	}
+	defer store.Close()
+
+	ctx := context.Background()
+	m := ModelInfo{
+		ID:                ModelID("claude-opus-4-5-20251101"),
+		Provider:          ProviderAnthropic,
+		DisplayName:       "Claude Opus 4.5",
+		Family:            Family("claude-opus-4-5"),
+		NormalizedFamily:  Family("claude"),
+		NormalizedVariant: "opus",
+		NormalizedVersion: "4.5",
+		NormalizedDate:    "2025-11-01",
+		LastSynced:        "2026-01-01T00:00:00Z",
+	}
+
+	if err := store.UpsertModels(ctx, []ModelInfo{m}); err != nil {
+		t.Fatalf("UpsertModels: %v", err)
+	}
+
+	got, err := store.QueryModel(ctx, m.ID)
+	if err != nil {
+		t.Fatalf("QueryModel: %v", err)
+	}
+
+	if got.NormalizedVersion != "4.5" {
+		t.Errorf(
+			"NormalizedVersion round-trip failed: got %q, want %q\n"+
+				"  What: NormalizedVersion not persisted or not scanned\n"+
+				"  Why: upsert SQL or scanModelInfo does not handle the version column\n"+
+				"  Where: store.go UpsertModels / scanModelInfo\n"+
+				"  How to fix: add version column to the INSERT + scan in store.go",
+			got.NormalizedVersion, "4.5",
+		)
+	}
+	if got.NormalizedFamily != "claude" {
+		t.Errorf("NormalizedFamily = %q, want %q", got.NormalizedFamily, "claude")
+	}
+	if got.NormalizedVariant != "opus" {
+		t.Errorf("NormalizedVariant = %q, want %q", got.NormalizedVariant, "opus")
 	}
 }

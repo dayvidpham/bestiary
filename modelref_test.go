@@ -6,8 +6,8 @@ import (
 	"github.com/dayvidpham/bestiary"
 )
 
-// TestModelInfo_Ref verifies that Ref() populates all 6 fields correctly.
-// Family and Variant come from the normalized fields; Date from NormalizedDate.
+// TestModelInfo_Ref verifies that Ref() populates all 7 fields correctly.
+// Family, Variant, and Version come from the normalized fields; Date from NormalizedDate.
 func TestModelInfo_Ref(t *testing.T) {
 	m := bestiary.ModelInfo{
 		ID:                "claude-opus-4-20250514",
@@ -15,6 +15,7 @@ func TestModelInfo_Ref(t *testing.T) {
 		Family:            "claude-opus",
 		NormalizedFamily:  "claude",
 		NormalizedVariant: "opus",
+		NormalizedVersion: "",
 		NormalizedDate:    "2025-05-14",
 		ReleaseDate:       "2025-05-14",
 	}
@@ -35,8 +36,36 @@ func TestModelInfo_Ref(t *testing.T) {
 	if ref.Variant != "opus" {
 		t.Errorf("Ref().Variant = %q, want %q (normalized variant)", ref.Variant, "opus")
 	}
+	if ref.Version != "" {
+		t.Errorf("Ref().Version = %q, want empty string", ref.Version)
+	}
 	if ref.Date != "2025-05-14" {
 		t.Errorf("Ref().Date = %q, want %q", ref.Date, "2025-05-14")
+	}
+}
+
+// TestModelInfo_Ref_WithVersion verifies that Ref() propagates NormalizedVersion.
+func TestModelInfo_Ref_WithVersion(t *testing.T) {
+	m := bestiary.ModelInfo{
+		ID:                "claude-opus-4-5-20251101",
+		Provider:          bestiary.ProviderAnthropic,
+		Family:            "claude-opus-4-5",
+		NormalizedFamily:  "claude",
+		NormalizedVariant: "opus",
+		NormalizedVersion: "4.5",
+		NormalizedDate:    "2025-11-01",
+		ReleaseDate:       "2025-11-01",
+	}
+	ref := m.Ref()
+
+	if ref.Variant != "opus" {
+		t.Errorf("Ref().Variant = %q, want %q", ref.Variant, "opus")
+	}
+	if ref.Version != "4.5" {
+		t.Errorf("Ref().Version = %q, want %q", ref.Version, "4.5")
+	}
+	if ref.Date != "2025-11-01" {
+		t.Errorf("Ref().Date = %q, want %q", ref.Date, "2025-11-01")
 	}
 }
 
@@ -60,6 +89,9 @@ func TestModelInfo_Ref_EmptyFields(t *testing.T) {
 	}
 	if ref.Variant != "" {
 		t.Errorf("Ref().Variant = %q, want empty string", ref.Variant)
+	}
+	if ref.Version != "" {
+		t.Errorf("Ref().Version = %q, want empty string for zero-value ModelInfo", ref.Version)
 	}
 	if ref.Date != "" {
 		t.Errorf("Ref().Date = %q, want empty string for zero-value ModelInfo", ref.Date)
@@ -88,6 +120,7 @@ func TestFormatRaw_UsesID(t *testing.T) {
 		Provider: bestiary.ProviderAnthropic,
 		Family:   "claude",
 		Variant:  "opus",
+		Version:  "",
 		Date:     "2025-05-14",
 	}
 	got := ref.Format(bestiary.SchemeRaw)
@@ -104,6 +137,7 @@ func TestFormatHuggingFace(t *testing.T) {
 		Provider: bestiary.ProviderAnthropic,
 		Family:   "claude",
 		Variant:  "opus",
+		Version:  "",
 		Date:     "2025-05-14",
 	}
 	got := ref.Format(bestiary.SchemeHuggingFace)
@@ -121,6 +155,7 @@ func TestFormatPURL(t *testing.T) {
 		Provider: bestiary.ProviderAnthropic,
 		Family:   "claude",
 		Variant:  "opus",
+		Version:  "",
 		Date:     "2025-05-14",
 	}
 	got := ref.Format(bestiary.SchemePURL)
@@ -131,13 +166,14 @@ func TestFormatPURL(t *testing.T) {
 }
 
 // TestFormatCanonical_WithVariantAndDate verifies the full
-// "<provider>/<family>/<variant>@<date>" form.
+// "<provider>/<family>/<variant>@<date>" form (no Version).
 func TestFormatCanonical_WithVariantAndDate(t *testing.T) {
 	ref := bestiary.ModelRef{
 		ID:       "claude-opus-4-20250514",
 		Provider: bestiary.ProviderAnthropic,
 		Family:   "claude",
 		Variant:  "opus",
+		Version:  "",
 		Date:     "2025-05-14",
 	}
 	got := ref.Format(bestiary.SchemeCanonical)
@@ -148,13 +184,14 @@ func TestFormatCanonical_WithVariantAndDate(t *testing.T) {
 }
 
 // TestFormatCanonical_WithVariantNoDate verifies "<provider>/<family>/<variant>"
-// when Date is empty.
+// when Date and Version are empty.
 func TestFormatCanonical_WithVariantNoDate(t *testing.T) {
 	ref := bestiary.ModelRef{
 		ID:       "claude-opus",
 		Provider: bestiary.ProviderAnthropic,
 		Family:   "claude",
 		Variant:  "opus",
+		Version:  "",
 		Date:     "",
 	}
 	got := ref.Format(bestiary.SchemeCanonical)
@@ -165,13 +202,14 @@ func TestFormatCanonical_WithVariantNoDate(t *testing.T) {
 }
 
 // TestFormatCanonical_FamilyOnly verifies "<provider>/<family>"
-// when both Variant and Date are empty.
+// when Variant, Version, and Date are all empty.
 func TestFormatCanonical_FamilyOnly(t *testing.T) {
 	ref := bestiary.ModelRef{
 		ID:       "gpt-4",
 		Provider: bestiary.ProviderOpenAI,
 		Family:   "gpt",
 		Variant:  "",
+		Version:  "",
 		Date:     "",
 	}
 	got := ref.Format(bestiary.SchemeCanonical)
@@ -189,6 +227,7 @@ func TestFormatCanonical_EmptyFamily_FallsBackToRawID(t *testing.T) {
 		Provider: "custom-provider",
 		Family:   "",
 		Variant:  "",
+		Version:  "",
 		Date:     "",
 	}
 	got := ref.Format(bestiary.SchemeCanonical)
@@ -205,6 +244,7 @@ func TestModelRef_String(t *testing.T) {
 		Provider: bestiary.ProviderAnthropic,
 		Family:   "claude",
 		Variant:  "opus",
+		Version:  "",
 		Date:     "2025-05-14",
 	}
 	if ref.String() != ref.Format(bestiary.SchemeCanonical) {
@@ -221,6 +261,7 @@ func TestModelRef_Designations_AllAdmitted(t *testing.T) {
 		Provider: bestiary.ProviderAnthropic,
 		Family:   "claude",
 		Variant:  "opus",
+		Version:  "",
 		Date:     "2025-05-14",
 	}
 	designations := ref.Designations()
@@ -243,6 +284,7 @@ func TestModelRef_Designations_CoversSchemes(t *testing.T) {
 		Provider: bestiary.ProviderAnthropic,
 		Family:   "claude",
 		Variant:  "opus",
+		Version:  "",
 		Date:     "2025-05-14",
 	}
 	designations := ref.Designations()
@@ -317,18 +359,181 @@ func TestProvidersForFamily_NotFound(t *testing.T) {
 }
 
 // TestFormatCanonical_WithFamilyAndDate verifies "<provider>/<family>@<date>"
-// when Variant is empty but Date is not.
+// when Variant and Version are empty but Date is not.
 func TestFormatCanonical_WithFamilyAndDate(t *testing.T) {
 	ref := bestiary.ModelRef{
 		ID:       "gpt-4-2024-08-06",
 		Provider: bestiary.ProviderOpenAI,
 		Family:   "gpt",
 		Variant:  "",
+		Version:  "",
 		Date:     "2024-08-06",
 	}
 	got := ref.Format(bestiary.SchemeCanonical)
 	want := "openai/gpt@2024-08-06"
 	if got != want {
 		t.Errorf("Format(SchemeCanonical) = %q, want %q", got, want)
+	}
+}
+
+// ---------------------------------------------------------------------------
+// Tests for Version-bearing canonical formatting (B4 from slice spec).
+// These tests FAIL until L3 (formatCanonical) is implemented.
+// ---------------------------------------------------------------------------
+
+// TestFormatCanonical_WithVersionAndDate verifies
+// "<provider>/<family>/<variant>/<version>@<date>" — the primary UAT-2 case.
+func TestFormatCanonical_WithVersionAndDate(t *testing.T) {
+	ref := bestiary.ModelRef{
+		ID:       "claude-opus-4-5-20251101",
+		Provider: bestiary.ProviderAnthropic,
+		Family:   "claude",
+		Variant:  "opus",
+		Version:  "4.5",
+		Date:     "2025-11-01",
+	}
+	got := ref.Format(bestiary.SchemeCanonical)
+	want := "anthropic/claude/opus/4.5@2025-11-01"
+	if got != want {
+		t.Errorf("Format(SchemeCanonical) with Version+Date = %q, want %q", got, want)
+	}
+}
+
+// TestFormatCanonical_WithVersionNoDate verifies
+// "<provider>/<family>/<variant>/<version>" when Date is empty.
+func TestFormatCanonical_WithVersionNoDate(t *testing.T) {
+	ref := bestiary.ModelRef{
+		ID:       "claude-opus-4-5",
+		Provider: bestiary.ProviderAnthropic,
+		Family:   "claude",
+		Variant:  "opus",
+		Version:  "4.5",
+		Date:     "",
+	}
+	got := ref.Format(bestiary.SchemeCanonical)
+	want := "anthropic/claude/opus/4.5"
+	if got != want {
+		t.Errorf("Format(SchemeCanonical) with Version no Date = %q, want %q", got, want)
+	}
+}
+
+// TestFormatCanonical_VersionOnlyNoVariant verifies
+// "<provider>/<family>/<version>@<date>" when Variant is empty.
+func TestFormatCanonical_VersionOnlyNoVariant(t *testing.T) {
+	ref := bestiary.ModelRef{
+		ID:       "gemini-2.5-20251101",
+		Provider: "google",
+		Family:   "gemini",
+		Variant:  "",
+		Version:  "2.5",
+		Date:     "2025-11-01",
+	}
+	got := ref.Format(bestiary.SchemeCanonical)
+	want := "google/gemini/2.5@2025-11-01"
+	if got != want {
+		t.Errorf("Format(SchemeCanonical) Version-only no Variant = %q, want %q", got, want)
+	}
+}
+
+// TestFormatCanonical_AllCombinations exercises the full combinatorial matrix
+// for Version presence/absence with Variant and Date.
+func TestFormatCanonical_AllCombinations(t *testing.T) {
+	cases := []struct {
+		name    string
+		ref     bestiary.ModelRef
+		want    string
+	}{
+		{
+			// Variant set, Version set, Date set
+			name: "variant+version+date",
+			ref: bestiary.ModelRef{
+				ID: "claude-opus-4-5-20251101", Provider: bestiary.ProviderAnthropic,
+				Family: "claude", Variant: "opus", Version: "4.5", Date: "2025-11-01",
+			},
+			want: "anthropic/claude/opus/4.5@2025-11-01",
+		},
+		{
+			// Variant set, Version set, no Date
+			name: "variant+version-nodate",
+			ref: bestiary.ModelRef{
+				ID: "claude-opus-4-5", Provider: bestiary.ProviderAnthropic,
+				Family: "claude", Variant: "opus", Version: "4.5", Date: "",
+			},
+			want: "anthropic/claude/opus/4.5",
+		},
+		{
+			// Variant set, no Version, Date set (existing behaviour preserved)
+			name: "variant-noversion+date",
+			ref: bestiary.ModelRef{
+				ID: "claude-opus-4-20250514", Provider: bestiary.ProviderAnthropic,
+				Family: "claude", Variant: "opus", Version: "", Date: "2025-05-14",
+			},
+			want: "anthropic/claude/opus@2025-05-14",
+		},
+		{
+			// Variant set, no Version, no Date
+			name: "variant-noversion-nodate",
+			ref: bestiary.ModelRef{
+				ID: "claude-opus", Provider: bestiary.ProviderAnthropic,
+				Family: "claude", Variant: "opus", Version: "", Date: "",
+			},
+			want: "anthropic/claude/opus",
+		},
+		{
+			// No Variant, Version set, Date set
+			name: "novariant+version+date",
+			ref: bestiary.ModelRef{
+				ID: "gemini-2.5-20251101", Provider: "google",
+				Family: "gemini", Variant: "", Version: "2.5", Date: "2025-11-01",
+			},
+			want: "google/gemini/2.5@2025-11-01",
+		},
+		{
+			// No Variant, Version set, no Date
+			name: "novariant+version-nodate",
+			ref: bestiary.ModelRef{
+				ID: "gemini-2.5", Provider: "google",
+				Family: "gemini", Variant: "", Version: "2.5", Date: "",
+			},
+			want: "google/gemini/2.5",
+		},
+		{
+			// No Variant, no Version, Date set (existing behaviour preserved)
+			name: "novariant-noversion+date",
+			ref: bestiary.ModelRef{
+				ID: "gpt-4-2024-08-06", Provider: bestiary.ProviderOpenAI,
+				Family: "gpt", Variant: "", Version: "", Date: "2024-08-06",
+			},
+			want: "openai/gpt@2024-08-06",
+		},
+		{
+			// No Variant, no Version, no Date
+			name: "family-only",
+			ref: bestiary.ModelRef{
+				ID: "gpt-4", Provider: bestiary.ProviderOpenAI,
+				Family: "gpt", Variant: "", Version: "", Date: "",
+			},
+			want: "openai/gpt",
+		},
+		{
+			// Empty Family: fall back to raw-ID
+			name: "empty-family-fallback",
+			ref: bestiary.ModelRef{
+				ID: "opaque-model", Provider: "custom",
+				Family: "", Variant: "", Version: "", Date: "",
+			},
+			want: "custom/opaque-model",
+		},
+	}
+
+	for _, tc := range cases {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			got := tc.ref.Format(bestiary.SchemeCanonical)
+			if got != tc.want {
+				t.Errorf("Format(SchemeCanonical) = %q, want %q", got, tc.want)
+			}
+		})
 	}
 }
