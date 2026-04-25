@@ -11,17 +11,22 @@ import (
 )
 
 // testModel returns a ModelInfo suitable for round-trip testing.
+// NormalizedFamily, NormalizedVariant, and NormalizedDate are set to non-zero
+// values so that round-trip tests prove these fields survive persistence.
 func testModel(id string, provider bestiary.Provider) bestiary.ModelInfo {
 	return bestiary.ModelInfo{
-		ID:            bestiary.ModelID(id),
-		Provider:      provider,
-		DisplayName:   "Test " + id,
-		Family:        "test-family",
-		ContextWindow: 128000,
-		MaxOutput:     4096,
-		Reasoning:     true,
-		ToolCall:      true,
-		Interleaved:   bestiary.Capability{Supported: false},
+		ID:                bestiary.ModelID(id),
+		Provider:          provider,
+		DisplayName:       "Test " + id,
+		Family:            "test-family",
+		NormalizedFamily:  "test",
+		NormalizedVariant: "family",
+		NormalizedDate:    "2026-01-01",
+		ContextWindow:     128000,
+		MaxOutput:         4096,
+		Reasoning:         true,
+		ToolCall:          true,
+		Interleaved:       bestiary.Capability{Supported: false},
 		Modalities: bestiary.Modalities{
 			Input:  []bestiary.Modality{bestiary.ModalityText, bestiary.ModalityImage},
 			Output: []bestiary.Modality{bestiary.ModalityText},
@@ -106,6 +111,41 @@ func TestUpsertQueryModels_RoundTrip(t *testing.T) {
 		if m.ToolCall != want.ToolCall {
 			t.Errorf("model %s: ToolCall = %v, want %v", m.ID, m.ToolCall, want.ToolCall)
 		}
+	}
+}
+
+// TestNormalizedFields_RoundTrip verifies that NormalizedFamily, NormalizedVariant,
+// and NormalizedDate survive a UpsertModels + QueryModel round-trip with non-zero
+// values. This test exists because these fields were added in v3 and the base
+// testModel fixture intentionally sets them; this assertion proves they are wired
+// through the full persistence path.
+func TestNormalizedFields_RoundTrip(t *testing.T) {
+	ctx := context.Background()
+	s := openMemStore(t)
+
+	want := testModel("norm-model", bestiary.ProviderAnthropic)
+	// Confirm testModel provides non-zero values (guard against accidental zeroing).
+	if want.NormalizedFamily == "" || want.NormalizedVariant == "" || want.NormalizedDate == "" {
+		t.Fatal("testModel must return non-zero NormalizedFamily/Variant/Date for this test to be meaningful")
+	}
+
+	if err := s.UpsertModels(ctx, []bestiary.ModelInfo{want}); err != nil {
+		t.Fatalf("UpsertModels: %v", err)
+	}
+
+	got, err := s.QueryModel(ctx, want.ID)
+	if err != nil {
+		t.Fatalf("QueryModel: %v", err)
+	}
+
+	if got.NormalizedFamily != want.NormalizedFamily {
+		t.Errorf("NormalizedFamily = %q, want %q", got.NormalizedFamily, want.NormalizedFamily)
+	}
+	if got.NormalizedVariant != want.NormalizedVariant {
+		t.Errorf("NormalizedVariant = %q, want %q", got.NormalizedVariant, want.NormalizedVariant)
+	}
+	if got.NormalizedDate != want.NormalizedDate {
+		t.Errorf("NormalizedDate = %q, want %q", got.NormalizedDate, want.NormalizedDate)
 	}
 }
 
@@ -600,7 +640,7 @@ func TestQueryByCanonical_CrossProvider(t *testing.T) {
 		t.Fatalf("UpsertModels: %v", err)
 	}
 
-	got, err := s.QueryByCanonical(ctx, bestiary.Family("claude"), "opus", "2025-05-14")
+	got, err := s.QueryByCanonical(ctx, bestiary.CanonicalFilter{Family: "claude", Variant: "opus", Date: "2025-05-14"})
 	if err != nil {
 		t.Fatalf("QueryByCanonical: %v", err)
 	}
@@ -633,7 +673,7 @@ func TestQueryByCanonical_NotFound(t *testing.T) {
 		t.Fatalf("UpsertModels: %v", err)
 	}
 
-	got, err := s.QueryByCanonical(ctx, bestiary.Family("nonexistent"), "v1", "2099-01-01")
+	got, err := s.QueryByCanonical(ctx, bestiary.CanonicalFilter{Family: "nonexistent", Variant: "v1", Date: "2099-01-01"})
 	if err != nil {
 		t.Fatalf("QueryByCanonical returned unexpected error: %v", err)
 	}
@@ -658,7 +698,7 @@ func TestQueryByCanonical_PartialMatch(t *testing.T) {
 	}
 
 	// Empty variant + empty date: match all claude models.
-	got, err := s.QueryByCanonical(ctx, bestiary.Family("claude"), "", "")
+	got, err := s.QueryByCanonical(ctx, bestiary.CanonicalFilter{Family: "claude"})
 	if err != nil {
 		t.Fatalf("QueryByCanonical(claude, empty, empty): %v", err)
 	}
@@ -672,7 +712,7 @@ func TestQueryByCanonical_PartialMatch(t *testing.T) {
 	}
 
 	// Empty family + specific variant: matches any family with that variant.
-	got2, err := s.QueryByCanonical(ctx, "", "opus", "")
+	got2, err := s.QueryByCanonical(ctx, bestiary.CanonicalFilter{Variant: "opus"})
 	if err != nil {
 		t.Fatalf("QueryByCanonical(empty, opus, empty): %v", err)
 	}
@@ -684,7 +724,7 @@ func TestQueryByCanonical_PartialMatch(t *testing.T) {
 	}
 
 	// All empty: returns all models.
-	all, err := s.QueryByCanonical(ctx, "", "", "")
+	all, err := s.QueryByCanonical(ctx, bestiary.CanonicalFilter{})
 	if err != nil {
 		t.Fatalf("QueryByCanonical(empty, empty, empty): %v", err)
 	}
@@ -709,7 +749,7 @@ func TestQueryByCanonical_NormalDataIntegrity(t *testing.T) {
 		t.Fatalf("UpsertModels: %v", err)
 	}
 
-	results, err := s.QueryByCanonical(ctx, bestiary.Family("gemini"), "flash", "2025-04-17")
+	results, err := s.QueryByCanonical(ctx, bestiary.CanonicalFilter{Family: "gemini", Variant: "flash", Date: "2025-04-17"})
 	if err != nil {
 		t.Fatalf("QueryByCanonical: %v", err)
 	}

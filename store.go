@@ -54,6 +54,22 @@ const schemaSQL = `CREATE TABLE IF NOT EXISTS models (
     PRIMARY KEY (model_id, provider)
 );`
 
+// indexSQL creates the canonical lookup index used by QueryByCanonical.
+// The (family, variant) prefix is used for all non-empty family/variant
+// predicates; provider is included to support composite-key scan pruning.
+// Safe to run on any database that already has the models table.
+const indexSQL = `CREATE INDEX IF NOT EXISTS idx_canonical ON models(family, variant, provider);`
+
+// CanonicalFilter selects models by their parsed canonical axes.
+// Empty fields act as wildcards: an empty Family matches any family, an
+// empty Variant matches any variant, and an empty Date matches any date.
+// This is the parameter type for Store.QueryByCanonical.
+type CanonicalFilter struct {
+	Family  Family
+	Variant string
+	Date    string
+}
+
 // Store is a SQLite-backed cache for AI model metadata.
 // Use OpenStore to create, and Close when done.
 type Store struct {
@@ -190,6 +206,11 @@ func migrateSchema(conn *sqlite.Conn, fromVersion int) error {
 		if err := sqlitex.ExecuteTransient(conn, schemaSQL, nil); err != nil {
 			return fmt.Errorf("bestiary: migrateSchema: create models table: %w", err)
 		}
+		// Create the canonical index on fresh DBs; migrateToV3 handles this
+		// for upgrade paths, but the fresh path skips that function entirely.
+		if err := sqlitex.ExecuteTransient(conn, indexSQL, nil); err != nil {
+			return fmt.Errorf("bestiary: migrateSchema: create idx_canonical: %w", err)
+		}
 	} else if fromVersion < 2 {
 		// Existing database with v0/v1 schema needs migration to v2.
 		// SQLite cannot ALTER PRIMARY KEY, so we recreate the table.
@@ -213,6 +234,31 @@ func migrateSchema(conn *sqlite.Conn, fromVersion int) error {
 	return nil
 }
 
+// tableRecreate applies the standard SQLite table-recreation migration pattern:
+//  1. Execute createSQL to create models_new with the target schema.
+//  2. Execute copySQL to populate models_new from the old models table.
+//  3. Drop the old models table.
+//  4. Rename models_new to models.
+//
+// Both createSQL and copySQL run inside the caller's transaction.
+// This helper is used by migrateToV2 and migrateToV3 to avoid duplicating
+// the identical 3-step pattern.
+func tableRecreate(conn *sqlite.Conn, createSQL, copySQL string) error {
+	if err := sqlitex.ExecuteTransient(conn, createSQL, nil); err != nil {
+		return fmt.Errorf("create models_new: %w", err)
+	}
+	if err := sqlitex.ExecuteTransient(conn, copySQL, nil); err != nil {
+		return fmt.Errorf("copy data to models_new: %w", err)
+	}
+	if err := sqlitex.ExecuteTransient(conn, `DROP TABLE models`, nil); err != nil {
+		return fmt.Errorf("drop old models table: %w", err)
+	}
+	if err := sqlitex.ExecuteTransient(conn, `ALTER TABLE models_new RENAME TO models`, nil); err != nil {
+		return fmt.Errorf("rename models_new to models: %w", err)
+	}
+	return nil
+}
+
 // migrateToV2 upgrades an existing models table to the v2 schema:
 //   - Adds interleaved_config column (if missing).
 //   - Changes PRIMARY KEY from (model_id) to (model_id, provider).
@@ -224,7 +270,6 @@ func migrateToV2(conn *sqlite.Conn) error {
 	var err error
 	defer endFn(&err)
 
-	// Create the replacement table with the v2 schema.
 	const createNewSQL = `CREATE TABLE IF NOT EXISTS models_new (
     model_id          TEXT NOT NULL,
     provider          TEXT NOT NULL,
@@ -252,10 +297,6 @@ func migrateToV2(conn *sqlite.Conn) error {
     last_synced       TEXT NOT NULL,
     PRIMARY KEY (model_id, provider)
 )`
-	err = sqlitex.ExecuteTransient(conn, createNewSQL, nil)
-	if err != nil {
-		return fmt.Errorf("create models_new: %w", err)
-	}
 
 	// Determine whether the old table already has the interleaved_config column.
 	hasConfig, err := columnExists(conn, "models", "interleaved_config")
@@ -279,21 +320,10 @@ func migrateToV2(conn *sqlite.Conn) error {
                 last_synced
             FROM models`
 	}
-	err = sqlitex.ExecuteTransient(conn, copySQL, nil)
-	if err != nil {
-		return fmt.Errorf("copy data to models_new: %w", err)
-	}
 
-	// Drop the old table and promote models_new.
-	err = sqlitex.ExecuteTransient(conn, `DROP TABLE models`, nil)
-	if err != nil {
-		return fmt.Errorf("drop old models table: %w", err)
+	if err = tableRecreate(conn, createNewSQL, copySQL); err != nil {
+		return err
 	}
-	err = sqlitex.ExecuteTransient(conn, `ALTER TABLE models_new RENAME TO models`, nil)
-	if err != nil {
-		return fmt.Errorf("rename models_new to models: %w", err)
-	}
-
 	return nil
 }
 
@@ -310,7 +340,6 @@ func migrateToV3(conn *sqlite.Conn) error {
 	var err error
 	defer endFn(&err)
 
-	// Create the replacement table with the v3 schema.
 	const createNewSQL = `CREATE TABLE IF NOT EXISTS models_new (
     model_id          TEXT NOT NULL,
     provider          TEXT NOT NULL,
@@ -341,10 +370,6 @@ func migrateToV3(conn *sqlite.Conn) error {
     last_synced       TEXT NOT NULL,
     PRIMARY KEY (model_id, provider)
 )`
-	err = sqlitex.ExecuteTransient(conn, createNewSQL, nil)
-	if err != nil {
-		return fmt.Errorf("create models_new: %w", err)
-	}
 
 	// Copy rows from old v2 table: map old family → raw_family; new columns default to ''.
 	const copySQL = `INSERT OR IGNORE INTO models_new
@@ -359,23 +384,14 @@ func migrateToV3(conn *sqlite.Conn) error {
             modalities_input, modalities_output,
             last_synced
         FROM models`
-	err = sqlitex.ExecuteTransient(conn, copySQL, nil)
-	if err != nil {
-		return fmt.Errorf("copy data to models_new: %w", err)
-	}
 
-	// Drop the old table and promote models_new.
-	err = sqlitex.ExecuteTransient(conn, `DROP TABLE models`, nil)
-	if err != nil {
-		return fmt.Errorf("drop old models table: %w", err)
-	}
-	err = sqlitex.ExecuteTransient(conn, `ALTER TABLE models_new RENAME TO models`, nil)
-	if err != nil {
-		return fmt.Errorf("rename models_new to models: %w", err)
+	if err = tableRecreate(conn, createNewSQL, copySQL); err != nil {
+		return err
 	}
 
 	// Backfill: read each row and re-parse family/variant/date.
-	// We collect (model_id, provider, raw_family, release_date) then UPDATE in a second pass.
+	// Two-pass: zombiezen/sqlite does not allow issuing new statements on conn
+	// while a ResultFunc cursor is open, so we collect all keys first then UPDATE.
 	type rowKey struct {
 		modelID     string
 		provider    string
@@ -419,8 +435,7 @@ func migrateToV3(conn *sqlite.Conn) error {
 	}
 
 	// Create the canonical index for QueryByCanonical to use.
-	err = sqlitex.ExecuteTransient(conn,
-		`CREATE INDEX IF NOT EXISTS idx_canonical ON models(family, variant, provider)`, nil)
+	err = sqlitex.ExecuteTransient(conn, indexSQL, nil)
 	if err != nil {
 		return fmt.Errorf("create idx_canonical: %w", err)
 	}
@@ -630,34 +645,35 @@ func (s *Store) QueryModelsByID(ctx context.Context, id ModelID) ([]ModelInfo, e
 	return models, nil
 }
 
-// QueryByCanonical returns ModelInfo entries matching the (family, variant, date)
-// canonical triple. Cross-provider results are returned as a slice. Empty params
-// match any value (e.g., variant="" matches all variants for the given family).
+// QueryByCanonical returns ModelInfo entries matching the canonical axes in f.
+// Cross-provider results are returned as a slice. Empty fields in f act as
+// wildcards: an empty Family matches any family, an empty Variant matches any
+// variant, and an empty Date matches any date.
 // Returns an empty slice (not an error) when no matching models are found.
 //
-// The query uses idx_canonical for efficient lookup when family is non-empty.
+// The query uses the (family, variant) prefix of idx_canonical for efficient
+// lookup when f.Family is non-empty.
 //
 // ctx is accepted for API compatibility; zombiezen.com/go/sqlite does not support per-operation context cancellation.
-func (s *Store) QueryByCanonical(ctx context.Context, family Family, variant, date string) ([]ModelInfo, error) {
-	// Build a dynamic WHERE clause: only include predicates for non-empty params.
-	// Empty params match any value (no filter applied for that column).
+func (s *Store) QueryByCanonical(ctx context.Context, f CanonicalFilter) ([]ModelInfo, error) {
+	// Build a dynamic WHERE clause: only include predicates for non-empty fields.
 	var conditions []string
 	var args []any
 	paramIdx := 1
 
-	if family != "" {
+	if f.Family != "" {
 		conditions = append(conditions, fmt.Sprintf("family = ?%d", paramIdx))
-		args = append(args, string(family))
+		args = append(args, string(f.Family))
 		paramIdx++
 	}
-	if variant != "" {
+	if f.Variant != "" {
 		conditions = append(conditions, fmt.Sprintf("variant = ?%d", paramIdx))
-		args = append(args, variant)
+		args = append(args, f.Variant)
 		paramIdx++
 	}
-	if date != "" {
+	if f.Date != "" {
 		conditions = append(conditions, fmt.Sprintf("date = ?%d", paramIdx))
-		args = append(args, date)
+		args = append(args, f.Date)
 		paramIdx++
 	}
 
@@ -685,7 +701,7 @@ func (s *Store) QueryByCanonical(ctx context.Context, family Family, variant, da
 	})
 	if err != nil {
 		return nil, fmt.Errorf("bestiary: QueryByCanonical(family=%q, variant=%q, date=%q): %w",
-			string(family), variant, date, err)
+			string(f.Family), f.Variant, f.Date, err)
 	}
 	return models, nil
 }

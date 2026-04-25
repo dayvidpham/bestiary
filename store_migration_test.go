@@ -14,6 +14,33 @@ import (
 	"zombiezen.com/go/sqlite/sqlitex"
 )
 
+// TestMigration_FreshDB_IndexCreated verifies that a brand-new (fresh-install)
+// database has the idx_canonical index — i.e., the index is not only created
+// by migrateToV3 (upgrade path) but also by the fresh-DB path in migrateSchema.
+func TestMigration_FreshDB_IndexCreated(t *testing.T) {
+	store, err := OpenStore(":memory:")
+	if err != nil {
+		t.Fatalf("OpenStore(:memory:): %v", err)
+	}
+	defer store.Close()
+
+	var found bool
+	err = sqlitex.Execute(store.conn,
+		`SELECT 1 FROM sqlite_master WHERE type='index' AND name='idx_canonical'`,
+		&sqlitex.ExecOptions{
+			ResultFunc: func(stmt *sqlite.Stmt) error {
+				found = true
+				return nil
+			},
+		})
+	if err != nil {
+		t.Fatalf("query sqlite_master for idx_canonical: %v", err)
+	}
+	if !found {
+		t.Error("idx_canonical index not found in fresh database; fresh-DB path must create the index")
+	}
+}
+
 // TestMigration_FreshDB verifies that opening a brand-new database results in
 // schema version 2 and a functional store.
 func TestMigration_FreshDB(t *testing.T) {
@@ -224,13 +251,14 @@ func createV2DB(t *testing.T, path string, rows []struct{ modelID, provider, fam
 	}
 }
 
-// TestMigration_V2Idempotent opens the same v2 database twice and verifies
-// that no error occurs, the version remains 2, and data is preserved.
-func TestMigration_V2Idempotent(t *testing.T) {
+// TestMigration_FreshDB_Idempotent opens the same fresh (v3) database twice and
+// verifies that the second open does not re-migrate, the schema version remains
+// currentSchemaVersion, and previously written data is preserved.
+func TestMigration_FreshDB_Idempotent(t *testing.T) {
 	dir := t.TempDir()
 	dbPath := filepath.Join(dir, "test.db")
 
-	// First open — creates fresh v2 DB and writes a row.
+	// First open — creates a fresh v3 DB and writes a row.
 	{
 		store, err := OpenStore(dbPath)
 		if err != nil {
@@ -283,6 +311,57 @@ func TestMigration_V2Idempotent(t *testing.T) {
 	}
 }
 
+// TestMigration_V2Idempotent opens the same v2 database (created by createV2DB)
+// twice and verifies that the second open does not re-migrate, the schema
+// version remains currentSchemaVersion (3), and data is preserved.
+// This exercises the v2→v3 migration path specifically for idempotency: the
+// first open migrates, the second open must be a no-op.
+func TestMigration_V2Idempotent(t *testing.T) {
+	dir := t.TempDir()
+	dbPath := filepath.Join(dir, "test.db")
+
+	createV2DB(t, dbPath, []struct{ modelID, provider, family, releaseDate string }{
+		{"m1", "anthropic", "claude", ""},
+	})
+
+	// First open — migrates v2 → v3.
+	{
+		store, err := OpenStore(dbPath)
+		if err != nil {
+			t.Fatalf("first OpenStore (v2→v3): %v", err)
+		}
+		if err := store.Close(); err != nil {
+			t.Fatalf("first Close: %v", err)
+		}
+	}
+
+	// Second open — must not error and must still see currentSchemaVersion and data.
+	{
+		store, err := OpenStore(dbPath)
+		if err != nil {
+			t.Fatalf("second OpenStore (v2 idempotent): %v", err)
+		}
+		defer store.Close()
+
+		version, err := getSchemaVersion(store.conn)
+		if err != nil {
+			t.Fatalf("getSchemaVersion on second open: %v", err)
+		}
+		if version != currentSchemaVersion {
+			t.Errorf("version after second open = %d, want %d", version, currentSchemaVersion)
+		}
+
+		ctx := context.Background()
+		got, err := store.QueryModel(ctx, ModelID("m1"))
+		if err != nil {
+			t.Fatalf("QueryModel on second open: %v", err)
+		}
+		if got.Provider != ProviderAnthropic {
+			t.Errorf("Provider = %q, want %q", got.Provider, ProviderAnthropic)
+		}
+	}
+}
+
 // TestMigration_V2toV3_PreservesData creates a v2 database with two rows, migrates
 // to v3 via OpenStore, and asserts both rows are present with correct non-canonical fields.
 func TestMigration_V2toV3_PreservesData(t *testing.T) {
@@ -313,7 +392,8 @@ func TestMigration_V2toV3_PreservesData(t *testing.T) {
 		t.Fatalf("expected 2 rows preserved, got %d", len(all))
 	}
 
-	// raw_family must be preserved from the old v2 family column.
+	// raw_family must be preserved from the old v2 family column;
+	// canonical fields must be backfilled by the migration.
 	byID := make(map[ModelID]ModelInfo, len(all))
 	for _, m := range all {
 		byID[m.ID] = m
@@ -322,6 +402,17 @@ func TestMigration_V2toV3_PreservesData(t *testing.T) {
 		if m.Family != "claude-opus" {
 			t.Errorf("claude-opus-4: Family (raw_family) = %q, want %q", m.Family, "claude-opus")
 		}
+		// ParseFamily("claude-opus") = ("claude", "opus")
+		if m.NormalizedFamily != "claude" {
+			t.Errorf("claude-opus-4: NormalizedFamily = %q, want %q", m.NormalizedFamily, "claude")
+		}
+		if m.NormalizedVariant != "opus" {
+			t.Errorf("claude-opus-4: NormalizedVariant = %q, want %q", m.NormalizedVariant, "opus")
+		}
+		// ExtractDate("claude-opus-4-20250514", "2025-05-14") = "2025-05-14" (from model_id)
+		if m.NormalizedDate != "2025-05-14" {
+			t.Errorf("claude-opus-4: NormalizedDate = %q, want %q", m.NormalizedDate, "2025-05-14")
+		}
 	} else {
 		t.Error("claude-opus-4-20250514 not found after migration")
 	}
@@ -329,22 +420,40 @@ func TestMigration_V2toV3_PreservesData(t *testing.T) {
 		if m.Family != "gemini-pro" {
 			t.Errorf("gemini-pro: Family (raw_family) = %q, want %q", m.Family, "gemini-pro")
 		}
+		// ParseFamily("gemini-pro") = ("gemini", "pro")
+		if m.NormalizedFamily != "gemini" {
+			t.Errorf("gemini-pro: NormalizedFamily = %q, want %q", m.NormalizedFamily, "gemini")
+		}
+		if m.NormalizedVariant != "pro" {
+			t.Errorf("gemini-pro: NormalizedVariant = %q, want %q", m.NormalizedVariant, "pro")
+		}
+		// ExtractDate("gemini-pro", "") = "" (no date in model_id, no release_date)
+		if m.NormalizedDate != "" {
+			t.Errorf("gemini-pro: NormalizedDate = %q, want %q", m.NormalizedDate, "")
+		}
 	} else {
 		t.Error("gemini-pro not found after migration")
 	}
 }
 
-// TestMigration_V2toV3_Backfill creates a v2 database with a row where family="claude-opus",
-// migrates to v3, and asserts NormalizedFamily/NormalizedVariant/NormalizedDate are backfilled
-// from parse.ParseFamily and parse.ExtractDate.
+// TestMigration_V2toV3_Backfill creates a v2 database and migrates to v3,
+// asserting NormalizedFamily/NormalizedVariant/NormalizedDate are backfilled
+// from ParseFamily and ExtractDate. Two rows cover both ExtractDate branches:
+//   - date embedded in model_id, no release_date
+//   - no date in model_id, date taken from release_date column
 func TestMigration_V2toV3_Backfill(t *testing.T) {
 	dir := t.TempDir()
 	dbPath := filepath.Join(dir, "test.db")
 
 	createV2DB(t, dbPath, []struct{ modelID, provider, family, releaseDate string }{
-		// claude-opus-4-20250514: ParseFamily("claude-opus") = ("claude","opus")
-		// ExtractDate("claude-opus-4-20250514", "") = "2025-05-14"
+		// Row 1: date embedded in model_id; release_date is empty.
+		// ParseFamily("claude-opus") = ("claude","opus")
+		// ExtractDate("claude-opus-4-20250514", "") = "2025-05-14" (from model_id)
 		{"claude-opus-4-20250514", "anthropic", "claude-opus", ""},
+		// Row 2: model_id has no embedded date; release_date is non-empty.
+		// ParseFamily("gemini-pro") = ("gemini-pro","") or similar single-token result.
+		// ExtractDate("gemini-pro", "2024-06-01") = "2024-06-01" (from release_date)
+		{"gemini-pro", "google", "gemini-pro", "2024-06-01"},
 	})
 
 	store, err := OpenStore(dbPath)
@@ -354,26 +463,37 @@ func TestMigration_V2toV3_Backfill(t *testing.T) {
 	defer store.Close()
 
 	ctx := context.Background()
-	got, err := store.QueryModel(ctx, ModelID("claude-opus-4-20250514"))
+
+	// --- Row 1: date from model_id ---
+	got1, err := store.QueryModel(ctx, ModelID("claude-opus-4-20250514"))
 	if err != nil {
-		t.Fatalf("QueryModel: %v", err)
+		t.Fatalf("QueryModel (row 1): %v", err)
+	}
+	if got1.Family != "claude-opus" {
+		t.Errorf("row1: Family (raw_family) = %q, want %q", got1.Family, "claude-opus")
+	}
+	if got1.NormalizedFamily != "claude" {
+		t.Errorf("row1: NormalizedFamily = %q, want %q", got1.NormalizedFamily, "claude")
+	}
+	if got1.NormalizedVariant != "opus" {
+		t.Errorf("row1: NormalizedVariant = %q, want %q", got1.NormalizedVariant, "opus")
+	}
+	// NormalizedDate must come from the model_id, not release_date (which is empty).
+	if got1.NormalizedDate != "2025-05-14" {
+		t.Errorf("row1: NormalizedDate = %q, want %q", got1.NormalizedDate, "2025-05-14")
 	}
 
-	// raw_family preserved
-	if got.Family != "claude-opus" {
-		t.Errorf("Family (raw_family) = %q, want %q", got.Family, "claude-opus")
+	// --- Row 2: date from release_date (model_id has no embedded date) ---
+	got2, err := store.QueryModel(ctx, ModelID("gemini-pro"))
+	if err != nil {
+		t.Fatalf("QueryModel (row 2): %v", err)
 	}
-	// NormalizedFamily backfilled via ParseFamily("claude-opus")
-	if got.NormalizedFamily != "claude" {
-		t.Errorf("NormalizedFamily = %q, want %q", got.NormalizedFamily, "claude")
+	if got2.Family != "gemini-pro" {
+		t.Errorf("row2: Family (raw_family) = %q, want %q", got2.Family, "gemini-pro")
 	}
-	// NormalizedVariant backfilled
-	if got.NormalizedVariant != "opus" {
-		t.Errorf("NormalizedVariant = %q, want %q", got.NormalizedVariant, "opus")
-	}
-	// NormalizedDate extracted from model_id "claude-opus-4-20250514"
-	if got.NormalizedDate != "2025-05-14" {
-		t.Errorf("NormalizedDate = %q, want %q", got.NormalizedDate, "2025-05-14")
+	// NormalizedDate must come from release_date "2024-06-01" because model_id has no date.
+	if got2.NormalizedDate != "2024-06-01" {
+		t.Errorf("row2: NormalizedDate = %q, want %q (should come from release_date)", got2.NormalizedDate, "2024-06-01")
 	}
 }
 
@@ -501,8 +621,12 @@ func TestMigration_V2toV3_EdgeCases(t *testing.T) {
 	}
 }
 
-// TestMigration_V2toV3_IndexUsed verifies that EXPLAIN QUERY PLAN for a query
-// filtering on (family, variant, provider) references the idx_canonical index.
+// TestMigration_V2toV3_IndexUsed verifies that EXPLAIN QUERY PLAN for the
+// actual QueryByCanonical predicate shape (family, variant, date) references
+// the idx_canonical index. The index covers (family, variant, provider); SQLite
+// uses the (family, variant) prefix as a range scan and treats date as a
+// residual filter. This test asserts that the index is reachable from the
+// migrated-DB code path (separate from the fresh-DB path tested elsewhere).
 func TestMigration_V2toV3_IndexUsed(t *testing.T) {
 	dir := t.TempDir()
 	dbPath := filepath.Join(dir, "test.db")
@@ -517,12 +641,13 @@ func TestMigration_V2toV3_IndexUsed(t *testing.T) {
 	}
 	defer store.Close()
 
-	// Run EXPLAIN QUERY PLAN and collect detail lines.
+	// Run EXPLAIN QUERY PLAN using the same predicate shape as QueryByCanonical
+	// (family, variant, date) — not provider — so the plan reflects actual usage.
 	var planLines []string
 	err = sqlitex.Execute(store.conn,
-		`EXPLAIN QUERY PLAN SELECT * FROM models WHERE family = ?1 AND variant = ?2 AND provider = ?3`,
+		`EXPLAIN QUERY PLAN SELECT * FROM models WHERE family = ?1 AND variant = ?2 AND date = ?3`,
 		&sqlitex.ExecOptions{
-			Args: []any{"claude", "opus", "anthropic"},
+			Args: []any{"claude", "opus", "2025-05-14"},
 			ResultFunc: func(stmt *sqlite.Stmt) error {
 				// EXPLAIN QUERY PLAN columns: id, parent, notused, detail
 				detail := stmt.GetText("detail")
