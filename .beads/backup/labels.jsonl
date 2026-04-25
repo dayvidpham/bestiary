@@ -61,6 +61,8 @@
 {"issue_id":"bestiary-3cmo","label":"aura:p10-impl:s10-review"}
 {"issue_id":"bestiary-3cmo","label":"aura:severity:minor"}
 {"issue_id":"bestiary-3cz","label":"aura:p9-impl:s9-slice"}
+{"issue_id":"bestiary-3hwv","label":"aura:p10-impl:s10-review"}
+{"issue_id":"bestiary-3hwv","label":"aura:severity:minor"}
 {"issue_id":"bestiary-3k7","label":"aura:p9-impl:s9-slice"}
 {"issue_id":"bestiary-3qy","label":"aura:axis-test-quality"}
 {"issue_id":"bestiary-3qy","label":"aura:p4-plan:s4-review"}
@@ -106,6 +108,11 @@
 {"issue_id":"bestiary-59q","label":"aura:p9-impl:s9-slice"}
 {"issue_id":"bestiary-5a0p","label":"aura:p10-impl:s10-review"}
 {"issue_id":"bestiary-5bp4","label":"aura:p10-impl:s10-review"}
+{"issue_id":"bestiary-5dd0","label":"aura:p10-impl:s10-review"}
+{"issue_id":"bestiary-5dd0","label":"aura:severity:minor"}
+{"issue_id":"bestiary-5eh8","label":"aura:p10-impl:s10-review"}
+{"issue_id":"bestiary-5eh8","label":"aura:severity:blocker"}
+{"issue_id":"bestiary-5eh8","label":"aura:severity:important"}
 {"issue_id":"bestiary-5m5i","label":"aura:p10-impl:s10-review"}
 {"issue_id":"bestiary-5ol9","label":"aura:p10-impl:s10-review"}
 {"issue_id":"bestiary-5ol9","label":"aura:severity:important"}
@@ -349,6 +356,8 @@
 {"issue_id":"bestiary-gogj","label":"aura:p10-impl:s10-review"}
 {"issue_id":"bestiary-gogj","label":"aura:severity:blocker"}
 {"issue_id":"bestiary-gpiy","label":"aura:p10-impl:s10-review"}
+{"issue_id":"bestiary-grsu","label":"aura:p10-impl:s10-review"}
+{"issue_id":"bestiary-grsu","label":"aura:severity:important"}
 {"issue_id":"bestiary-gvfj","label":"aura:p10-impl:s10-review"}
 {"issue_id":"bestiary-gvfj","label":"aura:severity:minor"}
 {"issue_id":"bestiary-gx2b","label":"aura:p10-impl:s10-review"}
@@ -506,6 +515,8 @@
 {"issue_id":"bestiary-rjf","label":"aura:urd"}
 {"issue_id":"bestiary-rjng","label":"aura:p10-impl:s10-review"}
 {"issue_id":"bestiary-rjng","label":"aura:severity:minor"}
+{"issue_id":"bestiary-rm34","label":"aura:p10-impl:s10-review"}
+{"issue_id":"bestiary-rm34","label":"aura:severity:important"}
 {"issue_id":"bestiary-rsq","label":"aura:p4-plan:s4-review"}
 {"issue_id":"bestiary-rxpu","label":"aura:p10-impl:s10-review"}
 {"issue_id":"bestiary-s36u","label":"aura:p10-impl:s10-review"}
