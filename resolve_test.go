@@ -173,13 +173,20 @@ func TestResolve_AutoDetect_PURLForm(t *testing.T) {
 
 // TestResolve_WithSchemeHuggingFace verifies that WithScheme(SchemeHuggingFace)
 // strips the provider prefix and matches by raw ID.
+// When the model is absent from the static registry the error must be *ErrNotFound
+// (not *ErrAmbiguous). When it is present every returned ref must carry the expected
+// raw model ID.
 func TestResolve_WithSchemeHuggingFace(t *testing.T) {
 	refs, err := bestiary.Resolve("openai/gpt-4o-2024-08-06", bestiary.WithScheme(bestiary.SchemeHuggingFace))
 	if err != nil {
-		// It's possible this model isn't in static data; if so just verify not ErrAmbiguous.
-		var ambig *bestiary.ErrAmbiguous
-		if errors.As(err, &ambig) {
-			t.Fatalf("Resolve SchemeHuggingFace returned ErrAmbiguous, want ErrNotFound or success")
+		// Model may be absent; assert the error is ErrNotFound, not ErrAmbiguous.
+		var notFound *bestiary.ErrNotFound
+		if !errors.As(err, &notFound) {
+			var ambig *bestiary.ErrAmbiguous
+			if errors.As(err, &ambig) {
+				t.Fatalf("Resolve SchemeHuggingFace returned ErrAmbiguous, want ErrNotFound when model absent")
+			}
+			t.Fatalf("Resolve SchemeHuggingFace returned unexpected error type %T: %v", err, err)
 		}
 		return
 	}
@@ -290,6 +297,29 @@ func TestResolve_ExactIDInCanonicalMode_NotAmbiguous(t *testing.T) {
 	// Anthropic must be among them.
 	if _, ok := providers[bestiary.ProviderAnthropic]; !ok {
 		t.Errorf("ProviderAnthropic not in results; providers seen: %v", providers)
+	}
+}
+
+// TestResolve_SchemeCanonical_NeverAutoDetected documents the boundary that
+// SchemeCanonical is never produced by auto-detection (bestiary-haiu).
+// A plain family-name input (e.g. "claude") without WithScheme must NOT trigger
+// ErrAmbiguous — it auto-detects as SchemeRaw and returns ErrNotFound because
+// "claude" is not a raw model ID in the static registry.
+func TestResolve_SchemeCanonical_NeverAutoDetected(t *testing.T) {
+	// "claude" is not a raw model ID, so SchemeRaw match fails → ErrNotFound.
+	_, err := bestiary.Resolve("claude")
+	if err == nil {
+		t.Fatal("Resolve(\"claude\") without WithScheme returned nil error; want ErrNotFound (SchemeRaw auto-detected)")
+	}
+	var notFound *bestiary.ErrNotFound
+	if !errors.As(err, &notFound) {
+		// ErrAmbiguous would imply SchemeCanonical was auto-detected — that's the bug.
+		var ambig *bestiary.ErrAmbiguous
+		if errors.As(err, &ambig) {
+			t.Fatalf("Resolve(\"claude\") without WithScheme returned ErrAmbiguous; "+
+				"SchemeCanonical must never be auto-detected — use WithScheme(SchemeCanonical) explicitly")
+		}
+		t.Fatalf("Resolve(\"claude\") returned unexpected error type %T: %v", err, err)
 	}
 }
 
