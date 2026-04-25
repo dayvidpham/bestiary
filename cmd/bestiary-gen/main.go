@@ -1,8 +1,9 @@
-// bestiary-gen fetches the models.dev API and writes three generated files
+// bestiary-gen fetches the models.dev API and writes four generated files
 // into the bestiary package root:
-//   - models_static_gen.go  — all ~4168 model records
-//   - providers_gen.go      — one Provider constant per API slug + knownProviders
-//   - families_gen.go       — one Family constant per unique API family value
+//   - models_static_gen.go    — all ~4168 model records
+//   - providers_gen.go        — one Provider constant per API slug + knownProviders
+//   - families_gen.go         — one Family constant per unique API family value
+//   - models_constants_gen.go — one Model_* constant per eligible (ID, Provider) pair
 //
 // Run via: go generate ./...
 package main
@@ -407,11 +408,22 @@ func run(args []string) error {
 		return err
 	}
 
+	// Generate models_constants_gen.go — Model_* constants for all eligible models.
+	// Uses the full (unfiltered) model set so that constants cover all providers.
+	constantsSrc, err := generateConstantsSource(models, slugToConst)
+	if err != nil {
+		return fmt.Errorf("generate constants source: %w", err)
+	}
+	if err := writeFile(outputConstantsPath, constantsSrc); err != nil {
+		return err
+	}
+
 	fmt.Fprintf(os.Stdout,
-		"bestiary-gen: wrote %s with %d models (%d providers), %s with %d constants, %s with %d constants at %s\n",
+		"bestiary-gen: wrote %s with %d models (%d providers), %s with %d constants, %s with %d constants, %s at %s\n",
 		outputPath, len(filtered), countUniqueProviders(filtered),
 		outputProvidersPath, len(allSlugs),
 		outputFamiliesPath, len(familyMeta),
+		outputConstantsPath,
 		now,
 	)
 	return nil
@@ -975,4 +987,448 @@ func truncate(s string, max int) string {
 		return s
 	}
 	return s[:max] + "... (truncated)"
+}
+
+// --------------------------------------------------------------------------
+// Model_ constants generation (SLICE-4)
+// --------------------------------------------------------------------------
+
+// outputConstantsPath is the file that generateConstantsSource writes.
+const outputConstantsPath = "models_constants_gen.go"
+
+// tokenToConstPart converts a single hyphen/dot-split token from a model ID into
+// a constant-name segment. Rules (in priority order):
+//  1. casingOverrides wins (e.g. "gpt" → "GPT", "ai" → "AI").
+//  2. Token leading with a digit: keep digit prefix verbatim; apply overrides to alpha suffix.
+//  3. Otherwise: title-case the token.
+//
+// Within-component characters are preserved ("4o" → "4o", not "4_o").
+func tokenToConstPart(tok string) string {
+	if tok == "" {
+		return ""
+	}
+	lower := strings.ToLower(tok)
+
+	// 1. Casing override for the full token.
+	if override, ok := casingOverrides[lower]; ok {
+		return override
+	}
+
+	// 2. Digit-leading token: split at first alpha character.
+	// "4o" → "4o" (within-component characters preserved — no casing change).
+	// "302ai" → "302AI" (casingOverride applies to multi-char alpha suffix).
+	if unicode.IsDigit(rune(tok[0])) {
+		// Find split point between digit prefix and alpha suffix.
+		splitAt := -1
+		for i, r := range tok {
+			if !unicode.IsDigit(r) {
+				splitAt = i
+				break
+			}
+		}
+		if splitAt < 0 {
+			// All digits — return as-is.
+			return tok
+		}
+		digitPart := tok[:splitAt]
+		alphaPart := tok[splitAt:]
+		alphaLower := strings.ToLower(alphaPart)
+		if override, ok := casingOverrides[alphaLower]; ok {
+			return digitPart + override
+		}
+		// Preserve the alpha part exactly as-is (spec: "4o stays 4o, not 4_o").
+		return digitPart + alphaPart
+	}
+
+	// 3. Default: title-case.
+	return strings.ToUpper(lower[:1]) + lower[1:]
+}
+
+// nameForCanonical derives the Model_* constant name for a single ModelInfo.
+//
+// The slugToConst map (slug → Go constant name, e.g. "openai" → "ProviderOpenAI")
+// is used to resolve the provider suffix with the correct display casing.
+// Pass nil to fall back to slugToIdentifier without a name hint.
+//
+// Algorithm:
+//  1. Provider segment: strip "Provider" prefix from the constant name.
+//  2. Strip any provider prefix from the raw ID (anything up to and including "/").
+//  3. Determine if the NormalizedDate is embedded in the raw ID (all forms:
+//     YYYYMMDD, YYYY-MM-DD, MM-YYYY, MM-DD). Strip that form from the end of the ID.
+//  4. Split remaining raw ID on "-" and ".".
+//  5. Map each token through tokenToConstPart.
+//  6. Join with "_", prefix "Model_<ProviderSuffix>_".
+//  7. Append YYYYMMDD date (hyphens removed from NormalizedDate) when non-empty
+//     AND the date was found in the raw ID.
+//
+// Returns "" when the skip rule applies (NormalizedFamily == "").
+func nameForCanonical(m bestiary.ModelInfo) string {
+	return nameForCanonicalWithMap(m, nil)
+}
+
+// nameForCanonicalWithMap is the full implementation of nameForCanonical with
+// an optional slugToConst map for correct provider casing.
+func nameForCanonicalWithMap(m bestiary.ModelInfo, slugToConst map[string]string) string {
+	if m.NormalizedFamily == "" {
+		return "" // skip rule: no family, no extractable family
+	}
+
+	// Derive provider suffix.
+	provSuffix := ""
+	if slugToConst != nil {
+		if constName, ok := slugToConst[string(m.Provider)]; ok {
+			provSuffix = strings.TrimPrefix(constName, "Provider")
+		}
+	}
+	if provSuffix == "" {
+		provSuffix = slugToIdentifier(string(m.Provider), "")
+	}
+	if provSuffix == "" {
+		provSuffix = "Unknown"
+	}
+
+	rawID := string(m.ID)
+
+	// Strip provider prefix (e.g., "anthropic/", "google/").
+	if idx := strings.IndexByte(rawID, '/'); idx >= 0 {
+		rawID = rawID[idx+1:]
+	}
+
+	// Compute date segment (compact form, no hyphens).
+	dateCompact := strings.ReplaceAll(m.NormalizedDate, "-", "") // YYYYMMDD or ""
+
+	// Strip the date from the raw ID and remember if we found it
+	// (we only append the date constant if the ID actually contains the date).
+	rawIDStripped, dateFoundInID := stripDateFromID(rawID, m.NormalizedDate, dateCompact)
+
+	// Split on hyphens and dots; convert each token.
+	tokens := strings.FieldsFunc(rawIDStripped, func(r rune) bool {
+		return r == '-' || r == '.'
+	})
+
+	var parts []string
+	for _, tok := range tokens {
+		if tok == "" {
+			continue
+		}
+		p := tokenToConstPart(tok)
+		if p != "" {
+			parts = append(parts, p)
+		}
+	}
+
+	name := "Model_" + provSuffix + "_" + strings.Join(parts, "_")
+	if dateFoundInID && dateCompact != "" {
+		name += "_" + dateCompact
+	}
+	return name
+}
+
+// stripDateFromID strips the date portion from the end of a model ID string.
+// It recognizes several date forms (in priority order):
+//  1. YYYYMMDD compact (e.g. "20250514" in "claude-opus-4-20250514")
+//  2. YYYY-MM-DD hyphenated (e.g. "2024-08-06" in "gpt-4o-2024-08-06")
+//  3. MM-YYYY (e.g. "09-2025" in "gemini-2.5-flash-lite-preview-09-2025")
+//  4. MM-DD   (e.g. "06-17" in "gemini-2.5-flash-lite-preview-06-17")
+//
+// Returns (strippedID, true) when any form is found, or (rawID, false) when no
+// date form is found in the ID.
+func stripDateFromID(rawID, normalizedDate, dateCompact string) (string, bool) {
+	if normalizedDate == "" {
+		return rawID, false
+	}
+
+	// Form 1: compact YYYYMMDD suffix.
+	if strings.HasSuffix(rawID, dateCompact) {
+		stripped := strings.TrimSuffix(rawID, dateCompact)
+		stripped = strings.TrimRight(stripped, "-.")
+		return stripped, true
+	}
+
+	// Form 2: YYYY-MM-DD suffix.
+	if strings.HasSuffix(rawID, normalizedDate) {
+		stripped := strings.TrimSuffix(rawID, normalizedDate)
+		stripped = strings.TrimRight(stripped, "-.")
+		return stripped, true
+	}
+
+	// Forms 3 and 4 require parsing YYYY-MM-DD into parts.
+	parts := strings.SplitN(normalizedDate, "-", 3)
+	if len(parts) != 3 {
+		return rawID, false
+	}
+	// yyyy, mm, dd := parts[0], parts[1], parts[2]
+	mm, dd, yyyy := parts[1], parts[2], parts[0]
+
+	// Form 3: MM-YYYY (e.g. "09-2025").
+	mmYYYY := mm + "-" + yyyy
+	if strings.HasSuffix(rawID, mmYYYY) {
+		stripped := strings.TrimSuffix(rawID, mmYYYY)
+		stripped = strings.TrimRight(stripped, "-.")
+		return stripped, true
+	}
+
+	// Form 4: MM-DD (e.g. "06-17").
+	mmDD := mm + "-" + dd
+	if strings.HasSuffix(rawID, mmDD) {
+		stripped := strings.TrimSuffix(rawID, mmDD)
+		stripped = strings.TrimRight(stripped, "-.")
+		return stripped, true
+	}
+
+	return rawID, false
+}
+
+// resolveCollisions takes a slice of candidate constant names (parallel to
+// models) and returns a slice of final, unique names. The input name "" means
+// "skip this model" — the output preserves "" at those positions.
+//
+// Two-pass algorithm:
+//
+//	Pass 1: detect all positions that share the same candidate name (collisions).
+//	Pass 2: for each collision group, apply disambiguators in priority order:
+//	  (a) Append a version segment extracted from the raw model ID.
+//	  (b) Append "_2", "_3", … (sequential suffix, last resort).
+func resolveCollisions(names []string, models []bestiary.ModelInfo) []string {
+	result := make([]string, len(names))
+	copy(result, names)
+
+	// Pass 1: group positions by their candidate name.
+	nameToPositions := make(map[string][]int, len(names))
+	for i, n := range names {
+		if n == "" {
+			continue // skip-rule models have no constant
+		}
+		nameToPositions[n] = append(nameToPositions[n], i)
+	}
+
+	// Pass 2: resolve each collision group.
+	for baseName, positions := range nameToPositions {
+		if len(positions) < 2 {
+			continue // no collision — keep as-is
+		}
+
+		// (a) Try to append a version segment extracted from the model ID.
+		// Version segment: the part of the raw ID that is between the date-stripped
+		// common prefix and the date. We use the tokenized ID minus the common tokens.
+		// Simplified heuristic: extract version-like tokens not present in other models.
+		type candidate struct {
+			pos     int
+			vSuffix string // "" means no usable version suffix was found
+		}
+		cands := make([]candidate, len(positions))
+		for k, pos := range positions {
+			cands[k] = candidate{pos: pos, vSuffix: extractVersionSegment(models[pos])}
+		}
+
+		// Check if all version suffixes are distinct and non-empty.
+		vSuffixSeen := make(map[string]int)
+		for _, c := range cands {
+			if c.vSuffix != "" {
+				vSuffixSeen[c.vSuffix]++
+			}
+		}
+		allDistinct := true
+		for _, c := range cands {
+			if c.vSuffix == "" || vSuffixSeen[c.vSuffix] > 1 {
+				allDistinct = false
+				break
+			}
+		}
+
+		if allDistinct {
+			// Version suffix disambiguates all colliders.
+			for _, c := range cands {
+				result[c.pos] = baseName + "_" + c.vSuffix
+			}
+		} else {
+			// (b) Sequential suffix fallback.
+			// Sort positions for deterministic ordering.
+			sortedPos := make([]int, len(positions))
+			copy(sortedPos, positions)
+			sort.Ints(sortedPos)
+			for idx, pos := range sortedPos {
+				if idx == 0 {
+					result[pos] = baseName + "_1"
+				} else {
+					result[pos] = baseName + "_" + fmt.Sprintf("%d", idx+1)
+				}
+			}
+		}
+	}
+
+	// Final uniqueness pass: if version-suffix disambiguation introduced new collisions
+	// (rare), fall back to sequential suffixes for remaining groups.
+	finalSeen := make(map[string][]int)
+	for i, n := range result {
+		if n == "" {
+			continue
+		}
+		finalSeen[n] = append(finalSeen[n], i)
+	}
+	for _, positions := range finalSeen {
+		if len(positions) < 2 {
+			continue
+		}
+		sortedPos := make([]int, len(positions))
+		copy(sortedPos, positions)
+		sort.Ints(sortedPos)
+		// Append _<n> to break the tie.
+		for idx, pos := range sortedPos {
+			result[pos] = result[pos] + fmt.Sprintf("_%d", idx+1)
+		}
+	}
+
+	return result
+}
+
+// extractVersionSegment returns a short string that uniquely identifies the
+// version of a model within its family+variant. It is used as a tie-breaker
+// in collision pass (a).
+//
+// Strategy:
+//  1. Strip provider prefix from raw ID.
+//  2. Strip date suffix from raw ID (using stripDateFromID for all date forms).
+//  3. Strip the NormalizedFamily prefix from the remaining ID tokens.
+//  4. Strip the NormalizedVariant prefix from the remaining tokens.
+//  5. Whatever is left is the version segment (joined with "_").
+//
+// Returns "" when no distinct version can be extracted.
+func extractVersionSegment(m bestiary.ModelInfo) string {
+	rawID := string(m.ID)
+
+	// Strip provider prefix.
+	if idx := strings.IndexByte(rawID, '/'); idx >= 0 {
+		rawID = rawID[idx+1:]
+	}
+
+	dateCompact := strings.ReplaceAll(m.NormalizedDate, "-", "")
+
+	// Strip date from end using the same logic as nameForCanonical.
+	rawIDStripped, _ := stripDateFromID(rawID, m.NormalizedDate, dateCompact)
+
+	// Tokenize.
+	tokens := strings.FieldsFunc(rawIDStripped, func(r rune) bool {
+		return r == '-' || r == '.'
+	})
+
+	// Strip known family tokens.
+	familyTokens := strings.FieldsFunc(string(m.NormalizedFamily), func(r rune) bool {
+		return r == '-' || r == '.'
+	})
+	variantTokens := strings.FieldsFunc(m.NormalizedVariant, func(r rune) bool {
+		return r == '-' || r == '.'
+	})
+
+	// Build a set of "known" tokens (family + variant) to skip.
+	knownTokens := make(map[string]struct{}, len(familyTokens)+len(variantTokens))
+	for _, t := range familyTokens {
+		knownTokens[strings.ToLower(t)] = struct{}{}
+	}
+	for _, t := range variantTokens {
+		knownTokens[strings.ToLower(t)] = struct{}{}
+	}
+
+	var versionParts []string
+	for _, tok := range tokens {
+		if _, known := knownTokens[strings.ToLower(tok)]; !known {
+			p := tokenToConstPart(tok)
+			if p != "" {
+				versionParts = append(versionParts, p)
+			}
+		}
+	}
+
+	return strings.Join(versionParts, "_")
+}
+
+// generateConstantsSource generates models_constants_gen.go containing one
+// Model_* constant per eligible model in the static data, plus a Models()
+// function returning a defensive copy.
+//
+// slugToConst maps provider slug → Go constant name (e.g. "openai" → "ProviderOpenAI").
+// It is used for correct provider casing in the generated constant names.
+// Pass nil to use the slug directly with slugToIdentifier (less accurate casing).
+//
+// Eligibility: NormalizedFamily must be non-empty.
+// Naming: Model_<ProviderSuffix>_<tokenized-ID-without-date>_<YYYYMMDD>
+// Collision resolution: two-pass (version suffix → sequential suffix).
+func generateConstantsSource(models []bestiary.ModelInfo, slugToConst map[string]string) ([]byte, error) {
+	// Build candidate names.
+	candidateNames := make([]string, len(models))
+	for i, m := range models {
+		candidateNames[i] = nameForCanonicalWithMap(m, slugToConst)
+	}
+
+	// Resolve collisions.
+	resolvedNames := resolveCollisions(candidateNames, models)
+
+	// Build the sorted list of (constName, modelID) pairs for output.
+	// Skip entries where constName == "" (skip-rule models).
+	type constEntry struct {
+		constName string
+		modelID   bestiary.ModelID
+	}
+	var entries []constEntry
+	for i, name := range resolvedNames {
+		if name == "" {
+			continue
+		}
+		entries = append(entries, constEntry{constName: name, modelID: models[i].ID})
+	}
+
+	// Sort by constant name for deterministic output.
+	sort.Slice(entries, func(i, j int) bool {
+		return entries[i].constName < entries[j].constName
+	})
+
+	var buf bytes.Buffer
+	buf.WriteString("// Code generated by bestiary-gen. DO NOT EDIT.\n")
+	buf.WriteString("//go:generate go run ./cmd/bestiary-gen\n")
+	buf.WriteString("\n")
+	buf.WriteString("package bestiary\n\n")
+
+	if len(entries) > 0 {
+		buf.WriteString("// Model_* constants provide compile-time references to every eligible model\n")
+		buf.WriteString("// in the static model registry. Names follow the pattern:\n")
+		buf.WriteString("//   Model_<Provider>_<Family>_<Variant>_<Date>?\n")
+		buf.WriteString("// where each component uses the same casing rules as Provider and Family\n")
+		buf.WriteString("// constants. Underscores separate components; within-component characters\n")
+		buf.WriteString("// are preserved (e.g. \"4o\" stays \"4o\", not \"4_o\").\n")
+		buf.WriteString("const (\n")
+		for _, e := range entries {
+			fmt.Fprintf(&buf, "\t%s ModelID = %q\n", e.constName, e.modelID)
+		}
+		buf.WriteString(")\n\n")
+	}
+
+	// allModelConstants: backing array for Models().
+	buf.WriteString("// allModelConstants is the complete list of generated Model_* constants.\n")
+	buf.WriteString("var allModelConstants = [...]ModelID{\n")
+	for _, e := range entries {
+		fmt.Fprintf(&buf, "\t%s,\n", e.constName)
+	}
+	buf.WriteString("}\n\n")
+
+	// Models() defensive copy.
+	buf.WriteString("// Models returns all generated Model_* constants as a defensive copy.\n")
+	buf.WriteString("// Mutating the returned slice does not affect future calls.\n")
+	buf.WriteString("func Models() []ModelID {\n")
+	buf.WriteString("\tout := make([]ModelID, len(allModelConstants))\n")
+	buf.WriteString("\tcopy(out, allModelConstants[:])\n")
+	buf.WriteString("\treturn out\n")
+	buf.WriteString("}\n")
+
+	formatted, err := format.Source(buf.Bytes())
+	if err != nil {
+		return nil, fmt.Errorf(
+			"go/format models_constants_gen.go: %w\n"+
+				"  What: the generated constants source is not syntactically valid\n"+
+				"  Why: a codegen template bug produced invalid Go\n"+
+				"  How to fix: inspect the unformatted buffer for syntax errors\n"+
+				"  Raw source (first 2000 bytes):\n%s",
+			err, truncate(buf.String(), 2000),
+		)
+	}
+	return formatted, nil
 }

@@ -90,8 +90,8 @@ func (e *ErrAmbiguous) Error() string {
 	if len(e.Candidates) > 0 {
 		sb.WriteString("  Candidates:\n")
 		for _, c := range e.Candidates {
-			fmt.Fprintf(&sb, "    - %s/%s (provider: %s)\n",
-				string(c.Family), c.Variant, c.Provider)
+			fmt.Fprintf(&sb, "    - %s (provider: %s)\n",
+				c.Format(SchemeCanonical), c.Provider)
 		}
 	}
 	sb.WriteString("  How to fix: refine the input to a more specific model ID, or use --scheme=raw with an exact API ID")

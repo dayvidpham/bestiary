@@ -233,6 +233,279 @@ func TestSplitComma(t *testing.T) {
 }
 
 // --------------------------------------------------------------------------
+// SLICE-4 tests: nameForCanonical, resolveCollisions, generateConstantsSource
+// --------------------------------------------------------------------------
+
+// testSlugToConst is a minimal slugToConst map for tests, providing the correct
+// provider constant names (with proper casing) for the providers used in golden examples.
+var testSlugToConst = map[string]string{
+	"anthropic":    "ProviderAnthropic",
+	"openai":       "ProviderOpenAI",
+	"google":       "ProviderGoogle",
+	"google-vertex": "ProviderGoogleVertex",
+	"openrouter":   "ProviderOpenRouter",
+}
+
+// TestNameForCanonical_KnownExamples verifies that nameForCanonicalWithMap produces
+// the expected constant names for the spec-defined golden examples from UAT-1 / PROPOSAL-3.
+func TestNameForCanonical_KnownExamples(t *testing.T) {
+	cases := []struct {
+		desc     string
+		model    bestiary.ModelInfo
+		wantName string
+	}{
+		{
+			desc: "claude-opus-4-20250514 on Anthropic",
+			model: bestiary.ModelInfo{
+				ID:               "claude-opus-4-20250514",
+				Provider:         "anthropic",
+				NormalizedFamily: "claude",
+				NormalizedVariant: "opus",
+				NormalizedDate:   "2025-05-14",
+			},
+			wantName: "Model_Anthropic_Claude_Opus_4_20250514",
+		},
+		{
+			desc: "claude-opus-4-1 on Anthropic (date not in ID, from release field)",
+			model: bestiary.ModelInfo{
+				ID:               "claude-opus-4-1",
+				Provider:         "anthropic",
+				NormalizedFamily: "claude",
+				NormalizedVariant: "opus",
+				// NormalizedDate comes from release field, NOT from ID content.
+				// The ID "claude-opus-4-1" has no YYYYMMDD/YYYY-MM-DD date.
+				// So date should NOT be appended to the constant name.
+				NormalizedDate:   "2025-08-05",
+			},
+			// Tokens: [claude, opus, 4, 1]; date not in ID → no date suffix.
+			wantName: "Model_Anthropic_Claude_Opus_4_1",
+		},
+		{
+			desc: "gpt-4o-2024-08-06 on OpenAI",
+			model: bestiary.ModelInfo{
+				ID:               "gpt-4o-2024-08-06",
+				Provider:         "openai",
+				NormalizedFamily: "gpt",
+				NormalizedVariant: "",
+				NormalizedDate:   "2024-08-06",
+			},
+			wantName: "Model_OpenAI_GPT_4o_20240806",
+		},
+		{
+			desc: "gemini-2.5-flash-lite-preview-06-17 on GoogleVertex (MM-DD date form)",
+			model: bestiary.ModelInfo{
+				ID:               "gemini-2.5-flash-lite-preview-06-17",
+				Provider:         "google-vertex",
+				NormalizedFamily: "gemini",
+				NormalizedVariant: "flash-lite",
+				NormalizedDate:   "2025-06-17",
+			},
+			// ID has "06-17" which is the MM-DD form of NormalizedDate "2025-06-17".
+			// stripDateFromID strips "06-17", leaving "gemini-2.5-flash-lite-preview".
+			// Tokens: [gemini, 2, 5, flash, lite, preview]
+			// → Model_GoogleVertex_Gemini_2_5_Flash_Lite_Preview_20250617
+			wantName: "Model_GoogleVertex_Gemini_2_5_Flash_Lite_Preview_20250617",
+		},
+		{
+			desc: "model with no date",
+			model: bestiary.ModelInfo{
+				ID:               "claude-haiku",
+				Provider:         "anthropic",
+				NormalizedFamily: "claude",
+				NormalizedVariant: "haiku",
+				NormalizedDate:   "",
+			},
+			wantName: "Model_Anthropic_Claude_Haiku",
+		},
+		{
+			desc: "provider-prefixed ID (openrouter style)",
+			model: bestiary.ModelInfo{
+				ID:               "anthropic/claude-opus-4-20250514",
+				Provider:         "openrouter",
+				NormalizedFamily: "claude",
+				NormalizedVariant: "opus",
+				NormalizedDate:   "2025-05-14",
+			},
+			wantName: "Model_OpenRouter_Claude_Opus_4_20250514",
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.desc, func(t *testing.T) {
+			got := nameForCanonicalWithMap(tc.model, testSlugToConst)
+			if got != tc.wantName {
+				t.Errorf("nameForCanonicalWithMap: got %q, want %q", got, tc.wantName)
+			}
+		})
+	}
+}
+
+// TestSkipEmptyFamily verifies that nameForCanonical returns "" when NormalizedFamily is empty.
+func TestSkipEmptyFamily(t *testing.T) {
+	m := bestiary.ModelInfo{
+		ID:               "some-model-123",
+		Provider:         "anthropic",
+		NormalizedFamily: "", // empty → skip
+		NormalizedVariant: "",
+		NormalizedDate:   "2025-01-01",
+	}
+	got := nameForCanonical(m)
+	if got != "" {
+		t.Errorf("nameForCanonical: expected empty string for empty NormalizedFamily, got %q", got)
+	}
+}
+
+// TestResolveCollisions_VersionSuffix verifies that when two models share the
+// same naive name but have distinguishable version segments in their raw IDs,
+// the version segment is used as a disambiguator (pass (a)).
+func TestResolveCollisions_VersionSuffix(t *testing.T) {
+	// Two models that produce the same naive name Model_Anthropic_Claude_Opus
+	// but whose IDs have different version tokens (4 vs 3_5).
+	models := []bestiary.ModelInfo{
+		{
+			ID:               "claude-opus-4",
+			Provider:         "anthropic",
+			NormalizedFamily: "claude",
+			NormalizedVariant: "opus",
+			NormalizedDate:   "",
+		},
+		{
+			ID:               "claude-opus-3-5",
+			Provider:         "anthropic",
+			NormalizedFamily: "claude",
+			NormalizedVariant: "opus",
+			NormalizedDate:   "",
+		},
+	}
+	// Both produce "Model_Anthropic_Claude_Opus" as the naive name.
+	names := []string{
+		"Model_Anthropic_Claude_Opus",
+		"Model_Anthropic_Claude_Opus",
+	}
+
+	resolved := resolveCollisions(names, models)
+	if len(resolved) != 2 {
+		t.Fatalf("resolveCollisions: want 2 results, got %d", len(resolved))
+	}
+
+	// Both must be non-empty and distinct.
+	if resolved[0] == "" || resolved[1] == "" {
+		t.Errorf("resolveCollisions: got empty string in result: %v", resolved)
+	}
+	if resolved[0] == resolved[1] {
+		t.Errorf("resolveCollisions: not unique: both = %q", resolved[0])
+	}
+
+	// Version suffixes should be used (pass a).
+	if !strings.Contains(resolved[0], "4") && !strings.Contains(resolved[1], "4") {
+		t.Errorf("resolveCollisions: expected version '4' in one result; got %v", resolved)
+	}
+}
+
+// TestResolveCollisions_SequentialSuffix verifies that when version-suffix
+// disambiguation fails (no distinct version), sequential _<n> suffixes are appended.
+func TestResolveCollisions_SequentialSuffix(t *testing.T) {
+	// Two models with the same naive name and same (or indistinguishable) version.
+	// We force this by using models with matching version tokens.
+	models := []bestiary.ModelInfo{
+		{
+			ID:               "mystery-model",
+			Provider:         "anthropic",
+			NormalizedFamily: "mystery",
+			NormalizedVariant: "",
+			NormalizedDate:   "",
+		},
+		{
+			ID:               "mystery-model",
+			Provider:         "anthropic",
+			NormalizedFamily: "mystery",
+			NormalizedVariant: "",
+			NormalizedDate:   "",
+		},
+	}
+	names := []string{
+		"Model_Anthropic_Mystery_Model",
+		"Model_Anthropic_Mystery_Model",
+	}
+
+	resolved := resolveCollisions(names, models)
+	if len(resolved) != 2 {
+		t.Fatalf("resolveCollisions: want 2 results, got %d", len(resolved))
+	}
+	if resolved[0] == resolved[1] {
+		t.Errorf("resolveCollisions: sequential fallback failed; both = %q", resolved[0])
+	}
+	// Must have numeric suffix.
+	if !strings.Contains(resolved[0], "_1") && !strings.Contains(resolved[0], "_2") {
+		t.Errorf("resolveCollisions: expected numeric suffix in %q", resolved[0])
+	}
+	if !strings.Contains(resolved[1], "_1") && !strings.Contains(resolved[1], "_2") {
+		t.Errorf("resolveCollisions: expected numeric suffix in %q", resolved[1])
+	}
+}
+
+// TestGenerateConstantsSource_Compiles verifies that generateConstantsSource
+// returns valid Go source that passes go/format for a small set of test models.
+func TestGenerateConstantsSource_Compiles(t *testing.T) {
+	models := []bestiary.ModelInfo{
+		{
+			ID:               "claude-opus-4-20250514",
+			Provider:         "anthropic",
+			NormalizedFamily: "claude",
+			NormalizedVariant: "opus",
+			NormalizedDate:   "2025-05-14",
+		},
+		{
+			ID:               "gpt-4o-2024-08-06",
+			Provider:         "openai",
+			NormalizedFamily: "gpt",
+			NormalizedVariant: "",
+			NormalizedDate:   "2024-08-06",
+		},
+		{
+			// Skip-rule: empty family.
+			ID:               "unknown-xyz",
+			Provider:         "some-provider",
+			NormalizedFamily: "",
+			NormalizedVariant: "",
+			NormalizedDate:   "",
+		},
+	}
+
+	src, err := generateConstantsSource(models, testSlugToConst)
+	if err != nil {
+		t.Fatalf("generateConstantsSource: unexpected error: %v", err)
+	}
+	if len(src) == 0 {
+		t.Fatal("generateConstantsSource: returned empty source")
+	}
+	// Must contain the expected constant names.
+	srcStr := string(src)
+	if !strings.Contains(srcStr, "Model_Anthropic_Claude_Opus_4_20250514") {
+		t.Errorf("generated source missing Model_Anthropic_Claude_Opus_4_20250514:\n%s", srcStr[:min(500, len(srcStr))])
+	}
+	if !strings.Contains(srcStr, "Model_OpenAI_GPT_4o_20240806") {
+		t.Errorf("generated source missing Model_OpenAI_GPT_4o_20240806:\n%s", srcStr[:min(500, len(srcStr))])
+	}
+	// Must NOT contain a constant for the skip-rule model.
+	if strings.Contains(srcStr, "unknown-xyz") {
+		t.Errorf("generated source should not contain skip-rule model 'unknown-xyz'")
+	}
+	// Must contain Models() function.
+	if !strings.Contains(srcStr, "func Models()") {
+		t.Errorf("generated source missing Models() function")
+	}
+}
+
+// min is a helper for older Go versions that don't have built-in min for integers.
+func min(a, b int) int {
+	if a < b {
+		return a
+	}
+	return b
+}
+
+// --------------------------------------------------------------------------
 // Helpers
 // --------------------------------------------------------------------------
 
