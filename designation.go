@@ -1,6 +1,10 @@
 package bestiary
 
-import "fmt"
+import (
+	"encoding/json"
+	"fmt"
+	"strings"
+)
 
 // AcceptabilityRating classifies a Designation by its acceptability status,
 // following ISO 1087 terminology principles.
@@ -35,6 +39,64 @@ func (r AcceptabilityRating) String() string {
 		return "deprecated"
 	default:
 		return fmt.Sprintf("AcceptabilityRating(%d)", int(r))
+	}
+}
+
+// MarshalJSON serializes AcceptabilityRating as a JSON string (e.g. "admitted").
+// This satisfies the bestiary.schema.json $defs/AcceptabilityRating enum contract,
+// which declares the type as a string — not a number.
+func (r AcceptabilityRating) MarshalJSON() ([]byte, error) {
+	return json.Marshal(r.String())
+}
+
+// UnmarshalJSON deserializes a JSON string into an AcceptabilityRating.
+// Accepted values: "admitted", "preferred", "deprecated" (case-insensitive).
+// Returns an error if the string is not recognized.
+func (r *AcceptabilityRating) UnmarshalJSON(b []byte) error {
+	var raw string
+	if err := json.Unmarshal(b, &raw); err != nil {
+		return fmt.Errorf(
+			"bestiary: AcceptabilityRating.UnmarshalJSON: expected a JSON string, got %s;\n"+
+				"  what went wrong: cannot unmarshal non-string JSON value into AcceptabilityRating\n"+
+				"  why: AcceptabilityRating is serialized as a string enum (\"admitted\", \"preferred\", \"deprecated\")\n"+
+				"  where: designation.go AcceptabilityRating.UnmarshalJSON\n"+
+				"  how to fix: provide a JSON string value for AcceptabilityRating",
+			b,
+		)
+	}
+	parsed, err := parseRating(strings.ToLower(raw))
+	if err != nil {
+		return fmt.Errorf(
+			"bestiary: AcceptabilityRating.UnmarshalJSON: unrecognized rating value %q;\n"+
+				"  what went wrong: %w\n"+
+				"  where: designation.go AcceptabilityRating.UnmarshalJSON\n"+
+				"  how to fix: use one of \"admitted\", \"preferred\", \"deprecated\"",
+			raw, err,
+		)
+	}
+	*r = parsed
+	return nil
+}
+
+// parseRating converts a lowercase string to an AcceptabilityRating.
+// Returns an error for unrecognized values.
+func parseRating(s string) (AcceptabilityRating, error) {
+	switch s {
+	case "admitted":
+		return AcceptabilityAdmitted, nil
+	case "preferred":
+		return AcceptabilityPreferred, nil
+	case "deprecated":
+		return AcceptabilityDeprecated, nil
+	default:
+		return AcceptabilityAdmitted, fmt.Errorf(
+			"bestiary: unrecognized acceptability rating %q\n"+
+				"  What: %q is not a valid AcceptabilityRating\n"+
+				"  Why: only %q, %q, and %q are accepted\n"+
+				"  Where: parseRating\n"+
+				"  How to fix: pass one of the accepted rating strings",
+			s, s, "admitted", "preferred", "deprecated",
+		)
 	}
 }
 

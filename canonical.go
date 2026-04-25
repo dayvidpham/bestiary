@@ -1,6 +1,10 @@
 package bestiary
 
-import "fmt"
+import (
+	"encoding/json"
+	"fmt"
+	"strings"
+)
 
 // CanonicalScheme identifies the string serialization format for a ModelRef.
 // Callers use it to select how a model identity is expressed as a string,
@@ -43,6 +47,42 @@ func (s CanonicalScheme) String() string {
 	default:
 		return fmt.Sprintf("CanonicalScheme(%d)", int(s))
 	}
+}
+
+// MarshalJSON serializes CanonicalScheme as a JSON string (e.g. "canonical").
+// This satisfies the bestiary.schema.json $defs/CanonicalScheme enum contract,
+// which declares the type as a string — not a number.
+func (s CanonicalScheme) MarshalJSON() ([]byte, error) {
+	return json.Marshal(s.String())
+}
+
+// UnmarshalJSON deserializes a JSON string into a CanonicalScheme.
+// Accepted values: "canonical", "huggingface", "purl", "raw" (case-insensitive).
+// Returns an error if the string is not recognized.
+func (s *CanonicalScheme) UnmarshalJSON(b []byte) error {
+	var raw string
+	if err := json.Unmarshal(b, &raw); err != nil {
+		return fmt.Errorf(
+			"bestiary: CanonicalScheme.UnmarshalJSON: expected a JSON string, got %s;\n"+
+				"  what went wrong: cannot unmarshal non-string JSON value into CanonicalScheme\n"+
+				"  why: CanonicalScheme is serialized as a string enum (\"canonical\", \"huggingface\", \"purl\", \"raw\")\n"+
+				"  where: canonical.go CanonicalScheme.UnmarshalJSON\n"+
+				"  how to fix: provide a JSON string value for CanonicalScheme",
+			b,
+		)
+	}
+	parsed, err := ParseScheme(strings.ToLower(raw))
+	if err != nil {
+		return fmt.Errorf(
+			"bestiary: CanonicalScheme.UnmarshalJSON: unrecognized scheme value %q;\n"+
+				"  what went wrong: %w\n"+
+				"  where: canonical.go CanonicalScheme.UnmarshalJSON\n"+
+				"  how to fix: use one of \"canonical\", \"huggingface\", \"purl\", \"raw\"",
+			raw, err,
+		)
+	}
+	*s = parsed
+	return nil
 }
 
 // ParseScheme converts a string to a CanonicalScheme.
