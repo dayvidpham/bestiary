@@ -7,6 +7,31 @@ import (
 )
 
 // ----------------------------------------------------------------------------
+// Parse data initialization tests
+// ----------------------------------------------------------------------------
+
+// TestParseData_RegexesValid asserts that the embedded parse data loads without
+// error at startup: all JSON files are present in the embedded FS, all regex
+// strings in version_patterns.json compile successfully, and no JSON is
+// malformed.
+//
+// bestiary-bzdy: the sync.Once error path in initParseData() is silently
+// swallowed by ParseFamily (fail-closed design). This test makes the startup
+// contract explicit and measurable. If the data files or regexes are ever
+// broken, this test will catch it before any caller of ParseFamily silently
+// degrades to returning raw values unchanged.
+func TestParseData_RegexesValid(t *testing.T) {
+	t.Parallel()
+	if err := bestiary.ParseDataReady(); err != nil {
+		t.Fatalf("ParseDataReady() returned unexpected error: %v\n"+
+			"  What: embedded parse data failed to load\n"+
+			"  Why: a JSON file is missing, malformed, or a regex in version_patterns.json did not compile\n"+
+			"  Where: parse/data/*.json embedded files\n"+
+			"  How to fix: inspect the error message above and repair the affected JSON data file", err)
+	}
+}
+
+// ----------------------------------------------------------------------------
 // ParseFamily tests
 // ----------------------------------------------------------------------------
 

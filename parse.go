@@ -197,6 +197,19 @@ func initParseData() (*parseData, error) {
 	}, nil
 }
 
+// ParseDataReady returns the error (if any) from the one-time initialization of
+// the embedded parse data (JSON files + regex compilation). In a correct build
+// the return value is always nil, because the data files are embedded at compile
+// time and the regexes are validated before any release.
+//
+// This function is primarily useful for startup self-checks and tests. Production
+// code does not need to call it — ParseFamily degrades gracefully when the load
+// fails (see the fail-closed comment inside ParseFamily).
+func ParseDataReady() error {
+	_, err := loadParseData()
+	return err
+}
+
 // ParseFamily takes a raw API family value and returns (Family, variant).
 //
 // Resolution order (first match wins):
@@ -215,8 +228,14 @@ func ParseFamily(raw Family) (Family, string) {
 
 	pd, err := loadParseData()
 	if err != nil {
-		// Fail closed: if data cannot be loaded, return the raw value unchanged.
-		// This should only happen in pathological build configurations.
+		// Fail closed: if embedded data cannot be loaded, return the raw value
+		// unchanged with an empty variant. In a correct build this path is
+		// unreachable because the JSON files are embedded at compile time and the
+		// regexes in version_patterns.json are validated once at startup. The
+		// silent degradation is intentional — ParseFamily has a 2-return signature
+		// by design (see PROPOSAL-3) and callers cannot handle an error return.
+		// TestParseData_RegexesValid asserts that this path is never taken in a
+		// normal test run, providing startup-time validation coverage.
 		return raw, ""
 	}
 
