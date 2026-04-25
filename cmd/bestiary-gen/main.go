@@ -265,6 +265,16 @@ func parseFlags(args []string) (flagResult, error) {
 				"  How to fix: use either -only-providers=<slugs> OR -all-providers-except=<slugs>, not both",
 		)
 	}
+	if res.cacheDir == "" {
+		return flagResult{}, fmt.Errorf(
+			"-cache-dir value must not be empty\n" +
+				"  What: -cache-dir was explicitly set to an empty string\n" +
+				"  Why: an empty cache dir resolves to the current working directory, which is unintended\n" +
+				"  Where: bestiary-gen flag parsing\n" +
+				"  How to fix: omit -cache-dir to use the default (%s), or provide a non-empty path",
+			defaultCacheDir,
+		)
+	}
 	return res, nil
 }
 
@@ -465,7 +475,6 @@ type ErrCacheMiss struct {
 func (e *ErrCacheMiss) Error() string {
 	return fmt.Sprintf(
 		"cached api_response.json missing or empty\n"+
-			"  What: cached api_response.json missing or empty\n"+
 			"  Why: --no-fetch was specified; HTTP fetch was skipped\n"+
 			"  Where: %s (during cache load step in fetchModelsWithRaw)\n"+
 			"  When: during cache load step in fetchModelsWithRaw\n"+
@@ -601,8 +610,8 @@ func parseCapabilityRaw(raw json.RawMessage) bestiary.Capability {
 // genToModelInfo converts a genWireModel to bestiary.ModelInfo.
 // LastSynced is intentionally left empty — the caller stamps it.
 //
-// Normalized fields are populated at this stage by invoking parse.ParseFamily,
-// parse.ExtractDate, and parse.InferFamilyFromID so that models_static_gen.go
+// Normalized fields are populated at this stage by invoking bestiary.ParseFamily,
+// bestiary.ExtractDate, and bestiary.InferFamilyFromID so that models_static_gen.go
 // carries baked normalization data at compile time.
 func genToModelInfo(providerSlug string, wm genWireModel) bestiary.ModelInfo {
 	// Derive normalized family and variant.
@@ -1331,6 +1340,11 @@ func extractVersionSegment(m bestiary.ModelInfo) string {
 	})
 
 	// Strip known family tokens.
+	// NOTE: NormalizedFamily and NormalizedVariant only use hyphens and dots as
+	// separators (models.dev normalized fields). Using the narrow hyphen-dot splitter
+	// here is intentional and matches all real data. If a future provider introduces
+	// underscores or other separators in a normalized family slug, unify this with the
+	// universal non-alphanumeric splitter used above for rawIDStripped.
 	familyTokens := strings.FieldsFunc(string(m.NormalizedFamily), func(r rune) bool {
 		return r == '-' || r == '.'
 	})
@@ -1361,7 +1375,7 @@ func extractVersionSegment(m bestiary.ModelInfo) string {
 }
 
 // generateConstantsSource generates models_constants_gen.go containing one
-// Model_* constant per eligible model in the static data, plus a Models()
+// Model_* constant per eligible model in the static data, plus a ModelIDs()
 // function returning a defensive copy.
 //
 // slugToConst maps provider slug → Go constant name (e.g. "openai" → "ProviderOpenAI").

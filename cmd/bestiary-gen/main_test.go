@@ -396,9 +396,13 @@ func TestResolveCollisions_VersionSuffix(t *testing.T) {
 		t.Errorf("resolveCollisions: not unique: both = %q", resolved[0])
 	}
 
-	// Version suffixes should be used (pass a).
-	if !strings.Contains(resolved[0], "4") && !strings.Contains(resolved[1], "4") {
-		t.Errorf("resolveCollisions: expected version '4' in one result; got %v", resolved)
+	// Version-suffix disambiguation (pass a) must produce the exact expected names.
+	// claude-opus-4 → version segment "4"; claude-opus-3-5 → version segment "3_5".
+	want0 := "Model_Anthropic_Claude_Opus_4"
+	want1 := "Model_Anthropic_Claude_Opus_3_5"
+	if (resolved[0] != want0 || resolved[1] != want1) && (resolved[0] != want1 || resolved[1] != want0) {
+		t.Errorf("resolveCollisions: unexpected version-suffix results:\n  got  [%q, %q]\n  want [%q, %q] (either order)",
+			resolved[0], resolved[1], want0, want1)
 	}
 }
 
@@ -545,6 +549,189 @@ func minimalAPIJSON(t *testing.T) []byte {
 	return b
 }
 
+// normalizationAPIJSON returns a minimal api_response.json body with models that
+// exercise the normalization code paths: one model with a non-empty family field
+// and one model with an empty family field (triggering InferFamilyFromID).
+func normalizationAPIJSON(t *testing.T) []byte {
+	t.Helper()
+	payload := map[string]any{
+		"anthropic": map[string]any{
+			"name": "Anthropic",
+			"models": map[string]any{
+				// Model with a non-empty family — exercises ParseFamily path.
+				"claude-opus-4-20250514": map[string]any{
+					"id":           "claude-opus-4-20250514",
+					"name":         "Claude Opus 4",
+					"family":       "claude-opus",
+					"release_date": "2025-05-14",
+				},
+				// Model with empty family — exercises InferFamilyFromID path (~25% of real models).
+				"claude-haiku-no-family": map[string]any{
+					"id":     "claude-haiku-no-family",
+					"name":   "Claude Haiku (no family)",
+					"family": "",
+				},
+			},
+		},
+		"openai": map[string]any{
+			"name": "OpenAI",
+			"models": map[string]any{
+				// GPT model with date in ID.
+				"gpt-4o-2024-08-06": map[string]any{
+					"id":           "gpt-4o-2024-08-06",
+					"name":         "GPT-4o",
+					"family":       "gpt-4o",
+					"release_date": "2024-08-06",
+				},
+			},
+		},
+	}
+	b, err := json.Marshal(payload)
+	if err != nil {
+		t.Fatalf("normalizationAPIJSON: marshal: %v", err)
+	}
+	return b
+}
+
+// TestGenToModelInfo_EmptyFamily verifies that the InferFamilyFromID code path in
+// genToModelInfo fires when the model's family field is empty (~25% of real models).
+// This exercises the else branch in genToModelInfo that the parse_test.go unit tests
+// for InferFamilyFromID do not cover at the codegen integration layer.
+func TestGenToModelInfo_EmptyFamily(t *testing.T) {
+	wm := genWireModel{
+		ID:     "claude-haiku-no-family",
+		Name:   "Claude Haiku (no family)",
+		Family: "", // empty — must trigger InferFamilyFromID
+	}
+	info := genToModelInfo("anthropic", wm)
+
+	if info.Family != "" {
+		t.Errorf("Family: got %q, want empty (raw field was empty)", info.Family)
+	}
+	// InferFamilyFromID("claude-haiku-no-family", "anthropic") must populate NormalizedFamily.
+	if info.NormalizedFamily == "" {
+		t.Errorf("NormalizedFamily: got empty; InferFamilyFromID should infer a non-empty family from ID %q", wm.ID)
+	}
+	// NormalizedVariant may or may not be empty depending on InferFamilyFromID behavior.
+	// The key property is that NormalizedFamily is populated (no silent no-op).
+	t.Logf("genToModelInfo empty-family: NormalizedFamily=%q NormalizedVariant=%q", info.NormalizedFamily, info.NormalizedVariant)
+}
+
+// TestGenToModelInfo_NormalizedFields verifies that genToModelInfo correctly populates
+// NormalizedFamily, NormalizedVariant, and NormalizedDate for models with known inputs.
+// This guards against regressions in the genToModelInfo normalization splice path.
+func TestGenToModelInfo_NormalizedFields(t *testing.T) {
+	cases := []struct {
+		desc            string
+		providerSlug    string
+		wm              genWireModel
+		wantFamily      string
+		wantVariant     string
+		wantDateContains string // substring of NormalizedDate (may be empty for no-date models)
+	}{
+		{
+			desc:         "claude-opus-4-20250514: family=claude-opus, date in ID",
+			providerSlug: "anthropic",
+			wm: genWireModel{
+				ID:          "claude-opus-4-20250514",
+				Name:        "Claude Opus 4",
+				Family:      "claude-opus",
+				ReleaseDate: "2025-05-14",
+			},
+			wantFamily:       "claude",
+			wantVariant:      "opus",
+			wantDateContains: "2025-05-14",
+		},
+		{
+			desc:         "gpt-4o-2024-08-06: family=gpt-4o, date in ID",
+			providerSlug: "openai",
+			wm: genWireModel{
+				ID:          "gpt-4o-2024-08-06",
+				Name:        "GPT-4o",
+				Family:      "gpt-4o",
+				ReleaseDate: "2024-08-06",
+			},
+			// ParseFamily("gpt-4o") returns ("gpt-4o", "") when no override matches;
+			// the exact result depends on parse data but the key property is that
+			// NormalizedFamily is non-empty and NormalizedDate is populated from the ID.
+			wantFamily:       "gpt-4o",
+			wantVariant:      "",
+			wantDateContains: "2024-08-06",
+		},
+		{
+			desc:         "empty family: NormalizedFamily inferred from ID",
+			providerSlug: "anthropic",
+			wm: genWireModel{
+				ID:     "claude-haiku-no-family",
+				Name:   "Claude Haiku",
+				Family: "",
+			},
+			wantFamily:       "claude", // InferFamilyFromID should infer "claude"
+			wantDateContains: "",       // no date
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.desc, func(t *testing.T) {
+			info := genToModelInfo(tc.providerSlug, tc.wm)
+
+			if string(info.NormalizedFamily) != tc.wantFamily {
+				t.Errorf("NormalizedFamily: got %q, want %q", info.NormalizedFamily, tc.wantFamily)
+			}
+			if tc.wantVariant != "" && info.NormalizedVariant != tc.wantVariant {
+				t.Errorf("NormalizedVariant: got %q, want %q", info.NormalizedVariant, tc.wantVariant)
+			}
+			if tc.wantDateContains != "" && !strings.Contains(info.NormalizedDate, tc.wantDateContains) {
+				t.Errorf("NormalizedDate: got %q, want it to contain %q", info.NormalizedDate, tc.wantDateContains)
+			}
+			if tc.wantDateContains == "" && info.NormalizedDate != "" {
+				// Some models may extract a date from the release field even when wantDateContains is "".
+				// Just log it; don't fail — release-date fallback is valid behavior.
+				t.Logf("NormalizedDate: got %q (non-empty); extracted from release field or ID", info.NormalizedDate)
+			}
+		})
+	}
+}
+
+// TestNoFetch_MalformedCache verifies that --no-fetch with a corrupt cache file
+// returns an actionable error describing the JSON decode failure.
+// This exercises the json.Unmarshal error path in fetchModelsWithRaw.
+func TestNoFetch_MalformedCache(t *testing.T) {
+	tmpDir := t.TempDir()
+	cachePath := filepath.Join(tmpDir, cacheFile)
+
+	// Write invalid JSON to the cache file.
+	if err := os.WriteFile(cachePath, []byte("{not valid json"), 0o644); err != nil {
+		t.Fatalf("setup: write malformed cache file: %v", err)
+	}
+
+	_, _, _, err := fetchModelsWithRaw(context.Background(), tmpDir, true)
+	if err == nil {
+		t.Fatal("fetchModelsWithRaw(noFetch=true, malformed cache): expected error, got nil")
+	}
+	msg := err.Error()
+	// The error must reference the decode failure (not a generic "operation failed").
+	if !strings.Contains(msg, "decode JSON") && !strings.Contains(msg, "json") && !strings.Contains(msg, "JSON") {
+		t.Errorf("error for malformed cache does not mention JSON decode failure:\n%s", msg)
+	}
+}
+
+// TestCacheDirFlag_EmptyValue verifies that parseFlags rejects -cache-dir= (empty value)
+// with an actionable error instead of silently setting cacheDir to "".
+func TestCacheDirFlag_EmptyValue(t *testing.T) {
+	_, err := parseFlags([]string{"-cache-dir="})
+	if err == nil {
+		t.Fatal("parseFlags(-cache-dir=): expected error for empty value, got nil")
+	}
+	msg := err.Error()
+	if !strings.Contains(msg, "-cache-dir") {
+		t.Errorf("error message %q does not mention -cache-dir", msg)
+	}
+	if !strings.Contains(msg, "empty") {
+		t.Errorf("error message %q does not mention 'empty'", msg)
+	}
+}
+
 // TestCacheDirFlag verifies that bestiary-gen --cache-dir <tmpdir> writes
 // api_response.json into the given directory (not the default .bestiary-gen-cache).
 // This test exercises the full run() code path end-to-end via apiURL override.
@@ -601,7 +788,10 @@ func TestCacheDirFlag(t *testing.T) {
 // TestNoFetch_HitsCache verifies that --no-fetch reads from a pre-populated
 // cache file without making any HTTP request.
 // The httptest.Server is wired into apiURL so that if fetchModelsWithRaw ever
-// makes an outbound request, the contacted flag trips.
+// makes an outbound request via apiURL, the contacted flag trips.
+//
+// Note: contacted trips only if a regression calls apiURL. A regression that
+// uses a hardcoded URL or a separate http.Get would not be caught by this guard.
 func TestNoFetch_HitsCache(t *testing.T) {
 	tmpDir := t.TempDir()
 	raw := minimalAPIJSON(t)
@@ -732,10 +922,23 @@ package bestiary
 type Family = string
 `,
 			wantErr: true,
-			// Both conditions fire: alias is present; but first we check for
-			// the named declaration absence. The alias form does NOT contain
-			// "type Family string" (without "="), so the first check fires.
+			// Only the first condition fires: the alias form ("type Family = string") does NOT
+			// contain the named-type declaration string ("type Family string", without "="),
+			// so the namedDecl check reports the missing declaration.
 			errFrag: "named-type declaration not found",
+		},
+		{
+			name: "failing: both named and alias forms present",
+			content: `// Code generated by bestiary-gen. DO NOT EDIT.
+package bestiary
+
+type Family string
+type Family = string
+`,
+			wantErr: true,
+			// Both the named form AND the alias form are present simultaneously.
+			// The named-type check passes; the alias-detection check fires second.
+			errFrag: "alias declaration found",
 		},
 	}
 

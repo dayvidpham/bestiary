@@ -131,28 +131,31 @@ func runShow(input string, format bestiary.OutputFormat, dbPath string, schemeFl
 	// Pick the best entry: prefer the one with the most-recent LastSynced.
 	//
 	// Try to open the store for cached data; fall back gracefully on error.
-	var cachedByID map[bestiary.ModelID]bestiary.ModelInfo
+	// Use QueryModel (per-ID lookup) instead of QueryModels("") (load-all) to
+	// avoid loading the full cache into memory for a single-model show operation.
+	var store *bestiary.Store
 	path, dbErr := resolveDBPath(dbPath)
 	if dbErr == nil {
-		store, openErr := bestiary.OpenStore(path)
-		if openErr == nil {
+		if s, openErr := bestiary.OpenStore(path); openErr == nil {
+			store = s
 			defer store.Close()
-			// Query all cached models; build lookup map by model ID.
-			all, qErr := store.QueryModels(context.Background(), "")
-			if qErr == nil {
-				cachedByID = make(map[bestiary.ModelID]bestiary.ModelInfo, len(all))
-				for _, m := range all {
-					cachedByID[m.ID] = m
-				}
-			}
 		}
 	}
 
 	var best bestiary.ModelInfo
 	found := false
+	ctx := context.Background()
 	for _, ref := range refs {
 		staticModel, inStatic := bestiary.LookupModel(ref.ID)
-		cachedModel, inCached := cachedByID[ref.ID]
+
+		var cachedModel bestiary.ModelInfo
+		inCached := false
+		if store != nil {
+			if m, qErr := store.QueryModel(ctx, ref.ID); qErr == nil {
+				cachedModel = m
+				inCached = true
+			}
+		}
 
 		var candidate bestiary.ModelInfo
 		switch {

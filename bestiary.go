@@ -16,8 +16,8 @@ type Capability struct {
 // ModelInfo holds metadata for a single AI model as returned by the models.dev API.
 //
 // Normalized fields (NormalizedFamily, NormalizedVariant, NormalizedDate) are
-// populated at codegen time by the bestiary-gen tool invoking parse.ParseFamily,
-// parse.ExtractDate, and parse.InferFamilyFromID. They are zero-value for models
+// populated at codegen time by the bestiary-gen tool invoking bestiary.ParseFamily,
+// bestiary.ExtractDate, and bestiary.InferFamilyFromID. They are zero-value for models
 // loaded from the SQLite cache (pre-normalization epoch) until a sync is performed.
 type ModelInfo struct {
 	ID          ModelID
@@ -30,8 +30,8 @@ type ModelInfo struct {
 	// NormalizedFamily is the canonical family identifier extracted from Family
 	// (or inferred from ID when Family is empty). Populated at codegen time.
 	NormalizedFamily Family
-	// NormalizedVariant is the variant suffix extracted from Family (e.g. "opus-4",
-	// "pro", "flash"). Empty when the model has no variant. Populated at codegen time.
+	// NormalizedVariant is the variant suffix extracted from Family (e.g. "opus",
+	// "pro", "flash-lite"). Empty when the model has no variant. Populated at codegen time.
 	NormalizedVariant string
 	// NormalizedDate is the release date extracted from the model ID or ReleaseDate
 	// field, in YYYY-MM-DD format. Empty when no date is found. Populated at codegen time.
