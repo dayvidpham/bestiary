@@ -141,8 +141,8 @@ func familyConstName(slug string, nameHint string) string {
 
 // CLI filter flags (set by parseFlags).
 var (
-	onlyProviders      []string // -only-providers: inclusion list (empty = all)
-	excludeProviders   []string // -all-providers-except: exclusion list (empty = none)
+	onlyProviders    []string // -only-providers: inclusion list (empty = all)
+	excludeProviders []string // -all-providers-except: exclusion list (empty = none)
 )
 
 // Output paths are relative to the module root (where go generate is run from).
@@ -150,7 +150,7 @@ const (
 	outputPath          = "models_static_gen.go"
 	outputProvidersPath = "providers_gen.go"
 	outputFamiliesPath  = "families_gen.go"
-	cacheDir            = ".bestiary-gen-cache"
+	defaultCacheDir     = ".bestiary-gen-cache"
 	cacheFile           = "api_response.json"
 )
 
@@ -218,29 +218,48 @@ func main() {
 	}
 }
 
-// parseFlags parses os.Args[1:] (or a provided slice) for the two filter flags.
-// Returns an error if both flags are specified simultaneously (mutually exclusive).
-func parseFlags(args []string) (only []string, except []string, err error) {
+// flagResult holds all parsed CLI flags.
+type flagResult struct {
+	only     []string // -only-providers: inclusion list (empty = all)
+	except   []string // -all-providers-except: exclusion list (empty = none)
+	cacheDir string   // -cache-dir: override default cache directory
+	noFetch  bool     // -no-fetch: skip HTTP, load from cache
+}
+
+// parseFlags parses os.Args[1:] (or a provided slice) for all supported flags.
+// Returns an error if both -only-providers and -all-providers-except are specified
+// simultaneously (mutually exclusive).
+func parseFlags(args []string) (flagResult, error) {
+	var res flagResult
+	res.cacheDir = defaultCacheDir // default: backward-compatible
+
 	for i := 0; i < len(args); i++ {
 		arg := args[i]
 		var val string
 		switch {
 		case strings.HasPrefix(arg, "-only-providers="):
 			val = strings.TrimPrefix(arg, "-only-providers=")
-			only = splitComma(val)
+			res.only = splitComma(val)
 		case arg == "-only-providers" && i+1 < len(args):
 			i++
-			only = splitComma(args[i])
+			res.only = splitComma(args[i])
 		case strings.HasPrefix(arg, "-all-providers-except="):
 			val = strings.TrimPrefix(arg, "-all-providers-except=")
-			except = splitComma(val)
+			res.except = splitComma(val)
 		case arg == "-all-providers-except" && i+1 < len(args):
 			i++
-			except = splitComma(args[i])
+			res.except = splitComma(args[i])
+		case strings.HasPrefix(arg, "-cache-dir="):
+			res.cacheDir = strings.TrimPrefix(arg, "-cache-dir=")
+		case arg == "-cache-dir" && i+1 < len(args):
+			i++
+			res.cacheDir = args[i]
+		case arg == "-no-fetch":
+			res.noFetch = true
 		}
 	}
-	if len(only) > 0 && len(except) > 0 {
-		return nil, nil, fmt.Errorf(
+	if len(res.only) > 0 && len(res.except) > 0 {
+		return flagResult{}, fmt.Errorf(
 			"flags -only-providers and -all-providers-except are mutually exclusive\n" +
 				"  What: both inclusion and exclusion filters were specified\n" +
 				"  Why: these flags represent opposite filtering strategies and cannot be combined\n" +
@@ -248,7 +267,7 @@ func parseFlags(args []string) (only []string, except []string, err error) {
 				"  How to fix: use either -only-providers=<slugs> OR -all-providers-except=<slugs>, not both",
 		)
 	}
-	return only, except, nil
+	return res, nil
 }
 
 func splitComma(s string) []string {
@@ -300,7 +319,7 @@ func applyFilter(models []bestiary.ModelInfo, only, except []string) []bestiary.
 }
 
 func run(args []string) error {
-	only, except, err := parseFlags(args)
+	flags, err := parseFlags(args)
 	if err != nil {
 		return err
 	}
@@ -308,15 +327,17 @@ func run(args []string) error {
 	ctx := context.Background()
 	now := time.Now().UTC().Format(time.RFC3339)
 
-	rawJSON, models, providerMeta, err := fetchModelsWithRaw(ctx)
+	rawJSON, models, providerMeta, err := fetchModelsWithRaw(ctx, flags.cacheDir, flags.noFetch)
 	if err != nil {
 		return err
 	}
 
-	// Cache the raw API JSON for offline analysis.
-	if cacheErr := cacheAPIResponse(rawJSON); cacheErr != nil {
-		// Non-fatal: log and continue.
-		fmt.Fprintf(os.Stderr, "bestiary-gen: warning: could not cache API response: %v\n", cacheErr)
+	// Cache the raw API JSON for offline analysis (only when we actually fetched).
+	if !flags.noFetch {
+		if cacheErr := cacheAPIResponse(rawJSON, flags.cacheDir); cacheErr != nil {
+			// Non-fatal: log and continue.
+			fmt.Fprintf(os.Stderr, "bestiary-gen: warning: could not cache API response: %v\n", cacheErr)
+		}
 	}
 
 	// Stamp LastSynced on all models.
@@ -335,16 +356,16 @@ func run(args []string) error {
 	familyMeta := collectFamilies(models, providerMeta)
 
 	// Apply model data filter (constants are always generated for all providers).
-	filtered := applyFilter(models, only, except)
+	filtered := applyFilter(models, flags.only, flags.except)
 
-	if len(filtered) == 0 && len(only) > 0 {
+	if len(filtered) == 0 && len(flags.only) > 0 {
 		return fmt.Errorf(
 			"no models found after applying -only-providers filter %v from %d total models\n"+
 				"  What: the inclusion filter matched no models\n"+
 				"  Why: the specified provider slugs may be incorrect or absent from the API\n"+
 				"  Where: bestiary-gen model filter\n"+
 				"  How to fix: check slug spelling against the API at %s or remove the filter",
-			only, len(models), apiURL,
+			flags.only, len(models), apiURL,
 		)
 	}
 
@@ -406,11 +427,11 @@ func writeFile(path string, src []byte) error {
 	return nil
 }
 
-func cacheAPIResponse(raw []byte) error {
-	if err := os.MkdirAll(cacheDir, 0o755); err != nil {
-		return fmt.Errorf("create cache dir %s: %w", cacheDir, err)
+func cacheAPIResponse(raw []byte, dir string) error {
+	if err := os.MkdirAll(dir, 0o755); err != nil {
+		return fmt.Errorf("create cache dir %s: %w", dir, err)
 	}
-	dst := filepath.Join(cacheDir, cacheFile)
+	dst := filepath.Join(dir, cacheFile)
 	return os.WriteFile(dst, raw, 0o644)
 }
 
@@ -419,53 +440,95 @@ type providerAPIMeta struct {
 	Name string // display name from API (e.g. "Amazon Bedrock", "XAI")
 }
 
-// fetchModelsWithRaw fetches all models from the models.dev API.
+// ErrCacheMiss is returned by fetchModelsWithRaw when --no-fetch is set and the
+// cache file does not exist or is empty.
+type ErrCacheMiss struct {
+	Path string // full resolved path that was missing
+}
+
+func (e *ErrCacheMiss) Error() string {
+	return fmt.Sprintf(
+		"cached api_response.json missing or empty\n"+
+			"  What: cached api_response.json missing or empty\n"+
+			"  Why: --no-fetch was specified; HTTP fetch was skipped\n"+
+			"  Where: %s (during cache load step in fetchModelsWithRaw)\n"+
+			"  When: during cache load step in fetchModelsWithRaw\n"+
+			"  What it means: bestiary-gen cannot proceed without API data\n"+
+			"  How to fix: re-run without --no-fetch (HTTP fetch enabled), OR place a previously-cached api_response.json at %s",
+		e.Path, e.Path,
+	)
+}
+
+// fetchModelsWithRaw fetches all models from the models.dev API (or loads from
+// the local cache when noFetch is true).
+//
+//   - dir: cache directory to write/read api_response.json (default: defaultCacheDir).
+//   - noFetch: when true, skip HTTP and read from dir/api_response.json instead.
+//     Returns *ErrCacheMiss if the cache file is absent or empty.
+//
 // Returns the raw JSON body, the flat model slice, and per-provider metadata.
-func fetchModelsWithRaw(ctx context.Context) (rawJSON []byte, models []bestiary.ModelInfo, provMeta map[string]providerAPIMeta, err error) {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, apiURL, nil)
-	if err != nil {
-		return nil, nil, nil, fmt.Errorf(
-			"create HTTP request for %s: %w\n"+
-				"  What: failed to construct the API request\n"+
-				"  How to fix: this is a programming error — report it",
-			apiURL, err,
-		)
-	}
+func fetchModelsWithRaw(ctx context.Context, dir string, noFetch bool) (rawJSON []byte, models []bestiary.ModelInfo, provMeta map[string]providerAPIMeta, err error) {
+	cachePath := filepath.Join(dir, cacheFile)
 
-	client := &http.Client{Timeout: 60 * time.Second}
-	resp, err := client.Do(req)
-	if err != nil {
-		return nil, nil, nil, fmt.Errorf(
-			"HTTP GET %s: %w\n"+
-				"  What: network request failed\n"+
-				"  How to fix: check network connectivity and retry",
-			apiURL, err,
-		)
-	}
-	defer resp.Body.Close()
+	if noFetch {
+		// Load from cache; no network call.
+		body, readErr := os.ReadFile(cachePath)
+		if readErr != nil || len(body) == 0 {
+			absPath, _ := filepath.Abs(cachePath)
+			if absPath == "" {
+				absPath = cachePath
+			}
+			return nil, nil, nil, &ErrCacheMiss{Path: absPath}
+		}
+		rawJSON = body
+	} else {
+		// Fetch from the API over HTTP.
+		req, reqErr := http.NewRequestWithContext(ctx, http.MethodGet, apiURL, nil)
+		if reqErr != nil {
+			return nil, nil, nil, fmt.Errorf(
+				"create HTTP request for %s: %w\n"+
+					"  What: failed to construct the API request\n"+
+					"  How to fix: this is a programming error — report it",
+				apiURL, reqErr,
+			)
+		}
 
-	if resp.StatusCode != http.StatusOK {
-		return nil, nil, nil, fmt.Errorf(
-			"unexpected HTTP status %d from %s; expected 200 OK\n"+
-				"  What: the API returned a non-success status\n"+
-				"  How to fix: check the API endpoint and try again",
-			resp.StatusCode, apiURL,
-		)
-	}
+		client := &http.Client{Timeout: 60 * time.Second}
+		resp, doErr := client.Do(req)
+		if doErr != nil {
+			return nil, nil, nil, fmt.Errorf(
+				"HTTP GET %s: %w\n"+
+					"  What: network request failed\n"+
+					"  How to fix: check network connectivity and retry",
+				apiURL, doErr,
+			)
+		}
+		defer resp.Body.Close()
 
-	const maxBodyBytes = 10 * 1024 * 1024
-	body, err := io.ReadAll(io.LimitReader(resp.Body, maxBodyBytes))
-	if err != nil {
-		return nil, nil, nil, fmt.Errorf(
-			"read response body from %s: %w\n"+
-				"  What: failed to read the API response body\n"+
-				"  How to fix: retry the operation",
-			apiURL, err,
-		)
+		if resp.StatusCode != http.StatusOK {
+			return nil, nil, nil, fmt.Errorf(
+				"unexpected HTTP status %d from %s; expected 200 OK\n"+
+					"  What: the API returned a non-success status\n"+
+					"  How to fix: check the API endpoint and try again",
+				resp.StatusCode, apiURL,
+			)
+		}
+
+		const maxBodyBytes = 10 * 1024 * 1024
+		body, readErr := io.ReadAll(io.LimitReader(resp.Body, maxBodyBytes))
+		if readErr != nil {
+			return nil, nil, nil, fmt.Errorf(
+				"read response body from %s: %w\n"+
+					"  What: failed to read the API response body\n"+
+					"  How to fix: retry the operation",
+				apiURL, readErr,
+			)
+		}
+		rawJSON = body
 	}
 
 	var apiResp genWireResponse
-	if err := json.Unmarshal(body, &apiResp); err != nil {
+	if err := json.Unmarshal(rawJSON, &apiResp); err != nil {
 		return nil, nil, nil, fmt.Errorf(
 			"decode JSON from %s: %w\n"+
 				"  What: the API response JSON could not be decoded\n"+
@@ -482,7 +545,7 @@ func fetchModelsWithRaw(ctx context.Context) (rawJSON []byte, models []bestiary.
 			models = append(models, genToModelInfo(providerSlug, wm))
 		}
 	}
-	return body, models, provMeta, nil
+	return rawJSON, models, provMeta, nil
 }
 
 // collectFamilies returns a deduplicated sorted list of unique non-empty family
