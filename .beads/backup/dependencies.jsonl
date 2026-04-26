@@ -93,6 +93,10 @@
 {"created_at":"2026-04-07T17:47:11Z","created_by":"David Huu Pham","depends_on_id":"bestiary-9u1","issue_id":"bestiary-2ks","type":"blocks"}
 {"created_at":"2026-04-07T17:47:11Z","created_by":"David Huu Pham","depends_on_id":"bestiary-ctu","issue_id":"bestiary-2ks","type":"blocks"}
 {"created_at":"2026-04-04T06:13:15Z","created_by":"David Huu Pham","depends_on_id":"bestiary-bba","issue_id":"bestiary-2vz","type":"blocks"}
+{"created_at":"2026-04-25T21:22:25Z","created_by":"David Huu Pham","depends_on_id":"bestiary-eqrc","issue_id":"bestiary-2xaf","type":"blocks"}
+{"created_at":"2026-04-25T21:22:24Z","created_by":"David Huu Pham","depends_on_id":"bestiary-tel4","issue_id":"bestiary-2xaf","type":"blocks"}
+{"created_at":"2026-04-25T21:22:25Z","created_by":"David Huu Pham","depends_on_id":"bestiary-wcvo","issue_id":"bestiary-2xaf","type":"blocks"}
+{"created_at":"2026-04-25T21:22:25Z","created_by":"David Huu Pham","depends_on_id":"bestiary-z2u7","issue_id":"bestiary-2xaf","type":"blocks"}
 {"created_at":"2026-04-25T02:53:14Z","created_by":"David Huu Pham","depends_on_id":"bestiary-i8m","issue_id":"bestiary-2yt","type":"blocks"}
 {"created_at":"2026-04-25T02:56:12Z","created_by":"David Huu Pham","depends_on_id":"bestiary-7di","issue_id":"bestiary-339","type":"blocks"}
 {"created_at":"2026-04-08T10:15:54Z","created_by":"David Huu Pham","depends_on_id":"bestiary-15j","issue_id":"bestiary-346","type":"blocks"}
@@ -156,10 +160,13 @@
 {"created_at":"2026-04-25T03:23:45Z","created_by":"David Huu Pham","depends_on_id":"bestiary-77tz","issue_id":"bestiary-5xg1","type":"blocks"}
 {"created_at":"2026-04-25T03:23:45Z","created_by":"David Huu Pham","depends_on_id":"bestiary-9ij4","issue_id":"bestiary-5xg1","type":"blocks"}
 {"created_at":"2026-04-25T03:23:45Z","created_by":"David Huu Pham","depends_on_id":"bestiary-mcb0","issue_id":"bestiary-5xg1","type":"blocks"}
+{"created_at":"2026-04-25T21:17:27Z","created_by":"David Huu Pham","depends_on_id":"bestiary-1wy7","issue_id":"bestiary-602y","type":"blocks"}
 {"created_at":"2026-04-25T17:28:28Z","created_by":"David Huu Pham","depends_on_id":"bestiary-3xk0","issue_id":"bestiary-602y","type":"blocks"}
 {"created_at":"2026-04-25T15:23:46Z","created_by":"David Huu Pham","depends_on_id":"bestiary-5w69","issue_id":"bestiary-602y","type":"blocks"}
 {"created_at":"2026-04-25T17:36:32Z","created_by":"David Huu Pham","depends_on_id":"bestiary-agep","issue_id":"bestiary-602y","type":"blocks"}
+{"created_at":"2026-04-25T21:32:02Z","created_by":"David Huu Pham","depends_on_id":"bestiary-aw2h","issue_id":"bestiary-602y","type":"blocks"}
 {"created_at":"2026-04-25T17:36:32Z","created_by":"David Huu Pham","depends_on_id":"bestiary-e2uk","issue_id":"bestiary-602y","type":"blocks"}
+{"created_at":"2026-04-25T21:32:02Z","created_by":"David Huu Pham","depends_on_id":"bestiary-ea00","issue_id":"bestiary-602y","type":"blocks"}
 {"created_at":"2026-04-25T17:28:27Z","created_by":"David Huu Pham","depends_on_id":"bestiary-nwg9","issue_id":"bestiary-602y","type":"blocks"}
 {"created_at":"2026-04-25T15:23:46Z","created_by":"David Huu Pham","depends_on_id":"bestiary-ptsc","issue_id":"bestiary-602y","type":"blocks"}
 {"created_at":"2026-04-25T17:28:27Z","created_by":"David Huu Pham","depends_on_id":"bestiary-r12q","issue_id":"bestiary-602y","type":"blocks"}
@@ -190,6 +197,7 @@
 {"created_at":"2026-04-07T17:45:37Z","created_by":"David Huu Pham","depends_on_id":"bestiary-2ks","issue_id":"bestiary-79y","type":"blocks"}
 {"created_at":"2026-04-07T17:51:36Z","created_by":"David Huu Pham","depends_on_id":"bestiary-axj","issue_id":"bestiary-79y","type":"blocks"}
 {"created_at":"2026-04-04T06:13:17Z","created_by":"David Huu Pham","depends_on_id":"bestiary-7mw","issue_id":"bestiary-7a7","type":"blocks"}
+{"created_at":"2026-04-25T21:25:03Z","created_by":"David Huu Pham","depends_on_id":"bestiary-z3t7","issue_id":"bestiary-7mqk","type":"blocks"}
 {"created_at":"2026-04-04T06:13:17Z","created_by":"David Huu Pham","depends_on_id":"bestiary-sgu","issue_id":"bestiary-7mw","type":"blocks"}
 {"created_at":"2026-04-04T07:21:16Z","created_by":"David Huu Pham","depends_on_id":"bestiary-75q","issue_id":"bestiary-7wx","type":"blocks"}
 {"created_at":"2026-04-04T07:04:10Z","created_by":"David Huu Pham","depends_on_id":"bestiary-c8l","issue_id":"bestiary-7wx","type":"blocks"}
@@ -247,6 +255,7 @@
 {"created_at":"2026-04-07T18:48:24Z","created_by":"David Huu Pham","depends_on_id":"bestiary-ptt","issue_id":"bestiary-axj","type":"blocks"}
 {"created_at":"2026-04-07T17:52:56Z","created_by":"David Huu Pham","depends_on_id":"bestiary-y3k","issue_id":"bestiary-axj","type":"blocks"}
 {"created_at":"2026-04-08T10:15:54Z","created_by":"David Huu Pham","depends_on_id":"bestiary-15j","issue_id":"bestiary-b0m","type":"blocks"}
+{"created_at":"2026-04-25T21:23:04Z","created_by":"David Huu Pham","depends_on_id":"bestiary-t26v","issue_id":"bestiary-b4u2","type":"blocks"}
 {"created_at":"2026-04-08T10:15:30Z","created_by":"David Huu Pham","depends_on_id":"bestiary-500","issue_id":"bestiary-b62","type":"blocks"}
 {"created_at":"2026-04-08T10:15:30Z","created_by":"David Huu Pham","depends_on_id":"bestiary-57v","issue_id":"bestiary-b62","type":"blocks"}
 {"created_at":"2026-04-08T10:15:30Z","created_by":"David Huu Pham","depends_on_id":"bestiary-ehg","issue_id":"bestiary-b62","type":"blocks"}
@@ -283,10 +292,12 @@
 {"created_at":"2026-04-04T06:13:15Z","created_by":"David Huu Pham","depends_on_id":"bestiary-3k7","issue_id":"bestiary-cka","type":"blocks"}
 {"created_at":"2026-04-04T06:13:15Z","created_by":"David Huu Pham","depends_on_id":"bestiary-8hl","issue_id":"bestiary-cka","type":"blocks"}
 {"created_at":"2026-04-04T06:13:15Z","created_by":"David Huu Pham","depends_on_id":"bestiary-nry","issue_id":"bestiary-cka","type":"blocks"}
+{"created_at":"2026-04-25T21:25:03Z","created_by":"David Huu Pham","depends_on_id":"bestiary-p2yc","issue_id":"bestiary-clhn","type":"blocks"}
 {"created_at":"2026-04-25T03:20:00Z","created_by":"David Huu Pham","depends_on_id":"bestiary-2jqs","issue_id":"bestiary-czu0","type":"blocks"}
 {"created_at":"2026-04-08T10:15:04Z","created_by":"David Huu Pham","depends_on_id":"bestiary-8xk","issue_id":"bestiary-d0q","type":"blocks"}
 {"created_at":"2026-04-25T03:18:22Z","created_by":"David Huu Pham","depends_on_id":"bestiary-jtbj","issue_id":"bestiary-dnj8","type":"blocks"}
 {"created_at":"2026-04-25T03:11:56Z","created_by":"David Huu Pham","depends_on_id":"bestiary-nevc","issue_id":"bestiary-dyq6","type":"blocks"}
+{"created_at":"2026-04-25T21:23:04Z","created_by":"David Huu Pham","depends_on_id":"bestiary-b4u2","issue_id":"bestiary-e11j","type":"blocks"}
 {"created_at":"2026-04-08T10:16:12Z","created_by":"David Huu Pham","depends_on_id":"bestiary-yan","issue_id":"bestiary-e5n","type":"blocks"}
 {"created_at":"2026-04-25T03:27:08Z","created_by":"David Huu Pham","depends_on_id":"bestiary-683u","issue_id":"bestiary-e7ru","type":"blocks"}
 {"created_at":"2026-04-25T03:27:08Z","created_by":"David Huu Pham","depends_on_id":"bestiary-z3t5","issue_id":"bestiary-e7ru","type":"blocks"}
@@ -300,6 +311,10 @@
 {"created_at":"2026-04-25T03:18:24Z","created_by":"David Huu Pham","depends_on_id":"bestiary-chbz","issue_id":"bestiary-ektc","type":"blocks"}
 {"created_at":"2026-04-25T03:08:05Z","created_by":"David Huu Pham","depends_on_id":"bestiary-f1f3","issue_id":"bestiary-ektc","type":"blocks"}
 {"created_at":"2026-04-25T03:08:05Z","created_by":"David Huu Pham","depends_on_id":"bestiary-fnc","issue_id":"bestiary-ektc","type":"blocks"}
+{"created_at":"2026-04-25T21:25:03Z","created_by":"David Huu Pham","depends_on_id":"bestiary-clhn","issue_id":"bestiary-eqrc","type":"blocks"}
+{"created_at":"2026-04-25T21:32:02Z","created_by":"David Huu Pham","depends_on_id":"bestiary-mo6s","issue_id":"bestiary-eqrc","type":"blocks"}
+{"created_at":"2026-04-25T21:25:03Z","created_by":"David Huu Pham","depends_on_id":"bestiary-p2yc","issue_id":"bestiary-eqrc","type":"blocks"}
+{"created_at":"2026-04-25T21:25:03Z","created_by":"David Huu Pham","depends_on_id":"bestiary-v5ic","issue_id":"bestiary-eqrc","type":"blocks"}
 {"created_at":"2026-04-25T02:56:11Z","created_by":"David Huu Pham","depends_on_id":"bestiary-339","issue_id":"bestiary-est","type":"blocks"}
 {"created_at":"2026-04-25T02:56:11Z","created_by":"David Huu Pham","depends_on_id":"bestiary-59q","issue_id":"bestiary-est","type":"blocks"}
 {"created_at":"2026-04-25T02:56:11Z","created_by":"David Huu Pham","depends_on_id":"bestiary-7di","issue_id":"bestiary-est","type":"blocks"}
@@ -315,6 +330,7 @@
 {"created_at":"2026-04-25T03:13:06Z","created_by":"David Huu Pham","depends_on_id":"bestiary-6i66","issue_id":"bestiary-f4zp","type":"blocks"}
 {"created_at":"2026-04-25T15:00:00Z","created_by":"David Huu Pham","depends_on_id":"bestiary-h2gg","issue_id":"bestiary-frep","type":"blocks"}
 {"created_at":"2026-04-25T03:18:27Z","created_by":"David Huu Pham","depends_on_id":"bestiary-nahz","issue_id":"bestiary-fyaz","type":"blocks"}
+{"created_at":"2026-04-25T21:19:46Z","created_by":"David Huu Pham","depends_on_id":"bestiary-2xaf","issue_id":"bestiary-g9ci","type":"blocks"}
 {"created_at":"2026-04-25T02:53:14Z","created_by":"David Huu Pham","depends_on_id":"bestiary-3cz","issue_id":"bestiary-gdu","type":"blocks"}
 {"created_at":"2026-04-25T14:59:24Z","created_by":"David Huu Pham","depends_on_id":"bestiary-0rr5","issue_id":"bestiary-gkpx","type":"blocks"}
 {"created_at":"2026-04-25T15:32:56Z","created_by":"David Huu Pham","depends_on_id":"bestiary-5eh8","issue_id":"bestiary-gkpx","type":"blocks"}
@@ -434,6 +450,7 @@
 {"created_at":"2026-04-04T07:59:53Z","created_by":"David Huu Pham","depends_on_id":"bestiary-cao","issue_id":"bestiary-orq","type":"blocks"}
 {"created_at":"2026-04-04T07:59:53Z","created_by":"David Huu Pham","depends_on_id":"bestiary-hyf","issue_id":"bestiary-orq","type":"blocks"}
 {"created_at":"2026-04-25T14:53:33Z","created_by":"David Huu Pham","depends_on_id":"bestiary-sj74","issue_id":"bestiary-ozew","type":"blocks"}
+{"created_at":"2026-04-25T21:25:03Z","created_by":"David Huu Pham","depends_on_id":"bestiary-v5ic","issue_id":"bestiary-p2yc","type":"blocks"}
 {"created_at":"2026-04-04T06:13:09Z","created_by":"David Huu Pham","depends_on_id":"bestiary-4r4","issue_id":"bestiary-pe7","type":"blocks"}
 {"created_at":"2026-04-04T07:01:53Z","created_by":"David Huu Pham","depends_on_id":"bestiary-7wx","issue_id":"bestiary-pe7","type":"blocks"}
 {"created_at":"2026-04-04T06:13:09Z","created_by":"David Huu Pham","depends_on_id":"bestiary-bye","issue_id":"bestiary-pe7","type":"blocks"}
@@ -458,6 +475,7 @@
 {"created_at":"2026-04-25T03:18:12Z","created_by":"David Huu Pham","depends_on_id":"bestiary-a1t2","issue_id":"bestiary-r39t","type":"blocks"}
 {"created_at":"2026-04-25T03:18:12Z","created_by":"David Huu Pham","depends_on_id":"bestiary-e7rq","issue_id":"bestiary-r39t","type":"blocks"}
 {"created_at":"2026-04-25T03:18:12Z","created_by":"David Huu Pham","depends_on_id":"bestiary-fyaz","issue_id":"bestiary-r39t","type":"blocks"}
+{"created_at":"2026-04-25T21:23:56Z","created_by":"David Huu Pham","depends_on_id":"bestiary-2aef","issue_id":"bestiary-r7uj","type":"blocks"}
 {"created_at":"2026-04-25T04:07:12Z","created_by":"David Huu Pham","depends_on_id":"bestiary-fh27","issue_id":"bestiary-rjng","type":"blocks"}
 {"created_at":"2026-04-25T04:07:12Z","created_by":"David Huu Pham","depends_on_id":"bestiary-olgy","issue_id":"bestiary-rjng","type":"blocks"}
 {"created_at":"2026-04-25T03:26:50Z","created_by":"David Huu Pham","depends_on_id":"bestiary-fcqp","issue_id":"bestiary-rxpu","type":"blocks"}
@@ -475,6 +493,9 @@
 {"created_at":"2026-04-25T03:25:28Z","created_by":"David Huu Pham","depends_on_id":"bestiary-1b5q","issue_id":"bestiary-sms9","type":"blocks"}
 {"created_at":"2026-04-25T03:25:28Z","created_by":"David Huu Pham","depends_on_id":"bestiary-az8v","issue_id":"bestiary-sms9","type":"blocks"}
 {"created_at":"2026-04-25T03:25:28Z","created_by":"David Huu Pham","depends_on_id":"bestiary-e878","issue_id":"bestiary-sms9","type":"blocks"}
+{"created_at":"2026-04-25T21:23:04Z","created_by":"David Huu Pham","depends_on_id":"bestiary-b4u2","issue_id":"bestiary-tel4","type":"blocks"}
+{"created_at":"2026-04-25T21:23:04Z","created_by":"David Huu Pham","depends_on_id":"bestiary-e11j","issue_id":"bestiary-tel4","type":"blocks"}
+{"created_at":"2026-04-25T21:23:04Z","created_by":"David Huu Pham","depends_on_id":"bestiary-t26v","issue_id":"bestiary-tel4","type":"blocks"}
 {"created_at":"2026-04-25T02:57:32Z","created_by":"David Huu Pham","depends_on_id":"bestiary-8yu","issue_id":"bestiary-tfuy","type":"blocks"}
 {"created_at":"2026-04-04T05:50:20Z","created_by":"David Huu Pham","depends_on_id":"bestiary-93h","issue_id":"bestiary-tgf","type":"blocks"}
 {"created_at":"2026-04-04T05:50:24Z","created_by":"David Huu Pham","depends_on_id":"bestiary-j35","issue_id":"bestiary-tgf","type":"blocks"}
@@ -508,6 +529,11 @@
 {"created_at":"2026-04-04T07:55:17Z","created_by":"David Huu Pham","depends_on_id":"bestiary-9r0","issue_id":"bestiary-wa2","type":"blocks"}
 {"created_at":"2026-04-04T07:53:02Z","created_by":"David Huu Pham","depends_on_id":"bestiary-bkx","issue_id":"bestiary-wa2","type":"blocks"}
 {"created_at":"2026-04-04T07:53:34Z","created_by":"David Huu Pham","depends_on_id":"bestiary-wqo","issue_id":"bestiary-wa2","type":"blocks"}
+{"created_at":"2026-04-25T21:23:56Z","created_by":"David Huu Pham","depends_on_id":"bestiary-r7uj","issue_id":"bestiary-wb6b","type":"blocks"}
+{"created_at":"2026-04-25T21:25:03Z","created_by":"David Huu Pham","depends_on_id":"bestiary-7mqk","issue_id":"bestiary-wcvo","type":"blocks"}
+{"created_at":"2026-04-25T21:25:03Z","created_by":"David Huu Pham","depends_on_id":"bestiary-7rea","issue_id":"bestiary-wcvo","type":"blocks"}
+{"created_at":"2026-04-25T21:22:25Z","created_by":"David Huu Pham","depends_on_id":"bestiary-tel4","issue_id":"bestiary-wcvo","type":"blocks"}
+{"created_at":"2026-04-25T21:25:03Z","created_by":"David Huu Pham","depends_on_id":"bestiary-z3t7","issue_id":"bestiary-wcvo","type":"blocks"}
 {"created_at":"2026-04-25T15:17:22Z","created_by":"David Huu Pham","depends_on_id":"bestiary-n7hh","issue_id":"bestiary-weps","type":"blocks"}
 {"created_at":"2026-04-25T15:53:09Z","created_by":"David Huu Pham","depends_on_id":"bestiary-eq7w","issue_id":"bestiary-wi36","type":"blocks"}
 {"created_at":"2026-04-25T03:17:56Z","created_by":"David Huu Pham","depends_on_id":"bestiary-n4fj","issue_id":"bestiary-x425","type":"blocks"}
@@ -533,7 +559,12 @@
 {"created_at":"2026-04-25T03:34:15Z","created_by":"David Huu Pham","depends_on_id":"bestiary-hsic","issue_id":"bestiary-yv6j","type":"blocks"}
 {"created_at":"2026-04-25T03:34:15Z","created_by":"David Huu Pham","depends_on_id":"bestiary-y8du","issue_id":"bestiary-yv6j","type":"blocks"}
 {"created_at":"2026-04-25T03:19:04Z","created_by":"David Huu Pham","depends_on_id":"bestiary-s36u","issue_id":"bestiary-z0f5","type":"blocks"}
+{"created_at":"2026-04-25T21:23:56Z","created_by":"David Huu Pham","depends_on_id":"bestiary-2aef","issue_id":"bestiary-z2u7","type":"blocks"}
+{"created_at":"2026-04-25T21:23:56Z","created_by":"David Huu Pham","depends_on_id":"bestiary-r7uj","issue_id":"bestiary-z2u7","type":"blocks"}
+{"created_at":"2026-04-25T21:22:25Z","created_by":"David Huu Pham","depends_on_id":"bestiary-tel4","issue_id":"bestiary-z2u7","type":"blocks"}
+{"created_at":"2026-04-25T21:23:56Z","created_by":"David Huu Pham","depends_on_id":"bestiary-wb6b","issue_id":"bestiary-z2u7","type":"blocks"}
 {"created_at":"2026-04-25T03:27:59Z","created_by":"David Huu Pham","depends_on_id":"bestiary-2mli","issue_id":"bestiary-z3t5","type":"blocks"}
+{"created_at":"2026-04-25T21:25:03Z","created_by":"David Huu Pham","depends_on_id":"bestiary-7rea","issue_id":"bestiary-z3t7","type":"blocks"}
 {"created_at":"2026-04-04T08:31:26Z","created_by":"David Huu Pham","depends_on_id":"bestiary-d4j","issue_id":"bestiary-zfd","type":"blocks"}
 {"created_at":"2026-04-25T03:34:08Z","created_by":"David Huu Pham","depends_on_id":"bestiary-o87o","issue_id":"bestiary-zlmm","type":"blocks"}
 {"created_at":"2026-04-25T03:34:09Z","created_by":"David Huu Pham","depends_on_id":"bestiary-t8fj","issue_id":"bestiary-zlmm","type":"blocks"}
