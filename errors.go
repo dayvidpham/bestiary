@@ -62,6 +62,8 @@ func (e *ErrAPIUnavailable) Unwrap() error {
 // What: the raw input string that triggered the ambiguity.
 // Scheme: the CanonicalScheme used during resolution.
 // Candidates: the list of ModelRefs that matched, one per distinct Canonical.
+// PURLMissedNamespace: when non-empty, identifies the PURL namespace (provider)
+// that had zero matches, triggering a loose-match fallback. (Fix #1)
 //
 // Use errors.As to extract structured fields. The Error() message names all 6
 // actionable-error elements per [C-actionable-errors]:
@@ -70,7 +72,7 @@ func (e *ErrAPIUnavailable) Unwrap() error {
 //  3. Where it failed (Resolve),
 //  4. When it failed (during model lookup / resolution step),
 //  5. What it means for the caller (the query cannot be resolved unambiguously),
-//  6. How to fix it (refine input or use --scheme=raw).
+//  6. How to fix it (refine input or use --format=raw).
 type ErrAmbiguous struct {
 	// Input is the raw string passed to Resolve.
 	Input string
@@ -78,6 +80,11 @@ type ErrAmbiguous struct {
 	Scheme CanonicalScheme
 	// Candidates lists all matching ModelRefs, grouped by distinct Canonical.
 	Candidates []ModelRef
+	// PURLMissedNamespace is set when the PURL namespace (provider segment) had
+	// zero matches and a loose-match fallback was performed. The value is the
+	// namespace string that missed (e.g. "totally-unknown-ns").
+	// Empty when no PURL namespace miss occurred.
+	PURLMissedNamespace string
 }
 
 // Error implements the error interface with an actionable message.
@@ -89,6 +96,13 @@ func (e *ErrAmbiguous) Error() string {
 		"bestiary: ambiguous model input %q (scheme=%s) matched %d distinct canonical(s)\n",
 		e.Input, e.Scheme, len(e.Candidates),
 	)
+	// Fix #1: When a PURL namespace miss occurred, include the diagnostic.
+	if e.PURLMissedNamespace != "" {
+		fmt.Fprintf(&sb,
+			"  Note: no matches in namespace %q — performing loose match across all providers\n",
+			e.PURLMissedNamespace,
+		)
+	}
 	sb.WriteString("  What: input matches multiple distinct model canonicals\n")
 	sb.WriteString("  Why: the input string is a prefix or substring shared by several models\n")
 	sb.WriteString("  Where: Resolve\n")

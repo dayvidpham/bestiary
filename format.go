@@ -294,6 +294,10 @@ func formatModelTable(w io.Writer, model ModelInfo) error {
 // *ErrAmbiguous. All rows share the same column widths.
 const ambiguousCandidateRow = "%-40s  %-14s  %-40s\n"
 
+// ambiguousMaxCandidates is the maximum number of candidate rows displayed
+// before truncation with a "+M more" hint. (Fix #2, SLICE-FIX-V2-2)
+const ambiguousMaxCandidates = 10
+
 // FormatAmbiguous writes a human-readable disambiguation table for e to w.
 //
 // Output format (written to w, typically os.Stderr):
@@ -301,26 +305,65 @@ const ambiguousCandidateRow = "%-40s  %-14s  %-40s\n"
 //	bestiary: input "<input>" matched multiple canonicals
 //	<header row>
 //	<separator row>
-//	<one row per candidate>
-//	use --scheme=raw or refine input
+//	<one canonical row per (Family, Variant, Version) group — at most N=10>
+//	+M more (shown when more than N groups exist)
+//	use --format=raw or refine input
+//
+// Fix #2 (SLICE-FIX-V2-2): Candidates are first grouped by (Family, Variant,
+// Version) tuple — one representative row per group. If >N=10 groups exist,
+// the output is truncated with a "+M more" hint. This collapses the 17+ rehost
+// rows for "claude" into one canonical row.
 //
 // The function always returns nil; write errors are silently swallowed because
 // this is advisory stderr output — a write failure should not mask the real
 // ErrAmbiguous that the caller surfaces to the user.
 func FormatAmbiguous(w io.Writer, e *ErrAmbiguous) {
 	fmt.Fprintf(w, "bestiary: input %q matched multiple canonicals\n\n", e.Input)
+
+	// Fix #2: Group by (Family, Variant, Version) — one row per group.
+	type groupKey struct {
+		family  string
+		variant string
+		version string
+	}
+	seen := make(map[groupKey]struct{})
+	var grouped []ModelRef
+	for _, c := range e.Candidates {
+		key := groupKey{
+			family:  string(c.Family),
+			variant: c.Variant,
+			version: c.Version,
+		}
+		if _, dup := seen[key]; dup {
+			continue
+		}
+		seen[key] = struct{}{}
+		grouped = append(grouped, c)
+	}
+
+	// Fix #2: Truncate after N=10 groups.
+	display := grouped
+	overflow := 0
+	if len(grouped) > ambiguousMaxCandidates {
+		overflow = len(grouped) - ambiguousMaxCandidates
+		display = grouped[:ambiguousMaxCandidates]
+	}
+
 	fmt.Fprintf(w, ambiguousCandidateRow, "Canonical", "Provider", "Raw ID")
 	fmt.Fprintf(w, ambiguousCandidateRow,
 		strings.Repeat("-", 40),
 		strings.Repeat("-", 14),
 		strings.Repeat("-", 40),
 	)
-	for _, c := range e.Candidates {
+	for _, c := range display {
 		fmt.Fprintf(w, ambiguousCandidateRow,
 			c.Format(SchemeCanonical),
 			string(c.Provider),
 			string(c.ID),
 		)
+	}
+	if overflow > 0 {
+		fmt.Fprintf(w, "\n+%d more (use --format=raw with a specific model ID to see all)\n", overflow)
 	}
 	fmt.Fprintf(w, "\nuse --format=raw or refine input to a more specific canonical form\n")
 }

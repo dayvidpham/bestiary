@@ -441,7 +441,7 @@ func TestFormatAmbiguous_Truncation(t *testing.T) {
 }
 
 // TestFormatAmbiguous_NoTruncation_ExactlyN verifies that exactly N=10 candidates
-// does NOT emit a truncation hint.
+// does NOT emit a truncation hint ("+M more" pattern).
 func TestFormatAmbiguous_NoTruncation_ExactlyN(t *testing.T) {
 	candidates := makeAmbiguousRefs(10, false)
 	e := &bestiary.ErrAmbiguous{
@@ -454,9 +454,10 @@ func TestFormatAmbiguous_NoTruncation_ExactlyN(t *testing.T) {
 	bestiary.FormatAmbiguous(&buf, e)
 	output := buf.String()
 
-	// No "+M more" hint for exactly 10 candidates.
-	if strings.Contains(output, "more") {
-		t.Errorf("FormatAmbiguous(10 candidates): should NOT have truncation hint; got:\n%s", output)
+	// No "+M more" truncation hint for exactly 10 candidates.
+	// (The footer may contain "more" in "more specific" — check for "+N more" pattern.)
+	if strings.Contains(output, "+") && strings.Contains(output, "more\n") {
+		t.Errorf("FormatAmbiguous(10 candidates): should NOT have '+N more' truncation hint; got:\n%s", output)
 	}
 }
 
@@ -468,15 +469,15 @@ func TestFormatAmbiguous_Grouping(t *testing.T) {
 	// Create candidates where the same (family, variant, version) appears with
 	// multiple providers — simulating the 17+ rehost scenario for claude/opus.
 	candidates := []bestiary.ModelRef{
-		{ID: "claude-opus-4-20250514", Provider: bestiary.ProviderAnthropic, Family: "claude", Variant: "opus", Version: "4", Date: "2025-05-14"},
-		{ID: "claude-opus-4-20250514", Provider: bestiary.Provider302AI, Family: "claude", Variant: "opus", Version: "4", Date: "2025-05-14"},
-		{ID: "claude-opus-4-20250514", Provider: bestiary.ProviderVercel, Family: "claude", Variant: "opus", Version: "4", Date: "2025-05-14"},
-		{ID: "claude-sonnet-4-5-20251101", Provider: bestiary.ProviderAnthropic, Family: "claude", Variant: "sonnet", Version: "4.5", Date: "2025-11-01"},
-		{ID: "claude-sonnet-4-5-20251101", Provider: bestiary.Provider302AI, Family: "claude", Variant: "sonnet", Version: "4.5", Date: "2025-11-01"},
+		{ID: "model-opus-1", Provider: bestiary.Provider("provider-a"), Family: "myfamily", Variant: "alpha", Version: "1", Date: "2025-01-01"},
+		{ID: "model-opus-1", Provider: bestiary.Provider("provider-b"), Family: "myfamily", Variant: "alpha", Version: "1", Date: "2025-01-01"},
+		{ID: "model-opus-1", Provider: bestiary.Provider("provider-c"), Family: "myfamily", Variant: "alpha", Version: "1", Date: "2025-01-01"},
+		{ID: "model-beta-1", Provider: bestiary.Provider("provider-a"), Family: "myfamily", Variant: "beta", Version: "1", Date: "2025-01-01"},
+		{ID: "model-beta-1", Provider: bestiary.Provider("provider-b"), Family: "myfamily", Variant: "beta", Version: "1", Date: "2025-01-01"},
 	}
 
 	e := &bestiary.ErrAmbiguous{
-		Input:      "claude",
+		Input:      "myfamily",
 		Scheme:     bestiary.SchemeCanonical,
 		Candidates: candidates,
 	}
@@ -485,18 +486,35 @@ func TestFormatAmbiguous_Grouping(t *testing.T) {
 	bestiary.FormatAmbiguous(&buf, e)
 	output := buf.String()
 
-	// Should show exactly 2 rows (one per unique (family, variant, version) group),
-	// not 5 rows (one per candidate).
-	// Count occurrences of "claude/opus" and "claude/sonnet" in the output.
-	opusCount := strings.Count(output, "opus")
-	sonnetCount := strings.Count(output, "sonnet")
-
-	// Each group should appear exactly ONCE (grouping collapses duplicates).
-	if opusCount != 1 {
-		t.Errorf("FormatAmbiguous grouping: 'opus' appears %d times, want 1 (grouped); output:\n%s", opusCount, output)
+	// Should show exactly 2 data rows (one per unique (family, variant, version) group),
+	// not 5 data rows (one per candidate).
+	// Count by splitting on newlines and counting non-header, non-separator data rows.
+	lines := strings.Split(strings.TrimSpace(output), "\n")
+	var dataLines []string
+	for _, l := range lines {
+		l = strings.TrimSpace(l)
+		// Skip header, separator (all dashes), footer, and empty lines.
+		if l == "" || strings.HasPrefix(l, "bestiary:") ||
+			strings.HasPrefix(l, "use --format") || strings.HasPrefix(l, "+") ||
+			strings.HasPrefix(l, "Canonical") || strings.HasPrefix(l, "----") {
+			continue
+		}
+		dataLines = append(dataLines, l)
 	}
-	if sonnetCount != 1 {
-		t.Errorf("FormatAmbiguous grouping: 'sonnet' appears %d times, want 1 (grouped); output:\n%s", sonnetCount, output)
+	if len(dataLines) != 2 {
+		t.Errorf("FormatAmbiguous grouping: expected 2 data rows (one per group), got %d; output:\n%s\ndata lines: %v",
+			len(dataLines), output, dataLines)
+	}
+
+	// Both variant names should appear exactly once in the output lines
+	// (grouping collapsed the 3+2 providers into 1+1 rows).
+	alphaCount := strings.Count(output, "/alpha/")
+	betaCount := strings.Count(output, "/beta/")
+	if alphaCount != 1 {
+		t.Errorf("FormatAmbiguous grouping: '/alpha/' appears %d times in canonical column, want 1 (grouped); output:\n%s", alphaCount, output)
+	}
+	if betaCount != 1 {
+		t.Errorf("FormatAmbiguous grouping: '/beta/' appears %d times in canonical column, want 1 (grouped); output:\n%s", betaCount, output)
 	}
 }
 
@@ -531,8 +549,8 @@ func TestFormatAmbiguous_GroupingAndTruncation(t *testing.T) {
 	output := buf.String()
 
 	// After grouping 30 candidates into 15 groups, then truncating at 10:
-	// "+5 more" hint must appear.
-	if !strings.Contains(output, "+5 more") && !strings.Contains(output, "5 more") {
+	// "+5 more" hint must appear as "+5 more".
+	if !strings.Contains(output, "+5 more") {
 		t.Errorf("FormatAmbiguous(30 candidates, 15 groups): should truncate to 10+'+5 more'; got:\n%s", output)
 	}
 }
