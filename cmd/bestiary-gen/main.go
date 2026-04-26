@@ -714,6 +714,7 @@ func genToModelInfoDetailed(providerSlug string, wm genWireModel) (bestiary.Mode
 	var normFamily bestiary.Family
 	var normVariant string
 	var normVersion string
+	var normModifier string
 	var failure *bestiary.ParseFailure
 
 	if rawFamily != "" {
@@ -721,80 +722,156 @@ func genToModelInfoDetailed(providerSlug string, wm genWireModel) (bestiary.Mode
 		// annotation if the parser detects a known deficiency (e.g. version digits
 		// between family prefix and variant in the model ID but not the raw family).
 		normFamily, normVariant, normVersion, failure = bestiary.ParseFamilyDetailed(rawFamily, id, provider)
+
+		// SLICE-FIX-V2-5: Extract trailing modifier token BEFORE extracting version
+		// from the model ID. Modifiers (e.g. "-thinking") must be stripped from the
+		// ID before passing it to ExtractVersionFromID so they don't pollute version
+		// heuristics. Pipeline order: ParseFamily → ExtractModifier → strip → ExtractVersionFromID.
+		normModifier, modifierConsumed := bestiary.ExtractModifier(id, normFamily, normVariant)
+		var cleanID bestiary.ModelID
+		if modifierConsumed != "" {
+			cleanStr := string(id)
+			if len(cleanStr) >= len(modifierConsumed) && cleanStr[len(cleanStr)-len(modifierConsumed):] == modifierConsumed {
+				cleanID = bestiary.ModelID(cleanStr[:len(cleanStr)-len(modifierConsumed)])
+			} else {
+				cleanID = id
+			}
+		} else {
+			cleanID = id
+		}
+
 		if normVersion == "" {
 			// The raw family field (e.g. "claude-opus") does not embed a version.
-			// Fall back to extracting the version from the model ID, which is the
-			// authoritative source for version numbers per team-lead arbitration
-			// (bestiary-5eh8). Example: "claude-opus-4-5-20251101" with family
-			// "claude-opus" yields version "4.5".
-			normVersion = bestiary.ExtractVersionFromID(id, rawFamily)
+			// Fall back to extracting the version from the cleaned model ID
+			// (modifier-stripped), which is the authoritative source for version
+			// numbers per team-lead arbitration (bestiary-5eh8).
+			// Example: "claude-opus-4-5-20251101-thinking" with family "claude-opus"
+			// yields version "4.5" after stripping "-thinking".
+			normVersion = bestiary.ExtractVersionFromID(cleanID, rawFamily)
 		}
-	} else {
-		// ~25% of models have an empty Family field — infer from the model ID.
-		// InferFamilyFromIDWithVariant applies the same suffix/pattern logic as
-		// ParseFamilyWithVersion, ensuring consistent (Family, Variant, Version)
-		// across providers that have empty vs. populated raw_family for the same
-		// model ID (SLICE-FIX-2, B5/B6).
-		normFamily, normVariant, normVersion = bestiary.InferFamilyFromIDWithVariant(
-			id,
-			provider,
-		)
+
+		// Derive normalized date from cleaned model ID (modifier stripped) or release date.
+		normDate := bestiary.ExtractDate(cleanID, wm.ReleaseDate)
+
+		// If a parse failure was detected, backfill the date into AttemptedParse.
+		if failure != nil {
+			failure.AttemptedParse.Date = normDate
+			// Models where ExtractModifier extracts a known modifier no longer trip
+			// ReasonKnownSuffixOverflow (the modifier is now a first-class field).
+			// Clear the failure record for this case so the audit log shrinks as
+			// expected per the V2-5 design.
+			if failure.Reason == bestiary.ReasonKnownSuffixOverflow && normModifier != "" {
+				failure = nil
+			}
+		}
+
+		info := bestiary.ModelInfo{
+			ID:          id,
+			Provider:    provider,
+			DisplayName: wm.Name,
+			RawFamily:   rawFamily,
+			Family:      normFamily,
+			Variant:     normVariant,
+			Version:     normVersion,
+			Date:        normDate,
+			Modifier:    normModifier,
+			Reasoning:         wm.Reasoning,
+			ToolCall:          wm.ToolCall,
+			Attachment:        wm.Attachment,
+			Temperature:       wm.Temperature,
+			StructuredOutput:  wm.StructuredOutput,
+			OpenWeights:       wm.OpenWeights,
+			ReleaseDate:       wm.ReleaseDate,
+			Knowledge:         wm.Knowledge,
+			Interleaved: parseCapabilityRaw(wm.Interleaved),
+			LastSynced:  "",
+		}
+
+		if wm.Cost != nil {
+			info.CostInputPerMTok = wm.Cost.Input
+			info.CostOutputPerMTok = wm.Cost.Output
+			info.CostReasoningPerMTok = wm.Cost.Reasoning
+			info.CostCacheReadPerMTok = wm.Cost.CacheRead
+			info.CostCacheWritePerMTok = wm.Cost.CacheWrite
+		}
+		if wm.Limit != nil {
+			if wm.Limit.Context != nil {
+				info.ContextWindow = *wm.Limit.Context
+			}
+			if wm.Limit.Output != nil {
+				info.MaxOutput = *wm.Limit.Output
+			}
+		}
+		if wm.Modalities != nil {
+			info.Modalities = genToModalities(wm.Modalities.Input, wm.Modalities.Output)
+		}
+		return info, failure
 	}
 
-	// Derive normalized date from model ID (primary) or release date (fallback).
-	normDate := bestiary.ExtractDate(id, wm.ReleaseDate)
+	// ~25% of models have an empty Family field — infer from the model ID.
+	// InferFamilyFromIDWithVariant applies the same suffix/pattern logic as
+	// ParseFamilyWithVersion, ensuring consistent (Family, Variant, Version)
+	// across providers that have empty vs. populated raw_family for the same
+	// model ID (SLICE-FIX-2, B5/B6).
+	normFamily, normVariant, normVersion = bestiary.InferFamilyFromIDWithVariant(
+		id,
+		provider,
+	)
 
-	// If a parse failure was detected, backfill the date into AttemptedParse.
-	// ParseFamilyDetailed cannot access the date (it only takes the raw family),
-	// so we populate it here after ExtractDate runs.
-	if failure != nil {
-		failure.AttemptedParse.Date = normDate
+	// For empty-family models, also extract the modifier.
+	normModifier, modifierConsumed2 := bestiary.ExtractModifier(id, normFamily, normVariant)
+	cleanID2 := id
+	if modifierConsumed2 != "" {
+		cleanStr := string(id)
+		if len(cleanStr) >= len(modifierConsumed2) && cleanStr[len(cleanStr)-len(modifierConsumed2):] == modifierConsumed2 {
+			cleanID2 = bestiary.ModelID(cleanStr[:len(cleanStr)-len(modifierConsumed2)])
+		}
 	}
 
-	info := bestiary.ModelInfo{
-		ID:          id,
-		Provider:    provider,
-		DisplayName: wm.Name,
-		RawFamily:   rawFamily,
-		Family:      normFamily,
-		Variant:     normVariant,
-		Version:     normVersion,
-		Date:        normDate,
-		Reasoning:         wm.Reasoning,
-		ToolCall:          wm.ToolCall,
-		Attachment:        wm.Attachment,
-		Temperature:       wm.Temperature,
-		StructuredOutput:  wm.StructuredOutput,
-		OpenWeights:       wm.OpenWeights,
-		ReleaseDate:       wm.ReleaseDate,
-		Knowledge:         wm.Knowledge,
-		// interleaved field: polymorphic bool or object.
-		Interleaved: parseCapabilityRaw(wm.Interleaved),
-		LastSynced:  "",
+	// Derive normalized date from cleaned model ID (modifier stripped) or release date.
+	normDate2 := bestiary.ExtractDate(cleanID2, wm.ReleaseDate)
+
+	info2 := bestiary.ModelInfo{
+		ID:               id,
+		Provider:         provider,
+		DisplayName:      wm.Name,
+		RawFamily:        rawFamily,
+		Family:           normFamily,
+		Variant:          normVariant,
+		Version:          normVersion,
+		Date:             normDate2,
+		Modifier:         normModifier,
+		Reasoning:        wm.Reasoning,
+		ToolCall:         wm.ToolCall,
+		Attachment:       wm.Attachment,
+		Temperature:      wm.Temperature,
+		StructuredOutput: wm.StructuredOutput,
+		OpenWeights:      wm.OpenWeights,
+		ReleaseDate:      wm.ReleaseDate,
+		Knowledge:        wm.Knowledge,
+		Interleaved:      parseCapabilityRaw(wm.Interleaved),
+		LastSynced:       "",
 	}
 
 	if wm.Cost != nil {
-		info.CostInputPerMTok = wm.Cost.Input
-		info.CostOutputPerMTok = wm.Cost.Output
-		info.CostReasoningPerMTok = wm.Cost.Reasoning
-		info.CostCacheReadPerMTok = wm.Cost.CacheRead
-		info.CostCacheWritePerMTok = wm.Cost.CacheWrite
+		info2.CostInputPerMTok = wm.Cost.Input
+		info2.CostOutputPerMTok = wm.Cost.Output
+		info2.CostReasoningPerMTok = wm.Cost.Reasoning
+		info2.CostCacheReadPerMTok = wm.Cost.CacheRead
+		info2.CostCacheWritePerMTok = wm.Cost.CacheWrite
 	}
-
 	if wm.Limit != nil {
 		if wm.Limit.Context != nil {
-			info.ContextWindow = *wm.Limit.Context
+			info2.ContextWindow = *wm.Limit.Context
 		}
 		if wm.Limit.Output != nil {
-			info.MaxOutput = *wm.Limit.Output
+			info2.MaxOutput = *wm.Limit.Output
 		}
 	}
-
 	if wm.Modalities != nil {
-		info.Modalities = genToModalities(wm.Modalities.Input, wm.Modalities.Output)
+		info2.Modalities = genToModalities(wm.Modalities.Input, wm.Modalities.Output)
 	}
-
-	return info, failure
+	return info2, nil // empty-family branch never produces a failure record
 }
 
 // genToModalities converts string slices from the API into the typed Modalities
@@ -847,6 +924,7 @@ func generateSource(models []bestiary.ModelInfo, slugToConst map[string]string) 
 		fmt.Fprintf(&buf, "\t\tVariant:               %q,\n", m.Variant)
 		fmt.Fprintf(&buf, "\t\tVersion:               %q,\n", m.Version)
 		fmt.Fprintf(&buf, "\t\tDate:                  %q,\n", m.Date)
+		fmt.Fprintf(&buf, "\t\tModifier:              %q,\n", m.Modifier)
 		fmt.Fprintf(&buf, "\t\tContextWindow:         %d,\n", m.ContextWindow)
 		fmt.Fprintf(&buf, "\t\tMaxOutput:             %d,\n", m.MaxOutput)
 		fmt.Fprintf(&buf, "\t\tReasoning:             %v,\n", m.Reasoning)
@@ -1243,6 +1321,22 @@ func nameForCanonicalWithMap(m bestiary.ModelInfo, slugToConst map[string]string
 	// but catch remaining "@" characters in ID suffixes).
 	rawID = strings.TrimLeft(rawID, "@")
 
+	// SLICE-FIX-V2-5: Strip modifier trailing token from raw ID before date/version extraction.
+	// Modifier (e.g. "-thinking") appears as the trailing hyphen-separated token.
+	// It must be stripped before date and version logic runs so it doesn't produce
+	// spurious tokens in the constant name.
+	modifierSegment := ""
+	if m.Modifier != "" {
+		modifierSuffix := "-" + m.Modifier
+		if strings.HasSuffix(rawID, modifierSuffix) {
+			rawID = strings.TrimSuffix(rawID, modifierSuffix)
+			rawID = strings.TrimRight(rawID, "-.")
+			// Compute cased modifier segment via tokenToConstPart.
+			// e.g. "thinking" → "Thinking", "vision" → "Vision".
+			modifierSegment = tokenToConstPart(m.Modifier)
+		}
+	}
+
 	// Compute date segment (compact form, no hyphens).
 	dateCompact := strings.ReplaceAll(m.Date, "-", "") // YYYYMMDD or ""
 
@@ -1305,6 +1399,10 @@ func nameForCanonicalWithMap(m bestiary.ModelInfo, slugToConst map[string]string
 	name := "Model__" + provSuffix + "__" + strings.Join(parts, "__")
 	if versionSegment != "" {
 		name += "__" + versionSegment
+	}
+	// SLICE-FIX-V2-5: Insert modifier segment between version and date.
+	if modifierSegment != "" {
+		name += "__" + modifierSegment
 	}
 	if dateFoundInID && dateCompact != "" {
 		name += "__" + dateCompact
