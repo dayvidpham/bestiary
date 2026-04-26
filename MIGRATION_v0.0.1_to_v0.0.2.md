@@ -900,7 +900,8 @@ type ParseFailuresEnvelope struct {
 
 // New reason constants (use these for consistent phrasing):
 const ReasonVersionDigitsNotExtracted = "version digits between family-prefix and variant not extracted"
-const ReasonSuffixOverflow = "suffix overflow: extra segments after expected family/variant/version/date"
+const ReasonKnownSuffixOverflow = "suffix overflow: trailing token is a known modifier"
+const ReasonUnknownSuffixOverflow = "suffix overflow: trailing token is an unknown modifier (extend allowlist)"
 const ReasonYYMMDateAsVersion = "YYMM-date-as-version false-positive"
 
 // New entry point (failure-aware companion to ParseFamilyWithVersion):
