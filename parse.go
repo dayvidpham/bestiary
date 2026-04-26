@@ -960,32 +960,45 @@ func ParseFamilyDetailed(raw Family, id ModelID, p Provider) (Family, string, st
 	}
 
 	// ── Failure mode 2: Suffix overflow ──────────────────────────────────────
-	// Detect cases where the model ID has a trailing modifier token beyond what
-	// the heuristics can account for. We classify the overflow into two sub-cases:
+	// Detect cases where the model ID ends with a trailing modifier token that
+	// the parser did NOT capture as the variant. This covers IDs like
+	// "claude-opus-4-thinking" where "thinking" is a modifier but rawFamily
+	// "claude-opus-4" parses to variant="" (no variant extracted).
+	//
+	// We classify the trailing token into two sub-cases:
 	//
 	//   ReasonKnownSuffixOverflow   — trailing token is in the modifier allowlist
 	//                                 (thinking, think, vision, latest, code, preview)
 	//   ReasonUnknownSuffixOverflow — trailing token is NOT in the allowlist
 	//                                 (audit-log hint to extend the allowlist)
 	//
-	// Note: this detection is intentionally separate from ExtractModifier (added
-	// by SLICE-FIX-V2-5), which extracts the modifier as a first-class field when
-	// the allowlist matches cleanly. After V2-5 lands, most ReasonKnownSuffixOverflow
-	// cases will be pre-empted by ExtractModifier; this block catches residuals.
-	if raw != "" && detectSuffixOverflow(rawStr, family, variant, version) {
-		trailingToken := extractTrailingToken(rawStr)
-		var reason string
-		if knownModifierTokens[trailingToken] {
-			reason = ReasonKnownSuffixOverflow
-		} else {
-			reason = ReasonUnknownSuffixOverflow
-		}
-		return family, variant, version, &ParseFailure{
-			RawID:          id,
-			Provider:       p,
-			RawFamily:      raw,
-			AttemptedParse: attempted,
-			Reason:         reason,
+	// Condition: fires when the model ID's trailing token is a modifier AND
+	// that token is NOT the already-parsed variant (to avoid double-reporting
+	// cases where suffix stripping correctly extracted the modifier as variant).
+	//
+	// Note: this is intentionally separate from ExtractModifier (added by
+	// SLICE-FIX-V2-5), which extracts the modifier as a first-class field.
+	// After V2-5 lands, most ReasonKnownSuffixOverflow cases will be pre-empted
+	// by ExtractModifier; this block catches residuals.
+	if string(id) != "" {
+		idTrailing := extractTrailingToken(string(id))
+		// Only fire if trailing token is a modifier AND is not already the parsed variant.
+		// The variant check avoids double-reporting when the parser correctly stripped
+		// the modifier as the variant (e.g. rawFamily="claude-thinking" → variant="thinking").
+		if idTrailing != variant && (knownModifierTokens[idTrailing] || detectSuffixOverflow(rawStr, family, variant, version)) {
+			var reason string
+			if knownModifierTokens[idTrailing] {
+				reason = ReasonKnownSuffixOverflow
+			} else {
+				reason = ReasonUnknownSuffixOverflow
+			}
+			return family, variant, version, &ParseFailure{
+				RawID:          id,
+				Provider:       p,
+				RawFamily:      raw,
+				AttemptedParse: attempted,
+				Reason:         reason,
+			}
 		}
 	}
 
