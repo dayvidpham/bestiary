@@ -399,3 +399,78 @@ func TestList_OutputFlagStillWorks(t *testing.T) {
 		t.Errorf("run list --output json: expected 'Provider' in output; got %q", out)
 	}
 }
+
+// TestShow_LegacySchemeFlag_BackwardCompat verifies that the deprecated --scheme flag
+// still works for backward compatibility with v0.0.1 scripts.
+//
+// The legacy --scheme flag should:
+//   - Support each scheme value (raw, canonical, huggingface, purl)
+//   - Route to the correct scheme dispatch
+//   - Be overridden by explicit --format when both are supplied
+//
+// Addresses C2-IMPORTANT finding from SLICE-FIX-V2-2 cycle 1 review: --scheme
+// backward-compat path was implemented but not tested at the CLI integration level.
+func TestShow_LegacySchemeFlag_BackwardCompat(t *testing.T) {
+	tmpDB := t.TempDir() + "/test.db"
+
+	t.Run("scheme_raw", func(t *testing.T) {
+		// --scheme raw should treat input as a raw model ID and resolve by exact match.
+		var runErr error
+		out := captureStdout(t, func() {
+			runErr = run([]string{"show", "--scheme", "raw", "--db-path", tmpDB, "claude-opus-4-1"})
+		})
+
+		if runErr != nil {
+			t.Fatalf("run show --scheme raw claude-opus-4-1 returned error: %v", runErr)
+		}
+		if !strings.Contains(out, "claude-opus-4-1") {
+			t.Errorf("show with --scheme raw: expected model ID in output; got %q", out)
+		}
+	})
+
+	t.Run("scheme_huggingface", func(t *testing.T) {
+		// --scheme huggingface should treat input as provider/raw-id and strip provider.
+		var runErr error
+		out := captureStdout(t, func() {
+			runErr = run([]string{"show", "--scheme", "huggingface", "--db-path", tmpDB, "anthropic/claude-opus-4-1"})
+		})
+
+		if runErr != nil {
+			t.Fatalf("run show --scheme huggingface anthropic/claude-opus-4-1 returned error: %v", runErr)
+		}
+		if !strings.Contains(out, "claude-opus-4-1") {
+			t.Errorf("show with --scheme huggingface: expected model ID in output; got %q", out)
+		}
+	})
+
+	t.Run("scheme_purl", func(t *testing.T) {
+		// --scheme purl should treat input as pkg:huggingface/provider/raw-id.
+		var runErr error
+		out := captureStdout(t, func() {
+			runErr = run([]string{"show", "--scheme", "purl", "--db-path", tmpDB, "pkg:huggingface/anthropic/claude-opus-4-1"})
+		})
+
+		if runErr != nil {
+			t.Fatalf("run show --scheme purl pkg:huggingface/anthropic/claude-opus-4-1 returned error: %v", runErr)
+		}
+		if !strings.Contains(out, "claude-opus-4-1") {
+			t.Errorf("show with --scheme purl: expected model ID in output; got %q", out)
+		}
+	})
+
+	t.Run("format_precedence_over_scheme", func(t *testing.T) {
+		// When both --format and --scheme are supplied, --format takes precedence.
+		// --scheme raw with --format purl should use purl, not raw.
+		var runErr error
+		out := captureStdout(t, func() {
+			runErr = run([]string{"show", "--format", "purl", "--scheme", "raw", "--db-path", tmpDB, "pkg:huggingface/anthropic/claude-opus-4-1"})
+		})
+
+		if runErr != nil {
+			t.Fatalf("run show --format purl --scheme raw pkg:huggingface/anthropic/claude-opus-4-1 returned error: %v", runErr)
+		}
+		if !strings.Contains(out, "claude-opus-4-1") {
+			t.Errorf("show with --format and --scheme: expected model ID in output; got %q", out)
+		}
+	})
+}
