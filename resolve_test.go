@@ -690,3 +690,126 @@ func TestResolve_WithInputFormat_Raw_PartialNoMatch(t *testing.T) {
 		t.Fatalf("Resolve WithInputFormat(Raw) partial: got %T, want *ErrNotFound", err)
 	}
 }
+
+// --- Fix 1 (SLICE-FIX-V2-5 cycle-2): Bracket-suffix [modifier] stripping in Resolve ---
+
+// TestResolve_BracketSuffixStripping_DateMatch verifies that a canonical input
+// with a [modifier] bracket suffix resolves correctly when both the date AND the
+// modifier match a model in the static registry.
+//
+// Regression: before the fix, matchCanonicalSegments did not strip the [modifier]
+// bracket suffix before parsing the "@date" field, so the dateFilter became
+// "2024-10-22[latest]" — which never matched any model's Date field.
+// Fix: bracket suffix is extracted BEFORE the "@date" suffix so dateFilter
+// contains only the date string.
+//
+// BLOCKER: bestiary-wjk9
+func TestResolve_BracketSuffixStripping_DateMatch(t *testing.T) {
+	// claude-3-5-haiku-latest from Anthropic has Family="claude", Variant="haiku",
+	// Date="2024-10-22", Modifier="latest" in the static registry.
+	// The canonical string "anthropic/claude/haiku@2024-10-22[latest]" must resolve
+	// to that model — NOT return ErrNotFound.
+	refs, err := bestiary.Resolve("anthropic/claude/haiku@2024-10-22[latest]")
+	if err != nil {
+		var notFound *bestiary.ErrNotFound
+		if errors.As(err, &notFound) {
+			t.Fatalf("Resolve(\"anthropic/claude/haiku@2024-10-22[latest]\") returned ErrNotFound; "+
+				"bracket-suffix [latest] must be stripped before date matching — BLOCKER bestiary-wjk9\n"+
+				"  What: bracket suffix was included in dateFilter string\n"+
+				"  Fix: strip [modifier] suffix from matchInput before extracting @date")
+		}
+		t.Fatalf("Resolve(\"anthropic/claude/haiku@2024-10-22[latest]\") returned unexpected error %T: %v", err, err)
+	}
+	if len(refs) == 0 {
+		t.Fatal("Resolve(\"anthropic/claude/haiku@2024-10-22[latest]\") returned empty refs")
+	}
+	// All returned refs must have Date="2024-10-22" and Modifier="latest".
+	for _, r := range refs {
+		if r.Date != "2024-10-22" {
+			t.Errorf("ref.Date = %q, want %q", r.Date, "2024-10-22")
+		}
+		if r.Modifier != "latest" {
+			t.Errorf("ref.Modifier = %q, want %q", r.Modifier, "latest")
+		}
+	}
+}
+
+// TestResolve_BracketSuffixStripping_ModifierFilter verifies that the [modifier]
+// bracket suffix acts as a filter: a model with a different Modifier value is
+// excluded from results.
+//
+// If both "claude-haiku@2024-10-22[latest]" and "claude-haiku@2024-10-22[nonexistent]"
+// are tried, the nonexistent modifier must yield ErrNotFound (the filter excludes all
+// models since none have Modifier="nonexistent" for that date).
+//
+// BLOCKER: bestiary-wjk9
+func TestResolve_BracketSuffixStripping_ModifierFilter(t *testing.T) {
+	// A synthetic modifier that no real model has — must yield ErrNotFound (filter applied).
+	_, err := bestiary.Resolve("claude/haiku@2024-10-22[nonexistent-modifier-xyz]")
+	if err == nil {
+		t.Fatal("Resolve with nonexistent [modifier] returned nil error; "+
+			"modifier filter must exclude models whose Modifier field does not match")
+	}
+	// Must be ErrNotFound (no models match the nonexistent modifier), not ErrAmbiguous.
+	var notFound *bestiary.ErrNotFound
+	if !errors.As(err, &notFound) {
+		var ambig *bestiary.ErrAmbiguous
+		if errors.As(err, &ambig) {
+			t.Fatalf("Resolve with nonexistent [modifier] returned ErrAmbiguous; "+
+				"expected ErrNotFound since no model has Modifier=%q", "nonexistent-modifier-xyz")
+		}
+		t.Fatalf("Resolve with nonexistent [modifier]: unexpected error %T: %v", err, err)
+	}
+}
+
+// TestResolve_BracketSuffixStripping_RoundTrip verifies that ModelRef.String()
+// (which emits bracket-suffix when Modifier is set) produces a string that
+// Resolve() can successfully resolve back to the same model.
+//
+// This is the full round-trip: ref → String() → Resolve() → ref'.
+// ref' must have the same (Family, Variant, Date, Modifier) as ref.
+//
+// BLOCKER: bestiary-wjk9
+func TestResolve_BracketSuffixStripping_RoundTrip(t *testing.T) {
+	// Find any static model with a non-empty Modifier to exercise the round-trip.
+	var seed *bestiary.ModelRef
+	for _, m := range bestiary.StaticModels() {
+		if m.Modifier != "" && m.Family != "" && m.Date != "" && m.Provider == bestiary.ProviderAnthropic {
+			ref := m.Ref()
+			seed = &ref
+			break
+		}
+	}
+	if seed == nil {
+		t.Skip("no Anthropic static model with Modifier and Date found; skipping round-trip test")
+	}
+
+	// seed.String() produces canonical form including [modifier] bracket suffix.
+	canonical := seed.String()
+	if canonical == "" {
+		t.Fatalf("ModelRef.String() returned empty string for %+v", *seed)
+	}
+
+	// Resolve must accept the canonical string and return a matching ref.
+	refs, err := bestiary.Resolve(canonical)
+	if err != nil {
+		t.Fatalf("Resolve(%q) = error %v; round-trip must succeed after bracket-suffix fix", canonical, err)
+	}
+	if len(refs) == 0 {
+		t.Fatalf("Resolve(%q) returned empty refs; round-trip must return at least one ref", canonical)
+	}
+
+	// At least one returned ref must match the original seed's (Family, Variant, Date, Modifier).
+	found := false
+	for _, r := range refs {
+		if r.Family == seed.Family && r.Variant == seed.Variant &&
+			r.Date == seed.Date && r.Modifier == seed.Modifier {
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Errorf("Resolve(%q): no ref matched seed (Family=%q, Variant=%q, Date=%q, Modifier=%q); refs=%v",
+			canonical, seed.Family, seed.Variant, seed.Date, seed.Modifier, refs)
+	}
+}

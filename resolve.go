@@ -475,20 +475,38 @@ func modelMatches(m ModelInfo, matchInput string, scheme CanonicalScheme) bool {
 }
 
 // matchCanonicalSegments parses a canonical-form matchInput (e.g.
-// "claude/opus@2025-11-01" or "claude/opus/4.5@2025-11-01") and checks whether
-// the model m matches the parsed (family, variant, version, date) tuple.
+// "claude/opus@2025-11-01", "claude/opus/4.5@2025-11-01[thinking]", or
+// "anthropic/claude/haiku@2024-10-22[latest]") and checks whether the model m
+// matches the parsed (family, variant, version, date, modifier) tuple.
 //
 // Parsing rules:
-//  1. Strip "@date" suffix if present.
-//  2. Split remaining segments on "/".
-//  3. Segment[0] = family; segment[1] = variant (if present); segment[2] = version (if present).
+//  1. Strip "[modifier]" bracket suffix if present (SLICE-FIX-V2-5).
+//  2. Strip "@date" suffix if present.
+//  3. Split remaining segments on "/".
+//  4. Provider-prefix detection: when 4 segments remain (provider/family/variant/version),
+//     segment[0] is treated as a provider prefix and skipped.
+//     Similarly for 3 segments (provider/family/variant) when segment[0] does not match
+//     the model's Family but segment[1] does — the provider prefix is skipped.
+//  5. Segment[0] = family; segment[1] = variant (if present); segment[2] = version (if present).
 //
 // Matching rules:
 //   - family must match Family (required).
 //   - variant must match Variant when specified.
 //   - version must match Version when specified.
 //   - date must match Date when specified.
+//   - modifier must match Modifier when specified (non-empty bracket suffix).
 func matchCanonicalSegments(m ModelInfo, matchInput string) bool {
+	// Extract "[modifier]" bracket suffix (SLICE-FIX-V2-5).
+	// Must be done BEFORE stripping "@date" so the bracket is not confused with
+	// the date field when the date is absent.
+	var modifierFilter string
+	if lb := strings.LastIndex(matchInput, "["); lb >= 0 {
+		if rb := strings.LastIndex(matchInput, "]"); rb == len(matchInput)-1 && rb > lb {
+			modifierFilter = matchInput[lb+1 : rb]
+			matchInput = matchInput[:lb]
+		}
+	}
+
 	// Extract "@date" suffix.
 	var dateFilter string
 	if at := strings.LastIndex(matchInput, "@"); at >= 0 {
@@ -499,6 +517,19 @@ func matchCanonicalSegments(m ModelInfo, matchInput string) bool {
 	segments := strings.Split(matchInput, "/")
 	if len(segments) == 0 || segments[0] == "" {
 		return false
+	}
+
+	// Provider-prefix handling: when 4 segments are present
+	// (provider/family/variant/version), segment[0] is the provider.
+	// When 3 segments are present (provider/family/variant or family/variant/version),
+	// try segment[0] as provider: if it does not match the model's Family but segment[1]
+	// does, skip segment[0] as a provider prefix.
+	if len(segments) == 4 {
+		// 4 segments: always treat segment[0] as provider.
+		segments = segments[1:]
+	} else if len(segments) == 3 && string(m.Family) != segments[0] && string(m.Family) == segments[1] {
+		// 3 segments: first is provider (doesn't match Family), second is family.
+		segments = segments[1:]
 	}
 
 	familyFilter := segments[0]
@@ -526,6 +557,10 @@ func matchCanonicalSegments(m ModelInfo, matchInput string) bool {
 	}
 	// Date filter: when specified, must match.
 	if dateFilter != "" && m.Date != dateFilter {
+		return false
+	}
+	// Modifier filter: when specified (bracket suffix present), must match.
+	if modifierFilter != "" && m.Modifier != modifierFilter {
 		return false
 	}
 	return true
