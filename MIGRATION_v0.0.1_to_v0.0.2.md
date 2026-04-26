@@ -25,8 +25,7 @@ URD `bestiary-rjf`, PROPOSAL-3 `bestiary-1oq`.
 9. [CLI: bestiary show --scheme flag; bestiary-gen --cache-dir and --no-fetch](#9-cli-changes)
 10. [BREAKING: ModelInfo JSON field rename (drop Normalized prefix)](#10-modelinfo-json-field-rename)
 11. [Resolve overhaul (PURL loose-fallback, ErrAmbiguous grouping, --format flag, canonical-provider preference)](#11-resolve-overhaul)
-12. [Parse-failure audit log (.bestiary-gen-cache/parse_failures.json)](#12-parse-failure-audit-log)
-12. [Parse-failure audit log (.bestiary-gen-cache/parse_failures.json)](#12-parse-failure-audit-log-bestiary-gen-cacheparsefailuresjson)
+12. [Parse-failure audit log (`.bestiary-gen-cache/parse_failures.json`)](#12-parse-failure-audit-log-bestiary-gen-cacheparsefailuresjson)
 
 ---
 
