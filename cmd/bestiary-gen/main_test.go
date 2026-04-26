@@ -719,16 +719,16 @@ func normalizationAPIJSON(t *testing.T) []byte {
 }
 
 // TestGenToModelInfo_EmptyFamily verifies that the InferFamilyFromID code path in
-// genToModelInfo fires when the model's family field is empty (~25% of real models).
-// This exercises the else branch in genToModelInfo that the parse_test.go unit tests
-// for InferFamilyFromID do not cover at the codegen integration layer.
+// genToModelInfoDetailed fires when the model's family field is empty (~25% of real models).
+// This exercises the else branch in genToModelInfoDetailed that the parse_test.go unit
+// tests for InferFamilyFromID do not cover at the codegen integration layer.
 func TestGenToModelInfo_EmptyFamily(t *testing.T) {
 	wm := genWireModel{
 		ID:     "claude-haiku-no-family",
 		Name:   "Claude Haiku (no family)",
 		Family: "", // empty — must trigger InferFamilyFromID
 	}
-	info := genToModelInfo("anthropic", wm)
+	info, _ := genToModelInfoDetailed("anthropic", wm)
 
 	if info.RawFamily != "" {
 		t.Errorf("RawFamily: got %q, want empty (raw field was empty)", info.RawFamily)
@@ -739,12 +739,12 @@ func TestGenToModelInfo_EmptyFamily(t *testing.T) {
 	}
 	// Variant may or may not be empty depending on InferFamilyFromID behavior.
 	// The key property is that Family is populated (no silent no-op).
-	t.Logf("genToModelInfo empty-family: Family=%q Variant=%q", info.Family, info.Variant)
+	t.Logf("genToModelInfoDetailed empty-family: Family=%q Variant=%q", info.Family, info.Variant)
 }
 
-// TestGenToModelInfo_CanonicalFields verifies that genToModelInfo correctly populates
-// Family, Variant, and Date for models with known inputs.
-// This guards against regressions in the genToModelInfo normalization splice path.
+// TestGenToModelInfo_CanonicalFields verifies that genToModelInfoDetailed correctly
+// populates Family, Variant, and Date for models with known inputs.
+// This guards against regressions in the genToModelInfoDetailed normalization splice path.
 func TestGenToModelInfo_CanonicalFields(t *testing.T) {
 	cases := []struct {
 		desc             string
@@ -798,7 +798,7 @@ func TestGenToModelInfo_CanonicalFields(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			info := genToModelInfo(tc.providerSlug, tc.wm)
+			info, _ := genToModelInfoDetailed(tc.providerSlug, tc.wm)
 
 			if string(info.Family) != tc.wantFamily {
 				t.Errorf("Family: got %q, want %q", info.Family, tc.wantFamily)

@@ -700,26 +700,6 @@ func parseCapabilityRaw(raw json.RawMessage) bestiary.Capability {
 	return bestiary.Capability{}
 }
 
-// genToModelInfo converts a genWireModel to bestiary.ModelInfo.
-// LastSynced is intentionally left empty — the caller stamps it.
-//
-// Canonical fields (Family, Variant, Version, Date) are populated at this
-// stage by invoking bestiary.ParseFamilyDetailed (which uses ParseFamilyWithVersion
-// internally and also returns a *ParseFailure when a known parsing deficiency is
-// detected), bestiary.ExtractVersionFromID (primary source for Version when the raw
-// family field does not embed a version), bestiary.ExtractDate, and
-// bestiary.InferFamilyFromIDWithVariant (for models with an empty raw family field)
-// so that models_static_gen.go carries baked normalization data at compile time with
-// consistent (Family, Variant, Version) across providers regardless of whether
-// raw_family is empty or populated (SLICE-FIX-2, B5/B6).
-//
-// Parse failures detected by ParseFamilyDetailed are returned as the second value.
-// Callers that collect failures should use genToModelInfoDetailed instead.
-func genToModelInfo(providerSlug string, wm genWireModel) bestiary.ModelInfo {
-	info, _ := genToModelInfoDetailed(providerSlug, wm)
-	return info
-}
-
 // genToModelInfoDetailed converts a genWireModel to (ModelInfo, *ParseFailure).
 // The *ParseFailure is non-nil when ParseFamilyDetailed detects a known parsing
 // deficiency (see bestiary.ParseFamilyDetailed for the three detected modes).
