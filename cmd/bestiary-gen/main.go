@@ -584,13 +584,13 @@ func fetchModelsWithRaw(ctx context.Context, dir string, noFetch bool) (rawJSON 
 	return rawJSON, models, provMeta, nil
 }
 
-// collectFamilies returns a deduplicated sorted list of unique non-empty family
-// values found across all models, together with a name hint for casing.
+// collectFamilies returns a deduplicated sorted list of unique non-empty raw API
+// family values found across all models, together with a name hint for casing.
 func collectFamilies(models []bestiary.ModelInfo, provMeta map[string]providerAPIMeta) []string {
 	seen := make(map[string]struct{})
 	for _, m := range models {
-		if m.Family != "" {
-			seen[string(m.Family)] = struct{}{}
+		if m.RawFamily != "" {
+			seen[string(m.RawFamily)] = struct{}{}
 		}
 	}
 	out := make([]string, 0, len(seen))
@@ -621,14 +621,14 @@ func parseCapabilityRaw(raw json.RawMessage) bestiary.Capability {
 // genToModelInfo converts a genWireModel to bestiary.ModelInfo.
 // LastSynced is intentionally left empty — the caller stamps it.
 //
-// Normalized fields are populated at this stage by invoking
-// bestiary.ParseFamilyWithVersion, bestiary.ExtractVersionFromID (primary
-// source for NormalizedVersion when the family field does not embed a
-// version), bestiary.ExtractDate, and bestiary.InferFamilyFromIDWithVariant
-// (for models with an empty family field) so that models_static_gen.go
-// carries baked normalization data at compile time with consistent
-// (NormalizedFamily, NormalizedVariant, NormalizedVersion) across providers
-// regardless of whether raw_family is empty or populated (SLICE-FIX-2, B5/B6).
+// Canonical fields (Family, Variant, Version, Date) are populated at this
+// stage by invoking bestiary.ParseFamilyWithVersion, bestiary.ExtractVersionFromID
+// (primary source for Version when the raw family field does not embed a version),
+// bestiary.ExtractDate, and bestiary.InferFamilyFromIDWithVariant (for models with
+// an empty raw family field) so that models_static_gen.go carries baked
+// normalization data at compile time with consistent (Family, Variant, Version)
+// across providers regardless of whether raw_family is empty or populated
+// (SLICE-FIX-2, B5/B6).
 func genToModelInfo(providerSlug string, wm genWireModel) bestiary.ModelInfo {
 	// Derive normalized family, variant, and version.
 	rawFamily := bestiary.Family(wm.Family)
@@ -648,9 +648,9 @@ func genToModelInfo(providerSlug string, wm genWireModel) bestiary.ModelInfo {
 	} else {
 		// ~25% of models have an empty Family field — infer from the model ID.
 		// InferFamilyFromIDWithVariant applies the same suffix/pattern logic as
-		// ParseFamilyWithVersion, ensuring consistent (NormalizedFamily,
-		// NormalizedVariant, NormalizedVersion) across providers that have
-		// empty vs. populated raw_family for the same model ID (SLICE-FIX-2, B5/B6).
+		// ParseFamilyWithVersion, ensuring consistent (Family, Variant, Version)
+		// across providers that have empty vs. populated raw_family for the same
+		// model ID (SLICE-FIX-2, B5/B6).
 		normFamily, normVariant, normVersion = bestiary.InferFamilyFromIDWithVariant(
 			bestiary.ModelID(wm.ID),
 			bestiary.Provider(providerSlug),
@@ -661,14 +661,14 @@ func genToModelInfo(providerSlug string, wm genWireModel) bestiary.ModelInfo {
 	normDate := bestiary.ExtractDate(bestiary.ModelID(wm.ID), wm.ReleaseDate)
 
 	info := bestiary.ModelInfo{
-		ID:                bestiary.ModelID(wm.ID),
-		Provider:          bestiary.Provider(providerSlug),
-		DisplayName:       wm.Name,
-		Family:            rawFamily,
-		NormalizedFamily:  normFamily,
-		NormalizedVariant: normVariant,
-		NormalizedVersion: normVersion,
-		NormalizedDate:    normDate,
+		ID:          bestiary.ModelID(wm.ID),
+		Provider:    bestiary.Provider(providerSlug),
+		DisplayName: wm.Name,
+		RawFamily:   rawFamily,
+		Family:      normFamily,
+		Variant:     normVariant,
+		Version:     normVersion,
+		Date:        normDate,
 		Reasoning:         wm.Reasoning,
 		ToolCall:          wm.ToolCall,
 		Attachment:        wm.Attachment,
@@ -751,11 +751,11 @@ func generateSource(models []bestiary.ModelInfo, slugToConst map[string]string) 
 		fmt.Fprintf(&buf, "\t\tID:                    %q,\n", m.ID)
 		fmt.Fprintf(&buf, "\t\tProvider:              %s,\n", providerExpr(m.Provider, slugToConst))
 		fmt.Fprintf(&buf, "\t\tDisplayName:           %q,\n", m.DisplayName)
+		fmt.Fprintf(&buf, "\t\tRawFamily:             %q,\n", m.RawFamily)
 		fmt.Fprintf(&buf, "\t\tFamily:                %q,\n", m.Family)
-		fmt.Fprintf(&buf, "\t\tNormalizedFamily:      %q,\n", m.NormalizedFamily)
-		fmt.Fprintf(&buf, "\t\tNormalizedVariant:     %q,\n", m.NormalizedVariant)
-		fmt.Fprintf(&buf, "\t\tNormalizedVersion:     %q,\n", m.NormalizedVersion)
-		fmt.Fprintf(&buf, "\t\tNormalizedDate:        %q,\n", m.NormalizedDate)
+		fmt.Fprintf(&buf, "\t\tVariant:               %q,\n", m.Variant)
+		fmt.Fprintf(&buf, "\t\tVersion:               %q,\n", m.Version)
+		fmt.Fprintf(&buf, "\t\tDate:                  %q,\n", m.Date)
 		fmt.Fprintf(&buf, "\t\tContextWindow:         %d,\n", m.ContextWindow)
 		fmt.Fprintf(&buf, "\t\tMaxOutput:             %d,\n", m.MaxOutput)
 		fmt.Fprintf(&buf, "\t\tReasoning:             %v,\n", m.Reasoning)
@@ -1096,9 +1096,9 @@ func tokenToConstPart(tok string) string {
 // Algorithm:
 //  1. Provider segment: strip "Provider" prefix from the constant name.
 //  2. Strip any provider prefix from the raw ID (anything up to and including "/").
-//  3. Determine if the NormalizedDate is embedded in the raw ID (all forms:
+//  3. Determine if the Date is embedded in the raw ID (all forms:
 //     YYYYMMDD, YYYY-MM-DD, MM-YYYY, MM-DD). Strip that form from the end of the ID.
-//  4. If NormalizedVersion is non-empty, compute a version segment ("4.5" → "4_5")
+//  4. If Version is non-empty, compute a version segment ("4.5" → "4_5")
 //     and strip the version tokens from the end of the ID (before the date).
 //  5. Split remaining raw ID on non-alphanumeric characters; map each token through
 //     tokenToConstPart.
@@ -1110,7 +1110,7 @@ func tokenToConstPart(tok string) string {
 // Double underscores separate top-level segments; single underscores appear only
 // within a segment (e.g. version "4.5" → "4_5", date always YYYYMMDD).
 //
-// Returns "" when the skip rule applies (NormalizedFamily == "").
+// Returns "" when the skip rule applies (Family == "").
 func nameForCanonical(m bestiary.ModelInfo) string {
 	return nameForCanonicalWithMap(m, nil)
 }
@@ -1118,7 +1118,7 @@ func nameForCanonical(m bestiary.ModelInfo) string {
 // nameForCanonicalWithMap is the full implementation of nameForCanonical with
 // an optional slugToConst map for correct provider casing.
 func nameForCanonicalWithMap(m bestiary.ModelInfo, slugToConst map[string]string) string {
-	if m.NormalizedFamily == "" {
+	if m.Family == "" {
 		return "" // skip rule: no family, no extractable family
 	}
 
@@ -1153,28 +1153,28 @@ func nameForCanonicalWithMap(m bestiary.ModelInfo, slugToConst map[string]string
 	rawID = strings.TrimLeft(rawID, "@")
 
 	// Compute date segment (compact form, no hyphens).
-	dateCompact := strings.ReplaceAll(m.NormalizedDate, "-", "") // YYYYMMDD or ""
+	dateCompact := strings.ReplaceAll(m.Date, "-", "") // YYYYMMDD or ""
 
 	// Strip the date from the raw ID and remember if we found it
 	// (we only append the date constant if the ID actually contains the date).
 	// Note: Google Vertex Anthropic uses "@" as date separator (e.g. "claude-opus-4@20250514").
 	// We must also strip the "@YYYYMMDD" form.
 	rawIDForDate := strings.ReplaceAll(rawID, "@", "-")
-	rawIDStripped, dateFoundInID := stripDateFromID(rawIDForDate, m.NormalizedDate, dateCompact)
+	rawIDStripped, dateFoundInID := stripDateFromID(rawIDForDate, m.Date, dateCompact)
 
-	// Compute version segment: NormalizedVersion "4.5" → "4_5".
-	// If NormalizedVersion is non-empty, strip the version tokens from the end of
+	// Compute version segment: Version "4.5" → "4_5".
+	// If Version is non-empty, strip the version tokens from the end of
 	// rawIDStripped (they appear immediately before the date in the raw ID).
 	versionSegment := ""
-	if m.NormalizedVersion != "" {
-		// Convert "4.5" → "4_5" (dots to underscores; no hyphens expected in NormalizedVersion).
-		versionSegment = strings.ReplaceAll(m.NormalizedVersion, ".", "_")
+	if m.Version != "" {
+		// Convert "4.5" → "4_5" (dots to underscores; no hyphens expected in Version).
+		versionSegment = strings.ReplaceAll(m.Version, ".", "_")
 
 		// Strip the version portion from rawIDStripped. The version appears in the
 		// raw ID as hyphen-separated digits/tokens (e.g. "4-5" for version "4.5").
 		// We try the hyphenated form and the dotted form as suffixes.
-		versionHyphen := strings.ReplaceAll(m.NormalizedVersion, ".", "-")
-		for _, vSuffix := range []string{versionHyphen, m.NormalizedVersion} {
+		versionHyphen := strings.ReplaceAll(m.Version, ".", "-")
+		for _, vSuffix := range []string{versionHyphen, m.Version} {
 			if vSuffix == "" {
 				continue
 			}
@@ -1388,8 +1388,8 @@ func resolveCollisions(names []string, models []bestiary.ModelInfo) []string {
 // Strategy:
 //  1. Strip provider prefix from raw ID.
 //  2. Strip date suffix from raw ID (using stripDateFromID for all date forms).
-//  3. Strip the NormalizedFamily prefix from the remaining ID tokens.
-//  4. Strip the NormalizedVariant prefix from the remaining tokens.
+//  3. Strip the Family prefix from the remaining ID tokens.
+//  4. Strip the Variant prefix from the remaining tokens.
 //  5. Whatever is left is the version segment (joined with "_").
 //
 // Returns "" when no distinct version can be extracted.
@@ -1402,13 +1402,13 @@ func extractVersionSegment(m bestiary.ModelInfo) string {
 	}
 	rawID = strings.TrimLeft(rawID, "@")
 
-	dateCompact := strings.ReplaceAll(m.NormalizedDate, "-", "")
+	dateCompact := strings.ReplaceAll(m.Date, "-", "")
 
 	// Normalize "@" date separator (Google Vertex Anthropic style).
 	rawIDForDate := strings.ReplaceAll(rawID, "@", "-")
 
 	// Strip date from end using the same logic as nameForCanonical.
-	rawIDStripped, _ := stripDateFromID(rawIDForDate, m.NormalizedDate, dateCompact)
+	rawIDStripped, _ := stripDateFromID(rawIDForDate, m.Date, dateCompact)
 
 	// Tokenize — split on any non-alphanumeric character.
 	tokens := strings.FieldsFunc(rawIDStripped, func(r rune) bool {
@@ -1416,15 +1416,15 @@ func extractVersionSegment(m bestiary.ModelInfo) string {
 	})
 
 	// Strip known family tokens.
-	// NOTE: NormalizedFamily and NormalizedVariant only use hyphens and dots as
-	// separators (models.dev normalized fields). Using the narrow hyphen-dot splitter
+	// NOTE: Family and Variant only use hyphens and dots as separators
+	// (models.dev normalized fields). Using the narrow hyphen-dot splitter
 	// here is intentional and matches all real data. If a future provider introduces
 	// underscores or other separators in a normalized family slug, unify this with the
 	// universal non-alphanumeric splitter used above for rawIDStripped.
-	familyTokens := strings.FieldsFunc(string(m.NormalizedFamily), func(r rune) bool {
+	familyTokens := strings.FieldsFunc(string(m.Family), func(r rune) bool {
 		return r == '-' || r == '.'
 	})
-	variantTokens := strings.FieldsFunc(m.NormalizedVariant, func(r rune) bool {
+	variantTokens := strings.FieldsFunc(m.Variant, func(r rune) bool {
 		return r == '-' || r == '.'
 	})
 
@@ -1458,7 +1458,7 @@ func extractVersionSegment(m bestiary.ModelInfo) string {
 // It is used for correct provider casing in the generated constant names.
 // Pass nil to use the slug directly with slugToIdentifier (less accurate casing).
 //
-// Eligibility: NormalizedFamily must be non-empty.
+// Eligibility: Family must be non-empty.
 // Naming: Model__<Provider>__<Family>__<Variant>?__<Version>?__<Date>?
 // Double underscores separate top-level segments; single underscores appear only
 // within a segment (e.g. version "4.5" → "4_5").
