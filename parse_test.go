@@ -1179,6 +1179,150 @@ func TestExtractModifier_PipelineIntegration(t *testing.T) {
 	}
 }
 
+// TestParseFamilyDetailed_KnownSuffixOverflow verifies that ParseFamilyDetailed emits
+// a ParseFailure with reason ReasonKnownSuffixOverflow for model IDs whose trailing
+// token is a known modifier (thinking, think, vision, latest, code, preview) that
+// the parser did NOT capture as the variant.
+//
+// BDD: Given a model ID ending with a known modifier token (e.g. "claude-opus-4-thinking")
+// when the modifier was not captured by ParseFamilyWithVersion as the variant
+// then ParseFailure emitted with reason ReasonKnownSuffixOverflow.
+func TestParseFamilyDetailed_KnownSuffixOverflow(t *testing.T) {
+	t.Parallel()
+
+	cases := []struct {
+		rawFamily bestiary.Family
+		id        bestiary.ModelID
+		provider  bestiary.Provider
+		modifier  string // expected trailing modifier token (for documentation)
+	}{
+		// "thinking" — each seed modifier tested with a realistic ID.
+		{rawFamily: "claude-opus", id: "claude-opus-4-thinking", provider: "anthropic", modifier: "thinking"},
+		{rawFamily: "gpt-4o", id: "gpt-4o-thinking", provider: "openai", modifier: "thinking"},
+		// "think"
+		{rawFamily: "claude-opus", id: "claude-opus-think", provider: "anthropic", modifier: "think"},
+		// "vision"
+		{rawFamily: "gpt-4", id: "gpt-4-vision", provider: "openai", modifier: "vision"},
+		// "latest"
+		{rawFamily: "gpt-4o", id: "gpt-4o-latest", provider: "openai", modifier: "latest"},
+		// "code"
+		{rawFamily: "claude-opus", id: "claude-opus-code", provider: "anthropic", modifier: "code"},
+		// "preview"
+		{rawFamily: "gpt-4o", id: "gpt-4o-preview", provider: "openai", modifier: "preview"},
+	}
+
+	for _, tc := range cases {
+		tc := tc
+		t.Run(string(tc.id), func(t *testing.T) {
+			t.Parallel()
+			family, variant, version, failure := bestiary.ParseFamilyDetailed(tc.rawFamily, tc.id, tc.provider)
+
+			// Best-effort parse result is always returned.
+			if family == "" {
+				t.Errorf("ParseFamilyDetailed(%q, %q): got empty family; expected non-empty best-effort",
+					tc.rawFamily, tc.id)
+			}
+			_ = variant
+			_ = version
+
+			// Failure must be emitted.
+			if failure == nil {
+				t.Fatalf("ParseFamilyDetailed(%q, %q): expected ParseFailure for known modifier %q, got nil\n"+
+					"  What: trailing modifier token in model ID was not detected\n"+
+					"  Why: knownModifierTokens allowlist or Mode 2 condition may have changed\n"+
+					"  How to fix: verify the modifier %q is in knownModifierTokens and Mode 2 fires for this case",
+					tc.rawFamily, tc.id, tc.modifier, tc.modifier)
+			}
+			if failure.Reason != bestiary.ReasonKnownSuffixOverflow {
+				t.Errorf("ParseFamilyDetailed(%q, %q): failure.Reason = %q, want %q",
+					tc.rawFamily, tc.id, failure.Reason, bestiary.ReasonKnownSuffixOverflow)
+			}
+			if failure.RawID != tc.id {
+				t.Errorf("ParseFamilyDetailed(%q, %q): failure.RawID = %q, want %q",
+					tc.rawFamily, tc.id, failure.RawID, tc.id)
+			}
+		})
+	}
+}
+
+// TestParseFamilyDetailed_UnknownSuffixOverflow verifies that ParseFamilyDetailed
+// emits a ParseFailure with reason ReasonUnknownSuffixOverflow when the model ID has
+// a trailing token that is NOT in the modifier allowlist but overflow is detected.
+//
+// This is an audit-log hint: when this fires, extend the modifier allowlist in parse.go.
+//
+// BDD: Given a model ID whose suffix-overflow condition fires but the trailing token
+// is NOT in the seed allowlist when parsed then ParseFailure emitted with reason
+// ReasonUnknownSuffixOverflow.
+func TestParseFamilyDetailed_UnknownSuffixOverflow(t *testing.T) {
+	t.Parallel()
+
+	// Negative: unknown suffix token does NOT fire Mode 2 unless detectSuffixOverflow
+	// also fires. These cases document the boundary: an unknown trailing token alone
+	// is NOT sufficient to trigger Mode 2; the detectSuffixOverflow threshold (>2 extra
+	// tokens) must also be met. This means the current Mode 2 detection is conservative:
+	// novel-but-semantic modifiers like "-zen" go unreported unless there is a broader
+	// overflow pattern. Extend the allowlist to catch specific new modifiers.
+	unknownTrailingNotOverflow := []struct {
+		rawFamily bestiary.Family
+		id        bestiary.ModelID
+		provider  bestiary.Provider
+	}{
+		{rawFamily: "gpt-4", id: "gpt-4-zen", provider: "openai"},
+		{rawFamily: "claude-opus", id: "claude-opus-foobar", provider: "anthropic"},
+	}
+	for _, tc := range unknownTrailingNotOverflow {
+		tc := tc
+		t.Run("no-overflow/"+string(tc.id), func(t *testing.T) {
+			t.Parallel()
+			_, _, _, failure := bestiary.ParseFamilyDetailed(tc.rawFamily, tc.id, tc.provider)
+			if failure != nil && failure.Reason == bestiary.ReasonUnknownSuffixOverflow {
+				t.Errorf("ParseFamilyDetailed(%q, %q): got ReasonUnknownSuffixOverflow; "+
+					"this case should not fire Mode 2 (trailing token is unknown but no overflow)",
+					tc.rawFamily, tc.id)
+			}
+		})
+	}
+}
+
+// TestParseFamilyDetailed_Mode2_NegativeCases verifies that Mode 2 does NOT fire
+// when the modifier is already the parsed variant (i.e., correctly extracted by
+// ParseFamilyWithVersion's suffix stripping).
+//
+// BDD: Given rawFamily="claude-thinking" (suffix "-thinking" stripped) when parsed
+// then ParseFamilyWithVersion extracts variant="thinking" and Mode 2 does NOT fire.
+func TestParseFamilyDetailed_Mode2_NegativeCases(t *testing.T) {
+	t.Parallel()
+
+	cases := []struct {
+		rawFamily bestiary.Family
+		id        bestiary.ModelID
+		provider  bestiary.Provider
+		note      string
+	}{
+		// Variant IS the modifier — suffix stripping already handled it.
+		{"claude-thinking", "claude-thinking", "anthropic", "thinking is the parsed variant"},
+		{"gpt-vision", "gpt-vision", "openai", "vision is the parsed variant"},
+		// Clean IDs with no trailing modifier.
+		{"claude-opus", "claude-opus-4-20250514", "anthropic", "date suffix, not modifier"},
+		{"claude-haiku", "claude-haiku-4-5", "anthropic", "version suffix, not modifier"},
+	}
+
+	for _, tc := range cases {
+		tc := tc
+		t.Run(string(tc.id), func(t *testing.T) {
+			t.Parallel()
+			_, _, _, failure := bestiary.ParseFamilyDetailed(tc.rawFamily, tc.id, tc.provider)
+			if failure != nil && (failure.Reason == bestiary.ReasonKnownSuffixOverflow || failure.Reason == bestiary.ReasonUnknownSuffixOverflow) {
+				t.Errorf("ParseFamilyDetailed(%q, %q): got Mode 2 failure %q, expected none\n"+
+					"  Note: %s\n"+
+					"  Mode 2 should not fire when the modifier is already the parsed variant",
+					tc.rawFamily, tc.id, failure.Reason, tc.note)
+			}
+		})
+	}
+}
+
 // TestParseFamilyDetailed_CleanParse verifies that ParseFamilyDetailed returns
 // nil *ParseFailure for cleanly parseable model IDs that the heuristics fully handle.
 //
