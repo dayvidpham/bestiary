@@ -14,7 +14,7 @@ URD `bestiary-rjf`, PROPOSAL-3 `bestiary-1oq`.
 ## Table of Contents
 
 1. [Schema version bump 0.0.1 → 0.0.2](#1-schema-version-bump-001--002)
-2. [ModelInfo new fields: NormalizedFamily, NormalizedVariant, NormalizedVersion, NormalizedDate](#2-modelinfo-new-fields)
+2. [ModelInfo new fields: Family, Variant, Version, Date (formerly NormalizedFamily etc.)](#2-modelinfo-new-fields)
 3. [ModelRef shape: 7 fields (added ID + Version)](#3-modelref-shape-7-fields)
 4. [NEW types: CanonicalScheme, Designation, AcceptabilityRating](#4-new-types)
 5. [NEW Resolve API + ErrAmbiguous error type](#5-new-resolve-api)
@@ -23,6 +23,7 @@ URD `bestiary-rjf`, PROPOSAL-3 `bestiary-1oq`.
 7b. [SQLite v3→v4: version column + idx_canonical rebuild](#7b-sqlite-v3v4-version-column--idx_canonical-rebuild)
 8. [NEW Model_* constants (ModelIDs function)](#8-new-model_-constants)
 9. [CLI: bestiary show --scheme flag; bestiary-gen --cache-dir and --no-fetch](#9-cli-changes)
+10. [BREAKING: ModelInfo JSON field rename (drop Normalized prefix)](#10-modelinfo-json-field-rename)
 
 ---
 
@@ -69,74 +70,73 @@ the schema version string; `$id` remains a stable bare URL.
 
 ## 2. ModelInfo new fields
 
-**Nature:** Additive; no existing fields removed or renamed.
+**Nature:** Additive (fields added in SLICE-FIX-1); then field rename (SLICE-FIX-V2-1, see Section 10 for breaking change details).
 
-Four codegen-baked normalization fields have been added to `ModelInfo`
-(`bestiary.go`). They are populated at code-generation time by
-`cmd/bestiary-gen` invoking `parse.ParseFamilyWithVersion`, `parse.ExtractDate`,
-`parse.InferFamilyFromID`, and (since SLICE-FIX-1 cycle 2) `parse.ExtractVersionFromID`.
+Five codegen-baked normalization fields are present in `ModelInfo` (`bestiary.go`).
+They are populated at code-generation time by `cmd/bestiary-gen` invoking
+`parse.ParseFamilyWithVersion`, `parse.ExtractDate`, `parse.InferFamilyFromID`,
+and (since SLICE-FIX-1 cycle 2) `parse.ExtractVersionFromID`.
 They are zero-value (`""`) for models loaded from a pre-v4 SQLite cache until a
 `bestiary sync` is performed.
 
-**Before (`ModelInfo`):**
+**Before (original ModelInfo, before SLICE-FIX-1):**
 ```go
 type ModelInfo struct {
     ID          ModelID
     Provider    Provider
     DisplayName string
-    Family      Family
+    Family      Family  // raw API family field (e.g. "claude-opus")
     ContextWindow int
     // ... remaining fields
 }
 ```
 
-**After (`ModelInfo`):**
+**After SLICE-FIX-1 + SLICE-FIX-V2-1 (current shape):**
 ```go
 type ModelInfo struct {
     ID          ModelID
     Provider    Provider
     DisplayName string
-    Family      Family
+    RawFamily   Family  // raw API family field verbatim (e.g. "claude-opus")
 
-    // Codegen-baked normalization (SLICE-FIX-1)
-    NormalizedFamily  Family  // canonical family (e.g. "claude")
-    NormalizedVariant string  // variant suffix (e.g. "opus", "sonnet")
-    NormalizedVersion string  // model version (e.g. "4.5", "4.6", "2.5"); see note below
-    NormalizedDate    string  // YYYY-MM-DD date from model ID or ReleaseDate
+    // Codegen-baked normalization (SLICE-FIX-1, renamed in SLICE-FIX-V2-1)
+    Family  Family  // canonical family (e.g. "claude")
+    Variant string  // variant suffix (e.g. "opus", "sonnet")
+    Version string  // model version (e.g. "4.5", "4.6", "2.5"); see note below
+    Date    string  // YYYY-MM-DD date from model ID or ReleaseDate
 
     ContextWindow int
     // ... remaining fields unchanged
 }
 ```
 
-**NOTE on NormalizedVersion:** The version is extracted from the model ID
+**NOTE on Version:** The version is extracted from the model ID
 (e.g. `"claude-opus-4-5-20251101"` → `"4.5"`) because the upstream models.dev
 API family strings do not embed version numbers (`"claude-opus"` not
-`"claude-opus-4-5"`). After SLICE-FIX-1 cycle 2, NormalizedVersion is populated
+`"claude-opus-4-5"`). After SLICE-FIX-1 cycle 2, Version is populated
 for approximately 636 of 4325 static models. Models whose IDs carry no separable
-version component will have `NormalizedVersion: ""`.
+version component will have `Version: ""`.
 
-**JSON wire impact:**
+**JSON wire impact (current):**
 ```json
-// New fields appear in all JSON outputs (FormatModel, FormatModels):
 {
-  "NormalizedFamily":  "claude",
-  "NormalizedVariant": "opus",
-  "NormalizedVersion": "4.5",
-  "NormalizedDate":    "2025-11-01"
+  "RawFamily": "claude-opus",
+  "Family":    "claude",
+  "Variant":   "opus",
+  "Version":   "4.5",
+  "Date":      "2025-11-01"
 }
 ```
 
-All four new fields are declared `required` in `bestiary.schema.json`. Consumers
-that previously used `additionalProperties: false` validation will need to accept
-these four new keys.
+All five fields are declared `required` in `bestiary.schema.json`.
 
 **Fix-up steps:**
-1. Update any JSON deserialization struct definitions to include all four new fields.
-2. Update any JSON Schema validators that use `additionalProperties: false` on
-   `ModelInfo`-shaped objects — add the four new property declarations.
-3. For models loaded from a pre-v4 SQLite cache, `NormalizedFamily/Variant/Version/Date`
+1. Update any JSON deserialization struct definitions to include all five fields with new names.
+2. Update any JSON Schema validators — replace `NormalizedFamily/Variant/Version/Date` with
+   `Family/Variant/Version/Date`, and replace the old `Family` property with `RawFamily`.
+3. For models loaded from a pre-v4 SQLite cache, `Family/Variant/Version/Date`
    will be empty strings until `bestiary sync` is re-run (see Section 7b for v3→v4 migration; Section 7 for v2→v3).
+4. See Section 10 for the full breaking-change details of the field rename.
 
 ---
 
@@ -185,7 +185,7 @@ type ModelRef struct {
 `Format(SchemeRaw)` returns `string(r.ID)`.
 
 **Fix-up steps:**
-1. Update any `ModelRef` struct literals — add `ID: m.ID` and `Version: m.NormalizedVersion`
+1. Update any `ModelRef` struct literals — add `ID: m.ID` and `Version: m.Version`
    when constructing manually.
 2. Update code that accesses `ModelRef` fields to use `r.ID` instead of
    indirect lookups through `RawFamily` when the raw model ID is needed.
@@ -315,7 +315,7 @@ if errors.As(err, &ambig) {
 
 Three top-level functions in `parse.go` (package `bestiary`) power the
 normalization pipeline. They are also called by `cmd/bestiary-gen` at code
-generation time to bake `NormalizedFamily/Variant/Date` into
+generation time to bake `Family/Variant/Date` into
 `models_static_gen.go`.
 
 ### 6.1 ParseFamily
@@ -460,7 +460,7 @@ where each component uses the same casing as the `Provider` and `Family` types
 ```go
 const (
     // Anthropic claude-opus-4-5-20251101: family=Claude, variant=Opus,
-    // version=4_5 (from NormalizedVersion "4.5"), date=20251101.
+    // version=4_5 (from Version "4.5"), date=20251101.
     Model__Anthropic__Claude__Opus__4_5__20251101 ModelID = "claude-opus-4-5-20251101"
 
     // OpenAI chatgpt-4o-latest: ChatGPT casing via casingOverrides entry.
@@ -545,6 +545,119 @@ bestiary-gen --no-fetch          # use cached response only, skip network fetch
 
 ---
 
+## 10. BREAKING: ModelInfo JSON field rename (drop Normalized prefix)
+
+**Nature:** Breaking; JSON wire format change.
+
+**Audit trail:** FIX_IMPL_PLAN_V2 `bestiary-2xaf`, SLICE-FIX-V2-1 `bestiary-tel4`.
+
+### What changed
+
+In SLICE-FIX-1 (the initial normalization pipeline), `ModelInfo` was given five
+codegen-baked fields. Four were named with a `Normalized` prefix, and the raw API
+`Family` field kept its old name:
+
+```go
+// BEFORE (SLICE-FIX-1 shape — obsolete)
+type ModelInfo struct {
+    // ...
+    Family           Family  // raw API value (e.g. "claude-opus")
+    NormalizedFamily Family  // canonical (e.g. "claude")
+    NormalizedVariant string  // variant suffix (e.g. "opus")
+    NormalizedVersion string  // model version (e.g. "4.5")
+    NormalizedDate   string  // YYYY-MM-DD
+    // ...
+}
+```
+
+In SLICE-FIX-V2-1 the prefix was dropped and the name collision resolved by
+renaming the raw field to `RawFamily`:
+
+```go
+// AFTER (current shape)
+type ModelInfo struct {
+    // ...
+    RawFamily Family  // raw API family field verbatim (e.g. "claude-opus")
+    Family    Family  // canonical family (e.g. "claude")
+    Variant   string  // variant suffix (e.g. "opus")
+    Version   string  // model version (e.g. "4.5")
+    Date      string  // YYYY-MM-DD
+    // ...
+}
+```
+
+### JSON wire impact
+
+The JSON key names changed accordingly. `bestiary list --format=json` and
+`bestiary show --format=json` output will now emit:
+
+**Before (obsolete wire format):**
+```json
+{
+  "Family":           "claude-opus",
+  "NormalizedFamily": "claude",
+  "NormalizedVariant": "opus",
+  "NormalizedVersion": "4.5",
+  "NormalizedDate":   "2025-11-01"
+}
+```
+
+**After (current wire format):**
+```json
+{
+  "RawFamily": "claude-opus",
+  "Family":    "claude",
+  "Variant":   "opus",
+  "Version":   "4.5",
+  "Date":      "2025-11-01"
+}
+```
+
+All five fields remain `required` in `bestiary.schema.json`.
+
+### SQL columns (unchanged)
+
+The underlying SQLite column names were **not** changed. They were already correct
+from the v2→v3 migration (Section 7) and remain:
+
+| Column | Maps to Go field |
+|---|---|
+| `raw_family` | `RawFamily` |
+| `family` | `Family` |
+| `variant` | `Variant` |
+| `version` | `Version` |
+| `date` | `Date` |
+
+No SQLite migration is required for this change.
+
+### Fix-up steps for consumers
+
+1. **Go callers using `ModelInfo` struct literals:** rename the five fields in any
+   struct literal or field access:
+   - `m.Family` (raw semantics) → `m.RawFamily`
+   - `m.NormalizedFamily` → `m.Family`
+   - `m.NormalizedVariant` → `m.Variant`
+   - `m.NormalizedVersion` → `m.Version`
+   - `m.NormalizedDate` → `m.Date`
+
+2. **Go callers using `ModelsByFamily` or `ProvidersForFamily`:** these functions
+   match on the raw API family value. Pass `RawFamily` values (e.g. `"claude-opus"`)
+   as before — the function signature is unchanged.
+
+3. **JSON consumers (downstream scripts, APIs, tests):** update any JSON key
+   references from the old names to the new names shown in the wire format table
+   above. There is no backward-compatibility shim; the change is a hard rename.
+
+4. **JSON Schema validators:** replace the five property names in any schema
+   definition that mirrors `bestiary.schema.json`. The `$schema` URI and `version`
+   field in `bestiary.schema.json` have been updated to `"0.0.2"` (see Section 1).
+
+5. **`ModelRef` consumers:** `ModelRef` already used the correct names
+   (`RawFamily`, `Family`, `Variant`, `Version`, `Date`) prior to this rename.
+   No change needed for callers that only access `ModelRef`.
+
+---
+
 ## Appendix: Beads audit trail
 
 | Reference | ID | Role |
@@ -558,3 +671,5 @@ bestiary-gen --no-fetch          # use cached response only, skip network fetch
 | SLICE-6b | — | bestiary-gen --cache-dir + --no-fetch |
 | URD | `bestiary-rjf` | User requirements document (R10 normalization epoch) |
 | PROPOSAL-3 | `bestiary-1oq` | Architecture proposal |
+| FIX_IMPL_PLAN_V2 | `bestiary-2xaf` | Fix plan: drop Normalized prefix, reconcile ModelInfo fields |
+| SLICE-FIX-V2-1 | `bestiary-tel4` | ModelInfo JSON field rename (this section's slice) |
