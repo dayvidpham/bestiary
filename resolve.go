@@ -119,8 +119,23 @@ func Resolve(input string, opts ...ResolveOption) ([]ModelRef, error) {
 	matches := matchModels(matchInput, scheme)
 
 	// Apply provider hint filter (set by PURL and SchemeCanonical with leading provider segment).
+	// Fix #1 (PURL loose-match fallback): when providerHint filter yields zero results,
+	// fall back to the full match set (all-provider loose match) and return ErrAmbiguous
+	// with a diagnostic message naming the missed namespace.
+	var purlLooseFallback bool
+	var purlMissedNamespace Provider
 	if cfg.providerHint != "" {
-		matches = filterByProvider(matches, cfg.providerHint)
+		filtered := filterByProvider(matches, cfg.providerHint)
+		if len(filtered) == 0 && len(matches) > 0 && scheme == SchemePURL {
+			// Fix #1: namespace (provider hint) had zero matches but model found in other providers.
+			// Record the miss and fall back to all matches as loose candidates.
+			purlLooseFallback = true
+			purlMissedNamespace = cfg.providerHint
+			// Do not set matches = filtered; keep the full match set for loose fallback.
+		} else {
+			// Normal path: apply the filter.
+			matches = filtered
+		}
 	}
 
 	// Bare-family fallback: when SchemeRaw produces zero matches and the input
@@ -136,6 +151,31 @@ func Resolve(input string, opts ...ResolveOption) ([]ModelRef, error) {
 
 	if len(matches) == 0 {
 		return nil, &ErrNotFound{What: "model", Key: input}
+	}
+
+	// Fix #1 (PURL loose fallback): when the PURL namespace yielded zero matches
+	// but other providers host the model, emit ErrAmbiguous with all candidates
+	// and a diagnostic message that names the missed namespace.
+	if purlLooseFallback {
+		// Build a deduplicated candidate list from all matches (group by ID).
+		candidateMap := make(map[ModelID]ModelRef)
+		var candidateOrder []ModelID
+		for _, m := range matches {
+			if _, seen := candidateMap[m.ID]; !seen {
+				candidateOrder = append(candidateOrder, m.ID)
+				candidateMap[m.ID] = m
+			}
+		}
+		candidates := make([]ModelRef, 0, len(candidateOrder))
+		for _, id := range candidateOrder {
+			candidates = append(candidates, candidateMap[id])
+		}
+		return nil, &ErrAmbiguous{
+			Input:             input,
+			Scheme:            scheme,
+			Candidates:        candidates,
+			PURLMissedNamespace: string(purlMissedNamespace),
+		}
 	}
 
 	// Group matches by their canonical key.
@@ -188,6 +228,26 @@ func Resolve(input string, opts ...ResolveOption) ([]ModelRef, error) {
 
 	if len(byGroup) == 1 {
 		// All matches share the same group: cross-provider hosting.
+		// Fix #4 (canonical-provider preference): when resolving in canonical form
+		// (peasant/SchemeCanonical) and not an exact-ID lookup, prefer the canonical
+		// originating provider over rehosts.
+		//
+		// Applies when:
+		//   1. Scheme is SchemeCanonical (canonical-form input, not raw/HF/PURL)
+		//   2. Not an exact-ID lookup (exactIDInput = false), since those have
+		//      deterministic cross-provider identity
+		//   3. CanonicalProvider() returns a non-empty Provider
+		//   4. That Provider is present in the match set
+		if scheme == SchemeCanonical && !exactIDInput && len(matches) > 0 {
+			canonicalProv := matches[0].Family.CanonicalProvider()
+			if canonicalProv != "" {
+				filtered := filterByProvider(matches, canonicalProv)
+				if len(filtered) > 0 {
+					return filtered, nil
+				}
+				// Canonical provider not in match set — fall through to return all matches.
+			}
+		}
 		// Return the flat slice; caller can filter by Provider.
 		return matches, nil
 	}
@@ -302,24 +362,20 @@ func looksLikeVersionedSegment(seg string) bool {
 }
 
 // extractCanonicalProviderHint inspects a canonical-form input with slashes and
-// attempts to determine whether the first segment is a provider name (vs. a family name).
+// returns the remaining match input (with any leading provider segment stripped).
 //
-// Heuristic: a segment is treated as a provider hint when it contains only
-// lowercase alpha characters with optional hyphens and does not look like a
-// model family name (i.e., it does not begin with a known family prefix that
-// would be followed by a variant segment).
+// Design note: canonical-provider preference is implemented via Family.CanonicalProvider()
+// in the grouping step of Resolve (SLICE-FIX-V2-2 Fix #4), not via provider-hint
+// extraction from the input string. The canonical auto-detect path does not extract
+// a provider hint from the input — matchCanonicalSegments handles the full
+// family/variant/version/date decomposition without needing to strip a leading
+// provider prefix. The full match set is returned and the canonical-provider
+// preference is applied post-grouping.
 //
-// When a provider hint is found, matchInput is the remaining path after stripping it.
-// When no provider hint is found, matchInput equals the full input.
-//
-// This is a best-effort heuristic. For unambiguous provider-filtered resolution,
-// callers should use the PURL form or WithScheme(SchemePURL).
+// Returns the full input as matchInput (no stripping).
 func extractCanonicalProviderHint(input string) (Provider, string) {
-	// For canonical forms, we return the input as-is for matching (SchemeCanonical
-	// matching in modelMatches handles family/variant decomposition).
-	// Provider hint extraction from canonical form is not applied for now —
-	// the canonical matching already constrains results sufficiently.
-	// Full provider-hint extraction from canonical form is a future enhancement.
+	// Canonical form matching uses the full input string; family/variant/version/date
+	// decomposition is handled in matchCanonicalSegments. No provider prefix stripping.
 	return "", input
 }
 
