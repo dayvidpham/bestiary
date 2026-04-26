@@ -38,6 +38,10 @@
       "description": "Release date extracted from the model ID or ReleaseDate field in YYYY-MM-DD format. Empty when no date is found. Populated at codegen time.",
       "type": "string"
     },
+    "Modifier": {
+      "description": "Known trailing token extracted from the model ID that carries semantic meaning beyond family/variant/version/date (e.g. \"thinking\", \"vision\", \"latest\"). Empty when no known modifier is found. Populated by ExtractModifier at codegen time.",
+      "type": "string"
+    },
     "ContextWindow": {
       "description": "Maximum number of tokens the model can process in a single request.",
       "type": "integer",
@@ -170,6 +174,7 @@
     "Variant",
     "Version",
     "Date",
+    "Modifier",
     "ContextWindow",
     "MaxOutput",
     "Reasoning",
@@ -223,9 +228,13 @@
         "Date": {
           "description": "Release date in YYYY-MM-DD format extracted from the model ID. Empty if none was found.",
           "type": "string"
+        },
+        "Modifier": {
+          "description": "Known trailing token extracted from the model ID that carries semantic meaning (e.g. \"thinking\", \"vision\"). Empty when no known modifier is found.",
+          "type": "string"
         }
       },
-      "required": ["ID", "Provider", "RawFamily", "Family", "Variant", "Version", "Date"]
+      "required": ["ID", "Provider", "RawFamily", "Family", "Variant", "Version", "Date", "Modifier"]
     },
     "CanonicalScheme": {
       "title": "CanonicalScheme",

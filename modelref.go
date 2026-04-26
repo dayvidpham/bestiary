@@ -4,10 +4,10 @@ import "fmt"
 
 // ModelRef represents the canonical identity of a model.
 //
-// The 7-field tuple (ID, Provider, RawFamily, Family, Variant, Version, Date) is the
+// The 8-field tuple (ID, Provider, RawFamily, Family, Variant, Version, Date, Modifier) is the
 // stable anchor for cross-provider queries, canonical formatting, and the
 // normalization pipeline. ID is the original API model identifier (e.g.
-// "claude-opus-4-20250514"). Family, Variant, and Version are populated at
+// "claude-opus-4-20250514"). Family, Variant, Version, and Modifier are populated at
 // codegen time by the normalization pipeline in cmd/bestiary-gen.
 type ModelRef struct {
 	ID        ModelID  // Original API model ID (e.g. "claude-opus-4-20250514")
@@ -17,11 +17,12 @@ type ModelRef struct {
 	Variant   string   // Canonical variant (e.g., "opus"); empty if no variant
 	Version   string   // Model version extracted from family (e.g., "4.5", "2.5"); empty if none
 	Date      string   // Release date in YYYY-MM-DD format; empty if none
+	Modifier  string   // Known trailing token (e.g., "thinking", "vision"); empty if none
 }
 
 // Ref returns a ModelRef for this ModelInfo.
-// All seven fields are populated: ID from the API model ID, RawFamily from the
-// raw API family field, and Family, Variant, Version, Date from the
+// All eight fields are populated: ID from the API model ID, RawFamily from the
+// raw API family field, and Family, Variant, Version, Date, Modifier from the
 // codegen-baked normalization.
 func (m ModelInfo) Ref() ModelRef {
 	return ModelRef{
@@ -32,6 +33,7 @@ func (m ModelInfo) Ref() ModelRef {
 		Variant:   m.Variant,
 		Version:   m.Version,
 		Date:      m.Date,
+		Modifier:  m.Modifier,
 	}
 }
 

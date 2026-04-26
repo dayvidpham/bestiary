@@ -44,7 +44,12 @@ type ModelInfo struct {
 	Version string
 	// Date is the release date extracted from the model ID or ReleaseDate
 	// field, in YYYY-MM-DD format. Empty when no date is found. Populated at codegen time.
-	Date                  string
+	Date string
+	// Modifier is a known trailing token extracted from the model ID that
+	// carries semantic meaning beyond family/variant/version/date (e.g.
+	// "thinking", "vision", "latest"). Empty when no known modifier is found.
+	// Populated by ExtractModifier at codegen time (SLICE-FIX-V2-5).
+	Modifier              string
 	ContextWindow         int
 	MaxOutput             int
 	Reasoning             bool
