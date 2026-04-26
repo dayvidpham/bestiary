@@ -275,9 +275,10 @@ func Resolve(input string, opts ...ResolveOption) ([]ModelRef, error) {
 //     retains the provider segment as a hint for filtering.
 //  2. SchemeCanonical: contains 2–4 slash-separated segments AND either an "@"
 //     date suffix OR a versioned token (e.g. "2.5", "4.5"). Also detects
-//     1-segment inputs ending with "@date". Provider hint extracted when the
-//     leading segment matches a known provider pattern (contains no digit tokens
-//     that would indicate a model family). Returns the canonicalized match input.
+//     1-segment inputs ending with "@date". Returns the input unchanged with
+//     no provider hint — provider preference for canonical-form input matching
+//     multiple providers is applied later via Family.CanonicalProvider() at the
+//     grouping step (see resolve.go:228-252).
 //  3. SchemeHuggingFace: exactly one "/" with no "pkg:" prefix and no canonical signals.
 //  4. SchemeRaw: default for plain model IDs with no slashes.
 func detectSchemeWithHint(input string) (CanonicalScheme, string, Provider) {
