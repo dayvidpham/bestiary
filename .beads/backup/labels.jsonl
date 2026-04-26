@@ -384,6 +384,9 @@
 {"issue_id":"bestiary-el0","label":"aura:p4-plan:s4-review"}
 {"issue_id":"bestiary-el0","label":"aura:review:axis-a"}
 {"issue_id":"bestiary-el0","label":"aura:review:vote-revise"}
+{"issue_id":"bestiary-emkd","label":"V2-5-coordination"}
+{"issue_id":"bestiary-emkd","label":"followup"}
+{"issue_id":"bestiary-emkd","label":"parse"}
 {"issue_id":"bestiary-en5h","label":"aura:p10-impl:s10-review"}
 {"issue_id":"bestiary-en5h","label":"aura:severity:important"}
 {"issue_id":"bestiary-eni7","label":"aura:p9-impl:s9-slice"}
