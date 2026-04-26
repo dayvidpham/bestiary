@@ -1,0 +1,12 @@
+{
+  "_comment": "Known modifier suffixes for model IDs. ExtractModifier consults this list to extract the modifier as a separate field rather than treating it as suffix overflow. Add new modifiers here as they appear in the wild. Modifiers are matched longest-first to prevent shorter tokens (e.g. 'think') from shadowing longer ones (e.g. 'thinking').",
+  "schema_version": 1,
+  "modifiers": [
+    "thinking",
+    "think",
+    "vision",
+    "latest",
+    "code",
+    "preview"
+  ]
+}

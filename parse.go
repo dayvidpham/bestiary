@@ -38,6 +38,10 @@ type parseData struct {
 
 	// patterns is the ordered list of compiled versioned-variant regex patterns.
 	patterns []*compiledPattern
+
+	// modifiers is the sorted longest-first list of known modifier tokens
+	// (e.g. "thinking", "vision"). Populated from parse/data/modifiers.json.
+	modifiers []string
 }
 
 // compiledPattern is a versionPattern with its compiled regexp.
@@ -190,10 +194,47 @@ func initParseData() (*parseData, error) {
 		compiled = append(compiled, cp)
 	}
 
+	// Load modifiers.json.
+	rawModifiers, err := parseDataFS.ReadFile("parse/data/modifiers.json")
+	if err != nil {
+		return nil, fmt.Errorf(
+			"bestiary parse: load modifiers.json: %w\n"+
+				"  What: cannot read embedded parse data file\n"+
+				"  Where: parse/data/modifiers.json\n"+
+				"  Why: file missing from embedded FS (should not happen in production build)\n"+
+				"  How to fix: ensure parse/data/modifiers.json is present before running go build",
+			err,
+		)
+	}
+
+	var modifierFile struct {
+		Comment   string   `json:"_comment"`
+		SchemaVer int      `json:"schema_version"`
+		Modifiers []string `json:"modifiers"`
+	}
+	if err := json.Unmarshal(rawModifiers, &modifierFile); err != nil {
+		return nil, fmt.Errorf(
+			"bestiary parse: parse modifiers.json: %w\n"+
+				"  What: JSON unmarshal failed\n"+
+				"  Where: parse/data/modifiers.json\n"+
+				"  How to fix: validate JSON syntax in the data file",
+			err,
+		)
+	}
+
+	// Ensure modifiers are sorted longest-first for greedy matching
+	// (prevents "think" from shadowing "thinking" when both are in the list).
+	modifiers := make([]string, len(modifierFile.Modifiers))
+	copy(modifiers, modifierFile.Modifiers)
+	sort.Slice(modifiers, func(i, j int) bool {
+		return len(modifiers[i]) > len(modifiers[j])
+	})
+
 	return &parseData{
 		overrides: overrides,
 		suffixes:  suffixes,
 		patterns:  compiled,
+		modifiers: modifiers,
 	}, nil
 }
 
@@ -574,6 +615,61 @@ func extractDateFromString(s string) string {
 		}
 	}
 	return ""
+}
+
+// ExtractModifier returns the modifier suffix found at the trailing end of id
+// (after family and variant are resolved) and the literal substring of id that
+// was consumed (including the leading hyphen).
+//
+// Resolution: after family + variant are known, the function scans the model ID
+// for a trailing "-<modifier>" token where modifier is in the allowlist from
+// parse/data/modifiers.json. Matching is longest-suffix-first so that "think"
+// does not shadow "thinking" when both are seeded.
+//
+// Return values:
+//   - modifier: the bare modifier token (e.g. "thinking"), or "" when none found.
+//   - modifierConsumed: the substring removed from id (e.g. "-thinking"), or "" when none found.
+//
+// The caller should strip modifierConsumed from the model ID before passing to
+// ExtractVersionFromID and ExtractDate, so that the modifier token does not
+// pollute version/date heuristics.
+//
+// ExtractModifier does not modify ModelInfo or ModelRef fields — it is a pure
+// function that returns values for the caller to wire. Pipeline order:
+//
+//  1. ParseFamily (raw → family + variant)
+//  2. ExtractModifier (id, family, variant) → modifier, consumed
+//  3. Strip consumed from id
+//  4. ExtractVersionFromID on cleaned id
+//  5. ExtractDate on cleaned id
+func ExtractModifier(id ModelID, family Family, variant string) (modifier string, modifierConsumed string) {
+	if id == "" {
+		return "", ""
+	}
+
+	pd, err := loadParseData()
+	if err != nil {
+		// Fail closed: if embedded data cannot be loaded, return empty.
+		// In a correct build this path is unreachable because the JSON files
+		// are embedded at compile time.
+		return "", ""
+	}
+
+	idStr := string(id)
+
+	// Strip any leading path segment (e.g. "anthropic/claude-opus-4-6-thinking" → use last segment).
+	if idx := strings.LastIndexByte(idStr, '/'); idx >= 0 {
+		idStr = idStr[idx+1:]
+	}
+
+	// Check modifiers longest-first.
+	for _, mod := range pd.modifiers {
+		suffix := "-" + mod
+		if strings.HasSuffix(idStr, suffix) {
+			return mod, suffix
+		}
+	}
+	return "", ""
 }
 
 // InferFamilyFromIDWithVariant is the extended empty-family fallback for models
