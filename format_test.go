@@ -310,20 +310,19 @@ func TestFormatModel_YAML(t *testing.T) {
 	}
 }
 
-// TestFormatModel_YAML_NormalizedFields verifies that the YAML serializer emits
-// NormalizedFamily, NormalizedVariant, and NormalizedDate alongside the other
-// fields, matching the JSON path (bestiary-v1jf).
-func TestFormatModel_YAML_NormalizedFields(t *testing.T) {
+// TestFormatModel_YAML_CanonicalFields verifies that the YAML serializer emits
+// Family, Variant, and Date alongside the other fields, matching the JSON path.
+func TestFormatModel_YAML_CanonicalFields(t *testing.T) {
 	var buf bytes.Buffer
 	model := bestiary.ModelInfo{
-		ID:                bestiary.ModelID("claude-opus-4-20250514"),
-		Provider:          bestiary.ProviderAnthropic,
-		DisplayName:       "Claude Opus 4",
-		Family:            "claude-opus",
-		NormalizedFamily:  "claude",
-		NormalizedVariant: "opus",
-		NormalizedDate:    "2025-05-14",
-		LastSynced:        "2025-05-14T00:00:00Z",
+		ID:          bestiary.ModelID("claude-opus-4-20250514"),
+		Provider:    bestiary.ProviderAnthropic,
+		DisplayName: "Claude Opus 4",
+		RawFamily:   "claude-opus",
+		Family:      "claude",
+		Variant:     "opus",
+		Date:        "2025-05-14",
+		LastSynced:  "2025-05-14T00:00:00Z",
 	}
 
 	err := bestiary.FormatModel(&buf, model, bestiary.FormatYAML)
@@ -333,8 +332,8 @@ func TestFormatModel_YAML_NormalizedFields(t *testing.T) {
 
 	output := buf.String()
 	for _, want := range []string{
-		"NormalizedFamily:", "NormalizedVariant:", "NormalizedDate:",
-		"claude", "opus", "2025-05-14",
+		"RawFamily:", "Family:", "Variant:", "Date:",
+		"claude-opus", "claude", "opus", "2025-05-14",
 	} {
 		if !strings.Contains(output, want) {
 			t.Errorf("FormatModel(YAML) output missing %q\nGot:\n%s", want, output)
@@ -342,21 +341,20 @@ func TestFormatModel_YAML_NormalizedFields(t *testing.T) {
 	}
 }
 
-// TestFormatModel_JSON_NormalizedVersion verifies that a ModelInfo with a
-// non-empty NormalizedVersion field round-trips correctly through JSON
-// serialization. This is the MINOR coverage gap identified in bestiary-5dd0.
-func TestFormatModel_JSON_NormalizedVersion(t *testing.T) {
+// TestFormatModel_JSON_Version verifies that a ModelInfo with a non-empty Version
+// field round-trips correctly through JSON serialization.
+func TestFormatModel_JSON_Version(t *testing.T) {
 	var buf bytes.Buffer
 	model := bestiary.ModelInfo{
-		ID:                "claude-opus-4-5-20251101",
-		Provider:          bestiary.ProviderAnthropic,
-		DisplayName:       "Claude Opus 4.5",
-		Family:            "claude-opus",
-		NormalizedFamily:  "claude",
-		NormalizedVariant: "opus",
-		NormalizedVersion: "4.5",
-		NormalizedDate:    "2025-11-01",
-		LastSynced:        "2025-11-01T00:00:00Z",
+		ID:          "claude-opus-4-5-20251101",
+		Provider:    bestiary.ProviderAnthropic,
+		DisplayName: "Claude Opus 4.5",
+		RawFamily:   "claude-opus",
+		Family:      "claude",
+		Variant:     "opus",
+		Version:     "4.5",
+		Date:        "2025-11-01",
+		LastSynced:  "2025-11-01T00:00:00Z",
 	}
 
 	if err := bestiary.FormatModel(&buf, model, bestiary.FormatJSON); err != nil {
@@ -373,12 +371,12 @@ func TestFormatModel_JSON_NormalizedVersion(t *testing.T) {
 		t.Fatalf("FormatModel(JSON): unmarshal failed: %v", err)
 	}
 
-	v, ok := decoded["NormalizedVersion"]
+	v, ok := decoded["Version"]
 	if !ok {
-		t.Fatalf("FormatModel(JSON): NormalizedVersion missing from output; present keys: %v", jsonKeysOf(decoded))
+		t.Fatalf("FormatModel(JSON): Version missing from output; present keys: %v", jsonKeysOf(decoded))
 	}
 	if s, ok := v.(string); !ok || s != "4.5" {
-		t.Errorf("FormatModel(JSON): NormalizedVersion = %v (%T), want %q", v, v, "4.5")
+		t.Errorf("FormatModel(JSON): Version = %v (%T), want %q", v, v, "4.5")
 	}
 }
 

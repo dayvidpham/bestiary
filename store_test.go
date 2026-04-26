@@ -11,19 +11,18 @@ import (
 )
 
 // testModel returns a ModelInfo suitable for round-trip testing.
-// NormalizedFamily, NormalizedVariant, NormalizedVersion, and NormalizedDate are
-// set to non-zero values so that round-trip tests prove these fields survive
-// persistence.
+// Family, Variant, and Date are set to non-zero values so that round-trip tests
+// prove these fields survive persistence.
 func testModel(id string, provider bestiary.Provider) bestiary.ModelInfo {
 	return bestiary.ModelInfo{
-		ID:                bestiary.ModelID(id),
-		Provider:          provider,
-		DisplayName:       "Test " + id,
-		Family:            "test-family",
-		NormalizedFamily:  "test",
-		NormalizedVariant: "family",
-		NormalizedVersion: "",
-		NormalizedDate:    "2026-01-01",
+		ID:          bestiary.ModelID(id),
+		Provider:    provider,
+		DisplayName: "Test " + id,
+		RawFamily:   "test-family",
+		Family:      "test",
+		Variant:     "family",
+		Version:     "",
+		Date:        "2026-01-01",
 		ContextWindow:     128000,
 		MaxOutput:         4096,
 		Reasoning:         true,
@@ -116,19 +115,18 @@ func TestUpsertQueryModels_RoundTrip(t *testing.T) {
 	}
 }
 
-// TestNormalizedFields_RoundTrip verifies that NormalizedFamily, NormalizedVariant,
-// and NormalizedDate survive a UpsertModels + QueryModel round-trip with non-zero
-// values. This test exists because these fields were added in v3 and the base
-// testModel fixture intentionally sets them; this assertion proves they are wired
-// through the full persistence path.
-func TestNormalizedFields_RoundTrip(t *testing.T) {
+// TestCanonicalFields_RoundTrip verifies that Family, Variant, and Date survive a
+// UpsertModels + QueryModel round-trip with non-zero values. This test exists because
+// these fields were added in v3 and the base testModel fixture intentionally sets them;
+// this assertion proves they are wired through the full persistence path.
+func TestCanonicalFields_RoundTrip(t *testing.T) {
 	ctx := context.Background()
 	s := openMemStore(t)
 
 	want := testModel("norm-model", bestiary.ProviderAnthropic)
 	// Confirm testModel provides non-zero values (guard against accidental zeroing).
-	if want.NormalizedFamily == "" || want.NormalizedVariant == "" || want.NormalizedDate == "" {
-		t.Fatal("testModel must return non-zero NormalizedFamily/Variant/Date for this test to be meaningful")
+	if want.Family == "" || want.Variant == "" || want.Date == "" {
+		t.Fatal("testModel must return non-zero Family/Variant/Date for this test to be meaningful")
 	}
 
 	if err := s.UpsertModels(ctx, []bestiary.ModelInfo{want}); err != nil {
@@ -140,14 +138,14 @@ func TestNormalizedFields_RoundTrip(t *testing.T) {
 		t.Fatalf("QueryModel: %v", err)
 	}
 
-	if got.NormalizedFamily != want.NormalizedFamily {
-		t.Errorf("NormalizedFamily = %q, want %q", got.NormalizedFamily, want.NormalizedFamily)
+	if got.Family != want.Family {
+		t.Errorf("Family = %q, want %q", got.Family, want.Family)
 	}
-	if got.NormalizedVariant != want.NormalizedVariant {
-		t.Errorf("NormalizedVariant = %q, want %q", got.NormalizedVariant, want.NormalizedVariant)
+	if got.Variant != want.Variant {
+		t.Errorf("Variant = %q, want %q", got.Variant, want.Variant)
 	}
-	if got.NormalizedDate != want.NormalizedDate {
-		t.Errorf("NormalizedDate = %q, want %q", got.NormalizedDate, want.NormalizedDate)
+	if got.Date != want.Date {
+		t.Errorf("Date = %q, want %q", got.Date, want.Date)
 	}
 }
 
@@ -615,14 +613,14 @@ func TestDefaultDBPath(t *testing.T) {
 }
 
 // testCanonicalModel returns a ModelInfo with the given canonical normalization fields set.
-// It uses testModel as a base and overrides NormalizedFamily, NormalizedVariant, NormalizedDate.
+// It uses testModel as a base and overrides RawFamily, Family, Variant, Date.
 func testCanonicalModel(id string, provider bestiary.Provider, rawFamily, normFamily, variant, date string) bestiary.ModelInfo {
 	m := testModel(id, provider)
-	m.Family = bestiary.Family(rawFamily)
-	m.NormalizedFamily = bestiary.Family(normFamily)
-	m.NormalizedVariant = variant
-	m.NormalizedVersion = ""
-	m.NormalizedDate = date
+	m.RawFamily = bestiary.Family(rawFamily)
+	m.Family = bestiary.Family(normFamily)
+	m.Variant = variant
+	m.Version = ""
+	m.Date = date
 	return m
 }
 
@@ -652,14 +650,14 @@ func TestQueryByCanonical_CrossProvider(t *testing.T) {
 	}
 	// All results must have the same canonical.
 	for _, m := range got {
-		if m.NormalizedFamily != "claude" {
-			t.Errorf("NormalizedFamily = %q, want %q", m.NormalizedFamily, "claude")
+		if m.Family != "claude" {
+			t.Errorf("Family = %q, want %q", m.Family, "claude")
 		}
-		if m.NormalizedVariant != "opus" {
-			t.Errorf("NormalizedVariant = %q, want %q", m.NormalizedVariant, "opus")
+		if m.Variant != "opus" {
+			t.Errorf("Variant = %q, want %q", m.Variant, "opus")
 		}
-		if m.NormalizedDate != "2025-05-14" {
-			t.Errorf("NormalizedDate = %q, want %q", m.NormalizedDate, "2025-05-14")
+		if m.Date != "2025-05-14" {
+			t.Errorf("Date = %q, want %q", m.Date, "2025-05-14")
 		}
 	}
 }
@@ -709,8 +707,8 @@ func TestQueryByCanonical_PartialMatch(t *testing.T) {
 		t.Fatalf("QueryByCanonical(claude): got %d results, want 3", len(got))
 	}
 	for _, m := range got {
-		if m.NormalizedFamily != "claude" {
-			t.Errorf("unexpected family %q in results", m.NormalizedFamily)
+		if m.Family != "claude" {
+			t.Errorf("unexpected family %q in results", m.Family)
 		}
 	}
 
@@ -722,8 +720,8 @@ func TestQueryByCanonical_PartialMatch(t *testing.T) {
 	if len(got2) != 1 {
 		t.Fatalf("QueryByCanonical(empty, opus, empty): got %d, want 1", len(got2))
 	}
-	if got2[0].NormalizedVariant != "opus" {
-		t.Errorf("variant = %q, want %q", got2[0].NormalizedVariant, "opus")
+	if got2[0].Variant != "opus" {
+		t.Errorf("variant = %q, want %q", got2[0].Variant, "opus")
 	}
 
 	// All empty: returns all models.
@@ -770,17 +768,17 @@ func TestQueryByCanonical_NormalDataIntegrity(t *testing.T) {
 	if got.DisplayName != want.DisplayName {
 		t.Errorf("DisplayName = %q, want %q", got.DisplayName, want.DisplayName)
 	}
+	if got.RawFamily != want.RawFamily {
+		t.Errorf("RawFamily (raw_family) = %q, want %q", got.RawFamily, want.RawFamily)
+	}
 	if got.Family != want.Family {
-		t.Errorf("Family (raw_family) = %q, want %q", got.Family, want.Family)
+		t.Errorf("Family = %q, want %q", got.Family, want.Family)
 	}
-	if got.NormalizedFamily != want.NormalizedFamily {
-		t.Errorf("NormalizedFamily = %q, want %q", got.NormalizedFamily, want.NormalizedFamily)
+	if got.Variant != want.Variant {
+		t.Errorf("Variant = %q, want %q", got.Variant, want.Variant)
 	}
-	if got.NormalizedVariant != want.NormalizedVariant {
-		t.Errorf("NormalizedVariant = %q, want %q", got.NormalizedVariant, want.NormalizedVariant)
-	}
-	if got.NormalizedDate != want.NormalizedDate {
-		t.Errorf("NormalizedDate = %q, want %q", got.NormalizedDate, want.NormalizedDate)
+	if got.Date != want.Date {
+		t.Errorf("Date = %q, want %q", got.Date, want.Date)
 	}
 	if got.ContextWindow != want.ContextWindow {
 		t.Errorf("ContextWindow = %d, want %d", got.ContextWindow, want.ContextWindow)

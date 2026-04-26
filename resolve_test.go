@@ -262,17 +262,17 @@ func TestResolve_CanonicalFamily_ReturnsErrAmbiguous(t *testing.T) {
 // TestResolve_ExactIDInCanonicalMode_NotAmbiguous is a regression test for the
 // false-ambiguity bug: when an exact model ID is resolved with
 // WithScheme(SchemeCanonical), providers that omit the family field can produce
-// a different NormalizedVariant ("" vs "opus") for the same model. This must
-// NOT trigger ErrAmbiguous — the input is unambiguous because the model ID is
-// exact. The fix groups by model ID (not canonical triple) when all matches
-// share the same raw ID.
+// a different Variant ("" vs "opus") for the same model. This must NOT trigger
+// ErrAmbiguous — the input is unambiguous because the model ID is exact. The
+// fix groups by model ID (not canonical triple) when all matches share the same
+// raw ID.
 //
 // Regression: bestiary-tant (Reviewer A, cycle 2).
 func TestResolve_ExactIDInCanonicalMode_NotAmbiguous(t *testing.T) {
 	// claude-opus-4-20250514 exhibits the divergent-variant pattern: some
-	// providers (e.g. anthropic, jiekou) have NormalizedVariant="opus" while
-	// others (e.g. nano-gpt, 302ai) have NormalizedVariant="" because they do
-	// not populate the API family field.
+	// providers (e.g. anthropic, jiekou) have Variant="opus" while others
+	// (e.g. nano-gpt, 302ai) have Variant="" because they do not populate the
+	// API family field.
 	refs, err := bestiary.Resolve("claude-opus-4-20250514", bestiary.WithScheme(bestiary.SchemeCanonical))
 	if err != nil {
 		t.Fatalf("Resolve(\"claude-opus-4-20250514\", SchemeCanonical) returned error (false ambiguity): %v", err)

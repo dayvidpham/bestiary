@@ -99,10 +99,10 @@ func TestModelsByProvider_Empty(t *testing.T) {
 }
 
 // TestModelsByFamily verifies that ModelsByFamily returns only models with the
-// given family string, and that all results match.
+// given raw family string, and that all results match.
 // NOTE: This test will fail until go generate ./... has been run.
 func TestModelsByFamily(t *testing.T) {
-	// "claude-opus" is a stable family in the Anthropic catalogue.
+	// "claude-opus" is a stable raw API family in the Anthropic catalogue.
 	const wantFamily = "claude-opus"
 
 	models := bestiary.ModelsByFamily(wantFamily)
@@ -114,8 +114,8 @@ func TestModelsByFamily(t *testing.T) {
 		t.Fatalf("ModelsByFamily(%q): got zero results from non-empty registry (%d models); check the family name", wantFamily, len(all))
 	}
 	for _, m := range models {
-		if m.Family != wantFamily {
-			t.Errorf("ModelsByFamily(%q): got model %q with family %q", wantFamily, m.ID, m.Family)
+		if m.RawFamily != wantFamily {
+			t.Errorf("ModelsByFamily(%q): got model %q with RawFamily %q", wantFamily, m.ID, m.RawFamily)
 		}
 	}
 }

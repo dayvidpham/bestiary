@@ -797,10 +797,9 @@ func TestParseFamilyWithVersion_BackwardCompat(t *testing.T) {
 // both variant and version from model IDs where the raw family field is empty.
 //
 // B5 (SLICE-FIX-2): the empty-family code path in genToModelInfo must produce
-// identical (NormalizedFamily, NormalizedVariant, NormalizedVersion) as the
-// non-empty-family path for the same raw model ID. A model ID like
-// "claude-opus-4-5-20251101" with empty raw family must decompose to
-// (claude, opus, 4.5), not (claude, "", "").
+// identical (Family, Variant, Version) as the non-empty-family path for the same
+// raw model ID. A model ID like "claude-opus-4-5-20251101" with empty raw family
+// must decompose to (claude, opus, 4.5), not (claude, "", "").
 //
 // This test FAILS until SLICE-FIX-2-L3 lands (InferFamilyFromIDWithVariant
 // does not yet exist; the existing InferFamilyFromID only returns family).

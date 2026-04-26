@@ -253,7 +253,7 @@ var testSlugToConst = map[string]string{
 //
 // The naming uses double underscores between EVERY token from the raw ID (after date strip),
 // plus the provider prefix and date suffix. Tokens from the raw ID (hyphen/dot split) each
-// become a separate __-separated component. The NormalizedVersion field produces a single
+// become a separate __-separated component. The Version field produces a single
 // underscore-within-component segment when it is non-empty (e.g. "4.5" → "4_5").
 func TestNameForCanonical_KnownExamples(t *testing.T) {
 	cases := []struct {
@@ -264,11 +264,11 @@ func TestNameForCanonical_KnownExamples(t *testing.T) {
 		{
 			desc: "claude-opus-4-20250514 on Anthropic",
 			model: bestiary.ModelInfo{
-				ID:                "claude-opus-4-20250514",
-				Provider:          "anthropic",
-				NormalizedFamily:  "claude",
-				NormalizedVariant: "opus",
-				NormalizedDate:    "2025-05-14",
+				ID:       "claude-opus-4-20250514",
+				Provider: "anthropic",
+				Family:   "claude",
+				Variant:  "opus",
+				Date:     "2025-05-14",
 			},
 			// Tokens after date strip: [claude→Claude, opus→Opus, 4→4]
 			// Double-underscore join + provSuffix + date.
@@ -277,14 +277,14 @@ func TestNameForCanonical_KnownExamples(t *testing.T) {
 		{
 			desc: "claude-opus-4-1 on Anthropic (date not in ID, from release field)",
 			model: bestiary.ModelInfo{
-				ID:                "claude-opus-4-1",
-				Provider:          "anthropic",
-				NormalizedFamily:  "claude",
-				NormalizedVariant: "opus",
-				// NormalizedDate comes from release field, NOT from ID content.
+				ID:      "claude-opus-4-1",
+				Provider: "anthropic",
+				Family:   "claude",
+				Variant:  "opus",
+				// Date comes from release field, NOT from ID content.
 				// The ID "claude-opus-4-1" has no YYYYMMDD/YYYY-MM-DD date.
 				// So date should NOT be appended to the constant name.
-				NormalizedDate: "2025-08-05",
+				Date: "2025-08-05",
 			},
 			// Tokens: [Claude, Opus, 4, 1]; date not in ID → no date suffix.
 			wantName: "Model__Anthropic__Claude__Opus__4__1",
@@ -292,11 +292,11 @@ func TestNameForCanonical_KnownExamples(t *testing.T) {
 		{
 			desc: "gpt-4o-2024-08-06 on OpenAI",
 			model: bestiary.ModelInfo{
-				ID:                "gpt-4o-2024-08-06",
-				Provider:          "openai",
-				NormalizedFamily:  "gpt",
-				NormalizedVariant: "",
-				NormalizedDate:    "2024-08-06",
+				ID:       "gpt-4o-2024-08-06",
+				Provider: "openai",
+				Family:   "gpt",
+				Variant:  "",
+				Date:     "2024-08-06",
 			},
 			// Tokens after date strip: [gpt→GPT, 4o→4o]
 			wantName: "Model__OpenAI__GPT__4o__20240806",
@@ -304,13 +304,13 @@ func TestNameForCanonical_KnownExamples(t *testing.T) {
 		{
 			desc: "gemini-2.5-flash-lite-preview-06-17 on GoogleVertex (MM-DD date form)",
 			model: bestiary.ModelInfo{
-				ID:                "gemini-2.5-flash-lite-preview-06-17",
-				Provider:          "google-vertex",
-				NormalizedFamily:  "gemini",
-				NormalizedVariant: "flash-lite",
-				NormalizedDate:    "2025-06-17",
+				ID:       "gemini-2.5-flash-lite-preview-06-17",
+				Provider: "google-vertex",
+				Family:   "gemini",
+				Variant:  "flash-lite",
+				Date:     "2025-06-17",
 			},
-			// ID has "06-17" which is the MM-DD form of NormalizedDate "2025-06-17".
+			// ID has "06-17" which is the MM-DD form of Date "2025-06-17".
 			// stripDateFromID strips "06-17", leaving "gemini-2.5-flash-lite-preview".
 			// Tokens: [Gemini, 2, 5, Flash, Lite, Preview] — each becomes own __ segment.
 			wantName: "Model__GoogleVertex__Gemini__2__5__Flash__Lite__Preview__20250617",
@@ -318,22 +318,22 @@ func TestNameForCanonical_KnownExamples(t *testing.T) {
 		{
 			desc: "model with no date",
 			model: bestiary.ModelInfo{
-				ID:                "claude-haiku",
-				Provider:          "anthropic",
-				NormalizedFamily:  "claude",
-				NormalizedVariant: "haiku",
-				NormalizedDate:    "",
+				ID:       "claude-haiku",
+				Provider: "anthropic",
+				Family:   "claude",
+				Variant:  "haiku",
+				Date:     "",
 			},
 			wantName: "Model__Anthropic__Claude__Haiku",
 		},
 		{
 			desc: "provider-prefixed ID (openrouter style)",
 			model: bestiary.ModelInfo{
-				ID:                "anthropic/claude-opus-4-20250514",
-				Provider:          "openrouter",
-				NormalizedFamily:  "claude",
-				NormalizedVariant: "opus",
-				NormalizedDate:    "2025-05-14",
+				ID:       "anthropic/claude-opus-4-20250514",
+				Provider: "openrouter",
+				Family:   "claude",
+				Variant:  "opus",
+				Date:     "2025-05-14",
 			},
 			wantName: "Model__OpenRouter__Claude__Opus__4__20250514",
 		},
@@ -349,18 +349,18 @@ func TestNameForCanonical_KnownExamples(t *testing.T) {
 	}
 }
 
-// TestSkipEmptyFamily verifies that nameForCanonical returns "" when NormalizedFamily is empty.
+// TestSkipEmptyFamily verifies that nameForCanonical returns "" when Family is empty.
 func TestSkipEmptyFamily(t *testing.T) {
 	m := bestiary.ModelInfo{
-		ID:               "some-model-123",
-		Provider:         "anthropic",
-		NormalizedFamily: "", // empty → skip
-		NormalizedVariant: "",
-		NormalizedDate:   "2025-01-01",
+		ID:       "some-model-123",
+		Provider: "anthropic",
+		Family:   "", // empty → skip
+		Variant:  "",
+		Date:     "2025-01-01",
 	}
 	got := nameForCanonical(m)
 	if got != "" {
-		t.Errorf("nameForCanonical: expected empty string for empty NormalizedFamily, got %q", got)
+		t.Errorf("nameForCanonical: expected empty string for empty Family, got %q", got)
 	}
 }
 
@@ -372,18 +372,18 @@ func TestResolveCollisions_VersionSuffix(t *testing.T) {
 	// but whose IDs have different version tokens (4 vs 3_5).
 	models := []bestiary.ModelInfo{
 		{
-			ID:                "claude-opus-4",
-			Provider:          "anthropic",
-			NormalizedFamily:  "claude",
-			NormalizedVariant: "opus",
-			NormalizedDate:    "",
+			ID:       "claude-opus-4",
+			Provider: "anthropic",
+			Family:   "claude",
+			Variant:  "opus",
+			Date:     "",
 		},
 		{
-			ID:                "claude-opus-3-5",
-			Provider:          "anthropic",
-			NormalizedFamily:  "claude",
-			NormalizedVariant: "opus",
-			NormalizedDate:    "",
+			ID:       "claude-opus-3-5",
+			Provider: "anthropic",
+			Family:   "claude",
+			Variant:  "opus",
+			Date:     "",
 		},
 	}
 	// Both produce "Model__Anthropic__Claude__Opus" as the naive name (double-underscore, B5).
@@ -423,18 +423,18 @@ func TestResolveCollisions_SequentialSuffix(t *testing.T) {
 	// We force this by using models with matching version tokens.
 	models := []bestiary.ModelInfo{
 		{
-			ID:               "mystery-model",
-			Provider:         "anthropic",
-			NormalizedFamily: "mystery",
-			NormalizedVariant: "",
-			NormalizedDate:   "",
+			ID:       "mystery-model",
+			Provider: "anthropic",
+			Family:   "mystery",
+			Variant:  "",
+			Date:     "",
 		},
 		{
-			ID:               "mystery-model",
-			Provider:         "anthropic",
-			NormalizedFamily: "mystery",
-			NormalizedVariant: "",
-			NormalizedDate:   "",
+			ID:       "mystery-model",
+			Provider: "anthropic",
+			Family:   "mystery",
+			Variant:  "",
+			Date:     "",
 		},
 	}
 	names := []string{
@@ -463,26 +463,26 @@ func TestResolveCollisions_SequentialSuffix(t *testing.T) {
 func TestGenerateConstantsSource_Compiles(t *testing.T) {
 	models := []bestiary.ModelInfo{
 		{
-			ID:               "claude-opus-4-20250514",
-			Provider:         "anthropic",
-			NormalizedFamily: "claude",
-			NormalizedVariant: "opus",
-			NormalizedDate:   "2025-05-14",
+			ID:       "claude-opus-4-20250514",
+			Provider: "anthropic",
+			Family:   "claude",
+			Variant:  "opus",
+			Date:     "2025-05-14",
 		},
 		{
-			ID:               "gpt-4o-2024-08-06",
-			Provider:         "openai",
-			NormalizedFamily: "gpt",
-			NormalizedVariant: "",
-			NormalizedDate:   "2024-08-06",
+			ID:       "gpt-4o-2024-08-06",
+			Provider: "openai",
+			Family:   "gpt",
+			Variant:  "",
+			Date:     "2024-08-06",
 		},
 		{
 			// Skip-rule: empty family.
-			ID:               "unknown-xyz",
-			Provider:         "some-provider",
-			NormalizedFamily: "",
-			NormalizedVariant: "",
-			NormalizedDate:   "",
+			ID:       "unknown-xyz",
+			Provider: "some-provider",
+			Family:   "",
+			Variant:  "",
+			Date:     "",
 		},
 	}
 
@@ -615,29 +615,29 @@ func TestGenToModelInfo_EmptyFamily(t *testing.T) {
 	}
 	info := genToModelInfo("anthropic", wm)
 
-	if info.Family != "" {
-		t.Errorf("Family: got %q, want empty (raw field was empty)", info.Family)
+	if info.RawFamily != "" {
+		t.Errorf("RawFamily: got %q, want empty (raw field was empty)", info.RawFamily)
 	}
-	// InferFamilyFromID("claude-haiku-no-family", "anthropic") must populate NormalizedFamily.
-	if info.NormalizedFamily == "" {
-		t.Errorf("NormalizedFamily: got empty; InferFamilyFromID should infer a non-empty family from ID %q", wm.ID)
+	// InferFamilyFromID("claude-haiku-no-family", "anthropic") must populate Family.
+	if info.Family == "" {
+		t.Errorf("Family: got empty; InferFamilyFromID should infer a non-empty family from ID %q", wm.ID)
 	}
-	// NormalizedVariant may or may not be empty depending on InferFamilyFromID behavior.
-	// The key property is that NormalizedFamily is populated (no silent no-op).
-	t.Logf("genToModelInfo empty-family: NormalizedFamily=%q NormalizedVariant=%q", info.NormalizedFamily, info.NormalizedVariant)
+	// Variant may or may not be empty depending on InferFamilyFromID behavior.
+	// The key property is that Family is populated (no silent no-op).
+	t.Logf("genToModelInfo empty-family: Family=%q Variant=%q", info.Family, info.Variant)
 }
 
-// TestGenToModelInfo_NormalizedFields verifies that genToModelInfo correctly populates
-// NormalizedFamily, NormalizedVariant, and NormalizedDate for models with known inputs.
+// TestGenToModelInfo_CanonicalFields verifies that genToModelInfo correctly populates
+// Family, Variant, and Date for models with known inputs.
 // This guards against regressions in the genToModelInfo normalization splice path.
-func TestGenToModelInfo_NormalizedFields(t *testing.T) {
+func TestGenToModelInfo_CanonicalFields(t *testing.T) {
 	cases := []struct {
-		desc            string
-		providerSlug    string
-		wm              genWireModel
-		wantFamily      string
-		wantVariant     string
-		wantDateContains string // substring of NormalizedDate (may be empty for no-date models)
+		desc             string
+		providerSlug     string
+		wm               genWireModel
+		wantFamily       string
+		wantVariant      string
+		wantDateContains string // substring of Date (may be empty for no-date models)
 	}{
 		{
 			desc:         "claude-opus-4-20250514: family=claude-opus, date in ID",
@@ -663,13 +663,13 @@ func TestGenToModelInfo_NormalizedFields(t *testing.T) {
 			},
 			// ParseFamily("gpt-4o") returns ("gpt-4o", "") when no override matches;
 			// the exact result depends on parse data but the key property is that
-			// NormalizedFamily is non-empty and NormalizedDate is populated from the ID.
+			// Family is non-empty and Date is populated from the ID.
 			wantFamily:       "gpt-4o",
 			wantVariant:      "",
 			wantDateContains: "2024-08-06",
 		},
 		{
-			desc:         "empty family: NormalizedFamily inferred from ID",
+			desc:         "empty family: Family inferred from ID",
 			providerSlug: "anthropic",
 			wm: genWireModel{
 				ID:     "claude-haiku-no-family",
@@ -685,19 +685,19 @@ func TestGenToModelInfo_NormalizedFields(t *testing.T) {
 		t.Run(tc.desc, func(t *testing.T) {
 			info := genToModelInfo(tc.providerSlug, tc.wm)
 
-			if string(info.NormalizedFamily) != tc.wantFamily {
-				t.Errorf("NormalizedFamily: got %q, want %q", info.NormalizedFamily, tc.wantFamily)
+			if string(info.Family) != tc.wantFamily {
+				t.Errorf("Family: got %q, want %q", info.Family, tc.wantFamily)
 			}
-			if tc.wantVariant != "" && info.NormalizedVariant != tc.wantVariant {
-				t.Errorf("NormalizedVariant: got %q, want %q", info.NormalizedVariant, tc.wantVariant)
+			if tc.wantVariant != "" && info.Variant != tc.wantVariant {
+				t.Errorf("Variant: got %q, want %q", info.Variant, tc.wantVariant)
 			}
-			if tc.wantDateContains != "" && !strings.Contains(info.NormalizedDate, tc.wantDateContains) {
-				t.Errorf("NormalizedDate: got %q, want it to contain %q", info.NormalizedDate, tc.wantDateContains)
+			if tc.wantDateContains != "" && !strings.Contains(info.Date, tc.wantDateContains) {
+				t.Errorf("Date: got %q, want it to contain %q", info.Date, tc.wantDateContains)
 			}
-			if tc.wantDateContains == "" && info.NormalizedDate != "" {
+			if tc.wantDateContains == "" && info.Date != "" {
 				// Some models may extract a date from the release field even when wantDateContains is "".
 				// Just log it; don't fail — release-date fallback is valid behavior.
-				t.Logf("NormalizedDate: got %q (non-empty); extracted from release field or ID", info.NormalizedDate)
+				t.Logf("Date: got %q (non-empty); extracted from release field or ID", info.Date)
 			}
 		})
 	}
@@ -899,15 +899,15 @@ func TestNoFetch_MissingCache_ActionableError(t *testing.T) {
 
 // TestStaticDataset_CrossProviderConsistency verifies that for model IDs present
 // under multiple providers in the static dataset, providers that have an empty
-// raw_family field produce the same (NormalizedFamily, NormalizedVariant,
-// NormalizedVersion) as providers with a populated raw_family, when all
-// populated-raw_family providers agree on the same decomposition.
+// raw_family field produce the same (Family, Variant, Version) as providers with
+// a populated raw_family, when all populated-raw_family providers agree on the
+// same decomposition.
 //
 // B6 (SLICE-FIX-2): codegen must produce consistent decompositions regardless of
 // whether the raw_family field is empty or populated. The primary documented
 // regression was: Nano-GPT and 302ai (empty raw_family) producing
-// NormalizedVariant="" for claude-opus-4-5-20251101 while Anthropic/QiHangAI
-// (raw_family="claude-opus") produce NormalizedVariant="opus".
+// Variant="" for claude-opus-4-5-20251101 while Anthropic/QiHangAI
+// (raw_family="claude-opus") produce Variant="opus".
 //
 // SCOPE BOUNDARY (documented findings for FOLLOWUP_SLICE-1 / bestiary-wi36):
 //
@@ -949,10 +949,10 @@ func TestStaticDataset_CrossProviderConsistency(t *testing.T) {
 			continue
 		}
 		byID[id] = append(byID[id], entry{
-			RawFamily: string(m.Family),
-			Family:    string(m.NormalizedFamily),
-			Variant:   m.NormalizedVariant,
-			Version:   m.NormalizedVersion,
+			RawFamily: string(m.RawFamily),
+			Family:    string(m.Family),
+			Variant:   m.Variant,
+			Version:   m.Version,
 			Provider:  string(m.Provider),
 		})
 	}
@@ -1183,7 +1183,7 @@ func TestSlugToIdentifier_ChatGPT(t *testing.T) {
 //
 // B5: Model__<Provider>__<Family>__<Variant>?__<Version>?__<Date>?
 //
-// When NormalizedVersion is non-empty, the version "4.5" is encoded as a single
+// When Version is non-empty, the version "4.5" is encoded as a single
 // segment "4_5" (dot→underscore). The raw ID version tokens are replaced by this
 // single compact segment so that "4_5" uses single underscores within.
 //
@@ -1195,41 +1195,41 @@ func TestNameForCanonical_DoubleUnderscoreTemplate(t *testing.T) {
 		wantName string
 	}{
 		{
-			desc: "claude-opus-4-5 with NormalizedVersion on Anthropic (B5 golden)",
+			desc: "claude-opus-4-5 with Version on Anthropic (B5 golden)",
 			model: bestiary.ModelInfo{
-				ID:                "claude-opus-4-5-20251101",
-				Provider:          "anthropic",
-				NormalizedFamily:  "claude",
-				NormalizedVariant: "opus",
-				NormalizedVersion: "4.5",
-				NormalizedDate:    "2025-11-01",
+				ID:       "claude-opus-4-5-20251101",
+				Provider: "anthropic",
+				Family:   "claude",
+				Variant:  "opus",
+				Version:  "4.5",
+				Date:     "2025-11-01",
 			},
-			// NormalizedVersion "4.5" → segment "4_5" (single underscores within, double between).
-			// Raw version tokens ("4","5") replaced by the NormalizedVersion segment.
+			// Version "4.5" → segment "4_5" (single underscores within, double between).
+			// Raw version tokens ("4","5") replaced by the Version segment.
 			wantName: "Model__Anthropic__Claude__Opus__4_5__20251101",
 		},
 		{
 			desc: "gpt-4o without version or date on OpenAI (B5 golden)",
 			model: bestiary.ModelInfo{
-				ID:                "gpt-4o",
-				Provider:          "openai",
-				NormalizedFamily:  "gpt",
-				NormalizedVariant: "",
-				NormalizedVersion: "",
-				NormalizedDate:    "",
+				ID:       "gpt-4o",
+				Provider: "openai",
+				Family:   "gpt",
+				Variant:  "",
+				Version:  "",
+				Date:     "",
 			},
-			// No NormalizedVersion → raw ID tokens: [GPT, 4o]; joined with __.
+			// No Version → raw ID tokens: [GPT, 4o]; joined with __.
 			wantName: "Model__OpenAI__GPT__4o",
 		},
 		{
 			desc: "chatgpt model uses ChatGPT casing (B4)",
 			model: bestiary.ModelInfo{
-				ID:                "chatgpt-4o",
-				Provider:          "openai",
-				NormalizedFamily:  "chatgpt",
-				NormalizedVariant: "",
-				NormalizedVersion: "",
-				NormalizedDate:    "",
+				ID:       "chatgpt-4o",
+				Provider: "openai",
+				Family:   "chatgpt",
+				Variant:  "",
+				Version:  "",
+				Date:     "",
 			},
 			// chatgpt → ChatGPT via casingOverrides; 4o from raw ID.
 			wantName: "Model__OpenAI__ChatGPT__4o",
@@ -1237,12 +1237,12 @@ func TestNameForCanonical_DoubleUnderscoreTemplate(t *testing.T) {
 		{
 			desc: "claude-haiku no date, double underscore between provider and family",
 			model: bestiary.ModelInfo{
-				ID:                "claude-haiku",
-				Provider:          "anthropic",
-				NormalizedFamily:  "claude",
-				NormalizedVariant: "haiku",
-				NormalizedVersion: "",
-				NormalizedDate:    "",
+				ID:       "claude-haiku",
+				Provider: "anthropic",
+				Family:   "claude",
+				Variant:  "haiku",
+				Version:  "",
+				Date:     "",
 			},
 			wantName: "Model__Anthropic__Claude__Haiku",
 		},

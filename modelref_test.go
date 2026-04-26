@@ -7,17 +7,17 @@ import (
 )
 
 // TestModelInfo_Ref verifies that Ref() populates all 7 fields correctly.
-// Family, Variant, and Version come from the normalized fields; Date from NormalizedDate.
+// Family, Variant, and Version come from the canonical fields; Date from Date.
 func TestModelInfo_Ref(t *testing.T) {
 	m := bestiary.ModelInfo{
-		ID:                "claude-opus-4-20250514",
-		Provider:          bestiary.ProviderAnthropic,
-		Family:            "claude-opus",
-		NormalizedFamily:  "claude",
-		NormalizedVariant: "opus",
-		NormalizedVersion: "",
-		NormalizedDate:    "2025-05-14",
-		ReleaseDate:       "2025-05-14",
+		ID:          "claude-opus-4-20250514",
+		Provider:    bestiary.ProviderAnthropic,
+		RawFamily:   "claude-opus",
+		Family:      "claude",
+		Variant:     "opus",
+		Version:     "",
+		Date:        "2025-05-14",
+		ReleaseDate: "2025-05-14",
 	}
 	ref := m.Ref()
 
@@ -44,17 +44,17 @@ func TestModelInfo_Ref(t *testing.T) {
 	}
 }
 
-// TestModelInfo_Ref_WithVersion verifies that Ref() propagates NormalizedVersion.
+// TestModelInfo_Ref_WithVersion verifies that Ref() propagates Version.
 func TestModelInfo_Ref_WithVersion(t *testing.T) {
 	m := bestiary.ModelInfo{
-		ID:                "claude-opus-4-5-20251101",
-		Provider:          bestiary.ProviderAnthropic,
-		Family:            "claude-opus-4-5",
-		NormalizedFamily:  "claude",
-		NormalizedVariant: "opus",
-		NormalizedVersion: "4.5",
-		NormalizedDate:    "2025-11-01",
-		ReleaseDate:       "2025-11-01",
+		ID:          "claude-opus-4-5-20251101",
+		Provider:    bestiary.ProviderAnthropic,
+		RawFamily:   "claude-opus-4-5",
+		Family:      "claude",
+		Variant:     "opus",
+		Version:     "4.5",
+		Date:        "2025-11-01",
+		ReleaseDate: "2025-11-01",
 	}
 	ref := m.Ref()
 
@@ -542,7 +542,7 @@ func TestFormatCanonical_AllCombinations(t *testing.T) {
 // that pulls claude-opus-4-5-20251101 from the static registry (populated by
 // go generate ./... via codegen) and asserts the canonical form includes the
 // version "4.5". This verifies the end-to-end production code path:
-// codegen → models_static_gen.go NormalizedVersion → Ref() → formatCanonical.
+// codegen → models_static_gen.go Version → Ref() → formatCanonical.
 //
 // Before cycle-2 fix: formatted as "anthropic/claude/opus@2025-11-01" (no version).
 // After cycle-2 fix: formatted as "anthropic/claude/opus/4.5@2025-11-01".
@@ -565,7 +565,7 @@ func TestFormatCanonical_StaticRegistry_Claude_Opus_4_5(t *testing.T) {
 
 	ref := m.Ref()
 	if ref.Version == "" {
-		t.Errorf("Ref().Version is empty for %q — NormalizedVersion not populated by codegen; want version extracted from model ID", targetID)
+		t.Errorf("Ref().Version is empty for %q — Version not populated by codegen; want version extracted from model ID", targetID)
 	}
 	if ref.Version != "4.5" {
 		t.Errorf("Ref().Version = %q, want %q", ref.Version, "4.5")

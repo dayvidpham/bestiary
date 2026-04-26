@@ -399,37 +399,37 @@ func TestMigration_V2toV3_PreservesData(t *testing.T) {
 		byID[m.ID] = m
 	}
 	if m, ok := byID["claude-opus-4-20250514"]; ok {
-		if m.Family != "claude-opus" {
-			t.Errorf("claude-opus-4: Family (raw_family) = %q, want %q", m.Family, "claude-opus")
+		if m.RawFamily != "claude-opus" {
+			t.Errorf("claude-opus-4: RawFamily (raw_family) = %q, want %q", m.RawFamily, "claude-opus")
 		}
 		// ParseFamily("claude-opus") = ("claude", "opus")
-		if m.NormalizedFamily != "claude" {
-			t.Errorf("claude-opus-4: NormalizedFamily = %q, want %q", m.NormalizedFamily, "claude")
+		if m.Family != "claude" {
+			t.Errorf("claude-opus-4: Family = %q, want %q", m.Family, "claude")
 		}
-		if m.NormalizedVariant != "opus" {
-			t.Errorf("claude-opus-4: NormalizedVariant = %q, want %q", m.NormalizedVariant, "opus")
+		if m.Variant != "opus" {
+			t.Errorf("claude-opus-4: Variant = %q, want %q", m.Variant, "opus")
 		}
 		// ExtractDate("claude-opus-4-20250514", "2025-05-14") = "2025-05-14" (from model_id)
-		if m.NormalizedDate != "2025-05-14" {
-			t.Errorf("claude-opus-4: NormalizedDate = %q, want %q", m.NormalizedDate, "2025-05-14")
+		if m.Date != "2025-05-14" {
+			t.Errorf("claude-opus-4: Date = %q, want %q", m.Date, "2025-05-14")
 		}
 	} else {
 		t.Error("claude-opus-4-20250514 not found after migration")
 	}
 	if m, ok := byID["gemini-pro"]; ok {
-		if m.Family != "gemini-pro" {
-			t.Errorf("gemini-pro: Family (raw_family) = %q, want %q", m.Family, "gemini-pro")
+		if m.RawFamily != "gemini-pro" {
+			t.Errorf("gemini-pro: RawFamily (raw_family) = %q, want %q", m.RawFamily, "gemini-pro")
 		}
 		// ParseFamily("gemini-pro") = ("gemini", "pro")
-		if m.NormalizedFamily != "gemini" {
-			t.Errorf("gemini-pro: NormalizedFamily = %q, want %q", m.NormalizedFamily, "gemini")
+		if m.Family != "gemini" {
+			t.Errorf("gemini-pro: Family = %q, want %q", m.Family, "gemini")
 		}
-		if m.NormalizedVariant != "pro" {
-			t.Errorf("gemini-pro: NormalizedVariant = %q, want %q", m.NormalizedVariant, "pro")
+		if m.Variant != "pro" {
+			t.Errorf("gemini-pro: Variant = %q, want %q", m.Variant, "pro")
 		}
 		// ExtractDate("gemini-pro", "") = "" (no date in model_id, no release_date)
-		if m.NormalizedDate != "" {
-			t.Errorf("gemini-pro: NormalizedDate = %q, want %q", m.NormalizedDate, "")
+		if m.Date != "" {
+			t.Errorf("gemini-pro: Date = %q, want %q", m.Date, "")
 		}
 	} else {
 		t.Error("gemini-pro not found after migration")
@@ -437,8 +437,8 @@ func TestMigration_V2toV3_PreservesData(t *testing.T) {
 }
 
 // TestMigration_V2toV3_Backfill creates a v2 database and migrates to v3,
-// asserting NormalizedFamily/NormalizedVariant/NormalizedDate are backfilled
-// from ParseFamily and ExtractDate. Two rows cover both ExtractDate branches:
+// asserting Family/Variant/Date are backfilled from ParseFamily and ExtractDate.
+// Two rows cover both ExtractDate branches:
 //   - date embedded in model_id, no release_date
 //   - no date in model_id, date taken from release_date column
 func TestMigration_V2toV3_Backfill(t *testing.T) {
@@ -469,18 +469,18 @@ func TestMigration_V2toV3_Backfill(t *testing.T) {
 	if err != nil {
 		t.Fatalf("QueryModel (row 1): %v", err)
 	}
-	if got1.Family != "claude-opus" {
-		t.Errorf("row1: Family (raw_family) = %q, want %q", got1.Family, "claude-opus")
+	if got1.RawFamily != "claude-opus" {
+		t.Errorf("row1: RawFamily (raw_family) = %q, want %q", got1.RawFamily, "claude-opus")
 	}
-	if got1.NormalizedFamily != "claude" {
-		t.Errorf("row1: NormalizedFamily = %q, want %q", got1.NormalizedFamily, "claude")
+	if got1.Family != "claude" {
+		t.Errorf("row1: Family = %q, want %q", got1.Family, "claude")
 	}
-	if got1.NormalizedVariant != "opus" {
-		t.Errorf("row1: NormalizedVariant = %q, want %q", got1.NormalizedVariant, "opus")
+	if got1.Variant != "opus" {
+		t.Errorf("row1: Variant = %q, want %q", got1.Variant, "opus")
 	}
-	// NormalizedDate must come from the model_id, not release_date (which is empty).
-	if got1.NormalizedDate != "2025-05-14" {
-		t.Errorf("row1: NormalizedDate = %q, want %q", got1.NormalizedDate, "2025-05-14")
+	// Date must come from the model_id, not release_date (which is empty).
+	if got1.Date != "2025-05-14" {
+		t.Errorf("row1: Date = %q, want %q", got1.Date, "2025-05-14")
 	}
 
 	// --- Row 2: date from release_date (model_id has no embedded date) ---
@@ -488,12 +488,12 @@ func TestMigration_V2toV3_Backfill(t *testing.T) {
 	if err != nil {
 		t.Fatalf("QueryModel (row 2): %v", err)
 	}
-	if got2.Family != "gemini-pro" {
-		t.Errorf("row2: Family (raw_family) = %q, want %q", got2.Family, "gemini-pro")
+	if got2.RawFamily != "gemini-pro" {
+		t.Errorf("row2: RawFamily (raw_family) = %q, want %q", got2.RawFamily, "gemini-pro")
 	}
-	// NormalizedDate must come from release_date "2024-06-01" because model_id has no date.
-	if got2.NormalizedDate != "2024-06-01" {
-		t.Errorf("row2: NormalizedDate = %q, want %q (should come from release_date)", got2.NormalizedDate, "2024-06-01")
+	// Date must come from release_date "2024-06-01" because model_id has no date.
+	if got2.Date != "2024-06-01" {
+		t.Errorf("row2: Date = %q, want %q (should come from release_date)", got2.Date, "2024-06-01")
 	}
 }
 
@@ -539,8 +539,8 @@ func TestMigration_V2toV3_Idempotent(t *testing.T) {
 		if err != nil {
 			t.Fatalf("QueryModel on second open: %v", err)
 		}
-		if got.Family != "gpt-4o" {
-			t.Errorf("Family (raw_family) = %q, want %q", got.Family, "gpt-4o")
+		if got.RawFamily != "gpt-4o" {
+			t.Errorf("RawFamily (raw_family) = %q, want %q", got.RawFamily, "gpt-4o")
 		}
 	}
 }
@@ -582,30 +582,30 @@ func TestMigration_V2toV3_EdgeCases(t *testing.T) {
 		byID[m.ID] = m
 	}
 
-	// Empty family case: NormalizedFamily should be "" (no override, no suffix match)
+	// Empty family case: Family should be "" (no override, no suffix match)
 	if m, ok := byID["some-model-20251201"]; ok {
 		if m.Family != "" {
 			t.Errorf("empty-family row: Family = %q, want %q", m.Family, "")
 		}
 		// date extracted from model_id "some-model-20251201"
-		if m.NormalizedDate != "2025-12-01" {
-			t.Errorf("empty-family row: NormalizedDate = %q, want %q", m.NormalizedDate, "2025-12-01")
+		if m.Date != "2025-12-01" {
+			t.Errorf("empty-family row: Date = %q, want %q", m.Date, "2025-12-01")
 		}
 	} else {
 		t.Error("some-model-20251201 not found")
 	}
 
-	// Single-token family "gpt" → no override, no pattern, no suffix → fallback
+	// Single-token raw_family "gpt" → no override, no pattern, no suffix → fallback
 	if m, ok := byID["gpt"]; ok {
-		if m.Family != "gpt" {
-			t.Errorf("gpt row: Family (raw_family) = %q, want %q", m.Family, "gpt")
+		if m.RawFamily != "gpt" {
+			t.Errorf("gpt row: RawFamily (raw_family) = %q, want %q", m.RawFamily, "gpt")
 		}
 		// ParseFamily("gpt") → ("gpt","") because no pattern/suffix matches a single token
-		if m.NormalizedFamily != "gpt" {
-			t.Errorf("gpt row: NormalizedFamily = %q, want %q", m.NormalizedFamily, "gpt")
+		if m.Family != "gpt" {
+			t.Errorf("gpt row: Family = %q, want %q", m.Family, "gpt")
 		}
-		if m.NormalizedVariant != "" {
-			t.Errorf("gpt row: NormalizedVariant = %q, want %q", m.NormalizedVariant, "")
+		if m.Variant != "" {
+			t.Errorf("gpt row: Variant = %q, want %q", m.Variant, "")
 		}
 	} else {
 		t.Error("gpt not found")
@@ -613,8 +613,8 @@ func TestMigration_V2toV3_EdgeCases(t *testing.T) {
 
 	// gemini row: date extracted from model_id
 	if m, ok := byID["gemini-2-0-flash-20250205"]; ok {
-		if m.NormalizedDate != "2025-02-05" {
-			t.Errorf("gemini row: NormalizedDate = %q, want %q", m.NormalizedDate, "2025-02-05")
+		if m.Date != "2025-02-05" {
+			t.Errorf("gemini row: Date = %q, want %q", m.Date, "2025-02-05")
 		}
 	} else {
 		t.Error("gemini-2-0-flash-20250205 not found")
@@ -802,18 +802,18 @@ func TestMigration_V3toV4_PreservesData(t *testing.T) {
 
 	// Check claude row: existing fields preserved, version defaults to ''.
 	if m, ok := byID["claude-opus-4-20250514"]; ok {
-		if m.NormalizedFamily != "claude" {
-			t.Errorf("claude: NormalizedFamily = %q, want %q", m.NormalizedFamily, "claude")
+		if m.Family != "claude" {
+			t.Errorf("claude: Family = %q, want %q", m.Family, "claude")
 		}
-		if m.NormalizedVariant != "opus" {
-			t.Errorf("claude: NormalizedVariant = %q, want %q", m.NormalizedVariant, "opus")
+		if m.Variant != "opus" {
+			t.Errorf("claude: Variant = %q, want %q", m.Variant, "opus")
 		}
-		if m.NormalizedDate != "2025-05-14" {
-			t.Errorf("claude: NormalizedDate = %q, want %q", m.NormalizedDate, "2025-05-14")
+		if m.Date != "2025-05-14" {
+			t.Errorf("claude: Date = %q, want %q", m.Date, "2025-05-14")
 		}
 		// Version column defaults to '' for migrated rows.
-		if m.NormalizedVersion != "" {
-			t.Errorf("claude: NormalizedVersion = %q, want '' (default from migration)", m.NormalizedVersion)
+		if m.Version != "" {
+			t.Errorf("claude: Version = %q, want '' (default from migration)", m.Version)
 		}
 	} else {
 		t.Error("claude-opus-4-20250514 not found after v3→v4 migration")
@@ -821,11 +821,11 @@ func TestMigration_V3toV4_PreservesData(t *testing.T) {
 
 	// Check gemini row.
 	if m, ok := byID["gemini-flash"]; ok {
-		if m.NormalizedFamily != "gemini" {
-			t.Errorf("gemini: NormalizedFamily = %q, want %q", m.NormalizedFamily, "gemini")
+		if m.Family != "gemini" {
+			t.Errorf("gemini: Family = %q, want %q", m.Family, "gemini")
 		}
-		if m.NormalizedVersion != "" {
-			t.Errorf("gemini: NormalizedVersion = %q, want '' (default from migration)", m.NormalizedVersion)
+		if m.Version != "" {
+			t.Errorf("gemini: Version = %q, want '' (default from migration)", m.Version)
 		}
 	} else {
 		t.Error("gemini-flash not found after v3→v4 migration")
@@ -919,10 +919,8 @@ func TestMigration_V3toV4_IndexRebuilt(t *testing.T) {
 	}
 }
 
-// TestNormalizedVersion_RoundTrip verifies that NormalizedVersion survives
-// a UpsertModels + QueryModel round-trip.
-// This test FAILS until L3 wires the version column into upsert and scan.
-func TestNormalizedVersion_RoundTrip(t *testing.T) {
+// TestVersion_RoundTrip verifies that Version survives a UpsertModels + QueryModel round-trip.
+func TestVersion_RoundTrip(t *testing.T) {
 	store, err := OpenStore(":memory:")
 	if err != nil {
 		t.Fatalf("OpenStore: %v", err)
@@ -931,15 +929,15 @@ func TestNormalizedVersion_RoundTrip(t *testing.T) {
 
 	ctx := context.Background()
 	m := ModelInfo{
-		ID:                ModelID("claude-opus-4-5-20251101"),
-		Provider:          ProviderAnthropic,
-		DisplayName:       "Claude Opus 4.5",
-		Family:            Family("claude-opus-4-5"),
-		NormalizedFamily:  Family("claude"),
-		NormalizedVariant: "opus",
-		NormalizedVersion: "4.5",
-		NormalizedDate:    "2025-11-01",
-		LastSynced:        "2026-01-01T00:00:00Z",
+		ID:          ModelID("claude-opus-4-5-20251101"),
+		Provider:    ProviderAnthropic,
+		DisplayName: "Claude Opus 4.5",
+		RawFamily:   Family("claude-opus-4-5"),
+		Family:      Family("claude"),
+		Variant:     "opus",
+		Version:     "4.5",
+		Date:        "2025-11-01",
+		LastSynced:  "2026-01-01T00:00:00Z",
 	}
 
 	if err := store.UpsertModels(ctx, []ModelInfo{m}); err != nil {
@@ -951,20 +949,20 @@ func TestNormalizedVersion_RoundTrip(t *testing.T) {
 		t.Fatalf("QueryModel: %v", err)
 	}
 
-	if got.NormalizedVersion != "4.5" {
+	if got.Version != "4.5" {
 		t.Errorf(
-			"NormalizedVersion round-trip failed: got %q, want %q\n"+
-				"  What: NormalizedVersion not persisted or not scanned\n"+
+			"Version round-trip failed: got %q, want %q\n"+
+				"  What: Version not persisted or not scanned\n"+
 				"  Why: upsert SQL or scanModelInfo does not handle the version column\n"+
 				"  Where: store.go UpsertModels / scanModelInfo\n"+
 				"  How to fix: add version column to the INSERT + scan in store.go",
-			got.NormalizedVersion, "4.5",
+			got.Version, "4.5",
 		)
 	}
-	if got.NormalizedFamily != "claude" {
-		t.Errorf("NormalizedFamily = %q, want %q", got.NormalizedFamily, "claude")
+	if got.Family != "claude" {
+		t.Errorf("Family = %q, want %q", got.Family, "claude")
 	}
-	if got.NormalizedVariant != "opus" {
-		t.Errorf("NormalizedVariant = %q, want %q", got.NormalizedVariant, "opus")
+	if got.Variant != "opus" {
+		t.Errorf("Variant = %q, want %q", got.Variant, "opus")
 	}
 }

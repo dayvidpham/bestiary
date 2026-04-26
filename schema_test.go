@@ -59,18 +59,18 @@ func TestJSONOutput_ConformsToSchema(t *testing.T) {
 		)
 	}
 
-	// Step 3: build a comprehensive ModelInfo fixture with all Normalized fields
-	// populated and produce JSON. Non-empty NormalizedFamily/Variant/Date are used
+	// Step 3: build a comprehensive ModelInfo fixture with all canonical fields
+	// populated and produce JSON. Non-empty Family/Variant/Date are used
 	// to exercise the codegen-baked normalization path.
 	cost := 1.5
 	fixture := bestiary.ModelInfo{
-		ID:                    "test-schema-model-20240101",
-		Provider:              "testprovider",
-		DisplayName:           "Schema Test Model",
-		Family:                "test-family",
-		NormalizedFamily:      "test",
-		NormalizedVariant:     "schema",
-		NormalizedDate:        "2024-01-01",
+		ID:          "test-schema-model-20240101",
+		Provider:    "testprovider",
+		DisplayName: "Schema Test Model",
+		RawFamily:   "test-family",
+		Family:      "test",
+		Variant:     "schema",
+		Date:        "2024-01-01",
 		ContextWindow:         128000,
 		MaxOutput:             4096,
 		Reasoning:             true,
@@ -148,22 +148,22 @@ func TestJSONOutput_ConformsToSchema(t *testing.T) {
 	}
 }
 
-// TestJSONOutput_NormalizedFields_Populated verifies that a ModelInfo fixture
-// with NormalizedFamily, NormalizedVariant, NormalizedVersion, and NormalizedDate
-// set to non-empty values round-trips correctly through JSON marshaling.
+// TestJSONOutput_CanonicalFields_Populated verifies that a ModelInfo fixture with
+// Family, Variant, Version, and Date set to non-empty values round-trips correctly
+// through JSON marshaling.
 //
 // This exercises the codegen-baked normalization path that SLICE-FIX-1 introduced.
-func TestJSONOutput_NormalizedFields_Populated(t *testing.T) {
+func TestJSONOutput_CanonicalFields_Populated(t *testing.T) {
 	cost := 2.5
 	fixture := bestiary.ModelInfo{
-		ID:                    "claude-opus-4-5-20251101",
-		Provider:              "anthropic",
-		DisplayName:           "Claude Opus 4.5",
-		Family:                "claude-opus",
-		NormalizedFamily:      "claude",
-		NormalizedVariant:     "opus",
-		NormalizedVersion:     "4.5",
-		NormalizedDate:        "2025-11-01",
+		ID:          "claude-opus-4-5-20251101",
+		Provider:    "anthropic",
+		DisplayName: "Claude Opus 4.5",
+		RawFamily:   "claude-opus",
+		Family:      "claude",
+		Variant:     "opus",
+		Version:     "4.5",
+		Date:        "2025-11-01",
 		ContextWindow:         200000,
 		MaxOutput:             32000,
 		Reasoning:             true,
@@ -198,10 +198,10 @@ func TestJSONOutput_NormalizedFields_Populated(t *testing.T) {
 	}
 
 	checks := map[string]string{
-		"NormalizedFamily":  "claude",
-		"NormalizedVariant": "opus",
-		"NormalizedVersion": "4.5",
-		"NormalizedDate":    "2025-11-01",
+		"Family":  "claude",
+		"Variant": "opus",
+		"Version": "4.5",
+		"Date":    "2025-11-01",
 	}
 	for field, want := range checks {
 		v, ok := got[field]
@@ -210,7 +210,7 @@ func TestJSONOutput_NormalizedFields_Populated(t *testing.T) {
 			continue
 		}
 		if got, ok := v.(string); !ok || got != want {
-			t.Errorf("field %q: got %v (%T), want %q;\n  why: NormalizedX fields must be string values", field, v, v, want)
+			t.Errorf("field %q: got %v (%T), want %q;\n  why: canonical fields must be string values", field, v, v, want)
 		}
 	}
 }
@@ -378,7 +378,7 @@ func TestDesignation_AllAcceptabilityRatings(t *testing.T) {
 // documented in bestiary.schema.json (see package errors.go).
 //
 // The static registry must contain at least two models with the same
-// NormalizedFamily but different variants for this test to be meaningful.
+// canonical Family but different variants for this test to be meaningful.
 func TestResolve_ErrAmbiguous(t *testing.T) {
 	// "claude" matches claude/opus, claude/sonnet, claude/haiku, etc. in the
 	// static registry. This should trigger ErrAmbiguous because multiple distinct
@@ -451,24 +451,24 @@ func isErrAmbiguous(err error, target **bestiary.ErrAmbiguous) bool {
 
 // TestJSONOutput_NegativeConformance verifies that a synthesized JSON object
 // that violates the bestiary.schema.json specification is detectable — i.e.,
-// the schema does NOT accept a wrong type for NormalizedDate.
+// the schema does NOT accept a wrong type for Date.
 //
 // This test does not invoke a live JSON Schema validator library (no external
-// deps); instead it directly asserts the detection logic — a NormalizedDate
-// field containing an integer would be rejected by type: string in the schema.
+// deps); instead it directly asserts the detection logic — a Date field
+// containing an integer would be rejected by type: string in the schema.
 // The test constructs such an invalid object and verifies it cannot be parsed
 // into a ModelInfo via a strict decoder that mirrors schema validation intent.
 func TestJSONOutput_NegativeConformance(t *testing.T) {
-	// Construct a JSON object with NormalizedDate as integer (schema violation).
-	// The real schema says NormalizedDate must be type: string.
+	// Construct a JSON object with Date as integer (schema violation).
+	// The real schema says Date must be type: string.
 	invalidJSON := `{
 		"ID": "bad-model",
 		"Provider": "test",
 		"DisplayName": "Bad Model",
+		"RawFamily": "test",
 		"Family": "test",
-		"NormalizedFamily": "test",
-		"NormalizedVariant": "",
-		"NormalizedDate": 20240101,
+		"Variant": "",
+		"Date": 20240101,
 		"ContextWindow": 1000,
 		"MaxOutput": 100,
 		"Reasoning": false,
@@ -489,7 +489,7 @@ func TestJSONOutput_NegativeConformance(t *testing.T) {
 		"LastSynced": "2024-01-01T00:00:00Z"
 	}`
 
-	// Strict JSON decode into ModelInfo: NormalizedDate is a string field in Go.
+	// Strict JSON decode into ModelInfo: Date is a string field in Go.
 	// json.Decoder with DisallowUnknownFields will fail on type mismatch.
 	var m bestiary.ModelInfo
 	dec := json.NewDecoder(bytes.NewBufferString(invalidJSON))
@@ -497,11 +497,11 @@ func TestJSONOutput_NegativeConformance(t *testing.T) {
 	err := dec.Decode(&m)
 	if err == nil {
 		t.Errorf(
-			"expected decode error for NormalizedDate=integer, got nil;\n"+
+			"expected decode error for Date=integer, got nil;\n"+
 				"  what went wrong: a JSON integer was accepted where a string is required\n"+
-				"  why: the schema declares NormalizedDate as type: string\n"+
+				"  why: the schema declares Date as type: string\n"+
 				"  where: schema_test.go TestJSONOutput_NegativeConformance\n"+
-				"  how to fix: ModelInfo.NormalizedDate must be typed as string in Go so "+
+				"  how to fix: ModelInfo.Date must be typed as string in Go so "+
 				"JSON decode rejects non-string values",
 		)
 	}
