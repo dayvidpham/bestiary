@@ -767,10 +767,16 @@ const (
 	// the "3-5" version component is not extracted by the parse heuristics).
 	ReasonVersionDigitsNotExtracted = "version digits between family-prefix and variant not extracted"
 
-	// ReasonSuffixOverflow is used when the remaining token stream after the
-	// expected family/variant/version/date components contains extra segments
-	// that the parser cannot account for.
-	ReasonSuffixOverflow = "suffix overflow: extra segments after expected family/variant/version/date"
+	// ReasonKnownSuffixOverflow is used when the trailing segment of the model ID
+	// matches a known modifier token (thinking, vision, latest, code, preview, think).
+	// The modifier is semantically meaningful but not yet extracted as a first-class
+	// field. Extend the modifier allowlist in parse.go when new tokens are discovered.
+	ReasonKnownSuffixOverflow = "suffix overflow: trailing token is a known modifier"
+
+	// ReasonUnknownSuffixOverflow is used when the trailing segment of the model ID
+	// does not match any known modifier token. This is an audit-log hint that the
+	// modifier allowlist in parse.go should be extended.
+	ReasonUnknownSuffixOverflow = "suffix overflow: trailing token is an unknown modifier (extend allowlist)"
 
 	// ReasonYYMMDateAsVersion is used for Mistral-style 4-digit numerals (e.g. 2401,
 	// 2403) where the parser cannot reliably distinguish a YYMM date from a version.
@@ -784,14 +790,17 @@ const (
 // Failure detection covers three modes:
 //  1. Version digits trapped between family-prefix and variant:
 //     "claude-3-5-haiku-20241022" → the 3-5 version digits are not extracted.
-//  2. Suffix overflow: extra hyphen-separated segments beyond what the heuristics
-//     can account for.
+//  2. Suffix overflow: trailing token beyond expected family/variant/version/date.
+//     Sub-cases: ReasonKnownSuffixOverflow (token in modifier allowlist) and
+//     ReasonUnknownSuffixOverflow (token not in allowlist — extend allowlist).
 //  3. YYMM-date-as-version false-positive: a 4-digit numeric segment that looks
 //     like a YYMM date (1900–2999 range) but is treated as part of the family/version.
 //
-// The best-effort result is always returned (same values as ParseFamilyWithVersion);
-// the *ParseFailure is non-nil as an annotation when a known deficiency is detected.
-// A nil *ParseFailure means no known deficiency was detected.
+// The returned *ParseFailure is an annotation, NOT an error. The function always
+// returns its best-effort family/variant/version values regardless of whether a
+// failure was detected. Callers who need only the parse result can discard the
+// *ParseFailure with _. Callers building an audit log should check failure != nil
+// and accumulate.
 //
 // Parameters id and p (model ID and provider) are used to populate the failure
 // record fields and are not used in the parse logic itself.
@@ -855,16 +864,32 @@ func ParseFamilyDetailed(raw Family, id ModelID, p Provider) (Family, string, st
 	}
 
 	// ── Failure mode 2: Suffix overflow ──────────────────────────────────────
-	// Detect cases where extra segments remain after accounting for
-	// family/variant/version/date. We reconstruct what the parser "consumed" and
-	// check if there is residual content.
+	// Detect cases where the model ID has a trailing modifier token beyond what
+	// the heuristics can account for. We classify the overflow into two sub-cases:
+	//
+	//   ReasonKnownSuffixOverflow   — trailing token is in the modifier allowlist
+	//                                 (thinking, think, vision, latest, code, preview)
+	//   ReasonUnknownSuffixOverflow — trailing token is NOT in the allowlist
+	//                                 (audit-log hint to extend the allowlist)
+	//
+	// Note: this detection is intentionally separate from ExtractModifier (added
+	// by SLICE-FIX-V2-5), which extracts the modifier as a first-class field when
+	// the allowlist matches cleanly. After V2-5 lands, most ReasonKnownSuffixOverflow
+	// cases will be pre-empted by ExtractModifier; this block catches residuals.
 	if raw != "" && detectSuffixOverflow(rawStr, family, variant, version) {
+		trailingToken := extractTrailingToken(rawStr)
+		var reason string
+		if knownModifierTokens[trailingToken] {
+			reason = ReasonKnownSuffixOverflow
+		} else {
+			reason = ReasonUnknownSuffixOverflow
+		}
 		return family, variant, version, &ParseFailure{
 			RawID:          id,
 			Provider:       p,
 			RawFamily:      raw,
 			AttemptedParse: attempted,
-			Reason:         ReasonSuffixOverflow,
+			Reason:         reason,
 		}
 	}
 
@@ -876,6 +901,35 @@ func ParseFamilyDetailed(raw Family, id ModelID, p Provider) (Family, string, st
 // Mistral versioning (e.g. "mistral-2401", "pixtral-2411").
 // The segment must be at a word boundary within the hyphenated string.
 var reYYMMCandidate = regexp.MustCompile(`(?:^|-)(?:19|20|21|22|23|24|25|26|27|28|29)\d{2}(?:-|$)`)
+
+// knownModifierTokens is the seed allowlist of trailing modifier tokens that are
+// semantically meaningful but not yet extracted as first-class fields by the parser.
+// When a suffix-overflow model ID ends with one of these tokens, the failure is
+// classified as ReasonKnownSuffixOverflow (expected, extend to handle cleanly).
+// When the trailing token is NOT in this set, it is classified as
+// ReasonUnknownSuffixOverflow (audit hint to extend this allowlist).
+//
+// NOTE: this list is intentionally duplicated from the modifier allowlist that
+// SLICE-FIX-V2-5 embeds in parse/data/modifiers.json. A follow-up task
+// (filed under FOLLOWUP epic bestiary-602y) will refactor to share a single
+// source-of-truth once V2-5 has landed.
+var knownModifierTokens = map[string]bool{
+	"thinking": true,
+	"think":    true,
+	"vision":   true,
+	"latest":   true,
+	"code":     true,
+	"preview":  true,
+}
+
+// extractTrailingToken returns the last hyphen-separated token of s,
+// or the whole string if there is no hyphen.
+func extractTrailingToken(s string) string {
+	if idx := strings.LastIndexByte(s, '-'); idx >= 0 {
+		return s[idx+1:]
+	}
+	return s
+}
 
 // detectVersionDigitsInID returns true when the model ID contains one or more
 // purely-numeric hyphen-separated tokens between the canonical family prefix and
