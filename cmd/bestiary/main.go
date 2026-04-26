@@ -25,11 +25,19 @@ func run(args []string) error {
 	cmd := args[0]
 	fs := flag.NewFlagSet(cmd, flag.ContinueOnError)
 	provider := fs.String("provider", "", "filter by provider slug")
-	format := fs.String("format", "json", "output format: json, yaml, table")
+	// --output selects the output rendering format (json, yaml, table).
+	// NOTE: formerly --format in v0.0.1; renamed to --output in v0.0.2 to
+	// free --format for the input-scheme selection. See MIGRATION Section 11.
+	output := fs.String("output", "json", "output format: json, yaml, table")
 	dbPath := fs.String("db-path", "", "SQLite database path (default: XDG_CACHE_HOME/bestiary/models.db)")
-	// --scheme is show-only; defined here so the shared flagset parses it.
-	// Accepted values: canonical, huggingface, purl, raw. Empty means auto-detect.
-	scheme := fs.String("scheme", "", "scheme for model ID resolution: canonical, huggingface, purl, raw (default: auto-detect)")
+	// --format selects the input scheme for model ID parsing (show command only).
+	// Default is "peasant" (bestiary canonical form). Other forms require explicit selection.
+	// Accepted values: peasant, huggingface, hf, purl, raw.
+	inputFormat := fs.String("format", "peasant", "input format for model ID: peasant (default), huggingface (hf), purl, raw")
+	// --scheme is kept for backward compatibility with v0.0.1 scripts.
+	// When --scheme is set and --format is not explicitly set, --scheme takes effect.
+	// --format takes precedence over --scheme when both are provided.
+	scheme := fs.String("scheme", "", "DEPRECATED: use --format instead; scheme for model ID resolution: canonical, huggingface, purl, raw")
 
 	if err := fs.Parse(args[1:]); err != nil {
 		return err
@@ -37,14 +45,14 @@ func run(args []string) error {
 
 	switch cmd {
 	case "list":
-		return runList(*provider, bestiary.OutputFormat(*format), *dbPath)
+		return runList(*provider, bestiary.OutputFormat(*output), *dbPath)
 	case "show":
 		if fs.NArg() < 1 {
-			return fmt.Errorf("usage: bestiary show <model-id> [--scheme=<canonical|huggingface|purl|raw>] [flags]")
+			return fmt.Errorf("usage: bestiary show <model-id> [--format=<peasant|huggingface|hf|purl|raw>] [--output=<json|yaml|table>] [flags]")
 		}
-		return runShow(fs.Arg(0), bestiary.OutputFormat(*format), *dbPath, *scheme)
+		return runShow(fs.Arg(0), bestiary.OutputFormat(*output), *dbPath, *inputFormat, *scheme)
 	case "sync":
-		return runSync(*provider, bestiary.OutputFormat(*format), *dbPath)
+		return runSync(*provider, bestiary.OutputFormat(*output), *dbPath)
 	default:
 		return fmt.Errorf("unknown command %q; supported commands: list, show, sync", cmd)
 	}
@@ -92,9 +100,8 @@ func runList(provider string, format bestiary.OutputFormat, dbPath string) error
 	return bestiary.FormatModels(os.Stdout, merged, format)
 }
 
-// runShow resolves a model by input string using Resolve (auto-detects scheme
-// from input prefix unless --scheme is given) and prints it in the requested
-// format. Three Resolve outcomes are handled:
+// runShow resolves a model by input string and prints it in the requested format.
+// Three Resolve outcomes are handled:
 //
 //   - Single canonical (cross-provider OK): print the best (most-recent) entry.
 //   - *ErrAmbiguous: print a candidate table to stderr and return non-zero.
@@ -103,15 +110,32 @@ func runList(provider string, format bestiary.OutputFormat, dbPath string) error
 // The static registry is authoritative for scheme-based lookups; the SQLite
 // cache is consulted for most-recent-wins selection. Falls back to static-only
 // when the store cannot be opened.
-func runShow(input string, format bestiary.OutputFormat, dbPath string, schemeFlag string) error {
-	// Build Resolve options from the --scheme flag.
+//
+// inputFormatFlag: value of --format flag (peasant/huggingface/hf/purl/raw).
+// schemeFlag: value of deprecated --scheme flag; used only when inputFormatFlag is "peasant" (default).
+func runShow(input string, format bestiary.OutputFormat, dbPath string, inputFormatFlag string, schemeFlag string) error {
+	// Build Resolve options from flags.
+	// --format takes precedence. If --format is explicitly non-peasant, use it.
+	// If --format is "peasant" (default) and --scheme is set, honour legacy --scheme.
 	var resolveOpts []bestiary.ResolveOption
-	if schemeFlag != "" {
+
+	if inputFormatFlag != "" && inputFormatFlag != "peasant" {
+		// Explicit non-default --format: parse and dispatch directly.
+		ifmt, err := bestiary.ParseInputFormat(inputFormatFlag)
+		if err != nil {
+			return err
+		}
+		resolveOpts = append(resolveOpts, bestiary.WithInputFormat(ifmt))
+	} else if schemeFlag != "" {
+		// Legacy --scheme flag (deprecated): translate to WithScheme.
 		s, err := bestiary.ParseScheme(schemeFlag)
 		if err != nil {
 			return err
 		}
 		resolveOpts = append(resolveOpts, bestiary.WithScheme(s))
+	} else {
+		// Default: peasant (canonical) form only — no auto-detect.
+		resolveOpts = append(resolveOpts, bestiary.WithInputFormat(bestiary.InputFormatPeasant))
 	}
 
 	refs, resolveErr := bestiary.Resolve(input, resolveOpts...)
@@ -120,7 +144,7 @@ func runShow(input string, format bestiary.OutputFormat, dbPath string, schemeFl
 		if errors.As(resolveErr, &ambig) {
 			// Print a candidate table to stderr; do not pollute stdout.
 			bestiary.FormatAmbiguous(os.Stderr, ambig)
-			return fmt.Errorf("ambiguous input %q matched %d canonicals — use --scheme=raw or refine input", input, len(ambig.Candidates))
+			return fmt.Errorf("ambiguous input %q matched %d canonicals — use --format=raw or refine to a more specific canonical form", input, len(ambig.Candidates))
 		}
 		// ErrNotFound or other errors pass through directly.
 		return resolveErr

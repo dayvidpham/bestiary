@@ -85,6 +85,48 @@ func (s *CanonicalScheme) UnmarshalJSON(b []byte) error {
 	return nil
 }
 
+// ParseInputFormat converts a --format flag string to an InputFormat.
+// Accepted values: "peasant", "huggingface", "hf", "purl", "raw" (case-insensitive).
+// Returns an error if the string is not a recognized input format.
+// Used by CLI flag parsing (--format flag in cmd/bestiary show).
+func ParseInputFormat(s string) (InputFormat, error) {
+	switch strings.ToLower(s) {
+	case "peasant", "canonical":
+		return InputFormatPeasant, nil
+	case "huggingface", "hf":
+		return InputFormatHuggingFace, nil
+	case "purl":
+		return InputFormatPURL, nil
+	case "raw":
+		return InputFormatRaw, nil
+	default:
+		return InputFormatPeasant, fmt.Errorf(
+			"bestiary: unrecognized input format %q\n"+
+				"  what: %q is not a valid input format\n"+
+				"  why: only %q, %q, %q, and %q are accepted (\"hf\" is an alias for \"huggingface\")\n"+
+				"  where: ParseInputFormat\n"+
+				"  how to fix: pass one of the accepted format strings",
+			s, s, "peasant", "huggingface", "purl", "raw",
+		)
+	}
+}
+
+// inputFormatToScheme maps an InputFormat to the corresponding CanonicalScheme
+// for Resolve dispatch. Returns SchemeCanonical for InputFormatPeasant.
+func inputFormatToScheme(f InputFormat) CanonicalScheme {
+	switch f {
+	case InputFormatHuggingFace:
+		return SchemeHuggingFace
+	case InputFormatPURL:
+		return SchemePURL
+	case InputFormatRaw:
+		return SchemeRaw
+	default:
+		// InputFormatPeasant → SchemeCanonical
+		return SchemeCanonical
+	}
+}
+
 // ParseScheme converts a string to a CanonicalScheme.
 // Accepted values: "canonical", "huggingface", "purl", "raw".
 // Returns an error if the string is not a recognized scheme.

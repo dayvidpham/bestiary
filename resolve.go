@@ -9,14 +9,35 @@ type ResolveOption func(*resolveConfig)
 // resolveConfig holds the resolved configuration for a Resolve call.
 type resolveConfig struct {
 	// scheme is the explicit CanonicalScheme to use for matching.
-	// When nil, Resolve auto-detects the scheme from the input string.
+	// When nil, Resolve auto-detects the scheme from the input string
+	// (unless inputFormat is set, which takes precedence over auto-detect).
 	scheme *CanonicalScheme
+
+	// inputFormat is the explicit InputFormat to use for matching.
+	// When non-nil, Resolve dispatches directly to the matching scheme
+	// without auto-detect. inputFormat takes precedence over scheme when both are set.
+	inputFormat *InputFormat
 
 	// providerHint is the provider extracted from the input string during scheme
 	// detection (e.g., the "anthropic" segment in "pkg:huggingface/anthropic/...").
 	// When non-empty, Resolve filters match results to this provider only.
 	// This field is set internally by detectScheme; callers cannot set it directly.
 	providerHint Provider
+}
+
+// WithInputFormat pins the InputFormat for a Resolve call.
+//
+// When InputFormatPeasant is specified (the default from the CLI), Resolve
+// dispatches as SchemeCanonical and does NOT auto-detect from the input prefix.
+// A PURL or HuggingFace input passed with InputFormatPeasant will fail to match
+// (ErrNotFound) — this is intentional. Pass the matching --format flag explicitly.
+//
+// For huggingface/hf, purl, and raw, dispatches directly to the corresponding
+// scheme without auto-detect.
+func WithInputFormat(f InputFormat) ResolveOption {
+	return func(c *resolveConfig) {
+		c.inputFormat = &f
+	}
 }
 
 // WithScheme pins the CanonicalScheme for a Resolve call.
@@ -77,7 +98,18 @@ func Resolve(input string, opts ...ResolveOption) ([]ModelRef, error) {
 	var scheme CanonicalScheme
 	var matchInput string
 
-	if cfg.scheme != nil {
+	if cfg.inputFormat != nil {
+		// Explicit --format flag: dispatch directly without auto-detect.
+		scheme = inputFormatToScheme(*cfg.inputFormat)
+		matchInput = normalizeInput(input, scheme)
+		// For PURL, also extract the provider hint.
+		if scheme == SchemePURL && strings.HasPrefix(input, "pkg:huggingface/") {
+			stripped := strings.TrimPrefix(input, "pkg:huggingface/")
+			if idx := strings.Index(stripped, "/"); idx >= 0 {
+				cfg.providerHint = Provider(stripped[:idx])
+			}
+		}
+	} else if cfg.scheme != nil {
 		scheme = *cfg.scheme
 		matchInput = normalizeInput(input, scheme)
 	} else {

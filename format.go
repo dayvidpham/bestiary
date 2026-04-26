@@ -16,6 +16,32 @@ const (
 	FormatTable OutputFormat = "table"
 )
 
+// InputFormat specifies the input scheme for parsing a model identity string
+// in the bestiary show command.
+//
+// The default is InputFormatPeasant (bestiary canonical form). Other formats
+// must be explicitly selected via --format on the CLI.
+type InputFormat string
+
+const (
+	// InputFormatPeasant is the bestiary canonical form:
+	//   [<provider>/]<family>[/<variant>[/<version>]][@<date>]
+	// This is the default input format.
+	InputFormatPeasant InputFormat = "peasant"
+
+	// InputFormatHuggingFace is the HuggingFace Hub form:
+	//   <provider>/<raw-model-id>
+	InputFormatHuggingFace InputFormat = "huggingface"
+
+	// InputFormatPURL is the Package URL (PURL) form:
+	//   pkg:huggingface/<provider>/<raw-model-id>
+	InputFormatPURL InputFormat = "purl"
+
+	// InputFormatRaw is the raw API model ID (exact match):
+	//   <raw-model-id>
+	InputFormatRaw InputFormat = "raw"
+)
+
 // FormatModels writes a list of models to w in the specified format.
 func FormatModels(w io.Writer, models []ModelInfo, format OutputFormat) error {
 	switch format {
@@ -296,5 +322,5 @@ func FormatAmbiguous(w io.Writer, e *ErrAmbiguous) {
 			string(c.ID),
 		)
 	}
-	fmt.Fprintf(w, "\nuse --scheme=raw or refine input\n")
+	fmt.Fprintf(w, "\nuse --format=raw or refine input to a more specific canonical form\n")
 }

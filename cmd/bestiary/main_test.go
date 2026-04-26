@@ -143,21 +143,23 @@ func captureStderr(t *testing.T, fn func()) string {
 	return buf.String()
 }
 
-// TestShow_SchemeRaw verifies that bestiary show <raw-id> (no scheme flag,
-// auto-detect falls through to SchemeRaw exact match) resolves a model and
-// prints its JSON to stdout.
+// TestShow_SchemeRaw verifies that bestiary show <raw-id> --format raw resolves
+// a model by exact model ID and prints its JSON to stdout.
 //
 // "claude-opus-4-1" is a known model ID in the static registry.
+// The --format raw flag is required for exact-ID lookup; without it, the default
+// peasant (canonical) mode would treat the ID as a canonical form and may produce
+// ErrAmbiguous if multiple canonical groups match.
 func TestShow_SchemeRaw(t *testing.T) {
 	tmpDB := t.TempDir() + "/test.db"
 
 	var runErr error
 	out := captureStdout(t, func() {
-		runErr = run([]string{"show", "--db-path", tmpDB, "claude-opus-4-1"})
+		runErr = run([]string{"show", "--format", "raw", "--db-path", tmpDB, "claude-opus-4-1"})
 	})
 
 	if runErr != nil {
-		t.Fatalf("run show claude-opus-4-1 returned error: %v", runErr)
+		t.Fatalf("run show --format raw claude-opus-4-1 returned error: %v", runErr)
 	}
 	if !strings.Contains(out, "claude-opus-4-1") {
 		t.Errorf("show output does not contain model ID %q; got %q", "claude-opus-4-1", out)
@@ -165,20 +167,19 @@ func TestShow_SchemeRaw(t *testing.T) {
 }
 
 // TestShow_SchemeHuggingFace verifies that bestiary show <provider>/<raw-id>
-// auto-detects SchemeHuggingFace (two slash-separated segments, no "pkg:" prefix)
-// and resolves the model by stripping the provider prefix.
+// with --format huggingface resolves the model by stripping the provider prefix.
 //
-// "anthropic/claude-opus-4-1" should resolve to "claude-opus-4-1".
+// "anthropic/claude-opus-4-1" with --format huggingface should resolve to "claude-opus-4-1".
 func TestShow_SchemeHuggingFace(t *testing.T) {
 	tmpDB := t.TempDir() + "/test.db"
 
 	var runErr error
 	out := captureStdout(t, func() {
-		runErr = run([]string{"show", "--db-path", tmpDB, "anthropic/claude-opus-4-1"})
+		runErr = run([]string{"show", "--format", "huggingface", "--db-path", tmpDB, "anthropic/claude-opus-4-1"})
 	})
 
 	if runErr != nil {
-		t.Fatalf("run show anthropic/claude-opus-4-1 returned error: %v", runErr)
+		t.Fatalf("run show --format huggingface anthropic/claude-opus-4-1 returned error: %v", runErr)
 	}
 	if !strings.Contains(out, "claude-opus-4-1") {
 		t.Errorf("show output does not contain model ID %q; got %q", "claude-opus-4-1", out)
@@ -186,20 +187,21 @@ func TestShow_SchemeHuggingFace(t *testing.T) {
 }
 
 // TestShow_SchemePURL verifies that bestiary show pkg:huggingface/<provider>/<raw-id>
-// auto-detects SchemePURL and resolves the model by stripping both the
-// "pkg:huggingface/" prefix and the provider segment.
+// with --format purl resolves the model by stripping both the "pkg:huggingface/"
+// prefix and the provider segment.
 //
-// "pkg:huggingface/anthropic/claude-opus-4-1" should resolve to "claude-opus-4-1".
+// "pkg:huggingface/anthropic/claude-opus-4-1" with --format purl should resolve
+// to "claude-opus-4-1".
 func TestShow_SchemePURL(t *testing.T) {
 	tmpDB := t.TempDir() + "/test.db"
 
 	var runErr error
 	out := captureStdout(t, func() {
-		runErr = run([]string{"show", "--db-path", tmpDB, "pkg:huggingface/anthropic/claude-opus-4-1"})
+		runErr = run([]string{"show", "--format", "purl", "--db-path", tmpDB, "pkg:huggingface/anthropic/claude-opus-4-1"})
 	})
 
 	if runErr != nil {
-		t.Fatalf("run show pkg:huggingface/anthropic/claude-opus-4-1 returned error: %v", runErr)
+		t.Fatalf("run show --format purl pkg:huggingface/anthropic/claude-opus-4-1 returned error: %v", runErr)
 	}
 	if !strings.Contains(out, "claude-opus-4-1") {
 		t.Errorf("show output does not contain model ID %q; got %q", "claude-opus-4-1", out)
@@ -212,7 +214,7 @@ func TestShow_SchemePURL(t *testing.T) {
 //  2. A non-zero exit (non-nil error returned by run).
 //  3. Nothing on stdout (table goes to stderr only).
 //
-// "claude" with --scheme=canonical matches claude/opus, claude/sonnet, claude/haiku, etc.
+// "claude" with default --format peasant matches claude/opus, claude/sonnet, etc.
 func TestShow_Ambiguous(t *testing.T) {
 	tmpDB := t.TempDir() + "/test.db"
 
@@ -220,7 +222,7 @@ func TestShow_Ambiguous(t *testing.T) {
 	var errOut string
 	out := captureStdout(t, func() {
 		errOut = captureStderr(t, func() {
-			runErr = run([]string{"show", "--scheme", "canonical", "--db-path", tmpDB, "claude"})
+			runErr = run([]string{"show", "--db-path", tmpDB, "claude"})
 		})
 	})
 
@@ -237,9 +239,9 @@ func TestShow_Ambiguous(t *testing.T) {
 	if !strings.Contains(errOut, "Canonical") || !strings.Contains(errOut, "Provider") || !strings.Contains(errOut, "Raw ID") {
 		t.Errorf("stderr does not contain expected column headers; got %q", errOut)
 	}
-	// stderr must contain the remediation footer.
-	if !strings.Contains(errOut, "--scheme=raw") {
-		t.Errorf("stderr does not contain remediation hint %q; got %q", "--scheme=raw", errOut)
+	// stderr must contain a remediation hint pointing toward --format raw or refinement.
+	if !strings.Contains(errOut, "--format") && !strings.Contains(errOut, "refine") && !strings.Contains(errOut, "raw") {
+		t.Errorf("stderr does not contain remediation hint (--format or refine); got %q", errOut)
 	}
 	// stdout must be empty — the candidate table goes to stderr only.
 	if out != "" {
