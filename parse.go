@@ -713,3 +713,226 @@ var reYYYYMMDD = regexp.MustCompile(`(?:^|[^0-9])(\d{4})(\d{2})(\d{2})(?:$|[^0-9
 
 // reYYYYDashMMDashDD matches YYYY-MM-DD date strings.
 var reYYYYDashMMDashDD = regexp.MustCompile(`(\d{4})-(\d{2})-(\d{2})`)
+
+// --------------------------------------------------------------------------
+// Parse-failure audit types (SLICE-FIX-V2-3)
+// --------------------------------------------------------------------------
+
+// ParseAttempt records the partial result produced when parse heuristics
+// could not fully decompose a raw family string. Fields mirror ModelInfo
+// canonical fields (Family, Variant, Version, Date) to aid comparison.
+type ParseAttempt struct {
+	Family  Family `json:"family"`
+	Variant string `json:"variant"`
+	Version string `json:"version"`
+	Date    string `json:"date"`
+}
+
+// ParseFailure records a single parsing failure detected during family-string
+// decomposition. It is produced by ParseFamilyDetailed when the parser's
+// best-effort result is known to be incomplete or ambiguous.
+//
+// JSON field names match the locked per-record format from SLICE-FIX-V2-3:
+//
+//	{
+//	  "raw_id":         "claude-3-5-haiku-20241022",
+//	  "provider":       "anthropic",
+//	  "raw_family":     "claude-haiku",
+//	  "attempted_parse": {"family":"claude","variant":"haiku","version":"","date":"2024-10-22"},
+//	  "reason":         "version digits between family-prefix and variant not extracted"
+//	}
+type ParseFailure struct {
+	RawID          ModelID      `json:"raw_id"`
+	Provider       Provider     `json:"provider"`
+	RawFamily      Family       `json:"raw_family"`
+	AttemptedParse ParseAttempt `json:"attempted_parse"`
+	Reason         string       `json:"reason"`
+}
+
+// ParseFailuresEnvelope is the top-level JSON structure written by bestiary-gen
+// to .bestiary-gen-cache/parse_failures.json after each codegen run.
+// The file is overwritten on every run (full audit, not append).
+type ParseFailuresEnvelope struct {
+	SchemaVersion int            `json:"schema_version"`
+	GeneratedAt   time.Time      `json:"generated_at"`
+	FailureCount  int            `json:"failure_count"`
+	Failures      []ParseFailure `json:"failures"`
+}
+
+// Reason constants for the three known failure modes (use these strings verbatim
+// to ensure consistent reason phrasing across all callers).
+const (
+	// ReasonVersionDigitsNotExtracted is used when version digits appear between
+	// the family prefix and the variant (e.g. "claude-3-5-haiku-20241022" where
+	// the "3-5" version component is not extracted by the parse heuristics).
+	ReasonVersionDigitsNotExtracted = "version digits between family-prefix and variant not extracted"
+
+	// ReasonSuffixOverflow is used when the remaining token stream after the
+	// expected family/variant/version/date components contains extra segments
+	// that the parser cannot account for.
+	ReasonSuffixOverflow = "suffix overflow: extra segments after expected family/variant/version/date"
+
+	// ReasonYYMMDateAsVersion is used for Mistral-style 4-digit numerals (e.g. 2401,
+	// 2403) where the parser cannot reliably distinguish a YYMM date from a version.
+	ReasonYYMMDateAsVersion = "YYMM-date-as-version false-positive"
+)
+
+// ParseFamilyDetailed is the failure-aware companion to ParseFamilyWithVersion.
+// It returns the same three-way decomposition (Family, variant, version) plus
+// an optional *ParseFailure when the parser detects a known incomplete result.
+//
+// Failure detection covers three modes:
+//  1. Version digits trapped between family-prefix and variant:
+//     "claude-3-5-haiku-20241022" → the 3-5 version digits are not extracted.
+//  2. Suffix overflow: extra hyphen-separated segments beyond what the heuristics
+//     can account for.
+//  3. YYMM-date-as-version false-positive: a 4-digit numeric segment that looks
+//     like a YYMM date (1900–2999 range) but is treated as part of the family/version.
+//
+// The best-effort result is always returned (same values as ParseFamilyWithVersion);
+// the *ParseFailure is non-nil as an annotation when a known deficiency is detected.
+// A nil *ParseFailure means no known deficiency was detected.
+//
+// Parameters id and p (model ID and provider) are used to populate the failure
+// record fields and are not used in the parse logic itself.
+func ParseFamilyDetailed(raw Family, id ModelID, p Provider) (Family, string, string, *ParseFailure) {
+	family, variant, version := ParseFamilyWithVersion(raw)
+
+	// No failure annotation when the input is empty.
+	if raw == "" {
+		return family, variant, version, nil
+	}
+
+	// Build the attempted parse for potential failure records.
+	attempted := ParseAttempt{
+		Family:  family,
+		Variant: variant,
+		Version: version,
+		// Date is populated by ExtractDate separately; pass empty string here
+		// since this function does not have access to the release date field.
+		Date: "",
+	}
+
+	rawStr := string(raw)
+
+	// ── Failure mode 3: YYMM-date-as-version false-positive ──────────────────
+	// Detect Mistral-style 4-digit numerals (e.g. "mistral-2401", "mistral-2403")
+	// where a YYMM-format segment (19xx–29xx) could be mistaken for a version.
+	// These appear in the raw family string, not as a separate date field.
+	if reYYMMCandidate.MatchString(rawStr) {
+		return family, variant, version, &ParseFailure{
+			RawID:          id,
+			Provider:       p,
+			RawFamily:      raw,
+			AttemptedParse: attempted,
+			Reason:         ReasonYYMMDateAsVersion,
+		}
+	}
+
+	// ── Failure mode 1: Version digits between family-prefix and variant ──────
+	// Detect cases like "claude-3-5-haiku-20241022" (with compact date stripped)
+	// where hyphen-separated digit groups appear between an alpha prefix and a
+	// known variant suffix. The heuristic: after stripping any trailing compact
+	// date (YYYYMMDD), if the raw string contains the pattern
+	// <alpha>-<digits>-<digits>-<alpha> (non-empty variant was extracted AND
+	// version is still empty), a version component was missed.
+	//
+	// Additional condition: the detected variant must not be the same as the
+	// last token of the raw string (which would mean the parser already handled it).
+	if version == "" && variant != "" {
+		// Strip trailing compact date from the raw string before checking.
+		rawNoDate := stripTrailingDate(rawStr)
+		if reVersionBetweenFamilyAndVariant.MatchString(rawNoDate) {
+			return family, variant, version, &ParseFailure{
+				RawID:          id,
+				Provider:       p,
+				RawFamily:      raw,
+				AttemptedParse: attempted,
+				Reason:         ReasonVersionDigitsNotExtracted,
+			}
+		}
+	}
+
+	// ── Failure mode 2: Suffix overflow ──────────────────────────────────────
+	// Detect cases where extra segments remain after accounting for
+	// family/variant/version/date. We reconstruct what the parser "consumed" and
+	// check if there is residual content.
+	if raw != "" && detectSuffixOverflow(rawStr, family, variant, version) {
+		return family, variant, version, &ParseFailure{
+			RawID:          id,
+			Provider:       p,
+			RawFamily:      raw,
+			AttemptedParse: attempted,
+			Reason:         ReasonSuffixOverflow,
+		}
+	}
+
+	return family, variant, version, nil
+}
+
+// reYYMMCandidate matches a 4-digit segment in a hyphen-separated raw family
+// string that falls in the YYMM range (1900–2999). These are characteristic of
+// Mistral versioning (e.g. "mistral-2401", "pixtral-2411").
+// The segment must be at a word boundary within the hyphenated string.
+var reYYMMCandidate = regexp.MustCompile(`(?:^|-)(?:19|20|21|22|23|24|25|26|27|28|29)\d{2}(?:-|$)`)
+
+// reVersionBetweenFamilyAndVariant matches the pattern of a raw family string
+// where one or more hyphen-separated purely-numeric segments appear between an
+// alphabetic prefix and an alphabetic suffix. Examples:
+//
+//	"claude-3-5-haiku"   → matches (3, 5 between "claude" and "haiku")
+//	"claude-3-haiku"     → matches (3 between "claude" and "haiku")
+//	"gpt-4-turbo"        → matches (4 between "gpt" and "turbo")
+//
+// Non-matches:
+//
+//	"claude-haiku"       → no numeric segments (pure override)
+//	"gemini-flash"       → no numeric segments
+var reVersionBetweenFamilyAndVariant = regexp.MustCompile(`^[a-zA-Z][a-zA-Z0-9]*(?:-[a-zA-Z][a-zA-Z0-9]*)*-\d+(?:-\d+)*-[a-zA-Z][a-zA-Z0-9-]*$`)
+
+// detectSuffixOverflow returns true when the raw family string contains more
+// hyphen-separated segments than can be accounted for by the parsed
+// family/variant/version tokens. This catches overflow cases where the heuristics
+// consume only a prefix and silently drop the rest.
+//
+// Algorithm: rebuild the "known tokens" from family + variant + version (using
+// their hyphen-split forms), then count how many tokens in rawStr are not
+// accounted for by the known set. If >0 extra tokens exist beyond a threshold,
+// it is likely overflow.
+func detectSuffixOverflow(rawStr string, family Family, variant string, version string) bool {
+	// Tokenize rawStr.
+	rawTokens := strings.Split(rawStr, "-")
+
+	// Build the set of tokens that the parser "consumed".
+	knownTokens := make(map[string]struct{})
+	for _, t := range strings.Split(string(family), "-") {
+		if t != "" {
+			knownTokens[t] = struct{}{}
+		}
+	}
+	for _, t := range strings.Split(variant, "-") {
+		if t != "" {
+			knownTokens[t] = struct{}{}
+		}
+	}
+	for _, t := range strings.Split(strings.ReplaceAll(version, ".", "-"), "-") {
+		if t != "" {
+			knownTokens[t] = struct{}{}
+		}
+	}
+
+	// Count tokens not accounted for.
+	extra := 0
+	for _, tok := range rawTokens {
+		if tok == "" {
+			continue
+		}
+		if _, known := knownTokens[tok]; !known {
+			extra++
+		}
+	}
+
+	// Overflow threshold: more than 2 unaccounted tokens suggests overflow.
+	// The threshold of 2 avoids false positives for models with minor extra tokens.
+	return extra > 2
+}
