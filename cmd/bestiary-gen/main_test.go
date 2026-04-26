@@ -1801,4 +1801,17 @@ func TestRun_WritesParseFailuresJSON(t *testing.T) {
 	if envelope.SchemaVersion != 1 {
 		t.Errorf("SchemaVersion = %d, want 1", envelope.SchemaVersion)
 	}
+	// failureAPIJSON injects exactly 2 YYMM-failure models (mistral-2401 + mistral-2403).
+	// Asserting FailureCount guards against a regression where failure_count is always 0.
+	const wantFailureCount = 2
+	if envelope.FailureCount != wantFailureCount {
+		t.Errorf("FailureCount = %d, want %d\n"+
+			"  What: failure_count in parse_failures.json does not match expected 2 YYMM failures\n"+
+			"  Why: the YYMM-date-as-version detector may have changed or FailureCount is not populated\n"+
+			"  How to fix: verify ParseFamilyDetailed emits ReasonYYMMDateAsVersion for mistral-2401 and mistral-2403",
+			envelope.FailureCount, wantFailureCount)
+	}
+	if len(envelope.Failures) != wantFailureCount {
+		t.Errorf("len(Failures) = %d, want %d", len(envelope.Failures), wantFailureCount)
+	}
 }
