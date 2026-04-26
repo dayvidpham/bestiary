@@ -66,7 +66,7 @@ func (r ModelRef) Format(s CanonicalScheme) string {
 //
 // When Family is populated the form is built from the non-empty segments:
 //
-//	<provider>/<family>[/<variant>][/<version>][@<date>]
+//	<provider>/<family>[/<variant>][/<version>][@<date>][<modifier>]
 //
 // Segment inclusion rules:
 //   - Family empty: fall back to "<provider>/<raw-id>"
@@ -74,8 +74,10 @@ func (r ModelRef) Format(s CanonicalScheme) string {
 //   - Version only appended when non-empty (requires Variant to precede it, or
 //     placed directly after Family when Variant is empty)
 //   - Date only appended as "@<date>" suffix when non-empty
+//   - Modifier only appended as "[modifier]" bracket suffix when non-empty
+//     (SLICE-FIX-V2-5: bracket suffix is placed after the date suffix, if any)
 //
-// Full example matrix (p = provider, f = family, v = variant, ver = version, d = date):
+// Full example matrix (p = provider, f = family, v = variant, ver = version, d = date, m = modifier):
 //
 //	(f)                          → p/f
 //	(f,d)                        → p/f@d
@@ -85,6 +87,8 @@ func (r ModelRef) Format(s CanonicalScheme) string {
 //	(f,ver,d)                    → p/f/ver@d
 //	(f,v,ver)                    → p/f/v/ver
 //	(f,v,ver,d)                  → p/f/v/ver@d
+//	(f,v,ver,d,m)                → p/f/v/ver@d[m]
+//	(f,v,ver,m)                  → p/f/v/ver[m]
 func (r ModelRef) formatCanonical() string {
 	if r.Family == "" {
 		// Fall back to provider-specific representation.
@@ -101,10 +105,18 @@ func (r ModelRef) formatCanonical() string {
 		path += "/" + r.Version
 	}
 
+	var base string
 	if r.Date != "" {
-		return fmt.Sprintf("%s/%s@%s", r.Provider, path, r.Date)
+		base = fmt.Sprintf("%s/%s@%s", r.Provider, path, r.Date)
+	} else {
+		base = fmt.Sprintf("%s/%s", r.Provider, path)
 	}
-	return fmt.Sprintf("%s/%s", r.Provider, path)
+
+	// Append bracket-suffix for Modifier when non-empty (SLICE-FIX-V2-5).
+	if r.Modifier != "" {
+		return base + "[" + r.Modifier + "]"
+	}
+	return base
 }
 
 // String implements fmt.Stringer.
