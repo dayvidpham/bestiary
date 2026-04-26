@@ -33,11 +33,13 @@ func ModelsByProvider(p Provider) []ModelInfo {
 	return out
 }
 
-// ModelsByFamily returns all static models belonging to the given family.
+// ModelsByFamily returns all static models with the given raw API family string.
+// The family parameter matches the RawFamily field (verbatim API value, e.g.
+// "claude-opus", "gemini-flash").
 func ModelsByFamily(family Family) []ModelInfo {
 	var out []ModelInfo
 	for _, m := range staticModels {
-		if m.Family == family {
+		if m.RawFamily == family {
 			out = append(out, m)
 		}
 	}

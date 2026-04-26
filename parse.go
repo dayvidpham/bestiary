@@ -586,8 +586,8 @@ func extractDateFromString(s string) string {
 //     variant and version using the same suffix/pattern logic as the non-empty
 //     family path in genToModelInfo.
 //
-// This ensures (NormalizedFamily, NormalizedVariant, NormalizedVersion) is
-// consistent across providers regardless of whether raw_family is empty or populated.
+// This ensures (Family, Variant, Version) is consistent across providers
+// regardless of whether raw_family is empty or populated.
 //
 // Examples:
 //

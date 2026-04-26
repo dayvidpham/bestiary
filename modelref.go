@@ -20,18 +20,18 @@ type ModelRef struct {
 }
 
 // Ref returns a ModelRef for this ModelInfo.
-// All seven fields are populated: ID from the API model ID, Family, Variant,
-// and Version from the codegen-baked normalization, and Date from the
-// codegen-extracted release date.
+// All seven fields are populated: ID from the API model ID, RawFamily from the
+// raw API family field, and Family, Variant, Version, Date from the
+// codegen-baked normalization.
 func (m ModelInfo) Ref() ModelRef {
 	return ModelRef{
 		ID:        m.ID,
 		Provider:  m.Provider,
-		RawFamily: m.Family,
-		Family:    m.NormalizedFamily,
-		Variant:   m.NormalizedVariant,
-		Version:   m.NormalizedVersion,
-		Date:      m.NormalizedDate,
+		RawFamily: m.RawFamily,
+		Family:    m.Family,
+		Variant:   m.Variant,
+		Version:   m.Version,
+		Date:      m.Date,
 	}
 }
 
@@ -150,14 +150,15 @@ func (r ModelRef) Designations() []Designation {
 }
 
 // ProvidersForFamily returns the set of providers that host models with
-// the given family string. The family parameter matches the raw API family
-// field (e.g., "claude-opus", "gemini-flash"). The returned slice contains
-// no duplicates. If no models match, a nil slice is returned.
+// the given raw API family string (e.g., "claude-opus", "gemini-flash").
+// The family parameter matches the RawFamily field (verbatim API value).
+// The returned slice contains no duplicates. If no models match, a nil slice
+// is returned.
 func ProvidersForFamily(family Family) []Provider {
 	seen := make(map[Provider]struct{})
 	var out []Provider
 	for _, m := range staticModels {
-		if m.Family == family {
+		if m.RawFamily == family {
 			if _, ok := seen[m.Provider]; !ok {
 				seen[m.Provider] = struct{}{}
 				out = append(out, m.Provider)

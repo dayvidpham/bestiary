@@ -41,9 +41,9 @@ func WithScheme(s CanonicalScheme) ResolveOption {
 // # Disambiguation rule (Reviewer C-N1)
 //
 // Cross-provider hosting: if all matches share the same Canonical triple
-// (NormalizedFamily, NormalizedVariant, NormalizedDate) — meaning the same
-// conceptual model is hosted by multiple providers — Resolve returns a non-nil
-// []ModelRef with err == nil. The caller can iterate by Provider.
+// (Family, Variant, Date) — meaning the same conceptual model is hosted by
+// multiple providers — Resolve returns a non-nil []ModelRef with err == nil.
+// The caller can iterate by Provider.
 //
 // Multiple distinct canonicals: if the input matches models that resolve to
 // two or more distinct Canonical triples (e.g., "claude" matches claude/opus,
@@ -115,11 +115,11 @@ func Resolve(input string, opts ...ResolveOption) ([]ModelRef, error) {
 	//
 	// For SchemeCanonical with an exact-ID input: use the same ID-based grouping
 	// as SchemeRaw. When the caller supplies an exact model ID like
-	// "claude-opus-4-20250514" with WithScheme(SchemeCanonical), normalizing the
-	// NormalizedVariant across providers can produce divergent tuples for what is
-	// semantically one model (e.g., Family="claude"/Variant="opus" from providers
-	// with a family field vs. Family="claude"/Variant="" from providers without
-	// one). Grouping by model ID instead collapses these spurious differences.
+	// "claude-opus-4-20250514" with WithScheme(SchemeCanonical), the Variant field
+	// across providers can produce divergent tuples for what is semantically one
+	// model (e.g., Family="claude"/Variant="opus" from providers with a family
+	// field vs. Family="claude"/Variant="" from providers without one). Grouping
+	// by model ID instead collapses these spurious differences.
 	//
 	// For SchemeCanonical with a non-exact-ID input (e.g., "claude" to match
 	// multiple family members), group by Canonical triple so that genuinely
@@ -389,9 +389,9 @@ func modelMatches(m ModelInfo, matchInput string, scheme CanonicalScheme) bool {
 		if string(m.ID) == matchInput {
 			return true
 		}
-		// Try matching on NormalizedFamily (exact family name match).
+		// Try matching on Family (exact canonical family name match).
 		// This allows inputs like "claude" to match all claude-family models.
-		if string(m.NormalizedFamily) == matchInput {
+		if string(m.Family) == matchInput {
 			return true
 		}
 		// Try canonical segment matching: "family/variant@date" form.
@@ -415,10 +415,10 @@ func modelMatches(m ModelInfo, matchInput string, scheme CanonicalScheme) bool {
 //  3. Segment[0] = family; segment[1] = variant (if present); segment[2] = version (if present).
 //
 // Matching rules:
-//   - family must match NormalizedFamily (required).
-//   - variant must match NormalizedVariant when specified.
-//   - version must match NormalizedVersion when specified.
-//   - date must match NormalizedDate when specified.
+//   - family must match Family (required).
+//   - variant must match Variant when specified.
+//   - version must match Version when specified.
+//   - date must match Date when specified.
 func matchCanonicalSegments(m ModelInfo, matchInput string) bool {
 	// Extract "@date" suffix.
 	var dateFilter string
@@ -444,19 +444,19 @@ func matchCanonicalSegments(m ModelInfo, matchInput string) bool {
 	}
 
 	// Family must match.
-	if string(m.NormalizedFamily) != familyFilter {
+	if string(m.Family) != familyFilter {
 		return false
 	}
 	// Variant filter: when specified, must match.
-	if variantFilter != "" && m.NormalizedVariant != variantFilter {
+	if variantFilter != "" && m.Variant != variantFilter {
 		return false
 	}
 	// Version filter: when specified, must match.
-	if versionFilter != "" && m.NormalizedVersion != versionFilter {
+	if versionFilter != "" && m.Version != versionFilter {
 		return false
 	}
 	// Date filter: when specified, must match.
-	if dateFilter != "" && m.NormalizedDate != dateFilter {
+	if dateFilter != "" && m.Date != dateFilter {
 		return false
 	}
 	return true

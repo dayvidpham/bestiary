@@ -474,7 +474,7 @@ func migrateToV3(conn *sqlite.Conn) error {
 // SQLite supports ADD COLUMN via ALTER TABLE for NOT NULL columns with a
 // constant DEFAULT value, so table-recreate is not required here.
 // The new column defaults to '' for all existing rows; a subsequent sync
-// operation will backfill NormalizedVersion from the parser.
+// operation will backfill Version from the parser.
 func migrateToV4(conn *sqlite.Conn) error {
 	endFn := sqlitex.Transaction(conn)
 	var err error
@@ -555,11 +555,11 @@ func (s *Store) UpsertModels(ctx context.Context, models []ModelInfo) error {
 				string(m.ID),
 				string(m.Provider),
 				m.DisplayName,
+				string(m.RawFamily),
 				string(m.Family),
-				string(m.NormalizedFamily),
-				m.NormalizedVariant,
-				m.NormalizedVersion,
-				m.NormalizedDate,
+				m.Variant,
+				m.Version,
+				m.Date,
 				m.ContextWindow,
 				m.MaxOutput,
 				boolToInt(m.Reasoning),
@@ -852,11 +852,11 @@ func scanModelInfo(stmt *sqlite.Stmt) ModelInfo {
 		ID:                ModelID(stmt.GetText("model_id")),
 		Provider:          Provider(stmt.GetText("provider")),
 		DisplayName:       stmt.GetText("display_name"),
-		Family:            Family(stmt.GetText("raw_family")),
-		NormalizedFamily:  Family(stmt.GetText("family")),
-		NormalizedVariant: stmt.GetText("variant"),
-		NormalizedVersion: stmt.GetText("version"),
-		NormalizedDate:    stmt.GetText("date"),
+		RawFamily: Family(stmt.GetText("raw_family")),
+		Family:    Family(stmt.GetText("family")),
+		Variant:   stmt.GetText("variant"),
+		Version:   stmt.GetText("version"),
+		Date:      stmt.GetText("date"),
 		ContextWindow:     int(stmt.GetInt64("context_window")),
 		MaxOutput:         int(stmt.GetInt64("max_output")),
 		Reasoning:         stmt.GetBool("reasoning"),
