@@ -854,3 +854,168 @@ func TestInferFamilyFromID_Variant(t *testing.T) {
 		})
 	}
 }
+
+// --------------------------------------------------------------------------
+// ParseFamilyDetailed failure-detection tests (SLICE-FIX-V2-3 L2)
+// --------------------------------------------------------------------------
+
+// TestParseFamilyDetailed_VersionDigitsNotExtracted verifies that ParseFamilyDetailed
+// emits a ParseFailure with reason ReasonVersionDigitsNotExtracted for model IDs
+// like "claude-3-5-haiku-20241022" where the raw_family is "claude-haiku" but the
+// version digits (3, 5) are embedded in the model ID between the family prefix
+// ("claude") and the variant ("haiku"), and are not extractable by ExtractVersionFromID.
+//
+// BDD: Given raw_family="claude-haiku" and id="claude-3-5-haiku-20241022" are parsed
+// when version digits between family-prefix and variant cannot be extracted from the
+// model ID then ParseFailure emitted with reason
+// "version digits between family-prefix and variant not extracted".
+func TestParseFamilyDetailed_VersionDigitsNotExtracted(t *testing.T) {
+	t.Parallel()
+
+	cases := []struct {
+		rawFamily bestiary.Family
+		id        bestiary.ModelID
+		provider  bestiary.Provider
+	}{
+		// claude-3.x line: version digits "3-5" between "claude" and "haiku" in the ID,
+		// but raw_family="claude-haiku" gives family="claude", variant="haiku", version="".
+		// ExtractVersionFromID fails because "claude-haiku" prefix does not match start of ID.
+		{
+			rawFamily: "claude-haiku",
+			id:        "claude-3-5-haiku-20241022",
+			provider:  "anthropic",
+		},
+		// claude-3.x line: version digits "3-7" between "claude" and "sonnet" in the ID.
+		{
+			rawFamily: "claude-sonnet",
+			id:        "claude-3-7-sonnet-20250219",
+			provider:  "anthropic",
+		},
+		// claude-3.x line: version digit "3" between "claude" and "haiku" in the ID.
+		{
+			rawFamily: "claude-haiku",
+			id:        "claude-3-haiku-20240307",
+			provider:  "anthropic",
+		},
+	}
+
+	for _, tc := range cases {
+		tc := tc
+		t.Run(string(tc.rawFamily), func(t *testing.T) {
+			t.Parallel()
+			family, variant, version, failure := bestiary.ParseFamilyDetailed(tc.rawFamily, tc.id, tc.provider)
+
+			// Best-effort result is always returned.
+			if family == "" {
+				t.Errorf("ParseFamilyDetailed(%q): got empty family; expected a non-empty best-effort result", tc.rawFamily)
+			}
+			_ = variant
+			_ = version
+
+			// Failure must be emitted.
+			if failure == nil {
+				t.Fatalf("ParseFamilyDetailed(%q): expected ParseFailure, got nil\n"+
+					"  What: version digits between family-prefix and variant were not detected as a failure\n"+
+					"  Why: the detector did not match the pattern <alpha>-<digit>-<alpha>\n"+
+					"  How to fix: verify reVersionBetweenFamilyAndVariant regex matches the input",
+					tc.rawFamily)
+			}
+			if failure.Reason != bestiary.ReasonVersionDigitsNotExtracted {
+				t.Errorf("ParseFamilyDetailed(%q): failure.Reason = %q, want %q",
+					tc.rawFamily, failure.Reason, bestiary.ReasonVersionDigitsNotExtracted)
+			}
+			if failure.RawFamily != tc.rawFamily {
+				t.Errorf("ParseFamilyDetailed(%q): failure.RawFamily = %q, want %q",
+					tc.rawFamily, failure.RawFamily, tc.rawFamily)
+			}
+			if failure.RawID != tc.id {
+				t.Errorf("ParseFamilyDetailed(%q): failure.RawID = %q, want %q",
+					tc.rawFamily, failure.RawID, tc.id)
+			}
+			if failure.Provider != tc.provider {
+				t.Errorf("ParseFamilyDetailed(%q): failure.Provider = %q, want %q",
+					tc.rawFamily, failure.Provider, tc.provider)
+			}
+		})
+	}
+}
+
+// TestParseFamilyDetailed_YYMMDateAsVersion verifies that ParseFamilyDetailed emits a
+// ParseFailure with reason ReasonYYMMDateAsVersion for Mistral-style 4-digit numerals
+// (e.g. "mistral-2401") where the YYMM segment cannot be reliably distinguished from a
+// version number.
+//
+// BDD: Given a Mistral 4-digit numeric (e.g. "mistral-2401") when YYMM date cannot
+// be cleanly distinguished from version then ParseFailure emitted with reason
+// "YYMM-date-as-version false-positive".
+func TestParseFamilyDetailed_YYMMDateAsVersion(t *testing.T) {
+	t.Parallel()
+
+	cases := []struct {
+		rawFamily bestiary.Family
+		id        bestiary.ModelID
+		provider  bestiary.Provider
+	}{
+		{rawFamily: "mistral-2401", id: "mistral-2401", provider: "mistral"},
+		{rawFamily: "mistral-2403", id: "mistral-2403", provider: "mistral"},
+		{rawFamily: "pixtral-2411", id: "pixtral-2411-latest", provider: "mistral"},
+	}
+
+	for _, tc := range cases {
+		tc := tc
+		t.Run(string(tc.rawFamily), func(t *testing.T) {
+			t.Parallel()
+			_, _, _, failure := bestiary.ParseFamilyDetailed(tc.rawFamily, tc.id, tc.provider)
+
+			if failure == nil {
+				t.Fatalf("ParseFamilyDetailed(%q): expected ParseFailure for YYMM pattern, got nil\n"+
+					"  What: YYMM-date-as-version false-positive was not detected\n"+
+					"  Why: the detector did not match the 4-digit YYMM pattern in the raw family string\n"+
+					"  How to fix: verify reYYMMCandidate regex matches 4-digit numerals in range 1900-2999",
+					tc.rawFamily)
+			}
+			if failure.Reason != bestiary.ReasonYYMMDateAsVersion {
+				t.Errorf("ParseFamilyDetailed(%q): failure.Reason = %q, want %q",
+					tc.rawFamily, failure.Reason, bestiary.ReasonYYMMDateAsVersion)
+			}
+		})
+	}
+}
+
+// TestParseFamilyDetailed_CleanParse verifies that ParseFamilyDetailed returns
+// nil *ParseFailure for cleanly parseable model IDs that the heuristics fully handle.
+//
+// BDD: Given a cleanly parseable model ID (e.g. "claude-opus") when parsed
+// then NO ParseFailure emitted.
+func TestParseFamilyDetailed_CleanParse(t *testing.T) {
+	t.Parallel()
+
+	cases := []struct {
+		rawFamily bestiary.Family
+		id        bestiary.ModelID
+		provider  bestiary.Provider
+	}{
+		// Known override entries — fully handled by the overrides table.
+		{rawFamily: "claude-opus", id: "claude-opus-4-20250514", provider: "anthropic"},
+		{rawFamily: "claude-haiku", id: "claude-haiku-4-5", provider: "anthropic"},
+		{rawFamily: "claude-sonnet", id: "claude-sonnet-4-5-20251015", provider: "anthropic"},
+		// Gemini with dot-version — handled by dot-version extraction.
+		{rawFamily: "gemini-flash", id: "gemini-2.5-flash-preview-04-17", provider: "google"},
+		// Empty raw family — no failure emitted on empty input.
+		{rawFamily: "", id: "some-model", provider: "openai"},
+	}
+
+	for _, tc := range cases {
+		tc := tc
+		t.Run(string(tc.rawFamily), func(t *testing.T) {
+			t.Parallel()
+			family, _, _, failure := bestiary.ParseFamilyDetailed(tc.rawFamily, tc.id, tc.provider)
+
+			if failure != nil {
+				t.Errorf("ParseFamilyDetailed(%q): expected nil ParseFailure for clean parse, got: %+v\n"+
+					"  Family=%q  Reason=%q",
+					tc.rawFamily, failure, family, failure.Reason)
+			}
+		})
+	}
+}

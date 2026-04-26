@@ -1341,3 +1341,349 @@ type Family = string
 		})
 	}
 }
+
+// --------------------------------------------------------------------------
+// SLICE-FIX-V2-3 tests: parse-failure audit log
+// --------------------------------------------------------------------------
+
+const parseFailuresFile = "parse_failures.json"
+
+// failureAPIJSON returns a minimal API response with models that will produce
+// parse failures at codegen time. Specifically, it includes models with
+// raw_family values that trigger the YYMM-date-as-version false-positive
+// (e.g. "mistral-2401") so that the failure count is predictable.
+func failureAPIJSON(t *testing.T) []byte {
+	t.Helper()
+	payload := map[string]any{
+		// testprovider: a clean model with no parse failures
+		"testprovider": map[string]any{
+			"name": "Test Provider",
+			"models": map[string]any{
+				"test-model-clean": map[string]any{
+					"id":     "test-model-clean",
+					"name":   "Clean Test Model",
+					"family": "claude-opus", // known override → no failure
+				},
+			},
+		},
+		// mistral: YYMM-date models that produce parse failures
+		"mistral": map[string]any{
+			"name": "Mistral",
+			"models": map[string]any{
+				"mistral-small-2401": map[string]any{
+					"id":     "mistral-small-2401",
+					"name":   "Mistral Small 2401",
+					"family": "mistral-2401", // YYMM pattern → failure
+				},
+				"mistral-medium-2403": map[string]any{
+					"id":     "mistral-medium-2403",
+					"name":   "Mistral Medium 2403",
+					"family": "mistral-2403", // YYMM pattern → failure
+				},
+			},
+		},
+	}
+	b, err := json.Marshal(payload)
+	if err != nil {
+		t.Fatalf("failureAPIJSON: marshal: %v", err)
+	}
+	return b
+}
+
+// TestWriteParseFailures_NonEmpty verifies that writeParseFailures writes a valid
+// ParseFailuresEnvelope JSON file containing the given failures.
+//
+// BDD: Given bestiary-gen runs with N failures detected then
+// file {cacheDir}/parse_failures.json exists with N records.
+func TestWriteParseFailures_NonEmpty(t *testing.T) {
+	cacheDir := t.TempDir()
+
+	failures := []bestiary.ParseFailure{
+		{
+			RawID:     "mistral-2401",
+			Provider:  "mistral",
+			RawFamily: "mistral-2401",
+			AttemptedParse: bestiary.ParseAttempt{
+				Family:  "mistral",
+				Variant: "",
+				Version: "",
+				Date:    "",
+			},
+			Reason: bestiary.ReasonYYMMDateAsVersion,
+		},
+		{
+			RawID:     "mistral-2403",
+			Provider:  "mistral",
+			RawFamily: "mistral-2403",
+			AttemptedParse: bestiary.ParseAttempt{
+				Family:  "mistral",
+				Variant: "",
+				Version: "",
+				Date:    "",
+			},
+			Reason: bestiary.ReasonYYMMDateAsVersion,
+		},
+	}
+
+	if err := writeParseFailures(cacheDir, failures); err != nil {
+		t.Fatalf("writeParseFailures: unexpected error: %v", err)
+	}
+
+	filePath := filepath.Join(cacheDir, parseFailuresFile)
+	data, err := os.ReadFile(filePath)
+	if err != nil {
+		t.Fatalf("parse_failures.json not written: %v", err)
+	}
+
+	var envelope bestiary.ParseFailuresEnvelope
+	if err := json.Unmarshal(data, &envelope); err != nil {
+		t.Fatalf("parse_failures.json: invalid JSON: %v", err)
+	}
+
+	if envelope.SchemaVersion != 1 {
+		t.Errorf("SchemaVersion = %d, want 1", envelope.SchemaVersion)
+	}
+	if envelope.FailureCount != len(failures) {
+		t.Errorf("FailureCount = %d, want %d", envelope.FailureCount, len(failures))
+	}
+	if len(envelope.Failures) != len(failures) {
+		t.Errorf("len(Failures) = %d, want %d", len(envelope.Failures), len(failures))
+	}
+	if envelope.GeneratedAt.IsZero() {
+		t.Error("GeneratedAt is zero; expected a valid timestamp")
+	}
+}
+
+// TestWriteParseFailures_Empty verifies that writeParseFailures writes a valid
+// ParseFailuresEnvelope with failure_count=0 and failures=[] when given an
+// empty failures slice.
+//
+// BDD: Given bestiary-gen runs with zero failures then file exists with valid
+// JSON envelope and failure_count: 0, failures: [].
+func TestWriteParseFailures_Empty(t *testing.T) {
+	cacheDir := t.TempDir()
+
+	if err := writeParseFailures(cacheDir, nil); err != nil {
+		t.Fatalf("writeParseFailures(nil): unexpected error: %v", err)
+	}
+
+	filePath := filepath.Join(cacheDir, parseFailuresFile)
+	data, err := os.ReadFile(filePath)
+	if err != nil {
+		t.Fatalf("parse_failures.json not written for empty failures: %v", err)
+	}
+
+	var envelope bestiary.ParseFailuresEnvelope
+	if err := json.Unmarshal(data, &envelope); err != nil {
+		t.Fatalf("parse_failures.json (empty): invalid JSON: %v", err)
+	}
+
+	if envelope.SchemaVersion != 1 {
+		t.Errorf("SchemaVersion = %d, want 1", envelope.SchemaVersion)
+	}
+	if envelope.FailureCount != 0 {
+		t.Errorf("FailureCount = %d, want 0", envelope.FailureCount)
+	}
+	if envelope.Failures == nil {
+		// Per spec: must be an empty array, not null, in JSON.
+		// encoding/json encodes nil slice as null. L3 must use []ParseFailure{} not nil.
+		t.Errorf("Failures is nil (would encode as JSON null); want empty array []")
+	}
+	if len(envelope.Failures) != 0 {
+		t.Errorf("len(Failures) = %d, want 0", len(envelope.Failures))
+	}
+}
+
+// TestWriteParseFailures_OverwriteNotAppend verifies that calling writeParseFailures
+// twice writes the SECOND run's failures — not the first run's combined with the second.
+//
+// BDD: Given bestiary-gen runs twice in succession then second run OVERWRITES
+// (not appends) — file contents reflect ONLY the second run.
+func TestWriteParseFailures_OverwriteNotAppend(t *testing.T) {
+	cacheDir := t.TempDir()
+
+	first := []bestiary.ParseFailure{
+		{
+			RawID:     "first-model",
+			Provider:  "p1",
+			RawFamily: "first-2401",
+			AttemptedParse: bestiary.ParseAttempt{
+				Family: "first",
+			},
+			Reason: bestiary.ReasonYYMMDateAsVersion,
+		},
+	}
+	second := []bestiary.ParseFailure{
+		{
+			RawID:     "second-model",
+			Provider:  "p2",
+			RawFamily: "second-2403",
+			AttemptedParse: bestiary.ParseAttempt{
+				Family: "second",
+			},
+			Reason: bestiary.ReasonYYMMDateAsVersion,
+		},
+		{
+			RawID:     "second-model-2",
+			Provider:  "p2",
+			RawFamily: "claude-haiku",
+			AttemptedParse: bestiary.ParseAttempt{
+				Family:  "claude",
+				Variant: "haiku",
+			},
+			Reason: bestiary.ReasonVersionDigitsNotExtracted,
+		},
+	}
+
+	// First write.
+	if err := writeParseFailures(cacheDir, first); err != nil {
+		t.Fatalf("writeParseFailures (first run): %v", err)
+	}
+	// Second write — must overwrite, not append.
+	if err := writeParseFailures(cacheDir, second); err != nil {
+		t.Fatalf("writeParseFailures (second run): %v", err)
+	}
+
+	filePath := filepath.Join(cacheDir, parseFailuresFile)
+	data, err := os.ReadFile(filePath)
+	if err != nil {
+		t.Fatalf("parse_failures.json not found after second run: %v", err)
+	}
+
+	var envelope bestiary.ParseFailuresEnvelope
+	if err := json.Unmarshal(data, &envelope); err != nil {
+		t.Fatalf("parse_failures.json: invalid JSON: %v", err)
+	}
+
+	// Must reflect only the second run.
+	if envelope.FailureCount != len(second) {
+		t.Errorf("FailureCount = %d after second run, want %d (only second run's failures)", envelope.FailureCount, len(second))
+	}
+	// First run's model must NOT appear.
+	for _, f := range envelope.Failures {
+		if string(f.RawID) == "first-model" {
+			t.Errorf("first run's entry 'first-model' found in second run's output (append bug)")
+		}
+	}
+}
+
+// TestWriteParseFailures_JSONRoundTrip verifies that the ParseFailuresEnvelope
+// written by writeParseFailures round-trips through json.Marshal/Unmarshal
+// with all fields preserved.
+//
+// BDD: Given the JSON file when re-parsed via json.Unmarshal into ParseFailuresEnvelope
+// then round-trips equal.
+func TestWriteParseFailures_JSONRoundTrip(t *testing.T) {
+	cacheDir := t.TempDir()
+
+	failures := []bestiary.ParseFailure{
+		{
+			RawID:     "claude-3-5-haiku-20241022",
+			Provider:  "anthropic",
+			RawFamily: "claude-haiku",
+			AttemptedParse: bestiary.ParseAttempt{
+				Family:  "claude",
+				Variant: "haiku",
+				Version: "",
+				Date:    "2024-10-22",
+			},
+			Reason: bestiary.ReasonVersionDigitsNotExtracted,
+		},
+	}
+
+	if err := writeParseFailures(cacheDir, failures); err != nil {
+		t.Fatalf("writeParseFailures: %v", err)
+	}
+
+	data, err := os.ReadFile(filepath.Join(cacheDir, parseFailuresFile))
+	if err != nil {
+		t.Fatalf("read parse_failures.json: %v", err)
+	}
+
+	var envelope bestiary.ParseFailuresEnvelope
+	if err := json.Unmarshal(data, &envelope); err != nil {
+		t.Fatalf("json.Unmarshal: %v", err)
+	}
+
+	if len(envelope.Failures) != 1 {
+		t.Fatalf("len(Failures) = %d, want 1", len(envelope.Failures))
+	}
+	f := envelope.Failures[0]
+	if f.RawID != "claude-3-5-haiku-20241022" {
+		t.Errorf("RawID = %q, want %q", f.RawID, "claude-3-5-haiku-20241022")
+	}
+	if f.Provider != "anthropic" {
+		t.Errorf("Provider = %q, want %q", f.Provider, "anthropic")
+	}
+	if f.RawFamily != "claude-haiku" {
+		t.Errorf("RawFamily = %q, want %q", f.RawFamily, "claude-haiku")
+	}
+	if f.AttemptedParse.Family != "claude" {
+		t.Errorf("AttemptedParse.Family = %q, want %q", f.AttemptedParse.Family, "claude")
+	}
+	if f.AttemptedParse.Variant != "haiku" {
+		t.Errorf("AttemptedParse.Variant = %q, want %q", f.AttemptedParse.Variant, "haiku")
+	}
+	if f.AttemptedParse.Date != "2024-10-22" {
+		t.Errorf("AttemptedParse.Date = %q, want %q", f.AttemptedParse.Date, "2024-10-22")
+	}
+	if f.Reason != bestiary.ReasonVersionDigitsNotExtracted {
+		t.Errorf("Reason = %q, want %q", f.Reason, bestiary.ReasonVersionDigitsNotExtracted)
+	}
+}
+
+// TestRun_WritesParseFailuresJSON verifies that run() writes parse_failures.json
+// to cacheDir when it encounters models with parseable failures (e.g. YYMM-pattern
+// raw_family values). This is the end-to-end integration test.
+//
+// BDD: Given bestiary-gen runs with N failures detected then file
+// {cacheDir}/parse_failures.json exists.
+func TestRun_WritesParseFailuresJSON(t *testing.T) {
+	// Serve an API response with models that produce failures.
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write(failureAPIJSON(t))
+	}))
+	defer srv.Close()
+
+	origURL := apiURL
+	apiURL = srv.URL
+	defer func() { apiURL = origURL }()
+
+	tmpDir := t.TempDir()
+	origDir, err := os.Getwd()
+	if err != nil {
+		t.Fatalf("getwd: %v", err)
+	}
+	if err := os.Chdir(tmpDir); err != nil {
+		t.Fatalf("chdir to tmpDir: %v", err)
+	}
+	defer func() { _ = os.Chdir(origDir) }()
+
+	cacheDir := filepath.Join(tmpDir, "test-cache")
+
+	if err := run([]string{"-cache-dir=" + cacheDir}); err != nil {
+		t.Fatalf("run(): unexpected error: %v", err)
+	}
+
+	// parse_failures.json must exist.
+	failuresPath := filepath.Join(cacheDir, parseFailuresFile)
+	data, err := os.ReadFile(failuresPath)
+	if err != nil {
+		t.Fatalf("parse_failures.json not written to cacheDir %q: %v\n"+
+			"  What: run() did not write parse_failures.json\n"+
+			"  Why: the file-write step in run() may not be implemented yet (L3)\n"+
+			"  How to fix: implement writeParseFailures call in run() (L3 task)",
+			cacheDir, err)
+	}
+
+	// Must be valid JSON.
+	var envelope bestiary.ParseFailuresEnvelope
+	if err := json.Unmarshal(data, &envelope); err != nil {
+		t.Fatalf("parse_failures.json: invalid JSON: %v\nContents: %s", err, data)
+	}
+	if envelope.SchemaVersion != 1 {
+		t.Errorf("SchemaVersion = %d, want 1", envelope.SchemaVersion)
+	}
+}
