@@ -830,19 +830,20 @@ func ParseFamilyDetailed(raw Family, id ModelID, p Provider) (Family, string, st
 	}
 
 	// ── Failure mode 1: Version digits between family-prefix and variant ──────
-	// Detect cases like "claude-3-5-haiku-20241022" (with compact date stripped)
-	// where hyphen-separated digit groups appear between an alpha prefix and a
-	// known variant suffix. The heuristic: after stripping any trailing compact
-	// date (YYYYMMDD), if the raw string contains the pattern
-	// <alpha>-<digits>-<digits>-<alpha> (non-empty variant was extracted AND
-	// version is still empty), a version component was missed.
+	// Detect cases where the model ID embeds version digits between the canonical
+	// family prefix and the variant, but those digits are not extractable by
+	// ExtractVersionFromID because the rawFamily prefix does not align with the ID.
 	//
-	// Additional condition: the detected variant must not be the same as the
-	// last token of the raw string (which would mean the parser already handled it).
-	if version == "" && variant != "" {
-		// Strip trailing compact date from the raw string before checking.
-		rawNoDate := stripTrailingDate(rawStr)
-		if reVersionBetweenFamilyAndVariant.MatchString(rawNoDate) {
+	// Example: rawFamily="claude-haiku" → family="claude", variant="haiku", version="".
+	// ID="claude-3-5-haiku-20241022": after stripping "claude-" prefix, the remainder
+	// "3-5-haiku-20241022" starts with digit groups, which means the version "3.5"
+	// sits between the family prefix and the variant in the ID.
+	//
+	// Heuristic: version=="" AND variant!="" AND the ID, after stripping the
+	// canonical family prefix + "-", has a leading numeric-group pattern before
+	// the variant token (and the YYMM detector did not already fire).
+	if version == "" && variant != "" && string(id) != "" {
+		if detectVersionDigitsInID(id, family, variant) {
 			return family, variant, version, &ParseFailure{
 				RawID:          id,
 				Provider:       p,
@@ -876,19 +877,68 @@ func ParseFamilyDetailed(raw Family, id ModelID, p Provider) (Family, string, st
 // The segment must be at a word boundary within the hyphenated string.
 var reYYMMCandidate = regexp.MustCompile(`(?:^|-)(?:19|20|21|22|23|24|25|26|27|28|29)\d{2}(?:-|$)`)
 
-// reVersionBetweenFamilyAndVariant matches the pattern of a raw family string
-// where one or more hyphen-separated purely-numeric segments appear between an
-// alphabetic prefix and an alphabetic suffix. Examples:
+// detectVersionDigitsInID returns true when the model ID contains one or more
+// purely-numeric hyphen-separated tokens between the canonical family prefix and
+// the variant name. This identifies cases like:
 //
-//	"claude-3-5-haiku"   → matches (3, 5 between "claude" and "haiku")
-//	"claude-3-haiku"     → matches (3 between "claude" and "haiku")
-//	"gpt-4-turbo"        → matches (4 between "gpt" and "turbo")
+//	id="claude-3-5-haiku-20241022", family="claude", variant="haiku"
+//	→ after stripping "claude-" prefix and trailing date, "3-5-haiku" remains
+//	→ tokens ["3","5","haiku"]: digits appear before the variant → true
 //
-// Non-matches:
+//	id="claude-opus-4-20250514", family="claude", variant="opus"
+//	→ after stripping "claude-" prefix and trailing date, "opus-4" remains
+//	→ tokens ["opus","4"]: variant appears before digits → false (no overflow digits ahead of variant)
 //
-//	"claude-haiku"       → no numeric segments (pure override)
-//	"gemini-flash"       → no numeric segments
-var reVersionBetweenFamilyAndVariant = regexp.MustCompile(`^[a-zA-Z][a-zA-Z0-9]*(?:-[a-zA-Z][a-zA-Z0-9]*)*-\d+(?:-\d+)*-[a-zA-Z][a-zA-Z0-9-]*$`)
+// The function strips trailing YYYYMMDD/YYYY-MM-DD dates from the ID before
+// token inspection to avoid misclassifying date segments as version digits.
+func detectVersionDigitsInID(id ModelID, family Family, variant string) bool {
+	if family == "" || variant == "" || id == "" {
+		return false
+	}
+
+	idStr := string(id)
+
+	// Strip any leading path segments (multi-segment provider IDs).
+	if idx := strings.LastIndexByte(idStr, '/'); idx >= 0 {
+		idStr = idStr[idx+1:]
+	}
+
+	// Build the expected family prefix for stripping (e.g. "claude-").
+	familyPrefix := string(family) + "-"
+	if !strings.HasPrefix(idStr, familyPrefix) {
+		return false
+	}
+
+	// Strip the family prefix, then strip any trailing date.
+	remainder := idStr[len(familyPrefix):]
+	remainder = stripTrailingDate(remainder)
+	if remainder == "" {
+		return false
+	}
+
+	// Tokenize the remainder on hyphens.
+	tokens := strings.Split(remainder, "-")
+
+	// Check if there are purely-numeric tokens BEFORE the first variant token.
+	// The variant may be multi-token (e.g. "flash-lite"), so we look for ANY
+	// variant token among the leading tokens.
+	variantTokens := strings.Split(variant, "-")
+	variantFirst := variantTokens[0]
+
+	for i, tok := range tokens {
+		if tok == variantFirst {
+			// Variant token found. If any earlier token was purely numeric, it's a version miss.
+			for _, prev := range tokens[:i] {
+				if isVersionToken(prev) {
+					return true
+				}
+			}
+			return false
+		}
+	}
+	// Variant token not found in remaining ID tokens — no version-between-variant pattern.
+	return false
+}
 
 // detectSuffixOverflow returns true when the raw family string contains more
 // hyphen-separated segments than can be accounted for by the parsed
