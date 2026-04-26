@@ -170,14 +170,20 @@ func runShow(input string, format bestiary.OutputFormat, dbPath string, inputFor
 	found := false
 	ctx := context.Background()
 	for _, ref := range refs {
-		staticModel, inStatic := bestiary.LookupModel(ref.ID)
+		// Look up by (Provider, ID) to respect the canonical-provider preference
+		// applied by Resolve. Using LookupModel(ID) alone would return the first
+		// model in the registry with that ID, ignoring the provider filter.
+		staticModel, inStatic := bestiary.LookupModelByProvider(ref.Provider, string(ref.ID))
 
 		var cachedModel bestiary.ModelInfo
 		inCached := false
 		if store != nil {
 			if m, qErr := store.QueryModel(ctx, ref.ID); qErr == nil {
-				cachedModel = m
-				inCached = true
+				// Filter cached model by provider as well.
+				if m.Provider == ref.Provider {
+					cachedModel = m
+					inCached = true
+				}
 			}
 		}
 
