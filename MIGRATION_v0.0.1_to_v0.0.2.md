@@ -24,6 +24,7 @@ URD `bestiary-rjf`, PROPOSAL-3 `bestiary-1oq`.
 8. [NEW Model_* constants (ModelIDs function)](#8-new-model_-constants)
 9. [CLI: bestiary show --scheme flag; bestiary-gen --cache-dir and --no-fetch](#9-cli-changes)
 10. [BREAKING: ModelInfo JSON field rename (drop Normalized prefix)](#10-modelinfo-json-field-rename)
+12. [Parse-failure audit log (.bestiary-gen-cache/parse_failures.json)](#12-parse-failure-audit-log-bestiary-gen-cacheparsefailuresjson)
 
 ---
 
@@ -658,6 +659,122 @@ No SQLite migration is required for this change.
 
 ---
 
+---
+
+## 12. Parse-failure audit log (`.bestiary-gen-cache/parse_failures.json`)
+
+**Nature:** Additive. New diagnostic output file written at codegen time. No API changes.
+
+**Slice:** SLICE-FIX-V2-3 (`bestiary-wcvo`)
+
+### What changed
+
+`bestiary-gen` now writes a parse-failure audit log to
+`.bestiary-gen-cache/parse_failures.json` at the end of every codegen run (i.e.
+every `go generate ./...`). The file is **overwritten** on each run — it is a
+full audit of the current generation, not an append log.
+
+### File envelope (schema_version: 1)
+
+```json
+{
+  "schema_version": 1,
+  "generated_at": "2026-04-26T05:18:25Z",
+  "failure_count": 2,
+  "failures": [
+    {
+      "raw_id": "claude-3-5-haiku-20241022",
+      "provider": "anthropic",
+      "raw_family": "claude-haiku",
+      "attempted_parse": {
+        "family": "claude",
+        "variant": "haiku",
+        "version": "",
+        "date": "2024-10-22"
+      },
+      "reason": "version digits between family-prefix and variant not extracted"
+    }
+  ]
+}
+```
+
+When zero failures occur, the file is still written with `failure_count: 0` and
+`failures: []`. It is never omitted.
+
+### Failure modes detected
+
+Three known failure modes are currently detected:
+
+| Reason string | Description | Example |
+|---|---|---|
+| `"version digits between family-prefix and variant not extracted"` | The model ID contains version digits between the family prefix and variant name, but `ExtractVersionFromID` cannot reach them (e.g. `claude-haiku` prefix doesn't align with `claude-3-5-haiku-...` ID). | `claude-3-5-haiku-20241022` with `raw_family="claude-haiku"` |
+| `"suffix overflow: extra segments after expected family/variant/version/date"` | More than 2 hyphen-separated segments remain in the raw family string after the parser accounts for the expected components. | Model IDs with unusual extra segments |
+| `"YYMM-date-as-version false-positive"` | The raw family string contains a 4-digit numeric segment in the YYMM range (1900–2999) that the parser cannot reliably classify as a date vs. a version. | `mistral-2401`, `mistral-2403`, `pixtral-2411` |
+
+### How to use the audit log
+
+After running `go generate ./...`, inspect the file to identify models whose
+canonical decomposition (`Family`, `Variant`, `Version`) may be inaccurate:
+
+```bash
+# Generate and inspect failures
+go generate ./...
+cat .bestiary-gen-cache/parse_failures.json | python3 -m json.tool
+
+# Count failures by reason
+cat .bestiary-gen-cache/parse_failures.json | \
+  python3 -c "import json,sys; d=json.load(sys.stdin); \
+  [print(f['reason']) for f in d['failures']]" | sort | uniq -c
+```
+
+The parse failures file is gitignored via `.bestiary-gen-cache/` in `.gitignore`.
+It is a build-time diagnostic and should not be committed.
+
+### API additions
+
+New public types in `parse.go`:
+
+```go
+type ParseAttempt struct {
+    Family  Family `json:"family"`
+    Variant string `json:"variant"`
+    Version string `json:"version"`
+    Date    string `json:"date"`
+}
+
+type ParseFailure struct {
+    RawID          ModelID      `json:"raw_id"`
+    Provider       Provider     `json:"provider"`
+    RawFamily      Family       `json:"raw_family"`
+    AttemptedParse ParseAttempt `json:"attempted_parse"`
+    Reason         string       `json:"reason"`
+}
+
+type ParseFailuresEnvelope struct {
+    SchemaVersion int            `json:"schema_version"`
+    GeneratedAt   time.Time      `json:"generated_at"`
+    FailureCount  int            `json:"failure_count"`
+    Failures      []ParseFailure `json:"failures"`
+}
+
+// New reason constants (use these for consistent phrasing):
+const ReasonVersionDigitsNotExtracted = "version digits between family-prefix and variant not extracted"
+const ReasonSuffixOverflow = "suffix overflow: extra segments after expected family/variant/version/date"
+const ReasonYYMMDateAsVersion = "YYMM-date-as-version false-positive"
+
+// New entry point (failure-aware companion to ParseFamilyWithVersion):
+func ParseFamilyDetailed(raw Family, id ModelID, p Provider) (Family, string, string, *ParseFailure)
+```
+
+### Downstream impact
+
+- No changes to `ModelInfo`, `ModelRef`, or any existing public types.
+- No schema version bump (additive diagnostic output only).
+- `.bestiary-gen-cache/parse_failures.json` is already gitignored.
+- Callers of `go generate ./...` will see new output: `N parse failures logged to .bestiary-gen-cache/parse_failures.json`.
+
+---
+
 ## Appendix: Beads audit trail
 
 | Reference | ID | Role |
@@ -673,3 +790,4 @@ No SQLite migration is required for this change.
 | PROPOSAL-3 | `bestiary-1oq` | Architecture proposal |
 | FIX_IMPL_PLAN_V2 | `bestiary-2xaf` | Fix plan: drop Normalized prefix, reconcile ModelInfo fields |
 | SLICE-FIX-V2-1 | `bestiary-tel4` | ModelInfo JSON field rename (this section's slice) |
+| SLICE-FIX-V2-3 | `bestiary-wcvo` | Parse-failure audit log (Section 12) |
