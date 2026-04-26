@@ -173,6 +173,7 @@ func modelToYAML(m ModelInfo, indent string) string {
 	writeYAMLString(&sb, indent, "Family", string(m.Family))
 	writeYAMLString(&sb, indent, "Variant", m.Variant)
 	writeYAMLString(&sb, indent, "Date", m.Date)
+	writeYAMLString(&sb, indent, "Modifier", m.Modifier)
 	writeYAMLInt(&sb, indent, "ContextWindow", m.ContextWindow)
 	writeYAMLInt(&sb, indent, "MaxOutput", m.MaxOutput)
 	writeYAMLBool(&sb, indent, "Reasoning", m.Reasoning)
