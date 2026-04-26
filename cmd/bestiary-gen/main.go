@@ -346,7 +346,7 @@ func run(args []string) error {
 	ctx := context.Background()
 	now := time.Now().UTC().Format(time.RFC3339)
 
-	rawJSON, models, providerMeta, err := fetchModelsWithRaw(ctx, flags.cacheDir, flags.noFetch)
+	rawJSON, models, providerMeta, parseFailures, err := fetchModelsWithRaw(ctx, flags.cacheDir, flags.noFetch)
 	if err != nil {
 		return err
 	}
@@ -439,13 +439,30 @@ func run(args []string) error {
 		return err
 	}
 
+	// Write parse_failures.json to the cache directory.
+	// Sort failures for stable output (parser output order is non-deterministic
+	// due to map iteration order in the API response). Stable order means
+	// consecutive codegen runs produce identical files when the data is unchanged.
+	sort.Slice(parseFailures, func(i, j int) bool {
+		li := string(parseFailures[i].Provider) + "/" + string(parseFailures[i].RawID)
+		lj := string(parseFailures[j].Provider) + "/" + string(parseFailures[j].RawID)
+		return li < lj
+	})
+	if err := writeParseFailures(flags.cacheDir, parseFailures); err != nil {
+		// Non-fatal: log and continue. Failures file is a diagnostic aid;
+		// a write error should not prevent the generated .go files from being used.
+		fmt.Fprintf(os.Stderr, "bestiary-gen: warning: could not write parse_failures.json: %v\n", err)
+	}
+
 	fmt.Fprintf(os.Stdout,
-		"bestiary-gen: wrote %s with %d models (%d providers), %s with %d constants, %s with %d constants, %s at %s\n",
+		"bestiary-gen: wrote %s with %d models (%d providers), %s with %d constants, %s with %d constants, %s at %s; %d parse failures logged to %s\n",
 		outputPath, len(filtered), countUniqueProviders(filtered),
 		outputProvidersPath, len(allSlugs),
 		outputFamiliesPath, len(familyMeta),
 		outputConstantsPath,
 		now,
+		len(parseFailures),
+		filepath.Join(flags.cacheDir, "parse_failures.json"),
 	)
 	return nil
 }
@@ -470,6 +487,65 @@ func cacheAPIResponse(raw []byte, dir string) error {
 	}
 	dst := filepath.Join(dir, cacheFile)
 	return os.WriteFile(dst, raw, 0o644)
+}
+
+// writeParseFailures marshals the given failures into a ParseFailuresEnvelope
+// and writes it to {cacheDir}/parse_failures.json. The file is overwritten on
+// every codegen run (full audit, not append). An empty failures slice produces a
+// valid JSON envelope with failure_count=0 and failures=[].
+//
+// Per [C-actionable-errors]: the error message describes what failed, why, where
+// the file lives, and how to recover.
+func writeParseFailures(cacheDir string, failures []bestiary.ParseFailure) error {
+	// Ensure the cache directory exists.
+	if err := os.MkdirAll(cacheDir, 0o755); err != nil {
+		return fmt.Errorf(
+			"writeParseFailures: create cache dir %q: %w\n"+
+				"  What: could not create the cache directory for parse_failures.json\n"+
+				"  Why: file system permission or path issue\n"+
+				"  Where: %s\n"+
+				"  How to fix: ensure the parent directory exists and is writable, or use --cache-dir to choose a different location",
+			cacheDir, err, cacheDir,
+		)
+	}
+
+	// Use an empty (non-nil) slice so JSON encodes failures as [] not null.
+	safeFailures := failures
+	if safeFailures == nil {
+		safeFailures = []bestiary.ParseFailure{}
+	}
+
+	envelope := bestiary.ParseFailuresEnvelope{
+		SchemaVersion: 1,
+		GeneratedAt:   time.Now().UTC(),
+		FailureCount:  len(safeFailures),
+		Failures:      safeFailures,
+	}
+
+	data, err := json.MarshalIndent(envelope, "", "  ")
+	if err != nil {
+		return fmt.Errorf(
+			"writeParseFailures: marshal JSON: %w\n"+
+				"  What: could not serialize the parse failures envelope to JSON\n"+
+				"  Why: the ParseFailuresEnvelope or its contents may contain non-serializable values\n"+
+				"  Where: in-memory marshal step before writing to %s\n"+
+				"  How to fix: inspect the ParseFailure records for unusual field values",
+			err, filepath.Join(cacheDir, "parse_failures.json"),
+		)
+	}
+
+	dst := filepath.Join(cacheDir, "parse_failures.json")
+	if err := os.WriteFile(dst, data, 0o644); err != nil {
+		return fmt.Errorf(
+			"writeParseFailures: write %s: %w\n"+
+				"  What: could not write parse_failures.json to disk\n"+
+				"  Why: file system permission or path issue\n"+
+				"  Where: %s\n"+
+				"  How to fix: ensure %s is writable, or use --cache-dir to choose a different location",
+			dst, err, dst, cacheDir,
+		)
+	}
+	return nil
 }
 
 // providerAPIMeta holds per-provider metadata extracted from the API for codegen.
@@ -502,8 +578,10 @@ func (e *ErrCacheMiss) Error() string {
 //   - noFetch: when true, skip HTTP and read from dir/api_response.json instead.
 //     Returns *ErrCacheMiss if the cache file is absent or empty.
 //
-// Returns the raw JSON body, the flat model slice, and per-provider metadata.
-func fetchModelsWithRaw(ctx context.Context, dir string, noFetch bool) (rawJSON []byte, models []bestiary.ModelInfo, provMeta map[string]providerAPIMeta, err error) {
+// Returns the raw JSON body, the flat model slice, per-provider metadata, and
+// any parse failures detected during model conversion via genToModelInfoDetailed.
+// Parse failures are non-fatal — the model is still included in the output.
+func fetchModelsWithRaw(ctx context.Context, dir string, noFetch bool) (rawJSON []byte, models []bestiary.ModelInfo, provMeta map[string]providerAPIMeta, failures []bestiary.ParseFailure, err error) {
 	cachePath := filepath.Join(dir, cacheFile)
 
 	if noFetch {
@@ -514,14 +592,14 @@ func fetchModelsWithRaw(ctx context.Context, dir string, noFetch bool) (rawJSON 
 			if absPath == "" {
 				absPath = cachePath
 			}
-			return nil, nil, nil, &ErrCacheMiss{Path: absPath}
+			return nil, nil, nil, nil, &ErrCacheMiss{Path: absPath}
 		}
 		rawJSON = body
 	} else {
 		// Fetch from the API over HTTP.
 		req, reqErr := http.NewRequestWithContext(ctx, http.MethodGet, apiURL, nil)
 		if reqErr != nil {
-			return nil, nil, nil, fmt.Errorf(
+			return nil, nil, nil, nil, fmt.Errorf(
 				"create HTTP request for %s: %w\n"+
 					"  What: failed to construct the API request\n"+
 					"  How to fix: this is a programming error — report it",
@@ -532,7 +610,7 @@ func fetchModelsWithRaw(ctx context.Context, dir string, noFetch bool) (rawJSON 
 		client := &http.Client{Timeout: 60 * time.Second}
 		resp, doErr := client.Do(req)
 		if doErr != nil {
-			return nil, nil, nil, fmt.Errorf(
+			return nil, nil, nil, nil, fmt.Errorf(
 				"HTTP GET %s: %w\n"+
 					"  What: network request failed\n"+
 					"  How to fix: check network connectivity and retry",
@@ -542,7 +620,7 @@ func fetchModelsWithRaw(ctx context.Context, dir string, noFetch bool) (rawJSON 
 		defer resp.Body.Close()
 
 		if resp.StatusCode != http.StatusOK {
-			return nil, nil, nil, fmt.Errorf(
+			return nil, nil, nil, nil, fmt.Errorf(
 				"unexpected HTTP status %d from %s; expected 200 OK\n"+
 					"  What: the API returned a non-success status\n"+
 					"  How to fix: check the API endpoint and try again",
@@ -553,7 +631,7 @@ func fetchModelsWithRaw(ctx context.Context, dir string, noFetch bool) (rawJSON 
 		const maxBodyBytes = 10 * 1024 * 1024
 		body, readErr := io.ReadAll(io.LimitReader(resp.Body, maxBodyBytes))
 		if readErr != nil {
-			return nil, nil, nil, fmt.Errorf(
+			return nil, nil, nil, nil, fmt.Errorf(
 				"read response body from %s: %w\n"+
 					"  What: failed to read the API response body\n"+
 					"  How to fix: retry the operation",
@@ -565,7 +643,7 @@ func fetchModelsWithRaw(ctx context.Context, dir string, noFetch bool) (rawJSON 
 
 	var apiResp genWireResponse
 	if err := json.Unmarshal(rawJSON, &apiResp); err != nil {
-		return nil, nil, nil, fmt.Errorf(
+		return nil, nil, nil, nil, fmt.Errorf(
 			"decode JSON from %s: %w\n"+
 				"  What: the API response JSON could not be decoded\n"+
 				"  Why: the API schema may have changed in a way not handled by json.RawMessage\n"+
@@ -578,10 +656,14 @@ func fetchModelsWithRaw(ctx context.Context, dir string, noFetch bool) (rawJSON 
 	for providerSlug, prov := range apiResp {
 		provMeta[providerSlug] = providerAPIMeta{Name: prov.Name}
 		for _, wm := range prov.Models {
-			models = append(models, genToModelInfo(providerSlug, wm))
+			info, failure := genToModelInfoDetailed(providerSlug, wm)
+			models = append(models, info)
+			if failure != nil {
+				failures = append(failures, *failure)
+			}
 		}
 	}
-	return rawJSON, models, provMeta, nil
+	return rawJSON, models, provMeta, failures, nil
 }
 
 // collectFamilies returns a deduplicated sorted list of unique non-empty raw API
@@ -622,28 +704,50 @@ func parseCapabilityRaw(raw json.RawMessage) bestiary.Capability {
 // LastSynced is intentionally left empty — the caller stamps it.
 //
 // Canonical fields (Family, Variant, Version, Date) are populated at this
-// stage by invoking bestiary.ParseFamilyWithVersion, bestiary.ExtractVersionFromID
-// (primary source for Version when the raw family field does not embed a version),
-// bestiary.ExtractDate, and bestiary.InferFamilyFromIDWithVariant (for models with
-// an empty raw family field) so that models_static_gen.go carries baked
-// normalization data at compile time with consistent (Family, Variant, Version)
-// across providers regardless of whether raw_family is empty or populated
-// (SLICE-FIX-2, B5/B6).
+// stage by invoking bestiary.ParseFamilyDetailed (which uses ParseFamilyWithVersion
+// internally and also returns a *ParseFailure when a known parsing deficiency is
+// detected), bestiary.ExtractVersionFromID (primary source for Version when the raw
+// family field does not embed a version), bestiary.ExtractDate, and
+// bestiary.InferFamilyFromIDWithVariant (for models with an empty raw family field)
+// so that models_static_gen.go carries baked normalization data at compile time with
+// consistent (Family, Variant, Version) across providers regardless of whether
+// raw_family is empty or populated (SLICE-FIX-2, B5/B6).
+//
+// Parse failures detected by ParseFamilyDetailed are returned as the second value.
+// Callers that collect failures should use genToModelInfoDetailed instead.
 func genToModelInfo(providerSlug string, wm genWireModel) bestiary.ModelInfo {
+	info, _ := genToModelInfoDetailed(providerSlug, wm)
+	return info
+}
+
+// genToModelInfoDetailed converts a genWireModel to (ModelInfo, *ParseFailure).
+// The *ParseFailure is non-nil when ParseFamilyDetailed detects a known parsing
+// deficiency (see bestiary.ParseFamilyDetailed for the three detected modes).
+// Failure records are collected by fetchModelsWithRaw and written to
+// parse_failures.json at the end of each codegen run.
+func genToModelInfoDetailed(providerSlug string, wm genWireModel) (bestiary.ModelInfo, *bestiary.ParseFailure) {
 	// Derive normalized family, variant, and version.
 	rawFamily := bestiary.Family(wm.Family)
+	id := bestiary.ModelID(wm.ID)
+	provider := bestiary.Provider(providerSlug)
+
 	var normFamily bestiary.Family
 	var normVariant string
 	var normVersion string
+	var failure *bestiary.ParseFailure
+
 	if rawFamily != "" {
-		normFamily, normVariant, normVersion = bestiary.ParseFamilyWithVersion(rawFamily)
+		// Use ParseFamilyDetailed to get (family, variant, version) plus a failure
+		// annotation if the parser detects a known deficiency (e.g. version digits
+		// between family prefix and variant in the model ID but not the raw family).
+		normFamily, normVariant, normVersion, failure = bestiary.ParseFamilyDetailed(rawFamily, id, provider)
 		if normVersion == "" {
 			// The raw family field (e.g. "claude-opus") does not embed a version.
 			// Fall back to extracting the version from the model ID, which is the
 			// authoritative source for version numbers per team-lead arbitration
 			// (bestiary-5eh8). Example: "claude-opus-4-5-20251101" with family
 			// "claude-opus" yields version "4.5".
-			normVersion = bestiary.ExtractVersionFromID(bestiary.ModelID(wm.ID), rawFamily)
+			normVersion = bestiary.ExtractVersionFromID(id, rawFamily)
 		}
 	} else {
 		// ~25% of models have an empty Family field — infer from the model ID.
@@ -652,17 +756,24 @@ func genToModelInfo(providerSlug string, wm genWireModel) bestiary.ModelInfo {
 		// across providers that have empty vs. populated raw_family for the same
 		// model ID (SLICE-FIX-2, B5/B6).
 		normFamily, normVariant, normVersion = bestiary.InferFamilyFromIDWithVariant(
-			bestiary.ModelID(wm.ID),
-			bestiary.Provider(providerSlug),
+			id,
+			provider,
 		)
 	}
 
 	// Derive normalized date from model ID (primary) or release date (fallback).
-	normDate := bestiary.ExtractDate(bestiary.ModelID(wm.ID), wm.ReleaseDate)
+	normDate := bestiary.ExtractDate(id, wm.ReleaseDate)
+
+	// If a parse failure was detected, backfill the date into AttemptedParse.
+	// ParseFamilyDetailed cannot access the date (it only takes the raw family),
+	// so we populate it here after ExtractDate runs.
+	if failure != nil {
+		failure.AttemptedParse.Date = normDate
+	}
 
 	info := bestiary.ModelInfo{
-		ID:          bestiary.ModelID(wm.ID),
-		Provider:    bestiary.Provider(providerSlug),
+		ID:          id,
+		Provider:    provider,
 		DisplayName: wm.Name,
 		RawFamily:   rawFamily,
 		Family:      normFamily,
@@ -703,7 +814,7 @@ func genToModelInfo(providerSlug string, wm genWireModel) bestiary.ModelInfo {
 		info.Modalities = genToModalities(wm.Modalities.Input, wm.Modalities.Output)
 	}
 
-	return info
+	return info, failure
 }
 
 // genToModalities converts string slices from the API into the typed Modalities

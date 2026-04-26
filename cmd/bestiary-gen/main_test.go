@@ -715,7 +715,7 @@ func TestNoFetch_MalformedCache(t *testing.T) {
 		t.Fatalf("setup: write malformed cache file: %v", err)
 	}
 
-	_, _, _, err := fetchModelsWithRaw(context.Background(), tmpDir, true)
+	_, _, _, _, err := fetchModelsWithRaw(context.Background(), tmpDir, true)
 	if err == nil {
 		t.Fatal("fetchModelsWithRaw(noFetch=true, malformed cache): expected error, got nil")
 	}
@@ -826,7 +826,7 @@ func TestNoFetch_HitsCache(t *testing.T) {
 	defer func() { apiURL = origURL }()
 
 	// fetchModelsWithRaw with noFetch=true must read from cache, not contact srv.
-	gotRaw, models, provMeta, err := fetchModelsWithRaw(context.Background(), tmpDir, true)
+	gotRaw, models, provMeta, _, err := fetchModelsWithRaw(context.Background(), tmpDir, true)
 	if err != nil {
 		t.Fatalf("fetchModelsWithRaw(noFetch=true): unexpected error: %v", err)
 	}
@@ -851,7 +851,7 @@ func TestNoFetch_MissingCache_ActionableError(t *testing.T) {
 	tmpDir := t.TempDir()
 	// Deliberately do NOT create api_response.json in tmpDir.
 
-	_, _, _, err := fetchModelsWithRaw(context.Background(), tmpDir, true)
+	_, _, _, _, err := fetchModelsWithRaw(context.Background(), tmpDir, true)
 	if err == nil {
 		t.Fatal("fetchModelsWithRaw(noFetch=true, missing cache): expected error, got nil")
 	}
