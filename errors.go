@@ -101,6 +101,6 @@ func (e *ErrAmbiguous) Error() string {
 				c.Format(SchemeCanonical), c.Provider)
 		}
 	}
-	sb.WriteString("  How to fix: refine the input to a more specific model ID, or use --scheme=raw with an exact API ID")
+	sb.WriteString("  How to fix: refine the input to a more specific model ID, or use --format=raw with an exact API ID")
 	return sb.String()
 }

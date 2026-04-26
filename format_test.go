@@ -3,6 +3,7 @@ package bestiary_test
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"strings"
 	"testing"
 
@@ -377,6 +378,185 @@ func TestFormatModel_JSON_Version(t *testing.T) {
 	}
 	if s, ok := v.(string); !ok || s != "4.5" {
 		t.Errorf("FormatModel(JSON): Version = %v (%T), want %q", v, v, "4.5")
+	}
+}
+
+// --- Fix #2: ErrAmbiguous grouping + truncation ---
+
+// makeAmbiguousRefs creates a list of ModelRefs for use in FormatAmbiguous tests.
+// Generates n refs with distinct (Family, Variant, Version) tuples by default,
+// unless duplicateTuples is true in which case some tuples are repeated to test grouping.
+func makeAmbiguousRefs(n int, duplicateTuples bool) []bestiary.ModelRef {
+	refs := make([]bestiary.ModelRef, n)
+	for i := 0; i < n; i++ {
+		family := fmt.Sprintf("family-%d", i)
+		variant := fmt.Sprintf("variant-%d", i)
+		version := fmt.Sprintf("1.%d", i)
+		if duplicateTuples && i > 0 && i%3 == 0 {
+			// Repeat the previous (family, variant, version) with a different provider.
+			family = fmt.Sprintf("family-%d", i-1)
+			variant = fmt.Sprintf("variant-%d", i-1)
+			version = fmt.Sprintf("1.%d", i-1)
+		}
+		refs[i] = bestiary.ModelRef{
+			ID:       bestiary.ModelID(fmt.Sprintf("model-%d", i)),
+			Provider: bestiary.Provider(fmt.Sprintf("provider-%d", i)),
+			Family:   bestiary.Family(family),
+			Variant:  variant,
+			Version:  version,
+			Date:     "2025-01-01",
+		}
+	}
+	return refs
+}
+
+// TestFormatAmbiguous_Truncation verifies that FormatAmbiguous truncates the
+// candidate list after N=10 and emits a "+M more" hint.
+//
+// Fix #2 (SLICE-FIX-V2-2): "Truncate after N (e.g. 10) with '+M more' hint"
+func TestFormatAmbiguous_Truncation(t *testing.T) {
+	// Create 17 distinct candidates (one per distinct (Family, Variant, Version) tuple).
+	candidates := makeAmbiguousRefs(17, false)
+	e := &bestiary.ErrAmbiguous{
+		Input:      "test-input",
+		Scheme:     bestiary.SchemeCanonical,
+		Candidates: candidates,
+	}
+
+	var buf bytes.Buffer
+	bestiary.FormatAmbiguous(&buf, e)
+	output := buf.String()
+
+	// Must contain "+7 more" (17 - 10 = 7) or equivalent.
+	if !strings.Contains(output, "+7 more") && !strings.Contains(output, "7 more") {
+		t.Errorf("FormatAmbiguous(17 candidates): output should contain '+7 more' hint; got:\n%s", output)
+	}
+	// Must NOT list all 17 candidates (only first 10).
+	// Check that "model-10" through "model-16" are NOT in the output.
+	for i := 10; i < 17; i++ {
+		if strings.Contains(output, fmt.Sprintf("model-%d", i)) {
+			t.Errorf("FormatAmbiguous: candidate model-%d should NOT appear in truncated output; got:\n%s", i, output)
+		}
+	}
+}
+
+// TestFormatAmbiguous_NoTruncation_ExactlyN verifies that exactly N=10 candidates
+// does NOT emit a truncation hint.
+func TestFormatAmbiguous_NoTruncation_ExactlyN(t *testing.T) {
+	candidates := makeAmbiguousRefs(10, false)
+	e := &bestiary.ErrAmbiguous{
+		Input:      "test-input",
+		Scheme:     bestiary.SchemeCanonical,
+		Candidates: candidates,
+	}
+
+	var buf bytes.Buffer
+	bestiary.FormatAmbiguous(&buf, e)
+	output := buf.String()
+
+	// No "+M more" hint for exactly 10 candidates.
+	if strings.Contains(output, "more") {
+		t.Errorf("FormatAmbiguous(10 candidates): should NOT have truncation hint; got:\n%s", output)
+	}
+}
+
+// TestFormatAmbiguous_Grouping verifies that FormatAmbiguous groups candidates
+// by (Family, Variant, Version) tuple and shows ONE canonical row per group.
+//
+// Fix #2 (SLICE-FIX-V2-2): "Group by NormalizedFamily/Variant; show one canonical per group"
+func TestFormatAmbiguous_Grouping(t *testing.T) {
+	// Create candidates where the same (family, variant, version) appears with
+	// multiple providers — simulating the 17+ rehost scenario for claude/opus.
+	candidates := []bestiary.ModelRef{
+		{ID: "claude-opus-4-20250514", Provider: bestiary.ProviderAnthropic, Family: "claude", Variant: "opus", Version: "4", Date: "2025-05-14"},
+		{ID: "claude-opus-4-20250514", Provider: bestiary.Provider302AI, Family: "claude", Variant: "opus", Version: "4", Date: "2025-05-14"},
+		{ID: "claude-opus-4-20250514", Provider: bestiary.ProviderVercel, Family: "claude", Variant: "opus", Version: "4", Date: "2025-05-14"},
+		{ID: "claude-sonnet-4-5-20251101", Provider: bestiary.ProviderAnthropic, Family: "claude", Variant: "sonnet", Version: "4.5", Date: "2025-11-01"},
+		{ID: "claude-sonnet-4-5-20251101", Provider: bestiary.Provider302AI, Family: "claude", Variant: "sonnet", Version: "4.5", Date: "2025-11-01"},
+	}
+
+	e := &bestiary.ErrAmbiguous{
+		Input:      "claude",
+		Scheme:     bestiary.SchemeCanonical,
+		Candidates: candidates,
+	}
+
+	var buf bytes.Buffer
+	bestiary.FormatAmbiguous(&buf, e)
+	output := buf.String()
+
+	// Should show exactly 2 rows (one per unique (family, variant, version) group),
+	// not 5 rows (one per candidate).
+	// Count occurrences of "claude/opus" and "claude/sonnet" in the output.
+	opusCount := strings.Count(output, "opus")
+	sonnetCount := strings.Count(output, "sonnet")
+
+	// Each group should appear exactly ONCE (grouping collapses duplicates).
+	if opusCount != 1 {
+		t.Errorf("FormatAmbiguous grouping: 'opus' appears %d times, want 1 (grouped); output:\n%s", opusCount, output)
+	}
+	if sonnetCount != 1 {
+		t.Errorf("FormatAmbiguous grouping: 'sonnet' appears %d times, want 1 (grouped); output:\n%s", sonnetCount, output)
+	}
+}
+
+// TestFormatAmbiguous_GroupingAndTruncation verifies that grouping is applied
+// BEFORE truncation — i.e., if 17+ rehost rows collapse to 10 groups, no
+// truncation hint is emitted. If they collapse to >10 groups, truncation applies.
+func TestFormatAmbiguous_GroupingAndTruncation(t *testing.T) {
+	// Create 15 distinct canonical groups, each with 2 providers (30 candidates total).
+	// After grouping: 15 groups → exceeds N=10 → should truncate with "+5 more".
+	candidates := make([]bestiary.ModelRef, 0, 30)
+	for i := 0; i < 15; i++ {
+		for j := 0; j < 2; j++ {
+			candidates = append(candidates, bestiary.ModelRef{
+				ID:       bestiary.ModelID(fmt.Sprintf("model-%d-p%d", i, j)),
+				Provider: bestiary.Provider(fmt.Sprintf("provider-%d", j)),
+				Family:   bestiary.Family(fmt.Sprintf("family-%d", i)),
+				Variant:  fmt.Sprintf("variant-%d", i),
+				Version:  fmt.Sprintf("1.%d", i),
+				Date:     "2025-01-01",
+			})
+		}
+	}
+
+	e := &bestiary.ErrAmbiguous{
+		Input:      "test",
+		Scheme:     bestiary.SchemeCanonical,
+		Candidates: candidates,
+	}
+
+	var buf bytes.Buffer
+	bestiary.FormatAmbiguous(&buf, e)
+	output := buf.String()
+
+	// After grouping 30 candidates into 15 groups, then truncating at 10:
+	// "+5 more" hint must appear.
+	if !strings.Contains(output, "+5 more") && !strings.Contains(output, "5 more") {
+		t.Errorf("FormatAmbiguous(30 candidates, 15 groups): should truncate to 10+'+5 more'; got:\n%s", output)
+	}
+}
+
+// TestFormatAmbiguous_RemedHintUpdated verifies that the remediation hint in
+// FormatAmbiguous now references --format=raw instead of the deprecated --scheme=raw.
+func TestFormatAmbiguous_RemedHintUpdated(t *testing.T) {
+	candidates := makeAmbiguousRefs(3, false)
+	e := &bestiary.ErrAmbiguous{
+		Input:      "test",
+		Scheme:     bestiary.SchemeCanonical,
+		Candidates: candidates,
+	}
+
+	var buf bytes.Buffer
+	bestiary.FormatAmbiguous(&buf, e)
+	output := buf.String()
+
+	// The hint should reference --format=raw, not the deprecated --scheme=raw.
+	if strings.Contains(output, "--scheme=raw") {
+		t.Errorf("FormatAmbiguous: output should not reference deprecated --scheme=raw; got:\n%s", output)
+	}
+	if !strings.Contains(output, "--format") && !strings.Contains(output, "raw") {
+		t.Errorf("FormatAmbiguous: output should reference --format=raw or 'raw'; got:\n%s", output)
 	}
 }
 

@@ -181,6 +181,105 @@ func TestFamily_UnmarshalText_NilReceiver(t *testing.T) {
 	}
 }
 
+// --- Fix #4: Family.CanonicalProvider method ---
+
+// TestFamily_CanonicalProvider_WellKnown verifies that CanonicalProvider returns
+// the correct canonical provider for well-known model families.
+//
+// Fix #4 (SLICE-FIX-V2-2): "For now, we can just determine the canonical providers
+// for the most popular models and stub the rest with a placeholder value."
+func TestFamily_CanonicalProvider_WellKnown(t *testing.T) {
+	cases := []struct {
+		family   bestiary.Family
+		wantProv bestiary.Provider
+	}{
+		{bestiary.FamilyClaude, bestiary.ProviderAnthropic},
+		{bestiary.FamilyClaudeOpus, bestiary.ProviderAnthropic},
+		{bestiary.FamilyClaudeSonnet, bestiary.ProviderAnthropic},
+		{bestiary.FamilyClaudeHaiku, bestiary.ProviderAnthropic},
+		{bestiary.FamilyGemini, bestiary.ProviderGoogle},
+		{bestiary.FamilyGemma, bestiary.ProviderGoogle},
+		{bestiary.FamilyGPT, bestiary.ProviderOpenAI},
+		{bestiary.FamilyO, bestiary.ProviderOpenAI},  // o1, o3, o4 carry Family="o"
+		{bestiary.FamilyLlama, bestiary.ProviderLocal},
+		{bestiary.FamilyMistral, bestiary.ProviderMistral},
+		{bestiary.FamilyDeepseek, bestiary.ProviderDeepSeek},
+		{bestiary.FamilyQwen, bestiary.ProviderAlibaba},
+	}
+
+	for _, tc := range cases {
+		tc := tc
+		t.Run(string(tc.family), func(t *testing.T) {
+			got := tc.family.CanonicalProvider()
+			if got != tc.wantProv {
+				t.Errorf("Family(%q).CanonicalProvider() = %q, want %q",
+					tc.family, got, tc.wantProv)
+			}
+		})
+	}
+}
+
+// TestFamily_CanonicalProvider_UnknownReturnsEmpty verifies that unknown families
+// return empty Provider (not a wrong-but-plausible guess, not panic).
+//
+// Fix #4 spec: "Placeholder MUST NOT be a wrong-but-plausible guess. Empty Provider only."
+func TestFamily_CanonicalProvider_UnknownReturnsEmpty(t *testing.T) {
+	unknowns := []bestiary.Family{
+		bestiary.Family(""),
+		bestiary.Family("totally-unknown-family"),
+		bestiary.Family("grok"),  // not mapped in Wave 3
+		bestiary.Family("nova"),
+		bestiary.Family("sonar"),
+		bestiary.Family("kimi"),
+	}
+
+	for _, f := range unknowns {
+		f := f
+		t.Run(string(f), func(t *testing.T) {
+			got := f.CanonicalProvider()
+			if got != "" {
+				t.Errorf("Family(%q).CanonicalProvider() = %q, want empty string for unknown family",
+					f, got)
+			}
+		})
+	}
+}
+
+// TestFamily_CanonicalProvider_NeverPanics verifies that CanonicalProvider never
+// panics for any family value, including edge cases.
+func TestFamily_CanonicalProvider_NeverPanics(t *testing.T) {
+	edgeCases := []bestiary.Family{
+		"",
+		"a",
+		"UPPER-CASE",
+		"with spaces",
+		"unicode-漢字",
+		bestiary.Family("claude"),
+	}
+	for _, f := range edgeCases {
+		// Should not panic.
+		_ = f.CanonicalProvider()
+	}
+}
+
+// TestFamily_CanonicalProvider_AllKnownFamiliesHandled verifies that all families
+// in Families() either return a known Provider or empty string (never a random value).
+func TestFamily_CanonicalProvider_AllKnownFamiliesHandled(t *testing.T) {
+	knownProviders := make(map[bestiary.Provider]bool)
+	for _, p := range bestiary.Providers() {
+		knownProviders[p] = true
+	}
+	knownProviders[""] = true // empty is valid sentinel for "unknown"
+
+	for _, f := range bestiary.Families() {
+		got := f.CanonicalProvider()
+		if !knownProviders[got] {
+			t.Errorf("Family(%q).CanonicalProvider() = %q, which is not a known Provider or empty",
+				f, got)
+		}
+	}
+}
+
 // TestFamilyType_NamedNotAlias is a regression guard against families_gen.go
 // accidentally defining Family as a type alias (type Family = string) instead
 // of a named type (type Family string). A type alias would break type safety

@@ -2,6 +2,7 @@ package bestiary_test
 
 import (
 	"errors"
+	"strings"
 	"testing"
 
 	"github.com/dayvidpham/bestiary"
@@ -427,5 +428,265 @@ func TestResolve_ErrAmbiguous_SchemePropagated(t *testing.T) {
 	}
 	if ambig.Scheme != bestiary.SchemeCanonical {
 		t.Errorf("ErrAmbiguous.Scheme = %v, want SchemeCanonical", ambig.Scheme)
+	}
+}
+
+// --- Fix #1: PURL loose-match fallback ---
+
+// TestResolve_PURL_LooseFallback_ZeroNamespaceMatches verifies that when a PURL
+// input's namespace (provider segment) yields zero matching models, Resolve falls
+// back to an all-provider search and returns *ErrAmbiguous with candidates drawn
+// from all providers. The error message must mention the missed namespace.
+//
+// Fix #1 (SLICE-FIX-V2-2): "State that we are doing loose matching in the fallback.
+// In zero match case, state that there are none and fallback to ErrAmbiguous with candidates."
+func TestResolve_PURL_LooseFallback_ZeroNamespaceMatches(t *testing.T) {
+	// Use a namespace (provider) that does NOT host claude-opus-4-5 to force the
+	// zero-match path. "totally-unknown-ns" is not a real provider.
+	_, err := bestiary.Resolve("pkg:huggingface/totally-unknown-ns/claude-opus-4-5")
+	if err == nil {
+		t.Fatal("Resolve PURL with unknown namespace: want error (ErrAmbiguous), got nil")
+	}
+
+	var ambig *bestiary.ErrAmbiguous
+	if !errors.As(err, &ambig) {
+		var notFound *bestiary.ErrNotFound
+		if errors.As(err, &notFound) {
+			t.Fatalf("Resolve PURL zero-namespace-match: got ErrNotFound, want ErrAmbiguous with loose fallback; "+
+				"Fix #1: when namespace yields no matches, fall back to all-provider candidates")
+		}
+		t.Fatalf("Resolve PURL zero-namespace-match: unexpected error %T: %v", err, err)
+	}
+
+	// Candidates must be non-empty (all-provider fallback).
+	if len(ambig.Candidates) == 0 {
+		t.Fatal("Resolve PURL zero-namespace-match: ErrAmbiguous.Candidates is empty; loose fallback must populate candidates")
+	}
+
+	// The error message must mention the missed namespace.
+	errMsg := ambig.Error()
+	if !strings.Contains(errMsg, "totally-unknown-ns") {
+		t.Errorf("ErrAmbiguous.Error() does not mention missed namespace %q; got:\n%s",
+			"totally-unknown-ns", errMsg)
+	}
+}
+
+// TestResolve_PURL_LooseFallback_DiagnosticMessage verifies that the ErrAmbiguous
+// error message specifically states that no matches were found in the namespace,
+// as required by Fix #1 verbatim: "state that there are none".
+func TestResolve_PURL_LooseFallback_DiagnosticMessage(t *testing.T) {
+	_, err := bestiary.Resolve("pkg:huggingface/no-such-provider/claude")
+	if err == nil {
+		t.Fatal("Resolve PURL with unknown namespace: want error, got nil")
+	}
+
+	var ambig *bestiary.ErrAmbiguous
+	if !errors.As(err, &ambig) {
+		// Any non-ErrAmbiguous error is also an acceptable outcome for no candidates
+		// but the message must still convey the namespace miss.
+		errMsg := err.Error()
+		if !strings.Contains(errMsg, "no-such-provider") {
+			t.Errorf("error message does not mention missed namespace; got: %v", errMsg)
+		}
+		return
+	}
+
+	errMsg := ambig.Error()
+	// Must contain either "no matches" or "namespace" to satisfy the verbatim spec.
+	if !strings.Contains(errMsg, "namespace") && !strings.Contains(errMsg, "no matches") {
+		t.Errorf("ErrAmbiguous.Error() should mention 'namespace' or 'no matches'; got:\n%s", errMsg)
+	}
+}
+
+// TestResolve_PURL_ExistingNamespacePreserved verifies that Fix #1 does not break
+// the existing behavior when the namespace (provider) DOES have matching models.
+// The original provider-filter should still apply when there are matches.
+func TestResolve_PURL_ExistingNamespacePreserved(t *testing.T) {
+	// anthropic hosts claude-opus-4-20250514 — namespace filter must still work.
+	refs, err := bestiary.Resolve("pkg:huggingface/anthropic/claude-opus-4-20250514")
+	if err != nil {
+		t.Skipf("claude-opus-4-20250514 not found under anthropic; skipping: %v", err)
+	}
+	if len(refs) == 0 {
+		t.Fatal("Resolve PURL with matching namespace returned empty refs")
+	}
+	// All returned refs must be from Anthropic.
+	for _, r := range refs {
+		if r.Provider != bestiary.ProviderAnthropic {
+			t.Errorf("PURL with existing namespace: got Provider=%q, want %q only",
+				r.Provider, bestiary.ProviderAnthropic)
+		}
+	}
+}
+
+// --- Fix #4: Family.CanonicalProvider preference in Resolve ---
+
+// TestResolve_CanonicalProvider_Preference_Claude verifies that when
+// "claude/opus@2025-05-14" matches both Anthropic and rehost providers,
+// Resolve returns only the Anthropic ModelRef (canonical provider preference).
+//
+// Fix #4: "Why this show provider 'qihang-ai' — Anthropic should be the
+// canonical provider here"
+func TestResolve_CanonicalProvider_Preference_Claude(t *testing.T) {
+	refs, err := bestiary.Resolve("claude/opus@2025-05-14")
+	if err != nil {
+		t.Skipf("claude/opus@2025-05-14 not found in registry; skipping: %v", err)
+	}
+	if len(refs) == 0 {
+		t.Fatal("Resolve(claude/opus@2025-05-14) returned empty refs")
+	}
+
+	// When canonical provider preference is applied, the result should be a
+	// single-provider set (Anthropic), not the 17+ rehost set.
+	for _, r := range refs {
+		if r.Provider != bestiary.ProviderAnthropic {
+			t.Errorf("Resolve(claude/opus@2025-05-14): got Provider=%q, want %q (canonical provider preference not applied)",
+				r.Provider, bestiary.ProviderAnthropic)
+		}
+	}
+}
+
+// TestResolve_CanonicalProvider_FallsBackToAmbiguous_UnknownFamily verifies that
+// when CanonicalProvider() returns empty (unknown family) and >1 provider matches,
+// ErrAmbiguous is returned (no preference applied, existing behavior preserved).
+func TestResolve_CanonicalProvider_FallsBackToAmbiguous_UnknownFamily(t *testing.T) {
+	// "grok" family — XAI is likely canonical but we haven't mapped it yet.
+	// This test verifies the fallback: unknown family → ErrAmbiguous.
+	// We use a bare family name to trigger multi-provider matching.
+	_, err := bestiary.Resolve("grok", bestiary.WithScheme(bestiary.SchemeCanonical))
+	if err == nil {
+		// Single result means grok only exists under one provider — that's fine too.
+		t.Skip("grok resolved to a single canonical; fallback test not applicable")
+	}
+
+	// If we get an error, it should be ErrAmbiguous (not ErrNotFound when grok exists).
+	var ambig *bestiary.ErrAmbiguous
+	if !errors.As(err, &ambig) {
+		var notFound *bestiary.ErrNotFound
+		if errors.As(err, &notFound) {
+			t.Skip("grok not in registry; fallback test not applicable")
+		}
+		t.Fatalf("Resolve(grok): unexpected error %T: %v", err, err)
+	}
+
+	// ErrAmbiguous is correct: unknown family must NOT apply canonical preference.
+	if len(ambig.Candidates) == 0 {
+		t.Error("ErrAmbiguous.Candidates is empty for grok — should have candidates")
+	}
+}
+
+// TestResolve_CanonicalProvider_WithInputFormat_Peasant_Claude verifies that
+// using WithInputFormat(InputFormatPeasant) with a canonical claude input applies
+// the CanonicalProvider preference and returns a single Anthropic ref.
+func TestResolve_CanonicalProvider_WithInputFormat_Peasant_Claude(t *testing.T) {
+	// Use a canonical input that should unambiguously identify an Anthropic model.
+	refs, err := bestiary.Resolve("claude/opus@2025-05-14", bestiary.WithInputFormat(bestiary.InputFormatPeasant))
+	if err != nil {
+		t.Skipf("claude/opus@2025-05-14 not in registry or error: %v", err)
+	}
+	if len(refs) == 0 {
+		t.Fatal("Resolve returned empty refs")
+	}
+	for _, r := range refs {
+		if r.Provider != bestiary.ProviderAnthropic {
+			t.Errorf("canonical provider preference not applied: got Provider=%q, want %q",
+				r.Provider, bestiary.ProviderAnthropic)
+		}
+	}
+}
+
+// --- Fix #3: --format input flag (via WithInputFormat) ---
+
+// TestResolve_WithInputFormat_Peasant_RejectsPURL verifies that InputFormatPeasant
+// does NOT auto-detect PURL inputs — a PURL string treated as canonical form should
+// return ErrNotFound (or ErrAmbiguous if it happens to parse as canonical segments),
+// not a successful PURL resolution.
+func TestResolve_WithInputFormat_Peasant_RejectsPURL(t *testing.T) {
+	// PURL input given to peasant mode: should NOT resolve as PURL.
+	// The "pkg:huggingface/..." prefix is not a valid canonical form segment.
+	_, err := bestiary.Resolve("pkg:huggingface/anthropic/claude-opus-4-20250514",
+		bestiary.WithInputFormat(bestiary.InputFormatPeasant))
+	if err == nil {
+		t.Fatal("Resolve peasant mode accepted PURL input without error; want ErrNotFound")
+	}
+	// May be ErrNotFound (preferred) or ErrAmbiguous (acceptable if pkg: matches as family=pkg).
+	// Must NOT silently resolve to the PURL scheme's target.
+}
+
+// TestResolve_WithInputFormat_PURL_Resolves verifies that InputFormatPURL
+// correctly resolves a PURL input string.
+func TestResolve_WithInputFormat_PURL_Resolves(t *testing.T) {
+	refs, err := bestiary.Resolve("pkg:huggingface/anthropic/claude-opus-4-20250514",
+		bestiary.WithInputFormat(bestiary.InputFormatPURL))
+	if err != nil {
+		t.Fatalf("Resolve WithInputFormat(PURL) returned error: %v", err)
+	}
+	if len(refs) == 0 {
+		t.Fatal("Resolve WithInputFormat(PURL) returned empty refs")
+	}
+	found := false
+	for _, r := range refs {
+		if r.ID == "claude-opus-4-20250514" {
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Error("Resolve WithInputFormat(PURL): claude-opus-4-20250514 not in results")
+	}
+}
+
+// TestResolve_WithInputFormat_HuggingFace_Resolves verifies that InputFormatHuggingFace
+// correctly resolves a HuggingFace-form input.
+func TestResolve_WithInputFormat_HuggingFace_Resolves(t *testing.T) {
+	refs, err := bestiary.Resolve("anthropic/claude-opus-4-20250514",
+		bestiary.WithInputFormat(bestiary.InputFormatHuggingFace))
+	if err != nil {
+		t.Fatalf("Resolve WithInputFormat(HuggingFace) returned error: %v", err)
+	}
+	if len(refs) == 0 {
+		t.Fatal("Resolve WithInputFormat(HuggingFace) returned empty refs")
+	}
+	found := false
+	for _, r := range refs {
+		if r.ID == "claude-opus-4-20250514" {
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Error("Resolve WithInputFormat(HuggingFace): claude-opus-4-20250514 not in results")
+	}
+}
+
+// TestResolve_WithInputFormat_Raw_Resolves verifies that InputFormatRaw
+// performs an exact model ID lookup.
+func TestResolve_WithInputFormat_Raw_Resolves(t *testing.T) {
+	refs, err := bestiary.Resolve("claude-opus-4-20250514",
+		bestiary.WithInputFormat(bestiary.InputFormatRaw))
+	if err != nil {
+		t.Fatalf("Resolve WithInputFormat(Raw) returned error: %v", err)
+	}
+	if len(refs) == 0 {
+		t.Fatal("Resolve WithInputFormat(Raw) returned empty refs")
+	}
+	for _, r := range refs {
+		if r.ID != "claude-opus-4-20250514" {
+			t.Errorf("Resolve WithInputFormat(Raw): got ID=%q, want exact match %q", r.ID, "claude-opus-4-20250514")
+		}
+	}
+}
+
+// TestResolve_WithInputFormat_Raw_PartialNoMatch verifies that InputFormatRaw
+// with a partial ID returns ErrNotFound (exact match only).
+func TestResolve_WithInputFormat_Raw_PartialNoMatch(t *testing.T) {
+	_, err := bestiary.Resolve("claude-opus",
+		bestiary.WithInputFormat(bestiary.InputFormatRaw))
+	if err == nil {
+		t.Fatal("Resolve WithInputFormat(Raw) partial ID: want ErrNotFound, got nil")
+	}
+	var notFound *bestiary.ErrNotFound
+	if !errors.As(err, &notFound) {
+		t.Fatalf("Resolve WithInputFormat(Raw) partial: got %T, want *ErrNotFound", err)
 	}
 }
