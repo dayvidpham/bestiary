@@ -666,6 +666,14 @@ func ExtractModifier(id ModelID, family Family, variant string) (modifier string
 	for _, mod := range pd.modifiers {
 		suffix := "-" + mod
 		if strings.HasSuffix(idStr, suffix) {
+			// Variant-guard (SLICE-FIX-V2-5 Fix 3): if the trailing modifier token is
+			// already encoded as the variant, do NOT double-count it. This prevents
+			// models like kimi-k2-thinking (RawFamily="kimi-thinking" → variant="thinking")
+			// from also getting Modifier="thinking". The variant is the authoritative
+			// source for that token when they are the same.
+			if mod == variant {
+				return "", ""
+			}
 			return mod, suffix
 		}
 	}
