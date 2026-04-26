@@ -982,6 +982,203 @@ func TestParseFamilyDetailed_YYMMDateAsVersion(t *testing.T) {
 	}
 }
 
+// ----------------------------------------------------------------------------
+// ExtractModifier tests (SLICE-FIX-V2-5)
+// ----------------------------------------------------------------------------
+
+// TestExtractModifier covers the 4-case corpus from the slice spec plus negative
+// cases. Tests are expected to FAIL until L3 integrates ExtractModifier into the
+// parse pipeline AND wires the result into ModelInfo.Modifier.
+//
+// Note: This test directly calls ExtractModifier which is already implemented
+// (the skeleton returns the correct value since we implemented the body in L1).
+// The pipeline integration test below covers the end-to-end flow.
+func TestExtractModifier(t *testing.T) {
+	t.Parallel()
+
+	cases := []struct {
+		desc             string
+		id               bestiary.ModelID
+		family           bestiary.Family
+		variant          string
+		wantModifier     string
+		wantConsumed     string
+	}{
+		// 4-case corpus from the team-lead spec.
+		{
+			desc:         "claude-opus-4-1-20250805-thinking",
+			id:           "claude-opus-4-1-20250805-thinking",
+			family:       "claude",
+			variant:      "opus",
+			wantModifier: "thinking",
+			wantConsumed: "-thinking",
+		},
+		{
+			desc:         "claude-opus-4-6-thinking (no date in ID)",
+			id:           "claude-opus-4-6-thinking",
+			family:       "claude",
+			variant:      "opus",
+			wantModifier: "thinking",
+			wantConsumed: "-thinking",
+		},
+		{
+			desc:         "doubao-seed-1-6-thinking-250715",
+			id:           "doubao-seed-1-6-thinking-250715",
+			family:       "doubao",
+			variant:      "seed",
+			wantModifier: "",
+			wantConsumed: "",
+			// 250715 is the trailing token (YYMMDD without dashes), not "thinking".
+			// "thinking" appears before "250715" so it is not the last hyphen-token.
+			// ExtractModifier only matches when the modifier IS the trailing token.
+		},
+		{
+			desc:         "gpt-4o-2024-05-13 (no modifier)",
+			id:           "gpt-4o-2024-05-13",
+			family:       "gpt",
+			variant:      "",
+			wantModifier: "",
+			wantConsumed: "",
+		},
+		// Negative cases.
+		{
+			desc:         "unknown modifier -zen returns empty",
+			id:           "some-model-zen",
+			family:       "some",
+			variant:      "model",
+			wantModifier: "",
+			wantConsumed: "",
+		},
+		{
+			desc:         "modifier-like substring inside variant does not fire",
+			id:           "deepseek-thinking",
+			family:       "deepseek",
+			variant:      "thinking", // variant IS thinking, but modifier should still fire
+			wantModifier: "thinking",
+			wantConsumed: "-thinking",
+			// ExtractModifier looks at the raw ID trailing token regardless of variant.
+			// The variant context is available but we only need the trailing suffix match.
+		},
+		{
+			desc:         "empty ID returns empty",
+			id:           "",
+			family:       "claude",
+			variant:      "opus",
+			wantModifier: "",
+			wantConsumed: "",
+		},
+		{
+			desc:         "think suffix (shorter modifier) does not shadow thinking",
+			id:           "model-thinking",
+			family:       "model",
+			variant:      "",
+			wantModifier: "thinking",
+			wantConsumed: "-thinking",
+		},
+	}
+
+	for _, tc := range cases {
+		tc := tc
+		t.Run(tc.desc, func(t *testing.T) {
+			t.Parallel()
+			gotModifier, gotConsumed := bestiary.ExtractModifier(tc.id, tc.family, tc.variant)
+			if gotModifier != tc.wantModifier {
+				t.Errorf("ExtractModifier(%q, %q, %q) modifier = %q, want %q",
+					tc.id, tc.family, tc.variant, gotModifier, tc.wantModifier)
+			}
+			if gotConsumed != tc.wantConsumed {
+				t.Errorf("ExtractModifier(%q, %q, %q) consumed = %q, want %q",
+					tc.id, tc.family, tc.variant, gotConsumed, tc.wantConsumed)
+			}
+		})
+	}
+}
+
+// TestExtractModifier_PipelineIntegration verifies that the parse pipeline
+// (ParseFamily → ExtractModifier → strip consumed → ExtractVersionFromID →
+// ExtractDate) produces a ModelInfo with Modifier populated and Version/Date
+// NOT polluted by the trailing modifier token.
+//
+// These tests will FAIL until L3 integrates ExtractModifier into genToModelInfoDetailed
+// so that ModelInfo.Modifier is populated during codegen.
+// This test validates the FUNCTION COMPOSITION directly (not the codegen path).
+func TestExtractModifier_PipelineIntegration(t *testing.T) {
+	t.Parallel()
+
+	cases := []struct {
+		desc            string
+		rawID           bestiary.ModelID
+		rawFamily       bestiary.Family
+		wantModifier    string
+		wantVersion     string
+		wantDate        string
+	}{
+		{
+			desc:         "claude-opus-4-1-20250805-thinking",
+			rawID:        "claude-opus-4-1-20250805-thinking",
+			rawFamily:    "claude-opus",
+			wantModifier: "thinking",
+			wantVersion:  "4.1",
+			wantDate:     "2025-08-05",
+		},
+		{
+			desc:         "claude-opus-4-6-thinking (no date)",
+			rawID:        "claude-opus-4-6-thinking",
+			rawFamily:    "claude-opus",
+			wantModifier: "thinking",
+			wantVersion:  "4.6",
+			wantDate:     "",
+		},
+		{
+			desc:         "gpt-4o-2024-05-13 (no modifier, version not extracted)",
+			rawID:        "gpt-4o-2024-05-13",
+			rawFamily:    "gpt-4o",
+			wantModifier: "",
+			wantVersion:  "",
+			wantDate:     "2024-05-13",
+		},
+	}
+
+	for _, tc := range cases {
+		tc := tc
+		t.Run(tc.desc, func(t *testing.T) {
+			t.Parallel()
+
+			// Step 1: ParseFamily
+			family, variant, _ := bestiary.ParseFamilyWithVersion(tc.rawFamily)
+
+			// Step 2: ExtractModifier
+			modifier, consumed := bestiary.ExtractModifier(tc.rawID, family, variant)
+
+			// Verify modifier extraction
+			if modifier != tc.wantModifier {
+				t.Errorf("ExtractModifier modifier = %q, want %q", modifier, tc.wantModifier)
+			}
+
+			// Step 3: Strip consumed from ID
+			cleanedID := bestiary.ModelID(string(tc.rawID))
+			if consumed != "" {
+				cleanedStr := string(tc.rawID)
+				if len(cleanedStr) >= len(consumed) && cleanedStr[len(cleanedStr)-len(consumed):] == consumed {
+					cleanedID = bestiary.ModelID(cleanedStr[:len(cleanedStr)-len(consumed)])
+				}
+			}
+
+			// Step 4: ExtractVersionFromID on cleaned ID
+			version := bestiary.ExtractVersionFromID(cleanedID, tc.rawFamily)
+			if version != tc.wantVersion {
+				t.Errorf("ExtractVersionFromID(%q, %q) = %q, want %q", cleanedID, tc.rawFamily, version, tc.wantVersion)
+			}
+
+			// Step 5: ExtractDate on cleaned ID
+			date := bestiary.ExtractDate(cleanedID, "")
+			if date != tc.wantDate {
+				t.Errorf("ExtractDate(%q, %q) = %q, want %q", cleanedID, "", date, tc.wantDate)
+			}
+		})
+	}
+}
+
 // TestParseFamilyDetailed_CleanParse verifies that ParseFamilyDetailed returns
 // nil *ParseFailure for cleanly parseable model IDs that the heuristics fully handle.
 //

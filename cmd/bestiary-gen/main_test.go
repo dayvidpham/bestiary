@@ -520,6 +520,121 @@ func min(a, b int) int {
 }
 
 // --------------------------------------------------------------------------
+// SLICE-FIX-V2-5 tests: Modifier slot in Model__ constants
+// --------------------------------------------------------------------------
+
+// TestNameForCanonical_ModifierSlot verifies that when a ModelInfo has a Modifier
+// field set, nameForCanonicalWithMap emits the __Modifier__ slot between version
+// and date in the constant name.
+//
+// These tests will FAIL until L3 updates nameForCanonicalWithMap to include the
+// Modifier segment between version and date.
+func TestNameForCanonical_ModifierSlot(t *testing.T) {
+	cases := []struct {
+		desc     string
+		model    bestiary.ModelInfo
+		wantName string
+	}{
+		{
+			desc: "claude-opus-4-6-thinking (date not in ID, only in Date field)",
+			model: bestiary.ModelInfo{
+				ID:       "claude-opus-4-6-thinking",
+				Provider: "anthropic",
+				Family:   "claude",
+				Variant:  "opus",
+				Version:  "4.6",
+				Date:     "2026-02-05",
+				Modifier: "thinking",
+			},
+			// Date "2026-02-05" is NOT in the raw ID "claude-opus-4-6-thinking",
+			// so dateFoundInID = false → no date suffix in constant.
+			// Modifier slot "Thinking" appears between version "4_6" and end.
+			// Expected: Model__Anthropic__Claude__Opus__4_6__Thinking
+			wantName: "Model__Anthropic__Claude__Opus__4_6__Thinking",
+		},
+		{
+			desc: "claude-opus-4-1-20250805-thinking with date in ID",
+			model: bestiary.ModelInfo{
+				ID:       "claude-opus-4-1-20250805-thinking",
+				Provider: "anthropic",
+				Family:   "claude",
+				Variant:  "opus",
+				Version:  "4.1",
+				Date:     "2025-08-05",
+				Modifier: "thinking",
+			},
+			// Compact date "20250805" IS in the raw ID → dateFoundInID = true.
+			// Modifier "-thinking" is the trailing token, stripped before tokenizing.
+			// After modifier+date strip: "claude-opus-4-1" → after version strip: "claude-opus"
+			// Tokens: [Claude, Opus]; version: "4_1"; date: "20250805"; modifier: "Thinking"
+			// Expected: Model__Anthropic__Claude__Opus__4_1__Thinking__20250805
+			wantName: "Model__Anthropic__Claude__Opus__4_1__Thinking__20250805",
+		},
+		{
+			desc: "model with modifier but no date",
+			model: bestiary.ModelInfo{
+				ID:       "claude-opus-4-6-thinking",
+				Provider: "anthropic",
+				Family:   "claude",
+				Variant:  "opus",
+				Version:  "4.6",
+				Date:     "",
+				Modifier: "thinking",
+			},
+			// No date → modifier becomes trailing segment.
+			// Expected: Model__Anthropic__Claude__Opus__4_6__Thinking
+			wantName: "Model__Anthropic__Claude__Opus__4_6__Thinking",
+		},
+		{
+			desc: "gpt-4o-2024-05-13 (no modifier)",
+			model: bestiary.ModelInfo{
+				ID:       "gpt-4o-2024-05-13",
+				Provider: "openai",
+				Family:   "gpt",
+				Variant:  "",
+				Version:  "",
+				Date:     "2024-05-13",
+				Modifier: "",
+			},
+			// No modifier → no __Modifier__ slot (preserves current form).
+			wantName: "Model__OpenAI__GPT__4o__20240513",
+		},
+	}
+
+	for _, tc := range cases {
+		tc := tc
+		t.Run(tc.desc, func(t *testing.T) {
+			got := nameForCanonicalWithMap(tc.model, testSlugToConst)
+			if got != tc.wantName {
+				t.Errorf("nameForCanonicalWithMap: got %q, want %q", got, tc.wantName)
+			}
+		})
+	}
+}
+
+// TestTokenToConstPart_ModifierCasing verifies that modifier tokens receive the
+// correct casing via tokenToConstPart (e.g. "thinking" → "Thinking").
+func TestTokenToConstPart_ModifierCasing(t *testing.T) {
+	cases := []struct {
+		tok  string
+		want string
+	}{
+		{"thinking", "Thinking"},
+		{"vision", "Vision"},
+		{"latest", "Latest"},
+		{"code", "Code"},
+		{"preview", "Preview"},
+		{"think", "Think"},
+	}
+	for _, tc := range cases {
+		got := tokenToConstPart(tc.tok)
+		if got != tc.want {
+			t.Errorf("tokenToConstPart(%q) = %q, want %q", tc.tok, got, tc.want)
+		}
+	}
+}
+
+// --------------------------------------------------------------------------
 // Helpers
 // --------------------------------------------------------------------------
 

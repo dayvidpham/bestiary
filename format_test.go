@@ -578,6 +578,114 @@ func TestFormatAmbiguous_RemedHintUpdated(t *testing.T) {
 	}
 }
 
+// ----------------------------------------------------------------------------
+// Modifier field format tests (SLICE-FIX-V2-5)
+// ----------------------------------------------------------------------------
+
+// TestFormatModel_JSON_ModifierField verifies that FormatModel(JSON) emits the
+// Modifier field when non-empty.
+//
+// These tests will FAIL (Modifier will be missing) until ModelInfo gains the
+// Modifier field AND json serialization uses it — both done in L1. The field is
+// auto-serialized since it's an exported string field with no explicit json tag.
+// Actually this test should PASS after L1 since Go's json.Marshal picks up
+// exported string fields by their field name.
+func TestFormatModel_JSON_ModifierField(t *testing.T) {
+	// Test that Modifier is emitted when non-empty.
+	m := bestiary.ModelInfo{
+		ID:          "claude-opus-4-6-thinking",
+		Provider:    "anthropic",
+		DisplayName: "Claude Opus 4.6 Thinking",
+		RawFamily:   "claude-opus",
+		Family:      "claude",
+		Variant:     "opus",
+		Version:     "4.6",
+		Date:        "2026-02-05",
+		Modifier:    "thinking",
+		LastSynced:  "2026-02-05T00:00:00Z",
+	}
+
+	var buf bytes.Buffer
+	if err := bestiary.FormatModel(&buf, m, bestiary.FormatJSON); err != nil {
+		t.Fatalf("FormatModel(JSON) error: %v", err)
+	}
+
+	var got map[string]any
+	if err := json.Unmarshal(buf.Bytes(), &got); err != nil {
+		t.Fatalf("Unmarshal JSON output error: %v", err)
+	}
+
+	val, ok := got["Modifier"]
+	if !ok {
+		t.Fatal("JSON output missing 'Modifier' key; add Modifier to ModelInfo and schema")
+	}
+	if s, ok := val.(string); !ok || s != "thinking" {
+		t.Errorf("Modifier = %v (%T), want \"thinking\"", val, val)
+	}
+
+	// Test that Modifier appears when empty (as empty string, not omitted,
+	// since ModelInfo.Modifier has no `json:",omitempty"` tag).
+	mEmpty := bestiary.ModelInfo{
+		ID:          "gpt-4o-2024-05-13",
+		Provider:    "openai",
+		DisplayName: "GPT-4o",
+		RawFamily:   "gpt-4o",
+		Family:      "gpt",
+		Variant:     "",
+		Version:     "4o",
+		Date:        "2024-05-13",
+		Modifier:    "",
+		LastSynced:  "2024-05-13T00:00:00Z",
+	}
+
+	var buf2 bytes.Buffer
+	if err := bestiary.FormatModel(&buf2, mEmpty, bestiary.FormatJSON); err != nil {
+		t.Fatalf("FormatModel(JSON) empty Modifier error: %v", err)
+	}
+
+	var got2 map[string]any
+	if err := json.Unmarshal(buf2.Bytes(), &got2); err != nil {
+		t.Fatalf("Unmarshal empty-modifier JSON error: %v", err)
+	}
+	// Modifier key should still be present (empty string "" since no omitempty).
+	if _, ok := got2["Modifier"]; !ok {
+		t.Error("JSON output missing 'Modifier' key even when empty; ensure Modifier field is in ModelInfo")
+	}
+}
+
+// TestFormatModel_YAML_ModifierField verifies that the YAML serializer emits
+// a Modifier line when Modifier is non-empty.
+//
+// These tests will FAIL until L3 updates modelToYAML in format.go to include a
+// Modifier line.
+func TestFormatModel_YAML_ModifierField(t *testing.T) {
+	m := bestiary.ModelInfo{
+		ID:          "claude-opus-4-6-thinking",
+		Provider:    "anthropic",
+		DisplayName: "Claude Opus 4.6 Thinking",
+		RawFamily:   "claude-opus",
+		Family:      "claude",
+		Variant:     "opus",
+		Version:     "4.6",
+		Date:        "2026-02-05",
+		Modifier:    "thinking",
+		LastSynced:  "2026-02-05T00:00:00Z",
+	}
+
+	var buf bytes.Buffer
+	if err := bestiary.FormatModel(&buf, m, bestiary.FormatYAML); err != nil {
+		t.Fatalf("FormatModel(YAML) error: %v", err)
+	}
+
+	output := buf.String()
+	if !strings.Contains(output, "Modifier") {
+		t.Errorf("YAML output missing 'Modifier' field;\nGot:\n%s", output)
+	}
+	if !strings.Contains(output, "thinking") {
+		t.Errorf("YAML output missing modifier value 'thinking';\nGot:\n%s", output)
+	}
+}
+
 // TestFormatModels_Table validates that FormatModels with FormatTable produces a
 // table with a header row containing column names and data rows for each model.
 func TestFormatModels_Table(t *testing.T) {

@@ -1,6 +1,7 @@
 package bestiary_test
 
 import (
+	"encoding/json"
 	"testing"
 
 	"github.com/dayvidpham/bestiary"
@@ -573,5 +574,81 @@ func TestFormatCanonical_StaticRegistry_Claude_Opus_4_5(t *testing.T) {
 	got := ref.Format(bestiary.SchemeCanonical)
 	if got != wantCanonical {
 		t.Errorf("Format(SchemeCanonical) = %q, want %q", got, wantCanonical)
+	}
+}
+
+// ----------------------------------------------------------------------------
+// Modifier field tests on ModelRef (SLICE-FIX-V2-5)
+// ----------------------------------------------------------------------------
+
+// TestModelRef_Modifier_MarshalUnmarshal verifies that ModelRef with a populated
+// Modifier field round-trips through JSON marshal/unmarshal correctly.
+func TestModelRef_Modifier_MarshalUnmarshal(t *testing.T) {
+	ref := bestiary.ModelRef{
+		ID:        "claude-opus-4-6-thinking",
+		Provider:  "anthropic",
+		RawFamily: "claude-opus",
+		Family:    "claude",
+		Variant:   "opus",
+		Version:   "4.6",
+		Date:      "2026-02-05",
+		Modifier:  "thinking",
+	}
+
+	enc, err := json.Marshal(ref)
+	if err != nil {
+		t.Fatalf("json.Marshal(ModelRef with Modifier) failed: %v", err)
+	}
+
+	var got map[string]any
+	if err := json.Unmarshal(enc, &got); err != nil {
+		t.Fatalf("json.Unmarshal failed: %v", err)
+	}
+
+	// All 8 fields must be present.
+	required := []string{"ID", "Provider", "RawFamily", "Family", "Variant", "Version", "Date", "Modifier"}
+	for _, field := range required {
+		if _, ok := got[field]; !ok {
+			t.Errorf("ModelRef JSON missing required field %q", field)
+		}
+	}
+
+	// Modifier must be "thinking".
+	if modVal, ok := got["Modifier"]; !ok || modVal != "thinking" {
+		t.Errorf("ModelRef JSON Modifier = %v, want \"thinking\"", modVal)
+	}
+}
+
+// TestModelInfo_Ref_Modifier verifies that Ref() propagates Modifier from ModelInfo to ModelRef.
+func TestModelInfo_Ref_Modifier(t *testing.T) {
+	m := bestiary.ModelInfo{
+		ID:          "claude-opus-4-6-thinking",
+		Provider:    bestiary.ProviderAnthropic,
+		RawFamily:   "claude-opus",
+		Family:      "claude",
+		Variant:     "opus",
+		Version:     "4.6",
+		Date:        "2026-02-05",
+		Modifier:    "thinking",
+	}
+
+	ref := m.Ref()
+	if ref.Modifier != "thinking" {
+		t.Errorf("Ref().Modifier = %q, want %q", ref.Modifier, "thinking")
+	}
+}
+
+// TestModelInfo_Ref_EmptyModifier verifies that zero-value Modifier propagates correctly.
+func TestModelInfo_Ref_EmptyModifier(t *testing.T) {
+	m := bestiary.ModelInfo{
+		ID:       "gpt-4o-2024-05-13",
+		Provider: "openai",
+		Family:   "gpt",
+		Modifier: "",
+	}
+
+	ref := m.Ref()
+	if ref.Modifier != "" {
+		t.Errorf("Ref().Modifier = %q, want empty string for zero-value Modifier", ref.Modifier)
 	}
 }
