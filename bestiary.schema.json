@@ -18,23 +18,23 @@
       "description": "Human-readable model name.",
       "type": "string"
     },
+    "RawFamily": {
+      "description": "Raw API family field verbatim as returned by the upstream API (e.g. \"claude-opus\", \"gemini-flash\").",
+      "type": "string"
+    },
     "Family": {
-      "description": "Model family or series name.",
+      "description": "Canonical family identifier extracted from RawFamily (or inferred from ID when RawFamily is empty). Populated at codegen time.",
       "type": "string"
     },
-    "NormalizedFamily": {
-      "description": "Canonical family identifier extracted from Family (or inferred from ID when Family is empty). Populated at codegen time.",
+    "Variant": {
+      "description": "Variant suffix extracted from RawFamily (e.g. \"opus-4\", \"pro\", \"flash\"). Empty when the model has no variant. Populated at codegen time.",
       "type": "string"
     },
-    "NormalizedVariant": {
-      "description": "Variant suffix extracted from Family (e.g. \"opus-4\", \"pro\", \"flash\"). Empty when the model has no variant. Populated at codegen time.",
-      "type": "string"
-    },
-    "NormalizedVersion": {
+    "Version": {
       "description": "Model version extracted from the family string (e.g. \"4.5\" for claude-opus-4-5, \"2.5\" for gemini-2.5-flash). Empty when the model has no separable version. Populated at codegen time.",
       "type": "string"
     },
-    "NormalizedDate": {
+    "Date": {
       "description": "Release date extracted from the model ID or ReleaseDate field in YYYY-MM-DD format. Empty when no date is found. Populated at codegen time.",
       "type": "string"
     },
@@ -165,11 +165,11 @@
     "ID",
     "Provider",
     "DisplayName",
+    "RawFamily",
     "Family",
-    "NormalizedFamily",
-    "NormalizedVariant",
-    "NormalizedVersion",
-    "NormalizedDate",
+    "Variant",
+    "Version",
+    "Date",
     "ContextWindow",
     "MaxOutput",
     "Reasoning",

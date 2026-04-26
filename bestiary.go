@@ -15,33 +15,36 @@ type Capability struct {
 
 // ModelInfo holds metadata for a single AI model as returned by the models.dev API.
 //
-// Normalized fields (NormalizedFamily, NormalizedVariant, NormalizedDate) are
-// populated at codegen time by the bestiary-gen tool invoking bestiary.ParseFamily,
-// bestiary.ExtractDate, and bestiary.InferFamilyFromID. They are zero-value for models
-// loaded from the SQLite cache (pre-normalization epoch) until a sync is performed.
+// Canonical fields (Family, Variant, Version, Date) are populated at codegen time
+// by the bestiary-gen tool invoking bestiary.ParseFamily, bestiary.ExtractDate, and
+// bestiary.InferFamilyFromID. They are zero-value for models loaded from the SQLite
+// cache (pre-normalization epoch) until a sync is performed.
+//
+// RawFamily is the raw API family value verbatim (e.g. "claude-opus", "gemini-flash").
+// Family is the canonical/normalized family (e.g. "claude", "gemini").
 type ModelInfo struct {
 	ID          ModelID
 	Provider    Provider
 	DisplayName string
-	Family      Family
+	RawFamily   Family // raw API family field verbatim (e.g. "claude-opus")
 
 	// Codegen-baked normalization (Slice 2b — IP-2 contract for Slices 3, 5, 7)
 
-	// NormalizedFamily is the canonical family identifier extracted from Family
-	// (or inferred from ID when Family is empty). Populated at codegen time.
-	NormalizedFamily Family
-	// NormalizedVariant is the variant suffix extracted from Family (e.g. "opus",
+	// Family is the canonical family identifier extracted from RawFamily
+	// (or inferred from ID when RawFamily is empty). Populated at codegen time.
+	Family Family
+	// Variant is the variant suffix extracted from RawFamily (e.g. "opus",
 	// "pro", "flash-lite"). Empty when the model has no variant. Populated at codegen time.
-	NormalizedVariant string
-	// NormalizedVersion is the model version extracted from the model ID
+	Variant string
+	// Version is the model version extracted from the model ID
 	// (primary source, e.g. "claude-opus-4-5-20251101" → "4.5") or, when the
 	// family string itself carries a version component, from the family string
 	// (fallback, e.g. "gemini-2.5-flash" → "2.5"). Empty when no separable
 	// version is found. Populated at codegen time.
-	NormalizedVersion string
-	// NormalizedDate is the release date extracted from the model ID or ReleaseDate
+	Version string
+	// Date is the release date extracted from the model ID or ReleaseDate
 	// field, in YYYY-MM-DD format. Empty when no date is found. Populated at codegen time.
-	NormalizedDate        string
+	Date                  string
 	ContextWindow         int
 	MaxOutput             int
 	Reasoning             bool
