@@ -26,6 +26,7 @@ URD `bestiary-rjf`, PROPOSAL-3 `bestiary-1oq`.
 10. [BREAKING: ModelInfo JSON field rename (drop Normalized prefix)](#10-modelinfo-json-field-rename)
 11. [Resolve overhaul (PURL loose-fallback, ErrAmbiguous grouping, --format flag, canonical-provider preference)](#11-resolve-overhaul)
 12. [Parse-failure audit log (`.bestiary-gen-cache/parse_failures.json`)](#12-parse-failure-audit-log-bestiary-gen-cacheparsefailuresjson)
+13. [Modifier field on ModelRef + ModelInfo (SLICE-FIX-V2-5)](#13-modifier-field-on-modelref--modelinfo-slice-fix-v2-5)
 
 ---
 
@@ -917,7 +918,187 @@ func ParseFamilyDetailed(raw Family, id ModelID, p Provider) (Family, string, st
 
 ---
 
-## Appendix: Beads audit trail
+## 13. Modifier field on ModelRef + ModelInfo (SLICE-FIX-V2-5)
+
+**Nature:** Additive. No breaking changes to existing fields.
+
+SLICE-FIX-V2-5 adds a `Modifier` field to both `ModelInfo` and `ModelRef`,
+introduces the `ExtractModifier` function, and establishes the canonical
+bracket-suffix format (`[modifier]`) in canonical string output. This section
+documents all six topics required for downstream consumers upgrading from v0.0.1
+to v0.0.2.
+
+---
+
+### 13.1 New `Modifier` field on ModelInfo and ModelRef
+
+**Migration impact:**
+
+Callers reading `ModelInfo` from JSON now receive a 9-field struct (was 8
+fields before v0.0.2). `ModelRef` gains 1 field (now 8, was 7). Field is
+additive — existing JSON decoders that use `omitempty` or ignore unknown fields
+are unaffected. Callers that rely on struct field count or positional encoding
+must be updated.
+
+**JSON wire format:**
+
+```json
+// Before (v0.0.1)
+{"id": "claude-opus-4-6-thinking", "family": "claude", "variant": "opus", ...}
+
+// After (v0.0.2) — Modifier emitted when non-empty
+{"id": "claude-opus-4-6-thinking", "family": "claude", "variant": "opus", "Modifier": "thinking", ...}
+
+// When Modifier is empty, field is omitted (empty string is zero value)
+{"id": "claude-opus-4-20250514", "family": "claude", "variant": "opus", ...}
+```
+
+**Field placement:** `Modifier` is the 9th field in `ModelInfo` and the 8th field
+in `ModelRef`, placed after `Date`. Downstream callers that switch on field order
+(unusual but possible in custom serializers) must account for the new slot.
+
+---
+
+### 13.2 `ExtractModifier(id, family, variant)` function
+
+**Signature:**
+
+```go
+func ExtractModifier(id ModelID, family Family, variant string) (modifier string, modifierConsumed string)
+```
+
+**When to call:** AFTER `ParseFamily` but BEFORE `ExtractVersionFromID` /
+`ExtractDate`. The recommended pipeline order is:
+
+```
+1. ParseFamily(rawFamily)            → family, variant
+2. ExtractModifier(id, family, variant) → modifier, consumed
+3. Strip consumed from id            → cleanedID
+4. ExtractVersionFromID(cleanedID, rawFamily)
+5. ExtractDate(cleanedID, releaseDate)
+```
+
+**Allowlist source:** `parse/data/modifiers.json`. The seed list (v0.0.2) includes:
+`thinking`, `think`, `vision`, `latest`, `code`, `preview`. To add new modifiers,
+append to the `modifiers` array in that file and re-run `go generate ./...`.
+
+**Variant-guard (cycle-2 fix):** `ExtractModifier` checks whether the matched
+trailing token equals the parsed `variant`. If so, it returns `("","")` to
+avoid double-counting the same semantic token in both `Variant` and `Modifier`.
+
+Example: `kimi-k2-thinking` with `RawFamily="kimi-thinking"`:
+- `ParseFamily("kimi-thinking")` → `variant="thinking"`
+- `ExtractModifier("kimi-k2-thinking", "kimi", "thinking")` → `("","")` (guard fires)
+- Result: `Variant="thinking"`, `Modifier=""` (correct; no double-count)
+
+Contrast with `claude-opus-4-6-thinking`:
+- `ParseFamily("claude-opus")` → `variant="opus"`
+- `ExtractModifier("claude-opus-4-6-thinking", "claude", "opus")` → `("thinking","-thinking")`
+- Result: `Variant="opus"`, `Modifier="thinking"` (correct; different tokens)
+
+---
+
+### 13.3 Canonical bracket-suffix format
+
+The canonical string produced by `ModelRef.String()` (or `ModelRef.Format(SchemeCanonical)`)
+now appends a `[modifier]` bracket suffix when `Modifier` is non-empty:
+
+```
+provider/family[/variant][/version][@date][modifier]
+```
+
+**Examples:**
+
+```
+// No modifier (unchanged from v0.0.1)
+anthropic/claude/opus@2025-05-14
+
+// With modifier
+anthropic/claude/opus@2026-02-05[thinking]
+anthropic/claude/haiku@2024-10-22[latest]
+```
+
+**Empty Modifier → no brackets.** The bracket suffix is only present when
+`Modifier != ""`, preserving backward compatibility for all existing canonical
+strings.
+
+**Resolve round-trip:** `Resolve()` now accepts canonical strings with the
+bracket suffix and strips the `[modifier]` before date matching. Both the date
+filter and the modifier filter are applied:
+
+```go
+// These now resolve correctly (ErrNotFound before cycle-2 fix):
+refs, err := bestiary.Resolve("anthropic/claude/haiku@2024-10-22[latest]")
+refs, err := bestiary.Resolve("anthropic/claude/opus@2026-02-05[thinking]")
+```
+
+---
+
+### 13.4 `Model__` constant slot for Modifier
+
+The generated `Model__` constants in `models_constants_gen.go` include a
+`__<Modifier>__` slot between the version and date segments when Modifier
+is non-empty:
+
+```
+Model__<Provider>__<Family>__<Variant>__<Version>__<Modifier>__<Date>
+```
+
+**Worked example** (claude-opus-4.6 with thinking modifier):
+```go
+Model__Anthropic__Claude__Opus__4_6__Thinking__20260205 ModelID = "claude-opus-4-6-thinking"
+```
+
+**Date-missing case:** when Date is empty, Modifier becomes the trailing slot:
+```go
+Model__Anthropic__Claude__Opus__4_6__Thinking ModelID = "claude-opus-4-6-thinking"
+```
+
+**Variant-guard effect on constants:** models where `variant == modifier` (the
+double-count case) produce constants WITHOUT a Modifier slot:
+```
+// BEFORE cycle-2 fix (incorrect — double-count):
+Model__Moonshot__Kimi__Thinking__Thinking__20251106
+
+// AFTER cycle-2 fix (correct — variant only):
+Model__Moonshot__Kimi__Thinking__20251106
+```
+
+---
+
+### 13.5 SQL schema: UNCHANGED
+
+The `Modifier` field is **NOT** added to the SQLite store schema. It is derived
+entirely from the parser pipeline (`ExtractModifier` on the existing `id` and
+`raw_family` columns) at codegen time and stored as a pre-baked field in the
+generated `models_static_gen.go`.
+
+**No SQL migration is required.** The SQLite schema version remains at v4.
+Callers upgrading from v0.0.1 do not need to run any `ALTER TABLE` statements
+or perform any data migration for the `Modifier` field.
+
+---
+
+### 13.6 Interaction with V2-3 audit log (`parse_failures.json`)
+
+`ExtractModifier` runs in the parse pipeline **before** `ParseFamilyDetailed`'s
+suffix-overflow detection (Mode 2). This means:
+
+- **`ReasonKnownSuffixOverflow` count drops to 0** after V2-5 lands: modifier
+  tokens that were previously unhandled trailing tokens are now cleanly extracted
+  by `ExtractModifier`. The Mode 2 condition `idTrailing != variant &&
+  knownModifierTokens[idTrailing]` no longer fires for those models because the
+  modifier has been consumed.
+
+- **`ReasonUnknownSuffixOverflow` continues to fire** for trailing tokens NOT in
+  the modifier allowlist (e.g. new model-family suffixes not yet seeded in
+  `parse/data/modifiers.json`). These remain as audit hints to extend the allowlist.
+
+The `parse_failures.json` audit log will reflect this reduction after each
+`go generate ./...` run. The failure count for
+`ReasonKnownSuffixOverflow` should be 0 in any post-V2-5 generation.
+
+---
 
 | Reference | ID | Role |
 |---|---|---|
@@ -933,3 +1114,4 @@ func ParseFamilyDetailed(raw Family, id ModelID, p Provider) (Family, string, st
 | FIX_IMPL_PLAN_V2 | `bestiary-2xaf` | Fix plan: drop Normalized prefix, reconcile ModelInfo fields |
 | SLICE-FIX-V2-1 | `bestiary-tel4` | ModelInfo JSON field rename (this section's slice) |
 | SLICE-FIX-V2-3 | `bestiary-wcvo` | Parse-failure audit log (Section 12) |
+| SLICE-FIX-V2-5 | `bestiary-xopj` | Modifier field on ModelRef + ModelInfo (Section 13) |
