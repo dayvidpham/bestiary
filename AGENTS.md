@@ -15,20 +15,30 @@
 ```
 bestiary/
 ├── bestiary.go              # Package doc, ModelInfo, ModelID, Capability types
-├── provider.go              # Provider string type, 4 constants, IsKnown()
-├── modality.go              # Modality int enum, Modalities struct
-├── errors.go                # ErrNotFound, ErrAPIUnavailable (struct errors, use errors.As)
-├── version.go               # 4 provenance consts (schema + upstream versions)
-├── registry.go              # StaticModels(), LookupModel(), ModelsByProvider(), ModelsByFamily()
-├── models_static_gen.go     # GENERATED — do not edit. ~110 models from 3 providers.
+├── canonical.go             # Canonical scheme parsing/formatting
 ├── client.go                # HTTP client with functional options, retry, 10 MB limit
-├── wire.go                  # Internal JSON wire types for models.dev API deserialization
-├── store.go                 # SQLite cache (zombiezen driver), schema migrations
-├── merge.go                 # MergeModels() — dedup by (ID, Provider), most-recent-wins
+├── designation.go           # Designation type + AcceptabilityRating (ISO 1087)
+├── errors.go                # ErrNotFound, ErrAmbiguous, ErrAPIUnavailable (struct errors, use errors.As)
+├── families_gen.go          # GENERATED — Family type and constants from API
+├── family.go                # Hand-curated Family methods (e.g., upcoming CanonicalProvider)
 ├── format.go                # JSON, YAML (internal serializer), table output
+├── harness.go               # Harness type — identifies coding tool / dev environment
+├── merge.go                 # MergeModels() — dedup by (ID, Provider), most-recent-wins
+├── modality.go              # Modality int enum, Modalities struct
+├── modelref.go              # ModelRef struct + Ref() method (RawFamily/Family/Variant/Version/Date)
+├── models_constants_gen.go  # GENERATED — Model__ string constants (~8654 entries)
+├── models_static_gen.go     # GENERATED — ~110 ModelInfo structs from 3 providers
+├── parse.go                 # ParseFamily, ParseFamilyWithVersion, ExtractVersionFromID
+├── provider.go              # Provider string type, IsKnown(), Providers()
+├── providers_gen.go         # GENERATED — ~110 provider constants from API
+├── registry.go              # StaticModels(), LookupModel(), ModelsByProvider/Family()
+├── resolve.go               # Resolve() with auto-detect (canonical/PURL/HF/raw)
+├── store.go                 # SQLite cache (zombiezen driver), schema migrations
+├── version.go               # 4 provenance consts (schema + upstream versions)
+├── wire.go                  # Internal JSON wire types for models.dev API deserialization
 ├── bestiary.schema.json     # JSON Schema (draft-2020-12) for public output types
 ├── cmd/bestiary/main.go     # CLI entry point: list, show, sync
-└── cmd/bestiary-gen/main.go # Codegen: fetches API, writes models_static_gen.go
+└── cmd/bestiary-gen/main.go # Codegen: fetches API, writes generated files
 ```
 
 ## Code style
