@@ -303,11 +303,9 @@ func detectSchemeWithHint(input string) (CanonicalScheme, string, Provider) {
 	//   "provider/family/variant/version@date" (3 slashes)
 	//   "family@date"                         (0 slashes, "@")
 	if slashCount >= 1 && slashCount <= 3 && isCanonicalForm(input) {
-		// Extract provider hint from leading segment when present.
-		// A leading segment is a provider hint when all remaining segments after
-		// it contain the expected canonical family/variant/version components.
-		providerHint, matchInput := extractCanonicalProviderHint(input)
-		return SchemeCanonical, matchInput, providerHint
+		// Canonical form matching uses the full input string; family/variant/version/date
+		// decomposition is handled in matchCanonicalSegments (no provider prefix stripping).
+		return SchemeCanonical, input, ""
 	}
 
 	// "@date" with no slashes: also canonical form.
@@ -359,24 +357,6 @@ func looksLikeVersionedSegment(seg string) bool {
 		return true
 	}
 	return false
-}
-
-// extractCanonicalProviderHint inspects a canonical-form input with slashes and
-// returns the remaining match input (with any leading provider segment stripped).
-//
-// Design note: canonical-provider preference is implemented via Family.CanonicalProvider()
-// in the grouping step of Resolve (SLICE-FIX-V2-2 Fix #4), not via provider-hint
-// extraction from the input string. The canonical auto-detect path does not extract
-// a provider hint from the input — matchCanonicalSegments handles the full
-// family/variant/version/date decomposition without needing to strip a leading
-// provider prefix. The full match set is returned and the canonical-provider
-// preference is applied post-grouping.
-//
-// Returns the full input as matchInput (no stripping).
-func extractCanonicalProviderHint(input string) (Provider, string) {
-	// Canonical form matching uses the full input string; family/variant/version/date
-	// decomposition is handled in matchCanonicalSegments. No provider prefix stripping.
-	return "", input
 }
 
 // filterByProvider returns only those refs whose Provider matches hint.
