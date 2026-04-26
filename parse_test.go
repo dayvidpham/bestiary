@@ -792,3 +792,66 @@ func TestParseFamilyWithVersion_BackwardCompat(t *testing.T) {
 		})
 	}
 }
+
+// TestInferFamilyFromID_Variant verifies that InferFamilyFromIDWithVariant extracts
+// both variant and version from model IDs where the raw family field is empty.
+//
+// B5 (SLICE-FIX-2): the empty-family code path in genToModelInfo must produce
+// identical (NormalizedFamily, NormalizedVariant, NormalizedVersion) as the
+// non-empty-family path for the same raw model ID. A model ID like
+// "claude-opus-4-5-20251101" with empty raw family must decompose to
+// (claude, opus, 4.5), not (claude, "", "").
+//
+// This test FAILS until SLICE-FIX-2-L3 lands (InferFamilyFromIDWithVariant
+// does not yet exist; the existing InferFamilyFromID only returns family).
+func TestInferFamilyFromID_Variant(t *testing.T) {
+	t.Parallel()
+
+	cases := []struct {
+		desc        string
+		id          bestiary.ModelID
+		provider    bestiary.Provider
+		wantFamily  bestiary.Family
+		wantVariant string
+		wantVersion string
+	}{
+		{
+			desc:        "claude-opus-4-5-20251101 empty raw_family → (claude, opus, 4.5)",
+			id:          "claude-opus-4-5-20251101",
+			provider:    "nano-gpt",
+			wantFamily:  "claude",
+			wantVariant: "opus",
+			wantVersion: "4.5",
+		},
+		{
+			desc:        "claude-opus-4-6 empty raw_family → (claude, opus, 4.6)",
+			id:          "claude-opus-4-6",
+			provider:    "some-provider",
+			wantFamily:  "claude",
+			wantVariant: "opus",
+			wantVersion: "4.6",
+		},
+	}
+
+	for _, tc := range cases {
+		tc := tc
+		t.Run(tc.desc, func(t *testing.T) {
+			t.Parallel()
+			gotFamily, gotVariant, gotVersion := bestiary.InferFamilyFromIDWithVariant(tc.id, tc.provider)
+			if gotFamily != tc.wantFamily {
+				t.Errorf("InferFamilyFromIDWithVariant(%q, %q) family = %q, want %q",
+					tc.id, tc.provider, gotFamily, tc.wantFamily)
+			}
+			if gotVariant != tc.wantVariant {
+				t.Errorf("InferFamilyFromIDWithVariant(%q, %q) variant = %q, want %q; "+
+					"must apply suffix/pattern logic to extract variant from ID tokens, "+
+					"not just return the first token",
+					tc.id, tc.provider, gotVariant, tc.wantVariant)
+			}
+			if gotVersion != tc.wantVersion {
+				t.Errorf("InferFamilyFromIDWithVariant(%q, %q) version = %q, want %q",
+					tc.id, tc.provider, gotVersion, tc.wantVersion)
+			}
+		})
+	}
+}

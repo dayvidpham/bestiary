@@ -576,6 +576,78 @@ func extractDateFromString(s string) string {
 	return ""
 }
 
+// InferFamilyFromIDWithVariant is the extended empty-family fallback for models
+// whose API family field is empty (~25% of models). Unlike InferFamilyFromID,
+// it extracts (Family, Variant, Version) by:
+//  1. Inferring the family from the first token of the model ID.
+//  2. Deriving the raw family string from the inferred family + remaining tokens
+//     (treating the ID after the family prefix as a family-like string for parsing).
+//  3. Applying ParseFamilyWithVersion on the derived family string to extract
+//     variant and version using the same suffix/pattern logic as the non-empty
+//     family path in genToModelInfo.
+//
+// This ensures (NormalizedFamily, NormalizedVariant, NormalizedVersion) is
+// consistent across providers regardless of whether raw_family is empty or populated.
+//
+// Examples:
+//
+//	InferFamilyFromIDWithVariant("claude-opus-4-5-20251101", "nano-gpt") → ("claude", "opus", "4.5")
+//	InferFamilyFromIDWithVariant("claude-opus-4-6", "some-provider")    → ("claude", "opus", "4.6")
+//	InferFamilyFromIDWithVariant("gpt-4o", "openai")                    → ("gpt", "", "4o")
+//
+// The provider parameter is reserved for future provider-specific heuristics
+// and is not currently used.
+func InferFamilyFromIDWithVariant(id ModelID, p Provider) (Family, string, string) {
+	if id == "" {
+		return "", "", ""
+	}
+	idStr := string(id)
+
+	// Step 1: strip trailing date tokens so they don't contaminate family inference.
+	stripped := stripTrailingDate(idStr)
+	if stripped == "" {
+		stripped = idStr
+	}
+
+	tokens := strings.Split(stripped, "-")
+	if len(tokens) == 0 {
+		return "", "", ""
+	}
+	// Take only the first alphabetic-leading token as the family seed.
+	first := tokens[0]
+	if first == "" || !unicode.IsLetter(rune(first[0])) {
+		return "", "", ""
+	}
+
+	// Step 2: reconstruct a "raw family" string from first token + remaining tokens
+	// (excluding trailing purely-numeric tokens which are version components).
+	// Then run ParseFamilyWithVersion on it to get (family, variant, version).
+	//
+	// Example: "claude-opus-4-5" (date already stripped from "claude-opus-4-5-20251101")
+	//   → tokens = ["claude", "opus", "4", "5"]
+	//   → strip trailing numeric tokens: ["claude", "opus", "4", "5"]
+	//     but we feed the whole thing as a family string to ParseFamilyWithVersion.
+	//
+	// Build the candidate family string: all tokens (no date stripping already done above).
+	candidateFamilyStr := stripped // e.g. "claude-opus-4-5" or "claude-opus-4-6"
+
+	family, variant, version := ParseFamilyWithVersion(Family(candidateFamilyStr))
+
+	// If ParseFamilyWithVersion returns the raw string unchanged (no pattern matched),
+	// it means the entire string is treated as a family with no variant or version.
+	// Fall back to InferFamilyFromID behaviour: use only the first token.
+	if family == Family(candidateFamilyStr) {
+		return Family(first), "", ""
+	}
+
+	// If version is still empty, try ExtractVersionFromID.
+	if version == "" && family != "" {
+		version = ExtractVersionFromID(id, family)
+	}
+
+	return family, variant, version
+}
+
 // InferFamilyFromID is the empty-family fallback for models whose API family field
 // is empty (~25% of models). It uses the model ID as a heuristic signal.
 //

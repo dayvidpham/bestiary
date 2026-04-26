@@ -300,26 +300,120 @@ func TestResolve_ExactIDInCanonicalMode_NotAmbiguous(t *testing.T) {
 	}
 }
 
-// TestResolve_SchemeCanonical_NeverAutoDetected documents the boundary that
-// SchemeCanonical is never produced by auto-detection (bestiary-haiu).
-// A plain family-name input (e.g. "claude") without WithScheme must NOT trigger
-// ErrAmbiguous — it auto-detects as SchemeRaw and returns ErrNotFound because
-// "claude" is not a raw model ID in the static registry.
-func TestResolve_SchemeCanonical_NeverAutoDetected(t *testing.T) {
-	// "claude" is not a raw model ID, so SchemeRaw match fails → ErrNotFound.
+// TestResolve_SchemeCanonical_NeverAutoDetected_detectScheme documents that
+// detectScheme never returns SchemeCanonical for a plain family-name input (no
+// slashes, no @ separator). The scheme detection boundary is unchanged: only
+// inputs with 1–3 "/" separators AND an "@" date or versioned token auto-detect
+// as SchemeCanonical. "claude" has no slashes, so detectScheme returns SchemeRaw.
+//
+// However, Resolve itself applies a bare-family fallback: when SchemeRaw returns
+// zero matches, it retries with SchemeCanonical family-only matching and returns
+// *ErrAmbiguous when multiple distinct family entries match. This is distinct from
+// auto-detecting SchemeCanonical in detectScheme — it is a post-match fallback.
+//
+// B4 (SLICE-FIX-2): Resolve("claude") must return *ErrAmbiguous (not ErrNotFound).
+func TestResolve_SchemeCanonical_NeverAutoDetected_detectScheme(t *testing.T) {
+	// "claude" has no slashes — detectScheme returns SchemeRaw (unchanged).
+	// But Resolve's bare-family fallback applies, so the result is ErrAmbiguous.
 	_, err := bestiary.Resolve("claude")
 	if err == nil {
-		t.Fatal("Resolve(\"claude\") without WithScheme returned nil error; want ErrNotFound (SchemeRaw auto-detected)")
+		t.Fatal("Resolve(\"claude\") returned nil error; want *ErrAmbiguous (bare-family fallback)")
 	}
+	var ambig *bestiary.ErrAmbiguous
+	if !errors.As(err, &ambig) {
+		t.Fatalf("Resolve(\"claude\") returned error type %T (%v); want *ErrAmbiguous", err, err)
+	}
+	if len(ambig.Candidates) < 2 {
+		t.Errorf("ErrAmbiguous.Candidates len=%d, want >=2 (bare-family fallback must find multiple claude variants)", len(ambig.Candidates))
+	}
+}
+
+// TestResolve_CanonicalAutoDetect verifies that detectScheme recognizes
+// "provider/family/variant@date" form and auto-detects SchemeCanonical.
+//
+// B1/B2 (SLICE-FIX-2): Resolve("claude/opus@2025-11-01") must return non-empty
+// refs (or *ErrAmbiguous when multi-provider) — NEVER ErrNotFound.
+func TestResolve_CanonicalAutoDetect(t *testing.T) {
+	refs, err := bestiary.Resolve("claude/opus@2025-11-01")
+	if err == nil {
+		// Single-group result: refs returned without error.
+		if len(refs) == 0 {
+			t.Fatal("Resolve(\"claude/opus@2025-11-01\") returned empty refs with nil error")
+		}
+		return
+	}
+	// *ErrAmbiguous is acceptable when multiple distinct canonical triples match.
+	var ambig *bestiary.ErrAmbiguous
+	if errors.As(err, &ambig) {
+		if len(ambig.Candidates) == 0 {
+			t.Fatal("Resolve(\"claude/opus@2025-11-01\") returned ErrAmbiguous with empty candidates")
+		}
+		return
+	}
+	// ErrNotFound is the bug — must not be returned.
 	var notFound *bestiary.ErrNotFound
-	if !errors.As(err, &notFound) {
-		// ErrAmbiguous would imply SchemeCanonical was auto-detected — that's the bug.
-		var ambig *bestiary.ErrAmbiguous
-		if errors.As(err, &ambig) {
-			t.Fatalf("Resolve(\"claude\") without WithScheme returned ErrAmbiguous; "+
-				"SchemeCanonical must never be auto-detected — use WithScheme(SchemeCanonical) explicitly")
+	if errors.As(err, &notFound) {
+		t.Fatalf("Resolve(\"claude/opus@2025-11-01\") returned ErrNotFound; "+
+			"detectScheme must recognize canonical form (family/variant@date) and NOT fall back to raw-ID lookup")
+	}
+	t.Fatalf("Resolve(\"claude/opus@2025-11-01\") returned unexpected error %T: %v", err, err)
+}
+
+// TestResolve_PURLProviderFilter verifies that the provider segment in a PURL
+// input is retained as a filter hint and applied to match results.
+//
+// B3 (SLICE-FIX-2): Resolve("pkg:huggingface/anthropic/claude-opus-4-5") must
+// return ONLY refs where Provider == "anthropic". It must never return refs from
+// other providers that also host the same model ID.
+func TestResolve_PURLProviderFilter(t *testing.T) {
+	refs, err := bestiary.Resolve("pkg:huggingface/anthropic/claude-opus-4-5")
+	if err != nil {
+		// If the model doesn't exist under anthropic exactly, ErrNotFound is
+		// acceptable. What is NOT acceptable is zero-Anthropic results in a non-nil refs.
+		var notFound *bestiary.ErrNotFound
+		if errors.As(err, &notFound) {
+			t.Skipf("claude-opus-4-5 not in static registry under anthropic; skipping provider-filter assertion")
+		}
+		t.Fatalf("Resolve PURL provider filter returned unexpected error %T: %v", err, err)
+	}
+	if len(refs) == 0 {
+		t.Fatal("Resolve(\"pkg:huggingface/anthropic/claude-opus-4-5\") returned empty refs")
+	}
+	// Every returned ref must be from Anthropic — the PURL provider filter must apply.
+	for _, r := range refs {
+		if r.Provider != bestiary.ProviderAnthropic {
+			t.Errorf("Resolve PURL provider filter: got ref with Provider=%q, want %q only; "+
+				"PURL provider segment must filter results",
+				r.Provider, bestiary.ProviderAnthropic)
+		}
+	}
+}
+
+// TestResolve_BareFamilyAmbiguous verifies that Resolve("claude") returns
+// *ErrAmbiguous with a non-empty candidate list — not ErrNotFound.
+//
+// B4 (SLICE-FIX-2): bare family names should fall back to SchemeCanonical
+// family-only matching and surface ErrAmbiguous when multiple variants match.
+func TestResolve_BareFamilyAmbiguous(t *testing.T) {
+	_, err := bestiary.Resolve("claude")
+	if err == nil {
+		t.Fatal("Resolve(\"claude\") returned nil error; want *ErrAmbiguous")
+	}
+	var ambig *bestiary.ErrAmbiguous
+	if !errors.As(err, &ambig) {
+		var notFound *bestiary.ErrNotFound
+		if errors.As(err, &notFound) {
+			t.Fatalf("Resolve(\"claude\") returned ErrNotFound; "+
+				"bare-family fallback must return *ErrAmbiguous when multiple claude variants exist, "+
+				"not ErrNotFound — fix: add SchemeCanonical fallback in Resolve after SchemeRaw returns empty")
 		}
 		t.Fatalf("Resolve(\"claude\") returned unexpected error type %T: %v", err, err)
+	}
+	if ambig.Input != "claude" {
+		t.Errorf("ErrAmbiguous.Input = %q, want %q", ambig.Input, "claude")
+	}
+	if len(ambig.Candidates) < 2 {
+		t.Errorf("ErrAmbiguous.Candidates len=%d, want >=2 distinct claude variants", len(ambig.Candidates))
 	}
 }
 

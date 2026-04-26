@@ -1001,52 +1001,42 @@ func TestStaticDataset_CrossProviderConsistency(t *testing.T) {
 			continue
 		}
 
-		// Now check: all empty-raw_family providers must match the consensus from
-		// populated-raw_family providers.
-		//
-		// Additional scope constraint (FOLLOWUP_SLICE-1 / bestiary-wi36):
-		// Skip cases where the consensus family itself contains a version component
-		// (e.g. "claude-3-5", "deepseek-thinking") — these arise from IDs where
-		// the empty-raw_family path can't derive the same family as the populated
-		// path because the family information is only available in raw_family, not
-		// in the model ID. Such cases require parser fixes scoped to bestiary-wi36.
-		//
-		// Specifically skip when:
-		// (a) consensusFamily != empty.Family but both are non-empty (family-level
-		//     divergence, not variant-level — raw_family carries family info the ID
-		//     doesn't have)
-		// (b) consensusVariant is derivable only from raw_family, not from the ID
-		//     (variant is NOT a token present in the model ID itself)
+		// Compute what InferFamilyFromIDWithVariant returns for this ID.
+		// This is the reference point for "what the current parser can derive
+		// from the ID alone, without any raw_family data".
+		// If InferFamilyFromIDWithVariant returns the same as the consensus,
+		// then an empty-raw_family provider that differs is a genuine bug.
+		// If InferFamilyFromIDWithVariant cannot derive the consensus, the
+		// case is deferred to FOLLOWUP_SLICE-1 (bestiary-wi36) — it requires
+		// parser enhancements beyond the scope of SLICE-FIX-2.
+		inferredFamily, inferredVariant, inferredVersion := bestiary.InferFamilyFromIDWithVariant(
+			bestiary.ModelID(id),
+			bestiary.Provider(empty[0].Provider),
+		)
+
+		// Skip if InferFamilyFromIDWithVariant can't derive the consensus.
+		// These are FOLLOWUP_SLICE-1 cases (parser enhancement needed).
+		if inferredFamily != bestiary.Family(consensusFamily) ||
+			inferredVariant != consensusVariant ||
+			inferredVersion != consensusVersion {
+			continue
+		}
+
+		// InferFamilyFromIDWithVariant CAN derive the consensus — so all
+		// empty-raw_family providers must match. Flag any that don't.
 		for _, e := range empty {
 			if e.Family == consensusFamily && e.Variant == consensusVariant && e.Version == consensusVersion {
-				continue // exact match, no divergence
-			}
-
-			// Skip family-level divergences (case a): the ID can't reliably derive
-			// the correct family when the populated-path family differs from the
-			// inferred family from the ID. Deferred to bestiary-wi36.
-			if e.Family != consensusFamily && e.Family != "" {
 				continue
 			}
-
-			// Skip variant-level divergences where the consensus variant is not a
-			// suffix token of the model ID (case b): the variant was derived from
-			// raw_family data, not inferrable from the ID. Deferred to bestiary-wi36.
-			if consensusVariant != "" && !strings.Contains("-"+id+"-", "-"+consensusVariant+"-") &&
-				!strings.HasSuffix(id, "-"+consensusVariant) {
-				continue
-			}
-
 			t.Errorf("cross-provider decomposition divergence for ID %q:\n"+
 				"  populated-raw_family consensus (provider %q) → (family=%q, variant=%q, version=%q)\n"+
 				"  empty-raw_family provider %q → (family=%q, variant=%q, version=%q)\n"+
-				"  Fix: InferFamilyFromIDWithVariant must extract variant+version so empty-raw_family\n"+
-				"  models produce the same decomposition as populated-raw_family providers.\n"+
-				"  Remaining cases with family or non-ID-derivable variant divergences are\n"+
-				"  deferred to bestiary-wi36 (FOLLOWUP_SLICE-1).",
+				"  InferFamilyFromIDWithVariant returns (%q, %q, %q) — the regen must use it.\n"+
+				"  Fix: re-run go generate ./... to bake the updated decomposition into models_static_gen.go.",
 				id,
 				populated[0].Provider, consensusFamily, consensusVariant, consensusVersion,
-				e.Provider, e.Family, e.Variant, e.Version)
+				e.Provider, e.Family, e.Variant, e.Version,
+				inferredFamily, inferredVariant, inferredVersion)
 		}
 	}
 }

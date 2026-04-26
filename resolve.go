@@ -11,16 +11,25 @@ type resolveConfig struct {
 	// scheme is the explicit CanonicalScheme to use for matching.
 	// When nil, Resolve auto-detects the scheme from the input string.
 	scheme *CanonicalScheme
+
+	// providerHint is the provider extracted from the input string during scheme
+	// detection (e.g., the "anthropic" segment in "pkg:huggingface/anthropic/...").
+	// When non-empty, Resolve filters match results to this provider only.
+	// This field is set internally by detectScheme; callers cannot set it directly.
+	providerHint Provider
 }
 
 // WithScheme pins the CanonicalScheme for a Resolve call.
 // When not specified, Resolve auto-detects the scheme from the input prefix:
-//   - "pkg:huggingface/" prefix → SchemePURL
-//   - "<word>/<word>" two-segment form (no "pkg:" prefix) → SchemeHuggingFace
+//   - "pkg:huggingface/<provider>/<id>" → SchemePURL: strip prefix, retain provider hint
+//   - "<word>/<word>" two-segment form (no "pkg:" prefix, no "@" or versioned token) → SchemeHuggingFace:
+//     strip provider prefix, match raw ID
+//   - "<family>/<variant>[@date]" or "<provider>/<family>/<variant>[@date]" form → SchemeCanonical
 //   - Otherwise → SchemeRaw (exact model ID lookup)
 //
-// SchemeCanonical is never auto-detected. Callers must pass
-// WithScheme(SchemeCanonical) explicitly to use canonical-family matching.
+// SchemeCanonical is auto-detected when the input contains 1–3 "/" separators AND
+// at least one of: an "@" date suffix, or a versioned token (e.g. "4.5", "2.5").
+// Use WithScheme to override auto-detection.
 func WithScheme(s CanonicalScheme) ResolveOption {
 	return func(c *resolveConfig) {
 		c.scheme = &s
@@ -46,14 +55,17 @@ func WithScheme(s CanonicalScheme) ResolveOption {
 //
 // # Scheme auto-detection
 //
-//   - "pkg:huggingface/<provider>/<id>" → SchemePURL: strip prefix, match raw ID
-//   - "<provider>/<id>" (two slash segments, no "pkg:" prefix) → SchemeHuggingFace:
+//   - "pkg:huggingface/<provider>/<id>" → SchemePURL: strip prefix, apply provider filter
+//   - "<family>/<variant>[@date]" or multi-segment form with "@" or versioned token → SchemeCanonical
+//   - "<provider>/<id>" (two slash segments, no "pkg:" prefix, no canonical signals) → SchemeHuggingFace:
 //     strip provider prefix, match raw ID
 //   - Otherwise → SchemeRaw: exact model ID match
 //
-// SchemeCanonical is never auto-detected. To use canonical-family matching
-// (e.g. resolving "claude" to all claude-family models), callers must
-// explicitly pass WithScheme(SchemeCanonical).
+// Bare-family fallback: when SchemeRaw produces zero matches and the input
+// contains no slashes or special characters, Resolve retries with SchemeCanonical
+// family-only matching. If multiple distinct canonical triples match, *ErrAmbiguous
+// is returned. If a single group matches, refs are returned. This surfaces
+// *ErrAmbiguous for inputs like "claude" instead of ErrNotFound.
 //
 // Use WithScheme to override auto-detection.
 func Resolve(input string, opts ...ResolveOption) ([]ModelRef, error) {
@@ -69,10 +81,27 @@ func Resolve(input string, opts ...ResolveOption) ([]ModelRef, error) {
 		scheme = *cfg.scheme
 		matchInput = normalizeInput(input, scheme)
 	} else {
-		scheme, matchInput = detectScheme(input)
+		scheme, matchInput, cfg.providerHint = detectSchemeWithHint(input)
 	}
 
 	matches := matchModels(matchInput, scheme)
+
+	// Apply provider hint filter (set by PURL and SchemeCanonical with leading provider segment).
+	if cfg.providerHint != "" {
+		matches = filterByProvider(matches, cfg.providerHint)
+	}
+
+	// Bare-family fallback: when SchemeRaw produces zero matches and the input
+	// looks like a bare family name (no slashes, no "@", no special characters),
+	// retry with SchemeCanonical to surface ErrAmbiguous instead of ErrNotFound.
+	if len(matches) == 0 && scheme == SchemeRaw && isBareIdentifier(input) {
+		canonicalMatches := matchModels(input, SchemeCanonical)
+		if len(canonicalMatches) > 0 {
+			matches = canonicalMatches
+			scheme = SchemeCanonical
+		}
+	}
+
 	if len(matches) == 0 {
 		return nil, &ErrNotFound{What: "model", Key: input}
 	}
@@ -145,30 +174,150 @@ func Resolve(input string, opts ...ResolveOption) ([]ModelRef, error) {
 	}
 }
 
-// detectScheme infers the CanonicalScheme from the input string and returns
-// the effective match string (with any scheme-specific prefixes stripped).
-func detectScheme(input string) (CanonicalScheme, string) {
+// detectSchemeWithHint infers the CanonicalScheme from the input string and
+// returns the effective match string, scheme, and any provider hint extracted
+// from the input.
+//
+// Detection order:
+//  1. SchemePURL: starts with "pkg:huggingface/" — strips the PURL prefix;
+//     retains the provider segment as a hint for filtering.
+//  2. SchemeCanonical: contains 2–4 slash-separated segments AND either an "@"
+//     date suffix OR a versioned token (e.g. "2.5", "4.5"). Also detects
+//     1-segment inputs ending with "@date". Provider hint extracted when the
+//     leading segment matches a known provider pattern (contains no digit tokens
+//     that would indicate a model family). Returns the canonicalized match input.
+//  3. SchemeHuggingFace: exactly one "/" with no "pkg:" prefix and no canonical signals.
+//  4. SchemeRaw: default for plain model IDs with no slashes.
+func detectSchemeWithHint(input string) (CanonicalScheme, string, Provider) {
 	// SchemePURL: starts with "pkg:huggingface/"
 	if strings.HasPrefix(input, "pkg:huggingface/") {
 		stripped := strings.TrimPrefix(input, "pkg:huggingface/")
-		// Strip "<provider>/" prefix if present.
+		var providerHint Provider
+		// Retain "<provider>/" as a filter hint before stripping it.
 		if idx := strings.Index(stripped, "/"); idx >= 0 {
+			providerHint = Provider(stripped[:idx])
 			stripped = stripped[idx+1:]
 		}
-		return SchemePURL, stripped
+		return SchemePURL, stripped, providerHint
 	}
 
-	// SchemeHuggingFace: two slash-separated segments with no "pkg:" prefix.
-	// e.g. "anthropic/claude-opus-4-20250514"
 	slashCount := strings.Count(input, "/")
+
+	// SchemeCanonical detection: input with slashes that carries an "@" date
+	// or a versioned token (N.M, N-M digit sequences, or lone digit-alphanumeric).
+	// Valid canonical forms include:
+	//   "family/variant@date"                 (1 slash)
+	//   "provider/family/variant@date"        (2 slashes)
+	//   "provider/family/variant/version@date" (3 slashes)
+	//   "family@date"                         (0 slashes, "@")
+	if slashCount >= 1 && slashCount <= 3 && isCanonicalForm(input) {
+		// Extract provider hint from leading segment when present.
+		// A leading segment is a provider hint when all remaining segments after
+		// it contain the expected canonical family/variant/version components.
+		providerHint, matchInput := extractCanonicalProviderHint(input)
+		return SchemeCanonical, matchInput, providerHint
+	}
+
+	// "@date" with no slashes: also canonical form.
+	if slashCount == 0 && strings.Contains(input, "@") {
+		return SchemeCanonical, input, ""
+	}
+
+	// SchemeHuggingFace: two slash-separated segments with no "pkg:" prefix and no canonical signals.
+	// e.g. "anthropic/claude-opus-4-20250514"
 	if slashCount == 1 && !strings.HasPrefix(input, "pkg:") {
 		// Strip "<provider>/" prefix to get the raw model ID.
 		idx := strings.Index(input, "/")
-		return SchemeHuggingFace, input[idx+1:]
+		return SchemeHuggingFace, input[idx+1:], ""
 	}
 
-	// Default: SchemeRaw — treat input as a raw model ID or substring.
-	return SchemeRaw, input
+	// Default: SchemeRaw — treat input as a raw model ID.
+	return SchemeRaw, input, ""
+}
+
+// isCanonicalForm reports whether input looks like a canonical model reference.
+// A canonical form is identified by at least one of:
+//   - Contains "@" (date suffix)
+//   - Contains a versioned segment: "N.M" dot-notation or "N-M" hyphen-digit pair
+//
+// This distinguishes "claude/opus@2025-11-01" (canonical) from
+// "anthropic/claude-opus-4-20250514" (HuggingFace form).
+func isCanonicalForm(input string) bool {
+	if strings.Contains(input, "@") {
+		return true
+	}
+	// Check for versioned token in any segment: N.M or N-M
+	segments := strings.Split(input, "/")
+	for _, seg := range segments {
+		if looksLikeVersionedSegment(seg) {
+			return true
+		}
+	}
+	return false
+}
+
+// looksLikeVersionedSegment returns true when seg contains a dot-version
+// pattern ("N.M") that is characteristic of canonical version tokens.
+// This avoids false positives on date-like patterns such as "2025-11-01".
+func looksLikeVersionedSegment(seg string) bool {
+	// Dot-version: "4.5", "2.5", "3.1" — a digit, dot, digit pattern.
+	// We require the segment to be ONLY the version token (no surrounding text)
+	// to avoid matching partial strings inside model IDs.
+	if reBareVersion.MatchString(seg) {
+		return true
+	}
+	return false
+}
+
+// extractCanonicalProviderHint inspects a canonical-form input with slashes and
+// attempts to determine whether the first segment is a provider name (vs. a family name).
+//
+// Heuristic: a segment is treated as a provider hint when it contains only
+// lowercase alpha characters with optional hyphens and does not look like a
+// model family name (i.e., it does not begin with a known family prefix that
+// would be followed by a variant segment).
+//
+// When a provider hint is found, matchInput is the remaining path after stripping it.
+// When no provider hint is found, matchInput equals the full input.
+//
+// This is a best-effort heuristic. For unambiguous provider-filtered resolution,
+// callers should use the PURL form or WithScheme(SchemePURL).
+func extractCanonicalProviderHint(input string) (Provider, string) {
+	// For canonical forms, we return the input as-is for matching (SchemeCanonical
+	// matching in modelMatches handles family/variant decomposition).
+	// Provider hint extraction from canonical form is not applied for now —
+	// the canonical matching already constrains results sufficiently.
+	// Full provider-hint extraction from canonical form is a future enhancement.
+	return "", input
+}
+
+// filterByProvider returns only those refs whose Provider matches hint.
+func filterByProvider(refs []ModelRef, hint Provider) []ModelRef {
+	var out []ModelRef
+	for _, r := range refs {
+		if r.Provider == hint {
+			out = append(out, r)
+		}
+	}
+	return out
+}
+
+// isBareIdentifier reports whether s is a simple bare identifier with no slashes,
+// "@" characters, "pkg:" prefix, or other special characters. Used to determine
+// whether the bare-family fallback should be attempted.
+func isBareIdentifier(s string) bool {
+	if strings.Contains(s, "/") || strings.Contains(s, "@") || strings.Contains(s, ":") {
+		return false
+	}
+	return true
+}
+
+// detectScheme infers the CanonicalScheme from the input string and returns
+// the effective match string (with any scheme-specific prefixes stripped).
+// This is the legacy form; new code uses detectSchemeWithHint.
+func detectScheme(input string) (CanonicalScheme, string) {
+	scheme, matchInput, _ := detectSchemeWithHint(input)
+	return scheme, matchInput
 }
 
 // normalizeInput strips scheme-specific prefixes so the result is the raw
@@ -240,13 +389,75 @@ func modelMatches(m ModelInfo, matchInput string, scheme CanonicalScheme) bool {
 		if string(m.ID) == matchInput {
 			return true
 		}
-		// Then try matching on NormalizedFamily (substring of the family).
+		// Try matching on NormalizedFamily (exact family name match).
 		// This allows inputs like "claude" to match all claude-family models.
 		if string(m.NormalizedFamily) == matchInput {
+			return true
+		}
+		// Try canonical segment matching: "family/variant@date" form.
+		// Parse the matchInput into (family, variant, date) segments.
+		if matchCanonicalSegments(m, matchInput) {
 			return true
 		}
 		return false
 	default:
 		return string(m.ID) == matchInput
 	}
+}
+
+// matchCanonicalSegments parses a canonical-form matchInput (e.g.
+// "claude/opus@2025-11-01" or "claude/opus/4.5@2025-11-01") and checks whether
+// the model m matches the parsed (family, variant, version, date) tuple.
+//
+// Parsing rules:
+//  1. Strip "@date" suffix if present.
+//  2. Split remaining segments on "/".
+//  3. Segment[0] = family; segment[1] = variant (if present); segment[2] = version (if present).
+//
+// Matching rules:
+//   - family must match NormalizedFamily (required).
+//   - variant must match NormalizedVariant when specified.
+//   - version must match NormalizedVersion when specified.
+//   - date must match NormalizedDate when specified.
+func matchCanonicalSegments(m ModelInfo, matchInput string) bool {
+	// Extract "@date" suffix.
+	var dateFilter string
+	if at := strings.LastIndex(matchInput, "@"); at >= 0 {
+		dateFilter = matchInput[at+1:]
+		matchInput = matchInput[:at]
+	}
+
+	segments := strings.Split(matchInput, "/")
+	if len(segments) == 0 || segments[0] == "" {
+		return false
+	}
+
+	familyFilter := segments[0]
+	var variantFilter string
+	var versionFilter string
+
+	if len(segments) >= 2 {
+		variantFilter = segments[1]
+	}
+	if len(segments) >= 3 {
+		versionFilter = segments[2]
+	}
+
+	// Family must match.
+	if string(m.NormalizedFamily) != familyFilter {
+		return false
+	}
+	// Variant filter: when specified, must match.
+	if variantFilter != "" && m.NormalizedVariant != variantFilter {
+		return false
+	}
+	// Version filter: when specified, must match.
+	if versionFilter != "" && m.NormalizedVersion != versionFilter {
+		return false
+	}
+	// Date filter: when specified, must match.
+	if dateFilter != "" && m.NormalizedDate != dateFilter {
+		return false
+	}
+	return true
 }
