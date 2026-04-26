@@ -24,6 +24,8 @@ URD `bestiary-rjf`, PROPOSAL-3 `bestiary-1oq`.
 8. [NEW Model_* constants (ModelIDs function)](#8-new-model_-constants)
 9. [CLI: bestiary show --scheme flag; bestiary-gen --cache-dir and --no-fetch](#9-cli-changes)
 10. [BREAKING: ModelInfo JSON field rename (drop Normalized prefix)](#10-modelinfo-json-field-rename)
+11. [Resolve overhaul (PURL loose-fallback, ErrAmbiguous grouping, --format flag, canonical-provider preference)](#11-resolve-overhaul)
+12. [Parse-failure audit log (.bestiary-gen-cache/parse_failures.json)](#12-parse-failure-audit-log)
 12. [Parse-failure audit log (.bestiary-gen-cache/parse_failures.json)](#12-parse-failure-audit-log-bestiary-gen-cacheparsefailuresjson)
 
 ---
@@ -658,6 +660,146 @@ No SQLite migration is required for this change.
    No change needed for callers that only access `ModelRef`.
 
 ---
+
+## 11. Resolve overhaul (PURL loose-fallback, ErrAmbiguous grouping, --format flag, canonical-provider preference)
+
+**Nature:** Breaking (CLI flag rename `--format` → `--output` for output; new `--format` for input). Behavioral change (canonical-provider preference, ErrAmbiguous output format).
+
+**Slice:** SLICE-FIX-V2-2 (`bestiary-z2u7`)
+
+**Audit trail:** FIX_IMPL_PLAN_V2 `bestiary-2xaf`, UAT-3 `bestiary-g9ci` (Component 3).
+
+### 11.1 CLI flag rename: output `--format` → `--output`
+
+The `bestiary` CLI had a naming collision: `--format` was used for both OUTPUT format (json/yaml/table) and (proposed) INPUT scheme selection. To use `--format` for input (as the user requested), the output flag was renamed.
+
+**Before (v0.0.1):**
+```
+bestiary list --format=json
+bestiary show <id> --format=yaml
+bestiary sync --format=table
+```
+
+**After (v0.0.2):**
+```
+bestiary list --output=json        # renamed: --format → --output
+bestiary show <id> --output=yaml
+bestiary sync --output=table
+```
+
+The default output format remains `json` — scripts that rely on the default behavior are unaffected.
+
+**Fix-up steps:**
+- Replace `--format <json|yaml|table>` with `--output <json|yaml|table>` in all scripts and CI workflows.
+- The `--format` flag now selects the INPUT scheme (see Section 11.2).
+
+### 11.2 New `--format` input flag for `bestiary show`
+
+`bestiary show` now defaults to canonical/peasant form ONLY. The previous auto-detect behavior (PURL via `pkg:` prefix, HuggingFace via `provider/id` form) is no longer applied by default.
+
+**Default behavior (v0.0.2):** `bestiary show <input>` treats `<input>` as a bestiary canonical form:
+```
+[<provider>/]<family>[/<variant>[/<version>]][@<date>]
+```
+
+To use other input formats, specify `--format`:
+
+| `--format` value | Input form accepted | Example |
+|---|---|---|
+| `peasant` (default) | Bestiary canonical | `claude/opus@2025-05-14` |
+| `huggingface` or `hf` | HuggingFace Hub form | `anthropic/claude-opus-4-20250514` |
+| `purl` | Package URL (PURL) | `pkg:huggingface/anthropic/claude-opus-4-20250514` |
+| `raw` | Exact API model ID | `claude-opus-4-20250514` |
+
+**Breaking changes for existing scripts:**
+- `bestiary show pkg:huggingface/... ` → must add `--format purl`
+- `bestiary show anthropic/<raw-id>` (HuggingFace form) → must add `--format huggingface` or `--format hf`
+- `bestiary show <raw-id>` (exact ID without slashes) → still works in peasant mode, but bare exact IDs that match canonical family names may now trigger ErrAmbiguous instead of ErrNotFound.
+
+**Legacy `--scheme` flag:** deprecated. Still accepted for backward compatibility. When `--format` is the default (peasant) and `--scheme` is set, the legacy `--scheme` value is honoured. `--format` takes precedence when explicitly set.
+
+**Fix-up steps:**
+1. Replace `bestiary show <purl>` with `bestiary show --format purl <purl>`.
+2. Replace `bestiary show <provider>/<raw-id>` with `bestiary show --format hf <provider>/<raw-id>`.
+3. Replace `bestiary show <raw-id>` (exact model ID) with `bestiary show --format raw <raw-id>` for unambiguous exact-ID lookup.
+4. Update any `--scheme` usages to `--format` equivalents:
+   - `--scheme canonical` → `--format peasant`
+   - `--scheme huggingface` → `--format huggingface`
+   - `--scheme purl` → `--format purl`
+   - `--scheme raw` → `--format raw`
+
+### 11.3 PURL loose-match fallback
+
+When a PURL input (`pkg:huggingface/<namespace>/<id>`) has zero matches in the specified namespace (provider), Resolve now falls back to an all-provider search instead of returning `ErrNotFound`.
+
+**Before (v0.0.1):**
+```
+Resolve("pkg:huggingface/unknown-ns/claude-opus-4-5") → ErrNotFound
+```
+
+**After (v0.0.2):**
+```
+Resolve("pkg:huggingface/unknown-ns/claude-opus-4-5") → *ErrAmbiguous
+  Note: no matches in namespace "unknown-ns" — performing loose match across all providers
+  Candidates: all providers that host claude-opus-4-5
+```
+
+The `ErrAmbiguous` struct gains a `PURLMissedNamespace string` field that carries the namespace that missed (empty for non-PURL ambiguity). The `ErrAmbiguous.Error()` message includes the diagnostic when set.
+
+**Fix-up steps:**
+- Callers that `errors.As(err, &ambig)` for PURL inputs may now receive `ErrAmbiguous` instead of `ErrNotFound`. Update any `ErrNotFound`-only handling paths to also check for `ErrAmbiguous` with a non-empty `PURLMissedNamespace`.
+
+### 11.4 ErrAmbiguous output: grouping + truncation
+
+`FormatAmbiguous` (written to stderr by `bestiary show` on ambiguous input) now:
+1. Groups candidates by `(Family, Variant, Version)` tuple — one row per group. Collapses multiple providers hosting the same model into a single canonical row.
+2. Truncates after N=10 groups with a `+M more` hint.
+
+**Before (v0.0.1):** All matching ModelRefs shown, one row per provider (17+ rows for popular models).
+
+**After (v0.0.2):** One row per distinct `(Family, Variant, Version)` group, at most 10 rows shown.
+
+The footer hint was also updated from `--scheme=raw` to `--format=raw`.
+
+**Fix-up steps:**
+- Scripts that parse the `FormatAmbiguous` output (stderr) may need to be updated to handle the new format (grouped + truncated).
+- The `ErrAmbiguous.Candidates` slice still contains all matching candidates (ungrouped, untruncated) — use the struct field for programmatic access if needed.
+
+### 11.5 Canonical-provider preference in Resolve
+
+When a canonical-form input (`family/variant@date`) matches multiple providers (cross-provider hosting), Resolve now prefers the originating canonical provider over re-hosts.
+
+**Before (v0.0.1):**
+```
+Resolve("claude/opus@2025-05-14") → [302ai, anthropic, azure, ...] (alphabetical order, first used)
+```
+
+**After (v0.0.2):**
+```
+Resolve("claude/opus@2025-05-14") → [anthropic] (canonical provider preferred)
+```
+
+The preference is implemented via `Family.CanonicalProvider() Provider` in `family.go`. Well-known mappings:
+
+| Family | Canonical Provider |
+|---|---|
+| `claude`, `claude-opus`, `claude-sonnet`, `claude-haiku` | `anthropic` |
+| `gemini`, `gemma` | `google` |
+| `gpt`, `o` (includes o1, o3, o4) | `openai` |
+| `llama` | `local` |
+| `mistral`, `codestral`, `devstral` | `mistral` |
+| `deepseek` | `deepseek` |
+| `qwen` | `alibaba` |
+| All others | `""` (empty) → falls back to ErrAmbiguous |
+
+The mapping for unrecognized families will be reviewed in followup `bestiary-1wy7`.
+
+**Applies only to:** SchemeCanonical (peasant form) non-exact-ID inputs. Raw/HuggingFace/PURL forms and exact-ID lookups are unaffected.
+
+**Fix-up steps:**
+- Callers that iterated all cross-provider refs and selected the first may now receive a single ref (the canonical provider only). Update iteration logic if all-provider refs are needed (use `WithScheme(SchemeRaw)` or `WithInputFormat(InputFormatRaw)` for exact-ID all-provider lookups).
+- `Family.CanonicalProvider()` is a new exported method — no breaking change.
+- `ErrAmbiguous.PURLMissedNamespace` is a new field — no breaking change for existing code.
 
 ---
 
