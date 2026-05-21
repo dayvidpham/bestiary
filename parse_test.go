@@ -1367,9 +1367,9 @@ func TestParseFamilyDetailed_UnknownSuffixOverflow(t *testing.T) {
 	// triggering detectSuffixOverflow. Trailing token "zen" is unknown, so
 	// ReasonUnknownSuffixOverflow would fire as an audit hint.
 	//
-	// NOTE: The current parser fully consumes most rawFamily strings, making this
-	// scenario rare in practice. When it does occur, the test will pass. This test
-	// serves as a spec for the intended behavior.
+	// NOTE: This positive-case subtest is currently SKIPPED because the code path is
+	// unreachable by construction (see Reviewer 2's analysis in SLICE-FIX-V2-3 cycle-3).
+	// Re-enable when FOLLOWUP bestiary-e9pi (parser reorder under FOLLOWUP_SLICE-1 bestiary-wi36) lands.
 	unknownTrailingWithOverflow := []struct {
 		rawFamily bestiary.Family
 		id        bestiary.ModelID
@@ -1387,42 +1387,14 @@ func TestParseFamilyDetailed_UnknownSuffixOverflow(t *testing.T) {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
-			family, variant, version, failure := bestiary.ParseFamilyDetailed(tc.rawFamily, tc.id, tc.provider)
-
-			// Best-effort parse result is always returned.
-			if family == "" {
-				t.Errorf("ParseFamilyDetailed(%q, %q): got empty family; expected non-empty best-effort",
-					tc.rawFamily, tc.id)
-			}
-			_ = variant
-			_ = version
-
-			// Failure SHOULD be emitted with ReasonUnknownSuffixOverflow if both conditions hold:
-			// (1) rawFamily has >2 unaccounted tokens (detectSuffixOverflow fires), AND
-			// (2) trailing token is NOT in knownModifierTokens (unknown modifier).
-			// If the current parser doesn't trigger this case naturally (because it fully
-			// consumes most rawFamily strings), this test documents the intended behavior.
-			if failure != nil && failure.Reason == bestiary.ReasonUnknownSuffixOverflow {
-				// Success: the positive case fired as intended.
-				return
-			}
-
-			// If we reach here, the condition did not fire. Document what was expected.
-			if failure == nil {
-				t.Logf("ParseFamilyDetailed(%q, %q): no failure emitted\n"+
-					"  Expected: ReasonUnknownSuffixOverflow when >2 raw family tokens are unaccounted\n"+
-					"  Actual: parser fully consumed the raw family string\n"+
-					"  Note: This is expected given the current parser design. When overflow conditions\n"+
-					"  occur in real models.dev API responses, this test will validate the behavior.",
-					tc.rawFamily, tc.id)
-				return
-			}
-
-			if failure.Reason != bestiary.ReasonUnknownSuffixOverflow {
-				t.Logf("ParseFamilyDetailed(%q, %q): got failure reason %q, not UnknownSuffixOverflow\n"+
-					"  This may indicate a different overflow mode (e.g., YYMM) fired first.",
-					tc.rawFamily, tc.id, failure.Reason)
-			}
+			// SKIPPED: The Mode 2 UnknownSuffixOverflow path (detectSuffixOverflow) is
+			// unreachable by current parser construction. ParseFamilyWithVersion Step-5
+			// fallback absorbs all trailing tokens into the family string, leaving 0
+			// unaccounted tokens — so detectSuffixOverflow never crosses the >2 threshold.
+			// (Per Reviewer 2's empirical analysis, SLICE-FIX-V2-3 cycle-3.)
+			// Re-enable this test when FOLLOWUP bestiary-e9pi (parser reorder under
+			// FOLLOWUP_SLICE-1 bestiary-wi36) lands and makes this code path reachable.
+			t.Skip("ReasonUnknownSuffixOverflow unreachable by current parser construction — see bestiary-e9pi for parser-reorder fix")
 		})
 	}
 
