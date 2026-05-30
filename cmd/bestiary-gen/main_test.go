@@ -2576,6 +2576,192 @@ func TestDecompositionSnapshot_ActiveClassVersionPopulated(t *testing.T) {
 	}
 }
 
+// --------------------------------------------------------------------------
+// SLICE-2-L3 tests: version_duplicates.json + dot_form_audit.json + smoke check
+// --------------------------------------------------------------------------
+
+// TestRun_WritesVersionDuplicates verifies that run() writes version_duplicates.json
+// to the cache directory when models share (provider, family, variant, version).
+// Uses fixture_api.json which contains haiku models that both resolve to version="3.5"
+// under cloudflare-ai-gateway (same provider/family/variant/version → duplicate group).
+func TestRun_WritesVersionDuplicates(t *testing.T) {
+	fixtureJSON := fixtureAPIJSON(t)
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write(fixtureJSON)
+	}))
+	defer srv.Close()
+
+	origURL := apiURL
+	apiURL = srv.URL
+	defer func() { apiURL = origURL }()
+
+	tmpDir := t.TempDir()
+	origDir, err := os.Getwd()
+	if err != nil {
+		t.Fatalf("getwd: %v", err)
+	}
+	if err := os.Chdir(tmpDir); err != nil {
+		t.Fatalf("chdir to tmpDir: %v", err)
+	}
+	defer func() { _ = os.Chdir(origDir) }()
+
+	cacheDir := filepath.Join(tmpDir, "test-cache")
+	if err := run([]string{"-cache-dir=" + cacheDir}); err != nil {
+		t.Fatalf("run(): unexpected error: %v", err)
+	}
+
+	// version_duplicates.json must exist.
+	dupPath := filepath.Join(cacheDir, versionDuplicatesFile)
+	data, err := os.ReadFile(dupPath)
+	if err != nil {
+		t.Fatalf("version_duplicates.json not written to cacheDir %q: %v\n"+
+			"  How to fix: verify writeVersionDuplicates is called in run()",
+			cacheDir, err)
+	}
+
+	// Must be valid JSON.
+	var envelope VersionDuplicatesEnvelope
+	if err := json.Unmarshal(data, &envelope); err != nil {
+		t.Fatalf("version_duplicates.json: invalid JSON: %v\nContents: %s", err, data)
+	}
+	if envelope.SchemaVersion != 1 {
+		t.Errorf("version_duplicates.json SchemaVersion = %d, want 1", envelope.SchemaVersion)
+	}
+	// fixture_api.json has two haiku models under cloudflare-ai-gateway, both with
+	// version="3.5" (family=claude, variant=haiku). They should form one duplicate group.
+	if envelope.DuplicateCount == 0 {
+		t.Errorf("version_duplicates.json DuplicateCount = 0, want > 0\n"+
+			"  What: expected at least one duplicate group from haiku models\n"+
+			"  Why: both claude-haiku models in fixture_api.json resolve to version=3.5\n"+
+			"  How to fix: verify writeVersionDuplicates collects (provider,family,variant,version) groups")
+	}
+}
+
+// TestRun_WritesDotFormAudit verifies that run() writes dot_form_audit.json with
+// models whose Version contains a dot (dot-form populated).
+func TestRun_WritesDotFormAudit(t *testing.T) {
+	fixtureJSON := fixtureAPIJSON(t)
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write(fixtureJSON)
+	}))
+	defer srv.Close()
+
+	origURL := apiURL
+	apiURL = srv.URL
+	defer func() { apiURL = origURL }()
+
+	tmpDir := t.TempDir()
+	origDir, err := os.Getwd()
+	if err != nil {
+		t.Fatalf("getwd: %v", err)
+	}
+	if err := os.Chdir(tmpDir); err != nil {
+		t.Fatalf("chdir to tmpDir: %v", err)
+	}
+	defer func() { _ = os.Chdir(origDir) }()
+
+	cacheDir := filepath.Join(tmpDir, "test-cache")
+	if err := run([]string{"-cache-dir=" + cacheDir}); err != nil {
+		t.Fatalf("run(): unexpected error: %v", err)
+	}
+
+	// dot_form_audit.json must exist.
+	auditPath := filepath.Join(cacheDir, dotFormAuditFile)
+	data, err := os.ReadFile(auditPath)
+	if err != nil {
+		t.Fatalf("dot_form_audit.json not written to cacheDir %q: %v\n"+
+			"  How to fix: verify writeDotFormAudit is called in run()",
+			cacheDir, err)
+	}
+
+	// Must be valid JSON.
+	var envelope DotFormAuditEnvelope
+	if err := json.Unmarshal(data, &envelope); err != nil {
+		t.Fatalf("dot_form_audit.json: invalid JSON: %v\nContents: %s", err, data)
+	}
+	if envelope.SchemaVersion != 1 {
+		t.Errorf("dot_form_audit.json SchemaVersion = %d, want 1", envelope.SchemaVersion)
+	}
+	// fixture_api.json has: claude-3-5-haiku (version=3.5), claude-3.5-haiku (version=3.5),
+	// gpt-5.1 (version=5.1), gpt-5.2 (version=5.2) — all with dot-form versions.
+	if envelope.Count == 0 {
+		t.Errorf("dot_form_audit.json Count = 0, want > 0\n"+
+			"  What: expected models with dot-form versions (e.g. 3.5, 5.1)\n"+
+			"  Why: fixture_api.json contains multiple models with dot-separated versions\n"+
+			"  How to fix: verify writeDotFormAudit checks for Version containing '.'")
+	}
+}
+
+// TestWriteVersionDuplicates_Unit is a unit test for the writeVersionDuplicates function.
+func TestWriteVersionDuplicates_Unit(t *testing.T) {
+	cacheDir := t.TempDir()
+	models := []bestiary.ModelInfo{
+		// Two models with same (provider, family, variant, version) → duplicate group.
+		{ID: "claude-3-5-haiku", Provider: "anthropic", Family: "claude", Variant: "haiku", Version: "3.5"},
+		{ID: "claude-3.5-haiku", Provider: "anthropic", Family: "claude", Variant: "haiku", Version: "3.5"},
+		// One model with unique key → no duplicate.
+		{ID: "gpt-5.1", Provider: "openai", Family: "gpt", Variant: "", Version: "5.1"},
+		// Models with no version → skipped.
+		{ID: "some-model", Provider: "provider", Family: "family", Variant: "", Version: ""},
+	}
+	if err := writeVersionDuplicates(cacheDir, models); err != nil {
+		t.Fatalf("writeVersionDuplicates: %v", err)
+	}
+
+	data, err := os.ReadFile(filepath.Join(cacheDir, versionDuplicatesFile))
+	if err != nil {
+		t.Fatalf("read version_duplicates.json: %v", err)
+	}
+	var envelope VersionDuplicatesEnvelope
+	if err := json.Unmarshal(data, &envelope); err != nil {
+		t.Fatalf("unmarshal version_duplicates.json: %v", err)
+	}
+	if envelope.DuplicateCount != 1 {
+		t.Errorf("DuplicateCount = %d, want 1", envelope.DuplicateCount)
+	}
+	if len(envelope.Duplicates) != 1 {
+		t.Fatalf("len(Duplicates) = %d, want 1", len(envelope.Duplicates))
+	}
+	g := envelope.Duplicates[0]
+	if g.Key.Provider != "anthropic" || g.Key.Family != "claude" || g.Key.Variant != "haiku" || g.Key.Version != "3.5" {
+		t.Errorf("duplicate group key = %+v, want {anthropic, claude, haiku, 3.5}", g.Key)
+	}
+	if len(g.ModelIDs) != 2 {
+		t.Errorf("ModelIDs = %v, want 2 entries", g.ModelIDs)
+	}
+}
+
+// TestWriteDotFormAudit_Unit is a unit test for the writeDotFormAudit function.
+func TestWriteDotFormAudit_Unit(t *testing.T) {
+	cacheDir := t.TempDir()
+	models := []bestiary.ModelInfo{
+		{ID: "claude-3.5-haiku", Provider: "anthropic", Version: "3.5"},  // dot-form
+		{ID: "gpt-5.1", Provider: "openai", Version: "5.1"},               // dot-form
+		{ID: "gpt-5-mini", Provider: "openai", Version: "5"},              // no dot — not in audit
+		{ID: "nova-2-lite-v1", Provider: "cartesia", Version: "2"},        // no dot — not in audit
+		{ID: "no-version", Provider: "test", Version: ""},                  // empty — not in audit
+	}
+	if err := writeDotFormAudit(cacheDir, models); err != nil {
+		t.Fatalf("writeDotFormAudit: %v", err)
+	}
+
+	data, err := os.ReadFile(filepath.Join(cacheDir, dotFormAuditFile))
+	if err != nil {
+		t.Fatalf("read dot_form_audit.json: %v", err)
+	}
+	var envelope DotFormAuditEnvelope
+	if err := json.Unmarshal(data, &envelope); err != nil {
+		t.Fatalf("unmarshal dot_form_audit.json: %v", err)
+	}
+	if envelope.Count != 2 {
+		t.Errorf("Count = %d, want 2 (claude-3.5-haiku + gpt-5.1)", envelope.Count)
+	}
+}
+
 // TestFixturePerReasonCounts asserts per-reason FailureCount expectations over the
 // full R5d fixture corpus. This mirrors the TestRun_WritesParseFailuresJSON pattern
 // but uses fixture_api.json instead of failureAPIJSON.

@@ -503,6 +503,23 @@ func run(args []string) error {
 		fmt.Fprintf(os.Stderr, "bestiary-gen: warning: could not write parse_failures.json: %v\n", err)
 	}
 
+	// Write version_duplicates.json — work-list for r66e (R4 duplicate collapse).
+	// Recognises models that share (provider, family, variant, version) but differ
+	// in model ID. Recognition only; duplicates remain two separate constants.
+	if err := writeVersionDuplicates(flags.cacheDir, models); err != nil {
+		fmt.Fprintf(os.Stderr, "bestiary-gen: warning: could not write version_duplicates.json: %v\n", err)
+	}
+
+	// Write dot_form_audit.json — models whose Version is populated via dot-form
+	// (N-M ≡ N.M) recognition. The list makes the regen delta reviewable.
+	if err := writeDotFormAudit(flags.cacheDir, models); err != nil {
+		fmt.Fprintf(os.Stderr, "bestiary-gen: warning: could not write dot_form_audit.json: %v\n", err)
+	}
+
+	// NON-GATING smoke check: log per-reason failure counts to stdout.
+	// This is diagnostic only (Plan UAT decision: not a ==0 gate).
+	logPerReasonCounts(parseFailures)
+
 	fmt.Fprintf(os.Stdout,
 		"bestiary-gen: wrote %s with %d models (%d providers), %s with %d constants, %s with %d constants, %s at %s; %d parse failures logged to %s\n",
 		outputPath, len(filtered), countUniqueProviders(filtered),
@@ -513,6 +530,183 @@ func run(args []string) error {
 		len(parseFailures),
 		filepath.Join(flags.cacheDir, "parse_failures.json"),
 	)
+	return nil
+}
+
+// logPerReasonCounts logs a per-reason breakdown of parse failures to stdout.
+// This is a NON-GATING smoke check — it never fails the codegen run regardless
+// of the counts (Plan UAT decision: not a ==0 gate).
+func logPerReasonCounts(failures []bestiary.ParseFailure) {
+	counts := make(map[bestiary.ParseFailureReason]int)
+	for _, f := range failures {
+		counts[f.Reason]++
+	}
+	if len(counts) == 0 {
+		fmt.Fprintln(os.Stdout, "bestiary-gen: parse-failure smoke check: 0 failures (all reasons)")
+		return
+	}
+	// Collect and sort reason keys for deterministic output.
+	reasons := make([]string, 0, len(counts))
+	for r := range counts {
+		reasons = append(reasons, string(r))
+	}
+	sort.Strings(reasons)
+	fmt.Fprintln(os.Stdout, "bestiary-gen: parse-failure smoke check (non-gating):")
+	for _, r := range reasons {
+		fmt.Fprintf(os.Stdout, "  %s: %d\n", r, counts[bestiary.ParseFailureReason(r)])
+	}
+}
+
+// writeVersionDuplicates identifies models that share (provider, family, variant,
+// version) but differ in model ID, and writes the result to
+// {cacheDir}/version_duplicates.json. Only groups with version != "" are
+// considered (models without version don't have a meaningful duplicate key).
+//
+// This is recognition-only: duplicates remain two separate constants. The file
+// is the ready-made work-list for bestiary-r66e (R4 duplicate collapse).
+func writeVersionDuplicates(cacheDir string, models []bestiary.ModelInfo) error {
+	if err := os.MkdirAll(cacheDir, 0o755); err != nil {
+		return fmt.Errorf(
+			"writeVersionDuplicates: create cache dir %q: %w\n"+
+				"  How to fix: ensure the cache directory path is writable",
+			cacheDir, err,
+		)
+	}
+
+	// Build a map: key → []model_id, sorted for determinism.
+	type groupKey struct {
+		provider string
+		family   string
+		variant  string
+		version  string
+	}
+	groups := make(map[groupKey][]string)
+	for _, m := range models {
+		if m.Version == "" {
+			continue // no version → no meaningful duplicate key
+		}
+		k := groupKey{
+			provider: string(m.Provider),
+			family:   string(m.Family),
+			variant:  m.Variant,
+			version:  m.Version,
+		}
+		groups[k] = append(groups[k], string(m.ID))
+	}
+
+	// Collect groups with more than one model ID (actual duplicates).
+	duplicates := make([]VersionDuplicateGroup, 0)
+	for k, ids := range groups {
+		if len(ids) <= 1 {
+			continue
+		}
+		sort.Strings(ids)
+		duplicates = append(duplicates, VersionDuplicateGroup{
+			Key: VersionDuplicateKey{
+				Provider: k.provider,
+				Family:   k.family,
+				Variant:  k.variant,
+				Version:  k.version,
+			},
+			ModelIDs: ids,
+		})
+	}
+	// Sort by (provider, family, variant, version) for deterministic output.
+	sort.Slice(duplicates, func(i, j int) bool {
+		ki := duplicates[i].Key
+		kj := duplicates[j].Key
+		if ki.Provider != kj.Provider {
+			return ki.Provider < kj.Provider
+		}
+		if ki.Family != kj.Family {
+			return ki.Family < kj.Family
+		}
+		if ki.Variant != kj.Variant {
+			return ki.Variant < kj.Variant
+		}
+		return ki.Version < kj.Version
+	})
+
+	envelope := VersionDuplicatesEnvelope{
+		SchemaVersion:  1,
+		GeneratedAt:    time.Now().UTC(),
+		DuplicateCount: len(duplicates),
+		Duplicates:     duplicates,
+	}
+	if envelope.Duplicates == nil {
+		envelope.Duplicates = []VersionDuplicateGroup{}
+	}
+
+	data, err := json.MarshalIndent(envelope, "", "  ")
+	if err != nil {
+		return fmt.Errorf("writeVersionDuplicates: marshal JSON: %w", err)
+	}
+
+	dst := filepath.Join(cacheDir, versionDuplicatesFile)
+	if err := os.WriteFile(dst, data, 0o644); err != nil {
+		return fmt.Errorf(
+			"writeVersionDuplicates: write %s: %w\n"+
+				"  How to fix: ensure %s is writable",
+			dst, err, cacheDir,
+		)
+	}
+	return nil
+}
+
+// writeDotFormAudit collects all models whose Version contains a dot ("."),
+// indicating that the version was populated via dot-form (N-M ≡ N.M) recognition
+// in ParseFamilyDetailed. The list makes the regen delta explicitly reviewable.
+// Written to {cacheDir}/dot_form_audit.json.
+func writeDotFormAudit(cacheDir string, models []bestiary.ModelInfo) error {
+	if err := os.MkdirAll(cacheDir, 0o755); err != nil {
+		return fmt.Errorf(
+			"writeDotFormAudit: create cache dir %q: %w\n"+
+				"  How to fix: ensure the cache directory path is writable",
+			cacheDir, err,
+		)
+	}
+
+	entries := make([]DotFormAuditEntry, 0)
+	for _, m := range models {
+		if strings.Contains(m.Version, ".") {
+			entries = append(entries, DotFormAuditEntry{
+				ModelID:  string(m.ID),
+				Provider: string(m.Provider),
+				Version:  m.Version,
+			})
+		}
+	}
+	// Sort by (provider, model_id) for deterministic output.
+	sort.Slice(entries, func(i, j int) bool {
+		if entries[i].Provider != entries[j].Provider {
+			return entries[i].Provider < entries[j].Provider
+		}
+		return entries[i].ModelID < entries[j].ModelID
+	})
+
+	envelope := DotFormAuditEnvelope{
+		SchemaVersion: 1,
+		GeneratedAt:   time.Now().UTC(),
+		Count:         len(entries),
+		Entries:       entries,
+	}
+	if envelope.Entries == nil {
+		envelope.Entries = []DotFormAuditEntry{}
+	}
+
+	data, err := json.MarshalIndent(envelope, "", "  ")
+	if err != nil {
+		return fmt.Errorf("writeDotFormAudit: marshal JSON: %w", err)
+	}
+
+	dst := filepath.Join(cacheDir, dotFormAuditFile)
+	if err := os.WriteFile(dst, data, 0o644); err != nil {
+		return fmt.Errorf(
+			"writeDotFormAudit: write %s: %w\n"+
+				"  How to fix: ensure %s is writable",
+			dst, err, cacheDir,
+		)
+	}
 	return nil
 }
 
