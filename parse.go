@@ -535,7 +535,7 @@ func ExtractVersionFromID(id ModelID, rawFamily Family) string {
 	// R3b (eq7w): reject a single YYMM token (e.g. "2603") to prevent Mistral-style
 	// 4-digit date numerals from being returned as versions.
 	if reHyphenDigits.MatchString(remainder) {
-		if IsYYMMDateToken(remainder) {
+		if isYYMMDateToken(remainder) {
 			return ""
 		}
 		return strings.ReplaceAll(remainder, "-", ".")
@@ -865,7 +865,7 @@ func splitAndStripVersionTail(s string) []string {
 }
 
 // isVersionToken returns true when tok is a purely-numeric token (all digits)
-// AND is not a YYMM-date token (as detected by IsYYMMDateToken).
+// AND is not a YYMM-date token (as detected by isYYMMDateToken).
 // Used to strip trailing version components from model IDs.
 //
 // R3b (eq7w): YYMM tokens (e.g. "2603", "2512") are rejected so that
@@ -880,7 +880,7 @@ func isVersionToken(tok string) bool {
 		}
 	}
 	// R3b guard: reject YYMM date tokens (e.g. 2603, 2512, 2411).
-	return !IsYYMMDateToken(tok)
+	return !isYYMMDateToken(tok)
 }
 
 // reYYYYMMDD matches an 8-digit date string not preceded or followed by a digit.
@@ -999,9 +999,14 @@ const (
 func ParseFamilyDetailed(raw Family, id ModelID, p Provider) (Family, string, string, string, *ParseFailure) {
 	family, variant, version := ParseFamilyWithVersion(raw)
 
-	// No failure annotation when the input is empty.
+	// No failure annotation when the input is empty: delegate to
+	// InferFamilyFromIDWithVariant so that GUARD-2 passthrough cases (e.g.
+	// kimi-k2-thinking) are handled correctly. The modifier is then extracted from
+	// the inferred family+variant context.
 	if raw == "" {
-		return family, variant, version, "", nil
+		family, variant, version = InferFamilyFromIDWithVariant(id, p)
+		modifier, _ := ExtractModifier(id, family, variant)
+		return family, variant, version, modifier, nil
 	}
 
 	// ── Δ1 extract-first: attempt to populate version from the model ID ───────
@@ -1105,10 +1110,15 @@ func ParseFamilyDetailed(raw Family, id ModelID, p Provider) (Family, string, st
 					break
 				}
 			}
-			// Only fire if trailing token is a modifier AND is not already the parsed variant.
-			// The variant check avoids double-reporting when the parser correctly stripped
-			// the modifier as the variant (e.g. rawFamily="claude-thinking" → variant="thinking").
-			if idTrailing != variant && (isKnownModifier || detectSuffixOverflow(rawStr, family, variant, version)) {
+			// Only fire if trailing token is a modifier AND is not already the parsed
+			// variant AND the cleaned ID (with modifier stripped) does not end with a
+			// date token. The variant check avoids double-reporting when the parser
+			// correctly extracted the modifier as the variant. The date check suppresses
+			// spurious overflow when a modifier legitimately follows a release date
+			// (e.g. "claude-opus-4-1-20250805-thinking" — the modifier is expected after
+			// the date and is fully accounted for by ExtractModifier).
+			cleanedEndsWithDate := stripTrailingDate(string(cleanedID)) != string(cleanedID)
+			if idTrailing != variant && !cleanedEndsWithDate && (isKnownModifier || detectSuffixOverflow(rawStr, family, variant, version)) {
 				var reason ParseFailureReason
 				if isKnownModifier {
 					reason = ReasonKnownSuffixOverflow
@@ -1290,16 +1300,16 @@ func firstToken(s string) string {
 // isYYMMDateToken (R3b / eq7w)
 // --------------------------------------------------------------------------
 
-// IsYYMMDateToken returns true when tok is a 4-digit string that matches the
+// isYYMMDateToken returns true when tok is a 4-digit string that matches the
 // YYMM date pattern (century prefixes 19xx–29xx). These appear in Mistral-style
 // model IDs (e.g. "mistral-small-2603" → "2603" is a YYMM date, NOT a version).
 //
-// Parity contract: any tok for which IsYYMMDateToken returns true must NOT be
+// Parity contract: any tok for which isYYMMDateToken returns true must NOT be
 // treated as a version by isVersionToken or ExtractVersionFromID.
 //
 // Built on reYYMMCandidate (parse.go); wraps the boundary anchors so the regex
 // matches the whole token rather than requiring a hyphen context.
-func IsYYMMDateToken(tok string) bool {
+func isYYMMDateToken(tok string) bool {
 	if len(tok) != 4 {
 		return false
 	}
@@ -1307,10 +1317,6 @@ func IsYYMMDateToken(tok string) bool {
 	// we wrap it in hyphens to satisfy the boundary expectation.
 	return reYYMMCandidate.MatchString("-" + tok + "-")
 }
-
-// isYYMMDateToken is the unexported alias of IsYYMMDateToken for use within
-// the parse package internals.
-func isYYMMDateToken(tok string) bool { return IsYYMMDateToken(tok) }
 
 // --------------------------------------------------------------------------
 // trimOneTrailingModifier (R3c / Δ2′ — tentative only)
@@ -1369,6 +1375,9 @@ func trimOneTrailingModifier(s string) string {
 //
 // Parity contract: ExtractVersionBetweenFamilyAndVariant fires if and only if
 // detectVersionDigitsInID (parse.go) would also fire on the same (id, family, variant).
+// This invariant is enforced by TestExtractVersionBetweenFamilyAndVariant_Parity
+// (parse_internal_test.go), which asserts: detector fires ⟺ extractor returns
+// non-empty version OR non-empty residual.
 //
 // Algorithm:
 //  1. Normalize the family to a canonical single-word form (first alphabetic token

@@ -114,7 +114,6 @@ func TestParseFamily_Overrides(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		tc := tc
 		t.Run(string(tc.raw), func(t *testing.T) {
 			t.Parallel()
 			gotFamily, gotVariant := bestiary.ParseFamily(tc.raw)
@@ -148,7 +147,6 @@ func TestParseFamily_Overrides_OpaqueCompounds(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		tc := tc
 		t.Run(string(tc.raw), func(t *testing.T) {
 			t.Parallel()
 			gotFamily, gotVariant := bestiary.ParseFamily(tc.raw)
@@ -184,7 +182,6 @@ func TestParseFamily_VersionedPatterns(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 			gotFamily, gotVariant := bestiary.ParseFamily(tc.raw)
@@ -214,7 +211,6 @@ func TestParseFamily_HyphenVersion(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 			gotFamily, gotVariant := bestiary.ParseFamily(tc.raw)
@@ -352,7 +348,6 @@ func TestParseFamily_SuffixStripping(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 			gotFamily, gotVariant := bestiary.ParseFamily(tc.raw)
@@ -389,7 +384,6 @@ func TestParseFamily_VPrefix(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 			gotFamily, gotVariant := bestiary.ParseFamily(tc.raw)
@@ -430,7 +424,6 @@ func TestParseFamily_HyphenVersion_NoOverride(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 			gotFamily, gotVariant := bestiary.ParseFamily(tc.raw)
@@ -475,7 +468,6 @@ func TestExtractDate_FromID(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 			got := bestiary.ExtractDate(tc.id, tc.releaseDate)
@@ -517,7 +509,6 @@ func TestExtractDate_CalendarValidation(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 			got := bestiary.ExtractDate(tc.id, tc.releaseDate)
@@ -556,7 +547,6 @@ func TestInferFamilyFromID(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 			got := bestiary.InferFamilyFromID(tc.id, tc.provider)
@@ -602,7 +592,6 @@ func TestParseFamilyWithVersion_Core(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 			gotFamily, gotVariant, gotVersion := bestiary.ParseFamilyWithVersion(tc.raw)
@@ -643,7 +632,6 @@ func TestParseFamilyWithVersion_Gemini(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 			gotFamily, gotVariant, gotVersion := bestiary.ParseFamilyWithVersion(tc.raw)
@@ -699,7 +687,6 @@ func TestParseFamilyWithVersion_AlphanumericVersion(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 			gotFamily, gotVariant, gotVersion := bestiary.ParseFamilyWithVersion(tc.raw)
@@ -753,7 +740,6 @@ func TestExtractVersionFromID(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 			got := bestiary.ExtractVersionFromID(tc.id, tc.rawFamily)
@@ -833,7 +819,6 @@ func TestInferFamilyFromID_Variant(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		tc := tc
 		t.Run(tc.desc, func(t *testing.T) {
 			t.Parallel()
 			gotFamily, gotVariant, gotVersion := bestiary.InferFamilyFromIDWithVariant(tc.id, tc.provider)
@@ -900,7 +885,6 @@ func TestParseFamilyDetailed_VersionDigitsNotExtracted(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		tc := tc
 		t.Run(string(tc.rawFamily), func(t *testing.T) {
 			t.Parallel()
 			// Under Δ1 (extract-first), these inputs now SUCCEED: version is populated from
@@ -954,7 +938,6 @@ func TestParseFamilyDetailed_YYMMDateAsVersion(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		tc := tc
 		t.Run(string(tc.rawFamily), func(t *testing.T) {
 			t.Parallel()
 			_, _, _, _, failure := bestiary.ParseFamilyDetailed(tc.rawFamily, tc.id, tc.provider)
@@ -1071,7 +1054,6 @@ func TestExtractModifier(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		tc := tc
 		t.Run(tc.desc, func(t *testing.T) {
 			t.Parallel()
 			gotModifier, gotConsumed := bestiary.ExtractModifier(tc.id, tc.family, tc.variant)
@@ -1165,7 +1147,6 @@ func TestExtractModifier_DoesNotDoubleCountVariant(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		tc := tc
 		t.Run(tc.desc, func(t *testing.T) {
 			t.Parallel()
 			gotModifier, gotConsumed := bestiary.ExtractModifier(tc.id, tc.family, tc.variant)
@@ -1229,7 +1210,6 @@ func TestExtractModifier_PipelineIntegration(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		tc := tc
 		t.Run(tc.desc, func(t *testing.T) {
 			t.Parallel()
 
@@ -1301,7 +1281,6 @@ func TestParseFamilyDetailed_KnownSuffixOverflow(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		tc := tc
 		t.Run(string(tc.id), func(t *testing.T) {
 			t.Parallel()
 			family, variant, version, modifier, failure := bestiary.ParseFamilyDetailed(tc.rawFamily, tc.id, tc.provider)
@@ -1377,7 +1356,6 @@ func TestParseFamilyDetailed_UnknownSuffixOverflow(t *testing.T) {
 		},
 	}
 	for _, tc := range unknownTrailingWithOverflow {
-		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 			// R3a (e9pi): this test is RE-ENABLED after the Step-5 bounded reorder in
@@ -1421,7 +1399,6 @@ func TestParseFamilyDetailed_UnknownSuffixOverflow(t *testing.T) {
 		{rawFamily: "claude-opus", id: "claude-opus-foobar", provider: "anthropic"},
 	}
 	for _, tc := range unknownTrailingNotOverflow {
-		tc := tc
 		t.Run("no-overflow/"+string(tc.id), func(t *testing.T) {
 			t.Parallel()
 			_, _, _, _, failure := bestiary.ParseFamilyDetailed(tc.rawFamily, tc.id, tc.provider)
@@ -1458,7 +1435,6 @@ func TestParseFamilyDetailed_Mode2_NegativeCases(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		tc := tc
 		t.Run(string(tc.id), func(t *testing.T) {
 			t.Parallel()
 			_, _, _, _, failure := bestiary.ParseFamilyDetailed(tc.rawFamily, tc.id, tc.provider)
@@ -1496,7 +1472,6 @@ func TestParseFamilyDetailed_CleanParse(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		tc := tc
 		t.Run(string(tc.rawFamily), func(t *testing.T) {
 			t.Parallel()
 			family, _, _, _, failure := bestiary.ParseFamilyDetailed(tc.rawFamily, tc.id, tc.provider)
@@ -1613,7 +1588,6 @@ func TestExtractVersionBetweenFamilyAndVariant(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		tc := tc
 		t.Run(tc.desc, func(t *testing.T) {
 			t.Parallel()
 			gotVersion, gotResidual := bestiary.ExtractVersionBetweenFamilyAndVariant(tc.id, tc.family, tc.variant)
@@ -1641,54 +1615,11 @@ func TestExtractVersionBetweenFamilyAndVariant(t *testing.T) {
 // R3b (eq7w): isYYMMDateToken tests
 // --------------------------------------------------------------------------
 
-// TestIsYYMMDateToken verifies the YYMM-date guard: 4-digit tokens matching the
-// YYMM range (century prefixes 19xx–29xx) must return true, while genuine version
-// tokens (4o, 45, 2.5) must return false.
-//
-// Parity contract: isYYMMDateToken true ⇒ isVersionToken rejects the token ⇒
-// ExtractVersionFromID rejects it ⇒ mistral-small-2603 yields no version.
-func TestIsYYMMDateToken(t *testing.T) {
-	t.Parallel()
-
-	cases := []struct {
-		tok  string
-		want bool
-	}{
-		// True: YYMM range tokens (should be rejected as versions).
-		{"2603", true},  // mistral-small-2603
-		{"2512", true},  // YYMM dec 2025
-		{"2411", true},  // pixtral-style
-		{"2401", true},  // mistral-2401
-		{"2503", true},  // another YYMM
-		// False: genuine version tokens.
-		{"45", false},    // single two-digit (not 4-digit)
-		{"46", false},    // single two-digit
-		{"4o", false},    // alphanumeric (not pure digits)
-		{"2", false},     // single digit
-		{"35", false},    // two-digit version
-		{"100", false},   // three digits
-		// False: 4-digit tokens outside YYMM range.
-		{"1234", false},  // 12xx — below 19xx threshold
-		{"3000", false},  // 30xx — above 29xx threshold
-		// False: empty.
-		{"", false},
-	}
-
-	for _, tc := range cases {
-		tc := tc
-		t.Run(tc.tok, func(t *testing.T) {
-			t.Parallel()
-			got := bestiary.IsYYMMDateToken(tc.tok)
-			if got != tc.want {
-				t.Errorf("IsYYMMDateToken(%q) = %v, want %v", tc.tok, got, tc.want)
-			}
-		})
-	}
-}
-
 // TestIsYYMMDateToken_Parity verifies that isYYMMDateToken parity holds with
 // ExtractVersionFromID: tokens for which isYYMMDateToken is true must not be
 // returned as versions.
+// The direct unit test for isYYMMDateToken lives in parse_internal_test.go
+// (package bestiary) since the function is unexported.
 //
 // The key case: mistral-small-2603 → no version (2603 is a YYMM date).
 func TestIsYYMMDateToken_Parity(t *testing.T) {
@@ -1721,7 +1652,6 @@ func TestIsYYMMDateToken_Parity(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		tc := tc
 		t.Run(tc.desc, func(t *testing.T) {
 			t.Parallel()
 			got := bestiary.ExtractVersionFromID(tc.id, tc.rawFamily)
@@ -1804,7 +1734,6 @@ func TestInferFamilyFromIDWithVariant_R3c(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		tc := tc
 		t.Run(tc.desc, func(t *testing.T) {
 			t.Parallel()
 			gotFamily, gotVariant, gotVersion := bestiary.InferFamilyFromIDWithVariant(tc.id, tc.provider)
@@ -1862,10 +1791,24 @@ func TestParseFamilyDetailed_5Tuple(t *testing.T) {
 			wantVersion:  "4.6",
 			wantModifier: "",
 		},
+		{
+			// GUARD-2 passthrough: empty rawFamily, id="kimi-k2-thinking".
+			// InferFamilyFromIDWithVariant path: exposed="kimi-k2" (after trimOneTrailingModifier
+			// strips -thinking), cleaned="kimi-k2" → PFWV → (kimi-k2,"","") passthrough →
+			// GUARD-2 declines (fProv == cleaned "kimi-k2") → existing flow preserves variant=thinking.
+			// ParseFamilyDetailed with rawFamily="" must preserve variant=thinking (not over-strip).
+			desc:         "kimi-k2-thinking empty rawFamily → GUARD-2 preserves variant=thinking",
+			rawFamily:    "",
+			id:           "kimi-k2-thinking",
+			provider:     "moonshot",
+			wantFamily:   "kimi-k2",
+			wantVariant:  "thinking",
+			wantVersion:  "",
+			wantModifier: "",
+		},
 	}
 
 	for _, tc := range cases {
-		tc := tc
 		t.Run(tc.desc, func(t *testing.T) {
 			t.Parallel()
 			family, variant, version, modifier, failure := bestiary.ParseFamilyDetailed(tc.rawFamily, tc.id, tc.provider)
@@ -1881,8 +1824,8 @@ func TestParseFamilyDetailed_5Tuple(t *testing.T) {
 			if modifier != tc.wantModifier {
 				t.Errorf("modifier = %q, want %q", modifier, tc.wantModifier)
 			}
-			// Clean cases should not emit failures.
-			if failure != nil && tc.wantModifier == "" {
+			// No case in this table should emit a spurious ParseFailure.
+			if failure != nil {
 				t.Errorf("unexpected failure: %+v", failure)
 			}
 		})
@@ -1915,7 +1858,6 @@ func TestParseFamilyDetailed_R2_Residual(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		tc := tc
 		t.Run(tc.desc, func(t *testing.T) {
 			t.Parallel()
 			_, _, version, _, failure := bestiary.ParseFamilyDetailed(tc.rawFamily, tc.id, tc.provider)
