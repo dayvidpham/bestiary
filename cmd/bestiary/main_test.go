@@ -235,13 +235,16 @@ func TestShow_Ambiguous(t *testing.T) {
 	if !strings.Contains(errOut, "claude") {
 		t.Errorf("stderr does not contain input %q; got %q", "claude", errOut)
 	}
-	// stderr must contain the column headers.
-	if !strings.Contains(errOut, "Canonical") || !strings.Contains(errOut, "Provider") || !strings.Contains(errOut, "Raw ID") {
-		t.Errorf("stderr does not contain expected column headers; got %q", errOut)
+	// stderr must contain the Canonical section header and the legend line.
+	if !strings.Contains(errOut, "Canonical:") {
+		t.Errorf("stderr does not contain 'Canonical:' section header; got %q", errOut)
 	}
-	// stderr must contain a remediation hint pointing toward --format raw or refinement.
-	if !strings.Contains(errOut, "--format") && !strings.Contains(errOut, "refine") && !strings.Contains(errOut, "raw") {
-		t.Errorf("stderr does not contain remediation hint (--format or refine); got %q", errOut)
+	if !strings.Contains(errOut, "* = canonical provider") {
+		t.Errorf("stderr does not contain legend '* = canonical provider'; got %q", errOut)
+	}
+	// stderr must contain a remediation hint pointing toward --format=raw.
+	if !strings.Contains(errOut, "--format=raw") {
+		t.Errorf("stderr does not contain remediation hint '--format=raw'; got %q", errOut)
 	}
 	// stdout must be empty — the candidate table goes to stderr only.
 	if out != "" {

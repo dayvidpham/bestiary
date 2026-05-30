@@ -288,115 +288,121 @@ func formatModelTable(w io.Writer, model ModelInfo) error {
 	return nil
 }
 
-// --- ErrAmbiguous candidate table ---
+// --- ErrAmbiguous two-section output (SLICE-FIX-V4-1) ---
 
-// ambiguousCandidateRow is the format string for every row (header, separator,
-// and data rows) in the 3-column candidate table rendered when Resolve returns
-// *ErrAmbiguous. All rows share the same column widths.
-const ambiguousCandidateRow = "%-40s  %-14s  %-40s\n"
+// ambiguousMaxCanonical is the maximum number of canonical rows displayed in
+// Section 1 before truncation with a "+N more" hint. (SLICE-FIX-V4-1)
+const ambiguousMaxCanonical = 5
 
-// ambiguousMaxCandidates is the maximum number of candidate rows displayed
-// before truncation with a "+M more" hint. (Fix #2, SLICE-FIX-V2-2)
-const ambiguousMaxCandidates = 10
+// ambiguousMaxRehosts is the maximum number of distinct rehost provider names
+// displayed in Section 2 before truncation with a "+N more" hint. (SLICE-FIX-V4-1)
+const ambiguousMaxRehosts = 5
 
-// FormatAmbiguous writes a human-readable disambiguation table for e to w.
+// FormatAmbiguous writes a human-readable two-section disambiguation message for
+// e to w (typically os.Stderr).
 //
-// Output format (written to w, typically os.Stderr):
+// Output format:
 //
 //	bestiary: input "<input>" matched multiple canonicals
-//	<header row>
-//	<separator row>
-//	<one canonical row per (Family, Variant, Version) group — at most N=10>
-//	+M more (shown when more than N groups exist)
-//	use --format=raw or refine input
+//	[no matches in namespace "..." — ... (when PURLMissedNamespace is set)]
 //
-// Fix #2 (SLICE-FIX-V2-2): Candidates are first grouped by (Family, Variant,
-// Version) tuple — one representative row per group. If >N=10 groups exist,
-// the output is truncated with a "+M more" hint. This collapses the 17+ rehost
-// rows for "claude" into one canonical row.
+//	* = canonical provider
+//
+//	Canonical:
+//	* <canonical-form>
+//	... (up to 5 rows; "+N more" when >5)
+//
+//	Also rehosted by:           (omitted when RehostProviders is empty)
+//	<provider-name>, <provider-name>, ...  (up to 5 names; "+N more" when >5)
+//
+//	To see all providers/variants: bestiary list   (or: bestiary list --provider <slug>)
+//	To resolve an exact model ID:  bestiary show <raw-id> --format=raw
+//
+// Section 1 (Canonical) shows up to 5 representatives from Candidates where
+// the Provider is the canonical/originating provider for the family. Each row
+// is prefixed with "* " to visually mark the canonical origin.
+//
+// Section 2 (Also rehosted by) lists up to 5 distinct provider names taken
+// directly from ErrAmbiguous.RehostProviders. The section is omitted entirely
+// when RehostProviders is empty.
 //
 // The function always returns nil; write errors are silently swallowed because
 // this is advisory stderr output — a write failure should not mask the real
 // ErrAmbiguous that the caller surfaces to the user.
 func FormatAmbiguous(w io.Writer, e *ErrAmbiguous) {
-	fmt.Fprintf(w, "bestiary: input %q matched multiple canonicals\n\n", e.Input)
+	fmt.Fprintf(w, "bestiary: input %q matched multiple canonicals\n", e.Input)
 
-	// Fix 2 (SLICE-FIX-V3-1): when a PURL namespace missed, print a note above
-	// the table so the user knows why the loose match was performed.
+	// PURL missed-namespace note: keep at top, unchanged from Fix 2 (SLICE-FIX-V3-1).
 	if e.PURLMissedNamespace != "" {
-		fmt.Fprintf(w, "no matches in namespace %q — performing loose match across all providers\n\n",
+		fmt.Fprintf(w, "\nno matches in namespace %q — performing loose match across all providers\n",
 			e.PURLMissedNamespace)
 	}
 
-	// Fix #2: Group by (Family, Variant, Version) — one row per group.
+	// Legend line.
+	fmt.Fprintf(w, "\n* = canonical provider\n")
+
+	// Section 1: Canonical rows — up to ambiguousMaxCanonical, each prefixed with "* ".
+	// Filter candidates to only canonical-provider rows (Provider == Family.CanonicalProvider()).
+	// Dedup by (Family, Variant, Version) so each model appears once.
 	type groupKey struct {
 		family  string
 		variant string
 		version string
 	}
-	seen := make(map[groupKey]struct{})
-	var grouped []ModelRef
+	seenGroup := make(map[groupKey]struct{})
+	var canonicalRows []ModelRef
 	for _, c := range e.Candidates {
+		if c.Provider == "" || c.Provider != c.Family.CanonicalProvider() {
+			continue
+		}
 		key := groupKey{
 			family:  string(c.Family),
 			variant: c.Variant,
 			version: c.Version,
 		}
-		if _, dup := seen[key]; dup {
+		if _, dup := seenGroup[key]; dup {
 			continue
 		}
-		seen[key] = struct{}{}
-		grouped = append(grouped, c)
+		seenGroup[key] = struct{}{}
+		canonicalRows = append(canonicalRows, c)
 	}
 
-	// Fix 1 (SLICE-FIX-V3-1): sort canonical-provider rows to the top of the
-	// grouped list before truncation. This guarantees canonical rows survive the
-	// N=10 cut even when there are many rehost groups. A row is canonical when its
-	// Provider equals Family.CanonicalProvider().
-	//
-	// Stable partition: canonical rows first, then non-canonical, each preserving
-	// their relative original order.
-	canonical := grouped[:0:0] // empty slice reusing no backing array
-	nonCanonical := grouped[:0:0]
-	for _, ref := range grouped {
-		if ref.Provider != "" && ref.Provider == ref.Family.CanonicalProvider() {
-			canonical = append(canonical, ref)
-		} else {
-			nonCanonical = append(nonCanonical, ref)
+	fmt.Fprintf(w, "\nCanonical:\n")
+	displayCanonical := canonicalRows
+	canonicalOverflow := 0
+	if len(canonicalRows) > ambiguousMaxCanonical {
+		canonicalOverflow = len(canonicalRows) - ambiguousMaxCanonical
+		displayCanonical = canonicalRows[:ambiguousMaxCanonical]
+	}
+	for _, c := range displayCanonical {
+		fmt.Fprintf(w, "* %s\n", c.Format(SchemeCanonical))
+	}
+	if canonicalOverflow > 0 {
+		fmt.Fprintf(w, "+%d more\n", canonicalOverflow)
+	}
+
+	// Section 2: Rehost provider names — up to ambiguousMaxRehosts.
+	// Omit the section entirely when RehostProviders is empty.
+	if len(e.RehostProviders) > 0 {
+		fmt.Fprintf(w, "\nAlso rehosted by:\n")
+		displayRehosts := e.RehostProviders
+		rehostOverflow := 0
+		if len(e.RehostProviders) > ambiguousMaxRehosts {
+			rehostOverflow = len(e.RehostProviders) - ambiguousMaxRehosts
+			displayRehosts = e.RehostProviders[:ambiguousMaxRehosts]
+		}
+		// Render as a comma-separated list of provider names on one line.
+		names := make([]string, len(displayRehosts))
+		for i, p := range displayRehosts {
+			names[i] = string(p)
+		}
+		fmt.Fprintf(w, "%s\n", strings.Join(names, ", "))
+		if rehostOverflow > 0 {
+			fmt.Fprintf(w, "+%d more\n", rehostOverflow)
 		}
 	}
-	sortedGrouped := make([]ModelRef, 0, len(grouped))
-	sortedGrouped = append(sortedGrouped, canonical...)
-	sortedGrouped = append(sortedGrouped, nonCanonical...)
 
-	// Fix #2: Truncate after N=10 groups.
-	display := sortedGrouped
-	overflow := 0
-	if len(sortedGrouped) > ambiguousMaxCandidates {
-		overflow = len(sortedGrouped) - ambiguousMaxCandidates
-		display = sortedGrouped[:ambiguousMaxCandidates]
-	}
-
-	fmt.Fprintf(w, ambiguousCandidateRow, "Canonical", "Provider", "Raw ID")
-	fmt.Fprintf(w, ambiguousCandidateRow,
-		strings.Repeat("-", 40),
-		strings.Repeat("-", 14),
-		strings.Repeat("-", 40),
-	)
-	for _, c := range display {
-		canonicalStr := c.Format(SchemeCanonical)
-		// Fix 1 (SLICE-FIX-V3-1): mark canonical-provider rows with a "*" suffix.
-		if c.Provider != "" && c.Provider == c.Family.CanonicalProvider() {
-			canonicalStr += " *"
-		}
-		fmt.Fprintf(w, ambiguousCandidateRow,
-			canonicalStr,
-			string(c.Provider),
-			string(c.ID),
-		)
-	}
-	if overflow > 0 {
-		fmt.Fprintf(w, "\n+%d more (use --format=raw with a specific model ID to see all)\n", overflow)
-	}
-	fmt.Fprintf(w, "\nuse --format=raw or refine input to a more specific canonical form\n")
+	// Footer: verified real commands only.
+	fmt.Fprintf(w, "\nTo see all providers/variants: bestiary list   (or: bestiary list --provider <slug>)\n")
+	fmt.Fprintf(w, "To resolve an exact model ID:  bestiary show <raw-id> --format=raw\n")
 }

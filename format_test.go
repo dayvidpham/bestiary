@@ -411,14 +411,25 @@ func makeAmbiguousRefs(n int, duplicateTuples bool) []bestiary.ModelRef {
 }
 
 // TestFormatAmbiguous_Truncation verifies that FormatAmbiguous truncates the
-// candidate list after N=10 and emits a "+M more" hint.
+// canonical candidate list after N=5 and emits a "+M more" hint.
 //
-// Fix #2 (SLICE-FIX-V2-2): "Truncate after N (e.g. 10) with '+M more' hint"
+// Updated for SLICE-FIX-V4-1 two-section layout: canonical cap is now 5.
+// Uses canonical Anthropic refs (Provider==CanonicalProvider) so Section 1 is populated.
 func TestFormatAmbiguous_Truncation(t *testing.T) {
-	// Create 17 distinct candidates (one per distinct (Family, Variant, Version) tuple).
-	candidates := makeAmbiguousRefs(17, false)
+	// Create 8 canonical anthropic/claude refs — after cap-5, "+3 more" expected.
+	candidates := make([]bestiary.ModelRef, 8)
+	for i := 0; i < 8; i++ {
+		candidates[i] = bestiary.ModelRef{
+			ID:       bestiary.ModelID(fmt.Sprintf("claude-model-%d", i)),
+			Provider: bestiary.ProviderAnthropic,
+			Family:   "claude",
+			Variant:  fmt.Sprintf("variant-%d", i),
+			Version:  "1",
+			Date:     "2025-01-01",
+		}
+	}
 	e := &bestiary.ErrAmbiguous{
-		Input:      "test-input",
+		Input:      "claude",
 		Scheme:     bestiary.SchemeCanonical,
 		Candidates: candidates,
 	}
@@ -427,57 +438,37 @@ func TestFormatAmbiguous_Truncation(t *testing.T) {
 	bestiary.FormatAmbiguous(&buf, e)
 	output := buf.String()
 
-	// Must contain "+7 more" (17 - 10 = 7) or equivalent.
-	if !strings.Contains(output, "+7 more") && !strings.Contains(output, "7 more") {
-		t.Errorf("FormatAmbiguous(17 candidates): output should contain '+7 more' hint; got:\n%s", output)
+	// Must contain "+3 more" (8 - 5 = 3).
+	if !strings.Contains(output, "+3 more") {
+		t.Errorf("FormatAmbiguous(8 canonical candidates): output should contain '+3 more' hint; got:\n%s", output)
 	}
-	// Must NOT list all 17 candidates (only first 10).
-	// Check that "model-10" through "model-16" are NOT in the output.
-	for i := 10; i < 17; i++ {
-		if strings.Contains(output, fmt.Sprintf("model-%d", i)) {
-			t.Errorf("FormatAmbiguous: candidate model-%d should NOT appear in truncated output; got:\n%s", i, output)
+	// Must NOT list variant-5 through variant-7 (beyond cap-5).
+	for i := 5; i < 8; i++ {
+		if strings.Contains(output, fmt.Sprintf("variant-%d", i)) {
+			t.Errorf("FormatAmbiguous: canonical candidate variant-%d should NOT appear in truncated output; got:\n%s", i, output)
 		}
 	}
 }
 
-// TestFormatAmbiguous_NoTruncation_ExactlyN verifies that exactly N=10 candidates
-// does NOT emit a truncation hint ("+M more" pattern).
-func TestFormatAmbiguous_NoTruncation_ExactlyN(t *testing.T) {
-	candidates := makeAmbiguousRefs(10, false)
-	e := &bestiary.ErrAmbiguous{
-		Input:      "test-input",
-		Scheme:     bestiary.SchemeCanonical,
-		Candidates: candidates,
-	}
-
-	var buf bytes.Buffer
-	bestiary.FormatAmbiguous(&buf, e)
-	output := buf.String()
-
-	// No "+M more" truncation hint for exactly 10 candidates.
-	// (The footer may contain "more" in "more specific" — check for "+N more" pattern.)
-	if strings.Contains(output, "+") && strings.Contains(output, "more\n") {
-		t.Errorf("FormatAmbiguous(10 candidates): should NOT have '+N more' truncation hint; got:\n%s", output)
-	}
-}
-
-// TestFormatAmbiguous_Grouping verifies that FormatAmbiguous groups candidates
-// by (Family, Variant, Version) tuple and shows ONE canonical row per group.
+// TestFormatAmbiguous_NoTruncation_ExactlyN verifies that exactly N=5 canonical
+// candidates does NOT emit a truncation hint ("+M more" pattern).
 //
-// Fix #2 (SLICE-FIX-V2-2): "Group by NormalizedFamily/Variant; show one canonical per group"
-func TestFormatAmbiguous_Grouping(t *testing.T) {
-	// Create candidates where the same (family, variant, version) appears with
-	// multiple providers — simulating the 17+ rehost scenario for claude/opus.
-	candidates := []bestiary.ModelRef{
-		{ID: "model-opus-1", Provider: bestiary.Provider("provider-a"), Family: "myfamily", Variant: "alpha", Version: "1", Date: "2025-01-01"},
-		{ID: "model-opus-1", Provider: bestiary.Provider("provider-b"), Family: "myfamily", Variant: "alpha", Version: "1", Date: "2025-01-01"},
-		{ID: "model-opus-1", Provider: bestiary.Provider("provider-c"), Family: "myfamily", Variant: "alpha", Version: "1", Date: "2025-01-01"},
-		{ID: "model-beta-1", Provider: bestiary.Provider("provider-a"), Family: "myfamily", Variant: "beta", Version: "1", Date: "2025-01-01"},
-		{ID: "model-beta-1", Provider: bestiary.Provider("provider-b"), Family: "myfamily", Variant: "beta", Version: "1", Date: "2025-01-01"},
+// Updated for SLICE-FIX-V4-1 two-section layout: canonical cap is now 5.
+func TestFormatAmbiguous_NoTruncation_ExactlyN(t *testing.T) {
+	// Exactly 5 canonical anthropic/claude refs — no truncation expected.
+	candidates := make([]bestiary.ModelRef, 5)
+	for i := 0; i < 5; i++ {
+		candidates[i] = bestiary.ModelRef{
+			ID:       bestiary.ModelID(fmt.Sprintf("claude-model-%d", i)),
+			Provider: bestiary.ProviderAnthropic,
+			Family:   "claude",
+			Variant:  fmt.Sprintf("variant-%d", i),
+			Version:  "1",
+			Date:     "2025-01-01",
+		}
 	}
-
 	e := &bestiary.ErrAmbiguous{
-		Input:      "myfamily",
+		Input:      "claude",
 		Scheme:     bestiary.SchemeCanonical,
 		Candidates: candidates,
 	}
@@ -486,60 +477,85 @@ func TestFormatAmbiguous_Grouping(t *testing.T) {
 	bestiary.FormatAmbiguous(&buf, e)
 	output := buf.String()
 
-	// Should show exactly 2 data rows (one per unique (family, variant, version) group),
-	// not 5 data rows (one per candidate).
-	// Count by splitting on newlines and counting non-header, non-separator data rows.
-	lines := strings.Split(strings.TrimSpace(output), "\n")
-	var dataLines []string
-	for _, l := range lines {
-		l = strings.TrimSpace(l)
-		// Skip header, separator (all dashes), footer, and empty lines.
-		if l == "" || strings.HasPrefix(l, "bestiary:") ||
-			strings.HasPrefix(l, "use --format") || strings.HasPrefix(l, "+") ||
-			strings.HasPrefix(l, "Canonical") || strings.HasPrefix(l, "----") {
-			continue
-		}
-		dataLines = append(dataLines, l)
+	// No "+N more" truncation hint for exactly 5 canonical candidates.
+	// The footer lines don't contain "+N more" patterns, so a simple check is safe.
+	if strings.Contains(output, "+0 more") {
+		t.Errorf("FormatAmbiguous(5 canonical candidates): should NOT have '+0 more'; got:\n%s", output)
 	}
-	if len(dataLines) != 2 {
-		t.Errorf("FormatAmbiguous grouping: expected 2 data rows (one per group), got %d; output:\n%s\ndata lines: %v",
-			len(dataLines), output, dataLines)
+	// Specifically: no canonical overflow hint.
+	lines := strings.Split(output, "\n")
+	for _, l := range lines {
+		if strings.HasPrefix(l, "+") && strings.Contains(l, "more") {
+			t.Errorf("FormatAmbiguous(5 canonical candidates): unexpected '+N more' hint: %q\nFull output:\n%s", l, output)
+		}
+	}
+}
+
+// TestFormatAmbiguous_Grouping verifies that FormatAmbiguous groups canonical candidates
+// by (Family, Variant, Version) tuple and shows ONE row per group in Section 1.
+//
+// Updated for SLICE-FIX-V4-1 two-section layout: grouping applies to canonical-provider
+// rows. Non-canonical rows in Candidates are excluded from Section 1.
+func TestFormatAmbiguous_Grouping(t *testing.T) {
+	// Two distinct canonical groups (alpha and beta), with no duplicate (family,variant,version).
+	// Anthropic is the canonical provider for "claude" family.
+	candidates := []bestiary.ModelRef{
+		{ID: "claude-alpha-1", Provider: bestiary.ProviderAnthropic, Family: "claude", Variant: "alpha", Version: "1", Date: "2025-01-01"},
+		{ID: "claude-beta-1", Provider: bestiary.ProviderAnthropic, Family: "claude", Variant: "beta", Version: "1", Date: "2025-01-01"},
 	}
 
-	// Both variant names should appear exactly once in the output lines
-	// (grouping collapsed the 3+2 providers into 1+1 rows).
+	e := &bestiary.ErrAmbiguous{
+		Input:      "claude",
+		Scheme:     bestiary.SchemeCanonical,
+		Candidates: candidates,
+	}
+
+	var buf bytes.Buffer
+	bestiary.FormatAmbiguous(&buf, e)
+	output := buf.String()
+
+	// Both variant names should appear in Section 1.
+	// Section 1 rows are canonical form strings prefixed with "* ".
+	if !strings.Contains(output, "/alpha/") {
+		t.Errorf("FormatAmbiguous grouping: '/alpha/' missing from output;\nGot:\n%s", output)
+	}
+	if !strings.Contains(output, "/beta/") {
+		t.Errorf("FormatAmbiguous grouping: '/beta/' missing from output;\nGot:\n%s", output)
+	}
+
+	// Each variant should appear exactly once (no duplicates).
 	alphaCount := strings.Count(output, "/alpha/")
 	betaCount := strings.Count(output, "/beta/")
 	if alphaCount != 1 {
-		t.Errorf("FormatAmbiguous grouping: '/alpha/' appears %d times in canonical column, want 1 (grouped); output:\n%s", alphaCount, output)
+		t.Errorf("FormatAmbiguous grouping: '/alpha/' appears %d times, want 1; output:\n%s", alphaCount, output)
 	}
 	if betaCount != 1 {
-		t.Errorf("FormatAmbiguous grouping: '/beta/' appears %d times in canonical column, want 1 (grouped); output:\n%s", betaCount, output)
+		t.Errorf("FormatAmbiguous grouping: '/beta/' appears %d times, want 1; output:\n%s", betaCount, output)
 	}
 }
 
 // TestFormatAmbiguous_GroupingAndTruncation verifies that grouping is applied
-// BEFORE truncation — i.e., if 17+ rehost rows collapse to 10 groups, no
-// truncation hint is emitted. If they collapse to >10 groups, truncation applies.
+// BEFORE truncation — canonical rows with same (Family,Variant,Version) are
+// deduped, then capped at 5 with "+N more".
+//
+// Updated for SLICE-FIX-V4-1 two-section layout: canonical cap is now 5.
 func TestFormatAmbiguous_GroupingAndTruncation(t *testing.T) {
-	// Create 15 distinct canonical groups, each with 2 providers (30 candidates total).
-	// After grouping: 15 groups → exceeds N=10 → should truncate with "+5 more".
-	candidates := make([]bestiary.ModelRef, 0, 30)
-	for i := 0; i < 15; i++ {
-		for j := 0; j < 2; j++ {
-			candidates = append(candidates, bestiary.ModelRef{
-				ID:       bestiary.ModelID(fmt.Sprintf("model-%d-p%d", i, j)),
-				Provider: bestiary.Provider(fmt.Sprintf("provider-%d", j)),
-				Family:   bestiary.Family(fmt.Sprintf("family-%d", i)),
-				Variant:  fmt.Sprintf("variant-%d", i),
-				Version:  fmt.Sprintf("1.%d", i),
-				Date:     "2025-01-01",
-			})
-		}
+	// 8 canonical anthropic/claude rows with distinct (variant, version) tuples.
+	// After dedup: 8 distinct groups → cap 5 → "+3 more".
+	candidates := make([]bestiary.ModelRef, 0, 8)
+	for i := 0; i < 8; i++ {
+		candidates = append(candidates, bestiary.ModelRef{
+			ID:       bestiary.ModelID(fmt.Sprintf("claude-model-%d", i)),
+			Provider: bestiary.ProviderAnthropic,
+			Family:   "claude",
+			Variant:  fmt.Sprintf("variant-%d", i),
+			Version:  fmt.Sprintf("1.%d", i),
+			Date:     "2025-01-01",
+		})
 	}
 
 	e := &bestiary.ErrAmbiguous{
-		Input:      "test",
+		Input:      "claude",
 		Scheme:     bestiary.SchemeCanonical,
 		Candidates: candidates,
 	}
@@ -548,10 +564,9 @@ func TestFormatAmbiguous_GroupingAndTruncation(t *testing.T) {
 	bestiary.FormatAmbiguous(&buf, e)
 	output := buf.String()
 
-	// After grouping 30 candidates into 15 groups, then truncating at 10:
-	// "+5 more" hint must appear as "+5 more".
-	if !strings.Contains(output, "+5 more") {
-		t.Errorf("FormatAmbiguous(30 candidates, 15 groups): should truncate to 10+'+5 more'; got:\n%s", output)
+	// After dedup (all distinct) and cap at 5: "+3 more" must appear.
+	if !strings.Contains(output, "+3 more") {
+		t.Errorf("FormatAmbiguous(8 canonical groups): should truncate to 5+'+3 more'; got:\n%s", output)
 	}
 }
 
@@ -837,67 +852,86 @@ func TestFormatAmbiguous_CanonicalRowMarked(t *testing.T) {
 	}
 }
 
-// TestFormatAmbiguous_CanonicalSortedToTop verifies that the canonical row
-// appears BEFORE rehost rows in the FormatAmbiguous output.
+// TestFormatAmbiguous_CanonicalSortedToTop verifies that the canonical section
+// (Section 1) appears BEFORE the rehost section (Section 2) in FormatAmbiguous output.
 //
-// SLICE-FIX-V3-1 Fix 1 — this test FAILS before the impl sorts canonical rows
-// to the top of the grouped list.
+// Updated for SLICE-FIX-V4-1 two-section layout: Section 1 ("Canonical:") always
+// precedes Section 2 ("Also rehosted by:"). The canonical provider appears in Section 1
+// (from Candidates), while rehost names appear in Section 2 (from RehostProviders).
 func TestFormatAmbiguous_CanonicalSortedToTop(t *testing.T) {
-	candidates := makeClaudeAmbiguousRefs(3) // 3 rehosts + 1 canonical
+	candidates := makeClaudeAmbiguousRefs(3) // 3 rehosts + 1 canonical anthropic row
+	// Populate RehostProviders from the non-canonical candidates.
+	rehostProviders := make([]bestiary.Provider, 3)
+	for i := 0; i < 3; i++ {
+		rehostProviders[i] = bestiary.Provider("deepinfra-" + fmt.Sprintf("%d", i))
+	}
 	e := &bestiary.ErrAmbiguous{
-		Input:      "claude",
-		Scheme:     bestiary.SchemeCanonical,
-		Candidates: candidates,
+		Input:           "claude",
+		Scheme:          bestiary.SchemeCanonical,
+		Candidates:      candidates,
+		RehostProviders: rehostProviders,
 	}
 
 	var buf bytes.Buffer
 	bestiary.FormatAmbiguous(&buf, e)
 	output := buf.String()
 
-	// Canonical provider "anthropic" must appear before any rehost.
-	// Check that the position of "anthropic" in output is before "deepinfra-0".
-	anthropicPos := strings.Index(output, string(bestiary.ProviderAnthropic))
-	rehostPos := strings.Index(output, "deepinfra-0")
+	// "Canonical:" section must appear before "Also rehosted by:".
+	canonicalPos := strings.Index(output, "Canonical:")
+	rehostPos := strings.Index(output, "Also rehosted by:")
 
-	if anthropicPos < 0 {
-		t.Fatalf("FormatAmbiguous: canonical provider not found in output;\nGot:\n%s", output)
+	if canonicalPos < 0 {
+		t.Fatalf("FormatAmbiguous: 'Canonical:' section not found;\nGot:\n%s", output)
 	}
 	if rehostPos < 0 {
-		t.Fatalf("FormatAmbiguous: rehost row not found in output;\nGot:\n%s", output)
+		t.Fatalf("FormatAmbiguous: 'Also rehosted by:' section not found;\nGot:\n%s", output)
 	}
-	if anthropicPos > rehostPos {
-		t.Errorf("FormatAmbiguous: canonical row should appear BEFORE rehost rows;\n"+
-			"anthropic at offset %d, deepinfra-0 at offset %d\nFull output:\n%s",
-			anthropicPos, rehostPos, output)
+	if canonicalPos > rehostPos {
+		t.Errorf("FormatAmbiguous: 'Canonical:' section should appear BEFORE 'Also rehosted by:';\n"+
+			"Canonical: at offset %d, Also rehosted by: at offset %d\nFull output:\n%s",
+			canonicalPos, rehostPos, output)
+	}
+
+	// Canonical provider "anthropic" must appear in the output (Section 1).
+	if !strings.Contains(output, string(bestiary.ProviderAnthropic)) {
+		t.Errorf("FormatAmbiguous: canonical provider %q missing from output;\nGot:\n%s",
+			bestiary.ProviderAnthropic, output)
 	}
 }
 
-// TestFormatAmbiguous_CanonicalSurvivesTruncation verifies that even with >10
-// total groups, the canonical provider row survives truncation (is not cut).
+// TestFormatAmbiguous_CanonicalSurvivesTruncation verifies that even with >5
+// canonical groups, the canonical section renders exactly 5 rows and the overflow
+// hint is emitted.
 //
-// SLICE-FIX-V3-1 Fix 1 — this test FAILS before the impl sorts canonical rows
-// to the top before the N=10 truncation.
+// Updated for SLICE-FIX-V4-1 two-section layout: canonical cap is now 5.
 func TestFormatAmbiguous_CanonicalSurvivesTruncation(t *testing.T) {
-	// 12 rehost groups + 1 canonical = 13 groups total (exceeds N=10).
-	// Without the sort-to-top fix, the canonical row (inserted last) gets cut.
-	candidates := makeClaudeAmbiguousRefs(12)
+	// 1 canonical + 12 rehosts in Candidates; RehostProviders for Section 2.
+	// The canonical anthropic row must appear in Section 1.
+	candidates := makeClaudeAmbiguousRefs(12) // 12 rehosts + 1 anthropic
+	// Build a realistic RehostProviders list.
+	rehostProviders := make([]bestiary.Provider, 7)
+	for i := 0; i < 7; i++ {
+		rehostProviders[i] = bestiary.Provider(fmt.Sprintf("rehost-%d", i))
+	}
 	e := &bestiary.ErrAmbiguous{
-		Input:      "claude",
-		Scheme:     bestiary.SchemeCanonical,
-		Candidates: candidates,
+		Input:           "claude",
+		Scheme:          bestiary.SchemeCanonical,
+		Candidates:      candidates,
+		RehostProviders: rehostProviders,
 	}
 
 	var buf bytes.Buffer
 	bestiary.FormatAmbiguous(&buf, e)
 	output := buf.String()
 
+	// Canonical provider "anthropic" must appear in Section 1.
 	if !strings.Contains(output, string(bestiary.ProviderAnthropic)) {
-		t.Errorf("FormatAmbiguous: canonical provider %q was truncated away (not in top-10 display);\nGot:\n%s",
+		t.Errorf("FormatAmbiguous: canonical provider %q not in output;\nGot:\n%s",
 			bestiary.ProviderAnthropic, output)
 	}
-	// Overflow hint should still be emitted (3 groups cut).
-	if !strings.Contains(output, "more") {
-		t.Errorf("FormatAmbiguous: expected overflow hint ('+N more') for 13 groups;\nGot:\n%s", output)
+	// Rehost overflow: 7 - 5 = 2 → "+2 more" for Section 2.
+	if !strings.Contains(output, "+2 more") {
+		t.Errorf("FormatAmbiguous: expected '+2 more' for 7 rehost providers (cap 5);\nGot:\n%s", output)
 	}
 }
 
@@ -1075,11 +1109,12 @@ func TestFormatAmbiguous_V4_CanonicalSection_Cap5(t *testing.T) {
 	bestiary.FormatAmbiguous(&buf, e)
 	output := buf.String()
 
-	// Count lines that start with "* " (canonical prefix rows).
+	// Count lines that start with "* " and are inside the Canonical: section
+	// (exclude the legend line "* = canonical provider").
 	lines := strings.Split(output, "\n")
 	prefixLines := 0
 	for _, l := range lines {
-		if strings.HasPrefix(l, "* ") {
+		if strings.HasPrefix(l, "* ") && !strings.HasPrefix(l, "* =") {
 			prefixLines++
 		}
 	}
