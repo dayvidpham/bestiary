@@ -801,6 +801,8 @@
 {"issue_id":"bestiary-vjv6","label":"aura:severity:minor"}
 {"issue_id":"bestiary-vkcq","label":"aura:p10-impl:s10-review"}
 {"issue_id":"bestiary-vkcq","label":"aura:severity:blocker"}
+{"issue_id":"bestiary-vq6k","label":"aura:epic-followup"}
+{"issue_id":"bestiary-vq6k","label":"aura:severity:important"}
 {"issue_id":"bestiary-vtd","label":"aura:p9-impl:s9-slice"}
 {"issue_id":"bestiary-vxqr","label":"aura:p10-impl:s10-review"}
 {"issue_id":"bestiary-vxqr","label":"aura:severity:minor"}
