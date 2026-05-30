@@ -85,6 +85,12 @@ type ErrAmbiguous struct {
 	// namespace string that missed (e.g. "totally-unknown-ns").
 	// Empty when no PURL namespace miss occurred.
 	PURLMissedNamespace string
+	// RehostProviders is the deduplicated list of providers (in stable first-seen
+	// order) that host at least one of the matching models but are NOT the
+	// canonical/originating provider for the family. Populated at both ErrAmbiguous
+	// construction sites in resolve.go (multi-group case and PURL loose-fallback
+	// case). Empty when no rehost providers exist in the match set.
+	RehostProviders []Provider
 }
 
 // Error implements the error interface with an actionable message.

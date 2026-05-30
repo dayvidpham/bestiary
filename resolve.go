@@ -171,10 +171,11 @@ func Resolve(input string, opts ...ResolveOption) ([]ModelRef, error) {
 			candidates = append(candidates, candidateMap[id])
 		}
 		return nil, &ErrAmbiguous{
-			Input:             input,
-			Scheme:            scheme,
-			Candidates:        candidates,
+			Input:               input,
+			Scheme:              scheme,
+			Candidates:          candidates,
 			PURLMissedNamespace: string(purlMissedNamespace),
+			RehostProviders:     collectRehostProviders(matches),
 		}
 	}
 
@@ -277,10 +278,30 @@ func Resolve(input string, opts ...ResolveOption) ([]ModelRef, error) {
 		candidates = append(candidates, rep)
 	}
 	return nil, &ErrAmbiguous{
-		Input:      input,
-		Scheme:     scheme,
-		Candidates: candidates,
+		Input:           input,
+		Scheme:          scheme,
+		Candidates:      candidates,
+		RehostProviders: collectRehostProviders(matches),
 	}
+}
+
+// collectRehostProviders returns the distinct providers from refs that are NOT
+// the canonical/originating provider for their family. Providers are deduplicated
+// in stable first-seen order. This is used to populate ErrAmbiguous.RehostProviders.
+func collectRehostProviders(refs []ModelRef) []Provider {
+	seen := make(map[Provider]struct{})
+	var out []Provider
+	for _, m := range refs {
+		if m.Provider == m.Family.CanonicalProvider() {
+			continue
+		}
+		if _, dup := seen[m.Provider]; dup {
+			continue
+		}
+		seen[m.Provider] = struct{}{}
+		out = append(out, m.Provider)
+	}
+	return out
 }
 
 // detectSchemeWithHint infers the CanonicalScheme from the input string and
