@@ -41,6 +41,41 @@
         "id": "gpt-5.2",
         "name": "GPT-5.2",
         "family": "gpt"
+      },
+      "gpt-5-mini": {
+        "id": "gpt-5-mini",
+        "name": "GPT-5 Mini",
+        "family": "gpt-mini"
+      }
+    }
+  },
+  "cartesia": {
+    "name": "Cartesia",
+    "models": {
+      "nova-2-lite-v1": {
+        "id": "nova-2-lite-v1",
+        "name": "Nova 2 Lite v1",
+        "family": "nova"
+      }
+    }
+  },
+  "moonshot": {
+    "name": "Moonshot",
+    "models": {
+      "kimi-k2-thinking": {
+        "id": "kimi-k2-thinking",
+        "name": "Kimi K2 Thinking",
+        "family": ""
+      }
+    }
+  },
+  "mistral": {
+    "name": "Mistral",
+    "models": {
+      "mistral-small-2603": {
+        "id": "mistral-small-2603",
+        "name": "Mistral Small 2603",
+        "family": "mistral-2603"
       }
     }
   }

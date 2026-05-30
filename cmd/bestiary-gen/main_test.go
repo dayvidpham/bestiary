@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"flag"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -16,6 +17,11 @@ import (
 
 	"github.com/dayvidpham/bestiary"
 )
+
+// updateGolden is a test flag that causes TestDecompositionSnapshot to regenerate
+// the golden file instead of comparing against it.
+// To regenerate: go test ./cmd/bestiary-gen/... -run TestDecompositionSnapshot -update
+var updateGolden = flag.Bool("update", false, "regenerate golden files instead of comparing")
 
 // TestSlugToIdentifier verifies the slug-to-PascalCase conversion, including
 // digit-leading slugs, casing overrides, and hyphen-separated tokens.
@@ -2024,10 +2030,13 @@ func TestCodegen_Reproducible_ByteIdentical(t *testing.T) {
 	refNorm := normalizeWhitespace(refStr)
 
 	// C group pins: '-' (0x2D) < '.' (0x2E) means claude-3-5-haiku < claude-3.5-haiku.
-	if !strings.Contains(refNorm, `Model__CloudflareAIGateway__Claude__3__5__Haiku_1 ModelID = "anthropic/claude-3-5-haiku"`) {
+	// With SLICE-1 parser active, version="3.5" is now extracted from both IDs
+	// (family=claude, variant=haiku, version=3.5). Both map to the same base constant
+	// Model__CloudflareAIGateway__Claude__3__5__Haiku__3_5; collision suffix applies.
+	if !strings.Contains(refNorm, `Model__CloudflareAIGateway__Claude__3__5__Haiku__3_5_1 ModelID = "anthropic/claude-3-5-haiku"`) {
 		t.Errorf("reference output: C group _1 pin mismatch; want anthropic/claude-3-5-haiku\nconstants:\n%s", refStr)
 	}
-	if !strings.Contains(refNorm, `Model__CloudflareAIGateway__Claude__3__5__Haiku_2 ModelID = "anthropic/claude-3.5-haiku"`) {
+	if !strings.Contains(refNorm, `Model__CloudflareAIGateway__Claude__3__5__Haiku__3_5_2 ModelID = "anthropic/claude-3.5-haiku"`) {
 		t.Errorf("reference output: C group _2 pin mismatch; want anthropic/claude-3.5-haiku\nconstants:\n%s", refStr)
 	}
 	// B group pins: kilo-auto/free < openrouter/free.
@@ -2045,6 +2054,8 @@ func TestCodegen_Reproducible_ByteIdentical(t *testing.T) {
 		t.Errorf("reference output: E control Model__OpenAI__GPT__5_2 missing or wrong\nconstants:\n%s", refStr)
 	}
 	// E control: assert NO fragment/doubled-ordinal variant (e.g. Model__OpenAI__GPT__5_1_1).
+	// Note: Model__OpenAI__GPT__5_1 and Model__OpenAI__GPT__5_2 are distinct by version-suffix
+	// pass (a), not the fallback collision suffix, so no _N suffix is appended.
 	if strings.Contains(refNorm, "Model__OpenAI__GPT__5_1_") || strings.Contains(refNorm, "Model__OpenAI__GPT__5_2_") {
 		t.Errorf("reference output: E control has doubled-ordinal variant (fragment suffix leaked)\nconstants:\n%s", refStr)
 	}
@@ -2278,15 +2289,19 @@ func TestCodegen_UpToDate(t *testing.T) {
 // TestCodegen_GoldenPins_C verifies the C group (cloudflare-ai-gateway punctuation
 // collision): "anthropic/claude-3-5-haiku" → _1, "anthropic/claude-3.5-haiku" → _2.
 // ASCII ordering: '-' (0x2D) < '.' (0x2E).
+//
+// With SLICE-1 parser active, both IDs parse to version="3.5" (family=claude,
+// variant=haiku). The constant base becomes Model__CloudflareAIGateway__Claude__3__5__Haiku__3_5;
+// collision suffix _1/_2 still applies via raw-ID-ordered fallback.
 func TestCodegen_GoldenPins_C(t *testing.T) {
 	fixtureJSON := deterministicFixtureJSON(t)
 	_, constantsSrc := runFixtureCodegen(t, fixtureJSON, "")
 	s := normalizeWhitespace(string(constantsSrc))
 
-	if !strings.Contains(s, `Model__CloudflareAIGateway__Claude__3__5__Haiku_1 ModelID = "anthropic/claude-3-5-haiku"`) {
+	if !strings.Contains(s, `Model__CloudflareAIGateway__Claude__3__5__Haiku__3_5_1 ModelID = "anthropic/claude-3-5-haiku"`) {
 		t.Errorf("C group _1 pin: expected anthropic/claude-3-5-haiku\nconstants:\n%s", string(constantsSrc))
 	}
-	if !strings.Contains(s, `Model__CloudflareAIGateway__Claude__3__5__Haiku_2 ModelID = "anthropic/claude-3.5-haiku"`) {
+	if !strings.Contains(s, `Model__CloudflareAIGateway__Claude__3__5__Haiku__3_5_2 ModelID = "anthropic/claude-3.5-haiku"`) {
 		t.Errorf("C group _2 pin: expected anthropic/claude-3.5-haiku\nconstants:\n%s", string(constantsSrc))
 	}
 }
@@ -2392,5 +2407,221 @@ func TestCodegen_SortOrder(t *testing.T) {
 	}
 	if !sort.StringsAreSorted(kiloModels) {
 		t.Errorf("kilo models not sorted: %v", kiloModels)
+	}
+}
+
+// --------------------------------------------------------------------------
+// SLICE-2-L2 tests: decomposition snapshot + fixture R5d corpus + per-reason
+// --------------------------------------------------------------------------
+
+// decompositionSnapshotEntry records the parse decomposition for a single model.
+// Sorted by (provider, model_id) for deterministic golden output.
+type decompositionSnapshotEntry struct {
+	Provider string `json:"provider"`
+	ModelID  string `json:"model_id"`
+	Family   string `json:"family"`
+	Variant  string `json:"variant"`
+	Version  string `json:"version"`
+	Modifier string `json:"modifier"`
+}
+
+// fixtureAPIJSON returns the contents of testdata/fixture_api.json. This fixture
+// contains the full R5d corpus (active-class, residual, empty-raw_family GUARD-2,
+// YYMM) and is the hermetic input for TestDecompositionSnapshot.
+func fixtureAPIJSON(t *testing.T) []byte {
+	t.Helper()
+	path := filepath.Join("testdata", "fixture_api.json")
+	data, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatalf("fixtureAPIJSON: could not read %q: %v\n"+
+			"  How to fix: ensure testdata/fixture_api.json is committed",
+			path, err)
+	}
+	return data
+}
+
+// runFixtureAPICodegen is like runFixtureCodegen but uses fixtureAPIJSON (the full
+// R5d corpus from testdata/fixture_api.json) instead of the collision-group-focused
+// deterministicFixtureJSON. It returns all models + parse failures from the run.
+func runFixtureAPICodegen(t *testing.T) (models []bestiary.ModelInfo, failures []bestiary.ParseFailure) {
+	t.Helper()
+	fixtureJSON := fixtureAPIJSON(t)
+
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write(fixtureJSON)
+	}))
+	defer srv.Close()
+
+	origURL := apiURL
+	apiURL = srv.URL
+	defer func() { apiURL = origURL }()
+
+	_, models, _, failures, err := fetchModelsWithRaw(context.Background(), t.TempDir(), false)
+	if err != nil {
+		t.Fatalf("runFixtureAPICodegen: fetchModelsWithRaw: %v", err)
+	}
+	return models, failures
+}
+
+// TestDecompositionSnapshot is the R5a fixture-based decomposition snapshot test.
+// It runs the full R5d corpus through fetchModelsWithRaw (which calls genToModelInfoDetailed
+// → ParseFamilyDetailed) and compares the (Family, Variant, Version, Modifier) output
+// per model against a committed golden file.
+//
+// The -update flag regenerates the golden file:
+//
+//	go test ./cmd/bestiary-gen/... -run TestDecompositionSnapshot -update
+//
+// This test is fixture-based only (NOT a real-data ==0 gate).
+func TestDecompositionSnapshot(t *testing.T) {
+	models, _ := runFixtureAPICodegen(t)
+
+	// Collect decomposition entries, sorted by (provider, model_id) for determinism.
+	entries := make([]decompositionSnapshotEntry, 0, len(models))
+	for _, m := range models {
+		entries = append(entries, decompositionSnapshotEntry{
+			Provider: string(m.Provider),
+			ModelID:  string(m.ID),
+			Family:   string(m.Family),
+			Variant:  m.Variant,
+			Version:  m.Version,
+			Modifier: m.Modifier,
+		})
+	}
+	// Models from fetchModelsWithRaw are already sorted by (Provider, ID) via R1.
+
+	got, err := json.MarshalIndent(entries, "", "  ")
+	if err != nil {
+		t.Fatalf("TestDecompositionSnapshot: marshal entries: %v", err)
+	}
+	// Ensure trailing newline for consistency with golden files.
+	got = append(got, '\n')
+
+	goldenPath := filepath.Join("testdata", "decomposition_snapshot.golden.json")
+
+	if *updateGolden {
+		if err := os.WriteFile(goldenPath, got, 0o644); err != nil {
+			t.Fatalf("TestDecompositionSnapshot: write golden %q: %v", goldenPath, err)
+		}
+		t.Logf("Updated golden file: %s", goldenPath)
+		return
+	}
+
+	want, err := os.ReadFile(goldenPath)
+	if err != nil {
+		t.Fatalf("TestDecompositionSnapshot: could not read golden %q: %v\n"+
+			"  How to fix: run `go test ./cmd/bestiary-gen/... -run TestDecompositionSnapshot -update` to generate",
+			goldenPath, err)
+	}
+
+	if !bytes.Equal(got, want) {
+		t.Errorf("TestDecompositionSnapshot: decomposition mismatch\n"+
+			"  What: fixture model decomposition changed vs golden\n"+
+			"  Why: ParseFamilyDetailed output changed, or fixture_api.json updated without regen\n"+
+			"  How to fix: run `go test ./cmd/bestiary-gen/... -run TestDecompositionSnapshot -update` to regenerate\n"+
+			"\nGot:\n%s\n\nWant:\n%s",
+			got, want)
+	}
+}
+
+// TestDecompositionSnapshot_ActiveClassVersionPopulated asserts that each
+// active-class model in the R5d fixture corpus has a non-empty Version field.
+// This is the per-row version!="" check for the active class.
+func TestDecompositionSnapshot_ActiveClassVersionPopulated(t *testing.T) {
+	models, _ := runFixtureAPICodegen(t)
+
+	// Active-class models: those expected to have version populated.
+	// SLICE-1 parser correctly extracts version for these cases.
+	activeCases := map[string]struct {
+		wantFamily  string
+		wantVariant string
+		wantVersion string
+	}{
+		// gpt-5-mini: raw_family=gpt-mini → family=gpt, variant=mini, version=5
+		"gpt-5-mini": {wantFamily: "gpt", wantVariant: "mini", wantVersion: "5"},
+		// claude-3-5-haiku: raw_family=claude-haiku → family=claude, variant=haiku, version=3.5
+		"anthropic/claude-3-5-haiku": {wantFamily: "claude", wantVariant: "haiku", wantVersion: "3.5"},
+		// claude-3.5-haiku: same family → same decomposition
+		"anthropic/claude-3.5-haiku": {wantFamily: "claude", wantVariant: "haiku", wantVersion: "3.5"},
+	}
+
+	modelsByID := make(map[string]bestiary.ModelInfo, len(models))
+	for _, m := range models {
+		modelsByID[string(m.ID)] = m
+	}
+
+	for id, want := range activeCases {
+		m, ok := modelsByID[id]
+		if !ok {
+			t.Errorf("active-class model %q not found in fixture output", id)
+			continue
+		}
+		if m.Version == "" {
+			t.Errorf("active-class model %q: Version is empty, want %q\n"+
+				"  What: SLICE-1 parser should populate Version for active-class models\n"+
+				"  Why: ParseFamilyDetailed may not be extracting version from model ID\n"+
+				"  How to fix: verify ParseFamilyDetailed returns version for family=%q, id=%q",
+				id, want.wantVersion, want.wantFamily, id)
+		} else if m.Version != want.wantVersion {
+			t.Errorf("active-class model %q: Version = %q, want %q", id, m.Version, want.wantVersion)
+		}
+		if string(m.Family) != want.wantFamily {
+			t.Errorf("active-class model %q: Family = %q, want %q", id, m.Family, want.wantFamily)
+		}
+		if m.Variant != want.wantVariant {
+			t.Errorf("active-class model %q: Variant = %q, want %q", id, m.Variant, want.wantVariant)
+		}
+	}
+}
+
+// TestFixturePerReasonCounts asserts per-reason FailureCount expectations over the
+// full R5d fixture corpus. This mirrors the TestRun_WritesParseFailuresJSON pattern
+// but uses fixture_api.json instead of failureAPIJSON.
+//
+// Expectations:
+//   - ReasonVersionDigitsNotExtracted (active class) → 0: SLICE-1 now correctly
+//     extracts version from IDs like claude-3-5-haiku; this failure should no longer fire.
+//   - ReasonResidualUnaccountedTokens → at least 1: nova-2-lite-v1 has residual "v1"
+//     tokens after version extraction.
+//   - ReasonYYMMDateAsVersion → at least 1: mistral-small-2603 (family mistral-2603)
+//     triggers the YYMM false-positive detector.
+//
+// This test is NOT a ==0 gate on real data — fixture-based only (Plan UAT decision).
+func TestFixturePerReasonCounts(t *testing.T) {
+	_, failures := runFixtureAPICodegen(t)
+
+	// Count per-reason occurrences.
+	counts := make(map[bestiary.ParseFailureReason]int)
+	for _, f := range failures {
+		counts[f.Reason]++
+	}
+
+	// Active class: ReasonVersionDigitsNotExtracted must be 0.
+	// With SLICE-1 parser, version is now correctly extracted for claude-3-5-haiku
+	// and similar active-class models, so this failure reason must NOT appear.
+	if n := counts[bestiary.ReasonVersionDigitsNotExtracted]; n != 0 {
+		t.Errorf("ReasonVersionDigitsNotExtracted = %d, want 0\n"+
+			"  What: SLICE-1 should suppress this failure for active-class models\n"+
+			"  Why: ParseFamilyDetailed now extracts version via Δ1 extract-first path\n"+
+			"  How to fix: verify ParseFamilyDetailed does not emit ReasonVersionDigitsNotExtracted for claude-3-5-haiku etc.",
+			n)
+	}
+
+	// Residual: ReasonResidualUnaccountedTokens must be > 0 (nova-2-lite-v1 contributes).
+	if n := counts[bestiary.ReasonResidualUnaccountedTokens]; n == 0 {
+		t.Errorf("ReasonResidualUnaccountedTokens = 0, want > 0\n"+
+			"  What: nova-2-lite-v1 should produce a residual failure (token 'v1' unaccounted)\n"+
+			"  Why: ParseFamilyDetailed R2 path emits ReasonResidualUnaccountedTokens when residual tokens remain\n"+
+			"  How to fix: verify fixture_api.json includes nova-2-lite-v1 under cartesia provider")
+	}
+
+	// YYMM: ReasonYYMMDateAsVersion must be > 0 (mistral-small-2603 contributes).
+	if n := counts[bestiary.ReasonYYMMDateAsVersion]; n == 0 {
+		t.Errorf("ReasonYYMMDateAsVersion = 0, want > 0\n"+
+			"  What: mistral-small-2603 (family mistral-2603) should produce a YYMM failure\n"+
+			"  Why: ParseFamilyDetailed YYMM detector fires for families matching the YYMM pattern\n"+
+			"  How to fix: verify fixture_api.json includes mistral-small-2603 under mistral provider")
 	}
 }

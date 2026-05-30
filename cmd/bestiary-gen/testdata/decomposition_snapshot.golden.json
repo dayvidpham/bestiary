@@ -1,0 +1,82 @@
+[
+  {
+    "provider": "cartesia",
+    "model_id": "nova-2-lite-v1",
+    "family": "nova",
+    "variant": "",
+    "version": "2",
+    "modifier": ""
+  },
+  {
+    "provider": "cloudflare-ai-gateway",
+    "model_id": "anthropic/claude-3-5-haiku",
+    "family": "claude",
+    "variant": "haiku",
+    "version": "3.5",
+    "modifier": ""
+  },
+  {
+    "provider": "cloudflare-ai-gateway",
+    "model_id": "anthropic/claude-3.5-haiku",
+    "family": "claude",
+    "variant": "haiku",
+    "version": "3.5",
+    "modifier": ""
+  },
+  {
+    "provider": "kilo",
+    "model_id": "kilo-auto/free",
+    "family": "free",
+    "variant": "",
+    "version": "",
+    "modifier": ""
+  },
+  {
+    "provider": "kilo",
+    "model_id": "openrouter/free",
+    "family": "free",
+    "variant": "",
+    "version": "",
+    "modifier": ""
+  },
+  {
+    "provider": "mistral",
+    "model_id": "mistral-small-2603",
+    "family": "mistral",
+    "variant": "",
+    "version": "2603",
+    "modifier": ""
+  },
+  {
+    "provider": "moonshot",
+    "model_id": "kimi-k2-thinking",
+    "family": "kimi-k2",
+    "variant": "thinking",
+    "version": "",
+    "modifier": ""
+  },
+  {
+    "provider": "openai",
+    "model_id": "gpt-5-mini",
+    "family": "gpt",
+    "variant": "mini",
+    "version": "5",
+    "modifier": ""
+  },
+  {
+    "provider": "openai",
+    "model_id": "gpt-5.1",
+    "family": "gpt",
+    "variant": "",
+    "version": "5.1",
+    "modifier": ""
+  },
+  {
+    "provider": "openai",
+    "model_id": "gpt-5.2",
+    "family": "gpt",
+    "variant": "",
+    "version": "5.2",
+    "modifier": ""
+  }
+]
