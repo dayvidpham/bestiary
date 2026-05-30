@@ -19,6 +19,7 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 	"unicode"
@@ -663,6 +664,17 @@ func fetchModelsWithRaw(ctx context.Context, dir string, noFetch bool) (rawJSON 
 			}
 		}
 	}
+
+	// Determinism: sort the assembled model set by (Provider, ID) exactly once so
+	// every downstream consumer observes a stable order regardless of API map-
+	// iteration order. See bestiary-9lnq.
+	sort.SliceStable(models, func(i, j int) bool {
+		if models[i].Provider != models[j].Provider {
+			return models[i].Provider < models[j].Provider
+		}
+		return models[i].ID < models[j].ID
+	})
+
 	return rawJSON, models, provMeta, failures, nil
 }
 
@@ -1530,17 +1542,19 @@ func resolveCollisions(names []string, models []bestiary.ModelInfo) []string {
 				result[c.pos] = baseName + "__" + c.vSuffix
 			}
 		} else {
-			// (b) Sequential suffix fallback.
-			// Sort positions for deterministic ordering.
-			sortedPos := make([]int, len(positions))
-			copy(sortedPos, positions)
-			sort.Ints(sortedPos)
-			for idx, pos := range sortedPos {
-				if idx == 0 {
-					result[pos] = baseName + "_1"
-				} else {
-					result[pos] = baseName + "_" + fmt.Sprintf("%d", idx+1)
-				}
+			// (b) Stable ordinal: order colliders by raw model ID so the _N binding is
+			// reproducible regardless of slice order. (Belt-and-suspenders with R1's sort.)
+			type member struct {
+				pos   int
+				rawID string
+			}
+			ms := make([]member, len(positions))
+			for k, pos := range positions {
+				ms[k] = member{pos, string(models[pos].ID)}
+			}
+			sort.Slice(ms, func(i, j int) bool { return ms[i].rawID < ms[j].rawID })
+			for idx, m := range ms {
+				result[m.pos] = baseName + "_" + strconv.Itoa(idx+1)
 			}
 		}
 	}
@@ -1558,12 +1572,19 @@ func resolveCollisions(names []string, models []bestiary.ModelInfo) []string {
 		if len(positions) < 2 {
 			continue
 		}
-		sortedPos := make([]int, len(positions))
-		copy(sortedPos, positions)
-		sort.Ints(sortedPos)
+		// Stable ordinal: order by raw model ID so the _N binding is reproducible.
+		type member struct {
+			pos   int
+			rawID string
+		}
+		ms := make([]member, len(positions))
+		for k, pos := range positions {
+			ms[k] = member{pos, string(models[pos].ID)}
+		}
+		sort.Slice(ms, func(i, j int) bool { return ms[i].rawID < ms[j].rawID })
 		// Append _<n> to break the tie.
-		for idx, pos := range sortedPos {
-			result[pos] = result[pos] + fmt.Sprintf("_%d", idx+1)
+		for idx, m := range ms {
+			result[m.pos] = result[m.pos] + "_" + strconv.Itoa(idx+1)
 		}
 	}
 

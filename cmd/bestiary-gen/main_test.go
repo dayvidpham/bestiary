@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -8,6 +9,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 	"testing"
 
@@ -1813,5 +1815,458 @@ func TestRun_WritesParseFailuresJSON(t *testing.T) {
 	}
 	if len(envelope.Failures) != wantFailureCount {
 		t.Errorf("len(Failures) = %d, want %d", len(envelope.Failures), wantFailureCount)
+	}
+}
+
+// --------------------------------------------------------------------------
+// SLICE-DET-1 tests: deterministic + reproducible codegen (R1, R3, R4)
+// --------------------------------------------------------------------------
+
+// normalizeWhitespace collapses all runs of whitespace in s to a single space.
+// Used to compare generated Go source that may have tab-aligned columns against
+// expected strings that use single spaces.
+func normalizeWhitespace(s string) string {
+	return strings.Join(strings.Fields(s), " ")
+}
+
+// containsNormalized reports whether the normalized form of s (whitespace collapsed)
+// contains the normalized form of substr. Useful for matching against gofmt-aligned
+// output where columns may have varying spaces.
+func containsNormalized(s, substr string) bool {
+	return strings.Contains(normalizeWhitespace(s), normalizeWhitespace(substr))
+}
+
+// deterministicFixtureJSON returns the hermetic fixture JSON for the reproducibility
+// tests. It contains three collision groups:
+//
+//   - B (prefix/kilo): "openrouter/free" + "kilo-auto/free" → both produce
+//     Model__Kilo__Free → resolved by raw-ID-ordered fallback (b)
+//     → _1="kilo-auto/free", _2="openrouter/free"
+//
+//   - C (punctuation/cloudflare): "anthropic/claude-3.5-haiku" + "anthropic/claude-3-5-haiku"
+//     → both produce Model__CloudflareAIGateway__Claude__3__5__Haiku
+//     → resolved by raw-ID-ordered fallback (b)
+//     → _1="anthropic/claude-3-5-haiku" ('-' < '.'), _2="anthropic/claude-3.5-haiku"
+//
+//   - E (version-pair / negative control): "gpt-5.1" + "gpt-5.2"
+//     → extractVersionSegment yields distinct suffixes "5_1" / "5_2"
+//     → resolved by version-suffix pass (a) — NOT the fallback
+//     → constant names: Model__OpenAI__GPT__5_1 and Model__OpenAI__GPT__5_2
+func deterministicFixtureJSON(t *testing.T) []byte {
+	t.Helper()
+	fixture := map[string]any{
+		"cloudflare-ai-gateway": map[string]any{
+			"name": "Cloudflare AI Gateway",
+			"models": map[string]any{
+				"anthropic/claude-3.5-haiku": map[string]any{
+					"id":     "anthropic/claude-3.5-haiku",
+					"name":   "Claude 3.5 Haiku",
+					"family": "claude-haiku",
+				},
+				"anthropic/claude-3-5-haiku": map[string]any{
+					"id":     "anthropic/claude-3-5-haiku",
+					"name":   "Claude 3.5 Haiku (alt)",
+					"family": "claude-haiku",
+				},
+			},
+		},
+		"kilo": map[string]any{
+			"name": "Kilo",
+			"models": map[string]any{
+				"openrouter/free": map[string]any{
+					"id":     "openrouter/free",
+					"name":   "Free (OpenRouter)",
+					"family": "free",
+				},
+				"kilo-auto/free": map[string]any{
+					"id":     "kilo-auto/free",
+					"name":   "Free (Kilo Auto)",
+					"family": "free",
+				},
+			},
+		},
+		"openai": map[string]any{
+			"name": "OpenAI",
+			"models": map[string]any{
+				"gpt-5.1": map[string]any{
+					"id":     "gpt-5.1",
+					"name":   "GPT-5.1",
+					"family": "gpt",
+				},
+				"gpt-5.2": map[string]any{
+					"id":     "gpt-5.2",
+					"name":   "GPT-5.2",
+					"family": "gpt",
+				},
+			},
+		},
+	}
+	b, err := json.Marshal(fixture)
+	if err != nil {
+		t.Fatalf("deterministicFixtureJSON: marshal: %v", err)
+	}
+	return b
+}
+
+// runFixtureCodegen performs one full codegen cycle using the hermetic fixture:
+// spin up an httptest.Server, override apiURL, call fetchModelsWithRaw, build
+// slugToConst, and return both generated sources.
+// Each call re-randomizes the Go map iteration order, which is the nondeterminism
+// source for bestiary-9lnq.
+func runFixtureCodegen(t *testing.T, fixtureJSON []byte) (staticSrc, constantsSrc []byte) {
+	t.Helper()
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write(fixtureJSON)
+	}))
+	defer srv.Close()
+
+	origURL := apiURL
+	apiURL = srv.URL
+	defer func() { apiURL = origURL }()
+
+	_, models, provMeta, _, err := fetchModelsWithRaw(context.Background(), t.TempDir(), false)
+	if err != nil {
+		t.Fatalf("runFixtureCodegen: fetchModelsWithRaw: %v", err)
+	}
+
+	allSlugs := make([]string, 0, len(provMeta))
+	for slug := range provMeta {
+		allSlugs = append(allSlugs, slug)
+	}
+	slugToConst := make(map[string]string, len(allSlugs))
+	for _, slug := range allSlugs {
+		meta := provMeta[slug]
+		slugToConst[slug] = providerConstName(slug, meta.Name)
+	}
+
+	staticSrc, err = generateSource(models, slugToConst)
+	if err != nil {
+		t.Fatalf("runFixtureCodegen: generateSource: %v", err)
+	}
+	constantsSrc, err = generateConstantsSource(models, slugToConst)
+	if err != nil {
+		t.Fatalf("runFixtureCodegen: generateConstantsSource: %v", err)
+	}
+	return staticSrc, constantsSrc
+}
+
+// TestCodegen_Reproducible_ByteIdentical verifies that N=100 successive codegen
+// runs over the same fixture data (each re-randomizing map iteration order via a
+// fresh fetchModelsWithRaw) produce byte-identical output for BOTH generateSource
+// and generateConstantsSource.
+//
+// Additionally asserts that each raw model ID always receives the same _N suffix
+// across all iterations (stable raw-ID-ordered assignment — R1 + raw-ID ordinal).
+//
+// Golden pins (from proposal/handoff spec):
+//   - C: "anthropic/claude-3-5-haiku" always _1, "anthropic/claude-3.5-haiku" always _2
+//   - B: "kilo-auto/free" always _1, "openrouter/free" always _2
+//   - E (version-pair / negative control): exact constant names with NO doubled-ordinal variant
+func TestCodegen_Reproducible_ByteIdentical(t *testing.T) {
+	const N = 100
+	fixtureJSON := deterministicFixtureJSON(t)
+
+	// Run once to establish the reference output.
+	refStatic, refConstants := runFixtureCodegen(t, fixtureJSON)
+
+	// Verify reference constants contain the expected golden pins.
+	refStr := string(refConstants)
+	// refNorm is the whitespace-normalized version for substring matching.
+	refNorm := normalizeWhitespace(refStr)
+
+	// C group pins: '-' (0x2D) < '.' (0x2E) means claude-3-5-haiku < claude-3.5-haiku.
+	if !strings.Contains(refNorm, `Model__CloudflareAIGateway__Claude__3__5__Haiku_1 ModelID = "anthropic/claude-3-5-haiku"`) {
+		t.Errorf("reference output: C group _1 pin mismatch; want anthropic/claude-3-5-haiku\nconstants:\n%s", refStr)
+	}
+	if !strings.Contains(refNorm, `Model__CloudflareAIGateway__Claude__3__5__Haiku_2 ModelID = "anthropic/claude-3.5-haiku"`) {
+		t.Errorf("reference output: C group _2 pin mismatch; want anthropic/claude-3.5-haiku\nconstants:\n%s", refStr)
+	}
+	// B group pins: kilo-auto/free < openrouter/free.
+	if !strings.Contains(refNorm, `Model__Kilo__Free_1 ModelID = "kilo-auto/free"`) {
+		t.Errorf("reference output: B group _1 pin mismatch; want kilo-auto/free\nconstants:\n%s", refStr)
+	}
+	if !strings.Contains(refNorm, `Model__Kilo__Free_2 ModelID = "openrouter/free"`) {
+		t.Errorf("reference output: B group _2 pin mismatch; want openrouter/free\nconstants:\n%s", refStr)
+	}
+	// E control: version-suffix pass (a), not fallback. Exact constant names.
+	if !strings.Contains(refNorm, `Model__OpenAI__GPT__5_1 ModelID = "gpt-5.1"`) {
+		t.Errorf("reference output: E control Model__OpenAI__GPT__5_1 missing or wrong\nconstants:\n%s", refStr)
+	}
+	if !strings.Contains(refNorm, `Model__OpenAI__GPT__5_2 ModelID = "gpt-5.2"`) {
+		t.Errorf("reference output: E control Model__OpenAI__GPT__5_2 missing or wrong\nconstants:\n%s", refStr)
+	}
+	// E control: assert NO fragment/doubled-ordinal variant (e.g. Model__OpenAI__GPT__5_1_1).
+	if strings.Contains(refNorm, "Model__OpenAI__GPT__5_1_") || strings.Contains(refNorm, "Model__OpenAI__GPT__5_2_") {
+		t.Errorf("reference output: E control has doubled-ordinal variant (fragment suffix leaked)\nconstants:\n%s", refStr)
+	}
+
+	// Build a per-rawID → constantName index from the reference for stability assertion.
+	// Parse lines of the form: \t<ConstName>...<spaces>...ModelID = "<rawID>"
+	// Use normalizeWhitespace per-line so the " ModelID = " split works despite gofmt alignment.
+	refIDToConst := make(map[string]string)
+	for _, line := range strings.Split(refStr, "\n") {
+		norm := normalizeWhitespace(line)
+		parts := strings.SplitN(norm, " ModelID = ", 2)
+		if len(parts) != 2 {
+			continue
+		}
+		constName := strings.TrimSpace(parts[0])
+		rawID := strings.Trim(strings.TrimSpace(parts[1]), `"`)
+		if constName != "" && rawID != "" {
+			refIDToConst[rawID] = constName
+		}
+	}
+
+	// Run N-1 more iterations and assert byte-equality.
+	for i := 1; i < N; i++ {
+		staticSrc, constantsSrc := runFixtureCodegen(t, fixtureJSON)
+		if !bytes.Equal(refStatic, staticSrc) {
+			t.Fatalf("iteration %d: generateSource output differs from reference (nondeterminism)\n"+
+				"  What: the static model list changed between runs\n"+
+				"  Why: R1 sort or fetchModelsWithRaw map-range is nondeterministic\n"+
+				"  Where: fetchModelsWithRaw or generateSource\n"+
+				"  How to fix: ensure sort.SliceStable(models, ...) runs before return in fetchModelsWithRaw",
+				i+1)
+		}
+		if !bytes.Equal(refConstants, constantsSrc) {
+			t.Fatalf("iteration %d: generateConstantsSource output differs from reference (nondeterminism)\n"+
+				"  What: the constants file changed between runs\n"+
+				"  Why: collision _N assignment is position-dependent (raw-ID ordinal not applied)\n"+
+				"  Where: resolveCollisions fallback or final-uniqueness pass\n"+
+				"  How to fix: replace sort.Ints(sortedPos) with raw-ID-keyed member sort in resolveCollisions",
+				i+1)
+		}
+
+		// Verify raw-ID → constant-name stability.
+		iterStr := string(constantsSrc)
+		for _, line := range strings.Split(iterStr, "\n") {
+			norm := normalizeWhitespace(line)
+			parts := strings.SplitN(norm, " ModelID = ", 2)
+			if len(parts) != 2 {
+				continue
+			}
+			constName := strings.TrimSpace(parts[0])
+			rawID := strings.Trim(strings.TrimSpace(parts[1]), `"`)
+			if constName == "" || rawID == "" {
+				continue
+			}
+			if prev, ok := refIDToConst[rawID]; ok && prev != constName {
+				t.Errorf("iteration %d: raw ID %q mapped to %q in iteration but %q in reference\n"+
+					"  What: _N suffix for this raw ID changed between runs\n"+
+					"  Why: raw-ID ordinal is not stable\n"+
+					"  How to fix: verify resolveCollisions uses raw-ID-keyed sort",
+					i+1, rawID, constName, prev)
+			}
+		}
+	}
+}
+
+// TestCodegen_UpToDate is the R4 up-to-date guard. It regenerates both source
+// files from the hermetic fixture in-process and compares against committed golden
+// excerpts in testdata/. Both sides are normalized with normalizeWhitespace
+// (gofmt-alignment-insensitive). The golden files are excerpts of the expected
+// output (not full files) and are substring-matched against the generated output.
+//
+// On mismatch: actionable error describing what differs, why it happened (forgot
+// regen), and how to fix it (run `go run ./cmd/bestiary-gen --no-fetch && git add`).
+func TestCodegen_UpToDate(t *testing.T) {
+	// Load committed golden excerpts.
+	constantsGoldenPath := filepath.Join("testdata", "expected_constants_excerpt.go.golden")
+	staticGoldenPath := filepath.Join("testdata", "expected_static_excerpt.go.golden")
+
+	constantsGoldenRaw, err := os.ReadFile(constantsGoldenPath)
+	if err != nil {
+		t.Fatalf("R4 guard: could not read constants golden %q: %v\n"+
+			"  How to fix: ensure testdata/expected_constants_excerpt.go.golden is committed",
+			constantsGoldenPath, err)
+	}
+	staticGoldenRaw, err := os.ReadFile(staticGoldenPath)
+	if err != nil {
+		t.Fatalf("R4 guard: could not read static golden %q: %v\n"+
+			"  How to fix: ensure testdata/expected_static_excerpt.go.golden is committed",
+			staticGoldenPath, err)
+	}
+
+	// Regenerate from the fixture.
+	fixtureJSON := deterministicFixtureJSON(t)
+	staticSrc, constantsSrc := runFixtureCodegen(t, fixtureJSON)
+
+	// stripGenHeader strips the 2-line "// Code generated..." / "//go:generate..." header
+	// from a generated Go file, then normalizes whitespace for comparison.
+	stripGenHeader := func(src []byte) string {
+		s := strings.TrimSpace(string(src))
+		if strings.HasPrefix(s, "// Code generated") {
+			idx := strings.Index(s, "\n")
+			if idx >= 0 {
+				s = strings.TrimSpace(s[idx+1:])
+			}
+		}
+		if strings.HasPrefix(s, "//go:generate") {
+			idx := strings.Index(s, "\n")
+			if idx >= 0 {
+				s = strings.TrimSpace(s[idx+1:])
+			}
+		}
+		return normalizeWhitespace(s)
+	}
+
+	// Normalize both sides: generated output (header stripped) and golden excerpt.
+	normConstants := stripGenHeader(constantsSrc)
+	normConstantsGolden := normalizeWhitespace(string(constantsGoldenRaw))
+
+	// The golden excerpt must appear as a substring in the generated output.
+	// Normalizing whitespace on both sides makes the comparison insensitive to
+	// gofmt alignment and minor formatting differences.
+	if !strings.Contains(normConstants, normConstantsGolden) {
+		t.Errorf("R4 guard: constants file does not contain golden excerpt\n"+
+			"  What: generateConstantsSource output differs from testdata/expected_constants_excerpt.go.golden\n"+
+			"  Why: collision _N bindings may have changed, or codegen logic was modified without re-running regen\n"+
+			"  Where: cmd/bestiary-gen/main.go generateConstantsSource or resolveCollisions\n"+
+			"  How to fix: run `go run ./cmd/bestiary-gen --no-fetch && git add models_constants_gen.go models_static_gen.go`\n"+
+			"\nGolden excerpt (normalized):\n%s\n\nGenerated (normalized, header stripped):\n%s",
+			normConstantsGolden, normConstants)
+	}
+
+	normStatic := stripGenHeader(staticSrc)
+	normStaticGolden := normalizeWhitespace(string(staticGoldenRaw))
+
+	// The golden excerpt must appear as a substring in the generated static output.
+	if !strings.Contains(normStatic, normStaticGolden) {
+		t.Errorf("R4 guard: static models file does not contain golden excerpt\n"+
+			"  What: generateSource output differs from testdata/expected_static_excerpt.go.golden\n"+
+			"  Why: model ordering changed, or codegen logic was modified without re-running regen\n"+
+			"  Where: cmd/bestiary-gen/main.go generateSource\n"+
+			"  How to fix: run `go run ./cmd/bestiary-gen --no-fetch && git add models_constants_gen.go models_static_gen.go`\n"+
+			"\nGolden excerpt (normalized):\n%s\n\nGenerated (normalized, header stripped):\n%s",
+			normStaticGolden, normStatic)
+	}
+
+	// Sanity-check: the constants golden must contain at least one expected binding.
+	// This guards against an accidentally empty or truncated golden file.
+	if !strings.Contains(string(constantsGoldenRaw), `ModelID = "anthropic/claude-3-5-haiku"`) {
+		t.Errorf("R4 guard: constants golden file appears empty or truncated (missing expected binding)\n"+
+			"  How to fix: ensure testdata/expected_constants_excerpt.go.golden is correctly committed")
+	}
+}
+
+// TestCodegen_GoldenPins_C verifies the C group (cloudflare-ai-gateway punctuation
+// collision): "anthropic/claude-3-5-haiku" → _1, "anthropic/claude-3.5-haiku" → _2.
+// ASCII ordering: '-' (0x2D) < '.' (0x2E).
+func TestCodegen_GoldenPins_C(t *testing.T) {
+	fixtureJSON := deterministicFixtureJSON(t)
+	_, constantsSrc := runFixtureCodegen(t, fixtureJSON)
+	s := normalizeWhitespace(string(constantsSrc))
+
+	if !strings.Contains(s, `Model__CloudflareAIGateway__Claude__3__5__Haiku_1 ModelID = "anthropic/claude-3-5-haiku"`) {
+		t.Errorf("C group _1 pin: expected anthropic/claude-3-5-haiku\nconstants:\n%s", string(constantsSrc))
+	}
+	if !strings.Contains(s, `Model__CloudflareAIGateway__Claude__3__5__Haiku_2 ModelID = "anthropic/claude-3.5-haiku"`) {
+		t.Errorf("C group _2 pin: expected anthropic/claude-3.5-haiku\nconstants:\n%s", string(constantsSrc))
+	}
+}
+
+// TestCodegen_GoldenPins_B verifies the B group (kilo prefix collision):
+// "kilo-auto/free" → _1, "openrouter/free" → _2.
+func TestCodegen_GoldenPins_B(t *testing.T) {
+	fixtureJSON := deterministicFixtureJSON(t)
+	_, constantsSrc := runFixtureCodegen(t, fixtureJSON)
+	s := normalizeWhitespace(string(constantsSrc))
+
+	if !strings.Contains(s, `Model__Kilo__Free_1 ModelID = "kilo-auto/free"`) {
+		t.Errorf("B group _1 pin: expected kilo-auto/free\nconstants:\n%s", string(constantsSrc))
+	}
+	if !strings.Contains(s, `Model__Kilo__Free_2 ModelID = "openrouter/free"`) {
+		t.Errorf("B group _2 pin: expected openrouter/free\nconstants:\n%s", string(constantsSrc))
+	}
+}
+
+// TestCodegen_GoldenPins_E verifies the E group (openai version-pair negative control):
+// "gpt-5.1" → Model__OpenAI__GPT__5_1, "gpt-5.2" → Model__OpenAI__GPT__5_2.
+// The _1 and _2 here are VERSION DIGITS from pass (a), NOT collision suffixes from fallback (b).
+// Asserts: exact names present; no fragment/doubled-ordinal variant.
+func TestCodegen_GoldenPins_E(t *testing.T) {
+	fixtureJSON := deterministicFixtureJSON(t)
+	_, constantsSrc := runFixtureCodegen(t, fixtureJSON)
+	s := normalizeWhitespace(string(constantsSrc))
+
+	if !strings.Contains(s, `Model__OpenAI__GPT__5_1 ModelID = "gpt-5.1"`) {
+		t.Errorf("E control: Model__OpenAI__GPT__5_1 missing or wrong value\nconstants:\n%s", string(constantsSrc))
+	}
+	if !strings.Contains(s, `Model__OpenAI__GPT__5_2 ModelID = "gpt-5.2"`) {
+		t.Errorf("E control: Model__OpenAI__GPT__5_2 missing or wrong value\nconstants:\n%s", string(constantsSrc))
+	}
+	// No doubled-ordinal or fragment variant (these would appear as Model__OpenAI__GPT__5_1_ in the raw form).
+	rawStr := string(constantsSrc)
+	if strings.Contains(rawStr, "Model__OpenAI__GPT__5_1_") {
+		t.Errorf("E control: Model__OpenAI__GPT__5_1 has unexpected suffix (doubled ordinal or fragment)\nconstants:\n%s", rawStr)
+	}
+	if strings.Contains(rawStr, "Model__OpenAI__GPT__5_2_") {
+		t.Errorf("E control: Model__OpenAI__GPT__5_2 has unexpected suffix (doubled ordinal or fragment)\nconstants:\n%s", rawStr)
+	}
+}
+
+// TestCodegen_SortOrder verifies that fetchModelsWithRaw returns models sorted by
+// (Provider, ID) after R1. Uses the fixture to check the expected ordering.
+func TestCodegen_SortOrder(t *testing.T) {
+	fixtureJSON := deterministicFixtureJSON(t)
+
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write(fixtureJSON)
+	}))
+	defer srv.Close()
+
+	origURL := apiURL
+	apiURL = srv.URL
+	defer func() { apiURL = origURL }()
+
+	_, models, _, _, err := fetchModelsWithRaw(context.Background(), t.TempDir(), false)
+	if err != nil {
+		t.Fatalf("fetchModelsWithRaw: %v", err)
+	}
+
+	// Verify sorted order: (Provider, ID) ascending.
+	for i := 1; i < len(models); i++ {
+		pi := models[i-1]
+		pj := models[i]
+		if pi.Provider > pj.Provider {
+			t.Errorf("sort order: model[%d] provider %q > model[%d] provider %q (not sorted)", i-1, pi.Provider, i, pj.Provider)
+			continue
+		}
+		if pi.Provider == pj.Provider && pi.ID > pj.ID {
+			t.Errorf("sort order: model[%d] ID %q > model[%d] ID %q within provider %q (not sorted)", i-1, pi.ID, i, pj.ID, pi.Provider)
+		}
+	}
+
+	// Spot-check known order from fixture: cloudflare < kilo < openai.
+	providers := make([]string, 0, len(models))
+	seen := make(map[string]bool)
+	for _, m := range models {
+		if !seen[string(m.Provider)] {
+			providers = append(providers, string(m.Provider))
+			seen[string(m.Provider)] = true
+		}
+	}
+	wantOrder := []string{"cloudflare-ai-gateway", "kilo", "openai"}
+	if len(providers) != len(wantOrder) {
+		t.Fatalf("expected %d providers, got %d: %v", len(wantOrder), len(providers), providers)
+	}
+	for i, want := range wantOrder {
+		if providers[i] != want {
+			t.Errorf("provider order[%d]: got %q, want %q", i, providers[i], want)
+		}
+	}
+	// Within kilo: kilo-auto/free < openrouter/free.
+	var kiloModels []string
+	for _, m := range models {
+		if m.Provider == "kilo" {
+			kiloModels = append(kiloModels, string(m.ID))
+		}
+	}
+	if !sort.StringsAreSorted(kiloModels) {
+		t.Errorf("kilo models not sorted: %v", kiloModels)
 	}
 }

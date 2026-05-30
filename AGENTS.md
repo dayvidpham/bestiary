@@ -91,3 +91,23 @@ When updating wire types for upstream API changes:
 | `bestiary.schema.json` | Manual | Must stay in sync with Go types. Verified by `TestJSONOutput_ConformsToSchema` |
 | `version.go` | Manual | Update on public type changes or upstream schema updates |
 | All other `.go` files | Developer | Normal development workflow |
+
+## Codegen determinism invariants
+
+The codegen pipeline (`cmd/bestiary-gen`) is required to be fully deterministic: two successive runs over the same input MUST produce byte-identical output. The following invariants enforce this (see bestiary-9lnq for the original bug):
+
+1. **Model ordering (R1)**: `fetchModelsWithRaw` sorts the assembled model slice by `(Provider, ID)` — ascending lexicographic — immediately before returning. This single sort covers both the outer provider-map iteration and inner model-map iteration nondeterminism of the models.dev API response.
+
+2. **Collision suffix ordering**: When two models share the same candidate constant name and the version-suffix pass (a) cannot distinguish them, the fallback assigns `_1`, `_2`, … by alphabetical raw model ID order (not slice position). This makes the `_N` binding stable regardless of insertion order. Meaningful naming of collision groups is deferred to bestiary-r66e (Epoch 2).
+
+3. **Reproducibility test**: `TestCodegen_Reproducible_ByteIdentical` (N=100, `cmd/bestiary-gen/main_test.go`) verifies byte-identity across 100 fresh codegen runs using a hermetic fixture. Run it locally before committing codegen changes.
+
+4. **Up-to-date guard**: `TestCodegen_UpToDate` checks that the committed golden excerpts (`cmd/bestiary-gen/testdata/expected_*_excerpt.go.golden`) match what the current codegen logic would produce from the fixture. If this test fails after a logic change, re-run regen and commit the updated generated files.
+
+5. **Regen workflow**: After any change to `cmd/bestiary-gen/main.go`, regenerate and commit the generated files as a **separate** `chore(gen):` commit:
+   ```
+   go run ./cmd/bestiary-gen --no-fetch
+   git add models_static_gen.go models_constants_gen.go
+   git agent-commit -m "chore(gen): regen after <change>"
+   ```
+   A second `--no-fetch` run after committing must produce zero `git diff`.

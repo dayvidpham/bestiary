@@ -1,0 +1,8 @@
+const (
+	Model__CloudflareAIGateway__Claude__3__5__Haiku_1 ModelID = "anthropic/claude-3-5-haiku"
+	Model__CloudflareAIGateway__Claude__3__5__Haiku_2 ModelID = "anthropic/claude-3.5-haiku"
+	Model__Kilo__Free_1                               ModelID = "kilo-auto/free"
+	Model__Kilo__Free_2                               ModelID = "openrouter/free"
+	Model__OpenAI__GPT__5_1                           ModelID = "gpt-5.1"
+	Model__OpenAI__GPT__5_2                           ModelID = "gpt-5.2"
+)
