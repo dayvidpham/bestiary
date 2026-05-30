@@ -831,6 +831,11 @@ func TestResolve_RehostProviders_Distinct(t *testing.T) {
 		t.Fatalf("Resolve(\"claude\") returned %T, want *ErrAmbiguous", err)
 	}
 
+	// RehostProviders must be non-empty: "claude" is rehosted by many third-party providers.
+	if len(ambig.RehostProviders) == 0 {
+		t.Fatal("RehostProviders must not be empty for bare claude input")
+	}
+
 	// RehostProviders must exclude the canonical provider (anthropic).
 	for _, p := range ambig.RehostProviders {
 		if p == bestiary.ProviderAnthropic {
@@ -904,5 +909,85 @@ func TestResolve_RehostProviders_PURL_LooseFallback(t *testing.T) {
 				p, ambig.RehostProviders)
 		}
 		seen[p] = true
+	}
+}
+
+// --- SLICE-FIX-V4-1-FIX2: canonical-preference in PURL loose-fallback ---
+
+// TestResolve_PURL_LooseFallback_CanonicalProviderInCandidates is a regression test
+// for the BLOCKER (bestiary-ylb8): when a PURL wrong-namespace input resolves to a
+// model that IS hosted by its canonical provider, the canonical provider's entry must
+// appear in ErrAmbiguous.Candidates so that FormatAmbiguous Section 1 is non-empty.
+//
+// Before the fix, azure-cognitive-services was selected as the per-ID representative
+// (first-seen in the static registry), causing anthropic to be absent from Candidates.
+// FormatAmbiguous Section 1 (which filters by Provider==CanonicalProvider()) was EMPTY.
+//
+// After the fix, the canonical provider (anthropic) is preferred as the representative
+// when it is present in the match set, so Section 1 contains the "* anthropic/..." row.
+//
+// Regression: bestiary-ylb8 (BLOCKER).
+func TestResolve_PURL_LooseFallback_CanonicalProviderInCandidates(t *testing.T) {
+	// "nonexistent" namespace forces the loose-fallback path; claude-opus-4-5 is
+	// hosted by anthropic (canonical) and by several rehosts.
+	_, err := bestiary.Resolve("pkg:huggingface/nonexistent/claude-opus-4-5")
+	if err == nil {
+		t.Fatal("Resolve PURL with nonexistent namespace: want ErrAmbiguous, got nil")
+	}
+	var ambig *bestiary.ErrAmbiguous
+	if !errors.As(err, &ambig) {
+		t.Fatalf("Resolve PURL loose-fallback: got %T, want *ErrAmbiguous", err)
+	}
+	if len(ambig.Candidates) == 0 {
+		t.Fatal("ErrAmbiguous.Candidates must not be empty for loose-fallback with known model")
+	}
+
+	// The canonical provider (anthropic) must be the representative for claude-opus-4-5.
+	found := false
+	for _, c := range ambig.Candidates {
+		if c.Provider == bestiary.ProviderAnthropic {
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Errorf("PURL loose-fallback Candidates must contain canonical provider %q entry; got %v",
+			bestiary.ProviderAnthropic, ambig.Candidates)
+	}
+}
+
+// TestResolve_PURL_LooseFallback_FormatAmbiguous_Section1NonEmpty is a regression test
+// that verifies the FormatAmbiguous output for the PURL wrong-namespace case has a
+// non-empty Canonical section (Section 1) with the "* anthropic/..." row.
+//
+// Before the fix, Section 1 was EMPTY (no canonical rows in Candidates) so anthropic
+// was invisible — neither in Section 1 nor in Section 2 (collectRehostProviders
+// correctly excludes canonical providers from Section 2). After the fix, Section 1
+// shows the "* anthropic/claude/opus/..." canonical row.
+//
+// Regression: bestiary-ylb8 (BLOCKER).
+func TestResolve_PURL_LooseFallback_FormatAmbiguous_Section1NonEmpty(t *testing.T) {
+	_, err := bestiary.Resolve("pkg:huggingface/nonexistent/claude-opus-4-5")
+	if err == nil {
+		t.Fatal("Resolve PURL with nonexistent namespace: want ErrAmbiguous, got nil")
+	}
+	var ambig *bestiary.ErrAmbiguous
+	if !errors.As(err, &ambig) {
+		t.Fatalf("Resolve PURL loose-fallback: got %T, want *ErrAmbiguous", err)
+	}
+
+	var buf strings.Builder
+	bestiary.FormatAmbiguous(&buf, ambig)
+	output := buf.String()
+
+	// Section 1 must be present and non-empty.
+	canonicalPos := strings.Index(output, "Canonical:")
+	if canonicalPos < 0 {
+		t.Fatalf("FormatAmbiguous Section 1 'Canonical:' header not found for PURL loose-fallback;\nGot:\n%s", output)
+	}
+
+	// The "* anthropic/..." row must be present (canonical provider is visible).
+	if !strings.Contains(output, "* "+string(bestiary.ProviderAnthropic)) {
+		t.Errorf("FormatAmbiguous Section 1 must contain '* anthropic/...' row for PURL loose-fallback;\nGot:\n%s", output)
 	}
 }

@@ -158,12 +158,26 @@ func Resolve(input string, opts ...ResolveOption) ([]ModelRef, error) {
 	// and a diagnostic message that names the missed namespace.
 	if purlLooseFallback {
 		// Build a deduplicated candidate list from all matches (group by ID).
+		// Fix (SLICE-FIX-V4-1-FIX2 BLOCKER): prefer the canonical provider as the
+		// per-ID representative. When iterating matches, if the current match is the
+		// canonical provider for its family, upgrade the stored representative (even
+		// if we've already seen this ID). This mirrors the multi-group logic at
+		// resolve.go:267-276 so FormatAmbiguous Section 1 is never empty for a model
+		// that IS hosted by its canonical provider.
 		candidateMap := make(map[ModelID]ModelRef)
 		var candidateOrder []ModelID
 		for _, m := range matches {
-			if _, seen := candidateMap[m.ID]; !seen {
+			existing, seen := candidateMap[m.ID]
+			if !seen {
 				candidateOrder = append(candidateOrder, m.ID)
 				candidateMap[m.ID] = m
+			} else {
+				// Upgrade to the canonical provider when the stored rep is not canonical
+				// and the current match is the canonical provider for this family.
+				canonProv := m.Family.CanonicalProvider()
+				if canonProv != "" && m.Provider == canonProv && existing.Provider != canonProv {
+					candidateMap[m.ID] = m
+				}
 			}
 		}
 		candidates := make([]ModelRef, 0, len(candidateOrder))

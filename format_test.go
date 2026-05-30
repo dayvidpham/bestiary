@@ -832,7 +832,7 @@ func TestFormatAmbiguous_CanonicalRowMarked(t *testing.T) {
 	output := buf.String()
 
 	// The canonical anthropic row must carry a visual marker.
-	// The impl uses a "*" suffix appended to the canonical entry in the Canonical column.
+	// The impl uses a "*" PREFIX at the start of each canonical row in Section 1.
 	// Check that the line containing "anthropic" also contains the marker "*".
 	lines := strings.Split(output, "\n")
 	var canonicalLine string
@@ -991,8 +991,11 @@ func TestFormatAmbiguous_PURLMissedNamespaceNote_AbsentWhenEmpty(t *testing.T) {
 // missed-namespace note appears BEFORE the candidate table header.
 //
 // SLICE-FIX-V3-1 Fix 2 — the note must be above the table per spec.
+// Uses a canonical anthropic ref so the Canonical: section is present in output.
 func TestFormatAmbiguous_PURLMissedNamespaceNote_BeforeTable(t *testing.T) {
-	candidates := makeAmbiguousRefs(3, false)
+	// Use makeClaudeAmbiguousRefs (includes one canonical anthropic row) so that
+	// the Canonical: section appears in output and ordering can be verified.
+	candidates := makeClaudeAmbiguousRefs(2)
 	e := &bestiary.ErrAmbiguous{
 		Input:               "claude-opus-4-5",
 		Scheme:              bestiary.SchemePURL,
@@ -1264,11 +1267,14 @@ func TestFormatAmbiguous_V4_FooterInstructions(t *testing.T) {
 // note is still printed when set, and appears before the Canonical section.
 //
 // SLICE-FIX-V4-1 — regression guard for existing Fix 2 behavior.
+// Uses canonical anthropic refs so the Canonical: section is present in output.
 func TestFormatAmbiguous_V4_PURLNote_StillPresent(t *testing.T) {
+	// Use makeClaudeAmbiguousRefs (includes one canonical anthropic row) so that
+	// the Canonical: section appears in output and ordering can be verified.
 	e := &bestiary.ErrAmbiguous{
 		Input:               "claude-opus-4-5",
 		Scheme:              bestiary.SchemePURL,
-		Candidates:          makeAmbiguousRefs(3, false),
+		Candidates:          makeClaudeAmbiguousRefs(2),
 		PURLMissedNamespace: "nonexistent-v4",
 		RehostProviders:     nil,
 	}
@@ -1291,5 +1297,64 @@ func TestFormatAmbiguous_V4_PURLNote_StillPresent(t *testing.T) {
 	if notePos > canonicalPos {
 		t.Errorf("FormatAmbiguous V4: PURL note must appear before 'Canonical:' section;\n"+
 			"note at %d, Canonical at %d\nFull output:\n%s", notePos, canonicalPos, output)
+	}
+}
+
+// ----------------------------------------------------------------------------
+// SLICE-FIX-V4-1-FIX2 FOLD: empty-canonical suppression
+// ----------------------------------------------------------------------------
+
+// TestFormatAmbiguous_EmptyCanonical_NoBareHeader verifies that when no candidates
+// match the canonical provider (unmapped family, e.g. "minimax"), FormatAmbiguous
+// does NOT print a bare empty "Canonical:" header or an orphaned "* = canonical provider"
+// legend. Instead, those elements are omitted entirely, producing coherent output.
+//
+// Before the fix, "bestiary show minimax" rendered:
+//
+//	* = canonical provider
+//	Canonical:
+//	Also rehosted by: ...
+//
+// The empty section with orphaned legend was confusing. After the fix, both are omitted
+// when there are zero canonical rows. The Section 2 (rehost names) and footer still appear.
+func TestFormatAmbiguous_EmptyCanonical_NoBareHeader(t *testing.T) {
+	// Build candidates with no canonical provider — all providers are synthetic
+	// names that do not map to any known CanonicalProvider().
+	candidates := makeAmbiguousRefs(3, false)
+	rehosts := []bestiary.Provider{"minimax", "deepinfra", "ollama-cloud"}
+	e := &bestiary.ErrAmbiguous{
+		Input:           "minimax",
+		Scheme:          bestiary.SchemeCanonical,
+		Candidates:      candidates,
+		RehostProviders: rehosts,
+	}
+
+	var buf bytes.Buffer
+	bestiary.FormatAmbiguous(&buf, e)
+	output := buf.String()
+
+	// The bare "Canonical:" header must NOT appear when there are no canonical rows.
+	if strings.Contains(output, "Canonical:") {
+		t.Errorf("FormatAmbiguous: bare 'Canonical:' header must be ABSENT when no canonical rows exist;\nGot:\n%s", output)
+	}
+
+	// The orphaned "* = canonical provider" legend must NOT appear.
+	if strings.Contains(output, "* = canonical provider") {
+		t.Errorf("FormatAmbiguous: orphaned '* = canonical provider' legend must be ABSENT when no canonical rows exist;\nGot:\n%s", output)
+	}
+
+	// Section 2 (rehost names) must still be present.
+	if !strings.Contains(output, "Also rehosted by:") {
+		t.Errorf("FormatAmbiguous: 'Also rehosted by:' section must still appear when RehostProviders non-empty;\nGot:\n%s", output)
+	}
+	for _, p := range rehosts {
+		if !strings.Contains(output, string(p)) {
+			t.Errorf("FormatAmbiguous: rehost provider %q missing from Section 2;\nGot:\n%s", p, output)
+		}
+	}
+
+	// Footer must still appear.
+	if !strings.Contains(output, "bestiary list") {
+		t.Errorf("FormatAmbiguous: footer 'bestiary list' must still appear;\nGot:\n%s", output)
 	}
 }

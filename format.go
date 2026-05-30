@@ -338,9 +338,6 @@ func FormatAmbiguous(w io.Writer, e *ErrAmbiguous) {
 			e.PURLMissedNamespace)
 	}
 
-	// Legend line.
-	fmt.Fprintf(w, "\n* = canonical provider\n")
-
 	// Section 1: Canonical rows — up to ambiguousMaxCanonical, each prefixed with "* ".
 	// Filter candidates to only canonical-provider rows (Provider == Family.CanonicalProvider()).
 	// Dedup by (Family, Variant, Version) so each model appears once.
@@ -367,18 +364,28 @@ func FormatAmbiguous(w io.Writer, e *ErrAmbiguous) {
 		canonicalRows = append(canonicalRows, c)
 	}
 
-	fmt.Fprintf(w, "\nCanonical:\n")
-	displayCanonical := canonicalRows
-	canonicalOverflow := 0
-	if len(canonicalRows) > ambiguousMaxCanonical {
-		canonicalOverflow = len(canonicalRows) - ambiguousMaxCanonical
-		displayCanonical = canonicalRows[:ambiguousMaxCanonical]
-	}
-	for _, c := range displayCanonical {
-		fmt.Fprintf(w, "* %s\n", c.Format(SchemeCanonical))
-	}
-	if canonicalOverflow > 0 {
-		fmt.Fprintf(w, "+%d more\n", canonicalOverflow)
+	// Fix (SLICE-FIX-V4-1-FIX2 FOLD): when canonicalRows is empty (unknown canonical
+	// provider for this family, e.g. "minimax"), omit the legend and the Canonical
+	// section entirely. A bare empty "Canonical:" header with an orphaned legend is
+	// misleading — the user sees no canonical rows and no explanation. When canonical
+	// rows are present, the legend + section together form a coherent unit.
+	if len(canonicalRows) > 0 {
+		// Legend line — only shown when there are canonical rows to explain.
+		fmt.Fprintf(w, "\n* = canonical provider\n")
+
+		fmt.Fprintf(w, "\nCanonical:\n")
+		displayCanonical := canonicalRows
+		canonicalOverflow := 0
+		if len(canonicalRows) > ambiguousMaxCanonical {
+			canonicalOverflow = len(canonicalRows) - ambiguousMaxCanonical
+			displayCanonical = canonicalRows[:ambiguousMaxCanonical]
+		}
+		for _, c := range displayCanonical {
+			fmt.Fprintf(w, "* %s\n", c.Format(SchemeCanonical))
+		}
+		if canonicalOverflow > 0 {
+			fmt.Fprintf(w, "+%d more\n", canonicalOverflow)
+		}
 	}
 
 	// Section 2: Rehost provider names — up to ambiguousMaxRehosts.
