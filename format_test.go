@@ -985,3 +985,276 @@ func TestFormatAmbiguous_PURLMissedNamespaceNote_BeforeTable(t *testing.T) {
 			notePos, tableHeaderPos, output)
 	}
 }
+
+// ----------------------------------------------------------------------------
+// SLICE-FIX-V4-1: Two-section layout (prefix marker, legend, rehost names, footer)
+// ----------------------------------------------------------------------------
+
+// makeAmbiguousRefsWithRehosts builds an ErrAmbiguous suitable for two-section layout tests.
+// It constructs numCanonical canonical refs (provider="anthropic", Family="claude") and
+// numRehosts rehost providers in RehostProviders. Each canonical ref has a distinct variant
+// so they appear as distinct canonical rows. RehostProviders is populated directly.
+func makeAmbiguousWithRehosts(numCanonical int, rehostProviders []bestiary.Provider) *bestiary.ErrAmbiguous {
+	candidates := make([]bestiary.ModelRef, numCanonical)
+	for i := 0; i < numCanonical; i++ {
+		candidates[i] = bestiary.ModelRef{
+			ID:       bestiary.ModelID(fmt.Sprintf("claude-canonical-%d", i)),
+			Provider: bestiary.ProviderAnthropic,
+			Family:   "claude",
+			Variant:  fmt.Sprintf("variant-%d", i),
+			Version:  "1",
+			Date:     "2025-01-01",
+		}
+	}
+	return &bestiary.ErrAmbiguous{
+		Input:           "claude",
+		Scheme:          bestiary.SchemeCanonical,
+		Candidates:      candidates,
+		RehostProviders: rehostProviders,
+	}
+}
+
+// TestFormatAmbiguous_V4_LegendPresent verifies the legend line "* = canonical provider"
+// is present in FormatAmbiguous output.
+//
+// SLICE-FIX-V4-1 — this test FAILS before L3 implements the new layout.
+func TestFormatAmbiguous_V4_LegendPresent(t *testing.T) {
+	e := makeAmbiguousWithRehosts(2, []bestiary.Provider{"deepinfra", "azure-cognitive-services"})
+
+	var buf bytes.Buffer
+	bestiary.FormatAmbiguous(&buf, e)
+	output := buf.String()
+
+	const legend = "* = canonical provider"
+	if !strings.Contains(output, legend) {
+		t.Errorf("FormatAmbiguous: missing legend line %q;\nGot:\n%s", legend, output)
+	}
+}
+
+// TestFormatAmbiguous_V4_CanonicalRowsHavePrefixStar verifies that canonical rows
+// START with "* " (prefix), NOT end with " *" (old suffix format).
+//
+// SLICE-FIX-V4-1 — this test FAILS before L3 since old impl uses suffix marker.
+func TestFormatAmbiguous_V4_CanonicalRowsHavePrefixStar(t *testing.T) {
+	e := makeAmbiguousWithRehosts(3, []bestiary.Provider{"deepinfra"})
+
+	var buf bytes.Buffer
+	bestiary.FormatAmbiguous(&buf, e)
+	output := buf.String()
+
+	// The output must contain at least one line that starts with "* " (prefix).
+	lines := strings.Split(output, "\n")
+	foundPrefixStar := false
+	for _, l := range lines {
+		if strings.HasPrefix(l, "* ") {
+			foundPrefixStar = true
+			break
+		}
+	}
+	if !foundPrefixStar {
+		t.Errorf("FormatAmbiguous: no line starts with '* ' (prefix marker absent);\nGot:\n%s", output)
+	}
+
+	// No canonical line should end with " *" (that was the old suffix format).
+	for _, l := range lines {
+		if strings.HasSuffix(l, " *") {
+			t.Errorf("FormatAmbiguous: found line with old suffix marker ' *': %q\nFull output:\n%s", l, output)
+		}
+	}
+}
+
+// TestFormatAmbiguous_V4_CanonicalSection_Cap5 verifies that at most 5 canonical rows
+// are displayed, with a "+N more" hint when >5 canonical candidates exist.
+//
+// SLICE-FIX-V4-1 — this test FAILS before L3 since old impl caps at 10.
+func TestFormatAmbiguous_V4_CanonicalSection_Cap5(t *testing.T) {
+	// 8 canonical candidates — should display 5 and emit "+3 more".
+	e := makeAmbiguousWithRehosts(8, nil)
+
+	var buf bytes.Buffer
+	bestiary.FormatAmbiguous(&buf, e)
+	output := buf.String()
+
+	// Count lines that start with "* " (canonical prefix rows).
+	lines := strings.Split(output, "\n")
+	prefixLines := 0
+	for _, l := range lines {
+		if strings.HasPrefix(l, "* ") {
+			prefixLines++
+		}
+	}
+	if prefixLines > 5 {
+		t.Errorf("FormatAmbiguous: expected <=5 canonical rows with '* ' prefix, got %d;\nGot:\n%s", prefixLines, output)
+	}
+
+	// Must emit "+3 more" hint for 8-5=3 overflow canonical rows.
+	if !strings.Contains(output, "+3 more") {
+		t.Errorf("FormatAmbiguous: expected '+3 more' hint for 8 canonical candidates (cap 5); got:\n%s", output)
+	}
+
+	// Candidates variant-5 through variant-7 must NOT appear in the output.
+	for i := 5; i < 8; i++ {
+		variantStr := fmt.Sprintf("variant-%d", i)
+		if strings.Contains(output, variantStr) {
+			t.Errorf("FormatAmbiguous: canonical candidate %q should NOT appear after cap-5 truncation; got:\n%s", variantStr, output)
+		}
+	}
+}
+
+// TestFormatAmbiguous_V4_RehostSection_PresentWhenNonEmpty verifies Section 2
+// "Also rehosted by:" is present when RehostProviders is non-empty, and lists
+// distinct rehost provider NAMES (not full canonical rows).
+//
+// SLICE-FIX-V4-1 — this test FAILS before L3.
+func TestFormatAmbiguous_V4_RehostSection_PresentWhenNonEmpty(t *testing.T) {
+	rehosts := []bestiary.Provider{"deepinfra", "azure-cognitive-services", "nano-gpt"}
+	e := makeAmbiguousWithRehosts(2, rehosts)
+
+	var buf bytes.Buffer
+	bestiary.FormatAmbiguous(&buf, e)
+	output := buf.String()
+
+	const sectionHeader = "Also rehosted by:"
+	if !strings.Contains(output, sectionHeader) {
+		t.Errorf("FormatAmbiguous: missing Section 2 header %q when RehostProviders non-empty;\nGot:\n%s", sectionHeader, output)
+	}
+
+	// Each rehost provider name must appear in the output.
+	for _, prov := range rehosts {
+		if !strings.Contains(output, string(prov)) {
+			t.Errorf("FormatAmbiguous: rehost provider %q missing from Section 2;\nGot:\n%s", prov, output)
+		}
+	}
+}
+
+// TestFormatAmbiguous_V4_RehostSection_AbsentWhenEmpty verifies Section 2 is
+// entirely omitted (header AND content) when RehostProviders is empty.
+//
+// SLICE-FIX-V4-1 — this test FAILS before L3.
+func TestFormatAmbiguous_V4_RehostSection_AbsentWhenEmpty(t *testing.T) {
+	// RehostProviders explicitly empty — section must be absent.
+	e := makeAmbiguousWithRehosts(3, nil)
+
+	var buf bytes.Buffer
+	bestiary.FormatAmbiguous(&buf, e)
+	output := buf.String()
+
+	const sectionHeader = "Also rehosted by:"
+	if strings.Contains(output, sectionHeader) {
+		t.Errorf("FormatAmbiguous: Section 2 header %q must be ABSENT when RehostProviders is empty;\nGot:\n%s", sectionHeader, output)
+	}
+}
+
+// TestFormatAmbiguous_V4_RehostSection_Cap5 verifies that at most 5 rehost provider
+// names are displayed, with a "+N more" hint when RehostProviders has >5 entries.
+//
+// SLICE-FIX-V4-1 — this test FAILS before L3.
+func TestFormatAmbiguous_V4_RehostSection_Cap5(t *testing.T) {
+	rehosts := []bestiary.Provider{
+		"deepinfra", "azure-cognitive-services", "nano-gpt",
+		"together-ai", "fireworks", "groq", "anyscale",
+	}
+	e := makeAmbiguousWithRehosts(2, rehosts)
+
+	var buf bytes.Buffer
+	bestiary.FormatAmbiguous(&buf, e)
+	output := buf.String()
+
+	// "+2 more" for 7-5=2 overflow rehost providers.
+	if !strings.Contains(output, "+2 more") {
+		t.Errorf("FormatAmbiguous: expected '+2 more' hint for 7 rehost providers (cap 5);\nGot:\n%s", output)
+	}
+
+	// Providers groq and anyscale (index 5,6) must NOT appear.
+	for _, hidden := range []bestiary.Provider{"groq", "anyscale"} {
+		if strings.Contains(output, string(hidden)) {
+			t.Errorf("FormatAmbiguous: rehost provider %q should NOT appear after cap-5;\nGot:\n%s", hidden, output)
+		}
+	}
+
+	// First 5 providers must appear.
+	for _, shown := range rehosts[:5] {
+		if !strings.Contains(output, string(shown)) {
+			t.Errorf("FormatAmbiguous: rehost provider %q should appear in first-5;\nGot:\n%s", shown, output)
+		}
+	}
+}
+
+// TestFormatAmbiguous_V4_RehostSection_NamesOnly verifies that Section 2 lists
+// provider NAMES only (not full canonical model strings like "anthropic/claude/opus/...").
+//
+// SLICE-FIX-V4-1 — this test FAILS before L3 if full canonical rows appear.
+func TestFormatAmbiguous_V4_RehostSection_NamesOnly(t *testing.T) {
+	rehosts := []bestiary.Provider{"deepinfra", "nano-gpt"}
+	e := makeAmbiguousWithRehosts(2, rehosts)
+
+	var buf bytes.Buffer
+	bestiary.FormatAmbiguous(&buf, e)
+	output := buf.String()
+
+	// Locate section 2 content after the "Also rehosted by:" header.
+	idx := strings.Index(output, "Also rehosted by:")
+	if idx < 0 {
+		t.Fatalf("FormatAmbiguous: Section 2 header 'Also rehosted by:' not found;\nGot:\n%s", output)
+	}
+	section2 := output[idx:]
+
+	// The section 2 area must NOT contain a full canonical path like "claude/variant-0"
+	// (which would indicate full model rows were rendered instead of provider names).
+	if strings.Contains(section2, "claude/variant-0") || strings.Contains(section2, "claude/variant-1") {
+		t.Errorf("FormatAmbiguous Section 2 must list provider names only, not full canonical model strings;\nSection2:\n%s", section2)
+	}
+}
+
+// TestFormatAmbiguous_V4_FooterInstructions verifies that the footer contains
+// the two real instruction strings: "bestiary list" and "--format=raw".
+//
+// SLICE-FIX-V4-1 — this test FAILS before L3.
+func TestFormatAmbiguous_V4_FooterInstructions(t *testing.T) {
+	e := makeAmbiguousWithRehosts(2, []bestiary.Provider{"deepinfra"})
+
+	var buf bytes.Buffer
+	bestiary.FormatAmbiguous(&buf, e)
+	output := buf.String()
+
+	if !strings.Contains(output, "bestiary list") {
+		t.Errorf("FormatAmbiguous footer: missing 'bestiary list' instruction;\nGot:\n%s", output)
+	}
+	if !strings.Contains(output, "--format=raw") {
+		t.Errorf("FormatAmbiguous footer: missing '--format=raw' instruction;\nGot:\n%s", output)
+	}
+}
+
+// TestFormatAmbiguous_V4_PURLNote_StillPresent verifies that the PURLMissedNamespace
+// note is still printed when set, and appears before the Canonical section.
+//
+// SLICE-FIX-V4-1 — regression guard for existing Fix 2 behavior.
+func TestFormatAmbiguous_V4_PURLNote_StillPresent(t *testing.T) {
+	e := &bestiary.ErrAmbiguous{
+		Input:               "claude-opus-4-5",
+		Scheme:              bestiary.SchemePURL,
+		Candidates:          makeAmbiguousRefs(3, false),
+		PURLMissedNamespace: "nonexistent-v4",
+		RehostProviders:     nil,
+	}
+
+	var buf bytes.Buffer
+	bestiary.FormatAmbiguous(&buf, e)
+	output := buf.String()
+
+	wantNote := `no matches in namespace "nonexistent-v4"`
+	if !strings.Contains(output, wantNote) {
+		t.Errorf("FormatAmbiguous V4: PURL missed-namespace note %q absent;\nGot:\n%s", wantNote, output)
+	}
+
+	// Note must appear before the Canonical: section.
+	notePos := strings.Index(output, wantNote)
+	canonicalPos := strings.Index(output, "Canonical:")
+	if canonicalPos < 0 {
+		t.Fatalf("FormatAmbiguous V4: 'Canonical:' section header not found;\nGot:\n%s", output)
+	}
+	if notePos > canonicalPos {
+		t.Errorf("FormatAmbiguous V4: PURL note must appear before 'Canonical:' section;\n"+
+			"note at %d, Canonical at %d\nFull output:\n%s", notePos, canonicalPos, output)
+	}
+}

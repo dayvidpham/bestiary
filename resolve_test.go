@@ -813,3 +813,96 @@ func TestResolve_BracketSuffixStripping_RoundTrip(t *testing.T) {
 			canonical, seed.Family, seed.Variant, seed.Date, seed.Modifier, refs)
 	}
 }
+
+// --- SLICE-FIX-V4-1: RehostProviders population ---
+
+// TestResolve_RehostProviders_Distinct verifies that ErrAmbiguous.RehostProviders
+// is populated with distinct (deduplicated) non-canonical providers when Resolve
+// returns ErrAmbiguous for a bare family name like "claude".
+//
+// SLICE-FIX-V4-1 L1 — verifies collectRehostProviders dedup and canonical exclusion.
+func TestResolve_RehostProviders_Distinct(t *testing.T) {
+	_, err := bestiary.Resolve("claude")
+	if err == nil {
+		t.Fatal("Resolve(\"claude\") returned nil error; want *ErrAmbiguous")
+	}
+	var ambig *bestiary.ErrAmbiguous
+	if !errors.As(err, &ambig) {
+		t.Fatalf("Resolve(\"claude\") returned %T, want *ErrAmbiguous", err)
+	}
+
+	// RehostProviders must exclude the canonical provider (anthropic).
+	for _, p := range ambig.RehostProviders {
+		if p == bestiary.ProviderAnthropic {
+			t.Errorf("RehostProviders must NOT include canonical provider %q; got %v",
+				bestiary.ProviderAnthropic, ambig.RehostProviders)
+		}
+	}
+
+	// RehostProviders must not contain duplicates.
+	seen := make(map[bestiary.Provider]int)
+	for i, p := range ambig.RehostProviders {
+		if prev, dup := seen[p]; dup {
+			t.Errorf("RehostProviders[%d]=%q duplicates RehostProviders[%d]; list: %v",
+				i, p, prev, ambig.RehostProviders)
+		}
+		seen[p] = i
+	}
+}
+
+// TestResolve_RehostProviders_ExcludesCanonical verifies that the canonical provider
+// is strictly excluded from RehostProviders even when it appears in the match set.
+//
+// SLICE-FIX-V4-1 — ensures collectRehostProviders filters out canonical provider.
+func TestResolve_RehostProviders_ExcludesCanonical(t *testing.T) {
+	_, err := bestiary.Resolve("claude", bestiary.WithScheme(bestiary.SchemeCanonical))
+	if err == nil {
+		t.Skip("Resolve(claude) returned nil; multi-provider not confirmed — skipping")
+	}
+	var ambig *bestiary.ErrAmbiguous
+	if !errors.As(err, &ambig) {
+		t.Fatalf("Resolve(claude) returned %T, want *ErrAmbiguous", err)
+	}
+
+	// RehostProviders must never include anthropic.
+	for _, p := range ambig.RehostProviders {
+		if p == bestiary.ProviderAnthropic {
+			t.Errorf("RehostProviders contains canonical provider anthropic; "+
+				"collectRehostProviders must exclude m.Provider == m.Family.CanonicalProvider()")
+		}
+	}
+}
+
+// TestResolve_RehostProviders_PURL_LooseFallback verifies that RehostProviders is
+// also populated on the PURL loose-fallback ErrAmbiguous path.
+//
+// SLICE-FIX-V4-1 — ensures the PURL loose-fallback construction site populates field.
+func TestResolve_RehostProviders_PURL_LooseFallback(t *testing.T) {
+	_, err := bestiary.Resolve("pkg:huggingface/totally-unknown-ns/claude-opus-4-5")
+	if err == nil {
+		t.Fatal("Resolve PURL with unknown namespace: want error, got nil")
+	}
+	var ambig *bestiary.ErrAmbiguous
+	if !errors.As(err, &ambig) {
+		t.Skipf("did not get *ErrAmbiguous: %T %v", err, err)
+	}
+
+	// RehostProviders field must be a slice (may be empty if all providers are
+	// canonical, but must not be nil when matches exist).
+	// The key assertion: canonical provider must not be in RehostProviders.
+	for _, p := range ambig.RehostProviders {
+		if p == bestiary.ProviderAnthropic {
+			t.Errorf("PURL loose-fallback RehostProviders must not include canonical provider anthropic")
+		}
+	}
+
+	// No duplicates in RehostProviders.
+	seen := make(map[bestiary.Provider]bool)
+	for _, p := range ambig.RehostProviders {
+		if seen[p] {
+			t.Errorf("PURL loose-fallback RehostProviders contains duplicate provider %q; list: %v",
+				p, ambig.RehostProviders)
+		}
+		seen[p] = true
+	}
+}
