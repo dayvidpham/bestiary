@@ -727,3 +727,261 @@ func TestFormatModels_Table(t *testing.T) {
 		}
 	}
 }
+
+// ----------------------------------------------------------------------------
+// Fix 1: Canonical-provider distinction in the ErrAmbiguous table
+// (SLICE-FIX-V3-1)
+// ----------------------------------------------------------------------------
+
+// makeClaudeAmbiguousRefs builds a synthetic ErrAmbiguous candidate list that
+// mirrors the real "bestiary show claude" scenario:
+//   - One canonical-provider row per variant (Provider="anthropic", Family="claude")
+//   - numRehostGroups rehost groups (each with Provider != "anthropic") with
+//     distinct (Family,Variant,Version) tuples so they pass the grouping dedup.
+//
+// The list is ordered with rehosts first, then the canonical anthropic row,
+// to guarantee the test catches ordering bugs (canonical must surface at top
+// even when it appears last in input).
+func makeClaudeAmbiguousRefs(numRehostGroups int) []bestiary.ModelRef {
+	rehostProviders := []string{
+		"deepinfra", "perplexity-agent", "azure-cognitive-services",
+		"nano-gpt", "together-ai", "fireworks", "groq", "anyscale",
+		"openrouter", "replicate", "modal", "lambda-labs", "lepton",
+	}
+	refs := make([]bestiary.ModelRef, 0, numRehostGroups+1)
+	for i := 0; i < numRehostGroups; i++ {
+		prov := rehostProviders[i%len(rehostProviders)]
+		refs = append(refs, bestiary.ModelRef{
+			ID:       bestiary.ModelID(fmt.Sprintf("claude-rehost-%d", i)),
+			Provider: bestiary.Provider(prov + fmt.Sprintf("-%d", i)),
+			Family:   "claude",
+			Variant:  fmt.Sprintf("rehost-variant-%d", i),
+			Version:  "",
+			Date:     "2025-01-01",
+		})
+	}
+	// Canonical anthropic row — appended LAST so canonical-sort logic must lift it.
+	refs = append(refs, bestiary.ModelRef{
+		ID:       "claude-opus-4-20250514",
+		Provider: bestiary.ProviderAnthropic, // "anthropic"
+		Family:   "claude",
+		Variant:  "opus",
+		Version:  "4",
+		Date:     "2025-05-14",
+	})
+	return refs
+}
+
+// TestFormatAmbiguous_CanonicalRowPresent verifies that when the candidate list
+// contains an anthropic (canonical) row mixed with rehosts, FormatAmbiguous
+// surfaces the anthropic row in the output.
+//
+// SLICE-FIX-V3-1 Fix 1 — this test FAILS before the impl sorts canonical rows
+// to the top (when >10 groups exist, canonical gets truncated away).
+func TestFormatAmbiguous_CanonicalRowPresent(t *testing.T) {
+	// 12 rehost groups + 1 canonical = 13 groups total → exceeds N=10.
+	// Before the fix, the canonical anthropic row (added last) is cut by truncation.
+	candidates := makeClaudeAmbiguousRefs(12)
+	e := &bestiary.ErrAmbiguous{
+		Input:      "claude",
+		Scheme:     bestiary.SchemeCanonical,
+		Candidates: candidates,
+	}
+
+	var buf bytes.Buffer
+	bestiary.FormatAmbiguous(&buf, e)
+	output := buf.String()
+
+	// The canonical provider "anthropic" must appear in the output.
+	if !strings.Contains(output, string(bestiary.ProviderAnthropic)) {
+		t.Errorf("FormatAmbiguous: canonical provider %q missing from output;\nGot:\n%s",
+			bestiary.ProviderAnthropic, output)
+	}
+}
+
+// TestFormatAmbiguous_CanonicalRowMarked verifies that the canonical row is
+// visually distinguished from rehost rows in the FormatAmbiguous output.
+//
+// SLICE-FIX-V3-1 Fix 1 — this test FAILS before the impl adds a visual marker
+// to canonical rows.
+func TestFormatAmbiguous_CanonicalRowMarked(t *testing.T) {
+	candidates := makeClaudeAmbiguousRefs(3) // 3 rehosts + 1 canonical, well within N=10
+	e := &bestiary.ErrAmbiguous{
+		Input:      "claude",
+		Scheme:     bestiary.SchemeCanonical,
+		Candidates: candidates,
+	}
+
+	var buf bytes.Buffer
+	bestiary.FormatAmbiguous(&buf, e)
+	output := buf.String()
+
+	// The canonical anthropic row must carry a visual marker.
+	// The impl uses a "*" suffix appended to the canonical entry in the Canonical column.
+	// Check that the line containing "anthropic" also contains the marker "*".
+	lines := strings.Split(output, "\n")
+	var canonicalLine string
+	for _, l := range lines {
+		if strings.Contains(l, string(bestiary.ProviderAnthropic)) {
+			canonicalLine = l
+			break
+		}
+	}
+	if canonicalLine == "" {
+		t.Fatalf("FormatAmbiguous: no line containing canonical provider %q found in output;\nGot:\n%s",
+			bestiary.ProviderAnthropic, output)
+	}
+	if !strings.Contains(canonicalLine, "*") {
+		t.Errorf("FormatAmbiguous: canonical row missing '*' marker;\ncanonical line: %q\nFull output:\n%s",
+			canonicalLine, output)
+	}
+}
+
+// TestFormatAmbiguous_CanonicalSortedToTop verifies that the canonical row
+// appears BEFORE rehost rows in the FormatAmbiguous output.
+//
+// SLICE-FIX-V3-1 Fix 1 — this test FAILS before the impl sorts canonical rows
+// to the top of the grouped list.
+func TestFormatAmbiguous_CanonicalSortedToTop(t *testing.T) {
+	candidates := makeClaudeAmbiguousRefs(3) // 3 rehosts + 1 canonical
+	e := &bestiary.ErrAmbiguous{
+		Input:      "claude",
+		Scheme:     bestiary.SchemeCanonical,
+		Candidates: candidates,
+	}
+
+	var buf bytes.Buffer
+	bestiary.FormatAmbiguous(&buf, e)
+	output := buf.String()
+
+	// Canonical provider "anthropic" must appear before any rehost.
+	// Check that the position of "anthropic" in output is before "deepinfra-0".
+	anthropicPos := strings.Index(output, string(bestiary.ProviderAnthropic))
+	rehostPos := strings.Index(output, "deepinfra-0")
+
+	if anthropicPos < 0 {
+		t.Fatalf("FormatAmbiguous: canonical provider not found in output;\nGot:\n%s", output)
+	}
+	if rehostPos < 0 {
+		t.Fatalf("FormatAmbiguous: rehost row not found in output;\nGot:\n%s", output)
+	}
+	if anthropicPos > rehostPos {
+		t.Errorf("FormatAmbiguous: canonical row should appear BEFORE rehost rows;\n"+
+			"anthropic at offset %d, deepinfra-0 at offset %d\nFull output:\n%s",
+			anthropicPos, rehostPos, output)
+	}
+}
+
+// TestFormatAmbiguous_CanonicalSurvivesTruncation verifies that even with >10
+// total groups, the canonical provider row survives truncation (is not cut).
+//
+// SLICE-FIX-V3-1 Fix 1 — this test FAILS before the impl sorts canonical rows
+// to the top before the N=10 truncation.
+func TestFormatAmbiguous_CanonicalSurvivesTruncation(t *testing.T) {
+	// 12 rehost groups + 1 canonical = 13 groups total (exceeds N=10).
+	// Without the sort-to-top fix, the canonical row (inserted last) gets cut.
+	candidates := makeClaudeAmbiguousRefs(12)
+	e := &bestiary.ErrAmbiguous{
+		Input:      "claude",
+		Scheme:     bestiary.SchemeCanonical,
+		Candidates: candidates,
+	}
+
+	var buf bytes.Buffer
+	bestiary.FormatAmbiguous(&buf, e)
+	output := buf.String()
+
+	if !strings.Contains(output, string(bestiary.ProviderAnthropic)) {
+		t.Errorf("FormatAmbiguous: canonical provider %q was truncated away (not in top-10 display);\nGot:\n%s",
+			bestiary.ProviderAnthropic, output)
+	}
+	// Overflow hint should still be emitted (3 groups cut).
+	if !strings.Contains(output, "more") {
+		t.Errorf("FormatAmbiguous: expected overflow hint ('+N more') for 13 groups;\nGot:\n%s", output)
+	}
+}
+
+// ----------------------------------------------------------------------------
+// Fix 2: PURL loose-fallback missed-namespace note
+// (SLICE-FIX-V3-1)
+// ----------------------------------------------------------------------------
+
+// TestFormatAmbiguous_PURLMissedNamespaceNote verifies that when
+// ErrAmbiguous.PURLMissedNamespace is non-empty, FormatAmbiguous prints a note
+// above the candidate table naming the missed namespace.
+//
+// SLICE-FIX-V3-1 Fix 2 — this test FAILS before the impl adds the note.
+func TestFormatAmbiguous_PURLMissedNamespaceNote(t *testing.T) {
+	candidates := makeAmbiguousRefs(3, false)
+	e := &bestiary.ErrAmbiguous{
+		Input:               "claude-opus-4-5",
+		Scheme:              bestiary.SchemePURL,
+		Candidates:          candidates,
+		PURLMissedNamespace: "nonexistent",
+	}
+
+	var buf bytes.Buffer
+	bestiary.FormatAmbiguous(&buf, e)
+	output := buf.String()
+
+	// Must contain the missed-namespace note.
+	wantNote := `no matches in namespace "nonexistent"`
+	if !strings.Contains(output, wantNote) {
+		t.Errorf("FormatAmbiguous: missing missed-namespace note %q;\nGot:\n%s", wantNote, output)
+	}
+}
+
+// TestFormatAmbiguous_PURLMissedNamespaceNote_AbsentWhenEmpty verifies that when
+// ErrAmbiguous.PURLMissedNamespace is empty, no missed-namespace note is printed.
+//
+// This is the negative case — the note must NOT appear for normal ambiguous errors.
+func TestFormatAmbiguous_PURLMissedNamespaceNote_AbsentWhenEmpty(t *testing.T) {
+	candidates := makeAmbiguousRefs(3, false)
+	e := &bestiary.ErrAmbiguous{
+		Input:               "test-input",
+		Scheme:              bestiary.SchemeCanonical,
+		Candidates:          candidates,
+		PURLMissedNamespace: "", // empty — note must not appear
+	}
+
+	var buf bytes.Buffer
+	bestiary.FormatAmbiguous(&buf, e)
+	output := buf.String()
+
+	if strings.Contains(output, "no matches in namespace") {
+		t.Errorf("FormatAmbiguous: missed-namespace note should be absent when PURLMissedNamespace is empty;\nGot:\n%s", output)
+	}
+}
+
+// TestFormatAmbiguous_PURLMissedNamespaceNote_BeforeTable verifies that the
+// missed-namespace note appears BEFORE the candidate table header.
+//
+// SLICE-FIX-V3-1 Fix 2 — the note must be above the table per spec.
+func TestFormatAmbiguous_PURLMissedNamespaceNote_BeforeTable(t *testing.T) {
+	candidates := makeAmbiguousRefs(3, false)
+	e := &bestiary.ErrAmbiguous{
+		Input:               "claude-opus-4-5",
+		Scheme:              bestiary.SchemePURL,
+		Candidates:          candidates,
+		PURLMissedNamespace: "nonexistent",
+	}
+
+	var buf bytes.Buffer
+	bestiary.FormatAmbiguous(&buf, e)
+	output := buf.String()
+
+	notePos := strings.Index(output, `no matches in namespace "nonexistent"`)
+	tableHeaderPos := strings.Index(output, "Canonical")
+
+	if notePos < 0 {
+		t.Fatalf("FormatAmbiguous: missed-namespace note not found in output;\nGot:\n%s", output)
+	}
+	if tableHeaderPos < 0 {
+		t.Fatalf("FormatAmbiguous: table header 'Canonical' not found in output;\nGot:\n%s", output)
+	}
+	if notePos > tableHeaderPos {
+		t.Errorf("FormatAmbiguous: missed-namespace note must appear BEFORE the table header;\n"+
+			"note at offset %d, table header at offset %d\nFull output:\n%s",
+			notePos, tableHeaderPos, output)
+	}
+}
