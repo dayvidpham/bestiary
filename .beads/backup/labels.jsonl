@@ -801,6 +801,8 @@
 {"issue_id":"bestiary-qx29","label":"aura:severity:important"}
 {"issue_id":"bestiary-qz7","label":"aura:p5-user:s5-uat"}
 {"issue_id":"bestiary-r12q","label":"aura:severity:important"}
+{"issue_id":"bestiary-r1ht","label":"aura:p10-impl:s10-review"}
+{"issue_id":"bestiary-r1ht","label":"aura:severity:blocker"}
 {"issue_id":"bestiary-r39t","label":"aura:p10-impl:s10-review"}
 {"issue_id":"bestiary-r66e","label":"aura:epic-followup"}
 {"issue_id":"bestiary-r7uj","label":"aura:p9-impl:s9-slice"}
