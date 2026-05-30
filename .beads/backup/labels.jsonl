@@ -697,6 +697,9 @@
 {"issue_id":"bestiary-mpyc","label":"aura:p10-impl:s10-review"}
 {"issue_id":"bestiary-mpyc","label":"aura:severity:important"}
 {"issue_id":"bestiary-mw1f","label":"aura:p9-impl:s9-slice"}
+{"issue_id":"bestiary-n187","label":"aura:epic-followup"}
+{"issue_id":"bestiary-n187","label":"deferred"}
+{"issue_id":"bestiary-n187","label":"parse"}
 {"issue_id":"bestiary-n1r","label":"aura:p9-impl:s9-slice"}
 {"issue_id":"bestiary-n2q","label":"aura:p10-impl:cycle-1-revise"}
 {"issue_id":"bestiary-n2q","label":"aura:p10-impl:cycle-2-clean"}
