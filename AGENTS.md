@@ -20,19 +20,19 @@ bestiary/
 ├── designation.go           # Designation type + AcceptabilityRating (ISO 1087)
 ├── errors.go                # ErrNotFound, ErrAmbiguous, ErrAPIUnavailable (struct errors, use errors.As)
 ├── families_gen.go          # GENERATED — Family type and constants from API
-├── family.go                # Hand-curated Family methods (e.g., upcoming CanonicalProvider)
+├── family.go                # Hand-curated Family methods (CanonicalProvider — popular families mapped, rest stubbed)
 ├── format.go                # JSON, YAML (internal serializer), table output
 ├── harness.go               # Harness type — identifies coding tool / dev environment
 ├── merge.go                 # MergeModels() — dedup by (ID, Provider), most-recent-wins
 ├── modality.go              # Modality int enum, Modalities struct
-├── modelref.go              # ModelRef struct + Ref() method (RawFamily/Family/Variant/Version/Date)
-├── models_constants_gen.go  # GENERATED — Model__ string constants (~8654 entries)
-├── models_static_gen.go     # GENERATED — ~110 ModelInfo structs from 3 providers
-├── parse.go                 # ParseFamily, ParseFamilyWithVersion, ExtractVersionFromID
+├── modelref.go              # ModelRef 8-field tuple + Ref()/Format() (RawFamily/Family/Variant/Version/Date/Modifier)
+├── models_constants_gen.go  # GENERATED — Model__ string constants (~8650 entries, double-underscore fields)
+├── models_static_gen.go     # GENERATED — ~4,300 ModelInfo structs from ~115 providers
+├── parse.go                 # ParseFamily, ParseFamilyWithVersion, ExtractVersionFromID, ExtractModifier; parse-failure audit
 ├── provider.go              # Provider string type, IsKnown(), Providers()
-├── providers_gen.go         # GENERATED — ~110 provider constants from API
-├── registry.go              # StaticModels(), LookupModel(), ModelsByProvider/Family()
-├── resolve.go               # Resolve() with auto-detect (canonical/PURL/HF/raw)
+├── providers_gen.go         # GENERATED — ~115 provider constants from API
+├── registry.go              # StaticModels(), LookupModel(), LookupModelByProvider(), ModelsByProvider/Family()
+├── resolve.go               # Resolve() with InputFormat selection (peasant default, no auto-detect) + canonical-provider preference; ErrAmbiguous candidate listing
 ├── store.go                 # SQLite cache (zombiezen driver), schema migrations
 ├── version.go               # 4 provenance consts (schema + upstream versions)
 ├── wire.go                  # Internal JSON wire types for models.dev API deserialization
@@ -61,7 +61,8 @@ bestiary/
 
 ## Key design decisions
 
-- **Provider as string type**: 109 providers in the models.dev API. A closed int enum can't scale. String type with well-known constants (Anthropic, Google, OpenAI, Local) gives type safety at call sites with extensibility.
+- **Provider as string type**: ~115 providers in the models.dev API. A closed int enum can't scale. String type with well-known constants (Anthropic, Google, OpenAI, Local) gives type safety at call sites with extensibility.
+- **Canonical normalization**: every model decomposes to `(Family, Variant, Version, Date, Modifier)` via deterministic suffix tables + curated overrides in `parse/data/`. The tuple is canonical; `ModelRef.Format(scheme)` renders canonical/HuggingFace/PURL/raw strings. Version is distinct from Date (Opus 4.5 ≠ 4.6). Unparseable inputs are logged to `parse_failures.json` at codegen, never silently mangled.
 - **Composite key (ModelID, Provider)**: Same model ID appears under multiple providers with different pricing. Store, merge, and registry all use the (ID, Provider) tuple.
 - **Capability type for Interleaved**: The models.dev API returns `interleaved` as either `true` or `{"field": "reasoning_details"}`. Other boolean fields are always pure booleans. Only Interleaved uses the Capability struct.
 - **Offline list/show, online sync**: `list` and `show` read static + SQLite cache (no network). `sync` fetches from the API and persists to SQLite.
