@@ -275,6 +275,7 @@
 {"created_at":"2026-04-04T06:13:15Z","created_by":"David Huu Pham","depends_on_id":"bestiary-3k7","issue_id":"bestiary-8hl","type":"blocks"}
 {"created_at":"2026-04-04T06:13:19Z","created_by":"David Huu Pham","depends_on_id":"bestiary-nt5","issue_id":"bestiary-8iz","type":"blocks"}
 {"created_at":"2026-04-25T04:08:20Z","created_by":"David Huu Pham","depends_on_id":"bestiary-94oz","issue_id":"bestiary-8oo7","type":"blocks"}
+{"created_at":"2026-05-30T00:28:57Z","created_by":"David Huu Pham","depends_on_id":"bestiary-ilaz","issue_id":"bestiary-8rh5","type":"blocks"}
 {"created_at":"2026-04-25T02:59:01Z","created_by":"David Huu Pham","depends_on_id":"bestiary-am6s","issue_id":"bestiary-8yfq","type":"blocks"}
 {"created_at":"2026-04-25T02:59:01Z","created_by":"David Huu Pham","depends_on_id":"bestiary-aqhq","issue_id":"bestiary-8yfq","type":"blocks"}
 {"created_at":"2026-04-25T02:59:01Z","created_by":"David Huu Pham","depends_on_id":"bestiary-xdej","issue_id":"bestiary-8yfq","type":"blocks"}
@@ -566,6 +567,7 @@
 {"created_at":"2026-04-25T03:18:12Z","created_by":"David Huu Pham","depends_on_id":"bestiary-e7rq","issue_id":"bestiary-r39t","type":"blocks"}
 {"created_at":"2026-04-25T03:18:12Z","created_by":"David Huu Pham","depends_on_id":"bestiary-fyaz","issue_id":"bestiary-r39t","type":"blocks"}
 {"created_at":"2026-04-25T21:23:56Z","created_by":"David Huu Pham","depends_on_id":"bestiary-2aef","issue_id":"bestiary-r7uj","type":"blocks"}
+{"created_at":"2026-05-30T00:20:29Z","created_by":"David Huu Pham","depends_on_id":"bestiary-8rh5","issue_id":"bestiary-r8jw","type":"blocks"}
 {"created_at":"2026-04-25T04:07:12Z","created_by":"David Huu Pham","depends_on_id":"bestiary-fh27","issue_id":"bestiary-rjng","type":"blocks"}
 {"created_at":"2026-04-25T04:07:12Z","created_by":"David Huu Pham","depends_on_id":"bestiary-olgy","issue_id":"bestiary-rjng","type":"blocks"}
 {"created_at":"2026-04-25T03:26:50Z","created_by":"David Huu Pham","depends_on_id":"bestiary-fcqp","issue_id":"bestiary-rxpu","type":"blocks"}
