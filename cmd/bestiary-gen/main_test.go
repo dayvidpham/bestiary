@@ -9,6 +9,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"regexp"
 	"sort"
 	"strings"
 	"testing"
@@ -1836,6 +1837,21 @@ func containsNormalized(s, substr string) bool {
 	return strings.Contains(normalizeWhitespace(s), normalizeWhitespace(substr))
 }
 
+// reLastSynced matches a LastSynced field line in generated Go source.
+// It covers both the fixture path (LastSynced: "") and the run()-stamped path
+// (LastSynced: "2006-01-02T15:04:05Z"). The sentinel replaces the entire field
+// value so that byte comparison is insensitive to the wall-clock timestamp.
+var reLastSynced = regexp.MustCompile(`LastSynced:\s+"[^"]*"`)
+
+const lastSyncedSentinel = `LastSynced: "__NORMALIZED__"`
+
+// normalizeLastSynced replaces every LastSynced field value in src with a fixed
+// sentinel string, making the output insensitive to the codegen wall-clock stamp.
+// Use this on both sides of any byte comparison that should tolerate timestamp churn.
+func normalizeLastSynced(src []byte) []byte {
+	return reLastSynced.ReplaceAll(src, []byte(lastSyncedSentinel))
+}
+
 // deterministicFixtureJSON returns the hermetic fixture JSON for the reproducibility
 // tests. It contains three collision groups:
 //
@@ -1909,11 +1925,20 @@ func deterministicFixtureJSON(t *testing.T) []byte {
 }
 
 // runFixtureCodegen performs one full codegen cycle using the hermetic fixture:
-// spin up an httptest.Server, override apiURL, call fetchModelsWithRaw, build
-// slugToConst, and return both generated sources.
+// spin up an httptest.Server, override apiURL, call fetchModelsWithRaw, optionally
+// stamp LastSynced (mirroring run() main.go:363-365), build slugToConst, and return
+// both generated sources.
+//
+// lastSynced controls the LastSynced stamp applied to every model before source
+// generation:
+//   - "" (empty): no stamp — LastSynced stays "" (the pre-existing behaviour used by
+//     tests that do not test the stamping path)
+//   - any non-empty RFC3339 string: stamp models[i].LastSynced with that value,
+//     exactly mirroring the run() pipeline path
+//
 // Each call re-randomizes the Go map iteration order, which is the nondeterminism
 // source for bestiary-9lnq.
-func runFixtureCodegen(t *testing.T, fixtureJSON []byte) (staticSrc, constantsSrc []byte) {
+func runFixtureCodegen(t *testing.T, fixtureJSON []byte, lastSynced string) (staticSrc, constantsSrc []byte) {
 	t.Helper()
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
@@ -1929,6 +1954,14 @@ func runFixtureCodegen(t *testing.T, fixtureJSON []byte) (staticSrc, constantsSr
 	_, models, provMeta, _, err := fetchModelsWithRaw(context.Background(), t.TempDir(), false)
 	if err != nil {
 		t.Fatalf("runFixtureCodegen: fetchModelsWithRaw: %v", err)
+	}
+
+	// Mirror run() main.go:363-365: stamp LastSynced on all models when a timestamp
+	// is injected. Leaving lastSynced empty preserves the "" zero-value (fixture path).
+	if lastSynced != "" {
+		for i := range models {
+			models[i].LastSynced = lastSynced
+		}
 	}
 
 	allSlugs := make([]string, 0, len(provMeta))
@@ -1955,7 +1988,15 @@ func runFixtureCodegen(t *testing.T, fixtureJSON []byte) (staticSrc, constantsSr
 // TestCodegen_Reproducible_ByteIdentical verifies that N=100 successive codegen
 // runs over the same fixture data (each re-randomizing map iteration order via a
 // fresh fetchModelsWithRaw) produce byte-identical output for BOTH generateSource
-// and generateConstantsSource.
+// and generateConstantsSource AFTER normalizing the LastSynced timestamp.
+//
+// LastSynced is injected via the same path as run() (main.go:363-365), using TWO
+// DIFFERENT RFC3339 timestamps that alternate across iterations. This means:
+//   - Odd iterations use tsA, even iterations use tsB.
+//   - Without normalization, two differently-stamped runs WILL differ in the
+//     LastSynced lines — this is proved by an explicit assertion below.
+//   - After normalizeLastSynced(), the output must be byte-identical — proving
+//     that LastSynced is the SOLE residual non-determinism.
 //
 // Additionally asserts that each raw model ID always receives the same _N suffix
 // across all iterations (stable raw-ID-ordered assignment — R1 + raw-ID ordinal).
@@ -1966,10 +2007,16 @@ func runFixtureCodegen(t *testing.T, fixtureJSON []byte) (staticSrc, constantsSr
 //   - E (version-pair / negative control): exact constant names with NO doubled-ordinal variant
 func TestCodegen_Reproducible_ByteIdentical(t *testing.T) {
 	const N = 100
+	// Two distinct RFC3339 timestamps used on alternating iterations to exercise the
+	// run() LastSynced stamping path and prove sole-residual non-determinism.
+	const tsA = "2000-01-01T00:00:00Z" // odd iterations (1, 3, 5, …)
+	const tsB = "2099-12-31T23:59:59Z" // even iterations (0, 2, 4, …)
+
 	fixtureJSON := deterministicFixtureJSON(t)
 
-	// Run once to establish the reference output.
-	refStatic, refConstants := runFixtureCodegen(t, fixtureJSON)
+	// Run once (iteration 0 → tsB) to establish the reference output with a stamped
+	// LastSynced. The reference uses the run()-equivalent stamping path.
+	refStatic, refConstants := runFixtureCodegen(t, fixtureJSON, tsB)
 
 	// Verify reference constants contain the expected golden pins.
 	refStr := string(refConstants)
@@ -2002,6 +2049,21 @@ func TestCodegen_Reproducible_ByteIdentical(t *testing.T) {
 		t.Errorf("reference output: E control has doubled-ordinal variant (fragment suffix leaked)\nconstants:\n%s", refStr)
 	}
 
+	// Prove that the reference static file was actually stamped: it must contain tsB in a
+	// LastSynced line. (The constants file does not contain LastSynced fields.)
+	refStaticStr := string(refStatic)
+	if !strings.Contains(refStaticStr, `LastSynced:`) || !strings.Contains(refStaticStr, tsB) {
+		t.Errorf("reference static output: LastSynced stamp not found (expected %q in a LastSynced field)\n"+
+			"  What: run() stamping path not exercised\n"+
+			"  Why: runFixtureCodegen did not mirror run() main.go:363-365\n"+
+			"  How to fix: verify that runFixtureCodegen stamps models[i].LastSynced when lastSynced != \"\"",
+			tsB)
+	}
+
+	// Pre-compute normalized reference (LastSynced stripped) for byte-identity comparison.
+	refStaticNorm := normalizeLastSynced(refStatic)
+	refConstantsNorm := normalizeLastSynced(refConstants)
+
 	// Build a per-rawID → constantName index from the reference for stability assertion.
 	// Parse lines of the form: \t<ConstName>...<spaces>...ModelID = "<rawID>"
 	// Use normalizeWhitespace per-line so the " ModelID = " split works despite gofmt alignment.
@@ -2019,24 +2081,68 @@ func TestCodegen_Reproducible_ByteIdentical(t *testing.T) {
 		}
 	}
 
-	// Run N-1 more iterations and assert byte-equality.
+	// Run N-1 more iterations and assert byte-equality after LastSynced normalization.
+	// Odd iterations use tsA, even iterations use tsB (alternating across the full run).
+	// At least one iteration with tsA WILL produce raw bytes that differ from the tsB
+	// reference — we assert that below to prove sole-residual.
+	foundDifferentRawStatic := false
+
 	for i := 1; i < N; i++ {
-		staticSrc, constantsSrc := runFixtureCodegen(t, fixtureJSON)
-		if !bytes.Equal(refStatic, staticSrc) {
-			t.Fatalf("iteration %d: generateSource output differs from reference (nondeterminism)\n"+
-				"  What: the static model list changed between runs\n"+
+		ts := tsB
+		if i%2 == 1 {
+			ts = tsA // odd iteration → different timestamp than reference (tsB)
+		}
+		staticSrc, constantsSrc := runFixtureCodegen(t, fixtureJSON, ts)
+
+		// --- Sole-residual proof (first odd iteration) ---
+		// Runs stamped with tsA must differ from the tsB reference in the raw bytes
+		// of the static file (LastSynced lines differ), but ONLY in LastSynced lines.
+		if ts == tsA && !foundDifferentRawStatic {
+			if bytes.Equal(refStatic, staticSrc) {
+				t.Errorf("sole-residual check: two runs with different timestamps produced identical raw bytes\n"+
+					"  What: expected LastSynced lines to differ (tsA=%q vs tsB=%q)\n"+
+					"  Why: LastSynced was not stamped by runFixtureCodegen\n"+
+					"  How to fix: verify runFixtureCodegen stamps models[i].LastSynced",
+					tsA, tsB)
+			} else {
+				foundDifferentRawStatic = true
+				// Assert that every differing line contains "LastSynced" — proving it is the
+				// sole source of non-determinism between two correctly-stamped runs.
+				refLines := strings.Split(string(refStatic), "\n")
+				iterLines := strings.Split(string(staticSrc), "\n")
+				if len(refLines) == len(iterLines) {
+					for lineIdx, refLine := range refLines {
+						if refLine != iterLines[lineIdx] && !strings.Contains(refLine, "LastSynced") {
+							t.Errorf("sole-residual check: line %d differs but does not contain 'LastSynced'\n"+
+								"  What: a non-LastSynced line changed between runs with different timestamps\n"+
+								"  Why: residual non-determinism beyond LastSynced exists\n"+
+								"  ref:  %q\n  iter: %q",
+								lineIdx+1, refLine, iterLines[lineIdx])
+						}
+					}
+				}
+			}
+		}
+
+		// --- Byte-identity after normalization ---
+		staticNorm := normalizeLastSynced(staticSrc)
+		constantsNorm := normalizeLastSynced(constantsSrc)
+
+		if !bytes.Equal(refStaticNorm, staticNorm) {
+			t.Fatalf("iteration %d (ts=%s): generateSource output differs from reference after LastSynced normalization\n"+
+				"  What: the static model list changed between runs (beyond LastSynced)\n"+
 				"  Why: R1 sort or fetchModelsWithRaw map-range is nondeterministic\n"+
 				"  Where: fetchModelsWithRaw or generateSource\n"+
 				"  How to fix: ensure sort.SliceStable(models, ...) runs before return in fetchModelsWithRaw",
-				i+1)
+				i+1, ts)
 		}
-		if !bytes.Equal(refConstants, constantsSrc) {
-			t.Fatalf("iteration %d: generateConstantsSource output differs from reference (nondeterminism)\n"+
+		if !bytes.Equal(refConstantsNorm, constantsNorm) {
+			t.Fatalf("iteration %d (ts=%s): generateConstantsSource output differs from reference after LastSynced normalization\n"+
 				"  What: the constants file changed between runs\n"+
 				"  Why: collision _N assignment is position-dependent (raw-ID ordinal not applied)\n"+
 				"  Where: resolveCollisions fallback or final-uniqueness pass\n"+
 				"  How to fix: replace sort.Ints(sortedPos) with raw-ID-keyed member sort in resolveCollisions",
-				i+1)
+				i+1, ts)
 		}
 
 		// Verify raw-ID → constant-name stability.
@@ -2060,6 +2166,13 @@ func TestCodegen_Reproducible_ByteIdentical(t *testing.T) {
 					i+1, rawID, constName, prev)
 			}
 		}
+	}
+
+	// Ensure we actually hit the sole-residual check at least once.
+	if !foundDifferentRawStatic {
+		t.Error("sole-residual check: no odd iteration produced raw-byte differences in the static file\n" +
+			"  What: the sole-residual proof never fired\n" +
+			"  Why: N may be < 2 or the alternating timestamp logic is broken")
 	}
 }
 
@@ -2090,8 +2203,11 @@ func TestCodegen_UpToDate(t *testing.T) {
 	}
 
 	// Regenerate from the fixture.
+	// Pass a representative injected timestamp to exercise the run() stamping path.
+	// normalizeLastSynced is applied to both sides before comparison, so the guard
+	// is insensitive to the codegen wall-clock (see bestiary-vq6k for true zero-diff).
 	fixtureJSON := deterministicFixtureJSON(t)
-	staticSrc, constantsSrc := runFixtureCodegen(t, fixtureJSON)
+	staticSrc, constantsSrc := runFixtureCodegen(t, fixtureJSON, "2000-01-01T00:00:00Z")
 
 	// stripGenHeader strips the 2-line "// Code generated..." / "//go:generate..." header
 	// from a generated Go file, then normalizes whitespace for comparison.
@@ -2112,9 +2228,17 @@ func TestCodegen_UpToDate(t *testing.T) {
 		return normalizeWhitespace(s)
 	}
 
-	// Normalize both sides: generated output (header stripped) and golden excerpt.
-	normConstants := stripGenHeader(constantsSrc)
-	normConstantsGolden := normalizeWhitespace(string(constantsGoldenRaw))
+	// normalizeAndStrip applies both normalizeLastSynced and stripGenHeader so that
+	// both the wall-clock stamp and gofmt alignment are factored out.
+	normalizeAndStrip := func(src []byte) string {
+		return stripGenHeader(normalizeLastSynced(src))
+	}
+
+	// Normalize both sides: generated output (LastSynced stripped, header stripped) and
+	// golden excerpt (LastSynced stripped). The golden file has LastSynced: "" because it
+	// was produced by the fixture path; after normalization both map to the same sentinel.
+	normConstants := normalizeAndStrip(constantsSrc)
+	normConstantsGolden := normalizeWhitespace(string(normalizeLastSynced(constantsGoldenRaw)))
 
 	// The golden excerpt must appear as a substring in the generated output.
 	// Normalizing whitespace on both sides makes the comparison insensitive to
@@ -2125,12 +2249,12 @@ func TestCodegen_UpToDate(t *testing.T) {
 			"  Why: collision _N bindings may have changed, or codegen logic was modified without re-running regen\n"+
 			"  Where: cmd/bestiary-gen/main.go generateConstantsSource or resolveCollisions\n"+
 			"  How to fix: run `go run ./cmd/bestiary-gen --no-fetch && git add models_constants_gen.go models_static_gen.go`\n"+
-			"\nGolden excerpt (normalized):\n%s\n\nGenerated (normalized, header stripped):\n%s",
+			"\nGolden excerpt (normalized, LastSynced stripped):\n%s\n\nGenerated (normalized, header+LastSynced stripped):\n%s",
 			normConstantsGolden, normConstants)
 	}
 
-	normStatic := stripGenHeader(staticSrc)
-	normStaticGolden := normalizeWhitespace(string(staticGoldenRaw))
+	normStatic := normalizeAndStrip(staticSrc)
+	normStaticGolden := normalizeWhitespace(string(normalizeLastSynced(staticGoldenRaw)))
 
 	// The golden excerpt must appear as a substring in the generated static output.
 	if !strings.Contains(normStatic, normStaticGolden) {
@@ -2139,7 +2263,7 @@ func TestCodegen_UpToDate(t *testing.T) {
 			"  Why: model ordering changed, or codegen logic was modified without re-running regen\n"+
 			"  Where: cmd/bestiary-gen/main.go generateSource\n"+
 			"  How to fix: run `go run ./cmd/bestiary-gen --no-fetch && git add models_constants_gen.go models_static_gen.go`\n"+
-			"\nGolden excerpt (normalized):\n%s\n\nGenerated (normalized, header stripped):\n%s",
+			"\nGolden excerpt (normalized, LastSynced stripped):\n%s\n\nGenerated (normalized, header+LastSynced stripped):\n%s",
 			normStaticGolden, normStatic)
 	}
 
@@ -2156,7 +2280,7 @@ func TestCodegen_UpToDate(t *testing.T) {
 // ASCII ordering: '-' (0x2D) < '.' (0x2E).
 func TestCodegen_GoldenPins_C(t *testing.T) {
 	fixtureJSON := deterministicFixtureJSON(t)
-	_, constantsSrc := runFixtureCodegen(t, fixtureJSON)
+	_, constantsSrc := runFixtureCodegen(t, fixtureJSON, "")
 	s := normalizeWhitespace(string(constantsSrc))
 
 	if !strings.Contains(s, `Model__CloudflareAIGateway__Claude__3__5__Haiku_1 ModelID = "anthropic/claude-3-5-haiku"`) {
@@ -2171,7 +2295,7 @@ func TestCodegen_GoldenPins_C(t *testing.T) {
 // "kilo-auto/free" → _1, "openrouter/free" → _2.
 func TestCodegen_GoldenPins_B(t *testing.T) {
 	fixtureJSON := deterministicFixtureJSON(t)
-	_, constantsSrc := runFixtureCodegen(t, fixtureJSON)
+	_, constantsSrc := runFixtureCodegen(t, fixtureJSON, "")
 	s := normalizeWhitespace(string(constantsSrc))
 
 	if !strings.Contains(s, `Model__Kilo__Free_1 ModelID = "kilo-auto/free"`) {
@@ -2188,7 +2312,7 @@ func TestCodegen_GoldenPins_B(t *testing.T) {
 // Asserts: exact names present; no fragment/doubled-ordinal variant.
 func TestCodegen_GoldenPins_E(t *testing.T) {
 	fixtureJSON := deterministicFixtureJSON(t)
-	_, constantsSrc := runFixtureCodegen(t, fixtureJSON)
+	_, constantsSrc := runFixtureCodegen(t, fixtureJSON, "")
 	s := normalizeWhitespace(string(constantsSrc))
 
 	if !strings.Contains(s, `Model__OpenAI__GPT__5_1 ModelID = "gpt-5.1"`) {

@@ -94,15 +94,15 @@ When updating wire types for upstream API changes:
 
 ## Codegen determinism invariants
 
-The codegen pipeline (`cmd/bestiary-gen`) is required to be fully deterministic: two successive runs over the same input MUST produce byte-identical output. The following invariants enforce this (see bestiary-9lnq for the original bug):
+The codegen pipeline (`cmd/bestiary-gen`) is required to be fully deterministic: two successive runs over the same input MUST produce byte-identical output **modulo the `LastSynced` codegen timestamp** (wall-clock). Model ordering and collision `_N` assignment are fully deterministic. The `LastSynced` wall-clock stamp is the sole known residual non-determinism; making it deterministic is tracked in bestiary-vq6k (Epoch 2 / FOLLOWUP). See bestiary-9lnq for the original ordering bug.
 
 1. **Model ordering (R1)**: `fetchModelsWithRaw` sorts the assembled model slice by `(Provider, ID)` — ascending lexicographic — immediately before returning. This single sort covers both the outer provider-map iteration and inner model-map iteration nondeterminism of the models.dev API response.
 
 2. **Collision suffix ordering**: When two models share the same candidate constant name and the version-suffix pass (a) cannot distinguish them, the fallback assigns `_1`, `_2`, … by alphabetical raw model ID order (not slice position). This makes the `_N` binding stable regardless of insertion order. Meaningful naming of collision groups is deferred to bestiary-r66e (Epoch 2).
 
-3. **Reproducibility test**: `TestCodegen_Reproducible_ByteIdentical` (N=100, `cmd/bestiary-gen/main_test.go`) verifies byte-identity across 100 fresh codegen runs using a hermetic fixture. Run it locally before committing codegen changes.
+3. **Reproducibility test**: `TestCodegen_Reproducible_ByteIdentical` (N=100, `cmd/bestiary-gen/main_test.go`) verifies byte-identity across 100 fresh codegen runs using a hermetic fixture. The test exercises the `run()` LastSynced stamping path (mirroring `main.go:363-365`) with two alternating RFC3339 timestamps (tsA / tsB), normalizes the `LastSynced` value on both sides before comparing, and asserts that raw output from two differently-stamped runs differs **only** in `LastSynced` lines — confirming it is the sole residual non-determinism. Run this test locally before committing codegen changes.
 
-4. **Up-to-date guard**: `TestCodegen_UpToDate` checks that the committed golden excerpts (`cmd/bestiary-gen/testdata/expected_*_excerpt.go.golden`) match what the current codegen logic would produce from the fixture. If this test fails after a logic change, re-run regen and commit the updated generated files.
+4. **Up-to-date guard**: `TestCodegen_UpToDate` checks that the committed golden excerpts (`cmd/bestiary-gen/testdata/expected_*_excerpt.go.golden`) match what the current codegen logic would produce from the fixture. Both sides have `LastSynced` normalized before comparison, so the guard is insensitive to the codegen wall-clock. If this test fails after a logic change, re-run regen and commit the updated generated files.
 
 5. **Regen workflow**: After any change to `cmd/bestiary-gen/main.go`, regenerate and commit the generated files as a **separate** `chore(gen):` commit:
    ```
@@ -110,4 +110,4 @@ The codegen pipeline (`cmd/bestiary-gen`) is required to be fully deterministic:
    git add models_static_gen.go models_constants_gen.go
    git agent-commit -m "chore(gen): regen after <change>"
    ```
-   A second `--no-fetch` run after committing must produce zero `git diff`.
+   Note: a second `--no-fetch` run after committing will still show a diff in `LastSynced` lines (wall-clock stamp). This is expected under the current guarantee. True zero-diff regen (deterministic `LastSynced`) is tracked in bestiary-vq6k.
