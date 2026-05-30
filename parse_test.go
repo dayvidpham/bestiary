@@ -903,38 +903,30 @@ func TestParseFamilyDetailed_VersionDigitsNotExtracted(t *testing.T) {
 		tc := tc
 		t.Run(string(tc.rawFamily), func(t *testing.T) {
 			t.Parallel()
-			family, variant, version, failure := bestiary.ParseFamilyDetailed(tc.rawFamily, tc.id, tc.provider)
+			// Under Δ1 (extract-first), these inputs now SUCCEED: version is populated from
+			// the model ID via ExtractVersionBetweenFamilyAndVariant. So failure must be nil
+			// and version must be non-empty.
+			family, variant, version, modifier, failure := bestiary.ParseFamilyDetailed(tc.rawFamily, tc.id, tc.provider)
+			_ = modifier
 
 			// Best-effort result is always returned.
 			if family == "" {
 				t.Errorf("ParseFamilyDetailed(%q): got empty family; expected a non-empty best-effort result", tc.rawFamily)
 			}
 			_ = variant
-			_ = version
 
-			// Failure must be emitted.
-			if failure == nil {
-				t.Fatalf("ParseFamilyDetailed(%q): expected ParseFailure, got nil\n"+
-					"  What: version digits between family-prefix and variant were not detected as a failure\n"+
-					"  Why: the detector did not match the pattern <alpha>-<digit>-<alpha>\n"+
-					"  How to fix: verify reVersionBetweenFamilyAndVariant regex matches the input",
-					tc.rawFamily)
+			// Under Δ1 extract-first: version must be populated from the model ID.
+			if version == "" {
+				t.Errorf("ParseFamilyDetailed(%q, %q): version = %q, want non-empty (Δ1 extract-first should populate version)",
+					tc.rawFamily, tc.id, version)
 			}
-			if failure.Reason != bestiary.ReasonVersionDigitsNotExtracted {
-				t.Errorf("ParseFamilyDetailed(%q): failure.Reason = %q, want %q",
-					tc.rawFamily, failure.Reason, bestiary.ReasonVersionDigitsNotExtracted)
-			}
-			if failure.RawFamily != tc.rawFamily {
-				t.Errorf("ParseFamilyDetailed(%q): failure.RawFamily = %q, want %q",
-					tc.rawFamily, failure.RawFamily, tc.rawFamily)
-			}
-			if failure.RawID != tc.id {
-				t.Errorf("ParseFamilyDetailed(%q): failure.RawID = %q, want %q",
-					tc.rawFamily, failure.RawID, tc.id)
-			}
-			if failure.Provider != tc.provider {
-				t.Errorf("ParseFamilyDetailed(%q): failure.Provider = %q, want %q",
-					tc.rawFamily, failure.Provider, tc.provider)
+
+			// Failure must be nil — extract-first mode succeeds for these inputs.
+			if failure != nil {
+				t.Errorf("ParseFamilyDetailed(%q, %q): expected nil ParseFailure (version now extracted), got Reason=%q\n"+
+					"  What: Δ1 extract-first should populate version from the model ID\n"+
+					"  Why: ExtractVersionBetweenFamilyAndVariant should find the digits in the ID",
+					tc.rawFamily, tc.id, failure.Reason)
 			}
 		})
 	}
@@ -965,7 +957,7 @@ func TestParseFamilyDetailed_YYMMDateAsVersion(t *testing.T) {
 		tc := tc
 		t.Run(string(tc.rawFamily), func(t *testing.T) {
 			t.Parallel()
-			_, _, _, failure := bestiary.ParseFamilyDetailed(tc.rawFamily, tc.id, tc.provider)
+			_, _, _, _, failure := bestiary.ParseFamilyDetailed(tc.rawFamily, tc.id, tc.provider)
 
 			if failure == nil {
 				t.Fatalf("ParseFamilyDetailed(%q): expected ParseFailure for YYMM pattern, got nil\n"+
@@ -1312,7 +1304,8 @@ func TestParseFamilyDetailed_KnownSuffixOverflow(t *testing.T) {
 		tc := tc
 		t.Run(string(tc.id), func(t *testing.T) {
 			t.Parallel()
-			family, variant, version, failure := bestiary.ParseFamilyDetailed(tc.rawFamily, tc.id, tc.provider)
+			family, variant, version, modifier, failure := bestiary.ParseFamilyDetailed(tc.rawFamily, tc.id, tc.provider)
+			_ = modifier
 
 			// Best-effort parse result is always returned.
 			if family == "" {
@@ -1326,8 +1319,8 @@ func TestParseFamilyDetailed_KnownSuffixOverflow(t *testing.T) {
 			if failure == nil {
 				t.Fatalf("ParseFamilyDetailed(%q, %q): expected ParseFailure for known modifier %q, got nil\n"+
 					"  What: trailing modifier token in model ID was not detected\n"+
-					"  Why: knownModifierTokens allowlist or Mode 2 condition may have changed\n"+
-					"  How to fix: verify the modifier %q is in knownModifierTokens and Mode 2 fires for this case",
+					"  Why: pd.modifiers allowlist or Mode 2 condition may have changed\n"+
+					"  How to fix: verify the modifier %q is in parse/data/modifiers.json and Mode 2 fires for this case",
 					tc.rawFamily, tc.id, tc.modifier, tc.modifier)
 			}
 			if failure.Reason != bestiary.ReasonKnownSuffixOverflow {
@@ -1387,14 +1380,29 @@ func TestParseFamilyDetailed_UnknownSuffixOverflow(t *testing.T) {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
-			// SKIPPED: The Mode 2 UnknownSuffixOverflow path (detectSuffixOverflow) is
-			// unreachable by current parser construction. ParseFamilyWithVersion Step-5
-			// fallback absorbs all trailing tokens into the family string, leaving 0
-			// unaccounted tokens — so detectSuffixOverflow never crosses the >2 threshold.
-			// (Per Reviewer 2's empirical analysis, SLICE-FIX-V2-3 cycle-3.)
-			// Re-enable this test when FOLLOWUP bestiary-e9pi (parser reorder under
-			// FOLLOWUP_SLICE-1 bestiary-wi36) lands and makes this code path reachable.
-			t.Skip("ReasonUnknownSuffixOverflow unreachable by current parser construction — see bestiary-e9pi for parser-reorder fix")
+			// R3a (e9pi): this test is RE-ENABLED after the Step-5 bounded reorder in
+			// ParseFamilyWithVersion. The reorder prevents the pure-fallback from absorbing
+			// all trailing tokens, making ReasonUnknownSuffixOverflow reachable.
+			// Input: rawFamily="claude-opus-4-1-extra-stuff-zen" — ParseFamilyWithVersion
+			// now decomposes (claude, opus, 4.1) via hyphen-version; "extra-stuff-zen"
+			// are unaccounted tokens (>2 threshold) → detectSuffixOverflow fires → "zen"
+			// is unknown → ReasonUnknownSuffixOverflow.
+			_, _, _, _, failure := bestiary.ParseFamilyDetailed(tc.rawFamily, tc.id, tc.provider)
+			if failure == nil {
+				t.Errorf("ParseFamilyDetailed(%q, %q): expected ParseFailure with Reason=%q, got nil\n"+
+					"  What: ReasonUnknownSuffixOverflow was not emitted\n"+
+					"  Why: ParseFamilyWithVersion Step-5 bounded reorder (R3a e9pi) must decompose\n"+
+					"       the input so that 'extra-stuff-zen' tokens are unaccounted (>2 threshold)\n"+
+					"  How to fix: verify ParseFamilyWithVersion returns (claude,opus,4.1) not raw passthrough",
+					tc.rawFamily, tc.id, bestiary.ReasonUnknownSuffixOverflow)
+				return
+			}
+			if failure.Reason != bestiary.ReasonUnknownSuffixOverflow {
+				t.Errorf("ParseFamilyDetailed(%q, %q): failure.Reason = %q, want %q\n"+
+					"  What: wrong failure reason — expected UnknownSuffixOverflow\n"+
+					"  Why: trailing token 'zen' is not in pd.modifiers but overflow was detected",
+					tc.rawFamily, tc.id, failure.Reason, bestiary.ReasonUnknownSuffixOverflow)
+			}
 		})
 	}
 
@@ -1416,7 +1424,7 @@ func TestParseFamilyDetailed_UnknownSuffixOverflow(t *testing.T) {
 		tc := tc
 		t.Run("no-overflow/"+string(tc.id), func(t *testing.T) {
 			t.Parallel()
-			_, _, _, failure := bestiary.ParseFamilyDetailed(tc.rawFamily, tc.id, tc.provider)
+			_, _, _, _, failure := bestiary.ParseFamilyDetailed(tc.rawFamily, tc.id, tc.provider)
 			if failure != nil && failure.Reason == bestiary.ReasonUnknownSuffixOverflow {
 				t.Errorf("ParseFamilyDetailed(%q, %q): got ReasonUnknownSuffixOverflow; "+
 					"this case should not fire Mode 2 (trailing token is unknown but no overflow)",
@@ -1453,7 +1461,7 @@ func TestParseFamilyDetailed_Mode2_NegativeCases(t *testing.T) {
 		tc := tc
 		t.Run(string(tc.id), func(t *testing.T) {
 			t.Parallel()
-			_, _, _, failure := bestiary.ParseFamilyDetailed(tc.rawFamily, tc.id, tc.provider)
+			_, _, _, _, failure := bestiary.ParseFamilyDetailed(tc.rawFamily, tc.id, tc.provider)
 			if failure != nil && (failure.Reason == bestiary.ReasonKnownSuffixOverflow || failure.Reason == bestiary.ReasonUnknownSuffixOverflow) {
 				t.Errorf("ParseFamilyDetailed(%q, %q): got Mode 2 failure %q, expected none\n"+
 					"  Note: %s\n"+
@@ -1491,12 +1499,438 @@ func TestParseFamilyDetailed_CleanParse(t *testing.T) {
 		tc := tc
 		t.Run(string(tc.rawFamily), func(t *testing.T) {
 			t.Parallel()
-			family, _, _, failure := bestiary.ParseFamilyDetailed(tc.rawFamily, tc.id, tc.provider)
+			family, _, _, _, failure := bestiary.ParseFamilyDetailed(tc.rawFamily, tc.id, tc.provider)
 
 			if failure != nil {
 				t.Errorf("ParseFamilyDetailed(%q): expected nil ParseFailure for clean parse, got: %+v\n"+
 					"  Family=%q  Reason=%q",
 					tc.rawFamily, failure, family, failure.Reason)
+			}
+		})
+	}
+}
+
+// --------------------------------------------------------------------------
+// R1: ExtractVersionBetweenFamilyAndVariant tests (SLICE-1-L2)
+// --------------------------------------------------------------------------
+
+// TestExtractVersionBetweenFamilyAndVariant covers the primary acceptance cases
+// from the L2 scope. These tests FAIL until L3 implements the extractor.
+//
+// N-M equivalence: hyphen-separated numeric tokens are dot-joined (3-5 → 3.5).
+// Residual: tokens between version and variant that are neither numeric nor variant
+// are returned in the residual slice (honest-audit per R2).
+func TestExtractVersionBetweenFamilyAndVariant(t *testing.T) {
+	t.Parallel()
+
+	cases := []struct {
+		desc           string
+		id             bestiary.ModelID
+		family         bestiary.Family
+		variant        string
+		wantVersion    string
+		wantResidual   []string
+	}{
+		// Primary acceptance cases from L2 scope.
+		{
+			desc:    "gpt-5-mini → 5 (single numeric between family and variant)",
+			id:      "gpt-5-mini",
+			family:  "gpt",
+			variant: "mini",
+			wantVersion:  "5",
+			wantResidual: nil,
+		},
+		{
+			desc:    "claude-3-5-haiku-20241022 → 3.5 (N-M dot-join)",
+			id:      "claude-3-5-haiku-20241022",
+			family:  "claude",
+			variant: "haiku",
+			wantVersion:  "3.5",
+			wantResidual: nil,
+		},
+		{
+			desc:    "claude-3.5-haiku → 3.5 (dot-normalized in ID)",
+			id:      "claude-3.5-haiku",
+			family:  "claude",
+			variant: "haiku",
+			wantVersion:  "3.5",
+			wantResidual: nil,
+		},
+		{
+			desc:    "gemini-3-pro-preview → 3 (single numeric, variant=pro)",
+			id:      "gemini-3-pro-preview",
+			family:  "gemini",
+			variant: "pro",
+			wantVersion:  "3",
+			wantResidual: nil,
+		},
+		{
+			desc:    "gemini-3-1-pro-preview → 3.1 (N-M dot-join, variant=pro)",
+			id:      "gemini-3-1-pro-preview",
+			family:  "gemini",
+			variant: "pro",
+			wantVersion:  "3.1",
+			wantResidual: nil,
+		},
+		{
+			desc:    "nova-2-lite-v1 → version=2, residual=[v1] (R2 honest-audit)",
+			id:      "nova-2-lite-v1",
+			family:  "nova",
+			variant: "lite",
+			wantVersion:  "2",
+			wantResidual: []string{"v1"},
+		},
+		{
+			desc:    "nemotron-3-super-free → version=3, residual=[super] (R2 honest-audit)",
+			id:      "nemotron-3-super-free",
+			family:  "nemotron",
+			variant: "free",
+			wantVersion:  "3",
+			wantResidual: []string{"super"},
+		},
+		// Edge cases.
+		{
+			desc:        "no version between family and variant → empty",
+			id:          "claude-opus-4-6",
+			family:      "claude",
+			variant:     "opus",
+			wantVersion: "",
+		},
+		{
+			desc:        "empty id → empty",
+			id:          "",
+			family:      "claude",
+			variant:     "haiku",
+			wantVersion: "",
+		},
+		{
+			desc:        "empty family → empty",
+			id:          "claude-3-5-haiku-20241022",
+			family:      "",
+			variant:     "haiku",
+			wantVersion: "",
+		},
+	}
+
+	for _, tc := range cases {
+		tc := tc
+		t.Run(tc.desc, func(t *testing.T) {
+			t.Parallel()
+			gotVersion, gotResidual := bestiary.ExtractVersionBetweenFamilyAndVariant(tc.id, tc.family, tc.variant)
+			if gotVersion != tc.wantVersion {
+				t.Errorf("ExtractVersionBetweenFamilyAndVariant(%q, %q, %q) version = %q, want %q",
+					tc.id, tc.family, tc.variant, gotVersion, tc.wantVersion)
+			}
+			// Compare residual slices (nil and empty are equivalent for this test).
+			if len(gotResidual) != len(tc.wantResidual) {
+				t.Errorf("ExtractVersionBetweenFamilyAndVariant(%q, %q, %q) residual = %v, want %v",
+					tc.id, tc.family, tc.variant, gotResidual, tc.wantResidual)
+			} else {
+				for i, tok := range tc.wantResidual {
+					if gotResidual[i] != tok {
+						t.Errorf("ExtractVersionBetweenFamilyAndVariant(%q, %q, %q) residual[%d] = %q, want %q",
+							tc.id, tc.family, tc.variant, i, gotResidual[i], tok)
+					}
+				}
+			}
+		})
+	}
+}
+
+// --------------------------------------------------------------------------
+// R3b (eq7w): isYYMMDateToken tests
+// --------------------------------------------------------------------------
+
+// TestIsYYMMDateToken verifies the YYMM-date guard: 4-digit tokens matching the
+// YYMM range (century prefixes 19xx–29xx) must return true, while genuine version
+// tokens (4o, 45, 2.5) must return false.
+//
+// Parity contract: isYYMMDateToken true ⇒ isVersionToken rejects the token ⇒
+// ExtractVersionFromID rejects it ⇒ mistral-small-2603 yields no version.
+func TestIsYYMMDateToken(t *testing.T) {
+	t.Parallel()
+
+	cases := []struct {
+		tok  string
+		want bool
+	}{
+		// True: YYMM range tokens (should be rejected as versions).
+		{"2603", true},  // mistral-small-2603
+		{"2512", true},  // YYMM dec 2025
+		{"2411", true},  // pixtral-style
+		{"2401", true},  // mistral-2401
+		{"2503", true},  // another YYMM
+		// False: genuine version tokens.
+		{"45", false},    // single two-digit (not 4-digit)
+		{"46", false},    // single two-digit
+		{"4o", false},    // alphanumeric (not pure digits)
+		{"2", false},     // single digit
+		{"35", false},    // two-digit version
+		{"100", false},   // three digits
+		// False: 4-digit tokens outside YYMM range.
+		{"1234", false},  // 12xx — below 19xx threshold
+		{"3000", false},  // 30xx — above 29xx threshold
+		// False: empty.
+		{"", false},
+	}
+
+	for _, tc := range cases {
+		tc := tc
+		t.Run(tc.tok, func(t *testing.T) {
+			t.Parallel()
+			got := bestiary.IsYYMMDateToken(tc.tok)
+			if got != tc.want {
+				t.Errorf("IsYYMMDateToken(%q) = %v, want %v", tc.tok, got, tc.want)
+			}
+		})
+	}
+}
+
+// TestIsYYMMDateToken_Parity verifies that isYYMMDateToken parity holds with
+// ExtractVersionFromID: tokens for which isYYMMDateToken is true must not be
+// returned as versions.
+//
+// The key case: mistral-small-2603 → no version (2603 is a YYMM date).
+func TestIsYYMMDateToken_Parity(t *testing.T) {
+	t.Parallel()
+
+	cases := []struct {
+		desc      string
+		id        bestiary.ModelID
+		rawFamily bestiary.Family
+		want      string
+	}{
+		{
+			desc:      "mistral-small-2603 → no version (2603 is YYMM date)",
+			id:        "mistral-small-2603",
+			rawFamily: "mistral",
+			want:      "",
+		},
+		{
+			desc:      "mistral-medium-2505 → no version (2505 is YYMM date)",
+			id:        "mistral-medium-2505",
+			rawFamily: "mistral",
+			want:      "",
+		},
+		{
+			desc:      "genuine version still extracted: claude-opus-4-6",
+			id:        "claude-opus-4-6",
+			rawFamily: "claude-opus",
+			want:      "4.6",
+		},
+	}
+
+	for _, tc := range cases {
+		tc := tc
+		t.Run(tc.desc, func(t *testing.T) {
+			t.Parallel()
+			got := bestiary.ExtractVersionFromID(tc.id, tc.rawFamily)
+			if got != tc.want {
+				t.Errorf("ExtractVersionFromID(%q, %q) = %q, want %q\n"+
+					"  What: YYMM token was not rejected by isYYMMDateToken guard\n"+
+					"  Why: ExtractVersionFromID must consult isYYMMDateToken before returning hyphen-digit tokens",
+					tc.id, tc.rawFamily, got, tc.want)
+			}
+		})
+	}
+}
+
+// --------------------------------------------------------------------------
+// R3c (Δ2′): InferFamilyFromIDWithVariant tests (R3c acceptance)
+// --------------------------------------------------------------------------
+
+// TestInferFamilyFromIDWithVariant_R3c covers the Δ2′ corrected algorithm:
+// tentative modifier strip → expose hidden date → decompose → guarded commit.
+//
+// Three empirically-verified traces from PROPOSAL-4 bestiary-y5lo:
+//  1. 302ai re-host: claude-opus-4-1-20250805-thinking → (claude, opus, 4.1)
+//  2. Genuine-variant guard: kimi-k2-thinking → GUARD-2 declines, variant=thinking preserved
+//  3. No-modifier control: claude-opus-4-1-20250805 → (claude, opus, 4.1) unchanged
+func TestInferFamilyFromIDWithVariant_R3c(t *testing.T) {
+	t.Parallel()
+
+	cases := []struct {
+		desc        string
+		id          bestiary.ModelID
+		provider    bestiary.Provider
+		wantFamily  bestiary.Family
+		wantVariant string
+		wantVersion string
+	}{
+		{
+			// Trace 1: 302ai re-host — empty raw_family, modifier after date.
+			// exposed=claude-opus-4-1-20250805 → cleaned=claude-opus-4-1 → PFWV →
+			// (claude, opus, 4.1); GUARD-1 passes (ExtractModifier returns -thinking),
+			// GUARD-2 passes (claude != claude-opus-4-1) → return (claude, opus, 4.1).
+			desc:        "claude-opus-4-1-20250805-thinking → (claude, opus, 4.1)",
+			id:          "claude-opus-4-1-20250805-thinking",
+			provider:    "302ai",
+			wantFamily:  "claude",
+			wantVariant: "opus",
+			wantVersion: "4.1",
+		},
+		{
+			// Trace 2: genuine-variant guard — kimi-k2-thinking (hypothetical empty raw_family).
+			// exposed=kimi-k2 → cleaned=kimi-k2 → PFWV → (kimi-k2,"","") passthrough →
+			// GUARD-2 declines (fProv == cleaned) → existing flow → variant=thinking preserved.
+			// Key: the variant MUST be "thinking", not "". Family is "kimi-k2" (no over-strip).
+			desc:        "kimi-k2-thinking-style passthrough → variant=thinking",
+			id:          "kimi-k2-thinking",
+			provider:    "moonshot",
+			wantFamily:  "kimi-k2",
+			wantVariant: "thinking",
+			wantVersion: "",
+		},
+		{
+			// Trace 3: no-modifier control — claude-opus-4-1-20250805.
+			// trimOneTrailingModifier is a no-op (last token is date digit-group) →
+			// existing flow → (claude, opus, 4.1) exactly as today.
+			desc:        "claude-opus-4-1-20250805 no modifier → unchanged",
+			id:          "claude-opus-4-1-20250805",
+			provider:    "anthropic",
+			wantFamily:  "claude",
+			wantVariant: "opus",
+			wantVersion: "4.1",
+		},
+		{
+			// Previous acceptance case (must not regress).
+			desc:        "claude-opus-4-5-20251101 empty raw_family",
+			id:          "claude-opus-4-5-20251101",
+			provider:    "nano-gpt",
+			wantFamily:  "claude",
+			wantVariant: "opus",
+			wantVersion: "4.5",
+		},
+	}
+
+	for _, tc := range cases {
+		tc := tc
+		t.Run(tc.desc, func(t *testing.T) {
+			t.Parallel()
+			gotFamily, gotVariant, gotVersion := bestiary.InferFamilyFromIDWithVariant(tc.id, tc.provider)
+			if gotFamily != tc.wantFamily {
+				t.Errorf("InferFamilyFromIDWithVariant(%q) family = %q, want %q",
+					tc.id, gotFamily, tc.wantFamily)
+			}
+			if gotVariant != tc.wantVariant {
+				t.Errorf("InferFamilyFromIDWithVariant(%q) variant = %q, want %q",
+					tc.id, gotVariant, tc.wantVariant)
+			}
+			if gotVersion != tc.wantVersion {
+				t.Errorf("InferFamilyFromIDWithVariant(%q) version = %q, want %q",
+					tc.id, gotVersion, tc.wantVersion)
+			}
+		})
+	}
+}
+
+// TestParseFamilyDetailed_R3c verifies that ParseFamilyDetailed, when called with
+// empty raw_family (via InferFamilyFromIDWithVariant path), produces the expected
+// 5-tuple for the Δ2′ traces.
+//
+// This covers the MANDATE from the UAT: 5-tuple returns include modifier.
+func TestParseFamilyDetailed_5Tuple(t *testing.T) {
+	t.Parallel()
+
+	cases := []struct {
+		desc        string
+		rawFamily   bestiary.Family
+		id          bestiary.ModelID
+		provider    bestiary.Provider
+		wantFamily  bestiary.Family
+		wantVariant string
+		wantVersion string
+		wantModifier string
+	}{
+		{
+			desc:         "claude-opus-4-1-20250805-thinking → modifier=thinking",
+			rawFamily:    "claude-opus",
+			id:           "claude-opus-4-1-20250805-thinking",
+			provider:     "anthropic",
+			wantFamily:   "claude",
+			wantVariant:  "opus",
+			wantVersion:  "4.1",
+			wantModifier: "thinking",
+		},
+		{
+			desc:         "claude-opus-4-6 → no modifier",
+			rawFamily:    "claude-opus",
+			id:           "claude-opus-4-6",
+			provider:     "anthropic",
+			wantFamily:   "claude",
+			wantVariant:  "opus",
+			wantVersion:  "4.6",
+			wantModifier: "",
+		},
+	}
+
+	for _, tc := range cases {
+		tc := tc
+		t.Run(tc.desc, func(t *testing.T) {
+			t.Parallel()
+			family, variant, version, modifier, failure := bestiary.ParseFamilyDetailed(tc.rawFamily, tc.id, tc.provider)
+			if family != tc.wantFamily {
+				t.Errorf("family = %q, want %q", family, tc.wantFamily)
+			}
+			if variant != tc.wantVariant {
+				t.Errorf("variant = %q, want %q", variant, tc.wantVariant)
+			}
+			if version != tc.wantVersion {
+				t.Errorf("version = %q, want %q", version, tc.wantVersion)
+			}
+			if modifier != tc.wantModifier {
+				t.Errorf("modifier = %q, want %q", modifier, tc.wantModifier)
+			}
+			// Clean cases should not emit failures.
+			if failure != nil && tc.wantModifier == "" {
+				t.Errorf("unexpected failure: %+v", failure)
+			}
+		})
+	}
+}
+
+// TestParseFamilyDetailed_R2_Residual verifies the R2 honest-audit signal:
+// when extraction succeeds but leaves a residual token, a ParseFailure is emitted
+// with Reason=ReasonResidualUnaccountedTokens AND version is populated.
+//
+// BDD: Given id="nova-2-lite-v1" and rawFamily="nova-lite" when parsed
+// then version="2" AND failure.Reason=ReasonResidualUnaccountedTokens with [v1].
+func TestParseFamilyDetailed_R2_Residual(t *testing.T) {
+	t.Parallel()
+
+	cases := []struct {
+		desc      string
+		rawFamily bestiary.Family
+		id        bestiary.ModelID
+		provider  bestiary.Provider
+		wantVersion string
+	}{
+		{
+			desc:        "nova-2-lite-v1 → version=2 + residual failure",
+			rawFamily:   "nova-lite",
+			id:          "nova-2-lite-v1",
+			provider:    "amazon",
+			wantVersion: "2",
+		},
+	}
+
+	for _, tc := range cases {
+		tc := tc
+		t.Run(tc.desc, func(t *testing.T) {
+			t.Parallel()
+			_, _, version, _, failure := bestiary.ParseFamilyDetailed(tc.rawFamily, tc.id, tc.provider)
+			if version != tc.wantVersion {
+				t.Errorf("ParseFamilyDetailed(%q, %q): version = %q, want %q\n"+
+					"  R2: version must be populated even when failure is emitted",
+					tc.rawFamily, tc.id, version, tc.wantVersion)
+			}
+			if failure == nil {
+				t.Fatalf("ParseFamilyDetailed(%q, %q): expected ParseFailure with R2 residual, got nil",
+					tc.rawFamily, tc.id)
+			}
+			if failure.Reason != bestiary.ReasonResidualUnaccountedTokens {
+				t.Errorf("ParseFamilyDetailed(%q, %q): failure.Reason = %q, want %q",
+					tc.rawFamily, tc.id, failure.Reason, bestiary.ReasonResidualUnaccountedTokens)
 			}
 		})
 	}

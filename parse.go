@@ -422,7 +422,41 @@ func ParseFamilyWithVersion(raw Family) (Family, string, string) {
 		return Family(baseWithoutVer), "", ver
 	}
 
-	// Step 5: Pure fallback — return raw unchanged, no version.
+	// Step 5: Bounded reorder — try to find a known-override prefix before pure passthrough.
+	// R3a (e9pi): without this step, a string like "claude-opus-4-1-extra-stuff-zen" would
+	// return the whole string as the family (passthrough), causing detectSuffixOverflow to
+	// find 0 unaccounted tokens (all tokens are "consumed" by the family) and thus making
+	// ReasonUnknownSuffixOverflow unreachable.
+	//
+	// Algorithm: scan hyphen-segmented prefixes of rawStr from longest to shortest. If a
+	// prefix is found in the overrides table, use that override's (family, variant) as the
+	// decomposition and attempt to extract a version from the remaining numeric tokens.
+	// This ensures that "claude-opus-4-1-extra-stuff-zen" decomposes to (claude, opus, 4.1)
+	// rather than returning the whole string as the family, making the overflow tokens
+	// (extra, stuff, zen) visible to detectSuffixOverflow.
+	rawTokens5 := strings.Split(rawStr, "-")
+	for prefixLen := len(rawTokens5) - 1; prefixLen >= 1; prefixLen-- {
+		candidate := strings.Join(rawTokens5[:prefixLen], "-")
+		if ov, ok := pd.overrides[Family(candidate)]; ok {
+			// Found an override prefix. The remaining tokens are the suffix.
+			suffix := rawTokens5[prefixLen:]
+
+			// Collect leading purely-numeric suffix tokens as version.
+			var versionTokens []string
+			for _, tok := range suffix {
+				if isVersionToken(tok) && !isYYMMDateToken(tok) {
+					versionTokens = append(versionTokens, tok)
+				} else {
+					break
+				}
+			}
+
+			version5 := strings.Join(versionTokens, ".")
+			return ov.Family, ov.Variant, version5
+		}
+	}
+
+	// Step 5 fallback: return raw unchanged, no version.
 	return raw, "", ""
 }
 
@@ -498,7 +532,12 @@ func ExtractVersionFromID(id ModelID, rawFamily Family) string {
 
 	// Path (a): all tokens are purely numeric → hyphen-separated digits → dot-join.
 	// e.g. "4-5" → "4.5"; "4-6" → "4.6"; "3-1" → "3.1"
+	// R3b (eq7w): reject a single YYMM token (e.g. "2603") to prevent Mistral-style
+	// 4-digit date numerals from being returned as versions.
 	if reHyphenDigits.MatchString(remainder) {
+		if IsYYMMDateToken(remainder) {
+			return ""
+		}
 		return strings.ReplaceAll(remainder, "-", ".")
 	}
 
@@ -683,12 +722,10 @@ func ExtractModifier(id ModelID, family Family, variant string) (modifier string
 // InferFamilyFromIDWithVariant is the extended empty-family fallback for models
 // whose API family field is empty (~25% of models). Unlike InferFamilyFromID,
 // it extracts (Family, Variant, Version) by:
-//  1. Inferring the family from the first token of the model ID.
-//  2. Deriving the raw family string from the inferred family + remaining tokens
-//     (treating the ID after the family prefix as a family-like string for parsing).
-//  3. Applying ParseFamilyWithVersion on the derived family string to extract
-//     variant and version using the same suffix/pattern logic as the non-empty
-//     family path in genToModelInfo.
+//  1. Attempting the Δ2′ modifier-strip path (R3c): tentatively strip a trailing
+//     modifier to expose a hidden date, then decompose and apply two commit guards.
+//  2. Existing flow: strip trailing date, feed ID to ParseFamilyWithVersion, then
+//     fall back to first-token-only if no decomposition found.
 //
 // This ensures (Family, Variant, Version) is consistent across providers
 // regardless of whether raw_family is empty or populated.
@@ -698,6 +735,7 @@ func ExtractModifier(id ModelID, family Family, variant string) (modifier string
 //	InferFamilyFromIDWithVariant("claude-opus-4-5-20251101", "nano-gpt") → ("claude", "opus", "4.5")
 //	InferFamilyFromIDWithVariant("claude-opus-4-6", "some-provider")    → ("claude", "opus", "4.6")
 //	InferFamilyFromIDWithVariant("gpt-4o", "openai")                    → ("gpt", "", "4o")
+//	InferFamilyFromIDWithVariant("claude-opus-4-1-20250805-thinking", "302ai") → ("claude", "opus", "4.1")
 //
 // The provider parameter is reserved for future provider-specific heuristics
 // and is not currently used.
@@ -705,13 +743,45 @@ func InferFamilyFromIDWithVariant(id ModelID, p Provider) (Family, string, strin
 	if id == "" {
 		return "", "", ""
 	}
-	idStr := string(id)
+	idStr := lastPathSegment(string(id))
 
-	// Step 1: strip trailing date tokens so they don't contaminate family inference.
-	stripped := stripTrailingDate(idStr)
-	if stripped == "" {
-		stripped = idStr
+	// R3c (Δ2′): a trailing modifier (e.g. "-thinking") can hide a trailing date
+	// ("-20250805-thinking"), blocking stripTrailingDate and corrupting decomposition.
+	// Algorithm: tentatively strip modifier → expose date → stripTrailingDate → provisional
+	// decompose → GUARD-1 (variant-guard: ExtractModifier returns non-empty consumed) +
+	// GUARD-2 (passthrough-guard: fProv != Family(cleaned)) → commit.
+	if exposed := trimOneTrailingModifier(idStr); exposed != idStr {
+		// A trailing pd.modifiers token was present; now the date (if any) is exposed.
+		cleaned := orSelf(stripTrailingDate(exposed), exposed)
+		fProv, vProv, verProv := ParseFamilyWithVersion(Family(cleaned))
+
+		// GUARD-1 (variant-guard): ExtractModifier(id, fProv, vProv) must return a
+		// non-empty consumed string. This confirms the trailing modifier token is a
+		// genuine modifier (not the same as the provisional variant), preventing
+		// over-stripping of real variants like "thinking" in "kimi-k2-thinking".
+		_, consumed := ExtractModifier(id, fProv, vProv)
+
+		// GUARD-2 (passthrough-guard): fProv must differ from the cleaned string.
+		// If they are equal, ParseFamilyWithVersion returned a pure passthrough (no
+		// decomposition found), meaning the strip was not semantically meaningful.
+		if consumed != "" && fProv != Family(cleaned) {
+			version := verProv
+			if version == "" && fProv != "" {
+				version = ExtractVersionFromID(ModelID(cleaned), fProv)
+			}
+			if version == "" && vProv != "" {
+				if v, _ := ExtractVersionBetweenFamilyAndVariant(ModelID(cleaned), fProv, vProv); v != "" {
+					version = v
+				}
+			}
+			return fProv, vProv, version // committed: modifier handled
+		}
 	}
+
+	// ── Existing flow (no hidden modifier, or commit declined by either guard) ──
+
+	// Strip trailing date tokens so they don't contaminate family inference.
+	stripped := orSelf(stripTrailingDate(idStr), idStr)
 
 	tokens := strings.Split(stripped, "-")
 	if len(tokens) == 0 {
@@ -723,17 +793,8 @@ func InferFamilyFromIDWithVariant(id ModelID, p Provider) (Family, string, strin
 		return "", "", ""
 	}
 
-	// Step 2: reconstruct a "raw family" string from first token + remaining tokens
-	// (excluding trailing purely-numeric tokens which are version components).
-	// Then run ParseFamilyWithVersion on it to get (family, variant, version).
-	//
-	// Example: "claude-opus-4-5" (date already stripped from "claude-opus-4-5-20251101")
-	//   → tokens = ["claude", "opus", "4", "5"]
-	//   → strip trailing numeric tokens: ["claude", "opus", "4", "5"]
-	//     but we feed the whole thing as a family string to ParseFamilyWithVersion.
-	//
-	// Build the candidate family string: all tokens (no date stripping already done above).
-	candidateFamilyStr := stripped // e.g. "claude-opus-4-5" or "claude-opus-4-6"
+	// Build the candidate family string and run ParseFamilyWithVersion on it.
+	candidateFamilyStr := stripped
 
 	family, variant, version := ParseFamilyWithVersion(Family(candidateFamilyStr))
 
@@ -741,12 +802,18 @@ func InferFamilyFromIDWithVariant(id ModelID, p Provider) (Family, string, strin
 	// it means the entire string is treated as a family with no variant or version.
 	// Fall back to InferFamilyFromID behaviour: use only the first token.
 	if family == Family(candidateFamilyStr) {
-		return Family(first), "", ""
+		return Family(firstToken(stripped)), "", ""
 	}
 
 	// If version is still empty, try ExtractVersionFromID.
 	if version == "" && family != "" {
 		version = ExtractVersionFromID(id, family)
+	}
+	// Final fallback: try the between-family-and-variant extractor.
+	if version == "" && variant != "" {
+		if v, _ := ExtractVersionBetweenFamilyAndVariant(ModelID(stripped), family, variant); v != "" {
+			version = v
+		}
 	}
 
 	return family, variant, version
@@ -797,8 +864,12 @@ func splitAndStripVersionTail(s string) []string {
 	return tokens
 }
 
-// isVersionToken returns true when tok is a purely-numeric token (all digits).
+// isVersionToken returns true when tok is a purely-numeric token (all digits)
+// AND is not a YYMM-date token (as detected by IsYYMMDateToken).
 // Used to strip trailing version components from model IDs.
+//
+// R3b (eq7w): YYMM tokens (e.g. "2603", "2512") are rejected so that
+// mistral-small-2603 → no version.
 func isVersionToken(tok string) bool {
 	if tok == "" {
 		return false
@@ -808,7 +879,8 @@ func isVersionToken(tok string) bool {
 			return false
 		}
 	}
-	return true
+	// R3b guard: reject YYMM date tokens (e.g. 2603, 2512, 2411).
+	return !IsYYMMDateToken(tok)
 }
 
 // reYYYYMMDD matches an 8-digit date string not preceded or followed by a digit.
@@ -832,6 +904,11 @@ type ParseAttempt struct {
 	Date    string `json:"date"`
 }
 
+// ParseFailureReason is a typed string identifying the class of parse failure.
+// Using a named type rather than bare string prevents accidental mixing of
+// reason strings and enables exhaustive case analysis.
+type ParseFailureReason string
+
 // ParseFailure records a single parsing failure detected during family-string
 // decomposition. It is produced by ParseFamilyDetailed when the parser's
 // best-effort result is known to be incomplete or ambiguous.
@@ -846,11 +923,11 @@ type ParseAttempt struct {
 //	  "reason":         "version digits between family-prefix and variant not extracted"
 //	}
 type ParseFailure struct {
-	RawID          ModelID      `json:"raw_id"`
-	Provider       Provider     `json:"provider"`
-	RawFamily      Family       `json:"raw_family"`
-	AttemptedParse ParseAttempt `json:"attempted_parse"`
-	Reason         string       `json:"reason"`
+	RawID          ModelID           `json:"raw_id"`
+	Provider       Provider          `json:"provider"`
+	RawFamily      Family            `json:"raw_family"`
+	AttemptedParse ParseAttempt      `json:"attempted_parse"`
+	Reason         ParseFailureReason `json:"reason"`
 }
 
 // ParseFailuresEnvelope is the top-level JSON structure written by bestiary-gen
@@ -863,28 +940,36 @@ type ParseFailuresEnvelope struct {
 	Failures      []ParseFailure `json:"failures"`
 }
 
-// Reason constants for the three known failure modes (use these strings verbatim
+// Reason constants for the known failure modes (use these constants verbatim
 // to ensure consistent reason phrasing across all callers).
 const (
 	// ReasonVersionDigitsNotExtracted is used when version digits appear between
 	// the family prefix and the variant (e.g. "claude-3-5-haiku-20241022" where
 	// the "3-5" version component is not extracted by the parse heuristics).
-	ReasonVersionDigitsNotExtracted = "version digits between family-prefix and variant not extracted"
+	ReasonVersionDigitsNotExtracted ParseFailureReason = "version digits between family-prefix and variant not extracted"
 
 	// ReasonKnownSuffixOverflow is used when the trailing segment of the model ID
 	// matches a known modifier token (thinking, vision, latest, code, preview, think).
 	// The modifier is semantically meaningful but not yet extracted as a first-class
-	// field. Extend the modifier allowlist in parse.go when new tokens are discovered.
-	ReasonKnownSuffixOverflow = "suffix overflow: trailing token is a known modifier"
+	// field. Extend the modifier allowlist in parse/data/modifiers.json when new
+	// tokens are discovered.
+	ReasonKnownSuffixOverflow ParseFailureReason = "suffix overflow: trailing token is a known modifier"
 
 	// ReasonUnknownSuffixOverflow is used when the trailing segment of the model ID
 	// does not match any known modifier token. This is an audit-log hint that the
-	// modifier allowlist in parse.go should be extended.
-	ReasonUnknownSuffixOverflow = "suffix overflow: trailing token is an unknown modifier (extend allowlist)"
+	// modifier allowlist in parse/data/modifiers.json should be extended.
+	ReasonUnknownSuffixOverflow ParseFailureReason = "suffix overflow: trailing token is an unknown modifier (extend allowlist)"
 
 	// ReasonYYMMDateAsVersion is used for Mistral-style 4-digit numerals (e.g. 2401,
 	// 2403) where the parser cannot reliably distinguish a YYMM date from a version.
-	ReasonYYMMDateAsVersion = "YYMM-date-as-version false-positive"
+	ReasonYYMMDateAsVersion ParseFailureReason = "YYMM-date-as-version false-positive"
+
+	// ReasonResidualUnaccountedTokens is used when version extraction succeeds but
+	// leaves one or more tokens in the model ID unaccounted for (e.g. nova-2-lite-v1
+	// yields version="2" but token "v1" is not explained by family/variant/version/date).
+	// This is an honest-audit signal: the version is populated but there is residual
+	// information the parser did not fully account for.
+	ReasonResidualUnaccountedTokens ParseFailureReason = "residual unaccounted tokens after extraction"
 )
 
 // ParseFamilyDetailed is the failure-aware companion to ParseFamilyWithVersion.
@@ -908,12 +993,57 @@ const (
 //
 // Parameters id and p (model ID and provider) are used to populate the failure
 // record fields and are not used in the parse logic itself.
-func ParseFamilyDetailed(raw Family, id ModelID, p Provider) (Family, string, string, *ParseFailure) {
+//
+// IP-1: The return order is (family, variant, version, modifier, *ParseFailure).
+// SLICE-2 (codegen wiring) depends on this exact 5-tuple shape — do NOT reorder.
+func ParseFamilyDetailed(raw Family, id ModelID, p Provider) (Family, string, string, string, *ParseFailure) {
 	family, variant, version := ParseFamilyWithVersion(raw)
 
 	// No failure annotation when the input is empty.
 	if raw == "" {
-		return family, variant, version, nil
+		return family, variant, version, "", nil
+	}
+
+	// ── Δ1 extract-first: attempt to populate version from the model ID ───────
+	// Extract modifier first so it doesn't pollute version/date extraction.
+	modifier, consumed := ExtractModifier(id, family, variant)
+	cleanedID := id
+	if consumed != "" {
+		cleanedStr := string(id)
+		if len(cleanedStr) >= len(consumed) && cleanedStr[len(cleanedStr)-len(consumed):] == consumed {
+			cleanedID = ModelID(cleanedStr[:len(cleanedStr)-len(consumed)])
+		}
+	}
+
+	// If ParseFamilyWithVersion did not extract a version, attempt extraction from
+	// the model ID using the canonical family prefix.
+	if version == "" && family != "" && cleanedID != "" {
+		if v, residual := ExtractVersionBetweenFamilyAndVariant(cleanedID, family, variant); v != "" {
+			version = v
+			// R2: if there are residual tokens after extraction, emit an honest-audit
+			// failure WITH version populated.
+			if len(residual) > 0 {
+				attempted := ParseAttempt{Family: family, Variant: variant, Version: version, Date: ""}
+				return family, variant, version, modifier, &ParseFailure{
+					RawID:          id,
+					Provider:       p,
+					RawFamily:      raw,
+					AttemptedParse: attempted,
+					Reason:         ReasonResidualUnaccountedTokens,
+				}
+			}
+		}
+
+		// Fallback: try the direct ID-prefix extractor with the raw family first
+		// (more specific prefix), then with the extracted family. The raw family
+		// (e.g. "claude-opus") gives a better prefix match than extracted family
+		// (e.g. "claude") for IDs like "claude-opus-4-6".
+		if version == "" {
+			version = ExtractVersionFromID(cleanedID, raw)
+		}
+		if version == "" {
+			version = ExtractVersionFromID(cleanedID, family)
+		}
 	}
 
 	// Build the attempted parse for potential failure records.
@@ -933,37 +1063,12 @@ func ParseFamilyDetailed(raw Family, id ModelID, p Provider) (Family, string, st
 	// where a YYMM-format segment (19xx–29xx) could be mistaken for a version.
 	// These appear in the raw family string, not as a separate date field.
 	if reYYMMCandidate.MatchString(rawStr) {
-		return family, variant, version, &ParseFailure{
+		return family, variant, version, modifier, &ParseFailure{
 			RawID:          id,
 			Provider:       p,
 			RawFamily:      raw,
 			AttemptedParse: attempted,
 			Reason:         ReasonYYMMDateAsVersion,
-		}
-	}
-
-	// ── Failure mode 1: Version digits between family-prefix and variant ──────
-	// Detect cases where the model ID embeds version digits between the canonical
-	// family prefix and the variant, but those digits are not extractable by
-	// ExtractVersionFromID because the rawFamily prefix does not align with the ID.
-	//
-	// Example: rawFamily="claude-haiku" → family="claude", variant="haiku", version="".
-	// ID="claude-3-5-haiku-20241022": after stripping "claude-" prefix, the remainder
-	// "3-5-haiku-20241022" starts with digit groups, which means the version "3.5"
-	// sits between the family prefix and the variant in the ID.
-	//
-	// Heuristic: version=="" AND variant!="" AND the ID, after stripping the
-	// canonical family prefix + "-", has a leading numeric-group pattern before
-	// the variant token (and the YYMM detector did not already fire).
-	if version == "" && variant != "" && string(id) != "" {
-		if detectVersionDigitsInID(id, family, variant) {
-			return family, variant, version, &ParseFailure{
-				RawID:          id,
-				Provider:       p,
-				RawFamily:      raw,
-				AttemptedParse: attempted,
-				Reason:         ReasonVersionDigitsNotExtracted,
-			}
 		}
 	}
 
@@ -989,28 +1094,39 @@ func ParseFamilyDetailed(raw Family, id ModelID, p Provider) (Family, string, st
 	// After V2-5 lands, most ReasonKnownSuffixOverflow cases will be pre-empted
 	// by ExtractModifier; this block catches residuals.
 	if string(id) != "" {
-		idTrailing := extractTrailingToken(string(id))
-		// Only fire if trailing token is a modifier AND is not already the parsed variant.
-		// The variant check avoids double-reporting when the parser correctly stripped
-		// the modifier as the variant (e.g. rawFamily="claude-thinking" → variant="thinking").
-		if idTrailing != variant && (knownModifierTokens[idTrailing] || detectSuffixOverflow(rawStr, family, variant, version)) {
-			var reason string
-			if knownModifierTokens[idTrailing] {
-				reason = ReasonKnownSuffixOverflow
-			} else {
-				reason = ReasonUnknownSuffixOverflow
+		pd, pdErr := loadParseData()
+		if pdErr == nil {
+			idTrailing := extractTrailingToken(string(id))
+			// Build a fast lookup set from pd.modifiers.
+			isKnownModifier := false
+			for _, mod := range pd.modifiers {
+				if mod == idTrailing {
+					isKnownModifier = true
+					break
+				}
 			}
-			return family, variant, version, &ParseFailure{
-				RawID:          id,
-				Provider:       p,
-				RawFamily:      raw,
-				AttemptedParse: attempted,
-				Reason:         reason,
+			// Only fire if trailing token is a modifier AND is not already the parsed variant.
+			// The variant check avoids double-reporting when the parser correctly stripped
+			// the modifier as the variant (e.g. rawFamily="claude-thinking" → variant="thinking").
+			if idTrailing != variant && (isKnownModifier || detectSuffixOverflow(rawStr, family, variant, version)) {
+				var reason ParseFailureReason
+				if isKnownModifier {
+					reason = ReasonKnownSuffixOverflow
+				} else {
+					reason = ReasonUnknownSuffixOverflow
+				}
+				return family, variant, version, modifier, &ParseFailure{
+					RawID:          id,
+					Provider:       p,
+					RawFamily:      raw,
+					AttemptedParse: attempted,
+					Reason:         reason,
+				}
 			}
 		}
 	}
 
-	return family, variant, version, nil
+	return family, variant, version, modifier, nil
 }
 
 // reYYMMCandidate matches a 4-digit segment in a hyphen-separated raw family
@@ -1018,26 +1134,6 @@ func ParseFamilyDetailed(raw Family, id ModelID, p Provider) (Family, string, st
 // Mistral versioning (e.g. "mistral-2401", "pixtral-2411").
 // The segment must be at a word boundary within the hyphenated string.
 var reYYMMCandidate = regexp.MustCompile(`(?:^|-)(?:19|20|21|22|23|24|25|26|27|28|29)\d{2}(?:-|$)`)
-
-// knownModifierTokens is the seed allowlist of trailing modifier tokens that are
-// semantically meaningful but not yet extracted as first-class fields by the parser.
-// When a suffix-overflow model ID ends with one of these tokens, the failure is
-// classified as ReasonKnownSuffixOverflow (expected, extend to handle cleanly).
-// When the trailing token is NOT in this set, it is classified as
-// ReasonUnknownSuffixOverflow (audit hint to extend this allowlist).
-//
-// NOTE: this list is intentionally duplicated from the modifier allowlist that
-// SLICE-FIX-V2-5 embeds in parse/data/modifiers.json. A follow-up task
-// (filed under FOLLOWUP epic bestiary-602y) will refactor to share a single
-// source-of-truth once V2-5 has landed.
-var knownModifierTokens = map[string]bool{
-	"thinking": true,
-	"think":    true,
-	"vision":   true,
-	"latest":   true,
-	"code":     true,
-	"preview":  true,
-}
 
 // extractTrailingToken returns the last hyphen-separated token of s,
 // or the whole string if there is no hyphen.
@@ -1156,4 +1252,263 @@ func detectSuffixOverflow(rawStr string, family Family, variant string, version 
 	// Overflow threshold: more than 2 unaccounted tokens suggests overflow.
 	// The threshold of 2 avoids false positives for models with minor extra tokens.
 	return extra > 2
+}
+
+// --------------------------------------------------------------------------
+// Small string helpers (R3c / Δ2′ support)
+// --------------------------------------------------------------------------
+
+// lastPathSegment returns the substring after the last '/' in s, or s itself
+// when no '/' is present. Used to strip leading provider path segments from
+// model IDs (e.g. "anthropic/claude-opus-4-6" → "claude-opus-4-6").
+func lastPathSegment(s string) string {
+	if idx := strings.LastIndexByte(s, '/'); idx >= 0 {
+		return s[idx+1:]
+	}
+	return s
+}
+
+// orSelf returns candidate when it is non-empty, otherwise falls back to s.
+// Used in InferFamilyFromIDWithVariant to guard no-op stripTrailingDate calls.
+func orSelf(candidate, s string) string {
+	if candidate != "" {
+		return candidate
+	}
+	return s
+}
+
+// firstToken returns the first hyphen-separated token of s, or s itself when
+// no hyphen is present.
+func firstToken(s string) string {
+	if idx := strings.IndexByte(s, '-'); idx >= 0 {
+		return s[:idx]
+	}
+	return s
+}
+
+// --------------------------------------------------------------------------
+// isYYMMDateToken (R3b / eq7w)
+// --------------------------------------------------------------------------
+
+// IsYYMMDateToken returns true when tok is a 4-digit string that matches the
+// YYMM date pattern (century prefixes 19xx–29xx). These appear in Mistral-style
+// model IDs (e.g. "mistral-small-2603" → "2603" is a YYMM date, NOT a version).
+//
+// Parity contract: any tok for which IsYYMMDateToken returns true must NOT be
+// treated as a version by isVersionToken or ExtractVersionFromID.
+//
+// Built on reYYMMCandidate (parse.go); wraps the boundary anchors so the regex
+// matches the whole token rather than requiring a hyphen context.
+func IsYYMMDateToken(tok string) bool {
+	if len(tok) != 4 {
+		return false
+	}
+	// reYYMMCandidate uses (?:^|-)…(?:-|$) boundary anchors; for a bare token
+	// we wrap it in hyphens to satisfy the boundary expectation.
+	return reYYMMCandidate.MatchString("-" + tok + "-")
+}
+
+// isYYMMDateToken is the unexported alias of IsYYMMDateToken for use within
+// the parse package internals.
+func isYYMMDateToken(tok string) bool { return IsYYMMDateToken(tok) }
+
+// --------------------------------------------------------------------------
+// trimOneTrailingModifier (R3c / Δ2′ — tentative only)
+// --------------------------------------------------------------------------
+
+// trimOneTrailingModifier removes exactly ONE trailing "-<mod>" token from s
+// where mod is in pd.modifiers (longest-first). Returns s unchanged when no
+// trailing modifier is found.
+//
+// IMPORTANT: this function is TENTATIVE and used ONLY inside
+// InferFamilyFromIDWithVariant to expose a hidden date. The actual commit to
+// the decomposition is always gated by the two guards in that caller (GUARD-1
+// variant-guard and GUARD-2 passthrough-guard). trimOneTrailingModifier itself
+// never commits anything — it only strips.
+//
+// Data lifecycle: pd.modifiers is populated via loadParseData/sync.Once from
+// parse/data/modifiers.json (embedded FS). The list is sorted longest-first at
+// load time so that "thinking" cannot be shadowed by "think". trimOneTrailingModifier
+// relies on that ordering to strip the longest matching modifier. In the event
+// loadParseData returns an error, trimOneTrailingModifier returns s unchanged
+// (fail-closed, matching the existing ParseFamily behavior).
+func trimOneTrailingModifier(s string) string {
+	pd, err := loadParseData()
+	if err != nil {
+		return s
+	}
+	for _, mod := range pd.modifiers {
+		suffix := "-" + mod
+		if strings.HasSuffix(s, suffix) {
+			return s[:len(s)-len(suffix)]
+		}
+	}
+	return s
+}
+
+// --------------------------------------------------------------------------
+// ExtractVersionBetweenFamilyAndVariant (R1)
+// --------------------------------------------------------------------------
+
+// ExtractVersionBetweenFamilyAndVariant extracts the numeric version component
+// from a model ID that embeds version digits BETWEEN the normalized family prefix
+// and the variant name. This handles the common case where raw_family does not
+// embed the version but the model ID does:
+//
+//	id="claude-3-5-haiku-20241022", family="claude", variant="haiku" → "3.5"
+//	id="claude-3.5-haiku",          family="claude", variant="haiku" → "3.5"
+//	id="gpt-5-mini",                family="gpt",    variant="mini"  → "5"
+//
+// Returns (version, residual) where:
+//   - version is the dot-joined leading numeric tokens found between family and variant.
+//   - residual contains any tokens between the version and variant that are neither
+//     numeric nor the variant first-token (honest-audit signal per R2).
+//
+// N-M equivalence: hyphen-separated pure-digit tokens are dot-joined so that
+// "3-5" → "3.5" and "4-6" → "4.6". This brings parity with ParseFamilyWithVersion.
+//
+// Parity contract: ExtractVersionBetweenFamilyAndVariant fires if and only if
+// detectVersionDigitsInID (parse.go) would also fire on the same (id, family, variant).
+//
+// Algorithm:
+//  1. Normalize the family to a canonical single-word form (first alphabetic token
+//     of family for multi-token families like "claude-opus" → "claude").
+//  2. Strip "<normalizedFamily>-" prefix from the ID. Return ("","") when absent.
+//  3. Strip any trailing compact/dash date from the remainder.
+//  4. Tokenize on "-". Collect leading purely-numeric tokens up to the first
+//     variant-first-token (or end of tokens if variant is empty).
+//  5. Dot-join the numeric tokens → version. Tokens after the numeric run that
+//     are neither the variant first-token nor purely-numeric are residual.
+func ExtractVersionBetweenFamilyAndVariant(id ModelID, family Family, variant string) (version string, residual []string) {
+	if id == "" || family == "" {
+		return "", nil
+	}
+
+	idStr := lastPathSegment(string(id))
+
+	// Normalize family: use only the first hyphen-token so that "claude-opus" → "claude".
+	normalizedFamily := firstToken(string(family))
+
+	prefix := normalizedFamily + "-"
+	if !strings.HasPrefix(idStr, prefix) {
+		return "", nil
+	}
+
+	// Strip the normalized-family prefix.
+	remainder := idStr[len(prefix):]
+	if remainder == "" {
+		return "", nil
+	}
+
+	// Strip trailing date so date tokens are not included in version or residual.
+	remainder = stripTrailingDate(remainder)
+	if remainder == "" {
+		return "", nil
+	}
+
+	// Handle the case where the ID uses a dot-version before the first hyphen segment.
+	// e.g. "3.5-haiku" — the first token "3.5" is a dot-version, not a hyphen-digit.
+	// Extract it by checking for a bare dot-version segment at the start of the remainder.
+	if idx := strings.Index(remainder, "-"); idx >= 0 {
+		lead := remainder[:idx]
+		if reBareVersion.MatchString(lead) {
+			// Dot-version token at the start: e.g. "3.5-haiku" → lead="3.5"
+			// Treat this as the version (no residual within this context — the suffix
+			// after the variant may have a date which is already stripped).
+			return lead, nil
+		}
+	}
+
+	tokens := strings.Split(remainder, "-")
+
+	// Determine the first token of the variant (for boundary detection).
+	variantFirst := ""
+	if variant != "" {
+		variantFirst = firstToken(variant)
+	}
+
+	// Build a set of "accounted" tokens (family first-token is already stripped;
+	// variant tokens will be accounted during the scan).
+	variantTokens := make(map[string]struct{})
+	if variant != "" {
+		for _, vt := range strings.Split(variant, "-") {
+			if vt != "" {
+				variantTokens[vt] = struct{}{}
+			}
+		}
+	}
+
+	// Collect leading purely-numeric tokens between family and variant.
+	var numericTokens []string
+	variantStart := -1
+	for i, tok := range tokens {
+		if tok == "" {
+			continue
+		}
+		// Stop at the variant boundary.
+		if variantFirst != "" && tok == variantFirst {
+			variantStart = i
+			break
+		}
+		if isVersionToken(tok) && !isYYMMDateToken(tok) {
+			numericTokens = append(numericTokens, tok)
+		} else {
+			// Non-numeric, non-variant token — treat it as residual if before variant.
+			residual = append(residual, tok)
+		}
+	}
+
+	if len(numericTokens) == 0 {
+		return "", nil
+	}
+
+	version = strings.Join(numericTokens, ".")
+
+	// Collect residual tokens AFTER the variant (e.g. "v1" in "nova-2-lite-v1").
+	// These are tokens that are not date-like, not numeric version digits, not part of
+	// the variant itself, and not known modifier/suffix tokens (which have their own
+	// semantic meaning and are not "unaccounted").
+	if variantStart >= 0 {
+		// Build known-modifier lookup from pd.modifiers for fast checks.
+		pd, pdErr := loadParseData()
+		isKnownMod := func(tok string) bool {
+			if pdErr != nil {
+				return false
+			}
+			for _, mod := range pd.modifiers {
+				if mod == tok {
+					return true
+				}
+			}
+			return false
+		}
+
+		// Skip variant tokens.
+		afterVariant := variantStart
+		for _, vt := range strings.Split(variant, "-") {
+			if vt != "" && afterVariant < len(tokens) && tokens[afterVariant] == vt {
+				afterVariant++
+			}
+		}
+		// Any tokens remaining after the variant are residual IF they are not known
+		// modifiers (which are semantically accounted for by the modifier extraction
+		// pipeline) and not purely numeric.
+		for i := afterVariant; i < len(tokens); i++ {
+			tok := tokens[i]
+			if tok == "" {
+				continue
+			}
+			// Skip purely-numeric tokens.
+			if isVersionToken(tok) && !isYYMMDateToken(tok) {
+				continue
+			}
+			// Skip known modifiers (they are extracted by ExtractModifier, not residual).
+			if isKnownMod(tok) {
+				continue
+			}
+			residual = append(residual, tok)
+		}
+	}
+
+	return version, residual
 }
