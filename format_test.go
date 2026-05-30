@@ -1244,6 +1244,60 @@ func TestFormatAmbiguous_V4_RehostSection_NamesOnly(t *testing.T) {
 	}
 }
 
+// TestFormatAmbiguous_V4_RehostSection_OnePerLine verifies that Section 2 renders
+// each rehost provider name on its own line rather than as a comma-separated list.
+//
+// SLICE-FIX-V4-1-FIX3 — the rehost-names rendering change (one-per-line).
+func TestFormatAmbiguous_V4_RehostSection_OnePerLine(t *testing.T) {
+	rehosts := []bestiary.Provider{"deepinfra", "azure-cognitive-services", "nano-gpt"}
+	e := makeAmbiguousWithRehosts(2, rehosts)
+
+	var buf bytes.Buffer
+	bestiary.FormatAmbiguous(&buf, e)
+	output := buf.String()
+
+	// Locate Section 2 content starting from its header.
+	idx := strings.Index(output, "Also rehosted by:")
+	if idx < 0 {
+		t.Fatalf("FormatAmbiguous: Section 2 header 'Also rehosted by:' not found;\nGot:\n%s", output)
+	}
+	section2 := output[idx:]
+
+	// Each provider must appear on its own line — confirmed by checking that the
+	// provider name is preceded by a newline (possibly with leading whitespace) and
+	// not joined to another provider name with a comma on the same line.
+	for _, prov := range rehosts {
+		provStr := string(prov)
+		// The comma-joined form would have "deepinfra, azure-cognitive-services" on one line.
+		// Assert the provider appears on a line by itself (no comma following it on the same line).
+		lines := strings.Split(section2, "\n")
+		found := false
+		for _, line := range lines {
+			trimmed := strings.TrimSpace(line)
+			if trimmed == provStr {
+				found = true
+				break
+			}
+		}
+		if !found {
+			t.Errorf("FormatAmbiguous: rehost provider %q must appear on its own line in Section 2;\nSection2:\n%s", provStr, section2)
+		}
+	}
+
+	// No line in Section 2 must contain two provider names joined by ", ".
+	lines := strings.Split(section2, "\n")
+	for _, line := range lines {
+		for i, p1 := range rehosts {
+			for _, p2 := range rehosts[i+1:] {
+				if strings.Contains(line, string(p1)+", "+string(p2)) || strings.Contains(line, string(p2)+", "+string(p1)) {
+					t.Errorf("FormatAmbiguous: rehost providers must be one-per-line, not comma-joined;\nOffending line: %q\nSection2:\n%s",
+						line, section2)
+				}
+			}
+		}
+	}
+}
+
 // TestFormatAmbiguous_V4_FooterInstructions verifies that the footer contains
 // the two real instruction strings: "bestiary list" and "--format=raw".
 //

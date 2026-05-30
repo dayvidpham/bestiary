@@ -313,7 +313,9 @@ const ambiguousMaxRehosts = 5
 //	... (up to 5 rows; "+N more" when >5)
 //
 //	Also rehosted by:           (omitted when RehostProviders is empty)
-//	<provider-name>, <provider-name>, ...  (up to 5 names; "+N more" when >5)
+//	  <provider-name>           (one per line, up to 5; "+N more" when >5)
+//	  <provider-name>
+//	  ...
 //
 //	To see all providers/variants: bestiary list   (or: bestiary list --provider <slug>)
 //	To resolve an exact model ID:  bestiary show <raw-id> --format=raw
@@ -398,12 +400,10 @@ func FormatAmbiguous(w io.Writer, e *ErrAmbiguous) {
 			rehostOverflow = len(e.RehostProviders) - ambiguousMaxRehosts
 			displayRehosts = e.RehostProviders[:ambiguousMaxRehosts]
 		}
-		// Render as a comma-separated list of provider names on one line.
-		names := make([]string, len(displayRehosts))
-		for i, p := range displayRehosts {
-			names[i] = string(p)
+		// Render each provider name on its own line, indented by two spaces.
+		for _, p := range displayRehosts {
+			fmt.Fprintf(w, "  %s\n", string(p))
 		}
-		fmt.Fprintf(w, "%s\n", strings.Join(names, ", "))
 		if rehostOverflow > 0 {
 			fmt.Fprintf(w, "+%d more\n", rehostOverflow)
 		}
