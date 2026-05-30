@@ -321,6 +321,13 @@ const ambiguousMaxCandidates = 10
 func FormatAmbiguous(w io.Writer, e *ErrAmbiguous) {
 	fmt.Fprintf(w, "bestiary: input %q matched multiple canonicals\n\n", e.Input)
 
+	// Fix 2 (SLICE-FIX-V3-1): when a PURL namespace missed, print a note above
+	// the table so the user knows why the loose match was performed.
+	if e.PURLMissedNamespace != "" {
+		fmt.Fprintf(w, "no matches in namespace %q — performing loose match across all providers\n\n",
+			e.PURLMissedNamespace)
+	}
+
 	// Fix #2: Group by (Family, Variant, Version) — one row per group.
 	type groupKey struct {
 		family  string
@@ -342,12 +349,32 @@ func FormatAmbiguous(w io.Writer, e *ErrAmbiguous) {
 		grouped = append(grouped, c)
 	}
 
+	// Fix 1 (SLICE-FIX-V3-1): sort canonical-provider rows to the top of the
+	// grouped list before truncation. This guarantees canonical rows survive the
+	// N=10 cut even when there are many rehost groups. A row is canonical when its
+	// Provider equals Family.CanonicalProvider().
+	//
+	// Stable partition: canonical rows first, then non-canonical, each preserving
+	// their relative original order.
+	canonical := grouped[:0:0] // empty slice reusing no backing array
+	nonCanonical := grouped[:0:0]
+	for _, ref := range grouped {
+		if ref.Provider != "" && ref.Provider == ref.Family.CanonicalProvider() {
+			canonical = append(canonical, ref)
+		} else {
+			nonCanonical = append(nonCanonical, ref)
+		}
+	}
+	sortedGrouped := make([]ModelRef, 0, len(grouped))
+	sortedGrouped = append(sortedGrouped, canonical...)
+	sortedGrouped = append(sortedGrouped, nonCanonical...)
+
 	// Fix #2: Truncate after N=10 groups.
-	display := grouped
+	display := sortedGrouped
 	overflow := 0
-	if len(grouped) > ambiguousMaxCandidates {
-		overflow = len(grouped) - ambiguousMaxCandidates
-		display = grouped[:ambiguousMaxCandidates]
+	if len(sortedGrouped) > ambiguousMaxCandidates {
+		overflow = len(sortedGrouped) - ambiguousMaxCandidates
+		display = sortedGrouped[:ambiguousMaxCandidates]
 	}
 
 	fmt.Fprintf(w, ambiguousCandidateRow, "Canonical", "Provider", "Raw ID")
@@ -357,8 +384,13 @@ func FormatAmbiguous(w io.Writer, e *ErrAmbiguous) {
 		strings.Repeat("-", 40),
 	)
 	for _, c := range display {
+		canonicalStr := c.Format(SchemeCanonical)
+		// Fix 1 (SLICE-FIX-V3-1): mark canonical-provider rows with a "*" suffix.
+		if c.Provider != "" && c.Provider == c.Family.CanonicalProvider() {
+			canonicalStr += " *"
+		}
 		fmt.Fprintf(w, ambiguousCandidateRow,
-			c.Format(SchemeCanonical),
+			canonicalStr,
 			string(c.Provider),
 			string(c.ID),
 		)

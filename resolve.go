@@ -254,10 +254,27 @@ func Resolve(input string, opts ...ResolveOption) ([]ModelRef, error) {
 
 	// Multiple distinct groups: ambiguous input.
 	// Build a representative candidate per distinct group.
+	// Fix (SLICE-FIX-V3-1): prefer the row whose Provider equals the Family's
+	// canonical provider when such a row exists in the group. This ensures that
+	// e.g. "anthropic" appears as the representative for claude groups instead of
+	// whichever rehost happened to be first in the static registry.
 	candidates := make([]ModelRef, 0, len(order))
 	for _, key := range order {
-		// Use the first match for each group as the representative.
-		candidates = append(candidates, byGroup[key][0])
+		group := byGroup[key]
+		rep := group[0]
+		// Prefer the canonical provider row when one exists in this group.
+		if len(group) > 1 {
+			canonProv := group[0].Family.CanonicalProvider()
+			if canonProv != "" {
+				for _, r := range group {
+					if r.Provider == canonProv {
+						rep = r
+						break
+					}
+				}
+			}
+		}
+		candidates = append(candidates, rep)
 	}
 	return nil, &ErrAmbiguous{
 		Input:      input,
