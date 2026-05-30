@@ -10,6 +10,7 @@ const (
 	FamilyHy                Family = "Hy"
 	FamilyAllam             Family = "allam"
 	FamilyAllenai           Family = "allenai"
+	FamilyAlpha             Family = "alpha"
 	FamilyAura              Family = "aura"
 	FamilyAuto              Family = "auto"
 	FamilyBaichuan          Family = "baichuan"
@@ -32,10 +33,10 @@ const (
 	FamilyDallE             Family = "dall-e"
 	FamilyDeepseek          Family = "deepseek"
 	FamilyDeepseekFlash     Family = "deepseek-flash"
+	FamilyDeepseekFlashFree Family = "deepseek-flash-free"
 	FamilyDeepseekThinking  Family = "deepseek-thinking"
 	FamilyDevstral          Family = "devstral"
 	FamilyDistilbert        Family = "distilbert"
-	FamilyElephant          Family = "elephant"
 	FamilyElevenlabs        Family = "elevenlabs"
 	FamilyErnie             Family = "ernie"
 	FamilyFlux              Family = "flux"
@@ -62,8 +63,7 @@ const (
 	FamilyGPTPro            Family = "gpt-pro"
 	FamilyGranite           Family = "granite"
 	FamilyGrok              Family = "grok"
-	FamilyGrokBeta          Family = "grok-beta"
-	FamilyGrokVision        Family = "grok-vision"
+	FamilyGrokBuild         Family = "grok-build"
 	FamilyGroq              Family = "groq"
 	FamilyHermes            Family = "hermes"
 	FamilyHunyuan           Family = "hunyuan"
@@ -101,6 +101,7 @@ const (
 	FamilyMimoV2Omni        Family = "mimo-v2-omni"
 	FamilyMimoV2Pro         Family = "mimo-v2-pro"
 	FamilyMimoV25           Family = "mimo-v2.5"
+	FamilyMimoV25Free       Family = "mimo-v2.5-free"
 	FamilyMimoV25Pro        Family = "mimo-v2.5-pro"
 	FamilyMinimax           Family = "minimax"
 	FamilyMinimaxFree       Family = "minimax-free"
@@ -118,7 +119,6 @@ const (
 	FamilyModelRouter       Family = "model-router"
 	FamilyMorph             Family = "morph"
 	FamilyNanoBanana        Family = "nano-banana"
-	FamilyNemoretriever     Family = "nemoretriever"
 	FamilyNemotron          Family = "nemotron"
 	FamilyNemotronFree      Family = "nemotron-free"
 	FamilyNousresearch      Family = "nousresearch"
@@ -129,11 +129,9 @@ const (
 	FamilyO                 Family = "o"
 	FamilyOMini             Family = "o-mini"
 	FamilyOPro              Family = "o-pro"
-	FamilyOpengvlab         Family = "opengvlab"
 	FamilyOsmosis           Family = "osmosis"
 	FamilyPalmyra           Family = "palmyra"
 	FamilyPangu             Family = "pangu"
-	FamilyParakeet          Family = "parakeet"
 	FamilyPhi               Family = "phi"
 	FamilyPixtral           Family = "pixtral"
 	FamilyPlamo             Family = "plamo"
@@ -142,13 +140,17 @@ const (
 	FamilyQwenFree          Family = "qwen-free"
 	FamilyQwen35            Family = "qwen3.5"
 	FamilyQwen36            Family = "qwen3.6"
+	FamilyQwen37Max         Family = "qwen3.7-max"
 	FamilyQwerky            Family = "qwerky"
 	FamilyRay               Family = "ray"
 	FamilyRecraft           Family = "recraft"
 	FamilyRednote           Family = "rednote"
+	FamilyReka              Family = "reka"
 	FamilyRing              Family = "ring"
+	FamilyRing1TFree        Family = "ring-1t-free"
 	FamilyRnj               Family = "rnj"
 	FamilyRunway            Family = "runway"
+	FamilySarvam            Family = "sarvam"
 	FamilySeed              Family = "seed"
 	FamilySmartTurn         Family = "smart-turn"
 	FamilySolarMini         Family = "solar-mini"
@@ -158,7 +160,6 @@ const (
 	FamilySonarPro          Family = "sonar-pro"
 	FamilySonarReasoning    Family = "sonar-reasoning"
 	FamilySora              Family = "sora"
-	FamilySourceful         Family = "sourceful"
 	FamilyStableDiffusion   Family = "stable-diffusion"
 	FamilyStep              Family = "step"
 	FamilyTako              Family = "tako"
@@ -183,6 +184,7 @@ var allFamilies = [...]Family{
 	"Hy",
 	"allam",
 	"allenai",
+	"alpha",
 	"aura",
 	"auto",
 	"baichuan",
@@ -205,10 +207,10 @@ var allFamilies = [...]Family{
 	"dall-e",
 	"deepseek",
 	"deepseek-flash",
+	"deepseek-flash-free",
 	"deepseek-thinking",
 	"devstral",
 	"distilbert",
-	"elephant",
 	"elevenlabs",
 	"ernie",
 	"flux",
@@ -235,8 +237,7 @@ var allFamilies = [...]Family{
 	"gpt-pro",
 	"granite",
 	"grok",
-	"grok-beta",
-	"grok-vision",
+	"grok-build",
 	"groq",
 	"hermes",
 	"hunyuan",
@@ -274,6 +275,7 @@ var allFamilies = [...]Family{
 	"mimo-v2-omni",
 	"mimo-v2-pro",
 	"mimo-v2.5",
+	"mimo-v2.5-free",
 	"mimo-v2.5-pro",
 	"minimax",
 	"minimax-free",
@@ -291,7 +293,6 @@ var allFamilies = [...]Family{
 	"model-router",
 	"morph",
 	"nano-banana",
-	"nemoretriever",
 	"nemotron",
 	"nemotron-free",
 	"nousresearch",
@@ -302,11 +303,9 @@ var allFamilies = [...]Family{
 	"o",
 	"o-mini",
 	"o-pro",
-	"opengvlab",
 	"osmosis",
 	"palmyra",
 	"pangu",
-	"parakeet",
 	"phi",
 	"pixtral",
 	"plamo",
@@ -315,13 +314,17 @@ var allFamilies = [...]Family{
 	"qwen-free",
 	"qwen3.5",
 	"qwen3.6",
+	"qwen3.7-max",
 	"qwerky",
 	"ray",
 	"recraft",
 	"rednote",
+	"reka",
 	"ring",
+	"ring-1t-free",
 	"rnj",
 	"runway",
+	"sarvam",
 	"seed",
 	"smart-turn",
 	"solar-mini",
@@ -331,7 +334,6 @@ var allFamilies = [...]Family{
 	"sonar-pro",
 	"sonar-reasoning",
 	"sora",
-	"sourceful",
 	"stable-diffusion",
 	"step",
 	"tako",
