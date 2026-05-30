@@ -144,12 +144,60 @@ func familyConstName(slug string, nameHint string) string {
 
 // Output paths are relative to the module root (where go generate is run from).
 const (
-	outputPath          = "models_static_gen.go"
-	outputProvidersPath = "providers_gen.go"
-	outputFamiliesPath  = "families_gen.go"
-	defaultCacheDir     = ".bestiary-gen-cache"
-	cacheFile           = "api_response.json"
+	outputPath              = "models_static_gen.go"
+	outputProvidersPath     = "providers_gen.go"
+	outputFamiliesPath      = "families_gen.go"
+	defaultCacheDir         = ".bestiary-gen-cache"
+	cacheFile               = "api_response.json"
+	versionDuplicatesFile   = "version_duplicates.json"
+	dotFormAuditFile        = "dot_form_audit.json"
 )
+
+// VersionDuplicateKey identifies a group of models that share (provider, family,
+// variant, version) but differ in date or other attributes. Written to
+// version_duplicates.json as a work-list for bestiary-r66e (R4 duplicate collapse).
+// Recognition only — duplicates remain two separate constants in the current epoch.
+type VersionDuplicateKey struct {
+	Provider string `json:"provider"`
+	Family   string `json:"family"`
+	Variant  string `json:"variant"`
+	Version  string `json:"version"`
+}
+
+// VersionDuplicateGroup records all model IDs that share the same
+// (provider, family, variant, version) key.
+type VersionDuplicateGroup struct {
+	Key      VersionDuplicateKey `json:"key"`
+	ModelIDs []string            `json:"model_ids"`
+}
+
+// VersionDuplicatesEnvelope is the top-level JSON structure written to
+// .bestiary-gen-cache/version_duplicates.json.
+type VersionDuplicatesEnvelope struct {
+	SchemaVersion  int                     `json:"schema_version"`
+	GeneratedAt    time.Time               `json:"generated_at"`
+	DuplicateCount int                     `json:"duplicate_count"` // number of groups with >1 model ID
+	Duplicates     []VersionDuplicateGroup `json:"duplicates"`
+}
+
+// DotFormAuditEntry records a single model whose Version was newly populated via
+// dot-form (N-M → N.M) recognition in ParseFamilyDetailed. Written to
+// .bestiary-gen-cache/dot_form_audit.json so the regen delta is explicitly
+// reviewable (UAT: embrace + audit-list).
+type DotFormAuditEntry struct {
+	ModelID  string `json:"model_id"`
+	Provider string `json:"provider"`
+	Version  string `json:"version"`
+}
+
+// DotFormAuditEnvelope is the top-level JSON structure written to
+// .bestiary-gen-cache/dot_form_audit.json.
+type DotFormAuditEnvelope struct {
+	SchemaVersion int                 `json:"schema_version"`
+	GeneratedAt   time.Time           `json:"generated_at"`
+	Count         int                 `json:"count"`
+	Entries       []DotFormAuditEntry `json:"entries"`
+}
 
 // apiURL is the endpoint bestiary-gen fetches from. Declared as a var (not const)
 // so tests can override it to point at an httptest.Server without build tags or
@@ -723,127 +771,49 @@ func genToModelInfoDetailed(providerSlug string, wm genWireModel) (bestiary.Mode
 	id := bestiary.ModelID(wm.ID)
 	provider := bestiary.Provider(providerSlug)
 
-	var normFamily bestiary.Family
-	var normVariant string
-	var normVersion string
-	var normModifier string
-	var failure *bestiary.ParseFailure
+	// Single-ownership: consume the full 5-tuple from ParseFamilyDetailed.
+	// ParseFamilyDetailed(raw="") delegates to InferFamilyFromIDWithVariant +
+	// ExtractModifier, covering the empty-family case (SLICE-FIX-2, B5/B6).
+	// This is byte-equivalent to the former two-branch structure; the
+	// decomposition snapshot test (TestDecompositionSnapshot) guards correctness.
+	//
+	// IP-1: (family, variant, version, modifier) all come from ParseFamilyDetailed.
+	// Codegen no longer calls ExtractVersionFromID directly (single-ownership).
+	normFamily, normVariant, normVersion, normModifier, failure := bestiary.ParseFamilyDetailed(rawFamily, id, provider)
 
-	if rawFamily != "" {
-		// Use ParseFamilyDetailed to get (family, variant, version) plus a failure
-		// annotation if the parser detects a known deficiency (e.g. version digits
-		// between family prefix and variant in the model ID but not the raw family).
-		normFamily, normVariant, normVersion, failure = bestiary.ParseFamilyDetailed(rawFamily, id, provider)
-
-		// SLICE-FIX-V2-5: Extract trailing modifier token BEFORE extracting version
-		// from the model ID. Modifiers (e.g. "-thinking") must be stripped from the
-		// ID before passing it to ExtractVersionFromID so they don't pollute version
-		// heuristics. Pipeline order: ParseFamily → ExtractModifier → strip → ExtractVersionFromID.
-		normModifier, modifierConsumed := bestiary.ExtractModifier(id, normFamily, normVariant)
-		var cleanID bestiary.ModelID
+	// Compute cleanID (modifier-stripped) for ExtractDate. The modifier consumed
+	// value is a trailing suffix of the model ID; strip it to avoid date extraction
+	// from tokens that are part of the modifier (e.g. "thinking", "preview").
+	cleanID := id
+	if normModifier != "" {
+		// ExtractModifier returns the modifier string; the consumed suffix equals the
+		// modifier token including its delimiter. Re-derive the consumed suffix by
+		// calling ExtractModifier with the known family+variant context.
+		_, modifierConsumed := bestiary.ExtractModifier(id, normFamily, normVariant)
 		if modifierConsumed != "" {
 			cleanStr := string(id)
 			if len(cleanStr) >= len(modifierConsumed) && cleanStr[len(cleanStr)-len(modifierConsumed):] == modifierConsumed {
 				cleanID = bestiary.ModelID(cleanStr[:len(cleanStr)-len(modifierConsumed)])
-			} else {
-				cleanID = id
 			}
-		} else {
-			cleanID = id
-		}
-
-		if normVersion == "" {
-			// The raw family field (e.g. "claude-opus") does not embed a version.
-			// Fall back to extracting the version from the cleaned model ID
-			// (modifier-stripped), which is the authoritative source for version
-			// numbers per team-lead arbitration (bestiary-5eh8).
-			// Example: "claude-opus-4-5-20251101-thinking" with family "claude-opus"
-			// yields version "4.5" after stripping "-thinking".
-			normVersion = bestiary.ExtractVersionFromID(cleanID, rawFamily)
-		}
-
-		// Derive normalized date from cleaned model ID (modifier stripped) or release date.
-		normDate := bestiary.ExtractDate(cleanID, wm.ReleaseDate)
-
-		// If a parse failure was detected, backfill the date into AttemptedParse.
-		if failure != nil {
-			failure.AttemptedParse.Date = normDate
-			// Models where ExtractModifier extracts a known modifier no longer trip
-			// ReasonKnownSuffixOverflow (the modifier is now a first-class field).
-			// Clear the failure record for this case so the audit log shrinks as
-			// expected per the V2-5 design.
-			if failure.Reason == bestiary.ReasonKnownSuffixOverflow && normModifier != "" {
-				failure = nil
-			}
-		}
-
-		info := bestiary.ModelInfo{
-			ID:          id,
-			Provider:    provider,
-			DisplayName: wm.Name,
-			RawFamily:   rawFamily,
-			Family:      normFamily,
-			Variant:     normVariant,
-			Version:     normVersion,
-			Date:        normDate,
-			Modifier:    normModifier,
-			Reasoning:         wm.Reasoning,
-			ToolCall:          wm.ToolCall,
-			Attachment:        wm.Attachment,
-			Temperature:       wm.Temperature,
-			StructuredOutput:  wm.StructuredOutput,
-			OpenWeights:       wm.OpenWeights,
-			ReleaseDate:       wm.ReleaseDate,
-			Knowledge:         wm.Knowledge,
-			Interleaved: parseCapabilityRaw(wm.Interleaved),
-			LastSynced:  "",
-		}
-
-		if wm.Cost != nil {
-			info.CostInputPerMTok = wm.Cost.Input
-			info.CostOutputPerMTok = wm.Cost.Output
-			info.CostReasoningPerMTok = wm.Cost.Reasoning
-			info.CostCacheReadPerMTok = wm.Cost.CacheRead
-			info.CostCacheWritePerMTok = wm.Cost.CacheWrite
-		}
-		if wm.Limit != nil {
-			if wm.Limit.Context != nil {
-				info.ContextWindow = *wm.Limit.Context
-			}
-			if wm.Limit.Output != nil {
-				info.MaxOutput = *wm.Limit.Output
-			}
-		}
-		if wm.Modalities != nil {
-			info.Modalities = genToModalities(wm.Modalities.Input, wm.Modalities.Output)
-		}
-		return info, failure
-	}
-
-	// ~25% of models have an empty Family field — infer from the model ID.
-	// InferFamilyFromIDWithVariant applies the same suffix/pattern logic as
-	// ParseFamilyWithVersion, ensuring consistent (Family, Variant, Version)
-	// across providers that have empty vs. populated raw_family for the same
-	// model ID (SLICE-FIX-2, B5/B6).
-	normFamily, normVariant, normVersion = bestiary.InferFamilyFromIDWithVariant(
-		id,
-		provider,
-	)
-
-	// For empty-family models, also extract the modifier.
-	normModifier, modifierConsumed2 := bestiary.ExtractModifier(id, normFamily, normVariant)
-	cleanID2 := id
-	if modifierConsumed2 != "" {
-		cleanStr := string(id)
-		if len(cleanStr) >= len(modifierConsumed2) && cleanStr[len(cleanStr)-len(modifierConsumed2):] == modifierConsumed2 {
-			cleanID2 = bestiary.ModelID(cleanStr[:len(cleanStr)-len(modifierConsumed2)])
 		}
 	}
 
 	// Derive normalized date from cleaned model ID (modifier stripped) or release date.
-	normDate2 := bestiary.ExtractDate(cleanID2, wm.ReleaseDate)
+	normDate := bestiary.ExtractDate(cleanID, wm.ReleaseDate)
 
-	info2 := bestiary.ModelInfo{
+	// If a parse failure was detected, backfill the date into AttemptedParse.
+	if failure != nil {
+		failure.AttemptedParse.Date = normDate
+		// Models where ExtractModifier extracts a known modifier no longer trip
+		// ReasonKnownSuffixOverflow (the modifier is now a first-class field).
+		// Clear the failure record for this case so the audit log shrinks as
+		// expected per the V2-5 design.
+		if failure.Reason == bestiary.ReasonKnownSuffixOverflow && normModifier != "" {
+			failure = nil
+		}
+	}
+
+	info := bestiary.ModelInfo{
 		ID:               id,
 		Provider:         provider,
 		DisplayName:      wm.Name,
@@ -851,7 +821,7 @@ func genToModelInfoDetailed(providerSlug string, wm genWireModel) (bestiary.Mode
 		Family:           normFamily,
 		Variant:          normVariant,
 		Version:          normVersion,
-		Date:             normDate2,
+		Date:             normDate,
 		Modifier:         normModifier,
 		Reasoning:        wm.Reasoning,
 		ToolCall:         wm.ToolCall,
@@ -866,24 +836,24 @@ func genToModelInfoDetailed(providerSlug string, wm genWireModel) (bestiary.Mode
 	}
 
 	if wm.Cost != nil {
-		info2.CostInputPerMTok = wm.Cost.Input
-		info2.CostOutputPerMTok = wm.Cost.Output
-		info2.CostReasoningPerMTok = wm.Cost.Reasoning
-		info2.CostCacheReadPerMTok = wm.Cost.CacheRead
-		info2.CostCacheWritePerMTok = wm.Cost.CacheWrite
+		info.CostInputPerMTok = wm.Cost.Input
+		info.CostOutputPerMTok = wm.Cost.Output
+		info.CostReasoningPerMTok = wm.Cost.Reasoning
+		info.CostCacheReadPerMTok = wm.Cost.CacheRead
+		info.CostCacheWritePerMTok = wm.Cost.CacheWrite
 	}
 	if wm.Limit != nil {
 		if wm.Limit.Context != nil {
-			info2.ContextWindow = *wm.Limit.Context
+			info.ContextWindow = *wm.Limit.Context
 		}
 		if wm.Limit.Output != nil {
-			info2.MaxOutput = *wm.Limit.Output
+			info.MaxOutput = *wm.Limit.Output
 		}
 	}
 	if wm.Modalities != nil {
-		info2.Modalities = genToModalities(wm.Modalities.Input, wm.Modalities.Output)
+		info.Modalities = genToModalities(wm.Modalities.Input, wm.Modalities.Output)
 	}
-	return info2, nil // empty-family branch never produces a failure record
+	return info, failure
 }
 
 // genToModalities converts string slices from the API into the typed Modalities
