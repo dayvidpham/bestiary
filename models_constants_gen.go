@@ -37,9 +37,9 @@ const (
 	Model__302AI__Deepseek__Reasoner                                               ModelID = "deepseek-reasoner"
 	Model__302AI__Deepseek__V3__2                                                  ModelID = "deepseek-v3.2"
 	Model__302AI__Deepseek__V3__2__Thinking                                        ModelID = "deepseek-v3.2-thinking"
-	Model__302AI__Doubao__Seed__1_8_251215                                         ModelID = "doubao-seed-1-8-251215"
 	Model__302AI__Doubao__Seed__1__6__Thinking__250715                             ModelID = "doubao-seed-1-6-thinking-250715"
 	Model__302AI__Doubao__Seed__1__6__Vision__250815                               ModelID = "doubao-seed-1-6-vision-250815"
+	Model__302AI__Doubao__Seed__1__8__251215__1_8                                  ModelID = "doubao-seed-1-8-251215"
 	Model__302AI__Doubao__Seed__Code__Preview__251028                              ModelID = "doubao-seed-code-preview-251028"
 	Model__302AI__GPT__4_1                                                         ModelID = "gpt-4.1"
 	Model__302AI__GPT__4__1__Mini__4_1                                             ModelID = "gpt-4.1-mini"
@@ -906,13 +906,13 @@ const (
 	Model__Cohere__C4ai__Aya__Expanse__8b                                          ModelID = "c4ai-aya-expanse-8b"
 	Model__Cohere__C4ai__Aya__Vision__32b                                          ModelID = "c4ai-aya-vision-32b"
 	Model__Cohere__C4ai__Aya__Vision__8b                                           ModelID = "c4ai-aya-vision-8b"
-	Model__Cohere__Command__A__03_2025__20250313                                   ModelID = "command-a-03-2025"
+	Model__Cohere__Command__A__20250313                                            ModelID = "command-a-03-2025"
 	Model__Cohere__Command__A__Reasoning__20250821                                 ModelID = "command-a-reasoning-08-2025"
 	Model__Cohere__Command__A__Translate__20250828                                 ModelID = "command-a-translate-08-2025"
 	Model__Cohere__Command__A__Vision__20250731                                    ModelID = "command-a-vision-07-2025"
 	Model__Cohere__Command__R7b__12__2024__12                                      ModelID = "command-r7b-12-2024"
 	Model__Cohere__Command__R7b__Arabic__02__20250227                              ModelID = "command-r7b-arabic-02-2025"
-	Model__Cohere__Command__R__08_2024__20240830                                   ModelID = "command-r-08-2024"
+	Model__Cohere__Command__R__20240830                                            ModelID = "command-r-08-2024"
 	Model__Cohere__Command__R__Plus__20240830                                      ModelID = "command-r-plus-08-2024"
 	Model__Cortecs__Claude__4__5__Sonnet__4_5                                      ModelID = "claude-4-5-sonnet"
 	Model__Cortecs__Claude__4__6__Sonnet__4_6                                      ModelID = "claude-4-6-sonnet"
@@ -1678,9 +1678,9 @@ const (
 	Model__Kilo__Codestral__2508                                                   ModelID = "mistralai/codestral-2508"
 	Model__Kilo__Cogito__V2__1__671b                                               ModelID = "deepcogito/cogito-v2.1-671b"
 	Model__Kilo__Command__A                                                        ModelID = "cohere/command-a"
-	Model__Kilo__Command__R7b__12_2024                                             ModelID = "cohere/command-r7b-12-2024"
-	Model__Kilo__Command__R__08_2024__20240830                                     ModelID = "cohere/command-r-08-2024"
-	Model__Kilo__Command__R__Plus__08_2024__20240830                               ModelID = "cohere/command-r-plus-08-2024"
+	Model__Kilo__Command__R7b__12__2024                                            ModelID = "cohere/command-r7b-12-2024"
+	Model__Kilo__Command__R__20240830                                              ModelID = "cohere/command-r-08-2024"
+	Model__Kilo__Command__R__Plus__20240830                                        ModelID = "cohere/command-r-plus-08-2024"
 	Model__Kilo__Cydonia__24b__V4__1                                               ModelID = "thedrummer/cydonia-24b-v4.1"
 	Model__Kilo__Deepseek__Chat                                                    ModelID = "deepseek/deepseek-chat"
 	Model__Kilo__Deepseek__Chat__V3__0324                                          ModelID = "deepseek/deepseek-chat-v3-0324"
@@ -1712,9 +1712,9 @@ const (
 	Model__Kilo__GPT__3__5__Turbo__3_5                                             ModelID = "openai/gpt-3.5-turbo"
 	Model__Kilo__GPT__3__5__Turbo__Instruct                                        ModelID = "openai/gpt-3.5-turbo-instruct"
 	Model__Kilo__GPT__4                                                            ModelID = "openai/gpt-4"
-	Model__Kilo__GPT__4_0314                                                       ModelID = "openai/gpt-4-0314"
 	Model__Kilo__GPT__4_1                                                          ModelID = "openai/gpt-4.1"
-	Model__Kilo__GPT__4_1106__Preview                                              ModelID = "openai/gpt-4-1106-preview"
+	Model__Kilo__GPT__4__0314__4                                                   ModelID = "openai/gpt-4-0314"
+	Model__Kilo__GPT__4__1106__4__Preview                                          ModelID = "openai/gpt-4-1106-preview"
 	Model__Kilo__GPT__4__1__Mini__4_1                                              ModelID = "openai/gpt-4.1-mini"
 	Model__Kilo__GPT__4__1__Nano__4_1                                              ModelID = "openai/gpt-4.1-nano"
 	Model__Kilo__GPT__4__Turbo                                                     ModelID = "openai/gpt-4-turbo"
@@ -2190,10 +2190,10 @@ const (
 	Model__Llmgateway__Qwen__Vl__Max                                               ModelID = "qwen-vl-max"
 	Model__Llmgateway__Qwen__Vl__Plus                                              ModelID = "qwen-vl-plus"
 	Model__Llmgateway__Qwq__Plus                                                   ModelID = "qwq-plus"
-	Model__Llmgateway__Seed__1_6_250615                                            ModelID = "seed-1-6-250615"
-	Model__Llmgateway__Seed__1_6_250915                                            ModelID = "seed-1-6-250915"
-	Model__Llmgateway__Seed__1_8_251228                                            ModelID = "seed-1-8-251228"
-	Model__Llmgateway__Seed__1__6__Flash__250715__1_6_250715                       ModelID = "seed-1-6-flash-250715"
+	Model__Llmgateway__Seed__1__6__250615__1_6                                     ModelID = "seed-1-6-250615"
+	Model__Llmgateway__Seed__1__6__250915__1_6                                     ModelID = "seed-1-6-250915"
+	Model__Llmgateway__Seed__1__6__Flash__250715__1_6                              ModelID = "seed-1-6-flash-250715"
+	Model__Llmgateway__Seed__1__8__251228__1_8                                     ModelID = "seed-1-8-251228"
 	Model__Llmgateway__Sonar                                                       ModelID = "sonar"
 	Model__Llmgateway__Sonar__Pro                                                  ModelID = "sonar-pro"
 	Model__Llmgateway__Sonar__Reasoning__Pro                                       ModelID = "sonar-reasoning-pro"
@@ -2451,7 +2451,7 @@ const (
 	Model__NanoGPT__Codestral__2508                                                ModelID = "mistralai/codestral-2508"
 	Model__NanoGPT__Cogito__V1__Preview__Qwen__32B                                 ModelID = "deepcogito/cogito-v1-preview-qwen-32B"
 	Model__NanoGPT__Cogito__V2__1__671b                                            ModelID = "deepcogito/cogito-v2.1-671b"
-	Model__NanoGPT__Command__A__Reasoning__08_2025__20250822                       ModelID = "command-a-reasoning-08-2025"
+	Model__NanoGPT__Command__A__Reasoning__20250822                                ModelID = "command-a-reasoning-08-2025"
 	Model__NanoGPT__Command__R                                                     ModelID = "cohere/command-r"
 	Model__NanoGPT__Command__R__Plus__20240830                                     ModelID = "cohere/command-r-plus-08-2024"
 	Model__NanoGPT__Cydonia__24B__V2                                               ModelID = "TheDrummer 2/Cydonia-24B-v2"
@@ -2497,10 +2497,10 @@ const (
 	Model__NanoGPT__Doubao__1__5__Thinking__Pro__Vision__250415                    ModelID = "doubao-1-5-thinking-pro-vision-250415"
 	Model__NanoGPT__Doubao__1__5__Thinking__Vision__Pro__250428                    ModelID = "doubao-1-5-thinking-vision-pro-250428"
 	Model__NanoGPT__Doubao__1__5__Vision__Pro__32k                                 ModelID = "doubao-1.5-vision-pro-32k"
-	Model__NanoGPT__Doubao__Seed__1_6_250615                                       ModelID = "doubao-seed-1-6-250615"
-	Model__NanoGPT__Doubao__Seed__1_8_251215                                       ModelID = "doubao-seed-1-8-251215"
+	Model__NanoGPT__Doubao__Seed__1__6__250615__1_6                                ModelID = "doubao-seed-1-6-250615"
 	Model__NanoGPT__Doubao__Seed__1__6__Flash__250615                              ModelID = "doubao-seed-1-6-flash-250615"
 	Model__NanoGPT__Doubao__Seed__1__6__Thinking__250615                           ModelID = "doubao-seed-1-6-thinking-250615"
+	Model__NanoGPT__Doubao__Seed__1__8__251215__1_8                                ModelID = "doubao-seed-1-8-251215"
 	Model__NanoGPT__Doubao__Seed__2__0__Code__Preview__260215                      ModelID = "doubao-seed-2-0-code-preview-260215"
 	Model__NanoGPT__Doubao__Seed__2__0__Lite__260215                               ModelID = "doubao-seed-2-0-lite-260215"
 	Model__NanoGPT__Doubao__Seed__2__0__Mini__260215                               ModelID = "doubao-seed-2-0-mini-260215"
@@ -5020,9 +5020,9 @@ var allModelConstants = [...]ModelID{
 	Model__302AI__Deepseek__Reasoner,
 	Model__302AI__Deepseek__V3__2,
 	Model__302AI__Deepseek__V3__2__Thinking,
-	Model__302AI__Doubao__Seed__1_8_251215,
 	Model__302AI__Doubao__Seed__1__6__Thinking__250715,
 	Model__302AI__Doubao__Seed__1__6__Vision__250815,
+	Model__302AI__Doubao__Seed__1__8__251215__1_8,
 	Model__302AI__Doubao__Seed__Code__Preview__251028,
 	Model__302AI__GPT__4_1,
 	Model__302AI__GPT__4__1__Mini__4_1,
@@ -5889,13 +5889,13 @@ var allModelConstants = [...]ModelID{
 	Model__Cohere__C4ai__Aya__Expanse__8b,
 	Model__Cohere__C4ai__Aya__Vision__32b,
 	Model__Cohere__C4ai__Aya__Vision__8b,
-	Model__Cohere__Command__A__03_2025__20250313,
+	Model__Cohere__Command__A__20250313,
 	Model__Cohere__Command__A__Reasoning__20250821,
 	Model__Cohere__Command__A__Translate__20250828,
 	Model__Cohere__Command__A__Vision__20250731,
 	Model__Cohere__Command__R7b__12__2024__12,
 	Model__Cohere__Command__R7b__Arabic__02__20250227,
-	Model__Cohere__Command__R__08_2024__20240830,
+	Model__Cohere__Command__R__20240830,
 	Model__Cohere__Command__R__Plus__20240830,
 	Model__Cortecs__Claude__4__5__Sonnet__4_5,
 	Model__Cortecs__Claude__4__6__Sonnet__4_6,
@@ -6661,9 +6661,9 @@ var allModelConstants = [...]ModelID{
 	Model__Kilo__Codestral__2508,
 	Model__Kilo__Cogito__V2__1__671b,
 	Model__Kilo__Command__A,
-	Model__Kilo__Command__R7b__12_2024,
-	Model__Kilo__Command__R__08_2024__20240830,
-	Model__Kilo__Command__R__Plus__08_2024__20240830,
+	Model__Kilo__Command__R7b__12__2024,
+	Model__Kilo__Command__R__20240830,
+	Model__Kilo__Command__R__Plus__20240830,
 	Model__Kilo__Cydonia__24b__V4__1,
 	Model__Kilo__Deepseek__Chat,
 	Model__Kilo__Deepseek__Chat__V3__0324,
@@ -6695,9 +6695,9 @@ var allModelConstants = [...]ModelID{
 	Model__Kilo__GPT__3__5__Turbo__3_5,
 	Model__Kilo__GPT__3__5__Turbo__Instruct,
 	Model__Kilo__GPT__4,
-	Model__Kilo__GPT__4_0314,
 	Model__Kilo__GPT__4_1,
-	Model__Kilo__GPT__4_1106__Preview,
+	Model__Kilo__GPT__4__0314__4,
+	Model__Kilo__GPT__4__1106__4__Preview,
 	Model__Kilo__GPT__4__1__Mini__4_1,
 	Model__Kilo__GPT__4__1__Nano__4_1,
 	Model__Kilo__GPT__4__Turbo,
@@ -7173,10 +7173,10 @@ var allModelConstants = [...]ModelID{
 	Model__Llmgateway__Qwen__Vl__Max,
 	Model__Llmgateway__Qwen__Vl__Plus,
 	Model__Llmgateway__Qwq__Plus,
-	Model__Llmgateway__Seed__1_6_250615,
-	Model__Llmgateway__Seed__1_6_250915,
-	Model__Llmgateway__Seed__1_8_251228,
-	Model__Llmgateway__Seed__1__6__Flash__250715__1_6_250715,
+	Model__Llmgateway__Seed__1__6__250615__1_6,
+	Model__Llmgateway__Seed__1__6__250915__1_6,
+	Model__Llmgateway__Seed__1__6__Flash__250715__1_6,
+	Model__Llmgateway__Seed__1__8__251228__1_8,
 	Model__Llmgateway__Sonar,
 	Model__Llmgateway__Sonar__Pro,
 	Model__Llmgateway__Sonar__Reasoning__Pro,
@@ -7434,7 +7434,7 @@ var allModelConstants = [...]ModelID{
 	Model__NanoGPT__Codestral__2508,
 	Model__NanoGPT__Cogito__V1__Preview__Qwen__32B,
 	Model__NanoGPT__Cogito__V2__1__671b,
-	Model__NanoGPT__Command__A__Reasoning__08_2025__20250822,
+	Model__NanoGPT__Command__A__Reasoning__20250822,
 	Model__NanoGPT__Command__R,
 	Model__NanoGPT__Command__R__Plus__20240830,
 	Model__NanoGPT__Cydonia__24B__V2,
@@ -7480,10 +7480,10 @@ var allModelConstants = [...]ModelID{
 	Model__NanoGPT__Doubao__1__5__Thinking__Pro__Vision__250415,
 	Model__NanoGPT__Doubao__1__5__Thinking__Vision__Pro__250428,
 	Model__NanoGPT__Doubao__1__5__Vision__Pro__32k,
-	Model__NanoGPT__Doubao__Seed__1_6_250615,
-	Model__NanoGPT__Doubao__Seed__1_8_251215,
+	Model__NanoGPT__Doubao__Seed__1__6__250615__1_6,
 	Model__NanoGPT__Doubao__Seed__1__6__Flash__250615,
 	Model__NanoGPT__Doubao__Seed__1__6__Thinking__250615,
+	Model__NanoGPT__Doubao__Seed__1__8__251215__1_8,
 	Model__NanoGPT__Doubao__Seed__2__0__Code__Preview__260215,
 	Model__NanoGPT__Doubao__Seed__2__0__Lite__260215,
 	Model__NanoGPT__Doubao__Seed__2__0__Mini__260215,
