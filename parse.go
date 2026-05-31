@@ -447,9 +447,12 @@ func ParseFamilyWithVersion(raw Family) (Family, string, string) {
 			suffix := rawTokens5[prefixLen:]
 
 			// Collect leading purely-numeric suffix tokens as version.
+			// SLICE-1-FIX-4 (7kyb/9yyp): use isDateShapedToken (4-digit OR 6-digit YYMMDD)
+			// to guard the 4th date-guard site. Previously isYYMMDateToken (4-digit only)
+			// was used, leaving 6-digit YYMMDD tokens (e.g. "250615") unguarded here.
 			var versionTokens []string
 			for _, tok := range suffix {
-				if isVersionToken(tok) && !isYYMMDateToken(tok) {
+				if isVersionToken(tok) && !isDateShapedToken(tok) {
 					versionTokens = append(versionTokens, tok)
 				} else {
 					break
@@ -935,10 +938,10 @@ type ParseFailureReason string
 //	  "reason":         "version digits between family-prefix and variant not extracted"
 //	}
 type ParseFailure struct {
-	RawID          ModelID           `json:"raw_id"`
-	Provider       Provider          `json:"provider"`
-	RawFamily      Family            `json:"raw_family"`
-	AttemptedParse ParseAttempt      `json:"attempted_parse"`
+	RawID          ModelID            `json:"raw_id"`
+	Provider       Provider           `json:"provider"`
+	RawFamily      Family             `json:"raw_family"`
+	AttemptedParse ParseAttempt       `json:"attempted_parse"`
 	Reason         ParseFailureReason `json:"reason"`
 }
 
@@ -1565,23 +1568,15 @@ func ExtractVersionBetweenFamilyAndVariant(id ModelID, family Family, variant st
 
 	idStr := lastPathSegment(string(id))
 
-	// Try the full family string as prefix first (e.g. "text-embedding-" for "text-embedding"),
-	// which avoids spurious residuals for compound families like "text-embedding-3-large"
-	// where firstToken("text-embedding")="text" would leave "embedding" as an unaccounted token.
-	// Fall back to firstToken normalization ("claude-opus" → "claude") when the full prefix
-	// is not present in the ID.
-	familyStr := string(family)
-	fullPrefix := familyStr + "-"
-	var prefix string
-	if strings.HasPrefix(idStr, fullPrefix) {
-		prefix = fullPrefix
-	} else {
-		// Normalize family: use only the first hyphen-token so that "claude-opus" → "claude".
-		normalizedFamily := firstToken(familyStr)
-		prefix = normalizedFamily + "-"
-		if !strings.HasPrefix(idStr, prefix) {
-			return "", nil
-		}
+	// Normalize family: use only the first hyphen-token so that "claude-opus" → "claude".
+	// SLICE-1-FIX-4: full-prefix-first was reverted (FIX-2 B1 over-stripped compound families
+	// like "gemini-2.5-flash-image-generation" by matching "gemini-2.5-flash-" as prefix and
+	// leaving "image-generation" as remainder with no numeric leading token, losing version "2.5").
+	// Proper additive handling for compound families (text-embedding, etc.) is deferred to rc2.
+	normalizedFamily := firstToken(string(family))
+	prefix := normalizedFamily + "-"
+	if !strings.HasPrefix(idStr, prefix) {
+		return "", nil
 	}
 
 	// Strip the family prefix.

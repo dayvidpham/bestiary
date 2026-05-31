@@ -144,13 +144,13 @@ func familyConstName(slug string, nameHint string) string {
 
 // Output paths are relative to the module root (where go generate is run from).
 const (
-	outputPath              = "models_static_gen.go"
-	outputProvidersPath     = "providers_gen.go"
-	outputFamiliesPath      = "families_gen.go"
-	defaultCacheDir         = ".bestiary-gen-cache"
-	cacheFile               = "api_response.json"
-	versionDuplicatesFile   = "version_duplicates.json"
-	dotFormAuditFile        = "dot_form_audit.json"
+	outputPath            = "models_static_gen.go"
+	outputProvidersPath   = "providers_gen.go"
+	outputFamiliesPath    = "families_gen.go"
+	defaultCacheDir       = ".bestiary-gen-cache"
+	cacheFile             = "api_response.json"
+	versionDuplicatesFile = "version_duplicates.json"
+	dotFormAuditFile      = "dot_form_audit.json"
 )
 
 // VersionDuplicateKey identifies a group of models that share (provider, family,
@@ -224,21 +224,21 @@ type genWireProvider struct {
 // Since we only care about our three target providers (anthropic, google, openai)
 // which do not use this field, we just skip it.
 type genWireModel struct {
-	ID               string            `json:"id"`
-	Name             string            `json:"name"`
-	Family           string            `json:"family"`
-	Reasoning        bool              `json:"reasoning"`
-	ToolCall         bool              `json:"tool_call"`
-	Attachment       bool              `json:"attachment"`
-	Temperature      bool              `json:"temperature"`
-	StructuredOutput bool              `json:"structured_output"`
-	Interleaved      json.RawMessage   `json:"interleaved"`
-	OpenWeights      bool              `json:"open_weights"`
-	ReleaseDate      string            `json:"release_date"`
-	Knowledge        string            `json:"knowledge"`
-	Cost             *genWireCost      `json:"cost"`
-	Limit            *genWireLimit     `json:"limit"`
-	Modalities       *genWireModality  `json:"modalities"`
+	ID               string           `json:"id"`
+	Name             string           `json:"name"`
+	Family           string           `json:"family"`
+	Reasoning        bool             `json:"reasoning"`
+	ToolCall         bool             `json:"tool_call"`
+	Attachment       bool             `json:"attachment"`
+	Temperature      bool             `json:"temperature"`
+	StructuredOutput bool             `json:"structured_output"`
+	Interleaved      json.RawMessage  `json:"interleaved"`
+	OpenWeights      bool             `json:"open_weights"`
+	ReleaseDate      string           `json:"release_date"`
+	Knowledge        string           `json:"knowledge"`
+	Cost             *genWireCost     `json:"cost"`
+	Limit            *genWireLimit    `json:"limit"`
+	Modalities       *genWireModality `json:"modalities"`
 }
 
 type genWireCost struct {
@@ -327,10 +327,10 @@ func parseFlags(args []string) (flagResult, error) {
 	}
 	if res.cacheDir == "" {
 		return flagResult{}, fmt.Errorf(
-			"-cache-dir value must not be empty\n" +
-				"  What: -cache-dir was explicitly set to an empty string\n" +
-				"  Why: an empty cache dir resolves to the current working directory, which is unintended\n" +
-				"  Where: bestiary-gen flag parsing\n" +
+			"-cache-dir value must not be empty\n"+
+				"  What: -cache-dir was explicitly set to an empty string\n"+
+				"  Why: an empty cache dir resolves to the current working directory, which is unintended\n"+
+				"  Where: bestiary-gen flag parsing\n"+
 				"  How to fix: omit -cache-dir to use the default (%s), or provide a non-empty path",
 			defaultCacheDir,
 		)
@@ -985,9 +985,8 @@ func genToModelInfoDetailed(providerSlug string, wm genWireModel) (bestiary.Mode
 		// calling ExtractModifier with the known family+variant context.
 		_, modifierConsumed := bestiary.ExtractModifier(id, normFamily, normVariant)
 		if modifierConsumed != "" {
-			cleanStr := string(id)
-			if len(cleanStr) >= len(modifierConsumed) && cleanStr[len(cleanStr)-len(modifierConsumed):] == modifierConsumed {
-				cleanID = bestiary.ModelID(cleanStr[:len(cleanStr)-len(modifierConsumed)])
+			if trimmed, ok := strings.CutSuffix(string(id), modifierConsumed); ok {
+				cleanID = bestiary.ModelID(trimmed)
 			}
 		}
 	}

@@ -2534,9 +2534,11 @@ func TestDecompositionSnapshot_ActiveClassVersionPopulated(t *testing.T) {
 
 	// Active-class models: those expected to have version populated.
 	// SLICE-1 parser correctly extracts version for these cases.
-	// SLICE-1-FIX-2 B1: adds variant-promoted models (glm-5-turbo, phi-4-mini,
-	// text-embedding-3-large, text-embedding-3-small) whose variant is now set
-	// from the sole trailing suffix after version extraction.
+	// SLICE-1-FIX-2 B1: adds variant-promoted models (glm-5-turbo, phi-4-mini)
+	// whose variant is now set from the sole trailing suffix after version extraction.
+	// SLICE-1-FIX-4: text-embedding-3-large/small removed from active class —
+	// the full-prefix-first change that enabled their B1 promotion was reverted.
+	// They are now documented residuals (bestiary-ibtb, rc2 deferred).
 	activeCases := map[string]struct {
 		wantFamily  string
 		wantVariant string
@@ -2548,15 +2550,11 @@ func TestDecompositionSnapshot_ActiveClassVersionPopulated(t *testing.T) {
 		"anthropic/claude-3-5-haiku": {wantFamily: "claude", wantVariant: "haiku", wantVersion: "3.5"},
 		// claude-3.5-haiku: same family → same decomposition
 		"anthropic/claude-3.5-haiku": {wantFamily: "claude", wantVariant: "haiku", wantVersion: "3.5"},
-		// B1 promoted models (SLICE-1-FIX-2):
+		// B1 promoted models surviving FIX-4 revert (single-token rawFamily, no compound prefix):
 		// glm-5-turbo: raw_family=glm → family=glm, variant=turbo (B1), version=5
 		"glm-5-turbo": {wantFamily: "glm", wantVariant: "turbo", wantVersion: "5"},
 		// phi-4-mini: raw_family=phi → family=phi, variant=mini (B1), version=4
 		"phi-4-mini": {wantFamily: "phi", wantVariant: "mini", wantVersion: "4"},
-		// text-embedding-3-large: raw_family=text-embedding → family=text-embedding, variant=large (B1), version=3
-		"text-embedding-3-large": {wantFamily: "text-embedding", wantVariant: "large", wantVersion: "3"},
-		// text-embedding-3-small: raw_family=text-embedding → family=text-embedding, variant=small (B1), version=3
-		"text-embedding-3-small": {wantFamily: "text-embedding", wantVariant: "small", wantVersion: "3"},
 	}
 
 	modelsByID := make(map[string]bestiary.ModelInfo, len(models))
@@ -2824,16 +2822,16 @@ func TestWriteDotFormAudit_Unit(t *testing.T) {
 // Expectations:
 //   - ReasonVersionDigitsNotExtracted (active class) → 0: SLICE-1 now correctly
 //     extracts version from IDs like claude-3-5-haiku; this failure should no longer fire.
-//   - ReasonResidualUnaccountedTokens → at least 2: nova-2-lite-v1 (C: unknown sole token
-//     'v1') and phi-3-medium-128k-instruct (B2: multiple residual tokens) both remain
-//     after SLICE-1-FIX-2 FIX B1 (B1 only promotes when exactly ONE known suffix remains
-//     and Variant=="").
+//   - ReasonResidualUnaccountedTokens → at least 4 (SLICE-1-FIX-4 updated):
+//     nova-2-lite-v1 (C: variant pre-set), phi-3-medium-128k-instruct (B2: multi-residual),
+//     text-embedding-3-large + text-embedding-3-small (FIX-4 documented residuals —
+//     full-prefix-first reverted; bestiary-ibtb tracks rc2 fix).
 //   - ReasonYYMMDateAsVersion → at least 1: mistral-small-2603 (family mistral-2603)
 //     triggers the YYMM false-positive detector.
 //   - FIX-A confirmation: deepseek-r1-0528 / deepseek-v3-0324 produce NO failure
 //     (bare 4-digit date tokens are now rejected as versions, not residual).
-//   - FIX-B1 confirmation: glm-5-turbo / phi-4-mini / text-embedding-3-* produce NO failure
-//     (sole trailing known suffix promoted into Variant).
+//   - FIX-B1 confirmation (SLICE-1-FIX-4 updated): glm-5-turbo / phi-4-mini produce NO failure
+//     (single-token rawFamily; B1 still fires). text-embedding-3-* removed (now residual).
 //
 // This test is NOT a ==0 gate on real data — fixture-based only (Plan UAT decision).
 func TestFixturePerReasonCounts(t *testing.T) {
@@ -2859,15 +2857,18 @@ func TestFixturePerReasonCounts(t *testing.T) {
 			n)
 	}
 
-	// Residual: ReasonResidualUnaccountedTokens must be >= 2 (nova-2-lite-v1 = C case +
-	// phi-3-medium-128k-instruct = B2 case). After FIX-B1, glm-5-turbo/phi-4-mini/
-	// text-embedding-3-* are NO longer residual (promoted to Variant).
-	if n := counts[bestiary.ReasonResidualUnaccountedTokens]; n < 2 {
-		t.Errorf("ReasonResidualUnaccountedTokens = %d, want >= 2\n"+
-			"  What: nova-2-lite-v1 (C: unknown token 'v1') AND phi-3-medium-128k-instruct (B2: multi-residual)\n"+
-			"    should produce residual failures; B2/C cases remain out-of-scope for FIX-B1\n"+
-			"  Why: FIX-B1 only promotes when exactly ONE residual token is a known variant suffix\n"+
-			"  How to fix: verify fixture_api.json includes both nova-2-lite-v1 and phi-3-medium-128k-instruct",
+	// Residual: ReasonResidualUnaccountedTokens must be >= 4 after SLICE-1-FIX-4:
+	// nova-2-lite-v1 (C: variant pre-set, "v1" residual after variant) +
+	// phi-3-medium-128k-instruct (B2: multi-residual) +
+	// text-embedding-3-large (FIX-4 documented residual: full-prefix-first reverted) +
+	// text-embedding-3-small (same).
+	// After FIX-B1, glm-5-turbo/phi-4-mini are promoted (single-token rawFamily, B1 applies).
+	if n := counts[bestiary.ReasonResidualUnaccountedTokens]; n < 4 {
+		t.Errorf("ReasonResidualUnaccountedTokens = %d, want >= 4\n"+
+			"  What: nova-2-lite-v1 (C) + phi-3-medium-128k-instruct (B2) + text-embedding-3-large/small (FIX-4 residual)\n"+
+			"    should produce residual failures\n"+
+			"  Why: FIX-4 reverted full-prefix-first; text-embedding models now have compound residual tokens\n"+
+			"  How to fix: verify fixture_api.json includes all four models",
 			n)
 	}
 
@@ -2892,10 +2893,12 @@ func TestFixturePerReasonCounts(t *testing.T) {
 		}
 	}
 
-	// FIX-B1 spot check: glm-5-turbo, phi-4-mini, text-embedding-3-large,
-	// text-embedding-3-small must NOT appear in failures. Their sole trailing
-	// known suffix is promoted into Variant → no residual failure.
-	for _, fixB1ID := range []string{"glm-5-turbo", "phi-4-mini", "text-embedding-3-large", "text-embedding-3-small"} {
+	// FIX-B1 spot check (SLICE-1-FIX-4 updated): glm-5-turbo and phi-4-mini must NOT
+	// appear in failures. Their single-token rawFamily ("glm", "phi") means B1 fires
+	// correctly (sole trailing suffix promoted, no compound prefix issue).
+	// text-embedding-3-large/small are removed from this check — they are now documented
+	// residuals after SLICE-1-FIX-4 reverted the full-prefix-first change (bestiary-ibtb).
+	for _, fixB1ID := range []string{"glm-5-turbo", "phi-4-mini"} {
 		if reason, found := failsByID[fixB1ID]; found {
 			t.Errorf("FIX-B1 model %q produced a failure (reason=%q), want no failure\n"+
 				"  What: sole trailing known-suffix was not promoted into Variant\n"+

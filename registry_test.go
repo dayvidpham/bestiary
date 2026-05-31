@@ -2,6 +2,7 @@ package bestiary_test
 
 import (
 	"regexp"
+	"strings"
 	"testing"
 
 	"github.com/dayvidpham/bestiary"
@@ -301,8 +302,11 @@ func TestStaticModels_NoDateVersions(t *testing.T) {
 	// reMMYYYY: MM-YYYY two-group (e.g. "08-2024", "03-2025").
 	reMMYYYY := regexp.MustCompile(`^(0[1-9]|1[0-2])-(19|20)\d{2}$`)
 	// reEmbedYear: version string that contains an embedded 4-digit calendar year
-	// run (19xx or 20xx), with or without surrounding dots/hyphens.
-	reEmbedYear := regexp.MustCompile(`(?:^|[.\-])(19|20)\d{2}(?:$|[.\-])`)
+	// run (19xx or 20xx), with or without surrounding dots/hyphens, OR a concatenated
+	// YYYYMMDD run (e.g. "20240101" where "2024" is concatenated with "0101" — no separator).
+	// SLICE-1-FIX-4 (reEmbedYear): trailing boundary hardened to also match a following digit,
+	// catching concatenated 8-digit YYYYMMDD strings that have no separator between year and day.
+	reEmbedYear := regexp.MustCompile(`(?:^|[.\-])(19|20)\d{2}(?:$|[.\-]|\d)`)
 
 	var failures []string
 	for _, m := range models {
@@ -332,18 +336,6 @@ func TestStaticModels_NoDateVersions(t *testing.T) {
 			"  What: Version field contains a date-shaped value\n"+
 			"  Why: parse heuristics failed to strip date tokens from the version dot-join path\n"+
 			"  How to fix: run SLICE-1-FIX-3 date-group guards or re-run go generate ./... after parse fix",
-			len(failures), joinLines(failures))
+			len(failures), strings.Join(failures, "\n"))
 	}
-}
-
-// joinLines joins a slice of strings with newlines for error output.
-func joinLines(ss []string) string {
-	result := ""
-	for i, s := range ss {
-		if i > 0 {
-			result += "\n"
-		}
-		result += s
-	}
-	return result
 }

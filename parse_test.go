@@ -236,7 +236,6 @@ func TestParseFamily_SingleToken(t *testing.T) {
 	}
 
 	for _, raw := range singles {
-		raw := raw
 		t.Run(string(raw), func(t *testing.T) {
 			t.Parallel()
 			gotFamily, gotVariant := bestiary.ParseFamily(raw)
@@ -277,7 +276,6 @@ func TestParseFamily_Determinism(t *testing.T) {
 	}
 
 	for _, raw := range inputs {
-		raw := raw
 		t.Run(string(raw), func(t *testing.T) {
 			t.Parallel()
 			first, firstVariant := bestiary.ParseFamily(raw)
@@ -718,8 +716,8 @@ func TestExtractVersionFromID(t *testing.T) {
 		// Required L3 cases per team-lead brief (bestiary-5eh8).
 		{"claude-opus-4-5-20251101", "claude-opus-4-5-20251101", "claude-opus", "4.5"},
 		{"claude-opus-4-6-20250514", "claude-opus-4-6-20250514", "claude-opus", "4.6"},
-		{"gemini-2.5-flash",         "gemini-2.5-flash",         "gemini",      "2.5"},
-		{"claude-opus no version",   "claude-opus",              "claude-opus", ""},
+		{"gemini-2.5-flash", "gemini-2.5-flash", "gemini", "2.5"},
+		{"claude-opus no version", "claude-opus", "claude-opus", ""},
 
 		// Additional coverage.
 		// gpt-4o: single alphanumeric token "4o" after stripping "gpt-"
@@ -761,7 +759,6 @@ func TestParseFamilyWithVersion_BackwardCompat(t *testing.T) {
 	}
 
 	for _, raw := range cases {
-		raw := raw
 		t.Run(string(raw), func(t *testing.T) {
 			t.Parallel()
 			wantFamily, wantVariant := bestiary.ParseFamily(raw)
@@ -972,12 +969,12 @@ func TestExtractModifier(t *testing.T) {
 	t.Parallel()
 
 	cases := []struct {
-		desc             string
-		id               bestiary.ModelID
-		family           bestiary.Family
-		variant          string
-		wantModifier     string
-		wantConsumed     string
+		desc         string
+		id           bestiary.ModelID
+		family       bestiary.Family
+		variant      string
+		wantModifier string
+		wantConsumed string
 	}{
 		// 4-case corpus from the team-lead spec.
 		{
@@ -1176,12 +1173,12 @@ func TestExtractModifier_PipelineIntegration(t *testing.T) {
 	t.Parallel()
 
 	cases := []struct {
-		desc            string
-		rawID           bestiary.ModelID
-		rawFamily       bestiary.Family
-		wantModifier    string
-		wantVersion     string
-		wantDate        string
+		desc         string
+		rawID        bestiary.ModelID
+		rawFamily    bestiary.Family
+		wantModifier string
+		wantVersion  string
+		wantDate     string
 	}{
 		{
 			desc:         "claude-opus-4-1-20250805-thinking",
@@ -1327,7 +1324,7 @@ func TestParseFamilyDetailed_UnknownSuffixOverflow(t *testing.T) {
 	t.Parallel()
 
 	// Positive: unknown suffix token FIRES Mode 2 UnknownSuffixOverflow when:
-	// (1) model ID trailing token is NOT in knownModifierTokens, AND
+	// (1) model ID trailing token is NOT in the modifier allowlist (pd.modifiers), AND
 	// (2) that token is not already the parsed variant, AND
 	// (3) detectSuffixOverflow returns true (raw family has >2 unaccounted tokens).
 	//
@@ -1339,9 +1336,9 @@ func TestParseFamilyDetailed_UnknownSuffixOverflow(t *testing.T) {
 	// triggering detectSuffixOverflow. Trailing token "zen" is unknown, so
 	// ReasonUnknownSuffixOverflow would fire as an audit hint.
 	//
-	// NOTE: This positive-case subtest is currently SKIPPED because the code path is
-	// unreachable by construction (see Reviewer 2's analysis in SLICE-FIX-V2-3 cycle-3).
-	// Re-enable when FOLLOWUP bestiary-e9pi (parser reorder under FOLLOWUP_SLICE-1 bestiary-wi36) lands.
+	// R3a (e9pi): this subtest is LIVE (not skipped). ParseFamilyWithVersion Step-5 bounded
+	// reorder prevents the pure-fallback from absorbing all trailing tokens, making
+	// ReasonUnknownSuffixOverflow reachable for the claude-opus-4-1-extra-stuff-zen fixture.
 	unknownTrailingWithOverflow := []struct {
 		rawFamily bestiary.Family
 		id        bestiary.ModelID
@@ -1358,13 +1355,10 @@ func TestParseFamilyDetailed_UnknownSuffixOverflow(t *testing.T) {
 	for _, tc := range unknownTrailingWithOverflow {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
-			// R3a (e9pi): this test is RE-ENABLED after the Step-5 bounded reorder in
-			// ParseFamilyWithVersion. The reorder prevents the pure-fallback from absorbing
-			// all trailing tokens, making ReasonUnknownSuffixOverflow reachable.
-			// Input: rawFamily="claude-opus-4-1-extra-stuff-zen" — ParseFamilyWithVersion
-			// now decomposes (claude, opus, 4.1) via hyphen-version; "extra-stuff-zen"
-			// are unaccounted tokens (>2 threshold) → detectSuffixOverflow fires → "zen"
-			// is unknown → ReasonUnknownSuffixOverflow.
+			// R3a (e9pi): ParseFamilyWithVersion Step-5 bounded reorder decomposes
+			// rawFamily="claude-opus-4-1-extra-stuff-zen" to (claude, opus, 4.1) via hyphen-version;
+			// "extra-stuff-zen" are unaccounted tokens (>2 threshold) → detectSuffixOverflow fires
+			// → "zen" is not in pd.modifiers → ReasonUnknownSuffixOverflow.
 			_, _, _, _, failure := bestiary.ParseFamilyDetailed(tc.rawFamily, tc.id, tc.provider)
 			if failure == nil {
 				t.Errorf("ParseFamilyDetailed(%q, %q): expected ParseFailure with Reason=%q, got nil\n"+
@@ -1499,67 +1493,67 @@ func TestExtractVersionBetweenFamilyAndVariant(t *testing.T) {
 	t.Parallel()
 
 	cases := []struct {
-		desc           string
-		id             bestiary.ModelID
-		family         bestiary.Family
-		variant        string
-		wantVersion    string
-		wantResidual   []string
+		desc         string
+		id           bestiary.ModelID
+		family       bestiary.Family
+		variant      string
+		wantVersion  string
+		wantResidual []string
 	}{
 		// Primary acceptance cases from L2 scope.
 		{
-			desc:    "gpt-5-mini → 5 (single numeric between family and variant)",
-			id:      "gpt-5-mini",
-			family:  "gpt",
-			variant: "mini",
+			desc:         "gpt-5-mini → 5 (single numeric between family and variant)",
+			id:           "gpt-5-mini",
+			family:       "gpt",
+			variant:      "mini",
 			wantVersion:  "5",
 			wantResidual: nil,
 		},
 		{
-			desc:    "claude-3-5-haiku-20241022 → 3.5 (N-M dot-join)",
-			id:      "claude-3-5-haiku-20241022",
-			family:  "claude",
-			variant: "haiku",
+			desc:         "claude-3-5-haiku-20241022 → 3.5 (N-M dot-join)",
+			id:           "claude-3-5-haiku-20241022",
+			family:       "claude",
+			variant:      "haiku",
 			wantVersion:  "3.5",
 			wantResidual: nil,
 		},
 		{
-			desc:    "claude-3.5-haiku → 3.5 (dot-normalized in ID)",
-			id:      "claude-3.5-haiku",
-			family:  "claude",
-			variant: "haiku",
+			desc:         "claude-3.5-haiku → 3.5 (dot-normalized in ID)",
+			id:           "claude-3.5-haiku",
+			family:       "claude",
+			variant:      "haiku",
 			wantVersion:  "3.5",
 			wantResidual: nil,
 		},
 		{
-			desc:    "gemini-3-pro-preview → 3 (single numeric, variant=pro)",
-			id:      "gemini-3-pro-preview",
-			family:  "gemini",
-			variant: "pro",
+			desc:         "gemini-3-pro-preview → 3 (single numeric, variant=pro)",
+			id:           "gemini-3-pro-preview",
+			family:       "gemini",
+			variant:      "pro",
 			wantVersion:  "3",
 			wantResidual: nil,
 		},
 		{
-			desc:    "gemini-3-1-pro-preview → 3.1 (N-M dot-join, variant=pro)",
-			id:      "gemini-3-1-pro-preview",
-			family:  "gemini",
-			variant: "pro",
+			desc:         "gemini-3-1-pro-preview → 3.1 (N-M dot-join, variant=pro)",
+			id:           "gemini-3-1-pro-preview",
+			family:       "gemini",
+			variant:      "pro",
 			wantVersion:  "3.1",
 			wantResidual: nil,
 		},
 		{
-			desc:    "nova-2-lite-v1 → version=2, residual=[v1] (R2 honest-audit)",
-			id:      "nova-2-lite-v1",
-			family:  "nova",
-			variant: "lite",
+			desc:         "nova-2-lite-v1 → version=2, residual=[v1] (R2 honest-audit)",
+			id:           "nova-2-lite-v1",
+			family:       "nova",
+			variant:      "lite",
 			wantVersion:  "2",
 			wantResidual: []string{"v1"},
 		},
 		{
-			desc:    "nemotron-3-super-free → version=3, residual=[super] (R2 honest-audit)",
-			id:      "nemotron-3-super-free",
-			family:  "nemotron",
-			variant: "free",
+			desc:         "nemotron-3-super-free → version=3, residual=[super] (R2 honest-audit)",
+			id:           "nemotron-3-super-free",
+			family:       "nemotron",
+			variant:      "free",
 			wantVersion:  "3",
 			wantResidual: []string{"super"},
 		},
@@ -1762,13 +1756,13 @@ func TestParseFamilyDetailed_5Tuple(t *testing.T) {
 	t.Parallel()
 
 	cases := []struct {
-		desc        string
-		rawFamily   bestiary.Family
-		id          bestiary.ModelID
-		provider    bestiary.Provider
-		wantFamily  bestiary.Family
-		wantVariant string
-		wantVersion string
+		desc         string
+		rawFamily    bestiary.Family
+		id           bestiary.ModelID
+		provider     bestiary.Provider
+		wantFamily   bestiary.Family
+		wantVariant  string
+		wantVersion  string
 		wantModifier string
 	}{
 		{
@@ -1842,10 +1836,10 @@ func TestParseFamilyDetailed_R2_Residual(t *testing.T) {
 	t.Parallel()
 
 	cases := []struct {
-		desc      string
-		rawFamily bestiary.Family
-		id        bestiary.ModelID
-		provider  bestiary.Provider
+		desc        string
+		rawFamily   bestiary.Family
+		id          bestiary.ModelID
+		provider    bestiary.Provider
 		wantVersion string
 	}{
 		{
@@ -1899,10 +1893,10 @@ func TestParseFamilyDetailed_FixA_Bare4DigitDateGuard(t *testing.T) {
 	t.Parallel()
 
 	cases := []struct {
-		desc      string
-		rawFamily bestiary.Family
-		id        bestiary.ModelID
-		provider  bestiary.Provider
+		desc        string
+		rawFamily   bestiary.Family
+		id          bestiary.ModelID
+		provider    bestiary.Provider
 		wantVersion string // want empty: 4-digit token must NOT be returned as version
 	}{
 		{
@@ -2020,19 +2014,20 @@ func TestExtractVersionFromID_FixA_Bare4DigitDateGuard(t *testing.T) {
 // BDD: Given id with sole residual = known variant suffix and Variant==""
 // when ParseFamilyDetailed is called then variant=<suffix> AND failure=nil.
 //
-// Acceptance: glm-5-turbo→(glm,turbo,5); phi-4-mini→(phi,mini,4);
-// text-embedding-3-large→(text-embedding,large,3); text-embedding-3-small→(text-embedding,small,3).
+// Acceptance: glm-5-turbo→(glm,turbo,5); phi-4-mini→(phi,mini,4).
+// Note: text-embedding-3-large/small were here in FIX-2 but are now documented residuals
+// after SLICE-1-FIX-4 reverted the full-prefix-first change (bestiary-ibtb, rc2 deferred).
 func TestParseFamilyDetailed_FixB1_SoleVariantSuffixPromotion(t *testing.T) {
 	t.Parallel()
 
 	cases := []struct {
-		desc        string
-		rawFamily   bestiary.Family
-		id          bestiary.ModelID
-		provider    bestiary.Provider
-		wantFamily  bestiary.Family
-		wantVariant string
-		wantVersion string
+		desc          string
+		rawFamily     bestiary.Family
+		id            bestiary.ModelID
+		provider      bestiary.Provider
+		wantFamily    bestiary.Family
+		wantVariant   string
+		wantVersion   string
 		wantNoFailure bool // true → failure must be nil
 	}{
 		{
@@ -2061,30 +2056,13 @@ func TestParseFamilyDetailed_FixB1_SoleVariantSuffixPromotion(t *testing.T) {
 			wantVersion:   "4",
 			wantNoFailure: true,
 		},
-		{
-			// text-embedding-3-large: rawFamily="text-embedding" → family=text-embedding, variant="" initially.
-			// Full-prefix match "text-embedding-" → remainder="3-large" → ver="3", residual=["large"].
-			// B1: variant="" → promote "large" → (text-embedding, large, 3), no failure.
-			desc:          "text-embedding-3-large → (text-embedding, large, 3), no residual failure",
-			rawFamily:     "text-embedding",
-			id:            "text-embedding-3-large",
-			provider:      "openai",
-			wantFamily:    "text-embedding",
-			wantVariant:   "large",
-			wantVersion:   "3",
-			wantNoFailure: true,
-		},
-		{
-			// text-embedding-3-small: same as above but with "small" suffix.
-			desc:          "text-embedding-3-small → (text-embedding, small, 3), no residual failure",
-			rawFamily:     "text-embedding",
-			id:            "text-embedding-3-small",
-			provider:      "openai",
-			wantFamily:    "text-embedding",
-			wantVariant:   "small",
-			wantVersion:   "3",
-			wantNoFailure: true,
-		},
+		// NOTE: text-embedding-3-large and text-embedding-3-small are NOT in this table
+		// after SLICE-1-FIX-4. The FIX-2 full-prefix-first change that made them promote
+		// has been reverted. With firstToken normalization, family="text-embedding" →
+		// prefix="text-" → remainder="embedding-3-large" → residual=["embedding","large"]
+		// (2 residual tokens, B1 requires exactly 1) → ReasonResidualUnaccountedTokens.
+		// These are documented residuals accepted in bestiary-ibtb (rc2 deferred).
+		// They are covered by TestParseFamilyDetailed_FixB1_Reverted_TextEmbeddingResidual.
 	}
 
 	for _, tc := range cases {
@@ -2117,44 +2095,46 @@ func TestParseFamilyDetailed_FixB1_SoleVariantSuffixPromotion(t *testing.T) {
 // TestParseFamilyDetailed_FixB1_NegativeControls verifies that FIX B1 is NOT applied
 // in the two out-of-scope cases:
 //
-//   B2: more than one residual token → still emits ReasonResidualUnaccountedTokens.
-//   C:  sole residual token is NOT a known variant suffix → still emits failure.
+//	B2: more than one residual token → still emits ReasonResidualUnaccountedTokens.
+//	C:  sole residual token is NOT a known variant suffix → still emits failure.
 //
 // The B2 and C classes remain documented residuals (user-accepted, out of scope).
 func TestParseFamilyDetailed_FixB1_NegativeControls(t *testing.T) {
 	t.Parallel()
 
 	cases := []struct {
-		desc         string
-		rawFamily    bestiary.Family
-		id           bestiary.ModelID
-		provider     bestiary.Provider
-		wantFailure  bool   // true → failure must be non-nil
-		wantReason   bestiary.ParseFailureReason
-		desc2        string // description of why it stays residual
+		desc        string
+		rawFamily   bestiary.Family
+		id          bestiary.ModelID
+		provider    bestiary.Provider
+		wantFailure bool // true → failure must be non-nil
+		wantReason  bestiary.ParseFailureReason
+		desc2       string // description of why it stays residual
 	}{
 		{
 			// B2 negative: phi-3-medium-128k-instruct has multiple residual tokens (medium, 128k, instruct).
 			// B1 only fires for exactly ONE residual token → stays residual.
 			// NOTE: "instruct" IS a known suffix, but there are more than 1 residual tokens, so B1 does not fire.
-			desc:         "phi-3-medium-128k-instruct (B2: multi-residual, B1 does NOT fire)",
-			rawFamily:    "phi",
-			id:           "phi-3-medium-128k-instruct",
-			provider:     "microsoft",
-			wantFailure:  true,
-			wantReason:   bestiary.ReasonResidualUnaccountedTokens,
-			desc2:        "B2: more than one residual token; B1 requires exactly one",
+			desc:        "phi-3-medium-128k-instruct (B2: multi-residual, B1 does NOT fire)",
+			rawFamily:   "phi",
+			id:          "phi-3-medium-128k-instruct",
+			provider:    "microsoft",
+			wantFailure: true,
+			wantReason:  bestiary.ReasonResidualUnaccountedTokens,
+			desc2:       "B2: more than one residual token; B1 requires exactly one",
 		},
 		{
-			// C negative: nova-2-lite-v1 has residual ["v1"] which is NOT a known variant suffix.
-			// B1 requires the sole token be a known suffix → stays residual.
-			desc:         "nova-2-lite-v1 (C: unknown sole token 'v1', B1 does NOT fire)",
-			rawFamily:    "nova-lite",
-			id:           "nova-2-lite-v1",
-			provider:     "cartesia",
-			wantFailure:  true,
-			wantReason:   bestiary.ReasonResidualUnaccountedTokens,
-			desc2:        "C: 'v1' is not a known variant suffix; B1 must not promote it",
+			// C negative: nova-2-lite-v1 has rawFamily="nova-lite" → variant="lite" (suffix strip).
+			// ExtractVersionBetween finds ver="2", residual=["v1"] AFTER the variant.
+			// B1 requires variant=="" at promotion time — but variant="lite" is already set,
+			// so B1 does NOT fire (the variant-empty guard fails before the suffix check).
+			desc:        "nova-2-lite-v1 (C: variant='lite' pre-set, B1 variant='' guard fails)",
+			rawFamily:   "nova-lite",
+			id:          "nova-2-lite-v1",
+			provider:    "cartesia",
+			wantFailure: true,
+			wantReason:  bestiary.ReasonResidualUnaccountedTokens,
+			desc2:       "C: variant is already 'lite'; B1 only fires when variant==\"\"",
 		},
 	}
 
@@ -2371,14 +2351,17 @@ func TestExtractVersionBetweenFamilyAndVariant_Fix3_6DigitStripped(t *testing.T)
 			wantResidual: nil,
 		},
 		{
-			// doubao-seed-1-6-250615: empty family → but if called with family="doubao-seed", variant="".
-			// 250615 is 6-digit, stops before it → version=1.6.
-			desc:         "doubao-seed-1-6-250615 with variant=empty → version=1.6",
+			// doubao-seed-1-6-250615: family="doubao-seed", variant="".
+			// SLICE-1-FIX-4: full-prefix-first reverted; firstToken("doubao-seed")="doubao" →
+			// prefix="doubao-", remainder="seed-1-6-250615" → "seed" is non-version residual,
+			// "1","6" are version tokens, "250615" is 6-digit YYMMDD → stop.
+			// → version="1.6", residual=["seed"] (honest-audit residual for compound family).
+			desc:         "doubao-seed-1-6-250615 with variant=empty → version=1.6, residual=[seed]",
 			id:           "doubao-seed-1-6-250615",
 			family:       "doubao-seed",
 			variant:      "",
 			wantVersion:  "1.6",
-			wantResidual: nil,
+			wantResidual: []string{"seed"},
 		},
 	}
 
@@ -2395,6 +2378,271 @@ func TestExtractVersionBetweenFamilyAndVariant_Fix3_6DigitStripped(t *testing.T)
 			if len(gotResidual) != len(tc.wantResidual) {
 				t.Errorf("ExtractVersionBetweenFamilyAndVariant(%q, %q, %q) residual = %v, want %v",
 					tc.id, tc.family, tc.variant, gotResidual, tc.wantResidual)
+			}
+		})
+	}
+}
+
+// --------------------------------------------------------------------------
+// SLICE-1-FIX-4: regression tests
+// --------------------------------------------------------------------------
+
+// TestParseFamilyDetailed_Fix4_VersionRestoredAfterRevert is the SLICE-1-FIX-4 regression
+// test pinning that the FIX-2 B1 full-prefix-first revert RESTORES version extraction for
+// the three canonical cases that were over-stripped. Guards against version-nulling recurrence.
+//
+// BDD: Given model IDs whose version digits appear BEFORE a compound family prefix in the ID
+// (e.g. "gemini-2.5-flash-image-generation" where "2.5" precedes "flash"),
+// when ParseFamilyDetailed is called, then version is populated (not empty).
+//
+// Pinned assertions:
+//   - claude-3-7-sonnet-thinking → version "3.7"
+//   - gemini-2.5-flash-image-generation → version "2.5"
+//   - grok-3-beta → version "3"
+func TestParseFamilyDetailed_Fix4_VersionRestoredAfterRevert(t *testing.T) {
+	t.Parallel()
+
+	cases := []struct {
+		desc        string
+		rawFamily   bestiary.Family
+		id          bestiary.ModelID
+		provider    bestiary.Provider
+		wantVersion string
+	}{
+		{
+			// claude-3-7-sonnet-thinking: rawFamily="claude-sonnet" → (claude, sonnet, "").
+			// ExtractVersionBetween(id, "claude", "sonnet"): prefix="claude-", rem="3-7-sonnet-thinking-20250219"
+			// → date strip → "3-7-sonnet-thinking" → "3","7" before "sonnet" → ver="3.7".
+			// (modifier "thinking" is stripped by ExtractModifier before this call.)
+			desc:        "claude-3-7-sonnet-thinking → version 3.7 (FIX-4 restore)",
+			rawFamily:   "claude-sonnet",
+			id:          "claude-3-7-sonnet-thinking-20250219",
+			provider:    "anthropic",
+			wantVersion: "3.7",
+		},
+		{
+			// gemini-2.5-flash-image-generation: rawFamily="gemini-2.5-flash-image" → via suffix/overrides
+			// → family="gemini-2.5-flash", variant="image". ExtractVersionBetween(id, "gemini-2.5-flash", "image"):
+			// prefix=firstToken("gemini-2.5-flash")+"-"="gemini-", rem="2.5-flash-image-generation"
+			// → dot-version early return: reBareVersion.MatchString("2.5")=true → ver="2.5".
+			// (FIX-2 full-prefix-first would have matched "gemini-2.5-flash-" and returned ver="".)
+			desc:        "gemini-2.5-flash-image-generation → version 2.5 (FIX-4 restore)",
+			rawFamily:   "gemini-2.5-flash-image",
+			id:          "gemini-2.5-flash-image-generation",
+			provider:    "google",
+			wantVersion: "2.5",
+		},
+		{
+			// grok-3-beta: rawFamily="grok" → (grok, "", ""). ExtractVersionBetween(id, "grok", ""):
+			// prefix="grok-", rem="3-beta" → no variantFirst → "3" is version, "beta" residual.
+			// B1: len(residual)==1, variant=="" → check "beta" is known suffix → promote → (grok, beta, 3).
+			desc:        "grok-3-beta → version 3 (FIX-4 restore)",
+			rawFamily:   "grok",
+			id:          "grok-3-beta",
+			provider:    "xai",
+			wantVersion: "3",
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.desc, func(t *testing.T) {
+			t.Parallel()
+			_, _, version, _, failure := bestiary.ParseFamilyDetailed(tc.rawFamily, tc.id, tc.provider)
+			if version != tc.wantVersion {
+				t.Errorf("ParseFamilyDetailed(%q, %q): version = %q, want %q\n"+
+					"  What: version not extracted — FIX-4 revert of B1 full-prefix-first should restore this\n"+
+					"  Why: full-prefix-first over-stripped compound family prefix, losing the leading version digits\n"+
+					"  How to fix: verify ExtractVersionBetweenFamilyAndVariant uses firstToken normalization, not full-prefix",
+					tc.rawFamily, tc.id, version, tc.wantVersion)
+			}
+			if failure != nil {
+				t.Errorf("ParseFamilyDetailed(%q, %q): unexpected ParseFailure reason=%q (version should be populated cleanly)",
+					tc.rawFamily, tc.id, failure.Reason)
+			}
+		})
+	}
+}
+
+// TestParseFamilyDetailed_Fix4_OjjbSurvivingB1Promotions verifies that the B1 sole-variant-suffix
+// promotions that do NOT depend on the full-prefix-first change SURVIVE the FIX-4 revert.
+// These are gpt-5-codex and gpt-4-turbo, where rawFamily="gpt" (single token) and the full-prefix
+// is the same as firstToken, so the revert has no effect on them.
+//
+// BDD: Given rawFamily="gpt" (single token, no compound prefix), when ParseFamilyDetailed is
+// called on gpt-5-codex and gpt-4-turbo, then B1 promotes the sole residual variant suffix.
+func TestParseFamilyDetailed_Fix4_OjjbSurvivingB1Promotions(t *testing.T) {
+	t.Parallel()
+
+	cases := []struct {
+		desc        string
+		rawFamily   bestiary.Family
+		id          bestiary.ModelID
+		provider    bestiary.Provider
+		wantFamily  bestiary.Family
+		wantVariant string
+		wantVersion string
+	}{
+		{
+			// gpt-5-codex: rawFamily="gpt" → (gpt, "", ""). ExtractVersionBetween: prefix="gpt-",
+			// rem="5-codex" → "5" is version, "codex" residual. B1: len(residual)==1, variant=="" →
+			// "codex" is a known suffix → promote → (gpt, codex, 5). No compound prefix issue.
+			desc:        "gpt-5-codex → (gpt, codex, 5) — B1 survives FIX-4 revert",
+			rawFamily:   "gpt",
+			id:          "gpt-5-codex",
+			provider:    "openai",
+			wantFamily:  "gpt",
+			wantVariant: "codex",
+			wantVersion: "5",
+		},
+		{
+			// gpt-4-turbo: rawFamily="gpt" → (gpt, "", ""). ExtractVersionBetween: prefix="gpt-",
+			// rem="4-turbo" → "4" is version, "turbo" residual. B1: len(residual)==1, variant=="" →
+			// "turbo" is a known suffix → promote → (gpt, turbo, 4). No compound prefix issue.
+			desc:        "gpt-4-turbo → (gpt, turbo, 4) — B1 survives FIX-4 revert",
+			rawFamily:   "gpt",
+			id:          "gpt-4-turbo",
+			provider:    "openai",
+			wantFamily:  "gpt",
+			wantVariant: "turbo",
+			wantVersion: "4",
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.desc, func(t *testing.T) {
+			t.Parallel()
+			family, variant, version, _, failure := bestiary.ParseFamilyDetailed(tc.rawFamily, tc.id, tc.provider)
+			if family != tc.wantFamily {
+				t.Errorf("family = %q, want %q", family, tc.wantFamily)
+			}
+			if variant != tc.wantVariant {
+				t.Errorf("variant = %q, want %q\n"+
+					"  What: B1 sole-variant-suffix promotion did not fire\n"+
+					"  Why: gpt-5-codex/gpt-4-turbo use single-token rawFamily ('gpt'); revert should not affect them\n"+
+					"  How to fix: verify B1 promotion logic in ParseFamilyDetailed",
+					variant, tc.wantVariant)
+			}
+			if version != tc.wantVersion {
+				t.Errorf("version = %q, want %q", version, tc.wantVersion)
+			}
+			if failure != nil {
+				t.Errorf("unexpected ParseFailure reason=%q; B1 should have promoted sole residual to variant",
+					failure.Reason)
+			}
+		})
+	}
+}
+
+// TestParseFamilyDetailed_Fix4_TextEmbeddingResidual documents the EXPECTED post-FIX-4 behavior
+// of text-embedding-3-large and text-embedding-3-small: they are documented residuals
+// (ReasonResidualUnaccountedTokens) after the full-prefix-first revert.
+//
+// After revert: firstToken("text-embedding")="text" → prefix="text-" → remainder="embedding-3-large"
+// → residual=["embedding","large"] (2 tokens, B1 requires exactly 1) → failure emitted.
+// Proper additive handling deferred to rc2 (bestiary-ibtb).
+func TestParseFamilyDetailed_Fix4_TextEmbeddingResidual(t *testing.T) {
+	t.Parallel()
+
+	cases := []struct {
+		rawFamily bestiary.Family
+		id        bestiary.ModelID
+		provider  bestiary.Provider
+	}{
+		{rawFamily: "text-embedding", id: "text-embedding-3-large", provider: "openai"},
+		{rawFamily: "text-embedding", id: "text-embedding-3-small", provider: "openai"},
+	}
+
+	for _, tc := range cases {
+		t.Run(string(tc.id), func(t *testing.T) {
+			t.Parallel()
+			_, _, _, _, failure := bestiary.ParseFamilyDetailed(tc.rawFamily, tc.id, tc.provider)
+			if failure == nil {
+				t.Errorf("ParseFamilyDetailed(%q, %q): failure=nil, want ReasonResidualUnaccountedTokens\n"+
+					"  What: text-embedding models should emit residual failure after FIX-4 revert\n"+
+					"  Why: full-prefix-first was reverted; firstToken('text-embedding')='text' leaves 'embedding' as residual\n"+
+					"  How to fix: verify full-prefix-first is NOT in ExtractVersionBetweenFamilyAndVariant",
+					tc.rawFamily, tc.id)
+				return
+			}
+			if failure.Reason != bestiary.ReasonResidualUnaccountedTokens {
+				t.Errorf("ParseFamilyDetailed(%q, %q): failure.Reason=%q, want %q",
+					tc.rawFamily, tc.id, failure.Reason, bestiary.ReasonResidualUnaccountedTokens)
+			}
+		})
+	}
+}
+
+// TestParseFamilyWithVersion_Fix4_Step5_6DigitDateGuard verifies the SLICE-1-FIX-4 7kyb/9yyp
+// fix: ParseFamilyWithVersion Step-5 override-prefix version loop now uses isDateShapedToken
+// (catches 4-digit AND 6-digit YYMMDD) instead of isYYMMDateToken (4-digit only).
+//
+// BDD: Given a rawFamily string that hits the Step-5 override-prefix path AND contains a
+// 6-digit YYMMDD date token in the suffix (e.g. "claude-opus-1-6-250615"),
+// when ParseFamilyWithVersion is called, then the 6-digit date is NOT included in the version.
+//
+// Also confirms TestStaticModels_NoDateVersions invariant is not violated by the 4th site.
+func TestParseFamilyWithVersion_Fix4_Step5_6DigitDateGuard(t *testing.T) {
+	t.Parallel()
+
+	cases := []struct {
+		name        string
+		raw         bestiary.Family
+		wantFamily  bestiary.Family
+		wantVariant string
+		wantVersion string
+	}{
+		{
+			// claude-opus-1-6-250615: "claude-opus" is in overrides → (claude, opus).
+			// suffix = ["1","6","250615"]. "1" ok, "6" ok, "250615" is 6-digit → isDateShapedToken → stop.
+			// → ver="1.6" (not "1.6.250615").
+			name:        "claude-opus-1-6-250615 → version 1.6 (6-digit date stopped at Step-5)",
+			raw:         "claude-opus-1-6-250615",
+			wantFamily:  "claude",
+			wantVariant: "opus",
+			wantVersion: "1.6",
+		},
+		{
+			// claude-sonnet-3-7-250219: "claude-sonnet" in overrides → (claude, sonnet).
+			// suffix = ["3","7","250219"]. "3" ok, "7" ok, "250219" 6-digit → stop.
+			// → ver="3.7".
+			name:        "claude-sonnet-3-7-250219 → version 3.7 (6-digit date stopped at Step-5)",
+			raw:         "claude-sonnet-3-7-250219",
+			wantFamily:  "claude",
+			wantVariant: "sonnet",
+			wantVersion: "3.7",
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			family, variant, version := bestiary.ParseFamilyWithVersion(tc.raw)
+			if family != tc.wantFamily {
+				t.Errorf("family = %q, want %q", family, tc.wantFamily)
+			}
+			if variant != tc.wantVariant {
+				t.Errorf("variant = %q, want %q", variant, tc.wantVariant)
+			}
+			if version != tc.wantVersion {
+				t.Errorf("version = %q, want %q\n"+
+					"  What: 6-digit YYMMDD token included in version at Step-5 override-prefix loop\n"+
+					"  Why: isYYMMDateToken only catches 4-digit tokens; is6DigitYYMMDD was not guarded here\n"+
+					"  How to fix: verify Step-5 loop uses isDateShapedToken (SLICE-1-FIX-4 7kyb/9yyp)",
+					version, tc.wantVersion)
+			}
+			// The version must NOT be a 6-digit all-numeric string.
+			if len(version) == 6 {
+				allDigits := true
+				for _, r := range version {
+					if r < '0' || r > '9' {
+						allDigits = false
+						break
+					}
+				}
+				if allDigits {
+					t.Errorf("version = %q is a bare 6-digit date — INVARIANT VIOLATED: version must not be a date",
+						version)
+				}
 			}
 		})
 	}
