@@ -101,31 +101,38 @@ func TestResolve_WithSchemeRaw_ExactMatch(t *testing.T) {
 	}
 }
 
-// TestResolve_WithSchemeRaw_NoMatch verifies that SchemeRaw with a partial ID
-// returns ErrAmbiguous (R4 dot-form: "claude-opus" maps to a canonical prefix that
-// matches multiple claude-opus-4.x models, so it is ambiguous rather than not-found).
+// TestResolve_WithSchemeRaw_BareFamilyAmbiguous is a regression test for the
+// bare-family fallback in resolve.go:141-150.
 //
-// rfxh: After the R4 dot-form normalization and regen, Resolve("claude-opus", raw) →
-// ErrAmbiguous (7 claude-opus-4.x candidates), not ErrNotFound.
-// NOTE: This test is real-data-dependent (couples to the regen in L3).
-// It will be RED after the fix commit and GREEN only after the chore(gen) regen commit.
-func TestResolve_WithSchemeRaw_NoMatch(t *testing.T) {
-	// "claude-opus" under SchemeRaw matches a canonical family+variant prefix that
-	// resolves to multiple claude-opus-4.x variants → ErrAmbiguous (not ErrNotFound).
+// When SchemeRaw produces zero matches and the input looks like a bare identifier
+// (no slashes, no "@", no special characters), Resolve retries with SchemeCanonical
+// to surface ErrAmbiguous instead of ErrNotFound. Before R4 dot-form normalization,
+// "claude-opus" matched nothing under SchemeRaw (ErrNotFound) because claude-opus-4.x
+// decomposed inconsistently. After R4, these models decompose as (family=claude,
+// variant=opus, version=4.x), so the bare-family retry finds the group and correctly
+// returns ErrAmbiguous with the full claude-opus candidate set.
+func TestResolve_WithSchemeRaw_BareFamilyAmbiguous(t *testing.T) {
 	_, err := bestiary.Resolve("claude-opus", bestiary.WithScheme(bestiary.SchemeRaw))
 	if err == nil {
 		t.Fatal("Resolve with SchemeRaw 'claude-opus' returned nil error, want ErrAmbiguous")
 	}
 	var ambig *bestiary.ErrAmbiguous
 	if !errors.As(err, &ambig) {
-		t.Fatalf("Resolve SchemeRaw 'claude-opus': error %T (%v), want *ErrAmbiguous\n"+
-			"  What: R4 dot-form makes 'claude-opus' resolve to multiple candidates\n"+
-			"  Why: multiple claude-opus-4.x models share (family=claude, variant=opus)\n"+
-			"  Note: this test is real-data-dependent; pass only after L3 regen",
+		t.Fatalf("Resolve SchemeRaw 'claude-opus': got %T (%v), want *ErrAmbiguous\n"+
+			"  What: bare-family fallback (resolve.go:141-150) retried with SchemeCanonical\n"+
+			"  Why: R4 dot-form makes claude-opus-4.x decompose consistently as (claude,opus,4.x)\n"+
+			"  Fix: this is DESIGNED behavior — do not revert to ErrNotFound",
 			err, err)
 	}
-	if len(ambig.Candidates) == 0 {
-		t.Errorf("ErrAmbiguous.Candidates is empty; expected claude-opus-4.x candidates")
+	// Assert the candidate set is the claude-opus family group (not some other family).
+	if len(ambig.Candidates) <= 1 {
+		t.Errorf("ErrAmbiguous.Candidates has %d entries; expected multiple claude-opus-4.x candidates",
+			len(ambig.Candidates))
+	}
+	for _, c := range ambig.Candidates {
+		if !strings.Contains(string(c.ID), "claude-opus") {
+			t.Errorf("ErrAmbiguous.Candidates contains unexpected model %q; all should be claude-opus-4.x variants", c.ID)
+		}
 	}
 }
 
@@ -691,15 +698,16 @@ func TestResolve_WithInputFormat_Raw_Resolves(t *testing.T) {
 	}
 }
 
-// TestResolve_WithInputFormat_Raw_PartialNoMatch verifies that InputFormatRaw
-// with a partial ID returns ErrAmbiguous (R4 dot-form: "claude-opus" maps to a
-// canonical prefix that matches multiple claude-opus-4.x models).
+// TestResolve_WithInputFormat_Raw_PartialAmbiguous is a regression test for the
+// bare-family fallback in resolve.go:141-150.
 //
-// rfxh: After the R4 dot-form normalization and regen, Resolve("claude-opus",
-// WithInputFormat(Raw)) → ErrAmbiguous (multiple claude-opus-4.x candidates).
-// NOTE: This test is real-data-dependent (couples to the regen in L3).
-// It will be RED after the fix commit and GREEN only after the chore(gen) regen commit.
-func TestResolve_WithInputFormat_Raw_PartialNoMatch(t *testing.T) {
+// InputFormatRaw delegates to SchemeRaw, so it follows the same bare-family fallback:
+// when SchemeRaw produces zero matches and the input is a bare identifier, Resolve
+// retries with SchemeCanonical and surfaces ErrAmbiguous instead of ErrNotFound.
+// Before R4 dot-form normalization, "claude-opus" under InputFormatRaw returned
+// ErrNotFound. After R4, claude-opus-4.x decomposes consistently as (claude,opus,4.x),
+// so the retry finds the group and correctly returns ErrAmbiguous with candidates.
+func TestResolve_WithInputFormat_Raw_PartialAmbiguous(t *testing.T) {
 	_, err := bestiary.Resolve("claude-opus",
 		bestiary.WithInputFormat(bestiary.InputFormatRaw))
 	if err == nil {
@@ -708,13 +716,20 @@ func TestResolve_WithInputFormat_Raw_PartialNoMatch(t *testing.T) {
 	var ambig *bestiary.ErrAmbiguous
 	if !errors.As(err, &ambig) {
 		t.Fatalf("Resolve WithInputFormat(Raw) 'claude-opus': got %T (%v), want *ErrAmbiguous\n"+
-			"  What: R4 dot-form makes 'claude-opus' resolve to multiple candidates\n"+
-			"  Why: multiple claude-opus-4.x models share (family=claude, variant=opus)\n"+
-			"  Note: this test is real-data-dependent; pass only after L3 regen",
+			"  What: bare-family fallback (resolve.go:141-150) retried with SchemeCanonical\n"+
+			"  Why: R4 dot-form makes claude-opus-4.x decompose consistently as (claude,opus,4.x)\n"+
+			"  Fix: this is DESIGNED behavior — do not revert to ErrNotFound",
 			err, err)
 	}
-	if len(ambig.Candidates) == 0 {
-		t.Errorf("ErrAmbiguous.Candidates is empty; expected claude-opus-4.x candidates")
+	// Assert the candidate set is the claude-opus family group (not some other family).
+	if len(ambig.Candidates) <= 1 {
+		t.Errorf("ErrAmbiguous.Candidates has %d entries; expected multiple claude-opus-4.x candidates",
+			len(ambig.Candidates))
+	}
+	for _, c := range ambig.Candidates {
+		if !strings.Contains(string(c.ID), "claude-opus") {
+			t.Errorf("ErrAmbiguous.Candidates contains unexpected model %q; all should be claude-opus-4.x variants", c.ID)
+		}
 	}
 }
 
