@@ -61,15 +61,15 @@ const (
 	Model__302AI__GPT__5__Thinking                                                 ModelID = "gpt-5-thinking"
 	Model__302AI__Gemini__2__0__Flash__Lite__2_0                                   ModelID = "gemini-2.0-flash-lite"
 	Model__302AI__Gemini__2__5__Flash__2_5                                         ModelID = "gemini-2.5-flash"
-	Model__302AI__Gemini__2__5__Flash__Image                                       ModelID = "gemini-2.5-flash-image"
+	Model__302AI__Gemini__2__5__Flash__Image__2_5                                  ModelID = "gemini-2.5-flash-image"
 	Model__302AI__Gemini__2__5__Flash__Lite__Preview__20250926                     ModelID = "gemini-2.5-flash-lite-preview-09-2025"
 	Model__302AI__Gemini__2__5__Flash__Nothink__2_5                                ModelID = "gemini-2.5-flash-nothink"
 	Model__302AI__Gemini__2__5__Flash__Preview__20250926                           ModelID = "gemini-2.5-flash-preview-09-2025"
 	Model__302AI__Gemini__2__5__Pro__2_5                                           ModelID = "gemini-2.5-pro"
-	Model__302AI__Gemini__3__1__Flash__Image__Preview                              ModelID = "gemini-3.1-flash-image-preview"
-	Model__302AI__Gemini__3__Flash__Preview                                        ModelID = "gemini-3-flash-preview"
-	Model__302AI__Gemini__3__Pro__Image__Preview                                   ModelID = "gemini-3-pro-image-preview"
-	Model__302AI__Gemini__3__Pro__Preview                                          ModelID = "gemini-3-pro-preview"
+	Model__302AI__Gemini__3__1__Flash__Image__3_1__Preview                         ModelID = "gemini-3.1-flash-image-preview"
+	Model__302AI__Gemini__3__Flash__3__Preview                                     ModelID = "gemini-3-flash-preview"
+	Model__302AI__Gemini__3__Pro__3__Preview                                       ModelID = "gemini-3-pro-preview"
+	Model__302AI__Gemini__3__Pro__Image__3__Preview                                ModelID = "gemini-3-pro-image-preview"
 	Model__302AI__Glm__4_5                                                         ModelID = "glm-4.5"
 	Model__302AI__Glm__4_6                                                         ModelID = "glm-4.6"
 	Model__302AI__Glm__4_7                                                         ModelID = "glm-4.7"
@@ -1700,7 +1700,7 @@ const (
 	Model__Kilo__Devstral__Medium                                                  ModelID = "mistralai/devstral-medium"
 	Model__Kilo__Devstral__Small                                                   ModelID = "mistralai/devstral-small"
 	Model__Kilo__Ernie__4__5__21b__A3b                                             ModelID = "baidu/ernie-4.5-21b-a3b"
-	Model__Kilo__Ernie__4__5__21b__A3b__Thinking                                   ModelID = "baidu/ernie-4.5-21b-a3b-thinking"
+	Model__Kilo__Ernie__4__5__21b__A3b__Thinking__4_5                              ModelID = "baidu/ernie-4.5-21b-a3b-thinking"
 	Model__Kilo__Ernie__4__5__300b__A47b                                           ModelID = "baidu/ernie-4.5-300b-a47b"
 	Model__Kilo__Ernie__4__5__Vl__28b__A3b                                         ModelID = "baidu/ernie-4.5-vl-28b-a3b"
 	Model__Kilo__Ernie__4__5__Vl__424b__A47b                                       ModelID = "baidu/ernie-4.5-vl-424b-a47b"
@@ -1710,15 +1710,15 @@ const (
 	Model__Kilo__GPT__3__5__Turbo__0613                                            ModelID = "openai/gpt-3.5-turbo-0613"
 	Model__Kilo__GPT__3__5__Turbo__16k                                             ModelID = "openai/gpt-3.5-turbo-16k"
 	Model__Kilo__GPT__3__5__Turbo__3_5                                             ModelID = "openai/gpt-3.5-turbo"
-	Model__Kilo__GPT__3__5__Turbo__Instruct                                        ModelID = "openai/gpt-3.5-turbo-instruct"
+	Model__Kilo__GPT__3__5__Turbo__Instruct__3_5                                   ModelID = "openai/gpt-3.5-turbo-instruct"
 	Model__Kilo__GPT__4                                                            ModelID = "openai/gpt-4"
 	Model__Kilo__GPT__4_1                                                          ModelID = "openai/gpt-4.1"
 	Model__Kilo__GPT__4__0314__4                                                   ModelID = "openai/gpt-4-0314"
 	Model__Kilo__GPT__4__1106__4__Preview                                          ModelID = "openai/gpt-4-1106-preview"
 	Model__Kilo__GPT__4__1__Mini__4_1                                              ModelID = "openai/gpt-4.1-mini"
 	Model__Kilo__GPT__4__1__Nano__4_1                                              ModelID = "openai/gpt-4.1-nano"
-	Model__Kilo__GPT__4__Turbo                                                     ModelID = "openai/gpt-4-turbo"
-	Model__Kilo__GPT__4__Turbo__Preview                                            ModelID = "openai/gpt-4-turbo-preview"
+	Model__Kilo__GPT__4__Turbo__4                                                  ModelID = "openai/gpt-4-turbo"
+	Model__Kilo__GPT__4__Turbo__4__Preview                                         ModelID = "openai/gpt-4-turbo-preview"
 	Model__Kilo__GPT__4o                                                           ModelID = "openai/gpt-4o"
 	Model__Kilo__GPT__4o__20240513                                                 ModelID = "openai/gpt-4o-2024-05-13"
 	Model__Kilo__GPT__4o__20240806                                                 ModelID = "openai/gpt-4o-2024-08-06"
@@ -1748,12 +1748,12 @@ const (
 	Model__Kilo__GPT__5__4__Pro__5_4                                               ModelID = "openai/gpt-5.4-pro"
 	Model__Kilo__GPT__5__5__Pro__5_5                                               ModelID = "openai/gpt-5.5-pro"
 	Model__Kilo__GPT__5__Chat                                                      ModelID = "openai/gpt-5-chat"
-	Model__Kilo__GPT__5__Codex                                                     ModelID = "openai/gpt-5-codex"
-	Model__Kilo__GPT__5__Image                                                     ModelID = "openai/gpt-5-image"
-	Model__Kilo__GPT__5__Image__Mini                                               ModelID = "openai/gpt-5-image-mini"
-	Model__Kilo__GPT__5__Mini                                                      ModelID = "openai/gpt-5-mini"
-	Model__Kilo__GPT__5__Nano                                                      ModelID = "openai/gpt-5-nano"
-	Model__Kilo__GPT__5__Pro                                                       ModelID = "openai/gpt-5-pro"
+	Model__Kilo__GPT__5__Codex__5                                                  ModelID = "openai/gpt-5-codex"
+	Model__Kilo__GPT__5__Image__5                                                  ModelID = "openai/gpt-5-image"
+	Model__Kilo__GPT__5__Image__Mini__5                                            ModelID = "openai/gpt-5-image-mini"
+	Model__Kilo__GPT__5__Mini__5                                                   ModelID = "openai/gpt-5-mini"
+	Model__Kilo__GPT__5__Nano__5                                                   ModelID = "openai/gpt-5-nano"
+	Model__Kilo__GPT__5__Pro__5                                                    ModelID = "openai/gpt-5-pro"
 	Model__Kilo__GPT__Audio                                                        ModelID = "openai/gpt-audio"
 	Model__Kilo__GPT__Audio__Mini                                                  ModelID = "openai/gpt-audio-mini"
 	Model__Kilo__GPT__Chat__Latest                                                 ModelID = "openai/gpt-chat-latest"
@@ -1765,20 +1765,20 @@ const (
 	Model__Kilo__Gemini__2__0__Flash__001                                          ModelID = "google/gemini-2.0-flash-001"
 	Model__Kilo__Gemini__2__0__Flash__Lite__001                                    ModelID = "google/gemini-2.0-flash-lite-001"
 	Model__Kilo__Gemini__2__5__Flash__2_5                                          ModelID = "google/gemini-2.5-flash"
-	Model__Kilo__Gemini__2__5__Flash__Image                                        ModelID = "google/gemini-2.5-flash-image"
+	Model__Kilo__Gemini__2__5__Flash__Image__2_5                                   ModelID = "google/gemini-2.5-flash-image"
 	Model__Kilo__Gemini__2__5__Flash__Lite__2_5                                    ModelID = "google/gemini-2.5-flash-lite"
 	Model__Kilo__Gemini__2__5__Flash__Lite__Preview__20250925                      ModelID = "google/gemini-2.5-flash-lite-preview-09-2025"
 	Model__Kilo__Gemini__2__5__Pro__2_5                                            ModelID = "google/gemini-2.5-pro"
 	Model__Kilo__Gemini__2__5__Pro__2_5__Preview                                   ModelID = "google/gemini-2.5-pro-preview"
 	Model__Kilo__Gemini__2__5__Pro__Preview__20250506                              ModelID = "google/gemini-2.5-pro-preview-05-06"
-	Model__Kilo__Gemini__3__1__Flash__Image__Preview                               ModelID = "google/gemini-3.1-flash-image-preview"
+	Model__Kilo__Gemini__3__1__Flash__Image__3_1__Preview                          ModelID = "google/gemini-3.1-flash-image-preview"
 	Model__Kilo__Gemini__3__1__Flash__Lite__3_1                                    ModelID = "google/gemini-3.1-flash-lite"
 	Model__Kilo__Gemini__3__1__Flash__Lite__3_1__Preview                           ModelID = "google/gemini-3.1-flash-lite-preview"
 	Model__Kilo__Gemini__3__1__Pro__3_1__Preview                                   ModelID = "google/gemini-3.1-pro-preview"
 	Model__Kilo__Gemini__3__1__Pro__Preview__Customtools                           ModelID = "google/gemini-3.1-pro-preview-customtools"
 	Model__Kilo__Gemini__3__5__Flash__3_5                                          ModelID = "google/gemini-3.5-flash"
-	Model__Kilo__Gemini__3__Flash__Preview                                         ModelID = "google/gemini-3-flash-preview"
-	Model__Kilo__Gemini__3__Pro__Image__Preview                                    ModelID = "google/gemini-3-pro-image-preview"
+	Model__Kilo__Gemini__3__Flash__3__Preview                                      ModelID = "google/gemini-3-flash-preview"
+	Model__Kilo__Gemini__3__Pro__Image__3__Preview                                 ModelID = "google/gemini-3-pro-image-preview"
 	Model__Kilo__Gemini__Flash__Latest                                             ModelID = "~google/gemini-flash-latest"
 	Model__Kilo__Gemini__Pro__Latest                                               ModelID = "~google/gemini-pro-latest"
 	Model__Kilo__Gemma__2__27b__It                                                 ModelID = "google/gemma-2-27b-it"
@@ -1798,7 +1798,7 @@ const (
 	Model__Kilo__Glm__4__7__Flash__4_7                                             ModelID = "z-ai/glm-4.7-flash"
 	Model__Kilo__Glm__5                                                            ModelID = "z-ai/glm-5"
 	Model__Kilo__Glm__5_1                                                          ModelID = "z-ai/glm-5.1"
-	Model__Kilo__Glm__5__Turbo                                                     ModelID = "z-ai/glm-5-turbo"
+	Model__Kilo__Glm__5__Turbo__5                                                  ModelID = "z-ai/glm-5-turbo"
 	Model__Kilo__Glm__5v__Turbo                                                    ModelID = "z-ai/glm-5v-turbo"
 	Model__Kilo__Granite__4__0__H__Micro                                           ModelID = "ibm-granite/granite-4.0-h-micro"
 	Model__Kilo__Granite__4__1__8b                                                 ModelID = "ibm-granite/granite-4.1-8b"
@@ -1834,21 +1834,21 @@ const (
 	Model__Kilo__Lfm__2__24b__A2b                                                  ModelID = "liquid/lfm-2-24b-a2b"
 	Model__Kilo__Ling__2__6__1t                                                    ModelID = "inclusionai/ling-2.6-1t"
 	Model__Kilo__Ling__2__6__Flash__2_6                                            ModelID = "inclusionai/ling-2.6-flash"
-	Model__Kilo__Llama__3__1__70b__Instruct                                        ModelID = "meta-llama/llama-3.1-70b-instruct"
-	Model__Kilo__Llama__3__1__8b__Instruct                                         ModelID = "meta-llama/llama-3.1-8b-instruct"
-	Model__Kilo__Llama__3__2__11b__Vision__Instruct                                ModelID = "meta-llama/llama-3.2-11b-vision-instruct"
-	Model__Kilo__Llama__3__2__1b__Instruct                                         ModelID = "meta-llama/llama-3.2-1b-instruct"
-	Model__Kilo__Llama__3__2__3b__Instruct                                         ModelID = "meta-llama/llama-3.2-3b-instruct"
-	Model__Kilo__Llama__3__3__70b__Instruct                                        ModelID = "meta-llama/llama-3.3-70b-instruct"
-	Model__Kilo__Llama__3__3__Nemotron__Super__49b__V1__5                          ModelID = "nvidia/llama-3.3-nemotron-super-49b-v1.5"
-	Model__Kilo__Llama__3__70b__Instruct                                           ModelID = "meta-llama/llama-3-70b-instruct"
-	Model__Kilo__Llama__3__8b__Instruct                                            ModelID = "meta-llama/llama-3-8b-instruct"
+	Model__Kilo__Llama__3__1__70b__Instruct__3_1                                   ModelID = "meta-llama/llama-3.1-70b-instruct"
+	Model__Kilo__Llama__3__1__8b__Instruct__3_1                                    ModelID = "meta-llama/llama-3.1-8b-instruct"
+	Model__Kilo__Llama__3__2__11b__Vision__Instruct__3_2                           ModelID = "meta-llama/llama-3.2-11b-vision-instruct"
+	Model__Kilo__Llama__3__2__1b__Instruct__3_2                                    ModelID = "meta-llama/llama-3.2-1b-instruct"
+	Model__Kilo__Llama__3__2__3b__Instruct__3_2                                    ModelID = "meta-llama/llama-3.2-3b-instruct"
+	Model__Kilo__Llama__3__3__70b__Instruct__3_3                                   ModelID = "meta-llama/llama-3.3-70b-instruct"
+	Model__Kilo__Llama__3__3__Nemotron__Super__49b__V1__5__3_3                     ModelID = "nvidia/llama-3.3-nemotron-super-49b-v1.5"
+	Model__Kilo__Llama__3__70b__Instruct__3                                        ModelID = "meta-llama/llama-3-70b-instruct"
+	Model__Kilo__Llama__3__8b__Instruct__3                                         ModelID = "meta-llama/llama-3-8b-instruct"
 	Model__Kilo__Llama__4__Maverick                                                ModelID = "meta-llama/llama-4-maverick"
 	Model__Kilo__Llama__4__Scout                                                   ModelID = "meta-llama/llama-4-scout"
 	Model__Kilo__Llama__Guard__3__8b                                               ModelID = "meta-llama/llama-guard-3-8b"
 	Model__Kilo__Llama__Guard__4__12b                                              ModelID = "meta-llama/llama-guard-4-12b"
 	Model__Kilo__Lyria__3__Clip__Preview                                           ModelID = "google/lyria-3-clip-preview"
-	Model__Kilo__Lyria__3__Pro__Preview                                            ModelID = "google/lyria-3-pro-preview"
+	Model__Kilo__Lyria__3__Pro__3__Preview                                         ModelID = "google/lyria-3-pro-preview"
 	Model__Kilo__Maestro__Reasoning                                                ModelID = "arcee-ai/maestro-reasoning"
 	Model__Kilo__Magnum__V4__72b                                                   ModelID = "anthracite-org/magnum-v4-72b"
 	Model__Kilo__Mercury__2                                                        ModelID = "inception/mercury-2"
@@ -1911,7 +1911,7 @@ const (
 	Model__Kilo__Pareto__Code                                                      ModelID = "openrouter/pareto-code"
 	Model__Kilo__Perceptron__Mk1                                                   ModelID = "perceptron/perceptron-mk1"
 	Model__Kilo__Phi__4                                                            ModelID = "microsoft/phi-4"
-	Model__Kilo__Phi__4__Mini__Instruct                                            ModelID = "microsoft/phi-4-mini-instruct"
+	Model__Kilo__Phi__4__Mini__Instruct__4                                         ModelID = "microsoft/phi-4-mini-instruct"
 	Model__Kilo__Pixtral__Large__2411                                              ModelID = "mistralai/pixtral-large-2411"
 	Model__Kilo__Qianfan__Ocr__Fast                                                ModelID = "baidu/qianfan-ocr-fast"
 	Model__Kilo__Qwen2__5__Vl__72b__Instruct                                       ModelID = "qwen/qwen2.5-vl-72b-instruct"
@@ -1954,9 +1954,9 @@ const (
 	Model__Kilo__Qwen3__Vl__32b__Instruct                                          ModelID = "qwen/qwen3-vl-32b-instruct"
 	Model__Kilo__Qwen3__Vl__8b__Instruct                                           ModelID = "qwen/qwen3-vl-8b-instruct"
 	Model__Kilo__Qwen3__Vl__8b__Thinking                                           ModelID = "qwen/qwen3-vl-8b-thinking"
-	Model__Kilo__Qwen__2__5__72b__Instruct                                         ModelID = "qwen/qwen-2.5-72b-instruct"
-	Model__Kilo__Qwen__2__5__7b__Instruct                                          ModelID = "qwen/qwen-2.5-7b-instruct"
-	Model__Kilo__Qwen__2__5__Coder__32b__Instruct                                  ModelID = "qwen/qwen-2.5-coder-32b-instruct"
+	Model__Kilo__Qwen__2__5__72b__Instruct__2_5                                    ModelID = "qwen/qwen-2.5-72b-instruct"
+	Model__Kilo__Qwen__2__5__7b__Instruct__2_5                                     ModelID = "qwen/qwen-2.5-7b-instruct"
+	Model__Kilo__Qwen__2__5__Coder__32b__Instruct__2_5                             ModelID = "qwen/qwen-2.5-coder-32b-instruct"
 	Model__Kilo__Qwen__Plus                                                        ModelID = "qwen/qwen-plus"
 	Model__Kilo__Qwen__Plus__20250728                                              ModelID = "qwen/qwen-plus-2025-07-28"
 	Model__Kilo__Qwen__Plus__2025__07__28__Thinking                                ModelID = "qwen/qwen-plus-2025-07-28:thinking"
@@ -1966,7 +1966,7 @@ const (
 	Model__Kilo__Relace__Search                                                    ModelID = "relace/relace-search"
 	Model__Kilo__Remm__Slerp__L2__13b                                              ModelID = "undi95/remm-slerp-l2-13b"
 	Model__Kilo__Ring__2__6__1t                                                    ModelID = "inclusionai/ring-2.6-1t"
-	Model__Kilo__Rnj__1__Instruct                                                  ModelID = "essentialai/rnj-1-instruct"
+	Model__Kilo__Rnj__1__Instruct__1                                               ModelID = "essentialai/rnj-1-instruct"
 	Model__Kilo__Rocinante__12b                                                    ModelID = "thedrummer/rocinante-12b"
 	Model__Kilo__Router                                                            ModelID = "switchpoint/router"
 	Model__Kilo__Seed__1_6                                                         ModelID = "bytedance-seed/seed-1.6"
@@ -2395,7 +2395,7 @@ const (
 	Model__NanoGPT__Auto__Model__Basic                                             ModelID = "auto-model-basic"
 	Model__NanoGPT__Auto__Model__Premium                                           ModelID = "auto-model-premium"
 	Model__NanoGPT__Auto__Model__Standard                                          ModelID = "auto-model-standard"
-	Model__NanoGPT__Azure__GPT__4__Turbo                                           ModelID = "azure-gpt-4-turbo"
+	Model__NanoGPT__Azure__GPT__4__Turbo__4                                        ModelID = "azure-gpt-4-turbo"
 	Model__NanoGPT__Azure__GPT__4o                                                 ModelID = "azure-gpt-4o"
 	Model__NanoGPT__Azure__GPT__4o__Mini                                           ModelID = "azure-gpt-4o-mini"
 	Model__NanoGPT__Azure__O1                                                      ModelID = "azure-o1"
@@ -2413,10 +2413,10 @@ const (
 	Model__NanoGPT__Claude__3__5__Sonnet__20241022                                 ModelID = "claude-3-5-sonnet-20241022"
 	Model__NanoGPT__Claude__3__7__Sonnet__20250219                                 ModelID = "claude-3-7-sonnet-20250219"
 	Model__NanoGPT__Claude__3__7__Sonnet__Reasoner                                 ModelID = "claude-3-7-sonnet-reasoner"
-	Model__NanoGPT__Claude__3__7__Sonnet__Thinking                                 ModelID = "claude-3-7-sonnet-thinking"
 	Model__NanoGPT__Claude__3__7__Sonnet__Thinking__1024                           ModelID = "claude-3-7-sonnet-thinking:1024"
 	Model__NanoGPT__Claude__3__7__Sonnet__Thinking__128000                         ModelID = "claude-3-7-sonnet-thinking:128000"
 	Model__NanoGPT__Claude__3__7__Sonnet__Thinking__32768                          ModelID = "claude-3-7-sonnet-thinking:32768"
+	Model__NanoGPT__Claude__3__7__Sonnet__Thinking__3_7                            ModelID = "claude-3-7-sonnet-thinking"
 	Model__NanoGPT__Claude__3__7__Sonnet__Thinking__8192                           ModelID = "claude-3-7-sonnet-thinking:8192"
 	Model__NanoGPT__Claude__Haiku__4_5__20251001                                   ModelID = "claude-haiku-4-5-20251001"
 	Model__NanoGPT__Claude__Opus__4_1__20250805                                    ModelID = "claude-opus-4-1-20250805"
@@ -2569,13 +2569,13 @@ const (
 	Model__NanoGPT__Gemini__2__0__Pro__Reasoner                                    ModelID = "gemini-2.0-pro-reasoner"
 	Model__NanoGPT__Gemini__2__5__Flash__2_5                                       ModelID = "gemini-2.5-flash"
 	Model__NanoGPT__Gemini__2__5__Flash__Lite__2_5                                 ModelID = "gemini-2.5-flash-lite"
-	Model__NanoGPT__Gemini__2__5__Flash__Lite__Preview__09__2025__Thinking         ModelID = "gemini-2.5-flash-lite-preview-09-2025-thinking"
+	Model__NanoGPT__Gemini__2__5__Flash__Lite__Preview__09__2025__Thinking__2_5    ModelID = "gemini-2.5-flash-lite-preview-09-2025-thinking"
 	Model__NanoGPT__Gemini__2__5__Flash__Lite__Preview__20250617                   ModelID = "gemini-2.5-flash-lite-preview-06-17"
 	Model__NanoGPT__Gemini__2__5__Flash__Lite__Preview__20250925                   ModelID = "gemini-2.5-flash-lite-preview-09-2025"
 	Model__NanoGPT__Gemini__2__5__Flash__Nothinking                                ModelID = "gemini-2.5-flash-nothinking"
 	Model__NanoGPT__Gemini__2__5__Flash__Preview__04__17__Thinking                 ModelID = "gemini-2.5-flash-preview-04-17:thinking"
 	Model__NanoGPT__Gemini__2__5__Flash__Preview__05__20__Thinking                 ModelID = "gemini-2.5-flash-preview-05-20:thinking"
-	Model__NanoGPT__Gemini__2__5__Flash__Preview__09__2025__Thinking               ModelID = "gemini-2.5-flash-preview-09-2025-thinking"
+	Model__NanoGPT__Gemini__2__5__Flash__Preview__09__2025__Thinking__2_5          ModelID = "gemini-2.5-flash-preview-09-2025-thinking"
 	Model__NanoGPT__Gemini__2__5__Flash__Preview__20250417                         ModelID = "gemini-2.5-flash-preview-04-17"
 	Model__NanoGPT__Gemini__2__5__Flash__Preview__20250520                         ModelID = "gemini-2.5-flash-preview-05-20"
 	Model__NanoGPT__Gemini__2__5__Flash__Preview__20250925                         ModelID = "gemini-2.5-flash-preview-09-2025"
@@ -2586,9 +2586,9 @@ const (
 	Model__NanoGPT__Gemini__2__5__Pro__Preview__20250605                           ModelID = "gemini-2.5-pro-preview-06-05"
 	Model__NanoGPT__Gemini__3__Flash__3__Preview                                   ModelID = "google/gemini-3-flash-preview"
 	Model__NanoGPT__Gemini__3__Flash__Preview__3__Thinking                         ModelID = "google/gemini-3-flash-preview-thinking"
-	Model__NanoGPT__Gemini__3__Pro__Image__Preview                                 ModelID = "gemini-3-pro-image-preview"
-	Model__NanoGPT__Gemini__3__Pro__Preview                                        ModelID = "gemini-3-pro-preview"
-	Model__NanoGPT__Gemini__3__Pro__Preview__Thinking                              ModelID = "gemini-3-pro-preview-thinking"
+	Model__NanoGPT__Gemini__3__Pro__3__Preview                                     ModelID = "gemini-3-pro-preview"
+	Model__NanoGPT__Gemini__3__Pro__Image__3__Preview                              ModelID = "gemini-3-pro-image-preview"
+	Model__NanoGPT__Gemini__3__Pro__Preview__Thinking__3                           ModelID = "gemini-3-pro-preview-thinking"
 	Model__NanoGPT__Gemini__Exp__1206                                              ModelID = "gemini-exp-1206"
 	Model__NanoGPT__Gemini__Flash__1__5                                            ModelID = "google/gemini-flash-1.5"
 	Model__NanoGPT__Gemma__3__12b__It                                              ModelID = "unsloth/gemma-3-12b-it"
@@ -2628,7 +2628,7 @@ const (
 	Model__NanoGPT__Glm__4__Air                                                    ModelID = "glm-4-air"
 	Model__NanoGPT__Glm__4__Air__0111                                              ModelID = "glm-4-air-0111"
 	Model__NanoGPT__Glm__4__Airx                                                   ModelID = "glm-4-airx"
-	Model__NanoGPT__Glm__4__Flash                                                  ModelID = "glm-4-flash"
+	Model__NanoGPT__Glm__4__Flash__4                                               ModelID = "glm-4-flash"
 	Model__NanoGPT__Glm__4__Long                                                   ModelID = "glm-4-long"
 	Model__NanoGPT__Glm__4__Plus                                                   ModelID = "glm-4-plus"
 	Model__NanoGPT__Glm__4__Plus__0111                                             ModelID = "glm-4-plus-0111"
@@ -2644,10 +2644,10 @@ const (
 	Model__NanoGPT__Glm__Z1__Rumination__32B__0414                                 ModelID = "THUDM/GLM-Z1-Rumination-32B-0414"
 	Model__NanoGPT__Glm__Zero__Preview                                             ModelID = "glm-zero-preview"
 	Model__NanoGPT__Grayline__Qwen3__8B                                            ModelID = "soob3123/GrayLine-Qwen3-8B"
-	Model__NanoGPT__Grok__3__Beta                                                  ModelID = "grok-3-beta"
-	Model__NanoGPT__Grok__3__Fast__Beta                                            ModelID = "grok-3-fast-beta"
-	Model__NanoGPT__Grok__3__Mini__Beta                                            ModelID = "grok-3-mini-beta"
-	Model__NanoGPT__Grok__3__Mini__Fast__Beta                                      ModelID = "grok-3-mini-fast-beta"
+	Model__NanoGPT__Grok__3__Beta__3                                               ModelID = "grok-3-beta"
+	Model__NanoGPT__Grok__3__Fast__Beta__3                                         ModelID = "grok-3-fast-beta"
+	Model__NanoGPT__Grok__3__Mini__Beta__3                                         ModelID = "grok-3-mini-beta"
+	Model__NanoGPT__Grok__3__Mini__Fast__Beta__3                                   ModelID = "grok-3-mini-fast-beta"
 	Model__NanoGPT__Grok__4__1__Fast__4_1                                          ModelID = "x-ai/grok-4.1-fast"
 	Model__NanoGPT__Grok__4__1__Fast__Reasoning__4_1                               ModelID = "x-ai/grok-4.1-fast-reasoning"
 	Model__NanoGPT__Grok__4__4_07_09__20250709                                     ModelID = "x-ai/grok-4-07-09"
@@ -2719,7 +2719,7 @@ const (
 	Model__NanoGPT__Llama__3__3__3v3__3__70B__Tenyxchat__Daybreakstorywriter       ModelID = "Llama-3.3+(3v3.3)-70B-TenyxChat-DaybreakStorywriter"
 	Model__NanoGPT__Llama__3__3__70B__Anthrobomination                             ModelID = "Llama-3.3-70B-Anthrobomination"
 	Model__NanoGPT__Llama__3__3__70B__Argunaut__1__Sft                             ModelID = "Llama-3.3-70B-Argunaut-1-SFT"
-	Model__NanoGPT__Llama__3__3__70B__Arliai__Rpmax__V1__4                         ModelID = "Llama-3.3-70B-ArliAI-RPMax-v1.4"
+	Model__NanoGPT__Llama__3__3__70B__Arliai__Rpmax__V1__4__3_3                    ModelID = "Llama-3.3-70B-ArliAI-RPMax-v1.4"
 	Model__NanoGPT__Llama__3__3__70B__Arliai__Rpmax__V2                            ModelID = "Llama-3.3-70B-ArliAI-RPMax-v2"
 	Model__NanoGPT__Llama__3__3__70B__Arliai__Rpmax__V3                            ModelID = "Llama-3.3-70B-ArliAI-RPMax-v3"
 	Model__NanoGPT__Llama__3__3__70B__Aurora__Borealis                             ModelID = "Llama-3.3-70B-Aurora-Borealis"
@@ -2727,16 +2727,16 @@ const (
 	Model__NanoGPT__Llama__3__3__70B__Cirrus__X1                                   ModelID = "Llama-3.3-70B-Cirrus-x1"
 	Model__NanoGPT__Llama__3__3__70B__Cu__Mai__R1                                  ModelID = "Llama-3.3-70B-Cu-Mai-R1"
 	Model__NanoGPT__Llama__3__3__70B__Damascus__R1                                 ModelID = "Llama-3.3-70B-Damascus-R1"
-	Model__NanoGPT__Llama__3__3__70B__Dark__Ages__V0__1                            ModelID = "Llama-3.3-70B-Dark-Ages-v0.1"
+	Model__NanoGPT__Llama__3__3__70B__Dark__Ages__V0__1__3_3                       ModelID = "Llama-3.3-70B-Dark-Ages-v0.1"
 	Model__NanoGPT__Llama__3__3__70B__Electra__R1                                  ModelID = "Llama-3.3-70B-Electra-R1"
-	Model__NanoGPT__Llama__3__3__70B__Electranova__V1__0                           ModelID = "Llama-3.3-70B-Electranova-v1.0"
+	Model__NanoGPT__Llama__3__3__70B__Electranova__V1__0__3_3                      ModelID = "Llama-3.3-70B-Electranova-v1.0"
 	Model__NanoGPT__Llama__3__3__70B__Fallen__R1__V1                               ModelID = "Llama-3.3-70B-Fallen-R1-v1"
 	Model__NanoGPT__Llama__3__3__70B__Fallen__V1                                   ModelID = "Llama-3.3-70B-Fallen-v1"
-	Model__NanoGPT__Llama__3__3__70B__Forgotten__Abomination__V5__0                ModelID = "Llama-3.3-70B-Forgotten-Abomination-v5.0"
+	Model__NanoGPT__Llama__3__3__70B__Forgotten__Abomination__V5__0__3_3           ModelID = "Llama-3.3-70B-Forgotten-Abomination-v5.0"
 	Model__NanoGPT__Llama__3__3__70B__Forgotten__Safeword__3_6                     ModelID = "Llama-3.3-70B-Forgotten-Safeword-3.6"
 	Model__NanoGPT__Llama__3__3__70B__Geneticlemonade__Opus                        ModelID = "Llama-3.3-70B-GeneticLemonade-Opus"
 	Model__NanoGPT__Llama__3__3__70B__Geneticlemonade__Unleashed__V3               ModelID = "Llama-3.3-70B-GeneticLemonade-Unleashed-v3"
-	Model__NanoGPT__Llama__3__3__70B__Ignition__V0__1                              ModelID = "Llama-3.3-70B-Ignition-v0.1"
+	Model__NanoGPT__Llama__3__3__70B__Ignition__V0__1__3_3                         ModelID = "Llama-3.3-70B-Ignition-v0.1"
 	Model__NanoGPT__Llama__3__3__70B__Incandescent__Malevolence                    ModelID = "Llama-3.3-70B-Incandescent-Malevolence"
 	Model__NanoGPT__Llama__3__3__70B__Instruct__Abliterated                        ModelID = "huihui-ai/Llama-3.3-70B-Instruct-abliterated"
 	Model__NanoGPT__Llama__3__3__70B__Legion__V2__1                                ModelID = "Llama-3.3-70B-Legion-V2.1"
@@ -2753,10 +2753,10 @@ const (
 	Model__NanoGPT__Llama__3__3__70B__Sapphira__0_1                                ModelID = "Llama-3.3-70B-Sapphira-0.1"
 	Model__NanoGPT__Llama__3__3__70B__Sapphira__0_2                                ModelID = "Llama-3.3-70B-Sapphira-0.2"
 	Model__NanoGPT__Llama__3__3__70B__Shakudo                                      ModelID = "Llama-3.3-70B-Shakudo"
-	Model__NanoGPT__Llama__3__3__70B__Strawberrylemonade__V1__0                    ModelID = "Llama-3.3-70B-StrawberryLemonade-v1.0"
-	Model__NanoGPT__Llama__3__3__70B__Strawberrylemonade__V1__2                    ModelID = "Llama-3.3-70B-Strawberrylemonade-v1.2"
-	Model__NanoGPT__Llama__3__3__70B__The__Omega__Directive__Unslop__V2__0         ModelID = "Llama-3.3-70B-The-Omega-Directive-Unslop-v2.0"
-	Model__NanoGPT__Llama__3__3__70B__The__Omega__Directive__Unslop__V2__1         ModelID = "Llama-3.3-70B-The-Omega-Directive-Unslop-v2.1"
+	Model__NanoGPT__Llama__3__3__70B__Strawberrylemonade__V1__0__3_3               ModelID = "Llama-3.3-70B-StrawberryLemonade-v1.0"
+	Model__NanoGPT__Llama__3__3__70B__Strawberrylemonade__V1__2__3_3               ModelID = "Llama-3.3-70B-Strawberrylemonade-v1.2"
+	Model__NanoGPT__Llama__3__3__70B__The__Omega__Directive__Unslop__V2__0__3_3    ModelID = "Llama-3.3-70B-The-Omega-Directive-Unslop-v2.0"
+	Model__NanoGPT__Llama__3__3__70B__The__Omega__Directive__Unslop__V2__1__3_3    ModelID = "Llama-3.3-70B-The-Omega-Directive-Unslop-v2.1"
 	Model__NanoGPT__Llama__3__3__70B__Vulpecula__R1                                ModelID = "Llama-3.3-70B-Vulpecula-R1"
 	Model__NanoGPT__Llama__3__3__70b__Instruct__3_3                                ModelID = "meta-llama/llama-3.3-70b-instruct"
 	Model__NanoGPT__Llama__3__3__Nemotron__Super__49B__V1                          ModelID = "nvidia/Llama-3.3-Nemotron-Super-49B-v1"
@@ -2803,7 +2803,7 @@ const (
 	Model__NanoGPT__Mistral__Nemo__12B__Instruct__2407                             ModelID = "Mistral-Nemo-12B-Instruct-2407"
 	Model__NanoGPT__Mistral__Nemo__Instruct__2407                                  ModelID = "mistralai/Mistral-Nemo-Instruct-2407"
 	Model__NanoGPT__Mistral__Saba                                                  ModelID = "mistralai/mistral-saba"
-	Model__NanoGPT__Mistral__Small__31__24b__Instruct                              ModelID = "mistral-small-31-24b-instruct"
+	Model__NanoGPT__Mistral__Small__31__24b__Instruct__31                          ModelID = "mistral-small-31-24b-instruct"
 	Model__NanoGPT__Mistral__Small__3__2__24B__Instruct__2506                      ModelID = "chutesai/Mistral-Small-3.2-24B-Instruct-2506"
 	Model__NanoGPT__Mistral__Small__Creative                                       ModelID = "mistralai/mistral-small-creative"
 	Model__NanoGPT__Mistral__Tiny                                                  ModelID = "mistralai/mistral-tiny"
@@ -2840,8 +2840,8 @@ const (
 	Model__NanoGPT__Olmo__3__1__32b__Think                                         ModelID = "allenai/olmo-3.1-32b-think"
 	Model__NanoGPT__Olmo__3__32b__Think                                            ModelID = "allenai/olmo-3-32b-think"
 	Model__NanoGPT__Openreasoning__Nemotron__32B                                   ModelID = "pamanseau/OpenReasoning-Nemotron-32B"
-	Model__NanoGPT__Phi__4__Mini__Instruct                                         ModelID = "phi-4-mini-instruct"
-	Model__NanoGPT__Phi__4__Multimodal__Instruct                                   ModelID = "phi-4-multimodal-instruct"
+	Model__NanoGPT__Phi__4__Mini__Instruct__4                                      ModelID = "phi-4-mini-instruct"
+	Model__NanoGPT__Phi__4__Multimodal__Instruct__4                                ModelID = "phi-4-multimodal-instruct"
 	Model__NanoGPT__Qvq__Max                                                       ModelID = "qvq-max"
 	Model__NanoGPT__Qwen25__Vl__72b__Instruct                                      ModelID = "qwen25-vl-72b-instruct"
 	Model__NanoGPT__Qwen2__5__32B__Eva__V0__2                                      ModelID = "Qwen2.5-32B-EVA-v0.2"
@@ -2884,7 +2884,7 @@ const (
 	Model__NanoGPT__Sorcererlm__8x22b                                              ModelID = "raifle/sorcererlm-8x22b"
 	Model__NanoGPT__Starcannon__Unleashed__12B__V1__0                              ModelID = "VongolaChouko/Starcannon-Unleashed-12B-v1.0"
 	Model__NanoGPT__Step__2__16k__Exp                                              ModelID = "step-2-16k-exp"
-	Model__NanoGPT__Step__2__Mini                                                  ModelID = "step-2-mini"
+	Model__NanoGPT__Step__2__Mini__2                                               ModelID = "step-2-mini"
 	Model__NanoGPT__Step__3                                                        ModelID = "step-3"
 	Model__NanoGPT__Step__3__5__Flash__3_5                                         ModelID = "stepfun-ai/step-3.5-flash"
 	Model__NanoGPT__Step__3__5__Flash__Thinking__3_5                               ModelID = "stepfun-ai/step-3.5-flash:thinking"
@@ -3016,7 +3016,7 @@ const (
 	Model__NovitaAI__Ernie__4__5__21B__A3b__4_5__Thinking                          ModelID = "baidu/ernie-4.5-21B-a3b-thinking"
 	Model__NovitaAI__Ernie__4__5__300b__A47b__Paddle                               ModelID = "baidu/ernie-4.5-300b-a47b-paddle"
 	Model__NovitaAI__Ernie__4__5__Vl__28b__A3b                                     ModelID = "baidu/ernie-4.5-vl-28b-a3b"
-	Model__NovitaAI__Ernie__4__5__Vl__28b__A3b__Thinking                           ModelID = "baidu/ernie-4.5-vl-28b-a3b-thinking"
+	Model__NovitaAI__Ernie__4__5__Vl__28b__A3b__Thinking__4_5                      ModelID = "baidu/ernie-4.5-vl-28b-a3b-thinking"
 	Model__NovitaAI__Ernie__4__5__Vl__424b__A47b                                   ModelID = "baidu/ernie-4.5-vl-424b-a47b"
 	Model__NovitaAI__GPT__Oss__120b                                                ModelID = "openai/gpt-oss-120b"
 	Model__NovitaAI__GPT__Oss__20b                                                 ModelID = "openai/gpt-oss-20b"
@@ -3052,7 +3052,7 @@ const (
 	Model__NovitaAI__Llama__3__70b__Instruct__3                                    ModelID = "meta-llama/llama-3-70b-instruct"
 	Model__NovitaAI__Llama__3__8b__Instruct__3                                     ModelID = "meta-llama/llama-3-8b-instruct"
 	Model__NovitaAI__Llama__4__Maverick__17b__128e__Instruct__Fp8                  ModelID = "meta-llama/llama-4-maverick-17b-128e-instruct-fp8"
-	Model__NovitaAI__Llama__4__Scout__17b__16e__Instruct                           ModelID = "meta-llama/llama-4-scout-17b-16e-instruct"
+	Model__NovitaAI__Llama__4__Scout__17b__16e__Instruct__4                        ModelID = "meta-llama/llama-4-scout-17b-16e-instruct"
 	Model__NovitaAI__Mimo__V2__5__Pro                                              ModelID = "xiaomimimo/mimo-v2.5-pro"
 	Model__NovitaAI__Mimo__V2__Flash                                               ModelID = "xiaomimimo/mimo-v2-flash"
 	Model__NovitaAI__Mimo__V2__Pro                                                 ModelID = "xiaomimimo/mimo-v2-pro"
@@ -3130,18 +3130,18 @@ const (
 	Model__Nvidia__Kimi__K2__Instruct                                              ModelID = "moonshotai/kimi-k2-instruct"
 	Model__Nvidia__Kimi__K2__Instruct__0905                                        ModelID = "moonshotai/kimi-k2-instruct-0905"
 	Model__Nvidia__Kimi__K2__Thinking                                              ModelID = "moonshotai/kimi-k2-thinking"
-	Model__Nvidia__Llama__3__1__70b__Instruct                                      ModelID = "meta/llama-3.1-70b-instruct"
+	Model__Nvidia__Llama__3__1__70b__Instruct__3_1                                 ModelID = "meta/llama-3.1-70b-instruct"
 	Model__Nvidia__Llama__3__1__8b__Instruct__3_1                                  ModelID = "meta/llama-3.1-8b-instruct"
 	Model__Nvidia__Llama__3__1__Nemotron__Safety__Guard__8b__V3                    ModelID = "nvidia/llama-3_1-nemotron-safety-guard-8b-v3"
-	Model__Nvidia__Llama__3__2__11b__Vision__Instruct                              ModelID = "meta/llama-3.2-11b-vision-instruct"
-	Model__Nvidia__Llama__3__2__1b__Instruct                                       ModelID = "meta/llama-3.2-1b-instruct"
+	Model__Nvidia__Llama__3__2__11b__Vision__Instruct__3_2                         ModelID = "meta/llama-3.2-11b-vision-instruct"
+	Model__Nvidia__Llama__3__2__1b__Instruct__3_2                                  ModelID = "meta/llama-3.2-1b-instruct"
 	Model__Nvidia__Llama__3__2__3b__Instruct__3_2                                  ModelID = "meta/llama-3.2-3b-instruct"
 	Model__Nvidia__Llama__3__2__90b__Vision__Instruct__3_2                         ModelID = "meta/llama-3.2-90b-vision-instruct"
 	Model__Nvidia__Llama__3__2__Nemoretriever__300m__Embed__V1                     ModelID = "nvidia/llama-3_2-nemoretriever-300m-embed-v1"
-	Model__Nvidia__Llama__3__3__70b__Instruct                                      ModelID = "meta/llama-3.3-70b-instruct"
+	Model__Nvidia__Llama__3__3__70b__Instruct__3_3                                 ModelID = "meta/llama-3.3-70b-instruct"
 	Model__Nvidia__Llama__3__3__Nemotron__Super__49b__V1                           ModelID = "nvidia/llama-3_3-nemotron-super-49b-v1"
 	Model__Nvidia__Llama__3__3__Nemotron__Super__49b__V1__5                        ModelID = "nvidia/llama-3_3-nemotron-super-49b-v1_5"
-	Model__Nvidia__Llama__4__Maverick__17b__128e__Instruct                         ModelID = "meta/llama-4-maverick-17b-128e-instruct"
+	Model__Nvidia__Llama__4__Maverick__17b__128e__Instruct__4                      ModelID = "meta/llama-4-maverick-17b-128e-instruct"
 	Model__Nvidia__Llama__Guard__4__12b__4                                         ModelID = "meta/llama-guard-4-12b"
 	Model__Nvidia__Llama__Nemotron__Embed__Vl__1b__V2                              ModelID = "nvidia/llama-nemotron-embed-vl-1b-v2"
 	Model__Nvidia__Llama__Nemotron__Rerank__Vl__1b__V2                             ModelID = "nvidia/llama-nemotron-rerank-vl-1b-v2"
@@ -3167,7 +3167,7 @@ const (
 	Model__Nvidia__Nv__Embedcode__7b__V1                                           ModelID = "nvidia/nv-embedcode-7b-v1"
 	Model__Nvidia__Nvidia__Nemotron__Nano__9b__V2                                  ModelID = "nvidia/nvidia-nemotron-nano-9b-v2"
 	Model__Nvidia__Phi__4__Mini__Instruct__4                                       ModelID = "microsoft/phi-4-mini-instruct"
-	Model__Nvidia__Phi__4__Multimodal__Instruct                                    ModelID = "microsoft/phi-4-multimodal-instruct"
+	Model__Nvidia__Phi__4__Multimodal__Instruct__4                                 ModelID = "microsoft/phi-4-multimodal-instruct"
 	Model__Nvidia__Qwen2__5__Coder__32b__Instruct                                  ModelID = "qwen/qwen2.5-coder-32b-instruct"
 	Model__Nvidia__Qwen3__5__122b__A10b                                            ModelID = "qwen/qwen3.5-122b-a10b"
 	Model__Nvidia__Qwen3__5__397b__A17b                                            ModelID = "qwen/qwen3.5-397b-a17b"
@@ -3192,7 +3192,7 @@ const (
 	Model__Nvidia__Whisper__Large__V3                                              ModelID = "openai/whisper-large-v3"
 	Model__OVHcloud__GPT__Oss__120b                                                ModelID = "gpt-oss-120b"
 	Model__OVHcloud__GPT__Oss__20b                                                 ModelID = "gpt-oss-20b"
-	Model__OVHcloud__Llama__3__1__8b__Instruct                                     ModelID = "llama-3.1-8b-instruct"
+	Model__OVHcloud__Llama__3__1__8b__Instruct__3_1                                ModelID = "llama-3.1-8b-instruct"
 	Model__OVHcloud__Meta__Llama__3__3__70b__Instruct                              ModelID = "meta-llama-3_3-70b-instruct"
 	Model__OVHcloud__Mistral__7b__Instruct__V0__3                                  ModelID = "mistral-7b-instruct-v0.3"
 	Model__OVHcloud__Mistral__Nemo__Instruct__2407                                 ModelID = "mistral-nemo-instruct-2407"
@@ -3905,7 +3905,7 @@ const (
 	Model__Poe__Gemini__3__1__Flash__Lite__3_1                                     ModelID = "google/gemini-3.1-flash-lite"
 	Model__Poe__Gemini__3__1__Pro__3_1                                             ModelID = "google/gemini-3.1-pro"
 	Model__Poe__Gemini__3__5__Flash__3_5                                           ModelID = "google/gemini-3.5-flash"
-	Model__Poe__Gemini__3__Flash                                                   ModelID = "google/gemini-3-flash"
+	Model__Poe__Gemini__3__Flash__3                                                ModelID = "google/gemini-3-flash"
 	Model__Poe__Gemini__3__Pro__3                                                  ModelID = "google/gemini-3-pro"
 	Model__Poe__Gemini__Deep__Research                                             ModelID = "google/gemini-deep-research"
 	Model__Poe__Gemma__4__31b                                                      ModelID = "google/gemma-4-31b"
@@ -4005,8 +4005,8 @@ const (
 	Model__QiniuAI__Deepseek__V3__2__Exp                                           ModelID = "deepseek/deepseek-v3.2-exp"
 	Model__QiniuAI__Deepseek__V3__2__Exp__Thinking                                 ModelID = "deepseek/deepseek-v3.2-exp-thinking"
 	Model__QiniuAI__Doubao__1__5__Pro__32k                                         ModelID = "doubao-1.5-pro-32k"
-	Model__QiniuAI__Doubao__1__5__Thinking__Pro                                    ModelID = "doubao-1.5-thinking-pro"
-	Model__QiniuAI__Doubao__1__5__Vision__Pro                                      ModelID = "doubao-1.5-vision-pro"
+	Model__QiniuAI__Doubao__1__5__Thinking__Pro__1_5                               ModelID = "doubao-1.5-thinking-pro"
+	Model__QiniuAI__Doubao__1__5__Vision__Pro__1_5                                 ModelID = "doubao-1.5-vision-pro"
 	Model__QiniuAI__Doubao__Seed__1_6                                              ModelID = "doubao-seed-1.6"
 	Model__QiniuAI__Doubao__Seed__1_6__Thinking                                    ModelID = "doubao-seed-1.6-thinking"
 	Model__QiniuAI__Doubao__Seed__1__6__Flash__1_6                                 ModelID = "doubao-seed-1.6-flash"
@@ -4022,12 +4022,12 @@ const (
 	Model__QiniuAI__Gemini__2__0__Flash__2_0                                       ModelID = "gemini-2.0-flash"
 	Model__QiniuAI__Gemini__2__0__Flash__Lite__2_0                                 ModelID = "gemini-2.0-flash-lite"
 	Model__QiniuAI__Gemini__2__5__Flash__2_5                                       ModelID = "gemini-2.5-flash"
-	Model__QiniuAI__Gemini__2__5__Flash__Image                                     ModelID = "gemini-2.5-flash-image"
+	Model__QiniuAI__Gemini__2__5__Flash__Image__2_5                                ModelID = "gemini-2.5-flash-image"
 	Model__QiniuAI__Gemini__2__5__Flash__Lite__2_5                                 ModelID = "gemini-2.5-flash-lite"
 	Model__QiniuAI__Gemini__2__5__Pro__2_5                                         ModelID = "gemini-2.5-pro"
 	Model__QiniuAI__Gemini__3__0__Flash__3_0__Preview                              ModelID = "gemini-3.0-flash-preview"
 	Model__QiniuAI__Gemini__3__0__Pro__3_0__Preview                                ModelID = "gemini-3.0-pro-preview"
-	Model__QiniuAI__Gemini__3__0__Pro__Image__Preview                              ModelID = "gemini-3.0-pro-image-preview"
+	Model__QiniuAI__Gemini__3__0__Pro__Image__3_0__Preview                         ModelID = "gemini-3.0-pro-image-preview"
 	Model__QiniuAI__Glm__4_5                                                       ModelID = "glm-4.5"
 	Model__QiniuAI__Glm__4_6                                                       ModelID = "z-ai/glm-4.6"
 	Model__QiniuAI__Glm__4_7                                                       ModelID = "z-ai/glm-4.7"
@@ -4120,7 +4120,7 @@ const (
 	Model__Requesty__GPT__5__Pro__5                                                ModelID = "openai/gpt-5-pro"
 	Model__Requesty__Gemini__2__5__Flash__2_5                                      ModelID = "google/gemini-2.5-flash"
 	Model__Requesty__Gemini__2__5__Pro__2_5                                        ModelID = "google/gemini-2.5-pro"
-	Model__Requesty__Gemini__3__Flash__Preview                                     ModelID = "google/gemini-3-flash-preview"
+	Model__Requesty__Gemini__3__Flash__3__Preview                                  ModelID = "google/gemini-3-flash-preview"
 	Model__Requesty__Gemini__3__Pro__3__Preview                                    ModelID = "google/gemini-3-pro-preview"
 	Model__Requesty__Grok__4                                                       ModelID = "xai/grok-4"
 	Model__Requesty__Grok__4__Fast__4                                              ModelID = "xai/grok-4-fast"
@@ -4920,13 +4920,13 @@ const (
 	Model__ZenMux__GPT__5__4__Pro__5_4                                             ModelID = "openai/gpt-5.4-pro"
 	Model__ZenMux__GPT__5__5                                                       ModelID = "openai/gpt-5.5"
 	Model__ZenMux__GPT__5__5__Pro__5_5                                             ModelID = "openai/gpt-5.5-pro"
-	Model__ZenMux__GPT__5__Codex                                                   ModelID = "openai/gpt-5-codex"
+	Model__ZenMux__GPT__5__Codex__5                                                ModelID = "openai/gpt-5-codex"
 	Model__ZenMux__Gemini__2__5__Flash__2_5                                        ModelID = "google/gemini-2.5-flash"
 	Model__ZenMux__Gemini__2__5__Flash__Lite__2_5                                  ModelID = "google/gemini-2.5-flash-lite"
 	Model__ZenMux__Gemini__2__5__Pro__2_5                                          ModelID = "google/gemini-2.5-pro"
 	Model__ZenMux__Gemini__3__1__Flash__Lite__3_1__Preview                         ModelID = "google/gemini-3.1-flash-lite-preview"
 	Model__ZenMux__Gemini__3__1__Pro__3_1__Preview                                 ModelID = "google/gemini-3.1-pro-preview"
-	Model__ZenMux__Gemini__3__Flash__Preview                                       ModelID = "google/gemini-3-flash-preview"
+	Model__ZenMux__Gemini__3__Flash__3__Preview                                    ModelID = "google/gemini-3-flash-preview"
 	Model__ZenMux__Glm__4_5                                                        ModelID = "z-ai/glm-4.5"
 	Model__ZenMux__Glm__4_6                                                        ModelID = "z-ai/glm-4.6"
 	Model__ZenMux__Glm__4_7                                                        ModelID = "z-ai/glm-4.7"
@@ -4934,11 +4934,11 @@ const (
 	Model__ZenMux__Glm__4__6v                                                      ModelID = "z-ai/glm-4.6v"
 	Model__ZenMux__Glm__4__6v__Flash                                               ModelID = "z-ai/glm-4.6v-flash"
 	Model__ZenMux__Glm__4__6v__Flash__Free                                         ModelID = "z-ai/glm-4.6v-flash-free"
-	Model__ZenMux__Glm__4__7__Flash__Free                                          ModelID = "z-ai/glm-4.7-flash-free"
+	Model__ZenMux__Glm__4__7__Flash__Free__4_7                                     ModelID = "z-ai/glm-4.7-flash-free"
 	Model__ZenMux__Glm__4__7__Flashx                                               ModelID = "z-ai/glm-4.7-flashx"
 	Model__ZenMux__Glm__5                                                          ModelID = "z-ai/glm-5"
 	Model__ZenMux__Glm__5_1                                                        ModelID = "z-ai/glm-5.1"
-	Model__ZenMux__Glm__5__Turbo                                                   ModelID = "z-ai/glm-5-turbo"
+	Model__ZenMux__Glm__5__Turbo__5                                                ModelID = "z-ai/glm-5-turbo"
 	Model__ZenMux__Glm__5v__Turbo                                                  ModelID = "z-ai/glm-5v-turbo"
 	Model__ZenMux__Grok__4                                                         ModelID = "x-ai/grok-4"
 	Model__ZenMux__Grok__4__1__Fast                                                ModelID = "x-ai/grok-4.1-fast"
@@ -4974,7 +4974,7 @@ const (
 	Model__ZenMux__Ring__1t                                                        ModelID = "inclusionai/ring-1t"
 	Model__ZenMux__Step__3                                                         ModelID = "stepfun/step-3"
 	Model__ZenMux__Step__3__5__Flash__3_5                                          ModelID = "stepfun/step-3.5-flash"
-	Model__ZenMux__Step__3__5__Flash__Free                                         ModelID = "stepfun/step-3.5-flash-free"
+	Model__ZenMux__Step__3__5__Flash__Free__3_5                                    ModelID = "stepfun/step-3.5-flash-free"
 	Model__ZhipuaiCodingPlan__Glm__4_7                                             ModelID = "glm-4.7"
 	Model__ZhipuaiCodingPlan__Glm__4__5__Air__4_5                                  ModelID = "glm-4.5-air"
 	Model__ZhipuaiCodingPlan__Glm__5_1                                             ModelID = "glm-5.1"
@@ -5044,15 +5044,15 @@ var allModelConstants = [...]ModelID{
 	Model__302AI__GPT__5__Thinking,
 	Model__302AI__Gemini__2__0__Flash__Lite__2_0,
 	Model__302AI__Gemini__2__5__Flash__2_5,
-	Model__302AI__Gemini__2__5__Flash__Image,
+	Model__302AI__Gemini__2__5__Flash__Image__2_5,
 	Model__302AI__Gemini__2__5__Flash__Lite__Preview__20250926,
 	Model__302AI__Gemini__2__5__Flash__Nothink__2_5,
 	Model__302AI__Gemini__2__5__Flash__Preview__20250926,
 	Model__302AI__Gemini__2__5__Pro__2_5,
-	Model__302AI__Gemini__3__1__Flash__Image__Preview,
-	Model__302AI__Gemini__3__Flash__Preview,
-	Model__302AI__Gemini__3__Pro__Image__Preview,
-	Model__302AI__Gemini__3__Pro__Preview,
+	Model__302AI__Gemini__3__1__Flash__Image__3_1__Preview,
+	Model__302AI__Gemini__3__Flash__3__Preview,
+	Model__302AI__Gemini__3__Pro__3__Preview,
+	Model__302AI__Gemini__3__Pro__Image__3__Preview,
 	Model__302AI__Glm__4_5,
 	Model__302AI__Glm__4_6,
 	Model__302AI__Glm__4_7,
@@ -6683,7 +6683,7 @@ var allModelConstants = [...]ModelID{
 	Model__Kilo__Devstral__Medium,
 	Model__Kilo__Devstral__Small,
 	Model__Kilo__Ernie__4__5__21b__A3b,
-	Model__Kilo__Ernie__4__5__21b__A3b__Thinking,
+	Model__Kilo__Ernie__4__5__21b__A3b__Thinking__4_5,
 	Model__Kilo__Ernie__4__5__300b__A47b,
 	Model__Kilo__Ernie__4__5__Vl__28b__A3b,
 	Model__Kilo__Ernie__4__5__Vl__424b__A47b,
@@ -6693,15 +6693,15 @@ var allModelConstants = [...]ModelID{
 	Model__Kilo__GPT__3__5__Turbo__0613,
 	Model__Kilo__GPT__3__5__Turbo__16k,
 	Model__Kilo__GPT__3__5__Turbo__3_5,
-	Model__Kilo__GPT__3__5__Turbo__Instruct,
+	Model__Kilo__GPT__3__5__Turbo__Instruct__3_5,
 	Model__Kilo__GPT__4,
 	Model__Kilo__GPT__4_1,
 	Model__Kilo__GPT__4__0314__4,
 	Model__Kilo__GPT__4__1106__4__Preview,
 	Model__Kilo__GPT__4__1__Mini__4_1,
 	Model__Kilo__GPT__4__1__Nano__4_1,
-	Model__Kilo__GPT__4__Turbo,
-	Model__Kilo__GPT__4__Turbo__Preview,
+	Model__Kilo__GPT__4__Turbo__4,
+	Model__Kilo__GPT__4__Turbo__4__Preview,
 	Model__Kilo__GPT__4o,
 	Model__Kilo__GPT__4o__20240513,
 	Model__Kilo__GPT__4o__20240806,
@@ -6731,12 +6731,12 @@ var allModelConstants = [...]ModelID{
 	Model__Kilo__GPT__5__4__Pro__5_4,
 	Model__Kilo__GPT__5__5__Pro__5_5,
 	Model__Kilo__GPT__5__Chat,
-	Model__Kilo__GPT__5__Codex,
-	Model__Kilo__GPT__5__Image,
-	Model__Kilo__GPT__5__Image__Mini,
-	Model__Kilo__GPT__5__Mini,
-	Model__Kilo__GPT__5__Nano,
-	Model__Kilo__GPT__5__Pro,
+	Model__Kilo__GPT__5__Codex__5,
+	Model__Kilo__GPT__5__Image__5,
+	Model__Kilo__GPT__5__Image__Mini__5,
+	Model__Kilo__GPT__5__Mini__5,
+	Model__Kilo__GPT__5__Nano__5,
+	Model__Kilo__GPT__5__Pro__5,
 	Model__Kilo__GPT__Audio,
 	Model__Kilo__GPT__Audio__Mini,
 	Model__Kilo__GPT__Chat__Latest,
@@ -6748,20 +6748,20 @@ var allModelConstants = [...]ModelID{
 	Model__Kilo__Gemini__2__0__Flash__001,
 	Model__Kilo__Gemini__2__0__Flash__Lite__001,
 	Model__Kilo__Gemini__2__5__Flash__2_5,
-	Model__Kilo__Gemini__2__5__Flash__Image,
+	Model__Kilo__Gemini__2__5__Flash__Image__2_5,
 	Model__Kilo__Gemini__2__5__Flash__Lite__2_5,
 	Model__Kilo__Gemini__2__5__Flash__Lite__Preview__20250925,
 	Model__Kilo__Gemini__2__5__Pro__2_5,
 	Model__Kilo__Gemini__2__5__Pro__2_5__Preview,
 	Model__Kilo__Gemini__2__5__Pro__Preview__20250506,
-	Model__Kilo__Gemini__3__1__Flash__Image__Preview,
+	Model__Kilo__Gemini__3__1__Flash__Image__3_1__Preview,
 	Model__Kilo__Gemini__3__1__Flash__Lite__3_1,
 	Model__Kilo__Gemini__3__1__Flash__Lite__3_1__Preview,
 	Model__Kilo__Gemini__3__1__Pro__3_1__Preview,
 	Model__Kilo__Gemini__3__1__Pro__Preview__Customtools,
 	Model__Kilo__Gemini__3__5__Flash__3_5,
-	Model__Kilo__Gemini__3__Flash__Preview,
-	Model__Kilo__Gemini__3__Pro__Image__Preview,
+	Model__Kilo__Gemini__3__Flash__3__Preview,
+	Model__Kilo__Gemini__3__Pro__Image__3__Preview,
 	Model__Kilo__Gemini__Flash__Latest,
 	Model__Kilo__Gemini__Pro__Latest,
 	Model__Kilo__Gemma__2__27b__It,
@@ -6781,7 +6781,7 @@ var allModelConstants = [...]ModelID{
 	Model__Kilo__Glm__4__7__Flash__4_7,
 	Model__Kilo__Glm__5,
 	Model__Kilo__Glm__5_1,
-	Model__Kilo__Glm__5__Turbo,
+	Model__Kilo__Glm__5__Turbo__5,
 	Model__Kilo__Glm__5v__Turbo,
 	Model__Kilo__Granite__4__0__H__Micro,
 	Model__Kilo__Granite__4__1__8b,
@@ -6817,21 +6817,21 @@ var allModelConstants = [...]ModelID{
 	Model__Kilo__Lfm__2__24b__A2b,
 	Model__Kilo__Ling__2__6__1t,
 	Model__Kilo__Ling__2__6__Flash__2_6,
-	Model__Kilo__Llama__3__1__70b__Instruct,
-	Model__Kilo__Llama__3__1__8b__Instruct,
-	Model__Kilo__Llama__3__2__11b__Vision__Instruct,
-	Model__Kilo__Llama__3__2__1b__Instruct,
-	Model__Kilo__Llama__3__2__3b__Instruct,
-	Model__Kilo__Llama__3__3__70b__Instruct,
-	Model__Kilo__Llama__3__3__Nemotron__Super__49b__V1__5,
-	Model__Kilo__Llama__3__70b__Instruct,
-	Model__Kilo__Llama__3__8b__Instruct,
+	Model__Kilo__Llama__3__1__70b__Instruct__3_1,
+	Model__Kilo__Llama__3__1__8b__Instruct__3_1,
+	Model__Kilo__Llama__3__2__11b__Vision__Instruct__3_2,
+	Model__Kilo__Llama__3__2__1b__Instruct__3_2,
+	Model__Kilo__Llama__3__2__3b__Instruct__3_2,
+	Model__Kilo__Llama__3__3__70b__Instruct__3_3,
+	Model__Kilo__Llama__3__3__Nemotron__Super__49b__V1__5__3_3,
+	Model__Kilo__Llama__3__70b__Instruct__3,
+	Model__Kilo__Llama__3__8b__Instruct__3,
 	Model__Kilo__Llama__4__Maverick,
 	Model__Kilo__Llama__4__Scout,
 	Model__Kilo__Llama__Guard__3__8b,
 	Model__Kilo__Llama__Guard__4__12b,
 	Model__Kilo__Lyria__3__Clip__Preview,
-	Model__Kilo__Lyria__3__Pro__Preview,
+	Model__Kilo__Lyria__3__Pro__3__Preview,
 	Model__Kilo__Maestro__Reasoning,
 	Model__Kilo__Magnum__V4__72b,
 	Model__Kilo__Mercury__2,
@@ -6894,7 +6894,7 @@ var allModelConstants = [...]ModelID{
 	Model__Kilo__Pareto__Code,
 	Model__Kilo__Perceptron__Mk1,
 	Model__Kilo__Phi__4,
-	Model__Kilo__Phi__4__Mini__Instruct,
+	Model__Kilo__Phi__4__Mini__Instruct__4,
 	Model__Kilo__Pixtral__Large__2411,
 	Model__Kilo__Qianfan__Ocr__Fast,
 	Model__Kilo__Qwen2__5__Vl__72b__Instruct,
@@ -6937,9 +6937,9 @@ var allModelConstants = [...]ModelID{
 	Model__Kilo__Qwen3__Vl__32b__Instruct,
 	Model__Kilo__Qwen3__Vl__8b__Instruct,
 	Model__Kilo__Qwen3__Vl__8b__Thinking,
-	Model__Kilo__Qwen__2__5__72b__Instruct,
-	Model__Kilo__Qwen__2__5__7b__Instruct,
-	Model__Kilo__Qwen__2__5__Coder__32b__Instruct,
+	Model__Kilo__Qwen__2__5__72b__Instruct__2_5,
+	Model__Kilo__Qwen__2__5__7b__Instruct__2_5,
+	Model__Kilo__Qwen__2__5__Coder__32b__Instruct__2_5,
 	Model__Kilo__Qwen__Plus,
 	Model__Kilo__Qwen__Plus__20250728,
 	Model__Kilo__Qwen__Plus__2025__07__28__Thinking,
@@ -6949,7 +6949,7 @@ var allModelConstants = [...]ModelID{
 	Model__Kilo__Relace__Search,
 	Model__Kilo__Remm__Slerp__L2__13b,
 	Model__Kilo__Ring__2__6__1t,
-	Model__Kilo__Rnj__1__Instruct,
+	Model__Kilo__Rnj__1__Instruct__1,
 	Model__Kilo__Rocinante__12b,
 	Model__Kilo__Router,
 	Model__Kilo__Seed__1_6,
@@ -7378,7 +7378,7 @@ var allModelConstants = [...]ModelID{
 	Model__NanoGPT__Auto__Model__Basic,
 	Model__NanoGPT__Auto__Model__Premium,
 	Model__NanoGPT__Auto__Model__Standard,
-	Model__NanoGPT__Azure__GPT__4__Turbo,
+	Model__NanoGPT__Azure__GPT__4__Turbo__4,
 	Model__NanoGPT__Azure__GPT__4o,
 	Model__NanoGPT__Azure__GPT__4o__Mini,
 	Model__NanoGPT__Azure__O1,
@@ -7396,10 +7396,10 @@ var allModelConstants = [...]ModelID{
 	Model__NanoGPT__Claude__3__5__Sonnet__20241022,
 	Model__NanoGPT__Claude__3__7__Sonnet__20250219,
 	Model__NanoGPT__Claude__3__7__Sonnet__Reasoner,
-	Model__NanoGPT__Claude__3__7__Sonnet__Thinking,
 	Model__NanoGPT__Claude__3__7__Sonnet__Thinking__1024,
 	Model__NanoGPT__Claude__3__7__Sonnet__Thinking__128000,
 	Model__NanoGPT__Claude__3__7__Sonnet__Thinking__32768,
+	Model__NanoGPT__Claude__3__7__Sonnet__Thinking__3_7,
 	Model__NanoGPT__Claude__3__7__Sonnet__Thinking__8192,
 	Model__NanoGPT__Claude__Haiku__4_5__20251001,
 	Model__NanoGPT__Claude__Opus__4_1__20250805,
@@ -7552,13 +7552,13 @@ var allModelConstants = [...]ModelID{
 	Model__NanoGPT__Gemini__2__0__Pro__Reasoner,
 	Model__NanoGPT__Gemini__2__5__Flash__2_5,
 	Model__NanoGPT__Gemini__2__5__Flash__Lite__2_5,
-	Model__NanoGPT__Gemini__2__5__Flash__Lite__Preview__09__2025__Thinking,
+	Model__NanoGPT__Gemini__2__5__Flash__Lite__Preview__09__2025__Thinking__2_5,
 	Model__NanoGPT__Gemini__2__5__Flash__Lite__Preview__20250617,
 	Model__NanoGPT__Gemini__2__5__Flash__Lite__Preview__20250925,
 	Model__NanoGPT__Gemini__2__5__Flash__Nothinking,
 	Model__NanoGPT__Gemini__2__5__Flash__Preview__04__17__Thinking,
 	Model__NanoGPT__Gemini__2__5__Flash__Preview__05__20__Thinking,
-	Model__NanoGPT__Gemini__2__5__Flash__Preview__09__2025__Thinking,
+	Model__NanoGPT__Gemini__2__5__Flash__Preview__09__2025__Thinking__2_5,
 	Model__NanoGPT__Gemini__2__5__Flash__Preview__20250417,
 	Model__NanoGPT__Gemini__2__5__Flash__Preview__20250520,
 	Model__NanoGPT__Gemini__2__5__Flash__Preview__20250925,
@@ -7569,9 +7569,9 @@ var allModelConstants = [...]ModelID{
 	Model__NanoGPT__Gemini__2__5__Pro__Preview__20250605,
 	Model__NanoGPT__Gemini__3__Flash__3__Preview,
 	Model__NanoGPT__Gemini__3__Flash__Preview__3__Thinking,
-	Model__NanoGPT__Gemini__3__Pro__Image__Preview,
-	Model__NanoGPT__Gemini__3__Pro__Preview,
-	Model__NanoGPT__Gemini__3__Pro__Preview__Thinking,
+	Model__NanoGPT__Gemini__3__Pro__3__Preview,
+	Model__NanoGPT__Gemini__3__Pro__Image__3__Preview,
+	Model__NanoGPT__Gemini__3__Pro__Preview__Thinking__3,
 	Model__NanoGPT__Gemini__Exp__1206,
 	Model__NanoGPT__Gemini__Flash__1__5,
 	Model__NanoGPT__Gemma__3__12b__It,
@@ -7611,7 +7611,7 @@ var allModelConstants = [...]ModelID{
 	Model__NanoGPT__Glm__4__Air,
 	Model__NanoGPT__Glm__4__Air__0111,
 	Model__NanoGPT__Glm__4__Airx,
-	Model__NanoGPT__Glm__4__Flash,
+	Model__NanoGPT__Glm__4__Flash__4,
 	Model__NanoGPT__Glm__4__Long,
 	Model__NanoGPT__Glm__4__Plus,
 	Model__NanoGPT__Glm__4__Plus__0111,
@@ -7627,10 +7627,10 @@ var allModelConstants = [...]ModelID{
 	Model__NanoGPT__Glm__Z1__Rumination__32B__0414,
 	Model__NanoGPT__Glm__Zero__Preview,
 	Model__NanoGPT__Grayline__Qwen3__8B,
-	Model__NanoGPT__Grok__3__Beta,
-	Model__NanoGPT__Grok__3__Fast__Beta,
-	Model__NanoGPT__Grok__3__Mini__Beta,
-	Model__NanoGPT__Grok__3__Mini__Fast__Beta,
+	Model__NanoGPT__Grok__3__Beta__3,
+	Model__NanoGPT__Grok__3__Fast__Beta__3,
+	Model__NanoGPT__Grok__3__Mini__Beta__3,
+	Model__NanoGPT__Grok__3__Mini__Fast__Beta__3,
 	Model__NanoGPT__Grok__4__1__Fast__4_1,
 	Model__NanoGPT__Grok__4__1__Fast__Reasoning__4_1,
 	Model__NanoGPT__Grok__4__4_07_09__20250709,
@@ -7702,7 +7702,7 @@ var allModelConstants = [...]ModelID{
 	Model__NanoGPT__Llama__3__3__3v3__3__70B__Tenyxchat__Daybreakstorywriter,
 	Model__NanoGPT__Llama__3__3__70B__Anthrobomination,
 	Model__NanoGPT__Llama__3__3__70B__Argunaut__1__Sft,
-	Model__NanoGPT__Llama__3__3__70B__Arliai__Rpmax__V1__4,
+	Model__NanoGPT__Llama__3__3__70B__Arliai__Rpmax__V1__4__3_3,
 	Model__NanoGPT__Llama__3__3__70B__Arliai__Rpmax__V2,
 	Model__NanoGPT__Llama__3__3__70B__Arliai__Rpmax__V3,
 	Model__NanoGPT__Llama__3__3__70B__Aurora__Borealis,
@@ -7710,16 +7710,16 @@ var allModelConstants = [...]ModelID{
 	Model__NanoGPT__Llama__3__3__70B__Cirrus__X1,
 	Model__NanoGPT__Llama__3__3__70B__Cu__Mai__R1,
 	Model__NanoGPT__Llama__3__3__70B__Damascus__R1,
-	Model__NanoGPT__Llama__3__3__70B__Dark__Ages__V0__1,
+	Model__NanoGPT__Llama__3__3__70B__Dark__Ages__V0__1__3_3,
 	Model__NanoGPT__Llama__3__3__70B__Electra__R1,
-	Model__NanoGPT__Llama__3__3__70B__Electranova__V1__0,
+	Model__NanoGPT__Llama__3__3__70B__Electranova__V1__0__3_3,
 	Model__NanoGPT__Llama__3__3__70B__Fallen__R1__V1,
 	Model__NanoGPT__Llama__3__3__70B__Fallen__V1,
-	Model__NanoGPT__Llama__3__3__70B__Forgotten__Abomination__V5__0,
+	Model__NanoGPT__Llama__3__3__70B__Forgotten__Abomination__V5__0__3_3,
 	Model__NanoGPT__Llama__3__3__70B__Forgotten__Safeword__3_6,
 	Model__NanoGPT__Llama__3__3__70B__Geneticlemonade__Opus,
 	Model__NanoGPT__Llama__3__3__70B__Geneticlemonade__Unleashed__V3,
-	Model__NanoGPT__Llama__3__3__70B__Ignition__V0__1,
+	Model__NanoGPT__Llama__3__3__70B__Ignition__V0__1__3_3,
 	Model__NanoGPT__Llama__3__3__70B__Incandescent__Malevolence,
 	Model__NanoGPT__Llama__3__3__70B__Instruct__Abliterated,
 	Model__NanoGPT__Llama__3__3__70B__Legion__V2__1,
@@ -7736,10 +7736,10 @@ var allModelConstants = [...]ModelID{
 	Model__NanoGPT__Llama__3__3__70B__Sapphira__0_1,
 	Model__NanoGPT__Llama__3__3__70B__Sapphira__0_2,
 	Model__NanoGPT__Llama__3__3__70B__Shakudo,
-	Model__NanoGPT__Llama__3__3__70B__Strawberrylemonade__V1__0,
-	Model__NanoGPT__Llama__3__3__70B__Strawberrylemonade__V1__2,
-	Model__NanoGPT__Llama__3__3__70B__The__Omega__Directive__Unslop__V2__0,
-	Model__NanoGPT__Llama__3__3__70B__The__Omega__Directive__Unslop__V2__1,
+	Model__NanoGPT__Llama__3__3__70B__Strawberrylemonade__V1__0__3_3,
+	Model__NanoGPT__Llama__3__3__70B__Strawberrylemonade__V1__2__3_3,
+	Model__NanoGPT__Llama__3__3__70B__The__Omega__Directive__Unslop__V2__0__3_3,
+	Model__NanoGPT__Llama__3__3__70B__The__Omega__Directive__Unslop__V2__1__3_3,
 	Model__NanoGPT__Llama__3__3__70B__Vulpecula__R1,
 	Model__NanoGPT__Llama__3__3__70b__Instruct__3_3,
 	Model__NanoGPT__Llama__3__3__Nemotron__Super__49B__V1,
@@ -7786,7 +7786,7 @@ var allModelConstants = [...]ModelID{
 	Model__NanoGPT__Mistral__Nemo__12B__Instruct__2407,
 	Model__NanoGPT__Mistral__Nemo__Instruct__2407,
 	Model__NanoGPT__Mistral__Saba,
-	Model__NanoGPT__Mistral__Small__31__24b__Instruct,
+	Model__NanoGPT__Mistral__Small__31__24b__Instruct__31,
 	Model__NanoGPT__Mistral__Small__3__2__24B__Instruct__2506,
 	Model__NanoGPT__Mistral__Small__Creative,
 	Model__NanoGPT__Mistral__Tiny,
@@ -7823,8 +7823,8 @@ var allModelConstants = [...]ModelID{
 	Model__NanoGPT__Olmo__3__1__32b__Think,
 	Model__NanoGPT__Olmo__3__32b__Think,
 	Model__NanoGPT__Openreasoning__Nemotron__32B,
-	Model__NanoGPT__Phi__4__Mini__Instruct,
-	Model__NanoGPT__Phi__4__Multimodal__Instruct,
+	Model__NanoGPT__Phi__4__Mini__Instruct__4,
+	Model__NanoGPT__Phi__4__Multimodal__Instruct__4,
 	Model__NanoGPT__Qvq__Max,
 	Model__NanoGPT__Qwen25__Vl__72b__Instruct,
 	Model__NanoGPT__Qwen2__5__32B__Eva__V0__2,
@@ -7867,7 +7867,7 @@ var allModelConstants = [...]ModelID{
 	Model__NanoGPT__Sorcererlm__8x22b,
 	Model__NanoGPT__Starcannon__Unleashed__12B__V1__0,
 	Model__NanoGPT__Step__2__16k__Exp,
-	Model__NanoGPT__Step__2__Mini,
+	Model__NanoGPT__Step__2__Mini__2,
 	Model__NanoGPT__Step__3,
 	Model__NanoGPT__Step__3__5__Flash__3_5,
 	Model__NanoGPT__Step__3__5__Flash__Thinking__3_5,
@@ -7999,7 +7999,7 @@ var allModelConstants = [...]ModelID{
 	Model__NovitaAI__Ernie__4__5__21B__A3b__4_5__Thinking,
 	Model__NovitaAI__Ernie__4__5__300b__A47b__Paddle,
 	Model__NovitaAI__Ernie__4__5__Vl__28b__A3b,
-	Model__NovitaAI__Ernie__4__5__Vl__28b__A3b__Thinking,
+	Model__NovitaAI__Ernie__4__5__Vl__28b__A3b__Thinking__4_5,
 	Model__NovitaAI__Ernie__4__5__Vl__424b__A47b,
 	Model__NovitaAI__GPT__Oss__120b,
 	Model__NovitaAI__GPT__Oss__20b,
@@ -8035,7 +8035,7 @@ var allModelConstants = [...]ModelID{
 	Model__NovitaAI__Llama__3__70b__Instruct__3,
 	Model__NovitaAI__Llama__3__8b__Instruct__3,
 	Model__NovitaAI__Llama__4__Maverick__17b__128e__Instruct__Fp8,
-	Model__NovitaAI__Llama__4__Scout__17b__16e__Instruct,
+	Model__NovitaAI__Llama__4__Scout__17b__16e__Instruct__4,
 	Model__NovitaAI__Mimo__V2__5__Pro,
 	Model__NovitaAI__Mimo__V2__Flash,
 	Model__NovitaAI__Mimo__V2__Pro,
@@ -8113,18 +8113,18 @@ var allModelConstants = [...]ModelID{
 	Model__Nvidia__Kimi__K2__Instruct,
 	Model__Nvidia__Kimi__K2__Instruct__0905,
 	Model__Nvidia__Kimi__K2__Thinking,
-	Model__Nvidia__Llama__3__1__70b__Instruct,
+	Model__Nvidia__Llama__3__1__70b__Instruct__3_1,
 	Model__Nvidia__Llama__3__1__8b__Instruct__3_1,
 	Model__Nvidia__Llama__3__1__Nemotron__Safety__Guard__8b__V3,
-	Model__Nvidia__Llama__3__2__11b__Vision__Instruct,
-	Model__Nvidia__Llama__3__2__1b__Instruct,
+	Model__Nvidia__Llama__3__2__11b__Vision__Instruct__3_2,
+	Model__Nvidia__Llama__3__2__1b__Instruct__3_2,
 	Model__Nvidia__Llama__3__2__3b__Instruct__3_2,
 	Model__Nvidia__Llama__3__2__90b__Vision__Instruct__3_2,
 	Model__Nvidia__Llama__3__2__Nemoretriever__300m__Embed__V1,
-	Model__Nvidia__Llama__3__3__70b__Instruct,
+	Model__Nvidia__Llama__3__3__70b__Instruct__3_3,
 	Model__Nvidia__Llama__3__3__Nemotron__Super__49b__V1,
 	Model__Nvidia__Llama__3__3__Nemotron__Super__49b__V1__5,
-	Model__Nvidia__Llama__4__Maverick__17b__128e__Instruct,
+	Model__Nvidia__Llama__4__Maverick__17b__128e__Instruct__4,
 	Model__Nvidia__Llama__Guard__4__12b__4,
 	Model__Nvidia__Llama__Nemotron__Embed__Vl__1b__V2,
 	Model__Nvidia__Llama__Nemotron__Rerank__Vl__1b__V2,
@@ -8150,7 +8150,7 @@ var allModelConstants = [...]ModelID{
 	Model__Nvidia__Nv__Embedcode__7b__V1,
 	Model__Nvidia__Nvidia__Nemotron__Nano__9b__V2,
 	Model__Nvidia__Phi__4__Mini__Instruct__4,
-	Model__Nvidia__Phi__4__Multimodal__Instruct,
+	Model__Nvidia__Phi__4__Multimodal__Instruct__4,
 	Model__Nvidia__Qwen2__5__Coder__32b__Instruct,
 	Model__Nvidia__Qwen3__5__122b__A10b,
 	Model__Nvidia__Qwen3__5__397b__A17b,
@@ -8175,7 +8175,7 @@ var allModelConstants = [...]ModelID{
 	Model__Nvidia__Whisper__Large__V3,
 	Model__OVHcloud__GPT__Oss__120b,
 	Model__OVHcloud__GPT__Oss__20b,
-	Model__OVHcloud__Llama__3__1__8b__Instruct,
+	Model__OVHcloud__Llama__3__1__8b__Instruct__3_1,
 	Model__OVHcloud__Meta__Llama__3__3__70b__Instruct,
 	Model__OVHcloud__Mistral__7b__Instruct__V0__3,
 	Model__OVHcloud__Mistral__Nemo__Instruct__2407,
@@ -8888,7 +8888,7 @@ var allModelConstants = [...]ModelID{
 	Model__Poe__Gemini__3__1__Flash__Lite__3_1,
 	Model__Poe__Gemini__3__1__Pro__3_1,
 	Model__Poe__Gemini__3__5__Flash__3_5,
-	Model__Poe__Gemini__3__Flash,
+	Model__Poe__Gemini__3__Flash__3,
 	Model__Poe__Gemini__3__Pro__3,
 	Model__Poe__Gemini__Deep__Research,
 	Model__Poe__Gemma__4__31b,
@@ -8988,8 +8988,8 @@ var allModelConstants = [...]ModelID{
 	Model__QiniuAI__Deepseek__V3__2__Exp,
 	Model__QiniuAI__Deepseek__V3__2__Exp__Thinking,
 	Model__QiniuAI__Doubao__1__5__Pro__32k,
-	Model__QiniuAI__Doubao__1__5__Thinking__Pro,
-	Model__QiniuAI__Doubao__1__5__Vision__Pro,
+	Model__QiniuAI__Doubao__1__5__Thinking__Pro__1_5,
+	Model__QiniuAI__Doubao__1__5__Vision__Pro__1_5,
 	Model__QiniuAI__Doubao__Seed__1_6,
 	Model__QiniuAI__Doubao__Seed__1_6__Thinking,
 	Model__QiniuAI__Doubao__Seed__1__6__Flash__1_6,
@@ -9005,12 +9005,12 @@ var allModelConstants = [...]ModelID{
 	Model__QiniuAI__Gemini__2__0__Flash__2_0,
 	Model__QiniuAI__Gemini__2__0__Flash__Lite__2_0,
 	Model__QiniuAI__Gemini__2__5__Flash__2_5,
-	Model__QiniuAI__Gemini__2__5__Flash__Image,
+	Model__QiniuAI__Gemini__2__5__Flash__Image__2_5,
 	Model__QiniuAI__Gemini__2__5__Flash__Lite__2_5,
 	Model__QiniuAI__Gemini__2__5__Pro__2_5,
 	Model__QiniuAI__Gemini__3__0__Flash__3_0__Preview,
 	Model__QiniuAI__Gemini__3__0__Pro__3_0__Preview,
-	Model__QiniuAI__Gemini__3__0__Pro__Image__Preview,
+	Model__QiniuAI__Gemini__3__0__Pro__Image__3_0__Preview,
 	Model__QiniuAI__Glm__4_5,
 	Model__QiniuAI__Glm__4_6,
 	Model__QiniuAI__Glm__4_7,
@@ -9103,7 +9103,7 @@ var allModelConstants = [...]ModelID{
 	Model__Requesty__GPT__5__Pro__5,
 	Model__Requesty__Gemini__2__5__Flash__2_5,
 	Model__Requesty__Gemini__2__5__Pro__2_5,
-	Model__Requesty__Gemini__3__Flash__Preview,
+	Model__Requesty__Gemini__3__Flash__3__Preview,
 	Model__Requesty__Gemini__3__Pro__3__Preview,
 	Model__Requesty__Grok__4,
 	Model__Requesty__Grok__4__Fast__4,
@@ -9903,13 +9903,13 @@ var allModelConstants = [...]ModelID{
 	Model__ZenMux__GPT__5__4__Pro__5_4,
 	Model__ZenMux__GPT__5__5,
 	Model__ZenMux__GPT__5__5__Pro__5_5,
-	Model__ZenMux__GPT__5__Codex,
+	Model__ZenMux__GPT__5__Codex__5,
 	Model__ZenMux__Gemini__2__5__Flash__2_5,
 	Model__ZenMux__Gemini__2__5__Flash__Lite__2_5,
 	Model__ZenMux__Gemini__2__5__Pro__2_5,
 	Model__ZenMux__Gemini__3__1__Flash__Lite__3_1__Preview,
 	Model__ZenMux__Gemini__3__1__Pro__3_1__Preview,
-	Model__ZenMux__Gemini__3__Flash__Preview,
+	Model__ZenMux__Gemini__3__Flash__3__Preview,
 	Model__ZenMux__Glm__4_5,
 	Model__ZenMux__Glm__4_6,
 	Model__ZenMux__Glm__4_7,
@@ -9917,11 +9917,11 @@ var allModelConstants = [...]ModelID{
 	Model__ZenMux__Glm__4__6v,
 	Model__ZenMux__Glm__4__6v__Flash,
 	Model__ZenMux__Glm__4__6v__Flash__Free,
-	Model__ZenMux__Glm__4__7__Flash__Free,
+	Model__ZenMux__Glm__4__7__Flash__Free__4_7,
 	Model__ZenMux__Glm__4__7__Flashx,
 	Model__ZenMux__Glm__5,
 	Model__ZenMux__Glm__5_1,
-	Model__ZenMux__Glm__5__Turbo,
+	Model__ZenMux__Glm__5__Turbo__5,
 	Model__ZenMux__Glm__5v__Turbo,
 	Model__ZenMux__Grok__4,
 	Model__ZenMux__Grok__4__1__Fast,
@@ -9957,7 +9957,7 @@ var allModelConstants = [...]ModelID{
 	Model__ZenMux__Ring__1t,
 	Model__ZenMux__Step__3,
 	Model__ZenMux__Step__3__5__Flash__3_5,
-	Model__ZenMux__Step__3__5__Flash__Free,
+	Model__ZenMux__Step__3__5__Flash__Free__3_5,
 	Model__ZhipuaiCodingPlan__Glm__4_7,
 	Model__ZhipuaiCodingPlan__Glm__4__5__Air__4_5,
 	Model__ZhipuaiCodingPlan__Glm__5_1,
