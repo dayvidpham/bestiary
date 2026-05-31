@@ -1,6 +1,7 @@
 package bestiary_test
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/dayvidpham/bestiary"
@@ -2581,6 +2582,13 @@ func TestParseFamilyDetailed_Fix4_TextEmbeddingResidual(t *testing.T) {
 // when ParseFamilyWithVersion is called, then the 6-digit date is NOT included in the version.
 //
 // Also confirms TestStaticModels_NoDateVersions invariant is not violated by the 4th site.
+//
+// NOTE (bestiary-rwbl / SLICE-1-FIX-4-FIX): The inputs in this test (e.g. "claude-opus-1-6-250615")
+// actually match the Step-2 hyphen-version regex (all-digit suffix) and are processed by
+// dotJoinStrippingDateSuffix BEFORE reaching Step-5. These tests are therefore NOT load-bearing
+// for parse.go:455 (the isDateShapedToken guard in the Step-5 override-prefix loop).
+// See TestParseFamilyWithVersion_Fix4_Step5_6DigitDateGuard_LoadBearing below for the
+// load-bearing test that actually exercises parse.go:455.
 func TestParseFamilyWithVersion_Fix4_Step5_6DigitDateGuard(t *testing.T) {
 	t.Parallel()
 
@@ -2646,4 +2654,166 @@ func TestParseFamilyWithVersion_Fix4_Step5_6DigitDateGuard(t *testing.T) {
 			}
 		})
 	}
+}
+
+// TestParseFamilyWithVersion_Fix4_Step5_6DigitDateGuard_LoadBearing is the LOAD-BEARING
+// companion test for parse.go:455 (the isDateShapedToken guard inside the Step-5
+// override-prefix version loop of ParseFamilyWithVersion).
+//
+// Background (bestiary-rwbl / SLICE-1-FIX-4-FIX):
+//
+// The existing TestParseFamilyWithVersion_Fix4_Step5_6DigitDateGuard is NOT load-bearing for
+// parse.go:455: its inputs (e.g. "claude-opus-1-6-250615") match the Step-2 hyphen-version
+// regex (^base-(\d+(-\d+)*)$) because their suffix is all-numeric, so they are handled by
+// dotJoinStrippingDateSuffix at Step-2 and RETURN before Step-5 is ever entered.
+// Reverting parse.go:455 from isDateShapedToken back to isYYMMDateToken passes the entire
+// test suite — confirming the original test does NOT exercise the FIX-4 change site.
+//
+// Reaching Step-5: the Step-5 override-prefix loop fires when:
+//  (a) No exact-override match at Step-1 (rawStr itself is not in overrides),
+//  (b) No hyphen-version match at Step-2 (requires the TRAILING suffix to be all-numeric —
+//      any non-digit token after the last digit group defeats the match),
+//  (c) No other pattern (v/k/m/no-prefix) at Step-2,
+//  (d) No suffix-strip match at Step-3,
+//  (e) No dot-version match at Step-4.
+//
+// Key insight: appending a non-digit modifier (e.g. "-zen") after the date prevents the
+// hyphen-version regex from matching (it requires an all-digit tail), so the input falls
+// through to Step-5 where the override-prefix scan fires.
+//
+// Mutation verification (performed during test authoring — bestiary-rwbl):
+//
+//	Reverting parse.go:455 to isYYMMDateToken: FAILS these cases.
+//	  "claude-opus-1-6-250615-zen" → version="1.6.250615" (want "1.6")
+//	  "claude-opus-4-250615-zen"   → version="4.250615"   (want "4")
+//	  "claude-opus-250615-zen"     → version="250615"     (want "")
+//	Restoring parse.go:455 to isDateShapedToken: PASSES all cases.
+//
+// BDD:
+//
+//	Given a rawFamily that (1) has no exact override match, (2) does NOT match the
+//	hyphen-version regex due to a trailing non-digit modifier, and (3) has a known
+//	override prefix in the overrides table with a 6-digit YYMMDD date token in the
+//	version position of the remaining suffix —
+//	When ParseFamilyWithVersion is called,
+//	Then the 6-digit token must NOT appear in the returned version.
+func TestParseFamilyWithVersion_Fix4_Step5_6DigitDateGuard_LoadBearing(t *testing.T) {
+	t.Parallel()
+
+	cases := []struct {
+		name        string
+		raw         bestiary.Family
+		wantFamily  bestiary.Family
+		wantVariant string
+		wantVersion string
+	}{
+		{
+			// "claude-opus-1-6-250615-zen": trailing "-zen" defeats hyphen-version regex (Step-2)
+			// → falls through to Step-5. Override scan: "claude-opus" → {claude, opus}.
+			// suffix = ["1","6","250615","zen"]. Tokens: "1" (version), "6" (version),
+			// "250615" (6-digit YYMMDD — isDateShapedToken=true) → break.
+			// Without FIX-4 (isYYMMDateToken): "250615" has len=6≠4 → isYYMMDateToken=false
+			// → "250615" appended → version="1.6.250615" (WRONG).
+			// With FIX-4 (isDateShapedToken): is6DigitYYMMDD("250615")=true → break → version="1.6" (CORRECT).
+			name:        "claude-opus-1-6-250615-zen → version 1.6 (Step-5 path, 6-digit blocked)",
+			raw:         "claude-opus-1-6-250615-zen",
+			wantFamily:  "claude",
+			wantVariant: "opus",
+			wantVersion: "1.6",
+		},
+		{
+			// "claude-opus-4-250615-zen": no hyphen-version match (zen at end).
+			// Step-5: "claude-opus" override → suffix=["4","250615","zen"].
+			// "4" ok, "250615" 6-digit → break → version="4".
+			name:        "claude-opus-4-250615-zen → version 4 (Step-5 path, 6-digit blocked)",
+			raw:         "claude-opus-4-250615-zen",
+			wantFamily:  "claude",
+			wantVariant: "opus",
+			wantVersion: "4",
+		},
+		{
+			// "claude-opus-250615-zen": no hyphen-version match (zen at end).
+			// Step-5: "claude-opus" override → suffix=["250615","zen"].
+			// "250615" is 6-digit date → break immediately → version="".
+			name:        "claude-opus-250615-zen → version empty (Step-5 path, 6-digit blocked first)",
+			raw:         "claude-opus-250615-zen",
+			wantFamily:  "claude",
+			wantVariant: "opus",
+			wantVersion: "",
+		},
+		{
+			// "claude-sonnet-4-250615-zen": uses "claude-sonnet" override.
+			// suffix=["4","250615","zen"]. "4" ok, "250615" 6-digit → break → version="4".
+			name:        "claude-sonnet-4-250615-zen → version 4 (Step-5 path, 6-digit blocked)",
+			raw:         "claude-sonnet-4-250615-zen",
+			wantFamily:  "claude",
+			wantVariant: "sonnet",
+			wantVersion: "4",
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			family, variant, version := bestiary.ParseFamilyWithVersion(tc.raw)
+			if family != tc.wantFamily {
+				t.Errorf("family = %q, want %q\n"+
+					"  What: wrong family from Step-5 override-prefix decomposition\n"+
+					"  File: parse.go ParseFamilyWithVersion Step-5 (lines ~443-465)",
+					family, tc.wantFamily)
+			}
+			if variant != tc.wantVariant {
+				t.Errorf("variant = %q, want %q\n"+
+					"  What: wrong variant from Step-5 override-prefix decomposition\n"+
+					"  File: parse.go ParseFamilyWithVersion Step-5 (lines ~443-465)",
+					variant, tc.wantVariant)
+			}
+			if version != tc.wantVersion {
+				t.Errorf("version = %q, want %q\n"+
+					"  What: 6-digit YYMMDD token leaked into version at parse.go:455 (Step-5 loop)\n"+
+					"  Why: isYYMMDateToken only rejects 4-digit tokens; 6-digit YYMMDD (len=6) passes through it\n"+
+					"  Where: parse.go ParseFamilyWithVersion Step-5, loop at ~line 454-459\n"+
+					"  How to fix: parse.go:455 must use isDateShapedToken (not isYYMMDateToken)\n"+
+					"  Ref: SLICE-1-FIX-4 bestiary-rwbl load-bearing mutation test",
+					version, tc.wantVersion)
+			}
+			// The version must NOT contain a 6-digit all-numeric segment (date leak).
+			for _, seg := range splitDotSegments(version) {
+				if len(seg) == 6 && isAllDigits(seg) {
+					t.Errorf("version segment %q is a bare 6-digit date — INVARIANT VIOLATED\n"+
+						"  What: version=%q contains date-shaped segment %q\n"+
+						"  Ref: parse.go:455 isDateShapedToken guard (SLICE-1-FIX-4)",
+						seg, version, seg)
+				}
+			}
+		})
+	}
+}
+
+// splitDotSegments splits s on "." and returns the non-empty parts.
+// Used by TestParseFamilyWithVersion_Fix4_Step5_6DigitDateGuard_LoadBearing to
+// inspect individual dot-notation version tokens.
+func splitDotSegments(s string) []string {
+	if s == "" {
+		return nil
+	}
+	parts := strings.Split(s, ".")
+	var out []string
+	for _, p := range parts {
+		if p != "" {
+			out = append(out, p)
+		}
+	}
+	return out
+}
+
+// isAllDigits reports whether every rune in s is an ASCII digit.
+// Used by TestParseFamilyWithVersion_Fix4_Step5_6DigitDateGuard_LoadBearing.
+func isAllDigits(s string) bool {
+	for _, r := range s {
+		if r < '0' || r > '9' {
+			return false
+		}
+	}
+	return true
 }
