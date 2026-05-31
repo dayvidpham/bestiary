@@ -1028,13 +1028,42 @@ func ParseFamilyDetailed(raw Family, id ModelID, p Provider) (Family, string, st
 			// R2: if there are residual tokens after extraction, emit an honest-audit
 			// failure WITH version populated.
 			if len(residual) > 0 {
-				attempted := ParseAttempt{Family: family, Variant: variant, Version: version, Date: ""}
-				return family, variant, version, modifier, &ParseFailure{
-					RawID:          id,
-					Provider:       p,
-					RawFamily:      raw,
-					AttemptedParse: attempted,
-					Reason:         ReasonResidualUnaccountedTokens,
+				// FIX B1: when exactly ONE residual token remains AND it is a known
+				// variant suffix AND the Variant field is currently empty, promote the
+				// token into Variant instead of emitting ReasonResidualUnaccountedTokens.
+				// This handles cases like: glm-5-turbo→(glm,turbo,5), phi-4-mini→(phi,mini,4),
+				// text-embedding-3-large→(text-embedding,large,3).
+				// Promotion is skipped when >1 residual token (B2, out of scope) or when
+				// the sole token is NOT a known suffix (C, out of scope).
+				if len(residual) == 1 && variant == "" {
+					soleToken := residual[0]
+					if pdCheck, pdErr := loadParseData(); pdErr == nil {
+						for _, sfx := range pdCheck.suffixes {
+							// pd.suffixes entries include the leading "-"; strip it for
+							// comparison with the bare residual token.
+							bare := sfx
+							if len(bare) > 0 && bare[0] == '-' {
+								bare = bare[1:]
+							}
+							if bare == soleToken {
+								// Known variant suffix — promote it.
+								variant = soleToken
+								residual = nil
+								break
+							}
+						}
+					}
+				}
+				// If residual was cleared by promotion, fall through without failure.
+				if len(residual) > 0 {
+					attempted := ParseAttempt{Family: family, Variant: variant, Version: version, Date: ""}
+					return family, variant, version, modifier, &ParseFailure{
+						RawID:          id,
+						Provider:       p,
+						RawFamily:      raw,
+						AttemptedParse: attempted,
+						Reason:         ReasonResidualUnaccountedTokens,
+					}
 				}
 			}
 		}
@@ -1064,10 +1093,14 @@ func ParseFamilyDetailed(raw Family, id ModelID, p Provider) (Family, string, st
 	rawStr := string(raw)
 
 	// ── Failure mode 3: YYMM-date-as-version false-positive ──────────────────
-	// Detect Mistral-style 4-digit numerals (e.g. "mistral-2401", "mistral-2403")
-	// where a YYMM-format segment (19xx–29xx) could be mistaken for a version.
-	// These appear in the raw family string, not as a separate date field.
-	if reYYMMCandidate.MatchString(rawStr) {
+	// Detect 4-digit date-like numerals (e.g. "mistral-2401", "mistral-0528")
+	// where a 4-digit segment could be mistaken for a version. Originally this
+	// only caught the YYMM century range (19xx–29xx) via reYYMMCandidate; FIX-A
+	// generalizes to ANY standalone 4-digit numeric segment via
+	// reBareAnyFourDigitCandidate, covering non-YYMM-range tokens like "0528"
+	// and "0324" in raw family strings. These appear in the raw family string,
+	// not as a separate date field.
+	if reBareAnyFourDigitCandidate.MatchString(rawStr) {
 		return family, variant, version, modifier, &ParseFailure{
 			RawID:          id,
 			Provider:       p,
@@ -1144,6 +1177,12 @@ func ParseFamilyDetailed(raw Family, id ModelID, p Provider) (Family, string, st
 // Mistral versioning (e.g. "mistral-2401", "pixtral-2411").
 // The segment must be at a word boundary within the hyphenated string.
 var reYYMMCandidate = regexp.MustCompile(`(?:^|-)(?:19|20|21|22|23|24|25|26|27|28|29)\d{2}(?:-|$)`)
+
+// reBareAnyFourDigitCandidate matches any standalone 4-digit all-numeric segment
+// in a hyphen-separated string. This is the FIX-A generalization of reYYMMCandidate:
+// it catches 4-digit tokens like "0528", "0324", "0905" in addition to YYMM-range
+// tokens like "2603", "2512". Used by ParseFamilyDetailed parity check.
+var reBareAnyFourDigitCandidate = regexp.MustCompile(`(?:^|-)\d{4}(?:-|$)`)
 
 // extractTrailingToken returns the last hyphen-separated token of s,
 // or the whole string if there is no hyphen.
@@ -1297,25 +1336,38 @@ func firstToken(s string) string {
 }
 
 // --------------------------------------------------------------------------
-// isYYMMDateToken (R3b / eq7w)
+// isYYMMDateToken (R3b / eq7w → FIX-A generalization)
 // --------------------------------------------------------------------------
 
-// isYYMMDateToken returns true when tok is a 4-digit string that matches the
-// YYMM date pattern (century prefixes 19xx–29xx). These appear in Mistral-style
-// model IDs (e.g. "mistral-small-2603" → "2603" is a YYMM date, NOT a version).
+// isYYMMDateToken returns true when tok is a 4-digit all-numeric string.
+// This is the FIX-A generalization of the original YYMM guard (eq7w):
+// the original guard only rejected tokens in the YYMM century range (19xx–29xx),
+// but supervisor analysis confirmed that ALL bare-4-digit tokens in the 1745
+// version-populated models are date/release-ids (MMDD or YYMM format), with ZERO
+// legitimate bare-4-digit semantic versions. Therefore the guard is extended to
+// reject ANY 4-digit numeric token (e.g. "0528", "0324", "0905" in addition to
+// the existing "2603", "2512").
+//
+// Examples of now-rejected tokens: "0528" (deepseek-r1-0528), "0324" (deepseek-v3-0324),
+// "2603" (mistral-small-2603), "2512" (existing YYMM range).
 //
 // Parity contract: any tok for which isYYMMDateToken returns true must NOT be
-// treated as a version by isVersionToken or ExtractVersionFromID.
-//
-// Built on reYYMMCandidate (parse.go); wraps the boundary anchors so the regex
-// matches the whole token rather than requiring a hyphen context.
+// treated as a version by isVersionToken or ExtractVersionFromID. The same guard
+// is also applied in ParseFamilyDetailed via reBareAnyFourDigitCandidate, which
+// matches any 4-digit segment in the raw family string (parity across all three
+// call sites).
 func isYYMMDateToken(tok string) bool {
 	if len(tok) != 4 {
 		return false
 	}
-	// reYYMMCandidate uses (?:^|-)…(?:-|$) boundary anchors; for a bare token
-	// we wrap it in hyphens to satisfy the boundary expectation.
-	return reYYMMCandidate.MatchString("-" + tok + "-")
+	// Any 4-digit purely-numeric token is treated as a date/release-id, not a
+	// semantic version. Check all-digits first (fast path); no range restriction.
+	for _, r := range tok {
+		if r < '0' || r > '9' {
+			return false
+		}
+	}
+	return true
 }
 
 // --------------------------------------------------------------------------
@@ -1395,15 +1447,26 @@ func ExtractVersionBetweenFamilyAndVariant(id ModelID, family Family, variant st
 
 	idStr := lastPathSegment(string(id))
 
-	// Normalize family: use only the first hyphen-token so that "claude-opus" → "claude".
-	normalizedFamily := firstToken(string(family))
-
-	prefix := normalizedFamily + "-"
-	if !strings.HasPrefix(idStr, prefix) {
-		return "", nil
+	// Try the full family string as prefix first (e.g. "text-embedding-" for "text-embedding"),
+	// which avoids spurious residuals for compound families like "text-embedding-3-large"
+	// where firstToken("text-embedding")="text" would leave "embedding" as an unaccounted token.
+	// Fall back to firstToken normalization ("claude-opus" → "claude") when the full prefix
+	// is not present in the ID.
+	familyStr := string(family)
+	fullPrefix := familyStr + "-"
+	var prefix string
+	if strings.HasPrefix(idStr, fullPrefix) {
+		prefix = fullPrefix
+	} else {
+		// Normalize family: use only the first hyphen-token so that "claude-opus" → "claude".
+		normalizedFamily := firstToken(familyStr)
+		prefix = normalizedFamily + "-"
+		if !strings.HasPrefix(idStr, prefix) {
+			return "", nil
+		}
 	}
 
-	// Strip the normalized-family prefix.
+	// Strip the family prefix.
 	remainder := idStr[len(prefix):]
 	if remainder == "" {
 		return "", nil

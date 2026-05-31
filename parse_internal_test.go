@@ -8,9 +8,9 @@ import (
 // R3b (eq7w): isYYMMDateToken direct unit test (internal)
 // --------------------------------------------------------------------------
 
-// TestIsYYMMDateToken verifies the YYMM-date guard: 4-digit tokens matching the
-// YYMM range (century prefixes 19xx–29xx) must return true, while genuine version
-// tokens (4o, 45, 2.5) must return false.
+// TestIsYYMMDateToken verifies the bare-4-digit-date guard (FIX-A generalization of
+// the original R3b/eq7w YYMM guard): ANY 4-digit all-numeric token must return true
+// (rejected as a date/release-id), not just the YYMM century range (19xx–29xx).
 //
 // isYYMMDateToken is unexported; this test lives in the internal package to call
 // it directly. Effect-level coverage is in TestIsYYMMDateToken_Parity (parse_test.go).
@@ -21,22 +21,27 @@ func TestIsYYMMDateToken(t *testing.T) {
 		tok  string
 		want bool
 	}{
-		// True: YYMM range tokens (should be rejected as versions).
-		{"2603", true},  // mistral-small-2603
+		// True: YYMM-range tokens (should be rejected as versions — original R3b cases).
+		{"2603", true},  // mistral-small-2603 (YYMM in-range)
 		{"2512", true},  // YYMM dec 2025
 		{"2411", true},  // pixtral-style
 		{"2401", true},  // mistral-2401
 		{"2503", true},  // another YYMM
-		// False: genuine version tokens.
-		{"45", false},   // single two-digit (not 4-digit)
-		{"46", false},   // single two-digit
+		// True: FIX-A generalization — ANY 4-digit all-numeric token is a date/release-id.
+		{"0528", true},  // deepseek-r1-0528 (MMDD format, below 19xx range)
+		{"0324", true},  // deepseek-v3-0324 (MMDD format)
+		{"0905", true},  // generic MMDD-format date
+		{"0711", true},  // generic MMDD-format date
+		{"1206", true},  // MMDD december
+		{"1234", true},  // previously false (below 19xx), now true under FIX-A
+		{"3000", true},  // previously false (above 29xx), now true under FIX-A
+		// False: genuine version tokens (non-4-digit or non-purely-numeric).
+		{"45", false},   // two-digit (not 4-digit)
+		{"46", false},   // two-digit
 		{"4o", false},   // alphanumeric (not pure digits)
 		{"2", false},    // single digit
 		{"35", false},   // two-digit version
 		{"100", false},  // three digits
-		// False: 4-digit tokens outside YYMM range.
-		{"1234", false}, // 12xx — below 19xx threshold
-		{"3000", false}, // 30xx — above 29xx threshold
 		// False: empty.
 		{"", false},
 	}

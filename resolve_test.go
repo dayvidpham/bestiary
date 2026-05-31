@@ -102,16 +102,30 @@ func TestResolve_WithSchemeRaw_ExactMatch(t *testing.T) {
 }
 
 // TestResolve_WithSchemeRaw_NoMatch verifies that SchemeRaw with a partial ID
-// returns ErrNotFound (exact match only, no substring).
+// returns ErrAmbiguous (R4 dot-form: "claude-opus" maps to a canonical prefix that
+// matches multiple claude-opus-4.x models, so it is ambiguous rather than not-found).
+//
+// rfxh: After the R4 dot-form normalization and regen, Resolve("claude-opus", raw) →
+// ErrAmbiguous (7 claude-opus-4.x candidates), not ErrNotFound.
+// NOTE: This test is real-data-dependent (couples to the regen in L3).
+// It will be RED after the fix commit and GREEN only after the chore(gen) regen commit.
 func TestResolve_WithSchemeRaw_NoMatch(t *testing.T) {
-	// Partial prefix should not match under SchemeRaw.
+	// "claude-opus" under SchemeRaw matches a canonical family+variant prefix that
+	// resolves to multiple claude-opus-4.x variants → ErrAmbiguous (not ErrNotFound).
 	_, err := bestiary.Resolve("claude-opus", bestiary.WithScheme(bestiary.SchemeRaw))
 	if err == nil {
-		t.Fatal("Resolve with SchemeRaw partial ID returned nil error, want ErrNotFound")
+		t.Fatal("Resolve with SchemeRaw 'claude-opus' returned nil error, want ErrAmbiguous")
 	}
-	var notFound *bestiary.ErrNotFound
-	if !errors.As(err, &notFound) {
-		t.Fatalf("Resolve SchemeRaw partial: error %T, want *ErrNotFound", err)
+	var ambig *bestiary.ErrAmbiguous
+	if !errors.As(err, &ambig) {
+		t.Fatalf("Resolve SchemeRaw 'claude-opus': error %T (%v), want *ErrAmbiguous\n"+
+			"  What: R4 dot-form makes 'claude-opus' resolve to multiple candidates\n"+
+			"  Why: multiple claude-opus-4.x models share (family=claude, variant=opus)\n"+
+			"  Note: this test is real-data-dependent; pass only after L3 regen",
+			err, err)
+	}
+	if len(ambig.Candidates) == 0 {
+		t.Errorf("ErrAmbiguous.Candidates is empty; expected claude-opus-4.x candidates")
 	}
 }
 
@@ -678,16 +692,29 @@ func TestResolve_WithInputFormat_Raw_Resolves(t *testing.T) {
 }
 
 // TestResolve_WithInputFormat_Raw_PartialNoMatch verifies that InputFormatRaw
-// with a partial ID returns ErrNotFound (exact match only).
+// with a partial ID returns ErrAmbiguous (R4 dot-form: "claude-opus" maps to a
+// canonical prefix that matches multiple claude-opus-4.x models).
+//
+// rfxh: After the R4 dot-form normalization and regen, Resolve("claude-opus",
+// WithInputFormat(Raw)) → ErrAmbiguous (multiple claude-opus-4.x candidates).
+// NOTE: This test is real-data-dependent (couples to the regen in L3).
+// It will be RED after the fix commit and GREEN only after the chore(gen) regen commit.
 func TestResolve_WithInputFormat_Raw_PartialNoMatch(t *testing.T) {
 	_, err := bestiary.Resolve("claude-opus",
 		bestiary.WithInputFormat(bestiary.InputFormatRaw))
 	if err == nil {
-		t.Fatal("Resolve WithInputFormat(Raw) partial ID: want ErrNotFound, got nil")
+		t.Fatal("Resolve WithInputFormat(Raw) 'claude-opus': want ErrAmbiguous, got nil")
 	}
-	var notFound *bestiary.ErrNotFound
-	if !errors.As(err, &notFound) {
-		t.Fatalf("Resolve WithInputFormat(Raw) partial: got %T, want *ErrNotFound", err)
+	var ambig *bestiary.ErrAmbiguous
+	if !errors.As(err, &ambig) {
+		t.Fatalf("Resolve WithInputFormat(Raw) 'claude-opus': got %T (%v), want *ErrAmbiguous\n"+
+			"  What: R4 dot-form makes 'claude-opus' resolve to multiple candidates\n"+
+			"  Why: multiple claude-opus-4.x models share (family=claude, variant=opus)\n"+
+			"  Note: this test is real-data-dependent; pass only after L3 regen",
+			err, err)
+	}
+	if len(ambig.Candidates) == 0 {
+		t.Errorf("ErrAmbiguous.Candidates is empty; expected claude-opus-4.x candidates")
 	}
 }
 

@@ -1877,3 +1877,306 @@ func TestParseFamilyDetailed_R2_Residual(t *testing.T) {
 		})
 	}
 }
+
+// --------------------------------------------------------------------------
+// SLICE-1-FIX-2 tests: FIX A (bare-4-digit date guard) + FIX B1 (sole trailing
+// variant-suffix promotion) + negative controls
+// --------------------------------------------------------------------------
+
+// TestParseFamilyDetailed_FixA_Bare4DigitDateGuard verifies FIX A: any standalone
+// 4-digit all-numeric token is rejected as a version (treated as a date/release-id),
+// regardless of whether it falls in the YYMM range (19xx–29xx). The original guard
+// (eq7w/R3b) only rejected YYMM-range tokens; FIX-A generalises to all 4-digit
+// numerics since supervisor analysis confirmed 0 legitimate bare-4-digit semantic
+// versions exist across the 1745 version-populated models.
+//
+// BDD: Given id contains a bare 4-digit numeric suffix (MMDD format like "0528")
+// when ParseFamilyDetailed is called then version="" (no version emitted for date token).
+//
+// Acceptance: deepseek-r1-0528 → no version; deepseek-v3-0324 → no version;
+// mistral-small-2603 still no version (YYMM, already handled by R3b).
+func TestParseFamilyDetailed_FixA_Bare4DigitDateGuard(t *testing.T) {
+	t.Parallel()
+
+	cases := []struct {
+		desc      string
+		rawFamily bestiary.Family
+		id        bestiary.ModelID
+		provider  bestiary.Provider
+		wantVersion string // want empty: 4-digit token must NOT be returned as version
+	}{
+		{
+			// deepseek-r1-0528: "0528" is MMDD format, below 19xx YYMM range.
+			// FIX-A: extended guard rejects "0528" as version.
+			desc:        "deepseek-r1-0528 → no version (0528 is MMDD date, not version)",
+			rawFamily:   "deepseek-r1",
+			id:          "deepseek-r1-0528",
+			provider:    "deepseek",
+			wantVersion: "",
+		},
+		{
+			// deepseek-v3-0324: "0324" is MMDD format.
+			// FIX-A: extended guard rejects "0324" as version.
+			desc:        "deepseek-v3-0324 → no version (0324 is MMDD date, not version)",
+			rawFamily:   "deepseek",
+			id:          "deepseek-v3-0324",
+			provider:    "deepseek",
+			wantVersion: "",
+		},
+		{
+			// mistral-small-2603: "2603" is YYMM range — still rejected (R3b coverage preserved).
+			desc:        "mistral-small-2603 → no version (2603 is YYMM date, R3b still holds)",
+			rawFamily:   "mistral-small",
+			id:          "mistral-small-2603",
+			provider:    "mistral",
+			wantVersion: "",
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.desc, func(t *testing.T) {
+			t.Parallel()
+			_, _, version, _, _ := bestiary.ParseFamilyDetailed(tc.rawFamily, tc.id, tc.provider)
+			if version != tc.wantVersion {
+				t.Errorf("ParseFamilyDetailed(%q, %q): version = %q, want %q\n"+
+					"  What: bare 4-digit date token was returned as a version\n"+
+					"  Why: FIX-A guard should reject any 4-digit all-numeric token as a date/release-id\n"+
+					"  How to fix: verify isYYMMDateToken returns true for all 4-digit all-numeric tokens",
+					tc.rawFamily, tc.id, version, tc.wantVersion)
+			}
+		})
+	}
+}
+
+// TestExtractVersionFromID_FixA_Bare4DigitDateGuard verifies that ExtractVersionFromID
+// also rejects bare 4-digit date tokens (FIX-A parity with ParseFamilyDetailed).
+// The guard must be consistent across all call sites: isVersionToken, ExtractVersionFromID,
+// and ParseFamilyDetailed.
+//
+// Acceptance: genuine versions like 4.6, 4.5, 4o still extracted correctly.
+func TestExtractVersionFromID_FixA_Bare4DigitDateGuard(t *testing.T) {
+	t.Parallel()
+
+	cases := []struct {
+		desc      string
+		id        bestiary.ModelID
+		rawFamily bestiary.Family
+		want      string
+	}{
+		// FIX-A: bare 4-digit tokens rejected.
+		{
+			desc:      "deepseek-r1-0528 → no version (0528 rejected)",
+			id:        "deepseek-r1-0528",
+			rawFamily: "deepseek-r1",
+			want:      "",
+		},
+		{
+			desc:      "some-model-0324 → no version (0324 rejected)",
+			id:        "some-model-0324",
+			rawFamily: "some-model",
+			want:      "",
+		},
+		// Existing YYMM guard still active.
+		{
+			desc:      "mistral-small-2603 → no version (2603 YYMM, R3b preserved)",
+			id:        "mistral-small-2603",
+			rawFamily: "mistral-small",
+			want:      "",
+		},
+		// Genuine versions still extracted (must not regress).
+		{
+			desc:      "claude-opus-4-6 → 4.6 (legitimate version)",
+			id:        "claude-opus-4-6",
+			rawFamily: "claude-opus",
+			want:      "4.6",
+		},
+		{
+			desc:      "gpt-4o → 4o (alphanumeric version)",
+			id:        "gpt-4o",
+			rawFamily: "gpt",
+			want:      "4o",
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.desc, func(t *testing.T) {
+			t.Parallel()
+			got := bestiary.ExtractVersionFromID(tc.id, tc.rawFamily)
+			if got != tc.want {
+				t.Errorf("ExtractVersionFromID(%q, %q) = %q, want %q\n"+
+					"  What: FIX-A bare-4-digit guard inconsistency\n"+
+					"  Why: 4-digit token must be rejected by isYYMMDateToken in ExtractVersionFromID",
+					tc.id, tc.rawFamily, got, tc.want)
+			}
+		})
+	}
+}
+
+// TestParseFamilyDetailed_FixB1_SoleVariantSuffixPromotion verifies FIX B1:
+// when version was extracted AND exactly ONE residual token remains AND it is a
+// known variant suffix (from variant_suffixes.json) AND Variant=="" → the token is
+// promoted into Variant, and no ReasonResidualUnaccountedTokens failure is emitted.
+//
+// BDD: Given id with sole residual = known variant suffix and Variant==""
+// when ParseFamilyDetailed is called then variant=<suffix> AND failure=nil.
+//
+// Acceptance: glm-5-turbo→(glm,turbo,5); phi-4-mini→(phi,mini,4);
+// text-embedding-3-large→(text-embedding,large,3); text-embedding-3-small→(text-embedding,small,3).
+func TestParseFamilyDetailed_FixB1_SoleVariantSuffixPromotion(t *testing.T) {
+	t.Parallel()
+
+	cases := []struct {
+		desc        string
+		rawFamily   bestiary.Family
+		id          bestiary.ModelID
+		provider    bestiary.Provider
+		wantFamily  bestiary.Family
+		wantVariant string
+		wantVersion string
+		wantNoFailure bool // true → failure must be nil
+	}{
+		{
+			// glm-5-turbo: rawFamily="glm" → family=glm, variant="" initially.
+			// ExtractVersionBetween: ver="5", residual=["turbo"]. "turbo" is a known suffix.
+			// B1: variant="" → promote "turbo" → (glm, turbo, 5), no failure.
+			desc:          "glm-5-turbo → (glm, turbo, 5), no residual failure",
+			rawFamily:     "glm",
+			id:            "glm-5-turbo",
+			provider:      "zhipu",
+			wantFamily:    "glm",
+			wantVariant:   "turbo",
+			wantVersion:   "5",
+			wantNoFailure: true,
+		},
+		{
+			// phi-4-mini: rawFamily="phi" → family=phi, variant="" initially.
+			// ExtractVersionBetween: ver="4", residual=["mini"]. "mini" is a known suffix.
+			// B1: variant="" → promote "mini" → (phi, mini, 4), no failure.
+			desc:          "phi-4-mini → (phi, mini, 4), no residual failure",
+			rawFamily:     "phi",
+			id:            "phi-4-mini",
+			provider:      "microsoft",
+			wantFamily:    "phi",
+			wantVariant:   "mini",
+			wantVersion:   "4",
+			wantNoFailure: true,
+		},
+		{
+			// text-embedding-3-large: rawFamily="text-embedding" → family=text-embedding, variant="" initially.
+			// Full-prefix match "text-embedding-" → remainder="3-large" → ver="3", residual=["large"].
+			// B1: variant="" → promote "large" → (text-embedding, large, 3), no failure.
+			desc:          "text-embedding-3-large → (text-embedding, large, 3), no residual failure",
+			rawFamily:     "text-embedding",
+			id:            "text-embedding-3-large",
+			provider:      "openai",
+			wantFamily:    "text-embedding",
+			wantVariant:   "large",
+			wantVersion:   "3",
+			wantNoFailure: true,
+		},
+		{
+			// text-embedding-3-small: same as above but with "small" suffix.
+			desc:          "text-embedding-3-small → (text-embedding, small, 3), no residual failure",
+			rawFamily:     "text-embedding",
+			id:            "text-embedding-3-small",
+			provider:      "openai",
+			wantFamily:    "text-embedding",
+			wantVariant:   "small",
+			wantVersion:   "3",
+			wantNoFailure: true,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.desc, func(t *testing.T) {
+			t.Parallel()
+			family, variant, version, _, failure := bestiary.ParseFamilyDetailed(tc.rawFamily, tc.id, tc.provider)
+			if family != tc.wantFamily {
+				t.Errorf("family = %q, want %q", family, tc.wantFamily)
+			}
+			if variant != tc.wantVariant {
+				t.Errorf("variant = %q, want %q\n"+
+					"  What: sole trailing known-suffix was not promoted into Variant\n"+
+					"  Why: FIX B1 should set Variant=<suffix> when exactly one residual token is a known variant suffix\n"+
+					"  How to fix: verify B1 promotion logic in ParseFamilyDetailed",
+					variant, tc.wantVariant)
+			}
+			if version != tc.wantVersion {
+				t.Errorf("version = %q, want %q", version, tc.wantVersion)
+			}
+			if tc.wantNoFailure && failure != nil {
+				t.Errorf("failure = %+v, want nil\n"+
+					"  What: ReasonResidualUnaccountedTokens emitted even though sole residual was a known suffix\n"+
+					"  Why: FIX B1 should suppress failure when sole residual is promoted to Variant",
+					failure)
+			}
+		})
+	}
+}
+
+// TestParseFamilyDetailed_FixB1_NegativeControls verifies that FIX B1 is NOT applied
+// in the two out-of-scope cases:
+//
+//   B2: more than one residual token → still emits ReasonResidualUnaccountedTokens.
+//   C:  sole residual token is NOT a known variant suffix → still emits failure.
+//
+// The B2 and C classes remain documented residuals (user-accepted, out of scope).
+func TestParseFamilyDetailed_FixB1_NegativeControls(t *testing.T) {
+	t.Parallel()
+
+	cases := []struct {
+		desc         string
+		rawFamily    bestiary.Family
+		id           bestiary.ModelID
+		provider     bestiary.Provider
+		wantFailure  bool   // true → failure must be non-nil
+		wantReason   bestiary.ParseFailureReason
+		desc2        string // description of why it stays residual
+	}{
+		{
+			// B2 negative: phi-3-medium-128k-instruct has multiple residual tokens (medium, 128k, instruct).
+			// B1 only fires for exactly ONE residual token → stays residual.
+			// NOTE: "instruct" IS a known suffix, but there are more than 1 residual tokens, so B1 does not fire.
+			desc:         "phi-3-medium-128k-instruct (B2: multi-residual, B1 does NOT fire)",
+			rawFamily:    "phi",
+			id:           "phi-3-medium-128k-instruct",
+			provider:     "microsoft",
+			wantFailure:  true,
+			wantReason:   bestiary.ReasonResidualUnaccountedTokens,
+			desc2:        "B2: more than one residual token; B1 requires exactly one",
+		},
+		{
+			// C negative: nova-2-lite-v1 has residual ["v1"] which is NOT a known variant suffix.
+			// B1 requires the sole token be a known suffix → stays residual.
+			desc:         "nova-2-lite-v1 (C: unknown sole token 'v1', B1 does NOT fire)",
+			rawFamily:    "nova-lite",
+			id:           "nova-2-lite-v1",
+			provider:     "cartesia",
+			wantFailure:  true,
+			wantReason:   bestiary.ReasonResidualUnaccountedTokens,
+			desc2:        "C: 'v1' is not a known variant suffix; B1 must not promote it",
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.desc, func(t *testing.T) {
+			t.Parallel()
+			_, _, _, _, failure := bestiary.ParseFamilyDetailed(tc.rawFamily, tc.id, tc.provider)
+			if tc.wantFailure {
+				if failure == nil {
+					t.Errorf("ParseFamilyDetailed(%q, %q): failure = nil, want %q failure\n"+
+						"  What: B1 should NOT promote in this case (%s)\n"+
+						"  Why: B1 only applies when exactly one residual token is a known variant suffix",
+						tc.rawFamily, tc.id, tc.wantReason, tc.desc2)
+					return
+				}
+				if failure.Reason != tc.wantReason {
+					t.Errorf("ParseFamilyDetailed(%q, %q): failure.Reason = %q, want %q",
+						tc.rawFamily, tc.id, failure.Reason, tc.wantReason)
+				}
+			} else if failure != nil {
+				t.Errorf("ParseFamilyDetailed(%q, %q): unexpected failure %q", tc.rawFamily, tc.id, failure.Reason)
+			}
+		})
+	}
+}

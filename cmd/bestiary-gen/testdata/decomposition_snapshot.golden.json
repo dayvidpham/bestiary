@@ -24,6 +24,22 @@
     "modifier": ""
   },
   {
+    "provider": "deepseek",
+    "model_id": "deepseek-r1-0528",
+    "family": "deepseek-r1",
+    "variant": "",
+    "version": "",
+    "modifier": ""
+  },
+  {
+    "provider": "deepseek",
+    "model_id": "deepseek-v3-0324",
+    "family": "deepseek",
+    "variant": "",
+    "version": "",
+    "modifier": ""
+  },
+  {
     "provider": "kilo",
     "model_id": "kilo-auto/free",
     "family": "free",
@@ -37,6 +53,22 @@
     "family": "free",
     "variant": "",
     "version": "",
+    "modifier": ""
+  },
+  {
+    "provider": "microsoft",
+    "model_id": "phi-3-medium-128k-instruct",
+    "family": "phi",
+    "variant": "",
+    "version": "3",
+    "modifier": ""
+  },
+  {
+    "provider": "microsoft",
+    "model_id": "phi-4-mini",
+    "family": "phi",
+    "variant": "mini",
+    "version": "4",
     "modifier": ""
   },
   {
@@ -77,6 +109,30 @@
     "family": "gpt",
     "variant": "",
     "version": "5.2",
+    "modifier": ""
+  },
+  {
+    "provider": "openai-embed",
+    "model_id": "text-embedding-3-large",
+    "family": "text-embedding",
+    "variant": "large",
+    "version": "3",
+    "modifier": ""
+  },
+  {
+    "provider": "openai-embed",
+    "model_id": "text-embedding-3-small",
+    "family": "text-embedding",
+    "variant": "small",
+    "version": "3",
+    "modifier": ""
+  },
+  {
+    "provider": "zhipu",
+    "model_id": "glm-5-turbo",
+    "family": "glm",
+    "variant": "turbo",
+    "version": "5",
     "modifier": ""
   }
 ]

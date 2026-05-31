@@ -2534,6 +2534,9 @@ func TestDecompositionSnapshot_ActiveClassVersionPopulated(t *testing.T) {
 
 	// Active-class models: those expected to have version populated.
 	// SLICE-1 parser correctly extracts version for these cases.
+	// SLICE-1-FIX-2 B1: adds variant-promoted models (glm-5-turbo, phi-4-mini,
+	// text-embedding-3-large, text-embedding-3-small) whose variant is now set
+	// from the sole trailing suffix after version extraction.
 	activeCases := map[string]struct {
 		wantFamily  string
 		wantVariant string
@@ -2545,6 +2548,15 @@ func TestDecompositionSnapshot_ActiveClassVersionPopulated(t *testing.T) {
 		"anthropic/claude-3-5-haiku": {wantFamily: "claude", wantVariant: "haiku", wantVersion: "3.5"},
 		// claude-3.5-haiku: same family → same decomposition
 		"anthropic/claude-3.5-haiku": {wantFamily: "claude", wantVariant: "haiku", wantVersion: "3.5"},
+		// B1 promoted models (SLICE-1-FIX-2):
+		// glm-5-turbo: raw_family=glm → family=glm, variant=turbo (B1), version=5
+		"glm-5-turbo": {wantFamily: "glm", wantVariant: "turbo", wantVersion: "5"},
+		// phi-4-mini: raw_family=phi → family=phi, variant=mini (B1), version=4
+		"phi-4-mini": {wantFamily: "phi", wantVariant: "mini", wantVersion: "4"},
+		// text-embedding-3-large: raw_family=text-embedding → family=text-embedding, variant=large (B1), version=3
+		"text-embedding-3-large": {wantFamily: "text-embedding", wantVariant: "large", wantVersion: "3"},
+		// text-embedding-3-small: raw_family=text-embedding → family=text-embedding, variant=small (B1), version=3
+		"text-embedding-3-small": {wantFamily: "text-embedding", wantVariant: "small", wantVersion: "3"},
 	}
 
 	modelsByID := make(map[string]bestiary.ModelInfo, len(models))
@@ -2571,7 +2583,50 @@ func TestDecompositionSnapshot_ActiveClassVersionPopulated(t *testing.T) {
 			t.Errorf("active-class model %q: Family = %q, want %q", id, m.Family, want.wantFamily)
 		}
 		if m.Variant != want.wantVariant {
-			t.Errorf("active-class model %q: Variant = %q, want %q", id, m.Variant, want.wantVariant)
+			t.Errorf("active-class model %q: Variant = %q, want %q\n"+
+				"  What: B1 promotion may not have fired (sole trailing suffix not promoted)\n"+
+				"  Why: FIX B1 should set Variant=<suffix> when exactly one residual is a known variant suffix",
+				id, m.Variant, want.wantVariant)
+		}
+	}
+}
+
+// TestDecompositionSnapshot_FixA_NoVersionForBare4Digit verifies FIX-A in the
+// fixture corpus: deepseek-r1-0528 and deepseek-v3-0324 must have Version="" because
+// "0528" and "0324" are bare 4-digit date tokens (MMDD format), not semantic versions.
+//
+// This is the per-row version=="" check for FIX-A models (fixture-based, not real-data).
+func TestDecompositionSnapshot_FixA_NoVersionForBare4Digit(t *testing.T) {
+	models, _ := runFixtureAPICodegen(t)
+
+	modelsByID := make(map[string]bestiary.ModelInfo, len(models))
+	for _, m := range models {
+		modelsByID[string(m.ID)] = m
+	}
+
+	fixACases := map[string]struct {
+		wantFamily  string
+		wantVersion string // must be empty
+	}{
+		"deepseek-r1-0528": {wantFamily: "deepseek-r1", wantVersion: ""},
+		"deepseek-v3-0324": {wantFamily: "deepseek", wantVersion: ""},
+	}
+
+	for id, want := range fixACases {
+		m, ok := modelsByID[id]
+		if !ok {
+			t.Errorf("FIX-A model %q not found in fixture output", id)
+			continue
+		}
+		if m.Version != want.wantVersion {
+			t.Errorf("FIX-A model %q: Version = %q, want %q (bare 4-digit token must not be a version)\n"+
+				"  What: 4-digit date-like token was extracted as a version\n"+
+				"  Why: FIX-A extends isYYMMDateToken to reject any 4-digit all-numeric token\n"+
+				"  How to fix: verify isYYMMDateToken returns true for \"0528\" and \"0324\"",
+				id, m.Version, want.wantVersion)
+		}
+		if string(m.Family) != want.wantFamily {
+			t.Errorf("FIX-A model %q: Family = %q, want %q", id, m.Family, want.wantFamily)
 		}
 	}
 }
@@ -2769,10 +2824,16 @@ func TestWriteDotFormAudit_Unit(t *testing.T) {
 // Expectations:
 //   - ReasonVersionDigitsNotExtracted (active class) → 0: SLICE-1 now correctly
 //     extracts version from IDs like claude-3-5-haiku; this failure should no longer fire.
-//   - ReasonResidualUnaccountedTokens → at least 1: nova-2-lite-v1 has residual "v1"
-//     tokens after version extraction.
+//   - ReasonResidualUnaccountedTokens → at least 2: nova-2-lite-v1 (C: unknown sole token
+//     'v1') and phi-3-medium-128k-instruct (B2: multiple residual tokens) both remain
+//     after SLICE-1-FIX-2 FIX B1 (B1 only promotes when exactly ONE known suffix remains
+//     and Variant=="").
 //   - ReasonYYMMDateAsVersion → at least 1: mistral-small-2603 (family mistral-2603)
 //     triggers the YYMM false-positive detector.
+//   - FIX-A confirmation: deepseek-r1-0528 / deepseek-v3-0324 produce NO failure
+//     (bare 4-digit date tokens are now rejected as versions, not residual).
+//   - FIX-B1 confirmation: glm-5-turbo / phi-4-mini / text-embedding-3-* produce NO failure
+//     (sole trailing known suffix promoted into Variant).
 //
 // This test is NOT a ==0 gate on real data — fixture-based only (Plan UAT decision).
 func TestFixturePerReasonCounts(t *testing.T) {
@@ -2780,8 +2841,11 @@ func TestFixturePerReasonCounts(t *testing.T) {
 
 	// Count per-reason occurrences.
 	counts := make(map[bestiary.ParseFailureReason]int)
+	// Build per-model failure lookup for FIX-A/B1 spot checks.
+	failsByID := make(map[string]bestiary.ParseFailureReason)
 	for _, f := range failures {
 		counts[f.Reason]++
+		failsByID[string(f.RawID)] = f.Reason
 	}
 
 	// Active class: ReasonVersionDigitsNotExtracted must be 0.
@@ -2795,12 +2859,16 @@ func TestFixturePerReasonCounts(t *testing.T) {
 			n)
 	}
 
-	// Residual: ReasonResidualUnaccountedTokens must be > 0 (nova-2-lite-v1 contributes).
-	if n := counts[bestiary.ReasonResidualUnaccountedTokens]; n == 0 {
-		t.Errorf("ReasonResidualUnaccountedTokens = 0, want > 0\n"+
-			"  What: nova-2-lite-v1 should produce a residual failure (token 'v1' unaccounted)\n"+
-			"  Why: ParseFamilyDetailed R2 path emits ReasonResidualUnaccountedTokens when residual tokens remain\n"+
-			"  How to fix: verify fixture_api.json includes nova-2-lite-v1 under cartesia provider")
+	// Residual: ReasonResidualUnaccountedTokens must be >= 2 (nova-2-lite-v1 = C case +
+	// phi-3-medium-128k-instruct = B2 case). After FIX-B1, glm-5-turbo/phi-4-mini/
+	// text-embedding-3-* are NO longer residual (promoted to Variant).
+	if n := counts[bestiary.ReasonResidualUnaccountedTokens]; n < 2 {
+		t.Errorf("ReasonResidualUnaccountedTokens = %d, want >= 2\n"+
+			"  What: nova-2-lite-v1 (C: unknown token 'v1') AND phi-3-medium-128k-instruct (B2: multi-residual)\n"+
+			"    should produce residual failures; B2/C cases remain out-of-scope for FIX-B1\n"+
+			"  Why: FIX-B1 only promotes when exactly ONE residual token is a known variant suffix\n"+
+			"  How to fix: verify fixture_api.json includes both nova-2-lite-v1 and phi-3-medium-128k-instruct",
+			n)
 	}
 
 	// YYMM: ReasonYYMMDateAsVersion must be > 0 (mistral-small-2603 contributes).
@@ -2809,5 +2877,31 @@ func TestFixturePerReasonCounts(t *testing.T) {
 			"  What: mistral-small-2603 (family mistral-2603) should produce a YYMM failure\n"+
 			"  Why: ParseFamilyDetailed YYMM detector fires for families matching the YYMM pattern\n"+
 			"  How to fix: verify fixture_api.json includes mistral-small-2603 under mistral provider")
+	}
+
+	// FIX-A spot check: deepseek-r1-0528 and deepseek-v3-0324 must NOT appear in
+	// failures. Their bare 4-digit date tokens ("0528", "0324") are now rejected as
+	// versions → no version extracted → no residual failure.
+	for _, fixAID := range []string{"deepseek-r1-0528", "deepseek-v3-0324"} {
+		if reason, found := failsByID[fixAID]; found {
+			t.Errorf("FIX-A model %q produced a failure (reason=%q), want no failure\n"+
+				"  What: bare 4-digit date token was not suppressed\n"+
+				"  Why: FIX-A should extend isYYMMDateToken to reject 4-digit all-numeric tokens\n"+
+				"  How to fix: verify isYYMMDateToken returns true for \"0528\" and \"0324\"",
+				fixAID, reason)
+		}
+	}
+
+	// FIX-B1 spot check: glm-5-turbo, phi-4-mini, text-embedding-3-large,
+	// text-embedding-3-small must NOT appear in failures. Their sole trailing
+	// known suffix is promoted into Variant → no residual failure.
+	for _, fixB1ID := range []string{"glm-5-turbo", "phi-4-mini", "text-embedding-3-large", "text-embedding-3-small"} {
+		if reason, found := failsByID[fixB1ID]; found {
+			t.Errorf("FIX-B1 model %q produced a failure (reason=%q), want no failure\n"+
+				"  What: sole trailing known-suffix was not promoted into Variant\n"+
+				"  Why: FIX-B1 should suppress ReasonResidualUnaccountedTokens when sole residual is a known suffix\n"+
+				"  How to fix: verify B1 promotion logic in ParseFamilyDetailed",
+				fixB1ID, reason)
+		}
 	}
 }
