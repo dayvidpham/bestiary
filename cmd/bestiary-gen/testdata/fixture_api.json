@@ -133,5 +133,75 @@
         "family": "text-embedding"
       }
     }
+  },
+  "mistral-fixture": {
+    "name": "Mistral (Fixture)",
+    "models": {
+      "mistral-large-2512": {
+        "id": "mistral-large-2512",
+        "name": "Mistral Large 2512",
+        "family": "mistral-large"
+      },
+      "codestral-2508": {
+        "id": "codestral-2508",
+        "name": "Codestral 2508",
+        "family": "codestral"
+      }
+    }
+  },
+  "openai-fixture": {
+    "name": "OpenAI (Fixture)",
+    "models": {
+      "gpt-4-0314": {
+        "id": "gpt-4-0314",
+        "name": "GPT-4 0314",
+        "family": "gpt-4"
+      },
+      "gpt-4-1106-preview": {
+        "id": "gpt-4-1106-preview",
+        "name": "GPT-4 1106 Preview",
+        "family": "gpt-4"
+      }
+    }
+  },
+  "doubao-fixture": {
+    "name": "Doubao (Fixture)",
+    "models": {
+      "doubao-seed-1-6-250615": {
+        "id": "doubao-seed-1-6-250615",
+        "name": "Doubao Seed 1.6 250615",
+        "family": ""
+      },
+      "seed-1-6-flash-250715": {
+        "id": "seed-1-6-flash-250715",
+        "name": "Seed 1.6 Flash 250715",
+        "family": "seed"
+      }
+    }
+  },
+  "cohere-fixture": {
+    "name": "Cohere (Fixture)",
+    "models": {
+      "command-r-08-2024": {
+        "id": "command-r-08-2024",
+        "name": "Command R 08-2024",
+        "family": "command-r"
+      },
+      "command-a-03-2025": {
+        "id": "command-a-03-2025",
+        "name": "Command A 03-2025",
+        "family": "command-a"
+      }
+    }
+  },
+  "google-fixture": {
+    "name": "Google (Fixture)",
+    "models": {
+      "gemini-exp-1206": {
+        "id": "gemini-exp-1206",
+        "name": "Gemini Exp 1206",
+        "family": ""
+      }
+    }
   }
 }

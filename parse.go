@@ -380,9 +380,14 @@ func ParseFamilyWithVersion(raw Family) (Family, string, string) {
 		variantStr := m[cp.variantIdx]
 
 		if cp.Name == "hyphen-version" {
-			// Convert hyphen-separated digit tokens to dot notation.
-			// e.g. "4-5" → "4.5"; "3-1" → "3.1"; "4" → "4".
-			version := strings.ReplaceAll(variantStr, "-", ".")
+			// Convert hyphen-separated digit tokens to dot notation, stripping any
+			// trailing date-shaped groups (SLICE-1-FIX-3).
+			// RULE: dot-join only the LEADING semantic-version groups; stop (discard)
+			// at the first date-shaped group. Date shapes: 4-digit (YYMM/MMDD),
+			// 6-digit (YYMMDD), or a full MM-YYYY two-group remainder.
+			// e.g. "4-5" → "4.5"; "4-0314" → "4"; "2603" → ""; "1-6-250615" → "1.6";
+			//      "08-2024" (MM-YYYY) → "".
+			version := dotJoinStrippingDateSuffix(variantStr)
 
 			if ov, ok := pd.overrides[Family(base)]; ok {
 				// The base has a known decomposition; the numeric version is extracted
@@ -534,11 +539,18 @@ func ExtractVersionFromID(id ModelID, rawFamily Family) string {
 	// e.g. "4-5" → "4.5"; "4-6" → "4.6"; "3-1" → "3.1"
 	// R3b (eq7w): reject a single YYMM token (e.g. "2603") to prevent Mistral-style
 	// 4-digit date numerals from being returned as versions.
+	// SLICE-1-FIX-3: also strip trailing date groups from multi-group remainders, and
+	// detect the MM-YYYY two-group pattern (e.g. "08-2024", "03-2025") as a full date.
 	if reHyphenDigits.MatchString(remainder) {
 		if isYYMMDateToken(remainder) {
 			return ""
 		}
-		return strings.ReplaceAll(remainder, "-", ".")
+		// Detect MM-YYYY two-group remainder (e.g. "08-2024", "03-2025").
+		if isMMYYYYTwoGroup(remainder) {
+			return ""
+		}
+		// Strip trailing date groups and dot-join the leading semantic-version groups.
+		return dotJoinStrippingDateSuffix(remainder)
 	}
 
 	// Path (b): dot-version — the remainder is itself a "N.M" string (after date strip).
@@ -1371,6 +1383,112 @@ func isYYMMDateToken(tok string) bool {
 }
 
 // --------------------------------------------------------------------------
+// SLICE-1-FIX-3: date-shape guards for dot-join paths
+// --------------------------------------------------------------------------
+
+// is6DigitYYMMDD returns true when tok is exactly 6 all-numeric digits.
+// These appear as compact YYMMDD date suffixes in model IDs (e.g. "250615",
+// "251215", "250715") and must not be treated as semantic version components.
+// Examples: "250615" (doubao-seed-1-6-250615), "250715" (seed-1-6-flash-250715).
+func is6DigitYYMMDD(tok string) bool {
+	if len(tok) != 6 {
+		return false
+	}
+	for _, r := range tok {
+		if r < '0' || r > '9' {
+			return false
+		}
+	}
+	return true
+}
+
+// isMMYYYYTwoGroup returns true when s is a two-hyphen-separated group with
+// the form MM-YYYY where MM is 01-12 and YYYY starts with 19 or 20.
+// This detects date strings like "08-2024", "03-2025", "12-2024" that appear
+// as the entire remainder after stripping a family prefix in model IDs such as
+// "command-r-08-2024" or "command-a-03-2025".
+// Precondition: s must already be confirmed to match reHyphenDigits (all-digit groups).
+func isMMYYYYTwoGroup(s string) bool {
+	// Must be exactly "NN-NNNN" (7 chars with hyphen at position 2).
+	if len(s) != 7 || s[2] != '-' {
+		return false
+	}
+	mm, yyyy := s[:2], s[3:]
+	// MM must be purely numeric (already guaranteed by reHyphenDigits precondition).
+	// Range check: 01–12.
+	mm0, mm1 := mm[0]-'0', mm[1]-'0'
+	if mm0 == 0 && mm1 == 0 {
+		return false // "00" is not a valid month
+	}
+	if mm0 > 1 {
+		return false // month > 19 is invalid
+	}
+	if mm0 == 1 && mm1 > 2 {
+		return false // month > 12 is invalid
+	}
+	// YYYY must start with "19" or "20".
+	if (yyyy[0] != '1' || yyyy[1] != '9') && (yyyy[0] != '2' || yyyy[1] != '0') {
+		return false
+	}
+	return true
+}
+
+// isDateShapedToken returns true when tok is a date-shaped digit group that must
+// NOT be included as part of a semantic version. Covers all date shapes defined by
+// SLICE-1-FIX-3: 4-digit (YYMM/MMDD), 6-digit (YYMMDD).
+// MM-YYYY two-group detection requires two tokens and is handled separately by
+// isMMYYYYTwoGroup on the full remainder.
+func isDateShapedToken(tok string) bool {
+	return isYYMMDateToken(tok) || is6DigitYYMMDD(tok)
+}
+
+// dotJoinStrippingDateSuffix converts a hyphen-separated digit string (as captured
+// by the hyphen-version regex) into a dot-notation version, stripping any TRAILING
+// date-shaped groups.
+//
+// RULE (SLICE-1-FIX-3): iterate groups left-to-right; stop (discard the current and
+// all remaining groups) at the first date-shaped group (4-digit YYMM/MMDD or 6-digit
+// YYMMDD). Dot-join the leading semantic-version groups only. Return "" when no
+// leading non-date groups remain.
+//
+// Additionally, a two-group remainder that is entirely a MM-YYYY date (e.g. "08-2024")
+// returns "" directly.
+//
+// Examples:
+//
+//	"4-5"      → "4.5"   (both groups are semantic)
+//	"2603"     → ""      (single 4-digit date)
+//	"4-0314"   → "4"     (leading "4" kept, trailing "0314" date stripped)
+//	"1-6-250615" → "1.6" (leading "1-6" kept, trailing 6-digit "250615" stripped)
+//	"08-2024"  → ""      (full MM-YYYY two-group remainder)
+//	"1-6"      → "1.6"   (semantic version, no date)
+func dotJoinStrippingDateSuffix(s string) string {
+	// Fast-path: single token.
+	if !strings.Contains(s, "-") {
+		if isDateShapedToken(s) {
+			return ""
+		}
+		return s
+	}
+
+	// Check if the whole string is a MM-YYYY two-group date.
+	if isMMYYYYTwoGroup(s) {
+		return ""
+	}
+
+	// Iterate groups left-to-right; stop at first date-shaped group.
+	parts := strings.Split(s, "-")
+	var keep []string
+	for _, p := range parts {
+		if isDateShapedToken(p) {
+			break // stop: discard this and all subsequent groups
+		}
+		keep = append(keep, p)
+	}
+	return strings.Join(keep, ".")
+}
+
+// --------------------------------------------------------------------------
 // trimOneTrailingModifier (R3c / Δ2′ — tentative only)
 // --------------------------------------------------------------------------
 
@@ -1511,6 +1629,9 @@ func ExtractVersionBetweenFamilyAndVariant(id ModelID, family Family, variant st
 	}
 
 	// Collect leading purely-numeric tokens between family and variant.
+	// SLICE-1-FIX-3: also reject 6-digit YYMMDD tokens (is6DigitYYMMDD) in addition
+	// to the existing 4-digit guard (isYYMMDateToken via isVersionToken). Stop at the
+	// first date-shaped token so trailing date groups are not included in the version.
 	var numericTokens []string
 	variantStart := -1
 	for i, tok := range tokens {
@@ -1522,11 +1643,15 @@ func ExtractVersionBetweenFamilyAndVariant(id ModelID, family Family, variant st
 			variantStart = i
 			break
 		}
-		if isVersionToken(tok) && !isYYMMDateToken(tok) {
+		if isVersionToken(tok) && !isDateShapedToken(tok) {
 			numericTokens = append(numericTokens, tok)
-		} else {
+		} else if !isVersionToken(tok) {
 			// Non-numeric, non-variant token — treat it as residual if before variant.
 			residual = append(residual, tok)
+		} else {
+			// Date-shaped token (6-digit YYMMDD or 4-digit, caught by isDateShapedToken):
+			// stop collecting version tokens (dates go to Date via ExtractDate, not here).
+			break
 		}
 	}
 
@@ -1565,13 +1690,18 @@ func ExtractVersionBetweenFamilyAndVariant(id ModelID, family Family, variant st
 		// Any tokens remaining after the variant are residual IF they are not known
 		// modifiers (which are semantically accounted for by the modifier extraction
 		// pipeline) and not purely numeric.
+		// SLICE-1-FIX-3: also skip 6-digit YYMMDD date tokens (they go to Date, not residual).
 		for i := afterVariant; i < len(tokens); i++ {
 			tok := tokens[i]
 			if tok == "" {
 				continue
 			}
-			// Skip purely-numeric tokens.
-			if isVersionToken(tok) && !isYYMMDateToken(tok) {
+			// Skip purely-numeric tokens and date-shaped tokens.
+			if isVersionToken(tok) && !isDateShapedToken(tok) {
+				continue
+			}
+			// Skip date-shaped tokens (4-digit YYMM/MMDD and 6-digit YYMMDD).
+			if isDateShapedToken(tok) {
 				continue
 			}
 			// Skip known modifiers (they are extracted by ExtractModifier, not residual).

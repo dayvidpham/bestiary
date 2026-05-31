@@ -2180,3 +2180,222 @@ func TestParseFamilyDetailed_FixB1_NegativeControls(t *testing.T) {
 		})
 	}
 }
+
+// --------------------------------------------------------------------------
+// SLICE-1-FIX-3: date-as-version guard inside dot-join paths
+// --------------------------------------------------------------------------
+
+// TestParseFamilyWithVersion_Fix3_DateGroupsStripped verifies SLICE-1-FIX-3:
+// the date-shape guard is applied INSIDE the hyphen-version dot-join path,
+// stripping trailing date groups and keeping only leading semantic-version groups.
+//
+// INVARIANT: no model's Version may be a date-shaped group. Covered shapes:
+//   - 4-digit YYMM (e.g. "2603", "2512", "2508") → ""
+//   - 4-digit MMDD (e.g. "0528", "0314", "1206") → ""
+//   - 6-digit YYMMDD (e.g. "250615", "250715") → stripped from trailing position
+//   - MM-YYYY two-group (e.g. "08-2024", "03-2025") → ""
+//
+// BDD: given a raw family string with a trailing date group in hyphen-version form,
+// when ParseFamilyWithVersion is called, then version="" (date stripped) or version
+// equals only the leading non-date groups.
+func TestParseFamilyWithVersion_Fix3_DateGroupsStripped(t *testing.T) {
+	t.Parallel()
+
+	cases := []struct {
+		name        string
+		raw         bestiary.Family
+		wantFamily  bestiary.Family
+		wantVariant string
+		wantVersion string
+	}{
+		// 4-digit YYMM cases: base in overrides, trailing date token.
+		{
+			name: "mistral-small-2603 → version empty (2603 is YYMM date)",
+			raw:  "mistral-small-2603", wantFamily: "mistral", wantVariant: "small", wantVersion: "",
+		},
+		{
+			name: "mistral-large-2512 → version empty (2512 is YYMM date)",
+			raw:  "mistral-large-2512", wantFamily: "mistral", wantVariant: "large", wantVersion: "",
+		},
+		{
+			name: "codestral-2508 → version empty (2508 is YYMM date)",
+			raw:  "codestral-2508", wantFamily: "codestral", wantVariant: "", wantVersion: "",
+		},
+		// 4-digit MMDD cases: leading semantic version kept, trailing date stripped.
+		{
+			name: "gpt-4-0314 → version=4 (0314 is MMDD date, leading 4 kept)",
+			raw:  "gpt-4-0314", wantFamily: "gpt", wantVariant: "", wantVersion: "4",
+		},
+		// 6-digit YYMMDD cases: stripped from trailing position.
+		{
+			name: "doubao-seed-1-6-250615 → version=1.6 (250615 is YYMMDD, stripped)",
+			raw:  "doubao-seed-1-6-250615", wantFamily: "doubao-seed", wantVariant: "", wantVersion: "1.6",
+		},
+		// 4-digit MMDD: gemini-exp-1206 (1206 is MMDD, single group → "").
+		{
+			name: "gemini-exp-1206 → version empty (1206 is MMDD date)",
+			raw:  "gemini-exp-1206", wantFamily: "gemini-exp", wantVariant: "", wantVersion: "",
+		},
+		// 4-digit MMDD: deepseek-r1-0528.
+		{
+			name: "deepseek-r1-0528 → version empty (0528 is MMDD date)",
+			raw:  "deepseek-r1-0528", wantFamily: "deepseek-r1", wantVariant: "", wantVersion: "",
+		},
+		// MM-YYYY two-group cases: full remainder is a date.
+		{
+			name: "command-r-08-2024 → version empty (08-2024 is MM-YYYY date)",
+			raw:  "command-r-08-2024", wantFamily: "command", wantVariant: "r", wantVersion: "",
+		},
+		{
+			name: "command-a-03-2025 → version empty (03-2025 is MM-YYYY date)",
+			raw:  "command-a-03-2025", wantFamily: "command", wantVariant: "a", wantVersion: "",
+		},
+		// Regression: legitimate versions must be preserved.
+		{
+			name: "claude-opus-4-5 → version=4.5 (no date, preserve)",
+			raw:  "claude-opus-4-5", wantFamily: "claude", wantVariant: "opus", wantVersion: "4.5",
+		},
+		{
+			name: "llama-3-1 → version=3.1 (no date, preserve)",
+			raw:  "llama-3-1", wantFamily: "llama", wantVariant: "", wantVersion: "3.1",
+		},
+		{
+			name: "phi-4-5 → version=4.5 (no date, preserve)",
+			raw:  "phi-4-5", wantFamily: "phi", wantVariant: "", wantVersion: "4.5",
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			gotFamily, gotVariant, gotVersion := bestiary.ParseFamilyWithVersion(tc.raw)
+			if gotFamily != tc.wantFamily {
+				t.Errorf("ParseFamilyWithVersion(%q) family = %q, want %q", tc.raw, gotFamily, tc.wantFamily)
+			}
+			if gotVariant != tc.wantVariant {
+				t.Errorf("ParseFamilyWithVersion(%q) variant = %q, want %q", tc.raw, gotVariant, tc.wantVariant)
+			}
+			if gotVersion != tc.wantVersion {
+				t.Errorf("ParseFamilyWithVersion(%q) version = %q, want %q\n"+
+					"  What: date-shaped token was returned as version\n"+
+					"  Why: SLICE-1-FIX-3 guard must strip date groups inside hyphen-version dot-join path\n"+
+					"  How to fix: verify dotJoinStrippingDateSuffix strips trailing date groups",
+					tc.raw, gotVersion, tc.wantVersion)
+			}
+		})
+	}
+}
+
+// TestExtractVersionFromID_Fix3_MMYYYYTwoGroup verifies SLICE-1-FIX-3 for the
+// reHyphenDigits path in ExtractVersionFromID: the MM-YYYY two-group pattern
+// (e.g. "08-2024", "03-2025") must be detected as a date and return "".
+//
+// BDD: given remainder="MM-YYYY" after family-prefix strip, when ExtractVersionFromID
+// is called, then "" is returned (date shape, not a semantic version).
+func TestExtractVersionFromID_Fix3_MMYYYYTwoGroup(t *testing.T) {
+	t.Parallel()
+
+	cases := []struct {
+		name      string
+		id        bestiary.ModelID
+		rawFamily bestiary.Family
+		want      string
+	}{
+		{
+			name:      "command-r-08-2024 → no version (08-2024 is MM-YYYY)",
+			id:        "command-r-08-2024",
+			rawFamily: "command-r",
+			want:      "",
+		},
+		{
+			name:      "command-a-03-2025 → no version (03-2025 is MM-YYYY)",
+			id:        "command-a-03-2025",
+			rawFamily: "command-a",
+			want:      "",
+		},
+		// Regression: must not break legitimate hyphen-digit versions.
+		{
+			name:      "claude-opus-4-5 → 4.5 (legitimate version preserved)",
+			id:        "claude-opus-4-5",
+			rawFamily: "claude-opus",
+			want:      "4.5",
+		},
+		{
+			name:      "claude-opus-4-6 → 4.6 (legitimate version preserved)",
+			id:        "claude-opus-4-6",
+			rawFamily: "claude-opus",
+			want:      "4.6",
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			got := bestiary.ExtractVersionFromID(tc.id, tc.rawFamily)
+			if got != tc.want {
+				t.Errorf("ExtractVersionFromID(%q, %q) = %q, want %q\n"+
+					"  What: MM-YYYY two-group was returned as version\n"+
+					"  Why: SLICE-1-FIX-3 isMMYYYYTwoGroup guard must detect and reject MM-YYYY remainder",
+					tc.id, tc.rawFamily, got, tc.want)
+			}
+		})
+	}
+}
+
+// TestExtractVersionBetweenFamilyAndVariant_Fix3_6DigitStripped verifies that
+// SLICE-1-FIX-3 correctly strips 6-digit YYMMDD tokens from the version extraction
+// loop in ExtractVersionBetweenFamilyAndVariant.
+//
+// BDD: given an ID with a 6-digit YYMMDD suffix embedded after valid version tokens,
+// when ExtractVersionBetweenFamilyAndVariant is called, then the version contains only
+// the leading semantic groups (6-digit date group is stopped at, not included).
+func TestExtractVersionBetweenFamilyAndVariant_Fix3_6DigitStripped(t *testing.T) {
+	t.Parallel()
+
+	cases := []struct {
+		desc         string
+		id           bestiary.ModelID
+		family       bestiary.Family
+		variant      string
+		wantVersion  string
+		wantResidual []string
+	}{
+		{
+			// seed-1-6-flash-250715: rawFamily="seed", 250715 is 6-digit YYMMDD.
+			// With variant="flash" (from ParseFamilyDetailed), extraction stops at 250715.
+			desc:         "seed-1-6-flash-250715 with variant=flash → version=1.6",
+			id:           "seed-1-6-flash-250715",
+			family:       "seed",
+			variant:      "flash",
+			wantVersion:  "1.6",
+			wantResidual: nil,
+		},
+		{
+			// doubao-seed-1-6-250615: empty family → but if called with family="doubao-seed", variant="".
+			// 250615 is 6-digit, stops before it → version=1.6.
+			desc:         "doubao-seed-1-6-250615 with variant=empty → version=1.6",
+			id:           "doubao-seed-1-6-250615",
+			family:       "doubao-seed",
+			variant:      "",
+			wantVersion:  "1.6",
+			wantResidual: nil,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.desc, func(t *testing.T) {
+			t.Parallel()
+			gotVersion, gotResidual := bestiary.ExtractVersionBetweenFamilyAndVariant(tc.id, tc.family, tc.variant)
+			if gotVersion != tc.wantVersion {
+				t.Errorf("ExtractVersionBetweenFamilyAndVariant(%q, %q, %q) version = %q, want %q\n"+
+					"  What: 6-digit YYMMDD was included in version\n"+
+					"  Why: SLICE-1-FIX-3 isDateShapedToken must reject 6-digit tokens in dot-join loop",
+					tc.id, tc.family, tc.variant, gotVersion, tc.wantVersion)
+			}
+			if len(gotResidual) != len(tc.wantResidual) {
+				t.Errorf("ExtractVersionBetweenFamilyAndVariant(%q, %q, %q) residual = %v, want %v",
+					tc.id, tc.family, tc.variant, gotResidual, tc.wantResidual)
+			}
+		})
+	}
+}

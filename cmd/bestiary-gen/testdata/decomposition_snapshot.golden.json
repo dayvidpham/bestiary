@@ -24,6 +24,22 @@
     "modifier": ""
   },
   {
+    "provider": "cohere-fixture",
+    "model_id": "command-a-03-2025",
+    "family": "command",
+    "variant": "a",
+    "version": "",
+    "modifier": ""
+  },
+  {
+    "provider": "cohere-fixture",
+    "model_id": "command-r-08-2024",
+    "family": "command",
+    "variant": "r",
+    "version": "",
+    "modifier": ""
+  },
+  {
     "provider": "deepseek",
     "model_id": "deepseek-r1-0528",
     "family": "deepseek-r1",
@@ -35,6 +51,30 @@
     "provider": "deepseek",
     "model_id": "deepseek-v3-0324",
     "family": "deepseek",
+    "variant": "",
+    "version": "",
+    "modifier": ""
+  },
+  {
+    "provider": "doubao-fixture",
+    "model_id": "doubao-seed-1-6-250615",
+    "family": "doubao-seed",
+    "variant": "",
+    "version": "1.6",
+    "modifier": ""
+  },
+  {
+    "provider": "doubao-fixture",
+    "model_id": "seed-1-6-flash-250715",
+    "family": "seed",
+    "variant": "flash",
+    "version": "1.6",
+    "modifier": ""
+  },
+  {
+    "provider": "google-fixture",
+    "model_id": "gemini-exp-1206",
+    "family": "gemini-exp",
     "variant": "",
     "version": "",
     "modifier": ""
@@ -76,7 +116,23 @@
     "model_id": "mistral-small-2603",
     "family": "mistral",
     "variant": "",
-    "version": "2603",
+    "version": "",
+    "modifier": ""
+  },
+  {
+    "provider": "mistral-fixture",
+    "model_id": "codestral-2508",
+    "family": "codestral",
+    "variant": "",
+    "version": "",
+    "modifier": ""
+  },
+  {
+    "provider": "mistral-fixture",
+    "model_id": "mistral-large-2512",
+    "family": "mistral",
+    "variant": "large",
+    "version": "",
     "modifier": ""
   },
   {
@@ -126,6 +182,22 @@
     "variant": "small",
     "version": "3",
     "modifier": ""
+  },
+  {
+    "provider": "openai-fixture",
+    "model_id": "gpt-4-0314",
+    "family": "gpt",
+    "variant": "",
+    "version": "4",
+    "modifier": ""
+  },
+  {
+    "provider": "openai-fixture",
+    "model_id": "gpt-4-1106-preview",
+    "family": "gpt",
+    "variant": "",
+    "version": "4",
+    "modifier": "preview"
   },
   {
     "provider": "zhipu",
