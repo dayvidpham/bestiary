@@ -1149,6 +1149,9 @@
 {"issue_id":"bestiary-wjk9","label":"aura:severity:blocker"}
 {"issue_id":"bestiary-wkv","label":"aura:p10-impl:s10-review"}
 {"issue_id":"bestiary-wkv","label":"aura:severity:minor"}
+{"issue_id":"bestiary-wnua","label":"aura:p9-impl:s9-slice"}
+{"issue_id":"bestiary-wnua","label":"followup"}
+{"issue_id":"bestiary-wnua","label":"parse"}
 {"issue_id":"bestiary-wqo","label":"aura:p4-plan:s4-review"}
 {"issue_id":"bestiary-wru1","label":"aura:p10-impl:s10-review"}
 {"issue_id":"bestiary-wt28","label":"aura:p10-impl:s10-review"}
