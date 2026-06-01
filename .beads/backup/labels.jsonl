@@ -859,6 +859,9 @@
 {"issue_id":"bestiary-l4up","label":"aura:p10-impl:s10-review"}
 {"issue_id":"bestiary-l63t","label":"aura:p10-impl:s10-review"}
 {"issue_id":"bestiary-l63t","label":"aura:severity:important"}
+{"issue_id":"bestiary-l77c","label":"aura:p9-impl:s9-slice"}
+{"issue_id":"bestiary-l77c","label":"followup"}
+{"issue_id":"bestiary-l77c","label":"parse"}
 {"issue_id":"bestiary-l8hp","label":"aura:p4-plan:s4-review"}
 {"issue_id":"bestiary-ldm1","label":"aura:p10-impl:s10-review"}
 {"issue_id":"bestiary-ldm1","label":"aura:severity:blocker"}
