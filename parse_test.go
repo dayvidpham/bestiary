@@ -2093,13 +2093,25 @@ func TestParseFamilyDetailed_FixB1_SoleVariantSuffixPromotion(t *testing.T) {
 	}
 }
 
-// TestParseFamilyDetailed_FixB1_NegativeControls verifies that FIX B1 is NOT applied
-// in the two out-of-scope cases:
+// TestParseFamilyDetailed_FixB1_NegativeControls verifies that a residual failure
+// is STILL emitted (the model does not fully decompose) in two cases where the
+// trailing residue is more than a single promotable suffix token — even though the
+// member-variant IS now recovered by recoverMemberVariant.
 //
-//	B2: more than one residual token → still emits ReasonResidualUnaccountedTokens.
-//	C:  sole residual token is NOT a known variant suffix → still emits failure.
+// SLICE-1 (rc2) FIX CYCLE: recoverMemberVariant superseded the old inline B1.
+// Unlike old B1 — which fired only on EXACTLY ONE post-version residual token — the
+// broad member-zone scan now recovers a member variant up front (for registered
+// families) regardless of how many OTHER residual tokens follow. So the variant IS
+// populated here; the residual failure persists because a DIFFERENT, unaccounted
+// token remains after the variant:
 //
-// The B2 and C classes remain documented residuals (user-accepted, out of scope).
+//	phi-3-medium-128k-instruct → variant="medium" recovered (phi member), but
+//	    "128k" (and "instruct") remain unaccounted → ReasonResidualUnaccountedTokens.
+//	nova-2-lite-v1 → variant="lite" set by ParseFamilyWithVersion suffix-strip, but
+//	    "v1" remains after the variant → ReasonResidualUnaccountedTokens.
+//
+// These remain documented residuals (user-accepted, out of scope): the failure is
+// the honest-audit signal that the ID did not fully decompose, NOT a missing variant.
 func TestParseFamilyDetailed_FixB1_NegativeControls(t *testing.T) {
 	t.Parallel()
 
@@ -2108,46 +2120,54 @@ func TestParseFamilyDetailed_FixB1_NegativeControls(t *testing.T) {
 		rawFamily   bestiary.Family
 		id          bestiary.ModelID
 		provider    bestiary.Provider
-		wantFailure bool // true → failure must be non-nil
+		wantVariant string // member variant IS recovered, even though a residual remains
+		wantFailure bool   // true → failure must be non-nil
 		wantReason  bestiary.ParseFailureReason
 		desc2       string // description of why it stays residual
 	}{
 		{
-			// B2 negative: phi-3-medium-128k-instruct has multiple residual tokens (medium, 128k, instruct).
-			// B1 only fires for exactly ONE residual token → stays residual.
-			// NOTE: "instruct" IS a known suffix, but there are more than 1 residual tokens, so B1 does not fire.
-			desc:        "phi-3-medium-128k-instruct (B2: multi-residual, B1 does NOT fire)",
+			// phi-3-medium-128k-instruct: recoverMemberVariant recovers "medium" (a phi
+			// member) up front. ExtractVersionBetween then finds ver="3" with residual
+			// ["128k","instruct"] AFTER the variant → residual failure persists.
+			desc:        "phi-3-medium-128k-instruct (variant=medium recovered; 128k unaccounted)",
 			rawFamily:   "phi",
 			id:          "phi-3-medium-128k-instruct",
 			provider:    "microsoft",
+			wantVariant: "medium",
 			wantFailure: true,
 			wantReason:  bestiary.ReasonResidualUnaccountedTokens,
-			desc2:       "B2: more than one residual token; B1 requires exactly one",
+			desc2:       "variant recovered as 'medium', but '128k' remains unaccounted after the variant",
 		},
 		{
-			// C negative: nova-2-lite-v1 has rawFamily="nova-lite" → variant="lite" (suffix strip).
-			// ExtractVersionBetween finds ver="2", residual=["v1"] AFTER the variant.
-			// B1 requires variant=="" at promotion time — but variant="lite" is already set,
-			// so B1 does NOT fire (the variant-empty guard fails before the suffix check).
-			desc:        "nova-2-lite-v1 (C: variant='lite' pre-set, B1 variant='' guard fails)",
+			// nova-2-lite-v1: rawFamily="nova-lite" → variant="lite" via ParseFamilyWithVersion
+			// suffix-strip (so recoverMemberVariant is not consulted). ExtractVersionBetween
+			// finds ver="2", residual=["v1"] AFTER the variant → residual failure persists.
+			desc:        "nova-2-lite-v1 (variant=lite pre-set; v1 unaccounted)",
 			rawFamily:   "nova-lite",
 			id:          "nova-2-lite-v1",
 			provider:    "cartesia",
+			wantVariant: "lite",
 			wantFailure: true,
 			wantReason:  bestiary.ReasonResidualUnaccountedTokens,
-			desc2:       "C: variant is already 'lite'; B1 only fires when variant==\"\"",
+			desc2:       "variant is 'lite'; 'v1' remains unaccounted after the variant",
 		},
 	}
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
 			t.Parallel()
-			_, _, _, _, failure := bestiary.ParseFamilyDetailed(tc.rawFamily, tc.id, tc.provider)
+			_, variant, _, _, failure := bestiary.ParseFamilyDetailed(tc.rawFamily, tc.id, tc.provider)
+			if variant != tc.wantVariant {
+				t.Errorf("ParseFamilyDetailed(%q, %q): variant = %q, want %q\n"+
+					"  What: recoverMemberVariant should recover the member variant even when a residual remains\n"+
+					"  Why: the broad member-zone scan no longer requires a single sole residual (unlike old B1)",
+					tc.rawFamily, tc.id, variant, tc.wantVariant)
+			}
 			if tc.wantFailure {
 				if failure == nil {
 					t.Errorf("ParseFamilyDetailed(%q, %q): failure = nil, want %q failure\n"+
-						"  What: B1 should NOT promote in this case (%s)\n"+
-						"  Why: B1 only applies when exactly one residual token is a known variant suffix",
+						"  What: a residual failure should still fire here (%s)\n"+
+						"  Why: an unaccounted token remains after the recovered variant",
 						tc.rawFamily, tc.id, tc.wantReason, tc.desc2)
 					return
 				}

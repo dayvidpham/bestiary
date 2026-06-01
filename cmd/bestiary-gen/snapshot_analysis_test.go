@@ -316,6 +316,14 @@ func TestSnapshotAnalysis_CrossProviderDivergences(t *testing.T) {
 	// cases; recoverMemberVariant resolved 38 CatC cases. New baseline: 340 / A=0
 	// / B=73 / C=210 / D=57. The "Meta <-> llama" mislabel pair became
 	// "llama <-> meta" (M4 lowercased the inferred family).
+	//
+	// SLICE-1 (rc2) FIX CYCLE is divergence-NEUTRAL on this count: restoring
+	// recoverMemberVariant's B1 family-agnostic sole-residual promotion (seed→flash,
+	// reka→flash, imagen→ultra, voyage→large/lite, …) reduces parse-failure residuals
+	// (a separate metric) but only promotes VERSION-bearing IDs — exactly what the
+	// original inline B1 did. Those promotions do not change which multi-provider IDs
+	// agree, so the divergence figures stay 340 / 0 / 73 / 210 / 57. The jvpa M3
+	// helper symmetry fix is likewise non-observable here (version extraction unchanged).
 	const (
 		divergenceExact = 340
 		// Secondary sanity band — guards against a wholesale snapshot/pipeline
@@ -344,6 +352,8 @@ func TestSnapshotAnalysis_CrossProviderDivergences(t *testing.T) {
 	// the total at 340 while changing the genuine-mislabel ledger candidates.
 	// Refreshing the snapshot intentionally changes these — update in lockstep.
 	// SLICE-1: CatA → 0 (M4 fixed all case divergences); CatC → 210 (recoverMemberVariant).
+	// FIX CYCLE divergence-neutral (see divergenceExact note above): restored B1
+	// promotion is version-gated, so it does not move these category counts.
 	const (
 		catAExact = 0   // vendor-prefix/case (SLICE-1 M4 resolved all)
 		catBExact = 73  // bare-gen-split (SLICE-2 scope)

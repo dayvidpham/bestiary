@@ -926,14 +926,11 @@ func InferFamilyFromIDWithVariant(id ModelID, p Provider) (Family, string, strin
 		return "", "", ""
 	}
 
-	// ── M3: vendor/namespace strip ───────────────────────────────────────────
-	// Step 3a: strip <org>/model path prefix (e.g. "anthropic/claude-3" → "claude-3").
-	idStr := lastPathSegment(string(id))
-	// Step 3b: strip <vendor_alias>- or <vendor_alias>/ prefix for non-provider
-	// vendors (e.g. "minimaxai-minimax-m1" → "minimax-m1").
-	if pd, err := loadParseData(); err == nil {
-		idStr = stripVendorAliasPrefix(idStr, pd.vendorAliases)
-	}
+	// ── M3: vendor/namespace strip (shared head) ─────────────────────────────
+	// stripVendorNamespace strips the "<org>/" path segment then any residual
+	// "<vendor_alias>-" / "<vendor_alias>/" prefix (e.g. "minimaxai-minimax-m1" →
+	// "minimax-m1"). The SAME helper is called by ParseFamilyDetailed (jvpa symmetry).
+	idStr := stripVendorNamespace(string(id))
 
 	// R3c (Δ2′): a trailing modifier (e.g. "-thinking") can hide a trailing date
 	// ("-20250805-thinking"), blocking stripTrailingDate and corrupting decomposition.
@@ -1245,22 +1242,30 @@ func ParseFamilyDetailed(raw Family, id ModelID, p Provider) (Family, string, st
 	}
 
 	// ── Pipeline skeleton (SLICE-1) ──────────────────────────────────────────
-	// M3 (vendor/namespace strip) is applied to the model ID implicitly via
-	// lastPathSegment inside ExtractVersionBetweenFamilyAndVariant and
-	// ExtractVersionFromID; the cleanedID retains the vendor prefix but the
-	// extractors normalise it internally.
+	// M3 (vendor/namespace strip) is applied here at the member-recovery boundary
+	// via stripVendorNamespace — the SAME helper InferFamilyFromIDWithVariant uses
+	// at its head (Reviewer A jvpa: one M3 helper, called in BOTH entrypoints).
+	// We deliberately scope M3 to the member-recovery memberZone rather than
+	// pre-stripping the ID fed to the version extractors: ExtractVersionBetween…
+	// already calls lastPathSegment internally, and pre-stripping the "<org>/"
+	// segment ahead of ExtractVersionFromID would expose a SEPARATE latent
+	// version-extraction issue (e.g. "gpt-oss-120b" → version "120b" param-count,
+	// "gpt-4o" → version "4o") that is out of SLICE-1 scope (version-presence is
+	// SLICE-2). Scoping M3 to member recovery keeps version extraction unchanged.
 	//
 	// SLICE-3 INSERTION POINT: family_aliases ledger remap (after M4, before bare-gen-split)
 	// SLICE-2 INSERTION POINT: bare_gen_split closed predicate (before recoverMemberVariant)
 	//
-	// recoverMemberVariant: recover variant from model ID member tokens when
-	// ParseFamilyWithVersion did not populate it. SOLE OWNER — subsumes inline
-	// B1 promotion (removed) and provides broader member-list coverage via
-	// families.json. Called BEFORE version extraction so the recovered variant is
-	// available as the boundary token for ExtractVersionBetweenFamilyAndVariant.
+	// recoverMemberVariant: recover variant from model ID member tokens (families.json
+	// members + curated suffixes) for REGISTERED families when ParseFamilyWithVersion
+	// did not populate it. Called BEFORE version extraction so the recovered variant is
+	// available as the boundary token for ExtractVersionBetweenFamilyAndVariant. The
+	// family-agnostic sole-residual suffix promotion (B1) for UNREGISTERED families runs
+	// AFTER version extraction (see the B1 block below) so it preserves a version that
+	// follows the suffix in the ID.
 	if variant == "" {
 		normFamPrefix := strings.ToLower(firstToken(string(family))) + "-"
-		lowID := strings.ToLower(lastPathSegment(string(cleanedID)))
+		lowID := strings.ToLower(stripVendorNamespace(string(cleanedID)))
 		memberZone := lowID
 		if strings.HasPrefix(memberZone, normFamPrefix) {
 			memberZone = memberZone[len(normFamPrefix):]
@@ -1273,14 +1278,28 @@ func ParseFamilyDetailed(raw Family, id ModelID, p Provider) (Family, string, st
 	if version == "" && family != "" && cleanedID != "" {
 		if v, residual := ExtractVersionBetweenFamilyAndVariant(cleanedID, family, variant); v != "" {
 			version = v
-			// R2: if there are residual tokens after extraction, emit an honest-audit
-			// failure WITH version populated.
+			// B1 sole-residual promotion (family-agnostic). When exactly ONE residual
+			// token remains AND it is a known variant suffix AND Variant is still empty,
+			// promote it into Variant instead of emitting ReasonResidualUnaccountedTokens.
+			// Handles e.g. seed-1-6-flash-250715 → (seed,flash,1.6), reka-flash-3 →
+			// (reka,flash,3), text-embedding-005 → (text-embedding,embedding,005).
 			//
-			// NOTE: inline B1 promotion (REMOVED in SLICE-1, subsumed by recoverMemberVariant
-			// above). recoverMemberVariant is called before this block, so variant is already
-			// populated when applicable, and ExtractVersionBetweenFamilyAndVariant sees the
-			// correct variant boundary. Any remaining residual represents genuinely
-			// unaccounted tokens and warrants a failure signal.
+			// This MUST run post-version: the version is already captured here, so the
+			// promotion preserves a version that follows the suffix in the ID (e.g. the
+			// "3" in reka-flash-3). recoverMemberVariant (called pre-version, above) owns
+			// member recovery for REGISTERED families; this narrow sole-residual suffix
+			// promotion covers UNREGISTERED families that recoverMemberVariant skips.
+			// >1 residual (B2) or a non-suffix sole token (C) remain documented residuals.
+			if len(residual) == 1 && variant == "" {
+				if pd, pdErr := loadParseData(); pdErr == nil {
+					if bare, ok := bareVariantSuffix(pd, strings.ToLower(residual[0])); ok {
+						variant = bare
+						residual = nil
+					}
+				}
+			}
+			// R2: any residual still remaining after promotion is genuinely unaccounted —
+			// emit an honest-audit failure WITH version populated.
 			if len(residual) > 0 {
 				attempted := ParseAttempt{Family: family, Variant: variant, Version: version, Date: ""}
 				return family, variant, version, modifier, &ParseFailure{
@@ -1562,68 +1581,93 @@ func stripVendorAliasPrefix(id string, vendorAliases []string) string {
 	return id
 }
 
+// stripVendorNamespace applies the M3 vendor/namespace strip to a model ID: first
+// the leading "<org>/" path segment (lastPathSegment), then any residual
+// non-provider "<vendor_alias>-" / "<vendor_alias>/" prefix (stripVendorAliasPrefix,
+// consulting vendor_aliases.json). Returns the stripped ID.
+//
+// This is the SINGLE M3 pipeline head shared by BOTH decomposition entrypoints
+// (InferFamilyFromIDWithVariant and ParseFamilyDetailed), so the strip is applied
+// symmetrically. Resolves Reviewer A finding jvpa: the vendor-alias strip
+// previously lived only in InferFamilyFromIDWithVariant, leaving ParseFamilyDetailed's
+// raw!="" path without it.
+func stripVendorNamespace(id string) string {
+	idStr := lastPathSegment(id)
+	if pd, err := loadParseData(); err == nil {
+		idStr = stripVendorAliasPrefix(idStr, pd.vendorAliases)
+	}
+	return idStr
+}
+
 // --------------------------------------------------------------------------
 // SLICE-1: recoverMemberVariant (sole owner)
 // --------------------------------------------------------------------------
 
-// recoverMemberVariant searches idTokens (the hyphen-split tokens of a model ID
-// AFTER stripping the family prefix) for the first token that matches a member of
-// the given family (from families.json) OR a known variant suffix (from
-// variant_suffixes.json). Returns the matched token (lowercase), or "" if none.
+// bareVariantSuffix reports whether lowTok (lowercase, no leading "-") matches a
+// curated variant suffix in pd.suffixes, returning the bare suffix on match.
+// pd.suffixes entries carry a leading "-"; this strips it before comparison. It is
+// the single source of truth for "is this token a known variant suffix", shared by
+// recoverMemberVariant (member-zone scan) and the B1 sole-residual promotion in
+// ParseFamilyDetailed.
+func bareVariantSuffix(pd *parseData, lowTok string) (string, bool) {
+	for _, sfx := range pd.suffixes {
+		bare := sfx
+		if len(bare) > 0 && bare[0] == '-' {
+			bare = bare[1:]
+		}
+		if lowTok == bare {
+			return bare, true
+		}
+	}
+	return "", false
+}
+
+// recoverMemberVariant recovers a variant token from idTokens (the hyphen-split
+// tokens of a model ID AFTER the family prefix is stripped) by scanning for the
+// first token that matches a families.json member (most specific) or a curated
+// variant suffix (pd.suffixes). Token comparison is case-insensitive. Returns the
+// bare variant token (lowercase, no leading "-"), or "" if none matches.
 //
-// Token comparison is case-insensitive: both sides are lowercased before matching.
-// Families.json members are checked first (more specific); pd.suffixes are the
-// fallback.
+// SCOPE: recovery is limited to REGISTERED families (present in families.json).
+// Unregistered/compound families (e.g. "text-embedding") return "" here, because
+// firstToken-prefix stripping is imprecise for them and a broad multi-token scan
+// would over-recover a family sub-token ("embedding", "large") as a variant. The
+// narrow, version-preserving sole-residual suffix promotion for UNREGISTERED
+// families (the original "B1", e.g. seed-1-6-flash-250715 → flash) is restored in
+// ParseFamilyDetailed AFTER version extraction — see the B1 block there. It must run
+// post-version: promoting a suffix that precedes the version (e.g. reka-flash-3)
+// pre-version would make ExtractVersionBetweenFamilyAndVariant stop at the variant
+// boundary and drop the version.
 //
-// SOLE OWNER: this function subsumes the previous split ownership:
-//   - inline B1 promotion (parse.go: sole-residual-suffix case after version extraction)
-//   - empty-raw amputation (parse.go: firstToken fallback in InferFamilyFromIDWithVariant)
+// This function subsumes the empty-raw amputation (firstToken fallback in
+// InferFamilyFromIDWithVariant) for registered families.
 //
 // Precondition: ExtractModifier has already been called and modifier tokens
 // stripped from the ID before computing idTokens. This ensures modifier tokens
 // (e.g. "-thinking") are not misidentified as variant members.
-//
-// Returns the bare variant token (lowercase, no leading "-").
 func recoverMemberVariant(idTokens []string, family Family) string {
 	pd, err := loadParseData()
 	if err != nil {
 		return ""
 	}
-	lowFamily := strings.ToLower(string(family))
-	info, hasFamilyInfo := pd.families[Family(lowFamily)]
-
-	// Only attempt recovery when the family is registered in families.json.
-	// Unregistered families (e.g. compound "text-embedding") have no curated
-	// member list and we cannot safely distinguish variant tokens from family
-	// sub-tokens; skip recovery entirely for them.
+	info, hasFamilyInfo := pd.families[Family(strings.ToLower(string(family)))]
 	if !hasFamilyInfo {
 		return ""
 	}
-
 	for _, tok := range idTokens {
 		if tok == "" {
 			continue
 		}
 		lowTok := strings.ToLower(tok)
-
-		// 1. Check family members (most specific — curated in families.json).
+		// 1. Family members (most specific — curated in families.json).
 		for _, member := range info.Members {
 			if lowTok == member {
 				return member
 			}
 		}
-
-		// 2. Check pd.suffixes as fallback (bare suffix without leading "-").
-		// Only reached when the family IS registered (hasFamilyInfo guard above),
-		// so generic suffix matches apply only to families we know about.
-		for _, sfx := range pd.suffixes {
-			bare := sfx
-			if len(bare) > 0 && bare[0] == '-' {
-				bare = bare[1:]
-			}
-			if lowTok == bare {
-				return bare
-			}
+		// 2. Curated variant suffix fallback (registered families only).
+		if bare, ok := bareVariantSuffix(pd, lowTok); ok {
+			return bare
 		}
 	}
 	return ""

@@ -67,7 +67,7 @@
     "provider": "doubao-fixture",
     "model_id": "seed-1-6-flash-250715",
     "family": "seed",
-    "variant": "",
+    "variant": "flash",
     "version": "1.6",
     "modifier": ""
   },
