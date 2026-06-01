@@ -102,11 +102,11 @@ const (
 	Model__302AI__Minimax__M2__7__Highspeed                                        ModelID = "MiniMax-M2.7-highspeed"
 	Model__302AI__Ministral__14b__2512                                             ModelID = "ministral-14b-2512"
 	Model__302AI__Mistral__Large__2512                                             ModelID = "mistral-large-2512"
-	Model__302AI__Qwen3__235b__A22b                                                ModelID = "qwen3-235b-a22b"
-	Model__302AI__Qwen3__235b__A22b__Instruct__2507                                ModelID = "qwen3-235b-a22b-instruct-2507"
-	Model__302AI__Qwen3__30b__A3b                                                  ModelID = "qwen3-30b-a3b"
+	Model__302AI__Qwen3__235b__A22b__3                                             ModelID = "qwen3-235b-a22b"
+	Model__302AI__Qwen3__235b__A22b__Instruct__2507__3                             ModelID = "qwen3-235b-a22b-instruct-2507"
+	Model__302AI__Qwen3__30b__A3b__3                                               ModelID = "qwen3-30b-a3b"
 	Model__302AI__Qwen3__Coder__480b__A35b__Instruct                               ModelID = "qwen3-coder-480b-a35b-instruct"
-	Model__302AI__Qwen3__Max__20250923                                             ModelID = "qwen3-max-2025-09-23"
+	Model__302AI__Qwen3__Max__3__20250923                                          ModelID = "qwen3-max-2025-09-23"
 	Model__302AI__Qwen__Flash                                                      ModelID = "qwen-flash"
 	Model__302AI__Qwen__Max__Latest                                                ModelID = "qwen-max-latest"
 	Model__302AI__Qwen__Plus                                                       ModelID = "qwen-plus"
@@ -152,9 +152,9 @@ const (
 	Model__AIHubMix__Kimi__K2__5                                                   ModelID = "kimi-k2.5"
 	Model__AIHubMix__Kimi__K2__6                                                   ModelID = "kimi-k2.6"
 	Model__AIHubMix__Minimax__M2__7                                                ModelID = "minimax-m2.7"
-	Model__AIHubMix__Qwen3__6__Flash                                               ModelID = "qwen3.6-flash"
-	Model__AIHubMix__Qwen3__6__Max__Preview                                        ModelID = "qwen3.6-max-preview"
-	Model__AIHubMix__Qwen3__6__Plus                                                ModelID = "qwen3.6-plus"
+	Model__AIHubMix__Qwen3__6__Flash__3_6                                          ModelID = "qwen3.6-flash"
+	Model__AIHubMix__Qwen3__6__Max__3_6__Preview                                   ModelID = "qwen3.6-max-preview"
+	Model__AIHubMix__Qwen3__6__Plus__3_6                                           ModelID = "qwen3.6-plus"
 	Model__AIHubMix__Xiaomi__Mimo__V2__5                                           ModelID = "xiaomi-mimo-v2.5"
 	Model__AIHubMix__Xiaomi__Mimo__V2__5__Free                                     ModelID = "xiaomi-mimo-v2.5-free"
 	Model__AIHubMix__Xiaomi__Mimo__V2__5__Pro                                      ModelID = "xiaomi-mimo-v2.5-pro"
@@ -213,15 +213,15 @@ const (
 	Model__Abacus__Llama__4__Maverick__17B__128E__Instruct__Fp8                    ModelID = "meta-llama/Llama-4-Maverick-17B-128E-Instruct-FP8"
 	Model__Abacus__Meta__Llama__3__1__405B__Instruct__Turbo                        ModelID = "meta-llama/Meta-Llama-3.1-405B-Instruct-Turbo"
 	Model__Abacus__Meta__Llama__3__1__8B__Instruct                                 ModelID = "meta-llama/Meta-Llama-3.1-8B-Instruct"
-	Model__Abacus__O3                                                              ModelID = "o3"
-	Model__Abacus__O3__Mini                                                        ModelID = "o3-mini"
-	Model__Abacus__O3__Pro                                                         ModelID = "o3-pro"
-	Model__Abacus__O4__Mini                                                        ModelID = "o4-mini"
-	Model__Abacus__Qwen2__5__72B__Instruct                                         ModelID = "Qwen/Qwen2.5-72B-Instruct"
-	Model__Abacus__Qwen3__235B__A22b__Instruct__2507                               ModelID = "Qwen/Qwen3-235B-A22B-Instruct-2507"
-	Model__Abacus__Qwen3__32B                                                      ModelID = "Qwen/Qwen3-32B"
-	Model__Abacus__Qwen3__Coder__480b__A35b__Instruct                              ModelID = "Qwen/qwen3-coder-480b-a35b-instruct"
-	Model__Abacus__Qwen3__Max                                                      ModelID = "qwen3-max"
+	Model__Abacus__O3__3                                                           ModelID = "o3"
+	Model__Abacus__O3__Mini__3                                                     ModelID = "o3-mini"
+	Model__Abacus__O3__Pro__3                                                      ModelID = "o3-pro"
+	Model__Abacus__O4__Mini__4                                                     ModelID = "o4-mini"
+	Model__Abacus__Qwen2__5__72B__Instruct__2_5                                    ModelID = "Qwen/Qwen2.5-72B-Instruct"
+	Model__Abacus__Qwen3__235B__A22b__Instruct__2507__3                            ModelID = "Qwen/Qwen3-235B-A22B-Instruct-2507"
+	Model__Abacus__Qwen3__32B__3                                                   ModelID = "Qwen/Qwen3-32B"
+	Model__Abacus__Qwen3__Coder__480b__A35b__Instruct__3                           ModelID = "Qwen/qwen3-coder-480b-a35b-instruct"
+	Model__Abacus__Qwen3__Max__3                                                   ModelID = "qwen3-max"
 	Model__Abacus__Qwen__2__5__Coder__32b__2_5                                     ModelID = "qwen-2.5-coder-32b"
 	Model__Abacus__Qwq__32B                                                        ModelID = "Qwen/QwQ-32B"
 	Model__Abacus__Route__LLM                                                      ModelID = "route-llm"
@@ -253,41 +253,41 @@ const (
 	Model__AlibabaCN__Minimax__M2__7                                               ModelID = "MiniMax/MiniMax-M2.7"
 	Model__AlibabaCN__Moonshot__Kimi__K2__Instruct                                 ModelID = "moonshot-kimi-k2-instruct"
 	Model__AlibabaCN__Qvq__Max                                                     ModelID = "qvq-max"
-	Model__AlibabaCN__Qwen2__5__14b__Instruct                                      ModelID = "qwen2-5-14b-instruct"
-	Model__AlibabaCN__Qwen2__5__32b__Instruct                                      ModelID = "qwen2-5-32b-instruct"
-	Model__AlibabaCN__Qwen2__5__72b__Instruct                                      ModelID = "qwen2-5-72b-instruct"
-	Model__AlibabaCN__Qwen2__5__7b__Instruct                                       ModelID = "qwen2-5-7b-instruct"
-	Model__AlibabaCN__Qwen2__5__Coder__32b__Instruct                               ModelID = "qwen2-5-coder-32b-instruct"
-	Model__AlibabaCN__Qwen2__5__Coder__7b__Instruct                                ModelID = "qwen2-5-coder-7b-instruct"
-	Model__AlibabaCN__Qwen2__5__Math__72b__Instruct                                ModelID = "qwen2-5-math-72b-instruct"
-	Model__AlibabaCN__Qwen2__5__Math__7b__Instruct                                 ModelID = "qwen2-5-math-7b-instruct"
-	Model__AlibabaCN__Qwen2__5__Omni__7b                                           ModelID = "qwen2-5-omni-7b"
-	Model__AlibabaCN__Qwen2__5__Vl__72b__Instruct                                  ModelID = "qwen2-5-vl-72b-instruct"
-	Model__AlibabaCN__Qwen2__5__Vl__7b__Instruct                                   ModelID = "qwen2-5-vl-7b-instruct"
-	Model__AlibabaCN__Qwen3__14b                                                   ModelID = "qwen3-14b"
-	Model__AlibabaCN__Qwen3__235b__A22b                                            ModelID = "qwen3-235b-a22b"
-	Model__AlibabaCN__Qwen3__32b                                                   ModelID = "qwen3-32b"
-	Model__AlibabaCN__Qwen3__5__397b__A17b                                         ModelID = "qwen3.5-397b-a17b"
-	Model__AlibabaCN__Qwen3__5__Flash                                              ModelID = "qwen3.5-flash"
-	Model__AlibabaCN__Qwen3__5__Plus                                               ModelID = "qwen3.5-plus"
-	Model__AlibabaCN__Qwen3__6__Flash                                              ModelID = "qwen3.6-flash"
-	Model__AlibabaCN__Qwen3__6__Max__Preview                                       ModelID = "qwen3.6-max-preview"
-	Model__AlibabaCN__Qwen3__6__Plus                                               ModelID = "qwen3.6-plus"
-	Model__AlibabaCN__Qwen3__7__Max                                                ModelID = "qwen3.7-max"
-	Model__AlibabaCN__Qwen3__8b                                                    ModelID = "qwen3-8b"
-	Model__AlibabaCN__Qwen3__Asr__Flash                                            ModelID = "qwen3-asr-flash"
-	Model__AlibabaCN__Qwen3__Coder__30b__A3b__Instruct                             ModelID = "qwen3-coder-30b-a3b-instruct"
-	Model__AlibabaCN__Qwen3__Coder__480b__A35b__Instruct                           ModelID = "qwen3-coder-480b-a35b-instruct"
-	Model__AlibabaCN__Qwen3__Coder__Flash                                          ModelID = "qwen3-coder-flash"
-	Model__AlibabaCN__Qwen3__Coder__Plus                                           ModelID = "qwen3-coder-plus"
-	Model__AlibabaCN__Qwen3__Max                                                   ModelID = "qwen3-max"
-	Model__AlibabaCN__Qwen3__Next__80b__A3b__Instruct                              ModelID = "qwen3-next-80b-a3b-instruct"
-	Model__AlibabaCN__Qwen3__Next__80b__A3b__Thinking                              ModelID = "qwen3-next-80b-a3b-thinking"
-	Model__AlibabaCN__Qwen3__Omni__Flash                                           ModelID = "qwen3-omni-flash"
-	Model__AlibabaCN__Qwen3__Omni__Flash__Realtime                                 ModelID = "qwen3-omni-flash-realtime"
-	Model__AlibabaCN__Qwen3__Vl__235b__A22b                                        ModelID = "qwen3-vl-235b-a22b"
-	Model__AlibabaCN__Qwen3__Vl__30b__A3b                                          ModelID = "qwen3-vl-30b-a3b"
-	Model__AlibabaCN__Qwen3__Vl__Plus                                              ModelID = "qwen3-vl-plus"
+	Model__AlibabaCN__Qwen2__5__14b__Instruct__2                                   ModelID = "qwen2-5-14b-instruct"
+	Model__AlibabaCN__Qwen2__5__32b__Instruct__2                                   ModelID = "qwen2-5-32b-instruct"
+	Model__AlibabaCN__Qwen2__5__72b__Instruct__2                                   ModelID = "qwen2-5-72b-instruct"
+	Model__AlibabaCN__Qwen2__5__7b__Instruct__2                                    ModelID = "qwen2-5-7b-instruct"
+	Model__AlibabaCN__Qwen2__5__Coder__32b__Instruct__2                            ModelID = "qwen2-5-coder-32b-instruct"
+	Model__AlibabaCN__Qwen2__5__Coder__7b__Instruct__2                             ModelID = "qwen2-5-coder-7b-instruct"
+	Model__AlibabaCN__Qwen2__5__Math__72b__Instruct__2                             ModelID = "qwen2-5-math-72b-instruct"
+	Model__AlibabaCN__Qwen2__5__Math__7b__Instruct__2                              ModelID = "qwen2-5-math-7b-instruct"
+	Model__AlibabaCN__Qwen2__5__Omni__7b__2                                        ModelID = "qwen2-5-omni-7b"
+	Model__AlibabaCN__Qwen2__5__Vl__72b__Instruct__2                               ModelID = "qwen2-5-vl-72b-instruct"
+	Model__AlibabaCN__Qwen2__5__Vl__7b__Instruct__2                                ModelID = "qwen2-5-vl-7b-instruct"
+	Model__AlibabaCN__Qwen3__14b__3                                                ModelID = "qwen3-14b"
+	Model__AlibabaCN__Qwen3__235b__A22b__3                                         ModelID = "qwen3-235b-a22b"
+	Model__AlibabaCN__Qwen3__32b__3                                                ModelID = "qwen3-32b"
+	Model__AlibabaCN__Qwen3__5__397b__A17b__3_5                                    ModelID = "qwen3.5-397b-a17b"
+	Model__AlibabaCN__Qwen3__5__Flash__3_5                                         ModelID = "qwen3.5-flash"
+	Model__AlibabaCN__Qwen3__5__Plus__3_5                                          ModelID = "qwen3.5-plus"
+	Model__AlibabaCN__Qwen3__6__Flash__3_6                                         ModelID = "qwen3.6-flash"
+	Model__AlibabaCN__Qwen3__6__Max__3_6__Preview                                  ModelID = "qwen3.6-max-preview"
+	Model__AlibabaCN__Qwen3__6__Plus__3_6                                          ModelID = "qwen3.6-plus"
+	Model__AlibabaCN__Qwen3__7__Max__3_7                                           ModelID = "qwen3.7-max"
+	Model__AlibabaCN__Qwen3__8b__3                                                 ModelID = "qwen3-8b"
+	Model__AlibabaCN__Qwen3__Asr__Flash__3                                         ModelID = "qwen3-asr-flash"
+	Model__AlibabaCN__Qwen3__Coder__30b__A3b__Instruct__3                          ModelID = "qwen3-coder-30b-a3b-instruct"
+	Model__AlibabaCN__Qwen3__Coder__480b__A35b__Instruct__3                        ModelID = "qwen3-coder-480b-a35b-instruct"
+	Model__AlibabaCN__Qwen3__Coder__Flash__3                                       ModelID = "qwen3-coder-flash"
+	Model__AlibabaCN__Qwen3__Coder__Plus__3                                        ModelID = "qwen3-coder-plus"
+	Model__AlibabaCN__Qwen3__Max__3                                                ModelID = "qwen3-max"
+	Model__AlibabaCN__Qwen3__Next__80b__A3b__3__Thinking                           ModelID = "qwen3-next-80b-a3b-thinking"
+	Model__AlibabaCN__Qwen3__Next__80b__A3b__Instruct__3                           ModelID = "qwen3-next-80b-a3b-instruct"
+	Model__AlibabaCN__Qwen3__Omni__Flash__3                                        ModelID = "qwen3-omni-flash"
+	Model__AlibabaCN__Qwen3__Omni__Flash__Realtime__3                              ModelID = "qwen3-omni-flash-realtime"
+	Model__AlibabaCN__Qwen3__Vl__235b__A22b__3                                     ModelID = "qwen3-vl-235b-a22b"
+	Model__AlibabaCN__Qwen3__Vl__30b__A3b__3                                       ModelID = "qwen3-vl-30b-a3b"
+	Model__AlibabaCN__Qwen3__Vl__Plus__3                                           ModelID = "qwen3-vl-plus"
 	Model__AlibabaCN__Qwen__Deep__Research                                         ModelID = "qwen-deep-research"
 	Model__AlibabaCN__Qwen__Doc__Turbo                                             ModelID = "qwen-doc-turbo"
 	Model__AlibabaCN__Qwen__Flash                                                  ModelID = "qwen-flash"
@@ -312,61 +312,61 @@ const (
 	Model__AlibabaCodingPlanCN__Glm__5                                             ModelID = "glm-5"
 	Model__AlibabaCodingPlanCN__Kimi__K2__5                                        ModelID = "kimi-k2.5"
 	Model__AlibabaCodingPlanCN__Minimax__M2__5                                     ModelID = "MiniMax-M2.5"
-	Model__AlibabaCodingPlanCN__Qwen3__5__Plus                                     ModelID = "qwen3.5-plus"
-	Model__AlibabaCodingPlanCN__Qwen3__6__Flash                                    ModelID = "qwen3.6-flash"
-	Model__AlibabaCodingPlanCN__Qwen3__6__Plus                                     ModelID = "qwen3.6-plus"
-	Model__AlibabaCodingPlanCN__Qwen3__7__Max                                      ModelID = "qwen3.7-max"
-	Model__AlibabaCodingPlanCN__Qwen3__Coder__Next                                 ModelID = "qwen3-coder-next"
-	Model__AlibabaCodingPlanCN__Qwen3__Coder__Plus                                 ModelID = "qwen3-coder-plus"
-	Model__AlibabaCodingPlanCN__Qwen3__Max__20260123                               ModelID = "qwen3-max-2026-01-23"
+	Model__AlibabaCodingPlanCN__Qwen3__5__Plus__3_5                                ModelID = "qwen3.5-plus"
+	Model__AlibabaCodingPlanCN__Qwen3__6__Flash__3_6                               ModelID = "qwen3.6-flash"
+	Model__AlibabaCodingPlanCN__Qwen3__6__Plus__3_6                                ModelID = "qwen3.6-plus"
+	Model__AlibabaCodingPlanCN__Qwen3__7__Max__3_7                                 ModelID = "qwen3.7-max"
+	Model__AlibabaCodingPlanCN__Qwen3__Coder__Next__3                              ModelID = "qwen3-coder-next"
+	Model__AlibabaCodingPlanCN__Qwen3__Coder__Plus__3                              ModelID = "qwen3-coder-plus"
+	Model__AlibabaCodingPlanCN__Qwen3__Max__3__20260123                            ModelID = "qwen3-max-2026-01-23"
 	Model__AlibabaCodingPlan__Glm__4_7                                             ModelID = "glm-4.7"
 	Model__AlibabaCodingPlan__Glm__5                                               ModelID = "glm-5"
 	Model__AlibabaCodingPlan__Kimi__K2__5                                          ModelID = "kimi-k2.5"
 	Model__AlibabaCodingPlan__Minimax__M2__5                                       ModelID = "MiniMax-M2.5"
-	Model__AlibabaCodingPlan__Qwen3__5__Plus                                       ModelID = "qwen3.5-plus"
-	Model__AlibabaCodingPlan__Qwen3__6__Flash                                      ModelID = "qwen3.6-flash"
-	Model__AlibabaCodingPlan__Qwen3__6__Plus                                       ModelID = "qwen3.6-plus"
-	Model__AlibabaCodingPlan__Qwen3__7__Max                                        ModelID = "qwen3.7-max"
-	Model__AlibabaCodingPlan__Qwen3__Coder__Next                                   ModelID = "qwen3-coder-next"
-	Model__AlibabaCodingPlan__Qwen3__Coder__Plus                                   ModelID = "qwen3-coder-plus"
-	Model__AlibabaCodingPlan__Qwen3__Max__20260123                                 ModelID = "qwen3-max-2026-01-23"
+	Model__AlibabaCodingPlan__Qwen3__5__Plus__3_5                                  ModelID = "qwen3.5-plus"
+	Model__AlibabaCodingPlan__Qwen3__6__Flash__3_6                                 ModelID = "qwen3.6-flash"
+	Model__AlibabaCodingPlan__Qwen3__6__Plus__3_6                                  ModelID = "qwen3.6-plus"
+	Model__AlibabaCodingPlan__Qwen3__7__Max__3_7                                   ModelID = "qwen3.7-max"
+	Model__AlibabaCodingPlan__Qwen3__Coder__Next__3                                ModelID = "qwen3-coder-next"
+	Model__AlibabaCodingPlan__Qwen3__Coder__Plus__3                                ModelID = "qwen3-coder-plus"
+	Model__AlibabaCodingPlan__Qwen3__Max__3__20260123                              ModelID = "qwen3-max-2026-01-23"
 	Model__Alibaba__Qvq__Max                                                       ModelID = "qvq-max"
-	Model__Alibaba__Qwen2__5__14b__Instruct                                        ModelID = "qwen2-5-14b-instruct"
-	Model__Alibaba__Qwen2__5__32b__Instruct                                        ModelID = "qwen2-5-32b-instruct"
-	Model__Alibaba__Qwen2__5__72b__Instruct                                        ModelID = "qwen2-5-72b-instruct"
-	Model__Alibaba__Qwen2__5__7b__Instruct                                         ModelID = "qwen2-5-7b-instruct"
-	Model__Alibaba__Qwen2__5__Omni__7b                                             ModelID = "qwen2-5-omni-7b"
-	Model__Alibaba__Qwen2__5__Vl__72b__Instruct                                    ModelID = "qwen2-5-vl-72b-instruct"
-	Model__Alibaba__Qwen2__5__Vl__7b__Instruct                                     ModelID = "qwen2-5-vl-7b-instruct"
-	Model__Alibaba__Qwen3__14b                                                     ModelID = "qwen3-14b"
-	Model__Alibaba__Qwen3__235b__A22b                                              ModelID = "qwen3-235b-a22b"
-	Model__Alibaba__Qwen3__32b                                                     ModelID = "qwen3-32b"
-	Model__Alibaba__Qwen3__5__122b__A10b                                           ModelID = "qwen3.5-122b-a10b"
-	Model__Alibaba__Qwen3__5__27b                                                  ModelID = "qwen3.5-27b"
-	Model__Alibaba__Qwen3__5__35b__A3b                                             ModelID = "qwen3.5-35b-a3b"
-	Model__Alibaba__Qwen3__5__397b__A17b                                           ModelID = "qwen3.5-397b-a17b"
-	Model__Alibaba__Qwen3__5__Plus                                                 ModelID = "qwen3.5-plus"
-	Model__Alibaba__Qwen3__6__27b                                                  ModelID = "qwen3.6-27b"
-	Model__Alibaba__Qwen3__6__35b__A3b                                             ModelID = "qwen3.6-35b-a3b"
-	Model__Alibaba__Qwen3__6__Flash                                                ModelID = "qwen3.6-flash"
-	Model__Alibaba__Qwen3__6__Max__Preview                                         ModelID = "qwen3.6-max-preview"
-	Model__Alibaba__Qwen3__6__Plus                                                 ModelID = "qwen3.6-plus"
-	Model__Alibaba__Qwen3__7__Max                                                  ModelID = "qwen3.7-max"
-	Model__Alibaba__Qwen3__8b                                                      ModelID = "qwen3-8b"
-	Model__Alibaba__Qwen3__Asr__Flash                                              ModelID = "qwen3-asr-flash"
-	Model__Alibaba__Qwen3__Coder__30b__A3b__Instruct                               ModelID = "qwen3-coder-30b-a3b-instruct"
-	Model__Alibaba__Qwen3__Coder__480b__A35b__Instruct                             ModelID = "qwen3-coder-480b-a35b-instruct"
-	Model__Alibaba__Qwen3__Coder__Flash                                            ModelID = "qwen3-coder-flash"
-	Model__Alibaba__Qwen3__Coder__Plus                                             ModelID = "qwen3-coder-plus"
-	Model__Alibaba__Qwen3__Livetranslate__Flash__Realtime                          ModelID = "qwen3-livetranslate-flash-realtime"
-	Model__Alibaba__Qwen3__Max                                                     ModelID = "qwen3-max"
-	Model__Alibaba__Qwen3__Next__80b__A3b__Instruct                                ModelID = "qwen3-next-80b-a3b-instruct"
-	Model__Alibaba__Qwen3__Next__80b__A3b__Thinking                                ModelID = "qwen3-next-80b-a3b-thinking"
-	Model__Alibaba__Qwen3__Omni__Flash                                             ModelID = "qwen3-omni-flash"
-	Model__Alibaba__Qwen3__Omni__Flash__Realtime                                   ModelID = "qwen3-omni-flash-realtime"
-	Model__Alibaba__Qwen3__Vl__235b__A22b                                          ModelID = "qwen3-vl-235b-a22b"
-	Model__Alibaba__Qwen3__Vl__30b__A3b                                            ModelID = "qwen3-vl-30b-a3b"
-	Model__Alibaba__Qwen3__Vl__Plus                                                ModelID = "qwen3-vl-plus"
+	Model__Alibaba__Qwen2__5__14b__Instruct__2                                     ModelID = "qwen2-5-14b-instruct"
+	Model__Alibaba__Qwen2__5__32b__Instruct__2                                     ModelID = "qwen2-5-32b-instruct"
+	Model__Alibaba__Qwen2__5__72b__Instruct__2                                     ModelID = "qwen2-5-72b-instruct"
+	Model__Alibaba__Qwen2__5__7b__Instruct__2                                      ModelID = "qwen2-5-7b-instruct"
+	Model__Alibaba__Qwen2__5__Omni__7b__2                                          ModelID = "qwen2-5-omni-7b"
+	Model__Alibaba__Qwen2__5__Vl__72b__Instruct__2                                 ModelID = "qwen2-5-vl-72b-instruct"
+	Model__Alibaba__Qwen2__5__Vl__7b__Instruct__2                                  ModelID = "qwen2-5-vl-7b-instruct"
+	Model__Alibaba__Qwen3__14b__3                                                  ModelID = "qwen3-14b"
+	Model__Alibaba__Qwen3__235b__A22b__3                                           ModelID = "qwen3-235b-a22b"
+	Model__Alibaba__Qwen3__32b__3                                                  ModelID = "qwen3-32b"
+	Model__Alibaba__Qwen3__5__122b__A10b__3_5                                      ModelID = "qwen3.5-122b-a10b"
+	Model__Alibaba__Qwen3__5__27b__3_5                                             ModelID = "qwen3.5-27b"
+	Model__Alibaba__Qwen3__5__35b__A3b__3_5                                        ModelID = "qwen3.5-35b-a3b"
+	Model__Alibaba__Qwen3__5__397b__A17b__3_5                                      ModelID = "qwen3.5-397b-a17b"
+	Model__Alibaba__Qwen3__5__Plus__3_5                                            ModelID = "qwen3.5-plus"
+	Model__Alibaba__Qwen3__6__27b__3_6                                             ModelID = "qwen3.6-27b"
+	Model__Alibaba__Qwen3__6__35b__A3b__3_6                                        ModelID = "qwen3.6-35b-a3b"
+	Model__Alibaba__Qwen3__6__Flash__3_6                                           ModelID = "qwen3.6-flash"
+	Model__Alibaba__Qwen3__6__Max__3_6__Preview                                    ModelID = "qwen3.6-max-preview"
+	Model__Alibaba__Qwen3__6__Plus__3_6                                            ModelID = "qwen3.6-plus"
+	Model__Alibaba__Qwen3__7__Max__3_7                                             ModelID = "qwen3.7-max"
+	Model__Alibaba__Qwen3__8b__3                                                   ModelID = "qwen3-8b"
+	Model__Alibaba__Qwen3__Asr__Flash__3                                           ModelID = "qwen3-asr-flash"
+	Model__Alibaba__Qwen3__Coder__30b__A3b__Instruct__3                            ModelID = "qwen3-coder-30b-a3b-instruct"
+	Model__Alibaba__Qwen3__Coder__480b__A35b__Instruct__3                          ModelID = "qwen3-coder-480b-a35b-instruct"
+	Model__Alibaba__Qwen3__Coder__Flash__3                                         ModelID = "qwen3-coder-flash"
+	Model__Alibaba__Qwen3__Coder__Plus__3                                          ModelID = "qwen3-coder-plus"
+	Model__Alibaba__Qwen3__Livetranslate__Flash__Realtime__3                       ModelID = "qwen3-livetranslate-flash-realtime"
+	Model__Alibaba__Qwen3__Max__3                                                  ModelID = "qwen3-max"
+	Model__Alibaba__Qwen3__Next__80b__A3b__3__Thinking                             ModelID = "qwen3-next-80b-a3b-thinking"
+	Model__Alibaba__Qwen3__Next__80b__A3b__Instruct__3                             ModelID = "qwen3-next-80b-a3b-instruct"
+	Model__Alibaba__Qwen3__Omni__Flash__3                                          ModelID = "qwen3-omni-flash"
+	Model__Alibaba__Qwen3__Omni__Flash__Realtime__3                                ModelID = "qwen3-omni-flash-realtime"
+	Model__Alibaba__Qwen3__Vl__235b__A22b__3                                       ModelID = "qwen3-vl-235b-a22b"
+	Model__Alibaba__Qwen3__Vl__30b__A3b__3                                         ModelID = "qwen3-vl-30b-a3b"
+	Model__Alibaba__Qwen3__Vl__Plus__3                                             ModelID = "qwen3-vl-plus"
 	Model__Alibaba__Qwen__Flash                                                    ModelID = "qwen-flash"
 	Model__Alibaba__Qwen__Max                                                      ModelID = "qwen-max"
 	Model__Alibaba__Qwen__Mt__Plus                                                 ModelID = "qwen-mt-plus"
@@ -590,12 +590,12 @@ const (
 	Model__AzureCognitiveServices__Mistral__Nemo                                   ModelID = "mistral-nemo"
 	Model__AzureCognitiveServices__Mistral__Small__2503                            ModelID = "mistral-small-2503"
 	Model__AzureCognitiveServices__Model__Router                                   ModelID = "model-router"
-	Model__AzureCognitiveServices__O1                                              ModelID = "o1"
-	Model__AzureCognitiveServices__O1__Mini                                        ModelID = "o1-mini"
-	Model__AzureCognitiveServices__O1__Preview                                     ModelID = "o1-preview"
-	Model__AzureCognitiveServices__O3                                              ModelID = "o3"
-	Model__AzureCognitiveServices__O3__Mini                                        ModelID = "o3-mini"
-	Model__AzureCognitiveServices__O4__Mini                                        ModelID = "o4-mini"
+	Model__AzureCognitiveServices__O1__1                                           ModelID = "o1"
+	Model__AzureCognitiveServices__O1__1__Preview                                  ModelID = "o1-preview"
+	Model__AzureCognitiveServices__O1__Mini__1                                     ModelID = "o1-mini"
+	Model__AzureCognitiveServices__O3__3                                           ModelID = "o3"
+	Model__AzureCognitiveServices__O3__Mini__3                                     ModelID = "o3-mini"
+	Model__AzureCognitiveServices__O4__Mini__4                                     ModelID = "o4-mini"
 	Model__AzureCognitiveServices__Phi__3__5__Mini__Instruct__3_5                  ModelID = "phi-3.5-mini-instruct"
 	Model__AzureCognitiveServices__Phi__3__5__Moe__Instruct__3_5                   ModelID = "phi-3.5-moe-instruct"
 	Model__AzureCognitiveServices__Phi__3__Medium__128k__Instruct__3               ModelID = "phi-3-medium-128k-instruct"
@@ -693,12 +693,12 @@ const (
 	Model__Azure__Mistral__Nemo                                                    ModelID = "mistral-nemo"
 	Model__Azure__Mistral__Small__2503                                             ModelID = "mistral-small-2503"
 	Model__Azure__Model__Router                                                    ModelID = "model-router"
-	Model__Azure__O1                                                               ModelID = "o1"
-	Model__Azure__O1__Mini                                                         ModelID = "o1-mini"
-	Model__Azure__O1__Preview                                                      ModelID = "o1-preview"
-	Model__Azure__O3                                                               ModelID = "o3"
-	Model__Azure__O3__Mini                                                         ModelID = "o3-mini"
-	Model__Azure__O4__Mini                                                         ModelID = "o4-mini"
+	Model__Azure__O1__1                                                            ModelID = "o1"
+	Model__Azure__O1__1__Preview                                                   ModelID = "o1-preview"
+	Model__Azure__O1__Mini__1                                                      ModelID = "o1-mini"
+	Model__Azure__O3__3                                                            ModelID = "o3"
+	Model__Azure__O3__Mini__3                                                      ModelID = "o3-mini"
+	Model__Azure__O4__Mini__4                                                      ModelID = "o4-mini"
 	Model__Azure__Phi__3__5__Mini__Instruct__3_5                                   ModelID = "phi-3.5-mini-instruct"
 	Model__Azure__Phi__3__5__Moe__Instruct__3_5                                    ModelID = "phi-3.5-moe-instruct"
 	Model__Azure__Phi__3__Medium__128k__Instruct__3                                ModelID = "phi-3-medium-128k-instruct"
@@ -769,17 +769,17 @@ const (
 	Model__Chutes__Mimo__V2__Flash__Tee                                            ModelID = "XiaomiMiMo/MiMo-V2-Flash-TEE"
 	Model__Chutes__Minimax__M2__5__Tee                                             ModelID = "MiniMaxAI/MiniMax-M2.5-TEE"
 	Model__Chutes__Mistral__Nemo__Instruct__2407                                   ModelID = "unsloth/Mistral-Nemo-Instruct-2407"
-	Model__Chutes__Qwen2__5__72B__Instruct                                         ModelID = "Qwen/Qwen2.5-72B-Instruct"
-	Model__Chutes__Qwen2__5__Coder__32B__Instruct                                  ModelID = "Qwen/Qwen2.5-Coder-32B-Instruct"
-	Model__Chutes__Qwen2__5__Vl__32B__Instruct                                     ModelID = "Qwen/Qwen2.5-VL-32B-Instruct"
-	Model__Chutes__Qwen3__235B__A22b__Instruct__2507__Tee                          ModelID = "Qwen/Qwen3-235B-A22B-Instruct-2507-TEE"
-	Model__Chutes__Qwen3__235B__A22b__Thinking__2507                               ModelID = "Qwen/Qwen3-235B-A22B-Thinking-2507"
-	Model__Chutes__Qwen3__30B__A3b                                                 ModelID = "Qwen/Qwen3-30B-A3B"
-	Model__Chutes__Qwen3__32B__Tee                                                 ModelID = "Qwen/Qwen3-32B-TEE"
-	Model__Chutes__Qwen3__5__397B__A17b__Tee                                       ModelID = "Qwen/Qwen3.5-397B-A17B-TEE"
-	Model__Chutes__Qwen3__6__27B__Tee                                              ModelID = "Qwen/Qwen3.6-27B-TEE"
-	Model__Chutes__Qwen3__Coder__Next__Tee                                         ModelID = "Qwen/Qwen3-Coder-Next-TEE"
-	Model__Chutes__Qwen3__Next__80B__A3b__Instruct                                 ModelID = "Qwen/Qwen3-Next-80B-A3B-Instruct"
+	Model__Chutes__Qwen2__5__72B__Instruct__2_5                                    ModelID = "Qwen/Qwen2.5-72B-Instruct"
+	Model__Chutes__Qwen2__5__Coder__32B__Instruct__2_5                             ModelID = "Qwen/Qwen2.5-Coder-32B-Instruct"
+	Model__Chutes__Qwen2__5__Vl__32B__Instruct__2_5                                ModelID = "Qwen/Qwen2.5-VL-32B-Instruct"
+	Model__Chutes__Qwen3__235B__A22b__Instruct__2507__Tee__3                       ModelID = "Qwen/Qwen3-235B-A22B-Instruct-2507-TEE"
+	Model__Chutes__Qwen3__235B__A22b__Thinking__2507__3                            ModelID = "Qwen/Qwen3-235B-A22B-Thinking-2507"
+	Model__Chutes__Qwen3__30B__A3b__3                                              ModelID = "Qwen/Qwen3-30B-A3B"
+	Model__Chutes__Qwen3__32B__Tee__3                                              ModelID = "Qwen/Qwen3-32B-TEE"
+	Model__Chutes__Qwen3__5__397B__A17b__Tee__3_5                                  ModelID = "Qwen/Qwen3.5-397B-A17B-TEE"
+	Model__Chutes__Qwen3__6__27B__Tee__3_6                                         ModelID = "Qwen/Qwen3.6-27B-TEE"
+	Model__Chutes__Qwen3__Coder__Next__Tee__3                                      ModelID = "Qwen/Qwen3-Coder-Next-TEE"
+	Model__Chutes__Qwen3__Next__80B__A3b__Instruct__3                              ModelID = "Qwen/Qwen3-Next-80B-A3B-Instruct"
 	Model__Chutes__Qwen3guard__Gen__0__6B                                          ModelID = "Qwen/Qwen3Guard-Gen-0.6B"
 	Model__Clarifai__Deepseek__Ocr                                                 ModelID = "deepseek-ai/deepseek-ocr/models/DeepSeek-OCR"
 	Model__Clarifai__GPT__Oss__120b__High__Throughput                              ModelID = "openai/chat-completion/models/gpt-oss-120b-high-throughput"
@@ -789,9 +789,9 @@ const (
 	Model__Clarifai__Ministral__3__14B__Reasoning__2512                            ModelID = "mistralai/completion/models/Ministral-3-14B-Reasoning-2512"
 	Model__Clarifai__Ministral__3__3B__Reasoning__2512                             ModelID = "mistralai/completion/models/Ministral-3-3B-Reasoning-2512"
 	Model__Clarifai__Mm__Poly__8b                                                  ModelID = "clarifai/main/models/mm-poly-8b"
-	Model__Clarifai__Qwen3__30B__A3b__Instruct__2507                               ModelID = "qwen/qwenLM/models/Qwen3-30B-A3B-Instruct-2507"
-	Model__Clarifai__Qwen3__30B__A3b__Thinking__2507                               ModelID = "qwen/qwenLM/models/Qwen3-30B-A3B-Thinking-2507"
-	Model__Clarifai__Qwen3__Coder__30B__A3b__Instruct                              ModelID = "qwen/qwenCoder/models/Qwen3-Coder-30B-A3B-Instruct"
+	Model__Clarifai__Qwen3__30B__A3b__Instruct__2507__3                            ModelID = "qwen/qwenLM/models/Qwen3-30B-A3B-Instruct-2507"
+	Model__Clarifai__Qwen3__30B__A3b__Thinking__2507__3                            ModelID = "qwen/qwenLM/models/Qwen3-30B-A3B-Thinking-2507"
+	Model__Clarifai__Qwen3__Coder__30B__A3b__Instruct__3                           ModelID = "qwen/qwenCoder/models/Qwen3-Coder-30B-A3B-Instruct"
 	Model__Clarifai__Trinity__Mini                                                 ModelID = "arcee_ai/AFM/models/trinity-mini"
 	Model__Claudinio__Claudinio                                                    ModelID = "claudinio"
 	Model__CloudFerroSherlock__Bielik__11B__V2__6__Instruct                        ModelID = "speakleash/Bielik-11B-v2.6-Instruct"
@@ -864,15 +864,15 @@ const (
 	Model__CloudflareAIGateway__Mistral__Small__3__1__24b__Instruct                ModelID = "workers-ai/@cf/mistralai/mistral-small-3.1-24b-instruct"
 	Model__CloudflareAIGateway__Nemotron__3__120b__A12b__3                         ModelID = "workers-ai/@cf/nvidia/nemotron-3-120b-a12b"
 	Model__CloudflareAIGateway__Nova__3                                            ModelID = "workers-ai/@cf/deepgram/nova-3"
-	Model__CloudflareAIGateway__O1                                                 ModelID = "openai/o1"
-	Model__CloudflareAIGateway__O3                                                 ModelID = "openai/o3"
-	Model__CloudflareAIGateway__O3__Mini                                           ModelID = "openai/o3-mini"
-	Model__CloudflareAIGateway__O3__Pro                                            ModelID = "openai/o3-pro"
-	Model__CloudflareAIGateway__O4__Mini                                           ModelID = "openai/o4-mini"
+	Model__CloudflareAIGateway__O1__1                                              ModelID = "openai/o1"
+	Model__CloudflareAIGateway__O3__3                                              ModelID = "openai/o3"
+	Model__CloudflareAIGateway__O3__Mini__3                                        ModelID = "openai/o3-mini"
+	Model__CloudflareAIGateway__O3__Pro__3                                         ModelID = "openai/o3-pro"
+	Model__CloudflareAIGateway__O4__Mini__4                                        ModelID = "openai/o4-mini"
 	Model__CloudflareAIGateway__Plamo__Embedding__1b                               ModelID = "workers-ai/@cf/pfnet/plamo-embedding-1b"
-	Model__CloudflareAIGateway__Qwen2__5__Coder__32b__Instruct                     ModelID = "workers-ai/@cf/qwen/qwen2.5-coder-32b-instruct"
-	Model__CloudflareAIGateway__Qwen3__30b__A3b__Fp8                               ModelID = "workers-ai/@cf/qwen/qwen3-30b-a3b-fp8"
-	Model__CloudflareAIGateway__Qwen3__Embedding__0__6b                            ModelID = "workers-ai/@cf/qwen/qwen3-embedding-0.6b"
+	Model__CloudflareAIGateway__Qwen2__5__Coder__32b__Instruct__2_5                ModelID = "workers-ai/@cf/qwen/qwen2.5-coder-32b-instruct"
+	Model__CloudflareAIGateway__Qwen3__30b__A3b__Fp8__3                            ModelID = "workers-ai/@cf/qwen/qwen3-30b-a3b-fp8"
+	Model__CloudflareAIGateway__Qwen3__Embedding__0__6b__3                         ModelID = "workers-ai/@cf/qwen/qwen3-embedding-0.6b"
 	Model__CloudflareAIGateway__Qwq__32b                                           ModelID = "workers-ai/@cf/qwen/qwq-32b"
 	Model__CloudflareAIGateway__Smart__Turn__V2                                    ModelID = "workers-ai/@cf/pipecat-ai/smart-turn-v2"
 	Model__CloudflareWorkersAI__Deepseek__R1__Distill__Qwen__32b                   ModelID = "@cf/deepseek-ai/deepseek-r1-distill-qwen-32b"
@@ -899,8 +899,8 @@ const (
 	Model__CloudflareWorkersAI__Mistral__7b__Instruct__V0__1                       ModelID = "@cf/mistral/mistral-7b-instruct-v0.1"
 	Model__CloudflareWorkersAI__Mistral__Small__3__1__24b__Instruct                ModelID = "@cf/mistralai/mistral-small-3.1-24b-instruct"
 	Model__CloudflareWorkersAI__Nemotron__3__120b__A12b__3                         ModelID = "@cf/nvidia/nemotron-3-120b-a12b"
-	Model__CloudflareWorkersAI__Qwen2__5__Coder__32b__Instruct                     ModelID = "@cf/qwen/qwen2.5-coder-32b-instruct"
-	Model__CloudflareWorkersAI__Qwen3__30b__A3b__Fp8                               ModelID = "@cf/qwen/qwen3-30b-a3b-fp8"
+	Model__CloudflareWorkersAI__Qwen2__5__Coder__32b__Instruct__2_5                ModelID = "@cf/qwen/qwen2.5-coder-32b-instruct"
+	Model__CloudflareWorkersAI__Qwen3__30b__A3b__Fp8__3                            ModelID = "@cf/qwen/qwen3-30b-a3b-fp8"
 	Model__CloudflareWorkersAI__Qwq__32b                                           ModelID = "@cf/qwen/qwq-32b"
 	Model__Cohere__C4ai__Aya__Expanse__32b                                         ModelID = "c4ai-aya-expanse-32b"
 	Model__Cohere__C4ai__Aya__Expanse__8b                                          ModelID = "c4ai-aya-expanse-8b"
@@ -954,13 +954,13 @@ const (
 	Model__Cortecs__Mixtral__8x7B__Instruct__V0__1                                 ModelID = "mixtral-8x7B-instruct-v0.1"
 	Model__Cortecs__Nemotron__3__Super__120b__A12b                                 ModelID = "nemotron-3-super-120b-a12b"
 	Model__Cortecs__Nova__Pro__V1                                                  ModelID = "nova-pro-v1"
-	Model__Cortecs__Qwen3__235b__A22b__Instruct__2507                              ModelID = "qwen3-235b-a22b-instruct-2507"
-	Model__Cortecs__Qwen3__32b                                                     ModelID = "qwen3-32b"
-	Model__Cortecs__Qwen3__5__122b__A10b                                           ModelID = "qwen3.5-122b-a10b"
-	Model__Cortecs__Qwen3__5__397b__A17b                                           ModelID = "qwen3.5-397b-a17b"
-	Model__Cortecs__Qwen3__Coder__30b__A3b__Instruct                               ModelID = "qwen3-coder-30b-a3b-instruct"
-	Model__Cortecs__Qwen3__Coder__480b__A35b__Instruct                             ModelID = "qwen3-coder-480b-a35b-instruct"
-	Model__Cortecs__Qwen3__Coder__Next                                             ModelID = "qwen3-coder-next"
+	Model__Cortecs__Qwen3__235b__A22b__Instruct__2507__3                           ModelID = "qwen3-235b-a22b-instruct-2507"
+	Model__Cortecs__Qwen3__32b__3                                                  ModelID = "qwen3-32b"
+	Model__Cortecs__Qwen3__5__122b__A10b__3_5                                      ModelID = "qwen3.5-122b-a10b"
+	Model__Cortecs__Qwen3__5__397b__A17b__3_5                                      ModelID = "qwen3.5-397b-a17b"
+	Model__Cortecs__Qwen3__Coder__30b__A3b__Instruct__3                            ModelID = "qwen3-coder-30b-a3b-instruct"
+	Model__Cortecs__Qwen3__Coder__480b__A35b__Instruct__3                          ModelID = "qwen3-coder-480b-a35b-instruct"
+	Model__Cortecs__Qwen3__Coder__Next__3                                          ModelID = "qwen3-coder-next"
 	Model__Cortecs__Qwen3__Next__80b__A3b__Thinking                                ModelID = "qwen3-next-80b-a3b-thinking"
 	Model__Cortecs__Qwen__2__5__72b__Instruct__2_5                                 ModelID = "qwen-2.5-72b-instruct"
 	Model__Crof__Deepseek__V3__2                                                   ModelID = "deepseek-v3.2"
@@ -981,9 +981,9 @@ const (
 	Model__Crof__Mimo__V2__5__Pro                                                  ModelID = "mimo-v2.5-pro"
 	Model__Crof__Mimo__V2__5__Pro__Precision                                       ModelID = "mimo-v2.5-pro-precision"
 	Model__Crof__Minimax__M2__5                                                    ModelID = "minimax-m2.5"
-	Model__Crof__Qwen3__5__397b__A17b                                              ModelID = "qwen3.5-397b-a17b"
-	Model__Crof__Qwen3__5__9b                                                      ModelID = "qwen3.5-9b"
-	Model__Crof__Qwen3__6__27b                                                     ModelID = "qwen3.6-27b"
+	Model__Crof__Qwen3__5__397b__A17b__3_5                                         ModelID = "qwen3.5-397b-a17b"
+	Model__Crof__Qwen3__5__9b__3_5                                                 ModelID = "qwen3.5-9b"
+	Model__Crof__Qwen3__6__27b__3_6                                                ModelID = "qwen3.6-27b"
 	Model__DInference__GPT__Oss__120b                                              ModelID = "gpt-oss-120b"
 	Model__DInference__Glm__4_7                                                    ModelID = "glm-4.7"
 	Model__DInference__Glm__5                                                      ModelID = "glm-5"
@@ -1052,11 +1052,11 @@ const (
 	Model__Deepinfra__Minimax__M2                                                  ModelID = "MiniMaxAI/MiniMax-M2"
 	Model__Deepinfra__Minimax__M2__1                                               ModelID = "MiniMaxAI/MiniMax-M2.1"
 	Model__Deepinfra__Minimax__M2__5                                               ModelID = "MiniMaxAI/MiniMax-M2.5"
-	Model__Deepinfra__Qwen3__5__35B__A3b                                           ModelID = "Qwen/Qwen3.5-35B-A3B"
-	Model__Deepinfra__Qwen3__5__397B__A17b                                         ModelID = "Qwen/Qwen3.5-397B-A17B"
-	Model__Deepinfra__Qwen3__6__35B__A3b                                           ModelID = "Qwen/Qwen3.6-35B-A3B"
-	Model__Deepinfra__Qwen3__Coder__480B__A35b__Instruct                           ModelID = "Qwen/Qwen3-Coder-480B-A35B-Instruct"
-	Model__Deepinfra__Qwen3__Coder__480B__A35b__Instruct__Turbo                    ModelID = "Qwen/Qwen3-Coder-480B-A35B-Instruct-Turbo"
+	Model__Deepinfra__Qwen3__5__35B__A3b__3_5                                      ModelID = "Qwen/Qwen3.5-35B-A3B"
+	Model__Deepinfra__Qwen3__5__397B__A17b__3_5                                    ModelID = "Qwen/Qwen3.5-397B-A17B"
+	Model__Deepinfra__Qwen3__6__35B__A3b__3_6                                      ModelID = "Qwen/Qwen3.6-35B-A3B"
+	Model__Deepinfra__Qwen3__Coder__480B__A35b__Instruct__3                        ModelID = "Qwen/Qwen3-Coder-480B-A35B-Instruct"
+	Model__Deepinfra__Qwen3__Coder__480B__A35b__Instruct__Turbo__3                 ModelID = "Qwen/Qwen3-Coder-480B-A35B-Instruct-Turbo"
 	Model__DigitalOcean__Alibaba__Qwen3__32b                                       ModelID = "alibaba-qwen3-32b"
 	Model__DigitalOcean__All__Mini__Lm__L6__V2                                     ModelID = "all-mini-lm-l6-v2"
 	Model__DigitalOcean__Anthropic__Claude__3__5__Haiku                            ModelID = "anthropic-claude-3.5-haiku"
@@ -1126,10 +1126,10 @@ const (
 	Model__DigitalOcean__Openai__O1                                                ModelID = "openai-o1"
 	Model__DigitalOcean__Openai__O3                                                ModelID = "openai-o3"
 	Model__DigitalOcean__Openai__O3__Mini                                          ModelID = "openai-o3-mini"
-	Model__DigitalOcean__Qwen3__5__397b__A17b                                      ModelID = "qwen3.5-397b-a17b"
-	Model__DigitalOcean__Qwen3__Coder__Flash                                       ModelID = "qwen3-coder-flash"
+	Model__DigitalOcean__Qwen3__5__397b__A17b__3_5                                 ModelID = "qwen3.5-397b-a17b"
+	Model__DigitalOcean__Qwen3__Coder__Flash__3                                    ModelID = "qwen3-coder-flash"
 	Model__DigitalOcean__Qwen3__Embedding__0__6b                                   ModelID = "qwen3-embedding-0.6b"
-	Model__DigitalOcean__Qwen3__Tts__Voicedesign                                   ModelID = "qwen3-tts-voicedesign"
+	Model__DigitalOcean__Qwen3__Tts__Voicedesign__3                                ModelID = "qwen3-tts-voicedesign"
 	Model__DigitalOcean__Qwen__2__5__14b__Instruct__2_5                            ModelID = "qwen-2.5-14b-instruct"
 	Model__DigitalOcean__Schnell                                                   ModelID = "fal-ai/flux/schnell"
 	Model__DigitalOcean__Stable__Diffusion__3__5__Large__3_5                       ModelID = "stable-diffusion-3.5-large"
@@ -1146,9 +1146,9 @@ const (
 	Model__Evroc__Magistral__Small__2509                                           ModelID = "mistralai/Magistral-Small-2509"
 	Model__Evroc__Multilingual__E5__Large__Instruct                                ModelID = "intfloat/multilingual-e5-large-instruct"
 	Model__Evroc__Phi__4__Multimodal__Instruct                                     ModelID = "microsoft/Phi-4-multimodal-instruct"
-	Model__Evroc__Qwen3__30B__A3b__Instruct__2507__Fp8                             ModelID = "Qwen/Qwen3-30B-A3B-Instruct-2507-FP8"
+	Model__Evroc__Qwen3__30B__A3b__Instruct__2507__Fp8__3                          ModelID = "Qwen/Qwen3-30B-A3B-Instruct-2507-FP8"
 	Model__Evroc__Qwen3__Embedding__8B                                             ModelID = "Qwen/Qwen3-Embedding-8B"
-	Model__Evroc__Qwen3__Vl__30B__A3b__Instruct                                    ModelID = "Qwen/Qwen3-VL-30B-A3B-Instruct"
+	Model__Evroc__Qwen3__Vl__30B__A3b__Instruct__3                                 ModelID = "Qwen/Qwen3-VL-30B-A3B-Instruct"
 	Model__Evroc__Voxtral__Small__24B__2507                                        ModelID = "mistralai/Voxtral-Small-24B-2507"
 	Model__Evroc__Whisper__Large__V3                                               ModelID = "openai/whisper-large-v3"
 	Model__FastRouter__Claude__Opus__4__1                                          ModelID = "anthropic/claude-opus-4.1"
@@ -1165,7 +1165,7 @@ const (
 	Model__FastRouter__Glm__5                                                      ModelID = "z-ai/glm-5"
 	Model__FastRouter__Grok__4                                                     ModelID = "x-ai/grok-4"
 	Model__FastRouter__Kimi__K2                                                    ModelID = "moonshotai/kimi-k2"
-	Model__FastRouter__Qwen3__Coder                                                ModelID = "qwen/qwen3-coder"
+	Model__FastRouter__Qwen3__Coder__3                                             ModelID = "qwen/qwen3-coder"
 	Model__Firepass__Kimi__K2p6__Turbo                                             ModelID = "accounts/fireworks/routers/kimi-k2p6-turbo"
 	Model__FireworksAI__Deepseek__V4__Flash                                        ModelID = "accounts/fireworks/models/deepseek-v4-flash"
 	Model__FireworksAI__Deepseek__V4__Pro                                          ModelID = "accounts/fireworks/models/deepseek-v4-pro"
@@ -1184,7 +1184,7 @@ const (
 	Model__Friendli__Llama__3__1__8B__Instruct                                     ModelID = "meta-llama/Llama-3.1-8B-Instruct"
 	Model__Friendli__Llama__3__3__70B__Instruct                                    ModelID = "meta-llama/Llama-3.3-70B-Instruct"
 	Model__Friendli__Minimax__M2__5                                                ModelID = "MiniMaxAI/MiniMax-M2.5"
-	Model__Friendli__Qwen3__235B__A22b__Instruct__2507                             ModelID = "Qwen/Qwen3-235B-A22B-Instruct-2507"
+	Model__Friendli__Qwen3__235B__A22b__Instruct__2507__3                          ModelID = "Qwen/Qwen3-235B-A22B-Instruct-2507"
 	Model__FrogBot__Claude__Haiku__4_5                                             ModelID = "claude-haiku-4-5"
 	Model__FrogBot__Claude__Opus__4_6                                              ModelID = "claude-opus-4-6"
 	Model__FrogBot__Claude__Opus__4_7                                              ModelID = "claude-opus-4-7"
@@ -1275,12 +1275,12 @@ const (
 	Model__GitHubModels__Mistral__Medium__2505                                     ModelID = "mistral-ai/mistral-medium-2505"
 	Model__GitHubModels__Mistral__Nemo                                             ModelID = "mistral-ai/mistral-nemo"
 	Model__GitHubModels__Mistral__Small__2503                                      ModelID = "mistral-ai/mistral-small-2503"
-	Model__GitHubModels__O1                                                        ModelID = "openai/o1"
-	Model__GitHubModels__O1__Mini                                                  ModelID = "openai/o1-mini"
-	Model__GitHubModels__O1__Preview                                               ModelID = "openai/o1-preview"
-	Model__GitHubModels__O3                                                        ModelID = "openai/o3"
-	Model__GitHubModels__O3__Mini                                                  ModelID = "openai/o3-mini"
-	Model__GitHubModels__O4__Mini                                                  ModelID = "openai/o4-mini"
+	Model__GitHubModels__O1__1                                                     ModelID = "openai/o1"
+	Model__GitHubModels__O1__1__Preview                                            ModelID = "openai/o1-preview"
+	Model__GitHubModels__O1__Mini__1                                               ModelID = "openai/o1-mini"
+	Model__GitHubModels__O3__3                                                     ModelID = "openai/o3"
+	Model__GitHubModels__O3__Mini__3                                               ModelID = "openai/o3-mini"
+	Model__GitHubModels__O4__Mini__4                                               ModelID = "openai/o4-mini"
 	Model__GitHubModels__Phi__3__5__Mini__Instruct__3_5                            ModelID = "microsoft/phi-3.5-mini-instruct"
 	Model__GitHubModels__Phi__3__5__Moe__Instruct__3_5                             ModelID = "microsoft/phi-3.5-moe-instruct"
 	Model__GitHubModels__Phi__3__5__Vision__Instruct__3_5                          ModelID = "microsoft/phi-3.5-vision-instruct"
@@ -1372,7 +1372,7 @@ const (
 	Model__GoogleVertex__Kimi__K2__Thinking__Maas                                  ModelID = "moonshotai/kimi-k2-thinking-maas"
 	Model__GoogleVertex__Llama__3__3__70b__Instruct__Maas__3_3                     ModelID = "meta/llama-3.3-70b-instruct-maas"
 	Model__GoogleVertex__Llama__4__Maverick__17b__128e__Instruct__Maas__4          ModelID = "meta/llama-4-maverick-17b-128e-instruct-maas"
-	Model__GoogleVertex__Qwen3__235b__A22b__Instruct__2507__Maas                   ModelID = "qwen/qwen3-235b-a22b-instruct-2507-maas"
+	Model__GoogleVertex__Qwen3__235b__A22b__Instruct__2507__Maas__3                ModelID = "qwen/qwen3-235b-a22b-instruct-2507-maas"
 	Model__Google__Gemini__2__0__Flash__2_0                                        ModelID = "gemini-2.0-flash"
 	Model__Google__Gemini__2__0__Flash__Lite__2_0                                  ModelID = "gemini-2.0-flash-lite"
 	Model__Google__Gemini__2__5__Flash__2_5                                        ModelID = "gemini-2.5-flash"
@@ -1417,7 +1417,7 @@ const (
 	Model__Groq__Mistral__Saba__24b                                                ModelID = "mistral-saba-24b"
 	Model__Groq__Orpheus__Arabic__Saudi                                            ModelID = "canopylabs/orpheus-arabic-saudi"
 	Model__Groq__Orpheus__V1__English                                              ModelID = "canopylabs/orpheus-v1-english"
-	Model__Groq__Qwen3__32b                                                        ModelID = "qwen/qwen3-32b"
+	Model__Groq__Qwen3__32b__3                                                     ModelID = "qwen/qwen3-32b"
 	Model__Groq__Qwen__Qwq__32b                                                    ModelID = "qwen-qwq-32b"
 	Model__Groq__Whisper__Large__V3                                                ModelID = "whisper-large-v3"
 	Model__Groq__Whisper__Large__V3__Turbo                                         ModelID = "whisper-large-v3-turbo"
@@ -1492,20 +1492,20 @@ const (
 	Model__Helicone__Mistral__Large__2411                                          ModelID = "mistral-large-2411"
 	Model__Helicone__Mistral__Nemo                                                 ModelID = "mistral-nemo"
 	Model__Helicone__Mistral__Small                                                ModelID = "mistral-small"
-	Model__Helicone__O1                                                            ModelID = "o1"
-	Model__Helicone__O1__Mini                                                      ModelID = "o1-mini"
-	Model__Helicone__O3                                                            ModelID = "o3"
-	Model__Helicone__O3__Mini                                                      ModelID = "o3-mini"
-	Model__Helicone__O3__Pro                                                       ModelID = "o3-pro"
-	Model__Helicone__O4__Mini                                                      ModelID = "o4-mini"
-	Model__Helicone__Qwen2__5__Coder__7b__Fast                                     ModelID = "qwen2.5-coder-7b-fast"
-	Model__Helicone__Qwen3__235b__A22b__Thinking                                   ModelID = "qwen3-235b-a22b-thinking"
-	Model__Helicone__Qwen3__30b__A3b                                               ModelID = "qwen3-30b-a3b"
-	Model__Helicone__Qwen3__32b                                                    ModelID = "qwen3-32b"
-	Model__Helicone__Qwen3__Coder                                                  ModelID = "qwen3-coder"
-	Model__Helicone__Qwen3__Coder__30b__A3b__Instruct                              ModelID = "qwen3-coder-30b-a3b-instruct"
-	Model__Helicone__Qwen3__Next__80b__A3b__Instruct                               ModelID = "qwen3-next-80b-a3b-instruct"
-	Model__Helicone__Qwen3__Vl__235b__A22b__Instruct                               ModelID = "qwen3-vl-235b-a22b-instruct"
+	Model__Helicone__O1__1                                                         ModelID = "o1"
+	Model__Helicone__O1__Mini__1                                                   ModelID = "o1-mini"
+	Model__Helicone__O3__3                                                         ModelID = "o3"
+	Model__Helicone__O3__Mini__3                                                   ModelID = "o3-mini"
+	Model__Helicone__O3__Pro__3                                                    ModelID = "o3-pro"
+	Model__Helicone__O4__Mini__4                                                   ModelID = "o4-mini"
+	Model__Helicone__Qwen2__5__Coder__7b__Fast__2_5                                ModelID = "qwen2.5-coder-7b-fast"
+	Model__Helicone__Qwen3__235b__A22b__3__Thinking                                ModelID = "qwen3-235b-a22b-thinking"
+	Model__Helicone__Qwen3__30b__A3b__3                                            ModelID = "qwen3-30b-a3b"
+	Model__Helicone__Qwen3__32b__3                                                 ModelID = "qwen3-32b"
+	Model__Helicone__Qwen3__Coder__3                                               ModelID = "qwen3-coder"
+	Model__Helicone__Qwen3__Coder__30b__A3b__Instruct__3                           ModelID = "qwen3-coder-30b-a3b-instruct"
+	Model__Helicone__Qwen3__Next__80b__A3b__Instruct__3                            ModelID = "qwen3-next-80b-a3b-instruct"
+	Model__Helicone__Qwen3__Vl__235b__A22b__Instruct__3                            ModelID = "qwen3-vl-235b-a22b-instruct"
 	Model__Helicone__Sonar                                                         ModelID = "sonar"
 	Model__Helicone__Sonar__Deep__Research                                         ModelID = "sonar-deep-research"
 	Model__Helicone__Sonar__Pro                                                    ModelID = "sonar-pro"
@@ -1530,14 +1530,14 @@ const (
 	Model__Huggingface__Minimax__M2__1                                             ModelID = "MiniMaxAI/MiniMax-M2.1"
 	Model__Huggingface__Minimax__M2__5                                             ModelID = "MiniMaxAI/MiniMax-M2.5"
 	Model__Huggingface__Minimax__M2__7                                             ModelID = "MiniMaxAI/MiniMax-M2.7"
-	Model__Huggingface__Qwen3__235B__A22b__Thinking__2507                          ModelID = "Qwen/Qwen3-235B-A22B-Thinking-2507"
-	Model__Huggingface__Qwen3__5__397B__A17b                                       ModelID = "Qwen/Qwen3.5-397B-A17B"
-	Model__Huggingface__Qwen3__Coder__480B__A35b__Instruct                         ModelID = "Qwen/Qwen3-Coder-480B-A35B-Instruct"
-	Model__Huggingface__Qwen3__Coder__Next                                         ModelID = "Qwen/Qwen3-Coder-Next"
-	Model__Huggingface__Qwen3__Embedding__4B                                       ModelID = "Qwen/Qwen3-Embedding-4B"
-	Model__Huggingface__Qwen3__Embedding__8B                                       ModelID = "Qwen/Qwen3-Embedding-8B"
-	Model__Huggingface__Qwen3__Next__80B__A3b__Instruct                            ModelID = "Qwen/Qwen3-Next-80B-A3B-Instruct"
-	Model__Huggingface__Qwen3__Next__80B__A3b__Thinking                            ModelID = "Qwen/Qwen3-Next-80B-A3B-Thinking"
+	Model__Huggingface__Qwen3__235B__A22b__Thinking__2507__3                       ModelID = "Qwen/Qwen3-235B-A22B-Thinking-2507"
+	Model__Huggingface__Qwen3__5__397B__A17b__3_5                                  ModelID = "Qwen/Qwen3.5-397B-A17B"
+	Model__Huggingface__Qwen3__Coder__480B__A35b__Instruct__3                      ModelID = "Qwen/Qwen3-Coder-480B-A35B-Instruct"
+	Model__Huggingface__Qwen3__Coder__Next__3                                      ModelID = "Qwen/Qwen3-Coder-Next"
+	Model__Huggingface__Qwen3__Embedding__4B__3                                    ModelID = "Qwen/Qwen3-Embedding-4B"
+	Model__Huggingface__Qwen3__Embedding__8B__3                                    ModelID = "Qwen/Qwen3-Embedding-8B"
+	Model__Huggingface__Qwen3__Next__80B__A3b__Instruct__3                         ModelID = "Qwen/Qwen3-Next-80B-A3B-Instruct"
+	Model__Huggingface__Qwen3__Next__80B__A3b__Thinking__3                         ModelID = "Qwen/Qwen3-Next-80B-A3B-Thinking"
 	Model__IONet__Deepseek__R1__0528                                               ModelID = "deepseek-ai/DeepSeek-R1-0528"
 	Model__IONet__Devstral__Small__2505                                            ModelID = "mistralai/Devstral-Small-2505"
 	Model__IONet__GPT__Oss__120b                                                   ModelID = "openai/gpt-oss-120b"
@@ -1551,24 +1551,24 @@ const (
 	Model__IONet__Magistral__Small__2506                                           ModelID = "mistralai/Magistral-Small-2506"
 	Model__IONet__Mistral__Large__Instruct__2411                                   ModelID = "mistralai/Mistral-Large-Instruct-2411"
 	Model__IONet__Mistral__Nemo__Instruct__2407                                    ModelID = "mistralai/Mistral-Nemo-Instruct-2407"
-	Model__IONet__Qwen2__5__Vl__32B__Instruct                                      ModelID = "Qwen/Qwen2.5-VL-32B-Instruct"
-	Model__IONet__Qwen3__235B__A22b__Thinking__2507                                ModelID = "Qwen/Qwen3-235B-A22B-Thinking-2507"
-	Model__IONet__Qwen3__Coder__480B__A35b__Instruct__Int4__Mixed__Ar              ModelID = "Intel/Qwen3-Coder-480B-A35B-Instruct-int4-mixed-ar"
-	Model__IONet__Qwen3__Next__80B__A3b__Instruct                                  ModelID = "Qwen/Qwen3-Next-80B-A3B-Instruct"
+	Model__IONet__Qwen2__5__Vl__32B__Instruct__2_5                                 ModelID = "Qwen/Qwen2.5-VL-32B-Instruct"
+	Model__IONet__Qwen3__235B__A22b__Thinking__2507__3                             ModelID = "Qwen/Qwen3-235B-A22B-Thinking-2507"
+	Model__IONet__Qwen3__Coder__480B__A35b__Instruct__Int4__Mixed__Ar__3           ModelID = "Intel/Qwen3-Coder-480B-A35B-Instruct-int4-mixed-ar"
+	Model__IONet__Qwen3__Next__80B__A3b__Instruct__3                               ModelID = "Qwen/Qwen3-Next-80B-A3B-Instruct"
 	Model__Iflowcn__Deepseek__R1                                                   ModelID = "deepseek-r1"
 	Model__Iflowcn__Deepseek__V3                                                   ModelID = "deepseek-v3"
 	Model__Iflowcn__Deepseek__V3__2                                                ModelID = "deepseek-v3.2"
 	Model__Iflowcn__Glm__4_6                                                       ModelID = "glm-4.6"
 	Model__Iflowcn__Kimi__K2                                                       ModelID = "kimi-k2"
 	Model__Iflowcn__Kimi__K2__0905                                                 ModelID = "kimi-k2-0905"
-	Model__Iflowcn__Qwen3__235b                                                    ModelID = "qwen3-235b"
-	Model__Iflowcn__Qwen3__235b__A22b__Instruct                                    ModelID = "qwen3-235b-a22b-instruct"
-	Model__Iflowcn__Qwen3__235b__A22b__Thinking__2507                              ModelID = "qwen3-235b-a22b-thinking-2507"
-	Model__Iflowcn__Qwen3__32b                                                     ModelID = "qwen3-32b"
-	Model__Iflowcn__Qwen3__Coder__Plus                                             ModelID = "qwen3-coder-plus"
-	Model__Iflowcn__Qwen3__Max                                                     ModelID = "qwen3-max"
-	Model__Iflowcn__Qwen3__Max__Preview                                            ModelID = "qwen3-max-preview"
-	Model__Iflowcn__Qwen3__Vl__Plus                                                ModelID = "qwen3-vl-plus"
+	Model__Iflowcn__Qwen3__235b__3                                                 ModelID = "qwen3-235b"
+	Model__Iflowcn__Qwen3__235b__A22b__Instruct__3                                 ModelID = "qwen3-235b-a22b-instruct"
+	Model__Iflowcn__Qwen3__235b__A22b__Thinking__2507__3                           ModelID = "qwen3-235b-a22b-thinking-2507"
+	Model__Iflowcn__Qwen3__32b__3                                                  ModelID = "qwen3-32b"
+	Model__Iflowcn__Qwen3__Coder__Plus__3                                          ModelID = "qwen3-coder-plus"
+	Model__Iflowcn__Qwen3__Max__3                                                  ModelID = "qwen3-max"
+	Model__Iflowcn__Qwen3__Max__3__Preview                                         ModelID = "qwen3-max-preview"
+	Model__Iflowcn__Qwen3__Vl__Plus__3                                             ModelID = "qwen3-vl-plus"
 	Model__Inception__Mercury__2                                                   ModelID = "mercury-2"
 	Model__Inception__Mercury__Edit__2                                             ModelID = "mercury-edit-2"
 	Model__Inceptron__Glm__5__1__Fp8                                               ModelID = "zai-org/GLM-5.1-FP8"
@@ -1582,7 +1582,7 @@ const (
 	Model__Inference__Llama__3__2__3b__Instruct__3_2                               ModelID = "meta/llama-3.2-3b-instruct"
 	Model__Inference__Mistral__Nemo__12b__Instruct                                 ModelID = "mistral/mistral-nemo-12b-instruct"
 	Model__Inference__Osmosis__Structure__0__6b                                    ModelID = "osmosis/osmosis-structure-0.6b"
-	Model__Inference__Qwen3__Embedding__4b                                         ModelID = "qwen/qwen3-embedding-4b"
+	Model__Inference__Qwen3__Embedding__4b__3                                      ModelID = "qwen/qwen3-embedding-4b"
 	Model__Inference__Qwen__2__5__7b__Vision__Instruct__2_5                        ModelID = "qwen/qwen-2.5-7b-vision-instruct"
 	Model__Jiekou__Claude__Haiku__4_5__20251001                                    ModelID = "claude-haiku-4-5-20251001"
 	Model__Jiekou__Claude__Opus__4_1__20250805                                     ModelID = "claude-opus-4-1-20250805"
@@ -1633,18 +1633,18 @@ const (
 	Model__Jiekou__Mimo__V2__Flash                                                 ModelID = "xiaomimimo/mimo-v2-flash"
 	Model__Jiekou__Minimax__M1__80k                                                ModelID = "minimaxai/minimax-m1-80k"
 	Model__Jiekou__Minimax__M2__1                                                  ModelID = "minimax/minimax-m2.1"
-	Model__Jiekou__O3                                                              ModelID = "o3"
-	Model__Jiekou__O3__Mini                                                        ModelID = "o3-mini"
-	Model__Jiekou__O4__Mini                                                        ModelID = "o4-mini"
-	Model__Jiekou__Qwen3__235b__A22b__Fp8                                          ModelID = "qwen/qwen3-235b-a22b-fp8"
-	Model__Jiekou__Qwen3__235b__A22b__Instruct__2507                               ModelID = "qwen/qwen3-235b-a22b-instruct-2507"
-	Model__Jiekou__Qwen3__235b__A22b__Thinking__2507                               ModelID = "qwen/qwen3-235b-a22b-thinking-2507"
-	Model__Jiekou__Qwen3__30b__A3b__Fp8                                            ModelID = "qwen/qwen3-30b-a3b-fp8"
-	Model__Jiekou__Qwen3__32b__Fp8                                                 ModelID = "qwen/qwen3-32b-fp8"
-	Model__Jiekou__Qwen3__Coder__480b__A35b__Instruct                              ModelID = "qwen/qwen3-coder-480b-a35b-instruct"
-	Model__Jiekou__Qwen3__Coder__Next                                              ModelID = "qwen/qwen3-coder-next"
-	Model__Jiekou__Qwen3__Next__80b__A3b__Instruct                                 ModelID = "qwen/qwen3-next-80b-a3b-instruct"
-	Model__Jiekou__Qwen3__Next__80b__A3b__Thinking                                 ModelID = "qwen/qwen3-next-80b-a3b-thinking"
+	Model__Jiekou__O3__3                                                           ModelID = "o3"
+	Model__Jiekou__O3__Mini__3                                                     ModelID = "o3-mini"
+	Model__Jiekou__O4__Mini__4                                                     ModelID = "o4-mini"
+	Model__Jiekou__Qwen3__235b__A22b__Fp8__3                                       ModelID = "qwen/qwen3-235b-a22b-fp8"
+	Model__Jiekou__Qwen3__235b__A22b__Instruct__2507__3                            ModelID = "qwen/qwen3-235b-a22b-instruct-2507"
+	Model__Jiekou__Qwen3__235b__A22b__Thinking__2507__3                            ModelID = "qwen/qwen3-235b-a22b-thinking-2507"
+	Model__Jiekou__Qwen3__30b__A3b__Fp8__3                                         ModelID = "qwen/qwen3-30b-a3b-fp8"
+	Model__Jiekou__Qwen3__32b__Fp8__3                                              ModelID = "qwen/qwen3-32b-fp8"
+	Model__Jiekou__Qwen3__Coder__480b__A35b__Instruct__3                           ModelID = "qwen/qwen3-coder-480b-a35b-instruct"
+	Model__Jiekou__Qwen3__Coder__Next__3                                           ModelID = "qwen/qwen3-coder-next"
+	Model__Jiekou__Qwen3__Next__80b__A3b__3__Thinking                              ModelID = "qwen/qwen3-next-80b-a3b-thinking"
+	Model__Jiekou__Qwen3__Next__80b__A3b__Instruct__3                              ModelID = "qwen/qwen3-next-80b-a3b-instruct"
 	Model__KUAECloudCodingPlan__Glm__4__7                                          ModelID = "GLM-4.7"
 	Model__Kilo__Aion__1_0                                                         ModelID = "aion-labs/aion-1.0"
 	Model__Kilo__Aion__1__0__Mini__1_0                                             ModelID = "aion-labs/aion-1.0-mini"
@@ -1895,16 +1895,16 @@ const (
 	Model__Kilo__Nova__Micro__V1                                                   ModelID = "amazon/nova-micro-v1"
 	Model__Kilo__Nova__Premier__V1                                                 ModelID = "amazon/nova-premier-v1"
 	Model__Kilo__Nova__Pro__V1                                                     ModelID = "amazon/nova-pro-v1"
-	Model__Kilo__O1                                                                ModelID = "openai/o1"
-	Model__Kilo__O1__Pro                                                           ModelID = "openai/o1-pro"
-	Model__Kilo__O3                                                                ModelID = "openai/o3"
-	Model__Kilo__O3__Deep__Research                                                ModelID = "openai/o3-deep-research"
-	Model__Kilo__O3__Mini                                                          ModelID = "openai/o3-mini"
-	Model__Kilo__O3__Mini__High                                                    ModelID = "openai/o3-mini-high"
-	Model__Kilo__O3__Pro                                                           ModelID = "openai/o3-pro"
-	Model__Kilo__O4__Mini                                                          ModelID = "openai/o4-mini"
+	Model__Kilo__O1__1                                                             ModelID = "openai/o1"
+	Model__Kilo__O1__Pro__1                                                        ModelID = "openai/o1-pro"
+	Model__Kilo__O3__3                                                             ModelID = "openai/o3"
+	Model__Kilo__O3__Deep__Research__3                                             ModelID = "openai/o3-deep-research"
+	Model__Kilo__O3__Mini__3                                                       ModelID = "openai/o3-mini"
+	Model__Kilo__O3__Mini__High__3                                                 ModelID = "openai/o3-mini-high"
+	Model__Kilo__O3__Pro__3                                                        ModelID = "openai/o3-pro"
+	Model__Kilo__O4__Mini__4                                                       ModelID = "openai/o4-mini"
 	Model__Kilo__O4__Mini__Deep__Research                                          ModelID = "openai/o4-mini-deep-research"
-	Model__Kilo__O4__Mini__High                                                    ModelID = "openai/o4-mini-high"
+	Model__Kilo__O4__Mini__High__4                                                 ModelID = "openai/o4-mini-high"
 	Model__Kilo__Olmo__3__32b__Think                                               ModelID = "allenai/olmo-3-32b-think"
 	Model__Kilo__Owl__Alpha                                                        ModelID = "openrouter/owl-alpha"
 	Model__Kilo__Palmyra__X5                                                       ModelID = "writer/palmyra-x5"
@@ -1915,35 +1915,35 @@ const (
 	Model__Kilo__Pixtral__Large__2411                                              ModelID = "mistralai/pixtral-large-2411"
 	Model__Kilo__Qianfan__Ocr__Fast                                                ModelID = "baidu/qianfan-ocr-fast"
 	Model__Kilo__Qwen2__5__Vl__72b__Instruct                                       ModelID = "qwen/qwen2.5-vl-72b-instruct"
-	Model__Kilo__Qwen3__14b                                                        ModelID = "qwen/qwen3-14b"
-	Model__Kilo__Qwen3__235b__A22b                                                 ModelID = "qwen/qwen3-235b-a22b"
-	Model__Kilo__Qwen3__235b__A22b__2507                                           ModelID = "qwen/qwen3-235b-a22b-2507"
-	Model__Kilo__Qwen3__235b__A22b__Thinking__2507                                 ModelID = "qwen/qwen3-235b-a22b-thinking-2507"
-	Model__Kilo__Qwen3__30b__A3b                                                   ModelID = "qwen/qwen3-30b-a3b"
-	Model__Kilo__Qwen3__30b__A3b__Instruct__2507                                   ModelID = "qwen/qwen3-30b-a3b-instruct-2507"
-	Model__Kilo__Qwen3__30b__A3b__Thinking__2507                                   ModelID = "qwen/qwen3-30b-a3b-thinking-2507"
-	Model__Kilo__Qwen3__32b                                                        ModelID = "qwen/qwen3-32b"
-	Model__Kilo__Qwen3__5__122b__A10b                                              ModelID = "qwen/qwen3.5-122b-a10b"
-	Model__Kilo__Qwen3__5__27b                                                     ModelID = "qwen/qwen3.5-27b"
-	Model__Kilo__Qwen3__5__35b__A3b                                                ModelID = "qwen/qwen3.5-35b-a3b"
-	Model__Kilo__Qwen3__5__397b__A17b                                              ModelID = "qwen/qwen3.5-397b-a17b"
-	Model__Kilo__Qwen3__5__9b                                                      ModelID = "qwen/qwen3.5-9b"
-	Model__Kilo__Qwen3__5__Flash__02__23                                           ModelID = "qwen/qwen3.5-flash-02-23"
-	Model__Kilo__Qwen3__5__Plus__20260215                                          ModelID = "qwen/qwen3.5-plus-02-15"
-	Model__Kilo__Qwen3__5__Plus__20260420                                          ModelID = "qwen/qwen3.5-plus-20260420"
-	Model__Kilo__Qwen3__6__27b                                                     ModelID = "qwen/qwen3.6-27b"
-	Model__Kilo__Qwen3__6__35b__A3b                                                ModelID = "qwen/qwen3.6-35b-a3b"
-	Model__Kilo__Qwen3__6__Flash                                                   ModelID = "qwen/qwen3.6-flash"
-	Model__Kilo__Qwen3__6__Max__Preview                                            ModelID = "qwen/qwen3.6-max-preview"
-	Model__Kilo__Qwen3__6__Plus                                                    ModelID = "qwen/qwen3.6-plus"
-	Model__Kilo__Qwen3__7__Max                                                     ModelID = "qwen/qwen3.7-max"
-	Model__Kilo__Qwen3__8b                                                         ModelID = "qwen/qwen3-8b"
-	Model__Kilo__Qwen3__Coder                                                      ModelID = "qwen/qwen3-coder"
+	Model__Kilo__Qwen3__14b__3                                                     ModelID = "qwen/qwen3-14b"
+	Model__Kilo__Qwen3__235b__A22b__2507__3                                        ModelID = "qwen/qwen3-235b-a22b-2507"
+	Model__Kilo__Qwen3__235b__A22b__3                                              ModelID = "qwen/qwen3-235b-a22b"
+	Model__Kilo__Qwen3__235b__A22b__Thinking__2507__3                              ModelID = "qwen/qwen3-235b-a22b-thinking-2507"
+	Model__Kilo__Qwen3__30b__A3b__3                                                ModelID = "qwen/qwen3-30b-a3b"
+	Model__Kilo__Qwen3__30b__A3b__Instruct__2507__3                                ModelID = "qwen/qwen3-30b-a3b-instruct-2507"
+	Model__Kilo__Qwen3__30b__A3b__Thinking__2507__3                                ModelID = "qwen/qwen3-30b-a3b-thinking-2507"
+	Model__Kilo__Qwen3__32b__3                                                     ModelID = "qwen/qwen3-32b"
+	Model__Kilo__Qwen3__5__122b__A10b__3_5                                         ModelID = "qwen/qwen3.5-122b-a10b"
+	Model__Kilo__Qwen3__5__27b__3_5                                                ModelID = "qwen/qwen3.5-27b"
+	Model__Kilo__Qwen3__5__35b__A3b__3_5                                           ModelID = "qwen/qwen3.5-35b-a3b"
+	Model__Kilo__Qwen3__5__397b__A17b__3_5                                         ModelID = "qwen/qwen3.5-397b-a17b"
+	Model__Kilo__Qwen3__5__9b__3_5                                                 ModelID = "qwen/qwen3.5-9b"
+	Model__Kilo__Qwen3__5__Flash__02__23__3_5                                      ModelID = "qwen/qwen3.5-flash-02-23"
+	Model__Kilo__Qwen3__5__Plus__3_5__20260215                                     ModelID = "qwen/qwen3.5-plus-02-15"
+	Model__Kilo__Qwen3__5__Plus__3_5__20260420                                     ModelID = "qwen/qwen3.5-plus-20260420"
+	Model__Kilo__Qwen3__6__27b__3_6                                                ModelID = "qwen/qwen3.6-27b"
+	Model__Kilo__Qwen3__6__35b__A3b__3_6                                           ModelID = "qwen/qwen3.6-35b-a3b"
+	Model__Kilo__Qwen3__6__Flash__3_6                                              ModelID = "qwen/qwen3.6-flash"
+	Model__Kilo__Qwen3__6__Max__3_6__Preview                                       ModelID = "qwen/qwen3.6-max-preview"
+	Model__Kilo__Qwen3__6__Plus__3_6                                               ModelID = "qwen/qwen3.6-plus"
+	Model__Kilo__Qwen3__7__Max__3_7                                                ModelID = "qwen/qwen3.7-max"
+	Model__Kilo__Qwen3__8b__3                                                      ModelID = "qwen/qwen3-8b"
+	Model__Kilo__Qwen3__Coder__3                                                   ModelID = "qwen/qwen3-coder"
 	Model__Kilo__Qwen3__Coder__30b__A3b__Instruct                                  ModelID = "qwen/qwen3-coder-30b-a3b-instruct"
 	Model__Kilo__Qwen3__Coder__Flash                                               ModelID = "qwen/qwen3-coder-flash"
-	Model__Kilo__Qwen3__Coder__Next                                                ModelID = "qwen/qwen3-coder-next"
-	Model__Kilo__Qwen3__Coder__Plus                                                ModelID = "qwen/qwen3-coder-plus"
-	Model__Kilo__Qwen3__Max                                                        ModelID = "qwen/qwen3-max"
+	Model__Kilo__Qwen3__Coder__Next__3                                             ModelID = "qwen/qwen3-coder-next"
+	Model__Kilo__Qwen3__Coder__Plus__3                                             ModelID = "qwen/qwen3-coder-plus"
+	Model__Kilo__Qwen3__Max__3                                                     ModelID = "qwen/qwen3-max"
 	Model__Kilo__Qwen3__Max__Thinking                                              ModelID = "qwen/qwen3-max-thinking"
 	Model__Kilo__Qwen3__Next__80b__A3b__Instruct                                   ModelID = "qwen/qwen3-next-80b-a3b-instruct"
 	Model__Kilo__Qwen3__Next__80b__A3b__Thinking                                   ModelID = "qwen/qwen3-next-80b-a3b-thinking"
@@ -1995,8 +1995,8 @@ const (
 	Model__KimiForCoding__K2p6                                                     ModelID = "k2p6"
 	Model__KimiForCoding__Kimi__K2__Thinking                                       ModelID = "kimi-k2-thinking"
 	Model__LMStudio__GPT__Oss__20b                                                 ModelID = "openai/gpt-oss-20b"
-	Model__LMStudio__Qwen3__30b__A3b__2507                                         ModelID = "qwen/qwen3-30b-a3b-2507"
-	Model__LMStudio__Qwen3__Coder__30b                                             ModelID = "qwen/qwen3-coder-30b"
+	Model__LMStudio__Qwen3__30b__A3b__2507__3                                      ModelID = "qwen/qwen3-30b-a3b-2507"
+	Model__LMStudio__Qwen3__Coder__30b__3                                          ModelID = "qwen/qwen3-coder-30b"
 	Model__Lilac__Gemma__4__31b__It__4                                             ModelID = "google/gemma-4-31b-it"
 	Model__Lilac__Glm__5__1                                                        ModelID = "zai-org/glm-5.1"
 	Model__Lilac__Kimi__K2__6                                                      ModelID = "moonshotai/kimi-k2.6"
@@ -2141,44 +2141,44 @@ const (
 	Model__Llmgateway__Mistral__Large__2512                                        ModelID = "mistral-large-2512"
 	Model__Llmgateway__Mistral__Large__Latest                                      ModelID = "mistral-large-latest"
 	Model__Llmgateway__Mistral__Small__2506                                        ModelID = "mistral-small-2506"
-	Model__Llmgateway__O1                                                          ModelID = "o1"
-	Model__Llmgateway__O3                                                          ModelID = "o3"
-	Model__Llmgateway__O3__Mini                                                    ModelID = "o3-mini"
-	Model__Llmgateway__O4__Mini                                                    ModelID = "o4-mini"
+	Model__Llmgateway__O1__1                                                       ModelID = "o1"
+	Model__Llmgateway__O3__3                                                       ModelID = "o3"
+	Model__Llmgateway__O3__Mini__3                                                 ModelID = "o3-mini"
+	Model__Llmgateway__O4__Mini__4                                                 ModelID = "o4-mini"
 	Model__Llmgateway__Pixtral__Large__Latest                                      ModelID = "pixtral-large-latest"
-	Model__Llmgateway__Qwen25__Coder__7b                                           ModelID = "qwen25-coder-7b"
-	Model__Llmgateway__Qwen2__5__Vl__32b__Instruct                                 ModelID = "qwen2-5-vl-32b-instruct"
-	Model__Llmgateway__Qwen2__5__Vl__72b__Instruct                                 ModelID = "qwen2-5-vl-72b-instruct"
-	Model__Llmgateway__Qwen35__397b__A17b                                          ModelID = "qwen35-397b-a17b"
-	Model__Llmgateway__Qwen3__235b__A22b__Fp8                                      ModelID = "qwen3-235b-a22b-fp8"
-	Model__Llmgateway__Qwen3__235b__A22b__Instruct__2507                           ModelID = "qwen3-235b-a22b-instruct-2507"
-	Model__Llmgateway__Qwen3__235b__A22b__Thinking__2507                           ModelID = "qwen3-235b-a22b-thinking-2507"
-	Model__Llmgateway__Qwen3__30b__A3b__Fp8                                        ModelID = "qwen3-30b-a3b-fp8"
-	Model__Llmgateway__Qwen3__30b__A3b__Instruct__2507                             ModelID = "qwen3-30b-a3b-instruct-2507"
-	Model__Llmgateway__Qwen3__30b__A3b__Thinking__2507                             ModelID = "qwen3-30b-a3b-thinking-2507"
-	Model__Llmgateway__Qwen3__32b                                                  ModelID = "qwen3-32b"
-	Model__Llmgateway__Qwen3__32b__Fp8                                             ModelID = "qwen3-32b-fp8"
-	Model__Llmgateway__Qwen3__4b__Fp8                                              ModelID = "qwen3-4b-fp8"
-	Model__Llmgateway__Qwen3__6__35b__A3b                                          ModelID = "qwen3.6-35b-a3b"
-	Model__Llmgateway__Qwen3__6__Max__Preview                                      ModelID = "qwen3.6-max-preview"
-	Model__Llmgateway__Qwen3__6__Plus                                              ModelID = "qwen3.6-plus"
-	Model__Llmgateway__Qwen3__7__Max                                               ModelID = "qwen3.7-max"
-	Model__Llmgateway__Qwen3__Coder__30b__A3b__Instruct                            ModelID = "qwen3-coder-30b-a3b-instruct"
-	Model__Llmgateway__Qwen3__Coder__480b__A35b__Instruct                          ModelID = "qwen3-coder-480b-a35b-instruct"
-	Model__Llmgateway__Qwen3__Coder__Flash                                         ModelID = "qwen3-coder-flash"
-	Model__Llmgateway__Qwen3__Coder__Next                                          ModelID = "qwen3-coder-next"
-	Model__Llmgateway__Qwen3__Coder__Plus                                          ModelID = "qwen3-coder-plus"
-	Model__Llmgateway__Qwen3__Max                                                  ModelID = "qwen3-max"
-	Model__Llmgateway__Qwen3__Max__20260123                                        ModelID = "qwen3-max-2026-01-23"
-	Model__Llmgateway__Qwen3__Next__80b__A3b__Instruct                             ModelID = "qwen3-next-80b-a3b-instruct"
-	Model__Llmgateway__Qwen3__Next__80b__A3b__Thinking                             ModelID = "qwen3-next-80b-a3b-thinking"
-	Model__Llmgateway__Qwen3__Vl__235b__A22b__Instruct                             ModelID = "qwen3-vl-235b-a22b-instruct"
-	Model__Llmgateway__Qwen3__Vl__235b__A22b__Thinking                             ModelID = "qwen3-vl-235b-a22b-thinking"
-	Model__Llmgateway__Qwen3__Vl__30b__A3b__Instruct                               ModelID = "qwen3-vl-30b-a3b-instruct"
-	Model__Llmgateway__Qwen3__Vl__30b__A3b__Thinking                               ModelID = "qwen3-vl-30b-a3b-thinking"
-	Model__Llmgateway__Qwen3__Vl__8b__Instruct                                     ModelID = "qwen3-vl-8b-instruct"
-	Model__Llmgateway__Qwen3__Vl__Flash                                            ModelID = "qwen3-vl-flash"
-	Model__Llmgateway__Qwen3__Vl__Plus                                             ModelID = "qwen3-vl-plus"
+	Model__Llmgateway__Qwen25__Coder__7b__25                                       ModelID = "qwen25-coder-7b"
+	Model__Llmgateway__Qwen2__5__Vl__32b__Instruct__2                              ModelID = "qwen2-5-vl-32b-instruct"
+	Model__Llmgateway__Qwen2__5__Vl__72b__Instruct__2                              ModelID = "qwen2-5-vl-72b-instruct"
+	Model__Llmgateway__Qwen35__397b__A17b__35                                      ModelID = "qwen35-397b-a17b"
+	Model__Llmgateway__Qwen3__235b__A22b__Fp8__3                                   ModelID = "qwen3-235b-a22b-fp8"
+	Model__Llmgateway__Qwen3__235b__A22b__Instruct__2507__3                        ModelID = "qwen3-235b-a22b-instruct-2507"
+	Model__Llmgateway__Qwen3__235b__A22b__Thinking__2507__3                        ModelID = "qwen3-235b-a22b-thinking-2507"
+	Model__Llmgateway__Qwen3__30b__A3b__Fp8__3                                     ModelID = "qwen3-30b-a3b-fp8"
+	Model__Llmgateway__Qwen3__30b__A3b__Instruct__2507__3                          ModelID = "qwen3-30b-a3b-instruct-2507"
+	Model__Llmgateway__Qwen3__30b__A3b__Thinking__2507__3                          ModelID = "qwen3-30b-a3b-thinking-2507"
+	Model__Llmgateway__Qwen3__32b__3                                               ModelID = "qwen3-32b"
+	Model__Llmgateway__Qwen3__32b__Fp8__3                                          ModelID = "qwen3-32b-fp8"
+	Model__Llmgateway__Qwen3__4b__Fp8__3                                           ModelID = "qwen3-4b-fp8"
+	Model__Llmgateway__Qwen3__6__35b__A3b__3_6                                     ModelID = "qwen3.6-35b-a3b"
+	Model__Llmgateway__Qwen3__6__Max__3_6__Preview                                 ModelID = "qwen3.6-max-preview"
+	Model__Llmgateway__Qwen3__6__Plus__3_6                                         ModelID = "qwen3.6-plus"
+	Model__Llmgateway__Qwen3__7__Max__3_7                                          ModelID = "qwen3.7-max"
+	Model__Llmgateway__Qwen3__Coder__30b__A3b__Instruct__3                         ModelID = "qwen3-coder-30b-a3b-instruct"
+	Model__Llmgateway__Qwen3__Coder__480b__A35b__Instruct__3                       ModelID = "qwen3-coder-480b-a35b-instruct"
+	Model__Llmgateway__Qwen3__Coder__Flash__3                                      ModelID = "qwen3-coder-flash"
+	Model__Llmgateway__Qwen3__Coder__Next__3                                       ModelID = "qwen3-coder-next"
+	Model__Llmgateway__Qwen3__Coder__Plus__3                                       ModelID = "qwen3-coder-plus"
+	Model__Llmgateway__Qwen3__Max__3                                               ModelID = "qwen3-max"
+	Model__Llmgateway__Qwen3__Max__3__20260123                                     ModelID = "qwen3-max-2026-01-23"
+	Model__Llmgateway__Qwen3__Next__80b__A3b__3__Thinking                          ModelID = "qwen3-next-80b-a3b-thinking"
+	Model__Llmgateway__Qwen3__Next__80b__A3b__Instruct__3                          ModelID = "qwen3-next-80b-a3b-instruct"
+	Model__Llmgateway__Qwen3__Vl__235b__A22b__3__Thinking                          ModelID = "qwen3-vl-235b-a22b-thinking"
+	Model__Llmgateway__Qwen3__Vl__235b__A22b__Instruct__3                          ModelID = "qwen3-vl-235b-a22b-instruct"
+	Model__Llmgateway__Qwen3__Vl__30b__A3b__3__Thinking                            ModelID = "qwen3-vl-30b-a3b-thinking"
+	Model__Llmgateway__Qwen3__Vl__30b__A3b__Instruct__3                            ModelID = "qwen3-vl-30b-a3b-instruct"
+	Model__Llmgateway__Qwen3__Vl__8b__Instruct__3                                  ModelID = "qwen3-vl-8b-instruct"
+	Model__Llmgateway__Qwen3__Vl__Flash__3                                         ModelID = "qwen3-vl-flash"
+	Model__Llmgateway__Qwen3__Vl__Plus__3                                          ModelID = "qwen3-vl-plus"
 	Model__Llmgateway__Qwen__Coder__Plus                                           ModelID = "qwen-coder-plus"
 	Model__Llmgateway__Qwen__Flash                                                 ModelID = "qwen-flash"
 	Model__Llmgateway__Qwen__Max                                                   ModelID = "qwen-max"
@@ -2215,9 +2215,9 @@ const (
 	Model__Meganova__Minimax__M2__5                                                ModelID = "MiniMaxAI/MiniMax-M2.5"
 	Model__Meganova__Mistral__Nemo__Instruct__2407                                 ModelID = "mistralai/Mistral-Nemo-Instruct-2407"
 	Model__Meganova__Mistral__Small__3__2__24B__Instruct__2506                     ModelID = "mistralai/Mistral-Small-3.2-24B-Instruct-2506"
-	Model__Meganova__Qwen2__5__Vl__32B__Instruct                                   ModelID = "Qwen/Qwen2.5-VL-32B-Instruct"
-	Model__Meganova__Qwen3__235B__A22b__Instruct__2507                             ModelID = "Qwen/Qwen3-235B-A22B-Instruct-2507"
-	Model__Meganova__Qwen3__5__Plus                                                ModelID = "Qwen/Qwen3.5-Plus"
+	Model__Meganova__Qwen2__5__Vl__32B__Instruct__2_5                              ModelID = "Qwen/Qwen2.5-VL-32B-Instruct"
+	Model__Meganova__Qwen3__235B__A22b__Instruct__2507__3                          ModelID = "Qwen/Qwen3-235B-A22B-Instruct-2507"
+	Model__Meganova__Qwen3__5__Plus__3_5                                           ModelID = "Qwen/Qwen3.5-Plus"
 	Model__MergeGateway__Claude__Haiku__4__5__20251001                             ModelID = "anthropic/claude-haiku-4-5-20251001"
 	Model__MergeGateway__Claude__Opus__4__1__20250805                              ModelID = "anthropic/claude-opus-4-1-20250805"
 	Model__MergeGateway__Claude__Opus__4__20250514                                 ModelID = "anthropic/claude-opus-4-20250514"
@@ -2296,10 +2296,10 @@ const (
 	Model__MergeGateway__Mistral__Medium__2505                                     ModelID = "mistral/mistral-medium-2505"
 	Model__MergeGateway__Mistral__Medium__Latest                                   ModelID = "mistral/mistral-medium-latest"
 	Model__MergeGateway__Mistral__Small__Latest                                    ModelID = "mistral/mistral-small-latest"
-	Model__MergeGateway__O1                                                        ModelID = "openai/o1"
-	Model__MergeGateway__O3                                                        ModelID = "openai/o3"
-	Model__MergeGateway__O3__Mini                                                  ModelID = "openai/o3-mini"
-	Model__MergeGateway__O4__Mini                                                  ModelID = "openai/o4-mini"
+	Model__MergeGateway__O1__1                                                     ModelID = "openai/o1"
+	Model__MergeGateway__O3__3                                                     ModelID = "openai/o3"
+	Model__MergeGateway__O3__Mini__3                                               ModelID = "openai/o3-mini"
+	Model__MergeGateway__O4__Mini__4                                               ModelID = "openai/o4-mini"
 	Model__MergeGateway__Pixtral__Large__Latest                                    ModelID = "mistral/pixtral-large-latest"
 	Model__MiniMaxCNCodingPlan__Minimax__M2                                        ModelID = "MiniMax-M2"
 	Model__MiniMaxCNCodingPlan__Minimax__M2__1                                     ModelID = "MiniMax-M2.1"
@@ -2353,20 +2353,20 @@ const (
 	Model__Mistral__Open__Mixtral__8x7b                                            ModelID = "open-mixtral-8x7b"
 	Model__Mistral__Pixtral__12b                                                   ModelID = "pixtral-12b"
 	Model__Mistral__Pixtral__Large__Latest                                         ModelID = "pixtral-large-latest"
-	Model__Mixlayer__Qwen3__5__122b__A10b                                          ModelID = "qwen/qwen3.5-122b-a10b"
-	Model__Mixlayer__Qwen3__5__27b                                                 ModelID = "qwen/qwen3.5-27b"
-	Model__Mixlayer__Qwen3__5__35b__A3b                                            ModelID = "qwen/qwen3.5-35b-a3b"
-	Model__Mixlayer__Qwen3__5__397b__A17b                                          ModelID = "qwen/qwen3.5-397b-a17b"
-	Model__Mixlayer__Qwen3__5__9b                                                  ModelID = "qwen/qwen3.5-9b"
+	Model__Mixlayer__Qwen3__5__122b__A10b__3_5                                     ModelID = "qwen/qwen3.5-122b-a10b"
+	Model__Mixlayer__Qwen3__5__27b__3_5                                            ModelID = "qwen/qwen3.5-27b"
+	Model__Mixlayer__Qwen3__5__35b__A3b__3_5                                       ModelID = "qwen/qwen3.5-35b-a3b"
+	Model__Mixlayer__Qwen3__5__397b__A17b__3_5                                     ModelID = "qwen/qwen3.5-397b-a17b"
+	Model__Mixlayer__Qwen3__5__9b__3_5                                             ModelID = "qwen/qwen3.5-9b"
 	Model__Moark__Glm__4__7                                                        ModelID = "GLM-4.7"
 	Model__Moark__Minimax__M2__1                                                   ModelID = "MiniMax-M2.1"
 	Model__ModelScope__Glm__4__5                                                   ModelID = "ZhipuAI/GLM-4.5"
 	Model__ModelScope__Glm__4__6                                                   ModelID = "ZhipuAI/GLM-4.6"
-	Model__ModelScope__Qwen3__235B__A22b__Instruct__2507                           ModelID = "Qwen/Qwen3-235B-A22B-Instruct-2507"
-	Model__ModelScope__Qwen3__235B__A22b__Thinking__2507                           ModelID = "Qwen/Qwen3-235B-A22B-Thinking-2507"
-	Model__ModelScope__Qwen3__30B__A3b__Instruct__2507                             ModelID = "Qwen/Qwen3-30B-A3B-Instruct-2507"
-	Model__ModelScope__Qwen3__30B__A3b__Thinking__2507                             ModelID = "Qwen/Qwen3-30B-A3B-Thinking-2507"
-	Model__ModelScope__Qwen3__Coder__30B__A3b__Instruct                            ModelID = "Qwen/Qwen3-Coder-30B-A3B-Instruct"
+	Model__ModelScope__Qwen3__235B__A22b__Instruct__2507__3                        ModelID = "Qwen/Qwen3-235B-A22B-Instruct-2507"
+	Model__ModelScope__Qwen3__235B__A22b__Thinking__2507__3                        ModelID = "Qwen/Qwen3-235B-A22B-Thinking-2507"
+	Model__ModelScope__Qwen3__30B__A3b__Instruct__2507__3                          ModelID = "Qwen/Qwen3-30B-A3B-Instruct-2507"
+	Model__ModelScope__Qwen3__30B__A3b__Thinking__2507__3                          ModelID = "Qwen/Qwen3-30B-A3B-Thinking-2507"
+	Model__ModelScope__Qwen3__Coder__30B__A3b__Instruct__3                         ModelID = "Qwen/Qwen3-Coder-30B-A3B-Instruct"
 	Model__MoonshotaiCN__Kimi__K2__0711__Preview                                   ModelID = "kimi-k2-0711-preview"
 	Model__MoonshotaiCN__Kimi__K2__0905__Preview                                   ModelID = "kimi-k2-0905-preview"
 	Model__MoonshotaiCN__Kimi__K2__5                                               ModelID = "kimi-k2.5"
@@ -2824,18 +2824,18 @@ const (
 	Model__NanoGPT__Nova__Micro__V1                                                ModelID = "amazon/nova-micro-v1"
 	Model__NanoGPT__Nova__Pro__V1                                                  ModelID = "amazon/nova-pro-v1"
 	Model__NanoGPT__Nvidia__Nemotron__Nano__9b__V2                                 ModelID = "nvidia/nvidia-nemotron-nano-9b-v2"
-	Model__NanoGPT__O1                                                             ModelID = "openai/o1"
-	Model__NanoGPT__O1__Preview                                                    ModelID = "openai/o1-preview"
-	Model__NanoGPT__O1__Pro                                                        ModelID = "openai/o1-pro"
-	Model__NanoGPT__O3                                                             ModelID = "openai/o3"
-	Model__NanoGPT__O3__Deep__Research                                             ModelID = "openai/o3-deep-research"
-	Model__NanoGPT__O3__Mini                                                       ModelID = "openai/o3-mini"
-	Model__NanoGPT__O3__Mini__High                                                 ModelID = "openai/o3-mini-high"
-	Model__NanoGPT__O3__Mini__Low                                                  ModelID = "openai/o3-mini-low"
-	Model__NanoGPT__O3__Pro__20250610                                              ModelID = "openai/o3-pro-2025-06-10"
-	Model__NanoGPT__O4__Mini                                                       ModelID = "openai/o4-mini"
-	Model__NanoGPT__O4__Mini__Deep__Research                                       ModelID = "openai/o4-mini-deep-research"
-	Model__NanoGPT__O4__Mini__High                                                 ModelID = "openai/o4-mini-high"
+	Model__NanoGPT__O1__1                                                          ModelID = "openai/o1"
+	Model__NanoGPT__O1__1__Preview                                                 ModelID = "openai/o1-preview"
+	Model__NanoGPT__O1__Pro__1                                                     ModelID = "openai/o1-pro"
+	Model__NanoGPT__O3__3                                                          ModelID = "openai/o3"
+	Model__NanoGPT__O3__Deep__Research__3                                          ModelID = "openai/o3-deep-research"
+	Model__NanoGPT__O3__Mini__3                                                    ModelID = "openai/o3-mini"
+	Model__NanoGPT__O3__Mini__High__3                                              ModelID = "openai/o3-mini-high"
+	Model__NanoGPT__O3__Mini__Low__3                                               ModelID = "openai/o3-mini-low"
+	Model__NanoGPT__O3__Pro__3__20250610                                           ModelID = "openai/o3-pro-2025-06-10"
+	Model__NanoGPT__O4__Mini__4                                                    ModelID = "openai/o4-mini"
+	Model__NanoGPT__O4__Mini__Deep__Research__4                                    ModelID = "openai/o4-mini-deep-research"
+	Model__NanoGPT__O4__Mini__High__4                                              ModelID = "openai/o4-mini-high"
 	Model__NanoGPT__Olmo__3__1__32b__Instruct                                      ModelID = "allenai/olmo-3.1-32b-instruct"
 	Model__NanoGPT__Olmo__3__1__32b__Think                                         ModelID = "allenai/olmo-3.1-32b-think"
 	Model__NanoGPT__Olmo__3__32b__Think                                            ModelID = "allenai/olmo-3-32b-think"
@@ -2845,20 +2845,20 @@ const (
 	Model__NanoGPT__Qvq__Max                                                       ModelID = "qvq-max"
 	Model__NanoGPT__Qwen25__Vl__72b__Instruct                                      ModelID = "qwen25-vl-72b-instruct"
 	Model__NanoGPT__Qwen2__5__32B__Eva__V0__2                                      ModelID = "Qwen2.5-32B-EVA-v0.2"
-	Model__NanoGPT__Qwen2__5__32B__Instruct__Abliterated                           ModelID = "huihui-ai/Qwen2.5-32B-Instruct-abliterated"
-	Model__NanoGPT__Qwen2__5__Vl__72b__Instruct                                    ModelID = "TEE/qwen2.5-vl-72b-instruct"
-	Model__NanoGPT__Qwen3__30b__A3b__Instruct__2507__30b_A3b_Instruct_2507         ModelID = "qwen3-30b-a3b-instruct-2507"
-	Model__NanoGPT__Qwen3__30b__A3b__Instruct__2507__Qwen3_30b_A3b_2507            ModelID = "TEE/qwen3-30b-a3b-instruct-2507"
-	Model__NanoGPT__Qwen3__5__397b__A17b_1                                         ModelID = "TEE/qwen3.5-397b-a17b"
-	Model__NanoGPT__Qwen3__5__397b__A17b_2                                         ModelID = "qwen/qwen3.5-397b-a17b"
-	Model__NanoGPT__Qwen3__6__35B__A3b                                             ModelID = "qwen/Qwen3.6-35B-A3B"
-	Model__NanoGPT__Qwen3__6__35B__A3b__Thinking                                   ModelID = "qwen/Qwen3.6-35B-A3B:thinking"
-	Model__NanoGPT__Qwen3__6__Flash                                                ModelID = "alibaba/qwen3.6-flash"
-	Model__NanoGPT__Qwen3__6__Max__Preview                                         ModelID = "qwen3.6-max-preview"
-	Model__NanoGPT__Qwen3__Coder                                                   ModelID = "TEE/qwen3-coder"
+	Model__NanoGPT__Qwen2__5__32B__Instruct__Abliterated__2_5                      ModelID = "huihui-ai/Qwen2.5-32B-Instruct-abliterated"
+	Model__NanoGPT__Qwen2__5__Vl__72b__Instruct__2_5                               ModelID = "TEE/qwen2.5-vl-72b-instruct"
+	Model__NanoGPT__Qwen3__30b__A3b__Instruct__2507__3_1                           ModelID = "TEE/qwen3-30b-a3b-instruct-2507"
+	Model__NanoGPT__Qwen3__30b__A3b__Instruct__2507__3_2                           ModelID = "qwen3-30b-a3b-instruct-2507"
+	Model__NanoGPT__Qwen3__5__397b__A17b__3_5_1                                    ModelID = "TEE/qwen3.5-397b-a17b"
+	Model__NanoGPT__Qwen3__5__397b__A17b__3_5_2                                    ModelID = "qwen/qwen3.5-397b-a17b"
+	Model__NanoGPT__Qwen3__6__35B__A3b__3_6                                        ModelID = "qwen/Qwen3.6-35B-A3B"
+	Model__NanoGPT__Qwen3__6__35B__A3b__Thinking__3_6                              ModelID = "qwen/Qwen3.6-35B-A3B:thinking"
+	Model__NanoGPT__Qwen3__6__Flash__3_6                                           ModelID = "alibaba/qwen3.6-flash"
+	Model__NanoGPT__Qwen3__6__Max__3_6__Preview                                    ModelID = "qwen3.6-max-preview"
+	Model__NanoGPT__Qwen3__Coder__3                                                ModelID = "TEE/qwen3-coder"
 	Model__NanoGPT__Qwen3__Coder__30b__A3b__Instruct                               ModelID = "qwen3-coder-30b-a3b-instruct"
-	Model__NanoGPT__Qwen3__Max__20260123                                           ModelID = "qwen3-max-2026-01-23"
-	Model__NanoGPT__Qwen3__Vl__235b__A22b__Instruct__Original                      ModelID = "qwen3-vl-235b-a22b-instruct-original"
+	Model__NanoGPT__Qwen3__Max__3__20260123                                        ModelID = "qwen3-max-2026-01-23"
+	Model__NanoGPT__Qwen3__Vl__235b__A22b__Instruct__Original__3                   ModelID = "qwen3-vl-235b-a22b-instruct-original"
 	Model__NanoGPT__Qwen3__Vl__235b__A22b__Thinking                                ModelID = "qwen3-vl-235b-a22b-thinking"
 	Model__NanoGPT__Qwen__3__6__Plus__3_6                                          ModelID = "qwen-3.6-plus"
 	Model__NanoGPT__Qwen__Image                                                    ModelID = "qwen-image"
@@ -2936,15 +2936,15 @@ const (
 	Model__Nearai__Gemini__3__Pro__3                                               ModelID = "google/gemini-3-pro"
 	Model__Nearai__Gemma__4__31B__It__4                                            ModelID = "google/gemma-4-31B-it"
 	Model__Nearai__Glm__5__1__Fp8                                                  ModelID = "zai-org/GLM-5.1-FP8"
-	Model__Nearai__O3                                                              ModelID = "openai/o3"
-	Model__Nearai__O3__Mini                                                        ModelID = "openai/o3-mini"
-	Model__Nearai__O4__Mini                                                        ModelID = "openai/o4-mini"
-	Model__Nearai__Qwen3__30B__A3b__Instruct__2507                                 ModelID = "Qwen/Qwen3-30B-A3B-Instruct-2507"
-	Model__Nearai__Qwen3__5__122B__A10b                                            ModelID = "Qwen/Qwen3.5-122B-A10B"
-	Model__Nearai__Qwen3__6__35B__A3b__Fp8                                         ModelID = "Qwen/Qwen3.6-35B-A3B-FP8"
+	Model__Nearai__O3__3                                                           ModelID = "openai/o3"
+	Model__Nearai__O3__Mini__3                                                     ModelID = "openai/o3-mini"
+	Model__Nearai__O4__Mini__4                                                     ModelID = "openai/o4-mini"
+	Model__Nearai__Qwen3__30B__A3b__Instruct__2507__3                              ModelID = "Qwen/Qwen3-30B-A3B-Instruct-2507"
+	Model__Nearai__Qwen3__5__122B__A10b__3_5                                       ModelID = "Qwen/Qwen3.5-122B-A10B"
+	Model__Nearai__Qwen3__6__35B__A3b__Fp8__3_6                                    ModelID = "Qwen/Qwen3.6-35B-A3B-FP8"
 	Model__Nearai__Qwen3__Embedding__0__6B                                         ModelID = "Qwen/Qwen3-Embedding-0.6B"
-	Model__Nearai__Qwen3__Reranker__0__6B                                          ModelID = "Qwen/Qwen3-Reranker-0.6B"
-	Model__Nearai__Qwen3__Vl__30B__A3b__Instruct                                   ModelID = "Qwen/Qwen3-VL-30B-A3B-Instruct"
+	Model__Nearai__Qwen3__Reranker__0__6B__3                                       ModelID = "Qwen/Qwen3-Reranker-0.6B"
+	Model__Nearai__Qwen3__Vl__30B__A3b__Instruct__3                                ModelID = "Qwen/Qwen3-VL-30B-A3B-Instruct"
 	Model__Nearai__Whisper__Large__V3                                              ModelID = "openai/whisper-large-v3"
 	Model__Nebius__Deepseek__V3__2                                                 ModelID = "deepseek-ai/DeepSeek-V3.2"
 	Model__Nebius__Deepseek__V3__2__Fast                                           ModelID = "deepseek-ai/DeepSeek-V3.2-fast"
@@ -2967,16 +2967,16 @@ const (
 	Model__Nebius__Nemotron__3__Nano__Omni                                         ModelID = "nvidia/Nemotron-3-Nano-Omni"
 	Model__Nebius__Nemotron__3__Super__120b__A12b                                  ModelID = "nvidia/nemotron-3-super-120b-a12b"
 	Model__Nebius__Nvidia__Nemotron__3__Nano__30B__A3b                             ModelID = "nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B"
-	Model__Nebius__Qwen2__5__Vl__72B__Instruct                                     ModelID = "Qwen/Qwen2.5-VL-72B-Instruct"
-	Model__Nebius__Qwen3__235B__A22b__Instruct__2507                               ModelID = "Qwen/Qwen3-235B-A22B-Instruct-2507"
-	Model__Nebius__Qwen3__235B__A22b__Thinking__2507__Fast                         ModelID = "Qwen/Qwen3-235B-A22B-Thinking-2507-fast"
-	Model__Nebius__Qwen3__30B__A3b__Instruct__2507                                 ModelID = "Qwen/Qwen3-30B-A3B-Instruct-2507"
-	Model__Nebius__Qwen3__32B                                                      ModelID = "Qwen/Qwen3-32B"
-	Model__Nebius__Qwen3__5__397B__A17b                                            ModelID = "Qwen/Qwen3.5-397B-A17B"
-	Model__Nebius__Qwen3__5__397B__A17b__Fast                                      ModelID = "Qwen/Qwen3.5-397B-A17B-fast"
+	Model__Nebius__Qwen2__5__Vl__72B__Instruct__2_5                                ModelID = "Qwen/Qwen2.5-VL-72B-Instruct"
+	Model__Nebius__Qwen3__235B__A22b__Instruct__2507__3                            ModelID = "Qwen/Qwen3-235B-A22B-Instruct-2507"
+	Model__Nebius__Qwen3__235B__A22b__Thinking__2507__Fast__3                      ModelID = "Qwen/Qwen3-235B-A22B-Thinking-2507-fast"
+	Model__Nebius__Qwen3__30B__A3b__Instruct__2507__3                              ModelID = "Qwen/Qwen3-30B-A3B-Instruct-2507"
+	Model__Nebius__Qwen3__32B__3                                                   ModelID = "Qwen/Qwen3-32B"
+	Model__Nebius__Qwen3__5__397B__A17b__3_5                                       ModelID = "Qwen/Qwen3.5-397B-A17B"
+	Model__Nebius__Qwen3__5__397B__A17b__Fast__3_5                                 ModelID = "Qwen/Qwen3.5-397B-A17B-fast"
 	Model__Nebius__Qwen3__Embedding__8B                                            ModelID = "Qwen/Qwen3-Embedding-8B"
-	Model__Nebius__Qwen3__Next__80B__A3b__Thinking                                 ModelID = "Qwen/Qwen3-Next-80B-A3B-Thinking"
-	Model__Nebius__Qwen3__Next__80B__A3b__Thinking__Fast                           ModelID = "Qwen/Qwen3-Next-80B-A3B-Thinking-fast"
+	Model__Nebius__Qwen3__Next__80B__A3b__Thinking__3                              ModelID = "Qwen/Qwen3-Next-80B-A3B-Thinking"
+	Model__Nebius__Qwen3__Next__80B__A3b__Thinking__Fast__3                        ModelID = "Qwen/Qwen3-Next-80B-A3B-Thinking-fast"
 	Model__Neuralwatt__Devstral__Small__2__24B__Instruct__2512                     ModelID = "mistralai/Devstral-Small-2-24B-Instruct-2512"
 	Model__Neuralwatt__GPT__Oss__20b                                               ModelID = "openai/gpt-oss-20b"
 	Model__Neuralwatt__Glm__5__1__Fast__5_1                                        ModelID = "glm-5.1-fast"
@@ -2987,10 +2987,10 @@ const (
 	Model__Neuralwatt__Kimi__K2__6                                                 ModelID = "moonshotai/Kimi-K2.6"
 	Model__Neuralwatt__Kimi__K2__6__Fast                                           ModelID = "kimi-k2.6-fast"
 	Model__Neuralwatt__Minimax__M2__5                                              ModelID = "MiniMaxAI/MiniMax-M2.5"
-	Model__Neuralwatt__Qwen3__5__397B__A17b__Fp8                                   ModelID = "Qwen/Qwen3.5-397B-A17B-FP8"
-	Model__Neuralwatt__Qwen3__5__397b__Fast                                        ModelID = "qwen3.5-397b-fast"
-	Model__Neuralwatt__Qwen3__6__35B__A3b                                          ModelID = "Qwen/Qwen3.6-35B-A3B"
-	Model__Neuralwatt__Qwen3__6__35b__Fast                                         ModelID = "qwen3.6-35b-fast"
+	Model__Neuralwatt__Qwen3__5__397B__A17b__Fp8__3_5                              ModelID = "Qwen/Qwen3.5-397B-A17B-FP8"
+	Model__Neuralwatt__Qwen3__5__397b__Fast__3_5                                   ModelID = "qwen3.5-397b-fast"
+	Model__Neuralwatt__Qwen3__6__35B__A3b__3_6                                     ModelID = "Qwen/Qwen3.6-35B-A3B"
+	Model__Neuralwatt__Qwen3__6__35b__Fast__3_6                                    ModelID = "qwen3.6-35b-fast"
 	Model__Nova__Nova__2__Lite__V1__2                                              ModelID = "nova-2-lite-v1"
 	Model__Nova__Nova__2__Pro__V1__2                                               ModelID = "nova-2-pro-v1"
 	Model__NovitaAI__Autoglm__Phone__9b__Multilingual                              ModelID = "zai-org/autoglm-phone-9b-multilingual"
@@ -3067,26 +3067,26 @@ const (
 	Model__NovitaAI__Mythomax__L2__13b                                             ModelID = "gryphe/mythomax-l2-13b"
 	Model__NovitaAI__Paddleocr__Vl                                                 ModelID = "paddlepaddle/paddleocr-vl"
 	Model__NovitaAI__Qwen2__5__7b__Instruct                                        ModelID = "qwen/qwen2.5-7b-instruct"
-	Model__NovitaAI__Qwen2__5__Vl__72b__Instruct                                   ModelID = "qwen/qwen2.5-vl-72b-instruct"
-	Model__NovitaAI__Qwen3__235b__A22b__Fp8                                        ModelID = "qwen/qwen3-235b-a22b-fp8"
-	Model__NovitaAI__Qwen3__235b__A22b__Instruct__2507                             ModelID = "qwen/qwen3-235b-a22b-instruct-2507"
-	Model__NovitaAI__Qwen3__235b__A22b__Thinking__2507                             ModelID = "qwen/qwen3-235b-a22b-thinking-2507"
-	Model__NovitaAI__Qwen3__30b__A3b__Fp8                                          ModelID = "qwen/qwen3-30b-a3b-fp8"
-	Model__NovitaAI__Qwen3__32b__Fp8                                               ModelID = "qwen/qwen3-32b-fp8"
-	Model__NovitaAI__Qwen3__4b__Fp8                                                ModelID = "qwen/qwen3-4b-fp8"
-	Model__NovitaAI__Qwen3__5__122b__A10b                                          ModelID = "qwen/qwen3.5-122b-a10b"
-	Model__NovitaAI__Qwen3__5__27b                                                 ModelID = "qwen/qwen3.5-27b"
-	Model__NovitaAI__Qwen3__5__35b__A3b                                            ModelID = "qwen/qwen3.5-35b-a3b"
-	Model__NovitaAI__Qwen3__5__397b__A17b                                          ModelID = "qwen/qwen3.5-397b-a17b"
-	Model__NovitaAI__Qwen3__7__Max                                                 ModelID = "qwen/qwen3.7-max"
-	Model__NovitaAI__Qwen3__8b__Fp8                                                ModelID = "qwen/qwen3-8b-fp8"
+	Model__NovitaAI__Qwen2__5__Vl__72b__Instruct__2_5                              ModelID = "qwen/qwen2.5-vl-72b-instruct"
+	Model__NovitaAI__Qwen3__235b__A22b__Fp8__3                                     ModelID = "qwen/qwen3-235b-a22b-fp8"
+	Model__NovitaAI__Qwen3__235b__A22b__Instruct__2507__3                          ModelID = "qwen/qwen3-235b-a22b-instruct-2507"
+	Model__NovitaAI__Qwen3__235b__A22b__Thinking__2507__3                          ModelID = "qwen/qwen3-235b-a22b-thinking-2507"
+	Model__NovitaAI__Qwen3__30b__A3b__Fp8__3                                       ModelID = "qwen/qwen3-30b-a3b-fp8"
+	Model__NovitaAI__Qwen3__32b__Fp8__3                                            ModelID = "qwen/qwen3-32b-fp8"
+	Model__NovitaAI__Qwen3__4b__Fp8__3                                             ModelID = "qwen/qwen3-4b-fp8"
+	Model__NovitaAI__Qwen3__5__122b__A10b__3_5                                     ModelID = "qwen/qwen3.5-122b-a10b"
+	Model__NovitaAI__Qwen3__5__27b__3_5                                            ModelID = "qwen/qwen3.5-27b"
+	Model__NovitaAI__Qwen3__5__35b__A3b__3_5                                       ModelID = "qwen/qwen3.5-35b-a3b"
+	Model__NovitaAI__Qwen3__5__397b__A17b__3_5                                     ModelID = "qwen/qwen3.5-397b-a17b"
+	Model__NovitaAI__Qwen3__7__Max__3_7                                            ModelID = "qwen/qwen3.7-max"
+	Model__NovitaAI__Qwen3__8b__Fp8__3                                             ModelID = "qwen/qwen3-8b-fp8"
 	Model__NovitaAI__Qwen3__Coder__30b__A3b__Instruct                              ModelID = "qwen/qwen3-coder-30b-a3b-instruct"
-	Model__NovitaAI__Qwen3__Coder__480b__A35b__Instruct                            ModelID = "qwen/qwen3-coder-480b-a35b-instruct"
-	Model__NovitaAI__Qwen3__Coder__Next                                            ModelID = "qwen/qwen3-coder-next"
-	Model__NovitaAI__Qwen3__Max                                                    ModelID = "qwen/qwen3-max"
+	Model__NovitaAI__Qwen3__Coder__480b__A35b__Instruct__3                         ModelID = "qwen/qwen3-coder-480b-a35b-instruct"
+	Model__NovitaAI__Qwen3__Coder__Next__3                                         ModelID = "qwen/qwen3-coder-next"
+	Model__NovitaAI__Qwen3__Max__3                                                 ModelID = "qwen/qwen3-max"
 	Model__NovitaAI__Qwen3__Next__80b__A3b__Instruct                               ModelID = "qwen/qwen3-next-80b-a3b-instruct"
 	Model__NovitaAI__Qwen3__Next__80b__A3b__Thinking                               ModelID = "qwen/qwen3-next-80b-a3b-thinking"
-	Model__NovitaAI__Qwen3__Omni__30b__A3b__Instruct                               ModelID = "qwen/qwen3-omni-30b-a3b-instruct"
+	Model__NovitaAI__Qwen3__Omni__30b__A3b__Instruct__3                            ModelID = "qwen/qwen3-omni-30b-a3b-instruct"
 	Model__NovitaAI__Qwen3__Omni__30b__A3b__Thinking                               ModelID = "qwen/qwen3-omni-30b-a3b-thinking"
 	Model__NovitaAI__Qwen3__Vl__235b__A22b__Instruct                               ModelID = "qwen/qwen3-vl-235b-a22b-instruct"
 	Model__NovitaAI__Qwen3__Vl__235b__A22b__Thinking                               ModelID = "qwen/qwen3-vl-235b-a22b-thinking"
@@ -3123,7 +3123,7 @@ const (
 	Model__Nvidia__Gemma__3n__E4b__It                                              ModelID = "google/gemma-3n-e4b-it"
 	Model__Nvidia__Gemma__4__31b__It__4                                            ModelID = "google/gemma-4-31b-it"
 	Model__Nvidia__Gliner__Pii                                                     ModelID = "nvidia/gliner-pii"
-	Model__Nvidia__Glm4__7                                                         ModelID = "z-ai/glm4.7"
+	Model__Nvidia__Glm4__7__4_7                                                    ModelID = "z-ai/glm4.7"
 	Model__Nvidia__Glm__5__1                                                       ModelID = "z-ai/glm-5.1"
 	Model__Nvidia__Google__Paligemma                                               ModelID = "google/google-paligemma"
 	Model__Nvidia__Kimi__K2__6                                                     ModelID = "moonshotai/kimi-k2.6"
@@ -3169,11 +3169,11 @@ const (
 	Model__Nvidia__Phi__4__Mini__Instruct__4                                       ModelID = "microsoft/phi-4-mini-instruct"
 	Model__Nvidia__Phi__4__Multimodal__Instruct__4                                 ModelID = "microsoft/phi-4-multimodal-instruct"
 	Model__Nvidia__Qwen2__5__Coder__32b__Instruct                                  ModelID = "qwen/qwen2.5-coder-32b-instruct"
-	Model__Nvidia__Qwen3__5__122b__A10b                                            ModelID = "qwen/qwen3.5-122b-a10b"
-	Model__Nvidia__Qwen3__5__397b__A17b                                            ModelID = "qwen/qwen3.5-397b-a17b"
-	Model__Nvidia__Qwen3__Coder__480b__A35b__Instruct                              ModelID = "qwen/qwen3-coder-480b-a35b-instruct"
-	Model__Nvidia__Qwen3__Next__80b__A3b__Instruct                                 ModelID = "qwen/qwen3-next-80b-a3b-instruct"
-	Model__Nvidia__Qwen3__Next__80b__A3b__Thinking                                 ModelID = "qwen/qwen3-next-80b-a3b-thinking"
+	Model__Nvidia__Qwen3__5__122b__A10b__3_5                                       ModelID = "qwen/qwen3.5-122b-a10b"
+	Model__Nvidia__Qwen3__5__397b__A17b__3_5                                       ModelID = "qwen/qwen3.5-397b-a17b"
+	Model__Nvidia__Qwen3__Coder__480b__A35b__Instruct__3                           ModelID = "qwen/qwen3-coder-480b-a35b-instruct"
+	Model__Nvidia__Qwen3__Next__80b__A3b__3__Thinking                              ModelID = "qwen/qwen3-next-80b-a3b-thinking"
+	Model__Nvidia__Qwen3__Next__80b__A3b__Instruct__3                              ModelID = "qwen/qwen3-next-80b-a3b-instruct"
 	Model__Nvidia__Qwen__Image                                                     ModelID = "qwen/qwen-image"
 	Model__Nvidia__Qwen__Image__Edit                                               ModelID = "qwen/qwen-image-edit"
 	Model__Nvidia__Rerank__Qa__Mistral__4b                                         ModelID = "nvidia/rerank-qa-mistral-4b"
@@ -3198,8 +3198,8 @@ const (
 	Model__OVHcloud__Mistral__Nemo__Instruct__2407                                 ModelID = "mistral-nemo-instruct-2407"
 	Model__OVHcloud__Mistral__Small__3__2__24b__Instruct__2506                     ModelID = "mistral-small-3.2-24b-instruct-2506"
 	Model__OVHcloud__Qwen2__5__Vl__72b__Instruct                                   ModelID = "qwen2.5-vl-72b-instruct"
-	Model__OVHcloud__Qwen3__32b                                                    ModelID = "qwen3-32b"
-	Model__OVHcloud__Qwen3__5__9b                                                  ModelID = "qwen3.5-9b"
+	Model__OVHcloud__Qwen3__32b__3                                                 ModelID = "qwen3-32b"
+	Model__OVHcloud__Qwen3__5__9b__3_5                                             ModelID = "qwen3.5-9b"
 	Model__OVHcloud__Qwen3__Coder__30b__A3b__Instruct                              ModelID = "qwen3-coder-30b-a3b-instruct"
 	Model__OllamaCloud__Cogito__2__1__671b                                         ModelID = "cogito-2.1:671b"
 	Model__OllamaCloud__Deepseek__V3__1__671b                                      ModelID = "deepseek-v3.1:671b"
@@ -3234,11 +3234,11 @@ const (
 	Model__OllamaCloud__Nemotron__3__Nano__30b__3                                  ModelID = "nemotron-3-nano:30b"
 	Model__OllamaCloud__Nemotron__3__Super__3                                      ModelID = "nemotron-3-super"
 	Model__OllamaCloud__Qwen3__5__397b                                             ModelID = "qwen3.5:397b"
-	Model__OllamaCloud__Qwen3__Coder__480b                                         ModelID = "qwen3-coder:480b"
-	Model__OllamaCloud__Qwen3__Coder__Next                                         ModelID = "qwen3-coder-next"
-	Model__OllamaCloud__Qwen3__Next__80b                                           ModelID = "qwen3-next:80b"
-	Model__OllamaCloud__Qwen3__Vl__235b                                            ModelID = "qwen3-vl:235b"
-	Model__OllamaCloud__Qwen3__Vl__235b__Instruct                                  ModelID = "qwen3-vl:235b-instruct"
+	Model__OllamaCloud__Qwen3__Coder__480b__3                                      ModelID = "qwen3-coder:480b"
+	Model__OllamaCloud__Qwen3__Coder__Next__3                                      ModelID = "qwen3-coder-next"
+	Model__OllamaCloud__Qwen3__Next__80b__3                                        ModelID = "qwen3-next:80b"
+	Model__OllamaCloud__Qwen3__Vl__235b__3                                         ModelID = "qwen3-vl:235b"
+	Model__OllamaCloud__Qwen3__Vl__235b__Instruct__3                               ModelID = "qwen3-vl:235b-instruct"
 	Model__OllamaCloud__Rnj__1__8b                                                 ModelID = "rnj-1:8b"
 	Model__OpenAI__ChatGPT__Image__Latest                                          ModelID = "chatgpt-image-latest"
 	Model__OpenAI__GPT__3__5__Turbo__3_5                                           ModelID = "gpt-3.5-turbo"
@@ -3279,16 +3279,16 @@ const (
 	Model__OpenAI__GPT__Image__1                                                   ModelID = "gpt-image-1"
 	Model__OpenAI__GPT__Image__1_5                                                 ModelID = "gpt-image-1.5"
 	Model__OpenAI__GPT__Image__1__Mini                                             ModelID = "gpt-image-1-mini"
-	Model__OpenAI__O1                                                              ModelID = "o1"
-	Model__OpenAI__O1__Mini                                                        ModelID = "o1-mini"
-	Model__OpenAI__O1__Preview                                                     ModelID = "o1-preview"
-	Model__OpenAI__O1__Pro                                                         ModelID = "o1-pro"
-	Model__OpenAI__O3                                                              ModelID = "o3"
-	Model__OpenAI__O3__Deep__Research                                              ModelID = "o3-deep-research"
-	Model__OpenAI__O3__Mini                                                        ModelID = "o3-mini"
-	Model__OpenAI__O3__Pro                                                         ModelID = "o3-pro"
-	Model__OpenAI__O4__Mini                                                        ModelID = "o4-mini"
-	Model__OpenAI__O4__Mini__Deep__Research                                        ModelID = "o4-mini-deep-research"
+	Model__OpenAI__O1__1                                                           ModelID = "o1"
+	Model__OpenAI__O1__1__Preview                                                  ModelID = "o1-preview"
+	Model__OpenAI__O1__Mini__1                                                     ModelID = "o1-mini"
+	Model__OpenAI__O1__Pro__1                                                      ModelID = "o1-pro"
+	Model__OpenAI__O3__3                                                           ModelID = "o3"
+	Model__OpenAI__O3__Deep__Research__3                                           ModelID = "o3-deep-research"
+	Model__OpenAI__O3__Mini__3                                                     ModelID = "o3-mini"
+	Model__OpenAI__O3__Pro__3                                                      ModelID = "o3-pro"
+	Model__OpenAI__O4__Mini__4                                                     ModelID = "o4-mini"
+	Model__OpenAI__O4__Mini__Deep__Research__4                                     ModelID = "o4-mini-deep-research"
 	Model__OpenAI__Text__Embedding__3__Large__3                                    ModelID = "text-embedding-3-large"
 	Model__OpenAI__Text__Embedding__3__Small__3                                    ModelID = "text-embedding-3-small"
 	Model__OpenAI__Text__Embedding__Ada__002                                       ModelID = "text-embedding-ada-002"
@@ -3304,8 +3304,8 @@ const (
 	Model__OpenCodeGo__Mimo__V2__Pro                                               ModelID = "mimo-v2-pro"
 	Model__OpenCodeGo__Minimax__M2__5                                              ModelID = "minimax-m2.5"
 	Model__OpenCodeGo__Minimax__M2__7                                              ModelID = "minimax-m2.7"
-	Model__OpenCodeGo__Qwen3__5__Plus                                              ModelID = "qwen3.5-plus"
-	Model__OpenCodeGo__Qwen3__6__Plus                                              ModelID = "qwen3.6-plus"
+	Model__OpenCodeGo__Qwen3__5__Plus__3_5                                         ModelID = "qwen3.5-plus"
+	Model__OpenCodeGo__Qwen3__6__Plus__3_6                                         ModelID = "qwen3.6-plus"
 	Model__OpenCodeGo__Qwen3__7__Max                                               ModelID = "qwen3.7-max"
 	Model__OpenCode__Big__Pickle                                                   ModelID = "big-pickle"
 	Model__OpenCode__Claude__3__5__Haiku__3_5                                      ModelID = "claude-3-5-haiku"
@@ -3365,10 +3365,10 @@ const (
 	Model__OpenCode__Minimax__M2__5__Free                                          ModelID = "minimax-m2.5-free"
 	Model__OpenCode__Minimax__M2__7                                                ModelID = "minimax-m2.7"
 	Model__OpenCode__Nemotron__3__Super__Free__3                                   ModelID = "nemotron-3-super-free"
-	Model__OpenCode__Qwen3__5__Plus                                                ModelID = "qwen3.5-plus"
-	Model__OpenCode__Qwen3__6__Plus                                                ModelID = "qwen3.6-plus"
-	Model__OpenCode__Qwen3__6__Plus__Free                                          ModelID = "qwen3.6-plus-free"
-	Model__OpenCode__Qwen3__Coder                                                  ModelID = "qwen3-coder"
+	Model__OpenCode__Qwen3__5__Plus__3_5                                           ModelID = "qwen3.5-plus"
+	Model__OpenCode__Qwen3__6__Plus__3_6                                           ModelID = "qwen3.6-plus"
+	Model__OpenCode__Qwen3__6__Plus__Free__3_6                                     ModelID = "qwen3.6-plus-free"
+	Model__OpenCode__Qwen3__Coder__3                                               ModelID = "qwen3-coder"
 	Model__OpenCode__Ring__2__6__1t__Free__2_6                                     ModelID = "ring-2.6-1t-free"
 	Model__OpenCode__Trinity__Large__Preview__Free                                 ModelID = "trinity-large-preview-free"
 	Model__OpenRouter__Aion__1_0                                                   ModelID = "aion-labs/aion-1.0"
@@ -3630,16 +3630,16 @@ const (
 	Model__OpenRouter__Nova__Micro__V1                                             ModelID = "amazon/nova-micro-v1"
 	Model__OpenRouter__Nova__Premier__V1                                           ModelID = "amazon/nova-premier-v1"
 	Model__OpenRouter__Nova__Pro__V1                                               ModelID = "amazon/nova-pro-v1"
-	Model__OpenRouter__O1                                                          ModelID = "openai/o1"
-	Model__OpenRouter__O1__Pro                                                     ModelID = "openai/o1-pro"
-	Model__OpenRouter__O3                                                          ModelID = "openai/o3"
-	Model__OpenRouter__O3__Deep__Research                                          ModelID = "openai/o3-deep-research"
-	Model__OpenRouter__O3__Mini                                                    ModelID = "openai/o3-mini"
-	Model__OpenRouter__O3__Mini__High                                              ModelID = "openai/o3-mini-high"
-	Model__OpenRouter__O3__Pro                                                     ModelID = "openai/o3-pro"
-	Model__OpenRouter__O4__Mini                                                    ModelID = "openai/o4-mini"
-	Model__OpenRouter__O4__Mini__Deep__Research                                    ModelID = "openai/o4-mini-deep-research"
-	Model__OpenRouter__O4__Mini__High                                              ModelID = "openai/o4-mini-high"
+	Model__OpenRouter__O1__1                                                       ModelID = "openai/o1"
+	Model__OpenRouter__O1__Pro__1                                                  ModelID = "openai/o1-pro"
+	Model__OpenRouter__O3__3                                                       ModelID = "openai/o3"
+	Model__OpenRouter__O3__Deep__Research__3                                       ModelID = "openai/o3-deep-research"
+	Model__OpenRouter__O3__Mini__3                                                 ModelID = "openai/o3-mini"
+	Model__OpenRouter__O3__Mini__High__3                                           ModelID = "openai/o3-mini-high"
+	Model__OpenRouter__O3__Pro__3                                                  ModelID = "openai/o3-pro"
+	Model__OpenRouter__O4__Mini__4                                                 ModelID = "openai/o4-mini"
+	Model__OpenRouter__O4__Mini__Deep__Research__4                                 ModelID = "openai/o4-mini-deep-research"
+	Model__OpenRouter__O4__Mini__High__4                                           ModelID = "openai/o4-mini-high"
 	Model__OpenRouter__Olmo__3__32b__Think                                         ModelID = "allenai/olmo-3-32b-think"
 	Model__OpenRouter__Owl__Alpha                                                  ModelID = "openrouter/owl-alpha"
 	Model__OpenRouter__Palmyra__X5                                                 ModelID = "writer/palmyra-x5"
@@ -3648,48 +3648,48 @@ const (
 	Model__OpenRouter__Phi__4                                                      ModelID = "microsoft/phi-4"
 	Model__OpenRouter__Phi__4__Mini__Instruct__4                                   ModelID = "microsoft/phi-4-mini-instruct"
 	Model__OpenRouter__Pixtral__Large__2411                                        ModelID = "mistralai/pixtral-large-2411"
-	Model__OpenRouter__Qwen2__5__Vl__72b__Instruct                                 ModelID = "qwen/qwen2.5-vl-72b-instruct"
-	Model__OpenRouter__Qwen3__14b                                                  ModelID = "qwen/qwen3-14b"
-	Model__OpenRouter__Qwen3__235b__A22b                                           ModelID = "qwen/qwen3-235b-a22b"
-	Model__OpenRouter__Qwen3__235b__A22b__2507                                     ModelID = "qwen/qwen3-235b-a22b-2507"
-	Model__OpenRouter__Qwen3__235b__A22b__Thinking__2507                           ModelID = "qwen/qwen3-235b-a22b-thinking-2507"
-	Model__OpenRouter__Qwen3__30b__A3b                                             ModelID = "qwen/qwen3-30b-a3b"
-	Model__OpenRouter__Qwen3__30b__A3b__Instruct__2507                             ModelID = "qwen/qwen3-30b-a3b-instruct-2507"
-	Model__OpenRouter__Qwen3__30b__A3b__Thinking__2507                             ModelID = "qwen/qwen3-30b-a3b-thinking-2507"
-	Model__OpenRouter__Qwen3__32b                                                  ModelID = "qwen/qwen3-32b"
-	Model__OpenRouter__Qwen3__5__122b__A10b                                        ModelID = "qwen/qwen3.5-122b-a10b"
-	Model__OpenRouter__Qwen3__5__27b                                               ModelID = "qwen/qwen3.5-27b"
-	Model__OpenRouter__Qwen3__5__35b__A3b                                          ModelID = "qwen/qwen3.5-35b-a3b"
-	Model__OpenRouter__Qwen3__5__397b__A17b                                        ModelID = "qwen/qwen3.5-397b-a17b"
-	Model__OpenRouter__Qwen3__5__9b                                                ModelID = "qwen/qwen3.5-9b"
-	Model__OpenRouter__Qwen3__5__Flash__02__23                                     ModelID = "qwen/qwen3.5-flash-02-23"
-	Model__OpenRouter__Qwen3__5__Plus__02__15                                      ModelID = "qwen/qwen3.5-plus-02-15"
-	Model__OpenRouter__Qwen3__5__Plus__20260420                                    ModelID = "qwen/qwen3.5-plus-20260420"
-	Model__OpenRouter__Qwen3__6__27b                                               ModelID = "qwen/qwen3.6-27b"
-	Model__OpenRouter__Qwen3__6__35b__A3b                                          ModelID = "qwen/qwen3.6-35b-a3b"
-	Model__OpenRouter__Qwen3__6__Flash                                             ModelID = "qwen/qwen3.6-flash"
-	Model__OpenRouter__Qwen3__6__Max__Preview                                      ModelID = "qwen/qwen3.6-max-preview"
-	Model__OpenRouter__Qwen3__6__Plus                                              ModelID = "qwen/qwen3.6-plus"
-	Model__OpenRouter__Qwen3__7__Max                                               ModelID = "qwen/qwen3.7-max"
-	Model__OpenRouter__Qwen3__8b                                                   ModelID = "qwen/qwen3-8b"
-	Model__OpenRouter__Qwen3__Coder                                                ModelID = "qwen/qwen3-coder"
-	Model__OpenRouter__Qwen3__Coder__30b__A3b__Instruct                            ModelID = "qwen/qwen3-coder-30b-a3b-instruct"
-	Model__OpenRouter__Qwen3__Coder__Flash                                         ModelID = "qwen/qwen3-coder-flash"
-	Model__OpenRouter__Qwen3__Coder__Free                                          ModelID = "qwen/qwen3-coder:free"
-	Model__OpenRouter__Qwen3__Coder__Next                                          ModelID = "qwen/qwen3-coder-next"
-	Model__OpenRouter__Qwen3__Coder__Plus                                          ModelID = "qwen/qwen3-coder-plus"
-	Model__OpenRouter__Qwen3__Max                                                  ModelID = "qwen/qwen3-max"
-	Model__OpenRouter__Qwen3__Max__Thinking                                        ModelID = "qwen/qwen3-max-thinking"
-	Model__OpenRouter__Qwen3__Next__80b__A3b__Instruct                             ModelID = "qwen/qwen3-next-80b-a3b-instruct"
-	Model__OpenRouter__Qwen3__Next__80b__A3b__Instruct__Free                       ModelID = "qwen/qwen3-next-80b-a3b-instruct:free"
-	Model__OpenRouter__Qwen3__Next__80b__A3b__Thinking                             ModelID = "qwen/qwen3-next-80b-a3b-thinking"
-	Model__OpenRouter__Qwen3__Vl__235b__A22b__Instruct                             ModelID = "qwen/qwen3-vl-235b-a22b-instruct"
-	Model__OpenRouter__Qwen3__Vl__235b__A22b__Thinking                             ModelID = "qwen/qwen3-vl-235b-a22b-thinking"
-	Model__OpenRouter__Qwen3__Vl__30b__A3b__Instruct                               ModelID = "qwen/qwen3-vl-30b-a3b-instruct"
-	Model__OpenRouter__Qwen3__Vl__30b__A3b__Thinking                               ModelID = "qwen/qwen3-vl-30b-a3b-thinking"
-	Model__OpenRouter__Qwen3__Vl__32b__Instruct                                    ModelID = "qwen/qwen3-vl-32b-instruct"
-	Model__OpenRouter__Qwen3__Vl__8b__Instruct                                     ModelID = "qwen/qwen3-vl-8b-instruct"
-	Model__OpenRouter__Qwen3__Vl__8b__Thinking                                     ModelID = "qwen/qwen3-vl-8b-thinking"
+	Model__OpenRouter__Qwen2__5__Vl__72b__Instruct__2_5                            ModelID = "qwen/qwen2.5-vl-72b-instruct"
+	Model__OpenRouter__Qwen3__14b__3                                               ModelID = "qwen/qwen3-14b"
+	Model__OpenRouter__Qwen3__235b__A22b__2507__3                                  ModelID = "qwen/qwen3-235b-a22b-2507"
+	Model__OpenRouter__Qwen3__235b__A22b__3                                        ModelID = "qwen/qwen3-235b-a22b"
+	Model__OpenRouter__Qwen3__235b__A22b__Thinking__2507__3                        ModelID = "qwen/qwen3-235b-a22b-thinking-2507"
+	Model__OpenRouter__Qwen3__30b__A3b__3                                          ModelID = "qwen/qwen3-30b-a3b"
+	Model__OpenRouter__Qwen3__30b__A3b__Instruct__2507__3                          ModelID = "qwen/qwen3-30b-a3b-instruct-2507"
+	Model__OpenRouter__Qwen3__30b__A3b__Thinking__2507__3                          ModelID = "qwen/qwen3-30b-a3b-thinking-2507"
+	Model__OpenRouter__Qwen3__32b__3                                               ModelID = "qwen/qwen3-32b"
+	Model__OpenRouter__Qwen3__5__122b__A10b__3_5                                   ModelID = "qwen/qwen3.5-122b-a10b"
+	Model__OpenRouter__Qwen3__5__27b__3_5                                          ModelID = "qwen/qwen3.5-27b"
+	Model__OpenRouter__Qwen3__5__35b__A3b__3_5                                     ModelID = "qwen/qwen3.5-35b-a3b"
+	Model__OpenRouter__Qwen3__5__397b__A17b__3_5                                   ModelID = "qwen/qwen3.5-397b-a17b"
+	Model__OpenRouter__Qwen3__5__9b__3_5                                           ModelID = "qwen/qwen3.5-9b"
+	Model__OpenRouter__Qwen3__5__Flash__02__23__3_5                                ModelID = "qwen/qwen3.5-flash-02-23"
+	Model__OpenRouter__Qwen3__5__Plus__02__15__3_5                                 ModelID = "qwen/qwen3.5-plus-02-15"
+	Model__OpenRouter__Qwen3__5__Plus__3_5__20260420                               ModelID = "qwen/qwen3.5-plus-20260420"
+	Model__OpenRouter__Qwen3__6__27b__3_6                                          ModelID = "qwen/qwen3.6-27b"
+	Model__OpenRouter__Qwen3__6__35b__A3b__3_6                                     ModelID = "qwen/qwen3.6-35b-a3b"
+	Model__OpenRouter__Qwen3__6__Flash__3_6                                        ModelID = "qwen/qwen3.6-flash"
+	Model__OpenRouter__Qwen3__6__Max__3_6__Preview                                 ModelID = "qwen/qwen3.6-max-preview"
+	Model__OpenRouter__Qwen3__6__Plus__3_6                                         ModelID = "qwen/qwen3.6-plus"
+	Model__OpenRouter__Qwen3__7__Max__3_7                                          ModelID = "qwen/qwen3.7-max"
+	Model__OpenRouter__Qwen3__8b__3                                                ModelID = "qwen/qwen3-8b"
+	Model__OpenRouter__Qwen3__Coder__3                                             ModelID = "qwen/qwen3-coder"
+	Model__OpenRouter__Qwen3__Coder__30b__A3b__Instruct__3                         ModelID = "qwen/qwen3-coder-30b-a3b-instruct"
+	Model__OpenRouter__Qwen3__Coder__Flash__3                                      ModelID = "qwen/qwen3-coder-flash"
+	Model__OpenRouter__Qwen3__Coder__Free__3                                       ModelID = "qwen/qwen3-coder:free"
+	Model__OpenRouter__Qwen3__Coder__Next__3                                       ModelID = "qwen/qwen3-coder-next"
+	Model__OpenRouter__Qwen3__Coder__Plus__3                                       ModelID = "qwen/qwen3-coder-plus"
+	Model__OpenRouter__Qwen3__Max__3                                               ModelID = "qwen/qwen3-max"
+	Model__OpenRouter__Qwen3__Max__3__Thinking                                     ModelID = "qwen/qwen3-max-thinking"
+	Model__OpenRouter__Qwen3__Next__80b__A3b__3__Thinking                          ModelID = "qwen/qwen3-next-80b-a3b-thinking"
+	Model__OpenRouter__Qwen3__Next__80b__A3b__Instruct__3                          ModelID = "qwen/qwen3-next-80b-a3b-instruct"
+	Model__OpenRouter__Qwen3__Next__80b__A3b__Instruct__Free__3                    ModelID = "qwen/qwen3-next-80b-a3b-instruct:free"
+	Model__OpenRouter__Qwen3__Vl__235b__A22b__3__Thinking                          ModelID = "qwen/qwen3-vl-235b-a22b-thinking"
+	Model__OpenRouter__Qwen3__Vl__235b__A22b__Instruct__3                          ModelID = "qwen/qwen3-vl-235b-a22b-instruct"
+	Model__OpenRouter__Qwen3__Vl__30b__A3b__3__Thinking                            ModelID = "qwen/qwen3-vl-30b-a3b-thinking"
+	Model__OpenRouter__Qwen3__Vl__30b__A3b__Instruct__3                            ModelID = "qwen/qwen3-vl-30b-a3b-instruct"
+	Model__OpenRouter__Qwen3__Vl__32b__Instruct__3                                 ModelID = "qwen/qwen3-vl-32b-instruct"
+	Model__OpenRouter__Qwen3__Vl__8b__3__Thinking                                  ModelID = "qwen/qwen3-vl-8b-thinking"
+	Model__OpenRouter__Qwen3__Vl__8b__Instruct__3                                  ModelID = "qwen/qwen3-vl-8b-instruct"
 	Model__OpenRouter__Qwen__2__5__72b__Instruct__2_5                              ModelID = "qwen/qwen-2.5-72b-instruct"
 	Model__OpenRouter__Qwen__2__5__7b__Instruct__2_5                               ModelID = "qwen/qwen-2.5-7b-instruct"
 	Model__OpenRouter__Qwen__2__5__Coder__32b__Instruct__2_5                       ModelID = "qwen/qwen-2.5-coder-32b-instruct"
@@ -3800,14 +3800,14 @@ const (
 	Model__OrcaRouter__Minimax__M2__5__Highspeed                                   ModelID = "minimax/minimax-m2.5-highspeed"
 	Model__OrcaRouter__Minimax__M2__7                                              ModelID = "minimax/minimax-m2.7"
 	Model__OrcaRouter__Minimax__M2__7__Highspeed                                   ModelID = "minimax/minimax-m2.7-highspeed"
-	Model__OrcaRouter__Qwen3__5__122b__A10b                                        ModelID = "qwen/qwen3.5-122b-a10b"
-	Model__OrcaRouter__Qwen3__5__27b                                               ModelID = "qwen/qwen3.5-27b"
-	Model__OrcaRouter__Qwen3__5__35b__A3b                                          ModelID = "qwen/qwen3.5-35b-a3b"
-	Model__OrcaRouter__Qwen3__5__397b__A17b                                        ModelID = "qwen/qwen3.5-397b-a17b"
-	Model__OrcaRouter__Qwen3__5__Plus                                              ModelID = "qwen/qwen3.5-plus"
-	Model__OrcaRouter__Qwen3__6__35b__A3b                                          ModelID = "qwen/qwen3.6-35b-a3b"
-	Model__OrcaRouter__Qwen3__6__Plus                                              ModelID = "qwen/qwen3.6-plus"
-	Model__OrcaRouter__Qwen3__Max                                                  ModelID = "qwen/qwen3-max"
+	Model__OrcaRouter__Qwen3__5__122b__A10b__3_5                                   ModelID = "qwen/qwen3.5-122b-a10b"
+	Model__OrcaRouter__Qwen3__5__27b__3_5                                          ModelID = "qwen/qwen3.5-27b"
+	Model__OrcaRouter__Qwen3__5__35b__A3b__3_5                                     ModelID = "qwen/qwen3.5-35b-a3b"
+	Model__OrcaRouter__Qwen3__5__397b__A17b__3_5                                   ModelID = "qwen/qwen3.5-397b-a17b"
+	Model__OrcaRouter__Qwen3__5__Plus__3_5                                         ModelID = "qwen/qwen3.5-plus"
+	Model__OrcaRouter__Qwen3__6__35b__A3b__3_6                                     ModelID = "qwen/qwen3.6-35b-a3b"
+	Model__OrcaRouter__Qwen3__6__Plus__3_6                                         ModelID = "qwen/qwen3.6-plus"
+	Model__OrcaRouter__Qwen3__Max__3                                               ModelID = "qwen/qwen3-max"
 	Model__PerplexityAgent__Claude__Haiku__4__5                                    ModelID = "anthropic/claude-haiku-4-5"
 	Model__PerplexityAgent__Claude__Opus__4__5                                     ModelID = "anthropic/claude-opus-4-5"
 	Model__PerplexityAgent__Claude__Opus__4__6                                     ModelID = "anthropic/claude-opus-4-6"
@@ -3943,17 +3943,17 @@ const (
 	Model__Poe__Minimax__M2__1                                                     ModelID = "novita/minimax-m2.1"
 	Model__Poe__Nano__Banana                                                       ModelID = "google/nano-banana"
 	Model__Poe__Nano__Banana__Pro                                                  ModelID = "google/nano-banana-pro"
-	Model__Poe__O1                                                                 ModelID = "openai/o1"
-	Model__Poe__O1__Pro                                                            ModelID = "openai/o1-pro"
-	Model__Poe__O3                                                                 ModelID = "openai/o3"
-	Model__Poe__O3__Deep__Research                                                 ModelID = "openai/o3-deep-research"
-	Model__Poe__O3__Mini                                                           ModelID = "openai/o3-mini"
-	Model__Poe__O3__Mini__High                                                     ModelID = "openai/o3-mini-high"
-	Model__Poe__O3__Pro                                                            ModelID = "openai/o3-pro"
-	Model__Poe__O4__Mini                                                           ModelID = "openai/o4-mini"
-	Model__Poe__O4__Mini__Deep__Research                                           ModelID = "openai/o4-mini-deep-research"
-	Model__Poe__Qwen3__235b__2507__Cs                                              ModelID = "cerebras/qwen3-235b-2507-cs"
-	Model__Poe__Qwen3__32b__Cs                                                     ModelID = "cerebras/qwen3-32b-cs"
+	Model__Poe__O1__1                                                              ModelID = "openai/o1"
+	Model__Poe__O1__Pro__1                                                         ModelID = "openai/o1-pro"
+	Model__Poe__O3__3                                                              ModelID = "openai/o3"
+	Model__Poe__O3__Deep__Research__3                                              ModelID = "openai/o3-deep-research"
+	Model__Poe__O3__Mini__3                                                        ModelID = "openai/o3-mini"
+	Model__Poe__O3__Mini__High__3                                                  ModelID = "openai/o3-mini-high"
+	Model__Poe__O3__Pro__3                                                         ModelID = "openai/o3-pro"
+	Model__Poe__O4__Mini__4                                                        ModelID = "openai/o4-mini"
+	Model__Poe__O4__Mini__Deep__Research__4                                        ModelID = "openai/o4-mini-deep-research"
+	Model__Poe__Qwen3__235b__2507__Cs__3                                           ModelID = "cerebras/qwen3-235b-2507-cs"
+	Model__Poe__Qwen3__32b__Cs__3                                                  ModelID = "cerebras/qwen3-32b-cs"
 	Model__Poe__Ray2                                                               ModelID = "lumalabs/ray2"
 	Model__Poe__Runway                                                             ModelID = "runwayml/runway"
 	Model__Poe__Runway__Gen__4__Turbo__4                                           ModelID = "runwayml/runway-gen-4-turbo"
@@ -3971,8 +3971,8 @@ const (
 	Model__Poolside__Laguna__Xs__2                                                 ModelID = "poolside/laguna-xs.2"
 	Model__PrivatemodeAI__GPT__Oss__120b                                           ModelID = "gpt-oss-120b"
 	Model__PrivatemodeAI__Gemma__3__27b__3                                         ModelID = "gemma-3-27b"
-	Model__PrivatemodeAI__Qwen3__Coder__30b__A3b                                   ModelID = "qwen3-coder-30b-a3b"
-	Model__PrivatemodeAI__Qwen3__Embedding__4b                                     ModelID = "qwen3-embedding-4b"
+	Model__PrivatemodeAI__Qwen3__Coder__30b__A3b__3                                ModelID = "qwen3-coder-30b-a3b"
+	Model__PrivatemodeAI__Qwen3__Embedding__4b__3                                  ModelID = "qwen3-embedding-4b"
 	Model__PrivatemodeAI__Whisper__Large__V3                                       ModelID = "whisper-large-v3"
 	Model__QiHangAI__Claude__Haiku__4_5__20251001                                  ModelID = "claude-haiku-4-5-20251001"
 	Model__QiHangAI__Claude__Opus__4_5__20251101                                   ModelID = "claude-opus-4-5-20251101"
@@ -4056,17 +4056,17 @@ const (
 	Model__QiniuAI__Minimax__M2__5__Highspeed                                      ModelID = "minimax/minimax-m2.5-highspeed"
 	Model__QiniuAI__Qwen2__5__Vl__72b__Instruct                                    ModelID = "qwen2.5-vl-72b-instruct"
 	Model__QiniuAI__Qwen2__5__Vl__7b__Instruct                                     ModelID = "qwen2.5-vl-7b-instruct"
-	Model__QiniuAI__Qwen3__235b__A22b                                              ModelID = "qwen3-235b-a22b"
-	Model__QiniuAI__Qwen3__235b__A22b__Instruct__2507                              ModelID = "qwen3-235b-a22b-instruct-2507"
-	Model__QiniuAI__Qwen3__235b__A22b__Thinking__2507                              ModelID = "qwen3-235b-a22b-thinking-2507"
-	Model__QiniuAI__Qwen3__30b__A3b                                                ModelID = "qwen3-30b-a3b"
-	Model__QiniuAI__Qwen3__30b__A3b__Instruct__2507                                ModelID = "qwen3-30b-a3b-instruct-2507"
-	Model__QiniuAI__Qwen3__30b__A3b__Thinking__2507                                ModelID = "qwen3-30b-a3b-thinking-2507"
-	Model__QiniuAI__Qwen3__32b                                                     ModelID = "qwen3-32b"
-	Model__QiniuAI__Qwen3__5__397b__A17b                                           ModelID = "qwen3.5-397b-a17b"
+	Model__QiniuAI__Qwen3__235b__A22b__3                                           ModelID = "qwen3-235b-a22b"
+	Model__QiniuAI__Qwen3__235b__A22b__Instruct__2507__3                           ModelID = "qwen3-235b-a22b-instruct-2507"
+	Model__QiniuAI__Qwen3__235b__A22b__Thinking__2507__3                           ModelID = "qwen3-235b-a22b-thinking-2507"
+	Model__QiniuAI__Qwen3__30b__A3b__3                                             ModelID = "qwen3-30b-a3b"
+	Model__QiniuAI__Qwen3__30b__A3b__Instruct__2507__3                             ModelID = "qwen3-30b-a3b-instruct-2507"
+	Model__QiniuAI__Qwen3__30b__A3b__Thinking__2507__3                             ModelID = "qwen3-30b-a3b-thinking-2507"
+	Model__QiniuAI__Qwen3__32b__3                                                  ModelID = "qwen3-32b"
+	Model__QiniuAI__Qwen3__5__397b__A17b__3_5                                      ModelID = "qwen3.5-397b-a17b"
 	Model__QiniuAI__Qwen3__Coder__480b__A35b__Instruct                             ModelID = "qwen3-coder-480b-a35b-instruct"
-	Model__QiniuAI__Qwen3__Max                                                     ModelID = "qwen3-max"
-	Model__QiniuAI__Qwen3__Max__Preview                                            ModelID = "qwen3-max-preview"
+	Model__QiniuAI__Qwen3__Max__3                                                  ModelID = "qwen3-max"
+	Model__QiniuAI__Qwen3__Max__3__Preview                                         ModelID = "qwen3-max-preview"
 	Model__QiniuAI__Qwen3__Next__80b__A3b__Instruct                                ModelID = "qwen3-next-80b-a3b-instruct"
 	Model__QiniuAI__Qwen3__Next__80b__A3b__Thinking                                ModelID = "qwen3-next-80b-a3b-thinking"
 	Model__QiniuAI__Qwen3__Vl__30b__A3b__Thinking                                  ModelID = "qwen3-vl-30b-a3b-thinking"
@@ -4081,11 +4081,11 @@ const (
 	Model__RegoloAI__Minimax__M2__5                                                ModelID = "minimax-m2.5"
 	Model__RegoloAI__Mistral__Small3__2                                            ModelID = "mistral-small3.2"
 	Model__RegoloAI__Mistral__Small__4__119b                                       ModelID = "mistral-small-4-119b"
-	Model__RegoloAI__Qwen3__5__122b                                                ModelID = "qwen3.5-122b"
-	Model__RegoloAI__Qwen3__5__9b                                                  ModelID = "qwen3.5-9b"
-	Model__RegoloAI__Qwen3__Coder__Next                                            ModelID = "qwen3-coder-next"
-	Model__RegoloAI__Qwen3__Embedding__8b                                          ModelID = "qwen3-embedding-8b"
-	Model__RegoloAI__Qwen3__Reranker__4b                                           ModelID = "qwen3-reranker-4b"
+	Model__RegoloAI__Qwen3__5__122b__3_5                                           ModelID = "qwen3.5-122b"
+	Model__RegoloAI__Qwen3__5__9b__3_5                                             ModelID = "qwen3.5-9b"
+	Model__RegoloAI__Qwen3__Coder__Next__3                                         ModelID = "qwen3-coder-next"
+	Model__RegoloAI__Qwen3__Embedding__8b__3                                       ModelID = "qwen3-embedding-8b"
+	Model__RegoloAI__Qwen3__Reranker__4b__3                                        ModelID = "qwen3-reranker-4b"
 	Model__RegoloAI__Qwen__Image                                                   ModelID = "qwen-image"
 	Model__Requesty__Claude__3__7__Sonnet__3_7                                     ModelID = "anthropic/claude-3-7-sonnet"
 	Model__Requesty__Claude__Haiku__4__5                                           ModelID = "anthropic/claude-haiku-4-5"
@@ -4124,7 +4124,7 @@ const (
 	Model__Requesty__Gemini__3__Pro__3__Preview                                    ModelID = "google/gemini-3-pro-preview"
 	Model__Requesty__Grok__4                                                       ModelID = "xai/grok-4"
 	Model__Requesty__Grok__4__Fast__4                                              ModelID = "xai/grok-4-fast"
-	Model__Requesty__O4__Mini                                                      ModelID = "openai/o4-mini"
+	Model__Requesty__O4__Mini__4                                                   ModelID = "openai/o4-mini"
 	Model__RoutingRun__Deepseek__V3__2                                             ModelID = "route/deepseek-v3.2"
 	Model__RoutingRun__Deepseek__V4__Flash                                         ModelID = "route/deepseek-v4-flash"
 	Model__RoutingRun__Deepseek__V4__Flash__6bit                                   ModelID = "route/deepseek-v4-flash-6bit"
@@ -4146,8 +4146,8 @@ const (
 	Model__RoutingRun__Mistral__Large__3                                           ModelID = "route/mistral-large-3"
 	Model__RoutingRun__Mistral__Medium__2505                                       ModelID = "route/mistral-medium-2505"
 	Model__RoutingRun__Mistral__Small__2503                                        ModelID = "route/mistral-small-2503"
-	Model__RoutingRun__Qwen3__6__27b                                               ModelID = "route/qwen3.6-27b"
-	Model__RoutingRun__Qwen3__6__27b__202k                                         ModelID = "route/qwen3.6-27b-202k"
+	Model__RoutingRun__Qwen3__6__27b__202k__3_6                                    ModelID = "route/qwen3.6-27b-202k"
+	Model__RoutingRun__Qwen3__6__27b__3_6                                          ModelID = "route/qwen3.6-27b"
 	Model__RoutingRun__Step__3__5__Flash__2603                                     ModelID = "route/step-3.5-flash-2603"
 	Model__RoutingRun__Step__3__5__Flash__3_5                                      ModelID = "route/step-3.5-flash"
 	Model__RoutingRun__Stepfun__3__5__Flash__3_5                                   ModelID = "route/stepfun-3.5-flash"
@@ -4182,8 +4182,8 @@ const (
 	Model__STACKIT__Llama__3__3__70B__Instruct__Fp8__Dynamic                       ModelID = "cortecs/Llama-3.3-70B-Instruct-FP8-Dynamic"
 	Model__STACKIT__Meta__Llama__3__1__8B__Instruct__Fp8                           ModelID = "neuralmagic/Meta-Llama-3.1-8B-Instruct-FP8"
 	Model__STACKIT__Mistral__Nemo__Instruct__2407__Fp8                             ModelID = "neuralmagic/Mistral-Nemo-Instruct-2407-FP8"
-	Model__STACKIT__Qwen3__Vl__235B__A22b__Instruct__Fp8                           ModelID = "Qwen/Qwen3-VL-235B-A22B-Instruct-FP8"
-	Model__STACKIT__Qwen3__Vl__Embedding__8B                                       ModelID = "Qwen/Qwen3-VL-Embedding-8B"
+	Model__STACKIT__Qwen3__Vl__235B__A22b__Instruct__Fp8__3                        ModelID = "Qwen/Qwen3-VL-235B-A22B-Instruct-FP8"
+	Model__STACKIT__Qwen3__Vl__Embedding__8B__3                                    ModelID = "Qwen/Qwen3-VL-Embedding-8B"
 	Model__Sarvam__Sarvam__105b                                                    ModelID = "sarvam-105b"
 	Model__Sarvam__Sarvam__30b                                                     ModelID = "sarvam-30b"
 	Model__Scaleway__Bge__Multilingual__Gemma2                                     ModelID = "bge-multilingual-gemma2"
@@ -4195,11 +4195,11 @@ const (
 	Model__Scaleway__Mistral__Medium__3__5__128b__3_5                              ModelID = "mistral-medium-3.5-128b"
 	Model__Scaleway__Mistral__Small__3__2__24b__Instruct__2506__3_2                ModelID = "mistral-small-3.2-24b-instruct-2506"
 	Model__Scaleway__Pixtral__12b__2409                                            ModelID = "pixtral-12b-2409"
-	Model__Scaleway__Qwen3__235b__A22b__Instruct__2507                             ModelID = "qwen3-235b-a22b-instruct-2507"
-	Model__Scaleway__Qwen3__5__397b__A17b                                          ModelID = "qwen3.5-397b-a17b"
-	Model__Scaleway__Qwen3__6__35b__A3b                                            ModelID = "qwen3.6-35b-a3b"
-	Model__Scaleway__Qwen3__Coder__30b__A3b__Instruct                              ModelID = "qwen3-coder-30b-a3b-instruct"
-	Model__Scaleway__Qwen3__Embedding__8b                                          ModelID = "qwen3-embedding-8b"
+	Model__Scaleway__Qwen3__235b__A22b__Instruct__2507__3                          ModelID = "qwen3-235b-a22b-instruct-2507"
+	Model__Scaleway__Qwen3__5__397b__A17b__3_5                                     ModelID = "qwen3.5-397b-a17b"
+	Model__Scaleway__Qwen3__6__35b__A3b__3_6                                       ModelID = "qwen3.6-35b-a3b"
+	Model__Scaleway__Qwen3__Coder__30b__A3b__Instruct__3                           ModelID = "qwen3-coder-30b-a3b-instruct"
+	Model__Scaleway__Qwen3__Embedding__8b__3                                       ModelID = "qwen3-embedding-8b"
 	Model__Scaleway__Voxtral__Small__24b__2507                                     ModelID = "voxtral-small-24b-2507"
 	Model__Scaleway__Whisper__Large__V3                                            ModelID = "whisper-large-v3"
 	Model__SiliconFlowCN__Deepseek__Ocr                                            ModelID = "deepseek-ai/DeepSeek-OCR"
@@ -4243,43 +4243,43 @@ const (
 	Model__SiliconFlowCN__Paddleocr__Vl                                            ModelID = "PaddlePaddle/PaddleOCR-VL"
 	Model__SiliconFlowCN__Paddleocr__Vl__1_5                                       ModelID = "PaddlePaddle/PaddleOCR-VL-1.5"
 	Model__SiliconFlowCN__Pangu__Pro__Moe                                          ModelID = "ascend-tribe/pangu-pro-moe"
-	Model__SiliconFlowCN__Qwen2__5__14B__Instruct                                  ModelID = "Qwen/Qwen2.5-14B-Instruct"
-	Model__SiliconFlowCN__Qwen2__5__32B__Instruct                                  ModelID = "Qwen/Qwen2.5-32B-Instruct"
-	Model__SiliconFlowCN__Qwen2__5__72B__Instruct                                  ModelID = "Qwen/Qwen2.5-72B-Instruct"
-	Model__SiliconFlowCN__Qwen2__5__72B__Instruct__128K                            ModelID = "Qwen/Qwen2.5-72B-Instruct-128K"
-	Model__SiliconFlowCN__Qwen2__5__7B__Instruct                                   ModelID = "Qwen/Qwen2.5-7B-Instruct"
-	Model__SiliconFlowCN__Qwen2__5__Coder__32B__Instruct                           ModelID = "Qwen/Qwen2.5-Coder-32B-Instruct"
-	Model__SiliconFlowCN__Qwen2__5__Vl__32B__Instruct                              ModelID = "Qwen/Qwen2.5-VL-32B-Instruct"
-	Model__SiliconFlowCN__Qwen2__5__Vl__72B__Instruct                              ModelID = "Qwen/Qwen2.5-VL-72B-Instruct"
-	Model__SiliconFlowCN__Qwen3__14B                                               ModelID = "Qwen/Qwen3-14B"
-	Model__SiliconFlowCN__Qwen3__235B__A22b__Instruct__2507                        ModelID = "Qwen/Qwen3-235B-A22B-Instruct-2507"
-	Model__SiliconFlowCN__Qwen3__235B__A22b__Thinking__2507                        ModelID = "Qwen/Qwen3-235B-A22B-Thinking-2507"
-	Model__SiliconFlowCN__Qwen3__30B__A3b__Instruct__2507                          ModelID = "Qwen/Qwen3-30B-A3B-Instruct-2507"
-	Model__SiliconFlowCN__Qwen3__30B__A3b__Thinking__2507                          ModelID = "Qwen/Qwen3-30B-A3B-Thinking-2507"
-	Model__SiliconFlowCN__Qwen3__32B                                               ModelID = "Qwen/Qwen3-32B"
-	Model__SiliconFlowCN__Qwen3__5__122B__A10b                                     ModelID = "Qwen/Qwen3.5-122B-A10B"
-	Model__SiliconFlowCN__Qwen3__5__27B                                            ModelID = "Qwen/Qwen3.5-27B"
-	Model__SiliconFlowCN__Qwen3__5__35B__A3b                                       ModelID = "Qwen/Qwen3.5-35B-A3B"
-	Model__SiliconFlowCN__Qwen3__5__397B__A17b                                     ModelID = "Qwen/Qwen3.5-397B-A17B"
-	Model__SiliconFlowCN__Qwen3__5__4B                                             ModelID = "Qwen/Qwen3.5-4B"
-	Model__SiliconFlowCN__Qwen3__5__9B                                             ModelID = "Qwen/Qwen3.5-9B"
-	Model__SiliconFlowCN__Qwen3__6__35B__A3b                                       ModelID = "Qwen/Qwen3.6-35B-A3B"
-	Model__SiliconFlowCN__Qwen3__8B                                                ModelID = "Qwen/Qwen3-8B"
-	Model__SiliconFlowCN__Qwen3__Coder__30B__A3b__Instruct                         ModelID = "Qwen/Qwen3-Coder-30B-A3B-Instruct"
-	Model__SiliconFlowCN__Qwen3__Coder__480B__A35b__Instruct                       ModelID = "Qwen/Qwen3-Coder-480B-A35B-Instruct"
-	Model__SiliconFlowCN__Qwen3__Next__80B__A3b__Instruct                          ModelID = "Qwen/Qwen3-Next-80B-A3B-Instruct"
-	Model__SiliconFlowCN__Qwen3__Next__80B__A3b__Thinking                          ModelID = "Qwen/Qwen3-Next-80B-A3B-Thinking"
-	Model__SiliconFlowCN__Qwen3__Omni__30B__A3b__Captioner                         ModelID = "Qwen/Qwen3-Omni-30B-A3B-Captioner"
-	Model__SiliconFlowCN__Qwen3__Omni__30B__A3b__Instruct                          ModelID = "Qwen/Qwen3-Omni-30B-A3B-Instruct"
-	Model__SiliconFlowCN__Qwen3__Omni__30B__A3b__Thinking                          ModelID = "Qwen/Qwen3-Omni-30B-A3B-Thinking"
-	Model__SiliconFlowCN__Qwen3__Vl__235B__A22b__Instruct                          ModelID = "Qwen/Qwen3-VL-235B-A22B-Instruct"
-	Model__SiliconFlowCN__Qwen3__Vl__235B__A22b__Thinking                          ModelID = "Qwen/Qwen3-VL-235B-A22B-Thinking"
-	Model__SiliconFlowCN__Qwen3__Vl__30B__A3b__Instruct                            ModelID = "Qwen/Qwen3-VL-30B-A3B-Instruct"
-	Model__SiliconFlowCN__Qwen3__Vl__30B__A3b__Thinking                            ModelID = "Qwen/Qwen3-VL-30B-A3B-Thinking"
-	Model__SiliconFlowCN__Qwen3__Vl__32B__Instruct                                 ModelID = "Qwen/Qwen3-VL-32B-Instruct"
-	Model__SiliconFlowCN__Qwen3__Vl__32B__Thinking                                 ModelID = "Qwen/Qwen3-VL-32B-Thinking"
-	Model__SiliconFlowCN__Qwen3__Vl__8B__Instruct                                  ModelID = "Qwen/Qwen3-VL-8B-Instruct"
-	Model__SiliconFlowCN__Qwen3__Vl__8B__Thinking                                  ModelID = "Qwen/Qwen3-VL-8B-Thinking"
+	Model__SiliconFlowCN__Qwen2__5__14B__Instruct__2_5                             ModelID = "Qwen/Qwen2.5-14B-Instruct"
+	Model__SiliconFlowCN__Qwen2__5__32B__Instruct__2_5                             ModelID = "Qwen/Qwen2.5-32B-Instruct"
+	Model__SiliconFlowCN__Qwen2__5__72B__Instruct__128K__2_5                       ModelID = "Qwen/Qwen2.5-72B-Instruct-128K"
+	Model__SiliconFlowCN__Qwen2__5__72B__Instruct__2_5                             ModelID = "Qwen/Qwen2.5-72B-Instruct"
+	Model__SiliconFlowCN__Qwen2__5__7B__Instruct__2_5                              ModelID = "Qwen/Qwen2.5-7B-Instruct"
+	Model__SiliconFlowCN__Qwen2__5__Coder__32B__Instruct__2_5                      ModelID = "Qwen/Qwen2.5-Coder-32B-Instruct"
+	Model__SiliconFlowCN__Qwen2__5__Vl__32B__Instruct__2_5                         ModelID = "Qwen/Qwen2.5-VL-32B-Instruct"
+	Model__SiliconFlowCN__Qwen2__5__Vl__72B__Instruct__2_5                         ModelID = "Qwen/Qwen2.5-VL-72B-Instruct"
+	Model__SiliconFlowCN__Qwen3__14B__3                                            ModelID = "Qwen/Qwen3-14B"
+	Model__SiliconFlowCN__Qwen3__235B__A22b__Instruct__2507__3                     ModelID = "Qwen/Qwen3-235B-A22B-Instruct-2507"
+	Model__SiliconFlowCN__Qwen3__235B__A22b__Thinking__2507__3                     ModelID = "Qwen/Qwen3-235B-A22B-Thinking-2507"
+	Model__SiliconFlowCN__Qwen3__30B__A3b__Instruct__2507__3                       ModelID = "Qwen/Qwen3-30B-A3B-Instruct-2507"
+	Model__SiliconFlowCN__Qwen3__30B__A3b__Thinking__2507__3                       ModelID = "Qwen/Qwen3-30B-A3B-Thinking-2507"
+	Model__SiliconFlowCN__Qwen3__32B__3                                            ModelID = "Qwen/Qwen3-32B"
+	Model__SiliconFlowCN__Qwen3__5__122B__A10b__3_5                                ModelID = "Qwen/Qwen3.5-122B-A10B"
+	Model__SiliconFlowCN__Qwen3__5__27B__3_5                                       ModelID = "Qwen/Qwen3.5-27B"
+	Model__SiliconFlowCN__Qwen3__5__35B__A3b__3_5                                  ModelID = "Qwen/Qwen3.5-35B-A3B"
+	Model__SiliconFlowCN__Qwen3__5__397B__A17b__3_5                                ModelID = "Qwen/Qwen3.5-397B-A17B"
+	Model__SiliconFlowCN__Qwen3__5__4B__3_5                                        ModelID = "Qwen/Qwen3.5-4B"
+	Model__SiliconFlowCN__Qwen3__5__9B__3_5                                        ModelID = "Qwen/Qwen3.5-9B"
+	Model__SiliconFlowCN__Qwen3__6__35B__A3b__3_6                                  ModelID = "Qwen/Qwen3.6-35B-A3B"
+	Model__SiliconFlowCN__Qwen3__8B__3                                             ModelID = "Qwen/Qwen3-8B"
+	Model__SiliconFlowCN__Qwen3__Coder__30B__A3b__Instruct__3                      ModelID = "Qwen/Qwen3-Coder-30B-A3B-Instruct"
+	Model__SiliconFlowCN__Qwen3__Coder__480B__A35b__Instruct__3                    ModelID = "Qwen/Qwen3-Coder-480B-A35B-Instruct"
+	Model__SiliconFlowCN__Qwen3__Next__80B__A3b__Instruct__3                       ModelID = "Qwen/Qwen3-Next-80B-A3B-Instruct"
+	Model__SiliconFlowCN__Qwen3__Next__80B__A3b__Thinking__3                       ModelID = "Qwen/Qwen3-Next-80B-A3B-Thinking"
+	Model__SiliconFlowCN__Qwen3__Omni__30B__A3b__Captioner__3                      ModelID = "Qwen/Qwen3-Omni-30B-A3B-Captioner"
+	Model__SiliconFlowCN__Qwen3__Omni__30B__A3b__Instruct__3                       ModelID = "Qwen/Qwen3-Omni-30B-A3B-Instruct"
+	Model__SiliconFlowCN__Qwen3__Omni__30B__A3b__Thinking__3                       ModelID = "Qwen/Qwen3-Omni-30B-A3B-Thinking"
+	Model__SiliconFlowCN__Qwen3__Vl__235B__A22b__Instruct__3                       ModelID = "Qwen/Qwen3-VL-235B-A22B-Instruct"
+	Model__SiliconFlowCN__Qwen3__Vl__235B__A22b__Thinking__3                       ModelID = "Qwen/Qwen3-VL-235B-A22B-Thinking"
+	Model__SiliconFlowCN__Qwen3__Vl__30B__A3b__Instruct__3                         ModelID = "Qwen/Qwen3-VL-30B-A3B-Instruct"
+	Model__SiliconFlowCN__Qwen3__Vl__30B__A3b__Thinking__3                         ModelID = "Qwen/Qwen3-VL-30B-A3B-Thinking"
+	Model__SiliconFlowCN__Qwen3__Vl__32B__Instruct__3                              ModelID = "Qwen/Qwen3-VL-32B-Instruct"
+	Model__SiliconFlowCN__Qwen3__Vl__32B__Thinking__3                              ModelID = "Qwen/Qwen3-VL-32B-Thinking"
+	Model__SiliconFlowCN__Qwen3__Vl__8B__Instruct__3                               ModelID = "Qwen/Qwen3-VL-8B-Instruct"
+	Model__SiliconFlowCN__Qwen3__Vl__8B__Thinking__3                               ModelID = "Qwen/Qwen3-VL-8B-Thinking"
 	Model__SiliconFlowCN__Qwq__32B                                                 ModelID = "Qwen/QwQ-32B"
 	Model__SiliconFlowCN__Ring__Flash__2__0                                        ModelID = "inclusionAI/Ring-flash-2.0"
 	Model__SiliconFlowCN__Seed__Oss__36B__Instruct                                 ModelID = "ByteDance-Seed/Seed-OSS-36B-Instruct"
@@ -4324,38 +4324,38 @@ const (
 	Model__SiliconFlow__Meta__Llama__3__1__8B__Instruct                            ModelID = "meta-llama/Meta-Llama-3.1-8B-Instruct"
 	Model__SiliconFlow__Minimax__M2__1                                             ModelID = "MiniMaxAI/MiniMax-M2.1"
 	Model__SiliconFlow__Minimax__M2__5                                             ModelID = "MiniMaxAI/MiniMax-M2.5"
-	Model__SiliconFlow__Qwen2__5__14B__Instruct                                    ModelID = "Qwen/Qwen2.5-14B-Instruct"
-	Model__SiliconFlow__Qwen2__5__32B__Instruct                                    ModelID = "Qwen/Qwen2.5-32B-Instruct"
-	Model__SiliconFlow__Qwen2__5__72B__Instruct                                    ModelID = "Qwen/Qwen2.5-72B-Instruct"
-	Model__SiliconFlow__Qwen2__5__72B__Instruct__128K                              ModelID = "Qwen/Qwen2.5-72B-Instruct-128K"
-	Model__SiliconFlow__Qwen2__5__7B__Instruct                                     ModelID = "Qwen/Qwen2.5-7B-Instruct"
-	Model__SiliconFlow__Qwen2__5__Coder__32B__Instruct                             ModelID = "Qwen/Qwen2.5-Coder-32B-Instruct"
-	Model__SiliconFlow__Qwen2__5__Vl__32B__Instruct                                ModelID = "Qwen/Qwen2.5-VL-32B-Instruct"
-	Model__SiliconFlow__Qwen2__5__Vl__72B__Instruct                                ModelID = "Qwen/Qwen2.5-VL-72B-Instruct"
-	Model__SiliconFlow__Qwen2__5__Vl__7B__Instruct                                 ModelID = "Qwen/Qwen2.5-VL-7B-Instruct"
-	Model__SiliconFlow__Qwen3__14B                                                 ModelID = "Qwen/Qwen3-14B"
-	Model__SiliconFlow__Qwen3__235B__A22b                                          ModelID = "Qwen/Qwen3-235B-A22B"
-	Model__SiliconFlow__Qwen3__235B__A22b__Instruct__2507                          ModelID = "Qwen/Qwen3-235B-A22B-Instruct-2507"
-	Model__SiliconFlow__Qwen3__235B__A22b__Thinking__2507                          ModelID = "Qwen/Qwen3-235B-A22B-Thinking-2507"
-	Model__SiliconFlow__Qwen3__30B__A3b__Instruct__2507                            ModelID = "Qwen/Qwen3-30B-A3B-Instruct-2507"
-	Model__SiliconFlow__Qwen3__30B__A3b__Thinking__2507                            ModelID = "Qwen/Qwen3-30B-A3B-Thinking-2507"
-	Model__SiliconFlow__Qwen3__32B                                                 ModelID = "Qwen/Qwen3-32B"
-	Model__SiliconFlow__Qwen3__8B                                                  ModelID = "Qwen/Qwen3-8B"
-	Model__SiliconFlow__Qwen3__Coder__30B__A3b__Instruct                           ModelID = "Qwen/Qwen3-Coder-30B-A3B-Instruct"
-	Model__SiliconFlow__Qwen3__Coder__480B__A35b__Instruct                         ModelID = "Qwen/Qwen3-Coder-480B-A35B-Instruct"
-	Model__SiliconFlow__Qwen3__Next__80B__A3b__Instruct                            ModelID = "Qwen/Qwen3-Next-80B-A3B-Instruct"
-	Model__SiliconFlow__Qwen3__Next__80B__A3b__Thinking                            ModelID = "Qwen/Qwen3-Next-80B-A3B-Thinking"
-	Model__SiliconFlow__Qwen3__Omni__30B__A3b__Captioner                           ModelID = "Qwen/Qwen3-Omni-30B-A3B-Captioner"
-	Model__SiliconFlow__Qwen3__Omni__30B__A3b__Instruct                            ModelID = "Qwen/Qwen3-Omni-30B-A3B-Instruct"
-	Model__SiliconFlow__Qwen3__Omni__30B__A3b__Thinking                            ModelID = "Qwen/Qwen3-Omni-30B-A3B-Thinking"
-	Model__SiliconFlow__Qwen3__Vl__235B__A22b__Instruct                            ModelID = "Qwen/Qwen3-VL-235B-A22B-Instruct"
-	Model__SiliconFlow__Qwen3__Vl__235B__A22b__Thinking                            ModelID = "Qwen/Qwen3-VL-235B-A22B-Thinking"
-	Model__SiliconFlow__Qwen3__Vl__30B__A3b__Instruct                              ModelID = "Qwen/Qwen3-VL-30B-A3B-Instruct"
-	Model__SiliconFlow__Qwen3__Vl__30B__A3b__Thinking                              ModelID = "Qwen/Qwen3-VL-30B-A3B-Thinking"
-	Model__SiliconFlow__Qwen3__Vl__32B__Instruct                                   ModelID = "Qwen/Qwen3-VL-32B-Instruct"
-	Model__SiliconFlow__Qwen3__Vl__32B__Thinking                                   ModelID = "Qwen/Qwen3-VL-32B-Thinking"
-	Model__SiliconFlow__Qwen3__Vl__8B__Instruct                                    ModelID = "Qwen/Qwen3-VL-8B-Instruct"
-	Model__SiliconFlow__Qwen3__Vl__8B__Thinking                                    ModelID = "Qwen/Qwen3-VL-8B-Thinking"
+	Model__SiliconFlow__Qwen2__5__14B__Instruct__2_5                               ModelID = "Qwen/Qwen2.5-14B-Instruct"
+	Model__SiliconFlow__Qwen2__5__32B__Instruct__2_5                               ModelID = "Qwen/Qwen2.5-32B-Instruct"
+	Model__SiliconFlow__Qwen2__5__72B__Instruct__128K__2_5                         ModelID = "Qwen/Qwen2.5-72B-Instruct-128K"
+	Model__SiliconFlow__Qwen2__5__72B__Instruct__2_5                               ModelID = "Qwen/Qwen2.5-72B-Instruct"
+	Model__SiliconFlow__Qwen2__5__7B__Instruct__2_5                                ModelID = "Qwen/Qwen2.5-7B-Instruct"
+	Model__SiliconFlow__Qwen2__5__Coder__32B__Instruct__2_5                        ModelID = "Qwen/Qwen2.5-Coder-32B-Instruct"
+	Model__SiliconFlow__Qwen2__5__Vl__32B__Instruct__2_5                           ModelID = "Qwen/Qwen2.5-VL-32B-Instruct"
+	Model__SiliconFlow__Qwen2__5__Vl__72B__Instruct__2_5                           ModelID = "Qwen/Qwen2.5-VL-72B-Instruct"
+	Model__SiliconFlow__Qwen2__5__Vl__7B__Instruct__2_5                            ModelID = "Qwen/Qwen2.5-VL-7B-Instruct"
+	Model__SiliconFlow__Qwen3__14B__3                                              ModelID = "Qwen/Qwen3-14B"
+	Model__SiliconFlow__Qwen3__235B__A22b__3                                       ModelID = "Qwen/Qwen3-235B-A22B"
+	Model__SiliconFlow__Qwen3__235B__A22b__Instruct__2507__3                       ModelID = "Qwen/Qwen3-235B-A22B-Instruct-2507"
+	Model__SiliconFlow__Qwen3__235B__A22b__Thinking__2507__3                       ModelID = "Qwen/Qwen3-235B-A22B-Thinking-2507"
+	Model__SiliconFlow__Qwen3__30B__A3b__Instruct__2507__3                         ModelID = "Qwen/Qwen3-30B-A3B-Instruct-2507"
+	Model__SiliconFlow__Qwen3__30B__A3b__Thinking__2507__3                         ModelID = "Qwen/Qwen3-30B-A3B-Thinking-2507"
+	Model__SiliconFlow__Qwen3__32B__3                                              ModelID = "Qwen/Qwen3-32B"
+	Model__SiliconFlow__Qwen3__8B__3                                               ModelID = "Qwen/Qwen3-8B"
+	Model__SiliconFlow__Qwen3__Coder__30B__A3b__Instruct__3                        ModelID = "Qwen/Qwen3-Coder-30B-A3B-Instruct"
+	Model__SiliconFlow__Qwen3__Coder__480B__A35b__Instruct__3                      ModelID = "Qwen/Qwen3-Coder-480B-A35B-Instruct"
+	Model__SiliconFlow__Qwen3__Next__80B__A3b__Instruct__3                         ModelID = "Qwen/Qwen3-Next-80B-A3B-Instruct"
+	Model__SiliconFlow__Qwen3__Next__80B__A3b__Thinking__3                         ModelID = "Qwen/Qwen3-Next-80B-A3B-Thinking"
+	Model__SiliconFlow__Qwen3__Omni__30B__A3b__Captioner__3                        ModelID = "Qwen/Qwen3-Omni-30B-A3B-Captioner"
+	Model__SiliconFlow__Qwen3__Omni__30B__A3b__Instruct__3                         ModelID = "Qwen/Qwen3-Omni-30B-A3B-Instruct"
+	Model__SiliconFlow__Qwen3__Omni__30B__A3b__Thinking__3                         ModelID = "Qwen/Qwen3-Omni-30B-A3B-Thinking"
+	Model__SiliconFlow__Qwen3__Vl__235B__A22b__Instruct__3                         ModelID = "Qwen/Qwen3-VL-235B-A22B-Instruct"
+	Model__SiliconFlow__Qwen3__Vl__235B__A22b__Thinking__3                         ModelID = "Qwen/Qwen3-VL-235B-A22B-Thinking"
+	Model__SiliconFlow__Qwen3__Vl__30B__A3b__Instruct__3                           ModelID = "Qwen/Qwen3-VL-30B-A3B-Instruct"
+	Model__SiliconFlow__Qwen3__Vl__30B__A3b__Thinking__3                           ModelID = "Qwen/Qwen3-VL-30B-A3B-Thinking"
+	Model__SiliconFlow__Qwen3__Vl__32B__Instruct__3                                ModelID = "Qwen/Qwen3-VL-32B-Instruct"
+	Model__SiliconFlow__Qwen3__Vl__32B__Thinking__3                                ModelID = "Qwen/Qwen3-VL-32B-Thinking"
+	Model__SiliconFlow__Qwen3__Vl__8B__Instruct__3                                 ModelID = "Qwen/Qwen3-VL-8B-Instruct"
+	Model__SiliconFlow__Qwen3__Vl__8B__Thinking__3                                 ModelID = "Qwen/Qwen3-VL-8B-Thinking"
 	Model__SiliconFlow__Qwq__32B                                                   ModelID = "Qwen/QwQ-32B"
 	Model__SiliconFlow__Ring__Flash__2__0                                          ModelID = "inclusionAI/Ring-flash-2.0"
 	Model__SiliconFlow__Seed__Oss__36B__Instruct                                   ModelID = "ByteDance-Seed/Seed-OSS-36B-Instruct"
@@ -4383,9 +4383,9 @@ const (
 	Model__Submodel__GPT__Oss__120b                                                ModelID = "openai/gpt-oss-120b"
 	Model__Submodel__Glm__4__5__Air                                                ModelID = "zai-org/GLM-4.5-Air"
 	Model__Submodel__Glm__4__5__Fp8                                                ModelID = "zai-org/GLM-4.5-FP8"
-	Model__Submodel__Qwen3__235B__A22b__Instruct__2507                             ModelID = "Qwen/Qwen3-235B-A22B-Instruct-2507"
-	Model__Submodel__Qwen3__235B__A22b__Thinking__2507                             ModelID = "Qwen/Qwen3-235B-A22B-Thinking-2507"
-	Model__Submodel__Qwen3__Coder__480B__A35b__Instruct__Fp8                       ModelID = "Qwen/Qwen3-Coder-480B-A35B-Instruct-FP8"
+	Model__Submodel__Qwen3__235B__A22b__Instruct__2507__3                          ModelID = "Qwen/Qwen3-235B-A22B-Instruct-2507"
+	Model__Submodel__Qwen3__235B__A22b__Thinking__2507__3                          ModelID = "Qwen/Qwen3-235B-A22B-Thinking-2507"
+	Model__Submodel__Qwen3__Coder__480B__A35b__Instruct__Fp8__3                    ModelID = "Qwen/Qwen3-Coder-480B-A35B-Instruct-FP8"
 	Model__Synthetic__Deepseek__R1                                                 ModelID = "hf:deepseek-ai/DeepSeek-R1"
 	Model__Synthetic__Deepseek__R1__0528                                           ModelID = "hf:deepseek-ai/DeepSeek-R1-0528"
 	Model__Synthetic__Deepseek__V3                                                 ModelID = "hf:deepseek-ai/DeepSeek-V3"
@@ -4414,11 +4414,11 @@ const (
 	Model__Synthetic__Minimax__M2__1                                               ModelID = "hf:MiniMaxAI/MiniMax-M2.1"
 	Model__Synthetic__Minimax__M2__5                                               ModelID = "hf:MiniMaxAI/MiniMax-M2.5"
 	Model__Synthetic__Nvidia__Nemotron__3__Super__120B__A12b__Nvfp4                ModelID = "hf:nvidia/NVIDIA-Nemotron-3-Super-120B-A12B-NVFP4"
-	Model__Synthetic__Qwen2__5__Coder__32B__Instruct                               ModelID = "hf:Qwen/Qwen2.5-Coder-32B-Instruct"
-	Model__Synthetic__Qwen3__235B__A22b__Instruct__2507                            ModelID = "hf:Qwen/Qwen3-235B-A22B-Instruct-2507"
-	Model__Synthetic__Qwen3__235B__A22b__Thinking__2507                            ModelID = "hf:Qwen/Qwen3-235B-A22B-Thinking-2507"
-	Model__Synthetic__Qwen3__5__397B__A17b                                         ModelID = "hf:Qwen/Qwen3.5-397B-A17B"
-	Model__Synthetic__Qwen3__Coder__480B__A35b__Instruct                           ModelID = "hf:Qwen/Qwen3-Coder-480B-A35B-Instruct"
+	Model__Synthetic__Qwen2__5__Coder__32B__Instruct__2_5                          ModelID = "hf:Qwen/Qwen2.5-Coder-32B-Instruct"
+	Model__Synthetic__Qwen3__235B__A22b__Instruct__2507__3                         ModelID = "hf:Qwen/Qwen3-235B-A22B-Instruct-2507"
+	Model__Synthetic__Qwen3__235B__A22b__Thinking__2507__3                         ModelID = "hf:Qwen/Qwen3-235B-A22B-Thinking-2507"
+	Model__Synthetic__Qwen3__5__397B__A17b__3_5                                    ModelID = "hf:Qwen/Qwen3.5-397B-A17B"
+	Model__Synthetic__Qwen3__Coder__480B__A35b__Instruct__3                        ModelID = "hf:Qwen/Qwen3-Coder-480B-A35B-Instruct"
 	Model__TencentCodingPlan__Glm__5                                               ModelID = "glm-5"
 	Model__TencentCodingPlan__Hunyuan__2_0__Thinking                               ModelID = "hunyuan-2.0-thinking"
 	Model__TencentCodingPlan__Hunyuan__2__0__Instruct__2_0                         ModelID = "hunyuan-2.0-instruct"
@@ -4449,12 +4449,12 @@ const (
 	Model__Togetherai__Llama__3__3__70B__Instruct__Turbo                           ModelID = "meta-llama/Llama-3.3-70B-Instruct-Turbo"
 	Model__Togetherai__Minimax__M2__5                                              ModelID = "MiniMaxAI/MiniMax-M2.5"
 	Model__Togetherai__Minimax__M2__7                                              ModelID = "MiniMaxAI/MiniMax-M2.7"
-	Model__Togetherai__Qwen3__235B__A22b__Instruct__2507__Tput                     ModelID = "Qwen/Qwen3-235B-A22B-Instruct-2507-tput"
-	Model__Togetherai__Qwen3__5__397B__A17b                                        ModelID = "Qwen/Qwen3.5-397B-A17B"
-	Model__Togetherai__Qwen3__6__Plus                                              ModelID = "Qwen/Qwen3.6-Plus"
-	Model__Togetherai__Qwen3__7__Max                                               ModelID = "Qwen/Qwen3.7-Max"
-	Model__Togetherai__Qwen3__Coder__480B__A35b__Instruct__Fp8                     ModelID = "Qwen/Qwen3-Coder-480B-A35B-Instruct-FP8"
-	Model__Togetherai__Qwen3__Coder__Next__Fp8                                     ModelID = "Qwen/Qwen3-Coder-Next-FP8"
+	Model__Togetherai__Qwen3__235B__A22b__Instruct__2507__Tput__3                  ModelID = "Qwen/Qwen3-235B-A22B-Instruct-2507-tput"
+	Model__Togetherai__Qwen3__5__397B__A17b__3_5                                   ModelID = "Qwen/Qwen3.5-397B-A17B"
+	Model__Togetherai__Qwen3__6__Plus__3_6                                         ModelID = "Qwen/Qwen3.6-Plus"
+	Model__Togetherai__Qwen3__7__Max__3_7                                          ModelID = "Qwen/Qwen3.7-Max"
+	Model__Togetherai__Qwen3__Coder__480B__A35b__Instruct__Fp8__3                  ModelID = "Qwen/Qwen3-Coder-480B-A35B-Instruct-FP8"
+	Model__Togetherai__Qwen3__Coder__Next__Fp8__3                                  ModelID = "Qwen/Qwen3-Coder-Next-FP8"
 	Model__Togetherai__Rnj__1__Instruct                                            ModelID = "essentialai/Rnj-1-Instruct"
 	Model__UmansAICodingPlan__Umans__Coder                                         ModelID = "umans-coder"
 	Model__UmansAICodingPlan__Umans__Flash                                         ModelID = "umans-flash"
@@ -4516,15 +4516,15 @@ const (
 	Model__Venice__Openai__GPT__55                                                 ModelID = "openai-gpt-55"
 	Model__Venice__Openai__GPT__55__Pro                                            ModelID = "openai-gpt-55-pro"
 	Model__Venice__Openai__GPT__Oss__120b                                          ModelID = "openai-gpt-oss-120b"
-	Model__Venice__Qwen3__235b__A22b__Instruct__2507                               ModelID = "qwen3-235b-a22b-instruct-2507"
-	Model__Venice__Qwen3__235b__A22b__Thinking__2507                               ModelID = "qwen3-235b-a22b-thinking-2507"
-	Model__Venice__Qwen3__5__35b__A3b                                              ModelID = "qwen3-5-35b-a3b"
-	Model__Venice__Qwen3__5__397b__A17b                                            ModelID = "qwen3-5-397b-a17b"
-	Model__Venice__Qwen3__5__9b                                                    ModelID = "qwen3-5-9b"
-	Model__Venice__Qwen3__6__27b                                                   ModelID = "qwen3-6-27b"
-	Model__Venice__Qwen3__Coder__480b__A35b__Instruct__Turbo                       ModelID = "qwen3-coder-480b-a35b-instruct-turbo"
-	Model__Venice__Qwen3__Next__80b                                                ModelID = "qwen3-next-80b"
-	Model__Venice__Qwen3__Vl__235b__A22b                                           ModelID = "qwen3-vl-235b-a22b"
+	Model__Venice__Qwen3__235b__A22b__Instruct__2507__3                            ModelID = "qwen3-235b-a22b-instruct-2507"
+	Model__Venice__Qwen3__235b__A22b__Thinking__2507__3                            ModelID = "qwen3-235b-a22b-thinking-2507"
+	Model__Venice__Qwen3__5__35b__A3b__3                                           ModelID = "qwen3-5-35b-a3b"
+	Model__Venice__Qwen3__5__397b__A17b__3                                         ModelID = "qwen3-5-397b-a17b"
+	Model__Venice__Qwen3__5__9b__3                                                 ModelID = "qwen3-5-9b"
+	Model__Venice__Qwen3__6__27b__3                                                ModelID = "qwen3-6-27b"
+	Model__Venice__Qwen3__Coder__480b__A35b__Instruct__Turbo__3                    ModelID = "qwen3-coder-480b-a35b-instruct-turbo"
+	Model__Venice__Qwen3__Next__80b__3                                             ModelID = "qwen3-next-80b"
+	Model__Venice__Qwen3__Vl__235b__A22b__3                                        ModelID = "qwen3-vl-235b-a22b"
 	Model__Venice__Qwen__3__6__Plus__3_6                                           ModelID = "qwen-3-6-plus"
 	Model__Venice__Qwen__3__7__Max__3_7                                            ModelID = "qwen-3-7-max"
 	Model__Venice__Venice__Uncensored__1_2                                         ModelID = "venice-uncensored-1-2"
@@ -4718,35 +4718,35 @@ const (
 	Model__Vercel__Nova__Lite                                                      ModelID = "amazon/nova-lite"
 	Model__Vercel__Nova__Micro                                                     ModelID = "amazon/nova-micro"
 	Model__Vercel__Nova__Pro                                                       ModelID = "amazon/nova-pro"
-	Model__Vercel__O1                                                              ModelID = "openai/o1"
-	Model__Vercel__O3                                                              ModelID = "openai/o3"
-	Model__Vercel__O3__Deep__Research                                              ModelID = "openai/o3-deep-research"
-	Model__Vercel__O3__Mini                                                        ModelID = "openai/o3-mini"
-	Model__Vercel__O3__Pro                                                         ModelID = "openai/o3-pro"
-	Model__Vercel__O4__Mini                                                        ModelID = "openai/o4-mini"
+	Model__Vercel__O1__1                                                           ModelID = "openai/o1"
+	Model__Vercel__O3__3                                                           ModelID = "openai/o3"
+	Model__Vercel__O3__Deep__Research__3                                           ModelID = "openai/o3-deep-research"
+	Model__Vercel__O3__Mini__3                                                     ModelID = "openai/o3-mini"
+	Model__Vercel__O3__Pro__3                                                      ModelID = "openai/o3-pro"
+	Model__Vercel__O4__Mini__4                                                     ModelID = "openai/o4-mini"
 	Model__Vercel__Pixtral__12b                                                    ModelID = "mistral/pixtral-12b"
 	Model__Vercel__Pixtral__Large                                                  ModelID = "mistral/pixtral-large"
-	Model__Vercel__Qwen3__235b__A22b__Thinking                                     ModelID = "alibaba/qwen3-235b-a22b-thinking"
-	Model__Vercel__Qwen3__5__Flash                                                 ModelID = "alibaba/qwen3.5-flash"
-	Model__Vercel__Qwen3__5__Plus                                                  ModelID = "alibaba/qwen3.5-plus"
-	Model__Vercel__Qwen3__6__27b                                                   ModelID = "alibaba/qwen3.6-27b"
-	Model__Vercel__Qwen3__6__Plus                                                  ModelID = "alibaba/qwen3.6-plus"
-	Model__Vercel__Qwen3__7__Max                                                   ModelID = "alibaba/qwen3.7-max"
-	Model__Vercel__Qwen3__Coder                                                    ModelID = "alibaba/qwen3-coder"
-	Model__Vercel__Qwen3__Coder__30b__A3b                                          ModelID = "alibaba/qwen3-coder-30b-a3b"
-	Model__Vercel__Qwen3__Coder__Next                                              ModelID = "alibaba/qwen3-coder-next"
-	Model__Vercel__Qwen3__Coder__Plus                                              ModelID = "alibaba/qwen3-coder-plus"
-	Model__Vercel__Qwen3__Embedding__0__6b                                         ModelID = "alibaba/qwen3-embedding-0.6b"
-	Model__Vercel__Qwen3__Embedding__4b                                            ModelID = "alibaba/qwen3-embedding-4b"
-	Model__Vercel__Qwen3__Embedding__8b                                            ModelID = "alibaba/qwen3-embedding-8b"
-	Model__Vercel__Qwen3__Max                                                      ModelID = "alibaba/qwen3-max"
-	Model__Vercel__Qwen3__Max__Preview                                             ModelID = "alibaba/qwen3-max-preview"
-	Model__Vercel__Qwen3__Max__Thinking                                            ModelID = "alibaba/qwen3-max-thinking"
-	Model__Vercel__Qwen3__Next__80b__A3b__Instruct                                 ModelID = "alibaba/qwen3-next-80b-a3b-instruct"
-	Model__Vercel__Qwen3__Next__80b__A3b__Thinking                                 ModelID = "alibaba/qwen3-next-80b-a3b-thinking"
-	Model__Vercel__Qwen3__Vl__235b__A22b__Instruct                                 ModelID = "alibaba/qwen3-vl-235b-a22b-instruct"
-	Model__Vercel__Qwen3__Vl__Instruct                                             ModelID = "alibaba/qwen3-vl-instruct"
-	Model__Vercel__Qwen3__Vl__Thinking                                             ModelID = "alibaba/qwen3-vl-thinking"
+	Model__Vercel__Qwen3__235b__A22b__3__Thinking                                  ModelID = "alibaba/qwen3-235b-a22b-thinking"
+	Model__Vercel__Qwen3__5__Flash__3_5                                            ModelID = "alibaba/qwen3.5-flash"
+	Model__Vercel__Qwen3__5__Plus__3_5                                             ModelID = "alibaba/qwen3.5-plus"
+	Model__Vercel__Qwen3__6__27b__3_6                                              ModelID = "alibaba/qwen3.6-27b"
+	Model__Vercel__Qwen3__6__Plus__3_6                                             ModelID = "alibaba/qwen3.6-plus"
+	Model__Vercel__Qwen3__7__Max__3_7                                              ModelID = "alibaba/qwen3.7-max"
+	Model__Vercel__Qwen3__Coder__3                                                 ModelID = "alibaba/qwen3-coder"
+	Model__Vercel__Qwen3__Coder__30b__A3b__3                                       ModelID = "alibaba/qwen3-coder-30b-a3b"
+	Model__Vercel__Qwen3__Coder__Next__3                                           ModelID = "alibaba/qwen3-coder-next"
+	Model__Vercel__Qwen3__Coder__Plus__3                                           ModelID = "alibaba/qwen3-coder-plus"
+	Model__Vercel__Qwen3__Embedding__0__6b__3                                      ModelID = "alibaba/qwen3-embedding-0.6b"
+	Model__Vercel__Qwen3__Embedding__4b__3                                         ModelID = "alibaba/qwen3-embedding-4b"
+	Model__Vercel__Qwen3__Embedding__8b__3                                         ModelID = "alibaba/qwen3-embedding-8b"
+	Model__Vercel__Qwen3__Max__3                                                   ModelID = "alibaba/qwen3-max"
+	Model__Vercel__Qwen3__Max__3__Preview                                          ModelID = "alibaba/qwen3-max-preview"
+	Model__Vercel__Qwen3__Max__3__Thinking                                         ModelID = "alibaba/qwen3-max-thinking"
+	Model__Vercel__Qwen3__Next__80b__A3b__3__Thinking                              ModelID = "alibaba/qwen3-next-80b-a3b-thinking"
+	Model__Vercel__Qwen3__Next__80b__A3b__Instruct__3                              ModelID = "alibaba/qwen3-next-80b-a3b-instruct"
+	Model__Vercel__Qwen3__Vl__235b__A22b__Instruct__3                              ModelID = "alibaba/qwen3-vl-235b-a22b-instruct"
+	Model__Vercel__Qwen3__Vl__3__Thinking                                          ModelID = "alibaba/qwen3-vl-thinking"
+	Model__Vercel__Qwen3__Vl__Instruct__3                                          ModelID = "alibaba/qwen3-vl-instruct"
 	Model__Vercel__Qwen__3__14b__3                                                 ModelID = "alibaba/qwen-3-14b"
 	Model__Vercel__Qwen__3__235b__3                                                ModelID = "alibaba/qwen-3-235b"
 	Model__Vercel__Qwen__3__30b__3                                                 ModelID = "alibaba/qwen-3-30b"
@@ -4803,8 +4803,8 @@ const (
 	Model__Vultr__Nemotron__Cascade__2__30B__A3b                                   ModelID = "nvidia/Nemotron-Cascade-2-30B-A3B"
 	Model__WaferAI__Glm__5__1                                                      ModelID = "GLM-5.1"
 	Model__WaferAI__Kimi__K2__6                                                    ModelID = "Kimi-K2.6"
-	Model__WaferAI__Qwen3__5__397B__A17b                                           ModelID = "Qwen3.5-397B-A17B"
-	Model__WaferAI__Qwen3__6__35B__A3b                                             ModelID = "Qwen3.6-35B-A3B"
+	Model__WaferAI__Qwen3__5__397B__A17b__3_5                                      ModelID = "Qwen3.5-397B-A17B"
+	Model__WaferAI__Qwen3__6__35B__A3b__3_6                                        ModelID = "Qwen3.6-35B-A3B"
 	Model__Wandb__Deepseek__V3__1                                                  ModelID = "deepseek-ai/DeepSeek-V3.1"
 	Model__Wandb__GPT__Oss__120b                                                   ModelID = "openai/gpt-oss-120b"
 	Model__Wandb__GPT__Oss__20b                                                    ModelID = "openai/gpt-oss-20b"
@@ -4818,11 +4818,11 @@ const (
 	Model__Wandb__Minimax__M2__5                                                   ModelID = "MiniMaxAI/MiniMax-M2.5"
 	Model__Wandb__Nvidia__Nemotron__3__Super__120B__A12b__Fp8                      ModelID = "nvidia/NVIDIA-Nemotron-3-Super-120B-A12B-FP8"
 	Model__Wandb__Phi__4__Mini__Instruct                                           ModelID = "microsoft/Phi-4-mini-instruct"
-	Model__Wandb__Qwen3__14B__Instruct                                             ModelID = "OpenPipe/Qwen3-14B-Instruct"
-	Model__Wandb__Qwen3__235B__A22b__Instruct__2507                                ModelID = "Qwen/Qwen3-235B-A22B-Instruct-2507"
-	Model__Wandb__Qwen3__235B__A22b__Thinking__2507                                ModelID = "Qwen/Qwen3-235B-A22B-Thinking-2507"
-	Model__Wandb__Qwen3__30B__A3b__Instruct__2507                                  ModelID = "Qwen/Qwen3-30B-A3B-Instruct-2507"
-	Model__Wandb__Qwen3__Coder__480B__A35b__Instruct                               ModelID = "Qwen/Qwen3-Coder-480B-A35B-Instruct"
+	Model__Wandb__Qwen3__14B__Instruct__3                                          ModelID = "OpenPipe/Qwen3-14B-Instruct"
+	Model__Wandb__Qwen3__235B__A22b__Instruct__2507__3                             ModelID = "Qwen/Qwen3-235B-A22B-Instruct-2507"
+	Model__Wandb__Qwen3__235B__A22b__Thinking__2507__3                             ModelID = "Qwen/Qwen3-235B-A22B-Thinking-2507"
+	Model__Wandb__Qwen3__30B__A3b__Instruct__2507__3                               ModelID = "Qwen/Qwen3-30B-A3B-Instruct-2507"
+	Model__Wandb__Qwen3__Coder__480B__A35b__Instruct__3                            ModelID = "Qwen/Qwen3-Coder-480B-A35B-Instruct"
 	Model__XAI__Grok__4_3                                                          ModelID = "grok-4.3"
 	Model__XAI__Grok__4__20__0309__Non__Reasoning__4_20                            ModelID = "grok-4.20-0309-non-reasoning"
 	Model__XAI__Grok__4__20__0309__Reasoning__4_20                                 ModelID = "grok-4.20-0309-reasoning"
@@ -4966,11 +4966,11 @@ const (
 	Model__ZenMux__Minimax__M2__5__Lightning                                       ModelID = "minimax/minimax-m2.5-lightning"
 	Model__ZenMux__Minimax__M2__7                                                  ModelID = "minimax/minimax-m2.7"
 	Model__ZenMux__Minimax__M2__7__Highspeed                                       ModelID = "minimax/minimax-m2.7-highspeed"
-	Model__ZenMux__Qwen3__5__Flash                                                 ModelID = "qwen/qwen3.5-flash"
-	Model__ZenMux__Qwen3__5__Plus                                                  ModelID = "qwen/qwen3.5-plus"
-	Model__ZenMux__Qwen3__6__Plus                                                  ModelID = "qwen/qwen3.6-plus"
-	Model__ZenMux__Qwen3__Coder__Plus                                              ModelID = "qwen/qwen3-coder-plus"
-	Model__ZenMux__Qwen3__Max                                                      ModelID = "qwen/qwen3-max"
+	Model__ZenMux__Qwen3__5__Flash__3_5                                            ModelID = "qwen/qwen3.5-flash"
+	Model__ZenMux__Qwen3__5__Plus__3_5                                             ModelID = "qwen/qwen3.5-plus"
+	Model__ZenMux__Qwen3__6__Plus__3_6                                             ModelID = "qwen/qwen3.6-plus"
+	Model__ZenMux__Qwen3__Coder__Plus__3                                           ModelID = "qwen/qwen3-coder-plus"
+	Model__ZenMux__Qwen3__Max__3                                                   ModelID = "qwen/qwen3-max"
 	Model__ZenMux__Ring__1t                                                        ModelID = "inclusionai/ring-1t"
 	Model__ZenMux__Step__3                                                         ModelID = "stepfun/step-3"
 	Model__ZenMux__Step__3__5__Flash__3_5                                          ModelID = "stepfun/step-3.5-flash"
@@ -5085,11 +5085,11 @@ var allModelConstants = [...]ModelID{
 	Model__302AI__Minimax__M2__7__Highspeed,
 	Model__302AI__Ministral__14b__2512,
 	Model__302AI__Mistral__Large__2512,
-	Model__302AI__Qwen3__235b__A22b,
-	Model__302AI__Qwen3__235b__A22b__Instruct__2507,
-	Model__302AI__Qwen3__30b__A3b,
+	Model__302AI__Qwen3__235b__A22b__3,
+	Model__302AI__Qwen3__235b__A22b__Instruct__2507__3,
+	Model__302AI__Qwen3__30b__A3b__3,
 	Model__302AI__Qwen3__Coder__480b__A35b__Instruct,
-	Model__302AI__Qwen3__Max__20250923,
+	Model__302AI__Qwen3__Max__3__20250923,
 	Model__302AI__Qwen__Flash,
 	Model__302AI__Qwen__Max__Latest,
 	Model__302AI__Qwen__Plus,
@@ -5135,9 +5135,9 @@ var allModelConstants = [...]ModelID{
 	Model__AIHubMix__Kimi__K2__5,
 	Model__AIHubMix__Kimi__K2__6,
 	Model__AIHubMix__Minimax__M2__7,
-	Model__AIHubMix__Qwen3__6__Flash,
-	Model__AIHubMix__Qwen3__6__Max__Preview,
-	Model__AIHubMix__Qwen3__6__Plus,
+	Model__AIHubMix__Qwen3__6__Flash__3_6,
+	Model__AIHubMix__Qwen3__6__Max__3_6__Preview,
+	Model__AIHubMix__Qwen3__6__Plus__3_6,
 	Model__AIHubMix__Xiaomi__Mimo__V2__5,
 	Model__AIHubMix__Xiaomi__Mimo__V2__5__Free,
 	Model__AIHubMix__Xiaomi__Mimo__V2__5__Pro,
@@ -5196,15 +5196,15 @@ var allModelConstants = [...]ModelID{
 	Model__Abacus__Llama__4__Maverick__17B__128E__Instruct__Fp8,
 	Model__Abacus__Meta__Llama__3__1__405B__Instruct__Turbo,
 	Model__Abacus__Meta__Llama__3__1__8B__Instruct,
-	Model__Abacus__O3,
-	Model__Abacus__O3__Mini,
-	Model__Abacus__O3__Pro,
-	Model__Abacus__O4__Mini,
-	Model__Abacus__Qwen2__5__72B__Instruct,
-	Model__Abacus__Qwen3__235B__A22b__Instruct__2507,
-	Model__Abacus__Qwen3__32B,
-	Model__Abacus__Qwen3__Coder__480b__A35b__Instruct,
-	Model__Abacus__Qwen3__Max,
+	Model__Abacus__O3__3,
+	Model__Abacus__O3__Mini__3,
+	Model__Abacus__O3__Pro__3,
+	Model__Abacus__O4__Mini__4,
+	Model__Abacus__Qwen2__5__72B__Instruct__2_5,
+	Model__Abacus__Qwen3__235B__A22b__Instruct__2507__3,
+	Model__Abacus__Qwen3__32B__3,
+	Model__Abacus__Qwen3__Coder__480b__A35b__Instruct__3,
+	Model__Abacus__Qwen3__Max__3,
 	Model__Abacus__Qwen__2__5__Coder__32b__2_5,
 	Model__Abacus__Qwq__32B,
 	Model__Abacus__Route__LLM,
@@ -5236,41 +5236,41 @@ var allModelConstants = [...]ModelID{
 	Model__AlibabaCN__Minimax__M2__7,
 	Model__AlibabaCN__Moonshot__Kimi__K2__Instruct,
 	Model__AlibabaCN__Qvq__Max,
-	Model__AlibabaCN__Qwen2__5__14b__Instruct,
-	Model__AlibabaCN__Qwen2__5__32b__Instruct,
-	Model__AlibabaCN__Qwen2__5__72b__Instruct,
-	Model__AlibabaCN__Qwen2__5__7b__Instruct,
-	Model__AlibabaCN__Qwen2__5__Coder__32b__Instruct,
-	Model__AlibabaCN__Qwen2__5__Coder__7b__Instruct,
-	Model__AlibabaCN__Qwen2__5__Math__72b__Instruct,
-	Model__AlibabaCN__Qwen2__5__Math__7b__Instruct,
-	Model__AlibabaCN__Qwen2__5__Omni__7b,
-	Model__AlibabaCN__Qwen2__5__Vl__72b__Instruct,
-	Model__AlibabaCN__Qwen2__5__Vl__7b__Instruct,
-	Model__AlibabaCN__Qwen3__14b,
-	Model__AlibabaCN__Qwen3__235b__A22b,
-	Model__AlibabaCN__Qwen3__32b,
-	Model__AlibabaCN__Qwen3__5__397b__A17b,
-	Model__AlibabaCN__Qwen3__5__Flash,
-	Model__AlibabaCN__Qwen3__5__Plus,
-	Model__AlibabaCN__Qwen3__6__Flash,
-	Model__AlibabaCN__Qwen3__6__Max__Preview,
-	Model__AlibabaCN__Qwen3__6__Plus,
-	Model__AlibabaCN__Qwen3__7__Max,
-	Model__AlibabaCN__Qwen3__8b,
-	Model__AlibabaCN__Qwen3__Asr__Flash,
-	Model__AlibabaCN__Qwen3__Coder__30b__A3b__Instruct,
-	Model__AlibabaCN__Qwen3__Coder__480b__A35b__Instruct,
-	Model__AlibabaCN__Qwen3__Coder__Flash,
-	Model__AlibabaCN__Qwen3__Coder__Plus,
-	Model__AlibabaCN__Qwen3__Max,
-	Model__AlibabaCN__Qwen3__Next__80b__A3b__Instruct,
-	Model__AlibabaCN__Qwen3__Next__80b__A3b__Thinking,
-	Model__AlibabaCN__Qwen3__Omni__Flash,
-	Model__AlibabaCN__Qwen3__Omni__Flash__Realtime,
-	Model__AlibabaCN__Qwen3__Vl__235b__A22b,
-	Model__AlibabaCN__Qwen3__Vl__30b__A3b,
-	Model__AlibabaCN__Qwen3__Vl__Plus,
+	Model__AlibabaCN__Qwen2__5__14b__Instruct__2,
+	Model__AlibabaCN__Qwen2__5__32b__Instruct__2,
+	Model__AlibabaCN__Qwen2__5__72b__Instruct__2,
+	Model__AlibabaCN__Qwen2__5__7b__Instruct__2,
+	Model__AlibabaCN__Qwen2__5__Coder__32b__Instruct__2,
+	Model__AlibabaCN__Qwen2__5__Coder__7b__Instruct__2,
+	Model__AlibabaCN__Qwen2__5__Math__72b__Instruct__2,
+	Model__AlibabaCN__Qwen2__5__Math__7b__Instruct__2,
+	Model__AlibabaCN__Qwen2__5__Omni__7b__2,
+	Model__AlibabaCN__Qwen2__5__Vl__72b__Instruct__2,
+	Model__AlibabaCN__Qwen2__5__Vl__7b__Instruct__2,
+	Model__AlibabaCN__Qwen3__14b__3,
+	Model__AlibabaCN__Qwen3__235b__A22b__3,
+	Model__AlibabaCN__Qwen3__32b__3,
+	Model__AlibabaCN__Qwen3__5__397b__A17b__3_5,
+	Model__AlibabaCN__Qwen3__5__Flash__3_5,
+	Model__AlibabaCN__Qwen3__5__Plus__3_5,
+	Model__AlibabaCN__Qwen3__6__Flash__3_6,
+	Model__AlibabaCN__Qwen3__6__Max__3_6__Preview,
+	Model__AlibabaCN__Qwen3__6__Plus__3_6,
+	Model__AlibabaCN__Qwen3__7__Max__3_7,
+	Model__AlibabaCN__Qwen3__8b__3,
+	Model__AlibabaCN__Qwen3__Asr__Flash__3,
+	Model__AlibabaCN__Qwen3__Coder__30b__A3b__Instruct__3,
+	Model__AlibabaCN__Qwen3__Coder__480b__A35b__Instruct__3,
+	Model__AlibabaCN__Qwen3__Coder__Flash__3,
+	Model__AlibabaCN__Qwen3__Coder__Plus__3,
+	Model__AlibabaCN__Qwen3__Max__3,
+	Model__AlibabaCN__Qwen3__Next__80b__A3b__3__Thinking,
+	Model__AlibabaCN__Qwen3__Next__80b__A3b__Instruct__3,
+	Model__AlibabaCN__Qwen3__Omni__Flash__3,
+	Model__AlibabaCN__Qwen3__Omni__Flash__Realtime__3,
+	Model__AlibabaCN__Qwen3__Vl__235b__A22b__3,
+	Model__AlibabaCN__Qwen3__Vl__30b__A3b__3,
+	Model__AlibabaCN__Qwen3__Vl__Plus__3,
 	Model__AlibabaCN__Qwen__Deep__Research,
 	Model__AlibabaCN__Qwen__Doc__Turbo,
 	Model__AlibabaCN__Qwen__Flash,
@@ -5295,61 +5295,61 @@ var allModelConstants = [...]ModelID{
 	Model__AlibabaCodingPlanCN__Glm__5,
 	Model__AlibabaCodingPlanCN__Kimi__K2__5,
 	Model__AlibabaCodingPlanCN__Minimax__M2__5,
-	Model__AlibabaCodingPlanCN__Qwen3__5__Plus,
-	Model__AlibabaCodingPlanCN__Qwen3__6__Flash,
-	Model__AlibabaCodingPlanCN__Qwen3__6__Plus,
-	Model__AlibabaCodingPlanCN__Qwen3__7__Max,
-	Model__AlibabaCodingPlanCN__Qwen3__Coder__Next,
-	Model__AlibabaCodingPlanCN__Qwen3__Coder__Plus,
-	Model__AlibabaCodingPlanCN__Qwen3__Max__20260123,
+	Model__AlibabaCodingPlanCN__Qwen3__5__Plus__3_5,
+	Model__AlibabaCodingPlanCN__Qwen3__6__Flash__3_6,
+	Model__AlibabaCodingPlanCN__Qwen3__6__Plus__3_6,
+	Model__AlibabaCodingPlanCN__Qwen3__7__Max__3_7,
+	Model__AlibabaCodingPlanCN__Qwen3__Coder__Next__3,
+	Model__AlibabaCodingPlanCN__Qwen3__Coder__Plus__3,
+	Model__AlibabaCodingPlanCN__Qwen3__Max__3__20260123,
 	Model__AlibabaCodingPlan__Glm__4_7,
 	Model__AlibabaCodingPlan__Glm__5,
 	Model__AlibabaCodingPlan__Kimi__K2__5,
 	Model__AlibabaCodingPlan__Minimax__M2__5,
-	Model__AlibabaCodingPlan__Qwen3__5__Plus,
-	Model__AlibabaCodingPlan__Qwen3__6__Flash,
-	Model__AlibabaCodingPlan__Qwen3__6__Plus,
-	Model__AlibabaCodingPlan__Qwen3__7__Max,
-	Model__AlibabaCodingPlan__Qwen3__Coder__Next,
-	Model__AlibabaCodingPlan__Qwen3__Coder__Plus,
-	Model__AlibabaCodingPlan__Qwen3__Max__20260123,
+	Model__AlibabaCodingPlan__Qwen3__5__Plus__3_5,
+	Model__AlibabaCodingPlan__Qwen3__6__Flash__3_6,
+	Model__AlibabaCodingPlan__Qwen3__6__Plus__3_6,
+	Model__AlibabaCodingPlan__Qwen3__7__Max__3_7,
+	Model__AlibabaCodingPlan__Qwen3__Coder__Next__3,
+	Model__AlibabaCodingPlan__Qwen3__Coder__Plus__3,
+	Model__AlibabaCodingPlan__Qwen3__Max__3__20260123,
 	Model__Alibaba__Qvq__Max,
-	Model__Alibaba__Qwen2__5__14b__Instruct,
-	Model__Alibaba__Qwen2__5__32b__Instruct,
-	Model__Alibaba__Qwen2__5__72b__Instruct,
-	Model__Alibaba__Qwen2__5__7b__Instruct,
-	Model__Alibaba__Qwen2__5__Omni__7b,
-	Model__Alibaba__Qwen2__5__Vl__72b__Instruct,
-	Model__Alibaba__Qwen2__5__Vl__7b__Instruct,
-	Model__Alibaba__Qwen3__14b,
-	Model__Alibaba__Qwen3__235b__A22b,
-	Model__Alibaba__Qwen3__32b,
-	Model__Alibaba__Qwen3__5__122b__A10b,
-	Model__Alibaba__Qwen3__5__27b,
-	Model__Alibaba__Qwen3__5__35b__A3b,
-	Model__Alibaba__Qwen3__5__397b__A17b,
-	Model__Alibaba__Qwen3__5__Plus,
-	Model__Alibaba__Qwen3__6__27b,
-	Model__Alibaba__Qwen3__6__35b__A3b,
-	Model__Alibaba__Qwen3__6__Flash,
-	Model__Alibaba__Qwen3__6__Max__Preview,
-	Model__Alibaba__Qwen3__6__Plus,
-	Model__Alibaba__Qwen3__7__Max,
-	Model__Alibaba__Qwen3__8b,
-	Model__Alibaba__Qwen3__Asr__Flash,
-	Model__Alibaba__Qwen3__Coder__30b__A3b__Instruct,
-	Model__Alibaba__Qwen3__Coder__480b__A35b__Instruct,
-	Model__Alibaba__Qwen3__Coder__Flash,
-	Model__Alibaba__Qwen3__Coder__Plus,
-	Model__Alibaba__Qwen3__Livetranslate__Flash__Realtime,
-	Model__Alibaba__Qwen3__Max,
-	Model__Alibaba__Qwen3__Next__80b__A3b__Instruct,
-	Model__Alibaba__Qwen3__Next__80b__A3b__Thinking,
-	Model__Alibaba__Qwen3__Omni__Flash,
-	Model__Alibaba__Qwen3__Omni__Flash__Realtime,
-	Model__Alibaba__Qwen3__Vl__235b__A22b,
-	Model__Alibaba__Qwen3__Vl__30b__A3b,
-	Model__Alibaba__Qwen3__Vl__Plus,
+	Model__Alibaba__Qwen2__5__14b__Instruct__2,
+	Model__Alibaba__Qwen2__5__32b__Instruct__2,
+	Model__Alibaba__Qwen2__5__72b__Instruct__2,
+	Model__Alibaba__Qwen2__5__7b__Instruct__2,
+	Model__Alibaba__Qwen2__5__Omni__7b__2,
+	Model__Alibaba__Qwen2__5__Vl__72b__Instruct__2,
+	Model__Alibaba__Qwen2__5__Vl__7b__Instruct__2,
+	Model__Alibaba__Qwen3__14b__3,
+	Model__Alibaba__Qwen3__235b__A22b__3,
+	Model__Alibaba__Qwen3__32b__3,
+	Model__Alibaba__Qwen3__5__122b__A10b__3_5,
+	Model__Alibaba__Qwen3__5__27b__3_5,
+	Model__Alibaba__Qwen3__5__35b__A3b__3_5,
+	Model__Alibaba__Qwen3__5__397b__A17b__3_5,
+	Model__Alibaba__Qwen3__5__Plus__3_5,
+	Model__Alibaba__Qwen3__6__27b__3_6,
+	Model__Alibaba__Qwen3__6__35b__A3b__3_6,
+	Model__Alibaba__Qwen3__6__Flash__3_6,
+	Model__Alibaba__Qwen3__6__Max__3_6__Preview,
+	Model__Alibaba__Qwen3__6__Plus__3_6,
+	Model__Alibaba__Qwen3__7__Max__3_7,
+	Model__Alibaba__Qwen3__8b__3,
+	Model__Alibaba__Qwen3__Asr__Flash__3,
+	Model__Alibaba__Qwen3__Coder__30b__A3b__Instruct__3,
+	Model__Alibaba__Qwen3__Coder__480b__A35b__Instruct__3,
+	Model__Alibaba__Qwen3__Coder__Flash__3,
+	Model__Alibaba__Qwen3__Coder__Plus__3,
+	Model__Alibaba__Qwen3__Livetranslate__Flash__Realtime__3,
+	Model__Alibaba__Qwen3__Max__3,
+	Model__Alibaba__Qwen3__Next__80b__A3b__3__Thinking,
+	Model__Alibaba__Qwen3__Next__80b__A3b__Instruct__3,
+	Model__Alibaba__Qwen3__Omni__Flash__3,
+	Model__Alibaba__Qwen3__Omni__Flash__Realtime__3,
+	Model__Alibaba__Qwen3__Vl__235b__A22b__3,
+	Model__Alibaba__Qwen3__Vl__30b__A3b__3,
+	Model__Alibaba__Qwen3__Vl__Plus__3,
 	Model__Alibaba__Qwen__Flash,
 	Model__Alibaba__Qwen__Max,
 	Model__Alibaba__Qwen__Mt__Plus,
@@ -5573,12 +5573,12 @@ var allModelConstants = [...]ModelID{
 	Model__AzureCognitiveServices__Mistral__Nemo,
 	Model__AzureCognitiveServices__Mistral__Small__2503,
 	Model__AzureCognitiveServices__Model__Router,
-	Model__AzureCognitiveServices__O1,
-	Model__AzureCognitiveServices__O1__Mini,
-	Model__AzureCognitiveServices__O1__Preview,
-	Model__AzureCognitiveServices__O3,
-	Model__AzureCognitiveServices__O3__Mini,
-	Model__AzureCognitiveServices__O4__Mini,
+	Model__AzureCognitiveServices__O1__1,
+	Model__AzureCognitiveServices__O1__1__Preview,
+	Model__AzureCognitiveServices__O1__Mini__1,
+	Model__AzureCognitiveServices__O3__3,
+	Model__AzureCognitiveServices__O3__Mini__3,
+	Model__AzureCognitiveServices__O4__Mini__4,
 	Model__AzureCognitiveServices__Phi__3__5__Mini__Instruct__3_5,
 	Model__AzureCognitiveServices__Phi__3__5__Moe__Instruct__3_5,
 	Model__AzureCognitiveServices__Phi__3__Medium__128k__Instruct__3,
@@ -5676,12 +5676,12 @@ var allModelConstants = [...]ModelID{
 	Model__Azure__Mistral__Nemo,
 	Model__Azure__Mistral__Small__2503,
 	Model__Azure__Model__Router,
-	Model__Azure__O1,
-	Model__Azure__O1__Mini,
-	Model__Azure__O1__Preview,
-	Model__Azure__O3,
-	Model__Azure__O3__Mini,
-	Model__Azure__O4__Mini,
+	Model__Azure__O1__1,
+	Model__Azure__O1__1__Preview,
+	Model__Azure__O1__Mini__1,
+	Model__Azure__O3__3,
+	Model__Azure__O3__Mini__3,
+	Model__Azure__O4__Mini__4,
 	Model__Azure__Phi__3__5__Mini__Instruct__3_5,
 	Model__Azure__Phi__3__5__Moe__Instruct__3_5,
 	Model__Azure__Phi__3__Medium__128k__Instruct__3,
@@ -5752,17 +5752,17 @@ var allModelConstants = [...]ModelID{
 	Model__Chutes__Mimo__V2__Flash__Tee,
 	Model__Chutes__Minimax__M2__5__Tee,
 	Model__Chutes__Mistral__Nemo__Instruct__2407,
-	Model__Chutes__Qwen2__5__72B__Instruct,
-	Model__Chutes__Qwen2__5__Coder__32B__Instruct,
-	Model__Chutes__Qwen2__5__Vl__32B__Instruct,
-	Model__Chutes__Qwen3__235B__A22b__Instruct__2507__Tee,
-	Model__Chutes__Qwen3__235B__A22b__Thinking__2507,
-	Model__Chutes__Qwen3__30B__A3b,
-	Model__Chutes__Qwen3__32B__Tee,
-	Model__Chutes__Qwen3__5__397B__A17b__Tee,
-	Model__Chutes__Qwen3__6__27B__Tee,
-	Model__Chutes__Qwen3__Coder__Next__Tee,
-	Model__Chutes__Qwen3__Next__80B__A3b__Instruct,
+	Model__Chutes__Qwen2__5__72B__Instruct__2_5,
+	Model__Chutes__Qwen2__5__Coder__32B__Instruct__2_5,
+	Model__Chutes__Qwen2__5__Vl__32B__Instruct__2_5,
+	Model__Chutes__Qwen3__235B__A22b__Instruct__2507__Tee__3,
+	Model__Chutes__Qwen3__235B__A22b__Thinking__2507__3,
+	Model__Chutes__Qwen3__30B__A3b__3,
+	Model__Chutes__Qwen3__32B__Tee__3,
+	Model__Chutes__Qwen3__5__397B__A17b__Tee__3_5,
+	Model__Chutes__Qwen3__6__27B__Tee__3_6,
+	Model__Chutes__Qwen3__Coder__Next__Tee__3,
+	Model__Chutes__Qwen3__Next__80B__A3b__Instruct__3,
 	Model__Chutes__Qwen3guard__Gen__0__6B,
 	Model__Clarifai__Deepseek__Ocr,
 	Model__Clarifai__GPT__Oss__120b__High__Throughput,
@@ -5772,9 +5772,9 @@ var allModelConstants = [...]ModelID{
 	Model__Clarifai__Ministral__3__14B__Reasoning__2512,
 	Model__Clarifai__Ministral__3__3B__Reasoning__2512,
 	Model__Clarifai__Mm__Poly__8b,
-	Model__Clarifai__Qwen3__30B__A3b__Instruct__2507,
-	Model__Clarifai__Qwen3__30B__A3b__Thinking__2507,
-	Model__Clarifai__Qwen3__Coder__30B__A3b__Instruct,
+	Model__Clarifai__Qwen3__30B__A3b__Instruct__2507__3,
+	Model__Clarifai__Qwen3__30B__A3b__Thinking__2507__3,
+	Model__Clarifai__Qwen3__Coder__30B__A3b__Instruct__3,
 	Model__Clarifai__Trinity__Mini,
 	Model__Claudinio__Claudinio,
 	Model__CloudFerroSherlock__Bielik__11B__V2__6__Instruct,
@@ -5847,15 +5847,15 @@ var allModelConstants = [...]ModelID{
 	Model__CloudflareAIGateway__Mistral__Small__3__1__24b__Instruct,
 	Model__CloudflareAIGateway__Nemotron__3__120b__A12b__3,
 	Model__CloudflareAIGateway__Nova__3,
-	Model__CloudflareAIGateway__O1,
-	Model__CloudflareAIGateway__O3,
-	Model__CloudflareAIGateway__O3__Mini,
-	Model__CloudflareAIGateway__O3__Pro,
-	Model__CloudflareAIGateway__O4__Mini,
+	Model__CloudflareAIGateway__O1__1,
+	Model__CloudflareAIGateway__O3__3,
+	Model__CloudflareAIGateway__O3__Mini__3,
+	Model__CloudflareAIGateway__O3__Pro__3,
+	Model__CloudflareAIGateway__O4__Mini__4,
 	Model__CloudflareAIGateway__Plamo__Embedding__1b,
-	Model__CloudflareAIGateway__Qwen2__5__Coder__32b__Instruct,
-	Model__CloudflareAIGateway__Qwen3__30b__A3b__Fp8,
-	Model__CloudflareAIGateway__Qwen3__Embedding__0__6b,
+	Model__CloudflareAIGateway__Qwen2__5__Coder__32b__Instruct__2_5,
+	Model__CloudflareAIGateway__Qwen3__30b__A3b__Fp8__3,
+	Model__CloudflareAIGateway__Qwen3__Embedding__0__6b__3,
 	Model__CloudflareAIGateway__Qwq__32b,
 	Model__CloudflareAIGateway__Smart__Turn__V2,
 	Model__CloudflareWorkersAI__Deepseek__R1__Distill__Qwen__32b,
@@ -5882,8 +5882,8 @@ var allModelConstants = [...]ModelID{
 	Model__CloudflareWorkersAI__Mistral__7b__Instruct__V0__1,
 	Model__CloudflareWorkersAI__Mistral__Small__3__1__24b__Instruct,
 	Model__CloudflareWorkersAI__Nemotron__3__120b__A12b__3,
-	Model__CloudflareWorkersAI__Qwen2__5__Coder__32b__Instruct,
-	Model__CloudflareWorkersAI__Qwen3__30b__A3b__Fp8,
+	Model__CloudflareWorkersAI__Qwen2__5__Coder__32b__Instruct__2_5,
+	Model__CloudflareWorkersAI__Qwen3__30b__A3b__Fp8__3,
 	Model__CloudflareWorkersAI__Qwq__32b,
 	Model__Cohere__C4ai__Aya__Expanse__32b,
 	Model__Cohere__C4ai__Aya__Expanse__8b,
@@ -5937,13 +5937,13 @@ var allModelConstants = [...]ModelID{
 	Model__Cortecs__Mixtral__8x7B__Instruct__V0__1,
 	Model__Cortecs__Nemotron__3__Super__120b__A12b,
 	Model__Cortecs__Nova__Pro__V1,
-	Model__Cortecs__Qwen3__235b__A22b__Instruct__2507,
-	Model__Cortecs__Qwen3__32b,
-	Model__Cortecs__Qwen3__5__122b__A10b,
-	Model__Cortecs__Qwen3__5__397b__A17b,
-	Model__Cortecs__Qwen3__Coder__30b__A3b__Instruct,
-	Model__Cortecs__Qwen3__Coder__480b__A35b__Instruct,
-	Model__Cortecs__Qwen3__Coder__Next,
+	Model__Cortecs__Qwen3__235b__A22b__Instruct__2507__3,
+	Model__Cortecs__Qwen3__32b__3,
+	Model__Cortecs__Qwen3__5__122b__A10b__3_5,
+	Model__Cortecs__Qwen3__5__397b__A17b__3_5,
+	Model__Cortecs__Qwen3__Coder__30b__A3b__Instruct__3,
+	Model__Cortecs__Qwen3__Coder__480b__A35b__Instruct__3,
+	Model__Cortecs__Qwen3__Coder__Next__3,
 	Model__Cortecs__Qwen3__Next__80b__A3b__Thinking,
 	Model__Cortecs__Qwen__2__5__72b__Instruct__2_5,
 	Model__Crof__Deepseek__V3__2,
@@ -5964,9 +5964,9 @@ var allModelConstants = [...]ModelID{
 	Model__Crof__Mimo__V2__5__Pro,
 	Model__Crof__Mimo__V2__5__Pro__Precision,
 	Model__Crof__Minimax__M2__5,
-	Model__Crof__Qwen3__5__397b__A17b,
-	Model__Crof__Qwen3__5__9b,
-	Model__Crof__Qwen3__6__27b,
+	Model__Crof__Qwen3__5__397b__A17b__3_5,
+	Model__Crof__Qwen3__5__9b__3_5,
+	Model__Crof__Qwen3__6__27b__3_6,
 	Model__DInference__GPT__Oss__120b,
 	Model__DInference__Glm__4_7,
 	Model__DInference__Glm__5,
@@ -6035,11 +6035,11 @@ var allModelConstants = [...]ModelID{
 	Model__Deepinfra__Minimax__M2,
 	Model__Deepinfra__Minimax__M2__1,
 	Model__Deepinfra__Minimax__M2__5,
-	Model__Deepinfra__Qwen3__5__35B__A3b,
-	Model__Deepinfra__Qwen3__5__397B__A17b,
-	Model__Deepinfra__Qwen3__6__35B__A3b,
-	Model__Deepinfra__Qwen3__Coder__480B__A35b__Instruct,
-	Model__Deepinfra__Qwen3__Coder__480B__A35b__Instruct__Turbo,
+	Model__Deepinfra__Qwen3__5__35B__A3b__3_5,
+	Model__Deepinfra__Qwen3__5__397B__A17b__3_5,
+	Model__Deepinfra__Qwen3__6__35B__A3b__3_6,
+	Model__Deepinfra__Qwen3__Coder__480B__A35b__Instruct__3,
+	Model__Deepinfra__Qwen3__Coder__480B__A35b__Instruct__Turbo__3,
 	Model__DigitalOcean__Alibaba__Qwen3__32b,
 	Model__DigitalOcean__All__Mini__Lm__L6__V2,
 	Model__DigitalOcean__Anthropic__Claude__3__5__Haiku,
@@ -6109,10 +6109,10 @@ var allModelConstants = [...]ModelID{
 	Model__DigitalOcean__Openai__O1,
 	Model__DigitalOcean__Openai__O3,
 	Model__DigitalOcean__Openai__O3__Mini,
-	Model__DigitalOcean__Qwen3__5__397b__A17b,
-	Model__DigitalOcean__Qwen3__Coder__Flash,
+	Model__DigitalOcean__Qwen3__5__397b__A17b__3_5,
+	Model__DigitalOcean__Qwen3__Coder__Flash__3,
 	Model__DigitalOcean__Qwen3__Embedding__0__6b,
-	Model__DigitalOcean__Qwen3__Tts__Voicedesign,
+	Model__DigitalOcean__Qwen3__Tts__Voicedesign__3,
 	Model__DigitalOcean__Qwen__2__5__14b__Instruct__2_5,
 	Model__DigitalOcean__Schnell,
 	Model__DigitalOcean__Stable__Diffusion__3__5__Large__3_5,
@@ -6129,9 +6129,9 @@ var allModelConstants = [...]ModelID{
 	Model__Evroc__Magistral__Small__2509,
 	Model__Evroc__Multilingual__E5__Large__Instruct,
 	Model__Evroc__Phi__4__Multimodal__Instruct,
-	Model__Evroc__Qwen3__30B__A3b__Instruct__2507__Fp8,
+	Model__Evroc__Qwen3__30B__A3b__Instruct__2507__Fp8__3,
 	Model__Evroc__Qwen3__Embedding__8B,
-	Model__Evroc__Qwen3__Vl__30B__A3b__Instruct,
+	Model__Evroc__Qwen3__Vl__30B__A3b__Instruct__3,
 	Model__Evroc__Voxtral__Small__24B__2507,
 	Model__Evroc__Whisper__Large__V3,
 	Model__FastRouter__Claude__Opus__4__1,
@@ -6148,7 +6148,7 @@ var allModelConstants = [...]ModelID{
 	Model__FastRouter__Glm__5,
 	Model__FastRouter__Grok__4,
 	Model__FastRouter__Kimi__K2,
-	Model__FastRouter__Qwen3__Coder,
+	Model__FastRouter__Qwen3__Coder__3,
 	Model__Firepass__Kimi__K2p6__Turbo,
 	Model__FireworksAI__Deepseek__V4__Flash,
 	Model__FireworksAI__Deepseek__V4__Pro,
@@ -6167,7 +6167,7 @@ var allModelConstants = [...]ModelID{
 	Model__Friendli__Llama__3__1__8B__Instruct,
 	Model__Friendli__Llama__3__3__70B__Instruct,
 	Model__Friendli__Minimax__M2__5,
-	Model__Friendli__Qwen3__235B__A22b__Instruct__2507,
+	Model__Friendli__Qwen3__235B__A22b__Instruct__2507__3,
 	Model__FrogBot__Claude__Haiku__4_5,
 	Model__FrogBot__Claude__Opus__4_6,
 	Model__FrogBot__Claude__Opus__4_7,
@@ -6258,12 +6258,12 @@ var allModelConstants = [...]ModelID{
 	Model__GitHubModels__Mistral__Medium__2505,
 	Model__GitHubModels__Mistral__Nemo,
 	Model__GitHubModels__Mistral__Small__2503,
-	Model__GitHubModels__O1,
-	Model__GitHubModels__O1__Mini,
-	Model__GitHubModels__O1__Preview,
-	Model__GitHubModels__O3,
-	Model__GitHubModels__O3__Mini,
-	Model__GitHubModels__O4__Mini,
+	Model__GitHubModels__O1__1,
+	Model__GitHubModels__O1__1__Preview,
+	Model__GitHubModels__O1__Mini__1,
+	Model__GitHubModels__O3__3,
+	Model__GitHubModels__O3__Mini__3,
+	Model__GitHubModels__O4__Mini__4,
 	Model__GitHubModels__Phi__3__5__Mini__Instruct__3_5,
 	Model__GitHubModels__Phi__3__5__Moe__Instruct__3_5,
 	Model__GitHubModels__Phi__3__5__Vision__Instruct__3_5,
@@ -6355,7 +6355,7 @@ var allModelConstants = [...]ModelID{
 	Model__GoogleVertex__Kimi__K2__Thinking__Maas,
 	Model__GoogleVertex__Llama__3__3__70b__Instruct__Maas__3_3,
 	Model__GoogleVertex__Llama__4__Maverick__17b__128e__Instruct__Maas__4,
-	Model__GoogleVertex__Qwen3__235b__A22b__Instruct__2507__Maas,
+	Model__GoogleVertex__Qwen3__235b__A22b__Instruct__2507__Maas__3,
 	Model__Google__Gemini__2__0__Flash__2_0,
 	Model__Google__Gemini__2__0__Flash__Lite__2_0,
 	Model__Google__Gemini__2__5__Flash__2_5,
@@ -6400,7 +6400,7 @@ var allModelConstants = [...]ModelID{
 	Model__Groq__Mistral__Saba__24b,
 	Model__Groq__Orpheus__Arabic__Saudi,
 	Model__Groq__Orpheus__V1__English,
-	Model__Groq__Qwen3__32b,
+	Model__Groq__Qwen3__32b__3,
 	Model__Groq__Qwen__Qwq__32b,
 	Model__Groq__Whisper__Large__V3,
 	Model__Groq__Whisper__Large__V3__Turbo,
@@ -6475,20 +6475,20 @@ var allModelConstants = [...]ModelID{
 	Model__Helicone__Mistral__Large__2411,
 	Model__Helicone__Mistral__Nemo,
 	Model__Helicone__Mistral__Small,
-	Model__Helicone__O1,
-	Model__Helicone__O1__Mini,
-	Model__Helicone__O3,
-	Model__Helicone__O3__Mini,
-	Model__Helicone__O3__Pro,
-	Model__Helicone__O4__Mini,
-	Model__Helicone__Qwen2__5__Coder__7b__Fast,
-	Model__Helicone__Qwen3__235b__A22b__Thinking,
-	Model__Helicone__Qwen3__30b__A3b,
-	Model__Helicone__Qwen3__32b,
-	Model__Helicone__Qwen3__Coder,
-	Model__Helicone__Qwen3__Coder__30b__A3b__Instruct,
-	Model__Helicone__Qwen3__Next__80b__A3b__Instruct,
-	Model__Helicone__Qwen3__Vl__235b__A22b__Instruct,
+	Model__Helicone__O1__1,
+	Model__Helicone__O1__Mini__1,
+	Model__Helicone__O3__3,
+	Model__Helicone__O3__Mini__3,
+	Model__Helicone__O3__Pro__3,
+	Model__Helicone__O4__Mini__4,
+	Model__Helicone__Qwen2__5__Coder__7b__Fast__2_5,
+	Model__Helicone__Qwen3__235b__A22b__3__Thinking,
+	Model__Helicone__Qwen3__30b__A3b__3,
+	Model__Helicone__Qwen3__32b__3,
+	Model__Helicone__Qwen3__Coder__3,
+	Model__Helicone__Qwen3__Coder__30b__A3b__Instruct__3,
+	Model__Helicone__Qwen3__Next__80b__A3b__Instruct__3,
+	Model__Helicone__Qwen3__Vl__235b__A22b__Instruct__3,
 	Model__Helicone__Sonar,
 	Model__Helicone__Sonar__Deep__Research,
 	Model__Helicone__Sonar__Pro,
@@ -6513,14 +6513,14 @@ var allModelConstants = [...]ModelID{
 	Model__Huggingface__Minimax__M2__1,
 	Model__Huggingface__Minimax__M2__5,
 	Model__Huggingface__Minimax__M2__7,
-	Model__Huggingface__Qwen3__235B__A22b__Thinking__2507,
-	Model__Huggingface__Qwen3__5__397B__A17b,
-	Model__Huggingface__Qwen3__Coder__480B__A35b__Instruct,
-	Model__Huggingface__Qwen3__Coder__Next,
-	Model__Huggingface__Qwen3__Embedding__4B,
-	Model__Huggingface__Qwen3__Embedding__8B,
-	Model__Huggingface__Qwen3__Next__80B__A3b__Instruct,
-	Model__Huggingface__Qwen3__Next__80B__A3b__Thinking,
+	Model__Huggingface__Qwen3__235B__A22b__Thinking__2507__3,
+	Model__Huggingface__Qwen3__5__397B__A17b__3_5,
+	Model__Huggingface__Qwen3__Coder__480B__A35b__Instruct__3,
+	Model__Huggingface__Qwen3__Coder__Next__3,
+	Model__Huggingface__Qwen3__Embedding__4B__3,
+	Model__Huggingface__Qwen3__Embedding__8B__3,
+	Model__Huggingface__Qwen3__Next__80B__A3b__Instruct__3,
+	Model__Huggingface__Qwen3__Next__80B__A3b__Thinking__3,
 	Model__IONet__Deepseek__R1__0528,
 	Model__IONet__Devstral__Small__2505,
 	Model__IONet__GPT__Oss__120b,
@@ -6534,24 +6534,24 @@ var allModelConstants = [...]ModelID{
 	Model__IONet__Magistral__Small__2506,
 	Model__IONet__Mistral__Large__Instruct__2411,
 	Model__IONet__Mistral__Nemo__Instruct__2407,
-	Model__IONet__Qwen2__5__Vl__32B__Instruct,
-	Model__IONet__Qwen3__235B__A22b__Thinking__2507,
-	Model__IONet__Qwen3__Coder__480B__A35b__Instruct__Int4__Mixed__Ar,
-	Model__IONet__Qwen3__Next__80B__A3b__Instruct,
+	Model__IONet__Qwen2__5__Vl__32B__Instruct__2_5,
+	Model__IONet__Qwen3__235B__A22b__Thinking__2507__3,
+	Model__IONet__Qwen3__Coder__480B__A35b__Instruct__Int4__Mixed__Ar__3,
+	Model__IONet__Qwen3__Next__80B__A3b__Instruct__3,
 	Model__Iflowcn__Deepseek__R1,
 	Model__Iflowcn__Deepseek__V3,
 	Model__Iflowcn__Deepseek__V3__2,
 	Model__Iflowcn__Glm__4_6,
 	Model__Iflowcn__Kimi__K2,
 	Model__Iflowcn__Kimi__K2__0905,
-	Model__Iflowcn__Qwen3__235b,
-	Model__Iflowcn__Qwen3__235b__A22b__Instruct,
-	Model__Iflowcn__Qwen3__235b__A22b__Thinking__2507,
-	Model__Iflowcn__Qwen3__32b,
-	Model__Iflowcn__Qwen3__Coder__Plus,
-	Model__Iflowcn__Qwen3__Max,
-	Model__Iflowcn__Qwen3__Max__Preview,
-	Model__Iflowcn__Qwen3__Vl__Plus,
+	Model__Iflowcn__Qwen3__235b__3,
+	Model__Iflowcn__Qwen3__235b__A22b__Instruct__3,
+	Model__Iflowcn__Qwen3__235b__A22b__Thinking__2507__3,
+	Model__Iflowcn__Qwen3__32b__3,
+	Model__Iflowcn__Qwen3__Coder__Plus__3,
+	Model__Iflowcn__Qwen3__Max__3,
+	Model__Iflowcn__Qwen3__Max__3__Preview,
+	Model__Iflowcn__Qwen3__Vl__Plus__3,
 	Model__Inception__Mercury__2,
 	Model__Inception__Mercury__Edit__2,
 	Model__Inceptron__Glm__5__1__Fp8,
@@ -6565,7 +6565,7 @@ var allModelConstants = [...]ModelID{
 	Model__Inference__Llama__3__2__3b__Instruct__3_2,
 	Model__Inference__Mistral__Nemo__12b__Instruct,
 	Model__Inference__Osmosis__Structure__0__6b,
-	Model__Inference__Qwen3__Embedding__4b,
+	Model__Inference__Qwen3__Embedding__4b__3,
 	Model__Inference__Qwen__2__5__7b__Vision__Instruct__2_5,
 	Model__Jiekou__Claude__Haiku__4_5__20251001,
 	Model__Jiekou__Claude__Opus__4_1__20250805,
@@ -6616,18 +6616,18 @@ var allModelConstants = [...]ModelID{
 	Model__Jiekou__Mimo__V2__Flash,
 	Model__Jiekou__Minimax__M1__80k,
 	Model__Jiekou__Minimax__M2__1,
-	Model__Jiekou__O3,
-	Model__Jiekou__O3__Mini,
-	Model__Jiekou__O4__Mini,
-	Model__Jiekou__Qwen3__235b__A22b__Fp8,
-	Model__Jiekou__Qwen3__235b__A22b__Instruct__2507,
-	Model__Jiekou__Qwen3__235b__A22b__Thinking__2507,
-	Model__Jiekou__Qwen3__30b__A3b__Fp8,
-	Model__Jiekou__Qwen3__32b__Fp8,
-	Model__Jiekou__Qwen3__Coder__480b__A35b__Instruct,
-	Model__Jiekou__Qwen3__Coder__Next,
-	Model__Jiekou__Qwen3__Next__80b__A3b__Instruct,
-	Model__Jiekou__Qwen3__Next__80b__A3b__Thinking,
+	Model__Jiekou__O3__3,
+	Model__Jiekou__O3__Mini__3,
+	Model__Jiekou__O4__Mini__4,
+	Model__Jiekou__Qwen3__235b__A22b__Fp8__3,
+	Model__Jiekou__Qwen3__235b__A22b__Instruct__2507__3,
+	Model__Jiekou__Qwen3__235b__A22b__Thinking__2507__3,
+	Model__Jiekou__Qwen3__30b__A3b__Fp8__3,
+	Model__Jiekou__Qwen3__32b__Fp8__3,
+	Model__Jiekou__Qwen3__Coder__480b__A35b__Instruct__3,
+	Model__Jiekou__Qwen3__Coder__Next__3,
+	Model__Jiekou__Qwen3__Next__80b__A3b__3__Thinking,
+	Model__Jiekou__Qwen3__Next__80b__A3b__Instruct__3,
 	Model__KUAECloudCodingPlan__Glm__4__7,
 	Model__Kilo__Aion__1_0,
 	Model__Kilo__Aion__1__0__Mini__1_0,
@@ -6878,16 +6878,16 @@ var allModelConstants = [...]ModelID{
 	Model__Kilo__Nova__Micro__V1,
 	Model__Kilo__Nova__Premier__V1,
 	Model__Kilo__Nova__Pro__V1,
-	Model__Kilo__O1,
-	Model__Kilo__O1__Pro,
-	Model__Kilo__O3,
-	Model__Kilo__O3__Deep__Research,
-	Model__Kilo__O3__Mini,
-	Model__Kilo__O3__Mini__High,
-	Model__Kilo__O3__Pro,
-	Model__Kilo__O4__Mini,
+	Model__Kilo__O1__1,
+	Model__Kilo__O1__Pro__1,
+	Model__Kilo__O3__3,
+	Model__Kilo__O3__Deep__Research__3,
+	Model__Kilo__O3__Mini__3,
+	Model__Kilo__O3__Mini__High__3,
+	Model__Kilo__O3__Pro__3,
+	Model__Kilo__O4__Mini__4,
 	Model__Kilo__O4__Mini__Deep__Research,
-	Model__Kilo__O4__Mini__High,
+	Model__Kilo__O4__Mini__High__4,
 	Model__Kilo__Olmo__3__32b__Think,
 	Model__Kilo__Owl__Alpha,
 	Model__Kilo__Palmyra__X5,
@@ -6898,35 +6898,35 @@ var allModelConstants = [...]ModelID{
 	Model__Kilo__Pixtral__Large__2411,
 	Model__Kilo__Qianfan__Ocr__Fast,
 	Model__Kilo__Qwen2__5__Vl__72b__Instruct,
-	Model__Kilo__Qwen3__14b,
-	Model__Kilo__Qwen3__235b__A22b,
-	Model__Kilo__Qwen3__235b__A22b__2507,
-	Model__Kilo__Qwen3__235b__A22b__Thinking__2507,
-	Model__Kilo__Qwen3__30b__A3b,
-	Model__Kilo__Qwen3__30b__A3b__Instruct__2507,
-	Model__Kilo__Qwen3__30b__A3b__Thinking__2507,
-	Model__Kilo__Qwen3__32b,
-	Model__Kilo__Qwen3__5__122b__A10b,
-	Model__Kilo__Qwen3__5__27b,
-	Model__Kilo__Qwen3__5__35b__A3b,
-	Model__Kilo__Qwen3__5__397b__A17b,
-	Model__Kilo__Qwen3__5__9b,
-	Model__Kilo__Qwen3__5__Flash__02__23,
-	Model__Kilo__Qwen3__5__Plus__20260215,
-	Model__Kilo__Qwen3__5__Plus__20260420,
-	Model__Kilo__Qwen3__6__27b,
-	Model__Kilo__Qwen3__6__35b__A3b,
-	Model__Kilo__Qwen3__6__Flash,
-	Model__Kilo__Qwen3__6__Max__Preview,
-	Model__Kilo__Qwen3__6__Plus,
-	Model__Kilo__Qwen3__7__Max,
-	Model__Kilo__Qwen3__8b,
-	Model__Kilo__Qwen3__Coder,
+	Model__Kilo__Qwen3__14b__3,
+	Model__Kilo__Qwen3__235b__A22b__2507__3,
+	Model__Kilo__Qwen3__235b__A22b__3,
+	Model__Kilo__Qwen3__235b__A22b__Thinking__2507__3,
+	Model__Kilo__Qwen3__30b__A3b__3,
+	Model__Kilo__Qwen3__30b__A3b__Instruct__2507__3,
+	Model__Kilo__Qwen3__30b__A3b__Thinking__2507__3,
+	Model__Kilo__Qwen3__32b__3,
+	Model__Kilo__Qwen3__5__122b__A10b__3_5,
+	Model__Kilo__Qwen3__5__27b__3_5,
+	Model__Kilo__Qwen3__5__35b__A3b__3_5,
+	Model__Kilo__Qwen3__5__397b__A17b__3_5,
+	Model__Kilo__Qwen3__5__9b__3_5,
+	Model__Kilo__Qwen3__5__Flash__02__23__3_5,
+	Model__Kilo__Qwen3__5__Plus__3_5__20260215,
+	Model__Kilo__Qwen3__5__Plus__3_5__20260420,
+	Model__Kilo__Qwen3__6__27b__3_6,
+	Model__Kilo__Qwen3__6__35b__A3b__3_6,
+	Model__Kilo__Qwen3__6__Flash__3_6,
+	Model__Kilo__Qwen3__6__Max__3_6__Preview,
+	Model__Kilo__Qwen3__6__Plus__3_6,
+	Model__Kilo__Qwen3__7__Max__3_7,
+	Model__Kilo__Qwen3__8b__3,
+	Model__Kilo__Qwen3__Coder__3,
 	Model__Kilo__Qwen3__Coder__30b__A3b__Instruct,
 	Model__Kilo__Qwen3__Coder__Flash,
-	Model__Kilo__Qwen3__Coder__Next,
-	Model__Kilo__Qwen3__Coder__Plus,
-	Model__Kilo__Qwen3__Max,
+	Model__Kilo__Qwen3__Coder__Next__3,
+	Model__Kilo__Qwen3__Coder__Plus__3,
+	Model__Kilo__Qwen3__Max__3,
 	Model__Kilo__Qwen3__Max__Thinking,
 	Model__Kilo__Qwen3__Next__80b__A3b__Instruct,
 	Model__Kilo__Qwen3__Next__80b__A3b__Thinking,
@@ -6978,8 +6978,8 @@ var allModelConstants = [...]ModelID{
 	Model__KimiForCoding__K2p6,
 	Model__KimiForCoding__Kimi__K2__Thinking,
 	Model__LMStudio__GPT__Oss__20b,
-	Model__LMStudio__Qwen3__30b__A3b__2507,
-	Model__LMStudio__Qwen3__Coder__30b,
+	Model__LMStudio__Qwen3__30b__A3b__2507__3,
+	Model__LMStudio__Qwen3__Coder__30b__3,
 	Model__Lilac__Gemma__4__31b__It__4,
 	Model__Lilac__Glm__5__1,
 	Model__Lilac__Kimi__K2__6,
@@ -7124,44 +7124,44 @@ var allModelConstants = [...]ModelID{
 	Model__Llmgateway__Mistral__Large__2512,
 	Model__Llmgateway__Mistral__Large__Latest,
 	Model__Llmgateway__Mistral__Small__2506,
-	Model__Llmgateway__O1,
-	Model__Llmgateway__O3,
-	Model__Llmgateway__O3__Mini,
-	Model__Llmgateway__O4__Mini,
+	Model__Llmgateway__O1__1,
+	Model__Llmgateway__O3__3,
+	Model__Llmgateway__O3__Mini__3,
+	Model__Llmgateway__O4__Mini__4,
 	Model__Llmgateway__Pixtral__Large__Latest,
-	Model__Llmgateway__Qwen25__Coder__7b,
-	Model__Llmgateway__Qwen2__5__Vl__32b__Instruct,
-	Model__Llmgateway__Qwen2__5__Vl__72b__Instruct,
-	Model__Llmgateway__Qwen35__397b__A17b,
-	Model__Llmgateway__Qwen3__235b__A22b__Fp8,
-	Model__Llmgateway__Qwen3__235b__A22b__Instruct__2507,
-	Model__Llmgateway__Qwen3__235b__A22b__Thinking__2507,
-	Model__Llmgateway__Qwen3__30b__A3b__Fp8,
-	Model__Llmgateway__Qwen3__30b__A3b__Instruct__2507,
-	Model__Llmgateway__Qwen3__30b__A3b__Thinking__2507,
-	Model__Llmgateway__Qwen3__32b,
-	Model__Llmgateway__Qwen3__32b__Fp8,
-	Model__Llmgateway__Qwen3__4b__Fp8,
-	Model__Llmgateway__Qwen3__6__35b__A3b,
-	Model__Llmgateway__Qwen3__6__Max__Preview,
-	Model__Llmgateway__Qwen3__6__Plus,
-	Model__Llmgateway__Qwen3__7__Max,
-	Model__Llmgateway__Qwen3__Coder__30b__A3b__Instruct,
-	Model__Llmgateway__Qwen3__Coder__480b__A35b__Instruct,
-	Model__Llmgateway__Qwen3__Coder__Flash,
-	Model__Llmgateway__Qwen3__Coder__Next,
-	Model__Llmgateway__Qwen3__Coder__Plus,
-	Model__Llmgateway__Qwen3__Max,
-	Model__Llmgateway__Qwen3__Max__20260123,
-	Model__Llmgateway__Qwen3__Next__80b__A3b__Instruct,
-	Model__Llmgateway__Qwen3__Next__80b__A3b__Thinking,
-	Model__Llmgateway__Qwen3__Vl__235b__A22b__Instruct,
-	Model__Llmgateway__Qwen3__Vl__235b__A22b__Thinking,
-	Model__Llmgateway__Qwen3__Vl__30b__A3b__Instruct,
-	Model__Llmgateway__Qwen3__Vl__30b__A3b__Thinking,
-	Model__Llmgateway__Qwen3__Vl__8b__Instruct,
-	Model__Llmgateway__Qwen3__Vl__Flash,
-	Model__Llmgateway__Qwen3__Vl__Plus,
+	Model__Llmgateway__Qwen25__Coder__7b__25,
+	Model__Llmgateway__Qwen2__5__Vl__32b__Instruct__2,
+	Model__Llmgateway__Qwen2__5__Vl__72b__Instruct__2,
+	Model__Llmgateway__Qwen35__397b__A17b__35,
+	Model__Llmgateway__Qwen3__235b__A22b__Fp8__3,
+	Model__Llmgateway__Qwen3__235b__A22b__Instruct__2507__3,
+	Model__Llmgateway__Qwen3__235b__A22b__Thinking__2507__3,
+	Model__Llmgateway__Qwen3__30b__A3b__Fp8__3,
+	Model__Llmgateway__Qwen3__30b__A3b__Instruct__2507__3,
+	Model__Llmgateway__Qwen3__30b__A3b__Thinking__2507__3,
+	Model__Llmgateway__Qwen3__32b__3,
+	Model__Llmgateway__Qwen3__32b__Fp8__3,
+	Model__Llmgateway__Qwen3__4b__Fp8__3,
+	Model__Llmgateway__Qwen3__6__35b__A3b__3_6,
+	Model__Llmgateway__Qwen3__6__Max__3_6__Preview,
+	Model__Llmgateway__Qwen3__6__Plus__3_6,
+	Model__Llmgateway__Qwen3__7__Max__3_7,
+	Model__Llmgateway__Qwen3__Coder__30b__A3b__Instruct__3,
+	Model__Llmgateway__Qwen3__Coder__480b__A35b__Instruct__3,
+	Model__Llmgateway__Qwen3__Coder__Flash__3,
+	Model__Llmgateway__Qwen3__Coder__Next__3,
+	Model__Llmgateway__Qwen3__Coder__Plus__3,
+	Model__Llmgateway__Qwen3__Max__3,
+	Model__Llmgateway__Qwen3__Max__3__20260123,
+	Model__Llmgateway__Qwen3__Next__80b__A3b__3__Thinking,
+	Model__Llmgateway__Qwen3__Next__80b__A3b__Instruct__3,
+	Model__Llmgateway__Qwen3__Vl__235b__A22b__3__Thinking,
+	Model__Llmgateway__Qwen3__Vl__235b__A22b__Instruct__3,
+	Model__Llmgateway__Qwen3__Vl__30b__A3b__3__Thinking,
+	Model__Llmgateway__Qwen3__Vl__30b__A3b__Instruct__3,
+	Model__Llmgateway__Qwen3__Vl__8b__Instruct__3,
+	Model__Llmgateway__Qwen3__Vl__Flash__3,
+	Model__Llmgateway__Qwen3__Vl__Plus__3,
 	Model__Llmgateway__Qwen__Coder__Plus,
 	Model__Llmgateway__Qwen__Flash,
 	Model__Llmgateway__Qwen__Max,
@@ -7198,9 +7198,9 @@ var allModelConstants = [...]ModelID{
 	Model__Meganova__Minimax__M2__5,
 	Model__Meganova__Mistral__Nemo__Instruct__2407,
 	Model__Meganova__Mistral__Small__3__2__24B__Instruct__2506,
-	Model__Meganova__Qwen2__5__Vl__32B__Instruct,
-	Model__Meganova__Qwen3__235B__A22b__Instruct__2507,
-	Model__Meganova__Qwen3__5__Plus,
+	Model__Meganova__Qwen2__5__Vl__32B__Instruct__2_5,
+	Model__Meganova__Qwen3__235B__A22b__Instruct__2507__3,
+	Model__Meganova__Qwen3__5__Plus__3_5,
 	Model__MergeGateway__Claude__Haiku__4__5__20251001,
 	Model__MergeGateway__Claude__Opus__4__1__20250805,
 	Model__MergeGateway__Claude__Opus__4__20250514,
@@ -7279,10 +7279,10 @@ var allModelConstants = [...]ModelID{
 	Model__MergeGateway__Mistral__Medium__2505,
 	Model__MergeGateway__Mistral__Medium__Latest,
 	Model__MergeGateway__Mistral__Small__Latest,
-	Model__MergeGateway__O1,
-	Model__MergeGateway__O3,
-	Model__MergeGateway__O3__Mini,
-	Model__MergeGateway__O4__Mini,
+	Model__MergeGateway__O1__1,
+	Model__MergeGateway__O3__3,
+	Model__MergeGateway__O3__Mini__3,
+	Model__MergeGateway__O4__Mini__4,
 	Model__MergeGateway__Pixtral__Large__Latest,
 	Model__MiniMaxCNCodingPlan__Minimax__M2,
 	Model__MiniMaxCNCodingPlan__Minimax__M2__1,
@@ -7336,20 +7336,20 @@ var allModelConstants = [...]ModelID{
 	Model__Mistral__Open__Mixtral__8x7b,
 	Model__Mistral__Pixtral__12b,
 	Model__Mistral__Pixtral__Large__Latest,
-	Model__Mixlayer__Qwen3__5__122b__A10b,
-	Model__Mixlayer__Qwen3__5__27b,
-	Model__Mixlayer__Qwen3__5__35b__A3b,
-	Model__Mixlayer__Qwen3__5__397b__A17b,
-	Model__Mixlayer__Qwen3__5__9b,
+	Model__Mixlayer__Qwen3__5__122b__A10b__3_5,
+	Model__Mixlayer__Qwen3__5__27b__3_5,
+	Model__Mixlayer__Qwen3__5__35b__A3b__3_5,
+	Model__Mixlayer__Qwen3__5__397b__A17b__3_5,
+	Model__Mixlayer__Qwen3__5__9b__3_5,
 	Model__Moark__Glm__4__7,
 	Model__Moark__Minimax__M2__1,
 	Model__ModelScope__Glm__4__5,
 	Model__ModelScope__Glm__4__6,
-	Model__ModelScope__Qwen3__235B__A22b__Instruct__2507,
-	Model__ModelScope__Qwen3__235B__A22b__Thinking__2507,
-	Model__ModelScope__Qwen3__30B__A3b__Instruct__2507,
-	Model__ModelScope__Qwen3__30B__A3b__Thinking__2507,
-	Model__ModelScope__Qwen3__Coder__30B__A3b__Instruct,
+	Model__ModelScope__Qwen3__235B__A22b__Instruct__2507__3,
+	Model__ModelScope__Qwen3__235B__A22b__Thinking__2507__3,
+	Model__ModelScope__Qwen3__30B__A3b__Instruct__2507__3,
+	Model__ModelScope__Qwen3__30B__A3b__Thinking__2507__3,
+	Model__ModelScope__Qwen3__Coder__30B__A3b__Instruct__3,
 	Model__MoonshotaiCN__Kimi__K2__0711__Preview,
 	Model__MoonshotaiCN__Kimi__K2__0905__Preview,
 	Model__MoonshotaiCN__Kimi__K2__5,
@@ -7807,18 +7807,18 @@ var allModelConstants = [...]ModelID{
 	Model__NanoGPT__Nova__Micro__V1,
 	Model__NanoGPT__Nova__Pro__V1,
 	Model__NanoGPT__Nvidia__Nemotron__Nano__9b__V2,
-	Model__NanoGPT__O1,
-	Model__NanoGPT__O1__Preview,
-	Model__NanoGPT__O1__Pro,
-	Model__NanoGPT__O3,
-	Model__NanoGPT__O3__Deep__Research,
-	Model__NanoGPT__O3__Mini,
-	Model__NanoGPT__O3__Mini__High,
-	Model__NanoGPT__O3__Mini__Low,
-	Model__NanoGPT__O3__Pro__20250610,
-	Model__NanoGPT__O4__Mini,
-	Model__NanoGPT__O4__Mini__Deep__Research,
-	Model__NanoGPT__O4__Mini__High,
+	Model__NanoGPT__O1__1,
+	Model__NanoGPT__O1__1__Preview,
+	Model__NanoGPT__O1__Pro__1,
+	Model__NanoGPT__O3__3,
+	Model__NanoGPT__O3__Deep__Research__3,
+	Model__NanoGPT__O3__Mini__3,
+	Model__NanoGPT__O3__Mini__High__3,
+	Model__NanoGPT__O3__Mini__Low__3,
+	Model__NanoGPT__O3__Pro__3__20250610,
+	Model__NanoGPT__O4__Mini__4,
+	Model__NanoGPT__O4__Mini__Deep__Research__4,
+	Model__NanoGPT__O4__Mini__High__4,
 	Model__NanoGPT__Olmo__3__1__32b__Instruct,
 	Model__NanoGPT__Olmo__3__1__32b__Think,
 	Model__NanoGPT__Olmo__3__32b__Think,
@@ -7828,20 +7828,20 @@ var allModelConstants = [...]ModelID{
 	Model__NanoGPT__Qvq__Max,
 	Model__NanoGPT__Qwen25__Vl__72b__Instruct,
 	Model__NanoGPT__Qwen2__5__32B__Eva__V0__2,
-	Model__NanoGPT__Qwen2__5__32B__Instruct__Abliterated,
-	Model__NanoGPT__Qwen2__5__Vl__72b__Instruct,
-	Model__NanoGPT__Qwen3__30b__A3b__Instruct__2507__30b_A3b_Instruct_2507,
-	Model__NanoGPT__Qwen3__30b__A3b__Instruct__2507__Qwen3_30b_A3b_2507,
-	Model__NanoGPT__Qwen3__5__397b__A17b_1,
-	Model__NanoGPT__Qwen3__5__397b__A17b_2,
-	Model__NanoGPT__Qwen3__6__35B__A3b,
-	Model__NanoGPT__Qwen3__6__35B__A3b__Thinking,
-	Model__NanoGPT__Qwen3__6__Flash,
-	Model__NanoGPT__Qwen3__6__Max__Preview,
-	Model__NanoGPT__Qwen3__Coder,
+	Model__NanoGPT__Qwen2__5__32B__Instruct__Abliterated__2_5,
+	Model__NanoGPT__Qwen2__5__Vl__72b__Instruct__2_5,
+	Model__NanoGPT__Qwen3__30b__A3b__Instruct__2507__3_1,
+	Model__NanoGPT__Qwen3__30b__A3b__Instruct__2507__3_2,
+	Model__NanoGPT__Qwen3__5__397b__A17b__3_5_1,
+	Model__NanoGPT__Qwen3__5__397b__A17b__3_5_2,
+	Model__NanoGPT__Qwen3__6__35B__A3b__3_6,
+	Model__NanoGPT__Qwen3__6__35B__A3b__Thinking__3_6,
+	Model__NanoGPT__Qwen3__6__Flash__3_6,
+	Model__NanoGPT__Qwen3__6__Max__3_6__Preview,
+	Model__NanoGPT__Qwen3__Coder__3,
 	Model__NanoGPT__Qwen3__Coder__30b__A3b__Instruct,
-	Model__NanoGPT__Qwen3__Max__20260123,
-	Model__NanoGPT__Qwen3__Vl__235b__A22b__Instruct__Original,
+	Model__NanoGPT__Qwen3__Max__3__20260123,
+	Model__NanoGPT__Qwen3__Vl__235b__A22b__Instruct__Original__3,
 	Model__NanoGPT__Qwen3__Vl__235b__A22b__Thinking,
 	Model__NanoGPT__Qwen__3__6__Plus__3_6,
 	Model__NanoGPT__Qwen__Image,
@@ -7919,15 +7919,15 @@ var allModelConstants = [...]ModelID{
 	Model__Nearai__Gemini__3__Pro__3,
 	Model__Nearai__Gemma__4__31B__It__4,
 	Model__Nearai__Glm__5__1__Fp8,
-	Model__Nearai__O3,
-	Model__Nearai__O3__Mini,
-	Model__Nearai__O4__Mini,
-	Model__Nearai__Qwen3__30B__A3b__Instruct__2507,
-	Model__Nearai__Qwen3__5__122B__A10b,
-	Model__Nearai__Qwen3__6__35B__A3b__Fp8,
+	Model__Nearai__O3__3,
+	Model__Nearai__O3__Mini__3,
+	Model__Nearai__O4__Mini__4,
+	Model__Nearai__Qwen3__30B__A3b__Instruct__2507__3,
+	Model__Nearai__Qwen3__5__122B__A10b__3_5,
+	Model__Nearai__Qwen3__6__35B__A3b__Fp8__3_6,
 	Model__Nearai__Qwen3__Embedding__0__6B,
-	Model__Nearai__Qwen3__Reranker__0__6B,
-	Model__Nearai__Qwen3__Vl__30B__A3b__Instruct,
+	Model__Nearai__Qwen3__Reranker__0__6B__3,
+	Model__Nearai__Qwen3__Vl__30B__A3b__Instruct__3,
 	Model__Nearai__Whisper__Large__V3,
 	Model__Nebius__Deepseek__V3__2,
 	Model__Nebius__Deepseek__V3__2__Fast,
@@ -7950,16 +7950,16 @@ var allModelConstants = [...]ModelID{
 	Model__Nebius__Nemotron__3__Nano__Omni,
 	Model__Nebius__Nemotron__3__Super__120b__A12b,
 	Model__Nebius__Nvidia__Nemotron__3__Nano__30B__A3b,
-	Model__Nebius__Qwen2__5__Vl__72B__Instruct,
-	Model__Nebius__Qwen3__235B__A22b__Instruct__2507,
-	Model__Nebius__Qwen3__235B__A22b__Thinking__2507__Fast,
-	Model__Nebius__Qwen3__30B__A3b__Instruct__2507,
-	Model__Nebius__Qwen3__32B,
-	Model__Nebius__Qwen3__5__397B__A17b,
-	Model__Nebius__Qwen3__5__397B__A17b__Fast,
+	Model__Nebius__Qwen2__5__Vl__72B__Instruct__2_5,
+	Model__Nebius__Qwen3__235B__A22b__Instruct__2507__3,
+	Model__Nebius__Qwen3__235B__A22b__Thinking__2507__Fast__3,
+	Model__Nebius__Qwen3__30B__A3b__Instruct__2507__3,
+	Model__Nebius__Qwen3__32B__3,
+	Model__Nebius__Qwen3__5__397B__A17b__3_5,
+	Model__Nebius__Qwen3__5__397B__A17b__Fast__3_5,
 	Model__Nebius__Qwen3__Embedding__8B,
-	Model__Nebius__Qwen3__Next__80B__A3b__Thinking,
-	Model__Nebius__Qwen3__Next__80B__A3b__Thinking__Fast,
+	Model__Nebius__Qwen3__Next__80B__A3b__Thinking__3,
+	Model__Nebius__Qwen3__Next__80B__A3b__Thinking__Fast__3,
 	Model__Neuralwatt__Devstral__Small__2__24B__Instruct__2512,
 	Model__Neuralwatt__GPT__Oss__20b,
 	Model__Neuralwatt__Glm__5__1__Fast__5_1,
@@ -7970,10 +7970,10 @@ var allModelConstants = [...]ModelID{
 	Model__Neuralwatt__Kimi__K2__6,
 	Model__Neuralwatt__Kimi__K2__6__Fast,
 	Model__Neuralwatt__Minimax__M2__5,
-	Model__Neuralwatt__Qwen3__5__397B__A17b__Fp8,
-	Model__Neuralwatt__Qwen3__5__397b__Fast,
-	Model__Neuralwatt__Qwen3__6__35B__A3b,
-	Model__Neuralwatt__Qwen3__6__35b__Fast,
+	Model__Neuralwatt__Qwen3__5__397B__A17b__Fp8__3_5,
+	Model__Neuralwatt__Qwen3__5__397b__Fast__3_5,
+	Model__Neuralwatt__Qwen3__6__35B__A3b__3_6,
+	Model__Neuralwatt__Qwen3__6__35b__Fast__3_6,
 	Model__Nova__Nova__2__Lite__V1__2,
 	Model__Nova__Nova__2__Pro__V1__2,
 	Model__NovitaAI__Autoglm__Phone__9b__Multilingual,
@@ -8050,26 +8050,26 @@ var allModelConstants = [...]ModelID{
 	Model__NovitaAI__Mythomax__L2__13b,
 	Model__NovitaAI__Paddleocr__Vl,
 	Model__NovitaAI__Qwen2__5__7b__Instruct,
-	Model__NovitaAI__Qwen2__5__Vl__72b__Instruct,
-	Model__NovitaAI__Qwen3__235b__A22b__Fp8,
-	Model__NovitaAI__Qwen3__235b__A22b__Instruct__2507,
-	Model__NovitaAI__Qwen3__235b__A22b__Thinking__2507,
-	Model__NovitaAI__Qwen3__30b__A3b__Fp8,
-	Model__NovitaAI__Qwen3__32b__Fp8,
-	Model__NovitaAI__Qwen3__4b__Fp8,
-	Model__NovitaAI__Qwen3__5__122b__A10b,
-	Model__NovitaAI__Qwen3__5__27b,
-	Model__NovitaAI__Qwen3__5__35b__A3b,
-	Model__NovitaAI__Qwen3__5__397b__A17b,
-	Model__NovitaAI__Qwen3__7__Max,
-	Model__NovitaAI__Qwen3__8b__Fp8,
+	Model__NovitaAI__Qwen2__5__Vl__72b__Instruct__2_5,
+	Model__NovitaAI__Qwen3__235b__A22b__Fp8__3,
+	Model__NovitaAI__Qwen3__235b__A22b__Instruct__2507__3,
+	Model__NovitaAI__Qwen3__235b__A22b__Thinking__2507__3,
+	Model__NovitaAI__Qwen3__30b__A3b__Fp8__3,
+	Model__NovitaAI__Qwen3__32b__Fp8__3,
+	Model__NovitaAI__Qwen3__4b__Fp8__3,
+	Model__NovitaAI__Qwen3__5__122b__A10b__3_5,
+	Model__NovitaAI__Qwen3__5__27b__3_5,
+	Model__NovitaAI__Qwen3__5__35b__A3b__3_5,
+	Model__NovitaAI__Qwen3__5__397b__A17b__3_5,
+	Model__NovitaAI__Qwen3__7__Max__3_7,
+	Model__NovitaAI__Qwen3__8b__Fp8__3,
 	Model__NovitaAI__Qwen3__Coder__30b__A3b__Instruct,
-	Model__NovitaAI__Qwen3__Coder__480b__A35b__Instruct,
-	Model__NovitaAI__Qwen3__Coder__Next,
-	Model__NovitaAI__Qwen3__Max,
+	Model__NovitaAI__Qwen3__Coder__480b__A35b__Instruct__3,
+	Model__NovitaAI__Qwen3__Coder__Next__3,
+	Model__NovitaAI__Qwen3__Max__3,
 	Model__NovitaAI__Qwen3__Next__80b__A3b__Instruct,
 	Model__NovitaAI__Qwen3__Next__80b__A3b__Thinking,
-	Model__NovitaAI__Qwen3__Omni__30b__A3b__Instruct,
+	Model__NovitaAI__Qwen3__Omni__30b__A3b__Instruct__3,
 	Model__NovitaAI__Qwen3__Omni__30b__A3b__Thinking,
 	Model__NovitaAI__Qwen3__Vl__235b__A22b__Instruct,
 	Model__NovitaAI__Qwen3__Vl__235b__A22b__Thinking,
@@ -8106,7 +8106,7 @@ var allModelConstants = [...]ModelID{
 	Model__Nvidia__Gemma__3n__E4b__It,
 	Model__Nvidia__Gemma__4__31b__It__4,
 	Model__Nvidia__Gliner__Pii,
-	Model__Nvidia__Glm4__7,
+	Model__Nvidia__Glm4__7__4_7,
 	Model__Nvidia__Glm__5__1,
 	Model__Nvidia__Google__Paligemma,
 	Model__Nvidia__Kimi__K2__6,
@@ -8152,11 +8152,11 @@ var allModelConstants = [...]ModelID{
 	Model__Nvidia__Phi__4__Mini__Instruct__4,
 	Model__Nvidia__Phi__4__Multimodal__Instruct__4,
 	Model__Nvidia__Qwen2__5__Coder__32b__Instruct,
-	Model__Nvidia__Qwen3__5__122b__A10b,
-	Model__Nvidia__Qwen3__5__397b__A17b,
-	Model__Nvidia__Qwen3__Coder__480b__A35b__Instruct,
-	Model__Nvidia__Qwen3__Next__80b__A3b__Instruct,
-	Model__Nvidia__Qwen3__Next__80b__A3b__Thinking,
+	Model__Nvidia__Qwen3__5__122b__A10b__3_5,
+	Model__Nvidia__Qwen3__5__397b__A17b__3_5,
+	Model__Nvidia__Qwen3__Coder__480b__A35b__Instruct__3,
+	Model__Nvidia__Qwen3__Next__80b__A3b__3__Thinking,
+	Model__Nvidia__Qwen3__Next__80b__A3b__Instruct__3,
 	Model__Nvidia__Qwen__Image,
 	Model__Nvidia__Qwen__Image__Edit,
 	Model__Nvidia__Rerank__Qa__Mistral__4b,
@@ -8181,8 +8181,8 @@ var allModelConstants = [...]ModelID{
 	Model__OVHcloud__Mistral__Nemo__Instruct__2407,
 	Model__OVHcloud__Mistral__Small__3__2__24b__Instruct__2506,
 	Model__OVHcloud__Qwen2__5__Vl__72b__Instruct,
-	Model__OVHcloud__Qwen3__32b,
-	Model__OVHcloud__Qwen3__5__9b,
+	Model__OVHcloud__Qwen3__32b__3,
+	Model__OVHcloud__Qwen3__5__9b__3_5,
 	Model__OVHcloud__Qwen3__Coder__30b__A3b__Instruct,
 	Model__OllamaCloud__Cogito__2__1__671b,
 	Model__OllamaCloud__Deepseek__V3__1__671b,
@@ -8217,11 +8217,11 @@ var allModelConstants = [...]ModelID{
 	Model__OllamaCloud__Nemotron__3__Nano__30b__3,
 	Model__OllamaCloud__Nemotron__3__Super__3,
 	Model__OllamaCloud__Qwen3__5__397b,
-	Model__OllamaCloud__Qwen3__Coder__480b,
-	Model__OllamaCloud__Qwen3__Coder__Next,
-	Model__OllamaCloud__Qwen3__Next__80b,
-	Model__OllamaCloud__Qwen3__Vl__235b,
-	Model__OllamaCloud__Qwen3__Vl__235b__Instruct,
+	Model__OllamaCloud__Qwen3__Coder__480b__3,
+	Model__OllamaCloud__Qwen3__Coder__Next__3,
+	Model__OllamaCloud__Qwen3__Next__80b__3,
+	Model__OllamaCloud__Qwen3__Vl__235b__3,
+	Model__OllamaCloud__Qwen3__Vl__235b__Instruct__3,
 	Model__OllamaCloud__Rnj__1__8b,
 	Model__OpenAI__ChatGPT__Image__Latest,
 	Model__OpenAI__GPT__3__5__Turbo__3_5,
@@ -8262,16 +8262,16 @@ var allModelConstants = [...]ModelID{
 	Model__OpenAI__GPT__Image__1,
 	Model__OpenAI__GPT__Image__1_5,
 	Model__OpenAI__GPT__Image__1__Mini,
-	Model__OpenAI__O1,
-	Model__OpenAI__O1__Mini,
-	Model__OpenAI__O1__Preview,
-	Model__OpenAI__O1__Pro,
-	Model__OpenAI__O3,
-	Model__OpenAI__O3__Deep__Research,
-	Model__OpenAI__O3__Mini,
-	Model__OpenAI__O3__Pro,
-	Model__OpenAI__O4__Mini,
-	Model__OpenAI__O4__Mini__Deep__Research,
+	Model__OpenAI__O1__1,
+	Model__OpenAI__O1__1__Preview,
+	Model__OpenAI__O1__Mini__1,
+	Model__OpenAI__O1__Pro__1,
+	Model__OpenAI__O3__3,
+	Model__OpenAI__O3__Deep__Research__3,
+	Model__OpenAI__O3__Mini__3,
+	Model__OpenAI__O3__Pro__3,
+	Model__OpenAI__O4__Mini__4,
+	Model__OpenAI__O4__Mini__Deep__Research__4,
 	Model__OpenAI__Text__Embedding__3__Large__3,
 	Model__OpenAI__Text__Embedding__3__Small__3,
 	Model__OpenAI__Text__Embedding__Ada__002,
@@ -8287,8 +8287,8 @@ var allModelConstants = [...]ModelID{
 	Model__OpenCodeGo__Mimo__V2__Pro,
 	Model__OpenCodeGo__Minimax__M2__5,
 	Model__OpenCodeGo__Minimax__M2__7,
-	Model__OpenCodeGo__Qwen3__5__Plus,
-	Model__OpenCodeGo__Qwen3__6__Plus,
+	Model__OpenCodeGo__Qwen3__5__Plus__3_5,
+	Model__OpenCodeGo__Qwen3__6__Plus__3_6,
 	Model__OpenCodeGo__Qwen3__7__Max,
 	Model__OpenCode__Big__Pickle,
 	Model__OpenCode__Claude__3__5__Haiku__3_5,
@@ -8348,10 +8348,10 @@ var allModelConstants = [...]ModelID{
 	Model__OpenCode__Minimax__M2__5__Free,
 	Model__OpenCode__Minimax__M2__7,
 	Model__OpenCode__Nemotron__3__Super__Free__3,
-	Model__OpenCode__Qwen3__5__Plus,
-	Model__OpenCode__Qwen3__6__Plus,
-	Model__OpenCode__Qwen3__6__Plus__Free,
-	Model__OpenCode__Qwen3__Coder,
+	Model__OpenCode__Qwen3__5__Plus__3_5,
+	Model__OpenCode__Qwen3__6__Plus__3_6,
+	Model__OpenCode__Qwen3__6__Plus__Free__3_6,
+	Model__OpenCode__Qwen3__Coder__3,
 	Model__OpenCode__Ring__2__6__1t__Free__2_6,
 	Model__OpenCode__Trinity__Large__Preview__Free,
 	Model__OpenRouter__Aion__1_0,
@@ -8613,16 +8613,16 @@ var allModelConstants = [...]ModelID{
 	Model__OpenRouter__Nova__Micro__V1,
 	Model__OpenRouter__Nova__Premier__V1,
 	Model__OpenRouter__Nova__Pro__V1,
-	Model__OpenRouter__O1,
-	Model__OpenRouter__O1__Pro,
-	Model__OpenRouter__O3,
-	Model__OpenRouter__O3__Deep__Research,
-	Model__OpenRouter__O3__Mini,
-	Model__OpenRouter__O3__Mini__High,
-	Model__OpenRouter__O3__Pro,
-	Model__OpenRouter__O4__Mini,
-	Model__OpenRouter__O4__Mini__Deep__Research,
-	Model__OpenRouter__O4__Mini__High,
+	Model__OpenRouter__O1__1,
+	Model__OpenRouter__O1__Pro__1,
+	Model__OpenRouter__O3__3,
+	Model__OpenRouter__O3__Deep__Research__3,
+	Model__OpenRouter__O3__Mini__3,
+	Model__OpenRouter__O3__Mini__High__3,
+	Model__OpenRouter__O3__Pro__3,
+	Model__OpenRouter__O4__Mini__4,
+	Model__OpenRouter__O4__Mini__Deep__Research__4,
+	Model__OpenRouter__O4__Mini__High__4,
 	Model__OpenRouter__Olmo__3__32b__Think,
 	Model__OpenRouter__Owl__Alpha,
 	Model__OpenRouter__Palmyra__X5,
@@ -8631,48 +8631,48 @@ var allModelConstants = [...]ModelID{
 	Model__OpenRouter__Phi__4,
 	Model__OpenRouter__Phi__4__Mini__Instruct__4,
 	Model__OpenRouter__Pixtral__Large__2411,
-	Model__OpenRouter__Qwen2__5__Vl__72b__Instruct,
-	Model__OpenRouter__Qwen3__14b,
-	Model__OpenRouter__Qwen3__235b__A22b,
-	Model__OpenRouter__Qwen3__235b__A22b__2507,
-	Model__OpenRouter__Qwen3__235b__A22b__Thinking__2507,
-	Model__OpenRouter__Qwen3__30b__A3b,
-	Model__OpenRouter__Qwen3__30b__A3b__Instruct__2507,
-	Model__OpenRouter__Qwen3__30b__A3b__Thinking__2507,
-	Model__OpenRouter__Qwen3__32b,
-	Model__OpenRouter__Qwen3__5__122b__A10b,
-	Model__OpenRouter__Qwen3__5__27b,
-	Model__OpenRouter__Qwen3__5__35b__A3b,
-	Model__OpenRouter__Qwen3__5__397b__A17b,
-	Model__OpenRouter__Qwen3__5__9b,
-	Model__OpenRouter__Qwen3__5__Flash__02__23,
-	Model__OpenRouter__Qwen3__5__Plus__02__15,
-	Model__OpenRouter__Qwen3__5__Plus__20260420,
-	Model__OpenRouter__Qwen3__6__27b,
-	Model__OpenRouter__Qwen3__6__35b__A3b,
-	Model__OpenRouter__Qwen3__6__Flash,
-	Model__OpenRouter__Qwen3__6__Max__Preview,
-	Model__OpenRouter__Qwen3__6__Plus,
-	Model__OpenRouter__Qwen3__7__Max,
-	Model__OpenRouter__Qwen3__8b,
-	Model__OpenRouter__Qwen3__Coder,
-	Model__OpenRouter__Qwen3__Coder__30b__A3b__Instruct,
-	Model__OpenRouter__Qwen3__Coder__Flash,
-	Model__OpenRouter__Qwen3__Coder__Free,
-	Model__OpenRouter__Qwen3__Coder__Next,
-	Model__OpenRouter__Qwen3__Coder__Plus,
-	Model__OpenRouter__Qwen3__Max,
-	Model__OpenRouter__Qwen3__Max__Thinking,
-	Model__OpenRouter__Qwen3__Next__80b__A3b__Instruct,
-	Model__OpenRouter__Qwen3__Next__80b__A3b__Instruct__Free,
-	Model__OpenRouter__Qwen3__Next__80b__A3b__Thinking,
-	Model__OpenRouter__Qwen3__Vl__235b__A22b__Instruct,
-	Model__OpenRouter__Qwen3__Vl__235b__A22b__Thinking,
-	Model__OpenRouter__Qwen3__Vl__30b__A3b__Instruct,
-	Model__OpenRouter__Qwen3__Vl__30b__A3b__Thinking,
-	Model__OpenRouter__Qwen3__Vl__32b__Instruct,
-	Model__OpenRouter__Qwen3__Vl__8b__Instruct,
-	Model__OpenRouter__Qwen3__Vl__8b__Thinking,
+	Model__OpenRouter__Qwen2__5__Vl__72b__Instruct__2_5,
+	Model__OpenRouter__Qwen3__14b__3,
+	Model__OpenRouter__Qwen3__235b__A22b__2507__3,
+	Model__OpenRouter__Qwen3__235b__A22b__3,
+	Model__OpenRouter__Qwen3__235b__A22b__Thinking__2507__3,
+	Model__OpenRouter__Qwen3__30b__A3b__3,
+	Model__OpenRouter__Qwen3__30b__A3b__Instruct__2507__3,
+	Model__OpenRouter__Qwen3__30b__A3b__Thinking__2507__3,
+	Model__OpenRouter__Qwen3__32b__3,
+	Model__OpenRouter__Qwen3__5__122b__A10b__3_5,
+	Model__OpenRouter__Qwen3__5__27b__3_5,
+	Model__OpenRouter__Qwen3__5__35b__A3b__3_5,
+	Model__OpenRouter__Qwen3__5__397b__A17b__3_5,
+	Model__OpenRouter__Qwen3__5__9b__3_5,
+	Model__OpenRouter__Qwen3__5__Flash__02__23__3_5,
+	Model__OpenRouter__Qwen3__5__Plus__02__15__3_5,
+	Model__OpenRouter__Qwen3__5__Plus__3_5__20260420,
+	Model__OpenRouter__Qwen3__6__27b__3_6,
+	Model__OpenRouter__Qwen3__6__35b__A3b__3_6,
+	Model__OpenRouter__Qwen3__6__Flash__3_6,
+	Model__OpenRouter__Qwen3__6__Max__3_6__Preview,
+	Model__OpenRouter__Qwen3__6__Plus__3_6,
+	Model__OpenRouter__Qwen3__7__Max__3_7,
+	Model__OpenRouter__Qwen3__8b__3,
+	Model__OpenRouter__Qwen3__Coder__3,
+	Model__OpenRouter__Qwen3__Coder__30b__A3b__Instruct__3,
+	Model__OpenRouter__Qwen3__Coder__Flash__3,
+	Model__OpenRouter__Qwen3__Coder__Free__3,
+	Model__OpenRouter__Qwen3__Coder__Next__3,
+	Model__OpenRouter__Qwen3__Coder__Plus__3,
+	Model__OpenRouter__Qwen3__Max__3,
+	Model__OpenRouter__Qwen3__Max__3__Thinking,
+	Model__OpenRouter__Qwen3__Next__80b__A3b__3__Thinking,
+	Model__OpenRouter__Qwen3__Next__80b__A3b__Instruct__3,
+	Model__OpenRouter__Qwen3__Next__80b__A3b__Instruct__Free__3,
+	Model__OpenRouter__Qwen3__Vl__235b__A22b__3__Thinking,
+	Model__OpenRouter__Qwen3__Vl__235b__A22b__Instruct__3,
+	Model__OpenRouter__Qwen3__Vl__30b__A3b__3__Thinking,
+	Model__OpenRouter__Qwen3__Vl__30b__A3b__Instruct__3,
+	Model__OpenRouter__Qwen3__Vl__32b__Instruct__3,
+	Model__OpenRouter__Qwen3__Vl__8b__3__Thinking,
+	Model__OpenRouter__Qwen3__Vl__8b__Instruct__3,
 	Model__OpenRouter__Qwen__2__5__72b__Instruct__2_5,
 	Model__OpenRouter__Qwen__2__5__7b__Instruct__2_5,
 	Model__OpenRouter__Qwen__2__5__Coder__32b__Instruct__2_5,
@@ -8783,14 +8783,14 @@ var allModelConstants = [...]ModelID{
 	Model__OrcaRouter__Minimax__M2__5__Highspeed,
 	Model__OrcaRouter__Minimax__M2__7,
 	Model__OrcaRouter__Minimax__M2__7__Highspeed,
-	Model__OrcaRouter__Qwen3__5__122b__A10b,
-	Model__OrcaRouter__Qwen3__5__27b,
-	Model__OrcaRouter__Qwen3__5__35b__A3b,
-	Model__OrcaRouter__Qwen3__5__397b__A17b,
-	Model__OrcaRouter__Qwen3__5__Plus,
-	Model__OrcaRouter__Qwen3__6__35b__A3b,
-	Model__OrcaRouter__Qwen3__6__Plus,
-	Model__OrcaRouter__Qwen3__Max,
+	Model__OrcaRouter__Qwen3__5__122b__A10b__3_5,
+	Model__OrcaRouter__Qwen3__5__27b__3_5,
+	Model__OrcaRouter__Qwen3__5__35b__A3b__3_5,
+	Model__OrcaRouter__Qwen3__5__397b__A17b__3_5,
+	Model__OrcaRouter__Qwen3__5__Plus__3_5,
+	Model__OrcaRouter__Qwen3__6__35b__A3b__3_6,
+	Model__OrcaRouter__Qwen3__6__Plus__3_6,
+	Model__OrcaRouter__Qwen3__Max__3,
 	Model__PerplexityAgent__Claude__Haiku__4__5,
 	Model__PerplexityAgent__Claude__Opus__4__5,
 	Model__PerplexityAgent__Claude__Opus__4__6,
@@ -8926,17 +8926,17 @@ var allModelConstants = [...]ModelID{
 	Model__Poe__Minimax__M2__1,
 	Model__Poe__Nano__Banana,
 	Model__Poe__Nano__Banana__Pro,
-	Model__Poe__O1,
-	Model__Poe__O1__Pro,
-	Model__Poe__O3,
-	Model__Poe__O3__Deep__Research,
-	Model__Poe__O3__Mini,
-	Model__Poe__O3__Mini__High,
-	Model__Poe__O3__Pro,
-	Model__Poe__O4__Mini,
-	Model__Poe__O4__Mini__Deep__Research,
-	Model__Poe__Qwen3__235b__2507__Cs,
-	Model__Poe__Qwen3__32b__Cs,
+	Model__Poe__O1__1,
+	Model__Poe__O1__Pro__1,
+	Model__Poe__O3__3,
+	Model__Poe__O3__Deep__Research__3,
+	Model__Poe__O3__Mini__3,
+	Model__Poe__O3__Mini__High__3,
+	Model__Poe__O3__Pro__3,
+	Model__Poe__O4__Mini__4,
+	Model__Poe__O4__Mini__Deep__Research__4,
+	Model__Poe__Qwen3__235b__2507__Cs__3,
+	Model__Poe__Qwen3__32b__Cs__3,
 	Model__Poe__Ray2,
 	Model__Poe__Runway,
 	Model__Poe__Runway__Gen__4__Turbo__4,
@@ -8954,8 +8954,8 @@ var allModelConstants = [...]ModelID{
 	Model__Poolside__Laguna__Xs__2,
 	Model__PrivatemodeAI__GPT__Oss__120b,
 	Model__PrivatemodeAI__Gemma__3__27b__3,
-	Model__PrivatemodeAI__Qwen3__Coder__30b__A3b,
-	Model__PrivatemodeAI__Qwen3__Embedding__4b,
+	Model__PrivatemodeAI__Qwen3__Coder__30b__A3b__3,
+	Model__PrivatemodeAI__Qwen3__Embedding__4b__3,
 	Model__PrivatemodeAI__Whisper__Large__V3,
 	Model__QiHangAI__Claude__Haiku__4_5__20251001,
 	Model__QiHangAI__Claude__Opus__4_5__20251101,
@@ -9039,17 +9039,17 @@ var allModelConstants = [...]ModelID{
 	Model__QiniuAI__Minimax__M2__5__Highspeed,
 	Model__QiniuAI__Qwen2__5__Vl__72b__Instruct,
 	Model__QiniuAI__Qwen2__5__Vl__7b__Instruct,
-	Model__QiniuAI__Qwen3__235b__A22b,
-	Model__QiniuAI__Qwen3__235b__A22b__Instruct__2507,
-	Model__QiniuAI__Qwen3__235b__A22b__Thinking__2507,
-	Model__QiniuAI__Qwen3__30b__A3b,
-	Model__QiniuAI__Qwen3__30b__A3b__Instruct__2507,
-	Model__QiniuAI__Qwen3__30b__A3b__Thinking__2507,
-	Model__QiniuAI__Qwen3__32b,
-	Model__QiniuAI__Qwen3__5__397b__A17b,
+	Model__QiniuAI__Qwen3__235b__A22b__3,
+	Model__QiniuAI__Qwen3__235b__A22b__Instruct__2507__3,
+	Model__QiniuAI__Qwen3__235b__A22b__Thinking__2507__3,
+	Model__QiniuAI__Qwen3__30b__A3b__3,
+	Model__QiniuAI__Qwen3__30b__A3b__Instruct__2507__3,
+	Model__QiniuAI__Qwen3__30b__A3b__Thinking__2507__3,
+	Model__QiniuAI__Qwen3__32b__3,
+	Model__QiniuAI__Qwen3__5__397b__A17b__3_5,
 	Model__QiniuAI__Qwen3__Coder__480b__A35b__Instruct,
-	Model__QiniuAI__Qwen3__Max,
-	Model__QiniuAI__Qwen3__Max__Preview,
+	Model__QiniuAI__Qwen3__Max__3,
+	Model__QiniuAI__Qwen3__Max__3__Preview,
 	Model__QiniuAI__Qwen3__Next__80b__A3b__Instruct,
 	Model__QiniuAI__Qwen3__Next__80b__A3b__Thinking,
 	Model__QiniuAI__Qwen3__Vl__30b__A3b__Thinking,
@@ -9064,11 +9064,11 @@ var allModelConstants = [...]ModelID{
 	Model__RegoloAI__Minimax__M2__5,
 	Model__RegoloAI__Mistral__Small3__2,
 	Model__RegoloAI__Mistral__Small__4__119b,
-	Model__RegoloAI__Qwen3__5__122b,
-	Model__RegoloAI__Qwen3__5__9b,
-	Model__RegoloAI__Qwen3__Coder__Next,
-	Model__RegoloAI__Qwen3__Embedding__8b,
-	Model__RegoloAI__Qwen3__Reranker__4b,
+	Model__RegoloAI__Qwen3__5__122b__3_5,
+	Model__RegoloAI__Qwen3__5__9b__3_5,
+	Model__RegoloAI__Qwen3__Coder__Next__3,
+	Model__RegoloAI__Qwen3__Embedding__8b__3,
+	Model__RegoloAI__Qwen3__Reranker__4b__3,
 	Model__RegoloAI__Qwen__Image,
 	Model__Requesty__Claude__3__7__Sonnet__3_7,
 	Model__Requesty__Claude__Haiku__4__5,
@@ -9107,7 +9107,7 @@ var allModelConstants = [...]ModelID{
 	Model__Requesty__Gemini__3__Pro__3__Preview,
 	Model__Requesty__Grok__4,
 	Model__Requesty__Grok__4__Fast__4,
-	Model__Requesty__O4__Mini,
+	Model__Requesty__O4__Mini__4,
 	Model__RoutingRun__Deepseek__V3__2,
 	Model__RoutingRun__Deepseek__V4__Flash,
 	Model__RoutingRun__Deepseek__V4__Flash__6bit,
@@ -9129,8 +9129,8 @@ var allModelConstants = [...]ModelID{
 	Model__RoutingRun__Mistral__Large__3,
 	Model__RoutingRun__Mistral__Medium__2505,
 	Model__RoutingRun__Mistral__Small__2503,
-	Model__RoutingRun__Qwen3__6__27b,
-	Model__RoutingRun__Qwen3__6__27b__202k,
+	Model__RoutingRun__Qwen3__6__27b__202k__3_6,
+	Model__RoutingRun__Qwen3__6__27b__3_6,
 	Model__RoutingRun__Step__3__5__Flash__2603,
 	Model__RoutingRun__Step__3__5__Flash__3_5,
 	Model__RoutingRun__Stepfun__3__5__Flash__3_5,
@@ -9165,8 +9165,8 @@ var allModelConstants = [...]ModelID{
 	Model__STACKIT__Llama__3__3__70B__Instruct__Fp8__Dynamic,
 	Model__STACKIT__Meta__Llama__3__1__8B__Instruct__Fp8,
 	Model__STACKIT__Mistral__Nemo__Instruct__2407__Fp8,
-	Model__STACKIT__Qwen3__Vl__235B__A22b__Instruct__Fp8,
-	Model__STACKIT__Qwen3__Vl__Embedding__8B,
+	Model__STACKIT__Qwen3__Vl__235B__A22b__Instruct__Fp8__3,
+	Model__STACKIT__Qwen3__Vl__Embedding__8B__3,
 	Model__Sarvam__Sarvam__105b,
 	Model__Sarvam__Sarvam__30b,
 	Model__Scaleway__Bge__Multilingual__Gemma2,
@@ -9178,11 +9178,11 @@ var allModelConstants = [...]ModelID{
 	Model__Scaleway__Mistral__Medium__3__5__128b__3_5,
 	Model__Scaleway__Mistral__Small__3__2__24b__Instruct__2506__3_2,
 	Model__Scaleway__Pixtral__12b__2409,
-	Model__Scaleway__Qwen3__235b__A22b__Instruct__2507,
-	Model__Scaleway__Qwen3__5__397b__A17b,
-	Model__Scaleway__Qwen3__6__35b__A3b,
-	Model__Scaleway__Qwen3__Coder__30b__A3b__Instruct,
-	Model__Scaleway__Qwen3__Embedding__8b,
+	Model__Scaleway__Qwen3__235b__A22b__Instruct__2507__3,
+	Model__Scaleway__Qwen3__5__397b__A17b__3_5,
+	Model__Scaleway__Qwen3__6__35b__A3b__3_6,
+	Model__Scaleway__Qwen3__Coder__30b__A3b__Instruct__3,
+	Model__Scaleway__Qwen3__Embedding__8b__3,
 	Model__Scaleway__Voxtral__Small__24b__2507,
 	Model__Scaleway__Whisper__Large__V3,
 	Model__SiliconFlowCN__Deepseek__Ocr,
@@ -9226,43 +9226,43 @@ var allModelConstants = [...]ModelID{
 	Model__SiliconFlowCN__Paddleocr__Vl,
 	Model__SiliconFlowCN__Paddleocr__Vl__1_5,
 	Model__SiliconFlowCN__Pangu__Pro__Moe,
-	Model__SiliconFlowCN__Qwen2__5__14B__Instruct,
-	Model__SiliconFlowCN__Qwen2__5__32B__Instruct,
-	Model__SiliconFlowCN__Qwen2__5__72B__Instruct,
-	Model__SiliconFlowCN__Qwen2__5__72B__Instruct__128K,
-	Model__SiliconFlowCN__Qwen2__5__7B__Instruct,
-	Model__SiliconFlowCN__Qwen2__5__Coder__32B__Instruct,
-	Model__SiliconFlowCN__Qwen2__5__Vl__32B__Instruct,
-	Model__SiliconFlowCN__Qwen2__5__Vl__72B__Instruct,
-	Model__SiliconFlowCN__Qwen3__14B,
-	Model__SiliconFlowCN__Qwen3__235B__A22b__Instruct__2507,
-	Model__SiliconFlowCN__Qwen3__235B__A22b__Thinking__2507,
-	Model__SiliconFlowCN__Qwen3__30B__A3b__Instruct__2507,
-	Model__SiliconFlowCN__Qwen3__30B__A3b__Thinking__2507,
-	Model__SiliconFlowCN__Qwen3__32B,
-	Model__SiliconFlowCN__Qwen3__5__122B__A10b,
-	Model__SiliconFlowCN__Qwen3__5__27B,
-	Model__SiliconFlowCN__Qwen3__5__35B__A3b,
-	Model__SiliconFlowCN__Qwen3__5__397B__A17b,
-	Model__SiliconFlowCN__Qwen3__5__4B,
-	Model__SiliconFlowCN__Qwen3__5__9B,
-	Model__SiliconFlowCN__Qwen3__6__35B__A3b,
-	Model__SiliconFlowCN__Qwen3__8B,
-	Model__SiliconFlowCN__Qwen3__Coder__30B__A3b__Instruct,
-	Model__SiliconFlowCN__Qwen3__Coder__480B__A35b__Instruct,
-	Model__SiliconFlowCN__Qwen3__Next__80B__A3b__Instruct,
-	Model__SiliconFlowCN__Qwen3__Next__80B__A3b__Thinking,
-	Model__SiliconFlowCN__Qwen3__Omni__30B__A3b__Captioner,
-	Model__SiliconFlowCN__Qwen3__Omni__30B__A3b__Instruct,
-	Model__SiliconFlowCN__Qwen3__Omni__30B__A3b__Thinking,
-	Model__SiliconFlowCN__Qwen3__Vl__235B__A22b__Instruct,
-	Model__SiliconFlowCN__Qwen3__Vl__235B__A22b__Thinking,
-	Model__SiliconFlowCN__Qwen3__Vl__30B__A3b__Instruct,
-	Model__SiliconFlowCN__Qwen3__Vl__30B__A3b__Thinking,
-	Model__SiliconFlowCN__Qwen3__Vl__32B__Instruct,
-	Model__SiliconFlowCN__Qwen3__Vl__32B__Thinking,
-	Model__SiliconFlowCN__Qwen3__Vl__8B__Instruct,
-	Model__SiliconFlowCN__Qwen3__Vl__8B__Thinking,
+	Model__SiliconFlowCN__Qwen2__5__14B__Instruct__2_5,
+	Model__SiliconFlowCN__Qwen2__5__32B__Instruct__2_5,
+	Model__SiliconFlowCN__Qwen2__5__72B__Instruct__128K__2_5,
+	Model__SiliconFlowCN__Qwen2__5__72B__Instruct__2_5,
+	Model__SiliconFlowCN__Qwen2__5__7B__Instruct__2_5,
+	Model__SiliconFlowCN__Qwen2__5__Coder__32B__Instruct__2_5,
+	Model__SiliconFlowCN__Qwen2__5__Vl__32B__Instruct__2_5,
+	Model__SiliconFlowCN__Qwen2__5__Vl__72B__Instruct__2_5,
+	Model__SiliconFlowCN__Qwen3__14B__3,
+	Model__SiliconFlowCN__Qwen3__235B__A22b__Instruct__2507__3,
+	Model__SiliconFlowCN__Qwen3__235B__A22b__Thinking__2507__3,
+	Model__SiliconFlowCN__Qwen3__30B__A3b__Instruct__2507__3,
+	Model__SiliconFlowCN__Qwen3__30B__A3b__Thinking__2507__3,
+	Model__SiliconFlowCN__Qwen3__32B__3,
+	Model__SiliconFlowCN__Qwen3__5__122B__A10b__3_5,
+	Model__SiliconFlowCN__Qwen3__5__27B__3_5,
+	Model__SiliconFlowCN__Qwen3__5__35B__A3b__3_5,
+	Model__SiliconFlowCN__Qwen3__5__397B__A17b__3_5,
+	Model__SiliconFlowCN__Qwen3__5__4B__3_5,
+	Model__SiliconFlowCN__Qwen3__5__9B__3_5,
+	Model__SiliconFlowCN__Qwen3__6__35B__A3b__3_6,
+	Model__SiliconFlowCN__Qwen3__8B__3,
+	Model__SiliconFlowCN__Qwen3__Coder__30B__A3b__Instruct__3,
+	Model__SiliconFlowCN__Qwen3__Coder__480B__A35b__Instruct__3,
+	Model__SiliconFlowCN__Qwen3__Next__80B__A3b__Instruct__3,
+	Model__SiliconFlowCN__Qwen3__Next__80B__A3b__Thinking__3,
+	Model__SiliconFlowCN__Qwen3__Omni__30B__A3b__Captioner__3,
+	Model__SiliconFlowCN__Qwen3__Omni__30B__A3b__Instruct__3,
+	Model__SiliconFlowCN__Qwen3__Omni__30B__A3b__Thinking__3,
+	Model__SiliconFlowCN__Qwen3__Vl__235B__A22b__Instruct__3,
+	Model__SiliconFlowCN__Qwen3__Vl__235B__A22b__Thinking__3,
+	Model__SiliconFlowCN__Qwen3__Vl__30B__A3b__Instruct__3,
+	Model__SiliconFlowCN__Qwen3__Vl__30B__A3b__Thinking__3,
+	Model__SiliconFlowCN__Qwen3__Vl__32B__Instruct__3,
+	Model__SiliconFlowCN__Qwen3__Vl__32B__Thinking__3,
+	Model__SiliconFlowCN__Qwen3__Vl__8B__Instruct__3,
+	Model__SiliconFlowCN__Qwen3__Vl__8B__Thinking__3,
 	Model__SiliconFlowCN__Qwq__32B,
 	Model__SiliconFlowCN__Ring__Flash__2__0,
 	Model__SiliconFlowCN__Seed__Oss__36B__Instruct,
@@ -9307,38 +9307,38 @@ var allModelConstants = [...]ModelID{
 	Model__SiliconFlow__Meta__Llama__3__1__8B__Instruct,
 	Model__SiliconFlow__Minimax__M2__1,
 	Model__SiliconFlow__Minimax__M2__5,
-	Model__SiliconFlow__Qwen2__5__14B__Instruct,
-	Model__SiliconFlow__Qwen2__5__32B__Instruct,
-	Model__SiliconFlow__Qwen2__5__72B__Instruct,
-	Model__SiliconFlow__Qwen2__5__72B__Instruct__128K,
-	Model__SiliconFlow__Qwen2__5__7B__Instruct,
-	Model__SiliconFlow__Qwen2__5__Coder__32B__Instruct,
-	Model__SiliconFlow__Qwen2__5__Vl__32B__Instruct,
-	Model__SiliconFlow__Qwen2__5__Vl__72B__Instruct,
-	Model__SiliconFlow__Qwen2__5__Vl__7B__Instruct,
-	Model__SiliconFlow__Qwen3__14B,
-	Model__SiliconFlow__Qwen3__235B__A22b,
-	Model__SiliconFlow__Qwen3__235B__A22b__Instruct__2507,
-	Model__SiliconFlow__Qwen3__235B__A22b__Thinking__2507,
-	Model__SiliconFlow__Qwen3__30B__A3b__Instruct__2507,
-	Model__SiliconFlow__Qwen3__30B__A3b__Thinking__2507,
-	Model__SiliconFlow__Qwen3__32B,
-	Model__SiliconFlow__Qwen3__8B,
-	Model__SiliconFlow__Qwen3__Coder__30B__A3b__Instruct,
-	Model__SiliconFlow__Qwen3__Coder__480B__A35b__Instruct,
-	Model__SiliconFlow__Qwen3__Next__80B__A3b__Instruct,
-	Model__SiliconFlow__Qwen3__Next__80B__A3b__Thinking,
-	Model__SiliconFlow__Qwen3__Omni__30B__A3b__Captioner,
-	Model__SiliconFlow__Qwen3__Omni__30B__A3b__Instruct,
-	Model__SiliconFlow__Qwen3__Omni__30B__A3b__Thinking,
-	Model__SiliconFlow__Qwen3__Vl__235B__A22b__Instruct,
-	Model__SiliconFlow__Qwen3__Vl__235B__A22b__Thinking,
-	Model__SiliconFlow__Qwen3__Vl__30B__A3b__Instruct,
-	Model__SiliconFlow__Qwen3__Vl__30B__A3b__Thinking,
-	Model__SiliconFlow__Qwen3__Vl__32B__Instruct,
-	Model__SiliconFlow__Qwen3__Vl__32B__Thinking,
-	Model__SiliconFlow__Qwen3__Vl__8B__Instruct,
-	Model__SiliconFlow__Qwen3__Vl__8B__Thinking,
+	Model__SiliconFlow__Qwen2__5__14B__Instruct__2_5,
+	Model__SiliconFlow__Qwen2__5__32B__Instruct__2_5,
+	Model__SiliconFlow__Qwen2__5__72B__Instruct__128K__2_5,
+	Model__SiliconFlow__Qwen2__5__72B__Instruct__2_5,
+	Model__SiliconFlow__Qwen2__5__7B__Instruct__2_5,
+	Model__SiliconFlow__Qwen2__5__Coder__32B__Instruct__2_5,
+	Model__SiliconFlow__Qwen2__5__Vl__32B__Instruct__2_5,
+	Model__SiliconFlow__Qwen2__5__Vl__72B__Instruct__2_5,
+	Model__SiliconFlow__Qwen2__5__Vl__7B__Instruct__2_5,
+	Model__SiliconFlow__Qwen3__14B__3,
+	Model__SiliconFlow__Qwen3__235B__A22b__3,
+	Model__SiliconFlow__Qwen3__235B__A22b__Instruct__2507__3,
+	Model__SiliconFlow__Qwen3__235B__A22b__Thinking__2507__3,
+	Model__SiliconFlow__Qwen3__30B__A3b__Instruct__2507__3,
+	Model__SiliconFlow__Qwen3__30B__A3b__Thinking__2507__3,
+	Model__SiliconFlow__Qwen3__32B__3,
+	Model__SiliconFlow__Qwen3__8B__3,
+	Model__SiliconFlow__Qwen3__Coder__30B__A3b__Instruct__3,
+	Model__SiliconFlow__Qwen3__Coder__480B__A35b__Instruct__3,
+	Model__SiliconFlow__Qwen3__Next__80B__A3b__Instruct__3,
+	Model__SiliconFlow__Qwen3__Next__80B__A3b__Thinking__3,
+	Model__SiliconFlow__Qwen3__Omni__30B__A3b__Captioner__3,
+	Model__SiliconFlow__Qwen3__Omni__30B__A3b__Instruct__3,
+	Model__SiliconFlow__Qwen3__Omni__30B__A3b__Thinking__3,
+	Model__SiliconFlow__Qwen3__Vl__235B__A22b__Instruct__3,
+	Model__SiliconFlow__Qwen3__Vl__235B__A22b__Thinking__3,
+	Model__SiliconFlow__Qwen3__Vl__30B__A3b__Instruct__3,
+	Model__SiliconFlow__Qwen3__Vl__30B__A3b__Thinking__3,
+	Model__SiliconFlow__Qwen3__Vl__32B__Instruct__3,
+	Model__SiliconFlow__Qwen3__Vl__32B__Thinking__3,
+	Model__SiliconFlow__Qwen3__Vl__8B__Instruct__3,
+	Model__SiliconFlow__Qwen3__Vl__8B__Thinking__3,
 	Model__SiliconFlow__Qwq__32B,
 	Model__SiliconFlow__Ring__Flash__2__0,
 	Model__SiliconFlow__Seed__Oss__36B__Instruct,
@@ -9366,9 +9366,9 @@ var allModelConstants = [...]ModelID{
 	Model__Submodel__GPT__Oss__120b,
 	Model__Submodel__Glm__4__5__Air,
 	Model__Submodel__Glm__4__5__Fp8,
-	Model__Submodel__Qwen3__235B__A22b__Instruct__2507,
-	Model__Submodel__Qwen3__235B__A22b__Thinking__2507,
-	Model__Submodel__Qwen3__Coder__480B__A35b__Instruct__Fp8,
+	Model__Submodel__Qwen3__235B__A22b__Instruct__2507__3,
+	Model__Submodel__Qwen3__235B__A22b__Thinking__2507__3,
+	Model__Submodel__Qwen3__Coder__480B__A35b__Instruct__Fp8__3,
 	Model__Synthetic__Deepseek__R1,
 	Model__Synthetic__Deepseek__R1__0528,
 	Model__Synthetic__Deepseek__V3,
@@ -9397,11 +9397,11 @@ var allModelConstants = [...]ModelID{
 	Model__Synthetic__Minimax__M2__1,
 	Model__Synthetic__Minimax__M2__5,
 	Model__Synthetic__Nvidia__Nemotron__3__Super__120B__A12b__Nvfp4,
-	Model__Synthetic__Qwen2__5__Coder__32B__Instruct,
-	Model__Synthetic__Qwen3__235B__A22b__Instruct__2507,
-	Model__Synthetic__Qwen3__235B__A22b__Thinking__2507,
-	Model__Synthetic__Qwen3__5__397B__A17b,
-	Model__Synthetic__Qwen3__Coder__480B__A35b__Instruct,
+	Model__Synthetic__Qwen2__5__Coder__32B__Instruct__2_5,
+	Model__Synthetic__Qwen3__235B__A22b__Instruct__2507__3,
+	Model__Synthetic__Qwen3__235B__A22b__Thinking__2507__3,
+	Model__Synthetic__Qwen3__5__397B__A17b__3_5,
+	Model__Synthetic__Qwen3__Coder__480B__A35b__Instruct__3,
 	Model__TencentCodingPlan__Glm__5,
 	Model__TencentCodingPlan__Hunyuan__2_0__Thinking,
 	Model__TencentCodingPlan__Hunyuan__2__0__Instruct__2_0,
@@ -9432,12 +9432,12 @@ var allModelConstants = [...]ModelID{
 	Model__Togetherai__Llama__3__3__70B__Instruct__Turbo,
 	Model__Togetherai__Minimax__M2__5,
 	Model__Togetherai__Minimax__M2__7,
-	Model__Togetherai__Qwen3__235B__A22b__Instruct__2507__Tput,
-	Model__Togetherai__Qwen3__5__397B__A17b,
-	Model__Togetherai__Qwen3__6__Plus,
-	Model__Togetherai__Qwen3__7__Max,
-	Model__Togetherai__Qwen3__Coder__480B__A35b__Instruct__Fp8,
-	Model__Togetherai__Qwen3__Coder__Next__Fp8,
+	Model__Togetherai__Qwen3__235B__A22b__Instruct__2507__Tput__3,
+	Model__Togetherai__Qwen3__5__397B__A17b__3_5,
+	Model__Togetherai__Qwen3__6__Plus__3_6,
+	Model__Togetherai__Qwen3__7__Max__3_7,
+	Model__Togetherai__Qwen3__Coder__480B__A35b__Instruct__Fp8__3,
+	Model__Togetherai__Qwen3__Coder__Next__Fp8__3,
 	Model__Togetherai__Rnj__1__Instruct,
 	Model__UmansAICodingPlan__Umans__Coder,
 	Model__UmansAICodingPlan__Umans__Flash,
@@ -9499,15 +9499,15 @@ var allModelConstants = [...]ModelID{
 	Model__Venice__Openai__GPT__55,
 	Model__Venice__Openai__GPT__55__Pro,
 	Model__Venice__Openai__GPT__Oss__120b,
-	Model__Venice__Qwen3__235b__A22b__Instruct__2507,
-	Model__Venice__Qwen3__235b__A22b__Thinking__2507,
-	Model__Venice__Qwen3__5__35b__A3b,
-	Model__Venice__Qwen3__5__397b__A17b,
-	Model__Venice__Qwen3__5__9b,
-	Model__Venice__Qwen3__6__27b,
-	Model__Venice__Qwen3__Coder__480b__A35b__Instruct__Turbo,
-	Model__Venice__Qwen3__Next__80b,
-	Model__Venice__Qwen3__Vl__235b__A22b,
+	Model__Venice__Qwen3__235b__A22b__Instruct__2507__3,
+	Model__Venice__Qwen3__235b__A22b__Thinking__2507__3,
+	Model__Venice__Qwen3__5__35b__A3b__3,
+	Model__Venice__Qwen3__5__397b__A17b__3,
+	Model__Venice__Qwen3__5__9b__3,
+	Model__Venice__Qwen3__6__27b__3,
+	Model__Venice__Qwen3__Coder__480b__A35b__Instruct__Turbo__3,
+	Model__Venice__Qwen3__Next__80b__3,
+	Model__Venice__Qwen3__Vl__235b__A22b__3,
 	Model__Venice__Qwen__3__6__Plus__3_6,
 	Model__Venice__Qwen__3__7__Max__3_7,
 	Model__Venice__Venice__Uncensored__1_2,
@@ -9701,35 +9701,35 @@ var allModelConstants = [...]ModelID{
 	Model__Vercel__Nova__Lite,
 	Model__Vercel__Nova__Micro,
 	Model__Vercel__Nova__Pro,
-	Model__Vercel__O1,
-	Model__Vercel__O3,
-	Model__Vercel__O3__Deep__Research,
-	Model__Vercel__O3__Mini,
-	Model__Vercel__O3__Pro,
-	Model__Vercel__O4__Mini,
+	Model__Vercel__O1__1,
+	Model__Vercel__O3__3,
+	Model__Vercel__O3__Deep__Research__3,
+	Model__Vercel__O3__Mini__3,
+	Model__Vercel__O3__Pro__3,
+	Model__Vercel__O4__Mini__4,
 	Model__Vercel__Pixtral__12b,
 	Model__Vercel__Pixtral__Large,
-	Model__Vercel__Qwen3__235b__A22b__Thinking,
-	Model__Vercel__Qwen3__5__Flash,
-	Model__Vercel__Qwen3__5__Plus,
-	Model__Vercel__Qwen3__6__27b,
-	Model__Vercel__Qwen3__6__Plus,
-	Model__Vercel__Qwen3__7__Max,
-	Model__Vercel__Qwen3__Coder,
-	Model__Vercel__Qwen3__Coder__30b__A3b,
-	Model__Vercel__Qwen3__Coder__Next,
-	Model__Vercel__Qwen3__Coder__Plus,
-	Model__Vercel__Qwen3__Embedding__0__6b,
-	Model__Vercel__Qwen3__Embedding__4b,
-	Model__Vercel__Qwen3__Embedding__8b,
-	Model__Vercel__Qwen3__Max,
-	Model__Vercel__Qwen3__Max__Preview,
-	Model__Vercel__Qwen3__Max__Thinking,
-	Model__Vercel__Qwen3__Next__80b__A3b__Instruct,
-	Model__Vercel__Qwen3__Next__80b__A3b__Thinking,
-	Model__Vercel__Qwen3__Vl__235b__A22b__Instruct,
-	Model__Vercel__Qwen3__Vl__Instruct,
-	Model__Vercel__Qwen3__Vl__Thinking,
+	Model__Vercel__Qwen3__235b__A22b__3__Thinking,
+	Model__Vercel__Qwen3__5__Flash__3_5,
+	Model__Vercel__Qwen3__5__Plus__3_5,
+	Model__Vercel__Qwen3__6__27b__3_6,
+	Model__Vercel__Qwen3__6__Plus__3_6,
+	Model__Vercel__Qwen3__7__Max__3_7,
+	Model__Vercel__Qwen3__Coder__3,
+	Model__Vercel__Qwen3__Coder__30b__A3b__3,
+	Model__Vercel__Qwen3__Coder__Next__3,
+	Model__Vercel__Qwen3__Coder__Plus__3,
+	Model__Vercel__Qwen3__Embedding__0__6b__3,
+	Model__Vercel__Qwen3__Embedding__4b__3,
+	Model__Vercel__Qwen3__Embedding__8b__3,
+	Model__Vercel__Qwen3__Max__3,
+	Model__Vercel__Qwen3__Max__3__Preview,
+	Model__Vercel__Qwen3__Max__3__Thinking,
+	Model__Vercel__Qwen3__Next__80b__A3b__3__Thinking,
+	Model__Vercel__Qwen3__Next__80b__A3b__Instruct__3,
+	Model__Vercel__Qwen3__Vl__235b__A22b__Instruct__3,
+	Model__Vercel__Qwen3__Vl__3__Thinking,
+	Model__Vercel__Qwen3__Vl__Instruct__3,
 	Model__Vercel__Qwen__3__14b__3,
 	Model__Vercel__Qwen__3__235b__3,
 	Model__Vercel__Qwen__3__30b__3,
@@ -9786,8 +9786,8 @@ var allModelConstants = [...]ModelID{
 	Model__Vultr__Nemotron__Cascade__2__30B__A3b,
 	Model__WaferAI__Glm__5__1,
 	Model__WaferAI__Kimi__K2__6,
-	Model__WaferAI__Qwen3__5__397B__A17b,
-	Model__WaferAI__Qwen3__6__35B__A3b,
+	Model__WaferAI__Qwen3__5__397B__A17b__3_5,
+	Model__WaferAI__Qwen3__6__35B__A3b__3_6,
 	Model__Wandb__Deepseek__V3__1,
 	Model__Wandb__GPT__Oss__120b,
 	Model__Wandb__GPT__Oss__20b,
@@ -9801,11 +9801,11 @@ var allModelConstants = [...]ModelID{
 	Model__Wandb__Minimax__M2__5,
 	Model__Wandb__Nvidia__Nemotron__3__Super__120B__A12b__Fp8,
 	Model__Wandb__Phi__4__Mini__Instruct,
-	Model__Wandb__Qwen3__14B__Instruct,
-	Model__Wandb__Qwen3__235B__A22b__Instruct__2507,
-	Model__Wandb__Qwen3__235B__A22b__Thinking__2507,
-	Model__Wandb__Qwen3__30B__A3b__Instruct__2507,
-	Model__Wandb__Qwen3__Coder__480B__A35b__Instruct,
+	Model__Wandb__Qwen3__14B__Instruct__3,
+	Model__Wandb__Qwen3__235B__A22b__Instruct__2507__3,
+	Model__Wandb__Qwen3__235B__A22b__Thinking__2507__3,
+	Model__Wandb__Qwen3__30B__A3b__Instruct__2507__3,
+	Model__Wandb__Qwen3__Coder__480B__A35b__Instruct__3,
 	Model__XAI__Grok__4_3,
 	Model__XAI__Grok__4__20__0309__Non__Reasoning__4_20,
 	Model__XAI__Grok__4__20__0309__Reasoning__4_20,
@@ -9949,11 +9949,11 @@ var allModelConstants = [...]ModelID{
 	Model__ZenMux__Minimax__M2__5__Lightning,
 	Model__ZenMux__Minimax__M2__7,
 	Model__ZenMux__Minimax__M2__7__Highspeed,
-	Model__ZenMux__Qwen3__5__Flash,
-	Model__ZenMux__Qwen3__5__Plus,
-	Model__ZenMux__Qwen3__6__Plus,
-	Model__ZenMux__Qwen3__Coder__Plus,
-	Model__ZenMux__Qwen3__Max,
+	Model__ZenMux__Qwen3__5__Flash__3_5,
+	Model__ZenMux__Qwen3__5__Plus__3_5,
+	Model__ZenMux__Qwen3__6__Plus__3_6,
+	Model__ZenMux__Qwen3__Coder__Plus__3,
+	Model__ZenMux__Qwen3__Max__3,
 	Model__ZenMux__Ring__1t,
 	Model__ZenMux__Step__3,
 	Model__ZenMux__Step__3__5__Flash__3_5,
