@@ -1852,11 +1852,11 @@ const (
 	Model__Kilo__Maestro__Reasoning                                                ModelID = "arcee-ai/maestro-reasoning"
 	Model__Kilo__Magnum__V4__72b                                                   ModelID = "anthracite-org/magnum-v4-72b"
 	Model__Kilo__Mercury__2                                                        ModelID = "inception/mercury-2"
+	Model__Kilo__Mimo__V2__2__Omni                                                 ModelID = "xiaomi/mimo-v2-omni"
 	Model__Kilo__Mimo__V2__2__Pro                                                  ModelID = "xiaomi/mimo-v2-pro"
 	Model__Kilo__Mimo__V2__5__2_5                                                  ModelID = "xiaomi/mimo-v2.5"
 	Model__Kilo__Mimo__V2__5__2_5__Pro                                             ModelID = "xiaomi/mimo-v2.5-pro"
 	Model__Kilo__Mimo__V2__Flash                                                   ModelID = "xiaomi/mimo-v2-flash"
-	Model__Kilo__Mimo__V2__Omni                                                    ModelID = "xiaomi/mimo-v2-omni"
 	Model__Kilo__Minimax__01                                                       ModelID = "minimax/minimax-01"
 	Model__Kilo__Minimax__M1__1                                                    ModelID = "minimax/minimax-m1"
 	Model__Kilo__Minimax__M2__1__2_1                                               ModelID = "minimax/minimax-m2.1"
@@ -2122,11 +2122,11 @@ const (
 	Model__Llmgateway__Llama__4__Maverick__17b__Instruct__4                        ModelID = "llama-4-maverick-17b-instruct"
 	Model__Llmgateway__Llama__4__Scout__17b__Instruct__4                           ModelID = "llama-4-scout-17b-instruct"
 	Model__Llmgateway__Llama__4__Scout__4                                          ModelID = "llama-4-scout"
+	Model__Llmgateway__Mimo__V2__2__Omni                                           ModelID = "mimo-v2-omni"
 	Model__Llmgateway__Mimo__V2__2__Pro                                            ModelID = "mimo-v2-pro"
 	Model__Llmgateway__Mimo__V2__5__2_5                                            ModelID = "mimo-v2.5"
 	Model__Llmgateway__Mimo__V2__5__2_5__Pro                                       ModelID = "mimo-v2.5-pro"
 	Model__Llmgateway__Mimo__V2__Flash                                             ModelID = "mimo-v2-flash"
-	Model__Llmgateway__Mimo__V2__Omni                                              ModelID = "mimo-v2-omni"
 	Model__Llmgateway__Minimax__M2__1__2_1                                         ModelID = "minimax-m2.1"
 	Model__Llmgateway__Minimax__M2__1__2_1__Lightning                              ModelID = "minimax-m2.1-lightning"
 	Model__Llmgateway__Minimax__M2__2                                              ModelID = "minimax-m2"
@@ -3298,10 +3298,10 @@ const (
 	Model__OpenCodeGo__Glm__5_1                                                    ModelID = "glm-5.1"
 	Model__OpenCodeGo__Kimi__K2__5__2_5                                            ModelID = "kimi-k2.5"
 	Model__OpenCodeGo__Kimi__K2__6__2_6                                            ModelID = "kimi-k2.6"
+	Model__OpenCodeGo__Mimo__V2__2__Omni                                           ModelID = "mimo-v2-omni"
 	Model__OpenCodeGo__Mimo__V2__2__Pro                                            ModelID = "mimo-v2-pro"
 	Model__OpenCodeGo__Mimo__V2__5__2_5                                            ModelID = "mimo-v2.5"
 	Model__OpenCodeGo__Mimo__V2__5__2_5__Pro                                       ModelID = "mimo-v2.5-pro"
-	Model__OpenCodeGo__Mimo__V2__Omni                                              ModelID = "mimo-v2-omni"
 	Model__OpenCodeGo__Minimax__M2__5__2_5                                         ModelID = "minimax-m2.5"
 	Model__OpenCodeGo__Minimax__M2__7__2_7                                         ModelID = "minimax-m2.7"
 	Model__OpenCodeGo__Qwen3__5__Plus__3_5                                         ModelID = "qwen3.5-plus"
@@ -3583,11 +3583,11 @@ const (
 	Model__OpenRouter__Maestro__Reasoning                                          ModelID = "arcee-ai/maestro-reasoning"
 	Model__OpenRouter__Magnum__V4__72b                                             ModelID = "anthracite-org/magnum-v4-72b"
 	Model__OpenRouter__Mercury__2                                                  ModelID = "inception/mercury-2"
+	Model__OpenRouter__Mimo__V2__2__Omni                                           ModelID = "xiaomi/mimo-v2-omni"
 	Model__OpenRouter__Mimo__V2__2__Pro                                            ModelID = "xiaomi/mimo-v2-pro"
 	Model__OpenRouter__Mimo__V2__5__2_5                                            ModelID = "xiaomi/mimo-v2.5"
 	Model__OpenRouter__Mimo__V2__5__2_5__Pro                                       ModelID = "xiaomi/mimo-v2.5-pro"
 	Model__OpenRouter__Mimo__V2__Flash                                             ModelID = "xiaomi/mimo-v2-flash"
-	Model__OpenRouter__Mimo__V2__Omni                                              ModelID = "xiaomi/mimo-v2-omni"
 	Model__OpenRouter__Minimax__01                                                 ModelID = "minimax/minimax-01"
 	Model__OpenRouter__Minimax__M1__1                                              ModelID = "minimax/minimax-m1"
 	Model__OpenRouter__Minimax__M2__1__2_1                                         ModelID = "minimax/minimax-m2.1"
@@ -4831,35 +4831,35 @@ const (
 	Model__XAI__Grok__Imagine__Image                                               ModelID = "grok-imagine-image"
 	Model__XAI__Grok__Imagine__Image__Quality                                      ModelID = "grok-imagine-image-quality"
 	Model__XAI__Grok__Imagine__Video                                               ModelID = "grok-imagine-video"
+	Model__XiaomiTokenPlanAMS__Mimo__V2__2__Omni                                   ModelID = "mimo-v2-omni"
 	Model__XiaomiTokenPlanAMS__Mimo__V2__2__Pro                                    ModelID = "mimo-v2-pro"
 	Model__XiaomiTokenPlanAMS__Mimo__V2__5__2_5                                    ModelID = "mimo-v2.5"
 	Model__XiaomiTokenPlanAMS__Mimo__V2__5__2_5__Pro                               ModelID = "mimo-v2.5-pro"
 	Model__XiaomiTokenPlanAMS__Mimo__V2__5__Tts                                    ModelID = "mimo-v2.5-tts"
 	Model__XiaomiTokenPlanAMS__Mimo__V2__5__Tts__Voiceclone                        ModelID = "mimo-v2.5-tts-voiceclone"
 	Model__XiaomiTokenPlanAMS__Mimo__V2__5__Tts__Voicedesign                       ModelID = "mimo-v2.5-tts-voicedesign"
-	Model__XiaomiTokenPlanAMS__Mimo__V2__Omni                                      ModelID = "mimo-v2-omni"
 	Model__XiaomiTokenPlanAMS__Mimo__V2__Tts                                       ModelID = "mimo-v2-tts"
+	Model__XiaomiTokenPlanCN__Mimo__V2__2__Omni                                    ModelID = "mimo-v2-omni"
 	Model__XiaomiTokenPlanCN__Mimo__V2__2__Pro                                     ModelID = "mimo-v2-pro"
 	Model__XiaomiTokenPlanCN__Mimo__V2__5__2_5                                     ModelID = "mimo-v2.5"
 	Model__XiaomiTokenPlanCN__Mimo__V2__5__2_5__Pro                                ModelID = "mimo-v2.5-pro"
 	Model__XiaomiTokenPlanCN__Mimo__V2__5__Tts                                     ModelID = "mimo-v2.5-tts"
 	Model__XiaomiTokenPlanCN__Mimo__V2__5__Tts__Voiceclone                         ModelID = "mimo-v2.5-tts-voiceclone"
 	Model__XiaomiTokenPlanCN__Mimo__V2__5__Tts__Voicedesign                        ModelID = "mimo-v2.5-tts-voicedesign"
-	Model__XiaomiTokenPlanCN__Mimo__V2__Omni                                       ModelID = "mimo-v2-omni"
 	Model__XiaomiTokenPlanCN__Mimo__V2__Tts                                        ModelID = "mimo-v2-tts"
+	Model__XiaomiTokenPlanSGP__Mimo__V2__2__Omni                                   ModelID = "mimo-v2-omni"
 	Model__XiaomiTokenPlanSGP__Mimo__V2__2__Pro                                    ModelID = "mimo-v2-pro"
 	Model__XiaomiTokenPlanSGP__Mimo__V2__5__2_5                                    ModelID = "mimo-v2.5"
 	Model__XiaomiTokenPlanSGP__Mimo__V2__5__2_5__Pro                               ModelID = "mimo-v2.5-pro"
 	Model__XiaomiTokenPlanSGP__Mimo__V2__5__Tts                                    ModelID = "mimo-v2.5-tts"
 	Model__XiaomiTokenPlanSGP__Mimo__V2__5__Tts__Voiceclone                        ModelID = "mimo-v2.5-tts-voiceclone"
 	Model__XiaomiTokenPlanSGP__Mimo__V2__5__Tts__Voicedesign                       ModelID = "mimo-v2.5-tts-voicedesign"
-	Model__XiaomiTokenPlanSGP__Mimo__V2__Omni                                      ModelID = "mimo-v2-omni"
 	Model__XiaomiTokenPlanSGP__Mimo__V2__Tts                                       ModelID = "mimo-v2-tts"
+	Model__Xiaomi__Mimo__V2__2__Omni                                               ModelID = "mimo-v2-omni"
 	Model__Xiaomi__Mimo__V2__2__Pro                                                ModelID = "mimo-v2-pro"
 	Model__Xiaomi__Mimo__V2__5__2_5                                                ModelID = "mimo-v2.5"
 	Model__Xiaomi__Mimo__V2__5__2_5__Pro                                           ModelID = "mimo-v2.5-pro"
 	Model__Xiaomi__Mimo__V2__Flash                                                 ModelID = "mimo-v2-flash"
-	Model__Xiaomi__Mimo__V2__Omni                                                  ModelID = "mimo-v2-omni"
 	Model__Xpersona__Xpersona__Frieren__Coder                                      ModelID = "xpersona-frieren-coder"
 	Model__ZaiCodingPlan__Glm__4_7                                                 ModelID = "glm-4.7"
 	Model__ZaiCodingPlan__Glm__4__5__Air__4_5                                      ModelID = "glm-4.5-air"
@@ -4955,11 +4955,11 @@ const (
 	Model__ZenMux__Kimi__K2__6__2_6                                                ModelID = "moonshotai/kimi-k2.6"
 	Model__ZenMux__Kimi__K2__Thinking__Turbo                                       ModelID = "moonshotai/kimi-k2-thinking-turbo"
 	Model__ZenMux__Ling__1t                                                        ModelID = "inclusionai/ling-1t"
+	Model__ZenMux__Mimo__V2__2__Omni                                               ModelID = "xiaomi/mimo-v2-omni"
 	Model__ZenMux__Mimo__V2__2__Pro                                                ModelID = "xiaomi/mimo-v2-pro"
 	Model__ZenMux__Mimo__V2__5__2_5                                                ModelID = "xiaomi/mimo-v2.5"
 	Model__ZenMux__Mimo__V2__5__2_5__Pro                                           ModelID = "xiaomi/mimo-v2.5-pro"
 	Model__ZenMux__Mimo__V2__Flash                                                 ModelID = "xiaomi/mimo-v2-flash"
-	Model__ZenMux__Mimo__V2__Omni                                                  ModelID = "xiaomi/mimo-v2-omni"
 	Model__ZenMux__Minimax__M2__1__2_1                                             ModelID = "minimax/minimax-m2.1"
 	Model__ZenMux__Minimax__M2__2                                                  ModelID = "minimax/minimax-m2"
 	Model__ZenMux__Minimax__M2__5__2_5                                             ModelID = "minimax/minimax-m2.5"
@@ -6835,11 +6835,11 @@ var allModelConstants = [...]ModelID{
 	Model__Kilo__Maestro__Reasoning,
 	Model__Kilo__Magnum__V4__72b,
 	Model__Kilo__Mercury__2,
+	Model__Kilo__Mimo__V2__2__Omni,
 	Model__Kilo__Mimo__V2__2__Pro,
 	Model__Kilo__Mimo__V2__5__2_5,
 	Model__Kilo__Mimo__V2__5__2_5__Pro,
 	Model__Kilo__Mimo__V2__Flash,
-	Model__Kilo__Mimo__V2__Omni,
 	Model__Kilo__Minimax__01,
 	Model__Kilo__Minimax__M1__1,
 	Model__Kilo__Minimax__M2__1__2_1,
@@ -7105,11 +7105,11 @@ var allModelConstants = [...]ModelID{
 	Model__Llmgateway__Llama__4__Maverick__17b__Instruct__4,
 	Model__Llmgateway__Llama__4__Scout__17b__Instruct__4,
 	Model__Llmgateway__Llama__4__Scout__4,
+	Model__Llmgateway__Mimo__V2__2__Omni,
 	Model__Llmgateway__Mimo__V2__2__Pro,
 	Model__Llmgateway__Mimo__V2__5__2_5,
 	Model__Llmgateway__Mimo__V2__5__2_5__Pro,
 	Model__Llmgateway__Mimo__V2__Flash,
-	Model__Llmgateway__Mimo__V2__Omni,
 	Model__Llmgateway__Minimax__M2__1__2_1,
 	Model__Llmgateway__Minimax__M2__1__2_1__Lightning,
 	Model__Llmgateway__Minimax__M2__2,
@@ -8281,10 +8281,10 @@ var allModelConstants = [...]ModelID{
 	Model__OpenCodeGo__Glm__5_1,
 	Model__OpenCodeGo__Kimi__K2__5__2_5,
 	Model__OpenCodeGo__Kimi__K2__6__2_6,
+	Model__OpenCodeGo__Mimo__V2__2__Omni,
 	Model__OpenCodeGo__Mimo__V2__2__Pro,
 	Model__OpenCodeGo__Mimo__V2__5__2_5,
 	Model__OpenCodeGo__Mimo__V2__5__2_5__Pro,
-	Model__OpenCodeGo__Mimo__V2__Omni,
 	Model__OpenCodeGo__Minimax__M2__5__2_5,
 	Model__OpenCodeGo__Minimax__M2__7__2_7,
 	Model__OpenCodeGo__Qwen3__5__Plus__3_5,
@@ -8566,11 +8566,11 @@ var allModelConstants = [...]ModelID{
 	Model__OpenRouter__Maestro__Reasoning,
 	Model__OpenRouter__Magnum__V4__72b,
 	Model__OpenRouter__Mercury__2,
+	Model__OpenRouter__Mimo__V2__2__Omni,
 	Model__OpenRouter__Mimo__V2__2__Pro,
 	Model__OpenRouter__Mimo__V2__5__2_5,
 	Model__OpenRouter__Mimo__V2__5__2_5__Pro,
 	Model__OpenRouter__Mimo__V2__Flash,
-	Model__OpenRouter__Mimo__V2__Omni,
 	Model__OpenRouter__Minimax__01,
 	Model__OpenRouter__Minimax__M1__1,
 	Model__OpenRouter__Minimax__M2__1__2_1,
@@ -9814,35 +9814,35 @@ var allModelConstants = [...]ModelID{
 	Model__XAI__Grok__Imagine__Image,
 	Model__XAI__Grok__Imagine__Image__Quality,
 	Model__XAI__Grok__Imagine__Video,
+	Model__XiaomiTokenPlanAMS__Mimo__V2__2__Omni,
 	Model__XiaomiTokenPlanAMS__Mimo__V2__2__Pro,
 	Model__XiaomiTokenPlanAMS__Mimo__V2__5__2_5,
 	Model__XiaomiTokenPlanAMS__Mimo__V2__5__2_5__Pro,
 	Model__XiaomiTokenPlanAMS__Mimo__V2__5__Tts,
 	Model__XiaomiTokenPlanAMS__Mimo__V2__5__Tts__Voiceclone,
 	Model__XiaomiTokenPlanAMS__Mimo__V2__5__Tts__Voicedesign,
-	Model__XiaomiTokenPlanAMS__Mimo__V2__Omni,
 	Model__XiaomiTokenPlanAMS__Mimo__V2__Tts,
+	Model__XiaomiTokenPlanCN__Mimo__V2__2__Omni,
 	Model__XiaomiTokenPlanCN__Mimo__V2__2__Pro,
 	Model__XiaomiTokenPlanCN__Mimo__V2__5__2_5,
 	Model__XiaomiTokenPlanCN__Mimo__V2__5__2_5__Pro,
 	Model__XiaomiTokenPlanCN__Mimo__V2__5__Tts,
 	Model__XiaomiTokenPlanCN__Mimo__V2__5__Tts__Voiceclone,
 	Model__XiaomiTokenPlanCN__Mimo__V2__5__Tts__Voicedesign,
-	Model__XiaomiTokenPlanCN__Mimo__V2__Omni,
 	Model__XiaomiTokenPlanCN__Mimo__V2__Tts,
+	Model__XiaomiTokenPlanSGP__Mimo__V2__2__Omni,
 	Model__XiaomiTokenPlanSGP__Mimo__V2__2__Pro,
 	Model__XiaomiTokenPlanSGP__Mimo__V2__5__2_5,
 	Model__XiaomiTokenPlanSGP__Mimo__V2__5__2_5__Pro,
 	Model__XiaomiTokenPlanSGP__Mimo__V2__5__Tts,
 	Model__XiaomiTokenPlanSGP__Mimo__V2__5__Tts__Voiceclone,
 	Model__XiaomiTokenPlanSGP__Mimo__V2__5__Tts__Voicedesign,
-	Model__XiaomiTokenPlanSGP__Mimo__V2__Omni,
 	Model__XiaomiTokenPlanSGP__Mimo__V2__Tts,
+	Model__Xiaomi__Mimo__V2__2__Omni,
 	Model__Xiaomi__Mimo__V2__2__Pro,
 	Model__Xiaomi__Mimo__V2__5__2_5,
 	Model__Xiaomi__Mimo__V2__5__2_5__Pro,
 	Model__Xiaomi__Mimo__V2__Flash,
-	Model__Xiaomi__Mimo__V2__Omni,
 	Model__Xpersona__Xpersona__Frieren__Coder,
 	Model__ZaiCodingPlan__Glm__4_7,
 	Model__ZaiCodingPlan__Glm__4__5__Air__4_5,
@@ -9938,11 +9938,11 @@ var allModelConstants = [...]ModelID{
 	Model__ZenMux__Kimi__K2__6__2_6,
 	Model__ZenMux__Kimi__K2__Thinking__Turbo,
 	Model__ZenMux__Ling__1t,
+	Model__ZenMux__Mimo__V2__2__Omni,
 	Model__ZenMux__Mimo__V2__2__Pro,
 	Model__ZenMux__Mimo__V2__5__2_5,
 	Model__ZenMux__Mimo__V2__5__2_5__Pro,
 	Model__ZenMux__Mimo__V2__Flash,
-	Model__ZenMux__Mimo__V2__Omni,
 	Model__ZenMux__Minimax__M2__1__2_1,
 	Model__ZenMux__Minimax__M2__2,
 	Model__ZenMux__Minimax__M2__5__2_5,
