@@ -961,7 +961,7 @@ const (
 	Model__Cortecs__Qwen3__Coder__30b__A3b__Instruct__3                            ModelID = "qwen3-coder-30b-a3b-instruct"
 	Model__Cortecs__Qwen3__Coder__480b__A35b__Instruct__3                          ModelID = "qwen3-coder-480b-a35b-instruct"
 	Model__Cortecs__Qwen3__Coder__Next__3                                          ModelID = "qwen3-coder-next"
-	Model__Cortecs__Qwen3__Next__80b__A3b__Thinking                                ModelID = "qwen3-next-80b-a3b-thinking"
+	Model__Cortecs__Qwen3__Next__80b__A3b__3__Thinking                             ModelID = "qwen3-next-80b-a3b-thinking"
 	Model__Cortecs__Qwen__2__5__72b__Instruct__2_5                                 ModelID = "qwen-2.5-72b-instruct"
 	Model__Crof__Deepseek__V3__2                                                   ModelID = "deepseek-v3.2"
 	Model__Crof__Deepseek__V4__Flash                                               ModelID = "deepseek-v4-flash"
@@ -1700,7 +1700,7 @@ const (
 	Model__Kilo__Devstral__Medium                                                  ModelID = "mistralai/devstral-medium"
 	Model__Kilo__Devstral__Small                                                   ModelID = "mistralai/devstral-small"
 	Model__Kilo__Ernie__4__5__21b__A3b                                             ModelID = "baidu/ernie-4.5-21b-a3b"
-	Model__Kilo__Ernie__4__5__21b__A3b__Thinking__4_5                              ModelID = "baidu/ernie-4.5-21b-a3b-thinking"
+	Model__Kilo__Ernie__4__5__21b__A3b__Thinking                                   ModelID = "baidu/ernie-4.5-21b-a3b-thinking"
 	Model__Kilo__Ernie__4__5__300b__A47b                                           ModelID = "baidu/ernie-4.5-300b-a47b"
 	Model__Kilo__Ernie__4__5__Vl__28b__A3b                                         ModelID = "baidu/ernie-4.5-vl-28b-a3b"
 	Model__Kilo__Ernie__4__5__Vl__424b__A47b                                       ModelID = "baidu/ernie-4.5-vl-424b-a47b"
@@ -1944,16 +1944,16 @@ const (
 	Model__Kilo__Qwen3__Coder__Next__3                                             ModelID = "qwen/qwen3-coder-next"
 	Model__Kilo__Qwen3__Coder__Plus__3                                             ModelID = "qwen/qwen3-coder-plus"
 	Model__Kilo__Qwen3__Max__3                                                     ModelID = "qwen/qwen3-max"
-	Model__Kilo__Qwen3__Max__Thinking                                              ModelID = "qwen/qwen3-max-thinking"
+	Model__Kilo__Qwen3__Max__3__Thinking                                           ModelID = "qwen/qwen3-max-thinking"
+	Model__Kilo__Qwen3__Next__80b__A3b__3__Thinking                                ModelID = "qwen/qwen3-next-80b-a3b-thinking"
 	Model__Kilo__Qwen3__Next__80b__A3b__Instruct                                   ModelID = "qwen/qwen3-next-80b-a3b-instruct"
-	Model__Kilo__Qwen3__Next__80b__A3b__Thinking                                   ModelID = "qwen/qwen3-next-80b-a3b-thinking"
+	Model__Kilo__Qwen3__Vl__235b__A22b__3__Thinking                                ModelID = "qwen/qwen3-vl-235b-a22b-thinking"
 	Model__Kilo__Qwen3__Vl__235b__A22b__Instruct                                   ModelID = "qwen/qwen3-vl-235b-a22b-instruct"
-	Model__Kilo__Qwen3__Vl__235b__A22b__Thinking                                   ModelID = "qwen/qwen3-vl-235b-a22b-thinking"
+	Model__Kilo__Qwen3__Vl__30b__A3b__3__Thinking                                  ModelID = "qwen/qwen3-vl-30b-a3b-thinking"
 	Model__Kilo__Qwen3__Vl__30b__A3b__Instruct                                     ModelID = "qwen/qwen3-vl-30b-a3b-instruct"
-	Model__Kilo__Qwen3__Vl__30b__A3b__Thinking                                     ModelID = "qwen/qwen3-vl-30b-a3b-thinking"
 	Model__Kilo__Qwen3__Vl__32b__Instruct                                          ModelID = "qwen/qwen3-vl-32b-instruct"
+	Model__Kilo__Qwen3__Vl__8b__3__Thinking                                        ModelID = "qwen/qwen3-vl-8b-thinking"
 	Model__Kilo__Qwen3__Vl__8b__Instruct                                           ModelID = "qwen/qwen3-vl-8b-instruct"
-	Model__Kilo__Qwen3__Vl__8b__Thinking                                           ModelID = "qwen/qwen3-vl-8b-thinking"
 	Model__Kilo__Qwen__2__5__72b__Instruct__2_5                                    ModelID = "qwen/qwen-2.5-72b-instruct"
 	Model__Kilo__Qwen__2__5__7b__Instruct__2_5                                     ModelID = "qwen/qwen-2.5-7b-instruct"
 	Model__Kilo__Qwen__2__5__Coder__32b__Instruct__2_5                             ModelID = "qwen/qwen-2.5-coder-32b-instruct"
@@ -2413,10 +2413,10 @@ const (
 	Model__NanoGPT__Claude__3__5__Sonnet__20241022                                 ModelID = "claude-3-5-sonnet-20241022"
 	Model__NanoGPT__Claude__3__7__Sonnet__20250219                                 ModelID = "claude-3-7-sonnet-20250219"
 	Model__NanoGPT__Claude__3__7__Sonnet__Reasoner                                 ModelID = "claude-3-7-sonnet-reasoner"
+	Model__NanoGPT__Claude__3__7__Sonnet__Thinking                                 ModelID = "claude-3-7-sonnet-thinking"
 	Model__NanoGPT__Claude__3__7__Sonnet__Thinking__1024                           ModelID = "claude-3-7-sonnet-thinking:1024"
 	Model__NanoGPT__Claude__3__7__Sonnet__Thinking__128000                         ModelID = "claude-3-7-sonnet-thinking:128000"
 	Model__NanoGPT__Claude__3__7__Sonnet__Thinking__32768                          ModelID = "claude-3-7-sonnet-thinking:32768"
-	Model__NanoGPT__Claude__3__7__Sonnet__Thinking__3_7                            ModelID = "claude-3-7-sonnet-thinking"
 	Model__NanoGPT__Claude__3__7__Sonnet__Thinking__8192                           ModelID = "claude-3-7-sonnet-thinking:8192"
 	Model__NanoGPT__Claude__Haiku__4_5__20251001                                   ModelID = "claude-haiku-4-5-20251001"
 	Model__NanoGPT__Claude__Opus__4_1__20250805                                    ModelID = "claude-opus-4-1-20250805"
@@ -2512,8 +2512,8 @@ const (
 	Model__NanoGPT__Ernie__4__5__Turbo__128k                                       ModelID = "ernie-4.5-turbo-128k"
 	Model__NanoGPT__Ernie__4__5__Turbo__Vl__32k                                    ModelID = "ernie-4.5-turbo-vl-32k"
 	Model__NanoGPT__Ernie__4__5__Vl__28b__A3b__4_5                                 ModelID = "baidu/ernie-4.5-vl-28b-a3b"
-	Model__NanoGPT__Ernie__5__0__Thinking__5_0__Latest                             ModelID = "ernie-5.0-thinking-latest"
-	Model__NanoGPT__Ernie__5__0__Thinking__5_0__Preview                            ModelID = "ernie-5.0-thinking-preview"
+	Model__NanoGPT__Ernie__5__0__Thinking__Latest                                  ModelID = "ernie-5.0-thinking-latest"
+	Model__NanoGPT__Ernie__5__0__Thinking__Preview                                 ModelID = "ernie-5.0-thinking-preview"
 	Model__NanoGPT__Ernie__X1__1__Preview                                          ModelID = "ernie-x1.1-preview"
 	Model__NanoGPT__Ernie__X1__32k                                                 ModelID = "ernie-x1-32k"
 	Model__NanoGPT__Ernie__X1__32k__Preview                                        ModelID = "ernie-x1-32k-preview"
@@ -2569,16 +2569,16 @@ const (
 	Model__NanoGPT__Gemini__2__0__Pro__Reasoner                                    ModelID = "gemini-2.0-pro-reasoner"
 	Model__NanoGPT__Gemini__2__5__Flash__2_5                                       ModelID = "gemini-2.5-flash"
 	Model__NanoGPT__Gemini__2__5__Flash__Lite__2_5                                 ModelID = "gemini-2.5-flash-lite"
-	Model__NanoGPT__Gemini__2__5__Flash__Lite__Preview__09__2025__Thinking__2_5    ModelID = "gemini-2.5-flash-lite-preview-09-2025-thinking"
 	Model__NanoGPT__Gemini__2__5__Flash__Lite__Preview__20250617                   ModelID = "gemini-2.5-flash-lite-preview-06-17"
 	Model__NanoGPT__Gemini__2__5__Flash__Lite__Preview__20250925                   ModelID = "gemini-2.5-flash-lite-preview-09-2025"
+	Model__NanoGPT__Gemini__2__5__Flash__Lite__Preview__Thinking__20250925         ModelID = "gemini-2.5-flash-lite-preview-09-2025-thinking"
 	Model__NanoGPT__Gemini__2__5__Flash__Nothinking                                ModelID = "gemini-2.5-flash-nothinking"
 	Model__NanoGPT__Gemini__2__5__Flash__Preview__04__17__Thinking                 ModelID = "gemini-2.5-flash-preview-04-17:thinking"
 	Model__NanoGPT__Gemini__2__5__Flash__Preview__05__20__Thinking                 ModelID = "gemini-2.5-flash-preview-05-20:thinking"
-	Model__NanoGPT__Gemini__2__5__Flash__Preview__09__2025__Thinking__2_5          ModelID = "gemini-2.5-flash-preview-09-2025-thinking"
 	Model__NanoGPT__Gemini__2__5__Flash__Preview__20250417                         ModelID = "gemini-2.5-flash-preview-04-17"
 	Model__NanoGPT__Gemini__2__5__Flash__Preview__20250520                         ModelID = "gemini-2.5-flash-preview-05-20"
 	Model__NanoGPT__Gemini__2__5__Flash__Preview__20250925                         ModelID = "gemini-2.5-flash-preview-09-2025"
+	Model__NanoGPT__Gemini__2__5__Flash__Preview__Thinking__20250925               ModelID = "gemini-2.5-flash-preview-09-2025-thinking"
 	Model__NanoGPT__Gemini__2__5__Pro__2_5                                         ModelID = "gemini-2.5-pro"
 	Model__NanoGPT__Gemini__2__5__Pro__Exp__20250325                               ModelID = "gemini-2.5-pro-exp-03-25"
 	Model__NanoGPT__Gemini__2__5__Pro__Preview__20250325                           ModelID = "gemini-2.5-pro-preview-03-25"
@@ -2588,7 +2588,7 @@ const (
 	Model__NanoGPT__Gemini__3__Flash__Preview__3__Thinking                         ModelID = "google/gemini-3-flash-preview-thinking"
 	Model__NanoGPT__Gemini__3__Pro__3__Preview                                     ModelID = "gemini-3-pro-preview"
 	Model__NanoGPT__Gemini__3__Pro__Image__3__Preview                              ModelID = "gemini-3-pro-image-preview"
-	Model__NanoGPT__Gemini__3__Pro__Preview__Thinking__3                           ModelID = "gemini-3-pro-preview-thinking"
+	Model__NanoGPT__Gemini__3__Pro__Preview__Thinking                              ModelID = "gemini-3-pro-preview-thinking"
 	Model__NanoGPT__Gemini__Exp__1206                                              ModelID = "gemini-exp-1206"
 	Model__NanoGPT__Gemini__Flash__1__5                                            ModelID = "google/gemini-flash-1.5"
 	Model__NanoGPT__Gemma__3__12b__It                                              ModelID = "unsloth/gemma-3-12b-it"
@@ -2858,8 +2858,8 @@ const (
 	Model__NanoGPT__Qwen3__Coder__3                                                ModelID = "TEE/qwen3-coder"
 	Model__NanoGPT__Qwen3__Coder__30b__A3b__Instruct                               ModelID = "qwen3-coder-30b-a3b-instruct"
 	Model__NanoGPT__Qwen3__Max__3__20260123                                        ModelID = "qwen3-max-2026-01-23"
+	Model__NanoGPT__Qwen3__Vl__235b__A22b__3__Thinking                             ModelID = "qwen3-vl-235b-a22b-thinking"
 	Model__NanoGPT__Qwen3__Vl__235b__A22b__Instruct__Original__3                   ModelID = "qwen3-vl-235b-a22b-instruct-original"
-	Model__NanoGPT__Qwen3__Vl__235b__A22b__Thinking                                ModelID = "qwen3-vl-235b-a22b-thinking"
 	Model__NanoGPT__Qwen__3__6__Plus__3_6                                          ModelID = "qwen-3.6-plus"
 	Model__NanoGPT__Qwen__Image                                                    ModelID = "qwen-image"
 	Model__NanoGPT__Qwen__Long                                                     ModelID = "qwen-long"
@@ -3016,7 +3016,7 @@ const (
 	Model__NovitaAI__Ernie__4__5__21B__A3b__4_5__Thinking                          ModelID = "baidu/ernie-4.5-21B-a3b-thinking"
 	Model__NovitaAI__Ernie__4__5__300b__A47b__Paddle                               ModelID = "baidu/ernie-4.5-300b-a47b-paddle"
 	Model__NovitaAI__Ernie__4__5__Vl__28b__A3b                                     ModelID = "baidu/ernie-4.5-vl-28b-a3b"
-	Model__NovitaAI__Ernie__4__5__Vl__28b__A3b__Thinking__4_5                      ModelID = "baidu/ernie-4.5-vl-28b-a3b-thinking"
+	Model__NovitaAI__Ernie__4__5__Vl__28b__A3b__Thinking                           ModelID = "baidu/ernie-4.5-vl-28b-a3b-thinking"
 	Model__NovitaAI__Ernie__4__5__Vl__424b__A47b                                   ModelID = "baidu/ernie-4.5-vl-424b-a47b"
 	Model__NovitaAI__GPT__Oss__120b                                                ModelID = "openai/gpt-oss-120b"
 	Model__NovitaAI__GPT__Oss__20b                                                 ModelID = "openai/gpt-oss-20b"
@@ -3084,14 +3084,14 @@ const (
 	Model__NovitaAI__Qwen3__Coder__480b__A35b__Instruct__3                         ModelID = "qwen/qwen3-coder-480b-a35b-instruct"
 	Model__NovitaAI__Qwen3__Coder__Next__3                                         ModelID = "qwen/qwen3-coder-next"
 	Model__NovitaAI__Qwen3__Max__3                                                 ModelID = "qwen/qwen3-max"
+	Model__NovitaAI__Qwen3__Next__80b__A3b__3__Thinking                            ModelID = "qwen/qwen3-next-80b-a3b-thinking"
 	Model__NovitaAI__Qwen3__Next__80b__A3b__Instruct                               ModelID = "qwen/qwen3-next-80b-a3b-instruct"
-	Model__NovitaAI__Qwen3__Next__80b__A3b__Thinking                               ModelID = "qwen/qwen3-next-80b-a3b-thinking"
+	Model__NovitaAI__Qwen3__Omni__30b__A3b__3__Thinking                            ModelID = "qwen/qwen3-omni-30b-a3b-thinking"
 	Model__NovitaAI__Qwen3__Omni__30b__A3b__Instruct__3                            ModelID = "qwen/qwen3-omni-30b-a3b-instruct"
-	Model__NovitaAI__Qwen3__Omni__30b__A3b__Thinking                               ModelID = "qwen/qwen3-omni-30b-a3b-thinking"
+	Model__NovitaAI__Qwen3__Vl__235b__A22b__3__Thinking                            ModelID = "qwen/qwen3-vl-235b-a22b-thinking"
 	Model__NovitaAI__Qwen3__Vl__235b__A22b__Instruct                               ModelID = "qwen/qwen3-vl-235b-a22b-instruct"
-	Model__NovitaAI__Qwen3__Vl__235b__A22b__Thinking                               ModelID = "qwen/qwen3-vl-235b-a22b-thinking"
+	Model__NovitaAI__Qwen3__Vl__30b__A3b__3__Thinking                              ModelID = "qwen/qwen3-vl-30b-a3b-thinking"
 	Model__NovitaAI__Qwen3__Vl__30b__A3b__Instruct                                 ModelID = "qwen/qwen3-vl-30b-a3b-instruct"
-	Model__NovitaAI__Qwen3__Vl__30b__A3b__Thinking                                 ModelID = "qwen/qwen3-vl-30b-a3b-thinking"
 	Model__NovitaAI__Qwen3__Vl__8b__Instruct                                       ModelID = "qwen/qwen3-vl-8b-instruct"
 	Model__NovitaAI__Qwen__2__5__72b__Instruct__2_5                                ModelID = "qwen/qwen-2.5-72b-instruct"
 	Model__NovitaAI__Qwen__Mt__Plus                                                ModelID = "qwen/qwen-mt-plus"
@@ -4067,9 +4067,9 @@ const (
 	Model__QiniuAI__Qwen3__Coder__480b__A35b__Instruct                             ModelID = "qwen3-coder-480b-a35b-instruct"
 	Model__QiniuAI__Qwen3__Max__3                                                  ModelID = "qwen3-max"
 	Model__QiniuAI__Qwen3__Max__3__Preview                                         ModelID = "qwen3-max-preview"
+	Model__QiniuAI__Qwen3__Next__80b__A3b__3__Thinking                             ModelID = "qwen3-next-80b-a3b-thinking"
 	Model__QiniuAI__Qwen3__Next__80b__A3b__Instruct                                ModelID = "qwen3-next-80b-a3b-instruct"
-	Model__QiniuAI__Qwen3__Next__80b__A3b__Thinking                                ModelID = "qwen3-next-80b-a3b-thinking"
-	Model__QiniuAI__Qwen3__Vl__30b__A3b__Thinking                                  ModelID = "qwen3-vl-30b-a3b-thinking"
+	Model__QiniuAI__Qwen3__Vl__30b__A3b__3__Thinking                               ModelID = "qwen3-vl-30b-a3b-thinking"
 	Model__QiniuAI__Qwen__Max__20250125                                            ModelID = "qwen-max-2025-01-25"
 	Model__QiniuAI__Qwen__Turbo                                                    ModelID = "qwen-turbo"
 	Model__QiniuAI__Qwen__Vl__Max__20250125                                        ModelID = "qwen-vl-max-2025-01-25"
@@ -4903,7 +4903,7 @@ const (
 	Model__ZenMux__Doubao__Seed__2__0__Mini__2_0                                   ModelID = "volcengine/doubao-seed-2.0-mini"
 	Model__ZenMux__Doubao__Seed__2__0__Pro__2_0                                    ModelID = "volcengine/doubao-seed-2.0-pro"
 	Model__ZenMux__Doubao__Seed__Code                                              ModelID = "volcengine/doubao-seed-code"
-	Model__ZenMux__Ernie__5__0__Thinking__5_0__Preview                             ModelID = "baidu/ernie-5.0-thinking-preview"
+	Model__ZenMux__Ernie__5__0__Thinking__Preview                                  ModelID = "baidu/ernie-5.0-thinking-preview"
 	Model__ZenMux__GPT__5                                                          ModelID = "openai/gpt-5"
 	Model__ZenMux__GPT__5_1                                                        ModelID = "openai/gpt-5.1"
 	Model__ZenMux__GPT__5_2                                                        ModelID = "openai/gpt-5.2"
@@ -5944,7 +5944,7 @@ var allModelConstants = [...]ModelID{
 	Model__Cortecs__Qwen3__Coder__30b__A3b__Instruct__3,
 	Model__Cortecs__Qwen3__Coder__480b__A35b__Instruct__3,
 	Model__Cortecs__Qwen3__Coder__Next__3,
-	Model__Cortecs__Qwen3__Next__80b__A3b__Thinking,
+	Model__Cortecs__Qwen3__Next__80b__A3b__3__Thinking,
 	Model__Cortecs__Qwen__2__5__72b__Instruct__2_5,
 	Model__Crof__Deepseek__V3__2,
 	Model__Crof__Deepseek__V4__Flash,
@@ -6683,7 +6683,7 @@ var allModelConstants = [...]ModelID{
 	Model__Kilo__Devstral__Medium,
 	Model__Kilo__Devstral__Small,
 	Model__Kilo__Ernie__4__5__21b__A3b,
-	Model__Kilo__Ernie__4__5__21b__A3b__Thinking__4_5,
+	Model__Kilo__Ernie__4__5__21b__A3b__Thinking,
 	Model__Kilo__Ernie__4__5__300b__A47b,
 	Model__Kilo__Ernie__4__5__Vl__28b__A3b,
 	Model__Kilo__Ernie__4__5__Vl__424b__A47b,
@@ -6927,16 +6927,16 @@ var allModelConstants = [...]ModelID{
 	Model__Kilo__Qwen3__Coder__Next__3,
 	Model__Kilo__Qwen3__Coder__Plus__3,
 	Model__Kilo__Qwen3__Max__3,
-	Model__Kilo__Qwen3__Max__Thinking,
+	Model__Kilo__Qwen3__Max__3__Thinking,
+	Model__Kilo__Qwen3__Next__80b__A3b__3__Thinking,
 	Model__Kilo__Qwen3__Next__80b__A3b__Instruct,
-	Model__Kilo__Qwen3__Next__80b__A3b__Thinking,
+	Model__Kilo__Qwen3__Vl__235b__A22b__3__Thinking,
 	Model__Kilo__Qwen3__Vl__235b__A22b__Instruct,
-	Model__Kilo__Qwen3__Vl__235b__A22b__Thinking,
+	Model__Kilo__Qwen3__Vl__30b__A3b__3__Thinking,
 	Model__Kilo__Qwen3__Vl__30b__A3b__Instruct,
-	Model__Kilo__Qwen3__Vl__30b__A3b__Thinking,
 	Model__Kilo__Qwen3__Vl__32b__Instruct,
+	Model__Kilo__Qwen3__Vl__8b__3__Thinking,
 	Model__Kilo__Qwen3__Vl__8b__Instruct,
-	Model__Kilo__Qwen3__Vl__8b__Thinking,
 	Model__Kilo__Qwen__2__5__72b__Instruct__2_5,
 	Model__Kilo__Qwen__2__5__7b__Instruct__2_5,
 	Model__Kilo__Qwen__2__5__Coder__32b__Instruct__2_5,
@@ -7396,10 +7396,10 @@ var allModelConstants = [...]ModelID{
 	Model__NanoGPT__Claude__3__5__Sonnet__20241022,
 	Model__NanoGPT__Claude__3__7__Sonnet__20250219,
 	Model__NanoGPT__Claude__3__7__Sonnet__Reasoner,
+	Model__NanoGPT__Claude__3__7__Sonnet__Thinking,
 	Model__NanoGPT__Claude__3__7__Sonnet__Thinking__1024,
 	Model__NanoGPT__Claude__3__7__Sonnet__Thinking__128000,
 	Model__NanoGPT__Claude__3__7__Sonnet__Thinking__32768,
-	Model__NanoGPT__Claude__3__7__Sonnet__Thinking__3_7,
 	Model__NanoGPT__Claude__3__7__Sonnet__Thinking__8192,
 	Model__NanoGPT__Claude__Haiku__4_5__20251001,
 	Model__NanoGPT__Claude__Opus__4_1__20250805,
@@ -7495,8 +7495,8 @@ var allModelConstants = [...]ModelID{
 	Model__NanoGPT__Ernie__4__5__Turbo__128k,
 	Model__NanoGPT__Ernie__4__5__Turbo__Vl__32k,
 	Model__NanoGPT__Ernie__4__5__Vl__28b__A3b__4_5,
-	Model__NanoGPT__Ernie__5__0__Thinking__5_0__Latest,
-	Model__NanoGPT__Ernie__5__0__Thinking__5_0__Preview,
+	Model__NanoGPT__Ernie__5__0__Thinking__Latest,
+	Model__NanoGPT__Ernie__5__0__Thinking__Preview,
 	Model__NanoGPT__Ernie__X1__1__Preview,
 	Model__NanoGPT__Ernie__X1__32k,
 	Model__NanoGPT__Ernie__X1__32k__Preview,
@@ -7552,16 +7552,16 @@ var allModelConstants = [...]ModelID{
 	Model__NanoGPT__Gemini__2__0__Pro__Reasoner,
 	Model__NanoGPT__Gemini__2__5__Flash__2_5,
 	Model__NanoGPT__Gemini__2__5__Flash__Lite__2_5,
-	Model__NanoGPT__Gemini__2__5__Flash__Lite__Preview__09__2025__Thinking__2_5,
 	Model__NanoGPT__Gemini__2__5__Flash__Lite__Preview__20250617,
 	Model__NanoGPT__Gemini__2__5__Flash__Lite__Preview__20250925,
+	Model__NanoGPT__Gemini__2__5__Flash__Lite__Preview__Thinking__20250925,
 	Model__NanoGPT__Gemini__2__5__Flash__Nothinking,
 	Model__NanoGPT__Gemini__2__5__Flash__Preview__04__17__Thinking,
 	Model__NanoGPT__Gemini__2__5__Flash__Preview__05__20__Thinking,
-	Model__NanoGPT__Gemini__2__5__Flash__Preview__09__2025__Thinking__2_5,
 	Model__NanoGPT__Gemini__2__5__Flash__Preview__20250417,
 	Model__NanoGPT__Gemini__2__5__Flash__Preview__20250520,
 	Model__NanoGPT__Gemini__2__5__Flash__Preview__20250925,
+	Model__NanoGPT__Gemini__2__5__Flash__Preview__Thinking__20250925,
 	Model__NanoGPT__Gemini__2__5__Pro__2_5,
 	Model__NanoGPT__Gemini__2__5__Pro__Exp__20250325,
 	Model__NanoGPT__Gemini__2__5__Pro__Preview__20250325,
@@ -7571,7 +7571,7 @@ var allModelConstants = [...]ModelID{
 	Model__NanoGPT__Gemini__3__Flash__Preview__3__Thinking,
 	Model__NanoGPT__Gemini__3__Pro__3__Preview,
 	Model__NanoGPT__Gemini__3__Pro__Image__3__Preview,
-	Model__NanoGPT__Gemini__3__Pro__Preview__Thinking__3,
+	Model__NanoGPT__Gemini__3__Pro__Preview__Thinking,
 	Model__NanoGPT__Gemini__Exp__1206,
 	Model__NanoGPT__Gemini__Flash__1__5,
 	Model__NanoGPT__Gemma__3__12b__It,
@@ -7841,8 +7841,8 @@ var allModelConstants = [...]ModelID{
 	Model__NanoGPT__Qwen3__Coder__3,
 	Model__NanoGPT__Qwen3__Coder__30b__A3b__Instruct,
 	Model__NanoGPT__Qwen3__Max__3__20260123,
+	Model__NanoGPT__Qwen3__Vl__235b__A22b__3__Thinking,
 	Model__NanoGPT__Qwen3__Vl__235b__A22b__Instruct__Original__3,
-	Model__NanoGPT__Qwen3__Vl__235b__A22b__Thinking,
 	Model__NanoGPT__Qwen__3__6__Plus__3_6,
 	Model__NanoGPT__Qwen__Image,
 	Model__NanoGPT__Qwen__Long,
@@ -7999,7 +7999,7 @@ var allModelConstants = [...]ModelID{
 	Model__NovitaAI__Ernie__4__5__21B__A3b__4_5__Thinking,
 	Model__NovitaAI__Ernie__4__5__300b__A47b__Paddle,
 	Model__NovitaAI__Ernie__4__5__Vl__28b__A3b,
-	Model__NovitaAI__Ernie__4__5__Vl__28b__A3b__Thinking__4_5,
+	Model__NovitaAI__Ernie__4__5__Vl__28b__A3b__Thinking,
 	Model__NovitaAI__Ernie__4__5__Vl__424b__A47b,
 	Model__NovitaAI__GPT__Oss__120b,
 	Model__NovitaAI__GPT__Oss__20b,
@@ -8067,14 +8067,14 @@ var allModelConstants = [...]ModelID{
 	Model__NovitaAI__Qwen3__Coder__480b__A35b__Instruct__3,
 	Model__NovitaAI__Qwen3__Coder__Next__3,
 	Model__NovitaAI__Qwen3__Max__3,
+	Model__NovitaAI__Qwen3__Next__80b__A3b__3__Thinking,
 	Model__NovitaAI__Qwen3__Next__80b__A3b__Instruct,
-	Model__NovitaAI__Qwen3__Next__80b__A3b__Thinking,
+	Model__NovitaAI__Qwen3__Omni__30b__A3b__3__Thinking,
 	Model__NovitaAI__Qwen3__Omni__30b__A3b__Instruct__3,
-	Model__NovitaAI__Qwen3__Omni__30b__A3b__Thinking,
+	Model__NovitaAI__Qwen3__Vl__235b__A22b__3__Thinking,
 	Model__NovitaAI__Qwen3__Vl__235b__A22b__Instruct,
-	Model__NovitaAI__Qwen3__Vl__235b__A22b__Thinking,
+	Model__NovitaAI__Qwen3__Vl__30b__A3b__3__Thinking,
 	Model__NovitaAI__Qwen3__Vl__30b__A3b__Instruct,
-	Model__NovitaAI__Qwen3__Vl__30b__A3b__Thinking,
 	Model__NovitaAI__Qwen3__Vl__8b__Instruct,
 	Model__NovitaAI__Qwen__2__5__72b__Instruct__2_5,
 	Model__NovitaAI__Qwen__Mt__Plus,
@@ -9050,9 +9050,9 @@ var allModelConstants = [...]ModelID{
 	Model__QiniuAI__Qwen3__Coder__480b__A35b__Instruct,
 	Model__QiniuAI__Qwen3__Max__3,
 	Model__QiniuAI__Qwen3__Max__3__Preview,
+	Model__QiniuAI__Qwen3__Next__80b__A3b__3__Thinking,
 	Model__QiniuAI__Qwen3__Next__80b__A3b__Instruct,
-	Model__QiniuAI__Qwen3__Next__80b__A3b__Thinking,
-	Model__QiniuAI__Qwen3__Vl__30b__A3b__Thinking,
+	Model__QiniuAI__Qwen3__Vl__30b__A3b__3__Thinking,
 	Model__QiniuAI__Qwen__Max__20250125,
 	Model__QiniuAI__Qwen__Turbo,
 	Model__QiniuAI__Qwen__Vl__Max__20250125,
@@ -9886,7 +9886,7 @@ var allModelConstants = [...]ModelID{
 	Model__ZenMux__Doubao__Seed__2__0__Mini__2_0,
 	Model__ZenMux__Doubao__Seed__2__0__Pro__2_0,
 	Model__ZenMux__Doubao__Seed__Code,
-	Model__ZenMux__Ernie__5__0__Thinking__5_0__Preview,
+	Model__ZenMux__Ernie__5__0__Thinking__Preview,
 	Model__ZenMux__GPT__5,
 	Model__ZenMux__GPT__5_1,
 	Model__ZenMux__GPT__5_2,
