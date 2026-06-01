@@ -878,6 +878,9 @@
 {"issue_id":"bestiary-r66e","label":"aura:epic-followup"}
 {"issue_id":"bestiary-r7uj","label":"aura:p9-impl:s9-slice"}
 {"issue_id":"bestiary-r8jw","label":"aura:p2-user:s2_1-elicit"}
+{"issue_id":"bestiary-raf5","label":"aura:p2-user:s2_1-elicit"}
+{"issue_id":"bestiary-raf5","label":"followup"}
+{"issue_id":"bestiary-raf5","label":"parse"}
 {"issue_id":"bestiary-rar7","label":"aura:p2-user:s2_2-urd"}
 {"issue_id":"bestiary-rar7","label":"aura:urd"}
 {"issue_id":"bestiary-rb92","label":"aura:p10-impl:s10-review"}
