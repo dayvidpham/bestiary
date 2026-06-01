@@ -325,6 +325,9 @@
 {"issue_id":"bestiary-94oz","label":"aura:p10-impl:s10-review"}
 {"issue_id":"bestiary-958i","label":"aura:p10-impl:s10-review"}
 {"issue_id":"bestiary-958i","label":"aura:severity:blocker"}
+{"issue_id":"bestiary-96sp","label":"aura:p9-impl:s9-slice"}
+{"issue_id":"bestiary-96sp","label":"followup"}
+{"issue_id":"bestiary-96sp","label":"parse"}
 {"issue_id":"bestiary-99m","label":"aura:p10-impl:cycle-2-clean"}
 {"issue_id":"bestiary-99m","label":"aura:p9-impl:s9-slice"}
 {"issue_id":"bestiary-9ax","label":"aura:p4-plan:s4-review"}
@@ -547,6 +550,9 @@
 {"issue_id":"bestiary-ee6f","label":"aura:p10-impl:s10-review"}
 {"issue_id":"bestiary-eene","label":"aura:p10-impl:s10-review"}
 {"issue_id":"bestiary-eene","label":"aura:severity:minor"}
+{"issue_id":"bestiary-eftv","label":"aura:p9-impl:s9-slice"}
+{"issue_id":"bestiary-eftv","label":"followup"}
+{"issue_id":"bestiary-eftv","label":"parse"}
 {"issue_id":"bestiary-efus","label":"aura:p10-impl:s10-review"}
 {"issue_id":"bestiary-ehg","label":"aura:p9-impl:s9-slice"}
 {"issue_id":"bestiary-eihs","label":"aura:p10-impl:s10-review"}
@@ -1015,6 +1021,9 @@
 {"issue_id":"bestiary-t8fj","label":"aura:severity:minor"}
 {"issue_id":"bestiary-tant","label":"aura:p10-impl:s10-review"}
 {"issue_id":"bestiary-tcrl","label":"aura:p9-impl:s9-slice"}
+{"issue_id":"bestiary-tebx","label":"aura:p9-impl:s9-slice"}
+{"issue_id":"bestiary-tebx","label":"followup"}
+{"issue_id":"bestiary-tebx","label":"parse"}
 {"issue_id":"bestiary-tel4","label":"aura:p9-impl:s9-slice"}
 {"issue_id":"bestiary-tfuy","label":"aura:p9-impl:s9-slice"}
 {"issue_id":"bestiary-tg61","label":"aura:p9-impl:s9-slice"}
@@ -1068,6 +1077,9 @@
 {"issue_id":"bestiary-v1i1","label":"aura:severity:important"}
 {"issue_id":"bestiary-v1jf","label":"aura:p10-impl:s10-review"}
 {"issue_id":"bestiary-v5ic","label":"aura:p9-impl:s9-slice"}
+{"issue_id":"bestiary-vbdv","label":"aura:p9-impl:s9-slice"}
+{"issue_id":"bestiary-vbdv","label":"followup"}
+{"issue_id":"bestiary-vbdv","label":"parse"}
 {"issue_id":"bestiary-vbjy","label":"aura:p9-impl:s9-slice"}
 {"issue_id":"bestiary-vbjy","label":"followup"}
 {"issue_id":"bestiary-vbjy","label":"parse"}
