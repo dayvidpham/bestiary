@@ -822,6 +822,7 @@
 {"issue_id":"bestiary-llgb","label":"aura:p10-impl:s10-review"}
 {"issue_id":"bestiary-lm1","label":"aura:p9-impl:s9-slice"}
 {"issue_id":"bestiary-lmoy","label":"aura:p9-impl:s9-slice"}
+{"issue_id":"bestiary-lmoy","label":"aura:p9-impl:slice-complete"}
 {"issue_id":"bestiary-lmoy","label":"followup"}
 {"issue_id":"bestiary-lmoy","label":"parse"}
 {"issue_id":"bestiary-lnd1","label":"aura:p9-impl:s9-slice"}
