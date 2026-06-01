@@ -385,8 +385,9 @@ func TestSnapshotAnalysis_CrossProviderDivergences(t *testing.T) {
 	// IDs still divergent are the MULTI-MODIFIER cases — a tier AND thinking/vision (or
 	// 2+ tiers) in the single-valued Modifier field: kimi-k2-thinking-turbo (×2 paths).
 	// The user ruled Option 1 (Modifier → LIST, lossless), but that is a PUBLIC SCHEMA
-	// change deferred to SLICE-9 (grep "SLICE-9" / "multi-modifier"). For S8 these keep
-	// the series split + the capability modifier (thinking) and DROP the tier.
+	// change deferred to the later Modifier-LIST slice (SLICE-10; grep "multi-modifier"
+	// / "Modifier-LIST"). For S8 these keep the series split + the capability modifier
+	// (thinking) and DROP the tier.
 	// (The other ~150 residual divergences are NON-series family/version mislabels —
 	// deepseek-v3.x, magnum, morph, mistral-7b-v0.x, the CatD ledger, qwen3-vl/param —
 	// out of SLICE-8's version-path scope.)

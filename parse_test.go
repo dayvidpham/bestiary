@@ -3834,17 +3834,18 @@ func TestSeriesTierModifier_CLARIFICATION6(t *testing.T) {
 	}
 }
 
-// TestSlice8_MultiModifier_DeferredToSlice9 is the greppable SCOPE-NOTE marker for
-// the multi-modifier residual. A letter-prefix series ID can carry BOTH a capability
-// modifier (thinking/vision) AND a tier (turbo/…) — two modifiers — but the Modifier
-// field is single-valued in S8. The user ruled Option 1 (Modifier → LIST, lossless),
-// which is a PUBLIC SCHEMA change (ModelInfo/ModelRef/bestiary.schema.json +
+// TestSlice8_MultiModifier_DeferredToModifierListSlice is the greppable SCOPE-NOTE
+// marker for the multi-modifier residual. A letter-prefix series ID can carry BOTH a
+// capability modifier (thinking/vision) AND a tier (turbo/…) — two modifiers — but the
+// Modifier field is single-valued in S8. The user ruled Option 1 (Modifier → LIST,
+// lossless), which is a PUBLIC SCHEMA change (ModelInfo/ModelRef/bestiary.schema.json +
 // BestiarySchemaVersion bump + Format ordering + resolve.go FIX-B group key) and is
-// therefore deferred to SLICE-9. For S8 the INTERIM is: keep the series split + the
-// capability modifier (thinking/vision wins), DROP the tier (documented residual).
-// This test PINS that interim so the S8→SLICE-9 hand-off is visible from the suite,
-// not just git history (mirrors the glmv S3→S8 SCOPE-NOTE pattern).
-func TestSlice8_MultiModifier_DeferredToSlice9(t *testing.T) {
+// therefore deferred to the later Modifier-LIST slice (SLICE-10). For S8 the INTERIM
+// is: keep the series split + the capability modifier (thinking/vision wins), DROP the
+// tier (documented residual). This test PINS that TEMPORARY interim so the S8→SLICE-10
+// hand-off is visible from the suite, not just git history (mirrors the glmv S3→S8
+// SCOPE-NOTE pattern).
+func TestSlice8_MultiModifier_DeferredToModifierListSlice(t *testing.T) {
 	t.Parallel()
 	cases := []struct {
 		desc                                          string
@@ -3853,7 +3854,7 @@ func TestSlice8_MultiModifier_DeferredToSlice9(t *testing.T) {
 		wantFamily, wantVariant, wantVersion, wantMod string
 	}{
 		// tier (turbo) + capability (thinking) → INTERIM: thinking kept, turbo dropped.
-		// SLICE-9 (Modifier-list) will populate BOTH losslessly.
+		// The Modifier-LIST slice (SLICE-10) will populate BOTH losslessly.
 		{"kimi-k2p6-turbo + thinking → interim keeps thinking", "kimi-thinking", "accounts/fireworks/routers/kimi-k2p6-turbo", "kimi", "k", "2.6", "thinking"},
 		{"kimi-k2-thinking-turbo → interim keeps thinking", "kimi-thinking", "kimi-k2-thinking-turbo", "kimi", "k", "2", "thinking"},
 	}
@@ -3862,7 +3863,7 @@ func TestSlice8_MultiModifier_DeferredToSlice9(t *testing.T) {
 			t.Parallel()
 			f, va, ve, mod, _ := bestiary.ParseFamilyDetailed(tc.raw, tc.id, "p")
 			if string(f) != tc.wantFamily || va != tc.wantVariant || ve != tc.wantVersion || mod != tc.wantMod {
-				t.Errorf("raw=%q id=%q → (%s|%s|%s|mod=%s), want (%s|%s|%s|mod=%s) [SLICE-9 multi-modifier interim]",
+				t.Errorf("raw=%q id=%q → (%s|%s|%s|mod=%s), want (%s|%s|%s|mod=%s) [SLICE-10 Modifier-list interim]",
 					tc.raw, tc.id, f, va, ve, mod, tc.wantFamily, tc.wantVariant, tc.wantVersion, tc.wantMod)
 			}
 		})
