@@ -217,11 +217,24 @@ func Resolve(input string, opts ...ResolveOption) ([]ModelRef, error) {
 	// model ID as the matchInput — which is the case for an exact static ID lookup.
 	exactIDInput := scheme == SchemeCanonical && isExactIDInput(matchInput, matches)
 
+	// groupKey is the canonical-identity key used to bucket matches into groups.
+	// Cross-provider hosting of the same conceptual model collapses into one group;
+	// genuinely distinct models (different variants, versions, context windows, etc.)
+	// land in separate groups.
+	//
+	// FIX-B (SLICE-4): The key now carries Version, Modifier, and a locally-parsed
+	// ":N" context-window discriminator (parseContextN). This prevents context-window
+	// variants (e.g. claude-3-7-sonnet-thinking:1024 vs :128000) from being silently
+	// collapsed into a single representative — they share identical canonical fields
+	// but differ only in the raw ":N" suffix.
 	type groupKey struct {
-		id      ModelID // non-empty for ID-based grouping
-		family  Family
-		variant string
-		date    string
+		id       ModelID // non-empty for ID-based grouping
+		family   Family
+		variant  string
+		version  string
+		modifier string
+		date     string
+		contextN string // parsed ":N" from ID (e.g., "1024", "128000", "")
 	}
 	byGroup := make(map[groupKey][]ModelRef)
 	var order []groupKey // preserve insertion order for deterministic output
@@ -232,8 +245,17 @@ func Resolve(input string, opts ...ResolveOption) ([]ModelRef, error) {
 			// Group by model ID: cross-provider hosting of the same raw ID.
 			key = groupKey{id: ref.ID}
 		} else {
-			// Group by Canonical triple for SchemeCanonical non-exact inputs.
-			key = groupKey{family: ref.Family, variant: ref.Variant, date: ref.Date}
+			// Group by extended canonical identity for SchemeCanonical non-exact inputs.
+			// Version, Modifier, and contextN distinguish sub-variants that share the
+			// same (Family, Variant, Date) triple.
+			key = groupKey{
+				family:   ref.Family,
+				variant:  ref.Variant,
+				version:  ref.Version,
+				modifier: ref.Modifier,
+				date:     ref.Date,
+				contextN: parseContextN(ref.ID),
+			}
 		}
 		if _, exists := byGroup[key]; !exists {
 			order = append(order, key)
@@ -268,28 +290,15 @@ func Resolve(input string, opts ...ResolveOption) ([]ModelRef, error) {
 	}
 
 	// Multiple distinct groups: ambiguous input.
-	// Build a representative candidate per distinct group.
-	// Fix (SLICE-FIX-V3-1): prefer the row whose Provider equals the Family's
-	// canonical provider when such a row exists in the group. This ensures that
-	// e.g. "anthropic" appears as the representative for claude groups instead of
-	// whichever rehost happened to be first in the static registry.
+	// Build a representative candidate per distinct group using selectRepresentative.
+	// Fix (SLICE-FIX-V3-1 / SLICE-4 FIX-B): selectRepresentative prefers the
+	// canonical provider row and falls back to lexicographic Provider order —
+	// ensuring "anthropic" appears as the representative for claude groups rather
+	// than an arbitrary rehost, and guaranteeing determinism independent of
+	// static registry ordering.
 	candidates := make([]ModelRef, 0, len(order))
 	for _, key := range order {
-		group := byGroup[key]
-		rep := group[0]
-		// Prefer the canonical provider row when one exists in this group.
-		if len(group) > 1 {
-			canonProv := group[0].Family.CanonicalProvider()
-			if canonProv != "" {
-				for _, r := range group {
-					if r.Provider == canonProv {
-						rep = r
-						break
-					}
-				}
-			}
-		}
-		candidates = append(candidates, rep)
+		candidates = append(candidates, selectRepresentative(byGroup[key]))
 	}
 	return nil, &ErrAmbiguous{
 		Input:           input,
@@ -423,14 +432,85 @@ func filterByProvider(refs []ModelRef, hint Provider) []ModelRef {
 	return out
 }
 
-// isBareIdentifier reports whether s is a simple bare identifier with no slashes,
-// "@" characters, "pkg:" prefix, or other special characters. Used to determine
-// whether the bare-family fallback should be attempted.
+// isBareIdentifier reports whether s is a simple bare identifier with no slashes
+// or "@" characters. Used to determine whether the bare-family fallback should be
+// attempted.
+//
+// Note: ":" is intentionally NOT rejected here. Some providers (e.g. NanoGPT) use
+// "name:N" suffixes to distinguish context-window variants (e.g.
+// "claude-3-7-sonnet-thinking:1024"). Rejecting ":" would dead-end those inputs
+// into ErrNotFound when the exact ID is absent; instead we allow the bare-family
+// fallback to attempt SchemeCanonical matching.
 func isBareIdentifier(s string) bool {
-	if strings.Contains(s, "/") || strings.Contains(s, "@") || strings.Contains(s, ":") {
+	if strings.Contains(s, "/") || strings.Contains(s, "@") {
 		return false
 	}
 	return true
+}
+
+// parseContextN extracts the context-window ":N" token from a raw model ID.
+// The ":N" suffix (e.g. ":1024", ":128000") is used by some providers (notably
+// NanoGPT) to expose distinct context-window variants of the same model under
+// separate IDs. These variants share identical canonical fields (Family, Variant,
+// Version, Modifier, Date) and can only be distinguished by the raw ":N" suffix.
+//
+// Returns the digit-only suffix after the last colon, or "" when absent or when
+// the suffix contains non-digit characters (e.g. ":thinking:low" → "").
+func parseContextN(id ModelID) string {
+	s := string(id)
+	i := strings.LastIndex(s, ":")
+	if i < 0 {
+		return ""
+	}
+	suffix := s[i+1:]
+	if len(suffix) == 0 {
+		return ""
+	}
+	for _, c := range suffix {
+		if c < '0' || c > '9' {
+			return ""
+		}
+	}
+	return suffix
+}
+
+// selectRepresentative picks the most representative ModelRef from a group of
+// cross-provider-hosted models (all sharing the same canonical identity).
+//
+// Tiebreak order:
+//  1. Prefer the row whose Provider equals Family.CanonicalProvider() for the
+//     family (as defined in family.go). This ensures the originating publisher
+//     appears as the representative rather than an arbitrary rehost.
+//  2. When no canonical provider is present in the group (or CanonicalProvider
+//     returns ""), fall back to the lexicographically-smallest Provider string.
+//     This guarantees a deterministic result regardless of slice order or map
+//     iteration order.
+//
+// Panics on an empty group (caller invariant: groups always contain ≥1 ref).
+func selectRepresentative(group []ModelRef) ModelRef {
+	if len(group) == 0 {
+		panic("bestiary: selectRepresentative called with empty group")
+	}
+	if len(group) == 1 {
+		return group[0]
+	}
+	// Prefer canonical provider row.
+	canonProv := group[0].Family.CanonicalProvider()
+	if canonProv != "" {
+		for _, r := range group {
+			if r.Provider == canonProv {
+				return r
+			}
+		}
+	}
+	// Lexicographic tiebreak: smallest Provider string for determinism.
+	rep := group[0]
+	for _, r := range group[1:] {
+		if r.Provider < rep.Provider {
+			rep = r
+		}
+	}
+	return rep
 }
 
 // detectScheme infers the CanonicalScheme from the input string and returns
