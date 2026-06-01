@@ -1,9 +1,9 @@
 {
   "total_multi_provider_ids": 864,
-  "total_divergent_ids": 388,
-  "cat_a_vendor_case_count": 10,
+  "total_divergent_ids": 340,
+  "cat_a_vendor_case_count": 0,
   "cat_b_bare_gen_split_count": 73,
-  "cat_c_member_variant_count": 248,
+  "cat_c_member_variant_count": 210,
   "cat_d_genuine_mislabel_count": 57,
   "genuine_mislabel_pairs": [
     {
@@ -60,11 +60,6 @@
       "family_a": "qwen",
       "family_b": "qwen3-vl-8b",
       "count": 2
-    },
-    {
-      "family_a": "Meta",
-      "family_b": "llama",
-      "count": 1
     },
     {
       "family_a": "aion",
@@ -134,6 +129,11 @@
     {
       "family_a": "llama",
       "family_b": "magnum",
+      "count": 1
+    },
+    {
+      "family_a": "llama",
+      "family_b": "meta",
       "count": 1
     },
     {

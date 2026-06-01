@@ -21,6 +21,21 @@ type familyOverride struct {
 	Variant string `json:"variant"`
 }
 
+// familyInfo holds the member list and bare-gen-split flag for a single family.
+// Populated from parse/data/families.json (SLICE-1). Keys in families.json are
+// lowercase and validated against allFamilies at load.
+//
+// Members is the curated list of variant tokens for this family (e.g. ["opus",
+// "sonnet", "haiku"] for "claude"). Used by recoverMemberVariant to identify
+// variant tokens in model IDs.
+//
+// BareGenSplit drives the M2 bare-generation split predicate (SLICE-2). Set to
+// provisional values by SLICE-1; SLICE-2 finalizes attested flags.
+type familyInfo struct {
+	Members      []string `json:"members"`
+	BareGenSplit bool     `json:"bare_gen_split"`
+}
+
 // versionPattern holds a named regex pattern for versioned-variant decomposition.
 type versionPattern struct {
 	Name        string `json:"name"`
@@ -42,6 +57,16 @@ type parseData struct {
 	// modifiers is the sorted longest-first list of known modifier tokens
 	// (e.g. "thinking", "vision"). Populated from parse/data/modifiers.json.
 	modifiers []string
+
+	// families maps lowercase Family → familyInfo (members + bare_gen_split flag).
+	// Populated from parse/data/families.json. Keys validated against allFamilies
+	// at load; fail-fast on unknown key.
+	families map[Family]familyInfo
+
+	// vendorAliases is the list of lowercase vendor alias names (non-provider
+	// vendors) from parse/data/vendor_aliases.json. Used for M3 vendor strip:
+	// model IDs starting with <alias>/ or <alias>- have the prefix stripped.
+	vendorAliases []string
 }
 
 // compiledPattern is a versionPattern with its compiled regexp.
@@ -230,12 +255,154 @@ func initParseData() (*parseData, error) {
 		return len(modifiers[i]) > len(modifiers[j])
 	})
 
+	// Load families.json (SLICE-1).
+	rawFamilies, err := parseDataFS.ReadFile("parse/data/families.json")
+	if err != nil {
+		return nil, fmt.Errorf(
+			"bestiary parse: load families.json: %w\n"+
+				"  What: cannot read embedded parse data file\n"+
+				"  Where: parse/data/families.json\n"+
+				"  Why: file missing from embedded FS (should not happen in production build)\n"+
+				"  How to fix: ensure parse/data/families.json is present before running go build",
+			err,
+		)
+	}
+
+	// Unmarshal into map[string]json.RawMessage so we can skip _comment.
+	var rawFamiliesMap map[string]json.RawMessage
+	if err := json.Unmarshal(rawFamilies, &rawFamiliesMap); err != nil {
+		return nil, fmt.Errorf(
+			"bestiary parse: parse families.json: %w\n"+
+				"  What: JSON unmarshal failed\n"+
+				"  Where: parse/data/families.json\n"+
+				"  How to fix: validate JSON syntax in the data file",
+			err,
+		)
+	}
+
+	families := make(map[Family]familyInfo, len(rawFamiliesMap))
+	for key, raw := range rawFamiliesMap {
+		if key == "_comment" {
+			continue
+		}
+		if !familyKeyKnown(key) {
+			return nil, fmt.Errorf(
+				"bestiary parse: families.json key %q is not a known family\n"+
+					"  What: unrecognised family key in parse/data/families.json\n"+
+					"  Where: families.json entry %q\n"+
+					"  Why: key does not match (case-insensitively) any value in allFamilies"+
+					" (families_gen.go:182-357)\n"+
+					"  How to fix: check for typos; valid keys must match lowercase allFamilies"+
+					" values (e.g. \"claude\", \"gpt\", \"qwen\")",
+				key, key,
+			)
+		}
+		var info familyInfo
+		if err := json.Unmarshal(raw, &info); err != nil {
+			return nil, fmt.Errorf(
+				"bestiary parse: parse families.json entry %q: %w\n"+
+					"  How to fix: validate JSON syntax for this entry",
+				key, err,
+			)
+		}
+		// Store under the lowercase key so recoverMemberVariant lookups use M4-normalised
+		// family values.
+		families[Family(strings.ToLower(key))] = info
+	}
+
+	// Load vendor_aliases.json (SLICE-1).
+	rawVendorAliases, err := parseDataFS.ReadFile("parse/data/vendor_aliases.json")
+	if err != nil {
+		return nil, fmt.Errorf(
+			"bestiary parse: load vendor_aliases.json: %w\n"+
+				"  What: cannot read embedded parse data file\n"+
+				"  Where: parse/data/vendor_aliases.json\n"+
+				"  Why: file missing from embedded FS (should not happen in production build)\n"+
+				"  How to fix: ensure parse/data/vendor_aliases.json is present before running go build",
+			err,
+		)
+	}
+
+	var vendorAliasFile struct {
+		Comment string   `json:"_comment"`
+		Vendors []string `json:"vendors"`
+	}
+	if err := json.Unmarshal(rawVendorAliases, &vendorAliasFile); err != nil {
+		return nil, fmt.Errorf(
+			"bestiary parse: parse vendor_aliases.json: %w\n"+
+				"  What: JSON unmarshal failed\n"+
+				"  Where: parse/data/vendor_aliases.json\n"+
+				"  How to fix: validate JSON syntax in the data file",
+			err,
+		)
+	}
+	// Normalise to lowercase for case-insensitive prefix matching at runtime.
+	vendorAliases := make([]string, len(vendorAliasFile.Vendors))
+	for i, v := range vendorAliasFile.Vendors {
+		vendorAliases[i] = strings.ToLower(v)
+	}
+
 	return &parseData{
-		overrides: overrides,
-		suffixes:  suffixes,
-		patterns:  compiled,
-		modifiers: modifiers,
+		overrides:     overrides,
+		suffixes:      suffixes,
+		patterns:      compiled,
+		modifiers:     modifiers,
+		families:      families,
+		vendorAliases: vendorAliases,
 	}, nil
+}
+
+// familyKeyKnown reports whether key (case-insensitive) matches an entry in
+// allFamilies. Used by initParseData and FamiliesJSONKeyError to validate
+// families.json keys. Reusable by SLICE-3's family_aliases.json validator.
+func familyKeyKnown(key string) bool {
+	lower := strings.ToLower(key)
+	for _, f := range allFamilies {
+		if strings.ToLower(string(f)) == lower {
+			return true
+		}
+	}
+	return false
+}
+
+// FamiliesJSONKeyError validates that every non-comment key in the raw
+// families.json-style bytes is a known Family (case-insensitive match against
+// allFamilies). Returns nil when all keys are valid, or an actionable error on
+// the first unrecognised key.
+//
+// Used by tests to verify the validation contract without modifying the
+// embedded data, and by SLICE-3 to validate family_aliases.json target keys.
+//
+// BDD: Given families.json with a typo key "claud" (should be "claude"),
+// When FamiliesJSONKeyError is called, Then a non-nil error is returned
+// mentioning the bad key.
+func FamiliesJSONKeyError(data []byte) error {
+	var m map[string]json.RawMessage
+	if err := json.Unmarshal(data, &m); err != nil {
+		return fmt.Errorf(
+			"bestiary parse: validate families JSON: %w\n"+
+				"  What: JSON unmarshal failed\n"+
+				"  How to fix: validate JSON syntax in the data",
+			err,
+		)
+	}
+	for key := range m {
+		if key == "_comment" {
+			continue
+		}
+		if !familyKeyKnown(key) {
+			return fmt.Errorf(
+				"bestiary parse: families JSON key %q is not a known family\n"+
+					"  What: unrecognised family key\n"+
+					"  Why: key does not match (case-insensitively) any value in allFamilies"+
+					" (families_gen.go:182-357)\n"+
+					"  How to fix: check for typos; valid keys must match allFamilies values"+
+					" (e.g. \"claude\", \"gpt\", \"qwen\")",
+				key,
+			)
+		}
+	}
+	return nil
 }
 
 // ParseDataReady returns the error (if any) from the one-time initialization of
@@ -758,7 +925,15 @@ func InferFamilyFromIDWithVariant(id ModelID, p Provider) (Family, string, strin
 	if id == "" {
 		return "", "", ""
 	}
+
+	// ── M3: vendor/namespace strip ───────────────────────────────────────────
+	// Step 3a: strip <org>/model path prefix (e.g. "anthropic/claude-3" → "claude-3").
 	idStr := lastPathSegment(string(id))
+	// Step 3b: strip <vendor_alias>- or <vendor_alias>/ prefix for non-provider
+	// vendors (e.g. "minimaxai-minimax-m1" → "minimax-m1").
+	if pd, err := loadParseData(); err == nil {
+		idStr = stripVendorAliasPrefix(idStr, pd.vendorAliases)
+	}
 
 	// R3c (Δ2′): a trailing modifier (e.g. "-thinking") can hide a trailing date
 	// ("-20250805-thinking"), blocking stripTrailingDate and corrupting decomposition.
@@ -789,7 +964,8 @@ func InferFamilyFromIDWithVariant(id ModelID, p Provider) (Family, string, strin
 					version = v
 				}
 			}
-			return fProv, vProv, version // committed: modifier handled
+			// M4: lowercase Family field at the output boundary.
+			return Family(strings.ToLower(string(fProv))), vProv, version // committed: modifier handled
 		}
 	}
 
@@ -813,11 +989,39 @@ func InferFamilyFromIDWithVariant(id ModelID, p Provider) (Family, string, strin
 
 	family, variant, version := ParseFamilyWithVersion(Family(candidateFamilyStr))
 
+	// ── Pipeline skeleton ──────────────────────────────────────────────────
+	// SLICE-3 INSERTION POINT: family_aliases ledger remap (after M4, before bare-gen-split)
+	// SLICE-2 INSERTION POINT: bare_gen_split closed predicate (before recoverMemberVariant)
+
 	// If ParseFamilyWithVersion returns the raw string unchanged (no pattern matched),
 	// it means the entire string is treated as a family with no variant or version.
-	// Fall back to InferFamilyFromID behaviour: use only the first token.
+	// SLICE-1 replacement of the empty-raw amputation: take firstToken as family, then
+	// recoverMemberVariant on remaining tokens to find variant from families.json members.
 	if family == Family(candidateFamilyStr) {
-		return Family(firstToken(stripped)), "", ""
+		baseFamily := Family(strings.ToLower(firstToken(stripped)))
+		// Remaining tokens after the first (family) token are candidate member zones.
+		remainingTokens := tokens[1:]
+		recoveredVariant := recoverMemberVariant(remainingTokens, baseFamily)
+		// M4: baseFamily is already lowercased above.
+		return baseFamily, recoveredVariant, ""
+	}
+
+	// M4: lowercase Family field at the output boundary.
+	family = Family(strings.ToLower(string(family)))
+
+	// SLICE-3 INSERTION POINT: family_aliases ledger remap (after M4, before bare-gen-split)
+	// SLICE-2 INSERTION POINT: bare_gen_split closed predicate (before recoverMemberVariant)
+
+	// recoverMemberVariant: if variant is still empty after ParseFamilyWithVersion,
+	// attempt to recover it from the model ID tokens (families.json members + suffixes).
+	if variant == "" {
+		normFamPrefix := strings.ToLower(firstToken(string(family))) + "-"
+		lowStripped := strings.ToLower(stripped)
+		memberZone := lowStripped
+		if strings.HasPrefix(memberZone, normFamPrefix) {
+			memberZone = memberZone[len(normFamPrefix):]
+		}
+		variant = recoverMemberVariant(strings.Split(memberZone, "-"), family)
 	}
 
 	// If version is still empty, try ExtractVersionFromID.
@@ -1014,10 +1218,15 @@ const (
 func ParseFamilyDetailed(raw Family, id ModelID, p Provider) (Family, string, string, string, *ParseFailure) {
 	family, variant, version := ParseFamilyWithVersion(raw)
 
+	// M4: lowercase Family field at the initial parse boundary.
+	// Applied to all raw_family inputs including empty string (no-op on "").
+	// For raw=="" the InferFamilyFromIDWithVariant path below applies its own M4.
+	family = Family(strings.ToLower(string(family)))
+
 	// No failure annotation when the input is empty: delegate to
 	// InferFamilyFromIDWithVariant so that GUARD-2 passthrough cases (e.g.
 	// kimi-k2-thinking) are handled correctly. The modifier is then extracted from
-	// the inferred family+variant context.
+	// the inferred family+variant context. M4 is applied inside InferFamilyFromIDWithVariant.
 	if raw == "" {
 		family, variant, version = InferFamilyFromIDWithVariant(id, p)
 		modifier, _ := ExtractModifier(id, family, variant)
@@ -1035,6 +1244,30 @@ func ParseFamilyDetailed(raw Family, id ModelID, p Provider) (Family, string, st
 		}
 	}
 
+	// ── Pipeline skeleton (SLICE-1) ──────────────────────────────────────────
+	// M3 (vendor/namespace strip) is applied to the model ID implicitly via
+	// lastPathSegment inside ExtractVersionBetweenFamilyAndVariant and
+	// ExtractVersionFromID; the cleanedID retains the vendor prefix but the
+	// extractors normalise it internally.
+	//
+	// SLICE-3 INSERTION POINT: family_aliases ledger remap (after M4, before bare-gen-split)
+	// SLICE-2 INSERTION POINT: bare_gen_split closed predicate (before recoverMemberVariant)
+	//
+	// recoverMemberVariant: recover variant from model ID member tokens when
+	// ParseFamilyWithVersion did not populate it. SOLE OWNER — subsumes inline
+	// B1 promotion (removed) and provides broader member-list coverage via
+	// families.json. Called BEFORE version extraction so the recovered variant is
+	// available as the boundary token for ExtractVersionBetweenFamilyAndVariant.
+	if variant == "" {
+		normFamPrefix := strings.ToLower(firstToken(string(family))) + "-"
+		lowID := strings.ToLower(lastPathSegment(string(cleanedID)))
+		memberZone := lowID
+		if strings.HasPrefix(memberZone, normFamPrefix) {
+			memberZone = memberZone[len(normFamPrefix):]
+		}
+		variant = recoverMemberVariant(strings.Split(memberZone, "-"), family)
+	}
+
 	// If ParseFamilyWithVersion did not extract a version, attempt extraction from
 	// the model ID using the canonical family prefix.
 	if version == "" && family != "" && cleanedID != "" {
@@ -1042,43 +1275,20 @@ func ParseFamilyDetailed(raw Family, id ModelID, p Provider) (Family, string, st
 			version = v
 			// R2: if there are residual tokens after extraction, emit an honest-audit
 			// failure WITH version populated.
+			//
+			// NOTE: inline B1 promotion (REMOVED in SLICE-1, subsumed by recoverMemberVariant
+			// above). recoverMemberVariant is called before this block, so variant is already
+			// populated when applicable, and ExtractVersionBetweenFamilyAndVariant sees the
+			// correct variant boundary. Any remaining residual represents genuinely
+			// unaccounted tokens and warrants a failure signal.
 			if len(residual) > 0 {
-				// FIX B1: when exactly ONE residual token remains AND it is a known
-				// variant suffix AND the Variant field is currently empty, promote the
-				// token into Variant instead of emitting ReasonResidualUnaccountedTokens.
-				// This handles cases like: glm-5-turbo→(glm,turbo,5), phi-4-mini→(phi,mini,4),
-				// text-embedding-3-large→(text-embedding,large,3).
-				// Promotion is skipped when >1 residual token (B2, out of scope) or when
-				// the sole token is NOT a known suffix (C, out of scope).
-				if len(residual) == 1 && variant == "" {
-					soleToken := residual[0]
-					if pdCheck, pdErr := loadParseData(); pdErr == nil {
-						for _, sfx := range pdCheck.suffixes {
-							// pd.suffixes entries include the leading "-"; strip it for
-							// comparison with the bare residual token.
-							bare := sfx
-							if len(bare) > 0 && bare[0] == '-' {
-								bare = bare[1:]
-							}
-							if bare == soleToken {
-								// Known variant suffix — promote it.
-								variant = soleToken
-								residual = nil
-								break
-							}
-						}
-					}
-				}
-				// If residual was cleared by promotion, fall through without failure.
-				if len(residual) > 0 {
-					attempted := ParseAttempt{Family: family, Variant: variant, Version: version, Date: ""}
-					return family, variant, version, modifier, &ParseFailure{
-						RawID:          id,
-						Provider:       p,
-						RawFamily:      raw,
-						AttemptedParse: attempted,
-						Reason:         ReasonResidualUnaccountedTokens,
-					}
+				attempted := ParseAttempt{Family: family, Variant: variant, Version: version, Date: ""}
+				return family, variant, version, modifier, &ParseFailure{
+					RawID:          id,
+					Provider:       p,
+					RawFamily:      raw,
+					AttemptedParse: attempted,
+					Reason:         ReasonResidualUnaccountedTokens,
 				}
 			}
 		}
@@ -1316,6 +1526,107 @@ func detectSuffixOverflow(rawStr string, family Family, variant string, version 
 	// Overflow threshold: more than 2 unaccounted tokens suggests overflow.
 	// The threshold of 2 avoids false positives for models with minor extra tokens.
 	return extra > 2
+}
+
+// --------------------------------------------------------------------------
+// SLICE-1: M3 vendor-strip helpers
+// --------------------------------------------------------------------------
+
+// stripVendorAliasPrefix strips a leading "<alias>/" or "<alias>-" prefix from
+// id when the first "/" or "-"-separated token (lowercased) matches one of the
+// provided vendor aliases. Used for M3 vendor/namespace strip in addition to the
+// path-based lastPathSegment call.
+//
+// The "/" case is already handled by lastPathSegment (in the same M3 step) but
+// is also attempted here for robustness. The "-" case handles IDs like
+// "minimaxai-minimax-m1" where the vendor alias is the first hyphen token.
+//
+// If no alias matches, id is returned unchanged.
+func stripVendorAliasPrefix(id string, vendorAliases []string) string {
+	if len(vendorAliases) == 0 {
+		return id
+	}
+	lowID := strings.ToLower(id)
+	for _, alias := range vendorAliases {
+		// "/" separator: e.g. "minimaxai/model-name" → "model-name"
+		slashPrefix := alias + "/"
+		if strings.HasPrefix(lowID, slashPrefix) {
+			return id[len(slashPrefix):]
+		}
+		// "-" separator: e.g. "minimaxai-model-name" → "model-name"
+		hyphenPrefix := alias + "-"
+		if strings.HasPrefix(lowID, hyphenPrefix) {
+			return id[len(hyphenPrefix):]
+		}
+	}
+	return id
+}
+
+// --------------------------------------------------------------------------
+// SLICE-1: recoverMemberVariant (sole owner)
+// --------------------------------------------------------------------------
+
+// recoverMemberVariant searches idTokens (the hyphen-split tokens of a model ID
+// AFTER stripping the family prefix) for the first token that matches a member of
+// the given family (from families.json) OR a known variant suffix (from
+// variant_suffixes.json). Returns the matched token (lowercase), or "" if none.
+//
+// Token comparison is case-insensitive: both sides are lowercased before matching.
+// Families.json members are checked first (more specific); pd.suffixes are the
+// fallback.
+//
+// SOLE OWNER: this function subsumes the previous split ownership:
+//   - inline B1 promotion (parse.go: sole-residual-suffix case after version extraction)
+//   - empty-raw amputation (parse.go: firstToken fallback in InferFamilyFromIDWithVariant)
+//
+// Precondition: ExtractModifier has already been called and modifier tokens
+// stripped from the ID before computing idTokens. This ensures modifier tokens
+// (e.g. "-thinking") are not misidentified as variant members.
+//
+// Returns the bare variant token (lowercase, no leading "-").
+func recoverMemberVariant(idTokens []string, family Family) string {
+	pd, err := loadParseData()
+	if err != nil {
+		return ""
+	}
+	lowFamily := strings.ToLower(string(family))
+	info, hasFamilyInfo := pd.families[Family(lowFamily)]
+
+	// Only attempt recovery when the family is registered in families.json.
+	// Unregistered families (e.g. compound "text-embedding") have no curated
+	// member list and we cannot safely distinguish variant tokens from family
+	// sub-tokens; skip recovery entirely for them.
+	if !hasFamilyInfo {
+		return ""
+	}
+
+	for _, tok := range idTokens {
+		if tok == "" {
+			continue
+		}
+		lowTok := strings.ToLower(tok)
+
+		// 1. Check family members (most specific — curated in families.json).
+		for _, member := range info.Members {
+			if lowTok == member {
+				return member
+			}
+		}
+
+		// 2. Check pd.suffixes as fallback (bare suffix without leading "-").
+		// Only reached when the family IS registered (hasFamilyInfo guard above),
+		// so generic suffix matches apply only to families we know about.
+		for _, sfx := range pd.suffixes {
+			bare := sfx
+			if len(bare) > 0 && bare[0] == '-' {
+				bare = bare[1:]
+			}
+			if lowTok == bare {
+				return bare
+			}
+		}
+	}
+	return ""
 }
 
 // --------------------------------------------------------------------------

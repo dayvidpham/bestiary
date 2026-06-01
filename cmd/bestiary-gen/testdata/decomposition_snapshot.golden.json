@@ -3,7 +3,7 @@
     "provider": "cartesia",
     "model_id": "nova-2-lite-v1",
     "family": "nova",
-    "variant": "",
+    "variant": "lite",
     "version": "2",
     "modifier": ""
   },
@@ -67,7 +67,7 @@
     "provider": "doubao-fixture",
     "model_id": "seed-1-6-flash-250715",
     "family": "seed",
-    "variant": "flash",
+    "variant": "",
     "version": "1.6",
     "modifier": ""
   },
@@ -99,7 +99,7 @@
     "provider": "microsoft",
     "model_id": "phi-3-medium-128k-instruct",
     "family": "phi",
-    "variant": "",
+    "variant": "medium",
     "version": "3",
     "modifier": ""
   },
@@ -115,7 +115,7 @@
     "provider": "mistral",
     "model_id": "mistral-small-2603",
     "family": "mistral",
-    "variant": "",
+    "variant": "small",
     "version": "",
     "modifier": ""
   },

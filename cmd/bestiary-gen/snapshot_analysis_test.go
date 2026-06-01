@@ -311,11 +311,16 @@ func TestSnapshotAnalysis_CrossProviderDivergences(t *testing.T) {
 	// SLICE-5's hardened TestStaticDataset_CrossProviderConsistency is the
 	// authoritative cross-provider gate; THIS analyzer pins the rc2 empirical
 	// baseline (the 388 figure the whole rc2 effort is measured against).
+	//
+	// SLICE-1 (rc2) updated these constants: M4 (case-fold) resolved all 10 CatA
+	// cases; recoverMemberVariant resolved 38 CatC cases. New baseline: 340 / A=0
+	// / B=73 / C=210 / D=57. The "Meta <-> llama" mislabel pair became
+	// "llama <-> meta" (M4 lowercased the inferred family).
 	const (
-		divergenceExact = 388
+		divergenceExact = 340
 		// Secondary sanity band — guards against a wholesale snapshot/pipeline
 		// breakage that happens to coincidentally land on a different exact value.
-		divergenceLow  = 300
+		divergenceLow  = 280
 		divergenceHigh = 500
 	)
 	if totalDivergent != divergenceExact {
@@ -336,12 +341,13 @@ func TestSnapshotAnalysis_CrossProviderDivergences(t *testing.T) {
 
 	// Pin the per-category counts on the fixed snapshot. These guard against a
 	// silent CatD→CatC (or any cross-category) reclassification that would keep
-	// the total at 388 while changing the genuine-mislabel ledger candidates.
+	// the total at 340 while changing the genuine-mislabel ledger candidates.
 	// Refreshing the snapshot intentionally changes these — update in lockstep.
+	// SLICE-1: CatA → 0 (M4 fixed all case divergences); CatC → 210 (recoverMemberVariant).
 	const (
-		catAExact = 10  // vendor-prefix/case
-		catBExact = 73  // bare-gen-split
-		catCExact = 248 // member-variant recovery
+		catAExact = 0   // vendor-prefix/case (SLICE-1 M4 resolved all)
+		catBExact = 73  // bare-gen-split (SLICE-2 scope)
+		catCExact = 210 // member-variant recovery (SLICE-1 recoverMemberVariant resolved 38)
 		catDExact = 57  // genuine family mislabel (ledger candidates)
 	)
 	checkCat := func(name string, got, want int) {

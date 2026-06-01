@@ -2817,3 +2817,427 @@ func isAllDigits(s string) bool {
 	}
 	return true
 }
+
+// ============================================================================
+// SLICE-1 (rc2) — L2 Tests (RED until L3 implements M3/M4/recoverMemberVariant)
+// ============================================================================
+
+// ----------------------------------------------------------------------------
+// M4 — case-fold: Family field must be lowercase at the output boundary
+// ----------------------------------------------------------------------------
+
+// TestM4_FamilyCaseFold verifies that ParseFamilyDetailed lowercases the
+// Family field regardless of the casing in the raw_family input (M4).
+//
+// BDD: Given a mixed-case raw_family (e.g. "MiniMax"),
+// When ParseFamilyDetailed is called,
+// Then the returned Family is lowercase ("minimax").
+//
+// This is the M4 case-fold step (SLICE-1). Fixes CatA cross-provider divergences
+// (e.g. some providers return raw_family="MiniMax" while others return "minimax").
+func TestM4_FamilyCaseFold(t *testing.T) {
+	t.Parallel()
+
+	cases := []struct {
+		desc       string
+		rawFamily  bestiary.Family
+		id         bestiary.ModelID
+		provider   bestiary.Provider
+		wantFamily bestiary.Family
+	}{
+		{
+			// CatA divergence: some providers return "MiniMax" (capitalised),
+			// others return "minimax". M4 normalises both to lowercase "minimax".
+			desc:       "MiniMax raw_family → lowercase minimax",
+			rawFamily:  "MiniMax",
+			id:         "minimax-m1-80k",
+			provider:   "nano-gpt",
+			wantFamily: "minimax",
+		},
+		{
+			// "Hy" is the only uppercase entry in allFamilies. M4 lowercases it.
+			desc:       "Hy raw_family → lowercase hy",
+			rawFamily:  "Hy",
+			id:         "hy3-something",
+			provider:   "some-provider",
+			wantFamily: "hy",
+		},
+		{
+			// Already lowercase — M4 is a no-op; existing behaviour preserved.
+			desc:       "claude raw_family unchanged by M4",
+			rawFamily:  "claude-opus",
+			id:         "claude-opus-4-6",
+			provider:   "anthropic",
+			wantFamily: "claude",
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.desc, func(t *testing.T) {
+			t.Parallel()
+			fam, _, _, _, _ := bestiary.ParseFamilyDetailed(tc.rawFamily, tc.id, tc.provider)
+			if fam != tc.wantFamily {
+				t.Errorf("family = %q, want %q\n"+
+					"  What: M4 case-fold did not lowercase the Family field\n"+
+					"  Why: SLICE-1 requires Family(strings.ToLower(...)) at the Family-field boundary\n"+
+					"  How to fix: apply M4 case-fold in ParseFamilyDetailed and InferFamilyFromIDWithVariant",
+					fam, tc.wantFamily)
+			}
+		})
+	}
+}
+
+// TestM4_InferFamilyCaseFold verifies that InferFamilyFromIDWithVariant (the
+// empty-raw-family path) also lowercases the inferred Family field (M4).
+//
+// BDD: Given an empty raw_family with a mixed-case model ID (e.g. "MiniMax-M1"),
+// When InferFamilyFromIDWithVariant is called,
+// Then the returned Family is lowercase ("minimax").
+func TestM4_InferFamilyCaseFold(t *testing.T) {
+	t.Parallel()
+
+	cases := []struct {
+		desc       string
+		id         bestiary.ModelID
+		provider   bestiary.Provider
+		wantFamily bestiary.Family
+	}{
+		{
+			// MiniMax-M1: some providers have empty raw_family; model ID starts with
+			// "MiniMax" (uppercase). After M3 path-strip and M4 lowercase, family
+			// should be "minimax".
+			desc:       "MiniMax-M1 empty raw_family → minimax (M4 lowercase)",
+			id:         "MiniMax-M1",
+			provider:   "nano-gpt",
+			wantFamily: "minimax",
+		},
+		{
+			// deepseek-ai/DeepSeek-V3.2: M3 path-strip gives "DeepSeek-V3.2", M4
+			// lowercases first token → "deepseek".
+			desc:       "DeepSeek-V3.2 after path strip → deepseek (M4 lowercase)",
+			id:         "deepseek-ai/DeepSeek-V3.2",
+			provider:   "some-provider",
+			wantFamily: "deepseek",
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.desc, func(t *testing.T) {
+			t.Parallel()
+			fam, _, _ := bestiary.InferFamilyFromIDWithVariant(tc.id, tc.provider)
+			if fam != tc.wantFamily {
+				t.Errorf("InferFamilyFromIDWithVariant(%q) family = %q, want %q\n"+
+					"  What: M4 case-fold did not lowercase inferred Family\n"+
+					"  Why: SLICE-1 requires M4 lowercase at Family-field boundary in"+
+					" InferFamilyFromIDWithVariant\n"+
+					"  How to fix: apply Family(strings.ToLower(...)) at the return boundaries",
+					tc.id, fam, tc.wantFamily)
+			}
+		})
+	}
+}
+
+// ----------------------------------------------------------------------------
+// M3 — vendor/namespace strip via vendor_aliases.json
+// ----------------------------------------------------------------------------
+
+// TestM3_VendorAliasStrip verifies that model IDs starting with a vendor alias
+// from vendor_aliases.json have the alias prefix stripped before family inference.
+//
+// BDD: Given a model ID starting with "minimaxai-" (a vendor alias NOT in
+// Providers()),
+// When InferFamilyFromIDWithVariant is called with empty raw_family,
+// Then the vendor prefix is stripped and family="minimax" is inferred.
+//
+// The "/" separator case (e.g. "minimaxai/minimax-m1") is already handled by
+// the existing lastPathSegment call. This test specifically covers the "-"
+// separator variant.
+func TestM3_VendorAliasStrip(t *testing.T) {
+	t.Parallel()
+
+	cases := []struct {
+		desc        string
+		id          bestiary.ModelID
+		provider    bestiary.Provider
+		wantFamily  bestiary.Family
+		wantVariant string
+	}{
+		{
+			// "minimaxai-minimax-m1": M3 strips "minimaxai-" → "minimax-m1",
+			// M4 lowercases → "minimax-m1", then recoverMemberVariant → variant="m1".
+			desc:        "minimaxai-minimax-m1 → strip alias, family=minimax variant=m1",
+			id:          "minimaxai-minimax-m1",
+			provider:    "some-provider",
+			wantFamily:  "minimax",
+			wantVariant: "m1",
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.desc, func(t *testing.T) {
+			t.Parallel()
+			fam, variant, _ := bestiary.InferFamilyFromIDWithVariant(tc.id, tc.provider)
+			if fam != tc.wantFamily {
+				t.Errorf("family = %q, want %q\n"+
+					"  What: M3 vendor alias strip did not remove vendor prefix\n"+
+					"  How to fix: implement M3 '-' strip for vendor_aliases in pipeline",
+					fam, tc.wantFamily)
+			}
+			if variant != tc.wantVariant {
+				t.Errorf("variant = %q, want %q\n"+
+					"  What: recoverMemberVariant did not recover variant from stripped ID",
+					variant, tc.wantVariant)
+			}
+		})
+	}
+}
+
+// ----------------------------------------------------------------------------
+// recoverMemberVariant — sole owner of member-variant recovery
+// ----------------------------------------------------------------------------
+
+// TestRecoverMemberVariant_FamiliesJSONMembers verifies that recoverMemberVariant
+// recovers variant tokens from families.json members, specifically for tokens that
+// are NOT in variant_suffixes.json (the old B1 scope) but ARE in the family's
+// member list.
+//
+// BDD: Given raw_family="minimax" and id="minimax-m1-80k" (where "m1" is in
+// families.json minimax.members but NOT in variant_suffixes.json),
+// When ParseFamilyDetailed is called,
+// Then variant="m1" is recovered.
+//
+// This test covers the NEW scope of recoverMemberVariant beyond old B1.
+// It will be RED until L3 implements recoverMemberVariant.
+func TestRecoverMemberVariant_FamiliesJSONMembers(t *testing.T) {
+	t.Parallel()
+
+	cases := []struct {
+		desc        string
+		rawFamily   bestiary.Family
+		id          bestiary.ModelID
+		provider    bestiary.Provider
+		wantFamily  bestiary.Family
+		wantVariant string
+	}{
+		{
+			// minimax-m1: "m1" is in families.json minimax.members but NOT in
+			// variant_suffixes.json. recoverMemberVariant must recover it.
+			desc:        "minimax raw_family + id minimax-m1-80k → variant=m1",
+			rawFamily:   "minimax",
+			id:          "minimax-m1-80k",
+			provider:    "minimax",
+			wantFamily:  "minimax",
+			wantVariant: "m1",
+		},
+		{
+			// Empty raw_family; MiniMax-M1 (mixed case); M3 path-strip is a no-op;
+			// M4 gives family="minimax"; recoverMemberVariant → variant="m1".
+			desc:        "empty raw_family, MiniMax-M1 → (minimax, m1)",
+			rawFamily:   "",
+			id:          "MiniMax-M1",
+			provider:    "nano-gpt",
+			wantFamily:  "minimax",
+			wantVariant: "m1",
+		},
+		{
+			// qwen family, member "max" not in variant_suffixes.json.
+			// raw_family="qwen", id="qwen-max" → variant="max" via member recovery.
+			desc:        "qwen raw_family + id qwen-max → variant=max",
+			rawFamily:   "qwen",
+			id:          "qwen-max",
+			provider:    "alibaba",
+			wantFamily:  "qwen",
+			wantVariant: "max",
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.desc, func(t *testing.T) {
+			t.Parallel()
+			fam, variant, _, _, _ := bestiary.ParseFamilyDetailed(tc.rawFamily, tc.id, tc.provider)
+			if fam != tc.wantFamily {
+				t.Errorf("family = %q, want %q", fam, tc.wantFamily)
+			}
+			if variant != tc.wantVariant {
+				t.Errorf("variant = %q, want %q\n"+
+					"  What: recoverMemberVariant did not recover variant from families.json members\n"+
+					"  Why: SLICE-1 requires recoverMemberVariant to consult pd.families members\n"+
+					"  How to fix: implement recoverMemberVariant in pipeline (L3)",
+					variant, tc.wantVariant)
+			}
+		})
+	}
+}
+
+// TestRecoverMemberVariant_SubsumesB1 verifies that recoverMemberVariant
+// subsumes the inline B1 promotion (parse.go:1053-1071), preserving all
+// existing B1 results after B1 is deleted.
+//
+// These tests MUST remain green after L3 removes the B1 block.
+// If they turn red, recoverMemberVariant has not correctly subsumed B1.
+func TestRecoverMemberVariant_SubsumesB1(t *testing.T) {
+	t.Parallel()
+
+	// These cases were already tested by TestParseFamilyDetailed_FixB1_SoleVariantSuffixPromotion.
+	// They must remain green after B1 is removed. Including here as explicit
+	// regression guards for the recoverMemberVariant subsumption.
+	cases := []struct {
+		desc          string
+		rawFamily     bestiary.Family
+		id            bestiary.ModelID
+		provider      bestiary.Provider
+		wantFamily    bestiary.Family
+		wantVariant   string
+		wantVersion   string
+		wantNoFailure bool
+	}{
+		{
+			desc:          "glm-5-turbo → (glm, turbo, 5) [B1 subsumed]",
+			rawFamily:     "glm",
+			id:            "glm-5-turbo",
+			provider:      "zhipu",
+			wantFamily:    "glm",
+			wantVariant:   "turbo",
+			wantVersion:   "5",
+			wantNoFailure: true,
+		},
+		{
+			desc:          "phi-4-mini → (phi, mini, 4) [B1 subsumed]",
+			rawFamily:     "phi",
+			id:            "phi-4-mini",
+			provider:      "microsoft",
+			wantFamily:    "phi",
+			wantVariant:   "mini",
+			wantVersion:   "4",
+			wantNoFailure: true,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.desc, func(t *testing.T) {
+			t.Parallel()
+			fam, variant, version, _, failure := bestiary.ParseFamilyDetailed(tc.rawFamily, tc.id, tc.provider)
+			if fam != tc.wantFamily {
+				t.Errorf("family = %q, want %q", fam, tc.wantFamily)
+			}
+			if variant != tc.wantVariant {
+				t.Errorf("variant = %q, want %q (B1 subsumption check)", variant, tc.wantVariant)
+			}
+			if version != tc.wantVersion {
+				t.Errorf("version = %q, want %q", version, tc.wantVersion)
+			}
+			if tc.wantNoFailure && failure != nil {
+				t.Errorf("failure = %+v, want nil (B1 subsumption: no residual failure expected)", failure)
+			}
+		})
+	}
+}
+
+// TestRecoverMemberVariant_SubsumesAmputation verifies that recoverMemberVariant
+// subsumes the empty-raw amputation (parse.go:819-821) in
+// InferFamilyFromIDWithVariant, preserving GUARD-2 tests green.
+//
+// The amputation case (family == candidateFamilyStr → firstToken) must be replaced
+// by: firstToken as family + recoverMemberVariant for variant.
+func TestRecoverMemberVariant_SubsumesAmputation(t *testing.T) {
+	t.Parallel()
+
+	// Existing GUARD-2 test: kimi-k2-thinking must still give (kimi-k2, thinking, "").
+	// This is NOT an amputation case (ParseFamilyWithVersion finds a decomposition
+	// via suffix "-thinking"), so it must remain unchanged.
+	t.Run("GUARD-2 kimi-k2-thinking preserved", func(t *testing.T) {
+		t.Parallel()
+		fam, variant, version := bestiary.InferFamilyFromIDWithVariant("kimi-k2-thinking", "moonshot")
+		if fam != "kimi-k2" {
+			t.Errorf("family = %q, want %q", fam, "kimi-k2")
+		}
+		if variant != "thinking" {
+			t.Errorf("variant = %q, want %q", variant, "thinking")
+		}
+		if version != "" {
+			t.Errorf("version = %q, want %q", version, "")
+		}
+	})
+
+	// New: when the amputation path IS taken (passthrough), recoverMemberVariant
+	// should recover the variant from the remaining tokens.
+	t.Run("empty raw_family MiniMax-M1 → (minimax, m1) via amputation+recovery", func(t *testing.T) {
+		t.Parallel()
+		fam, variant, _ := bestiary.InferFamilyFromIDWithVariant("MiniMax-M1", "nano-gpt")
+		if fam != "minimax" {
+			t.Errorf("family = %q, want %q (expected M4 lowercase)", fam, "minimax")
+		}
+		if variant != "m1" {
+			t.Errorf("variant = %q, want %q (expected recoverMemberVariant on remaining tokens)",
+				variant, "m1")
+		}
+	})
+}
+
+// ----------------------------------------------------------------------------
+// Loader fail-fast — families.json key validation
+// ----------------------------------------------------------------------------
+
+// TestFamiliesJSON_LoaderFailFast verifies that FamiliesJSONKeyError catches
+// unknown keys (typos) and accepts valid known keys.
+//
+// BDD: Given families.json with a typo key "claud" (not in allFamilies),
+// When FamiliesJSONKeyError is called,
+// Then a non-nil error is returned (fail-fast behaviour).
+//
+// This test is GREEN from L1 (FamiliesJSONKeyError is part of L1 infrastructure).
+// It serves as the specification of the fail-fast contract.
+func TestFamiliesJSON_LoaderFailFast(t *testing.T) {
+	t.Parallel()
+
+	t.Run("valid key passes", func(t *testing.T) {
+		t.Parallel()
+		data := []byte(`{"claude": {"members": ["opus"], "bare_gen_split": false}}`)
+		if err := bestiary.FamiliesJSONKeyError(data); err != nil {
+			t.Errorf("valid key 'claude' caused error: %v", err)
+		}
+	})
+
+	t.Run("typo key fails with actionable error", func(t *testing.T) {
+		t.Parallel()
+		data := []byte(`{"claud": {"members": ["opus"], "bare_gen_split": false}}`)
+		err := bestiary.FamiliesJSONKeyError(data)
+		if err == nil {
+			t.Error("typo key 'claud' did not cause error — fail-fast not triggered\n" +
+				"  What: FamiliesJSONKeyError must fail on unknown key\n" +
+				"  Why: 'claud' is not in allFamilies (likely typo of 'claude')\n" +
+				"  How to fix: ensure initParseData / FamiliesJSONKeyError validates keys")
+		}
+		// Verify the error mentions the bad key.
+		if err != nil && !strings.Contains(err.Error(), "claud") {
+			t.Errorf("error %q does not mention the bad key 'claud' — not actionable", err.Error())
+		}
+	})
+
+	t.Run("_comment key is skipped (not validated)", func(t *testing.T) {
+		t.Parallel()
+		data := []byte(`{"_comment": "test", "gpt": {"members": ["mini"], "bare_gen_split": false}}`)
+		if err := bestiary.FamiliesJSONKeyError(data); err != nil {
+			t.Errorf("_comment key should be skipped, got error: %v", err)
+		}
+	})
+
+	t.Run("Hy (uppercase in allFamilies) accepted as hy", func(t *testing.T) {
+		t.Parallel()
+		// allFamilies has "Hy" (uppercase). families.json uses lowercase keys.
+		// FamiliesJSONKeyError must accept "hy" as matching "Hy" case-insensitively.
+		data := []byte(`{"hy": {"members": [], "bare_gen_split": false}}`)
+		if err := bestiary.FamiliesJSONKeyError(data); err != nil {
+			t.Errorf("'hy' should be valid (case-insensitive match for allFamilies 'Hy'), got error: %v", err)
+		}
+	})
+
+	t.Run("openai is not a Family (provider name, not in allFamilies)", func(t *testing.T) {
+		t.Parallel()
+		data := []byte(`{"openai": {"members": ["gpt"], "bare_gen_split": false}}`)
+		err := bestiary.FamiliesJSONKeyError(data)
+		if err == nil {
+			t.Error("'openai' is a provider name, not a Family — should fail key validation")
+		}
+	})
+}
