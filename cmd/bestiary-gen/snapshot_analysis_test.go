@@ -377,18 +377,23 @@ func TestSnapshotAnalysis_CrossProviderDivergences(t *testing.T) {
 	// series-SCOPED (parse.go seriesTierModifiers), NOT added to global modifiers.json
 	// — that would reclassify non-series variants (gpt-5-mini, gemini-2.5-flash,
 	// qwen-turbo); verified those stay variant-tokens (CLARIFICATION-6 edge-b).
-	// RESIDUAL (honest, surfaced — NOT masked):
-	//  - MULTI-MODIFIER series IDs (tier + thinking/vision, or 2+ tiers:
-	//    kimi-k2-thinking-turbo, kimi-k2p6-turbo[raw kimi-thinking], mimo-v2-flash-
-	//    thinking, kimi-k2-thinking-{maas,original}, kimi-k2-turbo-preview): the
-	//    Modifier field is single-valued; the multiplicity ruling is pending, so these
-	//    keep the series split + the existing thinking modifier and DROP the tier.
-	//  - UNKNOWN-tier series IDs (mimo-v2-omni/v2-pro): the trailing token is not in
-	//    the curated tier set → splitSeriesVariant DECLINES (current behavior).
-	// These remain in the residual CatC. No previously agreeing ID broke (verified by
-	// suite + NoDateVersions=0 + version-only-divergence probe = 0).
+	// "omni" added to the curated series-tier set (CLARIFICATION-6 residual analysis):
+	// it was the only remaining UNKNOWN-tier token still causing a series divergence
+	// after the initial tier wiring (mimo-v2-omni → (mimo,'v','2',mod=omni)): 155 → 154
+	// (CatC 108 → 107).
+	// RESIDUAL (honest, surfaced — NOT masked): the only SERIES (kimi/minimax/mimo)
+	// IDs still divergent are the MULTI-MODIFIER cases — a tier AND thinking/vision (or
+	// 2+ tiers) in the single-valued Modifier field: kimi-k2-thinking-turbo (×2 paths).
+	// The user ruled Option 1 (Modifier → LIST, lossless), but that is a PUBLIC SCHEMA
+	// change deferred to SLICE-9 (grep "SLICE-9" / "multi-modifier"). For S8 these keep
+	// the series split + the capability modifier (thinking) and DROP the tier.
+	// (The other ~150 residual divergences are NON-series family/version mislabels —
+	// deepseek-v3.x, magnum, morph, mistral-7b-v0.x, the CatD ledger, qwen3-vl/param —
+	// out of SLICE-8's version-path scope.)
+	// No previously agreeing ID broke (verified by suite + NoDateVersions=0 +
+	// version-only-divergence probe = 0).
 	const (
-		divergenceExact = 155
+		divergenceExact = 154
 		// Secondary sanity band — guards against a wholesale snapshot/pipeline
 		// breakage that happens to coincidentally land on a different exact value.
 		divergenceLow  = 130
@@ -427,7 +432,7 @@ func TestSnapshotAnalysis_CrossProviderDivergences(t *testing.T) {
 	const (
 		catAExact = 0   // vendor-prefix/case (SLICE-1 M4 resolved all)
 		catBExact = 3   // bare-gen-split (SLICE-2 cleared 70/73; residual = bases w/o families.json entry)
-		catCExact = 108 // member-variant/version (SLICE-8: −104 via ID-driven version + series split + tier→modifier)
+		catCExact = 107 // member-variant/version (SLICE-8: −105 via ID-driven version + series split + tier→modifier incl. omni)
 		catDExact = 44  // genuine family mislabel (SLICE-3: −13, l3*→llama ledger + thinking/vision)
 	)
 	checkCat := func(name string, got, want int) {

@@ -10,7 +10,7 @@
   "kimi": { "members": ["free"], "bare_gen_split": false, "series_letter": "k" },
   "llama": { "members": ["instruct"], "bare_gen_split": false },
   "magistral": { "members": ["medium", "small"], "bare_gen_split": false },
-  "mimo": { "members": ["omni", "pro"], "bare_gen_split": false, "series_letter": "v" },
+  "mimo": { "members": [], "bare_gen_split": false, "series_letter": "v" },
   "minimax": { "members": ["free"], "bare_gen_split": false, "series_letter": "m" },
   "mistral": { "members": ["embed", "large", "medium", "nemo", "small"], "bare_gen_split": false },
   "nemotron": { "members": ["free"], "bare_gen_split": false },

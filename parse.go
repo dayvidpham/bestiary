@@ -2401,6 +2401,10 @@ var seriesTierModifiers = map[string]struct{}{
 	"lightning": {},
 	"precision": {},
 	"pro":       {},
+	// "omni": the only remaining unknown-tier token that still caused a cross-provider
+	// series divergence after the initial tier→modifier wiring (mimo-v2-omni). Confirmed
+	// by the supervisor's residual-categorization analysis; added per CLARIFICATION-6.
+	"omni": {},
 }
 
 func isSeriesTierToken(tok string) bool {
