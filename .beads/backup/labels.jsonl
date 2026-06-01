@@ -163,6 +163,9 @@
 {"issue_id":"bestiary-4et","label":"aura:p2-user:s2_2-urd"}
 {"issue_id":"bestiary-4et","label":"aura:urd"}
 {"issue_id":"bestiary-4ioi","label":"aura:p4-plan:s4-review"}
+{"issue_id":"bestiary-4koj","label":"aura:p9-impl:s9-slice"}
+{"issue_id":"bestiary-4koj","label":"followup"}
+{"issue_id":"bestiary-4koj","label":"parse"}
 {"issue_id":"bestiary-4kq4","label":"aura:p10-impl:s10-review"}
 {"issue_id":"bestiary-4lb6","label":"aura:p10-impl:s10-review"}
 {"issue_id":"bestiary-4lb6","label":"aura:severity:minor"}
@@ -653,6 +656,9 @@
 {"issue_id":"bestiary-fqp4","label":"parse"}
 {"issue_id":"bestiary-frep","label":"aura:p9-impl:s9-slice"}
 {"issue_id":"bestiary-frke","label":"aura:p4-plan:s4-review"}
+{"issue_id":"bestiary-fvkv","label":"aura:p9-impl:s9-slice"}
+{"issue_id":"bestiary-fvkv","label":"followup"}
+{"issue_id":"bestiary-fvkv","label":"parse"}
 {"issue_id":"bestiary-fw9w","label":"aura:p10-impl:s10-review"}
 {"issue_id":"bestiary-fyaz","label":"aura:p10-impl:s10-review"}
 {"issue_id":"bestiary-fyaz","label":"aura:severity:important"}
@@ -754,6 +760,9 @@
 {"issue_id":"bestiary-ilqh","label":"parse"}
 {"issue_id":"bestiary-ilrq","label":"aura:p10-impl:s10-review"}
 {"issue_id":"bestiary-ilrq","label":"aura:severity:blocker"}
+{"issue_id":"bestiary-imee","label":"aura:p9-impl:s9-slice"}
+{"issue_id":"bestiary-imee","label":"followup"}
+{"issue_id":"bestiary-imee","label":"parse"}
 {"issue_id":"bestiary-ip0s","label":"aura:p10-impl:s10-review"}
 {"issue_id":"bestiary-ip0s","label":"aura:severity:minor"}
 {"issue_id":"bestiary-iqk","label":"aura:p9-impl:s9-slice"}
@@ -955,6 +964,9 @@
 {"issue_id":"bestiary-p6l5","label":"aura:p10-impl:s10-review"}
 {"issue_id":"bestiary-paex","label":"aura:p10-impl:s10-review"}
 {"issue_id":"bestiary-paex","label":"aura:severity:important"}
+{"issue_id":"bestiary-pau0","label":"aura:p9-impl:s9-slice"}
+{"issue_id":"bestiary-pau0","label":"followup"}
+{"issue_id":"bestiary-pau0","label":"parse"}
 {"issue_id":"bestiary-pdvx","label":"aura:p10-impl:s10-review"}
 {"issue_id":"bestiary-pdvx","label":"aura:severity:blocker"}
 {"issue_id":"bestiary-pe7","label":"aura:p8-impl:s8-plan"}
