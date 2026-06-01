@@ -130,9 +130,13 @@ func TestSelectRepresentative_LexicographicFallback(t *testing.T) {
 	}
 }
 
-// TestSelectRepresentative_Deterministic verifies that selectRepresentative returns
-// the same result regardless of input slice order.
-func TestSelectRepresentative_Deterministic(t *testing.T) {
+// TestSelectRepresentative_OrderIndependent verifies that selectRepresentative
+// returns the same result regardless of input slice order (slice-order independence).
+//
+// Note: this test proves slice-order independence only. End-to-end map-iteration
+// determinism in Resolve (the byGroup map) is covered by the integration-level
+// codegen reproducibility test (TestCodegen_Reproducible_ByteIdentical with -shuffle).
+func TestSelectRepresentative_OrderIndependent(t *testing.T) {
 	unknownFamily := Family("another-unknown-family")
 
 	base := []ModelRef{
@@ -152,7 +156,7 @@ func TestSelectRepresentative_Deterministic(t *testing.T) {
 	for i, perm := range permutations {
 		got := selectRepresentative(perm)
 		if got.Provider != "alpha" {
-			t.Errorf("perm[%d]: selectRepresentative returned Provider=%q, want %q (determinism violated)",
+			t.Errorf("perm[%d]: selectRepresentative returned Provider=%q, want %q (order-independent result violated)",
 				i, got.Provider, "alpha")
 		}
 	}

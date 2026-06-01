@@ -432,17 +432,11 @@ func filterByProvider(refs []ModelRef, hint Provider) []ModelRef {
 	return out
 }
 
-// isBareIdentifier reports whether s is a simple bare identifier with no slashes
-// or "@" characters. Used to determine whether the bare-family fallback should be
-// attempted.
-//
-// Note: ":" is intentionally NOT rejected here. Some providers (e.g. NanoGPT) use
-// "name:N" suffixes to distinguish context-window variants (e.g.
-// "claude-3-7-sonnet-thinking:1024"). Rejecting ":" would dead-end those inputs
-// into ErrNotFound when the exact ID is absent; instead we allow the bare-family
-// fallback to attempt SchemeCanonical matching.
+// isBareIdentifier reports whether s is a simple bare identifier with no slashes,
+// "@" characters, "pkg:" prefix, or other special characters. Used to determine
+// whether the bare-family fallback should be attempted.
 func isBareIdentifier(s string) bool {
-	if strings.Contains(s, "/") || strings.Contains(s, "@") {
+	if strings.Contains(s, "/") || strings.Contains(s, "@") || strings.Contains(s, ":") {
 		return false
 	}
 	return true

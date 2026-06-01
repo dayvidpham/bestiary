@@ -1171,33 +1171,6 @@ func TestResolve_Reasoner_Distinct_FromThinking(t *testing.T) {
 	}
 }
 
-// TestResolve_IsBareIdentifier_AllowsColon verifies that a "name:N" input
-// (with a digit-only :N suffix) is treated as a bare identifier for the
-// bare-family fallback — i.e., Resolve does NOT dead-end into ErrNotFound
-// without attempting SchemeCanonical when SchemeRaw yields no matches.
-//
-// This tests the isBareIdentifier fix (SLICE-4 FIX-B): removing ":" from the
-// rejection criteria so :N inputs can flow through resolution correctly.
-func TestResolve_IsBareIdentifier_AllowsColon(t *testing.T) {
-	// A model ID that does NOT exist in static data but has a :N suffix.
-	// SchemeRaw: no match → bare-family fallback triggered (because ":" is not rejected).
-	// SchemeCanonical: no match either → ErrNotFound.
-	// Crucially: must NOT return ErrNotFound before trying the fallback; must at least
-	// attempt SchemeCanonical resolution.
-	//
-	// We verify the behavior is consistent with "name" (no colon):
-	// Both must reach the same code path after SchemeRaw fails.
-	_, err := bestiary.Resolve("totally-unknown-model-xyz-99999:1024")
-	var notFound *bestiary.ErrNotFound
-	if !errors.As(err, &notFound) {
-		// Ambiguous is fine too (if SchemeCanonical happened to match something).
-		var ambig *bestiary.ErrAmbiguous
-		if !errors.As(err, &ambig) {
-			t.Errorf("Resolve(unknown:N): expected ErrNotFound or ErrAmbiguous after bare-family fallback, got %T: %v", err, err)
-		}
-	}
-}
-
 // TestResolve_Peasant_Claude37Sonnet_SingleRep asserts that peasant
 // "claude-3-7-sonnet" (InputFormatPeasant → SchemeCanonical) resolves to a
 // SINGLE representative, NOT ErrAmbiguous.
