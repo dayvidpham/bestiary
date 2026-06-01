@@ -401,6 +401,9 @@
 {"issue_id":"bestiary-ap2m","label":"aura:p10-impl:s10-review"}
 {"issue_id":"bestiary-ap86","label":"aura:p10-impl:s10-review"}
 {"issue_id":"bestiary-ap86","label":"aura:severity:minor"}
+{"issue_id":"bestiary-aqgc","label":"aura:p10-impl:s10-review"}
+{"issue_id":"bestiary-aqgc","label":"followup"}
+{"issue_id":"bestiary-aqgc","label":"parse"}
 {"issue_id":"bestiary-aqhq","label":"aura:p9-impl:s9-slice"}
 {"issue_id":"bestiary-ar3w","label":"aura:p10-impl:s10-review"}
 {"issue_id":"bestiary-ataz","label":"aura:p10-impl:s10-review"}
