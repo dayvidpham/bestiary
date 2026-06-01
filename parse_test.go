@@ -3698,10 +3698,10 @@ func TestSlice8_GluedVersionModifier(t *testing.T) {
 // the SLICE-0 whole-token plan (minimax "m1") and SLICE-3's kimi-k2-thinking
 // (kimi,"","") pin, and the version_patterns letter-prefix whole-token-variant.
 //
-// TIER INTERACTION (MUST-SURFACE): tier-bearing IDs (kimi-k2-instruct,
-// kimi-k2p6-turbo, mimo-v2.5-pro) are DECLINED (left to current behavior) pending
-// the supervisor ruling — splitSeriesVariant never picks a tier placement
-// unilaterally. They are intentionally NOT pinned here.
+// TIER INTERACTION: surfaced + ruled by the user (CLARIFICATION-6): tier→Modifier,
+// variant stays the pure series-letter — pinned in TestSeriesTierModifier_CLARIFICATION6.
+// MULTI-MODIFIER cases (tier + thinking/vision) remain surfaced (single-valued
+// Modifier; multiplicity ruling pending) and keep the existing thinking modifier.
 func TestSeriesLetterSplit_CLARIFICATION5(t *testing.T) {
 	t.Parallel()
 
@@ -3776,6 +3776,58 @@ func TestSlice8_MustNotRegress_RealVersions(t *testing.T) {
 			if ve != tc.wantVersion {
 				t.Errorf("raw=%q id=%q → version=%q, want %q (must-not-regress real version / date-guard)",
 					tc.raw, tc.id, ve, tc.wantVersion)
+			}
+		})
+	}
+}
+
+// TestSeriesTierModifier_CLARIFICATION6 verifies the tier→Modifier promotion: a
+// curated TIER token trailing a letter-prefix series token becomes the Modifier,
+// while the variant stays the PURE series-letter (kimi-k2-instruct →
+// (kimi,'k','2',mod=instruct)). The promotion is SERIES-SCOPED — it must NOT
+// reclassify the SAME token when it is a VARIANT of a NON-series family
+// (gpt-5-mini, gemini-2.5-flash, qwen-turbo, llama-*-instruct stay variants).
+//
+// MULTI-MODIFIER cases (tier + thinking/vision, or 2+ tiers) are NOT pinned here:
+// the Modifier field is single-valued and the multiplicity rule is pending — those
+// keep the series split + the existing thinking/vision modifier and DROP the tier
+// (surfaced to the supervisor, not resolved unilaterally).
+func TestSeriesTierModifier_CLARIFICATION6(t *testing.T) {
+	t.Parallel()
+
+	cases := []struct {
+		desc                                          string
+		raw                                           bestiary.Family
+		id                                            bestiary.ModelID
+		wantFamily, wantVariant, wantVersion, wantMod string
+	}{
+		// Clean single-tier → modifier (variant = pure series-letter).
+		{"minimax-m2.5-fast (raw)", "minimax", "minimax-m2.5-fast", "minimax", "m", "2.5", "fast"},
+		{"minimax-m2.5-fast (empty raw)", "", "minimax-m2.5-fast", "minimax", "m", "2.5", "fast"},
+		{"minimax-m2.5-highspeed", "minimax", "minimax-m2.5-highspeed", "minimax", "m", "2.5", "highspeed"},
+		{"mimo-v2.5-pro (raw)", "mimo", "mimo-v2.5-pro", "mimo", "v", "2.5", "pro"},
+		{"mimo-v2.5-pro (empty raw)", "", "xiaomi/mimo-v2.5-pro", "mimo", "v", "2.5", "pro"},
+		{"kimi-k2-instruct (raw)", "kimi", "kimi-k2-instruct", "kimi", "k", "2", "instruct"},
+		{"kimi-k2-instruct (empty raw)", "", "moonshotai/kimi-k2-instruct", "kimi", "k", "2", "instruct"},
+		{"kimi-k2.5-fast", "kimi", "kimi-k2.5-fast", "kimi", "k", "2.5", "fast"},
+		{"kimi-k2.6-precision", "kimi-k2.6", "kimi-k2.6-precision", "kimi", "k", "2.6", "precision"},
+		// EDGE (b): the SAME tokens are VARIANTS for NON-series families — UNCHANGED.
+		{"gpt-5-mini stays variant=mini", "gpt", "openai/gpt-5-mini", "gpt", "mini", "5", ""},
+		{"gemini-2.5-flash stays variant=flash", "gemini-flash", "gemini-2.5-flash", "gemini", "flash", "2.5", ""},
+		{"qwen-turbo stays variant=turbo", "qwen", "qwen-turbo", "qwen", "turbo", "", ""},
+		{"llama-instruct stays variant=instruct", "llama", "meta-llama/llama-3.1-8b-instruct", "llama", "instruct", "3.1", ""},
+		// MULTI-MODIFIER: tier + thinking → keep thinking, DROP tier (pending ruling).
+		{"kimi-k2p6-turbo (raw kimi-thinking) → keep thinking, drop turbo", "kimi-thinking", "accounts/fireworks/routers/kimi-k2p6-turbo", "kimi", "k", "2.6", "thinking"},
+		{"kimi-k2-thinking-turbo (raw kimi-thinking) → keep thinking", "kimi-thinking", "kimi-k2-thinking-turbo", "kimi", "k", "2", "thinking"},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.desc, func(t *testing.T) {
+			t.Parallel()
+			f, va, ve, mod, _ := bestiary.ParseFamilyDetailed(tc.raw, tc.id, "p")
+			if string(f) != tc.wantFamily || va != tc.wantVariant || ve != tc.wantVersion || mod != tc.wantMod {
+				t.Errorf("raw=%q id=%q → (%s|%s|%s|mod=%s), want (%s|%s|%s|mod=%s)",
+					tc.raw, tc.id, f, va, ve, mod, tc.wantFamily, tc.wantVariant, tc.wantVersion, tc.wantMod)
 			}
 		})
 	}

@@ -1056,7 +1056,9 @@ func InferFamilyFromIDWithVariant(id ModelID, p Provider) (Family, string, strin
 		if base, ok := seriesBaseFamily(pd, family); ok {
 			family = base
 		}
-		if sv, svv, ok := splitSeriesVariant(pd, family, string(id)); ok {
+		// tierMod is ignored here: InferFamilyFromIDWithVariant has no Modifier slot;
+		// the tier→Modifier promotion (CLARIFICATION-6) is applied by ParseFamilyDetailed.
+		if sv, svv, _, ok := splitSeriesVariant(pd, family, string(id)); ok {
 			variant, version = sv, svv
 		}
 	}
@@ -1461,9 +1463,19 @@ func ParseFamilyDetailed(raw Family, id ModelID, p Provider) (Family, string, st
 				}
 			}
 		}
-		// SLICE-8 (d): the letter-prefix series split (CLARIFICATION-5) is applied
-		// inside InferFamilyFromIDWithVariant (above), so the inferred (family,
-		// variant, version) already reflects it here — no duplicate override needed.
+		// SLICE-8 (d): the letter-prefix series split (CLARIFICATION-5) is applied for
+		// (family, variant, version) inside InferFamilyFromIDWithVariant (above). The
+		// tier→Modifier promotion (CLARIFICATION-6) is applied HERE because InferFamily
+		// has no Modifier slot: a single trailing curated tier becomes the modifier
+		// only when no thinking/vision modifier is already present (multi-modifier
+		// cases keep the existing modifier and drop the tier — surfaced, not picked).
+		if modifier == "" {
+			if pd, pdErr := loadParseData(); pdErr == nil {
+				if _, _, tierMod, ok := splitSeriesVariant(pd, family, string(id)); ok && tierMod != "" {
+					modifier = tierMod
+				}
+			}
+		}
 		return family, variant, version, modifier, nil
 	}
 
@@ -1549,12 +1561,16 @@ func ParseFamilyDetailed(raw Family, id ModelID, p Provider) (Family, string, st
 	// version extraction so it OWNS the (variant, version) decomposition for series
 	// families (kimi/minimax/mimo) and takes precedence over both the version_patterns
 	// whole-token variant and the residual-unaccounted early-return below (e.g.
-	// "kimi-k2-6" must become ('k','2.6'), not version "6" + residual "k2"). Tier-
-	// bearing IDs are declined (no-op) pending the supervisor ruling; modifiers are
-	// already consumed into cleanedID so they never trigger the tier guard.
+	// "kimi-k2-6" must become ('k','2.6'), not version "6" + residual "k2"). A trailing
+	// curated TIER token is promoted to the Modifier (CLARIFICATION-6) — but ONLY when
+	// no other modifier (thinking/vision from the ID or raw family) is already present;
+	// multi-modifier cases keep the existing modifier and drop the tier (surfaced).
 	if pd, pdErr := loadParseData(); pdErr == nil {
-		if sv, svv, ok := splitSeriesVariant(pd, family, string(cleanedID)); ok {
+		if sv, svv, tierMod, ok := splitSeriesVariant(pd, family, string(cleanedID)); ok {
 			variant, version = sv, svv
+			if tierMod != "" && modifier == "" {
+				modifier = tierMod
+			}
 		}
 	}
 
@@ -2367,13 +2383,46 @@ func seriesBaseFamily(pd *parseData, family Family) (Family, bool) {
 	return Family(base), true
 }
 
-func splitSeriesVariant(pd *parseData, family Family, idStr string) (variant, version string, ok bool) {
+// seriesTierModifiers is the curated set of TIER/finetune tokens that, when they
+// trail a letter-prefix series token, are promoted to the Modifier field
+// (CLARIFICATION-6: tier→modifier, variant stays the pure series-letter). This set
+// is consulted ONLY inside splitSeriesVariant — i.e. ONLY within the letter-prefix
+// series decomposition (kimi/minimax/mimo). It is deliberately NOT added to the
+// global modifiers.json: every one of these tokens is also a VARIANT for some
+// NON-series family (turbo=qwen member + gpt-3.5-turbo; pro=gemini/mimo member;
+// instruct=llama member; fast=grok-4-fast; flash=qwen/glm/gemini member), so a
+// global promotion would wrongly reclassify gpt-5-mini / gemini-2.5-flash /
+// qwen-turbo. Series scoping satisfies the CLARIFICATION-6 edge-(b) constraint.
+var seriesTierModifiers = map[string]struct{}{
+	"instruct":  {},
+	"turbo":     {},
+	"fast":      {},
+	"highspeed": {},
+	"lightning": {},
+	"precision": {},
+	"pro":       {},
+}
+
+func isSeriesTierToken(tok string) bool {
+	_, ok := seriesTierModifiers[tok]
+	return ok
+}
+
+// splitSeriesVariant implements the SLICE-8 (d) series split. It returns
+// (variant=series-letter, version, tierMod, ok). tierMod is the curated series-tier
+// token promoted to a Modifier (CLARIFICATION-6) when EXACTLY ONE tier trails the
+// series token AND no thinking/vision modifier also trails it; otherwise tierMod is
+// "" (multi-modifier cases keep the series split but leave the tier uncaptured,
+// pending the Modifier-multiplicity ruling — surfaced to the supervisor). A trailing
+// token that is neither date/context/size, a known modifier, nor a curated tier is
+// an UNKNOWN finetune token → DECLINE (ok=false), leaving current behavior intact.
+func splitSeriesVariant(pd *parseData, family Family, idStr string) (variant, version, tierMod string, ok bool) {
 	if pd == nil {
-		return "", "", false
+		return "", "", "", false
 	}
 	info, has := pd.families[Family(strings.ToLower(string(family)))]
 	if !has || info.SeriesLetter == "" {
-		return "", "", false
+		return "", "", "", false
 	}
 	letter := info.SeriesLetter[0]
 
@@ -2396,7 +2445,7 @@ func splitSeriesVariant(pd *parseData, family Family, idStr string) (variant, ve
 		}
 	}
 	if si < 0 {
-		return "", "", false
+		return "", "", "", false
 	}
 
 	rest := toks[si+1:]
@@ -2422,21 +2471,42 @@ func splitSeriesVariant(pd *parseData, family Family, idStr string) (variant, ve
 		}
 	}
 
-	// TIER guard: any remaining token that is not a date, context-window, param-size,
-	// or known modifier is a genuine tier/finetune — DECLINE (pending the ruling).
+	// Partition the trailing tokens (after the series token + numeric merge):
+	//   - date / context-window / param-size      → skipped (not version, not tier)
+	//   - known modifier (thinking/vision/preview) → counted (multi-modifier signal)
+	//   - curated series-tier (instruct/turbo/…)   → tier candidate
+	//   - anything else                            → UNKNOWN → DECLINE the series split
+	var tiers []string
+	knownMods := 0
 	for _, t := range rest[idx:] {
 		tt := t
 		if j := strings.IndexByte(tt, ':'); j >= 0 {
 			tt = tt[:j]
 		}
-		if tt == "" || isDateShapedToken(tt) || reContextWindow.MatchString(tt) ||
-			isParamSizeToken(tt) || isKnownModifierToken(pd, tt) {
-			continue
+		switch {
+		case tt == "" || isDateShapedToken(tt) || reContextWindow.MatchString(tt) || isParamSizeToken(tt):
+			// not a tier, not a modifier — ignored residual (context/size/date).
+		case isKnownModifierToken(pd, tt):
+			knownMods++
+		case isSeriesTierToken(tt):
+			tiers = append(tiers, tt)
+		default:
+			// Unknown finetune/provider token (omni/maas/original/fp4/tts/…): DECLINE
+			// the series split entirely (leave current behavior; surfaced as residual).
+			return "", "", "", false
 		}
-		return "", "", false
 	}
 
-	return string(letter), ver, true
+	// CLARIFICATION-6: promote a single trailing tier to the Modifier ONLY when there
+	// is exactly one tier and NO co-occurring thinking/vision modifier. Multi-modifier
+	// cases (tier + thinking/vision, or 2+ tiers) keep the series split but leave the
+	// tier uncaptured — the Modifier field is single-valued and the multiplicity rule
+	// is pending (surfaced to the supervisor); never picked here unilaterally.
+	if len(tiers) == 1 && knownMods == 0 {
+		tierMod = tiers[0]
+	}
+
+	return string(letter), ver, tierMod, true
 }
 
 // idDrivenVersion is the consolidated ID-driven version extractor (SLICE-8 a/c).
