@@ -2864,3 +2864,17 @@
 {"actor":"David Huu Pham","comment":"Added label: aura:p2-user:s2_1-elicit","created_at":"2026-05-31T22:07:58Z","event_type":"label_added","id":2864,"issue_id":"bestiary-raf5","new_value":null,"old_value":null}
 {"actor":"David Huu Pham","comment":"Added label: followup","created_at":"2026-05-31T22:07:58Z","event_type":"label_added","id":2865,"issue_id":"bestiary-raf5","new_value":null,"old_value":null}
 {"actor":"David Huu Pham","comment":"Added label: parse","created_at":"2026-05-31T22:07:58Z","event_type":"label_added","id":2866,"issue_id":"bestiary-raf5","new_value":null,"old_value":null}
+{"actor":"David Huu Pham","comment":null,"created_at":"2026-05-31T22:12:13Z","event_type":"created","id":2867,"issue_id":"bestiary-kn3o","new_value":"","old_value":""}
+{"actor":"David Huu Pham","comment":"Added label: aura:p3-plan:s3-propose","created_at":"2026-05-31T22:12:13Z","event_type":"label_added","id":2868,"issue_id":"bestiary-kn3o","new_value":null,"old_value":null}
+{"actor":"David Huu Pham","comment":"Added label: followup","created_at":"2026-05-31T22:12:13Z","event_type":"label_added","id":2869,"issue_id":"bestiary-kn3o","new_value":null,"old_value":null}
+{"actor":"David Huu Pham","comment":"Added label: parse","created_at":"2026-05-31T22:12:13Z","event_type":"label_added","id":2870,"issue_id":"bestiary-kn3o","new_value":null,"old_value":null}
+{"actor":"David Huu Pham","comment":null,"created_at":"2026-05-31T22:15:51Z","event_type":"created","id":2871,"issue_id":"bestiary-fd1t","new_value":"","old_value":""}
+{"actor":"David Huu Pham","comment":"Added label: aura:p4-plan:s4-review","created_at":"2026-05-31T22:15:51Z","event_type":"label_added","id":2872,"issue_id":"bestiary-fd1t","new_value":null,"old_value":null}
+{"actor":"David Huu Pham","comment":null,"created_at":"2026-05-31T22:15:53Z","event_type":"created","id":2873,"issue_id":"bestiary-4ioi","new_value":"","old_value":""}
+{"actor":"David Huu Pham","comment":"Added label: aura:p4-plan:s4-review","created_at":"2026-05-31T22:15:53Z","event_type":"label_added","id":2874,"issue_id":"bestiary-4ioi","new_value":null,"old_value":null}
+{"actor":"David Huu Pham","comment":null,"created_at":"2026-05-31T22:17:54Z","event_type":"created","id":2875,"issue_id":"bestiary-l8hp","new_value":"","old_value":""}
+{"actor":"David Huu Pham","comment":"Added label: aura:p4-plan:s4-review","created_at":"2026-05-31T22:17:54Z","event_type":"label_added","id":2876,"issue_id":"bestiary-l8hp","new_value":null,"old_value":null}
+{"actor":"David Huu Pham","comment":null,"created_at":"2026-05-31T22:24:22Z","event_type":"created","id":2877,"issue_id":"bestiary-z4an","new_value":"","old_value":""}
+{"actor":"David Huu Pham","comment":"Added label: aura:p3-plan:s3-propose","created_at":"2026-05-31T22:24:22Z","event_type":"label_added","id":2878,"issue_id":"bestiary-z4an","new_value":null,"old_value":null}
+{"actor":"David Huu Pham","comment":"Added label: followup","created_at":"2026-05-31T22:24:22Z","event_type":"label_added","id":2879,"issue_id":"bestiary-z4an","new_value":null,"old_value":null}
+{"actor":"David Huu Pham","comment":"Added label: parse","created_at":"2026-05-31T22:24:22Z","event_type":"label_added","id":2880,"issue_id":"bestiary-z4an","new_value":null,"old_value":null}
