@@ -31,9 +31,16 @@ type familyOverride struct {
 //
 // BareGenSplit drives the M2 bare-generation split predicate (SLICE-2). Set to
 // provisional values by SLICE-1; SLICE-2 finalizes attested flags.
+//
+// SeriesLetter (SLICE-8 d, CLARIFICATION-5) marks a letter-prefix model series:
+// a single lowercase letter (e.g. "k" for kimi, "m" for minimax, "v" for mimo)
+// such that an ID token of the form "<letter><number>" (kimi-k2, minimax-m1,
+// mimo-v2.5) decomposes to variant=<letter> + version=<number>, instead of the
+// whole token becoming the variant. Empty when the family has no letter series.
 type familyInfo struct {
 	Members      []string `json:"members"`
 	BareGenSplit bool     `json:"bare_gen_split"`
+	SeriesLetter string   `json:"series_letter,omitempty"`
 }
 
 // versionPattern holds a named regex pattern for versioned-variant decomposition.
@@ -786,8 +793,17 @@ func ExtractVersionFromID(id ModelID, rawFamily Family) string {
 	if id == "" || rawFamily == "" {
 		return ""
 	}
-	idStr := string(id)
-	prefix := string(rawFamily) + "-"
+	// SLICE-8 (a): strip the vendor/path namespace so the SAME ID yields the same
+	// version regardless of how the provider prefixes it (e.g. "openai/gpt-4.1" and
+	// "gpt-4.1" must both match the "gpt-" family prefix). Without this the literal
+	// HasPrefix check below fails on namespaced IDs and the version is silently
+	// dropped on those providers only — a cross-provider version-presence divergence.
+	// SLICE-8 (a): case-fold the prefix match so an uppercase ID (e.g. "GLM-5",
+	// "MiniMax-M2") yields the SAME version as its lowercase sibling. The resolved
+	// family is already lowercase (M4), so without folding the literal prefix check
+	// fails on mixed-case IDs and the version drops on those providers only.
+	idStr := strings.ToLower(stripVendorNamespace(string(id)))
+	prefix := strings.ToLower(string(rawFamily)) + "-"
 	if !strings.HasPrefix(idStr, prefix) {
 		return ""
 	}
@@ -834,6 +850,14 @@ func ExtractVersionFromID(id ModelID, rawFamily Family) string {
 	// Must start with a digit and contain only alphanumeric characters (no hyphens).
 	// Must not be a pure-alpha word (which would be a variant, not a version).
 	if reAlphaNumVersion.MatchString(remainder) {
+		// SLICE-8 (b): param-size guard. Reject parameter-count / model-size tokens
+		// (e.g. "120b" from gpt-oss-120b, "20b", "7m") so they are NEVER promoted to
+		// Version. This makes gpt-oss-120b → Version "" on ALL providers (consistent);
+		// the size INFO is GH#9 (missing Size dimension), not a version. Genuine
+		// alphanumeric versions like "4o" are NOT matched (no b/m unit suffix).
+		if isParamSizeToken(remainder) {
+			return ""
+		}
 		return remainder
 	}
 
@@ -1021,7 +1045,28 @@ func ExtractModifier(id ModelID, family Family, variant string) (modifier string
 //
 // The provider parameter is reserved for future provider-specific heuristics
 // and is not currently used.
+//
+// SLICE-8 (d): this is a thin wrapper that applies the letter-prefix series split
+// (CLARIFICATION-5) to the inner inference result, so the empty-raw primitive is
+// SELF-CONSISTENT with the canonical ParseFamilyDetailed path (kimi-k2 → (kimi,k,2),
+// minimax-m1 → (minimax,m,1), and the compound-family recovery kimi-k2-0905 → kimi).
 func InferFamilyFromIDWithVariant(id ModelID, p Provider) (Family, string, string) {
+	family, variant, version := inferFamilyFromIDWithVariantBase(id, p)
+	if pd, pdErr := loadParseData(); pdErr == nil {
+		if base, ok := seriesBaseFamily(pd, family); ok {
+			family = base
+		}
+		if sv, svv, ok := splitSeriesVariant(pd, family, string(id)); ok {
+			variant, version = sv, svv
+		}
+	}
+	return family, variant, version
+}
+
+// inferFamilyFromIDWithVariantBase is the inner empty-family inference (pre
+// series-split). It owns the M3/M4 + ledger + bare-gen + member-recovery flow; the
+// SLICE-8 (d) series override is applied by the InferFamilyFromIDWithVariant wrapper.
+func inferFamilyFromIDWithVariantBase(id ModelID, p Provider) (Family, string, string) {
 	if id == "" {
 		return "", "", ""
 	}
@@ -1402,6 +1447,23 @@ func ParseFamilyDetailed(raw Family, id ModelID, p Provider) (Family, string, st
 	if raw == "" {
 		family, variant, version = InferFamilyFromIDWithVariant(id, p)
 		modifier, _ := ExtractModifier(id, family, variant)
+		// SLICE-8 (a)+(c): ID-driven version consistency. The empty-raw inference
+		// path (InferFamilyFromIDWithVariant) returns an empty version for IDs that
+		// hit ParseFamilyWithVersion's pure passthrough (e.g. "gemma-3-12b-it",
+		// "grok-4.1-fast", "ling-2.6-1t"). Extract the version directly off the ID
+		// using the resolved family so these AGREE with the raw-populated providers.
+		// Also recovers the glued version-modifier case (glm-4.5v → 4.5 + vision).
+		if version == "" && family != "" {
+			if v, gmod := idDrivenVersion(id, family, variant); v != "" {
+				version = v
+				if modifier == "" {
+					modifier = gmod
+				}
+			}
+		}
+		// SLICE-8 (d): the letter-prefix series split (CLARIFICATION-5) is applied
+		// inside InferFamilyFromIDWithVariant (above), so the inferred (family,
+		// variant, version) already reflects it here — no duplicate override needed.
 		return family, variant, version, modifier, nil
 	}
 
@@ -1483,6 +1545,19 @@ func ParseFamilyDetailed(raw Family, id ModelID, p Provider) (Family, string, st
 		variant = recoverMemberVariant(strings.Split(memberZone, "-"), family)
 	}
 
+	// SLICE-8 (d): letter-prefix series split (CLARIFICATION-5). Runs BEFORE generic
+	// version extraction so it OWNS the (variant, version) decomposition for series
+	// families (kimi/minimax/mimo) and takes precedence over both the version_patterns
+	// whole-token variant and the residual-unaccounted early-return below (e.g.
+	// "kimi-k2-6" must become ('k','2.6'), not version "6" + residual "k2"). Tier-
+	// bearing IDs are declined (no-op) pending the supervisor ruling; modifiers are
+	// already consumed into cleanedID so they never trigger the tier guard.
+	if pd, pdErr := loadParseData(); pdErr == nil {
+		if sv, svv, ok := splitSeriesVariant(pd, family, string(cleanedID)); ok {
+			variant, version = sv, svv
+		}
+	}
+
 	// If ParseFamilyWithVersion did not extract a version, attempt extraction from
 	// the model ID using the canonical family prefix.
 	if version == "" && family != "" && cleanedID != "" {
@@ -1531,6 +1606,18 @@ func ParseFamilyDetailed(raw Family, id ModelID, p Provider) (Family, string, st
 		}
 		if version == "" {
 			version = ExtractVersionFromID(cleanedID, family)
+		}
+		// SLICE-8 (c): glued version-modifier fallback (glm-4.5v → version 4.5 +
+		// modifier vision). The trailing "v" is glued to the version so neither
+		// ExtractModifier (separate hyphen-token) nor the extractors above catch it.
+		// Only fills an empty version and only sets the modifier when still empty.
+		if version == "" {
+			if v, gmod := idDrivenVersion(cleanedID, family, variant); v != "" {
+				version = v
+				if modifier == "" {
+					modifier = gmod
+				}
+			}
 		}
 	}
 
@@ -2074,6 +2161,341 @@ func isDateShapedToken(tok string) bool {
 	return isYYMMDateToken(tok) || is6DigitYYMMDD(tok)
 }
 
+// --------------------------------------------------------------------------
+// SLICE-8 (b): param-size guard (mirrors the date guard)
+// --------------------------------------------------------------------------
+
+// reParamSizeToken matches a parameter-count / model-size token that must NEVER
+// be promoted to Version. The size INFO is a documented residual (GH#9, missing
+// Size/Quantization dimension) — explicitly NOT a version and NOT a cross-provider
+// divergence. Mirrors the YYMM/date guard pattern.
+//
+// Shapes covered (case-insensitive; the b/m unit suffix is the discriminator):
+//   - dense param count:  "120b", "20b", "7b", "1.5b", "560m", "7m"
+//   - MoE "NxNNb":        "8x22b", "8x7b"
+//   - MoE active-params:  "30b-a3b", "300b-a47b", "235b-a22b", "480b-a35b"
+//
+// Genuine version tokens are NOT matched because they have no b/m unit suffix:
+// "4o" (ends "o"), "4.5", "5", "3.1", "2603" (date, also guarded separately).
+var reParamSizeToken = regexp.MustCompile(`^(?i:\d+(?:\.\d+)?[bm]|\d+x\d+b|\d+b-a\d+b)$`)
+
+// isParamSizeToken reports whether tok is a parameter-count / model-size token
+// (e.g. "120b", "7m", "8x22b", "30b-a3b"). Such tokens are dropped from version
+// extraction by the SLICE-8 (b) param-size guard so that, e.g., gpt-oss-120b
+// decomposes to Version "" on ALL providers (consistent), with the size INFO left
+// to GH#9 rather than masquerading as a version.
+func isParamSizeToken(tok string) bool {
+	if tok == "" {
+		return false
+	}
+	return reParamSizeToken.MatchString(tok)
+}
+
+// --------------------------------------------------------------------------
+// SLICE-8 (c): glued letter-suffix on a version (the glmv / glm-4.5v case)
+// --------------------------------------------------------------------------
+
+// gluedVersionModifierLetters maps a recognized modifier-letter that may be GLUED
+// to the trailing end of a numeric version token (e.g. the "v" in "glm-4.5v") to
+// its canonical modifier name. Only letters in this curated map are split off; any
+// other trailing letter (e.g. the "o" in "gpt-4o") is left intact so genuine
+// alphanumeric version tokens are never mangled.
+var gluedVersionModifierLetters = map[byte]string{
+	'v': "vision",
+}
+
+// reGluedVersionModifier matches a numeric version (integer or N.M dotted) with a
+// SINGLE trailing ASCII letter glued to it: e.g. "4.5v", "5v". The leading group is
+// a genuine numeric version so that "4o" (caught by the alpha-num version path) and
+// param-size tokens ("120b") are excluded — those are filtered by the modifier-letter
+// allowlist (gluedVersionModifierLetters) regardless.
+var reGluedVersionModifier = regexp.MustCompile(`^(\d+(?:\.\d+)?)([a-zA-Z])$`)
+
+// splitGluedVersionModifier inspects the LAST hyphen-token of id for a numeric
+// version with a glued recognized modifier-letter (SLICE-8 (c), the glm-4.5v case).
+// On match it returns (cleanedID, modifier, true) where cleanedID has the trailing
+// letter removed (so version extraction sees the bare numeric version) and modifier
+// is the expanded name (e.g. "vision"). On no match it returns (id, "", false).
+//
+// SCOPE-NOTE (SLICE-8 (c) / S3→S8 hand-off): glm-4.5v decomposes to
+// (glm, "", 4.5, modifier=vision). The trailing "v" is GLUED to the version so the
+// SLICE-3 trailing-{vision}-token modifier rule (which matches "-vision" as a
+// separate hyphen token) does NOT catch it; this glued-suffix split is the dedicated
+// owner. Only recognized modifier-letters (v=vision) are split — "4o" stays "4o".
+// CRITICAL: this is the TRAILING-letter case (modifier). The LEADING series-letter
+// case (mimo-v2.5 → variant "v") is SLICE-8 (d); position is the discriminator.
+func splitGluedVersionModifier(id string) (string, string, bool) {
+	if id == "" {
+		return id, "", false
+	}
+	last := id
+	if idx := strings.LastIndexByte(id, '-'); idx >= 0 {
+		last = id[idx+1:]
+	}
+	m := reGluedVersionModifier.FindStringSubmatch(last)
+	if m == nil {
+		return id, "", false
+	}
+	letter := m[2][0]
+	// Normalise the letter to lowercase for the allowlist lookup.
+	if letter >= 'A' && letter <= 'Z' {
+		letter += 'a' - 'A'
+	}
+	modifier, ok := gluedVersionModifierLetters[letter]
+	if !ok {
+		return id, "", false
+	}
+	// Drop exactly the trailing letter, leaving the numeric version glued to the
+	// preceding family/version context (e.g. "glm-4.5v" → "glm-4.5").
+	return id[:len(id)-1], modifier, true
+}
+
+// --------------------------------------------------------------------------
+// SLICE-8 (d): letter-prefix model-series split (CLARIFICATION-5)
+// --------------------------------------------------------------------------
+
+// reSeriesDotP matches the within-token version part of a series token AFTER the
+// series letter, with a "." or "p"(=dot) separator: "2.5", "2p5", "2p6" → N.M.
+var reSeriesDotP = regexp.MustCompile(`^(\d+)[.p](\d+)$`)
+
+// reContextWindow matches a context-window token like "80k", "16k" that lives only
+// in the ID (a discriminator, NOT a version, NOT a tier). Skipped by the series split.
+var reContextWindow = regexp.MustCompile(`^\d+k$`)
+
+// isAllDigits reports whether s is non-empty and every rune is an ASCII digit.
+func isAllDigits(s string) bool {
+	if s == "" {
+		return false
+	}
+	for i := 0; i < len(s); i++ {
+		if s[i] < '0' || s[i] > '9' {
+			return false
+		}
+	}
+	return true
+}
+
+// isKnownModifierToken reports whether tok is in the modifier allowlist (pd.modifiers).
+func isKnownModifierToken(pd *parseData, tok string) bool {
+	if pd == nil {
+		return false
+	}
+	for _, m := range pd.modifiers {
+		if m == tok {
+			return true
+		}
+	}
+	return false
+}
+
+// parseSeriesNumber parses the version part of a series token (the substring AFTER
+// the series letter, e.g. "2", "2.5", "2p5", "25"). Returns (version, hadSep, ok)
+// where hadSep is true when an explicit "." / "p" separator was present (so a later
+// hyphen-as-dot merge is NOT applied). A bare date-shaped run (e.g. "2603") is
+// rejected (ok=false) so a date is never mistaken for a series version.
+func parseSeriesNumber(rest string) (version string, hadSep bool, ok bool) {
+	if rest == "" {
+		return "", false, false
+	}
+	if m := reSeriesDotP.FindStringSubmatch(rest); m != nil {
+		return m[1] + "." + m[2], true, true
+	}
+	if isAllDigits(rest) {
+		if isDateShapedToken(rest) {
+			return "", false, false
+		}
+		return rest, false, true
+	}
+	return "", false, false
+}
+
+// splitSeriesVariant implements the SLICE-8 (d) / CLARIFICATION-5 letter-prefix
+// model-series decomposition. For a family carrying a series_letter (kimi→"k",
+// minimax→"m", mimo→"v"), it finds the "<letter><number>" token in the model ID
+// and returns (variant=<letter>, version=<number>, ok=true). It normalizes ALL
+// attested forms consistently:
+//
+//	kimi-k2        → ("k", "2")     minimax-m1   → ("m", "1")
+//	kimi-k2.5      → ("k", "2.5")   mimo-v2.5    → ("v", "2.5")
+//	kimi-k2p5      → ("k", "2.5")   (p = dot)    kimi-k2p6 → ("k", "2.6")
+//	kimi-k2-5      → ("k", "2.5")   (hyphen as dot, across two tokens)
+//	kimi-k2-0711   → ("k", "2")     (trailing date dropped; not a version)
+//	kimi-k2:1t     → ("k", "2")     (":1t" context discriminator stripped)
+//	minimax-m1-80k → ("m", "1")     ("80k" context window ignored)
+//
+// ⚠ TIER INTERACTION (MUST-SURFACE, SLICE-8 d): when a NON-numeric, non-modifier,
+// non-size/context tier token follows the series token (kimi-k2-instruct,
+// kimi-k2p6-turbo, mimo-v2.5-pro, minimax-m2.5-fast), the canonical placement of
+// the tier is AMBIGUOUS (variant is a single field). This was surfaced to the
+// supervisor for a ruling (recommended Option A: compound "<letter>-<tier>"). Until
+// ratified, this function DECLINES those cases (returns ok=false) and leaves the
+// current decomposition unchanged — it never picks a tier placement unilaterally.
+// Modifiers (thinking/vision) are stripped from the ID BEFORE this runs, so they do
+// not trigger the tier decline.
+// seriesBaseFamily recovers the base series family when the empty-raw inference
+// swallowed the series token into a COMPOUND family token. e.g. "kimi-k2" (from
+// "kimi-k2-0905") → "kimi". It returns (base, true) only when family is exactly
+// "<base>-<letter><digit>…" where base carries a series_letter that matches the
+// glued token's leading letter — keeping the recovery narrowly scoped to the three
+// series families (kimi/minimax/mimo); every other family is left untouched.
+// This is the family-side half of the SLICE-8 (d) normalization (so kimi-k2-0711
+// and kimi-k2-0905 resolve to family "kimi", per CLARIFICATION-5).
+func seriesBaseFamily(pd *parseData, family Family) (Family, bool) {
+	if pd == nil {
+		return "", false
+	}
+	fs := strings.ToLower(string(family))
+	idx := strings.IndexByte(fs, '-')
+	if idx <= 0 {
+		return "", false
+	}
+	base, tok := fs[:idx], fs[idx+1:]
+	info, has := pd.families[Family(base)]
+	if !has || info.SeriesLetter == "" {
+		return "", false
+	}
+	// tok must be exactly the series token "<letter><number>" (no further hyphens).
+	if strings.IndexByte(tok, '-') >= 0 {
+		return "", false
+	}
+	if len(tok) < 2 || tok[0] != info.SeriesLetter[0] {
+		return "", false
+	}
+	if _, _, okv := parseSeriesNumber(tok[1:]); !okv {
+		return "", false
+	}
+	return Family(base), true
+}
+
+func splitSeriesVariant(pd *parseData, family Family, idStr string) (variant, version string, ok bool) {
+	if pd == nil {
+		return "", "", false
+	}
+	info, has := pd.families[Family(strings.ToLower(string(family)))]
+	if !has || info.SeriesLetter == "" {
+		return "", "", false
+	}
+	letter := info.SeriesLetter[0]
+
+	toks := strings.Split(strings.ToLower(stripVendorNamespace(idStr)), "-")
+
+	si := -1
+	var ver string
+	var hadSep bool
+	for i, t := range toks {
+		tt := t
+		if j := strings.IndexByte(tt, ':'); j >= 0 {
+			tt = tt[:j]
+		}
+		if len(tt) < 2 || tt[0] != letter {
+			continue
+		}
+		if v, sep, okv := parseSeriesNumber(tt[1:]); okv {
+			si, ver, hadSep = i, v, sep
+			break
+		}
+	}
+	if si < 0 {
+		return "", "", false
+	}
+
+	rest := toks[si+1:]
+
+	// Hyphen-as-dot merge: an immediately-following bare integer with no internal
+	// separator on the series token (kimi-k2-5 → 2.5). A date-shaped following token
+	// (kimi-k2-0711) is consumed but dropped from the version (it is a Date).
+	idx := 0
+	if len(rest) > 0 {
+		n := rest[0]
+		if j := strings.IndexByte(n, ':'); j >= 0 {
+			n = n[:j]
+		}
+		if isAllDigits(n) {
+			if isDateShapedToken(n) {
+				idx = 1 // date suffix: consumed, version unchanged
+			} else if !hadSep {
+				ver = ver + "." + n
+				idx = 1
+			} else {
+				idx = 1 // already dotted; extra numeric is noise, consume it
+			}
+		}
+	}
+
+	// TIER guard: any remaining token that is not a date, context-window, param-size,
+	// or known modifier is a genuine tier/finetune — DECLINE (pending the ruling).
+	for _, t := range rest[idx:] {
+		tt := t
+		if j := strings.IndexByte(tt, ':'); j >= 0 {
+			tt = tt[:j]
+		}
+		if tt == "" || isDateShapedToken(tt) || reContextWindow.MatchString(tt) ||
+			isParamSizeToken(tt) || isKnownModifierToken(pd, tt) {
+			continue
+		}
+		return "", "", false
+	}
+
+	return string(letter), ver, true
+}
+
+// idDrivenVersion is the consolidated ID-driven version extractor (SLICE-8 a/c).
+// It extracts the canonical version for a resolved (family, variant) directly from
+// the model ID so the SAME ID yields the SAME version regardless of provider
+// raw_family. Resolution order:
+//
+//  1. Strip the vendor/path namespace (so "openai/gpt-4.1" and "gpt-4.1" agree).
+//  2. SLICE-8 (c): if the trailing token glues a recognized modifier-letter to a
+//     numeric version (e.g. "glm-4.5v"), split it — extract the version off the
+//     cleaned token and surface the modifier (e.g. "vision"). The glued modifier is
+//     only returned when the split actually yields a version (no false positives).
+//  3. ExtractVersionBetweenFamilyAndVariant (inter-token + bare dot-version).
+//  4. ExtractVersionFromID (family-prefix extractor; bare dot, "4o", param-size guard).
+//
+// Returns (version, gluedModifier). gluedModifier is "" unless step 2 fired.
+// Date and param-size guards live inside the two extractors (single ownership).
+func idDrivenVersion(id ModelID, family Family, variant string) (string, string) {
+	if id == "" || family == "" {
+		return "", ""
+	}
+	cleaned := stripVendorNamespace(string(id))
+
+	// Step 2: glued version-modifier split (glm-4.5v). Only commit the modifier when
+	// the trimmed form actually produces a version, so a stray trailing letter never
+	// invents a modifier without a corresponding version.
+	if trimmed, mod, ok := splitGluedVersionModifier(cleaned); ok {
+		if v := extractVersionFromCleanID(trimmed, family, variant); v != "" {
+			return v, mod
+		}
+	}
+
+	return extractVersionFromCleanID(cleaned, family, variant), ""
+}
+
+// extractVersionFromCleanID runs the two ID-driven version extractors (between
+// family/variant, then family-prefix) on an ALREADY vendor-stripped id string.
+// Shared by idDrivenVersion's glued and non-glued paths.
+func extractVersionFromCleanID(cleaned string, family Family, variant string) string {
+	if v, _ := ExtractVersionBetweenFamilyAndVariant(ModelID(cleaned), family, variant); v != "" {
+		return v
+	}
+	if v := ExtractVersionFromID(ModelID(cleaned), family); v != "" {
+		return v
+	}
+	// SLICE-8 (a): the version may appear AFTER the variant in the ID (e.g.
+	// "claude-opus-4.6-fast", "mistral-small-3.2-24b-..."). When raw_family is empty
+	// the family alone ("claude"/"mistral") cannot reach the post-variant numeric, so
+	// try the family+variant compound as the prefix — making the empty-raw path agree
+	// with the raw-populated path (which uses raw="claude-opus" / "mistral-small").
+	if variant != "" {
+		compound := Family(firstToken(string(family)) + "-" + variant)
+		if v := ExtractVersionFromID(ModelID(cleaned), compound); v != "" {
+			return v
+		}
+	}
+	return ""
+}
+
 // dotJoinStrippingDateSuffix converts a hyphen-separated digit string (as captured
 // by the hyphen-version regex) into a dot-notation version, stripping any TRAILING
 // date-shaped groups.
@@ -2195,14 +2617,16 @@ func ExtractVersionBetweenFamilyAndVariant(id ModelID, family Family, variant st
 		return "", nil
 	}
 
-	idStr := lastPathSegment(string(id))
+	// SLICE-8 (a): case-fold so mixed-case IDs ("GLM-5", "MiniMax-M2") agree with
+	// their lowercase siblings; the resolved family/variant are already lowercase.
+	idStr := strings.ToLower(lastPathSegment(string(id)))
 
 	// Normalize family: use only the first hyphen-token so that "claude-opus" → "claude".
 	// SLICE-1-FIX-4: full-prefix-first was reverted (FIX-2 B1 over-stripped compound families
 	// like "gemini-2.5-flash-image-generation" by matching "gemini-2.5-flash-" as prefix and
 	// leaving "image-generation" as remainder with no numeric leading token, losing version "2.5").
 	// Proper additive handling for compound families (text-embedding, etc.) is deferred to rc2.
-	normalizedFamily := firstToken(string(family))
+	normalizedFamily := strings.ToLower(firstToken(string(family)))
 	prefix := normalizedFamily + "-"
 	if !strings.HasPrefix(idStr, prefix) {
 		return "", nil
@@ -2218,6 +2642,16 @@ func ExtractVersionBetweenFamilyAndVariant(id ModelID, family Family, variant st
 	remainder = stripTrailingDate(remainder)
 	if remainder == "" {
 		return "", nil
+	}
+
+	// SLICE-8 (a): bare dot-version remainder with NO trailing hyphen segment.
+	// e.g. "gpt-4.1" (family "gpt") → remainder "4.1"; "glm-4.6" → "4.6". Without
+	// this, the tokenizer below treats "4.1" as a non-numeric residual (it has a dot)
+	// and drops the version, so the SAME ID extracts a version on the empty-raw path
+	// (which routes through ParseFamilyWithVersion's dot-version fallback) but NOT on
+	// the raw-populated path — a cross-provider version-presence divergence.
+	if reBareVersion.MatchString(remainder) {
+		return remainder, nil
 	}
 
 	// Handle the case where the ID uses a dot-version before the first hyphen segment.

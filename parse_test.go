@@ -1760,19 +1760,18 @@ func TestInferFamilyFromIDWithVariant_R3c(t *testing.T) {
 			wantVersion: "4.1",
 		},
 		{
-			// Trace 2 (SLICE-3 RED→GREEN flip): kimi-k2-thinking (empty raw_family).
-			// exposed=kimi-k2 → cleaned=kimi-k2 → PFWV → (kimi-k2,"","") passthrough →
-			// GUARD-2 declines (fProv == cleaned). With "-thinking" removed from the variant
-			// suffixes and kimi members, the existing flow now takes baseFamily="kimi" (first
-			// token) and recoverMemberVariant finds no variant → (kimi,"",""). The trailing
-			// "thinking" is NOT a variant here; ParseFamilyDetailed surfaces it as the
-			// first-class Modifier (InferFamilyFromIDWithVariant itself returns no modifier).
-			desc:        "kimi-k2-thinking empty raw_family → (kimi,\"\",\"\"); thinking is a Modifier",
+			// Trace 2 (SLICE-8 d / CLARIFICATION-5 flip, SUPERSEDES the SLICE-3
+			// (kimi,"","") pin): kimi-k2-thinking (empty raw_family). kimi is a
+			// letter-prefix series, so InferFamilyFromIDWithVariant's series split →
+			// (kimi, "k", "2"). The trailing "thinking" is NOT a variant;
+			// ParseFamilyDetailed surfaces it as the first-class Modifier
+			// (InferFamilyFromIDWithVariant itself returns no modifier).
+			desc:        "kimi-k2-thinking empty raw_family → series (kimi,k,2); thinking is a Modifier",
 			id:          "kimi-k2-thinking",
 			provider:    "moonshot",
 			wantFamily:  "kimi",
-			wantVariant: "",
-			wantVersion: "",
+			wantVariant: "k",
+			wantVersion: "2",
 		},
 		{
 			// Trace 3: no-modifier control — claude-opus-4-1-20250805.
@@ -1855,27 +1854,19 @@ func TestParseFamilyDetailed_5Tuple(t *testing.T) {
 			wantModifier: "",
 		},
 		{
-			// SLICE-3 uniform thinking/vision-as-modifier migration (RED→GREEN flip):
-			// empty rawFamily, id="kimi-k2-thinking". With "-thinking" removed from the
-			// variant suffixes and "thinking" removed from kimi's members, PFWV no longer
-			// suffix-strips it: the existing flow takes baseFamily=firstToken="kimi" and
-			// recoverMemberVariant finds NO variant ("k2" is not a kimi member) → (kimi,"","").
-			// ExtractModifier then surfaces "thinking" as the first-class Modifier. The
-			// trailing token is ALWAYS a Modifier, never a Variant.
-			//
-			// NOTE (surfaced to supervisor-rc2 for sign-off): the must-hold tuple names
-			// variant="k2", but "k2" is not currently a recoverable kimi variant (kimi-k2
-			// WITHOUT -thinking already decomposes to variant="" today). Promoting "k2"
-			// would require ADDING it to kimi's members — a CatC member-recovery curation
-			// beyond this slice's remove-only scope — and would shift every kimi-k2* model.
-			// This slice delivers CONSISTENCY (all providers → kimi, "", mod=thinking).
-			desc:         "kimi-k2-thinking empty rawFamily → thinking is Modifier, not Variant",
+			// SLICE-8 (d) / CLARIFICATION-5 RED→GREEN flip (SUPERSEDES the SLICE-3
+			// (kimi,"","") pin): the k-prefix is now a letter-prefix SERIES, so
+			// kimi-k2-thinking → (kimi, variant="k", version="2", modifier=thinking).
+			// "thinking" is stripped to the first-class Modifier first (uniform S3 rule);
+			// the series split then decomposes the remaining "k2" → variant "k" + version
+			// "2". Consistent across ALL providers (empty raw and raw="kimi-thinking").
+			desc:         "kimi-k2-thinking empty rawFamily → series (kimi,k,2) + modifier thinking",
 			rawFamily:    "",
 			id:           "kimi-k2-thinking",
 			provider:     "moonshot",
 			wantFamily:   "kimi",
-			wantVariant:  "",
-			wantVersion:  "",
+			wantVariant:  "k",
+			wantVersion:  "2",
 			wantModifier: "thinking",
 		},
 	}
@@ -3061,12 +3052,13 @@ func TestM3_VendorAliasStrip(t *testing.T) {
 	}{
 		{
 			// "minimaxai-minimax-m1": M3 strips "minimaxai-" → "minimax-m1",
-			// M4 lowercases → "minimax-m1", then recoverMemberVariant → variant="m1".
-			desc:        "minimaxai-minimax-m1 → strip alias, family=minimax variant=m1",
+			// M4 lowercases → "minimax-m1"; SLICE-8 (d) series split → variant="m"
+			// (CLARIFICATION-5 REVERSES the SLICE-0 whole-token "m1").
+			desc:        "minimaxai-minimax-m1 → strip alias, family=minimax series variant=m",
 			id:          "minimaxai-minimax-m1",
 			provider:    "some-provider",
 			wantFamily:  "minimax",
-			wantVariant: "m1",
+			wantVariant: "m",
 		},
 	}
 
@@ -3117,24 +3109,26 @@ func TestRecoverMemberVariant_FamiliesJSONMembers(t *testing.T) {
 		wantVariant string
 	}{
 		{
-			// minimax-m1: "m1" is in families.json minimax.members but NOT in
-			// variant_suffixes.json. recoverMemberVariant must recover it.
-			desc:        "minimax raw_family + id minimax-m1-80k → variant=m1",
+			// SLICE-8 (d) / CLARIFICATION-5: minimax is now a letter-prefix SERIES
+			// (series_letter "m"), so the series split OWNS this decomposition and
+			// supersedes the old whole-token "m1" member recovery: minimax-m1-80k →
+			// variant="m" (+ version "1"; "80k" is an ignored context-window token).
+			desc:        "minimax raw_family + id minimax-m1-80k → series variant=m",
 			rawFamily:   "minimax",
 			id:          "minimax-m1-80k",
 			provider:    "minimax",
 			wantFamily:  "minimax",
-			wantVariant: "m1",
+			wantVariant: "m",
 		},
 		{
-			// Empty raw_family; MiniMax-M1 (mixed case); M3 path-strip is a no-op;
-			// M4 gives family="minimax"; recoverMemberVariant → variant="m1".
-			desc:        "empty raw_family, MiniMax-M1 → (minimax, m1)",
+			// SLICE-8 (d) / CLARIFICATION-5: empty raw_family, MiniMax-M1 (mixed case)
+			// → M4 family="minimax"; series split → variant="m" (+ version "1").
+			desc:        "empty raw_family, MiniMax-M1 → series (minimax, m)",
 			rawFamily:   "",
 			id:          "MiniMax-M1",
 			provider:    "nano-gpt",
 			wantFamily:  "minimax",
-			wantVariant: "m1",
+			wantVariant: "m",
 		},
 		{
 			// qwen family, member "max" not in variant_suffixes.json.
@@ -3242,37 +3236,37 @@ func TestRecoverMemberVariant_SubsumesB1(t *testing.T) {
 func TestRecoverMemberVariant_SubsumesAmputation(t *testing.T) {
 	t.Parallel()
 
-	// SLICE-3 RED→GREEN flip: kimi-k2-thinking now gives (kimi, "", ""). With
-	// "-thinking" removed from the variant suffixes and kimi members, PFWV no longer
-	// suffix-strips it, so the amputation path IS taken: baseFamily="kimi" (first
-	// token) and recoverMemberVariant finds no variant ("k2" is not a kimi member).
-	// The trailing "thinking" is a Modifier (surfaced by ParseFamilyDetailed's
-	// ExtractModifier), never a Variant.
-	t.Run("kimi-k2-thinking → (kimi,\"\",\"\"); thinking is a Modifier", func(t *testing.T) {
+	// SLICE-8 (d) / CLARIFICATION-5 RED→GREEN flip (SUPERSEDES the SLICE-3
+	// (kimi,"","") pin): kimi is a letter-prefix series, so InferFamilyFromIDWithVariant
+	// applies the series split → (kimi, "k", "2"). The trailing "thinking" is a
+	// Modifier (surfaced by ParseFamilyDetailed's ExtractModifier), never a Variant.
+	t.Run("kimi-k2-thinking → series (kimi,k,2); thinking is a Modifier", func(t *testing.T) {
 		t.Parallel()
 		fam, variant, version := bestiary.InferFamilyFromIDWithVariant("kimi-k2-thinking", "moonshot")
 		if fam != "kimi" {
 			t.Errorf("family = %q, want %q", fam, "kimi")
 		}
-		if variant != "" {
-			t.Errorf("variant = %q, want %q", variant, "")
+		if variant != "k" {
+			t.Errorf("variant = %q, want %q", variant, "k")
 		}
-		if version != "" {
-			t.Errorf("version = %q, want %q", version, "")
+		if version != "2" {
+			t.Errorf("version = %q, want %q", version, "2")
 		}
 	})
 
 	// New: when the amputation path IS taken (passthrough), recoverMemberVariant
 	// should recover the variant from the remaining tokens.
-	t.Run("empty raw_family MiniMax-M1 → (minimax, m1) via amputation+recovery", func(t *testing.T) {
+	t.Run("empty raw_family MiniMax-M1 → series (minimax, m, 1)", func(t *testing.T) {
 		t.Parallel()
-		fam, variant, _ := bestiary.InferFamilyFromIDWithVariant("MiniMax-M1", "nano-gpt")
+		// SLICE-8 (d) / CLARIFICATION-5: minimax is a letter-prefix series, so the
+		// series split owns this — variant="m", version="1" (REVERSES whole-token "m1").
+		fam, variant, version := bestiary.InferFamilyFromIDWithVariant("MiniMax-M1", "nano-gpt")
 		if fam != "minimax" {
 			t.Errorf("family = %q, want %q (expected M4 lowercase)", fam, "minimax")
 		}
-		if variant != "m1" {
-			t.Errorf("variant = %q, want %q (expected recoverMemberVariant on remaining tokens)",
-				variant, "m1")
+		if variant != "m" || version != "1" {
+			t.Errorf("(variant,version) = (%q,%q), want (\"m\",\"1\") (CLARIFICATION-5 series split)",
+				variant, version)
 		}
 	})
 }
@@ -3514,14 +3508,18 @@ func TestM2_BareGenSplit_PositiveSplits(t *testing.T) {
 //
 //   - v0 / asi1 / esm2 / wan2 / hy3 / r1: base ("v"/"asi"/"esm"/"wan"/"hy"/"r")
 //     has NO families.json entry → has-entry clause fails.
-//   - l3 / mimo: l3's base "l" has no entry; mimo has no trailing digit at all —
-//     CLARIFICATION-1.4 (digit-suffix guard + has-entry).
-//   - m2.5 / k2.5 / v2.5: letter-prefixed dotted numerics remain VARIANT tokens
-//     (version_patterns precedent); they are never the family token and their
-//     family (minimax/kimi/mimo) carries no bare_gen_split flag.
+//   - l3: l3's base "l" has no entry — CLARIFICATION-1.4 (digit-suffix guard +
+//     has-entry).
+//
+// NOTE (SLICE-8 d): the letter-prefix series cases that USED to live here
+// (minimax-m2.5 / kimi-k2.5 / mimo-v2.5 / mimo-v1) are now decomposed by the
+// CLARIFICATION-5 series split (variant=letter + version=number) — a DIFFERENT
+// mechanism from bare_gen_split. bare_gen_split STILL declines them (their bases
+// carry no bare_gen_split flag); the observable ParseFamilyDetailed tuple is now
+// owned by splitSeriesVariant and asserted in TestSeriesLetterSplit_CLARIFICATION5.
 //
 // These assert the predicate is CLOSED (no per-name allow-list): the family
-// stays the un-split token (or the dotted token stays a variant).
+// stays the un-split token.
 func TestM2_BareGenSplit_NonSplit(t *testing.T) {
 	t.Parallel()
 
@@ -3545,12 +3543,9 @@ func TestM2_BareGenSplit_NonSplit(t *testing.T) {
 		// shorthand). The closed-predicate guarantee (no bare-gen split) is unchanged;
 		// the canonical family arrives via the ledger remap, not the split.
 		{"l3 → llama via ledger (bare-gen declines: l∉families)", "", "l3-8b", "p", "llama", ""},
-		// mimo: no trailing digit → never a split candidate (digit-suffix guard).
-		{"mimo NOT split (no trailing digit)", "", "mimo-v1", "p", "mimo", ""},
-		// Letter-prefixed dotted numerics remain VARIANT (version_patterns precedent).
-		{"minimax-m2.5 → variant m2.5 (not split)", "", "minimax-m2.5", "p", "minimax", "m2.5"},
-		{"kimi-k2.5 → variant k2.5 (not split)", "", "kimi-k2.5", "p", "kimi", "k2.5"},
-		{"mimo-v2.5 → variant v2.5 (not split)", "", "mimo-v2.5", "p", "mimo", "v2.5"},
+		// NOTE: the former minimax-m2.5 / kimi-k2.5 / mimo-v2.5 / mimo-v1 cases moved
+		// to TestSeriesLetterSplit_CLARIFICATION5 — they now decompose via the SLICE-8
+		// (d) letter-prefix series split, not bare_gen_split.
 	}
 
 	for _, tc := range cases {
@@ -3566,6 +3561,221 @@ func TestM2_BareGenSplit_NonSplit(t *testing.T) {
 			}
 			if variant != tc.wantVariant {
 				t.Errorf("variant = %q, want %q (dotted numerics must remain variant tokens)", variant, tc.wantVariant)
+			}
+		})
+	}
+}
+
+// ============================================================================
+// SLICE-8 (rc2): ID-driven version-presence consistency + param-size guard +
+// glued letter-suffix + letter-prefix series split (CLARIFICATION-4 + -5).
+// ============================================================================
+
+// TestSlice8_VersionPresenceConsistency_ClassA verifies SLICE-8 (a): a version
+// derivable from the (vendor-stripped, case-folded) model ID is extracted
+// CONSISTENTLY regardless of the provider raw_family. Each case asserts that the
+// SAME id decomposes to an IDENTICAL (Family, Variant, Version) under BOTH an
+// empty raw_family (the inference path) AND the provider's populated raw_family.
+func TestSlice8_VersionPresenceConsistency_ClassA(t *testing.T) {
+	t.Parallel()
+
+	cases := []struct {
+		desc        string
+		rawPopulated bestiary.Family
+		id          bestiary.ModelID
+		wantFamily  bestiary.Family
+		wantVariant string
+		wantVersion string
+	}{
+		{"gpt-4.1 (gpt | empty)", "gpt", "openai/gpt-4.1", "gpt", "", "4.1"},
+		{"glm-4.6 (glm | empty)", "glm", "z-ai/glm-4.6", "glm", "", "4.6"},
+		{"gemma-3-12b-it (gemma | empty)", "gemma", "google/gemma-3-12b-it", "gemma", "", "3"},
+		{"claude-3-5-haiku (claude-haiku | empty)", "claude-haiku", "claude-3-5-haiku-20241022", "claude", "haiku", "3.5"},
+		{"grok-4.1-fast (grok | empty)", "grok", "x-ai/grok-4.1-fast", "grok", "", "4.1"},
+		{"grok-4-fast (grok | empty)", "grok", "grok-4-fast-non-reasoning", "grok", "", "4"},
+		{"ernie-4.5-21b-a3b (ernie | empty)", "ernie", "baidu/ernie-4.5-21b-a3b", "ernie", "", "4.5"},
+		{"claude-opus-4.6-fast (claude-opus | empty)", "claude-opus", "anthropic/claude-opus-4.6-fast", "claude", "opus", "4.6"},
+		{"mistral-medium-3-5 (mistral-medium | empty)", "mistral-medium", "mistralai/mistral-medium-3-5", "mistral", "medium", "3.5"},
+		{"GLM-5 mixed-case (glm | empty)", "glm", "zai-org/GLM-5", "glm", "", "5"},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.desc, func(t *testing.T) {
+			t.Parallel()
+			for _, raw := range []bestiary.Family{"", tc.rawPopulated} {
+				f, va, ve, _, _ := bestiary.ParseFamilyDetailed(raw, tc.id, "p")
+				if f != tc.wantFamily || va != tc.wantVariant || ve != tc.wantVersion {
+					t.Errorf("raw=%q id=%q → (%s|%s|%s), want (%s|%s|%s)\n"+
+						"  What: ID-driven version not extracted consistently across raw_family\n"+
+						"  Why: SLICE-8 (a) — version must derive from the ID regardless of raw_family",
+						raw, tc.id, f, va, ve, tc.wantFamily, tc.wantVariant, tc.wantVersion)
+				}
+			}
+		})
+	}
+}
+
+// TestSlice8_ParamSizeGuard verifies SLICE-8 (b): parameter-count / model-size
+// tokens (NNNb / NNNm / MoE) are NEVER promoted to Version. The size INFO is GH#9
+// (missing Size dimension), explicitly not a version. Asserted on ALL providers
+// (empty + populated raw) so gpt-oss-120b is Version "" everywhere (consistent).
+func TestSlice8_ParamSizeGuard(t *testing.T) {
+	t.Parallel()
+
+	cases := []struct {
+		desc string
+		raw  bestiary.Family
+		id   bestiary.ModelID
+	}{
+		{"gpt-oss-120b (raw gpt-oss)", "gpt-oss", "gpt-oss-120b"},
+		{"gpt-oss-120b (empty raw)", "", "gpt-oss-120b"},
+		{"gpt-oss-20b (raw gpt-oss)", "gpt-oss", "gpt-oss-20b"},
+		{"qwen3-coder-30b-a3b MoE (raw qwen)", "qwen", "qwen3-coder-30b-a3b"},
+		{"mixtral-8x22b MoE (empty raw)", "", "mistralai/mixtral-8x22b"},
+		{"ernie-4.5-300b-a47b (raw ernie) keeps 4.5 not size", "ernie", "baidu/ernie-4.5-300b-a47b"},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.desc, func(t *testing.T) {
+			t.Parallel()
+			_, _, ve, _, _ := bestiary.ParseFamilyDetailed(tc.raw, tc.id, "p")
+			// The version must never be a bare param-size token (e.g. "120b", "20b",
+			// "30b", "8x22b"). For ernie the genuine version 4.5 IS allowed.
+			for _, bad := range []string{"120b", "20b", "30b", "8x22b", "300b", "a3b", "a47b"} {
+				if ve == bad {
+					t.Errorf("raw=%q id=%q → version=%q is a param-size token (must be dropped — GH#9, not a version)", tc.raw, tc.id, ve)
+				}
+			}
+		})
+	}
+
+	// Direct guard unit checks on the public ExtractVersionFromID path.
+	t.Run("ExtractVersionFromID drops 120b, keeps 4o/versions", func(t *testing.T) {
+		t.Parallel()
+		if v := bestiary.ExtractVersionFromID("gpt-oss-120b", "gpt-oss"); v != "" {
+			t.Errorf("gpt-oss-120b → %q, want \"\" (param-size guard)", v)
+		}
+		if v := bestiary.ExtractVersionFromID("gpt-4o", "gpt"); v != "4o" {
+			t.Errorf("gpt-4o → %q, want \"4o\" (genuine version, NOT a size)", v)
+		}
+	})
+}
+
+// TestSlice8_GluedVersionModifier verifies SLICE-8 (c): a recognized modifier-
+// letter GLUED to a numeric version is split — glm-4.5v → (glm, "", 4.5, vision).
+// SCOPE-NOTE (S3→S8 hand-off): glm-4.5v was deferred from SLICE-3 because the "v"
+// is glued to the version ("4.5v"), not a separate trailing {vision} hyphen token.
+// A genuine alphanumeric version like "4o" is NOT split (o is not a modifier-letter).
+func TestSlice8_GluedVersionModifier(t *testing.T) {
+	t.Parallel()
+
+	cases := []struct {
+		desc                                          string
+		raw                                           bestiary.Family
+		id                                            bestiary.ModelID
+		wantFamily, wantVariant, wantVersion, wantMod string
+	}{
+		{"glm-4.5v raw=glm → vision modifier", "glm", "glm-4.5v", "glm", "", "4.5", "vision"},
+		{"glm-4.5v empty raw → vision modifier", "", "glm-4.5v", "glm", "", "4.5", "vision"},
+		{"gpt-4o NOT split (4o is a version, not 4+vision)", "gpt", "gpt-4o", "gpt", "", "4o", ""},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.desc, func(t *testing.T) {
+			t.Parallel()
+			f, va, ve, mod, _ := bestiary.ParseFamilyDetailed(tc.raw, tc.id, "p")
+			if string(f) != tc.wantFamily || va != tc.wantVariant || ve != tc.wantVersion || mod != tc.wantMod {
+				t.Errorf("raw=%q id=%q → (%s|%s|%s|mod=%s), want (%s|%s|%s|mod=%s)",
+					tc.raw, tc.id, f, va, ve, mod, tc.wantFamily, tc.wantVariant, tc.wantVersion, tc.wantMod)
+			}
+		})
+	}
+}
+
+// TestSeriesLetterSplit_CLARIFICATION5 verifies SLICE-8 (d): letter-prefix model
+// series (kimi→k, minimax→m, mimo→v) decompose to variant=SERIES-LETTER +
+// version=NUMBER, with ALL attested forms normalized consistently. This SUPERSEDES
+// the SLICE-0 whole-token plan (minimax "m1") and SLICE-3's kimi-k2-thinking
+// (kimi,"","") pin, and the version_patterns letter-prefix whole-token-variant.
+//
+// TIER INTERACTION (MUST-SURFACE): tier-bearing IDs (kimi-k2-instruct,
+// kimi-k2p6-turbo, mimo-v2.5-pro) are DECLINED (left to current behavior) pending
+// the supervisor ruling — splitSeriesVariant never picks a tier placement
+// unilaterally. They are intentionally NOT pinned here.
+func TestSeriesLetterSplit_CLARIFICATION5(t *testing.T) {
+	t.Parallel()
+
+	cases := []struct {
+		desc                              string
+		raw                               bestiary.Family
+		id                                bestiary.ModelID
+		wantFamily, wantVariant, wantVer  string
+		wantMod                           string
+	}{
+		// kimi K-series (empty + populated raw → identical).
+		{"kimi-k2 empty raw", "", "kimi-k2", "kimi", "k", "2", ""},
+		{"kimi-k2 raw=kimi", "kimi", "kimi-k2", "kimi", "k", "2", ""},
+		{"kimi-k2.5 raw=kimi-k2.5", "kimi-k2.5", "kimi-k2.5", "kimi", "k", "2.5", ""},
+		{"kimi-k2.6 empty raw", "", "kimi-k2.6", "kimi", "k", "2.6", ""},
+		{"kimi-k2p5 (p=dot)", "", "accounts/fireworks/models/kimi-k2p5", "kimi", "k", "2.5", ""},
+		{"kimi-k2p6 (p=dot)", "kimi-thinking", "accounts/fireworks/models/kimi-k2p6", "kimi", "k", "2.6", "thinking"},
+		{"kimi-k2-5 (hyphen=dot)", "kimi", "kimi-k2-5", "kimi", "k", "2.5", ""},
+		{"kimi-k2-0711 (date dropped, ver 2)", "kimi", "kimi-k2-0711", "kimi", "k", "2", ""},
+		{"kimi-k2:1t (context tag, ver 2)", "kimi", "kimi-k2:1t", "kimi", "k", "2", ""},
+		{"kimi-k2-thinking → series + modifier", "kimi-thinking", "kimi-k2-thinking", "kimi", "k", "2", "thinking"},
+		{"kimi-k2-thinking empty raw", "", "kimi-k2-thinking", "kimi", "k", "2", "thinking"},
+		// minimax M-series (REVERSES SLICE-0 whole-token "m1").
+		{"minimax-m1 raw=minimax", "minimax", "minimax-m1", "minimax", "m", "1", ""},
+		{"minimax-m1 empty raw", "", "minimax-m1", "minimax", "m", "1", ""},
+		{"MiniMax-M1-80k (context window ignored)", "minimax", "MiniMaxAI/MiniMax-M1-80k", "minimax", "m", "1", ""},
+		{"minimax-m2.1", "minimax", "minimax-m2.1", "minimax", "m", "2.1", ""},
+		// mimo V-series.
+		{"mimo-v2.5 raw=mimo", "mimo", "mimo-v2.5", "mimo", "v", "2.5", ""},
+		{"mimo-v2.5 empty raw", "", "xiaomi/mimo-v2.5", "mimo", "v", "2.5", ""},
+		{"mimo-v1", "", "mimo-v1", "mimo", "v", "1", ""},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.desc, func(t *testing.T) {
+			t.Parallel()
+			f, va, ve, mod, _ := bestiary.ParseFamilyDetailed(tc.raw, tc.id, "p")
+			if string(f) != tc.wantFamily || va != tc.wantVariant || ve != tc.wantVer || mod != tc.wantMod {
+				t.Errorf("raw=%q id=%q → (%s|%s|%s|mod=%s), want (%s|%s|%s|mod=%s)",
+					tc.raw, tc.id, f, va, ve, mod, tc.wantFamily, tc.wantVariant, tc.wantVer, tc.wantMod)
+			}
+		})
+	}
+}
+
+// TestSlice8_MustNotRegress_RealVersions pins genuine semantic versions that the
+// param-size guard and series split MUST leave UNCHANGED (the size/series logic
+// distinguishes size tokens and series letters from real version numbers).
+func TestSlice8_MustNotRegress_RealVersions(t *testing.T) {
+	t.Parallel()
+
+	cases := []struct {
+		desc        string
+		raw         bestiary.Family
+		id          bestiary.ModelID
+		wantVersion string
+	}{
+		{"4.5 dotted", "claude-opus", "claude-opus-4-5-20251101", "4.5"},
+		{"2.5 dotted", "gemini-flash", "gemini-2.5-flash", "2.5"},
+		{"4o alphanumeric version", "gpt", "gpt-4o", "4o"},
+		{"3.5 (claude-haiku)", "claude-haiku", "claude-3-5-haiku-20241022", "3.5"},
+		{"3.7 (claude-sonnet)", "claude-sonnet", "claude-3-7-sonnet-20250219", "3.7"},
+		{"single-digit 5", "gpt", "openai/gpt-5", "5"},
+		{"dotted 3.1", "llama", "meta-llama/llama-3.1-8b", "3.1"},
+		{"mistral-small-2603 date NOT a version", "mistral-small", "mistral-small-2603", ""},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.desc, func(t *testing.T) {
+			t.Parallel()
+			_, _, ve, _, _ := bestiary.ParseFamilyDetailed(tc.raw, tc.id, "p")
+			if ve != tc.wantVersion {
+				t.Errorf("raw=%q id=%q → version=%q, want %q (must-not-regress real version / date-guard)",
+					tc.raw, tc.id, ve, tc.wantVersion)
 			}
 		})
 	}

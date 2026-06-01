@@ -352,11 +352,35 @@ func TestSnapshotAnalysis_CrossProviderDivergences(t *testing.T) {
 	//    converging the family across the empty-raw and raw="<fam>-thinking" providers.
 	// Net: total 281→259 (−22), CatD 57→44 (−13), CatC 221→212 (−9). No previously
 	// agreeing ID broke (verified by suite + NoDateVersions=0 + cross-provider gate).
+	//
+	// SLICE-8 (rc2) ID-driven version-presence consistency + param-size guard +
+	// glued letter-suffix + letter-prefix series split: New baseline 158 / A=0 / B=3
+	// / C=111 / D=44 (was 259/0/3/212/44). All −101 are CatC (member-variant/version)
+	// reductions:
+	//  - (a) ID-DRIVEN VERSION: ExtractVersionFromID now strips the vendor/path
+	//    namespace + case-folds; ExtractVersionBetween handles a bare dot-version
+	//    remainder; the empty-raw passthrough + the family+variant-compound prefix now
+	//    extract post-variant versions. Cleared ALL 89 version-only divergences
+	//    (gpt-4.1, glm-4.x, gemma-N, grok-4.x, claude-*-haiku/sonnet, ernie-4.5,
+	//    mistral-medium-3-5, GLM-5, …) — same ID → same version on every provider.
+	//  - (b) PARAM-SIZE GUARD: gpt-oss-120b → Version "" on ALL providers (size is
+	//    GH#9, not a version), converging the 120b-vs-"" split.
+	//  - (c) GLUED letter-suffix: glm-4.5v → (glm,"",4.5,vision) — cleared the
+	//    glm↔glmv version/modifier divergence for the glued form.
+	//  - (d) SERIES SPLIT (CLARIFICATION-5): kimi-k2/k2.5/…, minimax-m1/m2.x,
+	//    mimo-v2.x → (family, letter, number), incl. the empty-raw compound-family
+	//    recovery (kimi-k2-0905 → family kimi). Converged the non-tier series IDs.
+	// RESIDUAL (honest): the ~5 TIER-bearing series IDs (kimi-k2-instruct,
+	// kimi-k2-thinking-turbo, mimo-v2-omni/v2-pro/v2.5-pro) remain divergent — the
+	// series-letter-vs-tier variant placement was SURFACED to the supervisor and is
+	// DECLINED pending a ruling (splitSeriesVariant never picks unilaterally). They
+	// are part of the residual CatC, not masked. No previously agreeing ID broke
+	// (verified by suite + NoDateVersions=0 + version-only-divergence probe = 0).
 	const (
-		divergenceExact = 259
+		divergenceExact = 158
 		// Secondary sanity band — guards against a wholesale snapshot/pipeline
 		// breakage that happens to coincidentally land on a different exact value.
-		divergenceLow  = 230
+		divergenceLow  = 130
 		divergenceHigh = 500
 	)
 	if totalDivergent != divergenceExact {
@@ -386,10 +410,12 @@ func TestSnapshotAnalysis_CrossProviderDivergences(t *testing.T) {
 	// reclassified to CatC). CatB → 3 (residual hy/lyria/rnj, no families.json entry).
 	// SLICE-3: ledger l3*→llama folds + thinking/vision modifier migration cleared
 	// 13 CatD ledger candidates (44 remain) and converged 9 CatC IDs (212 remain).
+	// SLICE-8: ID-driven version + param-size guard + glued-suffix + series split
+	// converged 101 CatC IDs (212→111). CatA/B/D unchanged (version-path-only slice).
 	const (
 		catAExact = 0   // vendor-prefix/case (SLICE-1 M4 resolved all)
 		catBExact = 3   // bare-gen-split (SLICE-2 cleared 70/73; residual = bases w/o families.json entry)
-		catCExact = 212 // member-variant recovery (SLICE-3: −9 converged via modifier migration)
+		catCExact = 111 // member-variant/version (SLICE-8: −101 via ID-driven version + series split)
 		catDExact = 44  // genuine family mislabel (SLICE-3: −13, l3*→llama ledger + thinking/vision)
 	)
 	checkCat := func(name string, got, want int) {
