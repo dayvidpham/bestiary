@@ -1,9 +1,9 @@
 {
   "total_multi_provider_ids": 864,
-  "total_divergent_ids": 123,
+  "total_divergent_ids": 126,
   "cat_a_vendor_case_count": 0,
   "cat_b_bare_gen_split_count": 3,
-  "cat_c_member_variant_count": 76,
+  "cat_c_member_variant_count": 79,
   "cat_d_genuine_mislabel_count": 44,
   "genuine_mislabel_pairs": [
     {

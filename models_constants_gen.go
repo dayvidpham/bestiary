@@ -1323,29 +1323,29 @@ const (
 	Model__GoogleVertexAnthropic__Claude__3__5__Haiku__3_5__20241022               ModelID = "claude-3-5-haiku@20241022"
 	Model__GoogleVertexAnthropic__Claude__3__5__Sonnet__3_5__20241022              ModelID = "claude-3-5-sonnet@20241022"
 	Model__GoogleVertexAnthropic__Claude__3__7__Sonnet__3_7__20250219              ModelID = "claude-3-7-sonnet@20250219"
-	Model__GoogleVertexAnthropic__Claude__Haiku__4__5__4__20251001                 ModelID = "claude-haiku-4-5@20251001"
-	Model__GoogleVertexAnthropic__Claude__Opus__4__1__4__20250805                  ModelID = "claude-opus-4-1@20250805"
+	Model__GoogleVertexAnthropic__Claude__Haiku__4_5__20251001                     ModelID = "claude-haiku-4-5@20251001"
+	Model__GoogleVertexAnthropic__Claude__Opus__4_1__20250805                      ModelID = "claude-opus-4-1@20250805"
+	Model__GoogleVertexAnthropic__Claude__Opus__4_5__20251101                      ModelID = "claude-opus-4-5@20251101"
 	Model__GoogleVertexAnthropic__Claude__Opus__4__20250514                        ModelID = "claude-opus-4@20250514"
-	Model__GoogleVertexAnthropic__Claude__Opus__4__5__4__20251101                  ModelID = "claude-opus-4-5@20251101"
-	Model__GoogleVertexAnthropic__Claude__Opus__4__6__Default__4                   ModelID = "claude-opus-4-6@default"
-	Model__GoogleVertexAnthropic__Claude__Opus__4__7__Default__4                   ModelID = "claude-opus-4-7@default"
-	Model__GoogleVertexAnthropic__Claude__Opus__4__8__Default__4                   ModelID = "claude-opus-4-8@default"
+	Model__GoogleVertexAnthropic__Claude__Opus__4__6__Default__4_6                 ModelID = "claude-opus-4-6@default"
+	Model__GoogleVertexAnthropic__Claude__Opus__4__7__Default__4_7                 ModelID = "claude-opus-4-7@default"
+	Model__GoogleVertexAnthropic__Claude__Opus__4__8__Default__4_8                 ModelID = "claude-opus-4-8@default"
+	Model__GoogleVertexAnthropic__Claude__Sonnet__4_5__20250929                    ModelID = "claude-sonnet-4-5@20250929"
 	Model__GoogleVertexAnthropic__Claude__Sonnet__4__20250514                      ModelID = "claude-sonnet-4@20250514"
-	Model__GoogleVertexAnthropic__Claude__Sonnet__4__5__4__20250929                ModelID = "claude-sonnet-4-5@20250929"
-	Model__GoogleVertexAnthropic__Claude__Sonnet__4__6__Default__4                 ModelID = "claude-sonnet-4-6@default"
+	Model__GoogleVertexAnthropic__Claude__Sonnet__4__6__Default__4_6               ModelID = "claude-sonnet-4-6@default"
 	Model__GoogleVertex__Claude__3__5__Haiku__3_5__20241022                        ModelID = "claude-3-5-haiku@20241022"
 	Model__GoogleVertex__Claude__3__5__Sonnet__3_5__20241022                       ModelID = "claude-3-5-sonnet@20241022"
 	Model__GoogleVertex__Claude__3__7__Sonnet__3_7__20250219                       ModelID = "claude-3-7-sonnet@20250219"
-	Model__GoogleVertex__Claude__Haiku__4__5__4__20251001                          ModelID = "claude-haiku-4-5@20251001"
-	Model__GoogleVertex__Claude__Opus__4__1__4__20250805                           ModelID = "claude-opus-4-1@20250805"
+	Model__GoogleVertex__Claude__Haiku__4_5__20251001                              ModelID = "claude-haiku-4-5@20251001"
+	Model__GoogleVertex__Claude__Opus__4_1__20250805                               ModelID = "claude-opus-4-1@20250805"
+	Model__GoogleVertex__Claude__Opus__4_5__20251101                               ModelID = "claude-opus-4-5@20251101"
 	Model__GoogleVertex__Claude__Opus__4__20250514                                 ModelID = "claude-opus-4@20250514"
-	Model__GoogleVertex__Claude__Opus__4__5__4__20251101                           ModelID = "claude-opus-4-5@20251101"
-	Model__GoogleVertex__Claude__Opus__4__6__Default__4                            ModelID = "claude-opus-4-6@default"
-	Model__GoogleVertex__Claude__Opus__4__7__Default__4                            ModelID = "claude-opus-4-7@default"
-	Model__GoogleVertex__Claude__Opus__4__8__Default__4                            ModelID = "claude-opus-4-8@default"
+	Model__GoogleVertex__Claude__Opus__4__6__Default__4_6                          ModelID = "claude-opus-4-6@default"
+	Model__GoogleVertex__Claude__Opus__4__7__Default__4_7                          ModelID = "claude-opus-4-7@default"
+	Model__GoogleVertex__Claude__Opus__4__8__Default__4_8                          ModelID = "claude-opus-4-8@default"
+	Model__GoogleVertex__Claude__Sonnet__4_5__20250929                             ModelID = "claude-sonnet-4-5@20250929"
 	Model__GoogleVertex__Claude__Sonnet__4__20250514                               ModelID = "claude-sonnet-4@20250514"
-	Model__GoogleVertex__Claude__Sonnet__4__5__4__20250929                         ModelID = "claude-sonnet-4-5@20250929"
-	Model__GoogleVertex__Claude__Sonnet__4__6__Default__4                          ModelID = "claude-sonnet-4-6@default"
+	Model__GoogleVertex__Claude__Sonnet__4__6__Default__4_6                        ModelID = "claude-sonnet-4-6@default"
 	Model__GoogleVertex__Deepseek__V3__1__Maas                                     ModelID = "deepseek-ai/deepseek-v3.1-maas"
 	Model__GoogleVertex__Deepseek__V3__2__Maas                                     ModelID = "deepseek-ai/deepseek-v3.2-maas"
 	Model__GoogleVertex__GPT__Oss__120b__Maas                                      ModelID = "openai/gpt-oss-120b-maas"
@@ -6306,29 +6306,29 @@ var allModelConstants = [...]ModelID{
 	Model__GoogleVertexAnthropic__Claude__3__5__Haiku__3_5__20241022,
 	Model__GoogleVertexAnthropic__Claude__3__5__Sonnet__3_5__20241022,
 	Model__GoogleVertexAnthropic__Claude__3__7__Sonnet__3_7__20250219,
-	Model__GoogleVertexAnthropic__Claude__Haiku__4__5__4__20251001,
-	Model__GoogleVertexAnthropic__Claude__Opus__4__1__4__20250805,
+	Model__GoogleVertexAnthropic__Claude__Haiku__4_5__20251001,
+	Model__GoogleVertexAnthropic__Claude__Opus__4_1__20250805,
+	Model__GoogleVertexAnthropic__Claude__Opus__4_5__20251101,
 	Model__GoogleVertexAnthropic__Claude__Opus__4__20250514,
-	Model__GoogleVertexAnthropic__Claude__Opus__4__5__4__20251101,
-	Model__GoogleVertexAnthropic__Claude__Opus__4__6__Default__4,
-	Model__GoogleVertexAnthropic__Claude__Opus__4__7__Default__4,
-	Model__GoogleVertexAnthropic__Claude__Opus__4__8__Default__4,
+	Model__GoogleVertexAnthropic__Claude__Opus__4__6__Default__4_6,
+	Model__GoogleVertexAnthropic__Claude__Opus__4__7__Default__4_7,
+	Model__GoogleVertexAnthropic__Claude__Opus__4__8__Default__4_8,
+	Model__GoogleVertexAnthropic__Claude__Sonnet__4_5__20250929,
 	Model__GoogleVertexAnthropic__Claude__Sonnet__4__20250514,
-	Model__GoogleVertexAnthropic__Claude__Sonnet__4__5__4__20250929,
-	Model__GoogleVertexAnthropic__Claude__Sonnet__4__6__Default__4,
+	Model__GoogleVertexAnthropic__Claude__Sonnet__4__6__Default__4_6,
 	Model__GoogleVertex__Claude__3__5__Haiku__3_5__20241022,
 	Model__GoogleVertex__Claude__3__5__Sonnet__3_5__20241022,
 	Model__GoogleVertex__Claude__3__7__Sonnet__3_7__20250219,
-	Model__GoogleVertex__Claude__Haiku__4__5__4__20251001,
-	Model__GoogleVertex__Claude__Opus__4__1__4__20250805,
+	Model__GoogleVertex__Claude__Haiku__4_5__20251001,
+	Model__GoogleVertex__Claude__Opus__4_1__20250805,
+	Model__GoogleVertex__Claude__Opus__4_5__20251101,
 	Model__GoogleVertex__Claude__Opus__4__20250514,
-	Model__GoogleVertex__Claude__Opus__4__5__4__20251101,
-	Model__GoogleVertex__Claude__Opus__4__6__Default__4,
-	Model__GoogleVertex__Claude__Opus__4__7__Default__4,
-	Model__GoogleVertex__Claude__Opus__4__8__Default__4,
+	Model__GoogleVertex__Claude__Opus__4__6__Default__4_6,
+	Model__GoogleVertex__Claude__Opus__4__7__Default__4_7,
+	Model__GoogleVertex__Claude__Opus__4__8__Default__4_8,
+	Model__GoogleVertex__Claude__Sonnet__4_5__20250929,
 	Model__GoogleVertex__Claude__Sonnet__4__20250514,
-	Model__GoogleVertex__Claude__Sonnet__4__5__4__20250929,
-	Model__GoogleVertex__Claude__Sonnet__4__6__Default__4,
+	Model__GoogleVertex__Claude__Sonnet__4__6__Default__4_6,
 	Model__GoogleVertex__Deepseek__V3__1__Maas,
 	Model__GoogleVertex__Deepseek__V3__2__Maas,
 	Model__GoogleVertex__GPT__Oss__120b__Maas,
