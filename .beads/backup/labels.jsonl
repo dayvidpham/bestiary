@@ -820,6 +820,9 @@
 {"issue_id":"bestiary-itso","label":"aura:p10-impl:s10-review"}
 {"issue_id":"bestiary-iu3p","label":"aura:p10-impl:s10-review"}
 {"issue_id":"bestiary-iu3p","label":"aura:severity:important"}
+{"issue_id":"bestiary-j1nu","label":"aura:p9-impl:s9-slice"}
+{"issue_id":"bestiary-j1nu","label":"followup"}
+{"issue_id":"bestiary-j1nu","label":"parse"}
 {"issue_id":"bestiary-j2y4","label":"aura:p10-impl:s10-review"}
 {"issue_id":"bestiary-j35","label":"aura:p4-plan:s4-review"}
 {"issue_id":"bestiary-j3o0","label":"aura:p10-impl:s10-review"}
