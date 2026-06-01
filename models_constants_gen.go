@@ -2719,7 +2719,7 @@ const (
 	Model__NanoGPT__Llama__3__3__3v3__3__70B__Tenyxchat__Daybreakstorywriter       ModelID = "Llama-3.3+(3v3.3)-70B-TenyxChat-DaybreakStorywriter"
 	Model__NanoGPT__Llama__3__3__70B__Anthrobomination                             ModelID = "Llama-3.3-70B-Anthrobomination"
 	Model__NanoGPT__Llama__3__3__70B__Argunaut__1__Sft                             ModelID = "Llama-3.3-70B-Argunaut-1-SFT"
-	Model__NanoGPT__Llama__3__3__70B__Arliai__Rpmax__V1__4__3_3                    ModelID = "Llama-3.3-70B-ArliAI-RPMax-v1.4"
+	Model__NanoGPT__Llama__3__3__70B__Arliai__Rpmax__V1__4                         ModelID = "Llama-3.3-70B-ArliAI-RPMax-v1.4"
 	Model__NanoGPT__Llama__3__3__70B__Arliai__Rpmax__V2                            ModelID = "Llama-3.3-70B-ArliAI-RPMax-v2"
 	Model__NanoGPT__Llama__3__3__70B__Arliai__Rpmax__V3                            ModelID = "Llama-3.3-70B-ArliAI-RPMax-v3"
 	Model__NanoGPT__Llama__3__3__70B__Aurora__Borealis                             ModelID = "Llama-3.3-70B-Aurora-Borealis"
@@ -2727,16 +2727,16 @@ const (
 	Model__NanoGPT__Llama__3__3__70B__Cirrus__X1                                   ModelID = "Llama-3.3-70B-Cirrus-x1"
 	Model__NanoGPT__Llama__3__3__70B__Cu__Mai__R1                                  ModelID = "Llama-3.3-70B-Cu-Mai-R1"
 	Model__NanoGPT__Llama__3__3__70B__Damascus__R1                                 ModelID = "Llama-3.3-70B-Damascus-R1"
-	Model__NanoGPT__Llama__3__3__70B__Dark__Ages__V0__1__3_3                       ModelID = "Llama-3.3-70B-Dark-Ages-v0.1"
+	Model__NanoGPT__Llama__3__3__70B__Dark__Ages__V0__1                            ModelID = "Llama-3.3-70B-Dark-Ages-v0.1"
 	Model__NanoGPT__Llama__3__3__70B__Electra__R1                                  ModelID = "Llama-3.3-70B-Electra-R1"
-	Model__NanoGPT__Llama__3__3__70B__Electranova__V1__0__3_3                      ModelID = "Llama-3.3-70B-Electranova-v1.0"
+	Model__NanoGPT__Llama__3__3__70B__Electranova__V1__0                           ModelID = "Llama-3.3-70B-Electranova-v1.0"
 	Model__NanoGPT__Llama__3__3__70B__Fallen__R1__V1                               ModelID = "Llama-3.3-70B-Fallen-R1-v1"
 	Model__NanoGPT__Llama__3__3__70B__Fallen__V1                                   ModelID = "Llama-3.3-70B-Fallen-v1"
-	Model__NanoGPT__Llama__3__3__70B__Forgotten__Abomination__V5__0__3_3           ModelID = "Llama-3.3-70B-Forgotten-Abomination-v5.0"
+	Model__NanoGPT__Llama__3__3__70B__Forgotten__Abomination__V5__0                ModelID = "Llama-3.3-70B-Forgotten-Abomination-v5.0"
 	Model__NanoGPT__Llama__3__3__70B__Forgotten__Safeword__3_6                     ModelID = "Llama-3.3-70B-Forgotten-Safeword-3.6"
 	Model__NanoGPT__Llama__3__3__70B__Geneticlemonade__Opus                        ModelID = "Llama-3.3-70B-GeneticLemonade-Opus"
 	Model__NanoGPT__Llama__3__3__70B__Geneticlemonade__Unleashed__V3               ModelID = "Llama-3.3-70B-GeneticLemonade-Unleashed-v3"
-	Model__NanoGPT__Llama__3__3__70B__Ignition__V0__1__3_3                         ModelID = "Llama-3.3-70B-Ignition-v0.1"
+	Model__NanoGPT__Llama__3__3__70B__Ignition__V0__1                              ModelID = "Llama-3.3-70B-Ignition-v0.1"
 	Model__NanoGPT__Llama__3__3__70B__Incandescent__Malevolence                    ModelID = "Llama-3.3-70B-Incandescent-Malevolence"
 	Model__NanoGPT__Llama__3__3__70B__Instruct__Abliterated                        ModelID = "huihui-ai/Llama-3.3-70B-Instruct-abliterated"
 	Model__NanoGPT__Llama__3__3__70B__Legion__V2__1                                ModelID = "Llama-3.3-70B-Legion-V2.1"
@@ -2753,10 +2753,10 @@ const (
 	Model__NanoGPT__Llama__3__3__70B__Sapphira__0_1                                ModelID = "Llama-3.3-70B-Sapphira-0.1"
 	Model__NanoGPT__Llama__3__3__70B__Sapphira__0_2                                ModelID = "Llama-3.3-70B-Sapphira-0.2"
 	Model__NanoGPT__Llama__3__3__70B__Shakudo                                      ModelID = "Llama-3.3-70B-Shakudo"
-	Model__NanoGPT__Llama__3__3__70B__Strawberrylemonade__V1__0__3_3               ModelID = "Llama-3.3-70B-StrawberryLemonade-v1.0"
-	Model__NanoGPT__Llama__3__3__70B__Strawberrylemonade__V1__2__3_3               ModelID = "Llama-3.3-70B-Strawberrylemonade-v1.2"
-	Model__NanoGPT__Llama__3__3__70B__The__Omega__Directive__Unslop__V2__0__3_3    ModelID = "Llama-3.3-70B-The-Omega-Directive-Unslop-v2.0"
-	Model__NanoGPT__Llama__3__3__70B__The__Omega__Directive__Unslop__V2__1__3_3    ModelID = "Llama-3.3-70B-The-Omega-Directive-Unslop-v2.1"
+	Model__NanoGPT__Llama__3__3__70B__Strawberrylemonade__V1__0                    ModelID = "Llama-3.3-70B-StrawberryLemonade-v1.0"
+	Model__NanoGPT__Llama__3__3__70B__Strawberrylemonade__V1__2                    ModelID = "Llama-3.3-70B-Strawberrylemonade-v1.2"
+	Model__NanoGPT__Llama__3__3__70B__The__Omega__Directive__Unslop__V2__0         ModelID = "Llama-3.3-70B-The-Omega-Directive-Unslop-v2.0"
+	Model__NanoGPT__Llama__3__3__70B__The__Omega__Directive__Unslop__V2__1         ModelID = "Llama-3.3-70B-The-Omega-Directive-Unslop-v2.1"
 	Model__NanoGPT__Llama__3__3__70B__Vulpecula__R1                                ModelID = "Llama-3.3-70B-Vulpecula-R1"
 	Model__NanoGPT__Llama__3__3__70b__Instruct__3_3                                ModelID = "meta-llama/llama-3.3-70b-instruct"
 	Model__NanoGPT__Llama__3__3__Nemotron__Super__49B__V1                          ModelID = "nvidia/Llama-3.3-Nemotron-Super-49B-v1"
@@ -2848,7 +2848,7 @@ const (
 	Model__NanoGPT__Qwen2__5__32B__Instruct__Abliterated                           ModelID = "huihui-ai/Qwen2.5-32B-Instruct-abliterated"
 	Model__NanoGPT__Qwen2__5__Vl__72b__Instruct                                    ModelID = "TEE/qwen2.5-vl-72b-instruct"
 	Model__NanoGPT__Qwen3__30b__A3b__Instruct__2507__30b_A3b_Instruct_2507         ModelID = "qwen3-30b-a3b-instruct-2507"
-	Model__NanoGPT__Qwen3__30b__A3b__Instruct__2507__Qwen3_30b_A3b_Instruct_2507   ModelID = "TEE/qwen3-30b-a3b-instruct-2507"
+	Model__NanoGPT__Qwen3__30b__A3b__Instruct__2507__Qwen3_30b_A3b_2507            ModelID = "TEE/qwen3-30b-a3b-instruct-2507"
 	Model__NanoGPT__Qwen3__5__397b__A17b_1                                         ModelID = "TEE/qwen3.5-397b-a17b"
 	Model__NanoGPT__Qwen3__5__397b__A17b_2                                         ModelID = "qwen/qwen3.5-397b-a17b"
 	Model__NanoGPT__Qwen3__6__35B__A3b                                             ModelID = "qwen/Qwen3.6-35B-A3B"
@@ -3695,7 +3695,7 @@ const (
 	Model__OpenRouter__Qwen__2__5__Coder__32b__Instruct__2_5                       ModelID = "qwen/qwen-2.5-coder-32b-instruct"
 	Model__OpenRouter__Qwen__Plus                                                  ModelID = "qwen/qwen-plus"
 	Model__OpenRouter__Qwen__Plus__20250728                                        ModelID = "qwen/qwen-plus-2025-07-28"
-	Model__OpenRouter__Qwen__Plus__2025__07__28__Thinking__07                      ModelID = "qwen/qwen-plus-2025-07-28:thinking"
+	Model__OpenRouter__Qwen__Plus__2025__07__28__Thinking                          ModelID = "qwen/qwen-plus-2025-07-28:thinking"
 	Model__OpenRouter__Reka__Edge                                                  ModelID = "rekaai/reka-edge"
 	Model__OpenRouter__Reka__Flash__3                                              ModelID = "rekaai/reka-flash-3"
 	Model__OpenRouter__Relace__Apply__3                                            ModelID = "relace/relace-apply-3"
@@ -3894,7 +3894,7 @@ const (
 	Model__Poe__GPT__5__Pro__5                                                     ModelID = "openai/gpt-5-pro"
 	Model__Poe__GPT__Image__1                                                      ModelID = "openai/gpt-image-1"
 	Model__Poe__GPT__Image__1_5                                                    ModelID = "openai/gpt-image-1.5"
-	Model__Poe__GPT__Image__1__Mini__1                                             ModelID = "openai/gpt-image-1-mini"
+	Model__Poe__GPT__Image__1__Mini                                                ModelID = "openai/gpt-image-1-mini"
 	Model__Poe__GPT__Image__2                                                      ModelID = "openai/gpt-image-2"
 	Model__Poe__GPT__Oss__120b__Cs                                                 ModelID = "cerebras/gpt-oss-120b-cs"
 	Model__Poe__Gemini__2__0__Flash__2_0                                           ModelID = "google/gemini-2.0-flash"
@@ -7702,7 +7702,7 @@ var allModelConstants = [...]ModelID{
 	Model__NanoGPT__Llama__3__3__3v3__3__70B__Tenyxchat__Daybreakstorywriter,
 	Model__NanoGPT__Llama__3__3__70B__Anthrobomination,
 	Model__NanoGPT__Llama__3__3__70B__Argunaut__1__Sft,
-	Model__NanoGPT__Llama__3__3__70B__Arliai__Rpmax__V1__4__3_3,
+	Model__NanoGPT__Llama__3__3__70B__Arliai__Rpmax__V1__4,
 	Model__NanoGPT__Llama__3__3__70B__Arliai__Rpmax__V2,
 	Model__NanoGPT__Llama__3__3__70B__Arliai__Rpmax__V3,
 	Model__NanoGPT__Llama__3__3__70B__Aurora__Borealis,
@@ -7710,16 +7710,16 @@ var allModelConstants = [...]ModelID{
 	Model__NanoGPT__Llama__3__3__70B__Cirrus__X1,
 	Model__NanoGPT__Llama__3__3__70B__Cu__Mai__R1,
 	Model__NanoGPT__Llama__3__3__70B__Damascus__R1,
-	Model__NanoGPT__Llama__3__3__70B__Dark__Ages__V0__1__3_3,
+	Model__NanoGPT__Llama__3__3__70B__Dark__Ages__V0__1,
 	Model__NanoGPT__Llama__3__3__70B__Electra__R1,
-	Model__NanoGPT__Llama__3__3__70B__Electranova__V1__0__3_3,
+	Model__NanoGPT__Llama__3__3__70B__Electranova__V1__0,
 	Model__NanoGPT__Llama__3__3__70B__Fallen__R1__V1,
 	Model__NanoGPT__Llama__3__3__70B__Fallen__V1,
-	Model__NanoGPT__Llama__3__3__70B__Forgotten__Abomination__V5__0__3_3,
+	Model__NanoGPT__Llama__3__3__70B__Forgotten__Abomination__V5__0,
 	Model__NanoGPT__Llama__3__3__70B__Forgotten__Safeword__3_6,
 	Model__NanoGPT__Llama__3__3__70B__Geneticlemonade__Opus,
 	Model__NanoGPT__Llama__3__3__70B__Geneticlemonade__Unleashed__V3,
-	Model__NanoGPT__Llama__3__3__70B__Ignition__V0__1__3_3,
+	Model__NanoGPT__Llama__3__3__70B__Ignition__V0__1,
 	Model__NanoGPT__Llama__3__3__70B__Incandescent__Malevolence,
 	Model__NanoGPT__Llama__3__3__70B__Instruct__Abliterated,
 	Model__NanoGPT__Llama__3__3__70B__Legion__V2__1,
@@ -7736,10 +7736,10 @@ var allModelConstants = [...]ModelID{
 	Model__NanoGPT__Llama__3__3__70B__Sapphira__0_1,
 	Model__NanoGPT__Llama__3__3__70B__Sapphira__0_2,
 	Model__NanoGPT__Llama__3__3__70B__Shakudo,
-	Model__NanoGPT__Llama__3__3__70B__Strawberrylemonade__V1__0__3_3,
-	Model__NanoGPT__Llama__3__3__70B__Strawberrylemonade__V1__2__3_3,
-	Model__NanoGPT__Llama__3__3__70B__The__Omega__Directive__Unslop__V2__0__3_3,
-	Model__NanoGPT__Llama__3__3__70B__The__Omega__Directive__Unslop__V2__1__3_3,
+	Model__NanoGPT__Llama__3__3__70B__Strawberrylemonade__V1__0,
+	Model__NanoGPT__Llama__3__3__70B__Strawberrylemonade__V1__2,
+	Model__NanoGPT__Llama__3__3__70B__The__Omega__Directive__Unslop__V2__0,
+	Model__NanoGPT__Llama__3__3__70B__The__Omega__Directive__Unslop__V2__1,
 	Model__NanoGPT__Llama__3__3__70B__Vulpecula__R1,
 	Model__NanoGPT__Llama__3__3__70b__Instruct__3_3,
 	Model__NanoGPT__Llama__3__3__Nemotron__Super__49B__V1,
@@ -7831,7 +7831,7 @@ var allModelConstants = [...]ModelID{
 	Model__NanoGPT__Qwen2__5__32B__Instruct__Abliterated,
 	Model__NanoGPT__Qwen2__5__Vl__72b__Instruct,
 	Model__NanoGPT__Qwen3__30b__A3b__Instruct__2507__30b_A3b_Instruct_2507,
-	Model__NanoGPT__Qwen3__30b__A3b__Instruct__2507__Qwen3_30b_A3b_Instruct_2507,
+	Model__NanoGPT__Qwen3__30b__A3b__Instruct__2507__Qwen3_30b_A3b_2507,
 	Model__NanoGPT__Qwen3__5__397b__A17b_1,
 	Model__NanoGPT__Qwen3__5__397b__A17b_2,
 	Model__NanoGPT__Qwen3__6__35B__A3b,
@@ -8678,7 +8678,7 @@ var allModelConstants = [...]ModelID{
 	Model__OpenRouter__Qwen__2__5__Coder__32b__Instruct__2_5,
 	Model__OpenRouter__Qwen__Plus,
 	Model__OpenRouter__Qwen__Plus__20250728,
-	Model__OpenRouter__Qwen__Plus__2025__07__28__Thinking__07,
+	Model__OpenRouter__Qwen__Plus__2025__07__28__Thinking,
 	Model__OpenRouter__Reka__Edge,
 	Model__OpenRouter__Reka__Flash__3,
 	Model__OpenRouter__Relace__Apply__3,
@@ -8877,7 +8877,7 @@ var allModelConstants = [...]ModelID{
 	Model__Poe__GPT__5__Pro__5,
 	Model__Poe__GPT__Image__1,
 	Model__Poe__GPT__Image__1_5,
-	Model__Poe__GPT__Image__1__Mini__1,
+	Model__Poe__GPT__Image__1__Mini,
 	Model__Poe__GPT__Image__2,
 	Model__Poe__GPT__Oss__120b__Cs,
 	Model__Poe__Gemini__2__0__Flash__2_0,
