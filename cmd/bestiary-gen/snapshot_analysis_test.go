@@ -393,11 +393,29 @@ func TestSnapshotAnalysis_CrossProviderDivergences(t *testing.T) {
 	// out of SLICE-8's version-path scope.)
 	// No previously agreeing ID broke (verified by suite + NoDateVersions=0 +
 	// version-only-divergence probe = 0).
+	//
+	// SLICE-9 (rc2) PATH-UNIFICATION (CLARIFICATION-8, Option A): ParseFamilyDetailed
+	// is now ID-driven for Variant/Version/Modifier (raw_family is a HINT; the
+	// idDrivenDecompose primitive is shared by the empty-raw and raw-populated paths
+	// via reconcileIDDriven). FAMILY is PRESERVED from raw_family — the diff-first
+	// safeguard (TestPathUnification_ZeroUnexpectedRegression) proved the ID-path
+	// OVER-captures Family for the <family>-<gen><size>-<variant> shape (deepseek-v4,
+	// gpt-4o, llama-3.3-70b …), so converging those 107 FAMILY-over-capture divergences
+	// is deferred to the dedicated family-seeding slice (Option B). New baseline:
+	// 123 / A=0 / B=3 / C=76 / D=44 (was 154/0/3/107/44). All −31 are CatC member-
+	// variant/version convergences: empty-raw and raw-populated providers of the same
+	// ID now share one ID-driven Variant/Version/Modifier (glm-5v → (glm,"",5,vision);
+	// qwen3.6-flash variant de-junk "3.6"→"flash"; gpt-5.1-codex-mini "codex"→
+	// "codex-mini"; version-presence agreement). The committed before/after diff
+	// (testdata/snapshot/decomp_diff_report.json) categorizes every change a/b/c with
+	// ZERO category-(c) unexpected regressions (1 reviewed justified-exception:
+	// gemini-2.5-pro-preview-tts raw mislabel). CatD=44 unchanged — the genuine family
+	// mislabel ledger is Option B's scope, not SLICE-9's.
 	const (
-		divergenceExact = 154
+		divergenceExact = 123
 		// Secondary sanity band — guards against a wholesale snapshot/pipeline
 		// breakage that happens to coincidentally land on a different exact value.
-		divergenceLow  = 130
+		divergenceLow  = 100
 		divergenceHigh = 500
 	)
 	if totalDivergent != divergenceExact {
@@ -431,10 +449,10 @@ func TestSnapshotAnalysis_CrossProviderDivergences(t *testing.T) {
 	// (+ CLARIFICATION-6 tier→modifier) converged 104 CatC IDs (212→108). CatA/B/D
 	// unchanged (version-path-only slice).
 	const (
-		catAExact = 0   // vendor-prefix/case (SLICE-1 M4 resolved all)
-		catBExact = 3   // bare-gen-split (SLICE-2 cleared 70/73; residual = bases w/o families.json entry)
-		catCExact = 107 // member-variant/version (SLICE-8: −105 via ID-driven version + series split + tier→modifier incl. omni)
-		catDExact = 44  // genuine family mislabel (SLICE-3: −13, l3*→llama ledger + thinking/vision)
+		catAExact = 0  // vendor-prefix/case (SLICE-1 M4 resolved all)
+		catBExact = 3  // bare-gen-split (SLICE-2 cleared 70/73; residual = bases w/o families.json entry)
+		catCExact = 76 // member-variant/version (SLICE-9: −31 via path-unification — shared ID-driven Variant/Version/Modifier across empty-raw & raw-populated providers)
+		catDExact = 44 // genuine family mislabel (SLICE-3: −13; SLICE-9 leaves CatD untouched — family-mislabel ledger is Option B's scope)
 	)
 	checkCat := func(name string, got, want int) {
 		if got != want {

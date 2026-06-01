@@ -1388,6 +1388,151 @@ const (
 	ReasonResidualUnaccountedTokens ParseFailureReason = "residual unaccounted tokens after extraction"
 )
 
+// idDrivenDecompose is the SINGLE ID-driven decomposition primitive (SLICE-9
+// path-unification). It derives (Family, Variant, Version, Modifier) purely from
+// the model ID via the S1-S8 pipeline (InferFamilyFromIDWithVariant → ExtractModifier
+// → idDrivenVersion → tier→Modifier), with NO reference to raw_family. It is the
+// body the raw=="" branch of ParseFamilyDetailed used to inline; extracting it lets
+// the raw!="" branch consult the IDENTICAL decomposition so the two paths can never
+// disagree on the fields the ID owns.
+//
+// SLICE-9 (rc2) re-scope (Option A, authorized): this primitive drives Variant/
+// Version/Modifier in the unified path. It deliberately does NOT own Family for the
+// raw-populated path — the diff-first safeguard proved the ID-path OVER-captures the
+// Family for the common <family>-<gen><size>-<variant> ID shape (deepseek-v4-flash →
+// "deepseek-v4", gpt-4o-mini → "gpt-4o"), where raw_family carries the correct SHORT
+// family. Converging those 107 family-over-capture divergences to the short family is
+// the dedicated family-seeding slice (Option B), not this one.
+func idDrivenDecompose(id ModelID, p Provider) (Family, string, string, string) {
+	family, variant, version := InferFamilyFromIDWithVariant(id, p)
+	modifier, _ := ExtractModifier(id, family, variant)
+	// ID-driven version consistency (SLICE-8 a/c): recover a version the ID carries
+	// but ParseFamilyWithVersion's passthrough missed; also the glued letter-suffix
+	// version-modifier (glm-4.5v → 4.5 + vision).
+	if version == "" && family != "" {
+		if v, gmod := idDrivenVersion(id, family, variant); v != "" {
+			version = v
+			if modifier == "" {
+				modifier = gmod
+			}
+		}
+	}
+	// Tier→Modifier promotion (CLARIFICATION-6) for series families, only when no
+	// thinking/vision modifier is already present.
+	if modifier == "" {
+		if pd, pdErr := loadParseData(); pdErr == nil {
+			if _, _, tierMod, ok := splitSeriesVariant(pd, family, string(id)); ok && tierMod != "" {
+				modifier = tierMod
+			}
+		}
+	}
+	return family, variant, version, modifier
+}
+
+// reconcileIDDriven is the SLICE-9 (rc2) Option A unification step. Given the
+// raw-aware decomposition (the family-preserving base + fallback) and the model ID,
+// it produces the unified canonical (Family, Variant, Version, Modifier):
+//
+//   - FAMILY is PRESERVED from the raw-aware path. raw_family is the reliable short
+//     family; the ID-driven path over-captures it (see idDrivenDecompose). Family is
+//     NEVER changed here → ZERO family regression by construction.
+//   - VARIANT / VERSION / MODIFIER are taken from the ID-driven decomposition, but
+//     ONLY when the ID-driven path resolved the SAME family (idFam == rawFam). When
+//     they agree, the ID owns the field split and every provider of that ID (raw or
+//     empty) converges on the identical value — this is the divergence-fixing win for
+//     the field-only divergent IDs (glm-5v → (glm,"",5,vision); version-presence).
+//   - An ID-driven field is adopted only when NON-EMPTY: a populated raw field is
+//     never CLEARED by an empty ID-driven field (monotonic; preserves the rawModifier
+//     fallback such as raw="deepseek-thinking", id="deepseek-reasoner" → modifier
+//     "thinking", and avoids dropping a raw variant the ID does not re-derive).
+//   - When the families DISAGREE (the over-capture / ledger class), the raw-aware
+//     result is kept verbatim — that convergence belongs to the family-seeding slice.
+func reconcileIDDriven(rawFam Family, rawVar, rawVer, rawMod string, id ModelID, p Provider) (Family, string, string, string) {
+	// Family-preserving: the family is always the raw-aware family.
+	family, variant, version, modifier := rawFam, rawVar, rawVer, rawMod
+
+	if id == "" {
+		return family, variant, version, modifier
+	}
+
+	idFam, idVar, idVer, idMod := idDrivenDecompose(id, p)
+	if idFam != rawFam {
+		// Family disagreement (ID-path over-capture or a genuine ledger mislabel):
+		// keep the raw-aware result verbatim. Converging these is Option B's job.
+		return family, variant, version, modifier
+	}
+
+	// Families agree → the ID owns the field decomposition. Adopt each non-empty
+	// ID-driven field, but conservatively so a currently-correct decomposition is
+	// never WORSENED (the CLARIFICATION-8 zero-regression gate):
+	//
+	//  - VARIANT: fill an empty variant freely (enrichment + convergence with the
+	//    empty-raw providers). Only OVERRIDE a populated raw variant when the ID-driven
+	//    variant is a CLEAN token — no '.' and no digit — so we never replace a clean
+	//    raw variant (e.g. "pro") with a version/quant-polluted ID token (e.g.
+	//    "v2.5-pro-6bit" for mimo-v2.5-pro-6bit, where the series split was defeated by
+	//    the "6bit" quantization suffix). De-junking (raw variant "3.6" → "flash") and
+	//    refinement (raw "codex" → "codex-mini") both pass this guard.
+	if idVar != "" && (variant == "" || isCleanVariantToken(idVar)) {
+		variant = idVar
+	}
+	//  - VERSION: fill an empty version, or override with a NUMERIC/dotted ID-driven
+	//    version (versions are low-ambiguity). The override path is guarded by
+	//    isVersionShaped so a populated version is only ever replaced by another
+	//    version-shaped value, never by junk.
+	if idVer != "" && (version == "" || isVersionShaped(idVer)) {
+		version = idVer
+	}
+	//  - MODIFIER: fill an empty modifier only. A populated raw modifier is PRESERVED
+	//    (never overridden) so a capability modifier carried by raw_family (e.g.
+	//    "thinking") is never silently swapped for a tier modifier the ID happens to
+	//    carry (kimi-k2p6-turbo raw="kimi-thinking" keeps "thinking" — consistent with
+	//    the SLICE-8 capability-over-tier single-modifier ruling).
+	if modifier == "" && idMod != "" {
+		modifier = idMod
+	}
+	return family, variant, version, modifier
+}
+
+// isCleanVariantToken reports whether a variant token is a clean word-form variant
+// (no '.' and no digit) — safe to OVERRIDE a populated raw variant with. Tokens
+// carrying version/quantization junk (e.g. "v2.5-pro-6bit") are rejected so the
+// unification never worsens a clean raw variant.
+func isCleanVariantToken(s string) bool {
+	if s == "" {
+		return false
+	}
+	for _, r := range s {
+		if r == '.' || (r >= '0' && r <= '9') {
+			return false
+		}
+	}
+	return true
+}
+
+// isVersionShaped reports whether s looks like a version (digits, optionally with
+// '.'/'-' separators, and at most a trailing letter like "4o"). Used to guard
+// version overrides so a populated version is only replaced by another version.
+func isVersionShaped(s string) bool {
+	if s == "" {
+		return false
+	}
+	hasDigit := false
+	for _, r := range s {
+		switch {
+		case r >= '0' && r <= '9':
+			hasDigit = true
+		case r == '.' || r == '-':
+			// separator
+		case r >= 'a' && r <= 'z':
+			// allow trailing/embedded letters (e.g. "4o")
+		default:
+			return false
+		}
+	}
+	return hasDigit
+}
+
 // ParseFamilyDetailed is the failure-aware companion to ParseFamilyWithVersion.
 // It returns the same three-way decomposition (Family, variant, version) plus
 // an optional *ParseFailure when the parser detects a known incomplete result.
@@ -1447,36 +1592,20 @@ func ParseFamilyDetailed(raw Family, id ModelID, p Provider) (Family, string, st
 	// kimi-k2-thinking) are handled correctly. The modifier is then extracted from
 	// the inferred family+variant context. M4 is applied inside InferFamilyFromIDWithVariant.
 	if raw == "" {
-		family, variant, version = InferFamilyFromIDWithVariant(id, p)
-		modifier, _ := ExtractModifier(id, family, variant)
-		// SLICE-8 (a)+(c): ID-driven version consistency. The empty-raw inference
-		// path (InferFamilyFromIDWithVariant) returns an empty version for IDs that
-		// hit ParseFamilyWithVersion's pure passthrough (e.g. "gemma-3-12b-it",
-		// "grok-4.1-fast", "ling-2.6-1t"). Extract the version directly off the ID
-		// using the resolved family so these AGREE with the raw-populated providers.
-		// Also recovers the glued version-modifier case (glm-4.5v → 4.5 + vision).
-		if version == "" && family != "" {
-			if v, gmod := idDrivenVersion(id, family, variant); v != "" {
-				version = v
-				if modifier == "" {
-					modifier = gmod
-				}
-			}
-		}
-		// SLICE-8 (d): the letter-prefix series split (CLARIFICATION-5) is applied for
-		// (family, variant, version) inside InferFamilyFromIDWithVariant (above). The
-		// tier→Modifier promotion (CLARIFICATION-6) is applied HERE because InferFamily
-		// has no Modifier slot: a single trailing curated tier becomes the modifier
-		// only when no thinking/vision modifier is already present (multi-modifier
-		// cases keep the existing modifier and drop the tier — surfaced, not picked).
-		if modifier == "" {
-			if pd, pdErr := loadParseData(); pdErr == nil {
-				if _, _, tierMod, ok := splitSeriesVariant(pd, family, string(id)); ok && tierMod != "" {
-					modifier = tierMod
-				}
-			}
-		}
+		// Empty raw_family: the decomposition is fully ID-driven (no family hint to
+		// preserve). SLICE-9: this is the same idDrivenDecompose primitive the
+		// raw-populated path now consults, so the two paths share one decomposition.
+		family, variant, version, modifier := idDrivenDecompose(id, p)
 		return family, variant, version, modifier, nil
+	}
+
+	// SLICE-9 (rc2) Option A unification: EVERY raw-populated return path funnels its
+	// (family,variant,version,modifier) through reconcileIDDriven (family-preserving,
+	// ID-driven Variant/Version/Modifier) before returning. The *ParseFailure audit
+	// annotation is computed from the raw-path attempt and passed through unchanged.
+	recon := func(f Family, v, ver, m string, fail *ParseFailure) (Family, string, string, string, *ParseFailure) {
+		rf, rv, rver, rmod := reconcileIDDriven(f, v, ver, m, id, p)
+		return rf, rv, rver, rmod, fail
 	}
 
 	// ── Δ1 extract-first: attempt to populate version from the model ID ───────
@@ -1603,13 +1732,13 @@ func ParseFamilyDetailed(raw Family, id ModelID, p Provider) (Family, string, st
 			// emit an honest-audit failure WITH version populated.
 			if len(residual) > 0 {
 				attempted := ParseAttempt{Family: family, Variant: variant, Version: version, Date: ""}
-				return family, variant, version, modifier, &ParseFailure{
+				return recon(family, variant, version, modifier, &ParseFailure{
 					RawID:          id,
 					Provider:       p,
 					RawFamily:      raw,
 					AttemptedParse: attempted,
 					Reason:         ReasonResidualUnaccountedTokens,
-				}
+				})
 			}
 		}
 
@@ -1658,13 +1787,13 @@ func ParseFamilyDetailed(raw Family, id ModelID, p Provider) (Family, string, st
 	// and "0324" in raw family strings. These appear in the raw family string,
 	// not as a separate date field.
 	if reBareAnyFourDigitCandidate.MatchString(rawStr) {
-		return family, variant, version, modifier, &ParseFailure{
+		return recon(family, variant, version, modifier, &ParseFailure{
 			RawID:          id,
 			Provider:       p,
 			RawFamily:      raw,
 			AttemptedParse: attempted,
 			Reason:         ReasonYYMMDateAsVersion,
-		}
+		})
 	}
 
 	// ── Failure mode 2: Suffix overflow ──────────────────────────────────────
@@ -1715,18 +1844,18 @@ func ParseFamilyDetailed(raw Family, id ModelID, p Provider) (Family, string, st
 				} else {
 					reason = ReasonUnknownSuffixOverflow
 				}
-				return family, variant, version, modifier, &ParseFailure{
+				return recon(family, variant, version, modifier, &ParseFailure{
 					RawID:          id,
 					Provider:       p,
 					RawFamily:      raw,
 					AttemptedParse: attempted,
 					Reason:         reason,
-				}
+				})
 			}
 		}
 	}
 
-	return family, variant, version, modifier, nil
+	return recon(family, variant, version, modifier, nil)
 }
 
 // reYYMMCandidate matches a 4-digit segment in a hyphen-separated raw family

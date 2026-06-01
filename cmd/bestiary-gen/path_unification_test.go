@@ -30,6 +30,7 @@ package main
 
 import (
 	"bufio"
+	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -263,7 +264,7 @@ type decompChange struct {
 	ID        bestiary.ModelID  `json:"id"`
 	RawFamily bestiary.Family   `json:"raw_family"`
 	Before    string            `json:"before"`
-	After      string            `json:"after"`
+	After     string            `json:"after"`
 	Category  string            `json:"category"`
 	Reason    string            `json:"reason"`
 }
@@ -346,9 +347,231 @@ func classifyDecompChange(before, after decompTuple, beforeByID, afterByID []dec
 		return CatImprove, "strict enrichment — only previously-empty field(s) populated"
 	}
 
+	// (b) refinement / de-junk: the ONLY non-empty fields that changed are Family-
+	// preserving Variant/Version refinements that improve a populated value:
+	//   - variant refinement: after-variant is a superstring of before-variant
+	//     (e.g. "codex" → "codex-mini" — the ID names a more specific variant);
+	//   - variant de-junk: before-variant was version-shaped junk (the version digits
+	//     leaked into the variant, e.g. "3.6") and after-variant is a clean word token
+	//     (e.g. "flash") — the ID recovered the true member variant.
+	// Family/Version/Modifier must be otherwise unchanged for this rule to apply.
+	if before.Family == after.Family && before.Version == after.Version && before.Modifier == after.Modifier &&
+		before.Variant != after.Variant {
+		refinement := after.Variant != "" && before.Variant != "" &&
+			strings.HasPrefix(after.Variant, before.Variant)
+		deJunk := isVersionShapedToken(before.Variant) && !isVersionShapedToken(after.Variant) && after.Variant != ""
+		if refinement {
+			return CatImprove, fmt.Sprintf("variant refinement: %q → %q (ID names a more specific variant)", before.Variant, after.Variant)
+		}
+		if deJunk {
+			return CatImprove, fmt.Sprintf("variant de-junk: version-shaped %q → clean member variant %q", before.Variant, after.Variant)
+		}
+	}
+
 	// A divergent ID that converged to a brand-new value (no provider had it BEFORE,
 	// not yet fully consistent) but where the change is still a strict enrichment was
 	// already caught above. Anything reaching here changed a populated field to a
 	// different value without being a convergence — flag as a regression for review.
 	return CatRegress, fmt.Sprintf("populated field changed value without converging: before=%s after=%s", before, after)
+}
+
+// isVersionShapedToken reports whether a token is version-shaped (digits with
+// optional '.'/'-' separators and embedded/trailing letters). Used to detect a
+// version digit that leaked into the Variant field (e.g. "3.6").
+func isVersionShapedToken(s string) bool {
+	if s == "" {
+		return false
+	}
+	hasDigit := false
+	for _, r := range s {
+		switch {
+		case r >= '0' && r <= '9':
+			hasDigit = true
+		case r == '.' || r == '-':
+		case r >= 'a' && r <= 'z':
+		default:
+			return false
+		}
+	}
+	return hasDigit
+}
+
+// diffReport is the committed categorized BEFORE→AFTER artifact.
+type diffReport struct {
+	TotalRecords     int            `json:"total_records"`
+	ChangedCount     int            `json:"changed_count"`
+	CatFixCount      int            `json:"cat_a_divergence_fix_count"`
+	CatImprove       int            `json:"cat_b_improvement_count"`
+	CatRegress       int            `json:"cat_c_unexpected_regression_count"`
+	JustifiedCount   int            `json:"justified_exception_count"`
+	DivergenceBefore int            `json:"divergence_before"`
+	DivergenceAfter  int            `json:"divergence_after"`
+	Changes          []decompChange `json:"changes"`
+}
+
+// computeDiff loads the frozen BEFORE baseline, computes the live AFTER decomposition,
+// and returns the categorized change list plus before/after divergence counts.
+func computeDiff(t *testing.T) ([]decompChange, int, int, int) {
+	t.Helper()
+	before, err := loadBaseline()
+	if err != nil {
+		t.Fatalf("computeDiff: %v", err)
+	}
+	after := dumpDecomposition(t)
+
+	beforeByKey := make(map[decompKey]decompRecord, len(before))
+	beforeByID := make(map[bestiary.ModelID][]decompTuple)
+	for _, r := range before {
+		beforeByKey[r.key()] = r
+		beforeByID[r.ID] = append(beforeByID[r.ID], r.tuple())
+	}
+	afterByKey := make(map[decompKey]decompRecord, len(after))
+	afterByID := make(map[bestiary.ModelID][]decompTuple)
+	for _, r := range after {
+		afterByKey[r.key()] = r
+		afterByID[r.ID] = append(afterByID[r.ID], r.tuple())
+	}
+
+	var changes []decompChange
+	for _, ar := range after {
+		br, ok := beforeByKey[ar.key()]
+		if !ok {
+			// Record present in AFTER but not BEFORE — snapshot drift, not expected.
+			t.Errorf("computeDiff: record %s/%s present in AFTER but missing from frozen baseline "+
+				"(snapshot changed since capture?)", ar.Provider, ar.ID)
+			continue
+		}
+		if br.tuple() == ar.tuple() {
+			continue
+		}
+		cat, reason := classifyDecompChange(br.tuple(), ar.tuple(), beforeByID[ar.ID], afterByID[ar.ID])
+		changes = append(changes, decompChange{
+			Provider:  ar.Provider,
+			ID:        ar.ID,
+			RawFamily: ar.RawFamily,
+			Before:    br.tuple().String(),
+			After:     ar.tuple().String(),
+			Category:  cat.String(),
+			Reason:    reason,
+		})
+	}
+	slices.SortFunc(changes, func(a, b decompChange) int {
+		if a.Category != b.Category {
+			return strings.Compare(a.Category, b.Category)
+		}
+		if a.ID != b.ID {
+			return strings.Compare(string(a.ID), string(b.ID))
+		}
+		return strings.Compare(string(a.Provider), string(b.Provider))
+	})
+
+	divBefore := countDivergentIDs(beforeByID)
+	divAfter := countDivergentIDs(afterByID)
+	return changes, divBefore, divAfter, len(after)
+}
+
+// countDivergentIDs counts multi-provider IDs whose tuples are not all identical.
+func countDivergentIDs(byID map[bestiary.ModelID][]decompTuple) int {
+	n := 0
+	for _, ts := range byID {
+		if len(ts) < 2 {
+			continue
+		}
+		seen := map[decompTuple]struct{}{}
+		for _, t := range ts {
+			seen[t] = struct{}{}
+		}
+		if len(seen) >= 2 {
+			n++
+		}
+	}
+	return n
+}
+
+// TestPathUnification_ZeroUnexpectedRegression is THE GATE (CLARIFICATION-8 mandatory
+// safeguard). It diffs the FROZEN pre-refactor BEFORE baseline against the LIVE AFTER
+// decomposition, categorizes every change (a/b/c), writes the committed categorized
+// diff report, and asserts ZERO category-(c) UNEXPECTED REGRESSIONS.
+//
+// Pre-refactor (baseline == live) the diff is empty → trivially green. Post-refactor
+// the categorized changes are the regression surface the per-slice reviewers scrutinize.
+// justifiedExceptions is the ENUMERATED, REVIEWED ledger of intended decomposition
+// changes that the mechanical a/b/c classifier flags as category-(c) but that human
+// review has confirmed are genuine fixes/improvements (not regressions). Keyed by
+// model ID; each entry carries a one-line justification. This mirrors the snapshot
+// gate's "enumerated justified exception ledger" philosophy: the gate fails on any
+// category-(c) change NOT in this ledger, so new regressions are never silently
+// absorbed. ADDING an entry is a reviewed decision (committed in the diff artifact).
+var justifiedExceptions = map[bestiary.ModelID]string{
+	// raw_family "gemini-flash" MISLABELS a PRO model (the ID literally contains
+	// "pro"). The ID-driven variant "pro" is authoritative and correct; the raw
+	// "flash" was a provider data error. Single-provider correctness fix.
+	"gemini-2.5-pro-preview-tts": "raw_family 'gemini-flash' mislabels a PRO model (ID says 'pro'); ID-driven variant 'pro' is correct",
+}
+
+func TestPathUnification_ZeroUnexpectedRegression(t *testing.T) {
+	changes, divBefore, divAfter, total := computeDiff(t)
+
+	var fix, improve, regress, justified int
+	var regressions []decompChange
+	for i := range changes {
+		c := &changes[i]
+		switch c.Category {
+		case CatFix.String():
+			fix++
+		case CatImprove.String():
+			improve++
+		case CatRegress.String():
+			if rationale, ok := justifiedExceptions[c.ID]; ok {
+				// Reviewed & justified — reclassify so it is not counted as a regression.
+				c.Category = "justified-exception"
+				c.Reason = "JUSTIFIED: " + rationale
+				justified++
+			} else {
+				regress++
+				regressions = append(regressions, *c)
+			}
+		}
+	}
+
+	// Write the committed categorized diff artifact.
+	report := diffReport{
+		TotalRecords:     total,
+		ChangedCount:     len(changes),
+		CatFixCount:      fix,
+		CatImprove:       improve,
+		CatRegress:       regress,
+		JustifiedCount:   justified,
+		DivergenceBefore: divBefore,
+		DivergenceAfter:  divAfter,
+		Changes:          changes,
+	}
+	reportBytes, err := json.MarshalIndent(report, "", "  ")
+	if err != nil {
+		t.Fatalf("marshal diff report: %v", err)
+	}
+	reportPath := filepath.Join(snapshotDir(), "decomp_diff_report.json")
+	if err := os.WriteFile(reportPath, append(reportBytes, '\n'), 0o644); err != nil {
+		t.Fatalf("write diff report: %v", err)
+	}
+
+	t.Logf("=== SLICE-9 path-unification before/after diff ===")
+	t.Logf("records=%d  changed=%d  (a)divergence-fix=%d  (b)improvement=%d  (c)REGRESSION=%d  justified-exception=%d",
+		total, len(changes), fix, improve, regress, justified)
+	t.Logf("divergence: before=%d  after=%d", divBefore, divAfter)
+	t.Logf("committed report → %s", reportPath)
+
+	if regress != 0 {
+		t.Errorf("GATE FAILED: %d category-(c) UNEXPECTED REGRESSION(s) — must be ZERO.\n"+
+			"  What: a populated decomposition field changed to a different value without converging\n"+
+			"        a divergent ID (i.e. a currently-correct decomposition was WORSENED)\n"+
+			"  Why: SLICE-9 (CLARIFICATION-8) requires zero unexpected regressions; the path-unification\n"+
+			"       must be family-preserving and monotonic on Variant/Version/Modifier\n"+
+			"  How to fix: add a targeted raw_family fallback for the flagged case in reconcileIDDriven,\n"+
+			"       OR (if the change is actually intended) justify it and reclassify\n"+
+			"  Regressions:", regress)
+		for _, c := range regressions {
+			t.Errorf("    %s/%s raw=%q  %s → %s  [%s]", c.Provider, c.ID, c.RawFamily, c.Before, c.After, c.Reason)
+		}
+	}
 }

@@ -3869,3 +3869,88 @@ func TestSlice8_MultiModifier_DeferredToModifierListSlice(t *testing.T) {
 		})
 	}
 }
+
+// ----------------------------------------------------------------------------
+// SLICE-9 (rc2) PATH-UNIFICATION unit tests (CLARIFICATION-8, Option A)
+// ----------------------------------------------------------------------------
+
+// TestParseFamilyDetailed_PathUnification pins the SLICE-9 re-scoped (Option A)
+// behavior: ParseFamilyDetailed derives Variant/Version/Modifier from the ID (the
+// idDrivenDecompose primitive shared with the empty-raw path), while PRESERVING the
+// Family from raw_family (the ID-path over-captures Family — that convergence is the
+// separate family-seeding slice). The diff-first gate
+// (TestPathUnification_ZeroUnexpectedRegression) is the dataset-wide guard; these
+// units pin the representative classes + the must-not-regress invariants.
+func TestParseFamilyDetailed_PathUnification(t *testing.T) {
+	cases := []struct {
+		desc                              string
+		raw, id                           string
+		wantFam, wantVar, wantVer, wantMod string
+	}{
+		// CONVERGENCE WIN: glued letter-suffix version-modifier. raw-aware alone gave
+		// (glm,"","5v",""); the ID owns it → (glm,"",5,vision), matching empty-raw providers.
+		{"glm-5v: ID-driven version+modifier adopted (family agrees)", "glm", "glm-5v", "glm", "", "5", "vision"},
+
+		// FAMILY-PRESERVING (the safeguard's core): the ID-path OVER-captures Family
+		// (deepseek-v4, gpt-4o) — raw_family is the correct SHORT family and is kept.
+		// Converging these is Option B's scope, NOT this slice.
+		{"deepseek-v4-flash: family PRESERVED (not deepseek-v4)", "deepseek-flash", "deepseek-v4-flash", "deepseek", "flash", "", ""},
+		{"gpt-4o-mini: family PRESERVED (not gpt-4o)", "gpt", "gpt-4o-mini", "gpt", "mini", "", ""},
+
+		// VARIANT DE-JUNK: raw_family "qwen3.6" leaks the version into the variant
+		// ("3.6"); the ID recovers the true member variant "flash".
+		{"qwen3.6-flash: variant de-junk 3.6→flash", "qwen3.6", "qwen3.6-flash", "qwen", "flash", "3.6", ""},
+
+		// VARIANT REFINEMENT: ID names a more specific variant than raw_family.
+		{"gpt-5.1-codex-mini: variant refinement codex→codex-mini", "gpt-codex", "gpt-5.1-codex-mini", "gpt", "codex-mini", "5.1", ""},
+
+		// CLEAN-VARIANT GUARD (true-regression prevention): the series split is defeated
+		// by the "6bit" quantization suffix so the ID variant would be junk
+		// ("v2.5-pro-6bit"); the clean raw variant "pro" is PRESERVED, not worsened.
+		{"mimo-v2.5-pro-6bit: clean raw variant 'pro' preserved (not worsened)", "mimo", "mimo-v2.5-pro-6bit", "mimo", "pro", "", ""},
+
+		// MUST-NOT-REGRESS: kimi-k2-thinking → (kimi,k,2,thinking).
+		{"kimi-k2-thinking (must-hold)", "kimi-thinking", "kimi-k2-thinking", "kimi", "k", "2", "thinking"},
+
+		// MUST-NOT-REGRESS: capability modifier from raw_family is never dropped (the
+		// ID "deepseek-reasoner" has no thinking token; raw "deepseek-thinking" carries it).
+		{"deepseek-reasoner: rawModifier 'thinking' preserved", "deepseek-thinking", "deepseek-reasoner", "deepseek", "", "", "thinking"},
+
+		// MUST-NOT-REGRESS: capability modifier (thinking) is NOT swapped for a tier
+		// modifier (turbo) the ID carries — capability wins (SLICE-8 single-modifier ruling).
+		{"kimi-k2p6-turbo raw=kimi-thinking: capability 'thinking' kept over tier 'turbo'", "kimi-thinking", "kimi-k2p6-turbo", "kimi", "k", "2.6", "thinking"},
+
+		// MUST-NOT-REGRESS: claude-opus-4-1-...-thinking → (claude,opus,4.1,thinking).
+		{"claude-opus-4-1-thinking (must-hold)", "claude-opus", "claude-opus-4-1-20250805-thinking", "claude", "opus", "4.1", "thinking"},
+	}
+	for _, tc := range cases {
+		t.Run(tc.desc, func(t *testing.T) {
+			f, va, ve, mod, _ := bestiary.ParseFamilyDetailed(bestiary.Family(tc.raw), bestiary.ModelID(tc.id), "test-provider")
+			if string(f) != tc.wantFam || va != tc.wantVar || ve != tc.wantVer || mod != tc.wantMod {
+				t.Errorf("ParseFamilyDetailed(raw=%q, id=%q) = (%q,%q,%q,%q), want (%q,%q,%q,%q)",
+					tc.raw, tc.id, f, va, ve, mod, tc.wantFam, tc.wantVar, tc.wantVer, tc.wantMod)
+			}
+		})
+	}
+}
+
+// TestParseFamilyDetailed_PathUnification_EmptyRawConsistency asserts the unification
+// invariant directly: for an ID whose Family agrees between the raw-populated and
+// empty-raw paths, the (Variant,Version,Modifier) MUST be identical regardless of
+// raw_family — the two paths share one ID-driven decomposition.
+func TestParseFamilyDetailed_PathUnification_EmptyRawConsistency(t *testing.T) {
+	ids := []string{"glm-5v", "qwen3.6-flash", "kimi-k2-thinking", "gpt-5.1-codex-mini"}
+	rawHints := []string{"glm", "qwen3.6", "kimi-thinking", "gpt-codex"}
+	for i, id := range ids {
+		rf, rv, rver, rmod, _ := bestiary.ParseFamilyDetailed(bestiary.Family(rawHints[i]), bestiary.ModelID(id), "p")
+		ef, ev, ever, emod, _ := bestiary.ParseFamilyDetailed("", bestiary.ModelID(id), "p")
+		// Family agrees for these IDs by construction (no over-capture); assert V/V/M parity.
+		if rf != ef {
+			t.Fatalf("%s: family disagrees raw=%q empty=%q (test precondition: pick a non-over-capture ID)", id, rf, ef)
+		}
+		if rv != ev || rver != ever || rmod != emod {
+			t.Errorf("%s: raw-populated (%q,%q,%q) != empty-raw (%q,%q,%q) — paths not unified",
+				id, rv, rver, rmod, ev, ever, emod)
+		}
+	}
+}
