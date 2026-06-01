@@ -1,0 +1,216 @@
+{
+  "total_multi_provider_ids": 864,
+  "total_divergent_ids": 388,
+  "cat_a_vendor_case_count": 10,
+  "cat_b_bare_gen_split_count": 73,
+  "cat_c_member_variant_count": 248,
+  "cat_d_genuine_mislabel_count": 57,
+  "genuine_mislabel_pairs": [
+    {
+      "family_a": "qwen",
+      "family_b": "qwen3-next-80b-a3b",
+      "count": 4
+    },
+    {
+      "family_a": "hermes",
+      "family_b": "nousresearch",
+      "count": 3
+    },
+    {
+      "family_a": "qwen",
+      "family_b": "qwen3-vl-235b-a22b",
+      "count": 3
+    },
+    {
+      "family_a": "qwen",
+      "family_b": "qwen3-vl-30b-a3b",
+      "count": 3
+    },
+    {
+      "family_a": "aion",
+      "family_b": "llama",
+      "count": 2
+    },
+    {
+      "family_a": "glm",
+      "family_b": "glmv",
+      "count": 2
+    },
+    {
+      "family_a": "gpt",
+      "family_b": "inflection",
+      "count": 2
+    },
+    {
+      "family_a": "l3",
+      "family_b": "llama",
+      "count": 2
+    },
+    {
+      "family_a": "l3.1",
+      "family_b": "llama",
+      "count": 2
+    },
+    {
+      "family_a": "qwen",
+      "family_b": "qwen3-coder-30b-a3b",
+      "count": 2
+    },
+    {
+      "family_a": "qwen",
+      "family_b": "qwen3-vl-8b",
+      "count": 2
+    },
+    {
+      "family_a": "Meta",
+      "family_b": "llama",
+      "count": 1
+    },
+    {
+      "family_a": "aion",
+      "family_b": "deepseek",
+      "count": 1
+    },
+    {
+      "family_a": "allenai",
+      "family_b": "olmo",
+      "count": 1
+    },
+    {
+      "family_a": "alpha",
+      "family_b": "owl",
+      "count": 1
+    },
+    {
+      "family_a": "alpha",
+      "family_b": "weaver",
+      "count": 1
+    },
+    {
+      "family_a": "codellama",
+      "family_b": "llama",
+      "count": 1
+    },
+    {
+      "family_a": "glm",
+      "family_b": "intellect",
+      "count": 1
+    },
+    {
+      "family_a": "gpt",
+      "family_b": "o",
+      "count": 1
+    },
+    {
+      "family_a": "gpt",
+      "family_b": "wizardlm",
+      "count": 1
+    },
+    {
+      "family_a": "gpt-4o",
+      "family_b": "o",
+      "count": 1
+    },
+    {
+      "family_a": "gpt-audio",
+      "family_b": "o",
+      "count": 1
+    },
+    {
+      "family_a": "hermes",
+      "family_b": "llama",
+      "count": 1
+    },
+    {
+      "family_a": "l3.3",
+      "family_b": "llama",
+      "count": 1
+    },
+    {
+      "family_a": "lfm",
+      "family_b": "liquid",
+      "count": 1
+    },
+    {
+      "family_a": "llama",
+      "family_b": "magnum",
+      "count": 1
+    },
+    {
+      "family_a": "llama",
+      "family_b": "remm",
+      "count": 1
+    },
+    {
+      "family_a": "llama-3.3-nemotron-super-49b",
+      "family_b": "nemotron",
+      "count": 1
+    },
+    {
+      "family_a": "ministral",
+      "family_b": "mistral",
+      "count": 1
+    },
+    {
+      "family_a": "mistral",
+      "family_b": "mixtral-8x22b",
+      "count": 1
+    },
+    {
+      "family_a": "mistral",
+      "family_b": "pixtral-large",
+      "count": 1
+    },
+    {
+      "family_a": "mistral",
+      "family_b": "voxtral",
+      "count": 1
+    },
+    {
+      "family_a": "o",
+      "family_b": "o4-mini",
+      "count": 1
+    },
+    {
+      "family_a": "qwen",
+      "family_b": "qwen2.5-vl-72b",
+      "count": 1
+    },
+    {
+      "family_a": "qwen",
+      "family_b": "qwen3-coder",
+      "count": 1
+    },
+    {
+      "family_a": "qwen",
+      "family_b": "qwen3-coder-480b-a35b",
+      "count": 1
+    },
+    {
+      "family_a": "qwen",
+      "family_b": "qwen3-max",
+      "count": 1
+    },
+    {
+      "family_a": "qwen",
+      "family_b": "qwen3-vl-32b",
+      "count": 1
+    },
+    {
+      "family_a": "qwen",
+      "family_b": "qwen3.7-max",
+      "count": 1
+    },
+    {
+      "family_a": "qwen",
+      "family_b": "qwq",
+      "count": 1
+    },
+    {
+      "family_a": "qwen",
+      "family_b": "text-embedding",
+      "count": 1
+    }
+  ],
+  "snapshot_commit": "6a41e313"
+}
