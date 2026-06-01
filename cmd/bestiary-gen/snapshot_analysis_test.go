@@ -339,11 +339,24 @@ func TestSnapshotAnalysis_CrossProviderDivergences(t *testing.T) {
 	// the base family but still diverge on a deeper hyphenated-version / param-count /
 	// letter-suffix form (e.g. qwen vs qwen-2.5-72b, gpt vs gpt-4o, glm vs glm-5v) —
 	// out of bare-gen scope, so they remain honestly divergent rather than masked.
+	//
+	// SLICE-3 (rc2) family_aliases ledger + uniform thinking/vision-as-modifier
+	// migration: New baseline 259 / A=0 / B=3 / C=212 / D=44 (was 281/0/3/221/57).
+	//  - PART A ledger: l3/l3.1/l3.3 → llama folds (RATIFIED, community Llama-3
+	//    finetunes) cleared the three l3*<->llama CatD pairs — every sao10k/l3* ID now
+	//    decomposes to family "llama" instead of the shorthand seed.
+	//  - PART B modifier migration: removing the deepseek-thinking/kimi-thinking
+	//    /grok-vision overrides + the thinking/vision members/suffixes makes the
+	//    thinking-family IDs (kimi-k2-thinking et al.) decompose CONSISTENTLY to the
+	//    base family with the token surfaced as the first-class Modifier (not Variant),
+	//    converging the family across the empty-raw and raw="<fam>-thinking" providers.
+	// Net: total 281→259 (−22), CatD 57→44 (−13), CatC 221→212 (−9). No previously
+	// agreeing ID broke (verified by suite + NoDateVersions=0 + cross-provider gate).
 	const (
-		divergenceExact = 281
+		divergenceExact = 259
 		// Secondary sanity band — guards against a wholesale snapshot/pipeline
 		// breakage that happens to coincidentally land on a different exact value.
-		divergenceLow  = 250
+		divergenceLow  = 230
 		divergenceHigh = 500
 	)
 	if totalDivergent != divergenceExact {
@@ -371,11 +384,13 @@ func TestSnapshotAnalysis_CrossProviderDivergences(t *testing.T) {
 	// promotion is version-gated, so it does not move these category counts.
 	// SLICE-2: bare_gen_split predicate resolved 70 of 73 CatB (59 converged, 11
 	// reclassified to CatC). CatB → 3 (residual hy/lyria/rnj, no families.json entry).
+	// SLICE-3: ledger l3*→llama folds + thinking/vision modifier migration cleared
+	// 13 CatD ledger candidates (44 remain) and converged 9 CatC IDs (212 remain).
 	const (
 		catAExact = 0   // vendor-prefix/case (SLICE-1 M4 resolved all)
 		catBExact = 3   // bare-gen-split (SLICE-2 cleared 70/73; residual = bases w/o families.json entry)
-		catCExact = 221 // member-variant recovery (+11 former-CatB split-but-still-divergent)
-		catDExact = 57  // genuine family mislabel (ledger candidates)
+		catCExact = 212 // member-variant recovery (SLICE-3: −9 converged via modifier migration)
+		catDExact = 44  // genuine family mislabel (SLICE-3: −13, l3*→llama ledger + thinking/vision)
 	)
 	checkCat := func(name string, got, want int) {
 		if got != want {

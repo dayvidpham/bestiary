@@ -1,29 +1,14 @@
 {
   "total_multi_provider_ids": 864,
-  "total_divergent_ids": 281,
+  "total_divergent_ids": 259,
   "cat_a_vendor_case_count": 0,
   "cat_b_bare_gen_split_count": 3,
-  "cat_c_member_variant_count": 221,
-  "cat_d_genuine_mislabel_count": 57,
+  "cat_c_member_variant_count": 212,
+  "cat_d_genuine_mislabel_count": 44,
   "genuine_mislabel_pairs": [
-    {
-      "family_a": "qwen",
-      "family_b": "qwen3-next-80b-a3b",
-      "count": 4
-    },
     {
       "family_a": "hermes",
       "family_b": "nousresearch",
-      "count": 3
-    },
-    {
-      "family_a": "qwen",
-      "family_b": "qwen3-vl-235b-a22b",
-      "count": 3
-    },
-    {
-      "family_a": "qwen",
-      "family_b": "qwen3-vl-30b-a3b",
       "count": 3
     },
     {
@@ -42,23 +27,13 @@
       "count": 2
     },
     {
-      "family_a": "l3",
-      "family_b": "llama",
-      "count": 2
-    },
-    {
-      "family_a": "l3.1",
-      "family_b": "llama",
-      "count": 2
-    },
-    {
       "family_a": "qwen",
       "family_b": "qwen3-coder-30b-a3b",
       "count": 2
     },
     {
       "family_a": "qwen",
-      "family_b": "qwen3-vl-8b",
+      "family_b": "qwen3-next-80b-a3b",
       "count": 2
     },
     {
@@ -113,11 +88,6 @@
     },
     {
       "family_a": "hermes",
-      "family_b": "llama",
-      "count": 1
-    },
-    {
-      "family_a": "l3.3",
       "family_b": "llama",
       "count": 1
     },
@@ -188,12 +158,22 @@
     },
     {
       "family_a": "qwen",
-      "family_b": "qwen3-max",
+      "family_b": "qwen3-vl-235b-a22b",
+      "count": 1
+    },
+    {
+      "family_a": "qwen",
+      "family_b": "qwen3-vl-30b-a3b",
       "count": 1
     },
     {
       "family_a": "qwen",
       "family_b": "qwen3-vl-32b",
+      "count": 1
+    },
+    {
+      "family_a": "qwen",
+      "family_b": "qwen3-vl-8b",
       "count": 1
     },
     {

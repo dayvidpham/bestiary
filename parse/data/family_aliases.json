@@ -1,0 +1,8 @@
+{
+  "_comment": "Canonical-winner ledger (SLICE-3). Maps a mislabel/shorthand family KEY to its canonical family VALUE, applied AFTER M4 family normalisation and BEFORE bare-gen-split in BOTH parse entrypoints (ParseFamilyDetailed and InferFamilyFromIDWithVariant). The VALUE (canonical target) is validated against allFamilies at load (fail-fast via FamilyAliasesJSONError). Keys are mislabels and need NOT be canonical families. DEFAULT is own-family: genuinely distinct families (mixtral, ministral, qwq, aion, pixtral, voxtral, codellama, magnum, etc.) need NO row — ID-driven decomposition already keeps them self-consistent. Only add a row to remap a leading token to a DIFFERENT canonical family, and ONLY with user sign-off for any fold-into-parent (see bestiary-7ipe IP-5). Sorted alphabetically by key.",
+  "aliases": {
+    "l3": "llama",
+    "l3.1": "llama",
+    "l3.3": "llama"
+  }
+}

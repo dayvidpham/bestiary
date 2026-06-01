@@ -69,12 +69,10 @@ func loadFamiliesJSONMembers(t *testing.T) map[string][]string {
 func TestFamiliesJSON_MembersReachableInSnapshot(t *testing.T) {
 	// deferredUnreachableMembers["<family>"] = set of members allowed to be
 	// unreachable in the current snapshot, each with a documented reason.
-	deferredUnreachableMembers := map[string]map[string]string{
-		"grok": {
-			"vision": "‘vision’ is a modifier (stripped by ExtractModifier), not a recoverable variant; " +
-				"thinking/vision member removal is deferred to SLICE-3 (ro2w-A2)",
-		},
-	}
+	// SLICE-3 removed the thinking/vision members (deepseek/kimi → thinking, grok →
+	// vision) from families.json — they are now uniform Modifiers, not recoverable
+	// variants — so the former grok/"vision" allowlist entry is obsolete and gone.
+	deferredUnreachableMembers := map[string]map[string]string{}
 
 	members := loadFamiliesJSONMembers(t)
 

@@ -138,10 +138,10 @@
   {
     "provider": "moonshot",
     "model_id": "kimi-k2-thinking",
-    "family": "kimi-k2",
-    "variant": "thinking",
+    "family": "kimi",
+    "variant": "",
     "version": "",
-    "modifier": ""
+    "modifier": "thinking"
   },
   {
     "provider": "openai",

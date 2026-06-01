@@ -57,7 +57,8 @@ func TestParseFamily_Overrides(t *testing.T) {
 		{"command-a", "command", "a"},
 		{"command-r", "command", "r"},
 		{"deepseek-flash", "deepseek", "flash"},
-		{"deepseek-thinking", "deepseek", "thinking"},
+		// SLICE-3: deepseek-thinking / grok-vision / kimi-thinking overrides REMOVED —
+		// trailing thinking/vision is now ALWAYS a Modifier (see TestUniformModifierSuffix).
 		{"gemini-embedding", "gemini", "embedding"},
 		{"gemini-flash", "gemini", "flash"},
 		{"gemini-flash-lite", "gemini", "flash-lite"},
@@ -75,11 +76,9 @@ func TestParseFamily_Overrides(t *testing.T) {
 		{"gpt-oss", "gpt", "oss"},
 		{"gpt-pro", "gpt", "pro"},
 		{"grok-beta", "grok", "beta"},
-		{"grok-vision", "grok", "vision"},
 		{"hy3-free", "hy3", "free"},
 		{"kat-coder", "kat", "coder"},
 		{"kimi-free", "kimi", "free"},
-		{"kimi-thinking", "kimi", "thinking"},
 		{"ling-flash-free", "ling", "flash-free"},
 		{"magistral-medium", "magistral", "medium"},
 		{"magistral-small", "magistral", "small"},
@@ -308,17 +307,16 @@ func TestParseFamily_SuffixStripping(t *testing.T) {
 		wantFamily  bestiary.Family
 		wantVariant string
 	}{
-		// All 30 suffix entries from variant_suffixes.json (listed longest-first
+		// All suffix entries from variant_suffixes.json (listed longest-first
 		// in the JSON, but initParseData re-sorts by length so the order here
-		// is documentary only).
+		// is documentary only). SLICE-3 REMOVED "-thinking" and "-vision" — they are
+		// now uniform Modifiers (modifiers.json authoritative), never variant suffixes.
 		{"deep-research", "widget-deep-research", "widget", "deep-research"},
 		{"codex-spark", "acme-codex-spark", "acme", "codex-spark"},
 		{"codex-mini", "baz-codex-mini", "baz", "codex-mini"},
 		{"flash-lite", "acme-flash-lite", "acme", "flash-lite"},
 		{"codex", "acme-codex", "acme", "codex"},
-		{"thinking", "acme-thinking", "acme", "thinking"},
 		{"instruct", "acme-instruct", "acme", "instruct"},
-		{"vision", "acme-vision", "acme", "vision"},
 		{"embed", "acme-embed", "acme", "embed"},
 		{"embedding", "acme-embedding", "acme", "embedding"},
 		{"mini", "foo-mini", "foo", "mini"},
@@ -1072,10 +1070,13 @@ func TestExtractModifier(t *testing.T) {
 // ExtractModifier returns ("","") to avoid encoding the same semantic token in
 // both Variant and Modifier (double-count).
 //
-// Real-world case: moonshotai/kimi-k2-thinking with RawFamily="kimi-thinking".
-// ParseFamily("kimi-thinking") → variant="thinking". The ID ends with "-thinking".
-// Without the guard, ExtractModifier would return modifier="thinking" — double-count.
-// With the guard, it returns ("","") because the trailing token equals the variant.
+// SLICE-3 NOTE: after the uniform thinking/vision-as-modifier migration, the kimi/
+// deepseek "variant=thinking" inputs below are SYNTHETIC — production no longer
+// decomposes those IDs to variant="thinking" (the overrides/suffixes/members were
+// removed; thinking is now the first-class Modifier — see TestUniformModifierSuffix).
+// The variant-guard is RETAINED as a general defensive anti-double-count: should ANY
+// variant ever coincide with a trailing modifier token, it must not be counted twice.
+// These rows pin that guard mechanism; the empty-variant rows pin the new reality.
 //
 // IMPORTANT: bestiary-keqx (SLICE-FIX-V2-5 cycle-2 Fix 3)
 func TestExtractModifier_DoesNotDoubleCountVariant(t *testing.T) {
@@ -1157,6 +1158,67 @@ func TestExtractModifier_DoesNotDoubleCountVariant(t *testing.T) {
 			if gotConsumed != tc.wantConsumed {
 				t.Errorf("ExtractModifier(%q, %q, %q) consumed = %q, want %q",
 					tc.id, tc.family, tc.variant, gotConsumed, tc.wantConsumed)
+			}
+		})
+	}
+}
+
+// TestUniformModifierSuffix is the SLICE-3 acceptance test for the uniform
+// thinking/vision-as-modifier migration: ANY trailing {thinking,vision} token is
+// ALWAYS surfaced as the first-class Modifier and NEVER as the Variant, for ALL
+// families and regardless of whether the token arrives via the model ID, the raw
+// family field ("kimi-thinking", "deepseek-thinking", "grok-vision"), or both.
+//
+// BDD: Given a model whose ID and/or raw family carries a trailing thinking/vision
+// token, When ParseFamilyDetailed runs, Then Modifier == that token AND Variant is
+// never that token.
+//
+// SCOPE NOTE: version-presence (e.g. "3.7" in claude-3-7-sonnet-thinking, "k2" as a
+// kimi variant) is OUT of scope here — that is SLICE-8 (version extraction). This
+// test pins the modifier-classification invariant, not the full tuple's version.
+func TestUniformModifierSuffix(t *testing.T) {
+	t.Parallel()
+
+	cases := []struct {
+		desc         string
+		rawFamily    bestiary.Family
+		id           bestiary.ModelID
+		provider     bestiary.Provider
+		wantFamily   bestiary.Family
+		wantModifier string
+	}{
+		// The two headline cases mandated by the slice spec: BOTH must yield
+		// modifier=thinking with the token NEVER appearing as the variant.
+		{"claude-3-7-sonnet-thinking (empty raw)", "", "claude-3-7-sonnet-thinking", "nano-gpt", "claude", "thinking"},
+		{"kimi-k2-thinking (empty raw)", "", "kimi-k2-thinking", "302ai", "kimi", "thinking"},
+		// Raw-family-encoded modifier with the SAME token also in the ID.
+		{"kimi-k2-thinking (raw=kimi-thinking)", "kimi-thinking", "kimi-k2-thinking", "ollama-cloud", "kimi", "thinking"},
+		// Raw-family-encoded modifier with NO modifier token in the ID — the modifier
+		// must be recovered from the raw family, never silently dropped.
+		{"deepseek-thinking raw, id=deepseek-r1", "deepseek-thinking", "deepseek-r1", "iflowcn", "deepseek", "thinking"},
+		// Vision is treated identically to thinking.
+		{"grok-vision raw + id", "grok-vision", "grok-vision", "xai", "grok", "vision"},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.desc, func(t *testing.T) {
+			t.Parallel()
+			family, variant, _, modifier, _ := bestiary.ParseFamilyDetailed(tc.rawFamily, tc.id, tc.provider)
+			if family != tc.wantFamily {
+				t.Errorf("ParseFamilyDetailed(%q, %q) family = %q, want %q",
+					tc.rawFamily, tc.id, family, tc.wantFamily)
+			}
+			if modifier != tc.wantModifier {
+				t.Errorf("ParseFamilyDetailed(%q, %q) modifier = %q, want %q\n"+
+					"  What: trailing %q token was NOT surfaced as the first-class Modifier\n"+
+					"  Why: SLICE-3 uniform migration — thinking/vision are ALWAYS modifiers",
+					tc.rawFamily, tc.id, modifier, tc.wantModifier, tc.wantModifier)
+			}
+			// The invariant: the modifier token must NEVER be encoded as the variant.
+			if variant == tc.wantModifier {
+				t.Errorf("ParseFamilyDetailed(%q, %q) variant = %q — a trailing modifier token "+
+					"must NEVER be classified as the Variant (SLICE-3 uniform migration)",
+					tc.rawFamily, tc.id, variant)
 			}
 		})
 	}
@@ -1421,9 +1483,12 @@ func TestParseFamilyDetailed_Mode2_NegativeCases(t *testing.T) {
 		provider  bestiary.Provider
 		note      string
 	}{
-		// Variant IS the modifier — suffix stripping already handled it.
-		{"claude-thinking", "claude-thinking", "anthropic", "thinking is the parsed variant"},
-		{"gpt-vision", "gpt-vision", "openai", "vision is the parsed variant"},
+		// SLICE-3: the former claude-thinking / gpt-vision rows were REMOVED. Under the
+		// uniform thinking/vision-as-modifier migration those tokens are never the parsed
+		// variant, so they correctly surface as the first-class Modifier and — with no
+		// variant absorbing them — DO trip Mode 2 as an honest audit signal (same as
+		// claude-opus-4-thinking). Covered by TestParseFamilyDetailed_KnownSuffixOverflow
+		// and TestUniformModifierSuffix.
 		// Clean IDs with no trailing modifier.
 		{"claude-opus", "claude-opus-4-20250514", "anthropic", "date suffix, not modifier"},
 		{"claude-haiku", "claude-haiku-4-5", "anthropic", "version suffix, not modifier"},
@@ -1695,15 +1760,18 @@ func TestInferFamilyFromIDWithVariant_R3c(t *testing.T) {
 			wantVersion: "4.1",
 		},
 		{
-			// Trace 2: genuine-variant guard — kimi-k2-thinking (hypothetical empty raw_family).
+			// Trace 2 (SLICE-3 RED→GREEN flip): kimi-k2-thinking (empty raw_family).
 			// exposed=kimi-k2 → cleaned=kimi-k2 → PFWV → (kimi-k2,"","") passthrough →
-			// GUARD-2 declines (fProv == cleaned) → existing flow → variant=thinking preserved.
-			// Key: the variant MUST be "thinking", not "". Family is "kimi-k2" (no over-strip).
-			desc:        "kimi-k2-thinking-style passthrough → variant=thinking",
+			// GUARD-2 declines (fProv == cleaned). With "-thinking" removed from the variant
+			// suffixes and kimi members, the existing flow now takes baseFamily="kimi" (first
+			// token) and recoverMemberVariant finds no variant → (kimi,"",""). The trailing
+			// "thinking" is NOT a variant here; ParseFamilyDetailed surfaces it as the
+			// first-class Modifier (InferFamilyFromIDWithVariant itself returns no modifier).
+			desc:        "kimi-k2-thinking empty raw_family → (kimi,\"\",\"\"); thinking is a Modifier",
 			id:          "kimi-k2-thinking",
 			provider:    "moonshot",
-			wantFamily:  "kimi-k2",
-			wantVariant: "thinking",
+			wantFamily:  "kimi",
+			wantVariant: "",
 			wantVersion: "",
 		},
 		{
@@ -1787,19 +1855,28 @@ func TestParseFamilyDetailed_5Tuple(t *testing.T) {
 			wantModifier: "",
 		},
 		{
-			// GUARD-2 passthrough: empty rawFamily, id="kimi-k2-thinking".
-			// InferFamilyFromIDWithVariant path: exposed="kimi-k2" (after trimOneTrailingModifier
-			// strips -thinking), cleaned="kimi-k2" → PFWV → (kimi-k2,"","") passthrough →
-			// GUARD-2 declines (fProv == cleaned "kimi-k2") → existing flow preserves variant=thinking.
-			// ParseFamilyDetailed with rawFamily="" must preserve variant=thinking (not over-strip).
-			desc:         "kimi-k2-thinking empty rawFamily → GUARD-2 preserves variant=thinking",
+			// SLICE-3 uniform thinking/vision-as-modifier migration (RED→GREEN flip):
+			// empty rawFamily, id="kimi-k2-thinking". With "-thinking" removed from the
+			// variant suffixes and "thinking" removed from kimi's members, PFWV no longer
+			// suffix-strips it: the existing flow takes baseFamily=firstToken="kimi" and
+			// recoverMemberVariant finds NO variant ("k2" is not a kimi member) → (kimi,"","").
+			// ExtractModifier then surfaces "thinking" as the first-class Modifier. The
+			// trailing token is ALWAYS a Modifier, never a Variant.
+			//
+			// NOTE (surfaced to supervisor-rc2 for sign-off): the must-hold tuple names
+			// variant="k2", but "k2" is not currently a recoverable kimi variant (kimi-k2
+			// WITHOUT -thinking already decomposes to variant="" today). Promoting "k2"
+			// would require ADDING it to kimi's members — a CatC member-recovery curation
+			// beyond this slice's remove-only scope — and would shift every kimi-k2* model.
+			// This slice delivers CONSISTENCY (all providers → kimi, "", mod=thinking).
+			desc:         "kimi-k2-thinking empty rawFamily → thinking is Modifier, not Variant",
 			rawFamily:    "",
 			id:           "kimi-k2-thinking",
 			provider:     "moonshot",
-			wantFamily:   "kimi-k2",
-			wantVariant:  "thinking",
+			wantFamily:   "kimi",
+			wantVariant:  "",
 			wantVersion:  "",
-			wantModifier: "",
+			wantModifier: "thinking",
 		},
 	}
 
@@ -3165,17 +3242,20 @@ func TestRecoverMemberVariant_SubsumesB1(t *testing.T) {
 func TestRecoverMemberVariant_SubsumesAmputation(t *testing.T) {
 	t.Parallel()
 
-	// Existing GUARD-2 test: kimi-k2-thinking must still give (kimi-k2, thinking, "").
-	// This is NOT an amputation case (ParseFamilyWithVersion finds a decomposition
-	// via suffix "-thinking"), so it must remain unchanged.
-	t.Run("GUARD-2 kimi-k2-thinking preserved", func(t *testing.T) {
+	// SLICE-3 RED→GREEN flip: kimi-k2-thinking now gives (kimi, "", ""). With
+	// "-thinking" removed from the variant suffixes and kimi members, PFWV no longer
+	// suffix-strips it, so the amputation path IS taken: baseFamily="kimi" (first
+	// token) and recoverMemberVariant finds no variant ("k2" is not a kimi member).
+	// The trailing "thinking" is a Modifier (surfaced by ParseFamilyDetailed's
+	// ExtractModifier), never a Variant.
+	t.Run("kimi-k2-thinking → (kimi,\"\",\"\"); thinking is a Modifier", func(t *testing.T) {
 		t.Parallel()
 		fam, variant, version := bestiary.InferFamilyFromIDWithVariant("kimi-k2-thinking", "moonshot")
-		if fam != "kimi-k2" {
-			t.Errorf("family = %q, want %q", fam, "kimi-k2")
+		if fam != "kimi" {
+			t.Errorf("family = %q, want %q", fam, "kimi")
 		}
-		if variant != "thinking" {
-			t.Errorf("variant = %q, want %q", variant, "thinking")
+		if variant != "" {
+			t.Errorf("variant = %q, want %q", variant, "")
 		}
 		if version != "" {
 			t.Errorf("version = %q, want %q", version, "")
@@ -3263,6 +3343,106 @@ func TestFamiliesJSON_LoaderFailFast(t *testing.T) {
 			t.Error("'openai' is a provider name, not a Family — should fail key validation")
 		}
 	})
+}
+
+// ============================================================================
+// SLICE-3 (rc2) — family_aliases canonical-winner ledger
+// ============================================================================
+
+// TestFamilyAliasesJSON_LoaderFailFast verifies the SLICE-3 ledger validation
+// contract: alias TARGETS (canonical family values) must be known families, while
+// alias KEYS (mislabels) are deliberately NOT validated.
+//
+// BDD: Given a ledger row whose TARGET is a typo (not in allFamilies), When
+// FamilyAliasesJSONError is called, Then a non-nil actionable error naming the bad
+// target is returned. Given a non-canonical KEY mapping to a valid target, Then no
+// error (keys are arbitrary mislabels by design).
+func TestFamilyAliasesJSON_LoaderFailFast(t *testing.T) {
+	t.Parallel()
+
+	t.Run("valid target passes (ratified l3 → llama)", func(t *testing.T) {
+		t.Parallel()
+		data := []byte(`{"aliases": {"l3": "llama", "l3.1": "llama"}}`)
+		if err := bestiary.FamilyAliasesJSONError(data); err != nil {
+			t.Errorf("valid target 'llama' caused error: %v", err)
+		}
+	})
+
+	t.Run("typo target fails with actionable error", func(t *testing.T) {
+		t.Parallel()
+		data := []byte(`{"aliases": {"l3": "lluma"}}`)
+		err := bestiary.FamilyAliasesJSONError(data)
+		if err == nil {
+			t.Fatal("typo target 'lluma' did not cause error — target validation not triggered")
+		}
+		if !strings.Contains(err.Error(), "lluma") {
+			t.Errorf("error %q does not mention the bad target 'lluma' — not actionable", err.Error())
+		}
+	})
+
+	t.Run("non-canonical KEY with valid target is accepted (keys are mislabels)", func(t *testing.T) {
+		t.Parallel()
+		// "l3.1" is NOT itself a canonical family — it is a mislabel. Only the TARGET
+		// ("llama") must be canonical. This must pass.
+		data := []byte(`{"aliases": {"l3.1": "llama"}}`)
+		if err := bestiary.FamilyAliasesJSONError(data); err != nil {
+			t.Errorf("non-canonical key 'l3.1' → valid target 'llama' should pass, got: %v", err)
+		}
+	})
+}
+
+// TestFamilyAliasesLedger_Fold verifies the RATIFIED l3/l3.1/l3.3 → llama fold
+// end-to-end through ParseFamilyDetailed (the canonical-winner ledger applied after
+// M4 family normalisation, before bare-gen-split). Community Llama-3 finetunes
+// (sao10k/*) labelled with the "L3.x" shorthand must canonicalise to family "llama"
+// so the family agrees cross-provider.
+//
+// SCOPE NOTE: the finetune name and the embedded "3.x" version are residual here —
+// version recovery for folded families is SLICE-8 (version-presence), out of scope.
+func TestFamilyAliasesLedger_Fold(t *testing.T) {
+	t.Parallel()
+
+	cases := []struct {
+		id         bestiary.ModelID
+		wantFamily bestiary.Family
+	}{
+		{"sao10k/l3-euryale-70b", "llama"},
+		{"sao10K/l3-8b-lunaris", "llama"},
+		{"sao10k/l3.1-70b-hanami-x1", "llama"},
+		{"sao10k/l3.1-euryale-70b", "llama"},
+		{"sao10k/l3.3-euryale-70b", "llama"},
+	}
+	for _, tc := range cases {
+		t.Run(string(tc.id), func(t *testing.T) {
+			t.Parallel()
+			family, _, _, _, _ := bestiary.ParseFamilyDetailed("", tc.id, "p")
+			if family != tc.wantFamily {
+				t.Errorf("ParseFamilyDetailed(\"\", %q) family = %q, want %q\n"+
+					"  What: the family_aliases ledger fold (l3* → llama) did not fire\n"+
+					"  Why: RATIFIED row in parse/data/family_aliases.json must remap after M4",
+					tc.id, family, tc.wantFamily)
+			}
+		})
+	}
+}
+
+// TestFamilyAliasesLedger_DefaultOwnFamily verifies the DEFAULT own-family rule:
+// genuinely distinct families that have NO ledger row are left unchanged (no
+// accidental fold). These are the families the supervisor explicitly ratified as
+// own-family in bestiary-7ipe.
+func TestFamilyAliasesLedger_DefaultOwnFamily(t *testing.T) {
+	t.Parallel()
+
+	for _, raw := range []bestiary.Family{"mixtral", "ministral", "qwq", "aion", "pixtral", "voxtral"} {
+		t.Run(string(raw), func(t *testing.T) {
+			t.Parallel()
+			family, _, _, _, _ := bestiary.ParseFamilyDetailed(raw, bestiary.ModelID(raw), "p")
+			if family != raw {
+				t.Errorf("ParseFamilyDetailed(%q,…) family = %q, want %q (DEFAULT own-family: no ledger row)",
+					raw, family, raw)
+			}
+		})
+	}
 }
 
 // ============================================================================
@@ -3360,7 +3540,11 @@ func TestM2_BareGenSplit_NonSplit(t *testing.T) {
 		{"wan2 NOT split (wan∉families)", "", "wan2-t2v", "p", "wan2", ""},
 		{"hy3 NOT split (hy∉families)", "", "tencent/hy3-preview", "p", "hy3", ""},
 		{"r1 NOT split (r∉families)", "", "r1", "p", "r1", ""},
-		{"l3 NOT split (l∉families)", "", "l3-8b", "p", "l3", ""},
+		// SLICE-3: bare-gen still DECLINES "l3" (base "l" ∉ families.json), but the
+		// family_aliases ledger then folds l3 → llama (RATIFIED: L3.x = Llama-3
+		// shorthand). The closed-predicate guarantee (no bare-gen split) is unchanged;
+		// the canonical family arrives via the ledger remap, not the split.
+		{"l3 → llama via ledger (bare-gen declines: l∉families)", "", "l3-8b", "p", "llama", ""},
 		// mimo: no trailing digit → never a split candidate (digit-suffix guard).
 		{"mimo NOT split (no trailing digit)", "", "mimo-v1", "p", "mimo", ""},
 		// Letter-prefixed dotted numerics remain VARIANT (version_patterns precedent).

@@ -67,6 +67,13 @@ type parseData struct {
 	// vendors) from parse/data/vendor_aliases.json. Used for M3 vendor strip:
 	// model IDs starting with <alias>/ or <alias>- have the prefix stripped.
 	vendorAliases []string
+
+	// familyAliases is the canonical-winner ledger (SLICE-3): mislabel/shorthand
+	// family key → canonical family. Populated from parse/data/family_aliases.json.
+	// Keys are lowercase mislabels (need NOT be canonical); VALUES are canonical
+	// families validated against allFamilies at load (fail-fast). Applied after M4
+	// family normalisation and before bare-gen-split in both parse entrypoints.
+	familyAliases map[Family]Family
 }
 
 // compiledPattern is a versionPattern with its compiled regexp.
@@ -342,6 +349,40 @@ func initParseData() (*parseData, error) {
 		vendorAliases[i] = strings.ToLower(v)
 	}
 
+	// Load family_aliases.json (SLICE-3 canonical-winner ledger).
+	rawAliases, err := parseDataFS.ReadFile("parse/data/family_aliases.json")
+	if err != nil {
+		return nil, fmt.Errorf(
+			"bestiary parse: load family_aliases.json: %w\n"+
+				"  What: cannot read embedded parse data file\n"+
+				"  Where: parse/data/family_aliases.json\n"+
+				"  Why: file missing from embedded FS (should not happen in production build)\n"+
+				"  How to fix: ensure parse/data/family_aliases.json is present before running go build",
+			err,
+		)
+	}
+	if err := FamilyAliasesJSONError(rawAliases); err != nil {
+		return nil, err
+	}
+	var aliasFile struct {
+		Comment string            `json:"_comment"`
+		Aliases map[string]string `json:"aliases"`
+	}
+	if err := json.Unmarshal(rawAliases, &aliasFile); err != nil {
+		return nil, fmt.Errorf(
+			"bestiary parse: parse family_aliases.json: %w\n"+
+				"  What: JSON unmarshal failed\n"+
+				"  Where: parse/data/family_aliases.json\n"+
+				"  How to fix: validate JSON syntax in the data file",
+			err,
+		)
+	}
+	// Normalise keys to lowercase (M4 boundary); values are canonical families.
+	familyAliases := make(map[Family]Family, len(aliasFile.Aliases))
+	for key, target := range aliasFile.Aliases {
+		familyAliases[Family(strings.ToLower(key))] = Family(strings.ToLower(target))
+	}
+
 	return &parseData{
 		overrides:     overrides,
 		suffixes:      suffixes,
@@ -349,6 +390,7 @@ func initParseData() (*parseData, error) {
 		modifiers:     modifiers,
 		families:      families,
 		vendorAliases: vendorAliases,
+		familyAliases: familyAliases,
 	}, nil
 }
 
@@ -403,6 +445,64 @@ func FamiliesJSONKeyError(data []byte) error {
 		}
 	}
 	return nil
+}
+
+// FamilyAliasesJSONError validates the SLICE-3 canonical-winner ledger bytes
+// (family_aliases.json shape: {"_comment": ..., "aliases": {key: target, ...}}).
+// Each alias TARGET (the canonical family value) must be a known Family
+// (case-insensitive match against allFamilies). Alias KEYS are mislabels and are
+// deliberately NOT validated — they need not be canonical. Returns nil when every
+// target is valid, or an actionable error on the first unknown target.
+//
+// Reuses familyKeyKnown (SLICE-1) so the ledger and families.json share one
+// fail-fast validation contract. Used by initParseData (load-time fail-fast) and
+// by tests to verify the contract without mutating embedded data.
+//
+// BDD: Given a ledger row {"l3": "lluma"} (typo target), When FamilyAliasesJSONError
+// is called, Then a non-nil error naming the bad target is returned.
+func FamilyAliasesJSONError(data []byte) error {
+	var m struct {
+		Aliases map[string]string `json:"aliases"`
+	}
+	if err := json.Unmarshal(data, &m); err != nil {
+		return fmt.Errorf(
+			"bestiary parse: validate family_aliases.json: %w\n"+
+				"  What: JSON unmarshal failed\n"+
+				"  Where: parse/data/family_aliases.json\n"+
+				"  How to fix: validate JSON syntax; expected {\"aliases\": {key: target}}",
+			err,
+		)
+	}
+	for key, target := range m.Aliases {
+		if !familyKeyKnown(target) {
+			return fmt.Errorf(
+				"bestiary parse: family_aliases.json target %q (for key %q) is not a known family\n"+
+					"  What: unrecognised canonical-family TARGET in the SLICE-3 ledger\n"+
+					"  Where: family_aliases.json alias %q → %q\n"+
+					"  Why: the target does not match (case-insensitively) any value in allFamilies"+
+					" (families_gen.go:182-357)\n"+
+					"  How to fix: the alias VALUE must be a canonical family (e.g. \"llama\", \"qwen\");"+
+					" check for typos. Alias KEYS may be arbitrary mislabels, but TARGETS must be canonical",
+				target, key, key, target,
+			)
+		}
+	}
+	return nil
+}
+
+// remapFamilyAlias applies the SLICE-3 canonical-winner ledger to family: if a
+// ledger row maps family (compared case-insensitively) to a canonical target, the
+// target is returned; otherwise family is returned unchanged (DEFAULT own-family).
+// Called at the SLICE-3 insertion point (after M4 normalisation, before
+// bare-gen-split) in both parse entrypoints.
+func remapFamilyAlias(pd *parseData, family Family) Family {
+	if pd == nil || family == "" {
+		return family
+	}
+	if target, ok := pd.familyAliases[Family(strings.ToLower(string(family)))]; ok {
+		return target
+	}
+	return family
 }
 
 // ParseDataReady returns the error (if any) from the one-time initialization of
@@ -963,6 +1063,12 @@ func InferFamilyFromIDWithVariant(id ModelID, p Provider) (Family, string, strin
 			}
 			// M4: lowercase Family field at the output boundary.
 			outFamily := Family(strings.ToLower(string(fProv)))
+			// SLICE-3 INSERTION POINT: family_aliases ledger remap (after M4, before
+			// bare-gen-split). This modifier-stripping branch returns early, so the
+			// ledger must be applied here too for symmetry. DEFAULT own-family → no-op.
+			if pd, pdErr := loadParseData(); pdErr == nil {
+				outFamily = remapFamilyAlias(pd, outFamily)
+			}
 			// SLICE-2 bare_gen_split: this modifier-stripping branch returns early
 			// (before the pipeline insertion point below), so apply the split here too
 			// — e.g. "gemini-3-flash-preview" (preview stripped) leaves family
@@ -1011,6 +1117,14 @@ func InferFamilyFromIDWithVariant(id ModelID, p Provider) (Family, string, strin
 		baseFamily := Family(strings.ToLower(firstToken(stripped)))
 		// Remaining tokens after the first (family) token are candidate member zones.
 		remainingTokens := tokens[1:]
+		// SLICE-3 INSERTION POINT: family_aliases ledger remap (after M4, before
+		// bare-gen-split). Folds an inferred mislabel/shorthand seed to its canonical
+		// family (e.g. "l3.1" → "llama" for community Llama-3 finetunes) so the family
+		// agrees cross-provider; recoverMemberVariant then runs against the canonical
+		// family's member list. DEFAULT own-family → no-op.
+		if pd, pdErr := loadParseData(); pdErr == nil {
+			baseFamily = remapFamilyAlias(pd, baseFamily)
+		}
 		// SLICE-2 bare_gen_split: when the family seed is a glued <base><int> token
 		// (e.g. "qwen3", "o1"), split it so the generation surfaces as version. Gated
 		// on the closed predicate (has-entry ∧ not-digit-suffixed ∧ bare_gen_split).
@@ -1029,7 +1143,12 @@ func InferFamilyFromIDWithVariant(id ModelID, p Provider) (Family, string, strin
 	// M4: lowercase Family field at the output boundary.
 	family = Family(strings.ToLower(string(family)))
 
-	// SLICE-3 INSERTION POINT: family_aliases ledger remap (after M4, before bare-gen-split)
+	// SLICE-3 INSERTION POINT: family_aliases ledger remap (after M4, before bare-gen-split).
+	// DEFAULT own-family → no-op; a ledger row remaps a mislabel to its canonical family.
+	if pd, pdErr := loadParseData(); pdErr == nil {
+		family = remapFamilyAlias(pd, family)
+	}
+
 	// SLICE-2 INSERTION POINT: bare_gen_split closed predicate (before recoverMemberVariant)
 	// Split a glued/hyphenated <base><int> family token (e.g. "qwen3", "gpt-5") into
 	// its base family + generation version. Closed predicate (splitBareGen). Only
@@ -1247,12 +1366,34 @@ const (
 // IP-1: The return order is (family, variant, version, modifier, *ParseFailure).
 // SLICE-2 (codegen wiring) depends on this exact 5-tuple shape — do NOT reorder.
 func ParseFamilyDetailed(raw Family, id ModelID, p Provider) (Family, string, string, string, *ParseFailure) {
-	family, variant, version := ParseFamilyWithVersion(raw)
+	// SLICE-3 (uniform thinking/vision-as-modifier migration): a trailing
+	// {thinking,vision,…} token embedded in the RAW family is ALWAYS a modifier,
+	// never a variant. models.dev encodes the modifier in the family field for some
+	// providers (e.g. "deepseek-thinking", "kimi-thinking", "grok-vision"). Strip it
+	// BEFORE decomposition so the family normalises (kimi-thinking → kimi); the
+	// stripped token is surfaced as the modifier below (rawModifier) and takes effect
+	// only when the model ID does not itself carry a trailing modifier that
+	// ExtractModifier(id, …) can find (e.g. raw="deepseek-thinking", id="deepseek-r1"
+	// — the "thinking" lives ONLY in the raw family).
+	cleanRaw := raw
+	rawModifier := ""
+	if trimmed := Family(trimOneTrailingModifier(string(raw))); trimmed != raw {
+		rawModifier = strings.TrimPrefix(string(raw)[len(trimmed):], "-")
+		cleanRaw = trimmed
+	}
+
+	family, variant, version := ParseFamilyWithVersion(cleanRaw)
 
 	// M4: lowercase Family field at the initial parse boundary.
 	// Applied to all raw_family inputs including empty string (no-op on "").
 	// For raw=="" the InferFamilyFromIDWithVariant path below applies its own M4.
 	family = Family(strings.ToLower(string(family)))
+
+	// SLICE-3 INSERTION POINT: family_aliases ledger remap (after M4, before bare-gen-split).
+	// DEFAULT own-family → no-op; a ledger row remaps a mislabel to its canonical family.
+	if pd, pdErr := loadParseData(); pdErr == nil {
+		family = remapFamilyAlias(pd, family)
+	}
 
 	// No failure annotation when the input is empty: delegate to
 	// InferFamilyFromIDWithVariant so that GUARD-2 passthrough cases (e.g.
@@ -1267,6 +1408,12 @@ func ParseFamilyDetailed(raw Family, id ModelID, p Provider) (Family, string, st
 	// ── Δ1 extract-first: attempt to populate version from the model ID ───────
 	// Extract modifier first so it doesn't pollute version/date extraction.
 	modifier, consumed := ExtractModifier(id, family, variant)
+	// SLICE-3: when the modifier was encoded in the RAW family (not the ID),
+	// ExtractModifier(id, …) finds nothing — fall back to the raw-family modifier so
+	// it is never silently dropped (e.g. raw="deepseek-thinking", id="deepseek-r1").
+	if modifier == "" && rawModifier != "" {
+		modifier = rawModifier
+	}
 	cleanedID := id
 	if consumed != "" {
 		cleanedStr := string(id)
