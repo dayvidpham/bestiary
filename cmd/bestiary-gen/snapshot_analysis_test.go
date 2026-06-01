@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"sort"
+	"slices"
 	"strings"
 	"testing"
 
@@ -35,6 +35,10 @@ type familyTuple struct {
 //   - CatD (genuine family mislabel): none of A/B/C apply; the families are
 //     genuinely inconsistent across providers. These are the ledger candidates
 //     that require manual curation to resolve.
+//
+// CatD is a conservative UPPER BOUND on genuine mislabels: the A/B/C heuristics
+// are deliberately narrow and may miss some auto-fixable patterns, so CatD
+// over-counts by design — the downstream ledger review filters the residue.
 type divergenceCategory int
 
 const (
@@ -184,7 +188,7 @@ func TestSnapshotAnalysis_CrossProviderDivergences(t *testing.T) {
 			multiIDs = append(multiIDs, id)
 		}
 	}
-	sort.Strings(multiIDs)
+	slices.Sort(multiIDs)
 
 	// Identify divergent IDs (those where tuples are not all identical).
 	type divergentID struct {
@@ -216,7 +220,7 @@ func TestSnapshotAnalysis_CrossProviderDivergences(t *testing.T) {
 		for f := range familySet {
 			families = append(families, f)
 		}
-		sort.Slice(families, func(i, j int) bool { return families[i] < families[j] })
+		slices.Sort(families)
 
 		var cat divergenceCategory
 		if len(families) <= 1 {
@@ -230,14 +234,14 @@ func TestSnapshotAnalysis_CrossProviderDivergences(t *testing.T) {
 		for tup := range seenTuples {
 			tupleSlice = append(tupleSlice, tup)
 		}
-		sort.Slice(tupleSlice, func(i, j int) bool {
-			if tupleSlice[i].Family != tupleSlice[j].Family {
-				return tupleSlice[i].Family < tupleSlice[j].Family
+		slices.SortFunc(tupleSlice, func(a, b familyTuple) int {
+			if a.Family != b.Family {
+				return strings.Compare(string(a.Family), string(b.Family))
 			}
-			if tupleSlice[i].Variant != tupleSlice[j].Variant {
-				return tupleSlice[i].Variant < tupleSlice[j].Variant
+			if a.Variant != b.Variant {
+				return strings.Compare(a.Variant, b.Variant)
 			}
-			return tupleSlice[i].Version < tupleSlice[j].Version
+			return strings.Compare(a.Version, b.Version)
 		})
 
 		divergents = append(divergents, divergentID{
@@ -247,7 +251,9 @@ func TestSnapshotAnalysis_CrossProviderDivergences(t *testing.T) {
 			cat:      cat,
 		})
 	}
-	sort.Slice(divergents, func(i, j int) bool { return divergents[i].id < divergents[j].id })
+	slices.SortFunc(divergents, func(a, b divergentID) int {
+		return strings.Compare(a.id, b.id)
+	})
 
 	// Count per category.
 	catCounts := map[divergenceCategory]int{}
@@ -281,14 +287,14 @@ func TestSnapshotAnalysis_CrossProviderDivergences(t *testing.T) {
 	for p, c := range genuinePairCounts {
 		genuinePairs = append(genuinePairs, pairEntry{p, c})
 	}
-	sort.Slice(genuinePairs, func(i, j int) bool {
-		if genuinePairs[i].count != genuinePairs[j].count {
-			return genuinePairs[i].count > genuinePairs[j].count
+	slices.SortFunc(genuinePairs, func(a, b pairEntry) int {
+		if a.count != b.count {
+			return b.count - a.count // descending by count
 		}
-		if genuinePairs[i].pair[0] != genuinePairs[j].pair[0] {
-			return genuinePairs[i].pair[0] < genuinePairs[j].pair[0]
+		if a.pair[0] != b.pair[0] {
+			return strings.Compare(string(a.pair[0]), string(b.pair[0]))
 		}
-		return genuinePairs[i].pair[1] < genuinePairs[j].pair[1]
+		return strings.Compare(string(a.pair[1]), string(b.pair[1]))
 	})
 
 	// ── Assertions ────────────────────────────────────────────────────────────
@@ -296,28 +302,67 @@ func TestSnapshotAnalysis_CrossProviderDivergences(t *testing.T) {
 	totalDivergent := len(divergents)
 	totalMulti := len(multiIDs)
 
-	// The divergence count must be in the expected band (>300, <=500).
-	// The exact baseline is 388 as of snapshot commit 6a41e313.
+	snapshotCommit := loadSnapshotCommit(t)
+
+	// The committed snapshot is a FIXED blob, so the divergence count is a HARD
+	// invariant, not a fuzzy band. Refreshing the snapshot intentionally changes
+	// this number — update divergenceExact in lockstep with the new blob.
+	//
+	// SLICE-5's hardened TestStaticDataset_CrossProviderConsistency is the
+	// authoritative cross-provider gate; THIS analyzer pins the rc2 empirical
+	// baseline (the 388 figure the whole rc2 effort is measured against).
 	const (
+		divergenceExact = 388
+		// Secondary sanity band — guards against a wholesale snapshot/pipeline
+		// breakage that happens to coincidentally land on a different exact value.
 		divergenceLow  = 300
 		divergenceHigh = 500
-		divergenceExact = 388
 	)
+	if totalDivergent != divergenceExact {
+		t.Errorf("divergence count = %d, want exactly %d\n"+
+			"  What: the cross-provider (Family,Variant,Version) divergence count drifted\n"+
+			"  Why: this is the committed-snapshot baseline (snapshot commit %s); it only\n"+
+			"       changes when models_api.json is refreshed OR the parse pipeline changes\n"+
+			"  How to fix: if you refreshed the snapshot intentionally, update divergenceExact\n"+
+			"       (and the category floors below) to the new figures; otherwise a pipeline\n"+
+			"       regression reclassified IDs — investigate ParseFamilyDetailed",
+			totalDivergent, divergenceExact, snapshotCommit)
+	}
 	if totalDivergent < divergenceLow || totalDivergent > divergenceHigh {
-		t.Errorf("divergence count %d is outside expected band [%d, %d]; "+
-			"snapshot or parse pipeline may have changed",
+		t.Errorf("divergence count %d is outside sanity band [%d, %d]; "+
+			"snapshot or parse pipeline broke badly",
 			totalDivergent, divergenceLow, divergenceHigh)
 	}
-	// Warn (not fatal) if the exact baseline drifts.
-	if totalDivergent != divergenceExact {
-		t.Logf("NOTE: divergence count %d differs from exact baseline %d; "+
-			"acceptable if snapshot or pipeline was updated intentionally",
-			totalDivergent, divergenceExact)
+
+	// Pin the per-category counts on the fixed snapshot. These guard against a
+	// silent CatD→CatC (or any cross-category) reclassification that would keep
+	// the total at 388 while changing the genuine-mislabel ledger candidates.
+	// Refreshing the snapshot intentionally changes these — update in lockstep.
+	const (
+		catAExact = 10  // vendor-prefix/case
+		catBExact = 73  // bare-gen-split
+		catCExact = 248 // member-variant recovery
+		catDExact = 57  // genuine family mislabel (ledger candidates)
+	)
+	checkCat := func(name string, got, want int) {
+		if got != want {
+			t.Errorf("%s count = %d, want exactly %d\n"+
+				"  What: a divergent ID was reclassified between categories\n"+
+				"  Why: committed-snapshot baseline (commit %s); a category-count shift\n"+
+				"       with an unchanged total signals silent reclassification (e.g. CatD→CatC)\n"+
+				"  How to fix: if the snapshot was refreshed, update the cat*Exact floors;\n"+
+				"       otherwise investigate the classification heuristic / parse pipeline",
+				name, got, want, snapshotCommit)
+		}
 	}
+	checkCat("CatA (vendor-prefix/case)", catCounts[CatA], catAExact)
+	checkCat("CatB (bare-gen-split)", catCounts[CatB], catBExact)
+	checkCat("CatC (member-variant)", catCounts[CatC], catCExact)
+	checkCat("CatD (genuine-mislabel)", catCounts[CatD], catDExact)
 
 	// ── Log summary ───────────────────────────────────────────────────────────
 
-	t.Logf("=== Cross-Provider Divergence Analysis (snapshot commit 6a41e313) ===")
+	t.Logf("=== Cross-Provider Divergence Analysis (snapshot commit %s) ===", snapshotCommit)
 	t.Logf("Multi-provider model IDs : %d", totalMulti)
 	t.Logf("Divergent IDs (total)    : %d", totalDivergent)
 	t.Logf("  A vendor-prefix/case   : %d", catCounts[CatA])
@@ -349,7 +394,7 @@ func TestSnapshotAnalysis_CrossProviderDivergences(t *testing.T) {
 		CatCCounts:            catCounts[CatC],
 		CatDCounts:            catCounts[CatD],
 		GenuineMislabelPairs:  reportPairs,
-		SnapshotCommit:        "6a41e313",
+		SnapshotCommit:        snapshotCommit,
 	}
 
 	reportBytes, marshalErr := json.MarshalIndent(report, "", "  ")

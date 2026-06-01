@@ -91,3 +91,60 @@ func LoadSnapshotRecords() ([]SnapshotRecord, error) {
 
 	return records, nil
 }
+
+// SnapshotMeta mirrors the committed testdata/snapshot/snapshot_meta.json
+// provenance sidecar. Only the fields consumed by the analyzer are decoded.
+type SnapshotMeta struct {
+	UpstreamGitCommit     string `json:"upstream_git_commit"`
+	UpstreamSchemaVersion string `json:"upstream_schema_version"`
+	CaptureDate           string `json:"capture_date"`
+}
+
+// loadSnapshotMeta reads and decodes testdata/snapshot/snapshot_meta.json.
+func loadSnapshotMeta() (SnapshotMeta, error) {
+	metaPath := filepath.Join(snapshotDir(), "snapshot_meta.json")
+	body, err := os.ReadFile(metaPath)
+	if err != nil {
+		absPath, _ := filepath.Abs(metaPath)
+		return SnapshotMeta{}, fmt.Errorf(
+			"loadSnapshotMeta: cannot read snapshot meta at %s: %w\n"+
+				"  What: the snapshot provenance sidecar is missing or unreadable\n"+
+				"  How to fix: verify cmd/bestiary-gen/testdata/snapshot/snapshot_meta.json exists",
+			absPath, err,
+		)
+	}
+	var meta SnapshotMeta
+	if err := json.Unmarshal(body, &meta); err != nil {
+		return SnapshotMeta{}, fmt.Errorf(
+			"loadSnapshotMeta: cannot decode snapshot_meta.json: %w\n"+
+				"  What: the sidecar JSON does not match the expected SnapshotMeta shape\n"+
+				"  How to fix: ensure upstream_git_commit/upstream_schema_version/capture_date are present",
+			err,
+		)
+	}
+	return meta, nil
+}
+
+// loadSnapshotCommit returns the UpstreamGitCommit recorded in
+// snapshot_meta.json, failing the test if the sidecar is missing or malformed.
+// The analyzer reads this instead of hardcoding the commit hash so a snapshot
+// refresh updates the meta in one place and the test/report follow.
+func loadSnapshotCommit(t testingTB) string {
+	t.Helper()
+	meta, err := loadSnapshotMeta()
+	if err != nil {
+		t.Fatalf("loadSnapshotCommit: %v", err)
+	}
+	if meta.UpstreamGitCommit == "" {
+		t.Fatalf("loadSnapshotCommit: upstream_git_commit is empty in snapshot_meta.json")
+	}
+	return meta.UpstreamGitCommit
+}
+
+// testingTB is the minimal subset of *testing.T used by loadSnapshotCommit,
+// kept local so the loader support file does not import "testing" at the top
+// level for a single helper signature.
+type testingTB interface {
+	Helper()
+	Fatalf(format string, args ...any)
+}
