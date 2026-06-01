@@ -156,6 +156,7 @@
 {"created_at":"2026-04-25T04:20:40Z","created_by":"David Huu Pham","depends_on_id":"bestiary-irak","issue_id":"bestiary-3cmo","type":"blocks"}
 {"created_at":"2026-04-25T04:20:40Z","created_by":"David Huu Pham","depends_on_id":"bestiary-u43a","issue_id":"bestiary-3cmo","type":"blocks"}
 {"created_at":"2026-04-25T02:53:14Z","created_by":"David Huu Pham","depends_on_id":"bestiary-9y8","issue_id":"bestiary-3cz","type":"blocks"}
+{"created_at":"2026-06-01T06:21:26Z","created_by":"David Huu Pham","depends_on_id":"bestiary-34ae","issue_id":"bestiary-3icw","type":"blocks"}
 {"created_at":"2026-05-30T01:30:49Z","created_by":"David Huu Pham","depends_on_id":"bestiary-ifzs","issue_id":"bestiary-3ihm","type":"blocks"}
 {"created_at":"2026-04-04T06:13:15Z","created_by":"David Huu Pham","depends_on_id":"bestiary-2vz","issue_id":"bestiary-3k7","type":"blocks"}
 {"created_at":"2026-04-25T02:55:20Z","created_by":"David Huu Pham","depends_on_id":"bestiary-21k","issue_id":"bestiary-3rb","type":"blocks"}
@@ -892,6 +893,9 @@
 {"created_at":"2026-04-25T03:48:19Z","created_by":"David Huu Pham","depends_on_id":"bestiary-8b4v","issue_id":"bestiary-vz2i","type":"blocks"}
 {"created_at":"2026-04-25T03:48:19Z","created_by":"David Huu Pham","depends_on_id":"bestiary-d0b2","issue_id":"bestiary-vz2i","type":"blocks"}
 {"created_at":"2026-04-25T03:48:19Z","created_by":"David Huu Pham","depends_on_id":"bestiary-szv5","issue_id":"bestiary-vz2i","type":"blocks"}
+{"created_at":"2026-06-01T06:21:48Z","created_by":"David Huu Pham","depends_on_id":"bestiary-7yfo","issue_id":"bestiary-w5dy","type":"blocks"}
+{"created_at":"2026-06-01T06:21:48Z","created_by":"David Huu Pham","depends_on_id":"bestiary-yprj","issue_id":"bestiary-w5dy","type":"blocks"}
+{"created_at":"2026-06-01T06:21:48Z","created_by":"David Huu Pham","depends_on_id":"bestiary-zyp1","issue_id":"bestiary-w5dy","type":"blocks"}
 {"created_at":"2026-05-31T23:28:24Z","created_by":"David Huu Pham","depends_on_id":"bestiary-rwg8","issue_id":"bestiary-w7zh","type":"blocks"}
 {"created_at":"2026-04-04T07:53:48Z","created_by":"David Huu Pham","depends_on_id":"bestiary-9ax","issue_id":"bestiary-wa2","type":"blocks"}
 {"created_at":"2026-04-04T07:55:17Z","created_by":"David Huu Pham","depends_on_id":"bestiary-9r0","issue_id":"bestiary-wa2","type":"blocks"}

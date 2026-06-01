@@ -125,6 +125,8 @@
 {"issue_id":"bestiary-33qe","label":"followup"}
 {"issue_id":"bestiary-33qe","label":"parse"}
 {"issue_id":"bestiary-346","label":"aura:p9-impl:s9-slice"}
+{"issue_id":"bestiary-34ae","label":"aura:p10-impl:s10-review"}
+{"issue_id":"bestiary-34ae","label":"aura:severity:important"}
 {"issue_id":"bestiary-35qs","label":"aura:p10-impl:s10-review"}
 {"issue_id":"bestiary-35qs","label":"aura:severity:minor"}
 {"issue_id":"bestiary-36uf","label":"aura:p10-impl:s10-review"}
@@ -141,6 +143,8 @@
 {"issue_id":"bestiary-3gc2","label":"aura:severity:important"}
 {"issue_id":"bestiary-3hwv","label":"aura:p10-impl:s10-review"}
 {"issue_id":"bestiary-3hwv","label":"aura:severity:minor"}
+{"issue_id":"bestiary-3icw","label":"aura:p10-impl:s10-review"}
+{"issue_id":"bestiary-3icw","label":"aura:severity:important"}
 {"issue_id":"bestiary-3ihm","label":"aura:p9-impl:s9-slice"}
 {"issue_id":"bestiary-3k7","label":"aura:p9-impl:s9-slice"}
 {"issue_id":"bestiary-3qwy","label":"aura:p4-plan:s4-review"}
@@ -325,6 +329,8 @@
 {"issue_id":"bestiary-7wx","label":"aura:p11-user:s11-uat"}
 {"issue_id":"bestiary-7xs0","label":"aura:p10-impl:s10-review"}
 {"issue_id":"bestiary-7xs0","label":"aura:severity:minor"}
+{"issue_id":"bestiary-7yfo","label":"aura:p10-impl:s10-review"}
+{"issue_id":"bestiary-7yfo","label":"aura:severity:minor"}
 {"issue_id":"bestiary-816","label":"aura:p9-impl:s9-slice"}
 {"issue_id":"bestiary-87t5","label":"aura:p10-impl:s10-review"}
 {"issue_id":"bestiary-87t5","label":"aura:severity:important"}
@@ -1254,6 +1260,8 @@
 {"issue_id":"bestiary-vxqr","label":"aura:p10-impl:s10-review"}
 {"issue_id":"bestiary-vxqr","label":"aura:severity:minor"}
 {"issue_id":"bestiary-vz2i","label":"aura:p10-impl:s10-review"}
+{"issue_id":"bestiary-w5dy","label":"aura:p10-impl:s10-review"}
+{"issue_id":"bestiary-w5dy","label":"aura:severity:minor"}
 {"issue_id":"bestiary-w7zh","label":"aura:p9-impl:s9-slice"}
 {"issue_id":"bestiary-w7zh","label":"followup"}
 {"issue_id":"bestiary-w7zh","label":"parse"}
@@ -1356,6 +1364,8 @@
 {"issue_id":"bestiary-ylb8","label":"aura:severity:blocker"}
 {"issue_id":"bestiary-ym4v","label":"aura:p10-impl:s10-review"}
 {"issue_id":"bestiary-ym4v","label":"aura:severity:important"}
+{"issue_id":"bestiary-yprj","label":"aura:p10-impl:s10-review"}
+{"issue_id":"bestiary-yprj","label":"aura:severity:minor"}
 {"issue_id":"bestiary-yuy0","label":"aura:p10-impl:s10-review"}
 {"issue_id":"bestiary-yuy0","label":"aura:severity:minor"}
 {"issue_id":"bestiary-yv6j","label":"aura:p10-impl:s10-review"}
@@ -1393,3 +1403,5 @@
 {"issue_id":"bestiary-znj1","label":"aura:p10-impl:s10-review"}
 {"issue_id":"bestiary-zno2","label":"aura:p10-impl:s10-review"}
 {"issue_id":"bestiary-zno2","label":"aura:severity:minor"}
+{"issue_id":"bestiary-zyp1","label":"aura:p10-impl:s10-review"}
+{"issue_id":"bestiary-zyp1","label":"aura:severity:minor"}
