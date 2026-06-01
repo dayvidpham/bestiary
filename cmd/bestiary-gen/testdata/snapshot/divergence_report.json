@@ -1,10 +1,10 @@
 {
   "total_multi_provider_ids": 864,
-  "total_divergent_ids": 126,
+  "total_divergent_ids": 68,
   "cat_a_vendor_case_count": 0,
-  "cat_b_bare_gen_split_count": 3,
-  "cat_c_member_variant_count": 79,
-  "cat_d_genuine_mislabel_count": 44,
+  "cat_b_bare_gen_split_count": 1,
+  "cat_c_member_variant_count": 33,
+  "cat_d_genuine_mislabel_count": 34,
   "genuine_mislabel_pairs": [
     {
       "family_a": "hermes",
@@ -27,8 +27,8 @@
       "count": 2
     },
     {
-      "family_a": "qwen",
-      "family_b": "qwen3-coder-30b-a3b",
+      "family_a": "gpt",
+      "family_b": "o",
       "count": 2
     },
     {
@@ -68,17 +68,7 @@
     },
     {
       "family_a": "gpt",
-      "family_b": "o",
-      "count": 1
-    },
-    {
-      "family_a": "gpt",
       "family_b": "wizardlm",
-      "count": 1
-    },
-    {
-      "family_a": "gpt-4o",
-      "family_b": "o",
       "count": 1
     },
     {
@@ -123,57 +113,17 @@
     },
     {
       "family_a": "mistral",
-      "family_b": "mixtral-8x22b",
+      "family_b": "mixtral",
       "count": 1
     },
     {
       "family_a": "mistral",
-      "family_b": "pixtral-large",
+      "family_b": "pixtral",
       "count": 1
     },
     {
       "family_a": "mistral",
       "family_b": "voxtral",
-      "count": 1
-    },
-    {
-      "family_a": "o",
-      "family_b": "o4-mini",
-      "count": 1
-    },
-    {
-      "family_a": "qwen",
-      "family_b": "qwen2.5-vl-72b",
-      "count": 1
-    },
-    {
-      "family_a": "qwen",
-      "family_b": "qwen3-coder",
-      "count": 1
-    },
-    {
-      "family_a": "qwen",
-      "family_b": "qwen3-coder-480b-a35b",
-      "count": 1
-    },
-    {
-      "family_a": "qwen",
-      "family_b": "qwen3-vl-235b-a22b",
-      "count": 1
-    },
-    {
-      "family_a": "qwen",
-      "family_b": "qwen3-vl-30b-a3b",
-      "count": 1
-    },
-    {
-      "family_a": "qwen",
-      "family_b": "qwen3-vl-32b",
-      "count": 1
-    },
-    {
-      "family_a": "qwen",
-      "family_b": "qwen3-vl-8b",
       "count": 1
     },
     {

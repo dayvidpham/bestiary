@@ -341,14 +341,33 @@ func classifyDecompChange(before, after decompTuple, beforeByID, afterByID []dec
 	// deepseek-reasoner thinking→"") both reduced disagreement while WORSENING this
 	// record. Reject those here so they fall through to CatRegress (and Option B, whose
 	// family convergences are exactly this class, cannot fool the gate).
-	if beforeDivergent && (afterConsistent || matchedExistingBefore) && !isFieldDowngrade(before, after) {
-		reason := "converged divergent ID toward cross-provider agreement"
-		if matchedExistingBefore {
-			reason = "now matches a tuple another provider already produced for this ID (BEFORE)"
-		} else if afterConsistent {
-			reason = "all providers for this ID now agree post-unification"
+	//
+	// SLICE-11 (Option B) splits the directionality guard by field class. A family
+	// OVER-CAPTURE reduction (claude-opus → claude + variant "opus", deepseek-r1 →
+	// deepseek, llama-3.3-70b → llama) shortens a populated Family field and so trips
+	// isFieldDowngrade, yet converging it is a genuine FIX: the over-captured COMPOUND
+	// family spuriously glued/split fields (the "-r1", "-70b" param-size, the "instruct"
+	// suffix) that the dataset's CANONICAL short decomposition — independently produced
+	// by the raw-populated sibling providers of the SAME ID — omits. When the change
+	// converges onto such a sibling tuple AND the family moved in the REDUCTION direction,
+	// trust it. The ONE thing still rejected is a NON-family field losing SPECIFICITY
+	// (before a strict superstring of after — the flash-lite → flash class): that is real
+	// data loss, not over-capture noise, so it stays a regression.
+	familyReduced := familyIsReductionOf(after.Family, before.Family)
+	if beforeDivergent && (afterConsistent || matchedExistingBefore) {
+		if familyReduced {
+			if !nonFamilyPrefixDowngrade(before, after) {
+				return CatFix, "family over-capture reduced to registered short base, converged onto an independently-produced sibling tuple (SLICE-11)"
+			}
+		} else if !isFieldDowngrade(before, after) {
+			reason := "converged divergent ID toward cross-provider agreement"
+			if matchedExistingBefore {
+				reason = "now matches a tuple another provider already produced for this ID (BEFORE)"
+			} else if afterConsistent {
+				reason = "all providers for this ID now agree post-unification"
+			}
+			return CatFix, reason
 		}
-		return CatFix, reason
 	}
 
 	if isStrictEnrichment(before, after) {
@@ -376,11 +395,73 @@ func classifyDecompChange(before, after decompTuple, beforeByID, afterByID []dec
 		}
 	}
 
+	// (b) SLICE-11 NON-converging family over-capture reduction (single-provider IDs, or
+	// multi-provider IDs whose other providers stay an honest residual). Admitted as an
+	// improvement ONLY under an INDEPENDENT, data-grounded test: AFTER's family is a
+	// CANONICAL registered family (in the upstream-derived allFamilies registry) while
+	// BEFORE's is NOT — i.e. BEFORE was a synthetic over-capture and AFTER is the real
+	// short family — AND no NON-family field lost specificity (the flash-lite guard). An
+	// over-captured family is always wrong, so reducing it to the canonical short base
+	// without downgrading variant/version/modifier is a strict improvement. The registry
+	// is curated UPSTREAM data, not the reducer's logic, so this cannot rubber-stamp an
+	// arbitrary family rewrite: a genuine mislabel (intellect↔glm, ministral↔mistral) is
+	// NOT a reduction-direction shortening and a capability-modifier loss (kimi-k2-thinking)
+	// is declined upstream, so neither can slip through here.
+	if familyReduced && !nonFamilyPrefixDowngrade(before, after) &&
+		(familySuffixMovedToVariant(before, after) ||
+			(bestiary.IsKnownFamily(after.Family) && !bestiary.IsKnownFamily(before.Family))) {
+		return CatImprove, "family over-capture reduced to short base — exact family-suffix→variant move (override semantics), OR before ∉ registry & after ∈ registry; no non-family specificity lost (SLICE-11)"
+	}
+
 	// A divergent ID that converged to a brand-new value (no provider had it BEFORE,
 	// not yet fully consistent) but where the change is still a strict enrichment was
 	// already caught above. Anything reaching here changed a populated field to a
 	// different value without being a convergence — flag as a regression for review.
 	return CatRegress, fmt.Sprintf("populated field changed value without converging: before=%s after=%s", before, after)
+}
+
+// nonFamilyPrefixDowngrade reports whether any NON-family field (Variant/Version/
+// Modifier) lost SPECIFICITY in the BEFORE→AFTER change — before is non-empty and after
+// is a strict less-specific PREFIX of it (e.g. variant "flash-lite" → "flash", modifier
+// "thinking-turbo" → "thinking"). This is the SLICE-11 directionality guard for family
+// over-capture convergences: clearing an over-capture-noise field is allowed (the
+// canonical short sibling does not carry it either), but a populated field collapsing to
+// a less-specific prefix is genuine data loss and stays a regression. A field that is
+// CLEARED (after == "") is deliberately NOT counted here — that is the over-capture-noise
+// case (e.g. mixtral-8x22b-instruct → mixtral, matching the raw-populated sibling that
+// also carries no variant); a field changed to a non-prefix LATERAL value is likewise not
+// a specificity loss and is governed by the convergence requirement.
+func nonFamilyPrefixDowngrade(before, after decompTuple) bool {
+	pairs := [][2]string{
+		{before.Variant, after.Variant},
+		{before.Version, after.Version},
+		{before.Modifier, after.Modifier},
+	}
+	for _, p := range pairs {
+		b, a := p[0], p[1]
+		if b == "" || a == "" || b == a {
+			continue
+		}
+		if strings.HasPrefix(b, a) {
+			return true // before is a strict more-specific superstring of after
+		}
+	}
+	return false
+}
+
+// familySuffixMovedToVariant reports whether the BEFORE→AFTER change is exactly a
+// family-suffix → variant MOVE: before.Family == after.Family + "-" + after.Variant.
+// This is the signature of an override-table compound reduction (claude-opus → claude +
+// "opus", magistral-small → magistral + "small", gpt-image → gpt + "image") and is the
+// case where BEFORE's family is ITSELF a registered family value (models.dev emits
+// "claude-opus" for some providers) so the registry test cannot tell it apart from a
+// canonical short family. The exact suffix→variant equality is unambiguous: the dropped
+// family token re-appears verbatim as the variant, so no information is lost.
+func familySuffixMovedToVariant(before, after decompTuple) bool {
+	if after.Variant == "" {
+		return false
+	}
+	return string(before.Family) == string(after.Family)+"-"+after.Variant
 }
 
 // isFieldDowngrade reports whether the BEFORE→AFTER change EMPTIES or makes
@@ -410,6 +491,31 @@ func isFieldDowngrade(before, after decompTuple) bool {
 	return false
 }
 
+// familyIsReductionOf reports whether `short` is a strict LEADING reduction of `long`
+// — i.e. long is "short" plus a trailing member/generation token. Covers the hyphen
+// form ("claude-opus" ⊃ "claude") and the glued form ("qwen3" ⊃ "qwen", "gpt4o" ⊃
+// "gpt"). The token-loss check in isFamilyReductionPreserving is the real guard; this
+// only enforces the family moved in the reduction DIRECTION (short ⊂ long), so a
+// sideways family swap (mistral→ministral) can never qualify.
+func familyIsReductionOf(short, long bestiary.Family) bool {
+	s := strings.ToLower(string(short))
+	l := strings.ToLower(string(long))
+	if s == "" || s == l || !strings.HasPrefix(l, s) {
+		return false
+	}
+	// The char after the prefix must be a boundary (hyphen) or a digit (glued
+	// generation), never a continuing letter (so "command" is not a reduction of
+	// "commander").
+	c := l[len(s)]
+	return c == '-' || (c >= '0' && c <= '9')
+}
+
+// isFamilyReductionPreserving reports whether a BEFORE→AFTER change is an
+// INFORMATION-PRESERVING family OVER-CAPTURE reduction (SLICE-11 Option B): the family
+// became a less-specific REGISTERED short base (after.Family ⊂ before.Family) AND no
+// information was lost — every sub-token present in BEFORE still appears in AFTER (the
+// dropped family suffix re-surfaces as the variant/version/modifier).
+//
 // isVersionShapedToken reports whether a token is version-shaped (digits with
 // optional '.'/'-' separators and embedded/trailing letters). Used to detect a
 // version digit that leaked into the Variant field (e.g. "3.6").
@@ -557,6 +663,19 @@ var justifiedExceptions = map[exceptionKey]string{
 		Before: `(family="gemini",variant="flash",version="2.5",modifier="")`,
 		After:  `(family="gemini",variant="pro",version="2.5",modifier="")`,
 	}: "raw_family 'gemini-flash' mislabels a PRO model (ID says 'pro'); ID-driven variant 'pro' is correct",
+
+	// SLICE-11: raw_family "qwen-free" yields variant "free" (the ACCESS tier), but the
+	// ID "qwen3.6-plus-free" names the "plus" CAPABILITY tier. SLICE-11's family-seed
+	// reduction makes the ID-path family ("qwen") agree with the raw family, so
+	// reconcileIDDriven now adopts the ID-driven variant "plus" (a clean token) over the
+	// raw "free". "plus" is the more-specific capability variant; "free" is the access
+	// tag that a single Variant field cannot also hold (the variant-multiplicity limit,
+	// parallel to the Modifier-LIST deferral). Single-provider refinement, not a regression.
+	{
+		ID:     "qwen3.6-plus-free",
+		Before: `(family="qwen",variant="free",version="3.6",modifier="")`,
+		After:  `(family="qwen",variant="plus",version="3.6",modifier="")`,
+	}: "raw 'qwen-free'→variant 'free' (access tag) refined to ID-driven capability tier 'plus' (qwen3.6-plus-free); enabled by the family-seed reduction making idFam==rawFam",
 }
 
 func TestPathUnification_ZeroUnexpectedRegression(t *testing.T) {
@@ -712,4 +831,108 @@ func TestPathUnification_CrossIDFormConsistency(t *testing.T) {
 		t.Skip("no '@'-form IDs in snapshot — probe vacuous")
 	}
 	t.Logf("cross-ID-form probe: %d '@'-form records, all converge to canonical '-'-form", atForms)
+}
+
+// TestSLICE11_CategorizerPredicates unit-tests the SLICE-11 categorizer extensions in
+// isolation: the family-reduction direction guard, the non-family prefix-downgrade guard
+// (which still catches the flash-lite class), and the exact family-suffix→variant move.
+func TestSLICE11_CategorizerPredicates(t *testing.T) {
+	t.Run("familyIsReductionOf", func(t *testing.T) {
+		yes := [][2]string{{"claude", "claude-opus"}, {"qwen", "qwen3-vl-72b"}, {"gpt", "gpt-4o"}, {"llama", "llama-3.3-70b"}}
+		no := [][2]string{{"claude", "claude"}, {"mistral", "ministral"}, {"command", "commander"}, {"gpt", "deepseek"}}
+		for _, c := range yes {
+			if !familyIsReductionOf(bestiary.Family(c[0]), bestiary.Family(c[1])) {
+				t.Errorf("familyIsReductionOf(%q,%q) = false, want true", c[0], c[1])
+			}
+		}
+		for _, c := range no {
+			if familyIsReductionOf(bestiary.Family(c[0]), bestiary.Family(c[1])) {
+				t.Errorf("familyIsReductionOf(%q,%q) = true, want false", c[0], c[1])
+			}
+		}
+	})
+
+	t.Run("nonFamilyPrefixDowngrade catches flash-lite, allows clears/laterals", func(t *testing.T) {
+		// flash-lite → flash: variant lost specificity → TRUE (still a regression).
+		if !nonFamilyPrefixDowngrade(decompTuple{"gemini", "flash-lite", "2.5", ""}, decompTuple{"gemini", "flash", "2.5", ""}) {
+			t.Error("flash-lite→flash must be a non-family prefix downgrade")
+		}
+		// instruct → "" (cleared as over-capture noise) → FALSE (allowed in family reduction).
+		if nonFamilyPrefixDowngrade(decompTuple{"mixtral-8x22b", "instruct", "", ""}, decompTuple{"mixtral", "", "", ""}) {
+			t.Error("clearing a variant must NOT count as a prefix downgrade")
+		}
+		// image → flash (lateral, not a prefix) → FALSE.
+		if nonFamilyPrefixDowngrade(decompTuple{"gemini-2.5-flash", "image", "2.5", ""}, decompTuple{"gemini", "flash", "2.5", ""}) {
+			t.Error("lateral variant change must NOT count as a prefix downgrade")
+		}
+	})
+
+	t.Run("familySuffixMovedToVariant", func(t *testing.T) {
+		if !familySuffixMovedToVariant(decompTuple{"claude-opus", "", "4.1", ""}, decompTuple{"claude", "opus", "4.1", ""}) {
+			t.Error("claude-opus → claude+opus must be a suffix→variant move")
+		}
+		if !familySuffixMovedToVariant(decompTuple{"kat-coder", "pro", "", ""}, decompTuple{"kat", "coder", "", ""}) {
+			t.Error("kat-coder → kat+coder must be a suffix→variant move")
+		}
+		// NOT an exact move: variant does not reconstruct the family suffix.
+		if familySuffixMovedToVariant(decompTuple{"llama-3.3-70b", "instruct", "3.3", ""}, decompTuple{"llama", "instruct", "3.3", ""}) {
+			t.Error("llama-3.3-70b → llama+instruct is NOT an exact suffix→variant move")
+		}
+	})
+}
+
+// TestSLICE11_ClassifyFamilyReduction asserts classifyDecompChange's end-to-end verdicts
+// for the SLICE-11 family over-capture cases — converging reductions are FIXES, single-
+// provider information-preserving reductions are IMPROVEMENTS, and a non-family specificity
+// LOSS (flash-lite) converging onto a sibling is STILL a regression (the G1 guard holds).
+func TestSLICE11_ClassifyFamilyReduction(t *testing.T) {
+	cases := []struct {
+		desc       string
+		before     decompTuple
+		after      decompTuple
+		beforeByID []decompTuple
+		afterByID  []decompTuple
+		want       changeCategory
+	}{
+		{
+			desc:       "claude-opus → claude+opus, converges onto raw sibling → FIX",
+			before:     decompTuple{"claude-opus", "", "4.1", ""},
+			after:      decompTuple{"claude", "opus", "4.1", ""},
+			beforeByID: []decompTuple{{"claude-opus", "", "4.1", ""}, {"claude", "opus", "4.1", ""}},
+			afterByID:  []decompTuple{{"claude", "opus", "4.1", ""}, {"claude", "opus", "4.1", ""}},
+			want:       CatFix,
+		},
+		{
+			desc:       "deepseek-r1 → deepseek (drops r1), converges onto raw sibling → FIX",
+			before:     decompTuple{"deepseek-r1", "", "", ""},
+			after:      decompTuple{"deepseek", "", "", ""},
+			beforeByID: []decompTuple{{"deepseek-r1", "", "", ""}, {"deepseek", "", "", ""}},
+			afterByID:  []decompTuple{{"deepseek", "", "", ""}, {"deepseek", "", "", ""}},
+			want:       CatFix,
+		},
+		{
+			desc:       "single-provider jamba-large-1.6 → jamba+large, no sibling → IMPROVE",
+			before:     decompTuple{"jamba-large", "", "1.6", ""},
+			after:      decompTuple{"jamba", "large", "1.6", ""},
+			beforeByID: []decompTuple{{"jamba-large", "", "1.6", ""}},
+			afterByID:  []decompTuple{{"jamba", "large", "1.6", ""}},
+			want:       CatImprove,
+		},
+		{
+			desc:       "flash-lite → flash converging onto a sibling's flash is STILL a regression (G1)",
+			before:     decompTuple{"gemini", "flash-lite", "2.5", ""},
+			after:      decompTuple{"gemini", "flash", "2.5", ""},
+			beforeByID: []decompTuple{{"gemini", "flash-lite", "2.5", ""}, {"gemini", "flash", "2.5", ""}},
+			afterByID:  []decompTuple{{"gemini", "flash", "2.5", ""}, {"gemini", "flash", "2.5", ""}},
+			want:       CatRegress,
+		},
+	}
+	for _, tc := range cases {
+		t.Run(tc.desc, func(t *testing.T) {
+			got, reason := classifyDecompChange(tc.before, tc.after, tc.beforeByID, tc.afterByID)
+			if got != tc.want {
+				t.Errorf("classifyDecompChange = %s (%s), want %s", got, reason, tc.want)
+			}
+		})
+	}
 }

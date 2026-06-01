@@ -72,7 +72,17 @@ func TestFamiliesJSON_MembersReachableInSnapshot(t *testing.T) {
 	// SLICE-3 removed the thinking/vision members (deepseek/kimi → thinking, grok →
 	// vision) from families.json — they are now uniform Modifiers, not recoverable
 	// variants — so the former grok/"vision" allowlist entry is obsolete and gone.
-	deferredUnreachableMembers := map[string]map[string]string{}
+	deferredUnreachableMembers := map[string]map[string]string{
+		// SLICE-11 (rc2): the ONLY snapshot model that decomposed to (qwen, "free") was
+		// "qwen3.6-plus-free". SLICE-11's family-seed reduction makes the ID-path family
+		// agree with raw "qwen-free", so reconcileIDDriven now adopts the more-specific
+		// ID-driven capability tier "plus" over the access-tag "free" (the reviewed
+		// justified-exception in path_unification_test.go), leaving "free" transiently
+		// unreachable. The member is retained (not deleted) because the "qwen-free"
+		// override still maps the raw family, and a future qwen "free"-tier ID with no
+		// competing tier would re-ground it.
+		"qwen": {"free": "SLICE-11: sole (qwen,free) model qwen3.6-plus-free now refines to variant 'plus' (justified exception)"},
+	}
 
 	members := loadFamiliesJSONMembers(t)
 

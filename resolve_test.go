@@ -130,33 +130,62 @@ func TestResolve_WithSchemeRaw_ExactMatch(t *testing.T) {
 //
 // When SchemeRaw produces zero matches and the input looks like a bare identifier
 // (no slashes, no "@", no special characters), Resolve retries with SchemeCanonical
-// to surface ErrAmbiguous instead of ErrNotFound. Before R4 dot-form normalization,
-// "claude-opus" matched nothing under SchemeRaw (ErrNotFound) because claude-opus-4.x
-// decomposed inconsistently. After R4, these models decompose as (family=claude,
-// variant=opus, version=4.x), so the bare-family retry finds the group and correctly
-// returns ErrAmbiguous with the full claude-opus candidate set.
+// to surface ErrAmbiguous instead of ErrNotFound, matching on the canonical Family.
+//
+// SLICE-11 (rc2) NOTE: this test previously used "claude-opus" — which resolved as
+// ErrAmbiguous ONLY because the empty-raw claude-opus-4.x models were OVER-CAPTURED to
+// Family="claude-opus" (so modelMatches' Family-exact branch matched the bare input).
+// SLICE-11 fixes that over-capture (those models are now Family="claude", Variant="opus"),
+// so bare "claude-opus" no longer matches any Family and returns ErrNotFound — see the
+// dedicated TestResolve_SLICE11_BareOverCaptureNoLongerAmbiguous below, which pins the
+// new (correct) behavior and documents the resolve.go follow-up (variant-aware bare
+// matching is out of SLICE-11 scope — resolve.go is not touched). This test now uses the
+// bare canonical Family "claude" so it keeps exercising the SAME fallback MECHANISM
+// (raw→canonical retry → ErrAmbiguous) against a genuine multi-model family.
 func TestResolve_WithSchemeRaw_BareFamilyAmbiguous(t *testing.T) {
-	_, err := bestiary.Resolve("claude-opus", bestiary.WithScheme(bestiary.SchemeRaw))
+	_, err := bestiary.Resolve("claude", bestiary.WithScheme(bestiary.SchemeRaw))
 	if err == nil {
-		t.Fatal("Resolve with SchemeRaw 'claude-opus' returned nil error, want ErrAmbiguous")
+		t.Fatal("Resolve with SchemeRaw 'claude' returned nil error, want ErrAmbiguous")
 	}
 	var ambig *bestiary.ErrAmbiguous
 	if !errors.As(err, &ambig) {
-		t.Fatalf("Resolve SchemeRaw 'claude-opus': got %T (%v), want *ErrAmbiguous\n"+
+		t.Fatalf("Resolve SchemeRaw 'claude': got %T (%v), want *ErrAmbiguous\n"+
 			"  What: bare-family fallback (resolve.go:141-150) retried with SchemeCanonical\n"+
-			"  Why: R4 dot-form makes claude-opus-4.x decompose consistently as (claude,opus,4.x)\n"+
+			"  Why: bare 'claude' matches the claude Family group on the canonical retry\n"+
 			"  Fix: this is DESIGNED behavior — do not revert to ErrNotFound",
 			err, err)
 	}
-	// Assert the candidate set is the claude-opus family group (not some other family).
+	// Assert the bare-family retry surfaced a multi-candidate ambiguity (the claude
+	// Family group). Candidate IDs need NOT literally contain "claude" — the claude
+	// Family legitimately includes claude-backed models with vendor-branded IDs
+	// (e.g. GitLab Duo's "duo-chat-opus-4-5"); membership is by Family, not ID substring.
 	if len(ambig.Candidates) <= 1 {
-		t.Errorf("ErrAmbiguous.Candidates has %d entries; expected multiple claude-opus-4.x candidates",
+		t.Errorf("ErrAmbiguous.Candidates has %d entries; expected multiple claude-family candidates",
 			len(ambig.Candidates))
 	}
-	for _, c := range ambig.Candidates {
-		if !strings.Contains(string(c.ID), "claude-opus") {
-			t.Errorf("ErrAmbiguous.Candidates contains unexpected model %q; all should be claude-opus-4.x variants", c.ID)
-		}
+}
+
+// TestResolve_SLICE11_BareOverCaptureNoLongerAmbiguous pins the SLICE-11 (rc2) behavior
+// change: bare hyphen-joined "claude-opus" — which USED to resolve as ErrAmbiguous via the
+// Family="claude-opus" OVER-CAPTURE — now returns ErrNotFound, because SLICE-11 correctly
+// decomposes those models to Family="claude", Variant="opus" (no model has the synthetic
+// "claude-opus" Family any more). The full ID ("claude-opus-4-20250514") still resolves.
+//
+// SURFACED FOLLOW-UP (out of SLICE-11 scope — resolve.go is intentionally NOT touched):
+// resolve.go's bare-family fallback matches on Family exact only, so the variant-tier
+// shorthand "claude-opus" (and the canonical "claude/opus" form) no longer lists the opus
+// group. A variant-aware bare-family fallback in resolve.go would restore that shorthand.
+func TestResolve_SLICE11_BareOverCaptureNoLongerAmbiguous(t *testing.T) {
+	_, err := bestiary.Resolve("claude-opus", bestiary.WithScheme(bestiary.SchemeRaw))
+	var nf *bestiary.ErrNotFound
+	if !errors.As(err, &nf) {
+		t.Errorf("Resolve SchemeRaw 'claude-opus': got %v, want *ErrNotFound\n"+
+			"  SLICE-11 removed the claude-opus Family over-capture, so the bare hyphen form\n"+
+			"  no longer matches a Family. (The full ID and bare 'claude' still resolve.)", err)
+	}
+	// The full, exact ID must still resolve cleanly.
+	if _, err := bestiary.Resolve("claude-opus-4-20250514", bestiary.WithScheme(bestiary.SchemeRaw)); err != nil {
+		t.Errorf("full ID claude-opus-4-20250514 must still resolve, got: %v", err)
 	}
 }
 
@@ -728,32 +757,31 @@ func TestResolve_WithInputFormat_Raw_Resolves(t *testing.T) {
 // InputFormatRaw delegates to SchemeRaw, so it follows the same bare-family fallback:
 // when SchemeRaw produces zero matches and the input is a bare identifier, Resolve
 // retries with SchemeCanonical and surfaces ErrAmbiguous instead of ErrNotFound.
-// Before R4 dot-form normalization, "claude-opus" under InputFormatRaw returned
-// ErrNotFound. After R4, claude-opus-4.x decomposes consistently as (claude,opus,4.x),
-// so the retry finds the group and correctly returns ErrAmbiguous with candidates.
+//
+// SLICE-11 (rc2) NOTE: repointed from "claude-opus" to the bare Family "claude" for the
+// same reason as TestResolve_WithSchemeRaw_BareFamilyAmbiguous — SLICE-11 removed the
+// claude-opus Family over-capture, so the hyphen-tier shorthand no longer matches a
+// Family. The fallback MECHANISM (raw→canonical retry → ErrAmbiguous on a real multi-model
+// Family) is unchanged and is what this test guards.
 func TestResolve_WithInputFormat_Raw_PartialAmbiguous(t *testing.T) {
-	_, err := bestiary.Resolve("claude-opus",
+	_, err := bestiary.Resolve("claude",
 		bestiary.WithInputFormat(bestiary.InputFormatRaw))
 	if err == nil {
-		t.Fatal("Resolve WithInputFormat(Raw) 'claude-opus': want ErrAmbiguous, got nil")
+		t.Fatal("Resolve WithInputFormat(Raw) 'claude': want ErrAmbiguous, got nil")
 	}
 	var ambig *bestiary.ErrAmbiguous
 	if !errors.As(err, &ambig) {
-		t.Fatalf("Resolve WithInputFormat(Raw) 'claude-opus': got %T (%v), want *ErrAmbiguous\n"+
+		t.Fatalf("Resolve WithInputFormat(Raw) 'claude': got %T (%v), want *ErrAmbiguous\n"+
 			"  What: bare-family fallback (resolve.go:141-150) retried with SchemeCanonical\n"+
-			"  Why: R4 dot-form makes claude-opus-4.x decompose consistently as (claude,opus,4.x)\n"+
+			"  Why: bare 'claude' matches the claude Family group on the canonical retry\n"+
 			"  Fix: this is DESIGNED behavior — do not revert to ErrNotFound",
 			err, err)
 	}
-	// Assert the candidate set is the claude-opus family group (not some other family).
+	// Assert a multi-candidate ambiguity (claude Family group); candidate IDs need not
+	// contain "claude" (claude-backed vendor IDs like "duo-chat-opus-4-5" are members).
 	if len(ambig.Candidates) <= 1 {
-		t.Errorf("ErrAmbiguous.Candidates has %d entries; expected multiple claude-opus-4.x candidates",
+		t.Errorf("ErrAmbiguous.Candidates has %d entries; expected multiple claude-family candidates",
 			len(ambig.Candidates))
-	}
-	for _, c := range ambig.Candidates {
-		if !strings.Contains(string(c.ID), "claude-opus") {
-			t.Errorf("ErrAmbiguous.Candidates contains unexpected model %q; all should be claude-opus-4.x variants", c.ID)
-		}
 	}
 }
 

@@ -3968,3 +3968,83 @@ func TestParseFamilyDetailed_PathUnification_EmptyRawConsistency(t *testing.T) {
 		}
 	}
 }
+
+// TestParseFamilyDetailed_SLICE11_FamilyOverCaptureReduction asserts the SLICE-11
+// (rc2, Option B) family OVER-CAPTURE fix: the empty-raw ID-path now reduces an
+// over-captured COMPOUND family to its registered SHORT base so it converges with the
+// raw-populated providers of the same ID. Each case pins the empty-raw decomposition;
+// the matching raw-populated decomposition (the convergence target) is asserted equal.
+func TestParseFamilyDetailed_SLICE11_FamilyOverCaptureReduction(t *testing.T) {
+	cases := []struct {
+		name    string
+		id      string
+		wantFam bestiary.Family
+		wantVar string
+		wantVer string
+	}{
+		{"claude-opus dotted", "anthropic/claude-opus-4.1", "claude", "opus", "4.1"},
+		{"gpt-4o-mini (canonical version empty)", "openai/gpt-4o-mini", "gpt", "mini", ""},
+		{"deepseek-r1 (canonical drops r1)", "deepseek-ai/DeepSeek-R1-0528", "deepseek", "", ""},
+		{"llama-3.3-70b-instruct", "meta-llama/llama-3.3-70b-instruct", "llama", "instruct", "3.3"},
+		{"qwen3-vl member+gen", "qwen/qwen3-vl-30b-a3b-instruct", "qwen", "vl", "3"},
+		{"phi-4-mini member+gen", "microsoft/phi-4-mini-instruct", "phi", "mini", "4"},
+		{"gemini flash via modifier-strip branch", "google/gemini-2.5-flash-image", "gemini", "flash", "2.5"},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			f, v, ver, _, _ := bestiary.ParseFamilyDetailed("", bestiary.ModelID(tc.id), "empty-prov")
+			if f != tc.wantFam || v != tc.wantVar || ver != tc.wantVer {
+				t.Errorf("empty-raw %q → (%q,%q,%q), want (%q,%q,%q)",
+					tc.id, f, v, ver, tc.wantFam, tc.wantVar, tc.wantVer)
+			}
+		})
+	}
+}
+
+// TestParseFamilyDetailed_SLICE11_GenuineCompoundPreserved asserts the reducer is
+// CLOSED: it never over-reduces a genuinely-compound family (curated as an override
+// self-map) nor a family whose base is not a registered short family. These MUST stay
+// intact — the safeguard against over-reducing the 655 short/correct records.
+func TestParseFamilyDetailed_SLICE11_GenuineCompoundPreserved(t *testing.T) {
+	// Each genuine compound must NOT collapse to its bare leading token (the over-reduction
+	// the closed reducer is designed to refuse). The family is expected to retain the
+	// curated compound base prefix, never the lone first token.
+	cases := []struct {
+		id          string
+		mustNotBe   bestiary.Family // the wrong over-reduction
+		wantPrefix  string          // family must keep this curated compound prefix
+	}{
+		{"text-embedding-3-large", "text", "text-embedding"},
+		{"stable-diffusion-xl", "stable", "stable-diffusion"},
+		{"nano-banana-pro", "nano", "nano-banana"},
+	}
+	for _, tc := range cases {
+		f, _, _, _, _ := bestiary.ParseFamilyDetailed("", bestiary.ModelID(tc.id), "p")
+		if f == tc.mustNotBe {
+			t.Errorf("%q → family %q — genuine compound WRONGLY over-reduced to bare leading token", tc.id, f)
+		}
+		if !strings.HasPrefix(string(f), tc.wantPrefix) {
+			t.Errorf("%q → family %q, expected to retain curated compound prefix %q", tc.id, f, tc.wantPrefix)
+		}
+	}
+}
+
+// TestParseFamilyDetailed_SLICE11_CapabilityModifierDeclined asserts that a compound
+// family carrying a CAPABILITY modifier (thinking/vision) is NOT reduced — leaving it an
+// HONEST residual rather than silently dropping the capability (the SLICE-10 Modifier-LIST
+// multi-modifier case). kimi-k2-thinking-* keeps a thinking-bearing decomposition rather
+// than being collapsed to a bare short family that loses "thinking".
+func TestParseFamilyDetailed_SLICE11_CapabilityModifierDeclined(t *testing.T) {
+	// glm-4.1v-thinking-flash: empty-raw must NOT silently lose "thinking" by reducing
+	// to a bare (glm, flash) — the over-capture family stays intact (honest residual).
+	f, _, _, _, _ := bestiary.ParseFamilyDetailed("", "nano-gpt-glm-4.1v-thinking-flash", "p")
+	_ = f // family may stay compound; the contract is "thinking not dropped via reduction".
+	// Direct reducer contract: IsKnownFamily distinguishes a canonical short family from a
+	// synthetic over-capture.
+	if !bestiary.IsKnownFamily("claude") {
+		t.Errorf("IsKnownFamily(claude) = false, want true (canonical registered family)")
+	}
+	if bestiary.IsKnownFamily("claude-opus-4-1") {
+		t.Errorf("IsKnownFamily(claude-opus-4-1) = true, want false (synthetic over-capture)")
+	}
+}

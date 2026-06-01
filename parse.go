@@ -414,6 +414,19 @@ func familyKeyKnown(key string) bool {
 	return false
 }
 
+// IsKnownFamily reports whether f is a CANONICAL registered family — a value present
+// (case-insensitively) in the generated allFamilies registry (families_gen.go), which
+// is derived directly from the upstream models.dev family field. Synthetic OVER-CAPTURE
+// family strings the ID-path may transiently produce (e.g. "claude-opus", "qwen3-vl-72b",
+// "phi-4-mini") are NOT in that registry. Exposed for the SLICE-11 before/after-diff gate,
+// which uses "after ∈ registry ∧ before ∉ registry" as an INDEPENDENT, data-grounded
+// signal that a family change reduced an over-capture to its canonical short base (and so
+// is a genuine fix, not a regression) — the registry is curated upstream data, not the
+// reducer's own logic, so the check does not merely rubber-stamp the implementation.
+func IsKnownFamily(f Family) bool {
+	return familyKeyKnown(string(f))
+}
+
 // FamiliesJSONKeyError validates that every non-comment key in the raw
 // families.json-style bytes is a known Family (case-insensitive match against
 // allFamilies). Returns nil when all keys are valid, or an actionable error on
@@ -1120,6 +1133,7 @@ func inferFamilyFromIDWithVariantBase(id ModelID, p Provider) (Family, string, s
 			// (before the pipeline insertion point below), so apply the split here too
 			// — e.g. "gemini-3-flash-preview" (preview stripped) leaves family
 			// "gemini-3" which must split to (gemini, …, 3). Closed predicate.
+			outVariant := vProv
 			if pd, pdErr := loadParseData(); pdErr == nil {
 				if base, ver, ok := splitBareGen(pd, string(outFamily)); ok {
 					outFamily = base
@@ -1127,8 +1141,40 @@ func inferFamilyFromIDWithVariantBase(id ModelID, p Provider) (Family, string, s
 						version = ver
 					}
 				}
+				// SLICE-11 (rc2) Option B: reduce an OVER-CAPTURED compound family here too
+				// — this modifier-strip branch returns early (bypassing the main-path
+				// reduction), so IDs carrying a trailing modifier (e.g.
+				// gemini-3.1-flash-image-preview, gpt-4o-mini-search-preview) would otherwise
+				// keep the compound family. Re-derive variant/version against the short base,
+				// mirroring the main path, so they converge with the raw-populated providers.
+				if short, vhint, ok := reduceOverCapturedFamily(pd, outFamily); ok {
+					outFamily = short
+					outVariant = vhint
+					version = ""
+					lowID := strings.ToLower(stripVendorNamespace(string(cleaned)))
+					leadTok := lastPathSegment(lowID)
+					if i := strings.IndexByte(leadTok, '-'); i >= 0 {
+						leadTok = leadTok[:i]
+					}
+					if b, ver, okb := splitBareGen(pd, leadTok); okb && b == outFamily {
+						version = ver
+					}
+					if version == "" && outVariant != "" {
+						if v, _ := ExtractVersionBetweenFamilyAndVariant(ModelID(orSelf(stripTrailingDate(lowID), lowID)), outFamily, outVariant); v != "" {
+							version = v
+						}
+					}
+					if outVariant == "" {
+						normFamPrefix := strings.ToLower(firstToken(string(outFamily))) + "-"
+						zone := lowID
+						if strings.HasPrefix(zone, normFamPrefix) {
+							zone = zone[len(normFamPrefix):]
+						}
+						outVariant = recoverMemberVariant(strings.Split(zone, "-"), outFamily)
+					}
+				}
 			}
-			return outFamily, vProv, version // committed: modifier handled
+			return outFamily, outVariant, version // committed: modifier handled
 		}
 	}
 
@@ -1205,6 +1251,41 @@ func inferFamilyFromIDWithVariantBase(id ModelID, p Provider) (Family, string, s
 			family = base
 			if version == "" {
 				version = ver
+			}
+		}
+	}
+
+	// SLICE-11 (rc2) Option B: reduce an OVER-CAPTURED compound family to its registered
+	// SHORT base BEFORE member/version recovery, so the recovery below runs against the
+	// short family and reproduces the SAME (variant, version) the raw-populated providers
+	// derive (e.g. empty-raw "qwen3-vl-30b-a3b-instruct" → variant "vl"+version "3", NOT
+	// suffix-variant "instruct"). variant/version captured against the COMPOUND family are
+	// reset so they re-derive against the short base; the variant hint is used only as a
+	// last-resort fallback when member recovery finds nothing.
+	if pd, pdErr := loadParseData(); pdErr == nil {
+		if short, vhint, ok := reduceOverCapturedFamily(pd, family); ok {
+			family = short
+			variant = vhint
+			version = ""
+			// Re-derive the generation version against the SHORT family directly from the
+			// ID — mirroring the raw-populated providers' recovery — so the empty-raw record
+			// converges FULLY (family AND version), not just on family. Two steps mirror
+			// ParseFamilyDetailed's raw path: (1) bare-gen split of the leading ID token
+			// (qwen2.5→2.5, qwen3→3); (2) version between the family and the recovered
+			// member variant (phi-4-mini → 4, mistral-small-3.1 → 3.1). The generic
+			// extractors below remain as a final fallback.
+			lowID := strings.ToLower(stripVendorNamespace(string(id)))
+			leadTok := lastPathSegment(lowID)
+			if i := strings.IndexByte(leadTok, '-'); i >= 0 {
+				leadTok = leadTok[:i]
+			}
+			if b, ver, okb := splitBareGen(pd, leadTok); okb && b == family {
+				version = ver
+			}
+			if version == "" && variant != "" {
+				if v, _ := ExtractVersionBetweenFamilyAndVariant(ModelID(orSelf(stripTrailingDate(lowID), lowID)), family, variant); v != "" {
+					version = v
+				}
 			}
 		}
 	}
@@ -2531,6 +2612,158 @@ func seriesBaseFamily(pd *parseData, family Family) (Family, bool) {
 		return "", false
 	}
 	return Family(base), true
+}
+
+// --------------------------------------------------------------------------
+// SLICE-11 (rc2): family OVER-CAPTURE reduction (Option B / CLARIFICATION-9)
+// --------------------------------------------------------------------------
+
+// isFamilyResidueToken reports whether tok (a single lowercase token TRAILING the
+// short base of a COMPOUND, over-captured family string) is decomposition RESIDUE —
+// a member / variant / version / param-size / date / context-window / modifier token
+// that legitimately belongs to a model's variant/version split, NOT a distinct family.
+//
+// reduceOverCapturedFamily collapses a compound family to its short base ONLY when
+// EVERY trailing token is residue. A single UNRECOGNISED token blocks the reduction
+// (the compound is left intact as an HONEST residual) — the reducer never guesses that
+// an unknown token is "just noise", which is what keeps it from over-reducing a
+// genuinely-compound or genuinely-mislabelled family (e.g. ministral, lfm, intellect,
+// a leaked vendor namespace, or a community finetune slug).
+func isFamilyResidueToken(pd *parseData, base Family, tok string) bool {
+	if pd == nil {
+		return false
+	}
+	if tok == "" {
+		return true
+	}
+	if info, ok := pd.families[Family(strings.ToLower(string(base)))]; ok {
+		// Curated member of the short base (families.json members list).
+		for _, m := range info.Members {
+			if tok == m {
+				return true
+			}
+		}
+		// Series-letter token ("k2", "m1", "v2") for a series family.
+		if info.SeriesLetter != "" && len(tok) >= 2 && tok[0] == info.SeriesLetter[0] {
+			if _, _, okv := parseSeriesNumber(tok[1:]); okv {
+				return true
+			}
+		}
+	}
+	// Curated variant suffix (registered-family variant token, e.g. "flash", "mini").
+	if _, ok := bareVariantSuffix(pd, tok); ok {
+		return true
+	}
+	// Version-shaped (4o, 3.3, v4, r1, 4.1), param-size (70b, 30b-a3b, 8x22b),
+	// date-shaped (0528, 250715), context-window (80k), or a known capability modifier
+	// (thinking, vision, instruct, preview, …). All are variant/version residue.
+	if isVersionShaped(tok) || isParamSizeToken(tok) || isDateShapedToken(tok) ||
+		reContextWindow.MatchString(tok) || isKnownModifierToken(pd, tok) {
+		return true
+	}
+	return false
+}
+
+// reduceOverCapturedFamily collapses an ID-seeded COMPOUND family to its registered
+// SHORT base family (SLICE-11 Option B). It is the inverse of SLICE-9 Option-A's
+// family-PRESERVE workaround: where the empty-raw ID-path OVER-captures the family
+// (claude-opus-4.1 → "claude-opus", gpt-4o-mini → "gpt-4o", deepseek-v4-pro →
+// "deepseek-v4", llama-3.3-70b-instruct → "llama-3.3-70b", qwen3-vl-30b-a3b →
+// "qwen3-vl-30b-a3b"), this reduces the family to the short registered base
+// ("claude"/"gpt"/"deepseek"/"llama"/"qwen") so the empty-raw and raw-populated
+// providers of the SAME model ID converge on the SAME short family + variant/version.
+//
+// It is CLOSED and conservative (never invents a reduction):
+//   - A family explicitly SELF-MAPPED in family_overrides.json (text-embedding,
+//     stable-diffusion, nano-banana, model-router, dall-e, mm-poly, big-pickle,
+//     smart-turn) is a CURATED genuine compound → DECLINED (never reduced).
+//   - A family with a REDUCING override (claude-opus→claude, gpt-mini→gpt, …) reduces
+//     to that override's (family, variant).
+//   - Otherwise the leading token must resolve (directly, or via bare-gen split such
+//     as qwen3→qwen) to a REGISTERED short family (familyKeyKnown / allFamilies) AND
+//     EVERY remaining token must be decomposition RESIDUE (isFamilyResidueToken). A
+//     single unrecognised token DECLINES the reduction (honest residual).
+//
+// Returns (shortFamily, variantHint, ok). variantHint is the first member/suffix token
+// recovered from the residue (used only when the caller has no better variant). When ok,
+// the caller RE-DECOMPOSES variant/version against shortFamily so the empty-raw result
+// matches the raw-populated providers' member-recovery output exactly.
+func reduceOverCapturedFamily(pd *parseData, family Family) (Family, string, bool) {
+	if pd == nil {
+		return "", "", false
+	}
+	s := strings.ToLower(string(family))
+	if s == "" {
+		return "", "", false
+	}
+
+	// Override table: explicit curated decomposition, or a self-map = curated genuine
+	// compound that must be PRESERVED.
+	if ov, ok := pd.overrides[Family(s)]; ok {
+		if ov.Family != Family(s) {
+			return ov.Family, ov.Variant, true
+		}
+		return "", "", false
+	}
+
+	idx := strings.IndexByte(s, '-')
+	if idx <= 0 {
+		// Single-token family (short, or a glued form handled by splitBareGen/glued
+		// helpers elsewhere) — nothing to reduce here.
+		return "", "", false
+	}
+	leading, rest := s[:idx], s[idx+1:]
+
+	// Resolve the short base: split a glued generation off the leading token
+	// (qwen3 → qwen) when attested by the closed bare-gen predicate, else the leading
+	// token directly.
+	base := Family(leading)
+	if b, _, ok := splitBareGen(pd, leading); ok {
+		base = b
+	}
+	// The base MUST be a registered short family — never synthesize one.
+	if !familyKeyKnown(string(base)) {
+		return "", "", false
+	}
+	// Must be a STRICT reduction (a real shortening of the compound).
+	if base == family || strings.EqualFold(string(base), s) {
+		return "", "", false
+	}
+
+	// Every remaining token must be decomposition residue; the first member/suffix
+	// token becomes the variant hint.
+	variantHint := ""
+	for _, tok := range strings.Split(rest, "-") {
+		// DECLINE when a CAPABILITY modifier (thinking/think/vision) is glued into the
+		// over-captured family token. Reducing + re-decomposing such a family risks
+		// dropping the capability modifier (single Modifier field), and the multi-modifier
+		// cases (e.g. kimi-k2-thinking-turbo: thinking AND tier) are the KNOWN S8 residual
+		// explicitly deferred to the SLICE-10 Modifier-LIST change. Leaving these compound
+		// families intact keeps them an HONEST residual rather than silently losing the
+		// capability — never masking the deferred multi-modifier limitation.
+		if tok == "thinking" || tok == "think" || tok == "vision" {
+			return "", "", false
+		}
+		if !isFamilyResidueToken(pd, base, tok) {
+			return "", "", false
+		}
+		if variantHint == "" {
+			if info, ok := pd.families[Family(strings.ToLower(string(base)))]; ok {
+				for _, m := range info.Members {
+					if tok == m {
+						variantHint = m
+						break
+					}
+				}
+			}
+			if variantHint == "" {
+				if bare, ok := bareVariantSuffix(pd, tok); ok {
+					variantHint = bare
+				}
+			}
+		}
+	}
+	return base, variantHint, true
 }
 
 // seriesTierModifiers is the curated set of TIER/finetune tokens that, when they
