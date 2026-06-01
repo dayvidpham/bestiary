@@ -1323,29 +1323,29 @@ const (
 	Model__GoogleVertexAnthropic__Claude__3__5__Haiku__3_5__20241022               ModelID = "claude-3-5-haiku@20241022"
 	Model__GoogleVertexAnthropic__Claude__3__5__Sonnet__3_5__20241022              ModelID = "claude-3-5-sonnet@20241022"
 	Model__GoogleVertexAnthropic__Claude__3__7__Sonnet__3_7__20250219              ModelID = "claude-3-7-sonnet@20250219"
-	Model__GoogleVertexAnthropic__Claude__Haiku__4__5__20251001                    ModelID = "claude-haiku-4-5@20251001"
-	Model__GoogleVertexAnthropic__Claude__Opus__4__1__20250805                     ModelID = "claude-opus-4-1@20250805"
+	Model__GoogleVertexAnthropic__Claude__Haiku__4__5__4__20251001                 ModelID = "claude-haiku-4-5@20251001"
+	Model__GoogleVertexAnthropic__Claude__Opus__4__1__4__20250805                  ModelID = "claude-opus-4-1@20250805"
 	Model__GoogleVertexAnthropic__Claude__Opus__4__20250514                        ModelID = "claude-opus-4@20250514"
-	Model__GoogleVertexAnthropic__Claude__Opus__4__5__20251101                     ModelID = "claude-opus-4-5@20251101"
-	Model__GoogleVertexAnthropic__Claude__Opus__4__6__Default                      ModelID = "claude-opus-4-6@default"
-	Model__GoogleVertexAnthropic__Claude__Opus__4__7__Default                      ModelID = "claude-opus-4-7@default"
-	Model__GoogleVertexAnthropic__Claude__Opus__4__8__Default                      ModelID = "claude-opus-4-8@default"
+	Model__GoogleVertexAnthropic__Claude__Opus__4__5__4__20251101                  ModelID = "claude-opus-4-5@20251101"
+	Model__GoogleVertexAnthropic__Claude__Opus__4__6__Default__4                   ModelID = "claude-opus-4-6@default"
+	Model__GoogleVertexAnthropic__Claude__Opus__4__7__Default__4                   ModelID = "claude-opus-4-7@default"
+	Model__GoogleVertexAnthropic__Claude__Opus__4__8__Default__4                   ModelID = "claude-opus-4-8@default"
 	Model__GoogleVertexAnthropic__Claude__Sonnet__4__20250514                      ModelID = "claude-sonnet-4@20250514"
-	Model__GoogleVertexAnthropic__Claude__Sonnet__4__5__20250929                   ModelID = "claude-sonnet-4-5@20250929"
-	Model__GoogleVertexAnthropic__Claude__Sonnet__4__6__Default                    ModelID = "claude-sonnet-4-6@default"
+	Model__GoogleVertexAnthropic__Claude__Sonnet__4__5__4__20250929                ModelID = "claude-sonnet-4-5@20250929"
+	Model__GoogleVertexAnthropic__Claude__Sonnet__4__6__Default__4                 ModelID = "claude-sonnet-4-6@default"
 	Model__GoogleVertex__Claude__3__5__Haiku__3_5__20241022                        ModelID = "claude-3-5-haiku@20241022"
 	Model__GoogleVertex__Claude__3__5__Sonnet__3_5__20241022                       ModelID = "claude-3-5-sonnet@20241022"
 	Model__GoogleVertex__Claude__3__7__Sonnet__3_7__20250219                       ModelID = "claude-3-7-sonnet@20250219"
-	Model__GoogleVertex__Claude__Haiku__4__5__20251001                             ModelID = "claude-haiku-4-5@20251001"
-	Model__GoogleVertex__Claude__Opus__4__1__20250805                              ModelID = "claude-opus-4-1@20250805"
+	Model__GoogleVertex__Claude__Haiku__4__5__4__20251001                          ModelID = "claude-haiku-4-5@20251001"
+	Model__GoogleVertex__Claude__Opus__4__1__4__20250805                           ModelID = "claude-opus-4-1@20250805"
 	Model__GoogleVertex__Claude__Opus__4__20250514                                 ModelID = "claude-opus-4@20250514"
-	Model__GoogleVertex__Claude__Opus__4__5__20251101                              ModelID = "claude-opus-4-5@20251101"
-	Model__GoogleVertex__Claude__Opus__4__6__Default                               ModelID = "claude-opus-4-6@default"
-	Model__GoogleVertex__Claude__Opus__4__7__Default                               ModelID = "claude-opus-4-7@default"
-	Model__GoogleVertex__Claude__Opus__4__8__Default                               ModelID = "claude-opus-4-8@default"
+	Model__GoogleVertex__Claude__Opus__4__5__4__20251101                           ModelID = "claude-opus-4-5@20251101"
+	Model__GoogleVertex__Claude__Opus__4__6__Default__4                            ModelID = "claude-opus-4-6@default"
+	Model__GoogleVertex__Claude__Opus__4__7__Default__4                            ModelID = "claude-opus-4-7@default"
+	Model__GoogleVertex__Claude__Opus__4__8__Default__4                            ModelID = "claude-opus-4-8@default"
 	Model__GoogleVertex__Claude__Sonnet__4__20250514                               ModelID = "claude-sonnet-4@20250514"
-	Model__GoogleVertex__Claude__Sonnet__4__5__20250929                            ModelID = "claude-sonnet-4-5@20250929"
-	Model__GoogleVertex__Claude__Sonnet__4__6__Default                             ModelID = "claude-sonnet-4-6@default"
+	Model__GoogleVertex__Claude__Sonnet__4__5__4__20250929                         ModelID = "claude-sonnet-4-5@20250929"
+	Model__GoogleVertex__Claude__Sonnet__4__6__Default__4                          ModelID = "claude-sonnet-4-6@default"
 	Model__GoogleVertex__Deepseek__V3__1__Maas                                     ModelID = "deepseek-ai/deepseek-v3.1-maas"
 	Model__GoogleVertex__Deepseek__V3__2__Maas                                     ModelID = "deepseek-ai/deepseek-v3.2-maas"
 	Model__GoogleVertex__GPT__Oss__120b__Maas                                      ModelID = "openai/gpt-oss-120b-maas"
@@ -2797,7 +2797,7 @@ const (
 	Model__NanoGPT__Mirothinker__V1__5__235b                                       ModelID = "miromind-ai/mirothinker-v1.5-235b"
 	Model__NanoGPT__Mistral__7b__Instruct                                          ModelID = "mistralai/mistral-7b-instruct"
 	Model__NanoGPT__Mistral__Large                                                 ModelID = "mistralai/mistral-large"
-	Model__NanoGPT__Mistral__Large__3__675b__Instruct__2512                        ModelID = "mistralai/mistral-large-3-675b-instruct-2512"
+	Model__NanoGPT__Mistral__Large__3__675b__Instruct__2512__3                     ModelID = "mistralai/mistral-large-3-675b-instruct-2512"
 	Model__NanoGPT__Mistral__Medium__3                                             ModelID = "mistralai/mistral-medium-3"
 	Model__NanoGPT__Mistral__Medium__3_1                                           ModelID = "mistralai/mistral-medium-3.1"
 	Model__NanoGPT__Mistral__Nemo__12B__Instruct__2407                             ModelID = "Mistral-Nemo-12B-Instruct-2407"
@@ -3150,7 +3150,7 @@ const (
 	Model__Nvidia__Minimax__M2__5__2_5                                             ModelID = "minimaxai/minimax-m2.5"
 	Model__Nvidia__Minimax__M2__7__2_7                                             ModelID = "minimaxai/minimax-m2.7"
 	Model__Nvidia__Mistral__7b__Instruct__V03                                      ModelID = "mistralai/mistral-7b-instruct-v03"
-	Model__Nvidia__Mistral__Large__3__675b__Instruct__2512                         ModelID = "mistralai/mistral-large-3-675b-instruct-2512"
+	Model__Nvidia__Mistral__Large__3__675b__Instruct__2512__3                      ModelID = "mistralai/mistral-large-3-675b-instruct-2512"
 	Model__Nvidia__Mistral__Medium__3__Instruct                                    ModelID = "mistralai/mistral-medium-3-instruct"
 	Model__Nvidia__Mistral__Nemotron                                               ModelID = "mistralai/mistral-nemotron"
 	Model__Nvidia__Mistral__Small__4__119b__2603__4                                ModelID = "mistralai/mistral-small-4-119b-2603"
@@ -4080,7 +4080,7 @@ const (
 	Model__RegoloAI__Llama__3__3__70b__Instruct__3_3                               ModelID = "llama-3.3-70b-instruct"
 	Model__RegoloAI__Minimax__M2__5__2_5                                           ModelID = "minimax-m2.5"
 	Model__RegoloAI__Mistral__Small3__2                                            ModelID = "mistral-small3.2"
-	Model__RegoloAI__Mistral__Small__4__119b                                       ModelID = "mistral-small-4-119b"
+	Model__RegoloAI__Mistral__Small__4__119b__4                                    ModelID = "mistral-small-4-119b"
 	Model__RegoloAI__Qwen3__5__122b__3_5                                           ModelID = "qwen3.5-122b"
 	Model__RegoloAI__Qwen3__5__9b__3_5                                             ModelID = "qwen3.5-9b"
 	Model__RegoloAI__Qwen3__Coder__Next__3                                         ModelID = "qwen3-coder-next"
@@ -4473,9 +4473,9 @@ const (
 	Model__Venice__Claude__Opus__4_6                                               ModelID = "claude-opus-4-6"
 	Model__Venice__Claude__Opus__4_7                                               ModelID = "claude-opus-4-7"
 	Model__Venice__Claude__Opus__4_8                                               ModelID = "claude-opus-4-8"
-	Model__Venice__Claude__Opus__4__6__Fast                                        ModelID = "claude-opus-4-6-fast"
-	Model__Venice__Claude__Opus__4__7__Fast                                        ModelID = "claude-opus-4-7-fast"
-	Model__Venice__Claude__Opus__4__8__Fast                                        ModelID = "claude-opus-4-8-fast"
+	Model__Venice__Claude__Opus__4__6__Fast__4_6                                   ModelID = "claude-opus-4-6-fast"
+	Model__Venice__Claude__Opus__4__7__Fast__4_7                                   ModelID = "claude-opus-4-7-fast"
+	Model__Venice__Claude__Opus__4__8__Fast__4_8                                   ModelID = "claude-opus-4-8-fast"
 	Model__Venice__Claude__Sonnet__4_5                                             ModelID = "claude-sonnet-4-5"
 	Model__Venice__Claude__Sonnet__4_6                                             ModelID = "claude-sonnet-4-6"
 	Model__Venice__Deepseek__V3__2                                                 ModelID = "deepseek-v3.2"
@@ -6306,29 +6306,29 @@ var allModelConstants = [...]ModelID{
 	Model__GoogleVertexAnthropic__Claude__3__5__Haiku__3_5__20241022,
 	Model__GoogleVertexAnthropic__Claude__3__5__Sonnet__3_5__20241022,
 	Model__GoogleVertexAnthropic__Claude__3__7__Sonnet__3_7__20250219,
-	Model__GoogleVertexAnthropic__Claude__Haiku__4__5__20251001,
-	Model__GoogleVertexAnthropic__Claude__Opus__4__1__20250805,
+	Model__GoogleVertexAnthropic__Claude__Haiku__4__5__4__20251001,
+	Model__GoogleVertexAnthropic__Claude__Opus__4__1__4__20250805,
 	Model__GoogleVertexAnthropic__Claude__Opus__4__20250514,
-	Model__GoogleVertexAnthropic__Claude__Opus__4__5__20251101,
-	Model__GoogleVertexAnthropic__Claude__Opus__4__6__Default,
-	Model__GoogleVertexAnthropic__Claude__Opus__4__7__Default,
-	Model__GoogleVertexAnthropic__Claude__Opus__4__8__Default,
+	Model__GoogleVertexAnthropic__Claude__Opus__4__5__4__20251101,
+	Model__GoogleVertexAnthropic__Claude__Opus__4__6__Default__4,
+	Model__GoogleVertexAnthropic__Claude__Opus__4__7__Default__4,
+	Model__GoogleVertexAnthropic__Claude__Opus__4__8__Default__4,
 	Model__GoogleVertexAnthropic__Claude__Sonnet__4__20250514,
-	Model__GoogleVertexAnthropic__Claude__Sonnet__4__5__20250929,
-	Model__GoogleVertexAnthropic__Claude__Sonnet__4__6__Default,
+	Model__GoogleVertexAnthropic__Claude__Sonnet__4__5__4__20250929,
+	Model__GoogleVertexAnthropic__Claude__Sonnet__4__6__Default__4,
 	Model__GoogleVertex__Claude__3__5__Haiku__3_5__20241022,
 	Model__GoogleVertex__Claude__3__5__Sonnet__3_5__20241022,
 	Model__GoogleVertex__Claude__3__7__Sonnet__3_7__20250219,
-	Model__GoogleVertex__Claude__Haiku__4__5__20251001,
-	Model__GoogleVertex__Claude__Opus__4__1__20250805,
+	Model__GoogleVertex__Claude__Haiku__4__5__4__20251001,
+	Model__GoogleVertex__Claude__Opus__4__1__4__20250805,
 	Model__GoogleVertex__Claude__Opus__4__20250514,
-	Model__GoogleVertex__Claude__Opus__4__5__20251101,
-	Model__GoogleVertex__Claude__Opus__4__6__Default,
-	Model__GoogleVertex__Claude__Opus__4__7__Default,
-	Model__GoogleVertex__Claude__Opus__4__8__Default,
+	Model__GoogleVertex__Claude__Opus__4__5__4__20251101,
+	Model__GoogleVertex__Claude__Opus__4__6__Default__4,
+	Model__GoogleVertex__Claude__Opus__4__7__Default__4,
+	Model__GoogleVertex__Claude__Opus__4__8__Default__4,
 	Model__GoogleVertex__Claude__Sonnet__4__20250514,
-	Model__GoogleVertex__Claude__Sonnet__4__5__20250929,
-	Model__GoogleVertex__Claude__Sonnet__4__6__Default,
+	Model__GoogleVertex__Claude__Sonnet__4__5__4__20250929,
+	Model__GoogleVertex__Claude__Sonnet__4__6__Default__4,
 	Model__GoogleVertex__Deepseek__V3__1__Maas,
 	Model__GoogleVertex__Deepseek__V3__2__Maas,
 	Model__GoogleVertex__GPT__Oss__120b__Maas,
@@ -7780,7 +7780,7 @@ var allModelConstants = [...]ModelID{
 	Model__NanoGPT__Mirothinker__V1__5__235b,
 	Model__NanoGPT__Mistral__7b__Instruct,
 	Model__NanoGPT__Mistral__Large,
-	Model__NanoGPT__Mistral__Large__3__675b__Instruct__2512,
+	Model__NanoGPT__Mistral__Large__3__675b__Instruct__2512__3,
 	Model__NanoGPT__Mistral__Medium__3,
 	Model__NanoGPT__Mistral__Medium__3_1,
 	Model__NanoGPT__Mistral__Nemo__12B__Instruct__2407,
@@ -8133,7 +8133,7 @@ var allModelConstants = [...]ModelID{
 	Model__Nvidia__Minimax__M2__5__2_5,
 	Model__Nvidia__Minimax__M2__7__2_7,
 	Model__Nvidia__Mistral__7b__Instruct__V03,
-	Model__Nvidia__Mistral__Large__3__675b__Instruct__2512,
+	Model__Nvidia__Mistral__Large__3__675b__Instruct__2512__3,
 	Model__Nvidia__Mistral__Medium__3__Instruct,
 	Model__Nvidia__Mistral__Nemotron,
 	Model__Nvidia__Mistral__Small__4__119b__2603__4,
@@ -9063,7 +9063,7 @@ var allModelConstants = [...]ModelID{
 	Model__RegoloAI__Llama__3__3__70b__Instruct__3_3,
 	Model__RegoloAI__Minimax__M2__5__2_5,
 	Model__RegoloAI__Mistral__Small3__2,
-	Model__RegoloAI__Mistral__Small__4__119b,
+	Model__RegoloAI__Mistral__Small__4__119b__4,
 	Model__RegoloAI__Qwen3__5__122b__3_5,
 	Model__RegoloAI__Qwen3__5__9b__3_5,
 	Model__RegoloAI__Qwen3__Coder__Next__3,
@@ -9456,9 +9456,9 @@ var allModelConstants = [...]ModelID{
 	Model__Venice__Claude__Opus__4_6,
 	Model__Venice__Claude__Opus__4_7,
 	Model__Venice__Claude__Opus__4_8,
-	Model__Venice__Claude__Opus__4__6__Fast,
-	Model__Venice__Claude__Opus__4__7__Fast,
-	Model__Venice__Claude__Opus__4__8__Fast,
+	Model__Venice__Claude__Opus__4__6__Fast__4_6,
+	Model__Venice__Claude__Opus__4__7__Fast__4_7,
+	Model__Venice__Claude__Opus__4__8__Fast__4_8,
 	Model__Venice__Claude__Sonnet__4_5,
 	Model__Venice__Claude__Sonnet__4_6,
 	Model__Venice__Deepseek__V3__2,
