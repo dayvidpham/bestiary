@@ -957,6 +957,7 @@
 {"issue_id":"bestiary-u7hn","label":"aura:severity:blocker"}
 {"issue_id":"bestiary-u8e","label":"aura:p9-impl:s9-slice"}
 {"issue_id":"bestiary-u9k","label":"aura:p1-user:s1_1-classify"}
+{"issue_id":"bestiary-ua2j","label":"aura:p11-user:s11-uat"}
 {"issue_id":"bestiary-ubc","label":"aura:p2-user:s2_1-elicit"}
 {"issue_id":"bestiary-ubv3","label":"aura:p10-impl:s10-review"}
 {"issue_id":"bestiary-ubv3","label":"aura:severity:minor"}
