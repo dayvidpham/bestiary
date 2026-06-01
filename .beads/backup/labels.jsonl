@@ -1009,6 +1009,7 @@
 {"issue_id":"bestiary-rwbl","label":"aura:p10-impl:s10-review"}
 {"issue_id":"bestiary-rwbl","label":"aura:severity:important"}
 {"issue_id":"bestiary-rwg8","label":"aura:p9-impl:s9-slice"}
+{"issue_id":"bestiary-rwg8","label":"aura:p9-impl:slice-complete"}
 {"issue_id":"bestiary-rwg8","label":"followup"}
 {"issue_id":"bestiary-rwg8","label":"parse"}
 {"issue_id":"bestiary-rxpu","label":"aura:p10-impl:s10-review"}
