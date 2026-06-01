@@ -3089,12 +3089,15 @@ func TestRecoverMemberVariant_FamiliesJSONMembers(t *testing.T) {
 	}
 }
 
-// TestRecoverMemberVariant_SubsumesB1 verifies that recoverMemberVariant
-// subsumes the inline B1 promotion (parse.go:1053-1071), preserving all
-// existing B1 results after B1 is deleted.
+// TestRecoverMemberVariant_SubsumesB1 verifies that the B1 family-agnostic
+// sole-residual suffix promotion still yields its expected (family, variant,
+// version) results.
 //
-// These tests MUST remain green after L3 removes the B1 block.
-// If they turn red, recoverMemberVariant has not correctly subsumed B1.
+// NOTE (SLICE-1 rc2 FIX CYCLE): B1 was NOT removed. The fix cycle RESTORED a
+// version-preserving B1 that runs POST-version extraction for UNREGISTERED
+// families (via the shared bareVariantSuffix helper) — see the B1 block in
+// ParseFamilyDetailed and the recoverMemberVariant doc comment. These cases must
+// remain green; if they turn red, the restored B1 promotion regressed.
 func TestRecoverMemberVariant_SubsumesB1(t *testing.T) {
 	t.Parallel()
 
@@ -3260,4 +3263,126 @@ func TestFamiliesJSON_LoaderFailFast(t *testing.T) {
 			t.Error("'openai' is a provider name, not a Family — should fail key validation")
 		}
 	})
+}
+
+// ============================================================================
+// SLICE-2 (rc2) — L2 Tests (RED until L3 implements the bare_gen_split predicate)
+// ============================================================================
+
+// TestM2_BareGenSplit_PositiveSplits verifies the M2 bare-generation split: a
+// glued family token <base><int> (e.g. "qwen3", "o1") OR a clean family whose ID
+// carries a glued generation token decomposes to (base, …, version=int) when the
+// CLOSED predicate holds (has families.json entry ∧ base not digit-suffixed ∧
+// bare_gen_split:true flag attested in the snapshot).
+//
+// BDD: Given "qwen3-max" When decomposed Then (qwen, max, 3).
+// These cases are RED until L3 implements the predicate at the SLICE-2 insertion
+// point in BOTH entrypoints (InferFamilyFromIDWithVariant + ParseFamilyDetailed).
+func TestM2_BareGenSplit_PositiveSplits(t *testing.T) {
+	t.Parallel()
+
+	cases := []struct {
+		desc        string
+		rawFamily   bestiary.Family
+		id          bestiary.ModelID
+		provider    bestiary.Provider
+		wantFamily  bestiary.Family
+		wantVariant string
+		wantVersion string
+	}{
+		// Bare glued family token, empty raw — split base off the trailing int.
+		{"qwen3 → (qwen,,3)", "", "qwen3", "alibaba", "qwen", "", "3"},
+		{"o1 → (o,,1)", "", "o1", "openai", "o", "", "1"},
+		// Glued family token + member variant (empty-raw inference path).
+		{"qwen3-max (raw empty) → (qwen,max,3)", "", "qwen3-max", "qiniu-ai", "qwen", "max", "3"},
+		// CLEAN raw-supplied family + glued generation in the ID: the (B) version
+		// recovery half must surface the glued int as version so both providers agree.
+		{"qwen3-max (raw qwen) → (qwen,max,3)", "qwen", "qwen3-max", "alibaba", "qwen", "max", "3"},
+		{"o3-mini (raw o) → (o,mini,3)", "o", "openai/o3-mini", "openrouter", "o", "mini", "3"},
+		// Hyphenated generation already extracts version on the raw side; the
+		// empty-raw inferred family "gpt-5"/"gemini-3" must split to the base.
+		{"gpt-5-mini (raw empty) → (gpt,mini,5)", "", "openai/gpt-5-mini", "kilo", "gpt", "mini", "5"},
+		{"gemini-3-flash-preview (raw empty) → (gemini,flash,3)", "", "gemini-3-flash-preview", "302ai", "gemini", "flash", "3"},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.desc, func(t *testing.T) {
+			t.Parallel()
+			fam, variant, version, _, _ := bestiary.ParseFamilyDetailed(tc.rawFamily, tc.id, tc.provider)
+			if fam != tc.wantFamily {
+				t.Errorf("family = %q, want %q\n"+
+					"  What: bare_gen_split did not split the glued generation off the family\n"+
+					"  Why: SLICE-2 closed predicate (has-entry ∧ not-digit-suffixed ∧ flag) should split\n"+
+					"  How to fix: implement the bare_gen_split predicate at the SLICE-2 insertion point",
+					fam, tc.wantFamily)
+			}
+			if variant != tc.wantVariant {
+				t.Errorf("variant = %q, want %q", variant, tc.wantVariant)
+			}
+			if version != tc.wantVersion {
+				t.Errorf("version = %q, want %q\n"+
+					"  What: bare_gen_split did not surface the generation int as version\n"+
+					"  Why: split <base><int> → version=int, including the clean-family (B) recovery half",
+					version, tc.wantVersion)
+			}
+		})
+	}
+}
+
+// TestM2_BareGenSplit_NonSplit verifies the CLOSED predicate's negative cases:
+// tokens that look like <base><int> but MUST NOT split because a clause fails.
+//
+//   - v0 / asi1 / esm2 / wan2 / hy3 / r1: base ("v"/"asi"/"esm"/"wan"/"hy"/"r")
+//     has NO families.json entry → has-entry clause fails.
+//   - l3 / mimo: l3's base "l" has no entry; mimo has no trailing digit at all —
+//     CLARIFICATION-1.4 (digit-suffix guard + has-entry).
+//   - m2.5 / k2.5 / v2.5: letter-prefixed dotted numerics remain VARIANT tokens
+//     (version_patterns precedent); they are never the family token and their
+//     family (minimax/kimi/mimo) carries no bare_gen_split flag.
+//
+// These assert the predicate is CLOSED (no per-name allow-list): the family
+// stays the un-split token (or the dotted token stays a variant).
+func TestM2_BareGenSplit_NonSplit(t *testing.T) {
+	t.Parallel()
+
+	cases := []struct {
+		desc        string
+		rawFamily   bestiary.Family
+		id          bestiary.ModelID
+		provider    bestiary.Provider
+		wantFamily  bestiary.Family
+		wantVariant string
+	}{
+		// has-entry clause fails (base not a families.json key).
+		{"v0 NOT split (v∉families)", "", "v0-1.5", "p", "v0", ""},
+		{"asi1 NOT split (asi∉families)", "", "asi1-mini", "p", "asi1", "mini"},
+		{"esm2 NOT split (esm∉families)", "", "esm2-large", "p", "esm2", "large"},
+		{"wan2 NOT split (wan∉families)", "", "wan2-t2v", "p", "wan2", ""},
+		{"hy3 NOT split (hy∉families)", "", "tencent/hy3-preview", "p", "hy3", ""},
+		{"r1 NOT split (r∉families)", "", "r1", "p", "r1", ""},
+		{"l3 NOT split (l∉families)", "", "l3-8b", "p", "l3", ""},
+		// mimo: no trailing digit → never a split candidate (digit-suffix guard).
+		{"mimo NOT split (no trailing digit)", "", "mimo-v1", "p", "mimo", ""},
+		// Letter-prefixed dotted numerics remain VARIANT (version_patterns precedent).
+		{"minimax-m2.5 → variant m2.5 (not split)", "", "minimax-m2.5", "p", "minimax", "m2.5"},
+		{"kimi-k2.5 → variant k2.5 (not split)", "", "kimi-k2.5", "p", "kimi", "k2.5"},
+		{"mimo-v2.5 → variant v2.5 (not split)", "", "mimo-v2.5", "p", "mimo", "v2.5"},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.desc, func(t *testing.T) {
+			t.Parallel()
+			fam, variant, _, _, _ := bestiary.ParseFamilyDetailed(tc.rawFamily, tc.id, tc.provider)
+			if fam != tc.wantFamily {
+				t.Errorf("family = %q, want %q\n"+
+					"  What: bare_gen_split wrongly split a token whose closed-predicate clause fails\n"+
+					"  Why: the predicate is CLOSED — no families.json entry (or no trailing digit) means NO split\n"+
+					"  How to fix: gate the split on has-entry ∧ not-digit-suffixed ∧ bare_gen_split flag",
+					fam, tc.wantFamily)
+			}
+			if variant != tc.wantVariant {
+				t.Errorf("variant = %q, want %q (dotted numerics must remain variant tokens)", variant, tc.wantVariant)
+			}
+		})
+	}
 }

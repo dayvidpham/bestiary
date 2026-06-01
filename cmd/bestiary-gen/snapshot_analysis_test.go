@@ -324,11 +324,26 @@ func TestSnapshotAnalysis_CrossProviderDivergences(t *testing.T) {
 	// original inline B1 did. Those promotions do not change which multi-provider IDs
 	// agree, so the divergence figures stay 340 / 0 / 73 / 210 / 57. The jvpa M3
 	// helper symmetry fix is likewise non-observable here (version extraction unchanged).
+	//
+	// SLICE-2 (rc2) bare_gen_split: the closed predicate splits glued <base><int>
+	// family tokens (qwen3→qwen+v3, o3→o+v3, gpt-5→gpt+v5, gemini-3→gemini+v3,
+	// glm-5→glm+v5) for the 5 flagged families (qwen, o, gpt, gemini, glm) whose
+	// split form is attested in this snapshot. New baseline: 281 / A=0 / B=3 / C=221
+	// / D=57. Empirically verified (divergent-ID set diff vs the fc51ddc baseline):
+	// 59 IDs converged (left the divergent set) and ZERO previously-agreeing IDs
+	// broke. CatB fell 73→3; the 3 residual CatB IDs (bases hy / lyria / rnj) are
+	// correctly DECLINED by the closed predicate because they have no families.json
+	// entry — clearing them would require ADDING speculative single-occurrence family
+	// keys (open per-name maintenance), which the closed predicate exists to avoid.
+	// CatC rose 210→221 (+11): those 11 are former-CatB IDs that split correctly to
+	// the base family but still diverge on a deeper hyphenated-version / param-count /
+	// letter-suffix form (e.g. qwen vs qwen-2.5-72b, gpt vs gpt-4o, glm vs glm-5v) —
+	// out of bare-gen scope, so they remain honestly divergent rather than masked.
 	const (
-		divergenceExact = 340
+		divergenceExact = 281
 		// Secondary sanity band — guards against a wholesale snapshot/pipeline
 		// breakage that happens to coincidentally land on a different exact value.
-		divergenceLow  = 280
+		divergenceLow  = 250
 		divergenceHigh = 500
 	)
 	if totalDivergent != divergenceExact {
@@ -354,10 +369,12 @@ func TestSnapshotAnalysis_CrossProviderDivergences(t *testing.T) {
 	// SLICE-1: CatA → 0 (M4 fixed all case divergences); CatC → 210 (recoverMemberVariant).
 	// FIX CYCLE divergence-neutral (see divergenceExact note above): restored B1
 	// promotion is version-gated, so it does not move these category counts.
+	// SLICE-2: bare_gen_split predicate resolved 70 of 73 CatB (59 converged, 11
+	// reclassified to CatC). CatB → 3 (residual hy/lyria/rnj, no families.json entry).
 	const (
 		catAExact = 0   // vendor-prefix/case (SLICE-1 M4 resolved all)
-		catBExact = 73  // bare-gen-split (SLICE-2 scope)
-		catCExact = 210 // member-variant recovery (SLICE-1 recoverMemberVariant resolved 38)
+		catBExact = 3   // bare-gen-split (SLICE-2 cleared 70/73; residual = bases w/o families.json entry)
+		catCExact = 221 // member-variant recovery (+11 former-CatB split-but-still-divergent)
 		catDExact = 57  // genuine family mislabel (ledger candidates)
 	)
 	checkCat := func(name string, got, want int) {

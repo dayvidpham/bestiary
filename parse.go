@@ -962,7 +962,20 @@ func InferFamilyFromIDWithVariant(id ModelID, p Provider) (Family, string, strin
 				}
 			}
 			// M4: lowercase Family field at the output boundary.
-			return Family(strings.ToLower(string(fProv))), vProv, version // committed: modifier handled
+			outFamily := Family(strings.ToLower(string(fProv)))
+			// SLICE-2 bare_gen_split: this modifier-stripping branch returns early
+			// (before the pipeline insertion point below), so apply the split here too
+			// — e.g. "gemini-3-flash-preview" (preview stripped) leaves family
+			// "gemini-3" which must split to (gemini, …, 3). Closed predicate.
+			if pd, pdErr := loadParseData(); pdErr == nil {
+				if base, ver, ok := splitBareGen(pd, string(outFamily)); ok {
+					outFamily = base
+					if version == "" {
+						version = ver
+					}
+				}
+			}
+			return outFamily, vProv, version // committed: modifier handled
 		}
 	}
 
@@ -998,9 +1011,19 @@ func InferFamilyFromIDWithVariant(id ModelID, p Provider) (Family, string, strin
 		baseFamily := Family(strings.ToLower(firstToken(stripped)))
 		// Remaining tokens after the first (family) token are candidate member zones.
 		remainingTokens := tokens[1:]
+		// SLICE-2 bare_gen_split: when the family seed is a glued <base><int> token
+		// (e.g. "qwen3", "o1"), split it so the generation surfaces as version. Gated
+		// on the closed predicate (has-entry ∧ not-digit-suffixed ∧ bare_gen_split).
+		bareVersion := ""
+		if pd, pdErr := loadParseData(); pdErr == nil {
+			if base, ver, ok := splitBareGen(pd, string(baseFamily)); ok {
+				baseFamily = base
+				bareVersion = ver
+			}
+		}
 		recoveredVariant := recoverMemberVariant(remainingTokens, baseFamily)
 		// M4: baseFamily is already lowercased above.
-		return baseFamily, recoveredVariant, ""
+		return baseFamily, recoveredVariant, bareVersion
 	}
 
 	// M4: lowercase Family field at the output boundary.
@@ -1008,6 +1031,17 @@ func InferFamilyFromIDWithVariant(id ModelID, p Provider) (Family, string, strin
 
 	// SLICE-3 INSERTION POINT: family_aliases ledger remap (after M4, before bare-gen-split)
 	// SLICE-2 INSERTION POINT: bare_gen_split closed predicate (before recoverMemberVariant)
+	// Split a glued/hyphenated <base><int> family token (e.g. "qwen3", "gpt-5") into
+	// its base family + generation version. Closed predicate (splitBareGen). Only
+	// fills an empty version — never clobbers a version ParseFamilyWithVersion found.
+	if pd, pdErr := loadParseData(); pdErr == nil {
+		if base, ver, ok := splitBareGen(pd, string(family)); ok {
+			family = base
+			if version == "" {
+				version = ver
+			}
+		}
+	}
 
 	// recoverMemberVariant: if variant is still empty after ParseFamilyWithVersion,
 	// attempt to recover it from the model ID tokens (families.json members + suffixes).
@@ -1255,6 +1289,35 @@ func ParseFamilyDetailed(raw Family, id ModelID, p Provider) (Family, string, st
 	//
 	// SLICE-3 INSERTION POINT: family_aliases ledger remap (after M4, before bare-gen-split)
 	// SLICE-2 INSERTION POINT: bare_gen_split closed predicate (before recoverMemberVariant)
+	// Two halves, both gated on the SAME closed predicate (splitBareGen):
+	//  (A) family-token split: when the raw family is itself a glued <base><int>
+	//      (e.g. raw="qwen3"), split it to base family + generation version.
+	//  (B) clean-family version recovery: when the raw family is already a bare_gen
+	//      base (e.g. "qwen", "o") but the ID carries the glued generation token
+	//      (e.g. "qwen3-max", "o3-mini" — NO hyphen between base and int, so the
+	//      version extractors below cannot see it), recover the int as version so the
+	//      clean-family path AGREES with the empty-raw inference path. Only ever
+	//      FILLS an empty version (never clobbers a version PFWV already found), and
+	//      the (B) ID token's base must equal the resolved family (no cross-family
+	//      promotion). Param-count/size tokens (e.g. "120b" in gpt-oss-120b) are
+	//      immune: splitBareGen requires a registered, bare_gen_split base, and size
+	//      tokens are never the leading family token.
+	if pd, pdErr := loadParseData(); pdErr == nil {
+		if base, ver, ok := splitBareGen(pd, strings.ToLower(string(family))); ok {
+			family = base
+			if version == "" {
+				version = ver
+			}
+		} else if version == "" {
+			firstTok := lastPathSegment(strings.ToLower(stripVendorNamespace(string(cleanedID))))
+			if idx := strings.IndexByte(firstTok, '-'); idx >= 0 {
+				firstTok = firstTok[:idx]
+			}
+			if b, ver2, ok2 := splitBareGen(pd, firstTok); ok2 && b == family {
+				version = ver2
+			}
+		}
+	}
 	//
 	// recoverMemberVariant: recover variant from model ID member tokens (families.json
 	// members + curated suffixes) for REGISTERED families when ParseFamilyWithVersion
@@ -1620,6 +1683,70 @@ func bareVariantSuffix(pd *parseData, lowTok string) (string, bool) {
 		}
 	}
 	return "", false
+}
+
+// --------------------------------------------------------------------------
+// SLICE-2: bare_gen_split closed predicate
+// --------------------------------------------------------------------------
+
+// splitBareGen applies the M2 bare-generation split CLOSED predicate to a single
+// lowercase token. It splits a glued/hyphen-joined family-and-generation token
+// <base><int> or <base>-<int> (e.g. "qwen3", "o1", "gpt-5", "gemini-3") into its
+// base family and the trailing generation int, returning (base, version, true)
+// ONLY when ALL THREE clauses hold:
+//
+//  1. has-entry-in-families.json: base is a known family key (pd.families[base]
+//     exists). This is the clause that lets the negatives v0/asi1/esm2/wan2/hy3/r1
+//     (bases v/asi/esm/wan/hy/r) and l3 (base l) fall out — none are family keys.
+//  2. base-name-not-digit-suffixed: the alphabetic base does not itself end in a
+//     digit (defends against double-promoting an already-versioned base).
+//  3. bare_gen_split flag: pd.families[base].BareGenSplit is true. The flag is the
+//     CURATION-TIME record that the split form is attested in the committed
+//     snapshot (set in parse/data/families.json), keeping the predicate CLOSED —
+//     no per-name runtime allow-list.
+//
+// The trailing generation is the maximal run of [0-9.] at the end of the token
+// (so "qwen3" → "3", "qwen3.5" → "3.5"); a single separating hyphen between base
+// and int is consumed ("gpt-5" → base "gpt"). Tokens with no trailing digit
+// (e.g. "mimo") and all-numeric tokens return ok=false. The predicate never sees
+// letter-prefixed dotted variant tokens (m2.5/k2.5/v2.5): those are variants, not
+// family tokens, and their families carry no bare_gen_split flag regardless.
+func splitBareGen(pd *parseData, tok string) (Family, string, bool) {
+	if pd == nil || tok == "" {
+		return "", "", false
+	}
+	// Maximal trailing run of digits and dots = the generation version.
+	end := len(tok)
+	i := end
+	for i > 0 {
+		c := tok[i-1]
+		if (c >= '0' && c <= '9') || c == '.' {
+			i--
+			continue
+		}
+		break
+	}
+	if i == end {
+		return "", "", false // no trailing digit/dot run
+	}
+	version := tok[i:]
+	base := tok[:i]
+	// Consume a single separating hyphen ("gpt-5" → base "gpt").
+	base = strings.TrimSuffix(base, "-")
+	// version must contain at least one digit (guard against a lone "." tail).
+	if base == "" || !strings.ContainsAny(version, "0123456789") {
+		return "", "", false
+	}
+	// Clause 2: base-name-not-digit-suffixed.
+	if last := base[len(base)-1]; last >= '0' && last <= '9' {
+		return "", "", false
+	}
+	// Clause 1 (has-entry) + Clause 3 (bare_gen_split flag attested in snapshot).
+	info, ok := pd.families[Family(base)]
+	if !ok || !info.BareGenSplit {
+		return "", "", false
+	}
+	return Family(base), version, true
 }
 
 // recoverMemberVariant recovers a variant token from idTokens (the hyphen-split
