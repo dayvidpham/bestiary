@@ -411,8 +411,19 @@ func TestSnapshotAnalysis_CrossProviderDivergences(t *testing.T) {
 	// ZERO category-(c) unexpected regressions (1 reviewed justified-exception:
 	// gemini-2.5-pro-preview-tts raw mislabel). CatD=44 unchanged — the genuine family
 	// mislabel ledger is Option B's scope, not SLICE-9's.
+	//
+	// SLICE-9 fix-cycle-2 (review A/B/C REVISE → fixed): re-pinned 123→126 / CatC 76→79.
+	//  - P1 (Reviewer A): the variant-superstring guard restores the correct, more-
+	//    specific raw variant "flash-lite" for gemini-2.5-flash-lite-preview-* (the
+	//    ID-path returns less-specific "flash"). Those ~3 IDs therefore STAY divergent
+	//    (the empty-raw providers still mis-derive "flash") — an HONEST residual surfaced
+	//    for a future ID-path/tier-seeding fix, NOT hidden by downgrading the correct
+	//    flash-lite data. This is the +3 vs the (unsound) fix-cycle-1 count of 123.
+	//  - P2 (Reviewer C): '@'-form version normalization (claude-…-4-1@20250805 → 4.1,
+	//    not "4") removes the newly-introduced cross-form version-VALUE divergence; net
+	//    of P1+P2 the 3-tuple analyzer lands at 126 / A=0 / B=3 / C=79 / D=44.
 	const (
-		divergenceExact = 123
+		divergenceExact = 126
 		// Secondary sanity band — guards against a wholesale snapshot/pipeline
 		// breakage that happens to coincidentally land on a different exact value.
 		divergenceLow  = 100
@@ -451,7 +462,7 @@ func TestSnapshotAnalysis_CrossProviderDivergences(t *testing.T) {
 	const (
 		catAExact = 0  // vendor-prefix/case (SLICE-1 M4 resolved all)
 		catBExact = 3  // bare-gen-split (SLICE-2 cleared 70/73; residual = bases w/o families.json entry)
-		catCExact = 76 // member-variant/version (SLICE-9: −31 via path-unification — shared ID-driven Variant/Version/Modifier across empty-raw & raw-populated providers)
+		catCExact = 79 // member-variant/version (SLICE-9: −28 via path-unification; fix-cycle-2 +3 = flash-lite residual kept honest, not downgraded)
 		catDExact = 44 // genuine family mislabel (SLICE-3: −13; SLICE-9 leaves CatD untouched — family-mislabel ledger is Option B's scope)
 	)
 	checkCat := func(name string, got, want int) {

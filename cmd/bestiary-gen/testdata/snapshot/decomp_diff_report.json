@@ -1,12 +1,12 @@
 {
   "total_records": 4979,
-  "changed_count": 147,
-  "cat_a_divergence_fix_count": 64,
-  "cat_b_improvement_count": 82,
+  "changed_count": 146,
+  "cat_a_divergence_fix_count": 59,
+  "cat_b_improvement_count": 86,
   "cat_c_unexpected_regression_count": 0,
   "justified_exception_count": 1,
   "divergence_before": 163,
-  "divergence_after": 132,
+  "divergence_after": 135,
   "changes": [
     {
       "provider": "openrouter",
@@ -261,56 +261,11 @@
       "reason": "now matches a tuple another provider already produced for this ID (BEFORE)"
     },
     {
-      "provider": "google-vertex",
-      "id": "gemini-2.5-flash-lite-preview-06-17",
-      "raw_family": "gemini-flash-lite",
-      "before": "(family=\"gemini\",variant=\"flash-lite\",version=\"2.5\",modifier=\"\")",
-      "after": "(family=\"gemini\",variant=\"flash\",version=\"2.5\",modifier=\"\")",
-      "category": "a:divergence-fix",
-      "reason": "now matches a tuple another provider already produced for this ID (BEFORE)"
-    },
-    {
-      "provider": "jiekou",
-      "id": "gemini-2.5-flash-lite-preview-06-17",
-      "raw_family": "gemini-flash-lite",
-      "before": "(family=\"gemini\",variant=\"flash-lite\",version=\"2.5\",modifier=\"\")",
-      "after": "(family=\"gemini\",variant=\"flash\",version=\"2.5\",modifier=\"\")",
-      "category": "a:divergence-fix",
-      "reason": "now matches a tuple another provider already produced for this ID (BEFORE)"
-    },
-    {
-      "provider": "jiekou",
-      "id": "gemini-2.5-flash-lite-preview-09-2025",
-      "raw_family": "gemini-flash-lite",
-      "before": "(family=\"gemini\",variant=\"flash-lite\",version=\"2.5\",modifier=\"\")",
-      "after": "(family=\"gemini\",variant=\"flash\",version=\"2.5\",modifier=\"\")",
-      "category": "a:divergence-fix",
-      "reason": "now matches a tuple another provider already produced for this ID (BEFORE)"
-    },
-    {
       "provider": "abacus",
       "id": "gemini-3.1-flash-lite-preview",
       "raw_family": "gemini-flash",
       "before": "(family=\"gemini\",variant=\"flash\",version=\"3.1\",modifier=\"preview\")",
       "after": "(family=\"gemini\",variant=\"flash-lite\",version=\"3.1\",modifier=\"preview\")",
-      "category": "a:divergence-fix",
-      "reason": "now matches a tuple another provider already produced for this ID (BEFORE)"
-    },
-    {
-      "provider": "openrouter",
-      "id": "google/gemini-2.5-flash-lite-preview-09-2025",
-      "raw_family": "gemini-flash-lite",
-      "before": "(family=\"gemini\",variant=\"flash-lite\",version=\"2.5\",modifier=\"\")",
-      "after": "(family=\"gemini\",variant=\"flash\",version=\"2.5\",modifier=\"\")",
-      "category": "a:divergence-fix",
-      "reason": "now matches a tuple another provider already produced for this ID (BEFORE)"
-    },
-    {
-      "provider": "vercel",
-      "id": "google/gemini-2.5-flash-lite-preview-09-2025",
-      "raw_family": "gemini-flash-lite",
-      "before": "(family=\"gemini\",variant=\"flash-lite\",version=\"2.5\",modifier=\"\")",
-      "after": "(family=\"gemini\",variant=\"flash\",version=\"2.5\",modifier=\"\")",
       "category": "a:divergence-fix",
       "reason": "now matches a tuple another provider already produced for this ID (BEFORE)"
     },
@@ -616,7 +571,7 @@
       "id": "claude-haiku-4-5@20251001",
       "raw_family": "claude-haiku",
       "before": "(family=\"claude\",variant=\"haiku\",version=\"\",modifier=\"\")",
-      "after": "(family=\"claude\",variant=\"haiku\",version=\"4\",modifier=\"\")",
+      "after": "(family=\"claude\",variant=\"haiku\",version=\"4.5\",modifier=\"\")",
       "category": "b:improvement",
       "reason": "strict enrichment — only previously-empty field(s) populated"
     },
@@ -625,7 +580,7 @@
       "id": "claude-haiku-4-5@20251001",
       "raw_family": "claude-haiku",
       "before": "(family=\"claude\",variant=\"haiku\",version=\"\",modifier=\"\")",
-      "after": "(family=\"claude\",variant=\"haiku\",version=\"4\",modifier=\"\")",
+      "after": "(family=\"claude\",variant=\"haiku\",version=\"4.5\",modifier=\"\")",
       "category": "b:improvement",
       "reason": "strict enrichment — only previously-empty field(s) populated"
     },
@@ -634,7 +589,7 @@
       "id": "claude-opus-4-1@20250805",
       "raw_family": "claude-opus",
       "before": "(family=\"claude\",variant=\"opus\",version=\"\",modifier=\"\")",
-      "after": "(family=\"claude\",variant=\"opus\",version=\"4\",modifier=\"\")",
+      "after": "(family=\"claude\",variant=\"opus\",version=\"4.1\",modifier=\"\")",
       "category": "b:improvement",
       "reason": "strict enrichment — only previously-empty field(s) populated"
     },
@@ -643,7 +598,7 @@
       "id": "claude-opus-4-1@20250805",
       "raw_family": "claude-opus",
       "before": "(family=\"claude\",variant=\"opus\",version=\"\",modifier=\"\")",
-      "after": "(family=\"claude\",variant=\"opus\",version=\"4\",modifier=\"\")",
+      "after": "(family=\"claude\",variant=\"opus\",version=\"4.1\",modifier=\"\")",
       "category": "b:improvement",
       "reason": "strict enrichment — only previously-empty field(s) populated"
     },
@@ -652,7 +607,7 @@
       "id": "claude-opus-4-5@20251101",
       "raw_family": "claude-opus",
       "before": "(family=\"claude\",variant=\"opus\",version=\"\",modifier=\"\")",
-      "after": "(family=\"claude\",variant=\"opus\",version=\"4\",modifier=\"\")",
+      "after": "(family=\"claude\",variant=\"opus\",version=\"4.5\",modifier=\"\")",
       "category": "b:improvement",
       "reason": "strict enrichment — only previously-empty field(s) populated"
     },
@@ -661,7 +616,7 @@
       "id": "claude-opus-4-5@20251101",
       "raw_family": "claude-opus",
       "before": "(family=\"claude\",variant=\"opus\",version=\"\",modifier=\"\")",
-      "after": "(family=\"claude\",variant=\"opus\",version=\"4\",modifier=\"\")",
+      "after": "(family=\"claude\",variant=\"opus\",version=\"4.5\",modifier=\"\")",
       "category": "b:improvement",
       "reason": "strict enrichment — only previously-empty field(s) populated"
     },
@@ -679,7 +634,7 @@
       "id": "claude-opus-4-6@default",
       "raw_family": "claude-opus",
       "before": "(family=\"claude\",variant=\"opus\",version=\"\",modifier=\"\")",
-      "after": "(family=\"claude\",variant=\"opus\",version=\"4\",modifier=\"\")",
+      "after": "(family=\"claude\",variant=\"opus\",version=\"4.6\",modifier=\"\")",
       "category": "b:improvement",
       "reason": "strict enrichment — only previously-empty field(s) populated"
     },
@@ -688,7 +643,7 @@
       "id": "claude-opus-4-6@default",
       "raw_family": "claude-opus",
       "before": "(family=\"claude\",variant=\"opus\",version=\"\",modifier=\"\")",
-      "after": "(family=\"claude\",variant=\"opus\",version=\"4\",modifier=\"\")",
+      "after": "(family=\"claude\",variant=\"opus\",version=\"4.6\",modifier=\"\")",
       "category": "b:improvement",
       "reason": "strict enrichment — only previously-empty field(s) populated"
     },
@@ -706,7 +661,7 @@
       "id": "claude-opus-4-7@default",
       "raw_family": "claude-opus",
       "before": "(family=\"claude\",variant=\"opus\",version=\"\",modifier=\"\")",
-      "after": "(family=\"claude\",variant=\"opus\",version=\"4\",modifier=\"\")",
+      "after": "(family=\"claude\",variant=\"opus\",version=\"4.7\",modifier=\"\")",
       "category": "b:improvement",
       "reason": "strict enrichment — only previously-empty field(s) populated"
     },
@@ -715,7 +670,7 @@
       "id": "claude-opus-4-7@default",
       "raw_family": "claude-opus",
       "before": "(family=\"claude\",variant=\"opus\",version=\"\",modifier=\"\")",
-      "after": "(family=\"claude\",variant=\"opus\",version=\"4\",modifier=\"\")",
+      "after": "(family=\"claude\",variant=\"opus\",version=\"4.7\",modifier=\"\")",
       "category": "b:improvement",
       "reason": "strict enrichment — only previously-empty field(s) populated"
     },
@@ -733,13 +688,31 @@
       "id": "claude-opus-4-8@default",
       "raw_family": "claude-opus",
       "before": "(family=\"claude\",variant=\"opus\",version=\"\",modifier=\"\")",
-      "after": "(family=\"claude\",variant=\"opus\",version=\"4\",modifier=\"\")",
+      "after": "(family=\"claude\",variant=\"opus\",version=\"4.8\",modifier=\"\")",
       "category": "b:improvement",
       "reason": "strict enrichment — only previously-empty field(s) populated"
     },
     {
       "provider": "google-vertex-anthropic",
       "id": "claude-opus-4-8@default",
+      "raw_family": "claude-opus",
+      "before": "(family=\"claude\",variant=\"opus\",version=\"\",modifier=\"\")",
+      "after": "(family=\"claude\",variant=\"opus\",version=\"4.8\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "strict enrichment — only previously-empty field(s) populated"
+    },
+    {
+      "provider": "google-vertex",
+      "id": "claude-opus-4@20250514",
+      "raw_family": "claude-opus",
+      "before": "(family=\"claude\",variant=\"opus\",version=\"\",modifier=\"\")",
+      "after": "(family=\"claude\",variant=\"opus\",version=\"4\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "strict enrichment — only previously-empty field(s) populated"
+    },
+    {
+      "provider": "google-vertex-anthropic",
+      "id": "claude-opus-4@20250514",
       "raw_family": "claude-opus",
       "before": "(family=\"claude\",variant=\"opus\",version=\"\",modifier=\"\")",
       "after": "(family=\"claude\",variant=\"opus\",version=\"4\",modifier=\"\")",
@@ -751,7 +724,7 @@
       "id": "claude-sonnet-4-5@20250929",
       "raw_family": "claude-sonnet",
       "before": "(family=\"claude\",variant=\"sonnet\",version=\"\",modifier=\"\")",
-      "after": "(family=\"claude\",variant=\"sonnet\",version=\"4\",modifier=\"\")",
+      "after": "(family=\"claude\",variant=\"sonnet\",version=\"4.5\",modifier=\"\")",
       "category": "b:improvement",
       "reason": "strict enrichment — only previously-empty field(s) populated"
     },
@@ -760,7 +733,7 @@
       "id": "claude-sonnet-4-5@20250929",
       "raw_family": "claude-sonnet",
       "before": "(family=\"claude\",variant=\"sonnet\",version=\"\",modifier=\"\")",
-      "after": "(family=\"claude\",variant=\"sonnet\",version=\"4\",modifier=\"\")",
+      "after": "(family=\"claude\",variant=\"sonnet\",version=\"4.5\",modifier=\"\")",
       "category": "b:improvement",
       "reason": "strict enrichment — only previously-empty field(s) populated"
     },
@@ -769,13 +742,31 @@
       "id": "claude-sonnet-4-6@default",
       "raw_family": "claude-sonnet",
       "before": "(family=\"claude\",variant=\"sonnet\",version=\"\",modifier=\"\")",
-      "after": "(family=\"claude\",variant=\"sonnet\",version=\"4\",modifier=\"\")",
+      "after": "(family=\"claude\",variant=\"sonnet\",version=\"4.6\",modifier=\"\")",
       "category": "b:improvement",
       "reason": "strict enrichment — only previously-empty field(s) populated"
     },
     {
       "provider": "google-vertex-anthropic",
       "id": "claude-sonnet-4-6@default",
+      "raw_family": "claude-sonnet",
+      "before": "(family=\"claude\",variant=\"sonnet\",version=\"\",modifier=\"\")",
+      "after": "(family=\"claude\",variant=\"sonnet\",version=\"4.6\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "strict enrichment — only previously-empty field(s) populated"
+    },
+    {
+      "provider": "google-vertex",
+      "id": "claude-sonnet-4@20250514",
+      "raw_family": "claude-sonnet",
+      "before": "(family=\"claude\",variant=\"sonnet\",version=\"\",modifier=\"\")",
+      "after": "(family=\"claude\",variant=\"sonnet\",version=\"4\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "strict enrichment — only previously-empty field(s) populated"
+    },
+    {
+      "provider": "google-vertex-anthropic",
+      "id": "claude-sonnet-4@20250514",
       "raw_family": "claude-sonnet",
       "before": "(family=\"claude\",variant=\"sonnet\",version=\"\",modifier=\"\")",
       "after": "(family=\"claude\",variant=\"sonnet\",version=\"4\",modifier=\"\")",

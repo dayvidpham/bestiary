@@ -1404,6 +1404,17 @@ const (
 // family. Converging those 107 family-over-capture divergences to the short family is
 // the dedicated family-seeding slice (Option B), not this one.
 func idDrivenDecompose(id ModelID, p Provider) (Family, string, string, string) {
+	// SLICE-9 fix-cycle-2 (P2, Reviewer C IMPORTANT): some providers separate the
+	// version/date tag with '@' instead of '-' (e.g. "claude-opus-4-1@20250805",
+	// "claude-sonnet-4-6@default"). The '@' defeats every hyphen-based extractor
+	// (InferFamilyFromIDWithVariant, idDrivenVersion, splitSeriesVariant), leaving
+	// version "4" instead of the canonical "4.1"/"4.6" — a NEW same-model cross-form
+	// version-VALUE divergence (the epic's exact target, newly introduced). Normalize
+	// '@'→'-' ONCE here, at the head of the ID-driven primitive, so the @-form CONVERGES
+	// to the canonical hyphen-form decomposition. Date extraction (ExtractDate, codegen)
+	// runs on the ORIGINAL id and matches the embedded 8-digit date regardless of the
+	// '@' delimiter, so Date is unaffected.
+	id = ModelID(strings.ReplaceAll(string(id), "@", "-"))
 	family, variant, version := InferFamilyFromIDWithVariant(id, p)
 	modifier, _ := ExtractModifier(id, family, variant)
 	// ID-driven version consistency (SLICE-8 a/c): recover a version the ID carries
@@ -1473,7 +1484,17 @@ func reconcileIDDriven(rawFam Family, rawVar, rawVer, rawMod string, id ModelID,
 	//    "v2.5-pro-6bit" for mimo-v2.5-pro-6bit, where the series split was defeated by
 	//    the "6bit" quantization suffix). De-junking (raw variant "3.6" → "flash") and
 	//    refinement (raw "codex" → "codex-mini") both pass this guard.
-	if idVar != "" && (variant == "" || isCleanVariantToken(idVar)) {
+	//
+	//    SLICE-9 fix-cycle-2 (P1, Reviewer A BLOCKER): additionally REJECT the override
+	//    when the populated raw variant is a more-specific SUPERSTRING of idVar — i.e.
+	//    the ID-driven variant is LESS specific (a prefix). This prevents the
+	//    gemini-2.5-flash-lite-preview-* regression where InferFamilyFromIDWithVariant
+	//    loses the "-lite" tier and returns "flash", which would otherwise overwrite the
+	//    correct raw variant "flash-lite" (conflating two distinct Gemini tiers). The
+	//    empty-raw providers of those IDs still mis-derive "flash" — that is a REAL
+	//    pre-existing ID-path residual surfaced for a future family/tier-seeding fix,
+	//    NOT hidden by downgrading the correct raw data.
+	if idVar != "" && (variant == "" || (isCleanVariantToken(idVar) && !strings.HasPrefix(variant, idVar))) {
 		variant = idVar
 	}
 	//  - VERSION: fill an empty version, or override with a NUMERIC/dotted ID-driven

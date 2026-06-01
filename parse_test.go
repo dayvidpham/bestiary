@@ -2758,12 +2758,13 @@ func TestParseFamilyWithVersion_Fix4_Step5_6DigitDateGuard(t *testing.T) {
 // test suite — confirming the original test does NOT exercise the FIX-4 change site.
 //
 // Reaching Step-5: the Step-5 override-prefix loop fires when:
-//  (a) No exact-override match at Step-1 (rawStr itself is not in overrides),
-//  (b) No hyphen-version match at Step-2 (requires the TRAILING suffix to be all-numeric —
-//      any non-digit token after the last digit group defeats the match),
-//  (c) No other pattern (v/k/m/no-prefix) at Step-2,
-//  (d) No suffix-strip match at Step-3,
-//  (e) No dot-version match at Step-4.
+//
+//	(a) No exact-override match at Step-1 (rawStr itself is not in overrides),
+//	(b) No hyphen-version match at Step-2 (requires the TRAILING suffix to be all-numeric —
+//	    any non-digit token after the last digit group defeats the match),
+//	(c) No other pattern (v/k/m/no-prefix) at Step-2,
+//	(d) No suffix-strip match at Step-3,
+//	(e) No dot-version match at Step-4.
 //
 // Key insight: appending a non-digit modifier (e.g. "-zen") after the date prevents the
 // hyphen-version regex from matching (it requires an all-digit tail), so the input falls
@@ -3580,12 +3581,12 @@ func TestSlice8_VersionPresenceConsistency_ClassA(t *testing.T) {
 	t.Parallel()
 
 	cases := []struct {
-		desc        string
+		desc         string
 		rawPopulated bestiary.Family
-		id          bestiary.ModelID
-		wantFamily  bestiary.Family
-		wantVariant string
-		wantVersion string
+		id           bestiary.ModelID
+		wantFamily   bestiary.Family
+		wantVariant  string
+		wantVersion  string
 	}{
 		{"gpt-4.1 (gpt | empty)", "gpt", "openai/gpt-4.1", "gpt", "", "4.1"},
 		{"glm-4.6 (glm | empty)", "glm", "z-ai/glm-4.6", "glm", "", "4.6"},
@@ -3706,11 +3707,11 @@ func TestSeriesLetterSplit_CLARIFICATION5(t *testing.T) {
 	t.Parallel()
 
 	cases := []struct {
-		desc                              string
-		raw                               bestiary.Family
-		id                                bestiary.ModelID
-		wantFamily, wantVariant, wantVer  string
-		wantMod                           string
+		desc                             string
+		raw                              bestiary.Family
+		id                               bestiary.ModelID
+		wantFamily, wantVariant, wantVer string
+		wantMod                          string
 	}{
 		// kimi K-series (empty + populated raw → identical).
 		{"kimi-k2 empty raw", "", "kimi-k2", "kimi", "k", "2", ""},
@@ -3883,8 +3884,8 @@ func TestSlice8_MultiModifier_DeferredToModifierListSlice(t *testing.T) {
 // units pin the representative classes + the must-not-regress invariants.
 func TestParseFamilyDetailed_PathUnification(t *testing.T) {
 	cases := []struct {
-		desc                              string
-		raw, id                           string
+		desc                               string
+		raw, id                            string
 		wantFam, wantVar, wantVer, wantMod string
 	}{
 		// CONVERGENCE WIN: glued letter-suffix version-modifier. raw-aware alone gave
@@ -3922,6 +3923,19 @@ func TestParseFamilyDetailed_PathUnification(t *testing.T) {
 
 		// MUST-NOT-REGRESS: claude-opus-4-1-...-thinking → (claude,opus,4.1,thinking).
 		{"claude-opus-4-1-thinking (must-hold)", "claude-opus", "claude-opus-4-1-20250805-thinking", "claude", "opus", "4.1", "thinking"},
+
+		// fix-cycle-2 P1 (Reviewer A BLOCKER): a more-specific raw variant must NOT be
+		// overridden by a less-specific ID-driven one. InferFamilyFromIDWithVariant loses
+		// "-lite" (returns "flash") for the dated-preview suffix; the superstring guard
+		// keeps the correct raw variant "flash-lite" (distinct Gemini tier).
+		{"gemini-2.5-flash-lite-preview-06-17: flash-lite preserved (not downgraded to flash)", "gemini-flash-lite", "gemini-2.5-flash-lite-preview-06-17", "gemini", "flash-lite", "2.5", ""},
+		{"gemini-2.5-flash-lite-preview-09-2025: flash-lite preserved", "gemini-flash-lite", "gemini-2.5-flash-lite-preview-09-2025", "gemini", "flash-lite", "2.5", ""},
+
+		// fix-cycle-2 P2 (Reviewer C IMPORTANT): the '@' version/date delimiter is
+		// normalized to '-' so the @-form converges to the canonical version (not "4").
+		{"claude-opus-4-1@20250805: @-form version → 4.1 (raw)", "claude-opus", "claude-opus-4-1@20250805", "claude", "opus", "4.1", ""},
+		{"claude-opus-4-1@20250805: @-form version → 4.1 (empty-raw)", "", "claude-opus-4-1@20250805", "claude", "opus", "4.1", ""},
+		{"claude-sonnet-4-6@default: @-form version → 4.6", "claude-sonnet", "claude-sonnet-4-6@default", "claude", "sonnet", "4.6", ""},
 	}
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {

@@ -333,7 +333,15 @@ func classifyDecompChange(before, after decompTuple, beforeByID, afterByID []dec
 		}
 	}
 
-	if beforeDivergent && (afterConsistent || matchedExistingBefore) {
+	// G1 (fix-cycle-2, Reviewer A+B): a convergence is only a divergence-FIX when it
+	// does NOT empty or DOWNGRADE a field THIS record already had populated. A value-
+	// blind "matches a prior sibling tuple = fix" rule let real regressions through:
+	// converging onto a pre-existing WRONG value (e.g. flash-lite→flash because a
+	// sibling's empty-raw path mis-derived "flash") or clearing a populated field (e.g.
+	// deepseek-reasoner thinking→"") both reduced disagreement while WORSENING this
+	// record. Reject those here so they fall through to CatRegress (and Option B, whose
+	// family convergences are exactly this class, cannot fool the gate).
+	if beforeDivergent && (afterConsistent || matchedExistingBefore) && !isFieldDowngrade(before, after) {
 		reason := "converged divergent ID toward cross-provider agreement"
 		if matchedExistingBefore {
 			reason = "now matches a tuple another provider already produced for this ID (BEFORE)"
@@ -373,6 +381,33 @@ func classifyDecompChange(before, after decompTuple, beforeByID, afterByID []dec
 	// already caught above. Anything reaching here changed a populated field to a
 	// different value without being a convergence — flag as a regression for review.
 	return CatRegress, fmt.Sprintf("populated field changed value without converging: before=%s after=%s", before, after)
+}
+
+// isFieldDowngrade reports whether the BEFORE→AFTER change EMPTIES or makes
+// LESS-SPECIFIC any field that BEFORE had populated. This is the directionality
+// guard for the CatFix branch (G1): a convergence that clears a field (thinking→"")
+// or replaces it with a less-specific prefix (flash-lite→flash) is a regression, not
+// a fix, even when it reduces cross-provider disagreement.
+func isFieldDowngrade(before, after decompTuple) bool {
+	pairs := [][2]string{
+		{string(before.Family), string(after.Family)},
+		{before.Variant, after.Variant},
+		{before.Version, after.Version},
+		{before.Modifier, after.Modifier},
+	}
+	for _, p := range pairs {
+		b, a := p[0], p[1]
+		if b == a || b == "" {
+			continue
+		}
+		if a == "" {
+			return true // populated → cleared
+		}
+		if strings.HasPrefix(b, a) {
+			return true // before is a more-specific superstring (a is less specific)
+		}
+	}
+	return false
 }
 
 // isVersionShapedToken reports whether a token is version-shaped (digits with
@@ -495,18 +530,33 @@ func countDivergentIDs(byID map[bestiary.ModelID][]decompTuple) int {
 //
 // Pre-refactor (baseline == live) the diff is empty → trivially green. Post-refactor
 // the categorized changes are the regression surface the per-slice reviewers scrutinize.
+// exceptionKey identifies a SPECIFIC intended decomposition change by the exact
+// (ID, before-tuple, after-tuple). Keying on all three (fix-cycle-2, Reviewer B-2)
+// rather than ID alone means the ledger justifies ONLY the precise change that was
+// reviewed — if a future pipeline change makes the same ID transition to a DIFFERENT
+// (and unreviewed) tuple, the ledger no longer absorbs it and the gate fails.
+type exceptionKey struct {
+	ID     bestiary.ModelID
+	Before string
+	After  string
+}
+
 // justifiedExceptions is the ENUMERATED, REVIEWED ledger of intended decomposition
 // changes that the mechanical a/b/c classifier flags as category-(c) but that human
-// review has confirmed are genuine fixes/improvements (not regressions). Keyed by
-// model ID; each entry carries a one-line justification. This mirrors the snapshot
-// gate's "enumerated justified exception ledger" philosophy: the gate fails on any
-// category-(c) change NOT in this ledger, so new regressions are never silently
-// absorbed. ADDING an entry is a reviewed decision (committed in the diff artifact).
-var justifiedExceptions = map[bestiary.ModelID]string{
+// review has confirmed are genuine fixes/improvements (not regressions). Each entry
+// carries a one-line justification. This mirrors the snapshot gate's "enumerated
+// justified exception ledger" philosophy: the gate fails on any category-(c) change
+// NOT in this ledger, so new regressions are never silently absorbed. ADDING an entry
+// is a reviewed decision (committed in the diff artifact).
+var justifiedExceptions = map[exceptionKey]string{
 	// raw_family "gemini-flash" MISLABELS a PRO model (the ID literally contains
 	// "pro"). The ID-driven variant "pro" is authoritative and correct; the raw
 	// "flash" was a provider data error. Single-provider correctness fix.
-	"gemini-2.5-pro-preview-tts": "raw_family 'gemini-flash' mislabels a PRO model (ID says 'pro'); ID-driven variant 'pro' is correct",
+	{
+		ID:     "gemini-2.5-pro-preview-tts",
+		Before: `(family="gemini",variant="flash",version="2.5",modifier="")`,
+		After:  `(family="gemini",variant="pro",version="2.5",modifier="")`,
+	}: "raw_family 'gemini-flash' mislabels a PRO model (ID says 'pro'); ID-driven variant 'pro' is correct",
 }
 
 func TestPathUnification_ZeroUnexpectedRegression(t *testing.T) {
@@ -522,7 +572,7 @@ func TestPathUnification_ZeroUnexpectedRegression(t *testing.T) {
 		case CatImprove.String():
 			improve++
 		case CatRegress.String():
-			if rationale, ok := justifiedExceptions[c.ID]; ok {
+			if rationale, ok := justifiedExceptions[exceptionKey{c.ID, c.Before, c.After}]; ok {
 				// Reviewed & justified — reclassify so it is not counted as a regression.
 				c.Category = "justified-exception"
 				c.Reason = "JUSTIFIED: " + rationale
@@ -534,7 +584,6 @@ func TestPathUnification_ZeroUnexpectedRegression(t *testing.T) {
 		}
 	}
 
-	// Write the committed categorized diff artifact.
 	report := diffReport{
 		TotalRecords:     total,
 		ChangedCount:     len(changes),
@@ -546,20 +595,26 @@ func TestPathUnification_ZeroUnexpectedRegression(t *testing.T) {
 		DivergenceAfter:  divAfter,
 		Changes:          changes,
 	}
-	reportBytes, err := json.MarshalIndent(report, "", "  ")
-	if err != nil {
-		t.Fatalf("marshal diff report: %v", err)
-	}
-	reportPath := filepath.Join(snapshotDir(), "decomp_diff_report.json")
-	if err := os.WriteFile(reportPath, append(reportBytes, '\n'), 0o644); err != nil {
-		t.Fatalf("write diff report: %v", err)
-	}
 
 	t.Logf("=== SLICE-9 path-unification before/after diff ===")
 	t.Logf("records=%d  changed=%d  (a)divergence-fix=%d  (b)improvement=%d  (c)REGRESSION=%d  justified-exception=%d",
 		total, len(changes), fix, improve, regress, justified)
 	t.Logf("divergence: before=%d  after=%d", divBefore, divAfter)
-	t.Logf("committed report → %s", reportPath)
+
+	// M2 (fix-cycle-2, Reviewer B-3): only persist the committed artifact when the gate
+	// PASSES. A failing run must NOT leave a dirty/mismatched report in the working tree
+	// (which would pollute git status and could mask the failure under a re-commit).
+	reportPath := filepath.Join(snapshotDir(), "decomp_diff_report.json")
+	if regress == 0 {
+		reportBytes, err := json.MarshalIndent(report, "", "  ")
+		if err != nil {
+			t.Fatalf("marshal diff report: %v", err)
+		}
+		if err := os.WriteFile(reportPath, append(reportBytes, '\n'), 0o644); err != nil {
+			t.Fatalf("write diff report: %v", err)
+		}
+		t.Logf("committed report → %s", reportPath)
+	}
 
 	if regress != 0 {
 		t.Errorf("GATE FAILED: %d category-(c) UNEXPECTED REGRESSION(s) — must be ZERO.\n"+
@@ -574,4 +629,87 @@ func TestPathUnification_ZeroUnexpectedRegression(t *testing.T) {
 			t.Errorf("    %s/%s raw=%q  %s → %s  [%s]", c.Provider, c.ID, c.RawFamily, c.Before, c.After, c.Reason)
 		}
 	}
+}
+
+// TestClassifyDecompChange_RejectsDowngrade is the G1 unit (fix-cycle-2): a
+// convergence that EMPTIES or DOWNGRADES a populated field must classify as
+// CatRegress, NOT CatFix — even when the worse value matches a sibling provider's
+// prior tuple (the value-blind blind spot Reviewer B exploited).
+func TestClassifyDecompChange_RejectsDowngrade(t *testing.T) {
+	cases := []struct {
+		desc       string
+		before     decompTuple
+		after      decompTuple
+		beforeByID []decompTuple
+		afterByID  []decompTuple
+		want       changeCategory
+	}{
+		{
+			desc:   "deepseek-reasoner thinking CLEARED, converging onto a sibling's empty-modifier tuple → REGRESS",
+			before: decompTuple{"deepseek", "", "", "thinking"},
+			after:  decompTuple{"deepseek", "", "", ""},
+			// ID was divergent before; a sibling already had the empty-modifier tuple.
+			beforeByID: []decompTuple{{"deepseek", "", "", "thinking"}, {"deepseek", "", "", ""}},
+			afterByID:  []decompTuple{{"deepseek", "", "", ""}, {"deepseek", "", "", ""}},
+			want:       CatRegress,
+		},
+		{
+			desc:       "flash-lite DOWNGRADED to less-specific flash, converging onto a sibling's flash tuple → REGRESS",
+			before:     decompTuple{"gemini", "flash-lite", "2.5", ""},
+			after:      decompTuple{"gemini", "flash", "2.5", ""},
+			beforeByID: []decompTuple{{"gemini", "flash-lite", "2.5", ""}, {"gemini", "flash", "2.5", ""}},
+			afterByID:  []decompTuple{{"gemini", "flash", "2.5", ""}, {"gemini", "flash", "2.5", ""}},
+			want:       CatRegress,
+		},
+		{
+			desc:       "genuine version-presence convergence (empty→4.1, no downgrade) → FIX",
+			before:     decompTuple{"claude", "opus", "", ""},
+			after:      decompTuple{"claude", "opus", "4.1", ""},
+			beforeByID: []decompTuple{{"claude", "opus", "", ""}, {"claude", "opus", "4.1", ""}},
+			afterByID:  []decompTuple{{"claude", "opus", "4.1", ""}, {"claude", "opus", "4.1", ""}},
+			want:       CatFix,
+		},
+	}
+	for _, tc := range cases {
+		t.Run(tc.desc, func(t *testing.T) {
+			got, reason := classifyDecompChange(tc.before, tc.after, tc.beforeByID, tc.afterByID)
+			if got != tc.want {
+				t.Errorf("classifyDecompChange = %s (%s), want %s", got, reason, tc.want)
+			}
+		})
+	}
+}
+
+// TestPathUnification_CrossIDFormConsistency is the G2 cross-ID-FORM probe
+// (fix-cycle-2, Reviewer C): the per-exact-ID gate never compares the '@'-delimited
+// form of a model against its '-' form, so a same-model version-VALUE divergence
+// across ID-forms is invisible to it. This probe decomposes every snapshot record
+// whose ID contains '@' BOTH as-is and with '@'→'-' and asserts the canonical
+// (Family,Variant,Version) agree — i.e. the '@'-form converges to the canonical form.
+func TestPathUnification_CrossIDFormConsistency(t *testing.T) {
+	records, err := LoadSnapshotRecords()
+	if err != nil {
+		t.Fatalf("LoadSnapshotRecords: %v", err)
+	}
+	atForms := 0
+	for _, r := range records {
+		if !strings.Contains(string(r.ID), "@") {
+			continue
+		}
+		atForms++
+		hyphen := bestiary.ModelID(strings.ReplaceAll(string(r.ID), "@", "-"))
+		af, av, aver, _, _ := bestiary.ParseFamilyDetailed(r.RawFamily, r.ID, r.Provider)
+		hf, hv, hver, _, _ := bestiary.ParseFamilyDetailed(r.RawFamily, hyphen, r.Provider)
+		if af != hf || av != hv || aver != hver {
+			t.Errorf("cross-ID-form divergence for %s (provider %s, raw=%q):\n"+
+				"  '@'-form  %q → (family=%q,variant=%q,version=%q)\n"+
+				"  '-'-form  %q → (family=%q,variant=%q,version=%q)\n"+
+				"  the '@'-form must converge to the canonical '-'-form decomposition",
+				r.ID, r.Provider, r.RawFamily, r.ID, af, av, aver, hyphen, hf, hv, hver)
+		}
+	}
+	if atForms == 0 {
+		t.Skip("no '@'-form IDs in snapshot — probe vacuous")
+	}
+	t.Logf("cross-ID-form probe: %d '@'-form records, all converge to canonical '-'-form", atForms)
 }
