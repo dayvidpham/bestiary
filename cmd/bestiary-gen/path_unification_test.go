@@ -479,15 +479,22 @@ func classifyDecompChange(id bestiary.ModelID, before, after decompTuple, before
 	// Modifier otherwise preserved is a de-noise improvement when the cleared value is EITHER
 	//   - PHANTOM: absent from the model ID (#4 gpt-codex — raw_family "gpt-codex" tagging a
 	//     "-chat" ID with no "codex"); OR
-	//   - REDUNDANT: a duplicate of the version (#3 dotted bare-gen — raw_family "qwen3.6"/
-	//     "glm" leaked the generation "3.6"/"4.7" into BOTH the variant and version slots).
+	//   - REDUNDANT: a duplicate of the version that is GENUINELY redundant per the ID (#3
+	//     dotted bare-gen — raw_family "qwen3.6"/"glm" leaked the generation "3.6"/"4.7" into
+	//     BOTH the variant and version slots; the ID carries that token exactly once).
 	// This holds even when the ID is NOT cross-provider divergent (these bare IDs are
 	// consistent across providers). An ID-present, non-redundant variant cleared would have
 	// been a real loss (realNonFamilyLoss / the convergence branch) and never reach here.
+	//
+	// SLICE-14 (bestiary-g69j): the REDUNDANT escape now also consults the ID — it fires only
+	// when the value is in the ID AND equals the version (a genuine bare-gen duplicate leak),
+	// not on bare structural equality, so a future model that legitimately ID-named two
+	// distinct-but-equal tokens could not be silently cleared.
+	redundant := before.Variant == before.Version && valueInID(before.Variant, id)
 	if before.Variant != after.Variant && after.Variant == "" &&
 		before.Family == after.Family && before.Version == after.Version && before.Modifier == after.Modifier &&
-		(!valueInID(before.Variant, id) || before.Variant == before.Version) {
-		return CatImprove, fmt.Sprintf("junk variant %q cleared: phantom (absent from ID) or redundant (== version); de-noise", before.Variant)
+		(!valueInID(before.Variant, id) || redundant) {
+		return CatImprove, fmt.Sprintf("junk variant %q cleared: phantom (absent from ID) or redundant (== version, ID-confirmed); de-noise", before.Variant)
 	}
 
 	// (b) SLICE-12 family-preserving DE-NOISE/ENRICH: the FAMILY is unchanged and NO
@@ -569,7 +576,57 @@ func valueInID(val string, id bestiary.ModelID) bool {
 		s = s[i+1:]
 	}
 	s = strings.ReplaceAll(s, "@", "-")
-	return strings.Contains(s, strings.ToLower(val))
+	lv := strings.ToLower(val)
+	// Fast path: contiguous substring (handles the common single-token + adjacent cases).
+	if strings.Contains(s, lv) {
+		return true
+	}
+	// SLICE-14 (bestiary-ovf6) TOKEN-AWARE fallback: a MULTI-token lost value whose tokens
+	// are NON-CONTIGUOUS in the ID still represents REAL data present in the ID and must NOT
+	// be treated as phantom. Split the lost value on [-.] and require EVERY sub-token to be
+	// present in the ID's token-set (split on any non-alphanumeric). Closes the masking hole
+	// axis-B exploited: id="gemini-flash-2.0-lite", variant "flash-lite"→"flash" — "flash-lite"
+	// is not a contiguous substring, but both "flash" and "lite" ARE in the ID, so dropping
+	// "lite" is a REAL loss (cat-(c)), not a phantom de-noise. PURELY ADDITIVE: this only ever
+	// turns MORE losses real (never fewer), so it cannot mask a regression.
+	valToks := strings.FieldsFunc(lv, func(r rune) bool { return r == '-' || r == '.' })
+	if len(valToks) < 2 {
+		return false // single-token value already handled by the substring path
+	}
+	// Scope the token-set fallback to WORD-compound values (flash-lite, deep-research):
+	// every sub-token must contain a letter. A NUMERIC/dotted version ("2.3") must NOT use
+	// it — its digits ("2","3") often appear scattered in the ID (hermes-2…llama-3) without
+	// the version "2.3" being present, which would be a false "real loss". Numeric values
+	// rely on the contiguous substring check above (a real version is contiguous in the ID).
+	for _, vt := range valToks {
+		if !hasLetter(vt) {
+			return false
+		}
+	}
+	idToks := strings.FieldsFunc(s, func(r rune) bool { return !isAlnum(r) })
+	idSet := make(map[string]struct{}, len(idToks))
+	for _, t := range idToks {
+		idSet[t] = struct{}{}
+	}
+	for _, vt := range valToks {
+		if _, ok := idSet[vt]; !ok {
+			return false
+		}
+	}
+	return true
+}
+
+func isAlnum(r rune) bool {
+	return (r >= 'a' && r <= 'z') || (r >= 'A' && r <= 'Z') || (r >= '0' && r <= '9')
+}
+
+func hasLetter(s string) bool {
+	for _, r := range s {
+		if (r >= 'a' && r <= 'z') || (r >= 'A' && r <= 'Z') {
+			return true
+		}
+	}
+	return false
 }
 
 // resurfaces reports whether a value re-appears verbatim in another AFTER field — the
@@ -971,6 +1028,20 @@ func TestClassifyDecompChange_RejectsDowngrade(t *testing.T) {
 			after:      decompTuple{"gemini", "flash", "2.5", ""},
 			beforeByID: []decompTuple{{"gemini", "flash-lite", "2.5", ""}, {"gemini", "flash", "2.5", ""}},
 			afterByID:  []decompTuple{{"gemini", "flash", "2.5", ""}, {"gemini", "flash", "2.5", ""}},
+			want:       CatRegress,
+		},
+		{
+			// SLICE-14 (bestiary-ovf6) ADVERSARIAL: axis-B's exploit — the lost value
+			// "flash-lite" is NOT a contiguous substring of "gemini-flash-2.0-lite", but both
+			// "flash" and "lite" ARE present (non-contiguous). The pre-S14 substring valueInID
+			// returned false → masked the dropped "lite" as cat-(b) de-noise. The token-aware
+			// valueInID detects both tokens → REAL loss → cat-(c).
+			desc:       "NON-CONTIGUOUS multi-token loss (flash-lite→flash, tokens split by '2.0' in ID) → REGRESS (token-aware ovf6)",
+			id:         "gemini-flash-2.0-lite",
+			before:     decompTuple{"gemini", "flash-lite", "2.0", ""},
+			after:      decompTuple{"gemini", "flash", "2.0", ""},
+			beforeByID: []decompTuple{{"gemini", "flash-lite", "2.0", ""}, {"gemini", "flash", "2.0", ""}},
+			afterByID:  []decompTuple{{"gemini", "flash", "2.0", ""}, {"gemini", "flash", "2.0", ""}},
 			want:       CatRegress,
 		},
 		{
