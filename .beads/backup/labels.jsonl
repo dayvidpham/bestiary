@@ -391,6 +391,9 @@
 {"issue_id":"bestiary-99m","label":"aura:p10-impl:cycle-2-clean"}
 {"issue_id":"bestiary-99m","label":"aura:p9-impl:s9-slice"}
 {"issue_id":"bestiary-9ax","label":"aura:p4-plan:s4-review"}
+{"issue_id":"bestiary-9ax7","label":"followup"}
+{"issue_id":"bestiary-9ax7","label":"parse"}
+{"issue_id":"bestiary-9ax7","label":"tech-debt"}
 {"issue_id":"bestiary-9b9o","label":"aura:p10-impl:s10-review"}
 {"issue_id":"bestiary-9b9o","label":"aura:severity:minor"}
 {"issue_id":"bestiary-9c5","label":"aura:p4-plan:s4-review"}
