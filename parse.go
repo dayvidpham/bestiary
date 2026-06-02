@@ -81,6 +81,13 @@ type parseData struct {
 	// families validated against allFamilies at load (fail-fast). Applied after M4
 	// family normalisation and before bare-gen-split in both parse entrypoints.
 	familyAliases map[Family]Family
+
+	// enforceFamilies is the SLICE-12 CLOSED canonical-winner ENFORCE set
+	// (parse/data/family_enforce.json). When the ID-driven family is in this set and
+	// DISAGREES with raw_family, the ID-driven decomposition wins (reconcileIDDriven).
+	// Covers the own-family-enforce ledger (distinct model mislabelled as its parent)
+	// and the vendor/org-namespace leak (raw_family is the ID's org, not a family).
+	enforceFamilies map[Family]struct{}
 }
 
 // compiledPattern is a versionPattern with its compiled regexp.
@@ -390,14 +397,44 @@ func initParseData() (*parseData, error) {
 		familyAliases[Family(strings.ToLower(key))] = Family(strings.ToLower(target))
 	}
 
+	// Load family_enforce.json (SLICE-12 canonical-winner enforce set).
+	rawEnforce, err := parseDataFS.ReadFile("parse/data/family_enforce.json")
+	if err != nil {
+		return nil, fmt.Errorf(
+			"bestiary parse: load family_enforce.json: %w\n"+
+				"  What: cannot read embedded parse data file\n"+
+				"  Where: parse/data/family_enforce.json\n"+
+				"  How to fix: ensure parse/data/family_enforce.json is present before running go build",
+			err,
+		)
+	}
+	var enforceFile struct {
+		Comment  string   `json:"_comment"`
+		Families []string `json:"families"`
+	}
+	if err := json.Unmarshal(rawEnforce, &enforceFile); err != nil {
+		return nil, fmt.Errorf(
+			"bestiary parse: parse family_enforce.json: %w\n"+
+				"  What: JSON unmarshal failed\n"+
+				"  Where: parse/data/family_enforce.json\n"+
+				"  How to fix: validate JSON syntax in the data file",
+			err,
+		)
+	}
+	enforceFamilies := make(map[Family]struct{}, len(enforceFile.Families))
+	for _, f := range enforceFile.Families {
+		enforceFamilies[Family(strings.ToLower(f))] = struct{}{}
+	}
+
 	return &parseData{
-		overrides:     overrides,
-		suffixes:      suffixes,
-		patterns:      compiled,
-		modifiers:     modifiers,
-		families:      families,
-		vendorAliases: vendorAliases,
-		familyAliases: familyAliases,
+		overrides:       overrides,
+		suffixes:        suffixes,
+		patterns:        compiled,
+		modifiers:       modifiers,
+		families:        families,
+		vendorAliases:   vendorAliases,
+		familyAliases:   familyAliases,
+		enforceFamilies: enforceFamilies,
 	}, nil
 }
 
@@ -425,6 +462,24 @@ func familyKeyKnown(key string) bool {
 // reducer's own logic, so the check does not merely rubber-stamp the implementation.
 func IsKnownFamily(f Family) bool {
 	return familyKeyKnown(string(f))
+}
+
+// IsEnforcedCanonicalFamily reports whether f is in the SLICE-12 CLOSED canonical-winner
+// ENFORCE set (parse/data/family_enforce.json) — a curated list of DISTINCT model families
+// that win over a disagreeing raw_family parent/org mislabel (aion, hermes, mixtral, qwq,
+// …). Exposed for the before/after-diff gate (cmd/bestiary-gen): a lateral family change
+// whose AFTER family is in this set is a SANCTIONED ledger correction (the ID-canonical
+// distinct family beat a parent/org mislabel), not a regression — analogous to the SLICE-11
+// "after ∈ registry" signal but for lateral (non-reduction) corrections. The set is curated
+// data tied to the rc2 ledger + bestiary-xdbc Q3, NOT the categorizer's own logic, so this
+// does not rubber-stamp an arbitrary family rewrite.
+func IsEnforcedCanonicalFamily(f Family) bool {
+	pd, err := loadParseData()
+	if err != nil {
+		return false
+	}
+	_, ok := pd.enforceFamilies[Family(strings.ToLower(string(f)))]
+	return ok
 }
 
 // FamiliesJSONKeyError validates that every non-comment key in the raw
@@ -1549,6 +1604,60 @@ func reconcileIDDriven(rawFam Family, rawVar, rawVer, rawMod string, id ModelID,
 
 	idFam, idVar, idVer, idMod := idDrivenDecompose(id, p)
 	if idFam != rawFam {
+		// SLICE-12 CANONICAL-WINNER ENFORCE: when the ID-driven family is a DISTINCT
+		// family in the closed enforce set (family_enforce.json) and raw_family disagrees,
+		// the ID is authoritative — raw is either a parent-family mislabel (aion/magnum
+		// tagged "llama", mixtral/pixtral/voxtral tagged "mistral", intellect tagged "glm",
+		// qwq tagged "qwen", wizardlm/inflection tagged "gpt", weaver/owl tagged "alpha")
+		// or an org/namespace leak (raw is the ID's org: nousresearch→hermes, allenai→olmo,
+		// liquid→lfm). Adopt the ID-driven decomposition wholesale so the mislabelling
+		// provider converges onto the ID-derived canonical family + variant/version. The
+		// enforce set is CLOSED (curated), and this only fires when the ID's OWN family
+		// resolves to one of those distinct names — never a blanket family rewrite.
+		if pd, pdErr := loadParseData(); pdErr == nil && idFam != "" {
+			if _, enforced := pd.enforceFamilies[Family(strings.ToLower(string(idFam)))]; enforced {
+				// Monotonic adoption: take the ID-driven family, but FALL BACK to the
+				// raw-aware Variant/Version/Modifier when the ID-driven field is empty, so
+				// a populated raw field is never CLEARED (e.g. qwq-plus: idDriven yields no
+				// variant for the unregistered family "qwq", so keep raw variant "plus").
+				v, ver, mod := idVar, idVer, idMod
+				if v == "" {
+					v = rawVar
+				}
+				if ver == "" {
+					ver = rawVer
+				}
+				if mod == "" {
+					mod = rawMod
+				}
+				return idFam, v, ver, mod
+			}
+		}
+		// SLICE-12 (#2): a RAW-POPULATED OVER-CAPTURE family (raw_family is itself a
+		// compound that REDUCES to the same short base the ID-path derived — e.g.
+		// raw="qwen3.7-max" → qwen) is a provider over-capture, the mirror of the empty-raw
+		// case S11 already reduces. When reduceOverCapturedFamily(rawFam) lands on idFam,
+		// adopt the ID-driven decomposition so the over-capturing provider converges with its
+		// short-family siblings. CLOSED: declines (and keeps raw) when rawFam carries an
+		// unrecognised token (qwen3-next-80b-a3b — "next" blocks the reduction; honest residual).
+		// Guard: only adopt when raw carries NO populated variant of its own (rawVar==""),
+		// so this never SWAPS a real raw variant for a different ID-driven one (e.g.
+		// deepseek-flash-free's access-tag "free" must not be laterally replaced). qwen3.7-max
+		// (rawVar="") is the intended target; the swap cases keep the raw result.
+		if rawVar == "" {
+			if pd, pdErr := loadParseData(); pdErr == nil {
+				if short, _, ok := reduceOverCapturedFamily(pd, rawFam); ok && short == idFam {
+					ver, mod := idVer, idMod
+					if ver == "" {
+						ver = rawVer
+					}
+					if mod == "" {
+						mod = rawMod
+					}
+					return idFam, idVar, ver, mod
+				}
+			}
+		}
 		// Family disagreement (ID-path over-capture or a genuine ledger mislabel):
 		// keep the raw-aware result verbatim. Converging these is Option B's job.
 		return family, variant, version, modifier
@@ -1578,6 +1687,19 @@ func reconcileIDDriven(rawFam Family, rawVar, rawVer, rawMod string, id ModelID,
 	if idVar != "" && (variant == "" || (isCleanVariantToken(idVar) && !strings.HasPrefix(variant, idVar))) {
 		variant = idVar
 	}
+	//    SLICE-12 (#4) gpt-codex ID-WINS-on-variant-conflict: raw_family "gpt-codex"
+	//    (override → variant "codex"/"codex-mini"/"codex-spark") MISLABELS the
+	//    gpt-5/5.1/5.2-chat[-latest] chat models, whose IDs contain NO "codex". When the
+	//    codex variant is ABSENT from the ID it is a provider phantom — drop it in favor of
+	//    the ID-driven variant (idVar, possibly empty). SCOPED to the codex family on
+	//    purpose: a blanket "raw variant absent from ID → clear" wrongly drops legitimate
+	//    variants whose ID spells them differently (kimi-k2.6 vs "Kimi-K2_6") or names a
+	//    different one (raw "kat-coder" vs ID "KAT-Dev"). The S9 flash-lite superstring win
+	//    is untouched (flash-lite ∉ codex family AND is present in its ID).
+	if strings.HasPrefix(variant, "codex") &&
+		!strings.Contains(strings.ToLower(stripVendorNamespace(string(id))), "codex") {
+		variant = idVar
+	}
 	//  - VERSION: fill an empty version, or override with a NUMERIC/dotted ID-driven
 	//    version (versions are low-ambiguity). The override path is guarded by
 	//    isVersionShaped so a populated version is only ever replaced by another
@@ -1593,7 +1715,148 @@ func reconcileIDDriven(rawFam Family, rawVar, rawVer, rawMod string, id ModelID,
 	if modifier == "" && idMod != "" {
 		modifier = idMod
 	}
+	// SLICE-12 (#3) dotted bare-gen de-junk: a raw variant that is a PURE dotted/numeric
+	// generation token (e.g. "3.5"/"3.6" from raw_family "qwen3.5"/"qwen3.6") is the family
+	// GENERATION leaked into the variant slot by the version_patterns "no-prefix" rule. Move
+	// it to the (empty) version and clear the variant, so the raw-populated provider converges
+	// with the empty-raw providers (which carry version 3.5, variant ""). A pure numeric/dotted
+	// token is never a legitimate variant (real variants are words or single series letters),
+	// so this cannot drop a real variant.
+	if isPureDottedGen(variant) {
+		if version == "" {
+			version = variant
+		}
+		variant = ""
+	}
 	return family, variant, version, modifier
+}
+
+// isPureDottedGen reports whether s is a pure numeric generation token — digits with an
+// optional single dotted minor (e.g. "3", "3.5", "3.6") and nothing else (no letters, no
+// extra separators). Used to detect a family generation that leaked into the Variant slot.
+func isPureDottedGen(s string) bool {
+	if s == "" {
+		return false
+	}
+	hasDigit := false
+	for _, r := range s {
+		switch {
+		case r >= '0' && r <= '9':
+			hasDigit = true
+		case r == '.':
+		default:
+			return false
+		}
+	}
+	return hasDigit
+}
+
+// reOSeriesLine matches an OpenAI o-series leading ID token: "o" glued to a generation
+// integer (o1, o3, o4). The capture is the generation number.
+var reOSeriesLine = regexp.MustCompile(`^o([0-9]+)$`)
+
+// canonicalizeOpenAILine applies the bestiary-xdbc (Q2/Q2a/Q2b/Q2c) o-series taxonomy
+// restructure: ALL of OpenAI's gpt line decomposes under family=gpt, with the LINE
+// DESIGNATOR carried in the VARIANT slot and SIZE tokens (mini/pro/…) demoted to the
+// Modifier:
+//
+//   - o1 / o3 / o4              → (gpt, variant="o",     version=1/3/4)
+//   - o1-mini                   → (gpt, variant="o",     version=1, modifier="mini")
+//   - gpt-4o                    → (gpt, variant="4o",    version="")   ("4o" is the variant
+//                                                                       NOT version 4)
+//   - gpt-4o-mini[-DATE]        → (gpt, variant="4o",    version="", modifier="mini")
+//   - chatgpt-4o-latest         → (gpt, variant="4o",    version="", modifier="latest")
+//   - gpt-audio[-mini]          → (gpt, variant="audio", version="" [, modifier="mini"])
+//   - gpt-4 / gpt-5 / gpt-oss…  → UNCHANGED (no o-series line designator in the ID)
+//
+// It is ID-DRIVEN (the designator comes from the model ID, not raw_family) so every provider
+// of the same ID — however it mislabels raw_family ("gpt"/"o"/"o-mini"/"gpt-mini"/"gpt-audio")
+// — converges on the IDENTICAL canonical tuple. Scoped to family ∈ {gpt, o, gpt-audio} so it
+// can only ever touch OpenAI's line; a non-designator gpt model (gpt-4, gpt-5-chat, gpt-oss,
+// gpt-image, gpt-codex) returns unchanged. This INTENTIONALLY supersedes the pre-S12 pinned
+// BDD (o1-mini→(o,mini,1)); the change is sanctioned by bestiary-xdbc and gated by the
+// reviewed o-series allowlist.
+func canonicalizeOpenAILine(family Family, variant, version, modifier string, id ModelID) (Family, string, string, string) {
+	lf := strings.ToLower(string(family))
+	if lf != "gpt" && lf != "o" && lf != "gpt-audio" {
+		return family, variant, version, modifier
+	}
+	clean := strings.ToLower(lastPathSegment(stripVendorNamespace(string(id))))
+	clean = strings.ReplaceAll(clean, "@", "-")
+	toks := strings.Split(clean, "-")
+	if len(toks) == 0 {
+		return family, variant, version, modifier
+	}
+
+	designator := ""
+	newVer := version
+	switch {
+	case reOSeriesLine.MatchString(toks[0]):
+		designator = "o"
+		newVer = reOSeriesLine.FindStringSubmatch(toks[0])[1] // the generation digits
+	case containsToken(toks, "4o"):
+		designator = "4o"
+		newVer = "" // "4o" is the variant; version is empty
+	case lf == "gpt-audio" || (containsToken(toks, "audio") && (toks[0] == "gpt" || toks[0] == "chatgpt")):
+		designator = "audio"
+		newVer = ""
+	default:
+		// gpt-4, gpt-5, gpt-oss, gpt-image, gpt-codex, gpt-3.5-turbo, … — not an o-line ID.
+		return family, variant, version, modifier
+	}
+
+	// Size/finetune tokens (the OLD variant, e.g. mini/pro/deep-research) move to the
+	// Modifier when the variant slot is occupied by the line designator. An ID-extracted
+	// modifier already present (latest/preview) takes precedence; otherwise the old variant
+	// becomes the modifier so no information is dropped.
+	newMod := modifier
+	if newMod == "" && variant != "" && variant != designator {
+		newMod = variant
+	}
+	return Family("gpt"), designator, newVer, newMod
+}
+
+// reGlmV matches a glm version token with a glued trailing single 'v' (glm-4.5v → "4.5";
+// glm-5v-turbo → "5"). The 'v' must be at a token boundary after the numeric version.
+var reGlmV = regexp.MustCompile(`(?:^|-)(\d+(?:\.\d+)?)v(?:-|$)`)
+
+// canonicalizeGlmV applies the bestiary-xdbc Q1 ruling: for the GLM family ONLY, a single
+// letter 'v' GLUED to a glm version (glm-4.5v, glm-5v-turbo) is a VARIANT letter, NOT the
+// 'vision' modifier — glm-4.5v → (glm, variant="v", version=4.5); glm-5v-turbo → (glm,
+// variant="v", version=5, modifier="turbo"). Scoped to family=glm so the uniform
+// vision-as-MODIFIER rule is UNCHANGED for the spelled-out "vision" token and for every
+// other family (grok-vision, etc. — those carry "-vision" as a separate hyphen token and
+// never reach here). The mis-derived "vision" modifier (produced by the generic glued-letter
+// split for the glm 'v') is dropped; a tier in the old variant slot (turbo) is demoted to
+// the Modifier.
+func canonicalizeGlmV(family Family, variant, version, modifier string, id ModelID) (Family, string, string, string) {
+	if strings.ToLower(string(family)) != "glm" {
+		return family, variant, version, modifier
+	}
+	clean := strings.ToLower(lastPathSegment(stripVendorNamespace(string(id))))
+	m := reGlmV.FindStringSubmatch(clean)
+	if m == nil {
+		return family, variant, version, modifier
+	}
+	newMod := modifier
+	if newMod == "vision" {
+		newMod = "" // the glued 'v' is the variant, not the vision modifier
+	}
+	// Demote a tier left in the variant slot (e.g. "turbo" for glm-5v-turbo) to the Modifier.
+	if variant != "" && variant != "v" && newMod == "" {
+		newMod = variant
+	}
+	return family, "v", m[1], newMod
+}
+
+// containsToken reports whether toks contains tok exactly.
+func containsToken(toks []string, tok string) bool {
+	for _, t := range toks {
+		if t == tok {
+			return true
+		}
+	}
+	return false
 }
 
 // isCleanVariantToken reports whether a variant token is a clean word-form variant
@@ -1698,6 +1961,8 @@ func ParseFamilyDetailed(raw Family, id ModelID, p Provider) (Family, string, st
 		// preserve). SLICE-9: this is the same idDrivenDecompose primitive the
 		// raw-populated path now consults, so the two paths share one decomposition.
 		family, variant, version, modifier := idDrivenDecompose(id, p)
+		family, variant, version, modifier = canonicalizeOpenAILine(family, variant, version, modifier, id)
+		family, variant, version, modifier = canonicalizeGlmV(family, variant, version, modifier, id)
 		return family, variant, version, modifier, nil
 	}
 
@@ -1707,6 +1972,8 @@ func ParseFamilyDetailed(raw Family, id ModelID, p Provider) (Family, string, st
 	// annotation is computed from the raw-path attempt and passed through unchanged.
 	recon := func(f Family, v, ver, m string, fail *ParseFailure) (Family, string, string, string, *ParseFailure) {
 		rf, rv, rver, rmod := reconcileIDDriven(f, v, ver, m, id, p)
+		rf, rv, rver, rmod = canonicalizeOpenAILine(rf, rv, rver, rmod, id)
+		rf, rv, rver, rmod = canonicalizeGlmV(rf, rv, rver, rmod, id)
 		return rf, rv, rver, rmod, fail
 	}
 
@@ -2260,7 +2527,48 @@ func recoverMemberVariant(idTokens []string, family Family) string {
 	}
 	info, hasFamilyInfo := pd.families[Family(strings.ToLower(string(family)))]
 	if !hasFamilyInfo {
+		// SLICE-12 (#5) generic suffix-variant recovery for UNREGISTERED families
+		// (codellama, rnj, mixtral, voxtral, lyria — the enforce-set distinct families and
+		// over-capture short bases that carry no families.json member list). Recover a
+		// trailing GENERIC variant word (instruct/pro/mini/large/small/medium) so the
+		// empty-raw path matches the raw-populated sibling's variant (A-1/A-2 member-variant
+		// residual). Scoped to a small curated word set (NOT the full suffix list) so it
+		// cannot over-recover ambiguous tokens (-r/-a/-oss) for unregistered families.
+		for i, tok := range idTokens {
+			if _, ok := genericVariantWords[strings.ToLower(tok)]; !ok {
+				continue
+			}
+			// Skip a generic word immediately followed by a PLAIN version token (e.g.
+			// "devstral-small-2-…": recovering "small" as the variant would strip the "2"
+			// version boundary). A following size/date token does not block recovery.
+			if i+1 < len(idTokens) {
+				nxt := idTokens[i+1]
+				if isVersionShaped(nxt) && !isParamSizeToken(nxt) && !isDateShapedToken(nxt) {
+					continue
+				}
+			}
+			return strings.ToLower(tok)
+		}
 		return ""
+	}
+	// SLICE-12 (#6) flash-lite tier: prefer a COMPOUND (multi-token) member that appears
+	// as a contiguous hyphen-delimited run in the ID over a shorter single-token member —
+	// e.g. "gemini-2.5-flash-lite-preview" must recover "flash-lite", NOT the bare "flash"
+	// that the single-token scan below would match first. Longest compound member wins.
+	joined := strings.ToLower(strings.Join(idTokens, "-"))
+	bestCompound := ""
+	for _, m := range info.Members {
+		if !strings.Contains(m, "-") {
+			continue
+		}
+		if joined == m || strings.HasPrefix(joined, m+"-") || strings.HasSuffix(joined, "-"+m) || strings.Contains(joined, "-"+m+"-") {
+			if len(m) > len(bestCompound) {
+				bestCompound = m
+			}
+		}
+	}
+	if bestCompound != "" {
+		return bestCompound
 	}
 	for _, tok := range idTokens {
 		if tok == "" {
@@ -2279,6 +2587,15 @@ func recoverMemberVariant(idTokens []string, family Family) string {
 		}
 	}
 	return ""
+}
+
+// genericVariantWords is the small CLOSED set of family-agnostic variant words recovered
+// for UNREGISTERED families (SLICE-12 #5). These are unambiguous tier/finetune words that
+// are a VARIANT for whatever family carries them (codellama-…-instruct, lyria-…-pro,
+// voxtral-small). Deliberately excludes short/ambiguous suffixes (r/a/oss/base) that would
+// over-recover for an unregistered family with no curated member list to disambiguate.
+var genericVariantWords = map[string]struct{}{
+	"instruct": {}, "pro": {}, "mini": {}, "large": {}, "small": {}, "medium": {},
 }
 
 // --------------------------------------------------------------------------

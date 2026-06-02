@@ -1,11 +1,3576 @@
 {
   "total_records": 4979,
-  "changed_count": 0,
-  "cat_a_divergence_fix_count": 0,
-  "cat_b_improvement_count": 0,
+  "changed_count": 396,
+  "cat_a_divergence_fix_count": 257,
+  "cat_b_improvement_count": 139,
   "cat_c_unexpected_regression_count": 0,
   "justified_exception_count": 0,
   "divergence_before": 81,
-  "divergence_after": 81,
-  "changes": null
+  "divergence_after": 31,
+  "changes": [
+    {
+      "provider": "neuralwatt",
+      "id": "Qwen/Qwen3.6-35B-A3B",
+      "raw_family": "qwen3.6",
+      "before": "(family=\"qwen\",variant=\"3.6\",version=\"3.6\",modifier=\"\")",
+      "after": "(family=\"qwen\",variant=\"\",version=\"3.6\",modifier=\"\")",
+      "category": "a:divergence-fix",
+      "reason": "now matches a tuple another provider already produced for this ID (BEFORE); only phantom non-family loss permitted (j1nu)"
+    },
+    {
+      "provider": "nano-gpt",
+      "id": "aion-labs/aion-1.0",
+      "raw_family": "llama",
+      "before": "(family=\"llama\",variant=\"\",version=\"\",modifier=\"\")",
+      "after": "(family=\"aion\",variant=\"\",version=\"1.0\",modifier=\"\")",
+      "category": "a:divergence-fix",
+      "reason": "now matches a tuple another provider already produced for this ID (BEFORE); only phantom non-family loss permitted (j1nu)"
+    },
+    {
+      "provider": "nano-gpt",
+      "id": "aion-labs/aion-1.0-mini",
+      "raw_family": "deepseek",
+      "before": "(family=\"deepseek\",variant=\"mini\",version=\"\",modifier=\"\")",
+      "after": "(family=\"aion\",variant=\"mini\",version=\"1.0\",modifier=\"\")",
+      "category": "a:divergence-fix",
+      "reason": "now matches a tuple another provider already produced for this ID (BEFORE); only phantom non-family loss permitted (j1nu)"
+    },
+    {
+      "provider": "nano-gpt",
+      "id": "aion-labs/aion-rp-llama-3.1-8b",
+      "raw_family": "llama",
+      "before": "(family=\"llama\",variant=\"\",version=\"\",modifier=\"\")",
+      "after": "(family=\"aion\",variant=\"\",version=\"\",modifier=\"\")",
+      "category": "a:divergence-fix",
+      "reason": "now matches a tuple another provider already produced for this ID (BEFORE); only phantom non-family loss permitted (j1nu)"
+    },
+    {
+      "provider": "openrouter",
+      "id": "aion-labs/aion-rp-llama-3.1-8b",
+      "raw_family": "llama",
+      "before": "(family=\"llama\",variant=\"\",version=\"\",modifier=\"\")",
+      "after": "(family=\"aion\",variant=\"\",version=\"\",modifier=\"\")",
+      "category": "a:divergence-fix",
+      "reason": "now matches a tuple another provider already produced for this ID (BEFORE); only phantom non-family loss permitted (j1nu)"
+    },
+    {
+      "provider": "kilo",
+      "id": "alfredpros/codellama-7b-instruct-solidity",
+      "raw_family": "",
+      "before": "(family=\"codellama\",variant=\"\",version=\"\",modifier=\"\")",
+      "after": "(family=\"codellama\",variant=\"instruct\",version=\"\",modifier=\"\")",
+      "category": "a:divergence-fix",
+      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted (j1nu)"
+    },
+    {
+      "provider": "openrouter",
+      "id": "alfredpros/codellama-7b-instruct-solidity",
+      "raw_family": "llama",
+      "before": "(family=\"llama\",variant=\"instruct\",version=\"\",modifier=\"\")",
+      "after": "(family=\"codellama\",variant=\"instruct\",version=\"\",modifier=\"\")",
+      "category": "a:divergence-fix",
+      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted (j1nu)"
+    },
+    {
+      "provider": "nano-gpt",
+      "id": "allenai/olmo-3-32b-think",
+      "raw_family": "allenai",
+      "before": "(family=\"allenai\",variant=\"\",version=\"\",modifier=\"think\")",
+      "after": "(family=\"olmo\",variant=\"\",version=\"3\",modifier=\"think\")",
+      "category": "a:divergence-fix",
+      "reason": "now matches a tuple another provider already produced for this ID (BEFORE); only phantom non-family loss permitted (j1nu)"
+    },
+    {
+      "provider": "openrouter",
+      "id": "allenai/olmo-3-32b-think",
+      "raw_family": "allenai",
+      "before": "(family=\"allenai\",variant=\"\",version=\"\",modifier=\"think\")",
+      "after": "(family=\"olmo\",variant=\"\",version=\"3\",modifier=\"think\")",
+      "category": "a:divergence-fix",
+      "reason": "now matches a tuple another provider already produced for this ID (BEFORE); only phantom non-family loss permitted (j1nu)"
+    },
+    {
+      "provider": "nano-gpt",
+      "id": "anthracite-org/magnum-v4-72b",
+      "raw_family": "llama",
+      "before": "(family=\"llama\",variant=\"\",version=\"\",modifier=\"\")",
+      "after": "(family=\"magnum\",variant=\"\",version=\"\",modifier=\"\")",
+      "category": "a:divergence-fix",
+      "reason": "now matches a tuple another provider already produced for this ID (BEFORE); only phantom non-family loss permitted (j1nu)"
+    },
+    {
+      "provider": "302ai",
+      "id": "chatgpt-4o-latest",
+      "raw_family": "gpt",
+      "before": "(family=\"gpt\",variant=\"\",version=\"\",modifier=\"latest\")",
+      "after": "(family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"latest\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"latest\")"
+    },
+    {
+      "provider": "helicone",
+      "id": "chatgpt-4o-latest",
+      "raw_family": "gpt",
+      "before": "(family=\"gpt\",variant=\"\",version=\"\",modifier=\"latest\")",
+      "after": "(family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"latest\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"latest\")"
+    },
+    {
+      "provider": "kilo",
+      "id": "essentialai/rnj-1-instruct",
+      "raw_family": "",
+      "before": "(family=\"rnj\",variant=\"\",version=\"1\",modifier=\"\")",
+      "after": "(family=\"rnj\",variant=\"instruct\",version=\"1\",modifier=\"\")",
+      "category": "a:divergence-fix",
+      "reason": "now matches a tuple another provider already produced for this ID (BEFORE); only phantom non-family loss permitted (j1nu)"
+    },
+    {
+      "provider": "nano-gpt",
+      "id": "gemini-2.5-flash-lite-preview-06-17",
+      "raw_family": "",
+      "before": "(family=\"gemini\",variant=\"flash\",version=\"2.5\",modifier=\"\")",
+      "after": "(family=\"gemini\",variant=\"flash-lite\",version=\"2.5\",modifier=\"\")",
+      "category": "a:divergence-fix",
+      "reason": "now matches a tuple another provider already produced for this ID (BEFORE); only phantom non-family loss permitted (j1nu)"
+    },
+    {
+      "provider": "302ai",
+      "id": "gemini-2.5-flash-lite-preview-09-2025",
+      "raw_family": "",
+      "before": "(family=\"gemini\",variant=\"flash\",version=\"2.5\",modifier=\"\")",
+      "after": "(family=\"gemini\",variant=\"flash-lite\",version=\"2.5\",modifier=\"\")",
+      "category": "a:divergence-fix",
+      "reason": "now matches a tuple another provider already produced for this ID (BEFORE); only phantom non-family loss permitted (j1nu)"
+    },
+    {
+      "provider": "nano-gpt",
+      "id": "gemini-2.5-flash-lite-preview-09-2025",
+      "raw_family": "",
+      "before": "(family=\"gemini\",variant=\"flash\",version=\"2.5\",modifier=\"\")",
+      "after": "(family=\"gemini\",variant=\"flash-lite\",version=\"2.5\",modifier=\"\")",
+      "category": "a:divergence-fix",
+      "reason": "now matches a tuple another provider already produced for this ID (BEFORE); only phantom non-family loss permitted (j1nu)"
+    },
+    {
+      "provider": "302ai",
+      "id": "glm-5v-turbo",
+      "raw_family": "glm",
+      "before": "(family=\"glm\",variant=\"turbo\",version=\"\",modifier=\"\")",
+      "after": "(family=\"glm\",variant=\"v\",version=\"5\",modifier=\"turbo\")",
+      "category": "a:divergence-fix",
+      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted (j1nu)"
+    },
+    {
+      "provider": "zai",
+      "id": "glm-5v-turbo",
+      "raw_family": "glm",
+      "before": "(family=\"glm\",variant=\"turbo\",version=\"\",modifier=\"\")",
+      "after": "(family=\"glm\",variant=\"v\",version=\"5\",modifier=\"turbo\")",
+      "category": "a:divergence-fix",
+      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted (j1nu)"
+    },
+    {
+      "provider": "zai-coding-plan",
+      "id": "glm-5v-turbo",
+      "raw_family": "glm",
+      "before": "(family=\"glm\",variant=\"turbo\",version=\"\",modifier=\"\")",
+      "after": "(family=\"glm\",variant=\"v\",version=\"5\",modifier=\"turbo\")",
+      "category": "a:divergence-fix",
+      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted (j1nu)"
+    },
+    {
+      "provider": "zhipuai",
+      "id": "glm-5v-turbo",
+      "raw_family": "glm",
+      "before": "(family=\"glm\",variant=\"turbo\",version=\"\",modifier=\"\")",
+      "after": "(family=\"glm\",variant=\"v\",version=\"5\",modifier=\"turbo\")",
+      "category": "a:divergence-fix",
+      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted (j1nu)"
+    },
+    {
+      "provider": "zhipuai-coding-plan",
+      "id": "glm-5v-turbo",
+      "raw_family": "glm",
+      "before": "(family=\"glm\",variant=\"turbo\",version=\"\",modifier=\"\")",
+      "after": "(family=\"glm\",variant=\"v\",version=\"5\",modifier=\"turbo\")",
+      "category": "a:divergence-fix",
+      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted (j1nu)"
+    },
+    {
+      "provider": "kilo",
+      "id": "google/gemini-2.5-flash-lite-preview-09-2025",
+      "raw_family": "",
+      "before": "(family=\"gemini\",variant=\"flash\",version=\"2.5\",modifier=\"\")",
+      "after": "(family=\"gemini\",variant=\"flash-lite\",version=\"2.5\",modifier=\"\")",
+      "category": "a:divergence-fix",
+      "reason": "now matches a tuple another provider already produced for this ID (BEFORE); only phantom non-family loss permitted (j1nu)"
+    },
+    {
+      "provider": "kilo",
+      "id": "google/lyria-3-pro-preview",
+      "raw_family": "",
+      "before": "(family=\"lyria\",variant=\"\",version=\"3\",modifier=\"preview\")",
+      "after": "(family=\"lyria\",variant=\"pro\",version=\"3\",modifier=\"preview\")",
+      "category": "a:divergence-fix",
+      "reason": "now matches a tuple another provider already produced for this ID (BEFORE); only phantom non-family loss permitted (j1nu)"
+    },
+    {
+      "provider": "302ai",
+      "id": "gpt-4o",
+      "raw_family": "gpt",
+      "before": "(family=\"gpt\",variant=\"\",version=\"4o\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")"
+    },
+    {
+      "provider": "azure",
+      "id": "gpt-4o",
+      "raw_family": "gpt",
+      "before": "(family=\"gpt\",variant=\"\",version=\"4o\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")"
+    },
+    {
+      "provider": "azure-cognitive-services",
+      "id": "gpt-4o",
+      "raw_family": "gpt",
+      "before": "(family=\"gpt\",variant=\"\",version=\"4o\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")"
+    },
+    {
+      "provider": "frogbot",
+      "id": "gpt-4o",
+      "raw_family": "gpt",
+      "before": "(family=\"gpt\",variant=\"\",version=\"4o\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")"
+    },
+    {
+      "provider": "github-copilot",
+      "id": "gpt-4o",
+      "raw_family": "gpt",
+      "before": "(family=\"gpt\",variant=\"\",version=\"4o\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")"
+    },
+    {
+      "provider": "helicone",
+      "id": "gpt-4o",
+      "raw_family": "gpt",
+      "before": "(family=\"gpt\",variant=\"\",version=\"4o\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")"
+    },
+    {
+      "provider": "llmgateway",
+      "id": "gpt-4o",
+      "raw_family": "gpt",
+      "before": "(family=\"gpt\",variant=\"\",version=\"4o\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")"
+    },
+    {
+      "provider": "openai",
+      "id": "gpt-4o",
+      "raw_family": "gpt",
+      "before": "(family=\"gpt\",variant=\"\",version=\"4o\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")"
+    },
+    {
+      "provider": "openai",
+      "id": "gpt-4o-2024-05-13",
+      "raw_family": "gpt",
+      "before": "(family=\"gpt\",variant=\"\",version=\"4o\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")"
+    },
+    {
+      "provider": "openai",
+      "id": "gpt-4o-2024-08-06",
+      "raw_family": "gpt",
+      "before": "(family=\"gpt\",variant=\"\",version=\"4o\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")"
+    },
+    {
+      "provider": "abacus",
+      "id": "gpt-4o-2024-11-20",
+      "raw_family": "gpt",
+      "before": "(family=\"gpt\",variant=\"\",version=\"4o\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")"
+    },
+    {
+      "provider": "openai",
+      "id": "gpt-4o-2024-11-20",
+      "raw_family": "gpt",
+      "before": "(family=\"gpt\",variant=\"\",version=\"4o\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")"
+    },
+    {
+      "provider": "abacus",
+      "id": "gpt-4o-mini",
+      "raw_family": "gpt",
+      "before": "(family=\"gpt\",variant=\"mini\",version=\"\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"mini\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"mini\")"
+    },
+    {
+      "provider": "azure",
+      "id": "gpt-4o-mini",
+      "raw_family": "gpt-mini",
+      "before": "(family=\"gpt\",variant=\"mini\",version=\"\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"mini\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"mini\")"
+    },
+    {
+      "provider": "azure-cognitive-services",
+      "id": "gpt-4o-mini",
+      "raw_family": "gpt-mini",
+      "before": "(family=\"gpt\",variant=\"mini\",version=\"\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"mini\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"mini\")"
+    },
+    {
+      "provider": "helicone",
+      "id": "gpt-4o-mini",
+      "raw_family": "gpt-mini",
+      "before": "(family=\"gpt\",variant=\"mini\",version=\"\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"mini\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"mini\")"
+    },
+    {
+      "provider": "llmgateway",
+      "id": "gpt-4o-mini",
+      "raw_family": "gpt-mini",
+      "before": "(family=\"gpt\",variant=\"mini\",version=\"\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"mini\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"mini\")"
+    },
+    {
+      "provider": "openai",
+      "id": "gpt-4o-mini",
+      "raw_family": "gpt-mini",
+      "before": "(family=\"gpt\",variant=\"mini\",version=\"\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"mini\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"mini\")"
+    },
+    {
+      "provider": "llmgateway",
+      "id": "gpt-4o-mini-search-preview",
+      "raw_family": "gpt",
+      "before": "(family=\"gpt\",variant=\"mini\",version=\"\",modifier=\"preview\")",
+      "after": "(family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"preview\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"preview\")"
+    },
+    {
+      "provider": "llmgateway",
+      "id": "gpt-4o-search-preview",
+      "raw_family": "gpt",
+      "before": "(family=\"gpt\",variant=\"\",version=\"\",modifier=\"preview\")",
+      "after": "(family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"preview\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"preview\")"
+    },
+    {
+      "provider": "helicone",
+      "id": "gpt-5-chat-latest",
+      "raw_family": "gpt-codex",
+      "before": "(family=\"gpt\",variant=\"codex\",version=\"5\",modifier=\"latest\")",
+      "after": "(family=\"gpt\",variant=\"\",version=\"5\",modifier=\"latest\")",
+      "category": "a:divergence-fix",
+      "reason": "now matches a tuple another provider already produced for this ID (BEFORE); only phantom non-family loss permitted (j1nu)"
+    },
+    {
+      "provider": "llmgateway",
+      "id": "gpt-5-chat-latest",
+      "raw_family": "gpt-codex",
+      "before": "(family=\"gpt\",variant=\"codex\",version=\"5\",modifier=\"latest\")",
+      "after": "(family=\"gpt\",variant=\"\",version=\"5\",modifier=\"latest\")",
+      "category": "a:divergence-fix",
+      "reason": "now matches a tuple another provider already produced for this ID (BEFORE); only phantom non-family loss permitted (j1nu)"
+    },
+    {
+      "provider": "openai",
+      "id": "gpt-5-chat-latest",
+      "raw_family": "gpt-codex",
+      "before": "(family=\"gpt\",variant=\"codex\",version=\"5\",modifier=\"latest\")",
+      "after": "(family=\"gpt\",variant=\"\",version=\"5\",modifier=\"latest\")",
+      "category": "a:divergence-fix",
+      "reason": "now matches a tuple another provider already produced for this ID (BEFORE); only phantom non-family loss permitted (j1nu)"
+    },
+    {
+      "provider": "302ai",
+      "id": "gpt-5.1-chat-latest",
+      "raw_family": "gpt-codex",
+      "before": "(family=\"gpt\",variant=\"codex\",version=\"5.1\",modifier=\"latest\")",
+      "after": "(family=\"gpt\",variant=\"\",version=\"5.1\",modifier=\"latest\")",
+      "category": "a:divergence-fix",
+      "reason": "now matches a tuple another provider already produced for this ID (BEFORE); only phantom non-family loss permitted (j1nu)"
+    },
+    {
+      "provider": "helicone",
+      "id": "gpt-5.1-chat-latest",
+      "raw_family": "gpt-codex",
+      "before": "(family=\"gpt\",variant=\"codex\",version=\"5.1\",modifier=\"latest\")",
+      "after": "(family=\"gpt\",variant=\"\",version=\"5.1\",modifier=\"latest\")",
+      "category": "a:divergence-fix",
+      "reason": "now matches a tuple another provider already produced for this ID (BEFORE); only phantom non-family loss permitted (j1nu)"
+    },
+    {
+      "provider": "openai",
+      "id": "gpt-5.1-chat-latest",
+      "raw_family": "gpt-codex",
+      "before": "(family=\"gpt\",variant=\"codex\",version=\"5.1\",modifier=\"latest\")",
+      "after": "(family=\"gpt\",variant=\"\",version=\"5.1\",modifier=\"latest\")",
+      "category": "a:divergence-fix",
+      "reason": "now matches a tuple another provider already produced for this ID (BEFORE); only phantom non-family loss permitted (j1nu)"
+    },
+    {
+      "provider": "302ai",
+      "id": "gpt-5.2-chat-latest",
+      "raw_family": "gpt-codex",
+      "before": "(family=\"gpt\",variant=\"codex\",version=\"5.2\",modifier=\"latest\")",
+      "after": "(family=\"gpt\",variant=\"\",version=\"5.2\",modifier=\"latest\")",
+      "category": "a:divergence-fix",
+      "reason": "now matches a tuple another provider already produced for this ID (BEFORE); only phantom non-family loss permitted (j1nu)"
+    },
+    {
+      "provider": "llmgateway",
+      "id": "gpt-5.2-chat-latest",
+      "raw_family": "gpt-codex",
+      "before": "(family=\"gpt\",variant=\"codex\",version=\"5.2\",modifier=\"latest\")",
+      "after": "(family=\"gpt\",variant=\"\",version=\"5.2\",modifier=\"latest\")",
+      "category": "a:divergence-fix",
+      "reason": "now matches a tuple another provider already produced for this ID (BEFORE); only phantom non-family loss permitted (j1nu)"
+    },
+    {
+      "provider": "openai",
+      "id": "gpt-5.2-chat-latest",
+      "raw_family": "gpt-codex",
+      "before": "(family=\"gpt\",variant=\"codex\",version=\"5.2\",modifier=\"latest\")",
+      "after": "(family=\"gpt\",variant=\"\",version=\"5.2\",modifier=\"latest\")",
+      "category": "a:divergence-fix",
+      "reason": "now matches a tuple another provider already produced for this ID (BEFORE); only phantom non-family loss permitted (j1nu)"
+    },
+    {
+      "provider": "helicone",
+      "id": "hermes-2-pro-llama-3-8b",
+      "raw_family": "llama",
+      "before": "(family=\"llama\",variant=\"pro\",version=\"\",modifier=\"\")",
+      "after": "(family=\"hermes\",variant=\"pro\",version=\"2\",modifier=\"\")",
+      "category": "a:divergence-fix",
+      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted (j1nu)"
+    },
+    {
+      "provider": "llmgateway",
+      "id": "hermes-2-pro-llama-3-8b",
+      "raw_family": "hermes",
+      "before": "(family=\"hermes\",variant=\"\",version=\"2.3\",modifier=\"\")",
+      "after": "(family=\"hermes\",variant=\"pro\",version=\"2\",modifier=\"\")",
+      "category": "a:divergence-fix",
+      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted (j1nu)"
+    },
+    {
+      "provider": "nano-gpt",
+      "id": "inflection/inflection-3-pi",
+      "raw_family": "gpt",
+      "before": "(family=\"gpt\",variant=\"\",version=\"\",modifier=\"\")",
+      "after": "(family=\"inflection\",variant=\"\",version=\"3\",modifier=\"\")",
+      "category": "a:divergence-fix",
+      "reason": "now matches a tuple another provider already produced for this ID (BEFORE); only phantom non-family loss permitted (j1nu)"
+    },
+    {
+      "provider": "nano-gpt",
+      "id": "inflection/inflection-3-productivity",
+      "raw_family": "gpt",
+      "before": "(family=\"gpt\",variant=\"\",version=\"\",modifier=\"\")",
+      "after": "(family=\"inflection\",variant=\"\",version=\"3\",modifier=\"\")",
+      "category": "a:divergence-fix",
+      "reason": "now matches a tuple another provider already produced for this ID (BEFORE); only phantom non-family loss permitted (j1nu)"
+    },
+    {
+      "provider": "openrouter",
+      "id": "liquid/lfm-2-24b-a2b",
+      "raw_family": "liquid",
+      "before": "(family=\"liquid\",variant=\"\",version=\"\",modifier=\"\")",
+      "after": "(family=\"lfm\",variant=\"\",version=\"2\",modifier=\"\")",
+      "category": "a:divergence-fix",
+      "reason": "now matches a tuple another provider already produced for this ID (BEFORE); only phantom non-family loss permitted (j1nu)"
+    },
+    {
+      "provider": "openrouter",
+      "id": "mancer/weaver",
+      "raw_family": "alpha",
+      "before": "(family=\"alpha\",variant=\"\",version=\"\",modifier=\"\")",
+      "after": "(family=\"weaver\",variant=\"\",version=\"\",modifier=\"\")",
+      "category": "a:divergence-fix",
+      "reason": "now matches a tuple another provider already produced for this ID (BEFORE); only phantom non-family loss permitted (j1nu)"
+    },
+    {
+      "provider": "nano-gpt",
+      "id": "microsoft/wizardlm-2-8x22b",
+      "raw_family": "gpt",
+      "before": "(family=\"gpt\",variant=\"\",version=\"\",modifier=\"\")",
+      "after": "(family=\"wizardlm\",variant=\"\",version=\"2\",modifier=\"\")",
+      "category": "a:divergence-fix",
+      "reason": "now matches a tuple another provider already produced for this ID (BEFORE); only phantom non-family loss permitted (j1nu)"
+    },
+    {
+      "provider": "llmgateway",
+      "id": "ministral-14b-2512",
+      "raw_family": "mistral",
+      "before": "(family=\"mistral\",variant=\"\",version=\"\",modifier=\"\")",
+      "after": "(family=\"ministral\",variant=\"\",version=\"\",modifier=\"\")",
+      "category": "a:divergence-fix",
+      "reason": "now matches a tuple another provider already produced for this ID (BEFORE); only phantom non-family loss permitted (j1nu)"
+    },
+    {
+      "provider": "kilo",
+      "id": "mistralai/mixtral-8x22b-instruct",
+      "raw_family": "",
+      "before": "(family=\"mixtral\",variant=\"\",version=\"\",modifier=\"\")",
+      "after": "(family=\"mixtral\",variant=\"instruct\",version=\"\",modifier=\"\")",
+      "category": "a:divergence-fix",
+      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted (j1nu)"
+    },
+    {
+      "provider": "nvidia",
+      "id": "mistralai/mixtral-8x22b-instruct",
+      "raw_family": "",
+      "before": "(family=\"mixtral\",variant=\"\",version=\"\",modifier=\"\")",
+      "after": "(family=\"mixtral\",variant=\"instruct\",version=\"\",modifier=\"\")",
+      "category": "a:divergence-fix",
+      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted (j1nu)"
+    },
+    {
+      "provider": "openrouter",
+      "id": "mistralai/mixtral-8x22b-instruct",
+      "raw_family": "mistral",
+      "before": "(family=\"mistral\",variant=\"instruct\",version=\"\",modifier=\"\")",
+      "after": "(family=\"mixtral\",variant=\"instruct\",version=\"\",modifier=\"\")",
+      "category": "a:divergence-fix",
+      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted (j1nu)"
+    },
+    {
+      "provider": "openrouter",
+      "id": "mistralai/pixtral-large-2411",
+      "raw_family": "mistral",
+      "before": "(family=\"mistral\",variant=\"large\",version=\"\",modifier=\"\")",
+      "after": "(family=\"pixtral\",variant=\"large\",version=\"\",modifier=\"\")",
+      "category": "a:divergence-fix",
+      "reason": "now matches a tuple another provider already produced for this ID (BEFORE); only phantom non-family loss permitted (j1nu)"
+    },
+    {
+      "provider": "kilo",
+      "id": "mistralai/voxtral-small-24b-2507",
+      "raw_family": "",
+      "before": "(family=\"voxtral\",variant=\"\",version=\"\",modifier=\"\")",
+      "after": "(family=\"voxtral\",variant=\"small\",version=\"\",modifier=\"\")",
+      "category": "a:divergence-fix",
+      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted (j1nu)"
+    },
+    {
+      "provider": "openrouter",
+      "id": "mistralai/voxtral-small-24b-2507",
+      "raw_family": "mistral",
+      "before": "(family=\"mistral\",variant=\"small\",version=\"\",modifier=\"\")",
+      "after": "(family=\"voxtral\",variant=\"small\",version=\"\",modifier=\"\")",
+      "category": "a:divergence-fix",
+      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted (j1nu)"
+    },
+    {
+      "provider": "kilo",
+      "id": "nousresearch/hermes-2-pro-llama-3-8b",
+      "raw_family": "",
+      "before": "(family=\"hermes\",variant=\"\",version=\"2.3\",modifier=\"\")",
+      "after": "(family=\"hermes\",variant=\"pro\",version=\"2\",modifier=\"\")",
+      "category": "a:divergence-fix",
+      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted (j1nu)"
+    },
+    {
+      "provider": "novita-ai",
+      "id": "nousresearch/hermes-2-pro-llama-3-8b",
+      "raw_family": "",
+      "before": "(family=\"hermes\",variant=\"\",version=\"2.3\",modifier=\"\")",
+      "after": "(family=\"hermes\",variant=\"pro\",version=\"2\",modifier=\"\")",
+      "category": "a:divergence-fix",
+      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted (j1nu)"
+    },
+    {
+      "provider": "openrouter",
+      "id": "nousresearch/hermes-2-pro-llama-3-8b",
+      "raw_family": "nousresearch",
+      "before": "(family=\"nousresearch\",variant=\"\",version=\"\",modifier=\"\")",
+      "after": "(family=\"hermes\",variant=\"pro\",version=\"2\",modifier=\"\")",
+      "category": "a:divergence-fix",
+      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted (j1nu)"
+    },
+    {
+      "provider": "openrouter",
+      "id": "nousresearch/hermes-3-llama-3.1-405b",
+      "raw_family": "nousresearch",
+      "before": "(family=\"nousresearch\",variant=\"\",version=\"\",modifier=\"\")",
+      "after": "(family=\"hermes\",variant=\"\",version=\"3\",modifier=\"\")",
+      "category": "a:divergence-fix",
+      "reason": "now matches a tuple another provider already produced for this ID (BEFORE); only phantom non-family loss permitted (j1nu)"
+    },
+    {
+      "provider": "openrouter",
+      "id": "nousresearch/hermes-3-llama-3.1-70b",
+      "raw_family": "nousresearch",
+      "before": "(family=\"nousresearch\",variant=\"\",version=\"\",modifier=\"\")",
+      "after": "(family=\"hermes\",variant=\"\",version=\"3\",modifier=\"\")",
+      "category": "a:divergence-fix",
+      "reason": "now matches a tuple another provider already produced for this ID (BEFORE); only phantom non-family loss permitted (j1nu)"
+    },
+    {
+      "provider": "azure",
+      "id": "o1",
+      "raw_family": "o",
+      "before": "(family=\"o\",variant=\"\",version=\"1\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"o\",version=\"1\",modifier=\"\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"1\",modifier=\"\")"
+    },
+    {
+      "provider": "azure-cognitive-services",
+      "id": "o1",
+      "raw_family": "o",
+      "before": "(family=\"o\",variant=\"\",version=\"1\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"o\",version=\"1\",modifier=\"\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"1\",modifier=\"\")"
+    },
+    {
+      "provider": "helicone",
+      "id": "o1",
+      "raw_family": "o",
+      "before": "(family=\"o\",variant=\"\",version=\"1\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"o\",version=\"1\",modifier=\"\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"1\",modifier=\"\")"
+    },
+    {
+      "provider": "llmgateway",
+      "id": "o1",
+      "raw_family": "o",
+      "before": "(family=\"o\",variant=\"\",version=\"1\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"o\",version=\"1\",modifier=\"\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"1\",modifier=\"\")"
+    },
+    {
+      "provider": "openai",
+      "id": "o1",
+      "raw_family": "o",
+      "before": "(family=\"o\",variant=\"\",version=\"1\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"o\",version=\"1\",modifier=\"\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"1\",modifier=\"\")"
+    },
+    {
+      "provider": "azure",
+      "id": "o1-mini",
+      "raw_family": "o-mini",
+      "before": "(family=\"o\",variant=\"mini\",version=\"1\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"o\",version=\"1\",modifier=\"mini\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"1\",modifier=\"mini\")"
+    },
+    {
+      "provider": "azure-cognitive-services",
+      "id": "o1-mini",
+      "raw_family": "o-mini",
+      "before": "(family=\"o\",variant=\"mini\",version=\"1\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"o\",version=\"1\",modifier=\"mini\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"1\",modifier=\"mini\")"
+    },
+    {
+      "provider": "helicone",
+      "id": "o1-mini",
+      "raw_family": "o-mini",
+      "before": "(family=\"o\",variant=\"mini\",version=\"1\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"o\",version=\"1\",modifier=\"mini\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"1\",modifier=\"mini\")"
+    },
+    {
+      "provider": "openai",
+      "id": "o1-mini",
+      "raw_family": "o-mini",
+      "before": "(family=\"o\",variant=\"mini\",version=\"1\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"o\",version=\"1\",modifier=\"mini\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"1\",modifier=\"mini\")"
+    },
+    {
+      "provider": "azure",
+      "id": "o1-preview",
+      "raw_family": "o",
+      "before": "(family=\"o\",variant=\"\",version=\"1\",modifier=\"preview\")",
+      "after": "(family=\"gpt\",variant=\"o\",version=\"1\",modifier=\"preview\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"1\",modifier=\"preview\")"
+    },
+    {
+      "provider": "azure-cognitive-services",
+      "id": "o1-preview",
+      "raw_family": "o",
+      "before": "(family=\"o\",variant=\"\",version=\"1\",modifier=\"preview\")",
+      "after": "(family=\"gpt\",variant=\"o\",version=\"1\",modifier=\"preview\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"1\",modifier=\"preview\")"
+    },
+    {
+      "provider": "openai",
+      "id": "o1-preview",
+      "raw_family": "o",
+      "before": "(family=\"o\",variant=\"\",version=\"1\",modifier=\"preview\")",
+      "after": "(family=\"gpt\",variant=\"o\",version=\"1\",modifier=\"preview\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"1\",modifier=\"preview\")"
+    },
+    {
+      "provider": "openai",
+      "id": "o1-pro",
+      "raw_family": "o-pro",
+      "before": "(family=\"o\",variant=\"pro\",version=\"1\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"o\",version=\"1\",modifier=\"pro\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"1\",modifier=\"pro\")"
+    },
+    {
+      "provider": "abacus",
+      "id": "o3",
+      "raw_family": "o",
+      "before": "(family=\"o\",variant=\"\",version=\"3\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"\")"
+    },
+    {
+      "provider": "azure",
+      "id": "o3",
+      "raw_family": "o",
+      "before": "(family=\"o\",variant=\"\",version=\"3\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"\")"
+    },
+    {
+      "provider": "azure-cognitive-services",
+      "id": "o3",
+      "raw_family": "o",
+      "before": "(family=\"o\",variant=\"\",version=\"3\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"\")"
+    },
+    {
+      "provider": "helicone",
+      "id": "o3",
+      "raw_family": "o",
+      "before": "(family=\"o\",variant=\"\",version=\"3\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"\")"
+    },
+    {
+      "provider": "jiekou",
+      "id": "o3",
+      "raw_family": "",
+      "before": "(family=\"o\",variant=\"\",version=\"3\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"\")"
+    },
+    {
+      "provider": "llmgateway",
+      "id": "o3",
+      "raw_family": "o",
+      "before": "(family=\"o\",variant=\"\",version=\"3\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"\")"
+    },
+    {
+      "provider": "openai",
+      "id": "o3",
+      "raw_family": "o",
+      "before": "(family=\"o\",variant=\"\",version=\"3\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"\")"
+    },
+    {
+      "provider": "openai",
+      "id": "o3-deep-research",
+      "raw_family": "o",
+      "before": "(family=\"o\",variant=\"deep-research\",version=\"3\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"deep-research\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"deep-research\")"
+    },
+    {
+      "provider": "abacus",
+      "id": "o3-mini",
+      "raw_family": "o-mini",
+      "before": "(family=\"o\",variant=\"mini\",version=\"3\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"mini\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"mini\")"
+    },
+    {
+      "provider": "azure",
+      "id": "o3-mini",
+      "raw_family": "o-mini",
+      "before": "(family=\"o\",variant=\"mini\",version=\"3\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"mini\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"mini\")"
+    },
+    {
+      "provider": "azure-cognitive-services",
+      "id": "o3-mini",
+      "raw_family": "o-mini",
+      "before": "(family=\"o\",variant=\"mini\",version=\"3\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"mini\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"mini\")"
+    },
+    {
+      "provider": "helicone",
+      "id": "o3-mini",
+      "raw_family": "o-mini",
+      "before": "(family=\"o\",variant=\"mini\",version=\"3\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"mini\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"mini\")"
+    },
+    {
+      "provider": "jiekou",
+      "id": "o3-mini",
+      "raw_family": "o",
+      "before": "(family=\"o\",variant=\"mini\",version=\"3\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"mini\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"mini\")"
+    },
+    {
+      "provider": "llmgateway",
+      "id": "o3-mini",
+      "raw_family": "o-mini",
+      "before": "(family=\"o\",variant=\"mini\",version=\"3\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"mini\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"mini\")"
+    },
+    {
+      "provider": "openai",
+      "id": "o3-mini",
+      "raw_family": "o-mini",
+      "before": "(family=\"o\",variant=\"mini\",version=\"3\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"mini\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"mini\")"
+    },
+    {
+      "provider": "abacus",
+      "id": "o3-pro",
+      "raw_family": "o-pro",
+      "before": "(family=\"o\",variant=\"pro\",version=\"3\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"pro\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"pro\")"
+    },
+    {
+      "provider": "helicone",
+      "id": "o3-pro",
+      "raw_family": "o-pro",
+      "before": "(family=\"o\",variant=\"pro\",version=\"3\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"pro\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"pro\")"
+    },
+    {
+      "provider": "openai",
+      "id": "o3-pro",
+      "raw_family": "o-pro",
+      "before": "(family=\"o\",variant=\"pro\",version=\"3\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"pro\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"pro\")"
+    },
+    {
+      "provider": "abacus",
+      "id": "o4-mini",
+      "raw_family": "o-mini",
+      "before": "(family=\"o\",variant=\"mini\",version=\"4\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"o\",version=\"4\",modifier=\"mini\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"4\",modifier=\"mini\")"
+    },
+    {
+      "provider": "azure",
+      "id": "o4-mini",
+      "raw_family": "o-mini",
+      "before": "(family=\"o\",variant=\"mini\",version=\"4\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"o\",version=\"4\",modifier=\"mini\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"4\",modifier=\"mini\")"
+    },
+    {
+      "provider": "azure-cognitive-services",
+      "id": "o4-mini",
+      "raw_family": "o-mini",
+      "before": "(family=\"o\",variant=\"mini\",version=\"4\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"o\",version=\"4\",modifier=\"mini\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"4\",modifier=\"mini\")"
+    },
+    {
+      "provider": "helicone",
+      "id": "o4-mini",
+      "raw_family": "o-mini",
+      "before": "(family=\"o\",variant=\"mini\",version=\"4\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"o\",version=\"4\",modifier=\"mini\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"4\",modifier=\"mini\")"
+    },
+    {
+      "provider": "jiekou",
+      "id": "o4-mini",
+      "raw_family": "o",
+      "before": "(family=\"o\",variant=\"mini\",version=\"4\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"o\",version=\"4\",modifier=\"mini\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"4\",modifier=\"mini\")"
+    },
+    {
+      "provider": "llmgateway",
+      "id": "o4-mini",
+      "raw_family": "o-mini",
+      "before": "(family=\"o\",variant=\"mini\",version=\"4\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"o\",version=\"4\",modifier=\"mini\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"4\",modifier=\"mini\")"
+    },
+    {
+      "provider": "openai",
+      "id": "o4-mini",
+      "raw_family": "o-mini",
+      "before": "(family=\"o\",variant=\"mini\",version=\"4\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"o\",version=\"4\",modifier=\"mini\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"4\",modifier=\"mini\")"
+    },
+    {
+      "provider": "openai",
+      "id": "o4-mini-deep-research",
+      "raw_family": "o-mini",
+      "before": "(family=\"o\",variant=\"mini\",version=\"4\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"o\",version=\"4\",modifier=\"mini\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"4\",modifier=\"mini\")"
+    },
+    {
+      "provider": "digitalocean",
+      "id": "openai-gpt-4o",
+      "raw_family": "gpt",
+      "before": "(family=\"gpt\",variant=\"\",version=\"\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")"
+    },
+    {
+      "provider": "venice",
+      "id": "openai-gpt-4o-2024-11-20",
+      "raw_family": "gpt",
+      "before": "(family=\"gpt\",variant=\"\",version=\"\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")"
+    },
+    {
+      "provider": "digitalocean",
+      "id": "openai-gpt-4o-mini",
+      "raw_family": "gpt-mini",
+      "before": "(family=\"gpt\",variant=\"mini\",version=\"\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"mini\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"mini\")"
+    },
+    {
+      "provider": "venice",
+      "id": "openai-gpt-4o-mini-2024-07-18",
+      "raw_family": "gpt-mini",
+      "before": "(family=\"gpt\",variant=\"mini\",version=\"\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"mini\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"mini\")"
+    },
+    {
+      "provider": "nano-gpt",
+      "id": "openai/chatgpt-4o-latest",
+      "raw_family": "gpt",
+      "before": "(family=\"gpt\",variant=\"\",version=\"\",modifier=\"latest\")",
+      "after": "(family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"latest\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"latest\")"
+    },
+    {
+      "provider": "poe",
+      "id": "openai/chatgpt-4o-latest",
+      "raw_family": "gpt",
+      "before": "(family=\"gpt\",variant=\"\",version=\"\",modifier=\"latest\")",
+      "after": "(family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"latest\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"latest\")"
+    },
+    {
+      "provider": "cloudflare-ai-gateway",
+      "id": "openai/gpt-4o",
+      "raw_family": "gpt",
+      "before": "(family=\"gpt\",variant=\"\",version=\"4o\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")"
+    },
+    {
+      "provider": "github-models",
+      "id": "openai/gpt-4o",
+      "raw_family": "gpt",
+      "before": "(family=\"gpt\",variant=\"\",version=\"4o\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")"
+    },
+    {
+      "provider": "kilo",
+      "id": "openai/gpt-4o",
+      "raw_family": "",
+      "before": "(family=\"gpt\",variant=\"\",version=\"4o\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")"
+    },
+    {
+      "provider": "merge-gateway",
+      "id": "openai/gpt-4o",
+      "raw_family": "gpt",
+      "before": "(family=\"gpt\",variant=\"\",version=\"4o\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")"
+    },
+    {
+      "provider": "nano-gpt",
+      "id": "openai/gpt-4o",
+      "raw_family": "gpt",
+      "before": "(family=\"gpt\",variant=\"\",version=\"4o\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")"
+    },
+    {
+      "provider": "openrouter",
+      "id": "openai/gpt-4o",
+      "raw_family": "gpt",
+      "before": "(family=\"gpt\",variant=\"\",version=\"4o\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")"
+    },
+    {
+      "provider": "orcarouter",
+      "id": "openai/gpt-4o",
+      "raw_family": "gpt",
+      "before": "(family=\"gpt\",variant=\"\",version=\"4o\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")"
+    },
+    {
+      "provider": "poe",
+      "id": "openai/gpt-4o",
+      "raw_family": "gpt",
+      "before": "(family=\"gpt\",variant=\"\",version=\"4o\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")"
+    },
+    {
+      "provider": "vercel",
+      "id": "openai/gpt-4o",
+      "raw_family": "gpt",
+      "before": "(family=\"gpt\",variant=\"\",version=\"4o\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")"
+    },
+    {
+      "provider": "kilo",
+      "id": "openai/gpt-4o-2024-05-13",
+      "raw_family": "",
+      "before": "(family=\"gpt\",variant=\"\",version=\"4o\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")"
+    },
+    {
+      "provider": "merge-gateway",
+      "id": "openai/gpt-4o-2024-05-13",
+      "raw_family": "gpt",
+      "before": "(family=\"gpt\",variant=\"\",version=\"4o\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")"
+    },
+    {
+      "provider": "openrouter",
+      "id": "openai/gpt-4o-2024-05-13",
+      "raw_family": "gpt",
+      "before": "(family=\"gpt\",variant=\"\",version=\"4o\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")"
+    },
+    {
+      "provider": "orcarouter",
+      "id": "openai/gpt-4o-2024-05-13",
+      "raw_family": "gpt",
+      "before": "(family=\"gpt\",variant=\"\",version=\"4o\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")"
+    },
+    {
+      "provider": "kilo",
+      "id": "openai/gpt-4o-2024-08-06",
+      "raw_family": "",
+      "before": "(family=\"gpt\",variant=\"\",version=\"4o\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")"
+    },
+    {
+      "provider": "merge-gateway",
+      "id": "openai/gpt-4o-2024-08-06",
+      "raw_family": "gpt",
+      "before": "(family=\"gpt\",variant=\"\",version=\"4o\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")"
+    },
+    {
+      "provider": "nano-gpt",
+      "id": "openai/gpt-4o-2024-08-06",
+      "raw_family": "gpt",
+      "before": "(family=\"gpt\",variant=\"\",version=\"4o\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")"
+    },
+    {
+      "provider": "openrouter",
+      "id": "openai/gpt-4o-2024-08-06",
+      "raw_family": "gpt",
+      "before": "(family=\"gpt\",variant=\"\",version=\"4o\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")"
+    },
+    {
+      "provider": "orcarouter",
+      "id": "openai/gpt-4o-2024-08-06",
+      "raw_family": "gpt",
+      "before": "(family=\"gpt\",variant=\"\",version=\"4o\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")"
+    },
+    {
+      "provider": "kilo",
+      "id": "openai/gpt-4o-2024-11-20",
+      "raw_family": "",
+      "before": "(family=\"gpt\",variant=\"\",version=\"4o\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")"
+    },
+    {
+      "provider": "merge-gateway",
+      "id": "openai/gpt-4o-2024-11-20",
+      "raw_family": "gpt",
+      "before": "(family=\"gpt\",variant=\"\",version=\"4o\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")"
+    },
+    {
+      "provider": "nano-gpt",
+      "id": "openai/gpt-4o-2024-11-20",
+      "raw_family": "gpt",
+      "before": "(family=\"gpt\",variant=\"\",version=\"4o\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")"
+    },
+    {
+      "provider": "openrouter",
+      "id": "openai/gpt-4o-2024-11-20",
+      "raw_family": "gpt",
+      "before": "(family=\"gpt\",variant=\"\",version=\"4o\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")"
+    },
+    {
+      "provider": "orcarouter",
+      "id": "openai/gpt-4o-2024-11-20",
+      "raw_family": "gpt",
+      "before": "(family=\"gpt\",variant=\"\",version=\"4o\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")"
+    },
+    {
+      "provider": "kilo",
+      "id": "openai/gpt-4o-audio-preview",
+      "raw_family": "",
+      "before": "(family=\"gpt\",variant=\"\",version=\"\",modifier=\"preview\")",
+      "after": "(family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"preview\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"preview\")"
+    },
+    {
+      "provider": "poe",
+      "id": "openai/gpt-4o-aug",
+      "raw_family": "gpt",
+      "before": "(family=\"gpt\",variant=\"\",version=\"\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")"
+    },
+    {
+      "provider": "cloudflare-ai-gateway",
+      "id": "openai/gpt-4o-mini",
+      "raw_family": "gpt-mini",
+      "before": "(family=\"gpt\",variant=\"mini\",version=\"\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"mini\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"mini\")"
+    },
+    {
+      "provider": "github-models",
+      "id": "openai/gpt-4o-mini",
+      "raw_family": "gpt-mini",
+      "before": "(family=\"gpt\",variant=\"mini\",version=\"\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"mini\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"mini\")"
+    },
+    {
+      "provider": "kilo",
+      "id": "openai/gpt-4o-mini",
+      "raw_family": "",
+      "before": "(family=\"gpt\",variant=\"mini\",version=\"\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"mini\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"mini\")"
+    },
+    {
+      "provider": "merge-gateway",
+      "id": "openai/gpt-4o-mini",
+      "raw_family": "gpt-mini",
+      "before": "(family=\"gpt\",variant=\"mini\",version=\"\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"mini\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"mini\")"
+    },
+    {
+      "provider": "nano-gpt",
+      "id": "openai/gpt-4o-mini",
+      "raw_family": "gpt-mini",
+      "before": "(family=\"gpt\",variant=\"mini\",version=\"\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"mini\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"mini\")"
+    },
+    {
+      "provider": "openrouter",
+      "id": "openai/gpt-4o-mini",
+      "raw_family": "gpt-mini",
+      "before": "(family=\"gpt\",variant=\"mini\",version=\"\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"mini\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"mini\")"
+    },
+    {
+      "provider": "orcarouter",
+      "id": "openai/gpt-4o-mini",
+      "raw_family": "gpt-mini",
+      "before": "(family=\"gpt\",variant=\"mini\",version=\"\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"mini\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"mini\")"
+    },
+    {
+      "provider": "poe",
+      "id": "openai/gpt-4o-mini",
+      "raw_family": "gpt-mini",
+      "before": "(family=\"gpt\",variant=\"mini\",version=\"\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"mini\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"mini\")"
+    },
+    {
+      "provider": "requesty",
+      "id": "openai/gpt-4o-mini",
+      "raw_family": "gpt-mini",
+      "before": "(family=\"gpt\",variant=\"mini\",version=\"\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"mini\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"mini\")"
+    },
+    {
+      "provider": "vercel",
+      "id": "openai/gpt-4o-mini",
+      "raw_family": "gpt-mini",
+      "before": "(family=\"gpt\",variant=\"mini\",version=\"\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"mini\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"mini\")"
+    },
+    {
+      "provider": "kilo",
+      "id": "openai/gpt-4o-mini-2024-07-18",
+      "raw_family": "",
+      "before": "(family=\"gpt\",variant=\"mini\",version=\"\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"mini\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"mini\")"
+    },
+    {
+      "provider": "openrouter",
+      "id": "openai/gpt-4o-mini-2024-07-18",
+      "raw_family": "o-mini",
+      "before": "(family=\"o\",variant=\"mini\",version=\"\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"mini\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"mini\")"
+    },
+    {
+      "provider": "poe",
+      "id": "openai/gpt-4o-mini-search",
+      "raw_family": "gpt-mini",
+      "before": "(family=\"gpt\",variant=\"mini\",version=\"\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"mini\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"mini\")"
+    },
+    {
+      "provider": "kilo",
+      "id": "openai/gpt-4o-mini-search-preview",
+      "raw_family": "",
+      "before": "(family=\"gpt\",variant=\"mini\",version=\"\",modifier=\"preview\")",
+      "after": "(family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"preview\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"preview\")"
+    },
+    {
+      "provider": "nano-gpt",
+      "id": "openai/gpt-4o-mini-search-preview",
+      "raw_family": "gpt-mini",
+      "before": "(family=\"gpt\",variant=\"mini\",version=\"\",modifier=\"preview\")",
+      "after": "(family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"preview\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"preview\")"
+    },
+    {
+      "provider": "openrouter",
+      "id": "openai/gpt-4o-mini-search-preview",
+      "raw_family": "o-mini",
+      "before": "(family=\"o\",variant=\"mini\",version=\"\",modifier=\"preview\")",
+      "after": "(family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"preview\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"preview\")"
+    },
+    {
+      "provider": "vercel",
+      "id": "openai/gpt-4o-mini-search-preview",
+      "raw_family": "gpt-mini",
+      "before": "(family=\"gpt\",variant=\"mini\",version=\"\",modifier=\"preview\")",
+      "after": "(family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"preview\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"preview\")"
+    },
+    {
+      "provider": "poe",
+      "id": "openai/gpt-4o-search",
+      "raw_family": "gpt",
+      "before": "(family=\"gpt\",variant=\"\",version=\"\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")"
+    },
+    {
+      "provider": "kilo",
+      "id": "openai/gpt-4o-search-preview",
+      "raw_family": "",
+      "before": "(family=\"gpt\",variant=\"\",version=\"\",modifier=\"preview\")",
+      "after": "(family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"preview\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"preview\")"
+    },
+    {
+      "provider": "nano-gpt",
+      "id": "openai/gpt-4o-search-preview",
+      "raw_family": "gpt",
+      "before": "(family=\"gpt\",variant=\"\",version=\"\",modifier=\"preview\")",
+      "after": "(family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"preview\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"preview\")"
+    },
+    {
+      "provider": "openrouter",
+      "id": "openai/gpt-4o-search-preview",
+      "raw_family": "gpt",
+      "before": "(family=\"gpt\",variant=\"\",version=\"\",modifier=\"preview\")",
+      "after": "(family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"preview\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"preview\")"
+    },
+    {
+      "provider": "openrouter",
+      "id": "openai/gpt-5-chat",
+      "raw_family": "gpt-codex",
+      "before": "(family=\"gpt\",variant=\"codex\",version=\"5\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"\",version=\"5\",modifier=\"\")",
+      "category": "a:divergence-fix",
+      "reason": "now matches a tuple another provider already produced for this ID (BEFORE); only phantom non-family loss permitted (j1nu)"
+    },
+    {
+      "provider": "poe",
+      "id": "openai/gpt-5-chat",
+      "raw_family": "gpt-codex",
+      "before": "(family=\"gpt\",variant=\"codex\",version=\"5\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"\",version=\"5\",modifier=\"\")",
+      "category": "a:divergence-fix",
+      "reason": "now matches a tuple another provider already produced for this ID (BEFORE); only phantom non-family loss permitted (j1nu)"
+    },
+    {
+      "provider": "requesty",
+      "id": "openai/gpt-5-chat",
+      "raw_family": "gpt-codex",
+      "before": "(family=\"gpt\",variant=\"codex\",version=\"5\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"\",version=\"5\",modifier=\"\")",
+      "category": "a:divergence-fix",
+      "reason": "now matches a tuple another provider already produced for this ID (BEFORE); only phantom non-family loss permitted (j1nu)"
+    },
+    {
+      "provider": "merge-gateway",
+      "id": "openai/gpt-5-chat-latest",
+      "raw_family": "gpt-codex",
+      "before": "(family=\"gpt\",variant=\"codex\",version=\"5\",modifier=\"latest\")",
+      "after": "(family=\"gpt\",variant=\"\",version=\"5\",modifier=\"latest\")",
+      "category": "a:divergence-fix",
+      "reason": "now matches a tuple another provider already produced for this ID (BEFORE); only phantom non-family loss permitted (j1nu)"
+    },
+    {
+      "provider": "orcarouter",
+      "id": "openai/gpt-5-chat-latest",
+      "raw_family": "gpt-codex",
+      "before": "(family=\"gpt\",variant=\"codex\",version=\"5\",modifier=\"latest\")",
+      "after": "(family=\"gpt\",variant=\"\",version=\"5\",modifier=\"latest\")",
+      "category": "a:divergence-fix",
+      "reason": "now matches a tuple another provider already produced for this ID (BEFORE); only phantom non-family loss permitted (j1nu)"
+    },
+    {
+      "provider": "openrouter",
+      "id": "openai/gpt-5.1-chat",
+      "raw_family": "gpt-codex",
+      "before": "(family=\"gpt\",variant=\"codex\",version=\"5.1\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"\",version=\"5.1\",modifier=\"\")",
+      "category": "a:divergence-fix",
+      "reason": "now matches a tuple another provider already produced for this ID (BEFORE); only phantom non-family loss permitted (j1nu)"
+    },
+    {
+      "provider": "requesty",
+      "id": "openai/gpt-5.1-chat",
+      "raw_family": "gpt-codex",
+      "before": "(family=\"gpt\",variant=\"codex\",version=\"5.1\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"\",version=\"5.1\",modifier=\"\")",
+      "category": "a:divergence-fix",
+      "reason": "now matches a tuple another provider already produced for this ID (BEFORE); only phantom non-family loss permitted (j1nu)"
+    },
+    {
+      "provider": "merge-gateway",
+      "id": "openai/gpt-5.1-chat-latest",
+      "raw_family": "gpt-codex",
+      "before": "(family=\"gpt\",variant=\"codex\",version=\"5.1\",modifier=\"latest\")",
+      "after": "(family=\"gpt\",variant=\"\",version=\"5.1\",modifier=\"latest\")",
+      "category": "a:divergence-fix",
+      "reason": "now matches a tuple another provider already produced for this ID (BEFORE); only phantom non-family loss permitted (j1nu)"
+    },
+    {
+      "provider": "orcarouter",
+      "id": "openai/gpt-5.1-chat-latest",
+      "raw_family": "gpt-codex",
+      "before": "(family=\"gpt\",variant=\"codex\",version=\"5.1\",modifier=\"latest\")",
+      "after": "(family=\"gpt\",variant=\"\",version=\"5.1\",modifier=\"latest\")",
+      "category": "a:divergence-fix",
+      "reason": "now matches a tuple another provider already produced for this ID (BEFORE); only phantom non-family loss permitted (j1nu)"
+    },
+    {
+      "provider": "openrouter",
+      "id": "openai/gpt-5.2-chat",
+      "raw_family": "gpt-codex",
+      "before": "(family=\"gpt\",variant=\"codex\",version=\"5.2\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"\",version=\"5.2\",modifier=\"\")",
+      "category": "a:divergence-fix",
+      "reason": "now matches a tuple another provider already produced for this ID (BEFORE); only phantom non-family loss permitted (j1nu)"
+    },
+    {
+      "provider": "requesty",
+      "id": "openai/gpt-5.2-chat",
+      "raw_family": "gpt-codex",
+      "before": "(family=\"gpt\",variant=\"codex\",version=\"5.2\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"\",version=\"5.2\",modifier=\"\")",
+      "category": "a:divergence-fix",
+      "reason": "now matches a tuple another provider already produced for this ID (BEFORE); only phantom non-family loss permitted (j1nu)"
+    },
+    {
+      "provider": "kilo",
+      "id": "openai/gpt-audio",
+      "raw_family": "",
+      "before": "(family=\"gpt\",variant=\"\",version=\"\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"audio\",version=\"\",modifier=\"\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"audio\",version=\"\",modifier=\"\")"
+    },
+    {
+      "provider": "openrouter",
+      "id": "openai/gpt-audio",
+      "raw_family": "gpt",
+      "before": "(family=\"gpt\",variant=\"\",version=\"\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"audio\",version=\"\",modifier=\"\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"audio\",version=\"\",modifier=\"\")"
+    },
+    {
+      "provider": "kilo",
+      "id": "openai/gpt-audio-mini",
+      "raw_family": "",
+      "before": "(family=\"gpt-audio\",variant=\"mini\",version=\"\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"audio\",version=\"\",modifier=\"mini\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"audio\",version=\"\",modifier=\"mini\")"
+    },
+    {
+      "provider": "openrouter",
+      "id": "openai/gpt-audio-mini",
+      "raw_family": "o-mini",
+      "before": "(family=\"o\",variant=\"mini\",version=\"\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"audio\",version=\"\",modifier=\"mini\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"audio\",version=\"\",modifier=\"mini\")"
+    },
+    {
+      "provider": "cloudflare-ai-gateway",
+      "id": "openai/o1",
+      "raw_family": "o",
+      "before": "(family=\"o\",variant=\"\",version=\"1\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"o\",version=\"1\",modifier=\"\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"1\",modifier=\"\")"
+    },
+    {
+      "provider": "github-models",
+      "id": "openai/o1",
+      "raw_family": "o",
+      "before": "(family=\"o\",variant=\"\",version=\"1\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"o\",version=\"1\",modifier=\"\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"1\",modifier=\"\")"
+    },
+    {
+      "provider": "kilo",
+      "id": "openai/o1",
+      "raw_family": "",
+      "before": "(family=\"o\",variant=\"\",version=\"1\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"o\",version=\"1\",modifier=\"\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"1\",modifier=\"\")"
+    },
+    {
+      "provider": "merge-gateway",
+      "id": "openai/o1",
+      "raw_family": "o",
+      "before": "(family=\"o\",variant=\"\",version=\"1\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"o\",version=\"1\",modifier=\"\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"1\",modifier=\"\")"
+    },
+    {
+      "provider": "nano-gpt",
+      "id": "openai/o1",
+      "raw_family": "o",
+      "before": "(family=\"o\",variant=\"\",version=\"1\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"o\",version=\"1\",modifier=\"\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"1\",modifier=\"\")"
+    },
+    {
+      "provider": "openrouter",
+      "id": "openai/o1",
+      "raw_family": "o",
+      "before": "(family=\"o\",variant=\"\",version=\"1\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"o\",version=\"1\",modifier=\"\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"1\",modifier=\"\")"
+    },
+    {
+      "provider": "poe",
+      "id": "openai/o1",
+      "raw_family": "o",
+      "before": "(family=\"o\",variant=\"\",version=\"1\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"o\",version=\"1\",modifier=\"\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"1\",modifier=\"\")"
+    },
+    {
+      "provider": "vercel",
+      "id": "openai/o1",
+      "raw_family": "o",
+      "before": "(family=\"o\",variant=\"\",version=\"1\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"o\",version=\"1\",modifier=\"\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"1\",modifier=\"\")"
+    },
+    {
+      "provider": "github-models",
+      "id": "openai/o1-mini",
+      "raw_family": "o-mini",
+      "before": "(family=\"o\",variant=\"mini\",version=\"1\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"o\",version=\"1\",modifier=\"mini\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"1\",modifier=\"mini\")"
+    },
+    {
+      "provider": "github-models",
+      "id": "openai/o1-preview",
+      "raw_family": "o",
+      "before": "(family=\"o\",variant=\"\",version=\"1\",modifier=\"preview\")",
+      "after": "(family=\"gpt\",variant=\"o\",version=\"1\",modifier=\"preview\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"1\",modifier=\"preview\")"
+    },
+    {
+      "provider": "nano-gpt",
+      "id": "openai/o1-preview",
+      "raw_family": "o",
+      "before": "(family=\"o\",variant=\"\",version=\"1\",modifier=\"preview\")",
+      "after": "(family=\"gpt\",variant=\"o\",version=\"1\",modifier=\"preview\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"1\",modifier=\"preview\")"
+    },
+    {
+      "provider": "kilo",
+      "id": "openai/o1-pro",
+      "raw_family": "",
+      "before": "(family=\"o\",variant=\"pro\",version=\"1\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"o\",version=\"1\",modifier=\"pro\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"1\",modifier=\"pro\")"
+    },
+    {
+      "provider": "nano-gpt",
+      "id": "openai/o1-pro",
+      "raw_family": "o-pro",
+      "before": "(family=\"o\",variant=\"pro\",version=\"1\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"o\",version=\"1\",modifier=\"pro\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"1\",modifier=\"pro\")"
+    },
+    {
+      "provider": "openrouter",
+      "id": "openai/o1-pro",
+      "raw_family": "o-pro",
+      "before": "(family=\"o\",variant=\"pro\",version=\"1\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"o\",version=\"1\",modifier=\"pro\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"1\",modifier=\"pro\")"
+    },
+    {
+      "provider": "poe",
+      "id": "openai/o1-pro",
+      "raw_family": "o-pro",
+      "before": "(family=\"o\",variant=\"pro\",version=\"1\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"o\",version=\"1\",modifier=\"pro\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"1\",modifier=\"pro\")"
+    },
+    {
+      "provider": "cloudflare-ai-gateway",
+      "id": "openai/o3",
+      "raw_family": "o",
+      "before": "(family=\"o\",variant=\"\",version=\"3\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"\")"
+    },
+    {
+      "provider": "github-models",
+      "id": "openai/o3",
+      "raw_family": "o",
+      "before": "(family=\"o\",variant=\"\",version=\"3\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"\")"
+    },
+    {
+      "provider": "kilo",
+      "id": "openai/o3",
+      "raw_family": "",
+      "before": "(family=\"o\",variant=\"\",version=\"3\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"\")"
+    },
+    {
+      "provider": "merge-gateway",
+      "id": "openai/o3",
+      "raw_family": "o",
+      "before": "(family=\"o\",variant=\"\",version=\"3\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"\")"
+    },
+    {
+      "provider": "nano-gpt",
+      "id": "openai/o3",
+      "raw_family": "o",
+      "before": "(family=\"o\",variant=\"\",version=\"3\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"\")"
+    },
+    {
+      "provider": "nearai",
+      "id": "openai/o3",
+      "raw_family": "o",
+      "before": "(family=\"o\",variant=\"\",version=\"3\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"\")"
+    },
+    {
+      "provider": "openrouter",
+      "id": "openai/o3",
+      "raw_family": "o",
+      "before": "(family=\"o\",variant=\"\",version=\"3\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"\")"
+    },
+    {
+      "provider": "poe",
+      "id": "openai/o3",
+      "raw_family": "o",
+      "before": "(family=\"o\",variant=\"\",version=\"3\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"\")"
+    },
+    {
+      "provider": "vercel",
+      "id": "openai/o3",
+      "raw_family": "o",
+      "before": "(family=\"o\",variant=\"\",version=\"3\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"\")"
+    },
+    {
+      "provider": "kilo",
+      "id": "openai/o3-deep-research",
+      "raw_family": "",
+      "before": "(family=\"o\",variant=\"deep-research\",version=\"3\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"deep-research\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"deep-research\")"
+    },
+    {
+      "provider": "nano-gpt",
+      "id": "openai/o3-deep-research",
+      "raw_family": "o",
+      "before": "(family=\"o\",variant=\"deep-research\",version=\"3\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"deep-research\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"deep-research\")"
+    },
+    {
+      "provider": "openrouter",
+      "id": "openai/o3-deep-research",
+      "raw_family": "o",
+      "before": "(family=\"o\",variant=\"deep-research\",version=\"3\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"deep-research\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"deep-research\")"
+    },
+    {
+      "provider": "poe",
+      "id": "openai/o3-deep-research",
+      "raw_family": "o",
+      "before": "(family=\"o\",variant=\"deep-research\",version=\"3\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"deep-research\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"deep-research\")"
+    },
+    {
+      "provider": "vercel",
+      "id": "openai/o3-deep-research",
+      "raw_family": "o",
+      "before": "(family=\"o\",variant=\"deep-research\",version=\"3\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"deep-research\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"deep-research\")"
+    },
+    {
+      "provider": "cloudflare-ai-gateway",
+      "id": "openai/o3-mini",
+      "raw_family": "o-mini",
+      "before": "(family=\"o\",variant=\"mini\",version=\"3\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"mini\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"mini\")"
+    },
+    {
+      "provider": "github-models",
+      "id": "openai/o3-mini",
+      "raw_family": "o-mini",
+      "before": "(family=\"o\",variant=\"mini\",version=\"3\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"mini\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"mini\")"
+    },
+    {
+      "provider": "kilo",
+      "id": "openai/o3-mini",
+      "raw_family": "",
+      "before": "(family=\"o\",variant=\"mini\",version=\"3\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"mini\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"mini\")"
+    },
+    {
+      "provider": "merge-gateway",
+      "id": "openai/o3-mini",
+      "raw_family": "o-mini",
+      "before": "(family=\"o\",variant=\"mini\",version=\"3\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"mini\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"mini\")"
+    },
+    {
+      "provider": "nano-gpt",
+      "id": "openai/o3-mini",
+      "raw_family": "o-mini",
+      "before": "(family=\"o\",variant=\"mini\",version=\"3\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"mini\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"mini\")"
+    },
+    {
+      "provider": "nearai",
+      "id": "openai/o3-mini",
+      "raw_family": "o-mini",
+      "before": "(family=\"o\",variant=\"mini\",version=\"3\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"mini\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"mini\")"
+    },
+    {
+      "provider": "openrouter",
+      "id": "openai/o3-mini",
+      "raw_family": "o-mini",
+      "before": "(family=\"o\",variant=\"mini\",version=\"3\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"mini\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"mini\")"
+    },
+    {
+      "provider": "poe",
+      "id": "openai/o3-mini",
+      "raw_family": "o-mini",
+      "before": "(family=\"o\",variant=\"mini\",version=\"3\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"mini\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"mini\")"
+    },
+    {
+      "provider": "vercel",
+      "id": "openai/o3-mini",
+      "raw_family": "o-mini",
+      "before": "(family=\"o\",variant=\"mini\",version=\"3\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"mini\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"mini\")"
+    },
+    {
+      "provider": "kilo",
+      "id": "openai/o3-mini-high",
+      "raw_family": "",
+      "before": "(family=\"o\",variant=\"mini\",version=\"3\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"mini\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"mini\")"
+    },
+    {
+      "provider": "nano-gpt",
+      "id": "openai/o3-mini-high",
+      "raw_family": "o-mini",
+      "before": "(family=\"o\",variant=\"mini\",version=\"3\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"mini\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"mini\")"
+    },
+    {
+      "provider": "openrouter",
+      "id": "openai/o3-mini-high",
+      "raw_family": "o",
+      "before": "(family=\"o\",variant=\"mini\",version=\"3\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"mini\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"mini\")"
+    },
+    {
+      "provider": "poe",
+      "id": "openai/o3-mini-high",
+      "raw_family": "o-mini",
+      "before": "(family=\"o\",variant=\"mini\",version=\"3\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"mini\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"mini\")"
+    },
+    {
+      "provider": "nano-gpt",
+      "id": "openai/o3-mini-low",
+      "raw_family": "o-mini",
+      "before": "(family=\"o\",variant=\"mini\",version=\"3\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"mini\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"mini\")"
+    },
+    {
+      "provider": "cloudflare-ai-gateway",
+      "id": "openai/o3-pro",
+      "raw_family": "o-pro",
+      "before": "(family=\"o\",variant=\"pro\",version=\"3\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"pro\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"pro\")"
+    },
+    {
+      "provider": "kilo",
+      "id": "openai/o3-pro",
+      "raw_family": "",
+      "before": "(family=\"o\",variant=\"pro\",version=\"3\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"pro\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"pro\")"
+    },
+    {
+      "provider": "openrouter",
+      "id": "openai/o3-pro",
+      "raw_family": "o-pro",
+      "before": "(family=\"o\",variant=\"pro\",version=\"3\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"pro\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"pro\")"
+    },
+    {
+      "provider": "poe",
+      "id": "openai/o3-pro",
+      "raw_family": "o-pro",
+      "before": "(family=\"o\",variant=\"pro\",version=\"3\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"pro\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"pro\")"
+    },
+    {
+      "provider": "vercel",
+      "id": "openai/o3-pro",
+      "raw_family": "o-pro",
+      "before": "(family=\"o\",variant=\"pro\",version=\"3\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"pro\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"pro\")"
+    },
+    {
+      "provider": "nano-gpt",
+      "id": "openai/o3-pro-2025-06-10",
+      "raw_family": "o-pro",
+      "before": "(family=\"o\",variant=\"pro\",version=\"3\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"pro\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"pro\")"
+    },
+    {
+      "provider": "cloudflare-ai-gateway",
+      "id": "openai/o4-mini",
+      "raw_family": "o-mini",
+      "before": "(family=\"o\",variant=\"mini\",version=\"4\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"o\",version=\"4\",modifier=\"mini\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"4\",modifier=\"mini\")"
+    },
+    {
+      "provider": "github-models",
+      "id": "openai/o4-mini",
+      "raw_family": "o-mini",
+      "before": "(family=\"o\",variant=\"mini\",version=\"4\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"o\",version=\"4\",modifier=\"mini\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"4\",modifier=\"mini\")"
+    },
+    {
+      "provider": "kilo",
+      "id": "openai/o4-mini",
+      "raw_family": "",
+      "before": "(family=\"o\",variant=\"mini\",version=\"4\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"o\",version=\"4\",modifier=\"mini\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"4\",modifier=\"mini\")"
+    },
+    {
+      "provider": "merge-gateway",
+      "id": "openai/o4-mini",
+      "raw_family": "o-mini",
+      "before": "(family=\"o\",variant=\"mini\",version=\"4\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"o\",version=\"4\",modifier=\"mini\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"4\",modifier=\"mini\")"
+    },
+    {
+      "provider": "nano-gpt",
+      "id": "openai/o4-mini",
+      "raw_family": "o-mini",
+      "before": "(family=\"o\",variant=\"mini\",version=\"4\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"o\",version=\"4\",modifier=\"mini\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"4\",modifier=\"mini\")"
+    },
+    {
+      "provider": "nearai",
+      "id": "openai/o4-mini",
+      "raw_family": "o-mini",
+      "before": "(family=\"o\",variant=\"mini\",version=\"4\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"o\",version=\"4\",modifier=\"mini\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"4\",modifier=\"mini\")"
+    },
+    {
+      "provider": "openrouter",
+      "id": "openai/o4-mini",
+      "raw_family": "o-mini",
+      "before": "(family=\"o\",variant=\"mini\",version=\"4\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"o\",version=\"4\",modifier=\"mini\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"4\",modifier=\"mini\")"
+    },
+    {
+      "provider": "poe",
+      "id": "openai/o4-mini",
+      "raw_family": "o-mini",
+      "before": "(family=\"o\",variant=\"mini\",version=\"4\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"o\",version=\"4\",modifier=\"mini\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"4\",modifier=\"mini\")"
+    },
+    {
+      "provider": "requesty",
+      "id": "openai/o4-mini",
+      "raw_family": "o-mini",
+      "before": "(family=\"o\",variant=\"mini\",version=\"4\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"o\",version=\"4\",modifier=\"mini\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"4\",modifier=\"mini\")"
+    },
+    {
+      "provider": "vercel",
+      "id": "openai/o4-mini",
+      "raw_family": "o-mini",
+      "before": "(family=\"o\",variant=\"mini\",version=\"4\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"o\",version=\"4\",modifier=\"mini\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"4\",modifier=\"mini\")"
+    },
+    {
+      "provider": "kilo",
+      "id": "openai/o4-mini-deep-research",
+      "raw_family": "",
+      "before": "(family=\"o\",variant=\"mini\",version=\"4\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"o\",version=\"4\",modifier=\"mini\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"4\",modifier=\"mini\")"
+    },
+    {
+      "provider": "nano-gpt",
+      "id": "openai/o4-mini-deep-research",
+      "raw_family": "o-mini",
+      "before": "(family=\"o\",variant=\"mini\",version=\"4\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"o\",version=\"4\",modifier=\"mini\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"4\",modifier=\"mini\")"
+    },
+    {
+      "provider": "openrouter",
+      "id": "openai/o4-mini-deep-research",
+      "raw_family": "o-mini",
+      "before": "(family=\"o\",variant=\"mini\",version=\"4\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"o\",version=\"4\",modifier=\"mini\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"4\",modifier=\"mini\")"
+    },
+    {
+      "provider": "poe",
+      "id": "openai/o4-mini-deep-research",
+      "raw_family": "o-mini",
+      "before": "(family=\"o\",variant=\"mini\",version=\"4\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"o\",version=\"4\",modifier=\"mini\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"4\",modifier=\"mini\")"
+    },
+    {
+      "provider": "kilo",
+      "id": "openai/o4-mini-high",
+      "raw_family": "",
+      "before": "(family=\"o\",variant=\"mini\",version=\"4\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"o\",version=\"4\",modifier=\"mini\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"4\",modifier=\"mini\")"
+    },
+    {
+      "provider": "nano-gpt",
+      "id": "openai/o4-mini-high",
+      "raw_family": "o-mini",
+      "before": "(family=\"o\",variant=\"mini\",version=\"4\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"o\",version=\"4\",modifier=\"mini\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"4\",modifier=\"mini\")"
+    },
+    {
+      "provider": "openrouter",
+      "id": "openai/o4-mini-high",
+      "raw_family": "o",
+      "before": "(family=\"o\",variant=\"mini\",version=\"4\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"o\",version=\"4\",modifier=\"mini\")",
+      "category": "a:divergence-fix",
+      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"4\",modifier=\"mini\")"
+    },
+    {
+      "provider": "openrouter",
+      "id": "openrouter/owl-alpha",
+      "raw_family": "alpha",
+      "before": "(family=\"alpha\",variant=\"\",version=\"\",modifier=\"\")",
+      "after": "(family=\"owl\",variant=\"\",version=\"\",modifier=\"\")",
+      "category": "a:divergence-fix",
+      "reason": "now matches a tuple another provider already produced for this ID (BEFORE); only phantom non-family loss permitted (j1nu)"
+    },
+    {
+      "provider": "openrouter",
+      "id": "prime-intellect/intellect-3",
+      "raw_family": "glm",
+      "before": "(family=\"glm\",variant=\"\",version=\"\",modifier=\"\")",
+      "after": "(family=\"intellect\",variant=\"\",version=\"3\",modifier=\"\")",
+      "category": "a:divergence-fix",
+      "reason": "now matches a tuple another provider already produced for this ID (BEFORE); only phantom non-family loss permitted (j1nu)"
+    },
+    {
+      "provider": "openrouter",
+      "id": "qwen/qwen3.5-122b-a10b",
+      "raw_family": "qwen3.5",
+      "before": "(family=\"qwen\",variant=\"3.5\",version=\"3.5\",modifier=\"\")",
+      "after": "(family=\"qwen\",variant=\"\",version=\"3.5\",modifier=\"\")",
+      "category": "a:divergence-fix",
+      "reason": "now matches a tuple another provider already produced for this ID (BEFORE); only phantom non-family loss permitted (j1nu)"
+    },
+    {
+      "provider": "openrouter",
+      "id": "qwen/qwen3.5-27b",
+      "raw_family": "qwen3.5",
+      "before": "(family=\"qwen\",variant=\"3.5\",version=\"3.5\",modifier=\"\")",
+      "after": "(family=\"qwen\",variant=\"\",version=\"3.5\",modifier=\"\")",
+      "category": "a:divergence-fix",
+      "reason": "now matches a tuple another provider already produced for this ID (BEFORE); only phantom non-family loss permitted (j1nu)"
+    },
+    {
+      "provider": "openrouter",
+      "id": "qwen/qwen3.5-35b-a3b",
+      "raw_family": "qwen3.5",
+      "before": "(family=\"qwen\",variant=\"3.5\",version=\"3.5\",modifier=\"\")",
+      "after": "(family=\"qwen\",variant=\"\",version=\"3.5\",modifier=\"\")",
+      "category": "a:divergence-fix",
+      "reason": "now matches a tuple another provider already produced for this ID (BEFORE); only phantom non-family loss permitted (j1nu)"
+    },
+    {
+      "provider": "openrouter",
+      "id": "qwen/qwen3.5-9b",
+      "raw_family": "qwen3.5",
+      "before": "(family=\"qwen\",variant=\"3.5\",version=\"3.5\",modifier=\"\")",
+      "after": "(family=\"qwen\",variant=\"\",version=\"3.5\",modifier=\"\")",
+      "category": "a:divergence-fix",
+      "reason": "now matches a tuple another provider already produced for this ID (BEFORE); only phantom non-family loss permitted (j1nu)"
+    },
+    {
+      "provider": "openrouter",
+      "id": "qwen/qwen3.6-27b",
+      "raw_family": "qwen3.6",
+      "before": "(family=\"qwen\",variant=\"3.6\",version=\"3.6\",modifier=\"\")",
+      "after": "(family=\"qwen\",variant=\"\",version=\"3.6\",modifier=\"\")",
+      "category": "a:divergence-fix",
+      "reason": "now matches a tuple another provider already produced for this ID (BEFORE); only phantom non-family loss permitted (j1nu)"
+    },
+    {
+      "provider": "openrouter",
+      "id": "qwen/qwen3.6-35b-a3b",
+      "raw_family": "qwen3.6",
+      "before": "(family=\"qwen\",variant=\"3.6\",version=\"3.6\",modifier=\"\")",
+      "after": "(family=\"qwen\",variant=\"\",version=\"3.6\",modifier=\"\")",
+      "category": "a:divergence-fix",
+      "reason": "now matches a tuple another provider already produced for this ID (BEFORE); only phantom non-family loss permitted (j1nu)"
+    },
+    {
+      "provider": "digitalocean",
+      "id": "qwen3.5-397b-a17b",
+      "raw_family": "qwen3.5",
+      "before": "(family=\"qwen\",variant=\"3.5\",version=\"3.5\",modifier=\"\")",
+      "after": "(family=\"qwen\",variant=\"\",version=\"3.5\",modifier=\"\")",
+      "category": "a:divergence-fix",
+      "reason": "now matches a tuple another provider already produced for this ID (BEFORE); only phantom non-family loss permitted (j1nu)"
+    },
+    {
+      "provider": "opencode-go",
+      "id": "qwen3.7-max",
+      "raw_family": "qwen3.7-max",
+      "before": "(family=\"qwen3.7-max\",variant=\"\",version=\"\",modifier=\"\")",
+      "after": "(family=\"qwen\",variant=\"max\",version=\"3.7\",modifier=\"\")",
+      "category": "a:divergence-fix",
+      "reason": "family over-capture reduced to registered short base, converged onto an independently-produced sibling tuple (SLICE-11; j1nu-hardened: no ID-present non-family field lost)"
+    },
+    {
+      "provider": "alibaba-cn",
+      "id": "qwq-32b",
+      "raw_family": "qwen",
+      "before": "(family=\"qwen\",variant=\"\",version=\"\",modifier=\"\")",
+      "after": "(family=\"qwq\",variant=\"\",version=\"\",modifier=\"\")",
+      "category": "a:divergence-fix",
+      "reason": "now matches a tuple another provider already produced for this ID (BEFORE); only phantom non-family loss permitted (j1nu)"
+    },
+    {
+      "provider": "nano-gpt",
+      "id": "undi95/remm-slerp-l2-13b",
+      "raw_family": "llama",
+      "before": "(family=\"llama\",variant=\"\",version=\"\",modifier=\"\")",
+      "after": "(family=\"remm\",variant=\"\",version=\"\",modifier=\"\")",
+      "category": "a:divergence-fix",
+      "reason": "now matches a tuple another provider already produced for this ID (BEFORE); only phantom non-family loss permitted (j1nu)"
+    },
+    {
+      "provider": "kilo",
+      "id": "z-ai/glm-4.5v",
+      "raw_family": "",
+      "before": "(family=\"glm\",variant=\"\",version=\"4.5\",modifier=\"vision\")",
+      "after": "(family=\"glm\",variant=\"v\",version=\"4.5\",modifier=\"\")",
+      "category": "a:divergence-fix",
+      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted (j1nu)"
+    },
+    {
+      "provider": "openrouter",
+      "id": "z-ai/glm-4.5v",
+      "raw_family": "glm",
+      "before": "(family=\"glm\",variant=\"\",version=\"4.5\",modifier=\"vision\")",
+      "after": "(family=\"glm\",variant=\"v\",version=\"4.5\",modifier=\"\")",
+      "category": "a:divergence-fix",
+      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted (j1nu)"
+    },
+    {
+      "provider": "cloudflare-workers-ai",
+      "id": "@cf/qwen/qwq-32b",
+      "raw_family": "qwen",
+      "before": "(family=\"qwen\",variant=\"\",version=\"\",modifier=\"\")",
+      "after": "(family=\"qwq\",variant=\"\",version=\"\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "canonical-winner enforce: ID-derived distinct family won over a parent/org mislabel (family_enforce.json ledger)"
+    },
+    {
+      "provider": "siliconflow",
+      "id": "ByteDance-Seed/Seed-OSS-36B-Instruct",
+      "raw_family": "seed",
+      "before": "(family=\"seed\",variant=\"\",version=\"\",modifier=\"\")",
+      "after": "(family=\"seed\",variant=\"instruct\",version=\"\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "strict enrichment — only previously-empty field(s) populated"
+    },
+    {
+      "provider": "siliconflow-cn",
+      "id": "ByteDance-Seed/Seed-OSS-36B-Instruct",
+      "raw_family": "seed",
+      "before": "(family=\"seed\",variant=\"\",version=\"\",modifier=\"\")",
+      "after": "(family=\"seed\",variant=\"instruct\",version=\"\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "strict enrichment — only previously-empty field(s) populated"
+    },
+    {
+      "provider": "nano-gpt",
+      "id": "KAT-Coder-Pro-V1",
+      "raw_family": "",
+      "before": "(family=\"kat\",variant=\"\",version=\"\",modifier=\"\")",
+      "after": "(family=\"kat\",variant=\"pro\",version=\"\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "strict enrichment — only previously-empty field(s) populated"
+    },
+    {
+      "provider": "evroc",
+      "id": "KBLab/kb-whisper-large",
+      "raw_family": "whisper",
+      "before": "(family=\"whisper\",variant=\"\",version=\"\",modifier=\"\")",
+      "after": "(family=\"whisper\",variant=\"large\",version=\"\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "strict enrichment — only previously-empty field(s) populated"
+    },
+    {
+      "provider": "nano-gpt",
+      "id": "Meta-Llama-3-1-8B-Instruct-FP8",
+      "raw_family": "",
+      "before": "(family=\"meta\",variant=\"\",version=\"3.1\",modifier=\"\")",
+      "after": "(family=\"meta\",variant=\"instruct\",version=\"3.1\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "strict enrichment — only previously-empty field(s) populated"
+    },
+    {
+      "provider": "nano-gpt",
+      "id": "NousResearch 2/Hermes-4-70B:thinking",
+      "raw_family": "nousresearch",
+      "before": "(family=\"nousresearch\",variant=\"\",version=\"\",modifier=\"\")",
+      "after": "(family=\"hermes\",variant=\"\",version=\"4\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "canonical-winner enforce: ID-derived distinct family won over a parent/org mislabel (family_enforce.json ledger)"
+    },
+    {
+      "provider": "nano-gpt",
+      "id": "NousResearch 2/hermes-3-llama-3.1-70b",
+      "raw_family": "nousresearch",
+      "before": "(family=\"nousresearch\",variant=\"\",version=\"\",modifier=\"\")",
+      "after": "(family=\"hermes\",variant=\"\",version=\"3\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "canonical-winner enforce: ID-derived distinct family won over a parent/org mislabel (family_enforce.json ledger)"
+    },
+    {
+      "provider": "nano-gpt",
+      "id": "NousResearch 2/hermes-4-405b",
+      "raw_family": "nousresearch",
+      "before": "(family=\"nousresearch\",variant=\"\",version=\"\",modifier=\"\")",
+      "after": "(family=\"hermes\",variant=\"\",version=\"4\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "canonical-winner enforce: ID-derived distinct family won over a parent/org mislabel (family_enforce.json ledger)"
+    },
+    {
+      "provider": "nano-gpt",
+      "id": "NousResearch 2/hermes-4-405b:thinking",
+      "raw_family": "nousresearch",
+      "before": "(family=\"nousresearch\",variant=\"\",version=\"\",modifier=\"\")",
+      "after": "(family=\"hermes\",variant=\"\",version=\"4\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "canonical-winner enforce: ID-derived distinct family won over a parent/org mislabel (family_enforce.json ledger)"
+    },
+    {
+      "provider": "nano-gpt",
+      "id": "NousResearch 2/hermes-4-70b",
+      "raw_family": "nousresearch",
+      "before": "(family=\"nousresearch\",variant=\"\",version=\"\",modifier=\"\")",
+      "after": "(family=\"hermes\",variant=\"\",version=\"4\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "canonical-winner enforce: ID-derived distinct family won over a parent/org mislabel (family_enforce.json ledger)"
+    },
+    {
+      "provider": "chutes",
+      "id": "NousResearch/Hermes-4-14B",
+      "raw_family": "nousresearch",
+      "before": "(family=\"nousresearch\",variant=\"\",version=\"\",modifier=\"\")",
+      "after": "(family=\"hermes\",variant=\"\",version=\"4\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "canonical-winner enforce: ID-derived distinct family won over a parent/org mislabel (family_enforce.json ledger)"
+    },
+    {
+      "provider": "abacus",
+      "id": "Qwen/QwQ-32B",
+      "raw_family": "qwen",
+      "before": "(family=\"qwen\",variant=\"\",version=\"\",modifier=\"\")",
+      "after": "(family=\"qwq\",variant=\"\",version=\"\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "canonical-winner enforce: ID-derived distinct family won over a parent/org mislabel (family_enforce.json ledger)"
+    },
+    {
+      "provider": "siliconflow",
+      "id": "Qwen/QwQ-32B",
+      "raw_family": "qwen",
+      "before": "(family=\"qwen\",variant=\"\",version=\"\",modifier=\"\")",
+      "after": "(family=\"qwq\",variant=\"\",version=\"\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "canonical-winner enforce: ID-derived distinct family won over a parent/org mislabel (family_enforce.json ledger)"
+    },
+    {
+      "provider": "siliconflow-cn",
+      "id": "Qwen/QwQ-32B",
+      "raw_family": "qwen",
+      "before": "(family=\"qwen\",variant=\"\",version=\"\",modifier=\"\")",
+      "after": "(family=\"qwq\",variant=\"\",version=\"\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "canonical-winner enforce: ID-derived distinct family won over a parent/org mislabel (family_enforce.json ledger)"
+    },
+    {
+      "provider": "github-models",
+      "id": "ai21-labs/ai21-jamba-1.5-large",
+      "raw_family": "jamba",
+      "before": "(family=\"jamba\",variant=\"\",version=\"\",modifier=\"\")",
+      "after": "(family=\"jamba\",variant=\"large\",version=\"\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "strict enrichment — only previously-empty field(s) populated"
+    },
+    {
+      "provider": "github-models",
+      "id": "ai21-labs/ai21-jamba-1.5-mini",
+      "raw_family": "jamba",
+      "before": "(family=\"jamba\",variant=\"\",version=\"\",modifier=\"\")",
+      "after": "(family=\"jamba\",variant=\"mini\",version=\"\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "strict enrichment — only previously-empty field(s) populated"
+    },
+    {
+      "provider": "vercel",
+      "id": "alibaba/qwen3.6-27b",
+      "raw_family": "qwen3.6",
+      "before": "(family=\"qwen\",variant=\"3.6\",version=\"3.6\",modifier=\"\")",
+      "after": "(family=\"qwen\",variant=\"\",version=\"3.6\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "junk variant \"3.6\" cleared: phantom (absent from ID) or redundant (== version); de-noise"
+    },
+    {
+      "provider": "digitalocean",
+      "id": "all-mini-lm-l6-v2",
+      "raw_family": "text-embedding",
+      "before": "(family=\"text-embedding\",variant=\"\",version=\"\",modifier=\"\")",
+      "after": "(family=\"text-embedding\",variant=\"mini\",version=\"\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "strict enrichment — only previously-empty field(s) populated"
+    },
+    {
+      "provider": "nano-gpt",
+      "id": "allenai/olmo-3.1-32b-instruct",
+      "raw_family": "allenai",
+      "before": "(family=\"allenai\",variant=\"\",version=\"\",modifier=\"\")",
+      "after": "(family=\"allenai\",variant=\"instruct\",version=\"\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "strict enrichment — only previously-empty field(s) populated"
+    },
+    {
+      "provider": "nano-gpt",
+      "id": "allenai/olmo-3.1-32b-think",
+      "raw_family": "allenai",
+      "before": "(family=\"allenai\",variant=\"\",version=\"\",modifier=\"think\")",
+      "after": "(family=\"olmo\",variant=\"\",version=\"3.1\",modifier=\"think\")",
+      "category": "b:improvement",
+      "reason": "canonical-winner enforce: ID-derived distinct family won over a parent/org mislabel (family_enforce.json ledger)"
+    },
+    {
+      "provider": "nano-gpt",
+      "id": "anthracite-org/magnum-v2-72b",
+      "raw_family": "llama",
+      "before": "(family=\"llama\",variant=\"\",version=\"\",modifier=\"\")",
+      "after": "(family=\"magnum\",variant=\"\",version=\"\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "canonical-winner enforce: ID-derived distinct family won over a parent/org mislabel (family_enforce.json ledger)"
+    },
+    {
+      "provider": "siliconflow-cn",
+      "id": "ascend-tribe/pangu-pro-moe",
+      "raw_family": "pangu",
+      "before": "(family=\"pangu\",variant=\"\",version=\"\",modifier=\"\")",
+      "after": "(family=\"pangu\",variant=\"pro\",version=\"\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "strict enrichment — only previously-empty field(s) populated"
+    },
+    {
+      "provider": "vercel",
+      "id": "bfl/flux-kontext-pro",
+      "raw_family": "flux",
+      "before": "(family=\"flux\",variant=\"\",version=\"\",modifier=\"\")",
+      "after": "(family=\"flux\",variant=\"pro\",version=\"\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "strict enrichment — only previously-empty field(s) populated"
+    },
+    {
+      "provider": "nano-gpt",
+      "id": "chutesai/Mistral-Small-3.2-24B-Instruct-2506",
+      "raw_family": "chutesai",
+      "before": "(family=\"chutesai\",variant=\"\",version=\"\",modifier=\"\")",
+      "after": "(family=\"chutesai\",variant=\"instruct\",version=\"\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "strict enrichment — only previously-empty field(s) populated"
+    },
+    {
+      "provider": "scaleway",
+      "id": "devstral-2-123b-instruct-2512",
+      "raw_family": "devstral",
+      "before": "(family=\"devstral\",variant=\"\",version=\"2\",modifier=\"\")",
+      "after": "(family=\"devstral\",variant=\"instruct\",version=\"2\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "strict enrichment — only previously-empty field(s) populated"
+    },
+    {
+      "provider": "ollama-cloud",
+      "id": "devstral-small-2:24b",
+      "raw_family": "devstral",
+      "before": "(family=\"devstral\",variant=\"\",version=\"\",modifier=\"\")",
+      "after": "(family=\"devstral\",variant=\"small\",version=\"\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "strict enrichment — only previously-empty field(s) populated"
+    },
+    {
+      "provider": "nano-gpt",
+      "id": "doubao-1-5-thinking-pro-250415",
+      "raw_family": "",
+      "before": "(family=\"doubao\",variant=\"\",version=\"1.5\",modifier=\"\")",
+      "after": "(family=\"doubao\",variant=\"pro\",version=\"1.5\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "strict enrichment — only previously-empty field(s) populated"
+    },
+    {
+      "provider": "nano-gpt",
+      "id": "doubao-1-5-thinking-pro-vision-250415",
+      "raw_family": "",
+      "before": "(family=\"doubao\",variant=\"\",version=\"1.5\",modifier=\"\")",
+      "after": "(family=\"doubao\",variant=\"pro\",version=\"1.5\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "strict enrichment — only previously-empty field(s) populated"
+    },
+    {
+      "provider": "nano-gpt",
+      "id": "doubao-1-5-thinking-vision-pro-250428",
+      "raw_family": "",
+      "before": "(family=\"doubao\",variant=\"\",version=\"1.5\",modifier=\"\")",
+      "after": "(family=\"doubao\",variant=\"pro\",version=\"1.5\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "strict enrichment — only previously-empty field(s) populated"
+    },
+    {
+      "provider": "nano-gpt",
+      "id": "doubao-seed-2-0-mini-260215",
+      "raw_family": "",
+      "before": "(family=\"doubao\",variant=\"\",version=\"2.0\",modifier=\"\")",
+      "after": "(family=\"doubao\",variant=\"mini\",version=\"2.0\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "strict enrichment — only previously-empty field(s) populated"
+    },
+    {
+      "provider": "aihubmix",
+      "id": "doubao-seed-2-0-mini-260428",
+      "raw_family": "seed",
+      "before": "(family=\"seed\",variant=\"\",version=\"\",modifier=\"\")",
+      "after": "(family=\"seed\",variant=\"mini\",version=\"\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "strict enrichment — only previously-empty field(s) populated"
+    },
+    {
+      "provider": "aihubmix",
+      "id": "doubao-seed-2-0-pro",
+      "raw_family": "seed",
+      "before": "(family=\"seed\",variant=\"\",version=\"\",modifier=\"\")",
+      "after": "(family=\"seed\",variant=\"pro\",version=\"\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "strict enrichment — only previously-empty field(s) populated"
+    },
+    {
+      "provider": "nano-gpt",
+      "id": "doubao-seed-2-0-pro-260215",
+      "raw_family": "",
+      "before": "(family=\"doubao\",variant=\"\",version=\"2.0\",modifier=\"\")",
+      "after": "(family=\"doubao\",variant=\"pro\",version=\"2.0\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "strict enrichment — only previously-empty field(s) populated"
+    },
+    {
+      "provider": "nano-gpt",
+      "id": "gemini-2.5-flash-lite-preview-09-2025-thinking",
+      "raw_family": "",
+      "before": "(family=\"gemini\",variant=\"flash\",version=\"2.5\",modifier=\"thinking\")",
+      "after": "(family=\"gemini\",variant=\"flash-lite\",version=\"2.5\",modifier=\"thinking\")",
+      "category": "b:improvement",
+      "reason": "variant refinement: \"flash\" → \"flash-lite\" (ID names a more specific variant)"
+    },
+    {
+      "provider": "nano-gpt",
+      "id": "glm-4.1v-thinking-flashx",
+      "raw_family": "",
+      "before": "(family=\"glm\",variant=\"\",version=\"\",modifier=\"\")",
+      "after": "(family=\"glm\",variant=\"v\",version=\"4.1\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "strict enrichment — only previously-empty field(s) populated"
+    },
+    {
+      "provider": "302ai",
+      "id": "glm-4.5v",
+      "raw_family": "glm",
+      "before": "(family=\"glm\",variant=\"\",version=\"4.5\",modifier=\"vision\")",
+      "after": "(family=\"glm\",variant=\"v\",version=\"4.5\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "family-preserving de-noise/enrich: only phantom losses and/or enrichments, no ID-present field lost"
+    },
+    {
+      "provider": "llmgateway",
+      "id": "glm-4.5v",
+      "raw_family": "glm",
+      "before": "(family=\"glm\",variant=\"\",version=\"4.5\",modifier=\"vision\")",
+      "after": "(family=\"glm\",variant=\"v\",version=\"4.5\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "family-preserving de-noise/enrich: only phantom losses and/or enrichments, no ID-present field lost"
+    },
+    {
+      "provider": "zai",
+      "id": "glm-4.5v",
+      "raw_family": "glm",
+      "before": "(family=\"glm\",variant=\"\",version=\"4.5\",modifier=\"vision\")",
+      "after": "(family=\"glm\",variant=\"v\",version=\"4.5\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "family-preserving de-noise/enrich: only phantom losses and/or enrichments, no ID-present field lost"
+    },
+    {
+      "provider": "zhipuai",
+      "id": "glm-4.5v",
+      "raw_family": "glm",
+      "before": "(family=\"glm\",variant=\"\",version=\"4.5\",modifier=\"vision\")",
+      "after": "(family=\"glm\",variant=\"v\",version=\"4.5\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "family-preserving de-noise/enrich: only phantom losses and/or enrichments, no ID-present field lost"
+    },
+    {
+      "provider": "302ai",
+      "id": "glm-4.6v",
+      "raw_family": "glm",
+      "before": "(family=\"glm\",variant=\"\",version=\"4.6\",modifier=\"vision\")",
+      "after": "(family=\"glm\",variant=\"v\",version=\"4.6\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "family-preserving de-noise/enrich: only phantom losses and/or enrichments, no ID-present field lost"
+    },
+    {
+      "provider": "llmgateway",
+      "id": "glm-4.6v",
+      "raw_family": "glm",
+      "before": "(family=\"glm\",variant=\"\",version=\"4.6\",modifier=\"vision\")",
+      "after": "(family=\"glm\",variant=\"v\",version=\"4.6\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "family-preserving de-noise/enrich: only phantom losses and/or enrichments, no ID-present field lost"
+    },
+    {
+      "provider": "zai",
+      "id": "glm-4.6v",
+      "raw_family": "glm",
+      "before": "(family=\"glm\",variant=\"\",version=\"4.6\",modifier=\"vision\")",
+      "after": "(family=\"glm\",variant=\"v\",version=\"4.6\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "family-preserving de-noise/enrich: only phantom losses and/or enrichments, no ID-present field lost"
+    },
+    {
+      "provider": "zhipuai",
+      "id": "glm-4.6v",
+      "raw_family": "glm",
+      "before": "(family=\"glm\",variant=\"\",version=\"4.6\",modifier=\"vision\")",
+      "after": "(family=\"glm\",variant=\"v\",version=\"4.6\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "family-preserving de-noise/enrich: only phantom losses and/or enrichments, no ID-present field lost"
+    },
+    {
+      "provider": "llmgateway",
+      "id": "glm-4.6v-flash",
+      "raw_family": "glm",
+      "before": "(family=\"glm\",variant=\"flash\",version=\"\",modifier=\"\")",
+      "after": "(family=\"glm\",variant=\"v\",version=\"4.6\",modifier=\"flash\")",
+      "category": "b:improvement",
+      "reason": "family-preserving de-noise/enrich: only phantom losses and/or enrichments, no ID-present field lost"
+    },
+    {
+      "provider": "llmgateway",
+      "id": "glm-4.6v-flashx",
+      "raw_family": "glm",
+      "before": "(family=\"glm\",variant=\"\",version=\"\",modifier=\"\")",
+      "after": "(family=\"glm\",variant=\"v\",version=\"4.6\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "strict enrichment — only previously-empty field(s) populated"
+    },
+    {
+      "provider": "aihubmix",
+      "id": "glm-5v-turbo",
+      "raw_family": "glmv",
+      "before": "(family=\"glmv\",variant=\"\",version=\"\",modifier=\"\")",
+      "after": "(family=\"glm\",variant=\"v\",version=\"5\",modifier=\"turbo\")",
+      "category": "b:improvement",
+      "reason": "glued family-suffix moved to variant (e.g. glmv → glm + variant 'v'; bestiary-xdbc Q1)"
+    },
+    {
+      "provider": "kilo",
+      "id": "google/gemini-2.0-flash-lite-001",
+      "raw_family": "",
+      "before": "(family=\"gemini\",variant=\"flash\",version=\"2.0\",modifier=\"\")",
+      "after": "(family=\"gemini\",variant=\"flash-lite\",version=\"2.0\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "variant refinement: \"flash\" → \"flash-lite\" (ID names a more specific variant)"
+    },
+    {
+      "provider": "openrouter",
+      "id": "google/gemini-2.0-flash-lite-001",
+      "raw_family": "gemini",
+      "before": "(family=\"gemini\",variant=\"flash\",version=\"2.0\",modifier=\"\")",
+      "after": "(family=\"gemini\",variant=\"flash-lite\",version=\"2.0\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "variant refinement: \"flash\" → \"flash-lite\" (ID names a more specific variant)"
+    },
+    {
+      "provider": "azure",
+      "id": "gpt-5-chat",
+      "raw_family": "gpt-codex",
+      "before": "(family=\"gpt\",variant=\"codex\",version=\"5\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"\",version=\"5\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "junk variant \"codex\" cleared: phantom (absent from ID) or redundant (== version); de-noise"
+    },
+    {
+      "provider": "azure-cognitive-services",
+      "id": "gpt-5-chat",
+      "raw_family": "gpt-codex",
+      "before": "(family=\"gpt\",variant=\"codex\",version=\"5\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"\",version=\"5\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "junk variant \"codex\" cleared: phantom (absent from ID) or redundant (== version); de-noise"
+    },
+    {
+      "provider": "azure",
+      "id": "gpt-5.1-chat",
+      "raw_family": "gpt-codex",
+      "before": "(family=\"gpt\",variant=\"codex\",version=\"5.1\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"\",version=\"5.1\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "junk variant \"codex\" cleared: phantom (absent from ID) or redundant (== version); de-noise"
+    },
+    {
+      "provider": "azure-cognitive-services",
+      "id": "gpt-5.1-chat",
+      "raw_family": "gpt-codex",
+      "before": "(family=\"gpt\",variant=\"codex\",version=\"5.1\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"\",version=\"5.1\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "junk variant \"codex\" cleared: phantom (absent from ID) or redundant (== version); de-noise"
+    },
+    {
+      "provider": "azure",
+      "id": "gpt-5.2-chat",
+      "raw_family": "gpt-codex",
+      "before": "(family=\"gpt\",variant=\"codex\",version=\"5.2\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"\",version=\"5.2\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "junk variant \"codex\" cleared: phantom (absent from ID) or redundant (== version); de-noise"
+    },
+    {
+      "provider": "azure-cognitive-services",
+      "id": "gpt-5.2-chat",
+      "raw_family": "gpt-codex",
+      "before": "(family=\"gpt\",variant=\"codex\",version=\"5.2\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"\",version=\"5.2\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "junk variant \"codex\" cleared: phantom (absent from ID) or redundant (== version); de-noise"
+    },
+    {
+      "provider": "azure",
+      "id": "gpt-5.3-chat",
+      "raw_family": "gpt-codex",
+      "before": "(family=\"gpt\",variant=\"codex\",version=\"5.3\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"\",version=\"5.3\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "junk variant \"codex\" cleared: phantom (absent from ID) or redundant (== version); de-noise"
+    },
+    {
+      "provider": "groq",
+      "id": "groq/compound-mini",
+      "raw_family": "groq",
+      "before": "(family=\"groq\",variant=\"\",version=\"\",modifier=\"\")",
+      "after": "(family=\"groq\",variant=\"mini\",version=\"\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "strict enrichment — only previously-empty field(s) populated"
+    },
+    {
+      "provider": "digitalocean",
+      "id": "gte-large-en-v1.5",
+      "raw_family": "text-embedding",
+      "before": "(family=\"text-embedding\",variant=\"\",version=\"\",modifier=\"\")",
+      "after": "(family=\"text-embedding\",variant=\"large\",version=\"\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "strict enrichment — only previously-empty field(s) populated"
+    },
+    {
+      "provider": "evroc",
+      "id": "intfloat/multilingual-e5-large-instruct",
+      "raw_family": "text-embedding",
+      "before": "(family=\"text-embedding\",variant=\"\",version=\"\",modifier=\"\")",
+      "after": "(family=\"text-embedding\",variant=\"large\",version=\"\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "strict enrichment — only previously-empty field(s) populated"
+    },
+    {
+      "provider": "mistral",
+      "id": "labs-devstral-small-2512",
+      "raw_family": "devstral",
+      "before": "(family=\"devstral\",variant=\"\",version=\"\",modifier=\"\")",
+      "after": "(family=\"devstral\",variant=\"small\",version=\"\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "strict enrichment — only previously-empty field(s) populated"
+    },
+    {
+      "provider": "nano-gpt",
+      "id": "learnlm-1.5-pro-experimental",
+      "raw_family": "",
+      "before": "(family=\"learnlm\",variant=\"\",version=\"1.5\",modifier=\"\")",
+      "after": "(family=\"learnlm\",variant=\"pro\",version=\"1.5\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "strict enrichment — only previously-empty field(s) populated"
+    },
+    {
+      "provider": "openrouter",
+      "id": "liquid/lfm-2.5-1.2b-instruct:free",
+      "raw_family": "liquid",
+      "before": "(family=\"liquid\",variant=\"\",version=\"\",modifier=\"\")",
+      "after": "(family=\"lfm\",variant=\"\",version=\"2.5\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "canonical-winner enforce: ID-derived distinct family won over a parent/org mislabel (family_enforce.json ledger)"
+    },
+    {
+      "provider": "openrouter",
+      "id": "liquid/lfm-2.5-1.2b-thinking:free",
+      "raw_family": "liquid",
+      "before": "(family=\"liquid\",variant=\"\",version=\"\",modifier=\"\")",
+      "after": "(family=\"lfm\",variant=\"\",version=\"2.5\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "canonical-winner enforce: ID-derived distinct family won over a parent/org mislabel (family_enforce.json ledger)"
+    },
+    {
+      "provider": "nebius",
+      "id": "meta-llama/Meta-Llama-3.1-8B-Instruct",
+      "raw_family": "",
+      "before": "(family=\"meta\",variant=\"\",version=\"\",modifier=\"\")",
+      "after": "(family=\"meta\",variant=\"instruct\",version=\"\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "strict enrichment — only previously-empty field(s) populated"
+    },
+    {
+      "provider": "digitalocean",
+      "id": "ministral-3-8b-instruct-2512",
+      "raw_family": "ministral",
+      "before": "(family=\"ministral\",variant=\"\",version=\"3\",modifier=\"\")",
+      "after": "(family=\"ministral\",variant=\"instruct\",version=\"3\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "strict enrichment — only previously-empty field(s) populated"
+    },
+    {
+      "provider": "llmgateway",
+      "id": "ministral-3b-2512",
+      "raw_family": "mistral",
+      "before": "(family=\"mistral\",variant=\"\",version=\"\",modifier=\"\")",
+      "after": "(family=\"ministral\",variant=\"\",version=\"\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "canonical-winner enforce: ID-derived distinct family won over a parent/org mislabel (family_enforce.json ledger)"
+    },
+    {
+      "provider": "llmgateway",
+      "id": "ministral-8b-2512",
+      "raw_family": "mistral",
+      "before": "(family=\"mistral\",variant=\"\",version=\"\",modifier=\"\")",
+      "after": "(family=\"ministral\",variant=\"\",version=\"\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "canonical-winner enforce: ID-derived distinct family won over a parent/org mislabel (family_enforce.json ledger)"
+    },
+    {
+      "provider": "amazon-bedrock",
+      "id": "mistral.ministral-3-14b-instruct",
+      "raw_family": "ministral",
+      "before": "(family=\"ministral\",variant=\"\",version=\"\",modifier=\"\")",
+      "after": "(family=\"ministral\",variant=\"instruct\",version=\"\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "strict enrichment — only previously-empty field(s) populated"
+    },
+    {
+      "provider": "amazon-bedrock",
+      "id": "mistral.ministral-3-3b-instruct",
+      "raw_family": "ministral",
+      "before": "(family=\"ministral\",variant=\"\",version=\"\",modifier=\"\")",
+      "after": "(family=\"ministral\",variant=\"instruct\",version=\"\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "strict enrichment — only previously-empty field(s) populated"
+    },
+    {
+      "provider": "amazon-bedrock",
+      "id": "mistral.ministral-3-8b-instruct",
+      "raw_family": "ministral",
+      "before": "(family=\"ministral\",variant=\"\",version=\"\",modifier=\"\")",
+      "after": "(family=\"ministral\",variant=\"instruct\",version=\"\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "strict enrichment — only previously-empty field(s) populated"
+    },
+    {
+      "provider": "vercel",
+      "id": "mistral/mixtral-8x22b-instruct",
+      "raw_family": "mixtral",
+      "before": "(family=\"mixtral\",variant=\"\",version=\"\",modifier=\"\")",
+      "after": "(family=\"mixtral\",variant=\"instruct\",version=\"\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "strict enrichment — only previously-empty field(s) populated"
+    },
+    {
+      "provider": "neuralwatt",
+      "id": "mistralai/Devstral-Small-2-24B-Instruct-2512",
+      "raw_family": "devstral",
+      "before": "(family=\"devstral\",variant=\"\",version=\"2\",modifier=\"\")",
+      "after": "(family=\"devstral\",variant=\"instruct\",version=\"2\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "strict enrichment — only previously-empty field(s) populated"
+    },
+    {
+      "provider": "evroc",
+      "id": "mistralai/Voxtral-Small-24B-2507",
+      "raw_family": "voxtral",
+      "before": "(family=\"voxtral\",variant=\"\",version=\"\",modifier=\"\")",
+      "after": "(family=\"voxtral\",variant=\"small\",version=\"\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "strict enrichment — only previously-empty field(s) populated"
+    },
+    {
+      "provider": "nano-gpt",
+      "id": "mistralai/devstral-2-123b-instruct-2512",
+      "raw_family": "devstral",
+      "before": "(family=\"devstral\",variant=\"\",version=\"2\",modifier=\"\")",
+      "after": "(family=\"devstral\",variant=\"instruct\",version=\"2\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "strict enrichment — only previously-empty field(s) populated"
+    },
+    {
+      "provider": "nvidia",
+      "id": "mistralai/devstral-2-123b-instruct-2512",
+      "raw_family": "devstral",
+      "before": "(family=\"devstral\",variant=\"\",version=\"2\",modifier=\"\")",
+      "after": "(family=\"devstral\",variant=\"instruct\",version=\"2\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "strict enrichment — only previously-empty field(s) populated"
+    },
+    {
+      "provider": "evroc",
+      "id": "mistralai/devstral-small-2-24b-instruct-2512",
+      "raw_family": "devstral",
+      "before": "(family=\"devstral\",variant=\"\",version=\"2\",modifier=\"\")",
+      "after": "(family=\"devstral\",variant=\"instruct\",version=\"2\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "strict enrichment — only previously-empty field(s) populated"
+    },
+    {
+      "provider": "nano-gpt",
+      "id": "mistralai/ministral-14b-instruct-2512",
+      "raw_family": "ministral",
+      "before": "(family=\"ministral\",variant=\"\",version=\"\",modifier=\"\")",
+      "after": "(family=\"ministral\",variant=\"instruct\",version=\"\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "strict enrichment — only previously-empty field(s) populated"
+    },
+    {
+      "provider": "nvidia",
+      "id": "mistralai/mixtral-8x7b-instruct",
+      "raw_family": "",
+      "before": "(family=\"mixtral\",variant=\"\",version=\"\",modifier=\"\")",
+      "after": "(family=\"mixtral\",variant=\"instruct\",version=\"\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "strict enrichment — only previously-empty field(s) populated"
+    },
+    {
+      "provider": "morph",
+      "id": "morph-v3-large",
+      "raw_family": "morph",
+      "before": "(family=\"morph\",variant=\"\",version=\"\",modifier=\"\")",
+      "after": "(family=\"morph\",variant=\"large\",version=\"\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "strict enrichment — only previously-empty field(s) populated"
+    },
+    {
+      "provider": "kilo",
+      "id": "morph/morph-v3-large",
+      "raw_family": "",
+      "before": "(family=\"morph\",variant=\"\",version=\"\",modifier=\"\")",
+      "after": "(family=\"morph\",variant=\"large\",version=\"\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "strict enrichment — only previously-empty field(s) populated"
+    },
+    {
+      "provider": "openrouter",
+      "id": "morph/morph-v3-large",
+      "raw_family": "morph",
+      "before": "(family=\"morph\",variant=\"\",version=\"\",modifier=\"\")",
+      "after": "(family=\"morph\",variant=\"large\",version=\"\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "strict enrichment — only previously-empty field(s) populated"
+    },
+    {
+      "provider": "vercel",
+      "id": "morph/morph-v3-large",
+      "raw_family": "morph",
+      "before": "(family=\"morph\",variant=\"\",version=\"\",modifier=\"\")",
+      "after": "(family=\"morph\",variant=\"large\",version=\"\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "strict enrichment — only previously-empty field(s) populated"
+    },
+    {
+      "provider": "poe",
+      "id": "novita/glm-4.6v",
+      "raw_family": "",
+      "before": "(family=\"glm\",variant=\"\",version=\"4.6\",modifier=\"vision\")",
+      "after": "(family=\"glm\",variant=\"v\",version=\"4.6\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "family-preserving de-noise/enrich: only phantom losses and/or enrichments, no ID-present field lost"
+    },
+    {
+      "provider": "nvidia",
+      "id": "nvidia/riva-translate-4b-instruct-v1_1",
+      "raw_family": "",
+      "before": "(family=\"riva\",variant=\"\",version=\"\",modifier=\"\")",
+      "after": "(family=\"riva\",variant=\"instruct\",version=\"\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "strict enrichment — only previously-empty field(s) populated"
+    },
+    {
+      "provider": "merge-gateway",
+      "id": "openai/gpt-5.2-chat-latest",
+      "raw_family": "gpt-codex",
+      "before": "(family=\"gpt\",variant=\"codex\",version=\"5.2\",modifier=\"latest\")",
+      "after": "(family=\"gpt\",variant=\"\",version=\"5.2\",modifier=\"latest\")",
+      "category": "b:improvement",
+      "reason": "junk variant \"codex\" cleared: phantom (absent from ID) or redundant (== version); de-noise"
+    },
+    {
+      "provider": "orcarouter",
+      "id": "openai/gpt-5.2-chat-latest",
+      "raw_family": "gpt-codex",
+      "before": "(family=\"gpt\",variant=\"codex\",version=\"5.2\",modifier=\"latest\")",
+      "after": "(family=\"gpt\",variant=\"\",version=\"5.2\",modifier=\"latest\")",
+      "category": "b:improvement",
+      "reason": "junk variant \"codex\" cleared: phantom (absent from ID) or redundant (== version); de-noise"
+    },
+    {
+      "provider": "vercel",
+      "id": "openai/text-embedding-3-large",
+      "raw_family": "text-embedding",
+      "before": "(family=\"text-embedding\",variant=\"\",version=\"3\",modifier=\"\")",
+      "after": "(family=\"text-embedding\",variant=\"large\",version=\"3\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "strict enrichment — only previously-empty field(s) populated"
+    },
+    {
+      "provider": "vercel",
+      "id": "openai/text-embedding-3-small",
+      "raw_family": "text-embedding",
+      "before": "(family=\"text-embedding\",variant=\"\",version=\"3\",modifier=\"\")",
+      "after": "(family=\"text-embedding\",variant=\"small\",version=\"3\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "strict enrichment — only previously-empty field(s) populated"
+    },
+    {
+      "provider": "nano-gpt",
+      "id": "qwen/Qwen3.6-35B-A3B",
+      "raw_family": "qwen3.6",
+      "before": "(family=\"qwen\",variant=\"3.6\",version=\"3.6\",modifier=\"\")",
+      "after": "(family=\"qwen\",variant=\"\",version=\"3.6\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "junk variant \"3.6\" cleared: phantom (absent from ID) or redundant (== version); de-noise"
+    },
+    {
+      "provider": "nano-gpt",
+      "id": "qwen/Qwen3.6-35B-A3B:thinking",
+      "raw_family": "qwen3.6",
+      "before": "(family=\"qwen\",variant=\"3.6\",version=\"3.6\",modifier=\"\")",
+      "after": "(family=\"qwen\",variant=\"\",version=\"3.6\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "junk variant \"3.6\" cleared: phantom (absent from ID) or redundant (== version); de-noise"
+    },
+    {
+      "provider": "neuralwatt",
+      "id": "qwen3.6-35b-fast",
+      "raw_family": "qwen3.6",
+      "before": "(family=\"qwen\",variant=\"3.6\",version=\"3.6\",modifier=\"\")",
+      "after": "(family=\"qwen\",variant=\"\",version=\"3.6\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "junk variant \"3.6\" cleared: phantom (absent from ID) or redundant (== version); de-noise"
+    },
+    {
+      "provider": "alibaba",
+      "id": "qwq-plus",
+      "raw_family": "qwen",
+      "before": "(family=\"qwen\",variant=\"plus\",version=\"\",modifier=\"\")",
+      "after": "(family=\"qwq\",variant=\"plus\",version=\"\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "canonical-winner enforce: ID-derived distinct family won over a parent/org mislabel (family_enforce.json ledger)"
+    },
+    {
+      "provider": "alibaba-cn",
+      "id": "qwq-plus",
+      "raw_family": "qwen",
+      "before": "(family=\"qwen\",variant=\"plus\",version=\"\",modifier=\"\")",
+      "after": "(family=\"qwq\",variant=\"plus\",version=\"\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "canonical-winner enforce: ID-derived distinct family won over a parent/org mislabel (family_enforce.json ledger)"
+    },
+    {
+      "provider": "llmgateway",
+      "id": "qwq-plus",
+      "raw_family": "qwen",
+      "before": "(family=\"qwen\",variant=\"plus\",version=\"\",modifier=\"\")",
+      "after": "(family=\"qwq\",variant=\"plus\",version=\"\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "canonical-winner enforce: ID-derived distinct family won over a parent/org mislabel (family_enforce.json ledger)"
+    },
+    {
+      "provider": "nano-gpt",
+      "id": "step-2-mini",
+      "raw_family": "",
+      "before": "(family=\"step\",variant=\"\",version=\"2\",modifier=\"\")",
+      "after": "(family=\"step\",variant=\"mini\",version=\"2\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "strict enrichment — only previously-empty field(s) populated"
+    },
+    {
+      "provider": "siliconflow",
+      "id": "tencent/Hunyuan-A13B-Instruct",
+      "raw_family": "hunyuan",
+      "before": "(family=\"hunyuan\",variant=\"\",version=\"\",modifier=\"\")",
+      "after": "(family=\"hunyuan\",variant=\"instruct\",version=\"\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "strict enrichment — only previously-empty field(s) populated"
+    },
+    {
+      "provider": "siliconflow-cn",
+      "id": "tencent/Hunyuan-A13B-Instruct",
+      "raw_family": "hunyuan",
+      "before": "(family=\"hunyuan\",variant=\"\",version=\"\",modifier=\"\")",
+      "after": "(family=\"hunyuan\",variant=\"instruct\",version=\"\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "strict enrichment — only previously-empty field(s) populated"
+    },
+    {
+      "provider": "kilo",
+      "id": "tencent/hunyuan-a13b-instruct",
+      "raw_family": "",
+      "before": "(family=\"hunyuan\",variant=\"\",version=\"\",modifier=\"\")",
+      "after": "(family=\"hunyuan\",variant=\"instruct\",version=\"\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "strict enrichment — only previously-empty field(s) populated"
+    },
+    {
+      "provider": "openrouter",
+      "id": "tencent/hunyuan-a13b-instruct",
+      "raw_family": "hunyuan",
+      "before": "(family=\"hunyuan\",variant=\"\",version=\"\",modifier=\"\")",
+      "after": "(family=\"hunyuan\",variant=\"instruct\",version=\"\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "strict enrichment — only previously-empty field(s) populated"
+    },
+    {
+      "provider": "azure",
+      "id": "text-embedding-3-large",
+      "raw_family": "text-embedding",
+      "before": "(family=\"text-embedding\",variant=\"\",version=\"3\",modifier=\"\")",
+      "after": "(family=\"text-embedding\",variant=\"large\",version=\"3\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "strict enrichment — only previously-empty field(s) populated"
+    },
+    {
+      "provider": "azure-cognitive-services",
+      "id": "text-embedding-3-large",
+      "raw_family": "text-embedding",
+      "before": "(family=\"text-embedding\",variant=\"\",version=\"3\",modifier=\"\")",
+      "after": "(family=\"text-embedding\",variant=\"large\",version=\"3\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "strict enrichment — only previously-empty field(s) populated"
+    },
+    {
+      "provider": "openai",
+      "id": "text-embedding-3-large",
+      "raw_family": "text-embedding",
+      "before": "(family=\"text-embedding\",variant=\"\",version=\"3\",modifier=\"\")",
+      "after": "(family=\"text-embedding\",variant=\"large\",version=\"3\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "strict enrichment — only previously-empty field(s) populated"
+    },
+    {
+      "provider": "azure",
+      "id": "text-embedding-3-small",
+      "raw_family": "text-embedding",
+      "before": "(family=\"text-embedding\",variant=\"\",version=\"3\",modifier=\"\")",
+      "after": "(family=\"text-embedding\",variant=\"small\",version=\"3\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "strict enrichment — only previously-empty field(s) populated"
+    },
+    {
+      "provider": "azure-cognitive-services",
+      "id": "text-embedding-3-small",
+      "raw_family": "text-embedding",
+      "before": "(family=\"text-embedding\",variant=\"\",version=\"3\",modifier=\"\")",
+      "after": "(family=\"text-embedding\",variant=\"small\",version=\"3\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "strict enrichment — only previously-empty field(s) populated"
+    },
+    {
+      "provider": "openai",
+      "id": "text-embedding-3-small",
+      "raw_family": "text-embedding",
+      "before": "(family=\"text-embedding\",variant=\"\",version=\"3\",modifier=\"\")",
+      "after": "(family=\"text-embedding\",variant=\"small\",version=\"3\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "strict enrichment — only previously-empty field(s) populated"
+    },
+    {
+      "provider": "chutes",
+      "id": "unsloth/Llama-3.2-1B-Instruct",
+      "raw_family": "unsloth",
+      "before": "(family=\"unsloth\",variant=\"\",version=\"\",modifier=\"\")",
+      "after": "(family=\"unsloth\",variant=\"instruct\",version=\"\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "strict enrichment — only previously-empty field(s) populated"
+    },
+    {
+      "provider": "chutes",
+      "id": "unsloth/Llama-3.2-3B-Instruct",
+      "raw_family": "unsloth",
+      "before": "(family=\"unsloth\",variant=\"\",version=\"\",modifier=\"\")",
+      "after": "(family=\"unsloth\",variant=\"instruct\",version=\"\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "strict enrichment — only previously-empty field(s) populated"
+    },
+    {
+      "provider": "chutes",
+      "id": "unsloth/Mistral-Nemo-Instruct-2407",
+      "raw_family": "unsloth",
+      "before": "(family=\"unsloth\",variant=\"\",version=\"\",modifier=\"\")",
+      "after": "(family=\"unsloth\",variant=\"instruct\",version=\"\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "strict enrichment — only previously-empty field(s) populated"
+    },
+    {
+      "provider": "scaleway",
+      "id": "voxtral-small-24b-2507",
+      "raw_family": "voxtral",
+      "before": "(family=\"voxtral\",variant=\"\",version=\"\",modifier=\"\")",
+      "after": "(family=\"voxtral\",variant=\"small\",version=\"\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "strict enrichment — only previously-empty field(s) populated"
+    },
+    {
+      "provider": "cloudflare-ai-gateway",
+      "id": "workers-ai/@cf/baai/bge-large-en-v1.5",
+      "raw_family": "bge",
+      "before": "(family=\"bge\",variant=\"\",version=\"\",modifier=\"\")",
+      "after": "(family=\"bge\",variant=\"large\",version=\"\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "strict enrichment — only previously-empty field(s) populated"
+    },
+    {
+      "provider": "cloudflare-ai-gateway",
+      "id": "workers-ai/@cf/baai/bge-small-en-v1.5",
+      "raw_family": "bge",
+      "before": "(family=\"bge\",variant=\"\",version=\"\",modifier=\"\")",
+      "after": "(family=\"bge\",variant=\"small\",version=\"\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "strict enrichment — only previously-empty field(s) populated"
+    },
+    {
+      "provider": "cloudflare-ai-gateway",
+      "id": "workers-ai/@cf/facebook/bart-large-cnn",
+      "raw_family": "bart",
+      "before": "(family=\"bart\",variant=\"\",version=\"\",modifier=\"\")",
+      "after": "(family=\"bart\",variant=\"large\",version=\"\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "strict enrichment — only previously-empty field(s) populated"
+    },
+    {
+      "provider": "cloudflare-ai-gateway",
+      "id": "workers-ai/@cf/qwen/qwq-32b",
+      "raw_family": "qwen",
+      "before": "(family=\"qwen\",variant=\"\",version=\"\",modifier=\"\")",
+      "after": "(family=\"qwq\",variant=\"\",version=\"\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "canonical-winner enforce: ID-derived distinct family won over a parent/org mislabel (family_enforce.json ledger)"
+    },
+    {
+      "provider": "venice",
+      "id": "z-ai-glm-5v-turbo",
+      "raw_family": "glmv",
+      "before": "(family=\"glmv\",variant=\"\",version=\"\",modifier=\"\")",
+      "after": "(family=\"glm\",variant=\"v\",version=\"5\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "glued family-suffix moved to variant (e.g. glmv → glm + variant 'v'; bestiary-xdbc Q1)"
+    },
+    {
+      "provider": "nano-gpt",
+      "id": "z-ai/glm-4.5v",
+      "raw_family": "glmv",
+      "before": "(family=\"glmv\",variant=\"\",version=\"\",modifier=\"\")",
+      "after": "(family=\"glm\",variant=\"v\",version=\"4.5\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "glued family-suffix moved to variant (e.g. glmv → glm + variant 'v'; bestiary-xdbc Q1)"
+    },
+    {
+      "provider": "nano-gpt",
+      "id": "z-ai/glm-4.5v:thinking",
+      "raw_family": "glmv",
+      "before": "(family=\"glmv\",variant=\"\",version=\"\",modifier=\"\")",
+      "after": "(family=\"glm\",variant=\"v\",version=\"\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "glued family-suffix moved to variant (e.g. glmv → glm + variant 'v'; bestiary-xdbc Q1)"
+    },
+    {
+      "provider": "kilo",
+      "id": "z-ai/glm-4.6v",
+      "raw_family": "",
+      "before": "(family=\"glm\",variant=\"\",version=\"4.6\",modifier=\"vision\")",
+      "after": "(family=\"glm\",variant=\"v\",version=\"4.6\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "family-preserving de-noise/enrich: only phantom losses and/or enrichments, no ID-present field lost"
+    },
+    {
+      "provider": "openrouter",
+      "id": "z-ai/glm-4.6v",
+      "raw_family": "glm",
+      "before": "(family=\"glm\",variant=\"\",version=\"4.6\",modifier=\"vision\")",
+      "after": "(family=\"glm\",variant=\"v\",version=\"4.6\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "family-preserving de-noise/enrich: only phantom losses and/or enrichments, no ID-present field lost"
+    },
+    {
+      "provider": "zenmux",
+      "id": "z-ai/glm-4.6v",
+      "raw_family": "",
+      "before": "(family=\"glm\",variant=\"\",version=\"4.6\",modifier=\"vision\")",
+      "after": "(family=\"glm\",variant=\"v\",version=\"4.6\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "family-preserving de-noise/enrich: only phantom losses and/or enrichments, no ID-present field lost"
+    },
+    {
+      "provider": "zenmux",
+      "id": "z-ai/glm-4.6v-flash",
+      "raw_family": "",
+      "before": "(family=\"glm\",variant=\"flash\",version=\"\",modifier=\"\")",
+      "after": "(family=\"glm\",variant=\"v\",version=\"4.6\",modifier=\"flash\")",
+      "category": "b:improvement",
+      "reason": "family-preserving de-noise/enrich: only phantom losses and/or enrichments, no ID-present field lost"
+    },
+    {
+      "provider": "zenmux",
+      "id": "z-ai/glm-4.6v-flash-free",
+      "raw_family": "",
+      "before": "(family=\"glm\",variant=\"flash\",version=\"\",modifier=\"\")",
+      "after": "(family=\"glm\",variant=\"v\",version=\"4.6\",modifier=\"flash\")",
+      "category": "b:improvement",
+      "reason": "family-preserving de-noise/enrich: only phantom losses and/or enrichments, no ID-present field lost"
+    },
+    {
+      "provider": "kilo",
+      "id": "z-ai/glm-5v-turbo",
+      "raw_family": "",
+      "before": "(family=\"glm\",variant=\"turbo\",version=\"\",modifier=\"\")",
+      "after": "(family=\"glm\",variant=\"v\",version=\"5\",modifier=\"turbo\")",
+      "category": "b:improvement",
+      "reason": "family-preserving de-noise/enrich: only phantom losses and/or enrichments, no ID-present field lost"
+    },
+    {
+      "provider": "openrouter",
+      "id": "z-ai/glm-5v-turbo",
+      "raw_family": "glm",
+      "before": "(family=\"glm\",variant=\"turbo\",version=\"\",modifier=\"\")",
+      "after": "(family=\"glm\",variant=\"v\",version=\"5\",modifier=\"turbo\")",
+      "category": "b:improvement",
+      "reason": "family-preserving de-noise/enrich: only phantom losses and/or enrichments, no ID-present field lost"
+    },
+    {
+      "provider": "zenmux",
+      "id": "z-ai/glm-5v-turbo",
+      "raw_family": "",
+      "before": "(family=\"glm\",variant=\"turbo\",version=\"\",modifier=\"\")",
+      "after": "(family=\"glm\",variant=\"v\",version=\"5\",modifier=\"turbo\")",
+      "category": "b:improvement",
+      "reason": "family-preserving de-noise/enrich: only phantom losses and/or enrichments, no ID-present field lost"
+    },
+    {
+      "provider": "nvidia",
+      "id": "z-ai/glm4.7",
+      "raw_family": "glm",
+      "before": "(family=\"glm\",variant=\"4.7\",version=\"4.7\",modifier=\"\")",
+      "after": "(family=\"glm\",variant=\"\",version=\"4.7\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "junk variant \"4.7\" cleared: phantom (absent from ID) or redundant (== version); de-noise"
+    },
+    {
+      "provider": "siliconflow",
+      "id": "zai-org/GLM-4.5V",
+      "raw_family": "glm",
+      "before": "(family=\"glm\",variant=\"\",version=\"4.5\",modifier=\"vision\")",
+      "after": "(family=\"glm\",variant=\"v\",version=\"4.5\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "family-preserving de-noise/enrich: only phantom losses and/or enrichments, no ID-present field lost"
+    },
+    {
+      "provider": "siliconflow-cn",
+      "id": "zai-org/GLM-4.5V",
+      "raw_family": "glm",
+      "before": "(family=\"glm\",variant=\"\",version=\"4.5\",modifier=\"vision\")",
+      "after": "(family=\"glm\",variant=\"v\",version=\"4.5\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "family-preserving de-noise/enrich: only phantom losses and/or enrichments, no ID-present field lost"
+    },
+    {
+      "provider": "chutes",
+      "id": "zai-org/GLM-4.6V",
+      "raw_family": "glm",
+      "before": "(family=\"glm\",variant=\"\",version=\"4.6\",modifier=\"vision\")",
+      "after": "(family=\"glm\",variant=\"v\",version=\"4.6\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "family-preserving de-noise/enrich: only phantom losses and/or enrichments, no ID-present field lost"
+    },
+    {
+      "provider": "deepinfra",
+      "id": "zai-org/GLM-4.6V",
+      "raw_family": "glm",
+      "before": "(family=\"glm\",variant=\"\",version=\"4.6\",modifier=\"vision\")",
+      "after": "(family=\"glm\",variant=\"v\",version=\"4.6\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "family-preserving de-noise/enrich: only phantom losses and/or enrichments, no ID-present field lost"
+    },
+    {
+      "provider": "siliconflow",
+      "id": "zai-org/GLM-4.6V",
+      "raw_family": "glm",
+      "before": "(family=\"glm\",variant=\"\",version=\"4.6\",modifier=\"vision\")",
+      "after": "(family=\"glm\",variant=\"v\",version=\"4.6\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "family-preserving de-noise/enrich: only phantom losses and/or enrichments, no ID-present field lost"
+    },
+    {
+      "provider": "siliconflow-cn",
+      "id": "zai-org/GLM-4.6V",
+      "raw_family": "glm",
+      "before": "(family=\"glm\",variant=\"\",version=\"4.6\",modifier=\"vision\")",
+      "after": "(family=\"glm\",variant=\"v\",version=\"4.6\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "family-preserving de-noise/enrich: only phantom losses and/or enrichments, no ID-present field lost"
+    },
+    {
+      "provider": "siliconflow",
+      "id": "zai-org/GLM-5V-Turbo",
+      "raw_family": "glm",
+      "before": "(family=\"glm\",variant=\"turbo\",version=\"\",modifier=\"\")",
+      "after": "(family=\"glm\",variant=\"v\",version=\"5\",modifier=\"turbo\")",
+      "category": "b:improvement",
+      "reason": "family-preserving de-noise/enrich: only phantom losses and/or enrichments, no ID-present field lost"
+    },
+    {
+      "provider": "jiekou",
+      "id": "zai-org/glm-4.5v",
+      "raw_family": "glmv",
+      "before": "(family=\"glmv\",variant=\"\",version=\"\",modifier=\"\")",
+      "after": "(family=\"glm\",variant=\"v\",version=\"4.5\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "glued family-suffix moved to variant (e.g. glmv → glm + variant 'v'; bestiary-xdbc Q1)"
+    },
+    {
+      "provider": "novita-ai",
+      "id": "zai-org/glm-4.5v",
+      "raw_family": "glmv",
+      "before": "(family=\"glmv\",variant=\"\",version=\"\",modifier=\"\")",
+      "after": "(family=\"glm\",variant=\"v\",version=\"4.5\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "glued family-suffix moved to variant (e.g. glmv → glm + variant 'v'; bestiary-xdbc Q1)"
+    },
+    {
+      "provider": "novita-ai",
+      "id": "zai-org/glm-4.6v",
+      "raw_family": "glmv",
+      "before": "(family=\"glmv\",variant=\"\",version=\"\",modifier=\"\")",
+      "after": "(family=\"glm\",variant=\"v\",version=\"4.6\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "glued family-suffix moved to variant (e.g. glmv → glm + variant 'v'; bestiary-xdbc Q1)"
+    },
+    {
+      "provider": "vercel",
+      "id": "zai/glm-4.5v",
+      "raw_family": "glm",
+      "before": "(family=\"glm\",variant=\"\",version=\"4.5\",modifier=\"vision\")",
+      "after": "(family=\"glm\",variant=\"v\",version=\"4.5\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "family-preserving de-noise/enrich: only phantom losses and/or enrichments, no ID-present field lost"
+    },
+    {
+      "provider": "vercel",
+      "id": "zai/glm-4.6v",
+      "raw_family": "glm",
+      "before": "(family=\"glm\",variant=\"\",version=\"4.6\",modifier=\"vision\")",
+      "after": "(family=\"glm\",variant=\"v\",version=\"4.6\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "family-preserving de-noise/enrich: only phantom losses and/or enrichments, no ID-present field lost"
+    },
+    {
+      "provider": "vercel",
+      "id": "zai/glm-4.6v-flash",
+      "raw_family": "glm",
+      "before": "(family=\"glm\",variant=\"flash\",version=\"\",modifier=\"\")",
+      "after": "(family=\"glm\",variant=\"v\",version=\"4.6\",modifier=\"flash\")",
+      "category": "b:improvement",
+      "reason": "family-preserving de-noise/enrich: only phantom losses and/or enrichments, no ID-present field lost"
+    },
+    {
+      "provider": "vercel",
+      "id": "zai/glm-5v-turbo",
+      "raw_family": "glm",
+      "before": "(family=\"glm\",variant=\"turbo\",version=\"\",modifier=\"\")",
+      "after": "(family=\"glm\",variant=\"v\",version=\"5\",modifier=\"turbo\")",
+      "category": "b:improvement",
+      "reason": "family-preserving de-noise/enrich: only phantom losses and/or enrichments, no ID-present field lost"
+    }
+  ]
 }

@@ -82,6 +82,17 @@ func TestFamiliesJSON_MembersReachableInSnapshot(t *testing.T) {
 		// override still maps the raw family, and a future qwen "free"-tier ID with no
 		// competing tier would re-ground it.
 		"qwen": {"free": "SLICE-11: sole (qwen,free) model qwen3.6-plus-free now refines to variant 'plus' (justified exception)"},
+		// SLICE-12 (bestiary-xdbc Q2a): the 'o' family is FOLDED into gpt as a variant —
+		// o1/o3/o4[-mini/-pro] now decompose to (gpt, variant='o', version=N, modifier=mini/
+		// pro). The "o" families.json entry is RETAINED (its bare_gen_split:true still splits
+		// the transient "o1"→o+1 before canonicalizeOpenAILine relabels family→gpt, and its
+		// members [mini,pro] are still recovered transiently so the size token survives as the
+		// Modifier). But NO FINAL decomposition is (o, mini) / (o, pro) anymore — the members
+		// are reachable only mid-pipeline, so they read as unreachable here. Justified.
+		"o": {
+			"mini": "SLICE-12: o-series folded into gpt (bestiary-xdbc Q2a); 'mini' now surfaces as the Modifier under family=gpt, recovered only transiently under 'o'",
+			"pro":  "SLICE-12: o-series folded into gpt (bestiary-xdbc Q2a); 'pro' now surfaces as the Modifier under family=gpt, recovered only transiently under 'o'",
+		},
 	}
 
 	members := loadFamiliesJSONMembers(t)

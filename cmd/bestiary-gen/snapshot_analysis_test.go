@@ -445,11 +445,38 @@ func TestSnapshotAnalysis_CrossProviderDivergences(t *testing.T) {
 	// raw-populated over-captures (qwen3.7-max), and IDs whose canonical short side is itself
 	// lossy/inconsistent (deepseek-chat→deepseek drops "chat"; qwen3-next picks suffix
 	// "instruct" not "next").
+	// SLICE-12 (rc2) cross-provider convergence fix-cycle (bestiary-b4jm): 68 → 18.
+	// The −50 came from: o-series taxonomy restructure (bestiary-xdbc Q2: o1/o3/o4→(gpt,
+	// variant=o,ver), gpt-4o→(gpt,4o,""), gpt-audio→(gpt,audio); sanctioned via the reviewed
+	// allowlist) + gpt-codex ID-wins phantom-variant clear (8) + glm glued-'v' variant
+	// (Q1, glm-4.5v→(glm,v,4.5); glmv→glm+v) + canonical-winner ENFORCE set (own-family +
+	// org-namespace leak: aion/magnum/hermes/mixtral/pixtral/voxtral/intellect/qwq/weaver/
+	// owl/wizardlm/inflection/ministral + nousresearch→hermes/allenai→olmo/liquid→lfm) +
+	// dotted bare-gen de-junk (qwen3.5/3.6) + raw-populated over-capture fold (qwen3.7-max) +
+	// member-variant suffix re-recovery (codellama/rnj/mixtral/voxtral/lyria) + flash-lite
+	// tier (compound-member recovery, gemini-2.5-flash-lite-preview-*). The decomp diff
+	// (decomp_diff_report.json) classifies every change with ZERO category-(c) regressions.
+	//
+	// RESIDUAL = 18 (HONEST, surfaced — NOT masked). Of these, 5 are the SLICE-10-blocked
+	// multi-modifier/capability records (llama-3.2-11b-vision-instruct ×2, phi-4-multimodal-
+	// instruct, kimi-k2-thinking-turbo ×2 — a tier AND thinking/vision in the single Modifier
+	// slot, deferred to the SLICE-10 Modifier-LIST). The other ~13 are GENUINE stragglers
+	// that do NOT cleanly converge and are deliberately left rather than force-converged with
+	// a lossy/over-broad hack: deepseek-chat-v3* (the canonical short side drops "chat"),
+	// qwen3-next-80b-a3b-instruct ×2 ("next" is an unrecognised over-capture token), nvidia
+	// llama-3.3-nemotron-super-49b (an EMBEDDED registered family — the ID leads with "llama"),
+	// x-ai/grok-code-fast-1 ("fast" unrecognised), llama-4-scout (over-capture "scout"),
+	// tencent/hy3-preview ("hy" not a registered family), Qwen3-Embedding ("text-embedding"
+	// is a curated self-map override), meta-llama/Meta-Llama-3.1 (empty-raw derives "meta"
+	// from the doubled vendor — fixing it introduced cat-(c) collateral on odd-format records,
+	// so reverted/surfaced), command-r-plus/r7b/a-reasoning (over-capture + date-as-version),
+	// hermes-2-pro-llama (variant 'pro' on one side only). These warrant a follow-up slice or
+	// upstream data fix; see the SLICE-12 worker report.
 	const (
-		divergenceExact = 68
+		divergenceExact = 18
 		// Secondary sanity band — guards against a wholesale snapshot/pipeline
 		// breakage that happens to coincidentally land on a different exact value.
-		divergenceLow  = 40
+		divergenceLow  = 6
 		divergenceHigh = 500
 	)
 	if totalDivergent != divergenceExact {
@@ -482,11 +509,15 @@ func TestSnapshotAnalysis_CrossProviderDivergences(t *testing.T) {
 	// SLICE-8: ID-driven version + param-size guard + glued-suffix + series split
 	// (+ CLARIFICATION-6 tier→modifier) converged 104 CatC IDs (212→108). CatA/B/D
 	// unchanged (version-path-only slice).
+	// SLICE-12: CatC 33→12 (member-variant/version convergences: o-series, member re-recovery,
+	// flash-lite, dotted-gen, gpt-codex). CatD 34→5 (enforce-set own-family/org corrections +
+	// o-series family fold + qwen3.7-max; residual 5 = qwen3-next ×2, nemotron, text-embedding,
+	// meta-llama — genuine stragglers). CatB unchanged at 1.
 	const (
 		catAExact = 0  // vendor-prefix/case (SLICE-1 M4 resolved all)
 		catBExact = 1  // bare-gen-split (SLICE-11: −1; residual = bases w/o families.json entry)
-		catCExact = 33 // member-variant/version (SLICE-11: −44 via family over-capture reduction + converged variant/version)
-		catDExact = 34 // genuine family mislabel (SLICE-11: −10, over-captures mis-bucketed as D now reduce; residual = IP-5 ledger, user sign-off)
+		catCExact = 12 // member-variant/version (SLICE-12: −21 via o-series + member re-recovery + flash-lite + dotted-gen)
+		catDExact = 5  // genuine family mislabel (SLICE-12: −29 via enforce-set + o-series fold; residual = qwen3-next×2/nemotron/text-embedding/meta stragglers)
 	)
 	checkCat := func(name string, got, want int) {
 		if got != want {

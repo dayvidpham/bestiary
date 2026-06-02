@@ -3467,13 +3467,17 @@ func TestM2_BareGenSplit_PositiveSplits(t *testing.T) {
 	}{
 		// Bare glued family token, empty raw — split base off the trailing int.
 		{"qwen3 → (qwen,,3)", "", "qwen3", "alibaba", "qwen", "", "3"},
-		{"o1 → (o,,1)", "", "o1", "openai", "o", "", "1"},
+		// SLICE-12 (bestiary-xdbc Q2a): the 'o' family folds into gpt as a VARIANT —
+		// o1 → (gpt, variant='o', version=1). Supersedes the SLICE-2 o1→(o,,1) row.
+		{"o1 → (gpt,o,1) (bestiary-xdbc Q2a)", "", "o1", "openai", "gpt", "o", "1"},
 		// Glued family token + member variant (empty-raw inference path).
 		{"qwen3-max (raw empty) → (qwen,max,3)", "", "qwen3-max", "qiniu-ai", "qwen", "max", "3"},
 		// CLEAN raw-supplied family + glued generation in the ID: the (B) version
 		// recovery half must surface the glued int as version so both providers agree.
 		{"qwen3-max (raw qwen) → (qwen,max,3)", "qwen", "qwen3-max", "alibaba", "qwen", "max", "3"},
-		{"o3-mini (raw o) → (o,mini,3)", "o", "openai/o3-mini", "openrouter", "o", "mini", "3"},
+		// SLICE-12 (bestiary-xdbc Q2a/Q2b): o3-mini → (gpt, variant='o', version=3),
+		// mini→modifier (not asserted here). Supersedes the SLICE-2 o3-mini→(o,mini,3) row.
+		{"o3-mini (raw o) → (gpt,o,3) (bestiary-xdbc Q2a)", "o", "openai/o3-mini", "openrouter", "gpt", "o", "3"},
 		// Hyphenated generation already extracts version on the raw side; the
 		// empty-raw inferred family "gpt-5"/"gemini-3" must split to the base.
 		{"gpt-5-mini (raw empty) → (gpt,mini,5)", "", "openai/gpt-5-mini", "kilo", "gpt", "mini", "5"},
@@ -3662,11 +3666,13 @@ func TestSlice8_ParamSizeGuard(t *testing.T) {
 	})
 }
 
-// TestSlice8_GluedVersionModifier verifies SLICE-8 (c): a recognized modifier-
-// letter GLUED to a numeric version is split — glm-4.5v → (glm, "", 4.5, vision).
-// SCOPE-NOTE (S3→S8 hand-off): glm-4.5v was deferred from SLICE-3 because the "v"
-// is glued to the version ("4.5v"), not a separate trailing {vision} hyphen token.
-// A genuine alphanumeric version like "4o" is NOT split (o is not a modifier-letter).
+// TestSlice8_GluedVersionModifier verifies the glued letter-after-version handling.
+// SLICE-12 (bestiary-xdbc) SUPERSEDES the SLICE-8(c) glm-4.5v→vision behaviour:
+//   - Q1: the glued single 'v' after a glm version is the VARIANT 'v' (glm-4.5v →
+//     (glm, "v", 4.5), NOT modifier vision). The spelled-out "-vision" hyphen token
+//     remains a Modifier (uniform rule unchanged) and is NOT exercised here.
+//   - Q2/Q2b: gpt-4o → variant '4o', version ” ('4o' is the line designator, not a
+//     version). Supersedes the prior (gpt,"",4o) pin.
 func TestSlice8_GluedVersionModifier(t *testing.T) {
 	t.Parallel()
 
@@ -3676,9 +3682,9 @@ func TestSlice8_GluedVersionModifier(t *testing.T) {
 		id                                            bestiary.ModelID
 		wantFamily, wantVariant, wantVersion, wantMod string
 	}{
-		{"glm-4.5v raw=glm → vision modifier", "glm", "glm-4.5v", "glm", "", "4.5", "vision"},
-		{"glm-4.5v empty raw → vision modifier", "", "glm-4.5v", "glm", "", "4.5", "vision"},
-		{"gpt-4o NOT split (4o is a version, not 4+vision)", "gpt", "gpt-4o", "gpt", "", "4o", ""},
+		{"glm-4.5v raw=glm → variant 'v' (bestiary-xdbc Q1)", "glm", "glm-4.5v", "glm", "v", "4.5", ""},
+		{"glm-4.5v empty raw → variant 'v' (bestiary-xdbc Q1)", "", "glm-4.5v", "glm", "v", "4.5", ""},
+		{"gpt-4o → variant '4o', version '' (bestiary-xdbc Q2b)", "gpt", "gpt-4o", "gpt", "4o", "", ""},
 	}
 
 	for _, tc := range cases {
@@ -3762,7 +3768,10 @@ func TestSlice8_MustNotRegress_RealVersions(t *testing.T) {
 	}{
 		{"4.5 dotted", "claude-opus", "claude-opus-4-5-20251101", "4.5"},
 		{"2.5 dotted", "gemini-flash", "gemini-2.5-flash", "2.5"},
-		{"4o alphanumeric version", "gpt", "gpt-4o", "4o"},
+		// SLICE-12 (bestiary-xdbc Q2b): "4o" is now the VARIANT (line designator), so the
+		// version is EMPTY. Supersedes the SLICE-8 "4o is a version" pin. (Variant=4o is
+		// asserted in TestSlice8_GluedVersionModifier.)
+		{"gpt-4o → version '' ('4o' is the variant; bestiary-xdbc Q2b)", "gpt", "gpt-4o", ""},
 		{"3.5 (claude-haiku)", "claude-haiku", "claude-3-5-haiku-20241022", "3.5"},
 		{"3.7 (claude-sonnet)", "claude-sonnet", "claude-3-7-sonnet-20250219", "3.7"},
 		{"single-digit 5", "gpt", "openai/gpt-5", "5"},
@@ -3890,13 +3899,18 @@ func TestParseFamilyDetailed_PathUnification(t *testing.T) {
 	}{
 		// CONVERGENCE WIN: glued letter-suffix version-modifier. raw-aware alone gave
 		// (glm,"","5v",""); the ID owns it → (glm,"",5,vision), matching empty-raw providers.
-		{"glm-5v: ID-driven version+modifier adopted (family agrees)", "glm", "glm-5v", "glm", "", "5", "vision"},
+		// SLICE-12 (bestiary-xdbc Q1): the glued single 'v' after a glm version is the
+		// VARIANT 'v', NOT the 'vision' modifier (supersedes the SLICE-8 glm-5v→vision row).
+		{"glm-5v: glued 'v' is variant (bestiary-xdbc Q1)", "glm", "glm-5v", "glm", "v", "5", ""},
 
 		// FAMILY-PRESERVING (the safeguard's core): the ID-path OVER-captures Family
 		// (deepseek-v4, gpt-4o) — raw_family is the correct SHORT family and is kept.
 		// Converging these is Option B's scope, NOT this slice.
 		{"deepseek-v4-flash: family PRESERVED (not deepseek-v4)", "deepseek-flash", "deepseek-v4-flash", "deepseek", "flash", "", ""},
-		{"gpt-4o-mini: family PRESERVED (not gpt-4o)", "gpt", "gpt-4o-mini", "gpt", "mini", "", ""},
+		// SLICE-12 (bestiary-xdbc Q2/Q2b): gpt-4o-mini → variant '4o', mini→modifier
+		// (the line designator '4o' occupies the variant slot; size token 'mini' demotes
+		// to the Modifier). Supersedes the SLICE-9 family-preserve (gpt,mini,"") row.
+		{"gpt-4o-mini: variant '4o', mini→modifier (bestiary-xdbc Q2b)", "gpt", "gpt-4o-mini", "gpt", "4o", "", "mini"},
 
 		// VARIANT DE-JUNK: raw_family "qwen3.6" leaks the version into the variant
 		// ("3.6"); the ID recovers the true member variant "flash".
@@ -3983,7 +3997,9 @@ func TestParseFamilyDetailed_SLICE11_FamilyOverCaptureReduction(t *testing.T) {
 		wantVer string
 	}{
 		{"claude-opus dotted", "anthropic/claude-opus-4.1", "claude", "opus", "4.1"},
-		{"gpt-4o-mini (canonical version empty)", "openai/gpt-4o-mini", "gpt", "mini", ""},
+		// SLICE-12 (bestiary-xdbc Q2b): gpt-4o-mini → variant '4o' (mini→modifier, asserted
+		// elsewhere); version empty. Supersedes the SLICE-11 (gpt,mini,"") row.
+		{"gpt-4o-mini (variant '4o', bestiary-xdbc Q2b)", "openai/gpt-4o-mini", "gpt", "4o", ""},
 		{"deepseek-r1 (canonical drops r1)", "deepseek-ai/DeepSeek-R1-0528", "deepseek", "", ""},
 		{"llama-3.3-70b-instruct", "meta-llama/llama-3.3-70b-instruct", "llama", "instruct", "3.3"},
 		{"qwen3-vl member+gen", "qwen/qwen3-vl-30b-a3b-instruct", "qwen", "vl", "3"},
@@ -4010,9 +4026,9 @@ func TestParseFamilyDetailed_SLICE11_GenuineCompoundPreserved(t *testing.T) {
 	// the closed reducer is designed to refuse). The family is expected to retain the
 	// curated compound base prefix, never the lone first token.
 	cases := []struct {
-		id          string
-		mustNotBe   bestiary.Family // the wrong over-reduction
-		wantPrefix  string          // family must keep this curated compound prefix
+		id         string
+		mustNotBe  bestiary.Family // the wrong over-reduction
+		wantPrefix string          // family must keep this curated compound prefix
 	}{
 		{"text-embedding-3-large", "text", "text-embedding"},
 		{"stable-diffusion-xl", "stable", "stable-diffusion"},
@@ -4046,5 +4062,63 @@ func TestParseFamilyDetailed_SLICE11_CapabilityModifierDeclined(t *testing.T) {
 	}
 	if bestiary.IsKnownFamily("claude-opus-4-1") {
 		t.Errorf("IsKnownFamily(claude-opus-4-1) = true, want false (synthetic over-capture)")
+	}
+}
+
+// TestSLICE12_Convergences pins the SLICE-12 (rc2) cross-provider convergence fixes
+// (bestiary-b4jm). Each case is the canonical ParseFamilyDetailed decomposition that the
+// fix-cycle ratified; together with the before/after-diff gate (ZERO cat-(c)) these are
+// the L2 specification for the mechanical + o-series + ledger changes.
+func TestSLICE12_Convergences(t *testing.T) {
+	cases := []struct {
+		desc                   string
+		raw                    bestiary.Family
+		id                     bestiary.ModelID
+		wFam, wVar, wVer, wMod string
+	}{
+		// ── O-SERIES restructure (bestiary-xdbc Q2/Q2a/Q2b/Q2c) ──────────────────────
+		{"o1 → (gpt,o,1)", "", "o1", "gpt", "o", "1", ""},
+		{"o1 raw=o → (gpt,o,1)", "o", "o1", "gpt", "o", "1", ""},
+		{"o1-mini → (gpt,o,1,mini)", "o-mini", "o1-mini", "gpt", "o", "1", "mini"},
+		{"o3-mini → (gpt,o,3,mini)", "o", "o3-mini", "gpt", "o", "3", "mini"},
+		{"o3-pro → (gpt,o,3,pro)", "o-pro", "o3-pro", "gpt", "o", "3", "pro"},
+		{"o4-mini → (gpt,o,4,mini)", "o", "o4-mini", "gpt", "o", "4", "mini"},
+		{"gpt-4o → (gpt,4o,'')", "gpt", "gpt-4o", "gpt", "4o", "", ""},
+		{"gpt-4o empty raw → (gpt,4o,'')", "", "gpt-4o", "gpt", "4o", "", ""},
+		{"gpt-4o-mini → (gpt,4o,'',mini)", "gpt-mini", "gpt-4o-mini", "gpt", "4o", "", "mini"},
+		{"chatgpt-4o-latest → (gpt,4o,'',latest)", "gpt", "chatgpt-4o-latest", "gpt", "4o", "", "latest"},
+		{"gpt-audio-mini → (gpt,audio,'',mini)", "", "openai/gpt-audio-mini", "gpt", "audio", "", "mini"},
+		{"gpt-4 UNCHANGED → (gpt,'',4)", "gpt", "gpt-4", "gpt", "", "4", ""},
+		// ── gpt-codex ID-WINS (#4) + flash-lite NON-regression ───────────────────────
+		{"gpt-5-chat-latest: phantom codex cleared", "gpt-codex", "gpt-5-chat-latest", "gpt", "", "5", "latest"},
+		{"gpt-5.1-chat: phantom codex cleared", "gpt-codex", "openai/gpt-5.1-chat", "gpt", "", "5.1", ""},
+		{"flash-lite NOT regressed (raw)", "gemini-flash-lite", "gemini-2.5-flash-lite-preview-06-17", "gemini", "flash-lite", "2.5", ""},
+		{"flash-lite tier (empty raw, #6 compound-member)", "", "gemini-2.5-flash-lite-preview-09-2025", "gemini", "flash-lite", "2.5", ""},
+		// ── glm 'v' variant (Q1) ─────────────────────────────────────────────────────
+		{"glm-4.5v → (glm,v,4.5)", "glm", "glm-4.5v", "glm", "v", "4.5", ""},
+		{"glm-5v-turbo → (glm,v,5,turbo)", "glm", "glm-5v-turbo", "glm", "v", "5", "turbo"},
+		{"glmv raw → glm + variant v", "glmv", "z-ai/glm-4.5v", "glm", "v", "4.5", ""},
+		// ── canonical-winner ENFORCE (own-family + org leak) ─────────────────────────
+		{"aion mislabelled llama → aion", "llama", "aion-labs/aion-1.0", "aion", "", "1.0", ""},
+		{"mixtral mislabelled mistral → mixtral+instruct", "mistral", "mistralai/mixtral-8x22b-instruct", "mixtral", "instruct", "", ""},
+		{"nousresearch org leak → hermes", "nousresearch", "nousresearch/hermes-3-llama-3.1-70b", "hermes", "", "3", ""},
+		{"liquid org leak → lfm", "liquid", "liquid/lfm-2-24b-a2b", "lfm", "", "2", ""},
+		{"qwq mislabelled qwen → qwq", "qwen", "qwq-32b", "qwq", "", "", ""},
+		// ── raw-populated over-capture fold (#2) + dotted bare-gen (#3) ───────────────
+		{"qwen3.7-max raw over-capture → (qwen,max,3.7)", "qwen3.7-max", "qwen3.7-max", "qwen", "max", "3.7", ""},
+		{"qwen3.5 dotted bare-gen de-junk → (qwen,'',3.5)", "qwen3.5", "qwen/qwen3.5-27b", "qwen", "", "3.5", ""},
+		// ── member-variant suffix re-recovery (#5, A-1/A-2) ──────────────────────────
+		{"codellama empty-raw recovers instruct", "", "alfredpros/codellama-7b-instruct-solidity", "codellama", "instruct", "", ""},
+		{"rnj empty-raw recovers instruct (A-1)", "", "essentialai/rnj-1-instruct", "rnj", "instruct", "1", ""},
+		{"voxtral empty-raw recovers small (A-2)", "", "mistralai/voxtral-small-24b-2507", "voxtral", "small", "", ""},
+	}
+	for _, tc := range cases {
+		t.Run(tc.desc, func(t *testing.T) {
+			f, v, ver, m, _ := bestiary.ParseFamilyDetailed(tc.raw, tc.id, "p")
+			if string(f) != tc.wFam || v != tc.wVar || ver != tc.wVer || m != tc.wMod {
+				t.Errorf("ParseFamilyDetailed(raw=%q,id=%q) = (%q,%q,%q,%q), want (%q,%q,%q,%q)",
+					tc.raw, tc.id, f, v, ver, m, tc.wFam, tc.wVar, tc.wVer, tc.wMod)
+			}
+		})
 	}
 }

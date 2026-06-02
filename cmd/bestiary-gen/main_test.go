@@ -777,7 +777,7 @@ func TestGenToModelInfo_CanonicalFields(t *testing.T) {
 			wantDateContains: "2025-05-14",
 		},
 		{
-			desc:         "gpt-4o-2024-08-06: family=gpt-4o, date in ID",
+			desc:         "gpt-4o-2024-08-06: family=gpt, variant=4o, date in ID (bestiary-xdbc Q2b)",
 			providerSlug: "openai",
 			wm: genWireModel{
 				ID:          "gpt-4o-2024-08-06",
@@ -785,11 +785,10 @@ func TestGenToModelInfo_CanonicalFields(t *testing.T) {
 				Family:      "gpt-4o",
 				ReleaseDate: "2024-08-06",
 			},
-			// ParseFamily("gpt-4o") returns ("gpt-4o", "") when no override matches;
-			// the exact result depends on parse data but the key property is that
-			// Family is non-empty and Date is populated from the ID.
-			wantFamily:       "gpt-4o",
-			wantVariant:      "",
+			// SLICE-12 (bestiary-xdbc Q2/Q2b): gpt-4o decomposes to family "gpt" with the
+			// line designator "4o" as the VARIANT (version empty); Date still from the ID.
+			wantFamily:       "gpt",
+			wantVariant:      "4o",
 			wantDateContains: "2024-08-06",
 		},
 		{
@@ -2606,7 +2605,11 @@ func TestDecompositionSnapshot_FixA_NoVersionForBare4Digit(t *testing.T) {
 		wantFamily  string
 		wantVersion string // must be empty
 	}{
-		"deepseek-r1-0528": {wantFamily: "deepseek-r1", wantVersion: ""},
+		// SLICE-12 (#2): raw_family "deepseek-r1" is a RAW-POPULATED over-capture; it now
+		// reduces to the short base "deepseek" (the SAME reduction S11 applies to empty-raw),
+		// making it consistent with deepseek-v3-0324. The bare-4-digit date guard (the focus
+		// of this test) is unchanged — Version stays "".
+		"deepseek-r1-0528": {wantFamily: "deepseek", wantVersion: ""},
 		"deepseek-v3-0324": {wantFamily: "deepseek", wantVersion: ""},
 	}
 

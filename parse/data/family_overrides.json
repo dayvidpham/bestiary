@@ -18,6 +18,7 @@
   "glm-flash": { "family": "glm", "variant": "flash" },
   "glm-free": { "family": "glm", "variant": "free" },
   "glm-z": { "family": "glm", "variant": "z" },
+  "glmv": { "family": "glm", "variant": "v" },
   "gpt-codex": { "family": "gpt", "variant": "codex" },
   "gpt-codex-mini": { "family": "gpt", "variant": "codex-mini" },
   "gpt-codex-spark": { "family": "gpt", "variant": "codex-spark" },

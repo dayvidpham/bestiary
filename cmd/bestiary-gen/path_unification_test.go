@@ -450,6 +450,58 @@ func classifyDecompChange(id bestiary.ModelID, before, after decompTuple, before
 		return CatImprove, "family over-capture reduced to short base — exact family-suffix→variant move (override semantics), OR before ∉ registry & after ∈ registry; no ID-present non-family field lost (SLICE-11; j1nu-hardened)"
 	}
 
+	// (b) SLICE-12 CANONICAL-WINNER ENFORCE: a LATERAL family change (not a reduction)
+	// whose AFTER family is in the CLOSED enforce set (family_enforce.json) is a SANCTIONED
+	// ledger correction — the ID-canonical DISTINCT family (aion/magnum/hermes/mixtral/qwq/
+	// intellect/…) beat a parent-family or org-namespace mislabel (raw 'llama'/'mistral'/
+	// 'gpt'/'glm'/'qwen'/'nousresearch'/'allenai'/'liquid'). Admitted ONLY when no ID-present
+	// non-family field was lost (realNonFamilyLoss) — so a correction that also drops a real
+	// variant stays a cat-(c). The enforce set is curated data tied to the rc2 ledger +
+	// bestiary-xdbc Q3, not the categorizer's logic, so this cannot rubber-stamp an arbitrary
+	// family rewrite (only the ID's own distinct family triggers it in the parser).
+	if before.Family != after.Family && bestiary.IsEnforcedCanonicalFamily(after.Family) &&
+		!realNonFamilyLoss(before, after, id) {
+		return CatImprove, "canonical-winner enforce: ID-derived distinct family won over a parent/org mislabel (family_enforce.json ledger)"
+	}
+
+	// (b) SLICE-12 GLUED family-suffix → variant fold (bestiary-xdbc Q1, glmv→glm+'v'): the
+	// dropped family suffix re-surfaces VERBATIM as the variant, with no hyphen between base
+	// and suffix (before.Family == after.Family + after.Variant, e.g. "glmv" == "glm"+"v").
+	// Information-preserving (the suffix is relocated, not lost) and no ID-present non-family
+	// field lost — a strict improvement (the glm raw-family fold ratified in Q1).
+	if after.Variant != "" && string(before.Family) == string(after.Family)+after.Variant &&
+		!realNonFamilyLoss(before, after, id) {
+		return CatImprove, "glued family-suffix moved to variant (e.g. glmv → glm + variant 'v'; bestiary-xdbc Q1)"
+	}
+
+	// (b) SLICE-12 JUNK-VARIANT removal: a populated variant CLEARED with Family/Version/
+	// Modifier otherwise preserved is a de-noise improvement when the cleared value is EITHER
+	//   - PHANTOM: absent from the model ID (#4 gpt-codex — raw_family "gpt-codex" tagging a
+	//     "-chat" ID with no "codex"); OR
+	//   - REDUNDANT: a duplicate of the version (#3 dotted bare-gen — raw_family "qwen3.6"/
+	//     "glm" leaked the generation "3.6"/"4.7" into BOTH the variant and version slots).
+	// This holds even when the ID is NOT cross-provider divergent (these bare IDs are
+	// consistent across providers). An ID-present, non-redundant variant cleared would have
+	// been a real loss (realNonFamilyLoss / the convergence branch) and never reach here.
+	if before.Variant != after.Variant && after.Variant == "" &&
+		before.Family == after.Family && before.Version == after.Version && before.Modifier == after.Modifier &&
+		(!valueInID(before.Variant, id) || before.Variant == before.Version) {
+		return CatImprove, fmt.Sprintf("junk variant %q cleared: phantom (absent from ID) or redundant (== version); de-noise", before.Variant)
+	}
+
+	// (b) SLICE-12 family-preserving DE-NOISE/ENRICH: the FAMILY is unchanged and NO
+	// ID-present non-family field was lost (realNonFamilyLoss=false) — every changed field
+	// is either an ENRICHMENT (empty→populated, or a superstring extension) or a PHANTOM
+	// loss (a value ABSENT from the model ID). This covers compound changes the single-field
+	// branches above miss — notably the glm glued-'v' (Q1): glm-4.5v before (glm,"",4.5,
+	// modifier="vision") → after (glm,variant="v",4.5,"") simultaneously ENRICHES the variant
+	// ("v") and DROPS the phantom "vision" modifier ("vision" is NOT a substring of the ID
+	// "glm-4.5v"). An ID-present value lost would have tripped realNonFamilyLoss and never
+	// reach here; the family is preserved; so no currently-correct decomposition is worsened.
+	if before.Family == after.Family && !realNonFamilyLoss(before, after, id) {
+		return CatImprove, "family-preserving de-noise/enrich: only phantom losses and/or enrichments, no ID-present field lost"
+	}
+
 	// A divergent ID that converged to a brand-new value (no provider had it BEFORE,
 	// not yet fully consistent) but where the change is still a strict enrichment was
 	// already caught above. Anything reaching here changed a populated field to a
@@ -1110,11 +1162,12 @@ func TestSLICE11_ClassifyFamilyReduction(t *testing.T) {
 // TestSLICE12_SanctionedAllowlistGate is the NO-MASKING adversarial unit (bestiary-1kfq,
 // the supervisor refinement that OVERRIDES the handoff): the o-series sanctioned escape is
 // EXPECTED-TUPLE-MATCHED, not ID-blanket. It proves four properties:
-//   (1) an allowlisted ID whose observed AFTER tuple EQUALS its ratified target → cat-(a).
-//   (2) an allowlisted ID mutated to a WRONG (non-ratified) tuple → cat-(c) (no masking).
-//   (3) an o-series-SHAPED reassignment whose ID is NOT on the allowlist → cat-(c).
-//   (4) an UNRELATED bug riding an allowlisted ID (a tuple unrelated to the ratified one)
-//       → cat-(c) — you cannot hide a regression on an allowlisted ID under the escape.
+//
+//	(1) an allowlisted ID whose observed AFTER tuple EQUALS its ratified target → cat-(a).
+//	(2) an allowlisted ID mutated to a WRONG (non-ratified) tuple → cat-(c) (no masking).
+//	(3) an o-series-SHAPED reassignment whose ID is NOT on the allowlist → cat-(c).
+//	(4) an UNRELATED bug riding an allowlisted ID (a tuple unrelated to the ratified one)
+//	    → cat-(c) — you cannot hide a regression on an allowlisted ID under the escape.
 func TestSLICE12_SanctionedAllowlistGate(t *testing.T) {
 	// A small, explicit allowlist standing in for the committed artifact: o1-mini's
 	// ratified target tuple per bestiary-xdbc (Q2a/Q2b).
@@ -1155,15 +1208,15 @@ func TestSLICE12_SanctionedAllowlistGate(t *testing.T) {
 			want: CatRegress,
 		},
 		{
-			desc:   "(3) gpt-4o-SHAPED taxonomy change (version '4o' cleared) on a NON-allowlisted ID → cat-(c); you MUST allowlist it",
-			id:     "zzz-4o", // not in the allowlist; '4o' is in the ID
+			desc:   "(3) LOSSY gpt-4o-shaped change (version '4o' DROPPED, not relocated) on a NON-allowlisted ID → cat-(c); you MUST allowlist it",
+			id:     "zzz-4o", // not in the allowlist; '4o' is in the ID and is NOT re-surfaced
 			before: decompTuple{"gpt", "", "4o", ""},
-			after:  decompTuple{"gpt", "4o", "", ""},
-			// Consistent before+after (not a divergence-convergence), so only the allowlist
-			// could bless it; absent an entry it falls to cat-(c) because the version '4o'
-			// (ID-present) was cleared without re-surfacing — caught by the mechanical path.
+			after:  decompTuple{"gpt", "", "", ""}, // '4o' dropped entirely → real loss
+			// A LOSSLESS 4o relocation (version→variant) is correctly a de-noise improvement
+			// and needs no allowlist; but a LOSSY drop of the ID-present '4o' (not re-surfaced)
+			// is a real regression unless the exact ratified tuple is allowlisted.
 			bID:  []decompTuple{{"gpt", "", "4o", ""}},
-			aID:  []decompTuple{{"gpt", "4o", "", ""}},
+			aID:  []decompTuple{{"gpt", "", "", ""}},
 			want: CatRegress,
 		},
 		{
@@ -1183,5 +1236,62 @@ func TestSLICE12_SanctionedAllowlistGate(t *testing.T) {
 				t.Errorf("classifyDecompChange = %s (%s), want %s", got, reason, tc.want)
 			}
 		})
+	}
+}
+
+// TestSLICE12_AllowlistConformsToRatification asserts the committed o-series allowlist
+// artifact conforms to the bestiary-xdbc ratified rule: every entry is family="gpt" with
+// the line designator in the VARIANT slot, version follows the designator rule (o→digits,
+// 4o/audio→empty), and the ID actually carries the designator. This is the reviewable
+// integrity check tying the artifact to the ratification (no stray/padded entries).
+func TestSLICE12_AllowlistConformsToRatification(t *testing.T) {
+	allow, err := loadSanctionedAllowlist()
+	if err != nil {
+		t.Fatalf("%v", err)
+	}
+	if len(allow) == 0 {
+		t.Fatal("allowlist is empty — expected the o-series entries")
+	}
+	digits := func(s string) bool {
+		if s == "" {
+			return false
+		}
+		for _, r := range s {
+			if r < '0' || r > '9' {
+				return false
+			}
+		}
+		return true
+	}
+	for id, tup := range allow {
+		idl := strings.ToLower(string(id))
+		if tup.Family != "gpt" {
+			t.Errorf("%s: family=%q, want gpt (bestiary-xdbc: all OpenAI under gpt)", id, tup.Family)
+		}
+		switch tup.Variant {
+		case "o":
+			if !digits(tup.Version) {
+				t.Errorf("%s: variant 'o' must have a digit version, got %q", id, tup.Version)
+			}
+			if !strings.Contains(idl, "o"+tup.Version) {
+				t.Errorf("%s: ID does not carry o%s designator", id, tup.Version)
+			}
+		case "4o":
+			if tup.Version != "" {
+				t.Errorf("%s: variant '4o' must have empty version, got %q", id, tup.Version)
+			}
+			if !strings.Contains(idl, "4o") {
+				t.Errorf("%s: ID does not contain '4o'", id)
+			}
+		case "audio":
+			if tup.Version != "" {
+				t.Errorf("%s: variant 'audio' must have empty version, got %q", id, tup.Version)
+			}
+			if !strings.Contains(idl, "audio") {
+				t.Errorf("%s: ID does not contain 'audio'", id)
+			}
+		default:
+			t.Errorf("%s: variant %q is not a ratified line designator (o/4o/audio)", id, tup.Variant)
+		}
 	}
 }
