@@ -1,10 +1,10 @@
 {
   "total_multi_provider_ids": 864,
-  "total_divergent_ids": 13,
+  "total_divergent_ids": 10,
   "cat_a_vendor_case_count": 0,
-  "cat_b_bare_gen_split_count": 1,
-  "cat_c_member_variant_count": 8,
-  "cat_d_genuine_mislabel_count": 4,
+  "cat_b_bare_gen_split_count": 0,
+  "cat_c_member_variant_count": 7,
+  "cat_d_genuine_mislabel_count": 3,
   "genuine_mislabel_pairs": [
     {
       "family_a": "qwen",
@@ -14,11 +14,6 @@
     {
       "family_a": "llama-3.3-nemotron-super-49b",
       "family_b": "nemotron",
-      "count": 1
-    },
-    {
-      "family_a": "qwen",
-      "family_b": "text-embedding",
       "count": 1
     }
   ],

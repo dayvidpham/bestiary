@@ -473,28 +473,36 @@ func TestSnapshotAnalysis_CrossProviderDivergences(t *testing.T) {
 	// hermes-2-pro-llama (variant 'pro' on one side only). These warrant a follow-up slice or
 	// upstream data fix; see the SLICE-12 worker report.
 	//
-	// SLICE-14 (rc2) TIER-1 straggler fix-cycle (bestiary-vs61): 18 → 13. Converged 5 of the
-	// TIER-1 set under the hardened (token-aware, ovf6) gate, cat-(c)=0:
-	//  - deepseek-chat-v3-0324 / deepseek-chat-v3.1 → (deepseek, chat, …) — "chat" is now an
-	//    ATTESTABLE deepseek member (non-lossy; v3.1 version preserved via the v-prefix recover).
-	//  - command-r-plus-08-2024 → (command, r-plus, …) + command-a-reasoning-08-2025 → (command,
-	//    a-reasoning, …) — hyphenated-member overrides + MM-YYYY date-guard (08 is a date, not a
-	//    version; the categorizer's isDateFragmentInID agrees so the clear is not a loss).
+	// SLICE-14 (rc2) straggler fix-cycle (bestiary-vs61), team-lead-refined set: 18 → 10.
+	// GOVERNING PRINCIPLE: converge only when unambiguous under EXISTING ratified rules (family/
+	// vendor-strip/gen-split/date-guard/product-name member recovery) with NO modifier-vs-variant
+	// taxonomy judgment (that is reserved for S10). 5 COMMITTED + 3 CONDITIONALS all cleanly
+	// promoted (best-case 18→10), cat-(c)=0 under the hardened (token-aware, ovf6) gate:
+	//  - deepseek-chat-v3-0324 / -v3.1 → (deepseek, chat, …) — "chat" is the DeepSeek product
+	//    line, recovered as a deepseek member (non-lossy; v3.1 version preserved via v-prefix).
+	//  - command-r-plus-08-2024 → (command, r-plus); command-r7b-12-2024 → (command, r) ["r7b" =
+	//    member "r" + param-size "7b"]. R-line members; 08 is an MM-YYYY date (date-guarded).
 	//  - meta-llama/Meta-Llama-3.1-8B-Instruct → (llama, instruct, 3.1) — SURGICAL doubled-vendor
-	//    strip (org "meta-llama/" + repeated "Meta-Llama-…"), scoped so it cannot recur the broad
-	//    "meta"-alias cat-(c) collateral on odd-format IDs.
-	// command-r7b-12-2024 SPILLED to TIER-2 (surfaced, NOT forced): converging it needs a
-	// speculative r7b→r glued-size split + a date-guard threaded through the "r7b" token, beyond
-	// attestable member recovery / past the isCleanVariantToken guard.
+	//    strip (org "meta-llama/" + repeated "Meta-Llama-…"); scoped so the broad-"meta"-alias
+	//    cat-(c) collateral on odd-format IDs CANNOT recur.
+	//  - grok-code-fast-1 → (grok, code-fast, 1) — "code-fast" as ONE product-name member unit
+	//    (no fast-as-modifier judgment).
+	//  - Qwen/Qwen3-Embedding-* → (qwen, embedding, 3) — the ID-derived real family "qwen" wins
+	//    over the generic raw "text-embedding" self-map. GUARDED: OpenAI text-embedding-3-large/
+	//    small (whose ID literally IS "text-embedding") keep family "text-embedding" (no collateral).
+	//  - tencent/hy3-preview → (hy, "", 3, preview) — bare "hy" gen-split ("hy" attested via raw="Hy").
+	// command-r7b's version field still carries the date frag "12" (a shared, pre-existing value
+	// on both providers — CONVERGED, not a divergence; surfaced for a future date-guard polish).
 	//
-	// RESIDUAL = 13 (HONEST). Still 5 SLICE-10-blocked (llama-3.2-11b-vision ×2, phi-4-multimodal,
-	// kimi-k2-thinking-turbo ×2). TIER-2 ledger (8): qwen3-next ×2 (closed-predicate-blocked,
-	// "next"), nemotron (embedded-family), grok-code-fast-1 ("fast", closed-predicate), llama-4-scout
-	// ("scout", closed-predicate), tencent/hy3-preview ("hy" unregistered), Qwen3-Embedding
-	// (curated text-embedding self-map), command-r7b (glued-size split). Final TIER-2 ledger
-	// (~6-7) is confirmed with team-lead + pinned later (post-S10), not in this slice.
+	// RESIDUAL = 10 (HONEST). 9 are S10-PENDING (converge once S10's systematic modifier ruling +
+	// Modifier-LIST land): kimi-k2-thinking-turbo ×2, llama-3.2-11b-vision-instruct ×2, phi-4-
+	// multimodal-instruct (the 5 multi-modifier), command-a-reasoning-08-2025 ("reasoning"=
+	// borderline-capability), llama-4-scout + qwen3-next ×2 (line-designator + instruct→modifier).
+	// 1 is PERMANENT v0.2.2 LEDGER: nvidia/llama-3.3-nemotron-super-49b-v1.5 (embedded-family — the
+	// ID leads with "llama", canonical is "nemotron"; GH-followup). The set-equality enumerated-
+	// divergence gate is pinned later (post-S10), not in this slice.
 	const (
-		divergenceExact = 13
+		divergenceExact = 10
 		// Secondary sanity band — guards against a wholesale snapshot/pipeline
 		// breakage that happens to coincidentally land on a different exact value.
 		divergenceLow  = 6
@@ -534,14 +542,14 @@ func TestSnapshotAnalysis_CrossProviderDivergences(t *testing.T) {
 	// flash-lite, dotted-gen, gpt-codex). CatD 34→5 (enforce-set own-family/org corrections +
 	// o-series family fold + qwen3.7-max; residual 5 = qwen3-next ×2, nemotron, text-embedding,
 	// meta-llama — genuine stragglers). CatB unchanged at 1.
-	// SLICE-14: CatC 12→8 (command r-plus/a-reasoning member+date-guard, deepseek chat variant).
-	// CatD 5→4 (meta-llama doubled-vendor strip → llama; residual 4 = qwen3-next ×2, nemotron,
-	// text-embedding). CatB unchanged at 1.
+	// SLICE-14: CatC 12→7 (command r/r-plus member+date-guard, deepseek chat, grok code-fast,
+	// hy3 bare-gen). CatD 5→3 (meta-llama strip → llama, Qwen3-Embedding qwen-wins; residual D =
+	// qwen3-next ×2 + nemotron). CatB 1→0 (hy3 was the last bare-gen-split residual).
 	const (
 		catAExact = 0 // vendor-prefix/case (SLICE-1 M4 resolved all)
-		catBExact = 1 // bare-gen-split (SLICE-11: −1; residual = bases w/o families.json entry)
-		catCExact = 8 // member-variant/version (SLICE-14: −4 via command member+date-guard + deepseek chat)
-		catDExact = 4 // genuine family mislabel (SLICE-14: −1 via meta-llama strip; residual = qwen3-next×2/nemotron/text-embedding)
+		catBExact = 0 // bare-gen-split (SLICE-14: −1 via hy3 "hy" gen-split)
+		catCExact = 7 // member-variant/version (SLICE-14: command r/r-plus, deepseek chat, grok code-fast)
+		catDExact = 3 // genuine family mislabel (SLICE-14: −2 via meta-llama + Qwen3-Embedding; residual = qwen3-next×2 + nemotron)
 	)
 	checkCat := func(name string, got, want int) {
 		if got != want {

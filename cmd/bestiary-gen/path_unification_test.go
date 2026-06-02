@@ -475,6 +475,18 @@ func classifyDecompChange(id bestiary.ModelID, before, after decompTuple, before
 		return CatImprove, "glued family-suffix moved to variant (e.g. glmv → glm + variant 'v'; bestiary-xdbc Q1)"
 	}
 
+	// (b) SLICE-14: the GENERIC "text-embedding" raw self-map descriptor corrected to the
+	// ID-derived REAL family (Qwen/Qwen3-Embedding-* → qwen) — a canonical family correction
+	// (the ID names the actual family; "text-embedding" was a generic provider descriptor),
+	// the same spirit as the canonical-winner enforce set. Admitted only when the AFTER family
+	// is a registered family and no ID-present non-family field was lost. Holds even for the
+	// non-divergent single-provider embedding sizes (0.6B/4B). OpenAI's own text-embedding-3*
+	// keep family "text-embedding" (idFam==rawFam) and never reach here.
+	if strings.EqualFold(string(before.Family), "text-embedding") && before.Family != after.Family &&
+		bestiary.IsKnownFamily(after.Family) && !realNonFamilyLoss(before, after, id) {
+		return CatImprove, "generic 'text-embedding' descriptor corrected to the ID-derived real family (SLICE-14)"
+	}
+
 	// (b) SLICE-12 JUNK-VARIANT removal: a populated variant CLEARED with Family/Version/
 	// Modifier otherwise preserved is a de-noise improvement when the cleared value is EITHER
 	//   - PHANTOM: absent from the model ID (#4 gpt-codex — raw_family "gpt-codex" tagging a

@@ -1,13 +1,31 @@
 {
   "total_records": 4979,
-  "changed_count": 427,
-  "cat_a_divergence_fix_count": 270,
-  "cat_b_improvement_count": 157,
+  "changed_count": 444,
+  "cat_a_divergence_fix_count": 277,
+  "cat_b_improvement_count": 167,
   "cat_c_unexpected_regression_count": 0,
   "justified_exception_count": 0,
   "divergence_before": 81,
-  "divergence_after": 26,
+  "divergence_after": 23,
   "changes": [
+    {
+      "provider": "evroc",
+      "id": "Qwen/Qwen3-Embedding-8B",
+      "raw_family": "text-embedding",
+      "before": "(family=\"text-embedding\",variant=\"\",version=\"\",modifier=\"\")",
+      "after": "(family=\"qwen\",variant=\"embedding\",version=\"3\",modifier=\"\")",
+      "category": "a:divergence-fix",
+      "reason": "now matches a tuple another provider already produced for this ID (BEFORE); only phantom non-family loss permitted (j1nu)"
+    },
+    {
+      "provider": "nebius",
+      "id": "Qwen/Qwen3-Embedding-8B",
+      "raw_family": "text-embedding",
+      "before": "(family=\"text-embedding\",variant=\"\",version=\"\",modifier=\"\")",
+      "after": "(family=\"qwen\",variant=\"embedding\",version=\"3\",modifier=\"\")",
+      "category": "a:divergence-fix",
+      "reason": "now matches a tuple another provider already produced for this ID (BEFORE); only phantom non-family loss permitted (j1nu)"
+    },
     {
       "provider": "neuralwatt",
       "id": "Qwen/Qwen3.6-35B-A3B",
@@ -153,22 +171,13 @@
       "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted (j1nu)"
     },
     {
-      "provider": "cohere",
-      "id": "command-a-reasoning-08-2025",
-      "raw_family": "command-a",
-      "before": "(family=\"command\",variant=\"a\",version=\"\",modifier=\"\")",
-      "after": "(family=\"command\",variant=\"a-reasoning\",version=\"\",modifier=\"\")",
-      "category": "a:divergence-fix",
-      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted (j1nu)"
-    },
-    {
-      "provider": "nano-gpt",
-      "id": "command-a-reasoning-08-2025",
+      "provider": "kilo",
+      "id": "cohere/command-r7b-12-2024",
       "raw_family": "",
-      "before": "(family=\"command-a-reasoning\",variant=\"\",version=\"08\",modifier=\"\")",
-      "after": "(family=\"command\",variant=\"a-reasoning\",version=\"\",modifier=\"\")",
+      "before": "(family=\"command\",variant=\"\",version=\"12\",modifier=\"\")",
+      "after": "(family=\"command\",variant=\"r\",version=\"12\",modifier=\"\")",
       "category": "a:divergence-fix",
-      "reason": "family over-capture reduced to registered short base, converged onto an independently-produced sibling tuple (SLICE-11; j1nu-hardened: no ID-present non-family field lost)"
+      "reason": "now matches a tuple another provider already produced for this ID (BEFORE); only phantom non-family loss permitted (j1nu)"
     },
     {
       "provider": "kilo",
@@ -2412,6 +2421,33 @@
       "reason": "now matches a tuple another provider already produced for this ID (BEFORE); only phantom non-family loss permitted (j1nu)"
     },
     {
+      "provider": "kilo",
+      "id": "tencent/hy3-preview",
+      "raw_family": "",
+      "before": "(family=\"hy3\",variant=\"\",version=\"\",modifier=\"preview\")",
+      "after": "(family=\"hy\",variant=\"\",version=\"3\",modifier=\"preview\")",
+      "category": "a:divergence-fix",
+      "reason": "family over-capture reduced to registered short base, converged onto an independently-produced sibling tuple (SLICE-11; j1nu-hardened: no ID-present non-family field lost)"
+    },
+    {
+      "provider": "openrouter",
+      "id": "tencent/hy3-preview",
+      "raw_family": "Hy",
+      "before": "(family=\"hy\",variant=\"\",version=\"\",modifier=\"preview\")",
+      "after": "(family=\"hy\",variant=\"\",version=\"3\",modifier=\"preview\")",
+      "category": "a:divergence-fix",
+      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted (j1nu)"
+    },
+    {
+      "provider": "zenmux",
+      "id": "tencent/hy3-preview",
+      "raw_family": "Hy",
+      "before": "(family=\"hy\",variant=\"\",version=\"\",modifier=\"preview\")",
+      "after": "(family=\"hy\",variant=\"\",version=\"3\",modifier=\"preview\")",
+      "category": "a:divergence-fix",
+      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted (j1nu)"
+    },
+    {
       "provider": "nano-gpt",
       "id": "undi95/remm-slerp-l2-13b",
       "raw_family": "llama",
@@ -2419,6 +2455,33 @@
       "after": "(family=\"remm\",variant=\"\",version=\"\",modifier=\"\")",
       "category": "a:divergence-fix",
       "reason": "now matches a tuple another provider already produced for this ID (BEFORE); only phantom non-family loss permitted (j1nu)"
+    },
+    {
+      "provider": "nano-gpt",
+      "id": "x-ai/grok-code-fast-1",
+      "raw_family": "grok",
+      "before": "(family=\"grok\",variant=\"\",version=\"1\",modifier=\"\")",
+      "after": "(family=\"grok\",variant=\"code-fast\",version=\"1\",modifier=\"\")",
+      "category": "a:divergence-fix",
+      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted (j1nu)"
+    },
+    {
+      "provider": "qiniu-ai",
+      "id": "x-ai/grok-code-fast-1",
+      "raw_family": "",
+      "before": "(family=\"grok-code-fast\",variant=\"\",version=\"1\",modifier=\"\")",
+      "after": "(family=\"grok\",variant=\"code-fast\",version=\"1\",modifier=\"\")",
+      "category": "a:divergence-fix",
+      "reason": "family over-capture reduced to registered short base, converged onto an independently-produced sibling tuple (SLICE-11; j1nu-hardened: no ID-present non-family field lost)"
+    },
+    {
+      "provider": "zenmux",
+      "id": "x-ai/grok-code-fast-1",
+      "raw_family": "",
+      "before": "(family=\"grok-code-fast\",variant=\"\",version=\"1\",modifier=\"\")",
+      "after": "(family=\"grok\",variant=\"code-fast\",version=\"1\",modifier=\"\")",
+      "category": "a:divergence-fix",
+      "reason": "family over-capture reduced to registered short base, converged onto an independently-produced sibling tuple (SLICE-11; j1nu-hardened: no ID-present non-family field lost)"
     },
     {
       "provider": "kilo",
@@ -2581,6 +2644,15 @@
       "after": "(family=\"qwq\",variant=\"\",version=\"\",modifier=\"\")",
       "category": "b:improvement",
       "reason": "canonical-winner enforce: ID-derived distinct family won over a parent/org mislabel (family_enforce.json ledger)"
+    },
+    {
+      "provider": "nearai",
+      "id": "Qwen/Qwen3-Embedding-0.6B",
+      "raw_family": "text-embedding",
+      "before": "(family=\"text-embedding\",variant=\"\",version=\"\",modifier=\"\")",
+      "after": "(family=\"qwen\",variant=\"embedding\",version=\"3\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "generic 'text-embedding' descriptor corrected to the ID-derived real family (SLICE-14)"
     },
     {
       "provider": "github-models",
@@ -3033,6 +3105,51 @@
       "reason": "junk variant \"codex\" cleared: phantom (absent from ID) or redundant (== version, ID-confirmed); de-noise"
     },
     {
+      "provider": "abacus",
+      "id": "grok-code-fast-1",
+      "raw_family": "grok",
+      "before": "(family=\"grok\",variant=\"\",version=\"1\",modifier=\"\")",
+      "after": "(family=\"grok\",variant=\"code-fast\",version=\"1\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "strict enrichment — only previously-empty field(s) populated"
+    },
+    {
+      "provider": "frogbot",
+      "id": "grok-code-fast-1",
+      "raw_family": "grok",
+      "before": "(family=\"grok\",variant=\"\",version=\"1\",modifier=\"\")",
+      "after": "(family=\"grok\",variant=\"code-fast\",version=\"1\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "strict enrichment — only previously-empty field(s) populated"
+    },
+    {
+      "provider": "github-copilot",
+      "id": "grok-code-fast-1",
+      "raw_family": "grok",
+      "before": "(family=\"grok\",variant=\"\",version=\"1\",modifier=\"\")",
+      "after": "(family=\"grok\",variant=\"code-fast\",version=\"1\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "strict enrichment — only previously-empty field(s) populated"
+    },
+    {
+      "provider": "helicone",
+      "id": "grok-code-fast-1",
+      "raw_family": "grok",
+      "before": "(family=\"grok\",variant=\"\",version=\"1\",modifier=\"\")",
+      "after": "(family=\"grok\",variant=\"code-fast\",version=\"1\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "strict enrichment — only previously-empty field(s) populated"
+    },
+    {
+      "provider": "jiekou",
+      "id": "grok-code-fast-1",
+      "raw_family": "grok",
+      "before": "(family=\"grok\",variant=\"\",version=\"1\",modifier=\"\")",
+      "after": "(family=\"grok\",variant=\"code-fast\",version=\"1\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "strict enrichment — only previously-empty field(s) populated"
+    },
+    {
       "provider": "groq",
       "id": "groq/compound-mini",
       "raw_family": "groq",
@@ -3049,6 +3166,24 @@
       "after": "(family=\"text-embedding\",variant=\"large\",version=\"\",modifier=\"\")",
       "category": "b:improvement",
       "reason": "strict enrichment — only previously-empty field(s) populated"
+    },
+    {
+      "provider": "tencent-tokenhub",
+      "id": "hy3-preview",
+      "raw_family": "Hy",
+      "before": "(family=\"hy\",variant=\"\",version=\"\",modifier=\"preview\")",
+      "after": "(family=\"hy\",variant=\"\",version=\"3\",modifier=\"preview\")",
+      "category": "b:improvement",
+      "reason": "strict enrichment — only previously-empty field(s) populated"
+    },
+    {
+      "provider": "opencode",
+      "id": "hy3-preview-free",
+      "raw_family": "hy3-free",
+      "before": "(family=\"hy3\",variant=\"free\",version=\"\",modifier=\"\")",
+      "after": "(family=\"hy\",variant=\"free\",version=\"3\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "family over-capture reduced to short base — exact family-suffix→variant move (override semantics), OR before ∉ registry \u0026 after ∈ registry; no ID-present non-family field lost (SLICE-11; j1nu-hardened)"
     },
     {
       "provider": "evroc",
@@ -3402,6 +3537,15 @@
       "reason": "junk variant \"3.6\" cleared: phantom (absent from ID) or redundant (== version, ID-confirmed); de-noise"
     },
     {
+      "provider": "digitalocean",
+      "id": "qwen3-embedding-0.6b",
+      "raw_family": "text-embedding",
+      "before": "(family=\"text-embedding\",variant=\"\",version=\"\",modifier=\"\")",
+      "after": "(family=\"qwen\",variant=\"embedding\",version=\"3\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "generic 'text-embedding' descriptor corrected to the ID-derived real family (SLICE-14)"
+    },
+    {
       "provider": "neuralwatt",
       "id": "qwen3.6-35b-fast",
       "raw_family": "qwen3.6",
@@ -3616,6 +3760,15 @@
       "after": "(family=\"qwq\",variant=\"\",version=\"\",modifier=\"\")",
       "category": "b:improvement",
       "reason": "canonical-winner enforce: ID-derived distinct family won over a parent/org mislabel (family_enforce.json ledger)"
+    },
+    {
+      "provider": "poe",
+      "id": "xai/grok-code-fast-1",
+      "raw_family": "grok",
+      "before": "(family=\"grok\",variant=\"\",version=\"1\",modifier=\"\")",
+      "after": "(family=\"grok\",variant=\"code-fast\",version=\"1\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "strict enrichment — only previously-empty field(s) populated"
     },
     {
       "provider": "venice",

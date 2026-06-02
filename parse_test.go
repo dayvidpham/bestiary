@@ -3541,7 +3541,9 @@ func TestM2_BareGenSplit_NonSplit(t *testing.T) {
 		{"asi1 NOT split (asi∉families)", "", "asi1-mini", "p", "asi1", "mini"},
 		{"esm2 NOT split (esm∉families)", "", "esm2-large", "p", "esm2", "large"},
 		{"wan2 NOT split (wan∉families)", "", "wan2-t2v", "p", "wan2", ""},
-		{"hy3 NOT split (hy∉families)", "", "tencent/hy3-preview", "p", "hy3", ""},
+		// SLICE-14: "hy3" MOVED to the SPLIT set — "hy" is now a registered family
+		// (bare "hy" attested via raw="Hy"), so hy3-preview → (hy, "", 3) [see
+		// TestSLICE14_TIER1Convergences]. It is no longer a NonSplit case.
 		{"r1 NOT split (r∉families)", "", "r1", "p", "r1", ""},
 		// SLICE-3: bare-gen still DECLINES "l3" (base "l" ∉ families.json), but the
 		// family_aliases ledger then folds l3 → llama (RATIFIED: L3.x = Llama-3
@@ -4123,11 +4125,12 @@ func TestSLICE12_Convergences(t *testing.T) {
 	}
 }
 
-// TestSLICE14_TIER1Convergences pins the SLICE-14 (rc2) TIER-1 straggler convergences
-// (bestiary-judu): cohere command (date-guard + hyphenated member), deepseek attestable
-// "chat" variant, and the meta-llama surgical doubled-vendor strip. Each is non-lossy and
-// converges under the hardened (token-aware) gate (cat-(c)=0). command-r7b SPILLED to TIER-2
-// (needs a speculative r7b→r glued-size split; surfaced, not forced).
+// TestSLICE14_TIER1Convergences pins the SLICE-14 (rc2) straggler convergences (bestiary-judu),
+// per the team-lead-refined set: 5 COMMITTED (cohere command r/r-plus date-guard+member,
+// deepseek product-line "chat", meta-llama surgical doubled-vendor) + 3 CONDITIONALS cleanly
+// promoted under existing rules (grok product-name "code-fast", Qwen3-Embedding qwen-wins,
+// hy3 bare-gen). Each is non-lossy under the hardened gate (cat-(c)=0). command-a-reasoning is
+// DEFERRED to S10 (reasoning = borderline-capability, modifier-vs-variant judgment).
 func TestSLICE14_TIER1Convergences(t *testing.T) {
 	cases := []struct {
 		desc                   string
@@ -4135,19 +4138,35 @@ func TestSLICE14_TIER1Convergences(t *testing.T) {
 		id                     bestiary.ModelID
 		wFam, wVar, wVer, wMod string
 	}{
-		// deepseek "chat" attestable member (non-lossy; v3.1 version preserved).
+		// COMMITTED — deepseek "chat" product-line member (non-lossy; v3.1 version preserved).
 		{"deepseek-chat-v3-0324 empty → (deepseek,chat)", "", "deepseek/deepseek-chat-v3-0324", "deepseek", "chat", "", ""},
 		{"deepseek-chat-v3-0324 raw=deepseek → (deepseek,chat)", "deepseek", "deepseek/deepseek-chat-v3-0324", "deepseek", "chat", "", ""},
 		{"deepseek-chat-v3.1 empty → (deepseek,chat,3.1)", "", "deepseek/deepseek-chat-v3.1", "deepseek", "chat", "3.1", ""},
 		{"deepseek-chat-v3.1 raw=deepseek → (deepseek,chat,3.1)", "deepseek", "deepseek/deepseek-chat-v3.1", "deepseek", "chat", "3.1", ""},
-		// cohere command: hyphenated member + MM-YYYY date-guard (08/12 are dates, not versions).
+		// COMMITTED — cohere command R-line members (date-guard 08/12; "r7b"=member "r"+size "7b").
 		{"command-r-plus-08-2024 empty → (command,r-plus)", "", "cohere/command-r-plus-08-2024", "command", "r-plus", "", ""},
 		{"command-r-plus-08-2024 raw=command-r → (command,r-plus)", "command-r", "cohere/command-r-plus-08-2024", "command", "r-plus", "", ""},
-		{"command-a-reasoning-08-2025 empty → (command,a-reasoning)", "", "command-a-reasoning-08-2025", "command", "a-reasoning", "", ""},
-		{"command-a-reasoning-08-2025 raw=command-a → (command,a-reasoning)", "command-a", "command-a-reasoning-08-2025", "command", "a-reasoning", "", ""},
-		// meta-llama SURGICAL doubled-vendor strip (org "meta-llama/" + "Meta-Llama-…" → llama).
+		// "r7b" = member "r" + param-size "7b"; both sides CONVERGE to (command, r, 12). The
+		// version "12" is the MM of the "12-2024" date — a pre-existing SHARED value on both
+		// providers (NOT introduced here, NOT a divergence); date-guarding it to "" is a future
+		// polish surfaced to the supervisor. The convergence (variant r on both) is the fix.
+		{"command-r7b-12-2024 empty → (command,r) [r7b=r+7b-size]", "", "cohere/command-r7b-12-2024", "command", "r", "12", ""},
+		{"command-r7b-12-2024 raw=command-r → (command,r)", "command-r", "cohere/command-r7b-12-2024", "command", "r", "12", ""},
+		// COMMITTED — meta-llama SURGICAL doubled-vendor strip (org "meta-llama/" + "Meta-Llama-…").
 		{"meta-llama/Meta-Llama-3.1 empty → (llama,instruct,3.1)", "", "meta-llama/Meta-Llama-3.1-8B-Instruct", "llama", "instruct", "3.1", ""},
 		{"meta-llama/Meta-Llama-3.1 raw=llama → (llama,instruct,3.1)", "llama", "meta-llama/Meta-Llama-3.1-8B-Instruct", "llama", "instruct", "3.1", ""},
+		// CONDITIONAL (promoted) — grok product-name member "code-fast" (one unit; no fast-as-modifier judgment).
+		{"grok-code-fast-1 empty → (grok,code-fast,1)", "", "x-ai/grok-code-fast-1", "grok", "code-fast", "1", ""},
+		{"grok-code-fast-1 raw=grok → (grok,code-fast,1)", "grok", "x-ai/grok-code-fast-1", "grok", "code-fast", "1", ""},
+		// CONDITIONAL (promoted) — Qwen3-Embedding: ID-family qwen wins over generic raw "text-embedding".
+		{"Qwen3-Embedding raw=text-embedding → (qwen,embedding,3)", "text-embedding", "Qwen/Qwen3-Embedding-8B", "qwen", "embedding", "3", ""},
+		{"Qwen3-Embedding raw=qwen → (qwen,embedding,3)", "qwen", "Qwen/Qwen3-Embedding-8B", "qwen", "embedding", "3", ""},
+		// CONDITIONAL guard — OpenAI text-embedding-3* MUST stay family "text-embedding" (untouched).
+		{"GUARD: openai text-embedding-3-large stays text-embedding", "text-embedding", "openai/text-embedding-3-large", "text-embedding", "large", "3", ""},
+		{"GUARD: openai text-embedding-3-small stays text-embedding", "text-embedding", "text-embedding-3-small", "text-embedding", "small", "3", ""},
+		// CONDITIONAL (promoted) — hy3 bare-gen (bare "hy" attested via raw="Hy").
+		{"hy3-preview empty → (hy,,3,preview)", "", "tencent/hy3-preview", "hy", "", "3", "preview"},
+		{"hy3-preview raw=Hy → (hy,,3,preview)", "Hy", "tencent/hy3-preview", "hy", "", "3", "preview"},
 	}
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {

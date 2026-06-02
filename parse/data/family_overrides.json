@@ -7,7 +7,6 @@
   "codestral-embed": { "family": "codestral", "variant": "embed" },
   "cohere-embed": { "family": "cohere", "variant": "embed" },
   "command-a": { "family": "command", "variant": "a" },
-  "command-a-reasoning": { "family": "command", "variant": "a-reasoning" },
   "command-r": { "family": "command", "variant": "r" },
   "command-r-plus": { "family": "command", "variant": "r-plus" },
   "dall-e": { "family": "dall-e", "variant": "" },

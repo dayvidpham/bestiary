@@ -1672,6 +1672,15 @@ func reconcileIDDriven(rawFam Family, rawVar, rawVer, rawMod string, id ModelID,
 				}
 			}
 		}
+		// SLICE-14 (TIER-1 conditional): raw_family "text-embedding" is a GENERIC descriptor
+		// (a self-map override), not a product family. When the ID itself names a real registered
+		// family (Qwen/Qwen3-Embedding-8B → ID-family "qwen"), that family WINS. GUARD: OpenAI's
+		// own "text-embedding-3-large/small" — whose ID literally IS "text-embedding" — derives
+		// idFam=="text-embedding", so idFam==rawFam there and this branch never fires (no collateral).
+		if strings.EqualFold(string(rawFam), "text-embedding") && idFam != "" &&
+			!strings.EqualFold(string(idFam), "text-embedding") && familyKeyKnown(string(idFam)) {
+			return idFam, idVar, idVer, orSelf(idMod, rawMod)
+		}
 		// Family disagreement (ID-path over-capture or a genuine ledger mislabel):
 		// keep the raw-aware result verbatim. Converging these is Option B's job.
 		return family, variant, version, modifier
@@ -2607,6 +2616,13 @@ func recoverMemberVariant(idTokens []string, family Family) string {
 			if lowTok == member {
 				return member
 			}
+			// SLICE-14: a member GLUED to a trailing param-size ("r7b" = member "r" + size
+			// "7b" for command-r7b-…) recovers the bare member — the param-size is GH#9 noise
+			// dropped from the canonical tuple. Both pieces are attested (member ∈ families.json,
+			// size ∈ isParamSizeToken), so this is mechanical, not a speculative add.
+			if rest, ok := strings.CutPrefix(lowTok, member); ok && rest != "" && isParamSizeToken(rest) {
+				return member
+			}
 		}
 		// 2. Curated variant suffix fallback (registered families only).
 		if bare, ok := bareVariantSuffix(pd, lowTok); ok {
@@ -3072,6 +3088,19 @@ func reduceOverCapturedFamily(pd *parseData, family Family) (Family, string, boo
 	// Must be a STRICT reduction (a real shortening of the compound).
 	if base == family || strings.EqualFold(string(base), s) {
 		return "", "", false
+	}
+
+	// SLICE-14: the ENTIRE remainder is a single registered COMPOUND member of the base
+	// (grok-code-fast → grok + member "code-fast"). Taking it as one product-name variant
+	// unit avoids a per-token residue decision on "fast" (which would be a modifier-vs-variant
+	// judgment reserved for S10) — the member is curated in families.json, so this is
+	// attested product-name recovery, not a speculative split.
+	if info, ok := pd.families[base]; ok {
+		for _, m := range info.Members {
+			if rest == m {
+				return base, m, true
+			}
+		}
 	}
 
 	// Every remaining token must be decomposition residue; the first member/suffix
