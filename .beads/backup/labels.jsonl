@@ -1045,6 +1045,9 @@
 {"issue_id":"bestiary-orvc","label":"aura:p10-impl:s10-review"}
 {"issue_id":"bestiary-orvc","label":"aura:severity:important"}
 {"issue_id":"bestiary-orzd","label":"aura:p9-impl:s9-slice"}
+{"issue_id":"bestiary-ovf6","label":"aura:p9-impl:s9-slice"}
+{"issue_id":"bestiary-ovf6","label":"followup"}
+{"issue_id":"bestiary-ovf6","label":"parse"}
 {"issue_id":"bestiary-ovn0","label":"aura:p10-impl:s10-review"}
 {"issue_id":"bestiary-ozew","label":"aura:p11-user:s11-uat"}
 {"issue_id":"bestiary-p09y","label":"aura:p9-impl:s9-slice"}
