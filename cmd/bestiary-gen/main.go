@@ -1427,8 +1427,18 @@ func tokenToConstPart(tok string) string {
 		return digitPart + alphaPart
 	}
 
-	// 3. Default: title-case.
-	return strings.ToUpper(lower[:1]) + lower[1:]
+	// 3. Default: title-case. SLICE-12: a multi-token value (e.g. the modifier
+	// "deep-research" from o3-deep-research, passed here whole) is split on any
+	// non-alphanumeric separator and each sub-token title-cased, joined with a single
+	// within-segment underscore — so an internal hyphen never leaks into the identifier
+	// ("deep-research" → "Deep_Research"). Hyphen-free tokens are unchanged.
+	subs := strings.FieldsFunc(lower, func(r rune) bool {
+		return !unicode.IsLetter(r) && !unicode.IsDigit(r)
+	})
+	for i, s := range subs {
+		subs[i] = strings.ToUpper(s[:1]) + s[1:]
+	}
+	return strings.Join(subs, "_")
 }
 
 // nameForCanonical derives the Model__* constant name for a single ModelInfo.
