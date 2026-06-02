@@ -1,12 +1,12 @@
 {
   "total_records": 4979,
-  "changed_count": 396,
-  "cat_a_divergence_fix_count": 257,
-  "cat_b_improvement_count": 139,
+  "changed_count": 427,
+  "cat_a_divergence_fix_count": 270,
+  "cat_b_improvement_count": 157,
   "cat_c_unexpected_regression_count": 0,
   "justified_exception_count": 0,
   "divergence_before": 81,
-  "divergence_after": 31,
+  "divergence_after": 26,
   "changes": [
     {
       "provider": "neuralwatt",
@@ -115,6 +115,96 @@
       "after": "(family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"latest\")",
       "category": "a:divergence-fix",
       "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"latest\")"
+    },
+    {
+      "provider": "kilo",
+      "id": "cohere/command-r-plus-08-2024",
+      "raw_family": "",
+      "before": "(family=\"command-r-plus\",variant=\"\",version=\"08\",modifier=\"\")",
+      "after": "(family=\"command\",variant=\"r-plus\",version=\"\",modifier=\"\")",
+      "category": "a:divergence-fix",
+      "reason": "family over-capture reduced to registered short base, converged onto an independently-produced sibling tuple (SLICE-11; j1nu-hardened: no ID-present non-family field lost)"
+    },
+    {
+      "provider": "merge-gateway",
+      "id": "cohere/command-r-plus-08-2024",
+      "raw_family": "command-r",
+      "before": "(family=\"command\",variant=\"r\",version=\"\",modifier=\"\")",
+      "after": "(family=\"command\",variant=\"r-plus\",version=\"\",modifier=\"\")",
+      "category": "a:divergence-fix",
+      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted (j1nu)"
+    },
+    {
+      "provider": "nano-gpt",
+      "id": "cohere/command-r-plus-08-2024",
+      "raw_family": "command-r",
+      "before": "(family=\"command\",variant=\"r\",version=\"\",modifier=\"\")",
+      "after": "(family=\"command\",variant=\"r-plus\",version=\"\",modifier=\"\")",
+      "category": "a:divergence-fix",
+      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted (j1nu)"
+    },
+    {
+      "provider": "openrouter",
+      "id": "cohere/command-r-plus-08-2024",
+      "raw_family": "command-r",
+      "before": "(family=\"command\",variant=\"r\",version=\"\",modifier=\"\")",
+      "after": "(family=\"command\",variant=\"r-plus\",version=\"\",modifier=\"\")",
+      "category": "a:divergence-fix",
+      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted (j1nu)"
+    },
+    {
+      "provider": "cohere",
+      "id": "command-a-reasoning-08-2025",
+      "raw_family": "command-a",
+      "before": "(family=\"command\",variant=\"a\",version=\"\",modifier=\"\")",
+      "after": "(family=\"command\",variant=\"a-reasoning\",version=\"\",modifier=\"\")",
+      "category": "a:divergence-fix",
+      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted (j1nu)"
+    },
+    {
+      "provider": "nano-gpt",
+      "id": "command-a-reasoning-08-2025",
+      "raw_family": "",
+      "before": "(family=\"command-a-reasoning\",variant=\"\",version=\"08\",modifier=\"\")",
+      "after": "(family=\"command\",variant=\"a-reasoning\",version=\"\",modifier=\"\")",
+      "category": "a:divergence-fix",
+      "reason": "family over-capture reduced to registered short base, converged onto an independently-produced sibling tuple (SLICE-11; j1nu-hardened: no ID-present non-family field lost)"
+    },
+    {
+      "provider": "kilo",
+      "id": "deepseek/deepseek-chat-v3-0324",
+      "raw_family": "",
+      "before": "(family=\"deepseek-chat-v3\",variant=\"\",version=\"\",modifier=\"\")",
+      "after": "(family=\"deepseek\",variant=\"chat\",version=\"\",modifier=\"\")",
+      "category": "a:divergence-fix",
+      "reason": "family over-capture reduced to registered short base, converged onto an independently-produced sibling tuple (SLICE-11; j1nu-hardened: no ID-present non-family field lost)"
+    },
+    {
+      "provider": "openrouter",
+      "id": "deepseek/deepseek-chat-v3-0324",
+      "raw_family": "deepseek",
+      "before": "(family=\"deepseek\",variant=\"\",version=\"\",modifier=\"\")",
+      "after": "(family=\"deepseek\",variant=\"chat\",version=\"\",modifier=\"\")",
+      "category": "a:divergence-fix",
+      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted (j1nu)"
+    },
+    {
+      "provider": "kilo",
+      "id": "deepseek/deepseek-chat-v3.1",
+      "raw_family": "",
+      "before": "(family=\"deepseek-chat\",variant=\"v3.1\",version=\"\",modifier=\"\")",
+      "after": "(family=\"deepseek\",variant=\"chat\",version=\"3.1\",modifier=\"\")",
+      "category": "a:divergence-fix",
+      "reason": "family over-capture reduced to registered short base, converged onto an independently-produced sibling tuple (SLICE-11; j1nu-hardened: no ID-present non-family field lost)"
+    },
+    {
+      "provider": "openrouter",
+      "id": "deepseek/deepseek-chat-v3.1",
+      "raw_family": "deepseek",
+      "before": "(family=\"deepseek\",variant=\"\",version=\"\",modifier=\"\")",
+      "after": "(family=\"deepseek\",variant=\"chat\",version=\"3.1\",modifier=\"\")",
+      "category": "a:divergence-fix",
+      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted (j1nu)"
     },
     {
       "provider": "kilo",
@@ -529,6 +619,33 @@
       "after": "(family=\"weaver\",variant=\"\",version=\"\",modifier=\"\")",
       "category": "a:divergence-fix",
       "reason": "now matches a tuple another provider already produced for this ID (BEFORE); only phantom non-family loss permitted (j1nu)"
+    },
+    {
+      "provider": "abacus",
+      "id": "meta-llama/Meta-Llama-3.1-8B-Instruct",
+      "raw_family": "llama",
+      "before": "(family=\"llama\",variant=\"instruct\",version=\"\",modifier=\"\")",
+      "after": "(family=\"llama\",variant=\"instruct\",version=\"3.1\",modifier=\"\")",
+      "category": "a:divergence-fix",
+      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted (j1nu)"
+    },
+    {
+      "provider": "nebius",
+      "id": "meta-llama/Meta-Llama-3.1-8B-Instruct",
+      "raw_family": "",
+      "before": "(family=\"meta\",variant=\"\",version=\"\",modifier=\"\")",
+      "after": "(family=\"llama\",variant=\"instruct\",version=\"3.1\",modifier=\"\")",
+      "category": "a:divergence-fix",
+      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted (j1nu)"
+    },
+    {
+      "provider": "siliconflow",
+      "id": "meta-llama/Meta-Llama-3.1-8B-Instruct",
+      "raw_family": "llama",
+      "before": "(family=\"llama\",variant=\"instruct\",version=\"\",modifier=\"\")",
+      "after": "(family=\"llama\",variant=\"instruct\",version=\"3.1\",modifier=\"\")",
+      "category": "a:divergence-fix",
+      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted (j1nu)"
     },
     {
       "provider": "nano-gpt",
@@ -2323,6 +2440,15 @@
     },
     {
       "provider": "cloudflare-workers-ai",
+      "id": "@cf/mistral/mistral-7b-instruct-v0.1",
+      "raw_family": "mistral",
+      "before": "(family=\"mistral\",variant=\"instruct\",version=\"\",modifier=\"\")",
+      "after": "(family=\"mistral\",variant=\"instruct\",version=\"0.1\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "strict enrichment — only previously-empty field(s) populated"
+    },
+    {
+      "provider": "cloudflare-workers-ai",
       "id": "@cf/qwen/qwq-32b",
       "raw_family": "qwen",
       "before": "(family=\"qwen\",variant=\"\",version=\"\",modifier=\"\")",
@@ -2543,6 +2669,87 @@
       "raw_family": "chutesai",
       "before": "(family=\"chutesai\",variant=\"\",version=\"\",modifier=\"\")",
       "after": "(family=\"chutesai\",variant=\"instruct\",version=\"\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "strict enrichment — only previously-empty field(s) populated"
+    },
+    {
+      "provider": "cohere",
+      "id": "command-r-plus-08-2024",
+      "raw_family": "command-r",
+      "before": "(family=\"command\",variant=\"r\",version=\"\",modifier=\"\")",
+      "after": "(family=\"command\",variant=\"r-plus\",version=\"\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "variant refinement: \"r\" → \"r-plus\" (ID names a more specific variant)"
+    },
+    {
+      "provider": "302ai",
+      "id": "deepseek-chat",
+      "raw_family": "deepseek",
+      "before": "(family=\"deepseek\",variant=\"\",version=\"\",modifier=\"\")",
+      "after": "(family=\"deepseek\",variant=\"chat\",version=\"\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "strict enrichment — only previously-empty field(s) populated"
+    },
+    {
+      "provider": "deepseek",
+      "id": "deepseek-chat",
+      "raw_family": "deepseek",
+      "before": "(family=\"deepseek\",variant=\"\",version=\"\",modifier=\"\")",
+      "after": "(family=\"deepseek\",variant=\"chat\",version=\"\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "strict enrichment — only previously-empty field(s) populated"
+    },
+    {
+      "provider": "nano-gpt",
+      "id": "deepseek-chat",
+      "raw_family": "",
+      "before": "(family=\"deepseek\",variant=\"\",version=\"\",modifier=\"\")",
+      "after": "(family=\"deepseek\",variant=\"chat\",version=\"\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "strict enrichment — only previously-empty field(s) populated"
+    },
+    {
+      "provider": "nano-gpt",
+      "id": "deepseek-chat-cheaper",
+      "raw_family": "",
+      "before": "(family=\"deepseek\",variant=\"\",version=\"\",modifier=\"\")",
+      "after": "(family=\"deepseek\",variant=\"chat\",version=\"\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "strict enrichment — only previously-empty field(s) populated"
+    },
+    {
+      "provider": "kilo",
+      "id": "deepseek/deepseek-chat",
+      "raw_family": "",
+      "before": "(family=\"deepseek\",variant=\"\",version=\"\",modifier=\"\")",
+      "after": "(family=\"deepseek\",variant=\"chat\",version=\"\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "strict enrichment — only previously-empty field(s) populated"
+    },
+    {
+      "provider": "openrouter",
+      "id": "deepseek/deepseek-chat",
+      "raw_family": "deepseek",
+      "before": "(family=\"deepseek\",variant=\"\",version=\"\",modifier=\"\")",
+      "after": "(family=\"deepseek\",variant=\"chat\",version=\"\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "strict enrichment — only previously-empty field(s) populated"
+    },
+    {
+      "provider": "orcarouter",
+      "id": "deepseek/deepseek-chat",
+      "raw_family": "deepseek",
+      "before": "(family=\"deepseek\",variant=\"\",version=\"\",modifier=\"\")",
+      "after": "(family=\"deepseek\",variant=\"chat\",version=\"\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "strict enrichment — only previously-empty field(s) populated"
+    },
+    {
+      "provider": "zenmux",
+      "id": "deepseek/deepseek-chat",
+      "raw_family": "",
+      "before": "(family=\"deepseek\",variant=\"\",version=\"\",modifier=\"\")",
+      "after": "(family=\"deepseek\",variant=\"chat\",version=\"\",modifier=\"\")",
       "category": "b:improvement",
       "reason": "strict enrichment — only previously-empty field(s) populated"
     },
@@ -2889,11 +3096,11 @@
       "reason": "canonical-winner enforce: ID-derived distinct family won over a parent/org mislabel (family_enforce.json ledger)"
     },
     {
-      "provider": "nebius",
-      "id": "meta-llama/Meta-Llama-3.1-8B-Instruct",
-      "raw_family": "",
-      "before": "(family=\"meta\",variant=\"\",version=\"\",modifier=\"\")",
-      "after": "(family=\"meta\",variant=\"instruct\",version=\"\",modifier=\"\")",
+      "provider": "abacus",
+      "id": "meta-llama/Meta-Llama-3.1-405B-Instruct-Turbo",
+      "raw_family": "llama",
+      "before": "(family=\"llama\",variant=\"instruct\",version=\"\",modifier=\"\")",
+      "after": "(family=\"llama\",variant=\"instruct\",version=\"3.1\",modifier=\"\")",
       "category": "b:improvement",
       "reason": "strict enrichment — only previously-empty field(s) populated"
     },
@@ -2923,6 +3130,24 @@
       "after": "(family=\"ministral\",variant=\"\",version=\"\",modifier=\"\")",
       "category": "b:improvement",
       "reason": "canonical-winner enforce: ID-derived distinct family won over a parent/org mislabel (family_enforce.json ledger)"
+    },
+    {
+      "provider": "digitalocean",
+      "id": "mistral-7b-instruct-v0.3",
+      "raw_family": "mistral",
+      "before": "(family=\"mistral\",variant=\"instruct\",version=\"\",modifier=\"\")",
+      "after": "(family=\"mistral\",variant=\"instruct\",version=\"0.3\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "strict enrichment — only previously-empty field(s) populated"
+    },
+    {
+      "provider": "ovhcloud",
+      "id": "mistral-7b-instruct-v0.3",
+      "raw_family": "",
+      "before": "(family=\"mistral\",variant=\"instruct\",version=\"\",modifier=\"\")",
+      "after": "(family=\"mistral\",variant=\"instruct\",version=\"0.3\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "strict enrichment — only previously-empty field(s) populated"
     },
     {
       "provider": "amazon-bedrock",
@@ -3015,11 +3240,56 @@
       "reason": "strict enrichment — only previously-empty field(s) populated"
     },
     {
+      "provider": "kilo",
+      "id": "mistralai/mistral-7b-instruct-v0.1",
+      "raw_family": "",
+      "before": "(family=\"mistral\",variant=\"instruct\",version=\"\",modifier=\"\")",
+      "after": "(family=\"mistral\",variant=\"instruct\",version=\"0.1\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "strict enrichment — only previously-empty field(s) populated"
+    },
+    {
+      "provider": "openrouter",
+      "id": "mistralai/mistral-7b-instruct-v0.1",
+      "raw_family": "mistral",
+      "before": "(family=\"mistral\",variant=\"instruct\",version=\"\",modifier=\"\")",
+      "after": "(family=\"mistral\",variant=\"instruct\",version=\"0.1\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "strict enrichment — only previously-empty field(s) populated"
+    },
+    {
+      "provider": "nano-gpt",
+      "id": "mistralai/mixtral-8x22b-instruct-v0.1",
+      "raw_family": "mixtral",
+      "before": "(family=\"mixtral\",variant=\"instruct\",version=\"\",modifier=\"\")",
+      "after": "(family=\"mixtral\",variant=\"instruct\",version=\"0.1\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "strict enrichment — only previously-empty field(s) populated"
+    },
+    {
       "provider": "nvidia",
       "id": "mistralai/mixtral-8x7b-instruct",
       "raw_family": "",
       "before": "(family=\"mixtral\",variant=\"\",version=\"\",modifier=\"\")",
       "after": "(family=\"mixtral\",variant=\"instruct\",version=\"\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "strict enrichment — only previously-empty field(s) populated"
+    },
+    {
+      "provider": "nano-gpt",
+      "id": "mistralai/mixtral-8x7b-instruct-v0.1",
+      "raw_family": "mixtral",
+      "before": "(family=\"mixtral\",variant=\"instruct\",version=\"\",modifier=\"\")",
+      "after": "(family=\"mixtral\",variant=\"instruct\",version=\"0.1\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "strict enrichment — only previously-empty field(s) populated"
+    },
+    {
+      "provider": "cortecs",
+      "id": "mixtral-8x7B-instruct-v0.1",
+      "raw_family": "",
+      "before": "(family=\"mixtral\",variant=\"instruct\",version=\"\",modifier=\"\")",
+      "after": "(family=\"mixtral\",variant=\"instruct\",version=\"0.1\",modifier=\"\")",
       "category": "b:improvement",
       "reason": "strict enrichment — only previously-empty field(s) populated"
     },
@@ -3326,6 +3596,15 @@
       "raw_family": "bart",
       "before": "(family=\"bart\",variant=\"\",version=\"\",modifier=\"\")",
       "after": "(family=\"bart\",variant=\"large\",version=\"\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "strict enrichment — only previously-empty field(s) populated"
+    },
+    {
+      "provider": "cloudflare-ai-gateway",
+      "id": "workers-ai/@cf/mistral/mistral-7b-instruct-v0.1",
+      "raw_family": "mistral",
+      "before": "(family=\"mistral\",variant=\"instruct\",version=\"\",modifier=\"\")",
+      "after": "(family=\"mistral\",variant=\"instruct\",version=\"0.1\",modifier=\"\")",
       "category": "b:improvement",
       "reason": "strict enrichment — only previously-empty field(s) populated"
     },

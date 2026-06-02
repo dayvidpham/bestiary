@@ -4122,3 +4122,40 @@ func TestSLICE12_Convergences(t *testing.T) {
 		})
 	}
 }
+
+// TestSLICE14_TIER1Convergences pins the SLICE-14 (rc2) TIER-1 straggler convergences
+// (bestiary-judu): cohere command (date-guard + hyphenated member), deepseek attestable
+// "chat" variant, and the meta-llama surgical doubled-vendor strip. Each is non-lossy and
+// converges under the hardened (token-aware) gate (cat-(c)=0). command-r7b SPILLED to TIER-2
+// (needs a speculative r7b→r glued-size split; surfaced, not forced).
+func TestSLICE14_TIER1Convergences(t *testing.T) {
+	cases := []struct {
+		desc                   string
+		raw                    bestiary.Family
+		id                     bestiary.ModelID
+		wFam, wVar, wVer, wMod string
+	}{
+		// deepseek "chat" attestable member (non-lossy; v3.1 version preserved).
+		{"deepseek-chat-v3-0324 empty → (deepseek,chat)", "", "deepseek/deepseek-chat-v3-0324", "deepseek", "chat", "", ""},
+		{"deepseek-chat-v3-0324 raw=deepseek → (deepseek,chat)", "deepseek", "deepseek/deepseek-chat-v3-0324", "deepseek", "chat", "", ""},
+		{"deepseek-chat-v3.1 empty → (deepseek,chat,3.1)", "", "deepseek/deepseek-chat-v3.1", "deepseek", "chat", "3.1", ""},
+		{"deepseek-chat-v3.1 raw=deepseek → (deepseek,chat,3.1)", "deepseek", "deepseek/deepseek-chat-v3.1", "deepseek", "chat", "3.1", ""},
+		// cohere command: hyphenated member + MM-YYYY date-guard (08/12 are dates, not versions).
+		{"command-r-plus-08-2024 empty → (command,r-plus)", "", "cohere/command-r-plus-08-2024", "command", "r-plus", "", ""},
+		{"command-r-plus-08-2024 raw=command-r → (command,r-plus)", "command-r", "cohere/command-r-plus-08-2024", "command", "r-plus", "", ""},
+		{"command-a-reasoning-08-2025 empty → (command,a-reasoning)", "", "command-a-reasoning-08-2025", "command", "a-reasoning", "", ""},
+		{"command-a-reasoning-08-2025 raw=command-a → (command,a-reasoning)", "command-a", "command-a-reasoning-08-2025", "command", "a-reasoning", "", ""},
+		// meta-llama SURGICAL doubled-vendor strip (org "meta-llama/" + "Meta-Llama-…" → llama).
+		{"meta-llama/Meta-Llama-3.1 empty → (llama,instruct,3.1)", "", "meta-llama/Meta-Llama-3.1-8B-Instruct", "llama", "instruct", "3.1", ""},
+		{"meta-llama/Meta-Llama-3.1 raw=llama → (llama,instruct,3.1)", "llama", "meta-llama/Meta-Llama-3.1-8B-Instruct", "llama", "instruct", "3.1", ""},
+	}
+	for _, tc := range cases {
+		t.Run(tc.desc, func(t *testing.T) {
+			f, v, ver, m, _ := bestiary.ParseFamilyDetailed(tc.raw, tc.id, "p")
+			if string(f) != tc.wFam || v != tc.wVar || ver != tc.wVer || m != tc.wMod {
+				t.Errorf("ParseFamilyDetailed(raw=%q,id=%q) = (%q,%q,%q,%q), want (%q,%q,%q,%q)",
+					tc.raw, tc.id, f, v, ver, m, tc.wFam, tc.wVar, tc.wVer, tc.wMod)
+			}
+		})
+	}
+}

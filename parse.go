@@ -1319,6 +1319,14 @@ func inferFamilyFromIDWithVariantBase(id ModelID, p Provider) (Family, string, s
 	// last-resort fallback when member recovery finds nothing.
 	if pd, pdErr := loadParseData(); pdErr == nil {
 		if short, vhint, ok := reduceOverCapturedFamily(pd, family); ok {
+			// Preserve a VERSION-SHAPED pre-reset variant (e.g. "v3.1" for deepseek-chat-v3.1,
+			// where ParseFamilyWithVersion's v-prefix pattern put the version in the variant
+			// slot of the over-captured family). Reducing the family must NOT drop that real
+			// version — recover it below if the post-reduction re-derivation finds none.
+			origVariantVer := ""
+			if isVersionShaped(variant) {
+				origVariantVer = strings.TrimLeft(strings.ToLower(variant), "abcdefghijklmnopqrstuvwxyz")
+			}
 			family = short
 			variant = vhint
 			version = ""
@@ -1341,6 +1349,12 @@ func inferFamilyFromIDWithVariantBase(id ModelID, p Provider) (Family, string, s
 				if v, _ := ExtractVersionBetweenFamilyAndVariant(ModelID(orSelf(stripTrailingDate(lowID), lowID)), family, variant); v != "" {
 					version = v
 				}
+			}
+			// Final fallback: the version that the v-prefix pattern stashed in the variant
+			// slot of the compound family (deepseek-chat-v3.1 → "3.1"), recovered only if no
+			// generation version was derived above, so a reduction never drops a real version.
+			if version == "" && origVariantVer != "" {
+				version = origVariantVer
 			}
 		}
 	}
@@ -2403,6 +2417,19 @@ func stripVendorAliasPrefix(id string, vendorAliases []string) string {
 // previously lived only in InferFamilyFromIDWithVariant, leaving ParseFamilyDetailed's
 // raw!="" path without it.
 func stripVendorNamespace(id string) string {
+	// SLICE-14 (TIER-1): SURGICAL doubled-vendor strip. Some providers prefix the model name
+	// with the org AND repeat it: org "meta-llama/" + name "Meta-Llama-3.1-8B-Instruct". After
+	// the org segment is stripped, the leading "Meta-" makes the family derive "meta" instead
+	// of "llama". Strip the redundant leading "meta-" ONLY when the ORG segment is literally
+	// "meta-llama" (the doubled signal) — NOT a broad "meta" vendor alias, which caused cat-(c)
+	// collateral on odd-format IDs (Meta-Llama-3-1-…-FP8, meta-llama-3_3-70b with no such org).
+	if i := strings.IndexByte(id, '/'); i > 0 {
+		org := strings.ToLower(id[:i])
+		rest := id[i+1:]
+		if org == "meta-llama" && strings.HasPrefix(strings.ToLower(rest), "meta-") {
+			id = rest[len("meta-"):] // "Meta-Llama-3.1-…" → "Llama-3.1-…"
+		}
+	}
 	idStr := lastPathSegment(id)
 	if pd, err := loadParseData(); err == nil {
 		idStr = stripVendorAliasPrefix(idStr, pd.vendorAliases)

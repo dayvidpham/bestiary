@@ -629,10 +629,26 @@ func hasLetter(s string) bool {
 	return false
 }
 
-// resurfaces reports whether a value re-appears verbatim in another AFTER field — the
-// token was RELOCATED, not lost (e.g. a family suffix moved into the variant slot).
+// resurfaces reports whether a value re-appears in another AFTER field — the token was
+// RELOCATED, not lost (e.g. a family suffix moved into the variant slot). Also recognises a
+// VERSION-SHAPED value relocating to the Version slot with its leading version-marker letter
+// stripped (e.g. a junk variant "v3.1" de-junked to version "3.1" — the 'v' is a prefix
+// marker, not data).
 func resurfaces(val string, after decompTuple) bool {
-	return val != "" && (after.Variant == val || after.Version == val || after.Modifier == val || string(after.Family) == val)
+	if val == "" {
+		return false
+	}
+	if after.Variant == val || after.Version == val || after.Modifier == val || string(after.Family) == val {
+		return true
+	}
+	// Version-shaped value whose numeric part (leading letters stripped) equals the version.
+	if after.Version != "" {
+		stripped := strings.TrimLeft(strings.ToLower(val), "abcdefghijklmnopqrstuvwxyz")
+		if stripped == after.Version {
+			return true
+		}
+	}
+	return false
 }
 
 // realNonFamilyLoss reports whether the BEFORE→AFTER change LOSES REAL information in a
@@ -645,18 +661,29 @@ func resurfaces(val string, after decompTuple) bool {
 // dropped suffix is canonical over-capture noise — so realNonFamilyLoss deliberately
 // inspects only Variant/Version/Modifier.
 func realNonFamilyLoss(before, after decompTuple, id bestiary.ModelID) bool {
-	pairs := [][2]string{
-		{before.Variant, after.Variant},
-		{before.Version, after.Version},
-		{before.Modifier, after.Modifier},
+	type fld struct {
+		b, a      string
+		isVersion bool
+	}
+	pairs := []fld{
+		{before.Variant, after.Variant, false},
+		{before.Version, after.Version, true},
+		{before.Modifier, after.Modifier, false},
 	}
 	for _, p := range pairs {
-		b, a := p[0], p[1]
+		b, a := p.b, p.a
 		if b == "" || b == a {
 			continue
 		}
 		if a != "" && strings.HasPrefix(a, b) {
 			continue // enrichment: AFTER is a more-specific superstring of BEFORE
+		}
+		// SLICE-14: a CLEARED Version that is the MM of an MM-YYYY DATE in the ID
+		// (command-r-plus-08-2024 → "08", command-r7b-12-2024 → "12") is NOT a real version
+		// loss — it is a spurious date-fragment leak the parser correctly date-guards to "".
+		// (The raw-populated siblings already carry version "" for the same reason.)
+		if p.isVersion && a == "" && isDateFragmentInID(b, id) {
+			continue
 		}
 		// b was cleared or replaced by a non-enriching value.
 		if valueInID(b, id) && !resurfaces(b, after) {
@@ -664,6 +691,26 @@ func realNonFamilyLoss(before, after decompTuple, id bestiary.ModelID) bool {
 		}
 	}
 	return false
+}
+
+// isDateFragmentInID reports whether ver appears in id as the MM of an MM-YYYY date
+// (e.g. "08" in "command-r-plus-08-2024"). Only bare 1-2 digit numeric tokens qualify;
+// a real dotted/longer version ("3.5", "2024") never matches this shape.
+func isDateFragmentInID(ver string, id bestiary.ModelID) bool {
+	if len(ver) == 0 || len(ver) > 2 {
+		return false
+	}
+	for _, r := range ver {
+		if r < '0' || r > '9' {
+			return false
+		}
+	}
+	s := strings.ToLower(string(id))
+	if i := strings.LastIndexByte(s, '/'); i >= 0 {
+		s = s[i+1:]
+	}
+	re := regexp.MustCompile(`(?:^|[^0-9])` + ver + `-(?:19|20)\d\d(?:[^0-9]|$)`)
+	return re.MatchString(s)
 }
 
 // familyClearedOrDowngraded reports whether the FAMILY field was CLEARED (X→"") or

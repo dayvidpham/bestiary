@@ -472,8 +472,29 @@ func TestSnapshotAnalysis_CrossProviderDivergences(t *testing.T) {
 	// so reverted/surfaced), command-r-plus/r7b/a-reasoning (over-capture + date-as-version),
 	// hermes-2-pro-llama (variant 'pro' on one side only). These warrant a follow-up slice or
 	// upstream data fix; see the SLICE-12 worker report.
+	//
+	// SLICE-14 (rc2) TIER-1 straggler fix-cycle (bestiary-vs61): 18 → 13. Converged 5 of the
+	// TIER-1 set under the hardened (token-aware, ovf6) gate, cat-(c)=0:
+	//  - deepseek-chat-v3-0324 / deepseek-chat-v3.1 → (deepseek, chat, …) — "chat" is now an
+	//    ATTESTABLE deepseek member (non-lossy; v3.1 version preserved via the v-prefix recover).
+	//  - command-r-plus-08-2024 → (command, r-plus, …) + command-a-reasoning-08-2025 → (command,
+	//    a-reasoning, …) — hyphenated-member overrides + MM-YYYY date-guard (08 is a date, not a
+	//    version; the categorizer's isDateFragmentInID agrees so the clear is not a loss).
+	//  - meta-llama/Meta-Llama-3.1-8B-Instruct → (llama, instruct, 3.1) — SURGICAL doubled-vendor
+	//    strip (org "meta-llama/" + repeated "Meta-Llama-…"), scoped so it cannot recur the broad
+	//    "meta"-alias cat-(c) collateral on odd-format IDs.
+	// command-r7b-12-2024 SPILLED to TIER-2 (surfaced, NOT forced): converging it needs a
+	// speculative r7b→r glued-size split + a date-guard threaded through the "r7b" token, beyond
+	// attestable member recovery / past the isCleanVariantToken guard.
+	//
+	// RESIDUAL = 13 (HONEST). Still 5 SLICE-10-blocked (llama-3.2-11b-vision ×2, phi-4-multimodal,
+	// kimi-k2-thinking-turbo ×2). TIER-2 ledger (8): qwen3-next ×2 (closed-predicate-blocked,
+	// "next"), nemotron (embedded-family), grok-code-fast-1 ("fast", closed-predicate), llama-4-scout
+	// ("scout", closed-predicate), tencent/hy3-preview ("hy" unregistered), Qwen3-Embedding
+	// (curated text-embedding self-map), command-r7b (glued-size split). Final TIER-2 ledger
+	// (~6-7) is confirmed with team-lead + pinned later (post-S10), not in this slice.
 	const (
-		divergenceExact = 18
+		divergenceExact = 13
 		// Secondary sanity band — guards against a wholesale snapshot/pipeline
 		// breakage that happens to coincidentally land on a different exact value.
 		divergenceLow  = 6
@@ -513,11 +534,14 @@ func TestSnapshotAnalysis_CrossProviderDivergences(t *testing.T) {
 	// flash-lite, dotted-gen, gpt-codex). CatD 34→5 (enforce-set own-family/org corrections +
 	// o-series family fold + qwen3.7-max; residual 5 = qwen3-next ×2, nemotron, text-embedding,
 	// meta-llama — genuine stragglers). CatB unchanged at 1.
+	// SLICE-14: CatC 12→8 (command r-plus/a-reasoning member+date-guard, deepseek chat variant).
+	// CatD 5→4 (meta-llama doubled-vendor strip → llama; residual 4 = qwen3-next ×2, nemotron,
+	// text-embedding). CatB unchanged at 1.
 	const (
-		catAExact = 0  // vendor-prefix/case (SLICE-1 M4 resolved all)
-		catBExact = 1  // bare-gen-split (SLICE-11: −1; residual = bases w/o families.json entry)
-		catCExact = 12 // member-variant/version (SLICE-12: −21 via o-series + member re-recovery + flash-lite + dotted-gen)
-		catDExact = 5  // genuine family mislabel (SLICE-12: −29 via enforce-set + o-series fold; residual = qwen3-next×2/nemotron/text-embedding/meta stragglers)
+		catAExact = 0 // vendor-prefix/case (SLICE-1 M4 resolved all)
+		catBExact = 1 // bare-gen-split (SLICE-11: −1; residual = bases w/o families.json entry)
+		catCExact = 8 // member-variant/version (SLICE-14: −4 via command member+date-guard + deepseek chat)
+		catDExact = 4 // genuine family mislabel (SLICE-14: −1 via meta-llama strip; residual = qwen3-next×2/nemotron/text-embedding)
 	)
 	checkCat := func(name string, got, want int) {
 		if got != want {
