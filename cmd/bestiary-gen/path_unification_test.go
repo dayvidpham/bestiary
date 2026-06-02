@@ -34,6 +34,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"regexp"
 	"slices"
 	"strings"
 	"testing"
@@ -1294,4 +1295,130 @@ func TestSLICE12_AllowlistConformsToRatification(t *testing.T) {
 			t.Errorf("%s: variant %q is not a ratified line designator (o/4o/audio)", id, tup.Variant)
 		}
 	}
+}
+
+// oseriesMultiModifierCompromise lists the allowlisted o-series IDs that carry 2+ tokens
+// competing for the SINGLE Modifier slot. bestiary-xdbc does NOT rule on which wins (the
+// Modifier-LIST is deferred to SLICE-10), so their Modifier is a parser-determined
+// single-slot COMPROMISE — NOT independently rule-derivable. They are excluded from the
+// strict rule-authored Modifier assertion below (their designator+version IS still asserted).
+var oseriesMultiModifierCompromise = map[bestiary.ModelID]bool{
+	"gpt-4o-mini-search-preview": true, "gpt-4o-search-preview": true,
+	"openai/gpt-4o-mini-search-preview": true, "openai/gpt-4o-search-preview": true,
+	"openai/gpt-4o-audio-preview": true, "openai/gpt-4o-mini-search": true,
+	"openai/gpt-4o-search":  true,
+	"o4-mini-deep-research": true, "openai/o4-mini-deep-research": true,
+	"openai/o3-mini-high": true, "openai/o3-mini-low": true,
+}
+
+// ratifiedOSeriesTuple INDEPENDENTLY authors the expected (family,variant,version,modifier)
+// tuple for an o-series ID DIRECTLY from the bestiary-xdbc deterministic rule — a pure
+// function of the ID, written WITHOUT consulting the parser (guardrail-1: the allowlist is
+// the SPEC, the parser conforms to it, not the other way around). Returns ok=false for a
+// non-o-series ID or a multi-modifier compromise (whose Modifier the rule does not fix).
+func ratifiedOSeriesTuple(id bestiary.ModelID) (decompTuple, bool) {
+	s := strings.ToLower(string(id))
+	if i := strings.LastIndexByte(s, '/'); i >= 0 {
+		s = s[i+1:]
+	}
+	s = strings.ReplaceAll(s, "@", "-")
+	toks := strings.Split(s, "-")
+	if len(toks) == 0 {
+		return decompTuple{}, false
+	}
+	var variant, version string
+	switch {
+	case reOSeriesLineTest.MatchString(toks[0]):
+		variant, version = "o", reOSeriesLineTest.FindStringSubmatch(toks[0])[1]
+	case contains(toks, "4o"):
+		variant, version = "4o", ""
+	case contains(toks, "audio") && (toks[0] == "gpt" || toks[0] == "chatgpt"):
+		variant, version = "audio", ""
+	default:
+		return decompTuple{}, false
+	}
+	// Modifier (independent rule): the single size/finetune designator. mini/pro/nano are
+	// SIZE tokens demoted to Modifier; latest/preview are capability modifiers; deep-research
+	// is a finetune modifier. If 2+ are present it is a single-slot compromise (ok=false).
+	recognized := map[string]bool{"mini": true, "pro": true, "nano": true, "latest": true, "preview": true}
+	var mods []string
+	joined := "-" + s + "-"
+	if strings.Contains(joined, "-deep-research-") {
+		mods = append(mods, "deep-research")
+	}
+	for _, t := range toks {
+		if recognized[t] {
+			mods = append(mods, t)
+		}
+	}
+	if len(mods) > 1 {
+		return decompTuple{}, false // multi-modifier compromise — rule does not fix it
+	}
+	mod := ""
+	if len(mods) == 1 {
+		mod = mods[0]
+	}
+	return decompTuple{"gpt", variant, version, mod}, true
+}
+
+var reOSeriesLineTest = regexp.MustCompile(`^o([0-9]+)$`)
+
+// TestSLICE12_AllowlistMatchesIndependentRule is guardrail-1 (supervisor checkpoint-1): every
+// allowlist entry's tuple must EQUAL the tuple INDEPENDENTLY authored from the bestiary-xdbc
+// rule (ratifiedOSeriesTuple, written without consulting the parser) — so a subtle wrong tuple
+// copied from parser output cannot self-pass. Multi-modifier compromise IDs (whose Modifier the
+// rule does not fix) only have their designator+version checked; their Modifier is documented.
+func TestSLICE12_AllowlistMatchesIndependentRule(t *testing.T) {
+	allow, err := loadSanctionedAllowlist()
+	if err != nil {
+		t.Fatalf("%v", err)
+	}
+	for id, got := range allow {
+		want, clean := ratifiedOSeriesTuple(id)
+		if !clean {
+			// Compromise (or non-derivable): assert only the designator+version match the rule.
+			if oseriesMultiModifierCompromise[id] {
+				// designator+version independently checked via the family/variant/version rule:
+				ruleVarVer, _ := ratifiedOSeriesTupleDesignatorOnly(id)
+				if got.Family != "gpt" || got.Variant != ruleVarVer.Variant || got.Version != ruleVarVer.Version {
+					t.Errorf("%s: designator/version %q/%q != rule %q/%q", id, got.Variant, got.Version, ruleVarVer.Variant, ruleVarVer.Version)
+				}
+				continue
+			}
+			t.Errorf("%s: not derivable by the o-series rule and not a documented compromise — investigate", id)
+			continue
+		}
+		if got != want {
+			t.Errorf("%s: allowlist tuple %s != INDEPENDENTLY rule-authored %s (guardrail-1: allowlist must match the rule, not parser output)", id, got, want)
+		}
+	}
+}
+
+// ratifiedOSeriesTupleDesignatorOnly returns just the rule-derived family/variant/version
+// (ignoring the Modifier slot) for the compromise IDs.
+func ratifiedOSeriesTupleDesignatorOnly(id bestiary.ModelID) (decompTuple, bool) {
+	s := strings.ToLower(string(id))
+	if i := strings.LastIndexByte(s, '/'); i >= 0 {
+		s = s[i+1:]
+	}
+	s = strings.ReplaceAll(s, "@", "-")
+	toks := strings.Split(s, "-")
+	switch {
+	case reOSeriesLineTest.MatchString(toks[0]):
+		return decompTuple{"gpt", "o", reOSeriesLineTest.FindStringSubmatch(toks[0])[1], ""}, true
+	case contains(toks, "4o"):
+		return decompTuple{"gpt", "4o", "", ""}, true
+	case contains(toks, "audio") && (toks[0] == "gpt" || toks[0] == "chatgpt"):
+		return decompTuple{"gpt", "audio", "", ""}, true
+	}
+	return decompTuple{}, false
+}
+
+func contains(ss []string, v string) bool {
+	for _, s := range ss {
+		if s == v {
+			return true
+		}
+	}
+	return false
 }
