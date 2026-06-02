@@ -1128,7 +1128,7 @@ const (
 	Model__DigitalOcean__Openai__O3__Mini                                          ModelID = "openai-o3-mini"
 	Model__DigitalOcean__Qwen3__5__397b__A17b__3_5                                 ModelID = "qwen3.5-397b-a17b"
 	Model__DigitalOcean__Qwen3__Coder__Flash__3                                    ModelID = "qwen3-coder-flash"
-	Model__DigitalOcean__Qwen3__Embedding__0__6b                                   ModelID = "qwen3-embedding-0.6b"
+	Model__DigitalOcean__Qwen3__Embedding__0__6b__3                                ModelID = "qwen3-embedding-0.6b"
 	Model__DigitalOcean__Qwen3__Tts__Voicedesign__3                                ModelID = "qwen3-tts-voicedesign"
 	Model__DigitalOcean__Qwen__2__5__14b__Instruct__2_5                            ModelID = "qwen-2.5-14b-instruct"
 	Model__DigitalOcean__Schnell                                                   ModelID = "fal-ai/flux/schnell"
@@ -1147,7 +1147,7 @@ const (
 	Model__Evroc__Multilingual__E5__Large__Instruct                                ModelID = "intfloat/multilingual-e5-large-instruct"
 	Model__Evroc__Phi__4__Multimodal__Instruct__4                                  ModelID = "microsoft/Phi-4-multimodal-instruct"
 	Model__Evroc__Qwen3__30B__A3b__Instruct__2507__Fp8__3                          ModelID = "Qwen/Qwen3-30B-A3B-Instruct-2507-FP8"
-	Model__Evroc__Qwen3__Embedding__8B                                             ModelID = "Qwen/Qwen3-Embedding-8B"
+	Model__Evroc__Qwen3__Embedding__8B__3                                          ModelID = "Qwen/Qwen3-Embedding-8B"
 	Model__Evroc__Qwen3__Vl__30B__A3b__Instruct__3                                 ModelID = "Qwen/Qwen3-VL-30B-A3B-Instruct"
 	Model__Evroc__Voxtral__Small__24B__2507                                        ModelID = "mistralai/Voxtral-Small-24B-2507"
 	Model__Evroc__Whisper__Large__V3                                               ModelID = "openai/whisper-large-v3"
@@ -1812,7 +1812,7 @@ const (
 	Model__Kilo__Hermes__4__405b__4                                                ModelID = "nousresearch/hermes-4-405b"
 	Model__Kilo__Hermes__4__70b__4                                                 ModelID = "nousresearch/hermes-4-70b"
 	Model__Kilo__Hunyuan__A13b__Instruct                                           ModelID = "tencent/hunyuan-a13b-instruct"
-	Model__Kilo__Hy3__Preview                                                      ModelID = "tencent/hy3-preview"
+	Model__Kilo__Hy3__3__Preview                                                   ModelID = "tencent/hy3-preview"
 	Model__Kilo__Inflection__3__Pi__3                                              ModelID = "inflection/inflection-3-pi"
 	Model__Kilo__Inflection__3__Productivity__3                                    ModelID = "inflection/inflection-3-productivity"
 	Model__Kilo__Intellect__3                                                      ModelID = "prime-intellect/intellect-3"
@@ -2451,7 +2451,7 @@ const (
 	Model__NanoGPT__Codestral__2508                                                ModelID = "mistralai/codestral-2508"
 	Model__NanoGPT__Cogito__V1__Preview__Qwen__32B                                 ModelID = "deepcogito/cogito-v1-preview-qwen-32B"
 	Model__NanoGPT__Cogito__V2__1__671b                                            ModelID = "deepcogito/cogito-v2.1-671b"
-	Model__NanoGPT__Command__A__Reasoning__20250822                                ModelID = "command-a-reasoning-08-2025"
+	Model__NanoGPT__Command__A__Reasoning__08__20250822                            ModelID = "command-a-reasoning-08-2025"
 	Model__NanoGPT__Command__R                                                     ModelID = "cohere/command-r"
 	Model__NanoGPT__Command__R__Plus__20240830                                     ModelID = "cohere/command-r-plus-08-2024"
 	Model__NanoGPT__Cydonia__24B__V2                                               ModelID = "TheDrummer 2/Cydonia-24B-v2"
@@ -2942,7 +2942,7 @@ const (
 	Model__Nearai__Qwen3__30B__A3b__Instruct__2507__3                              ModelID = "Qwen/Qwen3-30B-A3B-Instruct-2507"
 	Model__Nearai__Qwen3__5__122B__A10b__3_5                                       ModelID = "Qwen/Qwen3.5-122B-A10B"
 	Model__Nearai__Qwen3__6__35B__A3b__Fp8__3_6                                    ModelID = "Qwen/Qwen3.6-35B-A3B-FP8"
-	Model__Nearai__Qwen3__Embedding__0__6B                                         ModelID = "Qwen/Qwen3-Embedding-0.6B"
+	Model__Nearai__Qwen3__Embedding__0__6B__3                                      ModelID = "Qwen/Qwen3-Embedding-0.6B"
 	Model__Nearai__Qwen3__Reranker__0__6B__3                                       ModelID = "Qwen/Qwen3-Reranker-0.6B"
 	Model__Nearai__Qwen3__Vl__30B__A3b__Instruct__3                                ModelID = "Qwen/Qwen3-VL-30B-A3B-Instruct"
 	Model__Nearai__Whisper__Large__V3                                              ModelID = "openai/whisper-large-v3"
@@ -2974,7 +2974,7 @@ const (
 	Model__Nebius__Qwen3__32B__3                                                   ModelID = "Qwen/Qwen3-32B"
 	Model__Nebius__Qwen3__5__397B__A17b__3_5                                       ModelID = "Qwen/Qwen3.5-397B-A17B"
 	Model__Nebius__Qwen3__5__397B__A17b__Fast__3_5                                 ModelID = "Qwen/Qwen3.5-397B-A17B-fast"
-	Model__Nebius__Qwen3__Embedding__8B                                            ModelID = "Qwen/Qwen3-Embedding-8B"
+	Model__Nebius__Qwen3__Embedding__8B__3                                         ModelID = "Qwen/Qwen3-Embedding-8B"
 	Model__Nebius__Qwen3__Next__80B__A3b__Thinking__3                              ModelID = "Qwen/Qwen3-Next-80B-A3B-Thinking"
 	Model__Nebius__Qwen3__Next__80B__A3b__Thinking__Fast__3                        ModelID = "Qwen/Qwen3-Next-80B-A3B-Thinking-fast"
 	Model__Neuralwatt__Devstral__Small__2__24B__Instruct__2512__2                  ModelID = "mistralai/Devstral-Small-2-24B-Instruct-2512"
@@ -3348,7 +3348,7 @@ const (
 	Model__OpenCode__Glm__5__Free__5                                               ModelID = "glm-5-free"
 	Model__OpenCode__Grok__Build__0_1                                              ModelID = "grok-build-0.1"
 	Model__OpenCode__Grok__Code                                                    ModelID = "grok-code"
-	Model__OpenCode__Hy3__Preview__Free                                            ModelID = "hy3-preview-free"
+	Model__OpenCode__Hy3__Preview__Free__3                                         ModelID = "hy3-preview-free"
 	Model__OpenCode__Kimi__K2__2                                                   ModelID = "kimi-k2"
 	Model__OpenCode__Kimi__K2__2__Thinking                                         ModelID = "kimi-k2-thinking"
 	Model__OpenCode__Kimi__K2__5__2_5                                              ModelID = "kimi-k2.5"
@@ -3538,7 +3538,7 @@ const (
 	Model__OpenRouter__Hermes__4__405b__4                                          ModelID = "nousresearch/hermes-4-405b"
 	Model__OpenRouter__Hermes__4__70b__4                                           ModelID = "nousresearch/hermes-4-70b"
 	Model__OpenRouter__Hunyuan__A13b__Instruct                                     ModelID = "tencent/hunyuan-a13b-instruct"
-	Model__OpenRouter__Hy3__Preview                                                ModelID = "tencent/hy3-preview"
+	Model__OpenRouter__Hy3__3__Preview                                             ModelID = "tencent/hy3-preview"
 	Model__OpenRouter__Inflection__3__Pi__3                                        ModelID = "inflection/inflection-3-pi"
 	Model__OpenRouter__Inflection__3__Productivity__3                              ModelID = "inflection/inflection-3-productivity"
 	Model__OpenRouter__Intellect__3                                                ModelID = "prime-intellect/intellect-3"
@@ -4427,7 +4427,7 @@ const (
 	Model__TencentCodingPlan__Kimi__K2__5__2_5                                     ModelID = "kimi-k2.5"
 	Model__TencentCodingPlan__Minimax__M2__5__2_5                                  ModelID = "minimax-m2.5"
 	Model__TencentCodingPlan__Tc__Code__Latest                                     ModelID = "tc-code-latest"
-	Model__TencentTokenHub__Hy3__Preview                                           ModelID = "hy3-preview"
+	Model__TencentTokenHub__Hy3__3__Preview                                        ModelID = "hy3-preview"
 	Model__TheGridAI__Agent__Max                                                   ModelID = "agent-max"
 	Model__TheGridAI__Agent__Prime                                                 ModelID = "agent-prime"
 	Model__TheGridAI__Agent__Standard                                              ModelID = "agent-standard"
@@ -4947,7 +4947,7 @@ const (
 	Model__ZenMux__Grok__4__2__Fast__Non__Reasoning__4_2                           ModelID = "x-ai/grok-4.2-fast-non-reasoning"
 	Model__ZenMux__Grok__4__Fast__4                                                ModelID = "x-ai/grok-4-fast"
 	Model__ZenMux__Grok__Code__Fast__1                                             ModelID = "x-ai/grok-code-fast-1"
-	Model__ZenMux__Hy3__Preview                                                    ModelID = "tencent/hy3-preview"
+	Model__ZenMux__Hy3__3__Preview                                                 ModelID = "tencent/hy3-preview"
 	Model__ZenMux__Kat__Coder__Pro__V2                                             ModelID = "kuaishou/kat-coder-pro-v2"
 	Model__ZenMux__Kimi__K2__0905__2                                               ModelID = "moonshotai/kimi-k2-0905"
 	Model__ZenMux__Kimi__K2__2__Thinking                                           ModelID = "moonshotai/kimi-k2-thinking"
@@ -6111,7 +6111,7 @@ var allModelConstants = [...]ModelID{
 	Model__DigitalOcean__Openai__O3__Mini,
 	Model__DigitalOcean__Qwen3__5__397b__A17b__3_5,
 	Model__DigitalOcean__Qwen3__Coder__Flash__3,
-	Model__DigitalOcean__Qwen3__Embedding__0__6b,
+	Model__DigitalOcean__Qwen3__Embedding__0__6b__3,
 	Model__DigitalOcean__Qwen3__Tts__Voicedesign__3,
 	Model__DigitalOcean__Qwen__2__5__14b__Instruct__2_5,
 	Model__DigitalOcean__Schnell,
@@ -6130,7 +6130,7 @@ var allModelConstants = [...]ModelID{
 	Model__Evroc__Multilingual__E5__Large__Instruct,
 	Model__Evroc__Phi__4__Multimodal__Instruct__4,
 	Model__Evroc__Qwen3__30B__A3b__Instruct__2507__Fp8__3,
-	Model__Evroc__Qwen3__Embedding__8B,
+	Model__Evroc__Qwen3__Embedding__8B__3,
 	Model__Evroc__Qwen3__Vl__30B__A3b__Instruct__3,
 	Model__Evroc__Voxtral__Small__24B__2507,
 	Model__Evroc__Whisper__Large__V3,
@@ -6795,7 +6795,7 @@ var allModelConstants = [...]ModelID{
 	Model__Kilo__Hermes__4__405b__4,
 	Model__Kilo__Hermes__4__70b__4,
 	Model__Kilo__Hunyuan__A13b__Instruct,
-	Model__Kilo__Hy3__Preview,
+	Model__Kilo__Hy3__3__Preview,
 	Model__Kilo__Inflection__3__Pi__3,
 	Model__Kilo__Inflection__3__Productivity__3,
 	Model__Kilo__Intellect__3,
@@ -7434,7 +7434,7 @@ var allModelConstants = [...]ModelID{
 	Model__NanoGPT__Codestral__2508,
 	Model__NanoGPT__Cogito__V1__Preview__Qwen__32B,
 	Model__NanoGPT__Cogito__V2__1__671b,
-	Model__NanoGPT__Command__A__Reasoning__20250822,
+	Model__NanoGPT__Command__A__Reasoning__08__20250822,
 	Model__NanoGPT__Command__R,
 	Model__NanoGPT__Command__R__Plus__20240830,
 	Model__NanoGPT__Cydonia__24B__V2,
@@ -7925,7 +7925,7 @@ var allModelConstants = [...]ModelID{
 	Model__Nearai__Qwen3__30B__A3b__Instruct__2507__3,
 	Model__Nearai__Qwen3__5__122B__A10b__3_5,
 	Model__Nearai__Qwen3__6__35B__A3b__Fp8__3_6,
-	Model__Nearai__Qwen3__Embedding__0__6B,
+	Model__Nearai__Qwen3__Embedding__0__6B__3,
 	Model__Nearai__Qwen3__Reranker__0__6B__3,
 	Model__Nearai__Qwen3__Vl__30B__A3b__Instruct__3,
 	Model__Nearai__Whisper__Large__V3,
@@ -7957,7 +7957,7 @@ var allModelConstants = [...]ModelID{
 	Model__Nebius__Qwen3__32B__3,
 	Model__Nebius__Qwen3__5__397B__A17b__3_5,
 	Model__Nebius__Qwen3__5__397B__A17b__Fast__3_5,
-	Model__Nebius__Qwen3__Embedding__8B,
+	Model__Nebius__Qwen3__Embedding__8B__3,
 	Model__Nebius__Qwen3__Next__80B__A3b__Thinking__3,
 	Model__Nebius__Qwen3__Next__80B__A3b__Thinking__Fast__3,
 	Model__Neuralwatt__Devstral__Small__2__24B__Instruct__2512__2,
@@ -8331,7 +8331,7 @@ var allModelConstants = [...]ModelID{
 	Model__OpenCode__Glm__5__Free__5,
 	Model__OpenCode__Grok__Build__0_1,
 	Model__OpenCode__Grok__Code,
-	Model__OpenCode__Hy3__Preview__Free,
+	Model__OpenCode__Hy3__Preview__Free__3,
 	Model__OpenCode__Kimi__K2__2,
 	Model__OpenCode__Kimi__K2__2__Thinking,
 	Model__OpenCode__Kimi__K2__5__2_5,
@@ -8521,7 +8521,7 @@ var allModelConstants = [...]ModelID{
 	Model__OpenRouter__Hermes__4__405b__4,
 	Model__OpenRouter__Hermes__4__70b__4,
 	Model__OpenRouter__Hunyuan__A13b__Instruct,
-	Model__OpenRouter__Hy3__Preview,
+	Model__OpenRouter__Hy3__3__Preview,
 	Model__OpenRouter__Inflection__3__Pi__3,
 	Model__OpenRouter__Inflection__3__Productivity__3,
 	Model__OpenRouter__Intellect__3,
@@ -9410,7 +9410,7 @@ var allModelConstants = [...]ModelID{
 	Model__TencentCodingPlan__Kimi__K2__5__2_5,
 	Model__TencentCodingPlan__Minimax__M2__5__2_5,
 	Model__TencentCodingPlan__Tc__Code__Latest,
-	Model__TencentTokenHub__Hy3__Preview,
+	Model__TencentTokenHub__Hy3__3__Preview,
 	Model__TheGridAI__Agent__Max,
 	Model__TheGridAI__Agent__Prime,
 	Model__TheGridAI__Agent__Standard,
@@ -9930,7 +9930,7 @@ var allModelConstants = [...]ModelID{
 	Model__ZenMux__Grok__4__2__Fast__Non__Reasoning__4_2,
 	Model__ZenMux__Grok__4__Fast__4,
 	Model__ZenMux__Grok__Code__Fast__1,
-	Model__ZenMux__Hy3__Preview,
+	Model__ZenMux__Hy3__3__Preview,
 	Model__ZenMux__Kat__Coder__Pro__V2,
 	Model__ZenMux__Kimi__K2__0905__2,
 	Model__ZenMux__Kimi__K2__2__Thinking,
