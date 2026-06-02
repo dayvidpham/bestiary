@@ -135,12 +135,11 @@ func TestResolve_WithSchemeRaw_ExactMatch(t *testing.T) {
 // SLICE-11 (rc2) NOTE: this test previously used "claude-opus" — which resolved as
 // ErrAmbiguous ONLY because the empty-raw claude-opus-4.x models were OVER-CAPTURED to
 // Family="claude-opus" (so modelMatches' Family-exact branch matched the bare input).
-// SLICE-11 fixes that over-capture (those models are now Family="claude", Variant="opus"),
-// so bare "claude-opus" no longer matches any Family and returns ErrNotFound — see the
-// dedicated TestResolve_SLICE11_BareOverCaptureNoLongerAmbiguous below, which pins the
-// new (correct) behavior and documents the resolve.go follow-up (variant-aware bare
-// matching is out of SLICE-11 scope — resolve.go is not touched). This test now uses the
-// bare canonical Family "claude" so it keeps exercising the SAME fallback MECHANISM
+// SLICE-11 fixes that over-capture (those models are now Family="claude", Variant="opus").
+// SLICE-13 (bestiary-xdbc item 4) then restored the "claude-opus" shorthand via a
+// variant-aware bare-family fallback — see TestResolve_SLICE13_BareHyphenShorthandRestored
+// below, which pins the ratified ErrAmbiguous behavior. This test now uses the bare
+// canonical Family "claude" so it keeps exercising the SAME fallback MECHANISM
 // (raw→canonical retry → ErrAmbiguous) against a genuine multi-model family.
 func TestResolve_WithSchemeRaw_BareFamilyAmbiguous(t *testing.T) {
 	_, err := bestiary.Resolve("claude", bestiary.WithScheme(bestiary.SchemeRaw))
@@ -165,27 +164,81 @@ func TestResolve_WithSchemeRaw_BareFamilyAmbiguous(t *testing.T) {
 	}
 }
 
-// TestResolve_SLICE11_BareOverCaptureNoLongerAmbiguous pins the SLICE-11 (rc2) behavior
-// change: bare hyphen-joined "claude-opus" — which USED to resolve as ErrAmbiguous via the
-// Family="claude-opus" OVER-CAPTURE — now returns ErrNotFound, because SLICE-11 correctly
-// decomposes those models to Family="claude", Variant="opus" (no model has the synthetic
-// "claude-opus" Family any more). The full ID ("claude-opus-4-20250514") still resolves.
+// TestResolve_SLICE13_BareHyphenShorthandRestored pins the SLICE-13 (rc2) behavior,
+// the ratified successor to the former TestResolve_SLICE11_BareOverCaptureNoLongerAmbiguous.
 //
-// SURFACED FOLLOW-UP (out of SLICE-11 scope — resolve.go is intentionally NOT touched):
-// resolve.go's bare-family fallback matches on Family exact only, so the variant-tier
-// shorthand "claude-opus" (and the canonical "claude/opus" form) no longer lists the opus
-// group. A variant-aware bare-family fallback in resolve.go would restore that shorthand.
-func TestResolve_SLICE11_BareOverCaptureNoLongerAmbiguous(t *testing.T) {
+// HISTORY: before SLICE-11, bare hyphen "claude-opus" resolved as ErrAmbiguous ONLY
+// because the opus models were OVER-CAPTURED to Family="claude-opus". SLICE-11 fixed
+// that (Family="claude", Variant="opus"), which incidentally regressed the shorthand to
+// ErrNotFound. bestiary-xdbc item 4 (Q4, user ruling: "Restore shorthand now (~20 LOC in
+// resolve.go)") ratified restoring it the RIGHT way: a variant-aware bare-family fallback.
+//
+// PIN: Resolve("claude-opus", SchemeRaw) now returns *ErrAmbiguous listing the opus
+// candidate group (>1), via matchBareFamilyVariant — NOT the old over-capture path and
+// NOT ErrNotFound. The full exact ID still resolves cleanly.
+func TestResolve_SLICE13_BareHyphenShorthandRestored(t *testing.T) {
 	_, err := bestiary.Resolve("claude-opus", bestiary.WithScheme(bestiary.SchemeRaw))
-	var nf *bestiary.ErrNotFound
-	if !errors.As(err, &nf) {
-		t.Errorf("Resolve SchemeRaw 'claude-opus': got %v, want *ErrNotFound\n"+
-			"  SLICE-11 removed the claude-opus Family over-capture, so the bare hyphen form\n"+
-			"  no longer matches a Family. (The full ID and bare 'claude' still resolve.)", err)
+	var ambig *bestiary.ErrAmbiguous
+	if !errors.As(err, &ambig) {
+		t.Fatalf("Resolve SchemeRaw 'claude-opus': got %T (%v), want *ErrAmbiguous\n"+
+			"  bestiary-xdbc item 4 restored the variant-aware bare-family shorthand:\n"+
+			"  '<family>-<variant>' (claude-opus) → the opus group as ambiguous candidates.\n"+
+			"  Do NOT revert to ErrNotFound.", err, err)
 	}
-	// The full, exact ID must still resolve cleanly.
+	// The shorthand must surface the multi-model opus group, not a single match.
+	if len(ambig.Candidates) <= 1 {
+		t.Errorf("ErrAmbiguous.Candidates has %d entries; expected the multi-version opus group (>1)",
+			len(ambig.Candidates))
+	}
+	// Every candidate must belong to the claude family with the opus variant — the
+	// shorthand must be precise, not a broad family match.
+	for _, c := range ambig.Candidates {
+		if c.Family != "claude" || c.Variant != "opus" {
+			t.Errorf("candidate %s has (Family=%q, Variant=%q); want (claude, opus)",
+				c.ID, c.Family, c.Variant)
+		}
+	}
+	// The full, exact ID must still resolve cleanly (no regression to full-ID lookup).
 	if _, err := bestiary.Resolve("claude-opus-4-20250514", bestiary.WithScheme(bestiary.SchemeRaw)); err != nil {
 		t.Errorf("full ID claude-opus-4-20250514 must still resolve, got: %v", err)
+	}
+}
+
+// TestResolve_SLICE13_ShorthandRegressions pins the behaviors that MUST stay UNCHANGED
+// alongside the restored shorthand (bestiary-xdbc item 4 / handoff slice13):
+//   - bare "claude" (family only) → still ErrAmbiguous with many candidates
+//   - canonical "claude/opus" → still ErrAmbiguous with the opus group
+//   - genuinely-unknown "<nonfamily>-x" and "<family>-<nonvariant>" → still ErrNotFound
+//     (the fallback is conservative and must NOT over-match arbitrary hyphenated input)
+func TestResolve_SLICE13_ShorthandRegressions(t *testing.T) {
+	// Bare family "claude" stays ambiguous over the whole family group.
+	_, err := bestiary.Resolve("claude", bestiary.WithScheme(bestiary.SchemeRaw))
+	var ambig *bestiary.ErrAmbiguous
+	if !errors.As(err, &ambig) {
+		t.Errorf("Resolve SchemeRaw 'claude': got %v, want *ErrAmbiguous (bare family unchanged)", err)
+	} else if len(ambig.Candidates) <= 1 {
+		t.Errorf("bare 'claude': got %d candidates, want the full claude family group (>1)", len(ambig.Candidates))
+	}
+
+	// Canonical "claude/opus" stays ambiguous over the opus group.
+	var ambig2 *bestiary.ErrAmbiguous
+	_, err = bestiary.Resolve("claude/opus", bestiary.WithScheme(bestiary.SchemeCanonical))
+	if !errors.As(err, &ambig2) {
+		t.Errorf("Resolve SchemeCanonical 'claude/opus': got %v, want *ErrAmbiguous (canonical form unchanged)", err)
+	} else if len(ambig2.Candidates) <= 1 {
+		t.Errorf("canonical 'claude/opus': got %d candidates, want the opus group (>1)", len(ambig2.Candidates))
+	}
+
+	// Genuinely-unknown inputs must NOT be over-matched by the variant-aware fallback.
+	for _, in := range []string{
+		"foo-bar",       // leading token is not a registered family
+		"claude-banana", // family is known but "banana" is not a claude variant
+	} {
+		var nf *bestiary.ErrNotFound
+		if _, err := bestiary.Resolve(in, bestiary.WithScheme(bestiary.SchemeRaw)); !errors.As(err, &nf) {
+			t.Errorf("Resolve SchemeRaw %q: got %v, want *ErrNotFound\n"+
+				"  the variant-aware fallback must stay conservative and not over-match.", in, err)
+		}
 	}
 }
 

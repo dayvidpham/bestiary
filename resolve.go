@@ -88,6 +88,13 @@ func WithScheme(s CanonicalScheme) ResolveOption {
 // is returned. If a single group matches, refs are returned. This surfaces
 // *ErrAmbiguous for inputs like "claude" instead of ErrNotFound.
 //
+// Variant-aware bare-family fallback (bestiary-xdbc item 4): when the Family-exact
+// retry also yields zero matches and the bare input is a hyphenated
+// "<family>-<variant>" shorthand whose leading token is a registered Family and
+// trailing token names a Variant within it (e.g. "claude-opus"), Resolve matches
+// that variant group and returns *ErrAmbiguous with the variant's candidates. See
+// matchBareFamilyVariant for the conservative matching rule.
+//
 // Use WithScheme to override auto-detection.
 func Resolve(input string, opts ...ResolveOption) ([]ModelRef, error) {
 	cfg := &resolveConfig{}
@@ -145,6 +152,15 @@ func Resolve(input string, opts ...ResolveOption) ([]ModelRef, error) {
 		canonicalMatches := matchModels(input, SchemeCanonical)
 		if len(canonicalMatches) > 0 {
 			matches = canonicalMatches
+			scheme = SchemeCanonical
+		} else if variantMatches := matchBareFamilyVariant(input); len(variantMatches) > 0 {
+			// Variant-aware bare-family fallback (bestiary-xdbc item 4): a bare
+			// hyphenated "<family>-<variant>" shorthand (e.g. "claude-opus") has no
+			// exact Family match post-SLICE-11, but the leading token is a registered
+			// Family and the trailing token names a Variant within it. Surface the
+			// matching variant group as ErrAmbiguous (via SchemeCanonical grouping)
+			// rather than ErrNotFound.
+			matches = variantMatches
 			scheme = SchemeCanonical
 		}
 	}
@@ -440,6 +456,45 @@ func isBareIdentifier(s string) bool {
 		return false
 	}
 	return true
+}
+
+// matchBareFamilyVariant implements the variant-aware bare-family fallback for a
+// bare hyphenated "<family>-<variant>" shorthand such as "claude-opus" (ratified
+// in bestiary-xdbc item 4). It is invoked only when an exact-ID and exact-Family
+// lookup have both already failed.
+//
+// The match is deliberately CLOSED/conservative to avoid false positives on
+// arbitrary hyphenated junk: it splits input at each hyphen, and accepts a split
+// only when BOTH (1) the leading token is a registered Family (IsKnownFamily) and
+// (2) the trailing token equals the Variant of one or more models in that Family.
+// The first hyphen position that satisfies both yields the candidate set; if no
+// split qualifies, it returns nil (caller then returns ErrNotFound). Because the
+// trailing token must match a real model Variant, a genuinely-unknown input like
+// "claude-banana" or "foo-bar" matches nothing.
+//
+// The returned refs are grouped by the caller under SchemeCanonical, so a variant
+// spanning multiple distinct canonicals (e.g. opus 4, opus 4.1, opus 3) surfaces
+// as ErrAmbiguous with the full candidate list.
+func matchBareFamilyVariant(input string) []ModelRef {
+	for i := 0; i < len(input); i++ {
+		if input[i] != '-' {
+			continue
+		}
+		famTok, varTok := input[:i], input[i+1:]
+		if famTok == "" || varTok == "" || !IsKnownFamily(Family(famTok)) {
+			continue
+		}
+		var out []ModelRef
+		for _, m := range staticModels {
+			if string(m.Family) == famTok && m.Variant == varTok {
+				out = append(out, m.Ref())
+			}
+		}
+		if len(out) > 0 {
+			return out
+		}
+	}
+	return nil
 }
 
 // parseContextN extracts the context-window ":N" token from a raw model ID.
