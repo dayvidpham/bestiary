@@ -1,0 +1,5 @@
+{
+  "_cite": "bestiary-xdbc (LEDGER-UAT: genuine-6 taxonomy ratification, rc2 fix-cycle) — Q2/Q2a/Q2b/Q2c. OpenAI fully under family=gpt: gpt-4 (v4), gpt-4o (variant '4o', version ''), o1/o3/o4 (variant 'o', version 1/3/4), gpt-audio (variant 'audio'); size tokens (mini/pro) -> modifier when the variant slot holds the line-designator. INTENTIONALLY supersedes the pinned o1-mini->(o,mini,1) / o3-mini->(o,mini,3) BDD.",
+  "_comment": "SLICE-12-L1 (bestiary-1kfq) reviewed allowlist: raw model ID -> EXPECTED post-restructure (family,variant,version,modifier) tuple. The diff categorizer admits an allowlisted ID's reassignment as cat-(a)-sanctioned ONLY IF the observed AFTER tuple EQUALS the expected tuple here. ANY other delta on an allowlisted ID (wrong modifier, changed field, an unrelated bug riding the escape) stays a HARD cat-(c). Entries are populated by L3O from the OBSERVED before/after diff, each verified against the ratified rule above. Do NOT widen this list or edit a tuple to make a stray delta pass.",
+  "entries": {}
+}

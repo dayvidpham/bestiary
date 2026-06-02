@@ -311,7 +311,28 @@ func isStrictEnrichment(before, after decompTuple) bool {
 //  2. (b) improvement: a strict enrichment (only fills empty fields).
 //  3. (c) regression: everything else (a populated field changed to a different
 //     value and it was NOT a convergence toward what other providers already had).
-func classifyDecompChange(before, after decompTuple, beforeByID, afterByID []decompTuple) (changeCategory, string) {
+func classifyDecompChange(id bestiary.ModelID, before, after decompTuple, beforeByID, afterByID []decompTuple, allow sanctionedAllowlist) (changeCategory, string) {
+	// L1 (bestiary-1kfq / RATIFIED bestiary-xdbc) — SANCTIONED o-series taxonomy escape,
+	// EXPECTED-TUPLE-MATCHED. An allowlisted raw ID is admitted as cat-(a)-sanctioned
+	// ONLY IF its observed AFTER tuple EQUALS the ratified target tuple recorded in the
+	// allowlist artifact. ANY OTHER delta on an allowlisted ID (a dropped/changed field,
+	// a wrong modifier, an unrelated bug riding the sanctioned escape) FALLS THROUGH to
+	// the mechanical classifier and stays a HARD cat-(c). A reassignment whose raw ID is
+	// NOT on the allowlist likewise gets no escape here. This is the NO-MASKING gate: you
+	// physically cannot hide an unrelated regression on an allowlisted ID under the escape,
+	// because the escape is keyed to the exact ratified tuple, not the ID alone.
+	if exp, ok := allow[id]; ok {
+		if after == exp {
+			return CatFix, "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple " + exp.String()
+		}
+		// AUTHORITATIVE for allowlisted IDs: any observed AFTER tuple OTHER than the
+		// ratified target is a HARD cat-(c) — short-circuit, do NOT fall through to the
+		// mechanical classifier (which might otherwise rubber-stamp an o-series-shaped
+		// reassignment as a clean convergence and mask a drifted/buggy tuple). This is
+		// what makes the escape EXPECTED-TUPLE-MATCHED rather than ID-blanket.
+		return CatRegress, fmt.Sprintf("allowlisted o-series ID did NOT converge to its ratified tuple %s (got %s) — sanctioned escape is tuple-matched, not ID-blanket (bestiary-xdbc)", exp, after)
+	}
+
 	distinct := func(ts []decompTuple) int {
 		seen := map[decompTuple]struct{}{}
 		for _, t := range ts {
@@ -353,18 +374,30 @@ func classifyDecompChange(before, after decompTuple, beforeByID, afterByID []dec
 	// trust it. The ONE thing still rejected is a NON-family field losing SPECIFICITY
 	// (before a strict superstring of after — the flash-lite → flash class): that is real
 	// data loss, not over-capture noise, so it stays a regression.
+	// SLICE-12 (bestiary-j1nu) HARDENING — the S11 review IMPORTANT (axis-A/B, same root).
+	// The pre-S12 CatFix family-reduction branch only checked nonFamilyPrefixDowngrade
+	// (prefix-only) and IGNORED field CLEARS, so a family reduction that CLEARED a
+	// populated variant a same-ID SIBLING retains was admitted as a fix — safe-by-DATA,
+	// not safe-by-CONSTRUCTION. The unified guard below (realNonFamilyLoss) rejects ANY
+	// non-family field that lost a REAL (ID-present) value not re-surfaced in another
+	// AFTER field — whether by clear OR by lateral/prefix change — in BOTH the family-
+	// reduction and the ordinary-convergence branch. A PHANTOM value (provider noise that
+	// never appears in the model ID, e.g. raw_family "gpt-codex" tagging a chat ID whose
+	// text has no "codex") may be dropped on convergence; an ID-PRESENT value may not
+	// (that is the flash-lite / instruct-clear data-loss class). This single guard makes
+	// the gpt-codex variant-clear AND the A-1 variant-clear safe-by-CONSTRUCTION.
 	familyReduced := familyIsReductionOf(after.Family, before.Family)
 	if beforeDivergent && (afterConsistent || matchedExistingBefore) {
 		if familyReduced {
-			if !nonFamilyPrefixDowngrade(before, after) {
-				return CatFix, "family over-capture reduced to registered short base, converged onto an independently-produced sibling tuple (SLICE-11)"
+			if !realNonFamilyLoss(before, after, id) {
+				return CatFix, "family over-capture reduced to registered short base, converged onto an independently-produced sibling tuple (SLICE-11; j1nu-hardened: no ID-present non-family field lost)"
 			}
-		} else if !isFieldDowngrade(before, after) {
-			reason := "converged divergent ID toward cross-provider agreement"
+		} else if !familyClearedOrDowngraded(before, after) && !realNonFamilyLoss(before, after, id) {
+			reason := "converged divergent ID toward cross-provider agreement (j1nu-hardened: only phantom non-family loss permitted)"
 			if matchedExistingBefore {
-				reason = "now matches a tuple another provider already produced for this ID (BEFORE)"
+				reason = "now matches a tuple another provider already produced for this ID (BEFORE); only phantom non-family loss permitted (j1nu)"
 			} else if afterConsistent {
-				reason = "all providers for this ID now agree post-unification"
+				reason = "all providers for this ID now agree post-unification; only phantom non-family loss permitted (j1nu)"
 			}
 			return CatFix, reason
 		}
@@ -407,10 +440,14 @@ func classifyDecompChange(before, after decompTuple, beforeByID, afterByID []dec
 	// arbitrary family rewrite: a genuine mislabel (intellect↔glm, ministral↔mistral) is
 	// NOT a reduction-direction shortening and a capability-modifier loss (kimi-k2-thinking)
 	// is declined upstream, so neither can slip through here.
-	if familyReduced && !nonFamilyPrefixDowngrade(before, after) &&
+	// SLICE-12 (j1nu): this NON-converging improvement branch must ALSO refuse to bless a
+	// reduction that CLEARS or laterally changes an ID-present non-family field that no
+	// AFTER field re-surfaces (e.g. rnj-1→rnj dropping the ID-attested "instruct" a sibling
+	// keeps). realNonFamilyLoss subsumes the old prefix-only nonFamilyPrefixDowngrade check.
+	if familyReduced && !realNonFamilyLoss(before, after, id) &&
 		(familySuffixMovedToVariant(before, after) ||
 			(bestiary.IsKnownFamily(after.Family) && !bestiary.IsKnownFamily(before.Family))) {
-		return CatImprove, "family over-capture reduced to short base — exact family-suffix→variant move (override semantics), OR before ∉ registry & after ∈ registry; no non-family specificity lost (SLICE-11)"
+		return CatImprove, "family over-capture reduced to short base — exact family-suffix→variant move (override semantics), OR before ∉ registry & after ∈ registry; no ID-present non-family field lost (SLICE-11; j1nu-hardened)"
 	}
 
 	// A divergent ID that converged to a brand-new value (no provider had it BEFORE,
@@ -464,31 +501,125 @@ func familySuffixMovedToVariant(before, after decompTuple) bool {
 	return string(before.Family) == string(after.Family)+"-"+after.Variant
 }
 
-// isFieldDowngrade reports whether the BEFORE→AFTER change EMPTIES or makes
-// LESS-SPECIFIC any field that BEFORE had populated. This is the directionality
-// guard for the CatFix branch (G1): a convergence that clears a field (thinking→"")
-// or replaces it with a less-specific prefix (flash-lite→flash) is a regression, not
-// a fix, even when it reduces cross-provider disagreement.
-func isFieldDowngrade(before, after decompTuple) bool {
+// valueInID reports whether a lost field value `val` actually appears in the model ID
+// (the canonical, vendor-stripped, '@'→'-' normalized form). A value PRESENT in the ID
+// is REAL data the decomposition must not drop; a value ABSENT from the ID is provider
+// PHANTOM noise (e.g. raw_family "gpt-codex" tagging "gpt-5-chat-latest", whose ID has
+// no "codex") that may be cleared on convergence. Substring (not token) match so a
+// multi-token value like "flash-lite" is detected in "gemini-2.5-flash-lite-preview".
+func valueInID(val string, id bestiary.ModelID) bool {
+	if val == "" {
+		return false
+	}
+	s := strings.ToLower(string(id))
+	if i := strings.LastIndexByte(s, '/'); i >= 0 {
+		s = s[i+1:]
+	}
+	s = strings.ReplaceAll(s, "@", "-")
+	return strings.Contains(s, strings.ToLower(val))
+}
+
+// resurfaces reports whether a value re-appears verbatim in another AFTER field — the
+// token was RELOCATED, not lost (e.g. a family suffix moved into the variant slot).
+func resurfaces(val string, after decompTuple) bool {
+	return val != "" && (after.Variant == val || after.Version == val || after.Modifier == val || string(after.Family) == val)
+}
+
+// realNonFamilyLoss reports whether the BEFORE→AFTER change LOSES REAL information in a
+// NON-family field (Variant/Version/Modifier): a populated old value was CLEARED, or
+// replaced by a non-enriching value, AND that old value is PRESENT in the model ID AND
+// did not re-surface verbatim in another AFTER field. This is the unified j1nu/gpt-codex
+// guard. An enrichment (AFTER extends BEFORE as a superstring prefix) is never a loss; a
+// PHANTOM loss (old value absent from the ID) is never a loss. The FAMILY field is
+// governed separately by the over-capture reduction path (familyIsReductionOf), whose
+// dropped suffix is canonical over-capture noise — so realNonFamilyLoss deliberately
+// inspects only Variant/Version/Modifier.
+func realNonFamilyLoss(before, after decompTuple, id bestiary.ModelID) bool {
 	pairs := [][2]string{
-		{string(before.Family), string(after.Family)},
 		{before.Variant, after.Variant},
 		{before.Version, after.Version},
 		{before.Modifier, after.Modifier},
 	}
 	for _, p := range pairs {
 		b, a := p[0], p[1]
-		if b == a || b == "" {
+		if b == "" || b == a {
 			continue
 		}
-		if a == "" {
-			return true // populated → cleared
+		if a != "" && strings.HasPrefix(a, b) {
+			continue // enrichment: AFTER is a more-specific superstring of BEFORE
 		}
-		if strings.HasPrefix(b, a) {
-			return true // before is a more-specific superstring (a is less specific)
+		// b was cleared or replaced by a non-enriching value.
+		if valueInID(b, id) && !resurfaces(b, after) {
+			return true // ID-present value lost without re-surfacing → REAL loss
 		}
 	}
 	return false
+}
+
+// familyClearedOrDowngraded reports whether the FAMILY field was CLEARED (X→"") or
+// PREFIX-DOWNGRADED outside the sanctioned over-capture reduction path. A lateral family
+// change (mistral→mixtral, the own-family-enforce ledger class) is NOT a downgrade and is
+// permitted on convergence; a family CLEAR or a prefix-shortening that is not a registered
+// reduction is rejected.
+func familyClearedOrDowngraded(before, after decompTuple) bool {
+	if before.Family == after.Family {
+		return false
+	}
+	if after.Family == "" {
+		return true // cleared
+	}
+	bf := strings.ToLower(string(before.Family))
+	af := strings.ToLower(string(after.Family))
+	if len(af) < len(bf) && strings.HasPrefix(bf, af) {
+		return true // prefix-shortening (handled as a reduction in the other branch; here = downgrade)
+	}
+	return false
+}
+
+// sanctionedAllowlist maps a raw model ID to its EXPECTED post-restructure (ratified)
+// decomposition tuple (bestiary-xdbc). It is the reviewed artifact that makes the
+// o-series taxonomy restructure safe-by-construction: the ONLY sanctioned escape from
+// cat-(c), and only when the observed AFTER tuple EQUALS the expected tuple for that ID.
+type sanctionedAllowlist map[bestiary.ModelID]decompTuple
+
+// sanctionedAllowlistEntry is the on-disk JSON shape of one allowlist row.
+type sanctionedAllowlistEntry struct {
+	Family   string `json:"family"`
+	Variant  string `json:"variant"`
+	Version  string `json:"version"`
+	Modifier string `json:"modifier"`
+}
+
+// sanctionedAllowlistFile is the committed allowlist artifact (header cites bestiary-xdbc).
+type sanctionedAllowlistFile struct {
+	Cite    string                              `json:"_cite"`
+	Comment string                              `json:"_comment"`
+	Entries map[string]sanctionedAllowlistEntry `json:"entries"`
+}
+
+func sanctionedAllowlistPath() string {
+	return filepath.Join(snapshotDir(), "sanctioned_oseries_allowlist.json")
+}
+
+// loadSanctionedAllowlist reads the committed, reviewed o-series allowlist artifact.
+func loadSanctionedAllowlist() (sanctionedAllowlist, error) {
+	body, err := os.ReadFile(sanctionedAllowlistPath())
+	if err != nil {
+		return nil, fmt.Errorf("loadSanctionedAllowlist: cannot read %s: %w\n"+
+			"  What: the SLICE-12 sanctioned o-series taxonomy allowlist (raw ID → ratified tuple) is missing\n"+
+			"  Why: it is the reviewed artifact tied to bestiary-xdbc that blesses the o-series restructure\n"+
+			"  How to fix: ensure cmd/bestiary-gen/testdata/snapshot/sanctioned_oseries_allowlist.json is committed",
+			sanctionedAllowlistPath(), err)
+	}
+	var f sanctionedAllowlistFile
+	if err := json.Unmarshal(body, &f); err != nil {
+		return nil, fmt.Errorf("loadSanctionedAllowlist: parse %s: %w", sanctionedAllowlistPath(), err)
+	}
+	out := make(sanctionedAllowlist, len(f.Entries))
+	for id, e := range f.Entries {
+		out[bestiary.ModelID(id)] = decompTuple{bestiary.Family(e.Family), e.Variant, e.Version, e.Modifier}
+	}
+	return out, nil
 }
 
 // familyIsReductionOf reports whether `short` is a strict LEADING reduction of `long`
@@ -560,6 +691,11 @@ func computeDiff(t *testing.T) ([]decompChange, int, int, int) {
 	}
 	after := dumpDecomposition(t)
 
+	allow, err := loadSanctionedAllowlist()
+	if err != nil {
+		t.Fatalf("computeDiff: %v", err)
+	}
+
 	beforeByKey := make(map[decompKey]decompRecord, len(before))
 	beforeByID := make(map[bestiary.ModelID][]decompTuple)
 	for _, r := range before {
@@ -585,7 +721,7 @@ func computeDiff(t *testing.T) ([]decompChange, int, int, int) {
 		if br.tuple() == ar.tuple() {
 			continue
 		}
-		cat, reason := classifyDecompChange(br.tuple(), ar.tuple(), beforeByID[ar.ID], afterByID[ar.ID])
+		cat, reason := classifyDecompChange(ar.ID, br.tuple(), ar.tuple(), beforeByID[ar.ID], afterByID[ar.ID], allow)
 		changes = append(changes, decompChange{
 			Provider:  ar.Provider,
 			ID:        ar.ID,
@@ -757,6 +893,7 @@ func TestPathUnification_ZeroUnexpectedRegression(t *testing.T) {
 func TestClassifyDecompChange_RejectsDowngrade(t *testing.T) {
 	cases := []struct {
 		desc       string
+		id         bestiary.ModelID
 		before     decompTuple
 		after      decompTuple
 		beforeByID []decompTuple
@@ -764,16 +901,19 @@ func TestClassifyDecompChange_RejectsDowngrade(t *testing.T) {
 		want       changeCategory
 	}{
 		{
-			desc:   "deepseek-reasoner thinking CLEARED, converging onto a sibling's empty-modifier tuple → REGRESS",
-			before: decompTuple{"deepseek", "", "", "thinking"},
-			after:  decompTuple{"deepseek", "", "", ""},
-			// ID was divergent before; a sibling already had the empty-modifier tuple.
+			desc: "thinking modifier CLEARED while the ID DOES carry 'thinking', converging onto a sibling's empty-modifier tuple → REGRESS (ID-present value lost)",
+			// SLICE-12 (j1nu): the distinguishing signal is whether the lost value is in
+			// the ID. Here 'thinking' IS in the ID, so clearing it is REAL data loss.
+			id:         "deepseek-v3-thinking",
+			before:     decompTuple{"deepseek", "", "", "thinking"},
+			after:      decompTuple{"deepseek", "", "", ""},
 			beforeByID: []decompTuple{{"deepseek", "", "", "thinking"}, {"deepseek", "", "", ""}},
 			afterByID:  []decompTuple{{"deepseek", "", "", ""}, {"deepseek", "", "", ""}},
 			want:       CatRegress,
 		},
 		{
-			desc:       "flash-lite DOWNGRADED to less-specific flash, converging onto a sibling's flash tuple → REGRESS",
+			desc:       "flash-lite DOWNGRADED to less-specific flash, converging onto a sibling's flash tuple → REGRESS (lite is in the ID)",
+			id:         "gemini-2.5-flash-lite-preview-09-2025",
 			before:     decompTuple{"gemini", "flash-lite", "2.5", ""},
 			after:      decompTuple{"gemini", "flash", "2.5", ""},
 			beforeByID: []decompTuple{{"gemini", "flash-lite", "2.5", ""}, {"gemini", "flash", "2.5", ""}},
@@ -781,7 +921,20 @@ func TestClassifyDecompChange_RejectsDowngrade(t *testing.T) {
 			want:       CatRegress,
 		},
 		{
+			desc: "gpt-codex PHANTOM variant CLEARED (codex absent from the chat ID), converging onto a sibling that already had variant='' → FIX",
+			// SLICE-12 (#4, gpt-codex ID-wins): 'codex' is provider phantom noise — it is
+			// NOT in 'gpt-5-chat-latest', so dropping it loses no real information. This is
+			// the case the absent-from-ID construction rule blesses (vs flash-lite above).
+			id:         "gpt-5-chat-latest",
+			before:     decompTuple{"gpt", "codex", "5", "latest"},
+			after:      decompTuple{"gpt", "", "5", "latest"},
+			beforeByID: []decompTuple{{"gpt", "codex", "5", "latest"}, {"gpt", "", "5", "latest"}},
+			afterByID:  []decompTuple{{"gpt", "", "5", "latest"}, {"gpt", "", "5", "latest"}},
+			want:       CatFix,
+		},
+		{
 			desc:       "genuine version-presence convergence (empty→4.1, no downgrade) → FIX",
+			id:         "claude-opus-4-1",
 			before:     decompTuple{"claude", "opus", "", ""},
 			after:      decompTuple{"claude", "opus", "4.1", ""},
 			beforeByID: []decompTuple{{"claude", "opus", "", ""}, {"claude", "opus", "4.1", ""}},
@@ -791,7 +944,7 @@ func TestClassifyDecompChange_RejectsDowngrade(t *testing.T) {
 	}
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			got, reason := classifyDecompChange(tc.before, tc.after, tc.beforeByID, tc.afterByID)
+			got, reason := classifyDecompChange(tc.id, tc.before, tc.after, tc.beforeByID, tc.afterByID, nil)
 			if got != tc.want {
 				t.Errorf("classifyDecompChange = %s (%s), want %s", got, reason, tc.want)
 			}
@@ -888,6 +1041,7 @@ func TestSLICE11_CategorizerPredicates(t *testing.T) {
 func TestSLICE11_ClassifyFamilyReduction(t *testing.T) {
 	cases := []struct {
 		desc       string
+		id         bestiary.ModelID
 		before     decompTuple
 		after      decompTuple
 		beforeByID []decompTuple
@@ -896,6 +1050,7 @@ func TestSLICE11_ClassifyFamilyReduction(t *testing.T) {
 	}{
 		{
 			desc:       "claude-opus → claude+opus, converges onto raw sibling → FIX",
+			id:         "claude-opus-4-1",
 			before:     decompTuple{"claude-opus", "", "4.1", ""},
 			after:      decompTuple{"claude", "opus", "4.1", ""},
 			beforeByID: []decompTuple{{"claude-opus", "", "4.1", ""}, {"claude", "opus", "4.1", ""}},
@@ -904,6 +1059,7 @@ func TestSLICE11_ClassifyFamilyReduction(t *testing.T) {
 		},
 		{
 			desc:       "deepseek-r1 → deepseek (drops r1), converges onto raw sibling → FIX",
+			id:         "deepseek-r1",
 			before:     decompTuple{"deepseek-r1", "", "", ""},
 			after:      decompTuple{"deepseek", "", "", ""},
 			beforeByID: []decompTuple{{"deepseek-r1", "", "", ""}, {"deepseek", "", "", ""}},
@@ -912,6 +1068,7 @@ func TestSLICE11_ClassifyFamilyReduction(t *testing.T) {
 		},
 		{
 			desc:       "single-provider jamba-large-1.6 → jamba+large, no sibling → IMPROVE",
+			id:         "jamba-large-1.6",
 			before:     decompTuple{"jamba-large", "", "1.6", ""},
 			after:      decompTuple{"jamba", "large", "1.6", ""},
 			beforeByID: []decompTuple{{"jamba-large", "", "1.6", ""}},
@@ -919,17 +1076,109 @@ func TestSLICE11_ClassifyFamilyReduction(t *testing.T) {
 			want:       CatImprove,
 		},
 		{
-			desc:       "flash-lite → flash converging onto a sibling's flash is STILL a regression (G1)",
+			desc:       "flash-lite → flash converging onto a sibling's flash is STILL a regression (G1; lite in ID)",
+			id:         "gemini-2.5-flash-lite-preview",
 			before:     decompTuple{"gemini", "flash-lite", "2.5", ""},
 			after:      decompTuple{"gemini", "flash", "2.5", ""},
 			beforeByID: []decompTuple{{"gemini", "flash-lite", "2.5", ""}, {"gemini", "flash", "2.5", ""}},
 			afterByID:  []decompTuple{{"gemini", "flash", "2.5", ""}, {"gemini", "flash", "2.5", ""}},
 			want:       CatRegress,
 		},
+		{
+			// SLICE-12 (j1nu ADVERSARIAL): a family reduction that ALSO CLEARS a populated
+			// variant THE ID CARRIES and that NO sibling re-surfaces must fall to cat-(c).
+			// Pre-S12 this slipped through (the reduction branch ignored field clears).
+			desc:       "j1nu: family reduction clearing an ID-PRESENT variant that the converged-to sibling does NOT carry → REGRESS",
+			id:         "essentialai/rnj-1-instruct",
+			before:     decompTuple{"rnj-1", "instruct", "1", ""},
+			after:      decompTuple{"rnj", "", "1", ""},
+			beforeByID: []decompTuple{{"rnj-1", "instruct", "1", ""}, {"rnj", "instruct", "1", ""}},
+			afterByID:  []decompTuple{{"rnj", "", "1", ""}, {"rnj", "instruct", "1", ""}},
+			want:       CatRegress,
+		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			got, reason := classifyDecompChange(tc.before, tc.after, tc.beforeByID, tc.afterByID)
+			got, reason := classifyDecompChange(tc.id, tc.before, tc.after, tc.beforeByID, tc.afterByID, nil)
+			if got != tc.want {
+				t.Errorf("classifyDecompChange = %s (%s), want %s", got, reason, tc.want)
+			}
+		})
+	}
+}
+
+// TestSLICE12_SanctionedAllowlistGate is the NO-MASKING adversarial unit (bestiary-1kfq,
+// the supervisor refinement that OVERRIDES the handoff): the o-series sanctioned escape is
+// EXPECTED-TUPLE-MATCHED, not ID-blanket. It proves four properties:
+//   (1) an allowlisted ID whose observed AFTER tuple EQUALS its ratified target → cat-(a).
+//   (2) an allowlisted ID mutated to a WRONG (non-ratified) tuple → cat-(c) (no masking).
+//   (3) an o-series-SHAPED reassignment whose ID is NOT on the allowlist → cat-(c).
+//   (4) an UNRELATED bug riding an allowlisted ID (a tuple unrelated to the ratified one)
+//       → cat-(c) — you cannot hide a regression on an allowlisted ID under the escape.
+func TestSLICE12_SanctionedAllowlistGate(t *testing.T) {
+	// A small, explicit allowlist standing in for the committed artifact: o1-mini's
+	// ratified target tuple per bestiary-xdbc (Q2a/Q2b).
+	allow := sanctionedAllowlist{
+		"o1-mini": decompTuple{"gpt", "o", "1", "mini"},
+		"gpt-4o":  decompTuple{"gpt", "4o", "", ""},
+	}
+	cases := []struct {
+		desc   string
+		id     bestiary.ModelID
+		before decompTuple
+		after  decompTuple
+		// bID/aID describe the cross-provider tuples for this ID; per-case so the
+		// convergence shape is realistic (same parser → same after on every provider).
+		bID  []decompTuple
+		aID  []decompTuple
+		want changeCategory
+	}{
+		{
+			desc:   "(1) allowlisted o1-mini converged to its RATIFIED tuple → sanctioned cat-(a)",
+			id:     "o1-mini",
+			before: decompTuple{"o", "mini", "1", ""},
+			after:  decompTuple{"gpt", "o", "1", "mini"},
+			bID:    []decompTuple{{"o", "mini", "1", ""}, {"gpt", "o", "1", "mini"}},
+			aID:    []decompTuple{{"gpt", "o", "1", "mini"}, {"gpt", "o", "1", "mini"}},
+			want:   CatFix,
+		},
+		{
+			desc:   "(2) allowlisted o1-mini mutated to a WRONG tuple (mini left in variant, no ratified 'o') → cat-(c)",
+			id:     "o1-mini",
+			before: decompTuple{"o", "mini", "1", ""},
+			after:  decompTuple{"gpt", "mini", "1", ""}, // NOT the ratified (gpt,o,1,mini)
+			// Even though the parser would produce this on every provider (consistent) and
+			// the mechanical classifier would call it a clean family-convergence fix, the
+			// allowlist is AUTHORITATIVE → hard cat-(c). This is the no-masking property.
+			bID:  []decompTuple{{"o", "mini", "1", ""}, {"gpt", "mini", "1", ""}},
+			aID:  []decompTuple{{"gpt", "mini", "1", ""}, {"gpt", "mini", "1", ""}},
+			want: CatRegress,
+		},
+		{
+			desc:   "(3) gpt-4o-SHAPED taxonomy change (version '4o' cleared) on a NON-allowlisted ID → cat-(c); you MUST allowlist it",
+			id:     "zzz-4o", // not in the allowlist; '4o' is in the ID
+			before: decompTuple{"gpt", "", "4o", ""},
+			after:  decompTuple{"gpt", "4o", "", ""},
+			// Consistent before+after (not a divergence-convergence), so only the allowlist
+			// could bless it; absent an entry it falls to cat-(c) because the version '4o'
+			// (ID-present) was cleared without re-surfacing — caught by the mechanical path.
+			bID:  []decompTuple{{"gpt", "", "4o", ""}},
+			aID:  []decompTuple{{"gpt", "4o", "", ""}},
+			want: CatRegress,
+		},
+		{
+			desc:   "(4) UNRELATED bug riding an allowlisted ID (gpt-4o mangled to a foreign tuple) → cat-(c)",
+			id:     "gpt-4o",
+			before: decompTuple{"gpt", "", "4o", ""},
+			after:  decompTuple{"deepseek", "", "", ""}, // unrelated to the ratified (gpt,4o,"")
+			bID:    []decompTuple{{"gpt", "", "4o", ""}, {"deepseek", "", "", ""}},
+			aID:    []decompTuple{{"deepseek", "", "", ""}, {"deepseek", "", "", ""}},
+			want:   CatRegress,
+		},
+	}
+	for _, tc := range cases {
+		t.Run(tc.desc, func(t *testing.T) {
+			got, reason := classifyDecompChange(tc.id, tc.before, tc.after, tc.bID, tc.aID, allow)
 			if got != tc.want {
 				t.Errorf("classifyDecompChange = %s (%s), want %s", got, reason, tc.want)
 			}

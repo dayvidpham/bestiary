@@ -34,15 +34,15 @@ provider	id	raw_family	family	variant	version	modifier
 302ai	doubao-seed-code-preview-251028		doubao-seed-code-preview			
 302ai	gemini-2.0-flash-lite	gemini-flash-lite	gemini	flash-lite	2.0	
 302ai	gemini-2.5-flash	gemini-flash	gemini	flash	2.5	
-302ai	gemini-2.5-flash-image		gemini-2.5-flash	image	2.5	
+302ai	gemini-2.5-flash-image		gemini	flash	2.5	
 302ai	gemini-2.5-flash-lite-preview-09-2025		gemini	flash	2.5	
 302ai	gemini-2.5-flash-nothink	gemini-flash	gemini	flash	2.5	
 302ai	gemini-2.5-flash-preview-09-2025		gemini	flash	2.5	
 302ai	gemini-2.5-pro	gemini-pro	gemini	pro	2.5	
 302ai	gemini-3-flash-preview		gemini	flash	3	preview
-302ai	gemini-3-pro-image-preview		gemini-3-pro	image	3	preview
+302ai	gemini-3-pro-image-preview		gemini	pro	3	preview
 302ai	gemini-3-pro-preview		gemini	pro	3	preview
-302ai	gemini-3.1-flash-image-preview		gemini-3.1-flash	image	3.1	preview
+302ai	gemini-3.1-flash-image-preview		gemini	flash	3.1	preview
 302ai	glm-4.5	glm	glm		4.5	
 302ai	glm-4.5-air	glm-air	glm	air	4.5	
 302ai	glm-4.5-airx	glm	glm		4.5	
@@ -94,7 +94,7 @@ provider	id	raw_family	family	variant	version	modifier
 302ai	qwen3-235b-a22b	qwen	qwen		3	
 302ai	qwen3-235b-a22b-instruct-2507		qwen	instruct	3	
 302ai	qwen3-30b-a3b	qwen	qwen		3	
-302ai	qwen3-coder-480b-a35b-instruct		qwen3-coder-480b-a35b	instruct		
+302ai	qwen3-coder-480b-a35b-instruct		qwen	coder	3	
 302ai	qwen3-max-2025-09-23		qwen	max	3	
 abacus	Qwen/QwQ-32B	qwen	qwen			
 abacus	Qwen/Qwen2.5-72B-Instruct	qwen	qwen	instruct	2.5	
@@ -914,7 +914,7 @@ cortecs	deepseek-v3.2	deepseek	deepseek	v3.2
 cortecs	deepseek-v4-flash	deepseek-flash	deepseek	flash		
 cortecs	deepseek-v4-pro	deepseek-thinking	deepseek	pro		thinking
 cortecs	devstral-2512		devstral			
-cortecs	devstral-small-2512		devstral-small			
+cortecs	devstral-small-2512		devstral	small		
 cortecs	gemini-2.5-pro	gemini-pro	gemini	pro	2.5	
 cortecs	glm-4.5	glm	glm		4.5	
 cortecs	glm-4.5-air	glm-air	glm	air	4.5	
@@ -937,7 +937,7 @@ cortecs	minimax-m2.1	minimax	minimax	m	2.1
 cortecs	minimax-m2.5	minimax	minimax	m	2.5	
 cortecs	minimax-m2.7	minimax	minimax	m	2.7	
 cortecs	mistral-large-2512	mistral-large	mistral	large		
-cortecs	mixtral-8x7B-instruct-v0.1		mixtral-8x7b-instruct	v0.1		
+cortecs	mixtral-8x7B-instruct-v0.1		mixtral	instruct		
 cortecs	nemotron-3-super-120b-a12b		nemotron		3	
 cortecs	nova-pro-v1	nova-pro	nova	pro		
 cortecs	qwen-2.5-72b-instruct	qwen	qwen	instruct	2.5	
@@ -1005,7 +1005,7 @@ deepinfra	Qwen/Qwen3.5-397B-A17B	qwen	qwen		3.5
 deepinfra	Qwen/Qwen3.6-35B-A3B	qwen	qwen		3.6	
 deepinfra	anthropic/claude-3-7-sonnet-latest	claude-sonnet	claude	sonnet	3.7	latest
 deepinfra	anthropic/claude-4-opus	claude-opus	claude	opus	4	
-deepinfra	deepseek-ai/DeepSeek-R1-0528		deepseek-r1			
+deepinfra	deepseek-ai/DeepSeek-R1-0528		deepseek			
 deepinfra	deepseek-ai/DeepSeek-V3.2		deepseek			
 deepinfra	deepseek-ai/DeepSeek-V4-Flash	deepseek-flash	deepseek	flash		
 deepinfra	deepseek-ai/DeepSeek-V4-Pro	deepseek-thinking	deepseek	pro		thinking
@@ -1406,7 +1406,7 @@ groq	openai/gpt-oss-safeguard-20b	gpt-oss	gpt	oss
 groq	qwen-qwq-32b	qwen	qwen			
 groq	qwen/qwen3-32b	qwen	qwen		3	
 groq	whisper-large-v3	whisper	whisper			
-groq	whisper-large-v3-turbo	whisper	whisper			
+groq	whisper-large-v3-turbo	whisper	whisper	large		
 helicone	chatgpt-4o-latest	gpt	gpt			latest
 helicone	claude-3-haiku-20240307	claude-haiku	claude	haiku	3	
 helicone	claude-3.5-haiku	claude-haiku	claude	haiku	3.5	
@@ -1561,7 +1561,7 @@ io-net	deepseek-ai/DeepSeek-R1-0528	deepseek-thinking	deepseek			thinking
 io-net	meta-llama/Llama-3.2-90B-Vision-Instruct	llama	llama	instruct	3.2	
 io-net	meta-llama/Llama-3.3-70B-Instruct	llama	llama	instruct	3.3	
 io-net	meta-llama/Llama-4-Maverick-17B-128E-Instruct-FP8	llama	llama	instruct	4	
-io-net	mistralai/Devstral-Small-2505	devstral	devstral			
+io-net	mistralai/Devstral-Small-2505	devstral	devstral	small		
 io-net	mistralai/Magistral-Small-2506	magistral-small	magistral	small		
 io-net	mistralai/Mistral-Large-Instruct-2411	mistral-large	mistral	large		
 io-net	mistralai/Mistral-Nemo-Instruct-2407	mistral-nemo	mistral	nemo		
@@ -1631,7 +1631,7 @@ jiekou	zai-org/glm-4.5	glm	glm		4.5
 jiekou	zai-org/glm-4.5v	glmv	glmv			
 jiekou	zai-org/glm-4.7	glm	glm		4.7	
 jiekou	zai-org/glm-4.7-flash	glm	glm	flash	4.7	
-kilo	ai21/jamba-large-1.7		jamba-large		1.7	
+kilo	ai21/jamba-large-1.7		jamba	large	1.7	
 kilo	aion-labs/aion-1.0		aion		1.0	
 kilo	aion-labs/aion-1.0-mini		aion	mini	1.0	
 kilo	aion-labs/aion-2.0		aion		2.0	
@@ -1646,17 +1646,17 @@ kilo	amazon/nova-pro-v1		nova	pro
 kilo	anthracite-org/magnum-v4-72b		magnum			
 kilo	anthropic/claude-3-haiku		claude	haiku	3	
 kilo	anthropic/claude-3.5-haiku		claude	haiku	3.5	
-kilo	anthropic/claude-haiku-4.5		claude-haiku		4.5	
+kilo	anthropic/claude-haiku-4.5		claude	haiku	4.5	
 kilo	anthropic/claude-opus-4		claude	opus	4	
-kilo	anthropic/claude-opus-4.1		claude-opus		4.1	
-kilo	anthropic/claude-opus-4.5		claude-opus		4.5	
-kilo	anthropic/claude-opus-4.6		claude-opus		4.6	
+kilo	anthropic/claude-opus-4.1		claude	opus	4.1	
+kilo	anthropic/claude-opus-4.5		claude	opus	4.5	
+kilo	anthropic/claude-opus-4.6		claude	opus	4.6	
 kilo	anthropic/claude-opus-4.6-fast		claude	opus	4.6	
-kilo	anthropic/claude-opus-4.7		claude-opus		4.7	
+kilo	anthropic/claude-opus-4.7		claude	opus	4.7	
 kilo	anthropic/claude-opus-4.7-fast		claude	opus	4.7	
 kilo	anthropic/claude-sonnet-4		claude	sonnet	4	
-kilo	anthropic/claude-sonnet-4.5		claude-sonnet		4.5	
-kilo	anthropic/claude-sonnet-4.6		claude-sonnet		4.6	
+kilo	anthropic/claude-sonnet-4.5		claude	sonnet	4.5	
+kilo	anthropic/claude-sonnet-4.6		claude	sonnet	4.6	
 kilo	arcee-ai/coder-large		coder	large		
 kilo	arcee-ai/maestro-reasoning		maestro			
 kilo	arcee-ai/spotlight		spotlight			
@@ -1678,34 +1678,34 @@ kilo	bytedance/ui-tars-1.5-7b		ui
 kilo	cohere/command-a		command	a		
 kilo	cohere/command-r-08-2024		command	r		
 kilo	cohere/command-r-plus-08-2024		command-r-plus		08	
-kilo	cohere/command-r7b-12-2024		command-r7b		12	
+kilo	cohere/command-r7b-12-2024		command		12	
 kilo	deepcogito/cogito-v2.1-671b		cogito	v2.1-671b		
 kilo	deepseek/deepseek-chat		deepseek			
 kilo	deepseek/deepseek-chat-v3-0324		deepseek-chat-v3			
 kilo	deepseek/deepseek-chat-v3.1		deepseek-chat	v3.1		
 kilo	deepseek/deepseek-r1		deepseek			
-kilo	deepseek/deepseek-r1-0528		deepseek-r1			
+kilo	deepseek/deepseek-r1-0528		deepseek			
 kilo	deepseek/deepseek-r1-distill-llama-70b		deepseek			
 kilo	deepseek/deepseek-r1-distill-qwen-32b		deepseek			
 kilo	deepseek/deepseek-v3.1-terminus		deepseek	v3.1-terminus		
 kilo	deepseek/deepseek-v3.2		deepseek	v3.2		
 kilo	deepseek/deepseek-v3.2-exp		deepseek	v3.2-exp		
 kilo	deepseek/deepseek-v3.2-speciale		deepseek	v3.2-speciale		
-kilo	deepseek/deepseek-v4-flash		deepseek-v4	flash		
-kilo	deepseek/deepseek-v4-pro		deepseek-v4	pro		
-kilo	essentialai/rnj-1-instruct		rnj-1	instruct	1	
+kilo	deepseek/deepseek-v4-flash		deepseek	flash		
+kilo	deepseek/deepseek-v4-pro		deepseek	pro		
+kilo	essentialai/rnj-1-instruct		rnj		1	
 kilo	google/gemini-2.0-flash-001		gemini	flash	2.0	
 kilo	google/gemini-2.0-flash-lite-001		gemini	flash	2.0	
 kilo	google/gemini-2.5-flash		gemini	flash	2.5	
-kilo	google/gemini-2.5-flash-image		gemini-2.5-flash	image	2.5	
+kilo	google/gemini-2.5-flash-image		gemini	flash	2.5	
 kilo	google/gemini-2.5-flash-lite		gemini	flash-lite	2.5	
 kilo	google/gemini-2.5-flash-lite-preview-09-2025		gemini	flash	2.5	
 kilo	google/gemini-2.5-pro		gemini	pro	2.5	
 kilo	google/gemini-2.5-pro-preview		gemini	pro	2.5	preview
 kilo	google/gemini-2.5-pro-preview-05-06		gemini	pro	2.5	
 kilo	google/gemini-3-flash-preview		gemini	flash	3	preview
-kilo	google/gemini-3-pro-image-preview		gemini-3-pro	image	3	preview
-kilo	google/gemini-3.1-flash-image-preview		gemini-3.1-flash	image	3.1	preview
+kilo	google/gemini-3-pro-image-preview		gemini	pro	3	preview
+kilo	google/gemini-3.1-flash-image-preview		gemini	flash	3.1	preview
 kilo	google/gemini-3.1-flash-lite		gemini	flash-lite	3.1	
 kilo	google/gemini-3.1-flash-lite-preview		gemini	flash-lite	3.1	preview
 kilo	google/gemini-3.1-pro-preview		gemini	pro	3.1	preview
@@ -1719,7 +1719,7 @@ kilo	google/gemma-3n-e4b-it		gemma
 kilo	google/gemma-4-26b-a4b-it		gemma		4	
 kilo	google/gemma-4-31b-it		gemma		4	
 kilo	google/lyria-3-clip-preview		lyria		3	preview
-kilo	google/lyria-3-pro-preview		lyria-3	pro	3	preview
+kilo	google/lyria-3-pro-preview		lyria		3	preview
 kilo	gryphe/mythomax-l2-13b		mythomax			
 kilo	ibm-granite/granite-4.0-h-micro		granite		4.0	
 kilo	ibm-granite/granite-4.1-8b		granite		4.1	
@@ -1736,20 +1736,20 @@ kilo	kilo-auto/small		small
 kilo	kwaipilot/kat-coder-pro-v2		kat	coder		
 kilo	liquid/lfm-2-24b-a2b		lfm		2	
 kilo	mancer/weaver		weaver			
-kilo	meta-llama/llama-3-70b-instruct		llama-3-70b	instruct	3	
-kilo	meta-llama/llama-3-8b-instruct		llama-3-8b	instruct	3	
-kilo	meta-llama/llama-3.1-70b-instruct		llama-3.1-70b	instruct	3.1	
-kilo	meta-llama/llama-3.1-8b-instruct		llama-3.1-8b	instruct	3.1	
+kilo	meta-llama/llama-3-70b-instruct		llama	instruct	3	
+kilo	meta-llama/llama-3-8b-instruct		llama	instruct	3	
+kilo	meta-llama/llama-3.1-70b-instruct		llama	instruct	3.1	
+kilo	meta-llama/llama-3.1-8b-instruct		llama	instruct	3.1	
 kilo	meta-llama/llama-3.2-11b-vision-instruct		llama-3.2-11b-vision	instruct	3.2	
-kilo	meta-llama/llama-3.2-1b-instruct		llama-3.2-1b	instruct	3.2	
-kilo	meta-llama/llama-3.2-3b-instruct		llama-3.2-3b	instruct	3.2	
-kilo	meta-llama/llama-3.3-70b-instruct		llama-3.3-70b	instruct	3.3	
+kilo	meta-llama/llama-3.2-1b-instruct		llama	instruct	3.2	
+kilo	meta-llama/llama-3.2-3b-instruct		llama	instruct	3.2	
+kilo	meta-llama/llama-3.3-70b-instruct		llama	instruct	3.3	
 kilo	meta-llama/llama-4-maverick		llama		4	
 kilo	meta-llama/llama-4-scout		llama		4	
 kilo	meta-llama/llama-guard-3-8b		llama		3	
 kilo	meta-llama/llama-guard-4-12b		llama		4	
 kilo	microsoft/phi-4		phi		4	
-kilo	microsoft/phi-4-mini-instruct		phi-4-mini	instruct	4	
+kilo	microsoft/phi-4-mini-instruct		phi	mini	4	
 kilo	microsoft/wizardlm-2-8x22b		wizardlm		2	
 kilo	minimax/minimax-01		minimax		01	
 kilo	minimax/minimax-m1		minimax	m	1	
@@ -1765,22 +1765,22 @@ kilo	mistralai/devstral-small		devstral	small
 kilo	mistralai/ministral-14b-2512		ministral			
 kilo	mistralai/ministral-3b-2512		ministral			
 kilo	mistralai/ministral-8b-2512		ministral			
-kilo	mistralai/mistral-7b-instruct-v0.1		mistral-7b-instruct	v0.1		
+kilo	mistralai/mistral-7b-instruct-v0.1		mistral	instruct		
 kilo	mistralai/mistral-large		mistral	large		
 kilo	mistralai/mistral-large-2407		mistral	large		
 kilo	mistralai/mistral-large-2411		mistral	large		
 kilo	mistralai/mistral-large-2512		mistral	large		
 kilo	mistralai/mistral-medium-3		mistral	medium	3	
 kilo	mistralai/mistral-medium-3-5		mistral	medium	3.5	
-kilo	mistralai/mistral-medium-3.1		mistral-medium		3.1	
+kilo	mistralai/mistral-medium-3.1		mistral	medium	3.1	
 kilo	mistralai/mistral-nemo		mistral	nemo		
 kilo	mistralai/mistral-saba		mistral			
 kilo	mistralai/mistral-small-24b-instruct-2501		mistral	small		
 kilo	mistralai/mistral-small-2603		mistral	small		
-kilo	mistralai/mistral-small-3.1-24b-instruct		mistral-small-3.1-24b	instruct		
-kilo	mistralai/mistral-small-3.2-24b-instruct		mistral-small-3.2-24b	instruct		
-kilo	mistralai/mixtral-8x22b-instruct		mixtral-8x22b	instruct		
-kilo	mistralai/pixtral-large-2411		pixtral-large			
+kilo	mistralai/mistral-small-3.1-24b-instruct		mistral	small	3.1	
+kilo	mistralai/mistral-small-3.2-24b-instruct		mistral	small	3.2	
+kilo	mistralai/mixtral-8x22b-instruct		mixtral			
+kilo	mistralai/pixtral-large-2411		pixtral	large		
 kilo	mistralai/voxtral-small-24b-2507		voxtral			
 kilo	moonshotai/kimi-k2		kimi	k	2	
 kilo	moonshotai/kimi-k2-0905		kimi	k	2	
@@ -1788,7 +1788,7 @@ kilo	moonshotai/kimi-k2-thinking		kimi	k	2	thinking
 kilo	moonshotai/kimi-k2.5		kimi	k	2.5	
 kilo	moonshotai/kimi-k2.6		kimi	k	2.6	
 kilo	morph/morph-v3-fast		morph			
-kilo	morph/morph-v3-large		morph-v3	large		
+kilo	morph/morph-v3-large		morph			
 kilo	nex-agi/deepseek-v3.1-nex-n1		deepseek	v3.1-nex-n1		
 kilo	nousresearch/hermes-2-pro-llama-3-8b		hermes		2.3	
 kilo	nousresearch/hermes-3-llama-3.1-405b		hermes		3	
@@ -1804,7 +1804,7 @@ kilo	nvidia/nemotron-nano-9b-v2		nemotron	nano
 kilo	openai/gpt-3.5-turbo		gpt	turbo	3.5	
 kilo	openai/gpt-3.5-turbo-0613		gpt	turbo	3.5	
 kilo	openai/gpt-3.5-turbo-16k		gpt	turbo	3.5	
-kilo	openai/gpt-3.5-turbo-instruct		gpt-3.5-turbo	instruct	3.5	
+kilo	openai/gpt-3.5-turbo-instruct		gpt	turbo	3.5	
 kilo	openai/gpt-4		gpt		4	
 kilo	openai/gpt-4-0314		gpt		4	
 kilo	openai/gpt-4-1106-preview		gpt		4	preview
@@ -1818,15 +1818,15 @@ kilo	openai/gpt-4o-2024-05-13		gpt		4o
 kilo	openai/gpt-4o-2024-08-06		gpt		4o	
 kilo	openai/gpt-4o-2024-11-20		gpt		4o	
 kilo	openai/gpt-4o-audio-preview		gpt			preview
-kilo	openai/gpt-4o-mini		gpt-4o	mini		
-kilo	openai/gpt-4o-mini-2024-07-18		gpt-4o	mini		
+kilo	openai/gpt-4o-mini		gpt	mini		
+kilo	openai/gpt-4o-mini-2024-07-18		gpt	mini		
 kilo	openai/gpt-4o-mini-search-preview		gpt	mini		preview
 kilo	openai/gpt-4o-search-preview		gpt			preview
 kilo	openai/gpt-5		gpt		5	
 kilo	openai/gpt-5-chat		gpt		5	
 kilo	openai/gpt-5-codex		gpt	codex	5	
 kilo	openai/gpt-5-image		gpt	image	5	
-kilo	openai/gpt-5-image-mini		gpt-5-image	mini	5	
+kilo	openai/gpt-5-image-mini		gpt	image	5	
 kilo	openai/gpt-5-mini		gpt	mini	5	
 kilo	openai/gpt-5-nano		gpt	nano	5	
 kilo	openai/gpt-5-pro		gpt	pro	5	
@@ -1862,7 +1862,7 @@ kilo	openai/o3-mini		o	mini	3
 kilo	openai/o3-mini-high		o	mini	3	
 kilo	openai/o3-pro		o	pro	3	
 kilo	openai/o4-mini		o	mini	4	
-kilo	openai/o4-mini-deep-research		o4-mini	deep-research		
+kilo	openai/o4-mini-deep-research		o	mini	4	
 kilo	openai/o4-mini-high		o	mini	4	
 kilo	openrouter/auto		auto			
 kilo	openrouter/bodybuilder		bodybuilder			
@@ -1874,17 +1874,17 @@ kilo	perplexity/sonar		sonar
 kilo	perplexity/sonar-deep-research		sonar	deep-research		
 kilo	perplexity/sonar-pro		sonar	pro		
 kilo	perplexity/sonar-pro-search		sonar	pro		
-kilo	perplexity/sonar-reasoning-pro		sonar-reasoning	pro		
+kilo	perplexity/sonar-reasoning-pro		sonar	reasoning		
 kilo	poolside/laguna-m.1:free		laguna			
 kilo	poolside/laguna-xs.2:free		laguna			
 kilo	prime-intellect/intellect-3		intellect		3	
-kilo	qwen/qwen-2.5-72b-instruct		qwen-2.5-72b	instruct	2.5	
-kilo	qwen/qwen-2.5-7b-instruct		qwen-2.5-7b	instruct	2.5	
-kilo	qwen/qwen-2.5-coder-32b-instruct		qwen-2.5-coder-32b	instruct	2.5	
+kilo	qwen/qwen-2.5-72b-instruct		qwen	instruct	2.5	
+kilo	qwen/qwen-2.5-7b-instruct		qwen	instruct	2.5	
+kilo	qwen/qwen-2.5-coder-32b-instruct		qwen	coder	2.5	
 kilo	qwen/qwen-plus		qwen	plus		
 kilo	qwen/qwen-plus-2025-07-28		qwen	plus		
 kilo	qwen/qwen-plus-2025-07-28:thinking		qwen	plus		
-kilo	qwen/qwen2.5-vl-72b-instruct		qwen2.5-vl-72b	instruct		
+kilo	qwen/qwen2.5-vl-72b-instruct		qwen	vl	2.5	
 kilo	qwen/qwen3-14b		qwen		3	
 kilo	qwen/qwen3-235b-a22b		qwen		3	
 kilo	qwen/qwen3-235b-a22b-2507		qwen		3	
@@ -1895,20 +1895,20 @@ kilo	qwen/qwen3-30b-a3b-thinking-2507		qwen		3
 kilo	qwen/qwen3-32b		qwen		3	
 kilo	qwen/qwen3-8b		qwen		3	
 kilo	qwen/qwen3-coder		qwen	coder	3	
-kilo	qwen/qwen3-coder-30b-a3b-instruct		qwen3-coder-30b-a3b	instruct		
-kilo	qwen/qwen3-coder-flash		qwen3-coder	flash		
+kilo	qwen/qwen3-coder-30b-a3b-instruct		qwen	coder	3	
+kilo	qwen/qwen3-coder-flash		qwen	coder	3	
 kilo	qwen/qwen3-coder-next		qwen	coder	3	
 kilo	qwen/qwen3-coder-plus		qwen	coder	3	
 kilo	qwen/qwen3-max		qwen	max	3	
 kilo	qwen/qwen3-max-thinking		qwen	max	3	thinking
 kilo	qwen/qwen3-next-80b-a3b-instruct		qwen3-next-80b-a3b	instruct		
 kilo	qwen/qwen3-next-80b-a3b-thinking		qwen		3	thinking
-kilo	qwen/qwen3-vl-235b-a22b-instruct		qwen3-vl-235b-a22b	instruct		
+kilo	qwen/qwen3-vl-235b-a22b-instruct		qwen	vl	3	
 kilo	qwen/qwen3-vl-235b-a22b-thinking		qwen	vl	3	thinking
-kilo	qwen/qwen3-vl-30b-a3b-instruct		qwen3-vl-30b-a3b	instruct		
+kilo	qwen/qwen3-vl-30b-a3b-instruct		qwen	vl	3	
 kilo	qwen/qwen3-vl-30b-a3b-thinking		qwen	vl	3	thinking
-kilo	qwen/qwen3-vl-32b-instruct		qwen3-vl-32b	instruct		
-kilo	qwen/qwen3-vl-8b-instruct		qwen3-vl-8b	instruct		
+kilo	qwen/qwen3-vl-32b-instruct		qwen	vl	3	
+kilo	qwen/qwen3-vl-8b-instruct		qwen	vl	3	
 kilo	qwen/qwen3-vl-8b-thinking		qwen	vl	3	thinking
 kilo	qwen/qwen3.5-122b-a10b		qwen		3.5	
 kilo	qwen/qwen3.5-27b		qwen		3.5	
@@ -1925,7 +1925,7 @@ kilo	qwen/qwen3.6-max-preview		qwen	max	3.6	preview
 kilo	qwen/qwen3.6-plus		qwen	plus	3.6	
 kilo	qwen/qwen3.7-max		qwen	max	3.7	
 kilo	rekaai/reka-edge		reka			
-kilo	rekaai/reka-flash-3		reka-flash		3	
+kilo	rekaai/reka-flash-3		reka	flash	3	
 kilo	relace/relace-apply-3		relace-apply		3	
 kilo	relace/relace-search		relace			
 kilo	sao10k/l3-euryale-70b		llama			
@@ -1933,12 +1933,12 @@ kilo	sao10k/l3-lunaris-8b		llama
 kilo	sao10k/l3.1-70b-hanami-x1		llama			
 kilo	sao10k/l3.1-euryale-70b		llama			
 kilo	sao10k/l3.3-euryale-70b		llama			
-kilo	stealth/claude-opus-4.6		claude-opus		4.6	
-kilo	stealth/claude-opus-4.7		claude-opus		4.7	
-kilo	stealth/claude-sonnet-4.6		claude-sonnet		4.6	
+kilo	stealth/claude-opus-4.6		claude	opus	4.6	
+kilo	stealth/claude-opus-4.7		claude	opus	4.7	
+kilo	stealth/claude-sonnet-4.6		claude	sonnet	4.6	
 kilo	stepfun/step-3.5-flash		step	flash	3.5	
 kilo	switchpoint/router		router			
-kilo	tencent/hunyuan-a13b-instruct		hunyuan-a13b	instruct		
+kilo	tencent/hunyuan-a13b-instruct		hunyuan			
 kilo	tencent/hy3-preview		hy3			preview
 kilo	thedrummer/cydonia-24b-v4.1		cydonia-24b	v4.1		
 kilo	thedrummer/rocinante-12b		rocinante			
@@ -1967,7 +1967,7 @@ kilo	z-ai/glm-4.7-flash		glm	flash	4.7
 kilo	z-ai/glm-5		glm		5	
 kilo	z-ai/glm-5-turbo		glm	turbo	5	
 kilo	z-ai/glm-5.1		glm		5.1	
-kilo	z-ai/glm-5v-turbo		glm-5v	turbo		
+kilo	z-ai/glm-5v-turbo		glm	turbo		
 kilo	~anthropic/claude-haiku-latest		claude	haiku		latest
 kilo	~anthropic/claude-opus-latest		claude	opus		latest
 kilo	~anthropic/claude-sonnet-latest		claude	sonnet		latest
@@ -2017,7 +2017,7 @@ llmgateway	deepseek-v3.2	deepseek	deepseek	v3.2
 llmgateway	deepseek-v4-flash	deepseek-flash	deepseek	flash		
 llmgateway	deepseek-v4-pro	deepseek-thinking	deepseek	pro		thinking
 llmgateway	devstral-2512	devstral	devstral			
-llmgateway	devstral-small-2507	devstral	devstral			
+llmgateway	devstral-small-2507	devstral	devstral	small		
 llmgateway	gemini-2.0-flash	gemini-flash	gemini	flash	2.0	
 llmgateway	gemini-2.0-flash-lite	gemini-flash-lite	gemini	flash-lite	2.0	
 llmgateway	gemini-2.5-flash	gemini-flash	gemini	flash	2.5	
@@ -2241,9 +2241,9 @@ merge-gateway	minimax/minimax-m2.7	minimax	minimax	m	2.7
 merge-gateway	minimax/minimax-m2.7-highspeed	minimax	minimax	m	2.7	highspeed
 merge-gateway	mistral/codestral-latest	codestral	codestral			latest
 merge-gateway	mistral/devstral-2512	devstral	devstral			
-merge-gateway	mistral/devstral-medium-2507	devstral	devstral			
+merge-gateway	mistral/devstral-medium-2507	devstral	devstral	medium		
 merge-gateway	mistral/devstral-medium-latest	devstral	devstral	medium		latest
-merge-gateway	mistral/devstral-small-2507	devstral	devstral			
+merge-gateway	mistral/devstral-small-2507	devstral	devstral	small		
 merge-gateway	mistral/magistral-medium-latest	magistral-medium	magistral	medium		latest
 merge-gateway	mistral/mistral-large-2411	mistral-large	mistral	large		
 merge-gateway	mistral/mistral-large-2512	mistral-large	mistral	large		
@@ -2313,10 +2313,10 @@ minimax-coding-plan	MiniMax-M2.7	minimax	minimax	m	2.7
 minimax-coding-plan	MiniMax-M2.7-highspeed	minimax	minimax	m	2.7	highspeed
 mistral	codestral-latest	codestral	codestral			latest
 mistral	devstral-2512	devstral	devstral			
-mistral	devstral-medium-2507	devstral	devstral			
+mistral	devstral-medium-2507	devstral	devstral	medium		
 mistral	devstral-medium-latest	devstral	devstral	medium		latest
-mistral	devstral-small-2505	devstral	devstral			
-mistral	devstral-small-2507	devstral	devstral			
+mistral	devstral-small-2505	devstral	devstral	small		
+mistral	devstral-small-2507	devstral	devstral	small		
 mistral	labs-devstral-small-2512	devstral	devstral			
 mistral	magistral-medium-latest	magistral-medium	magistral	medium		latest
 mistral	magistral-small	magistral-small	magistral	small		
@@ -2448,7 +2448,7 @@ nano-gpt	Llama-3.3-70B-Strawberrylemonade-v1.2		llama-3.3-70b-strawberrylemonade
 nano-gpt	Llama-3.3-70B-The-Omega-Directive-Unslop-v2.0		llama-3.3-70b-the-omega-directive-unslop	v2.0	3.3	
 nano-gpt	Llama-3.3-70B-The-Omega-Directive-Unslop-v2.1		llama-3.3-70b-the-omega-directive-unslop	v2.1	3.3	
 nano-gpt	Llama-3.3-70B-Vulpecula-R1		llama		3.3	
-nano-gpt	Magistral-Small-2506		magistral-small			
+nano-gpt	Magistral-Small-2506		magistral	small		
 nano-gpt	MarinaraSpaghetti/NemoMix-Unleashed-12B	mistral-nemo	mistral	nemo		
 nano-gpt	Meta-Llama-3-1-8B-Instruct-FP8		meta		3.1	
 nano-gpt	MiniMax-M1		minimax	m	1	
@@ -2610,7 +2610,7 @@ nano-gpt	deepseek-r1		deepseek
 nano-gpt	deepseek-r1-sambanova		deepseek			
 nano-gpt	deepseek-reasoner		deepseek			
 nano-gpt	deepseek-reasoner-cheaper		deepseek			
-nano-gpt	deepseek-v3-0324		deepseek-v3			
+nano-gpt	deepseek-v3-0324		deepseek			
 nano-gpt	deepseek/deepseek-prover-v2-671b	deepseek	deepseek			
 nano-gpt	deepseek/deepseek-v3.2	deepseek	deepseek	v3.2		
 nano-gpt	deepseek/deepseek-v3.2-speciale	deepseek	deepseek	v3.2-speciale		
@@ -2672,7 +2672,7 @@ nano-gpt	gemini-2.5-pro-exp-03-25		gemini	pro	2.5
 nano-gpt	gemini-2.5-pro-preview-03-25		gemini	pro	2.5	
 nano-gpt	gemini-2.5-pro-preview-05-06		gemini	pro	2.5	
 nano-gpt	gemini-2.5-pro-preview-06-05		gemini	pro	2.5	
-nano-gpt	gemini-3-pro-image-preview		gemini-3-pro	image	3	preview
+nano-gpt	gemini-3-pro-image-preview		gemini	pro	3	preview
 nano-gpt	gemini-3-pro-preview		gemini	pro	3	preview
 nano-gpt	gemini-3-pro-preview-thinking		gemini	pro	3	thinking
 nano-gpt	gemini-exp-1206		gemini-exp			
@@ -2692,9 +2692,9 @@ nano-gpt	glm-zero-preview		glm			preview
 nano-gpt	google/gemini-3-flash-preview	gemini-flash	gemini	flash	3	preview
 nano-gpt	google/gemini-3-flash-preview-thinking	gemini-flash	gemini	flash	3	thinking
 nano-gpt	google/gemini-flash-1.5	gemini-flash	gemini	flash	1.5	
-nano-gpt	grok-3-beta		grok-3	beta	3	
+nano-gpt	grok-3-beta		grok	beta	3	
 nano-gpt	grok-3-fast-beta		grok-3-fast	beta	3	
-nano-gpt	grok-3-mini-beta		grok-3-mini	beta	3	
+nano-gpt	grok-3-mini-beta		grok	mini	3	
 nano-gpt	grok-3-mini-fast-beta		grok-3-mini-fast	beta	3	
 nano-gpt	hidream		hidream			
 nano-gpt	huihui-ai/DeepSeek-R1-Distill-Llama-70B-abliterated	deepseek	deepseek			
@@ -2708,11 +2708,11 @@ nano-gpt	inflatebot/MN-12B-Mag-Mell-R1	mistral-nemo	mistral	nemo
 nano-gpt	inflection/inflection-3-pi	gpt	gpt			
 nano-gpt	inflection/inflection-3-productivity	gpt	gpt			
 nano-gpt	jamba-large		jamba	large		
-nano-gpt	jamba-large-1.6		jamba-large		1.6	
-nano-gpt	jamba-large-1.7		jamba-large		1.7	
+nano-gpt	jamba-large-1.6		jamba	large	1.6	
+nano-gpt	jamba-large-1.7		jamba	large	1.7	
 nano-gpt	jamba-mini		jamba	mini		
-nano-gpt	jamba-mini-1.6		jamba-mini		1.6	
-nano-gpt	jamba-mini-1.7		jamba-mini		1.7	
+nano-gpt	jamba-mini-1.6		jamba	mini	1.6	
+nano-gpt	jamba-mini-1.7		jamba	mini	1.7	
 nano-gpt	kimi-k2-instruct-fast		kimi	k	2	
 nano-gpt	kimi-thinking-preview		kimi			preview
 nano-gpt	learnlm-1.5-pro-experimental		learnlm		1.5	
@@ -2734,8 +2734,8 @@ nano-gpt	minimax/minimax-m2.1	minimax	minimax	m	2.1
 nano-gpt	minimax/minimax-m2.5	minimax	minimax	m	2.5	
 nano-gpt	minimax/minimax-m2.7	minimax	minimax	m	2.7	
 nano-gpt	miromind-ai/mirothinker-v1.5-235b	gpt	gpt			
-nano-gpt	mistral-small-31-24b-instruct		mistral-small-31-24b	instruct	31	
-nano-gpt	mistralai/Devstral-Small-2505	devstral	devstral			
+nano-gpt	mistral-small-31-24b-instruct		mistral	small		
+nano-gpt	mistralai/Devstral-Small-2505	devstral	devstral	small		
 nano-gpt	mistralai/Mistral-Nemo-Instruct-2407	mistral-nemo	mistral	nemo		
 nano-gpt	mistralai/codestral-2508	codestral	codestral			
 nano-gpt	mistralai/devstral-2-123b-instruct-2512	devstral	devstral		2	
@@ -2751,8 +2751,8 @@ nano-gpt	mistralai/mistral-medium-3.1	mistral-medium	mistral	medium	3.1
 nano-gpt	mistralai/mistral-saba	mistral	mistral			
 nano-gpt	mistralai/mistral-small-creative	mistral-small	mistral	small		
 nano-gpt	mistralai/mistral-tiny	mistral	mistral			
-nano-gpt	mistralai/mixtral-8x22b-instruct-v0.1	mixtral	mixtral			
-nano-gpt	mistralai/mixtral-8x7b-instruct-v0.1	mixtral	mixtral			
+nano-gpt	mistralai/mixtral-8x22b-instruct-v0.1	mixtral	mixtral	instruct		
+nano-gpt	mistralai/mixtral-8x7b-instruct-v0.1	mixtral	mixtral	instruct		
 nano-gpt	mlabonne/NeuralDaredevil-8B-abliterated	llama	llama			
 nano-gpt	moonshotai/Kimi-Dev-72B	kimi	kimi			
 nano-gpt	moonshotai/Kimi-K2-Instruct-0905	kimi	kimi	k	2	instruct
@@ -2819,7 +2819,7 @@ nano-gpt	openai/o4-mini	o-mini	o	mini	4
 nano-gpt	openai/o4-mini-deep-research	o-mini	o	mini	4	
 nano-gpt	openai/o4-mini-high	o-mini	o	mini	4	
 nano-gpt	pamanseau/OpenReasoning-Nemotron-32B	nemotron	nemotron			
-nano-gpt	phi-4-mini-instruct		phi-4-mini	instruct	4	
+nano-gpt	phi-4-mini-instruct		phi	mini	4	
 nano-gpt	phi-4-multimodal-instruct		phi-4-multimodal	instruct	4	
 nano-gpt	qvq-max		qvq			
 nano-gpt	qwen-3.6-plus	qwen3.6	qwen	plus	3.6	
@@ -2831,9 +2831,9 @@ nano-gpt	qwen-turbo		qwen	turbo
 nano-gpt	qwen/Qwen3.6-35B-A3B	qwen3.6	qwen	3.6	3.6	
 nano-gpt	qwen/Qwen3.6-35B-A3B:thinking	qwen3.6	qwen	3.6	3.6	
 nano-gpt	qwen/qwen3.5-397b-a17b	qwen	qwen		3.5	
-nano-gpt	qwen25-vl-72b-instruct		qwen25-vl-72b	instruct		
+nano-gpt	qwen25-vl-72b-instruct		qwen	vl	25	
 nano-gpt	qwen3-30b-a3b-instruct-2507		qwen	instruct	3	
-nano-gpt	qwen3-coder-30b-a3b-instruct		qwen3-coder-30b-a3b	instruct		
+nano-gpt	qwen3-coder-30b-a3b-instruct		qwen	coder	3	
 nano-gpt	qwen3-max-2026-01-23		qwen	max	3	
 nano-gpt	qwen3-vl-235b-a22b-instruct-original		qwen	vl	3	
 nano-gpt	qwen3-vl-235b-a22b-thinking		qwen	vl	3	thinking
@@ -2846,12 +2846,12 @@ nano-gpt	shisa-ai/shisa-v2.1-llama3.3-70b	llama	llama
 nano-gpt	sonar		sonar			
 nano-gpt	sonar-deep-research		sonar	deep-research		
 nano-gpt	sonar-pro		sonar	pro		
-nano-gpt	sonar-reasoning-pro		sonar-reasoning	pro		
+nano-gpt	sonar-reasoning-pro		sonar	reasoning		
 nano-gpt	soob3123/GrayLine-Qwen3-8B	qwen	qwen			
 nano-gpt	soob3123/Veiled-Calla-12B	llama	llama			
 nano-gpt	soob3123/amoral-gemma3-27B-v2	gemma	gemma			
 nano-gpt	step-2-16k-exp		step		2	
-nano-gpt	step-2-mini		step-2	mini	2	
+nano-gpt	step-2-mini		step		2	
 nano-gpt	step-3		step		3	
 nano-gpt	step-r1-v-mini		step-r1-v	mini		
 nano-gpt	stepfun-ai/step-3.5-flash	step	step	flash	3.5	
@@ -2994,9 +2994,9 @@ novita-ai	deepseek/deepseek-r1-0528-qwen3-8b		deepseek
 novita-ai	deepseek/deepseek-r1-distill-llama-70b	deepseek-thinking	deepseek			thinking
 novita-ai	deepseek/deepseek-r1-distill-qwen-14b	deepseek-thinking	deepseek			thinking
 novita-ai	deepseek/deepseek-r1-distill-qwen-32b	deepseek-thinking	deepseek			thinking
-novita-ai	deepseek/deepseek-r1-turbo		deepseek-r1	turbo		
+novita-ai	deepseek/deepseek-r1-turbo		deepseek	turbo		
 novita-ai	deepseek/deepseek-v3-0324	deepseek	deepseek			
-novita-ai	deepseek/deepseek-v3-turbo		deepseek-v3	turbo		
+novita-ai	deepseek/deepseek-v3-turbo		deepseek	turbo		
 novita-ai	deepseek/deepseek-v3.1	deepseek	deepseek	v3.1		
 novita-ai	deepseek/deepseek-v3.1-terminus	deepseek	deepseek	v3.1-terminus		
 novita-ai	deepseek/deepseek-v3.2	deepseek	deepseek	v3.2		
@@ -3011,7 +3011,7 @@ novita-ai	gryphe/mythomax-l2-13b		mythomax
 novita-ai	inclusionai/ling-2.6-1t	ling	ling		2.6	
 novita-ai	inclusionai/ling-2.6-flash	ling	ling	flash	2.6	
 novita-ai	inclusionai/ring-2.6-1t	ring	ring		2.6	
-novita-ai	kwaipilot/kat-coder-pro		kat-coder	pro		
+novita-ai	kwaipilot/kat-coder-pro		kat	coder		
 novita-ai	meta-llama/llama-3-70b-instruct	llama	llama	instruct	3	
 novita-ai	meta-llama/llama-3-8b-instruct	llama	llama	instruct	3	
 novita-ai	meta-llama/llama-3.1-8b-instruct	llama	llama	instruct	3.1	
@@ -3039,7 +3039,7 @@ novita-ai	openai/gpt-oss-20b		gpt	oss
 novita-ai	paddlepaddle/paddleocr-vl		paddleocr			
 novita-ai	qwen/qwen-2.5-72b-instruct	qwen	qwen	instruct	2.5	
 novita-ai	qwen/qwen-mt-plus		qwen	plus		
-novita-ai	qwen/qwen2.5-7b-instruct		qwen2.5-7b	instruct		
+novita-ai	qwen/qwen2.5-7b-instruct		qwen	instruct	2.5	
 novita-ai	qwen/qwen2.5-vl-72b-instruct	qwen	qwen	vl	2.5	
 novita-ai	qwen/qwen3-235b-a22b-fp8		qwen		3	
 novita-ai	qwen/qwen3-235b-a22b-instruct-2507	qwen	qwen	instruct	3	
@@ -3048,7 +3048,7 @@ novita-ai	qwen/qwen3-30b-a3b-fp8		qwen		3
 novita-ai	qwen/qwen3-32b-fp8		qwen		3	
 novita-ai	qwen/qwen3-4b-fp8		qwen		3	
 novita-ai	qwen/qwen3-8b-fp8		qwen		3	
-novita-ai	qwen/qwen3-coder-30b-a3b-instruct		qwen3-coder-30b-a3b	instruct		
+novita-ai	qwen/qwen3-coder-30b-a3b-instruct		qwen	coder	3	
 novita-ai	qwen/qwen3-coder-480b-a35b-instruct	qwen	qwen	coder	3	
 novita-ai	qwen/qwen3-coder-next	qwen	qwen	coder	3	
 novita-ai	qwen/qwen3-max	qwen	qwen	max	3	
@@ -3056,11 +3056,11 @@ novita-ai	qwen/qwen3-next-80b-a3b-instruct		qwen3-next-80b-a3b	instruct
 novita-ai	qwen/qwen3-next-80b-a3b-thinking		qwen		3	thinking
 novita-ai	qwen/qwen3-omni-30b-a3b-instruct	qwen	qwen	instruct	3	
 novita-ai	qwen/qwen3-omni-30b-a3b-thinking		qwen		3	thinking
-novita-ai	qwen/qwen3-vl-235b-a22b-instruct		qwen3-vl-235b-a22b	instruct		
+novita-ai	qwen/qwen3-vl-235b-a22b-instruct		qwen	vl	3	
 novita-ai	qwen/qwen3-vl-235b-a22b-thinking		qwen	vl	3	thinking
-novita-ai	qwen/qwen3-vl-30b-a3b-instruct		qwen3-vl-30b-a3b	instruct		
+novita-ai	qwen/qwen3-vl-30b-a3b-instruct		qwen	vl	3	
 novita-ai	qwen/qwen3-vl-30b-a3b-thinking		qwen	vl	3	thinking
-novita-ai	qwen/qwen3-vl-8b-instruct		qwen3-vl-8b	instruct		
+novita-ai	qwen/qwen3-vl-8b-instruct		qwen	vl	3	
 novita-ai	qwen/qwen3.5-122b-a10b	qwen	qwen		3.5	
 novita-ai	qwen/qwen3.5-27b	qwen	qwen		3.5	
 novita-ai	qwen/qwen3.5-35b-a3b	qwen	qwen		3.5	
@@ -3089,7 +3089,7 @@ nvidia	black-forest-labs/flux.1-dev	flux	flux
 nvidia	black-forest-labs/flux_1-kontext-dev		flux_1			
 nvidia	black-forest-labs/flux_1-schnell		flux_1			
 nvidia	black-forest-labs/flux_2-klein-4b	flux	flux			
-nvidia	bytedance/seed-oss-36b-instruct	seed	seed			
+nvidia	bytedance/seed-oss-36b-instruct	seed	seed	oss		
 nvidia	deepseek-ai/deepseek-v3.1-terminus	deepseek	deepseek	v3.1-terminus		
 nvidia	deepseek-ai/deepseek-v3.2	deepseek	deepseek	v3.2		
 nvidia	deepseek-ai/deepseek-v4-flash	deepseek-flash	deepseek	flash		
@@ -3102,13 +3102,13 @@ nvidia	google/gemma-4-31b-it	gemma	gemma		4
 nvidia	google/google-paligemma		google			
 nvidia	meta/esm2-650m		esm2			
 nvidia	meta/esmfold		esmfold			
-nvidia	meta/llama-3.1-70b-instruct		llama-3.1-70b	instruct	3.1	
+nvidia	meta/llama-3.1-70b-instruct		llama	instruct	3.1	
 nvidia	meta/llama-3.1-8b-instruct	llama	llama	instruct	3.1	
 nvidia	meta/llama-3.2-11b-vision-instruct		llama-3.2-11b-vision	instruct	3.2	
-nvidia	meta/llama-3.2-1b-instruct		llama-3.2-1b	instruct	3.2	
+nvidia	meta/llama-3.2-1b-instruct		llama	instruct	3.2	
 nvidia	meta/llama-3.2-3b-instruct	llama	llama	instruct	3.2	
 nvidia	meta/llama-3.2-90b-vision-instruct	llama	llama	instruct	3.2	
-nvidia	meta/llama-3.3-70b-instruct		llama-3.3-70b	instruct	3.3	
+nvidia	meta/llama-3.3-70b-instruct		llama	instruct	3.3	
 nvidia	meta/llama-4-maverick-17b-128e-instruct		llama-4-maverick-17b-128e	instruct	4	
 nvidia	meta/llama-guard-4-12b	llama	llama		4	
 nvidia	microsoft/phi-4-mini-instruct	phi	phi	mini	4	
@@ -3122,8 +3122,8 @@ nvidia	mistralai/mistral-large-3-675b-instruct-2512	mistral-large	mistral	large	
 nvidia	mistralai/mistral-medium-3-instruct	mistral-medium	mistral	medium		
 nvidia	mistralai/mistral-nemotron		mistral			
 nvidia	mistralai/mistral-small-4-119b-2603		mistral	small	4	
-nvidia	mistralai/mixtral-8x22b-instruct		mixtral-8x22b	instruct		
-nvidia	mistralai/mixtral-8x7b-instruct		mixtral-8x7b	instruct		
+nvidia	mistralai/mixtral-8x22b-instruct		mixtral			
+nvidia	mistralai/mixtral-8x7b-instruct		mixtral			
 nvidia	moonshotai/kimi-k2-instruct	kimi	kimi	k	2	instruct
 nvidia	moonshotai/kimi-k2-instruct-0905	kimi	kimi	k	2	instruct
 nvidia	moonshotai/kimi-k2-thinking	kimi-thinking	kimi	k	2	thinking
@@ -3146,7 +3146,7 @@ nvidia	nvidia/nemotron-3-nano-30b-a3b	nemotron	nemotron	nano	3
 nvidia	nvidia/nemotron-3-nano-omni-30b-a3b-reasoning	nemotron	nemotron	nano	3	
 nvidia	nvidia/nemotron-3-super-120b-a12b	nemotron	nemotron		3	
 nvidia	nvidia/nemotron-content-safety-reasoning-4b		nemotron			
-nvidia	nvidia/nemotron-mini-4b-instruct		nemotron-mini-4b	instruct		
+nvidia	nvidia/nemotron-mini-4b-instruct		nemotron	mini		
 nvidia	nvidia/nemotron-voicechat		nemotron			
 nvidia	nvidia/nv-embed-v1		nv			
 nvidia	nvidia/nv-embedcode-7b-v1		nv			
@@ -3164,7 +3164,7 @@ nvidia	openai/gpt-oss-20b	gpt-oss	gpt	oss
 nvidia	openai/whisper-large-v3	whisper	whisper			
 nvidia	qwen/qwen-image	qwen	qwen	image		
 nvidia	qwen/qwen-image-edit	qwen	qwen	image		
-nvidia	qwen/qwen2.5-coder-32b-instruct		qwen2.5-coder-32b	instruct		
+nvidia	qwen/qwen2.5-coder-32b-instruct		qwen	coder	2.5	
 nvidia	qwen/qwen3-coder-480b-a35b-instruct	qwen	qwen	coder	3	
 nvidia	qwen/qwen3-next-80b-a3b-instruct	qwen	qwen	instruct	3	
 nvidia	qwen/qwen3-next-80b-a3b-thinking	qwen	qwen		3	thinking
@@ -3328,7 +3328,7 @@ opencode	nemotron-3-super-free	nemotron-free	nemotron	free	3
 opencode	qwen3-coder	qwen	qwen	coder	3	
 opencode	qwen3.5-plus	qwen3.5	qwen	plus	3.5	
 opencode	qwen3.6-plus	qwen3.6	qwen	plus	3.6	
-opencode	qwen3.6-plus-free	qwen-free	qwen	free	3.6	
+opencode	qwen3.6-plus-free	qwen-free	qwen	plus	3.6	
 opencode	ring-2.6-1t-free	ring-1t-free	ring-1t	free	2.6	
 opencode	trinity-large-preview-free	trinity	trinity	large		
 opencode-go	deepseek-v4-flash	deepseek-flash	deepseek	flash		
@@ -3346,7 +3346,7 @@ opencode-go	minimax-m2.7	minimax-m2.7	minimax	m	2.7
 opencode-go	qwen3.5-plus	qwen3.5	qwen	plus	3.5	
 opencode-go	qwen3.6-plus	qwen3.6	qwen	plus	3.6	
 opencode-go	qwen3.7-max	qwen3.7-max	qwen3.7-max			
-openrouter	ai21/jamba-large-1.7	jamba	jamba			
+openrouter	ai21/jamba-large-1.7	jamba	jamba	large	1.7	
 openrouter	aion-labs/aion-1.0		aion		1.0	
 openrouter	aion-labs/aion-1.0-mini		aion	mini	1.0	
 openrouter	aion-labs/aion-2.0		aion		2.0	
@@ -3785,14 +3785,14 @@ orcarouter	z-ai/glm-5	glm	glm		5
 orcarouter	z-ai/glm-5.1	glm	glm		5.1	
 ovhcloud	gpt-oss-120b		gpt	oss		
 ovhcloud	gpt-oss-20b		gpt	oss		
-ovhcloud	llama-3.1-8b-instruct		llama-3.1-8b	instruct	3.1	
+ovhcloud	llama-3.1-8b-instruct		llama	instruct	3.1	
 ovhcloud	meta-llama-3_3-70b-instruct		meta-llama-3_3-70b	instruct		
-ovhcloud	mistral-7b-instruct-v0.3		mistral-7b-instruct	v0.3		
-ovhcloud	mistral-nemo-instruct-2407		mistral-nemo-instruct			
+ovhcloud	mistral-7b-instruct-v0.3		mistral	instruct		
+ovhcloud	mistral-nemo-instruct-2407		mistral	nemo		
 ovhcloud	mistral-small-3.2-24b-instruct-2506		mistral	small	3.2	
-ovhcloud	qwen2.5-vl-72b-instruct		qwen2.5-vl-72b	instruct		
+ovhcloud	qwen2.5-vl-72b-instruct		qwen	vl	2.5	
 ovhcloud	qwen3-32b		qwen		3	
-ovhcloud	qwen3-coder-30b-a3b-instruct		qwen3-coder-30b-a3b	instruct		
+ovhcloud	qwen3-coder-30b-a3b-instruct		qwen	coder	3	
 ovhcloud	qwen3.5-9b		qwen		3.5	
 perplexity	sonar	sonar	sonar			
 perplexity	sonar-deep-research		sonar	deep-research		
@@ -3822,15 +3822,15 @@ poe	anthropic/claude-haiku-4.5	claude-haiku	claude	haiku	4.5
 poe	anthropic/claude-opus-4	claude-opus	claude	opus	4	
 poe	anthropic/claude-opus-4.1	claude-opus	claude	opus	4.1	
 poe	anthropic/claude-opus-4.5	claude-opus	claude	opus	4.5	
-poe	anthropic/claude-opus-4.6		claude-opus		4.6	
-poe	anthropic/claude-opus-4.7		claude-opus		4.7	
+poe	anthropic/claude-opus-4.6		claude	opus	4.6	
+poe	anthropic/claude-opus-4.7		claude	opus	4.7	
 poe	anthropic/claude-opus-4.8	claude-opus	claude	opus	4.8	
 poe	anthropic/claude-sonnet-3.5	claude-sonnet	claude	sonnet	3.5	
 poe	anthropic/claude-sonnet-3.5-june	claude-sonnet	claude	sonnet	3.5	
 poe	anthropic/claude-sonnet-3.7	claude-sonnet	claude	sonnet	3.7	
 poe	anthropic/claude-sonnet-4	claude-sonnet	claude	sonnet	4	
 poe	anthropic/claude-sonnet-4.5	claude-sonnet	claude	sonnet	4.5	
-poe	anthropic/claude-sonnet-4.6		claude-sonnet		4.6	
+poe	anthropic/claude-sonnet-4.6		claude	sonnet	4.6	
 poe	cerebras/gpt-oss-120b-cs		gpt	oss		
 poe	cerebras/llama-3.1-8b-cs		llama		3.1	
 poe	cerebras/llama-3.3-70b-cs		llama		3.3	
@@ -3925,7 +3925,7 @@ poe	openai/gpt-5.5	gpt	gpt		5.5
 poe	openai/gpt-5.5-pro	gpt-pro	gpt	pro	5.5	
 poe	openai/gpt-image-1	gpt	gpt	image	1	
 poe	openai/gpt-image-1-mini	gpt	gpt	image		
-poe	openai/gpt-image-1.5		gpt-image		1.5	
+poe	openai/gpt-image-1.5		gpt	image	1.5	
 poe	openai/gpt-image-2		gpt	image	2	
 poe	openai/o1	o	o		1	
 poe	openai/o1-pro	o-pro	o	pro	1	
@@ -3980,9 +3980,9 @@ qiniu-ai	claude-4.5-haiku		claude	haiku	4.5
 qiniu-ai	claude-4.5-opus		claude	opus	4.5	
 qiniu-ai	claude-4.5-sonnet		claude	sonnet	4.5	
 qiniu-ai	deepseek-r1		deepseek			
-qiniu-ai	deepseek-r1-0528		deepseek-r1			
+qiniu-ai	deepseek-r1-0528		deepseek			
 qiniu-ai	deepseek-v3		deepseek			
-qiniu-ai	deepseek-v3-0324		deepseek-v3			
+qiniu-ai	deepseek-v3-0324		deepseek			
 qiniu-ai	deepseek-v3.1		deepseek	v3.1		
 qiniu-ai	deepseek/deepseek-math-v2		deepseek			
 qiniu-ai	deepseek/deepseek-v3.1-terminus		deepseek	v3.1-terminus		
@@ -4003,11 +4003,11 @@ qiniu-ai	doubao-seed-2.0-pro		doubao-seed	pro	2.0
 qiniu-ai	gemini-2.0-flash		gemini	flash	2.0	
 qiniu-ai	gemini-2.0-flash-lite		gemini	flash-lite	2.0	
 qiniu-ai	gemini-2.5-flash		gemini	flash	2.5	
-qiniu-ai	gemini-2.5-flash-image		gemini-2.5-flash	image	2.5	
+qiniu-ai	gemini-2.5-flash-image		gemini	flash	2.5	
 qiniu-ai	gemini-2.5-flash-lite		gemini	flash-lite	2.5	
 qiniu-ai	gemini-2.5-pro		gemini	pro	2.5	
 qiniu-ai	gemini-3.0-flash-preview		gemini	flash	3.0	preview
-qiniu-ai	gemini-3.0-pro-image-preview		gemini-3.0-pro	image	3.0	preview
+qiniu-ai	gemini-3.0-pro-image-preview		gemini	pro	3.0	preview
 qiniu-ai	gemini-3.0-pro-preview		gemini	pro	3.0	preview
 qiniu-ai	glm-4.5		glm		4.5	
 qiniu-ai	glm-4.5-air		glm	air	4.5	
@@ -4030,8 +4030,8 @@ qiniu-ai	openai/gpt-5.2		gpt		5.2
 qiniu-ai	qwen-max-2025-01-25		qwen	max		
 qiniu-ai	qwen-turbo		qwen	turbo		
 qiniu-ai	qwen-vl-max-2025-01-25		qwen	vl		
-qiniu-ai	qwen2.5-vl-72b-instruct		qwen2.5-vl-72b	instruct		
-qiniu-ai	qwen2.5-vl-7b-instruct		qwen2.5-vl-7b	instruct		
+qiniu-ai	qwen2.5-vl-72b-instruct		qwen	vl	2.5	
+qiniu-ai	qwen2.5-vl-7b-instruct		qwen	vl	2.5	
 qiniu-ai	qwen3-235b-a22b		qwen		3	
 qiniu-ai	qwen3-235b-a22b-instruct-2507		qwen	instruct	3	
 qiniu-ai	qwen3-235b-a22b-thinking-2507		qwen		3	
@@ -4039,7 +4039,7 @@ qiniu-ai	qwen3-30b-a3b		qwen		3
 qiniu-ai	qwen3-30b-a3b-instruct-2507		qwen	instruct	3	
 qiniu-ai	qwen3-30b-a3b-thinking-2507		qwen		3	
 qiniu-ai	qwen3-32b		qwen		3	
-qiniu-ai	qwen3-coder-480b-a35b-instruct		qwen3-coder-480b-a35b	instruct		
+qiniu-ai	qwen3-coder-480b-a35b-instruct		qwen	coder	3	
 qiniu-ai	qwen3-max		qwen	max	3	
 qiniu-ai	qwen3-max-preview		qwen	max	3	preview
 qiniu-ai	qwen3-next-80b-a3b-instruct		qwen3-next-80b-a3b	instruct		
@@ -4232,9 +4232,9 @@ siliconflow	deepseek-ai/DeepSeek-V3.2-Exp	deepseek	deepseek
 siliconflow	deepseek-ai/deepseek-v4-flash	deepseek-flash	deepseek	flash		
 siliconflow	deepseek-ai/deepseek-v4-pro	deepseek-thinking	deepseek	pro		thinking
 siliconflow	deepseek-ai/deepseek-vl2	deepseek	deepseek			
-siliconflow	inclusionAI/Ling-flash-2.0	ling	ling			
-siliconflow	inclusionAI/Ling-mini-2.0	ling	ling			
-siliconflow	inclusionAI/Ring-flash-2.0	ring	ring			
+siliconflow	inclusionAI/Ling-flash-2.0	ling	ling	flash	2.0	
+siliconflow	inclusionAI/Ling-mini-2.0	ling	ling	mini	2.0	
+siliconflow	inclusionAI/Ring-flash-2.0	ring	ring	flash	2.0	
 siliconflow	meta-llama/Meta-Llama-3.1-8B-Instruct	llama	llama	instruct		
 siliconflow	moonshotai/Kimi-K2-Instruct	kimi	kimi	k	2	instruct
 siliconflow	moonshotai/Kimi-K2-Instruct-0905	kimi	kimi	k	2	instruct
@@ -4326,9 +4326,9 @@ siliconflow-cn	deepseek-ai/DeepSeek-V3.1-Terminus	deepseek	deepseek
 siliconflow-cn	deepseek-ai/DeepSeek-V3.2	deepseek	deepseek			
 siliconflow-cn	deepseek-ai/DeepSeek-V4-Pro	deepseek-thinking	deepseek	pro		thinking
 siliconflow-cn	deepseek-ai/deepseek-vl2	deepseek	deepseek			
-siliconflow-cn	inclusionAI/Ling-flash-2.0	ling	ling			
-siliconflow-cn	inclusionAI/Ling-mini-2.0	ling	ling			
-siliconflow-cn	inclusionAI/Ring-flash-2.0	ring	ring			
+siliconflow-cn	inclusionAI/Ling-flash-2.0	ling	ling	flash	2.0	
+siliconflow-cn	inclusionAI/Ling-mini-2.0	ling	ling	mini	2.0	
+siliconflow-cn	inclusionAI/Ring-flash-2.0	ring	ring	flash	2.0	
 siliconflow-cn	moonshotai/Kimi-K2-Instruct-0905	kimi	kimi	k	2	instruct
 siliconflow-cn	moonshotai/Kimi-K2-Thinking	kimi-thinking	kimi	k	2	thinking
 siliconflow-cn	stepfun-ai/Step-3.5-Flash	step	step		3.5	
@@ -4575,8 +4575,8 @@ vercel	arcee-ai/trinity-mini	trinity	trinity	mini
 vercel	bfl/flux-kontext-max	flux	flux			
 vercel	bfl/flux-kontext-pro	flux	flux			
 vercel	bfl/flux-pro-1.0-fill	flux	flux			
-vercel	bfl/flux-pro-1.1	flux	flux			
-vercel	bfl/flux-pro-1.1-ultra	flux	flux			
+vercel	bfl/flux-pro-1.1	flux	flux	pro	1.1	
+vercel	bfl/flux-pro-1.1-ultra	flux	flux	pro	1.1	
 vercel	bytedance/seed-1.6	seed	seed		1.6	
 vercel	bytedance/seed-1.8	seed	seed		1.8	
 vercel	cohere/command-a	command	command	a		
@@ -4617,7 +4617,7 @@ vercel	google/imagen-4.0-ultra-generate-001	imagen	imagen		4.0
 vercel	google/text-embedding-005	text-embedding	text-embedding	embedding	005	
 vercel	google/text-multilingual-embedding-002	text-embedding	text-embedding		002	
 vercel	inception/mercury-2	mercury	mercury		2	
-vercel	inception/mercury-coder-small	mercury	mercury			
+vercel	inception/mercury-coder-small	mercury	mercury	coder		
 vercel	inception/mercury-edit-2		mercury-edit		2	
 vercel	interfaze/interfaze-beta		interfaze	beta		
 vercel	kwaipilot/kat-coder-pro-v1	kat-coder	kat	coder		
@@ -4867,15 +4867,15 @@ zai-coding-plan	glm-5.1	glm	glm		5.1
 zai-coding-plan	glm-5v-turbo	glm	glm	turbo		
 zenmux	anthropic/claude-3.5-haiku		claude	haiku	3.5	
 zenmux	anthropic/claude-3.7-sonnet		claude	sonnet	3.7	
-zenmux	anthropic/claude-haiku-4.5		claude-haiku		4.5	
+zenmux	anthropic/claude-haiku-4.5		claude	haiku	4.5	
 zenmux	anthropic/claude-opus-4		claude	opus	4	
-zenmux	anthropic/claude-opus-4.1		claude-opus		4.1	
-zenmux	anthropic/claude-opus-4.5		claude-opus		4.5	
-zenmux	anthropic/claude-opus-4.6		claude-opus		4.6	
-zenmux	anthropic/claude-opus-4.7		claude-opus		4.7	
+zenmux	anthropic/claude-opus-4.1		claude	opus	4.1	
+zenmux	anthropic/claude-opus-4.5		claude	opus	4.5	
+zenmux	anthropic/claude-opus-4.6		claude	opus	4.6	
+zenmux	anthropic/claude-opus-4.7		claude	opus	4.7	
 zenmux	anthropic/claude-sonnet-4		claude	sonnet	4	
-zenmux	anthropic/claude-sonnet-4.5		claude-sonnet		4.5	
-zenmux	anthropic/claude-sonnet-4.6		claude-sonnet		4.6	
+zenmux	anthropic/claude-sonnet-4.5		claude	sonnet	4.5	
+zenmux	anthropic/claude-sonnet-4.6		claude	sonnet	4.6	
 zenmux	baidu/ernie-5.0-thinking-preview		ernie		5.0	preview
 zenmux	deepseek/deepseek-chat		deepseek			
 zenmux	deepseek/deepseek-v3.2		deepseek	v3.2		
@@ -4928,7 +4928,7 @@ zenmux	sapiens-ai/agnes-1.5-lite		agnes	lite	1.5
 zenmux	sapiens-ai/agnes-1.5-pro		agnes	pro	1.5	
 zenmux	stepfun/step-3		step		3	
 zenmux	stepfun/step-3.5-flash		step	flash	3.5	
-zenmux	stepfun/step-3.5-flash-free		step-3.5-flash	free	3.5	
+zenmux	stepfun/step-3.5-flash-free		step	flash	3.5	
 zenmux	tencent/hy3-preview	Hy	hy			preview
 zenmux	volcengine/doubao-seed-1.8		doubao-seed		1.8	
 zenmux	volcengine/doubao-seed-2.0-code		doubao-seed		2.0	code
@@ -4952,15 +4952,15 @@ zenmux	z-ai/glm-4.5		glm		4.5
 zenmux	z-ai/glm-4.5-air		glm	air	4.5	
 zenmux	z-ai/glm-4.6		glm		4.6	
 zenmux	z-ai/glm-4.6v		glm		4.6	vision
-zenmux	z-ai/glm-4.6v-flash		glm-4.6v	flash		
-zenmux	z-ai/glm-4.6v-flash-free		glm-4.6v-flash	free		
+zenmux	z-ai/glm-4.6v-flash		glm	flash		
+zenmux	z-ai/glm-4.6v-flash-free		glm	flash		
 zenmux	z-ai/glm-4.7		glm		4.7	
-zenmux	z-ai/glm-4.7-flash-free		glm-4.7-flash	free	4.7	
+zenmux	z-ai/glm-4.7-flash-free		glm	flash	4.7	
 zenmux	z-ai/glm-4.7-flashx		glm		4.7	
 zenmux	z-ai/glm-5		glm		5	
 zenmux	z-ai/glm-5-turbo		glm	turbo	5	
 zenmux	z-ai/glm-5.1		glm		5.1	
-zenmux	z-ai/glm-5v-turbo		glm-5v	turbo		
+zenmux	z-ai/glm-5v-turbo		glm	turbo		
 zhipuai	glm-4.5	glm	glm		4.5	
 zhipuai	glm-4.5-air	glm-air	glm	air	4.5	
 zhipuai	glm-4.5-flash	glm-flash	glm	flash	4.5	
