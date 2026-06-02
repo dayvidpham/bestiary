@@ -211,8 +211,8 @@ const (
 	Model__Abacus__Kimi__K2__Turbo__2__Preview                                     ModelID = "kimi-k2-turbo-preview"
 	Model__Abacus__Llama__3__3__70b__Versatile__3_3                                ModelID = "llama-3.3-70b-versatile"
 	Model__Abacus__Llama__4__Maverick__17B__128E__Instruct__Fp8__4                 ModelID = "meta-llama/Llama-4-Maverick-17B-128E-Instruct-FP8"
-	Model__Abacus__Meta__Llama__3__1__405B__Instruct__Turbo                        ModelID = "meta-llama/Meta-Llama-3.1-405B-Instruct-Turbo"
-	Model__Abacus__Meta__Llama__3__1__8B__Instruct                                 ModelID = "meta-llama/Meta-Llama-3.1-8B-Instruct"
+	Model__Abacus__Meta__Llama__3__1__405B__Instruct__Turbo__3_1                   ModelID = "meta-llama/Meta-Llama-3.1-405B-Instruct-Turbo"
+	Model__Abacus__Meta__Llama__3__1__8B__Instruct__3_1                            ModelID = "meta-llama/Meta-Llama-3.1-8B-Instruct"
 	Model__Abacus__O3__3                                                           ModelID = "o3"
 	Model__Abacus__O3__3__Mini                                                     ModelID = "o3-mini"
 	Model__Abacus__O3__3__Pro                                                      ModelID = "o3-pro"
@@ -860,7 +860,7 @@ const (
 	Model__CloudflareAIGateway__Llama__Guard__3__8b__3                             ModelID = "workers-ai/@cf/meta/llama-guard-3-8b"
 	Model__CloudflareAIGateway__M2m100__1__2b                                      ModelID = "workers-ai/@cf/meta/m2m100-1.2b"
 	Model__CloudflareAIGateway__Melotts                                            ModelID = "workers-ai/@cf/myshell-ai/melotts"
-	Model__CloudflareAIGateway__Mistral__7b__Instruct__V0__1                       ModelID = "workers-ai/@cf/mistral/mistral-7b-instruct-v0.1"
+	Model__CloudflareAIGateway__Mistral__7b__Instruct__V0__1__0_1                  ModelID = "workers-ai/@cf/mistral/mistral-7b-instruct-v0.1"
 	Model__CloudflareAIGateway__Mistral__Small__3__1__24b__Instruct__3_1           ModelID = "workers-ai/@cf/mistralai/mistral-small-3.1-24b-instruct"
 	Model__CloudflareAIGateway__Nemotron__3__120b__A12b__3                         ModelID = "workers-ai/@cf/nvidia/nemotron-3-120b-a12b"
 	Model__CloudflareAIGateway__Nova__3                                            ModelID = "workers-ai/@cf/deepgram/nova-3"
@@ -896,7 +896,7 @@ const (
 	Model__CloudflareWorkersAI__Llama__3__8b__Instruct__Awq__3                     ModelID = "@cf/meta/llama-3-8b-instruct-awq"
 	Model__CloudflareWorkersAI__Llama__4__Scout__17b__16e__Instruct__4             ModelID = "@cf/meta/llama-4-scout-17b-16e-instruct"
 	Model__CloudflareWorkersAI__Llama__Guard__3__8b__3                             ModelID = "@cf/meta/llama-guard-3-8b"
-	Model__CloudflareWorkersAI__Mistral__7b__Instruct__V0__1                       ModelID = "@cf/mistral/mistral-7b-instruct-v0.1"
+	Model__CloudflareWorkersAI__Mistral__7b__Instruct__V0__1__0_1                  ModelID = "@cf/mistral/mistral-7b-instruct-v0.1"
 	Model__CloudflareWorkersAI__Mistral__Small__3__1__24b__Instruct__3_1           ModelID = "@cf/mistralai/mistral-small-3.1-24b-instruct"
 	Model__CloudflareWorkersAI__Nemotron__3__120b__A12b__3                         ModelID = "@cf/nvidia/nemotron-3-120b-a12b"
 	Model__CloudflareWorkersAI__Qwen2__5__Coder__32b__Instruct__2_5                ModelID = "@cf/qwen/qwen2.5-coder-32b-instruct"
@@ -951,7 +951,7 @@ const (
 	Model__Cortecs__Minimax__M2__5__2_5                                            ModelID = "minimax-m2.5"
 	Model__Cortecs__Minimax__M2__7__2_7                                            ModelID = "minimax-m2.7"
 	Model__Cortecs__Mistral__Large__2512                                           ModelID = "mistral-large-2512"
-	Model__Cortecs__Mixtral__8x7B__Instruct__V0__1                                 ModelID = "mixtral-8x7B-instruct-v0.1"
+	Model__Cortecs__Mixtral__8x7B__Instruct__V0__1__0_1                            ModelID = "mixtral-8x7B-instruct-v0.1"
 	Model__Cortecs__Nemotron__3__Super__120b__A12b__3                              ModelID = "nemotron-3-super-120b-a12b"
 	Model__Cortecs__Nova__Pro__V1                                                  ModelID = "nova-pro-v1"
 	Model__Cortecs__Qwen3__235b__A22b__Instruct__2507__3                           ModelID = "qwen3-235b-a22b-instruct-2507"
@@ -1095,7 +1095,7 @@ const (
 	Model__DigitalOcean__Minimax__M2__5__2_5                                       ModelID = "minimax-m2.5"
 	Model__DigitalOcean__Ministral__3__8b__Instruct__2512__3                       ModelID = "ministral-3-8b-instruct-2512"
 	Model__DigitalOcean__Mistral__3__14B                                           ModelID = "mistral-3-14B"
-	Model__DigitalOcean__Mistral__7b__Instruct__V0__3                              ModelID = "mistral-7b-instruct-v0.3"
+	Model__DigitalOcean__Mistral__7b__Instruct__V0__3__0_3                         ModelID = "mistral-7b-instruct-v0.3"
 	Model__DigitalOcean__Mistral__Nemo__Instruct__2407                             ModelID = "mistral-nemo-instruct-2407"
 	Model__DigitalOcean__Multi__Qa__Mpnet__Base__Dot__V1                           ModelID = "multi-qa-mpnet-base-dot-v1"
 	Model__DigitalOcean__Multilingual__V2                                          ModelID = "fal-ai/elevenlabs/tts/multilingual-v2"
@@ -1680,11 +1680,11 @@ const (
 	Model__Kilo__Command__A                                                        ModelID = "cohere/command-a"
 	Model__Kilo__Command__R7b__12__2024__12                                        ModelID = "cohere/command-r7b-12-2024"
 	Model__Kilo__Command__R__20240830                                              ModelID = "cohere/command-r-08-2024"
-	Model__Kilo__Command__R__Plus__08__20240830                                    ModelID = "cohere/command-r-plus-08-2024"
+	Model__Kilo__Command__R__Plus__20240830                                        ModelID = "cohere/command-r-plus-08-2024"
 	Model__Kilo__Cydonia__24b__V4__1                                               ModelID = "thedrummer/cydonia-24b-v4.1"
 	Model__Kilo__Deepseek__Chat                                                    ModelID = "deepseek/deepseek-chat"
 	Model__Kilo__Deepseek__Chat__V3__0324                                          ModelID = "deepseek/deepseek-chat-v3-0324"
-	Model__Kilo__Deepseek__Chat__V3__1                                             ModelID = "deepseek/deepseek-chat-v3.1"
+	Model__Kilo__Deepseek__Chat__V3__1__3_1                                        ModelID = "deepseek/deepseek-chat-v3.1"
 	Model__Kilo__Deepseek__R1                                                      ModelID = "deepseek/deepseek-r1"
 	Model__Kilo__Deepseek__R1__0528                                                ModelID = "deepseek/deepseek-r1-0528"
 	Model__Kilo__Deepseek__R1__Distill__Llama__70b                                 ModelID = "deepseek/deepseek-r1-distill-llama-70b"
@@ -1867,7 +1867,7 @@ const (
 	Model__Kilo__Ministral__14b__2512                                              ModelID = "mistralai/ministral-14b-2512"
 	Model__Kilo__Ministral__3b__2512                                               ModelID = "mistralai/ministral-3b-2512"
 	Model__Kilo__Ministral__8b__2512                                               ModelID = "mistralai/ministral-8b-2512"
-	Model__Kilo__Mistral__7b__Instruct__V0__1                                      ModelID = "mistralai/mistral-7b-instruct-v0.1"
+	Model__Kilo__Mistral__7b__Instruct__V0__1__0_1                                 ModelID = "mistralai/mistral-7b-instruct-v0.1"
 	Model__Kilo__Mistral__Large                                                    ModelID = "mistralai/mistral-large"
 	Model__Kilo__Mistral__Large__2407                                              ModelID = "mistralai/mistral-large-2407"
 	Model__Kilo__Mistral__Large__2411                                              ModelID = "mistralai/mistral-large-2411"
@@ -2451,7 +2451,7 @@ const (
 	Model__NanoGPT__Codestral__2508                                                ModelID = "mistralai/codestral-2508"
 	Model__NanoGPT__Cogito__V1__Preview__Qwen__32B                                 ModelID = "deepcogito/cogito-v1-preview-qwen-32B"
 	Model__NanoGPT__Cogito__V2__1__671b                                            ModelID = "deepcogito/cogito-v2.1-671b"
-	Model__NanoGPT__Command__A__Reasoning__08__20250822                            ModelID = "command-a-reasoning-08-2025"
+	Model__NanoGPT__Command__A__Reasoning__20250822                                ModelID = "command-a-reasoning-08-2025"
 	Model__NanoGPT__Command__R                                                     ModelID = "cohere/command-r"
 	Model__NanoGPT__Command__R__Plus__20240830                                     ModelID = "cohere/command-r-plus-08-2024"
 	Model__NanoGPT__Cydonia__24B__V2                                               ModelID = "TheDrummer 2/Cydonia-24B-v2"
@@ -2807,8 +2807,8 @@ const (
 	Model__NanoGPT__Mistral__Small__3__2__24B__Instruct__2506                      ModelID = "chutesai/Mistral-Small-3.2-24B-Instruct-2506"
 	Model__NanoGPT__Mistral__Small__Creative                                       ModelID = "mistralai/mistral-small-creative"
 	Model__NanoGPT__Mistral__Tiny                                                  ModelID = "mistralai/mistral-tiny"
-	Model__NanoGPT__Mixtral__8x22b__Instruct__V0__1                                ModelID = "mistralai/mixtral-8x22b-instruct-v0.1"
-	Model__NanoGPT__Mixtral__8x7b__Instruct__V0__1                                 ModelID = "mistralai/mixtral-8x7b-instruct-v0.1"
+	Model__NanoGPT__Mixtral__8x22b__Instruct__V0__1__0_1                           ModelID = "mistralai/mixtral-8x22b-instruct-v0.1"
+	Model__NanoGPT__Mixtral__8x7b__Instruct__V0__1__0_1                            ModelID = "mistralai/mixtral-8x7b-instruct-v0.1"
 	Model__NanoGPT__Mn__12B__Inferor__V0__0                                        ModelID = "Infermatic/MN-12B-Inferor-v0.0"
 	Model__NanoGPT__Mn__12B__Mag__Mell__R1                                         ModelID = "inflatebot/MN-12B-Mag-Mell-R1"
 	Model__NanoGPT__Mn__Loosecannon__12B__V1                                       ModelID = "GalrionSoftworks/MN-LooseCannon-12B-v1"
@@ -2961,7 +2961,7 @@ const (
 	Model__Nebius__Kimi__K2__5__2_5__Fast                                          ModelID = "moonshotai/Kimi-K2.5-fast"
 	Model__Nebius__Llama__3__1__Nemotron__Ultra__253B__V1                          ModelID = "nvidia/Llama-3_1-Nemotron-Ultra-253B-v1"
 	Model__Nebius__Llama__3__3__70B__Instruct__3_3                                 ModelID = "meta-llama/Llama-3.3-70B-Instruct"
-	Model__Nebius__Meta__Llama__3__1__8B__Instruct                                 ModelID = "meta-llama/Meta-Llama-3.1-8B-Instruct"
+	Model__Nebius__Meta__Llama__3__1__8B__Instruct__3_1                            ModelID = "meta-llama/Meta-Llama-3.1-8B-Instruct"
 	Model__Nebius__Minimax__M2__5__2_5                                             ModelID = "MiniMaxAI/MiniMax-M2.5"
 	Model__Nebius__Minimax__M2__5__2_5__Fast                                       ModelID = "MiniMaxAI/MiniMax-M2.5-fast"
 	Model__Nebius__Nemotron__3__Nano__Omni__3                                      ModelID = "nvidia/Nemotron-3-Nano-Omni"
@@ -3194,7 +3194,7 @@ const (
 	Model__OVHcloud__GPT__Oss__20b                                                 ModelID = "gpt-oss-20b"
 	Model__OVHcloud__Llama__3__1__8b__Instruct__3_1                                ModelID = "llama-3.1-8b-instruct"
 	Model__OVHcloud__Meta__Llama__3__3__70b__Instruct                              ModelID = "meta-llama-3_3-70b-instruct"
-	Model__OVHcloud__Mistral__7b__Instruct__V0__3                                  ModelID = "mistral-7b-instruct-v0.3"
+	Model__OVHcloud__Mistral__7b__Instruct__V0__3__0_3                             ModelID = "mistral-7b-instruct-v0.3"
 	Model__OVHcloud__Mistral__Nemo__Instruct__2407                                 ModelID = "mistral-nemo-instruct-2407"
 	Model__OVHcloud__Mistral__Small__3__2__24b__Instruct__2506__3_2                ModelID = "mistral-small-3.2-24b-instruct-2506"
 	Model__OVHcloud__Qwen2__5__Vl__72b__Instruct__2_5                              ModelID = "qwen2.5-vl-72b-instruct"
@@ -3406,7 +3406,7 @@ const (
 	Model__OpenRouter__Cydonia__24b__V4__1                                         ModelID = "thedrummer/cydonia-24b-v4.1"
 	Model__OpenRouter__Deepseek__Chat                                              ModelID = "deepseek/deepseek-chat"
 	Model__OpenRouter__Deepseek__Chat__V3__0324                                    ModelID = "deepseek/deepseek-chat-v3-0324"
-	Model__OpenRouter__Deepseek__Chat__V3__1                                       ModelID = "deepseek/deepseek-chat-v3.1"
+	Model__OpenRouter__Deepseek__Chat__V3__1__3_1                                  ModelID = "deepseek/deepseek-chat-v3.1"
 	Model__OpenRouter__Deepseek__R1                                                ModelID = "deepseek/deepseek-r1"
 	Model__OpenRouter__Deepseek__R1__0528                                          ModelID = "deepseek/deepseek-r1-0528"
 	Model__OpenRouter__Deepseek__R1__Distill__Llama__70b                           ModelID = "deepseek/deepseek-r1-distill-llama-70b"
@@ -3599,7 +3599,7 @@ const (
 	Model__OpenRouter__Ministral__14b__2512                                        ModelID = "mistralai/ministral-14b-2512"
 	Model__OpenRouter__Ministral__3b__2512                                         ModelID = "mistralai/ministral-3b-2512"
 	Model__OpenRouter__Ministral__8b__2512                                         ModelID = "mistralai/ministral-8b-2512"
-	Model__OpenRouter__Mistral__7b__Instruct__V0__1                                ModelID = "mistralai/mistral-7b-instruct-v0.1"
+	Model__OpenRouter__Mistral__7b__Instruct__V0__1__0_1                           ModelID = "mistralai/mistral-7b-instruct-v0.1"
 	Model__OpenRouter__Mistral__Large                                              ModelID = "mistralai/mistral-large"
 	Model__OpenRouter__Mistral__Large__2407                                        ModelID = "mistralai/mistral-large-2407"
 	Model__OpenRouter__Mistral__Large__2411                                        ModelID = "mistralai/mistral-large-2411"
@@ -4321,7 +4321,7 @@ const (
 	Model__SiliconFlow__Kimi__K2__Thinking__2                                      ModelID = "moonshotai/Kimi-K2-Thinking"
 	Model__SiliconFlow__Ling__Flash__2_0                                           ModelID = "inclusionAI/Ling-flash-2.0"
 	Model__SiliconFlow__Ling__Mini__2_0                                            ModelID = "inclusionAI/Ling-mini-2.0"
-	Model__SiliconFlow__Meta__Llama__3__1__8B__Instruct                            ModelID = "meta-llama/Meta-Llama-3.1-8B-Instruct"
+	Model__SiliconFlow__Meta__Llama__3__1__8B__Instruct__3_1                       ModelID = "meta-llama/Meta-Llama-3.1-8B-Instruct"
 	Model__SiliconFlow__Minimax__M2__1__2_1                                        ModelID = "MiniMaxAI/MiniMax-M2.1"
 	Model__SiliconFlow__Minimax__M2__5__2_5                                        ModelID = "MiniMaxAI/MiniMax-M2.5"
 	Model__SiliconFlow__Qwen2__5__14B__Instruct__2_5                               ModelID = "Qwen/Qwen2.5-14B-Instruct"
@@ -5194,8 +5194,8 @@ var allModelConstants = [...]ModelID{
 	Model__Abacus__Kimi__K2__Turbo__2__Preview,
 	Model__Abacus__Llama__3__3__70b__Versatile__3_3,
 	Model__Abacus__Llama__4__Maverick__17B__128E__Instruct__Fp8__4,
-	Model__Abacus__Meta__Llama__3__1__405B__Instruct__Turbo,
-	Model__Abacus__Meta__Llama__3__1__8B__Instruct,
+	Model__Abacus__Meta__Llama__3__1__405B__Instruct__Turbo__3_1,
+	Model__Abacus__Meta__Llama__3__1__8B__Instruct__3_1,
 	Model__Abacus__O3__3,
 	Model__Abacus__O3__3__Mini,
 	Model__Abacus__O3__3__Pro,
@@ -5843,7 +5843,7 @@ var allModelConstants = [...]ModelID{
 	Model__CloudflareAIGateway__Llama__Guard__3__8b__3,
 	Model__CloudflareAIGateway__M2m100__1__2b,
 	Model__CloudflareAIGateway__Melotts,
-	Model__CloudflareAIGateway__Mistral__7b__Instruct__V0__1,
+	Model__CloudflareAIGateway__Mistral__7b__Instruct__V0__1__0_1,
 	Model__CloudflareAIGateway__Mistral__Small__3__1__24b__Instruct__3_1,
 	Model__CloudflareAIGateway__Nemotron__3__120b__A12b__3,
 	Model__CloudflareAIGateway__Nova__3,
@@ -5879,7 +5879,7 @@ var allModelConstants = [...]ModelID{
 	Model__CloudflareWorkersAI__Llama__3__8b__Instruct__Awq__3,
 	Model__CloudflareWorkersAI__Llama__4__Scout__17b__16e__Instruct__4,
 	Model__CloudflareWorkersAI__Llama__Guard__3__8b__3,
-	Model__CloudflareWorkersAI__Mistral__7b__Instruct__V0__1,
+	Model__CloudflareWorkersAI__Mistral__7b__Instruct__V0__1__0_1,
 	Model__CloudflareWorkersAI__Mistral__Small__3__1__24b__Instruct__3_1,
 	Model__CloudflareWorkersAI__Nemotron__3__120b__A12b__3,
 	Model__CloudflareWorkersAI__Qwen2__5__Coder__32b__Instruct__2_5,
@@ -5934,7 +5934,7 @@ var allModelConstants = [...]ModelID{
 	Model__Cortecs__Minimax__M2__5__2_5,
 	Model__Cortecs__Minimax__M2__7__2_7,
 	Model__Cortecs__Mistral__Large__2512,
-	Model__Cortecs__Mixtral__8x7B__Instruct__V0__1,
+	Model__Cortecs__Mixtral__8x7B__Instruct__V0__1__0_1,
 	Model__Cortecs__Nemotron__3__Super__120b__A12b__3,
 	Model__Cortecs__Nova__Pro__V1,
 	Model__Cortecs__Qwen3__235b__A22b__Instruct__2507__3,
@@ -6078,7 +6078,7 @@ var allModelConstants = [...]ModelID{
 	Model__DigitalOcean__Minimax__M2__5__2_5,
 	Model__DigitalOcean__Ministral__3__8b__Instruct__2512__3,
 	Model__DigitalOcean__Mistral__3__14B,
-	Model__DigitalOcean__Mistral__7b__Instruct__V0__3,
+	Model__DigitalOcean__Mistral__7b__Instruct__V0__3__0_3,
 	Model__DigitalOcean__Mistral__Nemo__Instruct__2407,
 	Model__DigitalOcean__Multi__Qa__Mpnet__Base__Dot__V1,
 	Model__DigitalOcean__Multilingual__V2,
@@ -6663,11 +6663,11 @@ var allModelConstants = [...]ModelID{
 	Model__Kilo__Command__A,
 	Model__Kilo__Command__R7b__12__2024__12,
 	Model__Kilo__Command__R__20240830,
-	Model__Kilo__Command__R__Plus__08__20240830,
+	Model__Kilo__Command__R__Plus__20240830,
 	Model__Kilo__Cydonia__24b__V4__1,
 	Model__Kilo__Deepseek__Chat,
 	Model__Kilo__Deepseek__Chat__V3__0324,
-	Model__Kilo__Deepseek__Chat__V3__1,
+	Model__Kilo__Deepseek__Chat__V3__1__3_1,
 	Model__Kilo__Deepseek__R1,
 	Model__Kilo__Deepseek__R1__0528,
 	Model__Kilo__Deepseek__R1__Distill__Llama__70b,
@@ -6850,7 +6850,7 @@ var allModelConstants = [...]ModelID{
 	Model__Kilo__Ministral__14b__2512,
 	Model__Kilo__Ministral__3b__2512,
 	Model__Kilo__Ministral__8b__2512,
-	Model__Kilo__Mistral__7b__Instruct__V0__1,
+	Model__Kilo__Mistral__7b__Instruct__V0__1__0_1,
 	Model__Kilo__Mistral__Large,
 	Model__Kilo__Mistral__Large__2407,
 	Model__Kilo__Mistral__Large__2411,
@@ -7434,7 +7434,7 @@ var allModelConstants = [...]ModelID{
 	Model__NanoGPT__Codestral__2508,
 	Model__NanoGPT__Cogito__V1__Preview__Qwen__32B,
 	Model__NanoGPT__Cogito__V2__1__671b,
-	Model__NanoGPT__Command__A__Reasoning__08__20250822,
+	Model__NanoGPT__Command__A__Reasoning__20250822,
 	Model__NanoGPT__Command__R,
 	Model__NanoGPT__Command__R__Plus__20240830,
 	Model__NanoGPT__Cydonia__24B__V2,
@@ -7790,8 +7790,8 @@ var allModelConstants = [...]ModelID{
 	Model__NanoGPT__Mistral__Small__3__2__24B__Instruct__2506,
 	Model__NanoGPT__Mistral__Small__Creative,
 	Model__NanoGPT__Mistral__Tiny,
-	Model__NanoGPT__Mixtral__8x22b__Instruct__V0__1,
-	Model__NanoGPT__Mixtral__8x7b__Instruct__V0__1,
+	Model__NanoGPT__Mixtral__8x22b__Instruct__V0__1__0_1,
+	Model__NanoGPT__Mixtral__8x7b__Instruct__V0__1__0_1,
 	Model__NanoGPT__Mn__12B__Inferor__V0__0,
 	Model__NanoGPT__Mn__12B__Mag__Mell__R1,
 	Model__NanoGPT__Mn__Loosecannon__12B__V1,
@@ -7944,7 +7944,7 @@ var allModelConstants = [...]ModelID{
 	Model__Nebius__Kimi__K2__5__2_5__Fast,
 	Model__Nebius__Llama__3__1__Nemotron__Ultra__253B__V1,
 	Model__Nebius__Llama__3__3__70B__Instruct__3_3,
-	Model__Nebius__Meta__Llama__3__1__8B__Instruct,
+	Model__Nebius__Meta__Llama__3__1__8B__Instruct__3_1,
 	Model__Nebius__Minimax__M2__5__2_5,
 	Model__Nebius__Minimax__M2__5__2_5__Fast,
 	Model__Nebius__Nemotron__3__Nano__Omni__3,
@@ -8177,7 +8177,7 @@ var allModelConstants = [...]ModelID{
 	Model__OVHcloud__GPT__Oss__20b,
 	Model__OVHcloud__Llama__3__1__8b__Instruct__3_1,
 	Model__OVHcloud__Meta__Llama__3__3__70b__Instruct,
-	Model__OVHcloud__Mistral__7b__Instruct__V0__3,
+	Model__OVHcloud__Mistral__7b__Instruct__V0__3__0_3,
 	Model__OVHcloud__Mistral__Nemo__Instruct__2407,
 	Model__OVHcloud__Mistral__Small__3__2__24b__Instruct__2506__3_2,
 	Model__OVHcloud__Qwen2__5__Vl__72b__Instruct__2_5,
@@ -8389,7 +8389,7 @@ var allModelConstants = [...]ModelID{
 	Model__OpenRouter__Cydonia__24b__V4__1,
 	Model__OpenRouter__Deepseek__Chat,
 	Model__OpenRouter__Deepseek__Chat__V3__0324,
-	Model__OpenRouter__Deepseek__Chat__V3__1,
+	Model__OpenRouter__Deepseek__Chat__V3__1__3_1,
 	Model__OpenRouter__Deepseek__R1,
 	Model__OpenRouter__Deepseek__R1__0528,
 	Model__OpenRouter__Deepseek__R1__Distill__Llama__70b,
@@ -8582,7 +8582,7 @@ var allModelConstants = [...]ModelID{
 	Model__OpenRouter__Ministral__14b__2512,
 	Model__OpenRouter__Ministral__3b__2512,
 	Model__OpenRouter__Ministral__8b__2512,
-	Model__OpenRouter__Mistral__7b__Instruct__V0__1,
+	Model__OpenRouter__Mistral__7b__Instruct__V0__1__0_1,
 	Model__OpenRouter__Mistral__Large,
 	Model__OpenRouter__Mistral__Large__2407,
 	Model__OpenRouter__Mistral__Large__2411,
@@ -9304,7 +9304,7 @@ var allModelConstants = [...]ModelID{
 	Model__SiliconFlow__Kimi__K2__Thinking__2,
 	Model__SiliconFlow__Ling__Flash__2_0,
 	Model__SiliconFlow__Ling__Mini__2_0,
-	Model__SiliconFlow__Meta__Llama__3__1__8B__Instruct,
+	Model__SiliconFlow__Meta__Llama__3__1__8B__Instruct__3_1,
 	Model__SiliconFlow__Minimax__M2__1__2_1,
 	Model__SiliconFlow__Minimax__M2__5__2_5,
 	Model__SiliconFlow__Qwen2__5__14B__Instruct__2_5,
