@@ -603,6 +603,9 @@
 {"issue_id":"bestiary-dfpo","label":"aura:p10-impl:s10-review"}
 {"issue_id":"bestiary-dfpo","label":"aura:severity:minor"}
 {"issue_id":"bestiary-dftg","label":"aura:p8-impl:s8-fix-plan-v3"}
+{"issue_id":"bestiary-dj5v","label":"followup"}
+{"issue_id":"bestiary-dj5v","label":"parse"}
+{"issue_id":"bestiary-dj5v","label":"tech-debt"}
 {"issue_id":"bestiary-dkra","label":"aura:p8-impl:s8-impl-plan"}
 {"issue_id":"bestiary-dl3z","label":"aura:p10-impl:s10-review"}
 {"issue_id":"bestiary-dl3z","label":"aura:severity:important"}
@@ -755,6 +758,9 @@
 {"issue_id":"bestiary-gn4x","label":"aura:severity:important"}
 {"issue_id":"bestiary-gogj","label":"aura:p10-impl:s10-review"}
 {"issue_id":"bestiary-gogj","label":"aura:severity:blocker"}
+{"issue_id":"bestiary-gp9y","label":"followup"}
+{"issue_id":"bestiary-gp9y","label":"parse"}
+{"issue_id":"bestiary-gp9y","label":"tech-debt"}
 {"issue_id":"bestiary-gpiy","label":"aura:p10-impl:s10-review"}
 {"issue_id":"bestiary-gq3q","label":"aura:p5-user:s5-uat"}
 {"issue_id":"bestiary-grsu","label":"aura:p10-impl:s10-review"}
