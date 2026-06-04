@@ -146,6 +146,77 @@ func TestJSONOutput_ConformsToSchema(t *testing.T) {
 			)
 		}
 	}
+
+	// Step 7 (SLICE-10 fix-cycle 1, Reviewer-B): the ModelRef $defs sub-schema MUST also be
+	// validated — the uncaught B finding was that ModelRef.Modifier stayed "type":"string"
+	// while the Go field is []string. Parse $defs.ModelRef, marshal a real ModelRef with a
+	// MULTI-modifier list, assert every declared property is present AND that the Modifier
+	// field serializes as a JSON ARRAY of strings (the array-type fix) — not a bare string.
+	var schemaDefs struct {
+		Defs map[string]struct {
+			Properties map[string]struct {
+				Type any `json:"type"`
+			} `json:"properties"`
+			Required []string `json:"required"`
+		} `json:"$defs"`
+	}
+	if err := json.Unmarshal(schemaBytes, &schemaDefs); err != nil {
+		t.Fatalf("could not unmarshal $defs from bestiary.schema.json: %v", err)
+	}
+	modelRefDef, ok := schemaDefs.Defs["ModelRef"]
+	if !ok || len(modelRefDef.Properties) == 0 {
+		t.Fatalf("bestiary.schema.json $defs.ModelRef missing or has no properties")
+	}
+
+	ref := bestiary.ModelRef{
+		ID:        "llama-3.2-11b-vision-instruct",
+		Provider:  "testprovider",
+		RawFamily: "llama",
+		Family:    "llama",
+		Variant:   "",
+		Version:   "3.2",
+		Date:      "",
+		Modifier:  []string{"vision", "instruct"},
+	}
+	refJSON, err := json.Marshal(ref)
+	if err != nil {
+		t.Fatalf("json.Marshal(ModelRef) failed: %v", err)
+	}
+	var refOut map[string]any
+	if err := json.Unmarshal(refJSON, &refOut); err != nil {
+		t.Fatalf("could not unmarshal ModelRef JSON: %v", err)
+	}
+	for prop := range modelRefDef.Properties {
+		if _, ok := refOut[prop]; !ok {
+			t.Errorf("ModelRef JSON output missing schema $defs.ModelRef property %q", prop)
+		}
+	}
+	// The crux of the fix: Modifier MUST be an array, not a string.
+	if mv, ok := refOut["Modifier"]; ok {
+		arr, isArr := mv.([]any)
+		if !isArr {
+			t.Errorf("ModelRef.Modifier serialized as %T, want JSON array (schema $defs.ModelRef.Modifier must be array, not string)", mv)
+		} else if len(arr) != 2 || arr[0] != "vision" || arr[1] != "instruct" {
+			t.Errorf("ModelRef.Modifier = %v, want [vision instruct] in canonical order", arr)
+		}
+	} else {
+		t.Error("ModelRef JSON output missing 'Modifier'")
+	}
+
+	// Also assert a POPULATED ModelInfo.Modifier serializes as an array (top-level schema).
+	infoMM := fixture
+	infoMM.Modifier = []string{"thinking", "turbo"}
+	var bufMM bytes.Buffer
+	if err := bestiary.FormatModel(&bufMM, infoMM, bestiary.FormatJSON); err != nil {
+		t.Fatalf("FormatModel(JSON) multi-modifier error: %v", err)
+	}
+	var outMM map[string]any
+	if err := json.Unmarshal(bufMM.Bytes(), &outMM); err != nil {
+		t.Fatalf("unmarshal multi-modifier JSON: %v", err)
+	}
+	if arr, ok := outMM["Modifier"].([]any); !ok || len(arr) != 2 {
+		t.Errorf("ModelInfo.Modifier = %v (%T), want a 2-element JSON array", outMM["Modifier"], outMM["Modifier"])
+	}
 }
 
 // TestJSONOutput_CanonicalFields_Populated verifies that a ModelInfo fixture with

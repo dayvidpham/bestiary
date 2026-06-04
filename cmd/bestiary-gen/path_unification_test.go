@@ -1128,22 +1128,11 @@ var justifiedExceptions = map[exceptionKey]string{
 		Before: `(family="grok-3-mini-fast",variant="beta",version="3",modifier="")`,
 		After:  `(family="grok",variant="mini",version="3",modifier="")`,
 	}: "SLICE-10: empty-raw over-capture 'grok-3-mini-fast' reduced to canonical 'grok' with the real tier variant 'mini' (version 3 retained); the trailing access tag 'beta'/'fast' is an honest residual on the over-captured family. Single-provider, non-divergent.",
-	// (ii) RESIDUAL-VARIANT collateral — a real variant token (large/oss) is dropped because
-	// it is neither trailing nor sole-residual once the modifier reclassification changes the
-	// token structure, AND the family is UNREGISTERED so member-variant recovery does not
-	// apply. Single-provider, non-divergent, pre-existing empty-raw/unregistered-family
-	// limitation surfaced by the mandated variant_suffixes removal — NOT a regression of any
-	// convergence target. SURFACED to supervisor for sign-off.
-	{
-		ID:     "whisper-large-v3-turbo",
-		Before: `(family="whisper",variant="large",version="",modifier="")`,
-		After:  `(family="whisper",variant="",version="",modifier="turbo")`,
-	}: "SLICE-10: 'turbo'→Modifier; 'large' residual on the unregistered family 'whisper' (no member list to recover it). Single-provider (groq), non-divergent. Documented residual (GH#9 size/variant gap), not a convergence regression.",
-	{
-		ID:     "bytedance/seed-oss-36b-instruct",
-		Before: `(family="seed",variant="oss",version="",modifier="")`,
-		After:  `(family="seed",variant="",version="",modifier="instruct")`,
-	}: "SLICE-10: 'instruct'→Modifier; 'oss' residual on the unregistered family 'seed' (no member list / no version to anchor sole-residual recovery). Single-provider (nvidia), non-divergent. Documented residual, not a convergence regression.",
+	// fix-cycle 1 (FLAG2 / ALL-8 audit): whisper-large-v3-turbo and seed-oss-36b-instruct
+	// were RESOLVED (removed from this ledger) by registering whisper (member 'large') and
+	// seed (member 'oss') in families.json — both ∈ allFamilies, attestation-proven — so the
+	// variant recovers losslessly: (whisper,large,"",[turbo]) and (seed,oss,"",[instruct]),
+	// now cat-(b) enrichments, no longer cat-(c).
 }
 
 func TestPathUnification_ZeroUnexpectedRegression(t *testing.T) {

@@ -3900,6 +3900,10 @@ func TestParseFamilyDetailed_Slice10_ModifierList(t *testing.T) {
 		{"qwen-turbo → variant turbo (member-guard)", "qwen", "qwen-turbo", "qwen", "turbo", "", ""},
 		{"gemini-pro → variant pro (stays variant)", "gemini", "gemini-pro", "gemini", "pro", "", ""},
 		{"qwen-flash → variant flash (stays variant)", "qwen", "qwen-flash", "qwen", "flash", "", ""},
+		// fix-cycle 1 (FLAG2): whisper + seed registered as families → variant recovers
+		// losslessly; the modifier composes (turbo/instruct), removing the 2 justifiedExceptions.
+		{"whisper-large-v3-turbo → (whisper,large,[turbo])", "whisper", "whisper-large-v3-turbo", "whisper", "large", "", "turbo"},
+		{"seed-oss-36b-instruct → (seed,oss,[instruct])", "seed", "bytedance/seed-oss-36b-instruct", "seed", "oss", "", "instruct"},
 	}
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {

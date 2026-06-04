@@ -1,10 +1,10 @@
 {
   "total_records": 4979,
-  "changed_count": 1198,
+  "changed_count": 1205,
   "cat_a_divergence_fix_count": 322,
-  "cat_b_improvement_count": 868,
+  "cat_b_improvement_count": 877,
   "cat_c_unexpected_regression_count": 0,
-  "justified_exception_count": 8,
+  "justified_exception_count": 6,
   "divergence_before": 81,
   "divergence_after": 14,
   "changes": [
@@ -3046,7 +3046,7 @@
       "id": "ByteDance-Seed/Seed-OSS-36B-Instruct",
       "raw_family": "seed",
       "before": "(family=\"seed\",variant=\"\",version=\"\",modifier=\"\")",
-      "after": "(family=\"seed\",variant=\"\",version=\"\",modifier=\"instruct\")",
+      "after": "(family=\"seed\",variant=\"oss\",version=\"\",modifier=\"instruct\")",
       "category": "b:improvement",
       "reason": "strict enrichment — only previously-empty field(s) populated"
     },
@@ -3055,7 +3055,7 @@
       "id": "ByteDance-Seed/Seed-OSS-36B-Instruct",
       "raw_family": "seed",
       "before": "(family=\"seed\",variant=\"\",version=\"\",modifier=\"\")",
-      "after": "(family=\"seed\",variant=\"\",version=\"\",modifier=\"instruct\")",
+      "after": "(family=\"seed\",variant=\"oss\",version=\"\",modifier=\"instruct\")",
       "category": "b:improvement",
       "reason": "strict enrichment — only previously-empty field(s) populated"
     },
@@ -4383,6 +4383,15 @@
       "reason": "strict enrichment — only previously-empty field(s) populated"
     },
     {
+      "provider": "nvidia",
+      "id": "bytedance/seed-oss-36b-instruct",
+      "raw_family": "seed",
+      "before": "(family=\"seed\",variant=\"oss\",version=\"\",modifier=\"\")",
+      "after": "(family=\"seed\",variant=\"oss\",version=\"\",modifier=\"instruct\")",
+      "category": "b:improvement",
+      "reason": "strict enrichment — only previously-empty field(s) populated"
+    },
+    {
       "provider": "cohere",
       "id": "c4ai-aya-vision-32b",
       "raw_family": "",
@@ -4820,6 +4829,15 @@
       "raw_family": "",
       "before": "(family=\"doubao\",variant=\"\",version=\"2.0\",modifier=\"\")",
       "after": "(family=\"doubao\",variant=\"\",version=\"2.0\",modifier=\"preview,code\")",
+      "category": "b:improvement",
+      "reason": "strict enrichment — only previously-empty field(s) populated"
+    },
+    {
+      "provider": "aihubmix",
+      "id": "doubao-seed-2-0-lite-260428",
+      "raw_family": "seed",
+      "before": "(family=\"seed\",variant=\"\",version=\"\",modifier=\"\")",
+      "after": "(family=\"seed\",variant=\"lite\",version=\"\",modifier=\"\")",
       "category": "b:improvement",
       "reason": "strict enrichment — only previously-empty field(s) populated"
     },
@@ -8424,6 +8442,33 @@
       "reason": "strict enrichment — only previously-empty field(s) populated"
     },
     {
+      "provider": "evroc",
+      "id": "openai/whisper-large-v3",
+      "raw_family": "whisper",
+      "before": "(family=\"whisper\",variant=\"\",version=\"\",modifier=\"\")",
+      "after": "(family=\"whisper\",variant=\"large\",version=\"\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "strict enrichment — only previously-empty field(s) populated"
+    },
+    {
+      "provider": "nearai",
+      "id": "openai/whisper-large-v3",
+      "raw_family": "whisper",
+      "before": "(family=\"whisper\",variant=\"\",version=\"\",modifier=\"\")",
+      "after": "(family=\"whisper\",variant=\"large\",version=\"\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "strict enrichment — only previously-empty field(s) populated"
+    },
+    {
+      "provider": "nvidia",
+      "id": "openai/whisper-large-v3",
+      "raw_family": "whisper",
+      "before": "(family=\"whisper\",variant=\"\",version=\"\",modifier=\"\")",
+      "after": "(family=\"whisper\",variant=\"large\",version=\"\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "strict enrichment — only previously-empty field(s) populated"
+    },
+    {
       "provider": "azure",
       "id": "phi-3-medium-128k-instruct",
       "raw_family": "phi",
@@ -9972,6 +10017,42 @@
       "reason": "strict enrichment — only previously-empty field(s) populated"
     },
     {
+      "provider": "groq",
+      "id": "whisper-large-v3",
+      "raw_family": "whisper",
+      "before": "(family=\"whisper\",variant=\"\",version=\"\",modifier=\"\")",
+      "after": "(family=\"whisper\",variant=\"large\",version=\"\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "strict enrichment — only previously-empty field(s) populated"
+    },
+    {
+      "provider": "privatemode-ai",
+      "id": "whisper-large-v3",
+      "raw_family": "whisper",
+      "before": "(family=\"whisper\",variant=\"\",version=\"\",modifier=\"\")",
+      "after": "(family=\"whisper\",variant=\"large\",version=\"\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "strict enrichment — only previously-empty field(s) populated"
+    },
+    {
+      "provider": "scaleway",
+      "id": "whisper-large-v3",
+      "raw_family": "whisper",
+      "before": "(family=\"whisper\",variant=\"\",version=\"\",modifier=\"\")",
+      "after": "(family=\"whisper\",variant=\"large\",version=\"\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "strict enrichment — only previously-empty field(s) populated"
+    },
+    {
+      "provider": "groq",
+      "id": "whisper-large-v3-turbo",
+      "raw_family": "whisper",
+      "before": "(family=\"whisper\",variant=\"large\",version=\"\",modifier=\"\")",
+      "after": "(family=\"whisper\",variant=\"large\",version=\"\",modifier=\"turbo\")",
+      "category": "b:improvement",
+      "reason": "strict enrichment — only previously-empty field(s) populated"
+    },
+    {
       "provider": "cloudflare-ai-gateway",
       "id": "workers-ai/@cf/baai/bge-large-en-v1.5",
       "raw_family": "bge",
@@ -10737,15 +10818,6 @@
       "reason": "JUSTIFIED: SLICE-10: 'turbo' (now a global modifier) moved variant→Modifier; family 'azure-gpt-4' reduced to 'azure-gpt' (version 4 retained). turbo re-surfaces in Modifier — no information lost."
     },
     {
-      "provider": "nvidia",
-      "id": "bytedance/seed-oss-36b-instruct",
-      "raw_family": "seed",
-      "before": "(family=\"seed\",variant=\"oss\",version=\"\",modifier=\"\")",
-      "after": "(family=\"seed\",variant=\"\",version=\"\",modifier=\"instruct\")",
-      "category": "justified-exception",
-      "reason": "JUSTIFIED: SLICE-10: 'instruct'→Modifier; 'oss' residual on the unregistered family 'seed' (no member list / no version to anchor sole-residual recovery). Single-provider (nvidia), non-divergent. Documented residual, not a convergence regression."
-    },
-    {
       "provider": "poe",
       "id": "elevenlabs/elevenlabs-v2.5-turbo",
       "raw_family": "elevenlabs",
@@ -10780,15 +10852,6 @@
       "after": "(family=\"solar\",variant=\"\",version=\"\",modifier=\"instruct\")",
       "category": "justified-exception",
       "reason": "JUSTIFIED: SLICE-10: 'instruct'→Modifier; family over-capture 'solar-10_7b' reduced to 'solar'. instruct re-surfaces in Modifier — no information lost."
-    },
-    {
-      "provider": "groq",
-      "id": "whisper-large-v3-turbo",
-      "raw_family": "whisper",
-      "before": "(family=\"whisper\",variant=\"large\",version=\"\",modifier=\"\")",
-      "after": "(family=\"whisper\",variant=\"\",version=\"\",modifier=\"turbo\")",
-      "category": "justified-exception",
-      "reason": "JUSTIFIED: SLICE-10: 'turbo'→Modifier; 'large' residual on the unregistered family 'whisper' (no member list to recover it). Single-provider (groq), non-divergent. Documented residual (GH#9 size/variant gap), not a convergence regression."
     }
   ]
 }

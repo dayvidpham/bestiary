@@ -18,7 +18,9 @@
   "nova": { "members": ["lite", "micro", "pro"], "bare_gen_split": false },
   "o": { "members": ["mini", "pro"], "bare_gen_split": true },
   "phi": { "members": ["mini", "small", "medium"], "bare_gen_split": false },
+  "seed": { "members": ["oss"], "bare_gen_split": false },
   "qwen": { "members": ["max", "coder", "plus", "turbo", "flash", "vl", "free", "next"], "bare_gen_split": true },
   "sonar": { "members": ["deep-research", "pro", "reasoning"], "bare_gen_split": false },
-  "trinity": { "members": ["mini"], "bare_gen_split": false }
+  "trinity": { "members": ["mini"], "bare_gen_split": false },
+  "whisper": { "members": ["large"], "bare_gen_split": false }
 }
