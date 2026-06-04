@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"flag"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -683,50 +684,6 @@ func minimalAPIJSON(t *testing.T) []byte {
 	return b
 }
 
-// normalizationAPIJSON returns a minimal api_response.json body with models that
-// exercise the normalization code paths: one model with a non-empty family field
-// and one model with an empty family field (triggering InferFamilyFromID).
-func normalizationAPIJSON(t *testing.T) []byte {
-	t.Helper()
-	payload := map[string]any{
-		"anthropic": map[string]any{
-			"name": "Anthropic",
-			"models": map[string]any{
-				// Model with a non-empty family — exercises ParseFamily path.
-				"claude-opus-4-20250514": map[string]any{
-					"id":           "claude-opus-4-20250514",
-					"name":         "Claude Opus 4",
-					"family":       "claude-opus",
-					"release_date": "2025-05-14",
-				},
-				// Model with empty family — exercises InferFamilyFromID path (~25% of real models).
-				"claude-haiku-no-family": map[string]any{
-					"id":     "claude-haiku-no-family",
-					"name":   "Claude Haiku (no family)",
-					"family": "",
-				},
-			},
-		},
-		"openai": map[string]any{
-			"name": "OpenAI",
-			"models": map[string]any{
-				// GPT model with date in ID.
-				"gpt-4o-2024-08-06": map[string]any{
-					"id":           "gpt-4o-2024-08-06",
-					"name":         "GPT-4o",
-					"family":       "gpt-4o",
-					"release_date": "2024-08-06",
-				},
-			},
-		},
-	}
-	b, err := json.Marshal(payload)
-	if err != nil {
-		t.Fatalf("normalizationAPIJSON: marshal: %v", err)
-	}
-	return b
-}
-
 // TestGenToModelInfo_EmptyFamily verifies that the InferFamilyFromID code path in
 // genToModelInfoDetailed fires when the model's family field is empty (~25% of real models).
 // This exercises the else branch in genToModelInfoDetailed that the parse_test.go unit
@@ -1020,147 +977,123 @@ func TestNoFetch_MissingCache_ActionableError(t *testing.T) {
 // SLICE-FIX-2 tests: cross-provider decomposition consistency
 // --------------------------------------------------------------------------
 
-// TestStaticDataset_CrossProviderConsistency verifies that for model IDs present
-// under multiple providers in the static dataset, providers that have an empty
-// raw_family field produce the same (Family, Variant, Version) as providers with
-// a populated raw_family, when all populated-raw_family providers agree on the
-// same decomposition.
+// crossProviderJustifiedResidual is the SLICE-5 (rc2) ENUMERATED justified-residual
+// ledger for cross-provider (Family,Variant,Version) divergences over the COMMITTED
+// snapshot. The hardened gate asserts SET-EQUALITY: the divergent-ID set produced by the
+// production pipeline must equal EXACTLY this set. Each row carries a one-line
+// justification. Post-S10 the only justified residual is the embedded-family nemotron
+// (the ID leads with "llama" but the canonical family is "nemotron"; GH-followup).
+// SET-equality (not count) catches a DIFFERENT id going divergent while nemotron converges
+// — count would stay 1, the set would change. Do NOT pad this map to force green: every
+// row must be independently justified; an unexpected divergence is a STOP-and-surface.
+var crossProviderJustifiedResidual = map[string]string{
+	"nvidia/llama-3.3-nemotron-super-49b-v1.5": "embedded-family — ID leads 'llama' but canonical family is 'nemotron'; GH-followup (genuine cross-provider mislabel, not a pipeline bug)",
+}
+
+// crossProviderResidualUnaccountedCeiling pins the at-scale count of
+// ReasonResidualUnaccountedTokens over the committed snapshot (SLICE-5 INPUT, B-MINOR-3).
+// Today only the non-gating stdout smoke (main.go) sees this; pinning it catches a
+// non-fixture-family residual regression (the seed-flash class) that would otherwise slip
+// every gate. Measured post-S10 = 243; assert ≤ ceiling (tighten-only; a legitimate
+// reduction passes, a regression that re-drops B1/member coverage trips it).
+const crossProviderResidualUnaccountedCeiling = 243
+
+// TestStaticDataset_CrossProviderConsistency is the HARDENED (SLICE-5) cross-provider
+// consistency GATE. It REPLACES the SLICE-FIX-2 heuristic gate that carried 5 escape
+// hatches (namespaced-ID `/.@:` skip; no-empty-raw skip; no-populated-raw skip;
+// populated-providers-disagree skip; Infer-consensus-can't-derive skip) — those hid
+// 331/388 of the original divergences.
 //
-// B6 (SLICE-FIX-2): codegen must produce consistent decompositions regardless of
-// whether the raw_family field is empty or populated. The primary documented
-// regression was: Nano-GPT and 302ai (empty raw_family) producing
-// Variant="" for claude-opus-4-5-20251101 while Anthropic/QiHangAI
-// (raw_family="claude-opus") produce Variant="opus".
+// It decomposes the COMMITTED full snapshot (testdata/snapshot/models_api.json) via the
+// PRODUCTION pipeline (ParseFamilyDetailed) — the SAME data + pipeline that
+// TestSnapshotAnalysis_CrossProviderDivergences uses, so the two gates MUST agree — groups
+// by model ID across providers, and asserts the cross-provider (Family,Variant,Version)
+// divergent-ID SET == crossProviderJustifiedResidual (SET-equality, no escape hatches).
+// It also pins the ReasonResidualUnaccountedTokens count ≤ ceiling.
 //
-// SCOPE BOUNDARY (documented findings for FOLLOWUP_SLICE-1 / bestiary-wi36):
-//
-// Some divergences are NOT caused by the empty-raw_family bug and are deferred:
-//
-//  1. Different raw_family values across providers (upstream data inconsistency):
-//     Some providers use different raw_family for the same model ID, leading to
-//     fundamentally different canonical results. Example: alibaba uses raw_family=""
-//     for qwen3-* IDs while other providers use "qwen3-*". These are upstream API
-//     inconsistencies, not a codegen bug. Deferred to bestiary-wi36.
-//
-//  2. Complex claude-3.x IDs (claude-3-5-haiku-*, claude-3-7-sonnet-*):
-//     InferFamilyFromIDWithVariant("claude-3-5-haiku-20241022") extracts
-//     family="claude-3-5" (since "3-5" is a version component in the ID), while
-//     providers with raw_family="claude-haiku" yield family="claude". The correct
-//     decomposition requires parser fixes for claude-3.x family IDs, deferred to
-//     bestiary-wi36.
-//
-// This test constrains its check to: groups where ALL populated-raw_family providers
-// agree on the same (family, variant, version) AND at least one empty-raw_family
-// provider disagrees. This targets the original documented bug precisely.
+// SLICE-5 R1: the Modifier list is compared ORDER-INDEPENDENTLY everywhere else (resolve
+// FIX-B group key, path_unification cmp(), TestPathUnification_Slice10_ModifierSetIndependence);
+// this gate's PRIMARY tuple is (Family,Variant,Version) per the ratified consistency metric,
+// so a permuted-modifier pair across providers structurally cannot register here.
 func TestStaticDataset_CrossProviderConsistency(t *testing.T) {
-	models := bestiary.StaticModels()
-
-	// Build a per-ID map with the raw_family, normalized decomp, and provider.
-	type entry struct {
-		RawFamily string
-		Family    string
-		Variant   string
-		Version   string
-		Provider  string
+	records, err := LoadSnapshotRecords()
+	if err != nil {
+		t.Fatalf("TestStaticDataset_CrossProviderConsistency: LoadSnapshotRecords: %v", err)
 	}
-	byID := make(map[string][]entry)
-	for _, m := range models {
-		id := string(m.ID)
-		// Skip non-standard ID formats deferred to FOLLOWUP_SLICE-1 (bestiary-wi36).
-		if strings.Contains(id, "/") || strings.Contains(id, ".") ||
-			strings.HasPrefix(id, "@") || strings.HasPrefix(id, ":") {
-			continue
-		}
-		byID[id] = append(byID[id], entry{
-			RawFamily: string(m.RawFamily),
-			Family:    string(m.Family),
-			Variant:   m.Variant,
-			Version:   m.Version,
-			Provider:  string(m.Provider),
-		})
+	if len(records) == 0 {
+		t.Fatal("committed snapshot is empty — cannot run the cross-provider gate")
 	}
 
-	for id, entries := range byID {
-		if len(entries) < 2 {
-			continue
+	type tuple3 struct {
+		Family  bestiary.Family
+		Variant string
+		Version string
+	}
+	byID := make(map[string]map[tuple3]struct{})
+	residualUnaccounted := 0
+	for _, r := range records {
+		fam, variant, version, _, failure := bestiary.ParseFamilyDetailed(r.RawFamily, r.ID, r.Provider)
+		id := string(r.ID)
+		if byID[id] == nil {
+			byID[id] = make(map[tuple3]struct{})
 		}
+		byID[id][tuple3{fam, variant, version}] = struct{}{}
+		if failure != nil && failure.Reason == bestiary.ReasonResidualUnaccountedTokens {
+			residualUnaccounted++
+		}
+	}
 
-		// Split entries into populated-raw_family and empty-raw_family groups.
-		var populated []entry
-		var empty []entry
-		for _, e := range entries {
-			if e.RawFamily != "" {
-				populated = append(populated, e)
-			} else {
-				empty = append(empty, e)
+	// Compute the divergent-ID SET: multi-provider IDs whose (Family,Variant,Version)
+	// tuples are NOT all identical.
+	divergent := make(map[string]struct{})
+	for id, tuples := range byID {
+		if len(tuples) >= 2 {
+			divergent[id] = struct{}{}
+		}
+	}
+
+	// SET-EQUALITY against the enumerated justified-residual ledger.
+	// (a) every divergent ID must be a justified residual — else STOP + surface.
+	for id := range divergent {
+		if _, ok := crossProviderJustifiedResidual[id]; !ok {
+			// Dump the conflicting tuples for diagnosis.
+			var tups []string
+			for tp := range byID[id] {
+				tups = append(tups, fmt.Sprintf("(family=%q,variant=%q,version=%q)", tp.Family, tp.Variant, tp.Version))
 			}
+			sort.Strings(tups)
+			t.Errorf("UNEXPECTED cross-provider divergence for ID %q (NOT in the justified-residual ledger):\n"+
+				"  tuples: %s\n"+
+				"  This gate uses the SAME snapshot + production pipeline as TestSnapshotAnalysis_CrossProviderDivergences,\n"+
+				"  so both must agree on the divergent set. A new unexplained divergence is a GATE-LOGIC or pipeline\n"+
+				"  regression — ROOT-CAUSE and SURFACE it; do NOT pad the ledger to force green.",
+				id, strings.Join(tups, " | "))
 		}
+	}
+	// (b) every ledger row must STILL be divergent — else it converged (prune the row)
+	// or a DIFFERENT id took its place (caught by (a)).
+	for id, justification := range crossProviderJustifiedResidual {
+		if _, ok := divergent[id]; !ok {
+			t.Errorf("justified-residual ledger row %q (%q) is NO LONGER divergent — it converged;\n"+
+				"  remove the stale row so the ledger SET stays exactly the live residual set.",
+				id, justification)
+		}
+	}
 
-		// Skip this ID if there are no empty-raw_family providers
-		// (divergence can't be caused by the documented bug).
-		if len(empty) == 0 {
-			continue
-		}
-		// Skip this ID if there are no populated-raw_family providers
-		// (no reference to compare against).
-		if len(populated) == 0 {
-			continue
-		}
+	// GATE-AGREEMENT cross-check: this hardened gate and TestSnapshotAnalysis decompose
+	// identical data via the identical pipeline, so the divergent count must match the
+	// pinned divergenceExact (1). A mismatch means the two gates DISAGREE — a gate-logic bug.
+	if len(divergent) != len(crossProviderJustifiedResidual) {
+		t.Errorf("divergent-ID count = %d, justified-residual ledger size = %d — SET-equality broken (see per-ID errors above)",
+			len(divergent), len(crossProviderJustifiedResidual))
+	}
 
-		// Check if all populated-raw_family providers agree on the same decomposition.
-		// If they disagree, it's an upstream data inconsistency — skip (FOLLOWUP).
-		consensusFamily := populated[0].Family
-		consensusVariant := populated[0].Variant
-		consensusVersion := populated[0].Version
-		populatedAgree := true
-		for _, p := range populated[1:] {
-			if p.Family != consensusFamily || p.Variant != consensusVariant || p.Version != consensusVersion {
-				populatedAgree = false
-				break
-			}
-		}
-		if !populatedAgree {
-			// Upstream data inconsistency across populated providers — deferred to bestiary-wi36.
-			continue
-		}
-
-		// Compute what InferFamilyFromIDWithVariant returns for this ID.
-		// This is the reference point for "what the current parser can derive
-		// from the ID alone, without any raw_family data".
-		// If InferFamilyFromIDWithVariant returns the same as the consensus,
-		// then an empty-raw_family provider that differs is a genuine bug.
-		// If InferFamilyFromIDWithVariant cannot derive the consensus, the
-		// case is deferred to FOLLOWUP_SLICE-1 (bestiary-wi36) — it requires
-		// parser enhancements beyond the scope of SLICE-FIX-2.
-		inferredFamily, inferredVariant, inferredVersion := bestiary.InferFamilyFromIDWithVariant(
-			bestiary.ModelID(id),
-			bestiary.Provider(empty[0].Provider),
-		)
-
-		// Skip if InferFamilyFromIDWithVariant can't derive the consensus.
-		// These are FOLLOWUP_SLICE-1 cases (parser enhancement needed).
-		if inferredFamily != bestiary.Family(consensusFamily) ||
-			inferredVariant != consensusVariant ||
-			inferredVersion != consensusVersion {
-			continue
-		}
-
-		// InferFamilyFromIDWithVariant CAN derive the consensus — so all
-		// empty-raw_family providers must match. Flag any that don't.
-		for _, e := range empty {
-			if e.Family == consensusFamily && e.Variant == consensusVariant && e.Version == consensusVersion {
-				continue
-			}
-			t.Errorf("cross-provider decomposition divergence for ID %q:\n"+
-				"  populated-raw_family consensus (provider %q) → (family=%q, variant=%q, version=%q)\n"+
-				"  empty-raw_family provider %q → (family=%q, variant=%q, version=%q)\n"+
-				"  InferFamilyFromIDWithVariant returns (%q, %q, %q) — the regen must use it.\n"+
-				"  Fix: re-run go generate ./... to bake the updated decomposition into models_static_gen.go.",
-				id,
-				populated[0].Provider, consensusFamily, consensusVariant, consensusVersion,
-				e.Provider, e.Family, e.Variant, e.Version,
-				inferredFamily, inferredVariant, inferredVersion)
-		}
+	// RESIDUAL-COUNT PIN (B-MINOR-3): catch a non-fixture-family residual regression.
+	if residualUnaccounted > crossProviderResidualUnaccountedCeiling {
+		t.Errorf("ReasonResidualUnaccountedTokens count = %d, exceeds pinned ceiling %d;\n"+
+			"  a non-fixture-family residual regression (the seed-flash class) re-dropped B1/member coverage.\n"+
+			"  Investigate ParseFamilyDetailed; if the increase is intentional, bump the ceiling with justification.",
+			residualUnaccounted, crossProviderResidualUnaccountedCeiling)
 	}
 }
 
@@ -1833,13 +1766,6 @@ func TestRun_WritesParseFailuresJSON(t *testing.T) {
 // expected strings that use single spaces.
 func normalizeWhitespace(s string) string {
 	return strings.Join(strings.Fields(s), " ")
-}
-
-// containsNormalized reports whether the normalized form of s (whitespace collapsed)
-// contains the normalized form of substr. Useful for matching against gofmt-aligned
-// output where columns may have varying spaces.
-func containsNormalized(s, substr string) bool {
-	return strings.Contains(normalizeWhitespace(s), normalizeWhitespace(substr))
 }
 
 // reLastSynced matches a LastSynced field line in generated Go source.
