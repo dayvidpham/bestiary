@@ -615,6 +615,8 @@
 {"issue_id":"bestiary-dmi4","label":"aura:epic-followup"}
 {"issue_id":"bestiary-dnj8","label":"aura:p10-impl:s10-review"}
 {"issue_id":"bestiary-dnj8","label":"aura:severity:blocker"}
+{"issue_id":"bestiary-dntg","label":"aura:p10-impl:s10-review"}
+{"issue_id":"bestiary-dntg","label":"aura:severity:blocker"}
 {"issue_id":"bestiary-dq3d","label":"aura:p9-impl:s9-slice"}
 {"issue_id":"bestiary-dq3d","label":"followup"}
 {"issue_id":"bestiary-dq3d","label":"parse"}
