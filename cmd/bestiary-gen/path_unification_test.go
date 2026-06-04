@@ -1080,27 +1080,10 @@ type exceptionKey struct {
 // NOT in this ledger, so new regressions are never silently absorbed. ADDING an entry
 // is a reviewed decision (committed in the diff artifact).
 var justifiedExceptions = map[exceptionKey]string{
-	// raw_family "gemini-flash" MISLABELS a PRO model (the ID literally contains
-	// "pro"). The ID-driven variant "pro" is authoritative and correct; the raw
-	// "flash" was a provider data error. Single-provider correctness fix.
-	{
-		ID:     "gemini-2.5-pro-preview-tts",
-		Before: `(family="gemini",variant="flash",version="2.5",modifier="")`,
-		After:  `(family="gemini",variant="pro",version="2.5",modifier="")`,
-	}: "raw_family 'gemini-flash' mislabels a PRO model (ID says 'pro'); ID-driven variant 'pro' is correct",
-
-	// SLICE-11: raw_family "qwen-free" yields variant "free" (the ACCESS tier), but the
-	// ID "qwen3.6-plus-free" names the "plus" CAPABILITY tier. SLICE-11's family-seed
-	// reduction makes the ID-path family ("qwen") agree with the raw family, so
-	// reconcileIDDriven now adopts the ID-driven variant "plus" (a clean token) over the
-	// raw "free". "plus" is the more-specific capability variant; "free" is the access
-	// tag that a single Variant field cannot also hold (the variant-multiplicity limit,
-	// parallel to the Modifier-LIST deferral). Single-provider refinement, not a regression.
-	{
-		ID:     "qwen3.6-plus-free",
-		Before: `(family="qwen",variant="free",version="3.6",modifier="")`,
-		After:  `(family="qwen",variant="plus",version="3.6",modifier="")`,
-	}: "raw 'qwen-free'→variant 'free' (access tag) refined to ID-driven capability tier 'plus' (qwen3.6-plus-free); enabled by the family-seed reduction making idFam==rawFam",
+	// SLICE-10 fix-cycle 2 (Reviewer-A/C MINOR): the 2 pre-S10 DORMANT keys
+	// (gemini-2.5-pro-preview-tts, qwen3.6-plus-free) were PRUNED — they no longer fire a
+	// live change record against the current snapshot, so they were dead ledger weight.
+	// The map now holds ONLY the live S10 entries.
 
 	// ── SLICE-10 (rc2) modifier-taxonomy reclassification collateral ──────────────
 	// The ratified taxonomy moves {instruct, turbo, base} from variant_suffixes.json to

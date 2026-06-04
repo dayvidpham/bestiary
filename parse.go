@@ -1256,21 +1256,6 @@ func promoteVariantModifier(pd *parseData, family Family, variant string, mods [
 	return variant, mods
 }
 
-// trimTrailingModifiers strips EVERY contiguous trailing "-<modifier>" token from s
-// (looping trimOneTrailingModifier until stable). Unlike extractModifiers it does NOT
-// apply the per-family member-guard — it is used by the empty-family inference to
-// expose a hidden date/decomposition behind a run of trailing modifiers, where the
-// resolved family is not yet known. Returns s unchanged when no trailing modifier.
-func trimTrailingModifiers(s string) string {
-	for {
-		t := trimOneTrailingModifier(s)
-		if t == s {
-			return s
-		}
-		s = t
-	}
-}
-
 // InferFamilyFromIDWithVariant is the extended empty-family fallback for models
 // whose API family field is empty (~25% of models). Unlike InferFamilyFromID,
 // it extracts (Family, Variant, Version) by:
