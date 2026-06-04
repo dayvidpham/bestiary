@@ -1510,7 +1510,7 @@ const (
 	Model__Helicone__Sonar__Deep__Research                                                   ModelID = "sonar-deep-research"
 	Model__Helicone__Sonar__Pro                                                              ModelID = "sonar-pro"
 	Model__Helicone__Sonar__Reasoning                                                        ModelID = "sonar-reasoning"
-	Model__Helicone__Sonar__Reasoning__Pro__Reasoning                                        ModelID = "sonar-reasoning-pro"
+	Model__Helicone__Sonar__Reasoning__Pro                                                   ModelID = "sonar-reasoning-pro"
 	Model__HpcAI__Glm__5_1                                                                   ModelID = "zai-org/glm-5.1"
 	Model__HpcAI__Kimi__K2__5__2_5                                                           ModelID = "moonshotai/kimi-k2.5"
 	Model__HpcAI__Minimax__M2__5__2_5                                                        ModelID = "minimax/minimax-m2.5"
@@ -2196,7 +2196,7 @@ const (
 	Model__Llmgateway__Seed__1__8__251228__1_8                                               ModelID = "seed-1-8-251228"
 	Model__Llmgateway__Sonar                                                                 ModelID = "sonar"
 	Model__Llmgateway__Sonar__Pro                                                            ModelID = "sonar-pro"
-	Model__Llmgateway__Sonar__Reasoning__Pro__Reasoning                                      ModelID = "sonar-reasoning-pro"
+	Model__Llmgateway__Sonar__Reasoning__Pro                                                 ModelID = "sonar-reasoning-pro"
 	Model__LucidQuery__Lucidnova__Rf1__100b                                                  ModelID = "lucidnova-rf1-100b"
 	Model__LucidQuery__Lucidquery__Nexus__Coder                                              ModelID = "lucidquery-nexus-coder"
 	Model__Meganova__Deepseek__R1__0528__Thinking                                            ModelID = "deepseek-ai/DeepSeek-R1-0528"
@@ -3715,7 +3715,7 @@ const (
 	Model__OpenRouter__Sonar__Deep__Research                                                 ModelID = "perplexity/sonar-deep-research"
 	Model__OpenRouter__Sonar__Pro                                                            ModelID = "perplexity/sonar-pro"
 	Model__OpenRouter__Sonar__Pro__Search                                                    ModelID = "perplexity/sonar-pro-search"
-	Model__OpenRouter__Sonar__Reasoning__Pro__Reasoning                                      ModelID = "perplexity/sonar-reasoning-pro"
+	Model__OpenRouter__Sonar__Reasoning__Pro                                                 ModelID = "perplexity/sonar-reasoning-pro"
 	Model__OpenRouter__Spotlight                                                             ModelID = "arcee-ai/spotlight"
 	Model__OpenRouter__Step__3__5__Flash__3_5                                                ModelID = "stepfun/step-3.5-flash"
 	Model__OpenRouter__Step__3__7__Flash__3_7                                                ModelID = "stepfun/step-3.7-flash"
@@ -3829,7 +3829,7 @@ const (
 	Model__Perplexity__Sonar                                                                 ModelID = "sonar"
 	Model__Perplexity__Sonar__Deep__Research                                                 ModelID = "sonar-deep-research"
 	Model__Perplexity__Sonar__Pro                                                            ModelID = "sonar-pro"
-	Model__Perplexity__Sonar__Reasoning__Pro__Reasoning                                      ModelID = "sonar-reasoning-pro"
+	Model__Perplexity__Sonar__Reasoning__Pro                                                 ModelID = "sonar-reasoning-pro"
 	Model__Poe__ChatGPT__4o__Latest                                                          ModelID = "openai/chatgpt-4o-latest"
 	Model__Poe__Claude__Code                                                                 ModelID = "poetools/claude-code"
 	Model__Poe__Claude__Haiku__3                                                             ModelID = "anthropic/claude-haiku-3"
@@ -4759,7 +4759,7 @@ const (
 	Model__Vercel__Sonar                                                                     ModelID = "perplexity/sonar"
 	Model__Vercel__Sonar__Pro                                                                ModelID = "perplexity/sonar-pro"
 	Model__Vercel__Sonar__Reasoning                                                          ModelID = "perplexity/sonar-reasoning"
-	Model__Vercel__Sonar__Reasoning__Pro__Reasoning                                          ModelID = "perplexity/sonar-reasoning-pro"
+	Model__Vercel__Sonar__Reasoning__Pro                                                     ModelID = "perplexity/sonar-reasoning-pro"
 	Model__Vercel__Text__Embedding__005                                                      ModelID = "google/text-embedding-005"
 	Model__Vercel__Text__Embedding__3__Large__3                                              ModelID = "openai/text-embedding-3-large"
 	Model__Vercel__Text__Embedding__3__Small__3                                              ModelID = "openai/text-embedding-3-small"
@@ -6493,7 +6493,7 @@ var allModelConstants = [...]ModelID{
 	Model__Helicone__Sonar__Deep__Research,
 	Model__Helicone__Sonar__Pro,
 	Model__Helicone__Sonar__Reasoning,
-	Model__Helicone__Sonar__Reasoning__Pro__Reasoning,
+	Model__Helicone__Sonar__Reasoning__Pro,
 	Model__HpcAI__Glm__5_1,
 	Model__HpcAI__Kimi__K2__5__2_5,
 	Model__HpcAI__Minimax__M2__5__2_5,
@@ -7179,7 +7179,7 @@ var allModelConstants = [...]ModelID{
 	Model__Llmgateway__Seed__1__8__251228__1_8,
 	Model__Llmgateway__Sonar,
 	Model__Llmgateway__Sonar__Pro,
-	Model__Llmgateway__Sonar__Reasoning__Pro__Reasoning,
+	Model__Llmgateway__Sonar__Reasoning__Pro,
 	Model__LucidQuery__Lucidnova__Rf1__100b,
 	Model__LucidQuery__Lucidquery__Nexus__Coder,
 	Model__Meganova__Deepseek__R1__0528__Thinking,
@@ -8698,7 +8698,7 @@ var allModelConstants = [...]ModelID{
 	Model__OpenRouter__Sonar__Deep__Research,
 	Model__OpenRouter__Sonar__Pro,
 	Model__OpenRouter__Sonar__Pro__Search,
-	Model__OpenRouter__Sonar__Reasoning__Pro__Reasoning,
+	Model__OpenRouter__Sonar__Reasoning__Pro,
 	Model__OpenRouter__Spotlight,
 	Model__OpenRouter__Step__3__5__Flash__3_5,
 	Model__OpenRouter__Step__3__7__Flash__3_7,
@@ -8812,7 +8812,7 @@ var allModelConstants = [...]ModelID{
 	Model__Perplexity__Sonar,
 	Model__Perplexity__Sonar__Deep__Research,
 	Model__Perplexity__Sonar__Pro,
-	Model__Perplexity__Sonar__Reasoning__Pro__Reasoning,
+	Model__Perplexity__Sonar__Reasoning__Pro,
 	Model__Poe__ChatGPT__4o__Latest,
 	Model__Poe__Claude__Code,
 	Model__Poe__Claude__Haiku__3,
@@ -9742,7 +9742,7 @@ var allModelConstants = [...]ModelID{
 	Model__Vercel__Sonar,
 	Model__Vercel__Sonar__Pro,
 	Model__Vercel__Sonar__Reasoning,
-	Model__Vercel__Sonar__Reasoning__Pro__Reasoning,
+	Model__Vercel__Sonar__Reasoning__Pro,
 	Model__Vercel__Text__Embedding__005,
 	Model__Vercel__Text__Embedding__3__Large__3,
 	Model__Vercel__Text__Embedding__3__Small__3,
