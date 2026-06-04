@@ -34,8 +34,8 @@ func TestSlugToIdentifier(t *testing.T) {
 	}{
 		// Digit-leading slug: "302" stays verbatim; "ai" → "AI" via casingOverrides.
 		{"302ai", "302AI", "302AI"},
-		// Single-token casing override.
-		{"xai", "xAI", "XAI"},
+		// Single-token brand-casing (SLICE-7: ratified xai → xAI, was XAI).
+		{"xai", "xAI", "xAI"},
 		// Multi-token with two overrides (SAP + AI).
 		{"sap-ai-core", "SAP AI Core", "SAPAICore"},
 		// Hyphenated without overrides — title-case each token.
@@ -87,7 +87,7 @@ func TestProviderConstName(t *testing.T) {
 		want string
 	}{
 		{"302ai", "302AI", "Provider302AI"},
-		{"xai", "xAI", "ProviderXAI"},
+		{"xai", "xAI", "ProviderxAI"},
 		{"sap-ai-core", "SAP AI Core", "ProviderSAPAICore"},
 		{"amazon-bedrock", "Amazon Bedrock", "ProviderAmazonBedrock"},
 		{"anthropic", "Anthropic", "ProviderAnthropic"},

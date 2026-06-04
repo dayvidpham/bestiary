@@ -32,7 +32,7 @@ func (f Family) CanonicalProvider() Provider {
 	case FamilyMistral, FamilyCodestral, FamilyDevstral:
 		// Mistral AI is the canonical publisher for mistral, codestral, and devstral families.
 		return ProviderMistral
-	case FamilyDeepseek:
+	case FamilyDeepSeek:
 		// DeepSeek is the canonical publisher for deepseek family models.
 		return ProviderDeepSeek
 	case FamilyQwen:

@@ -27,13 +27,21 @@ import (
 	"github.com/dayvidpham/bestiary"
 )
 
-// casingOverrides maps lowercase token → preferred uppercase form.
-// Applied when blending the API name field does not yield a recognisable token.
-var casingOverrides = map[string]string{
+// brandCasing is the SLICE-7 (rc2, CLARIFICATION-3) curated brand-casing table:
+// lowercase token → preferred Go IDENTIFIER stylization. It is the single source the
+// shared styleSegment seam consults per-segment, so Provider, Family, and Model__
+// identifiers all stylize consistently. It ONLY affects generated SYMBOL names (and
+// optionally DisplayName) — never the Family FIELD value, any runtime string, or the
+// decomposition pipeline.
+//
+// Entries are RATIFIED (URD bestiary-o54x, user sign-off) or AUTO-APPLY (clearly-curated
+// batch). An un-curated token defaults to title-case (incremental honest-audit). Any
+// genuinely-ambiguous new casing must be SURFACED for user sign-off, never guessed here.
+var brandCasing = map[string]string{
+	// ── existing acronym/segment overrides (preserved) ──
 	"ai":      "AI",
 	"api":     "API",
 	"chatgpt": "ChatGPT",
-	"gpt":     "GPT",
 	"llm":     "LLM",
 	"io":      "IO",
 	"sap":     "SAP",
@@ -41,8 +49,82 @@ var casingOverrides = map[string]string{
 	"cn":      "CN",
 	"ams":     "AMS",
 	"sgp":     "SGP",
-	"xai":     "XAI",
 	"aws":     "AWS",
+
+	// ── RATIFIED casings (URD o54x, verbatim, user sign-off) ──
+	"nvidia":     "Nvidia", // NOT NVIDIA
+	"togetherai": "TogetherAI",
+	"llmgateway": "LlmGateway", // NOT LLMGateway
+	"iflowcn":    "iFlowCN",
+	"nearai":     "NearAI",
+	"gmicloud":   "GMICloud",
+
+	// ── AUTO-APPLY (clearly-curated, user-confirmed batch) ──
+	"openrouter":  "OpenRouter",
+	"deepseek":    "DeepSeek",
+	"minimax":     "MiniMax",
+	"openai":      "OpenAI",
+	"deepinfra":   "DeepInfra",
+	"huggingface": "HuggingFace",
+	"moonshotai":  "MoonshotAI",
+	"xai":         "xAI", // SLICE-7: was XAI; ratified brand is xAI
+	"github":      "GitHub",
+	"gitlab":      "GitLab",
+	"gpt":         "GPT",
+	"glm":         "GLM",
+	"qwen":        "Qwen",
+	"olmo":        "OLMo",
+	"internlm":    "InternLM",
+	"smollm":      "SmolLM",
+	"wizardlm":    "WizardLM",
+	"codellama":   "CodeLlama",
+}
+
+// styleSegment is the ONE shared per-segment identifier-styling seam (SLICE-7). It
+// consults the curated brandCasing table for the whole token, then (for a digit-leading
+// token) for the alpha suffix, and otherwise title-cases.
+//
+// Returns (result, handled): handled=true when the result is DEFINITIVE for this segment
+// — i.e. a curated brand entry applied, OR the token is digit-leading (whose styling is
+// fully resolved here, matching the legacy order where digit handling preceded the
+// name-hint fallback). handled=false for a plain (non-digit, un-curated) token, whose
+// returned value is the default title-case form; a caller with an additional fallback
+// (slugToIdentifier's API name-hint) may override it before settling on title-case.
+//
+// preserveDigitSuffix controls the un-curated alpha suffix of a digit-leading token:
+// true keeps it verbatim ("4o" → "4o", the Model__ segment rule), false title-cases it
+// ("302ab" → "302Ab", the slug identifier rule). A curated suffix (e.g. "ai"→"AI") wins
+// either way ("302ai" → "302AI").
+func styleSegment(tok string, preserveDigitSuffix bool) (string, bool) {
+	if tok == "" {
+		return "", true
+	}
+	lower := strings.ToLower(tok)
+	if s, ok := brandCasing[lower]; ok {
+		return s, true
+	}
+	if unicode.IsDigit(rune(tok[0])) {
+		splitAt := -1
+		for i, r := range tok {
+			if !unicode.IsDigit(r) {
+				splitAt = i
+				break
+			}
+		}
+		if splitAt < 0 {
+			return tok, true // all digits
+		}
+		digitPart, alphaPart := tok[:splitAt], tok[splitAt:]
+		if s, ok := brandCasing[strings.ToLower(alphaPart)]; ok {
+			return digitPart + s, true
+		}
+		if preserveDigitSuffix {
+			return digitPart + alphaPart, true
+		}
+		return digitPart + strings.ToUpper(alphaPart[:1]) + alphaPart[1:], true
+	}
+	// Plain un-curated token: title-case, NOT definitive (caller may apply a name-hint).
+	return strings.ToUpper(lower[:1]) + lower[1:], false
 }
 
 // slugToIdentifier converts a provider/family slug (e.g. "amazon-bedrock", "xai",
@@ -78,60 +160,35 @@ func slugToIdentifier(slug string, nameHint string) string {
 		}
 		lower := strings.ToLower(tok)
 
-		// 1. Check casing overrides.
-		if override, ok := casingOverrides[lower]; ok {
-			sb.WriteString(override)
+		// 1+2. Shared seam: curated brand-casing (full token, then digit-suffix) and
+		// digit-leading handling. preserveDigitSuffix=false → an un-curated digit suffix
+		// is title-cased (the slug identifier rule). When styleSegment reports it handled
+		// the segment (brand hit or digit-leading), that result is definitive.
+		if styled, handled := styleSegment(tok, false); handled {
+			sb.WriteString(styled)
 			continue
 		}
 
-		// 2. If the token starts with a digit, keep the digit part verbatim.
-		// Apply casing overrides to any alpha suffix.
-		// e.g. "302ai" → "302" + "ai" → "302" + "AI"
-		if unicode.IsDigit(rune(tok[0])) {
-			digitPart := ""
-			alphaPart := ""
-			for i, r := range tok {
-				if !unicode.IsDigit(r) {
-					digitPart = tok[:i]
-					alphaPart = tok[i:]
-					break
-				}
-			}
-			if alphaPart == "" {
-				digitPart = tok
-			}
-			sb.WriteString(digitPart)
-			if alphaPart != "" {
-				alphaLower := strings.ToLower(alphaPart)
-				if override, ok := casingOverrides[alphaLower]; ok {
-					sb.WriteString(override)
-				} else {
-					sb.WriteString(strings.ToUpper(alphaPart[:1]) + alphaPart[1:])
-				}
-			}
-			continue
-		}
-
-		// 3. Check name hint map for a display-form casing hint.
+		// 3. Plain un-curated token: prefer an API display-name casing hint.
 		if hint, ok := nameHintWords[lower]; ok {
-			hintLower := strings.ToLower(hint)
-			if override, ok2 := casingOverrides[hintLower]; ok2 {
-				sb.WriteString(override)
+			if styledHint, ok2 := brandCasing[strings.ToLower(hint)]; ok2 {
+				sb.WriteString(styledHint)
 			} else {
 				sb.WriteString(strings.ToUpper(hint[:1]) + hint[1:])
 			}
 			continue
 		}
 
-		// 4. Default: title-case the token.
-		sb.WriteString(strings.ToUpper(lower[:1]) + lower[1:])
+		// 4. Default: title-case the token (styleSegment's non-definitive result).
+		styled, _ := styleSegment(tok, false)
+		sb.WriteString(styled)
 	}
 	return sb.String()
 }
 
 // providerConstName returns the Go identifier for a Provider constant given its slug.
 // Examples: "anthropic" → "ProviderAnthropic", "302ai" → "Provider302AI",
-// "xai" → "ProviderXAI", "amazon-bedrock" → "ProviderAmazonBedrock".
+// "xai" → "ProviderxAI", "amazon-bedrock" → "ProviderAmazonBedrock".
 func providerConstName(slug string, nameHint string) string {
 	return "Provider" + slugToIdentifier(slug, nameHint)
 }
@@ -421,7 +478,7 @@ func run(args []string) error {
 	sort.Strings(allSlugs)
 
 	// Collect all unique family values from all models (before data filter).
-	familyMeta := collectFamilies(models, providerMeta)
+	familyMeta := collectFamilies(models)
 
 	// Apply model data filter (constants are always generated for all providers).
 	filtered := applyFilter(models, flags.only, flags.except)
@@ -922,7 +979,7 @@ func fetchModelsWithRaw(ctx context.Context, dir string, noFetch bool) (rawJSON 
 
 // collectFamilies returns a deduplicated sorted list of unique non-empty raw API
 // family values found across all models, together with a name hint for casing.
-func collectFamilies(models []bestiary.ModelInfo, provMeta map[string]providerAPIMeta) []string {
+func collectFamilies(models []bestiary.ModelInfo) []string {
 	seen := make(map[string]struct{})
 	for _, m := range models {
 		if m.RawFamily != "" {
@@ -1404,61 +1461,40 @@ func truncate(s string, max int) string {
 const outputConstantsPath = "models_constants_gen.go"
 
 // tokenToConstPart converts a single hyphen/dot-split token from a model ID into
-// a constant-name segment. Rules (in priority order):
-//  1. casingOverrides wins (e.g. "gpt" → "GPT", "ai" → "AI").
-//  2. Token leading with a digit: keep digit prefix verbatim; apply overrides to alpha suffix.
-//  3. Otherwise: title-case the token.
-//
-// Within-component characters are preserved ("4o" → "4o", not "4_o").
+// a constant-name segment via the shared styleSegment seam (SLICE-7). Rules (in order):
+//  1. curated brandCasing wins for the full token (e.g. "gpt" → "GPT", "deepseek" → "DeepSeek").
+//  2. Digit-leading token: keep digit prefix verbatim; brandCasing or VERBATIM alpha suffix
+//     ("4o" stays "4o", not "4O"/"4_o" — within-component characters preserved).
+//  3. Otherwise: title-case. A multi-token value (e.g. the modifier "deep-research" passed
+//     whole) is split on any non-alphanumeric separator, each sub-token styled, joined with
+//     a single within-segment underscore ("deep-research" → "Deep_Research").
 func tokenToConstPart(tok string) string {
 	if tok == "" {
 		return ""
 	}
 	lower := strings.ToLower(tok)
 
-	// 1. Casing override for the full token.
-	if override, ok := casingOverrides[lower]; ok {
-		return override
+	// 1. Curated brand-casing for the FULL token (before any compound split).
+	if s, ok := brandCasing[lower]; ok {
+		return s
 	}
 
-	// 2. Digit-leading token: split at first alpha character.
-	// "4o" → "4o" (within-component characters preserved — no casing change).
-	// "302ai" → "302AI" (casingOverride applies to multi-char alpha suffix).
-	if unicode.IsDigit(rune(tok[0])) {
-		// Find split point between digit prefix and alpha suffix.
-		splitAt := -1
-		for i, r := range tok {
-			if !unicode.IsDigit(r) {
-				splitAt = i
-				break
-			}
-		}
-		if splitAt < 0 {
-			// All digits — return as-is.
-			return tok
-		}
-		digitPart := tok[:splitAt]
-		alphaPart := tok[splitAt:]
-		alphaLower := strings.ToLower(alphaPart)
-		if override, ok := casingOverrides[alphaLower]; ok {
-			return digitPart + override
-		}
-		// Preserve the alpha part exactly as-is (spec: "4o stays 4o, not 4_o").
-		return digitPart + alphaPart
-	}
-
-	// 3. Default: title-case. SLICE-12: a multi-token value (e.g. the modifier
-	// "deep-research" from o3-deep-research, passed here whole) is split on any
-	// non-alphanumeric separator and each sub-token title-cased, joined with a single
-	// within-segment underscore — so an internal hyphen never leaks into the identifier
-	// ("deep-research" → "Deep_Research"). Hyphen-free tokens are unchanged.
-	subs := strings.FieldsFunc(lower, func(r rune) bool {
+	// 3. Compound (internal separator) → split, style each sub via the shared seam
+	// (preserveDigitSuffix=true: Model__ segment rule), join with "_".
+	subs := strings.FieldsFunc(tok, func(r rune) bool {
 		return !unicode.IsLetter(r) && !unicode.IsDigit(r)
 	})
-	for i, s := range subs {
-		subs[i] = strings.ToUpper(s[:1]) + s[1:]
+	if len(subs) > 1 {
+		for i, s := range subs {
+			styled, _ := styleSegment(s, true)
+			subs[i] = styled
+		}
+		return strings.Join(subs, "_")
 	}
-	return strings.Join(subs, "_")
+
+	// 1+2. Single token: shared seam (brand → digit-leading [verbatim suffix] → title-case).
+	styled, _ := styleSegment(tok, true)
+	return styled
 }
 
 // nameForCanonical derives the Model__* constant name for a single ModelInfo.

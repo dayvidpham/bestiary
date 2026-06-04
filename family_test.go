@@ -117,7 +117,7 @@ func TestFamily_RoundTrip(t *testing.T) {
 		{"gpt", bestiary.FamilyGPT},
 		{"llama", bestiary.FamilyLlama},
 		{"mistral", bestiary.FamilyMistral},
-		{"deepseek", bestiary.FamilyDeepseek},
+		{"deepseek", bestiary.FamilyDeepSeek},
 		// Unknown family: permissive contract must round-trip unknown values.
 		{"unknown", bestiary.Family("totally-unknown-family-xyz")},
 	}
@@ -203,7 +203,7 @@ func TestFamily_CanonicalProvider_WellKnown(t *testing.T) {
 		{bestiary.FamilyO, bestiary.ProviderOpenAI},  // o1, o3, o4 carry Family="o"
 		{bestiary.FamilyLlama, bestiary.ProviderLocal},
 		{bestiary.FamilyMistral, bestiary.ProviderMistral},
-		{bestiary.FamilyDeepseek, bestiary.ProviderDeepSeek},
+		{bestiary.FamilyDeepSeek, bestiary.ProviderDeepSeek},
 		{bestiary.FamilyQwen, bestiary.ProviderAlibaba},
 	}
 
