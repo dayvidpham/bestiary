@@ -33,14 +33,28 @@ const (
 	Model__302AI__Claude__Sonnet__4_6                                                        ModelID = "claude-sonnet-4-6"
 	Model__302AI__Claude__Sonnet__4_6__Thinking                                              ModelID = "claude-sonnet-4-6-thinking"
 	Model__302AI__Claude__Sonnet__4__20250514                                                ModelID = "claude-sonnet-4-20250514"
-	Model__302AI__Deepseek__Chat                                                             ModelID = "deepseek-chat"
-	Model__302AI__Deepseek__Reasoner__Thinking                                               ModelID = "deepseek-reasoner"
-	Model__302AI__Deepseek__V3__2                                                            ModelID = "deepseek-v3.2"
-	Model__302AI__Deepseek__V3__2__Thinking                                                  ModelID = "deepseek-v3.2-thinking"
+	Model__302AI__DeepSeek__Chat                                                             ModelID = "deepseek-chat"
+	Model__302AI__DeepSeek__Reasoner__Thinking                                               ModelID = "deepseek-reasoner"
+	Model__302AI__DeepSeek__V3__2                                                            ModelID = "deepseek-v3.2"
+	Model__302AI__DeepSeek__V3__2__Thinking                                                  ModelID = "deepseek-v3.2-thinking"
 	Model__302AI__Doubao__Seed__1__6__Thinking__250715__1_6__Thinking                        ModelID = "doubao-seed-1-6-thinking-250715"
 	Model__302AI__Doubao__Seed__1__6__Vision__250815__1_6__Vision                            ModelID = "doubao-seed-1-6-vision-250815"
 	Model__302AI__Doubao__Seed__1__8__251215__1_8                                            ModelID = "doubao-seed-1-8-251215"
 	Model__302AI__Doubao__Seed__Code__Preview__251028__PreviewCode                           ModelID = "doubao-seed-code-preview-251028"
+	Model__302AI__GLM__4_5                                                                   ModelID = "glm-4.5"
+	Model__302AI__GLM__4_6                                                                   ModelID = "glm-4.6"
+	Model__302AI__GLM__4_7                                                                   ModelID = "glm-4.7"
+	Model__302AI__GLM__4__5__Air__4_5                                                        ModelID = "glm-4.5-air"
+	Model__302AI__GLM__4__5__Airx__4_5                                                       ModelID = "glm-4.5-airx"
+	Model__302AI__GLM__4__5__X__4_5                                                          ModelID = "glm-4.5-x"
+	Model__302AI__GLM__4__5v__4_5                                                            ModelID = "glm-4.5v"
+	Model__302AI__GLM__4__6v__4_6                                                            ModelID = "glm-4.6v"
+	Model__302AI__GLM__4__7__Flashx__4_7                                                     ModelID = "glm-4.7-flashx"
+	Model__302AI__GLM__5                                                                     ModelID = "glm-5"
+	Model__302AI__GLM__5_1                                                                   ModelID = "glm-5.1"
+	Model__302AI__GLM__5__Turbo                                                              ModelID = "glm-5-turbo"
+	Model__302AI__GLM__5v__5__Turbo                                                          ModelID = "glm-5v-turbo"
+	Model__302AI__GLM__For__Coding                                                           ModelID = "glm-for-coding"
 	Model__302AI__GPT__4_1                                                                   ModelID = "gpt-4.1"
 	Model__302AI__GPT__4__1__Mini__4_1                                                       ModelID = "gpt-4.1-mini"
 	Model__302AI__GPT__4__1__Nano__4_1                                                       ModelID = "gpt-4.1-nano"
@@ -70,20 +84,6 @@ const (
 	Model__302AI__Gemini__3__Flash__3__Preview                                               ModelID = "gemini-3-flash-preview"
 	Model__302AI__Gemini__3__Pro__3__Preview                                                 ModelID = "gemini-3-pro-preview"
 	Model__302AI__Gemini__3__Pro__Image__3__Preview                                          ModelID = "gemini-3-pro-image-preview"
-	Model__302AI__Glm__4_5                                                                   ModelID = "glm-4.5"
-	Model__302AI__Glm__4_6                                                                   ModelID = "glm-4.6"
-	Model__302AI__Glm__4_7                                                                   ModelID = "glm-4.7"
-	Model__302AI__Glm__4__5__Air__4_5                                                        ModelID = "glm-4.5-air"
-	Model__302AI__Glm__4__5__Airx__4_5                                                       ModelID = "glm-4.5-airx"
-	Model__302AI__Glm__4__5__X__4_5                                                          ModelID = "glm-4.5-x"
-	Model__302AI__Glm__4__5v__4_5                                                            ModelID = "glm-4.5v"
-	Model__302AI__Glm__4__6v__4_6                                                            ModelID = "glm-4.6v"
-	Model__302AI__Glm__4__7__Flashx__4_7                                                     ModelID = "glm-4.7-flashx"
-	Model__302AI__Glm__5                                                                     ModelID = "glm-5"
-	Model__302AI__Glm__5_1                                                                   ModelID = "glm-5.1"
-	Model__302AI__Glm__5__Turbo                                                              ModelID = "glm-5-turbo"
-	Model__302AI__Glm__5v__5__Turbo                                                          ModelID = "glm-5v-turbo"
-	Model__302AI__Glm__For__Coding                                                           ModelID = "glm-for-coding"
 	Model__302AI__Grok__4_1                                                                  ModelID = "grok-4.1"
 	Model__302AI__Grok__4_1__ReasoningFast                                                   ModelID = "grok-4-1-fast-reasoning"
 	Model__302AI__Grok__4__1__Fast__Non__4_1__Reasoning                                      ModelID = "grok-4-1-fast-non-reasoning"
@@ -95,11 +95,11 @@ const (
 	Model__302AI__Kimi__K2__0905__2__Preview                                                 ModelID = "kimi-k2-0905-preview"
 	Model__302AI__Kimi__K2__2__Thinking                                                      ModelID = "kimi-k2-thinking"
 	Model__302AI__Kimi__K2__2__ThinkingTurbo                                                 ModelID = "kimi-k2-thinking-turbo"
-	Model__302AI__Minimax__M1__1                                                             ModelID = "MiniMax-M1"
-	Model__302AI__Minimax__M2__1__2_1                                                        ModelID = "MiniMax-M2.1"
-	Model__302AI__Minimax__M2__2                                                             ModelID = "MiniMax-M2"
-	Model__302AI__Minimax__M2__7__2_7                                                        ModelID = "MiniMax-M2.7"
-	Model__302AI__Minimax__M2__7__2_7__Highspeed                                             ModelID = "MiniMax-M2.7-highspeed"
+	Model__302AI__MiniMax__M1__1                                                             ModelID = "MiniMax-M1"
+	Model__302AI__MiniMax__M2__1__2_1                                                        ModelID = "MiniMax-M2.1"
+	Model__302AI__MiniMax__M2__2                                                             ModelID = "MiniMax-M2"
+	Model__302AI__MiniMax__M2__7__2_7                                                        ModelID = "MiniMax-M2.7"
+	Model__302AI__MiniMax__M2__7__2_7__Highspeed                                             ModelID = "MiniMax-M2.7-highspeed"
 	Model__302AI__Ministral__14b__2512                                                       ModelID = "ministral-14b-2512"
 	Model__302AI__Mistral__Large__2512                                                       ModelID = "mistral-large-2512"
 	Model__302AI__Qwen3__235b__A22b__3                                                       ModelID = "qwen3-235b-a22b"
@@ -110,28 +110,29 @@ const (
 	Model__302AI__Qwen__Flash                                                                ModelID = "qwen-flash"
 	Model__302AI__Qwen__Max__Latest                                                          ModelID = "qwen-max-latest"
 	Model__302AI__Qwen__Plus                                                                 ModelID = "qwen-plus"
-	Model__AIHubMix__Alicloud__Deepseek__V4__Flash                                           ModelID = "alicloud-deepseek-v4-flash"
-	Model__AIHubMix__Alicloud__Deepseek__V4__Pro__Thinking                                   ModelID = "alicloud-deepseek-v4-pro"
-	Model__AIHubMix__Alicloud__Glm__5__1                                                     ModelID = "alicloud-glm-5.1"
+	Model__AIHubMix__Alicloud__DeepSeek__V4__Flash                                           ModelID = "alicloud-deepseek-v4-flash"
+	Model__AIHubMix__Alicloud__DeepSeek__V4__Pro__Thinking                                   ModelID = "alicloud-deepseek-v4-pro"
+	Model__AIHubMix__Alicloud__GLM__5__1                                                     ModelID = "alicloud-glm-5.1"
 	Model__AIHubMix__Claude__Opus__4_6                                                       ModelID = "claude-opus-4-6"
 	Model__AIHubMix__Claude__Opus__4_6__Think                                                ModelID = "claude-opus-4-6-think"
 	Model__AIHubMix__Claude__Opus__4_7                                                       ModelID = "claude-opus-4-7"
 	Model__AIHubMix__Claude__Opus__4_7__Think                                                ModelID = "claude-opus-4-7-think"
 	Model__AIHubMix__Claude__Sonnet__4_6                                                     ModelID = "claude-sonnet-4-6"
 	Model__AIHubMix__Claude__Sonnet__4_6__Think                                              ModelID = "claude-sonnet-4-6-think"
-	Model__AIHubMix__Coding__Glm__5__1                                                       ModelID = "coding-glm-5.1"
-	Model__AIHubMix__Coding__Glm__5__1__Free                                                 ModelID = "coding-glm-5.1-free"
-	Model__AIHubMix__Coding__Minimax__M2__7__2_7                                             ModelID = "coding-minimax-m2.7"
-	Model__AIHubMix__Coding__Minimax__M2__7__2_7__Highspeed                                  ModelID = "coding-minimax-m2.7-highspeed"
-	Model__AIHubMix__Coding__Minimax__M2__7__Free                                            ModelID = "coding-minimax-m2.7-free"
+	Model__AIHubMix__Coding__GLM__5__1                                                       ModelID = "coding-glm-5.1"
+	Model__AIHubMix__Coding__GLM__5__1__Free                                                 ModelID = "coding-glm-5.1-free"
+	Model__AIHubMix__Coding__MiniMax__M2__7__2_7                                             ModelID = "coding-minimax-m2.7"
+	Model__AIHubMix__Coding__MiniMax__M2__7__2_7__Highspeed                                  ModelID = "coding-minimax-m2.7-highspeed"
+	Model__AIHubMix__Coding__MiniMax__M2__7__Free                                            ModelID = "coding-minimax-m2.7-free"
 	Model__AIHubMix__Coding__Xiaomi__Mimo__V2__5__2_5                                        ModelID = "coding-xiaomi-mimo-v2.5"
 	Model__AIHubMix__Coding__Xiaomi__Mimo__V2__5__2_5__Pro                                   ModelID = "coding-xiaomi-mimo-v2.5-pro"
-	Model__AIHubMix__Deep__Deepseek__V4__Flash                                               ModelID = "deep-deepseek-v4-flash"
-	Model__AIHubMix__Deep__Deepseek__V4__Pro__Thinking                                       ModelID = "deep-deepseek-v4-pro"
+	Model__AIHubMix__Deep__DeepSeek__V4__Flash                                               ModelID = "deep-deepseek-v4-flash"
+	Model__AIHubMix__Deep__DeepSeek__V4__Pro__Thinking                                       ModelID = "deep-deepseek-v4-pro"
 	Model__AIHubMix__Doubao__Seed__2__0__Lite__260428                                        ModelID = "doubao-seed-2-0-lite-260428"
 	Model__AIHubMix__Doubao__Seed__2__0__Mini__260428                                        ModelID = "doubao-seed-2-0-mini-260428"
 	Model__AIHubMix__Doubao__Seed__2__0__PreviewCode                                         ModelID = "doubao-seed-2-0-code-preview"
 	Model__AIHubMix__Doubao__Seed__2__0__Pro                                                 ModelID = "doubao-seed-2-0-pro"
+	Model__AIHubMix__GLM__5v__5__Turbo                                                       ModelID = "glm-5v-turbo"
 	Model__AIHubMix__GPT__5_1                                                                ModelID = "gpt-5.1"
 	Model__AIHubMix__GPT__5_2                                                                ModelID = "gpt-5.2"
 	Model__AIHubMix__GPT__5_4                                                                ModelID = "gpt-5.4"
@@ -147,11 +148,10 @@ const (
 	Model__AIHubMix__Gemini__3__1__Pro__3_1__Preview                                         ModelID = "gemini-3.1-pro-preview"
 	Model__AIHubMix__Gemini__3__1__Pro__Preview__Customtools__3_1                            ModelID = "gemini-3.1-pro-preview-customtools"
 	Model__AIHubMix__Gemini__3__Flash__3__Preview                                            ModelID = "gemini-3-flash-preview"
-	Model__AIHubMix__Glm__5v__5__Turbo                                                       ModelID = "glm-5v-turbo"
 	Model__AIHubMix__Grok__4_3                                                               ModelID = "grok-4.3"
 	Model__AIHubMix__Kimi__K2__5__2_5                                                        ModelID = "kimi-k2.5"
 	Model__AIHubMix__Kimi__K2__6__2_6                                                        ModelID = "kimi-k2.6"
-	Model__AIHubMix__Minimax__M2__7__2_7                                                     ModelID = "minimax-m2.7"
+	Model__AIHubMix__MiniMax__M2__7__2_7                                                     ModelID = "minimax-m2.7"
 	Model__AIHubMix__Qwen3__6__Flash__3_6                                                    ModelID = "qwen3.6-flash"
 	Model__AIHubMix__Qwen3__6__Max__3_6__Preview                                             ModelID = "qwen3.6-max-preview"
 	Model__AIHubMix__Qwen3__6__Plus__3_6                                                     ModelID = "qwen3.6-plus"
@@ -159,7 +159,7 @@ const (
 	Model__AIHubMix__Xiaomi__Mimo__V2__5__2_5__Pro                                           ModelID = "xiaomi-mimo-v2.5-pro"
 	Model__AIHubMix__Xiaomi__Mimo__V2__5__Free                                               ModelID = "xiaomi-mimo-v2.5-free"
 	Model__AIHubMix__Xiaomi__Mimo__V2__5__Pro__Free                                          ModelID = "xiaomi-mimo-v2.5-pro-free"
-	Model__AIHubMix__Zai__Glm__5__1                                                          ModelID = "zai-glm-5.1"
+	Model__AIHubMix__Zai__GLM__5__1                                                          ModelID = "zai-glm-5.1"
 	Model__Abacus__Claude__3__7__Sonnet__3_7__20250219                                       ModelID = "claude-3-7-sonnet-20250219"
 	Model__Abacus__Claude__Haiku__4_5__20251001                                              ModelID = "claude-haiku-4-5-20251001"
 	Model__Abacus__Claude__Opus__4_1__20250805                                               ModelID = "claude-opus-4-1-20250805"
@@ -169,10 +169,14 @@ const (
 	Model__Abacus__Claude__Sonnet__4_5__20250929                                             ModelID = "claude-sonnet-4-5-20250929"
 	Model__Abacus__Claude__Sonnet__4_6                                                       ModelID = "claude-sonnet-4-6"
 	Model__Abacus__Claude__Sonnet__4__20250514                                               ModelID = "claude-sonnet-4-20250514"
-	Model__Abacus__Deepseek__R1__Thinking                                                    ModelID = "deepseek-ai/DeepSeek-R1"
-	Model__Abacus__Deepseek__V3__1                                                           ModelID = "deepseek/deepseek-v3.1"
-	Model__Abacus__Deepseek__V3__1__Terminus                                                 ModelID = "deepseek-ai/DeepSeek-V3.1-Terminus"
-	Model__Abacus__Deepseek__V3__2                                                           ModelID = "deepseek-ai/DeepSeek-V3.2"
+	Model__Abacus__DeepSeek__R1__Thinking                                                    ModelID = "deepseek-ai/DeepSeek-R1"
+	Model__Abacus__DeepSeek__V3__1                                                           ModelID = "deepseek/deepseek-v3.1"
+	Model__Abacus__DeepSeek__V3__1__Terminus                                                 ModelID = "deepseek-ai/DeepSeek-V3.1-Terminus"
+	Model__Abacus__DeepSeek__V3__2                                                           ModelID = "deepseek-ai/DeepSeek-V3.2"
+	Model__Abacus__GLM__4_5                                                                  ModelID = "zai-org/glm-4.5"
+	Model__Abacus__GLM__4_6                                                                  ModelID = "zai-org/glm-4.6"
+	Model__Abacus__GLM__4_7                                                                  ModelID = "zai-org/glm-4.7"
+	Model__Abacus__GLM__5                                                                    ModelID = "zai-org/glm-5"
 	Model__Abacus__GPT__4_1                                                                  ModelID = "gpt-4.1"
 	Model__Abacus__GPT__4__1__Mini__4_1                                                      ModelID = "gpt-4.1-mini"
 	Model__Abacus__GPT__4__1__Nano__4_1                                                      ModelID = "gpt-4.1-nano"
@@ -199,10 +203,6 @@ const (
 	Model__Abacus__Gemini__3__1__Flash__Lite__3_1__Preview                                   ModelID = "gemini-3.1-flash-lite-preview"
 	Model__Abacus__Gemini__3__1__Pro__3_1__Preview                                           ModelID = "gemini-3.1-pro-preview"
 	Model__Abacus__Gemini__3__Flash__3__Preview                                              ModelID = "gemini-3-flash-preview"
-	Model__Abacus__Glm__4_5                                                                  ModelID = "zai-org/glm-4.5"
-	Model__Abacus__Glm__4_6                                                                  ModelID = "zai-org/glm-4.6"
-	Model__Abacus__Glm__4_7                                                                  ModelID = "zai-org/glm-4.7"
-	Model__Abacus__Glm__5                                                                    ModelID = "zai-org/glm-5"
 	Model__Abacus__Grok__4__0709__4                                                          ModelID = "grok-4-0709"
 	Model__Abacus__Grok__4__1__Fast__Non__4_1__Reasoning                                     ModelID = "grok-4-1-fast-non-reasoning"
 	Model__Abacus__Grok__4__Fast__Non__4__Reasoning                                          ModelID = "grok-4-fast-non-reasoning"
@@ -226,31 +226,31 @@ const (
 	Model__Abacus__Qwq__32B                                                                  ModelID = "Qwen/QwQ-32B"
 	Model__Abacus__Route__LLM                                                                ModelID = "route-llm"
 	Model__AbliterationAI__Abliterated__Model                                                ModelID = "abliterated-model"
-	Model__AlibabaCN__Deepseek__R1__0528__Thinking_1                                         ModelID = "deepseek-r1-0528"
-	Model__AlibabaCN__Deepseek__R1__0528__Thinking_2                                         ModelID = "siliconflow/deepseek-r1-0528"
-	Model__AlibabaCN__Deepseek__R1__Distill__Llama__70b__Thinking                            ModelID = "deepseek-r1-distill-llama-70b"
-	Model__AlibabaCN__Deepseek__R1__Distill__Llama__8b__Thinking                             ModelID = "deepseek-r1-distill-llama-8b"
-	Model__AlibabaCN__Deepseek__R1__Distill__Qwen__14b                                       ModelID = "deepseek-r1-distill-qwen-14b"
-	Model__AlibabaCN__Deepseek__R1__Distill__Qwen__1__5b                                     ModelID = "deepseek-r1-distill-qwen-1-5b"
-	Model__AlibabaCN__Deepseek__R1__Distill__Qwen__32b                                       ModelID = "deepseek-r1-distill-qwen-32b"
-	Model__AlibabaCN__Deepseek__R1__Distill__Qwen__7b                                        ModelID = "deepseek-r1-distill-qwen-7b"
-	Model__AlibabaCN__Deepseek__R1__Thinking                                                 ModelID = "deepseek-r1"
-	Model__AlibabaCN__Deepseek__V3                                                           ModelID = "deepseek-v3"
-	Model__AlibabaCN__Deepseek__V3__0324                                                     ModelID = "siliconflow/deepseek-v3-0324"
-	Model__AlibabaCN__Deepseek__V3__1                                                        ModelID = "deepseek-v3-1"
-	Model__AlibabaCN__Deepseek__V3__1__Terminus                                              ModelID = "siliconflow/deepseek-v3.1-terminus"
-	Model__AlibabaCN__Deepseek__V3__2                                                        ModelID = "siliconflow/deepseek-v3.2"
-	Model__AlibabaCN__Deepseek__V3__2__Exp__2                                                ModelID = "deepseek-v3-2-exp"
-	Model__AlibabaCN__Deepseek__V4__Flash                                                    ModelID = "deepseek-v4-flash"
-	Model__AlibabaCN__Deepseek__V4__Pro__Thinking                                            ModelID = "deepseek-v4-pro"
-	Model__AlibabaCN__Glm__5                                                                 ModelID = "glm-5"
-	Model__AlibabaCN__Glm__5_1                                                               ModelID = "glm-5.1"
+	Model__AlibabaCN__DeepSeek__R1__0528__Thinking_1                                         ModelID = "deepseek-r1-0528"
+	Model__AlibabaCN__DeepSeek__R1__0528__Thinking_2                                         ModelID = "siliconflow/deepseek-r1-0528"
+	Model__AlibabaCN__DeepSeek__R1__Distill__Llama__70b__Thinking                            ModelID = "deepseek-r1-distill-llama-70b"
+	Model__AlibabaCN__DeepSeek__R1__Distill__Llama__8b__Thinking                             ModelID = "deepseek-r1-distill-llama-8b"
+	Model__AlibabaCN__DeepSeek__R1__Distill__Qwen__14b                                       ModelID = "deepseek-r1-distill-qwen-14b"
+	Model__AlibabaCN__DeepSeek__R1__Distill__Qwen__1__5b                                     ModelID = "deepseek-r1-distill-qwen-1-5b"
+	Model__AlibabaCN__DeepSeek__R1__Distill__Qwen__32b                                       ModelID = "deepseek-r1-distill-qwen-32b"
+	Model__AlibabaCN__DeepSeek__R1__Distill__Qwen__7b                                        ModelID = "deepseek-r1-distill-qwen-7b"
+	Model__AlibabaCN__DeepSeek__R1__Thinking                                                 ModelID = "deepseek-r1"
+	Model__AlibabaCN__DeepSeek__V3                                                           ModelID = "deepseek-v3"
+	Model__AlibabaCN__DeepSeek__V3__0324                                                     ModelID = "siliconflow/deepseek-v3-0324"
+	Model__AlibabaCN__DeepSeek__V3__1                                                        ModelID = "deepseek-v3-1"
+	Model__AlibabaCN__DeepSeek__V3__1__Terminus                                              ModelID = "siliconflow/deepseek-v3.1-terminus"
+	Model__AlibabaCN__DeepSeek__V3__2                                                        ModelID = "siliconflow/deepseek-v3.2"
+	Model__AlibabaCN__DeepSeek__V3__2__Exp__2                                                ModelID = "deepseek-v3-2-exp"
+	Model__AlibabaCN__DeepSeek__V4__Flash                                                    ModelID = "deepseek-v4-flash"
+	Model__AlibabaCN__DeepSeek__V4__Pro__Thinking                                            ModelID = "deepseek-v4-pro"
+	Model__AlibabaCN__GLM__5                                                                 ModelID = "glm-5"
+	Model__AlibabaCN__GLM__5_1                                                               ModelID = "glm-5.1"
 	Model__AlibabaCN__Kimi__K2__2__Thinking                                                  ModelID = "kimi-k2-thinking"
 	Model__AlibabaCN__Kimi__K2__5__2_5_1                                                     ModelID = "kimi-k2.5"
 	Model__AlibabaCN__Kimi__K2__5__2_5_2                                                     ModelID = "kimi/kimi-k2.5"
 	Model__AlibabaCN__Kimi__K2__6__2_6                                                       ModelID = "kimi-k2.6"
-	Model__AlibabaCN__Minimax__M2__5__2_5                                                    ModelID = "MiniMax-M2.5"
-	Model__AlibabaCN__Minimax__M2__7__2_7                                                    ModelID = "MiniMax/MiniMax-M2.7"
+	Model__AlibabaCN__MiniMax__M2__5__2_5                                                    ModelID = "MiniMax-M2.5"
+	Model__AlibabaCN__MiniMax__M2__7__2_7                                                    ModelID = "MiniMax/MiniMax-M2.7"
 	Model__AlibabaCN__Moonshot__Kimi__K2__2__Instruct                                        ModelID = "moonshot-kimi-k2-instruct"
 	Model__AlibabaCN__Qvq__Max                                                               ModelID = "qvq-max"
 	Model__AlibabaCN__Qwen2__5__14b__2__Instruct                                             ModelID = "qwen2-5-14b-instruct"
@@ -308,10 +308,10 @@ const (
 	Model__AlibabaCN__Qwq__32b                                                               ModelID = "qwq-32b"
 	Model__AlibabaCN__Qwq__Plus                                                              ModelID = "qwq-plus"
 	Model__AlibabaCN__Tongyi__Intent__Detect__V3                                             ModelID = "tongyi-intent-detect-v3"
-	Model__AlibabaCodingPlanCN__Glm__4_7                                                     ModelID = "glm-4.7"
-	Model__AlibabaCodingPlanCN__Glm__5                                                       ModelID = "glm-5"
+	Model__AlibabaCodingPlanCN__GLM__4_7                                                     ModelID = "glm-4.7"
+	Model__AlibabaCodingPlanCN__GLM__5                                                       ModelID = "glm-5"
 	Model__AlibabaCodingPlanCN__Kimi__K2__5__2_5                                             ModelID = "kimi-k2.5"
-	Model__AlibabaCodingPlanCN__Minimax__M2__5__2_5                                          ModelID = "MiniMax-M2.5"
+	Model__AlibabaCodingPlanCN__MiniMax__M2__5__2_5                                          ModelID = "MiniMax-M2.5"
 	Model__AlibabaCodingPlanCN__Qwen3__5__Plus__3_5                                          ModelID = "qwen3.5-plus"
 	Model__AlibabaCodingPlanCN__Qwen3__6__Flash__3_6                                         ModelID = "qwen3.6-flash"
 	Model__AlibabaCodingPlanCN__Qwen3__6__Plus__3_6                                          ModelID = "qwen3.6-plus"
@@ -319,10 +319,10 @@ const (
 	Model__AlibabaCodingPlanCN__Qwen3__Coder__Next__3                                        ModelID = "qwen3-coder-next"
 	Model__AlibabaCodingPlanCN__Qwen3__Coder__Plus__3                                        ModelID = "qwen3-coder-plus"
 	Model__AlibabaCodingPlanCN__Qwen3__Max__3__20260123                                      ModelID = "qwen3-max-2026-01-23"
-	Model__AlibabaCodingPlan__Glm__4_7                                                       ModelID = "glm-4.7"
-	Model__AlibabaCodingPlan__Glm__5                                                         ModelID = "glm-5"
+	Model__AlibabaCodingPlan__GLM__4_7                                                       ModelID = "glm-4.7"
+	Model__AlibabaCodingPlan__GLM__5                                                         ModelID = "glm-5"
 	Model__AlibabaCodingPlan__Kimi__K2__5__2_5                                               ModelID = "kimi-k2.5"
-	Model__AlibabaCodingPlan__Minimax__M2__5__2_5                                            ModelID = "MiniMax-M2.5"
+	Model__AlibabaCodingPlan__MiniMax__M2__5__2_5                                            ModelID = "MiniMax-M2.5"
 	Model__AlibabaCodingPlan__Qwen3__5__Plus__3_5                                            ModelID = "qwen3.5-plus"
 	Model__AlibabaCodingPlan__Qwen3__6__Flash__3_6                                           ModelID = "qwen3.6-flash"
 	Model__AlibabaCodingPlan__Qwen3__6__Plus__3_6                                            ModelID = "qwen3.6-plus"
@@ -397,9 +397,9 @@ const (
 	Model__AmazonBedrock__Au__Anthropic__Claude__Opus__4__8                                  ModelID = "au.anthropic.claude-opus-4-8"
 	Model__AmazonBedrock__Au__Anthropic__Claude__Sonnet__4__5__20250929__V1__0               ModelID = "au.anthropic.claude-sonnet-4-5-20250929-v1:0"
 	Model__AmazonBedrock__Au__Anthropic__Claude__Sonnet__4__6                                ModelID = "au.anthropic.claude-sonnet-4-6"
-	Model__AmazonBedrock__Deepseek__R1__V1__0__Thinking                                      ModelID = "deepseek.r1-v1:0"
-	Model__AmazonBedrock__Deepseek__V3__2                                                    ModelID = "deepseek.v3.2"
-	Model__AmazonBedrock__Deepseek__V3__V1__0                                                ModelID = "deepseek.v3-v1:0"
+	Model__AmazonBedrock__DeepSeek__R1__V1__0__Thinking                                      ModelID = "deepseek.r1-v1:0"
+	Model__AmazonBedrock__DeepSeek__V3__2                                                    ModelID = "deepseek.v3.2"
+	Model__AmazonBedrock__DeepSeek__V3__V1__0                                                ModelID = "deepseek.v3-v1:0"
 	Model__AmazonBedrock__Eu__Anthropic__Claude__Haiku__4__5__20251001__V1__0                ModelID = "eu.anthropic.claude-haiku-4-5-20251001-v1:0"
 	Model__AmazonBedrock__Eu__Anthropic__Claude__Opus__4__5__20251101__V1__0                 ModelID = "eu.anthropic.claude-opus-4-5-20251101-v1:0"
 	Model__AmazonBedrock__Eu__Anthropic__Claude__Opus__4__6__V1                              ModelID = "eu.anthropic.claude-opus-4-6-v1"
@@ -426,9 +426,9 @@ const (
 	Model__AmazonBedrock__Meta__Llama3__3__70b__Instruct__V1__0__Instruct                    ModelID = "meta.llama3-3-70b-instruct-v1:0"
 	Model__AmazonBedrock__Meta__Llama4__Maverick__17b__Instruct__V1__0__Instruct             ModelID = "meta.llama4-maverick-17b-instruct-v1:0"
 	Model__AmazonBedrock__Meta__Llama4__Scout__17b__Instruct__V1__0__Instruct                ModelID = "meta.llama4-scout-17b-instruct-v1:0"
-	Model__AmazonBedrock__Minimax__Minimax__M2__1__2_1                                       ModelID = "minimax.minimax-m2.1"
-	Model__AmazonBedrock__Minimax__Minimax__M2__2                                            ModelID = "minimax.minimax-m2"
-	Model__AmazonBedrock__Minimax__Minimax__M2__5__2_5                                       ModelID = "minimax.minimax-m2.5"
+	Model__AmazonBedrock__MiniMax__MiniMax__M2__1__2_1                                       ModelID = "minimax.minimax-m2.1"
+	Model__AmazonBedrock__MiniMax__MiniMax__M2__2                                            ModelID = "minimax.minimax-m2"
+	Model__AmazonBedrock__MiniMax__MiniMax__M2__5__2_5                                       ModelID = "minimax.minimax-m2.5"
 	Model__AmazonBedrock__Mistral__Devstral__2__123b                                         ModelID = "mistral.devstral-2-123b"
 	Model__AmazonBedrock__Mistral__Magistral__Small__2509                                    ModelID = "mistral.magistral-small-2509"
 	Model__AmazonBedrock__Mistral__Ministral__3__14b__Instruct                               ModelID = "mistral.ministral-3-14b-instruct"
@@ -438,16 +438,16 @@ const (
 	Model__AmazonBedrock__Mistral__Pixtral__Large__2502__V1__0                               ModelID = "mistral.pixtral-large-2502-v1:0"
 	Model__AmazonBedrock__Mistral__Voxtral__Mini__3b__2507                                   ModelID = "mistral.voxtral-mini-3b-2507"
 	Model__AmazonBedrock__Mistral__Voxtral__Small__24b__2507                                 ModelID = "mistral.voxtral-small-24b-2507"
+	Model__AmazonBedrock__MoonshotAI__Kimi__K2__5__2_5                                       ModelID = "moonshotai.kimi-k2.5"
 	Model__AmazonBedrock__Moonshot__Kimi__K2__2__Thinking                                    ModelID = "moonshot.kimi-k2-thinking"
-	Model__AmazonBedrock__Moonshotai__Kimi__K2__5__2_5                                       ModelID = "moonshotai.kimi-k2.5"
 	Model__AmazonBedrock__Nvidia__Nemotron__Nano__12b__V2                                    ModelID = "nvidia.nemotron-nano-12b-v2"
 	Model__AmazonBedrock__Nvidia__Nemotron__Nano__3__30b                                     ModelID = "nvidia.nemotron-nano-3-30b"
 	Model__AmazonBedrock__Nvidia__Nemotron__Nano__9b__V2                                     ModelID = "nvidia.nemotron-nano-9b-v2"
 	Model__AmazonBedrock__Nvidia__Nemotron__Super__3__120b                                   ModelID = "nvidia.nemotron-super-3-120b"
-	Model__AmazonBedrock__Openai__GPT__Oss__120b__1__0                                       ModelID = "openai.gpt-oss-120b-1:0"
-	Model__AmazonBedrock__Openai__GPT__Oss__20b__1__0                                        ModelID = "openai.gpt-oss-20b-1:0"
-	Model__AmazonBedrock__Openai__GPT__Oss__Safeguard__120b                                  ModelID = "openai.gpt-oss-safeguard-120b"
-	Model__AmazonBedrock__Openai__GPT__Oss__Safeguard__20b                                   ModelID = "openai.gpt-oss-safeguard-20b"
+	Model__AmazonBedrock__OpenAI__GPT__Oss__120b__1__0                                       ModelID = "openai.gpt-oss-120b-1:0"
+	Model__AmazonBedrock__OpenAI__GPT__Oss__20b__1__0                                        ModelID = "openai.gpt-oss-20b-1:0"
+	Model__AmazonBedrock__OpenAI__GPT__Oss__Safeguard__120b                                  ModelID = "openai.gpt-oss-safeguard-120b"
+	Model__AmazonBedrock__OpenAI__GPT__Oss__Safeguard__20b                                   ModelID = "openai.gpt-oss-safeguard-20b"
 	Model__AmazonBedrock__Qwen__Qwen3__235b__A22b__2507__V1__0                               ModelID = "qwen.qwen3-235b-a22b-2507-v1:0"
 	Model__AmazonBedrock__Qwen__Qwen3__32b__V1__0                                            ModelID = "qwen.qwen3-32b-v1:0"
 	Model__AmazonBedrock__Qwen__Qwen3__Coder__30b__A3b__V1__0                                ModelID = "qwen.qwen3-coder-30b-a3b-v1:0"
@@ -463,15 +463,15 @@ const (
 	Model__AmazonBedrock__Us__Anthropic__Claude__Opus__4__8                                  ModelID = "us.anthropic.claude-opus-4-8"
 	Model__AmazonBedrock__Us__Anthropic__Claude__Sonnet__4__5__20250929__V1__0               ModelID = "us.anthropic.claude-sonnet-4-5-20250929-v1:0"
 	Model__AmazonBedrock__Us__Anthropic__Claude__Sonnet__4__6                                ModelID = "us.anthropic.claude-sonnet-4-6"
-	Model__AmazonBedrock__Us__Deepseek__R1__V1__0__Thinking                                  ModelID = "us.deepseek.r1-v1:0"
+	Model__AmazonBedrock__Us__DeepSeek__R1__V1__0__Thinking                                  ModelID = "us.deepseek.r1-v1:0"
 	Model__AmazonBedrock__Us__Meta__Llama4__Maverick__17b__Instruct__V1__0__Instruct         ModelID = "us.meta.llama4-maverick-17b-instruct-v1:0"
 	Model__AmazonBedrock__Us__Meta__Llama4__Scout__17b__Instruct__V1__0__Instruct            ModelID = "us.meta.llama4-scout-17b-instruct-v1:0"
 	Model__AmazonBedrock__Writer__Palmyra__X4__V1__0                                         ModelID = "writer.palmyra-x4-v1:0"
 	Model__AmazonBedrock__Writer__Palmyra__X5__V1__0                                         ModelID = "writer.palmyra-x5-v1:0"
-	Model__AmazonBedrock__Zai__Glm__4__7                                                     ModelID = "zai.glm-4.7"
-	Model__AmazonBedrock__Zai__Glm__4__7__Flash                                              ModelID = "zai.glm-4.7-flash"
-	Model__AmazonBedrock__Zai__Glm__5                                                        ModelID = "zai.glm-5"
-	Model__Ambient__Glm__5__1__Fp8__5_1                                                      ModelID = "zai-org/GLM-5.1-FP8"
+	Model__AmazonBedrock__Zai__GLM__4__7                                                     ModelID = "zai.glm-4.7"
+	Model__AmazonBedrock__Zai__GLM__4__7__Flash                                              ModelID = "zai.glm-4.7-flash"
+	Model__AmazonBedrock__Zai__GLM__5                                                        ModelID = "zai.glm-5"
+	Model__Ambient__GLM__5__1__Fp8__5_1                                                      ModelID = "zai-org/GLM-5.1-FP8"
 	Model__Ambient__Kimi__K2__6__2_6                                                         ModelID = "moonshotai/kimi-k2.6"
 	Model__Anthropic__Claude__3__5__Haiku__3_5__20241022                                     ModelID = "claude-3-5-haiku-20241022"
 	Model__Anthropic__Claude__3__5__Haiku__3_5__Latest                                       ModelID = "claude-3-5-haiku-latest"
@@ -505,17 +505,17 @@ const (
 	Model__Auriko__Claude__Opus__4_6                                                         ModelID = "claude-opus-4-6"
 	Model__Auriko__Claude__Opus__4_7                                                         ModelID = "claude-opus-4-7"
 	Model__Auriko__Claude__Sonnet__4_6                                                       ModelID = "claude-sonnet-4-6"
-	Model__Auriko__Deepseek__V4__Flash                                                       ModelID = "deepseek-v4-flash"
-	Model__Auriko__Deepseek__V4__Pro__Thinking                                               ModelID = "deepseek-v4-pro"
+	Model__Auriko__DeepSeek__V4__Flash                                                       ModelID = "deepseek-v4-flash"
+	Model__Auriko__DeepSeek__V4__Pro__Thinking                                               ModelID = "deepseek-v4-pro"
+	Model__Auriko__GLM__5_1                                                                  ModelID = "glm-5.1"
 	Model__Auriko__Gemini__2__5__Flash__2_5                                                  ModelID = "gemini-2.5-flash"
 	Model__Auriko__Gemini__2__5__Pro__2_5                                                    ModelID = "gemini-2.5-pro"
 	Model__Auriko__Gemini__3__1__Pro__3_1__Preview                                           ModelID = "gemini-3.1-pro-preview"
-	Model__Auriko__Glm__5_1                                                                  ModelID = "glm-5.1"
 	Model__Auriko__Grok__4_3                                                                 ModelID = "grok-4.3"
 	Model__Auriko__Kimi__K2__5__2_5                                                          ModelID = "kimi-k2.5"
 	Model__Auriko__Kimi__K2__6__2_6                                                          ModelID = "kimi-k2.6"
-	Model__Auriko__Minimax__M2__7__2_7                                                       ModelID = "minimax-m2-7"
-	Model__Auriko__Minimax__M2__7__2_7__Highspeed                                            ModelID = "minimax-m2-7-highspeed"
+	Model__Auriko__MiniMax__M2__7__2_7                                                       ModelID = "minimax-m2-7"
+	Model__Auriko__MiniMax__M2__7__2_7__Highspeed                                            ModelID = "minimax-m2-7-highspeed"
 	Model__Auriko__Qwen__3__6__Plus__3_6                                                     ModelID = "qwen-3.6-plus"
 	Model__AzureCognitiveServices__Claude__Haiku__4_5                                        ModelID = "claude-haiku-4-5"
 	Model__AzureCognitiveServices__Claude__Opus__4_1                                         ModelID = "claude-opus-4-1"
@@ -530,12 +530,12 @@ const (
 	Model__AzureCognitiveServices__Cohere__Embed__V3__English                                ModelID = "cohere-embed-v3-english"
 	Model__AzureCognitiveServices__Cohere__Embed__V3__Multilingual                           ModelID = "cohere-embed-v3-multilingual"
 	Model__AzureCognitiveServices__Cohere__Embed__V__4__0                                    ModelID = "cohere-embed-v-4-0"
-	Model__AzureCognitiveServices__Deepseek__R1__0528__Thinking                              ModelID = "deepseek-r1-0528"
-	Model__AzureCognitiveServices__Deepseek__R1__Thinking                                    ModelID = "deepseek-r1"
-	Model__AzureCognitiveServices__Deepseek__V3__0324                                        ModelID = "deepseek-v3-0324"
-	Model__AzureCognitiveServices__Deepseek__V3__1                                           ModelID = "deepseek-v3.1"
-	Model__AzureCognitiveServices__Deepseek__V3__2                                           ModelID = "deepseek-v3.2"
-	Model__AzureCognitiveServices__Deepseek__V3__2__Speciale                                 ModelID = "deepseek-v3.2-speciale"
+	Model__AzureCognitiveServices__DeepSeek__R1__0528__Thinking                              ModelID = "deepseek-r1-0528"
+	Model__AzureCognitiveServices__DeepSeek__R1__Thinking                                    ModelID = "deepseek-r1"
+	Model__AzureCognitiveServices__DeepSeek__V3__0324                                        ModelID = "deepseek-v3-0324"
+	Model__AzureCognitiveServices__DeepSeek__V3__1                                           ModelID = "deepseek-v3.1"
+	Model__AzureCognitiveServices__DeepSeek__V3__2                                           ModelID = "deepseek-v3.2"
+	Model__AzureCognitiveServices__DeepSeek__V3__2__Speciale                                 ModelID = "deepseek-v3.2-speciale"
 	Model__AzureCognitiveServices__GPT__3_5__TurboInstruct                                   ModelID = "gpt-3.5-turbo-instruct"
 	Model__AzureCognitiveServices__GPT__3__5__Turbo__0125__3_5__Turbo                        ModelID = "gpt-3.5-turbo-0125"
 	Model__AzureCognitiveServices__GPT__3__5__Turbo__0301__3_5__Turbo                        ModelID = "gpt-3.5-turbo-0301"
@@ -627,12 +627,12 @@ const (
 	Model__Azure__Cohere__Embed__V3__English                                                 ModelID = "cohere-embed-v3-english"
 	Model__Azure__Cohere__Embed__V3__Multilingual                                            ModelID = "cohere-embed-v3-multilingual"
 	Model__Azure__Cohere__Embed__V__4__0                                                     ModelID = "cohere-embed-v-4-0"
-	Model__Azure__Deepseek__R1__0528__Thinking                                               ModelID = "deepseek-r1-0528"
-	Model__Azure__Deepseek__R1__Thinking                                                     ModelID = "deepseek-r1"
-	Model__Azure__Deepseek__V3__0324                                                         ModelID = "deepseek-v3-0324"
-	Model__Azure__Deepseek__V3__1                                                            ModelID = "deepseek-v3.1"
-	Model__Azure__Deepseek__V3__2                                                            ModelID = "deepseek-v3.2"
-	Model__Azure__Deepseek__V3__2__Speciale                                                  ModelID = "deepseek-v3.2-speciale"
+	Model__Azure__DeepSeek__R1__0528__Thinking                                               ModelID = "deepseek-r1-0528"
+	Model__Azure__DeepSeek__R1__Thinking                                                     ModelID = "deepseek-r1"
+	Model__Azure__DeepSeek__V3__0324                                                         ModelID = "deepseek-v3-0324"
+	Model__Azure__DeepSeek__V3__1                                                            ModelID = "deepseek-v3.1"
+	Model__Azure__DeepSeek__V3__2                                                            ModelID = "deepseek-v3.2"
+	Model__Azure__DeepSeek__V3__2__Speciale                                                  ModelID = "deepseek-v3.2-speciale"
 	Model__Azure__GPT__3_5__TurboInstruct                                                    ModelID = "gpt-3.5-turbo-instruct"
 	Model__Azure__GPT__3__5__Turbo__0125__3_5__Turbo                                         ModelID = "gpt-3.5-turbo-0125"
 	Model__Azure__GPT__3__5__Turbo__0301__3_5__Turbo                                         ModelID = "gpt-3.5-turbo-0301"
@@ -718,56 +718,56 @@ const (
 	Model__Azure__Text__Embedding__Ada__002                                                  ModelID = "text-embedding-ada-002"
 	Model__Bailing__Ling__1T__1t                                                             ModelID = "Ling-1T"
 	Model__Bailing__Ring__1T__1t                                                             ModelID = "Ring-1T"
-	Model__Baseten__Deepseek__V3__0324                                                       ModelID = "deepseek-ai/DeepSeek-V3-0324"
-	Model__Baseten__Deepseek__V3__1                                                          ModelID = "deepseek-ai/DeepSeek-V3.1"
-	Model__Baseten__Deepseek__V3__2                                                          ModelID = "deepseek-ai/DeepSeek-V3.2"
-	Model__Baseten__Deepseek__V4__Pro__Thinking                                              ModelID = "deepseek-ai/DeepSeek-V4-Pro"
+	Model__Baseten__DeepSeek__V3__0324                                                       ModelID = "deepseek-ai/DeepSeek-V3-0324"
+	Model__Baseten__DeepSeek__V3__1                                                          ModelID = "deepseek-ai/DeepSeek-V3.1"
+	Model__Baseten__DeepSeek__V3__2                                                          ModelID = "deepseek-ai/DeepSeek-V3.2"
+	Model__Baseten__DeepSeek__V4__Pro__Thinking                                              ModelID = "deepseek-ai/DeepSeek-V4-Pro"
+	Model__Baseten__GLM__4_6                                                                 ModelID = "zai-org/GLM-4.6"
+	Model__Baseten__GLM__4_7                                                                 ModelID = "zai-org/GLM-4.7"
+	Model__Baseten__GLM__5                                                                   ModelID = "zai-org/GLM-5"
 	Model__Baseten__GPT__Oss__120b                                                           ModelID = "openai/gpt-oss-120b"
-	Model__Baseten__Glm__4_6                                                                 ModelID = "zai-org/GLM-4.6"
-	Model__Baseten__Glm__4_7                                                                 ModelID = "zai-org/GLM-4.7"
-	Model__Baseten__Glm__5                                                                   ModelID = "zai-org/GLM-5"
 	Model__Baseten__Kimi__K2__2__Thinking                                                    ModelID = "moonshotai/Kimi-K2-Thinking"
 	Model__Baseten__Kimi__K2__5__2_5                                                         ModelID = "moonshotai/Kimi-K2.5"
 	Model__Baseten__Kimi__K2__6__2_6                                                         ModelID = "moonshotai/Kimi-K2.6"
 	Model__Baseten__Kimi__K2__Instruct__0905__2__Instruct                                    ModelID = "moonshotai/Kimi-K2-Instruct-0905"
-	Model__Baseten__Minimax__M2__5__2_5                                                      ModelID = "MiniMaxAI/MiniMax-M2.5"
+	Model__Baseten__MiniMax__M2__5__2_5                                                      ModelID = "MiniMaxAI/MiniMax-M2.5"
 	Model__Baseten__Nemotron__120B__A12b                                                     ModelID = "nvidia/Nemotron-120B-A12B"
+	Model__Berget__GLM__4_7                                                                  ModelID = "zai-org/GLM-4.7"
 	Model__Berget__GPT__Oss__120b                                                            ModelID = "openai/gpt-oss-120b"
 	Model__Berget__Gemma__4__31B__It__4                                                      ModelID = "google/gemma-4-31B-it"
-	Model__Berget__Glm__4_7                                                                  ModelID = "zai-org/GLM-4.7"
 	Model__Berget__Kimi__K2__6__2_6                                                          ModelID = "moonshotai/Kimi-K2.6"
 	Model__Berget__Llama__3__3__70B__3_3__Instruct                                           ModelID = "meta-llama/Llama-3.3-70B-Instruct"
 	Model__Berget__Mistral__Medium__3__5__128B__3_5                                          ModelID = "mistralai/Mistral-Medium-3.5-128B"
 	Model__Berget__Mistral__Small__3__2__24B__Instruct__2506__3_2__Instruct                  ModelID = "mistralai/Mistral-Small-3.2-24B-Instruct-2506"
 	Model__Cerebras__GPT__Oss__120b                                                          ModelID = "gpt-oss-120b"
 	Model__Cerebras__Llama3__1__8b                                                           ModelID = "llama3.1-8b"
-	Model__Cerebras__Zai__Glm__4_7                                                           ModelID = "zai-glm-4.7"
+	Model__Cerebras__Zai__GLM__4_7                                                           ModelID = "zai-glm-4.7"
+	Model__Chutes__DeepSeek__R1__0528__Tee__Thinking                                         ModelID = "deepseek-ai/DeepSeek-R1-0528-TEE"
+	Model__Chutes__DeepSeek__R1__Distill__Llama__70B__Thinking                               ModelID = "deepseek-ai/DeepSeek-R1-Distill-Llama-70B"
+	Model__Chutes__DeepSeek__Tng__R1t2__Chimera__Tee                                         ModelID = "tngtech/DeepSeek-TNG-R1T2-Chimera-TEE"
+	Model__Chutes__DeepSeek__V3__0324__Tee                                                   ModelID = "deepseek-ai/DeepSeek-V3-0324-TEE"
+	Model__Chutes__DeepSeek__V3__1__Tee                                                      ModelID = "deepseek-ai/DeepSeek-V3.1-TEE"
+	Model__Chutes__DeepSeek__V3__2__Tee                                                      ModelID = "deepseek-ai/DeepSeek-V3.2-TEE"
 	Model__Chutes__Deephermes__3__Mistral__24B__Preview                                      ModelID = "NousResearch/DeepHermes-3-Mistral-24B-Preview"
-	Model__Chutes__Deepseek__R1__0528__Tee__Thinking                                         ModelID = "deepseek-ai/DeepSeek-R1-0528-TEE"
-	Model__Chutes__Deepseek__R1__Distill__Llama__70B__Thinking                               ModelID = "deepseek-ai/DeepSeek-R1-Distill-Llama-70B"
-	Model__Chutes__Deepseek__Tng__R1t2__Chimera__Tee                                         ModelID = "tngtech/DeepSeek-TNG-R1T2-Chimera-TEE"
-	Model__Chutes__Deepseek__V3__0324__Tee                                                   ModelID = "deepseek-ai/DeepSeek-V3-0324-TEE"
-	Model__Chutes__Deepseek__V3__1__Tee                                                      ModelID = "deepseek-ai/DeepSeek-V3.1-TEE"
-	Model__Chutes__Deepseek__V3__2__Tee                                                      ModelID = "deepseek-ai/DeepSeek-V3.2-TEE"
 	Model__Chutes__Dots__Ocr                                                                 ModelID = "rednote-hilab/dots.ocr"
+	Model__Chutes__GLM__4__6V__4_6                                                           ModelID = "zai-org/GLM-4.6V"
+	Model__Chutes__GLM__4__7__Fp8__4_7                                                       ModelID = "zai-org/GLM-4.7-FP8"
+	Model__Chutes__GLM__4__7__Tee__4_7                                                       ModelID = "zai-org/GLM-4.7-TEE"
+	Model__Chutes__GLM__5__1__Tee__5_1                                                       ModelID = "zai-org/GLM-5.1-TEE"
+	Model__Chutes__GLM__5__Tee__5                                                            ModelID = "zai-org/GLM-5-TEE"
+	Model__Chutes__GLM__5__Turbo                                                             ModelID = "zai-org/GLM-5-Turbo"
 	Model__Chutes__GPT__Oss__120b__Tee                                                       ModelID = "openai/gpt-oss-120b-TEE"
 	Model__Chutes__Gemma__3__12b__It                                                         ModelID = "unsloth/gemma-3-12b-it"
 	Model__Chutes__Gemma__3__27b__It                                                         ModelID = "unsloth/gemma-3-27b-it"
 	Model__Chutes__Gemma__3__4b__It                                                          ModelID = "unsloth/gemma-3-4b-it"
 	Model__Chutes__Gemma__4__31B__Turbo__Tee__4__Turbo                                       ModelID = "google/gemma-4-31B-turbo-TEE"
-	Model__Chutes__Glm__4__6V__4_6                                                           ModelID = "zai-org/GLM-4.6V"
-	Model__Chutes__Glm__4__7__Fp8__4_7                                                       ModelID = "zai-org/GLM-4.7-FP8"
-	Model__Chutes__Glm__4__7__Tee__4_7                                                       ModelID = "zai-org/GLM-4.7-TEE"
-	Model__Chutes__Glm__5__1__Tee__5_1                                                       ModelID = "zai-org/GLM-5.1-TEE"
-	Model__Chutes__Glm__5__Tee__5                                                            ModelID = "zai-org/GLM-5-TEE"
-	Model__Chutes__Glm__5__Turbo                                                             ModelID = "zai-org/GLM-5-Turbo"
 	Model__Chutes__Hermes__4__14B__4                                                         ModelID = "NousResearch/Hermes-4-14B"
 	Model__Chutes__Kimi__K2__5__Tee                                                          ModelID = "moonshotai/Kimi-K2.5-TEE"
 	Model__Chutes__Kimi__K2__6__Tee                                                          ModelID = "moonshotai/Kimi-K2.6-TEE"
 	Model__Chutes__Llama__3__2__1B__Instruct                                                 ModelID = "unsloth/Llama-3.2-1B-Instruct"
 	Model__Chutes__Llama__3__2__3B__Instruct                                                 ModelID = "unsloth/Llama-3.2-3B-Instruct"
 	Model__Chutes__Mimo__V2__Flash__Tee                                                      ModelID = "XiaomiMiMo/MiMo-V2-Flash-TEE"
-	Model__Chutes__Minimax__M2__5__Tee                                                       ModelID = "MiniMaxAI/MiniMax-M2.5-TEE"
+	Model__Chutes__MiniMax__M2__5__Tee                                                       ModelID = "MiniMaxAI/MiniMax-M2.5-TEE"
 	Model__Chutes__Mistral__Nemo__Instruct__2407__Instruct                                   ModelID = "unsloth/Mistral-Nemo-Instruct-2407"
 	Model__Chutes__Qwen2__5__72B__2_5__Instruct                                              ModelID = "Qwen/Qwen2.5-72B-Instruct"
 	Model__Chutes__Qwen2__5__Coder__32B__2_5__Instruct                                       ModelID = "Qwen/Qwen2.5-Coder-32B-Instruct"
@@ -781,11 +781,11 @@ const (
 	Model__Chutes__Qwen3__Coder__Next__Tee__3                                                ModelID = "Qwen/Qwen3-Coder-Next-TEE"
 	Model__Chutes__Qwen3__Next__80B__A3b__3__Instruct                                        ModelID = "Qwen/Qwen3-Next-80B-A3B-Instruct"
 	Model__Chutes__Qwen3guard__Gen__0__6B                                                    ModelID = "Qwen/Qwen3Guard-Gen-0.6B"
-	Model__Clarifai__Deepseek__Ocr                                                           ModelID = "deepseek-ai/deepseek-ocr/models/DeepSeek-OCR"
+	Model__Clarifai__DeepSeek__Ocr                                                           ModelID = "deepseek-ai/deepseek-ocr/models/DeepSeek-OCR"
 	Model__Clarifai__GPT__Oss__120b__High__Throughput                                        ModelID = "openai/chat-completion/models/gpt-oss-120b-high-throughput"
 	Model__Clarifai__GPT__Oss__20b                                                           ModelID = "openai/chat-completion/models/gpt-oss-20b"
 	Model__Clarifai__Kimi__K2__6                                                             ModelID = "moonshotai/chat-completion/models/Kimi-K2_6"
-	Model__Clarifai__Minimax__M2__5__High__Throughput                                        ModelID = "minimaxai/chat-completion/models/MiniMax-M2_5-high-throughput"
+	Model__Clarifai__MiniMax__M2__5__High__Throughput                                        ModelID = "minimaxai/chat-completion/models/MiniMax-M2_5-high-throughput"
 	Model__Clarifai__Ministral__3__14B__Reasoning__2512__3__Reasoning                        ModelID = "mistralai/completion/models/Ministral-3-14B-Reasoning-2512"
 	Model__Clarifai__Ministral__3__3B__Reasoning__2512__3__Reasoning                         ModelID = "mistralai/completion/models/Ministral-3-3B-Reasoning-2512"
 	Model__Clarifai__Mm__Poly__8b                                                            ModelID = "clarifai/main/models/mm-poly-8b"
@@ -798,7 +798,7 @@ const (
 	Model__CloudFerroSherlock__Bielik__11B__V3__0__Instruct                                  ModelID = "speakleash/Bielik-11B-v3.0-Instruct"
 	Model__CloudFerroSherlock__GPT__Oss__120b                                                ModelID = "openai/gpt-oss-120b"
 	Model__CloudFerroSherlock__Llama__3__3__70B__3_3__Instruct                               ModelID = "meta-llama/Llama-3.3-70B-Instruct"
-	Model__CloudFerroSherlock__Minimax__M2__5__2_5                                           ModelID = "MiniMaxAI/MiniMax-M2.5"
+	Model__CloudFerroSherlock__MiniMax__M2__5__2_5                                           ModelID = "MiniMaxAI/MiniMax-M2.5"
 	Model__CloudflareAIGateway__Aura__2__En__2                                               ModelID = "workers-ai/@cf/deepgram/aura-2-en"
 	Model__CloudflareAIGateway__Aura__2__Es__2                                               ModelID = "workers-ai/@cf/deepgram/aura-2-es"
 	Model__CloudflareAIGateway__Bart__Large__Cnn                                             ModelID = "workers-ai/@cf/facebook/bart-large-cnn"
@@ -823,8 +823,9 @@ const (
 	Model__CloudflareAIGateway__Claude__Sonnet__4                                            ModelID = "anthropic/claude-sonnet-4"
 	Model__CloudflareAIGateway__Claude__Sonnet__4_5                                          ModelID = "anthropic/claude-sonnet-4-5"
 	Model__CloudflareAIGateway__Claude__Sonnet__4_6                                          ModelID = "anthropic/claude-sonnet-4-6"
-	Model__CloudflareAIGateway__Deepseek__R1__Distill__Qwen__32b__Thinking                   ModelID = "workers-ai/@cf/deepseek-ai/deepseek-r1-distill-qwen-32b"
+	Model__CloudflareAIGateway__DeepSeek__R1__Distill__Qwen__32b__Thinking                   ModelID = "workers-ai/@cf/deepseek-ai/deepseek-r1-distill-qwen-32b"
 	Model__CloudflareAIGateway__Distilbert__Sst__2__Int8__2                                  ModelID = "workers-ai/@cf/huggingface/distilbert-sst-2-int8"
+	Model__CloudflareAIGateway__GLM__4__7__Flash__4_7                                        ModelID = "workers-ai/@cf/zai-org/glm-4.7-flash"
 	Model__CloudflareAIGateway__GPT__3_5__Turbo                                              ModelID = "openai/gpt-3.5-turbo"
 	Model__CloudflareAIGateway__GPT__4                                                       ModelID = "openai/gpt-4"
 	Model__CloudflareAIGateway__GPT__4__Turbo                                                ModelID = "openai/gpt-4-turbo"
@@ -841,7 +842,6 @@ const (
 	Model__CloudflareAIGateway__GPT__Oss__20b                                                ModelID = "workers-ai/@cf/openai/gpt-oss-20b"
 	Model__CloudflareAIGateway__Gemma__3__12b__It__3                                         ModelID = "workers-ai/@cf/google/gemma-3-12b-it"
 	Model__CloudflareAIGateway__Gemma__Sea__Lion__V4__27b__It                                ModelID = "workers-ai/@cf/aisingapore/gemma-sea-lion-v4-27b-it"
-	Model__CloudflareAIGateway__Glm__4__7__Flash__4_7                                        ModelID = "workers-ai/@cf/zai-org/glm-4.7-flash"
 	Model__CloudflareAIGateway__Granite__4__0__H__Micro__4_0                                 ModelID = "workers-ai/@cf/ibm-granite/granite-4.0-h-micro"
 	Model__CloudflareAIGateway__Indictrans2__En__Indic__1B                                   ModelID = "workers-ai/@cf/ai4bharat/indictrans2-en-indic-1B"
 	Model__CloudflareAIGateway__Kimi__K2__5__2_5                                             ModelID = "workers-ai/@cf/moonshotai/kimi-k2.5"
@@ -875,13 +875,13 @@ const (
 	Model__CloudflareAIGateway__Qwen3__Embedding__0__6b__3                                   ModelID = "workers-ai/@cf/qwen/qwen3-embedding-0.6b"
 	Model__CloudflareAIGateway__Qwq__32b                                                     ModelID = "workers-ai/@cf/qwen/qwq-32b"
 	Model__CloudflareAIGateway__Smart__Turn__V2                                              ModelID = "workers-ai/@cf/pipecat-ai/smart-turn-v2"
-	Model__CloudflareWorkersAI__Deepseek__R1__Distill__Qwen__32b                             ModelID = "@cf/deepseek-ai/deepseek-r1-distill-qwen-32b"
+	Model__CloudflareWorkersAI__DeepSeek__R1__Distill__Qwen__32b                             ModelID = "@cf/deepseek-ai/deepseek-r1-distill-qwen-32b"
+	Model__CloudflareWorkersAI__GLM__4__7__Flash__4_7                                        ModelID = "@cf/zai-org/glm-4.7-flash"
 	Model__CloudflareWorkersAI__GPT__Oss__120b                                               ModelID = "@cf/openai/gpt-oss-120b"
 	Model__CloudflareWorkersAI__GPT__Oss__20b                                                ModelID = "@cf/openai/gpt-oss-20b"
 	Model__CloudflareWorkersAI__Gemma__3__12b__It__3                                         ModelID = "@cf/google/gemma-3-12b-it"
 	Model__CloudflareWorkersAI__Gemma__4__26b__A4b__It__4                                    ModelID = "@cf/google/gemma-4-26b-a4b-it"
 	Model__CloudflareWorkersAI__Gemma__Sea__Lion__V4__27b__It                                ModelID = "@cf/aisingapore/gemma-sea-lion-v4-27b-it"
-	Model__CloudflareWorkersAI__Glm__4__7__Flash__4_7                                        ModelID = "@cf/zai-org/glm-4.7-flash"
 	Model__CloudflareWorkersAI__Granite__4__0__H__Micro__4_0                                 ModelID = "@cf/ibm-granite/granite-4.0-h-micro"
 	Model__CloudflareWorkersAI__Kimi__K2__5__2_5                                             ModelID = "@cf/moonshotai/kimi-k2.5"
 	Model__CloudflareWorkersAI__Kimi__K2__6__2_6                                             ModelID = "@cf/moonshotai/kimi-k2.6"
@@ -922,22 +922,22 @@ const (
 	Model__Cortecs__Claude__Opus4__7                                                         ModelID = "claude-opus4-7"
 	Model__Cortecs__Claude__Sonnet__4                                                        ModelID = "claude-sonnet-4"
 	Model__Cortecs__Codestral__2508                                                          ModelID = "codestral-2508"
-	Model__Cortecs__Deepseek__R1__0528__Thinking                                             ModelID = "deepseek-r1-0528"
-	Model__Cortecs__Deepseek__V3__0324                                                       ModelID = "deepseek-v3-0324"
-	Model__Cortecs__Deepseek__V3__2                                                          ModelID = "deepseek-v3.2"
-	Model__Cortecs__Deepseek__V4__Flash                                                      ModelID = "deepseek-v4-flash"
-	Model__Cortecs__Deepseek__V4__Pro__Thinking                                              ModelID = "deepseek-v4-pro"
+	Model__Cortecs__DeepSeek__R1__0528__Thinking                                             ModelID = "deepseek-r1-0528"
+	Model__Cortecs__DeepSeek__V3__0324                                                       ModelID = "deepseek-v3-0324"
+	Model__Cortecs__DeepSeek__V3__2                                                          ModelID = "deepseek-v3.2"
+	Model__Cortecs__DeepSeek__V4__Flash                                                      ModelID = "deepseek-v4-flash"
+	Model__Cortecs__DeepSeek__V4__Pro__Thinking                                              ModelID = "deepseek-v4-pro"
 	Model__Cortecs__Devstral__2512                                                           ModelID = "devstral-2512"
 	Model__Cortecs__Devstral__Small__2512                                                    ModelID = "devstral-small-2512"
+	Model__Cortecs__GLM__4_5                                                                 ModelID = "glm-4.5"
+	Model__Cortecs__GLM__4_7                                                                 ModelID = "glm-4.7"
+	Model__Cortecs__GLM__4__5__Air__4_5                                                      ModelID = "glm-4.5-air"
+	Model__Cortecs__GLM__4__7__Flash__4_7                                                    ModelID = "glm-4.7-flash"
+	Model__Cortecs__GLM__5                                                                   ModelID = "glm-5"
+	Model__Cortecs__GLM__5_1                                                                 ModelID = "glm-5.1"
 	Model__Cortecs__GPT__4_1                                                                 ModelID = "gpt-4.1"
 	Model__Cortecs__GPT__Oss__120b                                                           ModelID = "gpt-oss-120b"
 	Model__Cortecs__Gemini__2__5__Pro__2_5                                                   ModelID = "gemini-2.5-pro"
-	Model__Cortecs__Glm__4_5                                                                 ModelID = "glm-4.5"
-	Model__Cortecs__Glm__4_7                                                                 ModelID = "glm-4.7"
-	Model__Cortecs__Glm__4__5__Air__4_5                                                      ModelID = "glm-4.5-air"
-	Model__Cortecs__Glm__4__7__Flash__4_7                                                    ModelID = "glm-4.7-flash"
-	Model__Cortecs__Glm__5                                                                   ModelID = "glm-5"
-	Model__Cortecs__Glm__5_1                                                                 ModelID = "glm-5.1"
 	Model__Cortecs__Hermes__4__70b__4                                                        ModelID = "hermes-4-70b"
 	Model__Cortecs__Intellect__3                                                             ModelID = "intellect-3"
 	Model__Cortecs__Kimi__K2__2__Instruct                                                    ModelID = "kimi-k2-instruct"
@@ -946,10 +946,10 @@ const (
 	Model__Cortecs__Kimi__K2__6__2_6__Thinking                                               ModelID = "kimi-k2.6"
 	Model__Cortecs__Llama__3__1__405b__3_1__Instruct                                         ModelID = "llama-3.1-405b-instruct"
 	Model__Cortecs__Llama__3__3__70b__3_3__Instruct                                          ModelID = "llama-3.3-70b-instruct"
-	Model__Cortecs__Minimax__M2__1__2_1                                                      ModelID = "minimax-m2.1"
-	Model__Cortecs__Minimax__M2__2                                                           ModelID = "minimax-m2"
-	Model__Cortecs__Minimax__M2__5__2_5                                                      ModelID = "minimax-m2.5"
-	Model__Cortecs__Minimax__M2__7__2_7                                                      ModelID = "minimax-m2.7"
+	Model__Cortecs__MiniMax__M2__1__2_1                                                      ModelID = "minimax-m2.1"
+	Model__Cortecs__MiniMax__M2__2                                                           ModelID = "minimax-m2"
+	Model__Cortecs__MiniMax__M2__5__2_5                                                      ModelID = "minimax-m2.5"
+	Model__Cortecs__MiniMax__M2__7__2_7                                                      ModelID = "minimax-m2.7"
 	Model__Cortecs__Mistral__Large__2512                                                     ModelID = "mistral-large-2512"
 	Model__Cortecs__Mixtral__8x7B__Instruct__V0__1__0_1__Instruct                            ModelID = "mixtral-8x7B-instruct-v0.1"
 	Model__Cortecs__Nemotron__3__Super__120b__A12b__3                                        ModelID = "nemotron-3-super-120b-a12b"
@@ -963,16 +963,16 @@ const (
 	Model__Cortecs__Qwen3__Coder__Next__3                                                    ModelID = "qwen3-coder-next"
 	Model__Cortecs__Qwen3__Next__80b__A3b__3__Thinking                                       ModelID = "qwen3-next-80b-a3b-thinking"
 	Model__Cortecs__Qwen__2__5__72b__2_5__Instruct                                           ModelID = "qwen-2.5-72b-instruct"
-	Model__Crof__Deepseek__V3__2                                                             ModelID = "deepseek-v3.2"
-	Model__Crof__Deepseek__V4__Flash                                                         ModelID = "deepseek-v4-flash"
-	Model__Crof__Deepseek__V4__Pro__Precision__Thinking                                      ModelID = "deepseek-v4-pro-precision"
-	Model__Crof__Deepseek__V4__Pro__Thinking                                                 ModelID = "deepseek-v4-pro"
+	Model__Crof__DeepSeek__V3__2                                                             ModelID = "deepseek-v3.2"
+	Model__Crof__DeepSeek__V4__Flash                                                         ModelID = "deepseek-v4-flash"
+	Model__Crof__DeepSeek__V4__Pro__Precision__Thinking                                      ModelID = "deepseek-v4-pro-precision"
+	Model__Crof__DeepSeek__V4__Pro__Thinking                                                 ModelID = "deepseek-v4-pro"
+	Model__Crof__GLM__4_7                                                                    ModelID = "glm-4.7"
+	Model__Crof__GLM__4__7__Flash__4_7                                                       ModelID = "glm-4.7-flash"
+	Model__Crof__GLM__5                                                                      ModelID = "glm-5"
+	Model__Crof__GLM__5_1                                                                    ModelID = "glm-5.1"
+	Model__Crof__GLM__5__1__Precision__5_1                                                   ModelID = "glm-5.1-precision"
 	Model__Crof__Gemma__4__31b__It__4                                                        ModelID = "gemma-4-31b-it"
-	Model__Crof__Glm__4_7                                                                    ModelID = "glm-4.7"
-	Model__Crof__Glm__4__7__Flash__4_7                                                       ModelID = "glm-4.7-flash"
-	Model__Crof__Glm__5                                                                      ModelID = "glm-5"
-	Model__Crof__Glm__5_1                                                                    ModelID = "glm-5.1"
-	Model__Crof__Glm__5__1__Precision__5_1                                                   ModelID = "glm-5.1-precision"
 	Model__Crof__Greg                                                                        ModelID = "greg"
 	Model__Crof__Kimi__K2__5__2_5                                                            ModelID = "kimi-k2.5"
 	Model__Crof__Kimi__K2__5__2_5__Lightning                                                 ModelID = "kimi-k2.5-lightning"
@@ -980,15 +980,15 @@ const (
 	Model__Crof__Kimi__K2__6__2_6__Precision                                                 ModelID = "kimi-k2.6-precision"
 	Model__Crof__Mimo__V2__5__2_5__Pro                                                       ModelID = "mimo-v2.5-pro"
 	Model__Crof__Mimo__V2__5__Pro__Precision__2_5                                            ModelID = "mimo-v2.5-pro-precision"
-	Model__Crof__Minimax__M2__5__2_5                                                         ModelID = "minimax-m2.5"
+	Model__Crof__MiniMax__M2__5__2_5                                                         ModelID = "minimax-m2.5"
 	Model__Crof__Qwen3__5__397b__A17b__3_5                                                   ModelID = "qwen3.5-397b-a17b"
 	Model__Crof__Qwen3__5__9b__3_5                                                           ModelID = "qwen3.5-9b"
 	Model__Crof__Qwen3__6__27b__3_6                                                          ModelID = "qwen3.6-27b"
+	Model__DInference__GLM__4_7                                                              ModelID = "glm-4.7"
+	Model__DInference__GLM__5                                                                ModelID = "glm-5"
+	Model__DInference__GLM__5_1                                                              ModelID = "glm-5.1"
 	Model__DInference__GPT__Oss__120b                                                        ModelID = "gpt-oss-120b"
-	Model__DInference__Glm__4_7                                                              ModelID = "glm-4.7"
-	Model__DInference__Glm__5                                                                ModelID = "glm-5"
-	Model__DInference__Glm__5_1                                                              ModelID = "glm-5.1"
-	Model__DInference__Minimax__M2__5__2_5                                                   ModelID = "minimax-m2.5"
+	Model__DInference__MiniMax__M2__5__2_5                                                   ModelID = "minimax-m2.5"
 	Model__Databricks__Databricks__Claude__Haiku__4__5                                       ModelID = "databricks-claude-haiku-4-5"
 	Model__Databricks__Databricks__Claude__Opus__4__1                                        ModelID = "databricks-claude-opus-4-1"
 	Model__Databricks__Databricks__Claude__Opus__4__5                                        ModelID = "databricks-claude-opus-4-5"
@@ -1014,49 +1014,49 @@ const (
 	Model__Databricks__Databricks__Gemini__3__1__Pro                                         ModelID = "databricks-gemini-3-1-pro"
 	Model__Databricks__Databricks__Gemini__3__Flash                                          ModelID = "databricks-gemini-3-flash"
 	Model__Databricks__Databricks__Gemini__3__Pro                                            ModelID = "databricks-gemini-3-pro"
-	Model__DeepSeek__Deepseek__Chat                                                          ModelID = "deepseek-chat"
-	Model__DeepSeek__Deepseek__Reasoner__Thinking                                            ModelID = "deepseek-reasoner"
-	Model__DeepSeek__Deepseek__V4__Flash                                                     ModelID = "deepseek-v4-flash"
-	Model__DeepSeek__Deepseek__V4__Pro__Thinking                                             ModelID = "deepseek-v4-pro"
-	Model__Deepinfra__Claude__3__7__Sonnet__3_7__Latest                                      ModelID = "anthropic/claude-3-7-sonnet-latest"
-	Model__Deepinfra__Claude__4__Opus__4                                                     ModelID = "anthropic/claude-4-opus"
-	Model__Deepinfra__Deepseek__R1__0528                                                     ModelID = "deepseek-ai/DeepSeek-R1-0528"
-	Model__Deepinfra__Deepseek__V3__2                                                        ModelID = "deepseek-ai/DeepSeek-V3.2"
-	Model__Deepinfra__Deepseek__V4__Flash                                                    ModelID = "deepseek-ai/DeepSeek-V4-Flash"
-	Model__Deepinfra__Deepseek__V4__Pro__Thinking                                            ModelID = "deepseek-ai/DeepSeek-V4-Pro"
-	Model__Deepinfra__GPT__Oss__120b                                                         ModelID = "openai/gpt-oss-120b"
-	Model__Deepinfra__GPT__Oss__20b                                                          ModelID = "openai/gpt-oss-20b"
-	Model__Deepinfra__Gemma__4__26B__A4b__It__4                                              ModelID = "google/gemma-4-26B-A4B-it"
-	Model__Deepinfra__Gemma__4__31B__It__4                                                   ModelID = "google/gemma-4-31B-it"
-	Model__Deepinfra__Glm__4_5                                                               ModelID = "zai-org/GLM-4.5"
-	Model__Deepinfra__Glm__4_6                                                               ModelID = "zai-org/GLM-4.6"
-	Model__Deepinfra__Glm__4_7                                                               ModelID = "zai-org/GLM-4.7"
-	Model__Deepinfra__Glm__4__6V__4_6                                                        ModelID = "zai-org/GLM-4.6V"
-	Model__Deepinfra__Glm__4__7__Flash__4_7                                                  ModelID = "zai-org/GLM-4.7-Flash"
-	Model__Deepinfra__Glm__5                                                                 ModelID = "zai-org/GLM-5"
-	Model__Deepinfra__Glm__5_1                                                               ModelID = "zai-org/GLM-5.1"
-	Model__Deepinfra__Kimi__K2__2__Instruct                                                  ModelID = "moonshotai/Kimi-K2-Instruct"
-	Model__Deepinfra__Kimi__K2__2__Thinking                                                  ModelID = "moonshotai/Kimi-K2-Thinking"
-	Model__Deepinfra__Kimi__K2__5__2_5                                                       ModelID = "moonshotai/Kimi-K2.5"
-	Model__Deepinfra__Kimi__K2__6__2_6                                                       ModelID = "moonshotai/Kimi-K2.6"
-	Model__Deepinfra__Kimi__K2__Instruct__0905__2__Instruct                                  ModelID = "moonshotai/Kimi-K2-Instruct-0905"
-	Model__Deepinfra__Llama__3__1__70B__3_1__Instruct                                        ModelID = "meta-llama/Llama-3.1-70B-Instruct"
-	Model__Deepinfra__Llama__3__1__70B__3_1__TurboInstruct                                   ModelID = "meta-llama/Llama-3.1-70B-Instruct-Turbo"
-	Model__Deepinfra__Llama__3__1__8B__3_1__Instruct                                         ModelID = "meta-llama/Llama-3.1-8B-Instruct"
-	Model__Deepinfra__Llama__3__1__8B__3_1__TurboInstruct                                    ModelID = "meta-llama/Llama-3.1-8B-Instruct-Turbo"
-	Model__Deepinfra__Llama__3__3__70B__3_3__TurboInstruct                                   ModelID = "meta-llama/Llama-3.3-70B-Instruct-Turbo"
-	Model__Deepinfra__Llama__4__Maverick__17B__128E__Instruct__Fp8__4__Instruct              ModelID = "meta-llama/Llama-4-Maverick-17B-128E-Instruct-FP8"
-	Model__Deepinfra__Llama__4__Scout__17B__16E__4__Instruct                                 ModelID = "meta-llama/Llama-4-Scout-17B-16E-Instruct"
-	Model__Deepinfra__Mimo__V2__5__2_5                                                       ModelID = "xiaomi/mimo-v2.5"
-	Model__Deepinfra__Mimo__V2__5__2_5__Pro                                                  ModelID = "xiaomi/mimo-v2.5-pro"
-	Model__Deepinfra__Minimax__M2__1__2_1                                                    ModelID = "MiniMaxAI/MiniMax-M2.1"
-	Model__Deepinfra__Minimax__M2__2                                                         ModelID = "MiniMaxAI/MiniMax-M2"
-	Model__Deepinfra__Minimax__M2__5__2_5                                                    ModelID = "MiniMaxAI/MiniMax-M2.5"
-	Model__Deepinfra__Qwen3__5__35B__A3b__3_5                                                ModelID = "Qwen/Qwen3.5-35B-A3B"
-	Model__Deepinfra__Qwen3__5__397B__A17b__3_5                                              ModelID = "Qwen/Qwen3.5-397B-A17B"
-	Model__Deepinfra__Qwen3__6__35B__A3b__3_6                                                ModelID = "Qwen/Qwen3.6-35B-A3B"
-	Model__Deepinfra__Qwen3__Coder__480B__A35b__3__Instruct                                  ModelID = "Qwen/Qwen3-Coder-480B-A35B-Instruct"
-	Model__Deepinfra__Qwen3__Coder__480B__A35b__Instruct__Turbo__3                           ModelID = "Qwen/Qwen3-Coder-480B-A35B-Instruct-Turbo"
+	Model__DeepInfra__Claude__3__7__Sonnet__3_7__Latest                                      ModelID = "anthropic/claude-3-7-sonnet-latest"
+	Model__DeepInfra__Claude__4__Opus__4                                                     ModelID = "anthropic/claude-4-opus"
+	Model__DeepInfra__DeepSeek__R1__0528                                                     ModelID = "deepseek-ai/DeepSeek-R1-0528"
+	Model__DeepInfra__DeepSeek__V3__2                                                        ModelID = "deepseek-ai/DeepSeek-V3.2"
+	Model__DeepInfra__DeepSeek__V4__Flash                                                    ModelID = "deepseek-ai/DeepSeek-V4-Flash"
+	Model__DeepInfra__DeepSeek__V4__Pro__Thinking                                            ModelID = "deepseek-ai/DeepSeek-V4-Pro"
+	Model__DeepInfra__GLM__4_5                                                               ModelID = "zai-org/GLM-4.5"
+	Model__DeepInfra__GLM__4_6                                                               ModelID = "zai-org/GLM-4.6"
+	Model__DeepInfra__GLM__4_7                                                               ModelID = "zai-org/GLM-4.7"
+	Model__DeepInfra__GLM__4__6V__4_6                                                        ModelID = "zai-org/GLM-4.6V"
+	Model__DeepInfra__GLM__4__7__Flash__4_7                                                  ModelID = "zai-org/GLM-4.7-Flash"
+	Model__DeepInfra__GLM__5                                                                 ModelID = "zai-org/GLM-5"
+	Model__DeepInfra__GLM__5_1                                                               ModelID = "zai-org/GLM-5.1"
+	Model__DeepInfra__GPT__Oss__120b                                                         ModelID = "openai/gpt-oss-120b"
+	Model__DeepInfra__GPT__Oss__20b                                                          ModelID = "openai/gpt-oss-20b"
+	Model__DeepInfra__Gemma__4__26B__A4b__It__4                                              ModelID = "google/gemma-4-26B-A4B-it"
+	Model__DeepInfra__Gemma__4__31B__It__4                                                   ModelID = "google/gemma-4-31B-it"
+	Model__DeepInfra__Kimi__K2__2__Instruct                                                  ModelID = "moonshotai/Kimi-K2-Instruct"
+	Model__DeepInfra__Kimi__K2__2__Thinking                                                  ModelID = "moonshotai/Kimi-K2-Thinking"
+	Model__DeepInfra__Kimi__K2__5__2_5                                                       ModelID = "moonshotai/Kimi-K2.5"
+	Model__DeepInfra__Kimi__K2__6__2_6                                                       ModelID = "moonshotai/Kimi-K2.6"
+	Model__DeepInfra__Kimi__K2__Instruct__0905__2__Instruct                                  ModelID = "moonshotai/Kimi-K2-Instruct-0905"
+	Model__DeepInfra__Llama__3__1__70B__3_1__Instruct                                        ModelID = "meta-llama/Llama-3.1-70B-Instruct"
+	Model__DeepInfra__Llama__3__1__70B__3_1__TurboInstruct                                   ModelID = "meta-llama/Llama-3.1-70B-Instruct-Turbo"
+	Model__DeepInfra__Llama__3__1__8B__3_1__Instruct                                         ModelID = "meta-llama/Llama-3.1-8B-Instruct"
+	Model__DeepInfra__Llama__3__1__8B__3_1__TurboInstruct                                    ModelID = "meta-llama/Llama-3.1-8B-Instruct-Turbo"
+	Model__DeepInfra__Llama__3__3__70B__3_3__TurboInstruct                                   ModelID = "meta-llama/Llama-3.3-70B-Instruct-Turbo"
+	Model__DeepInfra__Llama__4__Maverick__17B__128E__Instruct__Fp8__4__Instruct              ModelID = "meta-llama/Llama-4-Maverick-17B-128E-Instruct-FP8"
+	Model__DeepInfra__Llama__4__Scout__17B__16E__4__Instruct                                 ModelID = "meta-llama/Llama-4-Scout-17B-16E-Instruct"
+	Model__DeepInfra__Mimo__V2__5__2_5                                                       ModelID = "xiaomi/mimo-v2.5"
+	Model__DeepInfra__Mimo__V2__5__2_5__Pro                                                  ModelID = "xiaomi/mimo-v2.5-pro"
+	Model__DeepInfra__MiniMax__M2__1__2_1                                                    ModelID = "MiniMaxAI/MiniMax-M2.1"
+	Model__DeepInfra__MiniMax__M2__2                                                         ModelID = "MiniMaxAI/MiniMax-M2"
+	Model__DeepInfra__MiniMax__M2__5__2_5                                                    ModelID = "MiniMaxAI/MiniMax-M2.5"
+	Model__DeepInfra__Qwen3__5__35B__A3b__3_5                                                ModelID = "Qwen/Qwen3.5-35B-A3B"
+	Model__DeepInfra__Qwen3__5__397B__A17b__3_5                                              ModelID = "Qwen/Qwen3.5-397B-A17B"
+	Model__DeepInfra__Qwen3__6__35B__A3b__3_6                                                ModelID = "Qwen/Qwen3.6-35B-A3B"
+	Model__DeepInfra__Qwen3__Coder__480B__A35b__3__Instruct                                  ModelID = "Qwen/Qwen3-Coder-480B-A35B-Instruct"
+	Model__DeepInfra__Qwen3__Coder__480B__A35b__Instruct__Turbo__3                           ModelID = "Qwen/Qwen3-Coder-480B-A35B-Instruct-Turbo"
+	Model__DeepSeek__DeepSeek__Chat                                                          ModelID = "deepseek-chat"
+	Model__DeepSeek__DeepSeek__Reasoner__Thinking                                            ModelID = "deepseek-reasoner"
+	Model__DeepSeek__DeepSeek__V4__Flash                                                     ModelID = "deepseek-v4-flash"
+	Model__DeepSeek__DeepSeek__V4__Pro__Thinking                                             ModelID = "deepseek-v4-pro"
 	Model__DigitalOcean__Alibaba__Qwen3__32b                                                 ModelID = "alibaba-qwen3-32b"
 	Model__DigitalOcean__All__Mini__Lm__L6__V2                                               ModelID = "all-mini-lm-l6-v2"
 	Model__DigitalOcean__Anthropic__Claude__3__5__Haiku                                      ModelID = "anthropic-claude-3.5-haiku"
@@ -1077,22 +1077,22 @@ const (
 	Model__DigitalOcean__Arcee__Trinity__Large__Thinking                                     ModelID = "arcee-trinity-large-thinking"
 	Model__DigitalOcean__Bge__M3                                                             ModelID = "bge-m3"
 	Model__DigitalOcean__Bge__Reranker__V2__M3                                               ModelID = "bge-reranker-v2-m3"
-	Model__DigitalOcean__Deepseek__3_2                                                       ModelID = "deepseek-3.2"
-	Model__DigitalOcean__Deepseek__4__Flash__4                                               ModelID = "deepseek-4-flash"
-	Model__DigitalOcean__Deepseek__R1__Distill__Llama__70b__Thinking                         ModelID = "deepseek-r1-distill-llama-70b"
-	Model__DigitalOcean__Deepseek__V3                                                        ModelID = "deepseek-v3"
-	Model__DigitalOcean__Deepseek__V4__Pro__Thinking                                         ModelID = "deepseek-v4-pro"
+	Model__DigitalOcean__DeepSeek__3_2                                                       ModelID = "deepseek-3.2"
+	Model__DigitalOcean__DeepSeek__4__Flash__4                                               ModelID = "deepseek-4-flash"
+	Model__DigitalOcean__DeepSeek__R1__Distill__Llama__70b__Thinking                         ModelID = "deepseek-r1-distill-llama-70b"
+	Model__DigitalOcean__DeepSeek__V3                                                        ModelID = "deepseek-v3"
+	Model__DigitalOcean__DeepSeek__V4__Pro__Thinking                                         ModelID = "deepseek-v4-pro"
 	Model__DigitalOcean__E5__Large__V2                                                       ModelID = "e5-large-v2"
 	Model__DigitalOcean__Fast__Sdxl                                                          ModelID = "fal-ai/fast-sdxl"
+	Model__DigitalOcean__GLM__5                                                              ModelID = "glm-5"
 	Model__DigitalOcean__Gemma__4__31B__It__4                                                ModelID = "gemma-4-31B-it"
-	Model__DigitalOcean__Glm__5                                                              ModelID = "glm-5"
 	Model__DigitalOcean__Gte__Large__En__V1__5                                               ModelID = "gte-large-en-v1.5"
 	Model__DigitalOcean__Kimi__K2__5__2_5                                                    ModelID = "kimi-k2.5"
 	Model__DigitalOcean__Kimi__K2__6__2_6                                                    ModelID = "kimi-k2.6"
 	Model__DigitalOcean__Llama3__3__70b__Instruct                                            ModelID = "llama3.3-70b-instruct"
 	Model__DigitalOcean__Llama3__8b__Instruct                                                ModelID = "llama3-8b-instruct"
 	Model__DigitalOcean__Llama__4__Maverick__4                                               ModelID = "llama-4-maverick"
-	Model__DigitalOcean__Minimax__M2__5__2_5                                                 ModelID = "minimax-m2.5"
+	Model__DigitalOcean__MiniMax__M2__5__2_5                                                 ModelID = "minimax-m2.5"
 	Model__DigitalOcean__Ministral__3__8b__Instruct__2512__3__Instruct                       ModelID = "ministral-3-8b-instruct-2512"
 	Model__DigitalOcean__Mistral__3__14B                                                     ModelID = "mistral-3-14B"
 	Model__DigitalOcean__Mistral__7b__Instruct__V0__3__0_3__Instruct                         ModelID = "mistral-7b-instruct-v0.3"
@@ -1103,29 +1103,29 @@ const (
 	Model__DigitalOcean__Nemotron__3__Nano__Omni__3                                          ModelID = "nemotron-3-nano-omni"
 	Model__DigitalOcean__Nemotron__Nano__12b__V2__Vl                                         ModelID = "nemotron-nano-12b-v2-vl"
 	Model__DigitalOcean__Nvidia__Nemotron__3__Super__120b                                    ModelID = "nvidia-nemotron-3-super-120b"
-	Model__DigitalOcean__Openai__GPT__4__1                                                   ModelID = "openai-gpt-4.1"
-	Model__DigitalOcean__Openai__GPT__4o                                                     ModelID = "openai-gpt-4o"
-	Model__DigitalOcean__Openai__GPT__4o__Mini                                               ModelID = "openai-gpt-4o-mini"
-	Model__DigitalOcean__Openai__GPT__5                                                      ModelID = "openai-gpt-5"
-	Model__DigitalOcean__Openai__GPT__5__1__Codex__Max                                       ModelID = "openai-gpt-5.1-codex-max"
-	Model__DigitalOcean__Openai__GPT__5__2                                                   ModelID = "openai-gpt-5.2"
-	Model__DigitalOcean__Openai__GPT__5__2__Pro                                              ModelID = "openai-gpt-5.2-pro"
-	Model__DigitalOcean__Openai__GPT__5__3__Codex                                            ModelID = "openai-gpt-5.3-codex"
-	Model__DigitalOcean__Openai__GPT__5__4                                                   ModelID = "openai-gpt-5.4"
-	Model__DigitalOcean__Openai__GPT__5__4__Mini                                             ModelID = "openai-gpt-5.4-mini"
-	Model__DigitalOcean__Openai__GPT__5__4__Nano                                             ModelID = "openai-gpt-5.4-nano"
-	Model__DigitalOcean__Openai__GPT__5__4__Pro                                              ModelID = "openai-gpt-5.4-pro"
-	Model__DigitalOcean__Openai__GPT__5__5                                                   ModelID = "openai-gpt-5.5"
-	Model__DigitalOcean__Openai__GPT__5__Mini                                                ModelID = "openai-gpt-5-mini"
-	Model__DigitalOcean__Openai__GPT__5__Nano                                                ModelID = "openai-gpt-5-nano"
-	Model__DigitalOcean__Openai__GPT__Image__1                                               ModelID = "openai-gpt-image-1"
-	Model__DigitalOcean__Openai__GPT__Image__1__5                                            ModelID = "openai-gpt-image-1.5"
-	Model__DigitalOcean__Openai__GPT__Image__2                                               ModelID = "openai-gpt-image-2"
-	Model__DigitalOcean__Openai__GPT__Oss__120b                                              ModelID = "openai-gpt-oss-120b"
-	Model__DigitalOcean__Openai__GPT__Oss__20b                                               ModelID = "openai-gpt-oss-20b"
-	Model__DigitalOcean__Openai__O1                                                          ModelID = "openai-o1"
-	Model__DigitalOcean__Openai__O3                                                          ModelID = "openai-o3"
-	Model__DigitalOcean__Openai__O3__Mini                                                    ModelID = "openai-o3-mini"
+	Model__DigitalOcean__OpenAI__GPT__4__1                                                   ModelID = "openai-gpt-4.1"
+	Model__DigitalOcean__OpenAI__GPT__4o                                                     ModelID = "openai-gpt-4o"
+	Model__DigitalOcean__OpenAI__GPT__4o__Mini                                               ModelID = "openai-gpt-4o-mini"
+	Model__DigitalOcean__OpenAI__GPT__5                                                      ModelID = "openai-gpt-5"
+	Model__DigitalOcean__OpenAI__GPT__5__1__Codex__Max                                       ModelID = "openai-gpt-5.1-codex-max"
+	Model__DigitalOcean__OpenAI__GPT__5__2                                                   ModelID = "openai-gpt-5.2"
+	Model__DigitalOcean__OpenAI__GPT__5__2__Pro                                              ModelID = "openai-gpt-5.2-pro"
+	Model__DigitalOcean__OpenAI__GPT__5__3__Codex                                            ModelID = "openai-gpt-5.3-codex"
+	Model__DigitalOcean__OpenAI__GPT__5__4                                                   ModelID = "openai-gpt-5.4"
+	Model__DigitalOcean__OpenAI__GPT__5__4__Mini                                             ModelID = "openai-gpt-5.4-mini"
+	Model__DigitalOcean__OpenAI__GPT__5__4__Nano                                             ModelID = "openai-gpt-5.4-nano"
+	Model__DigitalOcean__OpenAI__GPT__5__4__Pro                                              ModelID = "openai-gpt-5.4-pro"
+	Model__DigitalOcean__OpenAI__GPT__5__5                                                   ModelID = "openai-gpt-5.5"
+	Model__DigitalOcean__OpenAI__GPT__5__Mini                                                ModelID = "openai-gpt-5-mini"
+	Model__DigitalOcean__OpenAI__GPT__5__Nano                                                ModelID = "openai-gpt-5-nano"
+	Model__DigitalOcean__OpenAI__GPT__Image__1                                               ModelID = "openai-gpt-image-1"
+	Model__DigitalOcean__OpenAI__GPT__Image__1__5                                            ModelID = "openai-gpt-image-1.5"
+	Model__DigitalOcean__OpenAI__GPT__Image__2                                               ModelID = "openai-gpt-image-2"
+	Model__DigitalOcean__OpenAI__GPT__Oss__120b                                              ModelID = "openai-gpt-oss-120b"
+	Model__DigitalOcean__OpenAI__GPT__Oss__20b                                               ModelID = "openai-gpt-oss-20b"
+	Model__DigitalOcean__OpenAI__O1                                                          ModelID = "openai-o1"
+	Model__DigitalOcean__OpenAI__O3                                                          ModelID = "openai-o3"
+	Model__DigitalOcean__OpenAI__O3__Mini                                                    ModelID = "openai-o3-mini"
 	Model__DigitalOcean__Qwen3__5__397b__A17b__3_5                                           ModelID = "qwen3.5-397b-a17b"
 	Model__DigitalOcean__Qwen3__Coder__Flash__3                                              ModelID = "qwen3-coder-flash"
 	Model__DigitalOcean__Qwen3__Embedding__0__6b__3                                          ModelID = "qwen3-embedding-0.6b"
@@ -1135,9 +1135,9 @@ const (
 	Model__DigitalOcean__Stable__Diffusion__3__5__Large__3_5                                 ModelID = "stable-diffusion-3.5-large"
 	Model__DigitalOcean__Text__To__Audio                                                     ModelID = "fal-ai/stable-audio-25/text-to-audio"
 	Model__DigitalOcean__Wan2__2__T2v__A14b__2                                               ModelID = "wan2-2-t2v-a14b"
-	Model__Drun__Deepseek__R1__Thinking                                                      ModelID = "public/deepseek-r1"
-	Model__Drun__Deepseek__V3                                                                ModelID = "public/deepseek-v3"
-	Model__Drun__Minimax__M25__25                                                            ModelID = "public/minimax-m25"
+	Model__Drun__DeepSeek__R1__Thinking                                                      ModelID = "public/deepseek-r1"
+	Model__Drun__DeepSeek__V3                                                                ModelID = "public/deepseek-v3"
+	Model__Drun__MiniMax__M25__25                                                            ModelID = "public/minimax-m25"
 	Model__Evroc__Devstral__Small__2__24b__Instruct__2512__2__Instruct                       ModelID = "mistralai/devstral-small-2-24b-instruct-2512"
 	Model__Evroc__GPT__Oss__120b                                                             ModelID = "openai/gpt-oss-120b"
 	Model__Evroc__Kb__Whisper__Large                                                         ModelID = "KBLab/kb-whisper-large"
@@ -1153,7 +1153,8 @@ const (
 	Model__Evroc__Whisper__Large__V3                                                         ModelID = "openai/whisper-large-v3"
 	Model__FastRouter__Claude__Opus__4_1                                                     ModelID = "anthropic/claude-opus-4.1"
 	Model__FastRouter__Claude__Sonnet__4                                                     ModelID = "anthropic/claude-sonnet-4"
-	Model__FastRouter__Deepseek__R1__Distill__Llama__70b__Thinking                           ModelID = "deepseek-ai/deepseek-r1-distill-llama-70b"
+	Model__FastRouter__DeepSeek__R1__Distill__Llama__70b__Thinking                           ModelID = "deepseek-ai/deepseek-r1-distill-llama-70b"
+	Model__FastRouter__GLM__5                                                                ModelID = "z-ai/glm-5"
 	Model__FastRouter__GPT__4_1                                                              ModelID = "openai/gpt-4.1"
 	Model__FastRouter__GPT__5                                                                ModelID = "openai/gpt-5"
 	Model__FastRouter__GPT__5__Mini__5                                                       ModelID = "openai/gpt-5-mini"
@@ -1162,34 +1163,33 @@ const (
 	Model__FastRouter__GPT__Oss__20b                                                         ModelID = "openai/gpt-oss-20b"
 	Model__FastRouter__Gemini__2__5__Flash__2_5                                              ModelID = "google/gemini-2.5-flash"
 	Model__FastRouter__Gemini__2__5__Pro__2_5                                                ModelID = "google/gemini-2.5-pro"
-	Model__FastRouter__Glm__5                                                                ModelID = "z-ai/glm-5"
 	Model__FastRouter__Grok__4                                                               ModelID = "x-ai/grok-4"
 	Model__FastRouter__Kimi__K2__2                                                           ModelID = "moonshotai/kimi-k2"
 	Model__FastRouter__Qwen3__Coder__3                                                       ModelID = "qwen/qwen3-coder"
 	Model__Firepass__Kimi__K2p6__2_6__ThinkingTurbo                                          ModelID = "accounts/fireworks/routers/kimi-k2p6-turbo"
-	Model__FireworksAI__Deepseek__V4__Flash                                                  ModelID = "accounts/fireworks/models/deepseek-v4-flash"
-	Model__FireworksAI__Deepseek__V4__Pro__Thinking                                          ModelID = "accounts/fireworks/models/deepseek-v4-pro"
+	Model__FireworksAI__DeepSeek__V4__Flash                                                  ModelID = "accounts/fireworks/models/deepseek-v4-flash"
+	Model__FireworksAI__DeepSeek__V4__Pro__Thinking                                          ModelID = "accounts/fireworks/models/deepseek-v4-pro"
+	Model__FireworksAI__GLM__5p1                                                             ModelID = "accounts/fireworks/models/glm-5p1"
+	Model__FireworksAI__GLM__5p1__Fast                                                       ModelID = "accounts/fireworks/routers/glm-5p1-fast"
 	Model__FireworksAI__GPT__Oss__120b                                                       ModelID = "accounts/fireworks/models/gpt-oss-120b"
 	Model__FireworksAI__GPT__Oss__20b                                                        ModelID = "accounts/fireworks/models/gpt-oss-20b"
-	Model__FireworksAI__Glm__5p1                                                             ModelID = "accounts/fireworks/models/glm-5p1"
-	Model__FireworksAI__Glm__5p1__Fast                                                       ModelID = "accounts/fireworks/routers/glm-5p1-fast"
 	Model__FireworksAI__Kimi__K2p5__2_5__Thinking                                            ModelID = "accounts/fireworks/models/kimi-k2p5"
 	Model__FireworksAI__Kimi__K2p6__2_6__Thinking                                            ModelID = "accounts/fireworks/models/kimi-k2p6"
 	Model__FireworksAI__Kimi__K2p6__2_6__ThinkingTurbo                                       ModelID = "accounts/fireworks/routers/kimi-k2p6-turbo"
-	Model__FireworksAI__Minimax__M2p5__2_5                                                   ModelID = "accounts/fireworks/models/minimax-m2p5"
-	Model__FireworksAI__Minimax__M2p7__2_7                                                   ModelID = "accounts/fireworks/models/minimax-m2p7"
+	Model__FireworksAI__MiniMax__M2p5__2_5                                                   ModelID = "accounts/fireworks/models/minimax-m2p5"
+	Model__FireworksAI__MiniMax__M2p7__2_7                                                   ModelID = "accounts/fireworks/models/minimax-m2p7"
 	Model__FireworksAI__Qwen3p6__Plus                                                        ModelID = "accounts/fireworks/models/qwen3p6-plus"
-	Model__Friendli__Glm__5                                                                  ModelID = "zai-org/GLM-5"
-	Model__Friendli__Glm__5_1                                                                ModelID = "zai-org/GLM-5.1"
+	Model__Friendli__GLM__5                                                                  ModelID = "zai-org/GLM-5"
+	Model__Friendli__GLM__5_1                                                                ModelID = "zai-org/GLM-5.1"
 	Model__Friendli__Llama__3__1__8B__3_1__Instruct                                          ModelID = "meta-llama/Llama-3.1-8B-Instruct"
 	Model__Friendli__Llama__3__3__70B__3_3__Instruct                                         ModelID = "meta-llama/Llama-3.3-70B-Instruct"
-	Model__Friendli__Minimax__M2__5__2_5                                                     ModelID = "MiniMaxAI/MiniMax-M2.5"
+	Model__Friendli__MiniMax__M2__5__2_5                                                     ModelID = "MiniMaxAI/MiniMax-M2.5"
 	Model__Friendli__Qwen3__235B__A22b__Instruct__2507__3__Instruct                          ModelID = "Qwen/Qwen3-235B-A22B-Instruct-2507"
 	Model__FrogBot__Claude__Haiku__4_5                                                       ModelID = "claude-haiku-4-5"
 	Model__FrogBot__Claude__Opus__4_6                                                        ModelID = "claude-opus-4-6"
 	Model__FrogBot__Claude__Opus__4_7                                                        ModelID = "claude-opus-4-7"
 	Model__FrogBot__Claude__Sonnet__4_6                                                      ModelID = "claude-sonnet-4-6"
-	Model__FrogBot__Deepseek__V4__Pro                                                        ModelID = "deepseek-v4-pro"
+	Model__FrogBot__DeepSeek__V4__Pro                                                        ModelID = "deepseek-v4-pro"
 	Model__FrogBot__GPT__4o                                                                  ModelID = "gpt-4o"
 	Model__FrogBot__GPT__5_5                                                                 ModelID = "gpt-5-5"
 	Model__FrogBot__GPT__5__3__Codex__5_3                                                    ModelID = "gpt-5-3-codex"
@@ -1207,10 +1207,18 @@ const (
 	Model__FrogBot__Grok__Code__Fast__1                                                      ModelID = "grok-code-fast-1"
 	Model__FrogBot__Kimi__K2__5__2_5                                                         ModelID = "kimi-k2.5"
 	Model__FrogBot__Kimi__K2__6__2_6                                                         ModelID = "kimi-k2-6"
-	Model__FrogBot__Minimax__M2__5__2_5                                                      ModelID = "minimax-m2-5"
-	Model__FrogBot__Minimax__M2__7__2_7                                                      ModelID = "minimax-m2-7"
+	Model__FrogBot__MiniMax__M2__5__2_5                                                      ModelID = "minimax-m2-5"
+	Model__FrogBot__MiniMax__M2__7__2_7                                                      ModelID = "minimax-m2-7"
 	Model__FrogBot__Qwen__3__6__Plus__3_6                                                    ModelID = "qwen-3-6-plus"
-	Model__FrogBot__Zai__Glm__5__1                                                           ModelID = "zai-glm-5-1"
+	Model__FrogBot__Zai__GLM__5__1                                                           ModelID = "zai-glm-5-1"
+	Model__GMICloud__Claude__Opus__4_6                                                       ModelID = "anthropic/claude-opus-4.6"
+	Model__GMICloud__Claude__Opus__4_7                                                       ModelID = "anthropic/claude-opus-4.7"
+	Model__GMICloud__Claude__Sonnet__4_6                                                     ModelID = "anthropic/claude-sonnet-4.6"
+	Model__GMICloud__DeepSeek__V4__Flash                                                     ModelID = "deepseek-ai/DeepSeek-V4-Flash"
+	Model__GMICloud__DeepSeek__V4__Pro__Thinking                                             ModelID = "deepseek-ai/DeepSeek-V4-Pro"
+	Model__GMICloud__GLM__5__1__Fp8__5_1                                                     ModelID = "zai-org/GLM-5.1-FP8"
+	Model__GMICloud__GLM__5__Fp8__5                                                          ModelID = "zai-org/GLM-5-FP8"
+	Model__GMICloud__Kimi__K2__6__2_6                                                        ModelID = "moonshotai/Kimi-K2.6"
 	Model__GitHubCopilot__Claude__Haiku__4_5                                                 ModelID = "claude-haiku-4.5"
 	Model__GitHubCopilot__Claude__Opus__41                                                   ModelID = "claude-opus-41"
 	Model__GitHubCopilot__Claude__Opus__4_5                                                  ModelID = "claude-opus-4.5"
@@ -1248,9 +1256,9 @@ const (
 	Model__GitHubModels__Cohere__Command__R__20240801                                        ModelID = "cohere/cohere-command-r-08-2024"
 	Model__GitHubModels__Cohere__Command__R__Plus                                            ModelID = "cohere/cohere-command-r-plus"
 	Model__GitHubModels__Cohere__Command__R__Plus__20240801                                  ModelID = "cohere/cohere-command-r-plus-08-2024"
-	Model__GitHubModels__Deepseek__R1__0528__Thinking                                        ModelID = "deepseek/deepseek-r1-0528"
-	Model__GitHubModels__Deepseek__R1__Thinking                                              ModelID = "deepseek/deepseek-r1"
-	Model__GitHubModels__Deepseek__V3__0324                                                  ModelID = "deepseek/deepseek-v3-0324"
+	Model__GitHubModels__DeepSeek__R1__0528__Thinking                                        ModelID = "deepseek/deepseek-r1-0528"
+	Model__GitHubModels__DeepSeek__R1__Thinking                                              ModelID = "deepseek/deepseek-r1"
+	Model__GitHubModels__DeepSeek__V3__0324                                                  ModelID = "deepseek/deepseek-v3-0324"
 	Model__GitHubModels__GPT__4_1                                                            ModelID = "openai/gpt-4.1"
 	Model__GitHubModels__GPT__4__1__Mini__4_1                                                ModelID = "openai/gpt-4.1-mini"
 	Model__GitHubModels__GPT__4__1__Nano__4_1                                                ModelID = "openai/gpt-4.1-nano"
@@ -1312,14 +1320,6 @@ const (
 	Model__GitLab__Duo__Chat__Opus__4__8                                                     ModelID = "duo-chat-opus-4-8"
 	Model__GitLab__Duo__Chat__Sonnet__4__5                                                   ModelID = "duo-chat-sonnet-4-5"
 	Model__GitLab__Duo__Chat__Sonnet__4__6                                                   ModelID = "duo-chat-sonnet-4-6"
-	Model__Gmicloud__Claude__Opus__4_6                                                       ModelID = "anthropic/claude-opus-4.6"
-	Model__Gmicloud__Claude__Opus__4_7                                                       ModelID = "anthropic/claude-opus-4.7"
-	Model__Gmicloud__Claude__Sonnet__4_6                                                     ModelID = "anthropic/claude-sonnet-4.6"
-	Model__Gmicloud__Deepseek__V4__Flash                                                     ModelID = "deepseek-ai/DeepSeek-V4-Flash"
-	Model__Gmicloud__Deepseek__V4__Pro__Thinking                                             ModelID = "deepseek-ai/DeepSeek-V4-Pro"
-	Model__Gmicloud__Glm__5__1__Fp8__5_1                                                     ModelID = "zai-org/GLM-5.1-FP8"
-	Model__Gmicloud__Glm__5__Fp8__5                                                          ModelID = "zai-org/GLM-5-FP8"
-	Model__Gmicloud__Kimi__K2__6__2_6                                                        ModelID = "moonshotai/Kimi-K2.6"
 	Model__GoogleVertexAnthropic__Claude__3__5__Haiku__3_5__20241022                         ModelID = "claude-3-5-haiku@20241022"
 	Model__GoogleVertexAnthropic__Claude__3__5__Sonnet__3_5__20241022                        ModelID = "claude-3-5-sonnet@20241022"
 	Model__GoogleVertexAnthropic__Claude__3__7__Sonnet__3_7__20250219                        ModelID = "claude-3-7-sonnet@20250219"
@@ -1346,8 +1346,10 @@ const (
 	Model__GoogleVertex__Claude__Sonnet__4_5__20250929                                       ModelID = "claude-sonnet-4-5@20250929"
 	Model__GoogleVertex__Claude__Sonnet__4__20250514                                         ModelID = "claude-sonnet-4@20250514"
 	Model__GoogleVertex__Claude__Sonnet__4__6__Default__4_6                                  ModelID = "claude-sonnet-4-6@default"
-	Model__GoogleVertex__Deepseek__V3__1__Maas                                               ModelID = "deepseek-ai/deepseek-v3.1-maas"
-	Model__GoogleVertex__Deepseek__V3__2__Maas                                               ModelID = "deepseek-ai/deepseek-v3.2-maas"
+	Model__GoogleVertex__DeepSeek__V3__1__Maas                                               ModelID = "deepseek-ai/deepseek-v3.1-maas"
+	Model__GoogleVertex__DeepSeek__V3__2__Maas                                               ModelID = "deepseek-ai/deepseek-v3.2-maas"
+	Model__GoogleVertex__GLM__4__7__Maas__4_7                                                ModelID = "zai-org/glm-4.7-maas"
+	Model__GoogleVertex__GLM__5__Maas__5                                                     ModelID = "zai-org/glm-5-maas"
 	Model__GoogleVertex__GPT__Oss__120b__Maas                                                ModelID = "openai/gpt-oss-120b-maas"
 	Model__GoogleVertex__GPT__Oss__20b__Maas                                                 ModelID = "openai/gpt-oss-20b-maas"
 	Model__GoogleVertex__Gemini__2__0__Flash__2_0                                            ModelID = "gemini-2.0-flash"
@@ -1367,8 +1369,6 @@ const (
 	Model__GoogleVertex__Gemini__Embedding__001                                              ModelID = "gemini-embedding-001"
 	Model__GoogleVertex__Gemini__Flash__Latest                                               ModelID = "gemini-flash-latest"
 	Model__GoogleVertex__Gemini__Flash__Lite__Latest                                         ModelID = "gemini-flash-lite-latest"
-	Model__GoogleVertex__Glm__4__7__Maas__4_7                                                ModelID = "zai-org/glm-4.7-maas"
-	Model__GoogleVertex__Glm__5__Maas__5                                                     ModelID = "zai-org/glm-5-maas"
 	Model__GoogleVertex__Kimi__K2__Thinking__Maas__2__Thinking                               ModelID = "moonshotai/kimi-k2-thinking-maas"
 	Model__GoogleVertex__Llama__3__3__70b__Instruct__Maas__3_3__Instruct                     ModelID = "meta/llama-3.3-70b-instruct-maas"
 	Model__GoogleVertex__Llama__4__Maverick__17b__128e__Instruct__Maas__4__Instruct          ModelID = "meta/llama-4-maverick-17b-128e-instruct-maas"
@@ -1397,7 +1397,7 @@ const (
 	Model__Groq__Allam__2__7b__2                                                             ModelID = "allam-2-7b"
 	Model__Groq__Compound                                                                    ModelID = "groq/compound"
 	Model__Groq__Compound__Mini                                                              ModelID = "groq/compound-mini"
-	Model__Groq__Deepseek__R1__Distill__Llama__70b__Thinking                                 ModelID = "deepseek-r1-distill-llama-70b"
+	Model__Groq__DeepSeek__R1__Distill__Llama__70b__Thinking                                 ModelID = "deepseek-r1-distill-llama-70b"
 	Model__Groq__GPT__Oss__120b                                                              ModelID = "openai/gpt-oss-120b"
 	Model__Groq__GPT__Oss__20b                                                               ModelID = "openai/gpt-oss-20b"
 	Model__Groq__GPT__Oss__Safeguard__20b                                                    ModelID = "openai/gpt-oss-safeguard-20b"
@@ -1435,13 +1435,14 @@ const (
 	Model__Helicone__Claude__Opus__4_1__20250805                                             ModelID = "claude-opus-4-1-20250805"
 	Model__Helicone__Claude__Sonnet__4                                                       ModelID = "claude-sonnet-4"
 	Model__Helicone__Claude__Sonnet__4_5__20250929                                           ModelID = "claude-sonnet-4-5-20250929"
-	Model__Helicone__Deepseek__R1__Distill__Llama__70b__Thinking                             ModelID = "deepseek-r1-distill-llama-70b"
-	Model__Helicone__Deepseek__Reasoner__Thinking                                            ModelID = "deepseek-reasoner"
-	Model__Helicone__Deepseek__Tng__R1t2__Chimera__Thinking                                  ModelID = "deepseek-tng-r1t2-chimera"
-	Model__Helicone__Deepseek__V3                                                            ModelID = "deepseek-v3"
-	Model__Helicone__Deepseek__V3__1__Terminus                                               ModelID = "deepseek-v3.1-terminus"
-	Model__Helicone__Deepseek__V3__2                                                         ModelID = "deepseek-v3.2"
+	Model__Helicone__DeepSeek__R1__Distill__Llama__70b__Thinking                             ModelID = "deepseek-r1-distill-llama-70b"
+	Model__Helicone__DeepSeek__Reasoner__Thinking                                            ModelID = "deepseek-reasoner"
+	Model__Helicone__DeepSeek__Tng__R1t2__Chimera__Thinking                                  ModelID = "deepseek-tng-r1t2-chimera"
+	Model__Helicone__DeepSeek__V3                                                            ModelID = "deepseek-v3"
+	Model__Helicone__DeepSeek__V3__1__Terminus                                               ModelID = "deepseek-v3.1-terminus"
+	Model__Helicone__DeepSeek__V3__2                                                         ModelID = "deepseek-v3.2"
 	Model__Helicone__Ernie__4__5__21b__A3b__4_5__Thinking                                    ModelID = "ernie-4.5-21b-a3b-thinking"
+	Model__Helicone__GLM__4_6                                                                ModelID = "glm-4.6"
 	Model__Helicone__GPT__4_1                                                                ModelID = "gpt-4.1"
 	Model__Helicone__GPT__4__1__Mini__4_1                                                    ModelID = "gpt-4.1-mini"
 	Model__Helicone__GPT__4__1__Mini__4_1__20250414                                          ModelID = "gpt-4.1-mini-2025-04-14"
@@ -1466,7 +1467,6 @@ const (
 	Model__Helicone__Gemini__3__Pro__3__Preview                                              ModelID = "gemini-3-pro-preview"
 	Model__Helicone__Gemma2__9b__It                                                          ModelID = "gemma2-9b-it"
 	Model__Helicone__Gemma__3__12b__It__3                                                    ModelID = "gemma-3-12b-it"
-	Model__Helicone__Glm__4_6                                                                ModelID = "glm-4.6"
 	Model__Helicone__Grok__3                                                                 ModelID = "grok-3"
 	Model__Helicone__Grok__3__Mini__3                                                        ModelID = "grok-3-mini"
 	Model__Helicone__Grok__4                                                                 ModelID = "grok-4"
@@ -1511,38 +1511,38 @@ const (
 	Model__Helicone__Sonar__Pro                                                              ModelID = "sonar-pro"
 	Model__Helicone__Sonar__Reasoning                                                        ModelID = "sonar-reasoning"
 	Model__Helicone__Sonar__Reasoning__Pro                                                   ModelID = "sonar-reasoning-pro"
-	Model__HpcAI__Glm__5_1                                                                   ModelID = "zai-org/glm-5.1"
+	Model__HpcAI__GLM__5_1                                                                   ModelID = "zai-org/glm-5.1"
 	Model__HpcAI__Kimi__K2__5__2_5                                                           ModelID = "moonshotai/kimi-k2.5"
-	Model__HpcAI__Minimax__M2__5__2_5                                                        ModelID = "minimax/minimax-m2.5"
-	Model__Huggingface__Deepseek__R1__0528__Thinking                                         ModelID = "deepseek-ai/DeepSeek-R1-0528"
-	Model__Huggingface__Deepseek__V3__2                                                      ModelID = "deepseek-ai/DeepSeek-V3.2"
-	Model__Huggingface__Deepseek__V4__Pro__Thinking                                          ModelID = "deepseek-ai/DeepSeek-V4-Pro"
-	Model__Huggingface__Glm__4_7                                                             ModelID = "zai-org/GLM-4.7"
-	Model__Huggingface__Glm__4__7__Flash__4_7                                                ModelID = "zai-org/GLM-4.7-Flash"
-	Model__Huggingface__Glm__5                                                               ModelID = "zai-org/GLM-5"
-	Model__Huggingface__Glm__5_1                                                             ModelID = "zai-org/GLM-5.1"
-	Model__Huggingface__Kimi__K2__2__Instruct                                                ModelID = "moonshotai/Kimi-K2-Instruct"
-	Model__Huggingface__Kimi__K2__2__Thinking                                                ModelID = "moonshotai/Kimi-K2-Thinking"
-	Model__Huggingface__Kimi__K2__5__2_5                                                     ModelID = "moonshotai/Kimi-K2.5"
-	Model__Huggingface__Kimi__K2__6__2_6                                                     ModelID = "moonshotai/Kimi-K2.6"
-	Model__Huggingface__Kimi__K2__Instruct__0905__2__Instruct                                ModelID = "moonshotai/Kimi-K2-Instruct-0905"
-	Model__Huggingface__Mimo__V2__Flash                                                      ModelID = "XiaomiMiMo/MiMo-V2-Flash"
-	Model__Huggingface__Minimax__M2__1__2_1                                                  ModelID = "MiniMaxAI/MiniMax-M2.1"
-	Model__Huggingface__Minimax__M2__5__2_5                                                  ModelID = "MiniMaxAI/MiniMax-M2.5"
-	Model__Huggingface__Minimax__M2__7__2_7                                                  ModelID = "MiniMaxAI/MiniMax-M2.7"
-	Model__Huggingface__Qwen3__235B__A22b__Thinking__2507__3__Thinking                       ModelID = "Qwen/Qwen3-235B-A22B-Thinking-2507"
-	Model__Huggingface__Qwen3__5__397B__A17b__3_5                                            ModelID = "Qwen/Qwen3.5-397B-A17B"
-	Model__Huggingface__Qwen3__Coder__480B__A35b__3__Instruct                                ModelID = "Qwen/Qwen3-Coder-480B-A35B-Instruct"
-	Model__Huggingface__Qwen3__Coder__Next__3                                                ModelID = "Qwen/Qwen3-Coder-Next"
-	Model__Huggingface__Qwen3__Embedding__4B__3                                              ModelID = "Qwen/Qwen3-Embedding-4B"
-	Model__Huggingface__Qwen3__Embedding__8B__3                                              ModelID = "Qwen/Qwen3-Embedding-8B"
-	Model__Huggingface__Qwen3__Next__80B__A3b__3__Instruct                                   ModelID = "Qwen/Qwen3-Next-80B-A3B-Instruct"
-	Model__Huggingface__Qwen3__Next__80B__A3b__3__Thinking                                   ModelID = "Qwen/Qwen3-Next-80B-A3B-Thinking"
-	Model__IONet__Deepseek__R1__0528__Thinking                                               ModelID = "deepseek-ai/DeepSeek-R1-0528"
+	Model__HpcAI__MiniMax__M2__5__2_5                                                        ModelID = "minimax/minimax-m2.5"
+	Model__HuggingFace__DeepSeek__R1__0528__Thinking                                         ModelID = "deepseek-ai/DeepSeek-R1-0528"
+	Model__HuggingFace__DeepSeek__V3__2                                                      ModelID = "deepseek-ai/DeepSeek-V3.2"
+	Model__HuggingFace__DeepSeek__V4__Pro__Thinking                                          ModelID = "deepseek-ai/DeepSeek-V4-Pro"
+	Model__HuggingFace__GLM__4_7                                                             ModelID = "zai-org/GLM-4.7"
+	Model__HuggingFace__GLM__4__7__Flash__4_7                                                ModelID = "zai-org/GLM-4.7-Flash"
+	Model__HuggingFace__GLM__5                                                               ModelID = "zai-org/GLM-5"
+	Model__HuggingFace__GLM__5_1                                                             ModelID = "zai-org/GLM-5.1"
+	Model__HuggingFace__Kimi__K2__2__Instruct                                                ModelID = "moonshotai/Kimi-K2-Instruct"
+	Model__HuggingFace__Kimi__K2__2__Thinking                                                ModelID = "moonshotai/Kimi-K2-Thinking"
+	Model__HuggingFace__Kimi__K2__5__2_5                                                     ModelID = "moonshotai/Kimi-K2.5"
+	Model__HuggingFace__Kimi__K2__6__2_6                                                     ModelID = "moonshotai/Kimi-K2.6"
+	Model__HuggingFace__Kimi__K2__Instruct__0905__2__Instruct                                ModelID = "moonshotai/Kimi-K2-Instruct-0905"
+	Model__HuggingFace__Mimo__V2__Flash                                                      ModelID = "XiaomiMiMo/MiMo-V2-Flash"
+	Model__HuggingFace__MiniMax__M2__1__2_1                                                  ModelID = "MiniMaxAI/MiniMax-M2.1"
+	Model__HuggingFace__MiniMax__M2__5__2_5                                                  ModelID = "MiniMaxAI/MiniMax-M2.5"
+	Model__HuggingFace__MiniMax__M2__7__2_7                                                  ModelID = "MiniMaxAI/MiniMax-M2.7"
+	Model__HuggingFace__Qwen3__235B__A22b__Thinking__2507__3__Thinking                       ModelID = "Qwen/Qwen3-235B-A22B-Thinking-2507"
+	Model__HuggingFace__Qwen3__5__397B__A17b__3_5                                            ModelID = "Qwen/Qwen3.5-397B-A17B"
+	Model__HuggingFace__Qwen3__Coder__480B__A35b__3__Instruct                                ModelID = "Qwen/Qwen3-Coder-480B-A35B-Instruct"
+	Model__HuggingFace__Qwen3__Coder__Next__3                                                ModelID = "Qwen/Qwen3-Coder-Next"
+	Model__HuggingFace__Qwen3__Embedding__4B__3                                              ModelID = "Qwen/Qwen3-Embedding-4B"
+	Model__HuggingFace__Qwen3__Embedding__8B__3                                              ModelID = "Qwen/Qwen3-Embedding-8B"
+	Model__HuggingFace__Qwen3__Next__80B__A3b__3__Instruct                                   ModelID = "Qwen/Qwen3-Next-80B-A3B-Instruct"
+	Model__HuggingFace__Qwen3__Next__80B__A3b__3__Thinking                                   ModelID = "Qwen/Qwen3-Next-80B-A3B-Thinking"
+	Model__IONet__DeepSeek__R1__0528__Thinking                                               ModelID = "deepseek-ai/DeepSeek-R1-0528"
 	Model__IONet__Devstral__Small__2505                                                      ModelID = "mistralai/Devstral-Small-2505"
+	Model__IONet__GLM__4_6                                                                   ModelID = "zai-org/GLM-4.6"
 	Model__IONet__GPT__Oss__120b                                                             ModelID = "openai/gpt-oss-120b"
 	Model__IONet__GPT__Oss__20b                                                              ModelID = "openai/gpt-oss-20b"
-	Model__IONet__Glm__4_6                                                                   ModelID = "zai-org/GLM-4.6"
 	Model__IONet__Kimi__K2__2__Thinking                                                      ModelID = "moonshotai/Kimi-K2-Thinking"
 	Model__IONet__Kimi__K2__Instruct__0905__2__Instruct                                      ModelID = "moonshotai/Kimi-K2-Instruct-0905"
 	Model__IONet__Llama__3__2__90B__3_2__VisionInstruct                                      ModelID = "meta-llama/Llama-3.2-90B-Vision-Instruct"
@@ -1555,26 +1555,12 @@ const (
 	Model__IONet__Qwen3__235B__A22b__Thinking__2507__3__Thinking                             ModelID = "Qwen/Qwen3-235B-A22B-Thinking-2507"
 	Model__IONet__Qwen3__Coder__480B__A35b__Instruct__Int4__Mixed__Ar__3                     ModelID = "Intel/Qwen3-Coder-480B-A35B-Instruct-int4-mixed-ar"
 	Model__IONet__Qwen3__Next__80B__A3b__3__Instruct                                         ModelID = "Qwen/Qwen3-Next-80B-A3B-Instruct"
-	Model__Iflowcn__Deepseek__R1__Thinking                                                   ModelID = "deepseek-r1"
-	Model__Iflowcn__Deepseek__V3                                                             ModelID = "deepseek-v3"
-	Model__Iflowcn__Deepseek__V3__2                                                          ModelID = "deepseek-v3.2"
-	Model__Iflowcn__Glm__4_6                                                                 ModelID = "glm-4.6"
-	Model__Iflowcn__Kimi__K2__0905__2                                                        ModelID = "kimi-k2-0905"
-	Model__Iflowcn__Kimi__K2__2                                                              ModelID = "kimi-k2"
-	Model__Iflowcn__Qwen3__235b__3                                                           ModelID = "qwen3-235b"
-	Model__Iflowcn__Qwen3__235b__A22b__3__Instruct                                           ModelID = "qwen3-235b-a22b-instruct"
-	Model__Iflowcn__Qwen3__235b__A22b__Thinking__2507__3__Thinking                           ModelID = "qwen3-235b-a22b-thinking-2507"
-	Model__Iflowcn__Qwen3__32b__3                                                            ModelID = "qwen3-32b"
-	Model__Iflowcn__Qwen3__Coder__Plus__3                                                    ModelID = "qwen3-coder-plus"
-	Model__Iflowcn__Qwen3__Max__3                                                            ModelID = "qwen3-max"
-	Model__Iflowcn__Qwen3__Max__3__Preview                                                   ModelID = "qwen3-max-preview"
-	Model__Iflowcn__Qwen3__Vl__Plus__3                                                       ModelID = "qwen3-vl-plus"
 	Model__Inception__Mercury__2                                                             ModelID = "mercury-2"
 	Model__Inception__Mercury__Edit__2                                                       ModelID = "mercury-edit-2"
-	Model__Inceptron__Glm__5__1__Fp8__5_1                                                    ModelID = "zai-org/GLM-5.1-FP8"
+	Model__Inceptron__GLM__5__1__Fp8__5_1                                                    ModelID = "zai-org/GLM-5.1-FP8"
 	Model__Inceptron__Kimi__K2__6__2_6                                                       ModelID = "moonshotai/Kimi-K2.6"
 	Model__Inceptron__Llama__3__3__70b__Instruct__Fp8__3_3__Instruct                         ModelID = "nvidia/llama-3.3-70b-instruct-fp8"
-	Model__Inceptron__Minimax__M2__5__2_5                                                    ModelID = "MiniMaxAI/MiniMax-M2.5"
+	Model__Inceptron__MiniMax__M2__5__2_5                                                    ModelID = "MiniMaxAI/MiniMax-M2.5"
 	Model__Inference__Gemma__3                                                               ModelID = "google/gemma-3"
 	Model__Inference__Llama__3__1__8b__3_1__Instruct                                         ModelID = "meta/llama-3.1-8b-instruct"
 	Model__Inference__Llama__3__2__11b__3_2__VisionInstruct                                  ModelID = "meta/llama-3.2-11b-vision-instruct"
@@ -1591,11 +1577,15 @@ const (
 	Model__Jiekou__Claude__Opus__4__20250514                                                 ModelID = "claude-opus-4-20250514"
 	Model__Jiekou__Claude__Sonnet__4_5__20250929                                             ModelID = "claude-sonnet-4-5-20250929"
 	Model__Jiekou__Claude__Sonnet__4__20250514                                               ModelID = "claude-sonnet-4-20250514"
-	Model__Jiekou__Deepseek__R1__0528__Thinking                                              ModelID = "deepseek/deepseek-r1-0528"
-	Model__Jiekou__Deepseek__V3__0324                                                        ModelID = "deepseek/deepseek-v3-0324"
-	Model__Jiekou__Deepseek__V3__1                                                           ModelID = "deepseek/deepseek-v3.1"
+	Model__Jiekou__DeepSeek__R1__0528__Thinking                                              ModelID = "deepseek/deepseek-r1-0528"
+	Model__Jiekou__DeepSeek__V3__0324                                                        ModelID = "deepseek/deepseek-v3-0324"
+	Model__Jiekou__DeepSeek__V3__1                                                           ModelID = "deepseek/deepseek-v3.1"
 	Model__Jiekou__Ernie__4__5__300b__A47b__Paddle__4_5                                      ModelID = "baidu/ernie-4.5-300b-a47b-paddle"
 	Model__Jiekou__Ernie__4__5__Vl__424b__A47b__4_5                                          ModelID = "baidu/ernie-4.5-vl-424b-a47b"
+	Model__Jiekou__GLM__4_5                                                                  ModelID = "zai-org/glm-4.5"
+	Model__Jiekou__GLM__4_7                                                                  ModelID = "zai-org/glm-4.7"
+	Model__Jiekou__GLM__4__5v__4_5                                                           ModelID = "zai-org/glm-4.5v"
+	Model__Jiekou__GLM__4__7__Flash__4_7                                                     ModelID = "zai-org/glm-4.7-flash"
 	Model__Jiekou__GPT__5_1                                                                  ModelID = "gpt-5.1"
 	Model__Jiekou__GPT__5_2                                                                  ModelID = "gpt-5.2"
 	Model__Jiekou__GPT__5__1__Codex__5_1                                                     ModelID = "gpt-5.1-codex"
@@ -1617,10 +1607,6 @@ const (
 	Model__Jiekou__Gemini__2__5__Pro__Preview__06__05__2_5                                   ModelID = "gemini-2.5-pro-preview-06-05"
 	Model__Jiekou__Gemini__3__Flash__3__Preview                                              ModelID = "gemini-3-flash-preview"
 	Model__Jiekou__Gemini__3__Pro__3__Preview                                                ModelID = "gemini-3-pro-preview"
-	Model__Jiekou__Glm__4_5                                                                  ModelID = "zai-org/glm-4.5"
-	Model__Jiekou__Glm__4_7                                                                  ModelID = "zai-org/glm-4.7"
-	Model__Jiekou__Glm__4__5v__4_5                                                           ModelID = "zai-org/glm-4.5v"
-	Model__Jiekou__Glm__4__7__Flash__4_7                                                     ModelID = "zai-org/glm-4.7-flash"
 	Model__Jiekou__Grok__4_1__ReasoningFast                                                  ModelID = "grok-4-1-fast-reasoning"
 	Model__Jiekou__Grok__4__0709__4                                                          ModelID = "grok-4-0709"
 	Model__Jiekou__Grok__4__1__Fast__Non__4_1__Reasoning                                     ModelID = "grok-4-1-fast-non-reasoning"
@@ -1631,8 +1617,8 @@ const (
 	Model__Jiekou__Kimi__K2__2__Instruct                                                     ModelID = "moonshotai/kimi-k2-instruct"
 	Model__Jiekou__Kimi__K2__5__2_5                                                          ModelID = "moonshotai/kimi-k2.5"
 	Model__Jiekou__Mimo__V2__Flash                                                           ModelID = "xiaomimimo/mimo-v2-flash"
-	Model__Jiekou__Minimax__M1__80k__1                                                       ModelID = "minimaxai/minimax-m1-80k"
-	Model__Jiekou__Minimax__M2__1__2_1                                                       ModelID = "minimax/minimax-m2.1"
+	Model__Jiekou__MiniMax__M1__80k__1                                                       ModelID = "minimaxai/minimax-m1-80k"
+	Model__Jiekou__MiniMax__M2__1__2_1                                                       ModelID = "minimax/minimax-m2.1"
 	Model__Jiekou__O3__3                                                                     ModelID = "o3"
 	Model__Jiekou__O3__3__Mini                                                               ModelID = "o3-mini"
 	Model__Jiekou__O4__4__Mini                                                               ModelID = "o4-mini"
@@ -1645,7 +1631,7 @@ const (
 	Model__Jiekou__Qwen3__Coder__Next__3                                                     ModelID = "qwen/qwen3-coder-next"
 	Model__Jiekou__Qwen3__Next__80b__A3b__3__Instruct                                        ModelID = "qwen/qwen3-next-80b-a3b-instruct"
 	Model__Jiekou__Qwen3__Next__80b__A3b__3__Thinking                                        ModelID = "qwen/qwen3-next-80b-a3b-thinking"
-	Model__KUAECloudCodingPlan__Glm__4_7                                                     ModelID = "GLM-4.7"
+	Model__KUAECloudCodingPlan__GLM__4_7                                                     ModelID = "GLM-4.7"
 	Model__Kilo__Aion__1_0                                                                   ModelID = "aion-labs/aion-1.0"
 	Model__Kilo__Aion__1__0__Mini__1_0                                                       ModelID = "aion-labs/aion-1.0-mini"
 	Model__Kilo__Aion__2_0                                                                   ModelID = "aion-labs/aion-2.0"
@@ -1673,7 +1659,7 @@ const (
 	Model__Kilo__Claude__Sonnet__4_6_2                                                       ModelID = "stealth/claude-sonnet-4.6"
 	Model__Kilo__Claude__Sonnet__Latest                                                      ModelID = "~anthropic/claude-sonnet-latest"
 	Model__Kilo__Cobuddy__Free                                                               ModelID = "baidu/cobuddy:free"
-	Model__Kilo__Codellama__7b__Instruct__Solidity__Instruct                                 ModelID = "alfredpros/codellama-7b-instruct-solidity"
+	Model__Kilo__CodeLlama__7b__Instruct__Solidity__Instruct                                 ModelID = "alfredpros/codellama-7b-instruct-solidity"
 	Model__Kilo__Coder__Large                                                                ModelID = "arcee-ai/coder-large"
 	Model__Kilo__Codestral__2508                                                             ModelID = "mistralai/codestral-2508"
 	Model__Kilo__Cogito__V2__1__671b                                                         ModelID = "deepcogito/cogito-v2.1-671b"
@@ -1682,20 +1668,20 @@ const (
 	Model__Kilo__Command__R__20240830                                                        ModelID = "cohere/command-r-08-2024"
 	Model__Kilo__Command__R__Plus__20240830                                                  ModelID = "cohere/command-r-plus-08-2024"
 	Model__Kilo__Cydonia__24b__V4__1                                                         ModelID = "thedrummer/cydonia-24b-v4.1"
-	Model__Kilo__Deepseek__Chat                                                              ModelID = "deepseek/deepseek-chat"
-	Model__Kilo__Deepseek__Chat__V3__0324                                                    ModelID = "deepseek/deepseek-chat-v3-0324"
-	Model__Kilo__Deepseek__Chat__V3__1__3_1                                                  ModelID = "deepseek/deepseek-chat-v3.1"
-	Model__Kilo__Deepseek__R1                                                                ModelID = "deepseek/deepseek-r1"
-	Model__Kilo__Deepseek__R1__0528                                                          ModelID = "deepseek/deepseek-r1-0528"
-	Model__Kilo__Deepseek__R1__Distill__Llama__70b                                           ModelID = "deepseek/deepseek-r1-distill-llama-70b"
-	Model__Kilo__Deepseek__R1__Distill__Qwen__32b                                            ModelID = "deepseek/deepseek-r1-distill-qwen-32b"
-	Model__Kilo__Deepseek__V3__1__Nex__N1                                                    ModelID = "nex-agi/deepseek-v3.1-nex-n1"
-	Model__Kilo__Deepseek__V3__1__Terminus                                                   ModelID = "deepseek/deepseek-v3.1-terminus"
-	Model__Kilo__Deepseek__V3__2                                                             ModelID = "deepseek/deepseek-v3.2"
-	Model__Kilo__Deepseek__V3__2__Exp                                                        ModelID = "deepseek/deepseek-v3.2-exp"
-	Model__Kilo__Deepseek__V3__2__Speciale                                                   ModelID = "deepseek/deepseek-v3.2-speciale"
-	Model__Kilo__Deepseek__V4__Flash                                                         ModelID = "deepseek/deepseek-v4-flash"
-	Model__Kilo__Deepseek__V4__Pro                                                           ModelID = "deepseek/deepseek-v4-pro"
+	Model__Kilo__DeepSeek__Chat                                                              ModelID = "deepseek/deepseek-chat"
+	Model__Kilo__DeepSeek__Chat__V3__0324                                                    ModelID = "deepseek/deepseek-chat-v3-0324"
+	Model__Kilo__DeepSeek__Chat__V3__1__3_1                                                  ModelID = "deepseek/deepseek-chat-v3.1"
+	Model__Kilo__DeepSeek__R1                                                                ModelID = "deepseek/deepseek-r1"
+	Model__Kilo__DeepSeek__R1__0528                                                          ModelID = "deepseek/deepseek-r1-0528"
+	Model__Kilo__DeepSeek__R1__Distill__Llama__70b                                           ModelID = "deepseek/deepseek-r1-distill-llama-70b"
+	Model__Kilo__DeepSeek__R1__Distill__Qwen__32b                                            ModelID = "deepseek/deepseek-r1-distill-qwen-32b"
+	Model__Kilo__DeepSeek__V3__1__Nex__N1                                                    ModelID = "nex-agi/deepseek-v3.1-nex-n1"
+	Model__Kilo__DeepSeek__V3__1__Terminus                                                   ModelID = "deepseek/deepseek-v3.1-terminus"
+	Model__Kilo__DeepSeek__V3__2                                                             ModelID = "deepseek/deepseek-v3.2"
+	Model__Kilo__DeepSeek__V3__2__Exp                                                        ModelID = "deepseek/deepseek-v3.2-exp"
+	Model__Kilo__DeepSeek__V3__2__Speciale                                                   ModelID = "deepseek/deepseek-v3.2-speciale"
+	Model__Kilo__DeepSeek__V4__Flash                                                         ModelID = "deepseek/deepseek-v4-flash"
+	Model__Kilo__DeepSeek__V4__Pro                                                           ModelID = "deepseek/deepseek-v4-pro"
 	Model__Kilo__Devstral__2512                                                              ModelID = "mistralai/devstral-2512"
 	Model__Kilo__Devstral__Medium                                                            ModelID = "mistralai/devstral-medium"
 	Model__Kilo__Devstral__Small                                                             ModelID = "mistralai/devstral-small"
@@ -1707,6 +1693,18 @@ const (
 	Model__Kilo__Free_1                                                                      ModelID = "kilo-auto/free"
 	Model__Kilo__Free_2                                                                      ModelID = "openrouter/free"
 	Model__Kilo__Frontier                                                                    ModelID = "kilo-auto/frontier"
+	Model__Kilo__GLM__4_5                                                                    ModelID = "z-ai/glm-4.5"
+	Model__Kilo__GLM__4_6                                                                    ModelID = "z-ai/glm-4.6"
+	Model__Kilo__GLM__4_7                                                                    ModelID = "z-ai/glm-4.7"
+	Model__Kilo__GLM__4__32b__4                                                              ModelID = "z-ai/glm-4-32b"
+	Model__Kilo__GLM__4__5__Air__4_5                                                         ModelID = "z-ai/glm-4.5-air"
+	Model__Kilo__GLM__4__5v__4_5                                                             ModelID = "z-ai/glm-4.5v"
+	Model__Kilo__GLM__4__6v__4_6                                                             ModelID = "z-ai/glm-4.6v"
+	Model__Kilo__GLM__4__7__Flash__4_7                                                       ModelID = "z-ai/glm-4.7-flash"
+	Model__Kilo__GLM__5                                                                      ModelID = "z-ai/glm-5"
+	Model__Kilo__GLM__5_1                                                                    ModelID = "z-ai/glm-5.1"
+	Model__Kilo__GLM__5__Turbo                                                               ModelID = "z-ai/glm-5-turbo"
+	Model__Kilo__GLM__5v__5__Turbo                                                           ModelID = "z-ai/glm-5v-turbo"
 	Model__Kilo__GPT__3_5__Turbo                                                             ModelID = "openai/gpt-3.5-turbo"
 	Model__Kilo__GPT__3_5__TurboInstruct                                                     ModelID = "openai/gpt-3.5-turbo-instruct"
 	Model__Kilo__GPT__3__5__Turbo__0613__3_5__Turbo                                          ModelID = "openai/gpt-3.5-turbo-0613"
@@ -1788,18 +1786,6 @@ const (
 	Model__Kilo__Gemma__3n__E4b__It                                                          ModelID = "google/gemma-3n-e4b-it"
 	Model__Kilo__Gemma__4__26b__A4b__It__4                                                   ModelID = "google/gemma-4-26b-a4b-it"
 	Model__Kilo__Gemma__4__31b__It__4                                                        ModelID = "google/gemma-4-31b-it"
-	Model__Kilo__Glm__4_5                                                                    ModelID = "z-ai/glm-4.5"
-	Model__Kilo__Glm__4_6                                                                    ModelID = "z-ai/glm-4.6"
-	Model__Kilo__Glm__4_7                                                                    ModelID = "z-ai/glm-4.7"
-	Model__Kilo__Glm__4__32b__4                                                              ModelID = "z-ai/glm-4-32b"
-	Model__Kilo__Glm__4__5__Air__4_5                                                         ModelID = "z-ai/glm-4.5-air"
-	Model__Kilo__Glm__4__5v__4_5                                                             ModelID = "z-ai/glm-4.5v"
-	Model__Kilo__Glm__4__6v__4_6                                                             ModelID = "z-ai/glm-4.6v"
-	Model__Kilo__Glm__4__7__Flash__4_7                                                       ModelID = "z-ai/glm-4.7-flash"
-	Model__Kilo__Glm__5                                                                      ModelID = "z-ai/glm-5"
-	Model__Kilo__Glm__5_1                                                                    ModelID = "z-ai/glm-5.1"
-	Model__Kilo__Glm__5__Turbo                                                               ModelID = "z-ai/glm-5-turbo"
-	Model__Kilo__Glm__5v__5__Turbo                                                           ModelID = "z-ai/glm-5v-turbo"
 	Model__Kilo__Granite__4__0__H__Micro__4_0                                                ModelID = "ibm-granite/granite-4.0-h-micro"
 	Model__Kilo__Granite__4__1__8b__4_1                                                      ModelID = "ibm-granite/granite-4.1-8b"
 	Model__Kilo__Grok__4_20                                                                  ModelID = "x-ai/grok-4.20"
@@ -1857,13 +1843,13 @@ const (
 	Model__Kilo__Mimo__V2__5__2_5                                                            ModelID = "xiaomi/mimo-v2.5"
 	Model__Kilo__Mimo__V2__5__2_5__Pro                                                       ModelID = "xiaomi/mimo-v2.5-pro"
 	Model__Kilo__Mimo__V2__Flash                                                             ModelID = "xiaomi/mimo-v2-flash"
-	Model__Kilo__Minimax__01                                                                 ModelID = "minimax/minimax-01"
-	Model__Kilo__Minimax__M1__1                                                              ModelID = "minimax/minimax-m1"
-	Model__Kilo__Minimax__M2__1__2_1                                                         ModelID = "minimax/minimax-m2.1"
-	Model__Kilo__Minimax__M2__2                                                              ModelID = "minimax/minimax-m2"
-	Model__Kilo__Minimax__M2__5__2_5                                                         ModelID = "minimax/minimax-m2.5"
-	Model__Kilo__Minimax__M2__7__2_7                                                         ModelID = "minimax/minimax-m2.7"
-	Model__Kilo__Minimax__M2__Her                                                            ModelID = "minimax/minimax-m2-her"
+	Model__Kilo__MiniMax__01                                                                 ModelID = "minimax/minimax-01"
+	Model__Kilo__MiniMax__M1__1                                                              ModelID = "minimax/minimax-m1"
+	Model__Kilo__MiniMax__M2__1__2_1                                                         ModelID = "minimax/minimax-m2.1"
+	Model__Kilo__MiniMax__M2__2                                                              ModelID = "minimax/minimax-m2"
+	Model__Kilo__MiniMax__M2__5__2_5                                                         ModelID = "minimax/minimax-m2.5"
+	Model__Kilo__MiniMax__M2__7__2_7                                                         ModelID = "minimax/minimax-m2.7"
+	Model__Kilo__MiniMax__M2__Her                                                            ModelID = "minimax/minimax-m2-her"
 	Model__Kilo__Ministral__14b__2512                                                        ModelID = "mistralai/ministral-14b-2512"
 	Model__Kilo__Ministral__3b__2512                                                         ModelID = "mistralai/ministral-3b-2512"
 	Model__Kilo__Ministral__8b__2512                                                         ModelID = "mistralai/ministral-8b-2512"
@@ -1905,7 +1891,7 @@ const (
 	Model__Kilo__O4__4__Mini                                                                 ModelID = "openai/o4-mini"
 	Model__Kilo__O4__Mini__Deep__Research__4__Mini                                           ModelID = "openai/o4-mini-deep-research"
 	Model__Kilo__O4__Mini__High__4__Mini                                                     ModelID = "openai/o4-mini-high"
-	Model__Kilo__Olmo__3__32b__3__Think                                                      ModelID = "allenai/olmo-3-32b-think"
+	Model__Kilo__OLMo__3__32b__3__Think                                                      ModelID = "allenai/olmo-3-32b-think"
 	Model__Kilo__Owl__Alpha                                                                  ModelID = "openrouter/owl-alpha"
 	Model__Kilo__Palmyra__X5                                                                 ModelID = "writer/palmyra-x5"
 	Model__Kilo__Pareto__Code                                                                ModelID = "openrouter/pareto-code"
@@ -1990,17 +1976,17 @@ const (
 	Model__Kilo__Virtuoso__Large                                                             ModelID = "arcee-ai/virtuoso-large"
 	Model__Kilo__Voxtral__Small__24b__2507                                                   ModelID = "mistralai/voxtral-small-24b-2507"
 	Model__Kilo__Weaver                                                                      ModelID = "mancer/weaver"
-	Model__Kilo__Wizardlm__2__8x22b__2                                                       ModelID = "microsoft/wizardlm-2-8x22b"
+	Model__Kilo__WizardLM__2__8x22b__2                                                       ModelID = "microsoft/wizardlm-2-8x22b"
 	Model__KimiForCoding__K2p5__2_5__Thinking                                                ModelID = "k2p5"
 	Model__KimiForCoding__K2p6__2_6__Thinking                                                ModelID = "k2p6"
 	Model__KimiForCoding__Kimi__K2__2__Thinking                                              ModelID = "kimi-k2-thinking"
 	Model__LMStudio__GPT__Oss__20b                                                           ModelID = "openai/gpt-oss-20b"
 	Model__LMStudio__Qwen3__30b__A3b__2507__3                                                ModelID = "qwen/qwen3-30b-a3b-2507"
 	Model__LMStudio__Qwen3__Coder__30b__3                                                    ModelID = "qwen/qwen3-coder-30b"
+	Model__Lilac__GLM__5_1                                                                   ModelID = "zai-org/glm-5.1"
 	Model__Lilac__Gemma__4__31b__It__4                                                       ModelID = "google/gemma-4-31b-it"
-	Model__Lilac__Glm__5_1                                                                   ModelID = "zai-org/glm-5.1"
 	Model__Lilac__Kimi__K2__6__2_6                                                           ModelID = "moonshotai/kimi-k2.6"
-	Model__Lilac__Minimax__M2__7__2_7                                                        ModelID = "minimaxai/minimax-m2.7"
+	Model__Lilac__MiniMax__M2__7__2_7                                                        ModelID = "minimaxai/minimax-m2.7"
 	Model__Llama__Cerebras__Llama__4__Maverick__17b__128e__Instruct                          ModelID = "cerebras-llama-4-maverick-17b-128e-instruct"
 	Model__Llama__Cerebras__Llama__4__Scout__17b__16e__Instruct                              ModelID = "cerebras-llama-4-scout-17b-16e-instruct"
 	Model__Llama__Groq__Llama__4__Maverick__17b__128e__Instruct                              ModelID = "groq-llama-4-maverick-17b-128e-instruct"
@@ -2008,211 +1994,211 @@ const (
 	Model__Llama__Llama__3__3__8b__3_3__Instruct                                             ModelID = "llama-3.3-8b-instruct"
 	Model__Llama__Llama__4__Maverick__17b__128e__Instruct__Fp8__4__Instruct                  ModelID = "llama-4-maverick-17b-128e-instruct-fp8"
 	Model__Llama__Llama__4__Scout__17b__16e__Instruct__Fp8__4__Instruct                      ModelID = "llama-4-scout-17b-16e-instruct-fp8"
-	Model__Llmgateway__Auto                                                                  ModelID = "auto"
-	Model__Llmgateway__Claude__3__5__Haiku__3_5                                              ModelID = "claude-3-5-haiku"
-	Model__Llmgateway__Claude__3__5__Sonnet__3_5__20241022                                   ModelID = "claude-3-5-sonnet-20241022"
-	Model__Llmgateway__Claude__3__7__Sonnet__3_7                                             ModelID = "claude-3-7-sonnet"
-	Model__Llmgateway__Claude__3__7__Sonnet__3_7__20250219                                   ModelID = "claude-3-7-sonnet-20250219"
-	Model__Llmgateway__Claude__3__Opus__3                                                    ModelID = "claude-3-opus"
-	Model__Llmgateway__Claude__Haiku__4_5                                                    ModelID = "claude-haiku-4-5"
-	Model__Llmgateway__Claude__Haiku__4_5__20251001                                          ModelID = "claude-haiku-4-5-20251001"
-	Model__Llmgateway__Claude__Opus__4_1__20250805                                           ModelID = "claude-opus-4-1-20250805"
-	Model__Llmgateway__Claude__Opus__4_5__20251101                                           ModelID = "claude-opus-4-5-20251101"
-	Model__Llmgateway__Claude__Opus__4_6                                                     ModelID = "claude-opus-4-6"
-	Model__Llmgateway__Claude__Opus__4_7                                                     ModelID = "claude-opus-4-7"
-	Model__Llmgateway__Claude__Opus__4_8                                                     ModelID = "claude-opus-4-8"
-	Model__Llmgateway__Claude__Opus__4__20250514                                             ModelID = "claude-opus-4-20250514"
-	Model__Llmgateway__Claude__Sonnet__4_5                                                   ModelID = "claude-sonnet-4-5"
-	Model__Llmgateway__Claude__Sonnet__4_5__20250929                                         ModelID = "claude-sonnet-4-5-20250929"
-	Model__Llmgateway__Claude__Sonnet__4_6                                                   ModelID = "claude-sonnet-4-6"
-	Model__Llmgateway__Claude__Sonnet__4__20250514                                           ModelID = "claude-sonnet-4-20250514"
-	Model__Llmgateway__Codestral__2508                                                       ModelID = "codestral-2508"
-	Model__Llmgateway__Custom                                                                ModelID = "custom"
-	Model__Llmgateway__Deepseek__R1__0528                                                    ModelID = "deepseek-r1-0528"
-	Model__Llmgateway__Deepseek__V3__1                                                       ModelID = "deepseek-v3.1"
-	Model__Llmgateway__Deepseek__V3__2                                                       ModelID = "deepseek-v3.2"
-	Model__Llmgateway__Deepseek__V4__Flash                                                   ModelID = "deepseek-v4-flash"
-	Model__Llmgateway__Deepseek__V4__Pro__Thinking                                           ModelID = "deepseek-v4-pro"
-	Model__Llmgateway__Devstral__2512                                                        ModelID = "devstral-2512"
-	Model__Llmgateway__Devstral__Small__2507                                                 ModelID = "devstral-small-2507"
-	Model__Llmgateway__GPT__3_5__Turbo                                                       ModelID = "gpt-3.5-turbo"
-	Model__Llmgateway__GPT__4                                                                ModelID = "gpt-4"
-	Model__Llmgateway__GPT__4_1                                                              ModelID = "gpt-4.1"
-	Model__Llmgateway__GPT__4__1__Mini__4_1                                                  ModelID = "gpt-4.1-mini"
-	Model__Llmgateway__GPT__4__1__Nano__4_1                                                  ModelID = "gpt-4.1-nano"
-	Model__Llmgateway__GPT__4__Turbo                                                         ModelID = "gpt-4-turbo"
-	Model__Llmgateway__GPT__4o                                                               ModelID = "gpt-4o"
-	Model__Llmgateway__GPT__4o__Mini                                                         ModelID = "gpt-4o-mini"
-	Model__Llmgateway__GPT__4o__Mini__Search__PreviewMini                                    ModelID = "gpt-4o-mini-search-preview"
-	Model__Llmgateway__GPT__4o__Search__Preview                                              ModelID = "gpt-4o-search-preview"
-	Model__Llmgateway__GPT__5                                                                ModelID = "gpt-5"
-	Model__Llmgateway__GPT__5_1                                                              ModelID = "gpt-5.1"
-	Model__Llmgateway__GPT__5_2                                                              ModelID = "gpt-5.2"
-	Model__Llmgateway__GPT__5_2__ChatLatest                                                  ModelID = "gpt-5.2-chat-latest"
-	Model__Llmgateway__GPT__5_3__ChatLatest                                                  ModelID = "gpt-5.3-chat-latest"
-	Model__Llmgateway__GPT__5_4                                                              ModelID = "gpt-5.4"
-	Model__Llmgateway__GPT__5_5                                                              ModelID = "gpt-5.5"
-	Model__Llmgateway__GPT__5__1__Codex__5_1                                                 ModelID = "gpt-5.1-codex"
-	Model__Llmgateway__GPT__5__1__Codex__Mini__5_1                                           ModelID = "gpt-5.1-codex-mini"
-	Model__Llmgateway__GPT__5__2__Codex__5_2                                                 ModelID = "gpt-5.2-codex"
-	Model__Llmgateway__GPT__5__2__Pro__5_2                                                   ModelID = "gpt-5.2-pro"
-	Model__Llmgateway__GPT__5__3__Codex__5_3                                                 ModelID = "gpt-5.3-codex"
-	Model__Llmgateway__GPT__5__4__Mini__5_4                                                  ModelID = "gpt-5.4-mini"
-	Model__Llmgateway__GPT__5__4__Nano__5_4                                                  ModelID = "gpt-5.4-nano"
-	Model__Llmgateway__GPT__5__4__Pro__5_4                                                   ModelID = "gpt-5.4-pro"
-	Model__Llmgateway__GPT__5__5__Pro__5_5                                                   ModelID = "gpt-5.5-pro"
-	Model__Llmgateway__GPT__5__ChatLatest                                                    ModelID = "gpt-5-chat-latest"
-	Model__Llmgateway__GPT__5__Mini__5                                                       ModelID = "gpt-5-mini"
-	Model__Llmgateway__GPT__5__Nano__5                                                       ModelID = "gpt-5-nano"
-	Model__Llmgateway__GPT__5__Pro__5                                                        ModelID = "gpt-5-pro"
-	Model__Llmgateway__GPT__Oss__120b                                                        ModelID = "gpt-oss-120b"
-	Model__Llmgateway__GPT__Oss__20b                                                         ModelID = "gpt-oss-20b"
-	Model__Llmgateway__Gemini__2__0__Flash__2_0                                              ModelID = "gemini-2.0-flash"
-	Model__Llmgateway__Gemini__2__0__Flash__Lite__2_0                                        ModelID = "gemini-2.0-flash-lite"
-	Model__Llmgateway__Gemini__2__5__Flash__2_5                                              ModelID = "gemini-2.5-flash"
-	Model__Llmgateway__Gemini__2__5__Flash__Lite__2_5                                        ModelID = "gemini-2.5-flash-lite"
-	Model__Llmgateway__Gemini__2__5__Pro__2_5                                                ModelID = "gemini-2.5-pro"
-	Model__Llmgateway__Gemini__3__1__Flash__Lite__3_1                                        ModelID = "gemini-3.1-flash-lite"
-	Model__Llmgateway__Gemini__3__1__Flash__Lite__3_1__Preview                               ModelID = "gemini-3.1-flash-lite-preview"
-	Model__Llmgateway__Gemini__3__1__Pro__3_1__Preview                                       ModelID = "gemini-3.1-pro-preview"
-	Model__Llmgateway__Gemini__3__5__Flash__3_5                                              ModelID = "gemini-3.5-flash"
-	Model__Llmgateway__Gemini__3__Flash__3__Preview                                          ModelID = "gemini-3-flash-preview"
-	Model__Llmgateway__Gemini__Pro__Latest                                                   ModelID = "gemini-pro-latest"
-	Model__Llmgateway__Gemma__2__27b__It__Together__2                                        ModelID = "gemma-2-27b-it-together"
-	Model__Llmgateway__Gemma__3__1b__It__3                                                   ModelID = "gemma-3-1b-it"
-	Model__Llmgateway__Gemma__3__27b__3                                                      ModelID = "gemma-3-27b"
-	Model__Llmgateway__Glm__4_5                                                              ModelID = "glm-4.5"
-	Model__Llmgateway__Glm__4_6                                                              ModelID = "glm-4.6"
-	Model__Llmgateway__Glm__4_7                                                              ModelID = "glm-4.7"
-	Model__Llmgateway__Glm__4__32b__0414__128k__4                                            ModelID = "glm-4-32b-0414-128k"
-	Model__Llmgateway__Glm__4__5__Air__4_5                                                   ModelID = "glm-4.5-air"
-	Model__Llmgateway__Glm__4__5__Airx__4_5                                                  ModelID = "glm-4.5-airx"
-	Model__Llmgateway__Glm__4__5__Flash__4_5                                                 ModelID = "glm-4.5-flash"
-	Model__Llmgateway__Glm__4__5__X__4_5                                                     ModelID = "glm-4.5-x"
-	Model__Llmgateway__Glm__4__5v__4_5                                                       ModelID = "glm-4.5v"
-	Model__Llmgateway__Glm__4__6v__4_6                                                       ModelID = "glm-4.6v"
-	Model__Llmgateway__Glm__4__6v__4_6__Flash                                                ModelID = "glm-4.6v-flash"
-	Model__Llmgateway__Glm__4__6v__Flashx__4_6                                               ModelID = "glm-4.6v-flashx"
-	Model__Llmgateway__Glm__4__7__Flash__4_7                                                 ModelID = "glm-4.7-flash"
-	Model__Llmgateway__Glm__4__7__Flashx__4_7                                                ModelID = "glm-4.7-flashx"
-	Model__Llmgateway__Glm__5                                                                ModelID = "glm-5"
-	Model__Llmgateway__Glm__5_1                                                              ModelID = "glm-5.1"
-	Model__Llmgateway__Grok__4_1__ReasoningFast                                              ModelID = "grok-4-1-fast-reasoning"
-	Model__Llmgateway__Grok__4_20__Reasoning                                                 ModelID = "grok-4-20-reasoning"
-	Model__Llmgateway__Grok__4_3                                                             ModelID = "grok-4-3"
-	Model__Llmgateway__Grok__4__0709__4                                                      ModelID = "grok-4-0709"
-	Model__Llmgateway__Grok__4__20__Beta__0309__4_20__Reasoning                              ModelID = "grok-4-20-beta-0309-reasoning"
-	Model__Llmgateway__Grok__4__20__Beta__0309__Non__4_20__Reasoning                         ModelID = "grok-4-20-beta-0309-non-reasoning"
-	Model__Llmgateway__Grok__4__20__Non__4_20__Reasoning                                     ModelID = "grok-4-20-non-reasoning"
-	Model__Llmgateway__Grok__4__ReasoningFast                                                ModelID = "grok-4-fast-reasoning"
-	Model__Llmgateway__Hermes__2__Pro__Llama__3__8b__2                                       ModelID = "hermes-2-pro-llama-3-8b"
-	Model__Llmgateway__Kimi__K2__2                                                           ModelID = "kimi-k2"
-	Model__Llmgateway__Kimi__K2__2__Thinking                                                 ModelID = "kimi-k2-thinking"
-	Model__Llmgateway__Kimi__K2__2__ThinkingTurbo                                            ModelID = "kimi-k2-thinking-turbo"
-	Model__Llmgateway__Kimi__K2__5__2_5                                                      ModelID = "kimi-k2.5"
-	Model__Llmgateway__Kimi__K2__6__2_6                                                      ModelID = "kimi-k2.6"
-	Model__Llmgateway__Llama__3__1__70b__3_1__Instruct                                       ModelID = "llama-3.1-70b-instruct"
-	Model__Llmgateway__Llama__3__1__8b__3_1__Instruct                                        ModelID = "llama-3.1-8b-instruct"
-	Model__Llmgateway__Llama__3__1__Nemotron__Ultra__253b__3_1                               ModelID = "llama-3.1-nemotron-ultra-253b"
-	Model__Llmgateway__Llama__3__2__11b__3_2__Instruct                                       ModelID = "llama-3.2-11b-instruct"
-	Model__Llmgateway__Llama__3__2__3b__3_2__Instruct                                        ModelID = "llama-3.2-3b-instruct"
-	Model__Llmgateway__Llama__3__3__70b__3_3__Instruct                                       ModelID = "llama-3.3-70b-instruct"
-	Model__Llmgateway__Llama__3__70b__3__Instruct                                            ModelID = "llama-3-70b-instruct"
-	Model__Llmgateway__Llama__3__8b__3__Instruct                                             ModelID = "llama-3-8b-instruct"
-	Model__Llmgateway__Llama__4__Maverick__17b__4__Instruct                                  ModelID = "llama-4-maverick-17b-instruct"
-	Model__Llmgateway__Llama__4__Scout__17b__4__Instruct                                     ModelID = "llama-4-scout-17b-instruct"
-	Model__Llmgateway__Llama__4__Scout__4                                                    ModelID = "llama-4-scout"
-	Model__Llmgateway__Mimo__V2__2__Omni                                                     ModelID = "mimo-v2-omni"
-	Model__Llmgateway__Mimo__V2__2__Pro                                                      ModelID = "mimo-v2-pro"
-	Model__Llmgateway__Mimo__V2__5__2_5                                                      ModelID = "mimo-v2.5"
-	Model__Llmgateway__Mimo__V2__5__2_5__Pro                                                 ModelID = "mimo-v2.5-pro"
-	Model__Llmgateway__Mimo__V2__Flash                                                       ModelID = "mimo-v2-flash"
-	Model__Llmgateway__Minimax__M2__1__2_1                                                   ModelID = "minimax-m2.1"
-	Model__Llmgateway__Minimax__M2__1__2_1__Lightning                                        ModelID = "minimax-m2.1-lightning"
-	Model__Llmgateway__Minimax__M2__2                                                        ModelID = "minimax-m2"
-	Model__Llmgateway__Minimax__M2__5__2_5                                                   ModelID = "minimax-m2.5"
-	Model__Llmgateway__Minimax__M2__5__2_5__Highspeed                                        ModelID = "minimax-m2.5-highspeed"
-	Model__Llmgateway__Minimax__M2__7__2_7                                                   ModelID = "minimax-m2.7"
-	Model__Llmgateway__Minimax__M2__7__2_7__Highspeed                                        ModelID = "minimax-m2.7-highspeed"
-	Model__Llmgateway__Minimax__Text__01                                                     ModelID = "minimax-text-01"
-	Model__Llmgateway__Ministral__14b__2512                                                  ModelID = "ministral-14b-2512"
-	Model__Llmgateway__Ministral__3b__2512                                                   ModelID = "ministral-3b-2512"
-	Model__Llmgateway__Ministral__8b__2512                                                   ModelID = "ministral-8b-2512"
-	Model__Llmgateway__Mistral__Large__2512                                                  ModelID = "mistral-large-2512"
-	Model__Llmgateway__Mistral__Large__Latest                                                ModelID = "mistral-large-latest"
-	Model__Llmgateway__Mistral__Small__2506                                                  ModelID = "mistral-small-2506"
-	Model__Llmgateway__O1__1                                                                 ModelID = "o1"
-	Model__Llmgateway__O3__3                                                                 ModelID = "o3"
-	Model__Llmgateway__O3__3__Mini                                                           ModelID = "o3-mini"
-	Model__Llmgateway__O4__4__Mini                                                           ModelID = "o4-mini"
-	Model__Llmgateway__Pixtral__Large__Latest                                                ModelID = "pixtral-large-latest"
-	Model__Llmgateway__Qwen25__Coder__7b__25                                                 ModelID = "qwen25-coder-7b"
-	Model__Llmgateway__Qwen2__5__Vl__32b__2__Instruct                                        ModelID = "qwen2-5-vl-32b-instruct"
-	Model__Llmgateway__Qwen2__5__Vl__72b__2__Instruct                                        ModelID = "qwen2-5-vl-72b-instruct"
-	Model__Llmgateway__Qwen35__397b__A17b__35                                                ModelID = "qwen35-397b-a17b"
-	Model__Llmgateway__Qwen3__235b__A22b__Fp8__3                                             ModelID = "qwen3-235b-a22b-fp8"
-	Model__Llmgateway__Qwen3__235b__A22b__Instruct__2507__3__Instruct                        ModelID = "qwen3-235b-a22b-instruct-2507"
-	Model__Llmgateway__Qwen3__235b__A22b__Thinking__2507__3__Thinking                        ModelID = "qwen3-235b-a22b-thinking-2507"
-	Model__Llmgateway__Qwen3__30b__A3b__Fp8__3                                               ModelID = "qwen3-30b-a3b-fp8"
-	Model__Llmgateway__Qwen3__30b__A3b__Instruct__2507__3__Instruct                          ModelID = "qwen3-30b-a3b-instruct-2507"
-	Model__Llmgateway__Qwen3__30b__A3b__Thinking__2507__3__Thinking                          ModelID = "qwen3-30b-a3b-thinking-2507"
-	Model__Llmgateway__Qwen3__32b__3                                                         ModelID = "qwen3-32b"
-	Model__Llmgateway__Qwen3__32b__Fp8__3                                                    ModelID = "qwen3-32b-fp8"
-	Model__Llmgateway__Qwen3__4b__Fp8__3                                                     ModelID = "qwen3-4b-fp8"
-	Model__Llmgateway__Qwen3__6__35b__A3b__3_6                                               ModelID = "qwen3.6-35b-a3b"
-	Model__Llmgateway__Qwen3__6__Max__3_6__Preview                                           ModelID = "qwen3.6-max-preview"
-	Model__Llmgateway__Qwen3__6__Plus__3_6                                                   ModelID = "qwen3.6-plus"
-	Model__Llmgateway__Qwen3__7__Max__3_7                                                    ModelID = "qwen3.7-max"
-	Model__Llmgateway__Qwen3__Coder__30b__A3b__3__Instruct                                   ModelID = "qwen3-coder-30b-a3b-instruct"
-	Model__Llmgateway__Qwen3__Coder__480b__A35b__3__Instruct                                 ModelID = "qwen3-coder-480b-a35b-instruct"
-	Model__Llmgateway__Qwen3__Coder__Flash__3                                                ModelID = "qwen3-coder-flash"
-	Model__Llmgateway__Qwen3__Coder__Next__3                                                 ModelID = "qwen3-coder-next"
-	Model__Llmgateway__Qwen3__Coder__Plus__3                                                 ModelID = "qwen3-coder-plus"
-	Model__Llmgateway__Qwen3__Max__3                                                         ModelID = "qwen3-max"
-	Model__Llmgateway__Qwen3__Max__3__20260123                                               ModelID = "qwen3-max-2026-01-23"
-	Model__Llmgateway__Qwen3__Next__80b__A3b__3__Instruct                                    ModelID = "qwen3-next-80b-a3b-instruct"
-	Model__Llmgateway__Qwen3__Next__80b__A3b__3__Thinking                                    ModelID = "qwen3-next-80b-a3b-thinking"
-	Model__Llmgateway__Qwen3__Vl__235b__A22b__3__Instruct                                    ModelID = "qwen3-vl-235b-a22b-instruct"
-	Model__Llmgateway__Qwen3__Vl__235b__A22b__3__Thinking                                    ModelID = "qwen3-vl-235b-a22b-thinking"
-	Model__Llmgateway__Qwen3__Vl__30b__A3b__3__Instruct                                      ModelID = "qwen3-vl-30b-a3b-instruct"
-	Model__Llmgateway__Qwen3__Vl__30b__A3b__3__Thinking                                      ModelID = "qwen3-vl-30b-a3b-thinking"
-	Model__Llmgateway__Qwen3__Vl__8b__3__Instruct                                            ModelID = "qwen3-vl-8b-instruct"
-	Model__Llmgateway__Qwen3__Vl__Flash__3                                                   ModelID = "qwen3-vl-flash"
-	Model__Llmgateway__Qwen3__Vl__Plus__3                                                    ModelID = "qwen3-vl-plus"
-	Model__Llmgateway__Qwen__Coder__Plus                                                     ModelID = "qwen-coder-plus"
-	Model__Llmgateway__Qwen__Flash                                                           ModelID = "qwen-flash"
-	Model__Llmgateway__Qwen__Max                                                             ModelID = "qwen-max"
-	Model__Llmgateway__Qwen__Max__Latest                                                     ModelID = "qwen-max-latest"
-	Model__Llmgateway__Qwen__Omni__Turbo                                                     ModelID = "qwen-omni-turbo"
-	Model__Llmgateway__Qwen__Plus                                                            ModelID = "qwen-plus"
-	Model__Llmgateway__Qwen__Plus__Latest                                                    ModelID = "qwen-plus-latest"
-	Model__Llmgateway__Qwen__Turbo                                                           ModelID = "qwen-turbo"
-	Model__Llmgateway__Qwen__Vl__Max                                                         ModelID = "qwen-vl-max"
-	Model__Llmgateway__Qwen__Vl__Plus                                                        ModelID = "qwen-vl-plus"
-	Model__Llmgateway__Qwq__Plus                                                             ModelID = "qwq-plus"
-	Model__Llmgateway__Seed__1__6__250615__1_6                                               ModelID = "seed-1-6-250615"
-	Model__Llmgateway__Seed__1__6__250915__1_6                                               ModelID = "seed-1-6-250915"
-	Model__Llmgateway__Seed__1__6__Flash__250715__1_6                                        ModelID = "seed-1-6-flash-250715"
-	Model__Llmgateway__Seed__1__8__251228__1_8                                               ModelID = "seed-1-8-251228"
-	Model__Llmgateway__Sonar                                                                 ModelID = "sonar"
-	Model__Llmgateway__Sonar__Pro                                                            ModelID = "sonar-pro"
-	Model__Llmgateway__Sonar__Reasoning__Pro                                                 ModelID = "sonar-reasoning-pro"
+	Model__LlmGateway__Auto                                                                  ModelID = "auto"
+	Model__LlmGateway__Claude__3__5__Haiku__3_5                                              ModelID = "claude-3-5-haiku"
+	Model__LlmGateway__Claude__3__5__Sonnet__3_5__20241022                                   ModelID = "claude-3-5-sonnet-20241022"
+	Model__LlmGateway__Claude__3__7__Sonnet__3_7                                             ModelID = "claude-3-7-sonnet"
+	Model__LlmGateway__Claude__3__7__Sonnet__3_7__20250219                                   ModelID = "claude-3-7-sonnet-20250219"
+	Model__LlmGateway__Claude__3__Opus__3                                                    ModelID = "claude-3-opus"
+	Model__LlmGateway__Claude__Haiku__4_5                                                    ModelID = "claude-haiku-4-5"
+	Model__LlmGateway__Claude__Haiku__4_5__20251001                                          ModelID = "claude-haiku-4-5-20251001"
+	Model__LlmGateway__Claude__Opus__4_1__20250805                                           ModelID = "claude-opus-4-1-20250805"
+	Model__LlmGateway__Claude__Opus__4_5__20251101                                           ModelID = "claude-opus-4-5-20251101"
+	Model__LlmGateway__Claude__Opus__4_6                                                     ModelID = "claude-opus-4-6"
+	Model__LlmGateway__Claude__Opus__4_7                                                     ModelID = "claude-opus-4-7"
+	Model__LlmGateway__Claude__Opus__4_8                                                     ModelID = "claude-opus-4-8"
+	Model__LlmGateway__Claude__Opus__4__20250514                                             ModelID = "claude-opus-4-20250514"
+	Model__LlmGateway__Claude__Sonnet__4_5                                                   ModelID = "claude-sonnet-4-5"
+	Model__LlmGateway__Claude__Sonnet__4_5__20250929                                         ModelID = "claude-sonnet-4-5-20250929"
+	Model__LlmGateway__Claude__Sonnet__4_6                                                   ModelID = "claude-sonnet-4-6"
+	Model__LlmGateway__Claude__Sonnet__4__20250514                                           ModelID = "claude-sonnet-4-20250514"
+	Model__LlmGateway__Codestral__2508                                                       ModelID = "codestral-2508"
+	Model__LlmGateway__Custom                                                                ModelID = "custom"
+	Model__LlmGateway__DeepSeek__R1__0528                                                    ModelID = "deepseek-r1-0528"
+	Model__LlmGateway__DeepSeek__V3__1                                                       ModelID = "deepseek-v3.1"
+	Model__LlmGateway__DeepSeek__V3__2                                                       ModelID = "deepseek-v3.2"
+	Model__LlmGateway__DeepSeek__V4__Flash                                                   ModelID = "deepseek-v4-flash"
+	Model__LlmGateway__DeepSeek__V4__Pro__Thinking                                           ModelID = "deepseek-v4-pro"
+	Model__LlmGateway__Devstral__2512                                                        ModelID = "devstral-2512"
+	Model__LlmGateway__Devstral__Small__2507                                                 ModelID = "devstral-small-2507"
+	Model__LlmGateway__GLM__4_5                                                              ModelID = "glm-4.5"
+	Model__LlmGateway__GLM__4_6                                                              ModelID = "glm-4.6"
+	Model__LlmGateway__GLM__4_7                                                              ModelID = "glm-4.7"
+	Model__LlmGateway__GLM__4__32b__0414__128k__4                                            ModelID = "glm-4-32b-0414-128k"
+	Model__LlmGateway__GLM__4__5__Air__4_5                                                   ModelID = "glm-4.5-air"
+	Model__LlmGateway__GLM__4__5__Airx__4_5                                                  ModelID = "glm-4.5-airx"
+	Model__LlmGateway__GLM__4__5__Flash__4_5                                                 ModelID = "glm-4.5-flash"
+	Model__LlmGateway__GLM__4__5__X__4_5                                                     ModelID = "glm-4.5-x"
+	Model__LlmGateway__GLM__4__5v__4_5                                                       ModelID = "glm-4.5v"
+	Model__LlmGateway__GLM__4__6v__4_6                                                       ModelID = "glm-4.6v"
+	Model__LlmGateway__GLM__4__6v__4_6__Flash                                                ModelID = "glm-4.6v-flash"
+	Model__LlmGateway__GLM__4__6v__Flashx__4_6                                               ModelID = "glm-4.6v-flashx"
+	Model__LlmGateway__GLM__4__7__Flash__4_7                                                 ModelID = "glm-4.7-flash"
+	Model__LlmGateway__GLM__4__7__Flashx__4_7                                                ModelID = "glm-4.7-flashx"
+	Model__LlmGateway__GLM__5                                                                ModelID = "glm-5"
+	Model__LlmGateway__GLM__5_1                                                              ModelID = "glm-5.1"
+	Model__LlmGateway__GPT__3_5__Turbo                                                       ModelID = "gpt-3.5-turbo"
+	Model__LlmGateway__GPT__4                                                                ModelID = "gpt-4"
+	Model__LlmGateway__GPT__4_1                                                              ModelID = "gpt-4.1"
+	Model__LlmGateway__GPT__4__1__Mini__4_1                                                  ModelID = "gpt-4.1-mini"
+	Model__LlmGateway__GPT__4__1__Nano__4_1                                                  ModelID = "gpt-4.1-nano"
+	Model__LlmGateway__GPT__4__Turbo                                                         ModelID = "gpt-4-turbo"
+	Model__LlmGateway__GPT__4o                                                               ModelID = "gpt-4o"
+	Model__LlmGateway__GPT__4o__Mini                                                         ModelID = "gpt-4o-mini"
+	Model__LlmGateway__GPT__4o__Mini__Search__PreviewMini                                    ModelID = "gpt-4o-mini-search-preview"
+	Model__LlmGateway__GPT__4o__Search__Preview                                              ModelID = "gpt-4o-search-preview"
+	Model__LlmGateway__GPT__5                                                                ModelID = "gpt-5"
+	Model__LlmGateway__GPT__5_1                                                              ModelID = "gpt-5.1"
+	Model__LlmGateway__GPT__5_2                                                              ModelID = "gpt-5.2"
+	Model__LlmGateway__GPT__5_2__ChatLatest                                                  ModelID = "gpt-5.2-chat-latest"
+	Model__LlmGateway__GPT__5_3__ChatLatest                                                  ModelID = "gpt-5.3-chat-latest"
+	Model__LlmGateway__GPT__5_4                                                              ModelID = "gpt-5.4"
+	Model__LlmGateway__GPT__5_5                                                              ModelID = "gpt-5.5"
+	Model__LlmGateway__GPT__5__1__Codex__5_1                                                 ModelID = "gpt-5.1-codex"
+	Model__LlmGateway__GPT__5__1__Codex__Mini__5_1                                           ModelID = "gpt-5.1-codex-mini"
+	Model__LlmGateway__GPT__5__2__Codex__5_2                                                 ModelID = "gpt-5.2-codex"
+	Model__LlmGateway__GPT__5__2__Pro__5_2                                                   ModelID = "gpt-5.2-pro"
+	Model__LlmGateway__GPT__5__3__Codex__5_3                                                 ModelID = "gpt-5.3-codex"
+	Model__LlmGateway__GPT__5__4__Mini__5_4                                                  ModelID = "gpt-5.4-mini"
+	Model__LlmGateway__GPT__5__4__Nano__5_4                                                  ModelID = "gpt-5.4-nano"
+	Model__LlmGateway__GPT__5__4__Pro__5_4                                                   ModelID = "gpt-5.4-pro"
+	Model__LlmGateway__GPT__5__5__Pro__5_5                                                   ModelID = "gpt-5.5-pro"
+	Model__LlmGateway__GPT__5__ChatLatest                                                    ModelID = "gpt-5-chat-latest"
+	Model__LlmGateway__GPT__5__Mini__5                                                       ModelID = "gpt-5-mini"
+	Model__LlmGateway__GPT__5__Nano__5                                                       ModelID = "gpt-5-nano"
+	Model__LlmGateway__GPT__5__Pro__5                                                        ModelID = "gpt-5-pro"
+	Model__LlmGateway__GPT__Oss__120b                                                        ModelID = "gpt-oss-120b"
+	Model__LlmGateway__GPT__Oss__20b                                                         ModelID = "gpt-oss-20b"
+	Model__LlmGateway__Gemini__2__0__Flash__2_0                                              ModelID = "gemini-2.0-flash"
+	Model__LlmGateway__Gemini__2__0__Flash__Lite__2_0                                        ModelID = "gemini-2.0-flash-lite"
+	Model__LlmGateway__Gemini__2__5__Flash__2_5                                              ModelID = "gemini-2.5-flash"
+	Model__LlmGateway__Gemini__2__5__Flash__Lite__2_5                                        ModelID = "gemini-2.5-flash-lite"
+	Model__LlmGateway__Gemini__2__5__Pro__2_5                                                ModelID = "gemini-2.5-pro"
+	Model__LlmGateway__Gemini__3__1__Flash__Lite__3_1                                        ModelID = "gemini-3.1-flash-lite"
+	Model__LlmGateway__Gemini__3__1__Flash__Lite__3_1__Preview                               ModelID = "gemini-3.1-flash-lite-preview"
+	Model__LlmGateway__Gemini__3__1__Pro__3_1__Preview                                       ModelID = "gemini-3.1-pro-preview"
+	Model__LlmGateway__Gemini__3__5__Flash__3_5                                              ModelID = "gemini-3.5-flash"
+	Model__LlmGateway__Gemini__3__Flash__3__Preview                                          ModelID = "gemini-3-flash-preview"
+	Model__LlmGateway__Gemini__Pro__Latest                                                   ModelID = "gemini-pro-latest"
+	Model__LlmGateway__Gemma__2__27b__It__Together__2                                        ModelID = "gemma-2-27b-it-together"
+	Model__LlmGateway__Gemma__3__1b__It__3                                                   ModelID = "gemma-3-1b-it"
+	Model__LlmGateway__Gemma__3__27b__3                                                      ModelID = "gemma-3-27b"
+	Model__LlmGateway__Grok__4_1__ReasoningFast                                              ModelID = "grok-4-1-fast-reasoning"
+	Model__LlmGateway__Grok__4_20__Reasoning                                                 ModelID = "grok-4-20-reasoning"
+	Model__LlmGateway__Grok__4_3                                                             ModelID = "grok-4-3"
+	Model__LlmGateway__Grok__4__0709__4                                                      ModelID = "grok-4-0709"
+	Model__LlmGateway__Grok__4__20__Beta__0309__4_20__Reasoning                              ModelID = "grok-4-20-beta-0309-reasoning"
+	Model__LlmGateway__Grok__4__20__Beta__0309__Non__4_20__Reasoning                         ModelID = "grok-4-20-beta-0309-non-reasoning"
+	Model__LlmGateway__Grok__4__20__Non__4_20__Reasoning                                     ModelID = "grok-4-20-non-reasoning"
+	Model__LlmGateway__Grok__4__ReasoningFast                                                ModelID = "grok-4-fast-reasoning"
+	Model__LlmGateway__Hermes__2__Pro__Llama__3__8b__2                                       ModelID = "hermes-2-pro-llama-3-8b"
+	Model__LlmGateway__Kimi__K2__2                                                           ModelID = "kimi-k2"
+	Model__LlmGateway__Kimi__K2__2__Thinking                                                 ModelID = "kimi-k2-thinking"
+	Model__LlmGateway__Kimi__K2__2__ThinkingTurbo                                            ModelID = "kimi-k2-thinking-turbo"
+	Model__LlmGateway__Kimi__K2__5__2_5                                                      ModelID = "kimi-k2.5"
+	Model__LlmGateway__Kimi__K2__6__2_6                                                      ModelID = "kimi-k2.6"
+	Model__LlmGateway__Llama__3__1__70b__3_1__Instruct                                       ModelID = "llama-3.1-70b-instruct"
+	Model__LlmGateway__Llama__3__1__8b__3_1__Instruct                                        ModelID = "llama-3.1-8b-instruct"
+	Model__LlmGateway__Llama__3__1__Nemotron__Ultra__253b__3_1                               ModelID = "llama-3.1-nemotron-ultra-253b"
+	Model__LlmGateway__Llama__3__2__11b__3_2__Instruct                                       ModelID = "llama-3.2-11b-instruct"
+	Model__LlmGateway__Llama__3__2__3b__3_2__Instruct                                        ModelID = "llama-3.2-3b-instruct"
+	Model__LlmGateway__Llama__3__3__70b__3_3__Instruct                                       ModelID = "llama-3.3-70b-instruct"
+	Model__LlmGateway__Llama__3__70b__3__Instruct                                            ModelID = "llama-3-70b-instruct"
+	Model__LlmGateway__Llama__3__8b__3__Instruct                                             ModelID = "llama-3-8b-instruct"
+	Model__LlmGateway__Llama__4__Maverick__17b__4__Instruct                                  ModelID = "llama-4-maverick-17b-instruct"
+	Model__LlmGateway__Llama__4__Scout__17b__4__Instruct                                     ModelID = "llama-4-scout-17b-instruct"
+	Model__LlmGateway__Llama__4__Scout__4                                                    ModelID = "llama-4-scout"
+	Model__LlmGateway__Mimo__V2__2__Omni                                                     ModelID = "mimo-v2-omni"
+	Model__LlmGateway__Mimo__V2__2__Pro                                                      ModelID = "mimo-v2-pro"
+	Model__LlmGateway__Mimo__V2__5__2_5                                                      ModelID = "mimo-v2.5"
+	Model__LlmGateway__Mimo__V2__5__2_5__Pro                                                 ModelID = "mimo-v2.5-pro"
+	Model__LlmGateway__Mimo__V2__Flash                                                       ModelID = "mimo-v2-flash"
+	Model__LlmGateway__MiniMax__M2__1__2_1                                                   ModelID = "minimax-m2.1"
+	Model__LlmGateway__MiniMax__M2__1__2_1__Lightning                                        ModelID = "minimax-m2.1-lightning"
+	Model__LlmGateway__MiniMax__M2__2                                                        ModelID = "minimax-m2"
+	Model__LlmGateway__MiniMax__M2__5__2_5                                                   ModelID = "minimax-m2.5"
+	Model__LlmGateway__MiniMax__M2__5__2_5__Highspeed                                        ModelID = "minimax-m2.5-highspeed"
+	Model__LlmGateway__MiniMax__M2__7__2_7                                                   ModelID = "minimax-m2.7"
+	Model__LlmGateway__MiniMax__M2__7__2_7__Highspeed                                        ModelID = "minimax-m2.7-highspeed"
+	Model__LlmGateway__MiniMax__Text__01                                                     ModelID = "minimax-text-01"
+	Model__LlmGateway__Ministral__14b__2512                                                  ModelID = "ministral-14b-2512"
+	Model__LlmGateway__Ministral__3b__2512                                                   ModelID = "ministral-3b-2512"
+	Model__LlmGateway__Ministral__8b__2512                                                   ModelID = "ministral-8b-2512"
+	Model__LlmGateway__Mistral__Large__2512                                                  ModelID = "mistral-large-2512"
+	Model__LlmGateway__Mistral__Large__Latest                                                ModelID = "mistral-large-latest"
+	Model__LlmGateway__Mistral__Small__2506                                                  ModelID = "mistral-small-2506"
+	Model__LlmGateway__O1__1                                                                 ModelID = "o1"
+	Model__LlmGateway__O3__3                                                                 ModelID = "o3"
+	Model__LlmGateway__O3__3__Mini                                                           ModelID = "o3-mini"
+	Model__LlmGateway__O4__4__Mini                                                           ModelID = "o4-mini"
+	Model__LlmGateway__Pixtral__Large__Latest                                                ModelID = "pixtral-large-latest"
+	Model__LlmGateway__Qwen25__Coder__7b__25                                                 ModelID = "qwen25-coder-7b"
+	Model__LlmGateway__Qwen2__5__Vl__32b__2__Instruct                                        ModelID = "qwen2-5-vl-32b-instruct"
+	Model__LlmGateway__Qwen2__5__Vl__72b__2__Instruct                                        ModelID = "qwen2-5-vl-72b-instruct"
+	Model__LlmGateway__Qwen35__397b__A17b__35                                                ModelID = "qwen35-397b-a17b"
+	Model__LlmGateway__Qwen3__235b__A22b__Fp8__3                                             ModelID = "qwen3-235b-a22b-fp8"
+	Model__LlmGateway__Qwen3__235b__A22b__Instruct__2507__3__Instruct                        ModelID = "qwen3-235b-a22b-instruct-2507"
+	Model__LlmGateway__Qwen3__235b__A22b__Thinking__2507__3__Thinking                        ModelID = "qwen3-235b-a22b-thinking-2507"
+	Model__LlmGateway__Qwen3__30b__A3b__Fp8__3                                               ModelID = "qwen3-30b-a3b-fp8"
+	Model__LlmGateway__Qwen3__30b__A3b__Instruct__2507__3__Instruct                          ModelID = "qwen3-30b-a3b-instruct-2507"
+	Model__LlmGateway__Qwen3__30b__A3b__Thinking__2507__3__Thinking                          ModelID = "qwen3-30b-a3b-thinking-2507"
+	Model__LlmGateway__Qwen3__32b__3                                                         ModelID = "qwen3-32b"
+	Model__LlmGateway__Qwen3__32b__Fp8__3                                                    ModelID = "qwen3-32b-fp8"
+	Model__LlmGateway__Qwen3__4b__Fp8__3                                                     ModelID = "qwen3-4b-fp8"
+	Model__LlmGateway__Qwen3__6__35b__A3b__3_6                                               ModelID = "qwen3.6-35b-a3b"
+	Model__LlmGateway__Qwen3__6__Max__3_6__Preview                                           ModelID = "qwen3.6-max-preview"
+	Model__LlmGateway__Qwen3__6__Plus__3_6                                                   ModelID = "qwen3.6-plus"
+	Model__LlmGateway__Qwen3__7__Max__3_7                                                    ModelID = "qwen3.7-max"
+	Model__LlmGateway__Qwen3__Coder__30b__A3b__3__Instruct                                   ModelID = "qwen3-coder-30b-a3b-instruct"
+	Model__LlmGateway__Qwen3__Coder__480b__A35b__3__Instruct                                 ModelID = "qwen3-coder-480b-a35b-instruct"
+	Model__LlmGateway__Qwen3__Coder__Flash__3                                                ModelID = "qwen3-coder-flash"
+	Model__LlmGateway__Qwen3__Coder__Next__3                                                 ModelID = "qwen3-coder-next"
+	Model__LlmGateway__Qwen3__Coder__Plus__3                                                 ModelID = "qwen3-coder-plus"
+	Model__LlmGateway__Qwen3__Max__3                                                         ModelID = "qwen3-max"
+	Model__LlmGateway__Qwen3__Max__3__20260123                                               ModelID = "qwen3-max-2026-01-23"
+	Model__LlmGateway__Qwen3__Next__80b__A3b__3__Instruct                                    ModelID = "qwen3-next-80b-a3b-instruct"
+	Model__LlmGateway__Qwen3__Next__80b__A3b__3__Thinking                                    ModelID = "qwen3-next-80b-a3b-thinking"
+	Model__LlmGateway__Qwen3__Vl__235b__A22b__3__Instruct                                    ModelID = "qwen3-vl-235b-a22b-instruct"
+	Model__LlmGateway__Qwen3__Vl__235b__A22b__3__Thinking                                    ModelID = "qwen3-vl-235b-a22b-thinking"
+	Model__LlmGateway__Qwen3__Vl__30b__A3b__3__Instruct                                      ModelID = "qwen3-vl-30b-a3b-instruct"
+	Model__LlmGateway__Qwen3__Vl__30b__A3b__3__Thinking                                      ModelID = "qwen3-vl-30b-a3b-thinking"
+	Model__LlmGateway__Qwen3__Vl__8b__3__Instruct                                            ModelID = "qwen3-vl-8b-instruct"
+	Model__LlmGateway__Qwen3__Vl__Flash__3                                                   ModelID = "qwen3-vl-flash"
+	Model__LlmGateway__Qwen3__Vl__Plus__3                                                    ModelID = "qwen3-vl-plus"
+	Model__LlmGateway__Qwen__Coder__Plus                                                     ModelID = "qwen-coder-plus"
+	Model__LlmGateway__Qwen__Flash                                                           ModelID = "qwen-flash"
+	Model__LlmGateway__Qwen__Max                                                             ModelID = "qwen-max"
+	Model__LlmGateway__Qwen__Max__Latest                                                     ModelID = "qwen-max-latest"
+	Model__LlmGateway__Qwen__Omni__Turbo                                                     ModelID = "qwen-omni-turbo"
+	Model__LlmGateway__Qwen__Plus                                                            ModelID = "qwen-plus"
+	Model__LlmGateway__Qwen__Plus__Latest                                                    ModelID = "qwen-plus-latest"
+	Model__LlmGateway__Qwen__Turbo                                                           ModelID = "qwen-turbo"
+	Model__LlmGateway__Qwen__Vl__Max                                                         ModelID = "qwen-vl-max"
+	Model__LlmGateway__Qwen__Vl__Plus                                                        ModelID = "qwen-vl-plus"
+	Model__LlmGateway__Qwq__Plus                                                             ModelID = "qwq-plus"
+	Model__LlmGateway__Seed__1__6__250615__1_6                                               ModelID = "seed-1-6-250615"
+	Model__LlmGateway__Seed__1__6__250915__1_6                                               ModelID = "seed-1-6-250915"
+	Model__LlmGateway__Seed__1__6__Flash__250715__1_6                                        ModelID = "seed-1-6-flash-250715"
+	Model__LlmGateway__Seed__1__8__251228__1_8                                               ModelID = "seed-1-8-251228"
+	Model__LlmGateway__Sonar                                                                 ModelID = "sonar"
+	Model__LlmGateway__Sonar__Pro                                                            ModelID = "sonar-pro"
+	Model__LlmGateway__Sonar__Reasoning__Pro                                                 ModelID = "sonar-reasoning-pro"
 	Model__LucidQuery__Lucidnova__Rf1__100b                                                  ModelID = "lucidnova-rf1-100b"
 	Model__LucidQuery__Lucidquery__Nexus__Coder                                              ModelID = "lucidquery-nexus-coder"
-	Model__Meganova__Deepseek__R1__0528__Thinking                                            ModelID = "deepseek-ai/DeepSeek-R1-0528"
-	Model__Meganova__Deepseek__V3__0324                                                      ModelID = "deepseek-ai/DeepSeek-V3-0324"
-	Model__Meganova__Deepseek__V3__1                                                         ModelID = "deepseek-ai/DeepSeek-V3.1"
-	Model__Meganova__Deepseek__V3__2                                                         ModelID = "deepseek-ai/DeepSeek-V3.2"
-	Model__Meganova__Deepseek__V3__2__Exp                                                    ModelID = "deepseek-ai/DeepSeek-V3.2-Exp"
-	Model__Meganova__Glm__4_6                                                                ModelID = "zai-org/GLM-4.6"
-	Model__Meganova__Glm__4_7                                                                ModelID = "zai-org/GLM-4.7"
-	Model__Meganova__Glm__5                                                                  ModelID = "zai-org/GLM-5"
+	Model__Meganova__DeepSeek__R1__0528__Thinking                                            ModelID = "deepseek-ai/DeepSeek-R1-0528"
+	Model__Meganova__DeepSeek__V3__0324                                                      ModelID = "deepseek-ai/DeepSeek-V3-0324"
+	Model__Meganova__DeepSeek__V3__1                                                         ModelID = "deepseek-ai/DeepSeek-V3.1"
+	Model__Meganova__DeepSeek__V3__2                                                         ModelID = "deepseek-ai/DeepSeek-V3.2"
+	Model__Meganova__DeepSeek__V3__2__Exp                                                    ModelID = "deepseek-ai/DeepSeek-V3.2-Exp"
+	Model__Meganova__GLM__4_6                                                                ModelID = "zai-org/GLM-4.6"
+	Model__Meganova__GLM__4_7                                                                ModelID = "zai-org/GLM-4.7"
+	Model__Meganova__GLM__5                                                                  ModelID = "zai-org/GLM-5"
 	Model__Meganova__Kimi__K2__2__Thinking                                                   ModelID = "moonshotai/Kimi-K2-Thinking"
 	Model__Meganova__Kimi__K2__5__2_5                                                        ModelID = "moonshotai/Kimi-K2.5"
 	Model__Meganova__Llama__3__3__70B__3_3__Instruct                                         ModelID = "meta-llama/Llama-3.3-70B-Instruct"
 	Model__Meganova__Mimo__V2__Flash                                                         ModelID = "XiaomiMiMo/MiMo-V2-Flash"
-	Model__Meganova__Minimax__M2__1__2_1                                                     ModelID = "MiniMaxAI/MiniMax-M2.1"
-	Model__Meganova__Minimax__M2__5__2_5                                                     ModelID = "MiniMaxAI/MiniMax-M2.5"
+	Model__Meganova__MiniMax__M2__1__2_1                                                     ModelID = "MiniMaxAI/MiniMax-M2.1"
+	Model__Meganova__MiniMax__M2__5__2_5                                                     ModelID = "MiniMaxAI/MiniMax-M2.5"
 	Model__Meganova__Mistral__Nemo__Instruct__2407__Instruct                                 ModelID = "mistralai/Mistral-Nemo-Instruct-2407"
 	Model__Meganova__Mistral__Small__3__2__24B__Instruct__2506__3_2__Instruct                ModelID = "mistralai/Mistral-Small-3.2-24B-Instruct-2506"
 	Model__Meganova__Qwen2__5__Vl__32B__2_5__Instruct                                        ModelID = "Qwen/Qwen2.5-VL-32B-Instruct"
@@ -2232,12 +2218,20 @@ const (
 	Model__MergeGateway__Command__R7b__12__2024__12                                          ModelID = "cohere/command-r7b-12-2024"
 	Model__MergeGateway__Command__R__20240830                                                ModelID = "cohere/command-r-08-2024"
 	Model__MergeGateway__Command__R__Plus__20240830                                          ModelID = "cohere/command-r-plus-08-2024"
-	Model__MergeGateway__Deepseek__V4__Flash                                                 ModelID = "deepseek/deepseek-v4-flash"
-	Model__MergeGateway__Deepseek__V4__Pro__Thinking                                         ModelID = "deepseek/deepseek-v4-pro"
+	Model__MergeGateway__DeepSeek__V4__Flash                                                 ModelID = "deepseek/deepseek-v4-flash"
+	Model__MergeGateway__DeepSeek__V4__Pro__Thinking                                         ModelID = "deepseek/deepseek-v4-pro"
 	Model__MergeGateway__Devstral__2512                                                      ModelID = "mistral/devstral-2512"
 	Model__MergeGateway__Devstral__Medium__2507                                              ModelID = "mistral/devstral-medium-2507"
 	Model__MergeGateway__Devstral__Medium__Latest                                            ModelID = "mistral/devstral-medium-latest"
 	Model__MergeGateway__Devstral__Small__2507                                               ModelID = "mistral/devstral-small-2507"
+	Model__MergeGateway__GLM__4_5                                                            ModelID = "zai/glm-4.5"
+	Model__MergeGateway__GLM__4_6                                                            ModelID = "zai/glm-4.6"
+	Model__MergeGateway__GLM__4_7                                                            ModelID = "zai/glm-4.7"
+	Model__MergeGateway__GLM__4__5__Air__4_5                                                 ModelID = "zai/glm-4.5-air"
+	Model__MergeGateway__GLM__4__7__Flashx__4_7                                              ModelID = "zai/glm-4.7-flashx"
+	Model__MergeGateway__GLM__5                                                              ModelID = "zai/glm-5"
+	Model__MergeGateway__GLM__5_1                                                            ModelID = "zai/glm-5.1"
+	Model__MergeGateway__GLM__5__Turbo                                                       ModelID = "zai/glm-5-turbo"
 	Model__MergeGateway__GPT__4_1                                                            ModelID = "openai/gpt-4.1"
 	Model__MergeGateway__GPT__4__1__Mini__4_1                                                ModelID = "openai/gpt-4.1-mini"
 	Model__MergeGateway__GPT__4__1__Nano__4_1                                                ModelID = "openai/gpt-4.1-nano"
@@ -2273,23 +2267,15 @@ const (
 	Model__MergeGateway__Gemini__Flash__Lite__Latest                                         ModelID = "google/gemini-flash-lite-latest"
 	Model__MergeGateway__Gemma__4__26b__A4b__It__4                                           ModelID = "google/gemma-4-26b-a4b-it"
 	Model__MergeGateway__Gemma__4__31b__It__4                                                ModelID = "google/gemma-4-31b-it"
-	Model__MergeGateway__Glm__4_5                                                            ModelID = "zai/glm-4.5"
-	Model__MergeGateway__Glm__4_6                                                            ModelID = "zai/glm-4.6"
-	Model__MergeGateway__Glm__4_7                                                            ModelID = "zai/glm-4.7"
-	Model__MergeGateway__Glm__4__5__Air__4_5                                                 ModelID = "zai/glm-4.5-air"
-	Model__MergeGateway__Glm__4__7__Flashx__4_7                                              ModelID = "zai/glm-4.7-flashx"
-	Model__MergeGateway__Glm__5                                                              ModelID = "zai/glm-5"
-	Model__MergeGateway__Glm__5_1                                                            ModelID = "zai/glm-5.1"
-	Model__MergeGateway__Glm__5__Turbo                                                       ModelID = "zai/glm-5-turbo"
 	Model__MergeGateway__Grok__4_3                                                           ModelID = "xai/grok-4.3"
 	Model__MergeGateway__Grok__4__20__0309__4_20__Reasoning                                  ModelID = "xai/grok-4.20-0309-reasoning"
 	Model__MergeGateway__Magistral__Medium__Latest                                           ModelID = "mistral/magistral-medium-latest"
-	Model__MergeGateway__Minimax__M2__1__2_1                                                 ModelID = "minimax/minimax-m2.1"
-	Model__MergeGateway__Minimax__M2__2                                                      ModelID = "minimax/minimax-m2"
-	Model__MergeGateway__Minimax__M2__5__2_5                                                 ModelID = "minimax/minimax-m2.5"
-	Model__MergeGateway__Minimax__M2__5__2_5__Highspeed                                      ModelID = "minimax/minimax-m2.5-highspeed"
-	Model__MergeGateway__Minimax__M2__7__2_7                                                 ModelID = "minimax/minimax-m2.7"
-	Model__MergeGateway__Minimax__M2__7__2_7__Highspeed                                      ModelID = "minimax/minimax-m2.7-highspeed"
+	Model__MergeGateway__MiniMax__M2__1__2_1                                                 ModelID = "minimax/minimax-m2.1"
+	Model__MergeGateway__MiniMax__M2__2                                                      ModelID = "minimax/minimax-m2"
+	Model__MergeGateway__MiniMax__M2__5__2_5                                                 ModelID = "minimax/minimax-m2.5"
+	Model__MergeGateway__MiniMax__M2__5__2_5__Highspeed                                      ModelID = "minimax/minimax-m2.5-highspeed"
+	Model__MergeGateway__MiniMax__M2__7__2_7                                                 ModelID = "minimax/minimax-m2.7"
+	Model__MergeGateway__MiniMax__M2__7__2_7__Highspeed                                      ModelID = "minimax/minimax-m2.7-highspeed"
 	Model__MergeGateway__Mistral__Large__2411                                                ModelID = "mistral/mistral-large-2411"
 	Model__MergeGateway__Mistral__Large__2512                                                ModelID = "mistral/mistral-large-2512"
 	Model__MergeGateway__Mistral__Large__Latest                                              ModelID = "mistral/mistral-large-latest"
@@ -2301,30 +2287,30 @@ const (
 	Model__MergeGateway__O3__3__Mini                                                         ModelID = "openai/o3-mini"
 	Model__MergeGateway__O4__4__Mini                                                         ModelID = "openai/o4-mini"
 	Model__MergeGateway__Pixtral__Large__Latest                                              ModelID = "mistral/pixtral-large-latest"
-	Model__MiniMaxCNCodingPlan__Minimax__M2__1__2_1                                          ModelID = "MiniMax-M2.1"
-	Model__MiniMaxCNCodingPlan__Minimax__M2__2                                               ModelID = "MiniMax-M2"
-	Model__MiniMaxCNCodingPlan__Minimax__M2__5__2_5                                          ModelID = "MiniMax-M2.5"
-	Model__MiniMaxCNCodingPlan__Minimax__M2__5__2_5__Highspeed                               ModelID = "MiniMax-M2.5-highspeed"
-	Model__MiniMaxCNCodingPlan__Minimax__M2__7__2_7                                          ModelID = "MiniMax-M2.7"
-	Model__MiniMaxCNCodingPlan__Minimax__M2__7__2_7__Highspeed                               ModelID = "MiniMax-M2.7-highspeed"
-	Model__MiniMaxCN__Minimax__M2__1__2_1                                                    ModelID = "MiniMax-M2.1"
-	Model__MiniMaxCN__Minimax__M2__2                                                         ModelID = "MiniMax-M2"
-	Model__MiniMaxCN__Minimax__M2__5__2_5                                                    ModelID = "MiniMax-M2.5"
-	Model__MiniMaxCN__Minimax__M2__5__2_5__Highspeed                                         ModelID = "MiniMax-M2.5-highspeed"
-	Model__MiniMaxCN__Minimax__M2__7__2_7                                                    ModelID = "MiniMax-M2.7"
-	Model__MiniMaxCN__Minimax__M2__7__2_7__Highspeed                                         ModelID = "MiniMax-M2.7-highspeed"
-	Model__MiniMaxCodingPlan__Minimax__M2__1__2_1                                            ModelID = "MiniMax-M2.1"
-	Model__MiniMaxCodingPlan__Minimax__M2__2                                                 ModelID = "MiniMax-M2"
-	Model__MiniMaxCodingPlan__Minimax__M2__5__2_5                                            ModelID = "MiniMax-M2.5"
-	Model__MiniMaxCodingPlan__Minimax__M2__5__2_5__Highspeed                                 ModelID = "MiniMax-M2.5-highspeed"
-	Model__MiniMaxCodingPlan__Minimax__M2__7__2_7                                            ModelID = "MiniMax-M2.7"
-	Model__MiniMaxCodingPlan__Minimax__M2__7__2_7__Highspeed                                 ModelID = "MiniMax-M2.7-highspeed"
-	Model__MiniMax__Minimax__M2__1__2_1                                                      ModelID = "MiniMax-M2.1"
-	Model__MiniMax__Minimax__M2__2                                                           ModelID = "MiniMax-M2"
-	Model__MiniMax__Minimax__M2__5__2_5                                                      ModelID = "MiniMax-M2.5"
-	Model__MiniMax__Minimax__M2__5__2_5__Highspeed                                           ModelID = "MiniMax-M2.5-highspeed"
-	Model__MiniMax__Minimax__M2__7__2_7                                                      ModelID = "MiniMax-M2.7"
-	Model__MiniMax__Minimax__M2__7__2_7__Highspeed                                           ModelID = "MiniMax-M2.7-highspeed"
+	Model__MiniMaxCNCodingPlan__MiniMax__M2__1__2_1                                          ModelID = "MiniMax-M2.1"
+	Model__MiniMaxCNCodingPlan__MiniMax__M2__2                                               ModelID = "MiniMax-M2"
+	Model__MiniMaxCNCodingPlan__MiniMax__M2__5__2_5                                          ModelID = "MiniMax-M2.5"
+	Model__MiniMaxCNCodingPlan__MiniMax__M2__5__2_5__Highspeed                               ModelID = "MiniMax-M2.5-highspeed"
+	Model__MiniMaxCNCodingPlan__MiniMax__M2__7__2_7                                          ModelID = "MiniMax-M2.7"
+	Model__MiniMaxCNCodingPlan__MiniMax__M2__7__2_7__Highspeed                               ModelID = "MiniMax-M2.7-highspeed"
+	Model__MiniMaxCN__MiniMax__M2__1__2_1                                                    ModelID = "MiniMax-M2.1"
+	Model__MiniMaxCN__MiniMax__M2__2                                                         ModelID = "MiniMax-M2"
+	Model__MiniMaxCN__MiniMax__M2__5__2_5                                                    ModelID = "MiniMax-M2.5"
+	Model__MiniMaxCN__MiniMax__M2__5__2_5__Highspeed                                         ModelID = "MiniMax-M2.5-highspeed"
+	Model__MiniMaxCN__MiniMax__M2__7__2_7                                                    ModelID = "MiniMax-M2.7"
+	Model__MiniMaxCN__MiniMax__M2__7__2_7__Highspeed                                         ModelID = "MiniMax-M2.7-highspeed"
+	Model__MiniMaxCodingPlan__MiniMax__M2__1__2_1                                            ModelID = "MiniMax-M2.1"
+	Model__MiniMaxCodingPlan__MiniMax__M2__2                                                 ModelID = "MiniMax-M2"
+	Model__MiniMaxCodingPlan__MiniMax__M2__5__2_5                                            ModelID = "MiniMax-M2.5"
+	Model__MiniMaxCodingPlan__MiniMax__M2__5__2_5__Highspeed                                 ModelID = "MiniMax-M2.5-highspeed"
+	Model__MiniMaxCodingPlan__MiniMax__M2__7__2_7                                            ModelID = "MiniMax-M2.7"
+	Model__MiniMaxCodingPlan__MiniMax__M2__7__2_7__Highspeed                                 ModelID = "MiniMax-M2.7-highspeed"
+	Model__MiniMax__MiniMax__M2__1__2_1                                                      ModelID = "MiniMax-M2.1"
+	Model__MiniMax__MiniMax__M2__2                                                           ModelID = "MiniMax-M2"
+	Model__MiniMax__MiniMax__M2__5__2_5                                                      ModelID = "MiniMax-M2.5"
+	Model__MiniMax__MiniMax__M2__5__2_5__Highspeed                                           ModelID = "MiniMax-M2.5-highspeed"
+	Model__MiniMax__MiniMax__M2__7__2_7                                                      ModelID = "MiniMax-M2.7"
+	Model__MiniMax__MiniMax__M2__7__2_7__Highspeed                                           ModelID = "MiniMax-M2.7-highspeed"
 	Model__Mistral__Codestral__Latest                                                        ModelID = "codestral-latest"
 	Model__Mistral__Devstral__2512                                                           ModelID = "devstral-2512"
 	Model__Mistral__Devstral__Medium__2507                                                   ModelID = "devstral-medium-2507"
@@ -2358,29 +2344,29 @@ const (
 	Model__Mixlayer__Qwen3__5__35b__A3b__3_5                                                 ModelID = "qwen/qwen3.5-35b-a3b"
 	Model__Mixlayer__Qwen3__5__397b__A17b__3_5                                               ModelID = "qwen/qwen3.5-397b-a17b"
 	Model__Mixlayer__Qwen3__5__9b__3_5                                                       ModelID = "qwen/qwen3.5-9b"
-	Model__Moark__Glm__4_7                                                                   ModelID = "GLM-4.7"
-	Model__Moark__Minimax__M2__1__2_1                                                        ModelID = "MiniMax-M2.1"
-	Model__ModelScope__Glm__4_5                                                              ModelID = "ZhipuAI/GLM-4.5"
-	Model__ModelScope__Glm__4_6                                                              ModelID = "ZhipuAI/GLM-4.6"
+	Model__Moark__GLM__4_7                                                                   ModelID = "GLM-4.7"
+	Model__Moark__MiniMax__M2__1__2_1                                                        ModelID = "MiniMax-M2.1"
+	Model__ModelScope__GLM__4_5                                                              ModelID = "ZhipuAI/GLM-4.5"
+	Model__ModelScope__GLM__4_6                                                              ModelID = "ZhipuAI/GLM-4.6"
 	Model__ModelScope__Qwen3__235B__A22b__Instruct__2507__3__Instruct                        ModelID = "Qwen/Qwen3-235B-A22B-Instruct-2507"
 	Model__ModelScope__Qwen3__235B__A22b__Thinking__2507__3__Thinking                        ModelID = "Qwen/Qwen3-235B-A22B-Thinking-2507"
 	Model__ModelScope__Qwen3__30B__A3b__Instruct__2507__3__Instruct                          ModelID = "Qwen/Qwen3-30B-A3B-Instruct-2507"
 	Model__ModelScope__Qwen3__30B__A3b__Thinking__2507__3__Thinking                          ModelID = "Qwen/Qwen3-30B-A3B-Thinking-2507"
 	Model__ModelScope__Qwen3__Coder__30B__A3b__3__Instruct                                   ModelID = "Qwen/Qwen3-Coder-30B-A3B-Instruct"
-	Model__MoonshotaiCN__Kimi__K2__0711__2__Preview                                          ModelID = "kimi-k2-0711-preview"
-	Model__MoonshotaiCN__Kimi__K2__0905__2__Preview                                          ModelID = "kimi-k2-0905-preview"
-	Model__MoonshotaiCN__Kimi__K2__2__Thinking                                               ModelID = "kimi-k2-thinking"
-	Model__MoonshotaiCN__Kimi__K2__2__ThinkingTurbo                                          ModelID = "kimi-k2-thinking-turbo"
-	Model__MoonshotaiCN__Kimi__K2__2__TurboPreview                                           ModelID = "kimi-k2-turbo-preview"
-	Model__MoonshotaiCN__Kimi__K2__5__2_5                                                    ModelID = "kimi-k2.5"
-	Model__MoonshotaiCN__Kimi__K2__6__2_6                                                    ModelID = "kimi-k2.6"
-	Model__Moonshotai__Kimi__K2__0711__2__Preview                                            ModelID = "kimi-k2-0711-preview"
-	Model__Moonshotai__Kimi__K2__0905__2__Preview                                            ModelID = "kimi-k2-0905-preview"
-	Model__Moonshotai__Kimi__K2__2__Thinking                                                 ModelID = "kimi-k2-thinking"
-	Model__Moonshotai__Kimi__K2__2__ThinkingTurbo                                            ModelID = "kimi-k2-thinking-turbo"
-	Model__Moonshotai__Kimi__K2__2__TurboPreview                                             ModelID = "kimi-k2-turbo-preview"
-	Model__Moonshotai__Kimi__K2__5__2_5                                                      ModelID = "kimi-k2.5"
-	Model__Moonshotai__Kimi__K2__6__2_6                                                      ModelID = "kimi-k2.6"
+	Model__MoonshotAICN__Kimi__K2__0711__2__Preview                                          ModelID = "kimi-k2-0711-preview"
+	Model__MoonshotAICN__Kimi__K2__0905__2__Preview                                          ModelID = "kimi-k2-0905-preview"
+	Model__MoonshotAICN__Kimi__K2__2__Thinking                                               ModelID = "kimi-k2-thinking"
+	Model__MoonshotAICN__Kimi__K2__2__ThinkingTurbo                                          ModelID = "kimi-k2-thinking-turbo"
+	Model__MoonshotAICN__Kimi__K2__2__TurboPreview                                           ModelID = "kimi-k2-turbo-preview"
+	Model__MoonshotAICN__Kimi__K2__5__2_5                                                    ModelID = "kimi-k2.5"
+	Model__MoonshotAICN__Kimi__K2__6__2_6                                                    ModelID = "kimi-k2.6"
+	Model__MoonshotAI__Kimi__K2__0711__2__Preview                                            ModelID = "kimi-k2-0711-preview"
+	Model__MoonshotAI__Kimi__K2__0905__2__Preview                                            ModelID = "kimi-k2-0905-preview"
+	Model__MoonshotAI__Kimi__K2__2__Thinking                                                 ModelID = "kimi-k2-thinking"
+	Model__MoonshotAI__Kimi__K2__2__ThinkingTurbo                                            ModelID = "kimi-k2-thinking-turbo"
+	Model__MoonshotAI__Kimi__K2__2__TurboPreview                                             ModelID = "kimi-k2-turbo-preview"
+	Model__MoonshotAI__Kimi__K2__5__2_5                                                      ModelID = "kimi-k2.5"
+	Model__MoonshotAI__Kimi__K2__6__2_6                                                      ModelID = "kimi-k2.6"
 	Model__Morph__Auto                                                                       ModelID = "auto"
 	Model__Morph__Morph__V3__Fast                                                            ModelID = "morph-v3-fast"
 	Model__Morph__Morph__V3__Large                                                           ModelID = "morph-v3-large"
@@ -2458,34 +2444,34 @@ const (
 	Model__NanoGPT__Cydonia__24B__V4                                                         ModelID = "TheDrummer 2/Cydonia-24B-v4"
 	Model__NanoGPT__Cydonia__24B__V4__1                                                      ModelID = "TheDrummer 2/Cydonia-24B-v4.1"
 	Model__NanoGPT__Cydonia__24B__V4__3                                                      ModelID = "TheDrummer 2/Cydonia-24B-v4.3"
+	Model__NanoGPT__DeepSeek__Chat                                                           ModelID = "deepseek-chat"
+	Model__NanoGPT__DeepSeek__Chat__Cheaper                                                  ModelID = "deepseek-chat-cheaper"
+	Model__NanoGPT__DeepSeek__Math__V2                                                       ModelID = "deepseek-math-v2"
+	Model__NanoGPT__DeepSeek__Prover__V2__671b                                               ModelID = "deepseek/deepseek-prover-v2-671b"
+	Model__NanoGPT__DeepSeek__R1                                                             ModelID = "deepseek-r1"
+	Model__NanoGPT__DeepSeek__R1__0528_1                                                     ModelID = "TEE/deepseek-r1-0528"
+	Model__NanoGPT__DeepSeek__R1__0528_2                                                     ModelID = "deepseek-ai/DeepSeek-R1-0528"
+	Model__NanoGPT__DeepSeek__R1__Distill__Llama__70B__Abliterated                           ModelID = "huihui-ai/DeepSeek-R1-Distill-Llama-70B-abliterated"
+	Model__NanoGPT__DeepSeek__R1__Distill__Qwen__32B__Abliterated                            ModelID = "huihui-ai/DeepSeek-R1-Distill-Qwen-32B-abliterated"
+	Model__NanoGPT__DeepSeek__R1__Sambanova                                                  ModelID = "deepseek-r1-sambanova"
+	Model__NanoGPT__DeepSeek__Reasoner                                                       ModelID = "deepseek-reasoner"
+	Model__NanoGPT__DeepSeek__Reasoner__Cheaper                                              ModelID = "deepseek-reasoner-cheaper"
+	Model__NanoGPT__DeepSeek__Tng__R1t2__Chimera                                             ModelID = "tngtech/DeepSeek-TNG-R1T2-Chimera"
+	Model__NanoGPT__DeepSeek__V3__0324                                                       ModelID = "deepseek-v3-0324"
+	Model__NanoGPT__DeepSeek__V3__1_1                                                        ModelID = "TEE/deepseek-v3.1"
+	Model__NanoGPT__DeepSeek__V3__1_2                                                        ModelID = "deepseek-ai/DeepSeek-V3.1"
+	Model__NanoGPT__DeepSeek__V3__1__Nex__N1                                                 ModelID = "nex-agi/deepseek-v3.1-nex-n1"
+	Model__NanoGPT__DeepSeek__V3__1__Terminus                                                ModelID = "deepseek-ai/DeepSeek-V3.1-Terminus"
+	Model__NanoGPT__DeepSeek__V3__1__Terminus__Thinking__Thinking                            ModelID = "deepseek-ai/DeepSeek-V3.1-Terminus:thinking"
+	Model__NanoGPT__DeepSeek__V3__1__Thinking__Thinking                                      ModelID = "deepseek-ai/DeepSeek-V3.1:thinking"
+	Model__NanoGPT__DeepSeek__V3__2_1                                                        ModelID = "TEE/deepseek-v3.2"
+	Model__NanoGPT__DeepSeek__V3__2_2                                                        ModelID = "deepseek/deepseek-v3.2"
+	Model__NanoGPT__DeepSeek__V3__2__Exp                                                     ModelID = "deepseek-ai/deepseek-v3.2-exp"
+	Model__NanoGPT__DeepSeek__V3__2__Exp__Thinking                                           ModelID = "deepseek-ai/deepseek-v3.2-exp-thinking"
+	Model__NanoGPT__DeepSeek__V3__2__Speciale                                                ModelID = "deepseek/deepseek-v3.2-speciale"
+	Model__NanoGPT__DeepSeek__V3__2__Thinking                                                ModelID = "deepseek/deepseek-v3.2:thinking"
 	Model__NanoGPT__Deepclaude                                                               ModelID = "deepclaude"
 	Model__NanoGPT__Deephermes__3__Mistral__24B__Preview                                     ModelID = "NousResearch 2/DeepHermes-3-Mistral-24B-Preview"
-	Model__NanoGPT__Deepseek__Chat                                                           ModelID = "deepseek-chat"
-	Model__NanoGPT__Deepseek__Chat__Cheaper                                                  ModelID = "deepseek-chat-cheaper"
-	Model__NanoGPT__Deepseek__Math__V2                                                       ModelID = "deepseek-math-v2"
-	Model__NanoGPT__Deepseek__Prover__V2__671b                                               ModelID = "deepseek/deepseek-prover-v2-671b"
-	Model__NanoGPT__Deepseek__R1                                                             ModelID = "deepseek-r1"
-	Model__NanoGPT__Deepseek__R1__0528_1                                                     ModelID = "TEE/deepseek-r1-0528"
-	Model__NanoGPT__Deepseek__R1__0528_2                                                     ModelID = "deepseek-ai/DeepSeek-R1-0528"
-	Model__NanoGPT__Deepseek__R1__Distill__Llama__70B__Abliterated                           ModelID = "huihui-ai/DeepSeek-R1-Distill-Llama-70B-abliterated"
-	Model__NanoGPT__Deepseek__R1__Distill__Qwen__32B__Abliterated                            ModelID = "huihui-ai/DeepSeek-R1-Distill-Qwen-32B-abliterated"
-	Model__NanoGPT__Deepseek__R1__Sambanova                                                  ModelID = "deepseek-r1-sambanova"
-	Model__NanoGPT__Deepseek__Reasoner                                                       ModelID = "deepseek-reasoner"
-	Model__NanoGPT__Deepseek__Reasoner__Cheaper                                              ModelID = "deepseek-reasoner-cheaper"
-	Model__NanoGPT__Deepseek__Tng__R1t2__Chimera                                             ModelID = "tngtech/DeepSeek-TNG-R1T2-Chimera"
-	Model__NanoGPT__Deepseek__V3__0324                                                       ModelID = "deepseek-v3-0324"
-	Model__NanoGPT__Deepseek__V3__1_1                                                        ModelID = "TEE/deepseek-v3.1"
-	Model__NanoGPT__Deepseek__V3__1_2                                                        ModelID = "deepseek-ai/DeepSeek-V3.1"
-	Model__NanoGPT__Deepseek__V3__1__Nex__N1                                                 ModelID = "nex-agi/deepseek-v3.1-nex-n1"
-	Model__NanoGPT__Deepseek__V3__1__Terminus                                                ModelID = "deepseek-ai/DeepSeek-V3.1-Terminus"
-	Model__NanoGPT__Deepseek__V3__1__Terminus__Thinking__Thinking                            ModelID = "deepseek-ai/DeepSeek-V3.1-Terminus:thinking"
-	Model__NanoGPT__Deepseek__V3__1__Thinking__Thinking                                      ModelID = "deepseek-ai/DeepSeek-V3.1:thinking"
-	Model__NanoGPT__Deepseek__V3__2_1                                                        ModelID = "TEE/deepseek-v3.2"
-	Model__NanoGPT__Deepseek__V3__2_2                                                        ModelID = "deepseek/deepseek-v3.2"
-	Model__NanoGPT__Deepseek__V3__2__Exp                                                     ModelID = "deepseek-ai/deepseek-v3.2-exp"
-	Model__NanoGPT__Deepseek__V3__2__Exp__Thinking                                           ModelID = "deepseek-ai/deepseek-v3.2-exp-thinking"
-	Model__NanoGPT__Deepseek__V3__2__Speciale                                                ModelID = "deepseek/deepseek-v3.2-speciale"
-	Model__NanoGPT__Deepseek__V3__2__Thinking                                                ModelID = "deepseek/deepseek-v3.2:thinking"
 	Model__NanoGPT__Devstral__2__123b__Instruct__2512__2__Instruct                           ModelID = "mistralai/devstral-2-123b-instruct-2512"
 	Model__NanoGPT__Devstral__Small__2505                                                    ModelID = "mistralai/Devstral-Small-2505"
 	Model__NanoGPT__Dmind__1                                                                 ModelID = "dmind/dmind-1"
@@ -2526,6 +2512,46 @@ const (
 	Model__NanoGPT__Exa__Research                                                            ModelID = "exa-research"
 	Model__NanoGPT__Exa__Research__Pro                                                       ModelID = "exa-research-pro"
 	Model__NanoGPT__Fastgpt                                                                  ModelID = "fastgpt"
+	Model__NanoGPT__GLM__4                                                                   ModelID = "glm-4"
+	Model__NanoGPT__GLM__4_6_1                                                               ModelID = "TEE/glm-4.6"
+	Model__NanoGPT__GLM__4_6_2                                                               ModelID = "z-ai/glm-4.6"
+	Model__NanoGPT__GLM__4_7_1                                                               ModelID = "TEE/glm-4.7"
+	Model__NanoGPT__GLM__4_7_2                                                               ModelID = "zai-org/glm-4.7"
+	Model__NanoGPT__GLM__4__1v__Thinking__Flash                                              ModelID = "glm-4.1v-thinking-flash"
+	Model__NanoGPT__GLM__4__1v__Thinking__Flashx__4_1                                        ModelID = "glm-4.1v-thinking-flashx"
+	Model__NanoGPT__GLM__4__32B__0414__4                                                     ModelID = "THUDM/GLM-4-32B-0414"
+	Model__NanoGPT__GLM__4__5__Air__Derestricted__4_5                                        ModelID = "GLM-4.5-Air-Derestricted"
+	Model__NanoGPT__GLM__4__5__Air__Derestricted__Iceblink__4_5                              ModelID = "GLM-4.5-Air-Derestricted-Iceblink"
+	Model__NanoGPT__GLM__4__5__Air__Derestricted__Iceblink__Reextract__4_5                   ModelID = "GLM-4.5-Air-Derestricted-Iceblink-ReExtract"
+	Model__NanoGPT__GLM__4__5__Air__Derestricted__Iceblink__V2__4_5                          ModelID = "GLM-4.5-Air-Derestricted-Iceblink-v2"
+	Model__NanoGPT__GLM__4__5__Air__Derestricted__Iceblink__V2__Reextract__4_5               ModelID = "GLM-4.5-Air-Derestricted-Iceblink-v2-ReExtract"
+	Model__NanoGPT__GLM__4__5__Air__Derestricted__Steam__4_5                                 ModelID = "GLM-4.5-Air-Derestricted-Steam"
+	Model__NanoGPT__GLM__4__5__Air__Derestricted__Steam__Reextract__4_5                      ModelID = "GLM-4.5-Air-Derestricted-Steam-ReExtract"
+	Model__NanoGPT__GLM__4__5v__4_5                                                          ModelID = "z-ai/glm-4.5v"
+	Model__NanoGPT__GLM__4__5v__Thinking                                                     ModelID = "z-ai/glm-4.5v:thinking"
+	Model__NanoGPT__GLM__4__6__Derestricted__V5__4_6                                         ModelID = "GLM-4.6-Derestricted-v5"
+	Model__NanoGPT__GLM__4__6__Thinking                                                      ModelID = "z-ai/glm-4.6:thinking"
+	Model__NanoGPT__GLM__4__7__Flash__4_7_1                                                  ModelID = "TEE/glm-4.7-flash"
+	Model__NanoGPT__GLM__4__7__Flash__4_7_2                                                  ModelID = "zai-org/glm-4.7-flash"
+	Model__NanoGPT__GLM__4__9B__0414__4                                                      ModelID = "THUDM/GLM-4-9B-0414"
+	Model__NanoGPT__GLM__4__Air__0111__4                                                     ModelID = "glm-4-air-0111"
+	Model__NanoGPT__GLM__4__Air__4                                                           ModelID = "glm-4-air"
+	Model__NanoGPT__GLM__4__Airx__4                                                          ModelID = "glm-4-airx"
+	Model__NanoGPT__GLM__4__Flash__4                                                         ModelID = "glm-4-flash"
+	Model__NanoGPT__GLM__4__Long__4                                                          ModelID = "glm-4-long"
+	Model__NanoGPT__GLM__4__Plus__0111__4                                                    ModelID = "glm-4-plus-0111"
+	Model__NanoGPT__GLM__4__Plus__4                                                          ModelID = "glm-4-plus"
+	Model__NanoGPT__GLM__5_1_1                                                               ModelID = "TEE/glm-5"
+	Model__NanoGPT__GLM__5_1_2                                                               ModelID = "zai-org/glm-5.1"
+	Model__NanoGPT__GLM__5_2                                                                 ModelID = "zai-org/glm-5"
+	Model__NanoGPT__GLM__5__1__Thinking                                                      ModelID = "zai-org/glm-5.1:thinking"
+	Model__NanoGPT__GLM__5__Thinking                                                         ModelID = "zai-org/glm-5:thinking"
+	Model__NanoGPT__GLM__Z1__32B__0414                                                       ModelID = "THUDM/GLM-Z1-32B-0414"
+	Model__NanoGPT__GLM__Z1__9B__0414                                                        ModelID = "THUDM/GLM-Z1-9B-0414"
+	Model__NanoGPT__GLM__Z1__Air                                                             ModelID = "glm-z1-air"
+	Model__NanoGPT__GLM__Z1__Airx                                                            ModelID = "glm-z1-airx"
+	Model__NanoGPT__GLM__Z1__Rumination__32B__0414                                           ModelID = "THUDM/GLM-Z1-Rumination-32B-0414"
+	Model__NanoGPT__GLM__Zero__Preview                                                       ModelID = "glm-zero-preview"
 	Model__NanoGPT__GPT__3_5__Turbo                                                          ModelID = "openai/gpt-3.5-turbo"
 	Model__NanoGPT__GPT__4_1                                                                 ModelID = "openai/gpt-4.1"
 	Model__NanoGPT__GPT__4__1__Mini__4_1                                                     ModelID = "openai/gpt-4.1-mini"
@@ -2603,46 +2629,6 @@ const (
 	Model__NanoGPT__Gemma__3__27b__It                                                        ModelID = "unsloth/gemma-3-27b-it"
 	Model__NanoGPT__Gemma__3__27b__It__3                                                     ModelID = "TEE/gemma-3-27b-it"
 	Model__NanoGPT__Gemma__3__4b__It                                                         ModelID = "unsloth/gemma-3-4b-it"
-	Model__NanoGPT__Glm__4                                                                   ModelID = "glm-4"
-	Model__NanoGPT__Glm__4_6_1                                                               ModelID = "TEE/glm-4.6"
-	Model__NanoGPT__Glm__4_6_2                                                               ModelID = "z-ai/glm-4.6"
-	Model__NanoGPT__Glm__4_7_1                                                               ModelID = "TEE/glm-4.7"
-	Model__NanoGPT__Glm__4_7_2                                                               ModelID = "zai-org/glm-4.7"
-	Model__NanoGPT__Glm__4__1v__Thinking__Flash                                              ModelID = "glm-4.1v-thinking-flash"
-	Model__NanoGPT__Glm__4__1v__Thinking__Flashx__4_1                                        ModelID = "glm-4.1v-thinking-flashx"
-	Model__NanoGPT__Glm__4__32B__0414__4                                                     ModelID = "THUDM/GLM-4-32B-0414"
-	Model__NanoGPT__Glm__4__5__Air__Derestricted__4_5                                        ModelID = "GLM-4.5-Air-Derestricted"
-	Model__NanoGPT__Glm__4__5__Air__Derestricted__Iceblink__4_5                              ModelID = "GLM-4.5-Air-Derestricted-Iceblink"
-	Model__NanoGPT__Glm__4__5__Air__Derestricted__Iceblink__Reextract__4_5                   ModelID = "GLM-4.5-Air-Derestricted-Iceblink-ReExtract"
-	Model__NanoGPT__Glm__4__5__Air__Derestricted__Iceblink__V2__4_5                          ModelID = "GLM-4.5-Air-Derestricted-Iceblink-v2"
-	Model__NanoGPT__Glm__4__5__Air__Derestricted__Iceblink__V2__Reextract__4_5               ModelID = "GLM-4.5-Air-Derestricted-Iceblink-v2-ReExtract"
-	Model__NanoGPT__Glm__4__5__Air__Derestricted__Steam__4_5                                 ModelID = "GLM-4.5-Air-Derestricted-Steam"
-	Model__NanoGPT__Glm__4__5__Air__Derestricted__Steam__Reextract__4_5                      ModelID = "GLM-4.5-Air-Derestricted-Steam-ReExtract"
-	Model__NanoGPT__Glm__4__5v__4_5                                                          ModelID = "z-ai/glm-4.5v"
-	Model__NanoGPT__Glm__4__5v__Thinking                                                     ModelID = "z-ai/glm-4.5v:thinking"
-	Model__NanoGPT__Glm__4__6__Derestricted__V5__4_6                                         ModelID = "GLM-4.6-Derestricted-v5"
-	Model__NanoGPT__Glm__4__6__Thinking                                                      ModelID = "z-ai/glm-4.6:thinking"
-	Model__NanoGPT__Glm__4__7__Flash__4_7_1                                                  ModelID = "TEE/glm-4.7-flash"
-	Model__NanoGPT__Glm__4__7__Flash__4_7_2                                                  ModelID = "zai-org/glm-4.7-flash"
-	Model__NanoGPT__Glm__4__9B__0414__4                                                      ModelID = "THUDM/GLM-4-9B-0414"
-	Model__NanoGPT__Glm__4__Air__0111__4                                                     ModelID = "glm-4-air-0111"
-	Model__NanoGPT__Glm__4__Air__4                                                           ModelID = "glm-4-air"
-	Model__NanoGPT__Glm__4__Airx__4                                                          ModelID = "glm-4-airx"
-	Model__NanoGPT__Glm__4__Flash__4                                                         ModelID = "glm-4-flash"
-	Model__NanoGPT__Glm__4__Long__4                                                          ModelID = "glm-4-long"
-	Model__NanoGPT__Glm__4__Plus__0111__4                                                    ModelID = "glm-4-plus-0111"
-	Model__NanoGPT__Glm__4__Plus__4                                                          ModelID = "glm-4-plus"
-	Model__NanoGPT__Glm__5_1_1                                                               ModelID = "TEE/glm-5"
-	Model__NanoGPT__Glm__5_1_2                                                               ModelID = "zai-org/glm-5.1"
-	Model__NanoGPT__Glm__5_2                                                                 ModelID = "zai-org/glm-5"
-	Model__NanoGPT__Glm__5__1__Thinking                                                      ModelID = "zai-org/glm-5.1:thinking"
-	Model__NanoGPT__Glm__5__Thinking                                                         ModelID = "zai-org/glm-5:thinking"
-	Model__NanoGPT__Glm__Z1__32B__0414                                                       ModelID = "THUDM/GLM-Z1-32B-0414"
-	Model__NanoGPT__Glm__Z1__9B__0414                                                        ModelID = "THUDM/GLM-Z1-9B-0414"
-	Model__NanoGPT__Glm__Z1__Air                                                             ModelID = "glm-z1-air"
-	Model__NanoGPT__Glm__Z1__Airx                                                            ModelID = "glm-z1-airx"
-	Model__NanoGPT__Glm__Z1__Rumination__32B__0414                                           ModelID = "THUDM/GLM-Z1-Rumination-32B-0414"
-	Model__NanoGPT__Glm__Zero__Preview                                                       ModelID = "glm-zero-preview"
 	Model__NanoGPT__Grayline__Qwen3__8B                                                      ModelID = "soob3123/GrayLine-Qwen3-8B"
 	Model__NanoGPT__Grok__3__Beta__3                                                         ModelID = "grok-3-beta"
 	Model__NanoGPT__Grok__3__Fast__Beta__3                                                   ModelID = "grok-3-fast-beta"
@@ -2781,15 +2767,15 @@ const (
 	Model__NanoGPT__Mimo__V2__Flash__Original                                                ModelID = "xiaomi/mimo-v2-flash-original"
 	Model__NanoGPT__Mimo__V2__Flash__Thinking                                                ModelID = "xiaomi/mimo-v2-flash-thinking"
 	Model__NanoGPT__Mimo__V2__Flash__ThinkingOriginal                                        ModelID = "xiaomi/mimo-v2-flash-thinking-original"
-	Model__NanoGPT__Minimax__01                                                              ModelID = "minimax/minimax-01"
-	Model__NanoGPT__Minimax__M1__1                                                           ModelID = "MiniMax-M1"
-	Model__NanoGPT__Minimax__M1__80k__1                                                      ModelID = "MiniMaxAI/MiniMax-M1-80k"
-	Model__NanoGPT__Minimax__M2__1__2_1_1                                                    ModelID = "TEE/minimax-m2.1"
-	Model__NanoGPT__Minimax__M2__1__2_1_2                                                    ModelID = "minimax/minimax-m2.1"
-	Model__NanoGPT__Minimax__M2__2                                                           ModelID = "MiniMax-M2"
-	Model__NanoGPT__Minimax__M2__5__2_5                                                      ModelID = "minimax/minimax-m2.5"
-	Model__NanoGPT__Minimax__M2__7__2_7                                                      ModelID = "minimax/minimax-m2.7"
-	Model__NanoGPT__Minimax__M2__Her                                                         ModelID = "minimax/minimax-m2-her"
+	Model__NanoGPT__MiniMax__01                                                              ModelID = "minimax/minimax-01"
+	Model__NanoGPT__MiniMax__M1__1                                                           ModelID = "MiniMax-M1"
+	Model__NanoGPT__MiniMax__M1__80k__1                                                      ModelID = "MiniMaxAI/MiniMax-M1-80k"
+	Model__NanoGPT__MiniMax__M2__1__2_1_1                                                    ModelID = "TEE/minimax-m2.1"
+	Model__NanoGPT__MiniMax__M2__1__2_1_2                                                    ModelID = "minimax/minimax-m2.1"
+	Model__NanoGPT__MiniMax__M2__2                                                           ModelID = "MiniMax-M2"
+	Model__NanoGPT__MiniMax__M2__5__2_5                                                      ModelID = "minimax/minimax-m2.5"
+	Model__NanoGPT__MiniMax__M2__7__2_7                                                      ModelID = "minimax/minimax-m2.7"
+	Model__NanoGPT__MiniMax__M2__Her                                                         ModelID = "minimax/minimax-m2-her"
 	Model__NanoGPT__Ministral__14b__2512                                                     ModelID = "mistralai/ministral-14b-2512"
 	Model__NanoGPT__Ministral__14b__Instruct__2512__Instruct                                 ModelID = "mistralai/ministral-14b-instruct-2512"
 	Model__NanoGPT__Ministral__3b__2512                                                      ModelID = "mistralai/ministral-3b-2512"
@@ -2836,9 +2822,9 @@ const (
 	Model__NanoGPT__O4__4__Mini                                                              ModelID = "openai/o4-mini"
 	Model__NanoGPT__O4__Mini__Deep__Research__4__Mini                                        ModelID = "openai/o4-mini-deep-research"
 	Model__NanoGPT__O4__Mini__High__4__Mini                                                  ModelID = "openai/o4-mini-high"
-	Model__NanoGPT__Olmo__3__1__32b__3_1__Instruct                                           ModelID = "allenai/olmo-3.1-32b-instruct"
-	Model__NanoGPT__Olmo__3__1__32b__3_1__Think                                              ModelID = "allenai/olmo-3.1-32b-think"
-	Model__NanoGPT__Olmo__3__32b__3__Think                                                   ModelID = "allenai/olmo-3-32b-think"
+	Model__NanoGPT__OLMo__3__1__32b__3_1__Instruct                                           ModelID = "allenai/olmo-3.1-32b-instruct"
+	Model__NanoGPT__OLMo__3__1__32b__3_1__Think                                              ModelID = "allenai/olmo-3.1-32b-think"
+	Model__NanoGPT__OLMo__3__32b__3__Think                                                   ModelID = "allenai/olmo-3-32b-think"
 	Model__NanoGPT__Openreasoning__Nemotron__32B                                             ModelID = "pamanseau/OpenReasoning-Nemotron-32B"
 	Model__NanoGPT__Phi__4__Mini__4__Instruct                                                ModelID = "phi-4-mini-instruct"
 	Model__NanoGPT__Phi__4__MultimodalInstruct                                               ModelID = "phi-4-multimodal-instruct"
@@ -2904,56 +2890,56 @@ const (
 	Model__NanoGPT__Venice__Uncensored                                                       ModelID = "venice-uncensored"
 	Model__NanoGPT__Venice__Uncensored__Web                                                  ModelID = "venice-uncensored:web"
 	Model__NanoGPT__Wayfarer__Large__70B__Llama__3__3                                        ModelID = "LatitudeGames/Wayfarer-Large-70B-Llama-3.3"
-	Model__NanoGPT__Wizardlm__2__8x22b__2                                                    ModelID = "microsoft/wizardlm-2-8x22b"
+	Model__NanoGPT__WizardLM__2__8x22b__2                                                    ModelID = "microsoft/wizardlm-2-8x22b"
 	Model__NanoGPT__Yi__Large                                                                ModelID = "yi-large"
 	Model__NanoGPT__Yi__Lightning                                                            ModelID = "yi-lightning"
 	Model__NanoGPT__Yi__Medium__200k                                                         ModelID = "yi-medium-200k"
 	Model__NanoGPT__Z__Image__Turbo                                                          ModelID = "z-image-turbo"
-	Model__Nearai__Claude__Haiku__4_5                                                        ModelID = "anthropic/claude-haiku-4-5"
-	Model__Nearai__Claude__Opus__4_6                                                         ModelID = "anthropic/claude-opus-4-6"
-	Model__Nearai__Claude__Opus__4_7                                                         ModelID = "anthropic/claude-opus-4-7"
-	Model__Nearai__Claude__Sonnet__4_5                                                       ModelID = "anthropic/claude-sonnet-4-5"
-	Model__Nearai__Claude__Sonnet__4_6                                                       ModelID = "anthropic/claude-sonnet-4-6"
-	Model__Nearai__Flux__2__Klein__4B                                                        ModelID = "black-forest-labs/FLUX.2-klein-4B"
-	Model__Nearai__GPT__4_1                                                                  ModelID = "openai/gpt-4.1"
-	Model__Nearai__GPT__4__1__Mini__4_1                                                      ModelID = "openai/gpt-4.1-mini"
-	Model__Nearai__GPT__4__1__Nano__4_1                                                      ModelID = "openai/gpt-4.1-nano"
-	Model__Nearai__GPT__5                                                                    ModelID = "openai/gpt-5"
-	Model__Nearai__GPT__5_1                                                                  ModelID = "openai/gpt-5.1"
-	Model__Nearai__GPT__5_2                                                                  ModelID = "openai/gpt-5.2"
-	Model__Nearai__GPT__5_4                                                                  ModelID = "openai/gpt-5.4"
-	Model__Nearai__GPT__5_5                                                                  ModelID = "openai/gpt-5.5"
-	Model__Nearai__GPT__5__4__Mini__5_4                                                      ModelID = "openai/gpt-5.4-mini"
-	Model__Nearai__GPT__5__4__Nano__5_4                                                      ModelID = "openai/gpt-5.4-nano"
-	Model__Nearai__GPT__5__Mini__5                                                           ModelID = "openai/gpt-5-mini"
-	Model__Nearai__GPT__5__Nano__5                                                           ModelID = "openai/gpt-5-nano"
-	Model__Nearai__GPT__Oss__120b                                                            ModelID = "openai/gpt-oss-120b"
-	Model__Nearai__Gemini__2__5__Flash__2_5                                                  ModelID = "google/gemini-2.5-flash"
-	Model__Nearai__Gemini__2__5__Flash__Lite__2_5                                            ModelID = "google/gemini-2.5-flash-lite"
-	Model__Nearai__Gemini__2__5__Pro__2_5                                                    ModelID = "google/gemini-2.5-pro"
-	Model__Nearai__Gemini__3__1__Flash__Lite__3_1                                            ModelID = "google/gemini-3.1-flash-lite"
-	Model__Nearai__Gemini__3__5__Flash__3_5                                                  ModelID = "google/gemini-3.5-flash"
-	Model__Nearai__Gemini__3__Pro__3                                                         ModelID = "google/gemini-3-pro"
-	Model__Nearai__Gemma__4__31B__It__4                                                      ModelID = "google/gemma-4-31B-it"
-	Model__Nearai__Glm__5__1__Fp8__5_1                                                       ModelID = "zai-org/GLM-5.1-FP8"
-	Model__Nearai__O3__3                                                                     ModelID = "openai/o3"
-	Model__Nearai__O3__3__Mini                                                               ModelID = "openai/o3-mini"
-	Model__Nearai__O4__4__Mini                                                               ModelID = "openai/o4-mini"
-	Model__Nearai__Qwen3__30B__A3b__Instruct__2507__3__Instruct                              ModelID = "Qwen/Qwen3-30B-A3B-Instruct-2507"
-	Model__Nearai__Qwen3__5__122B__A10b__3_5                                                 ModelID = "Qwen/Qwen3.5-122B-A10B"
-	Model__Nearai__Qwen3__6__35B__A3b__Fp8__3_6                                              ModelID = "Qwen/Qwen3.6-35B-A3B-FP8"
-	Model__Nearai__Qwen3__Embedding__0__6B__3                                                ModelID = "Qwen/Qwen3-Embedding-0.6B"
-	Model__Nearai__Qwen3__Reranker__0__6B__3                                                 ModelID = "Qwen/Qwen3-Reranker-0.6B"
-	Model__Nearai__Qwen3__Vl__30B__A3b__3__Instruct                                          ModelID = "Qwen/Qwen3-VL-30B-A3B-Instruct"
-	Model__Nearai__Whisper__Large__V3                                                        ModelID = "openai/whisper-large-v3"
-	Model__Nebius__Deepseek__V3__2                                                           ModelID = "deepseek-ai/DeepSeek-V3.2"
-	Model__Nebius__Deepseek__V3__2__Fast                                                     ModelID = "deepseek-ai/DeepSeek-V3.2-fast"
-	Model__Nebius__Deepseek__V4__Pro__Thinking                                               ModelID = "deepseek-ai/DeepSeek-V4-Pro"
+	Model__NearAI__Claude__Haiku__4_5                                                        ModelID = "anthropic/claude-haiku-4-5"
+	Model__NearAI__Claude__Opus__4_6                                                         ModelID = "anthropic/claude-opus-4-6"
+	Model__NearAI__Claude__Opus__4_7                                                         ModelID = "anthropic/claude-opus-4-7"
+	Model__NearAI__Claude__Sonnet__4_5                                                       ModelID = "anthropic/claude-sonnet-4-5"
+	Model__NearAI__Claude__Sonnet__4_6                                                       ModelID = "anthropic/claude-sonnet-4-6"
+	Model__NearAI__Flux__2__Klein__4B                                                        ModelID = "black-forest-labs/FLUX.2-klein-4B"
+	Model__NearAI__GLM__5__1__Fp8__5_1                                                       ModelID = "zai-org/GLM-5.1-FP8"
+	Model__NearAI__GPT__4_1                                                                  ModelID = "openai/gpt-4.1"
+	Model__NearAI__GPT__4__1__Mini__4_1                                                      ModelID = "openai/gpt-4.1-mini"
+	Model__NearAI__GPT__4__1__Nano__4_1                                                      ModelID = "openai/gpt-4.1-nano"
+	Model__NearAI__GPT__5                                                                    ModelID = "openai/gpt-5"
+	Model__NearAI__GPT__5_1                                                                  ModelID = "openai/gpt-5.1"
+	Model__NearAI__GPT__5_2                                                                  ModelID = "openai/gpt-5.2"
+	Model__NearAI__GPT__5_4                                                                  ModelID = "openai/gpt-5.4"
+	Model__NearAI__GPT__5_5                                                                  ModelID = "openai/gpt-5.5"
+	Model__NearAI__GPT__5__4__Mini__5_4                                                      ModelID = "openai/gpt-5.4-mini"
+	Model__NearAI__GPT__5__4__Nano__5_4                                                      ModelID = "openai/gpt-5.4-nano"
+	Model__NearAI__GPT__5__Mini__5                                                           ModelID = "openai/gpt-5-mini"
+	Model__NearAI__GPT__5__Nano__5                                                           ModelID = "openai/gpt-5-nano"
+	Model__NearAI__GPT__Oss__120b                                                            ModelID = "openai/gpt-oss-120b"
+	Model__NearAI__Gemini__2__5__Flash__2_5                                                  ModelID = "google/gemini-2.5-flash"
+	Model__NearAI__Gemini__2__5__Flash__Lite__2_5                                            ModelID = "google/gemini-2.5-flash-lite"
+	Model__NearAI__Gemini__2__5__Pro__2_5                                                    ModelID = "google/gemini-2.5-pro"
+	Model__NearAI__Gemini__3__1__Flash__Lite__3_1                                            ModelID = "google/gemini-3.1-flash-lite"
+	Model__NearAI__Gemini__3__5__Flash__3_5                                                  ModelID = "google/gemini-3.5-flash"
+	Model__NearAI__Gemini__3__Pro__3                                                         ModelID = "google/gemini-3-pro"
+	Model__NearAI__Gemma__4__31B__It__4                                                      ModelID = "google/gemma-4-31B-it"
+	Model__NearAI__O3__3                                                                     ModelID = "openai/o3"
+	Model__NearAI__O3__3__Mini                                                               ModelID = "openai/o3-mini"
+	Model__NearAI__O4__4__Mini                                                               ModelID = "openai/o4-mini"
+	Model__NearAI__Qwen3__30B__A3b__Instruct__2507__3__Instruct                              ModelID = "Qwen/Qwen3-30B-A3B-Instruct-2507"
+	Model__NearAI__Qwen3__5__122B__A10b__3_5                                                 ModelID = "Qwen/Qwen3.5-122B-A10B"
+	Model__NearAI__Qwen3__6__35B__A3b__Fp8__3_6                                              ModelID = "Qwen/Qwen3.6-35B-A3B-FP8"
+	Model__NearAI__Qwen3__Embedding__0__6B__3                                                ModelID = "Qwen/Qwen3-Embedding-0.6B"
+	Model__NearAI__Qwen3__Reranker__0__6B__3                                                 ModelID = "Qwen/Qwen3-Reranker-0.6B"
+	Model__NearAI__Qwen3__Vl__30B__A3b__3__Instruct                                          ModelID = "Qwen/Qwen3-VL-30B-A3B-Instruct"
+	Model__NearAI__Whisper__Large__V3                                                        ModelID = "openai/whisper-large-v3"
+	Model__Nebius__DeepSeek__V3__2                                                           ModelID = "deepseek-ai/DeepSeek-V3.2"
+	Model__Nebius__DeepSeek__V3__2__Fast                                                     ModelID = "deepseek-ai/DeepSeek-V3.2-fast"
+	Model__Nebius__DeepSeek__V4__Pro__Thinking                                               ModelID = "deepseek-ai/DeepSeek-V4-Pro"
+	Model__Nebius__GLM__5                                                                    ModelID = "zai-org/GLM-5"
 	Model__Nebius__GPT__Oss__120b                                                            ModelID = "openai/gpt-oss-120b"
 	Model__Nebius__GPT__Oss__120b__Fast                                                      ModelID = "openai/gpt-oss-120b-fast"
 	Model__Nebius__Gemma__2__2b__It__2                                                       ModelID = "google/gemma-2-2b-it"
 	Model__Nebius__Gemma__3__27b__It__3                                                      ModelID = "google/gemma-3-27b-it"
-	Model__Nebius__Glm__5                                                                    ModelID = "zai-org/GLM-5"
 	Model__Nebius__Hermes__4__405B__4                                                        ModelID = "NousResearch/Hermes-4-405B"
 	Model__Nebius__Hermes__4__70B__4                                                         ModelID = "NousResearch/Hermes-4-70B"
 	Model__Nebius__Intellect__3                                                              ModelID = "PrimeIntellect/INTELLECT-3"
@@ -2962,8 +2948,8 @@ const (
 	Model__Nebius__Llama__3__1__Nemotron__Ultra__253B__V1                                    ModelID = "nvidia/Llama-3_1-Nemotron-Ultra-253B-v1"
 	Model__Nebius__Llama__3__3__70B__3_3__Instruct                                           ModelID = "meta-llama/Llama-3.3-70B-Instruct"
 	Model__Nebius__Meta__Llama__3__1__8B__3_1__Instruct                                      ModelID = "meta-llama/Meta-Llama-3.1-8B-Instruct"
-	Model__Nebius__Minimax__M2__5__2_5                                                       ModelID = "MiniMaxAI/MiniMax-M2.5"
-	Model__Nebius__Minimax__M2__5__2_5__Fast                                                 ModelID = "MiniMaxAI/MiniMax-M2.5-fast"
+	Model__Nebius__MiniMax__M2__5__2_5                                                       ModelID = "MiniMaxAI/MiniMax-M2.5"
+	Model__Nebius__MiniMax__M2__5__2_5__Fast                                                 ModelID = "MiniMaxAI/MiniMax-M2.5-fast"
 	Model__Nebius__Nemotron__3__Nano__Omni__3                                                ModelID = "nvidia/Nemotron-3-Nano-Omni"
 	Model__Nebius__Nemotron__3__Super__120b__A12b__3                                         ModelID = "nvidia/nemotron-3-super-120b-a12b"
 	Model__Nebius__Nvidia__Nemotron__3__Nano__30B__A3b__3                                    ModelID = "nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B"
@@ -2978,15 +2964,15 @@ const (
 	Model__Nebius__Qwen3__Next__80B__A3b__3__Thinking                                        ModelID = "Qwen/Qwen3-Next-80B-A3B-Thinking"
 	Model__Nebius__Qwen3__Next__80B__A3b__3__ThinkingFast                                    ModelID = "Qwen/Qwen3-Next-80B-A3B-Thinking-fast"
 	Model__Neuralwatt__Devstral__Small__2__24B__Instruct__2512__2__Instruct                  ModelID = "mistralai/Devstral-Small-2-24B-Instruct-2512"
+	Model__Neuralwatt__GLM__5_1__Fast                                                        ModelID = "glm-5.1-fast"
+	Model__Neuralwatt__GLM__5__1__Fp8__5_1                                                   ModelID = "zai-org/GLM-5.1-FP8"
+	Model__Neuralwatt__GLM__5__Fast                                                          ModelID = "glm-5-fast"
 	Model__Neuralwatt__GPT__Oss__20b                                                         ModelID = "openai/gpt-oss-20b"
-	Model__Neuralwatt__Glm__5_1__Fast                                                        ModelID = "glm-5.1-fast"
-	Model__Neuralwatt__Glm__5__1__Fp8__5_1                                                   ModelID = "zai-org/GLM-5.1-FP8"
-	Model__Neuralwatt__Glm__5__Fast                                                          ModelID = "glm-5-fast"
 	Model__Neuralwatt__Kimi__K2__5__2_5                                                      ModelID = "moonshotai/Kimi-K2.5"
 	Model__Neuralwatt__Kimi__K2__5__2_5__Fast                                                ModelID = "kimi-k2.5-fast"
 	Model__Neuralwatt__Kimi__K2__6__2_6                                                      ModelID = "moonshotai/Kimi-K2.6"
 	Model__Neuralwatt__Kimi__K2__6__2_6__Fast                                                ModelID = "kimi-k2.6-fast"
-	Model__Neuralwatt__Minimax__M2__5__2_5                                                   ModelID = "MiniMaxAI/MiniMax-M2.5"
+	Model__Neuralwatt__MiniMax__M2__5__2_5                                                   ModelID = "MiniMaxAI/MiniMax-M2.5"
 	Model__Neuralwatt__Qwen3__5__397B__A17b__Fp8__3_5                                        ModelID = "Qwen/Qwen3.5-397B-A17B-FP8"
 	Model__Neuralwatt__Qwen3__5__397b__3_5__Fast                                             ModelID = "qwen3.5-397b-fast"
 	Model__Neuralwatt__Qwen3__6__35B__A3b__3_6                                               ModelID = "Qwen/Qwen3.6-35B-A3B"
@@ -2995,44 +2981,44 @@ const (
 	Model__Nova__Nova__2__Pro__V1__2                                                         ModelID = "nova-2-pro-v1"
 	Model__NovitaAI__Autoglm__Phone__9b__Multilingual                                        ModelID = "zai-org/autoglm-phone-9b-multilingual"
 	Model__NovitaAI__Baichuan__M2__32b                                                       ModelID = "baichuan/baichuan-m2-32b"
-	Model__NovitaAI__Deepseek__Ocr                                                           ModelID = "deepseek/deepseek-ocr"
-	Model__NovitaAI__Deepseek__Ocr__2                                                        ModelID = "deepseek/deepseek-ocr-2"
-	Model__NovitaAI__Deepseek__Prover__V2__671b                                              ModelID = "deepseek/deepseek-prover-v2-671b"
-	Model__NovitaAI__Deepseek__R1__0528__Qwen3__8b                                           ModelID = "deepseek/deepseek-r1-0528-qwen3-8b"
-	Model__NovitaAI__Deepseek__R1__0528__Thinking                                            ModelID = "deepseek/deepseek-r1-0528"
-	Model__NovitaAI__Deepseek__R1__Distill__Llama__70b__Thinking                             ModelID = "deepseek/deepseek-r1-distill-llama-70b"
-	Model__NovitaAI__Deepseek__R1__Distill__Qwen__14b__Thinking                              ModelID = "deepseek/deepseek-r1-distill-qwen-14b"
-	Model__NovitaAI__Deepseek__R1__Distill__Qwen__32b__Thinking                              ModelID = "deepseek/deepseek-r1-distill-qwen-32b"
-	Model__NovitaAI__Deepseek__R1__Turbo                                                     ModelID = "deepseek/deepseek-r1-turbo"
-	Model__NovitaAI__Deepseek__V3__0324                                                      ModelID = "deepseek/deepseek-v3-0324"
-	Model__NovitaAI__Deepseek__V3__1                                                         ModelID = "deepseek/deepseek-v3.1"
-	Model__NovitaAI__Deepseek__V3__1__Terminus                                               ModelID = "deepseek/deepseek-v3.1-terminus"
-	Model__NovitaAI__Deepseek__V3__2                                                         ModelID = "deepseek/deepseek-v3.2"
-	Model__NovitaAI__Deepseek__V3__2__Exp                                                    ModelID = "deepseek/deepseek-v3.2-exp"
-	Model__NovitaAI__Deepseek__V3__Turbo                                                     ModelID = "deepseek/deepseek-v3-turbo"
-	Model__NovitaAI__Deepseek__V4__Flash                                                     ModelID = "deepseek/deepseek-v4-flash"
-	Model__NovitaAI__Deepseek__V4__Pro__Thinking                                             ModelID = "deepseek/deepseek-v4-pro"
+	Model__NovitaAI__DeepSeek__Ocr                                                           ModelID = "deepseek/deepseek-ocr"
+	Model__NovitaAI__DeepSeek__Ocr__2                                                        ModelID = "deepseek/deepseek-ocr-2"
+	Model__NovitaAI__DeepSeek__Prover__V2__671b                                              ModelID = "deepseek/deepseek-prover-v2-671b"
+	Model__NovitaAI__DeepSeek__R1__0528__Qwen3__8b                                           ModelID = "deepseek/deepseek-r1-0528-qwen3-8b"
+	Model__NovitaAI__DeepSeek__R1__0528__Thinking                                            ModelID = "deepseek/deepseek-r1-0528"
+	Model__NovitaAI__DeepSeek__R1__Distill__Llama__70b__Thinking                             ModelID = "deepseek/deepseek-r1-distill-llama-70b"
+	Model__NovitaAI__DeepSeek__R1__Distill__Qwen__14b__Thinking                              ModelID = "deepseek/deepseek-r1-distill-qwen-14b"
+	Model__NovitaAI__DeepSeek__R1__Distill__Qwen__32b__Thinking                              ModelID = "deepseek/deepseek-r1-distill-qwen-32b"
+	Model__NovitaAI__DeepSeek__R1__Turbo                                                     ModelID = "deepseek/deepseek-r1-turbo"
+	Model__NovitaAI__DeepSeek__V3__0324                                                      ModelID = "deepseek/deepseek-v3-0324"
+	Model__NovitaAI__DeepSeek__V3__1                                                         ModelID = "deepseek/deepseek-v3.1"
+	Model__NovitaAI__DeepSeek__V3__1__Terminus                                               ModelID = "deepseek/deepseek-v3.1-terminus"
+	Model__NovitaAI__DeepSeek__V3__2                                                         ModelID = "deepseek/deepseek-v3.2"
+	Model__NovitaAI__DeepSeek__V3__2__Exp                                                    ModelID = "deepseek/deepseek-v3.2-exp"
+	Model__NovitaAI__DeepSeek__V3__Turbo                                                     ModelID = "deepseek/deepseek-v3-turbo"
+	Model__NovitaAI__DeepSeek__V4__Flash                                                     ModelID = "deepseek/deepseek-v4-flash"
+	Model__NovitaAI__DeepSeek__V4__Pro__Thinking                                             ModelID = "deepseek/deepseek-v4-pro"
 	Model__NovitaAI__Ernie__4__5__21B__A3b__4_5                                              ModelID = "baidu/ernie-4.5-21B-a3b"
 	Model__NovitaAI__Ernie__4__5__21B__A3b__4_5__Thinking                                    ModelID = "baidu/ernie-4.5-21B-a3b-thinking"
 	Model__NovitaAI__Ernie__4__5__300b__A47b__Paddle__4_5                                    ModelID = "baidu/ernie-4.5-300b-a47b-paddle"
 	Model__NovitaAI__Ernie__4__5__Vl__28b__A3b__4_5                                          ModelID = "baidu/ernie-4.5-vl-28b-a3b"
 	Model__NovitaAI__Ernie__4__5__Vl__28b__A3b__4_5__Thinking                                ModelID = "baidu/ernie-4.5-vl-28b-a3b-thinking"
 	Model__NovitaAI__Ernie__4__5__Vl__424b__A47b__4_5                                        ModelID = "baidu/ernie-4.5-vl-424b-a47b"
+	Model__NovitaAI__GLM__4_5                                                                ModelID = "zai-org/glm-4.5"
+	Model__NovitaAI__GLM__4_6                                                                ModelID = "zai-org/glm-4.6"
+	Model__NovitaAI__GLM__4_7                                                                ModelID = "zai-org/glm-4.7"
+	Model__NovitaAI__GLM__4__5__Air__4_5                                                     ModelID = "zai-org/glm-4.5-air"
+	Model__NovitaAI__GLM__4__5v__4_5                                                         ModelID = "zai-org/glm-4.5v"
+	Model__NovitaAI__GLM__4__6v__4_6                                                         ModelID = "zai-org/glm-4.6v"
+	Model__NovitaAI__GLM__4__7__Flash__4_7                                                   ModelID = "zai-org/glm-4.7-flash"
+	Model__NovitaAI__GLM__5                                                                  ModelID = "zai-org/glm-5"
+	Model__NovitaAI__GLM__5_1                                                                ModelID = "zai-org/glm-5.1"
 	Model__NovitaAI__GPT__Oss__120b                                                          ModelID = "openai/gpt-oss-120b"
 	Model__NovitaAI__GPT__Oss__20b                                                           ModelID = "openai/gpt-oss-20b"
 	Model__NovitaAI__Gemma__3__12b__It__3                                                    ModelID = "google/gemma-3-12b-it"
 	Model__NovitaAI__Gemma__3__27b__It__3                                                    ModelID = "google/gemma-3-27b-it"
 	Model__NovitaAI__Gemma__4__26b__A4b__It__4                                               ModelID = "google/gemma-4-26b-a4b-it"
 	Model__NovitaAI__Gemma__4__31b__It__4                                                    ModelID = "google/gemma-4-31b-it"
-	Model__NovitaAI__Glm__4_5                                                                ModelID = "zai-org/glm-4.5"
-	Model__NovitaAI__Glm__4_6                                                                ModelID = "zai-org/glm-4.6"
-	Model__NovitaAI__Glm__4_7                                                                ModelID = "zai-org/glm-4.7"
-	Model__NovitaAI__Glm__4__5__Air__4_5                                                     ModelID = "zai-org/glm-4.5-air"
-	Model__NovitaAI__Glm__4__5v__4_5                                                         ModelID = "zai-org/glm-4.5v"
-	Model__NovitaAI__Glm__4__6v__4_6                                                         ModelID = "zai-org/glm-4.6v"
-	Model__NovitaAI__Glm__4__7__Flash__4_7                                                   ModelID = "zai-org/glm-4.7-flash"
-	Model__NovitaAI__Glm__5                                                                  ModelID = "zai-org/glm-5"
-	Model__NovitaAI__Glm__5_1                                                                ModelID = "zai-org/glm-5.1"
 	Model__NovitaAI__Hermes__2__Pro__Llama__3__8b__2                                         ModelID = "nousresearch/hermes-2-pro-llama-3-8b"
 	Model__NovitaAI__Kat__Coder__Pro                                                         ModelID = "kwaipilot/kat-coder-pro"
 	Model__NovitaAI__Kimi__K2__0905__2                                                       ModelID = "moonshotai/kimi-k2-0905"
@@ -3056,13 +3042,13 @@ const (
 	Model__NovitaAI__Mimo__V2__2__Pro                                                        ModelID = "xiaomimimo/mimo-v2-pro"
 	Model__NovitaAI__Mimo__V2__5__2_5__Pro                                                   ModelID = "xiaomimimo/mimo-v2.5-pro"
 	Model__NovitaAI__Mimo__V2__Flash                                                         ModelID = "xiaomimimo/mimo-v2-flash"
-	Model__NovitaAI__Minimax__M1__80k__1                                                     ModelID = "minimaxai/minimax-m1-80k"
-	Model__NovitaAI__Minimax__M2__1__2_1                                                     ModelID = "minimax/minimax-m2.1"
-	Model__NovitaAI__Minimax__M2__2                                                          ModelID = "minimax/minimax-m2"
-	Model__NovitaAI__Minimax__M2__5__2_5                                                     ModelID = "minimax/minimax-m2.5"
-	Model__NovitaAI__Minimax__M2__5__2_5__Highspeed                                          ModelID = "minimax/minimax-m2.5-highspeed"
-	Model__NovitaAI__Minimax__M2__7__2_7                                                     ModelID = "minimax/minimax-m2.7"
-	Model__NovitaAI__Minimax__M2__7__2_7__Highspeed                                          ModelID = "minimax/minimax-m2.7-highspeed"
+	Model__NovitaAI__MiniMax__M1__80k__1                                                     ModelID = "minimaxai/minimax-m1-80k"
+	Model__NovitaAI__MiniMax__M2__1__2_1                                                     ModelID = "minimax/minimax-m2.1"
+	Model__NovitaAI__MiniMax__M2__2                                                          ModelID = "minimax/minimax-m2"
+	Model__NovitaAI__MiniMax__M2__5__2_5                                                     ModelID = "minimax/minimax-m2.5"
+	Model__NovitaAI__MiniMax__M2__5__2_5__Highspeed                                          ModelID = "minimax/minimax-m2.5-highspeed"
+	Model__NovitaAI__MiniMax__M2__7__2_7                                                     ModelID = "minimax/minimax-m2.7"
+	Model__NovitaAI__MiniMax__M2__7__2_7__Highspeed                                          ModelID = "minimax/minimax-m2.7-highspeed"
 	Model__NovitaAI__Mistral__Nemo                                                           ModelID = "mistralai/mistral-nemo"
 	Model__NovitaAI__Mythomax__L2__13b                                                       ModelID = "gryphe/mythomax-l2-13b"
 	Model__NovitaAI__Paddleocr__Vl                                                           ModelID = "paddlepaddle/paddleocr-vl"
@@ -3096,17 +3082,17 @@ const (
 	Model__NovitaAI__Qwen__2__5__72b__2_5__Instruct                                          ModelID = "qwen/qwen-2.5-72b-instruct"
 	Model__NovitaAI__Qwen__Mt__Plus                                                          ModelID = "qwen/qwen-mt-plus"
 	Model__NovitaAI__Ring__2__6__1t__2_6                                                     ModelID = "inclusionai/ring-2.6-1t"
-	Model__NovitaAI__Wizardlm__2__8x22b__2                                                   ModelID = "microsoft/wizardlm-2-8x22b"
+	Model__NovitaAI__WizardLM__2__8x22b__2                                                   ModelID = "microsoft/wizardlm-2-8x22b"
 	Model__Nvidia__Active__Speaker__Detection                                                ModelID = "nvidia/active-speaker-detection"
 	Model__Nvidia__Bevformer                                                                 ModelID = "nvidia/bevformer"
 	Model__Nvidia__Bge__M3                                                                   ModelID = "baai/bge-m3"
 	Model__Nvidia__Cosmos__Predict1__5b                                                      ModelID = "nvidia/cosmos-predict1-5b"
 	Model__Nvidia__Cosmos__Transfer1__7b                                                     ModelID = "nvidia/cosmos-transfer1-7b"
 	Model__Nvidia__Cosmos__Transfer2__5__2b                                                  ModelID = "nvidia/cosmos-transfer2_5-2b"
-	Model__Nvidia__Deepseek__V3__1__Terminus                                                 ModelID = "deepseek-ai/deepseek-v3.1-terminus"
-	Model__Nvidia__Deepseek__V3__2                                                           ModelID = "deepseek-ai/deepseek-v3.2"
-	Model__Nvidia__Deepseek__V4__Flash                                                       ModelID = "deepseek-ai/deepseek-v4-flash"
-	Model__Nvidia__Deepseek__V4__Pro__Thinking                                               ModelID = "deepseek-ai/deepseek-v4-pro"
+	Model__Nvidia__DeepSeek__V3__1__Terminus                                                 ModelID = "deepseek-ai/deepseek-v3.1-terminus"
+	Model__Nvidia__DeepSeek__V3__2                                                           ModelID = "deepseek-ai/deepseek-v3.2"
+	Model__Nvidia__DeepSeek__V4__Flash                                                       ModelID = "deepseek-ai/deepseek-v4-flash"
+	Model__Nvidia__DeepSeek__V4__Pro__Thinking                                               ModelID = "deepseek-ai/deepseek-v4-pro"
 	Model__Nvidia__Devstral__2__123b__Instruct__2512__2__Instruct                            ModelID = "mistralai/devstral-2-123b-instruct-2512"
 	Model__Nvidia__Dracarys__Llama__3__1__70b__Instruct                                      ModelID = "abacusai/dracarys-llama-3_1-70b-instruct"
 	Model__Nvidia__Esm2__650m                                                                ModelID = "meta/esm2-650m"
@@ -3115,6 +3101,7 @@ const (
 	Model__Nvidia__Flux__1__Kontext__Dev                                                     ModelID = "black-forest-labs/flux_1-kontext-dev"
 	Model__Nvidia__Flux__1__Schnell                                                          ModelID = "black-forest-labs/flux_1-schnell"
 	Model__Nvidia__Flux__2__Klein__4b                                                        ModelID = "black-forest-labs/flux_2-klein-4b"
+	Model__Nvidia__GLM__5_1                                                                  ModelID = "z-ai/glm-5.1"
 	Model__Nvidia__GPT__Oss__120b                                                            ModelID = "openai/gpt-oss-120b"
 	Model__Nvidia__GPT__Oss__20b                                                             ModelID = "openai/gpt-oss-20b"
 	Model__Nvidia__Gemma__2__2b__It__2                                                       ModelID = "google/gemma-2-2b-it"
@@ -3124,7 +3111,6 @@ const (
 	Model__Nvidia__Gemma__4__31b__It__4                                                      ModelID = "google/gemma-4-31b-it"
 	Model__Nvidia__Gliner__Pii                                                               ModelID = "nvidia/gliner-pii"
 	Model__Nvidia__Glm4__7__4_7                                                              ModelID = "z-ai/glm4.7"
-	Model__Nvidia__Glm__5_1                                                                  ModelID = "z-ai/glm-5.1"
 	Model__Nvidia__Google__Paligemma                                                         ModelID = "google/google-paligemma"
 	Model__Nvidia__Kimi__K2__2__Instruct                                                     ModelID = "moonshotai/kimi-k2-instruct"
 	Model__Nvidia__Kimi__K2__2__Thinking                                                     ModelID = "moonshotai/kimi-k2-thinking"
@@ -3147,8 +3133,8 @@ const (
 	Model__Nvidia__Llama__Nemotron__Rerank__Vl__1b__V2                                       ModelID = "nvidia/llama-nemotron-rerank-vl-1b-v2"
 	Model__Nvidia__Magistral__Small__2506                                                    ModelID = "mistralai/magistral-small-2506"
 	Model__Nvidia__Magpie__Tts__Zeroshot                                                     ModelID = "nvidia/magpie-tts-zeroshot"
-	Model__Nvidia__Minimax__M2__5__2_5                                                       ModelID = "minimaxai/minimax-m2.5"
-	Model__Nvidia__Minimax__M2__7__2_7                                                       ModelID = "minimaxai/minimax-m2.7"
+	Model__Nvidia__MiniMax__M2__5__2_5                                                       ModelID = "minimaxai/minimax-m2.5"
+	Model__Nvidia__MiniMax__M2__7__2_7                                                       ModelID = "minimaxai/minimax-m2.7"
 	Model__Nvidia__Mistral__7b__Instruct__V03__Instruct                                      ModelID = "mistralai/mistral-7b-instruct-v03"
 	Model__Nvidia__Mistral__Large__3__675b__Instruct__2512__3__Instruct                      ModelID = "mistralai/mistral-large-3-675b-instruct-2512"
 	Model__Nvidia__Mistral__Medium__3__Instruct                                              ModelID = "mistralai/mistral-medium-3-instruct"
@@ -3202,12 +3188,16 @@ const (
 	Model__OVHcloud__Qwen3__5__9b__3_5                                                       ModelID = "qwen3.5-9b"
 	Model__OVHcloud__Qwen3__Coder__30b__A3b__3__Instruct                                     ModelID = "qwen3-coder-30b-a3b-instruct"
 	Model__OllamaCloud__Cogito__2__1__671b                                                   ModelID = "cogito-2.1:671b"
-	Model__OllamaCloud__Deepseek__V3__1__671b                                                ModelID = "deepseek-v3.1:671b"
-	Model__OllamaCloud__Deepseek__V3__2                                                      ModelID = "deepseek-v3.2"
-	Model__OllamaCloud__Deepseek__V4__Flash                                                  ModelID = "deepseek-v4-flash"
-	Model__OllamaCloud__Deepseek__V4__Pro__Thinking                                          ModelID = "deepseek-v4-pro"
+	Model__OllamaCloud__DeepSeek__V3__1__671b                                                ModelID = "deepseek-v3.1:671b"
+	Model__OllamaCloud__DeepSeek__V3__2                                                      ModelID = "deepseek-v3.2"
+	Model__OllamaCloud__DeepSeek__V4__Flash                                                  ModelID = "deepseek-v4-flash"
+	Model__OllamaCloud__DeepSeek__V4__Pro__Thinking                                          ModelID = "deepseek-v4-pro"
 	Model__OllamaCloud__Devstral__2__123b                                                    ModelID = "devstral-2:123b"
 	Model__OllamaCloud__Devstral__Small__2__24b                                              ModelID = "devstral-small-2:24b"
+	Model__OllamaCloud__GLM__4_6                                                             ModelID = "glm-4.6"
+	Model__OllamaCloud__GLM__4_7                                                             ModelID = "glm-4.7"
+	Model__OllamaCloud__GLM__5                                                               ModelID = "glm-5"
+	Model__OllamaCloud__GLM__5_1                                                             ModelID = "glm-5.1"
 	Model__OllamaCloud__GPT__Oss__120b                                                       ModelID = "gpt-oss:120b"
 	Model__OllamaCloud__GPT__Oss__20b                                                        ModelID = "gpt-oss:20b"
 	Model__OllamaCloud__Gemini__3__Flash__3__Preview                                         ModelID = "gemini-3-flash-preview"
@@ -3215,18 +3205,14 @@ const (
 	Model__OllamaCloud__Gemma3__27b                                                          ModelID = "gemma3:27b"
 	Model__OllamaCloud__Gemma3__4b                                                           ModelID = "gemma3:4b"
 	Model__OllamaCloud__Gemma4__31b                                                          ModelID = "gemma4:31b"
-	Model__OllamaCloud__Glm__4_6                                                             ModelID = "glm-4.6"
-	Model__OllamaCloud__Glm__4_7                                                             ModelID = "glm-4.7"
-	Model__OllamaCloud__Glm__5                                                               ModelID = "glm-5"
-	Model__OllamaCloud__Glm__5_1                                                             ModelID = "glm-5.1"
 	Model__OllamaCloud__Kimi__K2__1t__2                                                      ModelID = "kimi-k2:1t"
 	Model__OllamaCloud__Kimi__K2__2__Thinking                                                ModelID = "kimi-k2-thinking"
 	Model__OllamaCloud__Kimi__K2__5__2_5                                                     ModelID = "kimi-k2.5"
 	Model__OllamaCloud__Kimi__K2__6__2_6                                                     ModelID = "kimi-k2.6"
-	Model__OllamaCloud__Minimax__M2__1__2_1                                                  ModelID = "minimax-m2.1"
-	Model__OllamaCloud__Minimax__M2__2                                                       ModelID = "minimax-m2"
-	Model__OllamaCloud__Minimax__M2__5__2_5                                                  ModelID = "minimax-m2.5"
-	Model__OllamaCloud__Minimax__M2__7__2_7                                                  ModelID = "minimax-m2.7"
+	Model__OllamaCloud__MiniMax__M2__1__2_1                                                  ModelID = "minimax-m2.1"
+	Model__OllamaCloud__MiniMax__M2__2                                                       ModelID = "minimax-m2"
+	Model__OllamaCloud__MiniMax__M2__5__2_5                                                  ModelID = "minimax-m2.5"
+	Model__OllamaCloud__MiniMax__M2__7__2_7                                                  ModelID = "minimax-m2.7"
 	Model__OllamaCloud__Ministral__3__14b                                                    ModelID = "ministral-3:14b"
 	Model__OllamaCloud__Ministral__3__3b                                                     ModelID = "ministral-3:3b"
 	Model__OllamaCloud__Ministral__3__8b                                                     ModelID = "ministral-3:8b"
@@ -3292,18 +3278,18 @@ const (
 	Model__OpenAI__Text__Embedding__3__Large__3                                              ModelID = "text-embedding-3-large"
 	Model__OpenAI__Text__Embedding__3__Small__3                                              ModelID = "text-embedding-3-small"
 	Model__OpenAI__Text__Embedding__Ada__002                                                 ModelID = "text-embedding-ada-002"
-	Model__OpenCodeGo__Deepseek__V4__Flash                                                   ModelID = "deepseek-v4-flash"
-	Model__OpenCodeGo__Deepseek__V4__Pro__Thinking                                           ModelID = "deepseek-v4-pro"
-	Model__OpenCodeGo__Glm__5                                                                ModelID = "glm-5"
-	Model__OpenCodeGo__Glm__5_1                                                              ModelID = "glm-5.1"
+	Model__OpenCodeGo__DeepSeek__V4__Flash                                                   ModelID = "deepseek-v4-flash"
+	Model__OpenCodeGo__DeepSeek__V4__Pro__Thinking                                           ModelID = "deepseek-v4-pro"
+	Model__OpenCodeGo__GLM__5                                                                ModelID = "glm-5"
+	Model__OpenCodeGo__GLM__5_1                                                              ModelID = "glm-5.1"
 	Model__OpenCodeGo__Kimi__K2__5__2_5                                                      ModelID = "kimi-k2.5"
 	Model__OpenCodeGo__Kimi__K2__6__2_6                                                      ModelID = "kimi-k2.6"
 	Model__OpenCodeGo__Mimo__V2__2__Omni                                                     ModelID = "mimo-v2-omni"
 	Model__OpenCodeGo__Mimo__V2__2__Pro                                                      ModelID = "mimo-v2-pro"
 	Model__OpenCodeGo__Mimo__V2__5__2_5                                                      ModelID = "mimo-v2.5"
 	Model__OpenCodeGo__Mimo__V2__5__2_5__Pro                                                 ModelID = "mimo-v2.5-pro"
-	Model__OpenCodeGo__Minimax__M2__5__2_5                                                   ModelID = "minimax-m2.5"
-	Model__OpenCodeGo__Minimax__M2__7__2_7                                                   ModelID = "minimax-m2.7"
+	Model__OpenCodeGo__MiniMax__M2__5__2_5                                                   ModelID = "minimax-m2.5"
+	Model__OpenCodeGo__MiniMax__M2__7__2_7                                                   ModelID = "minimax-m2.7"
 	Model__OpenCodeGo__Qwen3__5__Plus__3_5                                                   ModelID = "qwen3.5-plus"
 	Model__OpenCodeGo__Qwen3__6__Plus__3_6                                                   ModelID = "qwen3.6-plus"
 	Model__OpenCodeGo__Qwen3__7__Max__3_7                                                    ModelID = "qwen3.7-max"
@@ -3318,7 +3304,13 @@ const (
 	Model__OpenCode__Claude__Sonnet__4                                                       ModelID = "claude-sonnet-4"
 	Model__OpenCode__Claude__Sonnet__4_5                                                     ModelID = "claude-sonnet-4-5"
 	Model__OpenCode__Claude__Sonnet__4_6                                                     ModelID = "claude-sonnet-4-6"
-	Model__OpenCode__Deepseek__V4__Flash__Free                                               ModelID = "deepseek-v4-flash-free"
+	Model__OpenCode__DeepSeek__V4__Flash__Free                                               ModelID = "deepseek-v4-flash-free"
+	Model__OpenCode__GLM__4_6                                                                ModelID = "glm-4.6"
+	Model__OpenCode__GLM__4_7                                                                ModelID = "glm-4.7"
+	Model__OpenCode__GLM__4__7__Free__4_7                                                    ModelID = "glm-4.7-free"
+	Model__OpenCode__GLM__5                                                                  ModelID = "glm-5"
+	Model__OpenCode__GLM__5_1                                                                ModelID = "glm-5.1"
+	Model__OpenCode__GLM__5__Free__5                                                         ModelID = "glm-5-free"
 	Model__OpenCode__GPT__5                                                                  ModelID = "gpt-5"
 	Model__OpenCode__GPT__5_1                                                                ModelID = "gpt-5.1"
 	Model__OpenCode__GPT__5_2                                                                ModelID = "gpt-5.2"
@@ -3340,12 +3332,6 @@ const (
 	Model__OpenCode__Gemini__3__5__Flash__3_5                                                ModelID = "gemini-3.5-flash"
 	Model__OpenCode__Gemini__3__Flash__3                                                     ModelID = "gemini-3-flash"
 	Model__OpenCode__Gemini__3__Pro__3                                                       ModelID = "gemini-3-pro"
-	Model__OpenCode__Glm__4_6                                                                ModelID = "glm-4.6"
-	Model__OpenCode__Glm__4_7                                                                ModelID = "glm-4.7"
-	Model__OpenCode__Glm__4__7__Free__4_7                                                    ModelID = "glm-4.7-free"
-	Model__OpenCode__Glm__5                                                                  ModelID = "glm-5"
-	Model__OpenCode__Glm__5_1                                                                ModelID = "glm-5.1"
-	Model__OpenCode__Glm__5__Free__5                                                         ModelID = "glm-5-free"
 	Model__OpenCode__Grok__Build__0_1                                                        ModelID = "grok-build-0.1"
 	Model__OpenCode__Grok__Code                                                              ModelID = "grok-code"
 	Model__OpenCode__Hy3__Preview__Free__3                                                   ModelID = "hy3-preview-free"
@@ -3359,11 +3345,11 @@ const (
 	Model__OpenCode__Mimo__V2__Flash__Free                                                   ModelID = "mimo-v2-flash-free"
 	Model__OpenCode__Mimo__V2__Omni__Free                                                    ModelID = "mimo-v2-omni-free"
 	Model__OpenCode__Mimo__V2__Pro__Free                                                     ModelID = "mimo-v2-pro-free"
-	Model__OpenCode__Minimax__M2__1__2_1                                                     ModelID = "minimax-m2.1"
-	Model__OpenCode__Minimax__M2__1__Free                                                    ModelID = "minimax-m2.1-free"
-	Model__OpenCode__Minimax__M2__5__2_5                                                     ModelID = "minimax-m2.5"
-	Model__OpenCode__Minimax__M2__5__Free                                                    ModelID = "minimax-m2.5-free"
-	Model__OpenCode__Minimax__M2__7__2_7                                                     ModelID = "minimax-m2.7"
+	Model__OpenCode__MiniMax__M2__1__2_1                                                     ModelID = "minimax-m2.1"
+	Model__OpenCode__MiniMax__M2__1__Free                                                    ModelID = "minimax-m2.1-free"
+	Model__OpenCode__MiniMax__M2__5__2_5                                                     ModelID = "minimax-m2.5"
+	Model__OpenCode__MiniMax__M2__5__Free                                                    ModelID = "minimax-m2.5-free"
+	Model__OpenCode__MiniMax__M2__7__2_7                                                     ModelID = "minimax-m2.7"
 	Model__OpenCode__Nemotron__3__Super__Free__3                                             ModelID = "nemotron-3-super-free"
 	Model__OpenCode__Qwen3__5__Plus__3_5                                                     ModelID = "qwen3.5-plus"
 	Model__OpenCode__Qwen3__6__Plus__3_6                                                     ModelID = "qwen3.6-plus"
@@ -3395,7 +3381,7 @@ const (
 	Model__OpenRouter__Claude__Sonnet__4_5                                                   ModelID = "anthropic/claude-sonnet-4.5"
 	Model__OpenRouter__Claude__Sonnet__4_6                                                   ModelID = "anthropic/claude-sonnet-4.6"
 	Model__OpenRouter__Claude__Sonnet__Latest                                                ModelID = "~anthropic/claude-sonnet-latest"
-	Model__OpenRouter__Codellama__7b__Instruct__Solidity__Instruct                           ModelID = "alfredpros/codellama-7b-instruct-solidity"
+	Model__OpenRouter__CodeLlama__7b__Instruct__Solidity__Instruct                           ModelID = "alfredpros/codellama-7b-instruct-solidity"
 	Model__OpenRouter__Coder__Large                                                          ModelID = "arcee-ai/coder-large"
 	Model__OpenRouter__Codestral__2508                                                       ModelID = "mistralai/codestral-2508"
 	Model__OpenRouter__Cogito__V2__1__671b                                                   ModelID = "deepcogito/cogito-v2.1-671b"
@@ -3404,20 +3390,20 @@ const (
 	Model__OpenRouter__Command__R__20240830                                                  ModelID = "cohere/command-r-08-2024"
 	Model__OpenRouter__Command__R__Plus__20240830                                            ModelID = "cohere/command-r-plus-08-2024"
 	Model__OpenRouter__Cydonia__24b__V4__1                                                   ModelID = "thedrummer/cydonia-24b-v4.1"
-	Model__OpenRouter__Deepseek__Chat                                                        ModelID = "deepseek/deepseek-chat"
-	Model__OpenRouter__Deepseek__Chat__V3__0324                                              ModelID = "deepseek/deepseek-chat-v3-0324"
-	Model__OpenRouter__Deepseek__Chat__V3__1__3_1                                            ModelID = "deepseek/deepseek-chat-v3.1"
-	Model__OpenRouter__Deepseek__R1__0528                                                    ModelID = "deepseek/deepseek-r1-0528"
-	Model__OpenRouter__Deepseek__R1__Distill__Llama__70b__Thinking                           ModelID = "deepseek/deepseek-r1-distill-llama-70b"
-	Model__OpenRouter__Deepseek__R1__Distill__Qwen__32b                                      ModelID = "deepseek/deepseek-r1-distill-qwen-32b"
-	Model__OpenRouter__Deepseek__R1__Thinking                                                ModelID = "deepseek/deepseek-r1"
-	Model__OpenRouter__Deepseek__V3__1__Nex__N1                                              ModelID = "nex-agi/deepseek-v3.1-nex-n1"
-	Model__OpenRouter__Deepseek__V3__1__Terminus                                             ModelID = "deepseek/deepseek-v3.1-terminus"
-	Model__OpenRouter__Deepseek__V3__2                                                       ModelID = "deepseek/deepseek-v3.2"
-	Model__OpenRouter__Deepseek__V3__2__Exp                                                  ModelID = "deepseek/deepseek-v3.2-exp"
-	Model__OpenRouter__Deepseek__V4__Flash                                                   ModelID = "deepseek/deepseek-v4-flash"
-	Model__OpenRouter__Deepseek__V4__Flash__Free                                             ModelID = "deepseek/deepseek-v4-flash:free"
-	Model__OpenRouter__Deepseek__V4__Pro__Thinking                                           ModelID = "deepseek/deepseek-v4-pro"
+	Model__OpenRouter__DeepSeek__Chat                                                        ModelID = "deepseek/deepseek-chat"
+	Model__OpenRouter__DeepSeek__Chat__V3__0324                                              ModelID = "deepseek/deepseek-chat-v3-0324"
+	Model__OpenRouter__DeepSeek__Chat__V3__1__3_1                                            ModelID = "deepseek/deepseek-chat-v3.1"
+	Model__OpenRouter__DeepSeek__R1__0528                                                    ModelID = "deepseek/deepseek-r1-0528"
+	Model__OpenRouter__DeepSeek__R1__Distill__Llama__70b__Thinking                           ModelID = "deepseek/deepseek-r1-distill-llama-70b"
+	Model__OpenRouter__DeepSeek__R1__Distill__Qwen__32b                                      ModelID = "deepseek/deepseek-r1-distill-qwen-32b"
+	Model__OpenRouter__DeepSeek__R1__Thinking                                                ModelID = "deepseek/deepseek-r1"
+	Model__OpenRouter__DeepSeek__V3__1__Nex__N1                                              ModelID = "nex-agi/deepseek-v3.1-nex-n1"
+	Model__OpenRouter__DeepSeek__V3__1__Terminus                                             ModelID = "deepseek/deepseek-v3.1-terminus"
+	Model__OpenRouter__DeepSeek__V3__2                                                       ModelID = "deepseek/deepseek-v3.2"
+	Model__OpenRouter__DeepSeek__V3__2__Exp                                                  ModelID = "deepseek/deepseek-v3.2-exp"
+	Model__OpenRouter__DeepSeek__V4__Flash                                                   ModelID = "deepseek/deepseek-v4-flash"
+	Model__OpenRouter__DeepSeek__V4__Flash__Free                                             ModelID = "deepseek/deepseek-v4-flash:free"
+	Model__OpenRouter__DeepSeek__V4__Pro__Thinking                                           ModelID = "deepseek/deepseek-v4-pro"
 	Model__OpenRouter__Devstral__2512                                                        ModelID = "mistralai/devstral-2512"
 	Model__OpenRouter__Devstral__Medium                                                      ModelID = "mistralai/devstral-medium"
 	Model__OpenRouter__Devstral__Small                                                       ModelID = "mistralai/devstral-small"
@@ -3428,6 +3414,19 @@ const (
 	Model__OpenRouter__Ernie__4__5__Vl__28b__A3b__4_5                                        ModelID = "baidu/ernie-4.5-vl-28b-a3b"
 	Model__OpenRouter__Ernie__4__5__Vl__424b__A47b__4_5                                      ModelID = "baidu/ernie-4.5-vl-424b-a47b"
 	Model__OpenRouter__Free                                                                  ModelID = "openrouter/free"
+	Model__OpenRouter__GLM__4_5                                                              ModelID = "z-ai/glm-4.5"
+	Model__OpenRouter__GLM__4_6                                                              ModelID = "z-ai/glm-4.6"
+	Model__OpenRouter__GLM__4_7                                                              ModelID = "z-ai/glm-4.7"
+	Model__OpenRouter__GLM__4__32b__4                                                        ModelID = "z-ai/glm-4-32b"
+	Model__OpenRouter__GLM__4__5__Air__4_5                                                   ModelID = "z-ai/glm-4.5-air"
+	Model__OpenRouter__GLM__4__5__Air__Free__4_5                                             ModelID = "z-ai/glm-4.5-air:free"
+	Model__OpenRouter__GLM__4__5v__4_5                                                       ModelID = "z-ai/glm-4.5v"
+	Model__OpenRouter__GLM__4__6v__4_6                                                       ModelID = "z-ai/glm-4.6v"
+	Model__OpenRouter__GLM__4__7__Flash__4_7                                                 ModelID = "z-ai/glm-4.7-flash"
+	Model__OpenRouter__GLM__5                                                                ModelID = "z-ai/glm-5"
+	Model__OpenRouter__GLM__5_1                                                              ModelID = "z-ai/glm-5.1"
+	Model__OpenRouter__GLM__5__Turbo                                                         ModelID = "z-ai/glm-5-turbo"
+	Model__OpenRouter__GLM__5v__5__Turbo                                                     ModelID = "z-ai/glm-5v-turbo"
 	Model__OpenRouter__GPT__3_5__Turbo                                                       ModelID = "openai/gpt-3.5-turbo"
 	Model__OpenRouter__GPT__3_5__TurboInstruct                                               ModelID = "openai/gpt-3.5-turbo-instruct"
 	Model__OpenRouter__GPT__3__5__Turbo__0613__3_5__Turbo                                    ModelID = "openai/gpt-3.5-turbo-0613"
@@ -3512,19 +3511,6 @@ const (
 	Model__OpenRouter__Gemma__4__26b__A4b__It__Free__4                                       ModelID = "google/gemma-4-26b-a4b-it:free"
 	Model__OpenRouter__Gemma__4__31b__It__4                                                  ModelID = "google/gemma-4-31b-it"
 	Model__OpenRouter__Gemma__4__31b__It__Free__4                                            ModelID = "google/gemma-4-31b-it:free"
-	Model__OpenRouter__Glm__4_5                                                              ModelID = "z-ai/glm-4.5"
-	Model__OpenRouter__Glm__4_6                                                              ModelID = "z-ai/glm-4.6"
-	Model__OpenRouter__Glm__4_7                                                              ModelID = "z-ai/glm-4.7"
-	Model__OpenRouter__Glm__4__32b__4                                                        ModelID = "z-ai/glm-4-32b"
-	Model__OpenRouter__Glm__4__5__Air__4_5                                                   ModelID = "z-ai/glm-4.5-air"
-	Model__OpenRouter__Glm__4__5__Air__Free__4_5                                             ModelID = "z-ai/glm-4.5-air:free"
-	Model__OpenRouter__Glm__4__5v__4_5                                                       ModelID = "z-ai/glm-4.5v"
-	Model__OpenRouter__Glm__4__6v__4_6                                                       ModelID = "z-ai/glm-4.6v"
-	Model__OpenRouter__Glm__4__7__Flash__4_7                                                 ModelID = "z-ai/glm-4.7-flash"
-	Model__OpenRouter__Glm__5                                                                ModelID = "z-ai/glm-5"
-	Model__OpenRouter__Glm__5_1                                                              ModelID = "z-ai/glm-5.1"
-	Model__OpenRouter__Glm__5__Turbo                                                         ModelID = "z-ai/glm-5-turbo"
-	Model__OpenRouter__Glm__5v__5__Turbo                                                     ModelID = "z-ai/glm-5v-turbo"
 	Model__OpenRouter__Granite__4__0__H__Micro__4_0                                          ModelID = "ibm-granite/granite-4.0-h-micro"
 	Model__OpenRouter__Granite__4__1__8b__4_1                                                ModelID = "ibm-granite/granite-4.1-8b"
 	Model__OpenRouter__Grok__4_20                                                            ModelID = "x-ai/grok-4.20"
@@ -3588,14 +3574,14 @@ const (
 	Model__OpenRouter__Mimo__V2__5__2_5                                                      ModelID = "xiaomi/mimo-v2.5"
 	Model__OpenRouter__Mimo__V2__5__2_5__Pro                                                 ModelID = "xiaomi/mimo-v2.5-pro"
 	Model__OpenRouter__Mimo__V2__Flash                                                       ModelID = "xiaomi/mimo-v2-flash"
-	Model__OpenRouter__Minimax__01                                                           ModelID = "minimax/minimax-01"
-	Model__OpenRouter__Minimax__M1__1                                                        ModelID = "minimax/minimax-m1"
-	Model__OpenRouter__Minimax__M2__1__2_1                                                   ModelID = "minimax/minimax-m2.1"
-	Model__OpenRouter__Minimax__M2__2                                                        ModelID = "minimax/minimax-m2"
-	Model__OpenRouter__Minimax__M2__5__2_5                                                   ModelID = "minimax/minimax-m2.5"
-	Model__OpenRouter__Minimax__M2__5__Free__2_5                                             ModelID = "minimax/minimax-m2.5:free"
-	Model__OpenRouter__Minimax__M2__7__2_7                                                   ModelID = "minimax/minimax-m2.7"
-	Model__OpenRouter__Minimax__M2__Her                                                      ModelID = "minimax/minimax-m2-her"
+	Model__OpenRouter__MiniMax__01                                                           ModelID = "minimax/minimax-01"
+	Model__OpenRouter__MiniMax__M1__1                                                        ModelID = "minimax/minimax-m1"
+	Model__OpenRouter__MiniMax__M2__1__2_1                                                   ModelID = "minimax/minimax-m2.1"
+	Model__OpenRouter__MiniMax__M2__2                                                        ModelID = "minimax/minimax-m2"
+	Model__OpenRouter__MiniMax__M2__5__2_5                                                   ModelID = "minimax/minimax-m2.5"
+	Model__OpenRouter__MiniMax__M2__5__Free__2_5                                             ModelID = "minimax/minimax-m2.5:free"
+	Model__OpenRouter__MiniMax__M2__7__2_7                                                   ModelID = "minimax/minimax-m2.7"
+	Model__OpenRouter__MiniMax__M2__Her                                                      ModelID = "minimax/minimax-m2-her"
 	Model__OpenRouter__Ministral__14b__2512                                                  ModelID = "mistralai/ministral-14b-2512"
 	Model__OpenRouter__Ministral__3b__2512                                                   ModelID = "mistralai/ministral-3b-2512"
 	Model__OpenRouter__Ministral__8b__2512                                                   ModelID = "mistralai/ministral-8b-2512"
@@ -3640,7 +3626,7 @@ const (
 	Model__OpenRouter__O4__4__Mini                                                           ModelID = "openai/o4-mini"
 	Model__OpenRouter__O4__Mini__Deep__Research__4__Mini                                     ModelID = "openai/o4-mini-deep-research"
 	Model__OpenRouter__O4__Mini__High__4__Mini                                               ModelID = "openai/o4-mini-high"
-	Model__OpenRouter__Olmo__3__32b__3__Think                                                ModelID = "allenai/olmo-3-32b-think"
+	Model__OpenRouter__OLMo__3__32b__3__Think                                                ModelID = "allenai/olmo-3-32b-think"
 	Model__OpenRouter__Owl__Alpha                                                            ModelID = "openrouter/owl-alpha"
 	Model__OpenRouter__Palmyra__X5                                                           ModelID = "writer/palmyra-x5"
 	Model__OpenRouter__Pareto__Code                                                          ModelID = "openrouter/pareto-code"
@@ -3726,7 +3712,7 @@ const (
 	Model__OpenRouter__Virtuoso__Large                                                       ModelID = "arcee-ai/virtuoso-large"
 	Model__OpenRouter__Voxtral__Small__24b__2507                                             ModelID = "mistralai/voxtral-small-24b-2507"
 	Model__OpenRouter__Weaver                                                                ModelID = "mancer/weaver"
-	Model__OpenRouter__Wizardlm__2__8x22b__2                                                 ModelID = "microsoft/wizardlm-2-8x22b"
+	Model__OpenRouter__WizardLM__2__8x22b__2                                                 ModelID = "microsoft/wizardlm-2-8x22b"
 	Model__OrcaRouter__Auto                                                                  ModelID = "orcarouter/auto"
 	Model__OrcaRouter__Claude__Haiku__4_5                                                    ModelID = "anthropic/claude-haiku-4.5"
 	Model__OrcaRouter__Claude__Opus__4                                                       ModelID = "anthropic/claude-opus-4"
@@ -3737,10 +3723,16 @@ const (
 	Model__OrcaRouter__Claude__Sonnet__4                                                     ModelID = "anthropic/claude-sonnet-4"
 	Model__OrcaRouter__Claude__Sonnet__4_5                                                   ModelID = "anthropic/claude-sonnet-4.5"
 	Model__OrcaRouter__Claude__Sonnet__4_6                                                   ModelID = "anthropic/claude-sonnet-4.6"
-	Model__OrcaRouter__Deepseek__Chat                                                        ModelID = "deepseek/deepseek-chat"
-	Model__OrcaRouter__Deepseek__Reasoner__Thinking                                          ModelID = "deepseek/deepseek-reasoner"
-	Model__OrcaRouter__Deepseek__V4__Flash                                                   ModelID = "deepseek/deepseek-v4-flash"
-	Model__OrcaRouter__Deepseek__V4__Pro__Thinking                                           ModelID = "deepseek/deepseek-v4-pro"
+	Model__OrcaRouter__DeepSeek__Chat                                                        ModelID = "deepseek/deepseek-chat"
+	Model__OrcaRouter__DeepSeek__Reasoner__Thinking                                          ModelID = "deepseek/deepseek-reasoner"
+	Model__OrcaRouter__DeepSeek__V4__Flash                                                   ModelID = "deepseek/deepseek-v4-flash"
+	Model__OrcaRouter__DeepSeek__V4__Pro__Thinking                                           ModelID = "deepseek/deepseek-v4-pro"
+	Model__OrcaRouter__GLM__4_5                                                              ModelID = "z-ai/glm-4.5"
+	Model__OrcaRouter__GLM__4_6                                                              ModelID = "z-ai/glm-4.6"
+	Model__OrcaRouter__GLM__4_7                                                              ModelID = "z-ai/glm-4.7"
+	Model__OrcaRouter__GLM__4__5__Air__4_5                                                   ModelID = "z-ai/glm-4.5-air"
+	Model__OrcaRouter__GLM__5                                                                ModelID = "z-ai/glm-5"
+	Model__OrcaRouter__GLM__5_1                                                              ModelID = "z-ai/glm-5.1"
 	Model__OrcaRouter__GPT__3_5__Turbo                                                       ModelID = "openai/gpt-3.5-turbo"
 	Model__OrcaRouter__GPT__4                                                                ModelID = "openai/gpt-4"
 	Model__OrcaRouter__GPT__4_1                                                              ModelID = "openai/gpt-4.1"
@@ -3787,19 +3779,13 @@ const (
 	Model__OrcaRouter__Gemini__Flash__Lite__Latest                                           ModelID = "google/gemini-flash-lite-latest"
 	Model__OrcaRouter__Gemma__4__26b__A4b__It__4                                             ModelID = "google/gemma-4-26b-a4b-it"
 	Model__OrcaRouter__Gemma__4__31b__It__4                                                  ModelID = "google/gemma-4-31b-it"
-	Model__OrcaRouter__Glm__4_5                                                              ModelID = "z-ai/glm-4.5"
-	Model__OrcaRouter__Glm__4_6                                                              ModelID = "z-ai/glm-4.6"
-	Model__OrcaRouter__Glm__4_7                                                              ModelID = "z-ai/glm-4.7"
-	Model__OrcaRouter__Glm__4__5__Air__4_5                                                   ModelID = "z-ai/glm-4.5-air"
-	Model__OrcaRouter__Glm__5                                                                ModelID = "z-ai/glm-5"
-	Model__OrcaRouter__Glm__5_1                                                              ModelID = "z-ai/glm-5.1"
 	Model__OrcaRouter__Grok__4_3                                                             ModelID = "grok/grok-4.3"
 	Model__OrcaRouter__Kimi__K2__5__2_5                                                      ModelID = "kimi/kimi-k2.5"
 	Model__OrcaRouter__Kimi__K2__6__2_6                                                      ModelID = "kimi/kimi-k2.6"
-	Model__OrcaRouter__Minimax__M2__5__2_5                                                   ModelID = "minimax/minimax-m2.5"
-	Model__OrcaRouter__Minimax__M2__5__2_5__Highspeed                                        ModelID = "minimax/minimax-m2.5-highspeed"
-	Model__OrcaRouter__Minimax__M2__7__2_7                                                   ModelID = "minimax/minimax-m2.7"
-	Model__OrcaRouter__Minimax__M2__7__2_7__Highspeed                                        ModelID = "minimax/minimax-m2.7-highspeed"
+	Model__OrcaRouter__MiniMax__M2__5__2_5                                                   ModelID = "minimax/minimax-m2.5"
+	Model__OrcaRouter__MiniMax__M2__5__2_5__Highspeed                                        ModelID = "minimax/minimax-m2.5-highspeed"
+	Model__OrcaRouter__MiniMax__M2__7__2_7                                                   ModelID = "minimax/minimax-m2.7"
+	Model__OrcaRouter__MiniMax__M2__7__2_7__Highspeed                                        ModelID = "minimax/minimax-m2.7-highspeed"
 	Model__OrcaRouter__Qwen3__5__122b__A10b__3_5                                             ModelID = "qwen/qwen3.5-122b-a10b"
 	Model__OrcaRouter__Qwen3__5__27b__3_5                                                    ModelID = "qwen/qwen3.5-27b"
 	Model__OrcaRouter__Qwen3__5__35b__A3b__3_5                                               ModelID = "qwen/qwen3.5-35b-a3b"
@@ -3848,12 +3834,18 @@ const (
 	Model__Poe__Claude__Sonnet__4_5                                                          ModelID = "anthropic/claude-sonnet-4.5"
 	Model__Poe__Claude__Sonnet__4_6                                                          ModelID = "anthropic/claude-sonnet-4.6"
 	Model__Poe__Dall__E__3                                                                   ModelID = "openai/dall-e-3"
-	Model__Poe__Deepseek__V3__2                                                              ModelID = "novita/deepseek-v3.2"
-	Model__Poe__Deepseek__V4__Flash__El                                                      ModelID = "empiriolabs/deepseek-v4-flash-el"
-	Model__Poe__Deepseek__V4__Pro__El                                                        ModelID = "empiriolabs/deepseek-v4-pro-el"
+	Model__Poe__DeepSeek__V3__2                                                              ModelID = "novita/deepseek-v3.2"
+	Model__Poe__DeepSeek__V4__Flash__El                                                      ModelID = "empiriolabs/deepseek-v4-flash-el"
+	Model__Poe__DeepSeek__V4__Pro__El                                                        ModelID = "empiriolabs/deepseek-v4-pro-el"
 	Model__Poe__Elevenlabs__Music                                                            ModelID = "elevenlabs/elevenlabs-music"
 	Model__Poe__Elevenlabs__V2__5__Turbo                                                     ModelID = "elevenlabs/elevenlabs-v2.5-turbo"
 	Model__Poe__Elevenlabs__V3                                                               ModelID = "elevenlabs/elevenlabs-v3"
+	Model__Poe__GLM__4_6                                                                     ModelID = "novita/glm-4.6"
+	Model__Poe__GLM__4_7                                                                     ModelID = "novita/glm-4.7"
+	Model__Poe__GLM__4__6v__4_6                                                              ModelID = "novita/glm-4.6v"
+	Model__Poe__GLM__4__7__Flash__4_7                                                        ModelID = "novita/glm-4.7-flash"
+	Model__Poe__GLM__4__7__N__4_7                                                            ModelID = "novita/glm-4.7-n"
+	Model__Poe__GLM__5                                                                       ModelID = "novita/glm-5"
 	Model__Poe__GPT__3_5__Turbo                                                              ModelID = "openai/gpt-3.5-turbo"
 	Model__Poe__GPT__3_5__TurboInstruct                                                      ModelID = "openai/gpt-3.5-turbo-instruct"
 	Model__Poe__GPT__3__5__Turbo__Raw__3_5__Turbo                                            ModelID = "openai/gpt-3.5-turbo-raw"
@@ -3909,12 +3901,6 @@ const (
 	Model__Poe__Gemini__3__Pro__3                                                            ModelID = "google/gemini-3-pro"
 	Model__Poe__Gemini__Deep__Research                                                       ModelID = "google/gemini-deep-research"
 	Model__Poe__Gemma__4__31b__4                                                             ModelID = "google/gemma-4-31b"
-	Model__Poe__Glm__4_6                                                                     ModelID = "novita/glm-4.6"
-	Model__Poe__Glm__4_7                                                                     ModelID = "novita/glm-4.7"
-	Model__Poe__Glm__4__6v__4_6                                                              ModelID = "novita/glm-4.6v"
-	Model__Poe__Glm__4__7__Flash__4_7                                                        ModelID = "novita/glm-4.7-flash"
-	Model__Poe__Glm__4__7__N__4_7                                                            ModelID = "novita/glm-4.7-n"
-	Model__Poe__Glm__5                                                                       ModelID = "novita/glm-5"
 	Model__Poe__Grok__3                                                                      ModelID = "xai/grok-3"
 	Model__Poe__Grok__3__Mini__3                                                             ModelID = "xai/grok-3-mini"
 	Model__Poe__Grok__4                                                                      ModelID = "xai/grok-4"
@@ -3940,7 +3926,7 @@ const (
 	Model__Poe__Llama__3__1__8b__Cs__3_1                                                     ModelID = "cerebras/llama-3.1-8b-cs"
 	Model__Poe__Llama__3__3__70b__Cs__3_3                                                    ModelID = "cerebras/llama-3.3-70b-cs"
 	Model__Poe__Lyria                                                                        ModelID = "google/lyria"
-	Model__Poe__Minimax__M2__1__2_1                                                          ModelID = "novita/minimax-m2.1"
+	Model__Poe__MiniMax__M2__1__2_1                                                          ModelID = "novita/minimax-m2.1"
 	Model__Poe__Nano__Banana                                                                 ModelID = "google/nano-banana"
 	Model__Poe__Nano__Banana__Pro                                                            ModelID = "google/nano-banana-pro"
 	Model__Poe__O1__1                                                                        ModelID = "openai/o1"
@@ -3993,17 +3979,17 @@ const (
 	Model__QiniuAI__Claude__4__5__Haiku__4_5                                                 ModelID = "claude-4.5-haiku"
 	Model__QiniuAI__Claude__4__5__Opus__4_5                                                  ModelID = "claude-4.5-opus"
 	Model__QiniuAI__Claude__4__5__Sonnet__4_5                                                ModelID = "claude-4.5-sonnet"
-	Model__QiniuAI__Deepseek__Math__V2                                                       ModelID = "deepseek/deepseek-math-v2"
-	Model__QiniuAI__Deepseek__R1                                                             ModelID = "deepseek-r1"
-	Model__QiniuAI__Deepseek__R1__0528                                                       ModelID = "deepseek-r1-0528"
-	Model__QiniuAI__Deepseek__V3                                                             ModelID = "deepseek-v3"
-	Model__QiniuAI__Deepseek__V3__0324                                                       ModelID = "deepseek-v3-0324"
-	Model__QiniuAI__Deepseek__V3__1                                                          ModelID = "deepseek-v3.1"
-	Model__QiniuAI__Deepseek__V3__1__Terminus                                                ModelID = "deepseek/deepseek-v3.1-terminus"
-	Model__QiniuAI__Deepseek__V3__1__Terminus__Thinking                                      ModelID = "deepseek/deepseek-v3.1-terminus-thinking"
-	Model__QiniuAI__Deepseek__V3__2__251201                                                  ModelID = "deepseek/deepseek-v3.2-251201"
-	Model__QiniuAI__Deepseek__V3__2__Exp                                                     ModelID = "deepseek/deepseek-v3.2-exp"
-	Model__QiniuAI__Deepseek__V3__2__Exp__Thinking                                           ModelID = "deepseek/deepseek-v3.2-exp-thinking"
+	Model__QiniuAI__DeepSeek__Math__V2                                                       ModelID = "deepseek/deepseek-math-v2"
+	Model__QiniuAI__DeepSeek__R1                                                             ModelID = "deepseek-r1"
+	Model__QiniuAI__DeepSeek__R1__0528                                                       ModelID = "deepseek-r1-0528"
+	Model__QiniuAI__DeepSeek__V3                                                             ModelID = "deepseek-v3"
+	Model__QiniuAI__DeepSeek__V3__0324                                                       ModelID = "deepseek-v3-0324"
+	Model__QiniuAI__DeepSeek__V3__1                                                          ModelID = "deepseek-v3.1"
+	Model__QiniuAI__DeepSeek__V3__1__Terminus                                                ModelID = "deepseek/deepseek-v3.1-terminus"
+	Model__QiniuAI__DeepSeek__V3__1__Terminus__Thinking                                      ModelID = "deepseek/deepseek-v3.1-terminus-thinking"
+	Model__QiniuAI__DeepSeek__V3__2__251201                                                  ModelID = "deepseek/deepseek-v3.2-251201"
+	Model__QiniuAI__DeepSeek__V3__2__Exp                                                     ModelID = "deepseek/deepseek-v3.2-exp"
+	Model__QiniuAI__DeepSeek__V3__2__Exp__Thinking                                           ModelID = "deepseek/deepseek-v3.2-exp-thinking"
 	Model__QiniuAI__Doubao__1__5__Pro__32k__1_5                                              ModelID = "doubao-1.5-pro-32k"
 	Model__QiniuAI__Doubao__1__5__Thinking__Pro__1_5                                         ModelID = "doubao-1.5-thinking-pro"
 	Model__QiniuAI__Doubao__1__5__Vision__Pro__1_5                                           ModelID = "doubao-1.5-vision-pro"
@@ -4014,6 +4000,11 @@ const (
 	Model__QiniuAI__Doubao__Seed__2__0__Lite__2_0                                            ModelID = "doubao-seed-2.0-lite"
 	Model__QiniuAI__Doubao__Seed__2__0__Mini__2_0                                            ModelID = "doubao-seed-2.0-mini"
 	Model__QiniuAI__Doubao__Seed__2__0__Pro__2_0                                             ModelID = "doubao-seed-2.0-pro"
+	Model__QiniuAI__GLM__4_5                                                                 ModelID = "glm-4.5"
+	Model__QiniuAI__GLM__4_6                                                                 ModelID = "z-ai/glm-4.6"
+	Model__QiniuAI__GLM__4_7                                                                 ModelID = "z-ai/glm-4.7"
+	Model__QiniuAI__GLM__4__5__Air__4_5                                                      ModelID = "glm-4.5-air"
+	Model__QiniuAI__GLM__5                                                                   ModelID = "z-ai/glm-5"
 	Model__QiniuAI__GPT__5                                                                   ModelID = "openai/gpt-5"
 	Model__QiniuAI__GPT__5_2                                                                 ModelID = "openai/gpt-5.2"
 	Model__QiniuAI__GPT__Oss__120b                                                           ModelID = "gpt-oss-120b"
@@ -4028,11 +4019,6 @@ const (
 	Model__QiniuAI__Gemini__3__0__Flash__3_0__Preview                                        ModelID = "gemini-3.0-flash-preview"
 	Model__QiniuAI__Gemini__3__0__Pro__3_0__Preview                                          ModelID = "gemini-3.0-pro-preview"
 	Model__QiniuAI__Gemini__3__0__Pro__Image__3_0__Preview                                   ModelID = "gemini-3.0-pro-image-preview"
-	Model__QiniuAI__Glm__4_5                                                                 ModelID = "glm-4.5"
-	Model__QiniuAI__Glm__4_6                                                                 ModelID = "z-ai/glm-4.6"
-	Model__QiniuAI__Glm__4_7                                                                 ModelID = "z-ai/glm-4.7"
-	Model__QiniuAI__Glm__4__5__Air__4_5                                                      ModelID = "glm-4.5-air"
-	Model__QiniuAI__Glm__5                                                                   ModelID = "z-ai/glm-5"
 	Model__QiniuAI__Grok__4_1__Fast                                                          ModelID = "x-ai/grok-4.1-fast"
 	Model__QiniuAI__Grok__4_1__ReasoningFast                                                 ModelID = "x-ai/grok-4.1-fast-reasoning"
 	Model__QiniuAI__Grok__4__1__Fast__Non__4_1__Reasoning                                    ModelID = "x-ai/grok-4.1-fast-non-reasoning"
@@ -4049,11 +4035,11 @@ const (
 	Model__QiniuAI__Longcat__Flash__Lite                                                     ModelID = "meituan/longcat-flash-lite"
 	Model__QiniuAI__Mimo__V2__Flash_1                                                        ModelID = "mimo-v2-flash"
 	Model__QiniuAI__Mimo__V2__Flash_2                                                        ModelID = "xiaomi/mimo-v2-flash"
-	Model__QiniuAI__Minimax__M1__1                                                           ModelID = "MiniMax-M1"
-	Model__QiniuAI__Minimax__M2__1__2_1                                                      ModelID = "minimax/minimax-m2.1"
-	Model__QiniuAI__Minimax__M2__2                                                           ModelID = "minimax/minimax-m2"
-	Model__QiniuAI__Minimax__M2__5__2_5                                                      ModelID = "minimax/minimax-m2.5"
-	Model__QiniuAI__Minimax__M2__5__2_5__Highspeed                                           ModelID = "minimax/minimax-m2.5-highspeed"
+	Model__QiniuAI__MiniMax__M1__1                                                           ModelID = "MiniMax-M1"
+	Model__QiniuAI__MiniMax__M2__1__2_1                                                      ModelID = "minimax/minimax-m2.1"
+	Model__QiniuAI__MiniMax__M2__2                                                           ModelID = "minimax/minimax-m2"
+	Model__QiniuAI__MiniMax__M2__5__2_5                                                      ModelID = "minimax/minimax-m2.5"
+	Model__QiniuAI__MiniMax__M2__5__2_5__Highspeed                                           ModelID = "minimax/minimax-m2.5-highspeed"
 	Model__QiniuAI__Qwen2__5__Vl__72b__2_5__Instruct                                         ModelID = "qwen2.5-vl-72b-instruct"
 	Model__QiniuAI__Qwen2__5__Vl__7b__2_5__Instruct                                          ModelID = "qwen2.5-vl-7b-instruct"
 	Model__QiniuAI__Qwen3__235b__A22b__3                                                     ModelID = "qwen3-235b-a22b"
@@ -4078,7 +4064,7 @@ const (
 	Model__RegoloAI__GPT__Oss__20b                                                           ModelID = "gpt-oss-20b"
 	Model__RegoloAI__Llama__3__1__8b__3_1__Instruct                                          ModelID = "llama-3.1-8b-instruct"
 	Model__RegoloAI__Llama__3__3__70b__3_3__Instruct                                         ModelID = "llama-3.3-70b-instruct"
-	Model__RegoloAI__Minimax__M2__5__2_5                                                     ModelID = "minimax-m2.5"
+	Model__RegoloAI__MiniMax__M2__5__2_5                                                     ModelID = "minimax-m2.5"
 	Model__RegoloAI__Mistral__Small3__2                                                      ModelID = "mistral-small3.2"
 	Model__RegoloAI__Mistral__Small__4__119b__4                                              ModelID = "mistral-small-4-119b"
 	Model__RegoloAI__Qwen3__5__122b__3_5                                                     ModelID = "qwen3.5-122b"
@@ -4125,24 +4111,24 @@ const (
 	Model__Requesty__Grok__4                                                                 ModelID = "xai/grok-4"
 	Model__Requesty__Grok__4__Fast                                                           ModelID = "xai/grok-4-fast"
 	Model__Requesty__O4__4__Mini                                                             ModelID = "openai/o4-mini"
-	Model__RoutingRun__Deepseek__V3__2                                                       ModelID = "route/deepseek-v3.2"
-	Model__RoutingRun__Deepseek__V4__Flash                                                   ModelID = "route/deepseek-v4-flash"
-	Model__RoutingRun__Deepseek__V4__Flash__6bit                                             ModelID = "route/deepseek-v4-flash-6bit"
-	Model__RoutingRun__Deepseek__V4__Pro__6bit__Thinking                                     ModelID = "route/deepseek-v4-pro-6bit"
-	Model__RoutingRun__Deepseek__V4__Pro__Thinking                                           ModelID = "route/deepseek-v4-pro"
+	Model__RoutingRun__DeepSeek__V3__2                                                       ModelID = "route/deepseek-v3.2"
+	Model__RoutingRun__DeepSeek__V4__Flash                                                   ModelID = "route/deepseek-v4-flash"
+	Model__RoutingRun__DeepSeek__V4__Flash__6bit                                             ModelID = "route/deepseek-v4-flash-6bit"
+	Model__RoutingRun__DeepSeek__V4__Pro__6bit__Thinking                                     ModelID = "route/deepseek-v4-pro-6bit"
+	Model__RoutingRun__DeepSeek__V4__Pro__Thinking                                           ModelID = "route/deepseek-v4-pro"
+	Model__RoutingRun__GLM__5_1                                                              ModelID = "route/glm-5.1"
+	Model__RoutingRun__GLM__5__1__6bit__5_1                                                  ModelID = "route/glm-5.1-6bit"
 	Model__RoutingRun__Gemma__4__31b__It__4                                                  ModelID = "route/gemma-4-31b-it"
-	Model__RoutingRun__Glm__5_1                                                              ModelID = "route/glm-5.1"
-	Model__RoutingRun__Glm__5__1__6bit__5_1                                                  ModelID = "route/glm-5.1-6bit"
 	Model__RoutingRun__Kimi__K2__5__2_5                                                      ModelID = "route/kimi-k2.5"
 	Model__RoutingRun__Kimi__K2__6__2_6                                                      ModelID = "route/kimi-k2.6"
 	Model__RoutingRun__Kimi__K2__6__6bit                                                     ModelID = "route/kimi-k2.6-6bit"
 	Model__RoutingRun__Mimo__V2__5__2_5                                                      ModelID = "route/mimo-v2.5"
 	Model__RoutingRun__Mimo__V2__5__2_5__Pro                                                 ModelID = "route/mimo-v2.5-pro"
 	Model__RoutingRun__Mimo__V2__5__Pro__6bit                                                ModelID = "route/mimo-v2.5-pro-6bit"
-	Model__RoutingRun__Minimax__M2__5__2_5                                                   ModelID = "route/minimax-m2.5"
-	Model__RoutingRun__Minimax__M2__5__2_5__Highspeed                                        ModelID = "route/minimax-m2.5-highspeed"
-	Model__RoutingRun__Minimax__M2__7__2_7                                                   ModelID = "route/minimax-m2.7"
-	Model__RoutingRun__Minimax__M2__7__2_7__Highspeed                                        ModelID = "route/minimax-m2.7-highspeed"
+	Model__RoutingRun__MiniMax__M2__5__2_5                                                   ModelID = "route/minimax-m2.5"
+	Model__RoutingRun__MiniMax__M2__5__2_5__Highspeed                                        ModelID = "route/minimax-m2.5-highspeed"
+	Model__RoutingRun__MiniMax__M2__7__2_7                                                   ModelID = "route/minimax-m2.7"
+	Model__RoutingRun__MiniMax__M2__7__2_7__Highspeed                                        ModelID = "route/minimax-m2.7-highspeed"
 	Model__RoutingRun__Mistral__Large__3                                                     ModelID = "route/mistral-large-3"
 	Model__RoutingRun__Mistral__Medium__2505                                                 ModelID = "route/mistral-medium-2505"
 	Model__RoutingRun__Mistral__Small__2503                                                  ModelID = "route/mistral-small-2503"
@@ -4202,31 +4188,31 @@ const (
 	Model__Scaleway__Qwen3__Embedding__8b__3                                                 ModelID = "qwen3-embedding-8b"
 	Model__Scaleway__Voxtral__Small__24b__2507                                               ModelID = "voxtral-small-24b-2507"
 	Model__Scaleway__Whisper__Large__V3                                                      ModelID = "whisper-large-v3"
-	Model__SiliconFlowCN__Deepseek__Ocr                                                      ModelID = "deepseek-ai/DeepSeek-OCR"
-	Model__SiliconFlowCN__Deepseek__R1__Distill__Qwen__14B                                   ModelID = "deepseek-ai/DeepSeek-R1-Distill-Qwen-14B"
-	Model__SiliconFlowCN__Deepseek__R1__Distill__Qwen__32B                                   ModelID = "deepseek-ai/DeepSeek-R1-Distill-Qwen-32B"
-	Model__SiliconFlowCN__Deepseek__R1__Thinking_1                                           ModelID = "Pro/deepseek-ai/DeepSeek-R1"
-	Model__SiliconFlowCN__Deepseek__R1__Thinking_2                                           ModelID = "deepseek-ai/DeepSeek-R1"
-	Model__SiliconFlowCN__Deepseek__V3_1                                                     ModelID = "Pro/deepseek-ai/DeepSeek-V3"
-	Model__SiliconFlowCN__Deepseek__V3_2                                                     ModelID = "deepseek-ai/DeepSeek-V3"
-	Model__SiliconFlowCN__Deepseek__V3__1__Terminus_1                                        ModelID = "Pro/deepseek-ai/DeepSeek-V3.1-Terminus"
-	Model__SiliconFlowCN__Deepseek__V3__1__Terminus_2                                        ModelID = "deepseek-ai/DeepSeek-V3.1-Terminus"
-	Model__SiliconFlowCN__Deepseek__V3__2_1                                                  ModelID = "Pro/deepseek-ai/DeepSeek-V3.2"
-	Model__SiliconFlowCN__Deepseek__V3__2_2                                                  ModelID = "deepseek-ai/DeepSeek-V3.2"
-	Model__SiliconFlowCN__Deepseek__V4__Pro__Thinking                                        ModelID = "deepseek-ai/DeepSeek-V4-Pro"
-	Model__SiliconFlowCN__Deepseek__Vl2                                                      ModelID = "deepseek-ai/deepseek-vl2"
+	Model__SiliconFlowCN__DeepSeek__Ocr                                                      ModelID = "deepseek-ai/DeepSeek-OCR"
+	Model__SiliconFlowCN__DeepSeek__R1__Distill__Qwen__14B                                   ModelID = "deepseek-ai/DeepSeek-R1-Distill-Qwen-14B"
+	Model__SiliconFlowCN__DeepSeek__R1__Distill__Qwen__32B                                   ModelID = "deepseek-ai/DeepSeek-R1-Distill-Qwen-32B"
+	Model__SiliconFlowCN__DeepSeek__R1__Thinking_1                                           ModelID = "Pro/deepseek-ai/DeepSeek-R1"
+	Model__SiliconFlowCN__DeepSeek__R1__Thinking_2                                           ModelID = "deepseek-ai/DeepSeek-R1"
+	Model__SiliconFlowCN__DeepSeek__V3_1                                                     ModelID = "Pro/deepseek-ai/DeepSeek-V3"
+	Model__SiliconFlowCN__DeepSeek__V3_2                                                     ModelID = "deepseek-ai/DeepSeek-V3"
+	Model__SiliconFlowCN__DeepSeek__V3__1__Terminus_1                                        ModelID = "Pro/deepseek-ai/DeepSeek-V3.1-Terminus"
+	Model__SiliconFlowCN__DeepSeek__V3__1__Terminus_2                                        ModelID = "deepseek-ai/DeepSeek-V3.1-Terminus"
+	Model__SiliconFlowCN__DeepSeek__V3__2_1                                                  ModelID = "Pro/deepseek-ai/DeepSeek-V3.2"
+	Model__SiliconFlowCN__DeepSeek__V3__2_2                                                  ModelID = "deepseek-ai/DeepSeek-V3.2"
+	Model__SiliconFlowCN__DeepSeek__V4__Pro__Thinking                                        ModelID = "deepseek-ai/DeepSeek-V4-Pro"
+	Model__SiliconFlowCN__DeepSeek__Vl2                                                      ModelID = "deepseek-ai/deepseek-vl2"
 	Model__SiliconFlowCN__Ernie__4__5__300B__A47b__4_5                                       ModelID = "baidu/ERNIE-4.5-300B-A47B"
-	Model__SiliconFlowCN__Glm__4_6                                                           ModelID = "zai-org/GLM-4.6"
-	Model__SiliconFlowCN__Glm__4_7                                                           ModelID = "Pro/zai-org/GLM-4.7"
-	Model__SiliconFlowCN__Glm__4__32B__0414__4                                               ModelID = "THUDM/GLM-4-32B-0414"
-	Model__SiliconFlowCN__Glm__4__5V__4_5                                                    ModelID = "zai-org/GLM-4.5V"
-	Model__SiliconFlowCN__Glm__4__5__Air__4_5                                                ModelID = "zai-org/GLM-4.5-Air"
-	Model__SiliconFlowCN__Glm__4__6V__4_6                                                    ModelID = "zai-org/GLM-4.6V"
-	Model__SiliconFlowCN__Glm__4__9B__0414__4                                                ModelID = "THUDM/GLM-4-9B-0414"
-	Model__SiliconFlowCN__Glm__5                                                             ModelID = "Pro/zai-org/GLM-5"
-	Model__SiliconFlowCN__Glm__5_1                                                           ModelID = "Pro/zai-org/GLM-5.1"
-	Model__SiliconFlowCN__Glm__Z1__32B__0414                                                 ModelID = "THUDM/GLM-Z1-32B-0414"
-	Model__SiliconFlowCN__Glm__Z1__9B__0414                                                  ModelID = "THUDM/GLM-Z1-9B-0414"
+	Model__SiliconFlowCN__GLM__4_6                                                           ModelID = "zai-org/GLM-4.6"
+	Model__SiliconFlowCN__GLM__4_7                                                           ModelID = "Pro/zai-org/GLM-4.7"
+	Model__SiliconFlowCN__GLM__4__32B__0414__4                                               ModelID = "THUDM/GLM-4-32B-0414"
+	Model__SiliconFlowCN__GLM__4__5V__4_5                                                    ModelID = "zai-org/GLM-4.5V"
+	Model__SiliconFlowCN__GLM__4__5__Air__4_5                                                ModelID = "zai-org/GLM-4.5-Air"
+	Model__SiliconFlowCN__GLM__4__6V__4_6                                                    ModelID = "zai-org/GLM-4.6V"
+	Model__SiliconFlowCN__GLM__4__9B__0414__4                                                ModelID = "THUDM/GLM-4-9B-0414"
+	Model__SiliconFlowCN__GLM__5                                                             ModelID = "Pro/zai-org/GLM-5"
+	Model__SiliconFlowCN__GLM__5_1                                                           ModelID = "Pro/zai-org/GLM-5.1"
+	Model__SiliconFlowCN__GLM__Z1__32B__0414                                                 ModelID = "THUDM/GLM-Z1-32B-0414"
+	Model__SiliconFlowCN__GLM__Z1__9B__0414                                                  ModelID = "THUDM/GLM-Z1-9B-0414"
 	Model__SiliconFlowCN__Hunyuan__A13b__Instruct                                            ModelID = "tencent/Hunyuan-A13B-Instruct"
 	Model__SiliconFlowCN__Hunyuan__Mt__7B                                                    ModelID = "tencent/Hunyuan-MT-7B"
 	Model__SiliconFlowCN__Kat__Dev                                                           ModelID = "Kwaipilot/KAT-Dev"
@@ -4238,8 +4224,8 @@ const (
 	Model__SiliconFlowCN__Kimi__K2__Instruct__0905__2__Instruct_2                            ModelID = "moonshotai/Kimi-K2-Instruct-0905"
 	Model__SiliconFlowCN__Ling__Flash__2_0                                                   ModelID = "inclusionAI/Ling-flash-2.0"
 	Model__SiliconFlowCN__Ling__Mini__2_0                                                    ModelID = "inclusionAI/Ling-mini-2.0"
-	Model__SiliconFlowCN__Minimax__M2__1__2_1                                                ModelID = "Pro/MiniMaxAI/MiniMax-M2.1"
-	Model__SiliconFlowCN__Minimax__M2__5__2_5                                                ModelID = "Pro/MiniMaxAI/MiniMax-M2.5"
+	Model__SiliconFlowCN__MiniMax__M2__1__2_1                                                ModelID = "Pro/MiniMaxAI/MiniMax-M2.1"
+	Model__SiliconFlowCN__MiniMax__M2__5__2_5                                                ModelID = "Pro/MiniMaxAI/MiniMax-M2.5"
 	Model__SiliconFlowCN__Paddleocr__Vl                                                      ModelID = "PaddlePaddle/PaddleOCR-VL"
 	Model__SiliconFlowCN__Paddleocr__Vl__1_5                                                 ModelID = "PaddlePaddle/PaddleOCR-VL-1.5"
 	Model__SiliconFlowCN__Pangu__Pro__Moe                                                    ModelID = "ascend-tribe/pangu-pro-moe"
@@ -4284,34 +4270,34 @@ const (
 	Model__SiliconFlowCN__Ring__Flash__2_0                                                   ModelID = "inclusionAI/Ring-flash-2.0"
 	Model__SiliconFlowCN__Seed__Oss__36B__Instruct                                           ModelID = "ByteDance-Seed/Seed-OSS-36B-Instruct"
 	Model__SiliconFlowCN__Step__3__5__Flash__3_5                                             ModelID = "stepfun-ai/Step-3.5-Flash"
-	Model__SiliconFlow__Deepseek__R1__Distill__Qwen__14B                                     ModelID = "deepseek-ai/DeepSeek-R1-Distill-Qwen-14B"
-	Model__SiliconFlow__Deepseek__R1__Distill__Qwen__32B                                     ModelID = "deepseek-ai/DeepSeek-R1-Distill-Qwen-32B"
-	Model__SiliconFlow__Deepseek__R1__Thinking                                               ModelID = "deepseek-ai/DeepSeek-R1"
-	Model__SiliconFlow__Deepseek__V3                                                         ModelID = "deepseek-ai/DeepSeek-V3"
-	Model__SiliconFlow__Deepseek__V3__1                                                      ModelID = "deepseek-ai/DeepSeek-V3.1"
-	Model__SiliconFlow__Deepseek__V3__1__Nex__N1                                             ModelID = "nex-agi/DeepSeek-V3.1-Nex-N1"
-	Model__SiliconFlow__Deepseek__V3__1__Terminus                                            ModelID = "deepseek-ai/DeepSeek-V3.1-Terminus"
-	Model__SiliconFlow__Deepseek__V3__2                                                      ModelID = "deepseek-ai/DeepSeek-V3.2"
-	Model__SiliconFlow__Deepseek__V3__2__Exp                                                 ModelID = "deepseek-ai/DeepSeek-V3.2-Exp"
-	Model__SiliconFlow__Deepseek__V4__Flash                                                  ModelID = "deepseek-ai/deepseek-v4-flash"
-	Model__SiliconFlow__Deepseek__V4__Pro__Thinking                                          ModelID = "deepseek-ai/deepseek-v4-pro"
-	Model__SiliconFlow__Deepseek__Vl2                                                        ModelID = "deepseek-ai/deepseek-vl2"
+	Model__SiliconFlow__DeepSeek__R1__Distill__Qwen__14B                                     ModelID = "deepseek-ai/DeepSeek-R1-Distill-Qwen-14B"
+	Model__SiliconFlow__DeepSeek__R1__Distill__Qwen__32B                                     ModelID = "deepseek-ai/DeepSeek-R1-Distill-Qwen-32B"
+	Model__SiliconFlow__DeepSeek__R1__Thinking                                               ModelID = "deepseek-ai/DeepSeek-R1"
+	Model__SiliconFlow__DeepSeek__V3                                                         ModelID = "deepseek-ai/DeepSeek-V3"
+	Model__SiliconFlow__DeepSeek__V3__1                                                      ModelID = "deepseek-ai/DeepSeek-V3.1"
+	Model__SiliconFlow__DeepSeek__V3__1__Nex__N1                                             ModelID = "nex-agi/DeepSeek-V3.1-Nex-N1"
+	Model__SiliconFlow__DeepSeek__V3__1__Terminus                                            ModelID = "deepseek-ai/DeepSeek-V3.1-Terminus"
+	Model__SiliconFlow__DeepSeek__V3__2                                                      ModelID = "deepseek-ai/DeepSeek-V3.2"
+	Model__SiliconFlow__DeepSeek__V3__2__Exp                                                 ModelID = "deepseek-ai/DeepSeek-V3.2-Exp"
+	Model__SiliconFlow__DeepSeek__V4__Flash                                                  ModelID = "deepseek-ai/deepseek-v4-flash"
+	Model__SiliconFlow__DeepSeek__V4__Pro__Thinking                                          ModelID = "deepseek-ai/deepseek-v4-pro"
+	Model__SiliconFlow__DeepSeek__Vl2                                                        ModelID = "deepseek-ai/deepseek-vl2"
 	Model__SiliconFlow__Ernie__4__5__300B__A47b__4_5                                         ModelID = "baidu/ERNIE-4.5-300B-A47B"
+	Model__SiliconFlow__GLM__4_5                                                             ModelID = "zai-org/GLM-4.5"
+	Model__SiliconFlow__GLM__4_6                                                             ModelID = "zai-org/GLM-4.6"
+	Model__SiliconFlow__GLM__4_7                                                             ModelID = "zai-org/GLM-4.7"
+	Model__SiliconFlow__GLM__4__32B__0414__4                                                 ModelID = "THUDM/GLM-4-32B-0414"
+	Model__SiliconFlow__GLM__4__5V__4_5                                                      ModelID = "zai-org/GLM-4.5V"
+	Model__SiliconFlow__GLM__4__5__Air__4_5                                                  ModelID = "zai-org/GLM-4.5-Air"
+	Model__SiliconFlow__GLM__4__6V__4_6                                                      ModelID = "zai-org/GLM-4.6V"
+	Model__SiliconFlow__GLM__4__9B__0414__4                                                  ModelID = "THUDM/GLM-4-9B-0414"
+	Model__SiliconFlow__GLM__5                                                               ModelID = "zai-org/GLM-5"
+	Model__SiliconFlow__GLM__5V__5__Turbo                                                    ModelID = "zai-org/GLM-5V-Turbo"
+	Model__SiliconFlow__GLM__5_1                                                             ModelID = "zai-org/GLM-5.1"
+	Model__SiliconFlow__GLM__Z1__32B__0414                                                   ModelID = "THUDM/GLM-Z1-32B-0414"
+	Model__SiliconFlow__GLM__Z1__9B__0414                                                    ModelID = "THUDM/GLM-Z1-9B-0414"
 	Model__SiliconFlow__GPT__Oss__120b                                                       ModelID = "openai/gpt-oss-120b"
 	Model__SiliconFlow__GPT__Oss__20b                                                        ModelID = "openai/gpt-oss-20b"
-	Model__SiliconFlow__Glm__4_5                                                             ModelID = "zai-org/GLM-4.5"
-	Model__SiliconFlow__Glm__4_6                                                             ModelID = "zai-org/GLM-4.6"
-	Model__SiliconFlow__Glm__4_7                                                             ModelID = "zai-org/GLM-4.7"
-	Model__SiliconFlow__Glm__4__32B__0414__4                                                 ModelID = "THUDM/GLM-4-32B-0414"
-	Model__SiliconFlow__Glm__4__5V__4_5                                                      ModelID = "zai-org/GLM-4.5V"
-	Model__SiliconFlow__Glm__4__5__Air__4_5                                                  ModelID = "zai-org/GLM-4.5-Air"
-	Model__SiliconFlow__Glm__4__6V__4_6                                                      ModelID = "zai-org/GLM-4.6V"
-	Model__SiliconFlow__Glm__4__9B__0414__4                                                  ModelID = "THUDM/GLM-4-9B-0414"
-	Model__SiliconFlow__Glm__5                                                               ModelID = "zai-org/GLM-5"
-	Model__SiliconFlow__Glm__5V__5__Turbo                                                    ModelID = "zai-org/GLM-5V-Turbo"
-	Model__SiliconFlow__Glm__5_1                                                             ModelID = "zai-org/GLM-5.1"
-	Model__SiliconFlow__Glm__Z1__32B__0414                                                   ModelID = "THUDM/GLM-Z1-32B-0414"
-	Model__SiliconFlow__Glm__Z1__9B__0414                                                    ModelID = "THUDM/GLM-Z1-9B-0414"
 	Model__SiliconFlow__Hunyuan__A13b__Instruct                                              ModelID = "tencent/Hunyuan-A13B-Instruct"
 	Model__SiliconFlow__Hunyuan__Mt__7B                                                      ModelID = "tencent/Hunyuan-MT-7B"
 	Model__SiliconFlow__Kimi__K2__2__Instruct                                                ModelID = "moonshotai/Kimi-K2-Instruct"
@@ -4322,8 +4308,8 @@ const (
 	Model__SiliconFlow__Ling__Flash__2_0                                                     ModelID = "inclusionAI/Ling-flash-2.0"
 	Model__SiliconFlow__Ling__Mini__2_0                                                      ModelID = "inclusionAI/Ling-mini-2.0"
 	Model__SiliconFlow__Meta__Llama__3__1__8B__3_1__Instruct                                 ModelID = "meta-llama/Meta-Llama-3.1-8B-Instruct"
-	Model__SiliconFlow__Minimax__M2__1__2_1                                                  ModelID = "MiniMaxAI/MiniMax-M2.1"
-	Model__SiliconFlow__Minimax__M2__5__2_5                                                  ModelID = "MiniMaxAI/MiniMax-M2.5"
+	Model__SiliconFlow__MiniMax__M2__1__2_1                                                  ModelID = "MiniMaxAI/MiniMax-M2.1"
+	Model__SiliconFlow__MiniMax__M2__5__2_5                                                  ModelID = "MiniMaxAI/MiniMax-M2.5"
 	Model__SiliconFlow__Qwen2__5__14B__2_5__Instruct                                         ModelID = "Qwen/Qwen2.5-14B-Instruct"
 	Model__SiliconFlow__Qwen2__5__32B__2_5__Instruct                                         ModelID = "Qwen/Qwen2.5-32B-Instruct"
 	Model__SiliconFlow__Qwen2__5__72B__2_5__Instruct                                         ModelID = "Qwen/Qwen2.5-72B-Instruct"
@@ -4364,41 +4350,41 @@ const (
 	Model__SnowflakeCortex__Claude__Opus__4_7                                                ModelID = "claude-opus-4-7"
 	Model__SnowflakeCortex__Claude__Sonnet__4_5                                              ModelID = "claude-sonnet-4-5"
 	Model__SnowflakeCortex__Claude__Sonnet__4_6                                              ModelID = "claude-sonnet-4-6"
-	Model__SnowflakeCortex__Openai__GPT__4__1                                                ModelID = "openai-gpt-4.1"
-	Model__SnowflakeCortex__Openai__GPT__5                                                   ModelID = "openai-gpt-5"
-	Model__SnowflakeCortex__Openai__GPT__5__1                                                ModelID = "openai-gpt-5.1"
-	Model__SnowflakeCortex__Openai__GPT__5__2                                                ModelID = "openai-gpt-5.2"
-	Model__SnowflakeCortex__Openai__GPT__5__4                                                ModelID = "openai-gpt-5.4"
-	Model__SnowflakeCortex__Openai__GPT__5__Mini                                             ModelID = "openai-gpt-5-mini"
-	Model__SnowflakeCortex__Openai__GPT__5__Nano                                             ModelID = "openai-gpt-5-nano"
+	Model__SnowflakeCortex__OpenAI__GPT__4__1                                                ModelID = "openai-gpt-4.1"
+	Model__SnowflakeCortex__OpenAI__GPT__5                                                   ModelID = "openai-gpt-5"
+	Model__SnowflakeCortex__OpenAI__GPT__5__1                                                ModelID = "openai-gpt-5.1"
+	Model__SnowflakeCortex__OpenAI__GPT__5__2                                                ModelID = "openai-gpt-5.2"
+	Model__SnowflakeCortex__OpenAI__GPT__5__4                                                ModelID = "openai-gpt-5.4"
+	Model__SnowflakeCortex__OpenAI__GPT__5__Mini                                             ModelID = "openai-gpt-5-mini"
+	Model__SnowflakeCortex__OpenAI__GPT__5__Nano                                             ModelID = "openai-gpt-5-nano"
 	Model__StepFunAI__Step__3__5__Flash__2603__3_5                                           ModelID = "step-3.5-flash-2603"
 	Model__StepFunAI__Step__3__5__Flash__3_5                                                 ModelID = "step-3.5-flash"
 	Model__StepFun__Step__1__32k__1                                                          ModelID = "step-1-32k"
 	Model__StepFun__Step__2__16k__2                                                          ModelID = "step-2-16k"
 	Model__StepFun__Step__3__5__Flash__2603__3_5                                             ModelID = "step-3.5-flash-2603"
 	Model__StepFun__Step__3__5__Flash__3_5                                                   ModelID = "step-3.5-flash"
-	Model__Submodel__Deepseek__R1__0528__Thinking                                            ModelID = "deepseek-ai/DeepSeek-R1-0528"
-	Model__Submodel__Deepseek__V3__0324                                                      ModelID = "deepseek-ai/DeepSeek-V3-0324"
-	Model__Submodel__Deepseek__V3__1                                                         ModelID = "deepseek-ai/DeepSeek-V3.1"
+	Model__Submodel__DeepSeek__R1__0528__Thinking                                            ModelID = "deepseek-ai/DeepSeek-R1-0528"
+	Model__Submodel__DeepSeek__V3__0324                                                      ModelID = "deepseek-ai/DeepSeek-V3-0324"
+	Model__Submodel__DeepSeek__V3__1                                                         ModelID = "deepseek-ai/DeepSeek-V3.1"
+	Model__Submodel__GLM__4__5__Air__4_5                                                     ModelID = "zai-org/GLM-4.5-Air"
+	Model__Submodel__GLM__4__5__Fp8__4_5                                                     ModelID = "zai-org/GLM-4.5-FP8"
 	Model__Submodel__GPT__Oss__120b                                                          ModelID = "openai/gpt-oss-120b"
-	Model__Submodel__Glm__4__5__Air__4_5                                                     ModelID = "zai-org/GLM-4.5-Air"
-	Model__Submodel__Glm__4__5__Fp8__4_5                                                     ModelID = "zai-org/GLM-4.5-FP8"
 	Model__Submodel__Qwen3__235B__A22b__Instruct__2507__3__Instruct                          ModelID = "Qwen/Qwen3-235B-A22B-Instruct-2507"
 	Model__Submodel__Qwen3__235B__A22b__Thinking__2507__3__Thinking                          ModelID = "Qwen/Qwen3-235B-A22B-Thinking-2507"
 	Model__Submodel__Qwen3__Coder__480B__A35b__Instruct__Fp8__3__Instruct                    ModelID = "Qwen/Qwen3-Coder-480B-A35B-Instruct-FP8"
-	Model__Synthetic__Deepseek__R1__0528__Thinking                                           ModelID = "hf:deepseek-ai/DeepSeek-R1-0528"
-	Model__Synthetic__Deepseek__R1__Thinking                                                 ModelID = "hf:deepseek-ai/DeepSeek-R1"
-	Model__Synthetic__Deepseek__V3                                                           ModelID = "hf:deepseek-ai/DeepSeek-V3"
-	Model__Synthetic__Deepseek__V3__0324                                                     ModelID = "hf:deepseek-ai/DeepSeek-V3-0324"
-	Model__Synthetic__Deepseek__V3__1                                                        ModelID = "hf:deepseek-ai/DeepSeek-V3.1"
-	Model__Synthetic__Deepseek__V3__1__Terminus                                              ModelID = "hf:deepseek-ai/DeepSeek-V3.1-Terminus"
-	Model__Synthetic__Deepseek__V3__2                                                        ModelID = "hf:deepseek-ai/DeepSeek-V3.2"
+	Model__Synthetic__DeepSeek__R1__0528__Thinking                                           ModelID = "hf:deepseek-ai/DeepSeek-R1-0528"
+	Model__Synthetic__DeepSeek__R1__Thinking                                                 ModelID = "hf:deepseek-ai/DeepSeek-R1"
+	Model__Synthetic__DeepSeek__V3                                                           ModelID = "hf:deepseek-ai/DeepSeek-V3"
+	Model__Synthetic__DeepSeek__V3__0324                                                     ModelID = "hf:deepseek-ai/DeepSeek-V3-0324"
+	Model__Synthetic__DeepSeek__V3__1                                                        ModelID = "hf:deepseek-ai/DeepSeek-V3.1"
+	Model__Synthetic__DeepSeek__V3__1__Terminus                                              ModelID = "hf:deepseek-ai/DeepSeek-V3.1-Terminus"
+	Model__Synthetic__DeepSeek__V3__2                                                        ModelID = "hf:deepseek-ai/DeepSeek-V3.2"
+	Model__Synthetic__GLM__4_6                                                               ModelID = "hf:zai-org/GLM-4.6"
+	Model__Synthetic__GLM__4_7                                                               ModelID = "hf:zai-org/GLM-4.7"
+	Model__Synthetic__GLM__4__7__Flash__4_7                                                  ModelID = "hf:zai-org/GLM-4.7-Flash"
+	Model__Synthetic__GLM__5                                                                 ModelID = "hf:zai-org/GLM-5"
+	Model__Synthetic__GLM__5_1                                                               ModelID = "hf:zai-org/GLM-5.1"
 	Model__Synthetic__GPT__Oss__120b                                                         ModelID = "hf:openai/gpt-oss-120b"
-	Model__Synthetic__Glm__4_6                                                               ModelID = "hf:zai-org/GLM-4.6"
-	Model__Synthetic__Glm__4_7                                                               ModelID = "hf:zai-org/GLM-4.7"
-	Model__Synthetic__Glm__4__7__Flash__4_7                                                  ModelID = "hf:zai-org/GLM-4.7-Flash"
-	Model__Synthetic__Glm__5                                                                 ModelID = "hf:zai-org/GLM-5"
-	Model__Synthetic__Glm__5_1                                                               ModelID = "hf:zai-org/GLM-5.1"
 	Model__Synthetic__Kimi__K2__2__Thinking                                                  ModelID = "hf:moonshotai/Kimi-K2-Thinking"
 	Model__Synthetic__Kimi__K2__5__2_5                                                       ModelID = "hf:moonshotai/Kimi-K2.5"
 	Model__Synthetic__Kimi__K2__5__Nvfp4                                                     ModelID = "hf:nvidia/Kimi-K2.5-NVFP4"
@@ -4410,22 +4396,22 @@ const (
 	Model__Synthetic__Llama__3__3__70B__3_3__Instruct                                        ModelID = "hf:meta-llama/Llama-3.3-70B-Instruct"
 	Model__Synthetic__Llama__4__Maverick__17B__128E__Instruct__Fp8__4__Instruct              ModelID = "hf:meta-llama/Llama-4-Maverick-17B-128E-Instruct-FP8"
 	Model__Synthetic__Llama__4__Scout__17B__16E__4__Instruct                                 ModelID = "hf:meta-llama/Llama-4-Scout-17B-16E-Instruct"
-	Model__Synthetic__Minimax__M2__1__2_1                                                    ModelID = "hf:MiniMaxAI/MiniMax-M2.1"
-	Model__Synthetic__Minimax__M2__2                                                         ModelID = "hf:MiniMaxAI/MiniMax-M2"
-	Model__Synthetic__Minimax__M2__5__2_5                                                    ModelID = "hf:MiniMaxAI/MiniMax-M2.5"
+	Model__Synthetic__MiniMax__M2__1__2_1                                                    ModelID = "hf:MiniMaxAI/MiniMax-M2.1"
+	Model__Synthetic__MiniMax__M2__2                                                         ModelID = "hf:MiniMaxAI/MiniMax-M2"
+	Model__Synthetic__MiniMax__M2__5__2_5                                                    ModelID = "hf:MiniMaxAI/MiniMax-M2.5"
 	Model__Synthetic__Nvidia__Nemotron__3__Super__120B__A12b__Nvfp4                          ModelID = "hf:nvidia/NVIDIA-Nemotron-3-Super-120B-A12B-NVFP4"
 	Model__Synthetic__Qwen2__5__Coder__32B__2_5__Instruct                                    ModelID = "hf:Qwen/Qwen2.5-Coder-32B-Instruct"
 	Model__Synthetic__Qwen3__235B__A22b__Instruct__2507__3__Instruct                         ModelID = "hf:Qwen/Qwen3-235B-A22B-Instruct-2507"
 	Model__Synthetic__Qwen3__235B__A22b__Thinking__2507__3__Thinking                         ModelID = "hf:Qwen/Qwen3-235B-A22B-Thinking-2507"
 	Model__Synthetic__Qwen3__5__397B__A17b__3_5                                              ModelID = "hf:Qwen/Qwen3.5-397B-A17B"
 	Model__Synthetic__Qwen3__Coder__480B__A35b__3__Instruct                                  ModelID = "hf:Qwen/Qwen3-Coder-480B-A35B-Instruct"
-	Model__TencentCodingPlan__Glm__5                                                         ModelID = "glm-5"
+	Model__TencentCodingPlan__GLM__5                                                         ModelID = "glm-5"
 	Model__TencentCodingPlan__Hunyuan__2_0__Instruct                                         ModelID = "hunyuan-2.0-instruct"
 	Model__TencentCodingPlan__Hunyuan__2_0__Thinking                                         ModelID = "hunyuan-2.0-thinking"
 	Model__TencentCodingPlan__Hunyuan__T1                                                    ModelID = "hunyuan-t1"
 	Model__TencentCodingPlan__Hunyuan__Turbos                                                ModelID = "hunyuan-turbos"
 	Model__TencentCodingPlan__Kimi__K2__5__2_5                                               ModelID = "kimi-k2.5"
-	Model__TencentCodingPlan__Minimax__M2__5__2_5                                            ModelID = "minimax-m2.5"
+	Model__TencentCodingPlan__MiniMax__M2__5__2_5                                            ModelID = "minimax-m2.5"
 	Model__TencentCodingPlan__Tc__LatestCode                                                 ModelID = "tc-code-latest"
 	Model__TencentTokenHub__Hy3__3__Preview                                                  ModelID = "hy3-preview"
 	Model__TheGridAI__Agent__Max                                                             ModelID = "agent-max"
@@ -4437,28 +4423,28 @@ const (
 	Model__TheGridAI__Text__Max                                                              ModelID = "text-max"
 	Model__TheGridAI__Text__Prime                                                            ModelID = "text-prime"
 	Model__TheGridAI__Text__Standard                                                         ModelID = "text-standard"
-	Model__Togetherai__Deepseek__R1__Thinking                                                ModelID = "deepseek-ai/DeepSeek-R1"
-	Model__Togetherai__Deepseek__V3                                                          ModelID = "deepseek-ai/DeepSeek-V3"
-	Model__Togetherai__Deepseek__V3__1                                                       ModelID = "deepseek-ai/DeepSeek-V3-1"
-	Model__Togetherai__Deepseek__V4__Pro                                                     ModelID = "deepseek-ai/DeepSeek-V4-Pro"
-	Model__Togetherai__GPT__Oss__120b                                                        ModelID = "openai/gpt-oss-120b"
-	Model__Togetherai__Gemma__4__31B__It__4                                                  ModelID = "google/gemma-4-31B-it"
-	Model__Togetherai__Glm__5_1                                                              ModelID = "zai-org/GLM-5.1"
-	Model__Togetherai__Kimi__K2__5__2_5                                                      ModelID = "moonshotai/Kimi-K2.5"
-	Model__Togetherai__Kimi__K2__6__2_6                                                      ModelID = "moonshotai/Kimi-K2.6"
-	Model__Togetherai__Llama__3__3__70B__3_3__TurboInstruct                                  ModelID = "meta-llama/Llama-3.3-70B-Instruct-Turbo"
-	Model__Togetherai__Minimax__M2__5__2_5                                                   ModelID = "MiniMaxAI/MiniMax-M2.5"
-	Model__Togetherai__Minimax__M2__7__2_7                                                   ModelID = "MiniMaxAI/MiniMax-M2.7"
-	Model__Togetherai__Qwen3__235B__A22b__Instruct__2507__Tput__3__Instruct                  ModelID = "Qwen/Qwen3-235B-A22B-Instruct-2507-tput"
-	Model__Togetherai__Qwen3__5__397B__A17b__3_5                                             ModelID = "Qwen/Qwen3.5-397B-A17B"
-	Model__Togetherai__Qwen3__6__Plus__3_6                                                   ModelID = "Qwen/Qwen3.6-Plus"
-	Model__Togetherai__Qwen3__7__Max__3_7                                                    ModelID = "Qwen/Qwen3.7-Max"
-	Model__Togetherai__Qwen3__Coder__480B__A35b__Instruct__Fp8__3__Instruct                  ModelID = "Qwen/Qwen3-Coder-480B-A35B-Instruct-FP8"
-	Model__Togetherai__Qwen3__Coder__Next__Fp8__3                                            ModelID = "Qwen/Qwen3-Coder-Next-FP8"
-	Model__Togetherai__Rnj__1__Instruct                                                      ModelID = "essentialai/Rnj-1-Instruct"
+	Model__TogetherAI__DeepSeek__R1__Thinking                                                ModelID = "deepseek-ai/DeepSeek-R1"
+	Model__TogetherAI__DeepSeek__V3                                                          ModelID = "deepseek-ai/DeepSeek-V3"
+	Model__TogetherAI__DeepSeek__V3__1                                                       ModelID = "deepseek-ai/DeepSeek-V3-1"
+	Model__TogetherAI__DeepSeek__V4__Pro                                                     ModelID = "deepseek-ai/DeepSeek-V4-Pro"
+	Model__TogetherAI__GLM__5_1                                                              ModelID = "zai-org/GLM-5.1"
+	Model__TogetherAI__GPT__Oss__120b                                                        ModelID = "openai/gpt-oss-120b"
+	Model__TogetherAI__Gemma__4__31B__It__4                                                  ModelID = "google/gemma-4-31B-it"
+	Model__TogetherAI__Kimi__K2__5__2_5                                                      ModelID = "moonshotai/Kimi-K2.5"
+	Model__TogetherAI__Kimi__K2__6__2_6                                                      ModelID = "moonshotai/Kimi-K2.6"
+	Model__TogetherAI__Llama__3__3__70B__3_3__TurboInstruct                                  ModelID = "meta-llama/Llama-3.3-70B-Instruct-Turbo"
+	Model__TogetherAI__MiniMax__M2__5__2_5                                                   ModelID = "MiniMaxAI/MiniMax-M2.5"
+	Model__TogetherAI__MiniMax__M2__7__2_7                                                   ModelID = "MiniMaxAI/MiniMax-M2.7"
+	Model__TogetherAI__Qwen3__235B__A22b__Instruct__2507__Tput__3__Instruct                  ModelID = "Qwen/Qwen3-235B-A22B-Instruct-2507-tput"
+	Model__TogetherAI__Qwen3__5__397B__A17b__3_5                                             ModelID = "Qwen/Qwen3.5-397B-A17B"
+	Model__TogetherAI__Qwen3__6__Plus__3_6                                                   ModelID = "Qwen/Qwen3.6-Plus"
+	Model__TogetherAI__Qwen3__7__Max__3_7                                                    ModelID = "Qwen/Qwen3.7-Max"
+	Model__TogetherAI__Qwen3__Coder__480B__A35b__Instruct__Fp8__3__Instruct                  ModelID = "Qwen/Qwen3-Coder-480B-A35B-Instruct-FP8"
+	Model__TogetherAI__Qwen3__Coder__Next__Fp8__3                                            ModelID = "Qwen/Qwen3-Coder-Next-FP8"
+	Model__TogetherAI__Rnj__1__Instruct                                                      ModelID = "essentialai/Rnj-1-Instruct"
 	Model__UmansAICodingPlan__Umans__Coder                                                   ModelID = "umans-coder"
 	Model__UmansAICodingPlan__Umans__Flash                                                   ModelID = "umans-flash"
-	Model__UmansAICodingPlan__Umans__Glm__5__1                                               ModelID = "umans-glm-5.1"
+	Model__UmansAICodingPlan__Umans__GLM__5__1                                               ModelID = "umans-glm-5.1"
 	Model__UmansAICodingPlan__Umans__Kimi__K2__6__2_6                                        ModelID = "umans-kimi-k2.6"
 	Model__UmansAICodingPlan__Umans__Qwen3__6__35b__A3b                                      ModelID = "umans-qwen3.6-35b-a3b"
 	Model__Upstage__Solar__Mini                                                              ModelID = "solar-mini"
@@ -4478,9 +4464,9 @@ const (
 	Model__Venice__Claude__Opus__4_8__Fast                                                   ModelID = "claude-opus-4-8-fast"
 	Model__Venice__Claude__Sonnet__4_5                                                       ModelID = "claude-sonnet-4-5"
 	Model__Venice__Claude__Sonnet__4_6                                                       ModelID = "claude-sonnet-4-6"
-	Model__Venice__Deepseek__V3__2                                                           ModelID = "deepseek-v3.2"
-	Model__Venice__Deepseek__V4__Flash                                                       ModelID = "deepseek-v4-flash"
-	Model__Venice__Deepseek__V4__Pro                                                         ModelID = "deepseek-v4-pro"
+	Model__Venice__DeepSeek__V3__2                                                           ModelID = "deepseek-v3.2"
+	Model__Venice__DeepSeek__V4__Flash                                                       ModelID = "deepseek-v4-flash"
+	Model__Venice__DeepSeek__V4__Pro                                                         ModelID = "deepseek-v4-pro"
 	Model__Venice__Gemini__3__1__Pro__3_1__Preview                                           ModelID = "gemini-3-1-pro-preview"
 	Model__Venice__Gemini__3__5__Flash__3_5                                                  ModelID = "gemini-3-5-flash"
 	Model__Venice__Gemini__3__Flash__3__Preview                                              ModelID = "gemini-3-flash-preview"
@@ -4498,24 +4484,24 @@ const (
 	Model__Venice__Llama__3__2__3b__3_2                                                      ModelID = "llama-3.2-3b"
 	Model__Venice__Llama__3__3__70b__3_3                                                     ModelID = "llama-3.3-70b"
 	Model__Venice__Mercury__2                                                                ModelID = "mercury-2"
-	Model__Venice__Minimax__M25__25                                                          ModelID = "minimax-m25"
-	Model__Venice__Minimax__M27__27                                                          ModelID = "minimax-m27"
+	Model__Venice__MiniMax__M25__25                                                          ModelID = "minimax-m25"
+	Model__Venice__MiniMax__M27__27                                                          ModelID = "minimax-m27"
 	Model__Venice__Mistral__Small__2603                                                      ModelID = "mistral-small-2603"
 	Model__Venice__Mistral__Small__3__2__24b__3_2__Instruct                                  ModelID = "mistral-small-3-2-24b-instruct"
 	Model__Venice__Nvidia__Nemotron__3__Nano__30b__A3b                                       ModelID = "nvidia-nemotron-3-nano-30b-a3b"
 	Model__Venice__Nvidia__Nemotron__Cascade__2__30b__A3b                                    ModelID = "nvidia-nemotron-cascade-2-30b-a3b"
-	Model__Venice__Olafangensan__Glm__4__7__Flash__Heretic                                   ModelID = "olafangensan-glm-4.7-flash-heretic"
-	Model__Venice__Openai__GPT__4o__20241120                                                 ModelID = "openai-gpt-4o-2024-11-20"
-	Model__Venice__Openai__GPT__4o__Mini__Mini__20240718                                     ModelID = "openai-gpt-4o-mini-2024-07-18"
-	Model__Venice__Openai__GPT__52                                                           ModelID = "openai-gpt-52"
-	Model__Venice__Openai__GPT__52__Codex                                                    ModelID = "openai-gpt-52-codex"
-	Model__Venice__Openai__GPT__53__Codex                                                    ModelID = "openai-gpt-53-codex"
-	Model__Venice__Openai__GPT__54                                                           ModelID = "openai-gpt-54"
-	Model__Venice__Openai__GPT__54__Mini                                                     ModelID = "openai-gpt-54-mini"
-	Model__Venice__Openai__GPT__54__Pro                                                      ModelID = "openai-gpt-54-pro"
-	Model__Venice__Openai__GPT__55                                                           ModelID = "openai-gpt-55"
-	Model__Venice__Openai__GPT__55__Pro                                                      ModelID = "openai-gpt-55-pro"
-	Model__Venice__Openai__GPT__Oss__120b                                                    ModelID = "openai-gpt-oss-120b"
+	Model__Venice__Olafangensan__GLM__4__7__Flash__Heretic                                   ModelID = "olafangensan-glm-4.7-flash-heretic"
+	Model__Venice__OpenAI__GPT__4o__20241120                                                 ModelID = "openai-gpt-4o-2024-11-20"
+	Model__Venice__OpenAI__GPT__4o__Mini__Mini__20240718                                     ModelID = "openai-gpt-4o-mini-2024-07-18"
+	Model__Venice__OpenAI__GPT__52                                                           ModelID = "openai-gpt-52"
+	Model__Venice__OpenAI__GPT__52__Codex                                                    ModelID = "openai-gpt-52-codex"
+	Model__Venice__OpenAI__GPT__53__Codex                                                    ModelID = "openai-gpt-53-codex"
+	Model__Venice__OpenAI__GPT__54                                                           ModelID = "openai-gpt-54"
+	Model__Venice__OpenAI__GPT__54__Mini                                                     ModelID = "openai-gpt-54-mini"
+	Model__Venice__OpenAI__GPT__54__Pro                                                      ModelID = "openai-gpt-54-pro"
+	Model__Venice__OpenAI__GPT__55                                                           ModelID = "openai-gpt-55"
+	Model__Venice__OpenAI__GPT__55__Pro                                                      ModelID = "openai-gpt-55-pro"
+	Model__Venice__OpenAI__GPT__Oss__120b                                                    ModelID = "openai-gpt-oss-120b"
 	Model__Venice__Qwen3__235b__A22b__Instruct__2507__3__Instruct                            ModelID = "qwen3-235b-a22b-instruct-2507"
 	Model__Venice__Qwen3__235b__A22b__Thinking__2507__3__Thinking                            ModelID = "qwen3-235b-a22b-thinking-2507"
 	Model__Venice__Qwen3__5__35b__A3b__3                                                     ModelID = "qwen3-5-35b-a3b"
@@ -4529,13 +4515,13 @@ const (
 	Model__Venice__Qwen__3__7__Max__3_7                                                      ModelID = "qwen-3-7-max"
 	Model__Venice__Venice__Uncensored__1_2                                                   ModelID = "venice-uncensored-1-2"
 	Model__Venice__Venice__Uncensored__Role__Play                                            ModelID = "venice-uncensored-role-play"
-	Model__Venice__Z__AI__Glm__5__Turbo                                                      ModelID = "z-ai-glm-5-turbo"
-	Model__Venice__Z__AI__Glm__5v__5__Turbo                                                  ModelID = "z-ai-glm-5v-turbo"
-	Model__Venice__Zai__Org__Glm__4__6                                                       ModelID = "zai-org-glm-4.6"
-	Model__Venice__Zai__Org__Glm__4__7                                                       ModelID = "zai-org-glm-4.7"
-	Model__Venice__Zai__Org__Glm__4__7__Flash                                                ModelID = "zai-org-glm-4.7-flash"
-	Model__Venice__Zai__Org__Glm__5                                                          ModelID = "zai-org-glm-5"
-	Model__Venice__Zai__Org__Glm__5__1                                                       ModelID = "zai-org-glm-5-1"
+	Model__Venice__Z__AI__GLM__5__Turbo                                                      ModelID = "z-ai-glm-5-turbo"
+	Model__Venice__Z__AI__GLM__5v__5__Turbo                                                  ModelID = "z-ai-glm-5v-turbo"
+	Model__Venice__Zai__Org__GLM__4__6                                                       ModelID = "zai-org-glm-4.6"
+	Model__Venice__Zai__Org__GLM__4__7                                                       ModelID = "zai-org-glm-4.7"
+	Model__Venice__Zai__Org__GLM__4__7__Flash                                                ModelID = "zai-org-glm-4.7-flash"
+	Model__Venice__Zai__Org__GLM__5                                                          ModelID = "zai-org-glm-5"
+	Model__Venice__Zai__Org__GLM__5__1                                                       ModelID = "zai-org-glm-5-1"
 	Model__Vercel__Claude__3__5__Haiku__3_5                                                  ModelID = "anthropic/claude-3.5-haiku"
 	Model__Vercel__Claude__3__5__Sonnet__3_5                                                 ModelID = "anthropic/claude-3.5-sonnet"
 	Model__Vercel__Claude__3__5__Sonnet__3_5__20240620                                       ModelID = "anthropic/claude-3.5-sonnet-20240620"
@@ -4556,15 +4542,15 @@ const (
 	Model__Vercel__Codestral__Embed                                                          ModelID = "mistral/codestral-embed"
 	Model__Vercel__Codex__Mini                                                               ModelID = "openai/codex-mini"
 	Model__Vercel__Command__A                                                                ModelID = "cohere/command-a"
-	Model__Vercel__Deepseek__R1__Thinking                                                    ModelID = "deepseek/deepseek-r1"
-	Model__Vercel__Deepseek__V3                                                              ModelID = "deepseek/deepseek-v3"
-	Model__Vercel__Deepseek__V3__1                                                           ModelID = "deepseek/deepseek-v3.1"
-	Model__Vercel__Deepseek__V3__1__Terminus                                                 ModelID = "deepseek/deepseek-v3.1-terminus"
-	Model__Vercel__Deepseek__V3__2                                                           ModelID = "deepseek/deepseek-v3.2"
-	Model__Vercel__Deepseek__V3__2__Exp                                                      ModelID = "deepseek/deepseek-v3.2-exp"
-	Model__Vercel__Deepseek__V3__2__Thinking                                                 ModelID = "deepseek/deepseek-v3.2-thinking"
-	Model__Vercel__Deepseek__V4__Flash                                                       ModelID = "deepseek/deepseek-v4-flash"
-	Model__Vercel__Deepseek__V4__Pro                                                         ModelID = "deepseek/deepseek-v4-pro"
+	Model__Vercel__DeepSeek__R1__Thinking                                                    ModelID = "deepseek/deepseek-r1"
+	Model__Vercel__DeepSeek__V3                                                              ModelID = "deepseek/deepseek-v3"
+	Model__Vercel__DeepSeek__V3__1                                                           ModelID = "deepseek/deepseek-v3.1"
+	Model__Vercel__DeepSeek__V3__1__Terminus                                                 ModelID = "deepseek/deepseek-v3.1-terminus"
+	Model__Vercel__DeepSeek__V3__2                                                           ModelID = "deepseek/deepseek-v3.2"
+	Model__Vercel__DeepSeek__V3__2__Exp                                                      ModelID = "deepseek/deepseek-v3.2-exp"
+	Model__Vercel__DeepSeek__V3__2__Thinking                                                 ModelID = "deepseek/deepseek-v3.2-thinking"
+	Model__Vercel__DeepSeek__V4__Flash                                                       ModelID = "deepseek/deepseek-v4-flash"
+	Model__Vercel__DeepSeek__V4__Pro                                                         ModelID = "deepseek/deepseek-v4-pro"
 	Model__Vercel__Devstral__2                                                               ModelID = "mistral/devstral-2"
 	Model__Vercel__Devstral__Small                                                           ModelID = "mistral/devstral-small"
 	Model__Vercel__Devstral__Small__2                                                        ModelID = "mistral/devstral-small-2"
@@ -4574,6 +4560,19 @@ const (
 	Model__Vercel__Flux__Pro__1_1                                                            ModelID = "bfl/flux-pro-1.1"
 	Model__Vercel__Flux__Pro__1__0__Fill                                                     ModelID = "bfl/flux-pro-1.0-fill"
 	Model__Vercel__Flux__Pro__1__1__Ultra__1_1                                               ModelID = "bfl/flux-pro-1.1-ultra"
+	Model__Vercel__GLM__4_5                                                                  ModelID = "zai/glm-4.5"
+	Model__Vercel__GLM__4_6                                                                  ModelID = "zai/glm-4.6"
+	Model__Vercel__GLM__4_7                                                                  ModelID = "zai/glm-4.7"
+	Model__Vercel__GLM__4__5__Air__4_5                                                       ModelID = "zai/glm-4.5-air"
+	Model__Vercel__GLM__4__5v__4_5                                                           ModelID = "zai/glm-4.5v"
+	Model__Vercel__GLM__4__6v__4_6                                                           ModelID = "zai/glm-4.6v"
+	Model__Vercel__GLM__4__6v__4_6__Flash                                                    ModelID = "zai/glm-4.6v-flash"
+	Model__Vercel__GLM__4__7__Flash__4_7                                                     ModelID = "zai/glm-4.7-flash"
+	Model__Vercel__GLM__4__7__Flashx__4_7                                                    ModelID = "zai/glm-4.7-flashx"
+	Model__Vercel__GLM__5                                                                    ModelID = "zai/glm-5"
+	Model__Vercel__GLM__5_1                                                                  ModelID = "zai/glm-5.1"
+	Model__Vercel__GLM__5__Turbo                                                             ModelID = "zai/glm-5-turbo"
+	Model__Vercel__GLM__5v__5__Turbo                                                         ModelID = "zai/glm-5v-turbo"
 	Model__Vercel__GPT__3_5__Turbo                                                           ModelID = "openai/gpt-3.5-turbo"
 	Model__Vercel__GPT__3_5__TurboInstruct                                                   ModelID = "openai/gpt-3.5-turbo-instruct"
 	Model__Vercel__GPT__4_1                                                                  ModelID = "openai/gpt-4.1"
@@ -4630,19 +4629,6 @@ const (
 	Model__Vercel__Gemini__Embedding__2                                                      ModelID = "google/gemini-embedding-2"
 	Model__Vercel__Gemma__4__26b__A4b__It__4                                                 ModelID = "google/gemma-4-26b-a4b-it"
 	Model__Vercel__Gemma__4__31b__It__4                                                      ModelID = "google/gemma-4-31b-it"
-	Model__Vercel__Glm__4_5                                                                  ModelID = "zai/glm-4.5"
-	Model__Vercel__Glm__4_6                                                                  ModelID = "zai/glm-4.6"
-	Model__Vercel__Glm__4_7                                                                  ModelID = "zai/glm-4.7"
-	Model__Vercel__Glm__4__5__Air__4_5                                                       ModelID = "zai/glm-4.5-air"
-	Model__Vercel__Glm__4__5v__4_5                                                           ModelID = "zai/glm-4.5v"
-	Model__Vercel__Glm__4__6v__4_6                                                           ModelID = "zai/glm-4.6v"
-	Model__Vercel__Glm__4__6v__4_6__Flash                                                    ModelID = "zai/glm-4.6v-flash"
-	Model__Vercel__Glm__4__7__Flash__4_7                                                     ModelID = "zai/glm-4.7-flash"
-	Model__Vercel__Glm__4__7__Flashx__4_7                                                    ModelID = "zai/glm-4.7-flashx"
-	Model__Vercel__Glm__5                                                                    ModelID = "zai/glm-5"
-	Model__Vercel__Glm__5_1                                                                  ModelID = "zai/glm-5.1"
-	Model__Vercel__Glm__5__Turbo                                                             ModelID = "zai/glm-5-turbo"
-	Model__Vercel__Glm__5v__5__Turbo                                                         ModelID = "zai/glm-5v-turbo"
 	Model__Vercel__Grok__4_1__ReasoningFast                                                  ModelID = "xai/grok-4.1-fast-reasoning"
 	Model__Vercel__Grok__4_20__Reasoning                                                     ModelID = "xai/grok-4.20-reasoning"
 	Model__Vercel__Grok__4_3                                                                 ModelID = "xai/grok-4.3"
@@ -4691,13 +4677,13 @@ const (
 	Model__Vercel__Mimo__V2__5__2_5                                                          ModelID = "xiaomi/mimo-v2.5"
 	Model__Vercel__Mimo__V2__5__2_5__Pro                                                     ModelID = "xiaomi/mimo-v2.5-pro"
 	Model__Vercel__Mimo__V2__Flash                                                           ModelID = "xiaomi/mimo-v2-flash"
-	Model__Vercel__Minimax__M2__1__2_1                                                       ModelID = "minimax/minimax-m2.1"
-	Model__Vercel__Minimax__M2__1__2_1__Lightning                                            ModelID = "minimax/minimax-m2.1-lightning"
-	Model__Vercel__Minimax__M2__2                                                            ModelID = "minimax/minimax-m2"
-	Model__Vercel__Minimax__M2__5__2_5                                                       ModelID = "minimax/minimax-m2.5"
-	Model__Vercel__Minimax__M2__5__2_5__Highspeed                                            ModelID = "minimax/minimax-m2.5-highspeed"
-	Model__Vercel__Minimax__M2__7__2_7                                                       ModelID = "minimax/minimax-m2.7"
-	Model__Vercel__Minimax__M2__7__2_7__Highspeed                                            ModelID = "minimax/minimax-m2.7-highspeed"
+	Model__Vercel__MiniMax__M2__1__2_1                                                       ModelID = "minimax/minimax-m2.1"
+	Model__Vercel__MiniMax__M2__1__2_1__Lightning                                            ModelID = "minimax/minimax-m2.1-lightning"
+	Model__Vercel__MiniMax__M2__2                                                            ModelID = "minimax/minimax-m2"
+	Model__Vercel__MiniMax__M2__5__2_5                                                       ModelID = "minimax/minimax-m2.5"
+	Model__Vercel__MiniMax__M2__5__2_5__Highspeed                                            ModelID = "minimax/minimax-m2.5-highspeed"
+	Model__Vercel__MiniMax__M2__7__2_7                                                       ModelID = "minimax/minimax-m2.7"
+	Model__Vercel__MiniMax__M2__7__2_7__Highspeed                                            ModelID = "minimax/minimax-m2.7-highspeed"
 	Model__Vercel__Ministral__14b                                                            ModelID = "mistral/ministral-14b"
 	Model__Vercel__Ministral__3b                                                             ModelID = "mistral/ministral-3b"
 	Model__Vercel__Ministral__8b                                                             ModelID = "mistral/ministral-8b"
@@ -4781,8 +4767,8 @@ const (
 	Model__Vercel__Voyage__Code__3                                                           ModelID = "voyage/voyage-code-3"
 	Model__Vercel__Voyage__Finance__2                                                        ModelID = "voyage/voyage-finance-2"
 	Model__Vercel__Voyage__Law__2                                                            ModelID = "voyage/voyage-law-2"
-	Model__Vivgrid__Deepseek__V3__2                                                          ModelID = "deepseek-v3.2"
-	Model__Vivgrid__Deepseek__V4__Pro__Thinking                                              ModelID = "deepseek-v4-pro"
+	Model__Vivgrid__DeepSeek__V3__2                                                          ModelID = "deepseek-v3.2"
+	Model__Vivgrid__DeepSeek__V4__Pro__Thinking                                              ModelID = "deepseek-v4-pro"
 	Model__Vivgrid__GPT__5_4                                                                 ModelID = "gpt-5.4"
 	Model__Vivgrid__GPT__5_5                                                                 ModelID = "gpt-5.5"
 	Model__Vivgrid__GPT__5__1__Codex__5_1                                                    ModelID = "gpt-5.1-codex"
@@ -4794,28 +4780,28 @@ const (
 	Model__Vivgrid__GPT__5__Mini__5                                                          ModelID = "gpt-5-mini"
 	Model__Vivgrid__Gemini__3__1__Flash__Lite__3_1__Preview                                  ModelID = "gemini-3.1-flash-lite-preview"
 	Model__Vivgrid__Gemini__3__1__Pro__3_1__Preview                                          ModelID = "gemini-3.1-pro-preview"
-	Model__Vultr__Deepseek__V3__2__Nvfp4                                                     ModelID = "nvidia/DeepSeek-V3.2-NVFP4"
-	Model__Vultr__Glm__5__1__Fp8__5_1                                                        ModelID = "zai-org/GLM-5.1-FP8"
+	Model__Vultr__DeepSeek__V3__2__Nvfp4                                                     ModelID = "nvidia/DeepSeek-V3.2-NVFP4"
+	Model__Vultr__GLM__5__1__Fp8__5_1                                                        ModelID = "zai-org/GLM-5.1-FP8"
 	Model__Vultr__Kimi__K2__6__2_6                                                           ModelID = "moonshotai/Kimi-K2.6"
 	Model__Vultr__Llama__3__1__Nemotron__Safety__Guard__8B__V3__3_1                          ModelID = "nvidia/Llama-3.1-Nemotron-Safety-Guard-8B-v3"
-	Model__Vultr__Minimax__M2__7__2_7                                                        ModelID = "MiniMaxAI/MiniMax-M2.7"
+	Model__Vultr__MiniMax__M2__7__2_7                                                        ModelID = "MiniMaxAI/MiniMax-M2.7"
 	Model__Vultr__Nemotron__3__Nano__Omni__30B__A3b__Reasoning__Bf16__3__Reasoning           ModelID = "nvidia/Nemotron-3-Nano-Omni-30B-A3B-Reasoning-BF16"
 	Model__Vultr__Nemotron__Cascade__2__30B__A3b__2                                          ModelID = "nvidia/Nemotron-Cascade-2-30B-A3B"
-	Model__WaferAI__Glm__5_1                                                                 ModelID = "GLM-5.1"
+	Model__WaferAI__GLM__5_1                                                                 ModelID = "GLM-5.1"
 	Model__WaferAI__Kimi__K2__6__2_6                                                         ModelID = "Kimi-K2.6"
 	Model__WaferAI__Qwen3__5__397B__A17b__3_5                                                ModelID = "Qwen3.5-397B-A17B"
 	Model__WaferAI__Qwen3__6__35B__A3b__3_6                                                  ModelID = "Qwen3.6-35B-A3B"
-	Model__Wandb__Deepseek__V3__1                                                            ModelID = "deepseek-ai/DeepSeek-V3.1"
+	Model__Wandb__DeepSeek__V3__1                                                            ModelID = "deepseek-ai/DeepSeek-V3.1"
+	Model__Wandb__GLM__5_1                                                                   ModelID = "zai-org/GLM-5.1"
+	Model__Wandb__GLM__5__Fp8__5                                                             ModelID = "zai-org/GLM-5-FP8"
 	Model__Wandb__GPT__Oss__120b                                                             ModelID = "openai/gpt-oss-120b"
 	Model__Wandb__GPT__Oss__20b                                                              ModelID = "openai/gpt-oss-20b"
-	Model__Wandb__Glm__5_1                                                                   ModelID = "zai-org/GLM-5.1"
-	Model__Wandb__Glm__5__Fp8__5                                                             ModelID = "zai-org/GLM-5-FP8"
 	Model__Wandb__Kimi__K2__5__2_5                                                           ModelID = "moonshotai/Kimi-K2.5"
 	Model__Wandb__Llama__3__1__70B__3_1__Instruct                                            ModelID = "meta-llama/Llama-3.1-70B-Instruct"
 	Model__Wandb__Llama__3__1__8B__3_1__Instruct                                             ModelID = "meta-llama/Llama-3.1-8B-Instruct"
 	Model__Wandb__Llama__3__3__70B__3_3__Instruct                                            ModelID = "meta-llama/Llama-3.3-70B-Instruct"
 	Model__Wandb__Llama__4__Scout__17B__16E__4__Instruct                                     ModelID = "meta-llama/Llama-4-Scout-17B-16E-Instruct"
-	Model__Wandb__Minimax__M2__5__2_5                                                        ModelID = "MiniMaxAI/MiniMax-M2.5"
+	Model__Wandb__MiniMax__M2__5__2_5                                                        ModelID = "MiniMaxAI/MiniMax-M2.5"
 	Model__Wandb__Nvidia__Nemotron__3__Super__120B__A12b__Fp8                                ModelID = "nvidia/NVIDIA-Nemotron-3-Super-120B-A12B-FP8"
 	Model__Wandb__Phi__4__Mini__4__Instruct                                                  ModelID = "microsoft/Phi-4-mini-instruct"
 	Model__Wandb__Qwen3__14B__3__Instruct                                                    ModelID = "OpenPipe/Qwen3-14B-Instruct"
@@ -4823,14 +4809,6 @@ const (
 	Model__Wandb__Qwen3__235B__A22b__Thinking__2507__3__Thinking                             ModelID = "Qwen/Qwen3-235B-A22B-Thinking-2507"
 	Model__Wandb__Qwen3__30B__A3b__Instruct__2507__3__Instruct                               ModelID = "Qwen/Qwen3-30B-A3B-Instruct-2507"
 	Model__Wandb__Qwen3__Coder__480B__A35b__3__Instruct                                      ModelID = "Qwen/Qwen3-Coder-480B-A35B-Instruct"
-	Model__XAI__Grok__4_3                                                                    ModelID = "grok-4.3"
-	Model__XAI__Grok__4__20__0309__4_20__Reasoning                                           ModelID = "grok-4.20-0309-reasoning"
-	Model__XAI__Grok__4__20__0309__Non__4_20__Reasoning                                      ModelID = "grok-4.20-0309-non-reasoning"
-	Model__XAI__Grok__4__20__Multi__Agent__0309__4_20                                        ModelID = "grok-4.20-multi-agent-0309"
-	Model__XAI__Grok__Build__0_1                                                             ModelID = "grok-build-0.1"
-	Model__XAI__Grok__Imagine__Image                                                         ModelID = "grok-imagine-image"
-	Model__XAI__Grok__Imagine__Image__Quality                                                ModelID = "grok-imagine-image-quality"
-	Model__XAI__Grok__Imagine__Video                                                         ModelID = "grok-imagine-video"
 	Model__XiaomiTokenPlanAMS__Mimo__V2__2__Omni                                             ModelID = "mimo-v2-omni"
 	Model__XiaomiTokenPlanAMS__Mimo__V2__2__Pro                                              ModelID = "mimo-v2-pro"
 	Model__XiaomiTokenPlanAMS__Mimo__V2__5__2_5                                              ModelID = "mimo-v2.5"
@@ -4861,24 +4839,24 @@ const (
 	Model__Xiaomi__Mimo__V2__5__2_5__Pro                                                     ModelID = "mimo-v2.5-pro"
 	Model__Xiaomi__Mimo__V2__Flash                                                           ModelID = "mimo-v2-flash"
 	Model__Xpersona__Xpersona__Frieren__Coder                                                ModelID = "xpersona-frieren-coder"
-	Model__ZaiCodingPlan__Glm__4_7                                                           ModelID = "glm-4.7"
-	Model__ZaiCodingPlan__Glm__4__5__Air__4_5                                                ModelID = "glm-4.5-air"
-	Model__ZaiCodingPlan__Glm__5_1                                                           ModelID = "glm-5.1"
-	Model__ZaiCodingPlan__Glm__5__Turbo                                                      ModelID = "glm-5-turbo"
-	Model__ZaiCodingPlan__Glm__5v__5__Turbo                                                  ModelID = "glm-5v-turbo"
-	Model__Zai__Glm__4_5                                                                     ModelID = "glm-4.5"
-	Model__Zai__Glm__4_6                                                                     ModelID = "glm-4.6"
-	Model__Zai__Glm__4_7                                                                     ModelID = "glm-4.7"
-	Model__Zai__Glm__4__5__Air__4_5                                                          ModelID = "glm-4.5-air"
-	Model__Zai__Glm__4__5__Flash__4_5                                                        ModelID = "glm-4.5-flash"
-	Model__Zai__Glm__4__5v__4_5                                                              ModelID = "glm-4.5v"
-	Model__Zai__Glm__4__6v__4_6                                                              ModelID = "glm-4.6v"
-	Model__Zai__Glm__4__7__Flash__4_7                                                        ModelID = "glm-4.7-flash"
-	Model__Zai__Glm__4__7__Flashx__4_7                                                       ModelID = "glm-4.7-flashx"
-	Model__Zai__Glm__5                                                                       ModelID = "glm-5"
-	Model__Zai__Glm__5_1                                                                     ModelID = "glm-5.1"
-	Model__Zai__Glm__5__Turbo                                                                ModelID = "glm-5-turbo"
-	Model__Zai__Glm__5v__5__Turbo                                                            ModelID = "glm-5v-turbo"
+	Model__ZaiCodingPlan__GLM__4_7                                                           ModelID = "glm-4.7"
+	Model__ZaiCodingPlan__GLM__4__5__Air__4_5                                                ModelID = "glm-4.5-air"
+	Model__ZaiCodingPlan__GLM__5_1                                                           ModelID = "glm-5.1"
+	Model__ZaiCodingPlan__GLM__5__Turbo                                                      ModelID = "glm-5-turbo"
+	Model__ZaiCodingPlan__GLM__5v__5__Turbo                                                  ModelID = "glm-5v-turbo"
+	Model__Zai__GLM__4_5                                                                     ModelID = "glm-4.5"
+	Model__Zai__GLM__4_6                                                                     ModelID = "glm-4.6"
+	Model__Zai__GLM__4_7                                                                     ModelID = "glm-4.7"
+	Model__Zai__GLM__4__5__Air__4_5                                                          ModelID = "glm-4.5-air"
+	Model__Zai__GLM__4__5__Flash__4_5                                                        ModelID = "glm-4.5-flash"
+	Model__Zai__GLM__4__5v__4_5                                                              ModelID = "glm-4.5v"
+	Model__Zai__GLM__4__6v__4_6                                                              ModelID = "glm-4.6v"
+	Model__Zai__GLM__4__7__Flash__4_7                                                        ModelID = "glm-4.7-flash"
+	Model__Zai__GLM__4__7__Flashx__4_7                                                       ModelID = "glm-4.7-flashx"
+	Model__Zai__GLM__5                                                                       ModelID = "glm-5"
+	Model__Zai__GLM__5_1                                                                     ModelID = "glm-5.1"
+	Model__Zai__GLM__5__Turbo                                                                ModelID = "glm-5-turbo"
+	Model__Zai__GLM__5v__5__Turbo                                                            ModelID = "glm-5v-turbo"
 	Model__ZenMux__Agnes__1__5__Lite__1_5                                                    ModelID = "sapiens-ai/agnes-1.5-lite"
 	Model__ZenMux__Agnes__1__5__Pro__1_5                                                     ModelID = "sapiens-ai/agnes-1.5-pro"
 	Model__ZenMux__Claude__3__5__Haiku__3_5                                                  ModelID = "anthropic/claude-3.5-haiku"
@@ -4892,11 +4870,11 @@ const (
 	Model__ZenMux__Claude__Sonnet__4                                                         ModelID = "anthropic/claude-sonnet-4"
 	Model__ZenMux__Claude__Sonnet__4_5                                                       ModelID = "anthropic/claude-sonnet-4.5"
 	Model__ZenMux__Claude__Sonnet__4_6                                                       ModelID = "anthropic/claude-sonnet-4.6"
-	Model__ZenMux__Deepseek__Chat                                                            ModelID = "deepseek/deepseek-chat"
-	Model__ZenMux__Deepseek__V3__2                                                           ModelID = "deepseek/deepseek-v3.2"
-	Model__ZenMux__Deepseek__V3__2__Exp                                                      ModelID = "deepseek/deepseek-v3.2-exp"
-	Model__ZenMux__Deepseek__V4__Flash                                                       ModelID = "deepseek/deepseek-v4-flash"
-	Model__ZenMux__Deepseek__V4__Pro__Thinking                                               ModelID = "deepseek/deepseek-v4-pro"
+	Model__ZenMux__DeepSeek__Chat                                                            ModelID = "deepseek/deepseek-chat"
+	Model__ZenMux__DeepSeek__V3__2                                                           ModelID = "deepseek/deepseek-v3.2"
+	Model__ZenMux__DeepSeek__V3__2__Exp                                                      ModelID = "deepseek/deepseek-v3.2-exp"
+	Model__ZenMux__DeepSeek__V4__Flash                                                       ModelID = "deepseek/deepseek-v4-flash"
+	Model__ZenMux__DeepSeek__V4__Pro__Thinking                                               ModelID = "deepseek/deepseek-v4-pro"
 	Model__ZenMux__Doubao__Seed__1_8                                                         ModelID = "volcengine/doubao-seed-1.8"
 	Model__ZenMux__Doubao__Seed__2_0__Code                                                   ModelID = "volcengine/doubao-seed-2.0-code"
 	Model__ZenMux__Doubao__Seed__2__0__Lite__2_0                                             ModelID = "volcengine/doubao-seed-2.0-lite"
@@ -4904,6 +4882,19 @@ const (
 	Model__ZenMux__Doubao__Seed__2__0__Pro__2_0                                              ModelID = "volcengine/doubao-seed-2.0-pro"
 	Model__ZenMux__Doubao__Seed__Code                                                        ModelID = "volcengine/doubao-seed-code"
 	Model__ZenMux__Ernie__5_0__ThinkingPreview                                               ModelID = "baidu/ernie-5.0-thinking-preview"
+	Model__ZenMux__GLM__4_5                                                                  ModelID = "z-ai/glm-4.5"
+	Model__ZenMux__GLM__4_6                                                                  ModelID = "z-ai/glm-4.6"
+	Model__ZenMux__GLM__4_7                                                                  ModelID = "z-ai/glm-4.7"
+	Model__ZenMux__GLM__4__5__Air__4_5                                                       ModelID = "z-ai/glm-4.5-air"
+	Model__ZenMux__GLM__4__6v__4_6                                                           ModelID = "z-ai/glm-4.6v"
+	Model__ZenMux__GLM__4__6v__4_6__Flash                                                    ModelID = "z-ai/glm-4.6v-flash"
+	Model__ZenMux__GLM__4__6v__Flash__Free__4_6__Flash                                       ModelID = "z-ai/glm-4.6v-flash-free"
+	Model__ZenMux__GLM__4__7__Flash__Free__4_7                                               ModelID = "z-ai/glm-4.7-flash-free"
+	Model__ZenMux__GLM__4__7__Flashx__4_7                                                    ModelID = "z-ai/glm-4.7-flashx"
+	Model__ZenMux__GLM__5                                                                    ModelID = "z-ai/glm-5"
+	Model__ZenMux__GLM__5_1                                                                  ModelID = "z-ai/glm-5.1"
+	Model__ZenMux__GLM__5__Turbo                                                             ModelID = "z-ai/glm-5-turbo"
+	Model__ZenMux__GLM__5v__5__Turbo                                                         ModelID = "z-ai/glm-5v-turbo"
 	Model__ZenMux__GPT__5                                                                    ModelID = "openai/gpt-5"
 	Model__ZenMux__GPT__5_1                                                                  ModelID = "openai/gpt-5.1"
 	Model__ZenMux__GPT__5_1__Chat                                                            ModelID = "openai/gpt-5.1-chat"
@@ -4927,19 +4918,6 @@ const (
 	Model__ZenMux__Gemini__3__1__Flash__Lite__3_1__Preview                                   ModelID = "google/gemini-3.1-flash-lite-preview"
 	Model__ZenMux__Gemini__3__1__Pro__3_1__Preview                                           ModelID = "google/gemini-3.1-pro-preview"
 	Model__ZenMux__Gemini__3__Flash__3__Preview                                              ModelID = "google/gemini-3-flash-preview"
-	Model__ZenMux__Glm__4_5                                                                  ModelID = "z-ai/glm-4.5"
-	Model__ZenMux__Glm__4_6                                                                  ModelID = "z-ai/glm-4.6"
-	Model__ZenMux__Glm__4_7                                                                  ModelID = "z-ai/glm-4.7"
-	Model__ZenMux__Glm__4__5__Air__4_5                                                       ModelID = "z-ai/glm-4.5-air"
-	Model__ZenMux__Glm__4__6v__4_6                                                           ModelID = "z-ai/glm-4.6v"
-	Model__ZenMux__Glm__4__6v__4_6__Flash                                                    ModelID = "z-ai/glm-4.6v-flash"
-	Model__ZenMux__Glm__4__6v__Flash__Free__4_6__Flash                                       ModelID = "z-ai/glm-4.6v-flash-free"
-	Model__ZenMux__Glm__4__7__Flash__Free__4_7                                               ModelID = "z-ai/glm-4.7-flash-free"
-	Model__ZenMux__Glm__4__7__Flashx__4_7                                                    ModelID = "z-ai/glm-4.7-flashx"
-	Model__ZenMux__Glm__5                                                                    ModelID = "z-ai/glm-5"
-	Model__ZenMux__Glm__5_1                                                                  ModelID = "z-ai/glm-5.1"
-	Model__ZenMux__Glm__5__Turbo                                                             ModelID = "z-ai/glm-5-turbo"
-	Model__ZenMux__Glm__5v__5__Turbo                                                         ModelID = "z-ai/glm-5v-turbo"
 	Model__ZenMux__Grok__4                                                                   ModelID = "x-ai/grok-4"
 	Model__ZenMux__Grok__4_1__Fast                                                           ModelID = "x-ai/grok-4.1-fast"
 	Model__ZenMux__Grok__4_2__Fast                                                           ModelID = "x-ai/grok-4.2-fast"
@@ -4960,12 +4938,12 @@ const (
 	Model__ZenMux__Mimo__V2__5__2_5                                                          ModelID = "xiaomi/mimo-v2.5"
 	Model__ZenMux__Mimo__V2__5__2_5__Pro                                                     ModelID = "xiaomi/mimo-v2.5-pro"
 	Model__ZenMux__Mimo__V2__Flash                                                           ModelID = "xiaomi/mimo-v2-flash"
-	Model__ZenMux__Minimax__M2__1__2_1                                                       ModelID = "minimax/minimax-m2.1"
-	Model__ZenMux__Minimax__M2__2                                                            ModelID = "minimax/minimax-m2"
-	Model__ZenMux__Minimax__M2__5__2_5                                                       ModelID = "minimax/minimax-m2.5"
-	Model__ZenMux__Minimax__M2__5__2_5__Lightning                                            ModelID = "minimax/minimax-m2.5-lightning"
-	Model__ZenMux__Minimax__M2__7__2_7                                                       ModelID = "minimax/minimax-m2.7"
-	Model__ZenMux__Minimax__M2__7__2_7__Highspeed                                            ModelID = "minimax/minimax-m2.7-highspeed"
+	Model__ZenMux__MiniMax__M2__1__2_1                                                       ModelID = "minimax/minimax-m2.1"
+	Model__ZenMux__MiniMax__M2__2                                                            ModelID = "minimax/minimax-m2"
+	Model__ZenMux__MiniMax__M2__5__2_5                                                       ModelID = "minimax/minimax-m2.5"
+	Model__ZenMux__MiniMax__M2__5__2_5__Lightning                                            ModelID = "minimax/minimax-m2.5-lightning"
+	Model__ZenMux__MiniMax__M2__7__2_7                                                       ModelID = "minimax/minimax-m2.7"
+	Model__ZenMux__MiniMax__M2__7__2_7__Highspeed                                            ModelID = "minimax/minimax-m2.7-highspeed"
 	Model__ZenMux__Qwen3__5__Flash__3_5                                                      ModelID = "qwen/qwen3.5-flash"
 	Model__ZenMux__Qwen3__5__Plus__3_5                                                       ModelID = "qwen/qwen3.5-plus"
 	Model__ZenMux__Qwen3__6__Plus__3_6                                                       ModelID = "qwen/qwen3.6-plus"
@@ -4975,23 +4953,45 @@ const (
 	Model__ZenMux__Step__3                                                                   ModelID = "stepfun/step-3"
 	Model__ZenMux__Step__3__5__Flash__3_5                                                    ModelID = "stepfun/step-3.5-flash"
 	Model__ZenMux__Step__3__5__Flash__Free__3_5                                              ModelID = "stepfun/step-3.5-flash-free"
-	Model__ZhipuaiCodingPlan__Glm__4_7                                                       ModelID = "glm-4.7"
-	Model__ZhipuaiCodingPlan__Glm__4__5__Air__4_5                                            ModelID = "glm-4.5-air"
-	Model__ZhipuaiCodingPlan__Glm__5_1                                                       ModelID = "glm-5.1"
-	Model__ZhipuaiCodingPlan__Glm__5__Turbo                                                  ModelID = "glm-5-turbo"
-	Model__ZhipuaiCodingPlan__Glm__5v__5__Turbo                                              ModelID = "glm-5v-turbo"
-	Model__Zhipuai__Glm__4_5                                                                 ModelID = "glm-4.5"
-	Model__Zhipuai__Glm__4_6                                                                 ModelID = "glm-4.6"
-	Model__Zhipuai__Glm__4_7                                                                 ModelID = "glm-4.7"
-	Model__Zhipuai__Glm__4__5__Air__4_5                                                      ModelID = "glm-4.5-air"
-	Model__Zhipuai__Glm__4__5__Flash__4_5                                                    ModelID = "glm-4.5-flash"
-	Model__Zhipuai__Glm__4__5v__4_5                                                          ModelID = "glm-4.5v"
-	Model__Zhipuai__Glm__4__6v__4_6                                                          ModelID = "glm-4.6v"
-	Model__Zhipuai__Glm__4__7__Flash__4_7                                                    ModelID = "glm-4.7-flash"
-	Model__Zhipuai__Glm__4__7__Flashx__4_7                                                   ModelID = "glm-4.7-flashx"
-	Model__Zhipuai__Glm__5                                                                   ModelID = "glm-5"
-	Model__Zhipuai__Glm__5_1                                                                 ModelID = "glm-5.1"
-	Model__Zhipuai__Glm__5v__5__Turbo                                                        ModelID = "glm-5v-turbo"
+	Model__ZhipuaiCodingPlan__GLM__4_7                                                       ModelID = "glm-4.7"
+	Model__ZhipuaiCodingPlan__GLM__4__5__Air__4_5                                            ModelID = "glm-4.5-air"
+	Model__ZhipuaiCodingPlan__GLM__5_1                                                       ModelID = "glm-5.1"
+	Model__ZhipuaiCodingPlan__GLM__5__Turbo                                                  ModelID = "glm-5-turbo"
+	Model__ZhipuaiCodingPlan__GLM__5v__5__Turbo                                              ModelID = "glm-5v-turbo"
+	Model__Zhipuai__GLM__4_5                                                                 ModelID = "glm-4.5"
+	Model__Zhipuai__GLM__4_6                                                                 ModelID = "glm-4.6"
+	Model__Zhipuai__GLM__4_7                                                                 ModelID = "glm-4.7"
+	Model__Zhipuai__GLM__4__5__Air__4_5                                                      ModelID = "glm-4.5-air"
+	Model__Zhipuai__GLM__4__5__Flash__4_5                                                    ModelID = "glm-4.5-flash"
+	Model__Zhipuai__GLM__4__5v__4_5                                                          ModelID = "glm-4.5v"
+	Model__Zhipuai__GLM__4__6v__4_6                                                          ModelID = "glm-4.6v"
+	Model__Zhipuai__GLM__4__7__Flash__4_7                                                    ModelID = "glm-4.7-flash"
+	Model__Zhipuai__GLM__4__7__Flashx__4_7                                                   ModelID = "glm-4.7-flashx"
+	Model__Zhipuai__GLM__5                                                                   ModelID = "glm-5"
+	Model__Zhipuai__GLM__5_1                                                                 ModelID = "glm-5.1"
+	Model__Zhipuai__GLM__5v__5__Turbo                                                        ModelID = "glm-5v-turbo"
+	Model__iFlowCN__DeepSeek__R1__Thinking                                                   ModelID = "deepseek-r1"
+	Model__iFlowCN__DeepSeek__V3                                                             ModelID = "deepseek-v3"
+	Model__iFlowCN__DeepSeek__V3__2                                                          ModelID = "deepseek-v3.2"
+	Model__iFlowCN__GLM__4_6                                                                 ModelID = "glm-4.6"
+	Model__iFlowCN__Kimi__K2__0905__2                                                        ModelID = "kimi-k2-0905"
+	Model__iFlowCN__Kimi__K2__2                                                              ModelID = "kimi-k2"
+	Model__iFlowCN__Qwen3__235b__3                                                           ModelID = "qwen3-235b"
+	Model__iFlowCN__Qwen3__235b__A22b__3__Instruct                                           ModelID = "qwen3-235b-a22b-instruct"
+	Model__iFlowCN__Qwen3__235b__A22b__Thinking__2507__3__Thinking                           ModelID = "qwen3-235b-a22b-thinking-2507"
+	Model__iFlowCN__Qwen3__32b__3                                                            ModelID = "qwen3-32b"
+	Model__iFlowCN__Qwen3__Coder__Plus__3                                                    ModelID = "qwen3-coder-plus"
+	Model__iFlowCN__Qwen3__Max__3                                                            ModelID = "qwen3-max"
+	Model__iFlowCN__Qwen3__Max__3__Preview                                                   ModelID = "qwen3-max-preview"
+	Model__iFlowCN__Qwen3__Vl__Plus__3                                                       ModelID = "qwen3-vl-plus"
+	Model__xAI__Grok__4_3                                                                    ModelID = "grok-4.3"
+	Model__xAI__Grok__4__20__0309__4_20__Reasoning                                           ModelID = "grok-4.20-0309-reasoning"
+	Model__xAI__Grok__4__20__0309__Non__4_20__Reasoning                                      ModelID = "grok-4.20-0309-non-reasoning"
+	Model__xAI__Grok__4__20__Multi__Agent__0309__4_20                                        ModelID = "grok-4.20-multi-agent-0309"
+	Model__xAI__Grok__Build__0_1                                                             ModelID = "grok-build-0.1"
+	Model__xAI__Grok__Imagine__Image                                                         ModelID = "grok-imagine-image"
+	Model__xAI__Grok__Imagine__Image__Quality                                                ModelID = "grok-imagine-image-quality"
+	Model__xAI__Grok__Imagine__Video                                                         ModelID = "grok-imagine-video"
 )
 
 // allModelConstants is the complete list of generated Model__* constants.
@@ -5016,14 +5016,28 @@ var allModelConstants = [...]ModelID{
 	Model__302AI__Claude__Sonnet__4_6,
 	Model__302AI__Claude__Sonnet__4_6__Thinking,
 	Model__302AI__Claude__Sonnet__4__20250514,
-	Model__302AI__Deepseek__Chat,
-	Model__302AI__Deepseek__Reasoner__Thinking,
-	Model__302AI__Deepseek__V3__2,
-	Model__302AI__Deepseek__V3__2__Thinking,
+	Model__302AI__DeepSeek__Chat,
+	Model__302AI__DeepSeek__Reasoner__Thinking,
+	Model__302AI__DeepSeek__V3__2,
+	Model__302AI__DeepSeek__V3__2__Thinking,
 	Model__302AI__Doubao__Seed__1__6__Thinking__250715__1_6__Thinking,
 	Model__302AI__Doubao__Seed__1__6__Vision__250815__1_6__Vision,
 	Model__302AI__Doubao__Seed__1__8__251215__1_8,
 	Model__302AI__Doubao__Seed__Code__Preview__251028__PreviewCode,
+	Model__302AI__GLM__4_5,
+	Model__302AI__GLM__4_6,
+	Model__302AI__GLM__4_7,
+	Model__302AI__GLM__4__5__Air__4_5,
+	Model__302AI__GLM__4__5__Airx__4_5,
+	Model__302AI__GLM__4__5__X__4_5,
+	Model__302AI__GLM__4__5v__4_5,
+	Model__302AI__GLM__4__6v__4_6,
+	Model__302AI__GLM__4__7__Flashx__4_7,
+	Model__302AI__GLM__5,
+	Model__302AI__GLM__5_1,
+	Model__302AI__GLM__5__Turbo,
+	Model__302AI__GLM__5v__5__Turbo,
+	Model__302AI__GLM__For__Coding,
 	Model__302AI__GPT__4_1,
 	Model__302AI__GPT__4__1__Mini__4_1,
 	Model__302AI__GPT__4__1__Nano__4_1,
@@ -5053,20 +5067,6 @@ var allModelConstants = [...]ModelID{
 	Model__302AI__Gemini__3__Flash__3__Preview,
 	Model__302AI__Gemini__3__Pro__3__Preview,
 	Model__302AI__Gemini__3__Pro__Image__3__Preview,
-	Model__302AI__Glm__4_5,
-	Model__302AI__Glm__4_6,
-	Model__302AI__Glm__4_7,
-	Model__302AI__Glm__4__5__Air__4_5,
-	Model__302AI__Glm__4__5__Airx__4_5,
-	Model__302AI__Glm__4__5__X__4_5,
-	Model__302AI__Glm__4__5v__4_5,
-	Model__302AI__Glm__4__6v__4_6,
-	Model__302AI__Glm__4__7__Flashx__4_7,
-	Model__302AI__Glm__5,
-	Model__302AI__Glm__5_1,
-	Model__302AI__Glm__5__Turbo,
-	Model__302AI__Glm__5v__5__Turbo,
-	Model__302AI__Glm__For__Coding,
 	Model__302AI__Grok__4_1,
 	Model__302AI__Grok__4_1__ReasoningFast,
 	Model__302AI__Grok__4__1__Fast__Non__4_1__Reasoning,
@@ -5078,11 +5078,11 @@ var allModelConstants = [...]ModelID{
 	Model__302AI__Kimi__K2__0905__2__Preview,
 	Model__302AI__Kimi__K2__2__Thinking,
 	Model__302AI__Kimi__K2__2__ThinkingTurbo,
-	Model__302AI__Minimax__M1__1,
-	Model__302AI__Minimax__M2__1__2_1,
-	Model__302AI__Minimax__M2__2,
-	Model__302AI__Minimax__M2__7__2_7,
-	Model__302AI__Minimax__M2__7__2_7__Highspeed,
+	Model__302AI__MiniMax__M1__1,
+	Model__302AI__MiniMax__M2__1__2_1,
+	Model__302AI__MiniMax__M2__2,
+	Model__302AI__MiniMax__M2__7__2_7,
+	Model__302AI__MiniMax__M2__7__2_7__Highspeed,
 	Model__302AI__Ministral__14b__2512,
 	Model__302AI__Mistral__Large__2512,
 	Model__302AI__Qwen3__235b__A22b__3,
@@ -5093,28 +5093,29 @@ var allModelConstants = [...]ModelID{
 	Model__302AI__Qwen__Flash,
 	Model__302AI__Qwen__Max__Latest,
 	Model__302AI__Qwen__Plus,
-	Model__AIHubMix__Alicloud__Deepseek__V4__Flash,
-	Model__AIHubMix__Alicloud__Deepseek__V4__Pro__Thinking,
-	Model__AIHubMix__Alicloud__Glm__5__1,
+	Model__AIHubMix__Alicloud__DeepSeek__V4__Flash,
+	Model__AIHubMix__Alicloud__DeepSeek__V4__Pro__Thinking,
+	Model__AIHubMix__Alicloud__GLM__5__1,
 	Model__AIHubMix__Claude__Opus__4_6,
 	Model__AIHubMix__Claude__Opus__4_6__Think,
 	Model__AIHubMix__Claude__Opus__4_7,
 	Model__AIHubMix__Claude__Opus__4_7__Think,
 	Model__AIHubMix__Claude__Sonnet__4_6,
 	Model__AIHubMix__Claude__Sonnet__4_6__Think,
-	Model__AIHubMix__Coding__Glm__5__1,
-	Model__AIHubMix__Coding__Glm__5__1__Free,
-	Model__AIHubMix__Coding__Minimax__M2__7__2_7,
-	Model__AIHubMix__Coding__Minimax__M2__7__2_7__Highspeed,
-	Model__AIHubMix__Coding__Minimax__M2__7__Free,
+	Model__AIHubMix__Coding__GLM__5__1,
+	Model__AIHubMix__Coding__GLM__5__1__Free,
+	Model__AIHubMix__Coding__MiniMax__M2__7__2_7,
+	Model__AIHubMix__Coding__MiniMax__M2__7__2_7__Highspeed,
+	Model__AIHubMix__Coding__MiniMax__M2__7__Free,
 	Model__AIHubMix__Coding__Xiaomi__Mimo__V2__5__2_5,
 	Model__AIHubMix__Coding__Xiaomi__Mimo__V2__5__2_5__Pro,
-	Model__AIHubMix__Deep__Deepseek__V4__Flash,
-	Model__AIHubMix__Deep__Deepseek__V4__Pro__Thinking,
+	Model__AIHubMix__Deep__DeepSeek__V4__Flash,
+	Model__AIHubMix__Deep__DeepSeek__V4__Pro__Thinking,
 	Model__AIHubMix__Doubao__Seed__2__0__Lite__260428,
 	Model__AIHubMix__Doubao__Seed__2__0__Mini__260428,
 	Model__AIHubMix__Doubao__Seed__2__0__PreviewCode,
 	Model__AIHubMix__Doubao__Seed__2__0__Pro,
+	Model__AIHubMix__GLM__5v__5__Turbo,
 	Model__AIHubMix__GPT__5_1,
 	Model__AIHubMix__GPT__5_2,
 	Model__AIHubMix__GPT__5_4,
@@ -5130,11 +5131,10 @@ var allModelConstants = [...]ModelID{
 	Model__AIHubMix__Gemini__3__1__Pro__3_1__Preview,
 	Model__AIHubMix__Gemini__3__1__Pro__Preview__Customtools__3_1,
 	Model__AIHubMix__Gemini__3__Flash__3__Preview,
-	Model__AIHubMix__Glm__5v__5__Turbo,
 	Model__AIHubMix__Grok__4_3,
 	Model__AIHubMix__Kimi__K2__5__2_5,
 	Model__AIHubMix__Kimi__K2__6__2_6,
-	Model__AIHubMix__Minimax__M2__7__2_7,
+	Model__AIHubMix__MiniMax__M2__7__2_7,
 	Model__AIHubMix__Qwen3__6__Flash__3_6,
 	Model__AIHubMix__Qwen3__6__Max__3_6__Preview,
 	Model__AIHubMix__Qwen3__6__Plus__3_6,
@@ -5142,7 +5142,7 @@ var allModelConstants = [...]ModelID{
 	Model__AIHubMix__Xiaomi__Mimo__V2__5__2_5__Pro,
 	Model__AIHubMix__Xiaomi__Mimo__V2__5__Free,
 	Model__AIHubMix__Xiaomi__Mimo__V2__5__Pro__Free,
-	Model__AIHubMix__Zai__Glm__5__1,
+	Model__AIHubMix__Zai__GLM__5__1,
 	Model__Abacus__Claude__3__7__Sonnet__3_7__20250219,
 	Model__Abacus__Claude__Haiku__4_5__20251001,
 	Model__Abacus__Claude__Opus__4_1__20250805,
@@ -5152,10 +5152,14 @@ var allModelConstants = [...]ModelID{
 	Model__Abacus__Claude__Sonnet__4_5__20250929,
 	Model__Abacus__Claude__Sonnet__4_6,
 	Model__Abacus__Claude__Sonnet__4__20250514,
-	Model__Abacus__Deepseek__R1__Thinking,
-	Model__Abacus__Deepseek__V3__1,
-	Model__Abacus__Deepseek__V3__1__Terminus,
-	Model__Abacus__Deepseek__V3__2,
+	Model__Abacus__DeepSeek__R1__Thinking,
+	Model__Abacus__DeepSeek__V3__1,
+	Model__Abacus__DeepSeek__V3__1__Terminus,
+	Model__Abacus__DeepSeek__V3__2,
+	Model__Abacus__GLM__4_5,
+	Model__Abacus__GLM__4_6,
+	Model__Abacus__GLM__4_7,
+	Model__Abacus__GLM__5,
 	Model__Abacus__GPT__4_1,
 	Model__Abacus__GPT__4__1__Mini__4_1,
 	Model__Abacus__GPT__4__1__Nano__4_1,
@@ -5182,10 +5186,6 @@ var allModelConstants = [...]ModelID{
 	Model__Abacus__Gemini__3__1__Flash__Lite__3_1__Preview,
 	Model__Abacus__Gemini__3__1__Pro__3_1__Preview,
 	Model__Abacus__Gemini__3__Flash__3__Preview,
-	Model__Abacus__Glm__4_5,
-	Model__Abacus__Glm__4_6,
-	Model__Abacus__Glm__4_7,
-	Model__Abacus__Glm__5,
 	Model__Abacus__Grok__4__0709__4,
 	Model__Abacus__Grok__4__1__Fast__Non__4_1__Reasoning,
 	Model__Abacus__Grok__4__Fast__Non__4__Reasoning,
@@ -5209,31 +5209,31 @@ var allModelConstants = [...]ModelID{
 	Model__Abacus__Qwq__32B,
 	Model__Abacus__Route__LLM,
 	Model__AbliterationAI__Abliterated__Model,
-	Model__AlibabaCN__Deepseek__R1__0528__Thinking_1,
-	Model__AlibabaCN__Deepseek__R1__0528__Thinking_2,
-	Model__AlibabaCN__Deepseek__R1__Distill__Llama__70b__Thinking,
-	Model__AlibabaCN__Deepseek__R1__Distill__Llama__8b__Thinking,
-	Model__AlibabaCN__Deepseek__R1__Distill__Qwen__14b,
-	Model__AlibabaCN__Deepseek__R1__Distill__Qwen__1__5b,
-	Model__AlibabaCN__Deepseek__R1__Distill__Qwen__32b,
-	Model__AlibabaCN__Deepseek__R1__Distill__Qwen__7b,
-	Model__AlibabaCN__Deepseek__R1__Thinking,
-	Model__AlibabaCN__Deepseek__V3,
-	Model__AlibabaCN__Deepseek__V3__0324,
-	Model__AlibabaCN__Deepseek__V3__1,
-	Model__AlibabaCN__Deepseek__V3__1__Terminus,
-	Model__AlibabaCN__Deepseek__V3__2,
-	Model__AlibabaCN__Deepseek__V3__2__Exp__2,
-	Model__AlibabaCN__Deepseek__V4__Flash,
-	Model__AlibabaCN__Deepseek__V4__Pro__Thinking,
-	Model__AlibabaCN__Glm__5,
-	Model__AlibabaCN__Glm__5_1,
+	Model__AlibabaCN__DeepSeek__R1__0528__Thinking_1,
+	Model__AlibabaCN__DeepSeek__R1__0528__Thinking_2,
+	Model__AlibabaCN__DeepSeek__R1__Distill__Llama__70b__Thinking,
+	Model__AlibabaCN__DeepSeek__R1__Distill__Llama__8b__Thinking,
+	Model__AlibabaCN__DeepSeek__R1__Distill__Qwen__14b,
+	Model__AlibabaCN__DeepSeek__R1__Distill__Qwen__1__5b,
+	Model__AlibabaCN__DeepSeek__R1__Distill__Qwen__32b,
+	Model__AlibabaCN__DeepSeek__R1__Distill__Qwen__7b,
+	Model__AlibabaCN__DeepSeek__R1__Thinking,
+	Model__AlibabaCN__DeepSeek__V3,
+	Model__AlibabaCN__DeepSeek__V3__0324,
+	Model__AlibabaCN__DeepSeek__V3__1,
+	Model__AlibabaCN__DeepSeek__V3__1__Terminus,
+	Model__AlibabaCN__DeepSeek__V3__2,
+	Model__AlibabaCN__DeepSeek__V3__2__Exp__2,
+	Model__AlibabaCN__DeepSeek__V4__Flash,
+	Model__AlibabaCN__DeepSeek__V4__Pro__Thinking,
+	Model__AlibabaCN__GLM__5,
+	Model__AlibabaCN__GLM__5_1,
 	Model__AlibabaCN__Kimi__K2__2__Thinking,
 	Model__AlibabaCN__Kimi__K2__5__2_5_1,
 	Model__AlibabaCN__Kimi__K2__5__2_5_2,
 	Model__AlibabaCN__Kimi__K2__6__2_6,
-	Model__AlibabaCN__Minimax__M2__5__2_5,
-	Model__AlibabaCN__Minimax__M2__7__2_7,
+	Model__AlibabaCN__MiniMax__M2__5__2_5,
+	Model__AlibabaCN__MiniMax__M2__7__2_7,
 	Model__AlibabaCN__Moonshot__Kimi__K2__2__Instruct,
 	Model__AlibabaCN__Qvq__Max,
 	Model__AlibabaCN__Qwen2__5__14b__2__Instruct,
@@ -5291,10 +5291,10 @@ var allModelConstants = [...]ModelID{
 	Model__AlibabaCN__Qwq__32b,
 	Model__AlibabaCN__Qwq__Plus,
 	Model__AlibabaCN__Tongyi__Intent__Detect__V3,
-	Model__AlibabaCodingPlanCN__Glm__4_7,
-	Model__AlibabaCodingPlanCN__Glm__5,
+	Model__AlibabaCodingPlanCN__GLM__4_7,
+	Model__AlibabaCodingPlanCN__GLM__5,
 	Model__AlibabaCodingPlanCN__Kimi__K2__5__2_5,
-	Model__AlibabaCodingPlanCN__Minimax__M2__5__2_5,
+	Model__AlibabaCodingPlanCN__MiniMax__M2__5__2_5,
 	Model__AlibabaCodingPlanCN__Qwen3__5__Plus__3_5,
 	Model__AlibabaCodingPlanCN__Qwen3__6__Flash__3_6,
 	Model__AlibabaCodingPlanCN__Qwen3__6__Plus__3_6,
@@ -5302,10 +5302,10 @@ var allModelConstants = [...]ModelID{
 	Model__AlibabaCodingPlanCN__Qwen3__Coder__Next__3,
 	Model__AlibabaCodingPlanCN__Qwen3__Coder__Plus__3,
 	Model__AlibabaCodingPlanCN__Qwen3__Max__3__20260123,
-	Model__AlibabaCodingPlan__Glm__4_7,
-	Model__AlibabaCodingPlan__Glm__5,
+	Model__AlibabaCodingPlan__GLM__4_7,
+	Model__AlibabaCodingPlan__GLM__5,
 	Model__AlibabaCodingPlan__Kimi__K2__5__2_5,
-	Model__AlibabaCodingPlan__Minimax__M2__5__2_5,
+	Model__AlibabaCodingPlan__MiniMax__M2__5__2_5,
 	Model__AlibabaCodingPlan__Qwen3__5__Plus__3_5,
 	Model__AlibabaCodingPlan__Qwen3__6__Flash__3_6,
 	Model__AlibabaCodingPlan__Qwen3__6__Plus__3_6,
@@ -5380,9 +5380,9 @@ var allModelConstants = [...]ModelID{
 	Model__AmazonBedrock__Au__Anthropic__Claude__Opus__4__8,
 	Model__AmazonBedrock__Au__Anthropic__Claude__Sonnet__4__5__20250929__V1__0,
 	Model__AmazonBedrock__Au__Anthropic__Claude__Sonnet__4__6,
-	Model__AmazonBedrock__Deepseek__R1__V1__0__Thinking,
-	Model__AmazonBedrock__Deepseek__V3__2,
-	Model__AmazonBedrock__Deepseek__V3__V1__0,
+	Model__AmazonBedrock__DeepSeek__R1__V1__0__Thinking,
+	Model__AmazonBedrock__DeepSeek__V3__2,
+	Model__AmazonBedrock__DeepSeek__V3__V1__0,
 	Model__AmazonBedrock__Eu__Anthropic__Claude__Haiku__4__5__20251001__V1__0,
 	Model__AmazonBedrock__Eu__Anthropic__Claude__Opus__4__5__20251101__V1__0,
 	Model__AmazonBedrock__Eu__Anthropic__Claude__Opus__4__6__V1,
@@ -5409,9 +5409,9 @@ var allModelConstants = [...]ModelID{
 	Model__AmazonBedrock__Meta__Llama3__3__70b__Instruct__V1__0__Instruct,
 	Model__AmazonBedrock__Meta__Llama4__Maverick__17b__Instruct__V1__0__Instruct,
 	Model__AmazonBedrock__Meta__Llama4__Scout__17b__Instruct__V1__0__Instruct,
-	Model__AmazonBedrock__Minimax__Minimax__M2__1__2_1,
-	Model__AmazonBedrock__Minimax__Minimax__M2__2,
-	Model__AmazonBedrock__Minimax__Minimax__M2__5__2_5,
+	Model__AmazonBedrock__MiniMax__MiniMax__M2__1__2_1,
+	Model__AmazonBedrock__MiniMax__MiniMax__M2__2,
+	Model__AmazonBedrock__MiniMax__MiniMax__M2__5__2_5,
 	Model__AmazonBedrock__Mistral__Devstral__2__123b,
 	Model__AmazonBedrock__Mistral__Magistral__Small__2509,
 	Model__AmazonBedrock__Mistral__Ministral__3__14b__Instruct,
@@ -5421,16 +5421,16 @@ var allModelConstants = [...]ModelID{
 	Model__AmazonBedrock__Mistral__Pixtral__Large__2502__V1__0,
 	Model__AmazonBedrock__Mistral__Voxtral__Mini__3b__2507,
 	Model__AmazonBedrock__Mistral__Voxtral__Small__24b__2507,
+	Model__AmazonBedrock__MoonshotAI__Kimi__K2__5__2_5,
 	Model__AmazonBedrock__Moonshot__Kimi__K2__2__Thinking,
-	Model__AmazonBedrock__Moonshotai__Kimi__K2__5__2_5,
 	Model__AmazonBedrock__Nvidia__Nemotron__Nano__12b__V2,
 	Model__AmazonBedrock__Nvidia__Nemotron__Nano__3__30b,
 	Model__AmazonBedrock__Nvidia__Nemotron__Nano__9b__V2,
 	Model__AmazonBedrock__Nvidia__Nemotron__Super__3__120b,
-	Model__AmazonBedrock__Openai__GPT__Oss__120b__1__0,
-	Model__AmazonBedrock__Openai__GPT__Oss__20b__1__0,
-	Model__AmazonBedrock__Openai__GPT__Oss__Safeguard__120b,
-	Model__AmazonBedrock__Openai__GPT__Oss__Safeguard__20b,
+	Model__AmazonBedrock__OpenAI__GPT__Oss__120b__1__0,
+	Model__AmazonBedrock__OpenAI__GPT__Oss__20b__1__0,
+	Model__AmazonBedrock__OpenAI__GPT__Oss__Safeguard__120b,
+	Model__AmazonBedrock__OpenAI__GPT__Oss__Safeguard__20b,
 	Model__AmazonBedrock__Qwen__Qwen3__235b__A22b__2507__V1__0,
 	Model__AmazonBedrock__Qwen__Qwen3__32b__V1__0,
 	Model__AmazonBedrock__Qwen__Qwen3__Coder__30b__A3b__V1__0,
@@ -5446,15 +5446,15 @@ var allModelConstants = [...]ModelID{
 	Model__AmazonBedrock__Us__Anthropic__Claude__Opus__4__8,
 	Model__AmazonBedrock__Us__Anthropic__Claude__Sonnet__4__5__20250929__V1__0,
 	Model__AmazonBedrock__Us__Anthropic__Claude__Sonnet__4__6,
-	Model__AmazonBedrock__Us__Deepseek__R1__V1__0__Thinking,
+	Model__AmazonBedrock__Us__DeepSeek__R1__V1__0__Thinking,
 	Model__AmazonBedrock__Us__Meta__Llama4__Maverick__17b__Instruct__V1__0__Instruct,
 	Model__AmazonBedrock__Us__Meta__Llama4__Scout__17b__Instruct__V1__0__Instruct,
 	Model__AmazonBedrock__Writer__Palmyra__X4__V1__0,
 	Model__AmazonBedrock__Writer__Palmyra__X5__V1__0,
-	Model__AmazonBedrock__Zai__Glm__4__7,
-	Model__AmazonBedrock__Zai__Glm__4__7__Flash,
-	Model__AmazonBedrock__Zai__Glm__5,
-	Model__Ambient__Glm__5__1__Fp8__5_1,
+	Model__AmazonBedrock__Zai__GLM__4__7,
+	Model__AmazonBedrock__Zai__GLM__4__7__Flash,
+	Model__AmazonBedrock__Zai__GLM__5,
+	Model__Ambient__GLM__5__1__Fp8__5_1,
 	Model__Ambient__Kimi__K2__6__2_6,
 	Model__Anthropic__Claude__3__5__Haiku__3_5__20241022,
 	Model__Anthropic__Claude__3__5__Haiku__3_5__Latest,
@@ -5488,17 +5488,17 @@ var allModelConstants = [...]ModelID{
 	Model__Auriko__Claude__Opus__4_6,
 	Model__Auriko__Claude__Opus__4_7,
 	Model__Auriko__Claude__Sonnet__4_6,
-	Model__Auriko__Deepseek__V4__Flash,
-	Model__Auriko__Deepseek__V4__Pro__Thinking,
+	Model__Auriko__DeepSeek__V4__Flash,
+	Model__Auriko__DeepSeek__V4__Pro__Thinking,
+	Model__Auriko__GLM__5_1,
 	Model__Auriko__Gemini__2__5__Flash__2_5,
 	Model__Auriko__Gemini__2__5__Pro__2_5,
 	Model__Auriko__Gemini__3__1__Pro__3_1__Preview,
-	Model__Auriko__Glm__5_1,
 	Model__Auriko__Grok__4_3,
 	Model__Auriko__Kimi__K2__5__2_5,
 	Model__Auriko__Kimi__K2__6__2_6,
-	Model__Auriko__Minimax__M2__7__2_7,
-	Model__Auriko__Minimax__M2__7__2_7__Highspeed,
+	Model__Auriko__MiniMax__M2__7__2_7,
+	Model__Auriko__MiniMax__M2__7__2_7__Highspeed,
 	Model__Auriko__Qwen__3__6__Plus__3_6,
 	Model__AzureCognitiveServices__Claude__Haiku__4_5,
 	Model__AzureCognitiveServices__Claude__Opus__4_1,
@@ -5513,12 +5513,12 @@ var allModelConstants = [...]ModelID{
 	Model__AzureCognitiveServices__Cohere__Embed__V3__English,
 	Model__AzureCognitiveServices__Cohere__Embed__V3__Multilingual,
 	Model__AzureCognitiveServices__Cohere__Embed__V__4__0,
-	Model__AzureCognitiveServices__Deepseek__R1__0528__Thinking,
-	Model__AzureCognitiveServices__Deepseek__R1__Thinking,
-	Model__AzureCognitiveServices__Deepseek__V3__0324,
-	Model__AzureCognitiveServices__Deepseek__V3__1,
-	Model__AzureCognitiveServices__Deepseek__V3__2,
-	Model__AzureCognitiveServices__Deepseek__V3__2__Speciale,
+	Model__AzureCognitiveServices__DeepSeek__R1__0528__Thinking,
+	Model__AzureCognitiveServices__DeepSeek__R1__Thinking,
+	Model__AzureCognitiveServices__DeepSeek__V3__0324,
+	Model__AzureCognitiveServices__DeepSeek__V3__1,
+	Model__AzureCognitiveServices__DeepSeek__V3__2,
+	Model__AzureCognitiveServices__DeepSeek__V3__2__Speciale,
 	Model__AzureCognitiveServices__GPT__3_5__TurboInstruct,
 	Model__AzureCognitiveServices__GPT__3__5__Turbo__0125__3_5__Turbo,
 	Model__AzureCognitiveServices__GPT__3__5__Turbo__0301__3_5__Turbo,
@@ -5610,12 +5610,12 @@ var allModelConstants = [...]ModelID{
 	Model__Azure__Cohere__Embed__V3__English,
 	Model__Azure__Cohere__Embed__V3__Multilingual,
 	Model__Azure__Cohere__Embed__V__4__0,
-	Model__Azure__Deepseek__R1__0528__Thinking,
-	Model__Azure__Deepseek__R1__Thinking,
-	Model__Azure__Deepseek__V3__0324,
-	Model__Azure__Deepseek__V3__1,
-	Model__Azure__Deepseek__V3__2,
-	Model__Azure__Deepseek__V3__2__Speciale,
+	Model__Azure__DeepSeek__R1__0528__Thinking,
+	Model__Azure__DeepSeek__R1__Thinking,
+	Model__Azure__DeepSeek__V3__0324,
+	Model__Azure__DeepSeek__V3__1,
+	Model__Azure__DeepSeek__V3__2,
+	Model__Azure__DeepSeek__V3__2__Speciale,
 	Model__Azure__GPT__3_5__TurboInstruct,
 	Model__Azure__GPT__3__5__Turbo__0125__3_5__Turbo,
 	Model__Azure__GPT__3__5__Turbo__0301__3_5__Turbo,
@@ -5701,56 +5701,56 @@ var allModelConstants = [...]ModelID{
 	Model__Azure__Text__Embedding__Ada__002,
 	Model__Bailing__Ling__1T__1t,
 	Model__Bailing__Ring__1T__1t,
-	Model__Baseten__Deepseek__V3__0324,
-	Model__Baseten__Deepseek__V3__1,
-	Model__Baseten__Deepseek__V3__2,
-	Model__Baseten__Deepseek__V4__Pro__Thinking,
+	Model__Baseten__DeepSeek__V3__0324,
+	Model__Baseten__DeepSeek__V3__1,
+	Model__Baseten__DeepSeek__V3__2,
+	Model__Baseten__DeepSeek__V4__Pro__Thinking,
+	Model__Baseten__GLM__4_6,
+	Model__Baseten__GLM__4_7,
+	Model__Baseten__GLM__5,
 	Model__Baseten__GPT__Oss__120b,
-	Model__Baseten__Glm__4_6,
-	Model__Baseten__Glm__4_7,
-	Model__Baseten__Glm__5,
 	Model__Baseten__Kimi__K2__2__Thinking,
 	Model__Baseten__Kimi__K2__5__2_5,
 	Model__Baseten__Kimi__K2__6__2_6,
 	Model__Baseten__Kimi__K2__Instruct__0905__2__Instruct,
-	Model__Baseten__Minimax__M2__5__2_5,
+	Model__Baseten__MiniMax__M2__5__2_5,
 	Model__Baseten__Nemotron__120B__A12b,
+	Model__Berget__GLM__4_7,
 	Model__Berget__GPT__Oss__120b,
 	Model__Berget__Gemma__4__31B__It__4,
-	Model__Berget__Glm__4_7,
 	Model__Berget__Kimi__K2__6__2_6,
 	Model__Berget__Llama__3__3__70B__3_3__Instruct,
 	Model__Berget__Mistral__Medium__3__5__128B__3_5,
 	Model__Berget__Mistral__Small__3__2__24B__Instruct__2506__3_2__Instruct,
 	Model__Cerebras__GPT__Oss__120b,
 	Model__Cerebras__Llama3__1__8b,
-	Model__Cerebras__Zai__Glm__4_7,
+	Model__Cerebras__Zai__GLM__4_7,
+	Model__Chutes__DeepSeek__R1__0528__Tee__Thinking,
+	Model__Chutes__DeepSeek__R1__Distill__Llama__70B__Thinking,
+	Model__Chutes__DeepSeek__Tng__R1t2__Chimera__Tee,
+	Model__Chutes__DeepSeek__V3__0324__Tee,
+	Model__Chutes__DeepSeek__V3__1__Tee,
+	Model__Chutes__DeepSeek__V3__2__Tee,
 	Model__Chutes__Deephermes__3__Mistral__24B__Preview,
-	Model__Chutes__Deepseek__R1__0528__Tee__Thinking,
-	Model__Chutes__Deepseek__R1__Distill__Llama__70B__Thinking,
-	Model__Chutes__Deepseek__Tng__R1t2__Chimera__Tee,
-	Model__Chutes__Deepseek__V3__0324__Tee,
-	Model__Chutes__Deepseek__V3__1__Tee,
-	Model__Chutes__Deepseek__V3__2__Tee,
 	Model__Chutes__Dots__Ocr,
+	Model__Chutes__GLM__4__6V__4_6,
+	Model__Chutes__GLM__4__7__Fp8__4_7,
+	Model__Chutes__GLM__4__7__Tee__4_7,
+	Model__Chutes__GLM__5__1__Tee__5_1,
+	Model__Chutes__GLM__5__Tee__5,
+	Model__Chutes__GLM__5__Turbo,
 	Model__Chutes__GPT__Oss__120b__Tee,
 	Model__Chutes__Gemma__3__12b__It,
 	Model__Chutes__Gemma__3__27b__It,
 	Model__Chutes__Gemma__3__4b__It,
 	Model__Chutes__Gemma__4__31B__Turbo__Tee__4__Turbo,
-	Model__Chutes__Glm__4__6V__4_6,
-	Model__Chutes__Glm__4__7__Fp8__4_7,
-	Model__Chutes__Glm__4__7__Tee__4_7,
-	Model__Chutes__Glm__5__1__Tee__5_1,
-	Model__Chutes__Glm__5__Tee__5,
-	Model__Chutes__Glm__5__Turbo,
 	Model__Chutes__Hermes__4__14B__4,
 	Model__Chutes__Kimi__K2__5__Tee,
 	Model__Chutes__Kimi__K2__6__Tee,
 	Model__Chutes__Llama__3__2__1B__Instruct,
 	Model__Chutes__Llama__3__2__3B__Instruct,
 	Model__Chutes__Mimo__V2__Flash__Tee,
-	Model__Chutes__Minimax__M2__5__Tee,
+	Model__Chutes__MiniMax__M2__5__Tee,
 	Model__Chutes__Mistral__Nemo__Instruct__2407__Instruct,
 	Model__Chutes__Qwen2__5__72B__2_5__Instruct,
 	Model__Chutes__Qwen2__5__Coder__32B__2_5__Instruct,
@@ -5764,11 +5764,11 @@ var allModelConstants = [...]ModelID{
 	Model__Chutes__Qwen3__Coder__Next__Tee__3,
 	Model__Chutes__Qwen3__Next__80B__A3b__3__Instruct,
 	Model__Chutes__Qwen3guard__Gen__0__6B,
-	Model__Clarifai__Deepseek__Ocr,
+	Model__Clarifai__DeepSeek__Ocr,
 	Model__Clarifai__GPT__Oss__120b__High__Throughput,
 	Model__Clarifai__GPT__Oss__20b,
 	Model__Clarifai__Kimi__K2__6,
-	Model__Clarifai__Minimax__M2__5__High__Throughput,
+	Model__Clarifai__MiniMax__M2__5__High__Throughput,
 	Model__Clarifai__Ministral__3__14B__Reasoning__2512__3__Reasoning,
 	Model__Clarifai__Ministral__3__3B__Reasoning__2512__3__Reasoning,
 	Model__Clarifai__Mm__Poly__8b,
@@ -5781,7 +5781,7 @@ var allModelConstants = [...]ModelID{
 	Model__CloudFerroSherlock__Bielik__11B__V3__0__Instruct,
 	Model__CloudFerroSherlock__GPT__Oss__120b,
 	Model__CloudFerroSherlock__Llama__3__3__70B__3_3__Instruct,
-	Model__CloudFerroSherlock__Minimax__M2__5__2_5,
+	Model__CloudFerroSherlock__MiniMax__M2__5__2_5,
 	Model__CloudflareAIGateway__Aura__2__En__2,
 	Model__CloudflareAIGateway__Aura__2__Es__2,
 	Model__CloudflareAIGateway__Bart__Large__Cnn,
@@ -5806,8 +5806,9 @@ var allModelConstants = [...]ModelID{
 	Model__CloudflareAIGateway__Claude__Sonnet__4,
 	Model__CloudflareAIGateway__Claude__Sonnet__4_5,
 	Model__CloudflareAIGateway__Claude__Sonnet__4_6,
-	Model__CloudflareAIGateway__Deepseek__R1__Distill__Qwen__32b__Thinking,
+	Model__CloudflareAIGateway__DeepSeek__R1__Distill__Qwen__32b__Thinking,
 	Model__CloudflareAIGateway__Distilbert__Sst__2__Int8__2,
+	Model__CloudflareAIGateway__GLM__4__7__Flash__4_7,
 	Model__CloudflareAIGateway__GPT__3_5__Turbo,
 	Model__CloudflareAIGateway__GPT__4,
 	Model__CloudflareAIGateway__GPT__4__Turbo,
@@ -5824,7 +5825,6 @@ var allModelConstants = [...]ModelID{
 	Model__CloudflareAIGateway__GPT__Oss__20b,
 	Model__CloudflareAIGateway__Gemma__3__12b__It__3,
 	Model__CloudflareAIGateway__Gemma__Sea__Lion__V4__27b__It,
-	Model__CloudflareAIGateway__Glm__4__7__Flash__4_7,
 	Model__CloudflareAIGateway__Granite__4__0__H__Micro__4_0,
 	Model__CloudflareAIGateway__Indictrans2__En__Indic__1B,
 	Model__CloudflareAIGateway__Kimi__K2__5__2_5,
@@ -5858,13 +5858,13 @@ var allModelConstants = [...]ModelID{
 	Model__CloudflareAIGateway__Qwen3__Embedding__0__6b__3,
 	Model__CloudflareAIGateway__Qwq__32b,
 	Model__CloudflareAIGateway__Smart__Turn__V2,
-	Model__CloudflareWorkersAI__Deepseek__R1__Distill__Qwen__32b,
+	Model__CloudflareWorkersAI__DeepSeek__R1__Distill__Qwen__32b,
+	Model__CloudflareWorkersAI__GLM__4__7__Flash__4_7,
 	Model__CloudflareWorkersAI__GPT__Oss__120b,
 	Model__CloudflareWorkersAI__GPT__Oss__20b,
 	Model__CloudflareWorkersAI__Gemma__3__12b__It__3,
 	Model__CloudflareWorkersAI__Gemma__4__26b__A4b__It__4,
 	Model__CloudflareWorkersAI__Gemma__Sea__Lion__V4__27b__It,
-	Model__CloudflareWorkersAI__Glm__4__7__Flash__4_7,
 	Model__CloudflareWorkersAI__Granite__4__0__H__Micro__4_0,
 	Model__CloudflareWorkersAI__Kimi__K2__5__2_5,
 	Model__CloudflareWorkersAI__Kimi__K2__6__2_6,
@@ -5905,22 +5905,22 @@ var allModelConstants = [...]ModelID{
 	Model__Cortecs__Claude__Opus4__7,
 	Model__Cortecs__Claude__Sonnet__4,
 	Model__Cortecs__Codestral__2508,
-	Model__Cortecs__Deepseek__R1__0528__Thinking,
-	Model__Cortecs__Deepseek__V3__0324,
-	Model__Cortecs__Deepseek__V3__2,
-	Model__Cortecs__Deepseek__V4__Flash,
-	Model__Cortecs__Deepseek__V4__Pro__Thinking,
+	Model__Cortecs__DeepSeek__R1__0528__Thinking,
+	Model__Cortecs__DeepSeek__V3__0324,
+	Model__Cortecs__DeepSeek__V3__2,
+	Model__Cortecs__DeepSeek__V4__Flash,
+	Model__Cortecs__DeepSeek__V4__Pro__Thinking,
 	Model__Cortecs__Devstral__2512,
 	Model__Cortecs__Devstral__Small__2512,
+	Model__Cortecs__GLM__4_5,
+	Model__Cortecs__GLM__4_7,
+	Model__Cortecs__GLM__4__5__Air__4_5,
+	Model__Cortecs__GLM__4__7__Flash__4_7,
+	Model__Cortecs__GLM__5,
+	Model__Cortecs__GLM__5_1,
 	Model__Cortecs__GPT__4_1,
 	Model__Cortecs__GPT__Oss__120b,
 	Model__Cortecs__Gemini__2__5__Pro__2_5,
-	Model__Cortecs__Glm__4_5,
-	Model__Cortecs__Glm__4_7,
-	Model__Cortecs__Glm__4__5__Air__4_5,
-	Model__Cortecs__Glm__4__7__Flash__4_7,
-	Model__Cortecs__Glm__5,
-	Model__Cortecs__Glm__5_1,
 	Model__Cortecs__Hermes__4__70b__4,
 	Model__Cortecs__Intellect__3,
 	Model__Cortecs__Kimi__K2__2__Instruct,
@@ -5929,10 +5929,10 @@ var allModelConstants = [...]ModelID{
 	Model__Cortecs__Kimi__K2__6__2_6__Thinking,
 	Model__Cortecs__Llama__3__1__405b__3_1__Instruct,
 	Model__Cortecs__Llama__3__3__70b__3_3__Instruct,
-	Model__Cortecs__Minimax__M2__1__2_1,
-	Model__Cortecs__Minimax__M2__2,
-	Model__Cortecs__Minimax__M2__5__2_5,
-	Model__Cortecs__Minimax__M2__7__2_7,
+	Model__Cortecs__MiniMax__M2__1__2_1,
+	Model__Cortecs__MiniMax__M2__2,
+	Model__Cortecs__MiniMax__M2__5__2_5,
+	Model__Cortecs__MiniMax__M2__7__2_7,
 	Model__Cortecs__Mistral__Large__2512,
 	Model__Cortecs__Mixtral__8x7B__Instruct__V0__1__0_1__Instruct,
 	Model__Cortecs__Nemotron__3__Super__120b__A12b__3,
@@ -5946,16 +5946,16 @@ var allModelConstants = [...]ModelID{
 	Model__Cortecs__Qwen3__Coder__Next__3,
 	Model__Cortecs__Qwen3__Next__80b__A3b__3__Thinking,
 	Model__Cortecs__Qwen__2__5__72b__2_5__Instruct,
-	Model__Crof__Deepseek__V3__2,
-	Model__Crof__Deepseek__V4__Flash,
-	Model__Crof__Deepseek__V4__Pro__Precision__Thinking,
-	Model__Crof__Deepseek__V4__Pro__Thinking,
+	Model__Crof__DeepSeek__V3__2,
+	Model__Crof__DeepSeek__V4__Flash,
+	Model__Crof__DeepSeek__V4__Pro__Precision__Thinking,
+	Model__Crof__DeepSeek__V4__Pro__Thinking,
+	Model__Crof__GLM__4_7,
+	Model__Crof__GLM__4__7__Flash__4_7,
+	Model__Crof__GLM__5,
+	Model__Crof__GLM__5_1,
+	Model__Crof__GLM__5__1__Precision__5_1,
 	Model__Crof__Gemma__4__31b__It__4,
-	Model__Crof__Glm__4_7,
-	Model__Crof__Glm__4__7__Flash__4_7,
-	Model__Crof__Glm__5,
-	Model__Crof__Glm__5_1,
-	Model__Crof__Glm__5__1__Precision__5_1,
 	Model__Crof__Greg,
 	Model__Crof__Kimi__K2__5__2_5,
 	Model__Crof__Kimi__K2__5__2_5__Lightning,
@@ -5963,15 +5963,15 @@ var allModelConstants = [...]ModelID{
 	Model__Crof__Kimi__K2__6__2_6__Precision,
 	Model__Crof__Mimo__V2__5__2_5__Pro,
 	Model__Crof__Mimo__V2__5__Pro__Precision__2_5,
-	Model__Crof__Minimax__M2__5__2_5,
+	Model__Crof__MiniMax__M2__5__2_5,
 	Model__Crof__Qwen3__5__397b__A17b__3_5,
 	Model__Crof__Qwen3__5__9b__3_5,
 	Model__Crof__Qwen3__6__27b__3_6,
+	Model__DInference__GLM__4_7,
+	Model__DInference__GLM__5,
+	Model__DInference__GLM__5_1,
 	Model__DInference__GPT__Oss__120b,
-	Model__DInference__Glm__4_7,
-	Model__DInference__Glm__5,
-	Model__DInference__Glm__5_1,
-	Model__DInference__Minimax__M2__5__2_5,
+	Model__DInference__MiniMax__M2__5__2_5,
 	Model__Databricks__Databricks__Claude__Haiku__4__5,
 	Model__Databricks__Databricks__Claude__Opus__4__1,
 	Model__Databricks__Databricks__Claude__Opus__4__5,
@@ -5997,49 +5997,49 @@ var allModelConstants = [...]ModelID{
 	Model__Databricks__Databricks__Gemini__3__1__Pro,
 	Model__Databricks__Databricks__Gemini__3__Flash,
 	Model__Databricks__Databricks__Gemini__3__Pro,
-	Model__DeepSeek__Deepseek__Chat,
-	Model__DeepSeek__Deepseek__Reasoner__Thinking,
-	Model__DeepSeek__Deepseek__V4__Flash,
-	Model__DeepSeek__Deepseek__V4__Pro__Thinking,
-	Model__Deepinfra__Claude__3__7__Sonnet__3_7__Latest,
-	Model__Deepinfra__Claude__4__Opus__4,
-	Model__Deepinfra__Deepseek__R1__0528,
-	Model__Deepinfra__Deepseek__V3__2,
-	Model__Deepinfra__Deepseek__V4__Flash,
-	Model__Deepinfra__Deepseek__V4__Pro__Thinking,
-	Model__Deepinfra__GPT__Oss__120b,
-	Model__Deepinfra__GPT__Oss__20b,
-	Model__Deepinfra__Gemma__4__26B__A4b__It__4,
-	Model__Deepinfra__Gemma__4__31B__It__4,
-	Model__Deepinfra__Glm__4_5,
-	Model__Deepinfra__Glm__4_6,
-	Model__Deepinfra__Glm__4_7,
-	Model__Deepinfra__Glm__4__6V__4_6,
-	Model__Deepinfra__Glm__4__7__Flash__4_7,
-	Model__Deepinfra__Glm__5,
-	Model__Deepinfra__Glm__5_1,
-	Model__Deepinfra__Kimi__K2__2__Instruct,
-	Model__Deepinfra__Kimi__K2__2__Thinking,
-	Model__Deepinfra__Kimi__K2__5__2_5,
-	Model__Deepinfra__Kimi__K2__6__2_6,
-	Model__Deepinfra__Kimi__K2__Instruct__0905__2__Instruct,
-	Model__Deepinfra__Llama__3__1__70B__3_1__Instruct,
-	Model__Deepinfra__Llama__3__1__70B__3_1__TurboInstruct,
-	Model__Deepinfra__Llama__3__1__8B__3_1__Instruct,
-	Model__Deepinfra__Llama__3__1__8B__3_1__TurboInstruct,
-	Model__Deepinfra__Llama__3__3__70B__3_3__TurboInstruct,
-	Model__Deepinfra__Llama__4__Maverick__17B__128E__Instruct__Fp8__4__Instruct,
-	Model__Deepinfra__Llama__4__Scout__17B__16E__4__Instruct,
-	Model__Deepinfra__Mimo__V2__5__2_5,
-	Model__Deepinfra__Mimo__V2__5__2_5__Pro,
-	Model__Deepinfra__Minimax__M2__1__2_1,
-	Model__Deepinfra__Minimax__M2__2,
-	Model__Deepinfra__Minimax__M2__5__2_5,
-	Model__Deepinfra__Qwen3__5__35B__A3b__3_5,
-	Model__Deepinfra__Qwen3__5__397B__A17b__3_5,
-	Model__Deepinfra__Qwen3__6__35B__A3b__3_6,
-	Model__Deepinfra__Qwen3__Coder__480B__A35b__3__Instruct,
-	Model__Deepinfra__Qwen3__Coder__480B__A35b__Instruct__Turbo__3,
+	Model__DeepInfra__Claude__3__7__Sonnet__3_7__Latest,
+	Model__DeepInfra__Claude__4__Opus__4,
+	Model__DeepInfra__DeepSeek__R1__0528,
+	Model__DeepInfra__DeepSeek__V3__2,
+	Model__DeepInfra__DeepSeek__V4__Flash,
+	Model__DeepInfra__DeepSeek__V4__Pro__Thinking,
+	Model__DeepInfra__GLM__4_5,
+	Model__DeepInfra__GLM__4_6,
+	Model__DeepInfra__GLM__4_7,
+	Model__DeepInfra__GLM__4__6V__4_6,
+	Model__DeepInfra__GLM__4__7__Flash__4_7,
+	Model__DeepInfra__GLM__5,
+	Model__DeepInfra__GLM__5_1,
+	Model__DeepInfra__GPT__Oss__120b,
+	Model__DeepInfra__GPT__Oss__20b,
+	Model__DeepInfra__Gemma__4__26B__A4b__It__4,
+	Model__DeepInfra__Gemma__4__31B__It__4,
+	Model__DeepInfra__Kimi__K2__2__Instruct,
+	Model__DeepInfra__Kimi__K2__2__Thinking,
+	Model__DeepInfra__Kimi__K2__5__2_5,
+	Model__DeepInfra__Kimi__K2__6__2_6,
+	Model__DeepInfra__Kimi__K2__Instruct__0905__2__Instruct,
+	Model__DeepInfra__Llama__3__1__70B__3_1__Instruct,
+	Model__DeepInfra__Llama__3__1__70B__3_1__TurboInstruct,
+	Model__DeepInfra__Llama__3__1__8B__3_1__Instruct,
+	Model__DeepInfra__Llama__3__1__8B__3_1__TurboInstruct,
+	Model__DeepInfra__Llama__3__3__70B__3_3__TurboInstruct,
+	Model__DeepInfra__Llama__4__Maverick__17B__128E__Instruct__Fp8__4__Instruct,
+	Model__DeepInfra__Llama__4__Scout__17B__16E__4__Instruct,
+	Model__DeepInfra__Mimo__V2__5__2_5,
+	Model__DeepInfra__Mimo__V2__5__2_5__Pro,
+	Model__DeepInfra__MiniMax__M2__1__2_1,
+	Model__DeepInfra__MiniMax__M2__2,
+	Model__DeepInfra__MiniMax__M2__5__2_5,
+	Model__DeepInfra__Qwen3__5__35B__A3b__3_5,
+	Model__DeepInfra__Qwen3__5__397B__A17b__3_5,
+	Model__DeepInfra__Qwen3__6__35B__A3b__3_6,
+	Model__DeepInfra__Qwen3__Coder__480B__A35b__3__Instruct,
+	Model__DeepInfra__Qwen3__Coder__480B__A35b__Instruct__Turbo__3,
+	Model__DeepSeek__DeepSeek__Chat,
+	Model__DeepSeek__DeepSeek__Reasoner__Thinking,
+	Model__DeepSeek__DeepSeek__V4__Flash,
+	Model__DeepSeek__DeepSeek__V4__Pro__Thinking,
 	Model__DigitalOcean__Alibaba__Qwen3__32b,
 	Model__DigitalOcean__All__Mini__Lm__L6__V2,
 	Model__DigitalOcean__Anthropic__Claude__3__5__Haiku,
@@ -6060,22 +6060,22 @@ var allModelConstants = [...]ModelID{
 	Model__DigitalOcean__Arcee__Trinity__Large__Thinking,
 	Model__DigitalOcean__Bge__M3,
 	Model__DigitalOcean__Bge__Reranker__V2__M3,
-	Model__DigitalOcean__Deepseek__3_2,
-	Model__DigitalOcean__Deepseek__4__Flash__4,
-	Model__DigitalOcean__Deepseek__R1__Distill__Llama__70b__Thinking,
-	Model__DigitalOcean__Deepseek__V3,
-	Model__DigitalOcean__Deepseek__V4__Pro__Thinking,
+	Model__DigitalOcean__DeepSeek__3_2,
+	Model__DigitalOcean__DeepSeek__4__Flash__4,
+	Model__DigitalOcean__DeepSeek__R1__Distill__Llama__70b__Thinking,
+	Model__DigitalOcean__DeepSeek__V3,
+	Model__DigitalOcean__DeepSeek__V4__Pro__Thinking,
 	Model__DigitalOcean__E5__Large__V2,
 	Model__DigitalOcean__Fast__Sdxl,
+	Model__DigitalOcean__GLM__5,
 	Model__DigitalOcean__Gemma__4__31B__It__4,
-	Model__DigitalOcean__Glm__5,
 	Model__DigitalOcean__Gte__Large__En__V1__5,
 	Model__DigitalOcean__Kimi__K2__5__2_5,
 	Model__DigitalOcean__Kimi__K2__6__2_6,
 	Model__DigitalOcean__Llama3__3__70b__Instruct,
 	Model__DigitalOcean__Llama3__8b__Instruct,
 	Model__DigitalOcean__Llama__4__Maverick__4,
-	Model__DigitalOcean__Minimax__M2__5__2_5,
+	Model__DigitalOcean__MiniMax__M2__5__2_5,
 	Model__DigitalOcean__Ministral__3__8b__Instruct__2512__3__Instruct,
 	Model__DigitalOcean__Mistral__3__14B,
 	Model__DigitalOcean__Mistral__7b__Instruct__V0__3__0_3__Instruct,
@@ -6086,29 +6086,29 @@ var allModelConstants = [...]ModelID{
 	Model__DigitalOcean__Nemotron__3__Nano__Omni__3,
 	Model__DigitalOcean__Nemotron__Nano__12b__V2__Vl,
 	Model__DigitalOcean__Nvidia__Nemotron__3__Super__120b,
-	Model__DigitalOcean__Openai__GPT__4__1,
-	Model__DigitalOcean__Openai__GPT__4o,
-	Model__DigitalOcean__Openai__GPT__4o__Mini,
-	Model__DigitalOcean__Openai__GPT__5,
-	Model__DigitalOcean__Openai__GPT__5__1__Codex__Max,
-	Model__DigitalOcean__Openai__GPT__5__2,
-	Model__DigitalOcean__Openai__GPT__5__2__Pro,
-	Model__DigitalOcean__Openai__GPT__5__3__Codex,
-	Model__DigitalOcean__Openai__GPT__5__4,
-	Model__DigitalOcean__Openai__GPT__5__4__Mini,
-	Model__DigitalOcean__Openai__GPT__5__4__Nano,
-	Model__DigitalOcean__Openai__GPT__5__4__Pro,
-	Model__DigitalOcean__Openai__GPT__5__5,
-	Model__DigitalOcean__Openai__GPT__5__Mini,
-	Model__DigitalOcean__Openai__GPT__5__Nano,
-	Model__DigitalOcean__Openai__GPT__Image__1,
-	Model__DigitalOcean__Openai__GPT__Image__1__5,
-	Model__DigitalOcean__Openai__GPT__Image__2,
-	Model__DigitalOcean__Openai__GPT__Oss__120b,
-	Model__DigitalOcean__Openai__GPT__Oss__20b,
-	Model__DigitalOcean__Openai__O1,
-	Model__DigitalOcean__Openai__O3,
-	Model__DigitalOcean__Openai__O3__Mini,
+	Model__DigitalOcean__OpenAI__GPT__4__1,
+	Model__DigitalOcean__OpenAI__GPT__4o,
+	Model__DigitalOcean__OpenAI__GPT__4o__Mini,
+	Model__DigitalOcean__OpenAI__GPT__5,
+	Model__DigitalOcean__OpenAI__GPT__5__1__Codex__Max,
+	Model__DigitalOcean__OpenAI__GPT__5__2,
+	Model__DigitalOcean__OpenAI__GPT__5__2__Pro,
+	Model__DigitalOcean__OpenAI__GPT__5__3__Codex,
+	Model__DigitalOcean__OpenAI__GPT__5__4,
+	Model__DigitalOcean__OpenAI__GPT__5__4__Mini,
+	Model__DigitalOcean__OpenAI__GPT__5__4__Nano,
+	Model__DigitalOcean__OpenAI__GPT__5__4__Pro,
+	Model__DigitalOcean__OpenAI__GPT__5__5,
+	Model__DigitalOcean__OpenAI__GPT__5__Mini,
+	Model__DigitalOcean__OpenAI__GPT__5__Nano,
+	Model__DigitalOcean__OpenAI__GPT__Image__1,
+	Model__DigitalOcean__OpenAI__GPT__Image__1__5,
+	Model__DigitalOcean__OpenAI__GPT__Image__2,
+	Model__DigitalOcean__OpenAI__GPT__Oss__120b,
+	Model__DigitalOcean__OpenAI__GPT__Oss__20b,
+	Model__DigitalOcean__OpenAI__O1,
+	Model__DigitalOcean__OpenAI__O3,
+	Model__DigitalOcean__OpenAI__O3__Mini,
 	Model__DigitalOcean__Qwen3__5__397b__A17b__3_5,
 	Model__DigitalOcean__Qwen3__Coder__Flash__3,
 	Model__DigitalOcean__Qwen3__Embedding__0__6b__3,
@@ -6118,9 +6118,9 @@ var allModelConstants = [...]ModelID{
 	Model__DigitalOcean__Stable__Diffusion__3__5__Large__3_5,
 	Model__DigitalOcean__Text__To__Audio,
 	Model__DigitalOcean__Wan2__2__T2v__A14b__2,
-	Model__Drun__Deepseek__R1__Thinking,
-	Model__Drun__Deepseek__V3,
-	Model__Drun__Minimax__M25__25,
+	Model__Drun__DeepSeek__R1__Thinking,
+	Model__Drun__DeepSeek__V3,
+	Model__Drun__MiniMax__M25__25,
 	Model__Evroc__Devstral__Small__2__24b__Instruct__2512__2__Instruct,
 	Model__Evroc__GPT__Oss__120b,
 	Model__Evroc__Kb__Whisper__Large,
@@ -6136,7 +6136,8 @@ var allModelConstants = [...]ModelID{
 	Model__Evroc__Whisper__Large__V3,
 	Model__FastRouter__Claude__Opus__4_1,
 	Model__FastRouter__Claude__Sonnet__4,
-	Model__FastRouter__Deepseek__R1__Distill__Llama__70b__Thinking,
+	Model__FastRouter__DeepSeek__R1__Distill__Llama__70b__Thinking,
+	Model__FastRouter__GLM__5,
 	Model__FastRouter__GPT__4_1,
 	Model__FastRouter__GPT__5,
 	Model__FastRouter__GPT__5__Mini__5,
@@ -6145,34 +6146,33 @@ var allModelConstants = [...]ModelID{
 	Model__FastRouter__GPT__Oss__20b,
 	Model__FastRouter__Gemini__2__5__Flash__2_5,
 	Model__FastRouter__Gemini__2__5__Pro__2_5,
-	Model__FastRouter__Glm__5,
 	Model__FastRouter__Grok__4,
 	Model__FastRouter__Kimi__K2__2,
 	Model__FastRouter__Qwen3__Coder__3,
 	Model__Firepass__Kimi__K2p6__2_6__ThinkingTurbo,
-	Model__FireworksAI__Deepseek__V4__Flash,
-	Model__FireworksAI__Deepseek__V4__Pro__Thinking,
+	Model__FireworksAI__DeepSeek__V4__Flash,
+	Model__FireworksAI__DeepSeek__V4__Pro__Thinking,
+	Model__FireworksAI__GLM__5p1,
+	Model__FireworksAI__GLM__5p1__Fast,
 	Model__FireworksAI__GPT__Oss__120b,
 	Model__FireworksAI__GPT__Oss__20b,
-	Model__FireworksAI__Glm__5p1,
-	Model__FireworksAI__Glm__5p1__Fast,
 	Model__FireworksAI__Kimi__K2p5__2_5__Thinking,
 	Model__FireworksAI__Kimi__K2p6__2_6__Thinking,
 	Model__FireworksAI__Kimi__K2p6__2_6__ThinkingTurbo,
-	Model__FireworksAI__Minimax__M2p5__2_5,
-	Model__FireworksAI__Minimax__M2p7__2_7,
+	Model__FireworksAI__MiniMax__M2p5__2_5,
+	Model__FireworksAI__MiniMax__M2p7__2_7,
 	Model__FireworksAI__Qwen3p6__Plus,
-	Model__Friendli__Glm__5,
-	Model__Friendli__Glm__5_1,
+	Model__Friendli__GLM__5,
+	Model__Friendli__GLM__5_1,
 	Model__Friendli__Llama__3__1__8B__3_1__Instruct,
 	Model__Friendli__Llama__3__3__70B__3_3__Instruct,
-	Model__Friendli__Minimax__M2__5__2_5,
+	Model__Friendli__MiniMax__M2__5__2_5,
 	Model__Friendli__Qwen3__235B__A22b__Instruct__2507__3__Instruct,
 	Model__FrogBot__Claude__Haiku__4_5,
 	Model__FrogBot__Claude__Opus__4_6,
 	Model__FrogBot__Claude__Opus__4_7,
 	Model__FrogBot__Claude__Sonnet__4_6,
-	Model__FrogBot__Deepseek__V4__Pro,
+	Model__FrogBot__DeepSeek__V4__Pro,
 	Model__FrogBot__GPT__4o,
 	Model__FrogBot__GPT__5_5,
 	Model__FrogBot__GPT__5__3__Codex__5_3,
@@ -6190,10 +6190,18 @@ var allModelConstants = [...]ModelID{
 	Model__FrogBot__Grok__Code__Fast__1,
 	Model__FrogBot__Kimi__K2__5__2_5,
 	Model__FrogBot__Kimi__K2__6__2_6,
-	Model__FrogBot__Minimax__M2__5__2_5,
-	Model__FrogBot__Minimax__M2__7__2_7,
+	Model__FrogBot__MiniMax__M2__5__2_5,
+	Model__FrogBot__MiniMax__M2__7__2_7,
 	Model__FrogBot__Qwen__3__6__Plus__3_6,
-	Model__FrogBot__Zai__Glm__5__1,
+	Model__FrogBot__Zai__GLM__5__1,
+	Model__GMICloud__Claude__Opus__4_6,
+	Model__GMICloud__Claude__Opus__4_7,
+	Model__GMICloud__Claude__Sonnet__4_6,
+	Model__GMICloud__DeepSeek__V4__Flash,
+	Model__GMICloud__DeepSeek__V4__Pro__Thinking,
+	Model__GMICloud__GLM__5__1__Fp8__5_1,
+	Model__GMICloud__GLM__5__Fp8__5,
+	Model__GMICloud__Kimi__K2__6__2_6,
 	Model__GitHubCopilot__Claude__Haiku__4_5,
 	Model__GitHubCopilot__Claude__Opus__41,
 	Model__GitHubCopilot__Claude__Opus__4_5,
@@ -6231,9 +6239,9 @@ var allModelConstants = [...]ModelID{
 	Model__GitHubModels__Cohere__Command__R__20240801,
 	Model__GitHubModels__Cohere__Command__R__Plus,
 	Model__GitHubModels__Cohere__Command__R__Plus__20240801,
-	Model__GitHubModels__Deepseek__R1__0528__Thinking,
-	Model__GitHubModels__Deepseek__R1__Thinking,
-	Model__GitHubModels__Deepseek__V3__0324,
+	Model__GitHubModels__DeepSeek__R1__0528__Thinking,
+	Model__GitHubModels__DeepSeek__R1__Thinking,
+	Model__GitHubModels__DeepSeek__V3__0324,
 	Model__GitHubModels__GPT__4_1,
 	Model__GitHubModels__GPT__4__1__Mini__4_1,
 	Model__GitHubModels__GPT__4__1__Nano__4_1,
@@ -6295,14 +6303,6 @@ var allModelConstants = [...]ModelID{
 	Model__GitLab__Duo__Chat__Opus__4__8,
 	Model__GitLab__Duo__Chat__Sonnet__4__5,
 	Model__GitLab__Duo__Chat__Sonnet__4__6,
-	Model__Gmicloud__Claude__Opus__4_6,
-	Model__Gmicloud__Claude__Opus__4_7,
-	Model__Gmicloud__Claude__Sonnet__4_6,
-	Model__Gmicloud__Deepseek__V4__Flash,
-	Model__Gmicloud__Deepseek__V4__Pro__Thinking,
-	Model__Gmicloud__Glm__5__1__Fp8__5_1,
-	Model__Gmicloud__Glm__5__Fp8__5,
-	Model__Gmicloud__Kimi__K2__6__2_6,
 	Model__GoogleVertexAnthropic__Claude__3__5__Haiku__3_5__20241022,
 	Model__GoogleVertexAnthropic__Claude__3__5__Sonnet__3_5__20241022,
 	Model__GoogleVertexAnthropic__Claude__3__7__Sonnet__3_7__20250219,
@@ -6329,8 +6329,10 @@ var allModelConstants = [...]ModelID{
 	Model__GoogleVertex__Claude__Sonnet__4_5__20250929,
 	Model__GoogleVertex__Claude__Sonnet__4__20250514,
 	Model__GoogleVertex__Claude__Sonnet__4__6__Default__4_6,
-	Model__GoogleVertex__Deepseek__V3__1__Maas,
-	Model__GoogleVertex__Deepseek__V3__2__Maas,
+	Model__GoogleVertex__DeepSeek__V3__1__Maas,
+	Model__GoogleVertex__DeepSeek__V3__2__Maas,
+	Model__GoogleVertex__GLM__4__7__Maas__4_7,
+	Model__GoogleVertex__GLM__5__Maas__5,
 	Model__GoogleVertex__GPT__Oss__120b__Maas,
 	Model__GoogleVertex__GPT__Oss__20b__Maas,
 	Model__GoogleVertex__Gemini__2__0__Flash__2_0,
@@ -6350,8 +6352,6 @@ var allModelConstants = [...]ModelID{
 	Model__GoogleVertex__Gemini__Embedding__001,
 	Model__GoogleVertex__Gemini__Flash__Latest,
 	Model__GoogleVertex__Gemini__Flash__Lite__Latest,
-	Model__GoogleVertex__Glm__4__7__Maas__4_7,
-	Model__GoogleVertex__Glm__5__Maas__5,
 	Model__GoogleVertex__Kimi__K2__Thinking__Maas__2__Thinking,
 	Model__GoogleVertex__Llama__3__3__70b__Instruct__Maas__3_3__Instruct,
 	Model__GoogleVertex__Llama__4__Maverick__17b__128e__Instruct__Maas__4__Instruct,
@@ -6380,7 +6380,7 @@ var allModelConstants = [...]ModelID{
 	Model__Groq__Allam__2__7b__2,
 	Model__Groq__Compound,
 	Model__Groq__Compound__Mini,
-	Model__Groq__Deepseek__R1__Distill__Llama__70b__Thinking,
+	Model__Groq__DeepSeek__R1__Distill__Llama__70b__Thinking,
 	Model__Groq__GPT__Oss__120b,
 	Model__Groq__GPT__Oss__20b,
 	Model__Groq__GPT__Oss__Safeguard__20b,
@@ -6418,13 +6418,14 @@ var allModelConstants = [...]ModelID{
 	Model__Helicone__Claude__Opus__4_1__20250805,
 	Model__Helicone__Claude__Sonnet__4,
 	Model__Helicone__Claude__Sonnet__4_5__20250929,
-	Model__Helicone__Deepseek__R1__Distill__Llama__70b__Thinking,
-	Model__Helicone__Deepseek__Reasoner__Thinking,
-	Model__Helicone__Deepseek__Tng__R1t2__Chimera__Thinking,
-	Model__Helicone__Deepseek__V3,
-	Model__Helicone__Deepseek__V3__1__Terminus,
-	Model__Helicone__Deepseek__V3__2,
+	Model__Helicone__DeepSeek__R1__Distill__Llama__70b__Thinking,
+	Model__Helicone__DeepSeek__Reasoner__Thinking,
+	Model__Helicone__DeepSeek__Tng__R1t2__Chimera__Thinking,
+	Model__Helicone__DeepSeek__V3,
+	Model__Helicone__DeepSeek__V3__1__Terminus,
+	Model__Helicone__DeepSeek__V3__2,
 	Model__Helicone__Ernie__4__5__21b__A3b__4_5__Thinking,
+	Model__Helicone__GLM__4_6,
 	Model__Helicone__GPT__4_1,
 	Model__Helicone__GPT__4__1__Mini__4_1,
 	Model__Helicone__GPT__4__1__Mini__4_1__20250414,
@@ -6449,7 +6450,6 @@ var allModelConstants = [...]ModelID{
 	Model__Helicone__Gemini__3__Pro__3__Preview,
 	Model__Helicone__Gemma2__9b__It,
 	Model__Helicone__Gemma__3__12b__It__3,
-	Model__Helicone__Glm__4_6,
 	Model__Helicone__Grok__3,
 	Model__Helicone__Grok__3__Mini__3,
 	Model__Helicone__Grok__4,
@@ -6494,38 +6494,38 @@ var allModelConstants = [...]ModelID{
 	Model__Helicone__Sonar__Pro,
 	Model__Helicone__Sonar__Reasoning,
 	Model__Helicone__Sonar__Reasoning__Pro,
-	Model__HpcAI__Glm__5_1,
+	Model__HpcAI__GLM__5_1,
 	Model__HpcAI__Kimi__K2__5__2_5,
-	Model__HpcAI__Minimax__M2__5__2_5,
-	Model__Huggingface__Deepseek__R1__0528__Thinking,
-	Model__Huggingface__Deepseek__V3__2,
-	Model__Huggingface__Deepseek__V4__Pro__Thinking,
-	Model__Huggingface__Glm__4_7,
-	Model__Huggingface__Glm__4__7__Flash__4_7,
-	Model__Huggingface__Glm__5,
-	Model__Huggingface__Glm__5_1,
-	Model__Huggingface__Kimi__K2__2__Instruct,
-	Model__Huggingface__Kimi__K2__2__Thinking,
-	Model__Huggingface__Kimi__K2__5__2_5,
-	Model__Huggingface__Kimi__K2__6__2_6,
-	Model__Huggingface__Kimi__K2__Instruct__0905__2__Instruct,
-	Model__Huggingface__Mimo__V2__Flash,
-	Model__Huggingface__Minimax__M2__1__2_1,
-	Model__Huggingface__Minimax__M2__5__2_5,
-	Model__Huggingface__Minimax__M2__7__2_7,
-	Model__Huggingface__Qwen3__235B__A22b__Thinking__2507__3__Thinking,
-	Model__Huggingface__Qwen3__5__397B__A17b__3_5,
-	Model__Huggingface__Qwen3__Coder__480B__A35b__3__Instruct,
-	Model__Huggingface__Qwen3__Coder__Next__3,
-	Model__Huggingface__Qwen3__Embedding__4B__3,
-	Model__Huggingface__Qwen3__Embedding__8B__3,
-	Model__Huggingface__Qwen3__Next__80B__A3b__3__Instruct,
-	Model__Huggingface__Qwen3__Next__80B__A3b__3__Thinking,
-	Model__IONet__Deepseek__R1__0528__Thinking,
+	Model__HpcAI__MiniMax__M2__5__2_5,
+	Model__HuggingFace__DeepSeek__R1__0528__Thinking,
+	Model__HuggingFace__DeepSeek__V3__2,
+	Model__HuggingFace__DeepSeek__V4__Pro__Thinking,
+	Model__HuggingFace__GLM__4_7,
+	Model__HuggingFace__GLM__4__7__Flash__4_7,
+	Model__HuggingFace__GLM__5,
+	Model__HuggingFace__GLM__5_1,
+	Model__HuggingFace__Kimi__K2__2__Instruct,
+	Model__HuggingFace__Kimi__K2__2__Thinking,
+	Model__HuggingFace__Kimi__K2__5__2_5,
+	Model__HuggingFace__Kimi__K2__6__2_6,
+	Model__HuggingFace__Kimi__K2__Instruct__0905__2__Instruct,
+	Model__HuggingFace__Mimo__V2__Flash,
+	Model__HuggingFace__MiniMax__M2__1__2_1,
+	Model__HuggingFace__MiniMax__M2__5__2_5,
+	Model__HuggingFace__MiniMax__M2__7__2_7,
+	Model__HuggingFace__Qwen3__235B__A22b__Thinking__2507__3__Thinking,
+	Model__HuggingFace__Qwen3__5__397B__A17b__3_5,
+	Model__HuggingFace__Qwen3__Coder__480B__A35b__3__Instruct,
+	Model__HuggingFace__Qwen3__Coder__Next__3,
+	Model__HuggingFace__Qwen3__Embedding__4B__3,
+	Model__HuggingFace__Qwen3__Embedding__8B__3,
+	Model__HuggingFace__Qwen3__Next__80B__A3b__3__Instruct,
+	Model__HuggingFace__Qwen3__Next__80B__A3b__3__Thinking,
+	Model__IONet__DeepSeek__R1__0528__Thinking,
 	Model__IONet__Devstral__Small__2505,
+	Model__IONet__GLM__4_6,
 	Model__IONet__GPT__Oss__120b,
 	Model__IONet__GPT__Oss__20b,
-	Model__IONet__Glm__4_6,
 	Model__IONet__Kimi__K2__2__Thinking,
 	Model__IONet__Kimi__K2__Instruct__0905__2__Instruct,
 	Model__IONet__Llama__3__2__90B__3_2__VisionInstruct,
@@ -6538,26 +6538,12 @@ var allModelConstants = [...]ModelID{
 	Model__IONet__Qwen3__235B__A22b__Thinking__2507__3__Thinking,
 	Model__IONet__Qwen3__Coder__480B__A35b__Instruct__Int4__Mixed__Ar__3,
 	Model__IONet__Qwen3__Next__80B__A3b__3__Instruct,
-	Model__Iflowcn__Deepseek__R1__Thinking,
-	Model__Iflowcn__Deepseek__V3,
-	Model__Iflowcn__Deepseek__V3__2,
-	Model__Iflowcn__Glm__4_6,
-	Model__Iflowcn__Kimi__K2__0905__2,
-	Model__Iflowcn__Kimi__K2__2,
-	Model__Iflowcn__Qwen3__235b__3,
-	Model__Iflowcn__Qwen3__235b__A22b__3__Instruct,
-	Model__Iflowcn__Qwen3__235b__A22b__Thinking__2507__3__Thinking,
-	Model__Iflowcn__Qwen3__32b__3,
-	Model__Iflowcn__Qwen3__Coder__Plus__3,
-	Model__Iflowcn__Qwen3__Max__3,
-	Model__Iflowcn__Qwen3__Max__3__Preview,
-	Model__Iflowcn__Qwen3__Vl__Plus__3,
 	Model__Inception__Mercury__2,
 	Model__Inception__Mercury__Edit__2,
-	Model__Inceptron__Glm__5__1__Fp8__5_1,
+	Model__Inceptron__GLM__5__1__Fp8__5_1,
 	Model__Inceptron__Kimi__K2__6__2_6,
 	Model__Inceptron__Llama__3__3__70b__Instruct__Fp8__3_3__Instruct,
-	Model__Inceptron__Minimax__M2__5__2_5,
+	Model__Inceptron__MiniMax__M2__5__2_5,
 	Model__Inference__Gemma__3,
 	Model__Inference__Llama__3__1__8b__3_1__Instruct,
 	Model__Inference__Llama__3__2__11b__3_2__VisionInstruct,
@@ -6574,11 +6560,15 @@ var allModelConstants = [...]ModelID{
 	Model__Jiekou__Claude__Opus__4__20250514,
 	Model__Jiekou__Claude__Sonnet__4_5__20250929,
 	Model__Jiekou__Claude__Sonnet__4__20250514,
-	Model__Jiekou__Deepseek__R1__0528__Thinking,
-	Model__Jiekou__Deepseek__V3__0324,
-	Model__Jiekou__Deepseek__V3__1,
+	Model__Jiekou__DeepSeek__R1__0528__Thinking,
+	Model__Jiekou__DeepSeek__V3__0324,
+	Model__Jiekou__DeepSeek__V3__1,
 	Model__Jiekou__Ernie__4__5__300b__A47b__Paddle__4_5,
 	Model__Jiekou__Ernie__4__5__Vl__424b__A47b__4_5,
+	Model__Jiekou__GLM__4_5,
+	Model__Jiekou__GLM__4_7,
+	Model__Jiekou__GLM__4__5v__4_5,
+	Model__Jiekou__GLM__4__7__Flash__4_7,
 	Model__Jiekou__GPT__5_1,
 	Model__Jiekou__GPT__5_2,
 	Model__Jiekou__GPT__5__1__Codex__5_1,
@@ -6600,10 +6590,6 @@ var allModelConstants = [...]ModelID{
 	Model__Jiekou__Gemini__2__5__Pro__Preview__06__05__2_5,
 	Model__Jiekou__Gemini__3__Flash__3__Preview,
 	Model__Jiekou__Gemini__3__Pro__3__Preview,
-	Model__Jiekou__Glm__4_5,
-	Model__Jiekou__Glm__4_7,
-	Model__Jiekou__Glm__4__5v__4_5,
-	Model__Jiekou__Glm__4__7__Flash__4_7,
 	Model__Jiekou__Grok__4_1__ReasoningFast,
 	Model__Jiekou__Grok__4__0709__4,
 	Model__Jiekou__Grok__4__1__Fast__Non__4_1__Reasoning,
@@ -6614,8 +6600,8 @@ var allModelConstants = [...]ModelID{
 	Model__Jiekou__Kimi__K2__2__Instruct,
 	Model__Jiekou__Kimi__K2__5__2_5,
 	Model__Jiekou__Mimo__V2__Flash,
-	Model__Jiekou__Minimax__M1__80k__1,
-	Model__Jiekou__Minimax__M2__1__2_1,
+	Model__Jiekou__MiniMax__M1__80k__1,
+	Model__Jiekou__MiniMax__M2__1__2_1,
 	Model__Jiekou__O3__3,
 	Model__Jiekou__O3__3__Mini,
 	Model__Jiekou__O4__4__Mini,
@@ -6628,7 +6614,7 @@ var allModelConstants = [...]ModelID{
 	Model__Jiekou__Qwen3__Coder__Next__3,
 	Model__Jiekou__Qwen3__Next__80b__A3b__3__Instruct,
 	Model__Jiekou__Qwen3__Next__80b__A3b__3__Thinking,
-	Model__KUAECloudCodingPlan__Glm__4_7,
+	Model__KUAECloudCodingPlan__GLM__4_7,
 	Model__Kilo__Aion__1_0,
 	Model__Kilo__Aion__1__0__Mini__1_0,
 	Model__Kilo__Aion__2_0,
@@ -6656,7 +6642,7 @@ var allModelConstants = [...]ModelID{
 	Model__Kilo__Claude__Sonnet__4_6_2,
 	Model__Kilo__Claude__Sonnet__Latest,
 	Model__Kilo__Cobuddy__Free,
-	Model__Kilo__Codellama__7b__Instruct__Solidity__Instruct,
+	Model__Kilo__CodeLlama__7b__Instruct__Solidity__Instruct,
 	Model__Kilo__Coder__Large,
 	Model__Kilo__Codestral__2508,
 	Model__Kilo__Cogito__V2__1__671b,
@@ -6665,20 +6651,20 @@ var allModelConstants = [...]ModelID{
 	Model__Kilo__Command__R__20240830,
 	Model__Kilo__Command__R__Plus__20240830,
 	Model__Kilo__Cydonia__24b__V4__1,
-	Model__Kilo__Deepseek__Chat,
-	Model__Kilo__Deepseek__Chat__V3__0324,
-	Model__Kilo__Deepseek__Chat__V3__1__3_1,
-	Model__Kilo__Deepseek__R1,
-	Model__Kilo__Deepseek__R1__0528,
-	Model__Kilo__Deepseek__R1__Distill__Llama__70b,
-	Model__Kilo__Deepseek__R1__Distill__Qwen__32b,
-	Model__Kilo__Deepseek__V3__1__Nex__N1,
-	Model__Kilo__Deepseek__V3__1__Terminus,
-	Model__Kilo__Deepseek__V3__2,
-	Model__Kilo__Deepseek__V3__2__Exp,
-	Model__Kilo__Deepseek__V3__2__Speciale,
-	Model__Kilo__Deepseek__V4__Flash,
-	Model__Kilo__Deepseek__V4__Pro,
+	Model__Kilo__DeepSeek__Chat,
+	Model__Kilo__DeepSeek__Chat__V3__0324,
+	Model__Kilo__DeepSeek__Chat__V3__1__3_1,
+	Model__Kilo__DeepSeek__R1,
+	Model__Kilo__DeepSeek__R1__0528,
+	Model__Kilo__DeepSeek__R1__Distill__Llama__70b,
+	Model__Kilo__DeepSeek__R1__Distill__Qwen__32b,
+	Model__Kilo__DeepSeek__V3__1__Nex__N1,
+	Model__Kilo__DeepSeek__V3__1__Terminus,
+	Model__Kilo__DeepSeek__V3__2,
+	Model__Kilo__DeepSeek__V3__2__Exp,
+	Model__Kilo__DeepSeek__V3__2__Speciale,
+	Model__Kilo__DeepSeek__V4__Flash,
+	Model__Kilo__DeepSeek__V4__Pro,
 	Model__Kilo__Devstral__2512,
 	Model__Kilo__Devstral__Medium,
 	Model__Kilo__Devstral__Small,
@@ -6690,6 +6676,18 @@ var allModelConstants = [...]ModelID{
 	Model__Kilo__Free_1,
 	Model__Kilo__Free_2,
 	Model__Kilo__Frontier,
+	Model__Kilo__GLM__4_5,
+	Model__Kilo__GLM__4_6,
+	Model__Kilo__GLM__4_7,
+	Model__Kilo__GLM__4__32b__4,
+	Model__Kilo__GLM__4__5__Air__4_5,
+	Model__Kilo__GLM__4__5v__4_5,
+	Model__Kilo__GLM__4__6v__4_6,
+	Model__Kilo__GLM__4__7__Flash__4_7,
+	Model__Kilo__GLM__5,
+	Model__Kilo__GLM__5_1,
+	Model__Kilo__GLM__5__Turbo,
+	Model__Kilo__GLM__5v__5__Turbo,
 	Model__Kilo__GPT__3_5__Turbo,
 	Model__Kilo__GPT__3_5__TurboInstruct,
 	Model__Kilo__GPT__3__5__Turbo__0613__3_5__Turbo,
@@ -6771,18 +6769,6 @@ var allModelConstants = [...]ModelID{
 	Model__Kilo__Gemma__3n__E4b__It,
 	Model__Kilo__Gemma__4__26b__A4b__It__4,
 	Model__Kilo__Gemma__4__31b__It__4,
-	Model__Kilo__Glm__4_5,
-	Model__Kilo__Glm__4_6,
-	Model__Kilo__Glm__4_7,
-	Model__Kilo__Glm__4__32b__4,
-	Model__Kilo__Glm__4__5__Air__4_5,
-	Model__Kilo__Glm__4__5v__4_5,
-	Model__Kilo__Glm__4__6v__4_6,
-	Model__Kilo__Glm__4__7__Flash__4_7,
-	Model__Kilo__Glm__5,
-	Model__Kilo__Glm__5_1,
-	Model__Kilo__Glm__5__Turbo,
-	Model__Kilo__Glm__5v__5__Turbo,
 	Model__Kilo__Granite__4__0__H__Micro__4_0,
 	Model__Kilo__Granite__4__1__8b__4_1,
 	Model__Kilo__Grok__4_20,
@@ -6840,13 +6826,13 @@ var allModelConstants = [...]ModelID{
 	Model__Kilo__Mimo__V2__5__2_5,
 	Model__Kilo__Mimo__V2__5__2_5__Pro,
 	Model__Kilo__Mimo__V2__Flash,
-	Model__Kilo__Minimax__01,
-	Model__Kilo__Minimax__M1__1,
-	Model__Kilo__Minimax__M2__1__2_1,
-	Model__Kilo__Minimax__M2__2,
-	Model__Kilo__Minimax__M2__5__2_5,
-	Model__Kilo__Minimax__M2__7__2_7,
-	Model__Kilo__Minimax__M2__Her,
+	Model__Kilo__MiniMax__01,
+	Model__Kilo__MiniMax__M1__1,
+	Model__Kilo__MiniMax__M2__1__2_1,
+	Model__Kilo__MiniMax__M2__2,
+	Model__Kilo__MiniMax__M2__5__2_5,
+	Model__Kilo__MiniMax__M2__7__2_7,
+	Model__Kilo__MiniMax__M2__Her,
 	Model__Kilo__Ministral__14b__2512,
 	Model__Kilo__Ministral__3b__2512,
 	Model__Kilo__Ministral__8b__2512,
@@ -6888,7 +6874,7 @@ var allModelConstants = [...]ModelID{
 	Model__Kilo__O4__4__Mini,
 	Model__Kilo__O4__Mini__Deep__Research__4__Mini,
 	Model__Kilo__O4__Mini__High__4__Mini,
-	Model__Kilo__Olmo__3__32b__3__Think,
+	Model__Kilo__OLMo__3__32b__3__Think,
 	Model__Kilo__Owl__Alpha,
 	Model__Kilo__Palmyra__X5,
 	Model__Kilo__Pareto__Code,
@@ -6973,17 +6959,17 @@ var allModelConstants = [...]ModelID{
 	Model__Kilo__Virtuoso__Large,
 	Model__Kilo__Voxtral__Small__24b__2507,
 	Model__Kilo__Weaver,
-	Model__Kilo__Wizardlm__2__8x22b__2,
+	Model__Kilo__WizardLM__2__8x22b__2,
 	Model__KimiForCoding__K2p5__2_5__Thinking,
 	Model__KimiForCoding__K2p6__2_6__Thinking,
 	Model__KimiForCoding__Kimi__K2__2__Thinking,
 	Model__LMStudio__GPT__Oss__20b,
 	Model__LMStudio__Qwen3__30b__A3b__2507__3,
 	Model__LMStudio__Qwen3__Coder__30b__3,
+	Model__Lilac__GLM__5_1,
 	Model__Lilac__Gemma__4__31b__It__4,
-	Model__Lilac__Glm__5_1,
 	Model__Lilac__Kimi__K2__6__2_6,
-	Model__Lilac__Minimax__M2__7__2_7,
+	Model__Lilac__MiniMax__M2__7__2_7,
 	Model__Llama__Cerebras__Llama__4__Maverick__17b__128e__Instruct,
 	Model__Llama__Cerebras__Llama__4__Scout__17b__16e__Instruct,
 	Model__Llama__Groq__Llama__4__Maverick__17b__128e__Instruct,
@@ -6991,211 +6977,211 @@ var allModelConstants = [...]ModelID{
 	Model__Llama__Llama__3__3__8b__3_3__Instruct,
 	Model__Llama__Llama__4__Maverick__17b__128e__Instruct__Fp8__4__Instruct,
 	Model__Llama__Llama__4__Scout__17b__16e__Instruct__Fp8__4__Instruct,
-	Model__Llmgateway__Auto,
-	Model__Llmgateway__Claude__3__5__Haiku__3_5,
-	Model__Llmgateway__Claude__3__5__Sonnet__3_5__20241022,
-	Model__Llmgateway__Claude__3__7__Sonnet__3_7,
-	Model__Llmgateway__Claude__3__7__Sonnet__3_7__20250219,
-	Model__Llmgateway__Claude__3__Opus__3,
-	Model__Llmgateway__Claude__Haiku__4_5,
-	Model__Llmgateway__Claude__Haiku__4_5__20251001,
-	Model__Llmgateway__Claude__Opus__4_1__20250805,
-	Model__Llmgateway__Claude__Opus__4_5__20251101,
-	Model__Llmgateway__Claude__Opus__4_6,
-	Model__Llmgateway__Claude__Opus__4_7,
-	Model__Llmgateway__Claude__Opus__4_8,
-	Model__Llmgateway__Claude__Opus__4__20250514,
-	Model__Llmgateway__Claude__Sonnet__4_5,
-	Model__Llmgateway__Claude__Sonnet__4_5__20250929,
-	Model__Llmgateway__Claude__Sonnet__4_6,
-	Model__Llmgateway__Claude__Sonnet__4__20250514,
-	Model__Llmgateway__Codestral__2508,
-	Model__Llmgateway__Custom,
-	Model__Llmgateway__Deepseek__R1__0528,
-	Model__Llmgateway__Deepseek__V3__1,
-	Model__Llmgateway__Deepseek__V3__2,
-	Model__Llmgateway__Deepseek__V4__Flash,
-	Model__Llmgateway__Deepseek__V4__Pro__Thinking,
-	Model__Llmgateway__Devstral__2512,
-	Model__Llmgateway__Devstral__Small__2507,
-	Model__Llmgateway__GPT__3_5__Turbo,
-	Model__Llmgateway__GPT__4,
-	Model__Llmgateway__GPT__4_1,
-	Model__Llmgateway__GPT__4__1__Mini__4_1,
-	Model__Llmgateway__GPT__4__1__Nano__4_1,
-	Model__Llmgateway__GPT__4__Turbo,
-	Model__Llmgateway__GPT__4o,
-	Model__Llmgateway__GPT__4o__Mini,
-	Model__Llmgateway__GPT__4o__Mini__Search__PreviewMini,
-	Model__Llmgateway__GPT__4o__Search__Preview,
-	Model__Llmgateway__GPT__5,
-	Model__Llmgateway__GPT__5_1,
-	Model__Llmgateway__GPT__5_2,
-	Model__Llmgateway__GPT__5_2__ChatLatest,
-	Model__Llmgateway__GPT__5_3__ChatLatest,
-	Model__Llmgateway__GPT__5_4,
-	Model__Llmgateway__GPT__5_5,
-	Model__Llmgateway__GPT__5__1__Codex__5_1,
-	Model__Llmgateway__GPT__5__1__Codex__Mini__5_1,
-	Model__Llmgateway__GPT__5__2__Codex__5_2,
-	Model__Llmgateway__GPT__5__2__Pro__5_2,
-	Model__Llmgateway__GPT__5__3__Codex__5_3,
-	Model__Llmgateway__GPT__5__4__Mini__5_4,
-	Model__Llmgateway__GPT__5__4__Nano__5_4,
-	Model__Llmgateway__GPT__5__4__Pro__5_4,
-	Model__Llmgateway__GPT__5__5__Pro__5_5,
-	Model__Llmgateway__GPT__5__ChatLatest,
-	Model__Llmgateway__GPT__5__Mini__5,
-	Model__Llmgateway__GPT__5__Nano__5,
-	Model__Llmgateway__GPT__5__Pro__5,
-	Model__Llmgateway__GPT__Oss__120b,
-	Model__Llmgateway__GPT__Oss__20b,
-	Model__Llmgateway__Gemini__2__0__Flash__2_0,
-	Model__Llmgateway__Gemini__2__0__Flash__Lite__2_0,
-	Model__Llmgateway__Gemini__2__5__Flash__2_5,
-	Model__Llmgateway__Gemini__2__5__Flash__Lite__2_5,
-	Model__Llmgateway__Gemini__2__5__Pro__2_5,
-	Model__Llmgateway__Gemini__3__1__Flash__Lite__3_1,
-	Model__Llmgateway__Gemini__3__1__Flash__Lite__3_1__Preview,
-	Model__Llmgateway__Gemini__3__1__Pro__3_1__Preview,
-	Model__Llmgateway__Gemini__3__5__Flash__3_5,
-	Model__Llmgateway__Gemini__3__Flash__3__Preview,
-	Model__Llmgateway__Gemini__Pro__Latest,
-	Model__Llmgateway__Gemma__2__27b__It__Together__2,
-	Model__Llmgateway__Gemma__3__1b__It__3,
-	Model__Llmgateway__Gemma__3__27b__3,
-	Model__Llmgateway__Glm__4_5,
-	Model__Llmgateway__Glm__4_6,
-	Model__Llmgateway__Glm__4_7,
-	Model__Llmgateway__Glm__4__32b__0414__128k__4,
-	Model__Llmgateway__Glm__4__5__Air__4_5,
-	Model__Llmgateway__Glm__4__5__Airx__4_5,
-	Model__Llmgateway__Glm__4__5__Flash__4_5,
-	Model__Llmgateway__Glm__4__5__X__4_5,
-	Model__Llmgateway__Glm__4__5v__4_5,
-	Model__Llmgateway__Glm__4__6v__4_6,
-	Model__Llmgateway__Glm__4__6v__4_6__Flash,
-	Model__Llmgateway__Glm__4__6v__Flashx__4_6,
-	Model__Llmgateway__Glm__4__7__Flash__4_7,
-	Model__Llmgateway__Glm__4__7__Flashx__4_7,
-	Model__Llmgateway__Glm__5,
-	Model__Llmgateway__Glm__5_1,
-	Model__Llmgateway__Grok__4_1__ReasoningFast,
-	Model__Llmgateway__Grok__4_20__Reasoning,
-	Model__Llmgateway__Grok__4_3,
-	Model__Llmgateway__Grok__4__0709__4,
-	Model__Llmgateway__Grok__4__20__Beta__0309__4_20__Reasoning,
-	Model__Llmgateway__Grok__4__20__Beta__0309__Non__4_20__Reasoning,
-	Model__Llmgateway__Grok__4__20__Non__4_20__Reasoning,
-	Model__Llmgateway__Grok__4__ReasoningFast,
-	Model__Llmgateway__Hermes__2__Pro__Llama__3__8b__2,
-	Model__Llmgateway__Kimi__K2__2,
-	Model__Llmgateway__Kimi__K2__2__Thinking,
-	Model__Llmgateway__Kimi__K2__2__ThinkingTurbo,
-	Model__Llmgateway__Kimi__K2__5__2_5,
-	Model__Llmgateway__Kimi__K2__6__2_6,
-	Model__Llmgateway__Llama__3__1__70b__3_1__Instruct,
-	Model__Llmgateway__Llama__3__1__8b__3_1__Instruct,
-	Model__Llmgateway__Llama__3__1__Nemotron__Ultra__253b__3_1,
-	Model__Llmgateway__Llama__3__2__11b__3_2__Instruct,
-	Model__Llmgateway__Llama__3__2__3b__3_2__Instruct,
-	Model__Llmgateway__Llama__3__3__70b__3_3__Instruct,
-	Model__Llmgateway__Llama__3__70b__3__Instruct,
-	Model__Llmgateway__Llama__3__8b__3__Instruct,
-	Model__Llmgateway__Llama__4__Maverick__17b__4__Instruct,
-	Model__Llmgateway__Llama__4__Scout__17b__4__Instruct,
-	Model__Llmgateway__Llama__4__Scout__4,
-	Model__Llmgateway__Mimo__V2__2__Omni,
-	Model__Llmgateway__Mimo__V2__2__Pro,
-	Model__Llmgateway__Mimo__V2__5__2_5,
-	Model__Llmgateway__Mimo__V2__5__2_5__Pro,
-	Model__Llmgateway__Mimo__V2__Flash,
-	Model__Llmgateway__Minimax__M2__1__2_1,
-	Model__Llmgateway__Minimax__M2__1__2_1__Lightning,
-	Model__Llmgateway__Minimax__M2__2,
-	Model__Llmgateway__Minimax__M2__5__2_5,
-	Model__Llmgateway__Minimax__M2__5__2_5__Highspeed,
-	Model__Llmgateway__Minimax__M2__7__2_7,
-	Model__Llmgateway__Minimax__M2__7__2_7__Highspeed,
-	Model__Llmgateway__Minimax__Text__01,
-	Model__Llmgateway__Ministral__14b__2512,
-	Model__Llmgateway__Ministral__3b__2512,
-	Model__Llmgateway__Ministral__8b__2512,
-	Model__Llmgateway__Mistral__Large__2512,
-	Model__Llmgateway__Mistral__Large__Latest,
-	Model__Llmgateway__Mistral__Small__2506,
-	Model__Llmgateway__O1__1,
-	Model__Llmgateway__O3__3,
-	Model__Llmgateway__O3__3__Mini,
-	Model__Llmgateway__O4__4__Mini,
-	Model__Llmgateway__Pixtral__Large__Latest,
-	Model__Llmgateway__Qwen25__Coder__7b__25,
-	Model__Llmgateway__Qwen2__5__Vl__32b__2__Instruct,
-	Model__Llmgateway__Qwen2__5__Vl__72b__2__Instruct,
-	Model__Llmgateway__Qwen35__397b__A17b__35,
-	Model__Llmgateway__Qwen3__235b__A22b__Fp8__3,
-	Model__Llmgateway__Qwen3__235b__A22b__Instruct__2507__3__Instruct,
-	Model__Llmgateway__Qwen3__235b__A22b__Thinking__2507__3__Thinking,
-	Model__Llmgateway__Qwen3__30b__A3b__Fp8__3,
-	Model__Llmgateway__Qwen3__30b__A3b__Instruct__2507__3__Instruct,
-	Model__Llmgateway__Qwen3__30b__A3b__Thinking__2507__3__Thinking,
-	Model__Llmgateway__Qwen3__32b__3,
-	Model__Llmgateway__Qwen3__32b__Fp8__3,
-	Model__Llmgateway__Qwen3__4b__Fp8__3,
-	Model__Llmgateway__Qwen3__6__35b__A3b__3_6,
-	Model__Llmgateway__Qwen3__6__Max__3_6__Preview,
-	Model__Llmgateway__Qwen3__6__Plus__3_6,
-	Model__Llmgateway__Qwen3__7__Max__3_7,
-	Model__Llmgateway__Qwen3__Coder__30b__A3b__3__Instruct,
-	Model__Llmgateway__Qwen3__Coder__480b__A35b__3__Instruct,
-	Model__Llmgateway__Qwen3__Coder__Flash__3,
-	Model__Llmgateway__Qwen3__Coder__Next__3,
-	Model__Llmgateway__Qwen3__Coder__Plus__3,
-	Model__Llmgateway__Qwen3__Max__3,
-	Model__Llmgateway__Qwen3__Max__3__20260123,
-	Model__Llmgateway__Qwen3__Next__80b__A3b__3__Instruct,
-	Model__Llmgateway__Qwen3__Next__80b__A3b__3__Thinking,
-	Model__Llmgateway__Qwen3__Vl__235b__A22b__3__Instruct,
-	Model__Llmgateway__Qwen3__Vl__235b__A22b__3__Thinking,
-	Model__Llmgateway__Qwen3__Vl__30b__A3b__3__Instruct,
-	Model__Llmgateway__Qwen3__Vl__30b__A3b__3__Thinking,
-	Model__Llmgateway__Qwen3__Vl__8b__3__Instruct,
-	Model__Llmgateway__Qwen3__Vl__Flash__3,
-	Model__Llmgateway__Qwen3__Vl__Plus__3,
-	Model__Llmgateway__Qwen__Coder__Plus,
-	Model__Llmgateway__Qwen__Flash,
-	Model__Llmgateway__Qwen__Max,
-	Model__Llmgateway__Qwen__Max__Latest,
-	Model__Llmgateway__Qwen__Omni__Turbo,
-	Model__Llmgateway__Qwen__Plus,
-	Model__Llmgateway__Qwen__Plus__Latest,
-	Model__Llmgateway__Qwen__Turbo,
-	Model__Llmgateway__Qwen__Vl__Max,
-	Model__Llmgateway__Qwen__Vl__Plus,
-	Model__Llmgateway__Qwq__Plus,
-	Model__Llmgateway__Seed__1__6__250615__1_6,
-	Model__Llmgateway__Seed__1__6__250915__1_6,
-	Model__Llmgateway__Seed__1__6__Flash__250715__1_6,
-	Model__Llmgateway__Seed__1__8__251228__1_8,
-	Model__Llmgateway__Sonar,
-	Model__Llmgateway__Sonar__Pro,
-	Model__Llmgateway__Sonar__Reasoning__Pro,
+	Model__LlmGateway__Auto,
+	Model__LlmGateway__Claude__3__5__Haiku__3_5,
+	Model__LlmGateway__Claude__3__5__Sonnet__3_5__20241022,
+	Model__LlmGateway__Claude__3__7__Sonnet__3_7,
+	Model__LlmGateway__Claude__3__7__Sonnet__3_7__20250219,
+	Model__LlmGateway__Claude__3__Opus__3,
+	Model__LlmGateway__Claude__Haiku__4_5,
+	Model__LlmGateway__Claude__Haiku__4_5__20251001,
+	Model__LlmGateway__Claude__Opus__4_1__20250805,
+	Model__LlmGateway__Claude__Opus__4_5__20251101,
+	Model__LlmGateway__Claude__Opus__4_6,
+	Model__LlmGateway__Claude__Opus__4_7,
+	Model__LlmGateway__Claude__Opus__4_8,
+	Model__LlmGateway__Claude__Opus__4__20250514,
+	Model__LlmGateway__Claude__Sonnet__4_5,
+	Model__LlmGateway__Claude__Sonnet__4_5__20250929,
+	Model__LlmGateway__Claude__Sonnet__4_6,
+	Model__LlmGateway__Claude__Sonnet__4__20250514,
+	Model__LlmGateway__Codestral__2508,
+	Model__LlmGateway__Custom,
+	Model__LlmGateway__DeepSeek__R1__0528,
+	Model__LlmGateway__DeepSeek__V3__1,
+	Model__LlmGateway__DeepSeek__V3__2,
+	Model__LlmGateway__DeepSeek__V4__Flash,
+	Model__LlmGateway__DeepSeek__V4__Pro__Thinking,
+	Model__LlmGateway__Devstral__2512,
+	Model__LlmGateway__Devstral__Small__2507,
+	Model__LlmGateway__GLM__4_5,
+	Model__LlmGateway__GLM__4_6,
+	Model__LlmGateway__GLM__4_7,
+	Model__LlmGateway__GLM__4__32b__0414__128k__4,
+	Model__LlmGateway__GLM__4__5__Air__4_5,
+	Model__LlmGateway__GLM__4__5__Airx__4_5,
+	Model__LlmGateway__GLM__4__5__Flash__4_5,
+	Model__LlmGateway__GLM__4__5__X__4_5,
+	Model__LlmGateway__GLM__4__5v__4_5,
+	Model__LlmGateway__GLM__4__6v__4_6,
+	Model__LlmGateway__GLM__4__6v__4_6__Flash,
+	Model__LlmGateway__GLM__4__6v__Flashx__4_6,
+	Model__LlmGateway__GLM__4__7__Flash__4_7,
+	Model__LlmGateway__GLM__4__7__Flashx__4_7,
+	Model__LlmGateway__GLM__5,
+	Model__LlmGateway__GLM__5_1,
+	Model__LlmGateway__GPT__3_5__Turbo,
+	Model__LlmGateway__GPT__4,
+	Model__LlmGateway__GPT__4_1,
+	Model__LlmGateway__GPT__4__1__Mini__4_1,
+	Model__LlmGateway__GPT__4__1__Nano__4_1,
+	Model__LlmGateway__GPT__4__Turbo,
+	Model__LlmGateway__GPT__4o,
+	Model__LlmGateway__GPT__4o__Mini,
+	Model__LlmGateway__GPT__4o__Mini__Search__PreviewMini,
+	Model__LlmGateway__GPT__4o__Search__Preview,
+	Model__LlmGateway__GPT__5,
+	Model__LlmGateway__GPT__5_1,
+	Model__LlmGateway__GPT__5_2,
+	Model__LlmGateway__GPT__5_2__ChatLatest,
+	Model__LlmGateway__GPT__5_3__ChatLatest,
+	Model__LlmGateway__GPT__5_4,
+	Model__LlmGateway__GPT__5_5,
+	Model__LlmGateway__GPT__5__1__Codex__5_1,
+	Model__LlmGateway__GPT__5__1__Codex__Mini__5_1,
+	Model__LlmGateway__GPT__5__2__Codex__5_2,
+	Model__LlmGateway__GPT__5__2__Pro__5_2,
+	Model__LlmGateway__GPT__5__3__Codex__5_3,
+	Model__LlmGateway__GPT__5__4__Mini__5_4,
+	Model__LlmGateway__GPT__5__4__Nano__5_4,
+	Model__LlmGateway__GPT__5__4__Pro__5_4,
+	Model__LlmGateway__GPT__5__5__Pro__5_5,
+	Model__LlmGateway__GPT__5__ChatLatest,
+	Model__LlmGateway__GPT__5__Mini__5,
+	Model__LlmGateway__GPT__5__Nano__5,
+	Model__LlmGateway__GPT__5__Pro__5,
+	Model__LlmGateway__GPT__Oss__120b,
+	Model__LlmGateway__GPT__Oss__20b,
+	Model__LlmGateway__Gemini__2__0__Flash__2_0,
+	Model__LlmGateway__Gemini__2__0__Flash__Lite__2_0,
+	Model__LlmGateway__Gemini__2__5__Flash__2_5,
+	Model__LlmGateway__Gemini__2__5__Flash__Lite__2_5,
+	Model__LlmGateway__Gemini__2__5__Pro__2_5,
+	Model__LlmGateway__Gemini__3__1__Flash__Lite__3_1,
+	Model__LlmGateway__Gemini__3__1__Flash__Lite__3_1__Preview,
+	Model__LlmGateway__Gemini__3__1__Pro__3_1__Preview,
+	Model__LlmGateway__Gemini__3__5__Flash__3_5,
+	Model__LlmGateway__Gemini__3__Flash__3__Preview,
+	Model__LlmGateway__Gemini__Pro__Latest,
+	Model__LlmGateway__Gemma__2__27b__It__Together__2,
+	Model__LlmGateway__Gemma__3__1b__It__3,
+	Model__LlmGateway__Gemma__3__27b__3,
+	Model__LlmGateway__Grok__4_1__ReasoningFast,
+	Model__LlmGateway__Grok__4_20__Reasoning,
+	Model__LlmGateway__Grok__4_3,
+	Model__LlmGateway__Grok__4__0709__4,
+	Model__LlmGateway__Grok__4__20__Beta__0309__4_20__Reasoning,
+	Model__LlmGateway__Grok__4__20__Beta__0309__Non__4_20__Reasoning,
+	Model__LlmGateway__Grok__4__20__Non__4_20__Reasoning,
+	Model__LlmGateway__Grok__4__ReasoningFast,
+	Model__LlmGateway__Hermes__2__Pro__Llama__3__8b__2,
+	Model__LlmGateway__Kimi__K2__2,
+	Model__LlmGateway__Kimi__K2__2__Thinking,
+	Model__LlmGateway__Kimi__K2__2__ThinkingTurbo,
+	Model__LlmGateway__Kimi__K2__5__2_5,
+	Model__LlmGateway__Kimi__K2__6__2_6,
+	Model__LlmGateway__Llama__3__1__70b__3_1__Instruct,
+	Model__LlmGateway__Llama__3__1__8b__3_1__Instruct,
+	Model__LlmGateway__Llama__3__1__Nemotron__Ultra__253b__3_1,
+	Model__LlmGateway__Llama__3__2__11b__3_2__Instruct,
+	Model__LlmGateway__Llama__3__2__3b__3_2__Instruct,
+	Model__LlmGateway__Llama__3__3__70b__3_3__Instruct,
+	Model__LlmGateway__Llama__3__70b__3__Instruct,
+	Model__LlmGateway__Llama__3__8b__3__Instruct,
+	Model__LlmGateway__Llama__4__Maverick__17b__4__Instruct,
+	Model__LlmGateway__Llama__4__Scout__17b__4__Instruct,
+	Model__LlmGateway__Llama__4__Scout__4,
+	Model__LlmGateway__Mimo__V2__2__Omni,
+	Model__LlmGateway__Mimo__V2__2__Pro,
+	Model__LlmGateway__Mimo__V2__5__2_5,
+	Model__LlmGateway__Mimo__V2__5__2_5__Pro,
+	Model__LlmGateway__Mimo__V2__Flash,
+	Model__LlmGateway__MiniMax__M2__1__2_1,
+	Model__LlmGateway__MiniMax__M2__1__2_1__Lightning,
+	Model__LlmGateway__MiniMax__M2__2,
+	Model__LlmGateway__MiniMax__M2__5__2_5,
+	Model__LlmGateway__MiniMax__M2__5__2_5__Highspeed,
+	Model__LlmGateway__MiniMax__M2__7__2_7,
+	Model__LlmGateway__MiniMax__M2__7__2_7__Highspeed,
+	Model__LlmGateway__MiniMax__Text__01,
+	Model__LlmGateway__Ministral__14b__2512,
+	Model__LlmGateway__Ministral__3b__2512,
+	Model__LlmGateway__Ministral__8b__2512,
+	Model__LlmGateway__Mistral__Large__2512,
+	Model__LlmGateway__Mistral__Large__Latest,
+	Model__LlmGateway__Mistral__Small__2506,
+	Model__LlmGateway__O1__1,
+	Model__LlmGateway__O3__3,
+	Model__LlmGateway__O3__3__Mini,
+	Model__LlmGateway__O4__4__Mini,
+	Model__LlmGateway__Pixtral__Large__Latest,
+	Model__LlmGateway__Qwen25__Coder__7b__25,
+	Model__LlmGateway__Qwen2__5__Vl__32b__2__Instruct,
+	Model__LlmGateway__Qwen2__5__Vl__72b__2__Instruct,
+	Model__LlmGateway__Qwen35__397b__A17b__35,
+	Model__LlmGateway__Qwen3__235b__A22b__Fp8__3,
+	Model__LlmGateway__Qwen3__235b__A22b__Instruct__2507__3__Instruct,
+	Model__LlmGateway__Qwen3__235b__A22b__Thinking__2507__3__Thinking,
+	Model__LlmGateway__Qwen3__30b__A3b__Fp8__3,
+	Model__LlmGateway__Qwen3__30b__A3b__Instruct__2507__3__Instruct,
+	Model__LlmGateway__Qwen3__30b__A3b__Thinking__2507__3__Thinking,
+	Model__LlmGateway__Qwen3__32b__3,
+	Model__LlmGateway__Qwen3__32b__Fp8__3,
+	Model__LlmGateway__Qwen3__4b__Fp8__3,
+	Model__LlmGateway__Qwen3__6__35b__A3b__3_6,
+	Model__LlmGateway__Qwen3__6__Max__3_6__Preview,
+	Model__LlmGateway__Qwen3__6__Plus__3_6,
+	Model__LlmGateway__Qwen3__7__Max__3_7,
+	Model__LlmGateway__Qwen3__Coder__30b__A3b__3__Instruct,
+	Model__LlmGateway__Qwen3__Coder__480b__A35b__3__Instruct,
+	Model__LlmGateway__Qwen3__Coder__Flash__3,
+	Model__LlmGateway__Qwen3__Coder__Next__3,
+	Model__LlmGateway__Qwen3__Coder__Plus__3,
+	Model__LlmGateway__Qwen3__Max__3,
+	Model__LlmGateway__Qwen3__Max__3__20260123,
+	Model__LlmGateway__Qwen3__Next__80b__A3b__3__Instruct,
+	Model__LlmGateway__Qwen3__Next__80b__A3b__3__Thinking,
+	Model__LlmGateway__Qwen3__Vl__235b__A22b__3__Instruct,
+	Model__LlmGateway__Qwen3__Vl__235b__A22b__3__Thinking,
+	Model__LlmGateway__Qwen3__Vl__30b__A3b__3__Instruct,
+	Model__LlmGateway__Qwen3__Vl__30b__A3b__3__Thinking,
+	Model__LlmGateway__Qwen3__Vl__8b__3__Instruct,
+	Model__LlmGateway__Qwen3__Vl__Flash__3,
+	Model__LlmGateway__Qwen3__Vl__Plus__3,
+	Model__LlmGateway__Qwen__Coder__Plus,
+	Model__LlmGateway__Qwen__Flash,
+	Model__LlmGateway__Qwen__Max,
+	Model__LlmGateway__Qwen__Max__Latest,
+	Model__LlmGateway__Qwen__Omni__Turbo,
+	Model__LlmGateway__Qwen__Plus,
+	Model__LlmGateway__Qwen__Plus__Latest,
+	Model__LlmGateway__Qwen__Turbo,
+	Model__LlmGateway__Qwen__Vl__Max,
+	Model__LlmGateway__Qwen__Vl__Plus,
+	Model__LlmGateway__Qwq__Plus,
+	Model__LlmGateway__Seed__1__6__250615__1_6,
+	Model__LlmGateway__Seed__1__6__250915__1_6,
+	Model__LlmGateway__Seed__1__6__Flash__250715__1_6,
+	Model__LlmGateway__Seed__1__8__251228__1_8,
+	Model__LlmGateway__Sonar,
+	Model__LlmGateway__Sonar__Pro,
+	Model__LlmGateway__Sonar__Reasoning__Pro,
 	Model__LucidQuery__Lucidnova__Rf1__100b,
 	Model__LucidQuery__Lucidquery__Nexus__Coder,
-	Model__Meganova__Deepseek__R1__0528__Thinking,
-	Model__Meganova__Deepseek__V3__0324,
-	Model__Meganova__Deepseek__V3__1,
-	Model__Meganova__Deepseek__V3__2,
-	Model__Meganova__Deepseek__V3__2__Exp,
-	Model__Meganova__Glm__4_6,
-	Model__Meganova__Glm__4_7,
-	Model__Meganova__Glm__5,
+	Model__Meganova__DeepSeek__R1__0528__Thinking,
+	Model__Meganova__DeepSeek__V3__0324,
+	Model__Meganova__DeepSeek__V3__1,
+	Model__Meganova__DeepSeek__V3__2,
+	Model__Meganova__DeepSeek__V3__2__Exp,
+	Model__Meganova__GLM__4_6,
+	Model__Meganova__GLM__4_7,
+	Model__Meganova__GLM__5,
 	Model__Meganova__Kimi__K2__2__Thinking,
 	Model__Meganova__Kimi__K2__5__2_5,
 	Model__Meganova__Llama__3__3__70B__3_3__Instruct,
 	Model__Meganova__Mimo__V2__Flash,
-	Model__Meganova__Minimax__M2__1__2_1,
-	Model__Meganova__Minimax__M2__5__2_5,
+	Model__Meganova__MiniMax__M2__1__2_1,
+	Model__Meganova__MiniMax__M2__5__2_5,
 	Model__Meganova__Mistral__Nemo__Instruct__2407__Instruct,
 	Model__Meganova__Mistral__Small__3__2__24B__Instruct__2506__3_2__Instruct,
 	Model__Meganova__Qwen2__5__Vl__32B__2_5__Instruct,
@@ -7215,12 +7201,20 @@ var allModelConstants = [...]ModelID{
 	Model__MergeGateway__Command__R7b__12__2024__12,
 	Model__MergeGateway__Command__R__20240830,
 	Model__MergeGateway__Command__R__Plus__20240830,
-	Model__MergeGateway__Deepseek__V4__Flash,
-	Model__MergeGateway__Deepseek__V4__Pro__Thinking,
+	Model__MergeGateway__DeepSeek__V4__Flash,
+	Model__MergeGateway__DeepSeek__V4__Pro__Thinking,
 	Model__MergeGateway__Devstral__2512,
 	Model__MergeGateway__Devstral__Medium__2507,
 	Model__MergeGateway__Devstral__Medium__Latest,
 	Model__MergeGateway__Devstral__Small__2507,
+	Model__MergeGateway__GLM__4_5,
+	Model__MergeGateway__GLM__4_6,
+	Model__MergeGateway__GLM__4_7,
+	Model__MergeGateway__GLM__4__5__Air__4_5,
+	Model__MergeGateway__GLM__4__7__Flashx__4_7,
+	Model__MergeGateway__GLM__5,
+	Model__MergeGateway__GLM__5_1,
+	Model__MergeGateway__GLM__5__Turbo,
 	Model__MergeGateway__GPT__4_1,
 	Model__MergeGateway__GPT__4__1__Mini__4_1,
 	Model__MergeGateway__GPT__4__1__Nano__4_1,
@@ -7256,23 +7250,15 @@ var allModelConstants = [...]ModelID{
 	Model__MergeGateway__Gemini__Flash__Lite__Latest,
 	Model__MergeGateway__Gemma__4__26b__A4b__It__4,
 	Model__MergeGateway__Gemma__4__31b__It__4,
-	Model__MergeGateway__Glm__4_5,
-	Model__MergeGateway__Glm__4_6,
-	Model__MergeGateway__Glm__4_7,
-	Model__MergeGateway__Glm__4__5__Air__4_5,
-	Model__MergeGateway__Glm__4__7__Flashx__4_7,
-	Model__MergeGateway__Glm__5,
-	Model__MergeGateway__Glm__5_1,
-	Model__MergeGateway__Glm__5__Turbo,
 	Model__MergeGateway__Grok__4_3,
 	Model__MergeGateway__Grok__4__20__0309__4_20__Reasoning,
 	Model__MergeGateway__Magistral__Medium__Latest,
-	Model__MergeGateway__Minimax__M2__1__2_1,
-	Model__MergeGateway__Minimax__M2__2,
-	Model__MergeGateway__Minimax__M2__5__2_5,
-	Model__MergeGateway__Minimax__M2__5__2_5__Highspeed,
-	Model__MergeGateway__Minimax__M2__7__2_7,
-	Model__MergeGateway__Minimax__M2__7__2_7__Highspeed,
+	Model__MergeGateway__MiniMax__M2__1__2_1,
+	Model__MergeGateway__MiniMax__M2__2,
+	Model__MergeGateway__MiniMax__M2__5__2_5,
+	Model__MergeGateway__MiniMax__M2__5__2_5__Highspeed,
+	Model__MergeGateway__MiniMax__M2__7__2_7,
+	Model__MergeGateway__MiniMax__M2__7__2_7__Highspeed,
 	Model__MergeGateway__Mistral__Large__2411,
 	Model__MergeGateway__Mistral__Large__2512,
 	Model__MergeGateway__Mistral__Large__Latest,
@@ -7284,30 +7270,30 @@ var allModelConstants = [...]ModelID{
 	Model__MergeGateway__O3__3__Mini,
 	Model__MergeGateway__O4__4__Mini,
 	Model__MergeGateway__Pixtral__Large__Latest,
-	Model__MiniMaxCNCodingPlan__Minimax__M2__1__2_1,
-	Model__MiniMaxCNCodingPlan__Minimax__M2__2,
-	Model__MiniMaxCNCodingPlan__Minimax__M2__5__2_5,
-	Model__MiniMaxCNCodingPlan__Minimax__M2__5__2_5__Highspeed,
-	Model__MiniMaxCNCodingPlan__Minimax__M2__7__2_7,
-	Model__MiniMaxCNCodingPlan__Minimax__M2__7__2_7__Highspeed,
-	Model__MiniMaxCN__Minimax__M2__1__2_1,
-	Model__MiniMaxCN__Minimax__M2__2,
-	Model__MiniMaxCN__Minimax__M2__5__2_5,
-	Model__MiniMaxCN__Minimax__M2__5__2_5__Highspeed,
-	Model__MiniMaxCN__Minimax__M2__7__2_7,
-	Model__MiniMaxCN__Minimax__M2__7__2_7__Highspeed,
-	Model__MiniMaxCodingPlan__Minimax__M2__1__2_1,
-	Model__MiniMaxCodingPlan__Minimax__M2__2,
-	Model__MiniMaxCodingPlan__Minimax__M2__5__2_5,
-	Model__MiniMaxCodingPlan__Minimax__M2__5__2_5__Highspeed,
-	Model__MiniMaxCodingPlan__Minimax__M2__7__2_7,
-	Model__MiniMaxCodingPlan__Minimax__M2__7__2_7__Highspeed,
-	Model__MiniMax__Minimax__M2__1__2_1,
-	Model__MiniMax__Minimax__M2__2,
-	Model__MiniMax__Minimax__M2__5__2_5,
-	Model__MiniMax__Minimax__M2__5__2_5__Highspeed,
-	Model__MiniMax__Minimax__M2__7__2_7,
-	Model__MiniMax__Minimax__M2__7__2_7__Highspeed,
+	Model__MiniMaxCNCodingPlan__MiniMax__M2__1__2_1,
+	Model__MiniMaxCNCodingPlan__MiniMax__M2__2,
+	Model__MiniMaxCNCodingPlan__MiniMax__M2__5__2_5,
+	Model__MiniMaxCNCodingPlan__MiniMax__M2__5__2_5__Highspeed,
+	Model__MiniMaxCNCodingPlan__MiniMax__M2__7__2_7,
+	Model__MiniMaxCNCodingPlan__MiniMax__M2__7__2_7__Highspeed,
+	Model__MiniMaxCN__MiniMax__M2__1__2_1,
+	Model__MiniMaxCN__MiniMax__M2__2,
+	Model__MiniMaxCN__MiniMax__M2__5__2_5,
+	Model__MiniMaxCN__MiniMax__M2__5__2_5__Highspeed,
+	Model__MiniMaxCN__MiniMax__M2__7__2_7,
+	Model__MiniMaxCN__MiniMax__M2__7__2_7__Highspeed,
+	Model__MiniMaxCodingPlan__MiniMax__M2__1__2_1,
+	Model__MiniMaxCodingPlan__MiniMax__M2__2,
+	Model__MiniMaxCodingPlan__MiniMax__M2__5__2_5,
+	Model__MiniMaxCodingPlan__MiniMax__M2__5__2_5__Highspeed,
+	Model__MiniMaxCodingPlan__MiniMax__M2__7__2_7,
+	Model__MiniMaxCodingPlan__MiniMax__M2__7__2_7__Highspeed,
+	Model__MiniMax__MiniMax__M2__1__2_1,
+	Model__MiniMax__MiniMax__M2__2,
+	Model__MiniMax__MiniMax__M2__5__2_5,
+	Model__MiniMax__MiniMax__M2__5__2_5__Highspeed,
+	Model__MiniMax__MiniMax__M2__7__2_7,
+	Model__MiniMax__MiniMax__M2__7__2_7__Highspeed,
 	Model__Mistral__Codestral__Latest,
 	Model__Mistral__Devstral__2512,
 	Model__Mistral__Devstral__Medium__2507,
@@ -7341,29 +7327,29 @@ var allModelConstants = [...]ModelID{
 	Model__Mixlayer__Qwen3__5__35b__A3b__3_5,
 	Model__Mixlayer__Qwen3__5__397b__A17b__3_5,
 	Model__Mixlayer__Qwen3__5__9b__3_5,
-	Model__Moark__Glm__4_7,
-	Model__Moark__Minimax__M2__1__2_1,
-	Model__ModelScope__Glm__4_5,
-	Model__ModelScope__Glm__4_6,
+	Model__Moark__GLM__4_7,
+	Model__Moark__MiniMax__M2__1__2_1,
+	Model__ModelScope__GLM__4_5,
+	Model__ModelScope__GLM__4_6,
 	Model__ModelScope__Qwen3__235B__A22b__Instruct__2507__3__Instruct,
 	Model__ModelScope__Qwen3__235B__A22b__Thinking__2507__3__Thinking,
 	Model__ModelScope__Qwen3__30B__A3b__Instruct__2507__3__Instruct,
 	Model__ModelScope__Qwen3__30B__A3b__Thinking__2507__3__Thinking,
 	Model__ModelScope__Qwen3__Coder__30B__A3b__3__Instruct,
-	Model__MoonshotaiCN__Kimi__K2__0711__2__Preview,
-	Model__MoonshotaiCN__Kimi__K2__0905__2__Preview,
-	Model__MoonshotaiCN__Kimi__K2__2__Thinking,
-	Model__MoonshotaiCN__Kimi__K2__2__ThinkingTurbo,
-	Model__MoonshotaiCN__Kimi__K2__2__TurboPreview,
-	Model__MoonshotaiCN__Kimi__K2__5__2_5,
-	Model__MoonshotaiCN__Kimi__K2__6__2_6,
-	Model__Moonshotai__Kimi__K2__0711__2__Preview,
-	Model__Moonshotai__Kimi__K2__0905__2__Preview,
-	Model__Moonshotai__Kimi__K2__2__Thinking,
-	Model__Moonshotai__Kimi__K2__2__ThinkingTurbo,
-	Model__Moonshotai__Kimi__K2__2__TurboPreview,
-	Model__Moonshotai__Kimi__K2__5__2_5,
-	Model__Moonshotai__Kimi__K2__6__2_6,
+	Model__MoonshotAICN__Kimi__K2__0711__2__Preview,
+	Model__MoonshotAICN__Kimi__K2__0905__2__Preview,
+	Model__MoonshotAICN__Kimi__K2__2__Thinking,
+	Model__MoonshotAICN__Kimi__K2__2__ThinkingTurbo,
+	Model__MoonshotAICN__Kimi__K2__2__TurboPreview,
+	Model__MoonshotAICN__Kimi__K2__5__2_5,
+	Model__MoonshotAICN__Kimi__K2__6__2_6,
+	Model__MoonshotAI__Kimi__K2__0711__2__Preview,
+	Model__MoonshotAI__Kimi__K2__0905__2__Preview,
+	Model__MoonshotAI__Kimi__K2__2__Thinking,
+	Model__MoonshotAI__Kimi__K2__2__ThinkingTurbo,
+	Model__MoonshotAI__Kimi__K2__2__TurboPreview,
+	Model__MoonshotAI__Kimi__K2__5__2_5,
+	Model__MoonshotAI__Kimi__K2__6__2_6,
 	Model__Morph__Auto,
 	Model__Morph__Morph__V3__Fast,
 	Model__Morph__Morph__V3__Large,
@@ -7441,34 +7427,34 @@ var allModelConstants = [...]ModelID{
 	Model__NanoGPT__Cydonia__24B__V4,
 	Model__NanoGPT__Cydonia__24B__V4__1,
 	Model__NanoGPT__Cydonia__24B__V4__3,
+	Model__NanoGPT__DeepSeek__Chat,
+	Model__NanoGPT__DeepSeek__Chat__Cheaper,
+	Model__NanoGPT__DeepSeek__Math__V2,
+	Model__NanoGPT__DeepSeek__Prover__V2__671b,
+	Model__NanoGPT__DeepSeek__R1,
+	Model__NanoGPT__DeepSeek__R1__0528_1,
+	Model__NanoGPT__DeepSeek__R1__0528_2,
+	Model__NanoGPT__DeepSeek__R1__Distill__Llama__70B__Abliterated,
+	Model__NanoGPT__DeepSeek__R1__Distill__Qwen__32B__Abliterated,
+	Model__NanoGPT__DeepSeek__R1__Sambanova,
+	Model__NanoGPT__DeepSeek__Reasoner,
+	Model__NanoGPT__DeepSeek__Reasoner__Cheaper,
+	Model__NanoGPT__DeepSeek__Tng__R1t2__Chimera,
+	Model__NanoGPT__DeepSeek__V3__0324,
+	Model__NanoGPT__DeepSeek__V3__1_1,
+	Model__NanoGPT__DeepSeek__V3__1_2,
+	Model__NanoGPT__DeepSeek__V3__1__Nex__N1,
+	Model__NanoGPT__DeepSeek__V3__1__Terminus,
+	Model__NanoGPT__DeepSeek__V3__1__Terminus__Thinking__Thinking,
+	Model__NanoGPT__DeepSeek__V3__1__Thinking__Thinking,
+	Model__NanoGPT__DeepSeek__V3__2_1,
+	Model__NanoGPT__DeepSeek__V3__2_2,
+	Model__NanoGPT__DeepSeek__V3__2__Exp,
+	Model__NanoGPT__DeepSeek__V3__2__Exp__Thinking,
+	Model__NanoGPT__DeepSeek__V3__2__Speciale,
+	Model__NanoGPT__DeepSeek__V3__2__Thinking,
 	Model__NanoGPT__Deepclaude,
 	Model__NanoGPT__Deephermes__3__Mistral__24B__Preview,
-	Model__NanoGPT__Deepseek__Chat,
-	Model__NanoGPT__Deepseek__Chat__Cheaper,
-	Model__NanoGPT__Deepseek__Math__V2,
-	Model__NanoGPT__Deepseek__Prover__V2__671b,
-	Model__NanoGPT__Deepseek__R1,
-	Model__NanoGPT__Deepseek__R1__0528_1,
-	Model__NanoGPT__Deepseek__R1__0528_2,
-	Model__NanoGPT__Deepseek__R1__Distill__Llama__70B__Abliterated,
-	Model__NanoGPT__Deepseek__R1__Distill__Qwen__32B__Abliterated,
-	Model__NanoGPT__Deepseek__R1__Sambanova,
-	Model__NanoGPT__Deepseek__Reasoner,
-	Model__NanoGPT__Deepseek__Reasoner__Cheaper,
-	Model__NanoGPT__Deepseek__Tng__R1t2__Chimera,
-	Model__NanoGPT__Deepseek__V3__0324,
-	Model__NanoGPT__Deepseek__V3__1_1,
-	Model__NanoGPT__Deepseek__V3__1_2,
-	Model__NanoGPT__Deepseek__V3__1__Nex__N1,
-	Model__NanoGPT__Deepseek__V3__1__Terminus,
-	Model__NanoGPT__Deepseek__V3__1__Terminus__Thinking__Thinking,
-	Model__NanoGPT__Deepseek__V3__1__Thinking__Thinking,
-	Model__NanoGPT__Deepseek__V3__2_1,
-	Model__NanoGPT__Deepseek__V3__2_2,
-	Model__NanoGPT__Deepseek__V3__2__Exp,
-	Model__NanoGPT__Deepseek__V3__2__Exp__Thinking,
-	Model__NanoGPT__Deepseek__V3__2__Speciale,
-	Model__NanoGPT__Deepseek__V3__2__Thinking,
 	Model__NanoGPT__Devstral__2__123b__Instruct__2512__2__Instruct,
 	Model__NanoGPT__Devstral__Small__2505,
 	Model__NanoGPT__Dmind__1,
@@ -7509,6 +7495,46 @@ var allModelConstants = [...]ModelID{
 	Model__NanoGPT__Exa__Research,
 	Model__NanoGPT__Exa__Research__Pro,
 	Model__NanoGPT__Fastgpt,
+	Model__NanoGPT__GLM__4,
+	Model__NanoGPT__GLM__4_6_1,
+	Model__NanoGPT__GLM__4_6_2,
+	Model__NanoGPT__GLM__4_7_1,
+	Model__NanoGPT__GLM__4_7_2,
+	Model__NanoGPT__GLM__4__1v__Thinking__Flash,
+	Model__NanoGPT__GLM__4__1v__Thinking__Flashx__4_1,
+	Model__NanoGPT__GLM__4__32B__0414__4,
+	Model__NanoGPT__GLM__4__5__Air__Derestricted__4_5,
+	Model__NanoGPT__GLM__4__5__Air__Derestricted__Iceblink__4_5,
+	Model__NanoGPT__GLM__4__5__Air__Derestricted__Iceblink__Reextract__4_5,
+	Model__NanoGPT__GLM__4__5__Air__Derestricted__Iceblink__V2__4_5,
+	Model__NanoGPT__GLM__4__5__Air__Derestricted__Iceblink__V2__Reextract__4_5,
+	Model__NanoGPT__GLM__4__5__Air__Derestricted__Steam__4_5,
+	Model__NanoGPT__GLM__4__5__Air__Derestricted__Steam__Reextract__4_5,
+	Model__NanoGPT__GLM__4__5v__4_5,
+	Model__NanoGPT__GLM__4__5v__Thinking,
+	Model__NanoGPT__GLM__4__6__Derestricted__V5__4_6,
+	Model__NanoGPT__GLM__4__6__Thinking,
+	Model__NanoGPT__GLM__4__7__Flash__4_7_1,
+	Model__NanoGPT__GLM__4__7__Flash__4_7_2,
+	Model__NanoGPT__GLM__4__9B__0414__4,
+	Model__NanoGPT__GLM__4__Air__0111__4,
+	Model__NanoGPT__GLM__4__Air__4,
+	Model__NanoGPT__GLM__4__Airx__4,
+	Model__NanoGPT__GLM__4__Flash__4,
+	Model__NanoGPT__GLM__4__Long__4,
+	Model__NanoGPT__GLM__4__Plus__0111__4,
+	Model__NanoGPT__GLM__4__Plus__4,
+	Model__NanoGPT__GLM__5_1_1,
+	Model__NanoGPT__GLM__5_1_2,
+	Model__NanoGPT__GLM__5_2,
+	Model__NanoGPT__GLM__5__1__Thinking,
+	Model__NanoGPT__GLM__5__Thinking,
+	Model__NanoGPT__GLM__Z1__32B__0414,
+	Model__NanoGPT__GLM__Z1__9B__0414,
+	Model__NanoGPT__GLM__Z1__Air,
+	Model__NanoGPT__GLM__Z1__Airx,
+	Model__NanoGPT__GLM__Z1__Rumination__32B__0414,
+	Model__NanoGPT__GLM__Zero__Preview,
 	Model__NanoGPT__GPT__3_5__Turbo,
 	Model__NanoGPT__GPT__4_1,
 	Model__NanoGPT__GPT__4__1__Mini__4_1,
@@ -7586,46 +7612,6 @@ var allModelConstants = [...]ModelID{
 	Model__NanoGPT__Gemma__3__27b__It,
 	Model__NanoGPT__Gemma__3__27b__It__3,
 	Model__NanoGPT__Gemma__3__4b__It,
-	Model__NanoGPT__Glm__4,
-	Model__NanoGPT__Glm__4_6_1,
-	Model__NanoGPT__Glm__4_6_2,
-	Model__NanoGPT__Glm__4_7_1,
-	Model__NanoGPT__Glm__4_7_2,
-	Model__NanoGPT__Glm__4__1v__Thinking__Flash,
-	Model__NanoGPT__Glm__4__1v__Thinking__Flashx__4_1,
-	Model__NanoGPT__Glm__4__32B__0414__4,
-	Model__NanoGPT__Glm__4__5__Air__Derestricted__4_5,
-	Model__NanoGPT__Glm__4__5__Air__Derestricted__Iceblink__4_5,
-	Model__NanoGPT__Glm__4__5__Air__Derestricted__Iceblink__Reextract__4_5,
-	Model__NanoGPT__Glm__4__5__Air__Derestricted__Iceblink__V2__4_5,
-	Model__NanoGPT__Glm__4__5__Air__Derestricted__Iceblink__V2__Reextract__4_5,
-	Model__NanoGPT__Glm__4__5__Air__Derestricted__Steam__4_5,
-	Model__NanoGPT__Glm__4__5__Air__Derestricted__Steam__Reextract__4_5,
-	Model__NanoGPT__Glm__4__5v__4_5,
-	Model__NanoGPT__Glm__4__5v__Thinking,
-	Model__NanoGPT__Glm__4__6__Derestricted__V5__4_6,
-	Model__NanoGPT__Glm__4__6__Thinking,
-	Model__NanoGPT__Glm__4__7__Flash__4_7_1,
-	Model__NanoGPT__Glm__4__7__Flash__4_7_2,
-	Model__NanoGPT__Glm__4__9B__0414__4,
-	Model__NanoGPT__Glm__4__Air__0111__4,
-	Model__NanoGPT__Glm__4__Air__4,
-	Model__NanoGPT__Glm__4__Airx__4,
-	Model__NanoGPT__Glm__4__Flash__4,
-	Model__NanoGPT__Glm__4__Long__4,
-	Model__NanoGPT__Glm__4__Plus__0111__4,
-	Model__NanoGPT__Glm__4__Plus__4,
-	Model__NanoGPT__Glm__5_1_1,
-	Model__NanoGPT__Glm__5_1_2,
-	Model__NanoGPT__Glm__5_2,
-	Model__NanoGPT__Glm__5__1__Thinking,
-	Model__NanoGPT__Glm__5__Thinking,
-	Model__NanoGPT__Glm__Z1__32B__0414,
-	Model__NanoGPT__Glm__Z1__9B__0414,
-	Model__NanoGPT__Glm__Z1__Air,
-	Model__NanoGPT__Glm__Z1__Airx,
-	Model__NanoGPT__Glm__Z1__Rumination__32B__0414,
-	Model__NanoGPT__Glm__Zero__Preview,
 	Model__NanoGPT__Grayline__Qwen3__8B,
 	Model__NanoGPT__Grok__3__Beta__3,
 	Model__NanoGPT__Grok__3__Fast__Beta__3,
@@ -7764,15 +7750,15 @@ var allModelConstants = [...]ModelID{
 	Model__NanoGPT__Mimo__V2__Flash__Original,
 	Model__NanoGPT__Mimo__V2__Flash__Thinking,
 	Model__NanoGPT__Mimo__V2__Flash__ThinkingOriginal,
-	Model__NanoGPT__Minimax__01,
-	Model__NanoGPT__Minimax__M1__1,
-	Model__NanoGPT__Minimax__M1__80k__1,
-	Model__NanoGPT__Minimax__M2__1__2_1_1,
-	Model__NanoGPT__Minimax__M2__1__2_1_2,
-	Model__NanoGPT__Minimax__M2__2,
-	Model__NanoGPT__Minimax__M2__5__2_5,
-	Model__NanoGPT__Minimax__M2__7__2_7,
-	Model__NanoGPT__Minimax__M2__Her,
+	Model__NanoGPT__MiniMax__01,
+	Model__NanoGPT__MiniMax__M1__1,
+	Model__NanoGPT__MiniMax__M1__80k__1,
+	Model__NanoGPT__MiniMax__M2__1__2_1_1,
+	Model__NanoGPT__MiniMax__M2__1__2_1_2,
+	Model__NanoGPT__MiniMax__M2__2,
+	Model__NanoGPT__MiniMax__M2__5__2_5,
+	Model__NanoGPT__MiniMax__M2__7__2_7,
+	Model__NanoGPT__MiniMax__M2__Her,
 	Model__NanoGPT__Ministral__14b__2512,
 	Model__NanoGPT__Ministral__14b__Instruct__2512__Instruct,
 	Model__NanoGPT__Ministral__3b__2512,
@@ -7819,9 +7805,9 @@ var allModelConstants = [...]ModelID{
 	Model__NanoGPT__O4__4__Mini,
 	Model__NanoGPT__O4__Mini__Deep__Research__4__Mini,
 	Model__NanoGPT__O4__Mini__High__4__Mini,
-	Model__NanoGPT__Olmo__3__1__32b__3_1__Instruct,
-	Model__NanoGPT__Olmo__3__1__32b__3_1__Think,
-	Model__NanoGPT__Olmo__3__32b__3__Think,
+	Model__NanoGPT__OLMo__3__1__32b__3_1__Instruct,
+	Model__NanoGPT__OLMo__3__1__32b__3_1__Think,
+	Model__NanoGPT__OLMo__3__32b__3__Think,
 	Model__NanoGPT__Openreasoning__Nemotron__32B,
 	Model__NanoGPT__Phi__4__Mini__4__Instruct,
 	Model__NanoGPT__Phi__4__MultimodalInstruct,
@@ -7887,56 +7873,56 @@ var allModelConstants = [...]ModelID{
 	Model__NanoGPT__Venice__Uncensored,
 	Model__NanoGPT__Venice__Uncensored__Web,
 	Model__NanoGPT__Wayfarer__Large__70B__Llama__3__3,
-	Model__NanoGPT__Wizardlm__2__8x22b__2,
+	Model__NanoGPT__WizardLM__2__8x22b__2,
 	Model__NanoGPT__Yi__Large,
 	Model__NanoGPT__Yi__Lightning,
 	Model__NanoGPT__Yi__Medium__200k,
 	Model__NanoGPT__Z__Image__Turbo,
-	Model__Nearai__Claude__Haiku__4_5,
-	Model__Nearai__Claude__Opus__4_6,
-	Model__Nearai__Claude__Opus__4_7,
-	Model__Nearai__Claude__Sonnet__4_5,
-	Model__Nearai__Claude__Sonnet__4_6,
-	Model__Nearai__Flux__2__Klein__4B,
-	Model__Nearai__GPT__4_1,
-	Model__Nearai__GPT__4__1__Mini__4_1,
-	Model__Nearai__GPT__4__1__Nano__4_1,
-	Model__Nearai__GPT__5,
-	Model__Nearai__GPT__5_1,
-	Model__Nearai__GPT__5_2,
-	Model__Nearai__GPT__5_4,
-	Model__Nearai__GPT__5_5,
-	Model__Nearai__GPT__5__4__Mini__5_4,
-	Model__Nearai__GPT__5__4__Nano__5_4,
-	Model__Nearai__GPT__5__Mini__5,
-	Model__Nearai__GPT__5__Nano__5,
-	Model__Nearai__GPT__Oss__120b,
-	Model__Nearai__Gemini__2__5__Flash__2_5,
-	Model__Nearai__Gemini__2__5__Flash__Lite__2_5,
-	Model__Nearai__Gemini__2__5__Pro__2_5,
-	Model__Nearai__Gemini__3__1__Flash__Lite__3_1,
-	Model__Nearai__Gemini__3__5__Flash__3_5,
-	Model__Nearai__Gemini__3__Pro__3,
-	Model__Nearai__Gemma__4__31B__It__4,
-	Model__Nearai__Glm__5__1__Fp8__5_1,
-	Model__Nearai__O3__3,
-	Model__Nearai__O3__3__Mini,
-	Model__Nearai__O4__4__Mini,
-	Model__Nearai__Qwen3__30B__A3b__Instruct__2507__3__Instruct,
-	Model__Nearai__Qwen3__5__122B__A10b__3_5,
-	Model__Nearai__Qwen3__6__35B__A3b__Fp8__3_6,
-	Model__Nearai__Qwen3__Embedding__0__6B__3,
-	Model__Nearai__Qwen3__Reranker__0__6B__3,
-	Model__Nearai__Qwen3__Vl__30B__A3b__3__Instruct,
-	Model__Nearai__Whisper__Large__V3,
-	Model__Nebius__Deepseek__V3__2,
-	Model__Nebius__Deepseek__V3__2__Fast,
-	Model__Nebius__Deepseek__V4__Pro__Thinking,
+	Model__NearAI__Claude__Haiku__4_5,
+	Model__NearAI__Claude__Opus__4_6,
+	Model__NearAI__Claude__Opus__4_7,
+	Model__NearAI__Claude__Sonnet__4_5,
+	Model__NearAI__Claude__Sonnet__4_6,
+	Model__NearAI__Flux__2__Klein__4B,
+	Model__NearAI__GLM__5__1__Fp8__5_1,
+	Model__NearAI__GPT__4_1,
+	Model__NearAI__GPT__4__1__Mini__4_1,
+	Model__NearAI__GPT__4__1__Nano__4_1,
+	Model__NearAI__GPT__5,
+	Model__NearAI__GPT__5_1,
+	Model__NearAI__GPT__5_2,
+	Model__NearAI__GPT__5_4,
+	Model__NearAI__GPT__5_5,
+	Model__NearAI__GPT__5__4__Mini__5_4,
+	Model__NearAI__GPT__5__4__Nano__5_4,
+	Model__NearAI__GPT__5__Mini__5,
+	Model__NearAI__GPT__5__Nano__5,
+	Model__NearAI__GPT__Oss__120b,
+	Model__NearAI__Gemini__2__5__Flash__2_5,
+	Model__NearAI__Gemini__2__5__Flash__Lite__2_5,
+	Model__NearAI__Gemini__2__5__Pro__2_5,
+	Model__NearAI__Gemini__3__1__Flash__Lite__3_1,
+	Model__NearAI__Gemini__3__5__Flash__3_5,
+	Model__NearAI__Gemini__3__Pro__3,
+	Model__NearAI__Gemma__4__31B__It__4,
+	Model__NearAI__O3__3,
+	Model__NearAI__O3__3__Mini,
+	Model__NearAI__O4__4__Mini,
+	Model__NearAI__Qwen3__30B__A3b__Instruct__2507__3__Instruct,
+	Model__NearAI__Qwen3__5__122B__A10b__3_5,
+	Model__NearAI__Qwen3__6__35B__A3b__Fp8__3_6,
+	Model__NearAI__Qwen3__Embedding__0__6B__3,
+	Model__NearAI__Qwen3__Reranker__0__6B__3,
+	Model__NearAI__Qwen3__Vl__30B__A3b__3__Instruct,
+	Model__NearAI__Whisper__Large__V3,
+	Model__Nebius__DeepSeek__V3__2,
+	Model__Nebius__DeepSeek__V3__2__Fast,
+	Model__Nebius__DeepSeek__V4__Pro__Thinking,
+	Model__Nebius__GLM__5,
 	Model__Nebius__GPT__Oss__120b,
 	Model__Nebius__GPT__Oss__120b__Fast,
 	Model__Nebius__Gemma__2__2b__It__2,
 	Model__Nebius__Gemma__3__27b__It__3,
-	Model__Nebius__Glm__5,
 	Model__Nebius__Hermes__4__405B__4,
 	Model__Nebius__Hermes__4__70B__4,
 	Model__Nebius__Intellect__3,
@@ -7945,8 +7931,8 @@ var allModelConstants = [...]ModelID{
 	Model__Nebius__Llama__3__1__Nemotron__Ultra__253B__V1,
 	Model__Nebius__Llama__3__3__70B__3_3__Instruct,
 	Model__Nebius__Meta__Llama__3__1__8B__3_1__Instruct,
-	Model__Nebius__Minimax__M2__5__2_5,
-	Model__Nebius__Minimax__M2__5__2_5__Fast,
+	Model__Nebius__MiniMax__M2__5__2_5,
+	Model__Nebius__MiniMax__M2__5__2_5__Fast,
 	Model__Nebius__Nemotron__3__Nano__Omni__3,
 	Model__Nebius__Nemotron__3__Super__120b__A12b__3,
 	Model__Nebius__Nvidia__Nemotron__3__Nano__30B__A3b__3,
@@ -7961,15 +7947,15 @@ var allModelConstants = [...]ModelID{
 	Model__Nebius__Qwen3__Next__80B__A3b__3__Thinking,
 	Model__Nebius__Qwen3__Next__80B__A3b__3__ThinkingFast,
 	Model__Neuralwatt__Devstral__Small__2__24B__Instruct__2512__2__Instruct,
+	Model__Neuralwatt__GLM__5_1__Fast,
+	Model__Neuralwatt__GLM__5__1__Fp8__5_1,
+	Model__Neuralwatt__GLM__5__Fast,
 	Model__Neuralwatt__GPT__Oss__20b,
-	Model__Neuralwatt__Glm__5_1__Fast,
-	Model__Neuralwatt__Glm__5__1__Fp8__5_1,
-	Model__Neuralwatt__Glm__5__Fast,
 	Model__Neuralwatt__Kimi__K2__5__2_5,
 	Model__Neuralwatt__Kimi__K2__5__2_5__Fast,
 	Model__Neuralwatt__Kimi__K2__6__2_6,
 	Model__Neuralwatt__Kimi__K2__6__2_6__Fast,
-	Model__Neuralwatt__Minimax__M2__5__2_5,
+	Model__Neuralwatt__MiniMax__M2__5__2_5,
 	Model__Neuralwatt__Qwen3__5__397B__A17b__Fp8__3_5,
 	Model__Neuralwatt__Qwen3__5__397b__3_5__Fast,
 	Model__Neuralwatt__Qwen3__6__35B__A3b__3_6,
@@ -7978,44 +7964,44 @@ var allModelConstants = [...]ModelID{
 	Model__Nova__Nova__2__Pro__V1__2,
 	Model__NovitaAI__Autoglm__Phone__9b__Multilingual,
 	Model__NovitaAI__Baichuan__M2__32b,
-	Model__NovitaAI__Deepseek__Ocr,
-	Model__NovitaAI__Deepseek__Ocr__2,
-	Model__NovitaAI__Deepseek__Prover__V2__671b,
-	Model__NovitaAI__Deepseek__R1__0528__Qwen3__8b,
-	Model__NovitaAI__Deepseek__R1__0528__Thinking,
-	Model__NovitaAI__Deepseek__R1__Distill__Llama__70b__Thinking,
-	Model__NovitaAI__Deepseek__R1__Distill__Qwen__14b__Thinking,
-	Model__NovitaAI__Deepseek__R1__Distill__Qwen__32b__Thinking,
-	Model__NovitaAI__Deepseek__R1__Turbo,
-	Model__NovitaAI__Deepseek__V3__0324,
-	Model__NovitaAI__Deepseek__V3__1,
-	Model__NovitaAI__Deepseek__V3__1__Terminus,
-	Model__NovitaAI__Deepseek__V3__2,
-	Model__NovitaAI__Deepseek__V3__2__Exp,
-	Model__NovitaAI__Deepseek__V3__Turbo,
-	Model__NovitaAI__Deepseek__V4__Flash,
-	Model__NovitaAI__Deepseek__V4__Pro__Thinking,
+	Model__NovitaAI__DeepSeek__Ocr,
+	Model__NovitaAI__DeepSeek__Ocr__2,
+	Model__NovitaAI__DeepSeek__Prover__V2__671b,
+	Model__NovitaAI__DeepSeek__R1__0528__Qwen3__8b,
+	Model__NovitaAI__DeepSeek__R1__0528__Thinking,
+	Model__NovitaAI__DeepSeek__R1__Distill__Llama__70b__Thinking,
+	Model__NovitaAI__DeepSeek__R1__Distill__Qwen__14b__Thinking,
+	Model__NovitaAI__DeepSeek__R1__Distill__Qwen__32b__Thinking,
+	Model__NovitaAI__DeepSeek__R1__Turbo,
+	Model__NovitaAI__DeepSeek__V3__0324,
+	Model__NovitaAI__DeepSeek__V3__1,
+	Model__NovitaAI__DeepSeek__V3__1__Terminus,
+	Model__NovitaAI__DeepSeek__V3__2,
+	Model__NovitaAI__DeepSeek__V3__2__Exp,
+	Model__NovitaAI__DeepSeek__V3__Turbo,
+	Model__NovitaAI__DeepSeek__V4__Flash,
+	Model__NovitaAI__DeepSeek__V4__Pro__Thinking,
 	Model__NovitaAI__Ernie__4__5__21B__A3b__4_5,
 	Model__NovitaAI__Ernie__4__5__21B__A3b__4_5__Thinking,
 	Model__NovitaAI__Ernie__4__5__300b__A47b__Paddle__4_5,
 	Model__NovitaAI__Ernie__4__5__Vl__28b__A3b__4_5,
 	Model__NovitaAI__Ernie__4__5__Vl__28b__A3b__4_5__Thinking,
 	Model__NovitaAI__Ernie__4__5__Vl__424b__A47b__4_5,
+	Model__NovitaAI__GLM__4_5,
+	Model__NovitaAI__GLM__4_6,
+	Model__NovitaAI__GLM__4_7,
+	Model__NovitaAI__GLM__4__5__Air__4_5,
+	Model__NovitaAI__GLM__4__5v__4_5,
+	Model__NovitaAI__GLM__4__6v__4_6,
+	Model__NovitaAI__GLM__4__7__Flash__4_7,
+	Model__NovitaAI__GLM__5,
+	Model__NovitaAI__GLM__5_1,
 	Model__NovitaAI__GPT__Oss__120b,
 	Model__NovitaAI__GPT__Oss__20b,
 	Model__NovitaAI__Gemma__3__12b__It__3,
 	Model__NovitaAI__Gemma__3__27b__It__3,
 	Model__NovitaAI__Gemma__4__26b__A4b__It__4,
 	Model__NovitaAI__Gemma__4__31b__It__4,
-	Model__NovitaAI__Glm__4_5,
-	Model__NovitaAI__Glm__4_6,
-	Model__NovitaAI__Glm__4_7,
-	Model__NovitaAI__Glm__4__5__Air__4_5,
-	Model__NovitaAI__Glm__4__5v__4_5,
-	Model__NovitaAI__Glm__4__6v__4_6,
-	Model__NovitaAI__Glm__4__7__Flash__4_7,
-	Model__NovitaAI__Glm__5,
-	Model__NovitaAI__Glm__5_1,
 	Model__NovitaAI__Hermes__2__Pro__Llama__3__8b__2,
 	Model__NovitaAI__Kat__Coder__Pro,
 	Model__NovitaAI__Kimi__K2__0905__2,
@@ -8039,13 +8025,13 @@ var allModelConstants = [...]ModelID{
 	Model__NovitaAI__Mimo__V2__2__Pro,
 	Model__NovitaAI__Mimo__V2__5__2_5__Pro,
 	Model__NovitaAI__Mimo__V2__Flash,
-	Model__NovitaAI__Minimax__M1__80k__1,
-	Model__NovitaAI__Minimax__M2__1__2_1,
-	Model__NovitaAI__Minimax__M2__2,
-	Model__NovitaAI__Minimax__M2__5__2_5,
-	Model__NovitaAI__Minimax__M2__5__2_5__Highspeed,
-	Model__NovitaAI__Minimax__M2__7__2_7,
-	Model__NovitaAI__Minimax__M2__7__2_7__Highspeed,
+	Model__NovitaAI__MiniMax__M1__80k__1,
+	Model__NovitaAI__MiniMax__M2__1__2_1,
+	Model__NovitaAI__MiniMax__M2__2,
+	Model__NovitaAI__MiniMax__M2__5__2_5,
+	Model__NovitaAI__MiniMax__M2__5__2_5__Highspeed,
+	Model__NovitaAI__MiniMax__M2__7__2_7,
+	Model__NovitaAI__MiniMax__M2__7__2_7__Highspeed,
 	Model__NovitaAI__Mistral__Nemo,
 	Model__NovitaAI__Mythomax__L2__13b,
 	Model__NovitaAI__Paddleocr__Vl,
@@ -8079,17 +8065,17 @@ var allModelConstants = [...]ModelID{
 	Model__NovitaAI__Qwen__2__5__72b__2_5__Instruct,
 	Model__NovitaAI__Qwen__Mt__Plus,
 	Model__NovitaAI__Ring__2__6__1t__2_6,
-	Model__NovitaAI__Wizardlm__2__8x22b__2,
+	Model__NovitaAI__WizardLM__2__8x22b__2,
 	Model__Nvidia__Active__Speaker__Detection,
 	Model__Nvidia__Bevformer,
 	Model__Nvidia__Bge__M3,
 	Model__Nvidia__Cosmos__Predict1__5b,
 	Model__Nvidia__Cosmos__Transfer1__7b,
 	Model__Nvidia__Cosmos__Transfer2__5__2b,
-	Model__Nvidia__Deepseek__V3__1__Terminus,
-	Model__Nvidia__Deepseek__V3__2,
-	Model__Nvidia__Deepseek__V4__Flash,
-	Model__Nvidia__Deepseek__V4__Pro__Thinking,
+	Model__Nvidia__DeepSeek__V3__1__Terminus,
+	Model__Nvidia__DeepSeek__V3__2,
+	Model__Nvidia__DeepSeek__V4__Flash,
+	Model__Nvidia__DeepSeek__V4__Pro__Thinking,
 	Model__Nvidia__Devstral__2__123b__Instruct__2512__2__Instruct,
 	Model__Nvidia__Dracarys__Llama__3__1__70b__Instruct,
 	Model__Nvidia__Esm2__650m,
@@ -8098,6 +8084,7 @@ var allModelConstants = [...]ModelID{
 	Model__Nvidia__Flux__1__Kontext__Dev,
 	Model__Nvidia__Flux__1__Schnell,
 	Model__Nvidia__Flux__2__Klein__4b,
+	Model__Nvidia__GLM__5_1,
 	Model__Nvidia__GPT__Oss__120b,
 	Model__Nvidia__GPT__Oss__20b,
 	Model__Nvidia__Gemma__2__2b__It__2,
@@ -8107,7 +8094,6 @@ var allModelConstants = [...]ModelID{
 	Model__Nvidia__Gemma__4__31b__It__4,
 	Model__Nvidia__Gliner__Pii,
 	Model__Nvidia__Glm4__7__4_7,
-	Model__Nvidia__Glm__5_1,
 	Model__Nvidia__Google__Paligemma,
 	Model__Nvidia__Kimi__K2__2__Instruct,
 	Model__Nvidia__Kimi__K2__2__Thinking,
@@ -8130,8 +8116,8 @@ var allModelConstants = [...]ModelID{
 	Model__Nvidia__Llama__Nemotron__Rerank__Vl__1b__V2,
 	Model__Nvidia__Magistral__Small__2506,
 	Model__Nvidia__Magpie__Tts__Zeroshot,
-	Model__Nvidia__Minimax__M2__5__2_5,
-	Model__Nvidia__Minimax__M2__7__2_7,
+	Model__Nvidia__MiniMax__M2__5__2_5,
+	Model__Nvidia__MiniMax__M2__7__2_7,
 	Model__Nvidia__Mistral__7b__Instruct__V03__Instruct,
 	Model__Nvidia__Mistral__Large__3__675b__Instruct__2512__3__Instruct,
 	Model__Nvidia__Mistral__Medium__3__Instruct,
@@ -8185,12 +8171,16 @@ var allModelConstants = [...]ModelID{
 	Model__OVHcloud__Qwen3__5__9b__3_5,
 	Model__OVHcloud__Qwen3__Coder__30b__A3b__3__Instruct,
 	Model__OllamaCloud__Cogito__2__1__671b,
-	Model__OllamaCloud__Deepseek__V3__1__671b,
-	Model__OllamaCloud__Deepseek__V3__2,
-	Model__OllamaCloud__Deepseek__V4__Flash,
-	Model__OllamaCloud__Deepseek__V4__Pro__Thinking,
+	Model__OllamaCloud__DeepSeek__V3__1__671b,
+	Model__OllamaCloud__DeepSeek__V3__2,
+	Model__OllamaCloud__DeepSeek__V4__Flash,
+	Model__OllamaCloud__DeepSeek__V4__Pro__Thinking,
 	Model__OllamaCloud__Devstral__2__123b,
 	Model__OllamaCloud__Devstral__Small__2__24b,
+	Model__OllamaCloud__GLM__4_6,
+	Model__OllamaCloud__GLM__4_7,
+	Model__OllamaCloud__GLM__5,
+	Model__OllamaCloud__GLM__5_1,
 	Model__OllamaCloud__GPT__Oss__120b,
 	Model__OllamaCloud__GPT__Oss__20b,
 	Model__OllamaCloud__Gemini__3__Flash__3__Preview,
@@ -8198,18 +8188,14 @@ var allModelConstants = [...]ModelID{
 	Model__OllamaCloud__Gemma3__27b,
 	Model__OllamaCloud__Gemma3__4b,
 	Model__OllamaCloud__Gemma4__31b,
-	Model__OllamaCloud__Glm__4_6,
-	Model__OllamaCloud__Glm__4_7,
-	Model__OllamaCloud__Glm__5,
-	Model__OllamaCloud__Glm__5_1,
 	Model__OllamaCloud__Kimi__K2__1t__2,
 	Model__OllamaCloud__Kimi__K2__2__Thinking,
 	Model__OllamaCloud__Kimi__K2__5__2_5,
 	Model__OllamaCloud__Kimi__K2__6__2_6,
-	Model__OllamaCloud__Minimax__M2__1__2_1,
-	Model__OllamaCloud__Minimax__M2__2,
-	Model__OllamaCloud__Minimax__M2__5__2_5,
-	Model__OllamaCloud__Minimax__M2__7__2_7,
+	Model__OllamaCloud__MiniMax__M2__1__2_1,
+	Model__OllamaCloud__MiniMax__M2__2,
+	Model__OllamaCloud__MiniMax__M2__5__2_5,
+	Model__OllamaCloud__MiniMax__M2__7__2_7,
 	Model__OllamaCloud__Ministral__3__14b,
 	Model__OllamaCloud__Ministral__3__3b,
 	Model__OllamaCloud__Ministral__3__8b,
@@ -8275,18 +8261,18 @@ var allModelConstants = [...]ModelID{
 	Model__OpenAI__Text__Embedding__3__Large__3,
 	Model__OpenAI__Text__Embedding__3__Small__3,
 	Model__OpenAI__Text__Embedding__Ada__002,
-	Model__OpenCodeGo__Deepseek__V4__Flash,
-	Model__OpenCodeGo__Deepseek__V4__Pro__Thinking,
-	Model__OpenCodeGo__Glm__5,
-	Model__OpenCodeGo__Glm__5_1,
+	Model__OpenCodeGo__DeepSeek__V4__Flash,
+	Model__OpenCodeGo__DeepSeek__V4__Pro__Thinking,
+	Model__OpenCodeGo__GLM__5,
+	Model__OpenCodeGo__GLM__5_1,
 	Model__OpenCodeGo__Kimi__K2__5__2_5,
 	Model__OpenCodeGo__Kimi__K2__6__2_6,
 	Model__OpenCodeGo__Mimo__V2__2__Omni,
 	Model__OpenCodeGo__Mimo__V2__2__Pro,
 	Model__OpenCodeGo__Mimo__V2__5__2_5,
 	Model__OpenCodeGo__Mimo__V2__5__2_5__Pro,
-	Model__OpenCodeGo__Minimax__M2__5__2_5,
-	Model__OpenCodeGo__Minimax__M2__7__2_7,
+	Model__OpenCodeGo__MiniMax__M2__5__2_5,
+	Model__OpenCodeGo__MiniMax__M2__7__2_7,
 	Model__OpenCodeGo__Qwen3__5__Plus__3_5,
 	Model__OpenCodeGo__Qwen3__6__Plus__3_6,
 	Model__OpenCodeGo__Qwen3__7__Max__3_7,
@@ -8301,7 +8287,13 @@ var allModelConstants = [...]ModelID{
 	Model__OpenCode__Claude__Sonnet__4,
 	Model__OpenCode__Claude__Sonnet__4_5,
 	Model__OpenCode__Claude__Sonnet__4_6,
-	Model__OpenCode__Deepseek__V4__Flash__Free,
+	Model__OpenCode__DeepSeek__V4__Flash__Free,
+	Model__OpenCode__GLM__4_6,
+	Model__OpenCode__GLM__4_7,
+	Model__OpenCode__GLM__4__7__Free__4_7,
+	Model__OpenCode__GLM__5,
+	Model__OpenCode__GLM__5_1,
+	Model__OpenCode__GLM__5__Free__5,
 	Model__OpenCode__GPT__5,
 	Model__OpenCode__GPT__5_1,
 	Model__OpenCode__GPT__5_2,
@@ -8323,12 +8315,6 @@ var allModelConstants = [...]ModelID{
 	Model__OpenCode__Gemini__3__5__Flash__3_5,
 	Model__OpenCode__Gemini__3__Flash__3,
 	Model__OpenCode__Gemini__3__Pro__3,
-	Model__OpenCode__Glm__4_6,
-	Model__OpenCode__Glm__4_7,
-	Model__OpenCode__Glm__4__7__Free__4_7,
-	Model__OpenCode__Glm__5,
-	Model__OpenCode__Glm__5_1,
-	Model__OpenCode__Glm__5__Free__5,
 	Model__OpenCode__Grok__Build__0_1,
 	Model__OpenCode__Grok__Code,
 	Model__OpenCode__Hy3__Preview__Free__3,
@@ -8342,11 +8328,11 @@ var allModelConstants = [...]ModelID{
 	Model__OpenCode__Mimo__V2__Flash__Free,
 	Model__OpenCode__Mimo__V2__Omni__Free,
 	Model__OpenCode__Mimo__V2__Pro__Free,
-	Model__OpenCode__Minimax__M2__1__2_1,
-	Model__OpenCode__Minimax__M2__1__Free,
-	Model__OpenCode__Minimax__M2__5__2_5,
-	Model__OpenCode__Minimax__M2__5__Free,
-	Model__OpenCode__Minimax__M2__7__2_7,
+	Model__OpenCode__MiniMax__M2__1__2_1,
+	Model__OpenCode__MiniMax__M2__1__Free,
+	Model__OpenCode__MiniMax__M2__5__2_5,
+	Model__OpenCode__MiniMax__M2__5__Free,
+	Model__OpenCode__MiniMax__M2__7__2_7,
 	Model__OpenCode__Nemotron__3__Super__Free__3,
 	Model__OpenCode__Qwen3__5__Plus__3_5,
 	Model__OpenCode__Qwen3__6__Plus__3_6,
@@ -8378,7 +8364,7 @@ var allModelConstants = [...]ModelID{
 	Model__OpenRouter__Claude__Sonnet__4_5,
 	Model__OpenRouter__Claude__Sonnet__4_6,
 	Model__OpenRouter__Claude__Sonnet__Latest,
-	Model__OpenRouter__Codellama__7b__Instruct__Solidity__Instruct,
+	Model__OpenRouter__CodeLlama__7b__Instruct__Solidity__Instruct,
 	Model__OpenRouter__Coder__Large,
 	Model__OpenRouter__Codestral__2508,
 	Model__OpenRouter__Cogito__V2__1__671b,
@@ -8387,20 +8373,20 @@ var allModelConstants = [...]ModelID{
 	Model__OpenRouter__Command__R__20240830,
 	Model__OpenRouter__Command__R__Plus__20240830,
 	Model__OpenRouter__Cydonia__24b__V4__1,
-	Model__OpenRouter__Deepseek__Chat,
-	Model__OpenRouter__Deepseek__Chat__V3__0324,
-	Model__OpenRouter__Deepseek__Chat__V3__1__3_1,
-	Model__OpenRouter__Deepseek__R1__0528,
-	Model__OpenRouter__Deepseek__R1__Distill__Llama__70b__Thinking,
-	Model__OpenRouter__Deepseek__R1__Distill__Qwen__32b,
-	Model__OpenRouter__Deepseek__R1__Thinking,
-	Model__OpenRouter__Deepseek__V3__1__Nex__N1,
-	Model__OpenRouter__Deepseek__V3__1__Terminus,
-	Model__OpenRouter__Deepseek__V3__2,
-	Model__OpenRouter__Deepseek__V3__2__Exp,
-	Model__OpenRouter__Deepseek__V4__Flash,
-	Model__OpenRouter__Deepseek__V4__Flash__Free,
-	Model__OpenRouter__Deepseek__V4__Pro__Thinking,
+	Model__OpenRouter__DeepSeek__Chat,
+	Model__OpenRouter__DeepSeek__Chat__V3__0324,
+	Model__OpenRouter__DeepSeek__Chat__V3__1__3_1,
+	Model__OpenRouter__DeepSeek__R1__0528,
+	Model__OpenRouter__DeepSeek__R1__Distill__Llama__70b__Thinking,
+	Model__OpenRouter__DeepSeek__R1__Distill__Qwen__32b,
+	Model__OpenRouter__DeepSeek__R1__Thinking,
+	Model__OpenRouter__DeepSeek__V3__1__Nex__N1,
+	Model__OpenRouter__DeepSeek__V3__1__Terminus,
+	Model__OpenRouter__DeepSeek__V3__2,
+	Model__OpenRouter__DeepSeek__V3__2__Exp,
+	Model__OpenRouter__DeepSeek__V4__Flash,
+	Model__OpenRouter__DeepSeek__V4__Flash__Free,
+	Model__OpenRouter__DeepSeek__V4__Pro__Thinking,
 	Model__OpenRouter__Devstral__2512,
 	Model__OpenRouter__Devstral__Medium,
 	Model__OpenRouter__Devstral__Small,
@@ -8411,6 +8397,19 @@ var allModelConstants = [...]ModelID{
 	Model__OpenRouter__Ernie__4__5__Vl__28b__A3b__4_5,
 	Model__OpenRouter__Ernie__4__5__Vl__424b__A47b__4_5,
 	Model__OpenRouter__Free,
+	Model__OpenRouter__GLM__4_5,
+	Model__OpenRouter__GLM__4_6,
+	Model__OpenRouter__GLM__4_7,
+	Model__OpenRouter__GLM__4__32b__4,
+	Model__OpenRouter__GLM__4__5__Air__4_5,
+	Model__OpenRouter__GLM__4__5__Air__Free__4_5,
+	Model__OpenRouter__GLM__4__5v__4_5,
+	Model__OpenRouter__GLM__4__6v__4_6,
+	Model__OpenRouter__GLM__4__7__Flash__4_7,
+	Model__OpenRouter__GLM__5,
+	Model__OpenRouter__GLM__5_1,
+	Model__OpenRouter__GLM__5__Turbo,
+	Model__OpenRouter__GLM__5v__5__Turbo,
 	Model__OpenRouter__GPT__3_5__Turbo,
 	Model__OpenRouter__GPT__3_5__TurboInstruct,
 	Model__OpenRouter__GPT__3__5__Turbo__0613__3_5__Turbo,
@@ -8495,19 +8494,6 @@ var allModelConstants = [...]ModelID{
 	Model__OpenRouter__Gemma__4__26b__A4b__It__Free__4,
 	Model__OpenRouter__Gemma__4__31b__It__4,
 	Model__OpenRouter__Gemma__4__31b__It__Free__4,
-	Model__OpenRouter__Glm__4_5,
-	Model__OpenRouter__Glm__4_6,
-	Model__OpenRouter__Glm__4_7,
-	Model__OpenRouter__Glm__4__32b__4,
-	Model__OpenRouter__Glm__4__5__Air__4_5,
-	Model__OpenRouter__Glm__4__5__Air__Free__4_5,
-	Model__OpenRouter__Glm__4__5v__4_5,
-	Model__OpenRouter__Glm__4__6v__4_6,
-	Model__OpenRouter__Glm__4__7__Flash__4_7,
-	Model__OpenRouter__Glm__5,
-	Model__OpenRouter__Glm__5_1,
-	Model__OpenRouter__Glm__5__Turbo,
-	Model__OpenRouter__Glm__5v__5__Turbo,
 	Model__OpenRouter__Granite__4__0__H__Micro__4_0,
 	Model__OpenRouter__Granite__4__1__8b__4_1,
 	Model__OpenRouter__Grok__4_20,
@@ -8571,14 +8557,14 @@ var allModelConstants = [...]ModelID{
 	Model__OpenRouter__Mimo__V2__5__2_5,
 	Model__OpenRouter__Mimo__V2__5__2_5__Pro,
 	Model__OpenRouter__Mimo__V2__Flash,
-	Model__OpenRouter__Minimax__01,
-	Model__OpenRouter__Minimax__M1__1,
-	Model__OpenRouter__Minimax__M2__1__2_1,
-	Model__OpenRouter__Minimax__M2__2,
-	Model__OpenRouter__Minimax__M2__5__2_5,
-	Model__OpenRouter__Minimax__M2__5__Free__2_5,
-	Model__OpenRouter__Minimax__M2__7__2_7,
-	Model__OpenRouter__Minimax__M2__Her,
+	Model__OpenRouter__MiniMax__01,
+	Model__OpenRouter__MiniMax__M1__1,
+	Model__OpenRouter__MiniMax__M2__1__2_1,
+	Model__OpenRouter__MiniMax__M2__2,
+	Model__OpenRouter__MiniMax__M2__5__2_5,
+	Model__OpenRouter__MiniMax__M2__5__Free__2_5,
+	Model__OpenRouter__MiniMax__M2__7__2_7,
+	Model__OpenRouter__MiniMax__M2__Her,
 	Model__OpenRouter__Ministral__14b__2512,
 	Model__OpenRouter__Ministral__3b__2512,
 	Model__OpenRouter__Ministral__8b__2512,
@@ -8623,7 +8609,7 @@ var allModelConstants = [...]ModelID{
 	Model__OpenRouter__O4__4__Mini,
 	Model__OpenRouter__O4__Mini__Deep__Research__4__Mini,
 	Model__OpenRouter__O4__Mini__High__4__Mini,
-	Model__OpenRouter__Olmo__3__32b__3__Think,
+	Model__OpenRouter__OLMo__3__32b__3__Think,
 	Model__OpenRouter__Owl__Alpha,
 	Model__OpenRouter__Palmyra__X5,
 	Model__OpenRouter__Pareto__Code,
@@ -8709,7 +8695,7 @@ var allModelConstants = [...]ModelID{
 	Model__OpenRouter__Virtuoso__Large,
 	Model__OpenRouter__Voxtral__Small__24b__2507,
 	Model__OpenRouter__Weaver,
-	Model__OpenRouter__Wizardlm__2__8x22b__2,
+	Model__OpenRouter__WizardLM__2__8x22b__2,
 	Model__OrcaRouter__Auto,
 	Model__OrcaRouter__Claude__Haiku__4_5,
 	Model__OrcaRouter__Claude__Opus__4,
@@ -8720,10 +8706,16 @@ var allModelConstants = [...]ModelID{
 	Model__OrcaRouter__Claude__Sonnet__4,
 	Model__OrcaRouter__Claude__Sonnet__4_5,
 	Model__OrcaRouter__Claude__Sonnet__4_6,
-	Model__OrcaRouter__Deepseek__Chat,
-	Model__OrcaRouter__Deepseek__Reasoner__Thinking,
-	Model__OrcaRouter__Deepseek__V4__Flash,
-	Model__OrcaRouter__Deepseek__V4__Pro__Thinking,
+	Model__OrcaRouter__DeepSeek__Chat,
+	Model__OrcaRouter__DeepSeek__Reasoner__Thinking,
+	Model__OrcaRouter__DeepSeek__V4__Flash,
+	Model__OrcaRouter__DeepSeek__V4__Pro__Thinking,
+	Model__OrcaRouter__GLM__4_5,
+	Model__OrcaRouter__GLM__4_6,
+	Model__OrcaRouter__GLM__4_7,
+	Model__OrcaRouter__GLM__4__5__Air__4_5,
+	Model__OrcaRouter__GLM__5,
+	Model__OrcaRouter__GLM__5_1,
 	Model__OrcaRouter__GPT__3_5__Turbo,
 	Model__OrcaRouter__GPT__4,
 	Model__OrcaRouter__GPT__4_1,
@@ -8770,19 +8762,13 @@ var allModelConstants = [...]ModelID{
 	Model__OrcaRouter__Gemini__Flash__Lite__Latest,
 	Model__OrcaRouter__Gemma__4__26b__A4b__It__4,
 	Model__OrcaRouter__Gemma__4__31b__It__4,
-	Model__OrcaRouter__Glm__4_5,
-	Model__OrcaRouter__Glm__4_6,
-	Model__OrcaRouter__Glm__4_7,
-	Model__OrcaRouter__Glm__4__5__Air__4_5,
-	Model__OrcaRouter__Glm__5,
-	Model__OrcaRouter__Glm__5_1,
 	Model__OrcaRouter__Grok__4_3,
 	Model__OrcaRouter__Kimi__K2__5__2_5,
 	Model__OrcaRouter__Kimi__K2__6__2_6,
-	Model__OrcaRouter__Minimax__M2__5__2_5,
-	Model__OrcaRouter__Minimax__M2__5__2_5__Highspeed,
-	Model__OrcaRouter__Minimax__M2__7__2_7,
-	Model__OrcaRouter__Minimax__M2__7__2_7__Highspeed,
+	Model__OrcaRouter__MiniMax__M2__5__2_5,
+	Model__OrcaRouter__MiniMax__M2__5__2_5__Highspeed,
+	Model__OrcaRouter__MiniMax__M2__7__2_7,
+	Model__OrcaRouter__MiniMax__M2__7__2_7__Highspeed,
 	Model__OrcaRouter__Qwen3__5__122b__A10b__3_5,
 	Model__OrcaRouter__Qwen3__5__27b__3_5,
 	Model__OrcaRouter__Qwen3__5__35b__A3b__3_5,
@@ -8831,12 +8817,18 @@ var allModelConstants = [...]ModelID{
 	Model__Poe__Claude__Sonnet__4_5,
 	Model__Poe__Claude__Sonnet__4_6,
 	Model__Poe__Dall__E__3,
-	Model__Poe__Deepseek__V3__2,
-	Model__Poe__Deepseek__V4__Flash__El,
-	Model__Poe__Deepseek__V4__Pro__El,
+	Model__Poe__DeepSeek__V3__2,
+	Model__Poe__DeepSeek__V4__Flash__El,
+	Model__Poe__DeepSeek__V4__Pro__El,
 	Model__Poe__Elevenlabs__Music,
 	Model__Poe__Elevenlabs__V2__5__Turbo,
 	Model__Poe__Elevenlabs__V3,
+	Model__Poe__GLM__4_6,
+	Model__Poe__GLM__4_7,
+	Model__Poe__GLM__4__6v__4_6,
+	Model__Poe__GLM__4__7__Flash__4_7,
+	Model__Poe__GLM__4__7__N__4_7,
+	Model__Poe__GLM__5,
 	Model__Poe__GPT__3_5__Turbo,
 	Model__Poe__GPT__3_5__TurboInstruct,
 	Model__Poe__GPT__3__5__Turbo__Raw__3_5__Turbo,
@@ -8892,12 +8884,6 @@ var allModelConstants = [...]ModelID{
 	Model__Poe__Gemini__3__Pro__3,
 	Model__Poe__Gemini__Deep__Research,
 	Model__Poe__Gemma__4__31b__4,
-	Model__Poe__Glm__4_6,
-	Model__Poe__Glm__4_7,
-	Model__Poe__Glm__4__6v__4_6,
-	Model__Poe__Glm__4__7__Flash__4_7,
-	Model__Poe__Glm__4__7__N__4_7,
-	Model__Poe__Glm__5,
 	Model__Poe__Grok__3,
 	Model__Poe__Grok__3__Mini__3,
 	Model__Poe__Grok__4,
@@ -8923,7 +8909,7 @@ var allModelConstants = [...]ModelID{
 	Model__Poe__Llama__3__1__8b__Cs__3_1,
 	Model__Poe__Llama__3__3__70b__Cs__3_3,
 	Model__Poe__Lyria,
-	Model__Poe__Minimax__M2__1__2_1,
+	Model__Poe__MiniMax__M2__1__2_1,
 	Model__Poe__Nano__Banana,
 	Model__Poe__Nano__Banana__Pro,
 	Model__Poe__O1__1,
@@ -8976,17 +8962,17 @@ var allModelConstants = [...]ModelID{
 	Model__QiniuAI__Claude__4__5__Haiku__4_5,
 	Model__QiniuAI__Claude__4__5__Opus__4_5,
 	Model__QiniuAI__Claude__4__5__Sonnet__4_5,
-	Model__QiniuAI__Deepseek__Math__V2,
-	Model__QiniuAI__Deepseek__R1,
-	Model__QiniuAI__Deepseek__R1__0528,
-	Model__QiniuAI__Deepseek__V3,
-	Model__QiniuAI__Deepseek__V3__0324,
-	Model__QiniuAI__Deepseek__V3__1,
-	Model__QiniuAI__Deepseek__V3__1__Terminus,
-	Model__QiniuAI__Deepseek__V3__1__Terminus__Thinking,
-	Model__QiniuAI__Deepseek__V3__2__251201,
-	Model__QiniuAI__Deepseek__V3__2__Exp,
-	Model__QiniuAI__Deepseek__V3__2__Exp__Thinking,
+	Model__QiniuAI__DeepSeek__Math__V2,
+	Model__QiniuAI__DeepSeek__R1,
+	Model__QiniuAI__DeepSeek__R1__0528,
+	Model__QiniuAI__DeepSeek__V3,
+	Model__QiniuAI__DeepSeek__V3__0324,
+	Model__QiniuAI__DeepSeek__V3__1,
+	Model__QiniuAI__DeepSeek__V3__1__Terminus,
+	Model__QiniuAI__DeepSeek__V3__1__Terminus__Thinking,
+	Model__QiniuAI__DeepSeek__V3__2__251201,
+	Model__QiniuAI__DeepSeek__V3__2__Exp,
+	Model__QiniuAI__DeepSeek__V3__2__Exp__Thinking,
 	Model__QiniuAI__Doubao__1__5__Pro__32k__1_5,
 	Model__QiniuAI__Doubao__1__5__Thinking__Pro__1_5,
 	Model__QiniuAI__Doubao__1__5__Vision__Pro__1_5,
@@ -8997,6 +8983,11 @@ var allModelConstants = [...]ModelID{
 	Model__QiniuAI__Doubao__Seed__2__0__Lite__2_0,
 	Model__QiniuAI__Doubao__Seed__2__0__Mini__2_0,
 	Model__QiniuAI__Doubao__Seed__2__0__Pro__2_0,
+	Model__QiniuAI__GLM__4_5,
+	Model__QiniuAI__GLM__4_6,
+	Model__QiniuAI__GLM__4_7,
+	Model__QiniuAI__GLM__4__5__Air__4_5,
+	Model__QiniuAI__GLM__5,
 	Model__QiniuAI__GPT__5,
 	Model__QiniuAI__GPT__5_2,
 	Model__QiniuAI__GPT__Oss__120b,
@@ -9011,11 +9002,6 @@ var allModelConstants = [...]ModelID{
 	Model__QiniuAI__Gemini__3__0__Flash__3_0__Preview,
 	Model__QiniuAI__Gemini__3__0__Pro__3_0__Preview,
 	Model__QiniuAI__Gemini__3__0__Pro__Image__3_0__Preview,
-	Model__QiniuAI__Glm__4_5,
-	Model__QiniuAI__Glm__4_6,
-	Model__QiniuAI__Glm__4_7,
-	Model__QiniuAI__Glm__4__5__Air__4_5,
-	Model__QiniuAI__Glm__5,
 	Model__QiniuAI__Grok__4_1__Fast,
 	Model__QiniuAI__Grok__4_1__ReasoningFast,
 	Model__QiniuAI__Grok__4__1__Fast__Non__4_1__Reasoning,
@@ -9032,11 +9018,11 @@ var allModelConstants = [...]ModelID{
 	Model__QiniuAI__Longcat__Flash__Lite,
 	Model__QiniuAI__Mimo__V2__Flash_1,
 	Model__QiniuAI__Mimo__V2__Flash_2,
-	Model__QiniuAI__Minimax__M1__1,
-	Model__QiniuAI__Minimax__M2__1__2_1,
-	Model__QiniuAI__Minimax__M2__2,
-	Model__QiniuAI__Minimax__M2__5__2_5,
-	Model__QiniuAI__Minimax__M2__5__2_5__Highspeed,
+	Model__QiniuAI__MiniMax__M1__1,
+	Model__QiniuAI__MiniMax__M2__1__2_1,
+	Model__QiniuAI__MiniMax__M2__2,
+	Model__QiniuAI__MiniMax__M2__5__2_5,
+	Model__QiniuAI__MiniMax__M2__5__2_5__Highspeed,
 	Model__QiniuAI__Qwen2__5__Vl__72b__2_5__Instruct,
 	Model__QiniuAI__Qwen2__5__Vl__7b__2_5__Instruct,
 	Model__QiniuAI__Qwen3__235b__A22b__3,
@@ -9061,7 +9047,7 @@ var allModelConstants = [...]ModelID{
 	Model__RegoloAI__GPT__Oss__20b,
 	Model__RegoloAI__Llama__3__1__8b__3_1__Instruct,
 	Model__RegoloAI__Llama__3__3__70b__3_3__Instruct,
-	Model__RegoloAI__Minimax__M2__5__2_5,
+	Model__RegoloAI__MiniMax__M2__5__2_5,
 	Model__RegoloAI__Mistral__Small3__2,
 	Model__RegoloAI__Mistral__Small__4__119b__4,
 	Model__RegoloAI__Qwen3__5__122b__3_5,
@@ -9108,24 +9094,24 @@ var allModelConstants = [...]ModelID{
 	Model__Requesty__Grok__4,
 	Model__Requesty__Grok__4__Fast,
 	Model__Requesty__O4__4__Mini,
-	Model__RoutingRun__Deepseek__V3__2,
-	Model__RoutingRun__Deepseek__V4__Flash,
-	Model__RoutingRun__Deepseek__V4__Flash__6bit,
-	Model__RoutingRun__Deepseek__V4__Pro__6bit__Thinking,
-	Model__RoutingRun__Deepseek__V4__Pro__Thinking,
+	Model__RoutingRun__DeepSeek__V3__2,
+	Model__RoutingRun__DeepSeek__V4__Flash,
+	Model__RoutingRun__DeepSeek__V4__Flash__6bit,
+	Model__RoutingRun__DeepSeek__V4__Pro__6bit__Thinking,
+	Model__RoutingRun__DeepSeek__V4__Pro__Thinking,
+	Model__RoutingRun__GLM__5_1,
+	Model__RoutingRun__GLM__5__1__6bit__5_1,
 	Model__RoutingRun__Gemma__4__31b__It__4,
-	Model__RoutingRun__Glm__5_1,
-	Model__RoutingRun__Glm__5__1__6bit__5_1,
 	Model__RoutingRun__Kimi__K2__5__2_5,
 	Model__RoutingRun__Kimi__K2__6__2_6,
 	Model__RoutingRun__Kimi__K2__6__6bit,
 	Model__RoutingRun__Mimo__V2__5__2_5,
 	Model__RoutingRun__Mimo__V2__5__2_5__Pro,
 	Model__RoutingRun__Mimo__V2__5__Pro__6bit,
-	Model__RoutingRun__Minimax__M2__5__2_5,
-	Model__RoutingRun__Minimax__M2__5__2_5__Highspeed,
-	Model__RoutingRun__Minimax__M2__7__2_7,
-	Model__RoutingRun__Minimax__M2__7__2_7__Highspeed,
+	Model__RoutingRun__MiniMax__M2__5__2_5,
+	Model__RoutingRun__MiniMax__M2__5__2_5__Highspeed,
+	Model__RoutingRun__MiniMax__M2__7__2_7,
+	Model__RoutingRun__MiniMax__M2__7__2_7__Highspeed,
 	Model__RoutingRun__Mistral__Large__3,
 	Model__RoutingRun__Mistral__Medium__2505,
 	Model__RoutingRun__Mistral__Small__2503,
@@ -9185,31 +9171,31 @@ var allModelConstants = [...]ModelID{
 	Model__Scaleway__Qwen3__Embedding__8b__3,
 	Model__Scaleway__Voxtral__Small__24b__2507,
 	Model__Scaleway__Whisper__Large__V3,
-	Model__SiliconFlowCN__Deepseek__Ocr,
-	Model__SiliconFlowCN__Deepseek__R1__Distill__Qwen__14B,
-	Model__SiliconFlowCN__Deepseek__R1__Distill__Qwen__32B,
-	Model__SiliconFlowCN__Deepseek__R1__Thinking_1,
-	Model__SiliconFlowCN__Deepseek__R1__Thinking_2,
-	Model__SiliconFlowCN__Deepseek__V3_1,
-	Model__SiliconFlowCN__Deepseek__V3_2,
-	Model__SiliconFlowCN__Deepseek__V3__1__Terminus_1,
-	Model__SiliconFlowCN__Deepseek__V3__1__Terminus_2,
-	Model__SiliconFlowCN__Deepseek__V3__2_1,
-	Model__SiliconFlowCN__Deepseek__V3__2_2,
-	Model__SiliconFlowCN__Deepseek__V4__Pro__Thinking,
-	Model__SiliconFlowCN__Deepseek__Vl2,
+	Model__SiliconFlowCN__DeepSeek__Ocr,
+	Model__SiliconFlowCN__DeepSeek__R1__Distill__Qwen__14B,
+	Model__SiliconFlowCN__DeepSeek__R1__Distill__Qwen__32B,
+	Model__SiliconFlowCN__DeepSeek__R1__Thinking_1,
+	Model__SiliconFlowCN__DeepSeek__R1__Thinking_2,
+	Model__SiliconFlowCN__DeepSeek__V3_1,
+	Model__SiliconFlowCN__DeepSeek__V3_2,
+	Model__SiliconFlowCN__DeepSeek__V3__1__Terminus_1,
+	Model__SiliconFlowCN__DeepSeek__V3__1__Terminus_2,
+	Model__SiliconFlowCN__DeepSeek__V3__2_1,
+	Model__SiliconFlowCN__DeepSeek__V3__2_2,
+	Model__SiliconFlowCN__DeepSeek__V4__Pro__Thinking,
+	Model__SiliconFlowCN__DeepSeek__Vl2,
 	Model__SiliconFlowCN__Ernie__4__5__300B__A47b__4_5,
-	Model__SiliconFlowCN__Glm__4_6,
-	Model__SiliconFlowCN__Glm__4_7,
-	Model__SiliconFlowCN__Glm__4__32B__0414__4,
-	Model__SiliconFlowCN__Glm__4__5V__4_5,
-	Model__SiliconFlowCN__Glm__4__5__Air__4_5,
-	Model__SiliconFlowCN__Glm__4__6V__4_6,
-	Model__SiliconFlowCN__Glm__4__9B__0414__4,
-	Model__SiliconFlowCN__Glm__5,
-	Model__SiliconFlowCN__Glm__5_1,
-	Model__SiliconFlowCN__Glm__Z1__32B__0414,
-	Model__SiliconFlowCN__Glm__Z1__9B__0414,
+	Model__SiliconFlowCN__GLM__4_6,
+	Model__SiliconFlowCN__GLM__4_7,
+	Model__SiliconFlowCN__GLM__4__32B__0414__4,
+	Model__SiliconFlowCN__GLM__4__5V__4_5,
+	Model__SiliconFlowCN__GLM__4__5__Air__4_5,
+	Model__SiliconFlowCN__GLM__4__6V__4_6,
+	Model__SiliconFlowCN__GLM__4__9B__0414__4,
+	Model__SiliconFlowCN__GLM__5,
+	Model__SiliconFlowCN__GLM__5_1,
+	Model__SiliconFlowCN__GLM__Z1__32B__0414,
+	Model__SiliconFlowCN__GLM__Z1__9B__0414,
 	Model__SiliconFlowCN__Hunyuan__A13b__Instruct,
 	Model__SiliconFlowCN__Hunyuan__Mt__7B,
 	Model__SiliconFlowCN__Kat__Dev,
@@ -9221,8 +9207,8 @@ var allModelConstants = [...]ModelID{
 	Model__SiliconFlowCN__Kimi__K2__Instruct__0905__2__Instruct_2,
 	Model__SiliconFlowCN__Ling__Flash__2_0,
 	Model__SiliconFlowCN__Ling__Mini__2_0,
-	Model__SiliconFlowCN__Minimax__M2__1__2_1,
-	Model__SiliconFlowCN__Minimax__M2__5__2_5,
+	Model__SiliconFlowCN__MiniMax__M2__1__2_1,
+	Model__SiliconFlowCN__MiniMax__M2__5__2_5,
 	Model__SiliconFlowCN__Paddleocr__Vl,
 	Model__SiliconFlowCN__Paddleocr__Vl__1_5,
 	Model__SiliconFlowCN__Pangu__Pro__Moe,
@@ -9267,34 +9253,34 @@ var allModelConstants = [...]ModelID{
 	Model__SiliconFlowCN__Ring__Flash__2_0,
 	Model__SiliconFlowCN__Seed__Oss__36B__Instruct,
 	Model__SiliconFlowCN__Step__3__5__Flash__3_5,
-	Model__SiliconFlow__Deepseek__R1__Distill__Qwen__14B,
-	Model__SiliconFlow__Deepseek__R1__Distill__Qwen__32B,
-	Model__SiliconFlow__Deepseek__R1__Thinking,
-	Model__SiliconFlow__Deepseek__V3,
-	Model__SiliconFlow__Deepseek__V3__1,
-	Model__SiliconFlow__Deepseek__V3__1__Nex__N1,
-	Model__SiliconFlow__Deepseek__V3__1__Terminus,
-	Model__SiliconFlow__Deepseek__V3__2,
-	Model__SiliconFlow__Deepseek__V3__2__Exp,
-	Model__SiliconFlow__Deepseek__V4__Flash,
-	Model__SiliconFlow__Deepseek__V4__Pro__Thinking,
-	Model__SiliconFlow__Deepseek__Vl2,
+	Model__SiliconFlow__DeepSeek__R1__Distill__Qwen__14B,
+	Model__SiliconFlow__DeepSeek__R1__Distill__Qwen__32B,
+	Model__SiliconFlow__DeepSeek__R1__Thinking,
+	Model__SiliconFlow__DeepSeek__V3,
+	Model__SiliconFlow__DeepSeek__V3__1,
+	Model__SiliconFlow__DeepSeek__V3__1__Nex__N1,
+	Model__SiliconFlow__DeepSeek__V3__1__Terminus,
+	Model__SiliconFlow__DeepSeek__V3__2,
+	Model__SiliconFlow__DeepSeek__V3__2__Exp,
+	Model__SiliconFlow__DeepSeek__V4__Flash,
+	Model__SiliconFlow__DeepSeek__V4__Pro__Thinking,
+	Model__SiliconFlow__DeepSeek__Vl2,
 	Model__SiliconFlow__Ernie__4__5__300B__A47b__4_5,
+	Model__SiliconFlow__GLM__4_5,
+	Model__SiliconFlow__GLM__4_6,
+	Model__SiliconFlow__GLM__4_7,
+	Model__SiliconFlow__GLM__4__32B__0414__4,
+	Model__SiliconFlow__GLM__4__5V__4_5,
+	Model__SiliconFlow__GLM__4__5__Air__4_5,
+	Model__SiliconFlow__GLM__4__6V__4_6,
+	Model__SiliconFlow__GLM__4__9B__0414__4,
+	Model__SiliconFlow__GLM__5,
+	Model__SiliconFlow__GLM__5V__5__Turbo,
+	Model__SiliconFlow__GLM__5_1,
+	Model__SiliconFlow__GLM__Z1__32B__0414,
+	Model__SiliconFlow__GLM__Z1__9B__0414,
 	Model__SiliconFlow__GPT__Oss__120b,
 	Model__SiliconFlow__GPT__Oss__20b,
-	Model__SiliconFlow__Glm__4_5,
-	Model__SiliconFlow__Glm__4_6,
-	Model__SiliconFlow__Glm__4_7,
-	Model__SiliconFlow__Glm__4__32B__0414__4,
-	Model__SiliconFlow__Glm__4__5V__4_5,
-	Model__SiliconFlow__Glm__4__5__Air__4_5,
-	Model__SiliconFlow__Glm__4__6V__4_6,
-	Model__SiliconFlow__Glm__4__9B__0414__4,
-	Model__SiliconFlow__Glm__5,
-	Model__SiliconFlow__Glm__5V__5__Turbo,
-	Model__SiliconFlow__Glm__5_1,
-	Model__SiliconFlow__Glm__Z1__32B__0414,
-	Model__SiliconFlow__Glm__Z1__9B__0414,
 	Model__SiliconFlow__Hunyuan__A13b__Instruct,
 	Model__SiliconFlow__Hunyuan__Mt__7B,
 	Model__SiliconFlow__Kimi__K2__2__Instruct,
@@ -9305,8 +9291,8 @@ var allModelConstants = [...]ModelID{
 	Model__SiliconFlow__Ling__Flash__2_0,
 	Model__SiliconFlow__Ling__Mini__2_0,
 	Model__SiliconFlow__Meta__Llama__3__1__8B__3_1__Instruct,
-	Model__SiliconFlow__Minimax__M2__1__2_1,
-	Model__SiliconFlow__Minimax__M2__5__2_5,
+	Model__SiliconFlow__MiniMax__M2__1__2_1,
+	Model__SiliconFlow__MiniMax__M2__5__2_5,
 	Model__SiliconFlow__Qwen2__5__14B__2_5__Instruct,
 	Model__SiliconFlow__Qwen2__5__32B__2_5__Instruct,
 	Model__SiliconFlow__Qwen2__5__72B__2_5__Instruct,
@@ -9347,41 +9333,41 @@ var allModelConstants = [...]ModelID{
 	Model__SnowflakeCortex__Claude__Opus__4_7,
 	Model__SnowflakeCortex__Claude__Sonnet__4_5,
 	Model__SnowflakeCortex__Claude__Sonnet__4_6,
-	Model__SnowflakeCortex__Openai__GPT__4__1,
-	Model__SnowflakeCortex__Openai__GPT__5,
-	Model__SnowflakeCortex__Openai__GPT__5__1,
-	Model__SnowflakeCortex__Openai__GPT__5__2,
-	Model__SnowflakeCortex__Openai__GPT__5__4,
-	Model__SnowflakeCortex__Openai__GPT__5__Mini,
-	Model__SnowflakeCortex__Openai__GPT__5__Nano,
+	Model__SnowflakeCortex__OpenAI__GPT__4__1,
+	Model__SnowflakeCortex__OpenAI__GPT__5,
+	Model__SnowflakeCortex__OpenAI__GPT__5__1,
+	Model__SnowflakeCortex__OpenAI__GPT__5__2,
+	Model__SnowflakeCortex__OpenAI__GPT__5__4,
+	Model__SnowflakeCortex__OpenAI__GPT__5__Mini,
+	Model__SnowflakeCortex__OpenAI__GPT__5__Nano,
 	Model__StepFunAI__Step__3__5__Flash__2603__3_5,
 	Model__StepFunAI__Step__3__5__Flash__3_5,
 	Model__StepFun__Step__1__32k__1,
 	Model__StepFun__Step__2__16k__2,
 	Model__StepFun__Step__3__5__Flash__2603__3_5,
 	Model__StepFun__Step__3__5__Flash__3_5,
-	Model__Submodel__Deepseek__R1__0528__Thinking,
-	Model__Submodel__Deepseek__V3__0324,
-	Model__Submodel__Deepseek__V3__1,
+	Model__Submodel__DeepSeek__R1__0528__Thinking,
+	Model__Submodel__DeepSeek__V3__0324,
+	Model__Submodel__DeepSeek__V3__1,
+	Model__Submodel__GLM__4__5__Air__4_5,
+	Model__Submodel__GLM__4__5__Fp8__4_5,
 	Model__Submodel__GPT__Oss__120b,
-	Model__Submodel__Glm__4__5__Air__4_5,
-	Model__Submodel__Glm__4__5__Fp8__4_5,
 	Model__Submodel__Qwen3__235B__A22b__Instruct__2507__3__Instruct,
 	Model__Submodel__Qwen3__235B__A22b__Thinking__2507__3__Thinking,
 	Model__Submodel__Qwen3__Coder__480B__A35b__Instruct__Fp8__3__Instruct,
-	Model__Synthetic__Deepseek__R1__0528__Thinking,
-	Model__Synthetic__Deepseek__R1__Thinking,
-	Model__Synthetic__Deepseek__V3,
-	Model__Synthetic__Deepseek__V3__0324,
-	Model__Synthetic__Deepseek__V3__1,
-	Model__Synthetic__Deepseek__V3__1__Terminus,
-	Model__Synthetic__Deepseek__V3__2,
+	Model__Synthetic__DeepSeek__R1__0528__Thinking,
+	Model__Synthetic__DeepSeek__R1__Thinking,
+	Model__Synthetic__DeepSeek__V3,
+	Model__Synthetic__DeepSeek__V3__0324,
+	Model__Synthetic__DeepSeek__V3__1,
+	Model__Synthetic__DeepSeek__V3__1__Terminus,
+	Model__Synthetic__DeepSeek__V3__2,
+	Model__Synthetic__GLM__4_6,
+	Model__Synthetic__GLM__4_7,
+	Model__Synthetic__GLM__4__7__Flash__4_7,
+	Model__Synthetic__GLM__5,
+	Model__Synthetic__GLM__5_1,
 	Model__Synthetic__GPT__Oss__120b,
-	Model__Synthetic__Glm__4_6,
-	Model__Synthetic__Glm__4_7,
-	Model__Synthetic__Glm__4__7__Flash__4_7,
-	Model__Synthetic__Glm__5,
-	Model__Synthetic__Glm__5_1,
 	Model__Synthetic__Kimi__K2__2__Thinking,
 	Model__Synthetic__Kimi__K2__5__2_5,
 	Model__Synthetic__Kimi__K2__5__Nvfp4,
@@ -9393,22 +9379,22 @@ var allModelConstants = [...]ModelID{
 	Model__Synthetic__Llama__3__3__70B__3_3__Instruct,
 	Model__Synthetic__Llama__4__Maverick__17B__128E__Instruct__Fp8__4__Instruct,
 	Model__Synthetic__Llama__4__Scout__17B__16E__4__Instruct,
-	Model__Synthetic__Minimax__M2__1__2_1,
-	Model__Synthetic__Minimax__M2__2,
-	Model__Synthetic__Minimax__M2__5__2_5,
+	Model__Synthetic__MiniMax__M2__1__2_1,
+	Model__Synthetic__MiniMax__M2__2,
+	Model__Synthetic__MiniMax__M2__5__2_5,
 	Model__Synthetic__Nvidia__Nemotron__3__Super__120B__A12b__Nvfp4,
 	Model__Synthetic__Qwen2__5__Coder__32B__2_5__Instruct,
 	Model__Synthetic__Qwen3__235B__A22b__Instruct__2507__3__Instruct,
 	Model__Synthetic__Qwen3__235B__A22b__Thinking__2507__3__Thinking,
 	Model__Synthetic__Qwen3__5__397B__A17b__3_5,
 	Model__Synthetic__Qwen3__Coder__480B__A35b__3__Instruct,
-	Model__TencentCodingPlan__Glm__5,
+	Model__TencentCodingPlan__GLM__5,
 	Model__TencentCodingPlan__Hunyuan__2_0__Instruct,
 	Model__TencentCodingPlan__Hunyuan__2_0__Thinking,
 	Model__TencentCodingPlan__Hunyuan__T1,
 	Model__TencentCodingPlan__Hunyuan__Turbos,
 	Model__TencentCodingPlan__Kimi__K2__5__2_5,
-	Model__TencentCodingPlan__Minimax__M2__5__2_5,
+	Model__TencentCodingPlan__MiniMax__M2__5__2_5,
 	Model__TencentCodingPlan__Tc__LatestCode,
 	Model__TencentTokenHub__Hy3__3__Preview,
 	Model__TheGridAI__Agent__Max,
@@ -9420,28 +9406,28 @@ var allModelConstants = [...]ModelID{
 	Model__TheGridAI__Text__Max,
 	Model__TheGridAI__Text__Prime,
 	Model__TheGridAI__Text__Standard,
-	Model__Togetherai__Deepseek__R1__Thinking,
-	Model__Togetherai__Deepseek__V3,
-	Model__Togetherai__Deepseek__V3__1,
-	Model__Togetherai__Deepseek__V4__Pro,
-	Model__Togetherai__GPT__Oss__120b,
-	Model__Togetherai__Gemma__4__31B__It__4,
-	Model__Togetherai__Glm__5_1,
-	Model__Togetherai__Kimi__K2__5__2_5,
-	Model__Togetherai__Kimi__K2__6__2_6,
-	Model__Togetherai__Llama__3__3__70B__3_3__TurboInstruct,
-	Model__Togetherai__Minimax__M2__5__2_5,
-	Model__Togetherai__Minimax__M2__7__2_7,
-	Model__Togetherai__Qwen3__235B__A22b__Instruct__2507__Tput__3__Instruct,
-	Model__Togetherai__Qwen3__5__397B__A17b__3_5,
-	Model__Togetherai__Qwen3__6__Plus__3_6,
-	Model__Togetherai__Qwen3__7__Max__3_7,
-	Model__Togetherai__Qwen3__Coder__480B__A35b__Instruct__Fp8__3__Instruct,
-	Model__Togetherai__Qwen3__Coder__Next__Fp8__3,
-	Model__Togetherai__Rnj__1__Instruct,
+	Model__TogetherAI__DeepSeek__R1__Thinking,
+	Model__TogetherAI__DeepSeek__V3,
+	Model__TogetherAI__DeepSeek__V3__1,
+	Model__TogetherAI__DeepSeek__V4__Pro,
+	Model__TogetherAI__GLM__5_1,
+	Model__TogetherAI__GPT__Oss__120b,
+	Model__TogetherAI__Gemma__4__31B__It__4,
+	Model__TogetherAI__Kimi__K2__5__2_5,
+	Model__TogetherAI__Kimi__K2__6__2_6,
+	Model__TogetherAI__Llama__3__3__70B__3_3__TurboInstruct,
+	Model__TogetherAI__MiniMax__M2__5__2_5,
+	Model__TogetherAI__MiniMax__M2__7__2_7,
+	Model__TogetherAI__Qwen3__235B__A22b__Instruct__2507__Tput__3__Instruct,
+	Model__TogetherAI__Qwen3__5__397B__A17b__3_5,
+	Model__TogetherAI__Qwen3__6__Plus__3_6,
+	Model__TogetherAI__Qwen3__7__Max__3_7,
+	Model__TogetherAI__Qwen3__Coder__480B__A35b__Instruct__Fp8__3__Instruct,
+	Model__TogetherAI__Qwen3__Coder__Next__Fp8__3,
+	Model__TogetherAI__Rnj__1__Instruct,
 	Model__UmansAICodingPlan__Umans__Coder,
 	Model__UmansAICodingPlan__Umans__Flash,
-	Model__UmansAICodingPlan__Umans__Glm__5__1,
+	Model__UmansAICodingPlan__Umans__GLM__5__1,
 	Model__UmansAICodingPlan__Umans__Kimi__K2__6__2_6,
 	Model__UmansAICodingPlan__Umans__Qwen3__6__35b__A3b,
 	Model__Upstage__Solar__Mini,
@@ -9461,9 +9447,9 @@ var allModelConstants = [...]ModelID{
 	Model__Venice__Claude__Opus__4_8__Fast,
 	Model__Venice__Claude__Sonnet__4_5,
 	Model__Venice__Claude__Sonnet__4_6,
-	Model__Venice__Deepseek__V3__2,
-	Model__Venice__Deepseek__V4__Flash,
-	Model__Venice__Deepseek__V4__Pro,
+	Model__Venice__DeepSeek__V3__2,
+	Model__Venice__DeepSeek__V4__Flash,
+	Model__Venice__DeepSeek__V4__Pro,
 	Model__Venice__Gemini__3__1__Pro__3_1__Preview,
 	Model__Venice__Gemini__3__5__Flash__3_5,
 	Model__Venice__Gemini__3__Flash__3__Preview,
@@ -9481,24 +9467,24 @@ var allModelConstants = [...]ModelID{
 	Model__Venice__Llama__3__2__3b__3_2,
 	Model__Venice__Llama__3__3__70b__3_3,
 	Model__Venice__Mercury__2,
-	Model__Venice__Minimax__M25__25,
-	Model__Venice__Minimax__M27__27,
+	Model__Venice__MiniMax__M25__25,
+	Model__Venice__MiniMax__M27__27,
 	Model__Venice__Mistral__Small__2603,
 	Model__Venice__Mistral__Small__3__2__24b__3_2__Instruct,
 	Model__Venice__Nvidia__Nemotron__3__Nano__30b__A3b,
 	Model__Venice__Nvidia__Nemotron__Cascade__2__30b__A3b,
-	Model__Venice__Olafangensan__Glm__4__7__Flash__Heretic,
-	Model__Venice__Openai__GPT__4o__20241120,
-	Model__Venice__Openai__GPT__4o__Mini__Mini__20240718,
-	Model__Venice__Openai__GPT__52,
-	Model__Venice__Openai__GPT__52__Codex,
-	Model__Venice__Openai__GPT__53__Codex,
-	Model__Venice__Openai__GPT__54,
-	Model__Venice__Openai__GPT__54__Mini,
-	Model__Venice__Openai__GPT__54__Pro,
-	Model__Venice__Openai__GPT__55,
-	Model__Venice__Openai__GPT__55__Pro,
-	Model__Venice__Openai__GPT__Oss__120b,
+	Model__Venice__Olafangensan__GLM__4__7__Flash__Heretic,
+	Model__Venice__OpenAI__GPT__4o__20241120,
+	Model__Venice__OpenAI__GPT__4o__Mini__Mini__20240718,
+	Model__Venice__OpenAI__GPT__52,
+	Model__Venice__OpenAI__GPT__52__Codex,
+	Model__Venice__OpenAI__GPT__53__Codex,
+	Model__Venice__OpenAI__GPT__54,
+	Model__Venice__OpenAI__GPT__54__Mini,
+	Model__Venice__OpenAI__GPT__54__Pro,
+	Model__Venice__OpenAI__GPT__55,
+	Model__Venice__OpenAI__GPT__55__Pro,
+	Model__Venice__OpenAI__GPT__Oss__120b,
 	Model__Venice__Qwen3__235b__A22b__Instruct__2507__3__Instruct,
 	Model__Venice__Qwen3__235b__A22b__Thinking__2507__3__Thinking,
 	Model__Venice__Qwen3__5__35b__A3b__3,
@@ -9512,13 +9498,13 @@ var allModelConstants = [...]ModelID{
 	Model__Venice__Qwen__3__7__Max__3_7,
 	Model__Venice__Venice__Uncensored__1_2,
 	Model__Venice__Venice__Uncensored__Role__Play,
-	Model__Venice__Z__AI__Glm__5__Turbo,
-	Model__Venice__Z__AI__Glm__5v__5__Turbo,
-	Model__Venice__Zai__Org__Glm__4__6,
-	Model__Venice__Zai__Org__Glm__4__7,
-	Model__Venice__Zai__Org__Glm__4__7__Flash,
-	Model__Venice__Zai__Org__Glm__5,
-	Model__Venice__Zai__Org__Glm__5__1,
+	Model__Venice__Z__AI__GLM__5__Turbo,
+	Model__Venice__Z__AI__GLM__5v__5__Turbo,
+	Model__Venice__Zai__Org__GLM__4__6,
+	Model__Venice__Zai__Org__GLM__4__7,
+	Model__Venice__Zai__Org__GLM__4__7__Flash,
+	Model__Venice__Zai__Org__GLM__5,
+	Model__Venice__Zai__Org__GLM__5__1,
 	Model__Vercel__Claude__3__5__Haiku__3_5,
 	Model__Vercel__Claude__3__5__Sonnet__3_5,
 	Model__Vercel__Claude__3__5__Sonnet__3_5__20240620,
@@ -9539,15 +9525,15 @@ var allModelConstants = [...]ModelID{
 	Model__Vercel__Codestral__Embed,
 	Model__Vercel__Codex__Mini,
 	Model__Vercel__Command__A,
-	Model__Vercel__Deepseek__R1__Thinking,
-	Model__Vercel__Deepseek__V3,
-	Model__Vercel__Deepseek__V3__1,
-	Model__Vercel__Deepseek__V3__1__Terminus,
-	Model__Vercel__Deepseek__V3__2,
-	Model__Vercel__Deepseek__V3__2__Exp,
-	Model__Vercel__Deepseek__V3__2__Thinking,
-	Model__Vercel__Deepseek__V4__Flash,
-	Model__Vercel__Deepseek__V4__Pro,
+	Model__Vercel__DeepSeek__R1__Thinking,
+	Model__Vercel__DeepSeek__V3,
+	Model__Vercel__DeepSeek__V3__1,
+	Model__Vercel__DeepSeek__V3__1__Terminus,
+	Model__Vercel__DeepSeek__V3__2,
+	Model__Vercel__DeepSeek__V3__2__Exp,
+	Model__Vercel__DeepSeek__V3__2__Thinking,
+	Model__Vercel__DeepSeek__V4__Flash,
+	Model__Vercel__DeepSeek__V4__Pro,
 	Model__Vercel__Devstral__2,
 	Model__Vercel__Devstral__Small,
 	Model__Vercel__Devstral__Small__2,
@@ -9557,6 +9543,19 @@ var allModelConstants = [...]ModelID{
 	Model__Vercel__Flux__Pro__1_1,
 	Model__Vercel__Flux__Pro__1__0__Fill,
 	Model__Vercel__Flux__Pro__1__1__Ultra__1_1,
+	Model__Vercel__GLM__4_5,
+	Model__Vercel__GLM__4_6,
+	Model__Vercel__GLM__4_7,
+	Model__Vercel__GLM__4__5__Air__4_5,
+	Model__Vercel__GLM__4__5v__4_5,
+	Model__Vercel__GLM__4__6v__4_6,
+	Model__Vercel__GLM__4__6v__4_6__Flash,
+	Model__Vercel__GLM__4__7__Flash__4_7,
+	Model__Vercel__GLM__4__7__Flashx__4_7,
+	Model__Vercel__GLM__5,
+	Model__Vercel__GLM__5_1,
+	Model__Vercel__GLM__5__Turbo,
+	Model__Vercel__GLM__5v__5__Turbo,
 	Model__Vercel__GPT__3_5__Turbo,
 	Model__Vercel__GPT__3_5__TurboInstruct,
 	Model__Vercel__GPT__4_1,
@@ -9613,19 +9612,6 @@ var allModelConstants = [...]ModelID{
 	Model__Vercel__Gemini__Embedding__2,
 	Model__Vercel__Gemma__4__26b__A4b__It__4,
 	Model__Vercel__Gemma__4__31b__It__4,
-	Model__Vercel__Glm__4_5,
-	Model__Vercel__Glm__4_6,
-	Model__Vercel__Glm__4_7,
-	Model__Vercel__Glm__4__5__Air__4_5,
-	Model__Vercel__Glm__4__5v__4_5,
-	Model__Vercel__Glm__4__6v__4_6,
-	Model__Vercel__Glm__4__6v__4_6__Flash,
-	Model__Vercel__Glm__4__7__Flash__4_7,
-	Model__Vercel__Glm__4__7__Flashx__4_7,
-	Model__Vercel__Glm__5,
-	Model__Vercel__Glm__5_1,
-	Model__Vercel__Glm__5__Turbo,
-	Model__Vercel__Glm__5v__5__Turbo,
 	Model__Vercel__Grok__4_1__ReasoningFast,
 	Model__Vercel__Grok__4_20__Reasoning,
 	Model__Vercel__Grok__4_3,
@@ -9674,13 +9660,13 @@ var allModelConstants = [...]ModelID{
 	Model__Vercel__Mimo__V2__5__2_5,
 	Model__Vercel__Mimo__V2__5__2_5__Pro,
 	Model__Vercel__Mimo__V2__Flash,
-	Model__Vercel__Minimax__M2__1__2_1,
-	Model__Vercel__Minimax__M2__1__2_1__Lightning,
-	Model__Vercel__Minimax__M2__2,
-	Model__Vercel__Minimax__M2__5__2_5,
-	Model__Vercel__Minimax__M2__5__2_5__Highspeed,
-	Model__Vercel__Minimax__M2__7__2_7,
-	Model__Vercel__Minimax__M2__7__2_7__Highspeed,
+	Model__Vercel__MiniMax__M2__1__2_1,
+	Model__Vercel__MiniMax__M2__1__2_1__Lightning,
+	Model__Vercel__MiniMax__M2__2,
+	Model__Vercel__MiniMax__M2__5__2_5,
+	Model__Vercel__MiniMax__M2__5__2_5__Highspeed,
+	Model__Vercel__MiniMax__M2__7__2_7,
+	Model__Vercel__MiniMax__M2__7__2_7__Highspeed,
 	Model__Vercel__Ministral__14b,
 	Model__Vercel__Ministral__3b,
 	Model__Vercel__Ministral__8b,
@@ -9764,8 +9750,8 @@ var allModelConstants = [...]ModelID{
 	Model__Vercel__Voyage__Code__3,
 	Model__Vercel__Voyage__Finance__2,
 	Model__Vercel__Voyage__Law__2,
-	Model__Vivgrid__Deepseek__V3__2,
-	Model__Vivgrid__Deepseek__V4__Pro__Thinking,
+	Model__Vivgrid__DeepSeek__V3__2,
+	Model__Vivgrid__DeepSeek__V4__Pro__Thinking,
 	Model__Vivgrid__GPT__5_4,
 	Model__Vivgrid__GPT__5_5,
 	Model__Vivgrid__GPT__5__1__Codex__5_1,
@@ -9777,28 +9763,28 @@ var allModelConstants = [...]ModelID{
 	Model__Vivgrid__GPT__5__Mini__5,
 	Model__Vivgrid__Gemini__3__1__Flash__Lite__3_1__Preview,
 	Model__Vivgrid__Gemini__3__1__Pro__3_1__Preview,
-	Model__Vultr__Deepseek__V3__2__Nvfp4,
-	Model__Vultr__Glm__5__1__Fp8__5_1,
+	Model__Vultr__DeepSeek__V3__2__Nvfp4,
+	Model__Vultr__GLM__5__1__Fp8__5_1,
 	Model__Vultr__Kimi__K2__6__2_6,
 	Model__Vultr__Llama__3__1__Nemotron__Safety__Guard__8B__V3__3_1,
-	Model__Vultr__Minimax__M2__7__2_7,
+	Model__Vultr__MiniMax__M2__7__2_7,
 	Model__Vultr__Nemotron__3__Nano__Omni__30B__A3b__Reasoning__Bf16__3__Reasoning,
 	Model__Vultr__Nemotron__Cascade__2__30B__A3b__2,
-	Model__WaferAI__Glm__5_1,
+	Model__WaferAI__GLM__5_1,
 	Model__WaferAI__Kimi__K2__6__2_6,
 	Model__WaferAI__Qwen3__5__397B__A17b__3_5,
 	Model__WaferAI__Qwen3__6__35B__A3b__3_6,
-	Model__Wandb__Deepseek__V3__1,
+	Model__Wandb__DeepSeek__V3__1,
+	Model__Wandb__GLM__5_1,
+	Model__Wandb__GLM__5__Fp8__5,
 	Model__Wandb__GPT__Oss__120b,
 	Model__Wandb__GPT__Oss__20b,
-	Model__Wandb__Glm__5_1,
-	Model__Wandb__Glm__5__Fp8__5,
 	Model__Wandb__Kimi__K2__5__2_5,
 	Model__Wandb__Llama__3__1__70B__3_1__Instruct,
 	Model__Wandb__Llama__3__1__8B__3_1__Instruct,
 	Model__Wandb__Llama__3__3__70B__3_3__Instruct,
 	Model__Wandb__Llama__4__Scout__17B__16E__4__Instruct,
-	Model__Wandb__Minimax__M2__5__2_5,
+	Model__Wandb__MiniMax__M2__5__2_5,
 	Model__Wandb__Nvidia__Nemotron__3__Super__120B__A12b__Fp8,
 	Model__Wandb__Phi__4__Mini__4__Instruct,
 	Model__Wandb__Qwen3__14B__3__Instruct,
@@ -9806,14 +9792,6 @@ var allModelConstants = [...]ModelID{
 	Model__Wandb__Qwen3__235B__A22b__Thinking__2507__3__Thinking,
 	Model__Wandb__Qwen3__30B__A3b__Instruct__2507__3__Instruct,
 	Model__Wandb__Qwen3__Coder__480B__A35b__3__Instruct,
-	Model__XAI__Grok__4_3,
-	Model__XAI__Grok__4__20__0309__4_20__Reasoning,
-	Model__XAI__Grok__4__20__0309__Non__4_20__Reasoning,
-	Model__XAI__Grok__4__20__Multi__Agent__0309__4_20,
-	Model__XAI__Grok__Build__0_1,
-	Model__XAI__Grok__Imagine__Image,
-	Model__XAI__Grok__Imagine__Image__Quality,
-	Model__XAI__Grok__Imagine__Video,
 	Model__XiaomiTokenPlanAMS__Mimo__V2__2__Omni,
 	Model__XiaomiTokenPlanAMS__Mimo__V2__2__Pro,
 	Model__XiaomiTokenPlanAMS__Mimo__V2__5__2_5,
@@ -9844,24 +9822,24 @@ var allModelConstants = [...]ModelID{
 	Model__Xiaomi__Mimo__V2__5__2_5__Pro,
 	Model__Xiaomi__Mimo__V2__Flash,
 	Model__Xpersona__Xpersona__Frieren__Coder,
-	Model__ZaiCodingPlan__Glm__4_7,
-	Model__ZaiCodingPlan__Glm__4__5__Air__4_5,
-	Model__ZaiCodingPlan__Glm__5_1,
-	Model__ZaiCodingPlan__Glm__5__Turbo,
-	Model__ZaiCodingPlan__Glm__5v__5__Turbo,
-	Model__Zai__Glm__4_5,
-	Model__Zai__Glm__4_6,
-	Model__Zai__Glm__4_7,
-	Model__Zai__Glm__4__5__Air__4_5,
-	Model__Zai__Glm__4__5__Flash__4_5,
-	Model__Zai__Glm__4__5v__4_5,
-	Model__Zai__Glm__4__6v__4_6,
-	Model__Zai__Glm__4__7__Flash__4_7,
-	Model__Zai__Glm__4__7__Flashx__4_7,
-	Model__Zai__Glm__5,
-	Model__Zai__Glm__5_1,
-	Model__Zai__Glm__5__Turbo,
-	Model__Zai__Glm__5v__5__Turbo,
+	Model__ZaiCodingPlan__GLM__4_7,
+	Model__ZaiCodingPlan__GLM__4__5__Air__4_5,
+	Model__ZaiCodingPlan__GLM__5_1,
+	Model__ZaiCodingPlan__GLM__5__Turbo,
+	Model__ZaiCodingPlan__GLM__5v__5__Turbo,
+	Model__Zai__GLM__4_5,
+	Model__Zai__GLM__4_6,
+	Model__Zai__GLM__4_7,
+	Model__Zai__GLM__4__5__Air__4_5,
+	Model__Zai__GLM__4__5__Flash__4_5,
+	Model__Zai__GLM__4__5v__4_5,
+	Model__Zai__GLM__4__6v__4_6,
+	Model__Zai__GLM__4__7__Flash__4_7,
+	Model__Zai__GLM__4__7__Flashx__4_7,
+	Model__Zai__GLM__5,
+	Model__Zai__GLM__5_1,
+	Model__Zai__GLM__5__Turbo,
+	Model__Zai__GLM__5v__5__Turbo,
 	Model__ZenMux__Agnes__1__5__Lite__1_5,
 	Model__ZenMux__Agnes__1__5__Pro__1_5,
 	Model__ZenMux__Claude__3__5__Haiku__3_5,
@@ -9875,11 +9853,11 @@ var allModelConstants = [...]ModelID{
 	Model__ZenMux__Claude__Sonnet__4,
 	Model__ZenMux__Claude__Sonnet__4_5,
 	Model__ZenMux__Claude__Sonnet__4_6,
-	Model__ZenMux__Deepseek__Chat,
-	Model__ZenMux__Deepseek__V3__2,
-	Model__ZenMux__Deepseek__V3__2__Exp,
-	Model__ZenMux__Deepseek__V4__Flash,
-	Model__ZenMux__Deepseek__V4__Pro__Thinking,
+	Model__ZenMux__DeepSeek__Chat,
+	Model__ZenMux__DeepSeek__V3__2,
+	Model__ZenMux__DeepSeek__V3__2__Exp,
+	Model__ZenMux__DeepSeek__V4__Flash,
+	Model__ZenMux__DeepSeek__V4__Pro__Thinking,
 	Model__ZenMux__Doubao__Seed__1_8,
 	Model__ZenMux__Doubao__Seed__2_0__Code,
 	Model__ZenMux__Doubao__Seed__2__0__Lite__2_0,
@@ -9887,6 +9865,19 @@ var allModelConstants = [...]ModelID{
 	Model__ZenMux__Doubao__Seed__2__0__Pro__2_0,
 	Model__ZenMux__Doubao__Seed__Code,
 	Model__ZenMux__Ernie__5_0__ThinkingPreview,
+	Model__ZenMux__GLM__4_5,
+	Model__ZenMux__GLM__4_6,
+	Model__ZenMux__GLM__4_7,
+	Model__ZenMux__GLM__4__5__Air__4_5,
+	Model__ZenMux__GLM__4__6v__4_6,
+	Model__ZenMux__GLM__4__6v__4_6__Flash,
+	Model__ZenMux__GLM__4__6v__Flash__Free__4_6__Flash,
+	Model__ZenMux__GLM__4__7__Flash__Free__4_7,
+	Model__ZenMux__GLM__4__7__Flashx__4_7,
+	Model__ZenMux__GLM__5,
+	Model__ZenMux__GLM__5_1,
+	Model__ZenMux__GLM__5__Turbo,
+	Model__ZenMux__GLM__5v__5__Turbo,
 	Model__ZenMux__GPT__5,
 	Model__ZenMux__GPT__5_1,
 	Model__ZenMux__GPT__5_1__Chat,
@@ -9910,19 +9901,6 @@ var allModelConstants = [...]ModelID{
 	Model__ZenMux__Gemini__3__1__Flash__Lite__3_1__Preview,
 	Model__ZenMux__Gemini__3__1__Pro__3_1__Preview,
 	Model__ZenMux__Gemini__3__Flash__3__Preview,
-	Model__ZenMux__Glm__4_5,
-	Model__ZenMux__Glm__4_6,
-	Model__ZenMux__Glm__4_7,
-	Model__ZenMux__Glm__4__5__Air__4_5,
-	Model__ZenMux__Glm__4__6v__4_6,
-	Model__ZenMux__Glm__4__6v__4_6__Flash,
-	Model__ZenMux__Glm__4__6v__Flash__Free__4_6__Flash,
-	Model__ZenMux__Glm__4__7__Flash__Free__4_7,
-	Model__ZenMux__Glm__4__7__Flashx__4_7,
-	Model__ZenMux__Glm__5,
-	Model__ZenMux__Glm__5_1,
-	Model__ZenMux__Glm__5__Turbo,
-	Model__ZenMux__Glm__5v__5__Turbo,
 	Model__ZenMux__Grok__4,
 	Model__ZenMux__Grok__4_1__Fast,
 	Model__ZenMux__Grok__4_2__Fast,
@@ -9943,12 +9921,12 @@ var allModelConstants = [...]ModelID{
 	Model__ZenMux__Mimo__V2__5__2_5,
 	Model__ZenMux__Mimo__V2__5__2_5__Pro,
 	Model__ZenMux__Mimo__V2__Flash,
-	Model__ZenMux__Minimax__M2__1__2_1,
-	Model__ZenMux__Minimax__M2__2,
-	Model__ZenMux__Minimax__M2__5__2_5,
-	Model__ZenMux__Minimax__M2__5__2_5__Lightning,
-	Model__ZenMux__Minimax__M2__7__2_7,
-	Model__ZenMux__Minimax__M2__7__2_7__Highspeed,
+	Model__ZenMux__MiniMax__M2__1__2_1,
+	Model__ZenMux__MiniMax__M2__2,
+	Model__ZenMux__MiniMax__M2__5__2_5,
+	Model__ZenMux__MiniMax__M2__5__2_5__Lightning,
+	Model__ZenMux__MiniMax__M2__7__2_7,
+	Model__ZenMux__MiniMax__M2__7__2_7__Highspeed,
 	Model__ZenMux__Qwen3__5__Flash__3_5,
 	Model__ZenMux__Qwen3__5__Plus__3_5,
 	Model__ZenMux__Qwen3__6__Plus__3_6,
@@ -9958,23 +9936,45 @@ var allModelConstants = [...]ModelID{
 	Model__ZenMux__Step__3,
 	Model__ZenMux__Step__3__5__Flash__3_5,
 	Model__ZenMux__Step__3__5__Flash__Free__3_5,
-	Model__ZhipuaiCodingPlan__Glm__4_7,
-	Model__ZhipuaiCodingPlan__Glm__4__5__Air__4_5,
-	Model__ZhipuaiCodingPlan__Glm__5_1,
-	Model__ZhipuaiCodingPlan__Glm__5__Turbo,
-	Model__ZhipuaiCodingPlan__Glm__5v__5__Turbo,
-	Model__Zhipuai__Glm__4_5,
-	Model__Zhipuai__Glm__4_6,
-	Model__Zhipuai__Glm__4_7,
-	Model__Zhipuai__Glm__4__5__Air__4_5,
-	Model__Zhipuai__Glm__4__5__Flash__4_5,
-	Model__Zhipuai__Glm__4__5v__4_5,
-	Model__Zhipuai__Glm__4__6v__4_6,
-	Model__Zhipuai__Glm__4__7__Flash__4_7,
-	Model__Zhipuai__Glm__4__7__Flashx__4_7,
-	Model__Zhipuai__Glm__5,
-	Model__Zhipuai__Glm__5_1,
-	Model__Zhipuai__Glm__5v__5__Turbo,
+	Model__ZhipuaiCodingPlan__GLM__4_7,
+	Model__ZhipuaiCodingPlan__GLM__4__5__Air__4_5,
+	Model__ZhipuaiCodingPlan__GLM__5_1,
+	Model__ZhipuaiCodingPlan__GLM__5__Turbo,
+	Model__ZhipuaiCodingPlan__GLM__5v__5__Turbo,
+	Model__Zhipuai__GLM__4_5,
+	Model__Zhipuai__GLM__4_6,
+	Model__Zhipuai__GLM__4_7,
+	Model__Zhipuai__GLM__4__5__Air__4_5,
+	Model__Zhipuai__GLM__4__5__Flash__4_5,
+	Model__Zhipuai__GLM__4__5v__4_5,
+	Model__Zhipuai__GLM__4__6v__4_6,
+	Model__Zhipuai__GLM__4__7__Flash__4_7,
+	Model__Zhipuai__GLM__4__7__Flashx__4_7,
+	Model__Zhipuai__GLM__5,
+	Model__Zhipuai__GLM__5_1,
+	Model__Zhipuai__GLM__5v__5__Turbo,
+	Model__iFlowCN__DeepSeek__R1__Thinking,
+	Model__iFlowCN__DeepSeek__V3,
+	Model__iFlowCN__DeepSeek__V3__2,
+	Model__iFlowCN__GLM__4_6,
+	Model__iFlowCN__Kimi__K2__0905__2,
+	Model__iFlowCN__Kimi__K2__2,
+	Model__iFlowCN__Qwen3__235b__3,
+	Model__iFlowCN__Qwen3__235b__A22b__3__Instruct,
+	Model__iFlowCN__Qwen3__235b__A22b__Thinking__2507__3__Thinking,
+	Model__iFlowCN__Qwen3__32b__3,
+	Model__iFlowCN__Qwen3__Coder__Plus__3,
+	Model__iFlowCN__Qwen3__Max__3,
+	Model__iFlowCN__Qwen3__Max__3__Preview,
+	Model__iFlowCN__Qwen3__Vl__Plus__3,
+	Model__xAI__Grok__4_3,
+	Model__xAI__Grok__4__20__0309__4_20__Reasoning,
+	Model__xAI__Grok__4__20__0309__Non__4_20__Reasoning,
+	Model__xAI__Grok__4__20__Multi__Agent__0309__4_20,
+	Model__xAI__Grok__Build__0_1,
+	Model__xAI__Grok__Imagine__Image,
+	Model__xAI__Grok__Imagine__Image__Quality,
+	Model__xAI__Grok__Imagine__Video,
 }
 
 // ModelIDs returns the canonical Model_<...> constant values from the codegen

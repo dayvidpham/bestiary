@@ -32,7 +32,7 @@ const (
 	ProviderCortecs                Provider = "cortecs"
 	ProviderCrof                   Provider = "crof"
 	ProviderDatabricks             Provider = "databricks"
-	ProviderDeepinfra              Provider = "deepinfra"
+	ProviderDeepInfra              Provider = "deepinfra"
 	ProviderDeepSeek               Provider = "deepseek"
 	ProviderDigitalOcean           Provider = "digitalocean"
 	ProviderDInference             Provider = "dinference"
@@ -46,15 +46,15 @@ const (
 	ProviderGitHubCopilot          Provider = "github-copilot"
 	ProviderGitHubModels           Provider = "github-models"
 	ProviderGitLab                 Provider = "gitlab"
-	ProviderGmicloud               Provider = "gmicloud"
+	ProviderGMICloud               Provider = "gmicloud"
 	ProviderGoogle                 Provider = "google"
 	ProviderGoogleVertex           Provider = "google-vertex"
 	ProviderGoogleVertexAnthropic  Provider = "google-vertex-anthropic"
 	ProviderGroq                   Provider = "groq"
 	ProviderHelicone               Provider = "helicone"
 	ProviderHpcAI                  Provider = "hpc-ai"
-	ProviderHuggingface            Provider = "huggingface"
-	ProviderIflowcn                Provider = "iflowcn"
+	ProviderHuggingFace            Provider = "huggingface"
+	ProvideriFlowCN                Provider = "iflowcn"
 	ProviderInception              Provider = "inception"
 	ProviderInceptron              Provider = "inceptron"
 	ProviderInference              Provider = "inference"
@@ -65,7 +65,7 @@ const (
 	ProviderKUAECloudCodingPlan    Provider = "kuae-cloud-coding-plan"
 	ProviderLilac                  Provider = "lilac"
 	ProviderLlama                  Provider = "llama"
-	ProviderLlmgateway             Provider = "llmgateway"
+	ProviderLlmGateway             Provider = "llmgateway"
 	ProviderLMStudio               Provider = "lmstudio"
 	ProviderLucidQuery             Provider = "lucidquery"
 	ProviderMeganova               Provider = "meganova"
@@ -78,11 +78,11 @@ const (
 	ProviderMixlayer               Provider = "mixlayer"
 	ProviderMoark                  Provider = "moark"
 	ProviderModelScope             Provider = "modelscope"
-	ProviderMoonshotai             Provider = "moonshotai"
-	ProviderMoonshotaiCN           Provider = "moonshotai-cn"
+	ProviderMoonshotAI             Provider = "moonshotai"
+	ProviderMoonshotAICN           Provider = "moonshotai-cn"
 	ProviderMorph                  Provider = "morph"
 	ProviderNanoGPT                Provider = "nano-gpt"
-	ProviderNearai                 Provider = "nearai"
+	ProviderNearAI                 Provider = "nearai"
 	ProviderNebius                 Provider = "nebius"
 	ProviderNeuralwatt             Provider = "neuralwatt"
 	ProviderNova                   Provider = "nova"
@@ -119,7 +119,7 @@ const (
 	ProviderTencentCodingPlan      Provider = "tencent-coding-plan"
 	ProviderTencentTokenHub        Provider = "tencent-tokenhub"
 	ProviderTheGridAI              Provider = "the-grid-ai"
-	ProviderTogetherai             Provider = "togetherai"
+	ProviderTogetherAI             Provider = "togetherai"
 	ProviderUmansAICodingPlan      Provider = "umans-ai-coding-plan"
 	ProviderUpstage                Provider = "upstage"
 	ProviderV0                     Provider = "v0"
@@ -129,7 +129,7 @@ const (
 	ProviderVultr                  Provider = "vultr"
 	ProviderWaferAI                Provider = "wafer.ai"
 	ProviderWandb                  Provider = "wandb"
-	ProviderXAI                    Provider = "xai"
+	ProviderxAI                    Provider = "xai"
 	ProviderXiaomi                 Provider = "xiaomi"
 	ProviderXiaomiTokenPlanAMS     Provider = "xiaomi-token-plan-ams"
 	ProviderXiaomiTokenPlanCN      Provider = "xiaomi-token-plan-cn"
@@ -174,7 +174,7 @@ var knownProviders = [...]Provider{
 	ProviderCortecs,
 	ProviderCrof,
 	ProviderDatabricks,
-	ProviderDeepinfra,
+	ProviderDeepInfra,
 	ProviderDeepSeek,
 	ProviderDigitalOcean,
 	ProviderDInference,
@@ -188,15 +188,15 @@ var knownProviders = [...]Provider{
 	ProviderGitHubCopilot,
 	ProviderGitHubModels,
 	ProviderGitLab,
-	ProviderGmicloud,
+	ProviderGMICloud,
 	ProviderGoogle,
 	ProviderGoogleVertex,
 	ProviderGoogleVertexAnthropic,
 	ProviderGroq,
 	ProviderHelicone,
 	ProviderHpcAI,
-	ProviderHuggingface,
-	ProviderIflowcn,
+	ProviderHuggingFace,
+	ProvideriFlowCN,
 	ProviderInception,
 	ProviderInceptron,
 	ProviderInference,
@@ -207,7 +207,7 @@ var knownProviders = [...]Provider{
 	ProviderKUAECloudCodingPlan,
 	ProviderLilac,
 	ProviderLlama,
-	ProviderLlmgateway,
+	ProviderLlmGateway,
 	ProviderLMStudio,
 	ProviderLucidQuery,
 	ProviderMeganova,
@@ -220,11 +220,11 @@ var knownProviders = [...]Provider{
 	ProviderMixlayer,
 	ProviderMoark,
 	ProviderModelScope,
-	ProviderMoonshotai,
-	ProviderMoonshotaiCN,
+	ProviderMoonshotAI,
+	ProviderMoonshotAICN,
 	ProviderMorph,
 	ProviderNanoGPT,
-	ProviderNearai,
+	ProviderNearAI,
 	ProviderNebius,
 	ProviderNeuralwatt,
 	ProviderNova,
@@ -261,7 +261,7 @@ var knownProviders = [...]Provider{
 	ProviderTencentCodingPlan,
 	ProviderTencentTokenHub,
 	ProviderTheGridAI,
-	ProviderTogetherai,
+	ProviderTogetherAI,
 	ProviderUmansAICodingPlan,
 	ProviderUpstage,
 	ProviderV0,
@@ -271,7 +271,7 @@ var knownProviders = [...]Provider{
 	ProviderVultr,
 	ProviderWaferAI,
 	ProviderWandb,
-	ProviderXAI,
+	ProviderxAI,
 	ProviderXiaomi,
 	ProviderXiaomiTokenPlanAMS,
 	ProviderXiaomiTokenPlanCN,
