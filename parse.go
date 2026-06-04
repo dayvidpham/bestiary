@@ -2195,9 +2195,16 @@ func ParseFamilyDetailed(raw Family, id ModelID, p Provider) (Family, string, st
 	// SLICE-3: when the modifier was encoded in the RAW family (not the ID),
 	// ExtractModifier(id, …) finds nothing — fall back to the raw-family modifier so
 	// it is never silently dropped (e.g. raw="deepseek-thinking", id="deepseek-r1").
-	// SLICE-10: rawModifier COMPOSES with any ID modifiers (lossless union).
+	// SLICE-10: rawModifier COMPOSES with any ID modifiers (lossless union) — BUT it is
+	// MEMBER-GUARDED: a rawModifier token that is a curated member of the resolved family
+	// is the product-LINE VARIANT, not a modifier (recoverMemberVariant restores it as the
+	// variant below), so it must NOT be appended — otherwise a RawFamily-embedded member
+	// (raw="sonar-reasoning" → "reasoning") duplicates into BOTH Variant and Modifier
+	// (Reviewer-A/C BLOCKER, fix-cycle 1).
 	if rawModifier != "" {
-		modifierList = append(modifierList, rawModifier)
+		if pd, pdErr := loadParseData(); pdErr != nil || !isFamilyMemberToken(pd, family, rawModifier) {
+			modifierList = append(modifierList, rawModifier)
+		}
 	}
 	modifier := CanonicalizeModifiers(modifierList)
 	cleanedID := id

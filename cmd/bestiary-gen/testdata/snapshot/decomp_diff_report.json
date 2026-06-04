@@ -1,12 +1,12 @@
 {
   "total_records": 4979,
-  "changed_count": 1205,
+  "changed_count": 1198,
   "cat_a_divergence_fix_count": 322,
-  "cat_b_improvement_count": 875,
+  "cat_b_improvement_count": 868,
   "cat_c_unexpected_regression_count": 0,
   "justified_exception_count": 8,
   "divergence_before": 81,
-  "divergence_after": 16,
+  "divergence_after": 14,
   "changes": [
     {
       "provider": "evroc",
@@ -8424,33 +8424,6 @@
       "reason": "strict enrichment — only previously-empty field(s) populated"
     },
     {
-      "provider": "vercel",
-      "id": "perplexity/sonar-reasoning",
-      "raw_family": "sonar-reasoning",
-      "before": "(family=\"sonar\",variant=\"reasoning\",version=\"\",modifier=\"\")",
-      "after": "(family=\"sonar\",variant=\"reasoning\",version=\"\",modifier=\"reasoning\")",
-      "category": "b:improvement",
-      "reason": "strict enrichment — only previously-empty field(s) populated"
-    },
-    {
-      "provider": "openrouter",
-      "id": "perplexity/sonar-reasoning-pro",
-      "raw_family": "sonar-reasoning",
-      "before": "(family=\"sonar\",variant=\"reasoning\",version=\"\",modifier=\"\")",
-      "after": "(family=\"sonar\",variant=\"reasoning\",version=\"\",modifier=\"reasoning\")",
-      "category": "b:improvement",
-      "reason": "strict enrichment — only previously-empty field(s) populated"
-    },
-    {
-      "provider": "vercel",
-      "id": "perplexity/sonar-reasoning-pro",
-      "raw_family": "sonar-reasoning",
-      "before": "(family=\"sonar\",variant=\"reasoning\",version=\"\",modifier=\"\")",
-      "after": "(family=\"sonar\",variant=\"reasoning\",version=\"\",modifier=\"reasoning\")",
-      "category": "b:improvement",
-      "reason": "strict enrichment — only previously-empty field(s) populated"
-    },
-    {
       "provider": "azure",
       "id": "phi-3-medium-128k-instruct",
       "raw_family": "phi",
@@ -9815,42 +9788,6 @@
       "raw_family": "runway",
       "before": "(family=\"runway\",variant=\"\",version=\"4\",modifier=\"\")",
       "after": "(family=\"runway\",variant=\"\",version=\"4\",modifier=\"turbo\")",
-      "category": "b:improvement",
-      "reason": "strict enrichment — only previously-empty field(s) populated"
-    },
-    {
-      "provider": "helicone",
-      "id": "sonar-reasoning",
-      "raw_family": "sonar-reasoning",
-      "before": "(family=\"sonar\",variant=\"reasoning\",version=\"\",modifier=\"\")",
-      "after": "(family=\"sonar\",variant=\"reasoning\",version=\"\",modifier=\"reasoning\")",
-      "category": "b:improvement",
-      "reason": "strict enrichment — only previously-empty field(s) populated"
-    },
-    {
-      "provider": "helicone",
-      "id": "sonar-reasoning-pro",
-      "raw_family": "sonar-reasoning",
-      "before": "(family=\"sonar\",variant=\"reasoning\",version=\"\",modifier=\"\")",
-      "after": "(family=\"sonar\",variant=\"reasoning\",version=\"\",modifier=\"reasoning\")",
-      "category": "b:improvement",
-      "reason": "strict enrichment — only previously-empty field(s) populated"
-    },
-    {
-      "provider": "llmgateway",
-      "id": "sonar-reasoning-pro",
-      "raw_family": "sonar-reasoning",
-      "before": "(family=\"sonar\",variant=\"reasoning\",version=\"\",modifier=\"\")",
-      "after": "(family=\"sonar\",variant=\"reasoning\",version=\"\",modifier=\"reasoning\")",
-      "category": "b:improvement",
-      "reason": "strict enrichment — only previously-empty field(s) populated"
-    },
-    {
-      "provider": "perplexity",
-      "id": "sonar-reasoning-pro",
-      "raw_family": "sonar-reasoning",
-      "before": "(family=\"sonar\",variant=\"reasoning\",version=\"\",modifier=\"\")",
-      "after": "(family=\"sonar\",variant=\"reasoning\",version=\"\",modifier=\"reasoning\")",
       "category": "b:improvement",
       "reason": "strict enrichment — only previously-empty field(s) populated"
     },

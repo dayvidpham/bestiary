@@ -3890,7 +3890,13 @@ func TestParseFamilyDetailed_Slice10_ModifierList(t *testing.T) {
 		{"grok-vision → [vision]", "grok-vision", "grok-vision", "grok", "", "", "vision"},
 		{"claude-3-7-sonnet-thinking → [thinking]", "claude-sonnet", "claude-3-7-sonnet-thinking", "claude", "sonnet", "3.7", "thinking"},
 		{"deepseek-chat → variant chat (member-guard)", "deepseek", "deepseek-chat", "deepseek", "chat", "", ""},
-		{"sonar-reasoning → variant reasoning (member-guard)", "sonar", "sonar-reasoning", "sonar", "reasoning", "", ""},
+		// fix-cycle 1 (Reviewer-A/C BLOCKER): RawFamily-embedded member must NOT duplicate
+		// into BOTH Variant and Modifier. Use the CODEGEN-REAL raw="sonar-reasoning"
+		// (the idealized raw="sonar" masked the bug). reasoning stays the VARIANT, no dup.
+		{"sonar-reasoning (raw=sonar-reasoning) → (sonar,reasoning,nil) no dup", "sonar-reasoning", "sonar-reasoning", "sonar", "reasoning", "", ""},
+		{"sonar-reasoning-pro (raw=sonar-reasoning) → (sonar,reasoning,nil) no dup", "sonar-reasoning", "sonar-reasoning-pro", "sonar", "reasoning", "", ""},
+		// Regression guards: other RawFamily-embedded members must also stay variant-only.
+		{"deepseek-chat (raw=deepseek-chat) → variant chat, no dup", "deepseek-chat", "deepseek-chat", "deepseek", "chat", "", ""},
 		{"qwen-turbo → variant turbo (member-guard)", "qwen", "qwen-turbo", "qwen", "turbo", "", ""},
 		{"gemini-pro → variant pro (stays variant)", "gemini", "gemini-pro", "gemini", "pro", "", ""},
 		{"qwen-flash → variant flash (stays variant)", "qwen", "qwen-flash", "qwen", "flash", "", ""},

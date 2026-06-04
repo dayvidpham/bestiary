@@ -231,8 +231,9 @@
           "type": "string"
         },
         "Modifier": {
-          "description": "Known trailing token extracted from the model ID that carries semantic meaning (e.g. \"thinking\", \"vision\"). Empty when no known modifier is found.",
-          "type": "string"
+          "description": "List of known trailing tokens extracted from the model ID that carry semantic meaning (e.g. [\"thinking\"], [\"vision\",\"instruct\"]), in canonical order. null when none. SLICE-10 (rc2): widened string→array of strings to match ModelRef.Modifier []string.",
+          "type": ["array", "null"],
+          "items": { "type": "string" }
         }
       },
       "required": ["ID", "Provider", "RawFamily", "Family", "Variant", "Version", "Date", "Modifier"]
