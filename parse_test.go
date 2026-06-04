@@ -311,20 +311,24 @@ func TestParseFamily_SuffixStripping(t *testing.T) {
 		// in the JSON, but initParseData re-sorts by length so the order here
 		// is documentary only). SLICE-3 REMOVED "-thinking" and "-vision" — they are
 		// now uniform Modifiers (modifiers.json authoritative), never variant suffixes.
+		// SLICE-10 (rc2) ALSO REMOVED "-instruct", "-turbo", "-base" — ratified global
+		// modifiers (member-guarded). ParseFamily no longer strips them, so "acme-instruct"
+		// stays family "acme-instruct" with empty variant (the modifier is extracted later
+		// by ExtractModifier in the ID-driven pipeline, not by ParseFamily on the raw string).
 		{"deep-research", "widget-deep-research", "widget", "deep-research"},
 		{"codex-spark", "acme-codex-spark", "acme", "codex-spark"},
 		{"codex-mini", "baz-codex-mini", "baz", "codex-mini"},
 		{"flash-lite", "acme-flash-lite", "acme", "flash-lite"},
 		{"codex", "acme-codex", "acme", "codex"},
-		{"instruct", "acme-instruct", "acme", "instruct"},
+		{"instruct (now a global Modifier — NOT stripped by ParseFamily)", "acme-instruct", "acme-instruct", ""},
 		{"embed", "acme-embed", "acme", "embed"},
 		{"embedding", "acme-embedding", "acme", "embedding"},
 		{"mini", "foo-mini", "foo", "mini"},
 		{"pro", "foo-pro", "foo", "pro"},
 		{"flash", "foo-flash", "foo", "flash"},
 		{"lite", "foo-lite", "foo", "lite"},
-		{"turbo", "foo-turbo", "foo", "turbo"},
-		{"base", "foo-base", "foo", "base"},
+		{"turbo (now a global Modifier — NOT stripped by ParseFamily)", "foo-turbo", "foo-turbo", ""},
+		{"base (now a global Modifier — NOT stripped by ParseFamily)", "foo-base", "foo-base", ""},
 		{"ultra", "foo-ultra", "foo", "ultra"},
 		{"large", "foo-large", "foo", "large"},
 		{"medium", "foo-medium", "foo", "medium"},
@@ -1208,7 +1212,7 @@ func TestUniformModifierSuffix(t *testing.T) {
 				t.Errorf("ParseFamilyDetailed(%q, %q) family = %q, want %q",
 					tc.rawFamily, tc.id, family, tc.wantFamily)
 			}
-			if modifier != tc.wantModifier {
+			if modJoin(modifier) != tc.wantModifier {
 				t.Errorf("ParseFamilyDetailed(%q, %q) modifier = %q, want %q\n"+
 					"  What: trailing %q token was NOT surfaced as the first-class Modifier\n"+
 					"  Why: SLICE-3 uniform migration — thinking/vision are ALWAYS modifiers",
@@ -1884,7 +1888,7 @@ func TestParseFamilyDetailed_5Tuple(t *testing.T) {
 			if version != tc.wantVersion {
 				t.Errorf("version = %q, want %q", version, tc.wantVersion)
 			}
-			if modifier != tc.wantModifier {
+			if modJoin(modifier) != tc.wantModifier {
 				t.Errorf("modifier = %q, want %q", modifier, tc.wantModifier)
 			}
 			// No case in this table should emit a spurious ParseFailure.
@@ -2103,14 +2107,20 @@ func TestParseFamilyDetailed_FixB1_SoleVariantSuffixPromotion(t *testing.T) {
 			// glm-5-turbo: rawFamily="glm" → family=glm, variant="" initially.
 			// ExtractVersionBetween: ver="5", residual=["turbo"]. "turbo" is a known suffix.
 			// B1: variant="" → promote "turbo" → (glm, turbo, 5), no failure.
-			desc:          "glm-5-turbo → (glm, turbo, 5), no residual failure",
+			// SLICE-10: 'turbo' is now a global Modifier (glm has no 'turbo' member), so it is
+			// NOT promoted into Variant — variant is empty, modifier=[turbo], version=5,
+			// and no residual-unaccounted failure (the modifier is a first-class field).
+			// SLICE-10: turbo→Modifier; ParseFamilyDetailed emits the ReasonKnownSuffixOverflow
+			// AUDIT annotation (turbo is a known modifier trailing the ID) which codegen clears
+			// once the modifier is a first-class field — so wantNoFailure is false here.
+			desc:          "glm-5-turbo → (glm, '', 5) turbo→Modifier",
 			rawFamily:     "glm",
 			id:            "glm-5-turbo",
 			provider:      "zhipu",
 			wantFamily:    "glm",
-			wantVariant:   "turbo",
+			wantVariant:   "",
 			wantVersion:   "5",
-			wantNoFailure: true,
+			wantNoFailure: false,
 		},
 		{
 			// phi-4-mini: rawFamily="phi" → family=phi, variant="" initially.
@@ -2584,15 +2594,14 @@ func TestParseFamilyDetailed_Fix4_OjjbSurvivingB1Promotions(t *testing.T) {
 			wantVersion: "5",
 		},
 		{
-			// gpt-4-turbo: rawFamily="gpt" → (gpt, "", ""). ExtractVersionBetween: prefix="gpt-",
-			// rem="4-turbo" → "4" is version, "turbo" residual. B1: len(residual)==1, variant=="" →
-			// "turbo" is a known suffix → promote → (gpt, turbo, 4). No compound prefix issue.
-			desc:        "gpt-4-turbo → (gpt, turbo, 4) — B1 survives FIX-4 revert",
+			// SLICE-10: 'turbo' is now a global Modifier (gpt has no 'turbo' member), so it is
+			// extracted to the Modifier list instead of promoted to Variant → (gpt, "", 4).
+			desc:        "gpt-4-turbo → (gpt, '', 4) turbo→Modifier (SLICE-10)",
 			rawFamily:   "gpt",
 			id:          "gpt-4-turbo",
 			provider:    "openai",
 			wantFamily:  "gpt",
-			wantVariant: "turbo",
+			wantVariant: "",
 			wantVersion: "4",
 		},
 	}
@@ -2614,7 +2623,10 @@ func TestParseFamilyDetailed_Fix4_OjjbSurvivingB1Promotions(t *testing.T) {
 			if version != tc.wantVersion {
 				t.Errorf("version = %q, want %q", version, tc.wantVersion)
 			}
-			if failure != nil {
+			// SLICE-10: a turbo→Modifier reclassification emits the ReasonKnownSuffixOverflow
+			// AUDIT annotation (codegen clears it once the modifier is first-class). Permit it;
+			// any OTHER failure reason is still unexpected.
+			if failure != nil && failure.Reason != bestiary.ReasonKnownSuffixOverflow {
 				t.Errorf("unexpected ParseFailure reason=%q; B1 should have promoted sole residual to variant",
 					failure.Reason)
 			}
@@ -3187,14 +3199,16 @@ func TestRecoverMemberVariant_SubsumesB1(t *testing.T) {
 		wantNoFailure bool
 	}{
 		{
-			desc:          "glm-5-turbo → (glm, turbo, 5) [B1 subsumed]",
+			// SLICE-10: 'turbo'→Modifier (glm non-member) → variant empty. The
+			// ReasonKnownSuffixOverflow audit annotation now fires (codegen clears it).
+			desc:          "glm-5-turbo → (glm, '', 5) turbo→Modifier [B1 subsumed]",
 			rawFamily:     "glm",
 			id:            "glm-5-turbo",
 			provider:      "zhipu",
 			wantFamily:    "glm",
-			wantVariant:   "turbo",
+			wantVariant:   "",
 			wantVersion:   "5",
-			wantNoFailure: true,
+			wantNoFailure: false,
 		},
 		{
 			desc:          "phi-4-mini → (phi, mini, 4) [B1 subsumed]",
@@ -3693,7 +3707,7 @@ func TestSlice8_GluedVersionModifier(t *testing.T) {
 		t.Run(tc.desc, func(t *testing.T) {
 			t.Parallel()
 			f, va, ve, mod, _ := bestiary.ParseFamilyDetailed(tc.raw, tc.id, "p")
-			if string(f) != tc.wantFamily || va != tc.wantVariant || ve != tc.wantVersion || mod != tc.wantMod {
+			if string(f) != tc.wantFamily || va != tc.wantVariant || ve != tc.wantVersion || modJoin(mod) != tc.wantMod {
 				t.Errorf("raw=%q id=%q → (%s|%s|%s|mod=%s), want (%s|%s|%s|mod=%s)",
 					tc.raw, tc.id, f, va, ve, mod, tc.wantFamily, tc.wantVariant, tc.wantVersion, tc.wantMod)
 			}
@@ -3748,7 +3762,7 @@ func TestSeriesLetterSplit_CLARIFICATION5(t *testing.T) {
 		t.Run(tc.desc, func(t *testing.T) {
 			t.Parallel()
 			f, va, ve, mod, _ := bestiary.ParseFamilyDetailed(tc.raw, tc.id, "p")
-			if string(f) != tc.wantFamily || va != tc.wantVariant || ve != tc.wantVer || mod != tc.wantMod {
+			if string(f) != tc.wantFamily || va != tc.wantVariant || ve != tc.wantVer || modJoin(mod) != tc.wantMod {
 				t.Errorf("raw=%q id=%q → (%s|%s|%s|mod=%s), want (%s|%s|%s|mod=%s)",
 					tc.raw, tc.id, f, va, ve, mod, tc.wantFamily, tc.wantVariant, tc.wantVer, tc.wantMod)
 			}
@@ -3827,18 +3841,19 @@ func TestSeriesTierModifier_CLARIFICATION6(t *testing.T) {
 		// EDGE (b): the SAME tokens are VARIANTS for NON-series families — UNCHANGED.
 		{"gpt-5-mini stays variant=mini", "gpt", "openai/gpt-5-mini", "gpt", "mini", "5", ""},
 		{"gemini-2.5-flash stays variant=flash", "gemini-flash", "gemini-2.5-flash", "gemini", "flash", "2.5", ""},
-		{"qwen-turbo stays variant=turbo", "qwen", "qwen-turbo", "qwen", "turbo", "", ""},
-		{"llama-instruct stays variant=instruct", "llama", "meta-llama/llama-3.1-8b-instruct", "llama", "instruct", "3.1", ""},
-		// MULTI-MODIFIER: tier + thinking → keep thinking, DROP tier (pending ruling).
-		{"kimi-k2p6-turbo (raw kimi-thinking) → keep thinking, drop turbo", "kimi-thinking", "accounts/fireworks/routers/kimi-k2p6-turbo", "kimi", "k", "2.6", "thinking"},
-		{"kimi-k2-thinking-turbo (raw kimi-thinking) → keep thinking", "kimi-thinking", "kimi-k2-thinking-turbo", "kimi", "k", "2", "thinking"},
+		{"qwen-turbo stays variant=turbo (member-guard)", "qwen", "qwen-turbo", "qwen", "turbo", "", ""},
+		// SLICE-10: 'instruct' is now a GLOBAL modifier (llama non-member) → variant empty, mod [instruct].
+		{"llama-instruct → [instruct] (SLICE-10 member-guard)", "llama", "meta-llama/llama-3.1-8b-instruct", "llama", "", "3.1", "instruct"},
+		// SLICE-10 MULTI-MODIFIER: tier + capability compose LOSSLESSLY in the Modifier list.
+		{"kimi-k2p6-turbo (raw kimi-thinking) → [thinking,turbo]", "kimi-thinking", "accounts/fireworks/routers/kimi-k2p6-turbo", "kimi", "k", "2.6", "thinking,turbo"},
+		{"kimi-k2-thinking-turbo (raw kimi-thinking) → [thinking,turbo]", "kimi-thinking", "kimi-k2-thinking-turbo", "kimi", "k", "2", "thinking,turbo"},
 	}
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
 			t.Parallel()
 			f, va, ve, mod, _ := bestiary.ParseFamilyDetailed(tc.raw, tc.id, "p")
-			if string(f) != tc.wantFamily || va != tc.wantVariant || ve != tc.wantVersion || mod != tc.wantMod {
+			if string(f) != tc.wantFamily || va != tc.wantVariant || ve != tc.wantVersion || modJoin(mod) != tc.wantMod {
 				t.Errorf("raw=%q id=%q → (%s|%s|%s|mod=%s), want (%s|%s|%s|mod=%s)",
 					tc.raw, tc.id, f, va, ve, mod, tc.wantFamily, tc.wantVariant, tc.wantVersion, tc.wantMod)
 			}
@@ -3846,37 +3861,47 @@ func TestSeriesTierModifier_CLARIFICATION6(t *testing.T) {
 	}
 }
 
-// TestSlice8_MultiModifier_DeferredToModifierListSlice is the greppable SCOPE-NOTE
-// marker for the multi-modifier residual. A letter-prefix series ID can carry BOTH a
-// capability modifier (thinking/vision) AND a tier (turbo/…) — two modifiers — but the
-// Modifier field is single-valued in S8. The user ruled Option 1 (Modifier → LIST,
-// lossless), which is a PUBLIC SCHEMA change (ModelInfo/ModelRef/bestiary.schema.json +
-// BestiarySchemaVersion bump + Format ordering + resolve.go FIX-B group key) and is
-// therefore deferred to the later Modifier-LIST slice (SLICE-10). For S8 the INTERIM
-// is: keep the series split + the capability modifier (thinking/vision wins), DROP the
-// tier (documented residual). This test PINS that TEMPORARY interim so the S8→SLICE-10
-// hand-off is visible from the suite, not just git history (mirrors the glmv S3→S8
-// SCOPE-NOTE pattern).
-func TestSlice8_MultiModifier_DeferredToModifierListSlice(t *testing.T) {
+// SLICE-10 (rc2): TestSlice8_MultiModifier_DeferredToModifierListSlice was REMOVED.
+// It pinned the S8 single-Modifier interim (kimi-k2-thinking-turbo DROPPED "turbo"). The
+// Modifier-LIST schema change (CLARIFICATION-7) now populates BOTH losslessly
+// ([thinking, turbo]); the lossless multi-modifier behaviour is asserted by
+// TestParseFamilyDetailed_Slice10_ModifierList.
+func TestParseFamilyDetailed_Slice10_ModifierList(t *testing.T) {
 	t.Parallel()
 	cases := []struct {
-		desc                                          string
-		raw                                           bestiary.Family
-		id                                            bestiary.ModelID
-		wantFamily, wantVariant, wantVersion, wantMod string
+		desc                              string
+		raw                               bestiary.Family
+		id                                bestiary.ModelID
+		wantFamily, wantVariant, wantVer  string
+		wantMod                           string // canonical comma-joined
 	}{
-		// tier (turbo) + capability (thinking) → INTERIM: thinking kept, turbo dropped.
-		// The Modifier-LIST slice (SLICE-10) will populate BOTH losslessly.
-		{"kimi-k2p6-turbo + thinking → interim keeps thinking", "kimi-thinking", "accounts/fireworks/routers/kimi-k2p6-turbo", "kimi", "k", "2.6", "thinking"},
-		{"kimi-k2-thinking-turbo → interim keeps thinking", "kimi-thinking", "kimi-k2-thinking-turbo", "kimi", "k", "2", "thinking"},
+		// Multi-modifier lossless capture (replaces the S8 interim drop).
+		{"kimi-k2-thinking-turbo → [thinking,turbo]", "kimi-thinking", "kimi-k2-thinking-turbo", "kimi", "k", "2", "thinking,turbo"},
+		{"kimi-k2p6-turbo + thinking → [thinking,turbo]", "kimi-thinking", "accounts/fireworks/routers/kimi-k2p6-turbo", "kimi", "k", "2.6", "thinking,turbo"},
+		{"kimi triple → [thinking,turbo,original]", "kimi-thinking", "moonshotai/kimi-k2-thinking-turbo-original", "kimi", "k", "2", "thinking,turbo,original"},
+		// Per-ID convergence targets for the 9 stragglers (canonical order).
+		{"command-a-reasoning → [reasoning]", "command-a", "command-a-reasoning-08-2025", "command", "a", "", "reasoning"},
+		{"llama vision-instruct → [vision,instruct]", "llama", "llama-3.2-11b-vision-instruct", "llama", "", "3.2", "vision,instruct"},
+		{"phi multimodal-instruct → [multimodal,instruct]", "phi", "phi-4-multimodal-instruct", "phi", "", "4", "multimodal,instruct"},
+		{"llama-4-scout(-instruct) → variant scout + [instruct]", "llama", "llama-4-scout-17b-16e-instruct", "llama", "scout", "4", "instruct"},
+		{"qwen3-next(-instruct) → variant next + [instruct]", "qwen", "qwen3-next-80b-a3b-instruct", "qwen", "next", "3", "instruct"},
+		// Must-not-regress (single-modifier + member-variant protection).
+		{"kimi-k2-thinking → [thinking]", "kimi-thinking", "kimi-k2-thinking", "kimi", "k", "2", "thinking"},
+		{"grok-vision → [vision]", "grok-vision", "grok-vision", "grok", "", "", "vision"},
+		{"claude-3-7-sonnet-thinking → [thinking]", "claude-sonnet", "claude-3-7-sonnet-thinking", "claude", "sonnet", "3.7", "thinking"},
+		{"deepseek-chat → variant chat (member-guard)", "deepseek", "deepseek-chat", "deepseek", "chat", "", ""},
+		{"sonar-reasoning → variant reasoning (member-guard)", "sonar", "sonar-reasoning", "sonar", "reasoning", "", ""},
+		{"qwen-turbo → variant turbo (member-guard)", "qwen", "qwen-turbo", "qwen", "turbo", "", ""},
+		{"gemini-pro → variant pro (stays variant)", "gemini", "gemini-pro", "gemini", "pro", "", ""},
+		{"qwen-flash → variant flash (stays variant)", "qwen", "qwen-flash", "qwen", "flash", "", ""},
 	}
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
 			t.Parallel()
 			f, va, ve, mod, _ := bestiary.ParseFamilyDetailed(tc.raw, tc.id, "p")
-			if string(f) != tc.wantFamily || va != tc.wantVariant || ve != tc.wantVersion || mod != tc.wantMod {
-				t.Errorf("raw=%q id=%q → (%s|%s|%s|mod=%s), want (%s|%s|%s|mod=%s) [SLICE-10 Modifier-list interim]",
-					tc.raw, tc.id, f, va, ve, mod, tc.wantFamily, tc.wantVariant, tc.wantVersion, tc.wantMod)
+			if string(f) != tc.wantFamily || va != tc.wantVariant || ve != tc.wantVer || modJoin(mod) != tc.wantMod {
+				t.Errorf("raw=%q id=%q → (%s|%s|%s|mod=%v), want (%s|%s|%s|mod=%s)",
+					tc.raw, tc.id, f, va, ve, mod, tc.wantFamily, tc.wantVariant, tc.wantVer, tc.wantMod)
 			}
 		})
 	}
@@ -3933,9 +3958,9 @@ func TestParseFamilyDetailed_PathUnification(t *testing.T) {
 		// ID "deepseek-reasoner" has no thinking token; raw "deepseek-thinking" carries it).
 		{"deepseek-reasoner: rawModifier 'thinking' preserved", "deepseek-thinking", "deepseek-reasoner", "deepseek", "", "", "thinking"},
 
-		// MUST-NOT-REGRESS: capability modifier (thinking) is NOT swapped for a tier
-		// modifier (turbo) the ID carries — capability wins (SLICE-8 single-modifier ruling).
-		{"kimi-k2p6-turbo raw=kimi-thinking: capability 'thinking' kept over tier 'turbo'", "kimi-thinking", "kimi-k2p6-turbo", "kimi", "k", "2.6", "thinking"},
+		// SLICE-10: capability + tier compose LOSSLESSLY in the Modifier LIST (supersedes
+		// the SLICE-8 single-modifier "capability wins, tier dropped" interim).
+		{"kimi-k2p6-turbo raw=kimi-thinking: thinking+turbo lossless", "kimi-thinking", "kimi-k2p6-turbo", "kimi", "k", "2.6", "thinking,turbo"},
 
 		// MUST-NOT-REGRESS: claude-opus-4-1-...-thinking → (claude,opus,4.1,thinking).
 		{"claude-opus-4-1-thinking (must-hold)", "claude-opus", "claude-opus-4-1-20250805-thinking", "claude", "opus", "4.1", "thinking"},
@@ -3945,7 +3970,9 @@ func TestParseFamilyDetailed_PathUnification(t *testing.T) {
 		// "-lite" (returns "flash") for the dated-preview suffix; the superstring guard
 		// keeps the correct raw variant "flash-lite" (distinct Gemini tier).
 		{"gemini-2.5-flash-lite-preview-06-17: flash-lite preserved (not downgraded to flash)", "gemini-flash-lite", "gemini-2.5-flash-lite-preview-06-17", "gemini", "flash-lite", "2.5", ""},
-		{"gemini-2.5-flash-lite-preview-09-2025: flash-lite preserved", "gemini-flash-lite", "gemini-2.5-flash-lite-preview-09-2025", "gemini", "flash-lite", "2.5", ""},
+		// SLICE-10: "preview" before an MM-YYYY date is now captured as a Modifier (the
+		// tail-scan skips the 09-2025 date fragment); flash-lite variant still preserved.
+		{"gemini-2.5-flash-lite-preview-09-2025: flash-lite preserved + preview modifier", "gemini-flash-lite", "gemini-2.5-flash-lite-preview-09-2025", "gemini", "flash-lite", "2.5", "preview"},
 
 		// fix-cycle-2 P2 (Reviewer C IMPORTANT): the '@' version/date delimiter is
 		// normalized to '-' so the @-form converges to the canonical version (not "4").
@@ -3956,7 +3983,7 @@ func TestParseFamilyDetailed_PathUnification(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
 			f, va, ve, mod, _ := bestiary.ParseFamilyDetailed(bestiary.Family(tc.raw), bestiary.ModelID(tc.id), "test-provider")
-			if string(f) != tc.wantFam || va != tc.wantVar || ve != tc.wantVer || mod != tc.wantMod {
+			if string(f) != tc.wantFam || va != tc.wantVar || ve != tc.wantVer || modJoin(mod) != tc.wantMod {
 				t.Errorf("ParseFamilyDetailed(raw=%q, id=%q) = (%q,%q,%q,%q), want (%q,%q,%q,%q)",
 					tc.raw, tc.id, f, va, ve, mod, tc.wantFam, tc.wantVar, tc.wantVer, tc.wantMod)
 			}
@@ -3978,7 +4005,7 @@ func TestParseFamilyDetailed_PathUnification_EmptyRawConsistency(t *testing.T) {
 		if rf != ef {
 			t.Fatalf("%s: family disagrees raw=%q empty=%q (test precondition: pick a non-over-capture ID)", id, rf, ef)
 		}
-		if rv != ev || rver != ever || rmod != emod {
+		if rv != ev || rver != ever || modJoin(rmod) != modJoin(emod) {
 			t.Errorf("%s: raw-populated (%q,%q,%q) != empty-raw (%q,%q,%q) — paths not unified",
 				id, rv, rver, rmod, ev, ever, emod)
 		}
@@ -4003,7 +4030,8 @@ func TestParseFamilyDetailed_SLICE11_FamilyOverCaptureReduction(t *testing.T) {
 		// elsewhere); version empty. Supersedes the SLICE-11 (gpt,mini,"") row.
 		{"gpt-4o-mini (variant '4o', bestiary-xdbc Q2b)", "openai/gpt-4o-mini", "gpt", "4o", ""},
 		{"deepseek-r1 (canonical drops r1)", "deepseek-ai/DeepSeek-R1-0528", "deepseek", "", ""},
-		{"llama-3.3-70b-instruct", "meta-llama/llama-3.3-70b-instruct", "llama", "instruct", "3.3"},
+		// SLICE-10: 'instruct' is a global modifier now → variant empty (not "instruct").
+		{"llama-3.3-70b-instruct", "meta-llama/llama-3.3-70b-instruct", "llama", "", "3.3"},
 		{"qwen3-vl member+gen", "qwen/qwen3-vl-30b-a3b-instruct", "qwen", "vl", "3"},
 		{"phi-4-mini member+gen", "microsoft/phi-4-mini-instruct", "phi", "mini", "4"},
 		{"gemini flash via modifier-strip branch", "google/gemini-2.5-flash-image", "gemini", "flash", "2.5"},
@@ -4092,17 +4120,19 @@ func TestSLICE12_Convergences(t *testing.T) {
 		{"gpt-audio-mini → (gpt,audio,'',mini)", "", "openai/gpt-audio-mini", "gpt", "audio", "", "mini"},
 		{"gpt-4 UNCHANGED → (gpt,'',4)", "gpt", "gpt-4", "gpt", "", "4", ""},
 		// ── gpt-codex ID-WINS (#4) + flash-lite NON-regression ───────────────────────
-		{"gpt-5-chat-latest: phantom codex cleared", "gpt-codex", "gpt-5-chat-latest", "gpt", "", "5", "latest"},
-		{"gpt-5.1-chat: phantom codex cleared", "gpt-codex", "openai/gpt-5.1-chat", "gpt", "", "5.1", ""},
+		// SLICE-10: 'chat' is now a global modifier (gpt has no 'chat' member) → captured in the list.
+		{"gpt-5-chat-latest: phantom codex cleared, chat→modifier", "gpt-codex", "gpt-5-chat-latest", "gpt", "", "5", "chat,latest"},
+		{"gpt-5.1-chat: phantom codex cleared, chat→modifier", "gpt-codex", "openai/gpt-5.1-chat", "gpt", "", "5.1", "chat"},
 		{"flash-lite NOT regressed (raw)", "gemini-flash-lite", "gemini-2.5-flash-lite-preview-06-17", "gemini", "flash-lite", "2.5", ""},
-		{"flash-lite tier (empty raw, #6 compound-member)", "", "gemini-2.5-flash-lite-preview-09-2025", "gemini", "flash-lite", "2.5", ""},
+		// SLICE-10: 'preview' before the MM-YYYY date is now captured (tail-scan skips the date).
+		{"flash-lite tier (empty raw, #6 compound-member)", "", "gemini-2.5-flash-lite-preview-09-2025", "gemini", "flash-lite", "2.5", "preview"},
 		// ── glm 'v' variant (Q1) ─────────────────────────────────────────────────────
 		{"glm-4.5v → (glm,v,4.5)", "glm", "glm-4.5v", "glm", "v", "4.5", ""},
 		{"glm-5v-turbo → (glm,v,5,turbo)", "glm", "glm-5v-turbo", "glm", "v", "5", "turbo"},
 		{"glmv raw → glm + variant v", "glmv", "z-ai/glm-4.5v", "glm", "v", "4.5", ""},
 		// ── canonical-winner ENFORCE (own-family + org leak) ─────────────────────────
 		{"aion mislabelled llama → aion", "llama", "aion-labs/aion-1.0", "aion", "", "1.0", ""},
-		{"mixtral mislabelled mistral → mixtral+instruct", "mistral", "mistralai/mixtral-8x22b-instruct", "mixtral", "instruct", "", ""},
+		{"mixtral mislabelled mistral → mixtral, instruct→modifier", "mistral", "mistralai/mixtral-8x22b-instruct", "mixtral", "", "", "instruct"},
 		{"nousresearch org leak → hermes", "nousresearch", "nousresearch/hermes-3-llama-3.1-70b", "hermes", "", "3", ""},
 		{"liquid org leak → lfm", "liquid", "liquid/lfm-2-24b-a2b", "lfm", "", "2", ""},
 		{"qwq mislabelled qwen → qwq", "qwen", "qwq-32b", "qwq", "", "", ""},
@@ -4110,14 +4140,15 @@ func TestSLICE12_Convergences(t *testing.T) {
 		{"qwen3.7-max raw over-capture → (qwen,max,3.7)", "qwen3.7-max", "qwen3.7-max", "qwen", "max", "3.7", ""},
 		{"qwen3.5 dotted bare-gen de-junk → (qwen,'',3.5)", "qwen3.5", "qwen/qwen3.5-27b", "qwen", "", "3.5", ""},
 		// ── member-variant suffix re-recovery (#5, A-1/A-2) ──────────────────────────
-		{"codellama empty-raw recovers instruct", "", "alfredpros/codellama-7b-instruct-solidity", "codellama", "instruct", "", ""},
-		{"rnj empty-raw recovers instruct (A-1)", "", "essentialai/rnj-1-instruct", "rnj", "instruct", "1", ""},
+		// SLICE-10: 'instruct' → global modifier (not a variant) for these non-member families.
+		{"codellama empty-raw: instruct→modifier", "", "alfredpros/codellama-7b-instruct-solidity", "codellama", "", "", "instruct"},
+		{"rnj empty-raw: instruct→modifier (A-1)", "", "essentialai/rnj-1-instruct", "rnj", "", "1", "instruct"},
 		{"voxtral empty-raw recovers small (A-2)", "", "mistralai/voxtral-small-24b-2507", "voxtral", "small", "", ""},
 	}
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
 			f, v, ver, m, _ := bestiary.ParseFamilyDetailed(tc.raw, tc.id, "p")
-			if string(f) != tc.wFam || v != tc.wVar || ver != tc.wVer || m != tc.wMod {
+			if string(f) != tc.wFam || v != tc.wVar || ver != tc.wVer || modJoin(m) != tc.wMod {
 				t.Errorf("ParseFamilyDetailed(raw=%q,id=%q) = (%q,%q,%q,%q), want (%q,%q,%q,%q)",
 					tc.raw, tc.id, f, v, ver, m, tc.wFam, tc.wVar, tc.wVer, tc.wMod)
 			}
@@ -4153,8 +4184,10 @@ func TestSLICE14_TIER1Convergences(t *testing.T) {
 		{"command-r7b-12-2024 empty → (command,r) [r7b=r+7b-size]", "", "cohere/command-r7b-12-2024", "command", "r", "12", ""},
 		{"command-r7b-12-2024 raw=command-r → (command,r)", "command-r", "cohere/command-r7b-12-2024", "command", "r", "12", ""},
 		// COMMITTED — meta-llama SURGICAL doubled-vendor strip (org "meta-llama/" + "Meta-Llama-…").
-		{"meta-llama/Meta-Llama-3.1 empty → (llama,instruct,3.1)", "", "meta-llama/Meta-Llama-3.1-8B-Instruct", "llama", "instruct", "3.1", ""},
-		{"meta-llama/Meta-Llama-3.1 raw=llama → (llama,instruct,3.1)", "llama", "meta-llama/Meta-Llama-3.1-8B-Instruct", "llama", "instruct", "3.1", ""},
+		// SLICE-10: 'instruct' → global modifier (llama has no 'instruct' member after the
+		// ratified families.json correction); variant empty, modifier [instruct].
+		{"meta-llama/Meta-Llama-3.1 empty → (llama,'',3.1,[instruct])", "", "meta-llama/Meta-Llama-3.1-8B-Instruct", "llama", "", "3.1", "instruct"},
+		{"meta-llama/Meta-Llama-3.1 raw=llama → (llama,'',3.1,[instruct])", "llama", "meta-llama/Meta-Llama-3.1-8B-Instruct", "llama", "", "3.1", "instruct"},
 		// CONDITIONAL (promoted) — grok product-name member "code-fast" (one unit; no fast-as-modifier judgment).
 		{"grok-code-fast-1 empty → (grok,code-fast,1)", "", "x-ai/grok-code-fast-1", "grok", "code-fast", "1", ""},
 		{"grok-code-fast-1 raw=grok → (grok,code-fast,1)", "grok", "x-ai/grok-code-fast-1", "grok", "code-fast", "1", ""},
@@ -4171,7 +4204,7 @@ func TestSLICE14_TIER1Convergences(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
 			f, v, ver, m, _ := bestiary.ParseFamilyDetailed(tc.raw, tc.id, "p")
-			if string(f) != tc.wFam || v != tc.wVar || ver != tc.wVer || m != tc.wMod {
+			if string(f) != tc.wFam || v != tc.wVar || ver != tc.wVer || modJoin(m) != tc.wMod {
 				t.Errorf("ParseFamilyDetailed(raw=%q,id=%q) = (%q,%q,%q,%q), want (%q,%q,%q,%q)",
 					tc.raw, tc.id, f, v, ver, m, tc.wFam, tc.wVar, tc.wVer, tc.wMod)
 			}

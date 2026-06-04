@@ -616,7 +616,7 @@ func TestFormatModel_JSON_ModifierField(t *testing.T) {
 		Variant:     "opus",
 		Version:     "4.6",
 		Date:        "2026-02-05",
-		Modifier:    "thinking",
+		Modifier:    []string{"thinking"},
 		LastSynced:  "2026-02-05T00:00:00Z",
 	}
 
@@ -634,8 +634,9 @@ func TestFormatModel_JSON_ModifierField(t *testing.T) {
 	if !ok {
 		t.Fatal("JSON output missing 'Modifier' key; add Modifier to ModelInfo and schema")
 	}
-	if s, ok := val.(string); !ok || s != "thinking" {
-		t.Errorf("Modifier = %v (%T), want \"thinking\"", val, val)
+	// SLICE-10: Modifier is a JSON array now.
+	if arr, ok := val.([]interface{}); !ok || len(arr) != 1 || arr[0] != "thinking" {
+		t.Errorf("Modifier = %v (%T), want [\"thinking\"]", val, val)
 	}
 
 	// Test that Modifier appears when empty (as empty string, not omitted,
@@ -649,7 +650,7 @@ func TestFormatModel_JSON_ModifierField(t *testing.T) {
 		Variant:     "",
 		Version:     "4o",
 		Date:        "2024-05-13",
-		Modifier:    "",
+		Modifier:    nil,
 		LastSynced:  "2024-05-13T00:00:00Z",
 	}
 
@@ -683,7 +684,7 @@ func TestFormatModel_YAML_ModifierField(t *testing.T) {
 		Variant:     "opus",
 		Version:     "4.6",
 		Date:        "2026-02-05",
-		Modifier:    "thinking",
+		Modifier:    []string{"thinking"},
 		LastSynced:  "2026-02-05T00:00:00Z",
 	}
 

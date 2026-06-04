@@ -39,8 +39,9 @@
       "type": "string"
     },
     "Modifier": {
-      "description": "Known trailing token extracted from the model ID that carries semantic meaning beyond family/variant/version/date (e.g. \"thinking\", \"vision\", \"latest\"). Empty when no known modifier is found. Populated by ExtractModifier at codegen time.",
-      "type": "string"
+      "description": "List of known trailing tokens extracted from the model ID that carry semantic meaning beyond family/variant/version/date (e.g. [\"thinking\"], [\"vision\",\"instruct\"]). Stored in deterministic canonical order (capability > speed > format/stage, alpha fallback). null when no known modifier is found. SLICE-10 (rc2): widened from string to array of strings for lossless multi-modifier capture.",
+      "type": ["array", "null"],
+      "items": { "type": "string" }
     },
     "ContextWindow": {
       "description": "Maximum number of tokens the model can process in a single request.",

@@ -979,15 +979,20 @@ func genToModelInfoDetailed(providerSlug string, wm genWireModel) (bestiary.Mode
 	// value is a trailing suffix of the model ID; strip it to avoid date extraction
 	// from tokens that are part of the modifier (e.g. "thinking", "preview").
 	cleanID := id
-	if normModifier != "" {
-		// ExtractModifier returns the modifier string; the consumed suffix equals the
-		// modifier token including its delimiter. Re-derive the consumed suffix by
-		// calling ExtractModifier with the known family+variant context.
-		_, modifierConsumed := bestiary.ExtractModifier(id, normFamily, normVariant)
-		if modifierConsumed != "" {
-			if trimmed, ok := strings.CutSuffix(string(id), modifierConsumed); ok {
-				cleanID = bestiary.ModelID(trimmed)
+	if len(normModifier) > 0 {
+		// SLICE-10: Modifier is now a LIST. Peel EVERY trailing modifier token (their
+		// consumed suffixes are contiguous at the tail of the ID) so ExtractDate never
+		// reads a date out of a modifier token (e.g. "...-thinking-turbo").
+		for {
+			_, modifierConsumed := bestiary.ExtractModifier(cleanID, normFamily, normVariant)
+			if modifierConsumed == "" {
+				break
 			}
+			trimmed, ok := strings.CutSuffix(string(cleanID), modifierConsumed)
+			if !ok {
+				break
+			}
+			cleanID = bestiary.ModelID(trimmed)
 		}
 	}
 
@@ -1001,7 +1006,7 @@ func genToModelInfoDetailed(providerSlug string, wm genWireModel) (bestiary.Mode
 		// ReasonKnownSuffixOverflow (the modifier is now a first-class field).
 		// Clear the failure record for this case so the audit log shrinks as
 		// expected per the V2-5 design.
-		if failure.Reason == bestiary.ReasonKnownSuffixOverflow && normModifier != "" {
+		if failure.Reason == bestiary.ReasonKnownSuffixOverflow && len(normModifier) > 0 {
 			failure = nil
 		}
 	}
@@ -1075,6 +1080,21 @@ func genToModalities(input, output []string) bestiary.Modalities {
 // generateSource renders the []ModelInfo slice as a valid Go source file and
 // formats it with go/format so the result is gofmt-clean.
 // slugToConst maps provider slug → Go constant name (e.g. "anthropic" → "ProviderAnthropic").
+// goStringSliceLiteral renders a []string as a compile-ready Go literal. A nil/empty
+// slice renders as "nil" (the canonical "no modifiers" value), matching the
+// empty→nil contract of ModelInfo.Modifier (SLICE-10). Elements are emitted verbatim
+// in their stored canonical order so codegen output is byte-stable.
+func goStringSliceLiteral(ss []string) string {
+	if len(ss) == 0 {
+		return "nil"
+	}
+	parts := make([]string, len(ss))
+	for i, s := range ss {
+		parts[i] = fmt.Sprintf("%q", s)
+	}
+	return "[]string{" + strings.Join(parts, ", ") + "}"
+}
+
 func generateSource(models []bestiary.ModelInfo, slugToConst map[string]string) ([]byte, error) {
 	var buf bytes.Buffer
 
@@ -1099,7 +1119,7 @@ func generateSource(models []bestiary.ModelInfo, slugToConst map[string]string) 
 		fmt.Fprintf(&buf, "\t\tVariant:               %q,\n", m.Variant)
 		fmt.Fprintf(&buf, "\t\tVersion:               %q,\n", m.Version)
 		fmt.Fprintf(&buf, "\t\tDate:                  %q,\n", m.Date)
-		fmt.Fprintf(&buf, "\t\tModifier:              %q,\n", m.Modifier)
+		fmt.Fprintf(&buf, "\t\tModifier:              %s,\n", goStringSliceLiteral(m.Modifier))
 		fmt.Fprintf(&buf, "\t\tContextWindow:         %d,\n", m.ContextWindow)
 		fmt.Fprintf(&buf, "\t\tMaxOutput:             %d,\n", m.MaxOutput)
 		fmt.Fprintf(&buf, "\t\tReasoning:             %v,\n", m.Reasoning)
@@ -1510,15 +1530,31 @@ func nameForCanonicalWithMap(m bestiary.ModelInfo, slugToConst map[string]string
 	// Modifier (e.g. "-thinking") appears as the trailing hyphen-separated token.
 	// It must be stripped before date and version logic runs so it doesn't produce
 	// spurious tokens in the constant name.
+	// SLICE-10: Modifier is a LIST. Greedily strip EVERY trailing modifier token from
+	// the raw ID (they may appear in any order in the ID), then build the constant
+	// segment from the stored CANONICAL order so the identifier is deterministic and
+	// byte-stable (e.g. ["vision","instruct"] → "VisionInstruct").
 	modifierSegment := ""
-	if m.Modifier != "" {
-		modifierSuffix := "-" + m.Modifier
-		if strings.HasSuffix(rawID, modifierSuffix) {
-			rawID = strings.TrimSuffix(rawID, modifierSuffix)
-			rawID = strings.TrimRight(rawID, "-.")
-			// Compute cased modifier segment via tokenToConstPart.
-			// e.g. "thinking" → "Thinking", "vision" → "Vision".
-			modifierSegment = tokenToConstPart(m.Modifier)
+	if len(m.Modifier) > 0 {
+		modSet := make(map[string]struct{}, len(m.Modifier))
+		for _, mod := range m.Modifier {
+			modSet[mod] = struct{}{}
+		}
+		// Peel trailing "-<modifier>" tokens until the tail is no longer a modifier.
+		for {
+			lastDash := strings.LastIndexByte(rawID, '-')
+			if lastDash < 0 {
+				break
+			}
+			tail := rawID[lastDash+1:]
+			if _, ok := modSet[strings.ToLower(tail)]; !ok {
+				break
+			}
+			rawID = strings.TrimRight(rawID[:lastDash], "-.")
+		}
+		// Cased segment in canonical order (m.Modifier is already canonical).
+		for _, mod := range m.Modifier {
+			modifierSegment += tokenToConstPart(mod)
 		}
 	}
 

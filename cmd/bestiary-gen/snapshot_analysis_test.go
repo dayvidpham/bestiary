@@ -501,11 +501,18 @@ func TestSnapshotAnalysis_CrossProviderDivergences(t *testing.T) {
 	// 1 is PERMANENT v0.2.2 LEDGER: nvidia/llama-3.3-nemotron-super-49b-v1.5 (embedded-family — the
 	// ID leads with "llama", canonical is "nemotron"; GH-followup). The set-equality enumerated-
 	// divergence gate is pinned later (post-S10), not in this slice.
+	// SLICE-10 (rc2): the Modifier-LIST schema change + ratified modifier-taxonomy
+	// (instruct/turbo/base/reasoning/multimodal/fast/chat → global modifiers, member-guarded;
+	// scout→llama, next→qwen member adds) CONVERGED all 9 S10-PENDING stragglers
+	// (kimi-k2-thinking-turbo ×2, llama-3.2-11b-vision-instruct ×2, phi-4-multimodal-instruct,
+	// command-a-reasoning-08-2025, llama-4-scout, qwen3-next ×2). RESIDUAL = 1 = the PERMANENT
+	// v0.2.2 LEDGER entry nvidia/llama-3.3-nemotron-super-49b-v1.5 (embedded-family — the ID
+	// leads with "llama", canonical is "nemotron"; GH-followup, NOT a modifier case).
 	const (
-		divergenceExact = 10
+		divergenceExact = 1
 		// Secondary sanity band — guards against a wholesale snapshot/pipeline
 		// breakage that happens to coincidentally land on a different exact value.
-		divergenceLow  = 6
+		divergenceLow  = 1
 		divergenceHigh = 500
 	)
 	if totalDivergent != divergenceExact {
@@ -545,11 +552,14 @@ func TestSnapshotAnalysis_CrossProviderDivergences(t *testing.T) {
 	// SLICE-14: CatC 12→7 (command r/r-plus member+date-guard, deepseek chat, grok code-fast,
 	// hy3 bare-gen). CatD 5→3 (meta-llama strip → llama, Qwen3-Embedding qwen-wins; residual D =
 	// qwen3-next ×2 + nemotron). CatB 1→0 (hy3 was the last bare-gen-split residual).
+	// SLICE-10: CatC 7→0 (all member-variant/version stragglers converged via the
+	// modifier-taxonomy + member-guard). CatD 3→1 (qwen3-next ×2 converged via the
+	// next→qwen member add; residual D = nemotron only). CatA/CatB unchanged at 0.
 	const (
 		catAExact = 0 // vendor-prefix/case (SLICE-1 M4 resolved all)
-		catBExact = 0 // bare-gen-split (SLICE-14: −1 via hy3 "hy" gen-split)
-		catCExact = 7 // member-variant/version (SLICE-14: command r/r-plus, deepseek chat, grok code-fast)
-		catDExact = 3 // genuine family mislabel (SLICE-14: −2 via meta-llama + Qwen3-Embedding; residual = qwen3-next×2 + nemotron)
+		catBExact = 0 // bare-gen-split
+		catCExact = 0 // member-variant/version — all converged (SLICE-10)
+		catDExact = 1 // genuine family mislabel — residual = nvidia nemotron (permanent ledger)
 	)
 	checkCat := func(name string, got, want int) {
 		if got != want {

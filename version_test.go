@@ -9,10 +9,10 @@ import (
 )
 
 // TestBestiarySchemaVersion_Exact asserts that BestiarySchemaVersion equals
-// exactly "0.0.2" — the version introduced by the normalization epoch (SLICE-7).
-// Update this test when a new schema version is released.
+// exactly "0.0.3" — bumped by SLICE-10 (rc2) for the Modifier string→[]string
+// public schema change. Update this test when a new schema version is released.
 func TestBestiarySchemaVersion_Exact(t *testing.T) {
-	const want = "0.0.2"
+	const want = "0.0.3"
 	if bestiary.BestiarySchemaVersion != want {
 		t.Errorf(
 			"BestiarySchemaVersion = %q, want %q;\n"+

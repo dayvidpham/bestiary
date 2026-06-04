@@ -117,6 +117,22 @@ func writeYAMLString(sb *strings.Builder, indent, key, value string) {
 	fmt.Fprintf(sb, "%s%s: %q\n", indent, key, value)
 }
 
+// writeYAMLStringSlice renders a string slice as an inline YAML flow sequence
+// (e.g. "Modifier: [vision, instruct]"). A nil/empty slice renders as "[]".
+// SLICE-10: Modifier became a list; values are emitted in their stored canonical
+// order so the output is deterministic.
+func writeYAMLStringSlice(sb *strings.Builder, indent, key string, values []string) {
+	if len(values) == 0 {
+		fmt.Fprintf(sb, "%s%s: []\n", indent, key)
+		return
+	}
+	quoted := make([]string, len(values))
+	for i, v := range values {
+		quoted[i] = fmt.Sprintf("%q", v)
+	}
+	fmt.Fprintf(sb, "%s%s: [%s]\n", indent, key, strings.Join(quoted, ", "))
+}
+
 func writeYAMLInt(sb *strings.Builder, indent, key string, value int) {
 	fmt.Fprintf(sb, "%s%s: %d\n", indent, key, value)
 }
@@ -173,7 +189,7 @@ func modelToYAML(m ModelInfo, indent string) string {
 	writeYAMLString(&sb, indent, "Family", string(m.Family))
 	writeYAMLString(&sb, indent, "Variant", m.Variant)
 	writeYAMLString(&sb, indent, "Date", m.Date)
-	writeYAMLString(&sb, indent, "Modifier", m.Modifier)
+	writeYAMLStringSlice(&sb, indent, "Modifier", m.Modifier)
 	writeYAMLInt(&sb, indent, "ContextWindow", m.ContextWindow)
 	writeYAMLInt(&sb, indent, "MaxOutput", m.MaxOutput)
 	writeYAMLBool(&sb, indent, "Reasoning", m.Reasoning)

@@ -592,7 +592,7 @@ func TestModelRef_Modifier_MarshalUnmarshal(t *testing.T) {
 		Variant:   "opus",
 		Version:   "4.6",
 		Date:      "2026-02-05",
-		Modifier:  "thinking",
+		Modifier:  []string{"thinking"},
 	}
 
 	enc, err := json.Marshal(ref)
@@ -613,9 +613,14 @@ func TestModelRef_Modifier_MarshalUnmarshal(t *testing.T) {
 		}
 	}
 
-	// Modifier must be "thinking".
-	if modVal, ok := got["Modifier"]; !ok || modVal != "thinking" {
-		t.Errorf("ModelRef JSON Modifier = %v, want \"thinking\"", modVal)
+	// SLICE-10: Modifier is now a JSON array; must be ["thinking"].
+	modVal, ok := got["Modifier"]
+	if !ok {
+		t.Fatal("ModelRef JSON missing 'Modifier'")
+	}
+	arr, isArr := modVal.([]interface{})
+	if !isArr || len(arr) != 1 || arr[0] != "thinking" {
+		t.Errorf("ModelRef JSON Modifier = %v (%T), want [\"thinking\"]", modVal, modVal)
 	}
 }
 
@@ -629,11 +634,11 @@ func TestModelInfo_Ref_Modifier(t *testing.T) {
 		Variant:     "opus",
 		Version:     "4.6",
 		Date:        "2026-02-05",
-		Modifier:    "thinking",
+		Modifier:    []string{"thinking"},
 	}
 
 	ref := m.Ref()
-	if ref.Modifier != "thinking" {
+	if modJoin(ref.Modifier) != "thinking" {
 		t.Errorf("Ref().Modifier = %q, want %q", ref.Modifier, "thinking")
 	}
 }
@@ -644,11 +649,11 @@ func TestModelInfo_Ref_EmptyModifier(t *testing.T) {
 		ID:       "gpt-4o-2024-05-13",
 		Provider: "openai",
 		Family:   "gpt",
-		Modifier: "",
+		Modifier: nil,
 	}
 
 	ref := m.Ref()
-	if ref.Modifier != "" {
-		t.Errorf("Ref().Modifier = %q, want empty string for zero-value Modifier", ref.Modifier)
+	if len(ref.Modifier) != 0 {
+		t.Errorf("Ref().Modifier = %q, want empty for zero-value Modifier", ref.Modifier)
 	}
 }

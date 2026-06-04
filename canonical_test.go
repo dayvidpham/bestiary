@@ -9,6 +9,13 @@ import (
 	"github.com/dayvidpham/bestiary"
 )
 
+// modJoin is the test-side equivalent of the package-internal modifierKey: the
+// canonical, order-independent comma-joined modifier key (SLICE-10). Shared across
+// the bestiary_test files for asserting Modifier-list behaviour.
+func modJoin(mods []string) string {
+	return strings.Join(bestiary.CanonicalizeModifiers(mods), ",")
+}
+
 func TestCanonicalScheme_String(t *testing.T) {
 	tests := []struct {
 		scheme bestiary.CanonicalScheme
@@ -221,7 +228,7 @@ func TestModelRef_Format_BracketSuffix(t *testing.T) {
 				Variant:  "opus",
 				Version:  "4.6",
 				Date:     "2026-02-05",
-				Modifier: "thinking",
+				Modifier: []string{"thinking"},
 			},
 			want: "anthropic/claude/opus/4.6@2026-02-05[thinking]",
 		},
@@ -233,7 +240,7 @@ func TestModelRef_Format_BracketSuffix(t *testing.T) {
 				Variant:  "opus",
 				Version:  "4.5",
 				Date:     "2025-11-01",
-				Modifier: "",
+				Modifier: nil,
 			},
 			want: "anthropic/claude/opus/4.5@2025-11-01",
 		},
@@ -245,7 +252,7 @@ func TestModelRef_Format_BracketSuffix(t *testing.T) {
 				Variant:  "",
 				Version:  "4o",
 				Date:     "2024-05-13",
-				Modifier: "",
+				Modifier: nil,
 			},
 			want: "openai/gpt/4o@2024-05-13",
 		},
@@ -257,7 +264,7 @@ func TestModelRef_Format_BracketSuffix(t *testing.T) {
 				Variant:  "opus",
 				Version:  "4.6",
 				Date:     "",
-				Modifier: "thinking",
+				Modifier: []string{"thinking"},
 			},
 			want: "anthropic/claude/opus/4.6[thinking]",
 		},
@@ -296,7 +303,7 @@ func TestModelRef_ParseCanonical_BracketSuffix(t *testing.T) {
 		Variant:   "opus",
 		Version:   "4.6",
 		Date:      "2026-02-05",
-		Modifier:  "thinking",
+		Modifier:  []string{"thinking"},
 	}
 
 	canonical := ref.Format(bestiary.SchemeCanonical)
@@ -313,7 +320,7 @@ func TestModelRef_ParseCanonical_BracketSuffix(t *testing.T) {
 		Variant:  "",
 		Version:  "4o",
 		Date:     "2024-05-13",
-		Modifier: "",
+		Modifier: nil,
 	}
 	canonical2 := refNoModifier.Format(bestiary.SchemeCanonical)
 	if strings.Contains(canonical2, "[") || strings.Contains(canonical2, "]") {

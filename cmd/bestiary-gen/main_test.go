@@ -553,7 +553,7 @@ func TestNameForCanonical_ModifierSlot(t *testing.T) {
 				Variant:  "opus",
 				Version:  "4.6",
 				Date:     "2026-02-05",
-				Modifier: "thinking",
+				Modifier: []string{"thinking"},
 			},
 			// Date "2026-02-05" is NOT in the raw ID "claude-opus-4-6-thinking",
 			// so dateFoundInID = false → no date suffix in constant.
@@ -570,7 +570,7 @@ func TestNameForCanonical_ModifierSlot(t *testing.T) {
 				Variant:  "opus",
 				Version:  "4.1",
 				Date:     "2025-08-05",
-				Modifier: "thinking",
+				Modifier: []string{"thinking"},
 			},
 			// Compact date "20250805" IS in the raw ID → dateFoundInID = true.
 			// Modifier "-thinking" is the trailing token, stripped before tokenizing.
@@ -588,7 +588,7 @@ func TestNameForCanonical_ModifierSlot(t *testing.T) {
 				Variant:  "opus",
 				Version:  "4.6",
 				Date:     "",
-				Modifier: "thinking",
+				Modifier: []string{"thinking"},
 			},
 			// No date → modifier becomes trailing segment.
 			// Expected: Model__Anthropic__Claude__Opus__4_6__Thinking
@@ -603,7 +603,7 @@ func TestNameForCanonical_ModifierSlot(t *testing.T) {
 				Variant:  "",
 				Version:  "",
 				Date:     "2024-05-13",
-				Modifier: "",
+				Modifier: nil,
 			},
 			// No modifier → no __Modifier__ slot (preserves current form).
 			wantName: "Model__OpenAI__GPT__4o__20240513",
@@ -2486,7 +2486,7 @@ func TestDecompositionSnapshot(t *testing.T) {
 			Family:   string(m.Family),
 			Variant:  m.Variant,
 			Version:  m.Version,
-			Modifier: m.Modifier,
+			Modifier: modKey(m.Modifier),
 		})
 	}
 	// Models from fetchModelsWithRaw are already sorted by (Provider, ID) via R1.
@@ -2550,9 +2550,10 @@ func TestDecompositionSnapshot_ActiveClassVersionPopulated(t *testing.T) {
 		// claude-3.5-haiku: same family → same decomposition
 		"anthropic/claude-3.5-haiku": {wantFamily: "claude", wantVariant: "haiku", wantVersion: "3.5"},
 		// B1 promoted models surviving FIX-4 revert (single-token rawFamily, no compound prefix):
-		// glm-5-turbo: raw_family=glm → family=glm, variant=turbo (B1), version=5
-		"glm-5-turbo": {wantFamily: "glm", wantVariant: "turbo", wantVersion: "5"},
-		// phi-4-mini: raw_family=phi → family=phi, variant=mini (B1), version=4
+		// glm-5-turbo: SLICE-10 — 'turbo' is now a GLOBAL modifier (not a glm member), so it
+		// reclassifies variant→modifier: (glm, "", 5, [turbo]). Version 5 still populated.
+		"glm-5-turbo": {wantFamily: "glm", wantVariant: "", wantVersion: "5"},
+		// phi-4-mini: raw_family=phi → family=phi, variant=mini (B1, still a variant suffix), version=4
 		"phi-4-mini": {wantFamily: "phi", wantVariant: "mini", wantVersion: "4"},
 	}
 

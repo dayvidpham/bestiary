@@ -9,7 +9,7 @@
   "grok": { "members": ["beta", "code-fast"], "bare_gen_split": false },
   "hy": { "members": [], "bare_gen_split": true },
   "kimi": { "members": ["free"], "bare_gen_split": false, "series_letter": "k" },
-  "llama": { "members": ["instruct"], "bare_gen_split": false },
+  "llama": { "members": ["scout"], "bare_gen_split": false },
   "magistral": { "members": ["medium", "small"], "bare_gen_split": false },
   "mimo": { "members": [], "bare_gen_split": false, "series_letter": "v" },
   "minimax": { "members": ["free"], "bare_gen_split": false, "series_letter": "m" },
@@ -18,7 +18,7 @@
   "nova": { "members": ["lite", "micro", "pro"], "bare_gen_split": false },
   "o": { "members": ["mini", "pro"], "bare_gen_split": true },
   "phi": { "members": ["mini", "small", "medium"], "bare_gen_split": false },
-  "qwen": { "members": ["max", "coder", "plus", "turbo", "flash", "vl", "free"], "bare_gen_split": true },
+  "qwen": { "members": ["max", "coder", "plus", "turbo", "flash", "vl", "free", "next"], "bare_gen_split": true },
   "sonar": { "members": ["deep-research", "pro", "reasoning"], "bare_gen_split": false },
   "trinity": { "members": ["mini"], "bare_gen_split": false }
 }

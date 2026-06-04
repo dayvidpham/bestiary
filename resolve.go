@@ -265,10 +265,13 @@ func Resolve(input string, opts ...ResolveOption) ([]ModelRef, error) {
 			// Version, Modifier, and contextN distinguish sub-variants that share the
 			// same (Family, Variant, Date) triple.
 			key = groupKey{
-				family:   ref.Family,
-				variant:  ref.Variant,
-				version:  ref.Version,
-				modifier: ref.Modifier,
+				family:  ref.Family,
+				variant: ref.Variant,
+				version: ref.Version,
+				// SLICE-10: the Modifier component is the ORDER-INDEPENDENT canonical
+				// key (modifierKey), so [thinking,turbo] and [turbo,thinking] never
+				// split a group; the ":N" context-window still discriminates per FIX-B.
+				modifier: modifierKey(ref.Modifier),
 				date:     ref.Date,
 				contextN: parseContextN(ref.ID),
 			}
@@ -740,8 +743,12 @@ func matchCanonicalSegments(m ModelInfo, matchInput string) bool {
 	if dateFilter != "" && m.Date != dateFilter {
 		return false
 	}
-	// Modifier filter: when specified (bracket suffix present), must match.
-	if modifierFilter != "" && m.Modifier != modifierFilter {
+	// Modifier filter: when specified (bracket suffix present), must match the
+	// model's order-independent canonical modifier key (SLICE-10). The bracket
+	// suffix renders the same canonical comma-joined form (ModelRef.Format), so a
+	// round-tripped "[vision,instruct]" matches a model with Modifier
+	// ["instruct","vision"].
+	if modifierFilter != "" && modifierKey(m.Modifier) != modifierFilter {
 		return false
 	}
 	return true

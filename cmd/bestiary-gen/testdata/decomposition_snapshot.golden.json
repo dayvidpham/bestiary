@@ -101,7 +101,7 @@
     "family": "phi",
     "variant": "medium",
     "version": "3",
-    "modifier": ""
+    "modifier": "instruct"
   },
   {
     "provider": "microsoft",
@@ -203,8 +203,8 @@
     "provider": "zhipu",
     "model_id": "glm-5-turbo",
     "family": "glm",
-    "variant": "turbo",
+    "variant": "",
     "version": "5",
-    "modifier": ""
+    "modifier": "turbo"
   }
 ]

@@ -17,7 +17,7 @@ type ModelRef struct {
 	Variant   string   // Canonical variant (e.g., "opus"); empty if no variant
 	Version   string   // Model version extracted from family (e.g., "4.5", "2.5"); empty if none
 	Date      string   // Release date in YYYY-MM-DD format; empty if none
-	Modifier  string   // Known trailing token (e.g., "thinking", "vision"); empty if none
+	Modifier  []string // Known trailing tokens in canonical order (e.g., ["vision","instruct"]); nil if none
 }
 
 // Ref returns a ModelRef for this ModelInfo.
@@ -112,9 +112,11 @@ func (r ModelRef) formatCanonical() string {
 		base = fmt.Sprintf("%s/%s", r.Provider, path)
 	}
 
-	// Append bracket-suffix for Modifier when non-empty (SLICE-FIX-V2-5).
-	if r.Modifier != "" {
-		return base + "[" + r.Modifier + "]"
+	// Append bracket-suffix for Modifier when non-empty (SLICE-FIX-V2-5; SLICE-10:
+	// ALL modifiers rendered in canonical order, comma-joined, for byte-stability
+	// across every scheme).
+	if key := modifierKey(r.Modifier); key != "" {
+		return base + "[" + key + "]"
 	}
 	return base
 }

@@ -54,7 +54,34 @@ type decompRecord struct {
 	Family    bestiary.Family
 	Variant   string
 	Version   string
-	Modifier  string
+	// SLICE-10: Modifier is a LIST, compared as an ORDER-INDEPENDENT SET.
+	Modifier []string
+}
+
+// modKey is the canonical, order-independent string key for a modifier list (the
+// SLICE-10 R1 set-independence anchor): permutations collapse to one key. Mirrors the
+// production bestiary modifierKey using the exported CanonicalizeModifiers.
+func modKey(mods []string) string {
+	c := bestiary.CanonicalizeModifiers(mods)
+	if len(c) == 0 {
+		return ""
+	}
+	return strings.Join(c, ",")
+}
+
+// modSet returns the modifier tokens as a lookup set (lowercased).
+func modSet(mods []string) map[string]struct{} {
+	s := make(map[string]struct{}, len(mods))
+	for _, m := range mods {
+		s[strings.ToLower(m)] = struct{}{}
+	}
+	return s
+}
+
+// inModSet reports whether tok (case-insensitive) is in the modifier list.
+func inModSet(mods []string, tok string) bool {
+	_, ok := modSet(mods)[strings.ToLower(tok)]
+	return ok
 }
 
 // decompKey is the stable identity of a record for diffing: (Provider, ID).
@@ -70,15 +97,33 @@ type decompTuple struct {
 	Family   bestiary.Family
 	Variant  string
 	Version  string
-	Modifier string
+	Modifier []string
 }
 
 func (r decompRecord) tuple() decompTuple {
 	return decompTuple{r.Family, r.Variant, r.Version, r.Modifier}
 }
 
+// decompCmp is the COMPARABLE projection of a decompTuple (the Modifier list is
+// reduced to its order-independent canonical key) so tuples can be used as map keys
+// and compared with ==. This is the SLICE-10 R1 set-independence guarantee applied to
+// the categorizer: a permuted modifier list never reads as a distinct tuple.
+type decompCmp struct {
+	Family   bestiary.Family
+	Variant  string
+	Version  string
+	Modifier string
+}
+
+func (t decompTuple) cmp() decompCmp {
+	return decompCmp{t.Family, t.Variant, t.Version, modKey(t.Modifier)}
+}
+
+// tupleEqual reports SET-equality of two tuples (modifier compared order-independently).
+func tupleEqual(a, b decompTuple) bool { return a.cmp() == b.cmp() }
+
 func (t decompTuple) String() string {
-	return fmt.Sprintf("(family=%q,variant=%q,version=%q,modifier=%q)", t.Family, t.Variant, t.Version, t.Modifier)
+	return fmt.Sprintf("(family=%q,variant=%q,version=%q,modifier=%q)", t.Family, t.Variant, t.Version, modKey(t.Modifier))
 }
 
 // dumpDecomposition runs the LIVE production decomposition (ParseFamilyDetailed)
@@ -124,10 +169,22 @@ func baselinePath() string {
 const baselineHeader = "provider\tid\traw_family\tfamily\tvariant\tversion\tmodifier"
 
 func formatBaselineLine(r decompRecord) string {
+	// SLICE-10: the modifier column is the canonical comma-joined key (order-independent).
+	// The FROZEN pre-refactor baseline holds single-token modifiers (no commas).
 	return strings.Join([]string{
 		string(r.Provider), string(r.ID), string(r.RawFamily),
-		string(r.Family), r.Variant, r.Version, r.Modifier,
+		string(r.Family), r.Variant, r.Version, modKey(r.Modifier),
 	}, "\t")
+}
+
+// parseModifierColumn turns the TSV modifier column back into a list (empty → nil).
+// The committed FROZEN baseline stores single-token values; a future capture would
+// store the canonical comma-joined form — both parse correctly here.
+func parseModifierColumn(s string) []string {
+	if s == "" {
+		return nil
+	}
+	return bestiary.CanonicalizeModifiers(strings.Split(s, ","))
 }
 
 func parseBaselineLine(line string) (decompRecord, error) {
@@ -142,7 +199,7 @@ func parseBaselineLine(line string) (decompRecord, error) {
 		Family:    bestiary.Family(parts[3]),
 		Variant:   parts[4],
 		Version:   parts[5],
-		Modifier:  parts[6],
+		Modifier:  parseModifierColumn(parts[6]),
 	}, nil
 }
 
@@ -278,7 +335,6 @@ func isStrictEnrichment(before, after decompTuple) bool {
 		{string(before.Family), string(after.Family)},
 		{before.Variant, after.Variant},
 		{before.Version, after.Version},
-		{before.Modifier, after.Modifier},
 	}
 	changed := false
 	for _, fp := range fieldPairs {
@@ -291,6 +347,17 @@ func isStrictEnrichment(before, after decompTuple) bool {
 			// A populated field changed to a different value (or was cleared) — not
 			// an enrichment.
 			return false
+		}
+	}
+	// SLICE-10 modifier as a SET: an enrichment may only ADD modifiers (before ⊆ after),
+	// never drop one. A dropped modifier is a populated-field change → not an enrichment.
+	if modKey(before.Modifier) != modKey(after.Modifier) {
+		changed = true
+		afterSet := modSet(after.Modifier)
+		for _, b := range before.Modifier {
+			if _, ok := afterSet[strings.ToLower(b)]; !ok {
+				return false // a modifier present BEFORE is gone AFTER — not enrichment
+			}
 		}
 	}
 	return changed
@@ -323,7 +390,7 @@ func classifyDecompChange(id bestiary.ModelID, before, after decompTuple, before
 	// physically cannot hide an unrelated regression on an allowlisted ID under the escape,
 	// because the escape is keyed to the exact ratified tuple, not the ID alone.
 	if exp, ok := allow[id]; ok {
-		if after == exp {
+		if tupleEqual(after, exp) {
 			return CatFix, "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple " + exp.String()
 		}
 		// AUTHORITATIVE for allowlisted IDs: any observed AFTER tuple OTHER than the
@@ -335,9 +402,9 @@ func classifyDecompChange(id bestiary.ModelID, before, after decompTuple, before
 	}
 
 	distinct := func(ts []decompTuple) int {
-		seen := map[decompTuple]struct{}{}
+		seen := map[decompCmp]struct{}{}
 		for _, t := range ts {
-			seen[t] = struct{}{}
+			seen[t.cmp()] = struct{}{}
 		}
 		return len(seen)
 	}
@@ -349,7 +416,7 @@ func classifyDecompChange(id bestiary.ModelID, before, after decompTuple, before
 	// value the dataset already considered correct for this ID — a divergence-fix.
 	matchedExistingBefore := false
 	for _, t := range beforeByID {
-		if t == after && t != before {
+		if tupleEqual(t, after) && !tupleEqual(t, before) {
 			matchedExistingBefore = true
 			break
 		}
@@ -416,7 +483,7 @@ func classifyDecompChange(id bestiary.ModelID, before, after decompTuple, before
 	//     leaked into the variant, e.g. "3.6") and after-variant is a clean word token
 	//     (e.g. "flash") — the ID recovered the true member variant.
 	// Family/Version/Modifier must be otherwise unchanged for this rule to apply.
-	if before.Family == after.Family && before.Version == after.Version && before.Modifier == after.Modifier &&
+	if before.Family == after.Family && before.Version == after.Version && modKey(before.Modifier) == modKey(after.Modifier) &&
 		before.Variant != after.Variant {
 		refinement := after.Variant != "" && before.Variant != "" &&
 			strings.HasPrefix(after.Variant, before.Variant)
@@ -504,7 +571,7 @@ func classifyDecompChange(id bestiary.ModelID, before, after decompTuple, before
 	// distinct-but-equal tokens could not be silently cleared.
 	redundant := before.Variant == before.Version && valueInID(before.Variant, id)
 	if before.Variant != after.Variant && after.Variant == "" &&
-		before.Family == after.Family && before.Version == after.Version && before.Modifier == after.Modifier &&
+		before.Family == after.Family && before.Version == after.Version && modKey(before.Modifier) == modKey(after.Modifier) &&
 		(!valueInID(before.Variant, id) || redundant) {
 		return CatImprove, fmt.Sprintf("junk variant %q cleared: phantom (absent from ID) or redundant (== version, ID-confirmed); de-noise", before.Variant)
 	}
@@ -541,10 +608,12 @@ func classifyDecompChange(id bestiary.ModelID, before, after decompTuple, before
 // also carries no variant); a field changed to a non-prefix LATERAL value is likewise not
 // a specificity loss and is governed by the convergence requirement.
 func nonFamilyPrefixDowngrade(before, after decompTuple) bool {
+	// SLICE-10: the Modifier list is governed as a SET by realNonFamilyLoss (a dropped
+	// modifier token is a loss only when ID-present and not re-surfaced); prefix-downgrade
+	// is a scalar-field notion, so only Variant/Version participate here.
 	pairs := [][2]string{
 		{before.Variant, after.Variant},
 		{before.Version, after.Version},
-		{before.Modifier, after.Modifier},
 	}
 	for _, p := range pairs {
 		b, a := p[0], p[1]
@@ -650,7 +719,10 @@ func resurfaces(val string, after decompTuple) bool {
 	if val == "" {
 		return false
 	}
-	if after.Variant == val || after.Version == val || after.Modifier == val || string(after.Family) == val {
+	// SLICE-10: a value that relocated INTO the after-Modifier SET counts as re-surfaced
+	// (this is the movedToModifier sanctioned-non-loss path: a variant token like
+	// "instruct" moving variant→modifier is a lateral move, not a drop).
+	if after.Variant == val || after.Version == val || inModSet(after.Modifier, val) || string(after.Family) == val {
 		return true
 	}
 	// Version-shaped value whose numeric part (leading letters stripped) equals the version.
@@ -677,10 +749,10 @@ func realNonFamilyLoss(before, after decompTuple, id bestiary.ModelID) bool {
 		b, a      string
 		isVersion bool
 	}
+	// Scalar fields (Variant/Version). The Modifier LIST is handled separately below.
 	pairs := []fld{
 		{before.Variant, after.Variant, false},
 		{before.Version, after.Version, true},
-		{before.Modifier, after.Modifier, false},
 	}
 	for _, p := range pairs {
 		b, a := p.b, p.a
@@ -697,12 +769,43 @@ func realNonFamilyLoss(before, after decompTuple, id bestiary.ModelID) bool {
 		if p.isVersion && a == "" && isDateFragmentInID(b, id) {
 			continue
 		}
-		// b was cleared or replaced by a non-enriching value.
+		// b was cleared or replaced by a non-enriching value. resurfaces() now also
+		// recognises a token relocated INTO the after-Modifier set (the SLICE-10
+		// variant→modifier move), so a sanctioned reclassification is NOT a loss.
 		if valueInID(b, id) && !resurfaces(b, after) {
 			return true // ID-present value lost without re-surfacing → REAL loss
 		}
 	}
+	// SLICE-10 Modifier SET loss: a modifier token present BEFORE but absent from the
+	// after-Modifier set is a REAL loss only when it is ID-present AND did not re-surface
+	// in another after field. (Phantom modifiers — e.g. the glm "vision" not in the ID —
+	// may be dropped; the union semantics mean this normally never fires.)
+	afterModSet := modSet(after.Modifier)
+	for _, b := range before.Modifier {
+		if _, ok := afterModSet[strings.ToLower(b)]; ok {
+			continue // still present
+		}
+		if valueInID(b, id) && !resurfaces(b, after) {
+			return true
+		}
+	}
 	return false
+}
+
+// movedToModifier reports whether `val` is a SANCTIONED variant/version→modifier lateral
+// move: it is absent from after.Variant AND after.Version but PRESENT in the after-Modifier
+// SET. This is the SLICE-10 R2 predicate that distinguishes a reclassification (cat-a/b,
+// non-loss) from a genuine drop. It is ENFORCEMENT-checked by the adversarial mutation test
+// (TestPathUnification_ModifierMove_MutationProof): delete the token from after.Modifier and
+// the move is no longer sanctioned, so the categorizer must flip the record to cat-(c).
+func movedToModifier(val string, after decompTuple) bool {
+	if val == "" {
+		return false
+	}
+	if after.Variant == val || after.Version == val {
+		return false
+	}
+	return inModSet(after.Modifier, val)
 }
 
 // isDateFragmentInID reports whether ver appears in id as the MM of an MM-YYYY date
@@ -786,7 +889,7 @@ func loadSanctionedAllowlist() (sanctionedAllowlist, error) {
 	}
 	out := make(sanctionedAllowlist, len(f.Entries))
 	for id, e := range f.Entries {
-		out[bestiary.ModelID(id)] = decompTuple{bestiary.Family(e.Family), e.Variant, e.Version, e.Modifier}
+		out[bestiary.ModelID(id)] = decompTuple{bestiary.Family(e.Family), e.Variant, e.Version, parseModifierColumn(e.Modifier)}
 	}
 	return out, nil
 }
@@ -887,7 +990,7 @@ func computeDiff(t *testing.T) ([]decompChange, int, int, int) {
 				"(snapshot changed since capture?)", ar.Provider, ar.ID)
 			continue
 		}
-		if br.tuple() == ar.tuple() {
+		if tupleEqual(br.tuple(), ar.tuple()) {
 			continue
 		}
 		cat, reason := classifyDecompChange(ar.ID, br.tuple(), ar.tuple(), beforeByID[ar.ID], afterByID[ar.ID], allow)
@@ -923,9 +1026,9 @@ func countDivergentIDs(byID map[bestiary.ModelID][]decompTuple) int {
 		if len(ts) < 2 {
 			continue
 		}
-		seen := map[decompTuple]struct{}{}
+		seen := map[decompCmp]struct{}{}
 		for _, t := range ts {
-			seen[t] = struct{}{}
+			seen[t.cmp()] = struct{}{}
 		}
 		if len(seen) >= 2 {
 			n++
@@ -981,6 +1084,66 @@ var justifiedExceptions = map[exceptionKey]string{
 		Before: `(family="qwen",variant="free",version="3.6",modifier="")`,
 		After:  `(family="qwen",variant="plus",version="3.6",modifier="")`,
 	}: "raw 'qwen-free'→variant 'free' (access tag) refined to ID-driven capability tier 'plus' (qwen3.6-plus-free); enabled by the family-seed reduction making idFam==rawFam",
+
+	// ── SLICE-10 (rc2) modifier-taxonomy reclassification collateral ──────────────
+	// The ratified taxonomy moves {instruct, turbo, base} from variant_suffixes.json to
+	// global modifiers (modifiers.json). For these NON-divergent, single-/few-provider IDs
+	// on UNREGISTERED or over-captured families, the reclassification surfaces a residual
+	// the mechanical classifier flags as cat-(c). Each is REVIEWED below; NONE is one of the
+	// 9 convergence stragglers and NONE introduces a cross-provider divergence (the
+	// post-S10 divergent set is exactly {nvidia/llama-3.3-nemotron-super-49b-v1.5}).
+	//
+	// (i) SANCTIONED reclassification — the trailing modifier moved to the Modifier LIST and
+	// RE-SURFACES there (no information lost); only the family-string shortened (over-capture
+	// reduction) or the variant-substring split. These are improvements the classifier's
+	// registry test does not bless because the (synthetic/over-captured) family is not in the
+	// upstream registry.
+	{
+		ID:     "abacusai/dracarys-llama-3_1-70b-instruct",
+		Before: `(family="dracarys-llama-3_1-70b",variant="instruct",version="",modifier="")`,
+		After:  `(family="dracarys",variant="",version="",modifier="instruct")`,
+	}: "SLICE-10: 'instruct' (now a global modifier) moved variant→Modifier; family over-capture reduced to short base 'dracarys'. instruct re-surfaces in Modifier — no information lost.",
+	{
+		ID:     "upstage/solar-10_7b-instruct",
+		Before: `(family="solar-10_7b",variant="instruct",version="",modifier="")`,
+		After:  `(family="solar",variant="",version="",modifier="instruct")`,
+	}: "SLICE-10: 'instruct'→Modifier; family over-capture 'solar-10_7b' reduced to 'solar'. instruct re-surfaces in Modifier — no information lost.",
+	{
+		ID:     "meta-llama-3_3-70b-instruct",
+		Before: `(family="meta-llama-3_3-70b",variant="instruct",version="",modifier="")`,
+		After:  `(family="meta",variant="",version="",modifier="instruct")`,
+	}: "SLICE-10: 'instruct'→Modifier; family over-capture 'meta-llama-3_3-70b' reduced to 'meta'. instruct re-surfaces in Modifier — no information lost.",
+	{
+		ID:     "azure-gpt-4-turbo",
+		Before: `(family="azure-gpt-4",variant="turbo",version="4",modifier="")`,
+		After:  `(family="azure-gpt",variant="",version="4",modifier="turbo")`,
+	}: "SLICE-10: 'turbo' (now a global modifier) moved variant→Modifier; family 'azure-gpt-4' reduced to 'azure-gpt' (version 4 retained). turbo re-surfaces in Modifier — no information lost.",
+	{
+		ID:     "elevenlabs/elevenlabs-v2.5-turbo",
+		Before: `(family="elevenlabs",variant="v2.5-turbo",version="",modifier="")`,
+		After:  `(family="elevenlabs",variant="v2.5",version="",modifier="turbo")`,
+	}: "SLICE-10: 'turbo'→Modifier split out of the compound variant 'v2.5-turbo'; primary variant 'v2.5' retained, turbo re-surfaces in Modifier — no information lost.",
+	{
+		ID:     "grok-3-mini-fast-beta",
+		Before: `(family="grok-3-mini-fast",variant="beta",version="3",modifier="")`,
+		After:  `(family="grok",variant="mini",version="3",modifier="")`,
+	}: "SLICE-10: empty-raw over-capture 'grok-3-mini-fast' reduced to canonical 'grok' with the real tier variant 'mini' (version 3 retained); the trailing access tag 'beta'/'fast' is an honest residual on the over-captured family. Single-provider, non-divergent.",
+	// (ii) RESIDUAL-VARIANT collateral — a real variant token (large/oss) is dropped because
+	// it is neither trailing nor sole-residual once the modifier reclassification changes the
+	// token structure, AND the family is UNREGISTERED so member-variant recovery does not
+	// apply. Single-provider, non-divergent, pre-existing empty-raw/unregistered-family
+	// limitation surfaced by the mandated variant_suffixes removal — NOT a regression of any
+	// convergence target. SURFACED to supervisor for sign-off.
+	{
+		ID:     "whisper-large-v3-turbo",
+		Before: `(family="whisper",variant="large",version="",modifier="")`,
+		After:  `(family="whisper",variant="",version="",modifier="turbo")`,
+	}: "SLICE-10: 'turbo'→Modifier; 'large' residual on the unregistered family 'whisper' (no member list to recover it). Single-provider (groq), non-divergent. Documented residual (GH#9 size/variant gap), not a convergence regression.",
+	{
+		ID:     "bytedance/seed-oss-36b-instruct",
+		Before: `(family="seed",variant="oss",version="",modifier="")`,
+		After:  `(family="seed",variant="",version="",modifier="instruct")`,
+	}: "SLICE-10: 'instruct'→Modifier; 'oss' residual on the unregistered family 'seed' (no member list / no version to anchor sole-residual recovery). Single-provider (nvidia), non-divergent. Documented residual, not a convergence regression.",
 }
 
 func TestPathUnification_ZeroUnexpectedRegression(t *testing.T) {
@@ -1074,19 +1237,19 @@ func TestClassifyDecompChange_RejectsDowngrade(t *testing.T) {
 			// SLICE-12 (j1nu): the distinguishing signal is whether the lost value is in
 			// the ID. Here 'thinking' IS in the ID, so clearing it is REAL data loss.
 			id:         "deepseek-v3-thinking",
-			before:     decompTuple{"deepseek", "", "", "thinking"},
-			after:      decompTuple{"deepseek", "", "", ""},
-			beforeByID: []decompTuple{{"deepseek", "", "", "thinking"}, {"deepseek", "", "", ""}},
-			afterByID:  []decompTuple{{"deepseek", "", "", ""}, {"deepseek", "", "", ""}},
+			before:     decompTuple{"deepseek", "", "", []string{"thinking"}},
+			after:      decompTuple{"deepseek", "", "", nil},
+			beforeByID: []decompTuple{{"deepseek", "", "", []string{"thinking"}}, {"deepseek", "", "", nil}},
+			afterByID:  []decompTuple{{"deepseek", "", "", nil}, {"deepseek", "", "", nil}},
 			want:       CatRegress,
 		},
 		{
 			desc:       "flash-lite DOWNGRADED to less-specific flash, converging onto a sibling's flash tuple → REGRESS (lite is in the ID)",
 			id:         "gemini-2.5-flash-lite-preview-09-2025",
-			before:     decompTuple{"gemini", "flash-lite", "2.5", ""},
-			after:      decompTuple{"gemini", "flash", "2.5", ""},
-			beforeByID: []decompTuple{{"gemini", "flash-lite", "2.5", ""}, {"gemini", "flash", "2.5", ""}},
-			afterByID:  []decompTuple{{"gemini", "flash", "2.5", ""}, {"gemini", "flash", "2.5", ""}},
+			before:     decompTuple{"gemini", "flash-lite", "2.5", nil},
+			after:      decompTuple{"gemini", "flash", "2.5", nil},
+			beforeByID: []decompTuple{{"gemini", "flash-lite", "2.5", nil}, {"gemini", "flash", "2.5", nil}},
+			afterByID:  []decompTuple{{"gemini", "flash", "2.5", nil}, {"gemini", "flash", "2.5", nil}},
 			want:       CatRegress,
 		},
 		{
@@ -1097,10 +1260,10 @@ func TestClassifyDecompChange_RejectsDowngrade(t *testing.T) {
 			// valueInID detects both tokens → REAL loss → cat-(c).
 			desc:       "NON-CONTIGUOUS multi-token loss (flash-lite→flash, tokens split by '2.0' in ID) → REGRESS (token-aware ovf6)",
 			id:         "gemini-flash-2.0-lite",
-			before:     decompTuple{"gemini", "flash-lite", "2.0", ""},
-			after:      decompTuple{"gemini", "flash", "2.0", ""},
-			beforeByID: []decompTuple{{"gemini", "flash-lite", "2.0", ""}, {"gemini", "flash", "2.0", ""}},
-			afterByID:  []decompTuple{{"gemini", "flash", "2.0", ""}, {"gemini", "flash", "2.0", ""}},
+			before:     decompTuple{"gemini", "flash-lite", "2.0", nil},
+			after:      decompTuple{"gemini", "flash", "2.0", nil},
+			beforeByID: []decompTuple{{"gemini", "flash-lite", "2.0", nil}, {"gemini", "flash", "2.0", nil}},
+			afterByID:  []decompTuple{{"gemini", "flash", "2.0", nil}, {"gemini", "flash", "2.0", nil}},
 			want:       CatRegress,
 		},
 		{
@@ -1109,19 +1272,19 @@ func TestClassifyDecompChange_RejectsDowngrade(t *testing.T) {
 			// NOT in 'gpt-5-chat-latest', so dropping it loses no real information. This is
 			// the case the absent-from-ID construction rule blesses (vs flash-lite above).
 			id:         "gpt-5-chat-latest",
-			before:     decompTuple{"gpt", "codex", "5", "latest"},
-			after:      decompTuple{"gpt", "", "5", "latest"},
-			beforeByID: []decompTuple{{"gpt", "codex", "5", "latest"}, {"gpt", "", "5", "latest"}},
-			afterByID:  []decompTuple{{"gpt", "", "5", "latest"}, {"gpt", "", "5", "latest"}},
+			before:     decompTuple{"gpt", "codex", "5", []string{"latest"}},
+			after:      decompTuple{"gpt", "", "5", []string{"latest"}},
+			beforeByID: []decompTuple{{"gpt", "codex", "5", []string{"latest"}}, {"gpt", "", "5", []string{"latest"}}},
+			afterByID:  []decompTuple{{"gpt", "", "5", []string{"latest"}}, {"gpt", "", "5", []string{"latest"}}},
 			want:       CatFix,
 		},
 		{
 			desc:       "genuine version-presence convergence (empty→4.1, no downgrade) → FIX",
 			id:         "claude-opus-4-1",
-			before:     decompTuple{"claude", "opus", "", ""},
-			after:      decompTuple{"claude", "opus", "4.1", ""},
-			beforeByID: []decompTuple{{"claude", "opus", "", ""}, {"claude", "opus", "4.1", ""}},
-			afterByID:  []decompTuple{{"claude", "opus", "4.1", ""}, {"claude", "opus", "4.1", ""}},
+			before:     decompTuple{"claude", "opus", "", nil},
+			after:      decompTuple{"claude", "opus", "4.1", nil},
+			beforeByID: []decompTuple{{"claude", "opus", "", nil}, {"claude", "opus", "4.1", nil}},
+			afterByID:  []decompTuple{{"claude", "opus", "4.1", nil}, {"claude", "opus", "4.1", nil}},
 			want:       CatFix,
 		},
 	}
@@ -1190,28 +1353,28 @@ func TestSLICE11_CategorizerPredicates(t *testing.T) {
 
 	t.Run("nonFamilyPrefixDowngrade catches flash-lite, allows clears/laterals", func(t *testing.T) {
 		// flash-lite → flash: variant lost specificity → TRUE (still a regression).
-		if !nonFamilyPrefixDowngrade(decompTuple{"gemini", "flash-lite", "2.5", ""}, decompTuple{"gemini", "flash", "2.5", ""}) {
+		if !nonFamilyPrefixDowngrade(decompTuple{"gemini", "flash-lite", "2.5", nil}, decompTuple{"gemini", "flash", "2.5", nil}) {
 			t.Error("flash-lite→flash must be a non-family prefix downgrade")
 		}
 		// instruct → "" (cleared as over-capture noise) → FALSE (allowed in family reduction).
-		if nonFamilyPrefixDowngrade(decompTuple{"mixtral-8x22b", "instruct", "", ""}, decompTuple{"mixtral", "", "", ""}) {
+		if nonFamilyPrefixDowngrade(decompTuple{"mixtral-8x22b", "instruct", "", nil}, decompTuple{"mixtral", "", "", nil}) {
 			t.Error("clearing a variant must NOT count as a prefix downgrade")
 		}
 		// image → flash (lateral, not a prefix) → FALSE.
-		if nonFamilyPrefixDowngrade(decompTuple{"gemini-2.5-flash", "image", "2.5", ""}, decompTuple{"gemini", "flash", "2.5", ""}) {
+		if nonFamilyPrefixDowngrade(decompTuple{"gemini-2.5-flash", "image", "2.5", nil}, decompTuple{"gemini", "flash", "2.5", nil}) {
 			t.Error("lateral variant change must NOT count as a prefix downgrade")
 		}
 	})
 
 	t.Run("familySuffixMovedToVariant", func(t *testing.T) {
-		if !familySuffixMovedToVariant(decompTuple{"claude-opus", "", "4.1", ""}, decompTuple{"claude", "opus", "4.1", ""}) {
+		if !familySuffixMovedToVariant(decompTuple{"claude-opus", "", "4.1", nil}, decompTuple{"claude", "opus", "4.1", nil}) {
 			t.Error("claude-opus → claude+opus must be a suffix→variant move")
 		}
-		if !familySuffixMovedToVariant(decompTuple{"kat-coder", "pro", "", ""}, decompTuple{"kat", "coder", "", ""}) {
+		if !familySuffixMovedToVariant(decompTuple{"kat-coder", "pro", "", nil}, decompTuple{"kat", "coder", "", nil}) {
 			t.Error("kat-coder → kat+coder must be a suffix→variant move")
 		}
 		// NOT an exact move: variant does not reconstruct the family suffix.
-		if familySuffixMovedToVariant(decompTuple{"llama-3.3-70b", "instruct", "3.3", ""}, decompTuple{"llama", "instruct", "3.3", ""}) {
+		if familySuffixMovedToVariant(decompTuple{"llama-3.3-70b", "instruct", "3.3", nil}, decompTuple{"llama", "instruct", "3.3", nil}) {
 			t.Error("llama-3.3-70b → llama+instruct is NOT an exact suffix→variant move")
 		}
 	})
@@ -1234,37 +1397,37 @@ func TestSLICE11_ClassifyFamilyReduction(t *testing.T) {
 		{
 			desc:       "claude-opus → claude+opus, converges onto raw sibling → FIX",
 			id:         "claude-opus-4-1",
-			before:     decompTuple{"claude-opus", "", "4.1", ""},
-			after:      decompTuple{"claude", "opus", "4.1", ""},
-			beforeByID: []decompTuple{{"claude-opus", "", "4.1", ""}, {"claude", "opus", "4.1", ""}},
-			afterByID:  []decompTuple{{"claude", "opus", "4.1", ""}, {"claude", "opus", "4.1", ""}},
+			before:     decompTuple{"claude-opus", "", "4.1", nil},
+			after:      decompTuple{"claude", "opus", "4.1", nil},
+			beforeByID: []decompTuple{{"claude-opus", "", "4.1", nil}, {"claude", "opus", "4.1", nil}},
+			afterByID:  []decompTuple{{"claude", "opus", "4.1", nil}, {"claude", "opus", "4.1", nil}},
 			want:       CatFix,
 		},
 		{
 			desc:       "deepseek-r1 → deepseek (drops r1), converges onto raw sibling → FIX",
 			id:         "deepseek-r1",
-			before:     decompTuple{"deepseek-r1", "", "", ""},
-			after:      decompTuple{"deepseek", "", "", ""},
-			beforeByID: []decompTuple{{"deepseek-r1", "", "", ""}, {"deepseek", "", "", ""}},
-			afterByID:  []decompTuple{{"deepseek", "", "", ""}, {"deepseek", "", "", ""}},
+			before:     decompTuple{"deepseek-r1", "", "", nil},
+			after:      decompTuple{"deepseek", "", "", nil},
+			beforeByID: []decompTuple{{"deepseek-r1", "", "", nil}, {"deepseek", "", "", nil}},
+			afterByID:  []decompTuple{{"deepseek", "", "", nil}, {"deepseek", "", "", nil}},
 			want:       CatFix,
 		},
 		{
 			desc:       "single-provider jamba-large-1.6 → jamba+large, no sibling → IMPROVE",
 			id:         "jamba-large-1.6",
-			before:     decompTuple{"jamba-large", "", "1.6", ""},
-			after:      decompTuple{"jamba", "large", "1.6", ""},
-			beforeByID: []decompTuple{{"jamba-large", "", "1.6", ""}},
-			afterByID:  []decompTuple{{"jamba", "large", "1.6", ""}},
+			before:     decompTuple{"jamba-large", "", "1.6", nil},
+			after:      decompTuple{"jamba", "large", "1.6", nil},
+			beforeByID: []decompTuple{{"jamba-large", "", "1.6", nil}},
+			afterByID:  []decompTuple{{"jamba", "large", "1.6", nil}},
 			want:       CatImprove,
 		},
 		{
 			desc:       "flash-lite → flash converging onto a sibling's flash is STILL a regression (G1; lite in ID)",
 			id:         "gemini-2.5-flash-lite-preview",
-			before:     decompTuple{"gemini", "flash-lite", "2.5", ""},
-			after:      decompTuple{"gemini", "flash", "2.5", ""},
-			beforeByID: []decompTuple{{"gemini", "flash-lite", "2.5", ""}, {"gemini", "flash", "2.5", ""}},
-			afterByID:  []decompTuple{{"gemini", "flash", "2.5", ""}, {"gemini", "flash", "2.5", ""}},
+			before:     decompTuple{"gemini", "flash-lite", "2.5", nil},
+			after:      decompTuple{"gemini", "flash", "2.5", nil},
+			beforeByID: []decompTuple{{"gemini", "flash-lite", "2.5", nil}, {"gemini", "flash", "2.5", nil}},
+			afterByID:  []decompTuple{{"gemini", "flash", "2.5", nil}, {"gemini", "flash", "2.5", nil}},
 			want:       CatRegress,
 		},
 		{
@@ -1273,10 +1436,10 @@ func TestSLICE11_ClassifyFamilyReduction(t *testing.T) {
 			// Pre-S12 this slipped through (the reduction branch ignored field clears).
 			desc:       "j1nu: family reduction clearing an ID-PRESENT variant that the converged-to sibling does NOT carry → REGRESS",
 			id:         "essentialai/rnj-1-instruct",
-			before:     decompTuple{"rnj-1", "instruct", "1", ""},
-			after:      decompTuple{"rnj", "", "1", ""},
-			beforeByID: []decompTuple{{"rnj-1", "instruct", "1", ""}, {"rnj", "instruct", "1", ""}},
-			afterByID:  []decompTuple{{"rnj", "", "1", ""}, {"rnj", "instruct", "1", ""}},
+			before:     decompTuple{"rnj-1", "instruct", "1", nil},
+			after:      decompTuple{"rnj", "", "1", nil},
+			beforeByID: []decompTuple{{"rnj-1", "instruct", "1", nil}, {"rnj", "instruct", "1", nil}},
+			afterByID:  []decompTuple{{"rnj", "", "1", nil}, {"rnj", "instruct", "1", nil}},
 			want:       CatRegress,
 		},
 	}
@@ -1303,8 +1466,8 @@ func TestSLICE12_SanctionedAllowlistGate(t *testing.T) {
 	// A small, explicit allowlist standing in for the committed artifact: o1-mini's
 	// ratified target tuple per bestiary-xdbc (Q2a/Q2b).
 	allow := sanctionedAllowlist{
-		"o1-mini": decompTuple{"gpt", "o", "1", "mini"},
-		"gpt-4o":  decompTuple{"gpt", "4o", "", ""},
+		"o1-mini": decompTuple{"gpt", "o", "1", []string{"mini"}},
+		"gpt-4o":  decompTuple{"gpt", "4o", "", nil},
 	}
 	cases := []struct {
 		desc   string
@@ -1320,43 +1483,43 @@ func TestSLICE12_SanctionedAllowlistGate(t *testing.T) {
 		{
 			desc:   "(1) allowlisted o1-mini converged to its RATIFIED tuple → sanctioned cat-(a)",
 			id:     "o1-mini",
-			before: decompTuple{"o", "mini", "1", ""},
-			after:  decompTuple{"gpt", "o", "1", "mini"},
-			bID:    []decompTuple{{"o", "mini", "1", ""}, {"gpt", "o", "1", "mini"}},
-			aID:    []decompTuple{{"gpt", "o", "1", "mini"}, {"gpt", "o", "1", "mini"}},
+			before: decompTuple{"o", "mini", "1", nil},
+			after:  decompTuple{"gpt", "o", "1", []string{"mini"}},
+			bID:    []decompTuple{{"o", "mini", "1", nil}, {"gpt", "o", "1", []string{"mini"}}},
+			aID:    []decompTuple{{"gpt", "o", "1", []string{"mini"}}, {"gpt", "o", "1", []string{"mini"}}},
 			want:   CatFix,
 		},
 		{
 			desc:   "(2) allowlisted o1-mini mutated to a WRONG tuple (mini left in variant, no ratified 'o') → cat-(c)",
 			id:     "o1-mini",
-			before: decompTuple{"o", "mini", "1", ""},
-			after:  decompTuple{"gpt", "mini", "1", ""}, // NOT the ratified (gpt,o,1,mini)
+			before: decompTuple{"o", "mini", "1", nil},
+			after:  decompTuple{"gpt", "mini", "1", nil}, // NOT the ratified (gpt,o,1,mini)
 			// Even though the parser would produce this on every provider (consistent) and
 			// the mechanical classifier would call it a clean family-convergence fix, the
 			// allowlist is AUTHORITATIVE → hard cat-(c). This is the no-masking property.
-			bID:  []decompTuple{{"o", "mini", "1", ""}, {"gpt", "mini", "1", ""}},
-			aID:  []decompTuple{{"gpt", "mini", "1", ""}, {"gpt", "mini", "1", ""}},
+			bID:  []decompTuple{{"o", "mini", "1", nil}, {"gpt", "mini", "1", nil}},
+			aID:  []decompTuple{{"gpt", "mini", "1", nil}, {"gpt", "mini", "1", nil}},
 			want: CatRegress,
 		},
 		{
 			desc:   "(3) LOSSY gpt-4o-shaped change (version '4o' DROPPED, not relocated) on a NON-allowlisted ID → cat-(c); you MUST allowlist it",
 			id:     "zzz-4o", // not in the allowlist; '4o' is in the ID and is NOT re-surfaced
-			before: decompTuple{"gpt", "", "4o", ""},
-			after:  decompTuple{"gpt", "", "", ""}, // '4o' dropped entirely → real loss
+			before: decompTuple{"gpt", "", "4o", nil},
+			after:  decompTuple{"gpt", "", "", nil}, // '4o' dropped entirely → real loss
 			// A LOSSLESS 4o relocation (version→variant) is correctly a de-noise improvement
 			// and needs no allowlist; but a LOSSY drop of the ID-present '4o' (not re-surfaced)
 			// is a real regression unless the exact ratified tuple is allowlisted.
-			bID:  []decompTuple{{"gpt", "", "4o", ""}},
-			aID:  []decompTuple{{"gpt", "", "", ""}},
+			bID:  []decompTuple{{"gpt", "", "4o", nil}},
+			aID:  []decompTuple{{"gpt", "", "", nil}},
 			want: CatRegress,
 		},
 		{
 			desc:   "(4) UNRELATED bug riding an allowlisted ID (gpt-4o mangled to a foreign tuple) → cat-(c)",
 			id:     "gpt-4o",
-			before: decompTuple{"gpt", "", "4o", ""},
-			after:  decompTuple{"deepseek", "", "", ""}, // unrelated to the ratified (gpt,4o,"")
-			bID:    []decompTuple{{"gpt", "", "4o", ""}, {"deepseek", "", "", ""}},
-			aID:    []decompTuple{{"deepseek", "", "", ""}, {"deepseek", "", "", ""}},
+			before: decompTuple{"gpt", "", "4o", nil},
+			after:  decompTuple{"deepseek", "", "", nil}, // unrelated to the ratified (gpt,4o,"")
+			bID:    []decompTuple{{"gpt", "", "4o", nil}, {"deepseek", "", "", nil}},
+			aID:    []decompTuple{{"deepseek", "", "", nil}, {"deepseek", "", "", nil}},
 			want:   CatRegress,
 		},
 	}
@@ -1484,11 +1647,7 @@ func ratifiedOSeriesTuple(id bestiary.ModelID) (decompTuple, bool) {
 	if len(mods) > 1 {
 		return decompTuple{}, false // multi-modifier compromise — rule does not fix it
 	}
-	mod := ""
-	if len(mods) == 1 {
-		mod = mods[0]
-	}
-	return decompTuple{"gpt", variant, version, mod}, true
+	return decompTuple{"gpt", variant, version, bestiary.CanonicalizeModifiers(mods)}, true
 }
 
 var reOSeriesLineTest = regexp.MustCompile(`^o([0-9]+)$`)
@@ -1518,7 +1677,7 @@ func TestSLICE12_AllowlistMatchesIndependentRule(t *testing.T) {
 			t.Errorf("%s: not derivable by the o-series rule and not a documented compromise — investigate", id)
 			continue
 		}
-		if got != want {
+		if !tupleEqual(got, want) {
 			t.Errorf("%s: allowlist tuple %s != INDEPENDENTLY rule-authored %s (guardrail-1: allowlist must match the rule, not parser output)", id, got, want)
 		}
 	}
@@ -1535,11 +1694,11 @@ func ratifiedOSeriesTupleDesignatorOnly(id bestiary.ModelID) (decompTuple, bool)
 	toks := strings.Split(s, "-")
 	switch {
 	case reOSeriesLineTest.MatchString(toks[0]):
-		return decompTuple{"gpt", "o", reOSeriesLineTest.FindStringSubmatch(toks[0])[1], ""}, true
+		return decompTuple{"gpt", "o", reOSeriesLineTest.FindStringSubmatch(toks[0])[1], nil}, true
 	case contains(toks, "4o"):
-		return decompTuple{"gpt", "4o", "", ""}, true
+		return decompTuple{"gpt", "4o", "", nil}, true
 	case contains(toks, "audio") && (toks[0] == "gpt" || toks[0] == "chatgpt"):
-		return decompTuple{"gpt", "audio", "", ""}, true
+		return decompTuple{"gpt", "audio", "", nil}, true
 	}
 	return decompTuple{}, false
 }
@@ -1551,4 +1710,68 @@ func contains(ss []string, v string) bool {
 		}
 	}
 	return false
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SLICE-10 (rc2) L2 — R1 set-independence + R2(i) adversarial modifier-move proof
+// ─────────────────────────────────────────────────────────────────────────────
+
+// TestPathUnification_Slice10_ModifierSetIndependence (R1) asserts the categorizer
+// compares the Modifier list as an ORDER-INDEPENDENT SET: a permuted modifier list
+// across two providers is NOT a divergence and NOT a change.
+func TestPathUnification_Slice10_ModifierSetIndependence(t *testing.T) {
+	a := decompTuple{"kimi", "k", "2", []string{"thinking", "turbo"}}
+	b := decompTuple{"kimi", "k", "2", []string{"turbo", "thinking"}} // permuted
+
+	if !tupleEqual(a, b) {
+		t.Errorf("permuted modifier lists must be SET-equal: %s vs %s", a, b)
+	}
+	if a.cmp() != b.cmp() {
+		t.Errorf("cmp() keys differ for permuted modifiers: %v vs %v", a.cmp(), b.cmp())
+	}
+	// Cross-provider divergence: two providers carrying permuted lists must collapse to
+	// ONE distinct tuple (no divergence).
+	seen := map[decompCmp]struct{}{a.cmp(): {}, b.cmp(): {}}
+	if len(seen) != 1 {
+		t.Errorf("permuted modifier lists counted as %d distinct tuples across providers, want 1", len(seen))
+	}
+	// A pure reorder is never a real non-family loss.
+	if realNonFamilyLoss(a, b, "kimi-k2-thinking-turbo") {
+		t.Errorf("a pure modifier reorder was flagged as realNonFamilyLoss")
+	}
+}
+
+// TestPathUnification_Slice10_ModifierMove_MutationProof (R2-i) is the adversarial
+// mutation-proof test: a value CLAIMED "moved variant→modifier" is asserted to be
+// ACTUALLY IN after.Modifier; deleting it from the after-modifier list MUST flip the
+// record to cat-(c) — you cannot launder a real drop as a sanctioned move.
+func TestPathUnification_Slice10_ModifierMove_MutationProof(t *testing.T) {
+	id := bestiary.ModelID("meta-llama/llama-3.3-70b-instruct")
+	before := decompTuple{"llama", "instruct", "3.3", nil}
+	after := decompTuple{"llama", "", "3.3", []string{"instruct"}} // instruct moved variant→modifier
+	mutated := decompTuple{"llama", "", "3.3", nil}                // ADVERSARIAL: token deleted
+
+	// The sanctioned move: instruct is absent from after.Variant/Version but PRESENT in
+	// the after-Modifier set.
+	if !movedToModifier("instruct", after) {
+		t.Fatal("movedToModifier(instruct, after) = false, want true (instruct is in after.Modifier)")
+	}
+	if realNonFamilyLoss(before, after, id) {
+		t.Error("sanctioned variant→modifier move wrongly flagged as realNonFamilyLoss")
+	}
+	allow := sanctionedAllowlist{}
+	if cat, _ := classifyDecompChange(id, before, after, []decompTuple{before}, []decompTuple{after}, allow); cat == CatRegress {
+		t.Error("sanctioned variant→modifier move classified as cat-(c) — should be a fix/improvement")
+	}
+
+	// MUTATION: delete instruct from the after-modifier list. It is now a GENUINE drop.
+	if movedToModifier("instruct", mutated) {
+		t.Error("after deleting instruct from the modifier list, movedToModifier MUST be false")
+	}
+	if !realNonFamilyLoss(before, mutated, id) {
+		t.Error("after deleting the moved token, the record MUST be a real non-family loss")
+	}
+	if cat, _ := classifyDecompChange(id, before, mutated, []decompTuple{before}, []decompTuple{mutated}, allow); cat != CatRegress {
+		t.Errorf("mutated (token-dropped) record MUST be cat-(c), got %v — a real drop laundered as a move", cat)
+	}
 }

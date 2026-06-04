@@ -85,7 +85,7 @@ func TestResolve_Ambiguous_MultipleCanonicals(t *testing.T) {
 	seen := make(map[string]struct{})
 	for _, c := range ambig.Candidates {
 		key := string(c.Family) + "/" + c.Variant + "/" + c.Version +
-			"@" + c.Date + "[" + c.Modifier + "]:" + contextN(c.ID)
+			"@" + c.Date + "[" + modJoin(c.Modifier) + "]:" + contextN(c.ID)
 		if _, dup := seen[key]; dup {
 			t.Errorf("ErrAmbiguous.Candidates contains duplicate canonical tuple %q (ID=%q)", key, c.ID)
 		}
@@ -875,7 +875,7 @@ func TestResolve_BracketSuffixStripping_DateMatch(t *testing.T) {
 		if r.Date != "2024-10-22" {
 			t.Errorf("ref.Date = %q, want %q", r.Date, "2024-10-22")
 		}
-		if r.Modifier != "latest" {
+		if modJoin(r.Modifier) != "latest" {
 			t.Errorf("ref.Modifier = %q, want %q", r.Modifier, "latest")
 		}
 	}
@@ -921,7 +921,7 @@ func TestResolve_BracketSuffixStripping_RoundTrip(t *testing.T) {
 	// Find any static model with a non-empty Modifier to exercise the round-trip.
 	var seed *bestiary.ModelRef
 	for _, m := range bestiary.StaticModels() {
-		if m.Modifier != "" && m.Family != "" && m.Date != "" && m.Provider == bestiary.ProviderAnthropic {
+		if len(m.Modifier) > 0 && m.Family != "" && m.Date != "" && m.Provider == bestiary.ProviderAnthropic {
 			ref := m.Ref()
 			seed = &ref
 			break
@@ -950,7 +950,7 @@ func TestResolve_BracketSuffixStripping_RoundTrip(t *testing.T) {
 	found := false
 	for _, r := range refs {
 		if r.Family == seed.Family && r.Variant == seed.Variant &&
-			r.Date == seed.Date && r.Modifier == seed.Modifier {
+			r.Date == seed.Date && modJoin(r.Modifier) == modJoin(seed.Modifier) {
 			found = true
 			break
 		}

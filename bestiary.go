@@ -45,11 +45,15 @@ type ModelInfo struct {
 	// Date is the release date extracted from the model ID or ReleaseDate
 	// field, in YYYY-MM-DD format. Empty when no date is found. Populated at codegen time.
 	Date string
-	// Modifier is a known trailing token extracted from the model ID that
-	// carries semantic meaning beyond family/variant/version/date (e.g.
-	// "thinking", "vision", "latest"). Empty when no known modifier is found.
-	// Populated by ExtractModifier at codegen time (SLICE-FIX-V2-5).
-	Modifier              string
+	// Modifier is the LIST of known trailing tokens extracted from the model ID
+	// that carry semantic meaning beyond family/variant/version/date (e.g.
+	// ["thinking"], ["vision", "instruct"]). nil when no known modifier is found.
+	// The list is stored in deterministic CANONICAL ORDER (see CanonicalizeModifiers
+	// in modifier.go): capability > speed > format/stage, with an alphabetical
+	// fallback. Populated by the parse pipeline at codegen time.
+	// SLICE-10 (rc2, CLARIFICATION-7): widened string → []string for lossless
+	// multi-modifier capture (kimi-k2-thinking-turbo → [thinking, turbo]).
+	Modifier              []string
 	ContextWindow         int
 	MaxOutput             int
 	Reasoning             bool
