@@ -1256,27 +1256,21 @@ func TestResolve_Reasoner_Distinct_FromThinking(t *testing.T) {
 // "claude-3-7-sonnet" (InputFormatPeasant → SchemeCanonical) resolves to a
 // SINGLE representative, NOT ErrAmbiguous.
 //
-// CROSS-SLICE NOTE: This test currently FAILS because the static data has
-// claude-3-7-sonnet-thinking with Family="claude-3-7-sonnet" (malformed
-// decomposition). After SLICE-1/2/3 fix parse.go, that model will have
-// Family="claude" (not "claude-3-7-sonnet"), eliminating the spurious
-// family-match hit. SLICE-4 FIX-B alone is insufficient — this test requires
-// both decomposition fixes (S1/S2/S3) AND the group-key extension (S4) to pass.
-//
-// Flagged for SLICE-6 integration verification. The test uses t.Skip (not t.Fatal)
-// when current static data causes ErrAmbiguous, to avoid blocking SLICE-4 green.
+// SLICE-6 LANDING: the cross-slice escape hatch is REMOVED. The decomposition fixes
+// (S1/S2/S3 — claude-3-7-sonnet-thinking now decomposes to Family="claude", not the
+// malformed "claude-3-7-sonnet") plus the FIX-B group-key extension (S4) have landed, so
+// this is now a HARD assertion: ErrAmbiguous is a failure, not a skip. The ratified BDD
+// acceptance criterion (peasant claude-3-7-sonnet → single representative; re-hosts are
+// informational) is gated here.
 func TestResolve_Peasant_Claude37Sonnet_SingleRep(t *testing.T) {
 	refs, err := bestiary.Resolve("claude-3-7-sonnet",
 		bestiary.WithInputFormat(bestiary.InputFormatPeasant))
 	if err != nil {
 		var ambig *bestiary.ErrAmbiguous
 		if errors.As(err, &ambig) {
-			// Currently returns ErrAmbiguous because claude-3-7-sonnet-thinking has
-			// Family="claude-3-7-sonnet" in the pre-S1/S2/S3 static data.
-			// This is the CROSS-SLICE dependency: SLICE-4 + S1/S2/S3 required.
-			t.Skipf("CROSS-SLICE (needs S1/S2/S3 + S4): claude-3-7-sonnet returned ErrAmbiguous "+
-				"with %d candidates; will be single-rep after decomposition fix. "+
-				"Candidates: %v", len(ambig.Candidates), ambig.Candidates)
+			t.Fatalf("Resolve(claude-3-7-sonnet, peasant) returned ErrAmbiguous with %d candidates, "+
+				"want a SINGLE representative (post-S1/S2/S3 decomposition + S4 FIX-B). Candidates: %v",
+				len(ambig.Candidates), ambig.Candidates)
 		}
 		t.Fatalf("Resolve(claude-3-7-sonnet, peasant) unexpected error %T: %v", err, err)
 	}

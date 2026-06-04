@@ -998,6 +998,14 @@ var crossProviderJustifiedResidual = map[string]string{
 // reduction passes, a regression that re-drops B1/member coverage trips it).
 const crossProviderResidualUnaccountedCeiling = 243
 
+// crossProviderPopulatedVersionFloor pins the at-scale count of snapshot records whose
+// production decomposition yields a NON-EMPTY Version (SLICE-6 landing pin; supersedes the
+// stale rc1 1681/293 figures). Measured post-S10 = 3401 over 4979 records. Assert ≥ floor
+// (loosen-only: more version coverage passes; a regression that drops version-presence
+// — the inverse of the residual-ceiling guard — trips it). Pinned alongside the residual
+// ceiling so both the "version populated" and "tokens unaccounted" at-scale counts are gated.
+const crossProviderPopulatedVersionFloor = 3401
+
 // TestStaticDataset_CrossProviderConsistency is the HARDENED (SLICE-5) cross-provider
 // consistency GATE. It REPLACES the SLICE-FIX-2 heuristic gate that carried 5 escape
 // hatches (namespaced-ID `/.@:` skip; no-empty-raw skip; no-populated-raw skip;
@@ -1031,6 +1039,7 @@ func TestStaticDataset_CrossProviderConsistency(t *testing.T) {
 	}
 	byID := make(map[string]map[tuple3]struct{})
 	residualUnaccounted := 0
+	populatedVersion := 0
 	for _, r := range records {
 		fam, variant, version, _, failure := bestiary.ParseFamilyDetailed(r.RawFamily, r.ID, r.Provider)
 		id := string(r.ID)
@@ -1040,6 +1049,9 @@ func TestStaticDataset_CrossProviderConsistency(t *testing.T) {
 		byID[id][tuple3{fam, variant, version}] = struct{}{}
 		if failure != nil && failure.Reason == bestiary.ReasonResidualUnaccountedTokens {
 			residualUnaccounted++
+		}
+		if version != "" {
+			populatedVersion++
 		}
 	}
 
@@ -1094,6 +1106,14 @@ func TestStaticDataset_CrossProviderConsistency(t *testing.T) {
 			"  a non-fixture-family residual regression (the seed-flash class) re-dropped B1/member coverage.\n"+
 			"  Investigate ParseFamilyDetailed; if the increase is intentional, bump the ceiling with justification.",
 			residualUnaccounted, crossProviderResidualUnaccountedCeiling)
+	}
+
+	// POPULATED-VERSION FLOOR PIN (SLICE-6 landing): catch a version-presence regression.
+	if populatedVersion < crossProviderPopulatedVersionFloor {
+		t.Errorf("populated-version count = %d, below pinned floor %d;\n"+
+			"  a regression dropped Version-presence coverage (the inverse of the residual-ceiling guard).\n"+
+			"  Investigate ParseFamilyDetailed/idDrivenVersion; if the decrease is intentional, lower the floor with justification.",
+			populatedVersion, crossProviderPopulatedVersionFloor)
 	}
 }
 
