@@ -3904,6 +3904,8 @@ func TestParseFamilyDetailed_Slice10_ModifierList(t *testing.T) {
 		// losslessly; the modifier composes (turbo/instruct), removing the 2 justifiedExceptions.
 		{"whisper-large-v3-turbo → (whisper,large,[turbo])", "whisper", "whisper-large-v3-turbo", "whisper", "large", "", "turbo"},
 		{"seed-oss-36b-instruct → (seed,oss,[instruct])", "seed", "bytedance/seed-oss-36b-instruct", "seed", "oss", "", "instruct"},
+		// fix-cycle 1: lossless variant-suffix→modifier split (v2.5-turbo → v2.5 + [turbo]).
+		{"elevenlabs-v2.5-turbo → (elevenlabs,v2.5,[turbo])", "elevenlabs", "elevenlabs/elevenlabs-v2.5-turbo", "elevenlabs", "v2.5", "", "turbo"},
 	}
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {

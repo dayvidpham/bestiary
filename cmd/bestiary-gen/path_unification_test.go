@@ -762,6 +762,23 @@ func realNonFamilyLoss(before, after decompTuple, id bestiary.ModelID) bool {
 		if a != "" && strings.HasPrefix(a, b) {
 			continue // enrichment: AFTER is a more-specific superstring of BEFORE
 		}
+		// SLICE-10 variant-suffix→modifier SPLIT (not a loss): the before-variant is the
+		// after-variant plus one or more trailing hyphen tokens that ALL re-surfaced in the
+		// after-Modifier set (e.g. variant "v2.5-turbo" → variant "v2.5" + modifier [turbo]).
+		// The dropped suffix relocated, nothing lost.
+		if !p.isVersion && a != "" && strings.HasPrefix(b, a+"-") {
+			rest := strings.Split(strings.TrimPrefix(b, a+"-"), "-")
+			allMoved := true
+			for _, tok := range rest {
+				if !inModSet(after.Modifier, tok) {
+					allMoved = false
+					break
+				}
+			}
+			if allMoved {
+				continue
+			}
+		}
 		// SLICE-14: a CLEARED Version that is the MM of an MM-YYYY DATE in the ID
 		// (command-r-plus-08-2024 → "08", command-r7b-12-2024 → "12") is NOT a real version
 		// loss — it is a spurious date-fragment leak the parser correctly date-guards to "".
@@ -1093,46 +1110,46 @@ var justifiedExceptions = map[exceptionKey]string{
 	// 9 convergence stragglers and NONE introduces a cross-provider divergence (the
 	// post-S10 divergent set is exactly {nvidia/llama-3.3-nemotron-super-49b-v1.5}).
 	//
-	// (i) SANCTIONED reclassification — the trailing modifier moved to the Modifier LIST and
-	// RE-SURFACES there (no information lost); only the family-string shortened (over-capture
-	// reduction) or the variant-substring split. These are improvements the classifier's
-	// registry test does not bless because the (synthetic/over-captured) family is not in the
-	// upstream registry.
+	// (i) GENUINE S10 EXCEPTIONS — model-ROOT families NOT in allFamilies (a registry
+	// completeness gap, not a vendor/modifier issue). 'instruct' (now a global modifier)
+	// moved variant→Modifier and RE-SURFACES there (NO token loss); the categorizer flags
+	// only because the reduced family root is absent from the upstream registry. These are
+	// the ONLY genuinely-S10-unavoidable entries (fix-cycle 1, team-lead co-sign target).
 	{
 		ID:     "abacusai/dracarys-llama-3_1-70b-instruct",
 		Before: `(family="dracarys-llama-3_1-70b",variant="instruct",version="",modifier="")`,
 		After:  `(family="dracarys",variant="",version="",modifier="instruct")`,
-	}: "SLICE-10: 'instruct' (now a global modifier) moved variant→Modifier; family over-capture reduced to short base 'dracarys'. instruct re-surfaces in Modifier — no information lost.",
+	}: "SLICE-10 GENUINE: 'instruct'→Modifier (re-surfaces, no token loss); family over-capture reduced to model-root 'dracarys' (∉ allFamilies → categorizer-flag-only). No registerable clean recovery.",
 	{
 		ID:     "upstage/solar-10_7b-instruct",
 		Before: `(family="solar-10_7b",variant="instruct",version="",modifier="")`,
 		After:  `(family="solar",variant="",version="",modifier="instruct")`,
-	}: "SLICE-10: 'instruct'→Modifier; family over-capture 'solar-10_7b' reduced to 'solar'. instruct re-surfaces in Modifier — no information lost.",
+	}: "SLICE-10 GENUINE: 'instruct'→Modifier (re-surfaces, no token loss); family reduced to model-root 'solar' (∉ allFamilies → categorizer-flag-only). 10.7b=size GH#9.",
+	// (ii) PRE-EXISTING residuals (parent family at 0982af8 was ALREADY a junk over-capture;
+	// the real family/token was NEVER cleanly captured) — routed to GH-followup. They remain
+	// here ONLY to keep the cat-(c)=0 gate green; the clean FIX is blocked OUT of S10 scope
+	// (user-sign-off fold meta→llama / azure→gpt per family_aliases contract, OR variant-
+	// multiplicity for grok 'beta'). SURFACED to supervisor — see GH-followup list in report.
 	{
 		ID:     "meta-llama-3_3-70b-instruct",
 		Before: `(family="meta-llama-3_3-70b",variant="instruct",version="",modifier="")`,
 		After:  `(family="meta",variant="",version="",modifier="instruct")`,
-	}: "SLICE-10: 'instruct'→Modifier; family over-capture 'meta-llama-3_3-70b' reduced to 'meta'. instruct re-surfaces in Modifier — no information lost.",
+	}: "PRE-EXISTING (GH-followup): parent family was junk 'meta-llama-3_3-70b' (llama NEVER captured); 'instruct' re-surfaces (no S10 token loss). FIX = meta→llama vendor-fold (user-sign-off-gated). Carried to keep gate green.",
 	{
 		ID:     "azure-gpt-4-turbo",
 		Before: `(family="azure-gpt-4",variant="turbo",version="4",modifier="")`,
 		After:  `(family="azure-gpt",variant="",version="4",modifier="turbo")`,
-	}: "SLICE-10: 'turbo' (now a global modifier) moved variant→Modifier; family 'azure-gpt-4' reduced to 'azure-gpt' (version 4 retained). turbo re-surfaces in Modifier — no information lost.",
-	{
-		ID:     "elevenlabs/elevenlabs-v2.5-turbo",
-		Before: `(family="elevenlabs",variant="v2.5-turbo",version="",modifier="")`,
-		After:  `(family="elevenlabs",variant="v2.5",version="",modifier="turbo")`,
-	}: "SLICE-10: 'turbo'→Modifier split out of the compound variant 'v2.5-turbo'; primary variant 'v2.5' retained, turbo re-surfaces in Modifier — no information lost.",
+	}: "PRE-EXISTING (GH-followup): parent family was junk 'azure-gpt-4' (gpt NEVER captured); 'turbo' re-surfaces (no S10 token loss). FIX = azure→gpt vendor-strip (azure is a Provider → vendor_aliases-contract collateral). Carried to keep gate green.",
 	{
 		ID:     "grok-3-mini-fast-beta",
 		Before: `(family="grok-3-mini-fast",variant="beta",version="3",modifier="")`,
 		After:  `(family="grok",variant="mini",version="3",modifier="")`,
-	}: "SLICE-10: empty-raw over-capture 'grok-3-mini-fast' reduced to canonical 'grok' with the real tier variant 'mini' (version 3 retained); the trailing access tag 'beta'/'fast' is an honest residual on the over-captured family. Single-provider, non-divergent.",
-	// fix-cycle 1 (FLAG2 / ALL-8 audit): whisper-large-v3-turbo and seed-oss-36b-instruct
-	// were RESOLVED (removed from this ledger) by registering whisper (member 'large') and
-	// seed (member 'oss') in families.json — both ∈ allFamilies, attestation-proven — so the
-	// variant recovers losslessly: (whisper,large,"",[turbo]) and (seed,oss,"",[instruct]),
-	// now cat-(b) enrichments, no longer cat-(c).
+	}: "PRE-EXISTING (GH-followup): parent family was junk 'grok-3-mini-fast'; S10 IMPROVES it to (grok,mini,3) but 'beta' (grok member) cannot share the variant slot with the 'mini' tier (variant-multiplicity). Carried to keep gate green.",
+	// fix-cycle 1 RESOLVED & de-ledgered:
+	//  • whisper-large-v3-turbo / seed-oss-36b-instruct — registered whisper(large)/seed(oss)
+	//    families (∈ allFamilies, attested) → lossless variants, now cat-(b).
+	//  • elevenlabs/elevenlabs-v2.5-turbo — lossless variant-suffix split (v2.5-turbo →
+	//    variant v2.5 + modifier [turbo]); realNonFamilyLoss now recognises the split, cat-(b).
 }
 
 func TestPathUnification_ZeroUnexpectedRegression(t *testing.T) {

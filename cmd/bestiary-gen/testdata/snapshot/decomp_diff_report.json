@@ -2,9 +2,9 @@
   "total_records": 4979,
   "changed_count": 1205,
   "cat_a_divergence_fix_count": 322,
-  "cat_b_improvement_count": 877,
+  "cat_b_improvement_count": 878,
   "cat_c_unexpected_regression_count": 0,
-  "justified_exception_count": 6,
+  "justified_exception_count": 5,
   "divergence_before": 81,
   "divergence_after": 14,
   "changes": [
@@ -4894,6 +4894,15 @@
       "after": "(family=\"doubao\",variant=\"\",version=\"\",modifier=\"preview,latest,code\")",
       "category": "b:improvement",
       "reason": "strict enrichment — only previously-empty field(s) populated"
+    },
+    {
+      "provider": "poe",
+      "id": "elevenlabs/elevenlabs-v2.5-turbo",
+      "raw_family": "elevenlabs",
+      "before": "(family=\"elevenlabs\",variant=\"v2.5-turbo\",version=\"\",modifier=\"\")",
+      "after": "(family=\"elevenlabs\",variant=\"v2.5\",version=\"\",modifier=\"turbo\")",
+      "category": "b:improvement",
+      "reason": "family-preserving de-noise/enrich: only phantom losses and/or enrichments, no ID-present field lost"
     },
     {
       "provider": "nano-gpt",
@@ -10806,7 +10815,7 @@
       "before": "(family=\"dracarys-llama-3_1-70b\",variant=\"instruct\",version=\"\",modifier=\"\")",
       "after": "(family=\"dracarys\",variant=\"\",version=\"\",modifier=\"instruct\")",
       "category": "justified-exception",
-      "reason": "JUSTIFIED: SLICE-10: 'instruct' (now a global modifier) moved variant→Modifier; family over-capture reduced to short base 'dracarys'. instruct re-surfaces in Modifier — no information lost."
+      "reason": "JUSTIFIED: SLICE-10 GENUINE: 'instruct'→Modifier (re-surfaces, no token loss); family over-capture reduced to model-root 'dracarys' (∉ allFamilies → categorizer-flag-only). No registerable clean recovery."
     },
     {
       "provider": "nano-gpt",
@@ -10815,16 +10824,7 @@
       "before": "(family=\"azure-gpt-4\",variant=\"turbo\",version=\"4\",modifier=\"\")",
       "after": "(family=\"azure-gpt\",variant=\"\",version=\"4\",modifier=\"turbo\")",
       "category": "justified-exception",
-      "reason": "JUSTIFIED: SLICE-10: 'turbo' (now a global modifier) moved variant→Modifier; family 'azure-gpt-4' reduced to 'azure-gpt' (version 4 retained). turbo re-surfaces in Modifier — no information lost."
-    },
-    {
-      "provider": "poe",
-      "id": "elevenlabs/elevenlabs-v2.5-turbo",
-      "raw_family": "elevenlabs",
-      "before": "(family=\"elevenlabs\",variant=\"v2.5-turbo\",version=\"\",modifier=\"\")",
-      "after": "(family=\"elevenlabs\",variant=\"v2.5\",version=\"\",modifier=\"turbo\")",
-      "category": "justified-exception",
-      "reason": "JUSTIFIED: SLICE-10: 'turbo'→Modifier split out of the compound variant 'v2.5-turbo'; primary variant 'v2.5' retained, turbo re-surfaces in Modifier — no information lost."
+      "reason": "JUSTIFIED: PRE-EXISTING (GH-followup): parent family was junk 'azure-gpt-4' (gpt NEVER captured); 'turbo' re-surfaces (no S10 token loss). FIX = azure→gpt vendor-strip (azure is a Provider → vendor_aliases-contract collateral). Carried to keep gate green."
     },
     {
       "provider": "nano-gpt",
@@ -10833,7 +10833,7 @@
       "before": "(family=\"grok-3-mini-fast\",variant=\"beta\",version=\"3\",modifier=\"\")",
       "after": "(family=\"grok\",variant=\"mini\",version=\"3\",modifier=\"\")",
       "category": "justified-exception",
-      "reason": "JUSTIFIED: SLICE-10: empty-raw over-capture 'grok-3-mini-fast' reduced to canonical 'grok' with the real tier variant 'mini' (version 3 retained); the trailing access tag 'beta'/'fast' is an honest residual on the over-captured family. Single-provider, non-divergent."
+      "reason": "JUSTIFIED: PRE-EXISTING (GH-followup): parent family was junk 'grok-3-mini-fast'; S10 IMPROVES it to (grok,mini,3) but 'beta' (grok member) cannot share the variant slot with the 'mini' tier (variant-multiplicity). Carried to keep gate green."
     },
     {
       "provider": "ovhcloud",
@@ -10842,7 +10842,7 @@
       "before": "(family=\"meta-llama-3_3-70b\",variant=\"instruct\",version=\"\",modifier=\"\")",
       "after": "(family=\"meta\",variant=\"\",version=\"\",modifier=\"instruct\")",
       "category": "justified-exception",
-      "reason": "JUSTIFIED: SLICE-10: 'instruct'→Modifier; family over-capture 'meta-llama-3_3-70b' reduced to 'meta'. instruct re-surfaces in Modifier — no information lost."
+      "reason": "JUSTIFIED: PRE-EXISTING (GH-followup): parent family was junk 'meta-llama-3_3-70b' (llama NEVER captured); 'instruct' re-surfaces (no S10 token loss). FIX = meta→llama vendor-fold (user-sign-off-gated). Carried to keep gate green."
     },
     {
       "provider": "nvidia",
@@ -10851,7 +10851,7 @@
       "before": "(family=\"solar-10_7b\",variant=\"instruct\",version=\"\",modifier=\"\")",
       "after": "(family=\"solar\",variant=\"\",version=\"\",modifier=\"instruct\")",
       "category": "justified-exception",
-      "reason": "JUSTIFIED: SLICE-10: 'instruct'→Modifier; family over-capture 'solar-10_7b' reduced to 'solar'. instruct re-surfaces in Modifier — no information lost."
+      "reason": "JUSTIFIED: SLICE-10 GENUINE: 'instruct'→Modifier (re-surfaces, no token loss); family reduced to model-root 'solar' (∉ allFamilies → categorizer-flag-only). 10.7b=size GH#9."
     }
   ]
 }
