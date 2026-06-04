@@ -662,6 +662,20 @@ func valueInID(val string, id bestiary.ModelID) bool {
 	if strings.Contains(s, lv) {
 		return true
 	}
+	// SLICE-5 gp9y (P1 foundation): dash/dot-form-INSENSITIVE contiguous check. A genuine
+	// numeric version is present in the ID as a CONTIGUOUS run even when its separator
+	// differs from the value's — "4.5" appears as "claude-opus-4-5" (dash form). Normalize
+	// BOTH '.'→'-' and retest the contiguous substring. This CATCHES a dropped dash-form
+	// numeric version (valueInID("4.5","...-4-5-...")==true → realNonFamilyLoss → cat-(c))
+	// WITHOUT false-positiving on hermes-style glued generation noise: "2.3" → "2-3" is NOT
+	// a contiguous substring of "hermes-3-llama-3-1-70b" (the digits 2 and 3 are non-adjacent),
+	// so the FP the alphabetic-only fallback guarded against does not recur. Strictly additive
+	// (only ever turns MORE losses real), so it cannot mask a regression.
+	sNorm := strings.ReplaceAll(s, ".", "-")
+	lvNorm := strings.ReplaceAll(lv, ".", "-")
+	if (sNorm != s || lvNorm != lv) && strings.Contains(sNorm, lvNorm) {
+		return true
+	}
 	// SLICE-14 (bestiary-ovf6) TOKEN-AWARE fallback: a MULTI-token lost value whose tokens
 	// are NON-CONTIGUOUS in the ID still represents REAL data present in the ID and must NOT
 	// be treated as phantom. Split the lost value on [-.] and require EVERY sub-token to be
@@ -1762,5 +1776,63 @@ func TestPathUnification_Slice10_ModifierMove_MutationProof(t *testing.T) {
 	}
 	if cat, _ := classifyDecompChange(id, before, mutated, []decompTuple{before}, []decompTuple{mutated}, allow); cat != CatRegress {
 		t.Errorf("mutated (token-dropped) record MUST be cat-(c), got %v — a real drop laundered as a move", cat)
+	}
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SLICE-5 gp9y (P1 foundation) — valueInID numeric dash-form completeness
+// ─────────────────────────────────────────────────────────────────────────────
+
+// TestValueInID_Gp9y_NumericDashForm proves the safety-predicate is now COMPLETE for the
+// numeric dash-form (the pre-existing alphabetic-only blind spot) AND still does NOT
+// false-positive on glued generation noise.
+func TestValueInID_Gp9y_NumericDashForm(t *testing.T) {
+	// (i) CAUGHT: a genuine version present only as scattered hyphen-digits.
+	caught := []struct {
+		val string
+		id  bestiary.ModelID
+	}{
+		{"4.5", "claude-opus-4-5-20251101"}, // dash form of 4.5
+		{"4.5", "anthropic/claude-opus-4-5"},
+		{"3.5", "openai/gpt-3-5-turbo"},
+		{"2.5", "gemini-2.5-flash"}, // dotted form (already contiguous) — still true
+	}
+	for _, c := range caught {
+		if !valueInID(c.val, c.id) {
+			t.Errorf("valueInID(%q,%q) = false, want true (gp9y: dash/dot-form numeric version must be CAUGHT)", c.val, c.id)
+		}
+	}
+
+	// (ii) NO FALSE POSITIVE: glued generation noise where the digits are NON-adjacent.
+	noFP := []struct {
+		val string
+		id  bestiary.ModelID
+	}{
+		{"2.3", "nousresearch/hermes-3-llama-3.1-70b"}, // 2 absent; 3s non-adjacent to any 2
+		{"2.3", "hermes-2-pro-llama-3"},                // 2 and 3 present but NON-adjacent
+		{"1.5", "qwen-1-pro-mixtral-5"},                // 1 and 5 non-adjacent
+	}
+	for _, c := range noFP {
+		if valueInID(c.val, c.id) {
+			t.Errorf("valueInID(%q,%q) = true, want false (gp9y: non-adjacent digits must NOT FP as a version)", c.val, c.id)
+		}
+	}
+
+	// (i') A record DROPPING a genuine scattered-numeric version → cat-(c).
+	allow := sanctionedAllowlist{}
+	beforeC := decompTuple{"claude", "opus", "4.5", nil}
+	afterC := decompTuple{"claude", "opus", "", nil}
+	if cat, _ := classifyDecompChange("claude-opus-4-5-20251101", beforeC, afterC,
+		[]decompTuple{beforeC}, []decompTuple{afterC}, allow); cat != CatRegress {
+		t.Errorf("dropping scattered-numeric version 4.5 → got %v, want CatRegress (gp9y: real numeric loss must be cat-(c))", cat)
+	}
+
+	// (ii') A record clearing a PHANTOM numeric (non-adjacent digits, not a real version)
+	// → NOT cat-(c) (clean de-noise).
+	beforeP := decompTuple{"hermes", "", "2.3", nil}
+	afterP := decompTuple{"hermes", "", "", nil}
+	if cat, _ := classifyDecompChange("nousresearch/hermes-3-llama-3.1-70b", beforeP, afterP,
+		[]decompTuple{beforeP}, []decompTuple{afterP}, allow); cat == CatRegress {
+		t.Error("clearing phantom non-adjacent '2.3' → got CatRegress, want non-regress (gp9y: must NOT FP)")
 	}
 }
