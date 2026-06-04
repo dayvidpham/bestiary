@@ -3522,3 +3522,4 @@
 {"actor":"David Huu Pham","comment":"Added label: followup","created_at":"2026-06-04T00:50:36Z","event_type":"label_added","id":3522,"issue_id":"bestiary-ptr9","new_value":null,"old_value":null}
 {"actor":"David Huu Pham","comment":"Added label: parse","created_at":"2026-06-04T00:50:36Z","event_type":"label_added","id":3523,"issue_id":"bestiary-ptr9","new_value":null,"old_value":null}
 {"actor":"David Huu Pham","comment":"Added label: tech-debt","created_at":"2026-06-04T00:50:36Z","event_type":"label_added","id":3524,"issue_id":"bestiary-ptr9","new_value":null,"old_value":null}
+{"actor":"David Huu Pham","comment":null,"created_at":"2026-06-04T01:13:34Z","event_type":"closed","id":3525,"issue_id":"bestiary-npya","new_value":"RESOLVED cycle-1 (sonar-reasoning Variant+Modifier dup): member-guard now fires on both bare-family AND RawFamily-embedded-member paths → sonar-reasoning→(sonar,reasoning,'',nil). Verified at f6a8686 by cycle-3 A+B+C.","old_value":""}
