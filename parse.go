@@ -3565,7 +3565,53 @@ func idDrivenVersion(id ModelID, family Family, variant string) (string, string)
 		}
 	}
 
-	return extractVersionFromCleanID(cleaned, family, variant), ""
+	v := extractVersionFromCleanID(cleaned, family, variant)
+	if v == "" && family == whisperFamily {
+		// rc3-L2 (bestiary-fz9r): WHISPER-FAMILY-GATED trailing "-v<int>" → Version recovery,
+		// mirroring the narrow curated azure-prefix-strip pattern. The general form blew up to
+		// 185 records (claude-opus-4-6-v1's Bedrock "-v1" packaging tag, elevenlabs dup, every
+		// -vN revision id), so this is STRICTLY gated on the resolved family being whisper —
+		// no other family can reach it. Recovers whisper-large-v3 → Version 3 (and
+		// whisper-large-v3-turbo, skipping the trailing "turbo" modifier). Only fires when no
+		// primary version was found, so a hypothetical whisper with a real version is untouched.
+		if rv := recoverWhisperTrailingVersion(cleaned); rv != "" {
+			v = rv
+		}
+	}
+	return v, ""
+}
+
+// whisperFamily is the single canonical family gate for the trailing-v version recovery.
+const whisperFamily = Family("whisper")
+
+// reWhisperVMarker matches a "v<version>" token (e.g. "v3", "v1.5"); capture is the version.
+var reWhisperVMarker = regexp.MustCompile(`^v(\d+(?:\.\d+)?)$`)
+
+// recoverWhisperTrailingVersion returns the de-'v'd version from a trailing "v<int>"/"v<dotted>"
+// token, IGNORING any trailing modifier tokens after it (whisper-large-v3 → "3";
+// whisper-large-v3-turbo → "3", skipping the "turbo" modifier). Skipping trailing modifiers
+// makes the recovery CONSISTENT whether the caller passes a modifier-stripped id (raw path) or
+// the full id (empty-raw path) — otherwise the same model would diverge across providers.
+// Returns "" when no such v-token, or when the de-'v'd remainder is not version-shaped. The
+// caller restricts use to family==whisper AND the version-empty case, so the blast radius is
+// exactly whisper-* records (no -vN revision/packaging tag on any other family is touched).
+func recoverWhisperTrailingVersion(cleaned string) string {
+	pd, err := loadParseData()
+	if err != nil {
+		return ""
+	}
+	toks := strings.Split(strings.ToLower(lastPathSegment(cleaned)), "-")
+	for i := len(toks) - 1; i >= 0; i-- {
+		t := toks[i]
+		if isKnownModifierToken(pd, t) {
+			continue
+		}
+		if m := reWhisperVMarker.FindStringSubmatch(t); m != nil && isVersionShaped(m[1]) {
+			return m[1]
+		}
+		return "" // first non-modifier tail token is not a v-marker
+	}
+	return ""
 }
 
 // extractVersionFromCleanID runs the two ID-driven version extractors (between

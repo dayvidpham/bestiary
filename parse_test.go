@@ -3902,7 +3902,8 @@ func TestParseFamilyDetailed_Slice10_ModifierList(t *testing.T) {
 		{"qwen-flash → variant flash (stays variant)", "qwen", "qwen-flash", "qwen", "flash", "", ""},
 		// fix-cycle 1 (FLAG2): whisper + seed registered as families → variant recovers
 		// losslessly; the modifier composes (turbo/instruct), removing the 2 justifiedExceptions.
-		{"whisper-large-v3-turbo → (whisper,large,[turbo])", "whisper", "whisper-large-v3-turbo", "whisper", "large", "", "turbo"},
+		// rc3-L2 (fz9r): whisper-family-gated trailing "-v3" now recovers Version=3 (was "").
+		{"whisper-large-v3-turbo → (whisper,large,3,[turbo])", "whisper", "whisper-large-v3-turbo", "whisper", "large", "3", "turbo"},
 		{"seed-oss-36b-instruct → (seed,oss,[instruct])", "seed", "bytedance/seed-oss-36b-instruct", "seed", "oss", "", "instruct"},
 		// fix-cycle 1: lossless variant-suffix→modifier split (v2.5-turbo → v2.5 + [turbo]).
 		{"elevenlabs-v2.5-turbo → (elevenlabs,v2.5,[turbo])", "elevenlabs", "elevenlabs/elevenlabs-v2.5-turbo", "elevenlabs", "v2.5", "", "turbo"},
@@ -4219,6 +4220,52 @@ func TestSLICE14_TIER1Convergences(t *testing.T) {
 			if string(f) != tc.wFam || v != tc.wVar || ver != tc.wVer || modJoin(m) != tc.wMod {
 				t.Errorf("ParseFamilyDetailed(raw=%q,id=%q) = (%q,%q,%q,%q), want (%q,%q,%q,%q)",
 					tc.raw, tc.id, f, v, ver, m, tc.wFam, tc.wVar, tc.wVer, tc.wMod)
+			}
+		})
+	}
+}
+
+// TestWhisperTrailingVersionRecovery_FamilyGated is the rc3-L2 (bestiary-fz9r) coverage for
+// the WHISPER-FAMILY-GATED trailing "-v<int>" → Version recovery. It pins both halves of the
+// contract: (1) whisper-* ids gain the version, and (2) the axis-B mutation-proof — NO other
+// family's "-vN" packaging/revision tag is ever promoted (the failure mode that sank the
+// general attempt). A regression that widens the gate beyond whisper turns these RED.
+func TestWhisperTrailingVersionRecovery_FamilyGated(t *testing.T) {
+	t.Parallel()
+
+	type tc struct {
+		raw     bestiary.Family
+		id      bestiary.ModelID
+		wantFam bestiary.Family
+		wantVer string
+	}
+	cases := []tc{
+		// (1) whisper TARGETS — version recovered to 3 (empty-raw AND raw paths agree).
+		{"", "openai/whisper-large-v3", "whisper", "3"},
+		{"", "whisper-large-v3", "whisper", "3"},
+		{"", "whisper-large-v3-turbo", "whisper", "3"}, // skips trailing "turbo" modifier
+		{"whisper", "whisper-large-v3-turbo", "whisper", "3"},
+
+		// (2) axis-B MUTATION-PROOF — non-whisper "-vN" tags MUST NOT be promoted.
+		// claude-opus-4-6-v1's "-v1" is a Bedrock packaging revision; the real version is 4.6,
+		// extracted by the normal path. The recovery must NOT overwrite it with "1".
+		{"", "anthropic.claude-opus-4-6-v1", "anthropic.claude", "4.6"},
+		// elevenlabs/nova/morph/deepseek/recraft trailing -vN must stay Version="" (untouched).
+		{"", "elevenlabs/elevenlabs-v2.5-turbo", "elevenlabs", ""},
+		{"", "amazon/nova-lite-v1", "nova", ""},
+		{"", "morph/morph-v3-fast", "morph", ""},
+		{"", "deepseek-ai/DeepSeek-V3", "deepseek", ""},
+		{"", "recraft/recraft-v3", "recraft", ""},
+	}
+	for _, c := range cases {
+		t.Run(string(c.id), func(t *testing.T) {
+			fam, _, ver, _, _ := bestiary.ParseFamilyDetailed(c.raw, c.id, "")
+			if fam != c.wantFam {
+				t.Errorf("ParseFamilyDetailed(%q, %q).Family = %q, want %q", c.raw, c.id, fam, c.wantFam)
+			}
+			if ver != c.wantVer {
+				t.Errorf("ParseFamilyDetailed(%q, %q).Version = %q, want %q (whisper-gated recovery must not touch non-whisper -vN tags)",
+					c.raw, c.id, ver, c.wantVer)
 			}
 		})
 	}
