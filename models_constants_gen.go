@@ -1150,7 +1150,7 @@ const (
 	Model__Evroc__Qwen3__Embedding__8B__3                                                    ModelID = "Qwen/Qwen3-Embedding-8B"
 	Model__Evroc__Qwen3__Vl__30B__A3b__3__Instruct                                           ModelID = "Qwen/Qwen3-VL-30B-A3B-Instruct"
 	Model__Evroc__Voxtral__Small__24B__2507                                                  ModelID = "mistralai/Voxtral-Small-24B-2507"
-	Model__Evroc__Whisper__Large__V3                                                         ModelID = "openai/whisper-large-v3"
+	Model__Evroc__Whisper__Large__V3__3                                                      ModelID = "openai/whisper-large-v3"
 	Model__FastRouter__Claude__Opus__4_1                                                     ModelID = "anthropic/claude-opus-4.1"
 	Model__FastRouter__Claude__Sonnet__4                                                     ModelID = "anthropic/claude-sonnet-4"
 	Model__FastRouter__DeepSeek__R1__Distill__Llama__70b__Thinking                           ModelID = "deepseek-ai/deepseek-r1-distill-llama-70b"
@@ -1419,8 +1419,8 @@ const (
 	Model__Groq__Orpheus__V1__English                                                        ModelID = "canopylabs/orpheus-v1-english"
 	Model__Groq__Qwen3__32b__3                                                               ModelID = "qwen/qwen3-32b"
 	Model__Groq__Qwen__Qwq__32b                                                              ModelID = "qwen-qwq-32b"
-	Model__Groq__Whisper__Large__V3                                                          ModelID = "whisper-large-v3"
-	Model__Groq__Whisper__Large__V3__Turbo                                                   ModelID = "whisper-large-v3-turbo"
+	Model__Groq__Whisper__Large__V3__3                                                       ModelID = "whisper-large-v3"
+	Model__Groq__Whisper__Large__V3__3__Turbo                                                ModelID = "whisper-large-v3-turbo"
 	Model__Helicone__ChatGPT__4o__Latest                                                     ModelID = "chatgpt-4o-latest"
 	Model__Helicone__Claude__3__5__Haiku__3_5                                                ModelID = "claude-3.5-haiku"
 	Model__Helicone__Claude__3__5__Sonnet__V2__3_5                                           ModelID = "claude-3.5-sonnet-v2"
@@ -2931,7 +2931,7 @@ const (
 	Model__NearAI__Qwen3__Embedding__0__6B__3                                                ModelID = "Qwen/Qwen3-Embedding-0.6B"
 	Model__NearAI__Qwen3__Reranker__0__6B__3                                                 ModelID = "Qwen/Qwen3-Reranker-0.6B"
 	Model__NearAI__Qwen3__Vl__30B__A3b__3__Instruct                                          ModelID = "Qwen/Qwen3-VL-30B-A3B-Instruct"
-	Model__NearAI__Whisper__Large__V3                                                        ModelID = "openai/whisper-large-v3"
+	Model__NearAI__Whisper__Large__V3__3                                                     ModelID = "openai/whisper-large-v3"
 	Model__Nebius__DeepSeek__V3__2                                                           ModelID = "deepseek-ai/DeepSeek-V3.2"
 	Model__Nebius__DeepSeek__V3__2__Fast                                                     ModelID = "deepseek-ai/DeepSeek-V3.2-fast"
 	Model__Nebius__DeepSeek__V4__Pro__Thinking                                               ModelID = "deepseek-ai/DeepSeek-V4-Pro"
@@ -3175,7 +3175,7 @@ const (
 	Model__Nvidia__Synthetic__Video__Detector                                                ModelID = "nvidia/synthetic-video-detector"
 	Model__Nvidia__Usdcode                                                                   ModelID = "nvidia/usdcode"
 	Model__Nvidia__Usdvalidate                                                               ModelID = "nvidia/usdvalidate"
-	Model__Nvidia__Whisper__Large__V3                                                        ModelID = "openai/whisper-large-v3"
+	Model__Nvidia__Whisper__Large__V3__3                                                     ModelID = "openai/whisper-large-v3"
 	Model__OVHcloud__GPT__Oss__120b                                                          ModelID = "gpt-oss-120b"
 	Model__OVHcloud__GPT__Oss__20b                                                           ModelID = "gpt-oss-20b"
 	Model__OVHcloud__Llama__3__1__8b__3_1__Instruct                                          ModelID = "llama-3.1-8b-instruct"
@@ -3959,7 +3959,7 @@ const (
 	Model__PrivatemodeAI__Gemma__3__27b__3                                                   ModelID = "gemma-3-27b"
 	Model__PrivatemodeAI__Qwen3__Coder__30b__A3b__3                                          ModelID = "qwen3-coder-30b-a3b"
 	Model__PrivatemodeAI__Qwen3__Embedding__4b__3                                            ModelID = "qwen3-embedding-4b"
-	Model__PrivatemodeAI__Whisper__Large__V3                                                 ModelID = "whisper-large-v3"
+	Model__PrivatemodeAI__Whisper__Large__V3__3                                              ModelID = "whisper-large-v3"
 	Model__QiHangAI__Claude__Haiku__4_5__20251001                                            ModelID = "claude-haiku-4-5-20251001"
 	Model__QiHangAI__Claude__Opus__4_5__20251101                                             ModelID = "claude-opus-4-5-20251101"
 	Model__QiHangAI__Claude__Sonnet__4_5__20250929                                           ModelID = "claude-sonnet-4-5-20250929"
@@ -4187,7 +4187,7 @@ const (
 	Model__Scaleway__Qwen3__Coder__30b__A3b__3__Instruct                                     ModelID = "qwen3-coder-30b-a3b-instruct"
 	Model__Scaleway__Qwen3__Embedding__8b__3                                                 ModelID = "qwen3-embedding-8b"
 	Model__Scaleway__Voxtral__Small__24b__2507                                               ModelID = "voxtral-small-24b-2507"
-	Model__Scaleway__Whisper__Large__V3                                                      ModelID = "whisper-large-v3"
+	Model__Scaleway__Whisper__Large__V3__3                                                   ModelID = "whisper-large-v3"
 	Model__SiliconFlowCN__DeepSeek__Ocr                                                      ModelID = "deepseek-ai/DeepSeek-OCR"
 	Model__SiliconFlowCN__DeepSeek__R1__Distill__Qwen__14B                                   ModelID = "deepseek-ai/DeepSeek-R1-Distill-Qwen-14B"
 	Model__SiliconFlowCN__DeepSeek__R1__Distill__Qwen__32B                                   ModelID = "deepseek-ai/DeepSeek-R1-Distill-Qwen-32B"
@@ -6133,7 +6133,7 @@ var allModelConstants = [...]ModelID{
 	Model__Evroc__Qwen3__Embedding__8B__3,
 	Model__Evroc__Qwen3__Vl__30B__A3b__3__Instruct,
 	Model__Evroc__Voxtral__Small__24B__2507,
-	Model__Evroc__Whisper__Large__V3,
+	Model__Evroc__Whisper__Large__V3__3,
 	Model__FastRouter__Claude__Opus__4_1,
 	Model__FastRouter__Claude__Sonnet__4,
 	Model__FastRouter__DeepSeek__R1__Distill__Llama__70b__Thinking,
@@ -6402,8 +6402,8 @@ var allModelConstants = [...]ModelID{
 	Model__Groq__Orpheus__V1__English,
 	Model__Groq__Qwen3__32b__3,
 	Model__Groq__Qwen__Qwq__32b,
-	Model__Groq__Whisper__Large__V3,
-	Model__Groq__Whisper__Large__V3__Turbo,
+	Model__Groq__Whisper__Large__V3__3,
+	Model__Groq__Whisper__Large__V3__3__Turbo,
 	Model__Helicone__ChatGPT__4o__Latest,
 	Model__Helicone__Claude__3__5__Haiku__3_5,
 	Model__Helicone__Claude__3__5__Sonnet__V2__3_5,
@@ -7914,7 +7914,7 @@ var allModelConstants = [...]ModelID{
 	Model__NearAI__Qwen3__Embedding__0__6B__3,
 	Model__NearAI__Qwen3__Reranker__0__6B__3,
 	Model__NearAI__Qwen3__Vl__30B__A3b__3__Instruct,
-	Model__NearAI__Whisper__Large__V3,
+	Model__NearAI__Whisper__Large__V3__3,
 	Model__Nebius__DeepSeek__V3__2,
 	Model__Nebius__DeepSeek__V3__2__Fast,
 	Model__Nebius__DeepSeek__V4__Pro__Thinking,
@@ -8158,7 +8158,7 @@ var allModelConstants = [...]ModelID{
 	Model__Nvidia__Synthetic__Video__Detector,
 	Model__Nvidia__Usdcode,
 	Model__Nvidia__Usdvalidate,
-	Model__Nvidia__Whisper__Large__V3,
+	Model__Nvidia__Whisper__Large__V3__3,
 	Model__OVHcloud__GPT__Oss__120b,
 	Model__OVHcloud__GPT__Oss__20b,
 	Model__OVHcloud__Llama__3__1__8b__3_1__Instruct,
@@ -8942,7 +8942,7 @@ var allModelConstants = [...]ModelID{
 	Model__PrivatemodeAI__Gemma__3__27b__3,
 	Model__PrivatemodeAI__Qwen3__Coder__30b__A3b__3,
 	Model__PrivatemodeAI__Qwen3__Embedding__4b__3,
-	Model__PrivatemodeAI__Whisper__Large__V3,
+	Model__PrivatemodeAI__Whisper__Large__V3__3,
 	Model__QiHangAI__Claude__Haiku__4_5__20251001,
 	Model__QiHangAI__Claude__Opus__4_5__20251101,
 	Model__QiHangAI__Claude__Sonnet__4_5__20250929,
@@ -9170,7 +9170,7 @@ var allModelConstants = [...]ModelID{
 	Model__Scaleway__Qwen3__Coder__30b__A3b__3__Instruct,
 	Model__Scaleway__Qwen3__Embedding__8b__3,
 	Model__Scaleway__Voxtral__Small__24b__2507,
-	Model__Scaleway__Whisper__Large__V3,
+	Model__Scaleway__Whisper__Large__V3__3,
 	Model__SiliconFlowCN__DeepSeek__Ocr,
 	Model__SiliconFlowCN__DeepSeek__R1__Distill__Qwen__14B,
 	Model__SiliconFlowCN__DeepSeek__R1__Distill__Qwen__32B,
