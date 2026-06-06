@@ -181,3 +181,41 @@ func TestExtractVersionBetweenFamilyAndVariant_Parity(t *testing.T) {
 		})
 	}
 }
+
+// --------------------------------------------------------------------------
+// rc3-L2 (bestiary-5gck): curated provider-prefix-strip safety guard
+// --------------------------------------------------------------------------
+
+// TestCuratedProviderPrefixStrip_MembersAreNonFamilyProviders is the self-enforcing
+// airtightness guard for the NARROW provider-prefix-strip seam. For EVERY member of
+// curatedProviderPrefixStrip it asserts:
+//
+//	(1) member ∈ Providers()   — only a real provider namespace may be stripped, and
+//	(2) member ∉ allFamilies   — the token is NOT itself a canonical family.
+//
+// (2) is the catastrophe-preventer: a future edit that naively adds a token which is
+// BOTH a provider AND a family (deepseek, groq, llama, minimax, mistral, morph, nova,
+// sarvam, v0, venice — the 10-token Providers()∩allFamilies set) would silently corrupt
+// every llama-*/mistral-*/nova-* id by amputating its family. This test turns that into
+// a RED before it can ship. It iterates the map directly (no fixture table) so it can
+// never drift out of sync with the seam.
+func TestCuratedProviderPrefixStrip_MembersAreNonFamilyProviders(t *testing.T) {
+	t.Parallel()
+
+	providers := make(map[string]struct{})
+	for _, p := range Providers() {
+		providers[string(p)] = struct{}{}
+	}
+
+	for member := range curatedProviderPrefixStrip {
+		if _, ok := providers[member]; !ok {
+			t.Errorf("curatedProviderPrefixStrip member %q is NOT in Providers(): only a real "+
+				"provider namespace may be prefix-stripped — remove it or add the provider", member)
+		}
+		if IsKnownFamily(Family(member)) {
+			t.Errorf("curatedProviderPrefixStrip member %q is ALSO a canonical family (∈allFamilies): "+
+				"stripping it would amputate the family from every %q-* id — this token MUST NOT be "+
+				"in the strip set (see the Providers()∩allFamilies catastrophe guard)", member, member)
+		}
+	}
+}
