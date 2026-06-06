@@ -1143,7 +1143,7 @@ var justifiedExceptions = map[exceptionKey]string{
 		ID:     "grok-3-mini-fast-beta",
 		Before: `(family="grok-3-mini-fast",variant="beta",version="3",modifier="")`,
 		After:  `(family="grok",variant="mini",version="3",modifier="")`,
-	}: "USER-RATIFIED non-defect (Impl-UAT bestiary-2gxu, GH#13 release-stage dimension): family corrected to grok + real tier 'mini' (+version 3); 'beta' (a grok member) cannot co-occupy the single Variant slot with 'mini' (variant-multiplicity — the variant analogue of S10's Modifier-LIST, deferred).",
+	}: "USER-RATIFIED non-defect (Impl-UAT bestiary-2gxu, GH#13 release-stage dimension): family corrected to grok + real tier 'mini' (+version 3); 'beta' (a grok member) cannot co-occupy the single Variant slot with 'mini' (variant-multiplicity — the variant analogue of S10's Modifier-LIST, deferred). The same trailing-'beta' member-guard also suppresses OTHER co-tokens: on xai/grok-4.20-non-reasoning-beta it suppresses 'non-reasoning' (stays Modifier=nil — nil both BEFORE and AFTER rc3, no regression, no gate trip), the same release-stage multiplicity tracked under GH#13.",
 	// rc3 RESOLVED & de-ledgered:
 	//  • nvidia/llama-3.3-nemotron-super-49b-v1.5 — folded to nemotron via idFamilyOverrides
 	//    (cross-provider divergence 1→0).

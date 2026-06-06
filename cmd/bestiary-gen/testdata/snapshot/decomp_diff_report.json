@@ -10896,7 +10896,7 @@
       "before": "(family=\"grok-3-mini-fast\",variant=\"beta\",version=\"3\",modifier=\"\")",
       "after": "(family=\"grok\",variant=\"mini\",version=\"3\",modifier=\"\")",
       "category": "justified-exception",
-      "reason": "JUSTIFIED: USER-RATIFIED non-defect (Impl-UAT bestiary-2gxu, GH#13 release-stage dimension): family corrected to grok + real tier 'mini' (+version 3); 'beta' (a grok member) cannot co-occupy the single Variant slot with 'mini' (variant-multiplicity — the variant analogue of S10's Modifier-LIST, deferred)."
+      "reason": "JUSTIFIED: USER-RATIFIED non-defect (Impl-UAT bestiary-2gxu, GH#13 release-stage dimension): family corrected to grok + real tier 'mini' (+version 3); 'beta' (a grok member) cannot co-occupy the single Variant slot with 'mini' (variant-multiplicity — the variant analogue of S10's Modifier-LIST, deferred). The same trailing-'beta' member-guard also suppresses OTHER co-tokens: on xai/grok-4.20-non-reasoning-beta it suppresses 'non-reasoning' (stays Modifier=nil — nil both BEFORE and AFTER rc3, no regression, no gate trip), the same release-stage multiplicity tracked under GH#13."
     },
     {
       "provider": "nvidia",
