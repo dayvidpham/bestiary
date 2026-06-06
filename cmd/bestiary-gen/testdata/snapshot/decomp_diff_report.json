@@ -8527,7 +8527,7 @@
       "id": "openai/whisper-large-v3",
       "raw_family": "whisper",
       "before": "(family=\"whisper\",variant=\"\",version=\"\",modifier=\"\")",
-      "after": "(family=\"whisper\",variant=\"large\",version=\"\",modifier=\"\")",
+      "after": "(family=\"whisper\",variant=\"large\",version=\"3\",modifier=\"\")",
       "category": "b:improvement",
       "reason": "strict enrichment — only previously-empty field(s) populated"
     },
@@ -8536,7 +8536,7 @@
       "id": "openai/whisper-large-v3",
       "raw_family": "whisper",
       "before": "(family=\"whisper\",variant=\"\",version=\"\",modifier=\"\")",
-      "after": "(family=\"whisper\",variant=\"large\",version=\"\",modifier=\"\")",
+      "after": "(family=\"whisper\",variant=\"large\",version=\"3\",modifier=\"\")",
       "category": "b:improvement",
       "reason": "strict enrichment — only previously-empty field(s) populated"
     },
@@ -8545,7 +8545,7 @@
       "id": "openai/whisper-large-v3",
       "raw_family": "whisper",
       "before": "(family=\"whisper\",variant=\"\",version=\"\",modifier=\"\")",
-      "after": "(family=\"whisper\",variant=\"large\",version=\"\",modifier=\"\")",
+      "after": "(family=\"whisper\",variant=\"large\",version=\"3\",modifier=\"\")",
       "category": "b:improvement",
       "reason": "strict enrichment — only previously-empty field(s) populated"
     },
@@ -10102,7 +10102,7 @@
       "id": "whisper-large-v3",
       "raw_family": "whisper",
       "before": "(family=\"whisper\",variant=\"\",version=\"\",modifier=\"\")",
-      "after": "(family=\"whisper\",variant=\"large\",version=\"\",modifier=\"\")",
+      "after": "(family=\"whisper\",variant=\"large\",version=\"3\",modifier=\"\")",
       "category": "b:improvement",
       "reason": "strict enrichment — only previously-empty field(s) populated"
     },
@@ -10111,7 +10111,7 @@
       "id": "whisper-large-v3",
       "raw_family": "whisper",
       "before": "(family=\"whisper\",variant=\"\",version=\"\",modifier=\"\")",
-      "after": "(family=\"whisper\",variant=\"large\",version=\"\",modifier=\"\")",
+      "after": "(family=\"whisper\",variant=\"large\",version=\"3\",modifier=\"\")",
       "category": "b:improvement",
       "reason": "strict enrichment — only previously-empty field(s) populated"
     },
@@ -10120,7 +10120,7 @@
       "id": "whisper-large-v3",
       "raw_family": "whisper",
       "before": "(family=\"whisper\",variant=\"\",version=\"\",modifier=\"\")",
-      "after": "(family=\"whisper\",variant=\"large\",version=\"\",modifier=\"\")",
+      "after": "(family=\"whisper\",variant=\"large\",version=\"3\",modifier=\"\")",
       "category": "b:improvement",
       "reason": "strict enrichment — only previously-empty field(s) populated"
     },
@@ -10129,7 +10129,7 @@
       "id": "whisper-large-v3-turbo",
       "raw_family": "whisper",
       "before": "(family=\"whisper\",variant=\"large\",version=\"\",modifier=\"\")",
-      "after": "(family=\"whisper\",variant=\"large\",version=\"\",modifier=\"turbo\")",
+      "after": "(family=\"whisper\",variant=\"large\",version=\"3\",modifier=\"turbo\")",
       "category": "b:improvement",
       "reason": "strict enrichment — only previously-empty field(s) populated"
     },
