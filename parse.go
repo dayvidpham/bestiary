@@ -2639,8 +2639,55 @@ func stripVendorNamespace(id string) string {
 	if pd, err := loadParseData(); err == nil {
 		idStr = stripVendorAliasPrefix(idStr, pd.vendorAliases)
 	}
+	// rc3-L1 (bestiary-xfo0): NO-SLASH doubled-vendor form. The slash-org case
+	// "meta-llama/Meta-Llama-3.1-…" is handled above; the no-slash hyphen forms
+	// "Meta-Llama-3-1-8B-Instruct-FP8" and "meta-llama-3_3-70b-instruct" (no org segment)
+	// reach here with the redundant leading "meta-" intact, deriving family "meta" instead
+	// of "llama" (and dropping the version, since the extractor mis-aligns). Strip the
+	// redundant "meta-" so they decompose NATIVELY to llama with the version preserved —
+	// the SAME outcome as the slash form. Scoped to the literal "meta-llama-" prefix (only
+	// the 2 attested no-slash meta-llama ids), zero collateral.
+	if strings.HasPrefix(strings.ToLower(idStr), "meta-llama-") {
+		idStr = idStr[len("meta-"):]
+	}
+	idStr = stripCuratedProviderPrefix(idStr)
 	return idStr
 }
+
+// curatedProviderPrefixStrip is the rc3-L2 (bestiary-5gck) NARROW provider-prefix-strip
+// seam. Each entry is a provider name that ALSO appears as a leading "<provider>-" prefix
+// on its own hosted models (an org prefix, NOT a family) and that is SAFE to strip:
+//
+//	(1) the token ∈ Providers() but ∉ allFamilies (so stripping cannot destroy a family —
+//	    this is the catastrophic guard against deepseek/minimax/llama/mistral/nova/…, which
+//	    are BOTH a Provider AND a family and must NEVER be stripped), AND
+//	(2) every committed-snapshot id bearing the "<provider>-" prefix decomposes correctly
+//	    after the strip (curation-time affected-set + collateral proof).
+//
+// Currently NARROW (azure only): all 5 "azure-*" ids are OpenAI (azure-gpt-4o/4o-mini/
+// 4-turbo, azure-o1, azure-o3-mini) → strip "azure-" → gpt/o-series family, zero collateral.
+// The GENERAL Providers()-derived hyphen-prefix strip (~150+ ids across anthropic/openai/
+// databricks/cohere/nvidia/…) has a large affected-set + real collateral risk (e.g.
+// nvidia-llama-* → llama over-capture) and is DEFERRED to a co-signed follow-up (surfaced).
+var curatedProviderPrefixStrip = map[string]struct{}{
+	"azure": {},
+}
+
+// stripCuratedProviderPrefix strips a leading "<provider>-" prefix when the provider is in
+// the curated safe-list (curatedProviderPrefixStrip). Case-insensitive on the prefix.
+func stripCuratedProviderPrefix(idStr string) string {
+	low := strings.ToLower(idStr)
+	for p := range curatedProviderPrefixStrip {
+		pre := p + "-"
+		if strings.HasPrefix(low, pre) {
+			return idStr[len(pre):]
+		}
+	}
+	return idStr
+}
+
+// --------------------------------------------------------------------------
+// SLICE-1: recoverMemberVariant (sole owner)
 
 // --------------------------------------------------------------------------
 // SLICE-1: recoverMemberVariant (sole owner)

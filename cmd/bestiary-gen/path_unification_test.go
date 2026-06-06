@@ -589,6 +589,23 @@ func classifyDecompChange(id bestiary.ModelID, before, after decompTuple, before
 		return CatImprove, "family-preserving de-noise/enrich: only phantom losses and/or enrichments, no ID-present field lost"
 	}
 
+	// (b) rc3 SANCTIONED org/over-capture family CORRECTION: the BEFORE family is an
+	// UNREGISTERED junk/over-capture string (∉ allFamilies — e.g. "azure", "azure-gpt-4",
+	// "meta", "meta-llama-3_3-70b") and the AFTER family is a REGISTERED canonical family
+	// (∈ allFamilies — gpt, llama) reached via a curated vendor/provider-prefix strip, AND
+	// no ID-present non-family field was lost (realNonFamilyLoss=false). An unregistered
+	// family is always wrong, so correcting it to a registered one without dropping any
+	// variant/version/modifier is a strict improvement. This is safe-by-construction (it
+	// CANNOT bless a wrong rewrite): a genuine mislabel between two REAL families is blocked
+	// (before would be ∈ allFamilies), and any token loss is blocked by realNonFamilyLoss.
+	// Mirrors the SLICE-11 reduction branch's registry test, without requiring a prefix
+	// REDUCTION (an org-prefix strip is a lateral, not a leading-reduction, family change).
+	if before.Family != after.Family &&
+		bestiary.IsKnownFamily(after.Family) && !bestiary.IsKnownFamily(before.Family) &&
+		!realNonFamilyLoss(before, after, id) {
+		return CatImprove, "rc3: unregistered org/over-capture family corrected to a registered family via curated vendor/provider-prefix strip; no ID-present field lost"
+	}
+
 	// A divergent ID that converged to a brand-new value (no provider had it BEFORE,
 	// not yet fully consistent) but where the change is still a strict enrichment was
 	// already caught above. Anything reaching here changed a populated field to a
@@ -1107,41 +1124,33 @@ var justifiedExceptions = map[exceptionKey]string{
 	// 9 convergence stragglers and NONE introduces a cross-provider divergence (the
 	// post-S10 divergent set is exactly {nvidia/llama-3.3-nemotron-super-49b-v1.5}).
 	//
-	// (i) GENUINE S10 EXCEPTIONS — model-ROOT families NOT in allFamilies (a registry
-	// completeness gap, not a vendor/modifier issue). 'instruct' (now a global modifier)
-	// moved variant→Modifier and RE-SURFACES there (NO token loss); the categorizer flags
-	// only because the reduced family root is absent from the upstream registry. These are
-	// the ONLY genuinely-S10-unavoidable entries (fix-cycle 1, team-lead co-sign target).
+	// rc3 (USER-RATIFIED Impl-UAT bestiary-2gxu) — the final ledger is exactly the user-
+	// sanctioned NON-defects. Each is non-divergent and honest; resolving it is disproportionate
+	// (∉ allFamilies with no fold target, or a structural Variant-LIST relaxation), so the user
+	// ratified them as documented non-defects for v0.2.2. 'instruct' re-surfaces in the Modifier
+	// list (no token loss); the categorizer flags only the family-root / variant-slot residual.
 	{
 		ID:     "abacusai/dracarys-llama-3_1-70b-instruct",
 		Before: `(family="dracarys-llama-3_1-70b",variant="instruct",version="",modifier="")`,
 		After:  `(family="dracarys",variant="",version="",modifier="instruct")`,
-	}: "SLICE-10 GENUINE: 'instruct'→Modifier (re-surfaces, no token loss); family over-capture reduced to model-root 'dracarys' (∉ allFamilies → categorizer-flag-only). No registerable clean recovery.",
+	}: "USER-RATIFIED non-defect (Impl-UAT bestiary-2gxu, GH#11 model-lineage): dracarys is a llama fine-tune with its own lineage, ∉ allFamilies; 'instruct'→Modifier re-surfaces (no token loss). Family-root precision is a taxonomy call, not a regression.",
 	{
 		ID:     "upstage/solar-10_7b-instruct",
 		Before: `(family="solar-10_7b",variant="instruct",version="",modifier="")`,
 		After:  `(family="solar",variant="",version="",modifier="instruct")`,
-	}: "SLICE-10 GENUINE: 'instruct'→Modifier (re-surfaces, no token loss); family reduced to model-root 'solar' (∉ allFamilies → categorizer-flag-only). 10.7b=size GH#9.",
-	// (ii) PRE-EXISTING residuals (parent family at 0982af8 was ALREADY a junk over-capture;
-	// the real family/token was NEVER cleanly captured) — routed to GH-followup. They remain
-	// here ONLY to keep the cat-(c)=0 gate green; the clean FIX is blocked OUT of S10 scope
-	// (user-sign-off fold meta→llama / azure→gpt per family_aliases contract, OR variant-
-	// multiplicity for grok 'beta'). SURFACED to supervisor — see GH-followup list in report.
-	{
-		ID:     "meta-llama-3_3-70b-instruct",
-		Before: `(family="meta-llama-3_3-70b",variant="instruct",version="",modifier="")`,
-		After:  `(family="meta",variant="",version="",modifier="instruct")`,
-	}: "PRE-EXISTING (GH-followup): parent family was junk 'meta-llama-3_3-70b' (llama NEVER captured); 'instruct' re-surfaces (no S10 token loss). FIX = meta→llama vendor-fold (user-sign-off-gated). Carried to keep gate green.",
-	{
-		ID:     "azure-gpt-4-turbo",
-		Before: `(family="azure-gpt-4",variant="turbo",version="4",modifier="")`,
-		After:  `(family="azure-gpt",variant="",version="4",modifier="turbo")`,
-	}: "PRE-EXISTING (GH-followup): parent family was junk 'azure-gpt-4' (gpt NEVER captured); 'turbo' re-surfaces (no S10 token loss). FIX = azure→gpt vendor-strip (azure is a Provider → vendor_aliases-contract collateral). Carried to keep gate green.",
+	}: "USER-RATIFIED non-defect (Impl-UAT bestiary-2gxu, future taxonomy): solar ∉ allFamilies and has no fold target (only attested as solar-mini/solar-pro); 'instruct'→Modifier re-surfaces (no token loss). 10.7b=size GH#9.",
 	{
 		ID:     "grok-3-mini-fast-beta",
 		Before: `(family="grok-3-mini-fast",variant="beta",version="3",modifier="")`,
 		After:  `(family="grok",variant="mini",version="3",modifier="")`,
-	}: "PRE-EXISTING (GH-followup): parent family was junk 'grok-3-mini-fast'; S10 IMPROVES it to (grok,mini,3) but 'beta' (grok member) cannot share the variant slot with the 'mini' tier (variant-multiplicity). Carried to keep gate green.",
+	}: "USER-RATIFIED non-defect (Impl-UAT bestiary-2gxu, GH#13 release-stage dimension): family corrected to grok + real tier 'mini' (+version 3); 'beta' (a grok member) cannot co-occupy the single Variant slot with 'mini' (variant-multiplicity — the variant analogue of S10's Modifier-LIST, deferred).",
+	// rc3 RESOLVED & de-ledgered:
+	//  • nvidia/llama-3.3-nemotron-super-49b-v1.5 — folded to nemotron via idFamilyOverrides
+	//    (cross-provider divergence 1→0).
+	//  • azure-gpt-* (5) — narrow curated provider-prefix strip (azure∉allFamilies) → gpt/o-series;
+	//    blessed by the rc3 unregistered→registered family-correction branch (cat-(b)).
+	//  • meta-llama-3_3-70b-instruct + Meta-Llama-3-1-…-FP8 — no-slash doubled-vendor strip →
+	//    llama (version preserved); same rc3 blessing (cat-(b)).
 	// fix-cycle 1 RESOLVED & de-ledgered:
 	//  • whisper-large-v3-turbo / seed-oss-36b-instruct — registered whisper(large)/seed(oss)
 	//    families (∈ allFamilies, attested) → lossless variants, now cat-(b).

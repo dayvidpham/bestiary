@@ -1,10 +1,10 @@
 {
   "total_records": 4979,
-  "changed_count": 1207,
+  "changed_count": 1211,
   "cat_a_divergence_fix_count": 324,
-  "cat_b_improvement_count": 878,
+  "cat_b_improvement_count": 884,
   "cat_c_unexpected_regression_count": 0,
-  "justified_exception_count": 5,
+  "justified_exception_count": 3,
   "divergence_before": 81,
   "divergence_after": 13,
   "changes": [
@@ -3109,9 +3109,9 @@
       "id": "Meta-Llama-3-1-8B-Instruct-FP8",
       "raw_family": "",
       "before": "(family=\"meta\",variant=\"\",version=\"3.1\",modifier=\"\")",
-      "after": "(family=\"meta\",variant=\"\",version=\"3.1\",modifier=\"instruct\")",
+      "after": "(family=\"llama\",variant=\"\",version=\"3.1\",modifier=\"instruct\")",
       "category": "b:improvement",
-      "reason": "strict enrichment — only previously-empty field(s) populated"
+      "reason": "rc3: unregistered org/over-capture family corrected to a registered family via curated vendor/provider-prefix strip; no ID-present field lost"
     },
     {
       "provider": "atomic-chat",
@@ -4365,6 +4365,51 @@
       "reason": "strict enrichment — only previously-empty field(s) populated"
     },
     {
+      "provider": "nano-gpt",
+      "id": "azure-gpt-4-turbo",
+      "raw_family": "",
+      "before": "(family=\"azure-gpt-4\",variant=\"turbo\",version=\"4\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"\",version=\"4\",modifier=\"turbo\")",
+      "category": "b:improvement",
+      "reason": "rc3: unregistered org/over-capture family corrected to a registered family via curated vendor/provider-prefix strip; no ID-present field lost"
+    },
+    {
+      "provider": "nano-gpt",
+      "id": "azure-gpt-4o",
+      "raw_family": "",
+      "before": "(family=\"azure\",variant=\"\",version=\"\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "rc3: unregistered org/over-capture family corrected to a registered family via curated vendor/provider-prefix strip; no ID-present field lost"
+    },
+    {
+      "provider": "nano-gpt",
+      "id": "azure-gpt-4o-mini",
+      "raw_family": "",
+      "before": "(family=\"azure-gpt-4o\",variant=\"mini\",version=\"\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"mini\")",
+      "category": "b:improvement",
+      "reason": "rc3: unregistered org/over-capture family corrected to a registered family via curated vendor/provider-prefix strip; no ID-present field lost"
+    },
+    {
+      "provider": "nano-gpt",
+      "id": "azure-o1",
+      "raw_family": "",
+      "before": "(family=\"azure\",variant=\"\",version=\"\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"o\",version=\"1\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "rc3: unregistered org/over-capture family corrected to a registered family via curated vendor/provider-prefix strip; no ID-present field lost"
+    },
+    {
+      "provider": "nano-gpt",
+      "id": "azure-o3-mini",
+      "raw_family": "",
+      "before": "(family=\"azure-o3\",variant=\"mini\",version=\"\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"mini\")",
+      "category": "b:improvement",
+      "reason": "rc3: unregistered org/over-capture family corrected to a registered family via curated vendor/provider-prefix strip; no ID-present field lost"
+    },
+    {
       "provider": "zenmux",
       "id": "baidu/ernie-5.0-thinking-preview",
       "raw_family": "",
@@ -4972,7 +5017,7 @@
       "id": "failspy/Meta-Llama-3-70B-Instruct-abliterated-v3.5",
       "raw_family": "llama",
       "before": "(family=\"llama\",variant=\"instruct\",version=\"\",modifier=\"\")",
-      "after": "(family=\"llama\",variant=\"\",version=\"\",modifier=\"instruct\")",
+      "after": "(family=\"llama\",variant=\"\",version=\"3\",modifier=\"instruct\")",
       "category": "b:improvement",
       "reason": "family-preserving de-noise/enrich: only phantom losses and/or enrichments, no ID-present field lost"
     },
@@ -6511,7 +6556,7 @@
       "id": "meta-llama-3-70b-instruct",
       "raw_family": "llama",
       "before": "(family=\"llama\",variant=\"instruct\",version=\"\",modifier=\"\")",
-      "after": "(family=\"llama\",variant=\"\",version=\"\",modifier=\"instruct\")",
+      "after": "(family=\"llama\",variant=\"\",version=\"3\",modifier=\"instruct\")",
       "category": "b:improvement",
       "reason": "family-preserving de-noise/enrich: only phantom losses and/or enrichments, no ID-present field lost"
     },
@@ -6520,7 +6565,7 @@
       "id": "meta-llama-3-70b-instruct",
       "raw_family": "llama",
       "before": "(family=\"llama\",variant=\"instruct\",version=\"\",modifier=\"\")",
-      "after": "(family=\"llama\",variant=\"\",version=\"\",modifier=\"instruct\")",
+      "after": "(family=\"llama\",variant=\"\",version=\"3\",modifier=\"instruct\")",
       "category": "b:improvement",
       "reason": "family-preserving de-noise/enrich: only phantom losses and/or enrichments, no ID-present field lost"
     },
@@ -6529,7 +6574,7 @@
       "id": "meta-llama-3-8b-instruct",
       "raw_family": "llama",
       "before": "(family=\"llama\",variant=\"instruct\",version=\"\",modifier=\"\")",
-      "after": "(family=\"llama\",variant=\"\",version=\"\",modifier=\"instruct\")",
+      "after": "(family=\"llama\",variant=\"\",version=\"3\",modifier=\"instruct\")",
       "category": "b:improvement",
       "reason": "family-preserving de-noise/enrich: only phantom losses and/or enrichments, no ID-present field lost"
     },
@@ -6538,7 +6583,7 @@
       "id": "meta-llama-3-8b-instruct",
       "raw_family": "llama",
       "before": "(family=\"llama\",variant=\"instruct\",version=\"\",modifier=\"\")",
-      "after": "(family=\"llama\",variant=\"\",version=\"\",modifier=\"instruct\")",
+      "after": "(family=\"llama\",variant=\"\",version=\"3\",modifier=\"instruct\")",
       "category": "b:improvement",
       "reason": "family-preserving de-noise/enrich: only phantom losses and/or enrichments, no ID-present field lost"
     },
@@ -6547,7 +6592,7 @@
       "id": "meta-llama-3.1-405b-instruct",
       "raw_family": "llama",
       "before": "(family=\"llama\",variant=\"instruct\",version=\"\",modifier=\"\")",
-      "after": "(family=\"llama\",variant=\"\",version=\"\",modifier=\"instruct\")",
+      "after": "(family=\"llama\",variant=\"\",version=\"3.1\",modifier=\"instruct\")",
       "category": "b:improvement",
       "reason": "family-preserving de-noise/enrich: only phantom losses and/or enrichments, no ID-present field lost"
     },
@@ -6556,7 +6601,7 @@
       "id": "meta-llama-3.1-405b-instruct",
       "raw_family": "llama",
       "before": "(family=\"llama\",variant=\"instruct\",version=\"\",modifier=\"\")",
-      "after": "(family=\"llama\",variant=\"\",version=\"\",modifier=\"instruct\")",
+      "after": "(family=\"llama\",variant=\"\",version=\"3.1\",modifier=\"instruct\")",
       "category": "b:improvement",
       "reason": "family-preserving de-noise/enrich: only phantom losses and/or enrichments, no ID-present field lost"
     },
@@ -6565,7 +6610,7 @@
       "id": "meta-llama-3.1-70b-instruct",
       "raw_family": "llama",
       "before": "(family=\"llama\",variant=\"instruct\",version=\"\",modifier=\"\")",
-      "after": "(family=\"llama\",variant=\"\",version=\"\",modifier=\"instruct\")",
+      "after": "(family=\"llama\",variant=\"\",version=\"3.1\",modifier=\"instruct\")",
       "category": "b:improvement",
       "reason": "family-preserving de-noise/enrich: only phantom losses and/or enrichments, no ID-present field lost"
     },
@@ -6574,7 +6619,7 @@
       "id": "meta-llama-3.1-70b-instruct",
       "raw_family": "llama",
       "before": "(family=\"llama\",variant=\"instruct\",version=\"\",modifier=\"\")",
-      "after": "(family=\"llama\",variant=\"\",version=\"\",modifier=\"instruct\")",
+      "after": "(family=\"llama\",variant=\"\",version=\"3.1\",modifier=\"instruct\")",
       "category": "b:improvement",
       "reason": "family-preserving de-noise/enrich: only phantom losses and/or enrichments, no ID-present field lost"
     },
@@ -6583,7 +6628,7 @@
       "id": "meta-llama-3.1-8b-instruct",
       "raw_family": "llama",
       "before": "(family=\"llama\",variant=\"instruct\",version=\"\",modifier=\"\")",
-      "after": "(family=\"llama\",variant=\"\",version=\"\",modifier=\"instruct\")",
+      "after": "(family=\"llama\",variant=\"\",version=\"3.1\",modifier=\"instruct\")",
       "category": "b:improvement",
       "reason": "family-preserving de-noise/enrich: only phantom losses and/or enrichments, no ID-present field lost"
     },
@@ -6592,9 +6637,18 @@
       "id": "meta-llama-3.1-8b-instruct",
       "raw_family": "llama",
       "before": "(family=\"llama\",variant=\"instruct\",version=\"\",modifier=\"\")",
-      "after": "(family=\"llama\",variant=\"\",version=\"\",modifier=\"instruct\")",
+      "after": "(family=\"llama\",variant=\"\",version=\"3.1\",modifier=\"instruct\")",
       "category": "b:improvement",
       "reason": "family-preserving de-noise/enrich: only phantom losses and/or enrichments, no ID-present field lost"
+    },
+    {
+      "provider": "ovhcloud",
+      "id": "meta-llama-3_3-70b-instruct",
+      "raw_family": "",
+      "before": "(family=\"meta-llama-3_3-70b\",variant=\"instruct\",version=\"\",modifier=\"\")",
+      "after": "(family=\"llama\",variant=\"\",version=\"\",modifier=\"instruct\")",
+      "category": "b:improvement",
+      "reason": "rc3: unregistered org/over-capture family corrected to a registered family via curated vendor/provider-prefix strip; no ID-present field lost"
     },
     {
       "provider": "deepinfra",
@@ -7276,7 +7330,7 @@
       "id": "meta/meta-llama-3-70b-instruct",
       "raw_family": "llama",
       "before": "(family=\"llama\",variant=\"instruct\",version=\"\",modifier=\"\")",
-      "after": "(family=\"llama\",variant=\"\",version=\"\",modifier=\"instruct\")",
+      "after": "(family=\"llama\",variant=\"\",version=\"3\",modifier=\"instruct\")",
       "category": "b:improvement",
       "reason": "family-preserving de-noise/enrich: only phantom losses and/or enrichments, no ID-present field lost"
     },
@@ -7285,7 +7339,7 @@
       "id": "meta/meta-llama-3-8b-instruct",
       "raw_family": "llama",
       "before": "(family=\"llama\",variant=\"instruct\",version=\"\",modifier=\"\")",
-      "after": "(family=\"llama\",variant=\"\",version=\"\",modifier=\"instruct\")",
+      "after": "(family=\"llama\",variant=\"\",version=\"3\",modifier=\"instruct\")",
       "category": "b:improvement",
       "reason": "family-preserving de-noise/enrich: only phantom losses and/or enrichments, no ID-present field lost"
     },
@@ -7294,7 +7348,7 @@
       "id": "meta/meta-llama-3.1-405b-instruct",
       "raw_family": "llama",
       "before": "(family=\"llama\",variant=\"instruct\",version=\"\",modifier=\"\")",
-      "after": "(family=\"llama\",variant=\"\",version=\"\",modifier=\"instruct\")",
+      "after": "(family=\"llama\",variant=\"\",version=\"3.1\",modifier=\"instruct\")",
       "category": "b:improvement",
       "reason": "family-preserving de-noise/enrich: only phantom losses and/or enrichments, no ID-present field lost"
     },
@@ -7303,7 +7357,7 @@
       "id": "meta/meta-llama-3.1-70b-instruct",
       "raw_family": "llama",
       "before": "(family=\"llama\",variant=\"instruct\",version=\"\",modifier=\"\")",
-      "after": "(family=\"llama\",variant=\"\",version=\"\",modifier=\"instruct\")",
+      "after": "(family=\"llama\",variant=\"\",version=\"3.1\",modifier=\"instruct\")",
       "category": "b:improvement",
       "reason": "family-preserving de-noise/enrich: only phantom losses and/or enrichments, no ID-present field lost"
     },
@@ -7312,7 +7366,7 @@
       "id": "meta/meta-llama-3.1-8b-instruct",
       "raw_family": "llama",
       "before": "(family=\"llama\",variant=\"instruct\",version=\"\",modifier=\"\")",
-      "after": "(family=\"llama\",variant=\"\",version=\"\",modifier=\"instruct\")",
+      "after": "(family=\"llama\",variant=\"\",version=\"3.1\",modifier=\"instruct\")",
       "category": "b:improvement",
       "reason": "family-preserving de-noise/enrich: only phantom losses and/or enrichments, no ID-present field lost"
     },
@@ -8005,7 +8059,7 @@
       "id": "neuralmagic/Meta-Llama-3.1-8B-Instruct-FP8",
       "raw_family": "llama",
       "before": "(family=\"llama\",variant=\"instruct\",version=\"\",modifier=\"\")",
-      "after": "(family=\"llama\",variant=\"\",version=\"\",modifier=\"instruct\")",
+      "after": "(family=\"llama\",variant=\"\",version=\"3.1\",modifier=\"instruct\")",
       "category": "b:improvement",
       "reason": "family-preserving de-noise/enrich: only phantom losses and/or enrichments, no ID-present field lost"
     },
@@ -10833,16 +10887,7 @@
       "before": "(family=\"dracarys-llama-3_1-70b\",variant=\"instruct\",version=\"\",modifier=\"\")",
       "after": "(family=\"dracarys\",variant=\"\",version=\"\",modifier=\"instruct\")",
       "category": "justified-exception",
-      "reason": "JUSTIFIED: SLICE-10 GENUINE: 'instruct'→Modifier (re-surfaces, no token loss); family over-capture reduced to model-root 'dracarys' (∉ allFamilies → categorizer-flag-only). No registerable clean recovery."
-    },
-    {
-      "provider": "nano-gpt",
-      "id": "azure-gpt-4-turbo",
-      "raw_family": "",
-      "before": "(family=\"azure-gpt-4\",variant=\"turbo\",version=\"4\",modifier=\"\")",
-      "after": "(family=\"azure-gpt\",variant=\"\",version=\"4\",modifier=\"turbo\")",
-      "category": "justified-exception",
-      "reason": "JUSTIFIED: PRE-EXISTING (GH-followup): parent family was junk 'azure-gpt-4' (gpt NEVER captured); 'turbo' re-surfaces (no S10 token loss). FIX = azure→gpt vendor-strip (azure is a Provider → vendor_aliases-contract collateral). Carried to keep gate green."
+      "reason": "JUSTIFIED: USER-RATIFIED non-defect (Impl-UAT bestiary-2gxu, GH#11 model-lineage): dracarys is a llama fine-tune with its own lineage, ∉ allFamilies; 'instruct'→Modifier re-surfaces (no token loss). Family-root precision is a taxonomy call, not a regression."
     },
     {
       "provider": "nano-gpt",
@@ -10851,16 +10896,7 @@
       "before": "(family=\"grok-3-mini-fast\",variant=\"beta\",version=\"3\",modifier=\"\")",
       "after": "(family=\"grok\",variant=\"mini\",version=\"3\",modifier=\"\")",
       "category": "justified-exception",
-      "reason": "JUSTIFIED: PRE-EXISTING (GH-followup): parent family was junk 'grok-3-mini-fast'; S10 IMPROVES it to (grok,mini,3) but 'beta' (grok member) cannot share the variant slot with the 'mini' tier (variant-multiplicity). Carried to keep gate green."
-    },
-    {
-      "provider": "ovhcloud",
-      "id": "meta-llama-3_3-70b-instruct",
-      "raw_family": "",
-      "before": "(family=\"meta-llama-3_3-70b\",variant=\"instruct\",version=\"\",modifier=\"\")",
-      "after": "(family=\"meta\",variant=\"\",version=\"\",modifier=\"instruct\")",
-      "category": "justified-exception",
-      "reason": "JUSTIFIED: PRE-EXISTING (GH-followup): parent family was junk 'meta-llama-3_3-70b' (llama NEVER captured); 'instruct' re-surfaces (no S10 token loss). FIX = meta→llama vendor-fold (user-sign-off-gated). Carried to keep gate green."
+      "reason": "JUSTIFIED: USER-RATIFIED non-defect (Impl-UAT bestiary-2gxu, GH#13 release-stage dimension): family corrected to grok + real tier 'mini' (+version 3); 'beta' (a grok member) cannot co-occupy the single Variant slot with 'mini' (variant-multiplicity — the variant analogue of S10's Modifier-LIST, deferred)."
     },
     {
       "provider": "nvidia",
@@ -10869,7 +10905,7 @@
       "before": "(family=\"solar-10_7b\",variant=\"instruct\",version=\"\",modifier=\"\")",
       "after": "(family=\"solar\",variant=\"\",version=\"\",modifier=\"instruct\")",
       "category": "justified-exception",
-      "reason": "JUSTIFIED: SLICE-10 GENUINE: 'instruct'→Modifier (re-surfaces, no token loss); family reduced to model-root 'solar' (∉ allFamilies → categorizer-flag-only). 10.7b=size GH#9."
+      "reason": "JUSTIFIED: USER-RATIFIED non-defect (Impl-UAT bestiary-2gxu, future taxonomy): solar ∉ allFamilies and has no fold target (only attested as solar-mini/solar-pro); 'instruct'→Modifier re-surfaces (no token loss). 10.7b=size GH#9."
     }
   ]
 }
