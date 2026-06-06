@@ -15,14 +15,14 @@ func testModels() []bestiary.ModelInfo {
 	cost := 15.0
 	return []bestiary.ModelInfo{
 		{
-			ID:            "test-model-1",
-			Provider:      "testprovider",
-			DisplayName:   "Test Model 1",
-			Family:        "test-family",
-			ContextWindow: 128000,
-			MaxOutput:     4096,
+			ID:               "test-model-1",
+			Provider:         "testprovider",
+			DisplayName:      "Test Model 1",
+			Family:           "test-family",
+			ContextWindow:    128000,
+			MaxOutput:        4096,
 			CostInputPerMTok: &cost,
-			LastSynced:    "2024-01-01T00:00:00Z",
+			LastSynced:       "2024-01-01T00:00:00Z",
 			Modalities: bestiary.Modalities{
 				Input:  []bestiary.Modality{bestiary.ModalityText, bestiary.ModalityImage},
 				Output: []bestiary.Modality{bestiary.ModalityText},
@@ -1366,9 +1366,9 @@ func TestFormatAmbiguous_V4_PURLNote_StillPresent(t *testing.T) {
 //
 // Before the fix, "bestiary show minimax" rendered:
 //
-//	* = canonical provider
-//	Canonical:
-//	Also rehosted by: ...
+//   - = canonical provider
+//     Canonical:
+//     Also rehosted by: ...
 //
 // The empty section with orphaned legend was confusing. After the fix, both are omitted
 // when there are zero canonical rows. The Section 2 (rehost names) and footer still appear.

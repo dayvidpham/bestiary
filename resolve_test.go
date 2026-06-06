@@ -481,7 +481,7 @@ func TestResolve_CanonicalAutoDetect(t *testing.T) {
 	// ErrNotFound is the bug — must not be returned.
 	var notFound *bestiary.ErrNotFound
 	if errors.As(err, &notFound) {
-		t.Fatalf("Resolve(\"claude/opus@2025-11-01\") returned ErrNotFound; "+
+		t.Fatalf("Resolve(\"claude/opus@2025-11-01\") returned ErrNotFound; " +
 			"detectScheme must recognize canonical form (family/variant@date) and NOT fall back to raw-ID lookup")
 	}
 	t.Fatalf("Resolve(\"claude/opus@2025-11-01\") returned unexpected error %T: %v", err, err)
@@ -531,8 +531,8 @@ func TestResolve_BareFamilyAmbiguous(t *testing.T) {
 	if !errors.As(err, &ambig) {
 		var notFound *bestiary.ErrNotFound
 		if errors.As(err, &notFound) {
-			t.Fatalf("Resolve(\"claude\") returned ErrNotFound; "+
-				"bare-family fallback must return *ErrAmbiguous when multiple claude variants exist, "+
+			t.Fatalf("Resolve(\"claude\") returned ErrNotFound; " +
+				"bare-family fallback must return *ErrAmbiguous when multiple claude variants exist, " +
 				"not ErrNotFound — fix: add SchemeCanonical fallback in Resolve after SchemeRaw returns empty")
 		}
 		t.Fatalf("Resolve(\"claude\") returned unexpected error type %T: %v", err, err)
@@ -579,7 +579,7 @@ func TestResolve_PURL_LooseFallback_ZeroNamespaceMatches(t *testing.T) {
 	if !errors.As(err, &ambig) {
 		var notFound *bestiary.ErrNotFound
 		if errors.As(err, &notFound) {
-			t.Fatalf("Resolve PURL zero-namespace-match: got ErrNotFound, want ErrAmbiguous with loose fallback; "+
+			t.Fatalf("Resolve PURL zero-namespace-match: got ErrNotFound, want ErrAmbiguous with loose fallback; " +
 				"Fix #1: when namespace yields no matches, fall back to all-provider candidates")
 		}
 		t.Fatalf("Resolve PURL zero-namespace-match: unexpected error %T: %v", err, err)
@@ -860,9 +860,9 @@ func TestResolve_BracketSuffixStripping_DateMatch(t *testing.T) {
 	if err != nil {
 		var notFound *bestiary.ErrNotFound
 		if errors.As(err, &notFound) {
-			t.Fatalf("Resolve(\"anthropic/claude/haiku@2024-10-22[latest]\") returned ErrNotFound; "+
-				"bracket-suffix [latest] must be stripped before date matching — BLOCKER bestiary-wjk9\n"+
-				"  What: bracket suffix was included in dateFilter string\n"+
+			t.Fatalf("Resolve(\"anthropic/claude/haiku@2024-10-22[latest]\") returned ErrNotFound; " +
+				"bracket-suffix [latest] must be stripped before date matching — BLOCKER bestiary-wjk9\n" +
+				"  What: bracket suffix was included in dateFilter string\n" +
 				"  Fix: strip [modifier] suffix from matchInput before extracting @date")
 		}
 		t.Fatalf("Resolve(\"anthropic/claude/haiku@2024-10-22[latest]\") returned unexpected error %T: %v", err, err)
@@ -894,7 +894,7 @@ func TestResolve_BracketSuffixStripping_ModifierFilter(t *testing.T) {
 	// A synthetic modifier that no real model has — must yield ErrNotFound (filter applied).
 	_, err := bestiary.Resolve("claude/haiku@2024-10-22[nonexistent-modifier-xyz]")
 	if err == nil {
-		t.Fatal("Resolve with nonexistent [modifier] returned nil error; "+
+		t.Fatal("Resolve with nonexistent [modifier] returned nil error; " +
 			"modifier filter must exclude models whose Modifier field does not match")
 	}
 	// Must be ErrNotFound (no models match the nonexistent modifier), not ErrAmbiguous.
@@ -1019,7 +1019,7 @@ func TestResolve_RehostProviders_ExcludesCanonical(t *testing.T) {
 	// RehostProviders must never include anthropic.
 	for _, p := range ambig.RehostProviders {
 		if p == bestiary.ProviderAnthropic {
-			t.Errorf("RehostProviders contains canonical provider anthropic; "+
+			t.Errorf("RehostProviders contains canonical provider anthropic; " +
 				"collectRehostProviders must exclude m.Provider == m.Family.CanonicalProvider()")
 		}
 	}

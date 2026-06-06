@@ -440,9 +440,9 @@ func TestFormatCanonical_VersionOnlyNoVariant(t *testing.T) {
 // for Version presence/absence with Variant and Date.
 func TestFormatCanonical_AllCombinations(t *testing.T) {
 	cases := []struct {
-		name    string
-		ref     bestiary.ModelRef
-		want    string
+		name string
+		ref  bestiary.ModelRef
+		want string
 	}{
 		{
 			// Variant set, Version set, Date set
@@ -627,14 +627,14 @@ func TestModelRef_Modifier_MarshalUnmarshal(t *testing.T) {
 // TestModelInfo_Ref_Modifier verifies that Ref() propagates Modifier from ModelInfo to ModelRef.
 func TestModelInfo_Ref_Modifier(t *testing.T) {
 	m := bestiary.ModelInfo{
-		ID:          "claude-opus-4-6-thinking",
-		Provider:    bestiary.ProviderAnthropic,
-		RawFamily:   "claude-opus",
-		Family:      "claude",
-		Variant:     "opus",
-		Version:     "4.6",
-		Date:        "2026-02-05",
-		Modifier:    []string{"thinking"},
+		ID:        "claude-opus-4-6-thinking",
+		Provider:  bestiary.ProviderAnthropic,
+		RawFamily: "claude-opus",
+		Family:    "claude",
+		Variant:   "opus",
+		Version:   "4.6",
+		Date:      "2026-02-05",
+		Modifier:  []string{"thinking"},
 	}
 
 	ref := m.Ref()

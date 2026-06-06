@@ -200,7 +200,7 @@ func TestFamily_CanonicalProvider_WellKnown(t *testing.T) {
 		{bestiary.FamilyGemini, bestiary.ProviderGoogle},
 		{bestiary.FamilyGemma, bestiary.ProviderGoogle},
 		{bestiary.FamilyGPT, bestiary.ProviderOpenAI},
-		{bestiary.FamilyO, bestiary.ProviderOpenAI},  // o1, o3, o4 carry Family="o"
+		{bestiary.FamilyO, bestiary.ProviderOpenAI}, // o1, o3, o4 carry Family="o"
 		{bestiary.FamilyLlama, bestiary.ProviderLocal},
 		{bestiary.FamilyMistral, bestiary.ProviderMistral},
 		{bestiary.FamilyDeepSeek, bestiary.ProviderDeepSeek},
@@ -227,7 +227,7 @@ func TestFamily_CanonicalProvider_UnknownReturnsEmpty(t *testing.T) {
 	unknowns := []bestiary.Family{
 		bestiary.Family(""),
 		bestiary.Family("totally-unknown-family"),
-		bestiary.Family("grok"),  // not mapped in Wave 3
+		bestiary.Family("grok"), // not mapped in Wave 3
 		bestiary.Family("nova"),
 		bestiary.Family("sonar"),
 		bestiary.Family("kimi"),

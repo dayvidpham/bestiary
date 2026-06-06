@@ -1676,13 +1676,13 @@ func TestExtractVersionBetweenFamilyAndVariant(t *testing.T) {
 }
 
 // --------------------------------------------------------------------------
-// R3b (eq7w): isYYMMDateToken tests
+// R3b (eq7w): isFourDigitDateToken tests
 // --------------------------------------------------------------------------
 
-// TestIsYYMMDateToken_Parity verifies that isYYMMDateToken parity holds with
-// ExtractVersionFromID: tokens for which isYYMMDateToken is true must not be
+// TestIsYYMMDateToken_Parity verifies that isFourDigitDateToken parity holds with
+// ExtractVersionFromID: tokens for which isFourDigitDateToken is true must not be
 // returned as versions.
-// The direct unit test for isYYMMDateToken lives in parse_internal_test.go
+// The direct unit test for isFourDigitDateToken lives in parse_internal_test.go
 // (package bestiary) since the function is unexported.
 //
 // The key case: mistral-small-2603 → no version (2603 is a YYMM date).
@@ -1721,8 +1721,8 @@ func TestIsYYMMDateToken_Parity(t *testing.T) {
 			got := bestiary.ExtractVersionFromID(tc.id, tc.rawFamily)
 			if got != tc.want {
 				t.Errorf("ExtractVersionFromID(%q, %q) = %q, want %q\n"+
-					"  What: YYMM token was not rejected by isYYMMDateToken guard\n"+
-					"  Why: ExtractVersionFromID must consult isYYMMDateToken before returning hyphen-digit tokens",
+					"  What: YYMM token was not rejected by isFourDigitDateToken guard\n"+
+					"  Why: ExtractVersionFromID must consult isFourDigitDateToken before returning hyphen-digit tokens",
 					tc.id, tc.rawFamily, got, tc.want)
 			}
 		})
@@ -2008,7 +2008,7 @@ func TestParseFamilyDetailed_FixA_Bare4DigitDateGuard(t *testing.T) {
 				t.Errorf("ParseFamilyDetailed(%q, %q): version = %q, want %q\n"+
 					"  What: bare 4-digit date token was returned as a version\n"+
 					"  Why: FIX-A guard should reject any 4-digit all-numeric token as a date/release-id\n"+
-					"  How to fix: verify isYYMMDateToken returns true for all 4-digit all-numeric tokens",
+					"  How to fix: verify isFourDigitDateToken returns true for all 4-digit all-numeric tokens",
 					tc.rawFamily, tc.id, version, tc.wantVersion)
 			}
 		})
@@ -2072,7 +2072,7 @@ func TestExtractVersionFromID_FixA_Bare4DigitDateGuard(t *testing.T) {
 			if got != tc.want {
 				t.Errorf("ExtractVersionFromID(%q, %q) = %q, want %q\n"+
 					"  What: FIX-A bare-4-digit guard inconsistency\n"+
-					"  Why: 4-digit token must be rejected by isYYMMDateToken in ExtractVersionFromID",
+					"  Why: 4-digit token must be rejected by isFourDigitDateToken in ExtractVersionFromID",
 					tc.id, tc.rawFamily, got, tc.want)
 			}
 		})
@@ -2675,7 +2675,7 @@ func TestParseFamilyDetailed_Fix4_TextEmbeddingResidual(t *testing.T) {
 
 // TestParseFamilyWithVersion_Fix4_Step5_6DigitDateGuard verifies the SLICE-1-FIX-4 7kyb/9yyp
 // fix: ParseFamilyWithVersion Step-5 override-prefix version loop now uses isDateShapedToken
-// (catches 4-digit AND 6-digit YYMMDD) instead of isYYMMDateToken (4-digit only).
+// (catches 4-digit AND 6-digit YYMMDD) instead of isFourDigitDateToken (4-digit only).
 //
 // BDD: Given a rawFamily string that hits the Step-5 override-prefix path AND contains a
 // 6-digit YYMMDD date token in the suffix (e.g. "claude-opus-1-6-250615"),
@@ -2734,7 +2734,7 @@ func TestParseFamilyWithVersion_Fix4_Step5_6DigitDateGuard(t *testing.T) {
 			if version != tc.wantVersion {
 				t.Errorf("version = %q, want %q\n"+
 					"  What: 6-digit YYMMDD token included in version at Step-5 override-prefix loop\n"+
-					"  Why: isYYMMDateToken only catches 4-digit tokens; is6DigitYYMMDD was not guarded here\n"+
+					"  Why: isFourDigitDateToken only catches 4-digit tokens; is6DigitYYMMDD was not guarded here\n"+
 					"  How to fix: verify Step-5 loop uses isDateShapedToken (SLICE-1-FIX-4 7kyb/9yyp)",
 					version, tc.wantVersion)
 			}
@@ -2766,7 +2766,7 @@ func TestParseFamilyWithVersion_Fix4_Step5_6DigitDateGuard(t *testing.T) {
 // parse.go:455: its inputs (e.g. "claude-opus-1-6-250615") match the Step-2 hyphen-version
 // regex (^base-(\d+(-\d+)*)$) because their suffix is all-numeric, so they are handled by
 // dotJoinStrippingDateSuffix at Step-2 and RETURN before Step-5 is ever entered.
-// Reverting parse.go:455 from isDateShapedToken back to isYYMMDateToken passes the entire
+// Reverting parse.go:455 from isDateShapedToken back to isFourDigitDateToken passes the entire
 // test suite — confirming the original test does NOT exercise the FIX-4 change site.
 //
 // Reaching Step-5: the Step-5 override-prefix loop fires when:
@@ -2784,7 +2784,7 @@ func TestParseFamilyWithVersion_Fix4_Step5_6DigitDateGuard(t *testing.T) {
 //
 // Mutation verification (performed during test authoring — bestiary-rwbl):
 //
-//	Reverting parse.go:455 to isYYMMDateToken: FAILS these cases.
+//	Reverting parse.go:455 to isFourDigitDateToken: FAILS these cases.
 //	  "claude-opus-1-6-250615-zen" → version="1.6.250615" (want "1.6")
 //	  "claude-opus-4-250615-zen"   → version="4.250615"   (want "4")
 //	  "claude-opus-250615-zen"     → version="250615"     (want "")
@@ -2813,7 +2813,7 @@ func TestParseFamilyWithVersion_Fix4_Step5_6DigitDateGuard_LoadBearing(t *testin
 			// → falls through to Step-5. Override scan: "claude-opus" → {claude, opus}.
 			// suffix = ["1","6","250615","zen"]. Tokens: "1" (version), "6" (version),
 			// "250615" (6-digit YYMMDD — isDateShapedToken=true) → break.
-			// Without FIX-4 (isYYMMDateToken): "250615" has len=6≠4 → isYYMMDateToken=false
+			// Without FIX-4 (isFourDigitDateToken): "250615" has len=6≠4 → isFourDigitDateToken=false
 			// → "250615" appended → version="1.6.250615" (WRONG).
 			// With FIX-4 (isDateShapedToken): is6DigitYYMMDD("250615")=true → break → version="1.6" (CORRECT).
 			name:        "claude-opus-1-6-250615-zen → version 1.6 (Step-5 path, 6-digit blocked)",
@@ -2872,9 +2872,9 @@ func TestParseFamilyWithVersion_Fix4_Step5_6DigitDateGuard_LoadBearing(t *testin
 			if version != tc.wantVersion {
 				t.Errorf("version = %q, want %q\n"+
 					"  What: 6-digit YYMMDD token leaked into version at parse.go:455 (Step-5 loop)\n"+
-					"  Why: isYYMMDateToken only rejects 4-digit tokens; 6-digit YYMMDD (len=6) passes through it\n"+
+					"  Why: isFourDigitDateToken only rejects 4-digit tokens; 6-digit YYMMDD (len=6) passes through it\n"+
 					"  Where: parse.go ParseFamilyWithVersion Step-5, loop at ~line 454-459\n"+
-					"  How to fix: parse.go:455 must use isDateShapedToken (not isYYMMDateToken)\n"+
+					"  How to fix: parse.go:455 must use isDateShapedToken (not isFourDigitDateToken)\n"+
 					"  Ref: SLICE-1-FIX-4 bestiary-rwbl load-bearing mutation test",
 					version, tc.wantVersion)
 			}
@@ -3869,11 +3869,11 @@ func TestSeriesTierModifier_CLARIFICATION6(t *testing.T) {
 func TestParseFamilyDetailed_Slice10_ModifierList(t *testing.T) {
 	t.Parallel()
 	cases := []struct {
-		desc                              string
-		raw                               bestiary.Family
-		id                                bestiary.ModelID
-		wantFamily, wantVariant, wantVer  string
-		wantMod                           string // canonical comma-joined
+		desc                             string
+		raw                              bestiary.Family
+		id                               bestiary.ModelID
+		wantFamily, wantVariant, wantVer string
+		wantMod                          string // canonical comma-joined
 	}{
 		// Multi-modifier lossless capture (replaces the S8 interim drop).
 		{"kimi-k2-thinking-turbo → [thinking,turbo]", "kimi-thinking", "kimi-k2-thinking-turbo", "kimi", "k", "2", "thinking,turbo"},

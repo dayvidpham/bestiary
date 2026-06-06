@@ -465,7 +465,7 @@ func migrateToV3(conn *sqlite.Conn) error {
 }
 
 // migrateToV4 upgrades an existing v3 models table to the v4 schema:
-//   - Adds `version TEXT NOT NULL DEFAULT ''` column for the model version
+//   - Adds `version TEXT NOT NULL DEFAULT ”` column for the model version
 //     extracted from the family string (e.g. "4.5" for claude-opus-4-5).
 //   - Drops the v3 idx_canonical (family, variant, provider) index and
 //     recreates it as (family, variant, version, provider) so that version
@@ -473,7 +473,7 @@ func migrateToV3(conn *sqlite.Conn) error {
 //
 // SQLite supports ADD COLUMN via ALTER TABLE for NOT NULL columns with a
 // constant DEFAULT value, so table-recreate is not required here.
-// The new column defaults to '' for all existing rows; a subsequent sync
+// The new column defaults to ” for all existing rows; a subsequent sync
 // operation will backfill Version from the parser.
 func migrateToV4(conn *sqlite.Conn) error {
 	endFn := sqlitex.Transaction(conn)
@@ -849,21 +849,21 @@ func modalitiesFromString(s string) []Modality {
 // Column order must match the SELECT in QueryModels / QueryModel / QueryByCanonical.
 func scanModelInfo(stmt *sqlite.Stmt) ModelInfo {
 	m := ModelInfo{
-		ID:                ModelID(stmt.GetText("model_id")),
-		Provider:          Provider(stmt.GetText("provider")),
-		DisplayName:       stmt.GetText("display_name"),
-		RawFamily: Family(stmt.GetText("raw_family")),
-		Family:    Family(stmt.GetText("family")),
-		Variant:   stmt.GetText("variant"),
-		Version:   stmt.GetText("version"),
-		Date:      stmt.GetText("date"),
-		ContextWindow:     int(stmt.GetInt64("context_window")),
-		MaxOutput:         int(stmt.GetInt64("max_output")),
-		Reasoning:         stmt.GetBool("reasoning"),
-		ToolCall:          stmt.GetBool("tool_call"),
-		Attachment:        stmt.GetBool("attachment"),
-		Temperature:       stmt.GetBool("temperature"),
-		StructuredOutput:  stmt.GetBool("structured_output"),
+		ID:               ModelID(stmt.GetText("model_id")),
+		Provider:         Provider(stmt.GetText("provider")),
+		DisplayName:      stmt.GetText("display_name"),
+		RawFamily:        Family(stmt.GetText("raw_family")),
+		Family:           Family(stmt.GetText("family")),
+		Variant:          stmt.GetText("variant"),
+		Version:          stmt.GetText("version"),
+		Date:             stmt.GetText("date"),
+		ContextWindow:    int(stmt.GetInt64("context_window")),
+		MaxOutput:        int(stmt.GetInt64("max_output")),
+		Reasoning:        stmt.GetBool("reasoning"),
+		ToolCall:         stmt.GetBool("tool_call"),
+		Attachment:       stmt.GetBool("attachment"),
+		Temperature:      stmt.GetBool("temperature"),
+		StructuredOutput: stmt.GetBool("structured_output"),
 		Interleaved: Capability{
 			Supported: stmt.GetBool("interleaved"),
 			Config:    configFromString(stmt.GetText("interleaved_config")),

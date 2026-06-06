@@ -84,11 +84,11 @@ func TestStyleSegment_DigitLeading(t *testing.T) {
 		preserve bool
 		want     string
 	}{
-		{"302ai", false, "302AI"},  // curated suffix override wins regardless of preserve
-		{"302ai", true, "302AI"},   //
-		{"4o", true, "4o"},         // Model__ segment rule: verbatim suffix
-		{"4o", false, "4O"},        // slug rule: title-case suffix
-		{"123", true, "123"},       // all digits → verbatim
+		{"302ai", false, "302AI"},        // curated suffix override wins regardless of preserve
+		{"302ai", true, "302AI"},         //
+		{"4o", true, "4o"},               // Model__ segment rule: verbatim suffix
+		{"4o", false, "4O"},              // slug rule: title-case suffix
+		{"123", true, "123"},             // all digits → verbatim
 		{"3deepseek", true, "3DeepSeek"}, // curated alpha suffix after digit
 	}
 	for _, c := range cases {

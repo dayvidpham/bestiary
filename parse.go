@@ -790,7 +790,7 @@ func ParseFamilyWithVersion(raw Family) (Family, string, string) {
 
 			// Collect leading purely-numeric suffix tokens as version.
 			// SLICE-1-FIX-4 (7kyb/9yyp): use isDateShapedToken (4-digit OR 6-digit YYMMDD)
-			// to guard the 4th date-guard site. Previously isYYMMDateToken (4-digit only)
+			// to guard the 4th date-guard site. Previously isFourDigitDateToken (4-digit only)
 			// was used, leaving 6-digit YYMMDD tokens (e.g. "250615") unguarded here.
 			var versionTokens []string
 			for _, tok := range suffix {
@@ -896,7 +896,7 @@ func ExtractVersionFromID(id ModelID, rawFamily Family) string {
 	// SLICE-1-FIX-3: also strip trailing date groups from multi-group remainders, and
 	// detect the MM-YYYY two-group pattern (e.g. "08-2024", "03-2025") as a full date.
 	if reHyphenDigits.MatchString(remainder) {
-		if isYYMMDateToken(remainder) {
+		if isFourDigitDateToken(remainder) {
 			return ""
 		}
 		// Detect MM-YYYY two-group remainder (e.g. "08-2024", "03-2025").
@@ -1594,7 +1594,7 @@ func splitAndStripVersionTail(s string) []string {
 }
 
 // isVersionToken returns true when tok is a purely-numeric token (all digits)
-// AND is not a YYMM-date token (as detected by isYYMMDateToken).
+// AND is not a YYMM-date token (as detected by isFourDigitDateToken).
 // Used to strip trailing version components from model IDs.
 //
 // R3b (eq7w): YYMM tokens (e.g. "2603", "2512") are rejected so that
@@ -1609,7 +1609,7 @@ func isVersionToken(tok string) bool {
 		}
 	}
 	// R3b guard: reject YYMM date tokens (e.g. 2603, 2512, 2411).
-	return !isYYMMDateToken(tok)
+	return !isFourDigitDateToken(tok)
 }
 
 // reYYYYMMDD matches an 8-digit date string not preceded or followed by a digit.
@@ -1949,7 +1949,7 @@ var reOSeriesLine = regexp.MustCompile(`^o([0-9]+)$`)
 //   - o1 / o3 / o4              → (gpt, variant="o",     version=1/3/4)
 //   - o1-mini                   → (gpt, variant="o",     version=1, modifier="mini")
 //   - gpt-4o                    → (gpt, variant="4o",    version="")   ("4o" is the variant
-//                                                                       NOT version 4)
+//     NOT version 4)
 //   - gpt-4o-mini[-DATE]        → (gpt, variant="4o",    version="", modifier="mini")
 //   - chatgpt-4o-latest         → (gpt, variant="4o",    version="", modifier="latest")
 //   - gpt-audio[-mini]          → (gpt, variant="audio", version="" [, modifier="mini"])
@@ -2448,11 +2448,9 @@ func ParseFamilyDetailed(raw Family, id ModelID, p Provider) (Family, string, st
 	return recon(family, variant, version, modifier, nil)
 }
 
-// reYYMMCandidate matches a 4-digit segment in a hyphen-separated raw family
-// string that falls in the YYMM range (1900–2999). These are characteristic of
-// Mistral versioning (e.g. "mistral-2401", "pixtral-2411").
-// The segment must be at a word boundary within the hyphenated string.
-var reYYMMCandidate = regexp.MustCompile(`(?:^|-)(?:19|20|21|22|23|24|25|26|27|28|29)\d{2}(?:-|$)`)
+// rc3-L4 (bestiary-8yrc): the YYMM-range-restricted reYYMMCandidate was REMOVED as dead
+// code — it had no callers. The FIX-A reBareAnyFourDigitCandidate below generalized it to
+// ANY 4-digit segment and is the sole regex the YYMM-date-as-version guard uses.
 
 // reBareAnyFourDigitCandidate matches any standalone 4-digit all-numeric segment
 // in a hyphen-separated string. This is the FIX-A generalization of reYYMMCandidate:
@@ -2872,10 +2870,10 @@ func firstToken(s string) string {
 }
 
 // --------------------------------------------------------------------------
-// isYYMMDateToken (R3b / eq7w → FIX-A generalization)
+// isFourDigitDateToken (R3b / eq7w → FIX-A generalization)
 // --------------------------------------------------------------------------
 
-// isYYMMDateToken returns true when tok is a 4-digit all-numeric string.
+// isFourDigitDateToken returns true when tok is a 4-digit all-numeric string.
 // This is the FIX-A generalization of the original YYMM guard (eq7w):
 // the original guard only rejected tokens in the YYMM century range (19xx–29xx),
 // but supervisor analysis confirmed that ALL bare-4-digit tokens in the 1745
@@ -2887,12 +2885,12 @@ func firstToken(s string) string {
 // Examples of now-rejected tokens: "0528" (deepseek-r1-0528), "0324" (deepseek-v3-0324),
 // "2603" (mistral-small-2603), "2512" (existing YYMM range).
 //
-// Parity contract: any tok for which isYYMMDateToken returns true must NOT be
+// Parity contract: any tok for which isFourDigitDateToken returns true must NOT be
 // treated as a version by isVersionToken or ExtractVersionFromID. The same guard
 // is also applied in ParseFamilyDetailed via reBareAnyFourDigitCandidate, which
 // matches any 4-digit segment in the raw family string (parity across all three
 // call sites).
-func isYYMMDateToken(tok string) bool {
+func isFourDigitDateToken(tok string) bool {
 	if len(tok) != 4 {
 		return false
 	}
@@ -2963,7 +2961,7 @@ func isMMYYYYTwoGroup(s string) bool {
 // MM-YYYY two-group detection requires two tokens and is handled separately by
 // isMMYYYYTwoGroup on the full remainder.
 func isDateShapedToken(tok string) bool {
-	return isYYMMDateToken(tok) || is6DigitYYMMDD(tok)
+	return isFourDigitDateToken(tok) || is6DigitYYMMDD(tok)
 }
 
 // --------------------------------------------------------------------------
@@ -3739,7 +3737,7 @@ func ExtractVersionBetweenFamilyAndVariant(id ModelID, family Family, variant st
 
 	// Collect leading purely-numeric tokens between family and variant.
 	// SLICE-1-FIX-3: also reject 6-digit YYMMDD tokens (is6DigitYYMMDD) in addition
-	// to the existing 4-digit guard (isYYMMDateToken via isVersionToken). Stop at the
+	// to the existing 4-digit guard (isFourDigitDateToken via isVersionToken). Stop at the
 	// first date-shaped token so trailing date groups are not included in the version.
 	var numericTokens []string
 	variantStart := -1

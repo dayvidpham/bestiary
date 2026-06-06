@@ -297,13 +297,13 @@ func TestModelRef_ParseCanonical_BracketSuffix(t *testing.T) {
 	// and verify Modifier appears in bracket notation.
 
 	ref := bestiary.ModelRef{
-		ID:        "claude-opus-4-6-thinking",
-		Provider:  "anthropic",
-		Family:    "claude",
-		Variant:   "opus",
-		Version:   "4.6",
-		Date:      "2026-02-05",
-		Modifier:  []string{"thinking"},
+		ID:       "claude-opus-4-6-thinking",
+		Provider: "anthropic",
+		Family:   "claude",
+		Variant:  "opus",
+		Version:  "4.6",
+		Date:     "2026-02-05",
+		Modifier: []string{"thinking"},
 	}
 
 	canonical := ref.Format(bestiary.SchemeCanonical)

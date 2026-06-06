@@ -51,10 +51,10 @@ func TestJSONOutput_ConformsToSchema(t *testing.T) {
 	}
 	if len(schema.Properties) == 0 {
 		t.Fatalf(
-			"bestiary.schema.json has no properties;\n"+
-				"  what went wrong: schema.properties is empty or missing\n"+
-				"  why: the schema file may be missing a \"properties\" key\n"+
-				"  where: schema_test.go TestJSONOutput_ConformsToSchema\n"+
+			"bestiary.schema.json has no properties;\n" +
+				"  what went wrong: schema.properties is empty or missing\n" +
+				"  why: the schema file may be missing a \"properties\" key\n" +
+				"  where: schema_test.go TestJSONOutput_ConformsToSchema\n" +
 				"  how to fix: add a \"properties\" object to bestiary.schema.json",
 		)
 	}
@@ -64,13 +64,13 @@ func TestJSONOutput_ConformsToSchema(t *testing.T) {
 	// to exercise the codegen-baked normalization path.
 	cost := 1.5
 	fixture := bestiary.ModelInfo{
-		ID:          "test-schema-model-20240101",
-		Provider:    "testprovider",
-		DisplayName: "Schema Test Model",
-		RawFamily:   "test-family",
-		Family:      "test",
-		Variant:     "schema",
-		Date:        "2024-01-01",
+		ID:                    "test-schema-model-20240101",
+		Provider:              "testprovider",
+		DisplayName:           "Schema Test Model",
+		RawFamily:             "test-family",
+		Family:                "test",
+		Variant:               "schema",
+		Date:                  "2024-01-01",
 		ContextWindow:         128000,
 		MaxOutput:             4096,
 		Reasoning:             true,
@@ -227,14 +227,14 @@ func TestJSONOutput_ConformsToSchema(t *testing.T) {
 func TestJSONOutput_CanonicalFields_Populated(t *testing.T) {
 	cost := 2.5
 	fixture := bestiary.ModelInfo{
-		ID:          "claude-opus-4-5-20251101",
-		Provider:    "anthropic",
-		DisplayName: "Claude Opus 4.5",
-		RawFamily:   "claude-opus",
-		Family:      "claude",
-		Variant:     "opus",
-		Version:     "4.5",
-		Date:        "2025-11-01",
+		ID:                    "claude-opus-4-5-20251101",
+		Provider:              "anthropic",
+		DisplayName:           "Claude Opus 4.5",
+		RawFamily:             "claude-opus",
+		Family:                "claude",
+		Variant:               "opus",
+		Version:               "4.5",
+		Date:                  "2025-11-01",
 		ContextWindow:         200000,
 		MaxOutput:             32000,
 		Reasoning:             true,
@@ -568,11 +568,11 @@ func TestJSONOutput_NegativeConformance(t *testing.T) {
 	err := dec.Decode(&m)
 	if err == nil {
 		t.Errorf(
-			"expected decode error for Date=integer, got nil;\n"+
-				"  what went wrong: a JSON integer was accepted where a string is required\n"+
-				"  why: the schema declares Date as type: string\n"+
-				"  where: schema_test.go TestJSONOutput_NegativeConformance\n"+
-				"  how to fix: ModelInfo.Date must be typed as string in Go so "+
+			"expected decode error for Date=integer, got nil;\n" +
+				"  what went wrong: a JSON integer was accepted where a string is required\n" +
+				"  why: the schema declares Date as type: string\n" +
+				"  where: schema_test.go TestJSONOutput_NegativeConformance\n" +
+				"  how to fix: ModelInfo.Date must be typed as string in Go so " +
 				"JSON decode rejects non-string values",
 		)
 	}

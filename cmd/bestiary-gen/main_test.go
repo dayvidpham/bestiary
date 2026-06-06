@@ -249,11 +249,11 @@ func TestSplitComma(t *testing.T) {
 // testSlugToConst is a minimal slugToConst map for tests, providing the correct
 // provider constant names (with proper casing) for the providers used in golden examples.
 var testSlugToConst = map[string]string{
-	"anthropic":    "ProviderAnthropic",
-	"openai":       "ProviderOpenAI",
-	"google":       "ProviderGoogle",
+	"anthropic":     "ProviderAnthropic",
+	"openai":        "ProviderOpenAI",
+	"google":        "ProviderGoogle",
 	"google-vertex": "ProviderGoogleVertex",
-	"openrouter":   "ProviderOpenRouter",
+	"openrouter":    "ProviderOpenRouter",
 }
 
 // TestNameForCanonical_KnownExamples verifies that nameForCanonicalWithMap produces
@@ -287,7 +287,7 @@ func TestNameForCanonical_KnownExamples(t *testing.T) {
 		{
 			desc: "claude-opus-4-1 on Anthropic (date not in ID, from release field)",
 			model: bestiary.ModelInfo{
-				ID:      "claude-opus-4-1",
+				ID:       "claude-opus-4-1",
 				Provider: "anthropic",
 				Family:   "claude",
 				Variant:  "opus",
@@ -1131,9 +1131,9 @@ func TestStaticDataset_CrossProviderConsistency(t *testing.T) {
 // These tests will FAIL until L3 adds double-hyphen prefix support to parseFlags.
 func TestParseFlags_DoubleHyphen(t *testing.T) {
 	cases := []struct {
-		desc    string
-		args    []string
-		check   func(t *testing.T, got flagResult)
+		desc  string
+		args  []string
+		check func(t *testing.T, got flagResult)
 	}{
 		{
 			desc: "--no-fetch sets noFetch=true",
@@ -2229,7 +2229,7 @@ func TestCodegen_UpToDate(t *testing.T) {
 	// Sanity-check: the constants golden must contain at least one expected binding.
 	// This guards against an accidentally empty or truncated golden file.
 	if !strings.Contains(string(constantsGoldenRaw), `ModelID = "anthropic/claude-3-5-haiku"`) {
-		t.Errorf("R4 guard: constants golden file appears empty or truncated (missing expected binding)\n"+
+		t.Errorf("R4 guard: constants golden file appears empty or truncated (missing expected binding)\n" +
 			"  How to fix: ensure testdata/expected_constants_excerpt.go.golden is correctly committed")
 	}
 }
@@ -2572,8 +2572,8 @@ func TestDecompositionSnapshot_FixA_NoVersionForBare4Digit(t *testing.T) {
 		if m.Version != want.wantVersion {
 			t.Errorf("FIX-A model %q: Version = %q, want %q (bare 4-digit token must not be a version)\n"+
 				"  What: 4-digit date-like token was extracted as a version\n"+
-				"  Why: FIX-A extends isYYMMDateToken to reject any 4-digit all-numeric token\n"+
-				"  How to fix: verify isYYMMDateToken returns true for \"0528\" and \"0324\"",
+				"  Why: FIX-A extends isFourDigitDateToken to reject any 4-digit all-numeric token\n"+
+				"  How to fix: verify isFourDigitDateToken returns true for \"0528\" and \"0324\"",
 				id, m.Version, want.wantVersion)
 		}
 		if string(m.Family) != want.wantFamily {
@@ -2638,9 +2638,9 @@ func TestRun_WritesVersionDuplicates(t *testing.T) {
 	// fixture_api.json has two haiku models under cloudflare-ai-gateway, both with
 	// version="3.5" (family=claude, variant=haiku). They should form one duplicate group.
 	if envelope.DuplicateCount == 0 {
-		t.Errorf("version_duplicates.json DuplicateCount = 0, want > 0\n"+
-			"  What: expected at least one duplicate group from haiku models\n"+
-			"  Why: both claude-haiku models in fixture_api.json resolve to version=3.5\n"+
+		t.Errorf("version_duplicates.json DuplicateCount = 0, want > 0\n" +
+			"  What: expected at least one duplicate group from haiku models\n" +
+			"  Why: both claude-haiku models in fixture_api.json resolve to version=3.5\n" +
 			"  How to fix: verify writeVersionDuplicates collects (provider,family,variant,version) groups")
 	}
 }
@@ -2695,9 +2695,9 @@ func TestRun_WritesDotFormAudit(t *testing.T) {
 	// fixture_api.json has: claude-3-5-haiku (version=3.5), claude-3.5-haiku (version=3.5),
 	// gpt-5.1 (version=5.1), gpt-5.2 (version=5.2) — all with dot-form versions.
 	if envelope.Count == 0 {
-		t.Errorf("dot_form_audit.json Count = 0, want > 0\n"+
-			"  What: expected models with dot-form versions (e.g. 3.5, 5.1)\n"+
-			"  Why: fixture_api.json contains multiple models with dot-separated versions\n"+
+		t.Errorf("dot_form_audit.json Count = 0, want > 0\n" +
+			"  What: expected models with dot-form versions (e.g. 3.5, 5.1)\n" +
+			"  Why: fixture_api.json contains multiple models with dot-separated versions\n" +
 			"  How to fix: verify writeDotFormAudit checks for Version containing '.'")
 	}
 }
@@ -2745,11 +2745,11 @@ func TestWriteVersionDuplicates_Unit(t *testing.T) {
 func TestWriteDotFormAudit_Unit(t *testing.T) {
 	cacheDir := t.TempDir()
 	models := []bestiary.ModelInfo{
-		{ID: "claude-3.5-haiku", Provider: "anthropic", Version: "3.5"},  // dot-form
-		{ID: "gpt-5.1", Provider: "openai", Version: "5.1"},               // dot-form
-		{ID: "gpt-5-mini", Provider: "openai", Version: "5"},              // no dot — not in audit
-		{ID: "nova-2-lite-v1", Provider: "cartesia", Version: "2"},        // no dot — not in audit
-		{ID: "no-version", Provider: "test", Version: ""},                  // empty — not in audit
+		{ID: "claude-3.5-haiku", Provider: "anthropic", Version: "3.5"}, // dot-form
+		{ID: "gpt-5.1", Provider: "openai", Version: "5.1"},             // dot-form
+		{ID: "gpt-5-mini", Provider: "openai", Version: "5"},            // no dot — not in audit
+		{ID: "nova-2-lite-v1", Provider: "cartesia", Version: "2"},      // no dot — not in audit
+		{ID: "no-version", Provider: "test", Version: ""},               // empty — not in audit
 	}
 	if err := writeDotFormAudit(cacheDir, models); err != nil {
 		t.Fatalf("writeDotFormAudit: %v", err)
@@ -2827,9 +2827,9 @@ func TestFixturePerReasonCounts(t *testing.T) {
 
 	// YYMM: ReasonYYMMDateAsVersion must be > 0 (mistral-small-2603 contributes).
 	if n := counts[bestiary.ReasonYYMMDateAsVersion]; n == 0 {
-		t.Errorf("ReasonYYMMDateAsVersion = 0, want > 0\n"+
-			"  What: mistral-small-2603 (family mistral-2603) should produce a YYMM failure\n"+
-			"  Why: ParseFamilyDetailed YYMM detector fires for families matching the YYMM pattern\n"+
+		t.Errorf("ReasonYYMMDateAsVersion = 0, want > 0\n" +
+			"  What: mistral-small-2603 (family mistral-2603) should produce a YYMM failure\n" +
+			"  Why: ParseFamilyDetailed YYMM detector fires for families matching the YYMM pattern\n" +
 			"  How to fix: verify fixture_api.json includes mistral-small-2603 under mistral provider")
 	}
 
@@ -2840,8 +2840,8 @@ func TestFixturePerReasonCounts(t *testing.T) {
 		if reason, found := failsByID[fixAID]; found {
 			t.Errorf("FIX-A model %q produced a failure (reason=%q), want no failure\n"+
 				"  What: bare 4-digit date token was not suppressed\n"+
-				"  Why: FIX-A should extend isYYMMDateToken to reject 4-digit all-numeric tokens\n"+
-				"  How to fix: verify isYYMMDateToken returns true for \"0528\" and \"0324\"",
+				"  Why: FIX-A should extend isFourDigitDateToken to reject 4-digit all-numeric tokens\n"+
+				"  How to fix: verify isFourDigitDateToken returns true for \"0528\" and \"0324\"",
 				fixAID, reason)
 		}
 	}

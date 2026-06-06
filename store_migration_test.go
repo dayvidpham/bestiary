@@ -131,7 +131,7 @@ func createV1DB(t *testing.T, path string) {
 //   - The version is bumped to 2.
 //   - The existing row survives.
 //   - The composite primary key is enforced (same model_id + different provider → 2 rows).
-//   - The interleaved_config column exists and defaults to ''.
+//   - The interleaved_config column exists and defaults to ”.
 func TestMigration_V1toV2(t *testing.T) {
 	dir := t.TempDir()
 	dbPath := filepath.Join(dir, "test.db")
@@ -758,7 +758,7 @@ func createV3DB(t *testing.T, path string, rows []struct {
 // migrates to v4 via OpenStore, and asserts:
 //   - Schema version is 4 (currentSchemaVersion).
 //   - Both rows are preserved.
-//   - The new `version` column exists with default ''.
+//   - The new `version` column exists with default ”.
 //   - Existing canonical fields (family, variant, date) are unchanged.
 func TestMigration_V3toV4_PreservesData(t *testing.T) {
 	dir := t.TempDir()

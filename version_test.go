@@ -134,10 +134,10 @@ func TestUpstreamGitCommit_NonEmpty(t *testing.T) {
 	v := bestiary.UpstreamGitCommit
 	if v == "" {
 		t.Errorf(
-			"UpstreamGitCommit is empty;\n"+
-				"  what went wrong: const is an empty string\n"+
-				"  why: const was not set in version.go\n"+
-				"  where: bestiary.UpstreamGitCommit (version.go)\n"+
+			"UpstreamGitCommit is empty;\n" +
+				"  what went wrong: const is an empty string\n" +
+				"  why: const was not set in version.go\n" +
+				"  where: bestiary.UpstreamGitCommit (version.go)\n" +
 				"  how to fix: set UpstreamGitCommit to the short hex commit hash (e.g. \"6a41e313\")",
 		)
 		return
@@ -161,10 +161,10 @@ func TestUpstreamGitRemote_NonEmpty(t *testing.T) {
 	v := bestiary.UpstreamGitRemote
 	if v == "" {
 		t.Errorf(
-			"UpstreamGitRemote is empty;\n"+
-				"  what went wrong: const is an empty string\n"+
-				"  why: const was not set in version.go\n"+
-				"  where: bestiary.UpstreamGitRemote (version.go)\n"+
+			"UpstreamGitRemote is empty;\n" +
+				"  what went wrong: const is an empty string\n" +
+				"  why: const was not set in version.go\n" +
+				"  where: bestiary.UpstreamGitRemote (version.go)\n" +
 				"  how to fix: set UpstreamGitRemote to the git remote URL (e.g. \"git@github.com:org/repo.git\")",
 		)
 		return
