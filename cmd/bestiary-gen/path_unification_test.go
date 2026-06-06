@@ -990,14 +990,21 @@ func isVersionShapedToken(s string) bool {
 
 // diffReport is the committed categorized BEFORE→AFTER artifact.
 type diffReport struct {
-	TotalRecords     int            `json:"total_records"`
-	ChangedCount     int            `json:"changed_count"`
-	CatFixCount      int            `json:"cat_a_divergence_fix_count"`
-	CatImprove       int            `json:"cat_b_improvement_count"`
-	CatRegress       int            `json:"cat_c_unexpected_regression_count"`
-	JustifiedCount   int            `json:"justified_exception_count"`
-	DivergenceBefore int            `json:"divergence_before"`
-	DivergenceAfter  int            `json:"divergence_after"`
+	TotalRecords   int `json:"total_records"`
+	ChangedCount   int `json:"changed_count"`
+	CatFixCount    int `json:"cat_a_divergence_fix_count"`
+	CatImprove     int `json:"cat_b_improvement_count"`
+	CatRegress     int `json:"cat_c_unexpected_regression_count"`
+	JustifiedCount int `json:"justified_exception_count"`
+	// DivergenceBefore/After count cross-provider divergent IDs over the 4-TUPLE INCLUDING
+	// Modifier (Family,Variant,Version,Modifier): 'before' = frozen SLICE-9 baseline,
+	// 'after' = current live snapshot. This is a DIFFERENT, broader metric than the
+	// authoritative cross-provider gate divergenceExact (snapshot_analysis_test.go), which is
+	// the 3-TUPLE EXCLUDING Modifier on the current snapshot (=0). The explicit json keys +
+	// DivergenceMetric descriptor below exist so a reader can never conflate the two.
+	DivergenceBefore int            `json:"id_tuple4_incl_modifier_divergence_frozen_before"`
+	DivergenceAfter  int            `json:"id_tuple4_incl_modifier_divergence_current_after"`
+	DivergenceMetric string         `json:"divergence_metric"`
 	Changes          []decompChange `json:"changes"`
 }
 
@@ -1143,7 +1150,7 @@ var justifiedExceptions = map[exceptionKey]string{
 		ID:     "grok-3-mini-fast-beta",
 		Before: `(family="grok-3-mini-fast",variant="beta",version="3",modifier="")`,
 		After:  `(family="grok",variant="mini",version="3",modifier="")`,
-	}: "USER-RATIFIED non-defect (Impl-UAT bestiary-2gxu, GH#13 release-stage dimension): family corrected to grok + real tier 'mini' (+version 3); 'beta' (a grok member) cannot co-occupy the single Variant slot with 'mini' (variant-multiplicity — the variant analogue of S10's Modifier-LIST, deferred). The same trailing-'beta' member-guard also suppresses OTHER co-tokens: on xai/grok-4.20-non-reasoning-beta it suppresses 'non-reasoning' (stays Modifier=nil — nil both BEFORE and AFTER rc3, no regression, no gate trip), the same release-stage multiplicity tracked under GH#13.",
+	}: "USER-RATIFIED non-defect (Impl-UAT bestiary-2gxu, GH#13 release-stage dimension): family corrected to grok + real tier 'mini' (+version 3); the release-stage token 'beta' AND the speed-tier token 'fast' are BOTH dropped — neither can co-occupy the single Variant slot with 'mini' (variant-multiplicity, the variant analogue of S10's Modifier-LIST, deferred). MECHANISM (corrected) for the related xai/grok-4.20-non-reasoning-beta, which stays Modifier=nil (nil both BEFORE and AFTER rc3 — no regression, no gate trip): the trailing 'beta' is the TAIL-ORDER MODIFIER-SCAN BOUNDARY — the scan starts at the tail and halts at 'beta' (a non-collected variant/boundary token) before reaching the inner 'non-reasoning', so the negation branch never executes. Contrast (Axis-B verified): grok-4.20-non-reasoning [tail='reasoning' preceded by 'non']→[non-reasoning]; grok-4-20-beta-0309-non-reasoning ['beta' MID-string, tail still 'reasoning']→[non-reasoning]; xai/grok-4.20-non-reasoning-beta [tail='beta']→nil. Same release-stage multiplicity tracked under GH#13.",
 	// rc3 RESOLVED & de-ledgered:
 	//  • nvidia/llama-3.3-nemotron-super-49b-v1.5 — folded to nemotron via idFamilyOverrides
 	//    (cross-provider divergence 1→0).
@@ -1192,6 +1199,7 @@ func TestPathUnification_ZeroUnexpectedRegression(t *testing.T) {
 		JustifiedCount:   justified,
 		DivergenceBefore: divBefore,
 		DivergenceAfter:  divAfter,
+		DivergenceMetric: "4-tuple INCL Modifier (Family,Variant,Version,Modifier); before=frozen SLICE-9 baseline, after=current snapshot. DISTINCT from the authoritative cross-provider divergenceExact gate (3-tuple, EXCL Modifier, current snapshot, =0).",
 		Changes:          changes,
 	}
 

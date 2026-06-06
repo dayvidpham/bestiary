@@ -4275,10 +4275,11 @@ func TestWhisperTrailingVersionRecovery_FamilyGated(t *testing.T) {
 // negation-aware modifier emission: an ID containing the literal token "non-<mod>" must
 // emit "non-<mod>" (e.g. "non-reasoning"), NEVER the bare positive "<mod>". It pins the
 // axis-B mutation-proof on both sides: (a) a "Cannon"/substring-"non" id NEVER gains a
-// non-* modifier (the gate is a separate hyphen-token "non", not a substring); (b) the
-// grok non-reasoning ids invert correctly; and (c) the out-of-scope grok "fast" handling
-// is left untouched (the positive reasoning sibling keeps [reasoning, fast]; the
-// non-reasoning id does NOT gain "fast").
+// non-* modifier (the gate is a separate hyphen-token "non", not a substring); (a') the
+// EXACT-vs-SUBSTRING pin "grok-noncode-reasoning" stays POSITIVE [reasoning] (a
+// strings.Contains gate-mutation would RED here); (b) the grok non-reasoning ids invert
+// correctly; and (c) the out-of-scope grok "fast" handling is left untouched (the positive
+// reasoning sibling keeps [reasoning, fast]; the non-reasoning id does NOT gain "fast").
 func TestGrokNegationAwareModifier(t *testing.T) {
 	t.Parallel()
 
@@ -4299,6 +4300,12 @@ func TestGrokNegationAwareModifier(t *testing.T) {
 		// (a) substring "non" inside a single token ("Cannon") must NEVER negate.
 		{"GalrionSoftworks/MN-LooseCannon-12B-v1", nil},
 		{"VongolaChouko/Starcannon-Unleashed-12B-v1.0", nil},
+		// (a') EXACT-vs-SUBSTRING PIN (rc3-wave MINOR M4): the negation gate is the LITERAL
+		// preceding token toks[i-1]=="non", NOT strings.Contains(prev,"non"). Here the modifier
+		// "reasoning" is preceded by "noncode" — which CONTAINS "non" as a substring but is not
+		// the literal token "non" — so it must stay the POSITIVE [reasoning]. A future mutation
+		// of the gate to strings.Contains would wrongly emit [non-reasoning] and turn this RED.
+		{"grok-noncode-reasoning", []string{"reasoning"}},
 	}
 	for _, c := range cases {
 		t.Run(string(c.id), func(t *testing.T) {

@@ -5,8 +5,9 @@
   "cat_b_improvement_count": 884,
   "cat_c_unexpected_regression_count": 0,
   "justified_exception_count": 3,
-  "divergence_before": 81,
-  "divergence_after": 13,
+  "id_tuple4_incl_modifier_divergence_frozen_before": 81,
+  "id_tuple4_incl_modifier_divergence_current_after": 13,
+  "divergence_metric": "4-tuple INCL Modifier (Family,Variant,Version,Modifier); before=frozen SLICE-9 baseline, after=current snapshot. DISTINCT from the authoritative cross-provider divergenceExact gate (3-tuple, EXCL Modifier, current snapshot, =0).",
   "changes": [
     {
       "provider": "evroc",
@@ -10896,7 +10897,7 @@
       "before": "(family=\"grok-3-mini-fast\",variant=\"beta\",version=\"3\",modifier=\"\")",
       "after": "(family=\"grok\",variant=\"mini\",version=\"3\",modifier=\"\")",
       "category": "justified-exception",
-      "reason": "JUSTIFIED: USER-RATIFIED non-defect (Impl-UAT bestiary-2gxu, GH#13 release-stage dimension): family corrected to grok + real tier 'mini' (+version 3); 'beta' (a grok member) cannot co-occupy the single Variant slot with 'mini' (variant-multiplicity — the variant analogue of S10's Modifier-LIST, deferred). The same trailing-'beta' member-guard also suppresses OTHER co-tokens: on xai/grok-4.20-non-reasoning-beta it suppresses 'non-reasoning' (stays Modifier=nil — nil both BEFORE and AFTER rc3, no regression, no gate trip), the same release-stage multiplicity tracked under GH#13."
+      "reason": "JUSTIFIED: USER-RATIFIED non-defect (Impl-UAT bestiary-2gxu, GH#13 release-stage dimension): family corrected to grok + real tier 'mini' (+version 3); the release-stage token 'beta' AND the speed-tier token 'fast' are BOTH dropped — neither can co-occupy the single Variant slot with 'mini' (variant-multiplicity, the variant analogue of S10's Modifier-LIST, deferred). MECHANISM (corrected) for the related xai/grok-4.20-non-reasoning-beta, which stays Modifier=nil (nil both BEFORE and AFTER rc3 — no regression, no gate trip): the trailing 'beta' is the TAIL-ORDER MODIFIER-SCAN BOUNDARY — the scan starts at the tail and halts at 'beta' (a non-collected variant/boundary token) before reaching the inner 'non-reasoning', so the negation branch never executes. Contrast (Axis-B verified): grok-4.20-non-reasoning [tail='reasoning' preceded by 'non']→[non-reasoning]; grok-4-20-beta-0309-non-reasoning ['beta' MID-string, tail still 'reasoning']→[non-reasoning]; xai/grok-4.20-non-reasoning-beta [tail='beta']→nil. Same release-stage multiplicity tracked under GH#13."
     },
     {
       "provider": "nvidia",
