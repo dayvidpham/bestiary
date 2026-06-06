@@ -86,11 +86,11 @@ const (
 	Model__302AI__Gemini__3__Pro__Image__3__Preview                                          ModelID = "gemini-3-pro-image-preview"
 	Model__302AI__Grok__4_1                                                                  ModelID = "grok-4.1"
 	Model__302AI__Grok__4_1__ReasoningFast                                                   ModelID = "grok-4-1-fast-reasoning"
-	Model__302AI__Grok__4__1__Fast__Non__4_1__Reasoning                                      ModelID = "grok-4-1-fast-non-reasoning"
+	Model__302AI__Grok__4__1__Fast__Non__Reasoning__4_1__Non_Reasoning                       ModelID = "grok-4-1-fast-non-reasoning"
 	Model__302AI__Grok__4__20__Beta__0309__4_20__Reasoning                                   ModelID = "grok-4.20-beta-0309-reasoning"
-	Model__302AI__Grok__4__20__Beta__0309__Non__4_20__Reasoning                              ModelID = "grok-4.20-beta-0309-non-reasoning"
+	Model__302AI__Grok__4__20__Beta__0309__Non__Reasoning__4_20__Non_Reasoning               ModelID = "grok-4.20-beta-0309-non-reasoning"
 	Model__302AI__Grok__4__20__Multi__Agent__Beta__0309__4_20                                ModelID = "grok-4.20-multi-agent-beta-0309"
-	Model__302AI__Grok__4__Fast__Non__4__Reasoning                                           ModelID = "grok-4-fast-non-reasoning"
+	Model__302AI__Grok__4__Fast__Non__Reasoning__4__Non_Reasoning                            ModelID = "grok-4-fast-non-reasoning"
 	Model__302AI__Grok__4__ReasoningFast                                                     ModelID = "grok-4-fast-reasoning"
 	Model__302AI__Kimi__K2__0905__2__Preview                                                 ModelID = "kimi-k2-0905-preview"
 	Model__302AI__Kimi__K2__2__Thinking                                                      ModelID = "kimi-k2-thinking"
@@ -204,8 +204,8 @@ const (
 	Model__Abacus__Gemini__3__1__Pro__3_1__Preview                                           ModelID = "gemini-3.1-pro-preview"
 	Model__Abacus__Gemini__3__Flash__3__Preview                                              ModelID = "gemini-3-flash-preview"
 	Model__Abacus__Grok__4__0709__4                                                          ModelID = "grok-4-0709"
-	Model__Abacus__Grok__4__1__Fast__Non__4_1__Reasoning                                     ModelID = "grok-4-1-fast-non-reasoning"
-	Model__Abacus__Grok__4__Fast__Non__4__Reasoning                                          ModelID = "grok-4-fast-non-reasoning"
+	Model__Abacus__Grok__4__1__Fast__Non__Reasoning__4_1__Non_Reasoning                      ModelID = "grok-4-1-fast-non-reasoning"
+	Model__Abacus__Grok__4__Fast__Non__Reasoning__4__Non_Reasoning                           ModelID = "grok-4-fast-non-reasoning"
 	Model__Abacus__Grok__Code__Fast__1                                                       ModelID = "grok-code-fast-1"
 	Model__Abacus__Kimi__K2__2__TurboPreview                                                 ModelID = "kimi-k2-turbo-preview"
 	Model__Abacus__Kimi__K2__5__2_5                                                          ModelID = "kimi-k2.5"
@@ -670,8 +670,8 @@ const (
 	Model__Azure__GPT__5__Pro__5                                                             ModelID = "gpt-5-pro"
 	Model__Azure__Grok__4_1__ReasoningFast                                                   ModelID = "grok-4-1-fast-reasoning"
 	Model__Azure__Grok__4_20__Reasoning                                                      ModelID = "grok-4-20-reasoning"
-	Model__Azure__Grok__4__1__Fast__Non__4_1__Reasoning                                      ModelID = "grok-4-1-fast-non-reasoning"
-	Model__Azure__Grok__4__20__Non__4_20__Reasoning                                          ModelID = "grok-4-20-non-reasoning"
+	Model__Azure__Grok__4__1__Fast__Non__Reasoning__4_1__Non_Reasoning                       ModelID = "grok-4-1-fast-non-reasoning"
+	Model__Azure__Grok__4__20__Non__Reasoning__4_20__Non_Reasoning                           ModelID = "grok-4-20-non-reasoning"
 	Model__Azure__Grok__4__ReasoningFast                                                     ModelID = "grok-4-fast-reasoning"
 	Model__Azure__Kimi__K2__2__Thinking                                                      ModelID = "kimi-k2-thinking"
 	Model__Azure__Kimi__K2__5__2_5                                                           ModelID = "kimi-k2.5"
@@ -1203,7 +1203,7 @@ const (
 	Model__FrogBot__Gemini__3__Flash__3__Preview                                             ModelID = "gemini-3-flash-preview"
 	Model__FrogBot__Grok__4_1__ReasoningFast                                                 ModelID = "grok-4-1-fast-reasoning"
 	Model__FrogBot__Grok__4_3                                                                ModelID = "grok-4-3"
-	Model__FrogBot__Grok__4__1__Fast__Non__4_1__Reasoning                                    ModelID = "grok-4-1-fast-non-reasoning"
+	Model__FrogBot__Grok__4__1__Fast__Non__Reasoning__4_1__Non_Reasoning                     ModelID = "grok-4-1-fast-non-reasoning"
 	Model__FrogBot__Grok__Code__Fast__1                                                      ModelID = "grok-code-fast-1"
 	Model__FrogBot__Kimi__K2__5__2_5                                                         ModelID = "kimi-k2.5"
 	Model__FrogBot__Kimi__K2__6__2_6                                                         ModelID = "kimi-k2-6"
@@ -1471,8 +1471,8 @@ const (
 	Model__Helicone__Grok__3__Mini__3                                                        ModelID = "grok-3-mini"
 	Model__Helicone__Grok__4                                                                 ModelID = "grok-4"
 	Model__Helicone__Grok__4_1__ReasoningFast                                                ModelID = "grok-4-1-fast-reasoning"
-	Model__Helicone__Grok__4__1__Fast__Non__4_1__Reasoning                                   ModelID = "grok-4-1-fast-non-reasoning"
-	Model__Helicone__Grok__4__Fast__Non__4__Reasoning                                        ModelID = "grok-4-fast-non-reasoning"
+	Model__Helicone__Grok__4__1__Fast__Non__Reasoning__4_1__Non_Reasoning                    ModelID = "grok-4-1-fast-non-reasoning"
+	Model__Helicone__Grok__4__Fast__Non__Reasoning__4__Non_Reasoning                         ModelID = "grok-4-fast-non-reasoning"
 	Model__Helicone__Grok__4__ReasoningFast                                                  ModelID = "grok-4-fast-reasoning"
 	Model__Helicone__Grok__Code__Fast__1                                                     ModelID = "grok-code-fast-1"
 	Model__Helicone__Hermes__2__Pro__Llama__3__8b__2                                         ModelID = "hermes-2-pro-llama-3-8b"
@@ -1609,8 +1609,8 @@ const (
 	Model__Jiekou__Gemini__3__Pro__3__Preview                                                ModelID = "gemini-3-pro-preview"
 	Model__Jiekou__Grok__4_1__ReasoningFast                                                  ModelID = "grok-4-1-fast-reasoning"
 	Model__Jiekou__Grok__4__0709__4                                                          ModelID = "grok-4-0709"
-	Model__Jiekou__Grok__4__1__Fast__Non__4_1__Reasoning                                     ModelID = "grok-4-1-fast-non-reasoning"
-	Model__Jiekou__Grok__4__Fast__Non__4__Reasoning                                          ModelID = "grok-4-fast-non-reasoning"
+	Model__Jiekou__Grok__4__1__Fast__Non__Reasoning__4_1__Non_Reasoning                      ModelID = "grok-4-1-fast-non-reasoning"
+	Model__Jiekou__Grok__4__Fast__Non__Reasoning__4__Non_Reasoning                           ModelID = "grok-4-fast-non-reasoning"
 	Model__Jiekou__Grok__4__ReasoningFast                                                    ModelID = "grok-4-fast-reasoning"
 	Model__Jiekou__Grok__Code__Fast__1                                                       ModelID = "grok-code-fast-1"
 	Model__Jiekou__Kimi__K2__0905__2                                                         ModelID = "moonshotai/kimi-k2-0905"
@@ -2088,8 +2088,8 @@ const (
 	Model__LlmGateway__Grok__4_3                                                             ModelID = "grok-4-3"
 	Model__LlmGateway__Grok__4__0709__4                                                      ModelID = "grok-4-0709"
 	Model__LlmGateway__Grok__4__20__Beta__0309__4_20__Reasoning                              ModelID = "grok-4-20-beta-0309-reasoning"
-	Model__LlmGateway__Grok__4__20__Beta__0309__Non__4_20__Reasoning                         ModelID = "grok-4-20-beta-0309-non-reasoning"
-	Model__LlmGateway__Grok__4__20__Non__4_20__Reasoning                                     ModelID = "grok-4-20-non-reasoning"
+	Model__LlmGateway__Grok__4__20__Beta__0309__Non__Reasoning__4_20__Non_Reasoning          ModelID = "grok-4-20-beta-0309-non-reasoning"
+	Model__LlmGateway__Grok__4__20__Non__Reasoning__4_20__Non_Reasoning                      ModelID = "grok-4-20-non-reasoning"
 	Model__LlmGateway__Grok__4__ReasoningFast                                                ModelID = "grok-4-fast-reasoning"
 	Model__LlmGateway__Hermes__2__Pro__Llama__3__8b__2                                       ModelID = "hermes-2-pro-llama-3-8b"
 	Model__LlmGateway__Kimi__K2__2                                                           ModelID = "kimi-k2"
@@ -3809,7 +3809,7 @@ const (
 	Model__PerplexityAgent__Gemini__2__5__Pro__2_5                                           ModelID = "google/gemini-2.5-pro"
 	Model__PerplexityAgent__Gemini__3__1__Pro__3_1__Preview                                  ModelID = "google/gemini-3.1-pro-preview"
 	Model__PerplexityAgent__Gemini__3__Flash__3__Preview                                     ModelID = "google/gemini-3-flash-preview"
-	Model__PerplexityAgent__Grok__4__1__Fast__Non__4_1__Reasoning                            ModelID = "xai/grok-4-1-fast-non-reasoning"
+	Model__PerplexityAgent__Grok__4__1__Fast__Non__Reasoning__4_1__Non_Reasoning             ModelID = "xai/grok-4-1-fast-non-reasoning"
 	Model__PerplexityAgent__Nemotron__3__Super__120b__A12b__3                                ModelID = "nvidia/nemotron-3-super-120b-a12b"
 	Model__PerplexityAgent__Sonar                                                            ModelID = "perplexity/sonar"
 	Model__Perplexity__Sonar                                                                 ModelID = "sonar"
@@ -3905,9 +3905,9 @@ const (
 	Model__Poe__Grok__3__Mini__3                                                             ModelID = "xai/grok-3-mini"
 	Model__Poe__Grok__4                                                                      ModelID = "xai/grok-4"
 	Model__Poe__Grok__4_1__ReasoningFast                                                     ModelID = "xai/grok-4.1-fast-reasoning"
-	Model__Poe__Grok__4__1__Fast__Non__4_1__Reasoning                                        ModelID = "xai/grok-4.1-fast-non-reasoning"
+	Model__Poe__Grok__4__1__Fast__Non__Reasoning__4_1__Non_Reasoning                         ModelID = "xai/grok-4.1-fast-non-reasoning"
 	Model__Poe__Grok__4__20__Multi__Agent__4_20                                              ModelID = "xai/grok-4.20-multi-agent"
-	Model__Poe__Grok__4__Fast__Non__4__Reasoning                                             ModelID = "xai/grok-4-fast-non-reasoning"
+	Model__Poe__Grok__4__Fast__Non__Reasoning__4__Non_Reasoning                              ModelID = "xai/grok-4-fast-non-reasoning"
 	Model__Poe__Grok__4__ReasoningFast                                                       ModelID = "xai/grok-4-fast-reasoning"
 	Model__Poe__Grok__Code__Fast__1                                                          ModelID = "xai/grok-code-fast-1"
 	Model__Poe__Ideogram                                                                     ModelID = "ideogramai/ideogram"
@@ -4021,9 +4021,9 @@ const (
 	Model__QiniuAI__Gemini__3__0__Pro__Image__3_0__Preview                                   ModelID = "gemini-3.0-pro-image-preview"
 	Model__QiniuAI__Grok__4_1__Fast                                                          ModelID = "x-ai/grok-4.1-fast"
 	Model__QiniuAI__Grok__4_1__ReasoningFast                                                 ModelID = "x-ai/grok-4.1-fast-reasoning"
-	Model__QiniuAI__Grok__4__1__Fast__Non__4_1__Reasoning                                    ModelID = "x-ai/grok-4.1-fast-non-reasoning"
+	Model__QiniuAI__Grok__4__1__Fast__Non__Reasoning__4_1__Non_Reasoning                     ModelID = "x-ai/grok-4.1-fast-non-reasoning"
 	Model__QiniuAI__Grok__4__Fast                                                            ModelID = "x-ai/grok-4-fast"
-	Model__QiniuAI__Grok__4__Fast__Non__4__Reasoning                                         ModelID = "x-ai/grok-4-fast-non-reasoning"
+	Model__QiniuAI__Grok__4__Fast__Non__Reasoning__4__Non_Reasoning                          ModelID = "x-ai/grok-4-fast-non-reasoning"
 	Model__QiniuAI__Grok__4__ReasoningFast                                                   ModelID = "x-ai/grok-4-fast-reasoning"
 	Model__QiniuAI__Grok__Code__Fast__1                                                      ModelID = "x-ai/grok-code-fast-1"
 	Model__QiniuAI__Kimi__K2__0905__2                                                        ModelID = "moonshotai/kimi-k2-0905"
@@ -4632,10 +4632,10 @@ const (
 	Model__Vercel__Grok__4_1__ReasoningFast                                                  ModelID = "xai/grok-4.1-fast-reasoning"
 	Model__Vercel__Grok__4_20__Reasoning                                                     ModelID = "xai/grok-4.20-reasoning"
 	Model__Vercel__Grok__4_3                                                                 ModelID = "xai/grok-4.3"
-	Model__Vercel__Grok__4__1__Fast__Non__4_1__Reasoning                                     ModelID = "xai/grok-4.1-fast-non-reasoning"
+	Model__Vercel__Grok__4__1__Fast__Non__Reasoning__4_1__Non_Reasoning                      ModelID = "xai/grok-4.1-fast-non-reasoning"
 	Model__Vercel__Grok__4__20__Multi__Agent__4_20                                           ModelID = "xai/grok-4.20-multi-agent"
 	Model__Vercel__Grok__4__20__Multi__Agent__Beta__4_20                                     ModelID = "xai/grok-4.20-multi-agent-beta"
-	Model__Vercel__Grok__4__20__Non__4_20__Reasoning                                         ModelID = "xai/grok-4.20-non-reasoning"
+	Model__Vercel__Grok__4__20__Non__Reasoning__4_20__Non_Reasoning                          ModelID = "xai/grok-4.20-non-reasoning"
 	Model__Vercel__Grok__4__20__Non__Reasoning__Beta__4_20                                   ModelID = "xai/grok-4.20-non-reasoning-beta"
 	Model__Vercel__Grok__4__20__Reasoning__Beta__4_20                                        ModelID = "xai/grok-4.20-reasoning-beta"
 	Model__Vercel__Grok__4__ReasoningFast                                                    ModelID = "xai/grok-4-fast-reasoning"
@@ -4921,8 +4921,8 @@ const (
 	Model__ZenMux__Grok__4                                                                   ModelID = "x-ai/grok-4"
 	Model__ZenMux__Grok__4_1__Fast                                                           ModelID = "x-ai/grok-4.1-fast"
 	Model__ZenMux__Grok__4_2__Fast                                                           ModelID = "x-ai/grok-4.2-fast"
-	Model__ZenMux__Grok__4__1__Fast__Non__4_1__Reasoning                                     ModelID = "x-ai/grok-4.1-fast-non-reasoning"
-	Model__ZenMux__Grok__4__2__Fast__Non__4_2__Reasoning                                     ModelID = "x-ai/grok-4.2-fast-non-reasoning"
+	Model__ZenMux__Grok__4__1__Fast__Non__Reasoning__4_1__Non_Reasoning                      ModelID = "x-ai/grok-4.1-fast-non-reasoning"
+	Model__ZenMux__Grok__4__2__Fast__Non__Reasoning__4_2__Non_Reasoning                      ModelID = "x-ai/grok-4.2-fast-non-reasoning"
 	Model__ZenMux__Grok__4__Fast                                                             ModelID = "x-ai/grok-4-fast"
 	Model__ZenMux__Grok__Code__Fast__1                                                       ModelID = "x-ai/grok-code-fast-1"
 	Model__ZenMux__Hy3__3__Preview                                                           ModelID = "tencent/hy3-preview"
@@ -4986,7 +4986,7 @@ const (
 	Model__iFlowCN__Qwen3__Vl__Plus__3                                                       ModelID = "qwen3-vl-plus"
 	Model__xAI__Grok__4_3                                                                    ModelID = "grok-4.3"
 	Model__xAI__Grok__4__20__0309__4_20__Reasoning                                           ModelID = "grok-4.20-0309-reasoning"
-	Model__xAI__Grok__4__20__0309__Non__4_20__Reasoning                                      ModelID = "grok-4.20-0309-non-reasoning"
+	Model__xAI__Grok__4__20__0309__Non__Reasoning__4_20__Non_Reasoning                       ModelID = "grok-4.20-0309-non-reasoning"
 	Model__xAI__Grok__4__20__Multi__Agent__0309__4_20                                        ModelID = "grok-4.20-multi-agent-0309"
 	Model__xAI__Grok__Build__0_1                                                             ModelID = "grok-build-0.1"
 	Model__xAI__Grok__Imagine__Image                                                         ModelID = "grok-imagine-image"
@@ -5069,11 +5069,11 @@ var allModelConstants = [...]ModelID{
 	Model__302AI__Gemini__3__Pro__Image__3__Preview,
 	Model__302AI__Grok__4_1,
 	Model__302AI__Grok__4_1__ReasoningFast,
-	Model__302AI__Grok__4__1__Fast__Non__4_1__Reasoning,
+	Model__302AI__Grok__4__1__Fast__Non__Reasoning__4_1__Non_Reasoning,
 	Model__302AI__Grok__4__20__Beta__0309__4_20__Reasoning,
-	Model__302AI__Grok__4__20__Beta__0309__Non__4_20__Reasoning,
+	Model__302AI__Grok__4__20__Beta__0309__Non__Reasoning__4_20__Non_Reasoning,
 	Model__302AI__Grok__4__20__Multi__Agent__Beta__0309__4_20,
-	Model__302AI__Grok__4__Fast__Non__4__Reasoning,
+	Model__302AI__Grok__4__Fast__Non__Reasoning__4__Non_Reasoning,
 	Model__302AI__Grok__4__ReasoningFast,
 	Model__302AI__Kimi__K2__0905__2__Preview,
 	Model__302AI__Kimi__K2__2__Thinking,
@@ -5187,8 +5187,8 @@ var allModelConstants = [...]ModelID{
 	Model__Abacus__Gemini__3__1__Pro__3_1__Preview,
 	Model__Abacus__Gemini__3__Flash__3__Preview,
 	Model__Abacus__Grok__4__0709__4,
-	Model__Abacus__Grok__4__1__Fast__Non__4_1__Reasoning,
-	Model__Abacus__Grok__4__Fast__Non__4__Reasoning,
+	Model__Abacus__Grok__4__1__Fast__Non__Reasoning__4_1__Non_Reasoning,
+	Model__Abacus__Grok__4__Fast__Non__Reasoning__4__Non_Reasoning,
 	Model__Abacus__Grok__Code__Fast__1,
 	Model__Abacus__Kimi__K2__2__TurboPreview,
 	Model__Abacus__Kimi__K2__5__2_5,
@@ -5653,8 +5653,8 @@ var allModelConstants = [...]ModelID{
 	Model__Azure__GPT__5__Pro__5,
 	Model__Azure__Grok__4_1__ReasoningFast,
 	Model__Azure__Grok__4_20__Reasoning,
-	Model__Azure__Grok__4__1__Fast__Non__4_1__Reasoning,
-	Model__Azure__Grok__4__20__Non__4_20__Reasoning,
+	Model__Azure__Grok__4__1__Fast__Non__Reasoning__4_1__Non_Reasoning,
+	Model__Azure__Grok__4__20__Non__Reasoning__4_20__Non_Reasoning,
 	Model__Azure__Grok__4__ReasoningFast,
 	Model__Azure__Kimi__K2__2__Thinking,
 	Model__Azure__Kimi__K2__5__2_5,
@@ -6186,7 +6186,7 @@ var allModelConstants = [...]ModelID{
 	Model__FrogBot__Gemini__3__Flash__3__Preview,
 	Model__FrogBot__Grok__4_1__ReasoningFast,
 	Model__FrogBot__Grok__4_3,
-	Model__FrogBot__Grok__4__1__Fast__Non__4_1__Reasoning,
+	Model__FrogBot__Grok__4__1__Fast__Non__Reasoning__4_1__Non_Reasoning,
 	Model__FrogBot__Grok__Code__Fast__1,
 	Model__FrogBot__Kimi__K2__5__2_5,
 	Model__FrogBot__Kimi__K2__6__2_6,
@@ -6454,8 +6454,8 @@ var allModelConstants = [...]ModelID{
 	Model__Helicone__Grok__3__Mini__3,
 	Model__Helicone__Grok__4,
 	Model__Helicone__Grok__4_1__ReasoningFast,
-	Model__Helicone__Grok__4__1__Fast__Non__4_1__Reasoning,
-	Model__Helicone__Grok__4__Fast__Non__4__Reasoning,
+	Model__Helicone__Grok__4__1__Fast__Non__Reasoning__4_1__Non_Reasoning,
+	Model__Helicone__Grok__4__Fast__Non__Reasoning__4__Non_Reasoning,
 	Model__Helicone__Grok__4__ReasoningFast,
 	Model__Helicone__Grok__Code__Fast__1,
 	Model__Helicone__Hermes__2__Pro__Llama__3__8b__2,
@@ -6592,8 +6592,8 @@ var allModelConstants = [...]ModelID{
 	Model__Jiekou__Gemini__3__Pro__3__Preview,
 	Model__Jiekou__Grok__4_1__ReasoningFast,
 	Model__Jiekou__Grok__4__0709__4,
-	Model__Jiekou__Grok__4__1__Fast__Non__4_1__Reasoning,
-	Model__Jiekou__Grok__4__Fast__Non__4__Reasoning,
+	Model__Jiekou__Grok__4__1__Fast__Non__Reasoning__4_1__Non_Reasoning,
+	Model__Jiekou__Grok__4__Fast__Non__Reasoning__4__Non_Reasoning,
 	Model__Jiekou__Grok__4__ReasoningFast,
 	Model__Jiekou__Grok__Code__Fast__1,
 	Model__Jiekou__Kimi__K2__0905__2,
@@ -7071,8 +7071,8 @@ var allModelConstants = [...]ModelID{
 	Model__LlmGateway__Grok__4_3,
 	Model__LlmGateway__Grok__4__0709__4,
 	Model__LlmGateway__Grok__4__20__Beta__0309__4_20__Reasoning,
-	Model__LlmGateway__Grok__4__20__Beta__0309__Non__4_20__Reasoning,
-	Model__LlmGateway__Grok__4__20__Non__4_20__Reasoning,
+	Model__LlmGateway__Grok__4__20__Beta__0309__Non__Reasoning__4_20__Non_Reasoning,
+	Model__LlmGateway__Grok__4__20__Non__Reasoning__4_20__Non_Reasoning,
 	Model__LlmGateway__Grok__4__ReasoningFast,
 	Model__LlmGateway__Hermes__2__Pro__Llama__3__8b__2,
 	Model__LlmGateway__Kimi__K2__2,
@@ -8792,7 +8792,7 @@ var allModelConstants = [...]ModelID{
 	Model__PerplexityAgent__Gemini__2__5__Pro__2_5,
 	Model__PerplexityAgent__Gemini__3__1__Pro__3_1__Preview,
 	Model__PerplexityAgent__Gemini__3__Flash__3__Preview,
-	Model__PerplexityAgent__Grok__4__1__Fast__Non__4_1__Reasoning,
+	Model__PerplexityAgent__Grok__4__1__Fast__Non__Reasoning__4_1__Non_Reasoning,
 	Model__PerplexityAgent__Nemotron__3__Super__120b__A12b__3,
 	Model__PerplexityAgent__Sonar,
 	Model__Perplexity__Sonar,
@@ -8888,9 +8888,9 @@ var allModelConstants = [...]ModelID{
 	Model__Poe__Grok__3__Mini__3,
 	Model__Poe__Grok__4,
 	Model__Poe__Grok__4_1__ReasoningFast,
-	Model__Poe__Grok__4__1__Fast__Non__4_1__Reasoning,
+	Model__Poe__Grok__4__1__Fast__Non__Reasoning__4_1__Non_Reasoning,
 	Model__Poe__Grok__4__20__Multi__Agent__4_20,
-	Model__Poe__Grok__4__Fast__Non__4__Reasoning,
+	Model__Poe__Grok__4__Fast__Non__Reasoning__4__Non_Reasoning,
 	Model__Poe__Grok__4__ReasoningFast,
 	Model__Poe__Grok__Code__Fast__1,
 	Model__Poe__Ideogram,
@@ -9004,9 +9004,9 @@ var allModelConstants = [...]ModelID{
 	Model__QiniuAI__Gemini__3__0__Pro__Image__3_0__Preview,
 	Model__QiniuAI__Grok__4_1__Fast,
 	Model__QiniuAI__Grok__4_1__ReasoningFast,
-	Model__QiniuAI__Grok__4__1__Fast__Non__4_1__Reasoning,
+	Model__QiniuAI__Grok__4__1__Fast__Non__Reasoning__4_1__Non_Reasoning,
 	Model__QiniuAI__Grok__4__Fast,
-	Model__QiniuAI__Grok__4__Fast__Non__4__Reasoning,
+	Model__QiniuAI__Grok__4__Fast__Non__Reasoning__4__Non_Reasoning,
 	Model__QiniuAI__Grok__4__ReasoningFast,
 	Model__QiniuAI__Grok__Code__Fast__1,
 	Model__QiniuAI__Kimi__K2__0905__2,
@@ -9615,10 +9615,10 @@ var allModelConstants = [...]ModelID{
 	Model__Vercel__Grok__4_1__ReasoningFast,
 	Model__Vercel__Grok__4_20__Reasoning,
 	Model__Vercel__Grok__4_3,
-	Model__Vercel__Grok__4__1__Fast__Non__4_1__Reasoning,
+	Model__Vercel__Grok__4__1__Fast__Non__Reasoning__4_1__Non_Reasoning,
 	Model__Vercel__Grok__4__20__Multi__Agent__4_20,
 	Model__Vercel__Grok__4__20__Multi__Agent__Beta__4_20,
-	Model__Vercel__Grok__4__20__Non__4_20__Reasoning,
+	Model__Vercel__Grok__4__20__Non__Reasoning__4_20__Non_Reasoning,
 	Model__Vercel__Grok__4__20__Non__Reasoning__Beta__4_20,
 	Model__Vercel__Grok__4__20__Reasoning__Beta__4_20,
 	Model__Vercel__Grok__4__ReasoningFast,
@@ -9904,8 +9904,8 @@ var allModelConstants = [...]ModelID{
 	Model__ZenMux__Grok__4,
 	Model__ZenMux__Grok__4_1__Fast,
 	Model__ZenMux__Grok__4_2__Fast,
-	Model__ZenMux__Grok__4__1__Fast__Non__4_1__Reasoning,
-	Model__ZenMux__Grok__4__2__Fast__Non__4_2__Reasoning,
+	Model__ZenMux__Grok__4__1__Fast__Non__Reasoning__4_1__Non_Reasoning,
+	Model__ZenMux__Grok__4__2__Fast__Non__Reasoning__4_2__Non_Reasoning,
 	Model__ZenMux__Grok__4__Fast,
 	Model__ZenMux__Grok__Code__Fast__1,
 	Model__ZenMux__Hy3__3__Preview,
@@ -9969,7 +9969,7 @@ var allModelConstants = [...]ModelID{
 	Model__iFlowCN__Qwen3__Vl__Plus__3,
 	Model__xAI__Grok__4_3,
 	Model__xAI__Grok__4__20__0309__4_20__Reasoning,
-	Model__xAI__Grok__4__20__0309__Non__4_20__Reasoning,
+	Model__xAI__Grok__4__20__0309__Non__Reasoning__4_20__Non_Reasoning,
 	Model__xAI__Grok__4__20__Multi__Agent__0309__4_20,
 	Model__xAI__Grok__Build__0_1,
 	Model__xAI__Grok__Imagine__Image,

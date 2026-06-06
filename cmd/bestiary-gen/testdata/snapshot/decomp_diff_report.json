@@ -5584,7 +5584,7 @@
       "id": "grok-4-1-fast-non-reasoning",
       "raw_family": "",
       "before": "(family=\"grok\",variant=\"\",version=\"4.1\",modifier=\"\")",
-      "after": "(family=\"grok\",variant=\"\",version=\"4.1\",modifier=\"reasoning\")",
+      "after": "(family=\"grok\",variant=\"\",version=\"4.1\",modifier=\"non-reasoning\")",
       "category": "b:improvement",
       "reason": "strict enrichment — only previously-empty field(s) populated"
     },
@@ -5593,7 +5593,7 @@
       "id": "grok-4-1-fast-non-reasoning",
       "raw_family": "grok",
       "before": "(family=\"grok\",variant=\"\",version=\"4.1\",modifier=\"\")",
-      "after": "(family=\"grok\",variant=\"\",version=\"4.1\",modifier=\"reasoning\")",
+      "after": "(family=\"grok\",variant=\"\",version=\"4.1\",modifier=\"non-reasoning\")",
       "category": "b:improvement",
       "reason": "strict enrichment — only previously-empty field(s) populated"
     },
@@ -5602,7 +5602,7 @@
       "id": "grok-4-1-fast-non-reasoning",
       "raw_family": "grok",
       "before": "(family=\"grok\",variant=\"\",version=\"4.1\",modifier=\"\")",
-      "after": "(family=\"grok\",variant=\"\",version=\"4.1\",modifier=\"reasoning\")",
+      "after": "(family=\"grok\",variant=\"\",version=\"4.1\",modifier=\"non-reasoning\")",
       "category": "b:improvement",
       "reason": "strict enrichment — only previously-empty field(s) populated"
     },
@@ -5611,7 +5611,7 @@
       "id": "grok-4-1-fast-non-reasoning",
       "raw_family": "grok",
       "before": "(family=\"grok\",variant=\"\",version=\"4.1\",modifier=\"\")",
-      "after": "(family=\"grok\",variant=\"\",version=\"4.1\",modifier=\"reasoning\")",
+      "after": "(family=\"grok\",variant=\"\",version=\"4.1\",modifier=\"non-reasoning\")",
       "category": "b:improvement",
       "reason": "strict enrichment — only previously-empty field(s) populated"
     },
@@ -5620,7 +5620,7 @@
       "id": "grok-4-1-fast-non-reasoning",
       "raw_family": "grok",
       "before": "(family=\"grok\",variant=\"\",version=\"4.1\",modifier=\"\")",
-      "after": "(family=\"grok\",variant=\"\",version=\"4.1\",modifier=\"reasoning\")",
+      "after": "(family=\"grok\",variant=\"\",version=\"4.1\",modifier=\"non-reasoning\")",
       "category": "b:improvement",
       "reason": "strict enrichment — only previously-empty field(s) populated"
     },
@@ -5629,7 +5629,7 @@
       "id": "grok-4-1-fast-non-reasoning",
       "raw_family": "grok",
       "before": "(family=\"grok\",variant=\"\",version=\"4.1\",modifier=\"\")",
-      "after": "(family=\"grok\",variant=\"\",version=\"4.1\",modifier=\"reasoning\")",
+      "after": "(family=\"grok\",variant=\"\",version=\"4.1\",modifier=\"non-reasoning\")",
       "category": "b:improvement",
       "reason": "strict enrichment — only previously-empty field(s) populated"
     },
@@ -5692,7 +5692,7 @@
       "id": "grok-4-20-beta-0309-non-reasoning",
       "raw_family": "grok",
       "before": "(family=\"grok\",variant=\"beta\",version=\"4.20\",modifier=\"\")",
-      "after": "(family=\"grok\",variant=\"beta\",version=\"4.20\",modifier=\"reasoning\")",
+      "after": "(family=\"grok\",variant=\"beta\",version=\"4.20\",modifier=\"non-reasoning\")",
       "category": "b:improvement",
       "reason": "strict enrichment — only previously-empty field(s) populated"
     },
@@ -5710,7 +5710,7 @@
       "id": "grok-4-20-non-reasoning",
       "raw_family": "grok",
       "before": "(family=\"grok\",variant=\"\",version=\"4.20\",modifier=\"\")",
-      "after": "(family=\"grok\",variant=\"\",version=\"4.20\",modifier=\"reasoning\")",
+      "after": "(family=\"grok\",variant=\"\",version=\"4.20\",modifier=\"non-reasoning\")",
       "category": "b:improvement",
       "reason": "strict enrichment — only previously-empty field(s) populated"
     },
@@ -5719,7 +5719,7 @@
       "id": "grok-4-20-non-reasoning",
       "raw_family": "grok",
       "before": "(family=\"grok\",variant=\"\",version=\"4.20\",modifier=\"\")",
-      "after": "(family=\"grok\",variant=\"\",version=\"4.20\",modifier=\"reasoning\")",
+      "after": "(family=\"grok\",variant=\"\",version=\"4.20\",modifier=\"non-reasoning\")",
       "category": "b:improvement",
       "reason": "strict enrichment — only previously-empty field(s) populated"
     },
@@ -5746,7 +5746,7 @@
       "id": "grok-4-fast-non-reasoning",
       "raw_family": "",
       "before": "(family=\"grok\",variant=\"\",version=\"4\",modifier=\"\")",
-      "after": "(family=\"grok\",variant=\"\",version=\"4\",modifier=\"reasoning\")",
+      "after": "(family=\"grok\",variant=\"\",version=\"4\",modifier=\"non-reasoning\")",
       "category": "b:improvement",
       "reason": "strict enrichment — only previously-empty field(s) populated"
     },
@@ -5755,7 +5755,7 @@
       "id": "grok-4-fast-non-reasoning",
       "raw_family": "grok",
       "before": "(family=\"grok\",variant=\"\",version=\"4\",modifier=\"\")",
-      "after": "(family=\"grok\",variant=\"\",version=\"4\",modifier=\"reasoning\")",
+      "after": "(family=\"grok\",variant=\"\",version=\"4\",modifier=\"non-reasoning\")",
       "category": "b:improvement",
       "reason": "strict enrichment — only previously-empty field(s) populated"
     },
@@ -5764,7 +5764,7 @@
       "id": "grok-4-fast-non-reasoning",
       "raw_family": "grok",
       "before": "(family=\"grok\",variant=\"\",version=\"4\",modifier=\"\")",
-      "after": "(family=\"grok\",variant=\"\",version=\"4\",modifier=\"reasoning\")",
+      "after": "(family=\"grok\",variant=\"\",version=\"4\",modifier=\"non-reasoning\")",
       "category": "b:improvement",
       "reason": "strict enrichment — only previously-empty field(s) populated"
     },
@@ -5773,7 +5773,7 @@
       "id": "grok-4-fast-non-reasoning",
       "raw_family": "grok",
       "before": "(family=\"grok\",variant=\"\",version=\"4\",modifier=\"\")",
-      "after": "(family=\"grok\",variant=\"\",version=\"4\",modifier=\"reasoning\")",
+      "after": "(family=\"grok\",variant=\"\",version=\"4\",modifier=\"non-reasoning\")",
       "category": "b:improvement",
       "reason": "strict enrichment — only previously-empty field(s) populated"
     },
@@ -5836,7 +5836,7 @@
       "id": "grok-4.20-0309-non-reasoning",
       "raw_family": "grok",
       "before": "(family=\"grok\",variant=\"\",version=\"4.20\",modifier=\"\")",
-      "after": "(family=\"grok\",variant=\"\",version=\"4.20\",modifier=\"reasoning\")",
+      "after": "(family=\"grok\",variant=\"\",version=\"4.20\",modifier=\"non-reasoning\")",
       "category": "b:improvement",
       "reason": "strict enrichment — only previously-empty field(s) populated"
     },
@@ -5854,7 +5854,7 @@
       "id": "grok-4.20-beta-0309-non-reasoning",
       "raw_family": "",
       "before": "(family=\"grok\",variant=\"beta\",version=\"4.20\",modifier=\"\")",
-      "after": "(family=\"grok\",variant=\"beta\",version=\"4.20\",modifier=\"reasoning\")",
+      "after": "(family=\"grok\",variant=\"beta\",version=\"4.20\",modifier=\"non-reasoning\")",
       "category": "b:improvement",
       "reason": "strict enrichment — only previously-empty field(s) populated"
     },
@@ -10336,7 +10336,7 @@
       "id": "x-ai/grok-4-fast-non-reasoning",
       "raw_family": "",
       "before": "(family=\"grok\",variant=\"\",version=\"4\",modifier=\"\")",
-      "after": "(family=\"grok\",variant=\"\",version=\"4\",modifier=\"reasoning\")",
+      "after": "(family=\"grok\",variant=\"\",version=\"4\",modifier=\"non-reasoning\")",
       "category": "b:improvement",
       "reason": "strict enrichment — only previously-empty field(s) populated"
     },
@@ -10390,7 +10390,7 @@
       "id": "x-ai/grok-4.1-fast-non-reasoning",
       "raw_family": "",
       "before": "(family=\"grok\",variant=\"\",version=\"4.1\",modifier=\"\")",
-      "after": "(family=\"grok\",variant=\"\",version=\"4.1\",modifier=\"reasoning\")",
+      "after": "(family=\"grok\",variant=\"\",version=\"4.1\",modifier=\"non-reasoning\")",
       "category": "b:improvement",
       "reason": "strict enrichment — only previously-empty field(s) populated"
     },
@@ -10399,7 +10399,7 @@
       "id": "x-ai/grok-4.1-fast-non-reasoning",
       "raw_family": "",
       "before": "(family=\"grok\",variant=\"\",version=\"4.1\",modifier=\"\")",
-      "after": "(family=\"grok\",variant=\"\",version=\"4.1\",modifier=\"reasoning\")",
+      "after": "(family=\"grok\",variant=\"\",version=\"4.1\",modifier=\"non-reasoning\")",
       "category": "b:improvement",
       "reason": "strict enrichment — only previously-empty field(s) populated"
     },
@@ -10435,7 +10435,7 @@
       "id": "x-ai/grok-4.2-fast-non-reasoning",
       "raw_family": "",
       "before": "(family=\"grok\",variant=\"\",version=\"4.2\",modifier=\"\")",
-      "after": "(family=\"grok\",variant=\"\",version=\"4.2\",modifier=\"reasoning\")",
+      "after": "(family=\"grok\",variant=\"\",version=\"4.2\",modifier=\"non-reasoning\")",
       "category": "b:improvement",
       "reason": "strict enrichment — only previously-empty field(s) populated"
     },
@@ -10444,7 +10444,7 @@
       "id": "xai/grok-4-1-fast-non-reasoning",
       "raw_family": "grok",
       "before": "(family=\"grok\",variant=\"\",version=\"4.1\",modifier=\"\")",
-      "after": "(family=\"grok\",variant=\"\",version=\"4.1\",modifier=\"reasoning\")",
+      "after": "(family=\"grok\",variant=\"\",version=\"4.1\",modifier=\"non-reasoning\")",
       "category": "b:improvement",
       "reason": "strict enrichment — only previously-empty field(s) populated"
     },
@@ -10462,7 +10462,7 @@
       "id": "xai/grok-4-fast-non-reasoning",
       "raw_family": "grok",
       "before": "(family=\"grok\",variant=\"\",version=\"4\",modifier=\"\")",
-      "after": "(family=\"grok\",variant=\"\",version=\"4\",modifier=\"reasoning\")",
+      "after": "(family=\"grok\",variant=\"\",version=\"4\",modifier=\"non-reasoning\")",
       "category": "b:improvement",
       "reason": "strict enrichment — only previously-empty field(s) populated"
     },
@@ -10489,7 +10489,7 @@
       "id": "xai/grok-4.1-fast-non-reasoning",
       "raw_family": "grok",
       "before": "(family=\"grok\",variant=\"\",version=\"4.1\",modifier=\"\")",
-      "after": "(family=\"grok\",variant=\"\",version=\"4.1\",modifier=\"reasoning\")",
+      "after": "(family=\"grok\",variant=\"\",version=\"4.1\",modifier=\"non-reasoning\")",
       "category": "b:improvement",
       "reason": "strict enrichment — only previously-empty field(s) populated"
     },
@@ -10498,7 +10498,7 @@
       "id": "xai/grok-4.1-fast-non-reasoning",
       "raw_family": "grok",
       "before": "(family=\"grok\",variant=\"\",version=\"4.1\",modifier=\"\")",
-      "after": "(family=\"grok\",variant=\"\",version=\"4.1\",modifier=\"reasoning\")",
+      "after": "(family=\"grok\",variant=\"\",version=\"4.1\",modifier=\"non-reasoning\")",
       "category": "b:improvement",
       "reason": "strict enrichment — only previously-empty field(s) populated"
     },
@@ -10534,7 +10534,7 @@
       "id": "xai/grok-4.20-non-reasoning",
       "raw_family": "grok",
       "before": "(family=\"grok\",variant=\"\",version=\"4.20\",modifier=\"\")",
-      "after": "(family=\"grok\",variant=\"\",version=\"4.20\",modifier=\"reasoning\")",
+      "after": "(family=\"grok\",variant=\"\",version=\"4.20\",modifier=\"non-reasoning\")",
       "category": "b:improvement",
       "reason": "strict enrichment — only previously-empty field(s) populated"
     },
