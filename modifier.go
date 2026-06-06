@@ -15,7 +15,7 @@ import (
 // fixed within-class order (NOT alpha — "thinking" precedes "vision" deliberately),
 // with an alphabetical fallback for any token outside the curated table.
 //
-//	(1) capability: thinking, vision, multimodal, reasoning
+//	(1) capability: thinking, vision, multimodal, reasoning, non-reasoning
 //	(2) speed:      turbo, fast   (+ series-tier speed promotions: highspeed, lightning, precision)
 //	(3) format/stage: instruct, chat, base, preview, latest, code
 //	(4) residual tier/size (series-scoped promotions), alpha: deep-research, flash, mini, omni, pro
@@ -23,7 +23,7 @@ import (
 // "think" is the legacy short alias of "thinking" and sorts adjacent to it.
 var canonicalModifierOrder = []string{
 	// (1) capability
-	"thinking", "think", "vision", "multimodal", "reasoning",
+	"thinking", "think", "vision", "multimodal", "reasoning", "non-reasoning",
 	// (2) speed-tier
 	"turbo", "fast", "highspeed", "lightning", "precision",
 	// (3) format/stage

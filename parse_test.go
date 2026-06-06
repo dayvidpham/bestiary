@@ -4270,3 +4270,56 @@ func TestWhisperTrailingVersionRecovery_FamilyGated(t *testing.T) {
 		})
 	}
 }
+
+// TestGrokNegationAwareModifier is the rc3 (bestiary-fz9r, USER-RULING) coverage for
+// negation-aware modifier emission: an ID containing the literal token "non-<mod>" must
+// emit "non-<mod>" (e.g. "non-reasoning"), NEVER the bare positive "<mod>". It pins the
+// axis-B mutation-proof on both sides: (a) a "Cannon"/substring-"non" id NEVER gains a
+// non-* modifier (the gate is a separate hyphen-token "non", not a substring); (b) the
+// grok non-reasoning ids invert correctly; and (c) the out-of-scope grok "fast" handling
+// is left untouched (the positive reasoning sibling keeps [reasoning, fast]; the
+// non-reasoning id does NOT gain "fast").
+func TestGrokNegationAwareModifier(t *testing.T) {
+	t.Parallel()
+
+	type tc struct {
+		id      bestiary.ModelID
+		wantMod []string
+	}
+	cases := []tc{
+		// (b) negation emitted, NOT the bare positive.
+		{"grok-4-1-fast-non-reasoning", []string{"non-reasoning"}},
+		{"grok-4-fast-non-reasoning", []string{"non-reasoning"}},
+		{"grok-4-20-non-reasoning", []string{"non-reasoning"}},
+		{"xai/grok-4.20-non-reasoning", []string{"non-reasoning"}},
+		// (c) out-of-scope "fast" untouched: positive sibling KEEPS [reasoning, fast];
+		// the non-reasoning id does NOT gain "fast" (stays a single negation token).
+		{"grok-4-1-fast-reasoning", []string{"reasoning", "fast"}},
+		{"grok-4-fast-reasoning", []string{"reasoning", "fast"}},
+		// (a) substring "non" inside a single token ("Cannon") must NEVER negate.
+		{"GalrionSoftworks/MN-LooseCannon-12B-v1", nil},
+		{"VongolaChouko/Starcannon-Unleashed-12B-v1.0", nil},
+	}
+	for _, c := range cases {
+		t.Run(string(c.id), func(t *testing.T) {
+			_, _, _, mod, _ := bestiary.ParseFamilyDetailed("", c.id, "")
+			if !equalStringSlices(mod, c.wantMod) {
+				t.Errorf("ParseFamilyDetailed(%q).Modifier = %v, want %v (negation-aware emission: literal "+
+					"\"non-<mod>\" token → \"non-<mod>\"; substring \"non\" must not negate; \"fast\" out of scope)",
+					c.id, mod, c.wantMod)
+			}
+		})
+	}
+}
+
+func equalStringSlices(a, b []string) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	for i := range a {
+		if a[i] != b[i] {
+			return false
+		}
+	}
+	return true
+}

@@ -1217,8 +1217,27 @@ func extractModifiers(id ModelID, family Family, variant string) (mods []string,
 		isMonthFragment := prevAfterYear && len(t) <= 2 && isAllDigits(t)
 		switch {
 		case isKnownModifierToken(pd, t) && t != lowVariant && !isFamilyMemberToken(pd, family, t):
-			mods = append(mods, t)
-			consumedTokens = len(toks) - i
+			// rc3 (bestiary-fz9r, USER-RULING): NEGATION-AWARE emission. When the captured
+			// modifier token is immediately preceded (in tail order) by the LITERAL token
+			// "non" — i.e. the ID contains "...-non-<mod>" — emit "non-<mod>" instead of the
+			// bare positive "<mod>", and consume the "non" token too. The gate is the literal
+			// "non" ADJACENCY on a separate hyphen-token (toks[i-1]=="non"), NOT a grok-name
+			// gate and NOT a substring: "LooseCannon"/"Starcannon" are single tokens, so their
+			// embedded "non" never matches. In this dataset this covers exactly the grok
+			// "*-non-reasoning" ids → Modifier [reasoning]→[non-reasoning].
+			if i-1 >= 0 && toks[i-1] == "non" {
+				mods = append(mods, "non-"+t)
+				// Consume the literal "non" token, then STOP. Stopping reproduces the EXACT
+				// pre-fix scan extent: before this fix "non" was a hard boundary, so nothing
+				// deeper than it was ever consumed. Halting here means the ONLY change is
+				// "<mod>"→"non-<mod>" — the out-of-scope grok "fast" handling (GH#13) is left
+				// untouched (it stays absent on these *-fast-non-reasoning ids, exactly as before).
+				consumedTokens = len(toks) - (i - 1)
+				i = -1
+			} else {
+				mods = append(mods, t)
+				consumedTokens = len(toks) - i
+			}
 			prevAfterYear = false
 		case isMonthFragment || isModifierTransparentToken(t):
 			// skip but keep scanning inward; consumedTokens only advances on a modifier hit.
