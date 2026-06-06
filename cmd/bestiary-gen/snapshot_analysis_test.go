@@ -508,11 +508,16 @@ func TestSnapshotAnalysis_CrossProviderDivergences(t *testing.T) {
 	// command-a-reasoning-08-2025, llama-4-scout, qwen3-next ×2). RESIDUAL = 1 = the PERMANENT
 	// v0.2.2 LEDGER entry nvidia/llama-3.3-nemotron-super-49b-v1.5 (embedded-family — the ID
 	// leads with "llama", canonical is "nemotron"; GH-followup, NOT a modifier case).
+	// rc3 (bestiary-xfo0, USER-RATIFIED Impl-UAT 2gxu): the curated ID-keyed family override
+	// (idFamilyOverrides) folds nvidia/llama-3.3-nemotron-super-49b-v1.5 → nemotron (both the
+	// empty-raw and raw="nemotron" providers converge on (nemotron,v1.5,3.3)). Cross-provider
+	// divergence is now ZERO (no residual). The override is enforce-blessed (family-only
+	// correction, no field dropped → cat-(c)=0).
 	const (
-		divergenceExact = 1
+		divergenceExact = 0
 		// Secondary sanity band — guards against a wholesale snapshot/pipeline
 		// breakage that happens to coincidentally land on a different exact value.
-		divergenceLow  = 1
+		divergenceLow  = 0
 		divergenceHigh = 500
 	)
 	if totalDivergent != divergenceExact {
@@ -555,11 +560,13 @@ func TestSnapshotAnalysis_CrossProviderDivergences(t *testing.T) {
 	// SLICE-10: CatC 7→0 (all member-variant/version stragglers converged via the
 	// modifier-taxonomy + member-guard). CatD 3→1 (qwen3-next ×2 converged via the
 	// next→qwen member add; residual D = nemotron only). CatA/CatB unchanged at 0.
+	// rc3: CatD 1→0 — the nemotron embedded-family residual folded via idFamilyOverrides.
+	// ALL cross-provider categories are now ZERO (total divergence = 0).
 	const (
 		catAExact = 0 // vendor-prefix/case (SLICE-1 M4 resolved all)
 		catBExact = 0 // bare-gen-split
 		catCExact = 0 // member-variant/version — all converged (SLICE-10)
-		catDExact = 1 // genuine family mislabel — residual = nvidia nemotron (permanent ledger)
+		catDExact = 0 // genuine family mislabel — nemotron folded (rc3); ZERO
 	)
 	checkCat := func(name string, got, want int) {
 		if got != want {

@@ -2113,6 +2113,19 @@ func isVersionShaped(s string) bool {
 // IP-1: The return order is (family, variant, version, modifier, *ParseFailure).
 // SLICE-2 (codegen wiring) depends on this exact 5-tuple shape — do NOT reorder.
 func ParseFamilyDetailed(raw Family, id ModelID, p Provider) (Family, string, string, []string, *ParseFailure) {
+	// rc3-L1 (bestiary-xfo0, USER-RATIFIED Impl-UAT 2gxu) — curated ID-keyed family
+	// override. A CLOSED, exact-model-ID map for the embedded-family case the leading-token
+	// pipeline cannot reach without a general embedded-detect (the Path-B trap: 16/249
+	// llama-nemotron IDs have attestation conflicts, so a broad nemotron/llama match would
+	// REGRESS them). Keyed to the EXACT id only → zero collateral. Applied to ALL providers
+	// of that id (provider-agnostic) so the empty-raw and raw-populated forms CONVERGE on the
+	// identical tuple. It corrects ONLY the FAMILY to the attested allFamilies target,
+	// preserving the pipeline-derived variant/version so no ID-present field is dropped
+	// (enforce-blessed family-only correction; cat-(c)=0).
+	if ov, ok := idFamilyOverrides[strings.ToLower(string(id))]; ok {
+		return ov.family, ov.variant, ov.version, nil, nil
+	}
+
 	// SLICE-3 (uniform thinking/vision-as-modifier migration): a trailing
 	// {thinking,vision,…} token embedded in the RAW family is ALWAYS a modifier,
 	// never a variant. models.dev encodes the modifier in the family field for some
@@ -3346,6 +3359,29 @@ var seriesTierModifiers = map[string]struct{}{
 	// series divergence after the initial tier→modifier wiring (mimo-v2-omni). Confirmed
 	// by the supervisor's residual-categorization analysis; added per CLARIFICATION-6.
 	"omni": {},
+}
+
+// idFamilyOverrideEntry is the curated (family, variant, version) an exact model ID maps to.
+type idFamilyOverrideEntry struct {
+	family  Family
+	variant string
+	version string
+}
+
+// idFamilyOverrides is the rc3-L1 (USER-RATIFIED Impl-UAT bestiary-2gxu) CLOSED, exact-
+// model-ID family-override map. It exists ONLY for the embedded-family case the leading-
+// token decomposition cannot reach safely: the model ID leads with one family token but the
+// canonical family is embedded later, and a general embedded-detect would regress sibling
+// IDs (the Path-B trap). Each entry is keyed to ONE exact (lowercase) model ID, corrects
+// the FAMILY to an attested allFamilies target, and preserves the pipeline-derived
+// variant/version (no field dropped). It drives the sole remaining cross-provider divergence
+// to 0 by converging the empty-raw and raw="nemotron" forms of the same id on one tuple.
+//
+//   - nvidia/llama-3.3-nemotron-super-49b-v1.5 (kilo raw="" over-captures family
+//     "llama-3.3-nemotron-super-49b"; openrouter raw="nemotron" gives "nemotron") →
+//     both converge on (nemotron, v1.5, 3.3). nemotron ∈ allFamilies + family_enforce.json.
+var idFamilyOverrides = map[string]idFamilyOverrideEntry{
+	"nvidia/llama-3.3-nemotron-super-49b-v1.5": {family: "nemotron", variant: "v1.5", version: "3.3"},
 }
 
 func isSeriesTierToken(tok string) bool {

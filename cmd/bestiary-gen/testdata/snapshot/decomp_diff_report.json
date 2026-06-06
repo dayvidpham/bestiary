@@ -1,12 +1,12 @@
 {
   "total_records": 4979,
-  "changed_count": 1205,
-  "cat_a_divergence_fix_count": 322,
+  "changed_count": 1207,
+  "cat_a_divergence_fix_count": 324,
   "cat_b_improvement_count": 878,
   "cat_c_unexpected_regression_count": 0,
   "justified_exception_count": 5,
   "divergence_before": 81,
-  "divergence_after": 14,
+  "divergence_after": 13,
   "changes": [
     {
       "provider": "evroc",
@@ -997,6 +997,24 @@
       "after": "(family=\"hermes\",variant=\"\",version=\"3\",modifier=\"\")",
       "category": "a:divergence-fix",
       "reason": "now matches a tuple another provider already produced for this ID (BEFORE); only phantom non-family loss permitted (j1nu)"
+    },
+    {
+      "provider": "kilo",
+      "id": "nvidia/llama-3.3-nemotron-super-49b-v1.5",
+      "raw_family": "",
+      "before": "(family=\"llama-3.3-nemotron-super-49b\",variant=\"v1.5\",version=\"3.3\",modifier=\"\")",
+      "after": "(family=\"nemotron\",variant=\"v1.5\",version=\"3.3\",modifier=\"\")",
+      "category": "a:divergence-fix",
+      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted (j1nu)"
+    },
+    {
+      "provider": "openrouter",
+      "id": "nvidia/llama-3.3-nemotron-super-49b-v1.5",
+      "raw_family": "nemotron",
+      "before": "(family=\"nemotron\",variant=\"\",version=\"\",modifier=\"\")",
+      "after": "(family=\"nemotron\",variant=\"v1.5\",version=\"3.3\",modifier=\"\")",
+      "category": "a:divergence-fix",
+      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted (j1nu)"
     },
     {
       "provider": "azure",

@@ -986,9 +986,12 @@ func TestNoFetch_MissingCache_ActionableError(t *testing.T) {
 // SET-equality (not count) catches a DIFFERENT id going divergent while nemotron converges
 // — count would stay 1, the set would change. Do NOT pad this map to force green: every
 // row must be independently justified; an unexpected divergence is a STOP-and-surface.
-var crossProviderJustifiedResidual = map[string]string{
-	"nvidia/llama-3.3-nemotron-super-49b-v1.5": "embedded-family — ID leads 'llama' but canonical family is 'nemotron'; GH-followup (genuine cross-provider mislabel, not a pipeline bug)",
-}
+// rc3 (bestiary-xfo0, USER-RATIFIED Impl-UAT 2gxu): EMPTY. The sole prior residual
+// (nvidia/llama-3.3-nemotron-super-49b-v1.5) was FOLDED to family nemotron via the curated
+// idFamilyOverrides entry — both providers converge on (nemotron,v1.5,3.3). Cross-provider
+// (Family,Variant,Version) divergence is now ZERO, so the divergent-ID SET is empty and this
+// justified-residual ledger is empty too (SET-equality holds at the empty set).
+var crossProviderJustifiedResidual = map[string]string{}
 
 // crossProviderResidualUnaccountedCeiling pins the at-scale count of
 // ReasonResidualUnaccountedTokens over the committed snapshot (SLICE-5 INPUT, B-MINOR-3).
