@@ -3557,7 +3557,7 @@ const (
 	Model__OpenRouter__Llama__3__2__3b__Instruct__Free__3_2__Instruct                        ModelID = "meta-llama/llama-3.2-3b-instruct:free"
 	Model__OpenRouter__Llama__3__3__70b__3_3__Instruct                                       ModelID = "meta-llama/llama-3.3-70b-instruct"
 	Model__OpenRouter__Llama__3__3__70b__Instruct__Free__3_3__Instruct                       ModelID = "meta-llama/llama-3.3-70b-instruct:free"
-	Model__OpenRouter__Llama__3__3__Nemotron__Super__49b__V1__5                              ModelID = "nvidia/llama-3.3-nemotron-super-49b-v1.5"
+	Model__OpenRouter__Llama__3__3__Nemotron__Super__49b__V1__5__3_3                         ModelID = "nvidia/llama-3.3-nemotron-super-49b-v1.5"
 	Model__OpenRouter__Llama__3__70b__3__Instruct                                            ModelID = "meta-llama/llama-3-70b-instruct"
 	Model__OpenRouter__Llama__3__8b__3__Instruct                                             ModelID = "meta-llama/llama-3-8b-instruct"
 	Model__OpenRouter__Llama__4__Maverick__4                                                 ModelID = "meta-llama/llama-4-maverick"
@@ -8540,7 +8540,7 @@ var allModelConstants = [...]ModelID{
 	Model__OpenRouter__Llama__3__2__3b__Instruct__Free__3_2__Instruct,
 	Model__OpenRouter__Llama__3__3__70b__3_3__Instruct,
 	Model__OpenRouter__Llama__3__3__70b__Instruct__Free__3_3__Instruct,
-	Model__OpenRouter__Llama__3__3__Nemotron__Super__49b__V1__5,
+	Model__OpenRouter__Llama__3__3__Nemotron__Super__49b__V1__5__3_3,
 	Model__OpenRouter__Llama__3__70b__3__Instruct,
 	Model__OpenRouter__Llama__3__8b__3__Instruct,
 	Model__OpenRouter__Llama__4__Maverick__4,
