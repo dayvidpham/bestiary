@@ -579,11 +579,11 @@ const (
 	Model__AzureCognitiveServices__Llama__4__Maverick__17b__128e__Instruct__Fp8__4__Instruct ModelID = "llama-4-maverick-17b-128e-instruct-fp8"
 	Model__AzureCognitiveServices__Llama__4__Scout__17b__16e__4__Instruct                    ModelID = "llama-4-scout-17b-16e-instruct"
 	Model__AzureCognitiveServices__Mai__Ds__R1                                               ModelID = "mai-ds-r1"
-	Model__AzureCognitiveServices__Meta__Llama__3__1__405b__Instruct                         ModelID = "meta-llama-3.1-405b-instruct"
-	Model__AzureCognitiveServices__Meta__Llama__3__1__70b__Instruct                          ModelID = "meta-llama-3.1-70b-instruct"
-	Model__AzureCognitiveServices__Meta__Llama__3__1__8b__Instruct                           ModelID = "meta-llama-3.1-8b-instruct"
-	Model__AzureCognitiveServices__Meta__Llama__3__70b__Instruct                             ModelID = "meta-llama-3-70b-instruct"
-	Model__AzureCognitiveServices__Meta__Llama__3__8b__Instruct                              ModelID = "meta-llama-3-8b-instruct"
+	Model__AzureCognitiveServices__Meta__Llama__3__1__405b__3_1__Instruct                    ModelID = "meta-llama-3.1-405b-instruct"
+	Model__AzureCognitiveServices__Meta__Llama__3__1__70b__3_1__Instruct                     ModelID = "meta-llama-3.1-70b-instruct"
+	Model__AzureCognitiveServices__Meta__Llama__3__1__8b__3_1__Instruct                      ModelID = "meta-llama-3.1-8b-instruct"
+	Model__AzureCognitiveServices__Meta__Llama__3__70b__3__Instruct                          ModelID = "meta-llama-3-70b-instruct"
+	Model__AzureCognitiveServices__Meta__Llama__3__8b__3__Instruct                           ModelID = "meta-llama-3-8b-instruct"
 	Model__AzureCognitiveServices__Ministral__3b                                             ModelID = "ministral-3b"
 	Model__AzureCognitiveServices__Mistral__Large__2411                                      ModelID = "mistral-large-2411"
 	Model__AzureCognitiveServices__Mistral__Medium__2505                                     ModelID = "mistral-medium-2505"
@@ -682,11 +682,11 @@ const (
 	Model__Azure__Llama__4__Maverick__17b__128e__Instruct__Fp8__4__Instruct                  ModelID = "llama-4-maverick-17b-128e-instruct-fp8"
 	Model__Azure__Llama__4__Scout__17b__16e__4__Instruct                                     ModelID = "llama-4-scout-17b-16e-instruct"
 	Model__Azure__Mai__Ds__R1                                                                ModelID = "mai-ds-r1"
-	Model__Azure__Meta__Llama__3__1__405b__Instruct                                          ModelID = "meta-llama-3.1-405b-instruct"
-	Model__Azure__Meta__Llama__3__1__70b__Instruct                                           ModelID = "meta-llama-3.1-70b-instruct"
-	Model__Azure__Meta__Llama__3__1__8b__Instruct                                            ModelID = "meta-llama-3.1-8b-instruct"
-	Model__Azure__Meta__Llama__3__70b__Instruct                                              ModelID = "meta-llama-3-70b-instruct"
-	Model__Azure__Meta__Llama__3__8b__Instruct                                               ModelID = "meta-llama-3-8b-instruct"
+	Model__Azure__Meta__Llama__3__1__405b__3_1__Instruct                                     ModelID = "meta-llama-3.1-405b-instruct"
+	Model__Azure__Meta__Llama__3__1__70b__3_1__Instruct                                      ModelID = "meta-llama-3.1-70b-instruct"
+	Model__Azure__Meta__Llama__3__1__8b__3_1__Instruct                                       ModelID = "meta-llama-3.1-8b-instruct"
+	Model__Azure__Meta__Llama__3__70b__3__Instruct                                           ModelID = "meta-llama-3-70b-instruct"
+	Model__Azure__Meta__Llama__3__8b__3__Instruct                                            ModelID = "meta-llama-3-8b-instruct"
 	Model__Azure__Ministral__3b                                                              ModelID = "ministral-3b"
 	Model__Azure__Mistral__Large__2411                                                       ModelID = "mistral-large-2411"
 	Model__Azure__Mistral__Medium__2505                                                      ModelID = "mistral-medium-2505"
@@ -1273,11 +1273,11 @@ const (
 	Model__GitHubModels__Llama__4__Maverick__17b__128e__Instruct__Fp8__4__Instruct           ModelID = "meta/llama-4-maverick-17b-128e-instruct-fp8"
 	Model__GitHubModels__Llama__4__Scout__17b__16e__4__Instruct                              ModelID = "meta/llama-4-scout-17b-16e-instruct"
 	Model__GitHubModels__Mai__Ds__R1                                                         ModelID = "microsoft/mai-ds-r1"
-	Model__GitHubModels__Meta__Llama__3__1__405b__Instruct                                   ModelID = "meta/meta-llama-3.1-405b-instruct"
-	Model__GitHubModels__Meta__Llama__3__1__70b__Instruct                                    ModelID = "meta/meta-llama-3.1-70b-instruct"
-	Model__GitHubModels__Meta__Llama__3__1__8b__Instruct                                     ModelID = "meta/meta-llama-3.1-8b-instruct"
-	Model__GitHubModels__Meta__Llama__3__70b__Instruct                                       ModelID = "meta/meta-llama-3-70b-instruct"
-	Model__GitHubModels__Meta__Llama__3__8b__Instruct                                        ModelID = "meta/meta-llama-3-8b-instruct"
+	Model__GitHubModels__Meta__Llama__3__1__405b__3_1__Instruct                              ModelID = "meta/meta-llama-3.1-405b-instruct"
+	Model__GitHubModels__Meta__Llama__3__1__70b__3_1__Instruct                               ModelID = "meta/meta-llama-3.1-70b-instruct"
+	Model__GitHubModels__Meta__Llama__3__1__8b__3_1__Instruct                                ModelID = "meta/meta-llama-3.1-8b-instruct"
+	Model__GitHubModels__Meta__Llama__3__70b__3__Instruct                                    ModelID = "meta/meta-llama-3-70b-instruct"
+	Model__GitHubModels__Meta__Llama__3__8b__3__Instruct                                     ModelID = "meta/meta-llama-3-8b-instruct"
 	Model__GitHubModels__Ministral__3b                                                       ModelID = "mistral-ai/ministral-3b"
 	Model__GitHubModels__Mistral__Large__2411                                                ModelID = "mistral-ai/mistral-large-2411"
 	Model__GitHubModels__Mistral__Medium__2505                                               ModelID = "mistral-ai/mistral-medium-2505"
@@ -2384,8 +2384,8 @@ const (
 	Model__NanoGPT__Azure__GPT__4__Turbo                                                     ModelID = "azure-gpt-4-turbo"
 	Model__NanoGPT__Azure__GPT__4o                                                           ModelID = "azure-gpt-4o"
 	Model__NanoGPT__Azure__GPT__4o__Mini                                                     ModelID = "azure-gpt-4o-mini"
-	Model__NanoGPT__Azure__O1                                                                ModelID = "azure-o1"
-	Model__NanoGPT__Azure__O3__Mini                                                          ModelID = "azure-o3-mini"
+	Model__NanoGPT__Azure__O1__1                                                             ModelID = "azure-o1"
+	Model__NanoGPT__Azure__O3__3__Mini                                                       ModelID = "azure-o3-mini"
 	Model__NanoGPT__Baichuan4__Air                                                           ModelID = "Baichuan4-Air"
 	Model__NanoGPT__Baichuan4__Turbo                                                         ModelID = "Baichuan4-Turbo"
 	Model__NanoGPT__Baichuan__M2                                                             ModelID = "Baichuan-M2"
@@ -2762,7 +2762,7 @@ const (
 	Model__NanoGPT__Manta__Mini__1__0                                                        ModelID = "meganova-ai/manta-mini-1.0"
 	Model__NanoGPT__Manta__Pro__1__0                                                         ModelID = "meganova-ai/manta-pro-1.0"
 	Model__NanoGPT__Meta__Llama__3__1__8B__Instruct__Fp8__3_1__Instruct                      ModelID = "Meta-Llama-3-1-8B-Instruct-FP8"
-	Model__NanoGPT__Meta__Llama__3__70B__Instruct__Abliterated__V3__5__Instruct              ModelID = "failspy/Meta-Llama-3-70B-Instruct-abliterated-v3.5"
+	Model__NanoGPT__Meta__Llama__3__70B__Instruct__Abliterated__V3__5__3__Instruct           ModelID = "failspy/Meta-Llama-3-70B-Instruct-abliterated-v3.5"
 	Model__NanoGPT__Mimo__V2__Flash                                                          ModelID = "xiaomi/mimo-v2-flash"
 	Model__NanoGPT__Mimo__V2__Flash__Original                                                ModelID = "xiaomi/mimo-v2-flash-original"
 	Model__NanoGPT__Mimo__V2__Flash__Thinking                                                ModelID = "xiaomi/mimo-v2-flash-thinking"
@@ -4166,7 +4166,7 @@ const (
 	Model__STACKIT__GPT__Oss__120b                                                           ModelID = "openai/gpt-oss-120b"
 	Model__STACKIT__Gemma__3__27b__It__3                                                     ModelID = "google/gemma-3-27b-it"
 	Model__STACKIT__Llama__3__3__70B__Instruct__Fp8__Dynamic__3_3__Instruct                  ModelID = "cortecs/Llama-3.3-70B-Instruct-FP8-Dynamic"
-	Model__STACKIT__Meta__Llama__3__1__8B__Instruct__Fp8__Instruct                           ModelID = "neuralmagic/Meta-Llama-3.1-8B-Instruct-FP8"
+	Model__STACKIT__Meta__Llama__3__1__8B__Instruct__Fp8__3_1__Instruct                      ModelID = "neuralmagic/Meta-Llama-3.1-8B-Instruct-FP8"
 	Model__STACKIT__Mistral__Nemo__Instruct__2407__Fp8__Instruct                             ModelID = "neuralmagic/Mistral-Nemo-Instruct-2407-FP8"
 	Model__STACKIT__Qwen3__Vl__235B__A22b__Instruct__Fp8__3__Instruct                        ModelID = "Qwen/Qwen3-VL-235B-A22B-Instruct-FP8"
 	Model__STACKIT__Qwen3__Vl__Embedding__8B__3                                              ModelID = "Qwen/Qwen3-VL-Embedding-8B"
@@ -5562,11 +5562,11 @@ var allModelConstants = [...]ModelID{
 	Model__AzureCognitiveServices__Llama__4__Maverick__17b__128e__Instruct__Fp8__4__Instruct,
 	Model__AzureCognitiveServices__Llama__4__Scout__17b__16e__4__Instruct,
 	Model__AzureCognitiveServices__Mai__Ds__R1,
-	Model__AzureCognitiveServices__Meta__Llama__3__1__405b__Instruct,
-	Model__AzureCognitiveServices__Meta__Llama__3__1__70b__Instruct,
-	Model__AzureCognitiveServices__Meta__Llama__3__1__8b__Instruct,
-	Model__AzureCognitiveServices__Meta__Llama__3__70b__Instruct,
-	Model__AzureCognitiveServices__Meta__Llama__3__8b__Instruct,
+	Model__AzureCognitiveServices__Meta__Llama__3__1__405b__3_1__Instruct,
+	Model__AzureCognitiveServices__Meta__Llama__3__1__70b__3_1__Instruct,
+	Model__AzureCognitiveServices__Meta__Llama__3__1__8b__3_1__Instruct,
+	Model__AzureCognitiveServices__Meta__Llama__3__70b__3__Instruct,
+	Model__AzureCognitiveServices__Meta__Llama__3__8b__3__Instruct,
 	Model__AzureCognitiveServices__Ministral__3b,
 	Model__AzureCognitiveServices__Mistral__Large__2411,
 	Model__AzureCognitiveServices__Mistral__Medium__2505,
@@ -5665,11 +5665,11 @@ var allModelConstants = [...]ModelID{
 	Model__Azure__Llama__4__Maverick__17b__128e__Instruct__Fp8__4__Instruct,
 	Model__Azure__Llama__4__Scout__17b__16e__4__Instruct,
 	Model__Azure__Mai__Ds__R1,
-	Model__Azure__Meta__Llama__3__1__405b__Instruct,
-	Model__Azure__Meta__Llama__3__1__70b__Instruct,
-	Model__Azure__Meta__Llama__3__1__8b__Instruct,
-	Model__Azure__Meta__Llama__3__70b__Instruct,
-	Model__Azure__Meta__Llama__3__8b__Instruct,
+	Model__Azure__Meta__Llama__3__1__405b__3_1__Instruct,
+	Model__Azure__Meta__Llama__3__1__70b__3_1__Instruct,
+	Model__Azure__Meta__Llama__3__1__8b__3_1__Instruct,
+	Model__Azure__Meta__Llama__3__70b__3__Instruct,
+	Model__Azure__Meta__Llama__3__8b__3__Instruct,
 	Model__Azure__Ministral__3b,
 	Model__Azure__Mistral__Large__2411,
 	Model__Azure__Mistral__Medium__2505,
@@ -6256,11 +6256,11 @@ var allModelConstants = [...]ModelID{
 	Model__GitHubModels__Llama__4__Maverick__17b__128e__Instruct__Fp8__4__Instruct,
 	Model__GitHubModels__Llama__4__Scout__17b__16e__4__Instruct,
 	Model__GitHubModels__Mai__Ds__R1,
-	Model__GitHubModels__Meta__Llama__3__1__405b__Instruct,
-	Model__GitHubModels__Meta__Llama__3__1__70b__Instruct,
-	Model__GitHubModels__Meta__Llama__3__1__8b__Instruct,
-	Model__GitHubModels__Meta__Llama__3__70b__Instruct,
-	Model__GitHubModels__Meta__Llama__3__8b__Instruct,
+	Model__GitHubModels__Meta__Llama__3__1__405b__3_1__Instruct,
+	Model__GitHubModels__Meta__Llama__3__1__70b__3_1__Instruct,
+	Model__GitHubModels__Meta__Llama__3__1__8b__3_1__Instruct,
+	Model__GitHubModels__Meta__Llama__3__70b__3__Instruct,
+	Model__GitHubModels__Meta__Llama__3__8b__3__Instruct,
 	Model__GitHubModels__Ministral__3b,
 	Model__GitHubModels__Mistral__Large__2411,
 	Model__GitHubModels__Mistral__Medium__2505,
@@ -7367,8 +7367,8 @@ var allModelConstants = [...]ModelID{
 	Model__NanoGPT__Azure__GPT__4__Turbo,
 	Model__NanoGPT__Azure__GPT__4o,
 	Model__NanoGPT__Azure__GPT__4o__Mini,
-	Model__NanoGPT__Azure__O1,
-	Model__NanoGPT__Azure__O3__Mini,
+	Model__NanoGPT__Azure__O1__1,
+	Model__NanoGPT__Azure__O3__3__Mini,
 	Model__NanoGPT__Baichuan4__Air,
 	Model__NanoGPT__Baichuan4__Turbo,
 	Model__NanoGPT__Baichuan__M2,
@@ -7745,7 +7745,7 @@ var allModelConstants = [...]ModelID{
 	Model__NanoGPT__Manta__Mini__1__0,
 	Model__NanoGPT__Manta__Pro__1__0,
 	Model__NanoGPT__Meta__Llama__3__1__8B__Instruct__Fp8__3_1__Instruct,
-	Model__NanoGPT__Meta__Llama__3__70B__Instruct__Abliterated__V3__5__Instruct,
+	Model__NanoGPT__Meta__Llama__3__70B__Instruct__Abliterated__V3__5__3__Instruct,
 	Model__NanoGPT__Mimo__V2__Flash,
 	Model__NanoGPT__Mimo__V2__Flash__Original,
 	Model__NanoGPT__Mimo__V2__Flash__Thinking,
@@ -9149,7 +9149,7 @@ var allModelConstants = [...]ModelID{
 	Model__STACKIT__GPT__Oss__120b,
 	Model__STACKIT__Gemma__3__27b__It__3,
 	Model__STACKIT__Llama__3__3__70B__Instruct__Fp8__Dynamic__3_3__Instruct,
-	Model__STACKIT__Meta__Llama__3__1__8B__Instruct__Fp8__Instruct,
+	Model__STACKIT__Meta__Llama__3__1__8B__Instruct__Fp8__3_1__Instruct,
 	Model__STACKIT__Mistral__Nemo__Instruct__2407__Fp8__Instruct,
 	Model__STACKIT__Qwen3__Vl__235B__A22b__Instruct__Fp8__3__Instruct,
 	Model__STACKIT__Qwen3__Vl__Embedding__8B__3,
