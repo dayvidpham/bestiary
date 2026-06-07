@@ -6,7 +6,10 @@
 # https://github.com/github/gitignore/blob/main/community/Golang/Go.AllowList.gitignore
 #
 # Binaries for programs and plugins
-bestiary
+# Root-anchored so it ignores ONLY the built ./bestiary binary at the repo root,
+# NOT the cmd/bestiary/ source directory (an unanchored "bestiary" matches every
+# path component named bestiary, silently ignoring new files under cmd/bestiary/).
+/bestiary
 /bestiary-gen
 .bestiary-gen-cache/
 *.exe

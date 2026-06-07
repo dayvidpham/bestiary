@@ -3435,8 +3435,27 @@ type idFamilyOverrideEntry struct {
 //   - nvidia/llama-3.3-nemotron-super-49b-v1.5 (kilo raw="" over-captures family
 //     "llama-3.3-nemotron-super-49b"; openrouter raw="nemotron" gives "nemotron") →
 //     both converge on (nemotron, v1.5, 3.3). nemotron ∈ allFamilies + family_enforce.json.
+//
+// The two derivative entries below address a different failure: a provider tags a
+// FINETUNE/MERGE with the raw_family of its BASE ("llama"), which folds the
+// derivative's identity into the base and loses its lineage. Keyed to the exact
+// (lowercase) ID, they restore the derivative family so the record links to the
+// correct entity (and carries its curated lineage from lineage.json):
+//
+//   - abacusai/Dracarys-72B-Instruct (nano-gpt raw="llama") → dracarys. The
+//     pipeline-derived "instruct" modifier is intentionally NOT re-attached here:
+//     leaving it off keys this 72B record as the bare "dracarys" entity, distinct
+//     from the separate dracarys-llama-3.1-70b ("dracarys{instruct}") — so the two
+//     genuinely-different artifacts never wrong-merge.
+//   - gryphe/mythomax-l2-13b (nano-gpt serves it as raw="llama"; other providers
+//     serve the same lowercase ID with raw="") → mythomax, converging every
+//     provider's MythoMax onto the one mythomax entity (this also removes the
+//     prior upper/lower-case entity split). variant/version stay empty to match
+//     the raw="" providers' tuple exactly.
 var idFamilyOverrides = map[string]idFamilyOverrideEntry{
 	"nvidia/llama-3.3-nemotron-super-49b-v1.5": {family: "nemotron", variant: "v1.5", version: "3.3"},
+	"abacusai/dracarys-72b-instruct":           {family: "dracarys"},
+	"gryphe/mythomax-l2-13b":                   {family: "mythomax"},
 }
 
 func isSeriesTierToken(tok string) bool {

@@ -36,11 +36,19 @@
     },
     {
       "child_id": "mythomax-l2-13b",
-      "child_ref": { "family": "llama", "variant": "mythomax", "version": "2" },
+      "child_ref": { "family": "mythomax", "variant": "", "version": "" },
       "real": true,
       "parents": [
-        { "family": "llama", "variant": "mythologic", "version": "2", "kind": "merge" },
-        { "family": "llama", "variant": "huginn", "version": "2", "kind": "merge" }
+        { "family": "mythologic", "variant": "", "version": "2", "kind": "merge" },
+        { "family": "huginn", "variant": "", "version": "2", "kind": "merge" }
+      ]
+    },
+    {
+      "child_id": "dracarys-72b-instruct",
+      "child_ref": { "family": "dracarys", "variant": "", "version": "" },
+      "real": true,
+      "parents": [
+        { "family": "llama", "variant": "", "version": "", "kind": "finetune" }
       ]
     }
   ]

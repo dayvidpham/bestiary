@@ -1156,6 +1156,22 @@ var justifiedExceptions = map[exceptionKey]string{
 		Before: `(family="azure-gpt-4",variant="turbo",version="4",modifier="")`,
 		After:  `(family="azure-gpt",variant="",version="4",modifier="turbo")`,
 	}: "NanoGPT reseller id: the leading 'azure-' is a backend-host label (NanoGPT routes to Azure-hosted OpenAI models), NOT a redundant provider prefix — the genuine Azure provider is the separate azure-cognitive-services namespace. The earlier provider-prefix strip that forced these to the gpt family was removed because it deleted the azure-host signal. These now decompose natively to an imperfect 'azure-*' family, pending a serving-host/backend dimension (GH#16). The before/after differs only in how that imperfect family splits 'turbo'/'4'; neither tuple is a meaningful model decomposition, so this is not a model-identity regression.",
+	// ── GH#11 fold-to-llama derivative rescue (idFamilyOverrides) ──────────────
+	// A provider mislabeled a finetune/merge with its BASE raw_family ("llama"),
+	// folding the derivative's identity into llama and losing its lineage. Each is a
+	// single-provider exact-ID override that restores the derivative family so the
+	// record links to the correct entity and carries its curated lineage. Neither is
+	// a multi-provider ID, so the cross-provider divergent set is unchanged (==0).
+	{
+		ID:     "Gryphe/MythoMax-L2-13b",
+		Before: `(family="llama",variant="",version="",modifier="")`,
+		After:  `(family="mythomax",variant="",version="",modifier="")`,
+	}: "GH#11 lineage (VC14): nano-gpt served MythoMax-L2-13B with raw_family='llama', folding it to the llama base and splitting it from the mythomax entity served by every other provider (raw=''). idFamilyOverrides restores family=mythomax, converging all providers onto the one mythomax merge entity. Single-provider exact-ID override; no cross-provider divergence introduced.",
+	{
+		ID:     "abacusai/Dracarys-72B-Instruct",
+		Before: `(family="llama",variant="instruct",version="",modifier="")`,
+		After:  `(family="dracarys",variant="",version="",modifier="")`,
+	}: "GH#11 lineage (VC14): nano-gpt served Dracarys-72B with raw_family='llama', folding the dracarys finetune into the llama base and erasing its lineage. idFamilyOverrides restores family=dracarys + a finetune-from-llama edge. The 'instruct' token is intentionally not re-attached so this 72B keys as the bare 'dracarys' entity, DISTINCT from the separate dracarys-llama-3.1-70b ('dracarys{instruct}') — preventing a wrong-merge of two different artifacts. Single-provider exact-ID override; no divergence introduced.",
 	// RESOLVED & de-ledgered:
 	//  • nvidia/llama-3.3-nemotron-super-49b-v1.5 — folded to nemotron via idFamilyOverrides
 	//    (cross-provider divergence 1→0).

@@ -136,13 +136,104 @@ func TestLineage_MergeFixture(t *testing.T) {
 		if e.Kind != bestiary.DerivationMerge {
 			t.Errorf("edge[%d].Kind = %v, want merge", i, e.Kind)
 		}
-		if e.Parent.Family != bestiary.FamilyLlama {
-			t.Errorf("edge[%d].Parent.Family = %q, want llama", i, e.Parent.Family)
+		// Parents are standalone merge families (mythologic, huginn) — see VC13's
+		// TestLineage_MergeParentsAreStandaloneFamilies for the per-family pins.
+		if e.Parent.Family == bestiary.FamilyLlama {
+			t.Errorf("edge[%d].Parent.Family = llama; merge parents must be standalone families", i)
 		}
 	}
 	rec, ok := bestiary.LineageRecordFor(id)
 	if !ok || !rec.Real {
 		t.Errorf("LineageRecordFor(%q): want (real=true, ok=true), got real=%v ok=%v", id, rec.Real, ok)
+	}
+}
+
+// TestLineage_MergeParentsAreStandaloneFamilies (VC13) pins that the mythomax
+// merge parents are modeled as their OWN base families (mythologic, huginn) — not
+// as llama-variants — and that both are registered as known base families so
+// lineage parent-validation accepts them. VC10's ≥2-parent merge invariant holds.
+func TestLineage_MergeParentsAreStandaloneFamilies(t *testing.T) {
+	m, ok := bestiary.LookupModel("gryphe/mythomax-l2-13b")
+	if !ok {
+		t.Fatal("LookupModel(gryphe/mythomax-l2-13b): merge fixture must exist")
+	}
+	if len(m.Lineage) < 2 {
+		t.Fatalf("VC10: merge must carry >= 2 parents; got %d", len(m.Lineage))
+	}
+	wantParents := map[bestiary.Family]bool{
+		bestiary.FamilyMythologic: false,
+		bestiary.FamilyHuginn:     false,
+	}
+	for _, e := range m.Lineage {
+		if e.Kind != bestiary.DerivationMerge {
+			t.Errorf("parent %q kind = %v, want merge", e.Parent.Family, e.Kind)
+		}
+		// The parent must be a STANDALONE family, never a llama-variant.
+		if e.Parent.Family == bestiary.FamilyLlama {
+			t.Errorf("merge parent modeled as llama (variant %q); want a standalone family", e.Parent.Variant)
+		}
+		if _, expected := wantParents[e.Parent.Family]; expected {
+			wantParents[e.Parent.Family] = true
+		}
+		// Every parent base family must be registered/known for validation.
+		if !e.Parent.Family.IsKnown() {
+			t.Errorf("merge parent family %q is not a known base family (must be registered)", e.Parent.Family)
+		}
+	}
+	for fam, seen := range wantParents {
+		if !seen {
+			t.Errorf("expected standalone merge parent %q not found in lineage", fam)
+		}
+	}
+}
+
+// TestLineage_IDFamilyOverride_FoldToLlamaDerivatives (VC14) pins the exact-ID
+// family overrides that rescue derivatives a provider mislabeled with the base
+// family ("llama"): the record must regain its derivative family AND its curated
+// lineage, and the previously case-split MythoMax must link to the one mythomax
+// entity across providers.
+func TestLineage_IDFamilyOverride_FoldToLlamaDerivatives(t *testing.T) {
+	// Dracarys-72B: provider tagged it raw_family=llama → must become dracarys
+	// with a finetune-from-llama edge.
+	d, ok := bestiary.LookupModel("abacusai/Dracarys-72B-Instruct")
+	if !ok {
+		t.Fatal("LookupModel(abacusai/Dracarys-72B-Instruct): record must exist")
+	}
+	if d.Family != bestiary.Family("dracarys") {
+		t.Errorf("Dracarys-72B Family = %q, want dracarys (override must beat raw_family=llama)", d.Family)
+	}
+	if edge, ok := findEdge(d.Lineage, bestiary.FamilyLlama); !ok || edge.Kind != bestiary.DerivationFinetune {
+		t.Errorf("Dracarys-72B Lineage = %+v, want a llama finetune edge", d.Lineage)
+	}
+
+	// MythoMax-L2-13b (nano-gpt, raw_family=llama) → mythomax + merge lineage.
+	mm, ok := bestiary.LookupModel("Gryphe/MythoMax-L2-13b")
+	if !ok {
+		t.Fatal("LookupModel(Gryphe/MythoMax-L2-13b): record must exist")
+	}
+	if mm.Family != bestiary.Family("mythomax") {
+		t.Errorf("MythoMax-L2-13b Family = %q, want mythomax (override must beat raw_family=llama)", mm.Family)
+	}
+	if len(mm.Lineage) < 2 {
+		t.Errorf("MythoMax-L2-13b Lineage = %+v, want the >=2-parent merge", mm.Lineage)
+	}
+
+	// Cross-provider linking: the mythomax entity must now aggregate BOTH the
+	// nano-gpt instance (previously split off as family=llama) and the providers
+	// that always served it as mythomax — one entity, multiple providers.
+	ent, ok := bestiary.EntityByTuple(bestiary.Family("mythomax"), "", "")
+	if !ok {
+		t.Fatal("EntityByTuple(mythomax): the mythomax entity must exist")
+	}
+	var providers = map[bestiary.Provider]bool{}
+	for _, inst := range ent.Instances {
+		providers[inst.Provider] = true
+	}
+	if !providers[bestiary.ProviderNanoGPT] {
+		t.Errorf("mythomax entity instances = %v providers; want the nano-gpt MythoMax linked in (case-split fixed)", providers)
+	}
+	if len(providers) < 2 {
+		t.Errorf("mythomax entity spans %d providers, want >= 2 (cross-provider linking)", len(providers))
 	}
 }
 

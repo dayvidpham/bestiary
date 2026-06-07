@@ -1,10 +1,10 @@
 {
   "total_records": 4979,
-  "changed_count": 1211,
+  "changed_count": 1212,
   "cat_a_divergence_fix_count": 324,
-  "cat_b_improvement_count": 884,
+  "cat_b_improvement_count": 883,
   "cat_c_unexpected_regression_count": 0,
-  "justified_exception_count": 3,
+  "justified_exception_count": 5,
   "id_tuple4_incl_modifier_divergence_frozen_before": 81,
   "id_tuple4_incl_modifier_divergence_current_after": 13,
   "divergence_metric": "4-tuple INCL Modifier (Family,Variant,Version,Modifier); before=frozen baseline, after=current snapshot. DISTINCT from the authoritative cross-provider divergenceExact gate (3-tuple, EXCL Modifier, current snapshot, =0).",
@@ -4155,15 +4155,6 @@
       "raw_family": "qwen",
       "before": "(family=\"qwen\",variant=\"instruct\",version=\"3\",modifier=\"\")",
       "after": "(family=\"qwen\",variant=\"\",version=\"3\",modifier=\"instruct\")",
-      "category": "b:improvement",
-      "reason": "family-preserving de-noise/enrich: only phantom losses and/or enrichments, no ID-present field lost"
-    },
-    {
-      "provider": "nano-gpt",
-      "id": "abacusai/Dracarys-72B-Instruct",
-      "raw_family": "llama",
-      "before": "(family=\"llama\",variant=\"instruct\",version=\"\",modifier=\"\")",
-      "after": "(family=\"llama\",variant=\"\",version=\"\",modifier=\"instruct\")",
       "category": "b:improvement",
       "reason": "family-preserving de-noise/enrich: only phantom losses and/or enrichments, no ID-present field lost"
     },
@@ -10880,6 +10871,24 @@
       "after": "(family=\"glm\",variant=\"v\",version=\"5\",modifier=\"turbo\")",
       "category": "b:improvement",
       "reason": "family-preserving de-noise/enrich: only phantom losses and/or enrichments, no ID-present field lost"
+    },
+    {
+      "provider": "nano-gpt",
+      "id": "Gryphe/MythoMax-L2-13b",
+      "raw_family": "llama",
+      "before": "(family=\"llama\",variant=\"\",version=\"\",modifier=\"\")",
+      "after": "(family=\"mythomax\",variant=\"\",version=\"\",modifier=\"\")",
+      "category": "justified-exception",
+      "reason": "JUSTIFIED: GH#11 lineage (VC14): nano-gpt served MythoMax-L2-13B with raw_family='llama', folding it to the llama base and splitting it from the mythomax entity served by every other provider (raw=''). idFamilyOverrides restores family=mythomax, converging all providers onto the one mythomax merge entity. Single-provider exact-ID override; no cross-provider divergence introduced."
+    },
+    {
+      "provider": "nano-gpt",
+      "id": "abacusai/Dracarys-72B-Instruct",
+      "raw_family": "llama",
+      "before": "(family=\"llama\",variant=\"instruct\",version=\"\",modifier=\"\")",
+      "after": "(family=\"dracarys\",variant=\"\",version=\"\",modifier=\"\")",
+      "category": "justified-exception",
+      "reason": "JUSTIFIED: GH#11 lineage (VC14): nano-gpt served Dracarys-72B with raw_family='llama', folding the dracarys finetune into the llama base and erasing its lineage. idFamilyOverrides restores family=dracarys + a finetune-from-llama edge. The 'instruct' token is intentionally not re-attached so this 72B keys as the bare 'dracarys' entity, DISTINCT from the separate dracarys-llama-3.1-70b ('dracarys{instruct}') — preventing a wrong-merge of two different artifacts. Single-provider exact-ID override; no divergence introduced."
     },
     {
       "provider": "nvidia",
