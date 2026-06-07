@@ -118,7 +118,14 @@ func loadLineageTable() (*lineageTable, error) {
 // when loading failed. It never returns nil and never panics — runtime lineage
 // lookups degrade to "no lineage" rather than aborting the program.
 func loadLineageTableSafe() *lineageTable {
-	t, err := loadLineageTable()
+	return safeLineageTable(loadLineageTable())
+}
+
+// safeLineageTable is the testable degrade seam behind loadLineageTableSafe: it
+// returns t when loading succeeded, or a non-nil EMPTY table when err is non-nil
+// or t is nil. It is the runtime-degrade twin of the codegen ValidateLineageTable
+// hard-fail — at runtime a bad/missing table yields "no lineage", never a panic.
+func safeLineageTable(t *lineageTable, err error) *lineageTable {
 	if err != nil || t == nil {
 		return emptyLineageTable()
 	}

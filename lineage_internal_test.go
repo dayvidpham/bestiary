@@ -1,6 +1,7 @@
 package bestiary
 
 import (
+	"reflect"
 	"strings"
 	"testing"
 	"time"
@@ -92,8 +93,10 @@ func TestLineageAncestors_CycleSafe(t *testing.T) {
 	case <-time.After(2 * time.Second):
 		t.Fatal("lineageAncestors did not terminate on a cyclic DAG (infinite loop)")
 	}
-	if len(got) != 2 {
-		t.Fatalf("ancestors of cyclic a→b→a = %+v, want exactly 2 distinct nodes", got)
+	// The visited set must yield EXACTLY {a, b} — each node once, no duplicates —
+	// so the cycle-break is observable in the contents, not just the cardinality.
+	if want := refSet(a, b); !reflect.DeepEqual(refSet(got...), want) {
+		t.Fatalf("ancestors of cyclic a→b→a = %v, want exactly the set {%s, %s}", got, a.String(), b.String())
 	}
 }
 
@@ -114,7 +117,57 @@ func TestLineageDescendants_CycleSafe(t *testing.T) {
 	case <-time.After(2 * time.Second):
 		t.Fatal("lineageDescendants did not terminate on a cyclic DAG (infinite loop)")
 	}
-	if len(got) != 2 {
-		t.Fatalf("descendants of cyclic a→b→a = %+v, want exactly 2 distinct nodes", got)
+	if want := refSet(a, b); !reflect.DeepEqual(refSet(got...), want) {
+		t.Fatalf("descendants of cyclic a→b→a = %v, want exactly the set {%s, %s}", got, a.String(), b.String())
+	}
+}
+
+// refSet collapses EntityRefs to a set keyed by their canonical String() form, so
+// a cycle-safe traversal's output can be compared by CONTENT independent of order.
+func refSet(refs ...EntityRef) map[string]struct{} {
+	set := make(map[string]struct{}, len(refs))
+	for _, r := range refs {
+		set[r.String()] = struct{}{}
+	}
+	return set
+}
+
+// TestSafeLineageTable_DegradesToNoLineage (A-MINOR-1) exercises the runtime
+// degrade twin of the codegen ValidateLineageTable hard-fail: when the table
+// fails to load (parse error) or is nil, safeLineageTable must fall back to a
+// non-nil EMPTY table so lookups miss ("no lineage") and traversal yields nothing
+// — never a nil-deref or panic. Mirrors the Slice-2 ClassifyModifier degrade test.
+func TestSafeLineageTable_DegradesToNoLineage(t *testing.T) {
+	// A malformed table is the load-failure trigger.
+	badTable, err := parseLineageTable([]byte("}{ not valid json"))
+	if err == nil {
+		t.Fatal("parseLineageTable accepted malformed JSON; expected a load error to drive the degrade path")
+	}
+
+	for _, tc := range []struct {
+		name  string
+		table *lineageTable
+		err   error
+	}{
+		{"load error", badTable, err},
+		{"nil table, nil error", nil, nil},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			got := safeLineageTable(tc.table, tc.err)
+			if got == nil {
+				t.Fatal("safeLineageTable returned nil; the degrade fallback must be non-nil")
+			}
+			// Lookups miss on the degraded table even for an otherwise-curated child.
+			if rec, ok := got.lookup("gryphe/mythomax-l2-13b"); ok {
+				t.Errorf("degraded lookup returned a record %+v, want a miss (no lineage)", rec)
+			}
+			// Traversal over the degraded indices is empty and never panics.
+			if anc := lineageAncestors(nil, got.forward); anc != nil {
+				t.Errorf("degraded ancestors = %v, want nil", anc)
+			}
+			if desc := lineageDescendants("llama@3.1", got.reverse); desc != nil {
+				t.Errorf("degraded descendants = %v, want nil", desc)
+			}
+		})
 	}
 }

@@ -177,11 +177,11 @@ func TestLineage_JSONRoundTrip(t *testing.T) {
 	}
 }
 
-// TestLineage_Ancestors_RealAndCycleSafe (VC3+) exercises Entity.Ancestors over
-// the populated DAG: a finetune child's ancestors are exactly its base parent,
-// and the traversal terminates (the curated DAG is acyclic; the visited-set guard
-// is unit-tested directly against an injected cycle in the internal tests).
-func TestLineage_Ancestors_RealAndCycleSafe(t *testing.T) {
+// TestLineage_Ancestors_RealCatalog (VC3+) exercises Entity.Ancestors over the
+// populated (acyclic) curated DAG: a finetune child's ancestors are exactly its
+// base parent. Cycle-termination of the DFS is covered directly against an
+// injected cycle in the internal tests (TestLineageAncestors_CycleSafe).
+func TestLineage_Ancestors_RealCatalog(t *testing.T) {
 	// Construct the dracarys entity with its codegen-populated edges.
 	edges := bestiary.LineageFor("abacusai/dracarys-llama-3_1-70b-instruct")
 	if len(edges) == 0 {
