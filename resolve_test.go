@@ -40,10 +40,10 @@ func TestResolve_ExactID_CrossProviderHosting(t *testing.T) {
 }
 
 // TestResolve_Ambiguous_MultipleCanonicals verifies that an input matching
-// multiple distinct canonical triples returns *ErrAmbiguous.
+// multiple distinct canonical identities returns *ErrAmbiguous.
 func TestResolve_Ambiguous_MultipleCanonicals(t *testing.T) {
 	// "claude" as a canonical family name matches claude/opus, claude/sonnet,
-	// claude/haiku, etc. — multiple distinct canonical triples.
+	// claude/haiku, etc. — multiple distinct canonical identities.
 	_, err := bestiary.Resolve("claude", bestiary.WithScheme(bestiary.SchemeCanonical))
 	if err == nil {
 		t.Fatal("Resolve(\"claude\", SchemeCanonical) returned nil error, want *ErrAmbiguous")
@@ -58,12 +58,36 @@ func TestResolve_Ambiguous_MultipleCanonicals(t *testing.T) {
 	if len(ambig.Candidates) < 2 {
 		t.Errorf("ErrAmbiguous.Candidates len=%d, want >=2 distinct canonicals", len(ambig.Candidates))
 	}
-	// Candidates must be distinct canonical triples.
+	// Candidates must be distinct by the extended canonical tuple:
+	// (Family, Variant, Version, Modifier, Date, contextN).
+	//
+	// Group-key invariant: the group key now includes Version, Modifier, and a parsed
+	// ":N" context-window discriminator from the raw ID. Two candidates may share
+	// the same (Family, Variant, Date) triple but differ in Version, Modifier, or
+	// contextN — that is expected and correct. The dedup key must cover all six
+	// dimensions.
+	//
+	// contextN is extracted inline from the model ID (mirrors unexported parseContextN).
+	contextN := func(id bestiary.ModelID) string {
+		s := string(id)
+		i := strings.LastIndex(s, ":")
+		if i < 0 {
+			return ""
+		}
+		suffix := s[i+1:]
+		for _, c := range suffix {
+			if c < '0' || c > '9' {
+				return ""
+			}
+		}
+		return suffix
+	}
 	seen := make(map[string]struct{})
 	for _, c := range ambig.Candidates {
-		key := string(c.Family) + "/" + c.Variant + "@" + c.Date
+		key := string(c.Family) + "/" + c.Variant + "/" + c.Version +
+			"@" + c.Date + "[" + modJoin(c.Modifier) + "]:" + contextN(c.ID)
 		if _, dup := seen[key]; dup {
-			t.Errorf("ErrAmbiguous.Candidates contains duplicate canonical %q", key)
+			t.Errorf("ErrAmbiguous.Candidates contains duplicate canonical tuple %q (ID=%q)", key, c.ID)
 		}
 		seen[key] = struct{}{}
 	}
@@ -101,17 +125,120 @@ func TestResolve_WithSchemeRaw_ExactMatch(t *testing.T) {
 	}
 }
 
-// TestResolve_WithSchemeRaw_NoMatch verifies that SchemeRaw with a partial ID
-// returns ErrNotFound (exact match only, no substring).
-func TestResolve_WithSchemeRaw_NoMatch(t *testing.T) {
-	// Partial prefix should not match under SchemeRaw.
-	_, err := bestiary.Resolve("claude-opus", bestiary.WithScheme(bestiary.SchemeRaw))
+// TestResolve_WithSchemeRaw_BareFamilyAmbiguous is a regression test for the
+// bare-family fallback in resolve.go:141-150.
+//
+// When SchemeRaw produces zero matches and the input looks like a bare identifier
+// (no slashes, no "@", no special characters), Resolve retries with SchemeCanonical
+// to surface ErrAmbiguous instead of ErrNotFound, matching on the canonical Family.
+//
+// NOTE: this test previously used "claude-opus" — which resolved as
+// ErrAmbiguous ONLY because the empty-raw claude-opus-4.x models were OVER-CAPTURED to
+// Family="claude-opus" (so modelMatches' Family-exact branch matched the bare input).
+// A later fix corrected that over-capture (those models are now Family="claude", Variant="opus").
+// The bare "claude-opus" shorthand was then restored via a
+// variant-aware bare-family fallback — see TestResolve_BareHyphenShorthandRestored
+// below, which pins the ratified ErrAmbiguous behavior. This test now uses the bare
+// canonical Family "claude" so it keeps exercising the SAME fallback MECHANISM
+// (raw→canonical retry → ErrAmbiguous) against a genuine multi-model family.
+func TestResolve_WithSchemeRaw_BareFamilyAmbiguous(t *testing.T) {
+	_, err := bestiary.Resolve("claude", bestiary.WithScheme(bestiary.SchemeRaw))
 	if err == nil {
-		t.Fatal("Resolve with SchemeRaw partial ID returned nil error, want ErrNotFound")
+		t.Fatal("Resolve with SchemeRaw 'claude' returned nil error, want ErrAmbiguous")
 	}
-	var notFound *bestiary.ErrNotFound
-	if !errors.As(err, &notFound) {
-		t.Fatalf("Resolve SchemeRaw partial: error %T, want *ErrNotFound", err)
+	var ambig *bestiary.ErrAmbiguous
+	if !errors.As(err, &ambig) {
+		t.Fatalf("Resolve SchemeRaw 'claude': got %T (%v), want *ErrAmbiguous\n"+
+			"  What: bare-family fallback (resolve.go:141-150) retried with SchemeCanonical\n"+
+			"  Why: bare 'claude' matches the claude Family group on the canonical retry\n"+
+			"  Fix: this is DESIGNED behavior — do not revert to ErrNotFound",
+			err, err)
+	}
+	// Assert the bare-family retry surfaced a multi-candidate ambiguity (the claude
+	// Family group). Candidate IDs need NOT literally contain "claude" — the claude
+	// Family legitimately includes claude-backed models with vendor-branded IDs
+	// (e.g. GitLab Duo's "duo-chat-opus-4-5"); membership is by Family, not ID substring.
+	if len(ambig.Candidates) <= 1 {
+		t.Errorf("ErrAmbiguous.Candidates has %d entries; expected multiple claude-family candidates",
+			len(ambig.Candidates))
+	}
+}
+
+// TestResolve_BareHyphenShorthandRestored pins the restored-shorthand behavior,
+// the ratified successor to the former bare-over-capture-no-longer-ambiguous test.
+//
+// HISTORY: earlier, bare hyphen "claude-opus" resolved as ErrAmbiguous ONLY
+// because the opus models were OVER-CAPTURED to Family="claude-opus". That was later fixed
+// to (Family="claude", Variant="opus"), which incidentally regressed the shorthand to
+// ErrNotFound. Per a user ruling ("Restore shorthand now (~20 LOC in
+// resolve.go)"), it was restored the RIGHT way: a variant-aware bare-family fallback.
+//
+// PIN: Resolve("claude-opus", SchemeRaw) now returns *ErrAmbiguous listing the opus
+// candidate group (>1), via matchBareFamilyVariant — NOT the old over-capture path and
+// NOT ErrNotFound. The full exact ID still resolves cleanly.
+func TestResolve_BareHyphenShorthandRestored(t *testing.T) {
+	_, err := bestiary.Resolve("claude-opus", bestiary.WithScheme(bestiary.SchemeRaw))
+	var ambig *bestiary.ErrAmbiguous
+	if !errors.As(err, &ambig) {
+		t.Fatalf("Resolve SchemeRaw 'claude-opus': got %T (%v), want *ErrAmbiguous\n"+
+			"  A later fix restored the variant-aware bare-family shorthand:\n"+
+			"  '<family>-<variant>' (claude-opus) → the opus group as ambiguous candidates.\n"+
+			"  Do NOT revert to ErrNotFound.", err, err)
+	}
+	// The shorthand must surface the multi-model opus group, not a single match.
+	if len(ambig.Candidates) <= 1 {
+		t.Errorf("ErrAmbiguous.Candidates has %d entries; expected the multi-version opus group (>1)",
+			len(ambig.Candidates))
+	}
+	// Every candidate must belong to the claude family with the opus variant — the
+	// shorthand must be precise, not a broad family match.
+	for _, c := range ambig.Candidates {
+		if c.Family != "claude" || c.Variant != "opus" {
+			t.Errorf("candidate %s has (Family=%q, Variant=%q); want (claude, opus)",
+				c.ID, c.Family, c.Variant)
+		}
+	}
+	// The full, exact ID must still resolve cleanly (no regression to full-ID lookup).
+	if _, err := bestiary.Resolve("claude-opus-4-20250514", bestiary.WithScheme(bestiary.SchemeRaw)); err != nil {
+		t.Errorf("full ID claude-opus-4-20250514 must still resolve, got: %v", err)
+	}
+}
+
+// TestResolve_ShorthandRegressions pins the behaviors that MUST stay UNCHANGED
+// alongside the restored shorthand:
+//   - bare "claude" (family only) → still ErrAmbiguous with many candidates
+//   - canonical "claude/opus" → still ErrAmbiguous with the opus group
+//   - genuinely-unknown "<nonfamily>-x" and "<family>-<nonvariant>" → still ErrNotFound
+//     (the fallback is conservative and must NOT over-match arbitrary hyphenated input)
+func TestResolve_ShorthandRegressions(t *testing.T) {
+	// Bare family "claude" stays ambiguous over the whole family group.
+	_, err := bestiary.Resolve("claude", bestiary.WithScheme(bestiary.SchemeRaw))
+	var ambig *bestiary.ErrAmbiguous
+	if !errors.As(err, &ambig) {
+		t.Errorf("Resolve SchemeRaw 'claude': got %v, want *ErrAmbiguous (bare family unchanged)", err)
+	} else if len(ambig.Candidates) <= 1 {
+		t.Errorf("bare 'claude': got %d candidates, want the full claude family group (>1)", len(ambig.Candidates))
+	}
+
+	// Canonical "claude/opus" stays ambiguous over the opus group.
+	var ambig2 *bestiary.ErrAmbiguous
+	_, err = bestiary.Resolve("claude/opus", bestiary.WithScheme(bestiary.SchemeCanonical))
+	if !errors.As(err, &ambig2) {
+		t.Errorf("Resolve SchemeCanonical 'claude/opus': got %v, want *ErrAmbiguous (canonical form unchanged)", err)
+	} else if len(ambig2.Candidates) <= 1 {
+		t.Errorf("canonical 'claude/opus': got %d candidates, want the opus group (>1)", len(ambig2.Candidates))
+	}
+
+	// Genuinely-unknown inputs must NOT be over-matched by the variant-aware fallback.
+	for _, in := range []string{
+		"foo-bar",       // leading token is not a registered family
+		"claude-banana", // family is known but "banana" is not a claude variant
+	} {
+		var nf *bestiary.ErrNotFound
+		if _, err := bestiary.Resolve(in, bestiary.WithScheme(bestiary.SchemeRaw)); !errors.As(err, &nf) {
+			t.Errorf("Resolve SchemeRaw %q: got %v, want *ErrNotFound\n"+
+				"  the variant-aware fallback must stay conservative and not over-match.", in, err)
+		}
 	}
 }
 
@@ -267,8 +394,6 @@ func TestResolve_CanonicalFamily_ReturnsErrAmbiguous(t *testing.T) {
 // ErrAmbiguous — the input is unambiguous because the model ID is exact. The
 // fix groups by model ID (not canonical triple) when all matches share the same
 // raw ID.
-//
-// Regression: bestiary-tant (Reviewer A, cycle 2).
 func TestResolve_ExactIDInCanonicalMode_NotAmbiguous(t *testing.T) {
 	// claude-opus-4-20250514 exhibits the divergent-variant pattern: some
 	// providers (e.g. anthropic, jiekou) have Variant="opus" while others
@@ -312,7 +437,7 @@ func TestResolve_ExactIDInCanonicalMode_NotAmbiguous(t *testing.T) {
 // *ErrAmbiguous when multiple distinct family entries match. This is distinct from
 // auto-detecting SchemeCanonical in detectScheme — it is a post-match fallback.
 //
-// B4 (SLICE-FIX-2): Resolve("claude") must return *ErrAmbiguous (not ErrNotFound).
+// Resolve("claude") must return *ErrAmbiguous (not ErrNotFound).
 func TestResolve_SchemeCanonical_NeverAutoDetected_detectScheme(t *testing.T) {
 	// "claude" has no slashes — detectScheme returns SchemeRaw (unchanged).
 	// But Resolve's bare-family fallback applies, so the result is ErrAmbiguous.
@@ -332,7 +457,7 @@ func TestResolve_SchemeCanonical_NeverAutoDetected_detectScheme(t *testing.T) {
 // TestResolve_CanonicalAutoDetect verifies that detectScheme recognizes
 // "provider/family/variant@date" form and auto-detects SchemeCanonical.
 //
-// B1/B2 (SLICE-FIX-2): Resolve("claude/opus@2025-11-01") must return non-empty
+// Resolve("claude/opus@2025-11-01") must return non-empty
 // refs (or *ErrAmbiguous when multi-provider) — NEVER ErrNotFound.
 func TestResolve_CanonicalAutoDetect(t *testing.T) {
 	refs, err := bestiary.Resolve("claude/opus@2025-11-01")
@@ -354,7 +479,7 @@ func TestResolve_CanonicalAutoDetect(t *testing.T) {
 	// ErrNotFound is the bug — must not be returned.
 	var notFound *bestiary.ErrNotFound
 	if errors.As(err, &notFound) {
-		t.Fatalf("Resolve(\"claude/opus@2025-11-01\") returned ErrNotFound; "+
+		t.Fatalf("Resolve(\"claude/opus@2025-11-01\") returned ErrNotFound; " +
 			"detectScheme must recognize canonical form (family/variant@date) and NOT fall back to raw-ID lookup")
 	}
 	t.Fatalf("Resolve(\"claude/opus@2025-11-01\") returned unexpected error %T: %v", err, err)
@@ -363,7 +488,7 @@ func TestResolve_CanonicalAutoDetect(t *testing.T) {
 // TestResolve_PURLProviderFilter verifies that the provider segment in a PURL
 // input is retained as a filter hint and applied to match results.
 //
-// B3 (SLICE-FIX-2): Resolve("pkg:huggingface/anthropic/claude-opus-4-5") must
+// Resolve("pkg:huggingface/anthropic/claude-opus-4-5") must
 // return ONLY refs where Provider == "anthropic". It must never return refs from
 // other providers that also host the same model ID.
 func TestResolve_PURLProviderFilter(t *testing.T) {
@@ -393,7 +518,7 @@ func TestResolve_PURLProviderFilter(t *testing.T) {
 // TestResolve_BareFamilyAmbiguous verifies that Resolve("claude") returns
 // *ErrAmbiguous with a non-empty candidate list — not ErrNotFound.
 //
-// B4 (SLICE-FIX-2): bare family names should fall back to SchemeCanonical
+// Bare family names should fall back to SchemeCanonical
 // family-only matching and surface ErrAmbiguous when multiple variants match.
 func TestResolve_BareFamilyAmbiguous(t *testing.T) {
 	_, err := bestiary.Resolve("claude")
@@ -404,8 +529,8 @@ func TestResolve_BareFamilyAmbiguous(t *testing.T) {
 	if !errors.As(err, &ambig) {
 		var notFound *bestiary.ErrNotFound
 		if errors.As(err, &notFound) {
-			t.Fatalf("Resolve(\"claude\") returned ErrNotFound; "+
-				"bare-family fallback must return *ErrAmbiguous when multiple claude variants exist, "+
+			t.Fatalf("Resolve(\"claude\") returned ErrNotFound; " +
+				"bare-family fallback must return *ErrAmbiguous when multiple claude variants exist, " +
 				"not ErrNotFound — fix: add SchemeCanonical fallback in Resolve after SchemeRaw returns empty")
 		}
 		t.Fatalf("Resolve(\"claude\") returned unexpected error type %T: %v", err, err)
@@ -438,7 +563,7 @@ func TestResolve_ErrAmbiguous_SchemePropagated(t *testing.T) {
 // back to an all-provider search and returns *ErrAmbiguous with candidates drawn
 // from all providers. The error message must mention the missed namespace.
 //
-// Fix #1 (SLICE-FIX-V2-2): "State that we are doing loose matching in the fallback.
+// Fix #1: "State that we are doing loose matching in the fallback.
 // In zero match case, state that there are none and fallback to ErrAmbiguous with candidates."
 func TestResolve_PURL_LooseFallback_ZeroNamespaceMatches(t *testing.T) {
 	// Use a namespace (provider) that does NOT host claude-opus-4-5 to force the
@@ -452,7 +577,7 @@ func TestResolve_PURL_LooseFallback_ZeroNamespaceMatches(t *testing.T) {
 	if !errors.As(err, &ambig) {
 		var notFound *bestiary.ErrNotFound
 		if errors.As(err, &notFound) {
-			t.Fatalf("Resolve PURL zero-namespace-match: got ErrNotFound, want ErrAmbiguous with loose fallback; "+
+			t.Fatalf("Resolve PURL zero-namespace-match: got ErrNotFound, want ErrAmbiguous with loose fallback; " +
 				"Fix #1: when namespace yields no matches, fall back to all-provider candidates")
 		}
 		t.Fatalf("Resolve PURL zero-namespace-match: unexpected error %T: %v", err, err)
@@ -677,21 +802,41 @@ func TestResolve_WithInputFormat_Raw_Resolves(t *testing.T) {
 	}
 }
 
-// TestResolve_WithInputFormat_Raw_PartialNoMatch verifies that InputFormatRaw
-// with a partial ID returns ErrNotFound (exact match only).
-func TestResolve_WithInputFormat_Raw_PartialNoMatch(t *testing.T) {
-	_, err := bestiary.Resolve("claude-opus",
+// TestResolve_WithInputFormat_Raw_PartialAmbiguous is a regression test for the
+// bare-family fallback in resolve.go:141-150.
+//
+// InputFormatRaw delegates to SchemeRaw, so it follows the same bare-family fallback:
+// when SchemeRaw produces zero matches and the input is a bare identifier, Resolve
+// retries with SchemeCanonical and surfaces ErrAmbiguous instead of ErrNotFound.
+//
+// NOTE: repointed from "claude-opus" to the bare Family "claude" for the
+// same reason as TestResolve_WithSchemeRaw_BareFamilyAmbiguous — removed the
+// claude-opus Family over-capture, so the hyphen-tier shorthand no longer matches a
+// Family. The fallback MECHANISM (raw→canonical retry → ErrAmbiguous on a real multi-model
+// Family) is unchanged and is what this test guards.
+func TestResolve_WithInputFormat_Raw_PartialAmbiguous(t *testing.T) {
+	_, err := bestiary.Resolve("claude",
 		bestiary.WithInputFormat(bestiary.InputFormatRaw))
 	if err == nil {
-		t.Fatal("Resolve WithInputFormat(Raw) partial ID: want ErrNotFound, got nil")
+		t.Fatal("Resolve WithInputFormat(Raw) 'claude': want ErrAmbiguous, got nil")
 	}
-	var notFound *bestiary.ErrNotFound
-	if !errors.As(err, &notFound) {
-		t.Fatalf("Resolve WithInputFormat(Raw) partial: got %T, want *ErrNotFound", err)
+	var ambig *bestiary.ErrAmbiguous
+	if !errors.As(err, &ambig) {
+		t.Fatalf("Resolve WithInputFormat(Raw) 'claude': got %T (%v), want *ErrAmbiguous\n"+
+			"  What: bare-family fallback (resolve.go:141-150) retried with SchemeCanonical\n"+
+			"  Why: bare 'claude' matches the claude Family group on the canonical retry\n"+
+			"  Fix: this is DESIGNED behavior — do not revert to ErrNotFound",
+			err, err)
+	}
+	// Assert a multi-candidate ambiguity (claude Family group); candidate IDs need not
+	// contain "claude" (claude-backed vendor IDs like "duo-chat-opus-4-5" are members).
+	if len(ambig.Candidates) <= 1 {
+		t.Errorf("ErrAmbiguous.Candidates has %d entries; expected multiple claude-family candidates",
+			len(ambig.Candidates))
 	}
 }
 
-// --- Fix 1 (SLICE-FIX-V2-5 cycle-2): Bracket-suffix [modifier] stripping in Resolve ---
+// --- Bracket-suffix [modifier] stripping in Resolve ---
 
 // TestResolve_BracketSuffixStripping_DateMatch verifies that a canonical input
 // with a [modifier] bracket suffix resolves correctly when both the date AND the
@@ -703,7 +848,7 @@ func TestResolve_WithInputFormat_Raw_PartialNoMatch(t *testing.T) {
 // Fix: bracket suffix is extracted BEFORE the "@date" suffix so dateFilter
 // contains only the date string.
 //
-// BLOCKER: bestiary-wjk9
+// BLOCKER:
 func TestResolve_BracketSuffixStripping_DateMatch(t *testing.T) {
 	// claude-3-5-haiku-latest from Anthropic has Family="claude", Variant="haiku",
 	// Date="2024-10-22", Modifier="latest" in the static registry.
@@ -713,9 +858,9 @@ func TestResolve_BracketSuffixStripping_DateMatch(t *testing.T) {
 	if err != nil {
 		var notFound *bestiary.ErrNotFound
 		if errors.As(err, &notFound) {
-			t.Fatalf("Resolve(\"anthropic/claude/haiku@2024-10-22[latest]\") returned ErrNotFound; "+
-				"bracket-suffix [latest] must be stripped before date matching — BLOCKER bestiary-wjk9\n"+
-				"  What: bracket suffix was included in dateFilter string\n"+
+			t.Fatalf("Resolve(\"anthropic/claude/haiku@2024-10-22[latest]\") returned ErrNotFound; " +
+				"bracket-suffix [latest] must be stripped before date matching\n" +
+				"  What: bracket suffix was included in dateFilter string\n" +
 				"  Fix: strip [modifier] suffix from matchInput before extracting @date")
 		}
 		t.Fatalf("Resolve(\"anthropic/claude/haiku@2024-10-22[latest]\") returned unexpected error %T: %v", err, err)
@@ -728,7 +873,7 @@ func TestResolve_BracketSuffixStripping_DateMatch(t *testing.T) {
 		if r.Date != "2024-10-22" {
 			t.Errorf("ref.Date = %q, want %q", r.Date, "2024-10-22")
 		}
-		if r.Modifier != "latest" {
+		if modJoin(r.Modifier) != "latest" {
 			t.Errorf("ref.Modifier = %q, want %q", r.Modifier, "latest")
 		}
 	}
@@ -742,12 +887,12 @@ func TestResolve_BracketSuffixStripping_DateMatch(t *testing.T) {
 // are tried, the nonexistent modifier must yield ErrNotFound (the filter excludes all
 // models since none have Modifier="nonexistent" for that date).
 //
-// BLOCKER: bestiary-wjk9
+// BLOCKER:
 func TestResolve_BracketSuffixStripping_ModifierFilter(t *testing.T) {
 	// A synthetic modifier that no real model has — must yield ErrNotFound (filter applied).
 	_, err := bestiary.Resolve("claude/haiku@2024-10-22[nonexistent-modifier-xyz]")
 	if err == nil {
-		t.Fatal("Resolve with nonexistent [modifier] returned nil error; "+
+		t.Fatal("Resolve with nonexistent [modifier] returned nil error; " +
 			"modifier filter must exclude models whose Modifier field does not match")
 	}
 	// Must be ErrNotFound (no models match the nonexistent modifier), not ErrAmbiguous.
@@ -769,12 +914,12 @@ func TestResolve_BracketSuffixStripping_ModifierFilter(t *testing.T) {
 // This is the full round-trip: ref → String() → Resolve() → ref'.
 // ref' must have the same (Family, Variant, Date, Modifier) as ref.
 //
-// BLOCKER: bestiary-wjk9
+// BLOCKER:
 func TestResolve_BracketSuffixStripping_RoundTrip(t *testing.T) {
 	// Find any static model with a non-empty Modifier to exercise the round-trip.
 	var seed *bestiary.ModelRef
 	for _, m := range bestiary.StaticModels() {
-		if m.Modifier != "" && m.Family != "" && m.Date != "" && m.Provider == bestiary.ProviderAnthropic {
+		if len(m.Modifier) > 0 && m.Family != "" && m.Date != "" && m.Provider == bestiary.ProviderAnthropic {
 			ref := m.Ref()
 			seed = &ref
 			break
@@ -803,7 +948,7 @@ func TestResolve_BracketSuffixStripping_RoundTrip(t *testing.T) {
 	found := false
 	for _, r := range refs {
 		if r.Family == seed.Family && r.Variant == seed.Variant &&
-			r.Date == seed.Date && r.Modifier == seed.Modifier {
+			r.Date == seed.Date && modJoin(r.Modifier) == modJoin(seed.Modifier) {
 			found = true
 			break
 		}
@@ -814,13 +959,13 @@ func TestResolve_BracketSuffixStripping_RoundTrip(t *testing.T) {
 	}
 }
 
-// --- SLICE-FIX-V4-1: RehostProviders population ---
+// --- : RehostProviders population ---
 
 // TestResolve_RehostProviders_Distinct verifies that ErrAmbiguous.RehostProviders
 // is populated with distinct (deduplicated) non-canonical providers when Resolve
 // returns ErrAmbiguous for a bare family name like "claude".
 //
-// SLICE-FIX-V4-1 L1 — verifies collectRehostProviders dedup and canonical exclusion.
+// Verifies collectRehostProviders dedup and canonical exclusion.
 func TestResolve_RehostProviders_Distinct(t *testing.T) {
 	_, err := bestiary.Resolve("claude")
 	if err == nil {
@@ -858,7 +1003,7 @@ func TestResolve_RehostProviders_Distinct(t *testing.T) {
 // TestResolve_RehostProviders_ExcludesCanonical verifies that the canonical provider
 // is strictly excluded from RehostProviders even when it appears in the match set.
 //
-// SLICE-FIX-V4-1 — ensures collectRehostProviders filters out canonical provider.
+// Ensures collectRehostProviders filters out canonical provider.
 func TestResolve_RehostProviders_ExcludesCanonical(t *testing.T) {
 	_, err := bestiary.Resolve("claude", bestiary.WithScheme(bestiary.SchemeCanonical))
 	if err == nil {
@@ -872,7 +1017,7 @@ func TestResolve_RehostProviders_ExcludesCanonical(t *testing.T) {
 	// RehostProviders must never include anthropic.
 	for _, p := range ambig.RehostProviders {
 		if p == bestiary.ProviderAnthropic {
-			t.Errorf("RehostProviders contains canonical provider anthropic; "+
+			t.Errorf("RehostProviders contains canonical provider anthropic; " +
 				"collectRehostProviders must exclude m.Provider == m.Family.CanonicalProvider()")
 		}
 	}
@@ -881,7 +1026,7 @@ func TestResolve_RehostProviders_ExcludesCanonical(t *testing.T) {
 // TestResolve_RehostProviders_PURL_LooseFallback verifies that RehostProviders is
 // also populated on the PURL loose-fallback ErrAmbiguous path.
 //
-// SLICE-FIX-V4-1 — ensures the PURL loose-fallback construction site populates field.
+// Ensures the PURL loose-fallback construction site populates field.
 func TestResolve_RehostProviders_PURL_LooseFallback(t *testing.T) {
 	_, err := bestiary.Resolve("pkg:huggingface/totally-unknown-ns/claude-opus-4-5")
 	if err == nil {
@@ -912,10 +1057,10 @@ func TestResolve_RehostProviders_PURL_LooseFallback(t *testing.T) {
 	}
 }
 
-// --- SLICE-FIX-V4-1-FIX2: canonical-preference in PURL loose-fallback ---
+// --- canonical-preference in PURL loose-fallback ---
 
 // TestResolve_PURL_LooseFallback_CanonicalProviderInCandidates is a regression test
-// for the BLOCKER (bestiary-ylb8): when a PURL wrong-namespace input resolves to a
+// for the BLOCKER: when a PURL wrong-namespace input resolves to a
 // model that IS hosted by its canonical provider, the canonical provider's entry must
 // appear in ErrAmbiguous.Candidates so that FormatAmbiguous Section 1 is non-empty.
 //
@@ -926,7 +1071,7 @@ func TestResolve_RehostProviders_PURL_LooseFallback(t *testing.T) {
 // After the fix, the canonical provider (anthropic) is preferred as the representative
 // when it is present in the match set, so Section 1 contains the "* anthropic/..." row.
 //
-// Regression: bestiary-ylb8 (BLOCKER).
+// Regression: (BLOCKER).
 func TestResolve_PURL_LooseFallback_CanonicalProviderInCandidates(t *testing.T) {
 	// "nonexistent" namespace forces the loose-fallback path; claude-opus-4-5 is
 	// hosted by anthropic (canonical) and by several rehosts.
@@ -965,7 +1110,7 @@ func TestResolve_PURL_LooseFallback_CanonicalProviderInCandidates(t *testing.T) 
 // correctly excludes canonical providers from Section 2). After the fix, Section 1
 // shows the "* anthropic/claude/opus/..." canonical row.
 //
-// Regression: bestiary-ylb8 (BLOCKER).
+// Regression: (BLOCKER).
 func TestResolve_PURL_LooseFallback_FormatAmbiguous_Section1NonEmpty(t *testing.T) {
 	_, err := bestiary.Resolve("pkg:huggingface/nonexistent/claude-opus-4-5")
 	if err == nil {
@@ -989,5 +1134,151 @@ func TestResolve_PURL_LooseFallback_FormatAmbiguous_Section1NonEmpty(t *testing.
 	// The "* anthropic/..." row must be present (canonical provider is visible).
 	if !strings.Contains(output, "* "+string(bestiary.ProviderAnthropic)) {
 		t.Errorf("FormatAmbiguous Section 1 must contain '* anthropic/...' row for PURL loose-fallback;\nGot:\n%s", output)
+	}
+}
+
+// --- Group-key invariant: :N context-window distinctness + selectRepresentative ---
+
+// TestResolve_ContextN_Distinct_InCandidates verifies that
+// claude-3-7-sonnet-thinking:1024 and claude-3-7-sonnet-thinking:128000 are NOT
+// collapsed into a single group when resolving "claude" with SchemeCanonical.
+// Both must appear as DISTINCT candidates in the ErrAmbiguous result.
+//
+// Before the group-key invariant: group key {family,variant,date} collapsed all :N variants sharing
+// the same (Family="claude", Variant="", Date="2025-02-24") triple → only ONE
+// candidate appeared in ErrAmbiguous for that slot.
+//
+// After the group-key invariant: group key extends to include parseContextN(ref.ID) → :1024 and
+// :128000 produce distinct keys → both appear as distinct candidates.
+func TestResolve_ContextN_Distinct_InCandidates(t *testing.T) {
+	_, err := bestiary.Resolve("claude", bestiary.WithScheme(bestiary.SchemeCanonical))
+	if err == nil {
+		t.Skip("Resolve(claude, SchemeCanonical) returned nil — skip :N candidate check")
+	}
+	var ambig *bestiary.ErrAmbiguous
+	if !errors.As(err, &ambig) {
+		t.Skipf("expected *ErrAmbiguous, got %T: %v", err, err)
+	}
+
+	// Check that the two representative :N models appear as separate candidates.
+	// (They only appear in the static data under ProviderNanoGPT; we just check
+	// presence by raw ID, not by provider.)
+	var found1024, found128k bool
+	for _, c := range ambig.Candidates {
+		switch c.ID {
+		case "claude-3-7-sonnet-thinking:1024":
+			found1024 = true
+		case "claude-3-7-sonnet-thinking:128000":
+			found128k = true
+		}
+	}
+	if !found1024 {
+		t.Errorf("ErrAmbiguous.Candidates must include claude-3-7-sonnet-thinking:1024 as a distinct candidate "+
+			"(group-key :N discriminator not applied?); total candidates=%d", len(ambig.Candidates))
+	}
+	if !found128k {
+		t.Errorf("ErrAmbiguous.Candidates must include claude-3-7-sonnet-thinking:128000 as a distinct candidate "+
+			"(group-key :N discriminator not applied?); total candidates=%d", len(ambig.Candidates))
+	}
+}
+
+// TestResolve_ContextN_Direct_Resolve verifies that direct exact-ID resolution
+// of :N models works correctly — each :N variant resolves to its own model entry,
+// not to a merged representative.
+func TestResolve_ContextN_Direct_Resolve(t *testing.T) {
+	refs1, err1 := bestiary.Resolve("claude-3-7-sonnet-thinking:1024")
+	refs2, err2 := bestiary.Resolve("claude-3-7-sonnet-thinking:128000")
+
+	if err1 != nil {
+		t.Skipf("claude-3-7-sonnet-thinking:1024 not in registry; skipping: %v", err1)
+	}
+	if err2 != nil {
+		t.Skipf("claude-3-7-sonnet-thinking:128000 not in registry; skipping: %v", err2)
+	}
+
+	// Each must resolve to its exact ID (different models).
+	for _, r := range refs1 {
+		if r.ID != "claude-3-7-sonnet-thinking:1024" {
+			t.Errorf("Resolve(:1024) returned ref with ID=%q, want exact :1024", r.ID)
+		}
+	}
+	for _, r := range refs2 {
+		if r.ID != "claude-3-7-sonnet-thinking:128000" {
+			t.Errorf("Resolve(:128000) returned ref with ID=%q, want exact :128000", r.ID)
+		}
+	}
+
+	// They must resolve to different sets (non-overlapping IDs).
+	ids1 := make(map[bestiary.ModelID]struct{})
+	for _, r := range refs1 {
+		ids1[r.ID] = struct{}{}
+	}
+	for _, r := range refs2 {
+		if _, overlap := ids1[r.ID]; overlap {
+			t.Errorf("Resolve(:1024) and Resolve(:128000) returned overlapping ID %q — they must be distinct", r.ID)
+		}
+	}
+}
+
+// TestResolve_Reasoner_Distinct_FromThinking verifies that claude-3-7-sonnet-reasoner
+// is a DISTINCT model from the -thinking:N siblings. It must never be merged into
+// the same group as -thinking variants (per the group-key invariant: -reasoner stays
+// a distinct model).
+//
+// Currently, -reasoner has Date="2025-03-29" and the :N thinking variants have
+// Date="2025-02-24", so they already land in different groups. This test
+// asserts the distinctness is preserved through future key changes.
+func TestResolve_Reasoner_Distinct_FromThinking(t *testing.T) {
+	reasonerRefs, err := bestiary.Resolve("claude-3-7-sonnet-reasoner")
+	if err != nil {
+		t.Skipf("claude-3-7-sonnet-reasoner not in registry; skipping: %v", err)
+	}
+	thinkingRefs, err := bestiary.Resolve("claude-3-7-sonnet-thinking:1024")
+	if err != nil {
+		t.Skipf("claude-3-7-sonnet-thinking:1024 not in registry; skipping: %v", err)
+	}
+
+	// -reasoner and -thinking:1024 must resolve to different model IDs (non-overlapping).
+	reasonerIDs := make(map[bestiary.ModelID]struct{})
+	for _, r := range reasonerRefs {
+		reasonerIDs[r.ID] = struct{}{}
+	}
+	for _, r := range thinkingRefs {
+		if _, overlap := reasonerIDs[r.ID]; overlap {
+			t.Errorf("-reasoner and -thinking:1024 share ID %q — they must be distinct models", r.ID)
+		}
+	}
+}
+
+// TestResolve_Peasant_Claude37Sonnet_SingleRep asserts that peasant
+// "claude-3-7-sonnet" (InputFormatPeasant → SchemeCanonical) resolves to a
+// SINGLE representative, NOT ErrAmbiguous.
+//
+// The cross-slice escape hatch is REMOVED. The decomposition fixes
+// (claude-3-7-sonnet-thinking now decomposes to Family="claude", not the
+// malformed "claude-3-7-sonnet") plus the group-key extension have landed, so
+// this is now a HARD assertion: ErrAmbiguous is a failure, not a skip. The ratified BDD
+// acceptance criterion (peasant claude-3-7-sonnet → single representative; re-hosts are
+// informational) is gated here.
+func TestResolve_Peasant_Claude37Sonnet_SingleRep(t *testing.T) {
+	refs, err := bestiary.Resolve("claude-3-7-sonnet",
+		bestiary.WithInputFormat(bestiary.InputFormatPeasant))
+	if err != nil {
+		var ambig *bestiary.ErrAmbiguous
+		if errors.As(err, &ambig) {
+			t.Fatalf("Resolve(claude-3-7-sonnet, peasant) returned ErrAmbiguous with %d candidates, "+
+				"want a SINGLE representative (post-decomposition + group-key invariant). Candidates: %v",
+				len(ambig.Candidates), ambig.Candidates)
+		}
+		t.Fatalf("Resolve(claude-3-7-sonnet, peasant) unexpected error %T: %v", err, err)
+	}
+	if len(refs) == 0 {
+		t.Fatal("Resolve(claude-3-7-sonnet, peasant) returned empty refs")
+	}
+	// All returned refs must have the exact ID "claude-3-7-sonnet".
+	for _, r := range refs {
+		if r.ID != "claude-3-7-sonnet" {
+			t.Errorf("Resolve(claude-3-7-sonnet, peasant): got ref ID=%q, want exact match", r.ID)
+		}
 	}
 }

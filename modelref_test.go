@@ -378,12 +378,12 @@ func TestFormatCanonical_WithFamilyAndDate(t *testing.T) {
 }
 
 // ---------------------------------------------------------------------------
-// Tests for Version-bearing canonical formatting (B4 from slice spec).
-// These tests FAIL until L3 (formatCanonical) is implemented.
+// Tests for Version-bearing canonical formatting.
+// These tests FAIL until formatCanonical is implemented.
 // ---------------------------------------------------------------------------
 
 // TestFormatCanonical_WithVersionAndDate verifies
-// "<provider>/<family>/<variant>/<version>@<date>" — the primary UAT-2 case.
+// "<provider>/<family>/<variant>/<version>@<date>" — the primary case.
 func TestFormatCanonical_WithVersionAndDate(t *testing.T) {
 	ref := bestiary.ModelRef{
 		ID:       "claude-opus-4-5-20251101",
@@ -440,9 +440,9 @@ func TestFormatCanonical_VersionOnlyNoVariant(t *testing.T) {
 // for Version presence/absence with Variant and Date.
 func TestFormatCanonical_AllCombinations(t *testing.T) {
 	cases := []struct {
-		name    string
-		ref     bestiary.ModelRef
-		want    string
+		name string
+		ref  bestiary.ModelRef
+		want string
 	}{
 		{
 			// Variant set, Version set, Date set
@@ -545,10 +545,10 @@ func TestFormatCanonical_AllCombinations(t *testing.T) {
 // version "4.5". This verifies the end-to-end production code path:
 // codegen → models_static_gen.go Version → Ref() → formatCanonical.
 //
-// Before cycle-2 fix: formatted as "anthropic/claude/opus@2025-11-01" (no version).
-// After cycle-2 fix: formatted as "anthropic/claude/opus/4.5@2025-11-01".
+// Before the bracket-suffix fix: formatted as "anthropic/claude/opus@2025-11-01" (no version).
+// After the bracket-suffix fix: formatted as "anthropic/claude/opus/4.5@2025-11-01".
 //
-// This test asserts the BLOCKER resolution from bestiary-5eh8.
+// This test asserts that BLOCKER resolution.
 func TestFormatCanonical_StaticRegistry_Claude_Opus_4_5(t *testing.T) {
 	const targetID = "claude-opus-4-5-20251101"
 	const wantCanonical = "anthropic/claude/opus/4.5@2025-11-01"
@@ -578,7 +578,7 @@ func TestFormatCanonical_StaticRegistry_Claude_Opus_4_5(t *testing.T) {
 }
 
 // ----------------------------------------------------------------------------
-// Modifier field tests on ModelRef (SLICE-FIX-V2-5)
+// Modifier field tests on ModelRef
 // ----------------------------------------------------------------------------
 
 // TestModelRef_Modifier_MarshalUnmarshal verifies that ModelRef with a populated
@@ -592,7 +592,7 @@ func TestModelRef_Modifier_MarshalUnmarshal(t *testing.T) {
 		Variant:   "opus",
 		Version:   "4.6",
 		Date:      "2026-02-05",
-		Modifier:  "thinking",
+		Modifier:  []string{"thinking"},
 	}
 
 	enc, err := json.Marshal(ref)
@@ -613,27 +613,32 @@ func TestModelRef_Modifier_MarshalUnmarshal(t *testing.T) {
 		}
 	}
 
-	// Modifier must be "thinking".
-	if modVal, ok := got["Modifier"]; !ok || modVal != "thinking" {
-		t.Errorf("ModelRef JSON Modifier = %v, want \"thinking\"", modVal)
+	// Modifier is now a JSON array; must be ["thinking"].
+	modVal, ok := got["Modifier"]
+	if !ok {
+		t.Fatal("ModelRef JSON missing 'Modifier'")
+	}
+	arr, isArr := modVal.([]interface{})
+	if !isArr || len(arr) != 1 || arr[0] != "thinking" {
+		t.Errorf("ModelRef JSON Modifier = %v (%T), want [\"thinking\"]", modVal, modVal)
 	}
 }
 
 // TestModelInfo_Ref_Modifier verifies that Ref() propagates Modifier from ModelInfo to ModelRef.
 func TestModelInfo_Ref_Modifier(t *testing.T) {
 	m := bestiary.ModelInfo{
-		ID:          "claude-opus-4-6-thinking",
-		Provider:    bestiary.ProviderAnthropic,
-		RawFamily:   "claude-opus",
-		Family:      "claude",
-		Variant:     "opus",
-		Version:     "4.6",
-		Date:        "2026-02-05",
-		Modifier:    "thinking",
+		ID:        "claude-opus-4-6-thinking",
+		Provider:  bestiary.ProviderAnthropic,
+		RawFamily: "claude-opus",
+		Family:    "claude",
+		Variant:   "opus",
+		Version:   "4.6",
+		Date:      "2026-02-05",
+		Modifier:  []string{"thinking"},
 	}
 
 	ref := m.Ref()
-	if ref.Modifier != "thinking" {
+	if modJoin(ref.Modifier) != "thinking" {
 		t.Errorf("Ref().Modifier = %q, want %q", ref.Modifier, "thinking")
 	}
 }
@@ -644,11 +649,11 @@ func TestModelInfo_Ref_EmptyModifier(t *testing.T) {
 		ID:       "gpt-4o-2024-05-13",
 		Provider: "openai",
 		Family:   "gpt",
-		Modifier: "",
+		Modifier: nil,
 	}
 
 	ref := m.Ref()
-	if ref.Modifier != "" {
-		t.Errorf("Ref().Modifier = %q, want empty string for zero-value Modifier", ref.Modifier)
+	if len(ref.Modifier) != 0 {
+		t.Errorf("Ref().Modifier = %q, want empty for zero-value Modifier", ref.Modifier)
 	}
 }

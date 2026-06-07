@@ -41,6 +41,166 @@
         "id": "gpt-5.2",
         "name": "GPT-5.2",
         "family": "gpt"
+      },
+      "gpt-5-mini": {
+        "id": "gpt-5-mini",
+        "name": "GPT-5 Mini",
+        "family": "gpt-mini"
+      }
+    }
+  },
+  "cartesia": {
+    "name": "Cartesia",
+    "models": {
+      "nova-2-lite-v1": {
+        "id": "nova-2-lite-v1",
+        "name": "Nova 2 Lite v1",
+        "family": "nova"
+      }
+    }
+  },
+  "moonshot": {
+    "name": "Moonshot",
+    "models": {
+      "kimi-k2-thinking": {
+        "id": "kimi-k2-thinking",
+        "name": "Kimi K2 Thinking",
+        "family": ""
+      }
+    }
+  },
+  "mistral": {
+    "name": "Mistral",
+    "models": {
+      "mistral-small-2603": {
+        "id": "mistral-small-2603",
+        "name": "Mistral Small 2603",
+        "family": "mistral-2603"
+      }
+    }
+  },
+  "deepseek": {
+    "name": "DeepSeek",
+    "models": {
+      "deepseek-r1-0528": {
+        "id": "deepseek-r1-0528",
+        "name": "DeepSeek R1 0528",
+        "family": "deepseek-r1"
+      },
+      "deepseek-v3-0324": {
+        "id": "deepseek-v3-0324",
+        "name": "DeepSeek V3 0324",
+        "family": "deepseek"
+      }
+    }
+  },
+  "zhipu": {
+    "name": "Zhipu AI",
+    "models": {
+      "glm-5-turbo": {
+        "id": "glm-5-turbo",
+        "name": "GLM-5 Turbo",
+        "family": "glm"
+      }
+    }
+  },
+  "microsoft": {
+    "name": "Microsoft",
+    "models": {
+      "phi-4-mini": {
+        "id": "phi-4-mini",
+        "name": "Phi-4 Mini",
+        "family": "phi"
+      },
+      "phi-3-medium-128k-instruct": {
+        "id": "phi-3-medium-128k-instruct",
+        "name": "Phi-3 Medium 128K Instruct",
+        "family": "phi"
+      }
+    }
+  },
+  "openai-embed": {
+    "name": "OpenAI Embeddings",
+    "models": {
+      "text-embedding-3-large": {
+        "id": "text-embedding-3-large",
+        "name": "Text Embedding 3 Large",
+        "family": "text-embedding"
+      },
+      "text-embedding-3-small": {
+        "id": "text-embedding-3-small",
+        "name": "Text Embedding 3 Small",
+        "family": "text-embedding"
+      }
+    }
+  },
+  "mistral-fixture": {
+    "name": "Mistral (Fixture)",
+    "models": {
+      "mistral-large-2512": {
+        "id": "mistral-large-2512",
+        "name": "Mistral Large 2512",
+        "family": "mistral-large"
+      },
+      "codestral-2508": {
+        "id": "codestral-2508",
+        "name": "Codestral 2508",
+        "family": "codestral"
+      }
+    }
+  },
+  "openai-fixture": {
+    "name": "OpenAI (Fixture)",
+    "models": {
+      "gpt-4-0314": {
+        "id": "gpt-4-0314",
+        "name": "GPT-4 0314",
+        "family": "gpt-4"
+      },
+      "gpt-4-1106-preview": {
+        "id": "gpt-4-1106-preview",
+        "name": "GPT-4 1106 Preview",
+        "family": "gpt-4"
+      }
+    }
+  },
+  "doubao-fixture": {
+    "name": "Doubao (Fixture)",
+    "models": {
+      "doubao-seed-1-6-250615": {
+        "id": "doubao-seed-1-6-250615",
+        "name": "Doubao Seed 1.6 250615",
+        "family": ""
+      },
+      "seed-1-6-flash-250715": {
+        "id": "seed-1-6-flash-250715",
+        "name": "Seed 1.6 Flash 250715",
+        "family": "seed"
+      }
+    }
+  },
+  "cohere-fixture": {
+    "name": "Cohere (Fixture)",
+    "models": {
+      "command-r-08-2024": {
+        "id": "command-r-08-2024",
+        "name": "Command R 08-2024",
+        "family": "command-r"
+      },
+      "command-a-03-2025": {
+        "id": "command-a-03-2025",
+        "name": "Command A 03-2025",
+        "family": "command-a"
+      }
+    }
+  },
+  "google-fixture": {
+    "name": "Google (Fixture)",
+    "models": {
+      "gemini-exp-1206": {
+        "id": "gemini-exp-1206",
+        "name": "Gemini Exp 1206",
+        "family": ""
       }
     }
   }

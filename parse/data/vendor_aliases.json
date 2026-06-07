@@ -1,0 +1,4 @@
+{
+  "_comment": "Residual non-provider vendor names that appear as leading prefixes in model IDs. These are org/namespace names NOT already in Providers() (providers_gen.go). Used for the vendor/namespace strip alongside Providers()-derived strip-set. All entries are lowercase; matching is case-insensitive at runtime.",
+  "vendors": ["minimaxai"]
+}

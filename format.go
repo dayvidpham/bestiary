@@ -117,6 +117,22 @@ func writeYAMLString(sb *strings.Builder, indent, key, value string) {
 	fmt.Fprintf(sb, "%s%s: %q\n", indent, key, value)
 }
 
+// writeYAMLStringSlice renders a string slice as an inline YAML flow sequence
+// (e.g. "Modifier: [vision, instruct]"). A nil/empty slice renders as "[]".
+// Modifier became a list; values are emitted in their stored canonical
+// order so the output is deterministic.
+func writeYAMLStringSlice(sb *strings.Builder, indent, key string, values []string) {
+	if len(values) == 0 {
+		fmt.Fprintf(sb, "%s%s: []\n", indent, key)
+		return
+	}
+	quoted := make([]string, len(values))
+	for i, v := range values {
+		quoted[i] = fmt.Sprintf("%q", v)
+	}
+	fmt.Fprintf(sb, "%s%s: [%s]\n", indent, key, strings.Join(quoted, ", "))
+}
+
 func writeYAMLInt(sb *strings.Builder, indent, key string, value int) {
 	fmt.Fprintf(sb, "%s%s: %d\n", indent, key, value)
 }
@@ -173,7 +189,7 @@ func modelToYAML(m ModelInfo, indent string) string {
 	writeYAMLString(&sb, indent, "Family", string(m.Family))
 	writeYAMLString(&sb, indent, "Variant", m.Variant)
 	writeYAMLString(&sb, indent, "Date", m.Date)
-	writeYAMLString(&sb, indent, "Modifier", m.Modifier)
+	writeYAMLStringSlice(&sb, indent, "Modifier", m.Modifier)
 	writeYAMLInt(&sb, indent, "ContextWindow", m.ContextWindow)
 	writeYAMLInt(&sb, indent, "MaxOutput", m.MaxOutput)
 	writeYAMLBool(&sb, indent, "Reasoning", m.Reasoning)
@@ -288,14 +304,14 @@ func formatModelTable(w io.Writer, model ModelInfo) error {
 	return nil
 }
 
-// --- ErrAmbiguous two-section output (SLICE-FIX-V4-1) ---
+// --- ErrAmbiguous two-section output ---
 
 // ambiguousMaxCanonical is the maximum number of canonical rows displayed in
-// Section 1 before truncation with a "+N more" hint. (SLICE-FIX-V4-1)
+// Section 1 before truncation with a "+N more" hint.
 const ambiguousMaxCanonical = 5
 
 // ambiguousMaxRehosts is the maximum number of distinct rehost provider names
-// displayed in Section 2 before truncation with a "+N more" hint. (SLICE-FIX-V4-1)
+// displayed in Section 2 before truncation with a "+N more" hint.
 const ambiguousMaxRehosts = 5
 
 // FormatAmbiguous writes a human-readable two-section disambiguation message for
@@ -334,7 +350,7 @@ const ambiguousMaxRehosts = 5
 func FormatAmbiguous(w io.Writer, e *ErrAmbiguous) {
 	fmt.Fprintf(w, "bestiary: input %q matched multiple canonicals\n", e.Input)
 
-	// PURL missed-namespace note: keep at top, unchanged from Fix 2 (SLICE-FIX-V3-1).
+	// PURL missed-namespace note: keep at top, unchanged from Fix 2.
 	if e.PURLMissedNamespace != "" {
 		fmt.Fprintf(w, "\nno matches in namespace %q — performing loose match across all providers\n",
 			e.PURLMissedNamespace)
@@ -366,7 +382,7 @@ func FormatAmbiguous(w io.Writer, e *ErrAmbiguous) {
 		canonicalRows = append(canonicalRows, c)
 	}
 
-	// Fix (SLICE-FIX-V4-1-FIX2 FOLD): when canonicalRows is empty (unknown canonical
+	// Fix: when canonicalRows is empty (unknown canonical
 	// provider for this family, e.g. "minimax"), omit the legend and the Canonical
 	// section entirely. A bare empty "Canonical:" header with an orphaned legend is
 	// misleading — the user sees no canonical rows and no explanation. When canonical

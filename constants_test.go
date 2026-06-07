@@ -48,7 +48,7 @@ func TestModelConstants_Unique(t *testing.T) {
 // ModelID value is non-empty and appears in the static model registry (LookupModel).
 //
 // NOTE: This test depends on the static model registry (models_static_gen.go).
-// It does NOT depend on SLICE-3's Resolve API (bestiary-99m). When Resolve is
+// It does NOT depend on the Resolve API. When Resolve is
 // available, a richer round-trip test (Format → Resolve → check) can be added.
 func TestModelConstants_RoundTrip(t *testing.T) {
 	ids := bestiary.ModelIDs()

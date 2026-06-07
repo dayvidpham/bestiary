@@ -12,8 +12,8 @@ import "fmt"
 // The mapping is a static switch populated at source time. Unknown families use
 // the empty string sentinel rather than a wrong-but-plausible guess.
 //
-// See FOLLOWUP bestiary-1wy7 for the task to review and fill in additional
-// canonical-provider mappings beyond the initial well-known set.
+// TODO: review and fill in additional canonical-provider mappings beyond the
+// initial well-known set.
 func (f Family) CanonicalProvider() Provider {
 	switch f {
 	case FamilyClaude, FamilyClaudeHaiku, FamilyClaudeOpus, FamilyClaudeSonnet:
@@ -27,19 +27,19 @@ func (f Family) CanonicalProvider() Provider {
 		// which carry Family="gpt") and o-family models (o1, o3, o4 carry Family="o").
 		return ProviderOpenAI
 	case FamilyLlama:
-		// Meta's Llama models are published under the "local" provider per team-lead direction.
+		// Meta's Llama models are published under the "local" provider (project decision).
 		return ProviderLocal
 	case FamilyMistral, FamilyCodestral, FamilyDevstral:
 		// Mistral AI is the canonical publisher for mistral, codestral, and devstral families.
 		return ProviderMistral
-	case FamilyDeepseek:
+	case FamilyDeepSeek:
 		// DeepSeek is the canonical publisher for deepseek family models.
 		return ProviderDeepSeek
 	case FamilyQwen:
 		// Alibaba is the canonical publisher for qwen family models.
 		return ProviderAlibaba
 	default:
-		// TODO(followup bestiary-1wy7): review canonical provider for this family — see FOLLOWUP_SLICE-2
+		// TODO: review canonical provider for this family
 		return "" // empty Provider; Resolve falls back to ErrAmbiguous
 	}
 }

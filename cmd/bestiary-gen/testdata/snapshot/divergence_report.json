@@ -1,0 +1,10 @@
+{
+  "total_multi_provider_ids": 864,
+  "total_divergent_ids": 0,
+  "cat_a_vendor_case_count": 0,
+  "cat_b_bare_gen_split_count": 0,
+  "cat_c_member_variant_count": 0,
+  "cat_d_genuine_mislabel_count": 0,
+  "genuine_mislabel_pairs": [],
+  "snapshot_commit": "6a41e313"
+}

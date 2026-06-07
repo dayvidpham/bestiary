@@ -11,7 +11,7 @@ import (
 )
 
 // --------------------------------------------------------------------------
-// Families() property tests (migrated from provider_test.go — bestiary-49xa)
+// Families() property tests (migrated from provider_test.go)
 // --------------------------------------------------------------------------
 
 // TestFamilies_AllNonEmpty verifies no empty string in Families().
@@ -117,7 +117,7 @@ func TestFamily_RoundTrip(t *testing.T) {
 		{"gpt", bestiary.FamilyGPT},
 		{"llama", bestiary.FamilyLlama},
 		{"mistral", bestiary.FamilyMistral},
-		{"deepseek", bestiary.FamilyDeepseek},
+		{"deepseek", bestiary.FamilyDeepSeek},
 		// Unknown family: permissive contract must round-trip unknown values.
 		{"unknown", bestiary.Family("totally-unknown-family-xyz")},
 	}
@@ -186,7 +186,7 @@ func TestFamily_UnmarshalText_NilReceiver(t *testing.T) {
 // TestFamily_CanonicalProvider_WellKnown verifies that CanonicalProvider returns
 // the correct canonical provider for well-known model families.
 //
-// Fix #4 (SLICE-FIX-V2-2): "For now, we can just determine the canonical providers
+// Fix #4: "For now, we can just determine the canonical providers
 // for the most popular models and stub the rest with a placeholder value."
 func TestFamily_CanonicalProvider_WellKnown(t *testing.T) {
 	cases := []struct {
@@ -200,10 +200,10 @@ func TestFamily_CanonicalProvider_WellKnown(t *testing.T) {
 		{bestiary.FamilyGemini, bestiary.ProviderGoogle},
 		{bestiary.FamilyGemma, bestiary.ProviderGoogle},
 		{bestiary.FamilyGPT, bestiary.ProviderOpenAI},
-		{bestiary.FamilyO, bestiary.ProviderOpenAI},  // o1, o3, o4 carry Family="o"
+		{bestiary.FamilyO, bestiary.ProviderOpenAI}, // o1, o3, o4 carry Family="o"
 		{bestiary.FamilyLlama, bestiary.ProviderLocal},
 		{bestiary.FamilyMistral, bestiary.ProviderMistral},
-		{bestiary.FamilyDeepseek, bestiary.ProviderDeepSeek},
+		{bestiary.FamilyDeepSeek, bestiary.ProviderDeepSeek},
 		{bestiary.FamilyQwen, bestiary.ProviderAlibaba},
 	}
 
@@ -227,7 +227,7 @@ func TestFamily_CanonicalProvider_UnknownReturnsEmpty(t *testing.T) {
 	unknowns := []bestiary.Family{
 		bestiary.Family(""),
 		bestiary.Family("totally-unknown-family"),
-		bestiary.Family("grok"),  // not mapped in Wave 3
+		bestiary.Family("grok"), // not mapped in Wave 3
 		bestiary.Family("nova"),
 		bestiary.Family("sonar"),
 		bestiary.Family("kimi"),

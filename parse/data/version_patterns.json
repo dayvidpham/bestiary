@@ -1,19 +1,19 @@
 {
-  "_comment": "Ordered list of versioned-variant regex patterns. Each pattern is tried in order; the first match wins. Patterns extract a (base_family, variant) tuple from a raw family string that contains a version component. All patterns are anchored (full-string match). Named capture groups: 'base' = normalized family, 'variant' = version/variant suffix.",
+  "_comment": "Ordered list of versioned-variant regex patterns. Each pattern is tried in order; the first match wins. Patterns extract a (base_family, variant) tuple from a raw family string that contains a version component. All patterns are anchored (full-string match). Named capture groups: 'base' = normalized family, 'variant' = version/variant suffix. NOTE: the v/k/m-prefix patterns are NOT dead — they remain load-bearing for FAMILY-BASE extraction from raw families like 'kimi-k2.5' / 'minimax-m2.5' / 'mimo-v2.5' (without them ParseFamilyWithVersion would treat the whole string as the family). Their WHOLE-TOKEN variant output ('k2.5'/'m2.5'/'v2.5') is SUPERSEDED downstream by parse.go splitSeriesVariant, which re-decomposes the letter-prefix series into variant=letter + version=number (kimi-k2.5 -> (kimi,'k','2.5')) directly off the model ID. ParseFamily/ParseFamilyWithVersion (the 2-/3-return primitives) still return the whole-token form; the canonical ParseFamilyDetailed output applies the series split.",
   "patterns": [
     {
       "name": "v-prefix",
-      "description": "Matches <base>-v<MAJOR>.<MINOR>(optional suffix): e.g. 'mimo-v2.5', 'mimo-v2.5-pro'",
+      "description": "Matches <base>-v<MAJOR>.<MINOR>(optional suffix): e.g. 'mimo-v2.5', 'mimo-v2.5-pro'. Extracts base family 'mimo'; the 'v2.5' variant is re-decomposed by splitSeriesVariant to variant='v' + version='2.5'.",
       "regex": "^(?P<base>.+)-(?P<variant>v\\d+\\.\\d+(?:-.+)?)$"
     },
     {
       "name": "k-prefix",
-      "description": "Matches <base>-k<MAJOR>.<MINOR>: e.g. 'kimi-k2.5', 'kimi-k2.6'",
+      "description": "Matches <base>-k<MAJOR>.<MINOR>: e.g. 'kimi-k2.5', 'kimi-k2.6'. Extracts base family 'kimi'; the 'k2.5' variant is re-decomposed by splitSeriesVariant to variant='k' + version='2.5'.",
       "regex": "^(?P<base>.+)-(?P<variant>k\\d+\\.\\d+)$"
     },
     {
       "name": "m-prefix",
-      "description": "Matches <base>-m<MAJOR>.<MINOR>: e.g. 'minimax-m2.5', 'minimax-m2.7'",
+      "description": "Matches <base>-m<MAJOR>.<MINOR>: e.g. 'minimax-m2.5', 'minimax-m2.7'. Extracts base family 'minimax'; the 'm2.5' variant is re-decomposed by splitSeriesVariant to variant='m' + version='2.5'.",
       "regex": "^(?P<base>.+)-(?P<variant>m\\d+\\.\\d+)$"
     },
     {

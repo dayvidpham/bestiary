@@ -3,7 +3,7 @@
   "$id": "https://github.com/dayvidpham/bestiary/bestiary.schema.json",
   "title": "ModelInfo",
   "description": "Metadata for a single AI model as produced by the bestiary CLI JSON formatter.",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "type": "object",
   "properties": {
     "ID": {
@@ -39,8 +39,9 @@
       "type": "string"
     },
     "Modifier": {
-      "description": "Known trailing token extracted from the model ID that carries semantic meaning beyond family/variant/version/date (e.g. \"thinking\", \"vision\", \"latest\"). Empty when no known modifier is found. Populated by ExtractModifier at codegen time.",
-      "type": "string"
+      "description": "List of known trailing tokens extracted from the model ID that carry semantic meaning beyond family/variant/version/date (e.g. [\"thinking\"], [\"vision\",\"instruct\"]). Stored in deterministic canonical order (capability > speed > format/stage, alpha fallback). null when no known modifier is found. Widened from string to array of strings for lossless multi-modifier capture.",
+      "type": ["array", "null"],
+      "items": { "type": "string" }
     },
     "ContextWindow": {
       "description": "Maximum number of tokens the model can process in a single request.",
@@ -230,8 +231,9 @@
           "type": "string"
         },
         "Modifier": {
-          "description": "Known trailing token extracted from the model ID that carries semantic meaning (e.g. \"thinking\", \"vision\"). Empty when no known modifier is found.",
-          "type": "string"
+          "description": "List of known trailing tokens extracted from the model ID that carry semantic meaning (e.g. [\"thinking\"], [\"vision\",\"instruct\"]), in canonical order. null when none. Widened from string to array of strings to match ModelRef.Modifier []string.",
+          "type": ["array", "null"],
+          "items": { "type": "string" }
         }
       },
       "required": ["ID", "Provider", "RawFamily", "Family", "Variant", "Version", "Date", "Modifier"]

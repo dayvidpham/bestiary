@@ -1,6 +1,8 @@
 package bestiary_test
 
 import (
+	"encoding/json"
+	"os"
 	"regexp"
 	"strings"
 	"testing"
@@ -8,11 +10,79 @@ import (
 	"github.com/dayvidpham/bestiary"
 )
 
+// typeContains reports whether a JSON-Schema "type" value (which may be a bare string
+// or an array of strings) includes want.
+func typeContains(typeField any, want string) bool {
+	switch t := typeField.(type) {
+	case string:
+		return t == want
+	case []any:
+		for _, v := range t {
+			if s, ok := v.(string); ok && s == want {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+// TestSchemaFile_VersionAndModifierType guards against schema-metadata drift:
+// the schema FILE's own metadata was unguarded, so it
+// silently drifted from the Go const (version stuck at 0.0.2) and could silently revert
+// the ModelRef.Modifier type to "string". This test cross-checks the schema FILE against
+// the Go contract so neither class can recur unnoticed.
+func TestSchemaFile_VersionAndModifierType(t *testing.T) {
+	raw, err := os.ReadFile("bestiary.schema.json")
+	if err != nil {
+		t.Fatalf("read bestiary.schema.json: %v", err)
+	}
+	var schema struct {
+		Version    string `json:"version"`
+		Properties map[string]struct {
+			Type any `json:"type"`
+		} `json:"properties"`
+		Defs map[string]struct {
+			Properties map[string]struct {
+				Type any `json:"type"`
+			} `json:"properties"`
+		} `json:"$defs"`
+	}
+	if err := json.Unmarshal(raw, &schema); err != nil {
+		t.Fatalf("unmarshal bestiary.schema.json: %v", err)
+	}
+
+	// (a) schema FILE version must equal the Go const.
+	if schema.Version != bestiary.BestiarySchemaVersion {
+		t.Errorf("bestiary.schema.json \"version\" = %q, want %q (== BestiarySchemaVersion);\n"+
+			"  the schema-file metadata drifted from the Go const — bump schema line 6 in lockstep",
+			schema.Version, bestiary.BestiarySchemaVersion)
+	}
+
+	// (b) ModelInfo top-level Modifier.type must declare "array".
+	if mi, ok := schema.Properties["Modifier"]; !ok {
+		t.Error("schema properties.Modifier missing")
+	} else if !typeContains(mi.Type, "array") {
+		t.Errorf("schema properties.Modifier.type = %v, must contain \"array\" (Modifier is []string)", mi.Type)
+	}
+
+	// (b) $defs.ModelRef.Modifier.type must ALSO declare "array" (the earlier gap: the
+	// Go output check alone did not catch a schema-side revert to "string").
+	ref, ok := schema.Defs["ModelRef"]
+	if !ok {
+		t.Fatal("schema $defs.ModelRef missing")
+	}
+	if rm, ok := ref.Properties["Modifier"]; !ok {
+		t.Error("schema $defs.ModelRef.Modifier missing")
+	} else if !typeContains(rm.Type, "array") {
+		t.Errorf("schema $defs.ModelRef.Modifier.type = %v, must contain \"array\" (ModelRef.Modifier is []string)", rm.Type)
+	}
+}
+
 // TestBestiarySchemaVersion_Exact asserts that BestiarySchemaVersion equals
-// exactly "0.0.2" — the version introduced by the normalization epoch (SLICE-7).
-// Update this test when a new schema version is released.
+// exactly "0.0.3" — bumped by for the Modifier string→[]string
+// public schema change. Update this test when a new schema version is released.
 func TestBestiarySchemaVersion_Exact(t *testing.T) {
-	const want = "0.0.2"
+	const want = "0.0.3"
 	if bestiary.BestiarySchemaVersion != want {
 		t.Errorf(
 			"BestiarySchemaVersion = %q, want %q;\n"+
@@ -64,10 +134,10 @@ func TestUpstreamGitCommit_NonEmpty(t *testing.T) {
 	v := bestiary.UpstreamGitCommit
 	if v == "" {
 		t.Errorf(
-			"UpstreamGitCommit is empty;\n"+
-				"  what went wrong: const is an empty string\n"+
-				"  why: const was not set in version.go\n"+
-				"  where: bestiary.UpstreamGitCommit (version.go)\n"+
+			"UpstreamGitCommit is empty;\n" +
+				"  what went wrong: const is an empty string\n" +
+				"  why: const was not set in version.go\n" +
+				"  where: bestiary.UpstreamGitCommit (version.go)\n" +
 				"  how to fix: set UpstreamGitCommit to the short hex commit hash (e.g. \"6a41e313\")",
 		)
 		return
@@ -91,10 +161,10 @@ func TestUpstreamGitRemote_NonEmpty(t *testing.T) {
 	v := bestiary.UpstreamGitRemote
 	if v == "" {
 		t.Errorf(
-			"UpstreamGitRemote is empty;\n"+
-				"  what went wrong: const is an empty string\n"+
-				"  why: const was not set in version.go\n"+
-				"  where: bestiary.UpstreamGitRemote (version.go)\n"+
+			"UpstreamGitRemote is empty;\n" +
+				"  what went wrong: const is an empty string\n" +
+				"  why: const was not set in version.go\n" +
+				"  where: bestiary.UpstreamGitRemote (version.go)\n" +
 				"  how to fix: set UpstreamGitRemote to the git remote URL (e.g. \"git@github.com:org/repo.git\")",
 		)
 		return

@@ -15,14 +15,14 @@ func testModels() []bestiary.ModelInfo {
 	cost := 15.0
 	return []bestiary.ModelInfo{
 		{
-			ID:            "test-model-1",
-			Provider:      "testprovider",
-			DisplayName:   "Test Model 1",
-			Family:        "test-family",
-			ContextWindow: 128000,
-			MaxOutput:     4096,
+			ID:               "test-model-1",
+			Provider:         "testprovider",
+			DisplayName:      "Test Model 1",
+			Family:           "test-family",
+			ContextWindow:    128000,
+			MaxOutput:        4096,
 			CostInputPerMTok: &cost,
-			LastSynced:    "2024-01-01T00:00:00Z",
+			LastSynced:       "2024-01-01T00:00:00Z",
 			Modalities: bestiary.Modalities{
 				Input:  []bestiary.Modality{bestiary.ModalityText, bestiary.ModalityImage},
 				Output: []bestiary.Modality{bestiary.ModalityText},
@@ -413,7 +413,7 @@ func makeAmbiguousRefs(n int, duplicateTuples bool) []bestiary.ModelRef {
 // TestFormatAmbiguous_Truncation verifies that FormatAmbiguous truncates the
 // canonical candidate list after N=5 and emits a "+M more" hint.
 //
-// Updated for SLICE-FIX-V4-1 two-section layout: canonical cap is now 5.
+// Two-section layout: canonical cap is now 5.
 // Uses canonical Anthropic refs (Provider==CanonicalProvider) so Section 1 is populated.
 func TestFormatAmbiguous_Truncation(t *testing.T) {
 	// Create 8 canonical anthropic/claude refs — after cap-5, "+3 more" expected.
@@ -453,7 +453,7 @@ func TestFormatAmbiguous_Truncation(t *testing.T) {
 // TestFormatAmbiguous_NoTruncation_ExactlyN verifies that exactly N=5 canonical
 // candidates does NOT emit a truncation hint ("+M more" pattern).
 //
-// Updated for SLICE-FIX-V4-1 two-section layout: canonical cap is now 5.
+// Two-section layout: canonical cap is now 5.
 func TestFormatAmbiguous_NoTruncation_ExactlyN(t *testing.T) {
 	// Exactly 5 canonical anthropic/claude refs — no truncation expected.
 	candidates := make([]bestiary.ModelRef, 5)
@@ -494,7 +494,7 @@ func TestFormatAmbiguous_NoTruncation_ExactlyN(t *testing.T) {
 // TestFormatAmbiguous_Grouping verifies that FormatAmbiguous groups canonical candidates
 // by (Family, Variant, Version) tuple and shows ONE row per group in Section 1.
 //
-// Updated for SLICE-FIX-V4-1 two-section layout: grouping applies to canonical-provider
+// Two-section layout: grouping applies to canonical-provider
 // rows. Non-canonical rows in Candidates are excluded from Section 1.
 func TestFormatAmbiguous_Grouping(t *testing.T) {
 	// Two distinct canonical groups (alpha and beta), with no duplicate (family,variant,version).
@@ -538,7 +538,7 @@ func TestFormatAmbiguous_Grouping(t *testing.T) {
 // BEFORE truncation — canonical rows with same (Family,Variant,Version) are
 // deduped, then capped at 5 with "+N more".
 //
-// Updated for SLICE-FIX-V4-1 two-section layout: canonical cap is now 5.
+// Two-section layout: canonical cap is now 5.
 func TestFormatAmbiguous_GroupingAndTruncation(t *testing.T) {
 	// 8 canonical anthropic/claude rows with distinct (variant, version) tuples.
 	// After dedup: 8 distinct groups → cap 5 → "+3 more".
@@ -594,17 +594,17 @@ func TestFormatAmbiguous_RemedHintUpdated(t *testing.T) {
 }
 
 // ----------------------------------------------------------------------------
-// Modifier field format tests (SLICE-FIX-V2-5)
+// Modifier field format tests
 // ----------------------------------------------------------------------------
 
 // TestFormatModel_JSON_ModifierField verifies that FormatModel(JSON) emits the
 // Modifier field when non-empty.
 //
 // These tests will FAIL (Modifier will be missing) until ModelInfo gains the
-// Modifier field AND json serialization uses it — both done in L1. The field is
+// Modifier field AND json serialization uses it. The field is
 // auto-serialized since it's an exported string field with no explicit json tag.
-// Actually this test should PASS after L1 since Go's json.Marshal picks up
-// exported string fields by their field name.
+// Actually this test should PASS once the field is added, since Go's json.Marshal
+// picks up exported string fields by their field name.
 func TestFormatModel_JSON_ModifierField(t *testing.T) {
 	// Test that Modifier is emitted when non-empty.
 	m := bestiary.ModelInfo{
@@ -616,7 +616,7 @@ func TestFormatModel_JSON_ModifierField(t *testing.T) {
 		Variant:     "opus",
 		Version:     "4.6",
 		Date:        "2026-02-05",
-		Modifier:    "thinking",
+		Modifier:    []string{"thinking"},
 		LastSynced:  "2026-02-05T00:00:00Z",
 	}
 
@@ -634,8 +634,9 @@ func TestFormatModel_JSON_ModifierField(t *testing.T) {
 	if !ok {
 		t.Fatal("JSON output missing 'Modifier' key; add Modifier to ModelInfo and schema")
 	}
-	if s, ok := val.(string); !ok || s != "thinking" {
-		t.Errorf("Modifier = %v (%T), want \"thinking\"", val, val)
+	// Modifier is a JSON array now.
+	if arr, ok := val.([]interface{}); !ok || len(arr) != 1 || arr[0] != "thinking" {
+		t.Errorf("Modifier = %v (%T), want [\"thinking\"]", val, val)
 	}
 
 	// Test that Modifier appears when empty (as empty string, not omitted,
@@ -649,7 +650,7 @@ func TestFormatModel_JSON_ModifierField(t *testing.T) {
 		Variant:     "",
 		Version:     "4o",
 		Date:        "2024-05-13",
-		Modifier:    "",
+		Modifier:    nil,
 		LastSynced:  "2024-05-13T00:00:00Z",
 	}
 
@@ -671,7 +672,7 @@ func TestFormatModel_JSON_ModifierField(t *testing.T) {
 // TestFormatModel_YAML_ModifierField verifies that the YAML serializer emits
 // a Modifier line when Modifier is non-empty.
 //
-// These tests will FAIL until L3 updates modelToYAML in format.go to include a
+// These tests will FAIL until modelToYAML in format.go is updated to include a
 // Modifier line.
 func TestFormatModel_YAML_ModifierField(t *testing.T) {
 	m := bestiary.ModelInfo{
@@ -683,7 +684,7 @@ func TestFormatModel_YAML_ModifierField(t *testing.T) {
 		Variant:     "opus",
 		Version:     "4.6",
 		Date:        "2026-02-05",
-		Modifier:    "thinking",
+		Modifier:    []string{"thinking"},
 		LastSynced:  "2026-02-05T00:00:00Z",
 	}
 
@@ -745,7 +746,7 @@ func TestFormatModels_Table(t *testing.T) {
 
 // ----------------------------------------------------------------------------
 // Fix 1: Canonical-provider distinction in the ErrAmbiguous table
-// (SLICE-FIX-V3-1)
+//
 // ----------------------------------------------------------------------------
 
 // makeClaudeAmbiguousRefs builds a synthetic ErrAmbiguous candidate list that
@@ -791,7 +792,7 @@ func makeClaudeAmbiguousRefs(numRehostGroups int) []bestiary.ModelRef {
 // contains an anthropic (canonical) row mixed with rehosts, FormatAmbiguous
 // surfaces the anthropic row in the output.
 //
-// SLICE-FIX-V3-1 Fix 1 — this test FAILS before the impl sorts canonical rows
+// Fix 1 — this test FAILS before the impl sorts canonical rows
 // to the top (when >10 groups exist, canonical gets truncated away).
 func TestFormatAmbiguous_CanonicalRowPresent(t *testing.T) {
 	// 12 rehost groups + 1 canonical = 13 groups total → exceeds N=10.
@@ -817,7 +818,7 @@ func TestFormatAmbiguous_CanonicalRowPresent(t *testing.T) {
 // TestFormatAmbiguous_CanonicalRowMarked verifies that the canonical row is
 // visually distinguished from rehost rows in the FormatAmbiguous output.
 //
-// SLICE-FIX-V3-1 Fix 1 — this test FAILS before the impl adds a visual marker
+// Fix 1 — this test FAILS before the impl adds a visual marker
 // to canonical rows.
 func TestFormatAmbiguous_CanonicalRowMarked(t *testing.T) {
 	candidates := makeClaudeAmbiguousRefs(3) // 3 rehosts + 1 canonical, well within N=10
@@ -855,7 +856,7 @@ func TestFormatAmbiguous_CanonicalRowMarked(t *testing.T) {
 // TestFormatAmbiguous_CanonicalSortedToTop verifies that the canonical section
 // (Section 1) appears BEFORE the rehost section (Section 2) in FormatAmbiguous output.
 //
-// Updated for SLICE-FIX-V4-1 two-section layout: Section 1 ("Canonical:") always
+// Two-section layout: Section 1 ("Canonical:") always
 // precedes Section 2 ("Also rehosted by:"). The canonical provider appears in Section 1
 // (from Candidates), while rehost names appear in Section 2 (from RehostProviders).
 func TestFormatAmbiguous_CanonicalSortedToTop(t *testing.T) {
@@ -903,7 +904,7 @@ func TestFormatAmbiguous_CanonicalSortedToTop(t *testing.T) {
 // canonical groups, the canonical section renders exactly 5 rows and the overflow
 // hint is emitted.
 //
-// Updated for SLICE-FIX-V4-1 two-section layout: canonical cap is now 5.
+// Two-section layout: canonical cap is now 5.
 func TestFormatAmbiguous_CanonicalSurvivesTruncation(t *testing.T) {
 	// 1 canonical + 12 rehosts in Candidates; RehostProviders for Section 2.
 	// The canonical anthropic row must appear in Section 1.
@@ -937,14 +938,14 @@ func TestFormatAmbiguous_CanonicalSurvivesTruncation(t *testing.T) {
 
 // ----------------------------------------------------------------------------
 // Fix 2: PURL loose-fallback missed-namespace note
-// (SLICE-FIX-V3-1)
+//
 // ----------------------------------------------------------------------------
 
 // TestFormatAmbiguous_PURLMissedNamespaceNote verifies that when
 // ErrAmbiguous.PURLMissedNamespace is non-empty, FormatAmbiguous prints a note
 // above the candidate table naming the missed namespace.
 //
-// SLICE-FIX-V3-1 Fix 2 — this test FAILS before the impl adds the note.
+// Fix 2 — this test FAILS before the impl adds the note.
 func TestFormatAmbiguous_PURLMissedNamespaceNote(t *testing.T) {
 	candidates := makeAmbiguousRefs(3, false)
 	e := &bestiary.ErrAmbiguous{
@@ -990,7 +991,7 @@ func TestFormatAmbiguous_PURLMissedNamespaceNote_AbsentWhenEmpty(t *testing.T) {
 // TestFormatAmbiguous_PURLMissedNamespaceNote_BeforeTable verifies that the
 // missed-namespace note appears BEFORE the candidate table header.
 //
-// SLICE-FIX-V3-1 Fix 2 — the note must be above the table per spec.
+// Fix 2 — the note must be above the table per spec.
 // Uses a canonical anthropic ref so the Canonical: section is present in output.
 func TestFormatAmbiguous_PURLMissedNamespaceNote_BeforeTable(t *testing.T) {
 	// Use makeClaudeAmbiguousRefs (includes one canonical anthropic row) so that
@@ -1024,7 +1025,7 @@ func TestFormatAmbiguous_PURLMissedNamespaceNote_BeforeTable(t *testing.T) {
 }
 
 // ----------------------------------------------------------------------------
-// SLICE-FIX-V4-1: Two-section layout (prefix marker, legend, rehost names, footer)
+// Two-section layout (prefix marker, legend, rehost names, footer)
 // ----------------------------------------------------------------------------
 
 // makeAmbiguousRefsWithRehosts builds an ErrAmbiguous suitable for two-section layout tests.
@@ -1054,7 +1055,7 @@ func makeAmbiguousWithRehosts(numCanonical int, rehostProviders []bestiary.Provi
 // TestFormatAmbiguous_V4_LegendPresent verifies the legend line "* = canonical provider"
 // is present in FormatAmbiguous output.
 //
-// SLICE-FIX-V4-1 — this test FAILS before L3 implements the new layout.
+// This test FAILS before the new layout is implemented.
 func TestFormatAmbiguous_V4_LegendPresent(t *testing.T) {
 	e := makeAmbiguousWithRehosts(2, []bestiary.Provider{"deepinfra", "azure-cognitive-services"})
 
@@ -1071,7 +1072,7 @@ func TestFormatAmbiguous_V4_LegendPresent(t *testing.T) {
 // TestFormatAmbiguous_V4_CanonicalRowsHavePrefixStar verifies that canonical rows
 // START with "* " (prefix), NOT end with " *" (old suffix format).
 //
-// SLICE-FIX-V4-1 — this test FAILS before L3 since old impl uses suffix marker.
+// This test FAILS before the new layout since the old impl uses a suffix marker.
 func TestFormatAmbiguous_V4_CanonicalRowsHavePrefixStar(t *testing.T) {
 	e := makeAmbiguousWithRehosts(3, []bestiary.Provider{"deepinfra"})
 
@@ -1103,7 +1104,7 @@ func TestFormatAmbiguous_V4_CanonicalRowsHavePrefixStar(t *testing.T) {
 // TestFormatAmbiguous_V4_CanonicalSection_Cap5 verifies that at most 5 canonical rows
 // are displayed, with a "+N more" hint when >5 canonical candidates exist.
 //
-// SLICE-FIX-V4-1 — this test FAILS before L3 since old impl caps at 10.
+// This test FAILS before the new layout since the old impl caps at 10.
 func TestFormatAmbiguous_V4_CanonicalSection_Cap5(t *testing.T) {
 	// 8 canonical candidates — should display 5 and emit "+3 more".
 	e := makeAmbiguousWithRehosts(8, nil)
@@ -1143,7 +1144,7 @@ func TestFormatAmbiguous_V4_CanonicalSection_Cap5(t *testing.T) {
 // "Also rehosted by:" is present when RehostProviders is non-empty, and lists
 // distinct rehost provider NAMES (not full canonical rows).
 //
-// SLICE-FIX-V4-1 — this test FAILS before L3.
+// This test FAILS before the new layout is implemented.
 func TestFormatAmbiguous_V4_RehostSection_PresentWhenNonEmpty(t *testing.T) {
 	rehosts := []bestiary.Provider{"deepinfra", "azure-cognitive-services", "nano-gpt"}
 	e := makeAmbiguousWithRehosts(2, rehosts)
@@ -1168,7 +1169,7 @@ func TestFormatAmbiguous_V4_RehostSection_PresentWhenNonEmpty(t *testing.T) {
 // TestFormatAmbiguous_V4_RehostSection_AbsentWhenEmpty verifies Section 2 is
 // entirely omitted (header AND content) when RehostProviders is empty.
 //
-// SLICE-FIX-V4-1 — this test FAILS before L3.
+// This test FAILS before the new layout is implemented.
 func TestFormatAmbiguous_V4_RehostSection_AbsentWhenEmpty(t *testing.T) {
 	// RehostProviders explicitly empty — section must be absent.
 	e := makeAmbiguousWithRehosts(3, nil)
@@ -1186,7 +1187,7 @@ func TestFormatAmbiguous_V4_RehostSection_AbsentWhenEmpty(t *testing.T) {
 // TestFormatAmbiguous_V4_RehostSection_Cap5 verifies that at most 5 rehost provider
 // names are displayed, with a "+N more" hint when RehostProviders has >5 entries.
 //
-// SLICE-FIX-V4-1 — this test FAILS before L3.
+// This test FAILS before the new layout is implemented.
 func TestFormatAmbiguous_V4_RehostSection_Cap5(t *testing.T) {
 	rehosts := []bestiary.Provider{
 		"deepinfra", "azure-cognitive-services", "nano-gpt",
@@ -1221,7 +1222,7 @@ func TestFormatAmbiguous_V4_RehostSection_Cap5(t *testing.T) {
 // TestFormatAmbiguous_V4_RehostSection_NamesOnly verifies that Section 2 lists
 // provider NAMES only (not full canonical model strings like "anthropic/claude/opus/...").
 //
-// SLICE-FIX-V4-1 — this test FAILS before L3 if full canonical rows appear.
+// This test FAILS before the new layout if full canonical rows appear.
 func TestFormatAmbiguous_V4_RehostSection_NamesOnly(t *testing.T) {
 	rehosts := []bestiary.Provider{"deepinfra", "nano-gpt"}
 	e := makeAmbiguousWithRehosts(2, rehosts)
@@ -1247,7 +1248,7 @@ func TestFormatAmbiguous_V4_RehostSection_NamesOnly(t *testing.T) {
 // TestFormatAmbiguous_V4_RehostSection_OnePerLine verifies that Section 2 renders
 // each rehost provider name on its own line rather than as a comma-separated list.
 //
-// SLICE-FIX-V4-1-FIX3 — the rehost-names rendering change (one-per-line).
+// The rehost-names rendering change (one-per-line).
 func TestFormatAmbiguous_V4_RehostSection_OnePerLine(t *testing.T) {
 	rehosts := []bestiary.Provider{"deepinfra", "azure-cognitive-services", "nano-gpt"}
 	e := makeAmbiguousWithRehosts(2, rehosts)
@@ -1301,7 +1302,7 @@ func TestFormatAmbiguous_V4_RehostSection_OnePerLine(t *testing.T) {
 // TestFormatAmbiguous_V4_FooterInstructions verifies that the footer contains
 // the two real instruction strings: "bestiary list" and "--format=raw".
 //
-// SLICE-FIX-V4-1 — this test FAILS before L3.
+// This test FAILS before the new layout is implemented.
 func TestFormatAmbiguous_V4_FooterInstructions(t *testing.T) {
 	e := makeAmbiguousWithRehosts(2, []bestiary.Provider{"deepinfra"})
 
@@ -1320,7 +1321,7 @@ func TestFormatAmbiguous_V4_FooterInstructions(t *testing.T) {
 // TestFormatAmbiguous_V4_PURLNote_StillPresent verifies that the PURLMissedNamespace
 // note is still printed when set, and appears before the Canonical section.
 //
-// SLICE-FIX-V4-1 — regression guard for existing Fix 2 behavior.
+// Regression guard for existing Fix 2 behavior.
 // Uses canonical anthropic refs so the Canonical: section is present in output.
 func TestFormatAmbiguous_V4_PURLNote_StillPresent(t *testing.T) {
 	// Use makeClaudeAmbiguousRefs (includes one canonical anthropic row) so that
@@ -1355,7 +1356,7 @@ func TestFormatAmbiguous_V4_PURLNote_StillPresent(t *testing.T) {
 }
 
 // ----------------------------------------------------------------------------
-// SLICE-FIX-V4-1-FIX2 FOLD: empty-canonical suppression
+// Empty-canonical suppression
 // ----------------------------------------------------------------------------
 
 // TestFormatAmbiguous_EmptyCanonical_NoBareHeader verifies that when no candidates
@@ -1365,9 +1366,9 @@ func TestFormatAmbiguous_V4_PURLNote_StillPresent(t *testing.T) {
 //
 // Before the fix, "bestiary show minimax" rendered:
 //
-//	* = canonical provider
-//	Canonical:
-//	Also rehosted by: ...
+//   - = canonical provider
+//     Canonical:
+//     Also rehosted by: ...
 //
 // The empty section with orphaned legend was confusing. After the fix, both are omitted
 // when there are zero canonical rows. The Section 2 (rehost names) and footer still appear.

@@ -1,0 +1,7 @@
+{
+  "upstream_git_commit": "6a41e313",
+  "upstream_schema_version": "2026.04.04-fd776194f63d717cce255cdfcff5ceaf18dccfe404a54f824a4b00afd354a8c6",
+  "capture_date": "2026-05-30",
+  "source_url": "https://models.dev/api.json",
+  "note": "Single replace-on-refresh blob. Do NOT accumulate dated copies. Refresh with: cp .bestiary-gen-cache/api_response.json cmd/bestiary-gen/testdata/snapshot/models_api.json"
+}

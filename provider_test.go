@@ -70,7 +70,7 @@ func TestProviderIsKnown_UnknownProviders(t *testing.T) {
 // TestGeneratedProviders_MatchSlugs verifies that every generated (non-Local)
 // provider constant has a valid slug format: lowercase alphanumeric + hyphens + dots.
 // Dots are permitted because the upstream models.dev API uses them in provider IDs
-// (e.g. "wafer.ai"). This is a codegen output validation guard (Reviewer B-6 requirement).
+// (e.g. "wafer.ai"). This is a codegen output validation guard.
 func TestGeneratedProviders_MatchSlugs(t *testing.T) {
 	providers := bestiary.Providers()
 	for _, p := range providers {

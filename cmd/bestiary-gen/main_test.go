@@ -5,6 +5,8 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"flag"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -17,6 +19,11 @@ import (
 	"github.com/dayvidpham/bestiary"
 )
 
+// updateGolden is a test flag that causes TestDecompositionSnapshot to regenerate
+// the golden file instead of comparing against it.
+// To regenerate: go test ./cmd/bestiary-gen/... -run TestDecompositionSnapshot -update
+var updateGolden = flag.Bool("update", false, "regenerate golden files instead of comparing")
+
 // TestSlugToIdentifier verifies the slug-to-PascalCase conversion, including
 // digit-leading slugs, casing overrides, and hyphen-separated tokens.
 func TestSlugToIdentifier(t *testing.T) {
@@ -27,8 +34,8 @@ func TestSlugToIdentifier(t *testing.T) {
 	}{
 		// Digit-leading slug: "302" stays verbatim; "ai" → "AI" via casingOverrides.
 		{"302ai", "302AI", "302AI"},
-		// Single-token casing override.
-		{"xai", "xAI", "XAI"},
+		// Single-token brand-casing.
+		{"xai", "xAI", "xAI"},
 		// Multi-token with two overrides (SAP + AI).
 		{"sap-ai-core", "SAP AI Core", "SAPAICore"},
 		// Hyphenated without overrides — title-case each token.
@@ -80,7 +87,7 @@ func TestProviderConstName(t *testing.T) {
 		want string
 	}{
 		{"302ai", "302AI", "Provider302AI"},
-		{"xai", "xAI", "ProviderXAI"},
+		{"xai", "xAI", "ProviderxAI"},
 		{"sap-ai-core", "SAP AI Core", "ProviderSAPAICore"},
 		{"amazon-bedrock", "Amazon Bedrock", "ProviderAmazonBedrock"},
 		{"anthropic", "Anthropic", "ProviderAnthropic"},
@@ -236,23 +243,23 @@ func TestSplitComma(t *testing.T) {
 }
 
 // --------------------------------------------------------------------------
-// SLICE-4 tests: nameForCanonical, resolveCollisions, generateConstantsSource
+// tests: nameForCanonical, resolveCollisions, generateConstantsSource
 // --------------------------------------------------------------------------
 
 // testSlugToConst is a minimal slugToConst map for tests, providing the correct
 // provider constant names (with proper casing) for the providers used in golden examples.
 var testSlugToConst = map[string]string{
-	"anthropic":    "ProviderAnthropic",
-	"openai":       "ProviderOpenAI",
-	"google":       "ProviderGoogle",
+	"anthropic":     "ProviderAnthropic",
+	"openai":        "ProviderOpenAI",
+	"google":        "ProviderGoogle",
 	"google-vertex": "ProviderGoogleVertex",
-	"openrouter":   "ProviderOpenRouter",
+	"openrouter":    "ProviderOpenRouter",
 }
 
 // TestNameForCanonical_KnownExamples verifies that nameForCanonicalWithMap produces
-// the expected constant names for the spec-defined golden examples from UAT-1 / PROPOSAL-3.
+// the expected constant names for the spec-defined golden examples.
 // Updated to new double-underscore template: Model__<Provider>__<Family>__<Variant>?__<Version>?__<Date>?
-// (B5: double underscores between components, single underscores within components).
+// (double underscores between components, single underscores within components).
 //
 // The naming uses double underscores between EVERY token from the raw ID (after date strip),
 // plus the provider prefix and date suffix. Tokens from the raw ID (hyphen/dot split) each
@@ -280,7 +287,7 @@ func TestNameForCanonical_KnownExamples(t *testing.T) {
 		{
 			desc: "claude-opus-4-1 on Anthropic (date not in ID, from release field)",
 			model: bestiary.ModelInfo{
-				ID:      "claude-opus-4-1",
+				ID:       "claude-opus-4-1",
 				Provider: "anthropic",
 				Family:   "claude",
 				Variant:  "opus",
@@ -389,7 +396,7 @@ func TestResolveCollisions_VersionSuffix(t *testing.T) {
 			Date:     "",
 		},
 	}
-	// Both produce "Model__Anthropic__Claude__Opus" as the naive name (double-underscore, B5).
+	// Both produce "Model__Anthropic__Claude__Opus" as the naive name (double-underscore).
 	names := []string{
 		"Model__Anthropic__Claude__Opus",
 		"Model__Anthropic__Claude__Opus",
@@ -496,7 +503,7 @@ func TestGenerateConstantsSource_Compiles(t *testing.T) {
 	if len(src) == 0 {
 		t.Fatal("generateConstantsSource: returned empty source")
 	}
-	// Must contain the expected constant names (double-underscore between components, B5).
+	// Must contain the expected constant names (double-underscore between components).
 	srcStr := string(src)
 	if !strings.Contains(srcStr, "Model__Anthropic__Claude__Opus__4__20250514") {
 		t.Errorf("generated source missing Model__Anthropic__Claude__Opus__4__20250514:\n%s", srcStr[:min(500, len(srcStr))])
@@ -523,14 +530,14 @@ func min(a, b int) int {
 }
 
 // --------------------------------------------------------------------------
-// SLICE-FIX-V2-5 tests: Modifier slot in Model__ constants
+// Tests: Modifier slot in Model__ constants
 // --------------------------------------------------------------------------
 
 // TestNameForCanonical_ModifierSlot verifies that when a ModelInfo has a Modifier
 // field set, nameForCanonicalWithMap emits the __Modifier__ slot between version
 // and date in the constant name.
 //
-// These tests will FAIL until L3 updates nameForCanonicalWithMap to include the
+// These tests will FAIL until nameForCanonicalWithMap is updated to include the
 // Modifier segment between version and date.
 func TestNameForCanonical_ModifierSlot(t *testing.T) {
 	cases := []struct {
@@ -547,7 +554,7 @@ func TestNameForCanonical_ModifierSlot(t *testing.T) {
 				Variant:  "opus",
 				Version:  "4.6",
 				Date:     "2026-02-05",
-				Modifier: "thinking",
+				Modifier: []string{"thinking"},
 			},
 			// Date "2026-02-05" is NOT in the raw ID "claude-opus-4-6-thinking",
 			// so dateFoundInID = false → no date suffix in constant.
@@ -564,7 +571,7 @@ func TestNameForCanonical_ModifierSlot(t *testing.T) {
 				Variant:  "opus",
 				Version:  "4.1",
 				Date:     "2025-08-05",
-				Modifier: "thinking",
+				Modifier: []string{"thinking"},
 			},
 			// Compact date "20250805" IS in the raw ID → dateFoundInID = true.
 			// Modifier "-thinking" is the trailing token, stripped before tokenizing.
@@ -582,7 +589,7 @@ func TestNameForCanonical_ModifierSlot(t *testing.T) {
 				Variant:  "opus",
 				Version:  "4.6",
 				Date:     "",
-				Modifier: "thinking",
+				Modifier: []string{"thinking"},
 			},
 			// No date → modifier becomes trailing segment.
 			// Expected: Model__Anthropic__Claude__Opus__4_6__Thinking
@@ -597,7 +604,7 @@ func TestNameForCanonical_ModifierSlot(t *testing.T) {
 				Variant:  "",
 				Version:  "",
 				Date:     "2024-05-13",
-				Modifier: "",
+				Modifier: nil,
 			},
 			// No modifier → no __Modifier__ slot (preserves current form).
 			wantName: "Model__OpenAI__GPT__4o__20240513",
@@ -677,50 +684,6 @@ func minimalAPIJSON(t *testing.T) []byte {
 	return b
 }
 
-// normalizationAPIJSON returns a minimal api_response.json body with models that
-// exercise the normalization code paths: one model with a non-empty family field
-// and one model with an empty family field (triggering InferFamilyFromID).
-func normalizationAPIJSON(t *testing.T) []byte {
-	t.Helper()
-	payload := map[string]any{
-		"anthropic": map[string]any{
-			"name": "Anthropic",
-			"models": map[string]any{
-				// Model with a non-empty family — exercises ParseFamily path.
-				"claude-opus-4-20250514": map[string]any{
-					"id":           "claude-opus-4-20250514",
-					"name":         "Claude Opus 4",
-					"family":       "claude-opus",
-					"release_date": "2025-05-14",
-				},
-				// Model with empty family — exercises InferFamilyFromID path (~25% of real models).
-				"claude-haiku-no-family": map[string]any{
-					"id":     "claude-haiku-no-family",
-					"name":   "Claude Haiku (no family)",
-					"family": "",
-				},
-			},
-		},
-		"openai": map[string]any{
-			"name": "OpenAI",
-			"models": map[string]any{
-				// GPT model with date in ID.
-				"gpt-4o-2024-08-06": map[string]any{
-					"id":           "gpt-4o-2024-08-06",
-					"name":         "GPT-4o",
-					"family":       "gpt-4o",
-					"release_date": "2024-08-06",
-				},
-			},
-		},
-	}
-	b, err := json.Marshal(payload)
-	if err != nil {
-		t.Fatalf("normalizationAPIJSON: marshal: %v", err)
-	}
-	return b
-}
-
 // TestGenToModelInfo_EmptyFamily verifies that the InferFamilyFromID code path in
 // genToModelInfoDetailed fires when the model's family field is empty (~25% of real models).
 // This exercises the else branch in genToModelInfoDetailed that the parse_test.go unit
@@ -771,7 +734,7 @@ func TestGenToModelInfo_CanonicalFields(t *testing.T) {
 			wantDateContains: "2025-05-14",
 		},
 		{
-			desc:         "gpt-4o-2024-08-06: family=gpt-4o, date in ID",
+			desc:         "gpt-4o-2024-08-06: family=gpt, variant=4o, date in ID",
 			providerSlug: "openai",
 			wm: genWireModel{
 				ID:          "gpt-4o-2024-08-06",
@@ -779,11 +742,10 @@ func TestGenToModelInfo_CanonicalFields(t *testing.T) {
 				Family:      "gpt-4o",
 				ReleaseDate: "2024-08-06",
 			},
-			// ParseFamily("gpt-4o") returns ("gpt-4o", "") when no override matches;
-			// the exact result depends on parse data but the key property is that
-			// Family is non-empty and Date is populated from the ID.
-			wantFamily:       "gpt-4o",
-			wantVariant:      "",
+			// gpt-4o decomposes to family "gpt" with the
+			// line designator "4o" as the VARIANT (version empty); Date still from the ID.
+			wantFamily:       "gpt",
+			wantVariant:      "4o",
 			wantDateContains: "2024-08-06",
 		},
 		{
@@ -1012,167 +974,166 @@ func TestNoFetch_MissingCache_ActionableError(t *testing.T) {
 }
 
 // --------------------------------------------------------------------------
-// SLICE-FIX-2 tests: cross-provider decomposition consistency
+// Cross-provider decomposition consistency tests
 // --------------------------------------------------------------------------
 
-// TestStaticDataset_CrossProviderConsistency verifies that for model IDs present
-// under multiple providers in the static dataset, providers that have an empty
-// raw_family field produce the same (Family, Variant, Version) as providers with
-// a populated raw_family, when all populated-raw_family providers agree on the
-// same decomposition.
+// crossProviderJustifiedResidual is the ENUMERATED justified-residual
+// ledger for cross-provider (Family,Variant,Version) divergences over the COMMITTED
+// snapshot. The hardened gate asserts SET-EQUALITY: the divergent-ID set produced by the
+// production pipeline must equal EXACTLY this set. Each row carries a one-line
+// justification. The only justified residual is the embedded-family nemotron
+// (the ID leads with "llama" but the canonical family is "nemotron"; GH-followup).
+// SET-equality (not count) catches a DIFFERENT id going divergent while nemotron converges
+// — count would stay 1, the set would change. Do NOT pad this map to force green: every
+// row must be independently justified; an unexpected divergence is a STOP-and-surface.
+// Now EMPTY. The sole prior residual
+// (nvidia/llama-3.3-nemotron-super-49b-v1.5) was FOLDED to family nemotron via the curated
+// idFamilyOverrides entry — both providers converge on (nemotron,v1.5,3.3). Cross-provider
+// (Family,Variant,Version) divergence is now ZERO, so the divergent-ID SET is empty and this
+// justified-residual ledger is empty too (SET-equality holds at the empty set).
+var crossProviderJustifiedResidual = map[string]string{}
+
+// crossProviderResidualUnaccountedCeiling pins the at-scale count of
+// ReasonResidualUnaccountedTokens over the committed snapshot.
+// Today only the non-gating stdout smoke (main.go) sees this; pinning it catches a
+// non-fixture-family residual regression (the seed-flash class) that would otherwise slip
+// every gate. Currently measured = 243; assert ≤ ceiling (tighten-only; a legitimate
+// reduction passes, a regression that re-drops sole-residual/member coverage trips it).
+const crossProviderResidualUnaccountedCeiling = 243
+
+// crossProviderPopulatedVersionFloor pins the at-scale count of snapshot records whose
+// production decomposition yields a NON-EMPTY Version (landing pin; supersedes the
+// stale 1681/293 figures). Currently measured = 3401 over 4979 records. Assert ≥ floor
+// (loosen-only: more version coverage passes; a regression that drops version-presence
+// — the inverse of the residual-ceiling guard — trips it). Pinned alongside the residual
+// ceiling so both the "version populated" and "tokens unaccounted" at-scale counts are gated.
+const crossProviderPopulatedVersionFloor = 3401
+
+// TestStaticDataset_CrossProviderConsistency is the HARDENED cross-provider
+// consistency GATE. It REPLACES the earlier heuristic gate that carried 5 escape
+// hatches (namespaced-ID `/.@:` skip; no-empty-raw skip; no-populated-raw skip;
+// populated-providers-disagree skip; Infer-consensus-can't-derive skip) — those hid
+// 331/388 of the original divergences.
 //
-// B6 (SLICE-FIX-2): codegen must produce consistent decompositions regardless of
-// whether the raw_family field is empty or populated. The primary documented
-// regression was: Nano-GPT and 302ai (empty raw_family) producing
-// Variant="" for claude-opus-4-5-20251101 while Anthropic/QiHangAI
-// (raw_family="claude-opus") produce Variant="opus".
+// It decomposes the COMMITTED full snapshot (testdata/snapshot/models_api.json) via the
+// PRODUCTION pipeline (ParseFamilyDetailed) — the SAME data + pipeline that
+// TestSnapshotAnalysis_CrossProviderDivergences uses, so the two gates MUST agree — groups
+// by model ID across providers, and asserts the cross-provider (Family,Variant,Version)
+// divergent-ID SET == crossProviderJustifiedResidual (SET-equality, no escape hatches).
+// It also pins the ReasonResidualUnaccountedTokens count ≤ ceiling.
 //
-// SCOPE BOUNDARY (documented findings for FOLLOWUP_SLICE-1 / bestiary-wi36):
-//
-// Some divergences are NOT caused by the empty-raw_family bug and are deferred:
-//
-//  1. Different raw_family values across providers (upstream data inconsistency):
-//     Some providers use different raw_family for the same model ID, leading to
-//     fundamentally different canonical results. Example: alibaba uses raw_family=""
-//     for qwen3-* IDs while other providers use "qwen3-*". These are upstream API
-//     inconsistencies, not a codegen bug. Deferred to bestiary-wi36.
-//
-//  2. Complex claude-3.x IDs (claude-3-5-haiku-*, claude-3-7-sonnet-*):
-//     InferFamilyFromIDWithVariant("claude-3-5-haiku-20241022") extracts
-//     family="claude-3-5" (since "3-5" is a version component in the ID), while
-//     providers with raw_family="claude-haiku" yield family="claude". The correct
-//     decomposition requires parser fixes for claude-3.x family IDs, deferred to
-//     bestiary-wi36.
-//
-// This test constrains its check to: groups where ALL populated-raw_family providers
-// agree on the same (family, variant, version) AND at least one empty-raw_family
-// provider disagrees. This targets the original documented bug precisely.
+// The Modifier list is compared ORDER-INDEPENDENTLY everywhere else (resolve
+// the group-key invariant, path_unification cmp(), TestPathUnification_ModifierSetIndependence);
+// this gate's PRIMARY tuple is (Family,Variant,Version) per the ratified consistency metric,
+// so a permuted-modifier pair across providers structurally cannot register here.
 func TestStaticDataset_CrossProviderConsistency(t *testing.T) {
-	models := bestiary.StaticModels()
-
-	// Build a per-ID map with the raw_family, normalized decomp, and provider.
-	type entry struct {
-		RawFamily string
-		Family    string
-		Variant   string
-		Version   string
-		Provider  string
+	records, err := LoadSnapshotRecords()
+	if err != nil {
+		t.Fatalf("TestStaticDataset_CrossProviderConsistency: LoadSnapshotRecords: %v", err)
 	}
-	byID := make(map[string][]entry)
-	for _, m := range models {
-		id := string(m.ID)
-		// Skip non-standard ID formats deferred to FOLLOWUP_SLICE-1 (bestiary-wi36).
-		if strings.Contains(id, "/") || strings.Contains(id, ".") ||
-			strings.HasPrefix(id, "@") || strings.HasPrefix(id, ":") {
-			continue
-		}
-		byID[id] = append(byID[id], entry{
-			RawFamily: string(m.RawFamily),
-			Family:    string(m.Family),
-			Variant:   m.Variant,
-			Version:   m.Version,
-			Provider:  string(m.Provider),
-		})
+	if len(records) == 0 {
+		t.Fatal("committed snapshot is empty — cannot run the cross-provider gate")
 	}
 
-	for id, entries := range byID {
-		if len(entries) < 2 {
-			continue
+	type tuple3 struct {
+		Family  bestiary.Family
+		Variant string
+		Version string
+	}
+	byID := make(map[string]map[tuple3]struct{})
+	residualUnaccounted := 0
+	populatedVersion := 0
+	for _, r := range records {
+		fam, variant, version, _, failure := bestiary.ParseFamilyDetailed(r.RawFamily, r.ID, r.Provider)
+		id := string(r.ID)
+		if byID[id] == nil {
+			byID[id] = make(map[tuple3]struct{})
 		}
+		byID[id][tuple3{fam, variant, version}] = struct{}{}
+		if failure != nil && failure.Reason == bestiary.ReasonResidualUnaccountedTokens {
+			residualUnaccounted++
+		}
+		if version != "" {
+			populatedVersion++
+		}
+	}
 
-		// Split entries into populated-raw_family and empty-raw_family groups.
-		var populated []entry
-		var empty []entry
-		for _, e := range entries {
-			if e.RawFamily != "" {
-				populated = append(populated, e)
-			} else {
-				empty = append(empty, e)
+	// Compute the divergent-ID SET: multi-provider IDs whose (Family,Variant,Version)
+	// tuples are NOT all identical.
+	divergent := make(map[string]struct{})
+	for id, tuples := range byID {
+		if len(tuples) >= 2 {
+			divergent[id] = struct{}{}
+		}
+	}
+
+	// SET-EQUALITY against the enumerated justified-residual ledger.
+	// (a) every divergent ID must be a justified residual — else STOP + surface.
+	for id := range divergent {
+		if _, ok := crossProviderJustifiedResidual[id]; !ok {
+			// Dump the conflicting tuples for diagnosis.
+			var tups []string
+			for tp := range byID[id] {
+				tups = append(tups, fmt.Sprintf("(family=%q,variant=%q,version=%q)", tp.Family, tp.Variant, tp.Version))
 			}
+			sort.Strings(tups)
+			t.Errorf("UNEXPECTED cross-provider divergence for ID %q (NOT in the justified-residual ledger):\n"+
+				"  tuples: %s\n"+
+				"  This gate uses the SAME snapshot + production pipeline as TestSnapshotAnalysis_CrossProviderDivergences,\n"+
+				"  so both must agree on the divergent set. A new unexplained divergence is a GATE-LOGIC or pipeline\n"+
+				"  regression — ROOT-CAUSE and SURFACE it; do NOT pad the ledger to force green.",
+				id, strings.Join(tups, " | "))
 		}
+	}
+	// (b) every ledger row must STILL be divergent — else it converged (prune the row)
+	// or a DIFFERENT id took its place (caught by (a)).
+	for id, justification := range crossProviderJustifiedResidual {
+		if _, ok := divergent[id]; !ok {
+			t.Errorf("justified-residual ledger row %q (%q) is NO LONGER divergent — it converged;\n"+
+				"  remove the stale row so the ledger SET stays exactly the live residual set.",
+				id, justification)
+		}
+	}
 
-		// Skip this ID if there are no empty-raw_family providers
-		// (divergence can't be caused by the documented bug).
-		if len(empty) == 0 {
-			continue
-		}
-		// Skip this ID if there are no populated-raw_family providers
-		// (no reference to compare against).
-		if len(populated) == 0 {
-			continue
-		}
+	// GATE-AGREEMENT cross-check: this hardened gate and TestSnapshotAnalysis decompose
+	// identical data via the identical pipeline, so the divergent count must match the
+	// pinned divergenceExact (1). A mismatch means the two gates DISAGREE — a gate-logic bug.
+	if len(divergent) != len(crossProviderJustifiedResidual) {
+		t.Errorf("divergent-ID count = %d, justified-residual ledger size = %d — SET-equality broken (see per-ID errors above)",
+			len(divergent), len(crossProviderJustifiedResidual))
+	}
 
-		// Check if all populated-raw_family providers agree on the same decomposition.
-		// If they disagree, it's an upstream data inconsistency — skip (FOLLOWUP).
-		consensusFamily := populated[0].Family
-		consensusVariant := populated[0].Variant
-		consensusVersion := populated[0].Version
-		populatedAgree := true
-		for _, p := range populated[1:] {
-			if p.Family != consensusFamily || p.Variant != consensusVariant || p.Version != consensusVersion {
-				populatedAgree = false
-				break
-			}
-		}
-		if !populatedAgree {
-			// Upstream data inconsistency across populated providers — deferred to bestiary-wi36.
-			continue
-		}
+	// RESIDUAL-COUNT PIN (B-MINOR-3): catch a non-fixture-family residual regression.
+	if residualUnaccounted > crossProviderResidualUnaccountedCeiling {
+		t.Errorf("ReasonResidualUnaccountedTokens count = %d, exceeds pinned ceiling %d;\n"+
+			"  a non-fixture-family residual regression (the seed-flash class) re-dropped sole-residual/member coverage.\n"+
+			"  Investigate ParseFamilyDetailed; if the increase is intentional, bump the ceiling with justification.",
+			residualUnaccounted, crossProviderResidualUnaccountedCeiling)
+	}
 
-		// Compute what InferFamilyFromIDWithVariant returns for this ID.
-		// This is the reference point for "what the current parser can derive
-		// from the ID alone, without any raw_family data".
-		// If InferFamilyFromIDWithVariant returns the same as the consensus,
-		// then an empty-raw_family provider that differs is a genuine bug.
-		// If InferFamilyFromIDWithVariant cannot derive the consensus, the
-		// case is deferred to FOLLOWUP_SLICE-1 (bestiary-wi36) — it requires
-		// parser enhancements beyond the scope of SLICE-FIX-2.
-		inferredFamily, inferredVariant, inferredVersion := bestiary.InferFamilyFromIDWithVariant(
-			bestiary.ModelID(id),
-			bestiary.Provider(empty[0].Provider),
-		)
-
-		// Skip if InferFamilyFromIDWithVariant can't derive the consensus.
-		// These are FOLLOWUP_SLICE-1 cases (parser enhancement needed).
-		if inferredFamily != bestiary.Family(consensusFamily) ||
-			inferredVariant != consensusVariant ||
-			inferredVersion != consensusVersion {
-			continue
-		}
-
-		// InferFamilyFromIDWithVariant CAN derive the consensus — so all
-		// empty-raw_family providers must match. Flag any that don't.
-		for _, e := range empty {
-			if e.Family == consensusFamily && e.Variant == consensusVariant && e.Version == consensusVersion {
-				continue
-			}
-			t.Errorf("cross-provider decomposition divergence for ID %q:\n"+
-				"  populated-raw_family consensus (provider %q) → (family=%q, variant=%q, version=%q)\n"+
-				"  empty-raw_family provider %q → (family=%q, variant=%q, version=%q)\n"+
-				"  InferFamilyFromIDWithVariant returns (%q, %q, %q) — the regen must use it.\n"+
-				"  Fix: re-run go generate ./... to bake the updated decomposition into models_static_gen.go.",
-				id,
-				populated[0].Provider, consensusFamily, consensusVariant, consensusVersion,
-				e.Provider, e.Family, e.Variant, e.Version,
-				inferredFamily, inferredVariant, inferredVersion)
-		}
+	// POPULATED-VERSION FLOOR PIN: catch a version-presence regression.
+	if populatedVersion < crossProviderPopulatedVersionFloor {
+		t.Errorf("populated-version count = %d, below pinned floor %d;\n"+
+			"  a regression dropped Version-presence coverage (the inverse of the residual-ceiling guard).\n"+
+			"  Investigate ParseFamilyDetailed/idDrivenVersion; if the decrease is intentional, lower the floor with justification.",
+			populatedVersion, crossProviderPopulatedVersionFloor)
 	}
 }
 
 // --------------------------------------------------------------------------
-// SLICE-FIX-3 tests: double-hyphen flag support, ChatGPT casing, double-underscore
+// Double-hyphen flag support, ChatGPT casing, double-underscore tests
 // --------------------------------------------------------------------------
 
 // TestParseFlags_DoubleHyphen verifies that all flags accept BOTH single-hyphen
 // and double-hyphen forms (e.g. --no-fetch is equivalent to -no-fetch).
-// This test covers B1-B3 from the slice spec.
+// This test covers the single-/double-hyphen flag criteria from the slice spec.
 //
-// These tests will FAIL until L3 adds double-hyphen prefix support to parseFlags.
+// These tests will FAIL until double-hyphen prefix support is added to parseFlags.
 func TestParseFlags_DoubleHyphen(t *testing.T) {
 	cases := []struct {
-		desc    string
-		args    []string
-		check   func(t *testing.T, got flagResult)
+		desc  string
+		args  []string
+		check func(t *testing.T, got flagResult)
 	}{
 		{
 			desc: "--no-fetch sets noFetch=true",
@@ -1269,7 +1230,7 @@ func TestParseFlags_DoubleHyphen(t *testing.T) {
 }
 
 // TestSlugToIdentifier_ChatGPT verifies that the chatgpt casing override is
-// applied correctly. B4: chatgpt → ChatGPT.
+// applied correctly: chatgpt → ChatGPT.
 func TestSlugToIdentifier_ChatGPT(t *testing.T) {
 	cases := []struct {
 		slug     string
@@ -1299,13 +1260,13 @@ func TestSlugToIdentifier_ChatGPT(t *testing.T) {
 // convention (double underscores between field components, single underscores
 // within a component, e.g. version "4.5" → "4_5").
 //
-// B5: Model__<Provider>__<Family>__<Variant>?__<Version>?__<Date>?
+// Model__<Provider>__<Family>__<Variant>?__<Version>?__<Date>?
 //
 // When Version is non-empty, the version "4.5" is encoded as a single
 // segment "4_5" (dot→underscore). The raw ID version tokens are replaced by this
 // single compact segment so that "4_5" uses single underscores within.
 //
-// These tests will FAIL until L3 changes the join separator and adds version-segment logic.
+// These tests will FAIL until the join separator is changed and version-segment logic is added.
 func TestNameForCanonical_DoubleUnderscoreTemplate(t *testing.T) {
 	cases := []struct {
 		desc     string
@@ -1313,7 +1274,7 @@ func TestNameForCanonical_DoubleUnderscoreTemplate(t *testing.T) {
 		wantName string
 	}{
 		{
-			desc: "claude-opus-4-5 with Version on Anthropic (B5 golden)",
+			desc: "claude-opus-4-5 with Version on Anthropic (golden)",
 			model: bestiary.ModelInfo{
 				ID:       "claude-opus-4-5-20251101",
 				Provider: "anthropic",
@@ -1327,7 +1288,7 @@ func TestNameForCanonical_DoubleUnderscoreTemplate(t *testing.T) {
 			wantName: "Model__Anthropic__Claude__Opus__4_5__20251101",
 		},
 		{
-			desc: "gpt-4o without version or date on OpenAI (B5 golden)",
+			desc: "gpt-4o without version or date on OpenAI (golden)",
 			model: bestiary.ModelInfo{
 				ID:       "gpt-4o",
 				Provider: "openai",
@@ -1340,7 +1301,7 @@ func TestNameForCanonical_DoubleUnderscoreTemplate(t *testing.T) {
 			wantName: "Model__OpenAI__GPT__4o",
 		},
 		{
-			desc: "chatgpt model uses ChatGPT casing (B4)",
+			desc: "chatgpt model uses ChatGPT casing",
 			model: bestiary.ModelInfo{
 				ID:       "chatgpt-4o",
 				Provider: "openai",
@@ -1461,7 +1422,7 @@ type Family = string
 }
 
 // --------------------------------------------------------------------------
-// SLICE-FIX-V2-3 tests: parse-failure audit log
+// Tests: parse-failure audit log
 // --------------------------------------------------------------------------
 
 const parseFailuresFile = "parse_failures.json"
@@ -1604,7 +1565,7 @@ func TestWriteParseFailures_Empty(t *testing.T) {
 	}
 	if envelope.Failures == nil {
 		// Per spec: must be an empty array, not null, in JSON.
-		// encoding/json encodes nil slice as null. L3 must use []ParseFailure{} not nil.
+		// encoding/json encodes nil slice as null. The impl must use []ParseFailure{} not nil.
 		t.Errorf("Failures is nil (would encode as JSON null); want empty array []")
 	}
 	if len(envelope.Failures) != 0 {
@@ -1791,8 +1752,8 @@ func TestRun_WritesParseFailuresJSON(t *testing.T) {
 	if err != nil {
 		t.Fatalf("parse_failures.json not written to cacheDir %q: %v\n"+
 			"  What: run() did not write parse_failures.json\n"+
-			"  Why: the file-write step in run() may not be implemented yet (L3)\n"+
-			"  How to fix: implement writeParseFailures call in run() (L3 task)",
+			"  Why: the file-write step in run() may not be implemented yet\n"+
+			"  How to fix: implement writeParseFailures call in run()",
 			cacheDir, err)
 	}
 
@@ -1820,7 +1781,7 @@ func TestRun_WritesParseFailuresJSON(t *testing.T) {
 }
 
 // --------------------------------------------------------------------------
-// SLICE-DET-1 tests: deterministic + reproducible codegen (R1, R3, R4)
+// Tests: deterministic + reproducible codegen (ordering, collision-suffix, up-to-date guard)
 // --------------------------------------------------------------------------
 
 // normalizeWhitespace collapses all runs of whitespace in s to a single space.
@@ -1828,13 +1789,6 @@ func TestRun_WritesParseFailuresJSON(t *testing.T) {
 // expected strings that use single spaces.
 func normalizeWhitespace(s string) string {
 	return strings.Join(strings.Fields(s), " ")
-}
-
-// containsNormalized reports whether the normalized form of s (whitespace collapsed)
-// contains the normalized form of substr. Useful for matching against gofmt-aligned
-// output where columns may have varying spaces.
-func containsNormalized(s, substr string) bool {
-	return strings.Contains(normalizeWhitespace(s), normalizeWhitespace(substr))
 }
 
 // reLastSynced matches a LastSynced field line in generated Go source.
@@ -1937,7 +1891,7 @@ func deterministicFixtureJSON(t *testing.T) []byte {
 //     exactly mirroring the run() pipeline path
 //
 // Each call re-randomizes the Go map iteration order, which is the nondeterminism
-// source for bestiary-9lnq.
+// source the codegen ordering guarantees defend against.
 func runFixtureCodegen(t *testing.T, fixtureJSON []byte, lastSynced string) (staticSrc, constantsSrc []byte) {
 	t.Helper()
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -1999,9 +1953,9 @@ func runFixtureCodegen(t *testing.T, fixtureJSON []byte, lastSynced string) (sta
 //     that LastSynced is the SOLE residual non-determinism.
 //
 // Additionally asserts that each raw model ID always receives the same _N suffix
-// across all iterations (stable raw-ID-ordered assignment — R1 + raw-ID ordinal).
+// across all iterations (stable raw-ID-ordered assignment — deterministic ordering + raw-ID ordinal).
 //
-// Golden pins (from proposal/handoff spec):
+// Golden pins (from the spec):
 //   - C: "anthropic/claude-3-5-haiku" always _1, "anthropic/claude-3.5-haiku" always _2
 //   - B: "kilo-auto/free" always _1, "openrouter/free" always _2
 //   - E (version-pair / negative control): exact constant names with NO doubled-ordinal variant
@@ -2024,10 +1978,13 @@ func TestCodegen_Reproducible_ByteIdentical(t *testing.T) {
 	refNorm := normalizeWhitespace(refStr)
 
 	// C group pins: '-' (0x2D) < '.' (0x2E) means claude-3-5-haiku < claude-3.5-haiku.
-	if !strings.Contains(refNorm, `Model__CloudflareAIGateway__Claude__3__5__Haiku_1 ModelID = "anthropic/claude-3-5-haiku"`) {
+	// With parser active, version="3.5" is now extracted from both IDs
+	// (family=claude, variant=haiku, version=3.5). Both map to the same base constant
+	// Model__CloudflareAIGateway__Claude__3__5__Haiku__3_5; collision suffix applies.
+	if !strings.Contains(refNorm, `Model__CloudflareAIGateway__Claude__3__5__Haiku__3_5_1 ModelID = "anthropic/claude-3-5-haiku"`) {
 		t.Errorf("reference output: C group _1 pin mismatch; want anthropic/claude-3-5-haiku\nconstants:\n%s", refStr)
 	}
-	if !strings.Contains(refNorm, `Model__CloudflareAIGateway__Claude__3__5__Haiku_2 ModelID = "anthropic/claude-3.5-haiku"`) {
+	if !strings.Contains(refNorm, `Model__CloudflareAIGateway__Claude__3__5__Haiku__3_5_2 ModelID = "anthropic/claude-3.5-haiku"`) {
 		t.Errorf("reference output: C group _2 pin mismatch; want anthropic/claude-3.5-haiku\nconstants:\n%s", refStr)
 	}
 	// B group pins: kilo-auto/free < openrouter/free.
@@ -2045,6 +2002,8 @@ func TestCodegen_Reproducible_ByteIdentical(t *testing.T) {
 		t.Errorf("reference output: E control Model__OpenAI__GPT__5_2 missing or wrong\nconstants:\n%s", refStr)
 	}
 	// E control: assert NO fragment/doubled-ordinal variant (e.g. Model__OpenAI__GPT__5_1_1).
+	// Note: Model__OpenAI__GPT__5_1 and Model__OpenAI__GPT__5_2 are distinct by version-suffix
+	// pass (a), not the fallback collision suffix, so no _N suffix is appended.
 	if strings.Contains(refNorm, "Model__OpenAI__GPT__5_1_") || strings.Contains(refNorm, "Model__OpenAI__GPT__5_2_") {
 		t.Errorf("reference output: E control has doubled-ordinal variant (fragment suffix leaked)\nconstants:\n%s", refStr)
 	}
@@ -2131,7 +2090,7 @@ func TestCodegen_Reproducible_ByteIdentical(t *testing.T) {
 		if !bytes.Equal(refStaticNorm, staticNorm) {
 			t.Fatalf("iteration %d (ts=%s): generateSource output differs from reference after LastSynced normalization\n"+
 				"  What: the static model list changed between runs (beyond LastSynced)\n"+
-				"  Why: R1 sort or fetchModelsWithRaw map-range is nondeterministic\n"+
+				"  Why: the deterministic-ordering sort or fetchModelsWithRaw map-range is nondeterministic\n"+
 				"  Where: fetchModelsWithRaw or generateSource\n"+
 				"  How to fix: ensure sort.SliceStable(models, ...) runs before return in fetchModelsWithRaw",
 				i+1, ts)
@@ -2176,7 +2135,7 @@ func TestCodegen_Reproducible_ByteIdentical(t *testing.T) {
 	}
 }
 
-// TestCodegen_UpToDate is the R4 up-to-date guard. It regenerates both source
+// TestCodegen_UpToDate is the up-to-date guard. It regenerates both source
 // files from the hermetic fixture in-process and compares against committed golden
 // excerpts in testdata/. Both sides are normalized with normalizeWhitespace
 // (gofmt-alignment-insensitive). The golden files are excerpts of the expected
@@ -2191,13 +2150,13 @@ func TestCodegen_UpToDate(t *testing.T) {
 
 	constantsGoldenRaw, err := os.ReadFile(constantsGoldenPath)
 	if err != nil {
-		t.Fatalf("R4 guard: could not read constants golden %q: %v\n"+
+		t.Fatalf("up-to-date guard: could not read constants golden %q: %v\n"+
 			"  How to fix: ensure testdata/expected_constants_excerpt.go.golden is committed",
 			constantsGoldenPath, err)
 	}
 	staticGoldenRaw, err := os.ReadFile(staticGoldenPath)
 	if err != nil {
-		t.Fatalf("R4 guard: could not read static golden %q: %v\n"+
+		t.Fatalf("up-to-date guard: could not read static golden %q: %v\n"+
 			"  How to fix: ensure testdata/expected_static_excerpt.go.golden is committed",
 			staticGoldenPath, err)
 	}
@@ -2205,7 +2164,7 @@ func TestCodegen_UpToDate(t *testing.T) {
 	// Regenerate from the fixture.
 	// Pass a representative injected timestamp to exercise the run() stamping path.
 	// normalizeLastSynced is applied to both sides before comparison, so the guard
-	// is insensitive to the codegen wall-clock (see bestiary-vq6k for true zero-diff).
+	// is insensitive to the codegen wall-clock (true zero-diff is a separate follow-up).
 	fixtureJSON := deterministicFixtureJSON(t)
 	staticSrc, constantsSrc := runFixtureCodegen(t, fixtureJSON, "2000-01-01T00:00:00Z")
 
@@ -2244,7 +2203,7 @@ func TestCodegen_UpToDate(t *testing.T) {
 	// Normalizing whitespace on both sides makes the comparison insensitive to
 	// gofmt alignment and minor formatting differences.
 	if !strings.Contains(normConstants, normConstantsGolden) {
-		t.Errorf("R4 guard: constants file does not contain golden excerpt\n"+
+		t.Errorf("up-to-date guard: constants file does not contain golden excerpt\n"+
 			"  What: generateConstantsSource output differs from testdata/expected_constants_excerpt.go.golden\n"+
 			"  Why: collision _N bindings may have changed, or codegen logic was modified without re-running regen\n"+
 			"  Where: cmd/bestiary-gen/main.go generateConstantsSource or resolveCollisions\n"+
@@ -2258,7 +2217,7 @@ func TestCodegen_UpToDate(t *testing.T) {
 
 	// The golden excerpt must appear as a substring in the generated static output.
 	if !strings.Contains(normStatic, normStaticGolden) {
-		t.Errorf("R4 guard: static models file does not contain golden excerpt\n"+
+		t.Errorf("up-to-date guard: static models file does not contain golden excerpt\n"+
 			"  What: generateSource output differs from testdata/expected_static_excerpt.go.golden\n"+
 			"  Why: model ordering changed, or codegen logic was modified without re-running regen\n"+
 			"  Where: cmd/bestiary-gen/main.go generateSource\n"+
@@ -2270,7 +2229,7 @@ func TestCodegen_UpToDate(t *testing.T) {
 	// Sanity-check: the constants golden must contain at least one expected binding.
 	// This guards against an accidentally empty or truncated golden file.
 	if !strings.Contains(string(constantsGoldenRaw), `ModelID = "anthropic/claude-3-5-haiku"`) {
-		t.Errorf("R4 guard: constants golden file appears empty or truncated (missing expected binding)\n"+
+		t.Errorf("up-to-date guard: constants golden file appears empty or truncated (missing expected binding)\n" +
 			"  How to fix: ensure testdata/expected_constants_excerpt.go.golden is correctly committed")
 	}
 }
@@ -2278,15 +2237,19 @@ func TestCodegen_UpToDate(t *testing.T) {
 // TestCodegen_GoldenPins_C verifies the C group (cloudflare-ai-gateway punctuation
 // collision): "anthropic/claude-3-5-haiku" → _1, "anthropic/claude-3.5-haiku" → _2.
 // ASCII ordering: '-' (0x2D) < '.' (0x2E).
+//
+// With parser active, both IDs parse to version="3.5" (family=claude,
+// variant=haiku). The constant base becomes Model__CloudflareAIGateway__Claude__3__5__Haiku__3_5;
+// collision suffix _1/_2 still applies via raw-ID-ordered fallback.
 func TestCodegen_GoldenPins_C(t *testing.T) {
 	fixtureJSON := deterministicFixtureJSON(t)
 	_, constantsSrc := runFixtureCodegen(t, fixtureJSON, "")
 	s := normalizeWhitespace(string(constantsSrc))
 
-	if !strings.Contains(s, `Model__CloudflareAIGateway__Claude__3__5__Haiku_1 ModelID = "anthropic/claude-3-5-haiku"`) {
+	if !strings.Contains(s, `Model__CloudflareAIGateway__Claude__3__5__Haiku__3_5_1 ModelID = "anthropic/claude-3-5-haiku"`) {
 		t.Errorf("C group _1 pin: expected anthropic/claude-3-5-haiku\nconstants:\n%s", string(constantsSrc))
 	}
-	if !strings.Contains(s, `Model__CloudflareAIGateway__Claude__3__5__Haiku_2 ModelID = "anthropic/claude-3.5-haiku"`) {
+	if !strings.Contains(s, `Model__CloudflareAIGateway__Claude__3__5__Haiku__3_5_2 ModelID = "anthropic/claude-3.5-haiku"`) {
 		t.Errorf("C group _2 pin: expected anthropic/claude-3.5-haiku\nconstants:\n%s", string(constantsSrc))
 	}
 }
@@ -2332,7 +2295,7 @@ func TestCodegen_GoldenPins_E(t *testing.T) {
 }
 
 // TestCodegen_SortOrder verifies that fetchModelsWithRaw returns models sorted by
-// (Provider, ID) after R1. Uses the fixture to check the expected ordering.
+// (Provider, ID) after the deterministic ordering. Uses the fixture to check the expected ordering.
 func TestCodegen_SortOrder(t *testing.T) {
 	fixtureJSON := deterministicFixtureJSON(t)
 
@@ -2392,5 +2355,509 @@ func TestCodegen_SortOrder(t *testing.T) {
 	}
 	if !sort.StringsAreSorted(kiloModels) {
 		t.Errorf("kilo models not sorted: %v", kiloModels)
+	}
+}
+
+// --------------------------------------------------------------------------
+// Decomposition snapshot + fixture corpus + per-reason tests
+// --------------------------------------------------------------------------
+
+// decompositionSnapshotEntry records the parse decomposition for a single model.
+// Sorted by (provider, model_id) for deterministic golden output.
+type decompositionSnapshotEntry struct {
+	Provider string `json:"provider"`
+	ModelID  string `json:"model_id"`
+	Family   string `json:"family"`
+	Variant  string `json:"variant"`
+	Version  string `json:"version"`
+	Modifier string `json:"modifier"`
+}
+
+// fixtureAPIJSON returns the contents of testdata/fixture_api.json. This fixture
+// contains the full fixture corpus (active-class, residual, empty-raw_family passthrough-guard,
+// YYMM) and is the hermetic input for TestDecompositionSnapshot.
+func fixtureAPIJSON(t *testing.T) []byte {
+	t.Helper()
+	path := filepath.Join("testdata", "fixture_api.json")
+	data, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatalf("fixtureAPIJSON: could not read %q: %v\n"+
+			"  How to fix: ensure testdata/fixture_api.json is committed",
+			path, err)
+	}
+	return data
+}
+
+// runFixtureAPICodegen is like runFixtureCodegen but uses fixtureAPIJSON (the full
+// fixture corpus from testdata/fixture_api.json) instead of the collision-group-focused
+// deterministicFixtureJSON. It returns all models + parse failures from the run.
+func runFixtureAPICodegen(t *testing.T) (models []bestiary.ModelInfo, failures []bestiary.ParseFailure) {
+	t.Helper()
+	fixtureJSON := fixtureAPIJSON(t)
+
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write(fixtureJSON)
+	}))
+	defer srv.Close()
+
+	origURL := apiURL
+	apiURL = srv.URL
+	defer func() { apiURL = origURL }()
+
+	_, models, _, failures, err := fetchModelsWithRaw(context.Background(), t.TempDir(), false)
+	if err != nil {
+		t.Fatalf("runFixtureAPICodegen: fetchModelsWithRaw: %v", err)
+	}
+	return models, failures
+}
+
+// TestDecompositionSnapshot is the fixture-based decomposition snapshot test.
+// It runs the full fixture corpus through fetchModelsWithRaw (which calls genToModelInfoDetailed
+// → ParseFamilyDetailed) and compares the (Family, Variant, Version, Modifier) output
+// per model against a committed golden file.
+//
+// The -update flag regenerates the golden file:
+//
+//	go test ./cmd/bestiary-gen/... -run TestDecompositionSnapshot -update
+//
+// This test is fixture-based only (NOT a real-data ==0 gate).
+func TestDecompositionSnapshot(t *testing.T) {
+	models, _ := runFixtureAPICodegen(t)
+
+	// Collect decomposition entries, sorted by (provider, model_id) for determinism.
+	entries := make([]decompositionSnapshotEntry, 0, len(models))
+	for _, m := range models {
+		entries = append(entries, decompositionSnapshotEntry{
+			Provider: string(m.Provider),
+			ModelID:  string(m.ID),
+			Family:   string(m.Family),
+			Variant:  m.Variant,
+			Version:  m.Version,
+			Modifier: modKey(m.Modifier),
+		})
+	}
+	// Models from fetchModelsWithRaw are already sorted by (Provider, ID) via the deterministic ordering.
+
+	got, err := json.MarshalIndent(entries, "", "  ")
+	if err != nil {
+		t.Fatalf("TestDecompositionSnapshot: marshal entries: %v", err)
+	}
+	// Ensure trailing newline for consistency with golden files.
+	got = append(got, '\n')
+
+	goldenPath := filepath.Join("testdata", "decomposition_snapshot.golden.json")
+
+	if *updateGolden {
+		if err := os.WriteFile(goldenPath, got, 0o644); err != nil {
+			t.Fatalf("TestDecompositionSnapshot: write golden %q: %v", goldenPath, err)
+		}
+		t.Logf("Updated golden file: %s", goldenPath)
+		return
+	}
+
+	want, err := os.ReadFile(goldenPath)
+	if err != nil {
+		t.Fatalf("TestDecompositionSnapshot: could not read golden %q: %v\n"+
+			"  How to fix: run `go test ./cmd/bestiary-gen/... -run TestDecompositionSnapshot -update` to generate",
+			goldenPath, err)
+	}
+
+	if !bytes.Equal(got, want) {
+		t.Errorf("TestDecompositionSnapshot: decomposition mismatch\n"+
+			"  What: fixture model decomposition changed vs golden\n"+
+			"  Why: ParseFamilyDetailed output changed, or fixture_api.json updated without regen\n"+
+			"  How to fix: run `go test ./cmd/bestiary-gen/... -run TestDecompositionSnapshot -update` to regenerate\n"+
+			"\nGot:\n%s\n\nWant:\n%s",
+			got, want)
+	}
+}
+
+// TestDecompositionSnapshot_ActiveClassVersionPopulated asserts that each
+// active-class model in the fixture corpus has a non-empty Version field.
+// This is the per-row version!="" check for the active class.
+func TestDecompositionSnapshot_ActiveClassVersionPopulated(t *testing.T) {
+	models, _ := runFixtureAPICodegen(t)
+
+	// Active-class models: those expected to have version populated.
+	// parser correctly extracts version for these cases.
+	// Sole-residual promotion adds variant-promoted models (glm-5-turbo, phi-4-mini)
+	// whose variant is now set from the sole trailing suffix after version extraction.
+	// text-embedding-3-large/small removed from active class —
+	// the full-prefix-first change that enabled their sole-residual promotion was reverted.
+	// They are now documented residuals.
+	activeCases := map[string]struct {
+		wantFamily  string
+		wantVariant string
+		wantVersion string
+	}{
+		// gpt-5-mini: raw_family=gpt-mini → family=gpt, variant=mini, version=5
+		"gpt-5-mini": {wantFamily: "gpt", wantVariant: "mini", wantVersion: "5"},
+		// claude-3-5-haiku: raw_family=claude-haiku → family=claude, variant=haiku, version=3.5
+		"anthropic/claude-3-5-haiku": {wantFamily: "claude", wantVariant: "haiku", wantVersion: "3.5"},
+		// claude-3.5-haiku: same family → same decomposition
+		"anthropic/claude-3.5-haiku": {wantFamily: "claude", wantVariant: "haiku", wantVersion: "3.5"},
+		// Sole-residual-promoted models surviving the full-prefix-first revert (single-token rawFamily, no compound prefix):
+		// glm-5-turbo: — 'turbo' is now a GLOBAL modifier (not a glm member), so it
+		// reclassifies variant→modifier: (glm, "", 5, [turbo]). Version 5 still populated.
+		"glm-5-turbo": {wantFamily: "glm", wantVariant: "", wantVersion: "5"},
+		// phi-4-mini: raw_family=phi → family=phi, variant=mini (sole-residual promotion, still a variant suffix), version=4
+		"phi-4-mini": {wantFamily: "phi", wantVariant: "mini", wantVersion: "4"},
+	}
+
+	modelsByID := make(map[string]bestiary.ModelInfo, len(models))
+	for _, m := range models {
+		modelsByID[string(m.ID)] = m
+	}
+
+	for id, want := range activeCases {
+		m, ok := modelsByID[id]
+		if !ok {
+			t.Errorf("active-class model %q not found in fixture output", id)
+			continue
+		}
+		if m.Version == "" {
+			t.Errorf("active-class model %q: Version is empty, want %q\n"+
+				"  What: the parser should populate Version for active-class models\n"+
+				"  Why: ParseFamilyDetailed may not be extracting version from model ID\n"+
+				"  How to fix: verify ParseFamilyDetailed returns version for family=%q, id=%q",
+				id, want.wantVersion, want.wantFamily, id)
+		} else if m.Version != want.wantVersion {
+			t.Errorf("active-class model %q: Version = %q, want %q", id, m.Version, want.wantVersion)
+		}
+		if string(m.Family) != want.wantFamily {
+			t.Errorf("active-class model %q: Family = %q, want %q", id, m.Family, want.wantFamily)
+		}
+		if m.Variant != want.wantVariant {
+			t.Errorf("active-class model %q: Variant = %q, want %q\n"+
+				"  What: the sole-residual promotion may not have fired (sole trailing suffix not promoted)\n"+
+				"  Why: the sole-residual suffix promotion should set Variant=<suffix> when exactly one residual is a known variant suffix",
+				id, m.Variant, want.wantVariant)
+		}
+	}
+}
+
+// TestDecompositionSnapshot_NoVersionForBare4Digit verifies the bare-4-digit-date guard in the
+// fixture corpus: deepseek-r1-0528 and deepseek-v3-0324 must have Version="" because
+// "0528" and "0324" are bare 4-digit date tokens (MMDD format), not semantic versions.
+//
+// This is the per-row version=="" check for the bare-4-digit-date guard models (fixture-based, not real-data).
+func TestDecompositionSnapshot_NoVersionForBare4Digit(t *testing.T) {
+	models, _ := runFixtureAPICodegen(t)
+
+	modelsByID := make(map[string]bestiary.ModelInfo, len(models))
+	for _, m := range models {
+		modelsByID[string(m.ID)] = m
+	}
+
+	fixACases := map[string]struct {
+		wantFamily  string
+		wantVersion string // must be empty
+	}{
+		// raw_family "deepseek-r1" is a RAW-POPULATED over-capture; it now
+		// reduces to the short base "deepseek" (the SAME reduction applied to empty-raw),
+		// making it consistent with deepseek-v3-0324. The bare-4-digit date guard (the focus
+		// of this test) is unchanged — Version stays "".
+		"deepseek-r1-0528": {wantFamily: "deepseek", wantVersion: ""},
+		"deepseek-v3-0324": {wantFamily: "deepseek", wantVersion: ""},
+	}
+
+	for id, want := range fixACases {
+		m, ok := modelsByID[id]
+		if !ok {
+			t.Errorf("the bare-4-digit-date guard model %q not found in fixture output", id)
+			continue
+		}
+		if m.Version != want.wantVersion {
+			t.Errorf("the bare-4-digit-date guard model %q: Version = %q, want %q (bare 4-digit token must not be a version)\n"+
+				"  What: 4-digit date-like token was extracted as a version\n"+
+				"  Why: the bare-4-digit-date guard extends isFourDigitDateToken to reject any 4-digit all-numeric token\n"+
+				"  How to fix: verify isFourDigitDateToken returns true for \"0528\" and \"0324\"",
+				id, m.Version, want.wantVersion)
+		}
+		if string(m.Family) != want.wantFamily {
+			t.Errorf("the bare-4-digit-date guard model %q: Family = %q, want %q", id, m.Family, want.wantFamily)
+		}
+	}
+}
+
+// --------------------------------------------------------------------------
+// version_duplicates.json + dot_form_audit.json + smoke check tests
+// --------------------------------------------------------------------------
+
+// TestRun_WritesVersionDuplicates verifies that run() writes version_duplicates.json
+// to the cache directory when models share (provider, family, variant, version).
+// Uses fixture_api.json which contains haiku models that both resolve to version="3.5"
+// under cloudflare-ai-gateway (same provider/family/variant/version → duplicate group).
+func TestRun_WritesVersionDuplicates(t *testing.T) {
+	fixtureJSON := fixtureAPIJSON(t)
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write(fixtureJSON)
+	}))
+	defer srv.Close()
+
+	origURL := apiURL
+	apiURL = srv.URL
+	defer func() { apiURL = origURL }()
+
+	tmpDir := t.TempDir()
+	origDir, err := os.Getwd()
+	if err != nil {
+		t.Fatalf("getwd: %v", err)
+	}
+	if err := os.Chdir(tmpDir); err != nil {
+		t.Fatalf("chdir to tmpDir: %v", err)
+	}
+	defer func() { _ = os.Chdir(origDir) }()
+
+	cacheDir := filepath.Join(tmpDir, "test-cache")
+	if err := run([]string{"-cache-dir=" + cacheDir}); err != nil {
+		t.Fatalf("run(): unexpected error: %v", err)
+	}
+
+	// version_duplicates.json must exist.
+	dupPath := filepath.Join(cacheDir, versionDuplicatesFile)
+	data, err := os.ReadFile(dupPath)
+	if err != nil {
+		t.Fatalf("version_duplicates.json not written to cacheDir %q: %v\n"+
+			"  How to fix: verify writeVersionDuplicates is called in run()",
+			cacheDir, err)
+	}
+
+	// Must be valid JSON.
+	var envelope VersionDuplicatesEnvelope
+	if err := json.Unmarshal(data, &envelope); err != nil {
+		t.Fatalf("version_duplicates.json: invalid JSON: %v\nContents: %s", err, data)
+	}
+	if envelope.SchemaVersion != 1 {
+		t.Errorf("version_duplicates.json SchemaVersion = %d, want 1", envelope.SchemaVersion)
+	}
+	// fixture_api.json has two haiku models under cloudflare-ai-gateway, both with
+	// version="3.5" (family=claude, variant=haiku). They should form one duplicate group.
+	if envelope.DuplicateCount == 0 {
+		t.Errorf("version_duplicates.json DuplicateCount = 0, want > 0\n" +
+			"  What: expected at least one duplicate group from haiku models\n" +
+			"  Why: both claude-haiku models in fixture_api.json resolve to version=3.5\n" +
+			"  How to fix: verify writeVersionDuplicates collects (provider,family,variant,version) groups")
+	}
+}
+
+// TestRun_WritesDotFormAudit verifies that run() writes dot_form_audit.json with
+// models whose Version contains a dot (dot-form populated).
+func TestRun_WritesDotFormAudit(t *testing.T) {
+	fixtureJSON := fixtureAPIJSON(t)
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write(fixtureJSON)
+	}))
+	defer srv.Close()
+
+	origURL := apiURL
+	apiURL = srv.URL
+	defer func() { apiURL = origURL }()
+
+	tmpDir := t.TempDir()
+	origDir, err := os.Getwd()
+	if err != nil {
+		t.Fatalf("getwd: %v", err)
+	}
+	if err := os.Chdir(tmpDir); err != nil {
+		t.Fatalf("chdir to tmpDir: %v", err)
+	}
+	defer func() { _ = os.Chdir(origDir) }()
+
+	cacheDir := filepath.Join(tmpDir, "test-cache")
+	if err := run([]string{"-cache-dir=" + cacheDir}); err != nil {
+		t.Fatalf("run(): unexpected error: %v", err)
+	}
+
+	// dot_form_audit.json must exist.
+	auditPath := filepath.Join(cacheDir, dotFormAuditFile)
+	data, err := os.ReadFile(auditPath)
+	if err != nil {
+		t.Fatalf("dot_form_audit.json not written to cacheDir %q: %v\n"+
+			"  How to fix: verify writeDotFormAudit is called in run()",
+			cacheDir, err)
+	}
+
+	// Must be valid JSON.
+	var envelope DotFormAuditEnvelope
+	if err := json.Unmarshal(data, &envelope); err != nil {
+		t.Fatalf("dot_form_audit.json: invalid JSON: %v\nContents: %s", err, data)
+	}
+	if envelope.SchemaVersion != 1 {
+		t.Errorf("dot_form_audit.json SchemaVersion = %d, want 1", envelope.SchemaVersion)
+	}
+	// fixture_api.json has: claude-3-5-haiku (version=3.5), claude-3.5-haiku (version=3.5),
+	// gpt-5.1 (version=5.1), gpt-5.2 (version=5.2) — all with dot-form versions.
+	if envelope.Count == 0 {
+		t.Errorf("dot_form_audit.json Count = 0, want > 0\n" +
+			"  What: expected models with dot-form versions (e.g. 3.5, 5.1)\n" +
+			"  Why: fixture_api.json contains multiple models with dot-separated versions\n" +
+			"  How to fix: verify writeDotFormAudit checks for Version containing '.'")
+	}
+}
+
+// TestWriteVersionDuplicates_Unit is a unit test for the writeVersionDuplicates function.
+func TestWriteVersionDuplicates_Unit(t *testing.T) {
+	cacheDir := t.TempDir()
+	models := []bestiary.ModelInfo{
+		// Two models with same (provider, family, variant, version) → duplicate group.
+		{ID: "claude-3-5-haiku", Provider: "anthropic", Family: "claude", Variant: "haiku", Version: "3.5"},
+		{ID: "claude-3.5-haiku", Provider: "anthropic", Family: "claude", Variant: "haiku", Version: "3.5"},
+		// One model with unique key → no duplicate.
+		{ID: "gpt-5.1", Provider: "openai", Family: "gpt", Variant: "", Version: "5.1"},
+		// Models with no version → skipped.
+		{ID: "some-model", Provider: "provider", Family: "family", Variant: "", Version: ""},
+	}
+	if err := writeVersionDuplicates(cacheDir, models); err != nil {
+		t.Fatalf("writeVersionDuplicates: %v", err)
+	}
+
+	data, err := os.ReadFile(filepath.Join(cacheDir, versionDuplicatesFile))
+	if err != nil {
+		t.Fatalf("read version_duplicates.json: %v", err)
+	}
+	var envelope VersionDuplicatesEnvelope
+	if err := json.Unmarshal(data, &envelope); err != nil {
+		t.Fatalf("unmarshal version_duplicates.json: %v", err)
+	}
+	if envelope.DuplicateCount != 1 {
+		t.Errorf("DuplicateCount = %d, want 1", envelope.DuplicateCount)
+	}
+	if len(envelope.Duplicates) != 1 {
+		t.Fatalf("len(Duplicates) = %d, want 1", len(envelope.Duplicates))
+	}
+	g := envelope.Duplicates[0]
+	if g.Key.Provider != "anthropic" || g.Key.Family != "claude" || g.Key.Variant != "haiku" || g.Key.Version != "3.5" {
+		t.Errorf("duplicate group key = %+v, want {anthropic, claude, haiku, 3.5}", g.Key)
+	}
+	if len(g.ModelIDs) != 2 {
+		t.Errorf("ModelIDs = %v, want 2 entries", g.ModelIDs)
+	}
+}
+
+// TestWriteDotFormAudit_Unit is a unit test for the writeDotFormAudit function.
+func TestWriteDotFormAudit_Unit(t *testing.T) {
+	cacheDir := t.TempDir()
+	models := []bestiary.ModelInfo{
+		{ID: "claude-3.5-haiku", Provider: "anthropic", Version: "3.5"}, // dot-form
+		{ID: "gpt-5.1", Provider: "openai", Version: "5.1"},             // dot-form
+		{ID: "gpt-5-mini", Provider: "openai", Version: "5"},            // no dot — not in audit
+		{ID: "nova-2-lite-v1", Provider: "cartesia", Version: "2"},      // no dot — not in audit
+		{ID: "no-version", Provider: "test", Version: ""},               // empty — not in audit
+	}
+	if err := writeDotFormAudit(cacheDir, models); err != nil {
+		t.Fatalf("writeDotFormAudit: %v", err)
+	}
+
+	data, err := os.ReadFile(filepath.Join(cacheDir, dotFormAuditFile))
+	if err != nil {
+		t.Fatalf("read dot_form_audit.json: %v", err)
+	}
+	var envelope DotFormAuditEnvelope
+	if err := json.Unmarshal(data, &envelope); err != nil {
+		t.Fatalf("unmarshal dot_form_audit.json: %v", err)
+	}
+	if envelope.Count != 2 {
+		t.Errorf("Count = %d, want 2 (claude-3.5-haiku + gpt-5.1)", envelope.Count)
+	}
+}
+
+// TestFixturePerReasonCounts asserts per-reason FailureCount expectations over the
+// full fixture corpus. This mirrors the TestRun_WritesParseFailuresJSON pattern
+// but uses fixture_api.json instead of failureAPIJSON.
+//
+// Expectations:
+//   - ReasonVersionDigitsNotExtracted (active class) → 0: now correctly
+//     extracts version from IDs like claude-3-5-haiku; this failure should no longer fire.
+//   - ReasonResidualUnaccountedTokens → at least 4:
+//     nova-2-lite-v1 (C: variant pre-set), phi-3-medium-128k-instruct (multi-residual),
+//     text-embedding-3-large + text-embedding-3-small (the full-prefix-first revert documented residuals —
+//     full-prefix-first reverted; deferred fix).
+//   - ReasonYYMMDateAsVersion → at least 1: mistral-small-2603 (family mistral-2603)
+//     triggers the YYMM false-positive detector.
+//   - the bare-4-digit-date guard confirmation: deepseek-r1-0528 / deepseek-v3-0324 produce NO failure
+//     (bare 4-digit date tokens are now rejected as versions, not residual).
+//   - the sole-residual suffix promotion confirmation: glm-5-turbo / phi-4-mini produce NO failure
+//     (single-token rawFamily; the sole-residual promotion still fires). text-embedding-3-* removed (now residual).
+//
+// This test is NOT a ==0 gate on real data — fixture-based only (by design).
+func TestFixturePerReasonCounts(t *testing.T) {
+	_, failures := runFixtureAPICodegen(t)
+
+	// Count per-reason occurrences.
+	counts := make(map[bestiary.ParseFailureReason]int)
+	// Build per-model failure lookup for the bare-4-digit-date guard / sole-residual promotion spot checks.
+	failsByID := make(map[string]bestiary.ParseFailureReason)
+	for _, f := range failures {
+		counts[f.Reason]++
+		failsByID[string(f.RawID)] = f.Reason
+	}
+
+	// Active class: ReasonVersionDigitsNotExtracted must be 0.
+	// With parser, version is now correctly extracted for claude-3-5-haiku
+	// and similar active-class models, so this failure reason must NOT appear.
+	if n := counts[bestiary.ReasonVersionDigitsNotExtracted]; n != 0 {
+		t.Errorf("ReasonVersionDigitsNotExtracted = %d, want 0\n"+
+			"  What: the parser should suppress this failure for active-class models\n"+
+			"  Why: ParseFamilyDetailed now extracts version via Δ1 extract-first path\n"+
+			"  How to fix: verify ParseFamilyDetailed does not emit ReasonVersionDigitsNotExtracted for claude-3-5-haiku etc.",
+			n)
+	}
+
+	// Residual: ReasonResidualUnaccountedTokens must be >= 4:
+	// nova-2-lite-v1 (C: variant pre-set, "v1" residual after variant) +
+	// phi-3-medium-128k-instruct (multi-residual) +
+	// text-embedding-3-large (documented residual of the full-prefix-first revert) +
+	// text-embedding-3-small (same).
+	// After the sole-residual suffix promotion, glm-5-turbo/phi-4-mini are promoted (single-token rawFamily, the sole-residual promotion applies).
+	if n := counts[bestiary.ReasonResidualUnaccountedTokens]; n < 4 {
+		t.Errorf("ReasonResidualUnaccountedTokens = %d, want >= 4\n"+
+			"  What: nova-2-lite-v1 (C) + phi-3-medium-128k-instruct (multi-residual) + text-embedding-3-large/small (the full-prefix-first revert residual)\n"+
+			"    should produce residual failures\n"+
+			"  Why: the full-prefix-first change was reverted; text-embedding models now have compound residual tokens\n"+
+			"  How to fix: verify fixture_api.json includes all four models",
+			n)
+	}
+
+	// YYMM: ReasonYYMMDateAsVersion must be > 0 (mistral-small-2603 contributes).
+	if n := counts[bestiary.ReasonYYMMDateAsVersion]; n == 0 {
+		t.Errorf("ReasonYYMMDateAsVersion = 0, want > 0\n" +
+			"  What: mistral-small-2603 (family mistral-2603) should produce a YYMM failure\n" +
+			"  Why: ParseFamilyDetailed YYMM detector fires for families matching the YYMM pattern\n" +
+			"  How to fix: verify fixture_api.json includes mistral-small-2603 under mistral provider")
+	}
+
+	// the bare-4-digit-date guard spot check: deepseek-r1-0528 and deepseek-v3-0324 must NOT appear in
+	// failures. Their bare 4-digit date tokens ("0528", "0324") are now rejected as
+	// versions → no version extracted → no residual failure.
+	for _, fixAID := range []string{"deepseek-r1-0528", "deepseek-v3-0324"} {
+		if reason, found := failsByID[fixAID]; found {
+			t.Errorf("the bare-4-digit-date guard model %q produced a failure (reason=%q), want no failure\n"+
+				"  What: bare 4-digit date token was not suppressed\n"+
+				"  Why: the bare-4-digit-date guard should extend isFourDigitDateToken to reject 4-digit all-numeric tokens\n"+
+				"  How to fix: verify isFourDigitDateToken returns true for \"0528\" and \"0324\"",
+				fixAID, reason)
+		}
+	}
+
+	// the sole-residual suffix promotion spot check: glm-5-turbo and phi-4-mini must NOT
+	// appear in failures. Their single-token rawFamily ("glm", "phi") means the sole-residual promotion fires
+	// correctly (sole trailing suffix promoted, no compound prefix issue).
+	// text-embedding-3-large/small are removed from this check — they are now documented
+	// residuals after reverted the full-prefix-first change.
+	for _, fixB1ID := range []string{"glm-5-turbo", "phi-4-mini"} {
+		if reason, found := failsByID[fixB1ID]; found {
+			t.Errorf("the sole-residual suffix promotion model %q produced a failure (reason=%q), want no failure\n"+
+				"  What: sole trailing known-suffix was not promoted into Variant\n"+
+				"  Why: the sole-residual suffix promotion should suppress ReasonResidualUnaccountedTokens when sole residual is a known suffix\n"+
+				"  How to fix: verify the sole-residual promotion logic in ParseFamilyDetailed",
+				fixB1ID, reason)
+		}
 	}
 }

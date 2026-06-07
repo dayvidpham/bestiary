@@ -1,5 +1,5 @@
 -- Migration: schema version 2 → 3
--- Bestiary entity normalization pipeline (PROPOSAL-3, deliverable 11)
+-- Bestiary entity normalization pipeline (deliverable 11)
 --
 -- PURPOSE: This file is a REFERENCE / EXTERNAL-DB-TOOL ONLY document.
 -- The Go store performs all migration logic in store.go via migrateToV3().

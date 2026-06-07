@@ -27,13 +27,21 @@ import (
 	"github.com/dayvidpham/bestiary"
 )
 
-// casingOverrides maps lowercase token → preferred uppercase form.
-// Applied when blending the API name field does not yield a recognisable token.
-var casingOverrides = map[string]string{
+// brandCasing is the curated brand-casing table:
+// lowercase token → preferred Go IDENTIFIER stylization. It is the single source the
+// shared styleSegment seam consults per-segment, so Provider, Family, and Model__
+// identifiers all stylize consistently. It ONLY affects generated SYMBOL names (and
+// optionally DisplayName) — never the Family FIELD value, any runtime string, or the
+// decomposition pipeline.
+//
+// Entries are RATIFIED or AUTO-APPLY (clearly-curated
+// batch). An un-curated token defaults to title-case (incremental honest-audit). Any
+// genuinely-ambiguous new casing must be SURFACED for user sign-off, never guessed here.
+var brandCasing = map[string]string{
+	// ── existing acronym/segment overrides (preserved) ──
 	"ai":      "AI",
 	"api":     "API",
 	"chatgpt": "ChatGPT",
-	"gpt":     "GPT",
 	"llm":     "LLM",
 	"io":      "IO",
 	"sap":     "SAP",
@@ -41,8 +49,82 @@ var casingOverrides = map[string]string{
 	"cn":      "CN",
 	"ams":     "AMS",
 	"sgp":     "SGP",
-	"xai":     "XAI",
 	"aws":     "AWS",
+
+	// ── RATIFIED casings ──
+	"nvidia":     "Nvidia", // NOT NVIDIA
+	"togetherai": "TogetherAI",
+	"llmgateway": "LlmGateway", // NOT LLMGateway
+	"iflowcn":    "iFlowCN",
+	"nearai":     "NearAI",
+	"gmicloud":   "GMICloud",
+
+	// ── AUTO-APPLY (clearly-curated, user-confirmed batch) ──
+	"openrouter":  "OpenRouter",
+	"deepseek":    "DeepSeek",
+	"minimax":     "MiniMax",
+	"openai":      "OpenAI",
+	"deepinfra":   "DeepInfra",
+	"huggingface": "HuggingFace",
+	"moonshotai":  "MoonshotAI",
+	"xai":         "xAI", // was XAI; ratified brand is xAI
+	"github":      "GitHub",
+	"gitlab":      "GitLab",
+	"gpt":         "GPT",
+	"glm":         "GLM",
+	"qwen":        "Qwen",
+	"olmo":        "OLMo",
+	"internlm":    "InternLM",
+	"smollm":      "SmolLM",
+	"wizardlm":    "WizardLM",
+	"codellama":   "CodeLlama",
+}
+
+// styleSegment is the ONE shared per-segment identifier-styling seam. It
+// consults the curated brandCasing table for the whole token, then (for a digit-leading
+// token) for the alpha suffix, and otherwise title-cases.
+//
+// Returns (result, handled): handled=true when the result is DEFINITIVE for this segment
+// — i.e. a curated brand entry applied, OR the token is digit-leading (whose styling is
+// fully resolved here, matching the legacy order where digit handling preceded the
+// name-hint fallback). handled=false for a plain (non-digit, un-curated) token, whose
+// returned value is the default title-case form; a caller with an additional fallback
+// (slugToIdentifier's API name-hint) may override it before settling on title-case.
+//
+// preserveDigitSuffix controls the un-curated alpha suffix of a digit-leading token:
+// true keeps it verbatim ("4o" → "4o", the Model__ segment rule), false title-cases it
+// ("302ab" → "302Ab", the slug identifier rule). A curated suffix (e.g. "ai"→"AI") wins
+// either way ("302ai" → "302AI").
+func styleSegment(tok string, preserveDigitSuffix bool) (string, bool) {
+	if tok == "" {
+		return "", true
+	}
+	lower := strings.ToLower(tok)
+	if s, ok := brandCasing[lower]; ok {
+		return s, true
+	}
+	if unicode.IsDigit(rune(tok[0])) {
+		splitAt := -1
+		for i, r := range tok {
+			if !unicode.IsDigit(r) {
+				splitAt = i
+				break
+			}
+		}
+		if splitAt < 0 {
+			return tok, true // all digits
+		}
+		digitPart, alphaPart := tok[:splitAt], tok[splitAt:]
+		if s, ok := brandCasing[strings.ToLower(alphaPart)]; ok {
+			return digitPart + s, true
+		}
+		if preserveDigitSuffix {
+			return digitPart + alphaPart, true
+		}
+		return digitPart + strings.ToUpper(alphaPart[:1]) + alphaPart[1:], true
+	}
+	// Plain un-curated token: title-case, NOT definitive (caller may apply a name-hint).
+	return strings.ToUpper(lower[:1]) + lower[1:], false
 }
 
 // slugToIdentifier converts a provider/family slug (e.g. "amazon-bedrock", "xai",
@@ -78,60 +160,35 @@ func slugToIdentifier(slug string, nameHint string) string {
 		}
 		lower := strings.ToLower(tok)
 
-		// 1. Check casing overrides.
-		if override, ok := casingOverrides[lower]; ok {
-			sb.WriteString(override)
+		// 1+2. Shared seam: curated brand-casing (full token, then digit-suffix) and
+		// digit-leading handling. preserveDigitSuffix=false → an un-curated digit suffix
+		// is title-cased (the slug identifier rule). When styleSegment reports it handled
+		// the segment (brand hit or digit-leading), that result is definitive.
+		if styled, handled := styleSegment(tok, false); handled {
+			sb.WriteString(styled)
 			continue
 		}
 
-		// 2. If the token starts with a digit, keep the digit part verbatim.
-		// Apply casing overrides to any alpha suffix.
-		// e.g. "302ai" → "302" + "ai" → "302" + "AI"
-		if unicode.IsDigit(rune(tok[0])) {
-			digitPart := ""
-			alphaPart := ""
-			for i, r := range tok {
-				if !unicode.IsDigit(r) {
-					digitPart = tok[:i]
-					alphaPart = tok[i:]
-					break
-				}
-			}
-			if alphaPart == "" {
-				digitPart = tok
-			}
-			sb.WriteString(digitPart)
-			if alphaPart != "" {
-				alphaLower := strings.ToLower(alphaPart)
-				if override, ok := casingOverrides[alphaLower]; ok {
-					sb.WriteString(override)
-				} else {
-					sb.WriteString(strings.ToUpper(alphaPart[:1]) + alphaPart[1:])
-				}
-			}
-			continue
-		}
-
-		// 3. Check name hint map for a display-form casing hint.
+		// 3. Plain un-curated token: prefer an API display-name casing hint.
 		if hint, ok := nameHintWords[lower]; ok {
-			hintLower := strings.ToLower(hint)
-			if override, ok2 := casingOverrides[hintLower]; ok2 {
-				sb.WriteString(override)
+			if styledHint, ok2 := brandCasing[strings.ToLower(hint)]; ok2 {
+				sb.WriteString(styledHint)
 			} else {
 				sb.WriteString(strings.ToUpper(hint[:1]) + hint[1:])
 			}
 			continue
 		}
 
-		// 4. Default: title-case the token.
-		sb.WriteString(strings.ToUpper(lower[:1]) + lower[1:])
+		// 4. Default: title-case the token (styleSegment's non-definitive result).
+		styled, _ := styleSegment(tok, false)
+		sb.WriteString(styled)
 	}
 	return sb.String()
 }
 
 // providerConstName returns the Go identifier for a Provider constant given its slug.
 // Examples: "anthropic" → "ProviderAnthropic", "302ai" → "Provider302AI",
-// "xai" → "ProviderXAI", "amazon-bedrock" → "ProviderAmazonBedrock".
+// "xai" → "ProviderxAI", "amazon-bedrock" → "ProviderAmazonBedrock".
 func providerConstName(slug string, nameHint string) string {
 	return "Provider" + slugToIdentifier(slug, nameHint)
 }
@@ -144,12 +201,60 @@ func familyConstName(slug string, nameHint string) string {
 
 // Output paths are relative to the module root (where go generate is run from).
 const (
-	outputPath          = "models_static_gen.go"
-	outputProvidersPath = "providers_gen.go"
-	outputFamiliesPath  = "families_gen.go"
-	defaultCacheDir     = ".bestiary-gen-cache"
-	cacheFile           = "api_response.json"
+	outputPath            = "models_static_gen.go"
+	outputProvidersPath   = "providers_gen.go"
+	outputFamiliesPath    = "families_gen.go"
+	defaultCacheDir       = ".bestiary-gen-cache"
+	cacheFile             = "api_response.json"
+	versionDuplicatesFile = "version_duplicates.json"
+	dotFormAuditFile      = "dot_form_audit.json"
 )
+
+// VersionDuplicateKey identifies a group of models that share (provider, family,
+// variant, version) but differ in date or other attributes. Written to
+// version_duplicates.json as a work-list for the future duplicate collapse.
+// Recognition only — duplicates remain two separate constants in the current epoch.
+type VersionDuplicateKey struct {
+	Provider string `json:"provider"`
+	Family   string `json:"family"`
+	Variant  string `json:"variant"`
+	Version  string `json:"version"`
+}
+
+// VersionDuplicateGroup records all model IDs that share the same
+// (provider, family, variant, version) key.
+type VersionDuplicateGroup struct {
+	Key      VersionDuplicateKey `json:"key"`
+	ModelIDs []string            `json:"model_ids"`
+}
+
+// VersionDuplicatesEnvelope is the top-level JSON structure written to
+// .bestiary-gen-cache/version_duplicates.json.
+type VersionDuplicatesEnvelope struct {
+	SchemaVersion  int                     `json:"schema_version"`
+	GeneratedAt    time.Time               `json:"generated_at"`
+	DuplicateCount int                     `json:"duplicate_count"` // number of groups with >1 model ID
+	Duplicates     []VersionDuplicateGroup `json:"duplicates"`
+}
+
+// DotFormAuditEntry records a single model whose Version was newly populated via
+// dot-form (N-M → N.M) recognition in ParseFamilyDetailed. Written to
+// .bestiary-gen-cache/dot_form_audit.json so the regen delta is explicitly
+// reviewable (embrace + audit-list).
+type DotFormAuditEntry struct {
+	ModelID  string `json:"model_id"`
+	Provider string `json:"provider"`
+	Version  string `json:"version"`
+}
+
+// DotFormAuditEnvelope is the top-level JSON structure written to
+// .bestiary-gen-cache/dot_form_audit.json.
+type DotFormAuditEnvelope struct {
+	SchemaVersion int                 `json:"schema_version"`
+	GeneratedAt   time.Time           `json:"generated_at"`
+	Count         int                 `json:"count"`
+	Entries       []DotFormAuditEntry `json:"entries"`
+}
 
 // apiURL is the endpoint bestiary-gen fetches from. Declared as a var (not const)
 // so tests can override it to point at an httptest.Server without build tags or
@@ -176,21 +281,21 @@ type genWireProvider struct {
 // Since we only care about our three target providers (anthropic, google, openai)
 // which do not use this field, we just skip it.
 type genWireModel struct {
-	ID               string            `json:"id"`
-	Name             string            `json:"name"`
-	Family           string            `json:"family"`
-	Reasoning        bool              `json:"reasoning"`
-	ToolCall         bool              `json:"tool_call"`
-	Attachment       bool              `json:"attachment"`
-	Temperature      bool              `json:"temperature"`
-	StructuredOutput bool              `json:"structured_output"`
-	Interleaved      json.RawMessage   `json:"interleaved"`
-	OpenWeights      bool              `json:"open_weights"`
-	ReleaseDate      string            `json:"release_date"`
-	Knowledge        string            `json:"knowledge"`
-	Cost             *genWireCost      `json:"cost"`
-	Limit            *genWireLimit     `json:"limit"`
-	Modalities       *genWireModality  `json:"modalities"`
+	ID               string           `json:"id"`
+	Name             string           `json:"name"`
+	Family           string           `json:"family"`
+	Reasoning        bool             `json:"reasoning"`
+	ToolCall         bool             `json:"tool_call"`
+	Attachment       bool             `json:"attachment"`
+	Temperature      bool             `json:"temperature"`
+	StructuredOutput bool             `json:"structured_output"`
+	Interleaved      json.RawMessage  `json:"interleaved"`
+	OpenWeights      bool             `json:"open_weights"`
+	ReleaseDate      string           `json:"release_date"`
+	Knowledge        string           `json:"knowledge"`
+	Cost             *genWireCost     `json:"cost"`
+	Limit            *genWireLimit    `json:"limit"`
+	Modalities       *genWireModality `json:"modalities"`
 }
 
 type genWireCost struct {
@@ -279,10 +384,10 @@ func parseFlags(args []string) (flagResult, error) {
 	}
 	if res.cacheDir == "" {
 		return flagResult{}, fmt.Errorf(
-			"-cache-dir value must not be empty\n" +
-				"  What: -cache-dir was explicitly set to an empty string\n" +
-				"  Why: an empty cache dir resolves to the current working directory, which is unintended\n" +
-				"  Where: bestiary-gen flag parsing\n" +
+			"-cache-dir value must not be empty\n"+
+				"  What: -cache-dir was explicitly set to an empty string\n"+
+				"  Why: an empty cache dir resolves to the current working directory, which is unintended\n"+
+				"  Where: bestiary-gen flag parsing\n"+
 				"  How to fix: omit -cache-dir to use the default (%s), or provide a non-empty path",
 			defaultCacheDir,
 		)
@@ -373,7 +478,7 @@ func run(args []string) error {
 	sort.Strings(allSlugs)
 
 	// Collect all unique family values from all models (before data filter).
-	familyMeta := collectFamilies(models, providerMeta)
+	familyMeta := collectFamilies(models)
 
 	// Apply model data filter (constants are always generated for all providers).
 	filtered := applyFilter(models, flags.only, flags.except)
@@ -455,6 +560,23 @@ func run(args []string) error {
 		fmt.Fprintf(os.Stderr, "bestiary-gen: warning: could not write parse_failures.json: %v\n", err)
 	}
 
+	// Write version_duplicates.json — work-list for the future duplicate collapse.
+	// Recognises models that share (provider, family, variant, version) but differ
+	// in model ID. Recognition only; duplicates remain two separate constants.
+	if err := writeVersionDuplicates(flags.cacheDir, models); err != nil {
+		fmt.Fprintf(os.Stderr, "bestiary-gen: warning: could not write version_duplicates.json: %v\n", err)
+	}
+
+	// Write dot_form_audit.json — models whose Version is populated via dot-form
+	// (N-M ≡ N.M) recognition. The list makes the regen delta reviewable.
+	if err := writeDotFormAudit(flags.cacheDir, models); err != nil {
+		fmt.Fprintf(os.Stderr, "bestiary-gen: warning: could not write dot_form_audit.json: %v\n", err)
+	}
+
+	// NON-GATING smoke check: log per-reason failure counts to stdout.
+	// This is diagnostic only (by design: not a ==0 gate).
+	logPerReasonCounts(parseFailures)
+
 	fmt.Fprintf(os.Stdout,
 		"bestiary-gen: wrote %s with %d models (%d providers), %s with %d constants, %s with %d constants, %s at %s; %d parse failures logged to %s\n",
 		outputPath, len(filtered), countUniqueProviders(filtered),
@@ -465,6 +587,183 @@ func run(args []string) error {
 		len(parseFailures),
 		filepath.Join(flags.cacheDir, "parse_failures.json"),
 	)
+	return nil
+}
+
+// logPerReasonCounts logs a per-reason breakdown of parse failures to stdout.
+// This is a NON-GATING smoke check — it never fails the codegen run regardless
+// of the counts (by design: not a ==0 gate).
+func logPerReasonCounts(failures []bestiary.ParseFailure) {
+	counts := make(map[bestiary.ParseFailureReason]int)
+	for _, f := range failures {
+		counts[f.Reason]++
+	}
+	if len(counts) == 0 {
+		fmt.Fprintln(os.Stdout, "bestiary-gen: parse-failure smoke check: 0 failures (all reasons)")
+		return
+	}
+	// Collect and sort reason keys for deterministic output.
+	reasons := make([]string, 0, len(counts))
+	for r := range counts {
+		reasons = append(reasons, string(r))
+	}
+	sort.Strings(reasons)
+	fmt.Fprintln(os.Stdout, "bestiary-gen: parse-failure smoke check (non-gating):")
+	for _, r := range reasons {
+		fmt.Fprintf(os.Stdout, "  %s: %d\n", r, counts[bestiary.ParseFailureReason(r)])
+	}
+}
+
+// writeVersionDuplicates identifies models that share (provider, family, variant,
+// version) but differ in model ID, and writes the result to
+// {cacheDir}/version_duplicates.json. Only groups with version != "" are
+// considered (models without version don't have a meaningful duplicate key).
+//
+// This is recognition-only: duplicates remain two separate constants. The file
+// is the ready-made work-list for the future duplicate collapse.
+func writeVersionDuplicates(cacheDir string, models []bestiary.ModelInfo) error {
+	if err := os.MkdirAll(cacheDir, 0o755); err != nil {
+		return fmt.Errorf(
+			"writeVersionDuplicates: create cache dir %q: %w\n"+
+				"  How to fix: ensure the cache directory path is writable",
+			cacheDir, err,
+		)
+	}
+
+	// Build a map: key → []model_id, sorted for determinism.
+	type groupKey struct {
+		provider string
+		family   string
+		variant  string
+		version  string
+	}
+	groups := make(map[groupKey][]string)
+	for _, m := range models {
+		if m.Version == "" {
+			continue // no version → no meaningful duplicate key
+		}
+		k := groupKey{
+			provider: string(m.Provider),
+			family:   string(m.Family),
+			variant:  m.Variant,
+			version:  m.Version,
+		}
+		groups[k] = append(groups[k], string(m.ID))
+	}
+
+	// Collect groups with more than one model ID (actual duplicates).
+	duplicates := make([]VersionDuplicateGroup, 0)
+	for k, ids := range groups {
+		if len(ids) <= 1 {
+			continue
+		}
+		sort.Strings(ids)
+		duplicates = append(duplicates, VersionDuplicateGroup{
+			Key: VersionDuplicateKey{
+				Provider: k.provider,
+				Family:   k.family,
+				Variant:  k.variant,
+				Version:  k.version,
+			},
+			ModelIDs: ids,
+		})
+	}
+	// Sort by (provider, family, variant, version) for deterministic output.
+	sort.Slice(duplicates, func(i, j int) bool {
+		ki := duplicates[i].Key
+		kj := duplicates[j].Key
+		if ki.Provider != kj.Provider {
+			return ki.Provider < kj.Provider
+		}
+		if ki.Family != kj.Family {
+			return ki.Family < kj.Family
+		}
+		if ki.Variant != kj.Variant {
+			return ki.Variant < kj.Variant
+		}
+		return ki.Version < kj.Version
+	})
+
+	envelope := VersionDuplicatesEnvelope{
+		SchemaVersion:  1,
+		GeneratedAt:    time.Now().UTC(),
+		DuplicateCount: len(duplicates),
+		Duplicates:     duplicates,
+	}
+	if envelope.Duplicates == nil {
+		envelope.Duplicates = []VersionDuplicateGroup{}
+	}
+
+	data, err := json.MarshalIndent(envelope, "", "  ")
+	if err != nil {
+		return fmt.Errorf("writeVersionDuplicates: marshal JSON: %w", err)
+	}
+
+	dst := filepath.Join(cacheDir, versionDuplicatesFile)
+	if err := os.WriteFile(dst, data, 0o644); err != nil {
+		return fmt.Errorf(
+			"writeVersionDuplicates: write %s: %w\n"+
+				"  How to fix: ensure %s is writable",
+			dst, err, cacheDir,
+		)
+	}
+	return nil
+}
+
+// writeDotFormAudit collects all models whose Version contains a dot ("."),
+// indicating that the version was populated via dot-form (N-M ≡ N.M) recognition
+// in ParseFamilyDetailed. The list makes the regen delta explicitly reviewable.
+// Written to {cacheDir}/dot_form_audit.json.
+func writeDotFormAudit(cacheDir string, models []bestiary.ModelInfo) error {
+	if err := os.MkdirAll(cacheDir, 0o755); err != nil {
+		return fmt.Errorf(
+			"writeDotFormAudit: create cache dir %q: %w\n"+
+				"  How to fix: ensure the cache directory path is writable",
+			cacheDir, err,
+		)
+	}
+
+	entries := make([]DotFormAuditEntry, 0)
+	for _, m := range models {
+		if strings.Contains(m.Version, ".") {
+			entries = append(entries, DotFormAuditEntry{
+				ModelID:  string(m.ID),
+				Provider: string(m.Provider),
+				Version:  m.Version,
+			})
+		}
+	}
+	// Sort by (provider, model_id) for deterministic output.
+	sort.Slice(entries, func(i, j int) bool {
+		if entries[i].Provider != entries[j].Provider {
+			return entries[i].Provider < entries[j].Provider
+		}
+		return entries[i].ModelID < entries[j].ModelID
+	})
+
+	envelope := DotFormAuditEnvelope{
+		SchemaVersion: 1,
+		GeneratedAt:   time.Now().UTC(),
+		Count:         len(entries),
+		Entries:       entries,
+	}
+	if envelope.Entries == nil {
+		envelope.Entries = []DotFormAuditEntry{}
+	}
+
+	data, err := json.MarshalIndent(envelope, "", "  ")
+	if err != nil {
+		return fmt.Errorf("writeDotFormAudit: marshal JSON: %w", err)
+	}
+
+	dst := filepath.Join(cacheDir, dotFormAuditFile)
+	if err := os.WriteFile(dst, data, 0o644); err != nil {
+		return fmt.Errorf(
+			"writeDotFormAudit: write %s: %w\n"+
+				"  How to fix: ensure %s is writable",
+			dst, err, cacheDir,
+		)
+	}
 	return nil
 }
 
@@ -667,7 +966,7 @@ func fetchModelsWithRaw(ctx context.Context, dir string, noFetch bool) (rawJSON 
 
 	// Determinism: sort the assembled model set by (Provider, ID) exactly once so
 	// every downstream consumer observes a stable order regardless of API map-
-	// iteration order. See bestiary-9lnq.
+	// iteration order.
 	sort.SliceStable(models, func(i, j int) bool {
 		if models[i].Provider != models[j].Provider {
 			return models[i].Provider < models[j].Provider
@@ -680,7 +979,7 @@ func fetchModelsWithRaw(ctx context.Context, dir string, noFetch bool) (rawJSON 
 
 // collectFamilies returns a deduplicated sorted list of unique non-empty raw API
 // family values found across all models, together with a name hint for casing.
-func collectFamilies(models []bestiary.ModelInfo, provMeta map[string]providerAPIMeta) []string {
+func collectFamilies(models []bestiary.ModelInfo) []string {
 	seen := make(map[string]struct{})
 	for _, m := range models {
 		if m.RawFamily != "" {
@@ -723,127 +1022,53 @@ func genToModelInfoDetailed(providerSlug string, wm genWireModel) (bestiary.Mode
 	id := bestiary.ModelID(wm.ID)
 	provider := bestiary.Provider(providerSlug)
 
-	var normFamily bestiary.Family
-	var normVariant string
-	var normVersion string
-	var normModifier string
-	var failure *bestiary.ParseFailure
+	// Single-ownership: consume the full 5-tuple from ParseFamilyDetailed.
+	// ParseFamilyDetailed(raw="") delegates to InferFamilyFromIDWithVariant +
+	// ExtractModifier, covering the empty-family case.
+	// This is byte-equivalent to the former two-branch structure; the
+	// decomposition snapshot test (TestDecompositionSnapshot) guards correctness.
+	//
+	// (family, variant, version, modifier) all come from ParseFamilyDetailed.
+	// Codegen no longer calls ExtractVersionFromID directly (single-ownership).
+	normFamily, normVariant, normVersion, normModifier, failure := bestiary.ParseFamilyDetailed(rawFamily, id, provider)
 
-	if rawFamily != "" {
-		// Use ParseFamilyDetailed to get (family, variant, version) plus a failure
-		// annotation if the parser detects a known deficiency (e.g. version digits
-		// between family prefix and variant in the model ID but not the raw family).
-		normFamily, normVariant, normVersion, failure = bestiary.ParseFamilyDetailed(rawFamily, id, provider)
-
-		// SLICE-FIX-V2-5: Extract trailing modifier token BEFORE extracting version
-		// from the model ID. Modifiers (e.g. "-thinking") must be stripped from the
-		// ID before passing it to ExtractVersionFromID so they don't pollute version
-		// heuristics. Pipeline order: ParseFamily → ExtractModifier → strip → ExtractVersionFromID.
-		normModifier, modifierConsumed := bestiary.ExtractModifier(id, normFamily, normVariant)
-		var cleanID bestiary.ModelID
-		if modifierConsumed != "" {
-			cleanStr := string(id)
-			if len(cleanStr) >= len(modifierConsumed) && cleanStr[len(cleanStr)-len(modifierConsumed):] == modifierConsumed {
-				cleanID = bestiary.ModelID(cleanStr[:len(cleanStr)-len(modifierConsumed)])
-			} else {
-				cleanID = id
+	// Compute cleanID (modifier-stripped) for ExtractDate. The modifier consumed
+	// value is a trailing suffix of the model ID; strip it to avoid date extraction
+	// from tokens that are part of the modifier (e.g. "thinking", "preview").
+	cleanID := id
+	if len(normModifier) > 0 {
+		// Modifier is now a LIST. Peel EVERY trailing modifier token (their
+		// consumed suffixes are contiguous at the tail of the ID) so ExtractDate never
+		// reads a date out of a modifier token (e.g. "...-thinking-turbo").
+		for {
+			_, modifierConsumed := bestiary.ExtractModifier(cleanID, normFamily, normVariant)
+			if modifierConsumed == "" {
+				break
 			}
-		} else {
-			cleanID = id
-		}
-
-		if normVersion == "" {
-			// The raw family field (e.g. "claude-opus") does not embed a version.
-			// Fall back to extracting the version from the cleaned model ID
-			// (modifier-stripped), which is the authoritative source for version
-			// numbers per team-lead arbitration (bestiary-5eh8).
-			// Example: "claude-opus-4-5-20251101-thinking" with family "claude-opus"
-			// yields version "4.5" after stripping "-thinking".
-			normVersion = bestiary.ExtractVersionFromID(cleanID, rawFamily)
-		}
-
-		// Derive normalized date from cleaned model ID (modifier stripped) or release date.
-		normDate := bestiary.ExtractDate(cleanID, wm.ReleaseDate)
-
-		// If a parse failure was detected, backfill the date into AttemptedParse.
-		if failure != nil {
-			failure.AttemptedParse.Date = normDate
-			// Models where ExtractModifier extracts a known modifier no longer trip
-			// ReasonKnownSuffixOverflow (the modifier is now a first-class field).
-			// Clear the failure record for this case so the audit log shrinks as
-			// expected per the V2-5 design.
-			if failure.Reason == bestiary.ReasonKnownSuffixOverflow && normModifier != "" {
-				failure = nil
+			trimmed, ok := strings.CutSuffix(string(cleanID), modifierConsumed)
+			if !ok {
+				break
 			}
-		}
-
-		info := bestiary.ModelInfo{
-			ID:          id,
-			Provider:    provider,
-			DisplayName: wm.Name,
-			RawFamily:   rawFamily,
-			Family:      normFamily,
-			Variant:     normVariant,
-			Version:     normVersion,
-			Date:        normDate,
-			Modifier:    normModifier,
-			Reasoning:         wm.Reasoning,
-			ToolCall:          wm.ToolCall,
-			Attachment:        wm.Attachment,
-			Temperature:       wm.Temperature,
-			StructuredOutput:  wm.StructuredOutput,
-			OpenWeights:       wm.OpenWeights,
-			ReleaseDate:       wm.ReleaseDate,
-			Knowledge:         wm.Knowledge,
-			Interleaved: parseCapabilityRaw(wm.Interleaved),
-			LastSynced:  "",
-		}
-
-		if wm.Cost != nil {
-			info.CostInputPerMTok = wm.Cost.Input
-			info.CostOutputPerMTok = wm.Cost.Output
-			info.CostReasoningPerMTok = wm.Cost.Reasoning
-			info.CostCacheReadPerMTok = wm.Cost.CacheRead
-			info.CostCacheWritePerMTok = wm.Cost.CacheWrite
-		}
-		if wm.Limit != nil {
-			if wm.Limit.Context != nil {
-				info.ContextWindow = *wm.Limit.Context
-			}
-			if wm.Limit.Output != nil {
-				info.MaxOutput = *wm.Limit.Output
-			}
-		}
-		if wm.Modalities != nil {
-			info.Modalities = genToModalities(wm.Modalities.Input, wm.Modalities.Output)
-		}
-		return info, failure
-	}
-
-	// ~25% of models have an empty Family field — infer from the model ID.
-	// InferFamilyFromIDWithVariant applies the same suffix/pattern logic as
-	// ParseFamilyWithVersion, ensuring consistent (Family, Variant, Version)
-	// across providers that have empty vs. populated raw_family for the same
-	// model ID (SLICE-FIX-2, B5/B6).
-	normFamily, normVariant, normVersion = bestiary.InferFamilyFromIDWithVariant(
-		id,
-		provider,
-	)
-
-	// For empty-family models, also extract the modifier.
-	normModifier, modifierConsumed2 := bestiary.ExtractModifier(id, normFamily, normVariant)
-	cleanID2 := id
-	if modifierConsumed2 != "" {
-		cleanStr := string(id)
-		if len(cleanStr) >= len(modifierConsumed2) && cleanStr[len(cleanStr)-len(modifierConsumed2):] == modifierConsumed2 {
-			cleanID2 = bestiary.ModelID(cleanStr[:len(cleanStr)-len(modifierConsumed2)])
+			cleanID = bestiary.ModelID(trimmed)
 		}
 	}
 
 	// Derive normalized date from cleaned model ID (modifier stripped) or release date.
-	normDate2 := bestiary.ExtractDate(cleanID2, wm.ReleaseDate)
+	normDate := bestiary.ExtractDate(cleanID, wm.ReleaseDate)
 
-	info2 := bestiary.ModelInfo{
+	// If a parse failure was detected, backfill the date into AttemptedParse.
+	if failure != nil {
+		failure.AttemptedParse.Date = normDate
+		// Models where ExtractModifier extracts a known modifier no longer trip
+		// ReasonKnownSuffixOverflow (the modifier is now a first-class field).
+		// Clear the failure record for this case so the audit log shrinks as
+		// expected per the V2-5 design.
+		if failure.Reason == bestiary.ReasonKnownSuffixOverflow && len(normModifier) > 0 {
+			failure = nil
+		}
+	}
+
+	info := bestiary.ModelInfo{
 		ID:               id,
 		Provider:         provider,
 		DisplayName:      wm.Name,
@@ -851,7 +1076,7 @@ func genToModelInfoDetailed(providerSlug string, wm genWireModel) (bestiary.Mode
 		Family:           normFamily,
 		Variant:          normVariant,
 		Version:          normVersion,
-		Date:             normDate2,
+		Date:             normDate,
 		Modifier:         normModifier,
 		Reasoning:        wm.Reasoning,
 		ToolCall:         wm.ToolCall,
@@ -866,24 +1091,24 @@ func genToModelInfoDetailed(providerSlug string, wm genWireModel) (bestiary.Mode
 	}
 
 	if wm.Cost != nil {
-		info2.CostInputPerMTok = wm.Cost.Input
-		info2.CostOutputPerMTok = wm.Cost.Output
-		info2.CostReasoningPerMTok = wm.Cost.Reasoning
-		info2.CostCacheReadPerMTok = wm.Cost.CacheRead
-		info2.CostCacheWritePerMTok = wm.Cost.CacheWrite
+		info.CostInputPerMTok = wm.Cost.Input
+		info.CostOutputPerMTok = wm.Cost.Output
+		info.CostReasoningPerMTok = wm.Cost.Reasoning
+		info.CostCacheReadPerMTok = wm.Cost.CacheRead
+		info.CostCacheWritePerMTok = wm.Cost.CacheWrite
 	}
 	if wm.Limit != nil {
 		if wm.Limit.Context != nil {
-			info2.ContextWindow = *wm.Limit.Context
+			info.ContextWindow = *wm.Limit.Context
 		}
 		if wm.Limit.Output != nil {
-			info2.MaxOutput = *wm.Limit.Output
+			info.MaxOutput = *wm.Limit.Output
 		}
 	}
 	if wm.Modalities != nil {
-		info2.Modalities = genToModalities(wm.Modalities.Input, wm.Modalities.Output)
+		info.Modalities = genToModalities(wm.Modalities.Input, wm.Modalities.Output)
 	}
-	return info2, nil // empty-family branch never produces a failure record
+	return info, failure
 }
 
 // genToModalities converts string slices from the API into the typed Modalities
@@ -912,6 +1137,21 @@ func genToModalities(input, output []string) bestiary.Modalities {
 // generateSource renders the []ModelInfo slice as a valid Go source file and
 // formats it with go/format so the result is gofmt-clean.
 // slugToConst maps provider slug → Go constant name (e.g. "anthropic" → "ProviderAnthropic").
+// goStringSliceLiteral renders a []string as a compile-ready Go literal. A nil/empty
+// slice renders as "nil" (the canonical "no modifiers" value), matching the
+// empty→nil contract of ModelInfo.Modifier. Elements are emitted verbatim
+// in their stored canonical order so codegen output is byte-stable.
+func goStringSliceLiteral(ss []string) string {
+	if len(ss) == 0 {
+		return "nil"
+	}
+	parts := make([]string, len(ss))
+	for i, s := range ss {
+		parts[i] = fmt.Sprintf("%q", s)
+	}
+	return "[]string{" + strings.Join(parts, ", ") + "}"
+}
+
 func generateSource(models []bestiary.ModelInfo, slugToConst map[string]string) ([]byte, error) {
 	var buf bytes.Buffer
 
@@ -936,7 +1176,7 @@ func generateSource(models []bestiary.ModelInfo, slugToConst map[string]string) 
 		fmt.Fprintf(&buf, "\t\tVariant:               %q,\n", m.Variant)
 		fmt.Fprintf(&buf, "\t\tVersion:               %q,\n", m.Version)
 		fmt.Fprintf(&buf, "\t\tDate:                  %q,\n", m.Date)
-		fmt.Fprintf(&buf, "\t\tModifier:              %q,\n", m.Modifier)
+		fmt.Fprintf(&buf, "\t\tModifier:              %s,\n", goStringSliceLiteral(m.Modifier))
 		fmt.Fprintf(&buf, "\t\tContextWindow:         %d,\n", m.ContextWindow)
 		fmt.Fprintf(&buf, "\t\tMaxOutput:             %d,\n", m.MaxOutput)
 		fmt.Fprintf(&buf, "\t\tReasoning:             %v,\n", m.Reasoning)
@@ -1214,58 +1454,47 @@ func truncate(s string, max int) string {
 }
 
 // --------------------------------------------------------------------------
-// Model_ constants generation (SLICE-4)
+// Model_ constants generation
 // --------------------------------------------------------------------------
 
 // outputConstantsPath is the file that generateConstantsSource writes.
 const outputConstantsPath = "models_constants_gen.go"
 
 // tokenToConstPart converts a single hyphen/dot-split token from a model ID into
-// a constant-name segment. Rules (in priority order):
-//  1. casingOverrides wins (e.g. "gpt" → "GPT", "ai" → "AI").
-//  2. Token leading with a digit: keep digit prefix verbatim; apply overrides to alpha suffix.
-//  3. Otherwise: title-case the token.
-//
-// Within-component characters are preserved ("4o" → "4o", not "4_o").
+// a constant-name segment via the shared styleSegment seam. Rules (in order):
+//  1. curated brandCasing wins for the full token (e.g. "gpt" → "GPT", "deepseek" → "DeepSeek").
+//  2. Digit-leading token: keep digit prefix verbatim; brandCasing or VERBATIM alpha suffix
+//     ("4o" stays "4o", not "4O"/"4_o" — within-component characters preserved).
+//  3. Otherwise: title-case. A multi-token value (e.g. the modifier "deep-research" passed
+//     whole) is split on any non-alphanumeric separator, each sub-token styled, joined with
+//     a single within-segment underscore ("deep-research" → "Deep_Research").
 func tokenToConstPart(tok string) string {
 	if tok == "" {
 		return ""
 	}
 	lower := strings.ToLower(tok)
 
-	// 1. Casing override for the full token.
-	if override, ok := casingOverrides[lower]; ok {
-		return override
+	// 1. Curated brand-casing for the FULL token (before any compound split).
+	if s, ok := brandCasing[lower]; ok {
+		return s
 	}
 
-	// 2. Digit-leading token: split at first alpha character.
-	// "4o" → "4o" (within-component characters preserved — no casing change).
-	// "302ai" → "302AI" (casingOverride applies to multi-char alpha suffix).
-	if unicode.IsDigit(rune(tok[0])) {
-		// Find split point between digit prefix and alpha suffix.
-		splitAt := -1
-		for i, r := range tok {
-			if !unicode.IsDigit(r) {
-				splitAt = i
-				break
-			}
+	// 3. Compound (internal separator) → split, style each sub via the shared seam
+	// (preserveDigitSuffix=true: Model__ segment rule), join with "_".
+	subs := strings.FieldsFunc(tok, func(r rune) bool {
+		return !unicode.IsLetter(r) && !unicode.IsDigit(r)
+	})
+	if len(subs) > 1 {
+		for i, s := range subs {
+			styled, _ := styleSegment(s, true)
+			subs[i] = styled
 		}
-		if splitAt < 0 {
-			// All digits — return as-is.
-			return tok
-		}
-		digitPart := tok[:splitAt]
-		alphaPart := tok[splitAt:]
-		alphaLower := strings.ToLower(alphaPart)
-		if override, ok := casingOverrides[alphaLower]; ok {
-			return digitPart + override
-		}
-		// Preserve the alpha part exactly as-is (spec: "4o stays 4o, not 4_o").
-		return digitPart + alphaPart
+		return strings.Join(subs, "_")
 	}
 
-	// 3. Default: title-case.
-	return strings.ToUpper(lower[:1]) + lower[1:]
+	// 1+2. Single token: shared seam (brand → digit-leading [verbatim suffix] → title-case).
+	styled, _ := styleSegment(tok, true)
+	return styled
 }
 
 // nameForCanonical derives the Model__* constant name for a single ModelInfo.
@@ -1333,19 +1562,35 @@ func nameForCanonicalWithMap(m bestiary.ModelInfo, slugToConst map[string]string
 	// but catch remaining "@" characters in ID suffixes).
 	rawID = strings.TrimLeft(rawID, "@")
 
-	// SLICE-FIX-V2-5: Strip modifier trailing token from raw ID before date/version extraction.
+	// Strip modifier trailing token from raw ID before date/version extraction.
 	// Modifier (e.g. "-thinking") appears as the trailing hyphen-separated token.
 	// It must be stripped before date and version logic runs so it doesn't produce
 	// spurious tokens in the constant name.
+	// Modifier is a LIST. Greedily strip EVERY trailing modifier token from
+	// the raw ID (they may appear in any order in the ID), then build the constant
+	// segment from the stored CANONICAL order so the identifier is deterministic and
+	// byte-stable (e.g. ["vision","instruct"] → "VisionInstruct").
 	modifierSegment := ""
-	if m.Modifier != "" {
-		modifierSuffix := "-" + m.Modifier
-		if strings.HasSuffix(rawID, modifierSuffix) {
-			rawID = strings.TrimSuffix(rawID, modifierSuffix)
-			rawID = strings.TrimRight(rawID, "-.")
-			// Compute cased modifier segment via tokenToConstPart.
-			// e.g. "thinking" → "Thinking", "vision" → "Vision".
-			modifierSegment = tokenToConstPart(m.Modifier)
+	if len(m.Modifier) > 0 {
+		modSet := make(map[string]struct{}, len(m.Modifier))
+		for _, mod := range m.Modifier {
+			modSet[mod] = struct{}{}
+		}
+		// Peel trailing "-<modifier>" tokens until the tail is no longer a modifier.
+		for {
+			lastDash := strings.LastIndexByte(rawID, '-')
+			if lastDash < 0 {
+				break
+			}
+			tail := rawID[lastDash+1:]
+			if _, ok := modSet[strings.ToLower(tail)]; !ok {
+				break
+			}
+			rawID = strings.TrimRight(rawID[:lastDash], "-.")
+		}
+		// Cased segment in canonical order (m.Modifier is already canonical).
+		for _, mod := range m.Modifier {
+			modifierSegment += tokenToConstPart(mod)
 		}
 	}
 
@@ -1412,7 +1657,7 @@ func nameForCanonicalWithMap(m bestiary.ModelInfo, slugToConst map[string]string
 	if versionSegment != "" {
 		name += "__" + versionSegment
 	}
-	// SLICE-FIX-V2-5: Insert modifier segment between version and date.
+	// Insert modifier segment between version and date.
 	if modifierSegment != "" {
 		name += "__" + modifierSegment
 	}
@@ -1543,7 +1788,8 @@ func resolveCollisions(names []string, models []bestiary.ModelInfo) []string {
 			}
 		} else {
 			// (b) Stable ordinal: order colliders by raw model ID so the _N binding is
-			// reproducible regardless of slice order. (Belt-and-suspenders with R1's sort.)
+			// reproducible regardless of slice order. (Belt-and-suspenders with the
+			// deterministic (Provider,ID) model ordering's sort.)
 			type member struct {
 				pos   int
 				rawID string
@@ -1736,8 +1982,8 @@ func generateConstantsSource(models []bestiary.ModelInfo, slugToConst map[string
 	// returns []ModelID (the constant values only). The distinct name avoids a compile-
 	// time conflict with the existing registry.go:Models() function.
 	buf.WriteString("// ModelIDs returns the canonical Model_<...> constant values from the codegen\n")
-	buf.WriteString("// pipeline. The name diverges from PROPOSAL-3's spec (Models() []ModelID) to\n")
-	buf.WriteString("// avoid clashing with registry.go:Models() []ModelInfo. See bestiary-p6l5.\n")
+	buf.WriteString("// pipeline. The name diverges from the original spec (Models() []ModelID) to\n")
+	buf.WriteString("// avoid clashing with registry.go:Models() []ModelInfo.\n")
 	buf.WriteString("//\n")
 	buf.WriteString("// The returned slice is a defensive copy; mutating it does not affect future calls.\n")
 	buf.WriteString("// See Models() in registry.go for the full ModelInfo slice (metadata + constants).\n")

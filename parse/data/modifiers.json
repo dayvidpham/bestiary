@@ -1,10 +1,18 @@
 {
-  "_comment": "Known modifier suffixes for model IDs. ExtractModifier consults this list to extract the modifier as a separate field rather than treating it as suffix overflow. Add new modifiers here as they appear in the wild. Modifiers are matched longest-first to prevent shorter tokens (e.g. 'think') from shadowing longer ones (e.g. 'thinking').",
+  "_comment": "Known modifier suffixes for model IDs. ExtractModifier consults this list to extract the modifier as a separate field rather than treating it as suffix overflow. Modifiers are matched longest-first to prevent shorter tokens (e.g. 'think') from shadowing longer ones (e.g. 'thinking'). Per the ratified taxonomy, the Modifier field is a LIST, so multiple trailing modifiers compose losslessly. ADDED reasoning/multimodal (capability), turbo/fast (speed), instruct/chat/base (format/stage). Each is reclassified variant->modifier ONLY when it is NOT a curated families.json member of the resolved family (per-family member-guard) — so deepseek-chat, sonar-reasoning, qwen-turbo keep the token as their product-line variant.",
   "schema_version": 1,
   "modifiers": [
     "thinking",
     "think",
     "vision",
+    "multimodal",
+    "reasoning",
+    "instruct",
+    "turbo",
+    "fast",
+    "chat",
+    "base",
+    "original",
     "latest",
     "code",
     "preview"

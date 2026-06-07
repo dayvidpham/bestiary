@@ -59,7 +59,7 @@ func WithScheme(s CanonicalScheme) ResolveOption {
 
 // Resolve returns the set of ModelRefs that match the given input string.
 //
-// # Disambiguation rule (Reviewer C-N1)
+// # Disambiguation rule
 //
 // Cross-provider hosting: if all matches share the same Canonical triple
 // (Family, Variant, Date) — meaning the same conceptual model is hosted by
@@ -87,6 +87,13 @@ func WithScheme(s CanonicalScheme) ResolveOption {
 // family-only matching. If multiple distinct canonical triples match, *ErrAmbiguous
 // is returned. If a single group matches, refs are returned. This surfaces
 // *ErrAmbiguous for inputs like "claude" instead of ErrNotFound.
+//
+// Variant-aware bare-family fallback: when the Family-exact
+// retry also yields zero matches and the bare input is a hyphenated
+// "<family>-<variant>" shorthand whose leading token is a registered Family and
+// trailing token names a Variant within it (e.g. "claude-opus"), Resolve matches
+// that variant group and returns *ErrAmbiguous with the variant's candidates. See
+// matchBareFamilyVariant for the conservative matching rule.
 //
 // Use WithScheme to override auto-detection.
 func Resolve(input string, opts ...ResolveOption) ([]ModelRef, error) {
@@ -146,6 +153,15 @@ func Resolve(input string, opts ...ResolveOption) ([]ModelRef, error) {
 		if len(canonicalMatches) > 0 {
 			matches = canonicalMatches
 			scheme = SchemeCanonical
+		} else if variantMatches := matchBareFamilyVariant(input); len(variantMatches) > 0 {
+			// Variant-aware bare-family fallback: a bare
+			// hyphenated "<family>-<variant>" shorthand (e.g. "claude-opus") has no
+			// exact Family match, but the leading token is a registered
+			// Family and the trailing token names a Variant within it. Surface the
+			// matching variant group as ErrAmbiguous (via SchemeCanonical grouping)
+			// rather than ErrNotFound.
+			matches = variantMatches
+			scheme = SchemeCanonical
 		}
 	}
 
@@ -158,7 +174,7 @@ func Resolve(input string, opts ...ResolveOption) ([]ModelRef, error) {
 	// and a diagnostic message that names the missed namespace.
 	if purlLooseFallback {
 		// Build a deduplicated candidate list from all matches (group by ID).
-		// Fix (SLICE-FIX-V4-1-FIX2 BLOCKER): prefer the canonical provider as the
+		// Fix: prefer the canonical provider as the
 		// per-ID representative. When iterating matches, if the current match is the
 		// canonical provider for its family, upgrade the stored representative (even
 		// if we've already seen this ID). This mirrors the multi-group logic at
@@ -217,11 +233,24 @@ func Resolve(input string, opts ...ResolveOption) ([]ModelRef, error) {
 	// model ID as the matchInput — which is the case for an exact static ID lookup.
 	exactIDInput := scheme == SchemeCanonical && isExactIDInput(matchInput, matches)
 
+	// groupKey is the canonical-identity key used to bucket matches into groups.
+	// Cross-provider hosting of the same conceptual model collapses into one group;
+	// genuinely distinct models (different variants, versions, context windows, etc.)
+	// land in separate groups.
+	//
+	// The group-key invariant: the key now carries Version, Modifier, and a locally-parsed
+	// ":N" context-window discriminator (parseContextN). This prevents context-window
+	// variants (e.g. claude-3-7-sonnet-thinking:1024 vs :128000) from being silently
+	// collapsed into a single representative — they share identical canonical fields
+	// but differ only in the raw ":N" suffix.
 	type groupKey struct {
-		id      ModelID // non-empty for ID-based grouping
-		family  Family
-		variant string
-		date    string
+		id       ModelID // non-empty for ID-based grouping
+		family   Family
+		variant  string
+		version  string
+		modifier string
+		date     string
+		contextN string // parsed ":N" from ID (e.g., "1024", "128000", "")
 	}
 	byGroup := make(map[groupKey][]ModelRef)
 	var order []groupKey // preserve insertion order for deterministic output
@@ -232,8 +261,20 @@ func Resolve(input string, opts ...ResolveOption) ([]ModelRef, error) {
 			// Group by model ID: cross-provider hosting of the same raw ID.
 			key = groupKey{id: ref.ID}
 		} else {
-			// Group by Canonical triple for SchemeCanonical non-exact inputs.
-			key = groupKey{family: ref.Family, variant: ref.Variant, date: ref.Date}
+			// Group by extended canonical identity for SchemeCanonical non-exact inputs.
+			// Version, Modifier, and contextN distinguish sub-variants that share the
+			// same (Family, Variant, Date) triple.
+			key = groupKey{
+				family:  ref.Family,
+				variant: ref.Variant,
+				version: ref.Version,
+				// the Modifier component is the ORDER-INDEPENDENT canonical
+				// key (modifierKey), so [thinking,turbo] and [turbo,thinking] never
+				// split a group; the ":N" context-window still discriminates per the group-key invariant.
+				modifier: modifierKey(ref.Modifier),
+				date:     ref.Date,
+				contextN: parseContextN(ref.ID),
+			}
 		}
 		if _, exists := byGroup[key]; !exists {
 			order = append(order, key)
@@ -268,28 +309,15 @@ func Resolve(input string, opts ...ResolveOption) ([]ModelRef, error) {
 	}
 
 	// Multiple distinct groups: ambiguous input.
-	// Build a representative candidate per distinct group.
-	// Fix (SLICE-FIX-V3-1): prefer the row whose Provider equals the Family's
-	// canonical provider when such a row exists in the group. This ensures that
-	// e.g. "anthropic" appears as the representative for claude groups instead of
-	// whichever rehost happened to be first in the static registry.
+	// Build a representative candidate per distinct group using selectRepresentative.
+	// Group-key invariant: selectRepresentative prefers the
+	// canonical provider row and falls back to lexicographic Provider order —
+	// ensuring "anthropic" appears as the representative for claude groups rather
+	// than an arbitrary rehost, and guaranteeing determinism independent of
+	// static registry ordering.
 	candidates := make([]ModelRef, 0, len(order))
 	for _, key := range order {
-		group := byGroup[key]
-		rep := group[0]
-		// Prefer the canonical provider row when one exists in this group.
-		if len(group) > 1 {
-			canonProv := group[0].Family.CanonicalProvider()
-			if canonProv != "" {
-				for _, r := range group {
-					if r.Provider == canonProv {
-						rep = r
-						break
-					}
-				}
-			}
-		}
-		candidates = append(candidates, rep)
+		candidates = append(candidates, selectRepresentative(byGroup[key]))
 	}
 	return nil, &ErrAmbiguous{
 		Input:           input,
@@ -433,6 +461,109 @@ func isBareIdentifier(s string) bool {
 	return true
 }
 
+// matchBareFamilyVariant implements the variant-aware bare-family fallback for a
+// bare hyphenated "<family>-<variant>" shorthand such as "claude-opus". It is
+// invoked only when an exact-ID and exact-Family lookup have both already failed.
+//
+// The match is deliberately CLOSED/conservative to avoid false positives on
+// arbitrary hyphenated junk: it splits input at each hyphen, and accepts a split
+// only when BOTH (1) the leading token is a registered Family (IsKnownFamily) and
+// (2) the trailing token equals the Variant of one or more models in that Family.
+// The first hyphen position that satisfies both yields the candidate set; if no
+// split qualifies, it returns nil (caller then returns ErrNotFound). Because the
+// trailing token must match a real model Variant, a genuinely-unknown input like
+// "claude-banana" or "foo-bar" matches nothing.
+//
+// The returned refs are grouped by the caller under SchemeCanonical, so a variant
+// spanning multiple distinct canonicals (e.g. opus 4, opus 4.1, opus 3) surfaces
+// as ErrAmbiguous with the full candidate list.
+func matchBareFamilyVariant(input string) []ModelRef {
+	for i := 0; i < len(input); i++ {
+		if input[i] != '-' {
+			continue
+		}
+		famTok, varTok := input[:i], input[i+1:]
+		if famTok == "" || varTok == "" || !IsKnownFamily(Family(famTok)) {
+			continue
+		}
+		var out []ModelRef
+		for _, m := range staticModels {
+			if string(m.Family) == famTok && m.Variant == varTok {
+				out = append(out, m.Ref())
+			}
+		}
+		if len(out) > 0 {
+			return out
+		}
+	}
+	return nil
+}
+
+// parseContextN extracts the context-window ":N" token from a raw model ID.
+// The ":N" suffix (e.g. ":1024", ":128000") is used by some providers (notably
+// NanoGPT) to expose distinct context-window variants of the same model under
+// separate IDs. These variants share identical canonical fields (Family, Variant,
+// Version, Modifier, Date) and can only be distinguished by the raw ":N" suffix.
+//
+// Returns the digit-only suffix after the last colon, or "" when absent or when
+// the suffix contains non-digit characters (e.g. ":thinking:low" → "").
+func parseContextN(id ModelID) string {
+	s := string(id)
+	i := strings.LastIndex(s, ":")
+	if i < 0 {
+		return ""
+	}
+	suffix := s[i+1:]
+	if len(suffix) == 0 {
+		return ""
+	}
+	for _, c := range suffix {
+		if c < '0' || c > '9' {
+			return ""
+		}
+	}
+	return suffix
+}
+
+// selectRepresentative picks the most representative ModelRef from a group of
+// cross-provider-hosted models (all sharing the same canonical identity).
+//
+// Tiebreak order:
+//  1. Prefer the row whose Provider equals Family.CanonicalProvider() for the
+//     family (as defined in family.go). This ensures the originating publisher
+//     appears as the representative rather than an arbitrary rehost.
+//  2. When no canonical provider is present in the group (or CanonicalProvider
+//     returns ""), fall back to the lexicographically-smallest Provider string.
+//     This guarantees a deterministic result regardless of slice order or map
+//     iteration order.
+//
+// Panics on an empty group (caller invariant: groups always contain ≥1 ref).
+func selectRepresentative(group []ModelRef) ModelRef {
+	if len(group) == 0 {
+		panic("bestiary: selectRepresentative called with empty group")
+	}
+	if len(group) == 1 {
+		return group[0]
+	}
+	// Prefer canonical provider row.
+	canonProv := group[0].Family.CanonicalProvider()
+	if canonProv != "" {
+		for _, r := range group {
+			if r.Provider == canonProv {
+				return r
+			}
+		}
+	}
+	// Lexicographic tiebreak: smallest Provider string for determinism.
+	rep := group[0]
+	for _, r := range group[1:] {
+		if r.Provider < rep.Provider {
+			rep = r
+		}
+	}
+	return rep
+}
+
 // detectScheme infers the CanonicalScheme from the input string and returns
 // the effective match string (with any scheme-specific prefixes stripped).
 // This is the legacy form; new code uses detectSchemeWithHint.
@@ -532,7 +663,7 @@ func modelMatches(m ModelInfo, matchInput string, scheme CanonicalScheme) bool {
 // matches the parsed (family, variant, version, date, modifier) tuple.
 //
 // Parsing rules:
-//  1. Strip "[modifier]" bracket suffix if present (SLICE-FIX-V2-5).
+//  1. Strip "[modifier]" bracket suffix if present.
 //  2. Strip "@date" suffix if present.
 //  3. Split remaining segments on "/".
 //  4. Provider-prefix detection: when 4 segments remain (provider/family/variant/version),
@@ -548,7 +679,7 @@ func modelMatches(m ModelInfo, matchInput string, scheme CanonicalScheme) bool {
 //   - date must match Date when specified.
 //   - modifier must match Modifier when specified (non-empty bracket suffix).
 func matchCanonicalSegments(m ModelInfo, matchInput string) bool {
-	// Extract "[modifier]" bracket suffix (SLICE-FIX-V2-5).
+	// Extract "[modifier]" bracket suffix.
 	// Must be done BEFORE stripping "@date" so the bracket is not confused with
 	// the date field when the date is absent.
 	var modifierFilter string
@@ -611,8 +742,12 @@ func matchCanonicalSegments(m ModelInfo, matchInput string) bool {
 	if dateFilter != "" && m.Date != dateFilter {
 		return false
 	}
-	// Modifier filter: when specified (bracket suffix present), must match.
-	if modifierFilter != "" && m.Modifier != modifierFilter {
+	// Modifier filter: when specified (bracket suffix present), must match the
+	// model's order-independent canonical modifier key. The bracket
+	// suffix renders the same canonical comma-joined form (ModelRef.Format), so a
+	// round-tripped "[vision,instruct]" matches a model with Modifier
+	// ["instruct","vision"].
+	if modifierFilter != "" && modifierKey(m.Modifier) != modifierFilter {
 		return false
 	}
 	return true
