@@ -118,6 +118,17 @@ func TestVC8_NilCostAggregation(t *testing.T) {
 	// Observability: a silent "0 all-nil entities" would mean the {nil,nil} arm was
 	// never actually exercised by real data. Log the coverage either way.
 	t.Logf("VC8 coverage over %d entities: input-cost all-nil=%d, mixed=%d", len(entities), allNilSeen, mixedSeen)
+
+	// Self-guard the coverage: both the all-nil ({nil,nil}) arm and the mixed
+	// (range-over-non-nil) arm MUST have been exercised by real data. A future
+	// regen that eliminated either case would otherwise leave that arm silently
+	// untested.
+	if allNilSeen == 0 {
+		t.Error("VC8 all-nil arm never exercised: no entity had every input cost nil; the {nil,nil} path is untested")
+	}
+	if mixedSeen == 0 {
+		t.Error("VC8 mixed arm never exercised: no entity mixed nil and non-nil input costs; range-over-non-nil is untested")
+	}
 }
 
 func checkPriceRange(
@@ -287,37 +298,61 @@ func TestEntityByTuple_Miss(t *testing.T) {
 	}
 }
 
-// TestEntityByTuple_AttributeModifierProjectedOut guards the identity-key
-// invariant: an attribute-class modifier supplied to EntityByTuple is projected out by
-// EntityModifiers, so the lookup resolves to the same base entity as the
-// no-modifier tuple (the attribute token never enters the key).
-func TestEntityByTuple_AttributeModifierProjectedOut(t *testing.T) {
-	// Find an entity whose underlying instances include an attribute-class modifier
-	// ("thinking" is attribute by the curated table) so the projection is real.
-	base := findEntity(t, func(e bestiary.Entity) bool {
-		if len(e.Ref.Modifier) != 0 {
-			return false // want a base (no identity-mod) entity
+// TestEntityIndex_AttributeModifierFoldsIntoBase proves the INDEX-BUILD side of
+// the identity projection: a model whose DECOMPOSED ModelInfo.Modifier carries a
+// real attribute-class token (e.g. ["thinking"]) is folded into its BASE entity
+// (empty Ref.Modifier) — its instance appears in that base entity's Instances —
+// because the index keys on EntityModifiers(m.Modifier, m.Family), not raw
+// m.Modifier.
+//
+// This guard is independent of EntityByTuple's lookup-side projection: it asserts
+// the concrete instance is PRESENT in the base entity. If the index build used
+// raw m.Modifier, that instance would key into a separate "{thinking}" entity and
+// be ABSENT from the base — so this test goes RED under that regression (verified
+// by flipping registry.go's EntityModifiers(...) → m.Modifier).
+func TestEntityIndex_AttributeModifierFoldsIntoBase(t *testing.T) {
+	// Locate a registry model whose raw decomposed modifiers are non-empty but
+	// project to NO identity modifiers (i.e. every raw token is attribute-class),
+	// so its identity is the bare base tuple. The dash-form "...-thinking" Claude
+	// IDs decompose to Modifier=["thinking"] and qualify.
+	var probe bestiary.ModelInfo
+	found := false
+	for _, m := range bestiary.StaticModels() {
+		if len(m.Modifier) == 0 {
+			continue
 		}
-		for _, in := range e.Instances {
-			if string(in.ID) != "" && hasThinkingSuffix(string(in.ID)) {
-				return true
-			}
+		if len(bestiary.EntityModifiers(m.Modifier, m.Family)) == 0 {
+			probe = m
+			found = true
+			break
 		}
-		return false
-	})
+	}
+	if !found {
+		t.Skip("no registry model with a non-empty all-attribute modifier set; cannot exercise index-side folding")
+	}
+	t.Logf("probe instance: ID=%s family=%s variant=%s version=%s rawMod=%v", probe.ID, probe.Family, probe.Variant, probe.Version, probe.Modifier)
 
-	// Supplying the attribute token "thinking" must resolve to the SAME base
-	// entity (token dropped), not split off a distinct one.
-	withAttr, ok := bestiary.EntityByTuple(base.Ref.Family, base.Ref.Variant, base.Ref.Version, "thinking")
+	// The probe's BASE identity is its tuple with NO modifiers.
+	base, ok := bestiary.EntityByTuple(probe.Family, probe.Variant, probe.Version)
 	if !ok {
-		t.Fatalf("EntityByTuple(%s + thinking) ok=false, want it to project to the base entity", base.Ref.String())
+		t.Fatalf("base entity %s/%s@%s not found; the attribute-modifier instance did not fold into a base entity", probe.Family, probe.Variant, probe.Version)
 	}
-	if withAttr.Ref.String() != base.Ref.String() {
-		t.Errorf("attribute modifier leaked into key: got %q, want base %q", withAttr.Ref.String(), base.Ref.String())
+	if len(base.Ref.Modifier) != 0 {
+		t.Fatalf("base entity unexpectedly carries identity modifiers %v; key=%q", base.Ref.Modifier, base.Ref.String())
 	}
-}
 
-func hasThinkingSuffix(id string) bool {
-	const s = "thinking"
-	return len(id) >= len(s) && id[len(id)-len(s):] == s
+	// The probe instance MUST be present in the base entity's Instances. Under a
+	// raw-modifier index it would instead live under "<base>{thinking}" and be
+	// absent here.
+	present := false
+	for _, in := range base.Instances {
+		if in.ID == probe.ID && in.Provider == probe.Provider {
+			present = true
+			break
+		}
+	}
+	if !present {
+		t.Errorf("index-side projection failed: instance %s (provider %s, rawMod %v) is NOT in base entity %q's instances — the attribute token leaked into the entity key and split it off its base",
+			probe.ID, probe.Provider, probe.Modifier, base.Ref.String())
+	}
 }

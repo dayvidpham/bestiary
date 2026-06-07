@@ -56,7 +56,7 @@ func run(args []string) error {
 	case "show":
 		if *byEntity {
 			if fs.NArg() < 1 {
-				return fmt.Errorf("usage: bestiary show --by-entity <model-id-or-tuple> [--output=<json|table>]")
+				return fmt.Errorf("usage: bestiary show --by-entity <model-id | family[/variant][/version|@version]{identity-mods}> [--output=<json|table>]")
 			}
 			return runShowEntity(fs.Arg(0), bestiary.OutputFormat(*output))
 		}
@@ -66,7 +66,8 @@ func run(args []string) error {
 		return runShow(fs.Arg(0), bestiary.OutputFormat(*output), *dbPath, *inputFormat, *scheme)
 	case "providers":
 		if fs.NArg() < 1 {
-			return fmt.Errorf("usage: bestiary providers <family>[/<variant>][@<version>]{identity-mods} [--output=<json|table>]")
+			return fmt.Errorf("usage: bestiary providers <family>[/<variant>][/<version>|@<version>]{identity-mods} [--output=<json|table>]\n" +
+				"  version may be given as a trailing /segment or as @version; the optional [attributes] filter is ignored in MVP")
 		}
 		return runProviders(fs.Arg(0), bestiary.OutputFormat(*output))
 	case "sync":
@@ -317,14 +318,34 @@ func lookupEntity(arg string) (bestiary.Entity, bool) {
 	return bestiary.Entity{}, false
 }
 
+// validateEntityOutput restricts the entity commands to the output formats they
+// can actually render (json or table). Unlike the model commands, there is no
+// YAML serializer for Entity, so any other value — including a typo such as
+// "tabel" or an unsupported "yaml" — is rejected with an actionable error rather
+// than silently falling through to the table renderer.
+func validateEntityOutput(format bestiary.OutputFormat) error {
+	switch format {
+	case bestiary.FormatJSON, bestiary.FormatTable:
+		return nil
+	default:
+		return fmt.Errorf(
+			"bestiary: unsupported --output %q for entity commands; supported formats: json, table",
+			string(format),
+		)
+	}
+}
+
 // runProviders lists every provider/host instance of the entity identified by the
 // given tuple (or model ID).
 func runProviders(arg string, format bestiary.OutputFormat) error {
+	if err := validateEntityOutput(format); err != nil {
+		return err
+	}
 	ent, ok := lookupEntity(arg)
 	if !ok {
 		return &bestiary.ErrNotFound{What: "entity", Key: arg}
 	}
-	if format == bestiary.OutputFormat("json") {
+	if format == bestiary.FormatJSON {
 		return writeJSON(os.Stdout, ent.Instances)
 	}
 	fmt.Fprintf(os.Stdout, "Entity: %s\n", ent.Ref.String())
@@ -336,11 +357,14 @@ func runProviders(arg string, format bestiary.OutputFormat) error {
 // provider/host lists, price/context/max-output ranges, capability union, lineage
 // edges, and the underlying instances.
 func runShowEntity(arg string, format bestiary.OutputFormat) error {
+	if err := validateEntityOutput(format); err != nil {
+		return err
+	}
 	ent, ok := lookupEntity(arg)
 	if !ok {
 		return &bestiary.ErrNotFound{What: "entity", Key: arg}
 	}
-	if format == bestiary.OutputFormat("json") {
+	if format == bestiary.FormatJSON {
 		return writeJSON(os.Stdout, ent)
 	}
 	writeEntityView(os.Stdout, ent)
