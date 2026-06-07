@@ -92,6 +92,16 @@ func TestJSONOutput_ConformsToSchema(t *testing.T) {
 			Output: []bestiary.Modality{bestiary.ModalityText},
 		},
 		LastSynced: "2024-01-01T00:00:00Z",
+		// v0.2.3 additive fields (schema 0.1.0): exercise the populated
+		// serialization path for Host (string) and Lineage ([]LineageEdge,
+		// with DerivationKind serialized as text).
+		Host: bestiary.HostAzure,
+		Lineage: []bestiary.LineageEdge{
+			{
+				Parent: bestiary.EntityRef{Family: "test", Variant: "schema", Version: "0"},
+				Kind:   bestiary.DerivationFinetune,
+			},
+		},
 	}
 
 	var buf bytes.Buffer
