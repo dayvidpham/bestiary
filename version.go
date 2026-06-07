@@ -2,13 +2,15 @@ package bestiary
 
 // BestiarySchemaVersion is the semantic version of the bestiary JSON Schema.
 // It follows semver (major.minor.patch) and must be incremented whenever the
-// schema changes in a backward-incompatible way.
-// bumped 0.0.2 → 0.0.3 for the Modifier field
-// widening string → []string (backward-incompatible public schema change).
-// bumped 0.0.3 → 0.1.0 for the additive v0.2.3 entity-model fields
-// (ModelInfo.Host, ModelInfo.Lineage; ModelRef.Host; new $defs EntityRef,
-// LineageEdge, DerivationKind). Additive and backward-compatible: the new
-// fields are optional/zero-value, so 0.0.x records still validate.
+// schema changes.
+//
+// Changelog:
+//   - 0.0.2 → 0.0.3: widened the Modifier field string → []string
+//     (backward-INCOMPATIBLE public schema change).
+//   - 0.0.3 → 0.1.0: added the v0.2.3 entity-model fields (ModelInfo.Host,
+//     ModelInfo.Lineage; ModelRef.Host; new $defs EntityRef, LineageEdge,
+//     DerivationKind). Additive and backward-COMPATIBLE: the new fields are
+//     optional/zero-value, so 0.0.x records still validate.
 const BestiarySchemaVersion = "0.1.0"
 
 // UpstreamSchemaVersion identifies the exact snapshot of the models.dev schema

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"os"
+	"slices"
 	"testing"
 
 	"github.com/dayvidpham/bestiary"
@@ -226,6 +227,201 @@ func TestJSONOutput_ConformsToSchema(t *testing.T) {
 	}
 	if arr, ok := outMM["Modifier"].([]any); !ok || len(arr) != 2 {
 		t.Errorf("ModelInfo.Modifier = %v (%T), want a 2-element JSON array", outMM["Modifier"], outMM["Modifier"])
+	}
+}
+
+// TestSchemaDefs_EntityLineage_DeepConformance mirrors the Step-7 ModelRef deep
+// check for the v0.2.3 additive $defs: it marshals a populated LineageEdge and a
+// populated EntityRef and asserts (a) every property declared in the schema's
+// $defs.LineageEdge / $defs.EntityRef is present in the marshaled output, (b)
+// LineageEdge.Kind serializes as the DerivationKind enum STRING (e.g. "finetune")
+// matching the schema's $defs.DerivationKind enum — never an integer, and (c) the
+// newly-added $defs.ModelRef.Host property is declared in the schema.
+func TestSchemaDefs_EntityLineage_DeepConformance(t *testing.T) {
+	schemaBytes, err := os.ReadFile("bestiary.schema.json")
+	if err != nil {
+		t.Fatalf("could not read bestiary.schema.json: %v", err)
+	}
+
+	var schemaDefs struct {
+		Defs map[string]struct {
+			Properties map[string]json.RawMessage `json:"properties"`
+			Required   []string                   `json:"required"`
+			Enum       []string                   `json:"enum"`
+		} `json:"$defs"`
+	}
+	if err := json.Unmarshal(schemaBytes, &schemaDefs); err != nil {
+		t.Fatalf("could not unmarshal $defs from bestiary.schema.json: %v", err)
+	}
+
+	// (c) $defs.ModelRef.Host must be a declared property.
+	modelRefDef, ok := schemaDefs.Defs["ModelRef"]
+	if !ok {
+		t.Fatalf("bestiary.schema.json $defs.ModelRef missing")
+	}
+	if _, ok := modelRefDef.Properties["Host"]; !ok {
+		t.Errorf("bestiary.schema.json $defs.ModelRef is missing the new \"Host\" property;\n" +
+			"  how to fix: add a \"Host\" property to $defs.ModelRef in bestiary.schema.json (added in schema 0.1.0)")
+	}
+
+	// $defs.EntityRef deep check.
+	entityRefDef, ok := schemaDefs.Defs["EntityRef"]
+	if !ok || len(entityRefDef.Properties) == 0 {
+		t.Fatalf("bestiary.schema.json $defs.EntityRef missing or has no properties")
+	}
+	entRef := bestiary.EntityRef{
+		Family:   "llama",
+		Variant:  "",
+		Version:  "3.1",
+		Modifier: []string{"instruct"},
+	}
+	entRefJSON, err := json.Marshal(entRef)
+	if err != nil {
+		t.Fatalf("json.Marshal(EntityRef) failed: %v", err)
+	}
+	var entRefOut map[string]any
+	if err := json.Unmarshal(entRefJSON, &entRefOut); err != nil {
+		t.Fatalf("could not unmarshal EntityRef JSON: %v", err)
+	}
+	for prop := range entityRefDef.Properties {
+		if _, ok := entRefOut[prop]; !ok {
+			t.Errorf("EntityRef JSON output missing schema $defs.EntityRef property %q;\n"+
+				"  how to fix: ensure bestiary.EntityRef has an exported field %q matching the schema", prop, prop)
+		}
+	}
+
+	// $defs.LineageEdge deep check + Kind-as-enum-string assertion.
+	lineageEdgeDef, ok := schemaDefs.Defs["LineageEdge"]
+	if !ok || len(lineageEdgeDef.Properties) == 0 {
+		t.Fatalf("bestiary.schema.json $defs.LineageEdge missing or has no properties")
+	}
+	edge := bestiary.LineageEdge{
+		Parent: bestiary.EntityRef{Family: "llama", Version: "3"},
+		Kind:   bestiary.DerivationFinetune,
+	}
+	edgeJSON, err := json.Marshal(edge)
+	if err != nil {
+		t.Fatalf("json.Marshal(LineageEdge) failed: %v", err)
+	}
+	var edgeOut map[string]any
+	if err := json.Unmarshal(edgeJSON, &edgeOut); err != nil {
+		t.Fatalf("could not unmarshal LineageEdge JSON: %v", err)
+	}
+	for prop := range lineageEdgeDef.Properties {
+		if _, ok := edgeOut[prop]; !ok {
+			t.Errorf("LineageEdge JSON output missing schema $defs.LineageEdge property %q;\n"+
+				"  how to fix: ensure bestiary.LineageEdge has an exported field %q matching the schema", prop, prop)
+		}
+	}
+	// The crux: Kind MUST be the DerivationKind enum STRING, not an integer.
+	kindVal, ok := edgeOut["Kind"]
+	if !ok {
+		t.Fatal("LineageEdge JSON output missing 'Kind'")
+	}
+	kindStr, isStr := kindVal.(string)
+	if !isStr {
+		t.Errorf("LineageEdge.Kind serialized as %T, want a JSON string (DerivationKind enum); a float/integer means MarshalText was bypassed", kindVal)
+	} else {
+		if kindStr != "finetune" {
+			t.Errorf("LineageEdge.Kind = %q, want \"finetune\"", kindStr)
+		}
+		// And it must be a member of the schema's $defs.DerivationKind enum.
+		dkDef, ok := schemaDefs.Defs["DerivationKind"]
+		if !ok || len(dkDef.Enum) == 0 {
+			t.Fatalf("bestiary.schema.json $defs.DerivationKind missing or has no enum")
+		}
+		if !slices.Contains(dkDef.Enum, kindStr) {
+			t.Errorf("LineageEdge.Kind=%q is not a member of schema $defs.DerivationKind.enum %v", kindStr, dkDef.Enum)
+		}
+	}
+}
+
+// TestSchema_BackwardCompat_ZeroValueFields pins INV2: the v0.2.3 additive fields
+// (Host, Lineage) are backward-compatible. A v0.2.2-shaped record (Host:"" /
+// Lineage:nil) still conforms to schema 0.1.0, and crucially Host/Lineage are NOT
+// listed in any required[] array (top-level ModelInfo or $defs.ModelRef) — so a
+// document predating these fields validates without them. This was previously
+// true only by inspection; this test makes it a regression gate.
+func TestSchema_BackwardCompat_ZeroValueFields(t *testing.T) {
+	schemaBytes, err := os.ReadFile("bestiary.schema.json")
+	if err != nil {
+		t.Fatalf("could not read bestiary.schema.json: %v", err)
+	}
+
+	// Parse top-level required + properties, and $defs required arrays.
+	var schema struct {
+		Properties map[string]json.RawMessage `json:"properties"`
+		Required   []string                   `json:"required"`
+		Defs       map[string]struct {
+			Required []string `json:"required"`
+		} `json:"$defs"`
+	}
+	if err := json.Unmarshal(schemaBytes, &schema); err != nil {
+		t.Fatalf("could not unmarshal bestiary.schema.json: %v", err)
+	}
+
+	// (a) Host/Lineage must NOT be in the top-level ModelInfo required[].
+	for _, f := range []string{"Host", "Lineage"} {
+		if slices.Contains(schema.Required, f) {
+			t.Errorf("ModelInfo schema required[] contains %q; additive v0.2.3 fields must stay OPTIONAL for backward compatibility (INV2)", f)
+		}
+	}
+	// (b) Host must NOT be in $defs.ModelRef.required[].
+	if mr, ok := schema.Defs["ModelRef"]; ok {
+		if slices.Contains(mr.Required, "Host") {
+			t.Errorf("$defs.ModelRef required[] contains \"Host\"; it must stay OPTIONAL for backward compatibility (INV2)")
+		}
+	}
+
+	// (c) A v0.2.2-shaped record (no Host/Lineage values) still conforms: every
+	// schema property appears in output and no extra keys appear. Host:"" and
+	// Lineage:nil are the zero values a pre-0.1.0 record would carry.
+	cost := 1.5
+	v022 := bestiary.ModelInfo{
+		ID:               "legacy-model-20240101",
+		Provider:         "testprovider",
+		DisplayName:      "Legacy Model",
+		RawFamily:        "legacy",
+		Family:           "legacy",
+		Variant:          "",
+		Date:             "2024-01-01",
+		ContextWindow:    8000,
+		MaxOutput:        2048,
+		Interleaved:      bestiary.Capability{Supported: false},
+		CostInputPerMTok: &cost,
+		ReleaseDate:      "2024-01-01",
+		Knowledge:        "2024-01",
+		Modalities: bestiary.Modalities{
+			Input:  []bestiary.Modality{bestiary.ModalityText},
+			Output: []bestiary.Modality{bestiary.ModalityText},
+		},
+		LastSynced: "2024-01-01T00:00:00Z",
+		// Host and Lineage deliberately left at zero value (Host:"" / Lineage:nil).
+	}
+	var buf bytes.Buffer
+	if err := bestiary.FormatModel(&buf, v022, bestiary.FormatJSON); err != nil {
+		t.Fatalf("FormatModel(legacy record) error: %v", err)
+	}
+	var out map[string]any
+	if err := json.Unmarshal(buf.Bytes(), &out); err != nil {
+		t.Fatalf("unmarshal legacy record JSON: %v", err)
+	}
+	for prop := range schema.Properties {
+		if _, ok := out[prop]; !ok {
+			t.Errorf("legacy record missing schema property %q", prop)
+		}
+	}
+	for key := range out {
+		if _, ok := schema.Properties[key]; !ok {
+			t.Errorf("legacy record has key %q not declared in schema", key)
+		}
+	}
+	// The zero values must serialize as expected for a backward-compatible record.
+	if out["Host"] != "" {
+		t.Errorf("legacy record Host = %v, want \"\" (zero value)", out["Host"])
+	}
+	if out["Lineage"] != nil {
+		t.Errorf("legacy record Lineage = %v, want null (zero value)", out["Lineage"])
 	}
 }
 

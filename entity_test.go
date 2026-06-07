@@ -202,3 +202,87 @@ func TestModifierClass_DefaultsToIdentity(t *testing.T) {
 		t.Errorf("ClassifyModifier(unknown) = %v, want ModifierClassIdentity (fail-safe default)", got)
 	}
 }
+
+// TestDerivationKind_OutOfRange covers the defensive out-of-range paths so a
+// corrupt/invalid enum value never panics or silently serializes as garbage:
+// String() returns a diagnostic form and MarshalText returns an actionable error.
+func TestDerivationKind_OutOfRange(t *testing.T) {
+	bad := bestiary.DerivationKind(99)
+	if got := bad.String(); got != "derivationkind(99)" {
+		t.Errorf("DerivationKind(99).String() = %q, want %q", got, "derivationkind(99)")
+	}
+	if _, err := bad.MarshalText(); err == nil {
+		t.Error("DerivationKind(99).MarshalText() = nil error, want an out-of-range error")
+	}
+	// Negative values take the same guarded path.
+	neg := bestiary.DerivationKind(-1)
+	if got := neg.String(); got != "derivationkind(-1)" {
+		t.Errorf("DerivationKind(-1).String() = %q, want %q", got, "derivationkind(-1)")
+	}
+	if _, err := neg.MarshalText(); err == nil {
+		t.Error("DerivationKind(-1).MarshalText() = nil error, want an out-of-range error")
+	}
+}
+
+// TestHost_IsKnown pins the known/unknown Host classification: named constants
+// (except HostNone) are known; HostNone and arbitrary backends are not — but the
+// latter remain valid Host values.
+func TestHost_IsKnown(t *testing.T) {
+	known := []bestiary.Host{bestiary.HostAzure, bestiary.HostAWS, bestiary.HostGCP, bestiary.HostCloudflare}
+	for _, h := range known {
+		if !h.IsKnown() {
+			t.Errorf("Host(%q).IsKnown() = false, want true", h)
+		}
+	}
+	if bestiary.HostNone.IsKnown() {
+		t.Error("HostNone.IsKnown() = true, want false (the zero value is not a known backend)")
+	}
+	if bestiary.Host("some-future-backend").IsKnown() {
+		t.Error("Host(\"some-future-backend\").IsKnown() = true, want false (unrecognized backend)")
+	}
+}
+
+// TestModifierClass_String covers the stringer for both members and the guarded
+// default for an out-of-range class value.
+func TestModifierClass_String(t *testing.T) {
+	if got := bestiary.ModifierClassIdentity.String(); got != "identity" {
+		t.Errorf("ModifierClassIdentity.String() = %q, want %q", got, "identity")
+	}
+	if got := bestiary.ModifierClassAttribute.String(); got != "attribute" {
+		t.Errorf("ModifierClassAttribute.String() = %q, want %q", got, "attribute")
+	}
+	if got := bestiary.ModifierClass(99).String(); got != "identity" {
+		t.Errorf("ModifierClass(99).String() = %q, want %q (fail-safe default)", got, "identity")
+	}
+}
+
+// TestEntityModifiers covers the identity-projection used to build the entity key.
+// Today every token defaults to Identity (Slice 2 owns the real table), so this
+// pins the canonicalization + dedup + empty-collapse behavior that the key
+// construction depends on, and serves as a drift-seam for the downstream slices.
+func TestEntityModifiers(t *testing.T) {
+	// Empty / all-empty inputs collapse to nil (canonical "no modifiers").
+	if got := bestiary.EntityModifiers(nil, "llama"); got != nil {
+		t.Errorf("EntityModifiers(nil) = %v, want nil", got)
+	}
+	if got := bestiary.EntityModifiers([]string{"", ""}, "llama"); got != nil {
+		t.Errorf("EntityModifiers(all-empty) = %v, want nil", got)
+	}
+	// De-dup + canonical ordering (thinking ranks before turbo).
+	got := bestiary.EntityModifiers([]string{"turbo", "thinking", "turbo"}, "kimi")
+	want := []string{"thinking", "turbo"}
+	if len(got) != len(want) {
+		t.Fatalf("EntityModifiers dedup/order = %v, want %v", got, want)
+	}
+	for i := range want {
+		if got[i] != want[i] {
+			t.Fatalf("EntityModifiers[%d] = %q, want %q (canonical order)", i, got[i], want[i])
+		}
+	}
+	// The projection feeds EntityRef.String(): keying on the projected mods must
+	// match rendering them directly.
+	ref := bestiary.EntityRef{Family: "kimi", Version: "k2", Modifier: got}
+	if ref.String() != "kimi@k2{thinking,turbo}" {
+		t.Errorf("EntityRef keyed on EntityModifiers = %q, want %q", ref.String(), "kimi@k2{thinking,turbo}")
+	}
+}
