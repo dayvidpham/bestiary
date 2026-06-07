@@ -136,7 +136,7 @@ func refSet(refs ...EntityRef) map[string]struct{} {
 // degrade twin of the codegen ValidateLineageTable hard-fail: when the table
 // fails to load (parse error) or is nil, safeLineageTable must fall back to a
 // non-nil EMPTY table so lookups miss ("no lineage") and traversal yields nothing
-// — never a nil-deref or panic. Mirrors the Slice-2 ClassifyModifier degrade test.
+// — never a nil-deref or panic. Mirrors the ClassifyModifier degrade test.
 func TestSafeLineageTable_DegradesToNoLineage(t *testing.T) {
 	// A malformed table is the load-failure trigger.
 	badTable, err := parseLineageTable([]byte("}{ not valid json"))
