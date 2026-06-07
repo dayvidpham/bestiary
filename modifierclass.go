@@ -1,5 +1,11 @@
 package bestiary
 
+import (
+	"encoding/json"
+	"strings"
+	"sync"
+)
+
 // ModifierClass partitions a trailing model-ID modifier token (e.g. "instruct",
 // "thinking", "turbo") into one of two roles relative to model IDENTITY:
 //
@@ -42,17 +48,146 @@ func (c ModifierClass) String() string {
 // identity-bearing for one family and a mere attribute for another (e.g.
 // "turbo": identity for gpt-4-turbo, attribute for a speed-tier alias elsewhere).
 //
+// Resolution order (per-family override BEATS the global table):
+//  1. family_overrides[fam][token] in modifier_class.json, if present;
+//  2. global[token] in modifier_class.json, if present;
+//  3. otherwise ModifierClassIdentity (the fail-safe default).
+//
 // CONTRACT: unknown/uncurated tokens MUST classify as ModifierClassIdentity
 // (the fail-safe default) and ClassifyModifier MUST NOT panic for any input —
-// rendering and entity keying depend on this graceful-degrade guarantee.
-//
-// This slice ships the SIGNATURE and a contract-preserving stub; the curated
-// modifier-class table (parse/data/modifier_class.json) plus per-family overrides
-// that drive the real classification are owned by a later slice. The stub returns
-// the documented default for every token, so call sites wire correctly today and
-// gain real classification when the table lands behind this same signature.
+// rendering and entity keying depend on this graceful-degrade guarantee. If the
+// embedded table fails to load, classification degrades to the unknown->Identity
+// default for every token (never a panic).
 func ClassifyModifier(token string, fam Family) ModifierClass {
+	if token == "" {
+		return ModifierClassIdentity
+	}
+	tbl := loadModifierClassTable()
+	if tbl == nil {
+		return ModifierClassIdentity
+	}
+	key := strings.ToLower(token)
+	// Per-family override wins.
+	if fam != "" {
+		if over, ok := tbl.perFamily[Family(strings.ToLower(string(fam)))]; ok {
+			if c, ok := over[key]; ok {
+				return c
+			}
+		}
+	}
+	if c, ok := tbl.global[key]; ok {
+		return c
+	}
 	return ModifierClassIdentity
+}
+
+// modifierClassTable is the curated global + per-family modifier classification,
+// loaded once from the embedded parse/data/modifier_class.json. A nil/empty table
+// is a valid (degraded) state: every lookup then falls through to the
+// unknown->Identity default in ClassifyModifier.
+type modifierClassTable struct {
+	global    map[string]ModifierClass
+	perFamily map[Family]map[string]ModifierClass
+}
+
+var (
+	modClassOnce  sync.Once
+	modClassTable *modifierClassTable
+)
+
+// loadModifierClassTable loads and caches the modifier-class table exactly once
+// (sync.Once). On any load/parse error it caches an EMPTY table rather than
+// failing — classification then degrades to unknown->Identity for every token.
+// It never returns nil and never panics.
+func loadModifierClassTable() *modifierClassTable {
+	modClassOnce.Do(func() {
+		modClassTable = initModifierClassTable()
+	})
+	return modClassTable
+}
+
+// initModifierClassTable reads parse/data/modifier_class.json from the embedded
+// filesystem (parseDataFS, declared in parse.go) and builds the lookup maps. Any
+// failure yields an empty-but-non-nil table (graceful degrade); unrecognized
+// class strings within the file are skipped rather than aborting the whole load.
+func initModifierClassTable() *modifierClassTable {
+	tbl := &modifierClassTable{
+		global:    map[string]ModifierClass{},
+		perFamily: map[Family]map[string]ModifierClass{},
+	}
+
+	raw, err := parseDataFS.ReadFile("parse/data/modifier_class.json")
+	if err != nil {
+		// Embedded file missing (should not happen in a production build):
+		// degrade to the empty table so callers still get unknown->Identity.
+		return tbl
+	}
+
+	var file struct {
+		Comment        string                       `json:"_comment"`
+		SchemaVer      int                          `json:"schema_version"`
+		Global         map[string]string            `json:"global"`
+		FamilyOverride map[string]map[string]string `json:"family_overrides"`
+	}
+	if err := json.Unmarshal(raw, &file); err != nil {
+		return tbl
+	}
+
+	for token, cls := range file.Global {
+		if c, ok := parseModifierClass(cls); ok {
+			tbl.global[strings.ToLower(token)] = c
+		}
+	}
+	for fam, over := range file.FamilyOverride {
+		fkey := Family(strings.ToLower(fam))
+		for token, cls := range over {
+			c, ok := parseModifierClass(cls)
+			if !ok {
+				continue
+			}
+			if tbl.perFamily[fkey] == nil {
+				tbl.perFamily[fkey] = map[string]ModifierClass{}
+			}
+			tbl.perFamily[fkey][strings.ToLower(token)] = c
+		}
+	}
+	return tbl
+}
+
+// parseModifierClass maps a curated class string ("identity"/"attribute") to a
+// ModifierClass. The bool result is false for any unrecognized string so the
+// caller can skip a malformed entry instead of mis-classifying it.
+func parseModifierClass(s string) (ModifierClass, bool) {
+	switch strings.ToLower(strings.TrimSpace(s)) {
+	case "identity":
+		return ModifierClassIdentity, true
+	case "attribute":
+		return ModifierClassAttribute, true
+	default:
+		return ModifierClassIdentity, false
+	}
+}
+
+// attributeModifiers returns the ATTRIBUTE-class subset of mods, de-duplicated and
+// in canonical order — the complement of EntityModifiers. It is the projection
+// used to build the "[attributes]" segment of a canonical render: identity-class
+// modifiers are dropped because they belong in the "{identity-mods}" segment. An
+// empty/all-identity input returns nil.
+func attributeModifiers(mods []string, fam Family) []string {
+	canon := CanonicalizeModifiers(mods)
+	if len(canon) == 0 {
+		return nil
+	}
+	out := make([]string, 0, len(canon))
+	for _, m := range canon {
+		if ClassifyModifier(m, fam) == ModifierClassAttribute {
+			out = append(out, m)
+		}
+	}
+	if len(out) == 0 {
+		return nil
+	}
+	return out
 }
 
 // EntityModifiers returns the IDENTITY-class subset of mods, de-duplicated and in
@@ -61,10 +196,10 @@ func ClassifyModifier(token string, fam Family) ModifierClass {
 // dropped because they do not affect identity. An empty/all-attribute input
 // returns nil (the canonical "no identity modifiers" value).
 //
-// EntityModifiers is implemented in terms of ClassifyModifier, so it is correct
-// by construction the moment ClassifyModifier's curated table lands — no rewrite
-// needed here. Until then, ClassifyModifier defaults every token to Identity, so
-// this returns the full canonicalized set.
+// EntityModifiers is implemented in terms of ClassifyModifier, so it tracks the
+// curated table automatically: a token classifies as identity (and is retained
+// here) unless the table — global or per-family override — demotes it to
+// attribute. Unknown tokens default to identity and are retained.
 func EntityModifiers(mods []string, fam Family) []string {
 	canon := CanonicalizeModifiers(mods)
 	if len(canon) == 0 {

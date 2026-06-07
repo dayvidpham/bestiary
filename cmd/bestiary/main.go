@@ -101,6 +101,14 @@ func runList(provider string, format bestiary.OutputFormat, dbPath string) error
 }
 
 // runShow resolves a model by input string and prints it in the requested format.
+//
+// In the default (peasant/canonical) format the input mirrors canonical output:
+// "<provider>/<family>[/<variant>][/<version>][@<date>]{identity-mods}[attributes]".
+// The "{identity-mods}" brace segment and the optional trailing "[attributes]"
+// bracket segment are both consumed by Resolve (matchCanonicalSegments); the union
+// of their tokens must equal the model's modifier set, so a class-aware render such
+// as "openai/gpt/4o{instruct}[turbo]" round-trips back to its model.
+//
 // Three Resolve outcomes are handled:
 //
 //   - Single canonical (cross-provider OK): print the best (most-recent) entry.

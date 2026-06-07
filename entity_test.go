@@ -257,10 +257,10 @@ func TestModifierClass_String(t *testing.T) {
 }
 
 // TestEntityModifiers covers the identity-projection used to build the entity key.
-// Today every token defaults to Identity (the modifier-class table is owned by
-// a later slice), so this
+// With the curated modifier-class table loaded, the projection retains only
+// IDENTITY-class tokens (dropping ATTRIBUTE-class tokens such as "thinking") and
 // pins the canonicalization + dedup + empty-collapse behavior that the key
-// construction depends on, and serves as a drift-seam for the downstream slices.
+// construction depends on.
 func TestEntityModifiers(t *testing.T) {
 	// Empty / all-empty inputs collapse to nil (canonical "no modifiers").
 	if got := bestiary.EntityModifiers(nil, "llama"); got != nil {
@@ -269,21 +269,23 @@ func TestEntityModifiers(t *testing.T) {
 	if got := bestiary.EntityModifiers([]string{"", ""}, "llama"); got != nil {
 		t.Errorf("EntityModifiers(all-empty) = %v, want nil", got)
 	}
-	// De-dup + canonical ordering (thinking ranks before turbo).
+	// ATTRIBUTE-class tokens are dropped from the identity projection: "thinking"
+	// is attribute, "turbo" is identity (global default; kimi has no override), so
+	// the de-duplicated projection keeps only "turbo".
 	got := bestiary.EntityModifiers([]string{"turbo", "thinking", "turbo"}, "kimi")
-	want := []string{"thinking", "turbo"}
+	want := []string{"turbo"}
 	if len(got) != len(want) {
-		t.Fatalf("EntityModifiers dedup/order = %v, want %v", got, want)
+		t.Fatalf("EntityModifiers dedup/class-filter = %v, want %v", got, want)
 	}
 	for i := range want {
 		if got[i] != want[i] {
-			t.Fatalf("EntityModifiers[%d] = %q, want %q (canonical order)", i, got[i], want[i])
+			t.Fatalf("EntityModifiers[%d] = %q, want %q", i, got[i], want[i])
 		}
 	}
 	// The projection feeds EntityRef.String(): keying on the projected mods must
-	// match rendering them directly.
+	// match rendering them directly. "thinking" never reaches the key.
 	ref := bestiary.EntityRef{Family: "kimi", Version: "k2", Modifier: got}
-	if ref.String() != "kimi@k2{thinking,turbo}" {
-		t.Errorf("EntityRef keyed on EntityModifiers = %q, want %q", ref.String(), "kimi@k2{thinking,turbo}")
+	if ref.String() != "kimi@k2{turbo}" {
+		t.Errorf("EntityRef keyed on EntityModifiers = %q, want %q", ref.String(), "kimi@k2{turbo}")
 	}
 }
