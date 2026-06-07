@@ -9978,8 +9978,8 @@ var allModelConstants = [...]ModelID{
 }
 
 // ModelIDs returns the canonical Model_<...> constant values from the codegen
-// pipeline. The name diverges from PROPOSAL-3's spec (Models() []ModelID) to
-// avoid clashing with registry.go:Models() []ModelInfo. See bestiary-p6l5.
+// pipeline. The name diverges from the original spec (Models() []ModelID) to
+// avoid clashing with registry.go:Models() []ModelInfo.
 //
 // The returned slice is a defensive copy; mutating it does not affect future calls.
 // See Models() in registry.go for the full ModelInfo slice (metadata + constants).
