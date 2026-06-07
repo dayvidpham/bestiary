@@ -1,0 +1,66 @@
+name: tag-on-release-merge
+
+# Tags the merge commit with vX.Y.Z when a PR titled "release(vX.Y.Z): ..."
+# is merged. The version is carried in the title scope, so no VERSION file is
+# needed. No-op for any other PR title. FAILS LOUDLY if the tag already exists
+# (it never force-moves a published tag) so a duplicate/mistyped release is caught.
+
+on:
+  pull_request:
+    types: [closed]
+
+permissions:
+  contents: write
+
+jobs:
+  tag:
+    # Cheap gate (Actions `if` has no regex): only merged PRs whose title
+    # starts with "release(". Strict validation happens in the shell step below.
+    if: >
+      github.event.pull_request.merged == true &&
+      startsWith(github.event.pull_request.title, 'release(')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Check out the base branch (e.g. main) at full depth so the merge
+          # commit is present for tagging. fetch-tags guarantees existing tags
+          # are present so the "tag already exists" check is reliable.
+          ref: ${{ github.event.pull_request.base.ref }}
+          fetch-depth: 0
+          fetch-tags: true
+
+      - name: Extract + strictly validate version from PR title
+        id: ver
+        env:
+          TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          # Format: "release(v1.2.3): <description>"  (optional pre-release: v1.2.3-rc1)
+          if [[ "$TITLE" =~ ^release\((v[0-9]+\.[0-9]+\.[0-9]+([-.][0-9A-Za-z.-]+)?)\):[[:space:]] ]]; then
+            echo "version=${BASH_REMATCH[1]}" >> "$GITHUB_OUTPUT"
+            echo "Matched release version: ${BASH_REMATCH[1]}"
+          else
+            echo "::notice::'$TITLE' is not a strict 'release(vX.Y.Z): ...' title — skipping tag."
+          fi
+
+      - name: Tag the merge commit (fail if tag exists)
+        if: steps.ver.outputs.version != ''
+        env:
+          V: ${{ steps.ver.outputs.version }}
+          SHA: ${{ github.event.pull_request.merge_commit_sha }}
+        run: |
+          if [ -z "$SHA" ]; then
+            echo "::error::merge_commit_sha is empty; cannot tag."; exit 1
+          fi
+          # Fail loudly if the tag already exists — a published release tag is
+          # never moved. This flags a duplicate or mistyped release PR.
+          if git rev-parse -q --verify "refs/tags/$V" >/dev/null; then
+            existing="$(git rev-parse --short "refs/tags/$V^{commit}")"
+            echo "::error::tag $V already exists (at $existing); refusing to move it. If this is a new release, bump the version in the PR title; if the existing tag is wrong, delete it and re-run."
+            exit 1
+          fi
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -a "$V" -m "Release $V" "$SHA"
+          git push origin "$V"
+          echo "Tagged $V -> $SHA"
