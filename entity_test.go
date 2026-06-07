@@ -257,7 +257,8 @@ func TestModifierClass_String(t *testing.T) {
 }
 
 // TestEntityModifiers covers the identity-projection used to build the entity key.
-// Today every token defaults to Identity (Slice 2 owns the real table), so this
+// Today every token defaults to Identity (the modifier-class table is owned by
+// a later slice), so this
 // pins the canonicalization + dedup + empty-collapse behavior that the key
 // construction depends on, and serves as a drift-seam for the downstream slices.
 func TestEntityModifiers(t *testing.T) {
