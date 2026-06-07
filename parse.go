@@ -2132,6 +2132,20 @@ func isVersionShaped(s string) bool {
 // The return order is (family, variant, version, modifier, *ParseFailure).
 // Codegen wiring depends on this exact 5-tuple shape — do NOT reorder.
 func ParseFamilyDetailed(raw Family, id ModelID, p Provider) (Family, string, string, []string, *ParseFailure) {
+	// Serving-host prefix split (curated, ID-prefix-only). When the model ID
+	// carries a curated host prefix (e.g. "azure-gpt-4o"), decompose from the
+	// host-stripped ID ("gpt-4o") so the resulting (Family,Variant,Version)
+	// tuple is host-independent — Host is a per-instance ATTRIBUTE that never
+	// participates in entity identity, so a host-routed instance shares its
+	// entity with the plainly-served model. The original ID is retained as
+	// origID for parse-failure audit records (RawID), which must reference the
+	// real catalog ID, not the stripped form. DetectHost returns the ID
+	// unchanged when no curated prefix matches, so non-host IDs are unaffected.
+	origID := id
+	if host, stripped := DetectHost(id); host != HostNone {
+		id = stripped
+	}
+
 	// Curated ID-keyed family
 	// override. A CLOSED, exact-model-ID map for the embedded-family case the leading-token
 	// pipeline cannot reach without a general embedded-detect (the Path-B trap: 16/249
@@ -2341,7 +2355,7 @@ func ParseFamilyDetailed(raw Family, id ModelID, p Provider) (Family, string, st
 			if len(residual) > 0 {
 				attempted := ParseAttempt{Family: family, Variant: variant, Version: version, Date: ""}
 				return recon(family, variant, version, modifier, &ParseFailure{
-					RawID:          id,
+					RawID:          origID,
 					Provider:       p,
 					RawFamily:      raw,
 					AttemptedParse: attempted,
@@ -2396,7 +2410,7 @@ func ParseFamilyDetailed(raw Family, id ModelID, p Provider) (Family, string, st
 	// not as a separate date field.
 	if reBareAnyFourDigitCandidate.MatchString(rawStr) {
 		return recon(family, variant, version, modifier, &ParseFailure{
-			RawID:          id,
+			RawID:          origID,
 			Provider:       p,
 			RawFamily:      raw,
 			AttemptedParse: attempted,
@@ -2453,7 +2467,7 @@ func ParseFamilyDetailed(raw Family, id ModelID, p Provider) (Family, string, st
 					reason = ReasonUnknownSuffixOverflow
 				}
 				return recon(family, variant, version, modifier, &ParseFailure{
-					RawID:          id,
+					RawID:          origID,
 					Provider:       p,
 					RawFamily:      raw,
 					AttemptedParse: attempted,

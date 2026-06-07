@@ -1,0 +1,7 @@
+{
+  "_comment": "Curated serving-host PREFIX table. A model ID whose leading token is one of these host tokens (followed by '-') is a host-routed instance: the host prefix is stripped from the ID for decomposition and surfaced as ModelInfo.Host (a per-instance ATTRIBUTE that NEVER participates in entity identity). Detection is ID-PREFIX-ONLY and NEVER consults the Provider field: a genuine host-as-provider (e.g. provider 'azure-cognitive-services' serving a plain 'gpt-4o' ID) carries no host prefix on its ID, so its Host stays HostNone (the host is implied by the Provider, not duplicated here) — this is the deliberate guard against the v0.2.2 blanket provider-name strip. Namespaced IDs (org/model, containing '/') are never split, so an org token that merely begins with a host word (azure-cognitive-services/gpt-4o) is left untouched. Seed set: the NanoGPT azure-* backend-routed OpenAI models. All entries lowercase; matching is case-insensitive at runtime; longer prefixes win (greedy longest-first).",
+  "schema_version": 1,
+  "prefixes": [
+    { "prefix": "azure", "host": "azure" }
+  ]
+}
