@@ -1032,6 +1032,13 @@ func genToModelInfoDetailed(providerSlug string, wm genWireModel) (bestiary.Mode
 	// Codegen no longer calls ExtractVersionFromID directly (single-ownership).
 	normFamily, normVariant, normVersion, normModifier, failure := bestiary.ParseFamilyDetailed(rawFamily, id, provider)
 
+	// Serving-host attribute (IP-2). DetectHost surfaces a curated host prefix
+	// (e.g. "azure-gpt-4o" → HostAzure) as a per-instance attribute; the same
+	// strip is applied inside ParseFamilyDetailed so the decomposition above is
+	// already host-independent. The full catalog ID is retained as info.ID below
+	// — Host records the backend without mutating the record's identity.
+	host, _ := bestiary.DetectHost(id)
+
 	// Compute cleanID (modifier-stripped) for ExtractDate. The modifier consumed
 	// value is a trailing suffix of the model ID; strip it to avoid date extraction
 	// from tokens that are part of the modifier (e.g. "thinking", "preview").
@@ -1073,6 +1080,7 @@ func genToModelInfoDetailed(providerSlug string, wm genWireModel) (bestiary.Mode
 		Provider:         provider,
 		DisplayName:      wm.Name,
 		RawFamily:        rawFamily,
+		Host:             host,
 		Family:           normFamily,
 		Variant:          normVariant,
 		Version:          normVersion,
@@ -1194,6 +1202,7 @@ func generateSource(models []bestiary.ModelInfo, slugToConst map[string]string) 
 		fmt.Fprintf(&buf, "\t\tReleaseDate:           %q,\n", m.ReleaseDate)
 		fmt.Fprintf(&buf, "\t\tKnowledge:             %q,\n", m.Knowledge)
 		fmt.Fprintf(&buf, "\t\tModalities:            %s,\n", modalitiesExpr(m.Modalities))
+		fmt.Fprintf(&buf, "\t\tHost:                  %q,\n", string(m.Host))
 		fmt.Fprintf(&buf, "\t\tLastSynced:            %q,\n", m.LastSynced)
 		buf.WriteString("\t},\n")
 	}

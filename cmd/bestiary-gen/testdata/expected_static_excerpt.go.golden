@@ -26,6 +26,7 @@ var staticModels = []ModelInfo{
 		ReleaseDate:           "",
 		Knowledge:             "",
 		Modalities:            Modalities{},
+		Host:                  "",
 		LastSynced:            "",
 	},
 	{
@@ -55,6 +56,7 @@ var staticModels = []ModelInfo{
 		ReleaseDate:           "",
 		Knowledge:             "",
 		Modalities:            Modalities{},
+		Host:                  "",
 		LastSynced:            "",
 	},
 	{
@@ -84,6 +86,7 @@ var staticModels = []ModelInfo{
 		ReleaseDate:           "",
 		Knowledge:             "",
 		Modalities:            Modalities{},
+		Host:                  "",
 		LastSynced:            "",
 	},
 	{
@@ -113,6 +116,7 @@ var staticModels = []ModelInfo{
 		ReleaseDate:           "",
 		Knowledge:             "",
 		Modalities:            Modalities{},
+		Host:                  "",
 		LastSynced:            "",
 	},
 	{
@@ -142,6 +146,7 @@ var staticModels = []ModelInfo{
 		ReleaseDate:           "",
 		Knowledge:             "",
 		Modalities:            Modalities{},
+		Host:                  "",
 		LastSynced:            "",
 	},
 	{
@@ -171,6 +176,7 @@ var staticModels = []ModelInfo{
 		ReleaseDate:           "",
 		Knowledge:             "",
 		Modalities:            Modalities{},
+		Host:                  "",
 		LastSynced:            "",
 	},
 }
