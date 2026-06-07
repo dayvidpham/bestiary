@@ -169,9 +169,9 @@ func TestResolve_WithSchemeRaw_BareFamilyAmbiguous(t *testing.T) {
 //
 // HISTORY: earlier, bare hyphen "claude-opus" resolved as ErrAmbiguous ONLY
 // because the opus models were OVER-CAPTURED to Family="claude-opus". That was later fixed
-// that (Family="claude", Variant="opus"), which incidentally regressed the shorthand to
-// ErrNotFound. item 4 (user ruling: "Restore shorthand now (~20 LOC in
-// resolve.go)") ratified restoring it the RIGHT way: a variant-aware bare-family fallback.
+// to (Family="claude", Variant="opus"), which incidentally regressed the shorthand to
+// ErrNotFound. Per a user ruling ("Restore shorthand now (~20 LOC in
+// resolve.go)"), it was restored the RIGHT way: a variant-aware bare-family fallback.
 //
 // PIN: Resolve("claude-opus", SchemeRaw) now returns *ErrAmbiguous listing the opus
 // candidate group (>1), via matchBareFamilyVariant — NOT the old over-capture path and

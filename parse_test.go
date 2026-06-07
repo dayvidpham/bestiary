@@ -2135,9 +2135,8 @@ func TestParseFamilyDetailed_SoleVariantSuffixPromotion(t *testing.T) {
 			wantVersion:   "4",
 			wantNoFailure: true,
 		},
-		// NOTE: text-embedding-3-large and text-embedding-3-small are NOT in this table
-		// after . The the earlier full-prefix-first fix full-prefix-first change that made them promote
-		// has been reverted. With firstToken normalization, family="text-embedding" →
+		// NOTE: text-embedding-3-large and text-embedding-3-small are NOT in this table.
+		// The earlier full-prefix-first change that made them promote has been reverted. With firstToken normalization, family="text-embedding" →
 		// prefix="text-" → remainder="embedding-3-large" → residual=["embedding","large"]
 		// (2 residual tokens, the sole-residual promotion requires exactly 1) → ReasonResidualUnaccountedTokens.
 		// These are documented residuals.
@@ -2956,7 +2955,7 @@ func TestFamilyCaseFold(t *testing.T) {
 			wantFamily: "minimax",
 		},
 		{
-			// "Hy" is the only uppercase entry in allFamilies. the case-fold lowercases it.
+			// "Hy" is the only uppercase entry in allFamilies. The case-fold lowercases it.
 			desc:       "Hy raw_family → lowercase hy",
 			rawFamily:  "Hy",
 			id:         "hy3-something",

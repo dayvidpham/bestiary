@@ -1613,8 +1613,8 @@ func TestAllowlistConformsToRatification(t *testing.T) {
 }
 
 // oseriesMultiModifierCompromise lists the allowlisted o-series IDs that carry 2+ tokens
-// competing for the SINGLE Modifier slot. does NOT rule on which wins (the
-// Modifier-LIST is deferred, so their Modifier is a parser-determined
+// competing for the SINGLE Modifier slot. This map does NOT rule on which wins:
+// the Modifier-LIST is deferred, so their Modifier is a parser-determined
 // single-slot COMPROMISE — NOT independently rule-derivable. They are excluded from the
 // strict rule-authored Modifier assertion below (their designator+version IS still asserted).
 var oseriesMultiModifierCompromise = map[bestiary.ModelID]bool{
