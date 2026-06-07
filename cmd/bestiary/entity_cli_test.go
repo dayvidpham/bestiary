@@ -188,6 +188,19 @@ func TestRun_Entity_UnsupportedOutput(t *testing.T) {
 			if !strings.Contains(msg, "unsupported") || !strings.Contains(msg, "json, table") {
 				t.Errorf("error = %q; want it to flag the unsupported format and list json, table", err.Error())
 			}
+			// The error string itself must NOT carry a "bestiary:" prefix — main()
+			// prepends exactly one. Asserting on the raw string here, AND on the
+			// rendered boundary below, locks the single-prefix convention so a
+			// doubled "bestiary: bestiary:" can't regress.
+			if strings.HasPrefix(err.Error(), "bestiary:") {
+				t.Errorf("validateEntityOutput error %q must not embed the 'bestiary:' prefix; main() adds it", err.Error())
+			}
+			// Replicate main()'s rendering ("bestiary: %v") and assert exactly one
+			// "bestiary:" prefix appears in what the user would see on stderr.
+			rendered := "bestiary: " + err.Error()
+			if n := strings.Count(rendered, "bestiary:"); n != 1 {
+				t.Errorf("rendered error %q has %d 'bestiary:' prefixes, want exactly 1", rendered, n)
+			}
 			// show --by-entity must reject the same way.
 			if err := run([]string{"show", "--by-entity", "--output=" + bad, e.Ref.String()}); err == nil {
 				t.Errorf("run show --by-entity --output=%s returned nil error, want an unsupported-format error", bad)

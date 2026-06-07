@@ -328,8 +328,11 @@ func validateEntityOutput(format bestiary.OutputFormat) error {
 	case bestiary.FormatJSON, bestiary.FormatTable:
 		return nil
 	default:
+		// No "bestiary:" prefix here — main() already prepends "bestiary: %v",
+		// so embedding it would render a doubled prefix. The sibling inline errors
+		// in this file (usage strings, unknown-command) omit it for the same reason.
 		return fmt.Errorf(
-			"bestiary: unsupported --output %q for entity commands; supported formats: json, table",
+			"unsupported --output %q for entity commands; supported formats: json, table",
 			string(format),
 		)
 	}
