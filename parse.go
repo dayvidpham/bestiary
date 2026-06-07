@@ -3058,7 +3058,7 @@ var gluedVersionModifierLetters = map[byte]string{
 var reGluedVersionModifier = regexp.MustCompile(`^(\d+(?:\.\d+)?)([a-zA-Z])$`)
 
 // splitGluedVersionModifier inspects the LAST hyphen-token of id for a numeric
-// version with a glued recognized modifier-letter, the glm-4.5v case).
+// version with a glued recognized modifier-letter (the glm-4.5v case).
 // On match it returns (cleanedID, modifier, true) where cleanedID has the trailing
 // letter removed (so version extraction sees the bare numeric version) and modifier
 // is the expanded name (e.g. "vision"). On no match it returns (id, "", false).
