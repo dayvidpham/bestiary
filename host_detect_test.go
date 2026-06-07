@@ -6,12 +6,14 @@ import (
 	"github.com/dayvidpham/bestiary"
 )
 
-// TestDetectHost_CuratedPrefix covers VC1: a curated host-prefix model ID is
-// split into (Host, stripped ID), and the decomposition of the stripped ID
-// refines to the host-independent tuple. The negative cases pin the two guards
-// that prevent the v0.2.2 blanket provider-name strip from reappearing: a
-// namespaced org token that merely begins with a host word, and a genuine
-// host-as-provider whose ID carries no host prefix, must BOTH stay HostNone.
+// TestDetectHost_CuratedPrefix pins the curated host-prefix split: a model ID
+// whose leading token is a curated host is split into (Host, stripped ID), and
+// the decomposition of the stripped ID refines to the host-independent tuple.
+// The negative cases pin the two guards that prevent the v0.2.2 blanket
+// provider-name strip from reappearing — a namespaced org token that merely
+// begins with a host word, and a plainly-served ID with no host prefix, must
+// BOTH stay HostNone — plus the contract that DetectHost decides Host from the
+// model-ID prefix alone, never from the (host-named or not) Provider.
 func TestDetectHost_CuratedPrefix(t *testing.T) {
 	t.Parallel()
 
@@ -23,6 +25,12 @@ func TestDetectHost_CuratedPrefix(t *testing.T) {
 		wantFamily bestiary.Family
 		wantVar    string
 		wantVer    string
+		// skipDecomp suppresses the (Family,Variant,Version) assertion for cases
+		// where the decomposition is not the point of the row (e.g. the bare
+		// host-token negative case). It is an explicit opt-out so a future case
+		// with a legitimately empty tuple cannot silently skip the check by
+		// leaving wantFamily/wantVar/wantVer all empty.
+		skipDecomp bool
 	}{
 		{
 			desc:       "azure-gpt-4o → host=azure, (gpt,4o)",
@@ -90,11 +98,29 @@ func TestDetectHost_CuratedPrefix(t *testing.T) {
 			wantVer:    "",
 		},
 		{
+			// Provider-independence contract: DetectHost takes ONLY the model ID
+			// (no Provider parameter), so the host decision can never be driven by
+			// a host-named provider. In the live catalog "o1" is served by the
+			// genuine provider literally named "azure" (ProviderAzure); the v0.2.2
+			// blanket provider-name strip would have wrongly attributed
+			// Host=azure to it. Because the ID carries no "azure-" prefix,
+			// DetectHost returns HostNone and leaves the ID unchanged — Host is
+			// decided by the ID prefix alone, independent of the provider name.
+			desc:       "o1 (served by host-named provider 'azure') → Host='' (ID prefix decides, not provider)",
+			id:         "o1",
+			wantHost:   bestiary.HostNone,
+			wantStrip:  "o1",
+			wantFamily: "gpt",
+			wantVar:    "o",
+			wantVer:    "1",
+		},
+		{
 			// A bare host token alone is not a model and must not be stripped.
-			desc:      "azure (bare token) → Host='' (no '<host>-<model>' form)",
-			id:        "azure",
-			wantHost:  bestiary.HostNone,
-			wantStrip: "azure",
+			desc:       "azure (bare token) → Host='' (no '<host>-<model>' form)",
+			id:         "azure",
+			wantHost:   bestiary.HostNone,
+			wantStrip:  "azure",
+			skipDecomp: true,
 		},
 	}
 
@@ -113,10 +139,10 @@ func TestDetectHost_CuratedPrefix(t *testing.T) {
 			// The decomposition consumes the ORIGINAL ID (ParseFamilyDetailed
 			// strips the host prefix internally) — this is exactly the codegen
 			// production path.
-			family, variant, version, _, _ := bestiary.ParseFamilyDetailed("", tc.id, "nano-gpt")
-			if tc.wantFamily == "" && tc.wantVar == "" && tc.wantVer == "" {
-				return // bare-token case: decomposition is unconstrained here.
+			if tc.skipDecomp {
+				return // decomposition is not the subject of this row.
 			}
+			family, variant, version, _, _ := bestiary.ParseFamilyDetailed("", tc.id, "nano-gpt")
 			if family != tc.wantFamily || variant != tc.wantVar || version != tc.wantVer {
 				t.Errorf("ParseFamilyDetailed(%q) = (%q,%q,%q), want (%q,%q,%q)",
 					tc.id, family, variant, version, tc.wantFamily, tc.wantVar, tc.wantVer)
@@ -125,12 +151,13 @@ func TestDetectHost_CuratedPrefix(t *testing.T) {
 	}
 }
 
-// TestHostSplit_EntityParity covers VC1b: a host-routed instance (azure-gpt-4o)
-// must decompose to the SAME (Family,Variant,Version) identity tuple as the
-// plainly-served model (gpt-4o), so the two share an entity. Host being a
-// per-instance attribute, it is the ONLY field that differs. We pin the parity
-// pairwise across all five seeded NanoGPT azure-* instances and their plain
-// counterparts as they appear under genuine providers.
+// TestHostSplit_EntityParity pins entity-identity parity between host-routed and
+// plainly-served instances: a host-routed instance (azure-gpt-4o) must decompose
+// to the SAME (Family,Variant,Version) identity tuple as the plainly-served
+// model (gpt-4o), so the two share an entity. Host being a per-instance
+// attribute, it is the ONLY field that differs. We pin the parity pairwise
+// across all five seeded NanoGPT azure-* instances and their plain counterparts
+// as they appear under genuine providers.
 func TestHostSplit_EntityParity(t *testing.T) {
 	t.Parallel()
 
