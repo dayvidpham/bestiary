@@ -237,6 +237,69 @@ func TestLineage_IDFamilyOverride_FoldToLlamaDerivatives(t *testing.T) {
 	}
 }
 
+// instanceIDs collects the model IDs of an entity's instances into a set, so two
+// entities' instance memberships can be compared for overlap.
+func instanceIDs(e bestiary.Entity) map[bestiary.ModelID]bool {
+	ids := make(map[bestiary.ModelID]bool, len(e.Instances))
+	for _, inst := range e.Instances {
+		ids[inst.ID] = true
+	}
+	return ids
+}
+
+// TestLineage_Dracarys_NoWrongMerge (VC14, behavioral) asserts the INVARIANT the
+// dropped-"instruct" decision protects: the two genuinely-different dracarys
+// artifacts resolve to SEPARATE entities with disjoint instance sets. The 72B
+// (override → bare "dracarys", Modifier nil) and the 70B (raw="" →
+// "dracarys{instruct}") must never collapse into one entity. This guards the
+// behavior, not just the mechanism — re-attaching "instruct" to the 72B override
+// would merge them and fail these assertions.
+func TestLineage_Dracarys_NoWrongMerge(t *testing.T) {
+	const id72 = bestiary.ModelID("abacusai/Dracarys-72B-Instruct")
+	const id70 = bestiary.ModelID("abacusai/dracarys-llama-3_1-70b-instruct")
+
+	ent72, ok72 := bestiary.EntityByTuple(bestiary.Family("dracarys"), "", "")
+	if !ok72 {
+		t.Fatal("EntityByTuple(dracarys): the bare 72B entity must exist")
+	}
+	ent70, ok70 := bestiary.EntityByTuple(bestiary.Family("dracarys"), "", "", "instruct")
+	if !ok70 {
+		t.Fatal("EntityByTuple(dracarys,…,instruct): the dracarys{instruct} 70B entity must exist")
+	}
+
+	// Distinct identities: different EntityRef keys.
+	if ent72.Ref.String() == ent70.Ref.String() {
+		t.Fatalf("the two dracarys artifacts share an EntityRef key %q — they must be SEPARATE entities (wrong-merge)", ent72.Ref.String())
+	}
+	if ent72.Ref.String() != "dracarys" {
+		t.Errorf("72B entity key = %q, want \"dracarys\"", ent72.Ref.String())
+	}
+	if ent70.Ref.String() != "dracarys{instruct}" {
+		t.Errorf("70B entity key = %q, want \"dracarys{instruct}\"", ent70.Ref.String())
+	}
+
+	// Disjoint instance sets: the 72B entity holds the 72B record and NOT the 70B,
+	// and vice-versa — no shared instance, no wrong-merge.
+	ids72, ids70 := instanceIDs(ent72), instanceIDs(ent70)
+	if !ids72[id72] {
+		t.Errorf("72B entity is missing its own instance %q", id72)
+	}
+	if ids72[id70] {
+		t.Errorf("72B entity wrongly contains the 70B instance %q (wrong-merge)", id70)
+	}
+	if !ids70[id70] {
+		t.Errorf("70B entity is missing its own instance %q", id70)
+	}
+	if ids70[id72] {
+		t.Errorf("70B entity wrongly contains the 72B instance %q (wrong-merge)", id72)
+	}
+	for id := range ids72 {
+		if ids70[id] {
+			t.Errorf("the two dracarys entities share instance %q — instance sets must be disjoint", id)
+		}
+	}
+}
+
 // TestLineage_JSONRoundTrip (VC3+) confirms a populated ModelInfo.Lineage
 // round-trips through JSON: the DerivationKind serializes as its lowercase wire
 // string and the edges survive marshal→unmarshal unchanged.

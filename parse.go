@@ -3427,10 +3427,13 @@ type idFamilyOverrideEntry struct {
 // model-ID family-override map. It exists ONLY for the embedded-family case the leading-
 // token decomposition cannot reach safely: the model ID leads with one family token but the
 // canonical family is embedded later, and a general embedded-detect would regress sibling
-// IDs (the Path-B trap). Each entry is keyed to ONE exact (lowercase) model ID, corrects
-// the FAMILY to an attested allFamilies target, and preserves the pipeline-derived
-// variant/version (no field dropped). It drives the sole remaining cross-provider divergence
-// to 0 by converging the empty-raw and raw="nemotron" forms of the same id on one tuple.
+// IDs (the Path-B trap). Each entry is keyed to ONE exact (lowercase) model ID and corrects
+// the FAMILY to the intended target. Most entries also pin the variant/version to the
+// pipeline-derived values so no ID-present field is dropped; a few entries (see the per-entry
+// comments below) DELIBERATELY reset variant/version — e.g. the fold-to-llama derivatives
+// drop a spurious variant/modifier to land the record on the correct entity. The original
+// nemotron entry drives the sole remaining cross-provider divergence to 0 by converging the
+// empty-raw and raw="nemotron" forms of the same id on one tuple.
 //
 //   - nvidia/llama-3.3-nemotron-super-49b-v1.5 (kilo raw="" over-captures family
 //     "llama-3.3-nemotron-super-49b"; openrouter raw="nemotron" gives "nemotron") →

@@ -30,7 +30,9 @@ func checkIgnored(t *testing.T, path string) (bool, error) {
 // bestiary, silently swallowing new files under cmd/bestiary/ (which previously
 // forced `git add -f`). The built root binary must still be ignored.
 func TestGitignore_CmdBestiaryNotIgnored(t *testing.T) {
-	// A hypothetical NEW source file under cmd/bestiary/ must be trackable.
+	// A hypothetical NEW source file under cmd/bestiary/ must be trackable. The path
+	// is INTENTIONALLY non-existent: git check-ignore is a pattern query, not a stat,
+	// so the file need not (and must not) be created — don't "fix" this by adding it.
 	ignored, err := checkIgnored(t, "cmd/bestiary/some_new_file_test.go")
 	if err != nil {
 		t.Skipf("git check-ignore unavailable (not a git work tree?): %v", err)
