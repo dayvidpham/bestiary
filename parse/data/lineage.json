@@ -1,0 +1,47 @@
+{
+  "_comment": "Curated model lineage DAG (GH#11). Maps a derived model (child) to its parent derivation edge(s). This curated ledger is the PRIMARY source of lineage; raw_family is a weak hint only and is never trusted as lineage. Each entry: child_id is the lowercase match key against a model ID (full ID or the segment after the last '/'); child_ref is the entity-ref identity of the child as a DAG node (used by Ancestors/Descendants traversal); real=true means the child record exists in the models.dev catalog, real=false marks a SYNTHETIC / catalog-absent fixture (curated-only — the child is not in the catalog, only its parents are) that exists here for DAG coverage and is flagged so consumers never mistake it for an attested catalog record. Every parent.family MUST be a known base family (validated at load); an unknown base is rejected.",
+  "schema_version": 1,
+  "edges": [
+    {
+      "child_id": "dracarys-llama-3_1-70b-instruct",
+      "child_ref": { "family": "llama", "variant": "dracarys", "version": "3.1" },
+      "real": true,
+      "parents": [
+        { "family": "llama", "variant": "", "version": "3.1", "kind": "finetune" }
+      ]
+    },
+    {
+      "child_id": "hermes-2-pro-llama-3-8b",
+      "child_ref": { "family": "llama", "variant": "hermes-2-pro", "version": "3" },
+      "real": true,
+      "parents": [
+        { "family": "llama", "variant": "", "version": "3", "kind": "finetune" }
+      ]
+    },
+    {
+      "child_id": "nous-hermes-2-solar-10.7b",
+      "child_ref": { "family": "nous-hermes", "variant": "", "version": "2-solar-10.7b" },
+      "real": false,
+      "parents": [
+        { "family": "solar", "variant": "", "version": "10.7b", "kind": "finetune" }
+      ]
+    },
+    {
+      "child_id": "nous-hermes-2-yi-34b",
+      "child_ref": { "family": "nous-hermes", "variant": "", "version": "2-yi-34b" },
+      "real": false,
+      "parents": [
+        { "family": "yi", "variant": "", "version": "34b", "kind": "finetune" }
+      ]
+    },
+    {
+      "child_id": "mythomax-l2-13b",
+      "child_ref": { "family": "llama", "variant": "mythomax", "version": "2" },
+      "real": true,
+      "parents": [
+        { "family": "llama", "variant": "mythologic", "version": "2", "kind": "merge" },
+        { "family": "llama", "variant": "huginn", "version": "2", "kind": "merge" }
+      ]
+    }
+  ]
+}

@@ -452,6 +452,13 @@ func run(args []string) error {
 	ctx := context.Background()
 	now := time.Now().UTC().Format(time.RFC3339)
 
+	// Fail loudly on bad lineage curation (IP-4) BEFORE generating anything: an
+	// unknown parent base family or a malformed entry is a curation bug that must
+	// be caught at codegen, not silently degraded to "no lineage" at runtime.
+	if err := bestiary.ValidateLineageTable(); err != nil {
+		return fmt.Errorf("validate curated lineage table: %w", err)
+	}
+
 	rawJSON, models, providerMeta, parseFailures, err := fetchModelsWithRaw(ctx, flags.cacheDir, flags.noFetch)
 	if err != nil {
 		return err
@@ -1116,6 +1123,13 @@ func genToModelInfoDetailed(providerSlug string, wm genWireModel) (bestiary.Mode
 	if wm.Modalities != nil {
 		info.Modalities = genToModalities(wm.Modalities.Input, wm.Modalities.Output)
 	}
+
+	// Lineage (IP-4). Populate the derivation edges from the curated lineage
+	// ledger (parse/data/lineage.json) for any catalog record whose ID matches a
+	// curated child key. The ledger — not raw_family — is the authoritative
+	// lineage source; nil (no edge) for the overwhelming majority of base models.
+	info.Lineage = bestiary.LineageFor(id)
+
 	return info, failure
 }
 
@@ -1158,6 +1172,46 @@ func goStringSliceLiteral(ss []string) string {
 		parts[i] = fmt.Sprintf("%q", s)
 	}
 	return "[]string{" + strings.Join(parts, ", ") + "}"
+}
+
+// derivationKindExpr renders a DerivationKind as its exported constant name so
+// the generated source references the enum symbolically (e.g. DerivationFinetune)
+// rather than by integer value. An out-of-range value (never produced by the
+// curated table) falls back to DerivationNone defensively.
+func derivationKindExpr(k bestiary.DerivationKind) string {
+	switch k {
+	case bestiary.DerivationFinetune:
+		return "DerivationFinetune"
+	case bestiary.DerivationMerge:
+		return "DerivationMerge"
+	case bestiary.DerivationDistillation:
+		return "DerivationDistillation"
+	case bestiary.DerivationQuantized:
+		return "DerivationQuantized"
+	case bestiary.DerivationAdapter:
+		return "DerivationAdapter"
+	default:
+		return "DerivationNone"
+	}
+}
+
+// lineageLiteral renders a []LineageEdge as a Go composite literal for the
+// generated source, mirroring goStringSliceLiteral's empty→"nil" contract so the
+// base-model majority emits a bare nil. The generated file is package bestiary,
+// so LineageEdge / EntityRef / DerivationKind constants are referenced unqualified.
+func lineageLiteral(edges []bestiary.LineageEdge) string {
+	if len(edges) == 0 {
+		return "nil"
+	}
+	parts := make([]string, len(edges))
+	for i, e := range edges {
+		parts[i] = fmt.Sprintf(
+			"{Parent: EntityRef{Family: %q, Variant: %q, Version: %q, Modifier: %s}, Kind: %s}",
+			string(e.Parent.Family), e.Parent.Variant, e.Parent.Version,
+			goStringSliceLiteral(e.Parent.Modifier), derivationKindExpr(e.Kind),
+		)
+	}
+	return "[]LineageEdge{" + strings.Join(parts, ", ") + "}"
 }
 
 func generateSource(models []bestiary.ModelInfo, slugToConst map[string]string) ([]byte, error) {
@@ -1203,6 +1257,7 @@ func generateSource(models []bestiary.ModelInfo, slugToConst map[string]string) 
 		fmt.Fprintf(&buf, "\t\tKnowledge:             %q,\n", m.Knowledge)
 		fmt.Fprintf(&buf, "\t\tModalities:            %s,\n", modalitiesExpr(m.Modalities))
 		fmt.Fprintf(&buf, "\t\tHost:                  %q,\n", string(m.Host))
+		fmt.Fprintf(&buf, "\t\tLineage:               %s,\n", lineageLiteral(m.Lineage))
 		fmt.Fprintf(&buf, "\t\tLastSynced:            %q,\n", m.LastSynced)
 		buf.WriteString("\t},\n")
 	}

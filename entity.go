@@ -146,11 +146,5 @@ func EntityByTuple(family Family, variant, version string, identityModifiers ...
 	return Entity{}, false
 }
 
-// Ancestors returns the transitive set of parent EntityRefs reachable from this
-// entity's lineage, via a cycle-safe depth-first traversal of the derivation DAG.
-//
-// SIGNATURE + stub: returns nil until lineage population and traversal land in a
-// later slice.
-func (e Entity) Ancestors() []EntityRef {
-	return nil
-}
+// Entity.Ancestors and Entity.Descendants — the cycle-safe DAG traversal over the
+// curated lineage ledger — are implemented in lineage.go (IP-4).
