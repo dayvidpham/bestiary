@@ -125,14 +125,20 @@ type Entity struct {
 }
 
 // Entities returns every model entity in the static registry, each with its
-// instances and aggregate views populated.
+// instances and aggregate views populated. The slice is ordered deterministically
+// by first-seen entity key.
 //
-// SIGNATURE + stub: the entity index (a memoized map[string][]ProviderInstance
-// keyed by EntityRef.String()) and the aggregation are owned by a later slice.
-// The stub returns nil (an empty registry) so dependents compile and behave
-// identity-safely until the implementation lands behind this signature.
+// The result is a DEFENSIVE DEEP COPY: every returned Entity (and all of its
+// slices and price pointers) is independent of the memoized registry index and
+// of every other returned Entity. Mutating a returned value can never corrupt the
+// registry or alias another entity.
 func Entities() []Entity {
-	return nil
+	cached := entityIndexAll()
+	out := make([]Entity, len(cached))
+	for i, e := range cached {
+		out[i] = cloneEntity(e)
+	}
+	return out
 }
 
 // EntityByTuple looks up a single entity by its identity tuple: family, variant,
@@ -140,10 +146,97 @@ func Entities() []Entity {
 // entity exists. Lookup is by EntityRef.String() equality, so the modifier
 // arguments are order-independent.
 //
-// SIGNATURE + stub: returns (zero Entity, false) until the entity index lands in
-// a later slice.
+// The supplied modifiers are passed through EntityModifiers(_, family), the same
+// identity-class projection used to build the index keys: attribute-class tokens
+// are dropped and the remainder canonicalized, so a caller need not pre-filter.
+// The returned Entity is a defensive deep copy (see Entities).
 func EntityByTuple(family Family, variant, version string, identityModifiers ...string) (Entity, bool) {
-	return Entity{}, false
+	ref := EntityRef{
+		Family:   family,
+		Variant:  variant,
+		Version:  version,
+		Modifier: EntityModifiers(identityModifiers, family),
+	}
+	e, ok := entityIndexLookup(ref.String())
+	if !ok {
+		return Entity{}, false
+	}
+	return cloneEntity(e), true
+}
+
+// cloneEntity returns a deep copy of e: a fresh backing array for every slice and
+// a fresh *float64 for every non-nil price-range bound. The [2]int ranges and the
+// CapabilityUnion are value types and copy by assignment. This is the single seam
+// that enforces VC9 (defensive copy / no-wrong-merge) for all entity reads.
+func cloneEntity(e Entity) Entity {
+	c := e
+	c.Ref = cloneRef(e.Ref)
+	c.Instances = cloneInstances(e.Instances)
+	c.Lineage = cloneLineage(e.Lineage)
+	if e.Providers != nil {
+		c.Providers = append([]Provider(nil), e.Providers...)
+	}
+	if e.Hosts != nil {
+		c.Hosts = append([]Host(nil), e.Hosts...)
+	}
+	c.PriceInputRange = cloneFloatPair(e.PriceInputRange)
+	c.PriceOutputRange = cloneFloatPair(e.PriceOutputRange)
+	return c
+}
+
+// cloneRef deep-copies an EntityRef, duplicating its Modifier slice.
+func cloneRef(r EntityRef) EntityRef {
+	c := r
+	if r.Modifier != nil {
+		c.Modifier = append([]string(nil), r.Modifier...)
+	}
+	return c
+}
+
+// cloneInstances deep-copies a ProviderInstance slice, including each instance's
+// cost pointers, so a caller cannot reach back into registry-owned float64s.
+func cloneInstances(in []ProviderInstance) []ProviderInstance {
+	if in == nil {
+		return nil
+	}
+	out := make([]ProviderInstance, len(in))
+	for i, inst := range in {
+		c := inst
+		c.CostInputPerMTok = cloneFloatPtr(inst.CostInputPerMTok)
+		c.CostOutputPerMTok = cloneFloatPtr(inst.CostOutputPerMTok)
+		out[i] = c
+	}
+	return out
+}
+
+// cloneLineage deep-copies a LineageEdge slice, duplicating each parent ref's
+// Modifier slice.
+func cloneLineage(in []LineageEdge) []LineageEdge {
+	if in == nil {
+		return nil
+	}
+	out := make([]LineageEdge, len(in))
+	for i, e := range in {
+		c := e
+		c.Parent = cloneRef(e.Parent)
+		out[i] = c
+	}
+	return out
+}
+
+// cloneFloatPair returns a [2]*float64 with fresh pointers for each non-nil bound,
+// preserving nils. The result shares no storage with the input.
+func cloneFloatPair(p [2]*float64) [2]*float64 {
+	return [2]*float64{cloneFloatPtr(p[0]), cloneFloatPtr(p[1])}
+}
+
+// cloneFloatPtr returns a fresh *float64 with the same value, or nil for nil.
+func cloneFloatPtr(p *float64) *float64 {
+	if p == nil {
+		return nil
+	}
+	v := *p
+	return &v
 }
 
 // Entity.Ancestors and Entity.Descendants — the cycle-safe DAG traversal over the

@@ -2,10 +2,13 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"flag"
 	"fmt"
+	"io"
 	"os"
+	"strings"
 
 	"github.com/dayvidpham/bestiary"
 )
@@ -19,12 +22,16 @@ func main() {
 
 func run(args []string) error {
 	if len(args) == 0 {
-		return fmt.Errorf("usage: bestiary <list|show|sync> [flags]")
+		return fmt.Errorf("usage: bestiary <list|show|providers|sync> [flags]")
 	}
 
 	cmd := args[0]
 	fs := flag.NewFlagSet(cmd, flag.ContinueOnError)
 	provider := fs.String("provider", "", "filter by provider slug")
+	// --by-entity (show only) switches `show` from per-model rendering to the
+	// aggregate entity view: all provider/host instances of one model identity
+	// rolled up with their price/context/capability ranges and lineage.
+	byEntity := fs.Bool("by-entity", false, "show the aggregate entity view (show command only)")
 	// --output selects the output rendering format (json, yaml, table).
 	// NOTE: formerly --format in v0.0.1; renamed to --output in v0.0.2 to
 	// free --format for the input-scheme selection. See MIGRATION Section 11.
@@ -47,14 +54,25 @@ func run(args []string) error {
 	case "list":
 		return runList(*provider, bestiary.OutputFormat(*output), *dbPath)
 	case "show":
+		if *byEntity {
+			if fs.NArg() < 1 {
+				return fmt.Errorf("usage: bestiary show --by-entity <model-id-or-tuple> [--output=<json|table>]")
+			}
+			return runShowEntity(fs.Arg(0), bestiary.OutputFormat(*output))
+		}
 		if fs.NArg() < 1 {
 			return fmt.Errorf("usage: bestiary show <model-id> [--format=<peasant|huggingface|hf|purl|raw>] [--output=<json|yaml|table>] [flags]")
 		}
 		return runShow(fs.Arg(0), bestiary.OutputFormat(*output), *dbPath, *inputFormat, *scheme)
+	case "providers":
+		if fs.NArg() < 1 {
+			return fmt.Errorf("usage: bestiary providers <family>[/<variant>][@<version>]{identity-mods} [--output=<json|table>]")
+		}
+		return runProviders(fs.Arg(0), bestiary.OutputFormat(*output))
 	case "sync":
 		return runSync(*provider, bestiary.OutputFormat(*output), *dbPath)
 	default:
-		return fmt.Errorf("unknown command %q; supported commands: list, show, sync", cmd)
+		return fmt.Errorf("unknown command %q; supported commands: list, show, providers, sync", cmd)
 	}
 }
 
@@ -221,6 +239,238 @@ func runShow(input string, format bestiary.OutputFormat, dbPath string, inputFor
 		return &bestiary.ErrNotFound{What: "model", Key: input}
 	}
 	return bestiary.FormatModel(os.Stdout, best, format)
+}
+
+// parseEntityTuple parses an entity identity tuple of the canonical form
+//
+//	family[/variant][@version]{identity-mods}[attributes]
+//
+// returning the (family, variant, version, identity-modifiers) components. This
+// mirrors EntityRef.String()'s rendering so that a key printed by the entity
+// layer round-trips back through this parser. The optional trailing "[attributes]"
+// bracket segment is recognized and discarded (attributes never affect identity,
+// and the MVP entity lookup ignores them). The "{identity-mods}" brace tokens are
+// split on commas and passed through verbatim; EntityByTuple re-projects them via
+// EntityModifiers, so attribute-class tokens supplied here are dropped at lookup.
+//
+// It returns an error only when the family segment is empty.
+func parseEntityTuple(input string) (fam bestiary.Family, variant, version string, mods []string, err error) {
+	s := input
+
+	// Strip the trailing "[attributes]" segment (ignored in MVP) before anything
+	// else so its contents cannot be confused with a brace/version segment.
+	if lb := strings.LastIndex(s, "["); lb >= 0 {
+		if rb := strings.LastIndex(s, "]"); rb == len(s)-1 && rb > lb {
+			s = s[:lb]
+		}
+	}
+
+	// Strip and capture the "{identity-mods}" segment.
+	if lb := strings.LastIndex(s, "{"); lb >= 0 {
+		if rb := strings.LastIndex(s, "}"); rb == len(s)-1 && rb > lb {
+			for _, t := range strings.Split(s[lb+1:rb], ",") {
+				if t = strings.TrimSpace(t); t != "" {
+					mods = append(mods, t)
+				}
+			}
+			s = s[:lb]
+		}
+	}
+
+	// Strip and capture the "@version" segment (identity version, not a date).
+	if at := strings.LastIndex(s, "@"); at >= 0 {
+		version = s[at+1:]
+		s = s[:at]
+	}
+
+	segs := strings.Split(s, "/")
+	if len(segs) == 0 || segs[0] == "" {
+		return "", "", "", nil, fmt.Errorf("parse entity tuple %q: empty family segment; expected family[/variant][@version]{identity-mods}", input)
+	}
+	fam = bestiary.Family(segs[0])
+	if len(segs) >= 2 {
+		variant = segs[1]
+	}
+	// A third path segment is accepted as the version for leniency, but only when
+	// no explicit @version was given (EntityRef renders version via @).
+	if len(segs) >= 3 && version == "" {
+		version = segs[2]
+	}
+	return fam, variant, version, mods, nil
+}
+
+// lookupEntity resolves the show/providers argument to an entity. It first tries
+// to parse the argument as an identity tuple; on a miss it falls back to treating
+// the argument as a concrete model ID (deriving that model's identity tuple), so
+// both `claude/opus@4.5` and `claude-opus-4-5-20251101` resolve to the same
+// entity.
+func lookupEntity(arg string) (bestiary.Entity, bool) {
+	if fam, variant, version, mods, err := parseEntityTuple(arg); err == nil {
+		if e, ok := bestiary.EntityByTuple(fam, variant, version, mods...); ok {
+			return e, true
+		}
+	}
+	// Fallback: the argument may be a concrete model ID rather than a tuple.
+	if m, ok := bestiary.LookupModel(bestiary.ModelID(arg)); ok {
+		return bestiary.EntityByTuple(m.Family, m.Variant, m.Version, m.Modifier...)
+	}
+	return bestiary.Entity{}, false
+}
+
+// runProviders lists every provider/host instance of the entity identified by the
+// given tuple (or model ID).
+func runProviders(arg string, format bestiary.OutputFormat) error {
+	ent, ok := lookupEntity(arg)
+	if !ok {
+		return &bestiary.ErrNotFound{What: "entity", Key: arg}
+	}
+	if format == bestiary.OutputFormat("json") {
+		return writeJSON(os.Stdout, ent.Instances)
+	}
+	fmt.Fprintf(os.Stdout, "Entity: %s\n", ent.Ref.String())
+	writeInstanceTable(os.Stdout, ent.Instances)
+	return nil
+}
+
+// runShowEntity renders the aggregate view of one entity: its identity, rolled-up
+// provider/host lists, price/context/max-output ranges, capability union, lineage
+// edges, and the underlying instances.
+func runShowEntity(arg string, format bestiary.OutputFormat) error {
+	ent, ok := lookupEntity(arg)
+	if !ok {
+		return &bestiary.ErrNotFound{What: "entity", Key: arg}
+	}
+	if format == bestiary.OutputFormat("json") {
+		return writeJSON(os.Stdout, ent)
+	}
+	writeEntityView(os.Stdout, ent)
+	return nil
+}
+
+// writeJSON marshals v as indented JSON to w.
+func writeJSON(w io.Writer, v any) error {
+	enc := json.NewEncoder(w)
+	enc.SetIndent("", "  ")
+	return enc.Encode(v)
+}
+
+// fmtPrice renders a *float64 price (per-MTok) as a fixed-precision string, or a
+// dash when the value is nil/unknown.
+func fmtPrice(p *float64) string {
+	if p == nil {
+		return "-"
+	}
+	return fmt.Sprintf("%.4f", *p)
+}
+
+// fmtHost renders a Host, mapping the zero value (HostNone) to a dash.
+func fmtHost(h bestiary.Host) string {
+	if h == bestiary.HostNone {
+		return "-"
+	}
+	return string(h)
+}
+
+// writeInstanceTable prints a fixed-width table of provider instances.
+func writeInstanceTable(w io.Writer, insts []bestiary.ProviderInstance) {
+	fmt.Fprintf(w, "Instances (%d):\n", len(insts))
+	fmt.Fprintf(w, "  %-40s %-22s %-12s %12s %12s %10s %10s\n",
+		"ID", "PROVIDER", "HOST", "IN/MTok", "OUT/MTok", "CONTEXT", "MAXOUT")
+	for _, in := range insts {
+		fmt.Fprintf(w, "  %-40s %-22s %-12s %12s %12s %10d %10d\n",
+			string(in.ID), string(in.Provider), fmtHost(in.Host),
+			fmtPrice(in.CostInputPerMTok), fmtPrice(in.CostOutputPerMTok),
+			in.ContextWindow, in.MaxOutput)
+	}
+}
+
+// writeEntityView prints the human-readable aggregate entity view.
+func writeEntityView(w io.Writer, e bestiary.Entity) {
+	fmt.Fprintf(w, "Entity: %s\n", e.Ref.String())
+	fmt.Fprintf(w, "  Family:        %s\n", string(e.Ref.Family))
+	fmt.Fprintf(w, "  Variant:       %s\n", orDash(e.Ref.Variant))
+	fmt.Fprintf(w, "  Version:       %s\n", orDash(e.Ref.Version))
+	fmt.Fprintf(w, "  Identity-mods: %s\n", orDash(strings.Join(e.Ref.Modifier, ",")))
+
+	providers := make([]string, len(e.Providers))
+	for i, p := range e.Providers {
+		providers[i] = string(p)
+	}
+	hosts := make([]string, len(e.Hosts))
+	for i, h := range e.Hosts {
+		hosts[i] = fmtHost(h)
+	}
+	fmt.Fprintf(w, "Providers (%d): %s\n", len(e.Providers), orDash(strings.Join(providers, ", ")))
+	fmt.Fprintf(w, "Hosts (%d): %s\n", len(e.Hosts), orDash(strings.Join(hosts, ", ")))
+
+	fmt.Fprintf(w, "Price input  /MTok: %s\n", fmtRangePtr(e.PriceInputRange))
+	fmt.Fprintf(w, "Price output /MTok: %s\n", fmtRangePtr(e.PriceOutputRange))
+	fmt.Fprintf(w, "Context window:     %s\n", fmtRangeInt(e.ContextRange))
+	fmt.Fprintf(w, "Max output:         %s\n", fmtRangeInt(e.MaxOutputRange))
+	fmt.Fprintf(w, "Capabilities: %s\n", orDash(strings.Join(capList(e.Capabilities), ", ")))
+
+	fmt.Fprintf(w, "Lineage (%d):\n", len(e.Lineage))
+	for _, edge := range e.Lineage {
+		fmt.Fprintf(w, "  -> %s %s\n", edge.Kind.String(), edge.Parent.String())
+	}
+
+	writeInstanceTable(w, e.Instances)
+}
+
+// orDash returns s, or "-" when s is empty.
+func orDash(s string) string {
+	if s == "" {
+		return "-"
+	}
+	return s
+}
+
+// fmtRangePtr renders a [min,max] price range, collapsing the all-nil case to a
+// dash and a single-valued range to one number.
+func fmtRangePtr(r [2]*float64) string {
+	if r[0] == nil && r[1] == nil {
+		return "-"
+	}
+	if r[0] != nil && r[1] != nil && *r[0] == *r[1] {
+		return fmtPrice(r[0])
+	}
+	return fmt.Sprintf("[%s, %s]", fmtPrice(r[0]), fmtPrice(r[1]))
+}
+
+// fmtRangeInt renders a [min,max] integer range, collapsing equal bounds.
+func fmtRangeInt(r [2]int) string {
+	if r[0] == r[1] {
+		return fmt.Sprintf("%d", r[0])
+	}
+	return fmt.Sprintf("[%d, %d]", r[0], r[1])
+}
+
+// capList returns the names of the capabilities that the union reports as
+// supported, in a stable declaration order.
+func capList(c bestiary.CapabilityUnion) []string {
+	var out []string
+	if c.Reasoning {
+		out = append(out, "reasoning")
+	}
+	if c.ToolCall {
+		out = append(out, "tool-call")
+	}
+	if c.Attachment {
+		out = append(out, "attachment")
+	}
+	if c.Temperature {
+		out = append(out, "temperature")
+	}
+	if c.StructuredOutput {
+		out = append(out, "structured-output")
+	}
+	if c.Interleaved {
+		out = append(out, "interleaved")
+	}
+	if c.OpenWeights {
+		out = append(out, "open-weights")
+	}
+	return out
 }
 
 // runSync fetches live model data from the API, persists to store, and prints results.
