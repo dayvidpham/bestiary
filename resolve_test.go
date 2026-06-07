@@ -437,7 +437,7 @@ func TestResolve_ExactIDInCanonicalMode_NotAmbiguous(t *testing.T) {
 // *ErrAmbiguous when multiple distinct family entries match. This is distinct from
 // auto-detecting SchemeCanonical in detectScheme — it is a post-match fallback.
 //
-// B4: Resolve("claude") must return *ErrAmbiguous (not ErrNotFound).
+// Resolve("claude") must return *ErrAmbiguous (not ErrNotFound).
 func TestResolve_SchemeCanonical_NeverAutoDetected_detectScheme(t *testing.T) {
 	// "claude" has no slashes — detectScheme returns SchemeRaw (unchanged).
 	// But Resolve's bare-family fallback applies, so the result is ErrAmbiguous.
@@ -488,7 +488,7 @@ func TestResolve_CanonicalAutoDetect(t *testing.T) {
 // TestResolve_PURLProviderFilter verifies that the provider segment in a PURL
 // input is retained as a filter hint and applied to match results.
 //
-// B3: Resolve("pkg:huggingface/anthropic/claude-opus-4-5") must
+// Resolve("pkg:huggingface/anthropic/claude-opus-4-5") must
 // return ONLY refs where Provider == "anthropic". It must never return refs from
 // other providers that also host the same model ID.
 func TestResolve_PURLProviderFilter(t *testing.T) {
@@ -518,7 +518,7 @@ func TestResolve_PURLProviderFilter(t *testing.T) {
 // TestResolve_BareFamilyAmbiguous verifies that Resolve("claude") returns
 // *ErrAmbiguous with a non-empty candidate list — not ErrNotFound.
 //
-// B4: bare family names should fall back to SchemeCanonical
+// Bare family names should fall back to SchemeCanonical
 // family-only matching and surface ErrAmbiguous when multiple variants match.
 func TestResolve_BareFamilyAmbiguous(t *testing.T) {
 	_, err := bestiary.Resolve("claude")
@@ -1057,7 +1057,7 @@ func TestResolve_RehostProviders_PURL_LooseFallback(t *testing.T) {
 	}
 }
 
-// --- -FIX2: canonical-preference in PURL loose-fallback ---
+// --- canonical-preference in PURL loose-fallback ---
 
 // TestResolve_PURL_LooseFallback_CanonicalProviderInCandidates is a regression test
 // for the BLOCKER: when a PURL wrong-namespace input resolves to a

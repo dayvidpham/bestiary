@@ -1248,7 +1248,7 @@ func TestFormatAmbiguous_V4_RehostSection_NamesOnly(t *testing.T) {
 // TestFormatAmbiguous_V4_RehostSection_OnePerLine verifies that Section 2 renders
 // each rehost provider name on its own line rather than as a comma-separated list.
 //
-// -FIX3 — the rehost-names rendering change (one-per-line).
+// The rehost-names rendering change (one-per-line).
 func TestFormatAmbiguous_V4_RehostSection_OnePerLine(t *testing.T) {
 	rehosts := []bestiary.Provider{"deepinfra", "azure-cognitive-services", "nano-gpt"}
 	e := makeAmbiguousWithRehosts(2, rehosts)
@@ -1356,7 +1356,7 @@ func TestFormatAmbiguous_V4_PURLNote_StillPresent(t *testing.T) {
 }
 
 // ----------------------------------------------------------------------------
-// -FIX2 FOLD: empty-canonical suppression
+// Empty-canonical suppression
 // ----------------------------------------------------------------------------
 
 // TestFormatAmbiguous_EmptyCanonical_NoBareHeader verifies that when no candidates

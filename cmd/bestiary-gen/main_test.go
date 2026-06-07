@@ -1230,7 +1230,7 @@ func TestParseFlags_DoubleHyphen(t *testing.T) {
 }
 
 // TestSlugToIdentifier_ChatGPT verifies that the chatgpt casing override is
-// applied correctly. B4: chatgpt → ChatGPT.
+// applied correctly: chatgpt → ChatGPT.
 func TestSlugToIdentifier_ChatGPT(t *testing.T) {
 	cases := []struct {
 		slug     string
@@ -1301,7 +1301,7 @@ func TestNameForCanonical_DoubleUnderscoreTemplate(t *testing.T) {
 			wantName: "Model__OpenAI__GPT__4o",
 		},
 		{
-			desc: "chatgpt model uses ChatGPT casing (B4)",
+			desc: "chatgpt model uses ChatGPT casing",
 			model: bestiary.ModelInfo{
 				ID:       "chatgpt-4o",
 				Provider: "openai",
@@ -2359,7 +2359,7 @@ func TestCodegen_SortOrder(t *testing.T) {
 }
 
 // --------------------------------------------------------------------------
-// Decomposition snapshot + fixture R5d corpus + per-reason tests
+// Decomposition snapshot + fixture corpus + per-reason tests
 // --------------------------------------------------------------------------
 
 // decompositionSnapshotEntry records the parse decomposition for a single model.
@@ -2374,7 +2374,7 @@ type decompositionSnapshotEntry struct {
 }
 
 // fixtureAPIJSON returns the contents of testdata/fixture_api.json. This fixture
-// contains the full R5d corpus (active-class, residual, empty-raw_family GUARD-2,
+// contains the full fixture corpus (active-class, residual, empty-raw_family passthrough-guard,
 // YYMM) and is the hermetic input for TestDecompositionSnapshot.
 func fixtureAPIJSON(t *testing.T) []byte {
 	t.Helper()
@@ -2389,7 +2389,7 @@ func fixtureAPIJSON(t *testing.T) []byte {
 }
 
 // runFixtureAPICodegen is like runFixtureCodegen but uses fixtureAPIJSON (the full
-// R5d corpus from testdata/fixture_api.json) instead of the collision-group-focused
+// fixture corpus from testdata/fixture_api.json) instead of the collision-group-focused
 // deterministicFixtureJSON. It returns all models + parse failures from the run.
 func runFixtureAPICodegen(t *testing.T) (models []bestiary.ModelInfo, failures []bestiary.ParseFailure) {
 	t.Helper()
@@ -2413,8 +2413,8 @@ func runFixtureAPICodegen(t *testing.T) (models []bestiary.ModelInfo, failures [
 	return models, failures
 }
 
-// TestDecompositionSnapshot is the R5a fixture-based decomposition snapshot test.
-// It runs the full R5d corpus through fetchModelsWithRaw (which calls genToModelInfoDetailed
+// TestDecompositionSnapshot is the fixture-based decomposition snapshot test.
+// It runs the full fixture corpus through fetchModelsWithRaw (which calls genToModelInfoDetailed
 // → ParseFamilyDetailed) and compares the (Family, Variant, Version, Modifier) output
 // per model against a committed golden file.
 //
@@ -2475,7 +2475,7 @@ func TestDecompositionSnapshot(t *testing.T) {
 }
 
 // TestDecompositionSnapshot_ActiveClassVersionPopulated asserts that each
-// active-class model in the R5d fixture corpus has a non-empty Version field.
+// active-class model in the fixture corpus has a non-empty Version field.
 // This is the per-row version!="" check for the active class.
 func TestDecompositionSnapshot_ActiveClassVersionPopulated(t *testing.T) {
 	models, _ := runFixtureAPICodegen(t)
@@ -2769,7 +2769,7 @@ func TestWriteDotFormAudit_Unit(t *testing.T) {
 }
 
 // TestFixturePerReasonCounts asserts per-reason FailureCount expectations over the
-// full R5d fixture corpus. This mirrors the TestRun_WritesParseFailuresJSON pattern
+// full fixture corpus. This mirrors the TestRun_WritesParseFailuresJSON pattern
 // but uses fixture_api.json instead of failureAPIJSON.
 //
 // Expectations:

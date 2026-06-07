@@ -1736,9 +1736,9 @@ func TestIsYYMMDateToken_Parity(t *testing.T) {
 // TestInferFamilyFromIDWithVariant_ModifierStripDateRecovery covers the Δ2′ corrected algorithm:
 // tentative modifier strip → expose hidden date → decompose → guarded commit.
 //
-// Three empirically-verified traces from :
+// Three empirically-verified traces:
 //  1. 302ai re-host: claude-opus-4-1-20250805-thinking → (claude, opus, 4.1)
-//  2. Genuine-variant guard: kimi-k2-thinking → GUARD-2 declines, variant=thinking preserved
+//  2. Genuine-variant guard: kimi-k2-thinking → the passthrough-guard declines, variant=thinking preserved
 //  3. No-modifier control: claude-opus-4-1-20250805 → (claude, opus, 4.1) unchanged
 func TestInferFamilyFromIDWithVariant_ModifierStripDateRecovery(t *testing.T) {
 	t.Parallel()
@@ -1754,8 +1754,8 @@ func TestInferFamilyFromIDWithVariant_ModifierStripDateRecovery(t *testing.T) {
 		{
 			// Trace 1: 302ai re-host — empty raw_family, modifier after date.
 			// exposed=claude-opus-4-1-20250805 → cleaned=claude-opus-4-1 → PFWV →
-			// (claude, opus, 4.1); GUARD-1 passes (ExtractModifier returns -thinking),
-			// GUARD-2 passes (claude != claude-opus-4-1) → return (claude, opus, 4.1).
+			// (claude, opus, 4.1); the variant-guard passes (ExtractModifier returns -thinking),
+			// the passthrough-guard passes (claude != claude-opus-4-1) → return (claude, opus, 4.1).
 			desc:        "claude-opus-4-1-20250805-thinking → (claude, opus, 4.1)",
 			id:          "claude-opus-4-1-20250805-thinking",
 			provider:    "302ai",
@@ -3244,7 +3244,7 @@ func TestRecoverMemberVariant_SubsumesSoleSuffixPromotion(t *testing.T) {
 
 // TestRecoverMemberVariant_SubsumesAmputation verifies that recoverMemberVariant
 // subsumes the empty-raw amputation (parse.go:819-821) in
-// InferFamilyFromIDWithVariant, preserving GUARD-2 tests green.
+// InferFamilyFromIDWithVariant, preserving the passthrough-guard tests green.
 //
 // The amputation case (family == candidateFamilyStr → firstToken) must be replaced
 // by: firstToken as family + recoverMemberVariant for variant.

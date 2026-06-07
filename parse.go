@@ -1332,20 +1332,20 @@ func inferFamilyFromIDWithVariantBase(id ModelID, p Provider) (Family, string, s
 	// Modifier-strip date recovery: a trailing modifier (e.g. "-thinking") can hide a trailing date
 	// ("-20250805-thinking"), blocking stripTrailingDate and corrupting decomposition.
 	// Algorithm: tentatively strip modifier → expose date → stripTrailingDate → provisional
-	// decompose → GUARD-1 (variant-guard: ExtractModifier returns non-empty consumed) +
-	// GUARD-2 (passthrough-guard: fProv != Family(cleaned)) → commit.
+	// decompose → the variant-guard (ExtractModifier returns non-empty consumed) +
+	// the passthrough-guard (fProv != Family(cleaned)) → commit.
 	if exposed := trimOneTrailingModifier(idStr); exposed != idStr {
 		// A trailing pd.modifiers token was present; now the date (if any) is exposed.
 		cleaned := orSelf(stripTrailingDate(exposed), exposed)
 		fProv, vProv, verProv := ParseFamilyWithVersion(Family(cleaned))
 
-		// GUARD-1 (variant-guard): ExtractModifier(id, fProv, vProv) must return a
+		// The variant-guard: ExtractModifier(id, fProv, vProv) must return a
 		// non-empty consumed string. This confirms the trailing modifier token is a
 		// genuine modifier (not the same as the provisional variant), preventing
 		// over-stripping of real variants like "thinking" in "kimi-k2-thinking".
 		_, consumed := ExtractModifier(id, fProv, vProv)
 
-		// GUARD-2 (passthrough-guard): fProv must differ from the cleaned string.
+		// The passthrough-guard: fProv must differ from the cleaned string.
 		// If they are equal, ParseFamilyWithVersion returned a pure passthrough (no
 		// decomposition found), meaning the strip was not semantically meaningful.
 		if consumed != "" && fProv != Family(cleaned) {
@@ -1856,7 +1856,7 @@ func reconcileIDDriven(rawFam Family, rawVar, rawVer string, rawMod []string, id
 				}
 			}
 		}
-		// (TIER-1 conditional): raw_family "text-embedding" is a GENERIC descriptor
+		// (conditional): raw_family "text-embedding" is a GENERIC descriptor
 		// (a self-map override), not a product family. When the ID itself names a real registered
 		// family (Qwen/Qwen3-Embedding-8B → ID-family "qwen"), that family WINS. GUARD: OpenAI's
 		// own "text-embedding-3-large/small" — whose ID literally IS "text-embedding" — derives
@@ -2175,7 +2175,7 @@ func ParseFamilyDetailed(raw Family, id ModelID, p Provider) (Family, string, st
 	}
 
 	// No failure annotation when the input is empty: delegate to
-	// InferFamilyFromIDWithVariant so that GUARD-2 passthrough cases (e.g.
+	// InferFamilyFromIDWithVariant so that passthrough-guard cases (e.g.
 	// kimi-k2-thinking) are handled correctly. The modifier is then extracted from
 	// the inferred family+variant context. The case-fold is applied inside InferFamilyFromIDWithVariant.
 	if raw == "" {
@@ -2640,7 +2640,7 @@ func stripVendorAliasPrefix(id string, vendorAliases []string) string {
 // previously lived only in InferFamilyFromIDWithVariant, leaving ParseFamilyDetailed's
 // raw!="" path without it.
 func stripVendorNamespace(id string) string {
-	// (TIER-1): SURGICAL doubled-vendor strip. Some providers prefix the model name
+	// SURGICAL doubled-vendor strip. Some providers prefix the model name
 	// with the org AND repeat it: org "meta-llama/" + name "Meta-Llama-3.1-8B-Instruct". After
 	// the org segment is stripped, the leading "Meta-" makes the family derive "meta" instead
 	// of "llama". Strip the redundant leading "meta-" ONLY when the ORG segment is literally
@@ -3690,8 +3690,8 @@ func dotJoinStrippingDateSuffix(s string) string {
 //
 // IMPORTANT: this function is TENTATIVE and used ONLY inside
 // InferFamilyFromIDWithVariant to expose a hidden date. The actual commit to
-// the decomposition is always gated by the two guards in that caller (GUARD-1
-// variant-guard and GUARD-2 passthrough-guard). trimOneTrailingModifier itself
+// the decomposition is always gated by the two guards in that caller (the
+// variant-guard and the passthrough-guard). trimOneTrailingModifier itself
 // never commits anything — it only strips.
 //
 // Data lifecycle: pd.modifiers is populated via loadParseData/sync.Once from

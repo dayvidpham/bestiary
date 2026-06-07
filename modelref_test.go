@@ -378,7 +378,7 @@ func TestFormatCanonical_WithFamilyAndDate(t *testing.T) {
 }
 
 // ---------------------------------------------------------------------------
-// Tests for Version-bearing canonical formatting (B4 from slice spec).
+// Tests for Version-bearing canonical formatting.
 // These tests FAIL until formatCanonical is implemented.
 // ---------------------------------------------------------------------------
 
