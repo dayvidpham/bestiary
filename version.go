@@ -5,7 +5,11 @@ package bestiary
 // schema changes in a backward-incompatible way.
 // bumped 0.0.2 → 0.0.3 for the Modifier field
 // widening string → []string (backward-incompatible public schema change).
-const BestiarySchemaVersion = "0.0.3"
+// bumped 0.0.3 → 0.1.0 for the additive v0.2.3 entity-model fields
+// (ModelInfo.Host, ModelInfo.Lineage; ModelRef.Host; new $defs EntityRef,
+// LineageEdge, DerivationKind). Additive and backward-compatible: the new
+// fields are optional/zero-value, so 0.0.x records still validate.
+const BestiarySchemaVersion = "0.1.0"
 
 // UpstreamSchemaVersion identifies the exact snapshot of the models.dev schema
 // that this bestiary schema was derived from. Format: YYYY.MM.DD-sha256
