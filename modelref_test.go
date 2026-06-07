@@ -545,10 +545,10 @@ func TestFormatCanonical_AllCombinations(t *testing.T) {
 // version "4.5". This verifies the end-to-end production code path:
 // codegen → models_static_gen.go Version → Ref() → formatCanonical.
 //
-// Before cycle-2 fix: formatted as "anthropic/claude/opus@2025-11-01" (no version).
-// After cycle-2 fix: formatted as "anthropic/claude/opus/4.5@2025-11-01".
+// Before the bracket-suffix fix: formatted as "anthropic/claude/opus@2025-11-01" (no version).
+// After the bracket-suffix fix: formatted as "anthropic/claude/opus/4.5@2025-11-01".
 //
-// This test asserts the BLOCKER resolution from .
+// This test asserts that BLOCKER resolution.
 func TestFormatCanonical_StaticRegistry_Claude_Opus_4_5(t *testing.T) {
 	const targetID = "claude-opus-4-5-20251101"
 	const wantCanonical = "anthropic/claude/opus/4.5@2025-11-01"

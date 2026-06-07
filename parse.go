@@ -616,7 +616,7 @@ func ParseFamily(raw Family) (Family, string) {
 		// unreachable because the JSON files are embedded at compile time and the
 		// regexes in version_patterns.json are validated once at startup. The
 		// silent degradation is intentional — ParseFamily has a 2-return signature
-		// by design (see ) and callers cannot handle an error return.
+		// by design and callers cannot handle an error return.
 		// TestParseData_RegexesValid asserts that this path is never taken in a
 		// normal test run, providing startup-time validation coverage.
 		return raw, ""
@@ -1661,7 +1661,7 @@ type ParseFailureReason string
 // decomposition. It is produced by ParseFamilyDetailed when the parser's
 // best-effort result is known to be incomplete or ambiguous.
 //
-// JSON field names match the locked per-record format from :
+// JSON field names match the locked per-record format:
 //
 //	{
 //	  "raw_id":         "claude-3-5-haiku-20241022",
@@ -2919,7 +2919,7 @@ func firstToken(s string) string {
 // isFourDigitDateToken returns true when tok is a 4-digit all-numeric string.
 // This is the bare-4-digit-date generalization of the original YYMM guard:
 // the original guard only rejected tokens in the YYMM century range (19xx–29xx),
-// but supervisor analysis confirmed that ALL bare-4-digit tokens in the 1745
+// but analysis confirmed that ALL bare-4-digit tokens in the 1745
 // version-populated models are date/release-ids (MMDD or YYMM format), with ZERO
 // legitimate bare-4-digit semantic versions. Therefore the guard is extended to
 // reject ANY 4-digit numeric token (e.g. "0528", "0324", "0905" in addition to
@@ -3173,7 +3173,7 @@ func parseSeriesNumber(rest string) (version string, hadSep bool, ok bool) {
 // non-size/context tier token follows the series token (kimi-k2-instruct,
 // kimi-k2p6-turbo, mimo-v2.5-pro, minimax-m2.5-fast), the canonical placement of
 // the tier is AMBIGUOUS (variant is a single field). This was surfaced to the
-// supervisor for a ruling (recommended Option A: compound "<letter>-<tier>"). Until
+// pending a ruling (recommended Option A: compound "<letter>-<tier>"). Until
 // ratified, this function DECLINES those cases (returns ok=false) and leaves the
 // current decomposition unchanged — it never picks a tier placement unilaterally.
 // Modifiers (thinking/vision) are stripped from the ID BEFORE this runs, so they do
@@ -3185,7 +3185,7 @@ func parseSeriesNumber(rest string) (version string, hadSep bool, ok bool) {
 // glued token's leading letter — keeping the recovery narrowly scoped to the three
 // series families (kimi/minimax/mimo); every other family is left untouched.
 // This is the family-side half of the (d) normalization (so kimi-k2-0711
-// and kimi-k2-0905 resolve to family "kimi", per ).
+// and kimi-k2-0905 resolve to family "kimi").
 func seriesBaseFamily(pd *parseData, family Family) (Family, bool) {
 	if pd == nil {
 		return "", false
@@ -3214,7 +3214,7 @@ func seriesBaseFamily(pd *parseData, family Family) (Family, bool) {
 }
 
 // --------------------------------------------------------------------------
-// family OVER-CAPTURE reduction (Option B / )
+// family OVER-CAPTURE reduction (Option B)
 // --------------------------------------------------------------------------
 
 // isFamilyResidueToken reports whether tok (a single lowercase token TRAILING the
@@ -3398,7 +3398,7 @@ var seriesTierModifiers = map[string]struct{}{
 	"pro":       {},
 	// "omni": the only remaining unknown-tier token that still caused a cross-provider
 	// series divergence after the initial tier→modifier wiring (mimo-v2-omni). Confirmed
-	// by the supervisor's residual-categorization analysis; added per .
+	// by the residual-categorization analysis.
 	"omni": {},
 }
 
@@ -3435,7 +3435,7 @@ func isSeriesTierToken(tok string) bool {
 // token promoted to a Modifier when EXACTLY ONE tier trails the
 // series token AND no thinking/vision modifier also trails it; otherwise tierMod is
 // "" (multi-modifier cases keep the series split but leave the tier uncaptured,
-// pending the Modifier-multiplicity ruling — surfaced to the supervisor). A trailing
+// pending the Modifier-multiplicity ruling). A trailing
 // token that is neither date/context/size, a known modifier, nor a curated tier is
 // an UNKNOWN finetune token → DECLINE (ok=false), leaving current behavior intact.
 func splitSeriesVariant(pd *parseData, family Family, idStr string) (variant, version, tierMod string, ok bool) {
@@ -3523,7 +3523,7 @@ func splitSeriesVariant(pd *parseData, family Family, idStr string) (variant, ve
 	// is exactly one tier and NO co-occurring thinking/vision modifier. Multi-modifier
 	// cases (tier + thinking/vision, or 2+ tiers) keep the series split but leave the
 	// tier uncaptured — the Modifier field is single-valued and the multiplicity rule
-	// is pending (surfaced to the supervisor); never picked here unilaterally.
+	// is pending a ruling; never picked here unilaterally.
 	if len(tiers) == 1 && knownMods == 0 {
 		tierMod = tiers[0]
 	}
@@ -3564,7 +3564,7 @@ func idDrivenVersion(id ModelID, family Family, variant string) (string, string)
 	v := extractVersionFromCleanID(cleaned, family, variant)
 	if v == "" && family == whisperFamily {
 		// WHISPER-FAMILY-GATED trailing "-v<int>" → Version recovery,
-		// mirroring the narrow curated azure-prefix-strip pattern. The general form blew up to
+		// mirroring the (now-removed) narrow curated azure-prefix-strip pattern. The general form blew up to
 		// 185 records (claude-opus-4-6-v1's Bedrock "-v1" packaging tag, elevenlabs dup, every
 		// -vN revision id), so this is STRICTLY gated on the resolved family being whisper —
 		// no other family can reach it. Recovers whisper-large-v3 → Version 3 (and

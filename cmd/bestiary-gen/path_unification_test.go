@@ -536,7 +536,7 @@ func classifyDecompChange(id bestiary.ModelID, before, after decompTuple, before
 	// dropped family suffix re-surfaces VERBATIM as the variant, with no hyphen between base
 	// and suffix (before.Family == after.Family + after.Variant, e.g. "glmv" == "glm"+"v").
 	// Information-preserving (the suffix is relocated, not lost) and no ID-present non-family
-	// field lost — a strict improvement (the glm raw-family fold ratified in Q1).
+	// field lost — a strict improvement (the glm raw-family fold, ratified).
 	if after.Variant != "" && string(before.Family) == string(after.Family)+after.Variant &&
 		!realNonFamilyLoss(before, after, id) {
 		return CatImprove, "glued family-suffix moved to variant (e.g. glmv → glm + variant 'v')"
@@ -580,7 +580,7 @@ func classifyDecompChange(id bestiary.ModelID, before, after decompTuple, before
 	// ID-present non-family field was lost (realNonFamilyLoss=false) — every changed field
 	// is either an ENRICHMENT (empty→populated, or a superstring extension) or a PHANTOM
 	// loss (a value ABSENT from the model ID). This covers compound changes the single-field
-	// branches above miss — notably the glm glued-'v' (Q1): glm-4.5v before (glm,"",4.5,
+	// branches above miss — notably the glm glued-'v': glm-4.5v before (glm,"",4.5,
 	// modifier="vision") → after (glm,variant="v",4.5,"") simultaneously ENRICHES the variant
 	// ("v") and DROPS the phantom "vision" modifier ("vision" is NOT a substring of the ID
 	// "glm-4.5v"). An ID-present value lost would have tripped realNonFamilyLoss and never
@@ -1476,8 +1476,7 @@ func TestClassifyFamilyReduction(t *testing.T) {
 	}
 }
 
-// TestSanctionedAllowlistGate is the NO-MASKING adversarial unit (,
-// the supervisor refinement that OVERRIDES the handoff): the o-series sanctioned escape is
+// TestSanctionedAllowlistGate is the NO-MASKING adversarial unit: the o-series sanctioned escape is
 // EXPECTED-TUPLE-MATCHED, not ID-blanket. It proves four properties:
 //
 //	(1) an allowlisted ID whose observed AFTER tuple EQUALS its ratified target → cat-(a).
@@ -1487,7 +1486,7 @@ func TestClassifyFamilyReduction(t *testing.T) {
 //	    → cat-(c) — you cannot hide a regression on an allowlisted ID under the escape.
 func TestSanctionedAllowlistGate(t *testing.T) {
 	// A small, explicit allowlist standing in for the committed artifact: o1-mini's
-	// ratified target tuple per (Q2a/Q2b).
+	// ratified target tuple.
 	allow := sanctionedAllowlist{
 		"o1-mini": decompTuple{"gpt", "o", "1", []string{"mini"}},
 		"gpt-4o":  decompTuple{"gpt", "4o", "", nil},
@@ -1615,7 +1614,7 @@ func TestAllowlistConformsToRatification(t *testing.T) {
 
 // oseriesMultiModifierCompromise lists the allowlisted o-series IDs that carry 2+ tokens
 // competing for the SINGLE Modifier slot. does NOT rule on which wins (the
-// Modifier-LIST is deferred to ), so their Modifier is a parser-determined
+// Modifier-LIST is deferred, so their Modifier is a parser-determined
 // single-slot COMPROMISE — NOT independently rule-derivable. They are excluded from the
 // strict rule-authored Modifier assertion below (their designator+version IS still asserted).
 var oseriesMultiModifierCompromise = map[bestiary.ModelID]bool{
@@ -1629,7 +1628,7 @@ var oseriesMultiModifierCompromise = map[bestiary.ModelID]bool{
 
 // ratifiedOSeriesTuple INDEPENDENTLY authors the expected (family,variant,version,modifier)
 // tuple for an o-series ID DIRECTLY from the deterministic rule — a pure
-// function of the ID, written WITHOUT consulting the parser (guardrail-1: the allowlist is
+// function of the ID, written WITHOUT consulting the parser (independent guardrail: the allowlist is
 // the SPEC, the parser conforms to it, not the other way around). Returns ok=false for a
 // non-o-series ID or a multi-modifier compromise (whose Modifier the rule does not fix).
 func ratifiedOSeriesTuple(id bestiary.ModelID) (decompTuple, bool) {
@@ -1675,7 +1674,7 @@ func ratifiedOSeriesTuple(id bestiary.ModelID) (decompTuple, bool) {
 
 var reOSeriesLineTest = regexp.MustCompile(`^o([0-9]+)$`)
 
-// TestAllowlistMatchesIndependentRule is guardrail-1 (supervisor checkpoint-1): every
+// TestAllowlistMatchesIndependentRule is an independent guardrail: every
 // allowlist entry's tuple must EQUAL the tuple INDEPENDENTLY authored from the
 // rule (ratifiedOSeriesTuple, written without consulting the parser) — so a subtle wrong tuple
 // copied from parser output cannot self-pass. Multi-modifier compromise IDs (whose Modifier the
@@ -1701,7 +1700,7 @@ func TestAllowlistMatchesIndependentRule(t *testing.T) {
 			continue
 		}
 		if !tupleEqual(got, want) {
-			t.Errorf("%s: allowlist tuple %s != INDEPENDENTLY rule-authored %s (guardrail-1: allowlist must match the rule, not parser output)", id, got, want)
+			t.Errorf("%s: allowlist tuple %s != INDEPENDENTLY rule-authored %s (independent guardrail: allowlist must match the rule, not parser output)", id, got, want)
 		}
 	}
 }

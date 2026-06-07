@@ -27,7 +27,7 @@ func (f Family) CanonicalProvider() Provider {
 		// which carry Family="gpt") and o-family models (o1, o3, o4 carry Family="o").
 		return ProviderOpenAI
 	case FamilyLlama:
-		// Meta's Llama models are published under the "local" provider per team-lead direction.
+		// Meta's Llama models are published under the "local" provider (project decision).
 		return ProviderLocal
 	case FamilyMistral, FamilyCodestral, FamilyDevstral:
 		// Mistral AI is the canonical publisher for mistral, codestral, and devstral families.

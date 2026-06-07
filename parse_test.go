@@ -716,7 +716,7 @@ func TestExtractVersionFromID(t *testing.T) {
 		rawFamily bestiary.Family
 		want      string
 	}{
-		// Required cases per team-lead brief.
+		// Required cases per the spec.
 		{"claude-opus-4-5-20251101", "claude-opus-4-5-20251101", "claude-opus", "4.5"},
 		{"claude-opus-4-6-20250514", "claude-opus-4-6-20250514", "claude-opus", "4.6"},
 		{"gemini-2.5-flash", "gemini-2.5-flash", "gemini", "2.5"},
@@ -979,7 +979,7 @@ func TestExtractModifier(t *testing.T) {
 		wantModifier string
 		wantConsumed string
 	}{
-		// 4-case corpus from the team-lead spec.
+		// 4-case corpus from the spec.
 		{
 			desc:         "claude-opus-4-1-20250805-thinking",
 			id:           "claude-opus-4-1-20250805-thinking",
@@ -1082,7 +1082,7 @@ func TestExtractModifier(t *testing.T) {
 // variant ever coincide with a trailing modifier token, it must not be counted twice.
 // These rows pin that guard mechanism; the empty-variant rows pin the new reality.
 //
-// IMPORTANT: ( cycle-2 Fix 3)
+// IMPORTANT: this guards against double-counting a variant token that also matches a trailing modifier.
 func TestExtractModifier_DoesNotDoubleCountVariant(t *testing.T) {
 	t.Parallel()
 
@@ -1954,7 +1954,7 @@ func TestParseFamilyDetailed_HonestAuditResidual(t *testing.T) {
 // 4-digit all-numeric token is rejected as a version (treated as a date/release-id),
 // regardless of whether it falls in the YYMM range (19xx–29xx). The original guard
 // (the original YYMM guard) only rejected YYMM-range tokens; the bare-4-digit-date guard generalises to all 4-digit
-// numerics since supervisor analysis confirmed 0 legitimate bare-4-digit semantic
+// numerics since analysis confirmed 0 legitimate bare-4-digit semantic
 // versions exist across the 1745 version-populated models.
 //
 // BDD: Given id contains a bare 4-digit numeric suffix (MMDD format like "0528")
@@ -2264,7 +2264,7 @@ func TestParseFamilyDetailed_SoleVariantSuffixPromotion_NegativeControls(t *test
 // date-as-version guard inside dot-join paths
 // --------------------------------------------------------------------------
 
-// TestParseFamilyWithVersion_DateGroupsStripped verifies :
+// TestParseFamilyWithVersion_DateGroupsStripped verifies:
 // the date-shape guard is applied INSIDE the hyphen-version dot-join path,
 // stripping trailing date groups and keeping only leading semantic-version groups.
 //
@@ -2563,7 +2563,7 @@ func TestParseFamilyDetailed_VersionRestoredAfterRevert(t *testing.T) {
 }
 
 // TestParseFamilyDetailed_SurvivingSoleSuffixPromotions verifies that the sole-variant-suffix
-// promotions that do NOT depend on the full-prefix-first change SURVIVE the the full-prefix-first revert revert.
+// promotions that do NOT depend on the full-prefix-first change SURVIVE the full-prefix-first revert.
 // These are gpt-5-codex and gpt-4-turbo, where rawFamily="gpt" (single token) and the full-prefix
 // is the same as firstToken, so the revert has no effect on them.
 //
@@ -2585,7 +2585,7 @@ func TestParseFamilyDetailed_SurvivingSoleSuffixPromotions(t *testing.T) {
 			// gpt-5-codex: rawFamily="gpt" → (gpt, "", ""). ExtractVersionBetween: prefix="gpt-",
 			// rem="5-codex" → "5" is version, "codex" residual. Promotion: len(residual)==1, variant=="" →
 			// "codex" is a known suffix → promote → (gpt, codex, 5). No compound prefix issue.
-			desc:        "gpt-5-codex → (gpt, codex, 5) — promotion survives the full-prefix-first revert revert",
+			desc:        "gpt-5-codex → (gpt, codex, 5) — promotion survives the full-prefix-first revert",
 			rawFamily:   "gpt",
 			id:          "gpt-5-codex",
 			provider:    "openai",
@@ -2659,7 +2659,7 @@ func TestParseFamilyDetailed_TextEmbeddingResidual(t *testing.T) {
 			_, _, _, _, failure := bestiary.ParseFamilyDetailed(tc.rawFamily, tc.id, tc.provider)
 			if failure == nil {
 				t.Errorf("ParseFamilyDetailed(%q, %q): failure=nil, want ReasonResidualUnaccountedTokens\n"+
-					"  What: text-embedding models should emit residual failure after the full-prefix-first revert revert\n"+
+					"  What: text-embedding models should emit residual failure after the full-prefix-first revert\n"+
 					"  Why: full-prefix-first was reverted; firstToken('text-embedding')='text' leaves 'embedding' as residual\n"+
 					"  How to fix: verify full-prefix-first is NOT in ExtractVersionBetweenFamilyAndVariant",
 					tc.rawFamily, tc.id)
@@ -2767,7 +2767,7 @@ func TestParseFamilyWithVersion_Step5_6DigitDateGuard(t *testing.T) {
 // regex (^base-(\d+(-\d+)*)$) because their suffix is all-numeric, so they are handled by
 // dotJoinStrippingDateSuffix at Step-2 and RETURN before Step-5 is ever entered.
 // Reverting parse.go:455 from isDateShapedToken back to isFourDigitDateToken passes the entire
-// test suite — confirming the original test does NOT exercise the the full-prefix-first revert change site.
+// test suite — confirming the original test does NOT exercise the full-prefix-first revert change site.
 //
 // Reaching Step-5: the Step-5 override-prefix loop fires when:
 //
@@ -2934,7 +2934,7 @@ func isAllDigits(s string) bool {
 // When ParseFamilyDetailed is called,
 // Then the returned Family is lowercase ("minimax").
 //
-// This is the the case-fold case-fold step. Fixes CatA cross-provider divergences
+// This is the case-fold step. Fixes CatA cross-provider divergences
 // (e.g. some providers return raw_family="MiniMax" while others return "minimax").
 func TestFamilyCaseFold(t *testing.T) {
 	t.Parallel()
@@ -3437,8 +3437,7 @@ func TestFamilyAliasesLedger_Fold(t *testing.T) {
 
 // TestFamilyAliasesLedger_DefaultOwnFamily verifies the DEFAULT own-family rule:
 // genuinely distinct families that have NO ledger row are left unchanged (no
-// accidental fold). These are the families the supervisor explicitly ratified as
-// own-family in .
+// accidental fold). These are the families explicitly ratified as their own family.
 func TestFamilyAliasesLedger_DefaultOwnFamily(t *testing.T) {
 	t.Parallel()
 
@@ -3527,8 +3526,8 @@ func TestBareGenSplit_PositiveSplits(t *testing.T) {
 //
 //   - v0 / asi1 / esm2 / wan2 / hy3 / r1: base ("v"/"asi"/"esm"/"wan"/"hy"/"r")
 //     has NO families.json entry → has-entry clause fails.
-//   - l3: l3's base "l" has no entry — .4 (digit-suffix guard +
-//     has-entry).
+//   - l3: l3's base "l" has no entry → has-entry clause fails (also guarded
+//     by the digit-suffix rule).
 //
 // NOTE: the letter-prefix series cases that USED to live here
 // (minimax-m2.5 / kimi-k2.5 / mimo-v2.5 / mimo-v1) are now decomposed by the
@@ -3684,10 +3683,10 @@ func TestParamSizeGuard(t *testing.T) {
 
 // TestGluedVersionModifier verifies the glued letter-after-version handling.
 // SUPERSEDES the (c) glm-4.5v→vision behaviour:
-//   - Q1: the glued single 'v' after a glm version is the VARIANT 'v' (glm-4.5v →
+//   - the glued single 'v' after a glm version is the VARIANT 'v' (glm-4.5v →
 //     (glm, "v", 4.5), NOT modifier vision). The spelled-out "-vision" hyphen token
 //     remains a Modifier (uniform rule unchanged) and is NOT exercised here.
-//   - Q2/Q2b: gpt-4o → variant '4o', version ” ('4o' is the line designator, not a
+//   - gpt-4o → variant '4o', version ” ('4o' is the line designator, not a
 //     version). Supersedes the prior (gpt,"",4o) pin.
 func TestGluedVersionModifier(t *testing.T) {
 	t.Parallel()
@@ -3817,7 +3816,7 @@ func TestMustNotRegress_RealVersions(t *testing.T) {
 // MULTI-MODIFIER cases (tier + thinking/vision, or 2+ tiers) are NOT pinned here:
 // the Modifier field is single-valued and the multiplicity rule is pending — those
 // keep the series split + the existing thinking/vision modifier and DROP the tier
-// (surfaced to the supervisor, not resolved unilaterally).
+// (pending a ruling, not resolved unilaterally).
 func TestSeriesTierModifier(t *testing.T) {
 	t.Parallel()
 
@@ -4139,7 +4138,7 @@ func TestCrossProviderConvergences(t *testing.T) {
 		{"flash-lite NOT regressed (raw)", "gemini-flash-lite", "gemini-2.5-flash-lite-preview-06-17", "gemini", "flash-lite", "2.5", ""},
 		// 'preview' before the MM-YYYY date is now captured (tail-scan skips the date).
 		{"flash-lite tier (empty raw, #6 compound-member)", "", "gemini-2.5-flash-lite-preview-09-2025", "gemini", "flash-lite", "2.5", "preview"},
-		// ── glm 'v' variant (Q1) ─────────────────────────────────────────────────────
+		// ── glm 'v' variant ──────────────────────────────────────────────────────────
 		{"glm-4.5v → (glm,v,4.5)", "glm", "glm-4.5v", "glm", "v", "4.5", ""},
 		{"glm-5v-turbo → (glm,v,5,turbo)", "glm", "glm-5v-turbo", "glm", "v", "5", "turbo"},
 		{"glmv raw → glm + variant v", "glmv", "z-ai/glm-4.5v", "glm", "v", "4.5", ""},
@@ -4170,7 +4169,7 @@ func TestCrossProviderConvergences(t *testing.T) {
 }
 
 // TestTier1StragglerConvergences pins the straggler convergences,
-// per the team-lead-refined set: 5 COMMITTED (cohere command r/r-plus date-guard+member,
+// per the refined set: 5 COMMITTED (cohere command r/r-plus date-guard+member,
 // deepseek product-line "chat", meta-llama surgical doubled-vendor) + 3 CONDITIONALS cleanly
 // promoted under existing rules (grok product-name "code-fast", Qwen3-Embedding qwen-wins,
 // hy3 bare-gen). Each is non-lossy under the hardened gate (cat-(c)=0). command-a-reasoning is
@@ -4193,7 +4192,7 @@ func TestTier1StragglerConvergences(t *testing.T) {
 		// "r7b" = member "r" + param-size "7b"; both sides CONVERGE to (command, r, 12). The
 		// version "12" is the MM of the "12-2024" date — a pre-existing SHARED value on both
 		// providers (NOT introduced here, NOT a divergence); date-guarding it to "" is a future
-		// polish surfaced to the supervisor. The convergence (variant r on both) is the fix.
+		// polish pending a ruling. The convergence (variant r on both) is the fix.
 		{"command-r7b-12-2024 empty → (command,r) [r7b=r+7b-size]", "", "cohere/command-r7b-12-2024", "command", "r", "12", ""},
 		{"command-r7b-12-2024 raw=command-r → (command,r)", "command-r", "cohere/command-r7b-12-2024", "command", "r", "12", ""},
 		// COMMITTED — meta-llama SURGICAL doubled-vendor strip (org "meta-llama/" + "Meta-Llama-…").

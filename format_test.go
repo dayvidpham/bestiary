@@ -413,7 +413,7 @@ func makeAmbiguousRefs(n int, duplicateTuples bool) []bestiary.ModelRef {
 // TestFormatAmbiguous_Truncation verifies that FormatAmbiguous truncates the
 // canonical candidate list after N=5 and emits a "+M more" hint.
 //
-// Updated for  two-section layout: canonical cap is now 5.
+// Two-section layout: canonical cap is now 5.
 // Uses canonical Anthropic refs (Provider==CanonicalProvider) so Section 1 is populated.
 func TestFormatAmbiguous_Truncation(t *testing.T) {
 	// Create 8 canonical anthropic/claude refs — after cap-5, "+3 more" expected.
@@ -453,7 +453,7 @@ func TestFormatAmbiguous_Truncation(t *testing.T) {
 // TestFormatAmbiguous_NoTruncation_ExactlyN verifies that exactly N=5 canonical
 // candidates does NOT emit a truncation hint ("+M more" pattern).
 //
-// Updated for  two-section layout: canonical cap is now 5.
+// Two-section layout: canonical cap is now 5.
 func TestFormatAmbiguous_NoTruncation_ExactlyN(t *testing.T) {
 	// Exactly 5 canonical anthropic/claude refs — no truncation expected.
 	candidates := make([]bestiary.ModelRef, 5)
@@ -494,7 +494,7 @@ func TestFormatAmbiguous_NoTruncation_ExactlyN(t *testing.T) {
 // TestFormatAmbiguous_Grouping verifies that FormatAmbiguous groups canonical candidates
 // by (Family, Variant, Version) tuple and shows ONE row per group in Section 1.
 //
-// Updated for  two-section layout: grouping applies to canonical-provider
+// Two-section layout: grouping applies to canonical-provider
 // rows. Non-canonical rows in Candidates are excluded from Section 1.
 func TestFormatAmbiguous_Grouping(t *testing.T) {
 	// Two distinct canonical groups (alpha and beta), with no duplicate (family,variant,version).
@@ -538,7 +538,7 @@ func TestFormatAmbiguous_Grouping(t *testing.T) {
 // BEFORE truncation — canonical rows with same (Family,Variant,Version) are
 // deduped, then capped at 5 with "+N more".
 //
-// Updated for  two-section layout: canonical cap is now 5.
+// Two-section layout: canonical cap is now 5.
 func TestFormatAmbiguous_GroupingAndTruncation(t *testing.T) {
 	// 8 canonical anthropic/claude rows with distinct (variant, version) tuples.
 	// After dedup: 8 distinct groups → cap 5 → "+3 more".
@@ -856,7 +856,7 @@ func TestFormatAmbiguous_CanonicalRowMarked(t *testing.T) {
 // TestFormatAmbiguous_CanonicalSortedToTop verifies that the canonical section
 // (Section 1) appears BEFORE the rehost section (Section 2) in FormatAmbiguous output.
 //
-// Updated for  two-section layout: Section 1 ("Canonical:") always
+// Two-section layout: Section 1 ("Canonical:") always
 // precedes Section 2 ("Also rehosted by:"). The canonical provider appears in Section 1
 // (from Candidates), while rehost names appear in Section 2 (from RehostProviders).
 func TestFormatAmbiguous_CanonicalSortedToTop(t *testing.T) {
@@ -904,7 +904,7 @@ func TestFormatAmbiguous_CanonicalSortedToTop(t *testing.T) {
 // canonical groups, the canonical section renders exactly 5 rows and the overflow
 // hint is emitted.
 //
-// Updated for  two-section layout: canonical cap is now 5.
+// Two-section layout: canonical cap is now 5.
 func TestFormatAmbiguous_CanonicalSurvivesTruncation(t *testing.T) {
 	// 1 canonical + 12 rehosts in Candidates; RehostProviders for Section 2.
 	// The canonical anthropic row must appear in Section 1.

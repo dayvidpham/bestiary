@@ -446,10 +446,10 @@ func TestSnapshotAnalysis_CrossProviderDivergences(t *testing.T) {
 	// lossy/inconsistent (deepseek-chat→deepseek drops "chat"; qwen3-next picks suffix
 	// "instruct" not "next").
 	// A cross-provider convergence pass: 68 → 18.
-	// The −50 came from: o-series taxonomy restructure (Q2: o1/o3/o4→(gpt,
+	// The −50 came from: o-series taxonomy restructure (o1/o3/o4→(gpt,
 	// variant=o,ver), gpt-4o→(gpt,4o,""), gpt-audio→(gpt,audio); sanctioned via the reviewed
 	// allowlist) + gpt-codex ID-wins phantom-variant clear (8) + glm glued-'v' variant
-	// (Q1, glm-4.5v→(glm,v,4.5); glmv→glm+v) + canonical-winner ENFORCE set (own-family +
+	// (glm-4.5v→(glm,v,4.5); glmv→glm+v) + canonical-winner ENFORCE set (own-family +
 	// org-namespace leak: aion/magnum/hermes/mixtral/pixtral/voxtral/intellect/qwq/weaver/
 	// owl/wizardlm/inflection/ministral + nousresearch→hermes/allenai→olmo/liquid→lfm) +
 	// dotted bare-gen de-junk (qwen3.5/3.6) + raw-populated over-capture fold (qwen3.7-max) +
@@ -473,7 +473,7 @@ func TestSnapshotAnalysis_CrossProviderDivergences(t *testing.T) {
 	// hermes-2-pro-llama (variant 'pro' on one side only). These warrant a follow-up slice or
 	// upstream data fix; see the worker report.
 	//
-	// A straggler-convergence pass, team-lead-refined set: 18 → 10.
+	// A straggler-convergence pass (refined set): 18 → 10.
 	// GOVERNING PRINCIPLE: converge only when unambiguous under EXISTING ratified rules (family/
 	// vendor-strip/gen-split/date-guard/product-name member recovery) with NO modifier-vs-variant
 	// taxonomy judgment (that is reserved for the systematic modifier ruling). 5 COMMITTED + 3 CONDITIONALS all cleanly

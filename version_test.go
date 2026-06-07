@@ -65,7 +65,7 @@ func TestSchemaFile_VersionAndModifierType(t *testing.T) {
 		t.Errorf("schema properties.Modifier.type = %v, must contain \"array\" (Modifier is []string)", mi.Type)
 	}
 
-	// (b) $defs.ModelRef.Modifier.type must ALSO declare "array" (the cycle-1 gap: the
+	// (b) $defs.ModelRef.Modifier.type must ALSO declare "array" (the earlier gap: the
 	// Go output check alone did not catch a schema-side revert to "string").
 	ref, ok := schema.Defs["ModelRef"]
 	if !ok {

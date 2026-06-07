@@ -75,7 +75,7 @@ func (r ModelRef) Format(s CanonicalScheme) string {
 //     placed directly after Family when Variant is empty)
 //   - Date only appended as "@<date>" suffix when non-empty
 //   - Modifier only appended as "[modifier]" bracket suffix when non-empty
-//     (: bracket suffix is placed after the date suffix, if any)
+//     (the bracket suffix is placed after the date suffix, if any)
 //
 // Full example matrix (p = provider, f = family, v = variant, ver = version, d = date, m = modifier):
 //

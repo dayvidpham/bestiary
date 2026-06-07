@@ -170,7 +170,7 @@ func TestResolve_WithSchemeRaw_BareFamilyAmbiguous(t *testing.T) {
 // HISTORY: earlier, bare hyphen "claude-opus" resolved as ErrAmbiguous ONLY
 // because the opus models were OVER-CAPTURED to Family="claude-opus". That was later fixed
 // that (Family="claude", Variant="opus"), which incidentally regressed the shorthand to
-// ErrNotFound. item 4 (Q4, user ruling: "Restore shorthand now (~20 LOC in
+// ErrNotFound. item 4 (user ruling: "Restore shorthand now (~20 LOC in
 // resolve.go)") ratified restoring it the RIGHT way: a variant-aware bare-family fallback.
 //
 // PIN: Resolve("claude-opus", SchemeRaw) now returns *ErrAmbiguous listing the opus
@@ -836,7 +836,7 @@ func TestResolve_WithInputFormat_Raw_PartialAmbiguous(t *testing.T) {
 	}
 }
 
-// --- Fix 1 ( cycle-2): Bracket-suffix [modifier] stripping in Resolve ---
+// --- Bracket-suffix [modifier] stripping in Resolve ---
 
 // TestResolve_BracketSuffixStripping_DateMatch verifies that a canonical input
 // with a [modifier] bracket suffix resolves correctly when both the date AND the

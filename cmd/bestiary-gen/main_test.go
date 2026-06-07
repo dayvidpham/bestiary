@@ -1955,7 +1955,7 @@ func runFixtureCodegen(t *testing.T, fixtureJSON []byte, lastSynced string) (sta
 // Additionally asserts that each raw model ID always receives the same _N suffix
 // across all iterations (stable raw-ID-ordered assignment — deterministic ordering + raw-ID ordinal).
 //
-// Golden pins (from proposal/handoff spec):
+// Golden pins (from the spec):
 //   - C: "anthropic/claude-3-5-haiku" always _1, "anthropic/claude-3.5-haiku" always _2
 //   - B: "kilo-auto/free" always _1, "openrouter/free" always _2
 //   - E (version-pair / negative control): exact constant names with NO doubled-ordinal variant
@@ -2164,7 +2164,7 @@ func TestCodegen_UpToDate(t *testing.T) {
 	// Regenerate from the fixture.
 	// Pass a representative injected timestamp to exercise the run() stamping path.
 	// normalizeLastSynced is applied to both sides before comparison, so the guard
-	// is insensitive to the codegen wall-clock (see for true zero-diff).
+	// is insensitive to the codegen wall-clock (true zero-diff is a separate follow-up).
 	fixtureJSON := deterministicFixtureJSON(t)
 	staticSrc, constantsSrc := runFixtureCodegen(t, fixtureJSON, "2000-01-01T00:00:00Z")
 
@@ -2498,7 +2498,7 @@ func TestDecompositionSnapshot_ActiveClassVersionPopulated(t *testing.T) {
 		"anthropic/claude-3-5-haiku": {wantFamily: "claude", wantVariant: "haiku", wantVersion: "3.5"},
 		// claude-3.5-haiku: same family → same decomposition
 		"anthropic/claude-3.5-haiku": {wantFamily: "claude", wantVariant: "haiku", wantVersion: "3.5"},
-		// Sole-residual-promoted models surviving the full-prefix-first revert revert (single-token rawFamily, no compound prefix):
+		// Sole-residual-promoted models surviving the full-prefix-first revert (single-token rawFamily, no compound prefix):
 		// glm-5-turbo: — 'turbo' is now a GLOBAL modifier (not a glm member), so it
 		// reclassifies variant→modifier: (glm, "", 5, [turbo]). Version 5 still populated.
 		"glm-5-turbo": {wantFamily: "glm", wantVariant: "", wantVersion: "5"},
@@ -2810,17 +2810,17 @@ func TestFixturePerReasonCounts(t *testing.T) {
 			n)
 	}
 
-	// Residual: ReasonResidualUnaccountedTokens must be >= 4 after :
+	// Residual: ReasonResidualUnaccountedTokens must be >= 4:
 	// nova-2-lite-v1 (C: variant pre-set, "v1" residual after variant) +
 	// phi-3-medium-128k-instruct (multi-residual) +
-	// text-embedding-3-large (the full-prefix-first revert documented residual: full-prefix-first reverted) +
+	// text-embedding-3-large (documented residual of the full-prefix-first revert) +
 	// text-embedding-3-small (same).
 	// After the sole-residual suffix promotion, glm-5-turbo/phi-4-mini are promoted (single-token rawFamily, the sole-residual promotion applies).
 	if n := counts[bestiary.ReasonResidualUnaccountedTokens]; n < 4 {
 		t.Errorf("ReasonResidualUnaccountedTokens = %d, want >= 4\n"+
 			"  What: nova-2-lite-v1 (C) + phi-3-medium-128k-instruct (multi-residual) + text-embedding-3-large/small (the full-prefix-first revert residual)\n"+
 			"    should produce residual failures\n"+
-			"  Why: the full-prefix-first revert reverted full-prefix-first; text-embedding models now have compound residual tokens\n"+
+			"  Why: the full-prefix-first change was reverted; text-embedding models now have compound residual tokens\n"+
 			"  How to fix: verify fixture_api.json includes all four models",
 			n)
 	}

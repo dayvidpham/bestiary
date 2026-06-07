@@ -966,7 +966,7 @@ func fetchModelsWithRaw(ctx context.Context, dir string, noFetch bool) (rawJSON 
 
 	// Determinism: sort the assembled model set by (Provider, ID) exactly once so
 	// every downstream consumer observes a stable order regardless of API map-
-	// iteration order. See .
+	// iteration order.
 	sort.SliceStable(models, func(i, j int) bool {
 		if models[i].Provider != models[j].Provider {
 			return models[i].Provider < models[j].Provider
