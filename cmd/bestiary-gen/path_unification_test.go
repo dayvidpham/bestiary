@@ -1151,13 +1151,16 @@ var justifiedExceptions = map[exceptionKey]string{
 		Before: `(family="grok-3-mini-fast",variant="beta",version="3",modifier="")`,
 		After:  `(family="grok",variant="mini",version="3",modifier="")`,
 	}: "USER-RATIFIED non-defect (Impl-UAT bestiary-2gxu, GH#13 release-stage dimension): family corrected to grok + real tier 'mini' (+version 3); the release-stage token 'beta' AND the speed-tier token 'fast' are BOTH dropped — neither can co-occupy the single Variant slot with 'mini' (variant-multiplicity, the variant analogue of S10's Modifier-LIST, deferred). MECHANISM (corrected) for the related xai/grok-4.20-non-reasoning-beta, which stays Modifier=nil (nil both BEFORE and AFTER rc3 — no regression, no gate trip): the trailing 'beta' is the TAIL-ORDER MODIFIER-SCAN BOUNDARY — the scan starts at the tail and halts at 'beta' (a non-collected variant/boundary token) before reaching the inner 'non-reasoning', so the negation branch never executes. Contrast (Axis-B verified): grok-4.20-non-reasoning [tail='reasoning' preceded by 'non']→[non-reasoning]; grok-4-20-beta-0309-non-reasoning ['beta' MID-string, tail still 'reasoning']→[non-reasoning]; xai/grok-4.20-non-reasoning-beta [tail='beta']→nil. Same release-stage multiplicity tracked under GH#13.",
-	// rc3 RESOLVED & de-ledgered:
+	{
+		ID:     "azure-gpt-4-turbo",
+		Before: `(family="azure-gpt-4",variant="turbo",version="4",modifier="")`,
+		After:  `(family="azure-gpt",variant="",version="4",modifier="turbo")`,
+	}: "NanoGPT reseller id: the leading 'azure-' is a backend-host label (NanoGPT routes to Azure-hosted OpenAI models), NOT a redundant provider prefix — the genuine Azure provider is the separate azure-cognitive-services namespace. The earlier provider-prefix strip that forced these to the gpt family was removed because it deleted the azure-host signal. These now decompose natively to an imperfect 'azure-*' family, pending a serving-host/backend dimension (TODO). The before/after differs only in how that imperfect family splits 'turbo'/'4'; neither tuple is a meaningful model decomposition, so this is not a model-identity regression.",
+	// RESOLVED & de-ledgered:
 	//  • nvidia/llama-3.3-nemotron-super-49b-v1.5 — folded to nemotron via idFamilyOverrides
 	//    (cross-provider divergence 1→0).
-	//  • azure-gpt-* (5) — narrow curated provider-prefix strip (azure∉allFamilies) → gpt/o-series;
-	//    blessed by the rc3 unregistered→registered family-correction branch (cat-(b)).
 	//  • meta-llama-3_3-70b-instruct + Meta-Llama-3-1-…-FP8 — no-slash doubled-vendor strip →
-	//    llama (version preserved); same rc3 blessing (cat-(b)).
+	//    llama (version preserved); native family-correction (cat-(b)).
 	// fix-cycle 1 RESOLVED & de-ledgered:
 	//  • whisper-large-v3-turbo / seed-oss-36b-instruct — registered whisper(large)/seed(oss)
 	//    families (∈ allFamilies, attested) → lossless variants, now cat-(b).

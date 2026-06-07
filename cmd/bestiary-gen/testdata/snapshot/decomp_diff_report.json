@@ -1,10 +1,10 @@
 {
   "total_records": 4979,
-  "changed_count": 1211,
+  "changed_count": 1207,
   "cat_a_divergence_fix_count": 324,
-  "cat_b_improvement_count": 884,
+  "cat_b_improvement_count": 879,
   "cat_c_unexpected_regression_count": 0,
-  "justified_exception_count": 3,
+  "justified_exception_count": 4,
   "id_tuple4_incl_modifier_divergence_frozen_before": 81,
   "id_tuple4_incl_modifier_divergence_current_after": 13,
   "divergence_metric": "4-tuple INCL Modifier (Family,Variant,Version,Modifier); before=frozen SLICE-9 baseline, after=current snapshot. DISTINCT from the authoritative cross-provider divergenceExact gate (3-tuple, EXCL Modifier, current snapshot, =0).",
@@ -4364,51 +4364,6 @@
       "after": "(family=\"pangu\",variant=\"pro\",version=\"\",modifier=\"\")",
       "category": "b:improvement",
       "reason": "strict enrichment — only previously-empty field(s) populated"
-    },
-    {
-      "provider": "nano-gpt",
-      "id": "azure-gpt-4-turbo",
-      "raw_family": "",
-      "before": "(family=\"azure-gpt-4\",variant=\"turbo\",version=\"4\",modifier=\"\")",
-      "after": "(family=\"gpt\",variant=\"\",version=\"4\",modifier=\"turbo\")",
-      "category": "b:improvement",
-      "reason": "rc3: unregistered org/over-capture family corrected to a registered family via curated vendor/provider-prefix strip; no ID-present field lost"
-    },
-    {
-      "provider": "nano-gpt",
-      "id": "azure-gpt-4o",
-      "raw_family": "",
-      "before": "(family=\"azure\",variant=\"\",version=\"\",modifier=\"\")",
-      "after": "(family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")",
-      "category": "b:improvement",
-      "reason": "rc3: unregistered org/over-capture family corrected to a registered family via curated vendor/provider-prefix strip; no ID-present field lost"
-    },
-    {
-      "provider": "nano-gpt",
-      "id": "azure-gpt-4o-mini",
-      "raw_family": "",
-      "before": "(family=\"azure-gpt-4o\",variant=\"mini\",version=\"\",modifier=\"\")",
-      "after": "(family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"mini\")",
-      "category": "b:improvement",
-      "reason": "rc3: unregistered org/over-capture family corrected to a registered family via curated vendor/provider-prefix strip; no ID-present field lost"
-    },
-    {
-      "provider": "nano-gpt",
-      "id": "azure-o1",
-      "raw_family": "",
-      "before": "(family=\"azure\",variant=\"\",version=\"\",modifier=\"\")",
-      "after": "(family=\"gpt\",variant=\"o\",version=\"1\",modifier=\"\")",
-      "category": "b:improvement",
-      "reason": "rc3: unregistered org/over-capture family corrected to a registered family via curated vendor/provider-prefix strip; no ID-present field lost"
-    },
-    {
-      "provider": "nano-gpt",
-      "id": "azure-o3-mini",
-      "raw_family": "",
-      "before": "(family=\"azure-o3\",variant=\"mini\",version=\"\",modifier=\"\")",
-      "after": "(family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"mini\")",
-      "category": "b:improvement",
-      "reason": "rc3: unregistered org/over-capture family corrected to a registered family via curated vendor/provider-prefix strip; no ID-present field lost"
     },
     {
       "provider": "zenmux",
@@ -10889,6 +10844,15 @@
       "after": "(family=\"dracarys\",variant=\"\",version=\"\",modifier=\"instruct\")",
       "category": "justified-exception",
       "reason": "JUSTIFIED: USER-RATIFIED non-defect (Impl-UAT bestiary-2gxu, GH#11 model-lineage): dracarys is a llama fine-tune with its own lineage, ∉ allFamilies; 'instruct'→Modifier re-surfaces (no token loss). Family-root precision is a taxonomy call, not a regression."
+    },
+    {
+      "provider": "nano-gpt",
+      "id": "azure-gpt-4-turbo",
+      "raw_family": "",
+      "before": "(family=\"azure-gpt-4\",variant=\"turbo\",version=\"4\",modifier=\"\")",
+      "after": "(family=\"azure-gpt\",variant=\"\",version=\"4\",modifier=\"turbo\")",
+      "category": "justified-exception",
+      "reason": "JUSTIFIED: NanoGPT reseller id: the leading 'azure-' is a backend-host label (NanoGPT routes to Azure-hosted OpenAI models), NOT a redundant provider prefix — the genuine Azure provider is the separate azure-cognitive-services namespace. The earlier provider-prefix strip that forced these to the gpt family was removed because it deleted the azure-host signal. These now decompose natively to an imperfect 'azure-*' family, pending a serving-host/backend dimension (TODO). The before/after differs only in how that imperfect family splits 'turbo'/'4'; neither tuple is a meaningful model decomposition, so this is not a model-identity regression."
     },
     {
       "provider": "nano-gpt",

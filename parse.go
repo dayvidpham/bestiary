@@ -2669,41 +2669,19 @@ func stripVendorNamespace(id string) string {
 	if strings.HasPrefix(strings.ToLower(idStr), "meta-llama-") {
 		idStr = idStr[len("meta-"):]
 	}
-	idStr = stripCuratedProviderPrefix(idStr)
 	return idStr
 }
 
-// curatedProviderPrefixStrip is the rc3-L2 (bestiary-5gck) NARROW provider-prefix-strip
-// seam. Each entry is a provider name that ALSO appears as a leading "<provider>-" prefix
-// on its own hosted models (an org prefix, NOT a family) and that is SAFE to strip:
-//
-//	(1) the token ∈ Providers() but ∉ allFamilies (so stripping cannot destroy a family —
-//	    this is the catastrophic guard against deepseek/minimax/llama/mistral/nova/…, which
-//	    are BOTH a Provider AND a family and must NEVER be stripped), AND
-//	(2) every committed-snapshot id bearing the "<provider>-" prefix decomposes correctly
-//	    after the strip (curation-time affected-set + collateral proof).
-//
-// Currently NARROW (azure only): all 5 "azure-*" ids are OpenAI (azure-gpt-4o/4o-mini/
-// 4-turbo, azure-o1, azure-o3-mini) → strip "azure-" → gpt/o-series family, zero collateral.
-// The GENERAL Providers()-derived hyphen-prefix strip (~150+ ids across anthropic/openai/
-// databricks/cohere/nvidia/…) has a large affected-set + real collateral risk (e.g.
-// nvidia-llama-* → llama over-capture) and is DEFERRED to a co-signed follow-up (surfaced).
-var curatedProviderPrefixStrip = map[string]struct{}{
-	"azure": {},
-}
-
-// stripCuratedProviderPrefix strips a leading "<provider>-" prefix when the provider is in
-// the curated safe-list (curatedProviderPrefixStrip). Case-insensitive on the prefix.
-func stripCuratedProviderPrefix(idStr string) string {
-	low := strings.ToLower(idStr)
-	for p := range curatedProviderPrefixStrip {
-		pre := p + "-"
-		if strings.HasPrefix(low, pre) {
-			return idStr[len(pre):]
-		}
-	}
-	return idStr
-}
+// NOTE (post-v0.2.2 correction, bestiary host-dimension follow-up): a curated
+// "provider-prefix-strip" seam used to strip a leading "azure-" here, mapping the 5 NanoGPT
+// reseller ids (azure-gpt-4o/4o-mini/4-turbo, azure-o1, azure-o3-mini — Provider=nano-gpt,
+// DisplayName "Azure …") to the gpt/o-series family. That was WRONG: "azure" is NanoGPT's
+// BACKEND-HOST label, not a redundant provider prefix (the genuine Azure provider is the
+// SEPARATE "azure-cognitive-services" namespace, whose models are named plainly, e.g.
+// "gpt-4o"). Stripping it silently deleted the azure-host signal from the decomposition
+// tuple. The seam is removed; these ids decompose natively now, and the host belongs in a
+// future serving-host/backend dimension. Provider-name-as-id-prefix is fundamentally unsafe:
+// an id may encode a DIFFERENT provider's name as routing/host info.
 
 // --------------------------------------------------------------------------
 // SLICE-1: recoverMemberVariant (sole owner)
