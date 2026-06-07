@@ -1097,7 +1097,7 @@ func TestStaticDataset_CrossProviderConsistency(t *testing.T) {
 
 	// GATE-AGREEMENT cross-check: this hardened gate and TestSnapshotAnalysis decompose
 	// identical data via the identical pipeline, so the divergent count must match the
-	// pinned divergenceExact (1). A mismatch means the two gates DISAGREE — a gate-logic bug.
+	// pinned divergenceExact (0). A mismatch means the two gates DISAGREE — a gate-logic bug.
 	if len(divergent) != len(crossProviderJustifiedResidual) {
 		t.Errorf("divergent-ID count = %d, justified-residual ledger size = %d — SET-equality broken (see per-ID errors above)",
 			len(divergent), len(crossProviderJustifiedResidual))
