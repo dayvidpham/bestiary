@@ -50,8 +50,8 @@ func loadFamiliesJSONMembers(t *testing.T) map[string][]string {
 	return out
 }
 
-// TestFamiliesJSON_MembersReachableInSnapshot is the SLICE-1 spec-item-1 guard
-// (Reviewer B finding B-IMPORTANT-1): "Member lists validated against SLICE-0
+// TestFamiliesJSON_MembersReachableInSnapshot is the spec-item-1 guard:
+// "Member lists validated against
 // snapshot." It asserts that for every (family, member) declared in families.json,
 // at least ONE real model ID in the committed snapshot decomposes — via the live
 // ParseFamilyDetailed pipeline — to that (family, member-as-variant) pair.
@@ -64,25 +64,25 @@ func loadFamiliesJSONMembers(t *testing.T) map[string][]string {
 // Known-unreachable members are listed in deferredUnreachableMembers with a reason.
 // The ONLY current entry is grok/"vision": "vision" is a MODIFIER (ExtractModifier
 // strips it before member recovery), so it can never surface as a variant. Removing
-// the thinking/vision member entries is explicitly deferred to SLICE-3 (modifier
-// migration; Reviewer A finding ro2w-A2) — until then it is allowlisted here.
+// the thinking/vision member entries is explicitly deferred to the modifier
+// migration — until then it is allowlisted here.
 func TestFamiliesJSON_MembersReachableInSnapshot(t *testing.T) {
 	// deferredUnreachableMembers["<family>"] = set of members allowed to be
 	// unreachable in the current snapshot, each with a documented reason.
-	// SLICE-3 removed the thinking/vision members (deepseek/kimi → thinking, grok →
+	// removed the thinking/vision members (deepseek/kimi → thinking, grok →
 	// vision) from families.json — they are now uniform Modifiers, not recoverable
 	// variants — so the former grok/"vision" allowlist entry is obsolete and gone.
 	deferredUnreachableMembers := map[string]map[string]string{
-		// SLICE-11 (rc2): the ONLY snapshot model that decomposed to (qwen, "free") was
-		// "qwen3.6-plus-free". SLICE-11's family-seed reduction makes the ID-path family
+		// the ONLY snapshot model that decomposed to (qwen, "free") was
+		// "qwen3.6-plus-free". this family-seed reduction makes the ID-path family
 		// agree with raw "qwen-free", so reconcileIDDriven now adopts the more-specific
 		// ID-driven capability tier "plus" over the access-tag "free" (the reviewed
 		// justified-exception in path_unification_test.go), leaving "free" transiently
 		// unreachable. The member is retained (not deleted) because the "qwen-free"
 		// override still maps the raw family, and a future qwen "free"-tier ID with no
 		// competing tier would re-ground it.
-		"qwen": {"free": "SLICE-11: sole (qwen,free) model qwen3.6-plus-free now refines to variant 'plus' (justified exception)"},
-		// SLICE-12 (bestiary-xdbc Q2a): the 'o' family is FOLDED into gpt as a variant —
+		"qwen": {"free": "sole (qwen,free) model qwen3.6-plus-free now refines to variant 'plus' (justified exception)"},
+		// the 'o' family is FOLDED into gpt as a variant —
 		// o1/o3/o4[-mini/-pro] now decompose to (gpt, variant='o', version=N, modifier=mini/
 		// pro). The "o" families.json entry is RETAINED (its bare_gen_split:true still splits
 		// the transient "o1"→o+1 before canonicalizeOpenAILine relabels family→gpt, and its
@@ -90,8 +90,8 @@ func TestFamiliesJSON_MembersReachableInSnapshot(t *testing.T) {
 		// Modifier). But NO FINAL decomposition is (o, mini) / (o, pro) anymore — the members
 		// are reachable only mid-pipeline, so they read as unreachable here. Justified.
 		"o": {
-			"mini": "SLICE-12: o-series folded into gpt (bestiary-xdbc Q2a); 'mini' now surfaces as the Modifier under family=gpt, recovered only transiently under 'o'",
-			"pro":  "SLICE-12: o-series folded into gpt (bestiary-xdbc Q2a); 'pro' now surfaces as the Modifier under family=gpt, recovered only transiently under 'o'",
+			"mini": "o-series folded into gpt; 'mini' now surfaces as the Modifier under family=gpt, recovered only transiently under 'o'",
+			"pro":  "o-series folded into gpt; 'pro' now surfaces as the Modifier under family=gpt, recovered only transiently under 'o'",
 		},
 	}
 
@@ -133,7 +133,7 @@ func TestFamiliesJSON_MembersReachableInSnapshot(t *testing.T) {
 			}
 			t.Errorf("families.json member %q/%q is UNREACHABLE: no snapshot model ID decomposes to (family=%q, variant=%q)\n"+
 				"  What: a families.json member is not grounded in any real model ID in the committed snapshot\n"+
-				"  Why: SLICE-1 spec item 1 requires member lists be validated against the SLICE-0 snapshot;\n"+
+				"  Why: the spec requires member lists be validated against the snapshot;\n"+
 				"       an unreachable member is most likely a typo or a speculative tier that does not exist\n"+
 				"  How to fix: correct the member spelling, remove the speculative member from parse/data/families.json,\n"+
 				"       OR (if intentionally deferred) add it to deferredUnreachableMembers with a documented reason",
@@ -168,7 +168,7 @@ func loadFamilyEnforce(t *testing.T) []string {
 	return f.Families
 }
 
-// TestFamilyEnforce_IntegrityGuard is the SLICE-14 (bestiary-juzk) integrity guard for the
+// TestFamilyEnforce_IntegrityGuard is the integrity guard for the
 // canonical-winner ENFORCE set. It asserts that EVERY family_enforce.json entry decomposes
 // from >=1 REAL model in the committed snapshot — the analogue of the o-series allowlist's
 // ConformsToRatification, and of the families.json member-reachability guard. The set CANNOT
@@ -209,7 +209,7 @@ func TestFamilyEnforce_IntegrityGuard(t *testing.T) {
 	t.Logf("family_enforce integrity: %d entries, all grounded in >=1 snapshot model", len(enforce))
 }
 
-// TestIsEnforcedCanonicalFamily_Unit is the SLICE-14 (bestiary-juzk) direct true/false unit
+// TestIsEnforcedCanonicalFamily_Unit is the direct true/false unit
 // for the exported predicate (previously exercised only indirectly via the diff gate).
 func TestIsEnforcedCanonicalFamily_Unit(t *testing.T) {
 	for _, f := range []string{"aion", "hermes", "mixtral", "qwq", "intellect", "AION", "Hermes"} {

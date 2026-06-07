@@ -379,11 +379,11 @@ func TestFormatCanonical_WithFamilyAndDate(t *testing.T) {
 
 // ---------------------------------------------------------------------------
 // Tests for Version-bearing canonical formatting (B4 from slice spec).
-// These tests FAIL until L3 (formatCanonical) is implemented.
+// These tests FAIL until formatCanonical is implemented.
 // ---------------------------------------------------------------------------
 
 // TestFormatCanonical_WithVersionAndDate verifies
-// "<provider>/<family>/<variant>/<version>@<date>" — the primary UAT-2 case.
+// "<provider>/<family>/<variant>/<version>@<date>" — the primary case.
 func TestFormatCanonical_WithVersionAndDate(t *testing.T) {
 	ref := bestiary.ModelRef{
 		ID:       "claude-opus-4-5-20251101",
@@ -548,7 +548,7 @@ func TestFormatCanonical_AllCombinations(t *testing.T) {
 // Before cycle-2 fix: formatted as "anthropic/claude/opus@2025-11-01" (no version).
 // After cycle-2 fix: formatted as "anthropic/claude/opus/4.5@2025-11-01".
 //
-// This test asserts the BLOCKER resolution from bestiary-5eh8.
+// This test asserts the BLOCKER resolution from .
 func TestFormatCanonical_StaticRegistry_Claude_Opus_4_5(t *testing.T) {
 	const targetID = "claude-opus-4-5-20251101"
 	const wantCanonical = "anthropic/claude/opus/4.5@2025-11-01"
@@ -578,7 +578,7 @@ func TestFormatCanonical_StaticRegistry_Claude_Opus_4_5(t *testing.T) {
 }
 
 // ----------------------------------------------------------------------------
-// Modifier field tests on ModelRef (SLICE-FIX-V2-5)
+// Modifier field tests on ModelRef
 // ----------------------------------------------------------------------------
 
 // TestModelRef_Modifier_MarshalUnmarshal verifies that ModelRef with a populated
@@ -613,7 +613,7 @@ func TestModelRef_Modifier_MarshalUnmarshal(t *testing.T) {
 		}
 	}
 
-	// SLICE-10: Modifier is now a JSON array; must be ["thinking"].
+	// Modifier is now a JSON array; must be ["thinking"].
 	modVal, ok := got["Modifier"]
 	if !ok {
 		t.Fatal("ModelRef JSON missing 'Modifier'")

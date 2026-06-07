@@ -147,7 +147,7 @@ func TestJSONOutput_ConformsToSchema(t *testing.T) {
 		}
 	}
 
-	// Step 7 (SLICE-10 fix-cycle 1, Reviewer-B): the ModelRef $defs sub-schema MUST also be
+	// Step 7: the ModelRef $defs sub-schema MUST also be
 	// validated — the uncaught B finding was that ModelRef.Modifier stayed "type":"string"
 	// while the Go field is []string. Parse $defs.ModelRef, marshal a real ModelRef with a
 	// MULTI-modifier list, assert every declared property is present AND that the Modifier
@@ -223,7 +223,7 @@ func TestJSONOutput_ConformsToSchema(t *testing.T) {
 // Family, Variant, Version, and Date set to non-empty values round-trips correctly
 // through JSON marshaling.
 //
-// This exercises the codegen-baked normalization path that SLICE-FIX-1 introduced.
+// This exercises the codegen-baked normalization path.
 func TestJSONOutput_CanonicalFields_Populated(t *testing.T) {
 	cost := 2.5
 	fixture := bestiary.ModelInfo{

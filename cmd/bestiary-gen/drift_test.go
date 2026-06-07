@@ -1,6 +1,6 @@
 //go:build drift
 
-// Package main — SLICE-5 L2 (bestiary-vbjy) drift smoke.
+// Package main — drift smoke.
 //
 // This file is guarded by the `drift` build tag so it is NEVER compiled or run by the
 // default `CGO_ENABLED=0 go test ./...` invocation (which does not pass `-tags drift`).

@@ -5,13 +5,13 @@ import (
 	"strings"
 )
 
-// SLICE-10 (rc2, CLARIFICATION-7): the Modifier field is a LIST ([]string), so a
+// The Modifier field is a LIST ([]string), so a
 // model may carry MULTIPLE trailing qualifiers losslessly (e.g. kimi-k2-thinking-turbo
 // → [thinking, turbo]; llama-3.2-…-vision-instruct → [vision, instruct]). This file
 // owns the single, deterministic CANONICAL ORDER for that list — the byte-stability
 // anchor for codegen (models_static_gen.go) and for ModelRef.Format across all schemes.
 //
-// RATIFIED ORDER (URD bestiary-o54x; leaf bestiary-pwei): class rank first, then a
+// RATIFIED ORDER: class rank first, then a
 // fixed within-class order (NOT alpha — "thinking" precedes "vision" deliberately),
 // with an alphabetical fallback for any token outside the curated table.
 //
@@ -98,7 +98,7 @@ func CanonicalizeModifiers(mods []string) []string {
 
 // modifierKey returns a stable, order-independent string key for a modifier list:
 // the canonical-ordered tokens joined by ",". Two lists that are permutations of the
-// same set produce the IDENTICAL key (the SLICE-10 R1 set-independence guarantee used
+// same set produce the IDENTICAL key (the R1 set-independence guarantee used
 // by resolve.go's FIX-B group key and by the cross-provider divergence comparison).
 // An empty/nil list returns "".
 func modifierKey(mods []string) string {

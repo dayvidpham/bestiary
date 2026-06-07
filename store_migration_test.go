@@ -675,7 +675,7 @@ func TestMigration_V2toV3_IndexUsed(t *testing.T) {
 
 // ---------------------------------------------------------------------------
 // v3 → v4 migration tests
-// (SLICE-FIX-1-L2: tests FAIL until L3 implements migrateToV4 + version column wiring)
+// (tests FAIL until migrateToV4 + version column wiring is implemented)
 // ---------------------------------------------------------------------------
 
 // v3Schema is the v3 schema: has raw_family, family, variant, date columns but

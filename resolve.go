@@ -59,7 +59,7 @@ func WithScheme(s CanonicalScheme) ResolveOption {
 
 // Resolve returns the set of ModelRefs that match the given input string.
 //
-// # Disambiguation rule (Reviewer C-N1)
+// # Disambiguation rule
 //
 // Cross-provider hosting: if all matches share the same Canonical triple
 // (Family, Variant, Date) — meaning the same conceptual model is hosted by
@@ -88,7 +88,7 @@ func WithScheme(s CanonicalScheme) ResolveOption {
 // is returned. If a single group matches, refs are returned. This surfaces
 // *ErrAmbiguous for inputs like "claude" instead of ErrNotFound.
 //
-// Variant-aware bare-family fallback (bestiary-xdbc item 4): when the Family-exact
+// Variant-aware bare-family fallback: when the Family-exact
 // retry also yields zero matches and the bare input is a hyphenated
 // "<family>-<variant>" shorthand whose leading token is a registered Family and
 // trailing token names a Variant within it (e.g. "claude-opus"), Resolve matches
@@ -154,9 +154,9 @@ func Resolve(input string, opts ...ResolveOption) ([]ModelRef, error) {
 			matches = canonicalMatches
 			scheme = SchemeCanonical
 		} else if variantMatches := matchBareFamilyVariant(input); len(variantMatches) > 0 {
-			// Variant-aware bare-family fallback (bestiary-xdbc item 4): a bare
+			// Variant-aware bare-family fallback: a bare
 			// hyphenated "<family>-<variant>" shorthand (e.g. "claude-opus") has no
-			// exact Family match post-SLICE-11, but the leading token is a registered
+			// exact Family match, but the leading token is a registered
 			// Family and the trailing token names a Variant within it. Surface the
 			// matching variant group as ErrAmbiguous (via SchemeCanonical grouping)
 			// rather than ErrNotFound.
@@ -174,7 +174,7 @@ func Resolve(input string, opts ...ResolveOption) ([]ModelRef, error) {
 	// and a diagnostic message that names the missed namespace.
 	if purlLooseFallback {
 		// Build a deduplicated candidate list from all matches (group by ID).
-		// Fix (SLICE-FIX-V4-1-FIX2 BLOCKER): prefer the canonical provider as the
+		// Fix: prefer the canonical provider as the
 		// per-ID representative. When iterating matches, if the current match is the
 		// canonical provider for its family, upgrade the stored representative (even
 		// if we've already seen this ID). This mirrors the multi-group logic at
@@ -238,7 +238,7 @@ func Resolve(input string, opts ...ResolveOption) ([]ModelRef, error) {
 	// genuinely distinct models (different variants, versions, context windows, etc.)
 	// land in separate groups.
 	//
-	// FIX-B (SLICE-4): The key now carries Version, Modifier, and a locally-parsed
+	// FIX-B: The key now carries Version, Modifier, and a locally-parsed
 	// ":N" context-window discriminator (parseContextN). This prevents context-window
 	// variants (e.g. claude-3-7-sonnet-thinking:1024 vs :128000) from being silently
 	// collapsed into a single representative — they share identical canonical fields
@@ -268,7 +268,7 @@ func Resolve(input string, opts ...ResolveOption) ([]ModelRef, error) {
 				family:  ref.Family,
 				variant: ref.Variant,
 				version: ref.Version,
-				// SLICE-10: the Modifier component is the ORDER-INDEPENDENT canonical
+				// the Modifier component is the ORDER-INDEPENDENT canonical
 				// key (modifierKey), so [thinking,turbo] and [turbo,thinking] never
 				// split a group; the ":N" context-window still discriminates per FIX-B.
 				modifier: modifierKey(ref.Modifier),
@@ -310,7 +310,7 @@ func Resolve(input string, opts ...ResolveOption) ([]ModelRef, error) {
 
 	// Multiple distinct groups: ambiguous input.
 	// Build a representative candidate per distinct group using selectRepresentative.
-	// Fix (SLICE-FIX-V3-1 / SLICE-4 FIX-B): selectRepresentative prefers the
+	// Fix (FIX-B): selectRepresentative prefers the
 	// canonical provider row and falls back to lexicographic Provider order —
 	// ensuring "anthropic" appears as the representative for claude groups rather
 	// than an arbitrary rehost, and guaranteeing determinism independent of
@@ -462,9 +462,8 @@ func isBareIdentifier(s string) bool {
 }
 
 // matchBareFamilyVariant implements the variant-aware bare-family fallback for a
-// bare hyphenated "<family>-<variant>" shorthand such as "claude-opus" (ratified
-// in bestiary-xdbc item 4). It is invoked only when an exact-ID and exact-Family
-// lookup have both already failed.
+// bare hyphenated "<family>-<variant>" shorthand such as "claude-opus". It is
+// invoked only when an exact-ID and exact-Family lookup have both already failed.
 //
 // The match is deliberately CLOSED/conservative to avoid false positives on
 // arbitrary hyphenated junk: it splits input at each hyphen, and accepts a split
@@ -664,7 +663,7 @@ func modelMatches(m ModelInfo, matchInput string, scheme CanonicalScheme) bool {
 // matches the parsed (family, variant, version, date, modifier) tuple.
 //
 // Parsing rules:
-//  1. Strip "[modifier]" bracket suffix if present (SLICE-FIX-V2-5).
+//  1. Strip "[modifier]" bracket suffix if present.
 //  2. Strip "@date" suffix if present.
 //  3. Split remaining segments on "/".
 //  4. Provider-prefix detection: when 4 segments remain (provider/family/variant/version),
@@ -680,7 +679,7 @@ func modelMatches(m ModelInfo, matchInput string, scheme CanonicalScheme) bool {
 //   - date must match Date when specified.
 //   - modifier must match Modifier when specified (non-empty bracket suffix).
 func matchCanonicalSegments(m ModelInfo, matchInput string) bool {
-	// Extract "[modifier]" bracket suffix (SLICE-FIX-V2-5).
+	// Extract "[modifier]" bracket suffix.
 	// Must be done BEFORE stripping "@date" so the bracket is not confused with
 	// the date field when the date is absent.
 	var modifierFilter string
@@ -744,7 +743,7 @@ func matchCanonicalSegments(m ModelInfo, matchInput string) bool {
 		return false
 	}
 	// Modifier filter: when specified (bracket suffix present), must match the
-	// model's order-independent canonical modifier key (SLICE-10). The bracket
+	// model's order-independent canonical modifier key. The bracket
 	// suffix renders the same canonical comma-joined form (ModelRef.Format), so a
 	// round-tripped "[vision,instruct]" matches a model with Modifier
 	// ["instruct","vision"].

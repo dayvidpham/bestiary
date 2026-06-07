@@ -16,7 +16,7 @@ import (
 // strings in version_patterns.json compile successfully, and no JSON is
 // malformed.
 //
-// bestiary-bzdy: the sync.Once error path in initParseData() is silently
+// The sync.Once error path in initParseData() is silently
 // swallowed by ParseFamily (fail-closed design). This test makes the startup
 // contract explicit and measurable. If the data files or regexes are ever
 // broken, this test will catch it before any caller of ParseFamily silently
@@ -57,7 +57,7 @@ func TestParseFamily_Overrides(t *testing.T) {
 		{"command-a", "command", "a"},
 		{"command-r", "command", "r"},
 		{"deepseek-flash", "deepseek", "flash"},
-		// SLICE-3: deepseek-thinking / grok-vision / kimi-thinking overrides REMOVED —
+		// deepseek-thinking / grok-vision / kimi-thinking overrides REMOVED —
 		// trailing thinking/vision is now ALWAYS a Modifier (see TestUniformModifierSuffix).
 		{"gemini-embedding", "gemini", "embedding"},
 		{"gemini-flash", "gemini", "flash"},
@@ -264,14 +264,14 @@ func TestParseFamily_Empty(t *testing.T) {
 // TestParseFamily_Determinism verifies that ParseFamily is deterministic:
 // running it 100 times on the same input always produces identical output.
 // This guards against any map-iteration-order leakage.
-// MINOR bestiary-s36u: includes a suffix-stripping input.
+// MINOR : includes a suffix-stripping input.
 func TestParseFamily_Determinism(t *testing.T) {
 	t.Parallel()
 
 	inputs := []bestiary.Family{
 		"claude-opus", "kimi-k2.5", "qwen3.5", "gemini-flash-lite",
 		"gpt-codex-spark", "claude-opus-4-5", "", "llama",
-		// suffix-stripping path (bestiary-s36u): ensure determinism on Step 3.
+		// suffix-stripping path: ensure determinism on Step 3.
 		"foo-mini",
 	}
 
@@ -297,7 +297,7 @@ func TestParseFamily_Determinism(t *testing.T) {
 // versioned-variant pattern, so they route past Steps 1 and 2 and reach the
 // suffix-stripping loop at parse.go:257-264.
 //
-// BLOCKER bestiary-jtbj: suffix-stripping path had zero test coverage.
+// BLOCKER : suffix-stripping path had zero test coverage.
 func TestParseFamily_SuffixStripping(t *testing.T) {
 	t.Parallel()
 
@@ -309,9 +309,9 @@ func TestParseFamily_SuffixStripping(t *testing.T) {
 	}{
 		// All suffix entries from variant_suffixes.json (listed longest-first
 		// in the JSON, but initParseData re-sorts by length so the order here
-		// is documentary only). SLICE-3 REMOVED "-thinking" and "-vision" — they are
+		// is documentary only). REMOVED "-thinking" and "-vision" — they are
 		// now uniform Modifiers (modifiers.json authoritative), never variant suffixes.
-		// SLICE-10 (rc2) ALSO REMOVED "-instruct", "-turbo", "-base" — ratified global
+		// ALSO REMOVED "-instruct", "-turbo", "-base" — ratified global
 		// modifiers (member-guarded). ParseFamily no longer strips them, so "acme-instruct"
 		// stays family "acme-instruct" with empty variant (the modifier is extracted later
 		// by ExtractModifier in the ID-driven pipeline, not by ParseFamily on the raw string).
@@ -365,7 +365,7 @@ func TestParseFamily_SuffixStripping(t *testing.T) {
 // TestParseFamily_VPrefix covers the v-prefix versioned-variant pattern using
 // base values NOT present in family_overrides.json.
 //
-// IMPORTANT bestiary-ave7: v-prefix path was previously uncovered — all v-prefix
+// IMPORTANT : v-prefix path was previously uncovered — all v-prefix
 // inputs in TestParseFamily_Overrides were intercepted by the overrides table.
 func TestParseFamily_VPrefix(t *testing.T) {
 	t.Parallel()
@@ -403,7 +403,7 @@ func TestParseFamily_VPrefix(t *testing.T) {
 // found in the overrides table, the function returns (Family(base), variant)
 // directly.
 //
-// IMPORTANT bestiary-resh: only previous case was "claude-opus-4-5" whose base
+// IMPORTANT : only previous case was "claude-opus-4-5" whose base
 // "claude-opus" IS in overrides, leaving the else-branch unreachable in tests.
 func TestParseFamily_HyphenVersion_NoOverride(t *testing.T) {
 	t.Parallel()
@@ -481,7 +481,7 @@ func TestExtractDate_FromID(t *testing.T) {
 
 // TestExtractDate_CalendarValidation checks that structurally-matching but
 // semantically-invalid dates (e.g. month 99, day 99) are rejected.
-// bestiary-2jqs: ExtractDate must use time.Parse round-trip to validate range.
+// ExtractDate must use time.Parse round-trip to validate range.
 func TestExtractDate_CalendarValidation(t *testing.T) {
 	t.Parallel()
 
@@ -560,7 +560,7 @@ func TestInferFamilyFromID(t *testing.T) {
 
 // ----------------------------------------------------------------------------
 // ParseFamilyWithVersion tests
-// (SLICE-FIX-1-L2: tests FAIL until L3 implementation exists)
+// (tests FAIL until the implementation exists)
 // ----------------------------------------------------------------------------
 
 // TestParseFamilyWithVersion_Core covers the primary acceptance criteria from
@@ -578,7 +578,7 @@ func TestParseFamilyWithVersion_Core(t *testing.T) {
 		wantVariant string
 		wantVersion string
 	}{
-		// Primary UAT-2 criterion: claude families with versioned hyphen suffix.
+		// Primary criterion: claude families with versioned hyphen suffix.
 		{"claude-opus-4-5", "claude-opus-4-5", "claude", "opus", "4.5"},
 		{"claude-opus-4-6", "claude-opus-4-6", "claude", "opus", "4.6"},
 		{"claude-sonnet-4-5", "claude-sonnet-4-5", "claude", "sonnet", "4.5"},
@@ -705,7 +705,7 @@ func TestParseFamilyWithVersion_AlphanumericVersion(t *testing.T) {
 }
 
 // TestExtractVersionFromID covers the ExtractVersionFromID helper introduced in
-// cycle 2 (BLOCKER bestiary-5eh8). The helper extracts the version from the
+// cycle 2 (BLOCKER ). The helper extracts the version from the
 // model ID when the raw family field does not embed one.
 func TestExtractVersionFromID(t *testing.T) {
 	t.Parallel()
@@ -716,7 +716,7 @@ func TestExtractVersionFromID(t *testing.T) {
 		rawFamily bestiary.Family
 		want      string
 	}{
-		// Required L3 cases per team-lead brief (bestiary-5eh8).
+		// Required cases per team-lead brief.
 		{"claude-opus-4-5-20251101", "claude-opus-4-5-20251101", "claude-opus", "4.5"},
 		{"claude-opus-4-6-20250514", "claude-opus-4-6-20250514", "claude-opus", "4.6"},
 		{"gemini-2.5-flash", "gemini-2.5-flash", "gemini", "2.5"},
@@ -782,12 +782,12 @@ func TestParseFamilyWithVersion_BackwardCompat(t *testing.T) {
 // TestInferFamilyFromID_Variant verifies that InferFamilyFromIDWithVariant extracts
 // both variant and version from model IDs where the raw family field is empty.
 //
-// B5 (SLICE-FIX-2): the empty-family code path in genToModelInfo must produce
+// B5: the empty-family code path in genToModelInfo must produce
 // identical (Family, Variant, Version) as the non-empty-family path for the same
 // raw model ID. A model ID like "claude-opus-4-5-20251101" with empty raw family
 // must decompose to (claude, opus, 4.5), not (claude, "", "").
 //
-// This test FAILS until SLICE-FIX-2-L3 lands (InferFamilyFromIDWithVariant
+// This test FAILS until InferFamilyFromIDWithVariant lands (it
 // does not yet exist; the existing InferFamilyFromID only returns family).
 func TestInferFamilyFromID_Variant(t *testing.T) {
 	t.Parallel()
@@ -841,7 +841,7 @@ func TestInferFamilyFromID_Variant(t *testing.T) {
 }
 
 // --------------------------------------------------------------------------
-// ParseFamilyDetailed failure-detection tests (SLICE-FIX-V2-3 L2)
+// ParseFamilyDetailed failure-detection tests
 // --------------------------------------------------------------------------
 
 // TestParseFamilyDetailed_VersionDigitsNotExtracted verifies that ParseFamilyDetailed
@@ -958,15 +958,15 @@ func TestParseFamilyDetailed_YYMMDateAsVersion(t *testing.T) {
 }
 
 // ----------------------------------------------------------------------------
-// ExtractModifier tests (SLICE-FIX-V2-5)
+// ExtractModifier tests
 // ----------------------------------------------------------------------------
 
 // TestExtractModifier covers the 4-case corpus from the slice spec plus negative
-// cases. Tests are expected to FAIL until L3 integrates ExtractModifier into the
-// parse pipeline AND wires the result into ModelInfo.Modifier.
+// cases. Tests are expected to FAIL until ExtractModifier is integrated into the
+// parse pipeline AND the result is wired into ModelInfo.Modifier.
 //
 // Note: This test directly calls ExtractModifier which is already implemented
-// (the skeleton returns the correct value since we implemented the body in L1).
+// (the skeleton returns the correct value since the body is implemented).
 // The pipeline integration test below covers the end-to-end flow.
 func TestExtractModifier(t *testing.T) {
 	t.Parallel()
@@ -1028,7 +1028,7 @@ func TestExtractModifier(t *testing.T) {
 			desc:         "trailing token == variant: no double-count",
 			id:           "deepseek-thinking",
 			family:       "deepseek",
-			variant:      "thinking", // variant IS "thinking" — ExtractModifier must return empty (variant-guard, SLICE-FIX-V2-5 Fix 3)
+			variant:      "thinking", // variant IS "thinking" — ExtractModifier must return empty (variant-guard, Fix 3)
 			wantModifier: "",
 			wantConsumed: "",
 			// When the trailing modifier token equals the parsed variant, ExtractModifier
@@ -1074,7 +1074,7 @@ func TestExtractModifier(t *testing.T) {
 // ExtractModifier returns ("","") to avoid encoding the same semantic token in
 // both Variant and Modifier (double-count).
 //
-// SLICE-3 NOTE: after the uniform thinking/vision-as-modifier migration, the kimi/
+// NOTE: after the uniform thinking/vision-as-modifier migration, the kimi/
 // deepseek "variant=thinking" inputs below are SYNTHETIC — production no longer
 // decomposes those IDs to variant="thinking" (the overrides/suffixes/members were
 // removed; thinking is now the first-class Modifier — see TestUniformModifierSuffix).
@@ -1082,7 +1082,7 @@ func TestExtractModifier(t *testing.T) {
 // variant ever coincide with a trailing modifier token, it must not be counted twice.
 // These rows pin that guard mechanism; the empty-variant rows pin the new reality.
 //
-// IMPORTANT: bestiary-keqx (SLICE-FIX-V2-5 cycle-2 Fix 3)
+// IMPORTANT: ( cycle-2 Fix 3)
 func TestExtractModifier_DoesNotDoubleCountVariant(t *testing.T) {
 	t.Parallel()
 
@@ -1156,7 +1156,7 @@ func TestExtractModifier_DoesNotDoubleCountVariant(t *testing.T) {
 			if gotModifier != tc.wantModifier {
 				t.Errorf("ExtractModifier(%q, %q, %q) modifier = %q, want %q\n"+
 					"  What: modifier was double-counted (same token as variant)\n"+
-					"  Fix: variant-guard in ExtractModifier (SLICE-FIX-V2-5 Fix 3)",
+					"  Fix: variant-guard in ExtractModifier (Fix 3)",
 					tc.id, tc.family, tc.variant, gotModifier, tc.wantModifier)
 			}
 			if gotConsumed != tc.wantConsumed {
@@ -1167,7 +1167,7 @@ func TestExtractModifier_DoesNotDoubleCountVariant(t *testing.T) {
 	}
 }
 
-// TestUniformModifierSuffix is the SLICE-3 acceptance test for the uniform
+// TestUniformModifierSuffix is the acceptance test for the uniform
 // thinking/vision-as-modifier migration: ANY trailing {thinking,vision} token is
 // ALWAYS surfaced as the first-class Modifier and NEVER as the Variant, for ALL
 // families and regardless of whether the token arrives via the model ID, the raw
@@ -1178,7 +1178,7 @@ func TestExtractModifier_DoesNotDoubleCountVariant(t *testing.T) {
 // never that token.
 //
 // SCOPE NOTE: version-presence (e.g. "3.7" in claude-3-7-sonnet-thinking, "k2" as a
-// kimi variant) is OUT of scope here — that is SLICE-8 (version extraction). This
+// kimi variant) is OUT of scope here — that is (version extraction). This
 // test pins the modifier-classification invariant, not the full tuple's version.
 func TestUniformModifierSuffix(t *testing.T) {
 	t.Parallel()
@@ -1215,13 +1215,13 @@ func TestUniformModifierSuffix(t *testing.T) {
 			if modJoin(modifier) != tc.wantModifier {
 				t.Errorf("ParseFamilyDetailed(%q, %q) modifier = %q, want %q\n"+
 					"  What: trailing %q token was NOT surfaced as the first-class Modifier\n"+
-					"  Why: SLICE-3 uniform migration — thinking/vision are ALWAYS modifiers",
+					"  Why: uniform migration — thinking/vision are ALWAYS modifiers",
 					tc.rawFamily, tc.id, modifier, tc.wantModifier, tc.wantModifier)
 			}
 			// The invariant: the modifier token must NEVER be encoded as the variant.
 			if variant == tc.wantModifier {
 				t.Errorf("ParseFamilyDetailed(%q, %q) variant = %q — a trailing modifier token "+
-					"must NEVER be classified as the Variant (SLICE-3 uniform migration)",
+					"must NEVER be classified as the Variant (uniform migration)",
 					tc.rawFamily, tc.id, variant)
 			}
 		})
@@ -1233,7 +1233,7 @@ func TestUniformModifierSuffix(t *testing.T) {
 // ExtractDate) produces a ModelInfo with Modifier populated and Version/Date
 // NOT polluted by the trailing modifier token.
 //
-// These tests will FAIL until L3 integrates ExtractModifier into genToModelInfoDetailed
+// These tests will FAIL until ExtractModifier is integrated into genToModelInfoDetailed
 // so that ModelInfo.Modifier is populated during codegen.
 // This test validates the FUNCTION COMPOSITION directly (not the codegen path).
 func TestExtractModifier_PipelineIntegration(t *testing.T) {
@@ -1487,7 +1487,7 @@ func TestParseFamilyDetailed_Mode2_NegativeCases(t *testing.T) {
 		provider  bestiary.Provider
 		note      string
 	}{
-		// SLICE-3: the former claude-thinking / gpt-vision rows were REMOVED. Under the
+		// the former claude-thinking / gpt-vision rows were REMOVED. Under the
 		// uniform thinking/vision-as-modifier migration those tokens are never the parsed
 		// variant, so they correctly surface as the first-class Modifier and — with no
 		// variant absorbing them — DO trip Mode 2 as an honest audit signal (same as
@@ -1550,11 +1550,11 @@ func TestParseFamilyDetailed_CleanParse(t *testing.T) {
 }
 
 // --------------------------------------------------------------------------
-// R1: ExtractVersionBetweenFamilyAndVariant tests (SLICE-1-L2)
+// R1: ExtractVersionBetweenFamilyAndVariant tests
 // --------------------------------------------------------------------------
 
 // TestExtractVersionBetweenFamilyAndVariant covers the primary acceptance cases
-// from the L2 scope. These tests FAIL until L3 implements the extractor.
+// from the scope. These tests FAIL until the extractor is implemented.
 //
 // N-M equivalence: hyphen-separated numeric tokens are dot-joined (3-5 → 3.5).
 // Residual: tokens between version and variant that are neither numeric nor variant
@@ -1570,7 +1570,7 @@ func TestExtractVersionBetweenFamilyAndVariant(t *testing.T) {
 		wantVersion  string
 		wantResidual []string
 	}{
-		// Primary acceptance cases from L2 scope.
+		// Primary acceptance cases from scope.
 		{
 			desc:         "gpt-5-mini → 5 (single numeric between family and variant)",
 			id:           "gpt-5-mini",
@@ -1736,7 +1736,7 @@ func TestIsYYMMDateToken_Parity(t *testing.T) {
 // TestInferFamilyFromIDWithVariant_R3c covers the Δ2′ corrected algorithm:
 // tentative modifier strip → expose hidden date → decompose → guarded commit.
 //
-// Three empirically-verified traces from PROPOSAL-4 bestiary-y5lo:
+// Three empirically-verified traces from :
 //  1. 302ai re-host: claude-opus-4-1-20250805-thinking → (claude, opus, 4.1)
 //  2. Genuine-variant guard: kimi-k2-thinking → GUARD-2 declines, variant=thinking preserved
 //  3. No-modifier control: claude-opus-4-1-20250805 → (claude, opus, 4.1) unchanged
@@ -1764,7 +1764,7 @@ func TestInferFamilyFromIDWithVariant_R3c(t *testing.T) {
 			wantVersion: "4.1",
 		},
 		{
-			// Trace 2 (SLICE-8 d / CLARIFICATION-5 flip, SUPERSEDES the SLICE-3
+			// Trace 2 (d / flip, SUPERSEDES the
 			// (kimi,"","") pin): kimi-k2-thinking (empty raw_family). kimi is a
 			// letter-prefix series, so InferFamilyFromIDWithVariant's series split →
 			// (kimi, "k", "2"). The trailing "thinking" is NOT a variant;
@@ -1823,7 +1823,7 @@ func TestInferFamilyFromIDWithVariant_R3c(t *testing.T) {
 // empty raw_family (via InferFamilyFromIDWithVariant path), produces the expected
 // 5-tuple for the Δ2′ traces.
 //
-// This covers the MANDATE from the UAT: 5-tuple returns include modifier.
+// This covers the mandate that 5-tuple returns include modifier.
 func TestParseFamilyDetailed_5Tuple(t *testing.T) {
 	t.Parallel()
 
@@ -1858,10 +1858,10 @@ func TestParseFamilyDetailed_5Tuple(t *testing.T) {
 			wantModifier: "",
 		},
 		{
-			// SLICE-8 (d) / CLARIFICATION-5 RED→GREEN flip (SUPERSEDES the SLICE-3
+			// / RED→GREEN flip (SUPERSEDES the
 			// (kimi,"","") pin): the k-prefix is now a letter-prefix SERIES, so
 			// kimi-k2-thinking → (kimi, variant="k", version="2", modifier=thinking).
-			// "thinking" is stripped to the first-class Modifier first (uniform S3 rule);
+			// "thinking" is stripped to the first-class Modifier first (uniform modifier rule);
 			// the series split then decomposes the remaining "k2" → variant "k" + version
 			// "2". Consistent across ALL providers (empty raw and raw="kimi-thinking").
 			desc:         "kimi-k2-thinking empty rawFamily → series (kimi,k,2) + modifier thinking",
@@ -1946,7 +1946,7 @@ func TestParseFamilyDetailed_R2_Residual(t *testing.T) {
 }
 
 // --------------------------------------------------------------------------
-// SLICE-1-FIX-2 tests: FIX A (bare-4-digit date guard) + FIX B1 (sole trailing
+// tests: FIX A (bare-4-digit date guard) + FIX B1 (sole trailing
 // variant-suffix promotion) + negative controls
 // --------------------------------------------------------------------------
 
@@ -2089,7 +2089,7 @@ func TestExtractVersionFromID_FixA_Bare4DigitDateGuard(t *testing.T) {
 //
 // Acceptance: glm-5-turbo→(glm,turbo,5); phi-4-mini→(phi,mini,4).
 // Note: text-embedding-3-large/small were here in FIX-2 but are now documented residuals
-// after SLICE-1-FIX-4 reverted the full-prefix-first change (bestiary-ibtb, rc2 deferred).
+// after reverted the full-prefix-first change.
 func TestParseFamilyDetailed_FixB1_SoleVariantSuffixPromotion(t *testing.T) {
 	t.Parallel()
 
@@ -2107,10 +2107,10 @@ func TestParseFamilyDetailed_FixB1_SoleVariantSuffixPromotion(t *testing.T) {
 			// glm-5-turbo: rawFamily="glm" → family=glm, variant="" initially.
 			// ExtractVersionBetween: ver="5", residual=["turbo"]. "turbo" is a known suffix.
 			// B1: variant="" → promote "turbo" → (glm, turbo, 5), no failure.
-			// SLICE-10: 'turbo' is now a global Modifier (glm has no 'turbo' member), so it is
+			// 'turbo' is now a global Modifier (glm has no 'turbo' member), so it is
 			// NOT promoted into Variant — variant is empty, modifier=[turbo], version=5,
 			// and no residual-unaccounted failure (the modifier is a first-class field).
-			// SLICE-10: turbo→Modifier; ParseFamilyDetailed emits the ReasonKnownSuffixOverflow
+			// turbo→Modifier; ParseFamilyDetailed emits the ReasonKnownSuffixOverflow
 			// AUDIT annotation (turbo is a known modifier trailing the ID) which codegen clears
 			// once the modifier is a first-class field — so wantNoFailure is false here.
 			desc:          "glm-5-turbo → (glm, '', 5) turbo→Modifier",
@@ -2136,11 +2136,11 @@ func TestParseFamilyDetailed_FixB1_SoleVariantSuffixPromotion(t *testing.T) {
 			wantNoFailure: true,
 		},
 		// NOTE: text-embedding-3-large and text-embedding-3-small are NOT in this table
-		// after SLICE-1-FIX-4. The FIX-2 full-prefix-first change that made them promote
+		// after . The FIX-2 full-prefix-first change that made them promote
 		// has been reverted. With firstToken normalization, family="text-embedding" →
 		// prefix="text-" → remainder="embedding-3-large" → residual=["embedding","large"]
 		// (2 residual tokens, B1 requires exactly 1) → ReasonResidualUnaccountedTokens.
-		// These are documented residuals accepted in bestiary-ibtb (rc2 deferred).
+		// These are documented residuals accepted in .
 		// They are covered by TestParseFamilyDetailed_FixB1_Reverted_TextEmbeddingResidual.
 	}
 
@@ -2176,7 +2176,7 @@ func TestParseFamilyDetailed_FixB1_SoleVariantSuffixPromotion(t *testing.T) {
 // trailing residue is more than a single promotable suffix token — even though the
 // member-variant IS now recovered by recoverMemberVariant.
 //
-// SLICE-1 (rc2) FIX CYCLE: recoverMemberVariant superseded the old inline B1.
+// recoverMemberVariant superseded the old inline B1.
 // Unlike old B1 — which fired only on EXACTLY ONE post-version residual token — the
 // broad member-zone scan now recovers a member variant up front (for registered
 // families) regardless of how many OTHER residual tokens follow. So the variant IS
@@ -2261,10 +2261,10 @@ func TestParseFamilyDetailed_FixB1_NegativeControls(t *testing.T) {
 }
 
 // --------------------------------------------------------------------------
-// SLICE-1-FIX-3: date-as-version guard inside dot-join paths
+// date-as-version guard inside dot-join paths
 // --------------------------------------------------------------------------
 
-// TestParseFamilyWithVersion_Fix3_DateGroupsStripped verifies SLICE-1-FIX-3:
+// TestParseFamilyWithVersion_Fix3_DateGroupsStripped verifies :
 // the date-shape guard is applied INSIDE the hyphen-version dot-join path,
 // stripping trailing date groups and keeping only leading semantic-version groups.
 //
@@ -2357,7 +2357,7 @@ func TestParseFamilyWithVersion_Fix3_DateGroupsStripped(t *testing.T) {
 			if gotVersion != tc.wantVersion {
 				t.Errorf("ParseFamilyWithVersion(%q) version = %q, want %q\n"+
 					"  What: date-shaped token was returned as version\n"+
-					"  Why: SLICE-1-FIX-3 guard must strip date groups inside hyphen-version dot-join path\n"+
+					"  Why: the date-shape guard must strip date groups inside hyphen-version dot-join path\n"+
 					"  How to fix: verify dotJoinStrippingDateSuffix strips trailing date groups",
 					tc.raw, gotVersion, tc.wantVersion)
 			}
@@ -2365,7 +2365,7 @@ func TestParseFamilyWithVersion_Fix3_DateGroupsStripped(t *testing.T) {
 	}
 }
 
-// TestExtractVersionFromID_Fix3_MMYYYYTwoGroup verifies SLICE-1-FIX-3 for the
+// TestExtractVersionFromID_Fix3_MMYYYYTwoGroup verifies for the
 // reHyphenDigits path in ExtractVersionFromID: the MM-YYYY two-group pattern
 // (e.g. "08-2024", "03-2025") must be detected as a date and return "".
 //
@@ -2414,7 +2414,7 @@ func TestExtractVersionFromID_Fix3_MMYYYYTwoGroup(t *testing.T) {
 			if got != tc.want {
 				t.Errorf("ExtractVersionFromID(%q, %q) = %q, want %q\n"+
 					"  What: MM-YYYY two-group was returned as version\n"+
-					"  Why: SLICE-1-FIX-3 isMMYYYYTwoGroup guard must detect and reject MM-YYYY remainder",
+					"  Why: the isMMYYYYTwoGroup guard must detect and reject MM-YYYY remainder",
 					tc.id, tc.rawFamily, got, tc.want)
 			}
 		})
@@ -2422,7 +2422,7 @@ func TestExtractVersionFromID_Fix3_MMYYYYTwoGroup(t *testing.T) {
 }
 
 // TestExtractVersionBetweenFamilyAndVariant_Fix3_6DigitStripped verifies that
-// SLICE-1-FIX-3 correctly strips 6-digit YYMMDD tokens from the version extraction
+// correctly strips 6-digit YYMMDD tokens from the version extraction
 // loop in ExtractVersionBetweenFamilyAndVariant.
 //
 // BDD: given an ID with a 6-digit YYMMDD suffix embedded after valid version tokens,
@@ -2451,7 +2451,7 @@ func TestExtractVersionBetweenFamilyAndVariant_Fix3_6DigitStripped(t *testing.T)
 		},
 		{
 			// doubao-seed-1-6-250615: family="doubao-seed", variant="".
-			// SLICE-1-FIX-4: full-prefix-first reverted; firstToken("doubao-seed")="doubao" →
+			// full-prefix-first reverted; firstToken("doubao-seed")="doubao" →
 			// prefix="doubao-", remainder="seed-1-6-250615" → "seed" is non-version residual,
 			// "1","6" are version tokens, "250615" is 6-digit YYMMDD → stop.
 			// → version="1.6", residual=["seed"] (honest-audit residual for compound family).
@@ -2471,7 +2471,7 @@ func TestExtractVersionBetweenFamilyAndVariant_Fix3_6DigitStripped(t *testing.T)
 			if gotVersion != tc.wantVersion {
 				t.Errorf("ExtractVersionBetweenFamilyAndVariant(%q, %q, %q) version = %q, want %q\n"+
 					"  What: 6-digit YYMMDD was included in version\n"+
-					"  Why: SLICE-1-FIX-3 isDateShapedToken must reject 6-digit tokens in dot-join loop",
+					"  Why: isDateShapedToken must reject 6-digit tokens in dot-join loop",
 					tc.id, tc.family, tc.variant, gotVersion, tc.wantVersion)
 			}
 			if len(gotResidual) != len(tc.wantResidual) {
@@ -2483,10 +2483,10 @@ func TestExtractVersionBetweenFamilyAndVariant_Fix3_6DigitStripped(t *testing.T)
 }
 
 // --------------------------------------------------------------------------
-// SLICE-1-FIX-4: regression tests
+// regression tests
 // --------------------------------------------------------------------------
 
-// TestParseFamilyDetailed_Fix4_VersionRestoredAfterRevert is the SLICE-1-FIX-4 regression
+// TestParseFamilyDetailed_Fix4_VersionRestoredAfterRevert is the regression
 // test pinning that the FIX-2 B1 full-prefix-first revert RESTORES version extraction for
 // the three canonical cases that were over-stripped. Guards against version-nulling recurrence.
 //
@@ -2594,9 +2594,9 @@ func TestParseFamilyDetailed_Fix4_OjjbSurvivingB1Promotions(t *testing.T) {
 			wantVersion: "5",
 		},
 		{
-			// SLICE-10: 'turbo' is now a global Modifier (gpt has no 'turbo' member), so it is
+			// 'turbo' is now a global Modifier (gpt has no 'turbo' member), so it is
 			// extracted to the Modifier list instead of promoted to Variant → (gpt, "", 4).
-			desc:        "gpt-4-turbo → (gpt, '', 4) turbo→Modifier (SLICE-10)",
+			desc:        "gpt-4-turbo → (gpt, '', 4) turbo→Modifier",
 			rawFamily:   "gpt",
 			id:          "gpt-4-turbo",
 			provider:    "openai",
@@ -2623,7 +2623,7 @@ func TestParseFamilyDetailed_Fix4_OjjbSurvivingB1Promotions(t *testing.T) {
 			if version != tc.wantVersion {
 				t.Errorf("version = %q, want %q", version, tc.wantVersion)
 			}
-			// SLICE-10: a turbo→Modifier reclassification emits the ReasonKnownSuffixOverflow
+			// a turbo→Modifier reclassification emits the ReasonKnownSuffixOverflow
 			// AUDIT annotation (codegen clears it once the modifier is first-class). Permit it;
 			// any OTHER failure reason is still unexpected.
 			if failure != nil && failure.Reason != bestiary.ReasonKnownSuffixOverflow {
@@ -2640,7 +2640,7 @@ func TestParseFamilyDetailed_Fix4_OjjbSurvivingB1Promotions(t *testing.T) {
 //
 // After revert: firstToken("text-embedding")="text" → prefix="text-" → remainder="embedding-3-large"
 // → residual=["embedding","large"] (2 tokens, B1 requires exactly 1) → failure emitted.
-// Proper additive handling deferred to rc2 (bestiary-ibtb).
+// Proper additive handling is deferred.
 func TestParseFamilyDetailed_Fix4_TextEmbeddingResidual(t *testing.T) {
 	t.Parallel()
 
@@ -2673,7 +2673,7 @@ func TestParseFamilyDetailed_Fix4_TextEmbeddingResidual(t *testing.T) {
 	}
 }
 
-// TestParseFamilyWithVersion_Fix4_Step5_6DigitDateGuard verifies the SLICE-1-FIX-4 7kyb/9yyp
+// TestParseFamilyWithVersion_Fix4_Step5_6DigitDateGuard verifies the 7kyb/9yyp
 // fix: ParseFamilyWithVersion Step-5 override-prefix version loop now uses isDateShapedToken
 // (catches 4-digit AND 6-digit YYMMDD) instead of isFourDigitDateToken (4-digit only).
 //
@@ -2683,7 +2683,7 @@ func TestParseFamilyDetailed_Fix4_TextEmbeddingResidual(t *testing.T) {
 //
 // Also confirms TestStaticModels_NoDateVersions invariant is not violated by the 4th site.
 //
-// NOTE (bestiary-rwbl / SLICE-1-FIX-4-FIX): The inputs in this test (e.g. "claude-opus-1-6-250615")
+// NOTE: The inputs in this test (e.g. "claude-opus-1-6-250615")
 // actually match the Step-2 hyphen-version regex (all-digit suffix) and are processed by
 // dotJoinStrippingDateSuffix BEFORE reaching Step-5. These tests are therefore NOT load-bearing
 // for parse.go:455 (the isDateShapedToken guard in the Step-5 override-prefix loop).
@@ -2735,7 +2735,7 @@ func TestParseFamilyWithVersion_Fix4_Step5_6DigitDateGuard(t *testing.T) {
 				t.Errorf("version = %q, want %q\n"+
 					"  What: 6-digit YYMMDD token included in version at Step-5 override-prefix loop\n"+
 					"  Why: isFourDigitDateToken only catches 4-digit tokens; is6DigitYYMMDD was not guarded here\n"+
-					"  How to fix: verify Step-5 loop uses isDateShapedToken (SLICE-1-FIX-4 7kyb/9yyp)",
+					"  How to fix: verify Step-5 loop uses isDateShapedToken",
 					version, tc.wantVersion)
 			}
 			// The version must NOT be a 6-digit all-numeric string.
@@ -2760,7 +2760,7 @@ func TestParseFamilyWithVersion_Fix4_Step5_6DigitDateGuard(t *testing.T) {
 // companion test for parse.go:455 (the isDateShapedToken guard inside the Step-5
 // override-prefix version loop of ParseFamilyWithVersion).
 //
-// Background (bestiary-rwbl / SLICE-1-FIX-4-FIX):
+// Background:
 //
 // The existing TestParseFamilyWithVersion_Fix4_Step5_6DigitDateGuard is NOT load-bearing for
 // parse.go:455: its inputs (e.g. "claude-opus-1-6-250615") match the Step-2 hyphen-version
@@ -2782,7 +2782,7 @@ func TestParseFamilyWithVersion_Fix4_Step5_6DigitDateGuard(t *testing.T) {
 // hyphen-version regex from matching (it requires an all-digit tail), so the input falls
 // through to Step-5 where the override-prefix scan fires.
 //
-// Mutation verification (performed during test authoring — bestiary-rwbl):
+// Mutation verification (performed during test authoring):
 //
 //	Reverting parse.go:455 to isFourDigitDateToken: FAILS these cases.
 //	  "claude-opus-1-6-250615-zen" → version="1.6.250615" (want "1.6")
@@ -2875,7 +2875,7 @@ func TestParseFamilyWithVersion_Fix4_Step5_6DigitDateGuard_LoadBearing(t *testin
 					"  Why: isFourDigitDateToken only rejects 4-digit tokens; 6-digit YYMMDD (len=6) passes through it\n"+
 					"  Where: parse.go ParseFamilyWithVersion Step-5, loop at ~line 454-459\n"+
 					"  How to fix: parse.go:455 must use isDateShapedToken (not isFourDigitDateToken)\n"+
-					"  Ref: SLICE-1-FIX-4 bestiary-rwbl load-bearing mutation test",
+					"  Ref: load-bearing mutation test",
 					version, tc.wantVersion)
 			}
 			// The version must NOT contain a 6-digit all-numeric segment (date leak).
@@ -2883,7 +2883,7 @@ func TestParseFamilyWithVersion_Fix4_Step5_6DigitDateGuard_LoadBearing(t *testin
 				if len(seg) == 6 && isAllDigits(seg) {
 					t.Errorf("version segment %q is a bare 6-digit date — INVARIANT VIOLATED\n"+
 						"  What: version=%q contains date-shaped segment %q\n"+
-						"  Ref: parse.go:455 isDateShapedToken guard (SLICE-1-FIX-4)",
+						"  Ref: parse.go:455 isDateShapedToken guard",
 						seg, version, seg)
 				}
 			}
@@ -2920,7 +2920,7 @@ func isAllDigits(s string) bool {
 }
 
 // ============================================================================
-// SLICE-1 (rc2) — L2 Tests (RED until L3 implements M3/M4/recoverMemberVariant)
+// Tests (RED until M3/M4/recoverMemberVariant are implemented)
 // ============================================================================
 
 // ----------------------------------------------------------------------------
@@ -2934,7 +2934,7 @@ func isAllDigits(s string) bool {
 // When ParseFamilyDetailed is called,
 // Then the returned Family is lowercase ("minimax").
 //
-// This is the M4 case-fold step (SLICE-1). Fixes CatA cross-provider divergences
+// This is the M4 case-fold step. Fixes CatA cross-provider divergences
 // (e.g. some providers return raw_family="MiniMax" while others return "minimax").
 func TestM4_FamilyCaseFold(t *testing.T) {
 	t.Parallel()
@@ -2980,7 +2980,7 @@ func TestM4_FamilyCaseFold(t *testing.T) {
 			if fam != tc.wantFamily {
 				t.Errorf("family = %q, want %q\n"+
 					"  What: M4 case-fold did not lowercase the Family field\n"+
-					"  Why: SLICE-1 requires Family(strings.ToLower(...)) at the Family-field boundary\n"+
+					"  Why: the parser requires Family(strings.ToLower(...)) at the Family-field boundary\n"+
 					"  How to fix: apply M4 case-fold in ParseFamilyDetailed and InferFamilyFromIDWithVariant",
 					fam, tc.wantFamily)
 			}
@@ -3029,7 +3029,7 @@ func TestM4_InferFamilyCaseFold(t *testing.T) {
 			if fam != tc.wantFamily {
 				t.Errorf("InferFamilyFromIDWithVariant(%q) family = %q, want %q\n"+
 					"  What: M4 case-fold did not lowercase inferred Family\n"+
-					"  Why: SLICE-1 requires M4 lowercase at Family-field boundary in"+
+					"  Why: the parser requires M4 lowercase at Family-field boundary in"+
 					" InferFamilyFromIDWithVariant\n"+
 					"  How to fix: apply Family(strings.ToLower(...)) at the return boundaries",
 					tc.id, fam, tc.wantFamily)
@@ -3065,8 +3065,8 @@ func TestM3_VendorAliasStrip(t *testing.T) {
 	}{
 		{
 			// "minimaxai-minimax-m1": M3 strips "minimaxai-" → "minimax-m1",
-			// M4 lowercases → "minimax-m1"; SLICE-8 (d) series split → variant="m"
-			// (CLARIFICATION-5 REVERSES the SLICE-0 whole-token "m1").
+			// M4 lowercases → "minimax-m1"; (d) series split → variant="m"
+			// (REVERSES the whole-token "m1").
 			desc:        "minimaxai-minimax-m1 → strip alias, family=minimax series variant=m",
 			id:          "minimaxai-minimax-m1",
 			provider:    "some-provider",
@@ -3109,7 +3109,7 @@ func TestM3_VendorAliasStrip(t *testing.T) {
 // Then variant="m1" is recovered.
 //
 // This test covers the NEW scope of recoverMemberVariant beyond old B1.
-// It will be RED until L3 implements recoverMemberVariant.
+// It will be RED until recoverMemberVariant is implemented.
 func TestRecoverMemberVariant_FamiliesJSONMembers(t *testing.T) {
 	t.Parallel()
 
@@ -3122,7 +3122,7 @@ func TestRecoverMemberVariant_FamiliesJSONMembers(t *testing.T) {
 		wantVariant string
 	}{
 		{
-			// SLICE-8 (d) / CLARIFICATION-5: minimax is now a letter-prefix SERIES
+			// / minimax is now a letter-prefix SERIES
 			// (series_letter "m"), so the series split OWNS this decomposition and
 			// supersedes the old whole-token "m1" member recovery: minimax-m1-80k →
 			// variant="m" (+ version "1"; "80k" is an ignored context-window token).
@@ -3134,7 +3134,7 @@ func TestRecoverMemberVariant_FamiliesJSONMembers(t *testing.T) {
 			wantVariant: "m",
 		},
 		{
-			// SLICE-8 (d) / CLARIFICATION-5: empty raw_family, MiniMax-M1 (mixed case)
+			// / empty raw_family, MiniMax-M1 (mixed case)
 			// → M4 family="minimax"; series split → variant="m" (+ version "1").
 			desc:        "empty raw_family, MiniMax-M1 → series (minimax, m)",
 			rawFamily:   "",
@@ -3165,8 +3165,8 @@ func TestRecoverMemberVariant_FamiliesJSONMembers(t *testing.T) {
 			if variant != tc.wantVariant {
 				t.Errorf("variant = %q, want %q\n"+
 					"  What: recoverMemberVariant did not recover variant from families.json members\n"+
-					"  Why: SLICE-1 requires recoverMemberVariant to consult pd.families members\n"+
-					"  How to fix: implement recoverMemberVariant in pipeline (L3)",
+					"  Why: the parser requires recoverMemberVariant to consult pd.families members\n"+
+					"  How to fix: implement recoverMemberVariant in pipeline",
 					variant, tc.wantVariant)
 			}
 		})
@@ -3177,7 +3177,7 @@ func TestRecoverMemberVariant_FamiliesJSONMembers(t *testing.T) {
 // sole-residual suffix promotion still yields its expected (family, variant,
 // version) results.
 //
-// NOTE (SLICE-1 rc2 FIX CYCLE): B1 was NOT removed. The fix cycle RESTORED a
+// NOTE: B1 was NOT removed. The fix cycle RESTORED a
 // version-preserving B1 that runs POST-version extraction for UNREGISTERED
 // families (via the shared bareVariantSuffix helper) — see the B1 block in
 // ParseFamilyDetailed and the recoverMemberVariant doc comment. These cases must
@@ -3199,7 +3199,7 @@ func TestRecoverMemberVariant_SubsumesB1(t *testing.T) {
 		wantNoFailure bool
 	}{
 		{
-			// SLICE-10: 'turbo'→Modifier (glm non-member) → variant empty. The
+			// 'turbo'→Modifier (glm non-member) → variant empty. The
 			// ReasonKnownSuffixOverflow audit annotation now fires (codegen clears it).
 			desc:          "glm-5-turbo → (glm, '', 5) turbo→Modifier [B1 subsumed]",
 			rawFamily:     "glm",
@@ -3251,7 +3251,7 @@ func TestRecoverMemberVariant_SubsumesB1(t *testing.T) {
 func TestRecoverMemberVariant_SubsumesAmputation(t *testing.T) {
 	t.Parallel()
 
-	// SLICE-8 (d) / CLARIFICATION-5 RED→GREEN flip (SUPERSEDES the SLICE-3
+	// / RED→GREEN flip (SUPERSEDES the
 	// (kimi,"","") pin): kimi is a letter-prefix series, so InferFamilyFromIDWithVariant
 	// applies the series split → (kimi, "k", "2"). The trailing "thinking" is a
 	// Modifier (surfaced by ParseFamilyDetailed's ExtractModifier), never a Variant.
@@ -3273,14 +3273,14 @@ func TestRecoverMemberVariant_SubsumesAmputation(t *testing.T) {
 	// should recover the variant from the remaining tokens.
 	t.Run("empty raw_family MiniMax-M1 → series (minimax, m, 1)", func(t *testing.T) {
 		t.Parallel()
-		// SLICE-8 (d) / CLARIFICATION-5: minimax is a letter-prefix series, so the
+		// / minimax is a letter-prefix series, so the
 		// series split owns this — variant="m", version="1" (REVERSES whole-token "m1").
 		fam, variant, version := bestiary.InferFamilyFromIDWithVariant("MiniMax-M1", "nano-gpt")
 		if fam != "minimax" {
 			t.Errorf("family = %q, want %q (expected M4 lowercase)", fam, "minimax")
 		}
 		if variant != "m" || version != "1" {
-			t.Errorf("(variant,version) = (%q,%q), want (\"m\",\"1\") (CLARIFICATION-5 series split)",
+			t.Errorf("(variant,version) = (%q,%q), want (\"m\",\"1\") (series split)",
 				variant, version)
 		}
 	})
@@ -3297,7 +3297,7 @@ func TestRecoverMemberVariant_SubsumesAmputation(t *testing.T) {
 // When FamiliesJSONKeyError is called,
 // Then a non-nil error is returned (fail-fast behaviour).
 //
-// This test is GREEN from L1 (FamiliesJSONKeyError is part of L1 infrastructure).
+// This test is GREEN from the start (FamiliesJSONKeyError is part of the base infrastructure).
 // It serves as the specification of the fail-fast contract.
 func TestFamiliesJSON_LoaderFailFast(t *testing.T) {
 	t.Parallel()
@@ -3355,10 +3355,10 @@ func TestFamiliesJSON_LoaderFailFast(t *testing.T) {
 }
 
 // ============================================================================
-// SLICE-3 (rc2) — family_aliases canonical-winner ledger
+// family_aliases canonical-winner ledger
 // ============================================================================
 
-// TestFamilyAliasesJSON_LoaderFailFast verifies the SLICE-3 ledger validation
+// TestFamilyAliasesJSON_LoaderFailFast verifies the ledger validation
 // contract: alias TARGETS (canonical family values) must be known families, while
 // alias KEYS (mislabels) are deliberately NOT validated.
 //
@@ -3407,7 +3407,7 @@ func TestFamilyAliasesJSON_LoaderFailFast(t *testing.T) {
 // so the family agrees cross-provider.
 //
 // SCOPE NOTE: the finetune name and the embedded "3.x" version are residual here —
-// version recovery for folded families is SLICE-8 (version-presence), out of scope.
+// version recovery for folded families is (version-presence), out of scope.
 func TestFamilyAliasesLedger_Fold(t *testing.T) {
 	t.Parallel()
 
@@ -3438,7 +3438,7 @@ func TestFamilyAliasesLedger_Fold(t *testing.T) {
 // TestFamilyAliasesLedger_DefaultOwnFamily verifies the DEFAULT own-family rule:
 // genuinely distinct families that have NO ledger row are left unchanged (no
 // accidental fold). These are the families the supervisor explicitly ratified as
-// own-family in bestiary-7ipe.
+// own-family in .
 func TestFamilyAliasesLedger_DefaultOwnFamily(t *testing.T) {
 	t.Parallel()
 
@@ -3455,7 +3455,7 @@ func TestFamilyAliasesLedger_DefaultOwnFamily(t *testing.T) {
 }
 
 // ============================================================================
-// SLICE-2 (rc2) — L2 Tests (RED until L3 implements the bare_gen_split predicate)
+// Tests (RED until the bare_gen_split predicate is implemented)
 // ============================================================================
 
 // TestM2_BareGenSplit_PositiveSplits verifies the M2 bare-generation split: a
@@ -3465,7 +3465,7 @@ func TestFamilyAliasesLedger_DefaultOwnFamily(t *testing.T) {
 // bare_gen_split:true flag attested in the snapshot).
 //
 // BDD: Given "qwen3-max" When decomposed Then (qwen, max, 3).
-// These cases are RED until L3 implements the predicate at the SLICE-2 insertion
+// These cases are RED until the predicate is implemented at the insertion
 // point in BOTH entrypoints (InferFamilyFromIDWithVariant + ParseFamilyDetailed).
 func TestM2_BareGenSplit_PositiveSplits(t *testing.T) {
 	t.Parallel()
@@ -3481,17 +3481,17 @@ func TestM2_BareGenSplit_PositiveSplits(t *testing.T) {
 	}{
 		// Bare glued family token, empty raw — split base off the trailing int.
 		{"qwen3 → (qwen,,3)", "", "qwen3", "alibaba", "qwen", "", "3"},
-		// SLICE-12 (bestiary-xdbc Q2a): the 'o' family folds into gpt as a VARIANT —
-		// o1 → (gpt, variant='o', version=1). Supersedes the SLICE-2 o1→(o,,1) row.
-		{"o1 → (gpt,o,1) (bestiary-xdbc Q2a)", "", "o1", "openai", "gpt", "o", "1"},
+		// the 'o' family folds into gpt as a VARIANT —
+		// o1 → (gpt, variant='o', version=1). Supersedes the o1→(o,,1) row.
+		{"o1 → (gpt,o,1)", "", "o1", "openai", "gpt", "o", "1"},
 		// Glued family token + member variant (empty-raw inference path).
 		{"qwen3-max (raw empty) → (qwen,max,3)", "", "qwen3-max", "qiniu-ai", "qwen", "max", "3"},
 		// CLEAN raw-supplied family + glued generation in the ID: the (B) version
 		// recovery half must surface the glued int as version so both providers agree.
 		{"qwen3-max (raw qwen) → (qwen,max,3)", "qwen", "qwen3-max", "alibaba", "qwen", "max", "3"},
-		// SLICE-12 (bestiary-xdbc Q2a/Q2b): o3-mini → (gpt, variant='o', version=3),
-		// mini→modifier (not asserted here). Supersedes the SLICE-2 o3-mini→(o,mini,3) row.
-		{"o3-mini (raw o) → (gpt,o,3) (bestiary-xdbc Q2a)", "o", "openai/o3-mini", "openrouter", "gpt", "o", "3"},
+		// o3-mini → (gpt, variant='o', version=3),
+		// mini→modifier (not asserted here). Supersedes the o3-mini→(o,mini,3) row.
+		{"o3-mini (raw o) → (gpt,o,3)", "o", "openai/o3-mini", "openrouter", "gpt", "o", "3"},
 		// Hyphenated generation already extracts version on the raw side; the
 		// empty-raw inferred family "gpt-5"/"gemini-3" must split to the base.
 		{"gpt-5-mini (raw empty) → (gpt,mini,5)", "", "openai/gpt-5-mini", "kilo", "gpt", "mini", "5"},
@@ -3505,8 +3505,8 @@ func TestM2_BareGenSplit_PositiveSplits(t *testing.T) {
 			if fam != tc.wantFamily {
 				t.Errorf("family = %q, want %q\n"+
 					"  What: bare_gen_split did not split the glued generation off the family\n"+
-					"  Why: SLICE-2 closed predicate (has-entry ∧ not-digit-suffixed ∧ flag) should split\n"+
-					"  How to fix: implement the bare_gen_split predicate at the SLICE-2 insertion point",
+					"  Why: the closed predicate (has-entry ∧ not-digit-suffixed ∧ flag) should split\n"+
+					"  How to fix: implement the bare_gen_split predicate at the insertion point",
 					fam, tc.wantFamily)
 			}
 			if variant != tc.wantVariant {
@@ -3527,12 +3527,12 @@ func TestM2_BareGenSplit_PositiveSplits(t *testing.T) {
 //
 //   - v0 / asi1 / esm2 / wan2 / hy3 / r1: base ("v"/"asi"/"esm"/"wan"/"hy"/"r")
 //     has NO families.json entry → has-entry clause fails.
-//   - l3: l3's base "l" has no entry — CLARIFICATION-1.4 (digit-suffix guard +
+//   - l3: l3's base "l" has no entry — .4 (digit-suffix guard +
 //     has-entry).
 //
-// NOTE (SLICE-8 d): the letter-prefix series cases that USED to live here
+// NOTE: the letter-prefix series cases that USED to live here
 // (minimax-m2.5 / kimi-k2.5 / mimo-v2.5 / mimo-v1) are now decomposed by the
-// CLARIFICATION-5 series split (variant=letter + version=number) — a DIFFERENT
+// series split (variant=letter + version=number) — a DIFFERENT
 // mechanism from bare_gen_split. bare_gen_split STILL declines them (their bases
 // carry no bare_gen_split flag); the observable ParseFamilyDetailed tuple is now
 // owned by splitSeriesVariant and asserted in TestSeriesLetterSplit_CLARIFICATION5.
@@ -3555,17 +3555,17 @@ func TestM2_BareGenSplit_NonSplit(t *testing.T) {
 		{"asi1 NOT split (asi∉families)", "", "asi1-mini", "p", "asi1", "mini"},
 		{"esm2 NOT split (esm∉families)", "", "esm2-large", "p", "esm2", "large"},
 		{"wan2 NOT split (wan∉families)", "", "wan2-t2v", "p", "wan2", ""},
-		// SLICE-14: "hy3" MOVED to the SPLIT set — "hy" is now a registered family
+		// "hy3" MOVED to the SPLIT set — "hy" is now a registered family
 		// (bare "hy" attested via raw="Hy"), so hy3-preview → (hy, "", 3) [see
 		// TestSLICE14_TIER1Convergences]. It is no longer a NonSplit case.
 		{"r1 NOT split (r∉families)", "", "r1", "p", "r1", ""},
-		// SLICE-3: bare-gen still DECLINES "l3" (base "l" ∉ families.json), but the
+		// bare-gen still DECLINES "l3" (base "l" ∉ families.json), but the
 		// family_aliases ledger then folds l3 → llama (RATIFIED: L3.x = Llama-3
 		// shorthand). The closed-predicate guarantee (no bare-gen split) is unchanged;
 		// the canonical family arrives via the ledger remap, not the split.
 		{"l3 → llama via ledger (bare-gen declines: l∉families)", "", "l3-8b", "p", "llama", ""},
 		// NOTE: the former minimax-m2.5 / kimi-k2.5 / mimo-v2.5 / mimo-v1 cases moved
-		// to TestSeriesLetterSplit_CLARIFICATION5 — they now decompose via the SLICE-8
+		// to TestSeriesLetterSplit_CLARIFICATION5 — they now decompose via the
 		// (d) letter-prefix series split, not bare_gen_split.
 	}
 
@@ -3588,11 +3588,11 @@ func TestM2_BareGenSplit_NonSplit(t *testing.T) {
 }
 
 // ============================================================================
-// SLICE-8 (rc2): ID-driven version-presence consistency + param-size guard +
-// glued letter-suffix + letter-prefix series split (CLARIFICATION-4 + -5).
+// ID-driven version-presence consistency + param-size guard +
+// glued letter-suffix + letter-prefix series split (+ -5).
 // ============================================================================
 
-// TestSlice8_VersionPresenceConsistency_ClassA verifies SLICE-8 (a): a version
+// TestSlice8_VersionPresenceConsistency_ClassA verifies (a): a version
 // derivable from the (vendor-stripped, case-folded) model ID is extracted
 // CONSISTENTLY regardless of the provider raw_family. Each case asserts that the
 // SAME id decomposes to an IDENTICAL (Family, Variant, Version) under BOTH an
@@ -3628,7 +3628,7 @@ func TestSlice8_VersionPresenceConsistency_ClassA(t *testing.T) {
 				if f != tc.wantFamily || va != tc.wantVariant || ve != tc.wantVersion {
 					t.Errorf("raw=%q id=%q → (%s|%s|%s), want (%s|%s|%s)\n"+
 						"  What: ID-driven version not extracted consistently across raw_family\n"+
-						"  Why: SLICE-8 (a) — version must derive from the ID regardless of raw_family",
+						"  Why: version must derive from the ID regardless of raw_family",
 						raw, tc.id, f, va, ve, tc.wantFamily, tc.wantVariant, tc.wantVersion)
 				}
 			}
@@ -3636,7 +3636,7 @@ func TestSlice8_VersionPresenceConsistency_ClassA(t *testing.T) {
 	}
 }
 
-// TestSlice8_ParamSizeGuard verifies SLICE-8 (b): parameter-count / model-size
+// TestSlice8_ParamSizeGuard verifies (b): parameter-count / model-size
 // tokens (NNNb / NNNm / MoE) are NEVER promoted to Version. The size INFO is GH#9
 // (missing Size dimension), explicitly not a version. Asserted on ALL providers
 // (empty + populated raw) so gpt-oss-120b is Version "" everywhere (consistent).
@@ -3683,7 +3683,7 @@ func TestSlice8_ParamSizeGuard(t *testing.T) {
 }
 
 // TestSlice8_GluedVersionModifier verifies the glued letter-after-version handling.
-// SLICE-12 (bestiary-xdbc) SUPERSEDES the SLICE-8(c) glm-4.5v→vision behaviour:
+// SUPERSEDES the (c) glm-4.5v→vision behaviour:
 //   - Q1: the glued single 'v' after a glm version is the VARIANT 'v' (glm-4.5v →
 //     (glm, "v", 4.5), NOT modifier vision). The spelled-out "-vision" hyphen token
 //     remains a Modifier (uniform rule unchanged) and is NOT exercised here.
@@ -3698,9 +3698,9 @@ func TestSlice8_GluedVersionModifier(t *testing.T) {
 		id                                            bestiary.ModelID
 		wantFamily, wantVariant, wantVersion, wantMod string
 	}{
-		{"glm-4.5v raw=glm → variant 'v' (bestiary-xdbc Q1)", "glm", "glm-4.5v", "glm", "v", "4.5", ""},
-		{"glm-4.5v empty raw → variant 'v' (bestiary-xdbc Q1)", "", "glm-4.5v", "glm", "v", "4.5", ""},
-		{"gpt-4o → variant '4o', version '' (bestiary-xdbc Q2b)", "gpt", "gpt-4o", "gpt", "4o", "", ""},
+		{"glm-4.5v raw=glm → variant 'v'", "glm", "glm-4.5v", "glm", "v", "4.5", ""},
+		{"glm-4.5v empty raw → variant 'v'", "", "glm-4.5v", "glm", "v", "4.5", ""},
+		{"gpt-4o → variant '4o', version ''", "gpt", "gpt-4o", "gpt", "4o", "", ""},
 	}
 
 	for _, tc := range cases {
@@ -3715,13 +3715,13 @@ func TestSlice8_GluedVersionModifier(t *testing.T) {
 	}
 }
 
-// TestSeriesLetterSplit_CLARIFICATION5 verifies SLICE-8 (d): letter-prefix model
+// TestSeriesLetterSplit_CLARIFICATION5 verifies (d): letter-prefix model
 // series (kimi→k, minimax→m, mimo→v) decompose to variant=SERIES-LETTER +
 // version=NUMBER, with ALL attested forms normalized consistently. This SUPERSEDES
-// the SLICE-0 whole-token plan (minimax "m1") and SLICE-3's kimi-k2-thinking
+// the whole-token plan (minimax "m1") and this kimi-k2-thinking
 // (kimi,"","") pin, and the version_patterns letter-prefix whole-token-variant.
 //
-// TIER INTERACTION: surfaced + ruled by the user (CLARIFICATION-6): tier→Modifier,
+// TIER INTERACTION: surfaced + ruled by the user: tier→Modifier,
 // variant stays the pure series-letter — pinned in TestSeriesTierModifier_CLARIFICATION6.
 // MULTI-MODIFIER cases (tier + thinking/vision) remain surfaced (single-valued
 // Modifier; multiplicity ruling pending) and keep the existing thinking modifier.
@@ -3747,7 +3747,7 @@ func TestSeriesLetterSplit_CLARIFICATION5(t *testing.T) {
 		{"kimi-k2:1t (context tag, ver 2)", "kimi", "kimi-k2:1t", "kimi", "k", "2", ""},
 		{"kimi-k2-thinking → series + modifier", "kimi-thinking", "kimi-k2-thinking", "kimi", "k", "2", "thinking"},
 		{"kimi-k2-thinking empty raw", "", "kimi-k2-thinking", "kimi", "k", "2", "thinking"},
-		// minimax M-series (REVERSES SLICE-0 whole-token "m1").
+		// minimax M-series (REVERSES whole-token "m1").
 		{"minimax-m1 raw=minimax", "minimax", "minimax-m1", "minimax", "m", "1", ""},
 		{"minimax-m1 empty raw", "", "minimax-m1", "minimax", "m", "1", ""},
 		{"MiniMax-M1-80k (context window ignored)", "minimax", "MiniMaxAI/MiniMax-M1-80k", "minimax", "m", "1", ""},
@@ -3784,10 +3784,10 @@ func TestSlice8_MustNotRegress_RealVersions(t *testing.T) {
 	}{
 		{"4.5 dotted", "claude-opus", "claude-opus-4-5-20251101", "4.5"},
 		{"2.5 dotted", "gemini-flash", "gemini-2.5-flash", "2.5"},
-		// SLICE-12 (bestiary-xdbc Q2b): "4o" is now the VARIANT (line designator), so the
-		// version is EMPTY. Supersedes the SLICE-8 "4o is a version" pin. (Variant=4o is
+		// "4o" is now the VARIANT (line designator), so the
+		// version is EMPTY. Supersedes the "4o is a version" pin. (Variant=4o is
 		// asserted in TestSlice8_GluedVersionModifier.)
-		{"gpt-4o → version '' ('4o' is the variant; bestiary-xdbc Q2b)", "gpt", "gpt-4o", ""},
+		{"gpt-4o → version '' ('4o' is the variant)", "gpt", "gpt-4o", ""},
 		{"3.5 (claude-haiku)", "claude-haiku", "claude-3-5-haiku-20241022", "3.5"},
 		{"3.7 (claude-sonnet)", "claude-sonnet", "claude-3-7-sonnet-20250219", "3.7"},
 		{"single-digit 5", "gpt", "openai/gpt-5", "5"},
@@ -3842,9 +3842,9 @@ func TestSeriesTierModifier_CLARIFICATION6(t *testing.T) {
 		{"gpt-5-mini stays variant=mini", "gpt", "openai/gpt-5-mini", "gpt", "mini", "5", ""},
 		{"gemini-2.5-flash stays variant=flash", "gemini-flash", "gemini-2.5-flash", "gemini", "flash", "2.5", ""},
 		{"qwen-turbo stays variant=turbo (member-guard)", "qwen", "qwen-turbo", "qwen", "turbo", "", ""},
-		// SLICE-10: 'instruct' is now a GLOBAL modifier (llama non-member) → variant empty, mod [instruct].
-		{"llama-instruct → [instruct] (SLICE-10 member-guard)", "llama", "meta-llama/llama-3.1-8b-instruct", "llama", "", "3.1", "instruct"},
-		// SLICE-10 MULTI-MODIFIER: tier + capability compose LOSSLESSLY in the Modifier list.
+		// 'instruct' is now a GLOBAL modifier (llama non-member) → variant empty, mod [instruct].
+		{"llama-instruct → [instruct] (member-guard)", "llama", "meta-llama/llama-3.1-8b-instruct", "llama", "", "3.1", "instruct"},
+		// MULTI-MODIFIER: tier + capability compose LOSSLESSLY in the Modifier list.
 		{"kimi-k2p6-turbo (raw kimi-thinking) → [thinking,turbo]", "kimi-thinking", "accounts/fireworks/routers/kimi-k2p6-turbo", "kimi", "k", "2.6", "thinking,turbo"},
 		{"kimi-k2-thinking-turbo (raw kimi-thinking) → [thinking,turbo]", "kimi-thinking", "kimi-k2-thinking-turbo", "kimi", "k", "2", "thinking,turbo"},
 	}
@@ -3861,9 +3861,9 @@ func TestSeriesTierModifier_CLARIFICATION6(t *testing.T) {
 	}
 }
 
-// SLICE-10 (rc2): TestSlice8_MultiModifier_DeferredToModifierListSlice was REMOVED.
-// It pinned the S8 single-Modifier interim (kimi-k2-thinking-turbo DROPPED "turbo"). The
-// Modifier-LIST schema change (CLARIFICATION-7) now populates BOTH losslessly
+// TestSlice8_MultiModifier_DeferredToModifierListSlice was REMOVED.
+// It pinned the single-Modifier interim (kimi-k2-thinking-turbo DROPPED "turbo"). The
+// Modifier-LIST schema change now populates BOTH losslessly
 // ([thinking, turbo]); the lossless multi-modifier behaviour is asserted by
 // TestParseFamilyDetailed_Slice10_ModifierList.
 func TestParseFamilyDetailed_Slice10_ModifierList(t *testing.T) {
@@ -3875,7 +3875,7 @@ func TestParseFamilyDetailed_Slice10_ModifierList(t *testing.T) {
 		wantFamily, wantVariant, wantVer string
 		wantMod                          string // canonical comma-joined
 	}{
-		// Multi-modifier lossless capture (replaces the S8 interim drop).
+		// Multi-modifier lossless capture (replaces the interim drop).
 		{"kimi-k2-thinking-turbo → [thinking,turbo]", "kimi-thinking", "kimi-k2-thinking-turbo", "kimi", "k", "2", "thinking,turbo"},
 		{"kimi-k2p6-turbo + thinking → [thinking,turbo]", "kimi-thinking", "accounts/fireworks/routers/kimi-k2p6-turbo", "kimi", "k", "2.6", "thinking,turbo"},
 		{"kimi triple → [thinking,turbo,original]", "kimi-thinking", "moonshotai/kimi-k2-thinking-turbo-original", "kimi", "k", "2", "thinking,turbo,original"},
@@ -3890,7 +3890,7 @@ func TestParseFamilyDetailed_Slice10_ModifierList(t *testing.T) {
 		{"grok-vision → [vision]", "grok-vision", "grok-vision", "grok", "", "", "vision"},
 		{"claude-3-7-sonnet-thinking → [thinking]", "claude-sonnet", "claude-3-7-sonnet-thinking", "claude", "sonnet", "3.7", "thinking"},
 		{"deepseek-chat → variant chat (member-guard)", "deepseek", "deepseek-chat", "deepseek", "chat", "", ""},
-		// fix-cycle 1 (Reviewer-A/C BLOCKER): RawFamily-embedded member must NOT duplicate
+		// RawFamily-embedded member must NOT duplicate
 		// into BOTH Variant and Modifier. Use the CODEGEN-REAL raw="sonar-reasoning"
 		// (the idealized raw="sonar" masked the bug). reasoning stays the VARIANT, no dup.
 		{"sonar-reasoning (raw=sonar-reasoning) → (sonar,reasoning,nil) no dup", "sonar-reasoning", "sonar-reasoning", "sonar", "reasoning", "", ""},
@@ -3900,12 +3900,12 @@ func TestParseFamilyDetailed_Slice10_ModifierList(t *testing.T) {
 		{"qwen-turbo → variant turbo (member-guard)", "qwen", "qwen-turbo", "qwen", "turbo", "", ""},
 		{"gemini-pro → variant pro (stays variant)", "gemini", "gemini-pro", "gemini", "pro", "", ""},
 		{"qwen-flash → variant flash (stays variant)", "qwen", "qwen-flash", "qwen", "flash", "", ""},
-		// fix-cycle 1 (FLAG2): whisper + seed registered as families → variant recovers
+		// (FLAG2): whisper + seed registered as families → variant recovers
 		// losslessly; the modifier composes (turbo/instruct), removing the 2 justifiedExceptions.
-		// rc3-L2 (fz9r): whisper-family-gated trailing "-v3" now recovers Version=3 (was "").
+		// (fz9r): whisper-family-gated trailing "-v3" now recovers Version=3 (was "").
 		{"whisper-large-v3-turbo → (whisper,large,3,[turbo])", "whisper", "whisper-large-v3-turbo", "whisper", "large", "3", "turbo"},
 		{"seed-oss-36b-instruct → (seed,oss,[instruct])", "seed", "bytedance/seed-oss-36b-instruct", "seed", "oss", "", "instruct"},
-		// fix-cycle 1: lossless variant-suffix→modifier split (v2.5-turbo → v2.5 + [turbo]).
+		// Lossless variant-suffix→modifier split (v2.5-turbo → v2.5 + [turbo]).
 		{"elevenlabs-v2.5-turbo → (elevenlabs,v2.5,[turbo])", "elevenlabs", "elevenlabs/elevenlabs-v2.5-turbo", "elevenlabs", "v2.5", "", "turbo"},
 	}
 	for _, tc := range cases {
@@ -3921,10 +3921,10 @@ func TestParseFamilyDetailed_Slice10_ModifierList(t *testing.T) {
 }
 
 // ----------------------------------------------------------------------------
-// SLICE-9 (rc2) PATH-UNIFICATION unit tests (CLARIFICATION-8, Option A)
+// PATH-UNIFICATION unit tests (Option A)
 // ----------------------------------------------------------------------------
 
-// TestParseFamilyDetailed_PathUnification pins the SLICE-9 re-scoped (Option A)
+// TestParseFamilyDetailed_PathUnification pins the re-scoped (Option A)
 // behavior: ParseFamilyDetailed derives Variant/Version/Modifier from the ID (the
 // idDrivenDecompose primitive shared with the empty-raw path), while PRESERVING the
 // Family from raw_family (the ID-path over-captures Family — that convergence is the
@@ -3939,18 +3939,18 @@ func TestParseFamilyDetailed_PathUnification(t *testing.T) {
 	}{
 		// CONVERGENCE WIN: glued letter-suffix version-modifier. raw-aware alone gave
 		// (glm,"","5v",""); the ID owns it → (glm,"",5,vision), matching empty-raw providers.
-		// SLICE-12 (bestiary-xdbc Q1): the glued single 'v' after a glm version is the
-		// VARIANT 'v', NOT the 'vision' modifier (supersedes the SLICE-8 glm-5v→vision row).
-		{"glm-5v: glued 'v' is variant (bestiary-xdbc Q1)", "glm", "glm-5v", "glm", "v", "5", ""},
+		// the glued single 'v' after a glm version is the
+		// VARIANT 'v', NOT the 'vision' modifier (supersedes the glm-5v→vision row).
+		{"glm-5v: glued 'v' is variant", "glm", "glm-5v", "glm", "v", "5", ""},
 
 		// FAMILY-PRESERVING (the safeguard's core): the ID-path OVER-captures Family
 		// (deepseek-v4, gpt-4o) — raw_family is the correct SHORT family and is kept.
 		// Converging these is Option B's scope, NOT this slice.
 		{"deepseek-v4-flash: family PRESERVED (not deepseek-v4)", "deepseek-flash", "deepseek-v4-flash", "deepseek", "flash", "", ""},
-		// SLICE-12 (bestiary-xdbc Q2/Q2b): gpt-4o-mini → variant '4o', mini→modifier
+		// gpt-4o-mini → variant '4o', mini→modifier
 		// (the line designator '4o' occupies the variant slot; size token 'mini' demotes
-		// to the Modifier). Supersedes the SLICE-9 family-preserve (gpt,mini,"") row.
-		{"gpt-4o-mini: variant '4o', mini→modifier (bestiary-xdbc Q2b)", "gpt", "gpt-4o-mini", "gpt", "4o", "", "mini"},
+		// to the Modifier). Supersedes the family-preserve (gpt,mini,"") row.
+		{"gpt-4o-mini: variant '4o', mini→modifier", "gpt", "gpt-4o-mini", "gpt", "4o", "", "mini"},
 
 		// VARIANT DE-JUNK: raw_family "qwen3.6" leaks the version into the variant
 		// ("3.6"); the ID recovers the true member variant "flash".
@@ -3971,23 +3971,23 @@ func TestParseFamilyDetailed_PathUnification(t *testing.T) {
 		// ID "deepseek-reasoner" has no thinking token; raw "deepseek-thinking" carries it).
 		{"deepseek-reasoner: rawModifier 'thinking' preserved", "deepseek-thinking", "deepseek-reasoner", "deepseek", "", "", "thinking"},
 
-		// SLICE-10: capability + tier compose LOSSLESSLY in the Modifier LIST (supersedes
-		// the SLICE-8 single-modifier "capability wins, tier dropped" interim).
+		// capability + tier compose LOSSLESSLY in the Modifier LIST (supersedes
+		// the single-modifier "capability wins, tier dropped" interim).
 		{"kimi-k2p6-turbo raw=kimi-thinking: thinking+turbo lossless", "kimi-thinking", "kimi-k2p6-turbo", "kimi", "k", "2.6", "thinking,turbo"},
 
 		// MUST-NOT-REGRESS: claude-opus-4-1-...-thinking → (claude,opus,4.1,thinking).
 		{"claude-opus-4-1-thinking (must-hold)", "claude-opus", "claude-opus-4-1-20250805-thinking", "claude", "opus", "4.1", "thinking"},
 
-		// fix-cycle-2 P1 (Reviewer A BLOCKER): a more-specific raw variant must NOT be
+		// A more-specific raw variant must NOT be
 		// overridden by a less-specific ID-driven one. InferFamilyFromIDWithVariant loses
 		// "-lite" (returns "flash") for the dated-preview suffix; the superstring guard
 		// keeps the correct raw variant "flash-lite" (distinct Gemini tier).
 		{"gemini-2.5-flash-lite-preview-06-17: flash-lite preserved (not downgraded to flash)", "gemini-flash-lite", "gemini-2.5-flash-lite-preview-06-17", "gemini", "flash-lite", "2.5", ""},
-		// SLICE-10: "preview" before an MM-YYYY date is now captured as a Modifier (the
+		// "preview" before an MM-YYYY date is now captured as a Modifier (the
 		// tail-scan skips the 09-2025 date fragment); flash-lite variant still preserved.
 		{"gemini-2.5-flash-lite-preview-09-2025: flash-lite preserved + preview modifier", "gemini-flash-lite", "gemini-2.5-flash-lite-preview-09-2025", "gemini", "flash-lite", "2.5", "preview"},
 
-		// fix-cycle-2 P2 (Reviewer C IMPORTANT): the '@' version/date delimiter is
+		// The '@' version/date delimiter is
 		// normalized to '-' so the @-form converges to the canonical version (not "4").
 		{"claude-opus-4-1@20250805: @-form version → 4.1 (raw)", "claude-opus", "claude-opus-4-1@20250805", "claude", "opus", "4.1", ""},
 		{"claude-opus-4-1@20250805: @-form version → 4.1 (empty-raw)", "", "claude-opus-4-1@20250805", "claude", "opus", "4.1", ""},
@@ -4025,8 +4025,8 @@ func TestParseFamilyDetailed_PathUnification_EmptyRawConsistency(t *testing.T) {
 	}
 }
 
-// TestParseFamilyDetailed_SLICE11_FamilyOverCaptureReduction asserts the SLICE-11
-// (rc2, Option B) family OVER-CAPTURE fix: the empty-raw ID-path now reduces an
+// TestParseFamilyDetailed_SLICE11_FamilyOverCaptureReduction asserts the
+// family OVER-CAPTURE fix: the empty-raw ID-path now reduces an
 // over-captured COMPOUND family to its registered SHORT base so it converges with the
 // raw-populated providers of the same ID. Each case pins the empty-raw decomposition;
 // the matching raw-populated decomposition (the convergence target) is asserted equal.
@@ -4039,11 +4039,11 @@ func TestParseFamilyDetailed_SLICE11_FamilyOverCaptureReduction(t *testing.T) {
 		wantVer string
 	}{
 		{"claude-opus dotted", "anthropic/claude-opus-4.1", "claude", "opus", "4.1"},
-		// SLICE-12 (bestiary-xdbc Q2b): gpt-4o-mini → variant '4o' (mini→modifier, asserted
-		// elsewhere); version empty. Supersedes the SLICE-11 (gpt,mini,"") row.
-		{"gpt-4o-mini (variant '4o', bestiary-xdbc Q2b)", "openai/gpt-4o-mini", "gpt", "4o", ""},
+		// gpt-4o-mini → variant '4o' (mini→modifier, asserted
+		// elsewhere); version empty. Supersedes the (gpt,mini,"") row.
+		{"gpt-4o-mini (variant '4o')", "openai/gpt-4o-mini", "gpt", "4o", ""},
 		{"deepseek-r1 (canonical drops r1)", "deepseek-ai/DeepSeek-R1-0528", "deepseek", "", ""},
-		// SLICE-10: 'instruct' is a global modifier now → variant empty (not "instruct").
+		// 'instruct' is a global modifier now → variant empty (not "instruct").
 		{"llama-3.3-70b-instruct", "meta-llama/llama-3.3-70b-instruct", "llama", "", "3.3"},
 		{"qwen3-vl member+gen", "qwen/qwen3-vl-30b-a3b-instruct", "qwen", "vl", "3"},
 		{"phi-4-mini member+gen", "microsoft/phi-4-mini-instruct", "phi", "mini", "4"},
@@ -4090,7 +4090,7 @@ func TestParseFamilyDetailed_SLICE11_GenuineCompoundPreserved(t *testing.T) {
 
 // TestParseFamilyDetailed_SLICE11_CapabilityModifierDeclined asserts that a compound
 // family carrying a CAPABILITY modifier (thinking/vision) is NOT reduced — leaving it an
-// HONEST residual rather than silently dropping the capability (the SLICE-10 Modifier-LIST
+// HONEST residual rather than silently dropping the capability (the Modifier-LIST
 // multi-modifier case). kimi-k2-thinking-* keeps a thinking-bearing decomposition rather
 // than being collapsed to a bare short family that loses "thinking".
 func TestParseFamilyDetailed_SLICE11_CapabilityModifierDeclined(t *testing.T) {
@@ -4108,10 +4108,10 @@ func TestParseFamilyDetailed_SLICE11_CapabilityModifierDeclined(t *testing.T) {
 	}
 }
 
-// TestSLICE12_Convergences pins the SLICE-12 (rc2) cross-provider convergence fixes
-// (bestiary-b4jm). Each case is the canonical ParseFamilyDetailed decomposition that the
-// fix-cycle ratified; together with the before/after-diff gate (ZERO cat-(c)) these are
-// the L2 specification for the mechanical + o-series + ledger changes.
+// TestSLICE12_Convergences pins the cross-provider convergence fixes.
+// Each case is the canonical ParseFamilyDetailed decomposition that the
+// convergence pass ratified; together with the before/after-diff gate (ZERO cat-(c)) these are
+// the specification for the mechanical + o-series + ledger changes.
 func TestSLICE12_Convergences(t *testing.T) {
 	cases := []struct {
 		desc                   string
@@ -4119,7 +4119,7 @@ func TestSLICE12_Convergences(t *testing.T) {
 		id                     bestiary.ModelID
 		wFam, wVar, wVer, wMod string
 	}{
-		// ── O-SERIES restructure (bestiary-xdbc Q2/Q2a/Q2b/Q2c) ──────────────────────
+		// ── O-SERIES restructure ──────────────────────
 		{"o1 → (gpt,o,1)", "", "o1", "gpt", "o", "1", ""},
 		{"o1 raw=o → (gpt,o,1)", "o", "o1", "gpt", "o", "1", ""},
 		{"o1-mini → (gpt,o,1,mini)", "o-mini", "o1-mini", "gpt", "o", "1", "mini"},
@@ -4133,11 +4133,11 @@ func TestSLICE12_Convergences(t *testing.T) {
 		{"gpt-audio-mini → (gpt,audio,'',mini)", "", "openai/gpt-audio-mini", "gpt", "audio", "", "mini"},
 		{"gpt-4 UNCHANGED → (gpt,'',4)", "gpt", "gpt-4", "gpt", "", "4", ""},
 		// ── gpt-codex ID-WINS (#4) + flash-lite NON-regression ───────────────────────
-		// SLICE-10: 'chat' is now a global modifier (gpt has no 'chat' member) → captured in the list.
+		// 'chat' is now a global modifier (gpt has no 'chat' member) → captured in the list.
 		{"gpt-5-chat-latest: phantom codex cleared, chat→modifier", "gpt-codex", "gpt-5-chat-latest", "gpt", "", "5", "chat,latest"},
 		{"gpt-5.1-chat: phantom codex cleared, chat→modifier", "gpt-codex", "openai/gpt-5.1-chat", "gpt", "", "5.1", "chat"},
 		{"flash-lite NOT regressed (raw)", "gemini-flash-lite", "gemini-2.5-flash-lite-preview-06-17", "gemini", "flash-lite", "2.5", ""},
-		// SLICE-10: 'preview' before the MM-YYYY date is now captured (tail-scan skips the date).
+		// 'preview' before the MM-YYYY date is now captured (tail-scan skips the date).
 		{"flash-lite tier (empty raw, #6 compound-member)", "", "gemini-2.5-flash-lite-preview-09-2025", "gemini", "flash-lite", "2.5", "preview"},
 		// ── glm 'v' variant (Q1) ─────────────────────────────────────────────────────
 		{"glm-4.5v → (glm,v,4.5)", "glm", "glm-4.5v", "glm", "v", "4.5", ""},
@@ -4153,7 +4153,7 @@ func TestSLICE12_Convergences(t *testing.T) {
 		{"qwen3.7-max raw over-capture → (qwen,max,3.7)", "qwen3.7-max", "qwen3.7-max", "qwen", "max", "3.7", ""},
 		{"qwen3.5 dotted bare-gen de-junk → (qwen,'',3.5)", "qwen3.5", "qwen/qwen3.5-27b", "qwen", "", "3.5", ""},
 		// ── member-variant suffix re-recovery (#5, A-1/A-2) ──────────────────────────
-		// SLICE-10: 'instruct' → global modifier (not a variant) for these non-member families.
+		// 'instruct' → global modifier (not a variant) for these non-member families.
 		{"codellama empty-raw: instruct→modifier", "", "alfredpros/codellama-7b-instruct-solidity", "codellama", "", "", "instruct"},
 		{"rnj empty-raw: instruct→modifier (A-1)", "", "essentialai/rnj-1-instruct", "rnj", "", "1", "instruct"},
 		{"voxtral empty-raw recovers small (A-2)", "", "mistralai/voxtral-small-24b-2507", "voxtral", "small", "", ""},
@@ -4169,12 +4169,12 @@ func TestSLICE12_Convergences(t *testing.T) {
 	}
 }
 
-// TestSLICE14_TIER1Convergences pins the SLICE-14 (rc2) straggler convergences (bestiary-judu),
+// TestSLICE14_TIER1Convergences pins the straggler convergences,
 // per the team-lead-refined set: 5 COMMITTED (cohere command r/r-plus date-guard+member,
 // deepseek product-line "chat", meta-llama surgical doubled-vendor) + 3 CONDITIONALS cleanly
 // promoted under existing rules (grok product-name "code-fast", Qwen3-Embedding qwen-wins,
 // hy3 bare-gen). Each is non-lossy under the hardened gate (cat-(c)=0). command-a-reasoning is
-// DEFERRED to S10 (reasoning = borderline-capability, modifier-vs-variant judgment).
+// DEFERRED to the systematic modifier ruling (reasoning = borderline-capability, modifier-vs-variant judgment).
 func TestSLICE14_TIER1Convergences(t *testing.T) {
 	cases := []struct {
 		desc                   string
@@ -4197,7 +4197,7 @@ func TestSLICE14_TIER1Convergences(t *testing.T) {
 		{"command-r7b-12-2024 empty → (command,r) [r7b=r+7b-size]", "", "cohere/command-r7b-12-2024", "command", "r", "12", ""},
 		{"command-r7b-12-2024 raw=command-r → (command,r)", "command-r", "cohere/command-r7b-12-2024", "command", "r", "12", ""},
 		// COMMITTED — meta-llama SURGICAL doubled-vendor strip (org "meta-llama/" + "Meta-Llama-…").
-		// SLICE-10: 'instruct' → global modifier (llama has no 'instruct' member after the
+		// 'instruct' → global modifier (llama has no 'instruct' member after the
 		// ratified families.json correction); variant empty, modifier [instruct].
 		{"meta-llama/Meta-Llama-3.1 empty → (llama,'',3.1,[instruct])", "", "meta-llama/Meta-Llama-3.1-8B-Instruct", "llama", "", "3.1", "instruct"},
 		{"meta-llama/Meta-Llama-3.1 raw=llama → (llama,'',3.1,[instruct])", "llama", "meta-llama/Meta-Llama-3.1-8B-Instruct", "llama", "", "3.1", "instruct"},
@@ -4225,9 +4225,9 @@ func TestSLICE14_TIER1Convergences(t *testing.T) {
 	}
 }
 
-// TestWhisperTrailingVersionRecovery_FamilyGated is the rc3-L2 (bestiary-fz9r) coverage for
+// TestWhisperTrailingVersionRecovery_FamilyGated is the coverage for
 // the WHISPER-FAMILY-GATED trailing "-v<int>" → Version recovery. It pins both halves of the
-// contract: (1) whisper-* ids gain the version, and (2) the axis-B mutation-proof — NO other
+// contract: (1) whisper-* ids gain the version, and (2) the mutation-proof — NO other
 // family's "-vN" packaging/revision tag is ever promoted (the failure mode that sank the
 // general attempt). A regression that widens the gate beyond whisper turns these RED.
 func TestWhisperTrailingVersionRecovery_FamilyGated(t *testing.T) {
@@ -4246,7 +4246,7 @@ func TestWhisperTrailingVersionRecovery_FamilyGated(t *testing.T) {
 		{"", "whisper-large-v3-turbo", "whisper", "3"}, // skips trailing "turbo" modifier
 		{"whisper", "whisper-large-v3-turbo", "whisper", "3"},
 
-		// (2) axis-B MUTATION-PROOF — non-whisper "-vN" tags MUST NOT be promoted.
+		// (2) MUTATION-PROOF — non-whisper "-vN" tags MUST NOT be promoted.
 		// claude-opus-4-6-v1's "-v1" is a Bedrock packaging revision; the real version is 4.6,
 		// extracted by the normal path. The recovery must NOT overwrite it with "1".
 		{"", "anthropic.claude-opus-4-6-v1", "anthropic.claude", "4.6"},
@@ -4271,10 +4271,10 @@ func TestWhisperTrailingVersionRecovery_FamilyGated(t *testing.T) {
 	}
 }
 
-// TestGrokNegationAwareModifier is the rc3 (bestiary-fz9r, USER-RULING) coverage for
+// TestGrokNegationAwareModifier is the coverage for
 // negation-aware modifier emission: an ID containing the literal token "non-<mod>" must
 // emit "non-<mod>" (e.g. "non-reasoning"), NEVER the bare positive "<mod>". It pins the
-// axis-B mutation-proof on both sides: (a) a "Cannon"/substring-"non" id NEVER gains a
+// mutation-proof on both sides: (a) a "Cannon"/substring-"non" id NEVER gains a
 // non-* modifier (the gate is a separate hyphen-token "non", not a substring); (a') the
 // EXACT-vs-SUBSTRING pin "grok-noncode-reasoning" stays POSITIVE [reasoning] (a
 // strings.Contains gate-mutation would RED here); (b) the grok non-reasoning ids invert
@@ -4300,7 +4300,7 @@ func TestGrokNegationAwareModifier(t *testing.T) {
 		// (a) substring "non" inside a single token ("Cannon") must NEVER negate.
 		{"GalrionSoftworks/MN-LooseCannon-12B-v1", nil},
 		{"VongolaChouko/Starcannon-Unleashed-12B-v1.0", nil},
-		// (a') EXACT-vs-SUBSTRING PIN (rc3-wave MINOR M4): the negation gate is the LITERAL
+		// (a') EXACT-vs-SUBSTRING PIN: the negation gate is the LITERAL
 		// preceding token toks[i-1]=="non", NOT strings.Contains(prev,"non"). Here the modifier
 		// "reasoning" is preceded by "noncode" — which CONTAINS "non" as a substring but is not
 		// the literal token "non" — so it must stay the POSITIVE [reasoning]. A future mutation

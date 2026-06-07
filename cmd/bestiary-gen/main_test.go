@@ -34,7 +34,7 @@ func TestSlugToIdentifier(t *testing.T) {
 	}{
 		// Digit-leading slug: "302" stays verbatim; "ai" → "AI" via casingOverrides.
 		{"302ai", "302AI", "302AI"},
-		// Single-token brand-casing (SLICE-7: ratified xai → xAI, was XAI).
+		// Single-token brand-casing.
 		{"xai", "xAI", "xAI"},
 		// Multi-token with two overrides (SAP + AI).
 		{"sap-ai-core", "SAP AI Core", "SAPAICore"},
@@ -243,7 +243,7 @@ func TestSplitComma(t *testing.T) {
 }
 
 // --------------------------------------------------------------------------
-// SLICE-4 tests: nameForCanonical, resolveCollisions, generateConstantsSource
+// tests: nameForCanonical, resolveCollisions, generateConstantsSource
 // --------------------------------------------------------------------------
 
 // testSlugToConst is a minimal slugToConst map for tests, providing the correct
@@ -257,7 +257,7 @@ var testSlugToConst = map[string]string{
 }
 
 // TestNameForCanonical_KnownExamples verifies that nameForCanonicalWithMap produces
-// the expected constant names for the spec-defined golden examples from UAT-1 / PROPOSAL-3.
+// the expected constant names for the spec-defined golden examples.
 // Updated to new double-underscore template: Model__<Provider>__<Family>__<Variant>?__<Version>?__<Date>?
 // (B5: double underscores between components, single underscores within components).
 //
@@ -530,14 +530,14 @@ func min(a, b int) int {
 }
 
 // --------------------------------------------------------------------------
-// SLICE-FIX-V2-5 tests: Modifier slot in Model__ constants
+// Tests: Modifier slot in Model__ constants
 // --------------------------------------------------------------------------
 
 // TestNameForCanonical_ModifierSlot verifies that when a ModelInfo has a Modifier
 // field set, nameForCanonicalWithMap emits the __Modifier__ slot between version
 // and date in the constant name.
 //
-// These tests will FAIL until L3 updates nameForCanonicalWithMap to include the
+// These tests will FAIL until nameForCanonicalWithMap is updated to include the
 // Modifier segment between version and date.
 func TestNameForCanonical_ModifierSlot(t *testing.T) {
 	cases := []struct {
@@ -734,7 +734,7 @@ func TestGenToModelInfo_CanonicalFields(t *testing.T) {
 			wantDateContains: "2025-05-14",
 		},
 		{
-			desc:         "gpt-4o-2024-08-06: family=gpt, variant=4o, date in ID (bestiary-xdbc Q2b)",
+			desc:         "gpt-4o-2024-08-06: family=gpt, variant=4o, date in ID",
 			providerSlug: "openai",
 			wm: genWireModel{
 				ID:          "gpt-4o-2024-08-06",
@@ -742,7 +742,7 @@ func TestGenToModelInfo_CanonicalFields(t *testing.T) {
 				Family:      "gpt-4o",
 				ReleaseDate: "2024-08-06",
 			},
-			// SLICE-12 (bestiary-xdbc Q2/Q2b): gpt-4o decomposes to family "gpt" with the
+			// gpt-4o decomposes to family "gpt" with the
 			// line designator "4o" as the VARIANT (version empty); Date still from the ID.
 			wantFamily:       "gpt",
 			wantVariant:      "4o",
@@ -974,19 +974,19 @@ func TestNoFetch_MissingCache_ActionableError(t *testing.T) {
 }
 
 // --------------------------------------------------------------------------
-// SLICE-FIX-2 tests: cross-provider decomposition consistency
+// Cross-provider decomposition consistency tests
 // --------------------------------------------------------------------------
 
-// crossProviderJustifiedResidual is the SLICE-5 (rc2) ENUMERATED justified-residual
+// crossProviderJustifiedResidual is the ENUMERATED justified-residual
 // ledger for cross-provider (Family,Variant,Version) divergences over the COMMITTED
 // snapshot. The hardened gate asserts SET-EQUALITY: the divergent-ID set produced by the
 // production pipeline must equal EXACTLY this set. Each row carries a one-line
-// justification. Post-S10 the only justified residual is the embedded-family nemotron
+// justification. The only justified residual is the embedded-family nemotron
 // (the ID leads with "llama" but the canonical family is "nemotron"; GH-followup).
 // SET-equality (not count) catches a DIFFERENT id going divergent while nemotron converges
 // — count would stay 1, the set would change. Do NOT pad this map to force green: every
 // row must be independently justified; an unexpected divergence is a STOP-and-surface.
-// rc3 (bestiary-xfo0, USER-RATIFIED Impl-UAT 2gxu): EMPTY. The sole prior residual
+// Now EMPTY. The sole prior residual
 // (nvidia/llama-3.3-nemotron-super-49b-v1.5) was FOLDED to family nemotron via the curated
 // idFamilyOverrides entry — both providers converge on (nemotron,v1.5,3.3). Cross-provider
 // (Family,Variant,Version) divergence is now ZERO, so the divergent-ID SET is empty and this
@@ -994,23 +994,23 @@ func TestNoFetch_MissingCache_ActionableError(t *testing.T) {
 var crossProviderJustifiedResidual = map[string]string{}
 
 // crossProviderResidualUnaccountedCeiling pins the at-scale count of
-// ReasonResidualUnaccountedTokens over the committed snapshot (SLICE-5 INPUT, B-MINOR-3).
+// ReasonResidualUnaccountedTokens over the committed snapshot.
 // Today only the non-gating stdout smoke (main.go) sees this; pinning it catches a
 // non-fixture-family residual regression (the seed-flash class) that would otherwise slip
-// every gate. Measured post-S10 = 243; assert ≤ ceiling (tighten-only; a legitimate
+// every gate. Currently measured = 243; assert ≤ ceiling (tighten-only; a legitimate
 // reduction passes, a regression that re-drops B1/member coverage trips it).
 const crossProviderResidualUnaccountedCeiling = 243
 
 // crossProviderPopulatedVersionFloor pins the at-scale count of snapshot records whose
-// production decomposition yields a NON-EMPTY Version (SLICE-6 landing pin; supersedes the
-// stale rc1 1681/293 figures). Measured post-S10 = 3401 over 4979 records. Assert ≥ floor
+// production decomposition yields a NON-EMPTY Version (landing pin; supersedes the
+// stale 1681/293 figures). Currently measured = 3401 over 4979 records. Assert ≥ floor
 // (loosen-only: more version coverage passes; a regression that drops version-presence
 // — the inverse of the residual-ceiling guard — trips it). Pinned alongside the residual
 // ceiling so both the "version populated" and "tokens unaccounted" at-scale counts are gated.
 const crossProviderPopulatedVersionFloor = 3401
 
-// TestStaticDataset_CrossProviderConsistency is the HARDENED (SLICE-5) cross-provider
-// consistency GATE. It REPLACES the SLICE-FIX-2 heuristic gate that carried 5 escape
+// TestStaticDataset_CrossProviderConsistency is the HARDENED cross-provider
+// consistency GATE. It REPLACES the earlier heuristic gate that carried 5 escape
 // hatches (namespaced-ID `/.@:` skip; no-empty-raw skip; no-populated-raw skip;
 // populated-providers-disagree skip; Infer-consensus-can't-derive skip) — those hid
 // 331/388 of the original divergences.
@@ -1022,7 +1022,7 @@ const crossProviderPopulatedVersionFloor = 3401
 // divergent-ID SET == crossProviderJustifiedResidual (SET-equality, no escape hatches).
 // It also pins the ReasonResidualUnaccountedTokens count ≤ ceiling.
 //
-// SLICE-5 R1: the Modifier list is compared ORDER-INDEPENDENTLY everywhere else (resolve
+// R1: the Modifier list is compared ORDER-INDEPENDENTLY everywhere else (resolve
 // FIX-B group key, path_unification cmp(), TestPathUnification_Slice10_ModifierSetIndependence);
 // this gate's PRIMARY tuple is (Family,Variant,Version) per the ratified consistency metric,
 // so a permuted-modifier pair across providers structurally cannot register here.
@@ -1111,7 +1111,7 @@ func TestStaticDataset_CrossProviderConsistency(t *testing.T) {
 			residualUnaccounted, crossProviderResidualUnaccountedCeiling)
 	}
 
-	// POPULATED-VERSION FLOOR PIN (SLICE-6 landing): catch a version-presence regression.
+	// POPULATED-VERSION FLOOR PIN: catch a version-presence regression.
 	if populatedVersion < crossProviderPopulatedVersionFloor {
 		t.Errorf("populated-version count = %d, below pinned floor %d;\n"+
 			"  a regression dropped Version-presence coverage (the inverse of the residual-ceiling guard).\n"+
@@ -1121,14 +1121,14 @@ func TestStaticDataset_CrossProviderConsistency(t *testing.T) {
 }
 
 // --------------------------------------------------------------------------
-// SLICE-FIX-3 tests: double-hyphen flag support, ChatGPT casing, double-underscore
+// Double-hyphen flag support, ChatGPT casing, double-underscore tests
 // --------------------------------------------------------------------------
 
 // TestParseFlags_DoubleHyphen verifies that all flags accept BOTH single-hyphen
 // and double-hyphen forms (e.g. --no-fetch is equivalent to -no-fetch).
 // This test covers B1-B3 from the slice spec.
 //
-// These tests will FAIL until L3 adds double-hyphen prefix support to parseFlags.
+// These tests will FAIL until double-hyphen prefix support is added to parseFlags.
 func TestParseFlags_DoubleHyphen(t *testing.T) {
 	cases := []struct {
 		desc  string
@@ -1266,7 +1266,7 @@ func TestSlugToIdentifier_ChatGPT(t *testing.T) {
 // segment "4_5" (dot→underscore). The raw ID version tokens are replaced by this
 // single compact segment so that "4_5" uses single underscores within.
 //
-// These tests will FAIL until L3 changes the join separator and adds version-segment logic.
+// These tests will FAIL until the join separator is changed and version-segment logic is added.
 func TestNameForCanonical_DoubleUnderscoreTemplate(t *testing.T) {
 	cases := []struct {
 		desc     string
@@ -1422,7 +1422,7 @@ type Family = string
 }
 
 // --------------------------------------------------------------------------
-// SLICE-FIX-V2-3 tests: parse-failure audit log
+// Tests: parse-failure audit log
 // --------------------------------------------------------------------------
 
 const parseFailuresFile = "parse_failures.json"
@@ -1565,7 +1565,7 @@ func TestWriteParseFailures_Empty(t *testing.T) {
 	}
 	if envelope.Failures == nil {
 		// Per spec: must be an empty array, not null, in JSON.
-		// encoding/json encodes nil slice as null. L3 must use []ParseFailure{} not nil.
+		// encoding/json encodes nil slice as null. The impl must use []ParseFailure{} not nil.
 		t.Errorf("Failures is nil (would encode as JSON null); want empty array []")
 	}
 	if len(envelope.Failures) != 0 {
@@ -1752,8 +1752,8 @@ func TestRun_WritesParseFailuresJSON(t *testing.T) {
 	if err != nil {
 		t.Fatalf("parse_failures.json not written to cacheDir %q: %v\n"+
 			"  What: run() did not write parse_failures.json\n"+
-			"  Why: the file-write step in run() may not be implemented yet (L3)\n"+
-			"  How to fix: implement writeParseFailures call in run() (L3 task)",
+			"  Why: the file-write step in run() may not be implemented yet\n"+
+			"  How to fix: implement writeParseFailures call in run()",
 			cacheDir, err)
 	}
 
@@ -1781,7 +1781,7 @@ func TestRun_WritesParseFailuresJSON(t *testing.T) {
 }
 
 // --------------------------------------------------------------------------
-// SLICE-DET-1 tests: deterministic + reproducible codegen (R1, R3, R4)
+// Tests: deterministic + reproducible codegen (R1, R3, R4)
 // --------------------------------------------------------------------------
 
 // normalizeWhitespace collapses all runs of whitespace in s to a single space.
@@ -1891,7 +1891,7 @@ func deterministicFixtureJSON(t *testing.T) []byte {
 //     exactly mirroring the run() pipeline path
 //
 // Each call re-randomizes the Go map iteration order, which is the nondeterminism
-// source for bestiary-9lnq.
+// source the codegen ordering guarantees defend against.
 func runFixtureCodegen(t *testing.T, fixtureJSON []byte, lastSynced string) (staticSrc, constantsSrc []byte) {
 	t.Helper()
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -1978,7 +1978,7 @@ func TestCodegen_Reproducible_ByteIdentical(t *testing.T) {
 	refNorm := normalizeWhitespace(refStr)
 
 	// C group pins: '-' (0x2D) < '.' (0x2E) means claude-3-5-haiku < claude-3.5-haiku.
-	// With SLICE-1 parser active, version="3.5" is now extracted from both IDs
+	// With parser active, version="3.5" is now extracted from both IDs
 	// (family=claude, variant=haiku, version=3.5). Both map to the same base constant
 	// Model__CloudflareAIGateway__Claude__3__5__Haiku__3_5; collision suffix applies.
 	if !strings.Contains(refNorm, `Model__CloudflareAIGateway__Claude__3__5__Haiku__3_5_1 ModelID = "anthropic/claude-3-5-haiku"`) {
@@ -2164,7 +2164,7 @@ func TestCodegen_UpToDate(t *testing.T) {
 	// Regenerate from the fixture.
 	// Pass a representative injected timestamp to exercise the run() stamping path.
 	// normalizeLastSynced is applied to both sides before comparison, so the guard
-	// is insensitive to the codegen wall-clock (see bestiary-vq6k for true zero-diff).
+	// is insensitive to the codegen wall-clock (see for true zero-diff).
 	fixtureJSON := deterministicFixtureJSON(t)
 	staticSrc, constantsSrc := runFixtureCodegen(t, fixtureJSON, "2000-01-01T00:00:00Z")
 
@@ -2238,7 +2238,7 @@ func TestCodegen_UpToDate(t *testing.T) {
 // collision): "anthropic/claude-3-5-haiku" → _1, "anthropic/claude-3.5-haiku" → _2.
 // ASCII ordering: '-' (0x2D) < '.' (0x2E).
 //
-// With SLICE-1 parser active, both IDs parse to version="3.5" (family=claude,
+// With parser active, both IDs parse to version="3.5" (family=claude,
 // variant=haiku). The constant base becomes Model__CloudflareAIGateway__Claude__3__5__Haiku__3_5;
 // collision suffix _1/_2 still applies via raw-ID-ordered fallback.
 func TestCodegen_GoldenPins_C(t *testing.T) {
@@ -2359,7 +2359,7 @@ func TestCodegen_SortOrder(t *testing.T) {
 }
 
 // --------------------------------------------------------------------------
-// SLICE-2-L2 tests: decomposition snapshot + fixture R5d corpus + per-reason
+// Decomposition snapshot + fixture R5d corpus + per-reason tests
 // --------------------------------------------------------------------------
 
 // decompositionSnapshotEntry records the parse decomposition for a single model.
@@ -2481,12 +2481,12 @@ func TestDecompositionSnapshot_ActiveClassVersionPopulated(t *testing.T) {
 	models, _ := runFixtureAPICodegen(t)
 
 	// Active-class models: those expected to have version populated.
-	// SLICE-1 parser correctly extracts version for these cases.
-	// SLICE-1-FIX-2 B1: adds variant-promoted models (glm-5-turbo, phi-4-mini)
+	// parser correctly extracts version for these cases.
+	// B1: adds variant-promoted models (glm-5-turbo, phi-4-mini)
 	// whose variant is now set from the sole trailing suffix after version extraction.
-	// SLICE-1-FIX-4: text-embedding-3-large/small removed from active class —
+	// text-embedding-3-large/small removed from active class —
 	// the full-prefix-first change that enabled their B1 promotion was reverted.
-	// They are now documented residuals (bestiary-ibtb, rc2 deferred).
+	// They are now documented residuals.
 	activeCases := map[string]struct {
 		wantFamily  string
 		wantVariant string
@@ -2499,7 +2499,7 @@ func TestDecompositionSnapshot_ActiveClassVersionPopulated(t *testing.T) {
 		// claude-3.5-haiku: same family → same decomposition
 		"anthropic/claude-3.5-haiku": {wantFamily: "claude", wantVariant: "haiku", wantVersion: "3.5"},
 		// B1 promoted models surviving FIX-4 revert (single-token rawFamily, no compound prefix):
-		// glm-5-turbo: SLICE-10 — 'turbo' is now a GLOBAL modifier (not a glm member), so it
+		// glm-5-turbo: — 'turbo' is now a GLOBAL modifier (not a glm member), so it
 		// reclassifies variant→modifier: (glm, "", 5, [turbo]). Version 5 still populated.
 		"glm-5-turbo": {wantFamily: "glm", wantVariant: "", wantVersion: "5"},
 		// phi-4-mini: raw_family=phi → family=phi, variant=mini (B1, still a variant suffix), version=4
@@ -2519,7 +2519,7 @@ func TestDecompositionSnapshot_ActiveClassVersionPopulated(t *testing.T) {
 		}
 		if m.Version == "" {
 			t.Errorf("active-class model %q: Version is empty, want %q\n"+
-				"  What: SLICE-1 parser should populate Version for active-class models\n"+
+				"  What: the parser should populate Version for active-class models\n"+
 				"  Why: ParseFamilyDetailed may not be extracting version from model ID\n"+
 				"  How to fix: verify ParseFamilyDetailed returns version for family=%q, id=%q",
 				id, want.wantVersion, want.wantFamily, id)
@@ -2555,8 +2555,8 @@ func TestDecompositionSnapshot_FixA_NoVersionForBare4Digit(t *testing.T) {
 		wantFamily  string
 		wantVersion string // must be empty
 	}{
-		// SLICE-12 (#2): raw_family "deepseek-r1" is a RAW-POPULATED over-capture; it now
-		// reduces to the short base "deepseek" (the SAME reduction S11 applies to empty-raw),
+		// raw_family "deepseek-r1" is a RAW-POPULATED over-capture; it now
+		// reduces to the short base "deepseek" (the SAME reduction applied to empty-raw),
 		// making it consistent with deepseek-v3-0324. The bare-4-digit date guard (the focus
 		// of this test) is unchanged — Version stays "".
 		"deepseek-r1-0528": {wantFamily: "deepseek", wantVersion: ""},
@@ -2583,7 +2583,7 @@ func TestDecompositionSnapshot_FixA_NoVersionForBare4Digit(t *testing.T) {
 }
 
 // --------------------------------------------------------------------------
-// SLICE-2-L3 tests: version_duplicates.json + dot_form_audit.json + smoke check
+// version_duplicates.json + dot_form_audit.json + smoke check tests
 // --------------------------------------------------------------------------
 
 // TestRun_WritesVersionDuplicates verifies that run() writes version_duplicates.json
@@ -2773,20 +2773,20 @@ func TestWriteDotFormAudit_Unit(t *testing.T) {
 // but uses fixture_api.json instead of failureAPIJSON.
 //
 // Expectations:
-//   - ReasonVersionDigitsNotExtracted (active class) → 0: SLICE-1 now correctly
+//   - ReasonVersionDigitsNotExtracted (active class) → 0: now correctly
 //     extracts version from IDs like claude-3-5-haiku; this failure should no longer fire.
-//   - ReasonResidualUnaccountedTokens → at least 4 (SLICE-1-FIX-4 updated):
+//   - ReasonResidualUnaccountedTokens → at least 4:
 //     nova-2-lite-v1 (C: variant pre-set), phi-3-medium-128k-instruct (B2: multi-residual),
 //     text-embedding-3-large + text-embedding-3-small (FIX-4 documented residuals —
-//     full-prefix-first reverted; bestiary-ibtb tracks rc2 fix).
+//     full-prefix-first reverted; deferred fix).
 //   - ReasonYYMMDateAsVersion → at least 1: mistral-small-2603 (family mistral-2603)
 //     triggers the YYMM false-positive detector.
 //   - FIX-A confirmation: deepseek-r1-0528 / deepseek-v3-0324 produce NO failure
 //     (bare 4-digit date tokens are now rejected as versions, not residual).
-//   - FIX-B1 confirmation (SLICE-1-FIX-4 updated): glm-5-turbo / phi-4-mini produce NO failure
+//   - FIX-B1 confirmation: glm-5-turbo / phi-4-mini produce NO failure
 //     (single-token rawFamily; B1 still fires). text-embedding-3-* removed (now residual).
 //
-// This test is NOT a ==0 gate on real data — fixture-based only (Plan UAT decision).
+// This test is NOT a ==0 gate on real data — fixture-based only (by design).
 func TestFixturePerReasonCounts(t *testing.T) {
 	_, failures := runFixtureAPICodegen(t)
 
@@ -2800,17 +2800,17 @@ func TestFixturePerReasonCounts(t *testing.T) {
 	}
 
 	// Active class: ReasonVersionDigitsNotExtracted must be 0.
-	// With SLICE-1 parser, version is now correctly extracted for claude-3-5-haiku
+	// With parser, version is now correctly extracted for claude-3-5-haiku
 	// and similar active-class models, so this failure reason must NOT appear.
 	if n := counts[bestiary.ReasonVersionDigitsNotExtracted]; n != 0 {
 		t.Errorf("ReasonVersionDigitsNotExtracted = %d, want 0\n"+
-			"  What: SLICE-1 should suppress this failure for active-class models\n"+
+			"  What: the parser should suppress this failure for active-class models\n"+
 			"  Why: ParseFamilyDetailed now extracts version via Δ1 extract-first path\n"+
 			"  How to fix: verify ParseFamilyDetailed does not emit ReasonVersionDigitsNotExtracted for claude-3-5-haiku etc.",
 			n)
 	}
 
-	// Residual: ReasonResidualUnaccountedTokens must be >= 4 after SLICE-1-FIX-4:
+	// Residual: ReasonResidualUnaccountedTokens must be >= 4 after :
 	// nova-2-lite-v1 (C: variant pre-set, "v1" residual after variant) +
 	// phi-3-medium-128k-instruct (B2: multi-residual) +
 	// text-embedding-3-large (FIX-4 documented residual: full-prefix-first reverted) +
@@ -2846,11 +2846,11 @@ func TestFixturePerReasonCounts(t *testing.T) {
 		}
 	}
 
-	// FIX-B1 spot check (SLICE-1-FIX-4 updated): glm-5-turbo and phi-4-mini must NOT
+	// FIX-B1 spot check: glm-5-turbo and phi-4-mini must NOT
 	// appear in failures. Their single-token rawFamily ("glm", "phi") means B1 fires
 	// correctly (sole trailing suffix promoted, no compound prefix issue).
 	// text-embedding-3-large/small are removed from this check — they are now documented
-	// residuals after SLICE-1-FIX-4 reverted the full-prefix-first change (bestiary-ibtb).
+	// residuals after reverted the full-prefix-first change.
 	for _, fixB1ID := range []string{"glm-5-turbo", "phi-4-mini"} {
 		if reason, found := failsByID[fixB1ID]; found {
 			t.Errorf("FIX-B1 model %q produced a failure (reason=%q), want no failure\n"+

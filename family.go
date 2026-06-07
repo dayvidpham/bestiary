@@ -12,8 +12,8 @@ import "fmt"
 // The mapping is a static switch populated at source time. Unknown families use
 // the empty string sentinel rather than a wrong-but-plausible guess.
 //
-// See FOLLOWUP bestiary-1wy7 for the task to review and fill in additional
-// canonical-provider mappings beyond the initial well-known set.
+// TODO: review and fill in additional canonical-provider mappings beyond the
+// initial well-known set.
 func (f Family) CanonicalProvider() Provider {
 	switch f {
 	case FamilyClaude, FamilyClaudeHaiku, FamilyClaudeOpus, FamilyClaudeSonnet:
@@ -39,7 +39,7 @@ func (f Family) CanonicalProvider() Provider {
 		// Alibaba is the canonical publisher for qwen family models.
 		return ProviderAlibaba
 	default:
-		// TODO(followup bestiary-1wy7): review canonical provider for this family — see FOLLOWUP_SLICE-2
+		// TODO: review canonical provider for this family
 		return "" // empty Provider; Resolve falls back to ErrAmbiguous
 	}
 }

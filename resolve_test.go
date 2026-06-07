@@ -61,7 +61,7 @@ func TestResolve_Ambiguous_MultipleCanonicals(t *testing.T) {
 	// Candidates must be distinct by the extended canonical tuple:
 	// (Family, Variant, Version, Modifier, Date, contextN).
 	//
-	// SLICE-4 FIX-B: the group key now includes Version, Modifier, and a parsed
+	// FIX-B: the group key now includes Version, Modifier, and a parsed
 	// ":N" context-window discriminator from the raw ID. Two candidates may share
 	// the same (Family, Variant, Date) triple but differ in Version, Modifier, or
 	// contextN — that is expected and correct. The dedup key must cover all six
@@ -132,11 +132,11 @@ func TestResolve_WithSchemeRaw_ExactMatch(t *testing.T) {
 // (no slashes, no "@", no special characters), Resolve retries with SchemeCanonical
 // to surface ErrAmbiguous instead of ErrNotFound, matching on the canonical Family.
 //
-// SLICE-11 (rc2) NOTE: this test previously used "claude-opus" — which resolved as
+// NOTE: this test previously used "claude-opus" — which resolved as
 // ErrAmbiguous ONLY because the empty-raw claude-opus-4.x models were OVER-CAPTURED to
 // Family="claude-opus" (so modelMatches' Family-exact branch matched the bare input).
-// SLICE-11 fixes that over-capture (those models are now Family="claude", Variant="opus").
-// SLICE-13 (bestiary-xdbc item 4) then restored the "claude-opus" shorthand via a
+// A later fix corrected that over-capture (those models are now Family="claude", Variant="opus").
+// The bare "claude-opus" shorthand was then restored via a
 // variant-aware bare-family fallback — see TestResolve_SLICE13_BareHyphenShorthandRestored
 // below, which pins the ratified ErrAmbiguous behavior. This test now uses the bare
 // canonical Family "claude" so it keeps exercising the SAME fallback MECHANISM
@@ -164,13 +164,13 @@ func TestResolve_WithSchemeRaw_BareFamilyAmbiguous(t *testing.T) {
 	}
 }
 
-// TestResolve_SLICE13_BareHyphenShorthandRestored pins the SLICE-13 (rc2) behavior,
+// TestResolve_SLICE13_BareHyphenShorthandRestored pins the restored-shorthand behavior,
 // the ratified successor to the former TestResolve_SLICE11_BareOverCaptureNoLongerAmbiguous.
 //
-// HISTORY: before SLICE-11, bare hyphen "claude-opus" resolved as ErrAmbiguous ONLY
-// because the opus models were OVER-CAPTURED to Family="claude-opus". SLICE-11 fixed
+// HISTORY: earlier, bare hyphen "claude-opus" resolved as ErrAmbiguous ONLY
+// because the opus models were OVER-CAPTURED to Family="claude-opus". That was later fixed
 // that (Family="claude", Variant="opus"), which incidentally regressed the shorthand to
-// ErrNotFound. bestiary-xdbc item 4 (Q4, user ruling: "Restore shorthand now (~20 LOC in
+// ErrNotFound. item 4 (Q4, user ruling: "Restore shorthand now (~20 LOC in
 // resolve.go)") ratified restoring it the RIGHT way: a variant-aware bare-family fallback.
 //
 // PIN: Resolve("claude-opus", SchemeRaw) now returns *ErrAmbiguous listing the opus
@@ -181,7 +181,7 @@ func TestResolve_SLICE13_BareHyphenShorthandRestored(t *testing.T) {
 	var ambig *bestiary.ErrAmbiguous
 	if !errors.As(err, &ambig) {
 		t.Fatalf("Resolve SchemeRaw 'claude-opus': got %T (%v), want *ErrAmbiguous\n"+
-			"  bestiary-xdbc item 4 restored the variant-aware bare-family shorthand:\n"+
+			"  A later fix restored the variant-aware bare-family shorthand:\n"+
 			"  '<family>-<variant>' (claude-opus) → the opus group as ambiguous candidates.\n"+
 			"  Do NOT revert to ErrNotFound.", err, err)
 	}
@@ -205,7 +205,7 @@ func TestResolve_SLICE13_BareHyphenShorthandRestored(t *testing.T) {
 }
 
 // TestResolve_SLICE13_ShorthandRegressions pins the behaviors that MUST stay UNCHANGED
-// alongside the restored shorthand (bestiary-xdbc item 4 / handoff slice13):
+// alongside the restored shorthand:
 //   - bare "claude" (family only) → still ErrAmbiguous with many candidates
 //   - canonical "claude/opus" → still ErrAmbiguous with the opus group
 //   - genuinely-unknown "<nonfamily>-x" and "<family>-<nonvariant>" → still ErrNotFound
@@ -394,8 +394,6 @@ func TestResolve_CanonicalFamily_ReturnsErrAmbiguous(t *testing.T) {
 // ErrAmbiguous — the input is unambiguous because the model ID is exact. The
 // fix groups by model ID (not canonical triple) when all matches share the same
 // raw ID.
-//
-// Regression: bestiary-tant (Reviewer A, cycle 2).
 func TestResolve_ExactIDInCanonicalMode_NotAmbiguous(t *testing.T) {
 	// claude-opus-4-20250514 exhibits the divergent-variant pattern: some
 	// providers (e.g. anthropic, jiekou) have Variant="opus" while others
@@ -439,7 +437,7 @@ func TestResolve_ExactIDInCanonicalMode_NotAmbiguous(t *testing.T) {
 // *ErrAmbiguous when multiple distinct family entries match. This is distinct from
 // auto-detecting SchemeCanonical in detectScheme — it is a post-match fallback.
 //
-// B4 (SLICE-FIX-2): Resolve("claude") must return *ErrAmbiguous (not ErrNotFound).
+// B4: Resolve("claude") must return *ErrAmbiguous (not ErrNotFound).
 func TestResolve_SchemeCanonical_NeverAutoDetected_detectScheme(t *testing.T) {
 	// "claude" has no slashes — detectScheme returns SchemeRaw (unchanged).
 	// But Resolve's bare-family fallback applies, so the result is ErrAmbiguous.
@@ -459,7 +457,7 @@ func TestResolve_SchemeCanonical_NeverAutoDetected_detectScheme(t *testing.T) {
 // TestResolve_CanonicalAutoDetect verifies that detectScheme recognizes
 // "provider/family/variant@date" form and auto-detects SchemeCanonical.
 //
-// B1/B2 (SLICE-FIX-2): Resolve("claude/opus@2025-11-01") must return non-empty
+// B1/B2: Resolve("claude/opus@2025-11-01") must return non-empty
 // refs (or *ErrAmbiguous when multi-provider) — NEVER ErrNotFound.
 func TestResolve_CanonicalAutoDetect(t *testing.T) {
 	refs, err := bestiary.Resolve("claude/opus@2025-11-01")
@@ -490,7 +488,7 @@ func TestResolve_CanonicalAutoDetect(t *testing.T) {
 // TestResolve_PURLProviderFilter verifies that the provider segment in a PURL
 // input is retained as a filter hint and applied to match results.
 //
-// B3 (SLICE-FIX-2): Resolve("pkg:huggingface/anthropic/claude-opus-4-5") must
+// B3: Resolve("pkg:huggingface/anthropic/claude-opus-4-5") must
 // return ONLY refs where Provider == "anthropic". It must never return refs from
 // other providers that also host the same model ID.
 func TestResolve_PURLProviderFilter(t *testing.T) {
@@ -520,7 +518,7 @@ func TestResolve_PURLProviderFilter(t *testing.T) {
 // TestResolve_BareFamilyAmbiguous verifies that Resolve("claude") returns
 // *ErrAmbiguous with a non-empty candidate list — not ErrNotFound.
 //
-// B4 (SLICE-FIX-2): bare family names should fall back to SchemeCanonical
+// B4: bare family names should fall back to SchemeCanonical
 // family-only matching and surface ErrAmbiguous when multiple variants match.
 func TestResolve_BareFamilyAmbiguous(t *testing.T) {
 	_, err := bestiary.Resolve("claude")
@@ -565,7 +563,7 @@ func TestResolve_ErrAmbiguous_SchemePropagated(t *testing.T) {
 // back to an all-provider search and returns *ErrAmbiguous with candidates drawn
 // from all providers. The error message must mention the missed namespace.
 //
-// Fix #1 (SLICE-FIX-V2-2): "State that we are doing loose matching in the fallback.
+// Fix #1: "State that we are doing loose matching in the fallback.
 // In zero match case, state that there are none and fallback to ErrAmbiguous with candidates."
 func TestResolve_PURL_LooseFallback_ZeroNamespaceMatches(t *testing.T) {
 	// Use a namespace (provider) that does NOT host claude-opus-4-5 to force the
@@ -811,8 +809,8 @@ func TestResolve_WithInputFormat_Raw_Resolves(t *testing.T) {
 // when SchemeRaw produces zero matches and the input is a bare identifier, Resolve
 // retries with SchemeCanonical and surfaces ErrAmbiguous instead of ErrNotFound.
 //
-// SLICE-11 (rc2) NOTE: repointed from "claude-opus" to the bare Family "claude" for the
-// same reason as TestResolve_WithSchemeRaw_BareFamilyAmbiguous — SLICE-11 removed the
+// NOTE: repointed from "claude-opus" to the bare Family "claude" for the
+// same reason as TestResolve_WithSchemeRaw_BareFamilyAmbiguous — removed the
 // claude-opus Family over-capture, so the hyphen-tier shorthand no longer matches a
 // Family. The fallback MECHANISM (raw→canonical retry → ErrAmbiguous on a real multi-model
 // Family) is unchanged and is what this test guards.
@@ -838,7 +836,7 @@ func TestResolve_WithInputFormat_Raw_PartialAmbiguous(t *testing.T) {
 	}
 }
 
-// --- Fix 1 (SLICE-FIX-V2-5 cycle-2): Bracket-suffix [modifier] stripping in Resolve ---
+// --- Fix 1 ( cycle-2): Bracket-suffix [modifier] stripping in Resolve ---
 
 // TestResolve_BracketSuffixStripping_DateMatch verifies that a canonical input
 // with a [modifier] bracket suffix resolves correctly when both the date AND the
@@ -850,7 +848,7 @@ func TestResolve_WithInputFormat_Raw_PartialAmbiguous(t *testing.T) {
 // Fix: bracket suffix is extracted BEFORE the "@date" suffix so dateFilter
 // contains only the date string.
 //
-// BLOCKER: bestiary-wjk9
+// BLOCKER:
 func TestResolve_BracketSuffixStripping_DateMatch(t *testing.T) {
 	// claude-3-5-haiku-latest from Anthropic has Family="claude", Variant="haiku",
 	// Date="2024-10-22", Modifier="latest" in the static registry.
@@ -861,7 +859,7 @@ func TestResolve_BracketSuffixStripping_DateMatch(t *testing.T) {
 		var notFound *bestiary.ErrNotFound
 		if errors.As(err, &notFound) {
 			t.Fatalf("Resolve(\"anthropic/claude/haiku@2024-10-22[latest]\") returned ErrNotFound; " +
-				"bracket-suffix [latest] must be stripped before date matching — BLOCKER bestiary-wjk9\n" +
+				"bracket-suffix [latest] must be stripped before date matching\n" +
 				"  What: bracket suffix was included in dateFilter string\n" +
 				"  Fix: strip [modifier] suffix from matchInput before extracting @date")
 		}
@@ -889,7 +887,7 @@ func TestResolve_BracketSuffixStripping_DateMatch(t *testing.T) {
 // are tried, the nonexistent modifier must yield ErrNotFound (the filter excludes all
 // models since none have Modifier="nonexistent" for that date).
 //
-// BLOCKER: bestiary-wjk9
+// BLOCKER:
 func TestResolve_BracketSuffixStripping_ModifierFilter(t *testing.T) {
 	// A synthetic modifier that no real model has — must yield ErrNotFound (filter applied).
 	_, err := bestiary.Resolve("claude/haiku@2024-10-22[nonexistent-modifier-xyz]")
@@ -916,7 +914,7 @@ func TestResolve_BracketSuffixStripping_ModifierFilter(t *testing.T) {
 // This is the full round-trip: ref → String() → Resolve() → ref'.
 // ref' must have the same (Family, Variant, Date, Modifier) as ref.
 //
-// BLOCKER: bestiary-wjk9
+// BLOCKER:
 func TestResolve_BracketSuffixStripping_RoundTrip(t *testing.T) {
 	// Find any static model with a non-empty Modifier to exercise the round-trip.
 	var seed *bestiary.ModelRef
@@ -961,13 +959,13 @@ func TestResolve_BracketSuffixStripping_RoundTrip(t *testing.T) {
 	}
 }
 
-// --- SLICE-FIX-V4-1: RehostProviders population ---
+// --- : RehostProviders population ---
 
 // TestResolve_RehostProviders_Distinct verifies that ErrAmbiguous.RehostProviders
 // is populated with distinct (deduplicated) non-canonical providers when Resolve
 // returns ErrAmbiguous for a bare family name like "claude".
 //
-// SLICE-FIX-V4-1 L1 — verifies collectRehostProviders dedup and canonical exclusion.
+// Verifies collectRehostProviders dedup and canonical exclusion.
 func TestResolve_RehostProviders_Distinct(t *testing.T) {
 	_, err := bestiary.Resolve("claude")
 	if err == nil {
@@ -1005,7 +1003,7 @@ func TestResolve_RehostProviders_Distinct(t *testing.T) {
 // TestResolve_RehostProviders_ExcludesCanonical verifies that the canonical provider
 // is strictly excluded from RehostProviders even when it appears in the match set.
 //
-// SLICE-FIX-V4-1 — ensures collectRehostProviders filters out canonical provider.
+// Ensures collectRehostProviders filters out canonical provider.
 func TestResolve_RehostProviders_ExcludesCanonical(t *testing.T) {
 	_, err := bestiary.Resolve("claude", bestiary.WithScheme(bestiary.SchemeCanonical))
 	if err == nil {
@@ -1028,7 +1026,7 @@ func TestResolve_RehostProviders_ExcludesCanonical(t *testing.T) {
 // TestResolve_RehostProviders_PURL_LooseFallback verifies that RehostProviders is
 // also populated on the PURL loose-fallback ErrAmbiguous path.
 //
-// SLICE-FIX-V4-1 — ensures the PURL loose-fallback construction site populates field.
+// Ensures the PURL loose-fallback construction site populates field.
 func TestResolve_RehostProviders_PURL_LooseFallback(t *testing.T) {
 	_, err := bestiary.Resolve("pkg:huggingface/totally-unknown-ns/claude-opus-4-5")
 	if err == nil {
@@ -1059,10 +1057,10 @@ func TestResolve_RehostProviders_PURL_LooseFallback(t *testing.T) {
 	}
 }
 
-// --- SLICE-FIX-V4-1-FIX2: canonical-preference in PURL loose-fallback ---
+// --- -FIX2: canonical-preference in PURL loose-fallback ---
 
 // TestResolve_PURL_LooseFallback_CanonicalProviderInCandidates is a regression test
-// for the BLOCKER (bestiary-ylb8): when a PURL wrong-namespace input resolves to a
+// for the BLOCKER: when a PURL wrong-namespace input resolves to a
 // model that IS hosted by its canonical provider, the canonical provider's entry must
 // appear in ErrAmbiguous.Candidates so that FormatAmbiguous Section 1 is non-empty.
 //
@@ -1073,7 +1071,7 @@ func TestResolve_RehostProviders_PURL_LooseFallback(t *testing.T) {
 // After the fix, the canonical provider (anthropic) is preferred as the representative
 // when it is present in the match set, so Section 1 contains the "* anthropic/..." row.
 //
-// Regression: bestiary-ylb8 (BLOCKER).
+// Regression: (BLOCKER).
 func TestResolve_PURL_LooseFallback_CanonicalProviderInCandidates(t *testing.T) {
 	// "nonexistent" namespace forces the loose-fallback path; claude-opus-4-5 is
 	// hosted by anthropic (canonical) and by several rehosts.
@@ -1112,7 +1110,7 @@ func TestResolve_PURL_LooseFallback_CanonicalProviderInCandidates(t *testing.T) 
 // correctly excludes canonical providers from Section 2). After the fix, Section 1
 // shows the "* anthropic/claude/opus/..." canonical row.
 //
-// Regression: bestiary-ylb8 (BLOCKER).
+// Regression: (BLOCKER).
 func TestResolve_PURL_LooseFallback_FormatAmbiguous_Section1NonEmpty(t *testing.T) {
 	_, err := bestiary.Resolve("pkg:huggingface/nonexistent/claude-opus-4-5")
 	if err == nil {
@@ -1139,7 +1137,7 @@ func TestResolve_PURL_LooseFallback_FormatAmbiguous_Section1NonEmpty(t *testing.
 	}
 }
 
-// --- SLICE-4 FIX-B: :N context-window distinctness + selectRepresentative ---
+// --- FIX-B: :N context-window distinctness + selectRepresentative ---
 
 // TestResolve_ContextN_Distinct_InCandidates verifies that
 // claude-3-7-sonnet-thinking:1024 and claude-3-7-sonnet-thinking:128000 are NOT
@@ -1256,9 +1254,9 @@ func TestResolve_Reasoner_Distinct_FromThinking(t *testing.T) {
 // "claude-3-7-sonnet" (InputFormatPeasant → SchemeCanonical) resolves to a
 // SINGLE representative, NOT ErrAmbiguous.
 //
-// SLICE-6 LANDING: the cross-slice escape hatch is REMOVED. The decomposition fixes
-// (S1/S2/S3 — claude-3-7-sonnet-thinking now decomposes to Family="claude", not the
-// malformed "claude-3-7-sonnet") plus the FIX-B group-key extension (S4) have landed, so
+// The cross-slice escape hatch is REMOVED. The decomposition fixes
+// (claude-3-7-sonnet-thinking now decomposes to Family="claude", not the
+// malformed "claude-3-7-sonnet") plus the FIX-B group-key extension have landed, so
 // this is now a HARD assertion: ErrAmbiguous is a failure, not a skip. The ratified BDD
 // acceptance criterion (peasant claude-3-7-sonnet → single representative; re-hosts are
 // informational) is gated here.
@@ -1269,7 +1267,7 @@ func TestResolve_Peasant_Claude37Sonnet_SingleRep(t *testing.T) {
 		var ambig *bestiary.ErrAmbiguous
 		if errors.As(err, &ambig) {
 			t.Fatalf("Resolve(claude-3-7-sonnet, peasant) returned ErrAmbiguous with %d candidates, "+
-				"want a SINGLE representative (post-S1/S2/S3 decomposition + S4 FIX-B). Candidates: %v",
+				"want a SINGLE representative (post-decomposition + FIX-B). Candidates: %v",
 				len(ambig.Candidates), ambig.Candidates)
 		}
 		t.Fatalf("Resolve(claude-3-7-sonnet, peasant) unexpected error %T: %v", err, err)

@@ -151,7 +151,7 @@ func TestStaticModels_NoDuplicateKeys(t *testing.T) {
 
 // TestStaticModels_ContainsCoreProviders is a regression guard ensuring the
 // three core providers (Anthropic, Google, OpenAI) actually appear in the
-// static registry after codegen (Reviewer B-4 requirement).
+// static registry after codegen.
 func TestStaticModels_ContainsCoreProviders(t *testing.T) {
 	seen := make(map[bestiary.Provider]bool)
 	for _, m := range bestiary.StaticModels() {
@@ -275,7 +275,7 @@ func TestModels_DefensiveCopy(t *testing.T) {
 	}
 }
 
-// TestStaticModels_NoDateVersions is the SLICE-1-FIX-3 real-data invariant test.
+// TestStaticModels_NoDateVersions is the real-data invariant test.
 // It iterates ALL models in the static registry and asserts that no model's Version
 // field contains a date-shaped value. This permanently guards the class of bugs
 // where date tokens (YYMM, MMDD, YYMMDD, MM-YYYY) are silently stored as versions.
@@ -304,7 +304,7 @@ func TestStaticModels_NoDateVersions(t *testing.T) {
 	// reEmbedYear: version string that contains an embedded 4-digit calendar year
 	// run (19xx or 20xx), with or without surrounding dots/hyphens, OR a concatenated
 	// YYYYMMDD run (e.g. "20240101" where "2024" is concatenated with "0101" — no separator).
-	// SLICE-1-FIX-4 (reEmbedYear): trailing boundary hardened to also match a following digit,
+	// (reEmbedYear): trailing boundary hardened to also match a following digit,
 	// catching concatenated 8-digit YYYYMMDD strings that have no separator between year and day.
 	reEmbedYear := regexp.MustCompile(`(?:^|[.\-])(19|20)\d{2}(?:$|[.\-]|\d)`)
 
@@ -335,7 +335,7 @@ func TestStaticModels_NoDateVersions(t *testing.T) {
 			"%s\n"+
 			"  What: Version field contains a date-shaped value\n"+
 			"  Why: parse heuristics failed to strip date tokens from the version dot-join path\n"+
-			"  How to fix: run SLICE-1-FIX-3 date-group guards or re-run go generate ./... after parse fix",
+			"  How to fix: apply the date-group guards or re-run go generate ./... after parse fix",
 			len(failures), strings.Join(failures, "\n"))
 	}
 }

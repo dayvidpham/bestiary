@@ -1,8 +1,8 @@
 package main
 
-// SLICE-9 (rc2) PATH-UNIFICATION — before/after decomposition diff harness.
+// PATH-UNIFICATION — before/after decomposition diff harness.
 //
-// CLARIFICATION-8 (bestiary-l77c): the user chose the ROOT-CAUSE path-unification
+// the user chose the ROOT-CAUSE path-unification
 // over the surgical patch — make ParseFamilyDetailed FULLY ID-driven (raw_family a
 // HINT/FALLBACK only, never overriding an ID-derived value). The risk that choice
 // carries is correctness regression: the raw_family="" experiment proved divergence
@@ -11,16 +11,16 @@ package main
 //
 // This file is the MANDATORY SAFEGUARD (the de-risking gate):
 //
-//   L1 (bestiary-5sbg): dumpDecomposition() over ALL snapshot records ×
+//   - dumpDecomposition() over ALL snapshot records ×
 //      (Family,Variant,Version,Modifier); a committed BEFORE baseline
 //      (testdata/snapshot/decomp_baseline.tsv) captured PRE-refactor; and the
 //      a/b/c categorizer (classifyDecompChange) that labels every change.
-//   L2 (bestiary-68ct): TestPathUnification_ZeroUnexpectedRegression — the GATE:
+//   - TestPathUnification_ZeroUnexpectedRegression — the GATE:
 //      loads the frozen BEFORE baseline, computes the live AFTER decomposition,
 //      categorizes every change, and asserts category-(c) (UNEXPECTED REGRESSION)
 //      is EMPTY. Pre-refactor the diff is empty (trivially green); post-refactor it
 //      is the regression surface the reviewers scrutinize.
-//   L3 (bestiary-m0e6): the refactor + the committed categorized diff report
+//   - the refactor + the committed categorized diff report
 //      (testdata/snapshot/decomp_diff_report.json).
 //
 // HONESTY CONTRACT: the BEFORE baseline is FROZEN — it is captured once, pre-refactor,
@@ -54,12 +54,12 @@ type decompRecord struct {
 	Family    bestiary.Family
 	Variant   string
 	Version   string
-	// SLICE-10: Modifier is a LIST, compared as an ORDER-INDEPENDENT SET.
+	// Modifier is a LIST, compared as an ORDER-INDEPENDENT SET.
 	Modifier []string
 }
 
 // modKey is the canonical, order-independent string key for a modifier list (the
-// SLICE-10 R1 set-independence anchor): permutations collapse to one key. Mirrors the
+// R1 set-independence anchor): permutations collapse to one key. Mirrors the
 // production bestiary modifierKey using the exported CanonicalizeModifiers.
 func modKey(mods []string) string {
 	c := bestiary.CanonicalizeModifiers(mods)
@@ -106,7 +106,7 @@ func (r decompRecord) tuple() decompTuple {
 
 // decompCmp is the COMPARABLE projection of a decompTuple (the Modifier list is
 // reduced to its order-independent canonical key) so tuples can be used as map keys
-// and compared with ==. This is the SLICE-10 R1 set-independence guarantee applied to
+// and compared with ==. This is the R1 set-independence guarantee applied to
 // the categorizer: a permuted modifier list never reads as a distinct tuple.
 type decompCmp struct {
 	Family   bestiary.Family
@@ -169,7 +169,7 @@ func baselinePath() string {
 const baselineHeader = "provider\tid\traw_family\tfamily\tvariant\tversion\tmodifier"
 
 func formatBaselineLine(r decompRecord) string {
-	// SLICE-10: the modifier column is the canonical comma-joined key (order-independent).
+	// the modifier column is the canonical comma-joined key (order-independent).
 	// The FROZEN pre-refactor baseline holds single-token modifiers (no commas).
 	return strings.Join([]string{
 		string(r.Provider), string(r.ID), string(r.RawFamily),
@@ -222,7 +222,7 @@ func loadBaseline() ([]decompRecord, error) {
 		abs, _ := filepath.Abs(baselinePath())
 		return nil, fmt.Errorf(
 			"loadBaseline: cannot read frozen decomposition baseline at %s: %w\n"+
-				"  What: the SLICE-9 BEFORE baseline (pre-path-unification decomposition) is missing\n"+
+				"  What: the BEFORE baseline (pre-path-unification decomposition) is missing\n"+
 				"  Why: it is captured once via TestCaptureDecompositionBaseline (env-gated) and committed\n"+
 				"  How to fix: BESTIARY_CAPTURE_BASELINE=1 go test ./cmd/bestiary-gen -run TestCaptureDecompositionBaseline\n"+
 				"       (run this ONLY pre-refactor; re-capturing post-refactor would mask regressions)",
@@ -264,7 +264,7 @@ func loadBaseline() ([]decompRecord, error) {
 //
 //	BESTIARY_CAPTURE_BASELINE=1 go test ./cmd/bestiary-gen -run TestCaptureDecompositionBaseline
 //
-// Run this ONCE, PRE-refactor (on the SLICE-8 HEAD), and commit the result.
+// Run this ONCE, PRE-refactor (on the HEAD), and commit the result.
 func TestCaptureDecompositionBaseline(t *testing.T) {
 	if os.Getenv("BESTIARY_CAPTURE_BASELINE") != "1" {
 		t.Skip("BESTIARY_CAPTURE_BASELINE != 1 — refusing to overwrite the frozen BEFORE baseline " +
@@ -349,7 +349,7 @@ func isStrictEnrichment(before, after decompTuple) bool {
 			return false
 		}
 	}
-	// SLICE-10 modifier as a SET: an enrichment may only ADD modifiers (before ⊆ after),
+	// modifier as a SET: an enrichment may only ADD modifiers (before ⊆ after),
 	// never drop one. A dropped modifier is a populated-field change → not an enrichment.
 	if modKey(before.Modifier) != modKey(after.Modifier) {
 		changed = true
@@ -380,7 +380,7 @@ func isStrictEnrichment(before, after decompTuple) bool {
 //  3. (c) regression: everything else (a populated field changed to a different
 //     value and it was NOT a convergence toward what other providers already had).
 func classifyDecompChange(id bestiary.ModelID, before, after decompTuple, beforeByID, afterByID []decompTuple, allow sanctionedAllowlist) (changeCategory, string) {
-	// L1 (bestiary-1kfq / RATIFIED bestiary-xdbc) — SANCTIONED o-series taxonomy escape,
+	// SANCTIONED o-series taxonomy escape,
 	// EXPECTED-TUPLE-MATCHED. An allowlisted raw ID is admitted as cat-(a)-sanctioned
 	// ONLY IF its observed AFTER tuple EQUALS the ratified target tuple recorded in the
 	// allowlist artifact. ANY OTHER delta on an allowlisted ID (a dropped/changed field,
@@ -391,14 +391,14 @@ func classifyDecompChange(id bestiary.ModelID, before, after decompTuple, before
 	// because the escape is keyed to the exact ratified tuple, not the ID alone.
 	if exp, ok := allow[id]; ok {
 		if tupleEqual(after, exp) {
-			return CatFix, "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple " + exp.String()
+			return CatFix, "sanctioned-taxonomy: converged to the ratified o-series target tuple " + exp.String()
 		}
 		// AUTHORITATIVE for allowlisted IDs: any observed AFTER tuple OTHER than the
 		// ratified target is a HARD cat-(c) — short-circuit, do NOT fall through to the
 		// mechanical classifier (which might otherwise rubber-stamp an o-series-shaped
 		// reassignment as a clean convergence and mask a drifted/buggy tuple). This is
 		// what makes the escape EXPECTED-TUPLE-MATCHED rather than ID-blanket.
-		return CatRegress, fmt.Sprintf("allowlisted o-series ID did NOT converge to its ratified tuple %s (got %s) — sanctioned escape is tuple-matched, not ID-blanket (bestiary-xdbc)", exp, after)
+		return CatRegress, fmt.Sprintf("allowlisted o-series ID did NOT converge to its ratified tuple %s (got %s) — sanctioned escape is tuple-matched, not ID-blanket", exp, after)
 	}
 
 	distinct := func(ts []decompTuple) int {
@@ -422,7 +422,7 @@ func classifyDecompChange(id bestiary.ModelID, before, after decompTuple, before
 		}
 	}
 
-	// G1 (fix-cycle-2, Reviewer A+B): a convergence is only a divergence-FIX when it
+	// G1: a convergence is only a divergence-FIX when it
 	// does NOT empty or DOWNGRADE a field THIS record already had populated. A value-
 	// blind "matches a prior sibling tuple = fix" rule let real regressions through:
 	// converging onto a pre-existing WRONG value (e.g. flash-lite→flash because a
@@ -431,7 +431,7 @@ func classifyDecompChange(id bestiary.ModelID, before, after decompTuple, before
 	// record. Reject those here so they fall through to CatRegress (and Option B, whose
 	// family convergences are exactly this class, cannot fool the gate).
 	//
-	// SLICE-11 (Option B) splits the directionality guard by field class. A family
+	// (Option B) splits the directionality guard by field class. A family
 	// OVER-CAPTURE reduction (claude-opus → claude + variant "opus", deepseek-r1 →
 	// deepseek, llama-3.3-70b → llama) shortens a populated Family field and so trips
 	// isFieldDowngrade, yet converging it is a genuine FIX: the over-captured COMPOUND
@@ -442,8 +442,8 @@ func classifyDecompChange(id bestiary.ModelID, before, after decompTuple, before
 	// trust it. The ONE thing still rejected is a NON-family field losing SPECIFICITY
 	// (before a strict superstring of after — the flash-lite → flash class): that is real
 	// data loss, not over-capture noise, so it stays a regression.
-	// SLICE-12 (bestiary-j1nu) HARDENING — the S11 review IMPORTANT (axis-A/B, same root).
-	// The pre-S12 CatFix family-reduction branch only checked nonFamilyPrefixDowngrade
+	// HARDENING — the over-capture-reduction review IMPORTANT.
+	// The earlier CatFix family-reduction branch only checked nonFamilyPrefixDowngrade
 	// (prefix-only) and IGNORED field CLEARS, so a family reduction that CLEARED a
 	// populated variant a same-ID SIBLING retains was admitted as a fix — safe-by-DATA,
 	// not safe-by-CONSTRUCTION. The unified guard below (realNonFamilyLoss) rejects ANY
@@ -458,14 +458,14 @@ func classifyDecompChange(id bestiary.ModelID, before, after decompTuple, before
 	if beforeDivergent && (afterConsistent || matchedExistingBefore) {
 		if familyReduced {
 			if !realNonFamilyLoss(before, after, id) {
-				return CatFix, "family over-capture reduced to registered short base, converged onto an independently-produced sibling tuple (SLICE-11; j1nu-hardened: no ID-present non-family field lost)"
+				return CatFix, "family over-capture reduced to registered short base, converged onto an independently-produced sibling tuple (hardened: no ID-present non-family field lost)"
 			}
 		} else if !familyClearedOrDowngraded(before, after) && !realNonFamilyLoss(before, after, id) {
-			reason := "converged divergent ID toward cross-provider agreement (j1nu-hardened: only phantom non-family loss permitted)"
+			reason := "converged divergent ID toward cross-provider agreement (hardened: only phantom non-family loss permitted)"
 			if matchedExistingBefore {
-				reason = "now matches a tuple another provider already produced for this ID (BEFORE); only phantom non-family loss permitted (j1nu)"
+				reason = "now matches a tuple another provider already produced for this ID (BEFORE); only phantom non-family loss permitted"
 			} else if afterConsistent {
-				reason = "all providers for this ID now agree post-unification; only phantom non-family loss permitted (j1nu)"
+				reason = "all providers for this ID now agree post-unification; only phantom non-family loss permitted"
 			}
 			return CatFix, reason
 		}
@@ -496,7 +496,7 @@ func classifyDecompChange(id bestiary.ModelID, before, after decompTuple, before
 		}
 	}
 
-	// (b) SLICE-11 NON-converging family over-capture reduction (single-provider IDs, or
+	// (b) NON-converging family over-capture reduction (single-provider IDs, or
 	// multi-provider IDs whose other providers stay an honest residual). Admitted as an
 	// improvement ONLY under an INDEPENDENT, data-grounded test: AFTER's family is a
 	// CANONICAL registered family (in the upstream-derived allFamilies registry) while
@@ -508,41 +508,41 @@ func classifyDecompChange(id bestiary.ModelID, before, after decompTuple, before
 	// arbitrary family rewrite: a genuine mislabel (intellect↔glm, ministral↔mistral) is
 	// NOT a reduction-direction shortening and a capability-modifier loss (kimi-k2-thinking)
 	// is declined upstream, so neither can slip through here.
-	// SLICE-12 (j1nu): this NON-converging improvement branch must ALSO refuse to bless a
+	// This NON-converging improvement branch must ALSO refuse to bless a
 	// reduction that CLEARS or laterally changes an ID-present non-family field that no
 	// AFTER field re-surfaces (e.g. rnj-1→rnj dropping the ID-attested "instruct" a sibling
 	// keeps). realNonFamilyLoss subsumes the old prefix-only nonFamilyPrefixDowngrade check.
 	if familyReduced && !realNonFamilyLoss(before, after, id) &&
 		(familySuffixMovedToVariant(before, after) ||
 			(bestiary.IsKnownFamily(after.Family) && !bestiary.IsKnownFamily(before.Family))) {
-		return CatImprove, "family over-capture reduced to short base — exact family-suffix→variant move (override semantics), OR before ∉ registry & after ∈ registry; no ID-present non-family field lost (SLICE-11; j1nu-hardened)"
+		return CatImprove, "family over-capture reduced to short base — exact family-suffix→variant move (override semantics), OR before ∉ registry & after ∈ registry; no ID-present non-family field lost (hardened)"
 	}
 
-	// (b) SLICE-12 CANONICAL-WINNER ENFORCE: a LATERAL family change (not a reduction)
+	// (b) CANONICAL-WINNER ENFORCE: a LATERAL family change (not a reduction)
 	// whose AFTER family is in the CLOSED enforce set (family_enforce.json) is a SANCTIONED
 	// ledger correction — the ID-canonical DISTINCT family (aion/magnum/hermes/mixtral/qwq/
 	// intellect/…) beat a parent-family or org-namespace mislabel (raw 'llama'/'mistral'/
 	// 'gpt'/'glm'/'qwen'/'nousresearch'/'allenai'/'liquid'). Admitted ONLY when no ID-present
 	// non-family field was lost (realNonFamilyLoss) — so a correction that also drops a real
-	// variant stays a cat-(c). The enforce set is curated data tied to the rc2 ledger +
-	// bestiary-xdbc Q3, not the categorizer's logic, so this cannot rubber-stamp an arbitrary
+	// variant stays a cat-(c). The enforce set is curated data, not the
+	// categorizer's logic, so this cannot rubber-stamp an arbitrary
 	// family rewrite (only the ID's own distinct family triggers it in the parser).
 	if before.Family != after.Family && bestiary.IsEnforcedCanonicalFamily(after.Family) &&
 		!realNonFamilyLoss(before, after, id) {
 		return CatImprove, "canonical-winner enforce: ID-derived distinct family won over a parent/org mislabel (family_enforce.json ledger)"
 	}
 
-	// (b) SLICE-12 GLUED family-suffix → variant fold (bestiary-xdbc Q1, glmv→glm+'v'): the
+	// (b) GLUED family-suffix → variant fold: the
 	// dropped family suffix re-surfaces VERBATIM as the variant, with no hyphen between base
 	// and suffix (before.Family == after.Family + after.Variant, e.g. "glmv" == "glm"+"v").
 	// Information-preserving (the suffix is relocated, not lost) and no ID-present non-family
 	// field lost — a strict improvement (the glm raw-family fold ratified in Q1).
 	if after.Variant != "" && string(before.Family) == string(after.Family)+after.Variant &&
 		!realNonFamilyLoss(before, after, id) {
-		return CatImprove, "glued family-suffix moved to variant (e.g. glmv → glm + variant 'v'; bestiary-xdbc Q1)"
+		return CatImprove, "glued family-suffix moved to variant (e.g. glmv → glm + variant 'v')"
 	}
 
-	// (b) SLICE-14: the GENERIC "text-embedding" raw self-map descriptor corrected to the
+	// (b) the GENERIC "text-embedding" raw self-map descriptor corrected to the
 	// ID-derived REAL family (Qwen/Qwen3-Embedding-* → qwen) — a canonical family correction
 	// (the ID names the actual family; "text-embedding" was a generic provider descriptor),
 	// the same spirit as the canonical-winner enforce set. Admitted only when the AFTER family
@@ -551,10 +551,10 @@ func classifyDecompChange(id bestiary.ModelID, before, after decompTuple, before
 	// keep family "text-embedding" (idFam==rawFam) and never reach here.
 	if strings.EqualFold(string(before.Family), "text-embedding") && before.Family != after.Family &&
 		bestiary.IsKnownFamily(after.Family) && !realNonFamilyLoss(before, after, id) {
-		return CatImprove, "generic 'text-embedding' descriptor corrected to the ID-derived real family (SLICE-14)"
+		return CatImprove, "generic 'text-embedding' descriptor corrected to the ID-derived real family"
 	}
 
-	// (b) SLICE-12 JUNK-VARIANT removal: a populated variant CLEARED with Family/Version/
+	// (b) JUNK-VARIANT removal: a populated variant CLEARED with Family/Version/
 	// Modifier otherwise preserved is a de-noise improvement when the cleared value is EITHER
 	//   - PHANTOM: absent from the model ID (#4 gpt-codex — raw_family "gpt-codex" tagging a
 	//     "-chat" ID with no "codex"); OR
@@ -565,7 +565,7 @@ func classifyDecompChange(id bestiary.ModelID, before, after decompTuple, before
 	// consistent across providers). An ID-present, non-redundant variant cleared would have
 	// been a real loss (realNonFamilyLoss / the convergence branch) and never reach here.
 	//
-	// SLICE-14 (bestiary-g69j): the REDUNDANT escape now also consults the ID — it fires only
+	// the REDUNDANT escape now also consults the ID — it fires only
 	// when the value is in the ID AND equals the version (a genuine bare-gen duplicate leak),
 	// not on bare structural equality, so a future model that legitimately ID-named two
 	// distinct-but-equal tokens could not be silently cleared.
@@ -576,7 +576,7 @@ func classifyDecompChange(id bestiary.ModelID, before, after decompTuple, before
 		return CatImprove, fmt.Sprintf("junk variant %q cleared: phantom (absent from ID) or redundant (== version, ID-confirmed); de-noise", before.Variant)
 	}
 
-	// (b) SLICE-12 family-preserving DE-NOISE/ENRICH: the FAMILY is unchanged and NO
+	// (b) family-preserving DE-NOISE/ENRICH: the FAMILY is unchanged and NO
 	// ID-present non-family field was lost (realNonFamilyLoss=false) — every changed field
 	// is either an ENRICHMENT (empty→populated, or a superstring extension) or a PHANTOM
 	// loss (a value ABSENT from the model ID). This covers compound changes the single-field
@@ -589,7 +589,7 @@ func classifyDecompChange(id bestiary.ModelID, before, after decompTuple, before
 		return CatImprove, "family-preserving de-noise/enrich: only phantom losses and/or enrichments, no ID-present field lost"
 	}
 
-	// (b) rc3 SANCTIONED org/over-capture family CORRECTION: the BEFORE family is an
+	// (b) SANCTIONED org/over-capture family CORRECTION: the BEFORE family is an
 	// UNREGISTERED junk/over-capture string (∉ allFamilies — e.g. "azure", "azure-gpt-4",
 	// "meta", "meta-llama-3_3-70b") and the AFTER family is a REGISTERED canonical family
 	// (∈ allFamilies — gpt, llama) reached via a curated vendor/provider-prefix strip, AND
@@ -598,12 +598,12 @@ func classifyDecompChange(id bestiary.ModelID, before, after decompTuple, before
 	// variant/version/modifier is a strict improvement. This is safe-by-construction (it
 	// CANNOT bless a wrong rewrite): a genuine mislabel between two REAL families is blocked
 	// (before would be ∈ allFamilies), and any token loss is blocked by realNonFamilyLoss.
-	// Mirrors the SLICE-11 reduction branch's registry test, without requiring a prefix
+	// Mirrors the reduction branch's registry test, without requiring a prefix
 	// REDUCTION (an org-prefix strip is a lateral, not a leading-reduction, family change).
 	if before.Family != after.Family &&
 		bestiary.IsKnownFamily(after.Family) && !bestiary.IsKnownFamily(before.Family) &&
 		!realNonFamilyLoss(before, after, id) {
-		return CatImprove, "rc3: unregistered org/over-capture family corrected to a registered family via curated vendor/provider-prefix strip; no ID-present field lost"
+		return CatImprove, "unregistered org/over-capture family corrected to a registered family via curated vendor/provider-prefix strip; no ID-present field lost"
 	}
 
 	// A divergent ID that converged to a brand-new value (no provider had it BEFORE,
@@ -616,7 +616,7 @@ func classifyDecompChange(id bestiary.ModelID, before, after decompTuple, before
 // nonFamilyPrefixDowngrade reports whether any NON-family field (Variant/Version/
 // Modifier) lost SPECIFICITY in the BEFORE→AFTER change — before is non-empty and after
 // is a strict less-specific PREFIX of it (e.g. variant "flash-lite" → "flash", modifier
-// "thinking-turbo" → "thinking"). This is the SLICE-11 directionality guard for family
+// "thinking-turbo" → "thinking"). This is the directionality guard for family
 // over-capture convergences: clearing an over-capture-noise field is allowed (the
 // canonical short sibling does not carry it either), but a populated field collapsing to
 // a less-specific prefix is genuine data loss and stays a regression. A field that is
@@ -625,7 +625,7 @@ func classifyDecompChange(id bestiary.ModelID, before, after decompTuple, before
 // also carries no variant); a field changed to a non-prefix LATERAL value is likewise not
 // a specificity loss and is governed by the convergence requirement.
 func nonFamilyPrefixDowngrade(before, after decompTuple) bool {
-	// SLICE-10: the Modifier list is governed as a SET by realNonFamilyLoss (a dropped
+	// the Modifier list is governed as a SET by realNonFamilyLoss (a dropped
 	// modifier token is a loss only when ID-present and not re-surfaced); prefix-downgrade
 	// is a scalar-field notion, so only Variant/Version participate here.
 	pairs := [][2]string{
@@ -679,7 +679,7 @@ func valueInID(val string, id bestiary.ModelID) bool {
 	if strings.Contains(s, lv) {
 		return true
 	}
-	// SLICE-5 gp9y (P1 foundation): dash/dot-form-INSENSITIVE contiguous check. A genuine
+	// Foundation: dash/dot-form-INSENSITIVE contiguous check. A genuine
 	// numeric version is present in the ID as a CONTIGUOUS run even when its separator
 	// differs from the value's — "4.5" appears as "claude-opus-4-5" (dash form). Normalize
 	// BOTH '.'→'-' and retest the contiguous substring. This CATCHES a dropped dash-form
@@ -693,11 +693,11 @@ func valueInID(val string, id bestiary.ModelID) bool {
 	if (sNorm != s || lvNorm != lv) && strings.Contains(sNorm, lvNorm) {
 		return true
 	}
-	// SLICE-14 (bestiary-ovf6) TOKEN-AWARE fallback: a MULTI-token lost value whose tokens
+	// TOKEN-AWARE fallback: a MULTI-token lost value whose tokens
 	// are NON-CONTIGUOUS in the ID still represents REAL data present in the ID and must NOT
 	// be treated as phantom. Split the lost value on [-.] and require EVERY sub-token to be
 	// present in the ID's token-set (split on any non-alphanumeric). Closes the masking hole
-	// axis-B exploited: id="gemini-flash-2.0-lite", variant "flash-lite"→"flash" — "flash-lite"
+	// Exploit case: id="gemini-flash-2.0-lite", variant "flash-lite"→"flash" — "flash-lite"
 	// is not a contiguous substring, but both "flash" and "lite" ARE in the ID, so dropping
 	// "lite" is a REAL loss (cat-(c)), not a phantom de-noise. PURELY ADDITIVE: this only ever
 	// turns MORE losses real (never fewer), so it cannot mask a regression.
@@ -750,7 +750,7 @@ func resurfaces(val string, after decompTuple) bool {
 	if val == "" {
 		return false
 	}
-	// SLICE-10: a value that relocated INTO the after-Modifier SET counts as re-surfaced
+	// a value that relocated INTO the after-Modifier SET counts as re-surfaced
 	// (this is the movedToModifier sanctioned-non-loss path: a variant token like
 	// "instruct" moving variant→modifier is a lateral move, not a drop).
 	if after.Variant == val || after.Version == val || inModSet(after.Modifier, val) || string(after.Family) == val {
@@ -769,7 +769,7 @@ func resurfaces(val string, after decompTuple) bool {
 // realNonFamilyLoss reports whether the BEFORE→AFTER change LOSES REAL information in a
 // NON-family field (Variant/Version/Modifier): a populated old value was CLEARED, or
 // replaced by a non-enriching value, AND that old value is PRESENT in the model ID AND
-// did not re-surface verbatim in another AFTER field. This is the unified j1nu/gpt-codex
+// did not re-surface verbatim in another AFTER field. This is the unified gpt-codex
 // guard. An enrichment (AFTER extends BEFORE as a superstring prefix) is never a loss; a
 // PHANTOM loss (old value absent from the ID) is never a loss. The FAMILY field is
 // governed separately by the over-capture reduction path (familyIsReductionOf), whose
@@ -793,7 +793,7 @@ func realNonFamilyLoss(before, after decompTuple, id bestiary.ModelID) bool {
 		if a != "" && strings.HasPrefix(a, b) {
 			continue // enrichment: AFTER is a more-specific superstring of BEFORE
 		}
-		// SLICE-10 variant-suffix→modifier SPLIT (not a loss): the before-variant is the
+		// variant-suffix→modifier SPLIT (not a loss): the before-variant is the
 		// after-variant plus one or more trailing hyphen tokens that ALL re-surfaced in the
 		// after-Modifier set (e.g. variant "v2.5-turbo" → variant "v2.5" + modifier [turbo]).
 		// The dropped suffix relocated, nothing lost.
@@ -810,7 +810,7 @@ func realNonFamilyLoss(before, after decompTuple, id bestiary.ModelID) bool {
 				continue
 			}
 		}
-		// SLICE-14: a CLEARED Version that is the MM of an MM-YYYY DATE in the ID
+		// a CLEARED Version that is the MM of an MM-YYYY DATE in the ID
 		// (command-r-plus-08-2024 → "08", command-r7b-12-2024 → "12") is NOT a real version
 		// loss — it is a spurious date-fragment leak the parser correctly date-guards to "".
 		// (The raw-populated siblings already carry version "" for the same reason.)
@@ -818,13 +818,13 @@ func realNonFamilyLoss(before, after decompTuple, id bestiary.ModelID) bool {
 			continue
 		}
 		// b was cleared or replaced by a non-enriching value. resurfaces() now also
-		// recognises a token relocated INTO the after-Modifier set (the SLICE-10
+		// recognises a token relocated INTO the after-Modifier set (the
 		// variant→modifier move), so a sanctioned reclassification is NOT a loss.
 		if valueInID(b, id) && !resurfaces(b, after) {
 			return true // ID-present value lost without re-surfacing → REAL loss
 		}
 	}
-	// SLICE-10 Modifier SET loss: a modifier token present BEFORE but absent from the
+	// Modifier SET loss: a modifier token present BEFORE but absent from the
 	// after-Modifier set is a REAL loss only when it is ID-present AND did not re-surface
 	// in another after field. (Phantom modifiers — e.g. the glm "vision" not in the ID —
 	// may be dropped; the union semantics mean this normally never fires.)
@@ -842,7 +842,7 @@ func realNonFamilyLoss(before, after decompTuple, id bestiary.ModelID) bool {
 
 // movedToModifier reports whether `val` is a SANCTIONED variant/version→modifier lateral
 // move: it is absent from after.Variant AND after.Version but PRESENT in the after-Modifier
-// SET. This is the SLICE-10 R2 predicate that distinguishes a reclassification (cat-a/b,
+// SET. This is the R2 predicate that distinguishes a reclassification (cat-a/b,
 // non-loss) from a genuine drop. It is ENFORCEMENT-checked by the adversarial mutation test
 // (TestPathUnification_ModifierMove_MutationProof): delete the token from after.Modifier and
 // the move is no longer sanctioned, so the categorizer must flip the record to cat-(c).
@@ -897,7 +897,7 @@ func familyClearedOrDowngraded(before, after decompTuple) bool {
 }
 
 // sanctionedAllowlist maps a raw model ID to its EXPECTED post-restructure (ratified)
-// decomposition tuple (bestiary-xdbc). It is the reviewed artifact that makes the
+// decomposition tuple. It is the reviewed artifact that makes the
 // o-series taxonomy restructure safe-by-construction: the ONLY sanctioned escape from
 // cat-(c), and only when the observed AFTER tuple EQUALS the expected tuple for that ID.
 type sanctionedAllowlist map[bestiary.ModelID]decompTuple
@@ -910,7 +910,7 @@ type sanctionedAllowlistEntry struct {
 	Modifier string `json:"modifier"`
 }
 
-// sanctionedAllowlistFile is the committed allowlist artifact (header cites bestiary-xdbc).
+// sanctionedAllowlistFile is the committed allowlist artifact.
 type sanctionedAllowlistFile struct {
 	Cite    string                              `json:"_cite"`
 	Comment string                              `json:"_comment"`
@@ -926,8 +926,8 @@ func loadSanctionedAllowlist() (sanctionedAllowlist, error) {
 	body, err := os.ReadFile(sanctionedAllowlistPath())
 	if err != nil {
 		return nil, fmt.Errorf("loadSanctionedAllowlist: cannot read %s: %w\n"+
-			"  What: the SLICE-12 sanctioned o-series taxonomy allowlist (raw ID → ratified tuple) is missing\n"+
-			"  Why: it is the reviewed artifact tied to bestiary-xdbc that blesses the o-series restructure\n"+
+			"  What: the sanctioned o-series taxonomy allowlist (raw ID → ratified tuple) is missing\n"+
+			"  Why: it is the reviewed artifact that blesses the o-series restructure\n"+
 			"  How to fix: ensure cmd/bestiary-gen/testdata/snapshot/sanctioned_oseries_allowlist.json is committed",
 			sanctionedAllowlistPath(), err)
 	}
@@ -962,7 +962,7 @@ func familyIsReductionOf(short, long bestiary.Family) bool {
 }
 
 // isFamilyReductionPreserving reports whether a BEFORE→AFTER change is an
-// INFORMATION-PRESERVING family OVER-CAPTURE reduction (SLICE-11 Option B): the family
+// INFORMATION-PRESERVING family OVER-CAPTURE reduction: the family
 // became a less-specific REGISTERED short base (after.Family ⊂ before.Family) AND no
 // information was lost — every sub-token present in BEFORE still appears in AFTER (the
 // dropped family suffix re-surfaces as the variant/version/modifier).
@@ -997,7 +997,7 @@ type diffReport struct {
 	CatRegress     int `json:"cat_c_unexpected_regression_count"`
 	JustifiedCount int `json:"justified_exception_count"`
 	// DivergenceBefore/After count cross-provider divergent IDs over the 4-TUPLE INCLUDING
-	// Modifier (Family,Variant,Version,Modifier): 'before' = frozen SLICE-9 baseline,
+	// Modifier (Family,Variant,Version,Modifier): 'before' = frozen baseline,
 	// 'after' = current live snapshot. This is a DIFFERENT, broader metric than the
 	// authoritative cross-provider gate divergenceExact (snapshot_analysis_test.go), which is
 	// the 3-TUPLE EXCLUDING Modifier on the current snapshot (=0). The explicit json keys +
@@ -1092,7 +1092,7 @@ func countDivergentIDs(byID map[bestiary.ModelID][]decompTuple) int {
 	return n
 }
 
-// TestPathUnification_ZeroUnexpectedRegression is THE GATE (CLARIFICATION-8 mandatory
+// TestPathUnification_ZeroUnexpectedRegression is THE GATE (mandatory
 // safeguard). It diffs the FROZEN pre-refactor BEFORE baseline against the LIVE AFTER
 // decomposition, categorizes every change (a/b/c), writes the committed categorized
 // diff report, and asserts ZERO category-(c) UNEXPECTED REGRESSIONS.
@@ -1100,7 +1100,7 @@ func countDivergentIDs(byID map[bestiary.ModelID][]decompTuple) int {
 // Pre-refactor (baseline == live) the diff is empty → trivially green. Post-refactor
 // the categorized changes are the regression surface the per-slice reviewers scrutinize.
 // exceptionKey identifies a SPECIFIC intended decomposition change by the exact
-// (ID, before-tuple, after-tuple). Keying on all three (fix-cycle-2, Reviewer B-2)
+// (ID, before-tuple, after-tuple). Keying on all three
 // rather than ID alone means the ledger justifies ONLY the precise change that was
 // reviewed — if a future pipeline change makes the same ID transition to a DIFFERENT
 // (and unreviewed) tuple, the ledger no longer absorbs it and the gate fails.
@@ -1118,20 +1118,20 @@ type exceptionKey struct {
 // NOT in this ledger, so new regressions are never silently absorbed. ADDING an entry
 // is a reviewed decision (committed in the diff artifact).
 var justifiedExceptions = map[exceptionKey]string{
-	// SLICE-10 fix-cycle 2 (Reviewer-A/C MINOR): the 2 pre-S10 DORMANT keys
+	// The 2 earlier DORMANT keys
 	// (gemini-2.5-pro-preview-tts, qwen3.6-plus-free) were PRUNED — they no longer fire a
 	// live change record against the current snapshot, so they were dead ledger weight.
-	// The map now holds ONLY the live S10 entries.
+	// The map now holds ONLY the live entries.
 
-	// ── SLICE-10 (rc2) modifier-taxonomy reclassification collateral ──────────────
+	// ── modifier-taxonomy reclassification collateral ──────────────
 	// The ratified taxonomy moves {instruct, turbo, base} from variant_suffixes.json to
 	// global modifiers (modifiers.json). For these NON-divergent, single-/few-provider IDs
 	// on UNREGISTERED or over-captured families, the reclassification surfaces a residual
 	// the mechanical classifier flags as cat-(c). Each is REVIEWED below; NONE is one of the
 	// 9 convergence stragglers and NONE introduces a cross-provider divergence (the
-	// post-S10 divergent set is exactly {nvidia/llama-3.3-nemotron-super-49b-v1.5}).
+	// divergent set is exactly {nvidia/llama-3.3-nemotron-super-49b-v1.5}).
 	//
-	// rc3 (USER-RATIFIED Impl-UAT bestiary-2gxu) — the final ledger is exactly the user-
+	// USER-RATIFIED — the final ledger is exactly the user-
 	// sanctioned NON-defects. Each is non-divergent and honest; resolving it is disproportionate
 	// (∉ allFamilies with no fold target, or a structural Variant-LIST relaxation), so the user
 	// ratified them as documented non-defects for v0.2.2. 'instruct' re-surfaces in the Modifier
@@ -1140,28 +1140,28 @@ var justifiedExceptions = map[exceptionKey]string{
 		ID:     "abacusai/dracarys-llama-3_1-70b-instruct",
 		Before: `(family="dracarys-llama-3_1-70b",variant="instruct",version="",modifier="")`,
 		After:  `(family="dracarys",variant="",version="",modifier="instruct")`,
-	}: "USER-RATIFIED non-defect (Impl-UAT bestiary-2gxu, GH#11 model-lineage): dracarys is a llama fine-tune with its own lineage, ∉ allFamilies; 'instruct'→Modifier re-surfaces (no token loss). Family-root precision is a taxonomy call, not a regression.",
+	}: "USER-RATIFIED non-defect (GH#11 model-lineage): dracarys is a llama fine-tune with its own lineage, ∉ allFamilies; 'instruct'→Modifier re-surfaces (no token loss). Family-root precision is a taxonomy call, not a regression.",
 	{
 		ID:     "upstage/solar-10_7b-instruct",
 		Before: `(family="solar-10_7b",variant="instruct",version="",modifier="")`,
 		After:  `(family="solar",variant="",version="",modifier="instruct")`,
-	}: "USER-RATIFIED non-defect (Impl-UAT bestiary-2gxu, future taxonomy): solar ∉ allFamilies and has no fold target (only attested as solar-mini/solar-pro); 'instruct'→Modifier re-surfaces (no token loss). 10.7b=size GH#9.",
+	}: "USER-RATIFIED non-defect (future taxonomy): solar ∉ allFamilies and has no fold target (only attested as solar-mini/solar-pro); 'instruct'→Modifier re-surfaces (no token loss). 10.7b=size GH#9.",
 	{
 		ID:     "grok-3-mini-fast-beta",
 		Before: `(family="grok-3-mini-fast",variant="beta",version="3",modifier="")`,
 		After:  `(family="grok",variant="mini",version="3",modifier="")`,
-	}: "USER-RATIFIED non-defect (Impl-UAT bestiary-2gxu, GH#13 release-stage dimension): family corrected to grok + real tier 'mini' (+version 3); the release-stage token 'beta' AND the speed-tier token 'fast' are BOTH dropped — neither can co-occupy the single Variant slot with 'mini' (variant-multiplicity, the variant analogue of S10's Modifier-LIST, deferred). MECHANISM (corrected) for the related xai/grok-4.20-non-reasoning-beta, which stays Modifier=nil (nil both BEFORE and AFTER rc3 — no regression, no gate trip): the trailing 'beta' is the TAIL-ORDER MODIFIER-SCAN BOUNDARY — the scan starts at the tail and halts at 'beta' (a non-collected variant/boundary token) before reaching the inner 'non-reasoning', so the negation branch never executes. Contrast (Axis-B verified): grok-4.20-non-reasoning [tail='reasoning' preceded by 'non']→[non-reasoning]; grok-4-20-beta-0309-non-reasoning ['beta' MID-string, tail still 'reasoning']→[non-reasoning]; xai/grok-4.20-non-reasoning-beta [tail='beta']→nil. Same release-stage multiplicity tracked under GH#13.",
+	}: "USER-RATIFIED non-defect (GH#13 release-stage dimension): family corrected to grok + real tier 'mini' (+version 3); the release-stage token 'beta' AND the speed-tier token 'fast' are BOTH dropped — neither can co-occupy the single Variant slot with 'mini' (variant-multiplicity, the variant analogue of the Modifier-LIST, deferred). MECHANISM (corrected) for the related xai/grok-4.20-non-reasoning-beta, which stays Modifier=nil (nil both BEFORE and AFTER — no regression, no gate trip): the trailing 'beta' is the TAIL-ORDER MODIFIER-SCAN BOUNDARY — the scan starts at the tail and halts at 'beta' (a non-collected variant/boundary token) before reaching the inner 'non-reasoning', so the negation branch never executes. Contrast (verified): grok-4.20-non-reasoning [tail='reasoning' preceded by 'non']→[non-reasoning]; grok-4-20-beta-0309-non-reasoning ['beta' MID-string, tail still 'reasoning']→[non-reasoning]; xai/grok-4.20-non-reasoning-beta [tail='beta']→nil. Same release-stage multiplicity tracked under GH#13.",
 	{
 		ID:     "azure-gpt-4-turbo",
 		Before: `(family="azure-gpt-4",variant="turbo",version="4",modifier="")`,
 		After:  `(family="azure-gpt",variant="",version="4",modifier="turbo")`,
-	}: "NanoGPT reseller id: the leading 'azure-' is a backend-host label (NanoGPT routes to Azure-hosted OpenAI models), NOT a redundant provider prefix — the genuine Azure provider is the separate azure-cognitive-services namespace. The earlier provider-prefix strip that forced these to the gpt family was removed because it deleted the azure-host signal. These now decompose natively to an imperfect 'azure-*' family, pending a serving-host/backend dimension (TODO). The before/after differs only in how that imperfect family splits 'turbo'/'4'; neither tuple is a meaningful model decomposition, so this is not a model-identity regression.",
+	}: "NanoGPT reseller id: the leading 'azure-' is a backend-host label (NanoGPT routes to Azure-hosted OpenAI models), NOT a redundant provider prefix — the genuine Azure provider is the separate azure-cognitive-services namespace. The earlier provider-prefix strip that forced these to the gpt family was removed because it deleted the azure-host signal. These now decompose natively to an imperfect 'azure-*' family, pending a serving-host/backend dimension (GH#16). The before/after differs only in how that imperfect family splits 'turbo'/'4'; neither tuple is a meaningful model decomposition, so this is not a model-identity regression.",
 	// RESOLVED & de-ledgered:
 	//  • nvidia/llama-3.3-nemotron-super-49b-v1.5 — folded to nemotron via idFamilyOverrides
 	//    (cross-provider divergence 1→0).
 	//  • meta-llama-3_3-70b-instruct + Meta-Llama-3-1-…-FP8 — no-slash doubled-vendor strip →
 	//    llama (version preserved); native family-correction (cat-(b)).
-	// fix-cycle 1 RESOLVED & de-ledgered:
+	// Also RESOLVED & de-ledgered:
 	//  • whisper-large-v3-turbo / seed-oss-36b-instruct — registered whisper(large)/seed(oss)
 	//    families (∈ allFamilies, attested) → lossless variants, now cat-(b).
 	//  • elevenlabs/elevenlabs-v2.5-turbo — lossless variant-suffix split (v2.5-turbo →
@@ -1202,16 +1202,16 @@ func TestPathUnification_ZeroUnexpectedRegression(t *testing.T) {
 		JustifiedCount:   justified,
 		DivergenceBefore: divBefore,
 		DivergenceAfter:  divAfter,
-		DivergenceMetric: "4-tuple INCL Modifier (Family,Variant,Version,Modifier); before=frozen SLICE-9 baseline, after=current snapshot. DISTINCT from the authoritative cross-provider divergenceExact gate (3-tuple, EXCL Modifier, current snapshot, =0).",
+		DivergenceMetric: "4-tuple INCL Modifier (Family,Variant,Version,Modifier); before=frozen baseline, after=current snapshot. DISTINCT from the authoritative cross-provider divergenceExact gate (3-tuple, EXCL Modifier, current snapshot, =0).",
 		Changes:          changes,
 	}
 
-	t.Logf("=== SLICE-9 path-unification before/after diff ===")
+	t.Logf("=== path-unification before/after diff ===")
 	t.Logf("records=%d  changed=%d  (a)divergence-fix=%d  (b)improvement=%d  (c)REGRESSION=%d  justified-exception=%d",
 		total, len(changes), fix, improve, regress, justified)
 	t.Logf("divergence: before=%d  after=%d", divBefore, divAfter)
 
-	// M2 (fix-cycle-2, Reviewer B-3): only persist the committed artifact when the gate
+	// M2: only persist the committed artifact when the gate
 	// PASSES. A failing run must NOT leave a dirty/mismatched report in the working tree
 	// (which would pollute git status and could mask the failure under a re-commit).
 	reportPath := filepath.Join(snapshotDir(), "decomp_diff_report.json")
@@ -1230,7 +1230,7 @@ func TestPathUnification_ZeroUnexpectedRegression(t *testing.T) {
 		t.Errorf("GATE FAILED: %d category-(c) UNEXPECTED REGRESSION(s) — must be ZERO.\n"+
 			"  What: a populated decomposition field changed to a different value without converging\n"+
 			"        a divergent ID (i.e. a currently-correct decomposition was WORSENED)\n"+
-			"  Why: SLICE-9 (CLARIFICATION-8) requires zero unexpected regressions; the path-unification\n"+
+			"  Why: the path-unification requires zero unexpected regressions; it\n"+
 			"       must be family-preserving and monotonic on Variant/Version/Modifier\n"+
 			"  How to fix: add a targeted raw_family fallback for the flagged case in reconcileIDDriven,\n"+
 			"       OR (if the change is actually intended) justify it and reclassify\n"+
@@ -1241,10 +1241,10 @@ func TestPathUnification_ZeroUnexpectedRegression(t *testing.T) {
 	}
 }
 
-// TestClassifyDecompChange_RejectsDowngrade is the G1 unit (fix-cycle-2): a
+// TestClassifyDecompChange_RejectsDowngrade is the G1 unit: a
 // convergence that EMPTIES or DOWNGRADES a populated field must classify as
 // CatRegress, NOT CatFix — even when the worse value matches a sibling provider's
-// prior tuple (the value-blind blind spot Reviewer B exploited).
+// prior tuple (the value-blind blind spot the review exploited).
 func TestClassifyDecompChange_RejectsDowngrade(t *testing.T) {
 	cases := []struct {
 		desc       string
@@ -1257,7 +1257,7 @@ func TestClassifyDecompChange_RejectsDowngrade(t *testing.T) {
 	}{
 		{
 			desc: "thinking modifier CLEARED while the ID DOES carry 'thinking', converging onto a sibling's empty-modifier tuple → REGRESS (ID-present value lost)",
-			// SLICE-12 (j1nu): the distinguishing signal is whether the lost value is in
+			// The distinguishing signal is whether the lost value is in
 			// the ID. Here 'thinking' IS in the ID, so clearing it is REAL data loss.
 			id:         "deepseek-v3-thinking",
 			before:     decompTuple{"deepseek", "", "", []string{"thinking"}},
@@ -1276,7 +1276,7 @@ func TestClassifyDecompChange_RejectsDowngrade(t *testing.T) {
 			want:       CatRegress,
 		},
 		{
-			// SLICE-14 (bestiary-ovf6) ADVERSARIAL: axis-B's exploit — the lost value
+			// ADVERSARIAL exploit — the lost value
 			// "flash-lite" is NOT a contiguous substring of "gemini-flash-2.0-lite", but both
 			// "flash" and "lite" ARE present (non-contiguous). The pre-S14 substring valueInID
 			// returned false → masked the dropped "lite" as cat-(b) de-noise. The token-aware
@@ -1291,7 +1291,7 @@ func TestClassifyDecompChange_RejectsDowngrade(t *testing.T) {
 		},
 		{
 			desc: "gpt-codex PHANTOM variant CLEARED (codex absent from the chat ID), converging onto a sibling that already had variant='' → FIX",
-			// SLICE-12 (#4, gpt-codex ID-wins): 'codex' is provider phantom noise — it is
+			// 'codex' is provider phantom noise — it is
 			// NOT in 'gpt-5-chat-latest', so dropping it loses no real information. This is
 			// the case the absent-from-ID construction rule blesses (vs flash-lite above).
 			id:         "gpt-5-chat-latest",
@@ -1321,8 +1321,8 @@ func TestClassifyDecompChange_RejectsDowngrade(t *testing.T) {
 	}
 }
 
-// TestPathUnification_CrossIDFormConsistency is the G2 cross-ID-FORM probe
-// (fix-cycle-2, Reviewer C): the per-exact-ID gate never compares the '@'-delimited
+// TestPathUnification_CrossIDFormConsistency is the G2 cross-ID-FORM probe:
+// the per-exact-ID gate never compares the '@'-delimited
 // form of a model against its '-' form, so a same-model version-VALUE divergence
 // across ID-forms is invisible to it. This probe decomposes every snapshot record
 // whose ID contains '@' BOTH as-is and with '@'→'-' and asserts the canonical
@@ -1355,7 +1355,7 @@ func TestPathUnification_CrossIDFormConsistency(t *testing.T) {
 	t.Logf("cross-ID-form probe: %d '@'-form records, all converge to canonical '-'-form", atForms)
 }
 
-// TestSLICE11_CategorizerPredicates unit-tests the SLICE-11 categorizer extensions in
+// TestSLICE11_CategorizerPredicates unit-tests the categorizer extensions in
 // isolation: the family-reduction direction guard, the non-family prefix-downgrade guard
 // (which still catches the flash-lite class), and the exact family-suffix→variant move.
 func TestSLICE11_CategorizerPredicates(t *testing.T) {
@@ -1404,7 +1404,7 @@ func TestSLICE11_CategorizerPredicates(t *testing.T) {
 }
 
 // TestSLICE11_ClassifyFamilyReduction asserts classifyDecompChange's end-to-end verdicts
-// for the SLICE-11 family over-capture cases — converging reductions are FIXES, single-
+// for the family over-capture cases — converging reductions are FIXES, single-
 // provider information-preserving reductions are IMPROVEMENTS, and a non-family specificity
 // LOSS (flash-lite) converging onto a sibling is STILL a regression (the G1 guard holds).
 func TestSLICE11_ClassifyFamilyReduction(t *testing.T) {
@@ -1454,10 +1454,10 @@ func TestSLICE11_ClassifyFamilyReduction(t *testing.T) {
 			want:       CatRegress,
 		},
 		{
-			// SLICE-12 (j1nu ADVERSARIAL): a family reduction that ALSO CLEARS a populated
+			// ADVERSARIAL: a family reduction that ALSO CLEARS a populated
 			// variant THE ID CARRIES and that NO sibling re-surfaces must fall to cat-(c).
-			// Pre-S12 this slipped through (the reduction branch ignored field clears).
-			desc:       "j1nu: family reduction clearing an ID-PRESENT variant that the converged-to sibling does NOT carry → REGRESS",
+			// Earlier this slipped through (the reduction branch ignored field clears).
+			desc:       "family reduction clearing an ID-PRESENT variant that the converged-to sibling does NOT carry → REGRESS",
 			id:         "essentialai/rnj-1-instruct",
 			before:     decompTuple{"rnj-1", "instruct", "1", nil},
 			after:      decompTuple{"rnj", "", "1", nil},
@@ -1476,7 +1476,7 @@ func TestSLICE11_ClassifyFamilyReduction(t *testing.T) {
 	}
 }
 
-// TestSLICE12_SanctionedAllowlistGate is the NO-MASKING adversarial unit (bestiary-1kfq,
+// TestSLICE12_SanctionedAllowlistGate is the NO-MASKING adversarial unit (,
 // the supervisor refinement that OVERRIDES the handoff): the o-series sanctioned escape is
 // EXPECTED-TUPLE-MATCHED, not ID-blanket. It proves four properties:
 //
@@ -1487,7 +1487,7 @@ func TestSLICE11_ClassifyFamilyReduction(t *testing.T) {
 //	    → cat-(c) — you cannot hide a regression on an allowlisted ID under the escape.
 func TestSLICE12_SanctionedAllowlistGate(t *testing.T) {
 	// A small, explicit allowlist standing in for the committed artifact: o1-mini's
-	// ratified target tuple per bestiary-xdbc (Q2a/Q2b).
+	// ratified target tuple per (Q2a/Q2b).
 	allow := sanctionedAllowlist{
 		"o1-mini": decompTuple{"gpt", "o", "1", []string{"mini"}},
 		"gpt-4o":  decompTuple{"gpt", "4o", "", nil},
@@ -1557,7 +1557,7 @@ func TestSLICE12_SanctionedAllowlistGate(t *testing.T) {
 }
 
 // TestSLICE12_AllowlistConformsToRatification asserts the committed o-series allowlist
-// artifact conforms to the bestiary-xdbc ratified rule: every entry is family="gpt" with
+// artifact conforms to the ratified rule: every entry is family="gpt" with
 // the line designator in the VARIANT slot, version follows the designator rule (o→digits,
 // 4o/audio→empty), and the ID actually carries the designator. This is the reviewable
 // integrity check tying the artifact to the ratification (no stray/padded entries).
@@ -1583,7 +1583,7 @@ func TestSLICE12_AllowlistConformsToRatification(t *testing.T) {
 	for id, tup := range allow {
 		idl := strings.ToLower(string(id))
 		if tup.Family != "gpt" {
-			t.Errorf("%s: family=%q, want gpt (bestiary-xdbc: all OpenAI under gpt)", id, tup.Family)
+			t.Errorf("%s: family=%q, want gpt (all OpenAI under gpt)", id, tup.Family)
 		}
 		switch tup.Variant {
 		case "o":
@@ -1614,8 +1614,8 @@ func TestSLICE12_AllowlistConformsToRatification(t *testing.T) {
 }
 
 // oseriesMultiModifierCompromise lists the allowlisted o-series IDs that carry 2+ tokens
-// competing for the SINGLE Modifier slot. bestiary-xdbc does NOT rule on which wins (the
-// Modifier-LIST is deferred to SLICE-10), so their Modifier is a parser-determined
+// competing for the SINGLE Modifier slot. does NOT rule on which wins (the
+// Modifier-LIST is deferred to ), so their Modifier is a parser-determined
 // single-slot COMPROMISE — NOT independently rule-derivable. They are excluded from the
 // strict rule-authored Modifier assertion below (their designator+version IS still asserted).
 var oseriesMultiModifierCompromise = map[bestiary.ModelID]bool{
@@ -1628,7 +1628,7 @@ var oseriesMultiModifierCompromise = map[bestiary.ModelID]bool{
 }
 
 // ratifiedOSeriesTuple INDEPENDENTLY authors the expected (family,variant,version,modifier)
-// tuple for an o-series ID DIRECTLY from the bestiary-xdbc deterministic rule — a pure
+// tuple for an o-series ID DIRECTLY from the deterministic rule — a pure
 // function of the ID, written WITHOUT consulting the parser (guardrail-1: the allowlist is
 // the SPEC, the parser conforms to it, not the other way around). Returns ok=false for a
 // non-o-series ID or a multi-modifier compromise (whose Modifier the rule does not fix).
@@ -1676,7 +1676,7 @@ func ratifiedOSeriesTuple(id bestiary.ModelID) (decompTuple, bool) {
 var reOSeriesLineTest = regexp.MustCompile(`^o([0-9]+)$`)
 
 // TestSLICE12_AllowlistMatchesIndependentRule is guardrail-1 (supervisor checkpoint-1): every
-// allowlist entry's tuple must EQUAL the tuple INDEPENDENTLY authored from the bestiary-xdbc
+// allowlist entry's tuple must EQUAL the tuple INDEPENDENTLY authored from the
 // rule (ratifiedOSeriesTuple, written without consulting the parser) — so a subtle wrong tuple
 // copied from parser output cannot self-pass. Multi-modifier compromise IDs (whose Modifier the
 // rule does not fix) only have their designator+version checked; their Modifier is documented.
@@ -1736,7 +1736,7 @@ func contains(ss []string, v string) bool {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SLICE-10 (rc2) L2 — R1 set-independence + R2(i) adversarial modifier-move proof
+// R1 set-independence + R2(i) adversarial modifier-move proof
 // ─────────────────────────────────────────────────────────────────────────────
 
 // TestPathUnification_Slice10_ModifierSetIndependence (R1) asserts the categorizer
@@ -1800,7 +1800,7 @@ func TestPathUnification_Slice10_ModifierMove_MutationProof(t *testing.T) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SLICE-5 gp9y (P1 foundation) — valueInID numeric dash-form completeness
+// Foundation — valueInID numeric dash-form completeness
 // ─────────────────────────────────────────────────────────────────────────────
 
 // TestValueInID_Gp9y_NumericDashForm proves the safety-predicate is now COMPLETE for the
@@ -1819,7 +1819,7 @@ func TestValueInID_Gp9y_NumericDashForm(t *testing.T) {
 	}
 	for _, c := range caught {
 		if !valueInID(c.val, c.id) {
-			t.Errorf("valueInID(%q,%q) = false, want true (gp9y: dash/dot-form numeric version must be CAUGHT)", c.val, c.id)
+			t.Errorf("valueInID(%q,%q) = false, want true (dash/dot-form numeric version must be CAUGHT)", c.val, c.id)
 		}
 	}
 
@@ -1834,7 +1834,7 @@ func TestValueInID_Gp9y_NumericDashForm(t *testing.T) {
 	}
 	for _, c := range noFP {
 		if valueInID(c.val, c.id) {
-			t.Errorf("valueInID(%q,%q) = true, want false (gp9y: non-adjacent digits must NOT FP as a version)", c.val, c.id)
+			t.Errorf("valueInID(%q,%q) = true, want false (non-adjacent digits must NOT FP as a version)", c.val, c.id)
 		}
 	}
 
@@ -1844,7 +1844,7 @@ func TestValueInID_Gp9y_NumericDashForm(t *testing.T) {
 	afterC := decompTuple{"claude", "opus", "", nil}
 	if cat, _ := classifyDecompChange("claude-opus-4-5-20251101", beforeC, afterC,
 		[]decompTuple{beforeC}, []decompTuple{afterC}, allow); cat != CatRegress {
-		t.Errorf("dropping scattered-numeric version 4.5 → got %v, want CatRegress (gp9y: real numeric loss must be cat-(c))", cat)
+		t.Errorf("dropping scattered-numeric version 4.5 → got %v, want CatRegress (real numeric loss must be cat-(c))", cat)
 	}
 
 	// (ii') A record clearing a PHANTOM numeric (non-adjacent digits, not a real version)
@@ -1853,6 +1853,6 @@ func TestValueInID_Gp9y_NumericDashForm(t *testing.T) {
 	afterP := decompTuple{"hermes", "", "", nil}
 	if cat, _ := classifyDecompChange("nousresearch/hermes-3-llama-3.1-70b", beforeP, afterP,
 		[]decompTuple{beforeP}, []decompTuple{afterP}, allow); cat == CatRegress {
-		t.Error("clearing phantom non-adjacent '2.3' → got CatRegress, want non-regress (gp9y: must NOT FP)")
+		t.Error("clearing phantom non-adjacent '2.3' → got CatRegress, want non-regress (must NOT FP)")
 	}
 }

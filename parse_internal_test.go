@@ -61,7 +61,7 @@ func TestIsYYMMDateToken(t *testing.T) {
 // R1 parity: detectVersionDigitsInID ⟺ ExtractVersionBetweenFamilyAndVariant
 // --------------------------------------------------------------------------
 
-// TestExtractVersionBetweenFamilyAndVariant_Parity enforces the URD R1 parity
+// TestExtractVersionBetweenFamilyAndVariant_Parity enforces the R1 parity
 // contract: detectVersionDigitsInID fires if and only if
 // ExtractVersionBetweenFamilyAndVariant returns a non-empty version OR a
 // non-empty residual.
@@ -165,7 +165,7 @@ func TestExtractVersionBetweenFamilyAndVariant_Parity(t *testing.T) {
 					"parity violation for id=%q family=%q variant=%q:\n"+
 						"  detectVersionDigitsInID = %v\n"+
 						"  ExtractVersionBetweenFamilyAndVariant fired = %v (version=%q, residual=%v)\n"+
-						"  URD R1 requires: detector fires IFF extractor returns non-empty version or residual",
+						"  R1 requires: detector fires IFF extractor returns non-empty version or residual",
 					tc.id, tc.family, tc.variant,
 					gotDetector, extractorFired, version, residual,
 				)

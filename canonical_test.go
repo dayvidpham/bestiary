@@ -10,7 +10,7 @@ import (
 )
 
 // modJoin is the test-side equivalent of the package-internal modifierKey: the
-// canonical, order-independent comma-joined modifier key (SLICE-10). Shared across
+// canonical, order-independent comma-joined modifier key. Shared across
 // the bestiary_test files for asserting Modifier-list behaviour.
 func modJoin(mods []string) string {
 	return strings.Join(bestiary.CanonicalizeModifiers(mods), ",")
@@ -206,13 +206,13 @@ func TestCanonicalScheme_UnmarshalJSON_RejectsBadInput(t *testing.T) {
 }
 
 // ----------------------------------------------------------------------------
-// Canonical bracket-suffix tests (SLICE-FIX-V2-5)
+// Canonical bracket-suffix tests
 // ----------------------------------------------------------------------------
 
 // TestModelRef_Format_BracketSuffix verifies that formatCanonical appends a
 // [modifier] bracket suffix when Modifier is non-empty, and omits it when empty.
 //
-// These tests will FAIL until L3 updates formatCanonical in modelref.go to emit
+// These tests will FAIL until formatCanonical in modelref.go is updated to emit
 // the bracket-suffix.
 func TestModelRef_Format_BracketSuffix(t *testing.T) {
 	tests := []struct {
@@ -285,7 +285,7 @@ func TestModelRef_Format_BracketSuffix(t *testing.T) {
 // (via Resolve with SchemeCanonical) correctly extracts the Modifier field from
 // a bracket-suffixed canonical string.
 //
-// These tests will FAIL until L3 updates the Resolve/canonical parser to consume
+// These tests will FAIL until the Resolve/canonical parser is updated to consume
 // the optional [modifier] bracket suffix.
 func TestModelRef_ParseCanonical_BracketSuffix(t *testing.T) {
 	// "anthropic/claude/opus/4.6@2026-02-05[thinking]" must resolve cleanly with Modifier="thinking".

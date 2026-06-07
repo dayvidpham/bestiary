@@ -75,7 +75,7 @@ func (r ModelRef) Format(s CanonicalScheme) string {
 //     placed directly after Family when Variant is empty)
 //   - Date only appended as "@<date>" suffix when non-empty
 //   - Modifier only appended as "[modifier]" bracket suffix when non-empty
-//     (SLICE-FIX-V2-5: bracket suffix is placed after the date suffix, if any)
+//     (: bracket suffix is placed after the date suffix, if any)
 //
 // Full example matrix (p = provider, f = family, v = variant, ver = version, d = date, m = modifier):
 //
@@ -112,9 +112,8 @@ func (r ModelRef) formatCanonical() string {
 		base = fmt.Sprintf("%s/%s", r.Provider, path)
 	}
 
-	// Append bracket-suffix for Modifier when non-empty (SLICE-FIX-V2-5; SLICE-10:
-	// ALL modifiers rendered in canonical order, comma-joined, for byte-stability
-	// across every scheme).
+	// Append bracket-suffix for Modifier when non-empty (ALL modifiers rendered in
+	// canonical order, comma-joined, for byte-stability across every scheme).
 	if key := modifierKey(r.Modifier); key != "" {
 		return base + "[" + key + "]"
 	}

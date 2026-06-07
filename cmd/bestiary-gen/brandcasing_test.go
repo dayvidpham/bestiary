@@ -2,8 +2,8 @@ package main
 
 import "testing"
 
-// SLICE-7 L2 (bestiary-96sp) — brand-casing helper unit tests. Separate file from
-// main_test.go (avoids colliding with SLICE-5's gate edits). Covers: curated brand
+// Brand-casing helper unit tests. Separate file from
+// main_test.go (avoids colliding with the gate edits). Covers: curated brand
 // stylization, un-curated title-case default, preserved multi-token acronyms, and the
 // per-segment digit-handling difference between the two identifier builders.
 
@@ -13,7 +13,7 @@ func TestStyleSegment_Curated(t *testing.T) {
 		tok  string
 		want string
 	}{
-		// RATIFIED casings (URD o54x).
+		// RATIFIED casings.
 		{"nvidia", "Nvidia"},
 		{"togetherai", "TogetherAI"},
 		{"llmgateway", "LlmGateway"},

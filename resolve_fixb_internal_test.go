@@ -1,11 +1,11 @@
 package bestiary
 
-// resolve_fixb_internal_test.go — SLICE-4 FIX-B internal unit tests for the
+// resolve_fixb_internal_test.go — FIX-B internal unit tests for the
 // selectRepresentative and parseContextN seams.
 //
 // These tests live in package bestiary (not bestiary_test) because they exercise
 // unexported functions. They verify the pure seam logic independently of
-// StaticModels(), so SLICE-4 is green without depending on the S1/S2/S3
+// StaticModels(), so they are green without depending on the
 // parse.go decomposition fixes.
 
 import (

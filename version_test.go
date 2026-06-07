@@ -26,8 +26,8 @@ func typeContains(typeField any, want string) bool {
 	return false
 }
 
-// TestSchemaFile_VersionAndModifierType is the SLICE-10 fix-cycle-2 guard (Reviewer-C
-// BLOCKER + Reviewer-B IMPORTANT): the schema FILE's own metadata was unguarded, so it
+// TestSchemaFile_VersionAndModifierType guards against schema-metadata drift:
+// the schema FILE's own metadata was unguarded, so it
 // silently drifted from the Go const (version stuck at 0.0.2) and could silently revert
 // the ModelRef.Modifier type to "string". This test cross-checks the schema FILE against
 // the Go contract so neither class can recur unnoticed.
@@ -58,7 +58,7 @@ func TestSchemaFile_VersionAndModifierType(t *testing.T) {
 			schema.Version, bestiary.BestiarySchemaVersion)
 	}
 
-	// (b) ModelInfo top-level Modifier.type must declare "array" (SLICE-10 []string).
+	// (b) ModelInfo top-level Modifier.type must declare "array".
 	if mi, ok := schema.Properties["Modifier"]; !ok {
 		t.Error("schema properties.Modifier missing")
 	} else if !typeContains(mi.Type, "array") {
@@ -79,7 +79,7 @@ func TestSchemaFile_VersionAndModifierType(t *testing.T) {
 }
 
 // TestBestiarySchemaVersion_Exact asserts that BestiarySchemaVersion equals
-// exactly "0.0.3" — bumped by SLICE-10 (rc2) for the Modifier string→[]string
+// exactly "0.0.3" — bumped by for the Modifier string→[]string
 // public schema change. Update this test when a new schema version is released.
 func TestBestiarySchemaVersion_Exact(t *testing.T) {
 	const want = "0.0.3"

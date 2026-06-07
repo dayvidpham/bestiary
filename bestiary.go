@@ -28,7 +28,7 @@ type ModelInfo struct {
 	DisplayName string
 	RawFamily   Family // raw API family field verbatim (e.g. "claude-opus")
 
-	// Codegen-baked normalization (Slice 2b — IP-2 contract for Slices 3, 5, 7)
+	// Codegen-baked normalization
 
 	// Family is the canonical family identifier extracted from RawFamily
 	// (or inferred from ID when RawFamily is empty). Populated at codegen time.
@@ -51,7 +51,7 @@ type ModelInfo struct {
 	// The list is stored in deterministic CANONICAL ORDER (see CanonicalizeModifiers
 	// in modifier.go): capability > speed > format/stage, with an alphabetical
 	// fallback. Populated by the parse pipeline at codegen time.
-	// SLICE-10 (rc2, CLARIFICATION-7): widened string → []string for lossless
+	// widened string → []string for lossless
 	// multi-modifier capture (kimi-k2-thinking-turbo → [thinking, turbo]).
 	Modifier              []string
 	ContextWindow         int

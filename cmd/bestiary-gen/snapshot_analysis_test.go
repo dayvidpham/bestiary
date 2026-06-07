@@ -308,24 +308,24 @@ func TestSnapshotAnalysis_CrossProviderDivergences(t *testing.T) {
 	// invariant, not a fuzzy band. Refreshing the snapshot intentionally changes
 	// this number — update divergenceExact in lockstep with the new blob.
 	//
-	// SLICE-5's hardened TestStaticDataset_CrossProviderConsistency is the
-	// authoritative cross-provider gate; THIS analyzer pins the rc2 empirical
-	// baseline (the 388 figure the whole rc2 effort is measured against).
+	// The hardened TestStaticDataset_CrossProviderConsistency is the
+	// authoritative cross-provider gate; THIS analyzer pins the empirical
+	// baseline (the 388 figure the whole effort is measured against).
 	//
-	// SLICE-1 (rc2) updated these constants: M4 (case-fold) resolved all 10 CatA
+	// The case-fold pass updated these constants: M4 (case-fold) resolved all 10 CatA
 	// cases; recoverMemberVariant resolved 38 CatC cases. New baseline: 340 / A=0
 	// / B=73 / C=210 / D=57. The "Meta <-> llama" mislabel pair became
 	// "llama <-> meta" (M4 lowercased the inferred family).
 	//
-	// SLICE-1 (rc2) FIX CYCLE is divergence-NEUTRAL on this count: restoring
+	// Restoring B1 is divergence-NEUTRAL on this count: restoring
 	// recoverMemberVariant's B1 family-agnostic sole-residual promotion (seed→flash,
 	// reka→flash, imagen→ultra, voyage→large/lite, …) reduces parse-failure residuals
 	// (a separate metric) but only promotes VERSION-bearing IDs — exactly what the
 	// original inline B1 did. Those promotions do not change which multi-provider IDs
-	// agree, so the divergence figures stay 340 / 0 / 73 / 210 / 57. The jvpa M3
+	// agree, so the divergence figures stay 340 / 0 / 73 / 210 / 57. The M3
 	// helper symmetry fix is likewise non-observable here (version extraction unchanged).
 	//
-	// SLICE-2 (rc2) bare_gen_split: the closed predicate splits glued <base><int>
+	// bare_gen_split: the closed predicate splits glued <base><int>
 	// family tokens (qwen3→qwen+v3, o3→o+v3, gpt-5→gpt+v5, gemini-3→gemini+v3,
 	// glm-5→glm+v5) for the 5 flagged families (qwen, o, gpt, gemini, glm) whose
 	// split form is attested in this snapshot. New baseline: 281 / A=0 / B=3 / C=221
@@ -340,12 +340,12 @@ func TestSnapshotAnalysis_CrossProviderDivergences(t *testing.T) {
 	// letter-suffix form (e.g. qwen vs qwen-2.5-72b, gpt vs gpt-4o, glm vs glm-5v) —
 	// out of bare-gen scope, so they remain honestly divergent rather than masked.
 	//
-	// SLICE-3 (rc2) family_aliases ledger + uniform thinking/vision-as-modifier
+	// The family_aliases ledger + uniform thinking/vision-as-modifier
 	// migration: New baseline 259 / A=0 / B=3 / C=212 / D=44 (was 281/0/3/221/57).
-	//  - PART A ledger: l3/l3.1/l3.3 → llama folds (RATIFIED, community Llama-3
+	//  - the ledger: l3/l3.1/l3.3 → llama folds (RATIFIED, community Llama-3
 	//    finetunes) cleared the three l3*<->llama CatD pairs — every sao10k/l3* ID now
 	//    decomposes to family "llama" instead of the shorthand seed.
-	//  - PART B modifier migration: removing the deepseek-thinking/kimi-thinking
+	//  - the modifier migration: removing the deepseek-thinking/kimi-thinking
 	//    /grok-vision overrides + the thinking/vision members/suffixes makes the
 	//    thinking-family IDs (kimi-k2-thinking et al.) decompose CONSISTENTLY to the
 	//    base family with the token surfaced as the first-class Modifier (not Variant),
@@ -353,8 +353,8 @@ func TestSnapshotAnalysis_CrossProviderDivergences(t *testing.T) {
 	// Net: total 281→259 (−22), CatD 57→44 (−13), CatC 221→212 (−9). No previously
 	// agreeing ID broke (verified by suite + NoDateVersions=0 + cross-provider gate).
 	//
-	// SLICE-8 (rc2) ID-driven version-presence consistency + param-size guard +
-	// glued letter-suffix + letter-prefix series split: New baseline 158 / A=0 / B=3
+	// The ID-driven version-presence consistency + param-size guard +
+	// glued letter-suffix + letter-prefix series split pass: New baseline 158 / A=0 / B=3
 	// / C=111 / D=44 (was 259/0/3/212/44). All −101 are CatC (member-variant/version)
 	// reductions:
 	//  - (a) ID-DRIVEN VERSION: ExtractVersionFromID now strips the vendor/path
@@ -367,17 +367,17 @@ func TestSnapshotAnalysis_CrossProviderDivergences(t *testing.T) {
 	//    GH#9, not a version), converging the 120b-vs-"" split.
 	//  - (c) GLUED letter-suffix: glm-4.5v → (glm,"",4.5,vision) — cleared the
 	//    glm↔glmv version/modifier divergence for the glued form.
-	//  - (d) SERIES SPLIT (CLARIFICATION-5): kimi-k2/k2.5/…, minimax-m1/m2.x,
+	//  - (d) SERIES SPLIT: kimi-k2/k2.5/…, minimax-m1/m2.x,
 	//    mimo-v2.x → (family, letter, number), incl. the empty-raw compound-family
 	//    recovery (kimi-k2-0905 → family kimi). Converged the non-tier series IDs.
-	// CLARIFICATION-6 (tier→modifier, variant=pure series-letter): the clean
+	// The tier→modifier promotion (variant=pure series-letter): the clean
 	// single-tier series IDs (mimo-v2.5-pro, minimax-m2.5-fast/highspeed,
 	// kimi-k2-instruct, …) now promote the tier to the Modifier and converge to
 	// (family, letter, version): 158 → 155 (CatC 111 → 108). The tier set is
 	// series-SCOPED (parse.go seriesTierModifiers), NOT added to global modifiers.json
 	// — that would reclassify non-series variants (gpt-5-mini, gemini-2.5-flash,
-	// qwen-turbo); verified those stay variant-tokens (CLARIFICATION-6 edge-b).
-	// "omni" added to the curated series-tier set (CLARIFICATION-6 residual analysis):
+	// qwen-turbo); verified those stay variant-tokens (edge-b).
+	// "omni" was added to the curated series-tier set (residual analysis):
 	// it was the only remaining UNKNOWN-tier token still causing a series divergence
 	// after the initial tier wiring (mimo-v2-omni → (mimo,'v','2',mod=omni)): 155 → 154
 	// (CatC 108 → 107).
@@ -385,16 +385,16 @@ func TestSnapshotAnalysis_CrossProviderDivergences(t *testing.T) {
 	// IDs still divergent are the MULTI-MODIFIER cases — a tier AND thinking/vision (or
 	// 2+ tiers) in the single-valued Modifier field: kimi-k2-thinking-turbo (×2 paths).
 	// The user ruled Option 1 (Modifier → LIST, lossless), but that is a PUBLIC SCHEMA
-	// change deferred to the later Modifier-LIST slice (SLICE-10; grep "multi-modifier"
-	// / "Modifier-LIST"). For S8 these keep the series split + the capability modifier
+	// change deferred to the later Modifier-LIST slice (grep "multi-modifier"
+	// / "Modifier-LIST"). For now these keep the series split + the capability modifier
 	// (thinking) and DROP the tier.
 	// (The other ~150 residual divergences are NON-series family/version mislabels —
 	// deepseek-v3.x, magnum, morph, mistral-7b-v0.x, the CatD ledger, qwen3-vl/param —
-	// out of SLICE-8's version-path scope.)
+	// out of this version-path scope.)
 	// No previously agreeing ID broke (verified by suite + NoDateVersions=0 +
 	// version-only-divergence probe = 0).
 	//
-	// SLICE-9 (rc2) PATH-UNIFICATION (CLARIFICATION-8, Option A): ParseFamilyDetailed
+	// PATH-UNIFICATION (Option A): ParseFamilyDetailed
 	// is now ID-driven for Variant/Version/Modifier (raw_family is a HINT; the
 	// idDrivenDecompose primitive is shared by the empty-raw and raw-populated paths
 	// via reconcileIDDriven). FAMILY is PRESERVED from raw_family — the diff-first
@@ -410,20 +410,20 @@ func TestSnapshotAnalysis_CrossProviderDivergences(t *testing.T) {
 	// (testdata/snapshot/decomp_diff_report.json) categorizes every change a/b/c with
 	// ZERO category-(c) unexpected regressions (1 reviewed justified-exception:
 	// gemini-2.5-pro-preview-tts raw mislabel). CatD=44 unchanged — the genuine family
-	// mislabel ledger is Option B's scope, not SLICE-9's.
+	// mislabel ledger is Option B's scope, not this one's.
 	//
-	// SLICE-9 fix-cycle-2 (review A/B/C REVISE → fixed): re-pinned 123→126 / CatC 76→79.
-	//  - P1 (Reviewer A): the variant-superstring guard restores the correct, more-
+	// A follow-up fix re-pinned 123→126 / CatC 76→79:
+	//  - the variant-superstring guard restores the correct, more-
 	//    specific raw variant "flash-lite" for gemini-2.5-flash-lite-preview-* (the
 	//    ID-path returns less-specific "flash"). Those ~3 IDs therefore STAY divergent
 	//    (the empty-raw providers still mis-derive "flash") — an HONEST residual surfaced
 	//    for a future ID-path/tier-seeding fix, NOT hidden by downgrading the correct
-	//    flash-lite data. This is the +3 vs the (unsound) fix-cycle-1 count of 123.
-	//  - P2 (Reviewer C): '@'-form version normalization (claude-…-4-1@20250805 → 4.1,
+	//    flash-lite data. This is the +3 vs the (unsound) earlier count of 123.
+	//  - '@'-form version normalization (claude-…-4-1@20250805 → 4.1,
 	//    not "4") removes the newly-introduced cross-form version-VALUE divergence; net
-	//    of P1+P2 the 3-tuple analyzer lands at 126 / A=0 / B=3 / C=79 / D=44.
+	//    of both changes the 3-tuple analyzer lands at 126 / A=0 / B=3 / C=79 / D=44.
 	//
-	// SLICE-11 (rc2) family OVER-CAPTURE fix (Option B / CLARIFICATION-9): the ID-path
+	// family OVER-CAPTURE fix (Option B): the ID-path
 	// family-SEEDING now reduces an over-captured COMPOUND family to its registered SHORT
 	// base (claude-opus→claude, gpt-4o→gpt, deepseek-v4→deepseek, llama-3.3-70b→llama,
 	// qwen3-vl-*→qwen, phi-4-mini→phi, …) so the empty-raw and raw-populated providers of
@@ -434,19 +434,19 @@ func TestSnapshotAnalysis_CrossProviderDivergences(t *testing.T) {
 	// CatC 79→35 (−44, family over-capture reductions that also converged variant/version),
 	// CatD 44→34 (−10, over-captures previously mis-bucketed as genuine mislabels now reduce
 	// to the correct short family), CatB 3→2 (−1). The remaining D=34 are GENUINE mislabels
-	// requiring the IP-5 ledger + user sign-off (aion/llama, hermes/nousresearch namespace
+	// requiring the ledger + user sign-off (aion/llama, hermes/nousresearch namespace
 	// leaks, lfm/liquid, ministral/mistral, pixtral/voxtral/mixtral vs mistral, inflection/gpt,
 	// intellect/glm, text-embedding/qwen, qwq/qwen, …) — NOT folded here. The before/after
 	// diff (decomp_diff_report.json) categorizes every change with ZERO category-(c)
 	// unexpected regressions (1 reviewed justified-exception: qwen3.6-plus-free free→plus).
 	// HONEST residuals NOT converged (declined by the closed reducer, surfaced not masked):
 	// capability/multi-modifier IDs (kimi-k2-thinking-turbo, llama-3.2-11b-vision,
-	// phi-4-multimodal — deferred to the SLICE-10 Modifier-LIST), the glued glmv letter-suffix,
+	// phi-4-multimodal — deferred to the Modifier-LIST), the glued glmv letter-suffix,
 	// raw-populated over-captures (qwen3.7-max), and IDs whose canonical short side is itself
 	// lossy/inconsistent (deepseek-chat→deepseek drops "chat"; qwen3-next picks suffix
 	// "instruct" not "next").
-	// SLICE-12 (rc2) cross-provider convergence fix-cycle (bestiary-b4jm): 68 → 18.
-	// The −50 came from: o-series taxonomy restructure (bestiary-xdbc Q2: o1/o3/o4→(gpt,
+	// A cross-provider convergence pass: 68 → 18.
+	// The −50 came from: o-series taxonomy restructure (Q2: o1/o3/o4→(gpt,
 	// variant=o,ver), gpt-4o→(gpt,4o,""), gpt-audio→(gpt,audio); sanctioned via the reviewed
 	// allowlist) + gpt-codex ID-wins phantom-variant clear (8) + glm glued-'v' variant
 	// (Q1, glm-4.5v→(glm,v,4.5); glmv→glm+v) + canonical-winner ENFORCE set (own-family +
@@ -457,10 +457,10 @@ func TestSnapshotAnalysis_CrossProviderDivergences(t *testing.T) {
 	// tier (compound-member recovery, gemini-2.5-flash-lite-preview-*). The decomp diff
 	// (decomp_diff_report.json) classifies every change with ZERO category-(c) regressions.
 	//
-	// RESIDUAL = 18 (HONEST, surfaced — NOT masked). Of these, 5 are the SLICE-10-blocked
+	// RESIDUAL = 18 (HONEST, surfaced — NOT masked). Of these, 5 are the Modifier-LIST-blocked
 	// multi-modifier/capability records (llama-3.2-11b-vision-instruct ×2, phi-4-multimodal-
 	// instruct, kimi-k2-thinking-turbo ×2 — a tier AND thinking/vision in the single Modifier
-	// slot, deferred to the SLICE-10 Modifier-LIST). The other ~13 are GENUINE stragglers
+	// slot, deferred to the Modifier-LIST). The other ~13 are GENUINE stragglers
 	// that do NOT cleanly converge and are deliberately left rather than force-converged with
 	// a lossy/over-broad hack: deepseek-chat-v3* (the canonical short side drops "chat"),
 	// qwen3-next-80b-a3b-instruct ×2 ("next" is an unrecognised over-capture token), nvidia
@@ -471,13 +471,13 @@ func TestSnapshotAnalysis_CrossProviderDivergences(t *testing.T) {
 	// from the doubled vendor — fixing it introduced cat-(c) collateral on odd-format records,
 	// so reverted/surfaced), command-r-plus/r7b/a-reasoning (over-capture + date-as-version),
 	// hermes-2-pro-llama (variant 'pro' on one side only). These warrant a follow-up slice or
-	// upstream data fix; see the SLICE-12 worker report.
+	// upstream data fix; see the worker report.
 	//
-	// SLICE-14 (rc2) straggler fix-cycle (bestiary-vs61), team-lead-refined set: 18 → 10.
+	// A straggler-convergence pass, team-lead-refined set: 18 → 10.
 	// GOVERNING PRINCIPLE: converge only when unambiguous under EXISTING ratified rules (family/
 	// vendor-strip/gen-split/date-guard/product-name member recovery) with NO modifier-vs-variant
-	// taxonomy judgment (that is reserved for S10). 5 COMMITTED + 3 CONDITIONALS all cleanly
-	// promoted (best-case 18→10), cat-(c)=0 under the hardened (token-aware, ovf6) gate:
+	// taxonomy judgment (that is reserved for the systematic modifier ruling). 5 COMMITTED + 3 CONDITIONALS all cleanly
+	// promoted (best-case 18→10), cat-(c)=0 under the hardened (token-aware) gate:
 	//  - deepseek-chat-v3-0324 / -v3.1 → (deepseek, chat, …) — "chat" is the DeepSeek product
 	//    line, recovered as a deepseek member (non-lossy; v3.1 version preserved via v-prefix).
 	//  - command-r-plus-08-2024 → (command, r-plus); command-r7b-12-2024 → (command, r) ["r7b" =
@@ -494,21 +494,21 @@ func TestSnapshotAnalysis_CrossProviderDivergences(t *testing.T) {
 	// command-r7b's version field still carries the date frag "12" (a shared, pre-existing value
 	// on both providers — CONVERGED, not a divergence; surfaced for a future date-guard polish).
 	//
-	// RESIDUAL = 10 (HONEST). 9 are S10-PENDING (converge once S10's systematic modifier ruling +
+	// RESIDUAL = 10 (HONEST). 9 are modifier-taxonomy-pending (converge once the systematic modifier ruling +
 	// Modifier-LIST land): kimi-k2-thinking-turbo ×2, llama-3.2-11b-vision-instruct ×2, phi-4-
 	// multimodal-instruct (the 5 multi-modifier), command-a-reasoning-08-2025 ("reasoning"=
 	// borderline-capability), llama-4-scout + qwen3-next ×2 (line-designator + instruct→modifier).
 	// 1 is PERMANENT v0.2.2 LEDGER: nvidia/llama-3.3-nemotron-super-49b-v1.5 (embedded-family — the
 	// ID leads with "llama", canonical is "nemotron"; GH-followup). The set-equality enumerated-
-	// divergence gate is pinned later (post-S10), not in this slice.
-	// SLICE-10 (rc2): the Modifier-LIST schema change + ratified modifier-taxonomy
+	// divergence gate is pinned in a later slice.
+	// The Modifier-LIST schema change + ratified modifier-taxonomy
 	// (instruct/turbo/base/reasoning/multimodal/fast/chat → global modifiers, member-guarded;
-	// scout→llama, next→qwen member adds) CONVERGED all 9 S10-PENDING stragglers
+	// scout→llama, next→qwen member adds) CONVERGED all 9 modifier-taxonomy-pending stragglers
 	// (kimi-k2-thinking-turbo ×2, llama-3.2-11b-vision-instruct ×2, phi-4-multimodal-instruct,
 	// command-a-reasoning-08-2025, llama-4-scout, qwen3-next ×2). RESIDUAL = 1 = the PERMANENT
 	// v0.2.2 LEDGER entry nvidia/llama-3.3-nemotron-super-49b-v1.5 (embedded-family — the ID
 	// leads with "llama", canonical is "nemotron"; GH-followup, NOT a modifier case).
-	// rc3 (bestiary-xfo0, USER-RATIFIED Impl-UAT 2gxu): the curated ID-keyed family override
+	// The curated ID-keyed family override
 	// (idFamilyOverrides) folds nvidia/llama-3.3-nemotron-super-49b-v1.5 → nemotron (both the
 	// empty-raw and raw="nemotron" providers converge on (nemotron,v1.5,3.3)). Cross-provider
 	// divergence is now ZERO (no residual). The override is enforce-blessed (family-only
@@ -540,33 +540,33 @@ func TestSnapshotAnalysis_CrossProviderDivergences(t *testing.T) {
 	// silent CatD→CatC (or any cross-category) reclassification that would keep
 	// the total at 340 while changing the genuine-mislabel ledger candidates.
 	// Refreshing the snapshot intentionally changes these — update in lockstep.
-	// SLICE-1: CatA → 0 (M4 fixed all case divergences); CatC → 210 (recoverMemberVariant).
-	// FIX CYCLE divergence-neutral (see divergenceExact note above): restored B1
+	// CatA → 0 (M4 fixed all case divergences); CatC → 210 (recoverMemberVariant).
+	// Restoring B1 is divergence-neutral (see divergenceExact note above): the restored B1
 	// promotion is version-gated, so it does not move these category counts.
-	// SLICE-2: bare_gen_split predicate resolved 70 of 73 CatB (59 converged, 11
+	// The bare_gen_split predicate resolved 70 of 73 CatB (59 converged, 11
 	// reclassified to CatC). CatB → 3 (residual hy/lyria/rnj, no families.json entry).
-	// SLICE-3: ledger l3*→llama folds + thinking/vision modifier migration cleared
+	// The ledger l3*→llama folds + thinking/vision modifier migration cleared
 	// 13 CatD ledger candidates (44 remain) and converged 9 CatC IDs (212 remain).
-	// SLICE-8: ID-driven version + param-size guard + glued-suffix + series split
-	// (+ CLARIFICATION-6 tier→modifier) converged 104 CatC IDs (212→108). CatA/B/D
-	// unchanged (version-path-only slice).
-	// SLICE-12: CatC 33→12 (member-variant/version convergences: o-series, member re-recovery,
+	// The ID-driven version + param-size guard + glued-suffix + series split
+	// (+ tier→modifier) converged 104 CatC IDs (212→108). CatA/B/D
+	// unchanged (version-path-only).
+	// CatC 33→12 (member-variant/version convergences: o-series, member re-recovery,
 	// flash-lite, dotted-gen, gpt-codex). CatD 34→5 (enforce-set own-family/org corrections +
 	// o-series family fold + qwen3.7-max; residual 5 = qwen3-next ×2, nemotron, text-embedding,
 	// meta-llama — genuine stragglers). CatB unchanged at 1.
-	// SLICE-14: CatC 12→7 (command r/r-plus member+date-guard, deepseek chat, grok code-fast,
+	// CatC 12→7 (command r/r-plus member+date-guard, deepseek chat, grok code-fast,
 	// hy3 bare-gen). CatD 5→3 (meta-llama strip → llama, Qwen3-Embedding qwen-wins; residual D =
 	// qwen3-next ×2 + nemotron). CatB 1→0 (hy3 was the last bare-gen-split residual).
-	// SLICE-10: CatC 7→0 (all member-variant/version stragglers converged via the
+	// CatC 7→0 (all member-variant/version stragglers converged via the
 	// modifier-taxonomy + member-guard). CatD 3→1 (qwen3-next ×2 converged via the
 	// next→qwen member add; residual D = nemotron only). CatA/CatB unchanged at 0.
-	// rc3: CatD 1→0 — the nemotron embedded-family residual folded via idFamilyOverrides.
+	// CatD 1→0 — the nemotron embedded-family residual folded via idFamilyOverrides.
 	// ALL cross-provider categories are now ZERO (total divergence = 0).
 	const (
-		catAExact = 0 // vendor-prefix/case (SLICE-1 M4 resolved all)
+		catAExact = 0 // vendor-prefix/case (M4 resolved all)
 		catBExact = 0 // bare-gen-split
-		catCExact = 0 // member-variant/version — all converged (SLICE-10)
-		catDExact = 0 // genuine family mislabel — nemotron folded (rc3); ZERO
+		catCExact = 0 // member-variant/version — all converged
+		catDExact = 0 // genuine family mislabel — nemotron folded; ZERO
 	)
 	checkCat := func(name string, got, want int) {
 		if got != want {

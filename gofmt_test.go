@@ -8,7 +8,7 @@ import (
 	"testing"
 )
 
-// TestGofmtClean is the rc3-L4 (bestiary-8yrc) hygiene GATE: every committed .go file in
+// TestGofmtClean is the hygiene GATE: every committed .go file in
 // the module MUST already be gofmt-clean, so a formatting regression can never recur
 // silently. It uses go/format (the same engine as the gofmt binary) rather than shelling
 // out, so it runs hermetically under CGO_ENABLED=0 go test ./... with no external tool.

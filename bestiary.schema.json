@@ -39,7 +39,7 @@
       "type": "string"
     },
     "Modifier": {
-      "description": "List of known trailing tokens extracted from the model ID that carry semantic meaning beyond family/variant/version/date (e.g. [\"thinking\"], [\"vision\",\"instruct\"]). Stored in deterministic canonical order (capability > speed > format/stage, alpha fallback). null when no known modifier is found. SLICE-10 (rc2): widened from string to array of strings for lossless multi-modifier capture.",
+      "description": "List of known trailing tokens extracted from the model ID that carry semantic meaning beyond family/variant/version/date (e.g. [\"thinking\"], [\"vision\",\"instruct\"]). Stored in deterministic canonical order (capability > speed > format/stage, alpha fallback). null when no known modifier is found. Widened from string to array of strings for lossless multi-modifier capture.",
       "type": ["array", "null"],
       "items": { "type": "string" }
     },
@@ -231,7 +231,7 @@
           "type": "string"
         },
         "Modifier": {
-          "description": "List of known trailing tokens extracted from the model ID that carry semantic meaning (e.g. [\"thinking\"], [\"vision\",\"instruct\"]), in canonical order. null when none. SLICE-10 (rc2): widened string→array of strings to match ModelRef.Modifier []string.",
+          "description": "List of known trailing tokens extracted from the model ID that carry semantic meaning (e.g. [\"thinking\"], [\"vision\",\"instruct\"]), in canonical order. null when none. Widened from string to array of strings to match ModelRef.Modifier []string.",
           "type": ["array", "null"],
           "items": { "type": "string" }
         }

@@ -7,7 +7,7 @@
   "justified_exception_count": 4,
   "id_tuple4_incl_modifier_divergence_frozen_before": 81,
   "id_tuple4_incl_modifier_divergence_current_after": 13,
-  "divergence_metric": "4-tuple INCL Modifier (Family,Variant,Version,Modifier); before=frozen SLICE-9 baseline, after=current snapshot. DISTINCT from the authoritative cross-provider divergenceExact gate (3-tuple, EXCL Modifier, current snapshot, =0).",
+  "divergence_metric": "4-tuple INCL Modifier (Family,Variant,Version,Modifier); before=frozen baseline, after=current snapshot. DISTINCT from the authoritative cross-provider divergenceExact gate (3-tuple, EXCL Modifier, current snapshot, =0).",
   "changes": [
     {
       "provider": "evroc",
@@ -16,7 +16,7 @@
       "before": "(family=\"text-embedding\",variant=\"\",version=\"\",modifier=\"\")",
       "after": "(family=\"qwen\",variant=\"embedding\",version=\"3\",modifier=\"\")",
       "category": "a:divergence-fix",
-      "reason": "now matches a tuple another provider already produced for this ID (BEFORE); only phantom non-family loss permitted (j1nu)"
+      "reason": "now matches a tuple another provider already produced for this ID (BEFORE); only phantom non-family loss permitted"
     },
     {
       "provider": "nebius",
@@ -25,7 +25,7 @@
       "before": "(family=\"text-embedding\",variant=\"\",version=\"\",modifier=\"\")",
       "after": "(family=\"qwen\",variant=\"embedding\",version=\"3\",modifier=\"\")",
       "category": "a:divergence-fix",
-      "reason": "now matches a tuple another provider already produced for this ID (BEFORE); only phantom non-family loss permitted (j1nu)"
+      "reason": "now matches a tuple another provider already produced for this ID (BEFORE); only phantom non-family loss permitted"
     },
     {
       "provider": "neuralwatt",
@@ -34,7 +34,7 @@
       "before": "(family=\"qwen\",variant=\"3.6\",version=\"3.6\",modifier=\"\")",
       "after": "(family=\"qwen\",variant=\"\",version=\"3.6\",modifier=\"\")",
       "category": "a:divergence-fix",
-      "reason": "now matches a tuple another provider already produced for this ID (BEFORE); only phantom non-family loss permitted (j1nu)"
+      "reason": "now matches a tuple another provider already produced for this ID (BEFORE); only phantom non-family loss permitted"
     },
     {
       "provider": "nano-gpt",
@@ -43,7 +43,7 @@
       "before": "(family=\"llama\",variant=\"\",version=\"\",modifier=\"\")",
       "after": "(family=\"aion\",variant=\"\",version=\"1.0\",modifier=\"\")",
       "category": "a:divergence-fix",
-      "reason": "now matches a tuple another provider already produced for this ID (BEFORE); only phantom non-family loss permitted (j1nu)"
+      "reason": "now matches a tuple another provider already produced for this ID (BEFORE); only phantom non-family loss permitted"
     },
     {
       "provider": "nano-gpt",
@@ -52,7 +52,7 @@
       "before": "(family=\"deepseek\",variant=\"mini\",version=\"\",modifier=\"\")",
       "after": "(family=\"aion\",variant=\"mini\",version=\"1.0\",modifier=\"\")",
       "category": "a:divergence-fix",
-      "reason": "now matches a tuple another provider already produced for this ID (BEFORE); only phantom non-family loss permitted (j1nu)"
+      "reason": "now matches a tuple another provider already produced for this ID (BEFORE); only phantom non-family loss permitted"
     },
     {
       "provider": "nano-gpt",
@@ -61,7 +61,7 @@
       "before": "(family=\"llama\",variant=\"\",version=\"\",modifier=\"\")",
       "after": "(family=\"aion\",variant=\"\",version=\"\",modifier=\"\")",
       "category": "a:divergence-fix",
-      "reason": "now matches a tuple another provider already produced for this ID (BEFORE); only phantom non-family loss permitted (j1nu)"
+      "reason": "now matches a tuple another provider already produced for this ID (BEFORE); only phantom non-family loss permitted"
     },
     {
       "provider": "openrouter",
@@ -70,7 +70,7 @@
       "before": "(family=\"llama\",variant=\"\",version=\"\",modifier=\"\")",
       "after": "(family=\"aion\",variant=\"\",version=\"\",modifier=\"\")",
       "category": "a:divergence-fix",
-      "reason": "now matches a tuple another provider already produced for this ID (BEFORE); only phantom non-family loss permitted (j1nu)"
+      "reason": "now matches a tuple another provider already produced for this ID (BEFORE); only phantom non-family loss permitted"
     },
     {
       "provider": "kilo",
@@ -79,7 +79,7 @@
       "before": "(family=\"codellama\",variant=\"\",version=\"\",modifier=\"\")",
       "after": "(family=\"codellama\",variant=\"\",version=\"\",modifier=\"instruct\")",
       "category": "a:divergence-fix",
-      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted (j1nu)"
+      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted"
     },
     {
       "provider": "openrouter",
@@ -88,7 +88,7 @@
       "before": "(family=\"llama\",variant=\"instruct\",version=\"\",modifier=\"\")",
       "after": "(family=\"codellama\",variant=\"\",version=\"\",modifier=\"instruct\")",
       "category": "a:divergence-fix",
-      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted (j1nu)"
+      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted"
     },
     {
       "provider": "nano-gpt",
@@ -97,7 +97,7 @@
       "before": "(family=\"allenai\",variant=\"\",version=\"\",modifier=\"think\")",
       "after": "(family=\"olmo\",variant=\"\",version=\"3\",modifier=\"think\")",
       "category": "a:divergence-fix",
-      "reason": "now matches a tuple another provider already produced for this ID (BEFORE); only phantom non-family loss permitted (j1nu)"
+      "reason": "now matches a tuple another provider already produced for this ID (BEFORE); only phantom non-family loss permitted"
     },
     {
       "provider": "openrouter",
@@ -106,7 +106,7 @@
       "before": "(family=\"allenai\",variant=\"\",version=\"\",modifier=\"think\")",
       "after": "(family=\"olmo\",variant=\"\",version=\"3\",modifier=\"think\")",
       "category": "a:divergence-fix",
-      "reason": "now matches a tuple another provider already produced for this ID (BEFORE); only phantom non-family loss permitted (j1nu)"
+      "reason": "now matches a tuple another provider already produced for this ID (BEFORE); only phantom non-family loss permitted"
     },
     {
       "provider": "nano-gpt",
@@ -115,7 +115,7 @@
       "before": "(family=\"llama\",variant=\"\",version=\"\",modifier=\"\")",
       "after": "(family=\"magnum\",variant=\"\",version=\"\",modifier=\"\")",
       "category": "a:divergence-fix",
-      "reason": "now matches a tuple another provider already produced for this ID (BEFORE); only phantom non-family loss permitted (j1nu)"
+      "reason": "now matches a tuple another provider already produced for this ID (BEFORE); only phantom non-family loss permitted"
     },
     {
       "provider": "302ai",
@@ -124,7 +124,7 @@
       "before": "(family=\"gpt\",variant=\"\",version=\"\",modifier=\"latest\")",
       "after": "(family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"latest\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"latest\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"latest\")"
     },
     {
       "provider": "helicone",
@@ -133,7 +133,7 @@
       "before": "(family=\"gpt\",variant=\"\",version=\"\",modifier=\"latest\")",
       "after": "(family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"latest\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"latest\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"latest\")"
     },
     {
       "provider": "kilo",
@@ -142,7 +142,7 @@
       "before": "(family=\"command-r-plus\",variant=\"\",version=\"08\",modifier=\"\")",
       "after": "(family=\"command\",variant=\"r-plus\",version=\"\",modifier=\"\")",
       "category": "a:divergence-fix",
-      "reason": "family over-capture reduced to registered short base, converged onto an independently-produced sibling tuple (SLICE-11; j1nu-hardened: no ID-present non-family field lost)"
+      "reason": "family over-capture reduced to registered short base, converged onto an independently-produced sibling tuple (hardened: no ID-present non-family field lost)"
     },
     {
       "provider": "merge-gateway",
@@ -151,7 +151,7 @@
       "before": "(family=\"command\",variant=\"r\",version=\"\",modifier=\"\")",
       "after": "(family=\"command\",variant=\"r-plus\",version=\"\",modifier=\"\")",
       "category": "a:divergence-fix",
-      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted (j1nu)"
+      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted"
     },
     {
       "provider": "nano-gpt",
@@ -160,7 +160,7 @@
       "before": "(family=\"command\",variant=\"r\",version=\"\",modifier=\"\")",
       "after": "(family=\"command\",variant=\"r-plus\",version=\"\",modifier=\"\")",
       "category": "a:divergence-fix",
-      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted (j1nu)"
+      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted"
     },
     {
       "provider": "openrouter",
@@ -169,7 +169,7 @@
       "before": "(family=\"command\",variant=\"r\",version=\"\",modifier=\"\")",
       "after": "(family=\"command\",variant=\"r-plus\",version=\"\",modifier=\"\")",
       "category": "a:divergence-fix",
-      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted (j1nu)"
+      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted"
     },
     {
       "provider": "kilo",
@@ -178,7 +178,7 @@
       "before": "(family=\"command\",variant=\"\",version=\"12\",modifier=\"\")",
       "after": "(family=\"command\",variant=\"r\",version=\"12\",modifier=\"\")",
       "category": "a:divergence-fix",
-      "reason": "now matches a tuple another provider already produced for this ID (BEFORE); only phantom non-family loss permitted (j1nu)"
+      "reason": "now matches a tuple another provider already produced for this ID (BEFORE); only phantom non-family loss permitted"
     },
     {
       "provider": "cohere",
@@ -187,7 +187,7 @@
       "before": "(family=\"command\",variant=\"a\",version=\"\",modifier=\"\")",
       "after": "(family=\"command\",variant=\"a\",version=\"\",modifier=\"reasoning\")",
       "category": "a:divergence-fix",
-      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted (j1nu)"
+      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted"
     },
     {
       "provider": "nano-gpt",
@@ -196,7 +196,7 @@
       "before": "(family=\"command-a-reasoning\",variant=\"\",version=\"08\",modifier=\"\")",
       "after": "(family=\"command\",variant=\"a\",version=\"\",modifier=\"reasoning\")",
       "category": "a:divergence-fix",
-      "reason": "family over-capture reduced to registered short base, converged onto an independently-produced sibling tuple (SLICE-11; j1nu-hardened: no ID-present non-family field lost)"
+      "reason": "family over-capture reduced to registered short base, converged onto an independently-produced sibling tuple (hardened: no ID-present non-family field lost)"
     },
     {
       "provider": "kilo",
@@ -205,7 +205,7 @@
       "before": "(family=\"deepseek-chat-v3\",variant=\"\",version=\"\",modifier=\"\")",
       "after": "(family=\"deepseek\",variant=\"chat\",version=\"\",modifier=\"\")",
       "category": "a:divergence-fix",
-      "reason": "family over-capture reduced to registered short base, converged onto an independently-produced sibling tuple (SLICE-11; j1nu-hardened: no ID-present non-family field lost)"
+      "reason": "family over-capture reduced to registered short base, converged onto an independently-produced sibling tuple (hardened: no ID-present non-family field lost)"
     },
     {
       "provider": "openrouter",
@@ -214,7 +214,7 @@
       "before": "(family=\"deepseek\",variant=\"\",version=\"\",modifier=\"\")",
       "after": "(family=\"deepseek\",variant=\"chat\",version=\"\",modifier=\"\")",
       "category": "a:divergence-fix",
-      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted (j1nu)"
+      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted"
     },
     {
       "provider": "kilo",
@@ -223,7 +223,7 @@
       "before": "(family=\"deepseek-chat\",variant=\"v3.1\",version=\"\",modifier=\"\")",
       "after": "(family=\"deepseek\",variant=\"chat\",version=\"3.1\",modifier=\"\")",
       "category": "a:divergence-fix",
-      "reason": "family over-capture reduced to registered short base, converged onto an independently-produced sibling tuple (SLICE-11; j1nu-hardened: no ID-present non-family field lost)"
+      "reason": "family over-capture reduced to registered short base, converged onto an independently-produced sibling tuple (hardened: no ID-present non-family field lost)"
     },
     {
       "provider": "openrouter",
@@ -232,7 +232,7 @@
       "before": "(family=\"deepseek\",variant=\"\",version=\"\",modifier=\"\")",
       "after": "(family=\"deepseek\",variant=\"chat\",version=\"3.1\",modifier=\"\")",
       "category": "a:divergence-fix",
-      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted (j1nu)"
+      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted"
     },
     {
       "provider": "kilo",
@@ -241,7 +241,7 @@
       "before": "(family=\"rnj\",variant=\"\",version=\"1\",modifier=\"\")",
       "after": "(family=\"rnj\",variant=\"\",version=\"1\",modifier=\"instruct\")",
       "category": "a:divergence-fix",
-      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted (j1nu)"
+      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted"
     },
     {
       "provider": "nano-gpt",
@@ -250,7 +250,7 @@
       "before": "(family=\"rnj\",variant=\"instruct\",version=\"1\",modifier=\"\")",
       "after": "(family=\"rnj\",variant=\"\",version=\"1\",modifier=\"instruct\")",
       "category": "a:divergence-fix",
-      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted (j1nu)"
+      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted"
     },
     {
       "provider": "openrouter",
@@ -259,7 +259,7 @@
       "before": "(family=\"rnj\",variant=\"instruct\",version=\"1\",modifier=\"\")",
       "after": "(family=\"rnj\",variant=\"\",version=\"1\",modifier=\"instruct\")",
       "category": "a:divergence-fix",
-      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted (j1nu)"
+      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted"
     },
     {
       "provider": "nano-gpt",
@@ -268,7 +268,7 @@
       "before": "(family=\"gemini\",variant=\"flash\",version=\"2.5\",modifier=\"\")",
       "after": "(family=\"gemini\",variant=\"flash-lite\",version=\"2.5\",modifier=\"\")",
       "category": "a:divergence-fix",
-      "reason": "now matches a tuple another provider already produced for this ID (BEFORE); only phantom non-family loss permitted (j1nu)"
+      "reason": "now matches a tuple another provider already produced for this ID (BEFORE); only phantom non-family loss permitted"
     },
     {
       "provider": "302ai",
@@ -277,7 +277,7 @@
       "before": "(family=\"gemini\",variant=\"flash\",version=\"2.5\",modifier=\"\")",
       "after": "(family=\"gemini\",variant=\"flash-lite\",version=\"2.5\",modifier=\"preview\")",
       "category": "a:divergence-fix",
-      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted (j1nu)"
+      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted"
     },
     {
       "provider": "jiekou",
@@ -286,7 +286,7 @@
       "before": "(family=\"gemini\",variant=\"flash-lite\",version=\"2.5\",modifier=\"\")",
       "after": "(family=\"gemini\",variant=\"flash-lite\",version=\"2.5\",modifier=\"preview\")",
       "category": "a:divergence-fix",
-      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted (j1nu)"
+      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted"
     },
     {
       "provider": "nano-gpt",
@@ -295,7 +295,7 @@
       "before": "(family=\"gemini\",variant=\"flash\",version=\"2.5\",modifier=\"\")",
       "after": "(family=\"gemini\",variant=\"flash-lite\",version=\"2.5\",modifier=\"preview\")",
       "category": "a:divergence-fix",
-      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted (j1nu)"
+      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted"
     },
     {
       "provider": "302ai",
@@ -304,7 +304,7 @@
       "before": "(family=\"glm\",variant=\"turbo\",version=\"\",modifier=\"\")",
       "after": "(family=\"glm\",variant=\"v\",version=\"5\",modifier=\"turbo\")",
       "category": "a:divergence-fix",
-      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted (j1nu)"
+      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted"
     },
     {
       "provider": "zai",
@@ -313,7 +313,7 @@
       "before": "(family=\"glm\",variant=\"turbo\",version=\"\",modifier=\"\")",
       "after": "(family=\"glm\",variant=\"v\",version=\"5\",modifier=\"turbo\")",
       "category": "a:divergence-fix",
-      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted (j1nu)"
+      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted"
     },
     {
       "provider": "zai-coding-plan",
@@ -322,7 +322,7 @@
       "before": "(family=\"glm\",variant=\"turbo\",version=\"\",modifier=\"\")",
       "after": "(family=\"glm\",variant=\"v\",version=\"5\",modifier=\"turbo\")",
       "category": "a:divergence-fix",
-      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted (j1nu)"
+      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted"
     },
     {
       "provider": "zhipuai",
@@ -331,7 +331,7 @@
       "before": "(family=\"glm\",variant=\"turbo\",version=\"\",modifier=\"\")",
       "after": "(family=\"glm\",variant=\"v\",version=\"5\",modifier=\"turbo\")",
       "category": "a:divergence-fix",
-      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted (j1nu)"
+      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted"
     },
     {
       "provider": "zhipuai-coding-plan",
@@ -340,7 +340,7 @@
       "before": "(family=\"glm\",variant=\"turbo\",version=\"\",modifier=\"\")",
       "after": "(family=\"glm\",variant=\"v\",version=\"5\",modifier=\"turbo\")",
       "category": "a:divergence-fix",
-      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted (j1nu)"
+      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted"
     },
     {
       "provider": "kilo",
@@ -349,7 +349,7 @@
       "before": "(family=\"gemini\",variant=\"flash\",version=\"2.5\",modifier=\"\")",
       "after": "(family=\"gemini\",variant=\"flash-lite\",version=\"2.5\",modifier=\"preview\")",
       "category": "a:divergence-fix",
-      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted (j1nu)"
+      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted"
     },
     {
       "provider": "openrouter",
@@ -358,7 +358,7 @@
       "before": "(family=\"gemini\",variant=\"flash-lite\",version=\"2.5\",modifier=\"\")",
       "after": "(family=\"gemini\",variant=\"flash-lite\",version=\"2.5\",modifier=\"preview\")",
       "category": "a:divergence-fix",
-      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted (j1nu)"
+      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted"
     },
     {
       "provider": "vercel",
@@ -367,7 +367,7 @@
       "before": "(family=\"gemini\",variant=\"flash-lite\",version=\"2.5\",modifier=\"\")",
       "after": "(family=\"gemini\",variant=\"flash-lite\",version=\"2.5\",modifier=\"preview\")",
       "category": "a:divergence-fix",
-      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted (j1nu)"
+      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted"
     },
     {
       "provider": "kilo",
@@ -376,7 +376,7 @@
       "before": "(family=\"lyria\",variant=\"\",version=\"3\",modifier=\"preview\")",
       "after": "(family=\"lyria\",variant=\"pro\",version=\"3\",modifier=\"preview\")",
       "category": "a:divergence-fix",
-      "reason": "now matches a tuple another provider already produced for this ID (BEFORE); only phantom non-family loss permitted (j1nu)"
+      "reason": "now matches a tuple another provider already produced for this ID (BEFORE); only phantom non-family loss permitted"
     },
     {
       "provider": "302ai",
@@ -385,7 +385,7 @@
       "before": "(family=\"gpt\",variant=\"\",version=\"4o\",modifier=\"\")",
       "after": "(family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")"
     },
     {
       "provider": "azure",
@@ -394,7 +394,7 @@
       "before": "(family=\"gpt\",variant=\"\",version=\"4o\",modifier=\"\")",
       "after": "(family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")"
     },
     {
       "provider": "azure-cognitive-services",
@@ -403,7 +403,7 @@
       "before": "(family=\"gpt\",variant=\"\",version=\"4o\",modifier=\"\")",
       "after": "(family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")"
     },
     {
       "provider": "frogbot",
@@ -412,7 +412,7 @@
       "before": "(family=\"gpt\",variant=\"\",version=\"4o\",modifier=\"\")",
       "after": "(family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")"
     },
     {
       "provider": "github-copilot",
@@ -421,7 +421,7 @@
       "before": "(family=\"gpt\",variant=\"\",version=\"4o\",modifier=\"\")",
       "after": "(family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")"
     },
     {
       "provider": "helicone",
@@ -430,7 +430,7 @@
       "before": "(family=\"gpt\",variant=\"\",version=\"4o\",modifier=\"\")",
       "after": "(family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")"
     },
     {
       "provider": "llmgateway",
@@ -439,7 +439,7 @@
       "before": "(family=\"gpt\",variant=\"\",version=\"4o\",modifier=\"\")",
       "after": "(family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")"
     },
     {
       "provider": "openai",
@@ -448,7 +448,7 @@
       "before": "(family=\"gpt\",variant=\"\",version=\"4o\",modifier=\"\")",
       "after": "(family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")"
     },
     {
       "provider": "openai",
@@ -457,7 +457,7 @@
       "before": "(family=\"gpt\",variant=\"\",version=\"4o\",modifier=\"\")",
       "after": "(family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")"
     },
     {
       "provider": "openai",
@@ -466,7 +466,7 @@
       "before": "(family=\"gpt\",variant=\"\",version=\"4o\",modifier=\"\")",
       "after": "(family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")"
     },
     {
       "provider": "abacus",
@@ -475,7 +475,7 @@
       "before": "(family=\"gpt\",variant=\"\",version=\"4o\",modifier=\"\")",
       "after": "(family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")"
     },
     {
       "provider": "openai",
@@ -484,7 +484,7 @@
       "before": "(family=\"gpt\",variant=\"\",version=\"4o\",modifier=\"\")",
       "after": "(family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")"
     },
     {
       "provider": "abacus",
@@ -493,7 +493,7 @@
       "before": "(family=\"gpt\",variant=\"mini\",version=\"\",modifier=\"\")",
       "after": "(family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"mini\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"mini\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"mini\")"
     },
     {
       "provider": "azure",
@@ -502,7 +502,7 @@
       "before": "(family=\"gpt\",variant=\"mini\",version=\"\",modifier=\"\")",
       "after": "(family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"mini\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"mini\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"mini\")"
     },
     {
       "provider": "azure-cognitive-services",
@@ -511,7 +511,7 @@
       "before": "(family=\"gpt\",variant=\"mini\",version=\"\",modifier=\"\")",
       "after": "(family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"mini\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"mini\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"mini\")"
     },
     {
       "provider": "helicone",
@@ -520,7 +520,7 @@
       "before": "(family=\"gpt\",variant=\"mini\",version=\"\",modifier=\"\")",
       "after": "(family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"mini\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"mini\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"mini\")"
     },
     {
       "provider": "llmgateway",
@@ -529,7 +529,7 @@
       "before": "(family=\"gpt\",variant=\"mini\",version=\"\",modifier=\"\")",
       "after": "(family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"mini\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"mini\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"mini\")"
     },
     {
       "provider": "openai",
@@ -538,7 +538,7 @@
       "before": "(family=\"gpt\",variant=\"mini\",version=\"\",modifier=\"\")",
       "after": "(family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"mini\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"mini\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"mini\")"
     },
     {
       "provider": "llmgateway",
@@ -547,7 +547,7 @@
       "before": "(family=\"gpt\",variant=\"mini\",version=\"\",modifier=\"preview\")",
       "after": "(family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"preview,mini\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"preview,mini\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"preview,mini\")"
     },
     {
       "provider": "llmgateway",
@@ -556,7 +556,7 @@
       "before": "(family=\"gpt\",variant=\"\",version=\"\",modifier=\"preview\")",
       "after": "(family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"preview\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"preview\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"preview\")"
     },
     {
       "provider": "helicone",
@@ -565,7 +565,7 @@
       "before": "(family=\"gpt\",variant=\"codex\",version=\"5\",modifier=\"latest\")",
       "after": "(family=\"gpt\",variant=\"\",version=\"5\",modifier=\"chat,latest\")",
       "category": "a:divergence-fix",
-      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted (j1nu)"
+      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted"
     },
     {
       "provider": "jiekou",
@@ -574,7 +574,7 @@
       "before": "(family=\"gpt\",variant=\"\",version=\"5\",modifier=\"latest\")",
       "after": "(family=\"gpt\",variant=\"\",version=\"5\",modifier=\"chat,latest\")",
       "category": "a:divergence-fix",
-      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted (j1nu)"
+      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted"
     },
     {
       "provider": "llmgateway",
@@ -583,7 +583,7 @@
       "before": "(family=\"gpt\",variant=\"codex\",version=\"5\",modifier=\"latest\")",
       "after": "(family=\"gpt\",variant=\"\",version=\"5\",modifier=\"chat,latest\")",
       "category": "a:divergence-fix",
-      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted (j1nu)"
+      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted"
     },
     {
       "provider": "openai",
@@ -592,7 +592,7 @@
       "before": "(family=\"gpt\",variant=\"codex\",version=\"5\",modifier=\"latest\")",
       "after": "(family=\"gpt\",variant=\"\",version=\"5\",modifier=\"chat,latest\")",
       "category": "a:divergence-fix",
-      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted (j1nu)"
+      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted"
     },
     {
       "provider": "302ai",
@@ -601,7 +601,7 @@
       "before": "(family=\"gpt\",variant=\"codex\",version=\"5.1\",modifier=\"latest\")",
       "after": "(family=\"gpt\",variant=\"\",version=\"5.1\",modifier=\"chat,latest\")",
       "category": "a:divergence-fix",
-      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted (j1nu)"
+      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted"
     },
     {
       "provider": "abacus",
@@ -610,7 +610,7 @@
       "before": "(family=\"gpt\",variant=\"\",version=\"5.1\",modifier=\"latest\")",
       "after": "(family=\"gpt\",variant=\"\",version=\"5.1\",modifier=\"chat,latest\")",
       "category": "a:divergence-fix",
-      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted (j1nu)"
+      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted"
     },
     {
       "provider": "helicone",
@@ -619,7 +619,7 @@
       "before": "(family=\"gpt\",variant=\"codex\",version=\"5.1\",modifier=\"latest\")",
       "after": "(family=\"gpt\",variant=\"\",version=\"5.1\",modifier=\"chat,latest\")",
       "category": "a:divergence-fix",
-      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted (j1nu)"
+      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted"
     },
     {
       "provider": "openai",
@@ -628,7 +628,7 @@
       "before": "(family=\"gpt\",variant=\"codex\",version=\"5.1\",modifier=\"latest\")",
       "after": "(family=\"gpt\",variant=\"\",version=\"5.1\",modifier=\"chat,latest\")",
       "category": "a:divergence-fix",
-      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted (j1nu)"
+      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted"
     },
     {
       "provider": "302ai",
@@ -637,7 +637,7 @@
       "before": "(family=\"gpt\",variant=\"codex\",version=\"5.2\",modifier=\"latest\")",
       "after": "(family=\"gpt\",variant=\"\",version=\"5.2\",modifier=\"chat,latest\")",
       "category": "a:divergence-fix",
-      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted (j1nu)"
+      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted"
     },
     {
       "provider": "abacus",
@@ -646,7 +646,7 @@
       "before": "(family=\"gpt\",variant=\"\",version=\"5.2\",modifier=\"latest\")",
       "after": "(family=\"gpt\",variant=\"\",version=\"5.2\",modifier=\"chat,latest\")",
       "category": "a:divergence-fix",
-      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted (j1nu)"
+      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted"
     },
     {
       "provider": "llmgateway",
@@ -655,7 +655,7 @@
       "before": "(family=\"gpt\",variant=\"codex\",version=\"5.2\",modifier=\"latest\")",
       "after": "(family=\"gpt\",variant=\"\",version=\"5.2\",modifier=\"chat,latest\")",
       "category": "a:divergence-fix",
-      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted (j1nu)"
+      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted"
     },
     {
       "provider": "openai",
@@ -664,7 +664,7 @@
       "before": "(family=\"gpt\",variant=\"codex\",version=\"5.2\",modifier=\"latest\")",
       "after": "(family=\"gpt\",variant=\"\",version=\"5.2\",modifier=\"chat,latest\")",
       "category": "a:divergence-fix",
-      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted (j1nu)"
+      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted"
     },
     {
       "provider": "helicone",
@@ -673,7 +673,7 @@
       "before": "(family=\"llama\",variant=\"pro\",version=\"\",modifier=\"\")",
       "after": "(family=\"hermes\",variant=\"pro\",version=\"2\",modifier=\"\")",
       "category": "a:divergence-fix",
-      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted (j1nu)"
+      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted"
     },
     {
       "provider": "llmgateway",
@@ -682,7 +682,7 @@
       "before": "(family=\"hermes\",variant=\"\",version=\"2.3\",modifier=\"\")",
       "after": "(family=\"hermes\",variant=\"pro\",version=\"2\",modifier=\"\")",
       "category": "a:divergence-fix",
-      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted (j1nu)"
+      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted"
     },
     {
       "provider": "nano-gpt",
@@ -691,7 +691,7 @@
       "before": "(family=\"gpt\",variant=\"\",version=\"\",modifier=\"\")",
       "after": "(family=\"inflection\",variant=\"\",version=\"3\",modifier=\"\")",
       "category": "a:divergence-fix",
-      "reason": "now matches a tuple another provider already produced for this ID (BEFORE); only phantom non-family loss permitted (j1nu)"
+      "reason": "now matches a tuple another provider already produced for this ID (BEFORE); only phantom non-family loss permitted"
     },
     {
       "provider": "nano-gpt",
@@ -700,7 +700,7 @@
       "before": "(family=\"gpt\",variant=\"\",version=\"\",modifier=\"\")",
       "after": "(family=\"inflection\",variant=\"\",version=\"3\",modifier=\"\")",
       "category": "a:divergence-fix",
-      "reason": "now matches a tuple another provider already produced for this ID (BEFORE); only phantom non-family loss permitted (j1nu)"
+      "reason": "now matches a tuple another provider already produced for this ID (BEFORE); only phantom non-family loss permitted"
     },
     {
       "provider": "302ai",
@@ -709,7 +709,7 @@
       "before": "(family=\"kimi-k2-thinking\",variant=\"turbo\",version=\"\",modifier=\"\")",
       "after": "(family=\"kimi\",variant=\"k\",version=\"2\",modifier=\"thinking,turbo\")",
       "category": "a:divergence-fix",
-      "reason": "family over-capture reduced to registered short base, converged onto an independently-produced sibling tuple (SLICE-11; j1nu-hardened: no ID-present non-family field lost)"
+      "reason": "family over-capture reduced to registered short base, converged onto an independently-produced sibling tuple (hardened: no ID-present non-family field lost)"
     },
     {
       "provider": "llmgateway",
@@ -718,7 +718,7 @@
       "before": "(family=\"kimi\",variant=\"k\",version=\"2\",modifier=\"thinking\")",
       "after": "(family=\"kimi\",variant=\"k\",version=\"2\",modifier=\"thinking,turbo\")",
       "category": "a:divergence-fix",
-      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted (j1nu)"
+      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted"
     },
     {
       "provider": "moonshotai",
@@ -727,7 +727,7 @@
       "before": "(family=\"kimi\",variant=\"k\",version=\"2\",modifier=\"thinking\")",
       "after": "(family=\"kimi\",variant=\"k\",version=\"2\",modifier=\"thinking,turbo\")",
       "category": "a:divergence-fix",
-      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted (j1nu)"
+      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted"
     },
     {
       "provider": "moonshotai-cn",
@@ -736,7 +736,7 @@
       "before": "(family=\"kimi\",variant=\"k\",version=\"2\",modifier=\"thinking\")",
       "after": "(family=\"kimi\",variant=\"k\",version=\"2\",modifier=\"thinking,turbo\")",
       "category": "a:divergence-fix",
-      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted (j1nu)"
+      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted"
     },
     {
       "provider": "openrouter",
@@ -745,7 +745,7 @@
       "before": "(family=\"liquid\",variant=\"\",version=\"\",modifier=\"\")",
       "after": "(family=\"lfm\",variant=\"\",version=\"2\",modifier=\"\")",
       "category": "a:divergence-fix",
-      "reason": "now matches a tuple another provider already produced for this ID (BEFORE); only phantom non-family loss permitted (j1nu)"
+      "reason": "now matches a tuple another provider already produced for this ID (BEFORE); only phantom non-family loss permitted"
     },
     {
       "provider": "openrouter",
@@ -754,7 +754,7 @@
       "before": "(family=\"alpha\",variant=\"\",version=\"\",modifier=\"\")",
       "after": "(family=\"weaver\",variant=\"\",version=\"\",modifier=\"\")",
       "category": "a:divergence-fix",
-      "reason": "now matches a tuple another provider already produced for this ID (BEFORE); only phantom non-family loss permitted (j1nu)"
+      "reason": "now matches a tuple another provider already produced for this ID (BEFORE); only phantom non-family loss permitted"
     },
     {
       "provider": "abacus",
@@ -763,7 +763,7 @@
       "before": "(family=\"llama\",variant=\"instruct\",version=\"\",modifier=\"\")",
       "after": "(family=\"llama\",variant=\"\",version=\"3.1\",modifier=\"instruct\")",
       "category": "a:divergence-fix",
-      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted (j1nu)"
+      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted"
     },
     {
       "provider": "nebius",
@@ -772,7 +772,7 @@
       "before": "(family=\"meta\",variant=\"\",version=\"\",modifier=\"\")",
       "after": "(family=\"llama\",variant=\"\",version=\"3.1\",modifier=\"instruct\")",
       "category": "a:divergence-fix",
-      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted (j1nu)"
+      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted"
     },
     {
       "provider": "siliconflow",
@@ -781,7 +781,7 @@
       "before": "(family=\"llama\",variant=\"instruct\",version=\"\",modifier=\"\")",
       "after": "(family=\"llama\",variant=\"\",version=\"3.1\",modifier=\"instruct\")",
       "category": "a:divergence-fix",
-      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted (j1nu)"
+      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted"
     },
     {
       "provider": "kilo",
@@ -790,7 +790,7 @@
       "before": "(family=\"llama-3.2-11b-vision\",variant=\"instruct\",version=\"3.2\",modifier=\"\")",
       "after": "(family=\"llama\",variant=\"\",version=\"3.2\",modifier=\"vision,instruct\")",
       "category": "a:divergence-fix",
-      "reason": "family over-capture reduced to registered short base, converged onto an independently-produced sibling tuple (SLICE-11; j1nu-hardened: no ID-present non-family field lost)"
+      "reason": "family over-capture reduced to registered short base, converged onto an independently-produced sibling tuple (hardened: no ID-present non-family field lost)"
     },
     {
       "provider": "openrouter",
@@ -799,7 +799,7 @@
       "before": "(family=\"llama\",variant=\"instruct\",version=\"3.2\",modifier=\"\")",
       "after": "(family=\"llama\",variant=\"\",version=\"3.2\",modifier=\"vision,instruct\")",
       "category": "a:divergence-fix",
-      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted (j1nu)"
+      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted"
     },
     {
       "provider": "groq",
@@ -808,7 +808,7 @@
       "before": "(family=\"llama\",variant=\"instruct\",version=\"4\",modifier=\"\")",
       "after": "(family=\"llama\",variant=\"scout\",version=\"4\",modifier=\"instruct\")",
       "category": "a:divergence-fix",
-      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted (j1nu)"
+      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted"
     },
     {
       "provider": "novita-ai",
@@ -817,7 +817,7 @@
       "before": "(family=\"llama-4-scout-17b-16e\",variant=\"instruct\",version=\"4\",modifier=\"\")",
       "after": "(family=\"llama\",variant=\"scout\",version=\"4\",modifier=\"instruct\")",
       "category": "a:divergence-fix",
-      "reason": "family over-capture reduced to registered short base, converged onto an independently-produced sibling tuple (SLICE-11; j1nu-hardened: no ID-present non-family field lost)"
+      "reason": "family over-capture reduced to registered short base, converged onto an independently-produced sibling tuple (hardened: no ID-present non-family field lost)"
     },
     {
       "provider": "github-models",
@@ -826,7 +826,7 @@
       "before": "(family=\"llama\",variant=\"instruct\",version=\"3.2\",modifier=\"\")",
       "after": "(family=\"llama\",variant=\"\",version=\"3.2\",modifier=\"vision,instruct\")",
       "category": "a:divergence-fix",
-      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted (j1nu)"
+      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted"
     },
     {
       "provider": "inference",
@@ -835,7 +835,7 @@
       "before": "(family=\"llama\",variant=\"instruct\",version=\"3.2\",modifier=\"\")",
       "after": "(family=\"llama\",variant=\"\",version=\"3.2\",modifier=\"vision,instruct\")",
       "category": "a:divergence-fix",
-      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted (j1nu)"
+      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted"
     },
     {
       "provider": "nvidia",
@@ -844,7 +844,7 @@
       "before": "(family=\"llama-3.2-11b-vision\",variant=\"instruct\",version=\"3.2\",modifier=\"\")",
       "after": "(family=\"llama\",variant=\"\",version=\"3.2\",modifier=\"vision,instruct\")",
       "category": "a:divergence-fix",
-      "reason": "family over-capture reduced to registered short base, converged onto an independently-produced sibling tuple (SLICE-11; j1nu-hardened: no ID-present non-family field lost)"
+      "reason": "family over-capture reduced to registered short base, converged onto an independently-produced sibling tuple (hardened: no ID-present non-family field lost)"
     },
     {
       "provider": "github-models",
@@ -853,7 +853,7 @@
       "before": "(family=\"phi\",variant=\"instruct\",version=\"4\",modifier=\"\")",
       "after": "(family=\"phi\",variant=\"\",version=\"4\",modifier=\"multimodal,instruct\")",
       "category": "a:divergence-fix",
-      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted (j1nu)"
+      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted"
     },
     {
       "provider": "nvidia",
@@ -862,7 +862,7 @@
       "before": "(family=\"phi-4-multimodal\",variant=\"instruct\",version=\"4\",modifier=\"\")",
       "after": "(family=\"phi\",variant=\"\",version=\"4\",modifier=\"multimodal,instruct\")",
       "category": "a:divergence-fix",
-      "reason": "family over-capture reduced to registered short base, converged onto an independently-produced sibling tuple (SLICE-11; j1nu-hardened: no ID-present non-family field lost)"
+      "reason": "family over-capture reduced to registered short base, converged onto an independently-produced sibling tuple (hardened: no ID-present non-family field lost)"
     },
     {
       "provider": "nano-gpt",
@@ -871,7 +871,7 @@
       "before": "(family=\"gpt\",variant=\"\",version=\"\",modifier=\"\")",
       "after": "(family=\"wizardlm\",variant=\"\",version=\"2\",modifier=\"\")",
       "category": "a:divergence-fix",
-      "reason": "now matches a tuple another provider already produced for this ID (BEFORE); only phantom non-family loss permitted (j1nu)"
+      "reason": "now matches a tuple another provider already produced for this ID (BEFORE); only phantom non-family loss permitted"
     },
     {
       "provider": "llmgateway",
@@ -880,7 +880,7 @@
       "before": "(family=\"mistral\",variant=\"\",version=\"\",modifier=\"\")",
       "after": "(family=\"ministral\",variant=\"\",version=\"\",modifier=\"\")",
       "category": "a:divergence-fix",
-      "reason": "now matches a tuple another provider already produced for this ID (BEFORE); only phantom non-family loss permitted (j1nu)"
+      "reason": "now matches a tuple another provider already produced for this ID (BEFORE); only phantom non-family loss permitted"
     },
     {
       "provider": "kilo",
@@ -889,7 +889,7 @@
       "before": "(family=\"mixtral\",variant=\"\",version=\"\",modifier=\"\")",
       "after": "(family=\"mixtral\",variant=\"\",version=\"\",modifier=\"instruct\")",
       "category": "a:divergence-fix",
-      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted (j1nu)"
+      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted"
     },
     {
       "provider": "nvidia",
@@ -898,7 +898,7 @@
       "before": "(family=\"mixtral\",variant=\"\",version=\"\",modifier=\"\")",
       "after": "(family=\"mixtral\",variant=\"\",version=\"\",modifier=\"instruct\")",
       "category": "a:divergence-fix",
-      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted (j1nu)"
+      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted"
     },
     {
       "provider": "openrouter",
@@ -907,7 +907,7 @@
       "before": "(family=\"mistral\",variant=\"instruct\",version=\"\",modifier=\"\")",
       "after": "(family=\"mixtral\",variant=\"\",version=\"\",modifier=\"instruct\")",
       "category": "a:divergence-fix",
-      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted (j1nu)"
+      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted"
     },
     {
       "provider": "openrouter",
@@ -916,7 +916,7 @@
       "before": "(family=\"mistral\",variant=\"large\",version=\"\",modifier=\"\")",
       "after": "(family=\"pixtral\",variant=\"large\",version=\"\",modifier=\"\")",
       "category": "a:divergence-fix",
-      "reason": "now matches a tuple another provider already produced for this ID (BEFORE); only phantom non-family loss permitted (j1nu)"
+      "reason": "now matches a tuple another provider already produced for this ID (BEFORE); only phantom non-family loss permitted"
     },
     {
       "provider": "kilo",
@@ -925,7 +925,7 @@
       "before": "(family=\"voxtral\",variant=\"\",version=\"\",modifier=\"\")",
       "after": "(family=\"voxtral\",variant=\"small\",version=\"\",modifier=\"\")",
       "category": "a:divergence-fix",
-      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted (j1nu)"
+      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted"
     },
     {
       "provider": "openrouter",
@@ -934,7 +934,7 @@
       "before": "(family=\"mistral\",variant=\"small\",version=\"\",modifier=\"\")",
       "after": "(family=\"voxtral\",variant=\"small\",version=\"\",modifier=\"\")",
       "category": "a:divergence-fix",
-      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted (j1nu)"
+      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted"
     },
     {
       "provider": "vercel",
@@ -943,7 +943,7 @@
       "before": "(family=\"kimi\",variant=\"k\",version=\"2\",modifier=\"thinking\")",
       "after": "(family=\"kimi\",variant=\"k\",version=\"2\",modifier=\"thinking,turbo\")",
       "category": "a:divergence-fix",
-      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted (j1nu)"
+      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted"
     },
     {
       "provider": "zenmux",
@@ -952,7 +952,7 @@
       "before": "(family=\"kimi-k2-thinking\",variant=\"turbo\",version=\"\",modifier=\"\")",
       "after": "(family=\"kimi\",variant=\"k\",version=\"2\",modifier=\"thinking,turbo\")",
       "category": "a:divergence-fix",
-      "reason": "family over-capture reduced to registered short base, converged onto an independently-produced sibling tuple (SLICE-11; j1nu-hardened: no ID-present non-family field lost)"
+      "reason": "family over-capture reduced to registered short base, converged onto an independently-produced sibling tuple (hardened: no ID-present non-family field lost)"
     },
     {
       "provider": "kilo",
@@ -961,7 +961,7 @@
       "before": "(family=\"hermes\",variant=\"\",version=\"2.3\",modifier=\"\")",
       "after": "(family=\"hermes\",variant=\"pro\",version=\"2\",modifier=\"\")",
       "category": "a:divergence-fix",
-      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted (j1nu)"
+      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted"
     },
     {
       "provider": "novita-ai",
@@ -970,7 +970,7 @@
       "before": "(family=\"hermes\",variant=\"\",version=\"2.3\",modifier=\"\")",
       "after": "(family=\"hermes\",variant=\"pro\",version=\"2\",modifier=\"\")",
       "category": "a:divergence-fix",
-      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted (j1nu)"
+      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted"
     },
     {
       "provider": "openrouter",
@@ -979,7 +979,7 @@
       "before": "(family=\"nousresearch\",variant=\"\",version=\"\",modifier=\"\")",
       "after": "(family=\"hermes\",variant=\"pro\",version=\"2\",modifier=\"\")",
       "category": "a:divergence-fix",
-      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted (j1nu)"
+      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted"
     },
     {
       "provider": "openrouter",
@@ -988,7 +988,7 @@
       "before": "(family=\"nousresearch\",variant=\"\",version=\"\",modifier=\"\")",
       "after": "(family=\"hermes\",variant=\"\",version=\"3\",modifier=\"\")",
       "category": "a:divergence-fix",
-      "reason": "now matches a tuple another provider already produced for this ID (BEFORE); only phantom non-family loss permitted (j1nu)"
+      "reason": "now matches a tuple another provider already produced for this ID (BEFORE); only phantom non-family loss permitted"
     },
     {
       "provider": "openrouter",
@@ -997,7 +997,7 @@
       "before": "(family=\"nousresearch\",variant=\"\",version=\"\",modifier=\"\")",
       "after": "(family=\"hermes\",variant=\"\",version=\"3\",modifier=\"\")",
       "category": "a:divergence-fix",
-      "reason": "now matches a tuple another provider already produced for this ID (BEFORE); only phantom non-family loss permitted (j1nu)"
+      "reason": "now matches a tuple another provider already produced for this ID (BEFORE); only phantom non-family loss permitted"
     },
     {
       "provider": "kilo",
@@ -1006,7 +1006,7 @@
       "before": "(family=\"llama-3.3-nemotron-super-49b\",variant=\"v1.5\",version=\"3.3\",modifier=\"\")",
       "after": "(family=\"nemotron\",variant=\"v1.5\",version=\"3.3\",modifier=\"\")",
       "category": "a:divergence-fix",
-      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted (j1nu)"
+      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted"
     },
     {
       "provider": "openrouter",
@@ -1015,7 +1015,7 @@
       "before": "(family=\"nemotron\",variant=\"\",version=\"\",modifier=\"\")",
       "after": "(family=\"nemotron\",variant=\"v1.5\",version=\"3.3\",modifier=\"\")",
       "category": "a:divergence-fix",
-      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted (j1nu)"
+      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted"
     },
     {
       "provider": "azure",
@@ -1024,7 +1024,7 @@
       "before": "(family=\"o\",variant=\"\",version=\"1\",modifier=\"\")",
       "after": "(family=\"gpt\",variant=\"o\",version=\"1\",modifier=\"\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"1\",modifier=\"\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"1\",modifier=\"\")"
     },
     {
       "provider": "azure-cognitive-services",
@@ -1033,7 +1033,7 @@
       "before": "(family=\"o\",variant=\"\",version=\"1\",modifier=\"\")",
       "after": "(family=\"gpt\",variant=\"o\",version=\"1\",modifier=\"\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"1\",modifier=\"\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"1\",modifier=\"\")"
     },
     {
       "provider": "helicone",
@@ -1042,7 +1042,7 @@
       "before": "(family=\"o\",variant=\"\",version=\"1\",modifier=\"\")",
       "after": "(family=\"gpt\",variant=\"o\",version=\"1\",modifier=\"\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"1\",modifier=\"\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"1\",modifier=\"\")"
     },
     {
       "provider": "llmgateway",
@@ -1051,7 +1051,7 @@
       "before": "(family=\"o\",variant=\"\",version=\"1\",modifier=\"\")",
       "after": "(family=\"gpt\",variant=\"o\",version=\"1\",modifier=\"\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"1\",modifier=\"\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"1\",modifier=\"\")"
     },
     {
       "provider": "openai",
@@ -1060,7 +1060,7 @@
       "before": "(family=\"o\",variant=\"\",version=\"1\",modifier=\"\")",
       "after": "(family=\"gpt\",variant=\"o\",version=\"1\",modifier=\"\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"1\",modifier=\"\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"1\",modifier=\"\")"
     },
     {
       "provider": "azure",
@@ -1069,7 +1069,7 @@
       "before": "(family=\"o\",variant=\"mini\",version=\"1\",modifier=\"\")",
       "after": "(family=\"gpt\",variant=\"o\",version=\"1\",modifier=\"mini\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"1\",modifier=\"mini\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"1\",modifier=\"mini\")"
     },
     {
       "provider": "azure-cognitive-services",
@@ -1078,7 +1078,7 @@
       "before": "(family=\"o\",variant=\"mini\",version=\"1\",modifier=\"\")",
       "after": "(family=\"gpt\",variant=\"o\",version=\"1\",modifier=\"mini\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"1\",modifier=\"mini\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"1\",modifier=\"mini\")"
     },
     {
       "provider": "helicone",
@@ -1087,7 +1087,7 @@
       "before": "(family=\"o\",variant=\"mini\",version=\"1\",modifier=\"\")",
       "after": "(family=\"gpt\",variant=\"o\",version=\"1\",modifier=\"mini\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"1\",modifier=\"mini\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"1\",modifier=\"mini\")"
     },
     {
       "provider": "openai",
@@ -1096,7 +1096,7 @@
       "before": "(family=\"o\",variant=\"mini\",version=\"1\",modifier=\"\")",
       "after": "(family=\"gpt\",variant=\"o\",version=\"1\",modifier=\"mini\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"1\",modifier=\"mini\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"1\",modifier=\"mini\")"
     },
     {
       "provider": "azure",
@@ -1105,7 +1105,7 @@
       "before": "(family=\"o\",variant=\"\",version=\"1\",modifier=\"preview\")",
       "after": "(family=\"gpt\",variant=\"o\",version=\"1\",modifier=\"preview\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"1\",modifier=\"preview\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"1\",modifier=\"preview\")"
     },
     {
       "provider": "azure-cognitive-services",
@@ -1114,7 +1114,7 @@
       "before": "(family=\"o\",variant=\"\",version=\"1\",modifier=\"preview\")",
       "after": "(family=\"gpt\",variant=\"o\",version=\"1\",modifier=\"preview\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"1\",modifier=\"preview\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"1\",modifier=\"preview\")"
     },
     {
       "provider": "openai",
@@ -1123,7 +1123,7 @@
       "before": "(family=\"o\",variant=\"\",version=\"1\",modifier=\"preview\")",
       "after": "(family=\"gpt\",variant=\"o\",version=\"1\",modifier=\"preview\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"1\",modifier=\"preview\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"1\",modifier=\"preview\")"
     },
     {
       "provider": "openai",
@@ -1132,7 +1132,7 @@
       "before": "(family=\"o\",variant=\"pro\",version=\"1\",modifier=\"\")",
       "after": "(family=\"gpt\",variant=\"o\",version=\"1\",modifier=\"pro\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"1\",modifier=\"pro\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"1\",modifier=\"pro\")"
     },
     {
       "provider": "abacus",
@@ -1141,7 +1141,7 @@
       "before": "(family=\"o\",variant=\"\",version=\"3\",modifier=\"\")",
       "after": "(family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"\")"
     },
     {
       "provider": "azure",
@@ -1150,7 +1150,7 @@
       "before": "(family=\"o\",variant=\"\",version=\"3\",modifier=\"\")",
       "after": "(family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"\")"
     },
     {
       "provider": "azure-cognitive-services",
@@ -1159,7 +1159,7 @@
       "before": "(family=\"o\",variant=\"\",version=\"3\",modifier=\"\")",
       "after": "(family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"\")"
     },
     {
       "provider": "helicone",
@@ -1168,7 +1168,7 @@
       "before": "(family=\"o\",variant=\"\",version=\"3\",modifier=\"\")",
       "after": "(family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"\")"
     },
     {
       "provider": "jiekou",
@@ -1177,7 +1177,7 @@
       "before": "(family=\"o\",variant=\"\",version=\"3\",modifier=\"\")",
       "after": "(family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"\")"
     },
     {
       "provider": "llmgateway",
@@ -1186,7 +1186,7 @@
       "before": "(family=\"o\",variant=\"\",version=\"3\",modifier=\"\")",
       "after": "(family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"\")"
     },
     {
       "provider": "openai",
@@ -1195,7 +1195,7 @@
       "before": "(family=\"o\",variant=\"\",version=\"3\",modifier=\"\")",
       "after": "(family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"\")"
     },
     {
       "provider": "openai",
@@ -1204,7 +1204,7 @@
       "before": "(family=\"o\",variant=\"deep-research\",version=\"3\",modifier=\"\")",
       "after": "(family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"deep-research\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"deep-research\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"deep-research\")"
     },
     {
       "provider": "abacus",
@@ -1213,7 +1213,7 @@
       "before": "(family=\"o\",variant=\"mini\",version=\"3\",modifier=\"\")",
       "after": "(family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"mini\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"mini\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"mini\")"
     },
     {
       "provider": "azure",
@@ -1222,7 +1222,7 @@
       "before": "(family=\"o\",variant=\"mini\",version=\"3\",modifier=\"\")",
       "after": "(family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"mini\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"mini\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"mini\")"
     },
     {
       "provider": "azure-cognitive-services",
@@ -1231,7 +1231,7 @@
       "before": "(family=\"o\",variant=\"mini\",version=\"3\",modifier=\"\")",
       "after": "(family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"mini\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"mini\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"mini\")"
     },
     {
       "provider": "helicone",
@@ -1240,7 +1240,7 @@
       "before": "(family=\"o\",variant=\"mini\",version=\"3\",modifier=\"\")",
       "after": "(family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"mini\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"mini\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"mini\")"
     },
     {
       "provider": "jiekou",
@@ -1249,7 +1249,7 @@
       "before": "(family=\"o\",variant=\"mini\",version=\"3\",modifier=\"\")",
       "after": "(family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"mini\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"mini\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"mini\")"
     },
     {
       "provider": "llmgateway",
@@ -1258,7 +1258,7 @@
       "before": "(family=\"o\",variant=\"mini\",version=\"3\",modifier=\"\")",
       "after": "(family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"mini\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"mini\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"mini\")"
     },
     {
       "provider": "openai",
@@ -1267,7 +1267,7 @@
       "before": "(family=\"o\",variant=\"mini\",version=\"3\",modifier=\"\")",
       "after": "(family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"mini\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"mini\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"mini\")"
     },
     {
       "provider": "abacus",
@@ -1276,7 +1276,7 @@
       "before": "(family=\"o\",variant=\"pro\",version=\"3\",modifier=\"\")",
       "after": "(family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"pro\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"pro\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"pro\")"
     },
     {
       "provider": "helicone",
@@ -1285,7 +1285,7 @@
       "before": "(family=\"o\",variant=\"pro\",version=\"3\",modifier=\"\")",
       "after": "(family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"pro\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"pro\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"pro\")"
     },
     {
       "provider": "openai",
@@ -1294,7 +1294,7 @@
       "before": "(family=\"o\",variant=\"pro\",version=\"3\",modifier=\"\")",
       "after": "(family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"pro\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"pro\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"pro\")"
     },
     {
       "provider": "abacus",
@@ -1303,7 +1303,7 @@
       "before": "(family=\"o\",variant=\"mini\",version=\"4\",modifier=\"\")",
       "after": "(family=\"gpt\",variant=\"o\",version=\"4\",modifier=\"mini\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"4\",modifier=\"mini\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"4\",modifier=\"mini\")"
     },
     {
       "provider": "azure",
@@ -1312,7 +1312,7 @@
       "before": "(family=\"o\",variant=\"mini\",version=\"4\",modifier=\"\")",
       "after": "(family=\"gpt\",variant=\"o\",version=\"4\",modifier=\"mini\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"4\",modifier=\"mini\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"4\",modifier=\"mini\")"
     },
     {
       "provider": "azure-cognitive-services",
@@ -1321,7 +1321,7 @@
       "before": "(family=\"o\",variant=\"mini\",version=\"4\",modifier=\"\")",
       "after": "(family=\"gpt\",variant=\"o\",version=\"4\",modifier=\"mini\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"4\",modifier=\"mini\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"4\",modifier=\"mini\")"
     },
     {
       "provider": "helicone",
@@ -1330,7 +1330,7 @@
       "before": "(family=\"o\",variant=\"mini\",version=\"4\",modifier=\"\")",
       "after": "(family=\"gpt\",variant=\"o\",version=\"4\",modifier=\"mini\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"4\",modifier=\"mini\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"4\",modifier=\"mini\")"
     },
     {
       "provider": "jiekou",
@@ -1339,7 +1339,7 @@
       "before": "(family=\"o\",variant=\"mini\",version=\"4\",modifier=\"\")",
       "after": "(family=\"gpt\",variant=\"o\",version=\"4\",modifier=\"mini\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"4\",modifier=\"mini\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"4\",modifier=\"mini\")"
     },
     {
       "provider": "llmgateway",
@@ -1348,7 +1348,7 @@
       "before": "(family=\"o\",variant=\"mini\",version=\"4\",modifier=\"\")",
       "after": "(family=\"gpt\",variant=\"o\",version=\"4\",modifier=\"mini\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"4\",modifier=\"mini\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"4\",modifier=\"mini\")"
     },
     {
       "provider": "openai",
@@ -1357,7 +1357,7 @@
       "before": "(family=\"o\",variant=\"mini\",version=\"4\",modifier=\"\")",
       "after": "(family=\"gpt\",variant=\"o\",version=\"4\",modifier=\"mini\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"4\",modifier=\"mini\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"4\",modifier=\"mini\")"
     },
     {
       "provider": "openai",
@@ -1366,7 +1366,7 @@
       "before": "(family=\"o\",variant=\"mini\",version=\"4\",modifier=\"\")",
       "after": "(family=\"gpt\",variant=\"o\",version=\"4\",modifier=\"mini\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"4\",modifier=\"mini\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"4\",modifier=\"mini\")"
     },
     {
       "provider": "digitalocean",
@@ -1375,7 +1375,7 @@
       "before": "(family=\"gpt\",variant=\"\",version=\"\",modifier=\"\")",
       "after": "(family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")"
     },
     {
       "provider": "venice",
@@ -1384,7 +1384,7 @@
       "before": "(family=\"gpt\",variant=\"\",version=\"\",modifier=\"\")",
       "after": "(family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")"
     },
     {
       "provider": "digitalocean",
@@ -1393,7 +1393,7 @@
       "before": "(family=\"gpt\",variant=\"mini\",version=\"\",modifier=\"\")",
       "after": "(family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"mini\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"mini\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"mini\")"
     },
     {
       "provider": "venice",
@@ -1402,7 +1402,7 @@
       "before": "(family=\"gpt\",variant=\"mini\",version=\"\",modifier=\"\")",
       "after": "(family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"mini\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"mini\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"mini\")"
     },
     {
       "provider": "nano-gpt",
@@ -1411,7 +1411,7 @@
       "before": "(family=\"gpt\",variant=\"\",version=\"\",modifier=\"latest\")",
       "after": "(family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"latest\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"latest\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"latest\")"
     },
     {
       "provider": "poe",
@@ -1420,7 +1420,7 @@
       "before": "(family=\"gpt\",variant=\"\",version=\"\",modifier=\"latest\")",
       "after": "(family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"latest\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"latest\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"latest\")"
     },
     {
       "provider": "cloudflare-ai-gateway",
@@ -1429,7 +1429,7 @@
       "before": "(family=\"gpt\",variant=\"\",version=\"4o\",modifier=\"\")",
       "after": "(family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")"
     },
     {
       "provider": "github-models",
@@ -1438,7 +1438,7 @@
       "before": "(family=\"gpt\",variant=\"\",version=\"4o\",modifier=\"\")",
       "after": "(family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")"
     },
     {
       "provider": "kilo",
@@ -1447,7 +1447,7 @@
       "before": "(family=\"gpt\",variant=\"\",version=\"4o\",modifier=\"\")",
       "after": "(family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")"
     },
     {
       "provider": "merge-gateway",
@@ -1456,7 +1456,7 @@
       "before": "(family=\"gpt\",variant=\"\",version=\"4o\",modifier=\"\")",
       "after": "(family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")"
     },
     {
       "provider": "nano-gpt",
@@ -1465,7 +1465,7 @@
       "before": "(family=\"gpt\",variant=\"\",version=\"4o\",modifier=\"\")",
       "after": "(family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")"
     },
     {
       "provider": "openrouter",
@@ -1474,7 +1474,7 @@
       "before": "(family=\"gpt\",variant=\"\",version=\"4o\",modifier=\"\")",
       "after": "(family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")"
     },
     {
       "provider": "orcarouter",
@@ -1483,7 +1483,7 @@
       "before": "(family=\"gpt\",variant=\"\",version=\"4o\",modifier=\"\")",
       "after": "(family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")"
     },
     {
       "provider": "poe",
@@ -1492,7 +1492,7 @@
       "before": "(family=\"gpt\",variant=\"\",version=\"4o\",modifier=\"\")",
       "after": "(family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")"
     },
     {
       "provider": "vercel",
@@ -1501,7 +1501,7 @@
       "before": "(family=\"gpt\",variant=\"\",version=\"4o\",modifier=\"\")",
       "after": "(family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")"
     },
     {
       "provider": "kilo",
@@ -1510,7 +1510,7 @@
       "before": "(family=\"gpt\",variant=\"\",version=\"4o\",modifier=\"\")",
       "after": "(family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")"
     },
     {
       "provider": "merge-gateway",
@@ -1519,7 +1519,7 @@
       "before": "(family=\"gpt\",variant=\"\",version=\"4o\",modifier=\"\")",
       "after": "(family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")"
     },
     {
       "provider": "openrouter",
@@ -1528,7 +1528,7 @@
       "before": "(family=\"gpt\",variant=\"\",version=\"4o\",modifier=\"\")",
       "after": "(family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")"
     },
     {
       "provider": "orcarouter",
@@ -1537,7 +1537,7 @@
       "before": "(family=\"gpt\",variant=\"\",version=\"4o\",modifier=\"\")",
       "after": "(family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")"
     },
     {
       "provider": "kilo",
@@ -1546,7 +1546,7 @@
       "before": "(family=\"gpt\",variant=\"\",version=\"4o\",modifier=\"\")",
       "after": "(family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")"
     },
     {
       "provider": "merge-gateway",
@@ -1555,7 +1555,7 @@
       "before": "(family=\"gpt\",variant=\"\",version=\"4o\",modifier=\"\")",
       "after": "(family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")"
     },
     {
       "provider": "nano-gpt",
@@ -1564,7 +1564,7 @@
       "before": "(family=\"gpt\",variant=\"\",version=\"4o\",modifier=\"\")",
       "after": "(family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")"
     },
     {
       "provider": "openrouter",
@@ -1573,7 +1573,7 @@
       "before": "(family=\"gpt\",variant=\"\",version=\"4o\",modifier=\"\")",
       "after": "(family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")"
     },
     {
       "provider": "orcarouter",
@@ -1582,7 +1582,7 @@
       "before": "(family=\"gpt\",variant=\"\",version=\"4o\",modifier=\"\")",
       "after": "(family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")"
     },
     {
       "provider": "kilo",
@@ -1591,7 +1591,7 @@
       "before": "(family=\"gpt\",variant=\"\",version=\"4o\",modifier=\"\")",
       "after": "(family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")"
     },
     {
       "provider": "merge-gateway",
@@ -1600,7 +1600,7 @@
       "before": "(family=\"gpt\",variant=\"\",version=\"4o\",modifier=\"\")",
       "after": "(family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")"
     },
     {
       "provider": "nano-gpt",
@@ -1609,7 +1609,7 @@
       "before": "(family=\"gpt\",variant=\"\",version=\"4o\",modifier=\"\")",
       "after": "(family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")"
     },
     {
       "provider": "openrouter",
@@ -1618,7 +1618,7 @@
       "before": "(family=\"gpt\",variant=\"\",version=\"4o\",modifier=\"\")",
       "after": "(family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")"
     },
     {
       "provider": "orcarouter",
@@ -1627,7 +1627,7 @@
       "before": "(family=\"gpt\",variant=\"\",version=\"4o\",modifier=\"\")",
       "after": "(family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")"
     },
     {
       "provider": "kilo",
@@ -1636,7 +1636,7 @@
       "before": "(family=\"gpt\",variant=\"\",version=\"\",modifier=\"preview\")",
       "after": "(family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"preview\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"preview\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"preview\")"
     },
     {
       "provider": "poe",
@@ -1645,7 +1645,7 @@
       "before": "(family=\"gpt\",variant=\"\",version=\"\",modifier=\"\")",
       "after": "(family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")"
     },
     {
       "provider": "cloudflare-ai-gateway",
@@ -1654,7 +1654,7 @@
       "before": "(family=\"gpt\",variant=\"mini\",version=\"\",modifier=\"\")",
       "after": "(family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"mini\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"mini\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"mini\")"
     },
     {
       "provider": "github-models",
@@ -1663,7 +1663,7 @@
       "before": "(family=\"gpt\",variant=\"mini\",version=\"\",modifier=\"\")",
       "after": "(family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"mini\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"mini\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"mini\")"
     },
     {
       "provider": "kilo",
@@ -1672,7 +1672,7 @@
       "before": "(family=\"gpt\",variant=\"mini\",version=\"\",modifier=\"\")",
       "after": "(family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"mini\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"mini\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"mini\")"
     },
     {
       "provider": "merge-gateway",
@@ -1681,7 +1681,7 @@
       "before": "(family=\"gpt\",variant=\"mini\",version=\"\",modifier=\"\")",
       "after": "(family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"mini\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"mini\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"mini\")"
     },
     {
       "provider": "nano-gpt",
@@ -1690,7 +1690,7 @@
       "before": "(family=\"gpt\",variant=\"mini\",version=\"\",modifier=\"\")",
       "after": "(family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"mini\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"mini\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"mini\")"
     },
     {
       "provider": "openrouter",
@@ -1699,7 +1699,7 @@
       "before": "(family=\"gpt\",variant=\"mini\",version=\"\",modifier=\"\")",
       "after": "(family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"mini\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"mini\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"mini\")"
     },
     {
       "provider": "orcarouter",
@@ -1708,7 +1708,7 @@
       "before": "(family=\"gpt\",variant=\"mini\",version=\"\",modifier=\"\")",
       "after": "(family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"mini\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"mini\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"mini\")"
     },
     {
       "provider": "poe",
@@ -1717,7 +1717,7 @@
       "before": "(family=\"gpt\",variant=\"mini\",version=\"\",modifier=\"\")",
       "after": "(family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"mini\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"mini\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"mini\")"
     },
     {
       "provider": "requesty",
@@ -1726,7 +1726,7 @@
       "before": "(family=\"gpt\",variant=\"mini\",version=\"\",modifier=\"\")",
       "after": "(family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"mini\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"mini\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"mini\")"
     },
     {
       "provider": "vercel",
@@ -1735,7 +1735,7 @@
       "before": "(family=\"gpt\",variant=\"mini\",version=\"\",modifier=\"\")",
       "after": "(family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"mini\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"mini\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"mini\")"
     },
     {
       "provider": "kilo",
@@ -1744,7 +1744,7 @@
       "before": "(family=\"gpt\",variant=\"mini\",version=\"\",modifier=\"\")",
       "after": "(family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"mini\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"mini\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"mini\")"
     },
     {
       "provider": "openrouter",
@@ -1753,7 +1753,7 @@
       "before": "(family=\"o\",variant=\"mini\",version=\"\",modifier=\"\")",
       "after": "(family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"mini\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"mini\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"mini\")"
     },
     {
       "provider": "poe",
@@ -1762,7 +1762,7 @@
       "before": "(family=\"gpt\",variant=\"mini\",version=\"\",modifier=\"\")",
       "after": "(family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"mini\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"mini\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"mini\")"
     },
     {
       "provider": "kilo",
@@ -1771,7 +1771,7 @@
       "before": "(family=\"gpt\",variant=\"mini\",version=\"\",modifier=\"preview\")",
       "after": "(family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"preview,mini\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"preview,mini\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"preview,mini\")"
     },
     {
       "provider": "nano-gpt",
@@ -1780,7 +1780,7 @@
       "before": "(family=\"gpt\",variant=\"mini\",version=\"\",modifier=\"preview\")",
       "after": "(family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"preview,mini\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"preview,mini\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"preview,mini\")"
     },
     {
       "provider": "openrouter",
@@ -1789,7 +1789,7 @@
       "before": "(family=\"o\",variant=\"mini\",version=\"\",modifier=\"preview\")",
       "after": "(family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"preview,mini\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"preview,mini\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"preview,mini\")"
     },
     {
       "provider": "vercel",
@@ -1798,7 +1798,7 @@
       "before": "(family=\"gpt\",variant=\"mini\",version=\"\",modifier=\"preview\")",
       "after": "(family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"preview,mini\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"preview,mini\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"preview,mini\")"
     },
     {
       "provider": "poe",
@@ -1807,7 +1807,7 @@
       "before": "(family=\"gpt\",variant=\"\",version=\"\",modifier=\"\")",
       "after": "(family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"\")"
     },
     {
       "provider": "kilo",
@@ -1816,7 +1816,7 @@
       "before": "(family=\"gpt\",variant=\"\",version=\"\",modifier=\"preview\")",
       "after": "(family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"preview\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"preview\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"preview\")"
     },
     {
       "provider": "nano-gpt",
@@ -1825,7 +1825,7 @@
       "before": "(family=\"gpt\",variant=\"\",version=\"\",modifier=\"preview\")",
       "after": "(family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"preview\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"preview\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"preview\")"
     },
     {
       "provider": "openrouter",
@@ -1834,7 +1834,7 @@
       "before": "(family=\"gpt\",variant=\"\",version=\"\",modifier=\"preview\")",
       "after": "(family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"preview\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"preview\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"4o\",version=\"\",modifier=\"preview\")"
     },
     {
       "provider": "kilo",
@@ -1843,7 +1843,7 @@
       "before": "(family=\"gpt\",variant=\"\",version=\"5\",modifier=\"\")",
       "after": "(family=\"gpt\",variant=\"\",version=\"5\",modifier=\"chat\")",
       "category": "a:divergence-fix",
-      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted (j1nu)"
+      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted"
     },
     {
       "provider": "openrouter",
@@ -1852,7 +1852,7 @@
       "before": "(family=\"gpt\",variant=\"codex\",version=\"5\",modifier=\"\")",
       "after": "(family=\"gpt\",variant=\"\",version=\"5\",modifier=\"chat\")",
       "category": "a:divergence-fix",
-      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted (j1nu)"
+      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted"
     },
     {
       "provider": "poe",
@@ -1861,7 +1861,7 @@
       "before": "(family=\"gpt\",variant=\"codex\",version=\"5\",modifier=\"\")",
       "after": "(family=\"gpt\",variant=\"\",version=\"5\",modifier=\"chat\")",
       "category": "a:divergence-fix",
-      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted (j1nu)"
+      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted"
     },
     {
       "provider": "requesty",
@@ -1870,7 +1870,7 @@
       "before": "(family=\"gpt\",variant=\"codex\",version=\"5\",modifier=\"\")",
       "after": "(family=\"gpt\",variant=\"\",version=\"5\",modifier=\"chat\")",
       "category": "a:divergence-fix",
-      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted (j1nu)"
+      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted"
     },
     {
       "provider": "vercel",
@@ -1879,7 +1879,7 @@
       "before": "(family=\"gpt\",variant=\"\",version=\"5\",modifier=\"\")",
       "after": "(family=\"gpt\",variant=\"\",version=\"5\",modifier=\"chat\")",
       "category": "a:divergence-fix",
-      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted (j1nu)"
+      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted"
     },
     {
       "provider": "merge-gateway",
@@ -1888,7 +1888,7 @@
       "before": "(family=\"gpt\",variant=\"codex\",version=\"5\",modifier=\"latest\")",
       "after": "(family=\"gpt\",variant=\"\",version=\"5\",modifier=\"chat,latest\")",
       "category": "a:divergence-fix",
-      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted (j1nu)"
+      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted"
     },
     {
       "provider": "nano-gpt",
@@ -1897,7 +1897,7 @@
       "before": "(family=\"gpt\",variant=\"\",version=\"5\",modifier=\"latest\")",
       "after": "(family=\"gpt\",variant=\"\",version=\"5\",modifier=\"chat,latest\")",
       "category": "a:divergence-fix",
-      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted (j1nu)"
+      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted"
     },
     {
       "provider": "orcarouter",
@@ -1906,7 +1906,7 @@
       "before": "(family=\"gpt\",variant=\"codex\",version=\"5\",modifier=\"latest\")",
       "after": "(family=\"gpt\",variant=\"\",version=\"5\",modifier=\"chat,latest\")",
       "category": "a:divergence-fix",
-      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted (j1nu)"
+      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted"
     },
     {
       "provider": "kilo",
@@ -1915,7 +1915,7 @@
       "before": "(family=\"gpt\",variant=\"\",version=\"5.1\",modifier=\"\")",
       "after": "(family=\"gpt\",variant=\"\",version=\"5.1\",modifier=\"chat\")",
       "category": "a:divergence-fix",
-      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted (j1nu)"
+      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted"
     },
     {
       "provider": "nano-gpt",
@@ -1924,7 +1924,7 @@
       "before": "(family=\"gpt\",variant=\"\",version=\"5.1\",modifier=\"\")",
       "after": "(family=\"gpt\",variant=\"\",version=\"5.1\",modifier=\"chat\")",
       "category": "a:divergence-fix",
-      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted (j1nu)"
+      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted"
     },
     {
       "provider": "openrouter",
@@ -1933,7 +1933,7 @@
       "before": "(family=\"gpt\",variant=\"codex\",version=\"5.1\",modifier=\"\")",
       "after": "(family=\"gpt\",variant=\"\",version=\"5.1\",modifier=\"chat\")",
       "category": "a:divergence-fix",
-      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted (j1nu)"
+      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted"
     },
     {
       "provider": "requesty",
@@ -1942,7 +1942,7 @@
       "before": "(family=\"gpt\",variant=\"codex\",version=\"5.1\",modifier=\"\")",
       "after": "(family=\"gpt\",variant=\"\",version=\"5.1\",modifier=\"chat\")",
       "category": "a:divergence-fix",
-      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted (j1nu)"
+      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted"
     },
     {
       "provider": "zenmux",
@@ -1951,7 +1951,7 @@
       "before": "(family=\"gpt\",variant=\"\",version=\"5.1\",modifier=\"\")",
       "after": "(family=\"gpt\",variant=\"\",version=\"5.1\",modifier=\"chat\")",
       "category": "a:divergence-fix",
-      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted (j1nu)"
+      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted"
     },
     {
       "provider": "merge-gateway",
@@ -1960,7 +1960,7 @@
       "before": "(family=\"gpt\",variant=\"codex\",version=\"5.1\",modifier=\"latest\")",
       "after": "(family=\"gpt\",variant=\"\",version=\"5.1\",modifier=\"chat,latest\")",
       "category": "a:divergence-fix",
-      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted (j1nu)"
+      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted"
     },
     {
       "provider": "nano-gpt",
@@ -1969,7 +1969,7 @@
       "before": "(family=\"gpt\",variant=\"\",version=\"5.1\",modifier=\"latest\")",
       "after": "(family=\"gpt\",variant=\"\",version=\"5.1\",modifier=\"chat,latest\")",
       "category": "a:divergence-fix",
-      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted (j1nu)"
+      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted"
     },
     {
       "provider": "orcarouter",
@@ -1978,7 +1978,7 @@
       "before": "(family=\"gpt\",variant=\"codex\",version=\"5.1\",modifier=\"latest\")",
       "after": "(family=\"gpt\",variant=\"\",version=\"5.1\",modifier=\"chat,latest\")",
       "category": "a:divergence-fix",
-      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted (j1nu)"
+      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted"
     },
     {
       "provider": "kilo",
@@ -1987,7 +1987,7 @@
       "before": "(family=\"gpt\",variant=\"\",version=\"5.2\",modifier=\"\")",
       "after": "(family=\"gpt\",variant=\"\",version=\"5.2\",modifier=\"chat\")",
       "category": "a:divergence-fix",
-      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted (j1nu)"
+      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted"
     },
     {
       "provider": "nano-gpt",
@@ -1996,7 +1996,7 @@
       "before": "(family=\"gpt\",variant=\"\",version=\"5.2\",modifier=\"\")",
       "after": "(family=\"gpt\",variant=\"\",version=\"5.2\",modifier=\"chat\")",
       "category": "a:divergence-fix",
-      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted (j1nu)"
+      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted"
     },
     {
       "provider": "openrouter",
@@ -2005,7 +2005,7 @@
       "before": "(family=\"gpt\",variant=\"codex\",version=\"5.2\",modifier=\"\")",
       "after": "(family=\"gpt\",variant=\"\",version=\"5.2\",modifier=\"chat\")",
       "category": "a:divergence-fix",
-      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted (j1nu)"
+      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted"
     },
     {
       "provider": "requesty",
@@ -2014,7 +2014,7 @@
       "before": "(family=\"gpt\",variant=\"codex\",version=\"5.2\",modifier=\"\")",
       "after": "(family=\"gpt\",variant=\"\",version=\"5.2\",modifier=\"chat\")",
       "category": "a:divergence-fix",
-      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted (j1nu)"
+      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted"
     },
     {
       "provider": "vercel",
@@ -2023,7 +2023,7 @@
       "before": "(family=\"gpt\",variant=\"\",version=\"5.2\",modifier=\"\")",
       "after": "(family=\"gpt\",variant=\"\",version=\"5.2\",modifier=\"chat\")",
       "category": "a:divergence-fix",
-      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted (j1nu)"
+      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted"
     },
     {
       "provider": "kilo",
@@ -2032,7 +2032,7 @@
       "before": "(family=\"gpt\",variant=\"\",version=\"\",modifier=\"\")",
       "after": "(family=\"gpt\",variant=\"audio\",version=\"\",modifier=\"\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"audio\",version=\"\",modifier=\"\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"audio\",version=\"\",modifier=\"\")"
     },
     {
       "provider": "openrouter",
@@ -2041,7 +2041,7 @@
       "before": "(family=\"gpt\",variant=\"\",version=\"\",modifier=\"\")",
       "after": "(family=\"gpt\",variant=\"audio\",version=\"\",modifier=\"\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"audio\",version=\"\",modifier=\"\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"audio\",version=\"\",modifier=\"\")"
     },
     {
       "provider": "kilo",
@@ -2050,7 +2050,7 @@
       "before": "(family=\"gpt-audio\",variant=\"mini\",version=\"\",modifier=\"\")",
       "after": "(family=\"gpt\",variant=\"audio\",version=\"\",modifier=\"mini\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"audio\",version=\"\",modifier=\"mini\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"audio\",version=\"\",modifier=\"mini\")"
     },
     {
       "provider": "openrouter",
@@ -2059,7 +2059,7 @@
       "before": "(family=\"o\",variant=\"mini\",version=\"\",modifier=\"\")",
       "after": "(family=\"gpt\",variant=\"audio\",version=\"\",modifier=\"mini\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"audio\",version=\"\",modifier=\"mini\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"audio\",version=\"\",modifier=\"mini\")"
     },
     {
       "provider": "cloudflare-ai-gateway",
@@ -2068,7 +2068,7 @@
       "before": "(family=\"o\",variant=\"\",version=\"1\",modifier=\"\")",
       "after": "(family=\"gpt\",variant=\"o\",version=\"1\",modifier=\"\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"1\",modifier=\"\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"1\",modifier=\"\")"
     },
     {
       "provider": "github-models",
@@ -2077,7 +2077,7 @@
       "before": "(family=\"o\",variant=\"\",version=\"1\",modifier=\"\")",
       "after": "(family=\"gpt\",variant=\"o\",version=\"1\",modifier=\"\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"1\",modifier=\"\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"1\",modifier=\"\")"
     },
     {
       "provider": "kilo",
@@ -2086,7 +2086,7 @@
       "before": "(family=\"o\",variant=\"\",version=\"1\",modifier=\"\")",
       "after": "(family=\"gpt\",variant=\"o\",version=\"1\",modifier=\"\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"1\",modifier=\"\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"1\",modifier=\"\")"
     },
     {
       "provider": "merge-gateway",
@@ -2095,7 +2095,7 @@
       "before": "(family=\"o\",variant=\"\",version=\"1\",modifier=\"\")",
       "after": "(family=\"gpt\",variant=\"o\",version=\"1\",modifier=\"\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"1\",modifier=\"\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"1\",modifier=\"\")"
     },
     {
       "provider": "nano-gpt",
@@ -2104,7 +2104,7 @@
       "before": "(family=\"o\",variant=\"\",version=\"1\",modifier=\"\")",
       "after": "(family=\"gpt\",variant=\"o\",version=\"1\",modifier=\"\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"1\",modifier=\"\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"1\",modifier=\"\")"
     },
     {
       "provider": "openrouter",
@@ -2113,7 +2113,7 @@
       "before": "(family=\"o\",variant=\"\",version=\"1\",modifier=\"\")",
       "after": "(family=\"gpt\",variant=\"o\",version=\"1\",modifier=\"\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"1\",modifier=\"\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"1\",modifier=\"\")"
     },
     {
       "provider": "poe",
@@ -2122,7 +2122,7 @@
       "before": "(family=\"o\",variant=\"\",version=\"1\",modifier=\"\")",
       "after": "(family=\"gpt\",variant=\"o\",version=\"1\",modifier=\"\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"1\",modifier=\"\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"1\",modifier=\"\")"
     },
     {
       "provider": "vercel",
@@ -2131,7 +2131,7 @@
       "before": "(family=\"o\",variant=\"\",version=\"1\",modifier=\"\")",
       "after": "(family=\"gpt\",variant=\"o\",version=\"1\",modifier=\"\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"1\",modifier=\"\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"1\",modifier=\"\")"
     },
     {
       "provider": "github-models",
@@ -2140,7 +2140,7 @@
       "before": "(family=\"o\",variant=\"mini\",version=\"1\",modifier=\"\")",
       "after": "(family=\"gpt\",variant=\"o\",version=\"1\",modifier=\"mini\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"1\",modifier=\"mini\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"1\",modifier=\"mini\")"
     },
     {
       "provider": "github-models",
@@ -2149,7 +2149,7 @@
       "before": "(family=\"o\",variant=\"\",version=\"1\",modifier=\"preview\")",
       "after": "(family=\"gpt\",variant=\"o\",version=\"1\",modifier=\"preview\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"1\",modifier=\"preview\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"1\",modifier=\"preview\")"
     },
     {
       "provider": "nano-gpt",
@@ -2158,7 +2158,7 @@
       "before": "(family=\"o\",variant=\"\",version=\"1\",modifier=\"preview\")",
       "after": "(family=\"gpt\",variant=\"o\",version=\"1\",modifier=\"preview\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"1\",modifier=\"preview\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"1\",modifier=\"preview\")"
     },
     {
       "provider": "kilo",
@@ -2167,7 +2167,7 @@
       "before": "(family=\"o\",variant=\"pro\",version=\"1\",modifier=\"\")",
       "after": "(family=\"gpt\",variant=\"o\",version=\"1\",modifier=\"pro\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"1\",modifier=\"pro\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"1\",modifier=\"pro\")"
     },
     {
       "provider": "nano-gpt",
@@ -2176,7 +2176,7 @@
       "before": "(family=\"o\",variant=\"pro\",version=\"1\",modifier=\"\")",
       "after": "(family=\"gpt\",variant=\"o\",version=\"1\",modifier=\"pro\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"1\",modifier=\"pro\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"1\",modifier=\"pro\")"
     },
     {
       "provider": "openrouter",
@@ -2185,7 +2185,7 @@
       "before": "(family=\"o\",variant=\"pro\",version=\"1\",modifier=\"\")",
       "after": "(family=\"gpt\",variant=\"o\",version=\"1\",modifier=\"pro\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"1\",modifier=\"pro\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"1\",modifier=\"pro\")"
     },
     {
       "provider": "poe",
@@ -2194,7 +2194,7 @@
       "before": "(family=\"o\",variant=\"pro\",version=\"1\",modifier=\"\")",
       "after": "(family=\"gpt\",variant=\"o\",version=\"1\",modifier=\"pro\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"1\",modifier=\"pro\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"1\",modifier=\"pro\")"
     },
     {
       "provider": "cloudflare-ai-gateway",
@@ -2203,7 +2203,7 @@
       "before": "(family=\"o\",variant=\"\",version=\"3\",modifier=\"\")",
       "after": "(family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"\")"
     },
     {
       "provider": "github-models",
@@ -2212,7 +2212,7 @@
       "before": "(family=\"o\",variant=\"\",version=\"3\",modifier=\"\")",
       "after": "(family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"\")"
     },
     {
       "provider": "kilo",
@@ -2221,7 +2221,7 @@
       "before": "(family=\"o\",variant=\"\",version=\"3\",modifier=\"\")",
       "after": "(family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"\")"
     },
     {
       "provider": "merge-gateway",
@@ -2230,7 +2230,7 @@
       "before": "(family=\"o\",variant=\"\",version=\"3\",modifier=\"\")",
       "after": "(family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"\")"
     },
     {
       "provider": "nano-gpt",
@@ -2239,7 +2239,7 @@
       "before": "(family=\"o\",variant=\"\",version=\"3\",modifier=\"\")",
       "after": "(family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"\")"
     },
     {
       "provider": "nearai",
@@ -2248,7 +2248,7 @@
       "before": "(family=\"o\",variant=\"\",version=\"3\",modifier=\"\")",
       "after": "(family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"\")"
     },
     {
       "provider": "openrouter",
@@ -2257,7 +2257,7 @@
       "before": "(family=\"o\",variant=\"\",version=\"3\",modifier=\"\")",
       "after": "(family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"\")"
     },
     {
       "provider": "poe",
@@ -2266,7 +2266,7 @@
       "before": "(family=\"o\",variant=\"\",version=\"3\",modifier=\"\")",
       "after": "(family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"\")"
     },
     {
       "provider": "vercel",
@@ -2275,7 +2275,7 @@
       "before": "(family=\"o\",variant=\"\",version=\"3\",modifier=\"\")",
       "after": "(family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"\")"
     },
     {
       "provider": "kilo",
@@ -2284,7 +2284,7 @@
       "before": "(family=\"o\",variant=\"deep-research\",version=\"3\",modifier=\"\")",
       "after": "(family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"deep-research\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"deep-research\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"deep-research\")"
     },
     {
       "provider": "nano-gpt",
@@ -2293,7 +2293,7 @@
       "before": "(family=\"o\",variant=\"deep-research\",version=\"3\",modifier=\"\")",
       "after": "(family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"deep-research\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"deep-research\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"deep-research\")"
     },
     {
       "provider": "openrouter",
@@ -2302,7 +2302,7 @@
       "before": "(family=\"o\",variant=\"deep-research\",version=\"3\",modifier=\"\")",
       "after": "(family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"deep-research\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"deep-research\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"deep-research\")"
     },
     {
       "provider": "poe",
@@ -2311,7 +2311,7 @@
       "before": "(family=\"o\",variant=\"deep-research\",version=\"3\",modifier=\"\")",
       "after": "(family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"deep-research\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"deep-research\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"deep-research\")"
     },
     {
       "provider": "vercel",
@@ -2320,7 +2320,7 @@
       "before": "(family=\"o\",variant=\"deep-research\",version=\"3\",modifier=\"\")",
       "after": "(family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"deep-research\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"deep-research\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"deep-research\")"
     },
     {
       "provider": "cloudflare-ai-gateway",
@@ -2329,7 +2329,7 @@
       "before": "(family=\"o\",variant=\"mini\",version=\"3\",modifier=\"\")",
       "after": "(family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"mini\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"mini\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"mini\")"
     },
     {
       "provider": "github-models",
@@ -2338,7 +2338,7 @@
       "before": "(family=\"o\",variant=\"mini\",version=\"3\",modifier=\"\")",
       "after": "(family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"mini\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"mini\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"mini\")"
     },
     {
       "provider": "kilo",
@@ -2347,7 +2347,7 @@
       "before": "(family=\"o\",variant=\"mini\",version=\"3\",modifier=\"\")",
       "after": "(family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"mini\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"mini\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"mini\")"
     },
     {
       "provider": "merge-gateway",
@@ -2356,7 +2356,7 @@
       "before": "(family=\"o\",variant=\"mini\",version=\"3\",modifier=\"\")",
       "after": "(family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"mini\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"mini\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"mini\")"
     },
     {
       "provider": "nano-gpt",
@@ -2365,7 +2365,7 @@
       "before": "(family=\"o\",variant=\"mini\",version=\"3\",modifier=\"\")",
       "after": "(family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"mini\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"mini\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"mini\")"
     },
     {
       "provider": "nearai",
@@ -2374,7 +2374,7 @@
       "before": "(family=\"o\",variant=\"mini\",version=\"3\",modifier=\"\")",
       "after": "(family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"mini\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"mini\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"mini\")"
     },
     {
       "provider": "openrouter",
@@ -2383,7 +2383,7 @@
       "before": "(family=\"o\",variant=\"mini\",version=\"3\",modifier=\"\")",
       "after": "(family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"mini\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"mini\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"mini\")"
     },
     {
       "provider": "poe",
@@ -2392,7 +2392,7 @@
       "before": "(family=\"o\",variant=\"mini\",version=\"3\",modifier=\"\")",
       "after": "(family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"mini\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"mini\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"mini\")"
     },
     {
       "provider": "vercel",
@@ -2401,7 +2401,7 @@
       "before": "(family=\"o\",variant=\"mini\",version=\"3\",modifier=\"\")",
       "after": "(family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"mini\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"mini\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"mini\")"
     },
     {
       "provider": "kilo",
@@ -2410,7 +2410,7 @@
       "before": "(family=\"o\",variant=\"mini\",version=\"3\",modifier=\"\")",
       "after": "(family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"mini\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"mini\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"mini\")"
     },
     {
       "provider": "nano-gpt",
@@ -2419,7 +2419,7 @@
       "before": "(family=\"o\",variant=\"mini\",version=\"3\",modifier=\"\")",
       "after": "(family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"mini\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"mini\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"mini\")"
     },
     {
       "provider": "openrouter",
@@ -2428,7 +2428,7 @@
       "before": "(family=\"o\",variant=\"mini\",version=\"3\",modifier=\"\")",
       "after": "(family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"mini\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"mini\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"mini\")"
     },
     {
       "provider": "poe",
@@ -2437,7 +2437,7 @@
       "before": "(family=\"o\",variant=\"mini\",version=\"3\",modifier=\"\")",
       "after": "(family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"mini\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"mini\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"mini\")"
     },
     {
       "provider": "nano-gpt",
@@ -2446,7 +2446,7 @@
       "before": "(family=\"o\",variant=\"mini\",version=\"3\",modifier=\"\")",
       "after": "(family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"mini\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"mini\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"mini\")"
     },
     {
       "provider": "cloudflare-ai-gateway",
@@ -2455,7 +2455,7 @@
       "before": "(family=\"o\",variant=\"pro\",version=\"3\",modifier=\"\")",
       "after": "(family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"pro\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"pro\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"pro\")"
     },
     {
       "provider": "kilo",
@@ -2464,7 +2464,7 @@
       "before": "(family=\"o\",variant=\"pro\",version=\"3\",modifier=\"\")",
       "after": "(family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"pro\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"pro\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"pro\")"
     },
     {
       "provider": "openrouter",
@@ -2473,7 +2473,7 @@
       "before": "(family=\"o\",variant=\"pro\",version=\"3\",modifier=\"\")",
       "after": "(family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"pro\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"pro\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"pro\")"
     },
     {
       "provider": "poe",
@@ -2482,7 +2482,7 @@
       "before": "(family=\"o\",variant=\"pro\",version=\"3\",modifier=\"\")",
       "after": "(family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"pro\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"pro\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"pro\")"
     },
     {
       "provider": "vercel",
@@ -2491,7 +2491,7 @@
       "before": "(family=\"o\",variant=\"pro\",version=\"3\",modifier=\"\")",
       "after": "(family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"pro\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"pro\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"pro\")"
     },
     {
       "provider": "nano-gpt",
@@ -2500,7 +2500,7 @@
       "before": "(family=\"o\",variant=\"pro\",version=\"3\",modifier=\"\")",
       "after": "(family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"pro\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"pro\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"pro\")"
     },
     {
       "provider": "cloudflare-ai-gateway",
@@ -2509,7 +2509,7 @@
       "before": "(family=\"o\",variant=\"mini\",version=\"4\",modifier=\"\")",
       "after": "(family=\"gpt\",variant=\"o\",version=\"4\",modifier=\"mini\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"4\",modifier=\"mini\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"4\",modifier=\"mini\")"
     },
     {
       "provider": "github-models",
@@ -2518,7 +2518,7 @@
       "before": "(family=\"o\",variant=\"mini\",version=\"4\",modifier=\"\")",
       "after": "(family=\"gpt\",variant=\"o\",version=\"4\",modifier=\"mini\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"4\",modifier=\"mini\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"4\",modifier=\"mini\")"
     },
     {
       "provider": "kilo",
@@ -2527,7 +2527,7 @@
       "before": "(family=\"o\",variant=\"mini\",version=\"4\",modifier=\"\")",
       "after": "(family=\"gpt\",variant=\"o\",version=\"4\",modifier=\"mini\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"4\",modifier=\"mini\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"4\",modifier=\"mini\")"
     },
     {
       "provider": "merge-gateway",
@@ -2536,7 +2536,7 @@
       "before": "(family=\"o\",variant=\"mini\",version=\"4\",modifier=\"\")",
       "after": "(family=\"gpt\",variant=\"o\",version=\"4\",modifier=\"mini\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"4\",modifier=\"mini\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"4\",modifier=\"mini\")"
     },
     {
       "provider": "nano-gpt",
@@ -2545,7 +2545,7 @@
       "before": "(family=\"o\",variant=\"mini\",version=\"4\",modifier=\"\")",
       "after": "(family=\"gpt\",variant=\"o\",version=\"4\",modifier=\"mini\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"4\",modifier=\"mini\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"4\",modifier=\"mini\")"
     },
     {
       "provider": "nearai",
@@ -2554,7 +2554,7 @@
       "before": "(family=\"o\",variant=\"mini\",version=\"4\",modifier=\"\")",
       "after": "(family=\"gpt\",variant=\"o\",version=\"4\",modifier=\"mini\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"4\",modifier=\"mini\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"4\",modifier=\"mini\")"
     },
     {
       "provider": "openrouter",
@@ -2563,7 +2563,7 @@
       "before": "(family=\"o\",variant=\"mini\",version=\"4\",modifier=\"\")",
       "after": "(family=\"gpt\",variant=\"o\",version=\"4\",modifier=\"mini\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"4\",modifier=\"mini\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"4\",modifier=\"mini\")"
     },
     {
       "provider": "poe",
@@ -2572,7 +2572,7 @@
       "before": "(family=\"o\",variant=\"mini\",version=\"4\",modifier=\"\")",
       "after": "(family=\"gpt\",variant=\"o\",version=\"4\",modifier=\"mini\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"4\",modifier=\"mini\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"4\",modifier=\"mini\")"
     },
     {
       "provider": "requesty",
@@ -2581,7 +2581,7 @@
       "before": "(family=\"o\",variant=\"mini\",version=\"4\",modifier=\"\")",
       "after": "(family=\"gpt\",variant=\"o\",version=\"4\",modifier=\"mini\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"4\",modifier=\"mini\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"4\",modifier=\"mini\")"
     },
     {
       "provider": "vercel",
@@ -2590,7 +2590,7 @@
       "before": "(family=\"o\",variant=\"mini\",version=\"4\",modifier=\"\")",
       "after": "(family=\"gpt\",variant=\"o\",version=\"4\",modifier=\"mini\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"4\",modifier=\"mini\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"4\",modifier=\"mini\")"
     },
     {
       "provider": "kilo",
@@ -2599,7 +2599,7 @@
       "before": "(family=\"o\",variant=\"mini\",version=\"4\",modifier=\"\")",
       "after": "(family=\"gpt\",variant=\"o\",version=\"4\",modifier=\"mini\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"4\",modifier=\"mini\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"4\",modifier=\"mini\")"
     },
     {
       "provider": "nano-gpt",
@@ -2608,7 +2608,7 @@
       "before": "(family=\"o\",variant=\"mini\",version=\"4\",modifier=\"\")",
       "after": "(family=\"gpt\",variant=\"o\",version=\"4\",modifier=\"mini\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"4\",modifier=\"mini\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"4\",modifier=\"mini\")"
     },
     {
       "provider": "openrouter",
@@ -2617,7 +2617,7 @@
       "before": "(family=\"o\",variant=\"mini\",version=\"4\",modifier=\"\")",
       "after": "(family=\"gpt\",variant=\"o\",version=\"4\",modifier=\"mini\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"4\",modifier=\"mini\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"4\",modifier=\"mini\")"
     },
     {
       "provider": "poe",
@@ -2626,7 +2626,7 @@
       "before": "(family=\"o\",variant=\"mini\",version=\"4\",modifier=\"\")",
       "after": "(family=\"gpt\",variant=\"o\",version=\"4\",modifier=\"mini\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"4\",modifier=\"mini\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"4\",modifier=\"mini\")"
     },
     {
       "provider": "kilo",
@@ -2635,7 +2635,7 @@
       "before": "(family=\"o\",variant=\"mini\",version=\"4\",modifier=\"\")",
       "after": "(family=\"gpt\",variant=\"o\",version=\"4\",modifier=\"mini\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"4\",modifier=\"mini\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"4\",modifier=\"mini\")"
     },
     {
       "provider": "nano-gpt",
@@ -2644,7 +2644,7 @@
       "before": "(family=\"o\",variant=\"mini\",version=\"4\",modifier=\"\")",
       "after": "(family=\"gpt\",variant=\"o\",version=\"4\",modifier=\"mini\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"4\",modifier=\"mini\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"4\",modifier=\"mini\")"
     },
     {
       "provider": "openrouter",
@@ -2653,7 +2653,7 @@
       "before": "(family=\"o\",variant=\"mini\",version=\"4\",modifier=\"\")",
       "after": "(family=\"gpt\",variant=\"o\",version=\"4\",modifier=\"mini\")",
       "category": "a:divergence-fix",
-      "reason": "sanctioned-taxonomy (bestiary-xdbc): converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"4\",modifier=\"mini\")"
+      "reason": "sanctioned-taxonomy: converged to the ratified o-series target tuple (family=\"gpt\",variant=\"o\",version=\"4\",modifier=\"mini\")"
     },
     {
       "provider": "openrouter",
@@ -2662,7 +2662,7 @@
       "before": "(family=\"alpha\",variant=\"\",version=\"\",modifier=\"\")",
       "after": "(family=\"owl\",variant=\"\",version=\"\",modifier=\"\")",
       "category": "a:divergence-fix",
-      "reason": "now matches a tuple another provider already produced for this ID (BEFORE); only phantom non-family loss permitted (j1nu)"
+      "reason": "now matches a tuple another provider already produced for this ID (BEFORE); only phantom non-family loss permitted"
     },
     {
       "provider": "openrouter",
@@ -2671,7 +2671,7 @@
       "before": "(family=\"glm\",variant=\"\",version=\"\",modifier=\"\")",
       "after": "(family=\"intellect\",variant=\"\",version=\"3\",modifier=\"\")",
       "category": "a:divergence-fix",
-      "reason": "now matches a tuple another provider already produced for this ID (BEFORE); only phantom non-family loss permitted (j1nu)"
+      "reason": "now matches a tuple another provider already produced for this ID (BEFORE); only phantom non-family loss permitted"
     },
     {
       "provider": "jiekou",
@@ -2680,7 +2680,7 @@
       "before": "(family=\"qwen\",variant=\"instruct\",version=\"3\",modifier=\"\")",
       "after": "(family=\"qwen\",variant=\"next\",version=\"3\",modifier=\"instruct\")",
       "category": "a:divergence-fix",
-      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted (j1nu)"
+      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted"
     },
     {
       "provider": "kilo",
@@ -2689,7 +2689,7 @@
       "before": "(family=\"qwen3-next-80b-a3b\",variant=\"instruct\",version=\"\",modifier=\"\")",
       "after": "(family=\"qwen\",variant=\"next\",version=\"3\",modifier=\"instruct\")",
       "category": "a:divergence-fix",
-      "reason": "family over-capture reduced to registered short base, converged onto an independently-produced sibling tuple (SLICE-11; j1nu-hardened: no ID-present non-family field lost)"
+      "reason": "family over-capture reduced to registered short base, converged onto an independently-produced sibling tuple (hardened: no ID-present non-family field lost)"
     },
     {
       "provider": "novita-ai",
@@ -2698,7 +2698,7 @@
       "before": "(family=\"qwen3-next-80b-a3b\",variant=\"instruct\",version=\"\",modifier=\"\")",
       "after": "(family=\"qwen\",variant=\"next\",version=\"3\",modifier=\"instruct\")",
       "category": "a:divergence-fix",
-      "reason": "family over-capture reduced to registered short base, converged onto an independently-produced sibling tuple (SLICE-11; j1nu-hardened: no ID-present non-family field lost)"
+      "reason": "family over-capture reduced to registered short base, converged onto an independently-produced sibling tuple (hardened: no ID-present non-family field lost)"
     },
     {
       "provider": "nvidia",
@@ -2707,7 +2707,7 @@
       "before": "(family=\"qwen\",variant=\"instruct\",version=\"3\",modifier=\"\")",
       "after": "(family=\"qwen\",variant=\"next\",version=\"3\",modifier=\"instruct\")",
       "category": "a:divergence-fix",
-      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted (j1nu)"
+      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted"
     },
     {
       "provider": "openrouter",
@@ -2716,7 +2716,7 @@
       "before": "(family=\"qwen\",variant=\"instruct\",version=\"3\",modifier=\"\")",
       "after": "(family=\"qwen\",variant=\"next\",version=\"3\",modifier=\"instruct\")",
       "category": "a:divergence-fix",
-      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted (j1nu)"
+      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted"
     },
     {
       "provider": "openrouter",
@@ -2725,7 +2725,7 @@
       "before": "(family=\"qwen\",variant=\"3.5\",version=\"3.5\",modifier=\"\")",
       "after": "(family=\"qwen\",variant=\"\",version=\"3.5\",modifier=\"\")",
       "category": "a:divergence-fix",
-      "reason": "now matches a tuple another provider already produced for this ID (BEFORE); only phantom non-family loss permitted (j1nu)"
+      "reason": "now matches a tuple another provider already produced for this ID (BEFORE); only phantom non-family loss permitted"
     },
     {
       "provider": "openrouter",
@@ -2734,7 +2734,7 @@
       "before": "(family=\"qwen\",variant=\"3.5\",version=\"3.5\",modifier=\"\")",
       "after": "(family=\"qwen\",variant=\"\",version=\"3.5\",modifier=\"\")",
       "category": "a:divergence-fix",
-      "reason": "now matches a tuple another provider already produced for this ID (BEFORE); only phantom non-family loss permitted (j1nu)"
+      "reason": "now matches a tuple another provider already produced for this ID (BEFORE); only phantom non-family loss permitted"
     },
     {
       "provider": "openrouter",
@@ -2743,7 +2743,7 @@
       "before": "(family=\"qwen\",variant=\"3.5\",version=\"3.5\",modifier=\"\")",
       "after": "(family=\"qwen\",variant=\"\",version=\"3.5\",modifier=\"\")",
       "category": "a:divergence-fix",
-      "reason": "now matches a tuple another provider already produced for this ID (BEFORE); only phantom non-family loss permitted (j1nu)"
+      "reason": "now matches a tuple another provider already produced for this ID (BEFORE); only phantom non-family loss permitted"
     },
     {
       "provider": "openrouter",
@@ -2752,7 +2752,7 @@
       "before": "(family=\"qwen\",variant=\"3.5\",version=\"3.5\",modifier=\"\")",
       "after": "(family=\"qwen\",variant=\"\",version=\"3.5\",modifier=\"\")",
       "category": "a:divergence-fix",
-      "reason": "now matches a tuple another provider already produced for this ID (BEFORE); only phantom non-family loss permitted (j1nu)"
+      "reason": "now matches a tuple another provider already produced for this ID (BEFORE); only phantom non-family loss permitted"
     },
     {
       "provider": "openrouter",
@@ -2761,7 +2761,7 @@
       "before": "(family=\"qwen\",variant=\"3.6\",version=\"3.6\",modifier=\"\")",
       "after": "(family=\"qwen\",variant=\"\",version=\"3.6\",modifier=\"\")",
       "category": "a:divergence-fix",
-      "reason": "now matches a tuple another provider already produced for this ID (BEFORE); only phantom non-family loss permitted (j1nu)"
+      "reason": "now matches a tuple another provider already produced for this ID (BEFORE); only phantom non-family loss permitted"
     },
     {
       "provider": "openrouter",
@@ -2770,7 +2770,7 @@
       "before": "(family=\"qwen\",variant=\"3.6\",version=\"3.6\",modifier=\"\")",
       "after": "(family=\"qwen\",variant=\"\",version=\"3.6\",modifier=\"\")",
       "category": "a:divergence-fix",
-      "reason": "now matches a tuple another provider already produced for this ID (BEFORE); only phantom non-family loss permitted (j1nu)"
+      "reason": "now matches a tuple another provider already produced for this ID (BEFORE); only phantom non-family loss permitted"
     },
     {
       "provider": "alibaba",
@@ -2779,7 +2779,7 @@
       "before": "(family=\"qwen\",variant=\"instruct\",version=\"3\",modifier=\"\")",
       "after": "(family=\"qwen\",variant=\"next\",version=\"3\",modifier=\"instruct\")",
       "category": "a:divergence-fix",
-      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted (j1nu)"
+      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted"
     },
     {
       "provider": "alibaba-cn",
@@ -2788,7 +2788,7 @@
       "before": "(family=\"qwen\",variant=\"instruct\",version=\"3\",modifier=\"\")",
       "after": "(family=\"qwen\",variant=\"next\",version=\"3\",modifier=\"instruct\")",
       "category": "a:divergence-fix",
-      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted (j1nu)"
+      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted"
     },
     {
       "provider": "helicone",
@@ -2797,7 +2797,7 @@
       "before": "(family=\"qwen\",variant=\"instruct\",version=\"3\",modifier=\"\")",
       "after": "(family=\"qwen\",variant=\"next\",version=\"3\",modifier=\"instruct\")",
       "category": "a:divergence-fix",
-      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted (j1nu)"
+      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted"
     },
     {
       "provider": "llmgateway",
@@ -2806,7 +2806,7 @@
       "before": "(family=\"qwen\",variant=\"instruct\",version=\"3\",modifier=\"\")",
       "after": "(family=\"qwen\",variant=\"next\",version=\"3\",modifier=\"instruct\")",
       "category": "a:divergence-fix",
-      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted (j1nu)"
+      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted"
     },
     {
       "provider": "qiniu-ai",
@@ -2815,7 +2815,7 @@
       "before": "(family=\"qwen3-next-80b-a3b\",variant=\"instruct\",version=\"\",modifier=\"\")",
       "after": "(family=\"qwen\",variant=\"next\",version=\"3\",modifier=\"instruct\")",
       "category": "a:divergence-fix",
-      "reason": "family over-capture reduced to registered short base, converged onto an independently-produced sibling tuple (SLICE-11; j1nu-hardened: no ID-present non-family field lost)"
+      "reason": "family over-capture reduced to registered short base, converged onto an independently-produced sibling tuple (hardened: no ID-present non-family field lost)"
     },
     {
       "provider": "digitalocean",
@@ -2824,7 +2824,7 @@
       "before": "(family=\"qwen\",variant=\"3.5\",version=\"3.5\",modifier=\"\")",
       "after": "(family=\"qwen\",variant=\"\",version=\"3.5\",modifier=\"\")",
       "category": "a:divergence-fix",
-      "reason": "now matches a tuple another provider already produced for this ID (BEFORE); only phantom non-family loss permitted (j1nu)"
+      "reason": "now matches a tuple another provider already produced for this ID (BEFORE); only phantom non-family loss permitted"
     },
     {
       "provider": "opencode-go",
@@ -2833,7 +2833,7 @@
       "before": "(family=\"qwen3.7-max\",variant=\"\",version=\"\",modifier=\"\")",
       "after": "(family=\"qwen\",variant=\"max\",version=\"3.7\",modifier=\"\")",
       "category": "a:divergence-fix",
-      "reason": "family over-capture reduced to registered short base, converged onto an independently-produced sibling tuple (SLICE-11; j1nu-hardened: no ID-present non-family field lost)"
+      "reason": "family over-capture reduced to registered short base, converged onto an independently-produced sibling tuple (hardened: no ID-present non-family field lost)"
     },
     {
       "provider": "alibaba-cn",
@@ -2842,7 +2842,7 @@
       "before": "(family=\"qwen\",variant=\"\",version=\"\",modifier=\"\")",
       "after": "(family=\"qwq\",variant=\"\",version=\"\",modifier=\"\")",
       "category": "a:divergence-fix",
-      "reason": "now matches a tuple another provider already produced for this ID (BEFORE); only phantom non-family loss permitted (j1nu)"
+      "reason": "now matches a tuple another provider already produced for this ID (BEFORE); only phantom non-family loss permitted"
     },
     {
       "provider": "kilo",
@@ -2851,7 +2851,7 @@
       "before": "(family=\"hy3\",variant=\"\",version=\"\",modifier=\"preview\")",
       "after": "(family=\"hy\",variant=\"\",version=\"3\",modifier=\"preview\")",
       "category": "a:divergence-fix",
-      "reason": "family over-capture reduced to registered short base, converged onto an independently-produced sibling tuple (SLICE-11; j1nu-hardened: no ID-present non-family field lost)"
+      "reason": "family over-capture reduced to registered short base, converged onto an independently-produced sibling tuple (hardened: no ID-present non-family field lost)"
     },
     {
       "provider": "openrouter",
@@ -2860,7 +2860,7 @@
       "before": "(family=\"hy\",variant=\"\",version=\"\",modifier=\"preview\")",
       "after": "(family=\"hy\",variant=\"\",version=\"3\",modifier=\"preview\")",
       "category": "a:divergence-fix",
-      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted (j1nu)"
+      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted"
     },
     {
       "provider": "zenmux",
@@ -2869,7 +2869,7 @@
       "before": "(family=\"hy\",variant=\"\",version=\"\",modifier=\"preview\")",
       "after": "(family=\"hy\",variant=\"\",version=\"3\",modifier=\"preview\")",
       "category": "a:divergence-fix",
-      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted (j1nu)"
+      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted"
     },
     {
       "provider": "nano-gpt",
@@ -2878,7 +2878,7 @@
       "before": "(family=\"llama\",variant=\"\",version=\"\",modifier=\"\")",
       "after": "(family=\"remm\",variant=\"\",version=\"\",modifier=\"\")",
       "category": "a:divergence-fix",
-      "reason": "now matches a tuple another provider already produced for this ID (BEFORE); only phantom non-family loss permitted (j1nu)"
+      "reason": "now matches a tuple another provider already produced for this ID (BEFORE); only phantom non-family loss permitted"
     },
     {
       "provider": "nano-gpt",
@@ -2887,7 +2887,7 @@
       "before": "(family=\"grok\",variant=\"\",version=\"1\",modifier=\"\")",
       "after": "(family=\"grok\",variant=\"code-fast\",version=\"1\",modifier=\"\")",
       "category": "a:divergence-fix",
-      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted (j1nu)"
+      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted"
     },
     {
       "provider": "qiniu-ai",
@@ -2896,7 +2896,7 @@
       "before": "(family=\"grok-code-fast\",variant=\"\",version=\"1\",modifier=\"\")",
       "after": "(family=\"grok\",variant=\"code-fast\",version=\"1\",modifier=\"\")",
       "category": "a:divergence-fix",
-      "reason": "family over-capture reduced to registered short base, converged onto an independently-produced sibling tuple (SLICE-11; j1nu-hardened: no ID-present non-family field lost)"
+      "reason": "family over-capture reduced to registered short base, converged onto an independently-produced sibling tuple (hardened: no ID-present non-family field lost)"
     },
     {
       "provider": "zenmux",
@@ -2905,7 +2905,7 @@
       "before": "(family=\"grok-code-fast\",variant=\"\",version=\"1\",modifier=\"\")",
       "after": "(family=\"grok\",variant=\"code-fast\",version=\"1\",modifier=\"\")",
       "category": "a:divergence-fix",
-      "reason": "family over-capture reduced to registered short base, converged onto an independently-produced sibling tuple (SLICE-11; j1nu-hardened: no ID-present non-family field lost)"
+      "reason": "family over-capture reduced to registered short base, converged onto an independently-produced sibling tuple (hardened: no ID-present non-family field lost)"
     },
     {
       "provider": "kilo",
@@ -2914,7 +2914,7 @@
       "before": "(family=\"glm\",variant=\"\",version=\"4.5\",modifier=\"vision\")",
       "after": "(family=\"glm\",variant=\"v\",version=\"4.5\",modifier=\"\")",
       "category": "a:divergence-fix",
-      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted (j1nu)"
+      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted"
     },
     {
       "provider": "openrouter",
@@ -2923,7 +2923,7 @@
       "before": "(family=\"glm\",variant=\"\",version=\"4.5\",modifier=\"vision\")",
       "after": "(family=\"glm\",variant=\"v\",version=\"4.5\",modifier=\"\")",
       "category": "a:divergence-fix",
-      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted (j1nu)"
+      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted"
     },
     {
       "provider": "cloudflare-workers-ai",
@@ -3112,7 +3112,7 @@
       "before": "(family=\"meta\",variant=\"\",version=\"3.1\",modifier=\"\")",
       "after": "(family=\"llama\",variant=\"\",version=\"3.1\",modifier=\"instruct\")",
       "category": "b:improvement",
-      "reason": "rc3: unregistered org/over-capture family corrected to a registered family via curated vendor/provider-prefix strip; no ID-present field lost"
+      "reason": "unregistered org/over-capture family corrected to a registered family via curated vendor/provider-prefix strip; no ID-present field lost"
     },
     {
       "provider": "atomic-chat",
@@ -3823,7 +3823,7 @@
       "before": "(family=\"text-embedding\",variant=\"\",version=\"\",modifier=\"\")",
       "after": "(family=\"qwen\",variant=\"embedding\",version=\"3\",modifier=\"\")",
       "category": "b:improvement",
-      "reason": "generic 'text-embedding' descriptor corrected to the ID-derived real family (SLICE-14)"
+      "reason": "generic 'text-embedding' descriptor corrected to the ID-derived real family"
     },
     {
       "provider": "chutes",
@@ -5191,7 +5191,7 @@
       "before": "(family=\"glmv\",variant=\"\",version=\"\",modifier=\"\")",
       "after": "(family=\"glm\",variant=\"v\",version=\"5\",modifier=\"turbo\")",
       "category": "b:improvement",
-      "reason": "glued family-suffix moved to variant (e.g. glmv → glm + variant 'v'; bestiary-xdbc Q1)"
+      "reason": "glued family-suffix moved to variant (e.g. glmv → glm + variant 'v')"
     },
     {
       "provider": "kilo",
@@ -5533,7 +5533,7 @@
       "before": "(family=\"grok-3-fast\",variant=\"beta\",version=\"3\",modifier=\"\")",
       "after": "(family=\"grok\",variant=\"beta\",version=\"3\",modifier=\"\")",
       "category": "b:improvement",
-      "reason": "family over-capture reduced to short base — exact family-suffix→variant move (override semantics), OR before ∉ registry \u0026 after ∈ registry; no ID-present non-family field lost (SLICE-11; j1nu-hardened)"
+      "reason": "family over-capture reduced to short base — exact family-suffix→variant move (override semantics), OR before ∉ registry \u0026 after ∈ registry; no ID-present non-family field lost (hardened)"
     },
     {
       "provider": "302ai",
@@ -6037,7 +6037,7 @@
       "before": "(family=\"hy3\",variant=\"free\",version=\"\",modifier=\"\")",
       "after": "(family=\"hy\",variant=\"free\",version=\"3\",modifier=\"\")",
       "category": "b:improvement",
-      "reason": "family over-capture reduced to short base — exact family-suffix→variant move (override semantics), OR before ∉ registry \u0026 after ∈ registry; no ID-present non-family field lost (SLICE-11; j1nu-hardened)"
+      "reason": "family over-capture reduced to short base — exact family-suffix→variant move (override semantics), OR before ∉ registry \u0026 after ∈ registry; no ID-present non-family field lost (hardened)"
     },
     {
       "provider": "poe",
@@ -6604,7 +6604,7 @@
       "before": "(family=\"meta-llama-3_3-70b\",variant=\"instruct\",version=\"\",modifier=\"\")",
       "after": "(family=\"llama\",variant=\"\",version=\"\",modifier=\"instruct\")",
       "category": "b:improvement",
-      "reason": "rc3: unregistered org/over-capture family corrected to a registered family via curated vendor/provider-prefix strip; no ID-present field lost"
+      "reason": "unregistered org/over-capture family corrected to a registered family via curated vendor/provider-prefix strip; no ID-present field lost"
     },
     {
       "provider": "deepinfra",
@@ -7243,7 +7243,7 @@
       "before": "(family=\"llama-4-maverick-17b-128e\",variant=\"instruct\",version=\"4\",modifier=\"\")",
       "after": "(family=\"llama\",variant=\"\",version=\"4\",modifier=\"instruct\")",
       "category": "b:improvement",
-      "reason": "family over-capture reduced to short base — exact family-suffix→variant move (override semantics), OR before ∉ registry \u0026 after ∈ registry; no ID-present non-family field lost (SLICE-11; j1nu-hardened)"
+      "reason": "family over-capture reduced to short base — exact family-suffix→variant move (override semantics), OR before ∉ registry \u0026 after ∈ registry; no ID-present non-family field lost (hardened)"
     },
     {
       "provider": "github-models",
@@ -8701,7 +8701,7 @@
       "before": "(family=\"phi-4-multimodal\",variant=\"instruct\",version=\"4\",modifier=\"\")",
       "after": "(family=\"phi\",variant=\"\",version=\"4\",modifier=\"multimodal,instruct\")",
       "category": "b:improvement",
-      "reason": "family over-capture reduced to short base — exact family-suffix→variant move (override semantics), OR before ∉ registry \u0026 after ∈ registry; no ID-present non-family field lost (SLICE-11; j1nu-hardened)"
+      "reason": "family over-capture reduced to short base — exact family-suffix→variant move (override semantics), OR before ∉ registry \u0026 after ∈ registry; no ID-present non-family field lost (hardened)"
     },
     {
       "provider": "azure",
@@ -9709,7 +9709,7 @@
       "before": "(family=\"text-embedding\",variant=\"\",version=\"\",modifier=\"\")",
       "after": "(family=\"qwen\",variant=\"embedding\",version=\"3\",modifier=\"\")",
       "category": "b:improvement",
-      "reason": "generic 'text-embedding' descriptor corrected to the ID-derived real family (SLICE-14)"
+      "reason": "generic 'text-embedding' descriptor corrected to the ID-derived real family"
     },
     {
       "provider": "venice",
@@ -10546,7 +10546,7 @@
       "before": "(family=\"glmv\",variant=\"\",version=\"\",modifier=\"\")",
       "after": "(family=\"glm\",variant=\"v\",version=\"5\",modifier=\"turbo\")",
       "category": "b:improvement",
-      "reason": "glued family-suffix moved to variant (e.g. glmv → glm + variant 'v'; bestiary-xdbc Q1)"
+      "reason": "glued family-suffix moved to variant (e.g. glmv → glm + variant 'v')"
     },
     {
       "provider": "nano-gpt",
@@ -10555,7 +10555,7 @@
       "before": "(family=\"glmv\",variant=\"\",version=\"\",modifier=\"\")",
       "after": "(family=\"glm\",variant=\"v\",version=\"4.5\",modifier=\"\")",
       "category": "b:improvement",
-      "reason": "glued family-suffix moved to variant (e.g. glmv → glm + variant 'v'; bestiary-xdbc Q1)"
+      "reason": "glued family-suffix moved to variant (e.g. glmv → glm + variant 'v')"
     },
     {
       "provider": "nano-gpt",
@@ -10564,7 +10564,7 @@
       "before": "(family=\"glmv\",variant=\"\",version=\"\",modifier=\"\")",
       "after": "(family=\"glm\",variant=\"v\",version=\"\",modifier=\"\")",
       "category": "b:improvement",
-      "reason": "glued family-suffix moved to variant (e.g. glmv → glm + variant 'v'; bestiary-xdbc Q1)"
+      "reason": "glued family-suffix moved to variant (e.g. glmv → glm + variant 'v')"
     },
     {
       "provider": "kilo",
@@ -10681,7 +10681,7 @@
       "before": "(family=\"z-image\",variant=\"turbo\",version=\"\",modifier=\"\")",
       "after": "(family=\"z\",variant=\"image\",version=\"\",modifier=\"turbo\")",
       "category": "b:improvement",
-      "reason": "family over-capture reduced to short base — exact family-suffix→variant move (override semantics), OR before ∉ registry \u0026 after ∈ registry; no ID-present non-family field lost (SLICE-11; j1nu-hardened)"
+      "reason": "family over-capture reduced to short base — exact family-suffix→variant move (override semantics), OR before ∉ registry \u0026 after ∈ registry; no ID-present non-family field lost (hardened)"
     },
     {
       "provider": "siliconflow",
@@ -10762,7 +10762,7 @@
       "before": "(family=\"glmv\",variant=\"\",version=\"\",modifier=\"\")",
       "after": "(family=\"glm\",variant=\"v\",version=\"4.5\",modifier=\"\")",
       "category": "b:improvement",
-      "reason": "glued family-suffix moved to variant (e.g. glmv → glm + variant 'v'; bestiary-xdbc Q1)"
+      "reason": "glued family-suffix moved to variant (e.g. glmv → glm + variant 'v')"
     },
     {
       "provider": "novita-ai",
@@ -10771,7 +10771,7 @@
       "before": "(family=\"glmv\",variant=\"\",version=\"\",modifier=\"\")",
       "after": "(family=\"glm\",variant=\"v\",version=\"4.5\",modifier=\"\")",
       "category": "b:improvement",
-      "reason": "glued family-suffix moved to variant (e.g. glmv → glm + variant 'v'; bestiary-xdbc Q1)"
+      "reason": "glued family-suffix moved to variant (e.g. glmv → glm + variant 'v')"
     },
     {
       "provider": "novita-ai",
@@ -10780,7 +10780,7 @@
       "before": "(family=\"glmv\",variant=\"\",version=\"\",modifier=\"\")",
       "after": "(family=\"glm\",variant=\"v\",version=\"4.6\",modifier=\"\")",
       "category": "b:improvement",
-      "reason": "glued family-suffix moved to variant (e.g. glmv → glm + variant 'v'; bestiary-xdbc Q1)"
+      "reason": "glued family-suffix moved to variant (e.g. glmv → glm + variant 'v')"
     },
     {
       "provider": "vercel",
@@ -10843,7 +10843,7 @@
       "before": "(family=\"dracarys-llama-3_1-70b\",variant=\"instruct\",version=\"\",modifier=\"\")",
       "after": "(family=\"dracarys\",variant=\"\",version=\"\",modifier=\"instruct\")",
       "category": "justified-exception",
-      "reason": "JUSTIFIED: USER-RATIFIED non-defect (Impl-UAT bestiary-2gxu, GH#11 model-lineage): dracarys is a llama fine-tune with its own lineage, ∉ allFamilies; 'instruct'→Modifier re-surfaces (no token loss). Family-root precision is a taxonomy call, not a regression."
+      "reason": "JUSTIFIED: USER-RATIFIED non-defect (GH#11 model-lineage): dracarys is a llama fine-tune with its own lineage, ∉ allFamilies; 'instruct'→Modifier re-surfaces (no token loss). Family-root precision is a taxonomy call, not a regression."
     },
     {
       "provider": "nano-gpt",
@@ -10852,7 +10852,7 @@
       "before": "(family=\"azure-gpt-4\",variant=\"turbo\",version=\"4\",modifier=\"\")",
       "after": "(family=\"azure-gpt\",variant=\"\",version=\"4\",modifier=\"turbo\")",
       "category": "justified-exception",
-      "reason": "JUSTIFIED: NanoGPT reseller id: the leading 'azure-' is a backend-host label (NanoGPT routes to Azure-hosted OpenAI models), NOT a redundant provider prefix — the genuine Azure provider is the separate azure-cognitive-services namespace. The earlier provider-prefix strip that forced these to the gpt family was removed because it deleted the azure-host signal. These now decompose natively to an imperfect 'azure-*' family, pending a serving-host/backend dimension (TODO). The before/after differs only in how that imperfect family splits 'turbo'/'4'; neither tuple is a meaningful model decomposition, so this is not a model-identity regression."
+      "reason": "JUSTIFIED: NanoGPT reseller id: the leading 'azure-' is a backend-host label (NanoGPT routes to Azure-hosted OpenAI models), NOT a redundant provider prefix — the genuine Azure provider is the separate azure-cognitive-services namespace. The earlier provider-prefix strip that forced these to the gpt family was removed because it deleted the azure-host signal. These now decompose natively to an imperfect 'azure-*' family, pending a serving-host/backend dimension (GH#16). The before/after differs only in how that imperfect family splits 'turbo'/'4'; neither tuple is a meaningful model decomposition, so this is not a model-identity regression."
     },
     {
       "provider": "nano-gpt",
@@ -10861,7 +10861,7 @@
       "before": "(family=\"grok-3-mini-fast\",variant=\"beta\",version=\"3\",modifier=\"\")",
       "after": "(family=\"grok\",variant=\"mini\",version=\"3\",modifier=\"\")",
       "category": "justified-exception",
-      "reason": "JUSTIFIED: USER-RATIFIED non-defect (Impl-UAT bestiary-2gxu, GH#13 release-stage dimension): family corrected to grok + real tier 'mini' (+version 3); the release-stage token 'beta' AND the speed-tier token 'fast' are BOTH dropped — neither can co-occupy the single Variant slot with 'mini' (variant-multiplicity, the variant analogue of S10's Modifier-LIST, deferred). MECHANISM (corrected) for the related xai/grok-4.20-non-reasoning-beta, which stays Modifier=nil (nil both BEFORE and AFTER rc3 — no regression, no gate trip): the trailing 'beta' is the TAIL-ORDER MODIFIER-SCAN BOUNDARY — the scan starts at the tail and halts at 'beta' (a non-collected variant/boundary token) before reaching the inner 'non-reasoning', so the negation branch never executes. Contrast (Axis-B verified): grok-4.20-non-reasoning [tail='reasoning' preceded by 'non']→[non-reasoning]; grok-4-20-beta-0309-non-reasoning ['beta' MID-string, tail still 'reasoning']→[non-reasoning]; xai/grok-4.20-non-reasoning-beta [tail='beta']→nil. Same release-stage multiplicity tracked under GH#13."
+      "reason": "JUSTIFIED: USER-RATIFIED non-defect (GH#13 release-stage dimension): family corrected to grok + real tier 'mini' (+version 3); the release-stage token 'beta' AND the speed-tier token 'fast' are BOTH dropped — neither can co-occupy the single Variant slot with 'mini' (variant-multiplicity, the variant analogue of the Modifier-LIST, deferred). MECHANISM (corrected) for the related xai/grok-4.20-non-reasoning-beta, which stays Modifier=nil (nil both BEFORE and AFTER — no regression, no gate trip): the trailing 'beta' is the TAIL-ORDER MODIFIER-SCAN BOUNDARY — the scan starts at the tail and halts at 'beta' (a non-collected variant/boundary token) before reaching the inner 'non-reasoning', so the negation branch never executes. Contrast (verified): grok-4.20-non-reasoning [tail='reasoning' preceded by 'non']→[non-reasoning]; grok-4-20-beta-0309-non-reasoning ['beta' MID-string, tail still 'reasoning']→[non-reasoning]; xai/grok-4.20-non-reasoning-beta [tail='beta']→nil. Same release-stage multiplicity tracked under GH#13."
     },
     {
       "provider": "nvidia",
@@ -10870,7 +10870,7 @@
       "before": "(family=\"solar-10_7b\",variant=\"instruct\",version=\"\",modifier=\"\")",
       "after": "(family=\"solar\",variant=\"\",version=\"\",modifier=\"instruct\")",
       "category": "justified-exception",
-      "reason": "JUSTIFIED: USER-RATIFIED non-defect (Impl-UAT bestiary-2gxu, future taxonomy): solar ∉ allFamilies and has no fold target (only attested as solar-mini/solar-pro); 'instruct'→Modifier re-surfaces (no token loss). 10.7b=size GH#9."
+      "reason": "JUSTIFIED: USER-RATIFIED non-defect (future taxonomy): solar ∉ allFamilies and has no fold target (only attested as solar-mini/solar-pro); 'instruct'→Modifier re-surfaces (no token loss). 10.7b=size GH#9."
     }
   ]
 }

@@ -22,17 +22,17 @@ type familyOverride struct {
 }
 
 // familyInfo holds the member list and bare-gen-split flag for a single family.
-// Populated from parse/data/families.json (SLICE-1). Keys in families.json are
+// Populated from parse/data/families.json. Keys in families.json are
 // lowercase and validated against allFamilies at load.
 //
 // Members is the curated list of variant tokens for this family (e.g. ["opus",
 // "sonnet", "haiku"] for "claude"). Used by recoverMemberVariant to identify
 // variant tokens in model IDs.
 //
-// BareGenSplit drives the M2 bare-generation split predicate (SLICE-2). Set to
-// provisional values by SLICE-1; SLICE-2 finalizes attested flags.
+// BareGenSplit drives the M2 bare-generation split predicate. Set to
+// provisional values by ; finalizes attested flags.
 //
-// SeriesLetter (SLICE-8 d, CLARIFICATION-5) marks a letter-prefix model series:
+// SeriesLetter marks a letter-prefix model series:
 // a single lowercase letter (e.g. "k" for kimi, "m" for minimax, "v" for mimo)
 // such that an ID token of the form "<letter><number>" (kimi-k2, minimax-m1,
 // mimo-v2.5) decomposes to variant=<letter> + version=<number>, instead of the
@@ -75,14 +75,14 @@ type parseData struct {
 	// model IDs starting with <alias>/ or <alias>- have the prefix stripped.
 	vendorAliases []string
 
-	// familyAliases is the canonical-winner ledger (SLICE-3): mislabel/shorthand
+	// familyAliases is the canonical-winner ledger: mislabel/shorthand
 	// family key → canonical family. Populated from parse/data/family_aliases.json.
 	// Keys are lowercase mislabels (need NOT be canonical); VALUES are canonical
 	// families validated against allFamilies at load (fail-fast). Applied after M4
 	// family normalisation and before bare-gen-split in both parse entrypoints.
 	familyAliases map[Family]Family
 
-	// enforceFamilies is the SLICE-12 CLOSED canonical-winner ENFORCE set
+	// enforceFamilies is the CLOSED canonical-winner ENFORCE set
 	// (parse/data/family_enforce.json). When the ID-driven family is in this set and
 	// DISAGREES with raw_family, the ID-driven decomposition wins (reconcileIDDriven).
 	// Covers the own-family-enforce ledger (distinct model mislabelled as its parent)
@@ -276,7 +276,7 @@ func initParseData() (*parseData, error) {
 		return len(modifiers[i]) > len(modifiers[j])
 	})
 
-	// Load families.json (SLICE-1).
+	// Load families.json.
 	rawFamilies, err := parseDataFS.ReadFile("parse/data/families.json")
 	if err != nil {
 		return nil, fmt.Errorf(
@@ -331,7 +331,7 @@ func initParseData() (*parseData, error) {
 		families[Family(strings.ToLower(key))] = info
 	}
 
-	// Load vendor_aliases.json (SLICE-1).
+	// Load vendor_aliases.json.
 	rawVendorAliases, err := parseDataFS.ReadFile("parse/data/vendor_aliases.json")
 	if err != nil {
 		return nil, fmt.Errorf(
@@ -363,7 +363,7 @@ func initParseData() (*parseData, error) {
 		vendorAliases[i] = strings.ToLower(v)
 	}
 
-	// Load family_aliases.json (SLICE-3 canonical-winner ledger).
+	// Load family_aliases.json.
 	rawAliases, err := parseDataFS.ReadFile("parse/data/family_aliases.json")
 	if err != nil {
 		return nil, fmt.Errorf(
@@ -397,7 +397,7 @@ func initParseData() (*parseData, error) {
 		familyAliases[Family(strings.ToLower(key))] = Family(strings.ToLower(target))
 	}
 
-	// Load family_enforce.json (SLICE-12 canonical-winner enforce set).
+	// Load family_enforce.json.
 	rawEnforce, err := parseDataFS.ReadFile("parse/data/family_enforce.json")
 	if err != nil {
 		return nil, fmt.Errorf(
@@ -440,7 +440,7 @@ func initParseData() (*parseData, error) {
 
 // familyKeyKnown reports whether key (case-insensitive) matches an entry in
 // allFamilies. Used by initParseData and FamiliesJSONKeyError to validate
-// families.json keys. Reusable by SLICE-3's family_aliases.json validator.
+// families.json keys. Reusable by this family_aliases.json validator.
 func familyKeyKnown(key string) bool {
 	lower := strings.ToLower(key)
 	for _, f := range allFamilies {
@@ -455,7 +455,7 @@ func familyKeyKnown(key string) bool {
 // (case-insensitively) in the generated allFamilies registry (families_gen.go), which
 // is derived directly from the upstream models.dev family field. Synthetic OVER-CAPTURE
 // family strings the ID-path may transiently produce (e.g. "claude-opus", "qwen3-vl-72b",
-// "phi-4-mini") are NOT in that registry. Exposed for the SLICE-11 before/after-diff gate,
+// "phi-4-mini") are NOT in that registry. Exposed for the before/after-diff gate,
 // which uses "after ∈ registry ∧ before ∉ registry" as an INDEPENDENT, data-grounded
 // signal that a family change reduced an over-capture to its canonical short base (and so
 // is a genuine fix, not a regression) — the registry is curated upstream data, not the
@@ -464,14 +464,14 @@ func IsKnownFamily(f Family) bool {
 	return familyKeyKnown(string(f))
 }
 
-// IsEnforcedCanonicalFamily reports whether f is in the SLICE-12 CLOSED canonical-winner
+// IsEnforcedCanonicalFamily reports whether f is in the CLOSED canonical-winner
 // ENFORCE set (parse/data/family_enforce.json) — a curated list of DISTINCT model families
 // that win over a disagreeing raw_family parent/org mislabel (aion, hermes, mixtral, qwq,
 // …). Exposed for the before/after-diff gate (cmd/bestiary-gen): a lateral family change
 // whose AFTER family is in this set is a SANCTIONED ledger correction (the ID-canonical
-// distinct family beat a parent/org mislabel), not a regression — analogous to the SLICE-11
+// distinct family beat a parent/org mislabel), not a regression — analogous to the
 // "after ∈ registry" signal but for lateral (non-reduction) corrections. The set is curated
-// data tied to the rc2 ledger + bestiary-xdbc Q3, NOT the categorizer's own logic, so this
+// data, NOT the categorizer's own logic, so this
 // does not rubber-stamp an arbitrary family rewrite.
 func IsEnforcedCanonicalFamily(f Family) bool {
 	pd, err := loadParseData()
@@ -488,7 +488,7 @@ func IsEnforcedCanonicalFamily(f Family) bool {
 // the first unrecognised key.
 //
 // Used by tests to verify the validation contract without modifying the
-// embedded data, and by SLICE-3 to validate family_aliases.json target keys.
+// embedded data, and by to validate family_aliases.json target keys.
 //
 // BDD: Given families.json with a typo key "claud" (should be "claude"),
 // When FamiliesJSONKeyError is called, Then a non-nil error is returned
@@ -522,14 +522,14 @@ func FamiliesJSONKeyError(data []byte) error {
 	return nil
 }
 
-// FamilyAliasesJSONError validates the SLICE-3 canonical-winner ledger bytes
+// FamilyAliasesJSONError validates the canonical-winner ledger bytes
 // (family_aliases.json shape: {"_comment": ..., "aliases": {key: target, ...}}).
 // Each alias TARGET (the canonical family value) must be a known Family
 // (case-insensitive match against allFamilies). Alias KEYS are mislabels and are
 // deliberately NOT validated — they need not be canonical. Returns nil when every
 // target is valid, or an actionable error on the first unknown target.
 //
-// Reuses familyKeyKnown (SLICE-1) so the ledger and families.json share one
+// Reuses familyKeyKnown so the ledger and families.json share one
 // fail-fast validation contract. Used by initParseData (load-time fail-fast) and
 // by tests to verify the contract without mutating embedded data.
 //
@@ -552,7 +552,7 @@ func FamilyAliasesJSONError(data []byte) error {
 		if !familyKeyKnown(target) {
 			return fmt.Errorf(
 				"bestiary parse: family_aliases.json target %q (for key %q) is not a known family\n"+
-					"  What: unrecognised canonical-family TARGET in the SLICE-3 ledger\n"+
+					"  What: unrecognised canonical-family TARGET in the family_aliases ledger\n"+
 					"  Where: family_aliases.json alias %q → %q\n"+
 					"  Why: the target does not match (case-insensitively) any value in allFamilies"+
 					" (families_gen.go:182-357)\n"+
@@ -565,10 +565,10 @@ func FamilyAliasesJSONError(data []byte) error {
 	return nil
 }
 
-// remapFamilyAlias applies the SLICE-3 canonical-winner ledger to family: if a
+// remapFamilyAlias applies the canonical-winner ledger to family: if a
 // ledger row maps family (compared case-insensitively) to a canonical target, the
 // target is returned; otherwise family is returned unchanged (DEFAULT own-family).
-// Called at the SLICE-3 insertion point (after M4 normalisation, before
+// Called at the insertion point (after M4 normalisation, before
 // bare-gen-split) in both parse entrypoints.
 func remapFamilyAlias(pd *parseData, family Family) Family {
 	if pd == nil || family == "" {
@@ -616,7 +616,7 @@ func ParseFamily(raw Family) (Family, string) {
 		// unreachable because the JSON files are embedded at compile time and the
 		// regexes in version_patterns.json are validated once at startup. The
 		// silent degradation is intentional — ParseFamily has a 2-return signature
-		// by design (see PROPOSAL-3) and callers cannot handle an error return.
+		// by design (see ) and callers cannot handle an error return.
 		// TestParseData_RegexesValid asserts that this path is never taken in a
 		// normal test run, providing startup-time validation coverage.
 		return raw, ""
@@ -723,7 +723,7 @@ func ParseFamilyWithVersion(raw Family) (Family, string, string) {
 
 		if cp.Name == "hyphen-version" {
 			// Convert hyphen-separated digit tokens to dot notation, stripping any
-			// trailing date-shaped groups (SLICE-1-FIX-3).
+			// trailing date-shaped groups.
 			// RULE: dot-join only the LEADING semantic-version groups; stop (discard)
 			// at the first date-shaped group. Date shapes: 4-digit (YYMM/MMDD),
 			// 6-digit (YYMMDD), or a full MM-YYYY two-group remainder.
@@ -789,7 +789,7 @@ func ParseFamilyWithVersion(raw Family) (Family, string, string) {
 			suffix := rawTokens5[prefixLen:]
 
 			// Collect leading purely-numeric suffix tokens as version.
-			// SLICE-1-FIX-4 (7kyb/9yyp): use isDateShapedToken (4-digit OR 6-digit YYMMDD)
+			// use isDateShapedToken (4-digit OR 6-digit YYMMDD)
 			// to guard the 4th date-guard site. Previously isFourDigitDateToken (4-digit only)
 			// was used, leaving 6-digit YYMMDD tokens (e.g. "250615") unguarded here.
 			var versionTokens []string
@@ -861,12 +861,12 @@ func ExtractVersionFromID(id ModelID, rawFamily Family) string {
 	if id == "" || rawFamily == "" {
 		return ""
 	}
-	// SLICE-8 (a): strip the vendor/path namespace so the SAME ID yields the same
+	// strip the vendor/path namespace so the SAME ID yields the same
 	// version regardless of how the provider prefixes it (e.g. "openai/gpt-4.1" and
 	// "gpt-4.1" must both match the "gpt-" family prefix). Without this the literal
 	// HasPrefix check below fails on namespaced IDs and the version is silently
 	// dropped on those providers only — a cross-provider version-presence divergence.
-	// SLICE-8 (a): case-fold the prefix match so an uppercase ID (e.g. "GLM-5",
+	// case-fold the prefix match so an uppercase ID (e.g. "GLM-5",
 	// "MiniMax-M2") yields the SAME version as its lowercase sibling. The resolved
 	// family is already lowercase (M4), so without folding the literal prefix check
 	// fails on mixed-case IDs and the version drops on those providers only.
@@ -893,7 +893,7 @@ func ExtractVersionFromID(id ModelID, rawFamily Family) string {
 	// e.g. "4-5" → "4.5"; "4-6" → "4.6"; "3-1" → "3.1"
 	// R3b (eq7w): reject a single YYMM token (e.g. "2603") to prevent Mistral-style
 	// 4-digit date numerals from being returned as versions.
-	// SLICE-1-FIX-3: also strip trailing date groups from multi-group remainders, and
+	// also strip trailing date groups from multi-group remainders, and
 	// detect the MM-YYYY two-group pattern (e.g. "08-2024", "03-2025") as a full date.
 	if reHyphenDigits.MatchString(remainder) {
 		if isFourDigitDateToken(remainder) {
@@ -918,7 +918,7 @@ func ExtractVersionFromID(id ModelID, rawFamily Family) string {
 	// Must start with a digit and contain only alphanumeric characters (no hyphens).
 	// Must not be a pure-alpha word (which would be a variant, not a version).
 	if reAlphaNumVersion.MatchString(remainder) {
-		// SLICE-8 (b): param-size guard. Reject parameter-count / model-size tokens
+		// param-size guard. Reject parameter-count / model-size tokens
 		// (e.g. "120b" from gpt-oss-120b, "20b", "7m") so they are NEVER promoted to
 		// Version. This makes gpt-oss-120b → Version "" on ALL providers (consistent);
 		// the size INFO is GH#9 (missing Size dimension), not a version. Genuine
@@ -1074,7 +1074,7 @@ func ExtractModifier(id ModelID, family Family, variant string) (modifier string
 	if idx := strings.LastIndexByte(idStr, '/'); idx >= 0 {
 		idStr = idStr[idx+1:]
 	}
-	// SLICE-10: match case-INSENSITIVELY (model IDs spell modifiers mixed-case, e.g.
+	// match case-INSENSITIVELY (model IDs spell modifiers mixed-case, e.g.
 	// "Llama-3.1-8B-Instruct", "Qwen-Turbo"). The bare modifier token returned is the
 	// lowercase canonical form; the consumed suffix is the ACTUAL-case tail substring so
 	// callers can strip it from the original ID by exact match.
@@ -1084,7 +1084,7 @@ func ExtractModifier(id ModelID, family Family, variant string) (modifier string
 	for _, mod := range pd.modifiers {
 		suffix := "-" + mod
 		if strings.HasSuffix(idLower, suffix) {
-			// Variant-guard (SLICE-FIX-V2-5 Fix 3): if the trailing modifier token is
+			// Variant-guard ( Fix 3): if the trailing modifier token is
 			// already encoded as the variant, do NOT double-count it. This prevents
 			// models like kimi-k2-thinking (RawFamily="kimi-thinking" → variant="thinking")
 			// from also getting Modifier="thinking". The variant is the authoritative
@@ -1092,7 +1092,7 @@ func ExtractModifier(id ModelID, family Family, variant string) (modifier string
 			if mod == strings.ToLower(variant) {
 				return "", ""
 			}
-			// SLICE-10 PER-FAMILY MEMBER-GUARD (ratified taxonomy, URD bestiary-o54x):
+			// PER-FAMILY MEMBER-GUARD (ratified taxonomy):
 			// a token reclassifies variant→modifier ONLY IF it is NOT a curated member
 			// of the resolved family. A member token is that family's product LINE (the
 			// variant), never a modifier — e.g. deepseek-chat (chat ∈ deepseek.members),
@@ -1111,7 +1111,7 @@ func ExtractModifier(id ModelID, family Family, variant string) (modifier string
 }
 
 // isFamilyMemberToken reports whether tok is a curated member of family in
-// families.json. Used by the SLICE-10 member-guard so a per-family product LINE
+// families.json. Used by the member-guard so a per-family product LINE
 // (deepseek "chat", sonar "reasoning", qwen "turbo", llama "scout"/qwen "next")
 // is never reclassified from variant to a global modifier. Case-insensitive on the
 // family key; member tokens are stored lowercase.
@@ -1140,7 +1140,7 @@ func isFamilyMemberToken(pd *parseData, family Family, tok string) bool {
 var quantizationTokens = map[string]struct{}{
 	"fp8": {}, "fp16": {}, "fp4": {}, "bf16": {}, "int8": {}, "int4": {},
 	"awq": {}, "gptq": {}, "gguf": {}, "tee": {}, "w8a8": {}, "w4a16": {},
-	// SLICE-10: serving-platform / finetune tail words that sit AFTER a buried modifier
+	// serving-platform / finetune tail words that sit AFTER a buried modifier
 	// (e.g. "...-instruct-maas", "...-instruct-fp8-dynamic", "...-Instruct-abliterated").
 	// They are neither version, variant, nor modifier — transparent to the modifier scan.
 	"dynamic": {}, "maas": {}, "tput": {}, "abliterated": {}, "hf": {}, "raw": {},
@@ -1148,7 +1148,7 @@ var quantizationTokens = map[string]struct{}{
 }
 
 // reVersionMarkerToken matches a "v"-prefixed version-marker tail token (v0.1, v03,
-// v1, v3.5) — SLICE-10 transparent to modifier scanning so a modifier buried before it
+// v1, v3.5) — transparent to modifier scanning so a modifier buried before it
 // (e.g. "mistral-7b-instruct-v0.1") is recovered. A BARE numeric ("1" in
 // "grok-code-fast-1") is deliberately NOT matched, so it still stops the scan.
 var reVersionMarkerToken = regexp.MustCompile(`^v[0-9]+(\.[0-9]+)?$`)
@@ -1178,7 +1178,7 @@ func isModifierTransparentToken(tok string) bool {
 	return false
 }
 
-// extractModifiers is the SLICE-10 multi-modifier companion to ExtractModifier. It
+// extractModifiers is the multi-modifier companion to ExtractModifier. It
 // scans the model ID's tail tokens (after the vendor/path strip, '@'→'-' normalized)
 // from the END inward, collecting EVERY modifier token (member-guarded, case-insensitive)
 // and SKIPPING transparent date/param/quant/context tokens, stopping at the first real
@@ -1217,7 +1217,7 @@ func extractModifiers(id ModelID, family Family, variant string) (mods []string,
 		isMonthFragment := prevAfterYear && len(t) <= 2 && isAllDigits(t)
 		switch {
 		case isKnownModifierToken(pd, t) && t != lowVariant && !isFamilyMemberToken(pd, family, t):
-			// rc3 (bestiary-fz9r, USER-RULING): NEGATION-AWARE emission. When the captured
+			// NEGATION-AWARE emission. When the captured
 			// modifier token is immediately preceded (in tail order) by the LITERAL token
 			// "non" — i.e. the ID contains "...-non-<mod>" — emit "non-<mod>" instead of the
 			// bare positive "<mod>", and consume the "non" token too. The gate is the literal
@@ -1256,7 +1256,7 @@ func extractModifiers(id ModelID, family Family, variant string) (mods []string,
 	return mods, consumed
 }
 
-// promoteVariantModifier enforces the SLICE-10 taxonomy invariant on the VARIANT slot:
+// promoteVariantModifier enforces the taxonomy invariant on the VARIANT slot:
 // a global modifier token must NEVER occupy the primary-variant slot. If the resolved
 // variant is a known modifier token AND is NOT a curated member of the resolved family
 // (member-guard), it is moved into the modifier LIST and the variant is cleared. This
@@ -1296,8 +1296,8 @@ func promoteVariantModifier(pd *parseData, family Family, variant string, mods [
 // The provider parameter is reserved for future provider-specific heuristics
 // and is not currently used.
 //
-// SLICE-8 (d): this is a thin wrapper that applies the letter-prefix series split
-// (CLARIFICATION-5) to the inner inference result, so the empty-raw primitive is
+// this is a thin wrapper that applies the letter-prefix series split
+// to the inner inference result, so the empty-raw primitive is
 // SELF-CONSISTENT with the canonical ParseFamilyDetailed path (kimi-k2 → (kimi,k,2),
 // minimax-m1 → (minimax,m,1), and the compound-family recovery kimi-k2-0905 → kimi).
 func InferFamilyFromIDWithVariant(id ModelID, p Provider) (Family, string, string) {
@@ -1307,7 +1307,7 @@ func InferFamilyFromIDWithVariant(id ModelID, p Provider) (Family, string, strin
 			family = base
 		}
 		// tierMod is ignored here: InferFamilyFromIDWithVariant has no Modifier slot;
-		// the tier→Modifier promotion (CLARIFICATION-6) is applied by ParseFamilyDetailed.
+		// the tier→Modifier promotion is applied by ParseFamilyDetailed.
 		if sv, svv, _, ok := splitSeriesVariant(pd, family, string(id)); ok {
 			variant, version = sv, svv
 		}
@@ -1317,7 +1317,7 @@ func InferFamilyFromIDWithVariant(id ModelID, p Provider) (Family, string, strin
 
 // inferFamilyFromIDWithVariantBase is the inner empty-family inference (pre
 // series-split). It owns the M3/M4 + ledger + bare-gen + member-recovery flow; the
-// SLICE-8 (d) series override is applied by the InferFamilyFromIDWithVariant wrapper.
+// series override is applied by the InferFamilyFromIDWithVariant wrapper.
 func inferFamilyFromIDWithVariantBase(id ModelID, p Provider) (Family, string, string) {
 	if id == "" {
 		return "", "", ""
@@ -1326,7 +1326,7 @@ func inferFamilyFromIDWithVariantBase(id ModelID, p Provider) (Family, string, s
 	// ── M3: vendor/namespace strip (shared head) ─────────────────────────────
 	// stripVendorNamespace strips the "<org>/" path segment then any residual
 	// "<vendor_alias>-" / "<vendor_alias>/" prefix (e.g. "minimaxai-minimax-m1" →
-	// "minimax-m1"). The SAME helper is called by ParseFamilyDetailed (jvpa symmetry).
+	// "minimax-m1"). The SAME helper is called by ParseFamilyDetailed (for symmetry).
 	idStr := stripVendorNamespace(string(id))
 
 	// R3c (Δ2′): a trailing modifier (e.g. "-thinking") can hide a trailing date
@@ -1360,13 +1360,13 @@ func inferFamilyFromIDWithVariantBase(id ModelID, p Provider) (Family, string, s
 			}
 			// M4: lowercase Family field at the output boundary.
 			outFamily := Family(strings.ToLower(string(fProv)))
-			// SLICE-3 INSERTION POINT: family_aliases ledger remap (after M4, before
+			// INSERTION POINT: family_aliases ledger remap (after M4, before
 			// bare-gen-split). This modifier-stripping branch returns early, so the
 			// ledger must be applied here too for symmetry. DEFAULT own-family → no-op.
 			if pd, pdErr := loadParseData(); pdErr == nil {
 				outFamily = remapFamilyAlias(pd, outFamily)
 			}
-			// SLICE-2 bare_gen_split: this modifier-stripping branch returns early
+			// bare_gen_split: this modifier-stripping branch returns early
 			// (before the pipeline insertion point below), so apply the split here too
 			// — e.g. "gemini-3-flash-preview" (preview stripped) leaves family
 			// "gemini-3" which must split to (gemini, …, 3). Closed predicate.
@@ -1378,7 +1378,7 @@ func inferFamilyFromIDWithVariantBase(id ModelID, p Provider) (Family, string, s
 						version = ver
 					}
 				}
-				// SLICE-11 (rc2) Option B: reduce an OVER-CAPTURED compound family here too
+				// Option B: reduce an OVER-CAPTURED compound family here too
 				// — this modifier-strip branch returns early (bypassing the main-path
 				// reduction), so IDs carrying a trailing modifier (e.g.
 				// gemini-3.1-flash-image-preview, gpt-4o-mini-search-preview) would otherwise
@@ -1436,18 +1436,18 @@ func inferFamilyFromIDWithVariantBase(id ModelID, p Provider) (Family, string, s
 	family, variant, version := ParseFamilyWithVersion(Family(candidateFamilyStr))
 
 	// ── Pipeline skeleton ──────────────────────────────────────────────────
-	// SLICE-3 INSERTION POINT: family_aliases ledger remap (after M4, before bare-gen-split)
-	// SLICE-2 INSERTION POINT: bare_gen_split closed predicate (before recoverMemberVariant)
+	// INSERTION POINT: family_aliases ledger remap (after M4, before bare-gen-split)
+	// INSERTION POINT: bare_gen_split closed predicate (before recoverMemberVariant)
 
 	// If ParseFamilyWithVersion returns the raw string unchanged (no pattern matched),
 	// it means the entire string is treated as a family with no variant or version.
-	// SLICE-1 replacement of the empty-raw amputation: take firstToken as family, then
+	// replacement of the empty-raw amputation: take firstToken as family, then
 	// recoverMemberVariant on remaining tokens to find variant from families.json members.
 	if family == Family(candidateFamilyStr) {
 		baseFamily := Family(strings.ToLower(firstToken(stripped)))
 		// Remaining tokens after the first (family) token are candidate member zones.
 		remainingTokens := tokens[1:]
-		// SLICE-3 INSERTION POINT: family_aliases ledger remap (after M4, before
+		// INSERTION POINT: family_aliases ledger remap (after M4, before
 		// bare-gen-split). Folds an inferred mislabel/shorthand seed to its canonical
 		// family (e.g. "l3.1" → "llama" for community Llama-3 finetunes) so the family
 		// agrees cross-provider; recoverMemberVariant then runs against the canonical
@@ -1455,7 +1455,7 @@ func inferFamilyFromIDWithVariantBase(id ModelID, p Provider) (Family, string, s
 		if pd, pdErr := loadParseData(); pdErr == nil {
 			baseFamily = remapFamilyAlias(pd, baseFamily)
 		}
-		// SLICE-2 bare_gen_split: when the family seed is a glued <base><int> token
+		// bare_gen_split: when the family seed is a glued <base><int> token
 		// (e.g. "qwen3", "o1"), split it so the generation surfaces as version. Gated
 		// on the closed predicate (has-entry ∧ not-digit-suffixed ∧ bare_gen_split).
 		bareVersion := ""
@@ -1473,13 +1473,13 @@ func inferFamilyFromIDWithVariantBase(id ModelID, p Provider) (Family, string, s
 	// M4: lowercase Family field at the output boundary.
 	family = Family(strings.ToLower(string(family)))
 
-	// SLICE-3 INSERTION POINT: family_aliases ledger remap (after M4, before bare-gen-split).
+	// INSERTION POINT: family_aliases ledger remap (after M4, before bare-gen-split).
 	// DEFAULT own-family → no-op; a ledger row remaps a mislabel to its canonical family.
 	if pd, pdErr := loadParseData(); pdErr == nil {
 		family = remapFamilyAlias(pd, family)
 	}
 
-	// SLICE-2 INSERTION POINT: bare_gen_split closed predicate (before recoverMemberVariant)
+	// INSERTION POINT: bare_gen_split closed predicate (before recoverMemberVariant)
 	// Split a glued/hyphenated <base><int> family token (e.g. "qwen3", "gpt-5") into
 	// its base family + generation version. Closed predicate (splitBareGen). Only
 	// fills an empty version — never clobbers a version ParseFamilyWithVersion found.
@@ -1492,7 +1492,7 @@ func inferFamilyFromIDWithVariantBase(id ModelID, p Provider) (Family, string, s
 		}
 	}
 
-	// SLICE-11 (rc2) Option B: reduce an OVER-CAPTURED compound family to its registered
+	// Option B: reduce an OVER-CAPTURED compound family to its registered
 	// SHORT base BEFORE member/version recovery, so the recovery below runs against the
 	// short family and reproduces the SAME (variant, version) the raw-populated providers
 	// derive (e.g. empty-raw "qwen3-vl-30b-a3b-instruct" → variant "vl"+version "3", NOT
@@ -1639,7 +1639,7 @@ var reYYYYMMDD = regexp.MustCompile(`(?:^|[^0-9])(\d{4})(\d{2})(\d{2})(?:$|[^0-9
 var reYYYYDashMMDashDD = regexp.MustCompile(`(\d{4})-(\d{2})-(\d{2})`)
 
 // --------------------------------------------------------------------------
-// Parse-failure audit types (SLICE-FIX-V2-3)
+// Parse-failure audit types
 // --------------------------------------------------------------------------
 
 // ParseAttempt records the partial result produced when parse heuristics
@@ -1661,7 +1661,7 @@ type ParseFailureReason string
 // decomposition. It is produced by ParseFamilyDetailed when the parser's
 // best-effort result is known to be incomplete or ambiguous.
 //
-// JSON field names match the locked per-record format from SLICE-FIX-V2-3:
+// JSON field names match the locked per-record format from :
 //
 //	{
 //	  "raw_id":         "claude-3-5-haiku-20241022",
@@ -1720,15 +1720,15 @@ const (
 	ReasonResidualUnaccountedTokens ParseFailureReason = "residual unaccounted tokens after extraction"
 )
 
-// idDrivenDecompose is the SINGLE ID-driven decomposition primitive (SLICE-9
-// path-unification). It derives (Family, Variant, Version, Modifier) purely from
-// the model ID via the S1-S8 pipeline (InferFamilyFromIDWithVariant → ExtractModifier
+// idDrivenDecompose is the SINGLE ID-driven decomposition primitive for
+// path-unification. It derives (Family, Variant, Version, Modifier) purely from
+// the model ID via the decomposition pipeline (InferFamilyFromIDWithVariant → ExtractModifier
 // → idDrivenVersion → tier→Modifier), with NO reference to raw_family. It is the
 // body the raw=="" branch of ParseFamilyDetailed used to inline; extracting it lets
 // the raw!="" branch consult the IDENTICAL decomposition so the two paths can never
 // disagree on the fields the ID owns.
 //
-// SLICE-9 (rc2) re-scope (Option A, authorized): this primitive drives Variant/
+// re-scope (Option A, authorized): this primitive drives Variant/
 // Version/Modifier in the unified path. It deliberately does NOT own Family for the
 // raw-populated path — the diff-first safeguard proved the ID-path OVER-captures the
 // Family for the common <family>-<gen><size>-<variant> ID shape (deepseek-v4-flash →
@@ -1736,7 +1736,7 @@ const (
 // family. Converging those 107 family-over-capture divergences to the short family is
 // the dedicated family-seeding slice (Option B), not this one.
 func idDrivenDecompose(id ModelID, p Provider) (Family, string, string, []string) {
-	// SLICE-9 fix-cycle-2 (P2, Reviewer C IMPORTANT): some providers separate the
+	// Some providers separate the
 	// version/date tag with '@' instead of '-' (e.g. "claude-opus-4-1@20250805",
 	// "claude-sonnet-4-6@default"). The '@' defeats every hyphen-based extractor
 	// (InferFamilyFromIDWithVariant, idDrivenVersion, splitSeriesVariant), leaving
@@ -1748,10 +1748,10 @@ func idDrivenDecompose(id ModelID, p Provider) (Family, string, string, []string
 	// '@' delimiter, so Date is unaffected.
 	id = ModelID(strings.ReplaceAll(string(id), "@", "-"))
 	family, variant, version := InferFamilyFromIDWithVariant(id, p)
-	// SLICE-10: peel ALL trailing modifiers (member-guarded) so multi-modifier IDs
+	// peel ALL trailing modifiers (member-guarded) so multi-modifier IDs
 	// (kimi-k2-thinking-turbo → [thinking, turbo]) are captured losslessly.
 	modifiers, _ := extractModifiers(id, family, variant)
-	// ID-driven version consistency (SLICE-8 a/c): recover a version the ID carries
+	// ID-driven version consistency: recover a version the ID carries
 	// but ParseFamilyWithVersion's passthrough missed; also the glued letter-suffix
 	// version-modifier (glm-4.5v → 4.5 + vision).
 	if version == "" && family != "" {
@@ -1762,14 +1762,14 @@ func idDrivenDecompose(id ModelID, p Provider) (Family, string, string, []string
 			}
 		}
 	}
-	// Tier→Modifier promotion (CLARIFICATION-6) for series families. The single-tier
+	// Tier→Modifier promotion for series families. The single-tier
 	// promotion still applies; with the Modifier LIST it composes atop any capability
 	// modifier (CanonicalizeModifiers dedups against tiers already peeled above).
 	if pd, pdErr := loadParseData(); pdErr == nil {
 		if _, _, tierMod, ok := splitSeriesVariant(pd, family, string(id)); ok && tierMod != "" {
 			modifiers = append(modifiers, tierMod)
 		}
-		// SLICE-10: a global modifier left in the variant slot by the empty-family
+		// a global modifier left in the variant slot by the empty-family
 		// inference (e.g. "instruct") is moved to the modifier list here, BEFORE the
 		// raw/ID reconcile, so it cannot override a genuine raw variant (e.g. "oss").
 		variant, modifiers = promoteVariantModifier(pd, family, variant, modifiers)
@@ -1777,7 +1777,7 @@ func idDrivenDecompose(id ModelID, p Provider) (Family, string, string, []string
 	return family, variant, version, CanonicalizeModifiers(modifiers)
 }
 
-// reconcileIDDriven is the SLICE-9 (rc2) Option A unification step. Given the
+// reconcileIDDriven is the Option A unification step. Given the
 // raw-aware decomposition (the family-preserving base + fallback) and the model ID,
 // it produces the unified canonical (Family, Variant, Version, Modifier):
 //
@@ -1805,7 +1805,7 @@ func reconcileIDDriven(rawFam Family, rawVar, rawVer string, rawMod []string, id
 
 	idFam, idVar, idVer, idMod := idDrivenDecompose(id, p)
 	if idFam != rawFam {
-		// SLICE-12 CANONICAL-WINNER ENFORCE: when the ID-driven family is a DISTINCT
+		// CANONICAL-WINNER ENFORCE: when the ID-driven family is a DISTINCT
 		// family in the closed enforce set (family_enforce.json) and raw_family disagrees,
 		// the ID is authoritative — raw is either a parent-family mislabel (aion/magnum
 		// tagged "llama", mixtral/pixtral/voxtral tagged "mistral", intellect tagged "glm",
@@ -1828,15 +1828,15 @@ func reconcileIDDriven(rawFam Family, rawVar, rawVer string, rawMod []string, id
 				if ver == "" {
 					ver = rawVer
 				}
-				// SLICE-10: union raw + ID modifiers (lossless); empty→nil.
+				// union raw + ID modifiers (lossless); empty→nil.
 				mod = CanonicalizeModifiers(append(append([]string{}, mod...), rawMod...))
 				return idFam, v, ver, mod
 			}
 		}
-		// SLICE-12 (#2): a RAW-POPULATED OVER-CAPTURE family (raw_family is itself a
+		// a RAW-POPULATED OVER-CAPTURE family (raw_family is itself a
 		// compound that REDUCES to the same short base the ID-path derived — e.g.
 		// raw="qwen3.7-max" → qwen) is a provider over-capture, the mirror of the empty-raw
-		// case S11 already reduces. When reduceOverCapturedFamily(rawFam) lands on idFam,
+		// case the over-capture reducer already handles. When reduceOverCapturedFamily(rawFam) lands on idFam,
 		// adopt the ID-driven decomposition so the over-capturing provider converges with its
 		// short-family siblings. CLOSED: declines (and keeps raw) when rawFam carries an
 		// unrecognised token (qwen3-next-80b-a3b — "next" blocks the reduction; honest residual).
@@ -1856,7 +1856,7 @@ func reconcileIDDriven(rawFam Family, rawVar, rawVer string, rawMod []string, id
 				}
 			}
 		}
-		// SLICE-14 (TIER-1 conditional): raw_family "text-embedding" is a GENERIC descriptor
+		// (TIER-1 conditional): raw_family "text-embedding" is a GENERIC descriptor
 		// (a self-map override), not a product family. When the ID itself names a real registered
 		// family (Qwen/Qwen3-Embedding-8B → ID-family "qwen"), that family WINS. GUARD: OpenAI's
 		// own "text-embedding-3-large/small" — whose ID literally IS "text-embedding" — derives
@@ -1872,7 +1872,7 @@ func reconcileIDDriven(rawFam Family, rawVar, rawVer string, rawMod []string, id
 
 	// Families agree → the ID owns the field decomposition. Adopt each non-empty
 	// ID-driven field, but conservatively so a currently-correct decomposition is
-	// never WORSENED (the CLARIFICATION-8 zero-regression gate):
+	// never WORSENED (the zero-regression gate):
 	//
 	//  - VARIANT: fill an empty variant freely (enrichment + convergence with the
 	//    empty-raw providers). Only OVERRIDE a populated raw variant when the ID-driven
@@ -1882,7 +1882,7 @@ func reconcileIDDriven(rawFam Family, rawVar, rawVer string, rawMod []string, id
 	//    the "6bit" quantization suffix). De-junking (raw variant "3.6" → "flash") and
 	//    refinement (raw "codex" → "codex-mini") both pass this guard.
 	//
-	//    SLICE-9 fix-cycle-2 (P1, Reviewer A BLOCKER): additionally REJECT the override
+	//    Additionally REJECT the override
 	//    when the populated raw variant is a more-specific SUPERSTRING of idVar — i.e.
 	//    the ID-driven variant is LESS specific (a prefix). This prevents the
 	//    gemini-2.5-flash-lite-preview-* regression where InferFamilyFromIDWithVariant
@@ -1894,14 +1894,14 @@ func reconcileIDDriven(rawFam Family, rawVar, rawVer string, rawMod []string, id
 	if idVar != "" && (variant == "" || (isCleanVariantToken(idVar) && !strings.HasPrefix(variant, idVar))) {
 		variant = idVar
 	}
-	//    SLICE-12 (#4) gpt-codex ID-WINS-on-variant-conflict: raw_family "gpt-codex"
+	//    gpt-codex ID-WINS-on-variant-conflict: raw_family "gpt-codex"
 	//    (override → variant "codex"/"codex-mini"/"codex-spark") MISLABELS the
 	//    gpt-5/5.1/5.2-chat[-latest] chat models, whose IDs contain NO "codex". When the
 	//    codex variant is ABSENT from the ID it is a provider phantom — drop it in favor of
 	//    the ID-driven variant (idVar, possibly empty). SCOPED to the codex family on
 	//    purpose: a blanket "raw variant absent from ID → clear" wrongly drops legitimate
 	//    variants whose ID spells them differently (kimi-k2.6 vs "Kimi-K2_6") or names a
-	//    different one (raw "kat-coder" vs ID "KAT-Dev"). The S9 flash-lite superstring win
+	//    different one (raw "kat-coder" vs ID "KAT-Dev"). The flash-lite superstring win
 	//    is untouched (flash-lite ∉ codex family AND is present in its ID).
 	if strings.HasPrefix(variant, "codex") &&
 		!strings.Contains(strings.ToLower(stripVendorNamespace(string(id))), "codex") {
@@ -1914,13 +1914,13 @@ func reconcileIDDriven(rawFam Family, rawVar, rawVer string, rawMod []string, id
 	if idVer != "" && (version == "" || isVersionShaped(idVer)) {
 		version = idVer
 	}
-	//  - MODIFIER: SLICE-10 — UNION the raw and ID modifier sets (lossless). The
+	//  - MODIFIER: — UNION the raw and ID modifier sets (lossless). The
 	//    Modifier field is now a LIST, so a capability modifier carried by raw_family
 	//    (e.g. "thinking") and a tier/capability the ID carries (e.g. "turbo") COMPOSE
 	//    rather than one silently shadowing the other (kimi-k2p6-turbo raw="kimi-thinking"
 	//    → [thinking, turbo]). CanonicalizeModifiers dedups + orders.
 	modifier = CanonicalizeModifiers(append(append([]string{}, modifier...), idMod...))
-	// SLICE-12 (#3) dotted bare-gen de-junk: a raw variant that is a PURE dotted/numeric
+	// dotted bare-gen de-junk: a raw variant that is a PURE dotted/numeric
 	// generation token (e.g. "3.5"/"3.6" from raw_family "qwen3.5"/"qwen3.6") is the family
 	// GENERATION leaked into the variant slot by the version_patterns "no-prefix" rule. Move
 	// it to the (empty) version and clear the variant, so the raw-populated provider converges
@@ -1960,7 +1960,7 @@ func isPureDottedGen(s string) bool {
 // integer (o1, o3, o4). The capture is the generation number.
 var reOSeriesLine = regexp.MustCompile(`^o([0-9]+)$`)
 
-// canonicalizeOpenAILine applies the bestiary-xdbc (Q2/Q2a/Q2b/Q2c) o-series taxonomy
+// canonicalizeOpenAILine applies the ratified o-series taxonomy
 // restructure: ALL of OpenAI's gpt line decomposes under family=gpt, with the LINE
 // DESIGNATOR carried in the VARIANT slot and SIZE tokens (mini/pro/…) demoted to the
 // Modifier:
@@ -1978,8 +1978,8 @@ var reOSeriesLine = regexp.MustCompile(`^o([0-9]+)$`)
 // of the same ID — however it mislabels raw_family ("gpt"/"o"/"o-mini"/"gpt-mini"/"gpt-audio")
 // — converges on the IDENTICAL canonical tuple. Scoped to family ∈ {gpt, o, gpt-audio} so it
 // can only ever touch OpenAI's line; a non-designator gpt model (gpt-4, gpt-5-chat, gpt-oss,
-// gpt-image, gpt-codex) returns unchanged. This INTENTIONALLY supersedes the pre-S12 pinned
-// BDD (o1-mini→(o,mini,1)); the change is sanctioned by bestiary-xdbc and gated by the
+// gpt-image, gpt-codex) returns unchanged. This INTENTIONALLY supersedes the earlier pinned
+// BDD (o1-mini→(o,mini,1)); the change is sanctioned by the ratified taxonomy and gated by the
 // reviewed o-series allowlist.
 func canonicalizeOpenAILine(family Family, variant, version string, modifier []string, id ModelID) (Family, string, string, []string) {
 	lf := strings.ToLower(string(family))
@@ -2013,7 +2013,7 @@ func canonicalizeOpenAILine(family Family, variant, version string, modifier []s
 	// Size/finetune tokens (the OLD variant, e.g. mini/pro/deep-research) move to the
 	// Modifier LIST when the variant slot is occupied by the line designator. The old
 	// variant ADDS to any ID-extracted modifiers (CanonicalizeModifiers dedups) so no
-	// information is dropped (SLICE-10).
+	// information is dropped.
 	newMod := modifier
 	if variant != "" && variant != designator {
 		newMod = CanonicalizeModifiers(append(append([]string{}, modifier...), variant))
@@ -2025,7 +2025,7 @@ func canonicalizeOpenAILine(family Family, variant, version string, modifier []s
 // glm-5v-turbo → "5"). The 'v' must be at a token boundary after the numeric version.
 var reGlmV = regexp.MustCompile(`(?:^|-)(\d+(?:\.\d+)?)v(?:-|$)`)
 
-// canonicalizeGlmV applies the bestiary-xdbc Q1 ruling: for the GLM family ONLY, a single
+// canonicalizeGlmV applies the ratified GLM ruling: for the GLM family ONLY, a single
 // letter 'v' GLUED to a glm version (glm-4.5v, glm-5v-turbo) is a VARIANT letter, NOT the
 // 'vision' modifier — glm-4.5v → (glm, variant="v", version=4.5); glm-5v-turbo → (glm,
 // variant="v", version=5, modifier="turbo"). Scoped to family=glm so the uniform
@@ -2129,10 +2129,10 @@ func isVersionShaped(s string) bool {
 // Parameters id and p (model ID and provider) are used to populate the failure
 // record fields and are not used in the parse logic itself.
 //
-// IP-1: The return order is (family, variant, version, modifier, *ParseFailure).
-// SLICE-2 (codegen wiring) depends on this exact 5-tuple shape — do NOT reorder.
+// The return order is (family, variant, version, modifier, *ParseFailure).
+// Codegen wiring depends on this exact 5-tuple shape — do NOT reorder.
 func ParseFamilyDetailed(raw Family, id ModelID, p Provider) (Family, string, string, []string, *ParseFailure) {
-	// rc3-L1 (bestiary-xfo0, USER-RATIFIED Impl-UAT 2gxu) — curated ID-keyed family
+	// Curated ID-keyed family
 	// override. A CLOSED, exact-model-ID map for the embedded-family case the leading-token
 	// pipeline cannot reach without a general embedded-detect (the Path-B trap: 16/249
 	// llama-nemotron IDs have attestation conflicts, so a broad nemotron/llama match would
@@ -2145,7 +2145,7 @@ func ParseFamilyDetailed(raw Family, id ModelID, p Provider) (Family, string, st
 		return ov.family, ov.variant, ov.version, nil, nil
 	}
 
-	// SLICE-3 (uniform thinking/vision-as-modifier migration): a trailing
+	// (uniform thinking/vision-as-modifier migration): a trailing
 	// {thinking,vision,…} token embedded in the RAW family is ALWAYS a modifier,
 	// never a variant. models.dev encodes the modifier in the family field for some
 	// providers (e.g. "deepseek-thinking", "kimi-thinking", "grok-vision"). Strip it
@@ -2168,7 +2168,7 @@ func ParseFamilyDetailed(raw Family, id ModelID, p Provider) (Family, string, st
 	// For raw=="" the InferFamilyFromIDWithVariant path below applies its own M4.
 	family = Family(strings.ToLower(string(family)))
 
-	// SLICE-3 INSERTION POINT: family_aliases ledger remap (after M4, before bare-gen-split).
+	// INSERTION POINT: family_aliases ledger remap (after M4, before bare-gen-split).
 	// DEFAULT own-family → no-op; a ledger row remaps a mislabel to its canonical family.
 	if pd, pdErr := loadParseData(); pdErr == nil {
 		family = remapFamilyAlias(pd, family)
@@ -2180,7 +2180,7 @@ func ParseFamilyDetailed(raw Family, id ModelID, p Provider) (Family, string, st
 	// the inferred family+variant context. M4 is applied inside InferFamilyFromIDWithVariant.
 	if raw == "" {
 		// Empty raw_family: the decomposition is fully ID-driven (no family hint to
-		// preserve). SLICE-9: this is the same idDrivenDecompose primitive the
+		// preserve). this is the same idDrivenDecompose primitive the
 		// raw-populated path now consults, so the two paths share one decomposition.
 		family, variant, version, modifier := idDrivenDecompose(id, p)
 		family, variant, version, modifier = canonicalizeOpenAILine(family, variant, version, modifier, id)
@@ -2191,7 +2191,7 @@ func ParseFamilyDetailed(raw Family, id ModelID, p Provider) (Family, string, st
 		return family, variant, version, modifier, nil
 	}
 
-	// SLICE-9 (rc2) Option A unification: EVERY raw-populated return path funnels its
+	// Option A unification: EVERY raw-populated return path funnels its
 	// (family,variant,version,modifier) through reconcileIDDriven (family-preserving,
 	// ID-driven Variant/Version/Modifier) before returning. The *ParseFailure audit
 	// annotation is computed from the raw-path attempt and passed through unchanged.
@@ -2207,17 +2207,16 @@ func ParseFamilyDetailed(raw Family, id ModelID, p Provider) (Family, string, st
 
 	// ── Δ1 extract-first: attempt to populate version from the model ID ───────
 	// Extract modifier(s) first so they don't pollute version/date extraction.
-	// SLICE-10: peel ALL trailing modifiers (member-guarded) into a LIST.
+	// peel ALL trailing modifiers (member-guarded) into a LIST.
 	modifierList, consumed := extractModifiers(id, family, variant)
-	// SLICE-3: when the modifier was encoded in the RAW family (not the ID),
+	// when the modifier was encoded in the RAW family (not the ID),
 	// ExtractModifier(id, …) finds nothing — fall back to the raw-family modifier so
 	// it is never silently dropped (e.g. raw="deepseek-thinking", id="deepseek-r1").
-	// SLICE-10: rawModifier COMPOSES with any ID modifiers (lossless union) — BUT it is
+	// rawModifier COMPOSES with any ID modifiers (lossless union) — BUT it is
 	// MEMBER-GUARDED: a rawModifier token that is a curated member of the resolved family
 	// is the product-LINE VARIANT, not a modifier (recoverMemberVariant restores it as the
 	// variant below), so it must NOT be appended — otherwise a RawFamily-embedded member
-	// (raw="sonar-reasoning" → "reasoning") duplicates into BOTH Variant and Modifier
-	// (Reviewer-A/C BLOCKER, fix-cycle 1).
+	// (raw="sonar-reasoning" → "reasoning") duplicates into BOTH Variant and Modifier.
 	if rawModifier != "" {
 		if pd, pdErr := loadParseData(); pdErr != nil || !isFamilyMemberToken(pd, family, rawModifier) {
 			modifierList = append(modifierList, rawModifier)
@@ -2232,20 +2231,20 @@ func ParseFamilyDetailed(raw Family, id ModelID, p Provider) (Family, string, st
 		}
 	}
 
-	// ── Pipeline skeleton (SLICE-1) ──────────────────────────────────────────
+	// ── Pipeline skeleton ──────────────────────────────────────────
 	// M3 (vendor/namespace strip) is applied here at the member-recovery boundary
 	// via stripVendorNamespace — the SAME helper InferFamilyFromIDWithVariant uses
-	// at its head (Reviewer A jvpa: one M3 helper, called in BOTH entrypoints).
+	// at its head.
 	// We deliberately scope M3 to the member-recovery memberZone rather than
 	// pre-stripping the ID fed to the version extractors: ExtractVersionBetween…
 	// already calls lastPathSegment internally, and pre-stripping the "<org>/"
 	// segment ahead of ExtractVersionFromID would expose a SEPARATE latent
 	// version-extraction issue (e.g. "gpt-oss-120b" → version "120b" param-count,
-	// "gpt-4o" → version "4o") that is out of SLICE-1 scope (version-presence is
-	// SLICE-2). Scoping M3 to member recovery keeps version extraction unchanged.
+	// "gpt-4o" → version "4o") that is out of scope (version-presence is
+	// ). Scoping M3 to member recovery keeps version extraction unchanged.
 	//
-	// SLICE-3 INSERTION POINT: family_aliases ledger remap (after M4, before bare-gen-split)
-	// SLICE-2 INSERTION POINT: bare_gen_split closed predicate (before recoverMemberVariant)
+	// INSERTION POINT: family_aliases ledger remap (after M4, before bare-gen-split)
+	// INSERTION POINT: bare_gen_split closed predicate (before recoverMemberVariant)
 	// Two halves, both gated on the SAME closed predicate (splitBareGen):
 	//  (A) family-token split: when the raw family is itself a glued <base><int>
 	//      (e.g. raw="qwen3"), split it to base family + generation version.
@@ -2293,18 +2292,18 @@ func ParseFamilyDetailed(raw Family, id ModelID, p Provider) (Family, string, st
 		variant = recoverMemberVariant(strings.Split(memberZone, "-"), family)
 	}
 
-	// SLICE-8 (d): letter-prefix series split (CLARIFICATION-5). Runs BEFORE generic
+	// letter-prefix series split. Runs BEFORE generic
 	// version extraction so it OWNS the (variant, version) decomposition for series
 	// families (kimi/minimax/mimo) and takes precedence over both the version_patterns
 	// whole-token variant and the residual-unaccounted early-return below (e.g.
 	// "kimi-k2-6" must become ('k','2.6'), not version "6" + residual "k2"). A trailing
-	// curated TIER token is promoted to the Modifier (CLARIFICATION-6) — but ONLY when
+	// curated TIER token is promoted to the Modifier — but ONLY when
 	// no other modifier (thinking/vision from the ID or raw family) is already present;
 	// multi-modifier cases keep the existing modifier and drop the tier (surfaced).
 	if pd, pdErr := loadParseData(); pdErr == nil {
 		if sv, svv, tierMod, ok := splitSeriesVariant(pd, family, string(cleanedID)); ok {
 			variant, version = sv, svv
-			// SLICE-10: the tier COMPOSES into the modifier LIST (CanonicalizeModifiers
+			// the tier COMPOSES into the modifier LIST (CanonicalizeModifiers
 			// dedups against any already-peeled tier/capability), no longer dropped.
 			if tierMod != "" {
 				modifier = CanonicalizeModifiers(append(append([]string{}, modifier...), tierMod))
@@ -2361,7 +2360,7 @@ func ParseFamilyDetailed(raw Family, id ModelID, p Provider) (Family, string, st
 		if version == "" {
 			version = ExtractVersionFromID(cleanedID, family)
 		}
-		// SLICE-8 (c): glued version-modifier fallback (glm-4.5v → version 4.5 +
+		// glued version-modifier fallback (glm-4.5v → version 4.5 +
 		// modifier vision). The trailing "v" is glued to the version so neither
 		// ExtractModifier (separate hyphen-token) nor the extractors above catch it.
 		// Only fills an empty version and only sets the modifier when still empty.
@@ -2423,7 +2422,7 @@ func ParseFamilyDetailed(raw Family, id ModelID, p Provider) (Family, string, st
 	// cases where suffix stripping correctly extracted the modifier as variant).
 	//
 	// Note: this is intentionally separate from ExtractModifier (added by
-	// SLICE-FIX-V2-5), which extracts the modifier as a first-class field.
+	// ), which extracts the modifier as a first-class field.
 	// After V2-5 lands, most ReasonKnownSuffixOverflow cases will be pre-empted
 	// by ExtractModifier; this block catches residuals.
 	if string(id) != "" {
@@ -2467,8 +2466,8 @@ func ParseFamilyDetailed(raw Family, id ModelID, p Provider) (Family, string, st
 	return recon(family, variant, version, modifier, nil)
 }
 
-// rc3-L4 (bestiary-8yrc): the YYMM-range-restricted reYYMMCandidate was REMOVED as dead
-// code — it had no callers. The FIX-A reBareAnyFourDigitCandidate below generalized it to
+// The YYMM-range-restricted reYYMMCandidate was REMOVED as dead
+// code — it had no callers. The reBareAnyFourDigitCandidate below generalized it to
 // ANY 4-digit segment and is the sole regex the YYMM-date-as-version guard uses.
 
 // reBareAnyFourDigitCandidate matches any standalone 4-digit all-numeric segment
@@ -2597,7 +2596,7 @@ func detectSuffixOverflow(rawStr string, family Family, variant string, version 
 }
 
 // --------------------------------------------------------------------------
-// SLICE-1: M3 vendor-strip helpers
+// M3 vendor-strip helpers
 // --------------------------------------------------------------------------
 
 // stripVendorAliasPrefix strips a leading "<alias>/" or "<alias>-" prefix from
@@ -2637,11 +2636,11 @@ func stripVendorAliasPrefix(id string, vendorAliases []string) string {
 //
 // This is the SINGLE M3 pipeline head shared by BOTH decomposition entrypoints
 // (InferFamilyFromIDWithVariant and ParseFamilyDetailed), so the strip is applied
-// symmetrically. Resolves Reviewer A finding jvpa: the vendor-alias strip
+// symmetrically. The vendor-alias strip
 // previously lived only in InferFamilyFromIDWithVariant, leaving ParseFamilyDetailed's
 // raw!="" path without it.
 func stripVendorNamespace(id string) string {
-	// SLICE-14 (TIER-1): SURGICAL doubled-vendor strip. Some providers prefix the model name
+	// (TIER-1): SURGICAL doubled-vendor strip. Some providers prefix the model name
 	// with the org AND repeat it: org "meta-llama/" + name "Meta-Llama-3.1-8B-Instruct". After
 	// the org segment is stripped, the leading "Meta-" makes the family derive "meta" instead
 	// of "llama". Strip the redundant leading "meta-" ONLY when the ORG segment is literally
@@ -2658,7 +2657,7 @@ func stripVendorNamespace(id string) string {
 	if pd, err := loadParseData(); err == nil {
 		idStr = stripVendorAliasPrefix(idStr, pd.vendorAliases)
 	}
-	// rc3-L1 (bestiary-xfo0): NO-SLASH doubled-vendor form. The slash-org case
+	// NO-SLASH doubled-vendor form. The slash-org case
 	// "meta-llama/Meta-Llama-3.1-…" is handled above; the no-slash hyphen forms
 	// "Meta-Llama-3-1-8B-Instruct-FP8" and "meta-llama-3_3-70b-instruct" (no org segment)
 	// reach here with the redundant leading "meta-" intact, deriving family "meta" instead
@@ -2680,14 +2679,14 @@ func stripVendorNamespace(id string) string {
 // SEPARATE "azure-cognitive-services" namespace, whose models are named plainly, e.g.
 // "gpt-4o"). Stripping it silently deleted the azure-host signal from the decomposition
 // tuple. The seam is removed; these ids decompose natively now, and the host belongs in a
-// future serving-host/backend dimension. Provider-name-as-id-prefix is fundamentally unsafe:
+// future serving-host/backend dimension (GH#16). Provider-name-as-id-prefix is fundamentally unsafe:
 // an id may encode a DIFFERENT provider's name as routing/host info.
 
 // --------------------------------------------------------------------------
-// SLICE-1: recoverMemberVariant (sole owner)
+// recoverMemberVariant (sole owner)
 
 // --------------------------------------------------------------------------
-// SLICE-1: recoverMemberVariant (sole owner)
+// recoverMemberVariant (sole owner)
 // --------------------------------------------------------------------------
 
 // bareVariantSuffix reports whether lowTok (lowercase, no leading "-") matches a
@@ -2710,7 +2709,7 @@ func bareVariantSuffix(pd *parseData, lowTok string) (string, bool) {
 }
 
 // --------------------------------------------------------------------------
-// SLICE-2: bare_gen_split closed predicate
+// bare_gen_split closed predicate
 // --------------------------------------------------------------------------
 
 // splitBareGen applies the M2 bare-generation split CLOSED predicate to a single
@@ -2803,7 +2802,7 @@ func recoverMemberVariant(idTokens []string, family Family) string {
 	}
 	info, hasFamilyInfo := pd.families[Family(strings.ToLower(string(family)))]
 	if !hasFamilyInfo {
-		// SLICE-12 (#5) generic suffix-variant recovery for UNREGISTERED families
+		// generic suffix-variant recovery for UNREGISTERED families
 		// (codellama, rnj, mixtral, voxtral, lyria — the enforce-set distinct families and
 		// over-capture short bases that carry no families.json member list). Recover a
 		// trailing GENERIC variant word (instruct/pro/mini/large/small/medium) so the
@@ -2827,7 +2826,7 @@ func recoverMemberVariant(idTokens []string, family Family) string {
 		}
 		return ""
 	}
-	// SLICE-12 (#6) flash-lite tier: prefer a COMPOUND (multi-token) member that appears
+	// flash-lite tier: prefer a COMPOUND (multi-token) member that appears
 	// as a contiguous hyphen-delimited run in the ID over a shorter single-token member —
 	// e.g. "gemini-2.5-flash-lite-preview" must recover "flash-lite", NOT the bare "flash"
 	// that the single-token scan below would match first. Longest compound member wins.
@@ -2856,7 +2855,7 @@ func recoverMemberVariant(idTokens []string, family Family) string {
 			if lowTok == member {
 				return member
 			}
-			// SLICE-14: a member GLUED to a trailing param-size ("r7b" = member "r" + size
+			// a member GLUED to a trailing param-size ("r7b" = member "r" + size
 			// "7b" for command-r7b-…) recovers the bare member — the param-size is GH#9 noise
 			// dropped from the canonical tuple. Both pieces are attested (member ∈ families.json,
 			// size ∈ isParamSizeToken), so this is mechanical, not a speculative add.
@@ -2873,7 +2872,7 @@ func recoverMemberVariant(idTokens []string, family Family) string {
 }
 
 // genericVariantWords is the small CLOSED set of family-agnostic variant words recovered
-// for UNREGISTERED families (SLICE-12 #5). These are unambiguous tier/finetune words that
+// for UNREGISTERED families. These are unambiguous tier/finetune words that
 // are a VARIANT for whatever family carries them (codellama-…-instruct, lyria-…-pro,
 // voxtral-small). Deliberately excludes short/ambiguous suffixes (r/a/oss/base) that would
 // over-recover for an unregistered family with no curated member list to disambiguate.
@@ -2949,7 +2948,7 @@ func isFourDigitDateToken(tok string) bool {
 }
 
 // --------------------------------------------------------------------------
-// SLICE-1-FIX-3: date-shape guards for dot-join paths
+// date-shape guards for dot-join paths
 // --------------------------------------------------------------------------
 
 // is6DigitYYMMDD returns true when tok is exactly 6 all-numeric digits.
@@ -3001,7 +3000,7 @@ func isMMYYYYTwoGroup(s string) bool {
 
 // isDateShapedToken returns true when tok is a date-shaped digit group that must
 // NOT be included as part of a semantic version. Covers all date shapes defined by
-// SLICE-1-FIX-3: 4-digit (YYMM/MMDD), 6-digit (YYMMDD).
+// 4-digit (YYMM/MMDD), 6-digit (YYMMDD).
 // MM-YYYY two-group detection requires two tokens and is handled separately by
 // isMMYYYYTwoGroup on the full remainder.
 func isDateShapedToken(tok string) bool {
@@ -3009,7 +3008,7 @@ func isDateShapedToken(tok string) bool {
 }
 
 // --------------------------------------------------------------------------
-// SLICE-8 (b): param-size guard (mirrors the date guard)
+// param-size guard (mirrors the date guard)
 // --------------------------------------------------------------------------
 
 // reParamSizeToken matches a parameter-count / model-size token that must NEVER
@@ -3028,7 +3027,7 @@ var reParamSizeToken = regexp.MustCompile(`^(?i:\d+(?:\.\d+)?[bm]|\d+x\d+b|\d+b-
 
 // isParamSizeToken reports whether tok is a parameter-count / model-size token
 // (e.g. "120b", "7m", "8x22b", "30b-a3b"). Such tokens are dropped from version
-// extraction by the SLICE-8 (b) param-size guard so that, e.g., gpt-oss-120b
+// extraction by the (b) param-size guard so that, e.g., gpt-oss-120b
 // decomposes to Version "" on ALL providers (consistent), with the size INFO left
 // to GH#9 rather than masquerading as a version.
 func isParamSizeToken(tok string) bool {
@@ -3039,7 +3038,7 @@ func isParamSizeToken(tok string) bool {
 }
 
 // --------------------------------------------------------------------------
-// SLICE-8 (c): glued letter-suffix on a version (the glmv / glm-4.5v case)
+// glued letter-suffix on a version (the glmv / glm-4.5v case)
 // --------------------------------------------------------------------------
 
 // gluedVersionModifierLetters maps a recognized modifier-letter that may be GLUED
@@ -3059,18 +3058,18 @@ var gluedVersionModifierLetters = map[byte]string{
 var reGluedVersionModifier = regexp.MustCompile(`^(\d+(?:\.\d+)?)([a-zA-Z])$`)
 
 // splitGluedVersionModifier inspects the LAST hyphen-token of id for a numeric
-// version with a glued recognized modifier-letter (SLICE-8 (c), the glm-4.5v case).
+// version with a glued recognized modifier-letter, the glm-4.5v case).
 // On match it returns (cleanedID, modifier, true) where cleanedID has the trailing
 // letter removed (so version extraction sees the bare numeric version) and modifier
 // is the expanded name (e.g. "vision"). On no match it returns (id, "", false).
 //
-// SCOPE-NOTE (SLICE-8 (c) / S3→S8 hand-off): glm-4.5v decomposes to
+// SCOPE-NOTE (glued-suffix vs trailing-token hand-off): glm-4.5v decomposes to
 // (glm, "", 4.5, modifier=vision). The trailing "v" is GLUED to the version so the
-// SLICE-3 trailing-{vision}-token modifier rule (which matches "-vision" as a
+// trailing-{vision}-token modifier rule (which matches "-vision" as a
 // separate hyphen token) does NOT catch it; this glued-suffix split is the dedicated
 // owner. Only recognized modifier-letters (v=vision) are split — "4o" stays "4o".
 // CRITICAL: this is the TRAILING-letter case (modifier). The LEADING series-letter
-// case (mimo-v2.5 → variant "v") is SLICE-8 (d); position is the discriminator.
+// case (mimo-v2.5 → variant "v") is the series split; position is the discriminator.
 func splitGluedVersionModifier(id string) (string, string, bool) {
 	if id == "" {
 		return id, "", false
@@ -3098,7 +3097,7 @@ func splitGluedVersionModifier(id string) (string, string, bool) {
 }
 
 // --------------------------------------------------------------------------
-// SLICE-8 (d): letter-prefix model-series split (CLARIFICATION-5)
+// letter-prefix model-series split
 // --------------------------------------------------------------------------
 
 // reSeriesDotP matches the within-token version part of a series token AFTER the
@@ -3156,7 +3155,7 @@ func parseSeriesNumber(rest string) (version string, hadSep bool, ok bool) {
 	return "", false, false
 }
 
-// splitSeriesVariant implements the SLICE-8 (d) / CLARIFICATION-5 letter-prefix
+// splitSeriesVariant implements the (d) / letter-prefix
 // model-series decomposition. For a family carrying a series_letter (kimi→"k",
 // minimax→"m", mimo→"v"), it finds the "<letter><number>" token in the model ID
 // and returns (variant=<letter>, version=<number>, ok=true). It normalizes ALL
@@ -3170,7 +3169,7 @@ func parseSeriesNumber(rest string) (version string, hadSep bool, ok bool) {
 //	kimi-k2:1t     → ("k", "2")     (":1t" context discriminator stripped)
 //	minimax-m1-80k → ("m", "1")     ("80k" context window ignored)
 //
-// ⚠ TIER INTERACTION (MUST-SURFACE, SLICE-8 d): when a NON-numeric, non-modifier,
+// ⚠ TIER INTERACTION (MUST-SURFACE, d): when a NON-numeric, non-modifier,
 // non-size/context tier token follows the series token (kimi-k2-instruct,
 // kimi-k2p6-turbo, mimo-v2.5-pro, minimax-m2.5-fast), the canonical placement of
 // the tier is AMBIGUOUS (variant is a single field). This was surfaced to the
@@ -3185,8 +3184,8 @@ func parseSeriesNumber(rest string) (version string, hadSep bool, ok bool) {
 // "<base>-<letter><digit>…" where base carries a series_letter that matches the
 // glued token's leading letter — keeping the recovery narrowly scoped to the three
 // series families (kimi/minimax/mimo); every other family is left untouched.
-// This is the family-side half of the SLICE-8 (d) normalization (so kimi-k2-0711
-// and kimi-k2-0905 resolve to family "kimi", per CLARIFICATION-5).
+// This is the family-side half of the (d) normalization (so kimi-k2-0711
+// and kimi-k2-0905 resolve to family "kimi", per ).
 func seriesBaseFamily(pd *parseData, family Family) (Family, bool) {
 	if pd == nil {
 		return "", false
@@ -3215,7 +3214,7 @@ func seriesBaseFamily(pd *parseData, family Family) (Family, bool) {
 }
 
 // --------------------------------------------------------------------------
-// SLICE-11 (rc2): family OVER-CAPTURE reduction (Option B / CLARIFICATION-9)
+// family OVER-CAPTURE reduction (Option B / )
 // --------------------------------------------------------------------------
 
 // isFamilyResidueToken reports whether tok (a single lowercase token TRAILING the
@@ -3265,7 +3264,7 @@ func isFamilyResidueToken(pd *parseData, base Family, tok string) bool {
 }
 
 // reduceOverCapturedFamily collapses an ID-seeded COMPOUND family to its registered
-// SHORT base family (SLICE-11 Option B). It is the inverse of SLICE-9 Option-A's
+// SHORT base family. It is the inverse of Option-A's
 // family-PRESERVE workaround: where the empty-raw ID-path OVER-captures the family
 // (claude-opus-4.1 → "claude-opus", gpt-4o-mini → "gpt-4o", deepseek-v4-pro →
 // "deepseek-v4", llama-3.3-70b-instruct → "llama-3.3-70b", qwen3-vl-30b-a3b →
@@ -3330,10 +3329,10 @@ func reduceOverCapturedFamily(pd *parseData, family Family) (Family, string, boo
 		return "", "", false
 	}
 
-	// SLICE-14: the ENTIRE remainder is a single registered COMPOUND member of the base
+	// the ENTIRE remainder is a single registered COMPOUND member of the base
 	// (grok-code-fast → grok + member "code-fast"). Taking it as one product-name variant
 	// unit avoids a per-token residue decision on "fast" (which would be a modifier-vs-variant
-	// judgment reserved for S10) — the member is curated in families.json, so this is
+	// judgment reserved for the systematic modifier ruling) — the member is curated in families.json, so this is
 	// attested product-name recovery, not a speculative split.
 	if info, ok := pd.families[base]; ok {
 		for _, m := range info.Members {
@@ -3350,8 +3349,8 @@ func reduceOverCapturedFamily(pd *parseData, family Family) (Family, string, boo
 		// DECLINE when a CAPABILITY modifier (thinking/think/vision) is glued into the
 		// over-captured family token. Reducing + re-decomposing such a family risks
 		// dropping the capability modifier (single Modifier field), and the multi-modifier
-		// cases (e.g. kimi-k2-thinking-turbo: thinking AND tier) are the KNOWN S8 residual
-		// explicitly deferred to the SLICE-10 Modifier-LIST change. Leaving these compound
+		// cases (e.g. kimi-k2-thinking-turbo: thinking AND tier) are the KNOWN residual
+		// explicitly deferred to the Modifier-LIST change. Leaving these compound
 		// families intact keeps them an HONEST residual rather than silently losing the
 		// capability — never masking the deferred multi-modifier limitation.
 		if tok == "thinking" || tok == "think" || tok == "vision" {
@@ -3381,14 +3380,14 @@ func reduceOverCapturedFamily(pd *parseData, family Family) (Family, string, boo
 
 // seriesTierModifiers is the curated set of TIER/finetune tokens that, when they
 // trail a letter-prefix series token, are promoted to the Modifier field
-// (CLARIFICATION-6: tier→modifier, variant stays the pure series-letter). This set
+// (tier→modifier, variant stays the pure series-letter). This set
 // is consulted ONLY inside splitSeriesVariant — i.e. ONLY within the letter-prefix
 // series decomposition (kimi/minimax/mimo). It is deliberately NOT added to the
 // global modifiers.json: every one of these tokens is also a VARIANT for some
 // NON-series family (turbo=qwen member + gpt-3.5-turbo; pro=gemini/mimo member;
 // instruct=llama member; fast=grok-4-fast; flash=qwen/glm/gemini member), so a
 // global promotion would wrongly reclassify gpt-5-mini / gemini-2.5-flash /
-// qwen-turbo. Series scoping satisfies the CLARIFICATION-6 edge-(b) constraint.
+// qwen-turbo. Series scoping satisfies the edge-(b) constraint.
 var seriesTierModifiers = map[string]struct{}{
 	"instruct":  {},
 	"turbo":     {},
@@ -3399,7 +3398,7 @@ var seriesTierModifiers = map[string]struct{}{
 	"pro":       {},
 	// "omni": the only remaining unknown-tier token that still caused a cross-provider
 	// series divergence after the initial tier→modifier wiring (mimo-v2-omni). Confirmed
-	// by the supervisor's residual-categorization analysis; added per CLARIFICATION-6.
+	// by the supervisor's residual-categorization analysis; added per .
 	"omni": {},
 }
 
@@ -3410,7 +3409,7 @@ type idFamilyOverrideEntry struct {
 	version string
 }
 
-// idFamilyOverrides is the rc3-L1 (USER-RATIFIED Impl-UAT bestiary-2gxu) CLOSED, exact-
+// idFamilyOverrides is the curated, CLOSED, exact-
 // model-ID family-override map. It exists ONLY for the embedded-family case the leading-
 // token decomposition cannot reach safely: the model ID leads with one family token but the
 // canonical family is embedded later, and a general embedded-detect would regress sibling
@@ -3431,9 +3430,9 @@ func isSeriesTierToken(tok string) bool {
 	return ok
 }
 
-// splitSeriesVariant implements the SLICE-8 (d) series split. It returns
+// splitSeriesVariant implements the (d) series split. It returns
 // (variant=series-letter, version, tierMod, ok). tierMod is the curated series-tier
-// token promoted to a Modifier (CLARIFICATION-6) when EXACTLY ONE tier trails the
+// token promoted to a Modifier when EXACTLY ONE tier trails the
 // series token AND no thinking/vision modifier also trails it; otherwise tierMod is
 // "" (multi-modifier cases keep the series split but leave the tier uncaptured,
 // pending the Modifier-multiplicity ruling — surfaced to the supervisor). A trailing
@@ -3520,7 +3519,7 @@ func splitSeriesVariant(pd *parseData, family Family, idStr string) (variant, ve
 		}
 	}
 
-	// CLARIFICATION-6: promote a single trailing tier to the Modifier ONLY when there
+	// promote a single trailing tier to the Modifier ONLY when there
 	// is exactly one tier and NO co-occurring thinking/vision modifier. Multi-modifier
 	// cases (tier + thinking/vision, or 2+ tiers) keep the series split but leave the
 	// tier uncaptured — the Modifier field is single-valued and the multiplicity rule
@@ -3532,13 +3531,13 @@ func splitSeriesVariant(pd *parseData, family Family, idStr string) (variant, ve
 	return string(letter), ver, tierMod, true
 }
 
-// idDrivenVersion is the consolidated ID-driven version extractor (SLICE-8 a/c).
+// idDrivenVersion is the consolidated ID-driven version extractor.
 // It extracts the canonical version for a resolved (family, variant) directly from
 // the model ID so the SAME ID yields the SAME version regardless of provider
 // raw_family. Resolution order:
 //
 //  1. Strip the vendor/path namespace (so "openai/gpt-4.1" and "gpt-4.1" agree).
-//  2. SLICE-8 (c): if the trailing token glues a recognized modifier-letter to a
+//  2. (c): if the trailing token glues a recognized modifier-letter to a
 //     numeric version (e.g. "glm-4.5v"), split it — extract the version off the
 //     cleaned token and surface the modifier (e.g. "vision"). The glued modifier is
 //     only returned when the split actually yields a version (no false positives).
@@ -3564,7 +3563,7 @@ func idDrivenVersion(id ModelID, family Family, variant string) (string, string)
 
 	v := extractVersionFromCleanID(cleaned, family, variant)
 	if v == "" && family == whisperFamily {
-		// rc3-L2 (bestiary-fz9r): WHISPER-FAMILY-GATED trailing "-v<int>" → Version recovery,
+		// WHISPER-FAMILY-GATED trailing "-v<int>" → Version recovery,
 		// mirroring the narrow curated azure-prefix-strip pattern. The general form blew up to
 		// 185 records (claude-opus-4-6-v1's Bedrock "-v1" packaging tag, elevenlabs dup, every
 		// -vN revision id), so this is STRICTLY gated on the resolved family being whisper —
@@ -3621,7 +3620,7 @@ func extractVersionFromCleanID(cleaned string, family Family, variant string) st
 	if v := ExtractVersionFromID(ModelID(cleaned), family); v != "" {
 		return v
 	}
-	// SLICE-8 (a): the version may appear AFTER the variant in the ID (e.g.
+	// the version may appear AFTER the variant in the ID (e.g.
 	// "claude-opus-4.6-fast", "mistral-small-3.2-24b-..."). When raw_family is empty
 	// the family alone ("claude"/"mistral") cannot reach the post-variant numeric, so
 	// try the family+variant compound as the prefix — making the empty-raw path agree
@@ -3639,7 +3638,7 @@ func extractVersionFromCleanID(cleaned string, family Family, variant string) st
 // by the hyphen-version regex) into a dot-notation version, stripping any TRAILING
 // date-shaped groups.
 //
-// RULE (SLICE-1-FIX-3): iterate groups left-to-right; stop (discard the current and
+// RULE: iterate groups left-to-right; stop (discard the current and
 // all remaining groups) at the first date-shaped group (4-digit YYMM/MMDD or 6-digit
 // YYMMDD). Dot-join the leading semantic-version groups only. Return "" when no
 // leading non-date groups remain.
@@ -3756,15 +3755,15 @@ func ExtractVersionBetweenFamilyAndVariant(id ModelID, family Family, variant st
 		return "", nil
 	}
 
-	// SLICE-8 (a): case-fold so mixed-case IDs ("GLM-5", "MiniMax-M2") agree with
+	// case-fold so mixed-case IDs ("GLM-5", "MiniMax-M2") agree with
 	// their lowercase siblings; the resolved family/variant are already lowercase.
 	idStr := strings.ToLower(lastPathSegment(string(id)))
 
 	// Normalize family: use only the first hyphen-token so that "claude-opus" → "claude".
-	// SLICE-1-FIX-4: full-prefix-first was reverted (FIX-2 B1 over-stripped compound families
+	// full-prefix-first was reverted (FIX-2 B1 over-stripped compound families
 	// like "gemini-2.5-flash-image-generation" by matching "gemini-2.5-flash-" as prefix and
 	// leaving "image-generation" as remainder with no numeric leading token, losing version "2.5").
-	// Proper additive handling for compound families (text-embedding, etc.) is deferred to rc2.
+	// Proper additive handling for compound families (text-embedding, etc.) is deferred.
 	normalizedFamily := strings.ToLower(firstToken(string(family)))
 	prefix := normalizedFamily + "-"
 	if !strings.HasPrefix(idStr, prefix) {
@@ -3783,7 +3782,7 @@ func ExtractVersionBetweenFamilyAndVariant(id ModelID, family Family, variant st
 		return "", nil
 	}
 
-	// SLICE-8 (a): bare dot-version remainder with NO trailing hyphen segment.
+	// bare dot-version remainder with NO trailing hyphen segment.
 	// e.g. "gpt-4.1" (family "gpt") → remainder "4.1"; "glm-4.6" → "4.6". Without
 	// this, the tokenizer below treats "4.1" as a non-numeric residual (it has a dot)
 	// and drops the version, so the SAME ID extracts a version on the empty-raw path
@@ -3826,7 +3825,7 @@ func ExtractVersionBetweenFamilyAndVariant(id ModelID, family Family, variant st
 	}
 
 	// Collect leading purely-numeric tokens between family and variant.
-	// SLICE-1-FIX-3: also reject 6-digit YYMMDD tokens (is6DigitYYMMDD) in addition
+	// also reject 6-digit YYMMDD tokens (is6DigitYYMMDD) in addition
 	// to the existing 4-digit guard (isFourDigitDateToken via isVersionToken). Stop at the
 	// first date-shaped token so trailing date groups are not included in the version.
 	var numericTokens []string
@@ -3887,7 +3886,7 @@ func ExtractVersionBetweenFamilyAndVariant(id ModelID, family Family, variant st
 		// Any tokens remaining after the variant are residual IF they are not known
 		// modifiers (which are semantically accounted for by the modifier extraction
 		// pipeline) and not purely numeric.
-		// SLICE-1-FIX-3: also skip 6-digit YYMMDD date tokens (they go to Date, not residual).
+		// also skip 6-digit YYMMDD date tokens (they go to Date, not residual).
 		for i := afterVariant; i < len(tokens); i++ {
 			tok := tokens[i]
 			if tok == "" {
