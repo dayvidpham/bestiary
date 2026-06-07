@@ -83,6 +83,24 @@ When updating wire types for upstream API changes:
 3. Update `UpstreamSchemaVersion`, `UpstreamGitCommit` in `version.go`
 4. Run `go generate ./...` to refresh static data
 
+## Releases
+
+Release tags are created automatically by `.github/workflows/tag-on-release-merge.yml` when a
+release PR is merged. **Do not tag releases by hand** — drive them through the PR title:
+
+1. Open the release PR into `main` with a title of the exact form `release(vX.Y.Z): <summary>`.
+   The version is carried in the conventional-commit scope; pre-releases are supported
+   (`release(v0.2.3-rc1): …`). A space after the colon is required.
+2. On merge, the workflow validates the title and creates the annotated tag `vX.Y.Z` on the
+   **resulting commit on `main`** (squash or merge commit), then pushes it.
+
+The workflow only takes effect **once it has landed on `main`** — for `pull_request` triggers GitHub
+runs the workflow from the base branch, so the PR that introduces it does not tag itself and any
+release merged earlier must be tagged by hand. It is a no-op for any other PR title, and **fails
+loudly if the tag already exists** (it never force-moves a published tag — so a duplicate or
+mistyped release is caught). Tags pushed by its `GITHUB_TOKEN` do **not** trigger downstream
+`on: push: tags` workflows — use a PAT or deploy key if a release-build job is later chained off the tag.
+
 ## File ownership
 
 | File | Owner | Notes |

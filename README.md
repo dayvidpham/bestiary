@@ -295,6 +295,29 @@ bestiary tracks two versions (see `version.go`):
 (The module release tag — `v0.2.0` — is a separate axis from `BestiarySchemaVersion`: the Go
 API grew substantially, while the JSON wire format stayed backward-compatible.)
 
+## Releases
+
+Release tags are created automatically when a **release PR is merged**. To cut a release:
+
+1. Open a PR into `main` whose **title** is `release(vX.Y.Z): <summary>` — the version lives in the
+   conventional-commit scope, e.g. `release(v0.2.3): lineage + entity linking`. Pre-releases are
+   supported: `release(v0.2.3-rc1): …`. A space after the `):` is required (`release(v0.2.3):x` is
+   not recognized).
+2. Merge it. The [`tag-on-release-merge`](.github/workflows/tag-on-release-merge.yml) workflow
+   validates the title, then creates the annotated tag `vX.Y.Z` on the **resulting commit on `main`**
+   (whether you squash or create a merge commit) and pushes it.
+
+Notes:
+
+- **Only active once it has landed on `main`.** Because the trigger is `pull_request`, GitHub runs
+  the workflow from the copy on the base branch — so the PR that *introduces* the workflow does not
+  tag itself, and any release merged before it reaches `main` must be tagged manually.
+- Any PR whose title is not a strict `release(vX.Y.Z): …` is ignored (a silent no-op).
+- If the tag already exists, the workflow **fails loudly** (it never force-moves a published tag),
+  so a duplicate or mistyped release PR is caught rather than silently doing nothing.
+- A tag pushed by the workflow's `GITHUB_TOKEN` does **not** trigger downstream `on: push: tags`
+  workflows; use a PAT or deploy key if you later chain a release-build job off the tag.
+
 ## Updating static data
 
 The static registry and `Model__*` constants are code-generated from the models.dev API:
