@@ -238,7 +238,7 @@ func Resolve(input string, opts ...ResolveOption) ([]ModelRef, error) {
 	// genuinely distinct models (different variants, versions, context windows, etc.)
 	// land in separate groups.
 	//
-	// FIX-B: The key now carries Version, Modifier, and a locally-parsed
+	// The group-key invariant: the key now carries Version, Modifier, and a locally-parsed
 	// ":N" context-window discriminator (parseContextN). This prevents context-window
 	// variants (e.g. claude-3-7-sonnet-thinking:1024 vs :128000) from being silently
 	// collapsed into a single representative — they share identical canonical fields
@@ -270,7 +270,7 @@ func Resolve(input string, opts ...ResolveOption) ([]ModelRef, error) {
 				version: ref.Version,
 				// the Modifier component is the ORDER-INDEPENDENT canonical
 				// key (modifierKey), so [thinking,turbo] and [turbo,thinking] never
-				// split a group; the ":N" context-window still discriminates per FIX-B.
+				// split a group; the ":N" context-window still discriminates per the group-key invariant.
 				modifier: modifierKey(ref.Modifier),
 				date:     ref.Date,
 				contextN: parseContextN(ref.ID),
@@ -310,7 +310,7 @@ func Resolve(input string, opts ...ResolveOption) ([]ModelRef, error) {
 
 	// Multiple distinct groups: ambiguous input.
 	// Build a representative candidate per distinct group using selectRepresentative.
-	// Fix (FIX-B): selectRepresentative prefers the
+	// Group-key invariant: selectRepresentative prefers the
 	// canonical provider row and falls back to lexicographic Provider order —
 	// ensuring "anthropic" appears as the representative for claude groups rather
 	// than an arbitrary rehost, and guaranteeing determinism independent of

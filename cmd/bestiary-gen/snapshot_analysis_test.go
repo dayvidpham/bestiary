@@ -25,7 +25,7 @@ type familyTuple struct {
 // of four buckets:
 //
 //   - CatA (vendor-prefix/case): families differ only by letter-case
-//     (e.g. "MiniMax" vs "minimax"). Fixable by M3 lowercase normalisation.
+//     (e.g. "MiniMax" vs "minimax"). Fixable by the lowercase/vendor-prefix normalisation.
 //   - CatB (bare-gen-split): families share a common base when stripped of
 //     trailing version tokens (e.g. "qwen" vs "qwen3.6"). These arise when
 //     some providers embed the generation number in the family slug.
@@ -312,17 +312,17 @@ func TestSnapshotAnalysis_CrossProviderDivergences(t *testing.T) {
 	// authoritative cross-provider gate; THIS analyzer pins the empirical
 	// baseline (the 388 figure the whole effort is measured against).
 	//
-	// The case-fold pass updated these constants: M4 (case-fold) resolved all 10 CatA
+	// The case-fold pass updated these constants: the case-fold resolved all 10 CatA
 	// cases; recoverMemberVariant resolved 38 CatC cases. New baseline: 340 / A=0
 	// / B=73 / C=210 / D=57. The "Meta <-> llama" mislabel pair became
-	// "llama <-> meta" (M4 lowercased the inferred family).
+	// "llama <-> meta" (the case-fold lowercased the inferred family).
 	//
-	// Restoring B1 is divergence-NEUTRAL on this count: restoring
-	// recoverMemberVariant's B1 family-agnostic sole-residual promotion (seed→flash,
+	// Restoring the sole-residual suffix promotion is divergence-NEUTRAL on this count: restoring
+	// recoverMemberVariant's family-agnostic sole-residual promotion (seed→flash,
 	// reka→flash, imagen→ultra, voyage→large/lite, …) reduces parse-failure residuals
 	// (a separate metric) but only promotes VERSION-bearing IDs — exactly what the
-	// original inline B1 did. Those promotions do not change which multi-provider IDs
-	// agree, so the divergence figures stay 340 / 0 / 73 / 210 / 57. The M3
+	// original inline promotion did. Those promotions do not change which multi-provider IDs
+	// agree, so the divergence figures stay 340 / 0 / 73 / 210 / 57. The vendor-strip
 	// helper symmetry fix is likewise non-observable here (version extraction unchanged).
 	//
 	// bare_gen_split: the closed predicate splits glued <base><int>
@@ -540,8 +540,8 @@ func TestSnapshotAnalysis_CrossProviderDivergences(t *testing.T) {
 	// silent CatD→CatC (or any cross-category) reclassification that would keep
 	// the total at 340 while changing the genuine-mislabel ledger candidates.
 	// Refreshing the snapshot intentionally changes these — update in lockstep.
-	// CatA → 0 (M4 fixed all case divergences); CatC → 210 (recoverMemberVariant).
-	// Restoring B1 is divergence-neutral (see divergenceExact note above): the restored B1
+	// CatA → 0 (the case-fold fixed all case divergences); CatC → 210 (recoverMemberVariant).
+	// Restoring the sole-residual promotion is divergence-neutral (see divergenceExact note above): the restored
 	// promotion is version-gated, so it does not move these category counts.
 	// The bare_gen_split predicate resolved 70 of 73 CatB (59 converged, 11
 	// reclassified to CatC). CatB → 3 (residual hy/lyria/rnj, no families.json entry).
@@ -563,7 +563,7 @@ func TestSnapshotAnalysis_CrossProviderDivergences(t *testing.T) {
 	// CatD 1→0 — the nemotron embedded-family residual folded via idFamilyOverrides.
 	// ALL cross-provider categories are now ZERO (total divergence = 0).
 	const (
-		catAExact = 0 // vendor-prefix/case (M4 resolved all)
+		catAExact = 0 // vendor-prefix/case (case-fold resolved all)
 		catBExact = 0 // bare-gen-split
 		catCExact = 0 // member-variant/version — all converged
 		catDExact = 0 // genuine family mislabel — nemotron folded; ZERO

@@ -29,7 +29,7 @@ type familyOverride struct {
 // "sonnet", "haiku"] for "claude"). Used by recoverMemberVariant to identify
 // variant tokens in model IDs.
 //
-// BareGenSplit drives the M2 bare-generation split predicate. Set to
+// BareGenSplit drives the bare-generation split predicate. Set to
 // provisional values by ; finalizes attested flags.
 //
 // SeriesLetter marks a letter-prefix model series:
@@ -71,14 +71,14 @@ type parseData struct {
 	families map[Family]familyInfo
 
 	// vendorAliases is the list of lowercase vendor alias names (non-provider
-	// vendors) from parse/data/vendor_aliases.json. Used for M3 vendor strip:
+	// vendors) from parse/data/vendor_aliases.json. Used for the vendor/namespace strip:
 	// model IDs starting with <alias>/ or <alias>- have the prefix stripped.
 	vendorAliases []string
 
 	// familyAliases is the canonical-winner ledger: mislabel/shorthand
 	// family key → canonical family. Populated from parse/data/family_aliases.json.
 	// Keys are lowercase mislabels (need NOT be canonical); VALUES are canonical
-	// families validated against allFamilies at load (fail-fast). Applied after M4
+	// families validated against allFamilies at load (fail-fast). Applied after the case-fold
 	// family normalisation and before bare-gen-split in both parse entrypoints.
 	familyAliases map[Family]Family
 
@@ -326,7 +326,7 @@ func initParseData() (*parseData, error) {
 				key, err,
 			)
 		}
-		// Store under the lowercase key so recoverMemberVariant lookups use M4-normalised
+		// Store under the lowercase key so recoverMemberVariant lookups use case-folded
 		// family values.
 		families[Family(strings.ToLower(key))] = info
 	}
@@ -391,7 +391,7 @@ func initParseData() (*parseData, error) {
 			err,
 		)
 	}
-	// Normalise keys to lowercase (M4 boundary); values are canonical families.
+	// Normalise keys to lowercase (case-fold boundary); values are canonical families.
 	familyAliases := make(map[Family]Family, len(aliasFile.Aliases))
 	for key, target := range aliasFile.Aliases {
 		familyAliases[Family(strings.ToLower(key))] = Family(strings.ToLower(target))
@@ -568,7 +568,7 @@ func FamilyAliasesJSONError(data []byte) error {
 // remapFamilyAlias applies the canonical-winner ledger to family: if a
 // ledger row maps family (compared case-insensitively) to a canonical target, the
 // target is returned; otherwise family is returned unchanged (DEFAULT own-family).
-// Called at the insertion point (after M4 normalisation, before
+// Called at the insertion point (after the case-fold normalisation, before
 // bare-gen-split) in both parse entrypoints.
 func remapFamilyAlias(pd *parseData, family Family) Family {
 	if pd == nil || family == "" {
@@ -770,7 +770,7 @@ func ParseFamilyWithVersion(raw Family) (Family, string, string) {
 	}
 
 	// Step 5: Bounded reorder — try to find a known-override prefix before pure passthrough.
-	// R3a (e9pi): without this step, a string like "claude-opus-4-1-extra-stuff-zen" would
+	// Without this bounded reorder, a string like "claude-opus-4-1-extra-stuff-zen" would
 	// return the whole string as the family (passthrough), causing detectSuffixOverflow to
 	// find 0 unaccounted tokens (all tokens are "consumed" by the family) and thus making
 	// ReasonUnknownSuffixOverflow unreachable.
@@ -868,7 +868,7 @@ func ExtractVersionFromID(id ModelID, rawFamily Family) string {
 	// dropped on those providers only — a cross-provider version-presence divergence.
 	// case-fold the prefix match so an uppercase ID (e.g. "GLM-5",
 	// "MiniMax-M2") yields the SAME version as its lowercase sibling. The resolved
-	// family is already lowercase (M4), so without folding the literal prefix check
+	// family is already lowercase (case-folded), so without folding the literal prefix check
 	// fails on mixed-case IDs and the version drops on those providers only.
 	idStr := strings.ToLower(stripVendorNamespace(string(id)))
 	prefix := strings.ToLower(string(rawFamily)) + "-"
@@ -891,8 +891,8 @@ func ExtractVersionFromID(id ModelID, rawFamily Family) string {
 
 	// Path (a): all tokens are purely numeric → hyphen-separated digits → dot-join.
 	// e.g. "4-5" → "4.5"; "4-6" → "4.6"; "3-1" → "3.1"
-	// R3b (eq7w): reject a single YYMM token (e.g. "2603") to prevent Mistral-style
-	// 4-digit date numerals from being returned as versions.
+	// The YYMM date guard rejects a single YYMM token (e.g. "2603") to prevent
+	// Mistral-style 4-digit date numerals from being returned as versions.
 	// also strip trailing date groups from multi-group remainders, and
 	// detect the MM-YYYY two-group pattern (e.g. "08-2024", "03-2025") as a full date.
 	if reHyphenDigits.MatchString(remainder) {
@@ -1278,7 +1278,7 @@ func promoteVariantModifier(pd *parseData, family Family, variant string, mods [
 // InferFamilyFromIDWithVariant is the extended empty-family fallback for models
 // whose API family field is empty (~25% of models). Unlike InferFamilyFromID,
 // it extracts (Family, Variant, Version) by:
-//  1. Attempting the Δ2′ modifier-strip path (R3c): tentatively strip a trailing
+//  1. Attempting the Δ2′ modifier-strip path: tentatively strip a trailing
 //     modifier to expose a hidden date, then decompose and apply two commit guards.
 //  2. Existing flow: strip trailing date, feed ID to ParseFamilyWithVersion, then
 //     fall back to first-token-only if no decomposition found.
@@ -1316,20 +1316,20 @@ func InferFamilyFromIDWithVariant(id ModelID, p Provider) (Family, string, strin
 }
 
 // inferFamilyFromIDWithVariantBase is the inner empty-family inference (pre
-// series-split). It owns the M3/M4 + ledger + bare-gen + member-recovery flow; the
+// series-split). It owns the vendor-strip + case-fold + ledger + bare-gen + member-recovery flow; the
 // series override is applied by the InferFamilyFromIDWithVariant wrapper.
 func inferFamilyFromIDWithVariantBase(id ModelID, p Provider) (Family, string, string) {
 	if id == "" {
 		return "", "", ""
 	}
 
-	// ── M3: vendor/namespace strip (shared head) ─────────────────────────────
+	// ── Vendor/namespace strip (shared head) ─────────────────────────────
 	// stripVendorNamespace strips the "<org>/" path segment then any residual
 	// "<vendor_alias>-" / "<vendor_alias>/" prefix (e.g. "minimaxai-minimax-m1" →
 	// "minimax-m1"). The SAME helper is called by ParseFamilyDetailed (for symmetry).
 	idStr := stripVendorNamespace(string(id))
 
-	// R3c (Δ2′): a trailing modifier (e.g. "-thinking") can hide a trailing date
+	// Modifier-strip date recovery: a trailing modifier (e.g. "-thinking") can hide a trailing date
 	// ("-20250805-thinking"), blocking stripTrailingDate and corrupting decomposition.
 	// Algorithm: tentatively strip modifier → expose date → stripTrailingDate → provisional
 	// decompose → GUARD-1 (variant-guard: ExtractModifier returns non-empty consumed) +
@@ -1358,9 +1358,9 @@ func inferFamilyFromIDWithVariantBase(id ModelID, p Provider) (Family, string, s
 					version = v
 				}
 			}
-			// M4: lowercase Family field at the output boundary.
+			// Case-fold: lowercase Family field at the output boundary.
 			outFamily := Family(strings.ToLower(string(fProv)))
-			// INSERTION POINT: family_aliases ledger remap (after M4, before
+			// INSERTION POINT: family_aliases ledger remap (after the case-fold, before
 			// bare-gen-split). This modifier-stripping branch returns early, so the
 			// ledger must be applied here too for symmetry. DEFAULT own-family → no-op.
 			if pd, pdErr := loadParseData(); pdErr == nil {
@@ -1436,7 +1436,7 @@ func inferFamilyFromIDWithVariantBase(id ModelID, p Provider) (Family, string, s
 	family, variant, version := ParseFamilyWithVersion(Family(candidateFamilyStr))
 
 	// ── Pipeline skeleton ──────────────────────────────────────────────────
-	// INSERTION POINT: family_aliases ledger remap (after M4, before bare-gen-split)
+	// INSERTION POINT: family_aliases ledger remap (after the case-fold, before bare-gen-split)
 	// INSERTION POINT: bare_gen_split closed predicate (before recoverMemberVariant)
 
 	// If ParseFamilyWithVersion returns the raw string unchanged (no pattern matched),
@@ -1447,7 +1447,7 @@ func inferFamilyFromIDWithVariantBase(id ModelID, p Provider) (Family, string, s
 		baseFamily := Family(strings.ToLower(firstToken(stripped)))
 		// Remaining tokens after the first (family) token are candidate member zones.
 		remainingTokens := tokens[1:]
-		// INSERTION POINT: family_aliases ledger remap (after M4, before
+		// INSERTION POINT: family_aliases ledger remap (after the case-fold, before
 		// bare-gen-split). Folds an inferred mislabel/shorthand seed to its canonical
 		// family (e.g. "l3.1" → "llama" for community Llama-3 finetunes) so the family
 		// agrees cross-provider; recoverMemberVariant then runs against the canonical
@@ -1466,14 +1466,14 @@ func inferFamilyFromIDWithVariantBase(id ModelID, p Provider) (Family, string, s
 			}
 		}
 		recoveredVariant := recoverMemberVariant(remainingTokens, baseFamily)
-		// M4: baseFamily is already lowercased above.
+		// Case-fold: baseFamily is already lowercased above.
 		return baseFamily, recoveredVariant, bareVersion
 	}
 
-	// M4: lowercase Family field at the output boundary.
+	// Case-fold: lowercase Family field at the output boundary.
 	family = Family(strings.ToLower(string(family)))
 
-	// INSERTION POINT: family_aliases ledger remap (after M4, before bare-gen-split).
+	// INSERTION POINT: family_aliases ledger remap (after the case-fold, before bare-gen-split).
 	// DEFAULT own-family → no-op; a ledger row remaps a mislabel to its canonical family.
 	if pd, pdErr := loadParseData(); pdErr == nil {
 		family = remapFamilyAlias(pd, family)
@@ -1616,7 +1616,7 @@ func splitAndStripVersionTail(s string) []string {
 // AND is not a YYMM-date token (as detected by isFourDigitDateToken).
 // Used to strip trailing version components from model IDs.
 //
-// R3b (eq7w): YYMM tokens (e.g. "2603", "2512") are rejected so that
+// YYMM tokens (e.g. "2603", "2512") are rejected by the date guard so that
 // mistral-small-2603 → no version.
 func isVersionToken(tok string) bool {
 	if tok == "" {
@@ -1627,7 +1627,7 @@ func isVersionToken(tok string) bool {
 			return false
 		}
 	}
-	// R3b guard: reject YYMM date tokens (e.g. 2603, 2512, 2411).
+	// YYMM date guard: reject YYMM date tokens (e.g. 2603, 2512, 2411).
 	return !isFourDigitDateToken(tok)
 }
 
@@ -2163,12 +2163,12 @@ func ParseFamilyDetailed(raw Family, id ModelID, p Provider) (Family, string, st
 
 	family, variant, version := ParseFamilyWithVersion(cleanRaw)
 
-	// M4: lowercase Family field at the initial parse boundary.
+	// Case-fold: lowercase Family field at the initial parse boundary.
 	// Applied to all raw_family inputs including empty string (no-op on "").
-	// For raw=="" the InferFamilyFromIDWithVariant path below applies its own M4.
+	// For raw=="" the InferFamilyFromIDWithVariant path below applies its own case-fold.
 	family = Family(strings.ToLower(string(family)))
 
-	// INSERTION POINT: family_aliases ledger remap (after M4, before bare-gen-split).
+	// INSERTION POINT: family_aliases ledger remap (after the case-fold, before bare-gen-split).
 	// DEFAULT own-family → no-op; a ledger row remaps a mislabel to its canonical family.
 	if pd, pdErr := loadParseData(); pdErr == nil {
 		family = remapFamilyAlias(pd, family)
@@ -2177,7 +2177,7 @@ func ParseFamilyDetailed(raw Family, id ModelID, p Provider) (Family, string, st
 	// No failure annotation when the input is empty: delegate to
 	// InferFamilyFromIDWithVariant so that GUARD-2 passthrough cases (e.g.
 	// kimi-k2-thinking) are handled correctly. The modifier is then extracted from
-	// the inferred family+variant context. M4 is applied inside InferFamilyFromIDWithVariant.
+	// the inferred family+variant context. The case-fold is applied inside InferFamilyFromIDWithVariant.
 	if raw == "" {
 		// Empty raw_family: the decomposition is fully ID-driven (no family hint to
 		// preserve). this is the same idDrivenDecompose primitive the
@@ -2232,18 +2232,18 @@ func ParseFamilyDetailed(raw Family, id ModelID, p Provider) (Family, string, st
 	}
 
 	// ── Pipeline skeleton ──────────────────────────────────────────
-	// M3 (vendor/namespace strip) is applied here at the member-recovery boundary
+	// The vendor/namespace strip is applied here at the member-recovery boundary
 	// via stripVendorNamespace — the SAME helper InferFamilyFromIDWithVariant uses
 	// at its head.
-	// We deliberately scope M3 to the member-recovery memberZone rather than
+	// We deliberately scope the vendor strip to the member-recovery memberZone rather than
 	// pre-stripping the ID fed to the version extractors: ExtractVersionBetween…
 	// already calls lastPathSegment internally, and pre-stripping the "<org>/"
 	// segment ahead of ExtractVersionFromID would expose a SEPARATE latent
 	// version-extraction issue (e.g. "gpt-oss-120b" → version "120b" param-count,
 	// "gpt-4o" → version "4o") that is out of scope (version-presence is
-	// ). Scoping M3 to member recovery keeps version extraction unchanged.
+	// ). Scoping the vendor strip to member recovery keeps version extraction unchanged.
 	//
-	// INSERTION POINT: family_aliases ledger remap (after M4, before bare-gen-split)
+	// INSERTION POINT: family_aliases ledger remap (after the case-fold, before bare-gen-split)
 	// INSERTION POINT: bare_gen_split closed predicate (before recoverMemberVariant)
 	// Two halves, both gated on the SAME closed predicate (splitBareGen):
 	//  (A) family-token split: when the raw family is itself a glued <base><int>
@@ -2279,8 +2279,8 @@ func ParseFamilyDetailed(raw Family, id ModelID, p Provider) (Family, string, st
 	// members + curated suffixes) for REGISTERED families when ParseFamilyWithVersion
 	// did not populate it. Called BEFORE version extraction so the recovered variant is
 	// available as the boundary token for ExtractVersionBetweenFamilyAndVariant. The
-	// family-agnostic sole-residual suffix promotion (B1) for UNREGISTERED families runs
-	// AFTER version extraction (see the B1 block below) so it preserves a version that
+	// family-agnostic sole-residual suffix promotion for UNREGISTERED families runs
+	// AFTER version extraction (see the sole-residual promotion block below) so it preserves a version that
 	// follows the suffix in the ID.
 	if variant == "" {
 		normFamPrefix := strings.ToLower(firstToken(string(family))) + "-"
@@ -2316,7 +2316,7 @@ func ParseFamilyDetailed(raw Family, id ModelID, p Provider) (Family, string, st
 	if version == "" && family != "" && cleanedID != "" {
 		if v, residual := ExtractVersionBetweenFamilyAndVariant(cleanedID, family, variant); v != "" {
 			version = v
-			// B1 sole-residual promotion (family-agnostic). When exactly ONE residual
+			// Sole-residual promotion (family-agnostic). When exactly ONE residual
 			// token remains AND it is a known variant suffix AND Variant is still empty,
 			// promote it into Variant instead of emitting ReasonResidualUnaccountedTokens.
 			// Handles e.g. seed-1-6-flash-250715 → (seed,flash,1.6), reka-flash-3 →
@@ -2327,7 +2327,7 @@ func ParseFamilyDetailed(raw Family, id ModelID, p Provider) (Family, string, st
 			// "3" in reka-flash-3). recoverMemberVariant (called pre-version, above) owns
 			// member recovery for REGISTERED families; this narrow sole-residual suffix
 			// promotion covers UNREGISTERED families that recoverMemberVariant skips.
-			// >1 residual (B2) or a non-suffix sole token (C) remain documented residuals.
+			// >1 residual (multi-residual) or a non-suffix sole token (C) remain documented residuals.
 			if len(residual) == 1 && variant == "" {
 				if pd, pdErr := loadParseData(); pdErr == nil {
 					if bare, ok := bareVariantSuffix(pd, strings.ToLower(residual[0])); ok {
@@ -2336,7 +2336,7 @@ func ParseFamilyDetailed(raw Family, id ModelID, p Provider) (Family, string, st
 					}
 				}
 			}
-			// R2: any residual still remaining after promotion is genuinely unaccounted —
+			// Honest-audit: any residual still remaining after promotion is genuinely unaccounted —
 			// emit an honest-audit failure WITH version populated.
 			if len(residual) > 0 {
 				attempted := ParseAttempt{Family: family, Variant: variant, Version: version, Date: ""}
@@ -2389,7 +2389,7 @@ func ParseFamilyDetailed(raw Family, id ModelID, p Provider) (Family, string, st
 	// ── Failure mode 3: YYMM-date-as-version false-positive ──────────────────
 	// Detect 4-digit date-like numerals (e.g. "mistral-2401", "mistral-0528")
 	// where a 4-digit segment could be mistaken for a version. Originally this
-	// only caught the YYMM century range (19xx–29xx) via reYYMMCandidate; FIX-A
+	// only caught the YYMM century range (19xx–29xx) via reYYMMCandidate; the bare-4-digit-date guard
 	// generalizes to ANY standalone 4-digit numeric segment via
 	// reBareAnyFourDigitCandidate, covering non-YYMM-range tokens like "0528"
 	// and "0324" in raw family strings. These appear in the raw family string,
@@ -2471,7 +2471,7 @@ func ParseFamilyDetailed(raw Family, id ModelID, p Provider) (Family, string, st
 // ANY 4-digit segment and is the sole regex the YYMM-date-as-version guard uses.
 
 // reBareAnyFourDigitCandidate matches any standalone 4-digit all-numeric segment
-// in a hyphen-separated string. This is the FIX-A generalization of reYYMMCandidate:
+// in a hyphen-separated string. This is the bare-4-digit-date generalization of reYYMMCandidate:
 // it catches 4-digit tokens like "0528", "0324", "0905" in addition to YYMM-range
 // tokens like "2603", "2512". Used by ParseFamilyDetailed parity check.
 var reBareAnyFourDigitCandidate = regexp.MustCompile(`(?:^|-)\d{4}(?:-|$)`)
@@ -2596,15 +2596,15 @@ func detectSuffixOverflow(rawStr string, family Family, variant string, version 
 }
 
 // --------------------------------------------------------------------------
-// M3 vendor-strip helpers
+// Vendor-strip helpers
 // --------------------------------------------------------------------------
 
 // stripVendorAliasPrefix strips a leading "<alias>/" or "<alias>-" prefix from
 // id when the first "/" or "-"-separated token (lowercased) matches one of the
-// provided vendor aliases. Used for M3 vendor/namespace strip in addition to the
+// provided vendor aliases. Used for the vendor/namespace strip in addition to the
 // path-based lastPathSegment call.
 //
-// The "/" case is already handled by lastPathSegment (in the same M3 step) but
+// The "/" case is already handled by lastPathSegment (in the same vendor-strip step) but
 // is also attempted here for robustness. The "-" case handles IDs like
 // "minimaxai-minimax-m1" where the vendor alias is the first hyphen token.
 //
@@ -2629,12 +2629,12 @@ func stripVendorAliasPrefix(id string, vendorAliases []string) string {
 	return id
 }
 
-// stripVendorNamespace applies the M3 vendor/namespace strip to a model ID: first
+// stripVendorNamespace applies the vendor/namespace strip to a model ID: first
 // the leading "<org>/" path segment (lastPathSegment), then any residual
 // non-provider "<vendor_alias>-" / "<vendor_alias>/" prefix (stripVendorAliasPrefix,
 // consulting vendor_aliases.json). Returns the stripped ID.
 //
-// This is the SINGLE M3 pipeline head shared by BOTH decomposition entrypoints
+// This is the SINGLE vendor-strip pipeline head shared by BOTH decomposition entrypoints
 // (InferFamilyFromIDWithVariant and ParseFamilyDetailed), so the strip is applied
 // symmetrically. The vendor-alias strip
 // previously lived only in InferFamilyFromIDWithVariant, leaving ParseFamilyDetailed's
@@ -2693,7 +2693,7 @@ func stripVendorNamespace(id string) string {
 // curated variant suffix in pd.suffixes, returning the bare suffix on match.
 // pd.suffixes entries carry a leading "-"; this strips it before comparison. It is
 // the single source of truth for "is this token a known variant suffix", shared by
-// recoverMemberVariant (member-zone scan) and the B1 sole-residual promotion in
+// recoverMemberVariant (member-zone scan) and the sole-residual suffix promotion in
 // ParseFamilyDetailed.
 func bareVariantSuffix(pd *parseData, lowTok string) (string, bool) {
 	for _, sfx := range pd.suffixes {
@@ -2712,7 +2712,7 @@ func bareVariantSuffix(pd *parseData, lowTok string) (string, bool) {
 // bare_gen_split closed predicate
 // --------------------------------------------------------------------------
 
-// splitBareGen applies the M2 bare-generation split CLOSED predicate to a single
+// splitBareGen applies the bare-generation split CLOSED predicate to a single
 // lowercase token. It splits a glued/hyphen-joined family-and-generation token
 // <base><int> or <base>-<int> (e.g. "qwen3", "o1", "gpt-5", "gemini-3") into its
 // base family and the trailing generation int, returning (base, version, true)
@@ -2783,8 +2783,8 @@ func splitBareGen(pd *parseData, tok string) (Family, string, bool) {
 // firstToken-prefix stripping is imprecise for them and a broad multi-token scan
 // would over-recover a family sub-token ("embedding", "large") as a variant. The
 // narrow, version-preserving sole-residual suffix promotion for UNREGISTERED
-// families (the original "B1", e.g. seed-1-6-flash-250715 → flash) is restored in
-// ParseFamilyDetailed AFTER version extraction — see the B1 block there. It must run
+// families (the original sole-residual promotion, e.g. seed-1-6-flash-250715 → flash) is restored in
+// ParseFamilyDetailed AFTER version extraction — see the sole-residual promotion block there. It must run
 // post-version: promoting a suffix that precedes the version (e.g. reka-flash-3)
 // pre-version would make ExtractVersionBetweenFamilyAndVariant stop at the variant
 // boundary and drop the version.
@@ -2881,7 +2881,7 @@ var genericVariantWords = map[string]struct{}{
 }
 
 // --------------------------------------------------------------------------
-// Small string helpers (R3c / Δ2′ support)
+// Small string helpers (modifier-strip date-recovery support)
 // --------------------------------------------------------------------------
 
 // lastPathSegment returns the substring after the last '/' in s, or s itself
@@ -2913,11 +2913,11 @@ func firstToken(s string) string {
 }
 
 // --------------------------------------------------------------------------
-// isFourDigitDateToken (R3b / eq7w → FIX-A generalization)
+// isFourDigitDateToken (bare-4-digit-date guard, generalized from the YYMM guard)
 // --------------------------------------------------------------------------
 
 // isFourDigitDateToken returns true when tok is a 4-digit all-numeric string.
-// This is the FIX-A generalization of the original YYMM guard (eq7w):
+// This is the bare-4-digit-date generalization of the original YYMM guard:
 // the original guard only rejected tokens in the YYMM century range (19xx–29xx),
 // but supervisor analysis confirmed that ALL bare-4-digit tokens in the 1745
 // version-populated models are date/release-ids (MMDD or YYMM format), with ZERO
@@ -3681,7 +3681,7 @@ func dotJoinStrippingDateSuffix(s string) string {
 }
 
 // --------------------------------------------------------------------------
-// trimOneTrailingModifier (R3c / Δ2′ — tentative only)
+// trimOneTrailingModifier (modifier-strip date recovery — tentative only)
 // --------------------------------------------------------------------------
 
 // trimOneTrailingModifier removes exactly ONE trailing "-<mod>" token from s
@@ -3715,7 +3715,7 @@ func trimOneTrailingModifier(s string) string {
 }
 
 // --------------------------------------------------------------------------
-// ExtractVersionBetweenFamilyAndVariant (R1)
+// ExtractVersionBetweenFamilyAndVariant
 // --------------------------------------------------------------------------
 
 // ExtractVersionBetweenFamilyAndVariant extracts the numeric version component
@@ -3730,7 +3730,7 @@ func trimOneTrailingModifier(s string) string {
 // Returns (version, residual) where:
 //   - version is the dot-joined leading numeric tokens found between family and variant.
 //   - residual contains any tokens between the version and variant that are neither
-//     numeric nor the variant first-token (honest-audit signal per R2).
+//     numeric nor the variant first-token (honest-audit signal).
 //
 // N-M equivalence: hyphen-separated pure-digit tokens are dot-joined so that
 // "3-5" → "3.5" and "4-6" → "4.6". This brings parity with ParseFamilyWithVersion.
@@ -3760,7 +3760,7 @@ func ExtractVersionBetweenFamilyAndVariant(id ModelID, family Family, variant st
 	idStr := strings.ToLower(lastPathSegment(string(id)))
 
 	// Normalize family: use only the first hyphen-token so that "claude-opus" → "claude".
-	// full-prefix-first was reverted (FIX-2 B1 over-stripped compound families
+	// full-prefix-first was reverted (an earlier fix over-stripped compound families
 	// like "gemini-2.5-flash-image-generation" by matching "gemini-2.5-flash-" as prefix and
 	// leaving "image-generation" as remainder with no numeric leading token, losing version "2.5").
 	// Proper additive handling for compound families (text-embedding, etc.) is deferred.

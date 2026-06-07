@@ -1,5 +1,5 @@
 {
-  "_comment": "Family member lists for member-variant recovery (recoverMemberVariant) and bare-generation split predicates. Keys MUST be lowercase and match a value in allFamilies (families_gen.go:182-357) — validated at load, fail-fast on typo. Members are lowercase variant tokens for this family. bare_gen_split controls the M2 bare-gen-split predicate.",
+  "_comment": "Family member lists for member-variant recovery (recoverMemberVariant) and bare-generation split predicates. Keys MUST be lowercase and match a value in allFamilies (families_gen.go:182-357) — validated at load, fail-fast on typo. Members are lowercase variant tokens for this family. bare_gen_split controls the bare-gen-split predicate.",
   "claude": { "members": ["opus", "sonnet", "haiku"], "bare_gen_split": false },
   "command": { "members": ["a", "r", "r-plus"], "bare_gen_split": false },
   "deepseek": { "members": ["flash", "chat"], "bare_gen_split": false },

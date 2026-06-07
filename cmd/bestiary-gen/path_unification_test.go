@@ -59,7 +59,7 @@ type decompRecord struct {
 }
 
 // modKey is the canonical, order-independent string key for a modifier list (the
-// R1 set-independence anchor): permutations collapse to one key. Mirrors the
+// set-independence anchor): permutations collapse to one key. Mirrors the
 // production bestiary modifierKey using the exported CanonicalizeModifiers.
 func modKey(mods []string) string {
 	c := bestiary.CanonicalizeModifiers(mods)
@@ -106,7 +106,7 @@ func (r decompRecord) tuple() decompTuple {
 
 // decompCmp is the COMPARABLE projection of a decompTuple (the Modifier list is
 // reduced to its order-independent canonical key) so tuples can be used as map keys
-// and compared with ==. This is the R1 set-independence guarantee applied to
+// and compared with ==. This is the set-independence guarantee applied to
 // the categorizer: a permuted modifier list never reads as a distinct tuple.
 type decompCmp struct {
 	Family   bestiary.Family
@@ -842,7 +842,7 @@ func realNonFamilyLoss(before, after decompTuple, id bestiary.ModelID) bool {
 
 // movedToModifier reports whether `val` is a SANCTIONED variant/version→modifier lateral
 // move: it is absent from after.Variant AND after.Version but PRESENT in the after-Modifier
-// SET. This is the R2 predicate that distinguishes a reclassification (cat-a/b,
+// SET. This is the modifier-move predicate that distinguishes a reclassification (cat-a/b,
 // non-loss) from a genuine drop. It is ENFORCEMENT-checked by the adversarial mutation test
 // (TestPathUnification_ModifierMove_MutationProof): delete the token from after.Modifier and
 // the move is no longer sanctioned, so the categorizer must flip the record to cat-(c).
@@ -1211,7 +1211,7 @@ func TestPathUnification_ZeroUnexpectedRegression(t *testing.T) {
 		total, len(changes), fix, improve, regress, justified)
 	t.Logf("divergence: before=%d  after=%d", divBefore, divAfter)
 
-	// M2: only persist the committed artifact when the gate
+	// Only persist the committed artifact when the gate
 	// PASSES. A failing run must NOT leave a dirty/mismatched report in the working tree
 	// (which would pollute git status and could mask the failure under a re-commit).
 	reportPath := filepath.Join(snapshotDir(), "decomp_diff_report.json")
@@ -1281,7 +1281,7 @@ func TestClassifyDecompChange_RejectsDowngrade(t *testing.T) {
 			// "flash" and "lite" ARE present (non-contiguous). The pre-S14 substring valueInID
 			// returned false → masked the dropped "lite" as cat-(b) de-noise. The token-aware
 			// valueInID detects both tokens → REAL loss → cat-(c).
-			desc:       "NON-CONTIGUOUS multi-token loss (flash-lite→flash, tokens split by '2.0' in ID) → REGRESS (token-aware ovf6)",
+			desc:       "NON-CONTIGUOUS multi-token loss (flash-lite→flash, tokens split by '2.0' in ID) → REGRESS (token-aware loss check)",
 			id:         "gemini-flash-2.0-lite",
 			before:     decompTuple{"gemini", "flash-lite", "2.0", nil},
 			after:      decompTuple{"gemini", "flash", "2.0", nil},
@@ -1355,10 +1355,10 @@ func TestPathUnification_CrossIDFormConsistency(t *testing.T) {
 	t.Logf("cross-ID-form probe: %d '@'-form records, all converge to canonical '-'-form", atForms)
 }
 
-// TestSLICE11_CategorizerPredicates unit-tests the categorizer extensions in
+// TestCategorizerPredicates unit-tests the categorizer extensions in
 // isolation: the family-reduction direction guard, the non-family prefix-downgrade guard
 // (which still catches the flash-lite class), and the exact family-suffix→variant move.
-func TestSLICE11_CategorizerPredicates(t *testing.T) {
+func TestCategorizerPredicates(t *testing.T) {
 	t.Run("familyIsReductionOf", func(t *testing.T) {
 		yes := [][2]string{{"claude", "claude-opus"}, {"qwen", "qwen3-vl-72b"}, {"gpt", "gpt-4o"}, {"llama", "llama-3.3-70b"}}
 		no := [][2]string{{"claude", "claude"}, {"mistral", "ministral"}, {"command", "commander"}, {"gpt", "deepseek"}}
@@ -1403,11 +1403,11 @@ func TestSLICE11_CategorizerPredicates(t *testing.T) {
 	})
 }
 
-// TestSLICE11_ClassifyFamilyReduction asserts classifyDecompChange's end-to-end verdicts
+// TestClassifyFamilyReduction asserts classifyDecompChange's end-to-end verdicts
 // for the family over-capture cases — converging reductions are FIXES, single-
 // provider information-preserving reductions are IMPROVEMENTS, and a non-family specificity
 // LOSS (flash-lite) converging onto a sibling is STILL a regression (the G1 guard holds).
-func TestSLICE11_ClassifyFamilyReduction(t *testing.T) {
+func TestClassifyFamilyReduction(t *testing.T) {
 	cases := []struct {
 		desc       string
 		id         bestiary.ModelID
@@ -1476,7 +1476,7 @@ func TestSLICE11_ClassifyFamilyReduction(t *testing.T) {
 	}
 }
 
-// TestSLICE12_SanctionedAllowlistGate is the NO-MASKING adversarial unit (,
+// TestSanctionedAllowlistGate is the NO-MASKING adversarial unit (,
 // the supervisor refinement that OVERRIDES the handoff): the o-series sanctioned escape is
 // EXPECTED-TUPLE-MATCHED, not ID-blanket. It proves four properties:
 //
@@ -1485,7 +1485,7 @@ func TestSLICE11_ClassifyFamilyReduction(t *testing.T) {
 //	(3) an o-series-SHAPED reassignment whose ID is NOT on the allowlist → cat-(c).
 //	(4) an UNRELATED bug riding an allowlisted ID (a tuple unrelated to the ratified one)
 //	    → cat-(c) — you cannot hide a regression on an allowlisted ID under the escape.
-func TestSLICE12_SanctionedAllowlistGate(t *testing.T) {
+func TestSanctionedAllowlistGate(t *testing.T) {
 	// A small, explicit allowlist standing in for the committed artifact: o1-mini's
 	// ratified target tuple per (Q2a/Q2b).
 	allow := sanctionedAllowlist{
@@ -1556,12 +1556,12 @@ func TestSLICE12_SanctionedAllowlistGate(t *testing.T) {
 	}
 }
 
-// TestSLICE12_AllowlistConformsToRatification asserts the committed o-series allowlist
+// TestAllowlistConformsToRatification asserts the committed o-series allowlist
 // artifact conforms to the ratified rule: every entry is family="gpt" with
 // the line designator in the VARIANT slot, version follows the designator rule (o→digits,
 // 4o/audio→empty), and the ID actually carries the designator. This is the reviewable
 // integrity check tying the artifact to the ratification (no stray/padded entries).
-func TestSLICE12_AllowlistConformsToRatification(t *testing.T) {
+func TestAllowlistConformsToRatification(t *testing.T) {
 	allow, err := loadSanctionedAllowlist()
 	if err != nil {
 		t.Fatalf("%v", err)
@@ -1675,12 +1675,12 @@ func ratifiedOSeriesTuple(id bestiary.ModelID) (decompTuple, bool) {
 
 var reOSeriesLineTest = regexp.MustCompile(`^o([0-9]+)$`)
 
-// TestSLICE12_AllowlistMatchesIndependentRule is guardrail-1 (supervisor checkpoint-1): every
+// TestAllowlistMatchesIndependentRule is guardrail-1 (supervisor checkpoint-1): every
 // allowlist entry's tuple must EQUAL the tuple INDEPENDENTLY authored from the
 // rule (ratifiedOSeriesTuple, written without consulting the parser) — so a subtle wrong tuple
 // copied from parser output cannot self-pass. Multi-modifier compromise IDs (whose Modifier the
 // rule does not fix) only have their designator+version checked; their Modifier is documented.
-func TestSLICE12_AllowlistMatchesIndependentRule(t *testing.T) {
+func TestAllowlistMatchesIndependentRule(t *testing.T) {
 	allow, err := loadSanctionedAllowlist()
 	if err != nil {
 		t.Fatalf("%v", err)
@@ -1736,13 +1736,13 @@ func contains(ss []string, v string) bool {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// R1 set-independence + R2(i) adversarial modifier-move proof
+// set-independence + adversarial modifier-move proof
 // ─────────────────────────────────────────────────────────────────────────────
 
-// TestPathUnification_Slice10_ModifierSetIndependence (R1) asserts the categorizer
+// TestPathUnification_ModifierSetIndependence asserts the categorizer
 // compares the Modifier list as an ORDER-INDEPENDENT SET: a permuted modifier list
 // across two providers is NOT a divergence and NOT a change.
-func TestPathUnification_Slice10_ModifierSetIndependence(t *testing.T) {
+func TestPathUnification_ModifierSetIndependence(t *testing.T) {
 	a := decompTuple{"kimi", "k", "2", []string{"thinking", "turbo"}}
 	b := decompTuple{"kimi", "k", "2", []string{"turbo", "thinking"}} // permuted
 
@@ -1764,11 +1764,11 @@ func TestPathUnification_Slice10_ModifierSetIndependence(t *testing.T) {
 	}
 }
 
-// TestPathUnification_Slice10_ModifierMove_MutationProof (R2-i) is the adversarial
+// TestPathUnification_ModifierMove_MutationProof is the adversarial
 // mutation-proof test: a value CLAIMED "moved variant→modifier" is asserted to be
 // ACTUALLY IN after.Modifier; deleting it from the after-modifier list MUST flip the
 // record to cat-(c) — you cannot launder a real drop as a sanctioned move.
-func TestPathUnification_Slice10_ModifierMove_MutationProof(t *testing.T) {
+func TestPathUnification_ModifierMove_MutationProof(t *testing.T) {
 	id := bestiary.ModelID("meta-llama/llama-3.3-70b-instruct")
 	before := decompTuple{"llama", "instruct", "3.3", nil}
 	after := decompTuple{"llama", "", "3.3", []string{"instruct"}} // instruct moved variant→modifier

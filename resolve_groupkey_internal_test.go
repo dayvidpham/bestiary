@@ -1,7 +1,7 @@
 package bestiary
 
-// resolve_fixb_internal_test.go — FIX-B internal unit tests for the
-// selectRepresentative and parseContextN seams.
+// resolve_groupkey_internal_test.go — group-key invariant internal unit tests for
+// the selectRepresentative and parseContextN seams.
 //
 // These tests live in package bestiary (not bestiary_test) because they exercise
 // unexported functions. They verify the pure seam logic independently of

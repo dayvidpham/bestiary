@@ -5,11 +5,11 @@ import (
 )
 
 // --------------------------------------------------------------------------
-// R3b (eq7w): isFourDigitDateToken direct unit test (internal)
+// isFourDigitDateToken direct unit test (internal)
 // --------------------------------------------------------------------------
 
-// TestIsYYMMDateToken verifies the bare-4-digit-date guard (FIX-A generalization of
-// the original R3b/eq7w YYMM guard): ANY 4-digit all-numeric token must return true
+// TestIsYYMMDateToken verifies the bare-4-digit-date guard (a generalization of
+// the original YYMM guard): ANY 4-digit all-numeric token must return true
 // (rejected as a date/release-id), not just the YYMM century range (19xx–29xx).
 //
 // isFourDigitDateToken is unexported; this test lives in the internal package to call
@@ -21,20 +21,20 @@ func TestIsYYMMDateToken(t *testing.T) {
 		tok  string
 		want bool
 	}{
-		// True: YYMM-range tokens (should be rejected as versions — original R3b cases).
+		// True: YYMM-range tokens (should be rejected as versions — original guard cases).
 		{"2603", true}, // mistral-small-2603 (YYMM in-range)
 		{"2512", true}, // YYMM dec 2025
 		{"2411", true}, // pixtral-style
 		{"2401", true}, // mistral-2401
 		{"2503", true}, // another YYMM
-		// True: FIX-A generalization — ANY 4-digit all-numeric token is a date/release-id.
+		// True: generalized guard — ANY 4-digit all-numeric token is a date/release-id.
 		{"0528", true}, // deepseek-r1-0528 (MMDD format, below 19xx range)
 		{"0324", true}, // deepseek-v3-0324 (MMDD format)
 		{"0905", true}, // generic MMDD-format date
 		{"0711", true}, // generic MMDD-format date
 		{"1206", true}, // MMDD december
-		{"1234", true}, // previously false (below 19xx), now true under FIX-A
-		{"3000", true}, // previously false (above 29xx), now true under FIX-A
+		{"1234", true}, // previously false (below 19xx), now true under the generalized guard
+		{"3000", true}, // previously false (above 29xx), now true under the generalized guard
 		// False: genuine version tokens (non-4-digit or non-purely-numeric).
 		{"45", false},  // two-digit (not 4-digit)
 		{"46", false},  // two-digit
@@ -58,10 +58,10 @@ func TestIsYYMMDateToken(t *testing.T) {
 }
 
 // --------------------------------------------------------------------------
-// R1 parity: detectVersionDigitsInID ⟺ ExtractVersionBetweenFamilyAndVariant
+// Parity: detectVersionDigitsInID ⟺ ExtractVersionBetweenFamilyAndVariant
 // --------------------------------------------------------------------------
 
-// TestExtractVersionBetweenFamilyAndVariant_Parity enforces the R1 parity
+// TestExtractVersionBetweenFamilyAndVariant_Parity enforces the parity
 // contract: detectVersionDigitsInID fires if and only if
 // ExtractVersionBetweenFamilyAndVariant returns a non-empty version OR a
 // non-empty residual.
@@ -165,7 +165,7 @@ func TestExtractVersionBetweenFamilyAndVariant_Parity(t *testing.T) {
 					"parity violation for id=%q family=%q variant=%q:\n"+
 						"  detectVersionDigitsInID = %v\n"+
 						"  ExtractVersionBetweenFamilyAndVariant fired = %v (version=%q, residual=%v)\n"+
-						"  R1 requires: detector fires IFF extractor returns non-empty version or residual",
+						"  parity requires: detector fires IFF extractor returns non-empty version or residual",
 					tc.id, tc.family, tc.variant,
 					gotDetector, extractorFired, version, residual,
 				)

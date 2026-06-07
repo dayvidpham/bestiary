@@ -259,7 +259,7 @@ var testSlugToConst = map[string]string{
 // TestNameForCanonical_KnownExamples verifies that nameForCanonicalWithMap produces
 // the expected constant names for the spec-defined golden examples.
 // Updated to new double-underscore template: Model__<Provider>__<Family>__<Variant>?__<Version>?__<Date>?
-// (B5: double underscores between components, single underscores within components).
+// (double underscores between components, single underscores within components).
 //
 // The naming uses double underscores between EVERY token from the raw ID (after date strip),
 // plus the provider prefix and date suffix. Tokens from the raw ID (hyphen/dot split) each
@@ -396,7 +396,7 @@ func TestResolveCollisions_VersionSuffix(t *testing.T) {
 			Date:     "",
 		},
 	}
-	// Both produce "Model__Anthropic__Claude__Opus" as the naive name (double-underscore, B5).
+	// Both produce "Model__Anthropic__Claude__Opus" as the naive name (double-underscore).
 	names := []string{
 		"Model__Anthropic__Claude__Opus",
 		"Model__Anthropic__Claude__Opus",
@@ -503,7 +503,7 @@ func TestGenerateConstantsSource_Compiles(t *testing.T) {
 	if len(src) == 0 {
 		t.Fatal("generateConstantsSource: returned empty source")
 	}
-	// Must contain the expected constant names (double-underscore between components, B5).
+	// Must contain the expected constant names (double-underscore between components).
 	srcStr := string(src)
 	if !strings.Contains(srcStr, "Model__Anthropic__Claude__Opus__4__20250514") {
 		t.Errorf("generated source missing Model__Anthropic__Claude__Opus__4__20250514:\n%s", srcStr[:min(500, len(srcStr))])
@@ -998,7 +998,7 @@ var crossProviderJustifiedResidual = map[string]string{}
 // Today only the non-gating stdout smoke (main.go) sees this; pinning it catches a
 // non-fixture-family residual regression (the seed-flash class) that would otherwise slip
 // every gate. Currently measured = 243; assert ≤ ceiling (tighten-only; a legitimate
-// reduction passes, a regression that re-drops B1/member coverage trips it).
+// reduction passes, a regression that re-drops sole-residual/member coverage trips it).
 const crossProviderResidualUnaccountedCeiling = 243
 
 // crossProviderPopulatedVersionFloor pins the at-scale count of snapshot records whose
@@ -1022,8 +1022,8 @@ const crossProviderPopulatedVersionFloor = 3401
 // divergent-ID SET == crossProviderJustifiedResidual (SET-equality, no escape hatches).
 // It also pins the ReasonResidualUnaccountedTokens count ≤ ceiling.
 //
-// R1: the Modifier list is compared ORDER-INDEPENDENTLY everywhere else (resolve
-// FIX-B group key, path_unification cmp(), TestPathUnification_Slice10_ModifierSetIndependence);
+// The Modifier list is compared ORDER-INDEPENDENTLY everywhere else (resolve
+// the group-key invariant, path_unification cmp(), TestPathUnification_ModifierSetIndependence);
 // this gate's PRIMARY tuple is (Family,Variant,Version) per the ratified consistency metric,
 // so a permuted-modifier pair across providers structurally cannot register here.
 func TestStaticDataset_CrossProviderConsistency(t *testing.T) {
@@ -1106,7 +1106,7 @@ func TestStaticDataset_CrossProviderConsistency(t *testing.T) {
 	// RESIDUAL-COUNT PIN (B-MINOR-3): catch a non-fixture-family residual regression.
 	if residualUnaccounted > crossProviderResidualUnaccountedCeiling {
 		t.Errorf("ReasonResidualUnaccountedTokens count = %d, exceeds pinned ceiling %d;\n"+
-			"  a non-fixture-family residual regression (the seed-flash class) re-dropped B1/member coverage.\n"+
+			"  a non-fixture-family residual regression (the seed-flash class) re-dropped sole-residual/member coverage.\n"+
 			"  Investigate ParseFamilyDetailed; if the increase is intentional, bump the ceiling with justification.",
 			residualUnaccounted, crossProviderResidualUnaccountedCeiling)
 	}
@@ -1126,7 +1126,7 @@ func TestStaticDataset_CrossProviderConsistency(t *testing.T) {
 
 // TestParseFlags_DoubleHyphen verifies that all flags accept BOTH single-hyphen
 // and double-hyphen forms (e.g. --no-fetch is equivalent to -no-fetch).
-// This test covers B1-B3 from the slice spec.
+// This test covers the single-/double-hyphen flag criteria from the slice spec.
 //
 // These tests will FAIL until double-hyphen prefix support is added to parseFlags.
 func TestParseFlags_DoubleHyphen(t *testing.T) {
@@ -1260,7 +1260,7 @@ func TestSlugToIdentifier_ChatGPT(t *testing.T) {
 // convention (double underscores between field components, single underscores
 // within a component, e.g. version "4.5" → "4_5").
 //
-// B5: Model__<Provider>__<Family>__<Variant>?__<Version>?__<Date>?
+// Model__<Provider>__<Family>__<Variant>?__<Version>?__<Date>?
 //
 // When Version is non-empty, the version "4.5" is encoded as a single
 // segment "4_5" (dot→underscore). The raw ID version tokens are replaced by this
@@ -1274,7 +1274,7 @@ func TestNameForCanonical_DoubleUnderscoreTemplate(t *testing.T) {
 		wantName string
 	}{
 		{
-			desc: "claude-opus-4-5 with Version on Anthropic (B5 golden)",
+			desc: "claude-opus-4-5 with Version on Anthropic (golden)",
 			model: bestiary.ModelInfo{
 				ID:       "claude-opus-4-5-20251101",
 				Provider: "anthropic",
@@ -1288,7 +1288,7 @@ func TestNameForCanonical_DoubleUnderscoreTemplate(t *testing.T) {
 			wantName: "Model__Anthropic__Claude__Opus__4_5__20251101",
 		},
 		{
-			desc: "gpt-4o without version or date on OpenAI (B5 golden)",
+			desc: "gpt-4o without version or date on OpenAI (golden)",
 			model: bestiary.ModelInfo{
 				ID:       "gpt-4o",
 				Provider: "openai",
@@ -1781,7 +1781,7 @@ func TestRun_WritesParseFailuresJSON(t *testing.T) {
 }
 
 // --------------------------------------------------------------------------
-// Tests: deterministic + reproducible codegen (R1, R3, R4)
+// Tests: deterministic + reproducible codegen (ordering, collision-suffix, up-to-date guard)
 // --------------------------------------------------------------------------
 
 // normalizeWhitespace collapses all runs of whitespace in s to a single space.
@@ -1953,7 +1953,7 @@ func runFixtureCodegen(t *testing.T, fixtureJSON []byte, lastSynced string) (sta
 //     that LastSynced is the SOLE residual non-determinism.
 //
 // Additionally asserts that each raw model ID always receives the same _N suffix
-// across all iterations (stable raw-ID-ordered assignment — R1 + raw-ID ordinal).
+// across all iterations (stable raw-ID-ordered assignment — deterministic ordering + raw-ID ordinal).
 //
 // Golden pins (from proposal/handoff spec):
 //   - C: "anthropic/claude-3-5-haiku" always _1, "anthropic/claude-3.5-haiku" always _2
@@ -2090,7 +2090,7 @@ func TestCodegen_Reproducible_ByteIdentical(t *testing.T) {
 		if !bytes.Equal(refStaticNorm, staticNorm) {
 			t.Fatalf("iteration %d (ts=%s): generateSource output differs from reference after LastSynced normalization\n"+
 				"  What: the static model list changed between runs (beyond LastSynced)\n"+
-				"  Why: R1 sort or fetchModelsWithRaw map-range is nondeterministic\n"+
+				"  Why: the deterministic-ordering sort or fetchModelsWithRaw map-range is nondeterministic\n"+
 				"  Where: fetchModelsWithRaw or generateSource\n"+
 				"  How to fix: ensure sort.SliceStable(models, ...) runs before return in fetchModelsWithRaw",
 				i+1, ts)
@@ -2135,7 +2135,7 @@ func TestCodegen_Reproducible_ByteIdentical(t *testing.T) {
 	}
 }
 
-// TestCodegen_UpToDate is the R4 up-to-date guard. It regenerates both source
+// TestCodegen_UpToDate is the up-to-date guard. It regenerates both source
 // files from the hermetic fixture in-process and compares against committed golden
 // excerpts in testdata/. Both sides are normalized with normalizeWhitespace
 // (gofmt-alignment-insensitive). The golden files are excerpts of the expected
@@ -2150,13 +2150,13 @@ func TestCodegen_UpToDate(t *testing.T) {
 
 	constantsGoldenRaw, err := os.ReadFile(constantsGoldenPath)
 	if err != nil {
-		t.Fatalf("R4 guard: could not read constants golden %q: %v\n"+
+		t.Fatalf("up-to-date guard: could not read constants golden %q: %v\n"+
 			"  How to fix: ensure testdata/expected_constants_excerpt.go.golden is committed",
 			constantsGoldenPath, err)
 	}
 	staticGoldenRaw, err := os.ReadFile(staticGoldenPath)
 	if err != nil {
-		t.Fatalf("R4 guard: could not read static golden %q: %v\n"+
+		t.Fatalf("up-to-date guard: could not read static golden %q: %v\n"+
 			"  How to fix: ensure testdata/expected_static_excerpt.go.golden is committed",
 			staticGoldenPath, err)
 	}
@@ -2203,7 +2203,7 @@ func TestCodegen_UpToDate(t *testing.T) {
 	// Normalizing whitespace on both sides makes the comparison insensitive to
 	// gofmt alignment and minor formatting differences.
 	if !strings.Contains(normConstants, normConstantsGolden) {
-		t.Errorf("R4 guard: constants file does not contain golden excerpt\n"+
+		t.Errorf("up-to-date guard: constants file does not contain golden excerpt\n"+
 			"  What: generateConstantsSource output differs from testdata/expected_constants_excerpt.go.golden\n"+
 			"  Why: collision _N bindings may have changed, or codegen logic was modified without re-running regen\n"+
 			"  Where: cmd/bestiary-gen/main.go generateConstantsSource or resolveCollisions\n"+
@@ -2217,7 +2217,7 @@ func TestCodegen_UpToDate(t *testing.T) {
 
 	// The golden excerpt must appear as a substring in the generated static output.
 	if !strings.Contains(normStatic, normStaticGolden) {
-		t.Errorf("R4 guard: static models file does not contain golden excerpt\n"+
+		t.Errorf("up-to-date guard: static models file does not contain golden excerpt\n"+
 			"  What: generateSource output differs from testdata/expected_static_excerpt.go.golden\n"+
 			"  Why: model ordering changed, or codegen logic was modified without re-running regen\n"+
 			"  Where: cmd/bestiary-gen/main.go generateSource\n"+
@@ -2229,7 +2229,7 @@ func TestCodegen_UpToDate(t *testing.T) {
 	// Sanity-check: the constants golden must contain at least one expected binding.
 	// This guards against an accidentally empty or truncated golden file.
 	if !strings.Contains(string(constantsGoldenRaw), `ModelID = "anthropic/claude-3-5-haiku"`) {
-		t.Errorf("R4 guard: constants golden file appears empty or truncated (missing expected binding)\n" +
+		t.Errorf("up-to-date guard: constants golden file appears empty or truncated (missing expected binding)\n" +
 			"  How to fix: ensure testdata/expected_constants_excerpt.go.golden is correctly committed")
 	}
 }
@@ -2295,7 +2295,7 @@ func TestCodegen_GoldenPins_E(t *testing.T) {
 }
 
 // TestCodegen_SortOrder verifies that fetchModelsWithRaw returns models sorted by
-// (Provider, ID) after R1. Uses the fixture to check the expected ordering.
+// (Provider, ID) after the deterministic ordering. Uses the fixture to check the expected ordering.
 func TestCodegen_SortOrder(t *testing.T) {
 	fixtureJSON := deterministicFixtureJSON(t)
 
@@ -2438,7 +2438,7 @@ func TestDecompositionSnapshot(t *testing.T) {
 			Modifier: modKey(m.Modifier),
 		})
 	}
-	// Models from fetchModelsWithRaw are already sorted by (Provider, ID) via R1.
+	// Models from fetchModelsWithRaw are already sorted by (Provider, ID) via the deterministic ordering.
 
 	got, err := json.MarshalIndent(entries, "", "  ")
 	if err != nil {
@@ -2482,10 +2482,10 @@ func TestDecompositionSnapshot_ActiveClassVersionPopulated(t *testing.T) {
 
 	// Active-class models: those expected to have version populated.
 	// parser correctly extracts version for these cases.
-	// B1: adds variant-promoted models (glm-5-turbo, phi-4-mini)
+	// Sole-residual promotion adds variant-promoted models (glm-5-turbo, phi-4-mini)
 	// whose variant is now set from the sole trailing suffix after version extraction.
 	// text-embedding-3-large/small removed from active class —
-	// the full-prefix-first change that enabled their B1 promotion was reverted.
+	// the full-prefix-first change that enabled their sole-residual promotion was reverted.
 	// They are now documented residuals.
 	activeCases := map[string]struct {
 		wantFamily  string
@@ -2498,11 +2498,11 @@ func TestDecompositionSnapshot_ActiveClassVersionPopulated(t *testing.T) {
 		"anthropic/claude-3-5-haiku": {wantFamily: "claude", wantVariant: "haiku", wantVersion: "3.5"},
 		// claude-3.5-haiku: same family → same decomposition
 		"anthropic/claude-3.5-haiku": {wantFamily: "claude", wantVariant: "haiku", wantVersion: "3.5"},
-		// B1 promoted models surviving FIX-4 revert (single-token rawFamily, no compound prefix):
+		// Sole-residual-promoted models surviving the full-prefix-first revert revert (single-token rawFamily, no compound prefix):
 		// glm-5-turbo: — 'turbo' is now a GLOBAL modifier (not a glm member), so it
 		// reclassifies variant→modifier: (glm, "", 5, [turbo]). Version 5 still populated.
 		"glm-5-turbo": {wantFamily: "glm", wantVariant: "", wantVersion: "5"},
-		// phi-4-mini: raw_family=phi → family=phi, variant=mini (B1, still a variant suffix), version=4
+		// phi-4-mini: raw_family=phi → family=phi, variant=mini (sole-residual promotion, still a variant suffix), version=4
 		"phi-4-mini": {wantFamily: "phi", wantVariant: "mini", wantVersion: "4"},
 	}
 
@@ -2531,19 +2531,19 @@ func TestDecompositionSnapshot_ActiveClassVersionPopulated(t *testing.T) {
 		}
 		if m.Variant != want.wantVariant {
 			t.Errorf("active-class model %q: Variant = %q, want %q\n"+
-				"  What: B1 promotion may not have fired (sole trailing suffix not promoted)\n"+
-				"  Why: FIX B1 should set Variant=<suffix> when exactly one residual is a known variant suffix",
+				"  What: the sole-residual promotion may not have fired (sole trailing suffix not promoted)\n"+
+				"  Why: the sole-residual suffix promotion should set Variant=<suffix> when exactly one residual is a known variant suffix",
 				id, m.Variant, want.wantVariant)
 		}
 	}
 }
 
-// TestDecompositionSnapshot_FixA_NoVersionForBare4Digit verifies FIX-A in the
+// TestDecompositionSnapshot_NoVersionForBare4Digit verifies the bare-4-digit-date guard in the
 // fixture corpus: deepseek-r1-0528 and deepseek-v3-0324 must have Version="" because
 // "0528" and "0324" are bare 4-digit date tokens (MMDD format), not semantic versions.
 //
-// This is the per-row version=="" check for FIX-A models (fixture-based, not real-data).
-func TestDecompositionSnapshot_FixA_NoVersionForBare4Digit(t *testing.T) {
+// This is the per-row version=="" check for the bare-4-digit-date guard models (fixture-based, not real-data).
+func TestDecompositionSnapshot_NoVersionForBare4Digit(t *testing.T) {
 	models, _ := runFixtureAPICodegen(t)
 
 	modelsByID := make(map[string]bestiary.ModelInfo, len(models))
@@ -2566,18 +2566,18 @@ func TestDecompositionSnapshot_FixA_NoVersionForBare4Digit(t *testing.T) {
 	for id, want := range fixACases {
 		m, ok := modelsByID[id]
 		if !ok {
-			t.Errorf("FIX-A model %q not found in fixture output", id)
+			t.Errorf("the bare-4-digit-date guard model %q not found in fixture output", id)
 			continue
 		}
 		if m.Version != want.wantVersion {
-			t.Errorf("FIX-A model %q: Version = %q, want %q (bare 4-digit token must not be a version)\n"+
+			t.Errorf("the bare-4-digit-date guard model %q: Version = %q, want %q (bare 4-digit token must not be a version)\n"+
 				"  What: 4-digit date-like token was extracted as a version\n"+
-				"  Why: FIX-A extends isFourDigitDateToken to reject any 4-digit all-numeric token\n"+
+				"  Why: the bare-4-digit-date guard extends isFourDigitDateToken to reject any 4-digit all-numeric token\n"+
 				"  How to fix: verify isFourDigitDateToken returns true for \"0528\" and \"0324\"",
 				id, m.Version, want.wantVersion)
 		}
 		if string(m.Family) != want.wantFamily {
-			t.Errorf("FIX-A model %q: Family = %q, want %q", id, m.Family, want.wantFamily)
+			t.Errorf("the bare-4-digit-date guard model %q: Family = %q, want %q", id, m.Family, want.wantFamily)
 		}
 	}
 }
@@ -2776,15 +2776,15 @@ func TestWriteDotFormAudit_Unit(t *testing.T) {
 //   - ReasonVersionDigitsNotExtracted (active class) → 0: now correctly
 //     extracts version from IDs like claude-3-5-haiku; this failure should no longer fire.
 //   - ReasonResidualUnaccountedTokens → at least 4:
-//     nova-2-lite-v1 (C: variant pre-set), phi-3-medium-128k-instruct (B2: multi-residual),
-//     text-embedding-3-large + text-embedding-3-small (FIX-4 documented residuals —
+//     nova-2-lite-v1 (C: variant pre-set), phi-3-medium-128k-instruct (multi-residual),
+//     text-embedding-3-large + text-embedding-3-small (the full-prefix-first revert documented residuals —
 //     full-prefix-first reverted; deferred fix).
 //   - ReasonYYMMDateAsVersion → at least 1: mistral-small-2603 (family mistral-2603)
 //     triggers the YYMM false-positive detector.
-//   - FIX-A confirmation: deepseek-r1-0528 / deepseek-v3-0324 produce NO failure
+//   - the bare-4-digit-date guard confirmation: deepseek-r1-0528 / deepseek-v3-0324 produce NO failure
 //     (bare 4-digit date tokens are now rejected as versions, not residual).
-//   - FIX-B1 confirmation: glm-5-turbo / phi-4-mini produce NO failure
-//     (single-token rawFamily; B1 still fires). text-embedding-3-* removed (now residual).
+//   - the sole-residual suffix promotion confirmation: glm-5-turbo / phi-4-mini produce NO failure
+//     (single-token rawFamily; the sole-residual promotion still fires). text-embedding-3-* removed (now residual).
 //
 // This test is NOT a ==0 gate on real data — fixture-based only (by design).
 func TestFixturePerReasonCounts(t *testing.T) {
@@ -2792,7 +2792,7 @@ func TestFixturePerReasonCounts(t *testing.T) {
 
 	// Count per-reason occurrences.
 	counts := make(map[bestiary.ParseFailureReason]int)
-	// Build per-model failure lookup for FIX-A/B1 spot checks.
+	// Build per-model failure lookup for the bare-4-digit-date guard / sole-residual promotion spot checks.
 	failsByID := make(map[string]bestiary.ParseFailureReason)
 	for _, f := range failures {
 		counts[f.Reason]++
@@ -2812,15 +2812,15 @@ func TestFixturePerReasonCounts(t *testing.T) {
 
 	// Residual: ReasonResidualUnaccountedTokens must be >= 4 after :
 	// nova-2-lite-v1 (C: variant pre-set, "v1" residual after variant) +
-	// phi-3-medium-128k-instruct (B2: multi-residual) +
-	// text-embedding-3-large (FIX-4 documented residual: full-prefix-first reverted) +
+	// phi-3-medium-128k-instruct (multi-residual) +
+	// text-embedding-3-large (the full-prefix-first revert documented residual: full-prefix-first reverted) +
 	// text-embedding-3-small (same).
-	// After FIX-B1, glm-5-turbo/phi-4-mini are promoted (single-token rawFamily, B1 applies).
+	// After the sole-residual suffix promotion, glm-5-turbo/phi-4-mini are promoted (single-token rawFamily, the sole-residual promotion applies).
 	if n := counts[bestiary.ReasonResidualUnaccountedTokens]; n < 4 {
 		t.Errorf("ReasonResidualUnaccountedTokens = %d, want >= 4\n"+
-			"  What: nova-2-lite-v1 (C) + phi-3-medium-128k-instruct (B2) + text-embedding-3-large/small (FIX-4 residual)\n"+
+			"  What: nova-2-lite-v1 (C) + phi-3-medium-128k-instruct (multi-residual) + text-embedding-3-large/small (the full-prefix-first revert residual)\n"+
 			"    should produce residual failures\n"+
-			"  Why: FIX-4 reverted full-prefix-first; text-embedding models now have compound residual tokens\n"+
+			"  Why: the full-prefix-first revert reverted full-prefix-first; text-embedding models now have compound residual tokens\n"+
 			"  How to fix: verify fixture_api.json includes all four models",
 			n)
 	}
@@ -2833,30 +2833,30 @@ func TestFixturePerReasonCounts(t *testing.T) {
 			"  How to fix: verify fixture_api.json includes mistral-small-2603 under mistral provider")
 	}
 
-	// FIX-A spot check: deepseek-r1-0528 and deepseek-v3-0324 must NOT appear in
+	// the bare-4-digit-date guard spot check: deepseek-r1-0528 and deepseek-v3-0324 must NOT appear in
 	// failures. Their bare 4-digit date tokens ("0528", "0324") are now rejected as
 	// versions → no version extracted → no residual failure.
 	for _, fixAID := range []string{"deepseek-r1-0528", "deepseek-v3-0324"} {
 		if reason, found := failsByID[fixAID]; found {
-			t.Errorf("FIX-A model %q produced a failure (reason=%q), want no failure\n"+
+			t.Errorf("the bare-4-digit-date guard model %q produced a failure (reason=%q), want no failure\n"+
 				"  What: bare 4-digit date token was not suppressed\n"+
-				"  Why: FIX-A should extend isFourDigitDateToken to reject 4-digit all-numeric tokens\n"+
+				"  Why: the bare-4-digit-date guard should extend isFourDigitDateToken to reject 4-digit all-numeric tokens\n"+
 				"  How to fix: verify isFourDigitDateToken returns true for \"0528\" and \"0324\"",
 				fixAID, reason)
 		}
 	}
 
-	// FIX-B1 spot check: glm-5-turbo and phi-4-mini must NOT
-	// appear in failures. Their single-token rawFamily ("glm", "phi") means B1 fires
+	// the sole-residual suffix promotion spot check: glm-5-turbo and phi-4-mini must NOT
+	// appear in failures. Their single-token rawFamily ("glm", "phi") means the sole-residual promotion fires
 	// correctly (sole trailing suffix promoted, no compound prefix issue).
 	// text-embedding-3-large/small are removed from this check — they are now documented
 	// residuals after reverted the full-prefix-first change.
 	for _, fixB1ID := range []string{"glm-5-turbo", "phi-4-mini"} {
 		if reason, found := failsByID[fixB1ID]; found {
-			t.Errorf("FIX-B1 model %q produced a failure (reason=%q), want no failure\n"+
+			t.Errorf("the sole-residual suffix promotion model %q produced a failure (reason=%q), want no failure\n"+
 				"  What: sole trailing known-suffix was not promoted into Variant\n"+
-				"  Why: FIX-B1 should suppress ReasonResidualUnaccountedTokens when sole residual is a known suffix\n"+
-				"  How to fix: verify B1 promotion logic in ParseFamilyDetailed",
+				"  Why: the sole-residual suffix promotion should suppress ReasonResidualUnaccountedTokens when sole residual is a known suffix\n"+
+				"  How to fix: verify the sole-residual promotion logic in ParseFamilyDetailed",
 				fixB1ID, reason)
 		}
 	}

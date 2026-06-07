@@ -212,7 +212,7 @@ const (
 
 // VersionDuplicateKey identifies a group of models that share (provider, family,
 // variant, version) but differ in date or other attributes. Written to
-// version_duplicates.json as a work-list for (R4 duplicate collapse).
+// version_duplicates.json as a work-list for the future duplicate collapse.
 // Recognition only — duplicates remain two separate constants in the current epoch.
 type VersionDuplicateKey struct {
 	Provider string `json:"provider"`
@@ -560,7 +560,7 @@ func run(args []string) error {
 		fmt.Fprintf(os.Stderr, "bestiary-gen: warning: could not write parse_failures.json: %v\n", err)
 	}
 
-	// Write version_duplicates.json — work-list for r66e (R4 duplicate collapse).
+	// Write version_duplicates.json — work-list for the future duplicate collapse.
 	// Recognises models that share (provider, family, variant, version) but differ
 	// in model ID. Recognition only; duplicates remain two separate constants.
 	if err := writeVersionDuplicates(flags.cacheDir, models); err != nil {
@@ -620,7 +620,7 @@ func logPerReasonCounts(failures []bestiary.ParseFailure) {
 // considered (models without version don't have a meaningful duplicate key).
 //
 // This is recognition-only: duplicates remain two separate constants. The file
-// is the ready-made work-list for (R4 duplicate collapse).
+// is the ready-made work-list for the future duplicate collapse.
 func writeVersionDuplicates(cacheDir string, models []bestiary.ModelInfo) error {
 	if err := os.MkdirAll(cacheDir, 0o755); err != nil {
 		return fmt.Errorf(
@@ -1024,7 +1024,7 @@ func genToModelInfoDetailed(providerSlug string, wm genWireModel) (bestiary.Mode
 
 	// Single-ownership: consume the full 5-tuple from ParseFamilyDetailed.
 	// ParseFamilyDetailed(raw="") delegates to InferFamilyFromIDWithVariant +
-	// ExtractModifier, covering the empty-family case (B5/B6).
+	// ExtractModifier, covering the empty-family case.
 	// This is byte-equivalent to the former two-branch structure; the
 	// decomposition snapshot test (TestDecompositionSnapshot) guards correctness.
 	//
@@ -1788,7 +1788,8 @@ func resolveCollisions(names []string, models []bestiary.ModelInfo) []string {
 			}
 		} else {
 			// (b) Stable ordinal: order colliders by raw model ID so the _N binding is
-			// reproducible regardless of slice order. (Belt-and-suspenders with R1's sort.)
+			// reproducible regardless of slice order. (Belt-and-suspenders with the
+			// deterministic (Provider,ID) model ordering's sort.)
 			type member struct {
 				pos   int
 				rawID string

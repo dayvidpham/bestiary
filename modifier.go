@@ -98,8 +98,8 @@ func CanonicalizeModifiers(mods []string) []string {
 
 // modifierKey returns a stable, order-independent string key for a modifier list:
 // the canonical-ordered tokens joined by ",". Two lists that are permutations of the
-// same set produce the IDENTICAL key (the R1 set-independence guarantee used
-// by resolve.go's FIX-B group key and by the cross-provider divergence comparison).
+// same set produce the IDENTICAL key (the modifier set-independence guarantee used
+// by resolve.go's group key and by the cross-provider divergence comparison).
 // An empty/nil list returns "".
 func modifierKey(mods []string) string {
 	c := CanonicalizeModifiers(mods)

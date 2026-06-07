@@ -61,7 +61,7 @@ func TestResolve_Ambiguous_MultipleCanonicals(t *testing.T) {
 	// Candidates must be distinct by the extended canonical tuple:
 	// (Family, Variant, Version, Modifier, Date, contextN).
 	//
-	// FIX-B: the group key now includes Version, Modifier, and a parsed
+	// Group-key invariant: the group key now includes Version, Modifier, and a parsed
 	// ":N" context-window discriminator from the raw ID. Two candidates may share
 	// the same (Family, Variant, Date) triple but differ in Version, Modifier, or
 	// contextN — that is expected and correct. The dedup key must cover all six
@@ -137,7 +137,7 @@ func TestResolve_WithSchemeRaw_ExactMatch(t *testing.T) {
 // Family="claude-opus" (so modelMatches' Family-exact branch matched the bare input).
 // A later fix corrected that over-capture (those models are now Family="claude", Variant="opus").
 // The bare "claude-opus" shorthand was then restored via a
-// variant-aware bare-family fallback — see TestResolve_SLICE13_BareHyphenShorthandRestored
+// variant-aware bare-family fallback — see TestResolve_BareHyphenShorthandRestored
 // below, which pins the ratified ErrAmbiguous behavior. This test now uses the bare
 // canonical Family "claude" so it keeps exercising the SAME fallback MECHANISM
 // (raw→canonical retry → ErrAmbiguous) against a genuine multi-model family.
@@ -164,8 +164,8 @@ func TestResolve_WithSchemeRaw_BareFamilyAmbiguous(t *testing.T) {
 	}
 }
 
-// TestResolve_SLICE13_BareHyphenShorthandRestored pins the restored-shorthand behavior,
-// the ratified successor to the former TestResolve_SLICE11_BareOverCaptureNoLongerAmbiguous.
+// TestResolve_BareHyphenShorthandRestored pins the restored-shorthand behavior,
+// the ratified successor to the former bare-over-capture-no-longer-ambiguous test.
 //
 // HISTORY: earlier, bare hyphen "claude-opus" resolved as ErrAmbiguous ONLY
 // because the opus models were OVER-CAPTURED to Family="claude-opus". That was later fixed
@@ -176,7 +176,7 @@ func TestResolve_WithSchemeRaw_BareFamilyAmbiguous(t *testing.T) {
 // PIN: Resolve("claude-opus", SchemeRaw) now returns *ErrAmbiguous listing the opus
 // candidate group (>1), via matchBareFamilyVariant — NOT the old over-capture path and
 // NOT ErrNotFound. The full exact ID still resolves cleanly.
-func TestResolve_SLICE13_BareHyphenShorthandRestored(t *testing.T) {
+func TestResolve_BareHyphenShorthandRestored(t *testing.T) {
 	_, err := bestiary.Resolve("claude-opus", bestiary.WithScheme(bestiary.SchemeRaw))
 	var ambig *bestiary.ErrAmbiguous
 	if !errors.As(err, &ambig) {
@@ -204,13 +204,13 @@ func TestResolve_SLICE13_BareHyphenShorthandRestored(t *testing.T) {
 	}
 }
 
-// TestResolve_SLICE13_ShorthandRegressions pins the behaviors that MUST stay UNCHANGED
+// TestResolve_ShorthandRegressions pins the behaviors that MUST stay UNCHANGED
 // alongside the restored shorthand:
 //   - bare "claude" (family only) → still ErrAmbiguous with many candidates
 //   - canonical "claude/opus" → still ErrAmbiguous with the opus group
 //   - genuinely-unknown "<nonfamily>-x" and "<family>-<nonvariant>" → still ErrNotFound
 //     (the fallback is conservative and must NOT over-match arbitrary hyphenated input)
-func TestResolve_SLICE13_ShorthandRegressions(t *testing.T) {
+func TestResolve_ShorthandRegressions(t *testing.T) {
 	// Bare family "claude" stays ambiguous over the whole family group.
 	_, err := bestiary.Resolve("claude", bestiary.WithScheme(bestiary.SchemeRaw))
 	var ambig *bestiary.ErrAmbiguous
@@ -457,7 +457,7 @@ func TestResolve_SchemeCanonical_NeverAutoDetected_detectScheme(t *testing.T) {
 // TestResolve_CanonicalAutoDetect verifies that detectScheme recognizes
 // "provider/family/variant@date" form and auto-detects SchemeCanonical.
 //
-// B1/B2: Resolve("claude/opus@2025-11-01") must return non-empty
+// Resolve("claude/opus@2025-11-01") must return non-empty
 // refs (or *ErrAmbiguous when multi-provider) — NEVER ErrNotFound.
 func TestResolve_CanonicalAutoDetect(t *testing.T) {
 	refs, err := bestiary.Resolve("claude/opus@2025-11-01")
@@ -1137,18 +1137,18 @@ func TestResolve_PURL_LooseFallback_FormatAmbiguous_Section1NonEmpty(t *testing.
 	}
 }
 
-// --- FIX-B: :N context-window distinctness + selectRepresentative ---
+// --- Group-key invariant: :N context-window distinctness + selectRepresentative ---
 
 // TestResolve_ContextN_Distinct_InCandidates verifies that
 // claude-3-7-sonnet-thinking:1024 and claude-3-7-sonnet-thinking:128000 are NOT
 // collapsed into a single group when resolving "claude" with SchemeCanonical.
 // Both must appear as DISTINCT candidates in the ErrAmbiguous result.
 //
-// Before FIX-B: group key {family,variant,date} collapsed all :N variants sharing
+// Before the group-key invariant: group key {family,variant,date} collapsed all :N variants sharing
 // the same (Family="claude", Variant="", Date="2025-02-24") triple → only ONE
 // candidate appeared in ErrAmbiguous for that slot.
 //
-// After FIX-B: group key extends to include parseContextN(ref.ID) → :1024 and
+// After the group-key invariant: group key extends to include parseContextN(ref.ID) → :1024 and
 // :128000 produce distinct keys → both appear as distinct candidates.
 func TestResolve_ContextN_Distinct_InCandidates(t *testing.T) {
 	_, err := bestiary.Resolve("claude", bestiary.WithScheme(bestiary.SchemeCanonical))
@@ -1174,11 +1174,11 @@ func TestResolve_ContextN_Distinct_InCandidates(t *testing.T) {
 	}
 	if !found1024 {
 		t.Errorf("ErrAmbiguous.Candidates must include claude-3-7-sonnet-thinking:1024 as a distinct candidate "+
-			"(FIX-B :N key not applied?); total candidates=%d", len(ambig.Candidates))
+			"(group-key :N discriminator not applied?); total candidates=%d", len(ambig.Candidates))
 	}
 	if !found128k {
 		t.Errorf("ErrAmbiguous.Candidates must include claude-3-7-sonnet-thinking:128000 as a distinct candidate "+
-			"(FIX-B :N key not applied?); total candidates=%d", len(ambig.Candidates))
+			"(group-key :N discriminator not applied?); total candidates=%d", len(ambig.Candidates))
 	}
 }
 
@@ -1222,7 +1222,7 @@ func TestResolve_ContextN_Direct_Resolve(t *testing.T) {
 
 // TestResolve_Reasoner_Distinct_FromThinking verifies that claude-3-7-sonnet-reasoner
 // is a DISTINCT model from the -thinking:N siblings. It must never be merged into
-// the same group as -thinking variants (per FIX-B invariant: -reasoner stays
+// the same group as -thinking variants (per the group-key invariant: -reasoner stays
 // a distinct model).
 //
 // Currently, -reasoner has Date="2025-03-29" and the :N thinking variants have
@@ -1256,7 +1256,7 @@ func TestResolve_Reasoner_Distinct_FromThinking(t *testing.T) {
 //
 // The cross-slice escape hatch is REMOVED. The decomposition fixes
 // (claude-3-7-sonnet-thinking now decomposes to Family="claude", not the
-// malformed "claude-3-7-sonnet") plus the FIX-B group-key extension have landed, so
+// malformed "claude-3-7-sonnet") plus the group-key extension have landed, so
 // this is now a HARD assertion: ErrAmbiguous is a failure, not a skip. The ratified BDD
 // acceptance criterion (peasant claude-3-7-sonnet → single representative; re-hosts are
 // informational) is gated here.
@@ -1267,7 +1267,7 @@ func TestResolve_Peasant_Claude37Sonnet_SingleRep(t *testing.T) {
 		var ambig *bestiary.ErrAmbiguous
 		if errors.As(err, &ambig) {
 			t.Fatalf("Resolve(claude-3-7-sonnet, peasant) returned ErrAmbiguous with %d candidates, "+
-				"want a SINGLE representative (post-decomposition + FIX-B). Candidates: %v",
+				"want a SINGLE representative (post-decomposition + group-key invariant). Candidates: %v",
 				len(ambig.Candidates), ambig.Candidates)
 		}
 		t.Fatalf("Resolve(claude-3-7-sonnet, peasant) unexpected error %T: %v", err, err)

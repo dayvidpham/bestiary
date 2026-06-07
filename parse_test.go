@@ -782,7 +782,7 @@ func TestParseFamilyWithVersion_BackwardCompat(t *testing.T) {
 // TestInferFamilyFromID_Variant verifies that InferFamilyFromIDWithVariant extracts
 // both variant and version from model IDs where the raw family field is empty.
 //
-// B5: the empty-family code path in genToModelInfo must produce
+// The empty-family code path in genToModelInfo must produce
 // identical (Family, Variant, Version) as the non-empty-family path for the same
 // raw model ID. A model ID like "claude-opus-4-5-20251101" with empty raw family
 // must decompose to (claude, opus, 4.5), not (claude, "", "").
@@ -1403,7 +1403,7 @@ func TestParseFamilyDetailed_UnknownSuffixOverflow(t *testing.T) {
 	// triggering detectSuffixOverflow. Trailing token "zen" is unknown, so
 	// ReasonUnknownSuffixOverflow would fire as an audit hint.
 	//
-	// R3a (e9pi): this subtest is LIVE (not skipped). ParseFamilyWithVersion Step-5 bounded
+	// This subtest is LIVE (not skipped). ParseFamilyWithVersion Step-5 bounded
 	// reorder prevents the pure-fallback from absorbing all trailing tokens, making
 	// ReasonUnknownSuffixOverflow reachable for the claude-opus-4-1-extra-stuff-zen fixture.
 	unknownTrailingWithOverflow := []struct {
@@ -1422,7 +1422,7 @@ func TestParseFamilyDetailed_UnknownSuffixOverflow(t *testing.T) {
 	for _, tc := range unknownTrailingWithOverflow {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
-			// R3a (e9pi): ParseFamilyWithVersion Step-5 bounded reorder decomposes
+			// ParseFamilyWithVersion Step-5 bounded reorder decomposes
 			// rawFamily="claude-opus-4-1-extra-stuff-zen" to (claude, opus, 4.1) via hyphen-version;
 			// "extra-stuff-zen" are unaccounted tokens (>2 threshold) → detectSuffixOverflow fires
 			// → "zen" is not in pd.modifiers → ReasonUnknownSuffixOverflow.
@@ -1430,7 +1430,7 @@ func TestParseFamilyDetailed_UnknownSuffixOverflow(t *testing.T) {
 			if failure == nil {
 				t.Errorf("ParseFamilyDetailed(%q, %q): expected ParseFailure with Reason=%q, got nil\n"+
 					"  What: ReasonUnknownSuffixOverflow was not emitted\n"+
-					"  Why: ParseFamilyWithVersion Step-5 bounded reorder (R3a e9pi) must decompose\n"+
+					"  Why: ParseFamilyWithVersion Step-5 bounded reorder must decompose\n"+
 					"       the input so that 'extra-stuff-zen' tokens are unaccounted (>2 threshold)\n"+
 					"  How to fix: verify ParseFamilyWithVersion returns (claude,opus,4.1) not raw passthrough",
 					tc.rawFamily, tc.id, bestiary.ReasonUnknownSuffixOverflow)
@@ -1550,7 +1550,7 @@ func TestParseFamilyDetailed_CleanParse(t *testing.T) {
 }
 
 // --------------------------------------------------------------------------
-// R1: ExtractVersionBetweenFamilyAndVariant tests
+// ExtractVersionBetweenFamilyAndVariant tests
 // --------------------------------------------------------------------------
 
 // TestExtractVersionBetweenFamilyAndVariant covers the primary acceptance cases
@@ -1558,7 +1558,7 @@ func TestParseFamilyDetailed_CleanParse(t *testing.T) {
 //
 // N-M equivalence: hyphen-separated numeric tokens are dot-joined (3-5 → 3.5).
 // Residual: tokens between version and variant that are neither numeric nor variant
-// are returned in the residual slice (honest-audit per R2).
+// are returned in the residual slice (honest-audit).
 func TestExtractVersionBetweenFamilyAndVariant(t *testing.T) {
 	t.Parallel()
 
@@ -1612,7 +1612,7 @@ func TestExtractVersionBetweenFamilyAndVariant(t *testing.T) {
 			wantResidual: nil,
 		},
 		{
-			desc:         "nova-2-lite-v1 → version=2, residual=[v1] (R2 honest-audit)",
+			desc:         "nova-2-lite-v1 → version=2, residual=[v1] (honest-audit)",
 			id:           "nova-2-lite-v1",
 			family:       "nova",
 			variant:      "lite",
@@ -1620,7 +1620,7 @@ func TestExtractVersionBetweenFamilyAndVariant(t *testing.T) {
 			wantResidual: []string{"v1"},
 		},
 		{
-			desc:         "nemotron-3-super-free → version=3, residual=[super] (R2 honest-audit)",
+			desc:         "nemotron-3-super-free → version=3, residual=[super] (honest-audit)",
 			id:           "nemotron-3-super-free",
 			family:       "nemotron",
 			variant:      "free",
@@ -1676,7 +1676,7 @@ func TestExtractVersionBetweenFamilyAndVariant(t *testing.T) {
 }
 
 // --------------------------------------------------------------------------
-// R3b (eq7w): isFourDigitDateToken tests
+// isFourDigitDateToken (YYMM date guard) tests
 // --------------------------------------------------------------------------
 
 // TestIsYYMMDateToken_Parity verifies that isFourDigitDateToken parity holds with
@@ -1730,17 +1730,17 @@ func TestIsYYMMDateToken_Parity(t *testing.T) {
 }
 
 // --------------------------------------------------------------------------
-// R3c (Δ2′): InferFamilyFromIDWithVariant tests (R3c acceptance)
+// Modifier-strip date-recovery: InferFamilyFromIDWithVariant tests
 // --------------------------------------------------------------------------
 
-// TestInferFamilyFromIDWithVariant_R3c covers the Δ2′ corrected algorithm:
+// TestInferFamilyFromIDWithVariant_ModifierStripDateRecovery covers the Δ2′ corrected algorithm:
 // tentative modifier strip → expose hidden date → decompose → guarded commit.
 //
 // Three empirically-verified traces from :
 //  1. 302ai re-host: claude-opus-4-1-20250805-thinking → (claude, opus, 4.1)
 //  2. Genuine-variant guard: kimi-k2-thinking → GUARD-2 declines, variant=thinking preserved
 //  3. No-modifier control: claude-opus-4-1-20250805 → (claude, opus, 4.1) unchanged
-func TestInferFamilyFromIDWithVariant_R3c(t *testing.T) {
+func TestInferFamilyFromIDWithVariant_ModifierStripDateRecovery(t *testing.T) {
 	t.Parallel()
 
 	cases := []struct {
@@ -1899,13 +1899,13 @@ func TestParseFamilyDetailed_5Tuple(t *testing.T) {
 	}
 }
 
-// TestParseFamilyDetailed_R2_Residual verifies the R2 honest-audit signal:
+// TestParseFamilyDetailed_HonestAuditResidual verifies the honest-audit signal:
 // when extraction succeeds but leaves a residual token, a ParseFailure is emitted
 // with Reason=ReasonResidualUnaccountedTokens AND version is populated.
 //
 // BDD: Given id="nova-2-lite-v1" and rawFamily="nova-lite" when parsed
 // then version="2" AND failure.Reason=ReasonResidualUnaccountedTokens with [v1].
-func TestParseFamilyDetailed_R2_Residual(t *testing.T) {
+func TestParseFamilyDetailed_HonestAuditResidual(t *testing.T) {
 	t.Parallel()
 
 	cases := []struct {
@@ -1930,11 +1930,11 @@ func TestParseFamilyDetailed_R2_Residual(t *testing.T) {
 			_, _, version, _, failure := bestiary.ParseFamilyDetailed(tc.rawFamily, tc.id, tc.provider)
 			if version != tc.wantVersion {
 				t.Errorf("ParseFamilyDetailed(%q, %q): version = %q, want %q\n"+
-					"  R2: version must be populated even when failure is emitted",
+					"  honest-audit: version must be populated even when failure is emitted",
 					tc.rawFamily, tc.id, version, tc.wantVersion)
 			}
 			if failure == nil {
-				t.Fatalf("ParseFamilyDetailed(%q, %q): expected ParseFailure with R2 residual, got nil",
+				t.Fatalf("ParseFamilyDetailed(%q, %q): expected ParseFailure with honest-audit residual, got nil",
 					tc.rawFamily, tc.id)
 			}
 			if failure.Reason != bestiary.ReasonResidualUnaccountedTokens {
@@ -1946,14 +1946,14 @@ func TestParseFamilyDetailed_R2_Residual(t *testing.T) {
 }
 
 // --------------------------------------------------------------------------
-// tests: FIX A (bare-4-digit date guard) + FIX B1 (sole trailing
-// variant-suffix promotion) + negative controls
+// tests: the bare-4-digit date guard + the sole trailing variant-suffix promotion
+// + negative controls
 // --------------------------------------------------------------------------
 
-// TestParseFamilyDetailed_FixA_Bare4DigitDateGuard verifies FIX A: any standalone
+// TestParseFamilyDetailed_Bare4DigitDateGuard verifies the bare-4-digit-date guard: any standalone
 // 4-digit all-numeric token is rejected as a version (treated as a date/release-id),
 // regardless of whether it falls in the YYMM range (19xx–29xx). The original guard
-// (eq7w/R3b) only rejected YYMM-range tokens; FIX-A generalises to all 4-digit
+// (the original YYMM guard) only rejected YYMM-range tokens; the bare-4-digit-date guard generalises to all 4-digit
 // numerics since supervisor analysis confirmed 0 legitimate bare-4-digit semantic
 // versions exist across the 1745 version-populated models.
 //
@@ -1961,8 +1961,8 @@ func TestParseFamilyDetailed_R2_Residual(t *testing.T) {
 // when ParseFamilyDetailed is called then version="" (no version emitted for date token).
 //
 // Acceptance: deepseek-r1-0528 → no version; deepseek-v3-0324 → no version;
-// mistral-small-2603 still no version (YYMM, already handled by R3b).
-func TestParseFamilyDetailed_FixA_Bare4DigitDateGuard(t *testing.T) {
+// mistral-small-2603 still no version (YYMM, already handled by the YYMM guard).
+func TestParseFamilyDetailed_Bare4DigitDateGuard(t *testing.T) {
 	t.Parallel()
 
 	cases := []struct {
@@ -1974,7 +1974,7 @@ func TestParseFamilyDetailed_FixA_Bare4DigitDateGuard(t *testing.T) {
 	}{
 		{
 			// deepseek-r1-0528: "0528" is MMDD format, below 19xx YYMM range.
-			// FIX-A: extended guard rejects "0528" as version.
+			// the bare-4-digit-date guard: extended guard rejects "0528" as version.
 			desc:        "deepseek-r1-0528 → no version (0528 is MMDD date, not version)",
 			rawFamily:   "deepseek-r1",
 			id:          "deepseek-r1-0528",
@@ -1983,7 +1983,7 @@ func TestParseFamilyDetailed_FixA_Bare4DigitDateGuard(t *testing.T) {
 		},
 		{
 			// deepseek-v3-0324: "0324" is MMDD format.
-			// FIX-A: extended guard rejects "0324" as version.
+			// the bare-4-digit-date guard: extended guard rejects "0324" as version.
 			desc:        "deepseek-v3-0324 → no version (0324 is MMDD date, not version)",
 			rawFamily:   "deepseek",
 			id:          "deepseek-v3-0324",
@@ -1991,8 +1991,8 @@ func TestParseFamilyDetailed_FixA_Bare4DigitDateGuard(t *testing.T) {
 			wantVersion: "",
 		},
 		{
-			// mistral-small-2603: "2603" is YYMM range — still rejected (R3b coverage preserved).
-			desc:        "mistral-small-2603 → no version (2603 is YYMM date, R3b still holds)",
+			// mistral-small-2603: "2603" is YYMM range — still rejected (YYMM-guard coverage preserved).
+			desc:        "mistral-small-2603 → no version (2603 is YYMM date, YYMM guard still holds)",
 			rawFamily:   "mistral-small",
 			id:          "mistral-small-2603",
 			provider:    "mistral",
@@ -2007,7 +2007,7 @@ func TestParseFamilyDetailed_FixA_Bare4DigitDateGuard(t *testing.T) {
 			if version != tc.wantVersion {
 				t.Errorf("ParseFamilyDetailed(%q, %q): version = %q, want %q\n"+
 					"  What: bare 4-digit date token was returned as a version\n"+
-					"  Why: FIX-A guard should reject any 4-digit all-numeric token as a date/release-id\n"+
+					"  Why: the bare-4-digit-date guard guard should reject any 4-digit all-numeric token as a date/release-id\n"+
 					"  How to fix: verify isFourDigitDateToken returns true for all 4-digit all-numeric tokens",
 					tc.rawFamily, tc.id, version, tc.wantVersion)
 			}
@@ -2015,13 +2015,13 @@ func TestParseFamilyDetailed_FixA_Bare4DigitDateGuard(t *testing.T) {
 	}
 }
 
-// TestExtractVersionFromID_FixA_Bare4DigitDateGuard verifies that ExtractVersionFromID
-// also rejects bare 4-digit date tokens (FIX-A parity with ParseFamilyDetailed).
+// TestExtractVersionFromID_Bare4DigitDateGuard verifies that ExtractVersionFromID
+// also rejects bare 4-digit date tokens (the bare-4-digit-date guard parity with ParseFamilyDetailed).
 // The guard must be consistent across all call sites: isVersionToken, ExtractVersionFromID,
 // and ParseFamilyDetailed.
 //
 // Acceptance: genuine versions like 4.6, 4.5, 4o still extracted correctly.
-func TestExtractVersionFromID_FixA_Bare4DigitDateGuard(t *testing.T) {
+func TestExtractVersionFromID_Bare4DigitDateGuard(t *testing.T) {
 	t.Parallel()
 
 	cases := []struct {
@@ -2030,7 +2030,7 @@ func TestExtractVersionFromID_FixA_Bare4DigitDateGuard(t *testing.T) {
 		rawFamily bestiary.Family
 		want      string
 	}{
-		// FIX-A: bare 4-digit tokens rejected.
+		// the bare-4-digit-date guard: bare 4-digit tokens rejected.
 		{
 			desc:      "deepseek-r1-0528 → no version (0528 rejected)",
 			id:        "deepseek-r1-0528",
@@ -2045,7 +2045,7 @@ func TestExtractVersionFromID_FixA_Bare4DigitDateGuard(t *testing.T) {
 		},
 		// Existing YYMM guard still active.
 		{
-			desc:      "mistral-small-2603 → no version (2603 YYMM, R3b preserved)",
+			desc:      "mistral-small-2603 → no version (2603 YYMM, YYMM guard preserved)",
 			id:        "mistral-small-2603",
 			rawFamily: "mistral-small",
 			want:      "",
@@ -2071,7 +2071,7 @@ func TestExtractVersionFromID_FixA_Bare4DigitDateGuard(t *testing.T) {
 			got := bestiary.ExtractVersionFromID(tc.id, tc.rawFamily)
 			if got != tc.want {
 				t.Errorf("ExtractVersionFromID(%q, %q) = %q, want %q\n"+
-					"  What: FIX-A bare-4-digit guard inconsistency\n"+
+					"  What: the bare-4-digit-date guard bare-4-digit guard inconsistency\n"+
 					"  Why: 4-digit token must be rejected by isFourDigitDateToken in ExtractVersionFromID",
 					tc.id, tc.rawFamily, got, tc.want)
 			}
@@ -2079,7 +2079,7 @@ func TestExtractVersionFromID_FixA_Bare4DigitDateGuard(t *testing.T) {
 	}
 }
 
-// TestParseFamilyDetailed_FixB1_SoleVariantSuffixPromotion verifies FIX B1:
+// TestParseFamilyDetailed_SoleVariantSuffixPromotion verifies the sole-residual suffix promotion:
 // when version was extracted AND exactly ONE residual token remains AND it is a
 // known variant suffix (from variant_suffixes.json) AND Variant=="" → the token is
 // promoted into Variant, and no ReasonResidualUnaccountedTokens failure is emitted.
@@ -2088,9 +2088,9 @@ func TestExtractVersionFromID_FixA_Bare4DigitDateGuard(t *testing.T) {
 // when ParseFamilyDetailed is called then variant=<suffix> AND failure=nil.
 //
 // Acceptance: glm-5-turbo→(glm,turbo,5); phi-4-mini→(phi,mini,4).
-// Note: text-embedding-3-large/small were here in FIX-2 but are now documented residuals
+// Note: text-embedding-3-large/small were here in the earlier full-prefix-first fix but are now documented residuals
 // after reverted the full-prefix-first change.
-func TestParseFamilyDetailed_FixB1_SoleVariantSuffixPromotion(t *testing.T) {
+func TestParseFamilyDetailed_SoleVariantSuffixPromotion(t *testing.T) {
 	t.Parallel()
 
 	cases := []struct {
@@ -2106,7 +2106,7 @@ func TestParseFamilyDetailed_FixB1_SoleVariantSuffixPromotion(t *testing.T) {
 		{
 			// glm-5-turbo: rawFamily="glm" → family=glm, variant="" initially.
 			// ExtractVersionBetween: ver="5", residual=["turbo"]. "turbo" is a known suffix.
-			// B1: variant="" → promote "turbo" → (glm, turbo, 5), no failure.
+			// variant="" → promote "turbo" → (glm, turbo, 5), no failure.
 			// 'turbo' is now a global Modifier (glm has no 'turbo' member), so it is
 			// NOT promoted into Variant — variant is empty, modifier=[turbo], version=5,
 			// and no residual-unaccounted failure (the modifier is a first-class field).
@@ -2125,7 +2125,7 @@ func TestParseFamilyDetailed_FixB1_SoleVariantSuffixPromotion(t *testing.T) {
 		{
 			// phi-4-mini: rawFamily="phi" → family=phi, variant="" initially.
 			// ExtractVersionBetween: ver="4", residual=["mini"]. "mini" is a known suffix.
-			// B1: variant="" → promote "mini" → (phi, mini, 4), no failure.
+			// variant="" → promote "mini" → (phi, mini, 4), no failure.
 			desc:          "phi-4-mini → (phi, mini, 4), no residual failure",
 			rawFamily:     "phi",
 			id:            "phi-4-mini",
@@ -2136,12 +2136,12 @@ func TestParseFamilyDetailed_FixB1_SoleVariantSuffixPromotion(t *testing.T) {
 			wantNoFailure: true,
 		},
 		// NOTE: text-embedding-3-large and text-embedding-3-small are NOT in this table
-		// after . The FIX-2 full-prefix-first change that made them promote
+		// after . The the earlier full-prefix-first fix full-prefix-first change that made them promote
 		// has been reverted. With firstToken normalization, family="text-embedding" →
 		// prefix="text-" → remainder="embedding-3-large" → residual=["embedding","large"]
-		// (2 residual tokens, B1 requires exactly 1) → ReasonResidualUnaccountedTokens.
-		// These are documented residuals accepted in .
-		// They are covered by TestParseFamilyDetailed_FixB1_Reverted_TextEmbeddingResidual.
+		// (2 residual tokens, the sole-residual promotion requires exactly 1) → ReasonResidualUnaccountedTokens.
+		// These are documented residuals.
+		// They are covered by TestParseFamilyDetailed_TextEmbeddingResidual.
 	}
 
 	for _, tc := range cases {
@@ -2154,8 +2154,8 @@ func TestParseFamilyDetailed_FixB1_SoleVariantSuffixPromotion(t *testing.T) {
 			if variant != tc.wantVariant {
 				t.Errorf("variant = %q, want %q\n"+
 					"  What: sole trailing known-suffix was not promoted into Variant\n"+
-					"  Why: FIX B1 should set Variant=<suffix> when exactly one residual token is a known variant suffix\n"+
-					"  How to fix: verify B1 promotion logic in ParseFamilyDetailed",
+					"  Why: the sole-residual suffix promotion should set Variant=<suffix> when exactly one residual token is a known variant suffix\n"+
+					"  How to fix: verify the sole-residual promotion logic in ParseFamilyDetailed",
 					variant, tc.wantVariant)
 			}
 			if version != tc.wantVersion {
@@ -2164,20 +2164,20 @@ func TestParseFamilyDetailed_FixB1_SoleVariantSuffixPromotion(t *testing.T) {
 			if tc.wantNoFailure && failure != nil {
 				t.Errorf("failure = %+v, want nil\n"+
 					"  What: ReasonResidualUnaccountedTokens emitted even though sole residual was a known suffix\n"+
-					"  Why: FIX B1 should suppress failure when sole residual is promoted to Variant",
+					"  Why: the sole-residual suffix promotion should suppress failure when sole residual is promoted to Variant",
 					failure)
 			}
 		})
 	}
 }
 
-// TestParseFamilyDetailed_FixB1_NegativeControls verifies that a residual failure
+// TestParseFamilyDetailed_SoleVariantSuffixPromotion_NegativeControls verifies that a residual failure
 // is STILL emitted (the model does not fully decompose) in two cases where the
 // trailing residue is more than a single promotable suffix token — even though the
 // member-variant IS now recovered by recoverMemberVariant.
 //
-// recoverMemberVariant superseded the old inline B1.
-// Unlike old B1 — which fired only on EXACTLY ONE post-version residual token — the
+// recoverMemberVariant superseded the old inline promotion.
+// Unlike the old promotion — which fired only on EXACTLY ONE post-version residual token — the
 // broad member-zone scan now recovers a member variant up front (for registered
 // families) regardless of how many OTHER residual tokens follow. So the variant IS
 // populated here; the residual failure persists because a DIFFERENT, unaccounted
@@ -2190,7 +2190,7 @@ func TestParseFamilyDetailed_FixB1_SoleVariantSuffixPromotion(t *testing.T) {
 //
 // These remain documented residuals (user-accepted, out of scope): the failure is
 // the honest-audit signal that the ID did not fully decompose, NOT a missing variant.
-func TestParseFamilyDetailed_FixB1_NegativeControls(t *testing.T) {
+func TestParseFamilyDetailed_SoleVariantSuffixPromotion_NegativeControls(t *testing.T) {
 	t.Parallel()
 
 	cases := []struct {
@@ -2238,7 +2238,7 @@ func TestParseFamilyDetailed_FixB1_NegativeControls(t *testing.T) {
 			if variant != tc.wantVariant {
 				t.Errorf("ParseFamilyDetailed(%q, %q): variant = %q, want %q\n"+
 					"  What: recoverMemberVariant should recover the member variant even when a residual remains\n"+
-					"  Why: the broad member-zone scan no longer requires a single sole residual (unlike old B1)",
+					"  Why: the broad member-zone scan no longer requires a single sole residual (unlike the old promotion)",
 					tc.rawFamily, tc.id, variant, tc.wantVariant)
 			}
 			if tc.wantFailure {
@@ -2264,7 +2264,7 @@ func TestParseFamilyDetailed_FixB1_NegativeControls(t *testing.T) {
 // date-as-version guard inside dot-join paths
 // --------------------------------------------------------------------------
 
-// TestParseFamilyWithVersion_Fix3_DateGroupsStripped verifies :
+// TestParseFamilyWithVersion_DateGroupsStripped verifies :
 // the date-shape guard is applied INSIDE the hyphen-version dot-join path,
 // stripping trailing date groups and keeping only leading semantic-version groups.
 //
@@ -2277,7 +2277,7 @@ func TestParseFamilyDetailed_FixB1_NegativeControls(t *testing.T) {
 // BDD: given a raw family string with a trailing date group in hyphen-version form,
 // when ParseFamilyWithVersion is called, then version="" (date stripped) or version
 // equals only the leading non-date groups.
-func TestParseFamilyWithVersion_Fix3_DateGroupsStripped(t *testing.T) {
+func TestParseFamilyWithVersion_DateGroupsStripped(t *testing.T) {
 	t.Parallel()
 
 	cases := []struct {
@@ -2365,13 +2365,13 @@ func TestParseFamilyWithVersion_Fix3_DateGroupsStripped(t *testing.T) {
 	}
 }
 
-// TestExtractVersionFromID_Fix3_MMYYYYTwoGroup verifies for the
+// TestExtractVersionFromID_MMYYYYTwoGroup verifies for the
 // reHyphenDigits path in ExtractVersionFromID: the MM-YYYY two-group pattern
 // (e.g. "08-2024", "03-2025") must be detected as a date and return "".
 //
 // BDD: given remainder="MM-YYYY" after family-prefix strip, when ExtractVersionFromID
 // is called, then "" is returned (date shape, not a semantic version).
-func TestExtractVersionFromID_Fix3_MMYYYYTwoGroup(t *testing.T) {
+func TestExtractVersionFromID_MMYYYYTwoGroup(t *testing.T) {
 	t.Parallel()
 
 	cases := []struct {
@@ -2421,14 +2421,14 @@ func TestExtractVersionFromID_Fix3_MMYYYYTwoGroup(t *testing.T) {
 	}
 }
 
-// TestExtractVersionBetweenFamilyAndVariant_Fix3_6DigitStripped verifies that
+// TestExtractVersionBetweenFamilyAndVariant_6DigitStripped verifies that
 // correctly strips 6-digit YYMMDD tokens from the version extraction
 // loop in ExtractVersionBetweenFamilyAndVariant.
 //
 // BDD: given an ID with a 6-digit YYMMDD suffix embedded after valid version tokens,
 // when ExtractVersionBetweenFamilyAndVariant is called, then the version contains only
 // the leading semantic groups (6-digit date group is stopped at, not included).
-func TestExtractVersionBetweenFamilyAndVariant_Fix3_6DigitStripped(t *testing.T) {
+func TestExtractVersionBetweenFamilyAndVariant_6DigitStripped(t *testing.T) {
 	t.Parallel()
 
 	cases := []struct {
@@ -2486,8 +2486,8 @@ func TestExtractVersionBetweenFamilyAndVariant_Fix3_6DigitStripped(t *testing.T)
 // regression tests
 // --------------------------------------------------------------------------
 
-// TestParseFamilyDetailed_Fix4_VersionRestoredAfterRevert is the regression
-// test pinning that the FIX-2 B1 full-prefix-first revert RESTORES version extraction for
+// TestParseFamilyDetailed_VersionRestoredAfterRevert is the regression
+// test pinning that the full-prefix-first revert RESTORES version extraction for
 // the three canonical cases that were over-stripped. Guards against version-nulling recurrence.
 //
 // BDD: Given model IDs whose version digits appear BEFORE a compound family prefix in the ID
@@ -2498,7 +2498,7 @@ func TestExtractVersionBetweenFamilyAndVariant_Fix3_6DigitStripped(t *testing.T)
 //   - claude-3-7-sonnet-thinking → version "3.7"
 //   - gemini-2.5-flash-image-generation → version "2.5"
 //   - grok-3-beta → version "3"
-func TestParseFamilyDetailed_Fix4_VersionRestoredAfterRevert(t *testing.T) {
+func TestParseFamilyDetailed_VersionRestoredAfterRevert(t *testing.T) {
 	t.Parallel()
 
 	cases := []struct {
@@ -2513,7 +2513,7 @@ func TestParseFamilyDetailed_Fix4_VersionRestoredAfterRevert(t *testing.T) {
 			// ExtractVersionBetween(id, "claude", "sonnet"): prefix="claude-", rem="3-7-sonnet-thinking-20250219"
 			// → date strip → "3-7-sonnet-thinking" → "3","7" before "sonnet" → ver="3.7".
 			// (modifier "thinking" is stripped by ExtractModifier before this call.)
-			desc:        "claude-3-7-sonnet-thinking → version 3.7 (FIX-4 restore)",
+			desc:        "claude-3-7-sonnet-thinking → version 3.7 (the full-prefix-first revert restore)",
 			rawFamily:   "claude-sonnet",
 			id:          "claude-3-7-sonnet-thinking-20250219",
 			provider:    "anthropic",
@@ -2524,8 +2524,8 @@ func TestParseFamilyDetailed_Fix4_VersionRestoredAfterRevert(t *testing.T) {
 			// → family="gemini-2.5-flash", variant="image". ExtractVersionBetween(id, "gemini-2.5-flash", "image"):
 			// prefix=firstToken("gemini-2.5-flash")+"-"="gemini-", rem="2.5-flash-image-generation"
 			// → dot-version early return: reBareVersion.MatchString("2.5")=true → ver="2.5".
-			// (FIX-2 full-prefix-first would have matched "gemini-2.5-flash-" and returned ver="".)
-			desc:        "gemini-2.5-flash-image-generation → version 2.5 (FIX-4 restore)",
+			// (the earlier full-prefix-first fix full-prefix-first would have matched "gemini-2.5-flash-" and returned ver="".)
+			desc:        "gemini-2.5-flash-image-generation → version 2.5 (the full-prefix-first revert restore)",
 			rawFamily:   "gemini-2.5-flash-image",
 			id:          "gemini-2.5-flash-image-generation",
 			provider:    "google",
@@ -2534,8 +2534,8 @@ func TestParseFamilyDetailed_Fix4_VersionRestoredAfterRevert(t *testing.T) {
 		{
 			// grok-3-beta: rawFamily="grok" → (grok, "", ""). ExtractVersionBetween(id, "grok", ""):
 			// prefix="grok-", rem="3-beta" → no variantFirst → "3" is version, "beta" residual.
-			// B1: len(residual)==1, variant=="" → check "beta" is known suffix → promote → (grok, beta, 3).
-			desc:        "grok-3-beta → version 3 (FIX-4 restore)",
+			// len(residual)==1, variant=="" → check "beta" is known suffix → promote → (grok, beta, 3).
+			desc:        "grok-3-beta → version 3 (the full-prefix-first revert restore)",
 			rawFamily:   "grok",
 			id:          "grok-3-beta",
 			provider:    "xai",
@@ -2549,7 +2549,7 @@ func TestParseFamilyDetailed_Fix4_VersionRestoredAfterRevert(t *testing.T) {
 			_, _, version, _, failure := bestiary.ParseFamilyDetailed(tc.rawFamily, tc.id, tc.provider)
 			if version != tc.wantVersion {
 				t.Errorf("ParseFamilyDetailed(%q, %q): version = %q, want %q\n"+
-					"  What: version not extracted — FIX-4 revert of B1 full-prefix-first should restore this\n"+
+					"  What: version not extracted — the full-prefix-first revert should restore this\n"+
 					"  Why: full-prefix-first over-stripped compound family prefix, losing the leading version digits\n"+
 					"  How to fix: verify ExtractVersionBetweenFamilyAndVariant uses firstToken normalization, not full-prefix",
 					tc.rawFamily, tc.id, version, tc.wantVersion)
@@ -2562,14 +2562,14 @@ func TestParseFamilyDetailed_Fix4_VersionRestoredAfterRevert(t *testing.T) {
 	}
 }
 
-// TestParseFamilyDetailed_Fix4_OjjbSurvivingB1Promotions verifies that the B1 sole-variant-suffix
-// promotions that do NOT depend on the full-prefix-first change SURVIVE the FIX-4 revert.
+// TestParseFamilyDetailed_SurvivingSoleSuffixPromotions verifies that the sole-variant-suffix
+// promotions that do NOT depend on the full-prefix-first change SURVIVE the the full-prefix-first revert revert.
 // These are gpt-5-codex and gpt-4-turbo, where rawFamily="gpt" (single token) and the full-prefix
 // is the same as firstToken, so the revert has no effect on them.
 //
 // BDD: Given rawFamily="gpt" (single token, no compound prefix), when ParseFamilyDetailed is
-// called on gpt-5-codex and gpt-4-turbo, then B1 promotes the sole residual variant suffix.
-func TestParseFamilyDetailed_Fix4_OjjbSurvivingB1Promotions(t *testing.T) {
+// called on gpt-5-codex and gpt-4-turbo, then the promotion fires for the sole residual variant suffix.
+func TestParseFamilyDetailed_SurvivingSoleSuffixPromotions(t *testing.T) {
 	t.Parallel()
 
 	cases := []struct {
@@ -2583,9 +2583,9 @@ func TestParseFamilyDetailed_Fix4_OjjbSurvivingB1Promotions(t *testing.T) {
 	}{
 		{
 			// gpt-5-codex: rawFamily="gpt" → (gpt, "", ""). ExtractVersionBetween: prefix="gpt-",
-			// rem="5-codex" → "5" is version, "codex" residual. B1: len(residual)==1, variant=="" →
+			// rem="5-codex" → "5" is version, "codex" residual. Promotion: len(residual)==1, variant=="" →
 			// "codex" is a known suffix → promote → (gpt, codex, 5). No compound prefix issue.
-			desc:        "gpt-5-codex → (gpt, codex, 5) — B1 survives FIX-4 revert",
+			desc:        "gpt-5-codex → (gpt, codex, 5) — promotion survives the full-prefix-first revert revert",
 			rawFamily:   "gpt",
 			id:          "gpt-5-codex",
 			provider:    "openai",
@@ -2615,9 +2615,9 @@ func TestParseFamilyDetailed_Fix4_OjjbSurvivingB1Promotions(t *testing.T) {
 			}
 			if variant != tc.wantVariant {
 				t.Errorf("variant = %q, want %q\n"+
-					"  What: B1 sole-variant-suffix promotion did not fire\n"+
+					"  What: the sole-variant-suffix promotion did not fire\n"+
 					"  Why: gpt-5-codex/gpt-4-turbo use single-token rawFamily ('gpt'); revert should not affect them\n"+
-					"  How to fix: verify B1 promotion logic in ParseFamilyDetailed",
+					"  How to fix: verify the sole-residual promotion logic in ParseFamilyDetailed",
 					variant, tc.wantVariant)
 			}
 			if version != tc.wantVersion {
@@ -2627,21 +2627,21 @@ func TestParseFamilyDetailed_Fix4_OjjbSurvivingB1Promotions(t *testing.T) {
 			// AUDIT annotation (codegen clears it once the modifier is first-class). Permit it;
 			// any OTHER failure reason is still unexpected.
 			if failure != nil && failure.Reason != bestiary.ReasonKnownSuffixOverflow {
-				t.Errorf("unexpected ParseFailure reason=%q; B1 should have promoted sole residual to variant",
+				t.Errorf("unexpected ParseFailure reason=%q; the promotion should have promoted sole residual to variant",
 					failure.Reason)
 			}
 		})
 	}
 }
 
-// TestParseFamilyDetailed_Fix4_TextEmbeddingResidual documents the EXPECTED post-FIX-4 behavior
+// TestParseFamilyDetailed_TextEmbeddingResidual documents the EXPECTED post-the full-prefix-first revert behavior
 // of text-embedding-3-large and text-embedding-3-small: they are documented residuals
 // (ReasonResidualUnaccountedTokens) after the full-prefix-first revert.
 //
 // After revert: firstToken("text-embedding")="text" → prefix="text-" → remainder="embedding-3-large"
-// → residual=["embedding","large"] (2 tokens, B1 requires exactly 1) → failure emitted.
+// → residual=["embedding","large"] (2 tokens, the sole-residual promotion requires exactly 1) → failure emitted.
 // Proper additive handling is deferred.
-func TestParseFamilyDetailed_Fix4_TextEmbeddingResidual(t *testing.T) {
+func TestParseFamilyDetailed_TextEmbeddingResidual(t *testing.T) {
 	t.Parallel()
 
 	cases := []struct {
@@ -2659,7 +2659,7 @@ func TestParseFamilyDetailed_Fix4_TextEmbeddingResidual(t *testing.T) {
 			_, _, _, _, failure := bestiary.ParseFamilyDetailed(tc.rawFamily, tc.id, tc.provider)
 			if failure == nil {
 				t.Errorf("ParseFamilyDetailed(%q, %q): failure=nil, want ReasonResidualUnaccountedTokens\n"+
-					"  What: text-embedding models should emit residual failure after FIX-4 revert\n"+
+					"  What: text-embedding models should emit residual failure after the full-prefix-first revert revert\n"+
 					"  Why: full-prefix-first was reverted; firstToken('text-embedding')='text' leaves 'embedding' as residual\n"+
 					"  How to fix: verify full-prefix-first is NOT in ExtractVersionBetweenFamilyAndVariant",
 					tc.rawFamily, tc.id)
@@ -2673,7 +2673,7 @@ func TestParseFamilyDetailed_Fix4_TextEmbeddingResidual(t *testing.T) {
 	}
 }
 
-// TestParseFamilyWithVersion_Fix4_Step5_6DigitDateGuard verifies the 7kyb/9yyp
+// TestParseFamilyWithVersion_Step5_6DigitDateGuard verifies the 6-digit-date-guard
 // fix: ParseFamilyWithVersion Step-5 override-prefix version loop now uses isDateShapedToken
 // (catches 4-digit AND 6-digit YYMMDD) instead of isFourDigitDateToken (4-digit only).
 //
@@ -2687,9 +2687,9 @@ func TestParseFamilyDetailed_Fix4_TextEmbeddingResidual(t *testing.T) {
 // actually match the Step-2 hyphen-version regex (all-digit suffix) and are processed by
 // dotJoinStrippingDateSuffix BEFORE reaching Step-5. These tests are therefore NOT load-bearing
 // for parse.go:455 (the isDateShapedToken guard in the Step-5 override-prefix loop).
-// See TestParseFamilyWithVersion_Fix4_Step5_6DigitDateGuard_LoadBearing below for the
+// See TestParseFamilyWithVersion_Step5_6DigitDateGuard_LoadBearing below for the
 // load-bearing test that actually exercises parse.go:455.
-func TestParseFamilyWithVersion_Fix4_Step5_6DigitDateGuard(t *testing.T) {
+func TestParseFamilyWithVersion_Step5_6DigitDateGuard(t *testing.T) {
 	t.Parallel()
 
 	cases := []struct {
@@ -2756,18 +2756,18 @@ func TestParseFamilyWithVersion_Fix4_Step5_6DigitDateGuard(t *testing.T) {
 	}
 }
 
-// TestParseFamilyWithVersion_Fix4_Step5_6DigitDateGuard_LoadBearing is the LOAD-BEARING
+// TestParseFamilyWithVersion_Step5_6DigitDateGuard_LoadBearing is the LOAD-BEARING
 // companion test for parse.go:455 (the isDateShapedToken guard inside the Step-5
 // override-prefix version loop of ParseFamilyWithVersion).
 //
 // Background:
 //
-// The existing TestParseFamilyWithVersion_Fix4_Step5_6DigitDateGuard is NOT load-bearing for
+// The existing TestParseFamilyWithVersion_Step5_6DigitDateGuard is NOT load-bearing for
 // parse.go:455: its inputs (e.g. "claude-opus-1-6-250615") match the Step-2 hyphen-version
 // regex (^base-(\d+(-\d+)*)$) because their suffix is all-numeric, so they are handled by
 // dotJoinStrippingDateSuffix at Step-2 and RETURN before Step-5 is ever entered.
 // Reverting parse.go:455 from isDateShapedToken back to isFourDigitDateToken passes the entire
-// test suite — confirming the original test does NOT exercise the FIX-4 change site.
+// test suite — confirming the original test does NOT exercise the the full-prefix-first revert change site.
 //
 // Reaching Step-5: the Step-5 override-prefix loop fires when:
 //
@@ -2798,7 +2798,7 @@ func TestParseFamilyWithVersion_Fix4_Step5_6DigitDateGuard(t *testing.T) {
 //	version position of the remaining suffix —
 //	When ParseFamilyWithVersion is called,
 //	Then the 6-digit token must NOT appear in the returned version.
-func TestParseFamilyWithVersion_Fix4_Step5_6DigitDateGuard_LoadBearing(t *testing.T) {
+func TestParseFamilyWithVersion_Step5_6DigitDateGuard_LoadBearing(t *testing.T) {
 	t.Parallel()
 
 	cases := []struct {
@@ -2813,9 +2813,9 @@ func TestParseFamilyWithVersion_Fix4_Step5_6DigitDateGuard_LoadBearing(t *testin
 			// → falls through to Step-5. Override scan: "claude-opus" → {claude, opus}.
 			// suffix = ["1","6","250615","zen"]. Tokens: "1" (version), "6" (version),
 			// "250615" (6-digit YYMMDD — isDateShapedToken=true) → break.
-			// Without FIX-4 (isFourDigitDateToken): "250615" has len=6≠4 → isFourDigitDateToken=false
+			// Without the full-prefix-first revert (isFourDigitDateToken): "250615" has len=6≠4 → isFourDigitDateToken=false
 			// → "250615" appended → version="1.6.250615" (WRONG).
-			// With FIX-4 (isDateShapedToken): is6DigitYYMMDD("250615")=true → break → version="1.6" (CORRECT).
+			// With the full-prefix-first revert (isDateShapedToken): is6DigitYYMMDD("250615")=true → break → version="1.6" (CORRECT).
 			name:        "claude-opus-1-6-250615-zen → version 1.6 (Step-5 path, 6-digit blocked)",
 			raw:         "claude-opus-1-6-250615-zen",
 			wantFamily:  "claude",
@@ -2892,7 +2892,7 @@ func TestParseFamilyWithVersion_Fix4_Step5_6DigitDateGuard_LoadBearing(t *testin
 }
 
 // splitDotSegments splits s on "." and returns the non-empty parts.
-// Used by TestParseFamilyWithVersion_Fix4_Step5_6DigitDateGuard_LoadBearing to
+// Used by TestParseFamilyWithVersion_Step5_6DigitDateGuard_LoadBearing to
 // inspect individual dot-notation version tokens.
 func splitDotSegments(s string) []string {
 	if s == "" {
@@ -2909,7 +2909,7 @@ func splitDotSegments(s string) []string {
 }
 
 // isAllDigits reports whether every rune in s is an ASCII digit.
-// Used by TestParseFamilyWithVersion_Fix4_Step5_6DigitDateGuard_LoadBearing.
+// Used by TestParseFamilyWithVersion_Step5_6DigitDateGuard_LoadBearing.
 func isAllDigits(s string) bool {
 	for _, r := range s {
 		if r < '0' || r > '9' {
@@ -2920,23 +2920,23 @@ func isAllDigits(s string) bool {
 }
 
 // ============================================================================
-// Tests (RED until M3/M4/recoverMemberVariant are implemented)
+// Tests (RED until the vendor strip/the case-fold/recoverMemberVariant are implemented)
 // ============================================================================
 
 // ----------------------------------------------------------------------------
-// M4 — case-fold: Family field must be lowercase at the output boundary
+// the case-fold — case-fold: Family field must be lowercase at the output boundary
 // ----------------------------------------------------------------------------
 
-// TestM4_FamilyCaseFold verifies that ParseFamilyDetailed lowercases the
-// Family field regardless of the casing in the raw_family input (M4).
+// TestFamilyCaseFold verifies that ParseFamilyDetailed lowercases the
+// Family field regardless of the casing in the raw_family input (the case-fold).
 //
 // BDD: Given a mixed-case raw_family (e.g. "MiniMax"),
 // When ParseFamilyDetailed is called,
 // Then the returned Family is lowercase ("minimax").
 //
-// This is the M4 case-fold step. Fixes CatA cross-provider divergences
+// This is the the case-fold case-fold step. Fixes CatA cross-provider divergences
 // (e.g. some providers return raw_family="MiniMax" while others return "minimax").
-func TestM4_FamilyCaseFold(t *testing.T) {
+func TestFamilyCaseFold(t *testing.T) {
 	t.Parallel()
 
 	cases := []struct {
@@ -2948,7 +2948,7 @@ func TestM4_FamilyCaseFold(t *testing.T) {
 	}{
 		{
 			// CatA divergence: some providers return "MiniMax" (capitalised),
-			// others return "minimax". M4 normalises both to lowercase "minimax".
+			// others return "minimax". the case-fold normalises both to lowercase "minimax".
 			desc:       "MiniMax raw_family → lowercase minimax",
 			rawFamily:  "MiniMax",
 			id:         "minimax-m1-80k",
@@ -2956,7 +2956,7 @@ func TestM4_FamilyCaseFold(t *testing.T) {
 			wantFamily: "minimax",
 		},
 		{
-			// "Hy" is the only uppercase entry in allFamilies. M4 lowercases it.
+			// "Hy" is the only uppercase entry in allFamilies. the case-fold lowercases it.
 			desc:       "Hy raw_family → lowercase hy",
 			rawFamily:  "Hy",
 			id:         "hy3-something",
@@ -2964,8 +2964,8 @@ func TestM4_FamilyCaseFold(t *testing.T) {
 			wantFamily: "hy",
 		},
 		{
-			// Already lowercase — M4 is a no-op; existing behaviour preserved.
-			desc:       "claude raw_family unchanged by M4",
+			// Already lowercase — the case-fold is a no-op; existing behaviour preserved.
+			desc:       "claude raw_family unchanged by the case-fold",
 			rawFamily:  "claude-opus",
 			id:         "claude-opus-4-6",
 			provider:   "anthropic",
@@ -2979,22 +2979,22 @@ func TestM4_FamilyCaseFold(t *testing.T) {
 			fam, _, _, _, _ := bestiary.ParseFamilyDetailed(tc.rawFamily, tc.id, tc.provider)
 			if fam != tc.wantFamily {
 				t.Errorf("family = %q, want %q\n"+
-					"  What: M4 case-fold did not lowercase the Family field\n"+
+					"  What: the case-fold case-fold did not lowercase the Family field\n"+
 					"  Why: the parser requires Family(strings.ToLower(...)) at the Family-field boundary\n"+
-					"  How to fix: apply M4 case-fold in ParseFamilyDetailed and InferFamilyFromIDWithVariant",
+					"  How to fix: apply the case-fold case-fold in ParseFamilyDetailed and InferFamilyFromIDWithVariant",
 					fam, tc.wantFamily)
 			}
 		})
 	}
 }
 
-// TestM4_InferFamilyCaseFold verifies that InferFamilyFromIDWithVariant (the
-// empty-raw-family path) also lowercases the inferred Family field (M4).
+// TestInferFamilyCaseFold verifies that InferFamilyFromIDWithVariant (the
+// empty-raw-family path) also lowercases the inferred Family field (the case-fold).
 //
 // BDD: Given an empty raw_family with a mixed-case model ID (e.g. "MiniMax-M1"),
 // When InferFamilyFromIDWithVariant is called,
 // Then the returned Family is lowercase ("minimax").
-func TestM4_InferFamilyCaseFold(t *testing.T) {
+func TestInferFamilyCaseFold(t *testing.T) {
 	t.Parallel()
 
 	cases := []struct {
@@ -3005,17 +3005,17 @@ func TestM4_InferFamilyCaseFold(t *testing.T) {
 	}{
 		{
 			// MiniMax-M1: some providers have empty raw_family; model ID starts with
-			// "MiniMax" (uppercase). After M3 path-strip and M4 lowercase, family
+			// "MiniMax" (uppercase). After the vendor strip path-strip and the case-fold lowercase, family
 			// should be "minimax".
-			desc:       "MiniMax-M1 empty raw_family → minimax (M4 lowercase)",
+			desc:       "MiniMax-M1 empty raw_family → minimax (the case-fold lowercase)",
 			id:         "MiniMax-M1",
 			provider:   "nano-gpt",
 			wantFamily: "minimax",
 		},
 		{
-			// deepseek-ai/DeepSeek-V3.2: M3 path-strip gives "DeepSeek-V3.2", M4
+			// deepseek-ai/DeepSeek-V3.2: the vendor strip path-strip gives "DeepSeek-V3.2", the case-fold
 			// lowercases first token → "deepseek".
-			desc:       "DeepSeek-V3.2 after path strip → deepseek (M4 lowercase)",
+			desc:       "DeepSeek-V3.2 after path strip → deepseek (the case-fold lowercase)",
 			id:         "deepseek-ai/DeepSeek-V3.2",
 			provider:   "some-provider",
 			wantFamily: "deepseek",
@@ -3028,8 +3028,8 @@ func TestM4_InferFamilyCaseFold(t *testing.T) {
 			fam, _, _ := bestiary.InferFamilyFromIDWithVariant(tc.id, tc.provider)
 			if fam != tc.wantFamily {
 				t.Errorf("InferFamilyFromIDWithVariant(%q) family = %q, want %q\n"+
-					"  What: M4 case-fold did not lowercase inferred Family\n"+
-					"  Why: the parser requires M4 lowercase at Family-field boundary in"+
+					"  What: the case-fold case-fold did not lowercase inferred Family\n"+
+					"  Why: the parser requires the case-fold lowercase at Family-field boundary in"+
 					" InferFamilyFromIDWithVariant\n"+
 					"  How to fix: apply Family(strings.ToLower(...)) at the return boundaries",
 					tc.id, fam, tc.wantFamily)
@@ -3039,10 +3039,10 @@ func TestM4_InferFamilyCaseFold(t *testing.T) {
 }
 
 // ----------------------------------------------------------------------------
-// M3 — vendor/namespace strip via vendor_aliases.json
+// the vendor strip — vendor/namespace strip via vendor_aliases.json
 // ----------------------------------------------------------------------------
 
-// TestM3_VendorAliasStrip verifies that model IDs starting with a vendor alias
+// TestVendorAliasStrip verifies that model IDs starting with a vendor alias
 // from vendor_aliases.json have the alias prefix stripped before family inference.
 //
 // BDD: Given a model ID starting with "minimaxai-" (a vendor alias NOT in
@@ -3053,7 +3053,7 @@ func TestM4_InferFamilyCaseFold(t *testing.T) {
 // The "/" separator case (e.g. "minimaxai/minimax-m1") is already handled by
 // the existing lastPathSegment call. This test specifically covers the "-"
 // separator variant.
-func TestM3_VendorAliasStrip(t *testing.T) {
+func TestVendorAliasStrip(t *testing.T) {
 	t.Parallel()
 
 	cases := []struct {
@@ -3064,8 +3064,8 @@ func TestM3_VendorAliasStrip(t *testing.T) {
 		wantVariant string
 	}{
 		{
-			// "minimaxai-minimax-m1": M3 strips "minimaxai-" → "minimax-m1",
-			// M4 lowercases → "minimax-m1"; (d) series split → variant="m"
+			// "minimaxai-minimax-m1": the vendor strip strips "minimaxai-" → "minimax-m1",
+			// the case-fold lowercases → "minimax-m1"; (d) series split → variant="m"
 			// (REVERSES the whole-token "m1").
 			desc:        "minimaxai-minimax-m1 → strip alias, family=minimax series variant=m",
 			id:          "minimaxai-minimax-m1",
@@ -3081,8 +3081,8 @@ func TestM3_VendorAliasStrip(t *testing.T) {
 			fam, variant, _ := bestiary.InferFamilyFromIDWithVariant(tc.id, tc.provider)
 			if fam != tc.wantFamily {
 				t.Errorf("family = %q, want %q\n"+
-					"  What: M3 vendor alias strip did not remove vendor prefix\n"+
-					"  How to fix: implement M3 '-' strip for vendor_aliases in pipeline",
+					"  What: the vendor strip vendor alias strip did not remove vendor prefix\n"+
+					"  How to fix: implement the vendor strip '-' strip for vendor_aliases in pipeline",
 					fam, tc.wantFamily)
 			}
 			if variant != tc.wantVariant {
@@ -3100,7 +3100,7 @@ func TestM3_VendorAliasStrip(t *testing.T) {
 
 // TestRecoverMemberVariant_FamiliesJSONMembers verifies that recoverMemberVariant
 // recovers variant tokens from families.json members, specifically for tokens that
-// are NOT in variant_suffixes.json (the old B1 scope) but ARE in the family's
+// are NOT in variant_suffixes.json (the old sole-residual scope) but ARE in the family's
 // member list.
 //
 // BDD: Given raw_family="minimax" and id="minimax-m1-80k" (where "m1" is in
@@ -3108,7 +3108,7 @@ func TestM3_VendorAliasStrip(t *testing.T) {
 // When ParseFamilyDetailed is called,
 // Then variant="m1" is recovered.
 //
-// This test covers the NEW scope of recoverMemberVariant beyond old B1.
+// This test covers the NEW scope of recoverMemberVariant beyond the old sole-residual promotion.
 // It will be RED until recoverMemberVariant is implemented.
 func TestRecoverMemberVariant_FamiliesJSONMembers(t *testing.T) {
 	t.Parallel()
@@ -3135,7 +3135,7 @@ func TestRecoverMemberVariant_FamiliesJSONMembers(t *testing.T) {
 		},
 		{
 			// / empty raw_family, MiniMax-M1 (mixed case)
-			// → M4 family="minimax"; series split → variant="m" (+ version "1").
+			// → the case-fold family="minimax"; series split → variant="m" (+ version "1").
 			desc:        "empty raw_family, MiniMax-M1 → series (minimax, m)",
 			rawFamily:   "",
 			id:          "MiniMax-M1",
@@ -3173,20 +3173,20 @@ func TestRecoverMemberVariant_FamiliesJSONMembers(t *testing.T) {
 	}
 }
 
-// TestRecoverMemberVariant_SubsumesB1 verifies that the B1 family-agnostic
+// TestRecoverMemberVariant_SubsumesSoleSuffixPromotion verifies that the family-agnostic
 // sole-residual suffix promotion still yields its expected (family, variant,
 // version) results.
 //
-// NOTE: B1 was NOT removed. The fix cycle RESTORED a
-// version-preserving B1 that runs POST-version extraction for UNREGISTERED
-// families (via the shared bareVariantSuffix helper) — see the B1 block in
+// NOTE: The sole-residual promotion was NOT removed. The fix cycle RESTORED a
+// version-preserving promotion that runs POST-version extraction for UNREGISTERED
+// families (via the shared bareVariantSuffix helper) — see the sole-residual promotion block in
 // ParseFamilyDetailed and the recoverMemberVariant doc comment. These cases must
-// remain green; if they turn red, the restored B1 promotion regressed.
-func TestRecoverMemberVariant_SubsumesB1(t *testing.T) {
+// remain green; if they turn red, the restored promotion regressed.
+func TestRecoverMemberVariant_SubsumesSoleSuffixPromotion(t *testing.T) {
 	t.Parallel()
 
-	// These cases were already tested by TestParseFamilyDetailed_FixB1_SoleVariantSuffixPromotion.
-	// They must remain green after B1 is removed. Including here as explicit
+	// These cases were already tested by TestParseFamilyDetailed_SoleVariantSuffixPromotion.
+	// They must remain green after the inline promotion is removed. Including here as explicit
 	// regression guards for the recoverMemberVariant subsumption.
 	cases := []struct {
 		desc          string
@@ -3201,7 +3201,7 @@ func TestRecoverMemberVariant_SubsumesB1(t *testing.T) {
 		{
 			// 'turbo'→Modifier (glm non-member) → variant empty. The
 			// ReasonKnownSuffixOverflow audit annotation now fires (codegen clears it).
-			desc:          "glm-5-turbo → (glm, '', 5) turbo→Modifier [B1 subsumed]",
+			desc:          "glm-5-turbo → (glm, '', 5) turbo→Modifier [sole-residual subsumed]",
 			rawFamily:     "glm",
 			id:            "glm-5-turbo",
 			provider:      "zhipu",
@@ -3211,7 +3211,7 @@ func TestRecoverMemberVariant_SubsumesB1(t *testing.T) {
 			wantNoFailure: false,
 		},
 		{
-			desc:          "phi-4-mini → (phi, mini, 4) [B1 subsumed]",
+			desc:          "phi-4-mini → (phi, mini, 4) [sole-residual subsumed]",
 			rawFamily:     "phi",
 			id:            "phi-4-mini",
 			provider:      "microsoft",
@@ -3230,13 +3230,13 @@ func TestRecoverMemberVariant_SubsumesB1(t *testing.T) {
 				t.Errorf("family = %q, want %q", fam, tc.wantFamily)
 			}
 			if variant != tc.wantVariant {
-				t.Errorf("variant = %q, want %q (B1 subsumption check)", variant, tc.wantVariant)
+				t.Errorf("variant = %q, want %q (sole-residual subsumption check)", variant, tc.wantVariant)
 			}
 			if version != tc.wantVersion {
 				t.Errorf("version = %q, want %q", version, tc.wantVersion)
 			}
 			if tc.wantNoFailure && failure != nil {
-				t.Errorf("failure = %+v, want nil (B1 subsumption: no residual failure expected)", failure)
+				t.Errorf("failure = %+v, want nil (sole-residual subsumption: no residual failure expected)", failure)
 			}
 		})
 	}
@@ -3277,7 +3277,7 @@ func TestRecoverMemberVariant_SubsumesAmputation(t *testing.T) {
 		// series split owns this — variant="m", version="1" (REVERSES whole-token "m1").
 		fam, variant, version := bestiary.InferFamilyFromIDWithVariant("MiniMax-M1", "nano-gpt")
 		if fam != "minimax" {
-			t.Errorf("family = %q, want %q (expected M4 lowercase)", fam, "minimax")
+			t.Errorf("family = %q, want %q (expected the case-fold lowercase)", fam, "minimax")
 		}
 		if variant != "m" || version != "1" {
 			t.Errorf("(variant,version) = (%q,%q), want (\"m\",\"1\") (series split)",
@@ -3402,7 +3402,7 @@ func TestFamilyAliasesJSON_LoaderFailFast(t *testing.T) {
 
 // TestFamilyAliasesLedger_Fold verifies the RATIFIED l3/l3.1/l3.3 → llama fold
 // end-to-end through ParseFamilyDetailed (the canonical-winner ledger applied after
-// M4 family normalisation, before bare-gen-split). Community Llama-3 finetunes
+// the case-fold family normalisation, before bare-gen-split). Community Llama-3 finetunes
 // (sao10k/*) labelled with the "L3.x" shorthand must canonicalise to family "llama"
 // so the family agrees cross-provider.
 //
@@ -3428,7 +3428,7 @@ func TestFamilyAliasesLedger_Fold(t *testing.T) {
 			if family != tc.wantFamily {
 				t.Errorf("ParseFamilyDetailed(\"\", %q) family = %q, want %q\n"+
 					"  What: the family_aliases ledger fold (l3* → llama) did not fire\n"+
-					"  Why: RATIFIED row in parse/data/family_aliases.json must remap after M4",
+					"  Why: RATIFIED row in parse/data/family_aliases.json must remap after the case-fold",
 					tc.id, family, tc.wantFamily)
 			}
 		})
@@ -3458,7 +3458,7 @@ func TestFamilyAliasesLedger_DefaultOwnFamily(t *testing.T) {
 // Tests (RED until the bare_gen_split predicate is implemented)
 // ============================================================================
 
-// TestM2_BareGenSplit_PositiveSplits verifies the M2 bare-generation split: a
+// TestBareGenSplit_PositiveSplits verifies the bare-generation split: a
 // glued family token <base><int> (e.g. "qwen3", "o1") OR a clean family whose ID
 // carries a glued generation token decomposes to (base, …, version=int) when the
 // CLOSED predicate holds (has families.json entry ∧ base not digit-suffixed ∧
@@ -3467,7 +3467,7 @@ func TestFamilyAliasesLedger_DefaultOwnFamily(t *testing.T) {
 // BDD: Given "qwen3-max" When decomposed Then (qwen, max, 3).
 // These cases are RED until the predicate is implemented at the insertion
 // point in BOTH entrypoints (InferFamilyFromIDWithVariant + ParseFamilyDetailed).
-func TestM2_BareGenSplit_PositiveSplits(t *testing.T) {
+func TestBareGenSplit_PositiveSplits(t *testing.T) {
 	t.Parallel()
 
 	cases := []struct {
@@ -3522,7 +3522,7 @@ func TestM2_BareGenSplit_PositiveSplits(t *testing.T) {
 	}
 }
 
-// TestM2_BareGenSplit_NonSplit verifies the CLOSED predicate's negative cases:
+// TestBareGenSplit_NonSplit verifies the CLOSED predicate's negative cases:
 // tokens that look like <base><int> but MUST NOT split because a clause fails.
 //
 //   - v0 / asi1 / esm2 / wan2 / hy3 / r1: base ("v"/"asi"/"esm"/"wan"/"hy"/"r")
@@ -3535,11 +3535,11 @@ func TestM2_BareGenSplit_PositiveSplits(t *testing.T) {
 // series split (variant=letter + version=number) — a DIFFERENT
 // mechanism from bare_gen_split. bare_gen_split STILL declines them (their bases
 // carry no bare_gen_split flag); the observable ParseFamilyDetailed tuple is now
-// owned by splitSeriesVariant and asserted in TestSeriesLetterSplit_CLARIFICATION5.
+// owned by splitSeriesVariant and asserted in TestSeriesLetterSplit.
 //
 // These assert the predicate is CLOSED (no per-name allow-list): the family
 // stays the un-split token.
-func TestM2_BareGenSplit_NonSplit(t *testing.T) {
+func TestBareGenSplit_NonSplit(t *testing.T) {
 	t.Parallel()
 
 	cases := []struct {
@@ -3557,7 +3557,7 @@ func TestM2_BareGenSplit_NonSplit(t *testing.T) {
 		{"wan2 NOT split (wan∉families)", "", "wan2-t2v", "p", "wan2", ""},
 		// "hy3" MOVED to the SPLIT set — "hy" is now a registered family
 		// (bare "hy" attested via raw="Hy"), so hy3-preview → (hy, "", 3) [see
-		// TestSLICE14_TIER1Convergences]. It is no longer a NonSplit case.
+		// TestTier1StragglerConvergences]. It is no longer a NonSplit case.
 		{"r1 NOT split (r∉families)", "", "r1", "p", "r1", ""},
 		// bare-gen still DECLINES "l3" (base "l" ∉ families.json), but the
 		// family_aliases ledger then folds l3 → llama (RATIFIED: L3.x = Llama-3
@@ -3565,7 +3565,7 @@ func TestM2_BareGenSplit_NonSplit(t *testing.T) {
 		// the canonical family arrives via the ledger remap, not the split.
 		{"l3 → llama via ledger (bare-gen declines: l∉families)", "", "l3-8b", "p", "llama", ""},
 		// NOTE: the former minimax-m2.5 / kimi-k2.5 / mimo-v2.5 / mimo-v1 cases moved
-		// to TestSeriesLetterSplit_CLARIFICATION5 — they now decompose via the
+		// to TestSeriesLetterSplit — they now decompose via the
 		// (d) letter-prefix series split, not bare_gen_split.
 	}
 
@@ -3592,12 +3592,12 @@ func TestM2_BareGenSplit_NonSplit(t *testing.T) {
 // glued letter-suffix + letter-prefix series split (+ -5).
 // ============================================================================
 
-// TestSlice8_VersionPresenceConsistency_ClassA verifies (a): a version
+// TestVersionPresenceConsistency_ClassA verifies (a): a version
 // derivable from the (vendor-stripped, case-folded) model ID is extracted
 // CONSISTENTLY regardless of the provider raw_family. Each case asserts that the
 // SAME id decomposes to an IDENTICAL (Family, Variant, Version) under BOTH an
 // empty raw_family (the inference path) AND the provider's populated raw_family.
-func TestSlice8_VersionPresenceConsistency_ClassA(t *testing.T) {
+func TestVersionPresenceConsistency_ClassA(t *testing.T) {
 	t.Parallel()
 
 	cases := []struct {
@@ -3636,11 +3636,11 @@ func TestSlice8_VersionPresenceConsistency_ClassA(t *testing.T) {
 	}
 }
 
-// TestSlice8_ParamSizeGuard verifies (b): parameter-count / model-size
+// TestParamSizeGuard verifies (b): parameter-count / model-size
 // tokens (NNNb / NNNm / MoE) are NEVER promoted to Version. The size INFO is GH#9
 // (missing Size dimension), explicitly not a version. Asserted on ALL providers
 // (empty + populated raw) so gpt-oss-120b is Version "" everywhere (consistent).
-func TestSlice8_ParamSizeGuard(t *testing.T) {
+func TestParamSizeGuard(t *testing.T) {
 	t.Parallel()
 
 	cases := []struct {
@@ -3682,14 +3682,14 @@ func TestSlice8_ParamSizeGuard(t *testing.T) {
 	})
 }
 
-// TestSlice8_GluedVersionModifier verifies the glued letter-after-version handling.
+// TestGluedVersionModifier verifies the glued letter-after-version handling.
 // SUPERSEDES the (c) glm-4.5v→vision behaviour:
 //   - Q1: the glued single 'v' after a glm version is the VARIANT 'v' (glm-4.5v →
 //     (glm, "v", 4.5), NOT modifier vision). The spelled-out "-vision" hyphen token
 //     remains a Modifier (uniform rule unchanged) and is NOT exercised here.
 //   - Q2/Q2b: gpt-4o → variant '4o', version ” ('4o' is the line designator, not a
 //     version). Supersedes the prior (gpt,"",4o) pin.
-func TestSlice8_GluedVersionModifier(t *testing.T) {
+func TestGluedVersionModifier(t *testing.T) {
 	t.Parallel()
 
 	cases := []struct {
@@ -3715,17 +3715,17 @@ func TestSlice8_GluedVersionModifier(t *testing.T) {
 	}
 }
 
-// TestSeriesLetterSplit_CLARIFICATION5 verifies (d): letter-prefix model
+// TestSeriesLetterSplit verifies (d): letter-prefix model
 // series (kimi→k, minimax→m, mimo→v) decompose to variant=SERIES-LETTER +
 // version=NUMBER, with ALL attested forms normalized consistently. This SUPERSEDES
 // the whole-token plan (minimax "m1") and this kimi-k2-thinking
 // (kimi,"","") pin, and the version_patterns letter-prefix whole-token-variant.
 //
 // TIER INTERACTION: surfaced + ruled by the user: tier→Modifier,
-// variant stays the pure series-letter — pinned in TestSeriesTierModifier_CLARIFICATION6.
+// variant stays the pure series-letter — pinned in TestSeriesTierModifier.
 // MULTI-MODIFIER cases (tier + thinking/vision) remain surfaced (single-valued
 // Modifier; multiplicity ruling pending) and keep the existing thinking modifier.
-func TestSeriesLetterSplit_CLARIFICATION5(t *testing.T) {
+func TestSeriesLetterSplit(t *testing.T) {
 	t.Parallel()
 
 	cases := []struct {
@@ -3770,10 +3770,10 @@ func TestSeriesLetterSplit_CLARIFICATION5(t *testing.T) {
 	}
 }
 
-// TestSlice8_MustNotRegress_RealVersions pins genuine semantic versions that the
+// TestMustNotRegress_RealVersions pins genuine semantic versions that the
 // param-size guard and series split MUST leave UNCHANGED (the size/series logic
 // distinguishes size tokens and series letters from real version numbers).
-func TestSlice8_MustNotRegress_RealVersions(t *testing.T) {
+func TestMustNotRegress_RealVersions(t *testing.T) {
 	t.Parallel()
 
 	cases := []struct {
@@ -3786,7 +3786,7 @@ func TestSlice8_MustNotRegress_RealVersions(t *testing.T) {
 		{"2.5 dotted", "gemini-flash", "gemini-2.5-flash", "2.5"},
 		// "4o" is now the VARIANT (line designator), so the
 		// version is EMPTY. Supersedes the "4o is a version" pin. (Variant=4o is
-		// asserted in TestSlice8_GluedVersionModifier.)
+		// asserted in TestGluedVersionModifier.)
 		{"gpt-4o → version '' ('4o' is the variant)", "gpt", "gpt-4o", ""},
 		{"3.5 (claude-haiku)", "claude-haiku", "claude-3-5-haiku-20241022", "3.5"},
 		{"3.7 (claude-sonnet)", "claude-sonnet", "claude-3-7-sonnet-20250219", "3.7"},
@@ -3807,7 +3807,7 @@ func TestSlice8_MustNotRegress_RealVersions(t *testing.T) {
 	}
 }
 
-// TestSeriesTierModifier_CLARIFICATION6 verifies the tier→Modifier promotion: a
+// TestSeriesTierModifier verifies the tier→Modifier promotion: a
 // curated TIER token trailing a letter-prefix series token becomes the Modifier,
 // while the variant stays the PURE series-letter (kimi-k2-instruct →
 // (kimi,'k','2',mod=instruct)). The promotion is SERIES-SCOPED — it must NOT
@@ -3818,7 +3818,7 @@ func TestSlice8_MustNotRegress_RealVersions(t *testing.T) {
 // the Modifier field is single-valued and the multiplicity rule is pending — those
 // keep the series split + the existing thinking/vision modifier and DROP the tier
 // (surfaced to the supervisor, not resolved unilaterally).
-func TestSeriesTierModifier_CLARIFICATION6(t *testing.T) {
+func TestSeriesTierModifier(t *testing.T) {
 	t.Parallel()
 
 	cases := []struct {
@@ -3861,12 +3861,12 @@ func TestSeriesTierModifier_CLARIFICATION6(t *testing.T) {
 	}
 }
 
-// TestSlice8_MultiModifier_DeferredToModifierListSlice was REMOVED.
+// The former multi-modifier-deferred-to-modifier-list test was REMOVED.
 // It pinned the single-Modifier interim (kimi-k2-thinking-turbo DROPPED "turbo"). The
 // Modifier-LIST schema change now populates BOTH losslessly
 // ([thinking, turbo]); the lossless multi-modifier behaviour is asserted by
-// TestParseFamilyDetailed_Slice10_ModifierList.
-func TestParseFamilyDetailed_Slice10_ModifierList(t *testing.T) {
+// TestParseFamilyDetailed_ModifierList.
+func TestParseFamilyDetailed_ModifierList(t *testing.T) {
 	t.Parallel()
 	cases := []struct {
 		desc                             string
@@ -3902,7 +3902,7 @@ func TestParseFamilyDetailed_Slice10_ModifierList(t *testing.T) {
 		{"qwen-flash → variant flash (stays variant)", "qwen", "qwen-flash", "qwen", "flash", "", ""},
 		// (FLAG2): whisper + seed registered as families → variant recovers
 		// losslessly; the modifier composes (turbo/instruct), removing the 2 justifiedExceptions.
-		// (fz9r): whisper-family-gated trailing "-v3" now recovers Version=3 (was "").
+		// The whisper-family-gated trailing "-v3" now recovers Version=3 (was "").
 		{"whisper-large-v3-turbo → (whisper,large,3,[turbo])", "whisper", "whisper-large-v3-turbo", "whisper", "large", "3", "turbo"},
 		{"seed-oss-36b-instruct → (seed,oss,[instruct])", "seed", "bytedance/seed-oss-36b-instruct", "seed", "oss", "", "instruct"},
 		// Lossless variant-suffix→modifier split (v2.5-turbo → v2.5 + [turbo]).
@@ -4025,12 +4025,12 @@ func TestParseFamilyDetailed_PathUnification_EmptyRawConsistency(t *testing.T) {
 	}
 }
 
-// TestParseFamilyDetailed_SLICE11_FamilyOverCaptureReduction asserts the
+// TestParseFamilyDetailed_FamilyOverCaptureReduction asserts the
 // family OVER-CAPTURE fix: the empty-raw ID-path now reduces an
 // over-captured COMPOUND family to its registered SHORT base so it converges with the
 // raw-populated providers of the same ID. Each case pins the empty-raw decomposition;
 // the matching raw-populated decomposition (the convergence target) is asserted equal.
-func TestParseFamilyDetailed_SLICE11_FamilyOverCaptureReduction(t *testing.T) {
+func TestParseFamilyDetailed_FamilyOverCaptureReduction(t *testing.T) {
 	cases := []struct {
 		name    string
 		id      string
@@ -4060,11 +4060,11 @@ func TestParseFamilyDetailed_SLICE11_FamilyOverCaptureReduction(t *testing.T) {
 	}
 }
 
-// TestParseFamilyDetailed_SLICE11_GenuineCompoundPreserved asserts the reducer is
+// TestParseFamilyDetailed_GenuineCompoundPreserved asserts the reducer is
 // CLOSED: it never over-reduces a genuinely-compound family (curated as an override
 // self-map) nor a family whose base is not a registered short family. These MUST stay
 // intact — the safeguard against over-reducing the 655 short/correct records.
-func TestParseFamilyDetailed_SLICE11_GenuineCompoundPreserved(t *testing.T) {
+func TestParseFamilyDetailed_GenuineCompoundPreserved(t *testing.T) {
 	// Each genuine compound must NOT collapse to its bare leading token (the over-reduction
 	// the closed reducer is designed to refuse). The family is expected to retain the
 	// curated compound base prefix, never the lone first token.
@@ -4088,12 +4088,12 @@ func TestParseFamilyDetailed_SLICE11_GenuineCompoundPreserved(t *testing.T) {
 	}
 }
 
-// TestParseFamilyDetailed_SLICE11_CapabilityModifierDeclined asserts that a compound
+// TestParseFamilyDetailed_CapabilityModifierDeclined asserts that a compound
 // family carrying a CAPABILITY modifier (thinking/vision) is NOT reduced — leaving it an
 // HONEST residual rather than silently dropping the capability (the Modifier-LIST
 // multi-modifier case). kimi-k2-thinking-* keeps a thinking-bearing decomposition rather
 // than being collapsed to a bare short family that loses "thinking".
-func TestParseFamilyDetailed_SLICE11_CapabilityModifierDeclined(t *testing.T) {
+func TestParseFamilyDetailed_CapabilityModifierDeclined(t *testing.T) {
 	// glm-4.1v-thinking-flash: empty-raw must NOT silently lose "thinking" by reducing
 	// to a bare (glm, flash) — the over-capture family stays intact (honest residual).
 	f, _, _, _, _ := bestiary.ParseFamilyDetailed("", "nano-gpt-glm-4.1v-thinking-flash", "p")
@@ -4108,11 +4108,11 @@ func TestParseFamilyDetailed_SLICE11_CapabilityModifierDeclined(t *testing.T) {
 	}
 }
 
-// TestSLICE12_Convergences pins the cross-provider convergence fixes.
+// TestCrossProviderConvergences pins the cross-provider convergence fixes.
 // Each case is the canonical ParseFamilyDetailed decomposition that the
 // convergence pass ratified; together with the before/after-diff gate (ZERO cat-(c)) these are
 // the specification for the mechanical + o-series + ledger changes.
-func TestSLICE12_Convergences(t *testing.T) {
+func TestCrossProviderConvergences(t *testing.T) {
 	cases := []struct {
 		desc                   string
 		raw                    bestiary.Family
@@ -4169,13 +4169,13 @@ func TestSLICE12_Convergences(t *testing.T) {
 	}
 }
 
-// TestSLICE14_TIER1Convergences pins the straggler convergences,
+// TestTier1StragglerConvergences pins the straggler convergences,
 // per the team-lead-refined set: 5 COMMITTED (cohere command r/r-plus date-guard+member,
 // deepseek product-line "chat", meta-llama surgical doubled-vendor) + 3 CONDITIONALS cleanly
 // promoted under existing rules (grok product-name "code-fast", Qwen3-Embedding qwen-wins,
 // hy3 bare-gen). Each is non-lossy under the hardened gate (cat-(c)=0). command-a-reasoning is
 // DEFERRED to the systematic modifier ruling (reasoning = borderline-capability, modifier-vs-variant judgment).
-func TestSLICE14_TIER1Convergences(t *testing.T) {
+func TestTier1StragglerConvergences(t *testing.T) {
 	cases := []struct {
 		desc                   string
 		raw                    bestiary.Family
