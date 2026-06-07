@@ -24,6 +24,10 @@ func modJoinCanon(mods []string) string {
 // AMBIGUOUS tokens (turbo/fast/chat/pro/precision) default to IDENTITY globally —
 // the safe over-split — and are demoted to ATTRIBUTE only by a per-family override
 // (see VC7). mini/flash stay IDENTITY-class this epoch (size axis deferred).
+//
+// Single source of truth: parse/data/modifier_class.json is canonical for the
+// classification. The token lists below enumerate the same inventory so a reader
+// can cross-check "all 24 pinned" at a glance; if the JSON changes, update both.
 func TestVC6_InventoryTokensPinned(t *testing.T) {
 	attribute := []string{
 		"thinking", "think", "preview", "latest", "original", "highspeed", "lightning",
@@ -258,6 +262,89 @@ func TestVC11_CLIRoundTrip(t *testing.T) {
 	if !matched(refs) {
 		t.Errorf("Resolve(%q): no ref matched seed (Family=%q Variant=%q Version=%q Date=%q Modifier=%q)",
 			canonical, seed.Family, seed.Variant, seed.Version, seed.Date, seed.Modifier)
+	}
+}
+
+// TestVC11_UnionRoundTrip_MixedModifier drives the NEW matchCanonicalSegments
+// arms through Resolve for a MIXED-modifier model (one identity + one attribute
+// modifier): the "[attributes]" strip arm and the "union of {} and [] tokens"
+// matcher. Both the class-aware split form ("…{identity}[attribute]") AND the
+// legacy combined form ("…[identity,attribute]") must resolve to the SAME ref,
+// and a render with a WRONG attribute token must NOT match that ref. Without this,
+// a regression in the attributeFilter branch or the union logic would slip past
+// the identity-only round-trip in TestVC11_CLIRoundTrip.
+func TestVC11_UnionRoundTrip_MixedModifier(t *testing.T) {
+	// Discover a static model whose modifier set is genuinely MIXED: at least one
+	// identity-class token (EntityModifiers non-empty) AND at least one
+	// attribute-class token (some token dropped from the identity projection),
+	// with a non-empty Variant + Date so segment parsing is unambiguous.
+	var seed *bestiary.ModelRef
+	for _, m := range bestiary.StaticModels() {
+		if m.Family == "" || m.Variant == "" || m.Date == "" {
+			continue
+		}
+		all := bestiary.CanonicalizeModifiers(m.Modifier)
+		id := bestiary.EntityModifiers(m.Modifier, m.Family)
+		if len(id) == 0 || len(all) <= len(id) {
+			continue // not mixed: no identity token, or nothing demoted to attribute
+		}
+		r := m.Ref()
+		seed = &r
+		break
+	}
+	if seed == nil {
+		t.Skip("no static model with a mixed identity+attribute modifier set found")
+	}
+
+	classAware := seed.Format(bestiary.SchemeCanonical)
+	brace := strings.Index(classAware, "{")
+	if brace < 0 || !strings.Contains(classAware, "[") {
+		t.Fatalf("mixed seed canonical %q lacks both {} and [] segments", classAware)
+	}
+	base := classAware[:brace]
+	legacyCombined := base + "[" + strings.Join(bestiary.CanonicalizeModifiers(seed.Modifier), ",") + "]"
+
+	matchesSeed := func(refs []bestiary.ModelRef) bool {
+		for _, r := range refs {
+			if r.Family == seed.Family && r.Variant == seed.Variant &&
+				r.Version == seed.Version && r.Date == seed.Date &&
+				modJoinCanon(r.Modifier) == modJoinCanon(seed.Modifier) {
+				return true
+			}
+		}
+		return false
+	}
+	// resolveMatches returns whether the seed tuple is present among Resolve's
+	// results, tolerating ErrAmbiguous (multiple providers host the same canonical)
+	// as a positive signal that the segments parsed and matched.
+	resolveMatches := func(input string) bool {
+		refs, err := bestiary.Resolve(input)
+		if err != nil {
+			var ambig *bestiary.ErrAmbiguous
+			if errors.As(err, &ambig) {
+				return matchesSeed(ambig.Candidates)
+			}
+			return false
+		}
+		return matchesSeed(refs)
+	}
+
+	// Both the class-aware split form and the legacy combined form resolve to the
+	// same model — the union matcher is class-agnostic on input.
+	if !resolveMatches(classAware) {
+		t.Errorf("class-aware form %q did not resolve to seed (Family=%q Variant=%q Version=%q Date=%q Modifier=%q)",
+			classAware, seed.Family, seed.Variant, seed.Version, seed.Date, seed.Modifier)
+	}
+	if !resolveMatches(legacyCombined) {
+		t.Errorf("legacy combined form %q did not resolve to seed; union matcher must accept the all-bracket form too",
+			legacyCombined)
+	}
+
+	// Negative: a render with a WRONG attribute token (not in the model's set)
+	// must NOT match the seed — the attributeFilter/union branch is doing real work.
+	wrongAttr := base + "{" + modJoinCanon(bestiary.EntityModifiers(seed.Modifier, seed.Family)) + "}[definitely-not-a-real-modifier]"
+	if resolveMatches(wrongAttr) {
+		t.Errorf("form with a bogus attribute %q must NOT match the seed", wrongAttr)
 	}
 }
 

@@ -62,20 +62,27 @@ func ClassifyModifier(token string, fam Family) ModifierClass {
 	if token == "" {
 		return ModifierClassIdentity
 	}
-	tbl := loadModifierClassTable()
-	if tbl == nil {
+	return loadModifierClassTable().classify(token, fam)
+}
+
+// classify resolves a single token against this table (per-family override beats
+// global, default unknown->Identity). It is the testable seam behind
+// ClassifyModifier: a nil receiver or an empty table degrades every token to
+// ModifierClassIdentity, exactly the load-failure contract, and never panics.
+func (t *modifierClassTable) classify(token string, fam Family) ModifierClass {
+	if t == nil {
 		return ModifierClassIdentity
 	}
 	key := strings.ToLower(token)
 	// Per-family override wins.
 	if fam != "" {
-		if over, ok := tbl.perFamily[Family(strings.ToLower(string(fam)))]; ok {
+		if over, ok := t.perFamily[Family(strings.ToLower(string(fam)))]; ok {
 			if c, ok := over[key]; ok {
 				return c
 			}
 		}
 	}
-	if c, ok := tbl.global[key]; ok {
+	if c, ok := t.global[key]; ok {
 		return c
 	}
 	return ModifierClassIdentity
@@ -164,7 +171,9 @@ func parseModifierClass(s string) (ModifierClass, bool) {
 	case "attribute":
 		return ModifierClassAttribute, true
 	default:
-		return ModifierClassIdentity, false
+		// Unrecognized class string: the ModifierClass is meaningless here and the
+		// caller ignores it when ok==false, so return the zero value.
+		return 0, false
 	}
 }
 
