@@ -1103,7 +1103,7 @@ func TestStaticDataset_CrossProviderConsistency(t *testing.T) {
 			len(divergent), len(crossProviderJustifiedResidual))
 	}
 
-	// RESIDUAL-COUNT PIN (B-MINOR-3): catch a non-fixture-family residual regression.
+	// RESIDUAL-COUNT PIN: catch a non-fixture-family residual regression.
 	if residualUnaccounted > crossProviderResidualUnaccountedCeiling {
 		t.Errorf("ReasonResidualUnaccountedTokens count = %d, exceeds pinned ceiling %d;\n"+
 			"  a non-fixture-family residual regression (the seed-flash class) re-dropped sole-residual/member coverage.\n"+
