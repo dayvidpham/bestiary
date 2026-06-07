@@ -132,7 +132,7 @@ func refSet(refs ...EntityRef) map[string]struct{} {
 	return set
 }
 
-// TestSafeLineageTable_DegradesToNoLineage (A-MINOR-1) exercises the runtime
+// TestSafeLineageTable_DegradesToNoLineage exercises the runtime
 // degrade twin of the codegen ValidateLineageTable hard-fail: when the table
 // fails to load (parse error) or is nil, safeLineageTable must fall back to a
 // non-nil EMPTY table so lookups miss ("no lineage") and traversal yields nothing
