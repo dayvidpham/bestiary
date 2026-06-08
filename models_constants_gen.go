@@ -2384,8 +2384,8 @@ const (
 	Model__NanoGPT__Azure__GPT__4__Turbo                                                     ModelID = "azure-gpt-4-turbo"
 	Model__NanoGPT__Azure__GPT__4o                                                           ModelID = "azure-gpt-4o"
 	Model__NanoGPT__Azure__GPT__4o__Mini                                                     ModelID = "azure-gpt-4o-mini"
-	Model__NanoGPT__Azure__O1                                                                ModelID = "azure-o1"
-	Model__NanoGPT__Azure__O3__Mini                                                          ModelID = "azure-o3-mini"
+	Model__NanoGPT__Azure__O1__1                                                             ModelID = "azure-o1"
+	Model__NanoGPT__Azure__O3__3__Mini                                                       ModelID = "azure-o3-mini"
 	Model__NanoGPT__Baichuan4__Air                                                           ModelID = "Baichuan4-Air"
 	Model__NanoGPT__Baichuan4__Turbo                                                         ModelID = "Baichuan4-Turbo"
 	Model__NanoGPT__Baichuan__M2                                                             ModelID = "Baichuan-M2"
@@ -7367,8 +7367,8 @@ var allModelConstants = [...]ModelID{
 	Model__NanoGPT__Azure__GPT__4__Turbo,
 	Model__NanoGPT__Azure__GPT__4o,
 	Model__NanoGPT__Azure__GPT__4o__Mini,
-	Model__NanoGPT__Azure__O1,
-	Model__NanoGPT__Azure__O3__Mini,
+	Model__NanoGPT__Azure__O1__1,
+	Model__NanoGPT__Azure__O3__3__Mini,
 	Model__NanoGPT__Baichuan4__Air,
 	Model__NanoGPT__Baichuan4__Turbo,
 	Model__NanoGPT__Baichuan__M2,

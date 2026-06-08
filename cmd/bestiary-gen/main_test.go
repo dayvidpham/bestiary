@@ -1097,13 +1097,13 @@ func TestStaticDataset_CrossProviderConsistency(t *testing.T) {
 
 	// GATE-AGREEMENT cross-check: this hardened gate and TestSnapshotAnalysis decompose
 	// identical data via the identical pipeline, so the divergent count must match the
-	// pinned divergenceExact (1). A mismatch means the two gates DISAGREE — a gate-logic bug.
+	// pinned divergenceExact (0). A mismatch means the two gates DISAGREE — a gate-logic bug.
 	if len(divergent) != len(crossProviderJustifiedResidual) {
 		t.Errorf("divergent-ID count = %d, justified-residual ledger size = %d — SET-equality broken (see per-ID errors above)",
 			len(divergent), len(crossProviderJustifiedResidual))
 	}
 
-	// RESIDUAL-COUNT PIN (B-MINOR-3): catch a non-fixture-family residual regression.
+	// RESIDUAL-COUNT PIN: catch a non-fixture-family residual regression.
 	if residualUnaccounted > crossProviderResidualUnaccountedCeiling {
 		t.Errorf("ReasonResidualUnaccountedTokens count = %d, exceeds pinned ceiling %d;\n"+
 			"  a non-fixture-family residual regression (the seed-flash class) re-dropped sole-residual/member coverage.\n"+

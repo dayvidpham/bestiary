@@ -46,14 +46,54 @@ func (f Family) CanonicalProvider() Provider {
 
 // IsKnown reports whether f is a recognized Family.
 // The known set is generated from the models.dev API at codegen time
-// and is stored in allFamilies (families_gen.go).
+// (allFamilies, families_gen.go) plus the hand-curated curatedBaseFamilies
+// supplement (base families the API omits but that lineage / canonical
+// references depend on, e.g. "solar").
 func (f Family) IsKnown() bool {
 	for _, known := range allFamilies {
 		if f == known {
 			return true
 		}
 	}
+	for _, known := range curatedBaseFamilies {
+		if f == known {
+			return true
+		}
+	}
 	return false
+}
+
+// FamilySolar is the curated base family for Upstage's SOLAR models. The
+// models.dev API never emits a bare "solar" family value — only the
+// variant-qualified solar-mini / solar-pro reach allFamilies (families_gen.go) —
+// yet the base family is needed as a valid lineage derivation PARENT (a SOLAR
+// finetune names "solar" as its base). It is registered here as a hand-curated
+// supplement to the generated set; see curatedBaseFamilies.
+const FamilySolar Family = "solar"
+
+// FamilyMythologic and FamilyHuginn are the two parent base families of the
+// MythoMax-L2-13B merge. MythoMax is a weight merge of MythoLogic-L2 and Huginn,
+// so the merge edge carries these as STANDALONE parent families (not as
+// llama-variants): the parents are distinct artifacts in their own right, and a
+// merge by definition combines >= 2 separate parents. Neither is emitted by the
+// API as a base family value, so both are registered here so lineage
+// parent-validation recognizes them.
+const (
+	FamilyMythologic Family = "mythologic"
+	FamilyHuginn     Family = "huginn"
+)
+
+// curatedBaseFamilies are hand-maintained base families that the models.dev API
+// does not surface as a bare family value but which are required as canonical /
+// lineage references (e.g. as a derivation parent). IsKnown consults these in
+// addition to the generated allFamilies, so a curated family is a first-class
+// known Family. Keep this list minimal: add a base family only when a real
+// reference (lineage parent, canonical-provider mapping) needs it. The yi base
+// family (01.AI) is already present in allFamilies and so is NOT repeated here.
+var curatedBaseFamilies = [...]Family{
+	FamilySolar,      // base for upstage SOLAR (allFamilies has only solar-mini/solar-pro)
+	FamilyMythologic, // MythoMax merge parent
+	FamilyHuginn,     // MythoMax merge parent
 }
 
 // String returns the string representation of the family.

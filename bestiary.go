@@ -71,5 +71,17 @@ type ModelInfo struct {
 	ReleaseDate           string
 	Knowledge             string
 	Modalities            Modalities
-	LastSynced            string // RFC3339
+
+	// Host is the serving host / backend infrastructure that runs this model
+	// instance, distinct from Provider. It is a per-instance ATTRIBUTE and never
+	// participates in entity identity. HostNone (zero value) when unknown or when
+	// the provider serves the model directly. Populated by the host-split slice.
+	Host Host
+	// Lineage is the set of derivation edges from this model to its parent
+	// model(s) (finetune, merge, distillation, …). nil when the model is a base
+	// model or no curated lineage is known. Populated at codegen time from the
+	// curated lineage table by the lineage slice.
+	Lineage []LineageEdge
+
+	LastSynced string // RFC3339
 }

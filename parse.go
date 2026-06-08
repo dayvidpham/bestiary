@@ -2132,6 +2132,20 @@ func isVersionShaped(s string) bool {
 // The return order is (family, variant, version, modifier, *ParseFailure).
 // Codegen wiring depends on this exact 5-tuple shape — do NOT reorder.
 func ParseFamilyDetailed(raw Family, id ModelID, p Provider) (Family, string, string, []string, *ParseFailure) {
+	// Serving-host prefix split (curated, ID-prefix-only). When the model ID
+	// carries a curated host prefix (e.g. "azure-gpt-4o"), decompose from the
+	// host-stripped ID ("gpt-4o") so the resulting (Family,Variant,Version)
+	// tuple is host-independent — Host is a per-instance ATTRIBUTE that never
+	// participates in entity identity, so a host-routed instance shares its
+	// entity with the plainly-served model. The original ID is retained as
+	// origID for parse-failure audit records (RawID), which must reference the
+	// real catalog ID, not the stripped form. DetectHost returns the ID
+	// unchanged when no curated prefix matches, so non-host IDs are unaffected.
+	origID := id
+	if host, stripped := DetectHost(id); host != HostNone {
+		id = stripped
+	}
+
 	// Curated ID-keyed family
 	// override. A CLOSED, exact-model-ID map for the embedded-family case the leading-token
 	// pipeline cannot reach without a general embedded-detect (the Path-B trap: 16/249
@@ -2341,7 +2355,7 @@ func ParseFamilyDetailed(raw Family, id ModelID, p Provider) (Family, string, st
 			if len(residual) > 0 {
 				attempted := ParseAttempt{Family: family, Variant: variant, Version: version, Date: ""}
 				return recon(family, variant, version, modifier, &ParseFailure{
-					RawID:          id,
+					RawID:          origID,
 					Provider:       p,
 					RawFamily:      raw,
 					AttemptedParse: attempted,
@@ -2396,7 +2410,7 @@ func ParseFamilyDetailed(raw Family, id ModelID, p Provider) (Family, string, st
 	// not as a separate date field.
 	if reBareAnyFourDigitCandidate.MatchString(rawStr) {
 		return recon(family, variant, version, modifier, &ParseFailure{
-			RawID:          id,
+			RawID:          origID,
 			Provider:       p,
 			RawFamily:      raw,
 			AttemptedParse: attempted,
@@ -2453,7 +2467,7 @@ func ParseFamilyDetailed(raw Family, id ModelID, p Provider) (Family, string, st
 					reason = ReasonUnknownSuffixOverflow
 				}
 				return recon(family, variant, version, modifier, &ParseFailure{
-					RawID:          id,
+					RawID:          origID,
 					Provider:       p,
 					RawFamily:      raw,
 					AttemptedParse: attempted,
@@ -3413,16 +3427,38 @@ type idFamilyOverrideEntry struct {
 // model-ID family-override map. It exists ONLY for the embedded-family case the leading-
 // token decomposition cannot reach safely: the model ID leads with one family token but the
 // canonical family is embedded later, and a general embedded-detect would regress sibling
-// IDs (the Path-B trap). Each entry is keyed to ONE exact (lowercase) model ID, corrects
-// the FAMILY to an attested allFamilies target, and preserves the pipeline-derived
-// variant/version (no field dropped). It drives the sole remaining cross-provider divergence
-// to 0 by converging the empty-raw and raw="nemotron" forms of the same id on one tuple.
+// IDs (the Path-B trap). Each entry is keyed to ONE exact (lowercase) model ID and corrects
+// the FAMILY to the intended target. Most entries also pin the variant/version to the
+// pipeline-derived values so no ID-present field is dropped; a few entries (see the per-entry
+// comments below) DELIBERATELY reset variant/version — e.g. the fold-to-llama derivatives
+// drop a spurious variant/modifier to land the record on the correct entity. The original
+// nemotron entry drives the sole remaining cross-provider divergence to 0 by converging the
+// empty-raw and raw="nemotron" forms of the same id on one tuple.
 //
 //   - nvidia/llama-3.3-nemotron-super-49b-v1.5 (kilo raw="" over-captures family
 //     "llama-3.3-nemotron-super-49b"; openrouter raw="nemotron" gives "nemotron") →
 //     both converge on (nemotron, v1.5, 3.3). nemotron ∈ allFamilies + family_enforce.json.
+//
+// The two derivative entries below address a different failure: a provider tags a
+// FINETUNE/MERGE with the raw_family of its BASE ("llama"), which folds the
+// derivative's identity into the base and loses its lineage. Keyed to the exact
+// (lowercase) ID, they restore the derivative family so the record links to the
+// correct entity (and carries its curated lineage from lineage.json):
+//
+//   - abacusai/Dracarys-72B-Instruct (nano-gpt raw="llama") → dracarys. The
+//     pipeline-derived "instruct" modifier is intentionally NOT re-attached here:
+//     leaving it off keys this 72B record as the bare "dracarys" entity, distinct
+//     from the separate dracarys-llama-3.1-70b ("dracarys{instruct}") — so the two
+//     genuinely-different artifacts never wrong-merge.
+//   - gryphe/mythomax-l2-13b (nano-gpt serves it as raw="llama"; other providers
+//     serve the same lowercase ID with raw="") → mythomax, converging every
+//     provider's MythoMax onto the one mythomax entity (this also removes the
+//     prior upper/lower-case entity split). variant/version stay empty to match
+//     the raw="" providers' tuple exactly.
 var idFamilyOverrides = map[string]idFamilyOverrideEntry{
 	"nvidia/llama-3.3-nemotron-super-49b-v1.5": {family: "nemotron", variant: "v1.5", version: "3.3"},
+	"abacusai/dracarys-72b-instruct":           {family: "dracarys"},
+	"gryphe/mythomax-l2-13b":                   {family: "mythomax"},
 }
 
 func isSeriesTierToken(tok string) bool {

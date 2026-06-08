@@ -3,7 +3,7 @@
   "$id": "https://github.com/dayvidpham/bestiary/bestiary.schema.json",
   "title": "ModelInfo",
   "description": "Metadata for a single AI model as produced by the bestiary CLI JSON formatter.",
-  "version": "0.0.3",
+  "version": "0.1.0",
   "type": "object",
   "properties": {
     "ID": {
@@ -164,6 +164,15 @@
     "LastSynced": {
       "description": "RFC3339 timestamp of when this model record was last fetched from the upstream API.",
       "type": "string"
+    },
+    "Host": {
+      "description": "Serving host / backend infrastructure that runs this model instance, distinct from Provider (e.g. \"azure\", \"aws\"). A per-instance attribute that never participates in entity identity. Empty string when unknown or when the provider serves the model directly. Added in schema 0.1.0; optional for backward compatibility with 0.0.x records.",
+      "type": "string"
+    },
+    "Lineage": {
+      "description": "Derivation edges from this model to its parent model(s) (finetune, merge, distillation, etc.). null when the model is a base model or no curated lineage is known. Added in schema 0.1.0; optional for backward compatibility with 0.0.x records.",
+      "type": ["array", "null"],
+      "items": { "$ref": "#/$defs/LineageEdge" }
     }
   },
   "required": [
@@ -234,9 +243,68 @@
           "description": "List of known trailing tokens extracted from the model ID that carry semantic meaning (e.g. [\"thinking\"], [\"vision\",\"instruct\"]), in canonical order. null when none. Widened from string to array of strings to match ModelRef.Modifier []string.",
           "type": ["array", "null"],
           "items": { "type": "string" }
+        },
+        "Host": {
+          "description": "Serving host / backend that runs this instance (e.g. \"azure\"), distinct from Provider. Per-instance attribute, never part of identity. Empty string when unknown. Added in schema 0.1.0; optional for backward compatibility.",
+          "type": "string"
         }
       },
       "required": ["ID", "Provider", "RawFamily", "Family", "Variant", "Version", "Date", "Modifier"]
+    },
+    "EntityRef": {
+      "title": "EntityRef",
+      "description": "Canonical identity of a model entity: the tuple (Family, Variant, Version) plus identity-class modifiers. Version is the identity version, NOT a release date (EntityRef has no Date field). Modifier holds only identity-class modifiers, in canonical order. Its String() form family[/variant][@version]{identity-mods} is the comparable entity key; per-instance attributes never appear in it.",
+      "type": "object",
+      "properties": {
+        "Family": {
+          "description": "Canonical family identifier (e.g. \"llama\", \"claude\").",
+          "type": "string"
+        },
+        "Variant": {
+          "description": "Canonical variant suffix. Empty when the entity has no variant.",
+          "type": "string"
+        },
+        "Version": {
+          "description": "Identity version (e.g. \"4.5\", \"3.1\"). Empty when the entity has no separable version. This is NOT a release date.",
+          "type": "string"
+        },
+        "Modifier": {
+          "description": "Identity-class modifiers only, in canonical order. null when none.",
+          "type": ["array", "null"],
+          "items": { "type": "string" }
+        }
+      },
+      "required": ["Family", "Variant", "Version", "Modifier"]
+    },
+    "DerivationKind": {
+      "title": "DerivationKind",
+      "description": "How a model was derived from its parent(s): the edge label on a lineage relationship. Serializes as a lowercase text string via encoding.TextMarshaler.",
+      "type": "string",
+      "enum": ["none", "finetune", "merge", "distillation", "quantized", "adapter"],
+      "x-enum-descriptions": {
+        "none": "No derivation relationship (a base model).",
+        "finetune": "Parameters further trained on additional data.",
+        "merge": "Weights combined from two or more parent models (>= 2 parents).",
+        "distillation": "A smaller student model trained to mimic a larger teacher.",
+        "quantized": "A lower-precision copy of a parent model.",
+        "adapter": "A parameter-efficient adapter (e.g. LoRA) over a base model."
+      }
+    },
+    "LineageEdge": {
+      "title": "LineageEdge",
+      "description": "One directed derivation relationship: this model was derived from Parent via technique Kind. A model with multiple parents (e.g. a merge) carries multiple LineageEdges.",
+      "type": "object",
+      "properties": {
+        "Parent": {
+          "description": "The parent entity this model was derived from.",
+          "$ref": "#/$defs/EntityRef"
+        },
+        "Kind": {
+          "description": "The derivation technique relating this model to Parent.",
+          "$ref": "#/$defs/DerivationKind"
+        }
+      },
+      "required": ["Parent", "Kind"]
     },
     "CanonicalScheme": {
       "title": "CanonicalScheme",

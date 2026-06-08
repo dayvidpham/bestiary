@@ -1,0 +1,39 @@
+{
+  "_comment": "Curated modifier-class table. Each known trailing modifier token (the Modifier field of a decomposed ModelRef) is tagged IDENTITY or ATTRIBUTE. IDENTITY modifiers distinguish a genuinely different model artifact (different weights/behavior) and are PART of the entity key — they render in the '{...}' segment. ATTRIBUTE modifiers describe a per-instance presentation or runtime knob that does NOT change identity and are EXCLUDED from the key — they render in the '[...]' segment. ClassifyModifier consults 'global' first-pass and 'family_overrides' as a per-family override that BEATS the global classification (mirroring the existing per-family member-guard pattern in modifiers.json): the same token can be identity-bearing for one family and a mere speed/runtime attribute for another (gpt-4-turbo: turbo=IDENTITY vs glm-5-turbo: turbo=ATTRIBUTE). Any token absent from BOTH layers defaults to IDENTITY (the fail-safe over-split — never silently collapse two artifacts into one entity). The global default for the AMBIGUOUS tokens (turbo/fast/chat/pro/precision) is therefore IDENTITY; per-family overrides demote specific ones to ATTRIBUTE where curation has established the token is a speed/runtime tier for that family. mini/pro/flash STAY IDENTITY-class modifiers this epoch (a dedicated size/param axis is deferred to GH#9 — NO modifier->variant reclassification here). All keys lowercase; matching is case-insensitive at runtime.",
+  "schema_version": 1,
+  "global": {
+    "thinking": "attribute",
+    "think": "attribute",
+    "preview": "attribute",
+    "latest": "attribute",
+    "original": "attribute",
+    "highspeed": "attribute",
+    "lightning": "attribute",
+
+    "instruct": "identity",
+    "non-reasoning": "identity",
+    "vision": "identity",
+    "code": "identity",
+    "omni": "identity",
+    "multimodal": "identity",
+    "deep-research": "identity",
+    "base": "identity",
+    "reasoning": "identity",
+    "distill": "identity",
+    "mini": "identity",
+    "flash": "identity",
+
+    "turbo": "identity",
+    "fast": "identity",
+    "chat": "identity",
+    "pro": "identity",
+    "precision": "identity"
+  },
+  "family_overrides": {
+    "claude": { "fast": "attribute" },
+    "glm": { "turbo": "attribute", "fast": "attribute" },
+    "kimi": { "fast": "attribute" },
+    "deepseek": { "fast": "attribute" },
+    "minimax": { "fast": "attribute" }
+  }
+}

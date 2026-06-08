@@ -18,6 +18,7 @@ type ModelRef struct {
 	Version   string   // Model version extracted from family (e.g., "4.5", "2.5"); empty if none
 	Date      string   // Release date in YYYY-MM-DD format; empty if none
 	Modifier  []string // Known trailing tokens in canonical order (e.g., ["vision","instruct"]); nil if none
+	Host      Host     // Serving host/backend (per-instance attribute, never part of identity); HostNone if unknown
 }
 
 // Ref returns a ModelRef for this ModelInfo.
@@ -34,6 +35,7 @@ func (m ModelInfo) Ref() ModelRef {
 		Version:   m.Version,
 		Date:      m.Date,
 		Modifier:  m.Modifier,
+		Host:      m.Host,
 	}
 }
 
@@ -66,7 +68,7 @@ func (r ModelRef) Format(s CanonicalScheme) string {
 //
 // When Family is populated the form is built from the non-empty segments:
 //
-//	<provider>/<family>[/<variant>][/<version>][@<date>][<modifier>]
+//	<provider>/<family>[/<variant>][/<version>][@<date>]{identity-mods}[attributes]
 //
 // Segment inclusion rules:
 //   - Family empty: fall back to "<provider>/<raw-id>"
@@ -74,10 +76,20 @@ func (r ModelRef) Format(s CanonicalScheme) string {
 //   - Version only appended when non-empty (requires Variant to precede it, or
 //     placed directly after Family when Variant is empty)
 //   - Date only appended as "@<date>" suffix when non-empty
-//   - Modifier only appended as "[modifier]" bracket suffix when non-empty
-//     (the bracket suffix is placed after the date suffix, if any)
+//   - Modifiers rendered class-aware: IDENTITY-class tokens in a "{identity-mods}"
+//     segment, ATTRIBUTE-class tokens in an "[attributes]" segment, in that order,
+//     after the date suffix (if any). Each token is routed by
+//     ClassifyModifier(token, family); within a segment tokens are de-duplicated
+//     and comma-joined in CanonicalizeModifiers order.
 //
-// Full example matrix (p = provider, f = family, v = variant, ver = version, d = date, m = modifier):
+// Backward-compatibility: ONLY identity modifiers moved out of the legacy "[mod]"
+// bracket into "{mod}"; attribute modifiers stay in "[mod]". A render whose
+// modifiers are ALL attribute-class is therefore BYTE-IDENTICAL to the pre-class
+// canonical form. Classification depends on the embedded table; if it fails to
+// load, every token degrades to IDENTITY (never a panic).
+//
+// Full example matrix (p = provider, f = family, v = variant, ver = version,
+// d = date, i = identity-mod, a = attribute-mod):
 //
 //	(f)                          → p/f
 //	(f,d)                        → p/f@d
@@ -87,8 +99,9 @@ func (r ModelRef) Format(s CanonicalScheme) string {
 //	(f,ver,d)                    → p/f/ver@d
 //	(f,v,ver)                    → p/f/v/ver
 //	(f,v,ver,d)                  → p/f/v/ver@d
-//	(f,v,ver,d,m)                → p/f/v/ver@d[m]
-//	(f,v,ver,m)                  → p/f/v/ver[m]
+//	(f,v,ver,d,a)                → p/f/v/ver@d[a]
+//	(f,v,ver,i)                  → p/f/v/ver{i}
+//	(f,v,ver,d,i,a)              → p/f/v/ver@d{i}[a]
 func (r ModelRef) formatCanonical() string {
 	if r.Family == "" {
 		// Fall back to provider-specific representation.
@@ -112,10 +125,14 @@ func (r ModelRef) formatCanonical() string {
 		base = fmt.Sprintf("%s/%s", r.Provider, path)
 	}
 
-	// Append bracket-suffix for Modifier when non-empty (ALL modifiers rendered in
-	// canonical order, comma-joined, for byte-stability across every scheme).
-	if key := modifierKey(r.Modifier); key != "" {
-		return base + "[" + key + "]"
+	// Route modifiers by class: identity-mods into "{...}", attribute-mods into
+	// "[...]", in that order. Attribute-only renders stay byte-identical to the
+	// legacy single-bracket form.
+	if idKey := modifierKey(EntityModifiers(r.Modifier, r.Family)); idKey != "" {
+		base += "{" + idKey + "}"
+	}
+	if attrKey := modifierKey(attributeModifiers(r.Modifier, r.Family)); attrKey != "" {
+		base += "[" + attrKey + "]"
 	}
 	return base
 }

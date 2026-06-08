@@ -658,34 +658,51 @@ func modelMatches(m ModelInfo, matchInput string, scheme CanonicalScheme) bool {
 }
 
 // matchCanonicalSegments parses a canonical-form matchInput (e.g.
-// "claude/opus@2025-11-01", "claude/opus/4.5@2025-11-01[thinking]", or
-// "anthropic/claude/haiku@2024-10-22[latest]") and checks whether the model m
-// matches the parsed (family, variant, version, date, modifier) tuple.
+// "claude/opus@2025-11-01", "claude/opus/4.5@2025-11-01[thinking]",
+// "meta/llama@3.1{instruct}", or "openai/gpt/4o{instruct}[turbo]") and checks
+// whether the model m matches the parsed (family, variant, version, date,
+// modifier) tuple.
 //
 // Parsing rules:
-//  1. Strip "[modifier]" bracket suffix if present.
-//  2. Strip "@date" suffix if present.
-//  3. Split remaining segments on "/".
-//  4. Provider-prefix detection: when 4 segments remain (provider/family/variant/version),
+//  1. Strip the trailing "[attributes]" bracket segment if present.
+//  2. Strip the trailing "{identity-mods}" brace segment if present.
+//  3. Strip "@date" suffix if present.
+//  4. Split remaining segments on "/".
+//  5. Provider-prefix detection: when 4 segments remain (provider/family/variant/version),
 //     segment[0] is treated as a provider prefix and skipped.
 //     Similarly for 3 segments (provider/family/variant) when segment[0] does not match
 //     the model's Family but segment[1] does — the provider prefix is skipped.
-//  5. Segment[0] = family; segment[1] = variant (if present); segment[2] = version (if present).
+//  6. Segment[0] = family; segment[1] = variant (if present); segment[2] = version (if present).
 //
 // Matching rules:
 //   - family must match Family (required).
 //   - variant must match Variant when specified.
 //   - version must match Version when specified.
 //   - date must match Date when specified.
-//   - modifier must match Modifier when specified (non-empty bracket suffix).
+//   - modifier: the UNION of the "{identity-mods}" and "[attributes]" tokens (when
+//     either segment is present) must equal the model's full canonical modifier
+//     set. Splitting the render across "{}" and "[]" is a presentation detail; the
+//     matcher is class-agnostic on input, so both the class-aware form
+//     ("{instruct}[turbo]") and the legacy combined form ("[instruct,turbo]")
+//     round-trip to the same model.
 func matchCanonicalSegments(m ModelInfo, matchInput string) bool {
-	// Extract "[modifier]" bracket suffix.
-	// Must be done BEFORE stripping "@date" so the bracket is not confused with
-	// the date field when the date is absent.
-	var modifierFilter string
+	// Extract the trailing "[attributes]" bracket segment.
+	// Must be done BEFORE stripping the "{identity-mods}" brace and the "@date"
+	// suffix so neither is confused with the modifier segments.
+	var attributeFilter string
 	if lb := strings.LastIndex(matchInput, "["); lb >= 0 {
 		if rb := strings.LastIndex(matchInput, "]"); rb == len(matchInput)-1 && rb > lb {
-			modifierFilter = matchInput[lb+1 : rb]
+			attributeFilter = matchInput[lb+1 : rb]
+			matchInput = matchInput[:lb]
+		}
+	}
+
+	// Extract the trailing "{identity-mods}" brace segment (now the suffix once any
+	// "[attributes]" segment has been removed).
+	var identityFilter string
+	if lb := strings.LastIndex(matchInput, "{"); lb >= 0 {
+		if rb := strings.LastIndex(matchInput, "}"); rb == len(matchInput)-1 && rb > lb {
+			identityFilter = matchInput[lb+1 : rb]
 			matchInput = matchInput[:lb]
 		}
 	}
@@ -742,13 +759,25 @@ func matchCanonicalSegments(m ModelInfo, matchInput string) bool {
 	if dateFilter != "" && m.Date != dateFilter {
 		return false
 	}
-	// Modifier filter: when specified (bracket suffix present), must match the
-	// model's order-independent canonical modifier key. The bracket
-	// suffix renders the same canonical comma-joined form (ModelRef.Format), so a
-	// round-tripped "[vision,instruct]" matches a model with Modifier
-	// ["instruct","vision"].
-	if modifierFilter != "" && modifierKey(m.Modifier) != modifierFilter {
-		return false
+	// Modifier filter: when either modifier segment ("{identity-mods}" and/or
+	// "[attributes]") is present, the UNION of their tokens must equal the model's
+	// order-independent canonical modifier key. Both segments render the same
+	// canonical comma-joined form (ModelRef.Format), so "{instruct}[turbo]" and the
+	// legacy combined "[instruct,turbo]" both match a model with Modifier
+	// ["turbo","instruct"]. The matcher is class-agnostic on input: it does not
+	// re-derive which token belongs in "{}" vs "[]", only that the requested set
+	// matches.
+	if identityFilter != "" || attributeFilter != "" {
+		var union []string
+		if identityFilter != "" {
+			union = append(union, strings.Split(identityFilter, ",")...)
+		}
+		if attributeFilter != "" {
+			union = append(union, strings.Split(attributeFilter, ",")...)
+		}
+		if modifierKey(union) != modifierKey(m.Modifier) {
+			return false
+		}
 	}
 	return true
 }

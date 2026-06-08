@@ -79,10 +79,11 @@ func TestSchemaFile_VersionAndModifierType(t *testing.T) {
 }
 
 // TestBestiarySchemaVersion_Exact asserts that BestiarySchemaVersion equals
-// exactly "0.0.3" — bumped by for the Modifier string→[]string
-// public schema change. Update this test when a new schema version is released.
+// exactly "0.1.0" — bumped for the additive v0.2.3 entity-model fields
+// (ModelInfo.Host/Lineage, ModelRef.Host, $defs EntityRef/LineageEdge/
+// DerivationKind). Update this test when a new schema version is released.
 func TestBestiarySchemaVersion_Exact(t *testing.T) {
-	const want = "0.0.3"
+	const want = "0.1.0"
 	if bestiary.BestiarySchemaVersion != want {
 		t.Errorf(
 			"BestiarySchemaVersion = %q, want %q;\n"+
