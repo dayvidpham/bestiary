@@ -341,8 +341,10 @@ func TestLineage_Ancestors_RealCatalog(t *testing.T) {
 	if len(edges) == 0 {
 		t.Fatal("LineageFor(dracarys) returned no edges")
 	}
+	// The child entity's identity key is dracarys{instruct} (Version decomposes to
+	// "", Modifier=[instruct], instruct being identity-class) — NOT llama/dracarys.
 	e := bestiary.Entity{
-		Ref:     bestiary.EntityRef{Family: bestiary.FamilyLlama, Variant: "dracarys", Version: "3.1"},
+		Ref:     bestiary.EntityRef{Family: bestiary.Family("dracarys"), Modifier: []string{"instruct"}},
 		Lineage: edges,
 	}
 	anc := e.Ancestors()
@@ -354,10 +356,52 @@ func TestLineage_Ancestors_RealCatalog(t *testing.T) {
 	}
 
 	// Fallback seed: an entity with no inline Lineage still resolves via the
-	// curated forward index keyed by its Ref.
-	e2 := bestiary.Entity{Ref: bestiary.EntityRef{Family: bestiary.FamilyLlama, Variant: "dracarys", Version: "3.1"}}
+	// curated forward index keyed by its Ref. This only works because the curated
+	// child_ref is aligned to the decomposed entity key dracarys{instruct}.
+	e2 := bestiary.Entity{Ref: bestiary.EntityRef{Family: bestiary.Family("dracarys"), Modifier: []string{"instruct"}}}
 	if got := e2.Ancestors(); len(got) != 1 || got[0].String() != "llama@3.1" {
 		t.Errorf("Ancestors() via forward-index seed = %+v, want [llama@3.1]", got)
+	}
+}
+
+// TestLineage_Dracarys70B_ChildRefAlignsToEntityKey is the traversal-consistency
+// guard for the 70B dracarys child_ref. The curated child_ref must key by the
+// SAME string the registry's identity-class projection produces for the entity
+// (dracarys{instruct}), so the entity EntityByTuple returns connects to its llama
+// parent via the forward-index/Ancestors seed — even with no inline Lineage.
+//
+// RED before the fix: the curated child_ref was {family:llama,variant:dracarys,
+// version:3.1} → forward-index key "llama/dracarys@3.1", which never matches the
+// real entity key "dracarys{instruct}", so the fallback seed finds no ancestors.
+func TestLineage_Dracarys70B_ChildRefAlignsToEntityKey(t *testing.T) {
+	const id70 = bestiary.ModelID("abacusai/dracarys-llama-3_1-70b-instruct")
+
+	// The entity the registry actually indexes for the 70B record.
+	ent, ok := bestiary.EntityByTuple(bestiary.Family("dracarys"), "", "", "instruct")
+	if !ok {
+		t.Fatal("EntityByTuple(dracarys,…,instruct): the 70B entity must exist")
+	}
+	const wantKey = "dracarys{instruct}"
+	if ent.Ref.String() != wantKey {
+		t.Fatalf("70B entity key = %q, want %q", ent.Ref.String(), wantKey)
+	}
+
+	// child_ref.String() must equal that key: rebuild the curated child node from
+	// the record's edges-less Ref and confirm the forward index resolves it.
+	// A hand-constructed entity carrying ONLY the Ref (no inline Lineage) must
+	// still reach the llama parent — this exercises the child_ref → forward-index
+	// seam, which is exactly what the alignment fixes.
+	seeded := bestiary.Entity{Ref: ent.Ref}
+	anc := seeded.Ancestors()
+	if len(anc) != 1 || anc[0].String() != "llama@3.1" {
+		t.Fatalf("Ancestors() via forward-index seed for %q = %+v, want [llama@3.1] "+
+			"(child_ref must align to the entity key)", wantKey, anc)
+	}
+
+	// And the baked edges still resolve the same parent (sanity: the record's own
+	// Lineage is unchanged by the child_ref realignment).
+	if edges := bestiary.LineageFor(id70); len(edges) != 1 || edges[0].Parent.String() != "llama@3.1" {
+		t.Errorf("LineageFor(70B) = %+v, want one edge to llama@3.1", edges)
 	}
 }
 
@@ -368,12 +412,12 @@ func TestLineage_Descendants(t *testing.T) {
 	desc := base.Descendants()
 	found := false
 	for _, d := range desc {
-		if d.String() == "llama/dracarys@3.1" {
+		if d.String() == "dracarys{instruct}" {
 			found = true
 		}
 	}
 	if !found {
-		t.Errorf("Descendants(llama@3.1) = %+v, want to include llama/dracarys@3.1", desc)
+		t.Errorf("Descendants(llama@3.1) = %+v, want to include dracarys{instruct}", desc)
 	}
 }
 

@@ -4,7 +4,7 @@
   "edges": [
     {
       "child_id": "dracarys-llama-3_1-70b-instruct",
-      "child_ref": { "family": "llama", "variant": "dracarys", "version": "3.1" },
+      "child_ref": { "family": "dracarys", "variant": "", "version": "", "modifier": ["instruct"] },
       "real": true,
       "parents": [
         { "family": "llama", "variant": "", "version": "3.1", "kind": "finetune" }

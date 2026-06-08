@@ -39,10 +39,15 @@ type lineageParentJSON struct {
 }
 
 // lineageRefJSON is the child's entity-ref identity (its DAG node) in lineage.json.
+// Modifier carries the IDENTITY-class modifiers of the child entity (e.g.
+// ["instruct"]) so child_ref.String() matches the EntityRef key produced by the
+// registry's identity-class projection. It is omitted for children whose key has
+// no identity modifier.
 type lineageRefJSON struct {
-	Family  Family `json:"family"`
-	Variant string `json:"variant"`
-	Version string `json:"version"`
+	Family   Family   `json:"family"`
+	Variant  string   `json:"variant"`
+	Version  string   `json:"version"`
+	Modifier []string `json:"modifier,omitempty"`
 }
 
 // lineageEntryJSON is one curated child→parents record in lineage.json.
@@ -199,7 +204,7 @@ func parseLineageTable(raw []byte) (*lineageTable, error) {
 			})
 		}
 
-		childRef := EntityRef{Family: e.ChildRef.Family, Variant: e.ChildRef.Variant, Version: e.ChildRef.Version}
+		childRef := EntityRef{Family: e.ChildRef.Family, Variant: e.ChildRef.Variant, Version: e.ChildRef.Version, Modifier: e.ChildRef.Modifier}
 		rec := LineageRecord{Child: childRef, Edges: edges, Real: e.Real}
 		tbl.byID[childID] = rec
 
