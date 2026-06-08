@@ -30,6 +30,10 @@
     "precision": "identity"
   },
   "family_overrides": {
-    "glm": { "turbo": "attribute" }
+    "claude": { "fast": "attribute" },
+    "glm": { "turbo": "attribute", "fast": "attribute" },
+    "kimi": { "fast": "attribute" },
+    "deepseek": { "fast": "attribute" },
+    "minimax": { "fast": "attribute" }
   }
 }

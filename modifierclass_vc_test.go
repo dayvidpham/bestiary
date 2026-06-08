@@ -349,6 +349,73 @@ func TestVC11_UnionRoundTrip_MixedModifier(t *testing.T) {
 }
 
 // ----------------------------------------------------------------------------
+// VC16 — "fast" is a per-family speed ATTRIBUTE for tiered families, but stays
+// an IDENTITY token globally (distinct-model families like grok/imagen/veo)
+// ----------------------------------------------------------------------------
+
+// TestVC16_FastPerFamilyDemotion pins the both-arm contract for the "fast"
+// modifier. For families where "fast" is a SPEED-TIER knob over the same artifact
+// (claude, glm, kimi, deepseek, minimax — each has a non-fast sibling with the
+// same weights), a per-family override demotes "fast" to ATTRIBUTE so a
+// "…-fast" record folds onto the non-fast entity. For families where "fast"
+// names a genuinely DIFFERENT model (grok-4-fast ≠ grok-4; Google's imagen/veo
+// "fast" media variants), "fast" rides the global default and stays IDENTITY so
+// the fast artifact remains a distinct entity. The global table is untouched:
+// only family_overrides demote.
+func TestVC16_FastPerFamilyDemotion(t *testing.T) {
+	// DEMOTED arm: "fast" is an attribute and drops out of the identity key, so a
+	// "…-fast" record folds onto its non-fast sibling entity.
+	demoted := []bestiary.Family{"claude", "glm", "kimi", "deepseek", "minimax"}
+	for _, fam := range demoted {
+		if got := bestiary.ClassifyModifier("fast", fam); got != bestiary.ModifierClassAttribute {
+			t.Errorf("ClassifyModifier(fast, %q) = %v, want ModifierClassAttribute", fam, got)
+		}
+		if got := bestiary.EntityModifiers([]string{"fast"}, fam); got != nil {
+			t.Errorf("EntityModifiers([fast], %q) = %v, want nil (fast is an attribute → dropped from key)", fam, got)
+		}
+	}
+
+	// Representative fold: a claude-opus-fast record keys to the SAME entity as the
+	// non-fast claude/opus sibling (the speed tier does not split identity).
+	fastOpus := bestiary.EntityRef{Family: "claude", Variant: "opus", Version: "4.5",
+		Modifier: bestiary.EntityModifiers([]string{"fast"}, "claude")}
+	plainOpus := bestiary.EntityRef{Family: "claude", Variant: "opus", Version: "4.5"}
+	if fastOpus.String() != plainOpus.String() {
+		t.Errorf("claude-opus-fast key %q must EQUAL the non-fast sibling %q (fast folds)",
+			fastOpus.String(), plainOpus.String())
+	}
+
+	// glm already demotes "turbo"; "fast" is now demoted ALONGSIDE it — both drop.
+	if got := bestiary.EntityModifiers([]string{"turbo", "fast"}, "glm"); got != nil {
+		t.Errorf("EntityModifiers([turbo,fast], glm) = %v, want nil (both demoted for glm)", got)
+	}
+
+	// RETAINED arm: "fast" stays an IDENTITY token where it names a distinct model.
+	// grok is the pinned representative (grok-4-fast ≠ grok-4).
+	if got := bestiary.ClassifyModifier("fast", "grok"); got != bestiary.ModifierClassIdentity {
+		t.Errorf("ClassifyModifier(fast, grok) = %v, want ModifierClassIdentity (distinct model)", got)
+	}
+	if got := bestiary.EntityModifiers([]string{"fast"}, "grok"); modJoinCanon(got) != "fast" {
+		t.Errorf("EntityModifiers([fast], grok) = %v, want [fast] (identity → retained)", got)
+	}
+	fastGrok := bestiary.EntityRef{Family: "grok", Version: "4",
+		Modifier: bestiary.EntityModifiers([]string{"fast"}, "grok")}
+	plainGrok := bestiary.EntityRef{Family: "grok", Version: "4"}
+	if fastGrok.String() == plainGrok.String() {
+		t.Errorf("grok-4-fast key %q must DIFFER from grok-4 %q (fast is identity for grok)",
+			fastGrok.String(), plainGrok.String())
+	}
+	if want := "grok@4{fast}"; fastGrok.String() != want {
+		t.Errorf("grok-4-fast key = %q, want %q", fastGrok.String(), want)
+	}
+
+	// The demotion is family-scoped: it must NOT leak to a retained family.
+	if got := bestiary.ClassifyModifier("fast", "imagen"); got != bestiary.ModifierClassIdentity {
+		t.Errorf("ClassifyModifier(fast, imagen) = %v, want ModifierClassIdentity (override is per-family)", got)
+	}
+}
+
+// ----------------------------------------------------------------------------
 // VC12 — backward-compat: attribute-only canonical byte-identical; identity changed
 // ----------------------------------------------------------------------------
 
