@@ -2,6 +2,59 @@ package bestiary
 
 import "strings"
 
+// QuantVRAM captures the per-quantization weight and VRAM footprint for a
+// single quantization variant of a model.
+//
+// Field semantics:
+//
+//   - Quant is the parsed quantization constant; QuantRaw is the raw string as
+//     it appeared in the source data (populated only when Quant is
+//     QuantizationOther or when the raw form is needed for display).
+//   - WeightsBytes is the ground-truth ingested GGUF file size in bytes.  It is
+//     the primary measurement and is always sourced from the downloaded file, not
+//     derived from bits-per-weight.
+//   - VRAMBytes is the estimated total VRAM requirement: WeightsBytes plus the
+//     KV-cache at VRAMContextTokens (the model's maximum context window).  When
+//     arch-facts are absent (Layers/KVHeads/HeadDim all zero), VRAMBytes equals
+//     WeightsBytes and VRAMEstimatePartial is set true.
+//   - VRAMContextTokens is the context-window size (tokens) used to compute the
+//     KV-cache term.  It is the model-max context, not a user-chosen value.
+//   - Layers, KVHeads, HeadDim are the architectural parameters used for the
+//     KV-cache computation.  Zero when the source did not supply them.
+//   - VRAMEstimatePartial is true when the KV-cache term was excluded from
+//     VRAMBytes because one or more of Layers/KVHeads/HeadDim is zero.  A true
+//     value means VRAMBytes is a weights-only lower bound, never a silent
+//     under-estimate.
+//
+// Zero values mean unknown: int64 0 = unknown bytes, int 0 = unknown count.
+// nil QuantVRAM slice on a ProviderInstance or ModelInfo means no quant data is
+// available for that row.
+type QuantVRAM struct {
+	// Quant is the parsed quantization type.
+	Quant Quantization
+	// QuantRaw is the raw quant string from the source (non-empty when Quant is
+	// QuantizationOther or the original casing must be preserved).
+	QuantRaw string
+	// WeightsBytes is the ingested GGUF file size in bytes — the ground-truth
+	// weights footprint for this quantization variant.
+	WeightsBytes int64
+	// VRAMBytes is weights + KV-cache at VRAMContextTokens; equals WeightsBytes
+	// when VRAMEstimatePartial is true.
+	VRAMBytes int64
+	// VRAMContextTokens is the context window (tokens) used to compute VRAMBytes.
+	VRAMContextTokens int
+	// Layers is the number of transformer layers; 0 when unknown.
+	Layers int
+	// KVHeads is the number of KV-attention heads (GQA-aware); 0 when unknown.
+	KVHeads int
+	// HeadDim is the per-head dimension in tokens; 0 when unknown.
+	HeadDim int
+	// VRAMEstimatePartial is true when the KV-cache term was omitted from
+	// VRAMBytes because at least one of Layers, KVHeads, or HeadDim is zero.
+	// Callers must check this flag before treating VRAMBytes as a full estimate.
+	VRAMEstimatePartial bool
+}
+
 // EntityRef is the canonical IDENTITY of a model entity — the tuple that
 // determines whether two provider/host instances are "the same model". It is the
 // comparable map key for entity grouping (via EntityRef.String) and doubles as
@@ -99,6 +152,12 @@ type ProviderInstance struct {
 	CostOutputPerMTok *float64 // nil when unknown
 	ContextWindow     int
 	MaxOutput         int
+	// QuantVRAM is the per-quantization weight and VRAM footprint for this
+	// instance. nil when no quantization data is available for this row.
+	QuantVRAM []QuantVRAM
+	// Source is the data source that provided this row. DataSourceNone (zero
+	// value, empty string) when no source is recorded.
+	Source DataSourceID
 }
 
 // CapabilityUnion is the aggregate capability view across all instances of an
@@ -135,6 +194,11 @@ type Entity struct {
 	ContextRange     [2]int
 	MaxOutputRange   [2]int
 	Capabilities     CapabilityUnion
+	// Sources is a DERIVED sorted read projection of the entity-source relation,
+	// built by the registry aggregate. It is NOT a source of truth — it is a
+	// convenience view over the EntitySource join table. nil until the registry
+	// aggregate layer populates it.
+	Sources []DataSourceID
 }
 
 // Entities returns every model entity in the static registry, each with its
@@ -198,6 +262,9 @@ func cloneEntity(e Entity) Entity {
 	if e.Hosts != nil {
 		c.Hosts = append([]Host(nil), e.Hosts...)
 	}
+	if e.Sources != nil {
+		c.Sources = append([]DataSourceID(nil), e.Sources...)
+	}
 	c.PriceInputRange = cloneFloatPair(e.PriceInputRange)
 	c.PriceOutputRange = cloneFloatPair(e.PriceOutputRange)
 	return c
@@ -213,7 +280,8 @@ func cloneRef(r EntityRef) EntityRef {
 }
 
 // cloneInstances deep-copies a ProviderInstance slice, including each instance's
-// cost pointers, so a caller cannot reach back into registry-owned float64s.
+// cost pointers and QuantVRAM slice, so a caller cannot reach back into
+// registry-owned float64s or QuantVRAM rows.
 func cloneInstances(in []ProviderInstance) []ProviderInstance {
 	if in == nil {
 		return nil
@@ -223,8 +291,21 @@ func cloneInstances(in []ProviderInstance) []ProviderInstance {
 		c := inst
 		c.CostInputPerMTok = cloneFloatPtr(inst.CostInputPerMTok)
 		c.CostOutputPerMTok = cloneFloatPtr(inst.CostOutputPerMTok)
+		c.QuantVRAM = cloneQuantVRAM(inst.QuantVRAM)
 		out[i] = c
 	}
+	return out
+}
+
+// cloneQuantVRAM deep-copies a QuantVRAM slice. QuantVRAM rows contain only
+// value types (no pointers), so a shallow element copy suffices; the function
+// allocates a fresh backing array so the caller cannot alias the source slice.
+func cloneQuantVRAM(in []QuantVRAM) []QuantVRAM {
+	if in == nil {
+		return nil
+	}
+	out := make([]QuantVRAM, len(in))
+	copy(out, in)
 	return out
 }
 

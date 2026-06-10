@@ -177,6 +177,15 @@
     "ParamSize": {
       "description": "Canonical parameter-size token for this model instance (e.g. \"70b\", \"8b\", \"0.5b\"). Empty string when the size is unknown or not applicable. Participates in entity identity via the #size segment of EntityRef.String(). Optional; absent for models without curated size data.",
       "type": "string"
+    },
+    "QuantVRAM": {
+      "description": "Per-quantization weight and VRAM footprint rows for this model instance. null when no quantization data is available. Populated at codegen time from curated data; live-sync rows carry null.",
+      "type": ["array", "null"],
+      "items": { "$ref": "#/$defs/QuantVRAM" }
+    },
+    "Source": {
+      "description": "Data source that provided this model row (e.g. \"models.dev\", \"ollama\"). Empty string (DataSourceNone) on live-sync rows; populated at codegen time from curated ingest data.",
+      "type": "string"
     }
   },
   "required": [
@@ -356,6 +365,56 @@
         }
       },
       "required": ["Value", "Scheme", "Provider", "Rating"]
+    },
+    "QuantVRAM": {
+      "title": "QuantVRAM",
+      "description": "Per-quantization weight and VRAM footprint for one quantization variant of a model. WeightsBytes is the ground-truth ingested GGUF file size. VRAMBytes = WeightsBytes + KV-cache at VRAMContextTokens (model max context). VRAMEstimatePartial is true when the KV term was excluded because arch-facts (Layers/KVHeads/HeadDim) were absent.",
+      "type": "object",
+      "properties": {
+        "Quant": {
+          "description": "Parsed quantization type (e.g. \"q4_k_m\", \"f16\"). Serializes as a lowercase string via encoding.TextMarshaler.",
+          "type": "string"
+        },
+        "QuantRaw": {
+          "description": "Raw quantization string from the source, preserved for display when Quant is QuantizationOther or original casing is needed. Empty string when not applicable.",
+          "type": "string"
+        },
+        "WeightsBytes": {
+          "description": "Ingested GGUF file size in bytes — the ground-truth weights footprint. 0 when unknown.",
+          "type": "integer",
+          "minimum": 0
+        },
+        "VRAMBytes": {
+          "description": "Estimated total VRAM in bytes: WeightsBytes + KV-cache at VRAMContextTokens. Equals WeightsBytes when VRAMEstimatePartial is true. 0 when unknown.",
+          "type": "integer",
+          "minimum": 0
+        },
+        "VRAMContextTokens": {
+          "description": "Context window in tokens used to compute VRAMBytes (the model-max context). 0 when unknown.",
+          "type": "integer",
+          "minimum": 0
+        },
+        "Layers": {
+          "description": "Number of transformer layers. 0 when unknown.",
+          "type": "integer",
+          "minimum": 0
+        },
+        "KVHeads": {
+          "description": "Number of KV-attention heads (GQA-aware). 0 when unknown.",
+          "type": "integer",
+          "minimum": 0
+        },
+        "HeadDim": {
+          "description": "Per-head dimension in tokens. 0 when unknown.",
+          "type": "integer",
+          "minimum": 0
+        },
+        "VRAMEstimatePartial": {
+          "description": "True when the KV-cache term was excluded from VRAMBytes because at least one of Layers, KVHeads, or HeadDim is zero. Callers must check this flag before treating VRAMBytes as a full estimate.",
+          "type": "boolean"
+        }
+      },
+      "required": ["Quant", "QuantRaw", "WeightsBytes", "VRAMBytes", "VRAMContextTokens", "Layers", "KVHeads", "HeadDim", "VRAMEstimatePartial"]
     }
   }
 }

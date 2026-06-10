@@ -87,6 +87,15 @@ type ModelInfo struct {
 	// model or no curated lineage is known. Populated at codegen time from the
 	// curated lineage table by the lineage slice.
 	Lineage []LineageEdge
+	// QuantVRAM is the per-quantization weight and VRAM footprint for this model
+	// instance. nil when no quantization data is available. Populated at codegen
+	// time from curated data; live-sync rows carry nil (curated VRAM is not
+	// available from the live API).
+	QuantVRAM []QuantVRAM
+	// Source is the data source that provided this model row. DataSourceNone
+	// (zero value, empty string) on live-sync rows; populated at codegen time
+	// from curated ingest data.
+	Source DataSourceID
 
 	LastSynced string // RFC3339
 }
