@@ -15,7 +15,11 @@ import (
 
 // currentSchemaVersion is the schema version this build expects.
 // Bump this whenever a migration is added.
-const currentSchemaVersion = 4
+//
+// NOTE: this is the SQLite store migration version (models cache + BCNF
+// provenance tables). It is DISTINCT from BestiarySchemaVersion in version.go,
+// which versions the public JSON output schema; do not conflate the two.
+const currentSchemaVersion = 5
 
 // schemaMetaSQL creates the schema_meta table used to track migration state.
 // Safe to run on any existing database (CREATE TABLE IF NOT EXISTS).
@@ -67,6 +71,82 @@ const indexSQL = `CREATE INDEX IF NOT EXISTS idx_canonical ON models(family, var
 // recreate it as indexSQL (adding version).
 const indexV3SQL = `CREATE INDEX IF NOT EXISTS idx_canonical ON models(family, variant, provider);`
 
+// --- v5 BCNF data-source provenance schema ---
+//
+// Four additive tables form the data-source provenance core. They are created
+// on both the fresh-DB path and the v4→v5 upgrade path via createProvenanceTables
+// so a fresh v5 database is never left with schema_meta=5 but no provenance
+// tables. Foreign keys are enforced only because OpenStore sets
+// `PRAGMA foreign_keys = ON` per-connection before migrations; without that
+// pragma these FK clauses would be decorative.
+
+// dataSourcesTableSQL is the BCNF dimension of originating data sources.
+// uri is a second candidate key (each source has a distinct fetch endpoint),
+// pinned UNIQUE so a duplicate-endpoint row is rejected.
+const dataSourcesTableSQL = `CREATE TABLE IF NOT EXISTS data_sources (
+    data_source_id TEXT PRIMARY KEY,
+    uri            TEXT NOT NULL,
+    canonical_name TEXT NOT NULL,
+    UNIQUE(uri)
+);`
+
+// datasetIngestedTableSQL records the single current ingest per source. It
+// carries NO uri (a transitive dependency reached via the data_sources FK join),
+// which is the BCNF normalization. The primary key is data_source_id.
+const datasetIngestedTableSQL = `CREATE TABLE IF NOT EXISTS dataset_ingested (
+    data_source_id TEXT PRIMARY KEY,
+    ingested_at    TEXT NOT NULL,
+    parser_schema  INTEGER NOT NULL,
+    FOREIGN KEY (data_source_id) REFERENCES data_sources(data_source_id)
+);`
+
+// entitiesTableSQL is the entity dimension that entity_source.entity_key
+// references. The decomposed columns default to ” so a minimal FK-target row
+// (entity_key only) is valid.
+const entitiesTableSQL = `CREATE TABLE IF NOT EXISTS entities (
+    entity_key TEXT PRIMARY KEY,
+    family     TEXT NOT NULL DEFAULT '',
+    variant    TEXT NOT NULL DEFAULT '',
+    version    TEXT NOT NULL DEFAULT '',
+    param_size TEXT NOT NULL DEFAULT ''
+);`
+
+// entitySourceTableSQL is the BCNF join table relating an entity to each data
+// source that attests it. The composite primary key (entity_key, data_source_id)
+// allows an entity attested by N sources to hold N rows; both columns are
+// foreign keys, so an orphan attestation (missing entity or missing source) is
+// rejected when foreign_keys is ON.
+const entitySourceTableSQL = `CREATE TABLE IF NOT EXISTS entity_source (
+    entity_key     TEXT NOT NULL,
+    data_source_id TEXT NOT NULL,
+    PRIMARY KEY (entity_key, data_source_id),
+    FOREIGN KEY (entity_key) REFERENCES entities(entity_key),
+    FOREIGN KEY (data_source_id) REFERENCES data_sources(data_source_id)
+);`
+
+// createProvenanceTables creates the four v5 BCNF provenance tables in FK
+// dependency order (parents before children): data_sources and entities are
+// dimensions; dataset_ingested and entity_source reference them. Each statement
+// is CREATE TABLE IF NOT EXISTS, so the helper is idempotent and safe to call on
+// the fresh-DB path and from migrateToV5 alike.
+func createProvenanceTables(conn *sqlite.Conn) error {
+	stmts := []struct {
+		name string
+		sql  string
+	}{
+		{"data_sources", dataSourcesTableSQL},
+		{"entities", entitiesTableSQL},
+		{"dataset_ingested", datasetIngestedTableSQL},
+		{"entity_source", entitySourceTableSQL},
+	}
+	for _, s := range stmts {
+		if err := sqlitex.ExecuteTransient(conn, s.sql, nil); err != nil {
+			return fmt.Errorf("create %s table: %w", s.name, err)
+		}
+	}
+	return nil
+}
+
 // CanonicalFilter selects models by their parsed canonical axes.
 // Empty fields act as wildcards: an empty Family matches any family, an
 // empty Variant matches any variant, an empty Version matches any version,
@@ -116,6 +196,16 @@ func OpenStore(path string) (*Store, error) {
 	conn, err := sqlite.OpenConn(path)
 	if err != nil {
 		return nil, fmt.Errorf("bestiary: OpenStore: open %s: %w", path, err)
+	}
+
+	// Enforce foreign keys on this connection BEFORE any migration runs. SQLite
+	// defaults FK enforcement OFF, so the v5 BCNF tables' FK clauses are decorative
+	// unless this pragma is set; it must be set outside a transaction, which is why
+	// it precedes migrateSchema. PRAGMA foreign_keys is per-connection, so it is set
+	// once here for the lifetime of the Store's single connection.
+	if err := sqlitex.ExecuteTransient(conn, `PRAGMA foreign_keys = ON;`, nil); err != nil {
+		_ = conn.Close()
+		return nil, fmt.Errorf("bestiary: OpenStore: enable foreign_keys on %s: %w", path, err)
 	}
 
 	// Ensure schema_meta exists — safe on fresh and existing DBs.
@@ -220,31 +310,47 @@ func migrateSchema(conn *sqlite.Conn, fromVersion int) error {
 		if err := sqlitex.ExecuteTransient(conn, indexSQL, nil); err != nil {
 			return fmt.Errorf("bestiary: migrateSchema: create idx_canonical: %w", err)
 		}
-	} else if fromVersion < 2 {
-		// Existing database with v0/v1 schema needs migration to v2.
-		// SQLite cannot ALTER PRIMARY KEY, so we recreate the table.
-		if err := migrateToV2(conn); err != nil {
-			return fmt.Errorf("bestiary: migrateSchema: v%d→v2: %w", fromVersion, err)
+		// Fresh DBs must ALSO get the v5 BCNF provenance tables here: this branch
+		// skips the migrateToVN arms below, so without this call a fresh database
+		// would record schema_meta=5 with no provenance tables.
+		if err := createProvenanceTables(conn); err != nil {
+			return fmt.Errorf("bestiary: migrateSchema: create provenance tables: %w", err)
 		}
-		// Fall through: v2 DB still needs migration to v3 then v4.
-		if err := migrateToV3(conn); err != nil {
-			return fmt.Errorf("bestiary: migrateSchema: v2→v3: %w", err)
+	} else {
+		if fromVersion < 2 {
+			// Existing database with v0/v1 schema needs migration to v2.
+			// SQLite cannot ALTER PRIMARY KEY, so we recreate the table.
+			if err := migrateToV2(conn); err != nil {
+				return fmt.Errorf("bestiary: migrateSchema: v%d→v2: %w", fromVersion, err)
+			}
+			// Fall through: v2 DB still needs migration to v3 then v4.
+			if err := migrateToV3(conn); err != nil {
+				return fmt.Errorf("bestiary: migrateSchema: v2→v3: %w", err)
+			}
+			if err := migrateToV4(conn); err != nil {
+				return fmt.Errorf("bestiary: migrateSchema: v3→v4: %w", err)
+			}
+		} else if fromVersion < 3 {
+			// v2 database needs migration to v3, then v4.
+			if err := migrateToV3(conn); err != nil {
+				return fmt.Errorf("bestiary: migrateSchema: v2→v3: %w", err)
+			}
+			if err := migrateToV4(conn); err != nil {
+				return fmt.Errorf("bestiary: migrateSchema: v3→v4: %w", err)
+			}
+		} else if fromVersion < 4 {
+			// v3 database needs migration to v4.
+			if err := migrateToV4(conn); err != nil {
+				return fmt.Errorf("bestiary: migrateSchema: v3→v4: %w", err)
+			}
 		}
-		if err := migrateToV4(conn); err != nil {
-			return fmt.Errorf("bestiary: migrateSchema: v3→v4: %w", err)
-		}
-	} else if fromVersion < 3 {
-		// v2 database needs migration to v3, then v4.
-		if err := migrateToV3(conn); err != nil {
-			return fmt.Errorf("bestiary: migrateSchema: v2→v3: %w", err)
-		}
-		if err := migrateToV4(conn); err != nil {
-			return fmt.Errorf("bestiary: migrateSchema: v3→v4: %w", err)
-		}
-	} else if fromVersion < 4 {
-		// v3 database needs migration to v4.
-		if err := migrateToV4(conn); err != nil {
-			return fmt.Errorf("bestiary: migrateSchema: v3→v4: %w", err)
+		// All upgrade arms above converge on the v4 models schema. The v4→v5 step
+		// is purely additive (new BCNF tables, models untouched), so it applies to
+		// every existing database that predates v5.
+		if fromVersion < 5 {
+			if err := migrateToV5(conn); err != nil {
+				return fmt.Errorf("bestiary: migrateSchema: v4→v5: %w", err)
+			}
 		}
 	}
 
@@ -507,6 +613,22 @@ func migrateToV4(conn *sqlite.Conn) error {
 	return nil
 }
 
+// migrateToV5 upgrades an existing v4 database to the v5 schema by adding the
+// four BCNF data-source provenance tables (data_sources, dataset_ingested,
+// entities, entity_source). The migration is purely additive: the models table
+// is untouched and no data is copied or recreated. Because each statement is
+// CREATE TABLE IF NOT EXISTS, re-running is harmless.
+func migrateToV5(conn *sqlite.Conn) error {
+	endFn := sqlitex.Transaction(conn)
+	var err error
+	defer endFn(&err)
+
+	if err = createProvenanceTables(conn); err != nil {
+		return fmt.Errorf("create BCNF provenance tables: %w", err)
+	}
+	return nil
+}
+
 // Close closes the underlying SQLite connection.
 func (s *Store) Close() error {
 	if s.conn == nil {
@@ -584,6 +706,130 @@ func (s *Store) UpsertModels(ctx context.Context, models []ModelInfo) error {
 		})
 		if err != nil {
 			return fmt.Errorf("bestiary: UpsertModels: upsert model %s: %w", m.ID, err)
+		}
+	}
+
+	return nil
+}
+
+// UpsertDataSources inserts or replaces the data-source dimension rows and their
+// current-ingest rows in a single transaction. Rows are written parents-before-
+// children to satisfy the dataset_ingested.data_source_id foreign key: every
+// DataSource is written first, then every DatasetIngested. A DatasetIngested whose
+// SourceID names a DataSource absent from BOTH this call and the existing
+// data_sources table is rejected by the foreign key (when foreign_keys is ON).
+// Insert-or-replace semantics mean re-ingesting a source overwrites its dimension
+// row and its single current-ingest row.
+//
+// ctx is accepted for API compatibility; zombiezen.com/go/sqlite does not support
+// per-operation context cancellation.
+func (s *Store) UpsertDataSources(ctx context.Context, sources []DataSource, ingested []DatasetIngested) error {
+	endFn := sqlitex.Transaction(s.conn)
+
+	var err error
+	defer endFn(&err)
+
+	// Pass 1 (parent dimension): data_sources. The upsert targets the
+	// data_source_id primary key ONLY (ON CONFLICT DO UPDATE), so re-ingesting a
+	// source by id refreshes its uri/canonical_name — but a DIFFERENT id claiming
+	// an already-owned uri violates the UNIQUE(uri) candidate key and is rejected,
+	// rather than silently REPLACE-deleting the incumbent row (which plain
+	// INSERT OR REPLACE would do on the secondary UNIQUE).
+	const sourceSQL = `INSERT INTO data_sources (
+		data_source_id, uri, canonical_name
+	) VALUES (?1, ?2, ?3)
+	ON CONFLICT(data_source_id) DO UPDATE SET
+		uri = excluded.uri,
+		canonical_name = excluded.canonical_name`
+	for i := range sources {
+		ds := &sources[i]
+		err = sqlitex.Execute(s.conn, sourceSQL, &sqlitex.ExecOptions{
+			Args: []any{string(ds.ID), ds.URI, ds.CanonicalName},
+		})
+		if err != nil {
+			return fmt.Errorf("bestiary: UpsertDataSources: upsert data_source %q (uri %q): %w\n"+
+				"  What: writing a data-source dimension row failed\n"+
+				"  Why: a constraint was violated — most likely the UNIQUE(uri) candidate key (another source already owns this uri)\n"+
+				"  Where: store.go UpsertDataSources, data_sources insert\n"+
+				"  How to fix: give each data source a distinct uri, or correct the duplicate id",
+				ds.ID, ds.URI, err)
+		}
+	}
+
+	// Pass 2 (child fact): dataset_ingested references data_sources.data_source_id.
+	const ingestSQL = `INSERT OR REPLACE INTO dataset_ingested (
+		data_source_id, ingested_at, parser_schema
+	) VALUES (?1, ?2, ?3)`
+	for i := range ingested {
+		di := &ingested[i]
+		err = sqlitex.Execute(s.conn, ingestSQL, &sqlitex.ExecOptions{
+			Args: []any{string(di.SourceID), di.IngestedAt, di.ParserSchema},
+		})
+		if err != nil {
+			return fmt.Errorf("bestiary: UpsertDataSources: upsert dataset_ingested for source %q: %w\n"+
+				"  What: writing a current-ingest row failed\n"+
+				"  Why: the foreign key data_source_id has no matching data_sources row in this call or the store\n"+
+				"  Where: store.go UpsertDataSources, dataset_ingested insert\n"+
+				"  How to fix: include the DataSource for %q in the sources argument before its DatasetIngested",
+				di.SourceID, err, di.SourceID)
+		}
+	}
+
+	return nil
+}
+
+// UpsertEntitySources inserts or replaces the entity↔source join rows in a single
+// transaction. Rows are written parents-before-children to satisfy the
+// entity_source.entity_key foreign key: pass 1 ensures a minimal entities
+// dimension row exists for each distinct EntityKey (INSERT OR IGNORE so a richer
+// pre-existing row is never clobbered; the decomposed columns default to ” — the
+// store's entities table is a foreign-key target, not the authoritative entity
+// decomposition, which lives in the generated registry), then pass 2 writes the
+// join rows. The entity_source.data_source_id foreign key is NOT auto-satisfied
+// here: callers must have populated data_sources first via UpsertDataSources, so an
+// EntitySource naming an unknown source is rejected (when foreign_keys is ON).
+//
+// ctx is accepted for API compatibility; zombiezen.com/go/sqlite does not support
+// per-operation context cancellation.
+func (s *Store) UpsertEntitySources(ctx context.Context, sources []EntitySource) error {
+	endFn := sqlitex.Transaction(s.conn)
+
+	var err error
+	defer endFn(&err)
+
+	// Pass 1 (parent dimension): minimal entities rows so the entity_key FK resolves.
+	const entitySQL = `INSERT OR IGNORE INTO entities (entity_key) VALUES (?1)`
+	for i := range sources {
+		es := &sources[i]
+		err = sqlitex.Execute(s.conn, entitySQL, &sqlitex.ExecOptions{
+			Args: []any{es.EntityKey},
+		})
+		if err != nil {
+			return fmt.Errorf("bestiary: UpsertEntitySources: ensure entity %q: %w\n"+
+				"  What: writing the minimal entities dimension row failed\n"+
+				"  Why: the entities insert was rejected unexpectedly\n"+
+				"  Where: store.go UpsertEntitySources, entities insert\n"+
+				"  How to fix: verify the v5 entities table exists (OpenStore migration)",
+				es.EntityKey, err)
+		}
+	}
+
+	// Pass 2 (child join): entity_source references entities and data_sources.
+	const joinSQL = `INSERT OR REPLACE INTO entity_source (
+		entity_key, data_source_id
+	) VALUES (?1, ?2)`
+	for i := range sources {
+		es := &sources[i]
+		err = sqlitex.Execute(s.conn, joinSQL, &sqlitex.ExecOptions{
+			Args: []any{es.EntityKey, string(es.SourceID)},
+		})
+		if err != nil {
+			return fmt.Errorf("bestiary: UpsertEntitySources: upsert attestation (entity %q, source %q): %w\n"+
+				"  What: writing an entity↔source join row failed\n"+
+				"  Why: the data_source_id foreign key has no matching data_sources row\n"+
+				"  Where: store.go UpsertEntitySources, entity_source insert\n"+
+				"  How to fix: call UpsertDataSources with the DataSource for %q before attesting entities to it",
+				es.EntityKey, es.SourceID, err, es.SourceID)
 		}
 	}
 
