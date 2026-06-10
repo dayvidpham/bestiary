@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"os"
 	"slices"
+	"strings"
 	"testing"
 
 	"github.com/dayvidpham/bestiary"
@@ -103,6 +104,19 @@ func TestJSONOutput_ConformsToSchema(t *testing.T) {
 				Kind:   bestiary.DerivationFinetune,
 			},
 		},
+		// v0.2.4 additive fields (schema 0.2.0): exercise the populated
+		// serialization path for ParamSize (string), QuantVRAM ([]QuantVRAM, with
+		// Quant serialized as a Quantization enum string), and Source (DataSourceID).
+		ParamSize: "70b",
+		QuantVRAM: []bestiary.QuantVRAM{
+			{
+				Quant:        bestiary.QuantQ4_K_M,
+				QuantRaw:     "Q4_K_M",
+				WeightsBytes: 42_000_000_000,
+				VRAMBytes:    45_000_000_000,
+			},
+		},
+		Source: bestiary.DataSourceOllama,
 	}
 
 	var buf bytes.Buffer
@@ -724,6 +738,300 @@ func isErrAmbiguous(err error, target **bestiary.ErrAmbiguous) bool {
 		return true
 	}
 	return false
+}
+
+// TestSchemaDefs_V024_DeepConformance mirrors the Step-7 ModelRef / EntityRef /
+// LineageEdge deep checks for the v0.2.4 additive $defs. For each new type it
+// marshals a populated Go value (the actual production type, not a hand-rolled
+// shape) and asserts every property the schema $def declares is present in the
+// marshaled output — locking the schema to the Go contract. It also pins the
+// load-bearing v0.2.4 invariants:
+//   - $defs.EntityRef.ParamSize is a declared property (the #size identity carrier).
+//   - $defs.QuantVRAM.Quant references the Quantization enum and serializes as a
+//     member of that enum's string values.
+//   - $defs.DatasetIngested carries NO "uri" property (BCNF transitive-dep removal).
+func TestSchemaDefs_V024_DeepConformance(t *testing.T) {
+	schemaBytes, err := os.ReadFile("bestiary.schema.json")
+	if err != nil {
+		t.Fatalf("could not read bestiary.schema.json: %v", err)
+	}
+
+	var schemaDefs struct {
+		Defs map[string]struct {
+			Properties map[string]json.RawMessage `json:"properties"`
+			Required   []string                   `json:"required"`
+			Enum       []string                   `json:"enum"`
+		} `json:"$defs"`
+	}
+	if err := json.Unmarshal(schemaBytes, &schemaDefs); err != nil {
+		t.Fatalf("could not unmarshal $defs from bestiary.schema.json: %v", err)
+	}
+
+	// (1) LOCKED: $defs.EntityRef.ParamSize must be a declared property — the
+	// #size identity carrier. A revert of the ParamSize addition must fail here.
+	entityRefDef, ok := schemaDefs.Defs["EntityRef"]
+	if !ok {
+		t.Fatalf("bestiary.schema.json $defs.EntityRef missing")
+	}
+	if _, ok := entityRefDef.Properties["ParamSize"]; !ok {
+		t.Errorf("bestiary.schema.json $defs.EntityRef is missing the \"ParamSize\" property;\n" +
+			"  how to fix: add a \"ParamSize\" property to $defs.EntityRef (added in schema 0.2.0; the #size identity carrier)")
+	}
+
+	// (2) LOCKED: $defs.DatasetIngested must carry NO "uri" property. The URI is a
+	// transitive dependency obtained by FK join to DataSource; a uri reappearing
+	// here would re-introduce the BCNF normalization defect.
+	dsiDef, ok := schemaDefs.Defs["DatasetIngested"]
+	if !ok || len(dsiDef.Properties) == 0 {
+		t.Fatalf("bestiary.schema.json $defs.DatasetIngested missing or has no properties")
+	}
+	for prop := range dsiDef.Properties {
+		if strings.EqualFold(prop, "uri") {
+			t.Errorf("bestiary.schema.json $defs.DatasetIngested declares a %q property; it MUST NOT — the URI is a transitive dependency reached by FK join to DataSource (BCNF). Remove it.", prop)
+		}
+	}
+
+	// (3) $defs.Quantization is a string enum whose values are the canonical
+	// lowercase wire names. Assert it exists, is non-empty, and that a marshaled
+	// Quantization (via QuantVRAM.Quant) is a member of it.
+	quantDef, ok := schemaDefs.Defs["Quantization"]
+	if !ok || len(quantDef.Enum) == 0 {
+		t.Fatalf("bestiary.schema.json $defs.Quantization missing or has no enum")
+	}
+
+	// Per-$def deep check: marshal a populated production value and assert
+	//   (a) the schema $def declares EXACTLY the expected property set
+	//       (catches a dropped or renamed schema property — the mutation guard), and
+	//   (b) every declared property is present in the marshaled production output
+	//       (catches a Go field that drifted away from the schema).
+	type deepCheck struct {
+		defName     string
+		value       any
+		expectProps []string
+	}
+	cost := 2.0
+	checks := []deepCheck{
+		{
+			defName: "QuantVRAM",
+			value: bestiary.QuantVRAM{
+				Quant:               bestiary.QuantQ4_K_M,
+				QuantRaw:            "Q4_K_M",
+				WeightsBytes:        42_000_000_000,
+				VRAMBytes:           45_000_000_000,
+				VRAMContextTokens:   131072,
+				Layers:              80,
+				KVHeads:             8,
+				HeadDim:             128,
+				VRAMEstimatePartial: false,
+			},
+			expectProps: []string{"Quant", "QuantRaw", "WeightsBytes", "VRAMBytes", "VRAMContextTokens", "Layers", "KVHeads", "HeadDim", "VRAMEstimatePartial"},
+		},
+		{
+			defName: "ProviderInstance",
+			value: bestiary.ProviderInstance{
+				ID:                "llama-3.3-70b",
+				Provider:          "ollama",
+				Host:              bestiary.HostNone,
+				CostInputPerMTok:  &cost,
+				CostOutputPerMTok: nil,
+				ContextWindow:     131072,
+				MaxOutput:         8192,
+				QuantVRAM: []bestiary.QuantVRAM{
+					{Quant: bestiary.QuantQ4_K_M, QuantRaw: "Q4_K_M", WeightsBytes: 42_000_000_000},
+				},
+				Source: bestiary.DataSourceOllama,
+			},
+			expectProps: []string{"ID", "Provider", "Host", "CostInputPerMTok", "CostOutputPerMTok", "ContextWindow", "MaxOutput", "QuantVRAM", "Source"},
+		},
+		{
+			defName: "CapabilityUnion",
+			value: bestiary.CapabilityUnion{
+				Reasoning: true, ToolCall: true, OpenWeights: true,
+			},
+			expectProps: []string{"Reasoning", "ToolCall", "Attachment", "Temperature", "StructuredOutput", "Interleaved", "OpenWeights"},
+		},
+		{
+			defName: "EntityRef",
+			value: bestiary.EntityRef{
+				Family: "llama", Version: "3.3", ParamSize: "70b", Modifier: []string{"instruct"},
+			},
+			expectProps: []string{"Family", "Variant", "Version", "ParamSize", "Modifier"},
+		},
+		{
+			defName: "DataSource",
+			value: bestiary.DataSource{
+				ID: bestiary.DataSourceOllama, URI: "https://ollama.com", CanonicalName: "Ollama",
+			},
+			expectProps: []string{"ID", "URI", "CanonicalName"},
+		},
+		{
+			defName: "DatasetIngested",
+			value: bestiary.DatasetIngested{
+				SourceID: bestiary.DataSourceOllama, IngestedAt: "2026-06-01T00:00:00Z", ParserSchema: 1,
+			},
+			expectProps: []string{"SourceID", "IngestedAt", "ParserSchema"},
+		},
+		{
+			defName: "EntitySource",
+			value: bestiary.EntitySource{
+				EntityKey: "llama@3.3#70b{instruct}", SourceID: bestiary.DataSourceOllama,
+			},
+			expectProps: []string{"EntityKey", "SourceID"},
+		},
+		{
+			defName: "Entity",
+			value: bestiary.Entity{
+				Ref:     bestiary.EntityRef{Family: "llama", Version: "3.3", ParamSize: "70b", Modifier: []string{"instruct"}},
+				Sources: []bestiary.DataSourceID{bestiary.DataSourceModelsDev, bestiary.DataSourceOllama},
+			},
+			expectProps: []string{"Ref", "Instances", "Lineage", "Providers", "Hosts", "PriceInputRange", "PriceOutputRange", "ContextRange", "MaxOutputRange", "Capabilities", "Sources"},
+		},
+	}
+
+	for _, c := range checks {
+		def, ok := schemaDefs.Defs[c.defName]
+		if !ok || len(def.Properties) == 0 {
+			t.Errorf("bestiary.schema.json $defs.%s missing or has no properties", c.defName)
+			continue
+		}
+		// (a) the schema $def must declare EXACTLY the expected property set. A
+		// dropped property fails the first arm; an undocumented extra property
+		// fails the second. This is what makes "remove a $def property" a falsifier.
+		for _, want := range c.expectProps {
+			if _, ok := def.Properties[want]; !ok {
+				t.Errorf("bestiary.schema.json $defs.%s is missing the %q property;\n"+
+					"  how to fix: add a %q property to $defs.%s (it is part of the v0.2.4 contract)",
+					c.defName, want, want, c.defName)
+			}
+		}
+		for got := range def.Properties {
+			if !slices.Contains(c.expectProps, got) {
+				t.Errorf("bestiary.schema.json $defs.%s declares an unexpected property %q;\n"+
+					"  how to fix: remove it or add it to the expected set in this test if it is intended",
+					c.defName, got)
+			}
+		}
+		enc, err := json.Marshal(c.value)
+		if err != nil {
+			t.Errorf("json.Marshal(%s) failed: %v", c.defName, err)
+			continue
+		}
+		var out map[string]any
+		if err := json.Unmarshal(enc, &out); err != nil {
+			t.Errorf("could not unmarshal %s JSON: %v", c.defName, err)
+			continue
+		}
+		for prop := range def.Properties {
+			if _, ok := out[prop]; !ok {
+				t.Errorf("%s JSON output is missing schema $defs.%s property %q;\n"+
+					"  how to fix: ensure bestiary.%s has an exported field %q matching the schema $def",
+					c.defName, c.defName, prop, c.defName, prop)
+			}
+		}
+		// Where the marshaled value carries a Quant token, assert it is a member of
+		// the Quantization enum (the $ref wiring is enforced behaviorally here).
+		if c.defName == "QuantVRAM" {
+			if qv, ok := out["Quant"].(string); ok {
+				if !slices.Contains(quantDef.Enum, qv) {
+					t.Errorf("QuantVRAM.Quant=%q is not a member of schema $defs.Quantization.enum %v", qv, quantDef.Enum)
+				}
+			} else {
+				t.Errorf("QuantVRAM.Quant serialized as %T, want a JSON string (Quantization enum)", out["Quant"])
+			}
+		}
+	}
+}
+
+// TestDataSource_JSONSchemaRoundTrip verifies that the BCNF provenance types
+// (DataSource, DatasetIngested-with-no-uri, EntitySource) and the Entity.Sources
+// projection round-trip through JSON and conform to their schema $defs. It marshals
+// each production value, round-trips it back through Unmarshal, asserts field
+// fidelity, and re-asserts the key invariants against the schema document.
+func TestDataSource_JSONSchemaRoundTrip(t *testing.T) {
+	// DataSource round-trip.
+	ds := bestiary.DataSource{
+		ID:            bestiary.DataSourceModelsDev,
+		URI:           "https://models.dev/api.json",
+		CanonicalName: "models.dev",
+	}
+	dsEnc, err := json.Marshal(ds)
+	if err != nil {
+		t.Fatalf("json.Marshal(DataSource) failed: %v", err)
+	}
+	var dsBack bestiary.DataSource
+	if err := json.Unmarshal(dsEnc, &dsBack); err != nil {
+		t.Fatalf("json.Unmarshal(DataSource) failed: %v", err)
+	}
+	if dsBack != ds {
+		t.Errorf("DataSource round-trip mismatch: got %+v, want %+v", dsBack, ds)
+	}
+
+	// DatasetIngested round-trip + NO uri in the serialized form.
+	di := bestiary.DatasetIngested{
+		SourceID:     bestiary.DataSourceOllama,
+		IngestedAt:   "2026-06-01T00:00:00Z",
+		ParserSchema: 1,
+	}
+	diEnc, err := json.Marshal(di)
+	if err != nil {
+		t.Fatalf("json.Marshal(DatasetIngested) failed: %v", err)
+	}
+	var diMap map[string]any
+	if err := json.Unmarshal(diEnc, &diMap); err != nil {
+		t.Fatalf("could not unmarshal DatasetIngested JSON: %v", err)
+	}
+	for k := range diMap {
+		if strings.EqualFold(k, "uri") {
+			t.Errorf("DatasetIngested serialized a %q key; it MUST carry no URI (transitive dep reached via FK join to DataSource)", k)
+		}
+	}
+	var diBack bestiary.DatasetIngested
+	if err := json.Unmarshal(diEnc, &diBack); err != nil {
+		t.Fatalf("json.Unmarshal(DatasetIngested) failed: %v", err)
+	}
+	if diBack != di {
+		t.Errorf("DatasetIngested round-trip mismatch: got %+v, want %+v", diBack, di)
+	}
+
+	// EntitySource round-trip.
+	es := bestiary.EntitySource{
+		EntityKey: "llama@3.3#70b{instruct}",
+		SourceID:  bestiary.DataSourceOllama,
+	}
+	esEnc, err := json.Marshal(es)
+	if err != nil {
+		t.Fatalf("json.Marshal(EntitySource) failed: %v", err)
+	}
+	var esBack bestiary.EntitySource
+	if err := json.Unmarshal(esEnc, &esBack); err != nil {
+		t.Fatalf("json.Unmarshal(EntitySource) failed: %v", err)
+	}
+	if esBack != es {
+		t.Errorf("EntitySource round-trip mismatch: got %+v, want %+v", esBack, es)
+	}
+
+	// Entity.Sources projection: an Entity carrying a sorted []DataSourceID
+	// projection round-trips and the Sources field serializes as a JSON array of
+	// source-id strings.
+	ent := bestiary.Entity{
+		Ref:     bestiary.EntityRef{Family: "llama", Version: "3.3", ParamSize: "70b", Modifier: []string{"instruct"}},
+		Sources: []bestiary.DataSourceID{bestiary.DataSourceModelsDev, bestiary.DataSourceOllama},
+	}
+	entEnc, err := json.Marshal(ent)
+	if err != nil {
+		t.Fatalf("json.Marshal(Entity) failed: %v", err)
+	}
+	var entMap map[string]any
+	if err := json.Unmarshal(entEnc, &entMap); err != nil {
+		t.Fatalf("could not unmarshal Entity JSON: %v", err)
+	}
+	srcArr, ok := entMap["Sources"].([]any)
+	if !ok {
+		t.Fatalf("Entity.Sources serialized as %T, want a JSON array", entMap["Sources"])
+	}
+	if len(srcArr) != 2 || srcArr[0] != "models.dev" || srcArr[1] != "ollama" {
+		t.Errorf("Entity.Sources = %v, want [models.dev ollama] (sorted projection)", srcArr)
+	}
 }
 
 // TestJSONOutput_NegativeConformance verifies that a synthesized JSON object
