@@ -6,7 +6,9 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"path/filepath"
 	"reflect"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -18,26 +20,28 @@ import (
 // Canned fixtures (NO network)
 // --------------------------------------------------------------------------
 
-// cannedCatalog is a small, hand-built stand-in for bestiary.StaticModels(). The
-// join code accepts a catalog slice precisely so tests inject this instead of
-// touching the real (generated) catalog or the network.
+// cannedCatalog is a small, hand-built stand-in for bestiary.StaticModels() for
+// the unit-level join tests. The load-bearing join correctness check runs against
+// the REAL compiled-in catalog (TestRealCatalog_AllowlistDisposition); these
+// fixtures isolate individual behaviors.
 func cannedCatalog() []bestiary.ModelInfo {
 	return []bestiary.ModelInfo{
-		// Plain-join target: size + identity modifier both present.
 		{ID: "llama-3.3-70b-instruct", Family: "llama", Version: "3.3", ParamSize: "70b", Modifier: []string{"instruct"}},
-		// Alias-rescue target: ParamSize uncurated (recovered from ID), carries the
-		// instruct modifier that Ollama's bare "llama3.1:8b" tag omits.
 		{ID: "meta-llama/Meta-Llama-3.1-8B-Instruct", Family: "llama", Version: "3.1", Modifier: []string{"instruct"}},
-		// Base for the lineage-linked finetune case.
 		{ID: "mixtral-8x7b-instruct", Family: "mixtral", ParamSize: "8x7b", Modifier: []string{"instruct"}},
 	}
 }
 
+// emptyCurated is the no-prior-curation set (first-ever run).
+var emptyCurated = map[string]bool{}
+
+// emptyExisting is the no-prior-file document.
+var emptyExisting = quantFileOut{SchemaVersion: quantVRAMSchemaVersion}
+
 // --------------------------------------------------------------------------
-// Polite-bot seam: User-Agent + >=1s rate limit (URD R9)
+// Polite-bot seam: User-Agent + >=1s rate limit
 // --------------------------------------------------------------------------
 
-// recordingDoer captures the requests it receives and returns a canned 200 body.
 type recordingDoer struct {
 	reqs []*http.Request
 	body string
@@ -52,9 +56,6 @@ func (d *recordingDoer) Do(req *http.Request) (*http.Response, error) {
 	}, nil
 }
 
-// fakeClock is a controllable monotonic clock + sleeper. sleep advances the clock
-// and records each slept duration, so the rate-limit gap is observable without
-// real time.
 type fakeClock struct {
 	t     time.Time
 	slept []time.Duration
@@ -88,7 +89,7 @@ func TestPoliteClient_SetsUserAgent(t *testing.T) {
 		t.Fatalf("want 1 request, got %d", len(rd.reqs))
 	}
 	if got := rd.reqs[0].Header.Get("User-Agent"); got != userAgent {
-		t.Fatalf("User-Agent = %q, want %q (politeness: a descriptive UA is mandatory)", got, userAgent)
+		t.Fatalf("User-Agent = %q, want %q (a descriptive UA is mandatory)", got, userAgent)
 	}
 	if got := rd.reqs[0].Header.Get("Accept"); got != manifestAccept {
 		t.Fatalf("Accept = %q, want %q", got, manifestAccept)
@@ -98,14 +99,12 @@ func TestPoliteClient_SetsUserAgent(t *testing.T) {
 func TestPoliteClient_SleepsBetweenRequests(t *testing.T) {
 	c, _, fc := newTestClient(`{}`)
 	ctx := context.Background()
-	// First request: no sleep (nothing precedes it).
 	if _, err := c.get(ctx, "https://x/1", ""); err != nil {
 		t.Fatalf("get 1: %v", err)
 	}
 	if len(fc.slept) != 0 {
 		t.Fatalf("first request must not sleep, slept=%v", fc.slept)
 	}
-	// Second request immediately after: must sleep the full minInterval.
 	if _, err := c.get(ctx, "https://x/2", ""); err != nil {
 		t.Fatalf("get 2: %v", err)
 	}
@@ -113,12 +112,12 @@ func TestPoliteClient_SleepsBetweenRequests(t *testing.T) {
 		t.Fatalf("second request must sleep exactly once, slept=%v", fc.slept)
 	}
 	if fc.slept[0] < minRequestInterval {
-		t.Fatalf("rate-limit sleep = %v, want >= %v (URD R9)", fc.slept[0], minRequestInterval)
+		t.Fatalf("rate-limit sleep = %v, want >= %v (>= 1 second between requests)", fc.slept[0], minRequestInterval)
 	}
 }
 
 // --------------------------------------------------------------------------
-// Manifest + config-blob parsing (canned JSON from the research report)
+// Manifest + config-blob parsing (canned JSON captured from registry responses)
 // --------------------------------------------------------------------------
 
 const cannedManifest = `{
@@ -159,11 +158,36 @@ func TestParseConfigBlob(t *testing.T) {
 }
 
 // --------------------------------------------------------------------------
-// THE JOIN
+// normalizeOllamaName — family/version split, single-letter series guard
+// --------------------------------------------------------------------------
+
+// Pins both the positive splits AND the single-letter guard. Relaxing
+// reAlphaNumSplit from {2,} to + must split "deepseek-r1" into "deepseek-r-1"
+// and fail this table.
+func TestNormalizeOllamaName(t *testing.T) {
+	cases := []struct{ in, want string }{
+		{"llama3.3", "llama-3.3"},
+		{"qwen2.5", "qwen-2.5"},
+		{"gemma2", "gemma-2"},
+		{"phi4", "phi-4"},
+		{"deepseek-r1", "deepseek-r1"}, // single-letter series token stays glued
+		{"kimi-k2", "kimi-k2"},         // single-letter series token stays glued
+		{"mistral-nemo", "mistral-nemo"},
+		{"llama3.2-vision", "llama-3.2-vision"},
+	}
+	for _, tc := range cases {
+		if got := normalizeOllamaName(tc.in); got != tc.want {
+			t.Errorf("normalizeOllamaName(%q) = %q, want %q", tc.in, got, tc.want)
+		}
+	}
+}
+
+// --------------------------------------------------------------------------
+// THE JOIN — fixture-level behaviors
 // --------------------------------------------------------------------------
 
 func TestJoin_PlainDecompositionJoins(t *testing.T) {
-	r := joinOllama("llama3.3:70b-instruct", cannedCatalog(), nil, nil)
+	r := joinOllama("llama3.3:70b-instruct", cannedCatalog(), nil, nil, emptyCurated)
 	if !r.Joined {
 		t.Fatalf("expected join, got decomp key %q (no catalog match)", r.Decomp.joinKey())
 	}
@@ -175,13 +199,13 @@ func TestJoin_PlainDecompositionJoins(t *testing.T) {
 	}
 }
 
-// VC6: a community finetune that does NOT join is KEPT (never dropped); with no
+// A community finetune that does NOT join is KEPT (never dropped); with no
 // determinable base it becomes a standalone entry AND lands in the unlinked list.
 func TestOllamaCommunity_FinetuneKept(t *testing.T) {
 	tags := []fetchedTag{
 		{OllamaID: "wizardlm-uncensored:13b-q4_K_M", WeightsBytes: 7865000000},
 	}
-	out, unlinked := buildOutput(tags, cannedCatalog(), nil, nil)
+	out, unlinked := buildOutput(tags, cannedCatalog(), nil, nil, emptyCurated, emptyExisting)
 
 	var kept *quantModelOut
 	for i := range out.Models {
@@ -205,15 +229,15 @@ func TestOllamaCommunity_FinetuneKept(t *testing.T) {
 		}
 	}
 	if !found {
-		t.Fatalf("base-unknown community model %q must appear in ollama_unlinked.json list %v", kept.ModelID, unlinked)
+		t.Fatalf("base-unknown community model %q must appear in the unlinked list %v", kept.ModelID, unlinked)
 	}
 }
 
-// VC-R11b: a finetune whose base IS determinable (curated base table) is KEPT and
-// carries an inferred base_ref — and is NOT unlinked.
+// A finetune whose base IS determinable (curated base table) is KEPT and carries
+// an inferred base_ref — and is NOT unlinked.
 func TestOllamaCommunity_LineageLinked(t *testing.T) {
 	bases := map[string]string{"dolphin-mixtral": "mixtral-8x7b-instruct"}
-	r := joinOllama("dolphin-mixtral:8x7b", cannedCatalog(), nil, bases)
+	r := joinOllama("dolphin-mixtral:8x7b", cannedCatalog(), nil, bases, emptyCurated)
 	if r.Joined {
 		t.Fatalf("a community finetune must not join a catalog entity directly")
 	}
@@ -228,7 +252,7 @@ func TestOllamaCommunity_LineageLinked(t *testing.T) {
 // Base inference falls back to decomposition: stripping the leading author token
 // exposes a base that exists in the catalog.
 func TestInferBase_DecompositionFallback(t *testing.T) {
-	r := joinOllama("myauthor-llama3.3:70b-instruct", cannedCatalog(), nil, nil)
+	r := joinOllama("myauthor-llama3.3:70b-instruct", cannedCatalog(), nil, nil, emptyCurated)
 	if r.Joined {
 		t.Fatalf("the prefixed finetune should not join directly")
 	}
@@ -237,27 +261,155 @@ func TestInferBase_DecompositionFallback(t *testing.T) {
 	}
 }
 
-// Alias rescue: Ollama's bare "llama3.1:8b" omits the instruct modifier
-// models.dev carries, so the mechanical decomposition does NOT match — the alias
-// re-adds instruct and the join succeeds. Also pins the mutation: WITHOUT the
-// alias there is no join.
-func TestJoin_AliasRescue(t *testing.T) {
-	// Mutation guard: no alias -> no join.
-	bare := joinOllama("llama3.1:8b", cannedCatalog(), nil, nil)
-	if bare.Joined {
-		t.Fatalf("without an alias, llama3.1:8b must NOT join (missing instruct modifier)")
+// Alias OVERRIDES the mechanical match — even when the mechanical bare key DOES
+// match a (wrong) catalog row. Here the bare key llama@3.1#8b matches the
+// non-instruct "cerebras/..." row, so the instruct fallback never fires; only an
+// alias with precedence can redirect to the instruct entity. The mutation guard:
+// inverting precedence (mechanical-first) lands on the wrong cerebras row.
+func TestJoin_AliasOverride(t *testing.T) {
+	catalog := []bestiary.ModelInfo{
+		// Bare key llama@3.1#8b (no instruct) — a non-instruct provider variant.
+		{ID: "cerebras/llama-3.1-8b-cs", Family: "llama", Version: "3.1", ParamSize: "8b"},
+		// The instruct entity the Ollama default tag actually serves.
+		{ID: "llama-3.1-8b-instruct", Family: "llama", Version: "3.1", ParamSize: "8b", Modifier: []string{"instruct"}},
 	}
 
+	// Without an alias, the bare mechanical key wins — the WRONG (non-instruct) row.
+	bare := joinOllama("llama3.1:8b", catalog, nil, nil, emptyCurated)
+	if !bare.Joined || bare.ModelsDevID != "cerebras/llama-3.1-8b-cs" {
+		t.Fatalf("bare mechanical join = (%v, %q), want join to cerebras/llama-3.1-8b-cs", bare.Joined, bare.ModelsDevID)
+	}
+
+	// With the alias (precedence over mechanical), the join is redirected.
 	aliases := map[string]ollamaAlias{
 		"llama3.1:8b": {Family: "llama", Version: "3.1", ParamSize: "8b", Modifier: []string{"instruct"}},
 	}
-	r := joinOllama("llama3.1:8b", cannedCatalog(), aliases, nil)
+	r := joinOllama("llama3.1:8b", catalog, aliases, nil, emptyCurated)
 	if !r.Joined {
-		t.Fatalf("alias rescue failed: llama3.1:8b should join via alias")
+		t.Fatalf("alias override failed: llama3.1:8b should join via alias")
 	}
-	if r.ModelsDevID != "meta-llama/Meta-Llama-3.1-8B-Instruct" {
-		t.Fatalf("ModelsDevID = %q, want meta-llama/Meta-Llama-3.1-8B-Instruct", r.ModelsDevID)
+	if r.ModelsDevID != "llama-3.1-8b-instruct" {
+		t.Fatalf("ModelsDevID = %q, want llama-3.1-8b-instruct (alias overrides the bare match)", r.ModelsDevID)
 	}
+}
+
+// --------------------------------------------------------------------------
+// REAL-CATALOG join (load-bearing): bestiary.StaticModels() is compiled in — no
+// network. This is the test that catches mis-keying against the actual catalog;
+// it pins the disposition of EVERY default-allowlist head and dies under both the
+// alias-precedence-inversion mutant and the matchCatalog lexicographic mutant.
+// --------------------------------------------------------------------------
+
+func TestRealCatalog_AllowlistDisposition(t *testing.T) {
+	catalog := bestiary.StaticModels()
+	aliases, err := loadAliasesFromDir("../../parse/data")
+	if err != nil {
+		t.Fatalf("load aliases: %v", err)
+	}
+	_, curated, err := loadExistingQuantVRAM("../../parse/data/quant_vram.json")
+	if err != nil {
+		t.Fatalf("load curated: %v", err)
+	}
+
+	type want struct {
+		joined   bool
+		modelsID string // when joined
+	}
+	cases := map[string]want{
+		// Alias OVERRIDE pins the instruct entity (bare key would mis-match).
+		"llama3.3:70b": {joined: true, modelsID: "llama-3.3-70b-instruct"},
+		"llama3.1:8b":  {joined: true, modelsID: "llama-3.1-8b-instruct"},
+		// Default-tag instruct FALLBACK (bare key misses, instruct hits).
+		"qwen2.5:7b": {joined: true, modelsID: "qwen/qwen2.5-7b-instruct"},
+		// Bare mechanical match to the canonical open-weights entity.
+		"mistral:7b": {joined: true, modelsID: "open-mistral-7b"},
+		// No joinable catalog entity at these sizes -> correctly KEPT (community).
+		"gemma2:9b":   {joined: false},
+		"phi3.5:3.8b": {joined: false},
+	}
+
+	for head, w := range cases {
+		r := joinOllama(head, catalog, aliases, communityBaseRefs, curated)
+		if r.Joined != w.joined {
+			t.Errorf("%s: Joined = %v, want %v (key=%q, modelsID=%q)", head, r.Joined, w.joined, r.Decomp.joinKey(), r.ModelsDevID)
+			continue
+		}
+		if w.joined && string(r.ModelsDevID) != w.modelsID {
+			t.Errorf("%s: ModelsDevID = %q, want %q", head, r.ModelsDevID, w.modelsID)
+		}
+		if !w.joined && r.Joined {
+			t.Errorf("%s: expected community (kept), got join to %q", head, r.ModelsDevID)
+		}
+	}
+}
+
+// --------------------------------------------------------------------------
+// MERGE-ON-REFRESH: a refresh preserves curated arch facts + context_window +
+// base_ref + _comment while refreshing fetch-owned weights. The wholesale-rewrite
+// mutant (ignore existing) loses the arch facts and fails here.
+// --------------------------------------------------------------------------
+
+func TestBuildOutput_MergePreservesCuration(t *testing.T) {
+	curated := map[string]bool{"llama-3.3-70b-instruct": true}
+	existing := quantFileOut{
+		SchemaVersion: quantVRAMSchemaVersion,
+		Models: []quantModelOut{
+			{
+				Comment:       "curated note",
+				ModelID:       "llama-3.3-70b-instruct",
+				ParamSize:     "70b",
+				Source:        "ollama",
+				ContextWindow: 131072,
+				Rows: []quantRowOut{
+					{Quant: "q4_k_m", WeightsBytes: 43033509888, Layers: 80, KVHeads: 8, HeadDim: 128},
+				},
+			},
+			// A curated entry NOT re-fetched this run must survive untouched.
+			{ModelID: "llama-3.2-3b-instruct", ParamSize: "3b", Source: "ollama", Rows: []quantRowOut{{Quant: "q4_k_m", WeightsBytes: 2019139072}}},
+		},
+	}
+	// Fresh fetch: same model:quant, NEW weights, NO arch facts.
+	tags := []fetchedTag{{OllamaID: "llama3.3:70b-instruct-q4_K_M", WeightsBytes: 99999999999}}
+
+	out, _ := buildOutput(tags, bestiary.StaticModels(), nil, nil, curated, existing)
+
+	var e *quantModelOut
+	for i := range out.Models {
+		if out.Models[i].ModelID == "llama-3.3-70b-instruct" {
+			e = &out.Models[i]
+		}
+	}
+	if e == nil {
+		t.Fatalf("refreshed entry missing; models=%v", modelIDs(out))
+	}
+	if len(e.Rows) != 1 {
+		t.Fatalf("rows = %+v, want 1", e.Rows)
+	}
+	row := e.Rows[0]
+	if row.WeightsBytes != 99999999999 {
+		t.Errorf("weights_bytes = %d, want refreshed 99999999999", row.WeightsBytes)
+	}
+	if row.Layers != 80 || row.KVHeads != 8 || row.HeadDim != 128 {
+		t.Errorf("curated arch facts LOST: layers=%d kv=%d hd=%d, want 80/8/128", row.Layers, row.KVHeads, row.HeadDim)
+	}
+	if e.ContextWindow != 131072 {
+		t.Errorf("context_window = %d, want curated 131072 preserved", e.ContextWindow)
+	}
+	if e.Comment != "curated note" {
+		t.Errorf("_comment = %q, want curated note preserved", e.Comment)
+	}
+	// The un-refetched curated entry must still be present.
+	if !slices.Contains(modelIDs(out), "llama-3.2-3b-instruct") {
+		t.Errorf("un-refetched curated entry llama-3.2-3b-instruct was dropped; got %v", modelIDs(out))
+	}
+}
+
+func modelIDs(f quantFileOut) []string {
+	out := make([]string, 0, len(f.Models))
+	for _, m := range f.Models {
+		out = append(out, m.ModelID)
+	}
+	return out
 }
 
 // --------------------------------------------------------------------------
@@ -270,14 +422,13 @@ func TestBuildOutput_Deterministic(t *testing.T) {
 		{OllamaID: "llama3.3:70b-instruct-q4_K_M", WeightsBytes: 43033509888},
 		{OllamaID: "wizardlm-uncensored:13b-q4_K_M", WeightsBytes: 7865000000},
 	}
-	// Same tags, different order.
 	b := []fetchedTag{
 		{OllamaID: "wizardlm-uncensored:13b-q4_K_M", WeightsBytes: 7865000000},
 		{OllamaID: "llama3.3:70b-instruct-q4_K_M", WeightsBytes: 43033509888},
 		{OllamaID: "llama3.3:70b-instruct-q8_0", WeightsBytes: 75176521728},
 	}
-	out1, ul1 := buildOutput(a, cannedCatalog(), nil, nil)
-	out2, ul2 := buildOutput(b, cannedCatalog(), nil, nil)
+	out1, ul1 := buildOutput(a, cannedCatalog(), nil, nil, emptyCurated, emptyExisting)
+	out2, ul2 := buildOutput(b, cannedCatalog(), nil, nil, emptyCurated, emptyExisting)
 
 	j1, _ := marshalJSON(out1)
 	j2, _ := marshalJSON(out2)
@@ -288,7 +439,6 @@ func TestBuildOutput_Deterministic(t *testing.T) {
 		t.Fatalf("unlinked list not deterministic: %v vs %v", ul1, ul2)
 	}
 
-	// Within the joined llama entry, the two quant rows must be sorted by quant.
 	var llama *quantModelOut
 	for i := range out1.Models {
 		if out1.Models[i].ModelID == "llama-3.3-70b-instruct" {
@@ -300,6 +450,40 @@ func TestBuildOutput_Deterministic(t *testing.T) {
 	}
 	if len(llama.Rows) != 2 || llama.Rows[0].Quant != "q4_k_m" || llama.Rows[1].Quant != "q8_0" {
 		t.Fatalf("rows not sorted by quant: %+v", llama.Rows)
+	}
+}
+
+// --------------------------------------------------------------------------
+// writeFileAtomic — content correctness + no leftover temp file
+// --------------------------------------------------------------------------
+
+func TestWriteFileAtomic(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "out.json")
+	if err := writeFileAtomic(path, []byte("hello\n")); err != nil {
+		t.Fatalf("write: %v", err)
+	}
+	got, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatalf("read back: %v", err)
+	}
+	if string(got) != "hello\n" {
+		t.Fatalf("content = %q, want %q", got, "hello\n")
+	}
+	// Overwrite an existing file (rename-over).
+	if err := writeFileAtomic(path, []byte("world\n")); err != nil {
+		t.Fatalf("overwrite: %v", err)
+	}
+	got, _ = os.ReadFile(path)
+	if string(got) != "world\n" {
+		t.Fatalf("overwrite content = %q, want world", got)
+	}
+	// No temp residue left behind.
+	entries, _ := os.ReadDir(dir)
+	for _, e := range entries {
+		if strings.HasPrefix(e.Name(), ".bestiary-ollama-") {
+			t.Fatalf("temp file left behind: %s", e.Name())
+		}
 	}
 }
 
@@ -359,9 +543,6 @@ func TestStampOllamaIngestedAt_MissingRow(t *testing.T) {
 // Committed-file shape compatibility
 // --------------------------------------------------------------------------
 
-// The tool's output structs must model the committed quant_vram.json exactly, so
-// codegen's loader round-trips the tool's writes. Parsing the committed file with
-// the tool's own structs proves the shapes agree.
 func TestQuantVRAMShape_ParsesCommittedFile(t *testing.T) {
 	raw, err := os.ReadFile("../../parse/data/quant_vram.json")
 	if err != nil {
@@ -388,8 +569,10 @@ func TestAliasSeed_Parses(t *testing.T) {
 	if err != nil {
 		t.Fatalf("parse seed: %v", err)
 	}
-	if _, ok := aliases["llama3.1:8b"]; !ok {
-		t.Fatalf("seed must carry the llama3.1:8b rescue entry, got keys %v", keysOf(aliases))
+	for _, k := range []string{"llama3.1:8b", "llama3.3:70b"} {
+		if _, ok := aliases[k]; !ok {
+			t.Fatalf("seed must carry the %q override entry, got keys %v", k, keysOf(aliases))
+		}
 	}
 }
 

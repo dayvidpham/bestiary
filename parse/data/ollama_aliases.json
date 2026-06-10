@@ -1,5 +1,5 @@
 {
-  "_comment": "Curated Ollama-ID -> entity-tuple rescue table for the offline Ollama refresh tool (cmd/bestiary-ollama). It is consulted ONLY when the mechanical join (DetectQuantization -> name/tag decomposition via the production parse pipeline -> EntityRef key match against the models.dev catalog) fails to find a catalog model. Each alias maps an Ollama ID (the quant-STRIPPED form is matched first, then the verbatim form) onto the canonical (family, variant, version, param_size, modifier) tuple so the tool can rebuild the EntityRef join key and re-match the catalog. KEYING: keys are lowercased Ollama IDs; param_size is a canonical token (ParseParamSize shape, e.g. '70b'); modifier is the IDENTITY-class modifier list (EntityModifiers projection). This file is hand-curated seed data; the tool never rewrites it. SEED RATIONALE: Ollama's default size tags (e.g. 'llama3.1:8b') are the instruction-tuned weights but OMIT the '-instruct' modifier that models.dev carries on 'meta-llama/Meta-Llama-3.1-8B-Instruct', so the mechanical decomposition produces 'llama@3.1#8b' while the catalog entity is 'llama@3.1#8b{instruct}' — a genuine residual the alias rescues by re-adding the instruct modifier.",
+  "_comment": "Curated Ollama-ID -> entity-tuple OVERRIDE table for the offline Ollama refresh tool (cmd/bestiary-ollama). It is consulted FIRST and takes PRECEDENCE over the mechanical join (curated > mechanical, matching the parse/ curated-overrides precedent), because the cases it covers are wrong-POSITIVES, not misses: an Ollama default size tag (e.g. 'llama3.3:70b', 'llama3.1:8b') serves the instruction-tuned weights but the tag string omits the '-instruct' modifier, so the bare mechanical decomposition produces an EntityRef key (llama@3.3#70b / llama@3.1#8b) that DOES match the catalog — but the wrong rows: the bare llama@3.3#70b key collapses 34 community-merge variants (e.g. Llama-3.3-70B-Anthrobomination), and llama@3.1#8b matches non-instruct provider variants (e.g. cerebras/llama-3.1-8b-cs). Each alias re-adds the instruct modifier so the join lands on the instruct entity (llama-3.3-70b-instruct / llama-3.1-8b-instruct). KEYING: keys are lowercased Ollama IDs; the quant-stripped form is matched first, then the verbatim form, so one entry covers every quant variant. param_size is a canonical token (ParseParamSize shape, e.g. '70b'); modifier is the IDENTITY-class modifier list (EntityModifiers projection). This file is hand-curated seed data; the tool never rewrites it. (Bare size-only tags whose mechanical key MISSES the catalog entirely, e.g. qwen2.5:7b, do not need an alias — the tool's default-tag instruct fallback reaches the instruct entity for them.)",
   "schema_version": 1,
   "aliases": {
     "llama3.1:8b": {
@@ -7,6 +7,13 @@
       "variant": "",
       "version": "3.1",
       "param_size": "8b",
+      "modifier": ["instruct"]
+    },
+    "llama3.3:70b": {
+      "family": "llama",
+      "variant": "",
+      "version": "3.3",
+      "param_size": "70b",
       "modifier": ["instruct"]
     }
   }

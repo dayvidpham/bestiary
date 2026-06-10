@@ -10,25 +10,31 @@
 // What it does when a human runs it:
 //  1. For each model in a curated, deterministically-ordered allowlist, fetch
 //     the Ollama registry-v2 Docker-Distribution manifests + config blobs
-//     (registry.ollama.ai/v2) and the ollama.com/library/<model>/tags HTML page
-//     (the registry's /tags/list endpoint returns 404 — see the research report).
-//     Every request goes through a POLITE-BOT seam: a descriptive User-Agent and
-//     at least one second between requests (URD R9, user-stated hard constraint).
-//  2. JOIN each Ollama tag onto a models.dev catalog ID (the epoch's named hard
-//     problem): DetectQuantization strips the quant tag, the remainder is
-//     decomposed through the production parse pipeline (ParseFamilyDetailed /
+//     (registry.ollama.ai/v2) and the ollama.com/library/<model>/tags HTML page.
+//     The registry's /v2/<model>/tags/list endpoint returns 404 (verified
+//     2026-06), so the tag set is enumerated from the HTML page. Every request
+//     goes through a polite-bot seam: a descriptive User-Agent and at least one
+//     second between requests (a project hard constraint, GH#12).
+//  2. JOIN each Ollama tag onto a models.dev catalog ID. This is the hard problem
+//     of this dataset: Ollama IDs and models.dev IDs do not match 1:1. A curated
+//     alias (ollama_aliases.json) is consulted FIRST and OVERRIDES the mechanical
+//     decomposition (curated > mechanical, matching the parse/ curated-overrides
+//     precedent); otherwise DetectQuantization strips the quant tag, the remainder
+//     is decomposed through the production parse pipeline (ParseFamilyDetailed /
 //     ParseParamSize / EntityModifiers) into an EntityRef key, and that key is
-//     matched against bestiary.StaticModels(). ollama_aliases.json rescues
-//     residuals the mechanical decomposition cannot match.
+//     matched against bestiary.StaticModels(). For a bare size-only Ollama tag
+//     (Ollama's default tags are instruction-tuned but omit the modifier) the join
+//     retries with an "instruct" modifier when the bare key misses.
 //  3. Community models that do not join are KEPT, never dropped: their base is
-//     INFERRED (Ollama exposes no base_model marker) via decomposition + a curated
+//     inferred (Ollama exposes no base_model marker) via decomposition + a curated
 //     base table; a base-known finetune carries a base_ref, a base-unknown one
-//     becomes a standalone entry AND is appended to a sorted ollama_unlinked.json
-//     for visibility.
-//  4. The joined + kept entries are written to parse/data/quant_vram.json (sorted,
-//     replace-on-refresh, models.dev-keyed) and the ollama row of
-//     parse/data/datasources.json gets its ingested_at stamped ONCE per run
-//     (committed-snapshot design — codegen never stamps a wall-clock).
+//     becomes a standalone entry AND is appended to a sorted ollama_unlinked.json.
+//  4. The result is MERGED into parse/data/quant_vram.json: fetch-owned fields
+//     (weights_bytes, the quant set, param_size from tags) refresh, while
+//     curation-owned fields (architecture facts, context_window, base_ref,
+//     provenance _comments) are preserved from the existing file. The ollama row
+//     of parse/data/datasources.json gets its ingested_at stamped once per run
+//     (a committed snapshot — codegen never stamps a wall-clock).
 package main
 
 import (
@@ -48,7 +54,7 @@ import (
 )
 
 // --------------------------------------------------------------------------
-// Polite-bot constants (URD R9 — user-stated, verbatim)
+// Polite-bot constants (a user-stated hard constraint, GH#12)
 // --------------------------------------------------------------------------
 
 const (
@@ -58,14 +64,14 @@ const (
 	userAgent = "bestiary-ollama/0.2.4 (+https://github.com/dayvidpham/bestiary; polite ingest bot)"
 
 	// minRequestInterval is the minimum wall-clock gap the tool enforces between
-	// two outbound requests. URD R9 mandates ">=1 second between requests".
+	// two outbound requests: at least one second, a user-stated hard constraint.
 	// TestPoliteClient_SleepsBetweenRequests pins it.
 	minRequestInterval = 1 * time.Second
 
 	// registryBase is the anonymous Docker-Distribution-v2 registry host.
 	registryBase = "https://registry.ollama.ai"
 	// libraryBase is the HTML site used for tag enumeration (the registry's
-	// /v2/.../tags/list returns 404; see the research report).
+	// /v2/.../tags/list returns 404).
 	libraryBase = "https://ollama.com"
 
 	// manifestAccept is the media type requested for a v2 manifest.
@@ -80,10 +86,21 @@ const (
 )
 
 // defaultAllowlist is the curated, deterministically-ordered set of Ollama
-// library models the tool refreshes. It is the allowlist's home (the contract
-// permits a tool-local list or a small config; this is the tool-local choice so
-// the refresh set is reviewable in code). Kept sorted; run() iterates it in
-// order so the fetch sequence is stable.
+// library models the tool refreshes. It is the allowlist's home (a tool-local
+// list so the refresh set is reviewable in code). Kept sorted; run() iterates it
+// in order so the fetch sequence is stable.
+//
+// Join disposition of each head against the current models.dev catalog (the
+// catalog is compiled in; see TestRealCatalog_AllowlistDisposition):
+//   - llama3.1, llama3.3: bare size tags collide with non-instruct / community
+//     catalog rows, so an alias pins them to the instruct entity (see
+//     ollama_aliases.json).
+//   - qwen2.5: bare key misses; the instruct fallback reaches the catalog entity.
+//   - mistral: bare key reaches the canonical open-weights entity.
+//   - gemma2, phi3.5: models.dev carries no joinable catalog entity for these
+//     sizes, so they are correctly KEPT as standalone community entries (and
+//     listed in ollama_unlinked.json). They are retained in the allowlist so the
+//     tool records their footprint rather than silently ignoring them.
 var defaultAllowlist = []string{
 	"gemma2",
 	"llama3.1",
@@ -107,8 +124,8 @@ type doer interface {
 // politeClient is the SINGLE outbound-request seam. Every fetch funnels through
 // get(), which (a) enforces minRequestInterval since the previous request via an
 // injectable clock+sleeper, and (b) sets the descriptive User-Agent. Routing all
-// traffic through one seam is what makes the URD-R9 politeness guarantee
-// structurally enforceable (and unit-testable without real time or sockets).
+// traffic through one seam is what makes the politeness guarantee structurally
+// enforceable (and unit-testable without real time or sockets).
 type politeClient struct {
 	doer        doer
 	ua          string
@@ -266,7 +283,7 @@ func (m ollamaManifest) weightsBytes() int64 {
 // letters) to a numeric/dotted-numeric version, e.g. "llama3.3", "qwen2.5",
 // "gemma2", "phi4". The >=2-letter guard deliberately EXCLUDES single-letter
 // series tokens like "r1"/"k2"/"v3" (deepseek-r1, kimi-k2) which models.dev also
-// keeps glued, so they must not be split.
+// keeps glued, so they must not be split. TestNormalizeOllamaName pins both.
 var reAlphaNumSplit = regexp.MustCompile(`^([a-z]{2,})(\d+(?:\.\d+)?)$`)
 
 // ollamaDecomposition is the normalized join key derived from an Ollama ID.
@@ -291,6 +308,14 @@ func (d ollamaDecomposition) joinKey() string {
 		ParamSize: d.ParamSize,
 		Modifier:  bestiary.EntityModifiers(d.Modifiers, d.Family),
 	}.String()
+}
+
+// withInstruct returns a copy of the decomposition with an "instruct" identity
+// modifier added — the default-tag interpretation for a bare Ollama size tag.
+func (d ollamaDecomposition) withInstruct() ollamaDecomposition {
+	out := d
+	out.Modifiers = append(append([]string(nil), d.Modifiers...), "instruct")
+	return out
 }
 
 // normalizeOllamaName converts an Ollama colon-name (the part before ':', which
@@ -327,10 +352,10 @@ func paramSizeFromID(id string) string {
 }
 
 // decomposeOllamaID turns a full Ollama ID (e.g. "llama3.3:70b-instruct-q4_K_M")
-// into its normalized join decomposition. The pipeline is exactly the contract's:
-// DetectQuantization strips the quant tag, the colon-name is normalized + the tag
-// re-glued into a models.dev-style ID, ParseFamilyDetailed decomposes
-// family/variant/version/modifiers, and ParseParamSize lifts the size token.
+// into its normalized join decomposition: DetectQuantization strips the quant
+// tag, the colon-name is normalized + the tag re-glued into a models.dev-style
+// ID, ParseFamilyDetailed decomposes family/variant/version/modifiers, and
+// ParseParamSize lifts the size token.
 func decomposeOllamaID(ollamaID string) ollamaDecomposition {
 	quant, quantRaw, stripped := bestiary.DetectQuantization(bestiary.ModelID(ollamaID))
 	s := string(stripped)
@@ -405,23 +430,69 @@ func catalogJoinKey(m bestiary.ModelInfo) string {
 	}.String()
 }
 
-// matchCatalog returns the models.dev catalog ID whose entity key equals key.
-// When several catalog rows share the key (the same ID under several providers,
-// or genuinely distinct IDs collapsing to one entity), the lexicographically
-// smallest ID is chosen so the join is deterministic.
-func matchCatalog(key string, catalog []bestiary.ModelInfo) (bestiary.ModelID, bool) {
+// matchCatalog returns the preferred models.dev catalog ID whose entity key
+// equals key. Several catalog rows commonly share a key (the same model under
+// many providers, plus community variants that decompose to the same identity);
+// the representative is chosen by a deterministic PREFERENCE ORDER, not by
+// lexicographic-smallest (which lands on uppercase community-merge junk —
+// "Llama-3.3-70B-Anthrobomination" sorts before "llama-3.3-70b-instruct"):
+//
+//	rank 1: ID already keyed in the curated quant_vram.json (the refresh target)
+//	rank 2: ID with no provider-namespace prefix (no '/')
+//	rank 3: ID that is entirely lowercase (canonical models.dev form, not a
+//	        CamelCase upstream/HF repo name)
+//	rank 4: shorter ID (prefers the plain entity over "-maas"/"-fp8" suffixes)
+//	rank 5: lexicographic (final total-order tiebreak)
+//
+// Canonical-provider preference was considered but is unreliable here: the Llama
+// family's canonical provider is "local" (no catalog rows), and other families'
+// canonical-provider rows are often the CamelCase HF-repo IDs rank 3 demotes.
+func matchCatalog(key string, catalog []bestiary.ModelInfo, curated map[string]bool) (bestiary.ModelID, bool) {
 	var best bestiary.ModelID
 	found := false
 	for i := range catalog {
-		if catalogJoinKey(catalog[i]) == key {
-			id := catalog[i].ID
-			if !found || id < best {
-				best = id
-				found = true
-			}
+		if catalogJoinKey(catalog[i]) != key {
+			continue
+		}
+		id := catalog[i].ID
+		if !found || preferCatalogID(id, best, curated) {
+			best = id
+			found = true
 		}
 	}
 	return best, found
+}
+
+// preferCatalogID reports whether candidate a is a better representative than the
+// incumbent b under the matchCatalog preference order.
+func preferCatalogID(a, b bestiary.ModelID, curated map[string]bool) bool {
+	ra, rb := catalogIDRank(a, curated), catalogIDRank(b, curated)
+	for i := range ra {
+		if ra[i] != rb[i] {
+			return ra[i] < rb[i]
+		}
+	}
+	// All rank components equal (incl. length): break the final tie lexicographically.
+	return a < b
+}
+
+// catalogIDRank is the comparable rank vector for an ID (lower is better): not
+// curated, has namespace slash, not all-lowercase, then length.
+func catalogIDRank(id bestiary.ModelID, curated map[string]bool) [4]int {
+	s := string(id)
+	notCurated := 1
+	if curated[strings.ToLower(s)] {
+		notCurated = 0
+	}
+	hasSlash := 0
+	if strings.Contains(s, "/") {
+		hasSlash = 1
+	}
+	notLower := 0
+	if s != strings.ToLower(s) {
+		notLower = 1
+	}
+	return [4]int{notCurated, hasSlash, notLower, len(s)}
 }
 
 // joinResult is the outcome of joining one Ollama identity (a (name, size,
@@ -436,27 +507,29 @@ type joinResult struct {
 }
 
 // joinOllama joins a single quant-stripped Ollama identity onto the catalog.
-// Order: mechanical decomposition -> catalog match; on miss, alias rescue ->
-// catalog match; on miss, KEEP as a community model and INFER its base.
+// Precedence (curated > mechanical):
+//  1. a curated alias OVERRIDES the mechanical decomposition (an alias is needed
+//     precisely where the mechanical key matches the WRONG catalog row, e.g. a
+//     bare default-instruct tag colliding with a community-merge or non-instruct
+//     row, so it cannot be a mere miss-rescue);
+//  2. the mechanical decomposition's natural key;
+//  3. for a bare size-only tag with no identity modifiers, a retry with the
+//     "instruct" modifier (Ollama's default size tags are instruction-tuned);
+//  4. otherwise KEEP as a community model and infer its base.
 func joinOllama(
 	ollamaIDStripped string,
 	catalog []bestiary.ModelInfo,
 	aliases map[string]ollamaAlias,
 	bases map[string]string,
+	curated map[string]bool,
 ) joinResult {
 	decomp := decomposeOllamaID(ollamaIDStripped)
 	res := joinResult{OllamaID: ollamaIDStripped, Decomp: decomp}
 
-	if id, ok := matchCatalog(decomp.joinKey(), catalog); ok {
-		res.Joined = true
-		res.ModelsDevID = id
-		return res
-	}
-
-	// Alias rescue (residuals the mechanical decomposition cannot match).
+	// 1. Curated alias OVERRIDE.
 	if alias, ok := lookupAlias(ollamaIDStripped, aliases); ok {
 		ad := alias.decomposition(decomp.Quant, decomp.QuantRaw)
-		if id, ok := matchCatalog(ad.joinKey(), catalog); ok {
+		if id, ok := matchCatalog(ad.joinKey(), catalog, curated); ok {
 			res.Decomp = ad
 			res.Joined = true
 			res.ModelsDevID = id
@@ -464,8 +537,26 @@ func joinOllama(
 		}
 	}
 
-	// Community model: KEPT, never dropped. INFER the base.
-	if base := inferBase(ollamaIDStripped, decomp, catalog, bases); base != "" {
+	// 2. Mechanical natural key.
+	if id, ok := matchCatalog(decomp.joinKey(), catalog, curated); ok {
+		res.Joined = true
+		res.ModelsDevID = id
+		return res
+	}
+
+	// 3. Default-tag instruct fallback (bare size-only tag).
+	if decomp.ParamSize != "" && len(bestiary.EntityModifiers(decomp.Modifiers, decomp.Family)) == 0 {
+		instr := decomp.withInstruct()
+		if id, ok := matchCatalog(instr.joinKey(), catalog, curated); ok {
+			res.Decomp = instr
+			res.Joined = true
+			res.ModelsDevID = id
+			return res
+		}
+	}
+
+	// 4. Community model: KEPT, never dropped. Infer the base.
+	if base := inferBase(ollamaIDStripped, decomp, catalog, bases, curated); base != "" {
 		res.BaseRef = base
 	} else {
 		res.Unlinked = true
@@ -498,6 +589,7 @@ func inferBase(
 	decomp ollamaDecomposition,
 	catalog []bestiary.ModelInfo,
 	bases map[string]string,
+	curated map[string]bool,
 ) string {
 	name, _, _ := strings.Cut(strings.ToLower(ollamaIDStripped), ":")
 	if bases != nil {
@@ -520,12 +612,11 @@ func inferBase(
 			probe = trimmedName + "-" + decomp.ParamSize
 		}
 		bd := decomposeOllamaID(probe)
-		// Preserve the finetune's identity modifiers (instruct, etc.) on the probe.
 		bd.Modifiers = decomp.Modifiers
 		if decomp.ParamSize != "" {
 			bd.ParamSize = decomp.ParamSize
 		}
-		if id, ok := matchCatalog(bd.joinKey(), catalog); ok {
+		if id, ok := matchCatalog(bd.joinKey(), catalog, curated); ok {
 			return string(id)
 		}
 	}
@@ -533,19 +624,16 @@ func inferBase(
 }
 
 // --------------------------------------------------------------------------
-// Output assembly (deterministic, sorted, models.dev-keyed)
+// Output assembly (deterministic, sorted, models.dev-keyed, merge-on-refresh)
 // --------------------------------------------------------------------------
 
-// fetchedTag is one (model, tag) the fetch step resolved to a quant + weight
-// footprint. Multiple tags of the same identity (differing only by quant) group
-// into one output entry with several rows.
+// fetchedTag is one (model, tag) the fetch step resolved. The fetch supplies ONLY
+// the OllamaID and the GGUF weights footprint — the Ollama config blob carries no
+// architecture facts (layers/kv_heads/head_dim) or context window, so those are
+// CURATION-owned and merged in from the existing file, never sourced here.
 type fetchedTag struct {
-	OllamaID      string // full tag ID, incl. quant (e.g. "llama3.3:70b-instruct-q4_K_M")
-	WeightsBytes  int64
-	ContextWindow int
-	Layers        int
-	KVHeads       int
-	HeadDim       int
+	OllamaID     string // full tag ID, incl. quant (e.g. "llama3.3:70b-instruct-q4_K_M")
+	WeightsBytes int64
 }
 
 // quantRowOut mirrors parse/data/quant_vram.json rows[].
@@ -575,82 +663,132 @@ type quantFileOut struct {
 	Models        []quantModelOut `json:"models"`
 }
 
-const quantFileComment = "Generated by cmd/bestiary-ollama (offline refresh). model_id is the models.dev catalog ID for joined models, or an 'ollama/<id>' namespace form for community models with no models.dev presence. weights_bytes is the GGUF model-layer size from the Ollama registry; VRAMBytes/VRAMContextTokens are computed and baked by codegen. source is always 'ollama'; base_ref names an inferred finetune base when determinable. Sorted by model_id (rows sorted by quant) — replace-on-refresh, deterministic."
+const quantFileComment = "Per-model per-quant weights and architecture facts for VRAM estimation. FIELD OWNERSHIP: the offline Ollama tool (cmd/bestiary-ollama) owns weights_bytes, the quant set, param_size, and source — it refreshes these from the Ollama registry on each run. Curation owns layers/kv_heads/head_dim (absent from the Ollama registry), context_window, base_ref, and the per-entry _comment — the tool PRESERVES these across a refresh (merge-on-refresh), never clobbering them. model_id is the models.dev catalog ID for joined models, or an 'ollama/<id>' namespace form for community models with no models.dev presence. VRAMBytes/VRAMContextTokens are computed and baked by codegen. Sorted by model_id (rows by quant) — deterministic."
 
 // quantVRAMSchemaVersion is the quant_vram.json schema the tool writes; it must
 // match a version the bestiary loader (knownQuantVRAMSchemaVersions) accepts.
 const quantVRAMSchemaVersion = 1
 
-// buildOutput runs the full join + group + assembly over fetched tags. It is the
+// buildOutput runs the full join + group + merge over fetched tags. It is the
 // pure core shared by production and tests: deterministic regardless of input
-// order. Returns the quant_vram.json document and the sorted unlinked-ID list.
+// order. fetch-owned fields refresh from tags; curation-owned fields are
+// preserved from existing (the current quant_vram.json). curated is the set of
+// existing model_id keys (lowercased), used as the strongest catalog-preference
+// signal. Returns the merged document and the sorted unlinked-ID list.
 func buildOutput(
 	tags []fetchedTag,
 	catalog []bestiary.ModelInfo,
 	aliases map[string]ollamaAlias,
 	bases map[string]string,
+	curated map[string]bool,
+	existing quantFileOut,
 ) (quantFileOut, []string) {
-	// Group tags by their quant-stripped identity key so all quants of one model
+	// Index existing entries (and their per-quant arch facts) for merge lookups.
+	existingByID := map[string]quantModelOut{}
+	for _, m := range existing.Models {
+		existingByID[strings.ToLower(m.ModelID)] = m
+	}
+
+	// Group fetched tags by quant-stripped identity so all quants of one model
 	// collapse into a single entry with multiple rows.
 	type group struct {
 		strippedID string
 		join       joinResult
 		rows       []quantRowOut
-		ctx        int
 	}
 	groups := map[string]*group{}
+	var groupOrder []string
 
 	for _, ft := range tags {
 		_, quantRaw, stripped := bestiary.DetectQuantization(bestiary.ModelID(ft.OllamaID))
 		strippedID := string(stripped)
 		g := groups[strippedID]
 		if g == nil {
-			g = &group{strippedID: strippedID, join: joinOllama(strippedID, catalog, aliases, bases)}
+			g = &group{strippedID: strippedID, join: joinOllama(strippedID, catalog, aliases, bases, curated)}
 			groups[strippedID] = g
-		}
-		if ft.ContextWindow > g.ctx {
-			g.ctx = ft.ContextWindow
+			groupOrder = append(groupOrder, strippedID)
 		}
 		g.rows = append(g.rows, quantRowOut{
 			Quant:        strings.ToLower(quantRaw),
 			WeightsBytes: ft.WeightsBytes,
-			Layers:       ft.Layers,
-			KVHeads:      ft.KVHeads,
-			HeadDim:      ft.HeadDim,
 		})
 	}
 
-	out := quantFileOut{
-		Comment:       quantFileComment,
-		SchemaVersion: quantVRAMSchemaVersion,
-	}
-	var unlinked []string
-
-	for _, g := range groups {
+	// Start the output from a copy of every existing entry so curation that was
+	// not re-fetched this run is never dropped.
+	out := quantFileOut{Comment: quantFileComment, SchemaVersion: quantVRAMSchemaVersion}
+	refreshed := map[string]bool{}
+	for _, sid := range groupOrder {
+		g := groups[sid]
 		modelID := outputModelID(g.join, g.strippedID)
+		prev, hasPrev := existingByID[strings.ToLower(modelID)]
+		refreshed[strings.ToLower(modelID)] = true
+		out.Models = append(out.Models, mergeEntry(modelID, g.join, g.rows, prev, hasPrev))
+	}
+	for _, m := range existing.Models {
+		if !refreshed[strings.ToLower(m.ModelID)] {
+			out.Models = append(out.Models, m)
+		}
+	}
 
-		rows := append([]quantRowOut(nil), g.rows...)
-		sort.Slice(rows, func(i, j int) bool { return rows[i].Quant < rows[j].Quant })
-
-		out.Models = append(out.Models, quantModelOut{
-			ModelID:       modelID,
-			ParamSize:     g.join.Decomp.ParamSize,
-			Source:        string(bestiary.DataSourceOllama),
-			BaseRef:       g.join.BaseRef,
-			ContextWindow: g.ctx,
-			Rows:          rows,
-		})
-
-		if g.join.Unlinked {
-			unlinked = append(unlinked, modelID)
+	var unlinked []string
+	for _, sid := range groupOrder {
+		if groups[sid].join.Unlinked {
+			unlinked = append(unlinked, outputModelID(groups[sid].join, sid))
 		}
 	}
 
 	// EXPLICIT sort (not first-seen / map order) — the determinism invariant.
 	sort.Slice(out.Models, func(i, j int) bool { return out.Models[i].ModelID < out.Models[j].ModelID })
 	sort.Strings(unlinked)
-
 	return out, unlinked
+}
+
+// mergeEntry assembles one output entry: fetch-owned fields from the fresh rows,
+// curation-owned fields (arch facts per quant, context_window, base_ref, comment)
+// preserved from the previous entry when present.
+func mergeEntry(modelID string, j joinResult, freshRows []quantRowOut, prev quantModelOut, hasPrev bool) quantModelOut {
+	prevArch := map[string]quantRowOut{}
+	if hasPrev {
+		for _, r := range prev.Rows {
+			prevArch[strings.ToLower(r.Quant)] = r
+		}
+	}
+
+	rows := make([]quantRowOut, 0, len(freshRows))
+	for _, r := range freshRows {
+		if pr, ok := prevArch[strings.ToLower(r.Quant)]; ok {
+			// Curation owns the arch facts; refresh only the fetch-owned weights.
+			r.Layers, r.KVHeads, r.HeadDim = pr.Layers, pr.KVHeads, pr.HeadDim
+		}
+		rows = append(rows, r)
+	}
+	sort.Slice(rows, func(i, k int) bool { return rows[i].Quant < rows[k].Quant })
+
+	paramSize := j.Decomp.ParamSize
+	if paramSize == "" && hasPrev {
+		paramSize = prev.ParamSize
+	}
+	baseRef := j.BaseRef
+	contextWindow := 0
+	comment := ""
+	if hasPrev {
+		if prev.BaseRef != "" {
+			baseRef = prev.BaseRef // curation wins for an explicitly curated base
+		}
+		contextWindow = prev.ContextWindow
+		comment = prev.Comment
+	}
+
+	return quantModelOut{
+		Comment:       comment,
+		ModelID:       modelID,
+		ParamSize:     paramSize,
+		Source:        string(bestiary.DataSourceOllama),
+		BaseRef:       baseRef,
+		ContextWindow: contextWindow,
+		Rows:          rows,
+	}
 }
 
 // outputModelID is the models.dev catalog ID for a joined identity, else an
@@ -738,12 +876,35 @@ func marshalJSON(v any) ([]byte, error) {
 	return append(b, '\n'), nil
 }
 
+// writeFileAtomic writes data to path atomically: it writes to a temp file in the
+// SAME directory (so os.Rename is a same-filesystem atomic swap) and renames it
+// over path. A crash mid-write leaves either the old file or the new one, never a
+// truncated file. The temp file is removed on any error before the rename.
 func writeFileAtomic(path string, data []byte) error {
-	if err := os.WriteFile(path, data, 0o644); err != nil {
+	dir := filepath.Dir(path)
+	tmp, err := os.CreateTemp(dir, ".bestiary-ollama-*.tmp")
+	if err != nil {
 		return fmt.Errorf(
-			"bestiary-ollama: write %q failed: %w\n"+
+			"bestiary-ollama: create temp file in %q failed: %w\n"+
 				"  Where: writeFileAtomic\n"+
-				"  How to fix: verify the directory exists and is writable", path, err)
+				"  How to fix: verify the directory exists and is writable", dir, err)
+	}
+	tmpName := tmp.Name()
+	if _, err := tmp.Write(data); err != nil {
+		tmp.Close()
+		os.Remove(tmpName)
+		return fmt.Errorf("bestiary-ollama: write temp file %q failed: %w", tmpName, err)
+	}
+	if err := tmp.Close(); err != nil {
+		os.Remove(tmpName)
+		return fmt.Errorf("bestiary-ollama: close temp file %q failed: %w", tmpName, err)
+	}
+	if err := os.Rename(tmpName, path); err != nil {
+		os.Remove(tmpName)
+		return fmt.Errorf(
+			"bestiary-ollama: rename %q -> %q failed: %w\n"+
+				"  Where: writeFileAtomic\n"+
+				"  How to fix: ensure the temp and target are on the same filesystem", tmpName, path, err)
 	}
 	return nil
 }
@@ -799,11 +960,10 @@ func fetchTag(ctx context.Context, c *politeClient, lib, tag string) (fetchedTag
 				"  Where: fetchTag\n"+
 				"  How to fix: confirm the manifest carries a %q layer", full, modelLayerMediaType)
 	}
-	// Fetch + parse the config blob for its authoritative file_type (quant) and
-	// model_type (param size). Arch facts (layers/heads) are NOT in the blob, so
-	// VRAM stays weights-only (partial) until curated. When the blob's file_type
-	// names a quant the tag string omits, append it so DetectQuantization (which
-	// groups rows downstream) sees the authoritative quant.
+	// The config blob's file_type is the authoritative quant; when the tag string
+	// omits it, append it so DetectQuantization (which groups rows downstream)
+	// sees the real quant. Architecture facts are NOT in the blob, so VRAM stays
+	// weights-only until curation supplies them (merge-on-refresh preserves them).
 	if man.Config.Digest != "" {
 		blobRaw, err := c.get(ctx, registryBase+"/v2/library/"+lib+"/blobs/"+man.Config.Digest, "")
 		if err != nil {
@@ -827,7 +987,6 @@ func fetchTag(ctx context.Context, c *politeClient, lib, tag string) (fetchedTag
 func run(args []string) error {
 	dataDir := "parse/data"
 	snapshot := time.Now().UTC().Format(time.RFC3339)
-	// Minimal flag handling (stdlib-only; this is a maintainer tool).
 	for i := 0; i < len(args); i++ {
 		switch args[i] {
 		case "--data-dir":
@@ -856,6 +1015,10 @@ func run(args []string) error {
 	if err != nil {
 		return err
 	}
+	existing, curated, err := loadExistingQuantVRAM(filepath.Join(dataDir, "quant_vram.json"))
+	if err != nil {
+		return err
+	}
 
 	var tags []fetchedTag
 	for _, lib := range defaultAllowlist {
@@ -876,7 +1039,7 @@ func run(args []string) error {
 	}
 
 	catalog := bestiary.StaticModels()
-	out, unlinked := buildOutput(tags, catalog, aliases, communityBaseRefs)
+	out, unlinked := buildOutput(tags, catalog, aliases, communityBaseRefs, curated, existing)
 
 	quantBytes, err := marshalJSON(out)
 	if err != nil {
@@ -919,7 +1082,9 @@ func run(args []string) error {
 
 // communityBaseRefs is the curated base-inference table for community finetunes
 // (Ollama publishes no base_model marker). It maps a lowercased Ollama ID (or
-// bare library name) to the inferred base reference written as base_ref.
+// bare library name) to the inferred base reference written as base_ref. It is
+// empty today (no shipped community finetune needs a curated override beyond the
+// decomposition fallback) but is the documented seam for future curation.
 var communityBaseRefs = map[string]string{}
 
 // loadAliasesFromDir reads ollama_aliases.json from dir; a missing file degrades
@@ -949,6 +1114,31 @@ func parseAliases(raw []byte) (map[string]ollamaAlias, error) {
 		out[strings.ToLower(k)] = v
 	}
 	return out, nil
+}
+
+// loadExistingQuantVRAM reads the current quant_vram.json for merge-on-refresh. A
+// missing file degrades to an empty document (first-ever run). It returns the
+// parsed document and the set of lowercased model_id keys (the catalog-preference
+// signal).
+func loadExistingQuantVRAM(path string) (quantFileOut, map[string]bool, error) {
+	raw, err := os.ReadFile(path)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return quantFileOut{SchemaVersion: quantVRAMSchemaVersion}, map[string]bool{}, nil
+		}
+		return quantFileOut{}, nil, fmt.Errorf("bestiary-ollama: read %q: %w", path, err)
+	}
+	var f quantFileOut
+	if err := json.Unmarshal(raw, &f); err != nil {
+		return quantFileOut{}, nil, fmt.Errorf(
+			"bestiary-ollama: parse %q failed: %w\n"+
+				"  How to fix: validate the quant_vram.json syntax before refreshing", path, err)
+	}
+	curated := make(map[string]bool, len(f.Models))
+	for _, m := range f.Models {
+		curated[strings.ToLower(m.ModelID)] = true
+	}
+	return f, curated, nil
 }
 
 func main() {
