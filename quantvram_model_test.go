@@ -160,16 +160,34 @@ func TestModelInfo_QuantVRAM_JSONRoundTrip(t *testing.T) {
 }
 
 // TestCloneEntity_SourcesRegistryPath verifies that Entities() returns entities
-// with nil Sources for all current static data (Sources is populated by a later
-// layer). This pins the nil-means-absent convention through the live registry path.
+// with a populated, sorted, clone-isolated Sources projection. Every entity in the
+// static registry originates from the models.dev pipeline, so its projection
+// contains at least DataSourceModelsDev (the registry attestation rule); the
+// returned slice is an independent copy that callers may mutate without corrupting
+// the registry.
 func TestCloneEntity_SourcesRegistryPath(t *testing.T) {
 	entities := bestiary.Entities()
 	if len(entities) == 0 {
 		t.Fatal("static registry is empty; cannot test clone isolation")
 	}
 	for _, e := range entities {
-		if e.Sources != nil {
-			t.Errorf("entity %q: Sources = %v, want nil in current static data", e.Ref.String(), e.Sources)
+		if len(e.Sources) == 0 {
+			t.Errorf("entity %q: Sources is empty, want at least the models.dev origin", e.Ref.String())
+			continue
+		}
+		var hasModelsDev bool
+		for _, s := range e.Sources {
+			if s == bestiary.DataSourceModelsDev {
+				hasModelsDev = true
+			}
+		}
+		if !hasModelsDev {
+			t.Errorf("entity %q: Sources = %v, want it to include models.dev", e.Ref.String(), e.Sources)
+		}
+		// Mutating the returned projection must not corrupt the registry (clone seam).
+		e.Sources[0] = "mutated-by-test"
+		if got := bestiary.Entities(); got[0].Sources[0] == "mutated-by-test" {
+			t.Fatal("Entities() Sources slice is not clone-isolated: a caller mutation leaked into the registry")
 		}
 	}
 }

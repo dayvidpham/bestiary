@@ -1,6 +1,9 @@
 package bestiary
 
-import "sync"
+import (
+	"sort"
+	"sync"
+)
 
 // staticModels is declared and populated in the generated models_static_gen.go.
 // It is referenced here by the registry query functions below.
@@ -19,6 +22,31 @@ var (
 	entityKeys      []string
 )
 
+// entitySourceRelation is the in-memory BCNF join relation between entities and the
+// data sources that attest them, built once alongside entityIndex (same sync.Once)
+// from the static registry's per-row Source carrier.
+//
+//   - rows is the full set of EntitySource join rows, sorted by (EntityKey, then
+//     SourceID) via an EXPLICIT sort.Slice. This pinned order is what makes the
+//     generated EntitySource emission and any relation iteration byte-deterministic;
+//     it deliberately does NOT reuse the providers/hosts first-seen aggregate order,
+//     which has no sort of its own.
+//   - byEntity is the sorted, de-duplicated DataSourceID projection per entity key
+//     (the read view materialized into Entity.Sources and returned by EntitySources).
+type entitySourceRelation struct {
+	rows     []EntitySource
+	byEntity map[string][]DataSourceID
+}
+
+// loadEntitySourceRelation returns the memoized entity↔source relation, building the
+// entity index (and the relation alongside it) on first use.
+func loadEntitySourceRelation() *entitySourceRelation {
+	entityIndexOnce.Do(loadEntityIndex)
+	return entitySourceRel
+}
+
+var entitySourceRel *entitySourceRelation
+
 // entityAgg accumulates the per-entity aggregate state while scanning the
 // registry. Price min/max are tracked as plain float64 + a found flag so the
 // stored range pointers never alias a ModelInfo's cost pointer (T9 nil-cost
@@ -34,6 +62,14 @@ type entityAgg struct {
 
 	lineage []LineageEdge
 	linSeen map[string]struct{}
+
+	// sources accumulates the de-duplicated DataSourceIDs that attest this entity,
+	// in first-seen order. It is the raw projection; the SORTED, deterministic
+	// output is produced by an explicit sort.Slice in loadEntityIndex (NOT first-seen
+	// order — the providers/hosts aggregate is first-seen and must NOT be mirrored
+	// here; see attestation rule below).
+	sources []DataSourceID
+	srcSeen map[DataSourceID]struct{}
 
 	caps CapabilityUnion
 
@@ -78,6 +114,7 @@ func loadEntityIndex() {
 				provSeen: make(map[Provider]struct{}),
 				hostSeen: make(map[Host]struct{}),
 				linSeen:  make(map[string]struct{}),
+				srcSeen:  make(map[DataSourceID]struct{}),
 			}
 			aggs[key] = a
 			order = append(order, key)
@@ -100,6 +137,31 @@ func loadEntityIndex() {
 		if _, dup := a.hostSeen[m.Host]; !dup {
 			a.hostSeen[m.Host] = struct{}{}
 			a.hosts = append(a.hosts, m.Host)
+		}
+
+		// Attestation rule (BCNF entity↔source join). Every static row originates
+		// from the models.dev pipeline, so each row attests DataSourceModelsDev —
+		// including rows whose Source carrier is empty (DataSourceNone), which means
+		// "the models.dev origin is implicit". A row whose Source names a further,
+		// distinct source (e.g. an ollama-enriched row carries Source=ollama) is a
+		// models.dev row ENRICHED with that source's data, so it DUAL-attests: it
+		// contributes BOTH DataSourceModelsDev and that source. Net effect:
+		//   - a pure models.dev row (Source=="")      → {models.dev}
+		//   - an ollama-enriched row (Source=="ollama") → {models.dev, ollama}
+		// so a multi-source entity (e.g. the curated llama-3.3-70b) carries
+		// [models.dev, ollama]. The per-source set is de-duplicated here in
+		// first-seen order; the deterministic output order is imposed by an explicit
+		// sort.Slice when the projection and relation are materialized below.
+		attest := func(src DataSourceID) {
+			if _, dup := a.srcSeen[src]; dup {
+				return
+			}
+			a.srcSeen[src] = struct{}{}
+			a.sources = append(a.sources, src)
+		}
+		attest(DataSourceModelsDev)
+		if m.Source != DataSourceNone && m.Source != DataSourceModelsDev {
+			attest(m.Source)
 		}
 
 		for _, e := range m.Lineage {
@@ -174,8 +236,18 @@ func loadEntityIndex() {
 
 	entityIndex = make(map[string]Entity, len(order))
 	entityKeys = order
+	rel := &entitySourceRelation{byEntity: make(map[string][]DataSourceID, len(order))}
 	for _, key := range order {
 		a := aggs[key]
+
+		// Materialize the SORTED, de-duplicated source projection for this entity.
+		// The aggregate collected sources in first-seen order; sortedSources imposes
+		// the ascending-DataSourceID order that pins Entity.Sources / EntitySources
+		// output deterministically — first-seen order would NOT be stable, unlike
+		// providers/hosts which inherit determinism from the pre-sorted staticModels.
+		sources := sortedSources(a.sources)
+		rel.byEntity[key] = sources
+
 		ent := Entity{
 			Ref:            a.ref,
 			Instances:      a.instances,
@@ -185,6 +257,7 @@ func loadEntityIndex() {
 			ContextRange:   [2]int{a.ctxMin, a.ctxMax},
 			MaxOutputRange: [2]int{a.moMin, a.moMax},
 			Capabilities:   a.caps,
+			Sources:        sources,
 		}
 		if a.piFound {
 			lo, hi := a.piMin, a.piMax
@@ -196,6 +269,37 @@ func loadEntityIndex() {
 		}
 		entityIndex[key] = ent
 	}
+
+	// Build the flat join relation from the per-entity projection, then impose the
+	// EXPLICIT (EntityKey, SourceID) total order via sort.Slice so relation
+	// iteration — and the generated EntitySource emission that consumes it — is
+	// byte-deterministic regardless of map/first-seen order.
+	for _, key := range order {
+		for _, src := range rel.byEntity[key] {
+			rel.rows = append(rel.rows, EntitySource{EntityKey: key, SourceID: src})
+		}
+	}
+	sort.Slice(rel.rows, func(i, j int) bool {
+		if rel.rows[i].EntityKey != rel.rows[j].EntityKey {
+			return rel.rows[i].EntityKey < rel.rows[j].EntityKey
+		}
+		return rel.rows[i].SourceID < rel.rows[j].SourceID
+	})
+	entitySourceRel = rel
+}
+
+// sortedSources returns a fresh slice holding the elements of in in ascending
+// DataSourceID order. It is the testable projection-sort seam: the registry feeds
+// it the first-seen attestation order, and the explicit sort is what makes the
+// Entity.Sources / EntitySources output deterministic regardless of the order in
+// which a source first attested an entity. An empty input returns nil.
+func sortedSources(in []DataSourceID) []DataSourceID {
+	if len(in) == 0 {
+		return nil
+	}
+	out := append([]DataSourceID(nil), in...)
+	sort.Slice(out, func(i, j int) bool { return out[i] < out[j] })
+	return out
 }
 
 // entityIndexLookup returns the cached entity for the given EntityRef key and
