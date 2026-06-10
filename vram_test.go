@@ -112,6 +112,44 @@ func TestEstimateVRAMBytes_ExactValues(t *testing.T) {
 			headDim:       0,
 			wantTotal:     0,
 		},
+		// Negative-value inputs: treated as absent (<=0), KV must be zero.
+		// These distinguish the <=0 guard from a ==0 guard mutant.
+		{
+			name:          "negative layers",
+			weightsBytes:  5_000_000_000,
+			contextTokens: 131072,
+			layers:        -1,
+			kvHeads:       8,
+			headDim:       128,
+			wantTotal:     5_000_000_000,
+		},
+		{
+			name:          "negative kvHeads",
+			weightsBytes:  5_000_000_000,
+			contextTokens: 131072,
+			layers:        80,
+			kvHeads:       -1,
+			headDim:       128,
+			wantTotal:     5_000_000_000,
+		},
+		{
+			name:          "negative headDim",
+			weightsBytes:  5_000_000_000,
+			contextTokens: 131072,
+			layers:        80,
+			kvHeads:       8,
+			headDim:       -1,
+			wantTotal:     5_000_000_000,
+		},
+		{
+			name:          "negative contextTokens",
+			weightsBytes:  5_000_000_000,
+			contextTokens: -1,
+			layers:        80,
+			kvHeads:       8,
+			headDim:       128,
+			wantTotal:     5_000_000_000,
+		},
 	}
 
 	for _, tt := range tests {
@@ -229,6 +267,11 @@ func TestVRAMEstimateIsPartial_TruthTable(t *testing.T) {
 		{name: "layers+kvHeads absent", layers: 0, kvHeads: 0, headDim: 128, want: true},
 		{name: "layers+headDim absent", layers: 0, kvHeads: 8, headDim: 0, want: true},
 		{name: "kvHeads+headDim absent", layers: 80, kvHeads: 0, headDim: 0, want: true},
+		// Negative values: treated as absent (<=0), so partial.
+		// These distinguish the <=0 guard from a ==0 guard mutant.
+		{name: "negative layers", layers: -1, kvHeads: 8, headDim: 128, want: true},
+		{name: "negative kvHeads", layers: 80, kvHeads: -1, headDim: 128, want: true},
+		{name: "negative headDim", layers: 80, kvHeads: 8, headDim: -1, want: true},
 	}
 
 	for _, tt := range tests {

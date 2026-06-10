@@ -27,9 +27,11 @@ const VRAMFormulaVersion = 2
 // bits-per-weight arithmetic.
 //
 // KV = 0 (weights-only lower bound) when ANY of layers, kvHeads, headDim, or
-// contextTokens is <= 0, so that absent arch-facts never produce a silent
-// under-estimate. Callers that set KV to zero must also set
-// VRAMEstimatePartial = true on the QuantVRAM row; see VRAMEstimateIsPartial.
+// contextTokens is <= 0. When baking a QuantVRAM row, the caller sets
+// VRAMEstimatePartial = VRAMEstimateIsPartial(layers, kvHeads, headDim).
+// Note: a zero-context bake yields KV=0 WITHOUT partial — partial is reserved
+// for structurally absent arch-facts; the caller chooses its bake context
+// independently. See VRAMEstimateIsPartial for the exact predicate.
 //
 // Integer arithmetic is int64 throughout. The maximum realistic KV cache
 // (e.g. 200 layers × 128 heads × 256 dim × 2 M context × 2 bytes ≈ 52 TB)
