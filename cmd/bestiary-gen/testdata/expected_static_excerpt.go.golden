@@ -28,6 +28,8 @@ var staticModels = []ModelInfo{
 		Modalities:            Modalities{},
 		Host:                  "",
 		Lineage:               nil,
+		Source:                "",
+		QuantVRAM:             nil,
 		LastSynced:            "",
 	},
 	{
@@ -59,6 +61,8 @@ var staticModels = []ModelInfo{
 		Modalities:            Modalities{},
 		Host:                  "",
 		Lineage:               nil,
+		Source:                "",
+		QuantVRAM:             nil,
 		LastSynced:            "",
 	},
 	{
@@ -90,6 +94,8 @@ var staticModels = []ModelInfo{
 		Modalities:            Modalities{},
 		Host:                  "",
 		Lineage:               nil,
+		Source:                "",
+		QuantVRAM:             nil,
 		LastSynced:            "",
 	},
 	{
@@ -121,6 +127,8 @@ var staticModels = []ModelInfo{
 		Modalities:            Modalities{},
 		Host:                  "",
 		Lineage:               nil,
+		Source:                "",
+		QuantVRAM:             nil,
 		LastSynced:            "",
 	},
 	{
@@ -152,6 +160,8 @@ var staticModels = []ModelInfo{
 		Modalities:            Modalities{},
 		Host:                  "",
 		Lineage:               nil,
+		Source:                "",
+		QuantVRAM:             nil,
 		LastSynced:            "",
 	},
 	{
@@ -183,6 +193,8 @@ var staticModels = []ModelInfo{
 		Modalities:            Modalities{},
 		Host:                  "",
 		Lineage:               nil,
+		Source:                "",
+		QuantVRAM:             nil,
 		LastSynced:            "",
 	},
 }
