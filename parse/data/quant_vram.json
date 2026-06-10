@@ -1,9 +1,9 @@
 {
-  "_comment": "Curated per-quant weights-bytes and architecture facts for VRAM estimation. Figures sourced from Ollama manifest/config-blob API (ollama.com tags page, registry.ollama.ai v2 API) where marked 'ollama'; otherwise plausible+documented figures are used and marked accordingly. The offline tool (cmd/bestiary-ollama) refreshes these from live Ollama registry data. VRAMBytes and VRAMContextTokens are NOT stored here — they are computed and baked by the codegen caller (cmd/bestiary-gen) using EstimateVRAMBytes.",
+  "_comment": "Curated per-quant weights-bytes and architecture facts for VRAM estimation. Each entry's _comment states whether its figures are research-sourced (from ollama.com tags page or registry.ollama.ai manifest API, cited in llm/research/v024-vram-quantization.md) or plausible+documented (reasonable estimates for seed coverage, to be replaced on next offline tool refresh). The source field identifies the data source for provenance tracking; it does not indicate figure quality. VRAMBytes and VRAMContextTokens are NOT stored here — they are computed and baked by the codegen caller (cmd/bestiary-gen) using EstimateVRAMBytes.",
   "schema_version": 1,
   "models": [
     {
-      "_comment": "llama-3.3-70b-instruct: arch facts from Meta-Llama-3.3-70B public model card; weights_bytes from ollama.com/library/llama3.3/tags (manifest layer size). Q4_K_M ~42.5 GB, Q8_0 ~75 GB, F16 ~141 GB as of 2026-06-09.",
+      "_comment": "Research-sourced: arch facts from Meta-Llama-3.3-70B public model card (layers=80, kv_heads=8, head_dim=128, context_window=131072). weights_bytes from ollama.com/library/llama3.3/tags page (Q4_K_M ~42.5 GB, Q8_0 ~75 GB, F16 ~141 GB) as of 2026-06-09.",
       "model_id": "llama3.3:70b-instruct",
       "param_size": "70b",
       "source": "ollama",
@@ -33,7 +33,7 @@
       ]
     },
     {
-      "_comment": "llama3.2:3b-instruct: param_size and weights_bytes from ollama.com/library/llama3.2 tags page (Q4_K_M ~2.0 GB). Arch facts absent — exercises the partial-VRAM code path.",
+      "_comment": "Plausible+documented: weights_bytes estimated from ollama.com/library/llama3.2 tags page size display (~2.0 GB Q4_K_M, ~3.2 GB Q8_0). Arch facts absent (exercises partial-VRAM path). Refresh with offline tool for authoritative figures.",
       "model_id": "llama3.2:3b-instruct",
       "param_size": "3b",
       "source": "ollama",
@@ -50,7 +50,7 @@
       ]
     },
     {
-      "_comment": "qwen2.5:0.5b-instruct: small model entry. param_size and weights_bytes from ollama.com/library/qwen2.5 tags page (Q4_K_M ~397 MB). Arch facts absent — exercises partial-VRAM path alongside the 3b entry.",
+      "_comment": "Plausible+documented: weights_bytes estimated from ollama.com/library/qwen2.5 tags page (~397 MB Q4_K_M for 0.5B). Arch facts absent (exercises partial-VRAM path). Refresh with offline tool for authoritative figures.",
       "model_id": "qwen2.5:0.5b-instruct",
       "param_size": "0.5b",
       "source": "ollama",
@@ -62,7 +62,7 @@
       ]
     },
     {
-      "_comment": "dracarys2-llama-3-70b-instruct: community finetune of llama-3-70b-instruct. base_ref exercises the finetune-with-base_ref code path. Weights_bytes are plausible+documented (same Q4_K_M class as a 70B model). The offline tool provides authoritative figures on next refresh.",
+      "_comment": "Plausible+documented: community finetune of llama-3-70b-instruct. weights_bytes are a plausible estimate for a 70B Q4_K_M model; arch facts copied from the base. base_ref exercises the codegen finetune-lineage inference path. Refresh with offline tool for authoritative figures.",
       "model_id": "ollama/dracarys2-llama-3-70b-instruct",
       "param_size": "70b",
       "source": "ollama",

@@ -7,9 +7,9 @@ import "strings"
 //
 // Field semantics:
 //
-//   - Quant is the parsed quantization constant; QuantRaw is the raw string as
-//     it appeared in the source data (populated only when Quant is
-//     QuantizationOther or when the raw form is needed for display).
+//   - Quant is the parsed quantization constant; QuantRaw is the verbatim token
+//     from the source data, always populated for every row (preserves original
+//     casing, e.g. "Q4_K_M" from Ollama's file_type field).
 //   - WeightsBytes is the ground-truth ingested GGUF file size in bytes.  It is
 //     the primary measurement and is always sourced from the downloaded file, not
 //     derived from bits-per-weight.
@@ -33,8 +33,12 @@ import "strings"
 type QuantVRAM struct {
 	// Quant is the parsed quantization type.
 	Quant Quantization
-	// QuantRaw is the raw quant string from the source (non-empty when Quant is
-	// QuantizationOther or the original casing must be preserved).
+	// QuantRaw is the verbatim quant token from the source data, preserving the
+	// original casing exactly as it appeared (e.g. "Q4_K_M" from an Ollama
+	// file_type field, or "q4_k_m" as written in a curated JSON file). It is
+	// populated for every row — not only when Quant is QuantizationOther —
+	// so callers can use it for lossless display or round-trip fidelity without
+	// a separate round-trip through Quant.String().
 	QuantRaw string
 	// WeightsBytes is the ingested GGUF file size in bytes — the ground-truth
 	// weights footprint for this quantization variant.

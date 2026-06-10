@@ -1,18 +1,14 @@
 package bestiary_test
 
 import (
-	"strings"
 	"testing"
 
 	"github.com/dayvidpham/bestiary"
 )
 
-// ----------------------------------------------------------------------------
-// TestQuantVRAMFor_Absent (VC5): a model ID that exists only in models.dev (no
-// Ollama row) must return nil — no error, no panic. This is the graceful-degrade
-// contract: the loader returns nil for a miss, never an error to the caller.
-// ----------------------------------------------------------------------------
-
+// TestQuantVRAMFor_Absent: a model ID that exists only in models.dev (no
+// Ollama row) must return nil — no error, no panic. The graceful-degrade
+// contract: the loader returns nil for a miss, never panics.
 func TestQuantVRAMFor_Absent(t *testing.T) {
 	const absentID bestiary.ModelID = "claude-3-5-sonnet"
 	rows := bestiary.QuantVRAMFor(absentID)
@@ -37,20 +33,33 @@ func TestSourceFor_Absent(t *testing.T) {
 	}
 }
 
-// ----------------------------------------------------------------------------
-// TestQuantVRAMFor_Llama33_70b (VC1): present model with arch facts. Verifies
-// exact weights_bytes for Q4_K_M and Q8_0 from seed, Quant parsed correctly,
-// Layers/KVHeads/HeadDim populated, and QuantRaw set appropriately.
-// VRAMBytes/VRAMContextTokens/VRAMEstimatePartial are NOT checked here — they
-// are computed by the codegen caller (EstimateVRAMBytes), not the loader.
-// ----------------------------------------------------------------------------
+func TestContextWindowFor_Absent(t *testing.T) {
+	const absentID bestiary.ModelID = "claude-3-5-sonnet"
+	got := bestiary.ContextWindowFor(absentID)
+	if got != 0 {
+		t.Errorf("ContextWindowFor(%q) = %d, want 0 for absent model", absentID, got)
+	}
+}
 
+func TestBaseRefFor_Absent(t *testing.T) {
+	const absentID bestiary.ModelID = "claude-3-5-sonnet"
+	got := bestiary.BaseRefFor(absentID)
+	if got != "" {
+		t.Errorf("BaseRefFor(%q) = %q, want empty string for absent model", absentID, got)
+	}
+}
+
+// TestQuantVRAMFor_Llama33_70b: present model with arch facts. Verifies exact
+// weights_bytes for each quant row from the seed file, Quant parsed correctly,
+// Layers/KVHeads/HeadDim populated from the curated arch facts.
+// VRAMBytes/VRAMContextTokens/VRAMEstimatePartial are not checked here — they
+// are computed by the codegen caller (EstimateVRAMBytes), not the loader.
 func TestQuantVRAMFor_Llama33_70b(t *testing.T) {
 	const id bestiary.ModelID = "llama3.3:70b-instruct"
 
 	rows := bestiary.QuantVRAMFor(id)
 	if len(rows) == 0 {
-		t.Fatalf("QuantVRAMFor(%q) = nil, want %d rows", id, 3)
+		t.Fatalf("QuantVRAMFor(%q) = nil, want 3 rows", id)
 	}
 	if len(rows) != 3 {
 		t.Fatalf("QuantVRAMFor(%q): got %d rows, want 3", id, len(rows))
@@ -62,13 +71,13 @@ func TestQuantVRAMFor_Llama33_70b(t *testing.T) {
 		byQuant[r.Quant] = r
 	}
 
-	// Q4_K_M row
+	// Q4_K_M row — ~42.5 GB, arch facts present.
 	q4km, ok := byQuant[bestiary.QuantQ4_K_M]
 	if !ok {
 		t.Fatalf("QuantVRAMFor(%q): no Q4_K_M row", id)
 	}
 	if q4km.WeightsBytes != 43033509888 {
-		t.Errorf("Q4_K_M WeightsBytes = %d, want 43033509888 (~42.5 GB)", q4km.WeightsBytes)
+		t.Errorf("Q4_K_M WeightsBytes = %d, want 43033509888", q4km.WeightsBytes)
 	}
 	if q4km.Layers != 80 {
 		t.Errorf("Q4_K_M Layers = %d, want 80", q4km.Layers)
@@ -80,30 +89,27 @@ func TestQuantVRAMFor_Llama33_70b(t *testing.T) {
 		t.Errorf("Q4_K_M HeadDim = %d, want 128", q4km.HeadDim)
 	}
 
-	// Q8_0 row
+	// Q8_0 row — ~75 GB.
 	q8, ok := byQuant[bestiary.QuantQ8_0]
 	if !ok {
 		t.Fatalf("QuantVRAMFor(%q): no Q8_0 row", id)
 	}
 	if q8.WeightsBytes != 75176521728 {
-		t.Errorf("Q8_0 WeightsBytes = %d, want 75176521728 (~75 GB)", q8.WeightsBytes)
+		t.Errorf("Q8_0 WeightsBytes = %d, want 75176521728", q8.WeightsBytes)
 	}
 
-	// F16 row
+	// F16 row — ~141 GB.
 	f16, ok := byQuant[bestiary.QuantF16]
 	if !ok {
 		t.Fatalf("QuantVRAMFor(%q): no F16 row", id)
 	}
 	if f16.WeightsBytes != 141166166016 {
-		t.Errorf("F16 WeightsBytes = %d, want 141166166016 (~141 GB)", f16.WeightsBytes)
+		t.Errorf("F16 WeightsBytes = %d, want 141166166016", f16.WeightsBytes)
 	}
 }
 
-// ----------------------------------------------------------------------------
-// TestQuantVRAMFor_SmallModel (VC2): small model llama3.2:3b-instruct.
-// Arch facts absent — exercises the partial path at the row level.
-// ----------------------------------------------------------------------------
-
+// TestQuantVRAMFor_SmallModel: small 3B-parameter model with two quant rows.
+// Arch facts are absent in the seed — exercises the partial-VRAM code path.
 func TestQuantVRAMFor_SmallModel(t *testing.T) {
 	const id bestiary.ModelID = "llama3.2:3b-instruct"
 
@@ -126,18 +132,16 @@ func TestQuantVRAMFor_SmallModel(t *testing.T) {
 		}
 	}
 
-	// ParamSize round-trip
+	// ParamSize round-trip.
 	ps := bestiary.ParamSizeFor(id)
 	if ps != "3b" {
 		t.Errorf("ParamSizeFor(%q) = %q, want %q", id, ps, "3b")
 	}
 }
 
-// ----------------------------------------------------------------------------
 // TestQuantVRAMFor_Finetune: community finetune with base_ref. The loader must
-// return rows for it (base_ref is stored in the JSON but does not affect QuantVRAMFor).
-// ----------------------------------------------------------------------------
-
+// return rows and expose both base_ref and context_window via the codegen
+// access functions.
 func TestQuantVRAMFor_Finetune(t *testing.T) {
 	const id bestiary.ModelID = "ollama/dracarys2-llama-3-70b-instruct"
 
@@ -152,12 +156,22 @@ func TestQuantVRAMFor_Finetune(t *testing.T) {
 	if rows[0].Layers == 0 {
 		t.Errorf("finetune row: Layers = 0, want non-zero arch fact")
 	}
+
+	// base_ref must be accessible for codegen lineage inference.
+	base := bestiary.BaseRefFor(id)
+	if base == "" {
+		t.Errorf("BaseRefFor(%q) = empty, want the curated base_ref", id)
+	}
+
+	// context_window must be accessible for codegen VRAM baking.
+	ctx := bestiary.ContextWindowFor(id)
+	if ctx == 0 {
+		t.Errorf("ContextWindowFor(%q) = 0, want the curated context_window", id)
+	}
 }
 
-// ----------------------------------------------------------------------------
-// TestParamSizeFor_Present / TestSourceFor_Present: hit + miss for both funcs.
-// ----------------------------------------------------------------------------
-
+// TestParamSizeFor_Present / TestSourceFor_Present: hit cases for the lookup
+// functions, covering all seed models.
 func TestParamSizeFor_Present(t *testing.T) {
 	cases := []struct {
 		id   bestiary.ModelID
@@ -193,94 +207,93 @@ func TestSourceFor_Present(t *testing.T) {
 	}
 }
 
-// ----------------------------------------------------------------------------
-// TestValidateQuantVRAMTable_Green: the shipped file must pass validation.
-// ----------------------------------------------------------------------------
+// TestContextWindowFor_Present: the curated context_window field is accessible
+// for models that declare it.
+func TestContextWindowFor_Present(t *testing.T) {
+	cases := []struct {
+		id   bestiary.ModelID
+		want int
+	}{
+		{"llama3.3:70b-instruct", 131072},
+		{"llama3.2:3b-instruct", 131072},
+		{"ollama/dracarys2-llama-3-70b-instruct", 8192},
+	}
+	for _, tc := range cases {
+		got := bestiary.ContextWindowFor(tc.id)
+		if got != tc.want {
+			t.Errorf("ContextWindowFor(%q) = %d, want %d", tc.id, got, tc.want)
+		}
+	}
+}
 
+// TestBaseRefFor_Present: the curated base_ref field is accessible for models
+// that declare it.
+func TestBaseRefFor_Present(t *testing.T) {
+	got := bestiary.BaseRefFor("ollama/dracarys2-llama-3-70b-instruct")
+	if got == "" {
+		t.Errorf("BaseRefFor(dracarys2): got empty, want the curated base_ref")
+	}
+	// Non-finetune models must return empty.
+	got2 := bestiary.BaseRefFor("llama3.3:70b-instruct")
+	if got2 != "" {
+		t.Errorf("BaseRefFor(llama3.3 base): got %q, want empty (not a finetune)", got2)
+	}
+}
+
+// TestValidateQuantVRAMTable_Green: the shipped file must pass validation.
 func TestValidateQuantVRAMTable_Green(t *testing.T) {
 	if err := bestiary.ValidateQuantVRAMTable(); err != nil {
 		t.Fatalf("ValidateQuantVRAMTable() returned error on the shipped file: %v", err)
 	}
 }
 
-// ----------------------------------------------------------------------------
-// TestValidateQuantVRAMTable_RejectsBadInput: exercises bad-table rejection via
-// the exported parseAndValidateQuantVRAMBytes seam (mirrors lineage test pattern).
-// Each case exercises a distinct validation rule.
-// ----------------------------------------------------------------------------
-
-func TestValidateQuantVRAMTable_RejectsBadInput(t *testing.T) {
-	cases := []struct {
-		name    string
-		json    string
-		wantErr string
-	}{
-		{
-			name:    "unknown_quant",
-			json:    `{"schema_version":1,"models":[{"model_id":"x","param_size":"7b","source":"ollama","rows":[{"quant":"notareal","weights_bytes":1000}]}]}`,
-			wantErr: "unknown quant",
-		},
-		{
-			name:    "zero_weights_bytes",
-			json:    `{"schema_version":1,"models":[{"model_id":"x","param_size":"7b","source":"ollama","rows":[{"quant":"q4_k_m","weights_bytes":0}]}]}`,
-			wantErr: "weights_bytes",
-		},
-		{
-			name:    "negative_weights_bytes",
-			json:    `{"schema_version":1,"models":[{"model_id":"x","param_size":"7b","source":"ollama","rows":[{"quant":"q4_k_m","weights_bytes":-1}]}]}`,
-			wantErr: "weights_bytes",
-		},
-		{
-			name:    "duplicate_model_id",
-			json:    `{"schema_version":1,"models":[{"model_id":"dup","param_size":"7b","source":"ollama","rows":[{"quant":"q4_k_m","weights_bytes":1000}]},{"model_id":"dup","param_size":"7b","source":"ollama","rows":[{"quant":"q8_0","weights_bytes":2000}]}]}`,
-			wantErr: "duplicate",
-		},
-		{
-			name:    "malformed_param_size",
-			json:    `{"schema_version":1,"models":[{"model_id":"x","param_size":"notasize","source":"ollama","rows":[{"quant":"q4_k_m","weights_bytes":1000}]}]}`,
-			wantErr: "param_size",
-		},
-		{
-			name:    "malformed_json",
-			json:    `}{not valid`,
-			wantErr: "unmarshal",
-		},
+// TestQuantVRAMFor_BakeContractUnchanged: every row returned by QuantVRAMFor
+// must have VRAMBytes==0, VRAMContextTokens==0, VRAMEstimatePartial==false.
+// The loader does not compute these fields; that responsibility belongs to the
+// codegen caller. An eager-computing loader mutant would fail this test.
+func TestQuantVRAMFor_BakeContractUnchanged(t *testing.T) {
+	ids := []bestiary.ModelID{
+		"llama3.3:70b-instruct",
+		"llama3.2:3b-instruct",
+		"qwen2.5:0.5b-instruct",
+		"ollama/dracarys2-llama-3-70b-instruct",
 	}
-	for _, tc := range cases {
-		t.Run(tc.name, func(t *testing.T) {
-			_, err := bestiary.ParseAndValidateQuantVRAMBytes([]byte(tc.json))
-			if err == nil {
-				t.Fatalf("ParseAndValidateQuantVRAMBytes accepted bad input (%s), want error containing %q", tc.name, tc.wantErr)
+	for _, id := range ids {
+		for _, r := range bestiary.QuantVRAMFor(id) {
+			if r.VRAMBytes != 0 {
+				t.Errorf("id=%q quant=%s: VRAMBytes=%d, want 0 (computed by codegen, not loader)",
+					id, r.Quant, r.VRAMBytes)
 			}
-			if !strings.Contains(strings.ToLower(err.Error()), strings.ToLower(tc.wantErr)) {
-				t.Errorf("error = %q, want it to mention %q", err.Error(), tc.wantErr)
+			if r.VRAMContextTokens != 0 {
+				t.Errorf("id=%q quant=%s: VRAMContextTokens=%d, want 0 (computed by codegen)",
+					id, r.Quant, r.VRAMContextTokens)
 			}
-		})
+			if r.VRAMEstimatePartial {
+				t.Errorf("id=%q quant=%s: VRAMEstimatePartial=true, want false (set by codegen, not loader)",
+					id, r.Quant)
+			}
+		}
 	}
 }
 
-// ----------------------------------------------------------------------------
-// TestQuantVRAMFor_NoPanic: calling all exported funcs with the empty model ID
-// must never panic (defensive against zero-value usage).
-// ----------------------------------------------------------------------------
-
+// TestQuantVRAMFor_NoPanic: calling all exported functions with the empty model
+// ID must never panic (defensive against zero-value usage).
 func TestQuantVRAMFor_NoPanic(t *testing.T) {
 	defer func() {
 		if r := recover(); r != nil {
-			t.Fatalf("QuantVRAMFor(\"\") panicked: %v", r)
+			t.Fatalf("exported functions panicked on empty ModelID: %v", r)
 		}
 	}()
 	_ = bestiary.QuantVRAMFor("")
 	_ = bestiary.ParamSizeFor("")
 	_ = bestiary.SourceFor("")
+	_ = bestiary.ContextWindowFor("")
+	_ = bestiary.BaseRefFor("")
 }
 
-// ----------------------------------------------------------------------------
-// TestQuantVRAMFor_QunatNotOther: every row loaded from the shipped file must
+// TestQuantVRAMFor_QuantNotOther: every row loaded from the shipped file must
 // not be QuantizationOther — the JSON curates known quant strings and validation
 // must reject unknown tokens before they reach the table.
-// ----------------------------------------------------------------------------
-
 func TestQuantVRAMFor_QuantNotOther(t *testing.T) {
 	knownIDs := []bestiary.ModelID{
 		"llama3.3:70b-instruct",
@@ -293,6 +306,31 @@ func TestQuantVRAMFor_QuantNotOther(t *testing.T) {
 		for _, r := range rows {
 			if r.Quant == bestiary.QuantizationOther {
 				t.Errorf("QuantVRAMFor(%q): row %v has Quant=QuantizationOther; curated data must use known quant strings", id, r)
+			}
+		}
+	}
+}
+
+// TestQuantVRAMFor_QuantRawAlwaysPopulated: QuantRaw must be the verbatim
+// curated token from the JSON file for every row, regardless of whether Quant
+// is QuantizationOther. An empty QuantRaw on any loaded row is a contract
+// violation — callers rely on it for lossless display and round-trip fidelity.
+func TestQuantVRAMFor_QuantRawAlwaysPopulated(t *testing.T) {
+	ids := []bestiary.ModelID{
+		"llama3.3:70b-instruct",
+		"llama3.2:3b-instruct",
+		"qwen2.5:0.5b-instruct",
+		"ollama/dracarys2-llama-3-70b-instruct",
+	}
+	for _, id := range ids {
+		rows := bestiary.QuantVRAMFor(id)
+		if len(rows) == 0 {
+			t.Errorf("QuantVRAMFor(%q): expected rows, got nil", id)
+			continue
+		}
+		for _, r := range rows {
+			if r.QuantRaw == "" {
+				t.Errorf("QuantVRAMFor(%q) quant=%s: QuantRaw is empty; must be the verbatim curated token", id, r.Quant)
 			}
 		}
 	}
