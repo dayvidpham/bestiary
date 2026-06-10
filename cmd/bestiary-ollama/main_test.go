@@ -295,9 +295,10 @@ func TestJoin_AliasOverride(t *testing.T) {
 
 // --------------------------------------------------------------------------
 // REAL-CATALOG join (load-bearing): bestiary.StaticModels() is compiled in — no
-// network. This is the test that catches mis-keying against the actual catalog;
-// it pins the disposition of EVERY default-allowlist head and dies under both the
-// alias-precedence-inversion mutant and the matchCatalog lexicographic mutant.
+// network. This is the test that catches mis-keying against the actual catalog.
+// It pins the disposition of every model in defaultAllowlist (each head's sizes),
+// and dies under the alias-precedence-inversion mutant and the matchCatalog
+// lexicographic mutant; removing any llama alias entry also fails it.
 // --------------------------------------------------------------------------
 
 func TestRealCatalog_AllowlistDisposition(t *testing.T) {
@@ -316,9 +317,12 @@ func TestRealCatalog_AllowlistDisposition(t *testing.T) {
 		modelsID string // when joined
 	}
 	cases := map[string]want{
-		// Alias OVERRIDE pins the instruct entity (bare key would mis-match).
+		// Alias OVERRIDE pins the instruct entity (bare key would mis-match a
+		// community-merge, a non-instruct provider variant, or a base entity).
 		"llama3.3:70b": {joined: true, modelsID: "llama-3.3-70b-instruct"},
 		"llama3.1:8b":  {joined: true, modelsID: "llama-3.1-8b-instruct"},
+		"llama3.2:3b":  {joined: true, modelsID: "llama-3.2-3b-instruct"},
+		"llama3.2:1b":  {joined: true, modelsID: "meta/llama-3.2-1b-instruct"},
 		// Default-tag instruct FALLBACK (bare key misses, instruct hits).
 		"qwen2.5:7b": {joined: true, modelsID: "qwen/qwen2.5-7b-instruct"},
 		// Bare mechanical match to the canonical open-weights entity.
@@ -569,7 +573,7 @@ func TestAliasSeed_Parses(t *testing.T) {
 	if err != nil {
 		t.Fatalf("parse seed: %v", err)
 	}
-	for _, k := range []string{"llama3.1:8b", "llama3.3:70b"} {
+	for _, k := range []string{"llama3.1:8b", "llama3.2:1b", "llama3.2:3b", "llama3.3:70b"} {
 		if _, ok := aliases[k]; !ok {
 			t.Fatalf("seed must carry the %q override entry, got keys %v", k, keysOf(aliases))
 		}

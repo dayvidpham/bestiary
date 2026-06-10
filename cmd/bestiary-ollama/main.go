@@ -92,9 +92,10 @@ const (
 //
 // Join disposition of each head against the current models.dev catalog (the
 // catalog is compiled in; see TestRealCatalog_AllowlistDisposition):
-//   - llama3.1, llama3.3: bare size tags collide with non-instruct / community
-//     catalog rows, so an alias pins them to the instruct entity (see
-//     ollama_aliases.json).
+//   - llama3.1, llama3.2, llama3.3: bare size tags collide with a base or
+//     non-instruct / community catalog row, so an alias pins each to the instruct
+//     entity (see ollama_aliases.json). llama3.2's 3b and 1b tags both hit base
+//     entities (llama-3.2-3b / meta/llama-3.2-1b) bare.
 //   - qwen2.5: bare key misses; the instruct fallback reaches the catalog entity.
 //   - mistral: bare key reaches the canonical open-weights entity.
 //   - gemma2, phi3.5: models.dev carries no joinable catalog entity for these
