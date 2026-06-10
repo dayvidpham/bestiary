@@ -4323,7 +4323,8 @@ func TestGrokNegationAwareModifier(t *testing.T) {
 
 // TestParseParamSize_ValidShapes verifies that ParseParamSize accepts well-formed
 // size tokens in all recognized shapes and returns the canonical lowercase form.
-// Findings: bestiary-q6ocr (case-folding) and bestiary-f7ml5 (shape coverage).
+// Covers dense (<digits><unit>), MoE (<total>x<active>b), and active-MoE
+// (<total>b-a<active>b) shapes; and that all inputs are canonicalized to lowercase.
 func TestParseParamSize_ValidShapes(t *testing.T) {
 	t.Parallel()
 
@@ -4345,7 +4346,7 @@ func TestParseParamSize_ValidShapes(t *testing.T) {
 		{"3.8b", "3.8b", "3.8b"},
 		{"72b", "72b", "72b"},
 
-		// Dense token: uppercase → lowercase (case-folding, bestiary-q6ocr)
+		// Dense token: uppercase → lowercase (ParseParamSize must canonicalize to lowercase).
 		{"70B uppercase → 70b", "70B", "70b"},
 		{"8B uppercase → 8b", "8B", "8b"},
 		{"0.5B uppercase → 0.5b", "0.5B", "0.5b"},
@@ -4362,6 +4363,11 @@ func TestParseParamSize_ValidShapes(t *testing.T) {
 		{"30b-a3b active-moe", "30b-a3b", "30b-a3b"},
 		{"671b-a17b active-moe", "671b-a17b", "671b-a17b"},
 		{"671B-A17B uppercase active-moe → 671b-a17b", "671B-A17B", "671b-a17b"},
+
+		// m-unit dense tokens (the [bm] unit arm for million-parameter models).
+		{"560m", "560m", "560m"},
+		{"350m", "350m", "350m"},
+		{"560M uppercase → 560m", "560M", "560m"},
 	}
 
 	for _, tc := range cases {
@@ -4384,7 +4390,9 @@ func TestParseParamSize_ValidShapes(t *testing.T) {
 
 // TestParseParamSize_InvalidShapes verifies that ParseParamSize rejects inputs
 // that do not match any recognized param-size shape and returns an actionable error.
-// Finding: bestiary-f7ml5 (rejection + actionable error contract).
+// Each rejected input must produce a non-nil error whose message names the bad input
+// (C-actionable-errors: callers must be able to diagnose the rejection without
+// reading source code).
 func TestParseParamSize_InvalidShapes(t *testing.T) {
 	t.Parallel()
 
@@ -4410,6 +4418,10 @@ func TestParseParamSize_InvalidShapes(t *testing.T) {
 		{"dash only", "-"},
 		// Version-like token that is not a size.
 		{"version 3.3", "3.3"},
+		// Alphanumeric GPT-style version (not a size unit).
+		{"4o", "4o"},
+		// Unknown unit 'k' (not b or m).
+		{"70k", "70k"},
 	}
 
 	for _, tc := range invalid {
@@ -4420,20 +4432,29 @@ func TestParseParamSize_InvalidShapes(t *testing.T) {
 				t.Errorf("ParseParamSize(%q) = nil error, want a rejection error for an invalid shape", tc.raw)
 				return
 			}
-			// Actionable error contract (C-actionable-errors): message must name the input.
 			msg := err.Error()
+			// The error must name the rejected input (actionable-error: callers can diagnose
+			// without reading source).
 			if !strings.Contains(msg, tc.raw) {
-				t.Errorf("ParseParamSize(%q) error message %q does not mention the rejected input\n"+
-					"  What: error message is not actionable (missing the bad input)\n"+
-					"  How to fix: include the raw input in the error message", tc.raw, msg)
+				t.Errorf("ParseParamSize(%q) error message does not mention the rejected input\n"+
+					"  got:  %q\n"+
+					"  want: message containing %q", tc.raw, msg, tc.raw)
+			}
+			// The error must include a "How to fix" clause (parse.go emits this
+			// unconditionally; pinning it prevents the clause from being accidentally removed).
+			if !strings.Contains(msg, "How to fix") {
+				t.Errorf("ParseParamSize(%q) error message missing 'How to fix' clause\n"+
+					"  got: %q\n"+
+					"  want: message containing 'How to fix: ...'", tc.raw, msg)
 			}
 		})
 	}
 }
 
-// TestParseParamSize_CaseFolding is an explicit regression guard for bestiary-q6ocr:
-// uppercase inputs must return the canonicalized lowercase form, not the original
-// casing, and must not error.
+// TestParseParamSize_CaseFolding pins the case-folding contract: ParseParamSize
+// must return the canonical lowercase form regardless of input casing, and must
+// not error on uppercase inputs. This guards against regressions where
+// strings.ToLower is accidentally removed from the implementation.
 func TestParseParamSize_CaseFolding(t *testing.T) {
 	t.Parallel()
 

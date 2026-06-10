@@ -353,16 +353,15 @@ func rebuildStrippedID(base string, hadColon bool, remaining string) ModelID {
 // looksLikeQuantTag returns true when s resembles an Ollama/llama.cpp quant
 // tag token that is not in the known quantNames list.  It guards against
 // stripping legitimate model-name segments (like "instruct" or "7b") as
-// unknown quants.  The heuristic: must start with one of the known quant
-// prefixes (iq, bf, fp, q, f — in that order, longer first) followed
-// immediately by a digit.  "fp" covers Ollama's fp16/fp32 aliases.
+// unknown quants.  The heuristic: s must start with one of the known quant
+// prefixes (iq, bf, fp, q, f) followed immediately by a digit.  "fp" covers
+// Ollama's fp16/fp32 aliases.  Prefix order is immaterial — the loop
+// continues past any prefix whose next character is not a digit.
 func looksLikeQuantTag(s string) bool {
 	if len(s) == 0 {
 		return false
 	}
 	lower := strings.ToLower(s)
-	// Longer prefixes first to avoid partial matches (e.g. "bf" before "f",
-	// "iq" before "i", "fp" before "f").
 	for _, pfx := range []string{"iq", "bf", "fp", "q", "f"} {
 		if strings.HasPrefix(lower, pfx) {
 			rest := lower[len(pfx):]

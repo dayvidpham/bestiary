@@ -218,37 +218,45 @@ func TestLookupEntity_TuplePath_UnsizedHit(t *testing.T) {
 	}
 }
 
-// TestLookupEntity_FallbackPath_ThreadsParamSize guards lookupEntity's model-ID
-// fallback path (mutation c, second call site): the fallback must pass m.ParamSize
-// through to EntityByTuple, not a hardcoded "". For all current static models
-// ParamSize="" so both produce the same result — but this test verifies the wiring
-// is structurally correct: the resolved entity's ParamSize equals the looked-up
-// model's ParamSize.
-func TestLookupEntity_FallbackPath_ThreadsParamSize(t *testing.T) {
-	// Use a real model whose entity can be resolved.
+// TestLookupEntity_FallbackPath_ParamSizeConsistency exercises lookupEntity's
+// model-ID fallback path and verifies that the resolved entity's ParamSize is
+// consistent with the looked-up model's ParamSize.
+//
+// Constraint: all current static models carry ParamSize="" (sized model rows are
+// baked at codegen time, not yet present in the static data). Therefore this test
+// cannot falsify the specific mutant of replacing m.ParamSize with "" in the
+// EntityByTuple call — both produce the same result. The mutation guard for that
+// call site is provided by TestParamSize_SizedHit and TestParamSize_SizedMiss in
+// paramsize_wiring_internal_test.go, which use a synthesized registry with non-empty
+// ParamSize. This test confirms the fallback path is reachable and returns a
+// consistent ParamSize field once sized data is present.
+func TestLookupEntity_FallbackPath_ParamSizeConsistency(t *testing.T) {
 	models := bestiary.StaticModels()
 	if len(models) == 0 {
 		t.Skip("static registry empty")
 	}
-	// Find a model that successfully resolves through the fallback path.
-	var probe bestiary.ModelInfo
+	// Find a model that successfully resolves via the fallback path.
 	found := false
 	for _, m := range models {
-		if e, ok := lookupEntity(string(m.ID)); ok {
-			// Verify that the entity's ParamSize matches the model's ParamSize.
-			if e.Ref.ParamSize != m.ParamSize {
-				t.Errorf("model %q: lookupEntity fallback resolved to entity with ParamSize=%q, want %q (m.ParamSize)",
-					m.ID, e.Ref.ParamSize, m.ParamSize)
-			}
-			probe = m
-			found = true
-			break
+		e, ok := lookupEntity(string(m.ID))
+		if !ok {
+			continue
 		}
+		found = true
+		// The entity's ParamSize must equal the model's ParamSize.
+		// With current static data both are "" — but this assertion will catch
+		// a regression if the fallback path ever hardcodes "" instead of m.ParamSize
+		// after sized model rows are introduced.
+		if e.Ref.ParamSize != m.ParamSize {
+			t.Errorf("model %q: lookupEntity fallback returned entity.ParamSize=%q, want %q (m.ParamSize); "+
+				"the fallback path must thread m.ParamSize to EntityByTuple, not a hardcoded empty string",
+				m.ID, e.Ref.ParamSize, m.ParamSize)
+		}
+		break
 	}
 	if !found {
-		t.Fatal("no static model could be resolved via the fallback path; wiring cannot be verified")
+		t.Fatal("no static model resolved via the fallback path; cannot verify ParamSize consistency")
 	}
-	t.Logf("verified fallback ParamSize threading via model %q (ParamSize=%q)", probe.ID, probe.ParamSize)
 }
 
 func equalStrings(a, b []string) bool {

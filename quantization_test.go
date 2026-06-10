@@ -521,6 +521,15 @@ func TestDetectQuantization_Known(t *testing.T) {
 			wantStripped: "gemma2:9b-instruct",
 			name:         "gemma2 q2_K",
 		},
+		// Colon-free IDs (HF/GGUF-style) exercise the hadColon==false arm of
+		// rebuildStrippedID.
+		{
+			id:           "llama-3-70b-q4_0",
+			wantQ:        bestiary.QuantQ4_0,
+			wantRaw:      "q4_0",
+			wantStripped: "llama-3-70b",
+			name:         "colon-free q4_0",
+		},
 	}
 	for _, tt := range tests {
 		q, raw, stripped := bestiary.DetectQuantization(tt.id)
@@ -595,6 +604,15 @@ func TestDetectQuantization_Unknown(t *testing.T) {
 			wantRaw:      "f99",
 			wantStripped: "somemodel:7b",
 			name:         "unknown f-prefix tag",
+		},
+		// Colon-free unknown-tag case exercises the hadColon==false arm of
+		// rebuildStrippedID on the Other path.
+		{
+			id:           "somemodel-7b-q99_X",
+			wantQ:        bestiary.QuantizationOther,
+			wantRaw:      "q99_X",
+			wantStripped: "somemodel-7b",
+			name:         "colon-free unknown q-prefix tag",
 		},
 	}
 	for _, tt := range tests {

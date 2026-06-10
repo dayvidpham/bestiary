@@ -7,9 +7,12 @@ package bestiary
 // controlled fixtures rather than relying solely on production data where all sizes
 // are currently empty.
 //
-// Each test saves and restores the package-level state so parallel test runs in the
-// same process cannot interfere. These tests are designed to be mutation-sensitive:
-// any of the following changes would cause a failure:
+// These tests must NOT be run in parallel with each other or with any test that
+// reads entity index state, because withSyntheticRegistry mutates shared package
+// variables (staticModels, entityIndex, entityKeys, entityIndexOnce).
+//
+// These tests are designed to be mutation-sensitive: any of the following changes
+// would cause a failure:
 //   - dropping ParamSize from the EntityRef literal in registry.go
 //   - dropping ParamSize from the EntityByTuple lookup ref in entity.go
 //   - removing or inverting the paramSizeFilter check in matchCanonicalSegments
@@ -144,15 +147,14 @@ func TestParamSize_TwoSizesDistinct(t *testing.T) {
 			t.Errorf("8b entity has ParamSize=%q, want %q", e8.Ref.ParamSize, "8b")
 		}
 
-		// Cross-size lookups must miss.
-		if _, ok := EntityByTuple(Family("llama"), "", "3.3", "8b", "instruct"); !ok {
-			// this was already checked above, just re-confirm
+		// Cross-size lookups must miss: asking for a size that is not in the
+		// registry must not silently return the other size's entity.
+		if _, crossHit := EntityByTuple(Family("llama"), "", "3.3", "1b", "instruct"); crossHit {
+			t.Error("EntityByTuple(1b) must MISS when registry has only 70b and 8b; got a hit — wrong-merge")
 		}
-		if _, hitWrong := EntityByTuple(Family("llama"), "", "3.3", "70b", "instruct"); hitWrong {
-			// already checked via e70 above
-			_ = hitWrong
-		}
-		// Cross: 70b key must NOT resolve to 8b entity and vice-versa.
+
+		// The two entities must carry distinct instance IDs (not pointing at the
+		// same underlying ModelInfo row).
 		if e70.Instances[0].ID == e8.Instances[0].ID {
 			t.Error("70b and 8b entities share the same instance ID — wrong-merge")
 		}
