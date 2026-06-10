@@ -11,6 +11,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"reflect"
 	"regexp"
 	"sort"
 	"strings"
@@ -1806,6 +1807,23 @@ func TestRun_AbortsOnDataSourceValidationError(t *testing.T) {
 	}
 	if !strings.Contains(err.Error(), "validate curated data-source table") {
 		t.Fatalf("run(): error missing the data-source guard context: %v", err)
+	}
+}
+
+// TestValidateCuratedDataSourceTable_DefaultIsRealGuard pins the seam's DEFAULT
+// BINDING to the real guard. TestRun_AbortsOnDataSourceValidationError falsifies the
+// CALL (run() invokes the seam and wraps its error) but not the binding: a refactor
+// typo or a leftover stub (e.g. `= func() error { return nil }`) would silently
+// disarm the data-source FK guard while the suite stayed green. Comparing func-
+// pointer identity kills that no-op-binding mutant. It is safe under -shuffle: the
+// abort test restores the binding via defer, so the package-var holds its default
+// here regardless of test order.
+func TestValidateCuratedDataSourceTable_DefaultIsRealGuard(t *testing.T) {
+	got := reflect.ValueOf(validateCuratedDataSourceTable).Pointer()
+	want := reflect.ValueOf(bestiary.ValidateDataSourceTable).Pointer()
+	if got != want {
+		t.Fatal("validateCuratedDataSourceTable default binding is not bestiary.ValidateDataSourceTable: " +
+			"the codegen data-source FK guard is disconnected (a no-op stub would disarm it silently)")
 	}
 }
 

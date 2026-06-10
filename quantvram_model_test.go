@@ -199,18 +199,83 @@ func TestCloneEntity_SourcesRegistryPath(t *testing.T) {
 	}
 }
 
-// TestCloneInstances_QuantVRAMRegistryPath verifies that all ProviderInstances
-// returned by the registry have nil QuantVRAM (populated by a later layer).
+// TestCloneInstances_QuantVRAMRegistryPath verifies the entity aggregate copies the
+// per-row QuantVRAM and Source carriers onto each ProviderInstance, and that the
+// returned instances are clone-isolated from the registry. The only curated source
+// is ollama: a curated row carries its quant rows and Source ollama, while an
+// uncurated row carries no quant rows and the zero (empty) Source — both directions
+// are checked, registry-wide and on the curated llama-3.3-70b entity specifically.
 func TestCloneInstances_QuantVRAMRegistryPath(t *testing.T) {
 	entities := bestiary.Entities()
 	if len(entities) == 0 {
-		t.Fatal("static registry is empty; cannot test clone isolation")
+		t.Fatal("static registry is empty; cannot test the instance carriers")
 	}
+
+	// Registry-wide both-directions invariant: an instance carries QuantVRAM rows
+	// only if it is a curated row, and every curated row's Source is ollama; an
+	// uncurated instance carries no quant rows and the zero Source.
+	var populated, uncurated int
 	for _, e := range entities {
 		for j, inst := range e.Instances {
-			if inst.QuantVRAM != nil {
-				t.Errorf("entity %q instance[%d]: QuantVRAM = %v, want nil in current static data",
-					e.Ref.String(), j, inst.QuantVRAM)
+			if len(inst.QuantVRAM) > 0 {
+				populated++
+				if inst.Source != bestiary.DataSourceOllama {
+					t.Errorf("entity %q instance[%d] (id %q) carries %d quant rows but Source = %q, want ollama",
+						e.Ref.String(), j, inst.ID, len(inst.QuantVRAM), inst.Source)
+				}
+			} else if inst.Source == bestiary.DataSourceNone {
+				uncurated++
+			}
+		}
+	}
+	if populated == 0 {
+		t.Fatal("no ProviderInstance carries QuantVRAM: the aggregate does not copy ModelInfo.QuantVRAM onto instances")
+	}
+	if uncurated == 0 {
+		t.Fatal("no uncurated (nil-quant, empty-source) instance found; expected the uncurated direction to exist")
+	}
+
+	// Targeted: the curated llama-3.3-70b entity's ollama instances carry exactly the
+	// 3 curated quant rows (q4_k_m, q8_0, f16), in curated order.
+	e, ok := bestiary.EntityByTuple("llama", "", "3.3", "70b", "instruct")
+	if !ok {
+		t.Fatal("curated entity llama@3.3#70b{instruct} not found in registry")
+	}
+	wantQuants := []bestiary.Quantization{bestiary.QuantQ4_K_M, bestiary.QuantQ8_0, bestiary.QuantF16}
+	var sawOllama70b bool
+	for j, inst := range e.Instances {
+		if inst.Source != bestiary.DataSourceOllama {
+			continue
+		}
+		sawOllama70b = true
+		if len(inst.QuantVRAM) != len(wantQuants) {
+			t.Errorf("70b instance[%d] (id %q): QuantVRAM has %d rows, want %d",
+				j, inst.ID, len(inst.QuantVRAM), len(wantQuants))
+			continue
+		}
+		for k, want := range wantQuants {
+			if inst.QuantVRAM[k].Quant != want {
+				t.Errorf("70b instance[%d].QuantVRAM[%d].Quant = %v, want %v", j, k, inst.QuantVRAM[k].Quant, want)
+			}
+		}
+	}
+	if !sawOllama70b {
+		t.Error("curated 70b entity has no ollama-sourced instance: Source carrier not copied onto instances?")
+	}
+
+	// Clone-isolation through the registry path: mutating a returned instance's quant
+	// row must not leak into the registry's cached copy.
+	for j := range e.Instances {
+		if len(e.Instances[j].QuantVRAM) > 0 {
+			e.Instances[j].QuantVRAM[0].WeightsBytes = -1
+			break
+		}
+	}
+	refetched, _ := bestiary.EntityByTuple("llama", "", "3.3", "70b", "instruct")
+	for k := range refetched.Instances {
+		for _, row := range refetched.Instances[k].QuantVRAM {
+			if row.WeightsBytes == -1 {
+				t.Fatal("ProviderInstance.QuantVRAM is not clone-isolated: a caller mutation leaked into the registry")
 			}
 		}
 	}

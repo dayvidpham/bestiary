@@ -130,6 +130,13 @@ func loadEntityIndex() {
 			CostOutputPerMTok: m.CostOutputPerMTok,
 			ContextWindow:     m.ContextWindow,
 			MaxOutput:         m.MaxOutput,
+			// QuantVRAM is the per-row quant/VRAM carrier and Source is the per-row
+			// ingest carrier; both are copied onto the instance so a curated row's
+			// quantization footprint and originating source travel with it. QuantVRAM
+			// is deep-copied (cloneQuantVRAM) because the cached instance must never
+			// alias a staticModels row's backing slice; Source is a value type.
+			QuantVRAM: cloneQuantVRAM(m.QuantVRAM),
+			Source:    m.Source,
 		})
 
 		if _, dup := a.provSeen[m.Provider]; !dup {

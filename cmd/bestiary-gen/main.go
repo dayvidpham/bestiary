@@ -482,13 +482,6 @@ func run(args []string) error {
 	// sibling entity-key FK is NOT guarded here: the entity↔source relation is derived
 	// from the registry, so that key check is tautological at codegen — see
 	// ValidateEntitySourceTable.)
-	// Fail loudly on bad data-source curation BEFORE generating anything: a duplicate
-	// source id/uri, an ingest source_id absent from the dimension, or an entity↔source
-	// attestation naming a source absent from the curated datasources.json is a curation
-	// bug that must abort codegen rather than baking an orphan provenance row. (The
-	// sibling entity-key FK is NOT guarded here: the entity↔source relation is derived
-	// from the registry, so that key check is tautological at codegen — see
-	// ValidateEntitySourceTable.)
 	if err := validateCuratedDataSourceTable(); err != nil {
 		return fmt.Errorf("validate curated data-source table: %w", err)
 	}
