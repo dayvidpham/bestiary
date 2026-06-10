@@ -42,7 +42,7 @@ func TestVC2_MultiProviderEntity_RangesAndInstances(t *testing.T) {
 
 	// EntityByTuple must resolve the same identity to one entity with the same
 	// instances (one entity, all instances).
-	got, ok := bestiary.EntityByTuple(e.Ref.Family, e.Ref.Variant, e.Ref.Version, e.Ref.Modifier...)
+	got, ok := bestiary.EntityByTuple(e.Ref.Family, e.Ref.Variant, e.Ref.Version, e.Ref.ParamSize, e.Ref.Modifier...)
 	if !ok {
 		t.Fatalf("EntityByTuple(%s) returned ok=false, want the entity to resolve", e.Ref.String())
 	}
@@ -193,14 +193,14 @@ func TestVC9_DefensiveCopy_NoWrongMerge(t *testing.T) {
 		return len(e.Instances) >= 2 && e.PriceInputRange[0] != nil
 	}
 	e := findEntity(t, pred)
-	fam, variant, version, mods := e.Ref.Family, e.Ref.Variant, e.Ref.Version, e.Ref.Modifier
+	fam, variant, version, paramSize, mods := e.Ref.Family, e.Ref.Variant, e.Ref.Version, e.Ref.ParamSize, e.Ref.Modifier
 
 	// Two independent reads of the SAME entity must not share backing storage.
-	a, ok := bestiary.EntityByTuple(fam, variant, version, mods...)
+	a, ok := bestiary.EntityByTuple(fam, variant, version, paramSize, mods...)
 	if !ok {
 		t.Fatalf("EntityByTuple(%s) ok=false", e.Ref.String())
 	}
-	b, ok := bestiary.EntityByTuple(fam, variant, version, mods...)
+	b, ok := bestiary.EntityByTuple(fam, variant, version, paramSize, mods...)
 	if !ok {
 		t.Fatalf("EntityByTuple(%s) second read ok=false", e.Ref.String())
 	}
@@ -230,7 +230,7 @@ func TestVC9_DefensiveCopy_NoWrongMerge(t *testing.T) {
 	}
 
 	// A fresh read must be entirely unaffected (registry not corrupted).
-	c, ok := bestiary.EntityByTuple(fam, variant, version, mods...)
+	c, ok := bestiary.EntityByTuple(fam, variant, version, paramSize, mods...)
 	if !ok {
 		t.Fatalf("EntityByTuple(%s) post-mutation read ok=false", e.Ref.String())
 	}
@@ -292,7 +292,7 @@ func TestVC9_DistinctEntitiesDoNotShareStorage(t *testing.T) {
 // TestEntityByTuple_Miss verifies a non-existent identity tuple returns
 // (zero, false) without panicking.
 func TestEntityByTuple_Miss(t *testing.T) {
-	e, ok := bestiary.EntityByTuple("no-such-family", "no-variant", "no-version")
+	e, ok := bestiary.EntityByTuple("no-such-family", "no-variant", "no-version", "")
 	if ok {
 		t.Errorf("EntityByTuple(bogus) ok=true, want false; got %s", e.Ref.String())
 	}
@@ -333,7 +333,7 @@ func TestEntityIndex_AttributeModifierFoldsIntoBase(t *testing.T) {
 	t.Logf("probe instance: ID=%s family=%s variant=%s version=%s rawMod=%v", probe.ID, probe.Family, probe.Variant, probe.Version, probe.Modifier)
 
 	// The probe's BASE identity is its tuple with NO modifiers.
-	base, ok := bestiary.EntityByTuple(probe.Family, probe.Variant, probe.Version)
+	base, ok := bestiary.EntityByTuple(probe.Family, probe.Variant, probe.Version, "")
 	if !ok {
 		t.Fatalf("base entity %s/%s@%s not found; the attribute-modifier instance did not fold into a base entity", probe.Family, probe.Variant, probe.Version)
 	}

@@ -9,18 +9,19 @@ import (
 )
 
 // TestParseEntityTuple is a table-driven check of the canonical entity-tuple
-// parser: the family[/variant][@version]{identity-mods}[attributes] grammar plus
-// the lenient 3-segment family/variant/version form and the discarded trailing
-// [attributes] segment.
+// parser: the family[/variant][@version][#paramsize]{identity-mods}[attributes]
+// grammar plus the lenient 3-segment family/variant/version form and the
+// discarded trailing [attributes] segment.
 func TestParseEntityTuple(t *testing.T) {
 	cases := []struct {
-		name        string
-		input       string
-		wantFam     bestiary.Family
-		wantVariant string
-		wantVersion string
-		wantMods    []string
-		wantErr     bool
+		name          string
+		input         string
+		wantFam       bestiary.Family
+		wantVariant   string
+		wantVersion   string
+		wantParamSize string
+		wantMods      []string
+		wantErr       bool
 	}{
 		{name: "family only", input: "llama", wantFam: "llama"},
 		{name: "family + variant", input: "claude/opus", wantFam: "claude", wantVariant: "opus"},
@@ -34,10 +35,17 @@ func TestParseEntityTuple(t *testing.T) {
 		{name: "explicit @version wins over 3rd segment", input: "claude/opus/x@4.5", wantFam: "claude", wantVariant: "opus", wantVersion: "4.5"},
 		{name: "empty family errors", input: "", wantErr: true},
 		{name: "missing family before @ errors", input: "@4.5", wantErr: true},
+		// #paramsize grammar (new)
+		{name: "#paramsize only", input: "llama#70b", wantFam: "llama", wantParamSize: "70b"},
+		{name: "@version + #paramsize", input: "llama@3.3#70b", wantFam: "llama", wantVersion: "3.3", wantParamSize: "70b"},
+		{name: "@version + #paramsize + {mods}", input: "llama@3.3#70b{instruct}", wantFam: "llama", wantVersion: "3.3", wantParamSize: "70b", wantMods: []string{"instruct"}},
+		{name: "family/variant@version#paramsize{mods}", input: "qwen/coder@2.5#7b{instruct}", wantFam: "qwen", wantVariant: "coder", wantVersion: "2.5", wantParamSize: "7b", wantMods: []string{"instruct"}},
+		{name: "#paramsize with [attrs] discarded", input: "llama@3.3#70b{instruct}[thinking]", wantFam: "llama", wantVersion: "3.3", wantParamSize: "70b", wantMods: []string{"instruct"}},
+		{name: "no #paramsize produces empty paramSize", input: "llama@3.3{instruct}", wantFam: "llama", wantVersion: "3.3", wantMods: []string{"instruct"}},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			fam, variant, version, mods, err := parseEntityTuple(tc.input)
+			fam, variant, version, paramSize, mods, err := parseEntityTuple(tc.input)
 			if tc.wantErr {
 				if err == nil {
 					t.Fatalf("parseEntityTuple(%q) err = nil, want an error", tc.input)
@@ -56,8 +64,65 @@ func TestParseEntityTuple(t *testing.T) {
 			if version != tc.wantVersion {
 				t.Errorf("version = %q, want %q", version, tc.wantVersion)
 			}
+			if paramSize != tc.wantParamSize {
+				t.Errorf("paramSize = %q, want %q", paramSize, tc.wantParamSize)
+			}
 			if !equalStrings(mods, tc.wantMods) {
 				t.Errorf("mods = %v, want %v", mods, tc.wantMods)
+			}
+		})
+	}
+}
+
+// TestEntityKey_SizedRoundTrip verifies the full round-trip property: for a sized
+// EntityRef, String() produces a key that parses back to the same (family, variant,
+// version, paramSize, mods) tuple, and re-calling String() on a reconstructed
+// EntityRef produces a byte-identical key.
+func TestEntityKey_SizedRoundTrip(t *testing.T) {
+	cases := []struct {
+		ref  bestiary.EntityRef
+		want string
+	}{
+		{
+			ref:  bestiary.EntityRef{Family: "llama", Version: "3.3", ParamSize: "70b", Modifier: []string{"instruct"}},
+			want: "llama@3.3#70b{instruct}",
+		},
+		{
+			ref:  bestiary.EntityRef{Family: "llama", Version: "3.3", ParamSize: "8b", Modifier: []string{"instruct"}},
+			want: "llama@3.3#8b{instruct}",
+		},
+		{
+			ref:  bestiary.EntityRef{Family: "qwen", Variant: "coder", Version: "2.5", ParamSize: "7b"},
+			want: "qwen/coder@2.5#7b",
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.want, func(t *testing.T) {
+			key := tc.ref.String()
+			if key != tc.want {
+				t.Fatalf("EntityRef.String() = %q, want %q", key, tc.want)
+			}
+
+			// Parse the key back to its components.
+			fam, variant, version, paramSize, mods, err := parseEntityTuple(key)
+			if err != nil {
+				t.Fatalf("parseEntityTuple(%q) unexpected error: %v", key, err)
+			}
+
+			// Reconstruct an EntityRef from parsed components.
+			reconstructed := bestiary.EntityRef{
+				Family:    fam,
+				Variant:   variant,
+				Version:   version,
+				ParamSize: paramSize,
+				Modifier:  mods,
+			}
+			rekey := reconstructed.String()
+
+			// The re-computed key must be byte-identical.
+			if rekey != key {
+				t.Errorf("round-trip failed: original=%q re-computed=%q", key, rekey)
 			}
 		})
 	}

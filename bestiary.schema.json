@@ -173,6 +173,10 @@
       "description": "Derivation edges from this model to its parent model(s) (finetune, merge, distillation, etc.). null when the model is a base model or no curated lineage is known. Added in schema 0.1.0; optional for backward compatibility with 0.0.x records.",
       "type": ["array", "null"],
       "items": { "$ref": "#/$defs/LineageEdge" }
+    },
+    "ParamSize": {
+      "description": "Canonical parameter-size token for this model instance (e.g. \"70b\", \"8b\", \"0.5b\"). Empty string when the size is unknown or not applicable. Participates in entity identity via the #size segment of EntityRef.String(). Optional; absent for models without curated size data.",
+      "type": "string"
     }
   },
   "required": [

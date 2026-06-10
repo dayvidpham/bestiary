@@ -63,10 +63,11 @@ func loadEntityIndex() {
 		// incorrectly because EntityRef.String() trusts Modifier to be
 		// identity-only.
 		ref := EntityRef{
-			Family:   m.Family,
-			Variant:  m.Variant,
-			Version:  m.Version,
-			Modifier: EntityModifiers(m.Modifier, m.Family),
+			Family:    m.Family,
+			Variant:   m.Variant,
+			Version:   m.Version,
+			ParamSize: m.ParamSize,
+			Modifier:  EntityModifiers(m.Modifier, m.Family),
 		}
 		key := ref.String()
 

@@ -178,3 +178,32 @@ func TestSelectRepresentative_CanonicalAbsent_LexicographicWins(t *testing.T) {
 			got.Provider, "aa-rehost")
 	}
 }
+
+// --- isBareIdentifier ---
+
+// TestIsBareIdentifier_RejectsHash verifies that isBareIdentifier returns false
+// for strings containing '#', so sized entity keys (e.g. "llama@3.3#70b{instruct}")
+// are not treated as bare family names for the fallback matching path.
+func TestIsBareIdentifier_RejectsHash(t *testing.T) {
+	cases := []struct {
+		input string
+		want  bool
+	}{
+		{"llama", true},
+		{"claude", true},
+		{"llama#70b", false},     // has #
+		{"llama@3.3#70b", false}, // has @ and #
+		{"llama/opus", false},    // has /
+		{"pkg:foo", false},       // has :
+		{"@version", false},      // has @
+		{"hash#only", false},     // has #
+	}
+	for _, tc := range cases {
+		t.Run(tc.input, func(t *testing.T) {
+			got := isBareIdentifier(tc.input)
+			if got != tc.want {
+				t.Errorf("isBareIdentifier(%q) = %v, want %v", tc.input, got, tc.want)
+			}
+		})
+	}
+}

@@ -3051,6 +3051,44 @@ func isParamSizeToken(tok string) bool {
 	return reParamSizeToken.MatchString(tok)
 }
 
+// ParseParamSize canonicalizes a raw parameter-size token into the lowercase
+// form used in EntityRef.String() (e.g. "#70b", "#0.5b"). The returned string
+// is suitable for direct use in EntityRef.ParamSize and ModelInfo.ParamSize.
+//
+// Canonicalization rules:
+//   - Input is lowercased.
+//   - If the lowercased input is not a recognized param-size token shape (as
+//     detected by isParamSizeToken), the function returns ("", error) so the
+//     caller knows the input was not a valid size token.
+//   - Empty input returns ("", nil) — no error, no size.
+//
+// Examples:
+//
+//	ParseParamSize("70B")    → ("70b", nil)
+//	ParseParamSize("0.5b")   → ("0.5b", nil)
+//	ParseParamSize("8x22B")  → ("8x22b", nil)
+//	ParseParamSize("")       → ("", nil)
+//	ParseParamSize("4.5")    → ("", error)  — version token, not a size
+func ParseParamSize(raw string) (string, error) {
+	if raw == "" {
+		return "", nil
+	}
+	lower := strings.ToLower(raw)
+	if !isParamSizeToken(lower) {
+		return "", fmt.Errorf(
+			"bestiary: ParseParamSize: %q is not a valid param-size token\n"+
+				"  What: the input does not match the expected parameter-count shape\n"+
+				"  Why: valid shapes are dense (e.g. \"70b\", \"0.5b\", \"560m\"),"+
+				" MoE (e.g. \"8x22b\"), or active-param MoE (e.g. \"30b-a3b\")\n"+
+				"  Where: bestiary.ParseParamSize\n"+
+				"  How to fix: supply a token ending in 'b' or 'm' with an optional"+
+				" leading count (e.g. \"8b\", \"70b\", \"0.5b\")",
+			raw,
+		)
+	}
+	return lower, nil
+}
+
 // --------------------------------------------------------------------------
 // glued letter-suffix on a version (the glmv / glm-4.5v case)
 // --------------------------------------------------------------------------

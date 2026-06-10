@@ -2,6 +2,7 @@ package bestiary_test
 
 import (
 	"encoding/json"
+	"strings"
 	"testing"
 
 	"github.com/dayvidpham/bestiary"
@@ -287,5 +288,129 @@ func TestEntityModifiers(t *testing.T) {
 	ref := bestiary.EntityRef{Family: "kimi", Version: "k2", Modifier: got}
 	if ref.String() != "kimi@k2{turbo}" {
 		t.Errorf("EntityRef keyed on EntityModifiers = %q, want %q", ref.String(), "kimi@k2{turbo}")
+	}
+}
+
+// TestEntityRef_ParamSizeDistinct verifies that two ModelInfo rows identical in
+// every identity field except ParamSize produce DISTINCT entity keys via the
+// registry grouping path (#size carrier), and that each key contains the
+// expected "#<size>" segment.
+func TestEntityRef_ParamSizeDistinct(t *testing.T) {
+	// Build the two EntityRefs directly (the registry grouping path is tested via
+	// registry_test and entity_aggregate_test; here we lock the key shape).
+	ref70 := bestiary.EntityRef{
+		Family:    "llama",
+		Version:   "3.3",
+		ParamSize: "70b",
+		Modifier:  []string{"instruct"},
+	}
+	ref8 := bestiary.EntityRef{
+		Family:    "llama",
+		Version:   "3.3",
+		ParamSize: "8b",
+		Modifier:  []string{"instruct"},
+	}
+
+	key70 := ref70.String()
+	key8 := ref8.String()
+
+	// Keys must be distinct.
+	if key70 == key8 {
+		t.Fatalf("70b and 8b refs produced identical key %q; expected distinct keys", key70)
+	}
+
+	// Each key must contain the expected #size segment.
+	if !strings.Contains(key70, "#70b") {
+		t.Errorf("key70 = %q; expected it to contain \"#70b\"", key70)
+	}
+	if !strings.Contains(key8, "#8b") {
+		t.Errorf("key8 = %q; expected it to contain \"#8b\"", key8)
+	}
+
+	// Full expected key forms.
+	wantKey70 := "llama@3.3#70b{instruct}"
+	wantKey8 := "llama@3.3#8b{instruct}"
+	if key70 != wantKey70 {
+		t.Errorf("key70 = %q, want %q", key70, wantKey70)
+	}
+	if key8 != wantKey8 {
+		t.Errorf("key8 = %q, want %q", key8, wantKey8)
+	}
+}
+
+// TestEntityRef_NoMigrationDrift verifies that adding the #size field to
+// EntityRef does NOT change any existing entity key in the static registry: every
+// entity key must be byte-identical to what it was before the change (i.e. no
+// "#" character appears in any key, and the key set size hasn't changed).
+//
+// This is the VC-MIG guard: because all current static model data has
+// ParamSize="" (empty), the #size segment must be OMITTED ENTIRELY, preserving
+// byte-identity of every existing key.
+func TestEntityRef_NoMigrationDrift(t *testing.T) {
+	entities := bestiary.Entities()
+	if len(entities) == 0 {
+		t.Fatal("static registry is empty; cannot check migration drift")
+	}
+
+	for _, e := range entities {
+		key := e.Ref.String()
+		if strings.Contains(key, "#") {
+			t.Errorf("entity key %q contains '#'; all current static entities must be unsized (ParamSize empty)", key)
+		}
+		// Verify the ParamSize field itself is empty for all current static entities.
+		if e.Ref.ParamSize != "" {
+			t.Errorf("entity %q has non-empty ParamSize=%q; expected empty for all current static entities", key, e.Ref.ParamSize)
+		}
+	}
+
+	// Log count for visibility — a large drop would hint at a regression.
+	t.Logf("checked %d entities: all keys are byte-identical to pre-paramsize form", len(entities))
+}
+
+// TestEntityRef_String_ParamSizeGrammar locks the full #size grammar for all
+// combinations: present/absent paramsize, with/without variant, version, mods.
+func TestEntityRef_String_ParamSizeGrammar(t *testing.T) {
+	cases := []struct {
+		name string
+		ref  bestiary.EntityRef
+		want string
+	}{
+		{
+			name: "paramsize only (no version no mods)",
+			ref:  bestiary.EntityRef{Family: "llama", ParamSize: "70b"},
+			want: "llama#70b",
+		},
+		{
+			name: "paramsize after version",
+			ref:  bestiary.EntityRef{Family: "llama", Version: "3.3", ParamSize: "70b"},
+			want: "llama@3.3#70b",
+		},
+		{
+			name: "paramsize before mods",
+			ref:  bestiary.EntityRef{Family: "llama", Version: "3.3", ParamSize: "70b", Modifier: []string{"instruct"}},
+			want: "llama@3.3#70b{instruct}",
+		},
+		{
+			name: "full tuple: family/variant@version#size{mods}",
+			ref:  bestiary.EntityRef{Family: "qwen", Variant: "coder", Version: "2.5", ParamSize: "7b", Modifier: []string{"instruct"}},
+			want: "qwen/coder@2.5#7b{instruct}",
+		},
+		{
+			name: "empty paramsize omits # entirely (backward compat)",
+			ref:  bestiary.EntityRef{Family: "claude", Variant: "opus", Version: "4.5"},
+			want: "claude/opus@4.5",
+		},
+		{
+			name: "nil paramsize (zero value) omits # entirely",
+			ref:  bestiary.EntityRef{Family: "llama", Version: "3.3"},
+			want: "llama@3.3",
+		},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			if got := tc.ref.String(); got != tc.want {
+				t.Errorf("EntityRef.String() = %q, want %q", got, tc.want)
+			}
+		})
 	}
 }

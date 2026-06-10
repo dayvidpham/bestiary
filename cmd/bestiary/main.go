@@ -244,18 +244,22 @@ func runShow(input string, format bestiary.OutputFormat, dbPath string, inputFor
 
 // parseEntityTuple parses an entity identity tuple of the canonical form
 //
-//	family[/variant][@version]{identity-mods}[attributes]
+//	family[/variant][@version][#paramsize]{identity-mods}[attributes]
 //
-// returning the (family, variant, version, identity-modifiers) components. This
-// mirrors EntityRef.String()'s rendering so that a key printed by the entity
+// returning the (family, variant, version, paramSize, identity-modifiers) components.
+// This mirrors EntityRef.String()'s rendering so that a key printed by the entity
 // layer round-trips back through this parser. The optional trailing "[attributes]"
 // bracket segment is recognized and discarded (attributes never affect identity,
 // and the MVP entity lookup ignores them). The "{identity-mods}" brace tokens are
 // split on commas and passed through verbatim; EntityByTuple re-projects them via
 // EntityModifiers, so attribute-class tokens supplied here are dropped at lookup.
 //
+// Strip order: [attrs] -> {mods} -> #size -> @version -> /variant
+// The #size strip happens BEFORE the @-LastIndex version split so that a '#'
+// in the size token never confuses the version parser.
+//
 // It returns an error only when the family segment is empty.
-func parseEntityTuple(input string) (fam bestiary.Family, variant, version string, mods []string, err error) {
+func parseEntityTuple(input string) (fam bestiary.Family, variant, version, paramSize string, mods []string, err error) {
 	s := input
 
 	// Strip the trailing "[attributes]" segment (ignored in MVP) before anything
@@ -278,6 +282,14 @@ func parseEntityTuple(input string) (fam bestiary.Family, variant, version strin
 		}
 	}
 
+	// Strip and capture the "#paramsize" segment. Must be done BEFORE the
+	// @-LastIndex version split — the size strip is intentionally ordered here
+	// so a '#' token never reaches the version parser.
+	if hash := strings.LastIndex(s, "#"); hash >= 0 {
+		paramSize = s[hash+1:]
+		s = s[:hash]
+	}
+
 	// Strip and capture the "@version" segment (identity version, not a date).
 	if at := strings.LastIndex(s, "@"); at >= 0 {
 		version = s[at+1:]
@@ -286,7 +298,10 @@ func parseEntityTuple(input string) (fam bestiary.Family, variant, version strin
 
 	segs := strings.Split(s, "/")
 	if len(segs) == 0 || segs[0] == "" {
-		return "", "", "", nil, fmt.Errorf("parse entity tuple %q: empty family segment; expected family[/variant][@version]{identity-mods}", input)
+		return "", "", "", "", nil, fmt.Errorf(
+			"parse entity tuple %q: empty family segment; expected family[/variant][@version][#paramsize]{identity-mods}",
+			input,
+		)
 	}
 	fam = bestiary.Family(segs[0])
 	if len(segs) >= 2 {
@@ -297,7 +312,7 @@ func parseEntityTuple(input string) (fam bestiary.Family, variant, version strin
 	if len(segs) >= 3 && version == "" {
 		version = segs[2]
 	}
-	return fam, variant, version, mods, nil
+	return fam, variant, version, paramSize, mods, nil
 }
 
 // lookupEntity resolves the show/providers argument to an entity. It first tries
@@ -306,14 +321,17 @@ func parseEntityTuple(input string) (fam bestiary.Family, variant, version strin
 // both `claude/opus@4.5` and `claude-opus-4-5-20251101` resolve to the same
 // entity.
 func lookupEntity(arg string) (bestiary.Entity, bool) {
-	if fam, variant, version, mods, err := parseEntityTuple(arg); err == nil {
-		if e, ok := bestiary.EntityByTuple(fam, variant, version, mods...); ok {
+	if fam, variant, version, paramSize, mods, err := parseEntityTuple(arg); err == nil {
+		if e, ok := bestiary.EntityByTuple(fam, variant, version, paramSize, mods...); ok {
 			return e, true
 		}
 	}
 	// Fallback: the argument may be a concrete model ID rather than a tuple.
+	// The fallback path has no paramSize (model-ID rows are unsized until curated
+	// data is wired in a later slice); ParamSize is passed as "" so lookup uses
+	// the unsized key, which is correct for all current static entities.
 	if m, ok := bestiary.LookupModel(bestiary.ModelID(arg)); ok {
-		return bestiary.EntityByTuple(m.Family, m.Variant, m.Version, m.Modifier...)
+		return bestiary.EntityByTuple(m.Family, m.Variant, m.Version, m.ParamSize, m.Modifier...)
 	}
 	return bestiary.Entity{}, false
 }
