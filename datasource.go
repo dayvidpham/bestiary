@@ -5,9 +5,9 @@ package bestiary
 // string) means "no source recorded" and is the correct default for any row
 // that has not been assigned a source.
 //
-// Constants are intentionally few here: the full BCNF provenance types
-// (DataSource, DatasetIngested, EntitySource) and their lookup functions belong
-// to a later slice that owns the rest of this file.
+// This file contains the DataSourceID type and the well-known source constants.
+// The full BCNF provenance types (DataSource, DatasetIngested, EntitySource)
+// and their registry lookup functions live alongside the registry aggregate.
 type DataSourceID string
 
 const (

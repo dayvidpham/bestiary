@@ -20,7 +20,8 @@ import "strings"
 //   - VRAMContextTokens is the context-window size (tokens) used to compute the
 //     KV-cache term.  It is the model-max context, not a user-chosen value.
 //   - Layers, KVHeads, HeadDim are the architectural parameters used for the
-//     KV-cache computation.  Zero when the source did not supply them.
+//     KV-cache computation.  HeadDim is the embedding width per attention head
+//     (elements per head).  Zero when the source did not supply them.
 //   - VRAMEstimatePartial is true when the KV-cache term was excluded from
 //     VRAMBytes because one or more of Layers/KVHeads/HeadDim is zero.  A true
 //     value means VRAMBytes is a weights-only lower bound, never a silent
@@ -47,7 +48,7 @@ type QuantVRAM struct {
 	Layers int
 	// KVHeads is the number of KV-attention heads (GQA-aware); 0 when unknown.
 	KVHeads int
-	// HeadDim is the per-head dimension in tokens; 0 when unknown.
+	// HeadDim is the embedding width per attention head (elements per head); 0 when unknown.
 	HeadDim int
 	// VRAMEstimatePartial is true when the KV-cache term was omitted from
 	// VRAMBytes because at least one of Layers, KVHeads, or HeadDim is zero.

@@ -405,7 +405,7 @@
           "minimum": 0
         },
         "HeadDim": {
-          "description": "Per-head dimension in tokens. 0 when unknown.",
+          "description": "Embedding width per attention head (elements per head). 0 when unknown.",
           "type": "integer",
           "minimum": 0
         },
