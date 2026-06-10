@@ -285,9 +285,18 @@ func parseEntityTuple(input string) (fam bestiary.Family, variant, version, para
 	// Strip and capture the "#paramsize" segment. Must be done BEFORE the
 	// @-LastIndex version split — the size strip is intentionally ordered here
 	// so a '#' token never reaches the version parser.
+	// Canonicalize to lowercase via ParseParamSize so that "llama@3.3#70B" and
+	// "llama@3.3#70b" resolve to the same entity key. Non-size tokens (empty,
+	// unrecognized shapes) are left as-is; the lookup will simply miss, which
+	// is the correct behavior for a malformed size token.
 	if hash := strings.LastIndex(s, "#"); hash >= 0 {
-		paramSize = s[hash+1:]
+		raw := s[hash+1:]
 		s = s[:hash]
+		if canonical, err := bestiary.ParseParamSize(raw); err == nil {
+			paramSize = canonical
+		} else {
+			paramSize = raw // pass through verbatim; lookup will miss
+		}
 	}
 
 	// Strip and capture the "@version" segment (identity version, not a date).
@@ -327,9 +336,7 @@ func lookupEntity(arg string) (bestiary.Entity, bool) {
 		}
 	}
 	// Fallback: the argument may be a concrete model ID rather than a tuple.
-	// The fallback path has no paramSize (model-ID rows are unsized until curated
-	// data is wired in a later slice); ParamSize is passed as "" so lookup uses
-	// the unsized key, which is correct for all current static entities.
+	// Use m.ParamSize so sized model rows resolve to their sized entity key.
 	if m, ok := bestiary.LookupModel(bestiary.ModelID(arg)); ok {
 		return bestiary.EntityByTuple(m.Family, m.Variant, m.Version, m.ParamSize, m.Modifier...)
 	}

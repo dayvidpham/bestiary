@@ -42,6 +42,17 @@ func TestParseEntityTuple(t *testing.T) {
 		{name: "family/variant@version#paramsize{mods}", input: "qwen/coder@2.5#7b{instruct}", wantFam: "qwen", wantVariant: "coder", wantVersion: "2.5", wantParamSize: "7b", wantMods: []string{"instruct"}},
 		{name: "#paramsize with [attrs] discarded", input: "llama@3.3#70b{instruct}[thinking]", wantFam: "llama", wantVersion: "3.3", wantParamSize: "70b", wantMods: []string{"instruct"}},
 		{name: "no #paramsize produces empty paramSize", input: "llama@3.3{instruct}", wantFam: "llama", wantVersion: "3.3", wantMods: []string{"instruct"}},
+		// Adversarial # inputs: the parser uses LastIndex so a double-# takes only the
+		// rightmost segment as size; the prefix up to that # (including any embedded #)
+		// lands in the family segment as verbatim text (no second parse pass).
+		// This is pinned passthrough behavior — such inputs will produce a lookup miss.
+		{name: "double # uses last segment as paramsize (prefix becomes family)", input: "llama#70b#8b", wantFam: "llama#70b", wantParamSize: "8b"},
+		// Trailing # produces empty paramsize (unrecognized shape passthrough).
+		{name: "trailing # produces empty paramsize", input: "llama#", wantFam: "llama", wantParamSize: ""},
+		// Leading # means empty family segment (errors).
+		{name: "leading # errors (empty family)", input: "#70b", wantErr: true},
+		// Uppercase size token: canonicalized to lowercase at parse boundary.
+		{name: "uppercase size token canonicalized", input: "llama@3.3#70B", wantFam: "llama", wantVersion: "3.3", wantParamSize: "70b"},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -74,10 +85,10 @@ func TestParseEntityTuple(t *testing.T) {
 	}
 }
 
-// TestEntityKey_SizedRoundTrip verifies the full round-trip property: for a sized
-// EntityRef, String() produces a key that parses back to the same (family, variant,
-// version, paramSize, mods) tuple, and re-calling String() on a reconstructed
-// EntityRef produces a byte-identical key.
+// TestEntityKey_SizedRoundTrip verifies the full round-trip property: for both
+// sized and unsized EntityRefs, String() produces a key that parses back to
+// identical components, and re-calling String() on the reconstructed EntityRef
+// produces a byte-identical key.
 func TestEntityKey_SizedRoundTrip(t *testing.T) {
 	cases := []struct {
 		ref  bestiary.EntityRef
@@ -94,6 +105,15 @@ func TestEntityKey_SizedRoundTrip(t *testing.T) {
 		{
 			ref:  bestiary.EntityRef{Family: "qwen", Variant: "coder", Version: "2.5", ParamSize: "7b"},
 			want: "qwen/coder@2.5#7b",
+		},
+		// Unsized round-trip: no #size segment must survive the parse and re-render.
+		{
+			ref:  bestiary.EntityRef{Family: "claude", Variant: "opus", Version: "4.5"},
+			want: "claude/opus@4.5",
+		},
+		{
+			ref:  bestiary.EntityRef{Family: "llama", Version: "3.3", Modifier: []string{"instruct"}},
+			want: "llama@3.3{instruct}",
 		},
 	}
 
@@ -126,6 +146,109 @@ func TestEntityKey_SizedRoundTrip(t *testing.T) {
 			}
 		})
 	}
+}
+
+// TestParseEntityTuple_ParamSizeCanonicalization pins the canonicalization rule at
+// the CLI parse boundary: uppercase size tokens are lowercased so that
+// "llama@3.3#70B" resolves to the same entity key as "llama@3.3#70b". The
+// canonical form is always lowercase, matching EntityRef.ParamSize storage.
+func TestParseEntityTuple_ParamSizeCanonicalization(t *testing.T) {
+	cases := []struct {
+		input         string
+		wantParamSize string
+	}{
+		// Uppercase B is lowercased at parse boundary.
+		{"llama@3.3#70B", "70b"},
+		{"llama@3.3#8B", "8b"},
+		// Already lowercase: unchanged.
+		{"llama@3.3#70b", "70b"},
+		// MoE with uppercase: lowercased.
+		{"qwen#8X22B", "8x22b"},
+	}
+	for _, tc := range cases {
+		t.Run(tc.input, func(t *testing.T) {
+			_, _, _, paramSize, _, err := parseEntityTuple(tc.input)
+			if err != nil {
+				t.Fatalf("parseEntityTuple(%q) unexpected error: %v", tc.input, err)
+			}
+			if paramSize != tc.wantParamSize {
+				t.Errorf("paramSize = %q, want %q", paramSize, tc.wantParamSize)
+			}
+		})
+	}
+}
+
+// TestLookupEntity_TuplePath_SizedMiss guards lookupEntity's tuple path (mutation c):
+// a sized key must MISS against the real static registry, which contains only unsized
+// entities. If the paramSize were dropped from the EntityByTuple call in lookupEntity,
+// the sized tuple would resolve to the unsized entity — a wrong-merge.
+func TestLookupEntity_TuplePath_SizedMiss(t *testing.T) {
+	// Pick any real entity from the static registry; use its key with an appended
+	// size segment. The sized variant does not exist in static data, so it must miss.
+	entities := bestiary.Entities()
+	if len(entities) == 0 {
+		t.Skip("static registry empty; cannot exercise lookupEntity tuple path")
+	}
+	realEntity := entities[0]
+	// Build a sized key by appending "#99b" — no static entity has this size.
+	sizedKey := realEntity.Ref.String() + "#99b"
+
+	_, ok := lookupEntity(sizedKey)
+	if ok {
+		t.Errorf("lookupEntity(%q) = (entity, true), want miss: sized key must not resolve to unsized entity", sizedKey)
+	}
+}
+
+// TestLookupEntity_TuplePath_UnsizedHit verifies the tuple path resolves a real
+// unsized entity key from the registry.
+func TestLookupEntity_TuplePath_UnsizedHit(t *testing.T) {
+	entities := bestiary.Entities()
+	if len(entities) == 0 {
+		t.Skip("static registry empty")
+	}
+	realEntity := entities[0]
+	key := realEntity.Ref.String()
+
+	got, ok := lookupEntity(key)
+	if !ok {
+		t.Fatalf("lookupEntity(%q) = miss, want a hit for a real entity key", key)
+	}
+	if got.Ref.String() != key {
+		t.Errorf("lookupEntity(%q) returned entity key %q, want %q", key, got.Ref.String(), key)
+	}
+}
+
+// TestLookupEntity_FallbackPath_ThreadsParamSize guards lookupEntity's model-ID
+// fallback path (mutation c, second call site): the fallback must pass m.ParamSize
+// through to EntityByTuple, not a hardcoded "". For all current static models
+// ParamSize="" so both produce the same result — but this test verifies the wiring
+// is structurally correct: the resolved entity's ParamSize equals the looked-up
+// model's ParamSize.
+func TestLookupEntity_FallbackPath_ThreadsParamSize(t *testing.T) {
+	// Use a real model whose entity can be resolved.
+	models := bestiary.StaticModels()
+	if len(models) == 0 {
+		t.Skip("static registry empty")
+	}
+	// Find a model that successfully resolves through the fallback path.
+	var probe bestiary.ModelInfo
+	found := false
+	for _, m := range models {
+		if e, ok := lookupEntity(string(m.ID)); ok {
+			// Verify that the entity's ParamSize matches the model's ParamSize.
+			if e.Ref.ParamSize != m.ParamSize {
+				t.Errorf("model %q: lookupEntity fallback resolved to entity with ParamSize=%q, want %q (m.ParamSize)",
+					m.ID, e.Ref.ParamSize, m.ParamSize)
+			}
+			probe = m
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Fatal("no static model could be resolved via the fallback path; wiring cannot be verified")
+	}
+	t.Logf("verified fallback ParamSize threading via model %q (ParamSize=%q)", probe.ID, probe.ParamSize)
 }
 
 func equalStrings(a, b []string) bool {

@@ -4317,6 +4317,151 @@ func TestGrokNegationAwareModifier(t *testing.T) {
 	}
 }
 
+// ----------------------------------------------------------------------------
+// ParseParamSize tests
+// ----------------------------------------------------------------------------
+
+// TestParseParamSize_ValidShapes verifies that ParseParamSize accepts well-formed
+// size tokens in all recognized shapes and returns the canonical lowercase form.
+// Findings: bestiary-q6ocr (case-folding) and bestiary-f7ml5 (shape coverage).
+func TestParseParamSize_ValidShapes(t *testing.T) {
+	t.Parallel()
+
+	cases := []struct {
+		name string
+		raw  string
+		want string
+	}{
+		// Empty is valid (no-op — not a size, not an error).
+		{"empty", "", ""},
+
+		// Dense size tokens: <digits><unit>
+		{"1b lowercase passthrough", "1b", "1b"},
+		{"7b", "7b", "7b"},
+		{"8b", "8b", "8b"},
+		{"70b", "70b", "70b"},
+		{"671b", "671b", "671b"},
+		{"0.5b", "0.5b", "0.5b"},
+		{"3.8b", "3.8b", "3.8b"},
+		{"72b", "72b", "72b"},
+
+		// Dense token: uppercase → lowercase (case-folding, bestiary-q6ocr)
+		{"70B uppercase → 70b", "70B", "70b"},
+		{"8B uppercase → 8b", "8B", "8b"},
+		{"0.5B uppercase → 0.5b", "0.5B", "0.5b"},
+		{"671B uppercase → 671b", "671B", "671b"},
+
+		// MoE shapes: <total>x<active>b
+		{"8x7b", "8x7b", "8x7b"},
+		{"8x22b", "8x22b", "8x22b"},
+
+		// MoE uppercase → lowercase
+		{"8X7B uppercase → 8x7b", "8X7B", "8x7b"},
+
+		// Active-MoE shapes: <total>b-a<active>b  (e.g. "30b-a3b", "671b-a17b")
+		{"30b-a3b active-moe", "30b-a3b", "30b-a3b"},
+		{"671b-a17b active-moe", "671b-a17b", "671b-a17b"},
+		{"671B-A17B uppercase active-moe → 671b-a17b", "671B-A17B", "671b-a17b"},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			got, err := bestiary.ParseParamSize(tc.raw)
+			if err != nil {
+				t.Fatalf("ParseParamSize(%q) returned unexpected error: %v\n"+
+					"  What: a valid param-size token was rejected\n"+
+					"  Why: isParamSizeToken returned false for this shape\n"+
+					"  How to fix: verify the size pattern covers this input",
+					tc.raw, err)
+			}
+			if got != tc.want {
+				t.Errorf("ParseParamSize(%q) = %q, want %q (canonical lowercase)", tc.raw, got, tc.want)
+			}
+		})
+	}
+}
+
+// TestParseParamSize_InvalidShapes verifies that ParseParamSize rejects inputs
+// that do not match any recognized param-size shape and returns an actionable error.
+// Finding: bestiary-f7ml5 (rejection + actionable error contract).
+func TestParseParamSize_InvalidShapes(t *testing.T) {
+	t.Parallel()
+
+	invalid := []struct {
+		name string
+		raw  string
+	}{
+		// Bare unit with no digit prefix.
+		{"bare b", "b"},
+		// Letter-only token.
+		{"alpha only", "xyz"},
+		// Size token with a '#' prefix (caller must strip '#' before passing).
+		{"hash prefix #70b", "#70b"},
+		// Whitespace embedded.
+		{"whitespace embedded", "70 b"},
+		// Digit-only (no unit).
+		{"digits only 70", "70"},
+		// Negative number.
+		{"negative -70b", "-70b"},
+		// Random word.
+		{"word instruct", "instruct"},
+		// Empty variant token (dash).
+		{"dash only", "-"},
+		// Version-like token that is not a size.
+		{"version 3.3", "3.3"},
+	}
+
+	for _, tc := range invalid {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			_, err := bestiary.ParseParamSize(tc.raw)
+			if err == nil {
+				t.Errorf("ParseParamSize(%q) = nil error, want a rejection error for an invalid shape", tc.raw)
+				return
+			}
+			// Actionable error contract (C-actionable-errors): message must name the input.
+			msg := err.Error()
+			if !strings.Contains(msg, tc.raw) {
+				t.Errorf("ParseParamSize(%q) error message %q does not mention the rejected input\n"+
+					"  What: error message is not actionable (missing the bad input)\n"+
+					"  How to fix: include the raw input in the error message", tc.raw, msg)
+			}
+		})
+	}
+}
+
+// TestParseParamSize_CaseFolding is an explicit regression guard for bestiary-q6ocr:
+// uppercase inputs must return the canonicalized lowercase form, not the original
+// casing, and must not error.
+func TestParseParamSize_CaseFolding(t *testing.T) {
+	t.Parallel()
+
+	pairs := [][2]string{
+		{"70B", "70b"},
+		{"8B", "8b"},
+		{"0.5B", "0.5b"},
+		{"1B", "1b"},
+		{"671B", "671b"},
+		{"8X7B", "8x7b"},
+		{"671B-A17B", "671b-a17b"},
+	}
+
+	for _, pair := range pairs {
+		raw, want := pair[0], pair[1]
+		t.Run(raw+"→"+want, func(t *testing.T) {
+			t.Parallel()
+			got, err := bestiary.ParseParamSize(raw)
+			if err != nil {
+				t.Fatalf("ParseParamSize(%q) unexpected error: %v (uppercase should be accepted and folded)", raw, err)
+			}
+			if got != want {
+				t.Errorf("ParseParamSize(%q) = %q, want %q (must canonicalize to lowercase)", raw, got, want)
+			}
+		})
+	}
+}
+
 func equalStringSlices(a, b []string) bool {
 	if len(a) != len(b) {
 		return false

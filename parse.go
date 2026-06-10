@@ -3052,8 +3052,8 @@ func isParamSizeToken(tok string) bool {
 }
 
 // ParseParamSize canonicalizes a raw parameter-size token into the lowercase
-// form used in EntityRef.String() (e.g. "#70b", "#0.5b"). The returned string
-// is suitable for direct use in EntityRef.ParamSize and ModelInfo.ParamSize.
+// form used in EntityRef.ParamSize and ModelInfo.ParamSize (e.g. "70b", "0.5b").
+// The '#' prefix is NOT part of the returned value; EntityRef.String() adds it.
 //
 // Canonicalization rules:
 //   - Input is lowercased.

@@ -363,7 +363,12 @@ func TestEntityRef_NoMigrationDrift(t *testing.T) {
 		}
 	}
 
-	// Log count for visibility — a large drop would hint at a regression.
+	// Pin the entity count so a regression (e.g. inadvertent registry truncation)
+	// is caught immediately. Update this constant after a deliberate registry regen.
+	const wantMinEntities = 600
+	if len(entities) < wantMinEntities {
+		t.Errorf("entity count = %d, want >= %d; a large drop signals registry truncation", len(entities), wantMinEntities)
+	}
 	t.Logf("checked %d entities: all keys are byte-identical to pre-paramsize form", len(entities))
 }
 
@@ -401,7 +406,7 @@ func TestEntityRef_String_ParamSizeGrammar(t *testing.T) {
 			want: "claude/opus@4.5",
 		},
 		{
-			name: "nil paramsize (zero value) omits # entirely",
+			name: "zero-value paramsize (empty string) omits # entirely",
 			ref:  bestiary.EntityRef{Family: "llama", Version: "3.3"},
 			want: "llama@3.3",
 		},
