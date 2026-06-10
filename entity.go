@@ -199,10 +199,12 @@ type Entity struct {
 	ContextRange     [2]int
 	MaxOutputRange   [2]int
 	Capabilities     CapabilityUnion
-	// Sources is a DERIVED sorted read projection of the entity-source relation,
-	// built by the registry aggregate. It is NOT a source of truth — it is a
-	// convenience view over the EntitySource join table. nil until the registry
-	// aggregate layer populates it.
+	// Sources is a DERIVED, sorted (ascending DataSourceID), de-duplicated read
+	// projection of the entity↔source join relation. It is NOT a source of truth —
+	// it is a convenience view over the EntitySource join table. For any entity
+	// returned by the registry it is always populated (every registry entity attests
+	// at least the models.dev origin); it is nil only on a hand-constructed Entity
+	// value that never went through the registry aggregate.
 	Sources []DataSourceID
 }
 

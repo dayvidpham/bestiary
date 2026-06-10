@@ -148,15 +148,28 @@ func TestDatasetIngested_NoURI(t *testing.T) {
 	}
 }
 
-// TestEntitySources_Deterministic asserts the projection and relation iteration
-// order are pinned: two independent reads of the same key return byte-equal slices
-// (the explicit sort, NOT first-seen, guarantees this).
+// TestEntitySources_Deterministic asserts EntitySources returns a copy-isolated,
+// stable projection. The earlier two-consecutive-reads form was vacuous: both reads
+// resolve through the same sync.Once-memoized relation, so they aliased one backing
+// slice and could not detect a missing defensive copy. This form mutates the first
+// read and asserts the second read is unaffected — killing a "return the internal
+// slice without copying" mutant in EntitySources — then checks the relation-wide
+// sort.
 func TestEntitySources_Deterministic(t *testing.T) {
 	key := "llama@3.3#70b{instruct}"
 	first := bestiary.EntitySources(key)
+	if len(first) == 0 {
+		t.Fatalf("EntitySources(%q) returned no sources; expected the dual-attested 70b", key)
+	}
+	// Mutating the returned slice must not leak into the memoized relation.
+	first[0] = "mutated-by-test"
 	second := bestiary.EntitySources(key)
-	if !reflect.DeepEqual(first, second) {
-		t.Fatalf("EntitySources(%q) not stable: %v vs %v", key, first, second)
+	if second[0] == "mutated-by-test" {
+		t.Fatalf("EntitySources(%q) is not copy-isolated: a caller mutation leaked into the memoized relation", key)
+	}
+	want := []bestiary.DataSourceID{bestiary.DataSourceModelsDev, bestiary.DataSourceOllama}
+	if !reflect.DeepEqual(second, want) {
+		t.Fatalf("EntitySources(%q) = %v, want %v (sorted dual attestation)", key, second, want)
 	}
 	// And every entity's projection is independently sorted (relation-wide pin).
 	for _, e := range bestiary.Entities() {

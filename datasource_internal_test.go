@@ -1,6 +1,7 @@
 package bestiary
 
 import (
+	"reflect"
 	"strings"
 	"testing"
 )
@@ -139,6 +140,42 @@ func TestSortedSources_Sorts(t *testing.T) {
 	}
 	if sortedSources(nil) != nil {
 		t.Error("sortedSources(nil) should return nil")
+	}
+}
+
+// TestBuildEntitySourceRelation_SortsRegardlessOfAttestOrder falsifies the
+// projection-sort WIRING, not just the sortedSources seam. It feeds the
+// materializer (the single site that sorts the projection in production, consumed
+// by both Entity.Sources and EntitySources) a key whose first-seen attestation
+// order is REVERSED ([ollama, models.dev]) and asserts that BOTH the per-entity
+// projection AND the flat rows come out ascending. The shipped corpus attests
+// models.dev (lexically smallest) first, so first-seen order coincidentally equals
+// sorted order — a call site that copied the first-seen list unsorted would pass
+// the whole public suite on shipped data. Driving the materializer with adversarial
+// order kills that bypass directly.
+func TestBuildEntitySourceRelation_SortsRegardlessOfAttestOrder(t *testing.T) {
+	const key = "adversarial@1#7b{}"
+	firstSeen := map[string][]DataSourceID{
+		key: {DataSourceOllama, DataSourceModelsDev}, // reversed vs sorted
+	}
+	rel := buildEntitySourceRelation([]string{key}, firstSeen)
+
+	want := []DataSourceID{DataSourceModelsDev, DataSourceOllama}
+
+	// byEntity is exactly the projection Entity.Sources holds and EntitySources copies.
+	if proj := rel.byEntity[key]; !reflect.DeepEqual(proj, want) {
+		t.Fatalf("byEntity[%q] = %v, want %v (ascending regardless of first-seen order)", key, proj, want)
+	}
+
+	// The flat rows for the key must also be ascending (the explicit total order).
+	var rows []DataSourceID
+	for _, r := range rel.rows {
+		if r.EntityKey == key {
+			rows = append(rows, r.SourceID)
+		}
+	}
+	if !reflect.DeepEqual(rows, want) {
+		t.Fatalf("rel.rows for %q = %v, want %v (explicit (EntityKey, SourceID) order)", key, rows, want)
 	}
 }
 

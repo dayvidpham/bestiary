@@ -16,10 +16,14 @@ import (
 // entityKeys preserves the first-seen key order so Entities() returns a
 // deterministic slice (staticModels is itself sorted by (Provider, ID) at
 // codegen, making first-seen order stable across runs).
+//
+// entitySourceRel is the entity↔source join relation built alongside the index
+// under the same sync.Once; it is grouped with the index state it is born with.
 var (
 	entityIndexOnce sync.Once
 	entityIndex     map[string]Entity
 	entityKeys      []string
+	entitySourceRel *entitySourceRelation
 )
 
 // entitySourceRelation is the in-memory BCNF join relation between entities and the
@@ -44,8 +48,6 @@ func loadEntitySourceRelation() *entitySourceRelation {
 	entityIndexOnce.Do(loadEntityIndex)
 	return entitySourceRel
 }
-
-var entitySourceRel *entitySourceRelation
 
 // entityAgg accumulates the per-entity aggregate state while scanning the
 // registry. Price min/max are tracked as plain float64 + a found flag so the
@@ -236,17 +238,20 @@ func loadEntityIndex() {
 
 	entityIndex = make(map[string]Entity, len(order))
 	entityKeys = order
-	rel := &entitySourceRelation{byEntity: make(map[string][]DataSourceID, len(order))}
+
+	// Collect the first-seen attestation list per entity, then materialize the
+	// sorted projection + flat join relation in one place (buildEntitySourceRelation).
+	// Routing both Entity.Sources and EntitySources through that single materializer
+	// keeps the public projection and the relation rows in lockstep and concentrates
+	// the determinism-imposing sort at one testable site.
+	firstSeen := make(map[string][]DataSourceID, len(order))
+	for _, key := range order {
+		firstSeen[key] = aggs[key].sources
+	}
+	rel := buildEntitySourceRelation(order, firstSeen)
+
 	for _, key := range order {
 		a := aggs[key]
-
-		// Materialize the SORTED, de-duplicated source projection for this entity.
-		// The aggregate collected sources in first-seen order; sortedSources imposes
-		// the ascending-DataSourceID order that pins Entity.Sources / EntitySources
-		// output deterministically — first-seen order would NOT be stable, unlike
-		// providers/hosts which inherit determinism from the pre-sorted staticModels.
-		sources := sortedSources(a.sources)
-		rel.byEntity[key] = sources
 
 		ent := Entity{
 			Ref:            a.ref,
@@ -257,7 +262,7 @@ func loadEntityIndex() {
 			ContextRange:   [2]int{a.ctxMin, a.ctxMax},
 			MaxOutputRange: [2]int{a.moMin, a.moMax},
 			Capabilities:   a.caps,
-			Sources:        sources,
+			Sources:        rel.byEntity[key],
 		}
 		if a.piFound {
 			lo, hi := a.piMin, a.piMax
@@ -270,10 +275,29 @@ func loadEntityIndex() {
 		entityIndex[key] = ent
 	}
 
-	// Build the flat join relation from the per-entity projection, then impose the
-	// EXPLICIT (EntityKey, SourceID) total order via sort.Slice so relation
-	// iteration — and the generated EntitySource emission that consumes it — is
-	// byte-deterministic regardless of map/first-seen order.
+	entitySourceRel = rel
+}
+
+// buildEntitySourceRelation materializes the BCNF entity↔source join relation from
+// the per-entity first-seen attestation lists. For each key (in the supplied order)
+// it sorts the attestation set ascending by DataSourceID — that sorted slice is the
+// per-entity projection exposed as Entity.Sources and returned by EntitySources —
+// then flattens the projections into rows and imposes the EXPLICIT (EntityKey,
+// SourceID) total order so relation iteration (and the generated EntitySource
+// emission that consumes it) is byte-deterministic regardless of map/first-seen
+// order.
+//
+// It is the pure, testable seam behind loadEntityIndex: the projection sort is
+// applied here, not at the call site, so feeding it a key whose first-seen order is
+// reversed proves the projection AND rows come out ascending. The shipped corpus
+// attests models.dev (lexically smallest) first, so a bypass that copied first-seen
+// order unsorted would pass the whole public suite on shipped data — this seam lets
+// that bypass be falsified directly with adversarial input.
+func buildEntitySourceRelation(order []string, firstSeen map[string][]DataSourceID) *entitySourceRelation {
+	rel := &entitySourceRelation{byEntity: make(map[string][]DataSourceID, len(order))}
+	for _, key := range order {
+		rel.byEntity[key] = sortedSources(firstSeen[key])
+	}
 	for _, key := range order {
 		for _, src := range rel.byEntity[key] {
 			rel.rows = append(rel.rows, EntitySource{EntityKey: key, SourceID: src})
@@ -285,7 +309,7 @@ func loadEntityIndex() {
 		}
 		return rel.rows[i].SourceID < rel.rows[j].SourceID
 	})
-	entitySourceRel = rel
+	return rel
 }
 
 // sortedSources returns a fresh slice holding the elements of in in ascending

@@ -11,9 +11,15 @@ import (
 // string) means "no source recorded" and is the correct default for any row
 // that has not been assigned a source.
 //
-// This file contains the DataSourceID type and the well-known source constants.
-// The full BCNF provenance types (DataSource, DatasetIngested, EntitySource)
-// and their registry lookup functions live alongside the registry aggregate.
+// This file is the home of the data-source provenance module: the DataSourceID
+// type and well-known source constants; the BCNF provenance types (DataSource
+// dimension, DatasetIngested fact, EntitySource join row); the curated loader for
+// parse/data/datasources.json with its runtime degrade seam; the public lookups
+// (KnownDataSources, DataSourceByID, DatasetIngestedFor, EntitySources); and the
+// codegen FK guards (ValidateDataSourceTable, ValidateEntitySourceTable). The
+// entity↔source join relation itself is built by the registry aggregate in
+// registry.go (loadEntityIndex / buildEntitySourceRelation); EntitySources here
+// reads that relation's per-entity projection.
 type DataSourceID string
 
 const (
@@ -47,8 +53,8 @@ type DataSource struct {
 }
 
 // DatasetIngested records the single current ingest of a data source. The URI is
-// deliberately ABSENT: it is a transitive (URI depends on SourceID via DataSource),
-// so it is reached by joining to DataSource via SourceID rather than duplicated
+// deliberately ABSENT: it is a transitive dependency (URI depends on SourceID via
+// DataSource), so it is reached by joining to DataSource via SourceID rather than duplicated
 // here — this is the BCNF normalization that removes the transitive dependency.
 // The primary key is SourceID (one current ingest per source; the append-only
 // ingest history is deferred to a later schema).
@@ -68,6 +74,16 @@ type DatasetIngested struct {
 // source that attests it. The primary key is the composite (EntityKey, SourceID);
 // an entity attested by N sources has N rows. EntityKey is an EntityRef.String()
 // value; SourceID is a FK to DataSource.
+//
+// Attestation rule (the join's existence condition, applied by the registry
+// aggregate in registry.go's loadEntityIndex): every static row attests
+// DataSourceModelsDev — a row whose Source carrier is empty (DataSourceNone) means
+// the models.dev origin is implicit; a row whose Source names a further, distinct
+// source (e.g. ollama) is a models.dev row ENRICHED with that source's data, so it
+// DUAL-attests BOTH DataSourceModelsDev AND that source. Thus a pure models.dev
+// entity has one row {models.dev} and an ollama-enriched entity has two rows
+// {models.dev, ollama}. The same rule is stated at registry.go's aggregate comment
+// and the parse/data/datasources.json _comment.
 type EntitySource struct {
 	EntityKey string
 	SourceID  DataSourceID
@@ -217,7 +233,7 @@ func parseDataSourceTable(raw []byte) (*dataSourceTable, error) {
 				"bestiary datasource: source %q (#%d): empty uri\n"+
 					"  What: a data-source dimension row has no uri\n"+
 					"  Where: parse/data/datasources.json sources[%d].uri\n"+
-					"  Why: uri is a candidate key and the FK-join target for ingest rows\n"+
+					"  Why: uri is a second candidate key; ingest rows reach it by joining on source_id\n"+
 					"  How to fix: set the canonical fetch endpoint uri",
 				s.ID, i, i,
 			)
@@ -320,9 +336,21 @@ func EntitySources(entityKey string) []DataSourceID {
 // ValidateDataSourceTable loads the curated data-source table and verifies its
 // referential integrity: it returns any load/parse error, and additionally checks
 // that every DatasetIngested.SourceID and every EntitySource.SourceID resolves to a
-// DataSource, and that URIs are unique (the latter is enforced at parse time).
-// Codegen calls this once and aborts on a non-nil result so a dangling source FK is
-// caught at generation time rather than producing an orphan attestation at runtime.
+// DataSource (URI uniqueness is enforced at parse time in parseDataSourceTable).
+//
+// Codegen (cmd/bestiary-gen run()) calls this once, alongside ValidateLineageTable
+// and ValidateQuantVRAMTable, and aborts on a non-nil result. Two FK invariants are
+// caught at generation time rather than baking an orphan provenance row:
+//   - the curated datasources.json is internally sound (no duplicate id/uri, every
+//     ingest source_id present in the dimension); and
+//   - no entity↔source attestation names a source absent from the dimension. The
+//     attestation rows come from the registry COMPILED INTO THIS BINARY (the
+//     previously generated staticModels), and their SourceIDs come from the
+//     attestation rule (models.dev + each row's curated Source). datasources.json is
+//     an INDEPENDENT curated file, so this cross-input check is genuinely
+//     falsifiable: a Source added to the model curation without a matching
+//     datasources.json row is rejected — on the next codegen run after that Source
+//     bakes into staticModels.
 func ValidateDataSourceTable() error {
 	t, err := loadDataSourceTable()
 	if err != nil {
@@ -366,10 +394,22 @@ func validateDataSourceFKs(t *dataSourceTable, rows []EntitySource) error {
 }
 
 // ValidateEntitySourceTable verifies that every EntityKey in the entity↔source join
-// relation resolves to a real registry entity (generalizing the lineage key-resolves
-// guard). Codegen calls this once and aborts on a non-nil result so an attestation
-// keyed to a non-existent entity is caught at generation time. It also surfaces any
-// data-source load error so a degraded relation never passes silently.
+// relation resolves to a real registry entity, and surfaces any data-source load
+// error first via ValidateDataSourceTable.
+//
+// It is deliberately NOT wired into codegen. Unlike the lineage key-resolves guard
+// (which cross-checks an INDEPENDENT curated file against the registry), the
+// entity↔source relation is DERIVED from the registry: loadEntityIndex builds both
+// the relation rows and the entity index from the same scan, so every row's
+// EntityKey is a key of that index by construction and the resolver here cannot
+// fail against the production relation — wiring it into codegen would assert a
+// tautology and misleadingly imply the key FK is enforced at generation. The check
+// is kept as a public, unit-tested guard (its seam, validateEntityKeyFKs, is
+// falsified with a constructed orphan) so it is ready the moment entity↔source rows
+// are sourced INDEPENDENTLY of the entity index (e.g. a curated join file or the
+// SQLite store), at which point the key FK stops being tautological. Until then the
+// genuine codegen FK guard is ValidateDataSourceTable, which cross-checks the
+// independent datasources.json.
 func ValidateEntitySourceTable() error {
 	if err := ValidateDataSourceTable(); err != nil {
 		return err

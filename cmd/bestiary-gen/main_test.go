@@ -1780,6 +1780,35 @@ func TestRun_WritesParseFailuresJSON(t *testing.T) {
 	}
 }
 
+// TestRun_AbortsOnDataSourceValidationError pins the codegen data-source FK guard
+// wiring: run() must invoke the data-source validator BEFORE fetching/generating and
+// abort (returning the wrapped error) when it fails. The guard is swapped for a
+// failing stub via the validateCuratedDataSourceTable seam so the abort path is
+// exercised without mutating the embedded datasources.json. If the validation call
+// were dropped from run(), run() would proceed past it and the returned error would
+// not wrap the sentinel — killing that drop mutant.
+func TestRun_AbortsOnDataSourceValidationError(t *testing.T) {
+	orig := validateCuratedDataSourceTable
+	defer func() { validateCuratedDataSourceTable = orig }()
+
+	sentinel := errors.New("sentinel: bad data-source curation")
+	validateCuratedDataSourceTable = func() error { return sentinel }
+
+	// -no-fetch with an empty cache dir would itself fail at the fetch step; the
+	// data-source guard runs strictly before fetch, so a correctly-wired run() returns
+	// the sentinel-wrapped error and never reaches fetch.
+	err := run([]string{"-no-fetch", "-cache-dir=" + filepath.Join(t.TempDir(), "cache")})
+	if err == nil {
+		t.Fatal("run(): expected abort on data-source validation error, got nil")
+	}
+	if !errors.Is(err, sentinel) {
+		t.Fatalf("run(): error does not wrap the data-source validation failure (guard not wired before fetch?): %v", err)
+	}
+	if !strings.Contains(err.Error(), "validate curated data-source table") {
+		t.Fatalf("run(): error missing the data-source guard context: %v", err)
+	}
+}
+
 // --------------------------------------------------------------------------
 // Tests: deterministic + reproducible codegen (ordering, collision-suffix, up-to-date guard)
 // --------------------------------------------------------------------------

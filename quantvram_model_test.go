@@ -184,8 +184,15 @@ func TestCloneEntity_SourcesRegistryPath(t *testing.T) {
 		if !hasModelsDev {
 			t.Errorf("entity %q: Sources = %v, want it to include models.dev", e.Ref.String(), e.Sources)
 		}
-		// Mutating the returned projection must not corrupt the registry (clone seam).
-		e.Sources[0] = "mutated-by-test"
+	}
+
+	// Clone-isolation probe, ONCE (not per-entity). Mutating a returned projection
+	// must not corrupt the registry. Re-fetch and compare the SAME index the mutation
+	// targeted (got[0]) — the previous per-entity form mutated e.Sources[0] for every
+	// entity but only ever inspected got[0], so a leak from entity i>0 (visible at
+	// got[i]) could never fire, and it re-cloned the whole registry O(n) times.
+	if len(entities[0].Sources) > 0 {
+		entities[0].Sources[0] = "mutated-by-test"
 		if got := bestiary.Entities(); got[0].Sources[0] == "mutated-by-test" {
 			t.Fatal("Entities() Sources slice is not clone-isolated: a caller mutation leaked into the registry")
 		}

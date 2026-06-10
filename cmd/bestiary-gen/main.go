@@ -444,6 +444,13 @@ func applyFilter(models []bestiary.ModelInfo, only, except []string) []bestiary.
 	return out
 }
 
+// validateCuratedDataSourceTable is the codegen data-source FK guard, indirected
+// through a package var so the run() abort-on-bad-curation wiring is falsifiable in
+// a test (swap it for a failing stub and assert run() returns the wrapped error)
+// without mutating the embedded datasources.json. Production always uses the real
+// guard.
+var validateCuratedDataSourceTable = bestiary.ValidateDataSourceTable
+
 func run(args []string) error {
 	flags, err := parseFlags(args)
 	if err != nil {
@@ -466,6 +473,24 @@ func run(args []string) error {
 	// baking wrong VRAM estimates or provenance into the generated static data.
 	if err := bestiary.ValidateQuantVRAMTable(); err != nil {
 		return fmt.Errorf("validate curated quant-VRAM table: %w", err)
+	}
+
+	// Fail loudly on bad data-source curation BEFORE generating anything: a duplicate
+	// source id/uri, an ingest source_id absent from the dimension, or an entity↔source
+	// attestation naming a source absent from the curated datasources.json is a curation
+	// bug that must abort codegen rather than baking an orphan provenance row. (The
+	// sibling entity-key FK is NOT guarded here: the entity↔source relation is derived
+	// from the registry, so that key check is tautological at codegen — see
+	// ValidateEntitySourceTable.)
+	// Fail loudly on bad data-source curation BEFORE generating anything: a duplicate
+	// source id/uri, an ingest source_id absent from the dimension, or an entity↔source
+	// attestation naming a source absent from the curated datasources.json is a curation
+	// bug that must abort codegen rather than baking an orphan provenance row. (The
+	// sibling entity-key FK is NOT guarded here: the entity↔source relation is derived
+	// from the registry, so that key check is tautological at codegen — see
+	// ValidateEntitySourceTable.)
+	if err := validateCuratedDataSourceTable(); err != nil {
+		return fmt.Errorf("validate curated data-source table: %w", err)
 	}
 
 	rawJSON, models, providerMeta, parseFailures, err := fetchModelsWithRaw(ctx, flags.cacheDir, flags.noFetch)
