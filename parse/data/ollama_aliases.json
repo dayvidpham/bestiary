@@ -1,0 +1,13 @@
+{
+  "_comment": "Curated Ollama-ID -> entity-tuple rescue table for the offline Ollama refresh tool (cmd/bestiary-ollama). It is consulted ONLY when the mechanical join (DetectQuantization -> name/tag decomposition via the production parse pipeline -> EntityRef key match against the models.dev catalog) fails to find a catalog model. Each alias maps an Ollama ID (the quant-STRIPPED form is matched first, then the verbatim form) onto the canonical (family, variant, version, param_size, modifier) tuple so the tool can rebuild the EntityRef join key and re-match the catalog. KEYING: keys are lowercased Ollama IDs; param_size is a canonical token (ParseParamSize shape, e.g. '70b'); modifier is the IDENTITY-class modifier list (EntityModifiers projection). This file is hand-curated seed data; the tool never rewrites it. SEED RATIONALE: Ollama's default size tags (e.g. 'llama3.1:8b') are the instruction-tuned weights but OMIT the '-instruct' modifier that models.dev carries on 'meta-llama/Meta-Llama-3.1-8B-Instruct', so the mechanical decomposition produces 'llama@3.1#8b' while the catalog entity is 'llama@3.1#8b{instruct}' — a genuine residual the alias rescues by re-adding the instruct modifier.",
+  "schema_version": 1,
+  "aliases": {
+    "llama3.1:8b": {
+      "family": "llama",
+      "variant": "",
+      "version": "3.1",
+      "param_size": "8b",
+      "modifier": ["instruct"]
+    }
+  }
+}
