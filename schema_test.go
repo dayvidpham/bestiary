@@ -804,10 +804,20 @@ func TestSchemaDefs_V024_DeepConformance(t *testing.T) {
 	//       (catches a dropped or renamed schema property — the mutation guard), and
 	//   (b) every declared property is present in the marshaled production output
 	//       (catches a Go field that drifted away from the schema).
+	//
+	// expectTypes pins each property's DECLARED schema "type" against the Go
+	// contract so a type-flip in the schema (e.g. DatasetIngested.ParserSchema
+	// integer->string) is falsifiable. Values are the canonical type rendering
+	// used by canonSchemaType: a scalar keyword ("string"/"integer"/"number"/
+	// "boolean"/"array"), a sorted "|"-joined union for nullable arrays
+	// ("array|null"), or the sentinel "$ref" for $ref-valued properties.
+	// Polymorphic oneOf properties (the nullable-cost numbers) carry no plain
+	// "type" node and are deliberately omitted (explicit allowlist).
 	type deepCheck struct {
 		defName     string
 		value       any
 		expectProps []string
+		expectTypes map[string]string
 	}
 	cost := 2.0
 	checks := []deepCheck{
@@ -825,6 +835,17 @@ func TestSchemaDefs_V024_DeepConformance(t *testing.T) {
 				VRAMEstimatePartial: false,
 			},
 			expectProps: []string{"Quant", "QuantRaw", "WeightsBytes", "VRAMBytes", "VRAMContextTokens", "Layers", "KVHeads", "HeadDim", "VRAMEstimatePartial"},
+			expectTypes: map[string]string{
+				"Quant":               "$ref",
+				"QuantRaw":            "string",
+				"WeightsBytes":        "integer",
+				"VRAMBytes":           "integer",
+				"VRAMContextTokens":   "integer",
+				"Layers":              "integer",
+				"KVHeads":             "integer",
+				"HeadDim":             "integer",
+				"VRAMEstimatePartial": "boolean",
+			},
 		},
 		{
 			defName: "ProviderInstance",
@@ -842,6 +863,16 @@ func TestSchemaDefs_V024_DeepConformance(t *testing.T) {
 				Source: bestiary.DataSourceOllama,
 			},
 			expectProps: []string{"ID", "Provider", "Host", "CostInputPerMTok", "CostOutputPerMTok", "ContextWindow", "MaxOutput", "QuantVRAM", "Source"},
+			expectTypes: map[string]string{
+				"ID":       "string",
+				"Provider": "string",
+				"Host":     "string",
+				// CostInputPerMTok / CostOutputPerMTok: oneOf{number,null} — no plain "type" node (allowlisted).
+				"ContextWindow": "integer",
+				"MaxOutput":     "integer",
+				"QuantVRAM":     "array|null",
+				"Source":        "string",
+			},
 		},
 		{
 			defName: "CapabilityUnion",
@@ -849,6 +880,15 @@ func TestSchemaDefs_V024_DeepConformance(t *testing.T) {
 				Reasoning: true, ToolCall: true, OpenWeights: true,
 			},
 			expectProps: []string{"Reasoning", "ToolCall", "Attachment", "Temperature", "StructuredOutput", "Interleaved", "OpenWeights"},
+			expectTypes: map[string]string{
+				"Reasoning":        "boolean",
+				"ToolCall":         "boolean",
+				"Attachment":       "boolean",
+				"Temperature":      "boolean",
+				"StructuredOutput": "boolean",
+				"Interleaved":      "boolean",
+				"OpenWeights":      "boolean",
+			},
 		},
 		{
 			defName: "EntityRef",
@@ -856,6 +896,13 @@ func TestSchemaDefs_V024_DeepConformance(t *testing.T) {
 				Family: "llama", Version: "3.3", ParamSize: "70b", Modifier: []string{"instruct"},
 			},
 			expectProps: []string{"Family", "Variant", "Version", "ParamSize", "Modifier"},
+			expectTypes: map[string]string{
+				"Family":    "string",
+				"Variant":   "string",
+				"Version":   "string",
+				"ParamSize": "string",
+				"Modifier":  "array|null",
+			},
 		},
 		{
 			defName: "DataSource",
@@ -863,6 +910,11 @@ func TestSchemaDefs_V024_DeepConformance(t *testing.T) {
 				ID: bestiary.DataSourceOllama, URI: "https://ollama.com", CanonicalName: "Ollama",
 			},
 			expectProps: []string{"ID", "URI", "CanonicalName"},
+			expectTypes: map[string]string{
+				"ID":            "string",
+				"URI":           "string",
+				"CanonicalName": "string",
+			},
 		},
 		{
 			defName: "DatasetIngested",
@@ -870,6 +922,11 @@ func TestSchemaDefs_V024_DeepConformance(t *testing.T) {
 				SourceID: bestiary.DataSourceOllama, IngestedAt: "2026-06-01T00:00:00Z", ParserSchema: 1,
 			},
 			expectProps: []string{"SourceID", "IngestedAt", "ParserSchema"},
+			expectTypes: map[string]string{
+				"SourceID":     "string",
+				"IngestedAt":   "string",
+				"ParserSchema": "integer",
+			},
 		},
 		{
 			defName: "EntitySource",
@@ -877,6 +934,10 @@ func TestSchemaDefs_V024_DeepConformance(t *testing.T) {
 				EntityKey: "llama@3.3#70b{instruct}", SourceID: bestiary.DataSourceOllama,
 			},
 			expectProps: []string{"EntityKey", "SourceID"},
+			expectTypes: map[string]string{
+				"EntityKey": "string",
+				"SourceID":  "string",
+			},
 		},
 		{
 			defName: "Entity",
@@ -885,6 +946,19 @@ func TestSchemaDefs_V024_DeepConformance(t *testing.T) {
 				Sources: []bestiary.DataSourceID{bestiary.DataSourceModelsDev, bestiary.DataSourceOllama},
 			},
 			expectProps: []string{"Ref", "Instances", "Lineage", "Providers", "Hosts", "PriceInputRange", "PriceOutputRange", "ContextRange", "MaxOutputRange", "Capabilities", "Sources"},
+			expectTypes: map[string]string{
+				"Ref":              "$ref",
+				"Instances":        "array|null",
+				"Lineage":          "array|null",
+				"Providers":        "array|null",
+				"Hosts":            "array|null",
+				"PriceInputRange":  "array",
+				"PriceOutputRange": "array",
+				"ContextRange":     "array",
+				"MaxOutputRange":   "array",
+				"Capabilities":     "$ref",
+				"Sources":          "array|null",
+			},
 		},
 	}
 
@@ -916,8 +990,12 @@ func TestSchemaDefs_V024_DeepConformance(t *testing.T) {
 			t.Errorf("json.Marshal(%s) failed: %v", c.defName, err)
 			continue
 		}
+		// Decode with UseNumber so numeric JSON values arrive as json.Number,
+		// letting the integer/number type check below distinguish "42" from "42.0".
 		var out map[string]any
-		if err := json.Unmarshal(enc, &out); err != nil {
+		dec := json.NewDecoder(bytes.NewReader(enc))
+		dec.UseNumber()
+		if err := dec.Decode(&out); err != nil {
 			t.Errorf("could not unmarshal %s JSON: %v", c.defName, err)
 			continue
 		}
@@ -926,6 +1004,80 @@ func TestSchemaDefs_V024_DeepConformance(t *testing.T) {
 				t.Errorf("%s JSON output is missing schema $defs.%s property %q;\n"+
 					"  how to fix: ensure bestiary.%s has an exported field %q matching the schema $def",
 					c.defName, c.defName, prop, c.defName, prop)
+			}
+		}
+		// (c) Pin the DECLARED schema "type" of every checked property against the
+		// Go contract, and cross-check the marshaled value's JSON kind. This is what
+		// makes a type-flip (e.g. ParserSchema integer->string) a falsifier: the
+		// presence-only checks above never read the declared "type".
+		for prop, want := range c.expectTypes {
+			raw, ok := def.Properties[prop]
+			if !ok {
+				continue // a missing property is already reported by the presence check above
+			}
+			var node struct {
+				Type json.RawMessage `json:"type"`
+				Ref  string          `json:"$ref"`
+			}
+			if err := json.Unmarshal(raw, &node); err != nil {
+				t.Errorf("could not decode $defs.%s.%s for type check: %v", c.defName, prop, err)
+				continue
+			}
+			if want == "$ref" {
+				if node.Ref == "" {
+					t.Errorf("$defs.%s.%s expected to be a $ref property, but no \"$ref\" is declared;\n"+
+						"  how to fix: restore the \"$ref\" for $defs.%s.%s in bestiary.schema.json",
+						c.defName, prop, c.defName, prop)
+				}
+				continue
+			}
+			got, ok := canonSchemaType(node.Type)
+			if !ok {
+				t.Errorf("$defs.%s.%s has no decodable \"type\" node (expected %q);\n"+
+					"  how to fix: declare \"type\": %q on $defs.%s.%s",
+					c.defName, prop, want, want, c.defName, prop)
+				continue
+			}
+			if got != want {
+				t.Errorf("$defs.%s.%s declares type %q, want %q;\n"+
+					"  what went wrong: the schema property type drifted from the Go contract\n"+
+					"  why: the published 0.2.0 schema type no longer matches what the production type marshals\n"+
+					"  impact: a conforming validator would REJECT valid bestiary records carrying this field\n"+
+					"  how to fix: set the \"type\" of $defs.%s.%s back to %q in bestiary.schema.json",
+					c.defName, prop, got, want, c.defName, prop, want)
+			}
+			// Cross-check the marshaled production value's JSON kind for this property,
+			// when present and non-null. Catches Go-side drift (a field whose Go type
+			// no longer marshals to the declared schema type). json.Number lets the
+			// integer branch assert the value carries no decimal point.
+			v, present := out[prop]
+			if !present || v == nil {
+				continue // null branch of a nullable union, or an absent optional — schema-side check above stands
+			}
+			switch want {
+			case "string":
+				if _, ok := v.(string); !ok {
+					t.Errorf("$defs.%s.%s: marshaled value is %T, want a JSON string", c.defName, prop, v)
+				}
+			case "boolean":
+				if _, ok := v.(bool); !ok {
+					t.Errorf("$defs.%s.%s: marshaled value is %T, want a JSON boolean", c.defName, prop, v)
+				}
+			case "integer":
+				n, ok := v.(json.Number)
+				if !ok {
+					t.Errorf("$defs.%s.%s: marshaled value is %T, want a JSON integer", c.defName, prop, v)
+				} else if strings.ContainsAny(n.String(), ".eE") {
+					t.Errorf("$defs.%s.%s: marshaled value %q is not an integer (schema declares \"integer\")", c.defName, prop, n.String())
+				}
+			case "number":
+				if _, ok := v.(json.Number); !ok {
+					t.Errorf("$defs.%s.%s: marshaled value is %T, want a JSON number", c.defName, prop, v)
+				}
+			case "array", "array|null":
+				if _, ok := v.([]any); !ok {
+					t.Errorf("$defs.%s.%s: marshaled value is %T, want a JSON array", c.defName, prop, v)
+				}
 			}
 		}
 		// Where the marshaled value carries a Quant token, assert it is a member of
@@ -939,6 +1091,108 @@ func TestSchemaDefs_V024_DeepConformance(t *testing.T) {
 				t.Errorf("QuantVRAM.Quant serialized as %T, want a JSON string (Quantization enum)", out["Quant"])
 			}
 		}
+	}
+}
+
+// canonSchemaType renders a JSON-Schema "type" node — which may be a single
+// string ("integer") or an array of strings (["array","null"]) — as a stable,
+// comparable canonical string. Array forms are sorted and "|"-joined so member
+// order in the schema document is immaterial (["array","null"] and
+// ["null","array"] both render "array|null"). It returns ok=false when the raw
+// node is empty or not a string/[]string (e.g. a property that uses oneOf or
+// $ref instead of a plain "type").
+func canonSchemaType(raw json.RawMessage) (string, bool) {
+	if len(raw) == 0 {
+		return "", false
+	}
+	var single string
+	if err := json.Unmarshal(raw, &single); err == nil {
+		return single, true
+	}
+	var many []string
+	if err := json.Unmarshal(raw, &many); err == nil && len(many) > 0 {
+		s := append([]string(nil), many...)
+		slices.Sort(s)
+		return strings.Join(s, "|"), true
+	}
+	return "", false
+}
+
+// TestSchemaDefs_Quantization_EnumExactSet pins the published
+// $defs.Quantization.enum to be EXACTLY the set of canonical wire names produced
+// by marshaling every member of the closed Go enum (QuantizationNone ..
+// QuantizationOther). It asserts set equality in BOTH directions and self-extends
+// as the Go enum grows — adding a new Quantization constant automatically widens
+// the expected set with no test edit.
+//
+// This closes the gap where the prior deep-check only verified the ONE marshaled
+// value it exercised (q4_k_m) was a member: 35 of 36 members could silently
+// vanish from the schema, or any number of phantom members could be added, with
+// the suite still green. Both are now falsifiers:
+//   - a member dropped from the schema (e.g. iq2_xxs) fails direction 1 — a
+//     conforming validator would reject valid CLI output quantized at that format;
+//   - a phantom member added to the schema (e.g. q9_zz_bogus) fails direction 2 —
+//     a validator would falsely admit a token Quantization.UnmarshalText refuses.
+func TestSchemaDefs_Quantization_EnumExactSet(t *testing.T) {
+	schemaBytes, err := os.ReadFile("bestiary.schema.json")
+	if err != nil {
+		t.Fatalf("could not read bestiary.schema.json: %v", err)
+	}
+	var schemaDefs struct {
+		Defs map[string]struct {
+			Enum []string `json:"enum"`
+		} `json:"$defs"`
+	}
+	if err := json.Unmarshal(schemaBytes, &schemaDefs); err != nil {
+		t.Fatalf("could not unmarshal $defs from bestiary.schema.json: %v", err)
+	}
+	quantDef, ok := schemaDefs.Defs["Quantization"]
+	if !ok || len(quantDef.Enum) == 0 {
+		t.Fatalf("bestiary.schema.json $defs.Quantization missing or has no enum")
+	}
+
+	// Authoritative set: marshal every member of the closed Go enum. Iterating
+	// QuantizationNone..QuantizationOther makes this self-extend when the enum grows.
+	goNames := make([]string, 0, int(bestiary.QuantizationOther)+1)
+	for q := bestiary.QuantizationNone; q <= bestiary.QuantizationOther; q++ {
+		b, err := q.MarshalText()
+		if err != nil {
+			t.Fatalf("Quantization(%d).MarshalText() failed: %v", int(q), err)
+		}
+		goNames = append(goNames, string(b))
+	}
+
+	// Direction 1: every Go wire name must appear in the schema enum.
+	for _, name := range goNames {
+		if !slices.Contains(quantDef.Enum, name) {
+			t.Errorf("schema $defs.Quantization.enum is MISSING Go wire name %q;\n"+
+				"  what went wrong: the closed Go enum marshals %q but the published schema enum omits it\n"+
+				"  why: a member was dropped from (or never added to) $defs.Quantization.enum\n"+
+				"  impact: a conforming validator would REJECT valid CLI output quantized at %q\n"+
+				"  how to fix: add %q to $defs.Quantization.enum in bestiary.schema.json",
+				name, name, name, name)
+		}
+	}
+
+	// Direction 2: every schema enum member must be produced by some Go value.
+	for _, member := range quantDef.Enum {
+		if !slices.Contains(goNames, member) {
+			t.Errorf("schema $defs.Quantization.enum contains PHANTOM member %q with no Go counterpart;\n"+
+				"  what went wrong: the schema enum lists %q but no Quantization constant marshals to it\n"+
+				"  why: a spurious member was added to $defs.Quantization.enum\n"+
+				"  impact: a validator would falsely ADMIT %q, which Quantization.UnmarshalText then refuses\n"+
+				"  how to fix: remove %q from $defs.Quantization.enum, or add a matching Go constant",
+				member, member, member, member)
+		}
+	}
+
+	// Exact set: equal cardinality after both subset checks ⇒ set equality, and
+	// also catches a duplicated schema member (which both subset checks would miss).
+	if len(quantDef.Enum) != len(goNames) {
+		t.Errorf("schema $defs.Quantization.enum has %d members, the Go enum has %d;\n"+
+			"  the schema enum must be EXACTLY the MarshalText set over QuantizationNone..QuantizationOther\n"+
+			"  (a count mismatch with all members present indicates a duplicate member in the schema enum)",
+			len(quantDef.Enum), len(goNames))
 	}
 }
 

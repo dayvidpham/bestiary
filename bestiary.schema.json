@@ -431,7 +431,45 @@
         "iq1_s", "iq1_m", "iq2_xxs", "iq2_xs", "iq2_s", "iq2_m", "iq3_xxs", "iq3_xs", "iq3_s", "iq3_m", "iq4_xs", "iq4_nl",
         "awq", "gptq", "int8", "int4",
         "other"
-      ]
+      ],
+      "x-enum-descriptions": {
+        "none": "Unquantized zero value: no quantization format specified.",
+        "f16": "16-bit IEEE half-precision float; 16 bpw.",
+        "bf16": "16-bit bfloat (brain float); 16 bpw.",
+        "f32": "32-bit IEEE single-precision float; 32 bpw.",
+        "q4_0": "Legacy GGUF 4-bit block quant, scheme 0; ~4.5 bpw (llama.cpp).",
+        "q4_1": "Legacy GGUF 4-bit block quant, scheme 1; ~5.0 bpw (llama.cpp).",
+        "q5_0": "Legacy GGUF 5-bit block quant, scheme 0; ~5.5 bpw (llama.cpp).",
+        "q5_1": "Legacy GGUF 5-bit block quant, scheme 1; ~6.0 bpw (llama.cpp).",
+        "q8_0": "Legacy GGUF 8-bit block quant, scheme 0; 8.5 bpw (llama.cpp).",
+        "q2_k": "2-bit k-quant (super-block); ~3.16 bpw (llama.cpp).",
+        "q2_k_s": "2-bit k-quant, small super-block; ~2.97 bpw (llama.cpp).",
+        "q3_k_s": "3-bit k-quant, small super-block; ~3.64 bpw (llama.cpp).",
+        "q3_k_m": "3-bit k-quant, medium super-block; ~4.0 bpw (llama.cpp).",
+        "q3_k_l": "3-bit k-quant, large super-block; ~4.3 bpw (llama.cpp).",
+        "q4_k_s": "4-bit k-quant, small super-block; ~4.67 bpw (llama.cpp).",
+        "q4_k_m": "4-bit k-quant, medium super-block (most popular); ~4.89 bpw (llama.cpp).",
+        "q5_k_s": "5-bit k-quant, small super-block; ~5.57 bpw (llama.cpp).",
+        "q5_k_m": "5-bit k-quant, medium super-block; ~5.7 bpw (llama.cpp).",
+        "q6_k": "6-bit k-quant; ~6.56 bpw (llama.cpp).",
+        "iq1_s": "1-bit i-quant (importance-matrix), small; ~2.0 bpw (llama.cpp).",
+        "iq1_m": "1-bit i-quant, medium; ~2.15 bpw (llama.cpp).",
+        "iq2_xxs": "2-bit i-quant, extra-extra-small; ~2.38 bpw (llama.cpp).",
+        "iq2_xs": "2-bit i-quant, extra-small; ~2.59 bpw (llama.cpp).",
+        "iq2_s": "2-bit i-quant, small; ~2.74 bpw (llama.cpp).",
+        "iq2_m": "2-bit i-quant, medium; ~2.93 bpw (llama.cpp).",
+        "iq3_xxs": "3-bit i-quant, extra-extra-small; ~3.25 bpw (llama.cpp).",
+        "iq3_xs": "3-bit i-quant, extra-small; ~3.5 bpw (llama.cpp).",
+        "iq3_s": "3-bit i-quant, small; ~3.66 bpw (llama.cpp).",
+        "iq3_m": "3-bit i-quant, medium; ~3.76 bpw (llama.cpp).",
+        "iq4_xs": "4-bit i-quant, extra-small; ~4.46 bpw (llama.cpp).",
+        "iq4_nl": "4-bit i-quant, non-linear (nearest-lookup); ~4.68 bpw (llama.cpp).",
+        "awq": "Reserved HF-ecosystem: Activation-aware Weight Quantization (4-bit); bpw config-dependent.",
+        "gptq": "Reserved HF-ecosystem: GPTQ post-training quantization (3/4/8-bit); bpw config-dependent.",
+        "int8": "Reserved HF-ecosystem: bitsandbytes 8-bit integer; bpw config-dependent.",
+        "int4": "Reserved HF-ecosystem: bitsandbytes 4-bit integer; bpw config-dependent.",
+        "other": "Fail-safe bucket for a recognized-but-unmapped quantization tag; raw token carried on the instance."
+      }
     },
     "ProviderInstance": {
       "title": "ProviderInstance",
@@ -573,7 +611,7 @@
           "$ref": "#/$defs/CapabilityUnion"
         },
         "Sources": {
-          "description": "DERIVED sorted read projection of the entity-source relation (the distinct data sources that attest this entity). NOT a source of truth — a convenience view over the EntitySource join table. null until the registry aggregate populates it. Added in schema 0.2.0.",
+          "description": "Derived, sorted set of data sources attesting this entity's instances. Always contains at least \"models.dev\" for catalog entities. A read projection over the EntitySource join table, not a source of truth. Added in schema 0.2.0.",
           "type": ["array", "null"],
           "items": { "type": "string" }
         }
