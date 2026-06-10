@@ -489,22 +489,31 @@ func filterInstancesByQuant(insts []bestiary.ProviderInstance, q bestiary.Quanti
 	return out
 }
 
-// sourceProvenance is one attesting data source for an entity, joined across the
-// BCNF provenance tables. URI and CanonicalName come from the DataSource dimension
-// (reached by FK on Source) — the uri is obtained ONLY via this join and is never
-// duplicated onto the ingest row. IngestedAt and ParserSchema come from the
-// DatasetIngested current-ingest fact for the same source.
+// sourceProvenance is the sources subcommand's per-source output record: the
+// DataSource dimension row (ID/URI/CanonicalName — reached by the FK join on the
+// source id; the uri is obtained ONLY via this join and is never duplicated onto
+// the ingest row) composed with the two scalar facts of its DatasetIngested
+// current ingest (IngestedAt/ParserSchema). The source id appears once, as the
+// embedded DataSource.ID primary key — DatasetIngested.SourceID would be the same
+// value, so it is omitted to avoid a redundant key.
+//
+// WIRE-SHAPE CONSTRAINT: this record marshals with the published 0.2.0 $defs field
+// names (PascalCase: ID, URI, CanonicalName, IngestedAt, ParserSchema) — the same
+// spelling every sibling subcommand (list/show/providers) emits and the spelling
+// the schema tests pin. It deliberately embeds the production bestiary.DataSource
+// type so any rename of those fields propagates here automatically. Do NOT add
+// snake_case json tags: the snake_case shapes elsewhere in the repo are INGEST
+// wire types, not output types, and a divergent output casing would be a breaking
+// change for CLI consumers.
 type sourceProvenance struct {
-	Source        bestiary.DataSourceID `json:"source"`
-	URI           string                `json:"uri"`
-	CanonicalName string                `json:"canonical_name"`
-	IngestedAt    string                `json:"ingested_at"`
-	ParserSchema  int                   `json:"parser_schema"`
+	bestiary.DataSource
+	IngestedAt   string
+	ParserSchema int
 }
 
 // sourceProvenanceRows builds the joined per-source provenance view for an
 // entity's attesting sources. For each source id it resolves the DataSource
-// dimension (uri/canonical-name) via the DataSourceByID FK join and the
+// dimension (id/uri/canonical-name) via the DataSourceByID FK join and the
 // DatasetIngested current ingest via DatasetIngestedFor. The result is sorted
 // ascending by source id so output ordering is deterministic regardless of the
 // order in which Entity.Sources was supplied. A source that fails to resolve (a
@@ -513,10 +522,10 @@ type sourceProvenance struct {
 func sourceProvenanceRows(sources []bestiary.DataSourceID) []sourceProvenance {
 	rows := make([]sourceProvenance, 0, len(sources))
 	for _, id := range sources {
-		sp := sourceProvenance{Source: id}
+		// Seed ID so a degraded (FK-miss) record still carries the source id.
+		sp := sourceProvenance{DataSource: bestiary.DataSource{ID: id}}
 		if ds, ok := bestiary.DataSourceByID(id); ok {
-			sp.URI = ds.URI
-			sp.CanonicalName = ds.CanonicalName
+			sp.DataSource = ds
 		}
 		if di, ok := bestiary.DatasetIngestedFor(id); ok {
 			sp.IngestedAt = di.IngestedAt
@@ -525,7 +534,7 @@ func sourceProvenanceRows(sources []bestiary.DataSourceID) []sourceProvenance {
 		rows = append(rows, sp)
 	}
 	sort.Slice(rows, func(i, j int) bool {
-		return rows[i].Source < rows[j].Source
+		return rows[i].ID < rows[j].ID
 	})
 	return rows
 }
@@ -538,7 +547,7 @@ func writeSourceTable(w io.Writer, rows []sourceProvenance) {
 	fmt.Fprintf(w, "  %-12s %-34s %-22s %8s\n", "SOURCE", "URI", "INGESTED", "PARSER")
 	for _, r := range rows {
 		fmt.Fprintf(w, "  %-12s %-34s %-22s %8d\n",
-			string(r.Source), orDash(r.URI), orDash(r.IngestedAt), r.ParserSchema)
+			string(r.ID), orDash(r.URI), orDash(r.IngestedAt), r.ParserSchema)
 	}
 }
 

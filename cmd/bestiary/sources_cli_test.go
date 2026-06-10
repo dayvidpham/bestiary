@@ -18,7 +18,7 @@ import (
 const sizedCuratedKey = "llama@3.3#70b{instruct}"
 
 // requireSizedEntity fetches the curated sized entity or fails loudly with a
-// regen hint — the whole slice's behaviour rides on this baked data.
+// regen hint — these tests ride on this baked data.
 func requireSizedEntity(t *testing.T) bestiary.Entity {
 	t.Helper()
 	e, ok := lookupEntity(sizedCuratedKey)
@@ -50,12 +50,15 @@ func TestRun_Sources_JSON_SortedJoined(t *testing.T) {
 		t.Fatalf("run sources %q returned error: %v", sizedCuratedKey, runErr)
 	}
 
+	// The wire shape is locked to the published 0.2.0 $defs field names (PascalCase),
+	// decoded here with explicit json tags so a snake_case regression (e.g. retagging
+	// a field "uri") leaves these fields empty and fails the join assertions below.
 	var got []struct {
-		Source        string `json:"source"`
-		URI           string `json:"uri"`
-		CanonicalName string `json:"canonical_name"`
-		IngestedAt    string `json:"ingested_at"`
-		ParserSchema  int    `json:"parser_schema"`
+		ID            string `json:"ID"`
+		URI           string `json:"URI"`
+		CanonicalName string `json:"CanonicalName"`
+		IngestedAt    string `json:"IngestedAt"`
+		ParserSchema  int    `json:"ParserSchema"`
 	}
 	if err := json.Unmarshal([]byte(out), &got); err != nil {
 		t.Fatalf("sources json did not parse: %v\noutput:\n%s", err, out)
@@ -65,40 +68,54 @@ func TestRun_Sources_JSON_SortedJoined(t *testing.T) {
 		t.Fatalf("sources json has %d records, want %d (one per attesting source)", len(got), len(ent.Sources))
 	}
 
+	// Pin the exact PascalCase wire keys and forbid the snake_case spelling outright.
+	// This is the falsifier for the snake-case-regression mutant: renaming any one
+	// output field back to snake_case trips one of these assertions.
+	for _, key := range []string{`"ID"`, `"URI"`, `"CanonicalName"`, `"IngestedAt"`, `"ParserSchema"`} {
+		if !strings.Contains(out, key) {
+			t.Errorf("sources json missing published PascalCase key %s; got:\n%s", key, out)
+		}
+	}
+	for _, key := range []string{`"source"`, `"uri"`, `"canonical_name"`, `"ingested_at"`, `"parser_schema"`} {
+		if strings.Contains(out, key) {
+			t.Errorf("sources json carries divergent snake_case key %s; output must match the $defs PascalCase spelling; got:\n%s", key, out)
+		}
+	}
+
 	// Sorted ascending by source id (kills the drop-the-sort mutant).
 	order := make([]string, len(got))
 	for i, r := range got {
-		order[i] = r.Source
+		order[i] = r.ID
 	}
-	if !sort.SliceIsSorted(got, func(i, j int) bool { return got[i].Source < got[j].Source }) {
+	if !sort.SliceIsSorted(got, func(i, j int) bool { return got[i].ID < got[j].ID }) {
 		t.Errorf("sources records are not sorted ascending by source id; got order: %v", order)
 	}
 
 	// Each record's join fields must equal the values reached via the FK join —
 	// this is what catches a hardcoded/duplicated uri.
 	for _, r := range got {
-		ds, ok := bestiary.DataSourceByID(bestiary.DataSourceID(r.Source))
+		ds, ok := bestiary.DataSourceByID(bestiary.DataSourceID(r.ID))
 		if !ok {
-			t.Errorf("source %q in output does not resolve via DataSourceByID (FK join broken)", r.Source)
+			t.Errorf("source %q in output does not resolve via DataSourceByID (FK join broken)", r.ID)
 			continue
 		}
 		if r.URI != ds.URI {
-			t.Errorf("source %q uri = %q, want %q (must come from the DataSourceByID join, not a hardcoded value)",
-				r.Source, r.URI, ds.URI)
+			t.Errorf("source %q URI = %q, want %q (must come from the DataSourceByID join, not a hardcoded value)",
+				r.ID, r.URI, ds.URI)
 		}
 		if r.CanonicalName != ds.CanonicalName {
-			t.Errorf("source %q canonical_name = %q, want %q", r.Source, r.CanonicalName, ds.CanonicalName)
+			t.Errorf("source %q CanonicalName = %q, want %q", r.ID, r.CanonicalName, ds.CanonicalName)
 		}
-		di, ok := bestiary.DatasetIngestedFor(bestiary.DataSourceID(r.Source))
+		di, ok := bestiary.DatasetIngestedFor(bestiary.DataSourceID(r.ID))
 		if !ok {
-			t.Errorf("source %q has no DatasetIngested (join broken)", r.Source)
+			t.Errorf("source %q has no DatasetIngested (join broken)", r.ID)
 			continue
 		}
 		if r.IngestedAt != di.IngestedAt {
-			t.Errorf("source %q ingested_at = %q, want %q", r.Source, r.IngestedAt, di.IngestedAt)
+			t.Errorf("source %q IngestedAt = %q, want %q", r.ID, r.IngestedAt, di.IngestedAt)
 		}
 		if r.ParserSchema != di.ParserSchema {
-			t.Errorf("source %q parser_schema = %d, want %d", r.Source, r.ParserSchema, di.ParserSchema)
+			t.Errorf("source %q ParserSchema = %d, want %d", r.ID, r.ParserSchema, di.ParserSchema)
 		}
 	}
 }
@@ -168,8 +185,8 @@ func TestRun_Sources_SingleSource(t *testing.T) {
 	if len(got) != 1 {
 		t.Fatalf("models.dev-only entity %q produced %d source records, want 1", key, len(got))
 	}
-	if got[0]["source"] != string(bestiary.DataSourceModelsDev) {
-		t.Errorf("single source = %v, want %q", got[0]["source"], bestiary.DataSourceModelsDev)
+	if got[0]["ID"] != string(bestiary.DataSourceModelsDev) {
+		t.Errorf("single source ID = %v, want %q", got[0]["ID"], bestiary.DataSourceModelsDev)
 	}
 }
 
@@ -232,20 +249,20 @@ func TestSourceProvenanceRows_SortsAndJoins(t *testing.T) {
 	if len(rows) != 2 {
 		t.Fatalf("sourceProvenanceRows returned %d rows, want 2", len(rows))
 	}
-	if rows[0].Source != bestiary.DataSourceModelsDev || rows[1].Source != bestiary.DataSourceOllama {
+	if rows[0].ID != bestiary.DataSourceModelsDev || rows[1].ID != bestiary.DataSourceOllama {
 		t.Fatalf("rows not sorted ascending: got [%s, %s], want [models.dev, ollama]",
-			rows[0].Source, rows[1].Source)
+			rows[0].ID, rows[1].ID)
 	}
 	for _, r := range rows {
-		ds, _ := bestiary.DataSourceByID(r.Source)
+		ds, _ := bestiary.DataSourceByID(r.ID)
 		if r.URI != ds.URI || r.CanonicalName != ds.CanonicalName {
 			t.Errorf("row %q join mismatch: uri=%q/%q name=%q/%q",
-				r.Source, r.URI, ds.URI, r.CanonicalName, ds.CanonicalName)
+				r.ID, r.URI, ds.URI, r.CanonicalName, ds.CanonicalName)
 		}
-		di, _ := bestiary.DatasetIngestedFor(r.Source)
+		di, _ := bestiary.DatasetIngestedFor(r.ID)
 		if r.IngestedAt != di.IngestedAt || r.ParserSchema != di.ParserSchema {
 			t.Errorf("row %q ingest mismatch: at=%q/%q schema=%d/%d",
-				r.Source, r.IngestedAt, di.IngestedAt, r.ParserSchema, di.ParserSchema)
+				r.ID, r.IngestedAt, di.IngestedAt, r.ParserSchema, di.ParserSchema)
 		}
 	}
 }
@@ -258,8 +275,25 @@ func TestRun_Providers_QuantFilter_Match(t *testing.T) {
 	const q = bestiary.QuantQ4_K_M
 	const qFlag = "q4_k_m"
 
+	// Snapshot each unfiltered instance's full quant footprint so we can assert the
+	// filter SELECTS instances without PRUNING their rows. Keyed by (ID, Provider,
+	// Host) — the per-instance identity tuple.
+	type instKey struct {
+		id   bestiary.ModelID
+		prov bestiary.Provider
+		host bestiary.Host
+	}
+	fullCount := map[instKey]int{}
+	fullSet := map[instKey]map[bestiary.Quantization]bool{}
 	want := 0
 	for _, in := range ent.Instances {
+		k := instKey{in.ID, in.Provider, in.Host}
+		fullCount[k] = len(in.QuantVRAM)
+		set := map[bestiary.Quantization]bool{}
+		for _, qv := range in.QuantVRAM {
+			set[qv.Quant] = true
+		}
+		fullSet[k] = set
 		if instanceHasQuant(in, q) {
 			want++
 		}
@@ -285,6 +319,22 @@ func TestRun_Providers_QuantFilter_Match(t *testing.T) {
 	for _, in := range insts {
 		if !instanceHasQuant(in, q) {
 			t.Errorf("instance %q retained but carries no %s row (filter let a non-match through)", in.ID, qFlag)
+		}
+		// Row-retention: a retained instance MUST keep its FULL QuantVRAM list — the
+		// filter selects whole instances, it does not prune their rows. This is the
+		// falsifier for a row-truncating mutant (keep only the matched row), which
+		// would otherwise ship JSON with the non-matching q8_0/f16 rows silently
+		// dropped from a selected instance.
+		k := instKey{in.ID, in.Provider, in.Host}
+		if got := len(in.QuantVRAM); got != fullCount[k] {
+			t.Errorf("retained instance %v: QuantVRAM count = %d after filtering by %s, want %d (full list must survive)",
+				k, got, qFlag, fullCount[k])
+		}
+		for origQ := range fullSet[k] {
+			if !instanceHasQuant(in, origQ) {
+				t.Errorf("retained instance %v: quant %s present before filtering is missing after (filter must not prune rows)",
+					k, origQ)
+			}
 		}
 	}
 }
@@ -348,6 +398,49 @@ func TestRun_Providers_QuantColumns(t *testing.T) {
 		if !strings.Contains(out, want) {
 			t.Errorf("instance table missing quant column/value %q; got:\n%s", want, out)
 		}
+	}
+}
+
+// pickQuantlessEntity returns a registry entity none of whose instances carry any
+// QuantVRAM data (the vast majority — only the curated handful have quant rows).
+func pickQuantlessEntity(t *testing.T) bestiary.Entity {
+	t.Helper()
+	for _, e := range bestiary.Entities() {
+		if len(e.Instances) == 0 {
+			continue
+		}
+		hasQuant := false
+		for _, in := range e.Instances {
+			if len(in.QuantVRAM) > 0 {
+				hasQuant = true
+				break
+			}
+		}
+		if !hasQuant {
+			return e
+		}
+	}
+	t.Skip("no quant-less entity found in the registry")
+	return bestiary.Entity{}
+}
+
+// TestRun_Providers_QuantColumns_AbsentWhenNoQuant pins writeQuantRows's
+// empty-suppression: an entity whose instances carry NO quant data must render NO
+// QUANT header (and no quant sub-rows). This is the falsifier for dropping the
+// len(rows)==0 early return, which would print a dataless QUANT header under every
+// quant-less instance.
+func TestRun_Providers_QuantColumns_AbsentWhenNoQuant(t *testing.T) {
+	e := pickQuantlessEntity(t)
+	var runErr error
+	out := captureStdout(t, func() {
+		runErr = run([]string{"providers", "--output=table", e.Ref.String()})
+	})
+	if runErr != nil {
+		t.Fatalf("run providers --output=table %q returned error: %v", e.Ref.String(), runErr)
+	}
+	if strings.Contains(out, "QUANT") {
+		t.Errorf("quant-less entity %q rendered a QUANT header; writeQuantRows must suppress it when an instance has no quant data; got:\n%s",
+			e.Ref.String(), out)
 	}
 }
 
