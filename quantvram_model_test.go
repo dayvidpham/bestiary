@@ -322,6 +322,19 @@ func TestProviderInstance_QuantVRAM_BuildSiteCloneIsolation(t *testing.T) {
 	ms[idx].QuantVRAM[0].WeightsBytes = sentinel                // writes the shared backing array
 	defer func() { ms[idx].QuantVRAM[0].WeightsBytes = orig }() // restore global state
 
+	// Self-guard the load-bearing assumption: this falsifier only has teeth while
+	// StaticModels() returns SHALLOW copies whose QuantVRAM headers alias the canonical
+	// backing. A fresh read must observe the sentinel we just wrote; if it does not,
+	// StaticModels() has been hardened to deep-copy quant rows and the sentinel write
+	// can no longer reach the registry's source data — making this test silently
+	// vacuous (green even under the aliasing mutant). Fail loudly instead.
+	if guard := bestiary.StaticModels(); guard[idx].QuantVRAM[0].WeightsBytes != sentinel {
+		t.Fatalf("StaticModels() no longer shares the QuantVRAM backing array (a second read does not see the "+
+			"sentinel write): this sentinel technique no longer falsifies the registry build-site clone — rework "+
+			"the test to reach the cached instance another way (got %d, want %d)",
+			guard[idx].QuantVRAM[0].WeightsBytes, sentinel)
+	}
+
 	for _, e := range bestiary.Entities() {
 		for j, inst := range e.Instances {
 			for k, row := range inst.QuantVRAM {
