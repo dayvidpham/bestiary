@@ -281,6 +281,60 @@ func TestCloneInstances_QuantVRAMRegistryPath(t *testing.T) {
 	}
 }
 
+// TestProviderInstance_QuantVRAM_BuildSiteCloneIsolation falsifies the BUILD-SITE
+// clone in the registry aggregate (registry.go loadEntityIndex:
+// `QuantVRAM: cloneQuantVRAM(m.QuantVRAM)`). The lookup-path clone (cloneInstances on
+// the way OUT of Entities/EntityByTuple) hides whether the CACHED instance aliases
+// staticModels' backing — so TestCloneInstances_QuantVRAMRegistryPath's probe (which
+// mutates an already-insulated lookup result) cannot observe the build-site copy.
+//
+// This reaches the shared backing directly: StaticModels() returns SHALLOW ModelInfo
+// copies, so a returned row's QuantVRAM slice header points at the SAME backing array
+// the registry built its cached instances from. After forcing the index to build, a
+// sentinel written through that backing must NOT surface on any registry instance —
+// true only if the build site took its own copy. Under the aliasing mutant
+// (`QuantVRAM: m.QuantVRAM`) the cached instance shares the backing, the sentinel
+// leaks through the lookup-path clone, and this test fails. The global mutation is
+// restored via defer (the package's parallel tests resume only after this serial
+// test returns).
+func TestProviderInstance_QuantVRAM_BuildSiteCloneIsolation(t *testing.T) {
+	// Force the entity index (and its cached instances) to materialize BEFORE we
+	// perturb the backing, so the build-site copy has already run.
+	_ = bestiary.Entities()
+
+	ms := bestiary.StaticModels()
+	idx := -1
+	for i := range ms {
+		if len(ms[i].QuantVRAM) > 0 {
+			idx = i
+			break
+		}
+	}
+	if idx < 0 {
+		t.Fatal("no curated row with QuantVRAM in StaticModels(); cannot exercise the build-site clone")
+	}
+
+	const sentinel int64 = -987654321
+	orig := ms[idx].QuantVRAM[0].WeightsBytes
+	if orig == sentinel {
+		t.Fatalf("sentinel %d collides with a real WeightsBytes value; pick another", sentinel)
+	}
+	ms[idx].QuantVRAM[0].WeightsBytes = sentinel                // writes the shared backing array
+	defer func() { ms[idx].QuantVRAM[0].WeightsBytes = orig }() // restore global state
+
+	for _, e := range bestiary.Entities() {
+		for j, inst := range e.Instances {
+			for k, row := range inst.QuantVRAM {
+				if row.WeightsBytes == sentinel {
+					t.Fatalf("entity %q instance[%d].QuantVRAM[%d] shows the sentinel: the registry's cached "+
+						"instance aliases the staticModels QuantVRAM backing — the build-site clone is missing",
+						e.Ref.String(), j, k)
+				}
+			}
+		}
+	}
+}
+
 // TestSchema_QuantVRAMSource_Conformance extends the schema conformance fixture
 // with populated QuantVRAM and Source fields (following the v0.2.3 Host/Lineage
 // precedent at schema_test.go). It performs a deep check of the $defs.QuantVRAM
