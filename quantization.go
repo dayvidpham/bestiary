@@ -231,9 +231,10 @@ func (q Quantization) MarshalText() ([]byte, error) {
 
 // UnmarshalText implements encoding.TextUnmarshaler, parsing a canonical
 // lowercase wire name back into a Quantization.  Parsing is case-insensitive so
-// that Ollama's mixed-case file_type values (e.g. "Q4_K_M", "fp16") round-trip
-// correctly.  An unrecognised token yields an actionable error listing valid
-// examples.
+// that Ollama's mixed-case file_type values (e.g. "Q4_K_M", "F16") round-trip
+// correctly.  Aliases such as "fp16" are NOT accepted; ingest layers must
+// normalise fp16→f16 before unmarshalling (see TestDetectQuantization_FP16Alias).
+// An unrecognised token yields an actionable error listing valid examples.
 func (q *Quantization) UnmarshalText(text []byte) error {
 	s := strings.ToLower(string(text))
 	for i, name := range quantNames {
@@ -286,85 +287,75 @@ func (q Quantization) IsKnown() bool {
 // Matching is case-insensitive against quantNames so both "Q4_K_M" and
 // "q4_k_m" resolve to QuantQ4_K_M.  The function never panics.
 //
-// This mirrors the (value, raw, stripped-id) contract of DetectHost.
+// This extends DetectHost's (value, stripped-id) shape with the raw matched
+// tag as a third return value.
 func DetectQuantization(id ModelID) (Quantization, string, ModelID) {
 	s := string(id)
 
-	// Split on ":" to separate model name from tag (e.g. "llama3.3:70b-instruct-q4_K_M").
-	// We only search the portion after the colon when present, because the
-	// family/version part before the colon does not carry quant tokens.
-	base := s
-	tagPart := s
-	if idx := strings.IndexByte(s, ':'); idx >= 0 {
-		base = s[:idx]
-		tagPart = s[idx+1:] // e.g. "70b-instruct-q4_K_M"
+	// Split on ":" to separate model name from tag part
+	// (e.g. "llama3.3:70b-instruct-q4_K_M" → base="llama3.3", tag part="70b-instruct-q4_K_M").
+	// Only the tag part is searched; the family/version before the colon does
+	// not carry quant tokens.
+	base, tagPart, hadColon := strings.Cut(s, ":")
+	if !hadColon {
+		tagPart = s
 	}
 
-	// Walk segments separated by "-" from right to left.  The quant token is
-	// conventionally the last dash-separated segment (or last two for compound
-	// names like "q4_K_M" which contain underscores, not dashes).  We test
-	// progressively longer right-suffixes to handle both "q4_0" (single
-	// segment) and "q4_k_m" (single segment with underscores).
+	// Walk segments separated by "-" from right to left.  Quant tokens are
+	// conventionally the last dash-separated segment (underscores within the
+	// token, e.g. "q4_K_M", are part of a single segment).
 	segments := strings.Split(tagPart, "-")
 	for i := len(segments) - 1; i >= 0; i-- {
 		candidate := strings.Join(segments[i:], "-")
 		lower := strings.ToLower(candidate)
 		for j, name := range quantNames {
-			if j == int(QuantizationNone) {
-				continue // never match "none" as a tag in an ID
+			// Skip the internal sentinels: "none" and "other" are not llama.cpp
+			// or Ollama quant tags; matching them would corrupt the stripped ID.
+			if j == int(QuantizationNone) || j == int(QuantizationOther) {
+				continue
 			}
 			if name == lower {
-				// Found a known quant tag.
 				remaining := strings.Join(segments[:i], "-")
-				var strippedID string
-				if base != s {
-					// Had a colon: reassemble as base + ":" + remaining (drop trailing "-").
-					remaining = strings.TrimRight(remaining, "-")
-					if remaining == "" {
-						strippedID = base
-					} else {
-						strippedID = base + ":" + remaining
-					}
-				} else {
-					// No colon: strip from the full id.
-					remaining = strings.TrimRight(remaining, "-")
-					strippedID = remaining
-				}
-				return Quantization(j), candidate, ModelID(strippedID)
+				return Quantization(j), candidate, rebuildStrippedID(base, hadColon, remaining)
 			}
 		}
 	}
 
-	// No known quant tag found; check if the last dash-segment looks like a
-	// quant token (starts with q/iq/f/b followed by a digit or digit-sequence)
-	// and return QuantizationOther with the raw tag stripped.
+	// No known quant tag found; check whether the last dash-segment looks like
+	// an unknown quant token (see looksLikeQuantTag) and return QuantizationOther
+	// with it stripped.
 	if len(segments) > 0 {
 		last := segments[len(segments)-1]
 		if looksLikeQuantTag(last) {
-			remaining := strings.TrimRight(strings.Join(segments[:len(segments)-1], "-"), "-")
-			var strippedID string
-			if base != s {
-				if remaining == "" {
-					strippedID = base
-				} else {
-					strippedID = base + ":" + remaining
-				}
-			} else {
-				strippedID = remaining
-			}
-			return QuantizationOther, last, ModelID(strippedID)
+			remaining := strings.Join(segments[:len(segments)-1], "-")
+			return QuantizationOther, last, rebuildStrippedID(base, hadColon, remaining)
 		}
 	}
 
 	return QuantizationNone, "", id
 }
 
+// rebuildStrippedID reassembles a stripped ModelID from the base (the part
+// before the colon, if any), the hadColon flag, and the remaining tag-part
+// segments after the quant token has been removed.  Trailing dashes left by
+// segment joining are trimmed before reassembly.
+func rebuildStrippedID(base string, hadColon bool, remaining string) ModelID {
+	remaining = strings.TrimRight(remaining, "-")
+	if hadColon {
+		if remaining == "" {
+			return ModelID(base)
+		}
+		return ModelID(base + ":" + remaining)
+	}
+	return ModelID(remaining)
+}
+
 // looksLikeQuantTag returns true when s resembles an Ollama/llama.cpp quant
-// tag token that isn't in the known list.  It guards against stripping
-// legitimate model-name segments (like "instruct" or "7b") as unknown quants.
-// The heuristic: must start with one of the known quant prefixes (iq, bf, fp,
-// q, f) followed immediately by a digit.  "fp" covers Ollama's "fp16"/"fp32"
-// aliases for f16/f32.
+// tag token that is not in the known quantNames list.  It guards against
+// stripping legitimate model-name segments (like "instruct" or "7b") as
+// unknown quants.  The heuristic: must start with one of the known quant
+// prefixes (iq, bf, fp, q, f — in that order, longer first) followed
+// immediately by a digit.  "fp" covers Ollama's fp16/fp32 aliases.
 func looksLikeQuantTag(s string) bool {
 	if len(s) == 0 {
 		return false

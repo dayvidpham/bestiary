@@ -158,6 +158,9 @@ func TestQuantization_BitsPerWeight(t *testing.T) {
 		{bestiary.QuantF32, 32.0, "F32"},
 		// Legacy
 		{bestiary.QuantQ4_0, 4.5, "Q4_0"},
+		{bestiary.QuantQ4_1, 5.0, "Q4_1"},
+		{bestiary.QuantQ5_0, 5.5, "Q5_0"},
+		{bestiary.QuantQ5_1, 6.0, "Q5_1"},
 		{bestiary.QuantQ8_0, 8.50, "Q8_0"},
 		// K-quants
 		{bestiary.QuantQ2_K, 3.16, "Q2_K"},
@@ -562,30 +565,36 @@ func TestDetectQuantization_NoTag(t *testing.T) {
 
 // TestDetectQuantization_Unknown (VC4) verifies that an unknown-but-quant-looking
 // tag results in (QuantizationOther, raw, stripped) without panicking.
+// All three return values are pinned exactly to catch mutants that corrupt the
+// raw case, truncate the raw, or mis-assemble the stripped ID.
 func TestDetectQuantization_Unknown(t *testing.T) {
 	tests := []struct {
-		id         bestiary.ModelID
-		wantQ      bestiary.Quantization
-		wantRawPfx string // prefix the raw tag must start with
-		name       string
+		id           bestiary.ModelID
+		wantQ        bestiary.Quantization
+		wantRaw      string           // exact original-case raw tag
+		wantStripped bestiary.ModelID // exact stripped ID
+		name         string
 	}{
 		{
-			id:         "somemodel:7b-instruct-q99_X",
-			wantQ:      bestiary.QuantizationOther,
-			wantRawPfx: "q",
-			name:       "unknown q-prefix tag",
+			id:           "somemodel:7b-instruct-q99_X",
+			wantQ:        bestiary.QuantizationOther,
+			wantRaw:      "q99_X",
+			wantStripped: "somemodel:7b-instruct",
+			name:         "unknown q-prefix tag",
 		},
 		{
-			id:         "somemodel:7b-iq99_super",
-			wantQ:      bestiary.QuantizationOther,
-			wantRawPfx: "iq",
-			name:       "unknown iq-prefix tag",
+			id:           "somemodel:7b-iq99_super",
+			wantQ:        bestiary.QuantizationOther,
+			wantRaw:      "iq99_super",
+			wantStripped: "somemodel:7b",
+			name:         "unknown iq-prefix tag",
 		},
 		{
-			id:         "somemodel:7b-f99",
-			wantQ:      bestiary.QuantizationOther,
-			wantRawPfx: "f",
-			name:       "unknown f-prefix tag",
+			id:           "somemodel:7b-f99",
+			wantQ:        bestiary.QuantizationOther,
+			wantRaw:      "f99",
+			wantStripped: "somemodel:7b",
+			name:         "unknown f-prefix tag",
 		},
 	}
 	for _, tt := range tests {
@@ -596,14 +605,16 @@ func TestDetectQuantization_Unknown(t *testing.T) {
 					t.Errorf("[%s] DetectQuantization panicked: %v", tt.name, r)
 				}
 			}()
-			q, raw, _ := bestiary.DetectQuantization(tt.id)
+			q, raw, stripped := bestiary.DetectQuantization(tt.id)
 			if q != tt.wantQ {
-				t.Errorf("[%s] DetectQuantization: q = %d, want QuantizationOther (%d)",
-					tt.name, int(q), int(bestiary.QuantizationOther))
+				t.Errorf("[%s] DetectQuantization: q = %d (%s), want QuantizationOther (%d)",
+					tt.name, int(q), q, int(bestiary.QuantizationOther))
 			}
-			if !strings.HasPrefix(strings.ToLower(raw), tt.wantRawPfx) {
-				t.Errorf("[%s] DetectQuantization: raw = %q, want prefix %q",
-					tt.name, raw, tt.wantRawPfx)
+			if raw != tt.wantRaw {
+				t.Errorf("[%s] DetectQuantization: raw = %q, want %q", tt.name, raw, tt.wantRaw)
+			}
+			if stripped != tt.wantStripped {
+				t.Errorf("[%s] DetectQuantization: stripped = %q, want %q", tt.name, stripped, tt.wantStripped)
 			}
 		}()
 	}
@@ -619,6 +630,21 @@ func TestDetectQuantization_Unknown(t *testing.T) {
 		if q == bestiary.QuantizationOther {
 			t.Errorf("DetectQuantization(%q): got QuantizationOther, want not-Other (should not strip non-quant suffix)", id)
 		}
+	}
+
+	// The sentinel name "other" must NOT be matched as a known tag; a model ID
+	// ending in "-other" should pass through as (None, "", unchanged).
+	otherSuffix := bestiary.ModelID("somemodel:7b-other")
+	q, raw, stripped := bestiary.DetectQuantization(otherSuffix)
+	if q != bestiary.QuantizationNone {
+		t.Errorf("DetectQuantization(%q): q = %d (%s), want QuantizationNone (sentinel 'other' must not be matched as a quant tag)",
+			otherSuffix, int(q), q)
+	}
+	if raw != "" {
+		t.Errorf("DetectQuantization(%q): raw = %q, want \"\" (no quant tag in '-other' suffix)", otherSuffix, raw)
+	}
+	if stripped != otherSuffix {
+		t.Errorf("DetectQuantization(%q): stripped = %q, want unchanged", otherSuffix, stripped)
 	}
 }
 
