@@ -101,8 +101,8 @@ const datasetIngestedTableSQL = `CREATE TABLE IF NOT EXISTS dataset_ingested (
 );`
 
 // entitiesTableSQL is the entity dimension that entity_source.entity_key
-// references. The decomposed columns default to ” so a minimal FK-target row
-// (entity_key only) is valid.
+// references. The decomposed columns default to the empty string so a minimal
+// FK-target row (entity_key only) is valid.
 const entitiesTableSQL = `CREATE TABLE IF NOT EXISTS entities (
     entity_key TEXT PRIMARY KEY,
     family     TEXT NOT NULL DEFAULT '',
@@ -571,16 +571,16 @@ func migrateToV3(conn *sqlite.Conn) error {
 }
 
 // migrateToV4 upgrades an existing v3 models table to the v4 schema:
-//   - Adds `version TEXT NOT NULL DEFAULT ”` column for the model version
-//     extracted from the family string (e.g. "4.5" for claude-opus-4-5).
+//   - Adds the version column (TEXT NOT NULL, empty-string default) for the model
+//     version extracted from the family string (e.g. "4.5" for claude-opus-4-5).
 //   - Drops the v3 idx_canonical (family, variant, provider) index and
 //     recreates it as (family, variant, version, provider) so that version
 //     is a first-class lookup axis.
 //
 // SQLite supports ADD COLUMN via ALTER TABLE for NOT NULL columns with a
 // constant DEFAULT value, so table-recreate is not required here.
-// The new column defaults to ” for all existing rows; a subsequent sync
-// operation will backfill Version from the parser.
+// The new column defaults to the empty string for all existing rows; a subsequent
+// sync operation will backfill Version from the parser.
 func migrateToV4(conn *sqlite.Conn) error {
 	endFn := sqlitex.Transaction(conn)
 	var err error
@@ -782,8 +782,8 @@ func (s *Store) UpsertDataSources(ctx context.Context, sources []DataSource, ing
 // transaction. Rows are written parents-before-children to satisfy the
 // entity_source.entity_key foreign key: pass 1 ensures a minimal entities
 // dimension row exists for each distinct EntityKey (INSERT OR IGNORE so a richer
-// pre-existing row is never clobbered; the decomposed columns default to ” — the
-// store's entities table is a foreign-key target, not the authoritative entity
+// pre-existing row is never clobbered; the decomposed columns default to the
+// empty string — the store's entities table is a foreign-key target, not the authoritative entity
 // decomposition, which lives in the generated registry), then pass 2 writes the
 // join rows. The entity_source.data_source_id foreign key is NOT auto-satisfied
 // here: callers must have populated data_sources first via UpsertDataSources, so an

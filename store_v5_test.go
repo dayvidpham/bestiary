@@ -35,7 +35,7 @@ func countRows(t *testing.T, conn *sqlite.Conn, table string) int {
 	return n
 }
 
-// TestStoreV5_ForeignKeysEnforced (VC-NORM2) verifies, on a FRESH in-memory v5
+// TestStoreV5_ForeignKeysEnforced verifies, on a FRESH in-memory v5
 // database, that (1) all four BCNF tables exist on the fresh-DB path, (2) the
 // foreign_keys pragma actually bites — inserting an entity_source row whose
 // data_source_id has no data_sources parent is REJECTED, and (3) a fully
@@ -171,7 +171,7 @@ func createV4DB(t *testing.T, path string, rows []struct {
 	}
 }
 
-// TestStoreMigrate_V4toV5 (VC-migration) builds a v4 database with model rows,
+// TestStoreMigrate_V4toV5 builds a v4 database with model rows,
 // opens it with OpenStore, and asserts the migration is additive: the schema
 // version becomes 5, the model rows are intact, and the four BCNF provenance
 // tables now exist.
@@ -361,6 +361,64 @@ func TestUpsertDataSources_IngestOrphanRejected(t *testing.T) {
 	}
 	if err := store.UpsertDataSources(ctx, nil, ingested); err == nil {
 		t.Error("dataset_ingested orphan was accepted; data_source_id FK not enforced")
+	}
+}
+
+// TestUpsertDataSources_IngestReplaceOnRefresh pins the replace-on-refresh
+// semantic of dataset_ingested: re-ingesting the same source with a newer
+// ingested_at OVERWRITES the single current-ingest row rather than leaving the
+// older one in place. Without this, an OR REPLACE→OR IGNORE regression would
+// silently retain a stale ingested_at while the rest of the suite stayed green.
+func TestUpsertDataSources_IngestReplaceOnRefresh(t *testing.T) {
+	store, err := OpenStore(":memory:")
+	if err != nil {
+		t.Fatalf("OpenStore(:memory:): %v", err)
+	}
+	defer store.Close()
+
+	ctx := context.Background()
+	src := []DataSource{{ID: DataSourceOllama, URI: "https://ollama.com", CanonicalName: "Ollama"}}
+
+	// First ingest at T1.
+	if err := store.UpsertDataSources(ctx, src, []DatasetIngested{
+		{SourceID: DataSourceOllama, IngestedAt: "2026-06-01T00:00:00Z", ParserSchema: 2},
+	}); err != nil {
+		t.Fatalf("UpsertDataSources (T1): %v", err)
+	}
+
+	// Re-ingest the SAME source at a newer T2 with a different parser_schema.
+	if err := store.UpsertDataSources(ctx, src, []DatasetIngested{
+		{SourceID: DataSourceOllama, IngestedAt: "2026-06-09T00:00:00Z", ParserSchema: 3},
+	}); err != nil {
+		t.Fatalf("UpsertDataSources (T2): %v", err)
+	}
+
+	// Still exactly one current-ingest row (PK = data_source_id), now carrying T2.
+	if got := countRows(t, store.conn, "dataset_ingested"); got != 1 {
+		t.Errorf("dataset_ingested row count = %d, want 1 (single current ingest, replaced not appended)", got)
+	}
+	var ingestedAt string
+	var parserSchema int
+	err = sqlitex.Execute(store.conn,
+		`SELECT ingested_at AS ingested_at, parser_schema AS parser_schema
+		 FROM dataset_ingested WHERE data_source_id = ?1`,
+		&sqlitex.ExecOptions{
+			Args: []any{string(DataSourceOllama)},
+			ResultFunc: func(stmt *sqlite.Stmt) error {
+				ingestedAt = stmt.GetText("ingested_at")
+				parserSchema = int(stmt.GetInt64("parser_schema"))
+				return nil
+			},
+		})
+	if err != nil {
+		t.Fatalf("read-back: %v", err)
+	}
+	if ingestedAt != "2026-06-09T00:00:00Z" {
+		t.Errorf("ingested_at after refresh = %q, want T2 %q (replace-on-refresh; an OR IGNORE regression would keep stale T1)",
+			ingestedAt, "2026-06-09T00:00:00Z")
+	}
+	if parserSchema != 3 {
+		t.Errorf("parser_schema after refresh = %d, want 3 (replaced)", parserSchema)
 	}
 }
 
