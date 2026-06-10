@@ -3273,10 +3273,12 @@ func TestCodegen_BaseRef_LineageEdge(t *testing.T) {
 		}
 	})
 
-	// A non-decomposable base_ref (no family alpha prefix) still appends an edge —
-	// parseBaseRef never panics and always returns a (possibly partial) EntityRef.
-	// Here "123" has no leading-alpha family, so the regex does not match and the
-	// family resolves empty; the edge is still recorded rather than dropped.
+	// A non-decomposable base_ref (no colon, no glued version, no tag tokens) still
+	// appends an edge — parseBaseRef never panics and always returns a non-zero
+	// EntityRef. "123" has no colon and no leading-alpha prefix so the version regex
+	// does not match; strings.Cut gives model="123", tag="". ParseFamilyWithVersion
+	// treats "123" as a family pass-through, so Family="123" and all other fields are
+	// empty. The edge is still recorded rather than dropped.
 	t.Run("non_decomposable_base_ref_still_appends", func(t *testing.T) {
 		info := bestiary.ModelInfo{}
 		appendFinetuneLineage(&info, "123")
@@ -3285,6 +3287,9 @@ func TestCodegen_BaseRef_LineageEdge(t *testing.T) {
 		}
 		if info.Lineage[0].Kind != bestiary.DerivationFinetune {
 			t.Errorf("Kind = %v, want DerivationFinetune", info.Lineage[0].Kind)
+		}
+		if got := string(info.Lineage[0].Parent.Family); got != "123" {
+			t.Errorf("Parent.Family = %q, want %q (degenerate input passed through as family)", got, "123")
 		}
 	})
 

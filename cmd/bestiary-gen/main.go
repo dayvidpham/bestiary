@@ -465,14 +465,7 @@ func run(args []string) error {
 	// unknown source is a curation bug that must abort codegen rather than silently
 	// baking wrong VRAM estimates or provenance into the generated static data.
 	if err := bestiary.ValidateQuantVRAMTable(); err != nil {
-		return fmt.Errorf(
-			"validate curated quant-VRAM table: %w\n"+
-				"  What: parse/data/quant_vram.json failed validation\n"+
-				"  Why: bad curation detected before codegen started\n"+
-				"  Where: bestiary-gen run(), before fetchModelsWithRaw\n"+
-				"  How to fix: correct the entry in parse/data/quant_vram.json and re-run codegen",
-			err,
-		)
+		return fmt.Errorf("validate curated quant-VRAM table: %w", err)
 	}
 
 	rawJSON, models, providerMeta, parseFailures, err := fetchModelsWithRaw(ctx, flags.cacheDir, flags.noFetch)
