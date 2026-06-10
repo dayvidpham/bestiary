@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"sort"
 	"strings"
 
 	"github.com/dayvidpham/bestiary"
@@ -22,7 +23,7 @@ func main() {
 
 func run(args []string) error {
 	if len(args) == 0 {
-		return fmt.Errorf("usage: bestiary <list|show|providers|sync> [flags]")
+		return fmt.Errorf("usage: bestiary <list|show|providers|sources|sync> [flags]")
 	}
 
 	cmd := args[0]
@@ -45,6 +46,11 @@ func run(args []string) error {
 	// When --scheme is set and --format is not explicitly set, --scheme takes effect.
 	// --format takes precedence over --scheme when both are provided.
 	scheme := fs.String("scheme", "", "DEPRECATED: use --format instead; scheme for model ID resolution: canonical, huggingface, purl, raw")
+	// --quant filters the entity instance views (providers, show --by-entity) to the
+	// instances that carry a per-quantization VRAM row matching the given quant
+	// (e.g. q4_k_m, f16). It is parsed via bestiary.ParseQuantization, which rejects
+	// an unrecognised value with an actionable error rather than silently ignoring it.
+	quant := fs.String("quant", "", "filter instances by quantization (e.g. q4_k_m, f16); applies to providers and show --by-entity")
 
 	if err := fs.Parse(args[1:]); err != nil {
 		return err
@@ -58,7 +64,7 @@ func run(args []string) error {
 			if fs.NArg() < 1 {
 				return fmt.Errorf("usage: bestiary show --by-entity <model-id | family[/variant][/version|@version]{identity-mods}> [--output=<json|table>]")
 			}
-			return runShowEntity(fs.Arg(0), bestiary.OutputFormat(*output))
+			return runShowEntity(fs.Arg(0), bestiary.OutputFormat(*output), *quant)
 		}
 		if fs.NArg() < 1 {
 			return fmt.Errorf("usage: bestiary show <model-id> [--format=<peasant|huggingface|hf|purl|raw>] [--output=<json|yaml|table>] [flags]")
@@ -69,11 +75,17 @@ func run(args []string) error {
 			return fmt.Errorf("usage: bestiary providers <family>[/<variant>][/<version>|@<version>]{identity-mods} [--output=<json|table>]\n" +
 				"  version may be given as a trailing /segment or as @version; the optional [attributes] filter is ignored in MVP")
 		}
-		return runProviders(fs.Arg(0), bestiary.OutputFormat(*output))
+		return runProviders(fs.Arg(0), bestiary.OutputFormat(*output), *quant)
+	case "sources":
+		if fs.NArg() < 1 {
+			return fmt.Errorf("usage: bestiary sources <family>[/<variant>][@<version>][#<paramsize>]{identity-mods} [--output=<json|table>]\n" +
+				"  prints the per-source ingest provenance (uri via FK join, ingest date, parser schema) that attests the entity, sorted by source")
+		}
+		return runSources(fs.Arg(0), bestiary.OutputFormat(*output))
 	case "sync":
 		return runSync(*provider, bestiary.OutputFormat(*output), *dbPath)
 	default:
-		return fmt.Errorf("unknown command %q; supported commands: list, show, providers, sync", cmd)
+		return fmt.Errorf("unknown command %q; supported commands: list, show, providers, sources, sync", cmd)
 	}
 }
 
@@ -364,8 +376,44 @@ func validateEntityOutput(format bestiary.OutputFormat) error {
 }
 
 // runProviders lists every provider/host instance of the entity identified by the
-// given tuple (or model ID).
-func runProviders(arg string, format bestiary.OutputFormat) error {
+// given tuple (or model ID). When quantFlag is non-empty the instance set is
+// filtered to those carrying a QuantVRAM row matching that quantization; an
+// unrecognised quantFlag is rejected with an actionable error (never silently
+// ignored or mapped to QuantizationOther).
+func runProviders(arg string, format bestiary.OutputFormat, quantFlag string) error {
+	if err := validateEntityOutput(format); err != nil {
+		return err
+	}
+	quant, filter, err := parseQuantFilter(quantFlag)
+	if err != nil {
+		return err
+	}
+	ent, ok := lookupEntity(arg)
+	if !ok {
+		return &bestiary.ErrNotFound{What: "entity", Key: arg}
+	}
+	insts := ent.Instances
+	if filter {
+		insts = filterInstancesByQuant(insts, quant)
+	}
+	if format == bestiary.FormatJSON {
+		return writeJSON(os.Stdout, insts)
+	}
+	fmt.Fprintf(os.Stdout, "Entity: %s\n", ent.Ref.String())
+	writeInstanceTable(os.Stdout, insts)
+	return nil
+}
+
+// runSources prints the per-source ingest provenance attesting the entity
+// identified by arg: one record per attesting data source (from Entity.Sources),
+// each JOINED across the BCNF provenance tables — uri + canonical-name from the
+// DataSource dimension (reached by FK on the source id, never duplicated onto the
+// ingest row) and ingested-at + parser-schema from the DatasetIngested current
+// ingest. Records are sorted ascending by source id. This is the subcommand's own
+// SOURCE|URI|INGESTED|PARSER view; it deliberately does NOT add a SOURCE column to
+// the show/list instance tables (deferred). An unknown key yields an actionable
+// ErrNotFound.
+func runSources(arg string, format bestiary.OutputFormat) error {
 	if err := validateEntityOutput(format); err != nil {
 		return err
 	}
@@ -373,30 +421,125 @@ func runProviders(arg string, format bestiary.OutputFormat) error {
 	if !ok {
 		return &bestiary.ErrNotFound{What: "entity", Key: arg}
 	}
+	rows := sourceProvenanceRows(ent.Sources)
 	if format == bestiary.FormatJSON {
-		return writeJSON(os.Stdout, ent.Instances)
+		return writeJSON(os.Stdout, rows)
 	}
 	fmt.Fprintf(os.Stdout, "Entity: %s\n", ent.Ref.String())
-	writeInstanceTable(os.Stdout, ent.Instances)
+	writeSourceTable(os.Stdout, rows)
 	return nil
 }
 
 // runShowEntity renders the aggregate view of one entity: its identity, rolled-up
 // provider/host lists, price/context/max-output ranges, capability union, lineage
 // edges, and the underlying instances.
-func runShowEntity(arg string, format bestiary.OutputFormat) error {
+func runShowEntity(arg string, format bestiary.OutputFormat, quantFlag string) error {
 	if err := validateEntityOutput(format); err != nil {
+		return err
+	}
+	quant, filter, err := parseQuantFilter(quantFlag)
+	if err != nil {
 		return err
 	}
 	ent, ok := lookupEntity(arg)
 	if !ok {
 		return &bestiary.ErrNotFound{What: "entity", Key: arg}
 	}
+	if filter {
+		ent.Instances = filterInstancesByQuant(ent.Instances, quant)
+	}
 	if format == bestiary.FormatJSON {
 		return writeJSON(os.Stdout, ent)
 	}
 	writeEntityView(os.Stdout, ent)
 	return nil
+}
+
+// parseQuantFilter interprets the --quant flag value. An empty string means "no
+// filter" and returns filter=false. A non-empty value is parsed via
+// bestiary.ParseQuantization, which NEVER silently maps an unrecognised token to
+// QuantizationOther — an unknown value returns an actionable error so the caller
+// learns their filter was rejected rather than silently matching nothing.
+func parseQuantFilter(flag string) (q bestiary.Quantization, filter bool, err error) {
+	if flag == "" {
+		return bestiary.QuantizationNone, false, nil
+	}
+	q, err = bestiary.ParseQuantization(flag)
+	if err != nil {
+		return bestiary.QuantizationNone, false, err
+	}
+	return q, true, nil
+}
+
+// filterInstancesByQuant keeps only the instances that carry at least one
+// QuantVRAM row whose Quant equals q; instances with no matching quant row are
+// dropped entirely. The returned slice is freshly allocated and the matched
+// instances retain their full QuantVRAM lists (the filter selects instances, it
+// does not prune their rows). The input slice is never mutated.
+func filterInstancesByQuant(insts []bestiary.ProviderInstance, q bestiary.Quantization) []bestiary.ProviderInstance {
+	out := make([]bestiary.ProviderInstance, 0, len(insts))
+	for _, in := range insts {
+		for _, qv := range in.QuantVRAM {
+			if qv.Quant == q {
+				out = append(out, in)
+				break
+			}
+		}
+	}
+	return out
+}
+
+// sourceProvenance is one attesting data source for an entity, joined across the
+// BCNF provenance tables. URI and CanonicalName come from the DataSource dimension
+// (reached by FK on Source) — the uri is obtained ONLY via this join and is never
+// duplicated onto the ingest row. IngestedAt and ParserSchema come from the
+// DatasetIngested current-ingest fact for the same source.
+type sourceProvenance struct {
+	Source        bestiary.DataSourceID `json:"source"`
+	URI           string                `json:"uri"`
+	CanonicalName string                `json:"canonical_name"`
+	IngestedAt    string                `json:"ingested_at"`
+	ParserSchema  int                   `json:"parser_schema"`
+}
+
+// sourceProvenanceRows builds the joined per-source provenance view for an
+// entity's attesting sources. For each source id it resolves the DataSource
+// dimension (uri/canonical-name) via the DataSourceByID FK join and the
+// DatasetIngested current ingest via DatasetIngestedFor. The result is sorted
+// ascending by source id so output ordering is deterministic regardless of the
+// order in which Entity.Sources was supplied. A source that fails to resolve (a
+// graceful-degrade load failure) keeps its id with empty join fields rather than
+// being dropped.
+func sourceProvenanceRows(sources []bestiary.DataSourceID) []sourceProvenance {
+	rows := make([]sourceProvenance, 0, len(sources))
+	for _, id := range sources {
+		sp := sourceProvenance{Source: id}
+		if ds, ok := bestiary.DataSourceByID(id); ok {
+			sp.URI = ds.URI
+			sp.CanonicalName = ds.CanonicalName
+		}
+		if di, ok := bestiary.DatasetIngestedFor(id); ok {
+			sp.IngestedAt = di.IngestedAt
+			sp.ParserSchema = di.ParserSchema
+		}
+		rows = append(rows, sp)
+	}
+	sort.Slice(rows, func(i, j int) bool {
+		return rows[i].Source < rows[j].Source
+	})
+	return rows
+}
+
+// writeSourceTable prints the sources subcommand's SOURCE|URI|INGESTED|PARSER
+// table. This is the subcommand's own provenance view and is distinct from the
+// deferred show/list instance-table SOURCE column.
+func writeSourceTable(w io.Writer, rows []sourceProvenance) {
+	fmt.Fprintf(w, "Sources (%d):\n", len(rows))
+	fmt.Fprintf(w, "  %-12s %-34s %-22s %8s\n", "SOURCE", "URI", "INGESTED", "PARSER")
+	for _, r := range rows {
+		fmt.Fprintf(w, "  %-12s %-34s %-22s %8d\n",
+			string(r.Source), orDash(r.URI), orDash(r.IngestedAt), r.ParserSchema)
+	}
 }
 
 // writeJSON marshals v as indented JSON to w.
@@ -433,6 +576,24 @@ func writeInstanceTable(w io.Writer, insts []bestiary.ProviderInstance) {
 			string(in.ID), string(in.Provider), fmtHost(in.Host),
 			fmtPrice(in.CostInputPerMTok), fmtPrice(in.CostOutputPerMTok),
 			in.ContextWindow, in.MaxOutput)
+		writeQuantRows(w, in.QuantVRAM)
+	}
+}
+
+// writeQuantRows prints the per-quantization VRAM sub-rows for one instance,
+// indented beneath its main row. Nothing is printed when the instance carries no
+// quant data. The PARTIAL column flags a weights-only VRAM lower bound — true
+// means the KV-cache term was excluded because architecture facts were absent, so
+// VRAMBytes is not a full estimate.
+func writeQuantRows(w io.Writer, rows []bestiary.QuantVRAM) {
+	if len(rows) == 0 {
+		return
+	}
+	fmt.Fprintf(w, "      %-10s %15s %15s %10s %8s\n",
+		"QUANT", "WEIGHTS", "VRAM", "CTX", "PARTIAL")
+	for _, q := range rows {
+		fmt.Fprintf(w, "      %-10s %15d %15d %10d %8t\n",
+			q.Quant.String(), q.WeightsBytes, q.VRAMBytes, q.VRAMContextTokens, q.VRAMEstimatePartial)
 	}
 }
 
