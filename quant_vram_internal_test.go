@@ -233,19 +233,19 @@ func TestSafeQuantVRAMTable_DegradesToEmpty(t *testing.T) {
 				t.Fatal("safeQuantVRAMTable returned nil; the degrade fallback must be non-nil")
 			}
 			// All lookups must return zero values on the degraded table.
-			if rows := got.rows["llama3.3:70b-instruct"]; rows != nil {
+			if rows := got.rows["llama-3.3-70b-instruct"]; rows != nil {
 				t.Errorf("degraded rows lookup returned %v, want nil", rows)
 			}
-			if ps := got.paramSize["llama3.3:70b-instruct"]; ps != "" {
+			if ps := got.paramSize["llama-3.3-70b-instruct"]; ps != "" {
 				t.Errorf("degraded paramSize lookup returned %q, want empty", ps)
 			}
-			if src, ok := got.source["llama3.3:70b-instruct"]; ok || src != DataSourceNone {
+			if src, ok := got.source["llama-3.3-70b-instruct"]; ok || src != DataSourceNone {
 				t.Errorf("degraded source lookup returned (%q, %v), want (\"\", false)", src, ok)
 			}
-			if cw := got.contextWindow["llama3.3:70b-instruct"]; cw != 0 {
+			if cw := got.contextWindow["llama-3.3-70b-instruct"]; cw != 0 {
 				t.Errorf("degraded contextWindow lookup returned %d, want 0", cw)
 			}
-			if br := got.baseRef["llama3.3:70b-instruct"]; br != "" {
+			if br := got.baseRef["llama-3.3-70b-instruct"]; br != "" {
 				t.Errorf("degraded baseRef lookup returned %q, want empty", br)
 			}
 		})

@@ -55,7 +55,7 @@ func TestBaseRefFor_Absent(t *testing.T) {
 // VRAMBytes/VRAMContextTokens/VRAMEstimatePartial are not checked here — they
 // are computed by the codegen caller (EstimateVRAMBytes), not the loader.
 func TestQuantVRAMFor_Llama33_70b(t *testing.T) {
-	const id bestiary.ModelID = "llama3.3:70b-instruct"
+	const id bestiary.ModelID = "llama-3.3-70b-instruct"
 
 	rows := bestiary.QuantVRAMFor(id)
 	if len(rows) == 0 {
@@ -111,7 +111,7 @@ func TestQuantVRAMFor_Llama33_70b(t *testing.T) {
 // TestQuantVRAMFor_SmallModel: small 3B-parameter model with two quant rows.
 // Arch facts are absent in the seed — exercises the partial-VRAM code path.
 func TestQuantVRAMFor_SmallModel(t *testing.T) {
-	const id bestiary.ModelID = "llama3.2:3b-instruct"
+	const id bestiary.ModelID = "llama-3.2-3b-instruct"
 
 	rows := bestiary.QuantVRAMFor(id)
 	if len(rows) == 0 {
@@ -177,9 +177,9 @@ func TestParamSizeFor_Present(t *testing.T) {
 		id   bestiary.ModelID
 		want string
 	}{
-		{"llama3.3:70b-instruct", "70b"},
-		{"llama3.2:3b-instruct", "3b"},
-		{"qwen2.5:0.5b-instruct", "0.5b"},
+		{"llama-3.3-70b-instruct", "70b"},
+		{"llama-3.3-8b-instruct", "8b"},
+		{"llama-3.2-3b-instruct", "3b"},
 		{"ollama/dracarys2-llama-3-70b-instruct", "70b"},
 	}
 	for _, tc := range cases {
@@ -195,8 +195,9 @@ func TestSourceFor_Present(t *testing.T) {
 		id   bestiary.ModelID
 		want bestiary.DataSourceID
 	}{
-		{"llama3.3:70b-instruct", bestiary.DataSourceOllama},
-		{"llama3.2:3b-instruct", bestiary.DataSourceOllama},
+		{"llama-3.3-70b-instruct", bestiary.DataSourceOllama},
+		{"llama-3.3-8b-instruct", bestiary.DataSourceOllama},
+		{"llama-3.2-3b-instruct", bestiary.DataSourceOllama},
 		{"ollama/dracarys2-llama-3-70b-instruct", bestiary.DataSourceOllama},
 	}
 	for _, tc := range cases {
@@ -214,8 +215,8 @@ func TestContextWindowFor_Present(t *testing.T) {
 		id   bestiary.ModelID
 		want int
 	}{
-		{"llama3.3:70b-instruct", 131072},
-		{"llama3.2:3b-instruct", 131072},
+		{"llama-3.3-70b-instruct", 131072},
+		{"llama-3.2-3b-instruct", 131072},
 		{"ollama/dracarys2-llama-3-70b-instruct", 8192},
 	}
 	for _, tc := range cases {
@@ -234,9 +235,9 @@ func TestBaseRefFor_Present(t *testing.T) {
 		t.Errorf("BaseRefFor(dracarys2): got empty, want the curated base_ref")
 	}
 	// Non-finetune models must return empty.
-	got2 := bestiary.BaseRefFor("llama3.3:70b-instruct")
+	got2 := bestiary.BaseRefFor("llama-3.3-70b-instruct")
 	if got2 != "" {
-		t.Errorf("BaseRefFor(llama3.3 base): got %q, want empty (not a finetune)", got2)
+		t.Errorf("BaseRefFor(llama-3.3-70b-instruct base): got %q, want empty (not a finetune)", got2)
 	}
 }
 
@@ -253,9 +254,8 @@ func TestValidateQuantVRAMTable_Green(t *testing.T) {
 // codegen caller. An eager-computing loader mutant would fail this test.
 func TestQuantVRAMFor_BakeContractUnchanged(t *testing.T) {
 	ids := []bestiary.ModelID{
-		"llama3.3:70b-instruct",
-		"llama3.2:3b-instruct",
-		"qwen2.5:0.5b-instruct",
+		"llama-3.3-70b-instruct",
+		"llama-3.2-3b-instruct",
 		"ollama/dracarys2-llama-3-70b-instruct",
 	}
 	for _, id := range ids {
@@ -296,9 +296,8 @@ func TestQuantVRAMFor_NoPanic(t *testing.T) {
 // must reject unknown tokens before they reach the table.
 func TestQuantVRAMFor_QuantNotOther(t *testing.T) {
 	knownIDs := []bestiary.ModelID{
-		"llama3.3:70b-instruct",
-		"llama3.2:3b-instruct",
-		"qwen2.5:0.5b-instruct",
+		"llama-3.3-70b-instruct",
+		"llama-3.2-3b-instruct",
 		"ollama/dracarys2-llama-3-70b-instruct",
 	}
 	for _, id := range knownIDs {
@@ -315,8 +314,8 @@ func TestQuantVRAMFor_QuantNotOther(t *testing.T) {
 // case-insensitive matching. Verify it by querying with mixed-case IDs that
 // differ in casing from the lowercased model_ids stored in the table.
 func TestLookup_CaseInsensitive(t *testing.T) {
-	// Mixed-case variant of a seed model.
-	const id bestiary.ModelID = "Llama3.3:70B-Instruct"
+	// Mixed-case variant of a seed model (models.dev ID with different casing).
+	const id bestiary.ModelID = "Llama-3.3-70B-Instruct"
 
 	rows := bestiary.QuantVRAMFor(id)
 	if len(rows) == 0 {
@@ -348,11 +347,14 @@ func TestLookup_CaseInsensitive(t *testing.T) {
 // curated token from the JSON file for every row, regardless of whether Quant
 // is QuantizationOther. An empty QuantRaw on any loaded row is a contract
 // violation — callers rely on it for lossless display and round-trip fidelity.
+//
+// Models with non-empty rows are checked; the 8b param-size-only entry has
+// empty rows (QuantVRAMFor returns nil) so it is excluded from this check —
+// the nil return is intentional and covered by TestParamSizeFor_Present.
 func TestQuantVRAMFor_QuantRawAlwaysPopulated(t *testing.T) {
 	ids := []bestiary.ModelID{
-		"llama3.3:70b-instruct",
-		"llama3.2:3b-instruct",
-		"qwen2.5:0.5b-instruct",
+		"llama-3.3-70b-instruct",
+		"llama-3.2-3b-instruct",
 		"ollama/dracarys2-llama-3-70b-instruct",
 	}
 	for _, id := range ids {
