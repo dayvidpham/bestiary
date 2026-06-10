@@ -119,9 +119,10 @@ type quantVRAMFileJSON struct {
 	Models        []quantVRAMModelJSON `json:"models"`
 }
 
-// knownSchemaVersions is the set of schema_version values this code understands.
-// Bump when the JSON shape changes incompatibly. Only versions listed here are
-// accepted; any other value yields an actionable error from parseQuantVRAMTable.
+// knownQuantVRAMSchemaVersions is the set of schema_version values this code
+// understands. Bump when the JSON shape changes incompatibly. Only versions
+// listed here are accepted; any other value yields an actionable error from
+// parseQuantVRAMTable.
 var knownQuantVRAMSchemaVersions = map[int]bool{
 	1: true,
 }
@@ -308,6 +309,18 @@ func parseQuantVRAMTable(raw []byte) (*quantVRAMTable, error) {
 		}
 		if m.Source != "" {
 			tbl.source[mid] = DataSourceID(m.Source)
+		}
+		if m.ContextWindow < 0 {
+			return nil, fmt.Errorf(
+				"bestiary quant_vram: negative context_window %d at entry #%d (model_id=%q)\n"+
+					"  What: context_window must be >= 0 (0 means not curated)\n"+
+					"  Where: parse/data/quant_vram.json models[%d].context_window\n"+
+					"  Why: a negative context window is physically nonsensical and indicates"+
+					" a curation error\n"+
+					"  How to fix: set context_window to 0 (omit it) or a positive integer"+
+					" representing the model's maximum context length in tokens",
+				m.ContextWindow, i, mid, i,
+			)
 		}
 		if m.ContextWindow > 0 {
 			tbl.contextWindow[mid] = m.ContextWindow

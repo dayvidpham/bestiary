@@ -311,6 +311,39 @@ func TestQuantVRAMFor_QuantNotOther(t *testing.T) {
 	}
 }
 
+// TestLookup_CaseInsensitive: all five public lookup functions document
+// case-insensitive matching. Verify it by querying with mixed-case IDs that
+// differ in casing from the lowercased model_ids stored in the table.
+func TestLookup_CaseInsensitive(t *testing.T) {
+	// Mixed-case variant of a seed model.
+	const id bestiary.ModelID = "Llama3.3:70B-Instruct"
+
+	rows := bestiary.QuantVRAMFor(id)
+	if len(rows) == 0 {
+		t.Errorf("QuantVRAMFor(%q) = nil, want rows; lookup must be case-insensitive", id)
+	}
+
+	ps := bestiary.ParamSizeFor(id)
+	if ps != "70b" {
+		t.Errorf("ParamSizeFor(%q) = %q, want %q; lookup must be case-insensitive", id, ps, "70b")
+	}
+
+	src := bestiary.SourceFor(id)
+	if src != bestiary.DataSourceOllama {
+		t.Errorf("SourceFor(%q) = %q, want DataSourceOllama; lookup must be case-insensitive", id, src)
+	}
+
+	cw := bestiary.ContextWindowFor(id)
+	if cw != 131072 {
+		t.Errorf("ContextWindowFor(%q) = %d, want 131072; lookup must be case-insensitive", id, cw)
+	}
+
+	br := bestiary.BaseRefFor("Ollama/Dracarys2-Llama-3-70B-Instruct")
+	if br == "" {
+		t.Errorf("BaseRefFor (mixed-case finetune id) = empty, want non-empty; lookup must be case-insensitive")
+	}
+}
+
 // TestQuantVRAMFor_QuantRawAlwaysPopulated: QuantRaw must be the verbatim
 // curated token from the JSON file for every row, regardless of whether Quant
 // is QuantizationOther. An empty QuantRaw on any loaded row is a contract

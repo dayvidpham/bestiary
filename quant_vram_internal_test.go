@@ -171,6 +171,36 @@ func TestParseQuantVRAMTable_QuantCaseInsensitive(t *testing.T) {
 	}
 }
 
+// TestParseQuantVRAMTable_RejectsNegativeContextWindow: a negative context_window
+// value must be rejected with an actionable error, consistent with the
+// abort-on-bad-curation policy applied to negative arch facts.
+func TestParseQuantVRAMTable_RejectsNegativeContextWindow(t *testing.T) {
+	const bad = `{"schema_version":1,"models":[{"model_id":"x","source":"ollama","context_window":-1,"rows":[{"quant":"q4_k_m","weights_bytes":1000}]}]}`
+	_, err := parseQuantVRAMTable([]byte(bad))
+	if err == nil {
+		t.Fatal("parseQuantVRAMTable accepted negative context_window; want rejection")
+	}
+	if !strings.Contains(strings.ToLower(err.Error()), "context_window") {
+		t.Errorf("error = %q, want it to mention context_window", err.Error())
+	}
+}
+
+// TestParseQuantVRAMTable_RejectsCaseDifferingDuplicateModelID: duplicate
+// detection must be case-insensitive. "Dup" and "dup" refer to the same
+// model_id and the second entry must be rejected as a duplicate.
+func TestParseQuantVRAMTable_RejectsCaseDifferingDuplicateModelID(t *testing.T) {
+	const bad = `{"schema_version":1,"models":[` +
+		`{"model_id":"Dup","source":"ollama","rows":[{"quant":"q4_k_m","weights_bytes":1000}]},` +
+		`{"model_id":"dup","source":"ollama","rows":[{"quant":"q8_0","weights_bytes":2000}]}]}`
+	_, err := parseQuantVRAMTable([]byte(bad))
+	if err == nil {
+		t.Fatal("parseQuantVRAMTable accepted case-differing duplicate model_id; want rejection")
+	}
+	if !strings.Contains(strings.ToLower(err.Error()), "duplicate") {
+		t.Errorf("error = %q, want it to mention duplicate", err.Error())
+	}
+}
+
 // TestEmbeddedQuantVRAMTable_Valid: the shipped curated file loads and validates
 // cleanly — the production-data counterpart of the negative tests above.
 func TestEmbeddedQuantVRAMTable_Valid(t *testing.T) {

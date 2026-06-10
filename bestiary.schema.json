@@ -376,7 +376,7 @@
           "type": "string"
         },
         "QuantRaw": {
-          "description": "Raw quantization string from the source, preserved for display when Quant is QuantizationOther or original casing is needed. Empty string when not applicable.",
+          "description": "Verbatim quantization token from the source data, always populated for every row. Preserves the original casing exactly as it appeared in the source (e.g. \"Q4_K_M\" from an Ollama file_type field). Never empty when a row is present.",
           "type": "string"
         },
         "WeightsBytes": {
