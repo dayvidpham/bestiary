@@ -222,43 +222,59 @@ func TestLookupEntity_TuplePath_UnsizedHit(t *testing.T) {
 // model-ID fallback path and verifies that the resolved entity's ParamSize is
 // consistent with the looked-up model's ParamSize.
 //
-// Constraint: all current static models carry ParamSize="" (sized model rows are
-// baked at codegen time, not yet present in the static data). Therefore this test
-// cannot falsify the specific mutant of replacing m.ParamSize with "" at main.go:341
-// — both produce the same result when all models are unsized. The synthesized-registry
-// tests in paramsize_wiring_internal_test.go guard the EntityByTuple carrier semantics
-// (that ParamSize participates correctly in entity keying), but they never execute the
-// main.go:341 call site; the argument binding at that call site remains unfalsifiable
-// from this package until sized static data ships. A sized-fallback test is deferred
-// to when sized model rows are present in the static registry.
+// The primary case pins llama-3.3-70b-instruct: after codegen bakes the curated
+// param_size="70b" into static data, the fallback path must resolve to the SIZED
+// entity llama@3.3#70b{instruct} with ParamSize="70b". A mutant that hardcodes ""
+// at main.go:341 instead of passing m.ParamSize would resolve to the wrong unsized
+// entity llama@3.3{instruct} and fail this test.
+//
+// The general scan asserts the invariant holds for every model in the registry:
+// entity.ParamSize must equal m.ParamSize for any model resolved via the fallback.
 func TestLookupEntity_FallbackPath_ParamSizeConsistency(t *testing.T) {
+	// Primary case: sized model must resolve to its SIZED entity.
+	const sizedModelID = "llama-3.3-70b-instruct"
+	e, ok := lookupEntity(sizedModelID)
+	if !ok {
+		t.Fatalf("lookupEntity(%q) returned miss; sized model must resolve via fallback path\n"+
+			"  What: the model-ID fallback did not find this model in static data\n"+
+			"  Why: either regen has not been run, or the model is absent from the catalog\n"+
+			"  How to fix: run 'go run ./cmd/bestiary-gen --no-fetch' to regenerate static data",
+			sizedModelID)
+	}
+	if e.Ref.ParamSize != "70b" {
+		t.Errorf("lookupEntity(%q) fallback: entity.ParamSize = %q, want %q\n"+
+			"  What: fallback resolved to the wrong entity (unsized instead of sized)\n"+
+			"  Why: main.go lookupEntity fallback must pass m.ParamSize to EntityByTuple, not a hardcoded empty string\n"+
+			"  How to fix: verify the EntityByTuple call in lookupEntity uses m.ParamSize",
+			sizedModelID, e.Ref.ParamSize, "70b")
+	}
+	wantKey := "llama@3.3#70b{instruct}"
+	if e.Ref.String() != wantKey {
+		t.Errorf("lookupEntity(%q) fallback: entity key = %q, want %q",
+			sizedModelID, e.Ref.String(), wantKey)
+	}
+
+	// General scan: for every model that resolves via the fallback path,
+	// entity.ParamSize must equal m.ParamSize.
 	models := bestiary.StaticModels()
 	if len(models) == 0 {
 		t.Skip("static registry empty")
 	}
-	// Find a model that successfully resolves via the fallback path.
 	found := false
 	for _, m := range models {
-		e, ok := lookupEntity(string(m.ID))
+		ent, ok := lookupEntity(string(m.ID))
 		if !ok {
 			continue
 		}
 		found = true
-		// The entity's ParamSize must equal the model's ParamSize.
-		// With current static data both are "" so this assertion cannot distinguish
-		// m.ParamSize from a hardcoded "": a mutant replacing m.ParamSize with ""
-		// still resolves the same unsized entity and passes. The assertion documents
-		// the required invariant and will hold correctly once unsized data remains
-		// unsized, but it does not falsify the hardcoded-"" mutant today.
-		if e.Ref.ParamSize != m.ParamSize {
+		if ent.Ref.ParamSize != m.ParamSize {
 			t.Errorf("model %q: lookupEntity fallback returned entity.ParamSize=%q, want %q (m.ParamSize); "+
-				"the fallback path must thread m.ParamSize to EntityByTuple, not a hardcoded empty string",
-				m.ID, e.Ref.ParamSize, m.ParamSize)
+				"the fallback path must thread m.ParamSize to EntityByTuple",
+				m.ID, ent.Ref.ParamSize, m.ParamSize)
 		}
-		break
 	}
 	if !found {
-		t.Fatal("no static model resolved via the fallback path; cannot verify ParamSize consistency")
+		t.Fatal("no static model resolved via the fallback path; cannot verify general ParamSize consistency")
 	}
 }
 

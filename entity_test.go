@@ -338,38 +338,95 @@ func TestEntityRef_ParamSizeDistinct(t *testing.T) {
 	}
 }
 
-// TestEntityRef_NoMigrationDrift verifies that adding the #size field to
-// EntityRef does NOT change any existing entity key in the static registry: every
-// entity key must be byte-identical to what it was before the change (i.e. no
-// "#" character appears in any key, and the key set size hasn't changed).
+// TestEntityRef_NoMigrationDrift is the VC-MIG guard for the #size grammar.
+// It enforces two invariants simultaneously:
 //
-// This is the VC-MIG guard: because all current static model data has
-// ParamSize="" (empty), the #size segment must be OMITTED ENTIRELY, preserving
-// byte-identity of every existing key.
+//	(a) NO unintended drift: every entity NOT in the curated sized set must have
+//	    a '#'-free key. Any model acquiring a '#size' segment unexpectedly signals
+//	    an accidental wrong-merge or a misapplied curation entry.
+//
+//	(b) INTENDED sizing: the three curated models.dev IDs with an explicit
+//	    param_size in quant_vram.json must each produce an entity with the
+//	    correct '#size' segment in its key. This pins the exact expected keys so
+//	    a regression in the ParamSize carrier (registry.go -> EntityRef -> String())
+//	    is caught immediately.
+//
+// The curated sized set (models.dev IDs with param_size in quant_vram.json):
+//   - llama-3.3-70b-instruct -> llama@3.3#70b{instruct}
+//   - llama-3.3-8b-instruct  -> llama@3.3#8b{instruct}
+//   - llama-3.2-3b-instruct  -> llama@3.2#3b{instruct}
 func TestEntityRef_NoMigrationDrift(t *testing.T) {
 	entities := bestiary.Entities()
 	if len(entities) == 0 {
 		t.Fatal("static registry is empty; cannot check migration drift")
 	}
 
+	// (b) Pin the exact expected keys for the curated sized entities.
+	wantSizedKeys := map[string]string{
+		"llama@3.3#70b{instruct}": "llama-3.3-70b-instruct",
+		"llama@3.3#8b{instruct}":  "llama-3.3-8b-instruct",
+		"llama@3.2#3b{instruct}":  "llama-3.2-3b-instruct",
+	}
+
+	// Build index of actual entity keys for assertion (b).
+	actualKeys := make(map[string]bestiary.EntityRef, len(entities))
 	for _, e := range entities {
-		key := e.Ref.String()
-		if strings.Contains(key, "#") {
-			t.Errorf("entity key %q contains '#'; all current static entities must be unsized (ParamSize empty)", key)
+		actualKeys[e.Ref.String()] = e.Ref
+	}
+
+	// Assert (b): each expected sized key must exist in the registry with the
+	// correct '#size' segment.
+	for wantKey, modelID := range wantSizedKeys {
+		ref, ok := actualKeys[wantKey]
+		if !ok {
+			t.Errorf("curated model %q: expected entity key %q not found in registry\n"+
+				"  What: the sized entity is missing — re-keyed quant_vram.json entry did not join\n"+
+				"  Why: either regen has not been run, or the model_id does not match the models.dev catalog ID\n"+
+				"  How to fix: run 'go run ./cmd/bestiary-gen --no-fetch' to regenerate static data",
+				modelID, wantKey)
+			continue
 		}
-		// Verify the ParamSize field itself is empty for all current static entities.
-		if e.Ref.ParamSize != "" {
-			t.Errorf("entity %q has non-empty ParamSize=%q; expected empty for all current static entities", key, e.Ref.ParamSize)
+		if ref.ParamSize == "" {
+			t.Errorf("entity %q: ParamSize is empty, want non-empty", wantKey)
 		}
 	}
 
-	// Pin the entity count so a regression (e.g. inadvertent registry truncation)
-	// is caught immediately. Update this constant after a deliberate registry regen.
+	// Assert (a): every entity NOT in the curated sized set must be '#'-free.
+	// Any unexpected '#' signals unintended drift.
+	for _, e := range entities {
+		key := e.Ref.String()
+		if _, isCuratedSized := wantSizedKeys[key]; isCuratedSized {
+			continue // expected sized entity — skip the '#'-free check
+		}
+		if strings.Contains(key, "#") {
+			t.Errorf("unexpected '#' in entity key %q (ParamSize=%q): this entity is not in the curated sized set\n"+
+				"  What: an entity acquired a '#size' segment without a matching quant_vram.json entry\n"+
+				"  How to fix: either add the model_id to wantSizedKeys above (if intentional), or remove the param_size from quant_vram.json",
+				key, e.Ref.ParamSize)
+		}
+	}
+
+	// (c) Pin the entity count floor so inadvertent registry truncation is caught.
 	const wantMinEntities = 600
 	if len(entities) < wantMinEntities {
 		t.Errorf("entity count = %d, want >= %d; a large drop signals registry truncation", len(entities), wantMinEntities)
 	}
-	t.Logf("checked %d entities: all keys are byte-identical to pre-paramsize form", len(entities))
+
+	// Pin the sized count: exactly 3 curated sized entities must exist in the registry.
+	sizedCount := 0
+	for _, e := range entities {
+		if strings.Contains(e.Ref.String(), "#") {
+			sizedCount++
+		}
+	}
+	if sizedCount != len(wantSizedKeys) {
+		t.Errorf("sized entity count = %d, want %d (one per curated models.dev entry in quant_vram.json)\n"+
+			"  What: sized entity count does not match the curated seed\n"+
+			"  How to fix: ensure quant_vram.json and wantSizedKeys above are in sync",
+			sizedCount, len(wantSizedKeys))
+	}
+
+	t.Logf("checked %d entities: %d sized (curated), %d unsized", len(entities), sizedCount, len(entities)-sizedCount)
 }
 
 // TestEntityRef_String_ParamSizeGrammar locks the full #size grammar for all

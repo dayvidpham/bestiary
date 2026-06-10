@@ -2866,7 +2866,7 @@ func TestFixturePerReasonCounts(t *testing.T) {
 // SLICE-6: Codegen wiring — QuantVRAM baking + determinism tests
 // --------------------------------------------------------------------------
 
-// TestQuantVRAM_Llama33_70b is the 70B anchor: llama3.3:70b-instruct bakes
+// TestQuantVRAM_Llama33_70b is the 70B anchor: llama-3.3-70b-instruct bakes
 // VRAMBytes = weights + KV at context 131072 with partial=false for all three quants.
 //
 // Expected values (hand-computed):
@@ -2876,7 +2876,7 @@ func TestFixturePerReasonCounts(t *testing.T) {
 //	q8_0:   VRAMBytes = 75,176,521,728 + 42,949,672,960 = 118,126,194,688
 //	f16:    VRAMBytes = 141,166,166,016 + 42,949,672,960 = 184,115,838,976
 func TestQuantVRAM_Llama33_70b(t *testing.T) {
-	const modelID = bestiary.ModelID("llama3.3:70b-instruct")
+	const modelID = bestiary.ModelID("llama-3.3-70b-instruct")
 	const bakeCtx = 131072 // curated context_window from quant_vram.json
 
 	type wantRow struct {
@@ -2964,54 +2964,64 @@ func TestQuantVRAM_Llama33_70b(t *testing.T) {
 	}
 }
 
-// TestQuantVRAM_SmallModel covers small models (llama3.2:3b-instruct,
-// qwen2.5:0.5b-instruct) where arch facts are absent (exercises partial path)
-// and ParamSize is populated.
+// TestQuantVRAM_SmallModel covers small models where arch facts are absent
+// (exercises partial path) and ParamSize is populated.
+//
+// llama-3.2-3b-instruct: two quant rows, arch facts absent.
+// llama-3.3-8b-instruct: param-size-only entry (empty rows array); QuantVRAMFor
+// returns nil but ParamSizeFor returns "8b" — demonstrates the epoch's core
+// entity-split fix without fabricated GGUF weights.
 func TestQuantVRAM_SmallModel(t *testing.T) {
-	cases := []struct {
-		modelID       bestiary.ModelID
-		wantParamSize string
-		wantRows      int
-	}{
-		{modelID: "llama3.2:3b-instruct", wantParamSize: "3b", wantRows: 2},
-		{modelID: "qwen2.5:0.5b-instruct", wantParamSize: "0.5b", wantRows: 1},
-	}
+	t.Run("llama-3.2-3b-instruct", func(t *testing.T) {
+		const modelID bestiary.ModelID = "llama-3.2-3b-instruct"
+		rows := bestiary.QuantVRAMFor(modelID)
+		if rows == nil {
+			t.Fatalf("QuantVRAMFor(%q) returned nil; expected curated rows", modelID)
+		}
+		if len(rows) != 2 {
+			t.Fatalf("QuantVRAMFor(%q): got %d rows, want 2", modelID, len(rows))
+		}
 
-	for _, tc := range cases {
-		tc := tc
-		t.Run(string(tc.modelID), func(t *testing.T) {
-			rows := bestiary.QuantVRAMFor(tc.modelID)
-			if rows == nil {
-				t.Fatalf("QuantVRAMFor(%q) returned nil; expected curated rows", tc.modelID)
+		// Arch facts should be absent (all zero) for this model.
+		for i, row := range rows {
+			if row.Layers != 0 || row.KVHeads != 0 || row.HeadDim != 0 {
+				t.Errorf("row %d: expected arch facts to be absent (0), got layers=%d kvHeads=%d headDim=%d",
+					i, row.Layers, row.KVHeads, row.HeadDim)
 			}
-			if len(rows) != tc.wantRows {
-				t.Fatalf("QuantVRAMFor(%q): got %d rows, want %d", tc.modelID, len(rows), tc.wantRows)
+			// With arch absent, partial flag must be true after baking.
+			partial := bestiary.VRAMEstimateIsPartial(row.Layers, row.KVHeads, row.HeadDim)
+			if !partial {
+				t.Errorf("row %d: VRAMEstimateIsPartial = false with absent arch facts; want true", i)
 			}
+			if row.WeightsBytes <= 0 {
+				t.Errorf("row %d: WeightsBytes = %d; must be > 0", i, row.WeightsBytes)
+			}
+		}
 
-			// Arch facts should be absent (all zero) for these small models.
-			for i, row := range rows {
-				if row.Layers != 0 || row.KVHeads != 0 || row.HeadDim != 0 {
-					t.Errorf("row %d: expected arch facts to be absent (0), got layers=%d kvHeads=%d headDim=%d",
-						i, row.Layers, row.KVHeads, row.HeadDim)
-				}
-				// With arch absent, partial flag must be true after baking.
-				partial := bestiary.VRAMEstimateIsPartial(row.Layers, row.KVHeads, row.HeadDim)
-				if !partial {
-					t.Errorf("row %d: VRAMEstimateIsPartial = false with absent arch facts; want true", i)
-				}
-				if row.WeightsBytes <= 0 {
-					t.Errorf("row %d: WeightsBytes = %d; must be > 0", i, row.WeightsBytes)
-				}
-			}
+		if ps := bestiary.ParamSizeFor(modelID); ps != "3b" {
+			t.Errorf("ParamSizeFor(%q) = %q, want %q", modelID, ps, "3b")
+		}
+		if src := bestiary.SourceFor(modelID); src != bestiary.DataSourceOllama {
+			t.Errorf("SourceFor(%q) = %q, want %q", modelID, src, bestiary.DataSourceOllama)
+		}
+	})
 
-			if ps := bestiary.ParamSizeFor(tc.modelID); ps != tc.wantParamSize {
-				t.Errorf("ParamSizeFor(%q) = %q, want %q", tc.modelID, ps, tc.wantParamSize)
-			}
-			if src := bestiary.SourceFor(tc.modelID); src != bestiary.DataSourceOllama {
-				t.Errorf("SourceFor(%q) = %q, want %q", tc.modelID, src, bestiary.DataSourceOllama)
-			}
-		})
-	}
+	t.Run("llama-3.3-8b-instruct param-size-only", func(t *testing.T) {
+		// This entry has an empty rows array: no GGUF weights curated yet.
+		// QuantVRAMFor must return nil (correct for empty rows), but ParamSizeFor
+		// must return "8b" so codegen splits llama@3.3#8b{instruct} from the 70b entity.
+		const modelID bestiary.ModelID = "llama-3.3-8b-instruct"
+		rows := bestiary.QuantVRAMFor(modelID)
+		if rows != nil {
+			t.Errorf("QuantVRAMFor(%q) = %v, want nil for a param-size-only entry with no curated weights", modelID, rows)
+		}
+		if ps := bestiary.ParamSizeFor(modelID); ps != "8b" {
+			t.Errorf("ParamSizeFor(%q) = %q, want %q", modelID, ps, "8b")
+		}
+		if src := bestiary.SourceFor(modelID); src != bestiary.DataSourceOllama {
+			t.Errorf("SourceFor(%q) = %q, want %q", modelID, src, bestiary.DataSourceOllama)
+		}
+	})
 }
 
 // TestQuantVRAM_PartialWhenArchAbsent (VC-VRAM3): verifies the baking rule that
@@ -3020,13 +3030,13 @@ func TestQuantVRAM_SmallModel(t *testing.T) {
 // the predicate using the curated seed data.
 func TestQuantVRAM_PartialWhenArchAbsent(t *testing.T) {
 	t.Run("arch_absent_yields_partial", func(t *testing.T) {
-		// qwen2.5:0.5b-instruct has no arch facts.
-		rows := bestiary.QuantVRAMFor("qwen2.5:0.5b-instruct")
+		// llama-3.2-3b-instruct has no arch facts (exercises partial-VRAM path).
+		rows := bestiary.QuantVRAMFor("llama-3.2-3b-instruct")
 		if rows == nil {
-			t.Fatal("QuantVRAMFor(qwen2.5:0.5b-instruct) returned nil; need curated rows")
+			t.Fatal("QuantVRAMFor(llama-3.2-3b-instruct) returned nil; need curated rows")
 		}
 		for i, row := range rows {
-			bakeCtx := bestiary.ContextWindowFor("qwen2.5:0.5b-instruct")
+			bakeCtx := bestiary.ContextWindowFor("llama-3.2-3b-instruct")
 			vram := bestiary.EstimateVRAMBytes(row.WeightsBytes, bakeCtx, row.Layers, row.KVHeads, row.HeadDim)
 			partial := bestiary.VRAMEstimateIsPartial(row.Layers, row.KVHeads, row.HeadDim)
 
@@ -3042,10 +3052,10 @@ func TestQuantVRAM_PartialWhenArchAbsent(t *testing.T) {
 	})
 
 	t.Run("arch_present_yields_not_partial", func(t *testing.T) {
-		// llama3.3:70b-instruct has full arch facts.
-		rows := bestiary.QuantVRAMFor("llama3.3:70b-instruct")
+		// llama-3.3-70b-instruct has full arch facts.
+		rows := bestiary.QuantVRAMFor("llama-3.3-70b-instruct")
 		if rows == nil {
-			t.Fatal("QuantVRAMFor(llama3.3:70b-instruct) returned nil; need curated rows")
+			t.Fatal("QuantVRAMFor(llama-3.3-70b-instruct) returned nil; need curated rows")
 		}
 		for i, row := range rows {
 			partial := bestiary.VRAMEstimateIsPartial(row.Layers, row.KVHeads, row.HeadDim)
@@ -3193,15 +3203,15 @@ func TestCodegen_BaseRef_LineageEdge(t *testing.T) {
 
 // TestCodegen_QuantVRAMLiteral_Deterministic verifies that quantVRAMLiteral
 // produces byte-identical output across repeated calls with the same input,
-// using the curated llama3.3:70b-instruct rows as the baked anchor.
+// using the curated llama-3.3-70b-instruct rows as the baked anchor.
 func TestCodegen_QuantVRAMLiteral_Deterministic(t *testing.T) {
-	// Obtain and bake the llama3.3:70b rows.
-	const modelID = bestiary.ModelID("llama3.3:70b-instruct")
+	// Obtain and bake the llama-3.3-70b rows.
+	const modelID = bestiary.ModelID("llama-3.3-70b-instruct")
 	const bakeCtx = 131072
 
 	rawRows := bestiary.QuantVRAMFor(modelID)
 	if rawRows == nil {
-		t.Fatal("QuantVRAMFor(llama3.3:70b-instruct) returned nil")
+		t.Fatal("QuantVRAMFor(llama-3.3-70b-instruct) returned nil")
 	}
 	baked := make([]bestiary.QuantVRAM, len(rawRows))
 	for i, row := range rawRows {
