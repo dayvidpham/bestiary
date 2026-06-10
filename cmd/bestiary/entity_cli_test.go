@@ -224,12 +224,13 @@ func TestLookupEntity_TuplePath_UnsizedHit(t *testing.T) {
 //
 // Constraint: all current static models carry ParamSize="" (sized model rows are
 // baked at codegen time, not yet present in the static data). Therefore this test
-// cannot falsify the specific mutant of replacing m.ParamSize with "" in the
-// EntityByTuple call — both produce the same result. The mutation guard for that
-// call site is provided by TestParamSize_SizedHit and TestParamSize_SizedMiss in
-// paramsize_wiring_internal_test.go, which use a synthesized registry with non-empty
-// ParamSize. This test confirms the fallback path is reachable and returns a
-// consistent ParamSize field once sized data is present.
+// cannot falsify the specific mutant of replacing m.ParamSize with "" at main.go:341
+// — both produce the same result when all models are unsized. The synthesized-registry
+// tests in paramsize_wiring_internal_test.go guard the EntityByTuple carrier semantics
+// (that ParamSize participates correctly in entity keying), but they never execute the
+// main.go:341 call site; the argument binding at that call site remains unfalsifiable
+// from this package until sized static data ships. A sized-fallback test is deferred
+// to when sized model rows are present in the static registry.
 func TestLookupEntity_FallbackPath_ParamSizeConsistency(t *testing.T) {
 	models := bestiary.StaticModels()
 	if len(models) == 0 {
@@ -244,9 +245,11 @@ func TestLookupEntity_FallbackPath_ParamSizeConsistency(t *testing.T) {
 		}
 		found = true
 		// The entity's ParamSize must equal the model's ParamSize.
-		// With current static data both are "" — but this assertion will catch
-		// a regression if the fallback path ever hardcodes "" instead of m.ParamSize
-		// after sized model rows are introduced.
+		// With current static data both are "" so this assertion cannot distinguish
+		// m.ParamSize from a hardcoded "": a mutant replacing m.ParamSize with ""
+		// still resolves the same unsized entity and passes. The assertion documents
+		// the required invariant and will hold correctly once unsized data remains
+		// unsized, but it does not falsify the hardcoded-"" mutant today.
 		if e.Ref.ParamSize != m.ParamSize {
 			t.Errorf("model %q: lookupEntity fallback returned entity.ParamSize=%q, want %q (m.ParamSize); "+
 				"the fallback path must thread m.ParamSize to EntityByTuple, not a hardcoded empty string",
