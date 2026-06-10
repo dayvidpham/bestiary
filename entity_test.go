@@ -338,8 +338,9 @@ func TestEntityRef_ParamSizeDistinct(t *testing.T) {
 	}
 }
 
-// TestEntityRef_NoMigrationDrift is the VC-MIG guard for the #size grammar.
-// It enforces two invariants simultaneously:
+// TestEntityRef_NoMigrationDrift is the registry-level migration-drift guard for
+// the #size grammar over the real static catalog. It enforces four invariants,
+// asserted below in this order:
 //
 //	(a) NO unintended drift: every entity NOT in the curated sized set must have
 //	    a '#'-free key. Any model acquiring a '#size' segment unexpectedly signals
@@ -350,6 +351,15 @@ func TestEntityRef_ParamSizeDistinct(t *testing.T) {
 //	    correct '#size' segment in its key. This pins the exact expected keys so
 //	    a regression in the ParamSize carrier (registry.go -> EntityRef -> String())
 //	    is caught immediately.
+//
+//	(c) ENTITY-COUNT FLOOR: the registry must hold at least wantMinEntities, so an
+//	    inadvertent truncation of the catalog is caught.
+//
+//	(d) SIZED-COUNT PIN: the number of '#'-bearing entities must equal the curated
+//	    set size exactly, so neither a missing nor an extra sized entity slips by.
+//
+// The body asserts (b) first (building the actual-key index it reuses), then (a),
+// then (c), then (d).
 //
 // The curated sized set (models.dev IDs with param_size in quant_vram.json):
 //   - llama-3.3-70b-instruct -> llama@3.3#70b{instruct}
@@ -412,7 +422,9 @@ func TestEntityRef_NoMigrationDrift(t *testing.T) {
 		t.Errorf("entity count = %d, want >= %d; a large drop signals registry truncation", len(entities), wantMinEntities)
 	}
 
-	// Pin the sized count: exactly 3 curated sized entities must exist in the registry.
+	// (d) Pin the sized count: exactly len(wantSizedKeys) curated sized entities
+	// must exist in the registry — neither fewer (a dropped join) nor more (a stray
+	// param_size leaking onto an uncurated model).
 	sizedCount := 0
 	for _, e := range entities {
 		if strings.Contains(e.Ref.String(), "#") {

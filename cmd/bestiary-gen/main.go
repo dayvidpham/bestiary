@@ -1179,20 +1179,40 @@ func genToModelInfoDetailed(providerSlug string, wm genWireModel) (bestiary.Mode
 
 	// Curated finetune base reference (IP-5). When quant_vram.json records a
 	// base_ref for this model, append a DerivationFinetune edge to Lineage. This
-	// handles community Ollama finetunes whose base is known from curated metadata
-	// but not yet in the lineage.json ledger. If the ledger already supplied edges
-	// (LineageFor above returned non-nil), the base_ref edge is still appended so
-	// the full parent set is recorded; callers must be aware of this when consuming
-	// Lineage.
-	if baseRef := bestiary.BaseRefFor(id); baseRef != "" {
-		parentRef := parseBaseRef(baseRef)
-		info.Lineage = append(info.Lineage, bestiary.LineageEdge{
-			Parent: parentRef,
-			Kind:   bestiary.DerivationFinetune,
-		})
-	}
+	// path is production-dormant until a curated finetune joins a models.dev
+	// catalog ID: the only base_ref entry today is a non-models.dev community
+	// finetune that never joins during codegen.
+	appendFinetuneLineage(&info, bestiary.BaseRefFor(id))
 
 	return info, failure
+}
+
+// appendFinetuneLineage appends a DerivationFinetune edge to info.Lineage when
+// baseRef is non-empty, with the parent EntityRef decomposed from baseRef by
+// parseBaseRef. An empty baseRef is a no-op (info.Lineage is left untouched).
+//
+// This handles community Ollama finetunes whose base is known from curated
+// metadata but not yet in the lineage.json ledger. If the ledger already supplied
+// edges (LineageFor returned non-nil), the base_ref edge is still appended so the
+// full parent set is recorded; callers must be aware of this when consuming
+// Lineage.
+//
+// info.Lineage on entry is the slice returned by bestiary.LineageFor, which is
+// the curated table's stored backing slice (not a copy). A plain append could
+// write into that shared array if it has spare capacity, so this copies the
+// existing edges into a fresh slice before appending — the appended edge can
+// never alias the curated ledger's storage.
+func appendFinetuneLineage(info *bestiary.ModelInfo, baseRef string) {
+	if baseRef == "" {
+		return
+	}
+	edges := make([]bestiary.LineageEdge, 0, len(info.Lineage)+1)
+	edges = append(edges, info.Lineage...)
+	edges = append(edges, bestiary.LineageEdge{
+		Parent: parseBaseRef(baseRef),
+		Kind:   bestiary.DerivationFinetune,
+	})
+	info.Lineage = edges
 }
 
 // genToModalities converts string slices from the API into the typed Modalities
@@ -1278,13 +1298,11 @@ func parseBaseRef(baseRef string) bestiary.EntityRef {
 	// strip the version from the model string and carry it forward.
 	var gluedVersion string
 	if m := reBaseRefModelVersion.FindStringSubmatch(model); m != nil {
-		candidate := m[1] // e.g. "llama"
-		// Accept the split only when the non-digit prefix is a non-empty alpha
-		// prefix — this rejects pure-numeric inputs (which would be degenerate).
-		if candidate != "" {
-			model = candidate
-			gluedVersion = m[2] // e.g. "3", "3.1"
-		}
+		// m[1] (the family prefix) is non-empty by construction: the regex's
+		// leading [a-z] requirement excludes pure-numeric/degenerate inputs, which
+		// never match at all (FindStringSubmatch returns nil for those).
+		model = m[1]        // e.g. "llama"
+		gluedVersion = m[2] // e.g. "3", "3.1"
 	}
 
 	// Decompose the (now clean) model part using ParseFamilyWithVersion.
@@ -1368,7 +1386,7 @@ func lineageLiteral(edges []bestiary.LineageEdge) string {
 }
 
 // quantExpr renders a Quantization value as its exported constant name so the
-// generated source references the enum symbolically (e.g. QuantQ4KM) rather
+// generated source references the enum symbolically (e.g. QuantQ4_K_M) rather
 // than by integer value. Mirrors derivationKindExpr exactly. An out-of-range
 // value falls back to QuantizationNone defensively.
 func quantExpr(q bestiary.Quantization) string {

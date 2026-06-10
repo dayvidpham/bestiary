@@ -5,4 +5,6 @@ const (
 	Model__Kilo__Free_2                                    ModelID = "openrouter/free"
 	Model__OpenAI__GPT__5_1                                ModelID = "gpt-5.1"
 	Model__OpenAI__GPT__5_2                                ModelID = "gpt-5.2"
+	Model__VLLM__Llama__3__2__3b__3_2__Instruct            ModelID = "llama-3.2-3b-instruct"
+	Model__VLLM__Llama__3__3__70b__3_3__Instruct           ModelID = "llama-3.3-70b-instruct"
 )
