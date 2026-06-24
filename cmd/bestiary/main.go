@@ -14,11 +14,34 @@ import (
 	"github.com/dayvidpham/bestiary"
 )
 
+// errPrefix is the single namespace prefix the CLI guarantees on every error
+// line it prints to stderr.
+const errPrefix = "bestiary: "
+
 func main() {
 	if err := run(os.Args[1:]); err != nil {
-		fmt.Fprintf(os.Stderr, "bestiary: %v\n", err)
+		fmt.Fprintln(os.Stderr, renderError(err))
 		os.Exit(1)
 	}
+}
+
+// renderError formats err for the CLI's stderr line with EXACTLY one
+// "bestiary: " prefix.
+//
+// The bestiary package is also a library: its structured errors (ErrNotFound,
+// ErrAmbiguous, ErrAPIUnavailable, the ParseQuantization error, …) deliberately
+// namespace themselves with "bestiary: " in their Error() string, which is the
+// correct, self-describing form for any library consumer. The CLI must not
+// double that prefix, so it prints an already-namespaced error verbatim. The
+// inline errors raised in this command package (usage strings, unknown-command,
+// unsupported-output) carry no prefix on purpose — the CLI supplies the sole one
+// here. Either way the user sees one prefix, never "bestiary: bestiary:".
+func renderError(err error) string {
+	msg := err.Error()
+	if strings.HasPrefix(msg, errPrefix) {
+		return msg
+	}
+	return errPrefix + msg
 }
 
 func run(args []string) error {
@@ -52,7 +75,7 @@ func run(args []string) error {
 	// an unrecognised value with an actionable error rather than silently ignoring it.
 	quant := fs.String("quant", "", "filter instances by quantization (e.g. q4_k_m, f16); applies to providers and show --by-entity")
 
-	if err := fs.Parse(args[1:]); err != nil {
+	if err := fs.Parse(reorderArgs(fs, args[1:])); err != nil {
 		return err
 	}
 
@@ -87,6 +110,67 @@ func run(args []string) error {
 	default:
 		return fmt.Errorf("unknown command %q; supported commands: list, show, providers, sources, sync", cmd)
 	}
+}
+
+// reorderArgs makes flag parsing position-independent. Go's flag package stops
+// scanning at the first non-flag argument, so a flag written AFTER the
+// positional (e.g. `show KEY --by-entity`) would otherwise be silently dropped.
+// This helper partitions args into flags and positionals — preserving the order
+// within each group — and returns the flags first, followed by a "--" terminator
+// and the positionals, so flag.Parse sees every flag regardless of where the
+// user placed it relative to the positional.
+//
+// Value-bearing flags are handled in both spellings: the joined "--name=value"
+// form is moved as a single token, and the separated "--name value" form pulls
+// the following token along as its value. Boolean flags (detected via the flag
+// package's IsBoolFlag contract) consume no value. An unknown flag is treated as
+// value-bearing, which leaves the eventual flag.Parse to reject it with its
+// standard unknown-flag error rather than this reordering swallowing it silently.
+// A lone "-" and everything after an explicit "--" are treated as positionals.
+func reorderArgs(fs *flag.FlagSet, args []string) []string {
+	var flags, positionals []string
+	for i := 0; i < len(args); i++ {
+		arg := args[i]
+		if arg == "--" {
+			positionals = append(positionals, args[i+1:]...)
+			break
+		}
+		if len(arg) < 2 || arg[0] != '-' {
+			// A lone "-" (len 1) or any non-dash token is a positional.
+			positionals = append(positionals, arg)
+			continue
+		}
+		// arg is a flag token.
+		flags = append(flags, arg)
+		name := strings.TrimLeft(arg, "-")
+		if strings.IndexByte(name, '=') >= 0 {
+			// "--name=value": value is already attached to this token.
+			continue
+		}
+		// "--name": a value-bearing flag consumes the following token (if any).
+		if !flagIsBool(fs, name) && i+1 < len(args) {
+			i++
+			flags = append(flags, args[i])
+		}
+	}
+	if len(positionals) == 0 {
+		return flags
+	}
+	// The "--" terminator guards any positional that itself begins with "-".
+	return append(append(flags, "--"), positionals...)
+}
+
+// flagIsBool reports whether the named flag is a registered boolean flag (one
+// that takes no value), using the same IsBoolFlag contract the flag package uses
+// internally. An unregistered name reports false so reorderArgs defers the
+// rejection of unknown flags to flag.Parse.
+func flagIsBool(fs *flag.FlagSet, name string) bool {
+	f := fs.Lookup(name)
+	if f == nil {
+		return false
+	}
+	bf, ok := f.Value.(interface{ IsBoolFlag() bool })
+	return ok && bf.IsBoolFlag()
 }
 
 // resolveDBPath returns dbPath if non-empty, otherwise calls DefaultDBPath().
