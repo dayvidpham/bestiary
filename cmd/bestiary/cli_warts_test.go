@@ -157,7 +157,8 @@ func TestFlagsByEntityActuallyApplies(t *testing.T) {
 	}
 }
 
-// TestFlagsMalformed_PositionIndependent pins the dukv7 fix: a value-bearing flag
+// TestFlagsMalformed_PositionIndependent pins that a dangling trailing value-flag
+// errors identically in any position: a value-bearing flag
 // that is missing its value must raise the SAME "flag needs an argument" error
 // whether it appears before or after the positional. A value can only be a token
 // that FOLLOWS the flag, so a positional typed before a trailing value-flag (e.g.
@@ -214,7 +215,8 @@ func TestFlagsMalformed_PositionIndependent(t *testing.T) {
 	}
 }
 
-// TestFlagsBoolThenValue_TableEffect pins the hiwl9 gap: it asserts the EFFECT of
+// TestFlagsBoolThenValue_TableEffect covers a bool flag followed by a value flag
+// after the positional: it asserts the EFFECT of
 // the bool-vs-value distinction that reorderArgs/flagIsBool make. A bool flag
 // (--by-entity) must NOT consume the following positional, so a trailing value
 // flag (--output=table) is still seen by flag.Parse and selects the table entity
@@ -257,7 +259,7 @@ func TestFlagsBoolThenValue_TableEffect(t *testing.T) {
 	}
 }
 
-// TestExplicitDashDash_Passthrough pins the sub4c gap: an explicit "--" input
+// TestExplicitDashDash_Passthrough pins explicit "--" input passthrough: an "--"
 // terminator must be consumed by reorderArgs and let the positional through
 // unchanged, identical to omitting it. A mutant that drops the `arg == "--"`
 // input branch turns a trailing "--" into a dangling unknown flag, which drops
@@ -277,7 +279,8 @@ func TestExplicitDashDash_Passthrough(t *testing.T) {
 	}
 }
 
-// TestDashLeadingPositional_AfterDashDash pins the 5zlvk gap: a positional that
+// TestDashLeadingPositional_AfterDashDash pins that a dash-leading positional
+// after "--" is treated as a positional, not a flag: a positional that
 // itself begins with "-", reachable only after an explicit "--", must be treated
 // as a positional and not re-parsed as a flag. The output-side "--" terminator
 // reorderArgs inserts is what guards it. A mutant that drops that terminator lets
@@ -298,7 +301,8 @@ func TestDashLeadingPositional_AfterDashDash(t *testing.T) {
 	}
 }
 
-// TestRenderError_WrappedSinglePrefix pins the m1ccu + a16j0 hardening: an error
+// TestRenderError_WrappedSinglePrefix pins that wrapped/embedded errors collapse
+// to a single leading prefix: an error
 // whose message CONTAINS "bestiary: " somewhere other than the start (a library
 // error wrapped with a bare context prefix, e.g. runSync's
 // "sync: open store at X: bestiary: OpenStore: …") must still render with EXACTLY
