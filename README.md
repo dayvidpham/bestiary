@@ -143,10 +143,164 @@ claude-opus-4-6                           anthropic     claude              1000
 ...
 ```
 
+## v0.2.4 — VRAM, quantization & data-source provenance
+
+v0.2.4 answers "what will this model cost to *run*, at which quantization, and where did
+the data come from?" It adds three things on top of the canonical entity model:
+**parameter size as part of identity**, **per-quantization weights + computed VRAM**, and a
+**data-source provenance** core that records every source that attests to a model.
+
+> All CLI examples below write the flag **before** the positional argument
+> (`show --by-entity <key>`). Flags are accepted in any position — `show <key> --by-entity`
+> works too — but the flag-first form is the one shown here for consistency.
+
+### Parameter size is part of identity
+
+`EntityRef.String()` gains an optional `#paramsize` segment:
+
+```
+family[/variant][@version][#paramsize]{identity-mods}
+```
+
+So a 70B and an 8B of the same family are **distinct entities** with distinct keys — they
+have different weights, different VRAM, and different architectures, so they are not the same
+thing served at two sizes:
+
+```sh
+$ bestiary show --by-entity 'llama@3.3#70b{instruct}'
+{
+  "Ref": {
+    "Family": "llama",
+    "Variant": "",
+    "Version": "3.3",
+    "ParamSize": "70b",
+    "Modifier": ["instruct"]
+  },
+  ...
+}
+
+$ bestiary show --by-entity 'llama@3.3#8b{instruct}'
+{
+  "Ref": { "Family": "llama", "Version": "3.3", "ParamSize": "8b", "Modifier": ["instruct"] },
+  ...
+}
+```
+
+The `#` segment is **omitted when size is unknown**, so every pre-v0.2.4 entity key is
+byte-identical — sizing is purely additive. Today only a small curated set carries sizes;
+broader coverage is incremental.
+
+### Per-quantization weights vs. VRAM
+
+Each provider instance of a curated local model carries a `QuantVRAM` row per quantization.
+The table view is the most compact way to read it:
+
+```sh
+$ bestiary providers --output table 'llama@3.3#70b{instruct}'
+Entity: llama@3.3#70b{instruct}
+Instances (8):
+  ID                                       PROVIDER               HOST              IN/MTok     OUT/MTok    CONTEXT     MAXOUT
+  llama-3.3-70b-instruct                   azure                  -                  0.7100       0.7100     128000      32768
+      QUANT              WEIGHTS            VRAM        CTX  PARTIAL
+      q4_k_m         43033509888     85983182848     131072    false
+      q8_0           75176521728    118126194688     131072    false
+      f16           141166166016    184115838976     131072    false
+  ...
+```
+
+Two numbers matter, and they are deliberately **not** the same:
+
+- **`WEIGHTS`** is the ground-truth GGUF **file size** ingested from the Ollama registry
+  (the q4_k_m download is ≈40 GiB = `43,033,509,888` bytes). This is the number Ollama lists
+  on a model's tags page — it is a *download/disk* size, **not** a VRAM figure.
+- **`VRAM`** is *computed* by bestiary: `weights + KV-cache`, **baked at the model's maximum
+  context** (`CTX` = 131072 here), with **no overhead constant** (`VRAMFormulaVersion 2`).
+
+For the 70B at q4_k_m, `VRAM − WEIGHTS = 85,983,182,848 − 43,033,509,888 = 42,949,672,960` =
+exactly **40 GiB of fp16 KV-cache** at 128K context (≈320 KiB/token). That is why the VRAM
+figure is roughly **2× the file size at full context** — it is physically correct, not a bug:
+the KV-cache at a 128K window is as large as the quantized weights themselves. At a smaller
+working context the figure is far closer to the file size; `(QuantVRAM).EstimateVRAM(ctx)`
+recomputes it from the stored inputs at any context you choose.
+
+When the architectural facts (layers / KV-heads / head-dim) are **absent**, the KV term is
+excluded and the row is flagged `PARTIAL true` — `VRAM` then equals `WEIGHTS`, an honest
+weights-only **lower bound**, never a silent under-estimate:
+
+```sh
+$ bestiary providers --output table 'llama@3.2#3b{instruct}'
+Entity: llama@3.2#3b{instruct}
+Instances (1):
+  ...
+      QUANT              WEIGHTS            VRAM        CTX  PARTIAL
+      q4_k_m          2019139072      2019139072     131072     true
+      q8_0            3419799040      3419799040     131072     true
+```
+
+### Filtering by quantization
+
+`--quant` keeps only the instances that carry a matching quantization row (it applies to
+`providers` and `show --by-entity`):
+
+```sh
+$ bestiary providers --output table --quant f16 'llama@3.3#70b{instruct}'   # 8 instances, all carry f16
+$ bestiary providers --output table --quant f16 'llama@3.2#3b{instruct}'    # Instances (0): 3b has no f16 row
+```
+
+An unrecognized quant is rejected with an actionable error rather than silently ignored:
+
+```sh
+$ bestiary providers --quant nope 'llama@3.3#70b{instruct}'
+bestiary: ParseQuantization: unrecognised quantization "nope"; why: the input does not
+match any known quantization name (case-insensitive); ... how to fix: pass one of the
+canonical wire names (f16, bf16, f32, q4_0, q8_0, q4_k_m, q5_k_m, iq4_nl, other).
+```
+
+### Where the data came from (`sources`)
+
+Every entity records which data sources attest to it. `bestiary sources <key>` joins the
+provenance tables and prints one row per source — its URI, ingest date, and parser-schema
+version:
+
+```sh
+$ bestiary sources --output table 'llama@3.3#70b{instruct}'
+Entity: llama@3.3#70b{instruct}
+Sources (2):
+  SOURCE       URI                                INGESTED                 PARSER
+  models.dev   https://models.dev/api.json        2026-06-09T00:00:00Z          2
+  ollama       https://registry.ollama.ai         2026-06-09T00:00:00Z          2
+```
+
+The 70B is **dual-attested** (`[models.dev, ollama]`): models.dev knows it as a hosted API
+model, and the Ollama ingest contributed its per-quant weights. A model only models.dev knows
+about reports a single source:
+
+```sh
+$ bestiary sources --output table 'claude/opus@4.5'
+Entity: claude/opus@4.5
+Sources (1):
+  SOURCE       URI                                INGESTED                 PARSER
+  models.dev   https://models.dev/api.json        2026-06-09T00:00:00Z          2
+```
+
+The same provenance is available as JSON (`bestiary sources <key>`, no `--output`), and the
+`Entity.Sources` array is included on every `show --by-entity` / `providers` JSON document.
+
+### Refreshing the Ollama data (`cmd/bestiary-ollama`)
+
+The per-quant weights/architecture data lives in a committed curated file
+(`parse/data/quant_vram.json`) that codegen bakes into the static catalog — `list` / `show`
+/ `sources` never touch the network. To refresh that file from the live Ollama registry, a
+human runs the **offline, network-gated** `cmd/bestiary-ollama` tool. It is a polite bot
+(descriptive User-Agent, ≥1 s between requests), joins each Ollama tag onto a models.dev
+catalog ID (alias table first, then mechanical decomposition), **keeps** community finetunes
+rather than dropping them, and merges fetch-owned fields into the curated file while
+preserving hand-curated architecture facts. It is **not** part of `go test ./...`.
+
 ## CLI
 
 ```
-bestiary <list|show|sync> [flags]
+bestiary <list|show|providers|sources|sync> [flags]
 ```
 
 ### Commands
@@ -154,7 +308,9 @@ bestiary <list|show|sync> [flags]
 **show** — resolve a single model and print it (offline). The argument is interpreted in the
 canonical ("peasant") form by default; use `--format` to supply HuggingFace, PURL, or raw IDs.
 If the input matches more than one model, an ambiguous-candidate listing is printed to stderr
-and the command exits non-zero.
+and the command exits non-zero. Pass `--by-entity` to resolve a `#size`-aware **entity key**
+(`family[/variant][@version][#paramsize]{mods}`) and print the aggregated entity — its
+instances, per-quant VRAM, capability union, and source list — instead of a single row.
 
 ```sh
 bestiary show 'anthropic/claude/opus/4.6@2026-02-05'      # canonical form (default)
@@ -162,6 +318,23 @@ bestiary show claude-opus-4-6 --format raw                # raw API model ID
 bestiary show anthropic/claude-opus-4-6 --format hf       # HuggingFace repo-id
 bestiary show pkg:huggingface/anthropic/claude-opus-4-5 --format purl
 bestiary show 'anthropic/claude/opus/4.6@2026-02-05' --output yaml
+bestiary show --by-entity 'llama@3.3#70b{instruct}'       # aggregated entity by #size key
+```
+
+**providers** — resolve an entity key and list every provider instance that serves it,
+including per-quantization weights/VRAM rows in the table view.
+
+```sh
+bestiary providers --output table 'llama@3.3#70b{instruct}'
+bestiary providers --output table --quant q4_k_m 'llama@3.3#70b{instruct}'
+```
+
+**sources** — resolve an entity key and print its data-source provenance (one row per
+attesting source: URI, ingest date, parser-schema version). Offline.
+
+```sh
+bestiary sources --output table 'llama@3.3#70b{instruct}'   # dual-attested: models.dev + ollama
+bestiary sources 'claude/opus@4.5'                          # JSON; models.dev-only
 ```
 
 **list** — query models from the static registry + local cache (offline).
@@ -188,9 +361,14 @@ After syncing, `list` and `show` merge static + cached data. When both sources h
 |------|-----------|---------|-------------|
 | `--output` | all | `json` | Output rendering: `json`, `yaml`, `table`. *(Was `--format` in v0.0.1.)* |
 | `--format` | `show` | `peasant` | **Input** scheme for the model argument: `peasant` (canonical), `huggingface`/`hf`, `purl`, `raw`. No auto-detection — non-canonical inputs must select their format. |
+| `--by-entity` | `show` | `false` | Resolve the argument as a `#size`-aware entity key and print the aggregated entity instead of a single model row. |
+| `--quant` | `providers`, `show --by-entity` | (all) | Keep only instances carrying a matching quantization row (e.g. `q4_k_m`, `f16`). An unrecognized value is rejected with an actionable error. |
 | `--provider` | `list`, `sync` | (all) | Filter by provider slug (e.g. `anthropic`, `google`, `openai`). |
 | `--db-path` | all | `$XDG_CACHE_HOME/bestiary/models.db` | SQLite cache location. |
 | `--scheme` | `show` | — | **Deprecated** alias for `--format`; kept for v0.0.1 scripts. `--format` wins if both are set. |
+
+Flags are positional-order-independent: `bestiary show --by-entity <key>` and
+`bestiary show <key> --by-entity` are equivalent.
 
 ## Library usage
 

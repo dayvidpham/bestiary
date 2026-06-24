@@ -17,7 +17,9 @@ bestiary/
 ├── bestiary.go              # Package doc, ModelInfo, ModelID, Capability types
 ├── canonical.go             # Canonical scheme parsing/formatting
 ├── client.go                # HTTP client with functional options, retry, 10 MB limit
+├── datasource.go            # BCNF data-source provenance: DataSource/DatasetIngested/EntitySource + curated loader + FK guards
 ├── designation.go           # Designation type + AcceptabilityRating (ISO 1087)
+├── entity.go                # Entity model: EntityRef (#size identity), EntityByTuple, QuantVRAM, Entity.Sources projection
 ├── errors.go                # ErrNotFound, ErrAmbiguous, ErrAPIUnavailable (struct errors, use errors.As)
 ├── families_gen.go          # GENERATED — Family type and constants from API
 ├── family.go                # Hand-curated Family methods (CanonicalProvider — popular families mapped, rest stubbed)
@@ -31,14 +33,19 @@ bestiary/
 ├── parse.go                 # ParseFamily, ParseFamilyWithVersion, ExtractVersionFromID, ExtractModifier; parse-failure audit
 ├── provider.go              # Provider string type, IsKnown(), Providers()
 ├── providers_gen.go         # GENERATED — ~115 provider constants from API
-├── registry.go              # StaticModels(), LookupModel(), LookupModelByProvider(), ModelsByProvider/Family()
+├── quantization.go          # Quantization closed int enum + DetectQuantization/ParseQuantization/BitsPerWeight
+├── quant_vram_data.go       # Curated loaders: QuantVRAMFor/ParamSizeFor/SourceFor + ValidateQuantVRAMTable (graceful-degrade)
+├── registry.go              # StaticModels(), LookupModel(), entity index + entity↔source join relation build
 ├── resolve.go               # Resolve() with InputFormat selection (peasant default, no auto-detect) + canonical-provider preference; ErrAmbiguous candidate listing
-├── store.go                 # SQLite cache (zombiezen driver), schema migrations
+├── store.go                 # SQLite cache (zombiezen driver), schema v5 migrations + BCNF provenance tables (real FK)
+├── vram.go                  # EstimateVRAMBytes (weights + KV, no overhead) + (QuantVRAM).EstimateVRAM(ctx); VRAMFormulaVersion 2
 ├── version.go               # 4 provenance consts (schema + upstream versions)
 ├── wire.go                  # Internal JSON wire types for models.dev API deserialization
+├── parse/data/*.json        # Curated codegen inputs (quant_vram.json, datasources.json, ollama_aliases.json, lineage.json, …)
 ├── bestiary.schema.json     # JSON Schema (draft-2020-12) for public output types
-├── cmd/bestiary/main.go     # CLI entry point: list, show, sync
-└── cmd/bestiary-gen/main.go # Codegen: fetches API, writes generated files
+├── cmd/bestiary/main.go     # CLI entry point: list, show, providers, sources, sync
+├── cmd/bestiary-gen/main.go # Codegen: fetches API, bakes static catalog (incl. QuantVRAM/Source/EntitySource)
+└── cmd/bestiary-ollama/main.go # OFFLINE network-gated Ollama refresh tool (polite-bot; rebuilds quant_vram.json)
 ```
 
 ## Code style
@@ -69,6 +76,100 @@ bestiary/
 - **Most-recent-wins merge**: When static and cached data overlap on (ID, Provider), the entry with the more recent LastSynced timestamp wins.
 - **Schema migrations**: SQLite store uses a `schema_meta` version table. OpenStore() auto-migrates old schemas via table recreation with data preservation.
 - **Internal YAML serializer**: Write-only, ~50 lines, no external yaml dependency. Handles the flat ModelInfo output case.
+
+## v0.2.4 design decisions (VRAM, quantization & data-source provenance)
+
+These are enduring facts about how the codebase models a model's memory footprint, its
+identity at a given size, and where its data came from. The authoritative design record is the
+handoff `bestiary-84su7` (the full ratified surface + implementation notes) and the URD
+`bestiary-ipt4q` (R1–R11 + the Plan-UAT revision rounds = the *why* behind each decision).
+
+- **Parameter size is part of entity identity** (`entity.go`). `EntityRef` carries a
+  `ParamSize` field and `EntityRef.String()` renders it as a `#paramsize` segment:
+  `family[/variant][@version][#paramsize]{identity-mods}`. A 70B and an 8B of one family have
+  different weights, VRAM, and architecture, so they are genuinely **distinct entities** —
+  param size belongs in the key, not as a per-instance attribute (quantization, by contrast,
+  *is* per-instance: one entity, many quant rows). The `#` segment is **omitted when size is
+  unknown**, which makes the migration byte-identical: every pre-v0.2.4 entity key is
+  unchanged. The carrier chain is curated `param_size` → `ParamSizeFor(id)` →
+  `ModelInfo.ParamSize` → registry grouping → `EntityRef`. Parser strip order is fixed:
+  `[attrs]` → `{mods}` → `#size` → `@version` → `/`. `EntityByTuple` and the tuple parsers
+  (`parseEntityTuple`, `matchCanonicalSegments`, `isBareIdentifier`) are all `#`-aware.
+
+- **VRAM is computed, never ingested** (`vram.go`, `QuantVRAM` in `entity.go`). Ollama
+  publishes a GGUF **file size** (download/disk size), not a VRAM figure, so `WeightsBytes` is
+  the ground-truth ingested file size and `VRAMBytes` is *derived*:
+  `VRAMBytes = WeightsBytes + KVCache`, with `KVCache = 2·layers·kvHeads·headDim·ctx·2`
+  (fp16 KV, GQA-aware). Two deliberate choices, both ratified at Plan-UAT: VRAM is baked at
+  the model's **maximum context** (`VRAMContextTokens` records which context was used — not a
+  fixed 4096), and there is **no overhead constant** (`VRAMFormulaVersion = 2`; the earlier
+  1 GiB overhead was removed). The weights term is *always* the ingested file size;
+  `BitsPerWeight()` exists for sanity-checking only and never feeds the baked figure. When any
+  architectural fact (layers / kvHeads / headDim) is absent the KV term is dropped (`KV = 0`)
+  and `VRAMEstimatePartial` is set true, so `VRAMBytes` is an honest weights-only lower bound
+  rather than a silent under-estimate. `(QuantVRAM).EstimateVRAM(ctx)` recomputes the figure
+  from the stored inputs at any caller-chosen context.
+
+- **Quantization is a closed int enum** (`quantization.go`). Following the `DerivationKind`
+  precedent (not Provider-as-string), `Quantization` enumerates the GGUF/llama.cpp scheme
+  names — `f16`/`bf16`/`f32`, the `q*` k-quants, the `iq*` i-quants — plus *reserved*
+  HF-ecosystem members (`awq`/`gptq`/`int8`/`int4`, ingest deferred). `QuantizationNone` is the
+  zero value and `QuantizationOther` is the fail-safe bucket so an unknown-but-recognized tag
+  is never dropped (the raw token rides along on `QuantRaw`). `DetectQuantization(id)` strips a
+  quant tag off an Ollama-style ID (unknown → `Other` + raw, never panics); `ParseQuantization(s)`
+  is the CLI path (unknown non-empty → an actionable error, never a silent `Other`).
+
+- **Curated data is a codegen input, not a live fetch** (`parse/data/*.json`,
+  `quant_vram_data.go`). Per-quant weights/architecture (`quant_vram.json`) and source
+  provenance (`datasources.json`) are committed JSON, auto-embedded via the `parse.go` glob and
+  read by graceful-degrade loaders (the `lineage.go` precedent: never panic, never nil — a
+  missing/corrupt file degrades to empty). `list` / `show` / `sources` therefore never touch
+  the network. **Determinism invariant (INV3):** codegen output is byte-identical across runs
+  except the `LastSynced` wall-clock. New literals (`QuantVRAM`, `EntitySource`, `DataSource`)
+  must render via an **explicit `sort.Slice`** — the existing Providers/Hosts aggregate emits
+  *first-seen* order (deterministic only because `staticModels` is pre-sorted, not because it
+  sorts), so it is **not** a pattern to copy for the new emissions. `DatasetIngested.IngestedAt`
+  is a **committed snapshot** read from `datasources.json`, never a codegen wall-clock, so it
+  needs no normalization. Regen lands as a **separate `chore(gen):` commit**;
+  `TestCodegen_Reproducible_ByteIdentical` (N=100) and `TestCodegen_UpToDate` must stay green.
+
+- **Provenance is a BCNF + FK relational core** (`datasource.go`, `store.go`). Multiple
+  sources now attest to a model (models.dev, Ollama, future Unsloth/HF), so provenance is
+  first-class and normalized: `DataSource(ID PK, URI UNIQUE, CanonicalName)` is the dimension;
+  `DatasetIngested(SourceID PK, IngestedAt, ParserSchema)` is the per-source ingest fact and
+  carries **no URI** (that would be a transitive dependency — the URI is obtained by FK join to
+  `DataSource`); `EntitySource(EntityKey, SourceID)` is the many-to-many **join table** and the
+  single source of truth for entity↔source. `Entity.Sources []DataSourceID` is a **derived,
+  sorted, denormalized read projection** of the join table — convenient, but not authoritative.
+  The SQLite store persists all four tables (schema v5) with **real foreign keys**: `OpenStore`
+  sets `PRAGMA foreign_keys = ON` per-connection *before* migrations (SQLite defaults FK
+  enforcement off, so the FK clauses are decorative without it), and the fresh-DB path creates
+  the BCNF tables too (not only the `migrateToV5` arm). Rule: a model is attested by a source
+  iff there is an `EntitySource` row — dual attestation yields two rows and `Sources =
+  [models.dev, ollama]`; never split one entity into two, and never treat the array as the
+  source of truth.
+
+- **The Ollama ingest is an offline, polite-bot tool** (`cmd/bestiary-ollama`). The hard
+  models.dev↔Ollama ID-join lives in this network-gated binary, never in `go test`. It is
+  **alias-first**: a curated `ollama_aliases.json` entry overrides the mechanical decomposition
+  (curated > mechanical, matching the `parse/` override precedent); otherwise it strips the
+  quant tag and decomposes the remainder through the production parse pipeline into an
+  `EntityRef` key, matched against `StaticModels()` (retrying with an `instruct` modifier for
+  bare size-only tags). Community finetunes are **kept, never dropped**: Ollama exposes no
+  base-model marker, so lineage is **inferred** (decomposition + curated tables) — base-known
+  finetunes carry a `base_ref` (→ a `DerivationFinetune` lineage edge), base-unknown ones become
+  standalone entities and are appended to a sorted `ollama_unlinked.json` for visibility. On
+  refresh, **field ownership** is explicit: fetch-owned fields (`weights_bytes`, the quant set,
+  `param_size`) are overwritten while curation-owned fields (architecture facts,
+  `context_window`, `base_ref`, `_comment`s) are preserved. The bot uses a descriptive
+  User-Agent and waits **≥1 second** between requests (a hard project constraint).
+
+- **Two version axes, both bump for v0.2.4.** `BestiarySchemaVersion` (the public JSON output
+  contract in `bestiary.schema.json`) goes `0.1.0` → `0.2.0` — additive only; all new props
+  (`ParamSize`, `QuantVRAM`, `Source`, `Entity.Sources`, the `DataSource`/`DatasetIngested`/
+  `EntitySource`/`Quantization` `$defs`) are omitted from `required`. The SQLite store
+  `currentSchemaVersion` (migrations) goes `4` → `5`. These are **distinct** numbers; do not
+  conflate them. `TestJSONOutput_ConformsToSchema` enforces schema/type agreement.
 
 ## Schema versioning
 
