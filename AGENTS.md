@@ -35,7 +35,7 @@ bestiary/
 ├── providers_gen.go         # GENERATED — ~115 provider constants from API
 ├── quantization.go          # Quantization closed int enum + DetectQuantization/ParseQuantization/BitsPerWeight
 ├── quant_vram_data.go       # Curated loaders: QuantVRAMFor/ParamSizeFor/SourceFor + ValidateQuantVRAMTable (graceful-degrade)
-├── registry.go              # StaticModels(), LookupModel(), entity index + entity↔source join relation build
+├── registry.go              # StaticModels(), LookupModel(), LookupModelByProvider(), ModelsByProvider/Family(); entity index + entity↔source join relation build
 ├── resolve.go               # Resolve() with InputFormat selection (peasant default, no auto-detect) + canonical-provider preference; ErrAmbiguous candidate listing
 ├── store.go                 # SQLite cache (zombiezen driver), schema v5 migrations + BCNF provenance tables (real FK)
 ├── vram.go                  # EstimateVRAMBytes (weights + KV, no overhead) + (QuantVRAM).EstimateVRAM(ctx); VRAMFormulaVersion 2

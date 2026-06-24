@@ -174,15 +174,25 @@ $ bestiary show --by-entity 'llama@3.3#70b{instruct}'
     "Variant": "",
     "Version": "3.3",
     "ParamSize": "70b",
-    "Modifier": ["instruct"]
+    "Modifier": [
+      "instruct"
+    ]
   },
-  ...
+  ...                          # (excerpt — the "Ref" object; Instances/Sources/etc. elided)
 }
 
 $ bestiary show --by-entity 'llama@3.3#8b{instruct}'
 {
-  "Ref": { "Family": "llama", "Version": "3.3", "ParamSize": "8b", "Modifier": ["instruct"] },
-  ...
+  "Ref": {
+    "Family": "llama",
+    "Variant": "",
+    "Version": "3.3",
+    "ParamSize": "8b",
+    "Modifier": [
+      "instruct"
+    ]
+  },
+  ...                          # (excerpt)
 }
 ```
 
@@ -251,9 +261,7 @@ An unrecognized quant is rejected with an actionable error rather than silently 
 
 ```sh
 $ bestiary providers --quant nope 'llama@3.3#70b{instruct}'
-bestiary: ParseQuantization: unrecognised quantization "nope"; why: the input does not
-match any known quantization name (case-insensitive); ... how to fix: pass one of the
-canonical wire names (f16, bf16, f32, q4_0, q8_0, q4_k_m, q5_k_m, iq4_nl, other).
+bestiary: ParseQuantization: unrecognised quantization "nope"; why: the input does not match any known quantization name (case-insensitive); where: ParseQuantization; valid examples: f16, bf16, f32, q4_0, q8_0, q4_k_m, q5_k_m, iq4_nl, other; how to fix: pass one of the canonical wire names listed above
 ```
 
 ### Where the data came from (`sources`)
