@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"strings"
 	"testing"
 )
@@ -153,6 +154,176 @@ func TestFlagsByEntityActuallyApplies(t *testing.T) {
 	// `show` renderer never emits this line.
 	if !strings.Contains(out, "Entity: "+e.Ref.String()) {
 		t.Errorf("show KEY --by-entity did not render the entity view; --by-entity was ignored after the positional.\noutput:\n%s", out)
+	}
+}
+
+// TestFlagsMalformed_PositionIndependent pins the dukv7 fix: a value-bearing flag
+// that is missing its value must raise the SAME "flag needs an argument" error
+// whether it appears before or after the positional. A value can only be a token
+// that FOLLOWS the flag, so a positional typed before a trailing value-flag (e.g.
+// `providers KEY --quant`) leaves that flag dangling — it must NOT silently
+// consume reorderArgs' inserted "--" terminator as a bogus value. A mutant that
+// lets the dangling flag swallow the "--" (the pre-fix behavior) diverges the two
+// orderings — flags-after would mis-error on "--" (for --quant) or silently
+// succeed (for --db-path) — and dies here.
+func TestFlagsMalformed_PositionIndependent(t *testing.T) {
+	cases := []struct {
+		name       string
+		flagsFirst []string
+		flagsAfter []string
+	}{
+		{
+			// Value-flag with no value, flags-first vs after a positional.
+			name:       "dangling_quant",
+			flagsFirst: []string{"providers", "--quant"},
+			flagsAfter: []string{"providers", sizedCuratedKey, "--quant"},
+		},
+		{
+			name:       "dangling_dbpath",
+			flagsFirst: []string{"show", "--db-path"},
+			flagsAfter: []string{"show", sizedCuratedKey, "--db-path"},
+		},
+		{
+			// A satisfied bool flag followed by a dangling value flag.
+			name:       "bool_then_dangling_value",
+			flagsFirst: []string{"show", "--by-entity", "--db-path"},
+			flagsAfter: []string{"show", sizedCuratedKey, "--by-entity", "--db-path"},
+		},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			first := invokeRun(t, tc.flagsFirst)
+			after := invokeRun(t, tc.flagsAfter)
+			// Both orderings must FAIL, identically — including no stray stdout from
+			// a silently-accepted bogus "--" value.
+			if first.errStr == "" {
+				t.Fatalf("flags-first %v should error (flag needs an argument) but succeeded", tc.flagsFirst)
+			}
+			if first.errStr != after.errStr {
+				t.Errorf("malformed error diverged by flag position:\n flags-first: %q\n flags-after: %q",
+					first.errStr, after.errStr)
+			}
+			if !strings.Contains(first.errStr, "flag needs an argument") {
+				t.Errorf("flags-first %v error = %q; want 'flag needs an argument'", tc.flagsFirst, first.errStr)
+			}
+			if after.stdout != "" {
+				t.Errorf("flags-after %v emitted stdout %q; a dangling value flag must error, not silently succeed",
+					tc.flagsAfter, after.stdout)
+			}
+		})
+	}
+}
+
+// TestFlagsBoolThenValue_TableEffect pins the hiwl9 gap: it asserts the EFFECT of
+// the bool-vs-value distinction that reorderArgs/flagIsBool make. A bool flag
+// (--by-entity) must NOT consume the following positional, so a trailing value
+// flag (--output=table) is still seen by flag.Parse and selects the table entity
+// view in BOTH orderings. A mutant that makes flagIsBool return false treats
+// --by-entity as value-bearing, swallowing the positional; flag.Parse then stops
+// at the leftover non-flag and never sees --output=table, so the renderer falls
+// back to JSON. Asserting the table EFFECT (the "Entity: " header that only the
+// table renderer emits) kills that mutant.
+func TestFlagsBoolThenValue_TableEffect(t *testing.T) {
+	e := pickMultiProviderEntity(t)
+	key := e.Ref.String()
+	header := "Entity: " + key
+	cases := []struct {
+		name string
+		args []string
+	}{
+		{"flags_first", []string{"show", "--by-entity", "--output=table", key}},
+		{"value_after_positional", []string{"show", "--by-entity", key, "--output=table"}},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			var runErr error
+			out := captureStdout(t, func() {
+				runErr = run(tc.args)
+			})
+			if runErr != nil {
+				t.Fatalf("run(%v) errored: %v", tc.args, runErr)
+			}
+			// The table renderer prints the "Entity: <ref>" header; the JSON
+			// renderer (the flagIsBool=>false fallback) never does.
+			if !strings.Contains(out, header) {
+				t.Errorf("run(%v) did not render the TABLE entity view (no %q header); --output=table was dropped.\noutput:\n%s",
+					tc.args, header, out)
+			}
+			if strings.HasPrefix(strings.TrimSpace(out), "{") {
+				t.Errorf("run(%v) rendered JSON, not the table view; the bool/value distinction was lost.\noutput:\n%s",
+					tc.args, out)
+			}
+		})
+	}
+}
+
+// TestExplicitDashDash_Passthrough pins the sub4c gap: an explicit "--" input
+// terminator must be consumed by reorderArgs and let the positional through
+// unchanged, identical to omitting it. A mutant that drops the `arg == "--"`
+// input branch turns a trailing "--" into a dangling unknown flag, which drops
+// the positional and yields a usage error instead of the entity output — so the
+// two forms diverge and the mutant dies.
+func TestExplicitDashDash_Passthrough(t *testing.T) {
+	plain := invokeRun(t, []string{"providers", sizedCuratedKey})
+	withSep := invokeRun(t, []string{"providers", sizedCuratedKey, "--"})
+	if plain.errStr != "" {
+		t.Fatalf("control `providers KEY` errored: %s", plain.errStr)
+	}
+	if withSep.errStr != "" {
+		t.Errorf("`providers KEY --` errored %q; an explicit terminator must pass the positional through", withSep.errStr)
+	}
+	if plain.stdout != withSep.stdout {
+		t.Errorf("explicit `--` changed output:\n without --:\n%s\n with --:\n%s", plain.stdout, withSep.stdout)
+	}
+}
+
+// TestDashLeadingPositional_AfterDashDash pins the 5zlvk gap: a positional that
+// itself begins with "-", reachable only after an explicit "--", must be treated
+// as a positional and not re-parsed as a flag. The output-side "--" terminator
+// reorderArgs inserts is what guards it. A mutant that drops that terminator lets
+// flag.Parse see the dash-leading positional as an undefined flag — yielding
+// "flag provided but not defined" instead of the entity not-found error — and
+// dies here.
+func TestDashLeadingPositional_AfterDashDash(t *testing.T) {
+	err := run([]string{"show", "--by-entity", "--", "-weird-key"})
+	if err == nil {
+		t.Fatal("run show --by-entity -- -weird-key returned nil; want a not-found error for the positional")
+	}
+	msg := strings.ToLower(err.Error())
+	if !strings.Contains(msg, "not found") {
+		t.Errorf("error = %q; want the dash-leading token treated as a (not-found) POSITIONAL, not parsed as a flag", err.Error())
+	}
+	if strings.Contains(msg, "flag provided but not defined") {
+		t.Errorf("error = %q; the dash-leading positional after `--` was mis-parsed as a flag", err.Error())
+	}
+}
+
+// TestRenderError_WrappedSinglePrefix pins the m1ccu + a16j0 hardening: an error
+// whose message CONTAINS "bestiary: " somewhere other than the start (a library
+// error wrapped with a bare context prefix, e.g. runSync's
+// "sync: open store at X: bestiary: OpenStore: …") must still render with EXACTLY
+// one leading prefix — never the redundant "bestiary: bestiary:". A mutant that
+// reverts renderError to the prefix-only check re-doubles the token and dies.
+func TestRenderError_WrappedSinglePrefix(t *testing.T) {
+	cases := []struct {
+		name string
+		in   string
+	}{
+		{"wrapped_sync_context", "sync: open store at /tmp/x: " + errPrefix + "OpenStore: not a directory"},
+		{"contains_not_prefix", "oops " + errPrefix + "detail"},
+		{"two_embedded_tokens", "ctx: " + errPrefix + "inner: " + errPrefix + "deepest"},
+		{"bare_no_token", "plain inline failure with no namespace"},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			got := renderError(errors.New(tc.in))
+			if !strings.HasPrefix(got, errPrefix) {
+				t.Errorf("renderError(%q) = %q; must start with %q", tc.in, got, errPrefix)
+			}
+			if n := strings.Count(got, errPrefix); n != 1 {
+				t.Errorf("renderError(%q) = %q has %d %q tokens, want exactly 1", tc.in, got, n, errPrefix)
+			}
+		})
 	}
 }
 

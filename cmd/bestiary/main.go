@@ -38,8 +38,21 @@ func main() {
 // here. Either way the user sees one prefix, never "bestiary: bestiary:".
 func renderError(err error) string {
 	msg := err.Error()
+	// A library error already namespaces itself with a LEADING "bestiary: "
+	// (ErrNotFound, ErrAmbiguous, the ParseQuantization error, …): print it
+	// verbatim — it carries exactly one prefix, at the front.
 	if strings.HasPrefix(msg, errPrefix) {
 		return msg
+	}
+	// A context-wrapped library error carries the namespace token in the MIDDLE,
+	// after a bare wrapper prefix (e.g. runSync's
+	// "sync: open store at <dir>: bestiary: OpenStore: …"). Stripping every
+	// embedded "bestiary: " and hoisting a single one to the front collapses the
+	// redundancy to exactly one leading prefix, so no path ever renders the
+	// doubled "bestiary: bestiary:". A bare inline error contains no token to
+	// strip and simply gains the sole prefix.
+	if strings.Contains(msg, errPrefix) {
+		msg = strings.ReplaceAll(msg, errPrefix, "")
 	}
 	return errPrefix + msg
 }
@@ -127,8 +140,18 @@ func run(args []string) error {
 // value-bearing, which leaves the eventual flag.Parse to reject it with its
 // standard unknown-flag error rather than this reordering swallowing it silently.
 // A lone "-" and everything after an explicit "--" are treated as positionals.
+//
+// A value-bearing flag is only ever satisfied by a token that FOLLOWS it; a
+// positional typed BEFORE the flag (e.g. `providers KEY --quant`) cannot be its
+// value. Such a trailing value-bearing flag with nothing after it is "dangling"
+// and must raise the same "flag needs an argument" error the flags-first form
+// produces — so it is emitted LAST, with no "--" terminator after it that
+// flag.Parse could otherwise greedily consume as a bogus value. Because that
+// parse fails before any positional is read, the positionals are intentionally
+// dropped from the dangling result: the command errors identically regardless.
 func reorderArgs(fs *flag.FlagSet, args []string) []string {
 	var flags, positionals []string
+	dangling := ""
 	for i := 0; i < len(args); i++ {
 		arg := args[i]
 		if arg == "--" {
@@ -141,17 +164,31 @@ func reorderArgs(fs *flag.FlagSet, args []string) []string {
 			continue
 		}
 		// arg is a flag token.
-		flags = append(flags, arg)
 		name := strings.TrimLeft(arg, "-")
 		if strings.IndexByte(name, '=') >= 0 {
 			// "--name=value": value is already attached to this token.
+			flags = append(flags, arg)
 			continue
 		}
-		// "--name": a value-bearing flag consumes the following token (if any).
-		if !flagIsBool(fs, name) && i+1 < len(args) {
-			i++
-			flags = append(flags, args[i])
+		if flagIsBool(fs, name) {
+			// Boolean flag: consumes no following token.
+			flags = append(flags, arg)
+			continue
 		}
+		// "--name": a value-bearing flag consumes the following token, if one
+		// follows it in the original order.
+		if i+1 < len(args) {
+			flags = append(flags, arg, args[i+1])
+			i++
+			continue
+		}
+		// Nothing follows: a dangling value-bearing flag missing its value.
+		dangling = arg
+	}
+	if dangling != "" {
+		// Emit the dangling flag last with nothing after it so flag.Parse raises
+		// "flag needs an argument: -<name>", matching the flags-first form.
+		return append(flags, dangling)
 	}
 	if len(positionals) == 0 {
 		return flags
