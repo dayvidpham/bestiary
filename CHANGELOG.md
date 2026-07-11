@@ -14,7 +14,9 @@ for its **Go module tags** (`vX.Y.Z`).
 
 ## [Unreleased]
 
-**Schema:** `0.1.0` → `0.2.0` (additive).
+## [0.2.4] — 2026-07-11
+
+**Schema:** `0.1.0` → `0.2.0` (additive). SQLite store schema `4` → `5`.
 
 The **VRAM + quantization + provenance** epoch: model the memory footprint of a
 model at each quantization, make parameter size part of entity identity, ingest
