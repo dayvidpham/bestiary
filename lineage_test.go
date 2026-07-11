@@ -221,7 +221,7 @@ func TestLineage_IDFamilyOverride_FoldToLlamaDerivatives(t *testing.T) {
 	// Cross-provider linking: the mythomax entity must now aggregate BOTH the
 	// nano-gpt instance (previously split off as family=llama) and the providers
 	// that always served it as mythomax — one entity, multiple providers.
-	ent, ok := bestiary.EntityByTuple(bestiary.Family("mythomax"), "", "")
+	ent, ok := bestiary.EntityByTuple(bestiary.Family("mythomax"), "", "", "")
 	if !ok {
 		t.Fatal("EntityByTuple(mythomax): the mythomax entity must exist")
 	}
@@ -258,11 +258,11 @@ func TestLineage_Dracarys_NoWrongMerge(t *testing.T) {
 	const id72 = bestiary.ModelID("abacusai/Dracarys-72B-Instruct")
 	const id70 = bestiary.ModelID("abacusai/dracarys-llama-3_1-70b-instruct")
 
-	ent72, ok72 := bestiary.EntityByTuple(bestiary.Family("dracarys"), "", "")
+	ent72, ok72 := bestiary.EntityByTuple(bestiary.Family("dracarys"), "", "", "")
 	if !ok72 {
 		t.Fatal("EntityByTuple(dracarys): the bare 72B entity must exist")
 	}
-	ent70, ok70 := bestiary.EntityByTuple(bestiary.Family("dracarys"), "", "", "instruct")
+	ent70, ok70 := bestiary.EntityByTuple(bestiary.Family("dracarys"), "", "", "", "instruct")
 	if !ok70 {
 		t.Fatal("EntityByTuple(dracarys,…,instruct): the dracarys{instruct} 70B entity must exist")
 	}
@@ -377,7 +377,7 @@ func TestLineage_Dracarys70B_ChildRefAlignsToEntityKey(t *testing.T) {
 	const id70 = bestiary.ModelID("abacusai/dracarys-llama-3_1-70b-instruct")
 
 	// The entity the registry actually indexes for the 70B record.
-	ent, ok := bestiary.EntityByTuple(bestiary.Family("dracarys"), "", "", "instruct")
+	ent, ok := bestiary.EntityByTuple(bestiary.Family("dracarys"), "", "", "", "instruct")
 	if !ok {
 		t.Fatal("EntityByTuple(dracarys,…,instruct): the 70B entity must exist")
 	}

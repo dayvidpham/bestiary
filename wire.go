@@ -104,6 +104,12 @@ func parseCapability(raw json.RawMessage) Capability {
 // toModelInfo converts a wire-level model entry to the public ModelInfo type.
 // providerSlug is the map key from wireResponse (e.g., "anthropic").
 // LastSynced is intentionally left empty — callers set it on persist.
+// ParamSize is intentionally left "" — live sync rows are unsized; curated
+// param-size data is baked at codegen time, not available from the live API.
+// QuantVRAM is intentionally left nil — live sync rows carry no quant/VRAM data;
+// curated VRAM is baked at codegen time, not available from the live API.
+// Source is intentionally left DataSourceNone — live sync rows have no curated
+// source tag; the models.dev source is implicit for live-sync rows.
 func toModelInfo(providerSlug string, wm wireModel) ModelInfo {
 	info := ModelInfo{
 		ID:               ModelID(wm.ID),

@@ -3,7 +3,7 @@
   "$id": "https://github.com/dayvidpham/bestiary/bestiary.schema.json",
   "title": "ModelInfo",
   "description": "Metadata for a single AI model as produced by the bestiary CLI JSON formatter.",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "type": "object",
   "properties": {
     "ID": {
@@ -173,6 +173,19 @@
       "description": "Derivation edges from this model to its parent model(s) (finetune, merge, distillation, etc.). null when the model is a base model or no curated lineage is known. Added in schema 0.1.0; optional for backward compatibility with 0.0.x records.",
       "type": ["array", "null"],
       "items": { "$ref": "#/$defs/LineageEdge" }
+    },
+    "ParamSize": {
+      "description": "Canonical parameter-size token for this model instance (e.g. \"70b\", \"8b\", \"0.5b\"). Empty string when the size is unknown or not applicable. Participates in entity identity via the #size segment of EntityRef.String(). Optional; absent for models without curated size data.",
+      "type": "string"
+    },
+    "QuantVRAM": {
+      "description": "Per-quantization weight and VRAM footprint rows for this model instance. null when no quantization data is available. Populated at codegen time from curated data; live-sync rows carry null.",
+      "type": ["array", "null"],
+      "items": { "$ref": "#/$defs/QuantVRAM" }
+    },
+    "Source": {
+      "description": "Data source that provided this model row (e.g. \"models.dev\", \"ollama\"). Empty string (DataSourceNone) on live-sync rows; populated at codegen time from curated ingest data.",
+      "type": "string"
     }
   },
   "required": [
@@ -253,7 +266,7 @@
     },
     "EntityRef": {
       "title": "EntityRef",
-      "description": "Canonical identity of a model entity: the tuple (Family, Variant, Version) plus identity-class modifiers. Version is the identity version, NOT a release date (EntityRef has no Date field). Modifier holds only identity-class modifiers, in canonical order. Its String() form family[/variant][@version]{identity-mods} is the comparable entity key; per-instance attributes never appear in it.",
+      "description": "Canonical identity of a model entity: the tuple (Family, Variant, Version, ParamSize) plus identity-class modifiers. Version is the identity version, NOT a release date (EntityRef has no Date field). ParamSize is the canonical parameter-size token and is part of identity. Modifier holds only identity-class modifiers, in canonical order. Its String() form family[/variant][@version][#paramsize]{identity-mods} is the comparable entity key; per-instance attributes never appear in it.",
       "type": "object",
       "properties": {
         "Family": {
@@ -266,6 +279,10 @@
         },
         "Version": {
           "description": "Identity version (e.g. \"4.5\", \"3.1\"). Empty when the entity has no separable version. This is NOT a release date.",
+          "type": "string"
+        },
+        "ParamSize": {
+          "description": "Canonical parameter-size token (e.g. \"70b\", \"8b\", \"0.5b\"). Part of entity identity via the #size segment of EntityRef.String(): \"llama@3.3#70b{instruct}\" and \"llama@3.3#8b{instruct}\" are distinct entities. Empty when size is unknown — the #segment is then omitted so existing keys stay byte-identical. Added in schema 0.2.0; optional for backward compatibility.",
           "type": "string"
         },
         "Modifier": {
@@ -352,6 +369,311 @@
         }
       },
       "required": ["Value", "Scheme", "Provider", "Rating"]
+    },
+    "QuantVRAM": {
+      "title": "QuantVRAM",
+      "description": "Per-quantization weight and VRAM footprint for one quantization variant of a model. WeightsBytes is the ground-truth ingested GGUF file size. VRAMBytes = WeightsBytes + KV-cache at VRAMContextTokens (model max context). VRAMEstimatePartial is true when the KV term was excluded because arch-facts (Layers/KVHeads/HeadDim) were absent.",
+      "type": "object",
+      "properties": {
+        "Quant": {
+          "description": "Parsed quantization type. Serializes as a lowercase string via encoding.TextMarshaler.",
+          "$ref": "#/$defs/Quantization"
+        },
+        "QuantRaw": {
+          "description": "Verbatim quantization token from the source data, always populated for every row. Preserves the original casing exactly as it appeared in the source (e.g. \"Q4_K_M\" from an Ollama file_type field). Never empty when a row is present.",
+          "type": "string"
+        },
+        "WeightsBytes": {
+          "description": "Ingested GGUF file size in bytes — the ground-truth weights footprint. 0 when unknown.",
+          "type": "integer",
+          "minimum": 0
+        },
+        "VRAMBytes": {
+          "description": "Estimated total VRAM in bytes: WeightsBytes + KV-cache at VRAMContextTokens. Equals WeightsBytes when VRAMEstimatePartial is true. 0 when unknown.",
+          "type": "integer",
+          "minimum": 0
+        },
+        "VRAMContextTokens": {
+          "description": "Context window in tokens used to compute VRAMBytes (the model-max context). 0 when unknown.",
+          "type": "integer",
+          "minimum": 0
+        },
+        "Layers": {
+          "description": "Number of transformer layers. 0 when unknown.",
+          "type": "integer",
+          "minimum": 0
+        },
+        "KVHeads": {
+          "description": "Number of KV-attention heads (GQA-aware). 0 when unknown.",
+          "type": "integer",
+          "minimum": 0
+        },
+        "HeadDim": {
+          "description": "Embedding width per attention head (elements per head). 0 when unknown.",
+          "type": "integer",
+          "minimum": 0
+        },
+        "VRAMEstimatePartial": {
+          "description": "True when the KV-cache term was excluded from VRAMBytes because at least one of Layers, KVHeads, or HeadDim is zero. Callers must check this flag before treating VRAMBytes as a full estimate.",
+          "type": "boolean"
+        }
+      },
+      "required": ["Quant", "QuantRaw", "WeightsBytes", "VRAMBytes", "VRAMContextTokens", "Layers", "KVHeads", "HeadDim", "VRAMEstimatePartial"]
+    },
+    "Quantization": {
+      "title": "Quantization",
+      "description": "The quantization scheme applied to a model's weights, identified by its canonical lowercase wire name. Serializes as a string via encoding.TextMarshaler (case-insensitive on unmarshal). \"none\" is the unquantized zero value; \"other\" is the fail-safe bucket for a recognized-but-unmapped tag. The GGUF/llama.cpp families (q*/iq*/f16/bf16/f32) carry an authoritative bits-per-weight; the reserved HF-ecosystem members (awq/gptq/int8/int4) are config-dependent and reserved for a later ingest.",
+      "type": "string",
+      "enum": [
+        "none", "f16", "bf16", "f32",
+        "q4_0", "q4_1", "q5_0", "q5_1", "q8_0",
+        "q2_k", "q2_k_s", "q3_k_s", "q3_k_m", "q3_k_l", "q4_k_s", "q4_k_m", "q5_k_s", "q5_k_m", "q6_k",
+        "iq1_s", "iq1_m", "iq2_xxs", "iq2_xs", "iq2_s", "iq2_m", "iq3_xxs", "iq3_xs", "iq3_s", "iq3_m", "iq4_xs", "iq4_nl",
+        "awq", "gptq", "int8", "int4",
+        "other"
+      ],
+      "x-enum-descriptions": {
+        "none": "Unquantized zero value: no quantization format specified.",
+        "f16": "16-bit IEEE half-precision float; 16 bpw.",
+        "bf16": "16-bit bfloat (brain float); 16 bpw.",
+        "f32": "32-bit IEEE single-precision float; 32 bpw.",
+        "q4_0": "Legacy GGUF 4-bit block quant, scheme 0; ~4.5 bpw (llama.cpp).",
+        "q4_1": "Legacy GGUF 4-bit block quant, scheme 1; ~5.0 bpw (llama.cpp).",
+        "q5_0": "Legacy GGUF 5-bit block quant, scheme 0; ~5.5 bpw (llama.cpp).",
+        "q5_1": "Legacy GGUF 5-bit block quant, scheme 1; ~6.0 bpw (llama.cpp).",
+        "q8_0": "Legacy GGUF 8-bit block quant, scheme 0; 8.5 bpw (llama.cpp).",
+        "q2_k": "2-bit k-quant (super-block); ~3.16 bpw (llama.cpp).",
+        "q2_k_s": "2-bit k-quant, small super-block; ~2.97 bpw (llama.cpp).",
+        "q3_k_s": "3-bit k-quant, small super-block; ~3.64 bpw (llama.cpp).",
+        "q3_k_m": "3-bit k-quant, medium super-block; ~4.0 bpw (llama.cpp).",
+        "q3_k_l": "3-bit k-quant, large super-block; ~4.3 bpw (llama.cpp).",
+        "q4_k_s": "4-bit k-quant, small super-block; ~4.67 bpw (llama.cpp).",
+        "q4_k_m": "4-bit k-quant, medium super-block (most popular); ~4.89 bpw (llama.cpp).",
+        "q5_k_s": "5-bit k-quant, small super-block; ~5.57 bpw (llama.cpp).",
+        "q5_k_m": "5-bit k-quant, medium super-block; ~5.7 bpw (llama.cpp).",
+        "q6_k": "6-bit k-quant; ~6.56 bpw (llama.cpp).",
+        "iq1_s": "1-bit i-quant (importance-matrix), small; ~2.0 bpw (llama.cpp).",
+        "iq1_m": "1-bit i-quant, medium; ~2.15 bpw (llama.cpp).",
+        "iq2_xxs": "2-bit i-quant, extra-extra-small; ~2.38 bpw (llama.cpp).",
+        "iq2_xs": "2-bit i-quant, extra-small; ~2.59 bpw (llama.cpp).",
+        "iq2_s": "2-bit i-quant, small; ~2.74 bpw (llama.cpp).",
+        "iq2_m": "2-bit i-quant, medium; ~2.93 bpw (llama.cpp).",
+        "iq3_xxs": "3-bit i-quant, extra-extra-small; ~3.25 bpw (llama.cpp).",
+        "iq3_xs": "3-bit i-quant, extra-small; ~3.5 bpw (llama.cpp).",
+        "iq3_s": "3-bit i-quant, small; ~3.66 bpw (llama.cpp).",
+        "iq3_m": "3-bit i-quant, medium; ~3.76 bpw (llama.cpp).",
+        "iq4_xs": "4-bit i-quant, extra-small; ~4.46 bpw (llama.cpp).",
+        "iq4_nl": "4-bit i-quant, non-linear (nearest-lookup); ~4.68 bpw (llama.cpp).",
+        "awq": "Reserved HF-ecosystem: Activation-aware Weight Quantization (4-bit); bpw config-dependent.",
+        "gptq": "Reserved HF-ecosystem: GPTQ post-training quantization (3/4/8-bit); bpw config-dependent.",
+        "int8": "Reserved HF-ecosystem: bitsandbytes 8-bit integer; bpw config-dependent.",
+        "int4": "Reserved HF-ecosystem: bitsandbytes 4-bit integer; bpw config-dependent.",
+        "other": "Fail-safe bucket for a recognized-but-unmapped quantization tag; raw token carried on the instance."
+      }
+    },
+    "ProviderInstance": {
+      "title": "ProviderInstance",
+      "description": "A single concrete offering of an entity: one (provider, host) serving of a model, with its instance-specific pricing, limits, and ingest provenance. Many ProviderInstances roll up into one Entity. The fields here are the per-instance ATTRIBUTES — they vary across instances of the same entity and so are excluded from EntityRef.",
+      "type": "object",
+      "properties": {
+        "ID": {
+          "description": "Original API model identifier for this instance.",
+          "type": "string"
+        },
+        "Provider": {
+          "description": "Organization that hosts or publishes this instance (e.g. \"anthropic\").",
+          "type": "string"
+        },
+        "Host": {
+          "description": "Serving host / backend that runs this instance (e.g. \"azure\"), distinct from Provider. Empty string when unknown or served directly.",
+          "type": "string"
+        },
+        "CostInputPerMTok": {
+          "description": "Cost in USD per million input tokens, or null if unknown.",
+          "oneOf": [
+            { "type": "number", "minimum": 0 },
+            { "type": "null" }
+          ]
+        },
+        "CostOutputPerMTok": {
+          "description": "Cost in USD per million output tokens, or null if unknown.",
+          "oneOf": [
+            { "type": "number", "minimum": 0 },
+            { "type": "null" }
+          ]
+        },
+        "ContextWindow": {
+          "description": "Maximum number of tokens this instance can process in a single request.",
+          "type": "integer",
+          "minimum": 0
+        },
+        "MaxOutput": {
+          "description": "Maximum number of tokens this instance can generate in a single response.",
+          "type": "integer",
+          "minimum": 0
+        },
+        "QuantVRAM": {
+          "description": "Per-quantization weight and VRAM footprint rows for this instance. null when no quantization data is available for this row. Added in schema 0.2.0.",
+          "type": ["array", "null"],
+          "items": { "$ref": "#/$defs/QuantVRAM" }
+        },
+        "Source": {
+          "description": "Data source that provided this row (e.g. \"models.dev\", \"ollama\"). Empty string (DataSourceNone) when no source is recorded. Added in schema 0.2.0.",
+          "type": "string"
+        }
+      },
+      "required": ["ID", "Provider", "Host", "CostInputPerMTok", "CostOutputPerMTok", "ContextWindow", "MaxOutput"]
+    },
+    "CapabilityUnion": {
+      "title": "CapabilityUnion",
+      "description": "Aggregate capability view across all instances of an entity: each boolean is the OR over the corresponding per-instance capability (an entity supports a capability if ANY instance does). The zero value (all-false) is the identity-safe default for an entity with no instances.",
+      "type": "object",
+      "properties": {
+        "Reasoning": { "description": "Any instance supports chain-of-thought / extended reasoning.", "type": "boolean" },
+        "ToolCall": { "description": "Any instance supports tool / function calling.", "type": "boolean" },
+        "Attachment": { "description": "Any instance supports file attachments.", "type": "boolean" },
+        "Temperature": { "description": "Any instance exposes a temperature parameter.", "type": "boolean" },
+        "StructuredOutput": { "description": "Any instance supports structured JSON output.", "type": "boolean" },
+        "Interleaved": { "description": "Any instance supports interleaved reasoning.", "type": "boolean" },
+        "OpenWeights": { "description": "Any instance has publicly available weights.", "type": "boolean" }
+      },
+      "required": ["Reasoning", "ToolCall", "Attachment", "Temperature", "StructuredOutput", "Interleaved", "OpenWeights"]
+    },
+    "Entity": {
+      "title": "Entity",
+      "description": "A model identity (Ref) together with every provider/host instance that serves it and the aggregate views derived from those instances. The unit returned by Entities() / EntityByTuple(). Range fields summarize the instances: PriceInputRange / PriceOutputRange are [min,max] over the NON-nil instance costs ({null,null} when every cost is nil); ContextRange / MaxOutputRange are [min,max] over instance context / max-output.",
+      "type": "object",
+      "properties": {
+        "Ref": {
+          "description": "The canonical identity of this entity.",
+          "$ref": "#/$defs/EntityRef"
+        },
+        "Instances": {
+          "description": "Every provider/host instance that serves this identity. null when the entity has no instances.",
+          "type": ["array", "null"],
+          "items": { "$ref": "#/$defs/ProviderInstance" }
+        },
+        "Lineage": {
+          "description": "Derivation edges from this entity to its parent(s). null when the entity is a base model or no curated lineage is known.",
+          "type": ["array", "null"],
+          "items": { "$ref": "#/$defs/LineageEdge" }
+        },
+        "Providers": {
+          "description": "Distinct providers serving this entity. null when none.",
+          "type": ["array", "null"],
+          "items": { "type": "string" }
+        },
+        "Hosts": {
+          "description": "Distinct serving hosts for this entity. null when none.",
+          "type": ["array", "null"],
+          "items": { "type": "string" }
+        },
+        "PriceInputRange": {
+          "description": "[min,max] input cost in USD per million tokens over the NON-nil instance costs. Each bound is null when no instance has a known input cost.",
+          "type": "array",
+          "items": {
+            "oneOf": [
+              { "type": "number", "minimum": 0 },
+              { "type": "null" }
+            ]
+          },
+          "minItems": 2,
+          "maxItems": 2
+        },
+        "PriceOutputRange": {
+          "description": "[min,max] output cost in USD per million tokens over the NON-nil instance costs. Each bound is null when no instance has a known output cost.",
+          "type": "array",
+          "items": {
+            "oneOf": [
+              { "type": "number", "minimum": 0 },
+              { "type": "null" }
+            ]
+          },
+          "minItems": 2,
+          "maxItems": 2
+        },
+        "ContextRange": {
+          "description": "[min,max] context window in tokens over the instances.",
+          "type": "array",
+          "items": { "type": "integer", "minimum": 0 },
+          "minItems": 2,
+          "maxItems": 2
+        },
+        "MaxOutputRange": {
+          "description": "[min,max] max-output in tokens over the instances.",
+          "type": "array",
+          "items": { "type": "integer", "minimum": 0 },
+          "minItems": 2,
+          "maxItems": 2
+        },
+        "Capabilities": {
+          "description": "Aggregate (OR-over-instances) capability view for this entity.",
+          "$ref": "#/$defs/CapabilityUnion"
+        },
+        "Sources": {
+          "description": "Derived, sorted set of data sources attesting this entity's instances. Always contains at least \"models.dev\" for catalog entities. A read projection over the EntitySource join table, not a source of truth. Added in schema 0.2.0.",
+          "type": ["array", "null"],
+          "items": { "type": "string" }
+        }
+      },
+      "required": ["Ref", "Instances", "Lineage", "Providers", "Hosts", "PriceInputRange", "PriceOutputRange", "ContextRange", "MaxOutputRange", "Capabilities"]
+    },
+    "DataSource": {
+      "title": "DataSource",
+      "description": "A BCNF dimension row identifying a data source that provides model records to the registry (e.g. the models.dev API or the Ollama registry). URI is a second candidate key (UNIQUE) and is the single home for the source's location — it is NOT duplicated onto DatasetIngested.",
+      "type": "object",
+      "properties": {
+        "ID": {
+          "description": "Stable source identifier (e.g. \"models.dev\", \"ollama\"). The primary key.",
+          "type": "string"
+        },
+        "URI": {
+          "description": "Canonical location of the source (e.g. its API or registry URL). A second candidate key — UNIQUE across data sources.",
+          "type": "string"
+        },
+        "CanonicalName": {
+          "description": "Human-readable display name for the source.",
+          "type": "string"
+        }
+      },
+      "required": ["ID", "URI", "CanonicalName"]
+    },
+    "DatasetIngested": {
+      "title": "DatasetIngested",
+      "description": "BCNF fact row recording the single current ingest of a data source (PK = SourceID, replace-on-refresh). It carries NO uri property: the URI is a transitive dependency on SourceID and lives only on DataSource, obtained by FK join. IngestedAt is a committed snapshot from the curated data, never a codegen wall-clock stamp (determinism).",
+      "type": "object",
+      "properties": {
+        "SourceID": {
+          "description": "The DataSource this ingest belongs to (FK to DataSource.ID). The primary key — one current ingest per source.",
+          "type": "string"
+        },
+        "IngestedAt": {
+          "description": "Timestamp of the ingest, a committed snapshot from the curated data (not a codegen wall-clock stamp).",
+          "type": "string"
+        },
+        "ParserSchema": {
+          "description": "Parser/schema version under which the ingest was parsed.",
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "required": ["SourceID", "IngestedAt", "ParserSchema"]
+    },
+    "EntitySource": {
+      "title": "EntitySource",
+      "description": "A BCNF join-table row attesting that an entity is provided by a data source (composite PK = (EntityKey, SourceID)). The many-to-many relation between entities and data sources; Entity.Sources is its denormalized sorted read projection.",
+      "type": "object",
+      "properties": {
+        "EntityKey": {
+          "description": "The entity key (EntityRef.String()) attested by SourceID. FK to a real entity.",
+          "type": "string"
+        },
+        "SourceID": {
+          "description": "The data source attesting EntityKey (FK to DataSource.ID).",
+          "type": "string"
+        }
+      },
+      "required": ["EntityKey", "SourceID"]
     }
   }
 }

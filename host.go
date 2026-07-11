@@ -12,9 +12,9 @@ package bestiary
 // Host is a string type (not a closed int enum) for the same reason Provider is:
 // the set of serving backends is open and grows over time. Well-known hosts have
 // named constants for type-safe call sites; unrecognized hosts are still
-// representable verbatim. The curated host table (parse/data/hosts.json) that
-// populates ModelInfo.Host from the raw API data is owned by a later slice; this
-// slice only fixes the type contract and a seed set of constants.
+// representable verbatim. ModelInfo.Host is populated by DetectHost, which matches a
+// model ID against the curated host-prefix table (parse/data/hosts.json); an
+// unrecognized or absent prefix yields HostNone.
 type Host string
 
 const (

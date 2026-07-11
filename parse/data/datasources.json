@@ -1,0 +1,28 @@
+{
+  "_comment": "BCNF data-source provenance dimension + current-ingest rows. 'sources' is the data-source dimension keyed by id (uri is a 2nd candidate key, unique). 'ingested' is the single CURRENT ingest per source keyed by source_id (FK to sources); it carries NO uri — the uri is reached by joining to sources via source_id (BCNF: the transitive uri->id dependency is normalized out). ingested_at is a COMMITTED SNAPSHOT timestamp, NEVER computed at load or codegen time — pinning it here is what keeps generated output byte-deterministic. The registry attestation rule (registry.go aggregate): every static row attests models.dev (empty Source means the models.dev origin is implicit); an enriched row whose Source names a further source (e.g. ollama) DUAL-attests both models.dev AND that source.",
+  "schema_version": 2,
+  "sources": [
+    {
+      "id": "models.dev",
+      "uri": "https://models.dev/api.json",
+      "canonical_name": "models.dev"
+    },
+    {
+      "id": "ollama",
+      "uri": "https://registry.ollama.ai",
+      "canonical_name": "Ollama Registry"
+    }
+  ],
+  "ingested": [
+    {
+      "source_id": "models.dev",
+      "ingested_at": "2026-06-09T00:00:00Z",
+      "parser_schema": 2
+    },
+    {
+      "source_id": "ollama",
+      "ingested_at": "2026-06-09T00:00:00Z",
+      "parser_schema": 2
+    }
+  ]
+}

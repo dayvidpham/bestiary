@@ -8,21 +8,58 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"sort"
 	"strings"
 
 	"github.com/dayvidpham/bestiary"
 )
 
+// errPrefix is the single namespace prefix the CLI guarantees on every error
+// line it prints to stderr.
+const errPrefix = "bestiary: "
+
 func main() {
 	if err := run(os.Args[1:]); err != nil {
-		fmt.Fprintf(os.Stderr, "bestiary: %v\n", err)
+		fmt.Fprintln(os.Stderr, renderError(err))
 		os.Exit(1)
 	}
 }
 
+// renderError formats err for the CLI's stderr line with EXACTLY one
+// "bestiary: " prefix.
+//
+// The bestiary package is also a library: its structured errors (ErrNotFound,
+// ErrAmbiguous, ErrAPIUnavailable, the ParseQuantization error, …) deliberately
+// namespace themselves with "bestiary: " in their Error() string, which is the
+// correct, self-describing form for any library consumer. The CLI must not
+// double that prefix, so it prints an already-namespaced error verbatim. The
+// inline errors raised in this command package (usage strings, unknown-command,
+// unsupported-output) carry no prefix on purpose — the CLI supplies the sole one
+// here. Either way the user sees one prefix, never "bestiary: bestiary:".
+func renderError(err error) string {
+	msg := err.Error()
+	// A library error already namespaces itself with a LEADING "bestiary: "
+	// (ErrNotFound, ErrAmbiguous, the ParseQuantization error, …): print it
+	// verbatim — it carries exactly one prefix, at the front.
+	if strings.HasPrefix(msg, errPrefix) {
+		return msg
+	}
+	// A context-wrapped library error carries the namespace token in the MIDDLE,
+	// after a bare wrapper prefix (e.g. runSync's
+	// "sync: open store at <dir>: bestiary: OpenStore: …"). Stripping every
+	// embedded "bestiary: " and hoisting a single one to the front collapses the
+	// redundancy to exactly one leading prefix, so no path ever renders the
+	// doubled "bestiary: bestiary:". A bare inline error contains no token to
+	// strip and simply gains the sole prefix.
+	if strings.Contains(msg, errPrefix) {
+		msg = strings.ReplaceAll(msg, errPrefix, "")
+	}
+	return errPrefix + msg
+}
+
 func run(args []string) error {
 	if len(args) == 0 {
-		return fmt.Errorf("usage: bestiary <list|show|providers|sync> [flags]")
+		return fmt.Errorf("usage: bestiary <list|show|providers|sources|sync> [flags]")
 	}
 
 	cmd := args[0]
@@ -45,8 +82,13 @@ func run(args []string) error {
 	// When --scheme is set and --format is not explicitly set, --scheme takes effect.
 	// --format takes precedence over --scheme when both are provided.
 	scheme := fs.String("scheme", "", "DEPRECATED: use --format instead; scheme for model ID resolution: canonical, huggingface, purl, raw")
+	// --quant filters the entity instance views (providers, show --by-entity) to the
+	// instances that carry a per-quantization VRAM row matching the given quant
+	// (e.g. q4_k_m, f16). It is parsed via bestiary.ParseQuantization, which rejects
+	// an unrecognised value with an actionable error rather than silently ignoring it.
+	quant := fs.String("quant", "", "filter instances by quantization (e.g. q4_k_m, f16); applies to providers and show --by-entity")
 
-	if err := fs.Parse(args[1:]); err != nil {
+	if err := fs.Parse(reorderArgs(fs, args[1:])); err != nil {
 		return err
 	}
 
@@ -58,7 +100,7 @@ func run(args []string) error {
 			if fs.NArg() < 1 {
 				return fmt.Errorf("usage: bestiary show --by-entity <model-id | family[/variant][/version|@version]{identity-mods}> [--output=<json|table>]")
 			}
-			return runShowEntity(fs.Arg(0), bestiary.OutputFormat(*output))
+			return runShowEntity(fs.Arg(0), bestiary.OutputFormat(*output), *quant)
 		}
 		if fs.NArg() < 1 {
 			return fmt.Errorf("usage: bestiary show <model-id> [--format=<peasant|huggingface|hf|purl|raw>] [--output=<json|yaml|table>] [flags]")
@@ -69,12 +111,103 @@ func run(args []string) error {
 			return fmt.Errorf("usage: bestiary providers <family>[/<variant>][/<version>|@<version>]{identity-mods} [--output=<json|table>]\n" +
 				"  version may be given as a trailing /segment or as @version; the optional [attributes] filter is ignored in MVP")
 		}
-		return runProviders(fs.Arg(0), bestiary.OutputFormat(*output))
+		return runProviders(fs.Arg(0), bestiary.OutputFormat(*output), *quant)
+	case "sources":
+		if fs.NArg() < 1 {
+			return fmt.Errorf("usage: bestiary sources <family>[/<variant>][@<version>][#<paramsize>]{identity-mods} [--output=<json|table>]\n" +
+				"  prints the per-source ingest provenance (uri via FK join, ingest date, parser schema) that attests the entity, sorted by source")
+		}
+		return runSources(fs.Arg(0), bestiary.OutputFormat(*output))
 	case "sync":
 		return runSync(*provider, bestiary.OutputFormat(*output), *dbPath)
 	default:
-		return fmt.Errorf("unknown command %q; supported commands: list, show, providers, sync", cmd)
+		return fmt.Errorf("unknown command %q; supported commands: list, show, providers, sources, sync", cmd)
 	}
+}
+
+// reorderArgs makes flag parsing position-independent. Go's flag package stops
+// scanning at the first non-flag argument, so a flag written AFTER the
+// positional (e.g. `show KEY --by-entity`) would otherwise be silently dropped.
+// This helper partitions args into flags and positionals — preserving the order
+// within each group — and returns the flags first, followed by a "--" terminator
+// and the positionals, so flag.Parse sees every flag regardless of where the
+// user placed it relative to the positional.
+//
+// Value-bearing flags are handled in both spellings: the joined "--name=value"
+// form is moved as a single token, and the separated "--name value" form pulls
+// the following token along as its value. Boolean flags (detected via the flag
+// package's IsBoolFlag contract) consume no value. An unknown flag is treated as
+// value-bearing, which leaves the eventual flag.Parse to reject it with its
+// standard unknown-flag error rather than this reordering swallowing it silently.
+// A lone "-" and everything after an explicit "--" are treated as positionals.
+//
+// A value-bearing flag is only ever satisfied by a token that FOLLOWS it; a
+// positional typed BEFORE the flag (e.g. `providers KEY --quant`) cannot be its
+// value. Such a trailing value-bearing flag with nothing after it is "dangling"
+// and must raise the same "flag needs an argument" error the flags-first form
+// produces — so it is emitted LAST, with no "--" terminator after it that
+// flag.Parse could otherwise greedily consume as a bogus value. Because that
+// parse fails before any positional is read, the positionals are intentionally
+// dropped from the dangling result: the command errors identically regardless.
+func reorderArgs(fs *flag.FlagSet, args []string) []string {
+	var flags, positionals []string
+	dangling := ""
+	for i := 0; i < len(args); i++ {
+		arg := args[i]
+		if arg == "--" {
+			positionals = append(positionals, args[i+1:]...)
+			break
+		}
+		if len(arg) < 2 || arg[0] != '-' {
+			// A lone "-" (len 1) or any non-dash token is a positional.
+			positionals = append(positionals, arg)
+			continue
+		}
+		// arg is a flag token.
+		name := strings.TrimLeft(arg, "-")
+		if strings.IndexByte(name, '=') >= 0 {
+			// "--name=value": value is already attached to this token.
+			flags = append(flags, arg)
+			continue
+		}
+		if flagIsBool(fs, name) {
+			// Boolean flag: consumes no following token.
+			flags = append(flags, arg)
+			continue
+		}
+		// "--name": a value-bearing flag consumes the following token, if one
+		// follows it in the original order.
+		if i+1 < len(args) {
+			flags = append(flags, arg, args[i+1])
+			i++
+			continue
+		}
+		// Nothing follows: a dangling value-bearing flag missing its value.
+		dangling = arg
+	}
+	if dangling != "" {
+		// Emit the dangling flag last with nothing after it so flag.Parse raises
+		// "flag needs an argument: -<name>", matching the flags-first form.
+		return append(flags, dangling)
+	}
+	if len(positionals) == 0 {
+		return flags
+	}
+	// The "--" terminator guards any positional that itself begins with "-".
+	return append(append(flags, "--"), positionals...)
+}
+
+// flagIsBool reports whether the named flag is a registered boolean flag (one
+// that takes no value), using the same IsBoolFlag contract the flag package uses
+// internally. An unregistered name reports false so reorderArgs defers the
+// rejection of unknown flags to flag.Parse.
+func flagIsBool(fs *flag.FlagSet, name string) bool {
+	f := fs.Lookup(name)
+	if f == nil {
+		return false
+	}
+	bf, ok := f.Value.(interface{ IsBoolFlag() bool })
+	return ok && bf.IsBoolFlag()
 }
 
 // resolveDBPath returns dbPath if non-empty, otherwise calls DefaultDBPath().
@@ -244,18 +377,22 @@ func runShow(input string, format bestiary.OutputFormat, dbPath string, inputFor
 
 // parseEntityTuple parses an entity identity tuple of the canonical form
 //
-//	family[/variant][@version]{identity-mods}[attributes]
+//	family[/variant][@version][#paramsize]{identity-mods}[attributes]
 //
-// returning the (family, variant, version, identity-modifiers) components. This
-// mirrors EntityRef.String()'s rendering so that a key printed by the entity
+// returning the (family, variant, version, paramSize, identity-modifiers) components.
+// This mirrors EntityRef.String()'s rendering so that a key printed by the entity
 // layer round-trips back through this parser. The optional trailing "[attributes]"
 // bracket segment is recognized and discarded (attributes never affect identity,
 // and the MVP entity lookup ignores them). The "{identity-mods}" brace tokens are
 // split on commas and passed through verbatim; EntityByTuple re-projects them via
 // EntityModifiers, so attribute-class tokens supplied here are dropped at lookup.
 //
+// Strip order: [attrs] -> {mods} -> #size -> @version -> /variant
+// The #size strip happens BEFORE the @-LastIndex version split so that a '#'
+// in the size token never confuses the version parser.
+//
 // It returns an error only when the family segment is empty.
-func parseEntityTuple(input string) (fam bestiary.Family, variant, version string, mods []string, err error) {
+func parseEntityTuple(input string) (fam bestiary.Family, variant, version, paramSize string, mods []string, err error) {
 	s := input
 
 	// Strip the trailing "[attributes]" segment (ignored in MVP) before anything
@@ -278,6 +415,23 @@ func parseEntityTuple(input string) (fam bestiary.Family, variant, version strin
 		}
 	}
 
+	// Strip and capture the "#paramsize" segment. Must be done BEFORE the
+	// @-LastIndex version split — the size strip is intentionally ordered here
+	// so a '#' token never reaches the version parser.
+	// Canonicalize to lowercase via ParseParamSize so that "llama@3.3#70B" and
+	// "llama@3.3#70b" resolve to the same entity key. Non-size tokens (empty,
+	// unrecognized shapes) are left as-is; the lookup will simply miss, which
+	// is the correct behavior for a malformed size token.
+	if hash := strings.LastIndex(s, "#"); hash >= 0 {
+		raw := s[hash+1:]
+		s = s[:hash]
+		if canonical, err := bestiary.ParseParamSize(raw); err == nil {
+			paramSize = canonical
+		} else {
+			paramSize = raw // pass through verbatim; lookup will miss
+		}
+	}
+
 	// Strip and capture the "@version" segment (identity version, not a date).
 	if at := strings.LastIndex(s, "@"); at >= 0 {
 		version = s[at+1:]
@@ -286,7 +440,10 @@ func parseEntityTuple(input string) (fam bestiary.Family, variant, version strin
 
 	segs := strings.Split(s, "/")
 	if len(segs) == 0 || segs[0] == "" {
-		return "", "", "", nil, fmt.Errorf("parse entity tuple %q: empty family segment; expected family[/variant][@version]{identity-mods}", input)
+		return "", "", "", "", nil, fmt.Errorf(
+			"parse entity tuple %q: empty family segment; expected family[/variant][@version][#paramsize]{identity-mods}",
+			input,
+		)
 	}
 	fam = bestiary.Family(segs[0])
 	if len(segs) >= 2 {
@@ -297,7 +454,7 @@ func parseEntityTuple(input string) (fam bestiary.Family, variant, version strin
 	if len(segs) >= 3 && version == "" {
 		version = segs[2]
 	}
-	return fam, variant, version, mods, nil
+	return fam, variant, version, paramSize, mods, nil
 }
 
 // lookupEntity resolves the show/providers argument to an entity. It first tries
@@ -306,14 +463,15 @@ func parseEntityTuple(input string) (fam bestiary.Family, variant, version strin
 // both `claude/opus@4.5` and `claude-opus-4-5-20251101` resolve to the same
 // entity.
 func lookupEntity(arg string) (bestiary.Entity, bool) {
-	if fam, variant, version, mods, err := parseEntityTuple(arg); err == nil {
-		if e, ok := bestiary.EntityByTuple(fam, variant, version, mods...); ok {
+	if fam, variant, version, paramSize, mods, err := parseEntityTuple(arg); err == nil {
+		if e, ok := bestiary.EntityByTuple(fam, variant, version, paramSize, mods...); ok {
 			return e, true
 		}
 	}
 	// Fallback: the argument may be a concrete model ID rather than a tuple.
+	// Use m.ParamSize so sized model rows resolve to their sized entity key.
 	if m, ok := bestiary.LookupModel(bestiary.ModelID(arg)); ok {
-		return bestiary.EntityByTuple(m.Family, m.Variant, m.Version, m.Modifier...)
+		return bestiary.EntityByTuple(m.Family, m.Variant, m.Version, m.ParamSize, m.Modifier...)
 	}
 	return bestiary.Entity{}, false
 }
@@ -339,8 +497,44 @@ func validateEntityOutput(format bestiary.OutputFormat) error {
 }
 
 // runProviders lists every provider/host instance of the entity identified by the
-// given tuple (or model ID).
-func runProviders(arg string, format bestiary.OutputFormat) error {
+// given tuple (or model ID). When quantFlag is non-empty the instance set is
+// filtered to those carrying a QuantVRAM row matching that quantization; an
+// unrecognised quantFlag is rejected with an actionable error (never silently
+// ignored or mapped to QuantizationOther).
+func runProviders(arg string, format bestiary.OutputFormat, quantFlag string) error {
+	if err := validateEntityOutput(format); err != nil {
+		return err
+	}
+	quant, filter, err := parseQuantFilter(quantFlag)
+	if err != nil {
+		return err
+	}
+	ent, ok := lookupEntity(arg)
+	if !ok {
+		return &bestiary.ErrNotFound{What: "entity", Key: arg}
+	}
+	insts := ent.Instances
+	if filter {
+		insts = filterInstancesByQuant(insts, quant)
+	}
+	if format == bestiary.FormatJSON {
+		return writeJSON(os.Stdout, insts)
+	}
+	fmt.Fprintf(os.Stdout, "Entity: %s\n", ent.Ref.String())
+	writeInstanceTable(os.Stdout, insts)
+	return nil
+}
+
+// runSources prints the per-source ingest provenance attesting the entity
+// identified by arg: one record per attesting data source (from Entity.Sources),
+// each JOINED across the BCNF provenance tables — uri + canonical-name from the
+// DataSource dimension (reached by FK on the source id, never duplicated onto the
+// ingest row) and ingested-at + parser-schema from the DatasetIngested current
+// ingest. Records are sorted ascending by source id. This is the subcommand's own
+// SOURCE|URI|INGESTED|PARSER view; it deliberately does NOT add a SOURCE column to
+// the show/list instance tables (deferred). An unknown key yields an actionable
+// ErrNotFound.
+func runSources(arg string, format bestiary.OutputFormat) error {
 	if err := validateEntityOutput(format); err != nil {
 		return err
 	}
@@ -348,30 +542,134 @@ func runProviders(arg string, format bestiary.OutputFormat) error {
 	if !ok {
 		return &bestiary.ErrNotFound{What: "entity", Key: arg}
 	}
+	rows := sourceProvenanceRows(ent.Sources)
 	if format == bestiary.FormatJSON {
-		return writeJSON(os.Stdout, ent.Instances)
+		return writeJSON(os.Stdout, rows)
 	}
 	fmt.Fprintf(os.Stdout, "Entity: %s\n", ent.Ref.String())
-	writeInstanceTable(os.Stdout, ent.Instances)
+	writeSourceTable(os.Stdout, rows)
 	return nil
 }
 
 // runShowEntity renders the aggregate view of one entity: its identity, rolled-up
 // provider/host lists, price/context/max-output ranges, capability union, lineage
 // edges, and the underlying instances.
-func runShowEntity(arg string, format bestiary.OutputFormat) error {
+func runShowEntity(arg string, format bestiary.OutputFormat, quantFlag string) error {
 	if err := validateEntityOutput(format); err != nil {
+		return err
+	}
+	quant, filter, err := parseQuantFilter(quantFlag)
+	if err != nil {
 		return err
 	}
 	ent, ok := lookupEntity(arg)
 	if !ok {
 		return &bestiary.ErrNotFound{What: "entity", Key: arg}
 	}
+	if filter {
+		ent.Instances = filterInstancesByQuant(ent.Instances, quant)
+	}
 	if format == bestiary.FormatJSON {
 		return writeJSON(os.Stdout, ent)
 	}
 	writeEntityView(os.Stdout, ent)
 	return nil
+}
+
+// parseQuantFilter interprets the --quant flag value. An empty string means "no
+// filter" and returns filter=false. A non-empty value is parsed via
+// bestiary.ParseQuantization, which NEVER silently maps an unrecognised token to
+// QuantizationOther — an unknown value returns an actionable error so the caller
+// learns their filter was rejected rather than silently matching nothing.
+func parseQuantFilter(flag string) (q bestiary.Quantization, filter bool, err error) {
+	if flag == "" {
+		return bestiary.QuantizationNone, false, nil
+	}
+	q, err = bestiary.ParseQuantization(flag)
+	if err != nil {
+		return bestiary.QuantizationNone, false, err
+	}
+	return q, true, nil
+}
+
+// filterInstancesByQuant keeps only the instances that carry at least one
+// QuantVRAM row whose Quant equals q; instances with no matching quant row are
+// dropped entirely. The returned slice is freshly allocated and the matched
+// instances retain their full QuantVRAM lists (the filter selects instances, it
+// does not prune their rows). The input slice is never mutated.
+func filterInstancesByQuant(insts []bestiary.ProviderInstance, q bestiary.Quantization) []bestiary.ProviderInstance {
+	out := make([]bestiary.ProviderInstance, 0, len(insts))
+	for _, in := range insts {
+		for _, qv := range in.QuantVRAM {
+			if qv.Quant == q {
+				out = append(out, in)
+				break
+			}
+		}
+	}
+	return out
+}
+
+// sourceProvenance is the sources subcommand's per-source output record: the
+// DataSource dimension row (ID/URI/CanonicalName — reached by the FK join on the
+// source id; the uri is obtained ONLY via this join and is never duplicated onto
+// the ingest row) composed with the two scalar facts of its DatasetIngested
+// current ingest (IngestedAt/ParserSchema). The source id appears once, as the
+// embedded DataSource.ID primary key — DatasetIngested.SourceID would be the same
+// value, so it is omitted to avoid a redundant key.
+//
+// WIRE-SHAPE CONSTRAINT: this record marshals with the published 0.2.0 $defs field
+// names (PascalCase: ID, URI, CanonicalName, IngestedAt, ParserSchema) — the same
+// spelling every sibling subcommand (list/show/providers) emits and the spelling
+// the schema tests pin. It deliberately embeds the production bestiary.DataSource
+// type so any rename of those fields propagates here automatically. Do NOT add
+// snake_case json tags: the snake_case shapes elsewhere in the repo are INGEST
+// wire types, not output types, and a divergent output casing would be a breaking
+// change for CLI consumers.
+type sourceProvenance struct {
+	bestiary.DataSource
+	IngestedAt   string
+	ParserSchema int
+}
+
+// sourceProvenanceRows builds the joined per-source provenance view for an
+// entity's attesting sources. For each source id it resolves the DataSource
+// dimension (id/uri/canonical-name) via the DataSourceByID FK join and the
+// DatasetIngested current ingest via DatasetIngestedFor. The result is sorted
+// ascending by source id so output ordering is deterministic regardless of the
+// order in which Entity.Sources was supplied. A source that fails to resolve (a
+// graceful-degrade load failure) keeps its id with empty join fields rather than
+// being dropped.
+func sourceProvenanceRows(sources []bestiary.DataSourceID) []sourceProvenance {
+	rows := make([]sourceProvenance, 0, len(sources))
+	for _, id := range sources {
+		// Seed ID so a degraded (FK-miss) record still carries the source id.
+		sp := sourceProvenance{DataSource: bestiary.DataSource{ID: id}}
+		if ds, ok := bestiary.DataSourceByID(id); ok {
+			sp.DataSource = ds
+		}
+		if di, ok := bestiary.DatasetIngestedFor(id); ok {
+			sp.IngestedAt = di.IngestedAt
+			sp.ParserSchema = di.ParserSchema
+		}
+		rows = append(rows, sp)
+	}
+	sort.Slice(rows, func(i, j int) bool {
+		return rows[i].ID < rows[j].ID
+	})
+	return rows
+}
+
+// writeSourceTable prints the sources subcommand's SOURCE|URI|INGESTED|PARSER
+// table. This is the subcommand's own provenance view and is distinct from the
+// deferred show/list instance-table SOURCE column.
+func writeSourceTable(w io.Writer, rows []sourceProvenance) {
+	fmt.Fprintf(w, "Sources (%d):\n", len(rows))
+	fmt.Fprintf(w, "  %-12s %-34s %-22s %8s\n", "SOURCE", "URI", "INGESTED", "PARSER")
+	for _, r := range rows {
+		fmt.Fprintf(w, "  %-12s %-34s %-22s %8d\n",
+			string(r.ID), orDash(r.URI), orDash(r.IngestedAt), r.ParserSchema)
+	}
 }
 
 // writeJSON marshals v as indented JSON to w.
@@ -408,6 +706,24 @@ func writeInstanceTable(w io.Writer, insts []bestiary.ProviderInstance) {
 			string(in.ID), string(in.Provider), fmtHost(in.Host),
 			fmtPrice(in.CostInputPerMTok), fmtPrice(in.CostOutputPerMTok),
 			in.ContextWindow, in.MaxOutput)
+		writeQuantRows(w, in.QuantVRAM)
+	}
+}
+
+// writeQuantRows prints the per-quantization VRAM sub-rows for one instance,
+// indented beneath its main row. Nothing is printed when the instance carries no
+// quant data. The PARTIAL column flags a weights-only VRAM lower bound — true
+// means the KV-cache term was excluded because architecture facts were absent, so
+// VRAMBytes is not a full estimate.
+func writeQuantRows(w io.Writer, rows []bestiary.QuantVRAM) {
+	if len(rows) == 0 {
+		return
+	}
+	fmt.Fprintf(w, "      %-10s %15s %15s %10s %8s\n",
+		"QUANT", "WEIGHTS", "VRAM", "CTX", "PARTIAL")
+	for _, q := range rows {
+		fmt.Fprintf(w, "      %-10s %15d %15d %10d %8t\n",
+			q.Quant.String(), q.WeightsBytes, q.VRAMBytes, q.VRAMContextTokens, q.VRAMEstimatePartial)
 	}
 }
 

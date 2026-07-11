@@ -1,0 +1,77 @@
+{
+  "_comment": "Curated per-quant weights-bytes and architecture facts for VRAM estimation. KEYING CONTRACT: model_id is the models.dev model ID (the same ID used in models_static_gen.go) for any model that exists in the models.dev catalog, so that codegen (cmd/bestiary-gen) joins these rows onto the catalog by exact model-ID match and bakes ParamSize/Source/QuantVRAM into the generated static data. A non-models.dev Ollama-native ID — either a colon-tag form (e.g. \"llama3:70b-instruct\") or a namespace/slash form (e.g. \"ollama/dracarys2-llama-3-70b-instruct\") — is reserved ONLY for community finetunes that are NOT in models.dev; those legitimately do not join during codegen and await the offline Ollama tool's network-gated ID join; such entries carry an explanatory _comment. Each entry's _comment states whether its figures are research-sourced (from ollama.com tags page or registry.ollama.ai manifest API, cited in llm/research/v024-vram-quantization.md) or plausible+documented (reasonable estimates for seed coverage, to be replaced on next offline tool refresh). The source field identifies the data source for provenance tracking; it does not indicate figure quality. VRAMBytes and VRAMContextTokens are NOT stored here — they are computed and baked by the codegen caller (cmd/bestiary-gen) using EstimateVRAMBytes.",
+  "schema_version": 1,
+  "models": [
+    {
+      "_comment": "Research-sourced: arch facts from Meta-Llama-3.3-70B public model card (layers=80, kv_heads=8, head_dim=128, context_window=131072). weights_bytes from ollama.com/library/llama3.3/tags page (Q4_K_M ~42.5 GB, Q8_0 ~75 GB, F16 ~141 GB) as of 2026-06-09. model_id is the models.dev catalog ID 'llama-3.3-70b-instruct' so codegen joins this row onto the catalog.",
+      "model_id": "llama-3.3-70b-instruct",
+      "param_size": "70b",
+      "source": "ollama",
+      "context_window": 131072,
+      "rows": [
+        {
+          "quant": "q4_k_m",
+          "weights_bytes": 43033509888,
+          "layers": 80,
+          "kv_heads": 8,
+          "head_dim": 128
+        },
+        {
+          "quant": "q8_0",
+          "weights_bytes": 75176521728,
+          "layers": 80,
+          "kv_heads": 8,
+          "head_dim": 128
+        },
+        {
+          "quant": "f16",
+          "weights_bytes": 141166166016,
+          "layers": 80,
+          "kv_heads": 8,
+          "head_dim": 128
+        }
+      ]
+    },
+    {
+      "_comment": "Param-size-only entry (no curated weights): the models.dev catalog ID 'llama-3.3-8b-instruct' shares Family/Version/Modifier with the 70b instruct entry above, so without a curated param_size the two would wrong-merge into a single unsized llama@3.3{instruct} entity. Carrying param_size='8b' here splits it into the distinct llama@3.3#8b{instruct} entity. No authoritative GGUF weights figures are available for this catalog entry yet (it is not a standard Meta release), so rows is intentionally empty: ParamSize and Source are baked, but QuantVRAM stays nil until the offline tool supplies real weights. Refresh with the offline tool for VRAM figures.",
+      "model_id": "llama-3.3-8b-instruct",
+      "param_size": "8b",
+      "source": "ollama",
+      "rows": []
+    },
+    {
+      "_comment": "Plausible+documented: weights_bytes estimated from ollama.com/library/llama3.2 tags page size display (~2.0 GB Q4_K_M, ~3.2 GB Q8_0). Arch facts absent (exercises partial-VRAM path). model_id is the models.dev catalog ID 'llama-3.2-3b-instruct' so codegen joins this row. Refresh with offline tool for authoritative figures.",
+      "model_id": "llama-3.2-3b-instruct",
+      "param_size": "3b",
+      "source": "ollama",
+      "context_window": 131072,
+      "rows": [
+        {
+          "quant": "q4_k_m",
+          "weights_bytes": 2019139072
+        },
+        {
+          "quant": "q8_0",
+          "weights_bytes": 3419799040
+        }
+      ]
+    },
+    {
+      "_comment": "Community finetune NOT in the models.dev catalog: kept under its Ollama-native ID ('ollama/dracarys2-llama-3-70b-instruct', a namespace/slash form — not a models.dev catalog ID) because no matching models.dev model ID exists, so it does NOT join during codegen — it awaits the offline Ollama tool's network-gated ID join. This entry exercises the codegen finetune-lineage inference path via base_ref (the base_ref field 'llama3:70b-instruct' genuinely uses colon-tag notation). weights_bytes are a plausible estimate for a 70B Q4_K_M model; arch facts copied from the base. Refresh with offline tool for authoritative figures.",
+      "model_id": "ollama/dracarys2-llama-3-70b-instruct",
+      "param_size": "70b",
+      "source": "ollama",
+      "base_ref": "llama3:70b-instruct",
+      "context_window": 8192,
+      "rows": [
+        {
+          "quant": "q4_k_m",
+          "weights_bytes": 42534666240,
+          "layers": 80,
+          "kv_heads": 8,
+          "head_dim": 128
+        }
+      ]
+    }
+  ]
+}

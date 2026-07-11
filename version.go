@@ -1,8 +1,14 @@
 package bestiary
 
-// BestiarySchemaVersion is the semantic version of the bestiary JSON Schema.
-// It follows semver (major.minor.patch) and must be incremented whenever the
+// BestiarySchemaVersion is the semantic version of the bestiary JSON Schema
+// (the public CLI JSON output schema in bestiary.schema.json). It follows
+// semver (major.minor.patch) and must be incremented whenever the public output
 // schema changes.
+//
+// This is DISTINCT from the SQLite store's currentSchemaVersion (store.go),
+// which versions the on-disk cache migrations and bumps on its own cadence. Do
+// not conflate the two: the JSON output schema and the SQLite cache schema
+// evolve independently.
 //
 // Changelog:
 //   - 0.0.2 → 0.0.3: widened the Modifier field string → []string
@@ -11,7 +17,13 @@ package bestiary
 //     ModelInfo.Lineage; ModelRef.Host; new $defs EntityRef, LineageEdge,
 //     DerivationKind). Additive and backward-COMPATIBLE: the new fields are
 //     optional/zero-value, so 0.0.x records still validate.
-const BestiarySchemaVersion = "0.1.0"
+//   - 0.1.0 → 0.2.0: added the v0.2.4 VRAM/quantization/provenance fields
+//     (ModelInfo.ParamSize, ModelInfo.QuantVRAM, ModelInfo.Source;
+//     EntityRef.ParamSize; new $defs Quantization, QuantVRAM, ProviderInstance,
+//     CapabilityUnion, Entity, DataSource, DatasetIngested, EntitySource).
+//     Additive and backward-COMPATIBLE: every new field is optional/zero-value,
+//     so 0.1.x records still validate.
+const BestiarySchemaVersion = "0.2.0"
 
 // UpstreamSchemaVersion identifies the exact snapshot of the models.dev schema
 // that this bestiary schema was derived from. Format: YYYY.MM.DD-sha256

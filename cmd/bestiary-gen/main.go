@@ -18,6 +18,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"regexp"
 	"sort"
 	"strconv"
 	"strings"
@@ -443,6 +444,13 @@ func applyFilter(models []bestiary.ModelInfo, only, except []string) []bestiary.
 	return out
 }
 
+// validateCuratedDataSourceTable is the codegen data-source FK guard, indirected
+// through a package var so the run() abort-on-bad-curation wiring is falsifiable in
+// a test (swap it for a failing stub and assert run() returns the wrapped error)
+// without mutating the embedded datasources.json. Production always uses the real
+// guard.
+var validateCuratedDataSourceTable = bestiary.ValidateDataSourceTable
+
 func run(args []string) error {
 	flags, err := parseFlags(args)
 	if err != nil {
@@ -457,6 +465,25 @@ func run(args []string) error {
 	// be caught at codegen, not silently degraded to "no lineage" at runtime.
 	if err := bestiary.ValidateLineageTable(); err != nil {
 		return fmt.Errorf("validate curated lineage table: %w", err)
+	}
+
+	// Fail loudly on bad quant/VRAM curation BEFORE generating anything: an unknown
+	// quant token, zero weights_bytes, duplicate model_id, invalid param_size, or
+	// unknown source is a curation bug that must abort codegen rather than silently
+	// baking wrong VRAM estimates or provenance into the generated static data.
+	if err := bestiary.ValidateQuantVRAMTable(); err != nil {
+		return fmt.Errorf("validate curated quant-VRAM table: %w", err)
+	}
+
+	// Fail loudly on bad data-source curation BEFORE generating anything: a duplicate
+	// source id/uri, an ingest source_id absent from the dimension, or an entity↔source
+	// attestation naming a source absent from the curated datasources.json is a curation
+	// bug that must abort codegen rather than baking an orphan provenance row. (The
+	// sibling entity-key FK is NOT guarded here: the entity↔source relation is derived
+	// from the registry, so that key check is tautological at codegen — see
+	// ValidateEntitySourceTable.)
+	if err := validateCuratedDataSourceTable(); err != nil {
+		return fmt.Errorf("validate curated data-source table: %w", err)
 	}
 
 	rawJSON, models, providerMeta, parseFailures, err := fetchModelsWithRaw(ctx, flags.cacheDir, flags.noFetch)
@@ -1130,7 +1157,73 @@ func genToModelInfoDetailed(providerSlug string, wm genWireModel) (bestiary.Mode
 	// lineage source; nil (no edge) for the overwhelming majority of base models.
 	info.Lineage = bestiary.LineageFor(id)
 
+	// Curated quant/VRAM data (IP-5). Populate ParamSize, Source, and QuantVRAM
+	// from the curated quant_vram.json table. QuantVRAM rows are BAKED here: each
+	// row's VRAMBytes and VRAMContextTokens are filled in by calling
+	// EstimateVRAMBytes at the model's maximum context window. The bake-context
+	// precedence is: (1) curated context_window from quant_vram.json (most
+	// specific); (2) ModelInfo.ContextWindow from the upstream models.dev catalog;
+	// (3) 0 (weights-only lower bound). VRAMEstimatePartial is set when the arch
+	// facts (Layers, KVHeads, HeadDim) are absent, per VRAMEstimateIsPartial.
+	info.ParamSize = bestiary.ParamSizeFor(id)
+	info.Source = bestiary.SourceFor(id)
+
+	rawRows := bestiary.QuantVRAMFor(id)
+	if len(rawRows) > 0 {
+		// Determine the bake context using the curated precedence chain.
+		bakeCtx := bestiary.ContextWindowFor(id)
+		if bakeCtx == 0 {
+			bakeCtx = info.ContextWindow
+		}
+		// bakeCtx may still be 0 if neither curated nor upstream supplied it;
+		// EstimateVRAMBytes handles 0 contextTokens as weights-only (KV=0).
+
+		baked := make([]bestiary.QuantVRAM, len(rawRows))
+		for i, row := range rawRows {
+			row.VRAMBytes = bestiary.EstimateVRAMBytes(row.WeightsBytes, bakeCtx, row.Layers, row.KVHeads, row.HeadDim)
+			row.VRAMContextTokens = bakeCtx
+			row.VRAMEstimatePartial = bestiary.VRAMEstimateIsPartial(row.Layers, row.KVHeads, row.HeadDim)
+			baked[i] = row
+		}
+		info.QuantVRAM = baked
+	}
+
+	// Curated finetune base reference (IP-5). When quant_vram.json records a
+	// base_ref for this model, append a DerivationFinetune edge to Lineage. This
+	// path is production-dormant until a curated finetune joins a models.dev
+	// catalog ID: the only base_ref entry today is a non-models.dev community
+	// finetune that never joins during codegen.
+	appendFinetuneLineage(&info, bestiary.BaseRefFor(id))
+
 	return info, failure
+}
+
+// appendFinetuneLineage appends a DerivationFinetune edge to info.Lineage when
+// baseRef is non-empty, with the parent EntityRef decomposed from baseRef by
+// parseBaseRef. An empty baseRef is a no-op (info.Lineage is left untouched).
+//
+// This handles community Ollama finetunes whose base is known from curated
+// metadata but not yet in the lineage.json ledger. If the ledger already supplied
+// edges (LineageFor returned non-nil), the base_ref edge is still appended so the
+// full parent set is recorded; callers must be aware of this when consuming
+// Lineage.
+//
+// info.Lineage on entry is the slice returned by bestiary.LineageFor, which is
+// the curated table's stored backing slice (not a copy). A plain append could
+// write into that shared array if it has spare capacity, so this copies the
+// existing edges into a fresh slice before appending — the appended edge can
+// never alias the curated ledger's storage.
+func appendFinetuneLineage(info *bestiary.ModelInfo, baseRef string) {
+	if baseRef == "" {
+		return
+	}
+	edges := make([]bestiary.LineageEdge, 0, len(info.Lineage)+1)
+	edges = append(edges, info.Lineage...)
+	edges = append(edges, bestiary.LineageEdge{
+		Parent: parseBaseRef(baseRef),
+		Kind:   bestiary.DerivationFinetune,
+	})
+	info.Lineage = edges
 }
 
 // genToModalities converts string slices from the API into the typed Modalities
@@ -1174,6 +1267,95 @@ func goStringSliceLiteral(ss []string) string {
 	return "[]string{" + strings.Join(parts, ", ") + "}"
 }
 
+// reBaseRefModelVersion matches a trailing version number (integer or simple
+// dotted, e.g. "3", "3.1", "3.3") appended directly to a family name in an
+// Ollama-style base ref (e.g. "llama3", "llama3.1"). This is distinct from a
+// full model ID like "llama-3.3-70b-instruct" — the base-ref model part uses
+// no hyphen between the family and version digit.
+var reBaseRefModelVersion = regexp.MustCompile(`^([a-z][a-z0-9\-]*)(\d+(?:\.\d+)?)$`)
+
+// parseBaseRef decomposes a curated base-ref string (as stored in
+// parse/data/quant_vram.json's base_ref field) into a bestiary.EntityRef. The
+// format used in the curated file is an Ollama-style reference:
+//
+//	"<model>[:<tag>]"
+//
+// where <model> is a model-family name with an optional bare version digit
+// glued to it (e.g. "llama3", "llama3.1") and <tag> is a hyphen-separated
+// sequence of param-size and modifier tokens (e.g. "70b-instruct"). The
+// decomposition uses the production parse pipeline plus a dedicated step for
+// the bare-version-glued-to-family form:
+//
+//  1. Split on the first ':' to get model and tag.
+//  2. Detect and strip a trailing version number from the model part (e.g.
+//     "llama3" → model="llama", version="3"). This handles the common Ollama
+//     naming pattern where the generation digit is glued directly to the family
+//     name without a hyphen. After stripping, apply ParseFamilyWithVersion to
+//     the clean family string.
+//  3. Heuristic tag scan: the first token that passes ParseParamSize is the
+//     param-size; remaining hyphen-separated tokens are treated as modifiers
+//     and passed through EntityModifiers to project only the identity-class subset.
+//
+// Unknown tokens (tokens that are neither a valid param-size nor a recognised
+// modifier) are silently ignored — curated base refs are always small, and
+// ignoring noise is better than aborting codegen on an unrecognised suffix.
+// The function never panics and always returns a non-zero EntityRef.
+func parseBaseRef(baseRef string) bestiary.EntityRef {
+	// Split on the first ':' to separate the model part from the tag.
+	model, tag, _ := strings.Cut(baseRef, ":")
+
+	// Detect "llama3", "llama3.1", "qwen2", etc.: family name with a bare
+	// version number glued to the end (no hyphen separator). When matched,
+	// strip the version from the model string and carry it forward.
+	var gluedVersion string
+	if m := reBaseRefModelVersion.FindStringSubmatch(model); m != nil {
+		// m[1] (the family prefix) is non-empty by construction: the regex's
+		// leading [a-z] requirement excludes pure-numeric/degenerate inputs, which
+		// never match at all (FindStringSubmatch returns nil for those).
+		model = m[1]        // e.g. "llama"
+		gluedVersion = m[2] // e.g. "3", "3.1"
+	}
+
+	// Decompose the (now clean) model part using ParseFamilyWithVersion.
+	normFamily, normVariant, normVersion := bestiary.ParseFamilyWithVersion(bestiary.Family(model))
+
+	// If ParseFamilyWithVersion didn't extract a version but we found a glued
+	// version above, use the glued version. If ParseFamilyWithVersion did
+	// extract one (e.g. from a hyphen-version pattern), prefer that.
+	if normVersion == "" && gluedVersion != "" {
+		normVersion = gluedVersion
+	}
+
+	var paramSize string
+	var modifiers []string
+
+	if tag != "" {
+		tokens := strings.Split(tag, "-")
+		for _, tok := range tokens {
+			if tok == "" {
+				continue
+			}
+			if paramSize == "" {
+				if ps, err := bestiary.ParseParamSize(tok); err == nil && ps != "" {
+					paramSize = ps
+					continue
+				}
+			}
+			// Non-size tokens are candidate modifiers; EntityModifiers will project
+			// only identity-class tokens for the resolved family.
+			modifiers = append(modifiers, tok)
+		}
+	}
+
+	return bestiary.EntityRef{
+		Family:    normFamily,
+		Variant:   normVariant,
+		Version:   normVersion,
+		ParamSize: paramSize,
+		Modifier:  bestiary.EntityModifiers(modifiers, normFamily),
+	}
+}
+
 // derivationKindExpr renders a DerivationKind as its exported constant name so
 // the generated source references the enum symbolically (e.g. DerivationFinetune)
 // rather than by integer value. An out-of-range value (never produced by the
@@ -1212,6 +1394,112 @@ func lineageLiteral(edges []bestiary.LineageEdge) string {
 		)
 	}
 	return "[]LineageEdge{" + strings.Join(parts, ", ") + "}"
+}
+
+// quantExpr renders a Quantization value as its exported constant name so the
+// generated source references the enum symbolically (e.g. QuantQ4_K_M) rather
+// than by integer value. Mirrors derivationKindExpr exactly. An out-of-range
+// value falls back to QuantizationNone defensively.
+func quantExpr(q bestiary.Quantization) string {
+	switch q {
+	case bestiary.QuantF16:
+		return "QuantF16"
+	case bestiary.QuantBF16:
+		return "QuantBF16"
+	case bestiary.QuantF32:
+		return "QuantF32"
+	case bestiary.QuantQ4_0:
+		return "QuantQ4_0"
+	case bestiary.QuantQ4_1:
+		return "QuantQ4_1"
+	case bestiary.QuantQ5_0:
+		return "QuantQ5_0"
+	case bestiary.QuantQ5_1:
+		return "QuantQ5_1"
+	case bestiary.QuantQ8_0:
+		return "QuantQ8_0"
+	case bestiary.QuantQ2_K:
+		return "QuantQ2_K"
+	case bestiary.QuantQ2_K_S:
+		return "QuantQ2_K_S"
+	case bestiary.QuantQ3_K_S:
+		return "QuantQ3_K_S"
+	case bestiary.QuantQ3_K_M:
+		return "QuantQ3_K_M"
+	case bestiary.QuantQ3_K_L:
+		return "QuantQ3_K_L"
+	case bestiary.QuantQ4_K_S:
+		return "QuantQ4_K_S"
+	case bestiary.QuantQ4_K_M:
+		return "QuantQ4_K_M"
+	case bestiary.QuantQ5_K_S:
+		return "QuantQ5_K_S"
+	case bestiary.QuantQ5_K_M:
+		return "QuantQ5_K_M"
+	case bestiary.QuantQ6_K:
+		return "QuantQ6_K"
+	case bestiary.QuantIQ1_S:
+		return "QuantIQ1_S"
+	case bestiary.QuantIQ1_M:
+		return "QuantIQ1_M"
+	case bestiary.QuantIQ2_XXS:
+		return "QuantIQ2_XXS"
+	case bestiary.QuantIQ2_XS:
+		return "QuantIQ2_XS"
+	case bestiary.QuantIQ2_S:
+		return "QuantIQ2_S"
+	case bestiary.QuantIQ2_M:
+		return "QuantIQ2_M"
+	case bestiary.QuantIQ3_XXS:
+		return "QuantIQ3_XXS"
+	case bestiary.QuantIQ3_XS:
+		return "QuantIQ3_XS"
+	case bestiary.QuantIQ3_S:
+		return "QuantIQ3_S"
+	case bestiary.QuantIQ3_M:
+		return "QuantIQ3_M"
+	case bestiary.QuantIQ4_XS:
+		return "QuantIQ4_XS"
+	case bestiary.QuantIQ4_NL:
+		return "QuantIQ4_NL"
+	case bestiary.QuantAWQ:
+		return "QuantAWQ"
+	case bestiary.QuantGPTQ:
+		return "QuantGPTQ"
+	case bestiary.QuantInt8:
+		return "QuantInt8"
+	case bestiary.QuantInt4:
+		return "QuantInt4"
+	case bestiary.QuantizationOther:
+		return "QuantizationOther"
+	default:
+		return "QuantizationNone"
+	}
+}
+
+// quantVRAMLiteral renders a []QuantVRAM as a Go composite literal for the
+// generated source, mirroring lineageLiteral's empty→"nil" contract so the
+// models-with-no-quant-data majority emits a bare nil. The generated file is
+// package bestiary, so QuantVRAM and Quantization constants are referenced
+// unqualified. Row order is the curated file order (the loader preserves
+// insertion order), which is deterministic and never subject to map iteration.
+func quantVRAMLiteral(rows []bestiary.QuantVRAM) string {
+	if len(rows) == 0 {
+		return "nil"
+	}
+	parts := make([]string, len(rows))
+	for i, r := range rows {
+		parts[i] = fmt.Sprintf(
+			"{Quant: %s, QuantRaw: %q, WeightsBytes: %d, VRAMBytes: %d,"+
+				" VRAMContextTokens: %d, Layers: %d, KVHeads: %d, HeadDim: %d,"+
+				" VRAMEstimatePartial: %v}",
+			quantExpr(r.Quant), r.QuantRaw,
+			r.WeightsBytes, r.VRAMBytes, r.VRAMContextTokens,
+			r.Layers, r.KVHeads, r.HeadDim,
+			r.VRAMEstimatePartial,
+		)
+	}
+	return "[]QuantVRAM{" + strings.Join(parts, ", ") + "}"
 }
 
 func generateSource(models []bestiary.ModelInfo, slugToConst map[string]string) ([]byte, error) {
@@ -1258,6 +1546,16 @@ func generateSource(models []bestiary.ModelInfo, slugToConst map[string]string) 
 		fmt.Fprintf(&buf, "\t\tModalities:            %s,\n", modalitiesExpr(m.Modalities))
 		fmt.Fprintf(&buf, "\t\tHost:                  %q,\n", string(m.Host))
 		fmt.Fprintf(&buf, "\t\tLineage:               %s,\n", lineageLiteral(m.Lineage))
+		// ParamSize: only emit when non-empty, matching how other optional string
+		// fields (Variant, Version, Date) are handled — zero value omitted entirely
+		// so the output stays compact for the unsized majority.
+		if m.ParamSize != "" {
+			fmt.Fprintf(&buf, "\t\tParamSize:             %q,\n", m.ParamSize)
+		}
+		// Source: always emit; DataSourceNone ("") is the correct zero value for
+		// live-sync rows and is emitted explicitly so the field is self-documenting.
+		fmt.Fprintf(&buf, "\t\tSource:                %q,\n", string(m.Source))
+		fmt.Fprintf(&buf, "\t\tQuantVRAM:             %s,\n", quantVRAMLiteral(m.QuantVRAM))
 		fmt.Fprintf(&buf, "\t\tLastSynced:            %q,\n", m.LastSynced)
 		buf.WriteString("\t},\n")
 	}

@@ -11,6 +11,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"reflect"
 	"regexp"
 	"sort"
 	"strings"
@@ -1780,6 +1781,52 @@ func TestRun_WritesParseFailuresJSON(t *testing.T) {
 	}
 }
 
+// TestRun_AbortsOnDataSourceValidationError pins the codegen data-source FK guard
+// wiring: run() must invoke the data-source validator BEFORE fetching/generating and
+// abort (returning the wrapped error) when it fails. The guard is swapped for a
+// failing stub via the validateCuratedDataSourceTable seam so the abort path is
+// exercised without mutating the embedded datasources.json. If the validation call
+// were dropped from run(), run() would proceed past it and the returned error would
+// not wrap the sentinel — killing that drop mutant.
+func TestRun_AbortsOnDataSourceValidationError(t *testing.T) {
+	orig := validateCuratedDataSourceTable
+	defer func() { validateCuratedDataSourceTable = orig }()
+
+	sentinel := errors.New("sentinel: bad data-source curation")
+	validateCuratedDataSourceTable = func() error { return sentinel }
+
+	// -no-fetch with an empty cache dir would itself fail at the fetch step; the
+	// data-source guard runs strictly before fetch, so a correctly-wired run() returns
+	// the sentinel-wrapped error and never reaches fetch.
+	err := run([]string{"-no-fetch", "-cache-dir=" + filepath.Join(t.TempDir(), "cache")})
+	if err == nil {
+		t.Fatal("run(): expected abort on data-source validation error, got nil")
+	}
+	if !errors.Is(err, sentinel) {
+		t.Fatalf("run(): error does not wrap the data-source validation failure (guard not wired before fetch?): %v", err)
+	}
+	if !strings.Contains(err.Error(), "validate curated data-source table") {
+		t.Fatalf("run(): error missing the data-source guard context: %v", err)
+	}
+}
+
+// TestValidateCuratedDataSourceTable_DefaultIsRealGuard pins the seam's DEFAULT
+// BINDING to the real guard. TestRun_AbortsOnDataSourceValidationError falsifies the
+// CALL (run() invokes the seam and wraps its error) but not the binding: a refactor
+// typo or a leftover stub (e.g. `= func() error { return nil }`) would silently
+// disarm the data-source FK guard while the suite stayed green. Comparing func-
+// pointer identity kills that no-op-binding mutant. It is safe under -shuffle: the
+// abort test restores the binding via defer, so the package-var holds its default
+// here regardless of test order.
+func TestValidateCuratedDataSourceTable_DefaultIsRealGuard(t *testing.T) {
+	got := reflect.ValueOf(validateCuratedDataSourceTable).Pointer()
+	want := reflect.ValueOf(bestiary.ValidateDataSourceTable).Pointer()
+	if got != want {
+		t.Fatal("validateCuratedDataSourceTable default binding is not bestiary.ValidateDataSourceTable: " +
+			"the codegen data-source FK guard is disconnected (a no-op stub would disarm it silently)")
+	}
+}
+
 // --------------------------------------------------------------------------
 // Tests: deterministic + reproducible codegen (ordering, collision-suffix, up-to-date guard)
 // --------------------------------------------------------------------------
@@ -1867,6 +1914,38 @@ func deterministicFixtureJSON(t *testing.T) []byte {
 					"id":     "gpt-5.2",
 					"name":   "GPT-5.2",
 					"family": "gpt",
+				},
+			},
+		},
+		// Curated-join models. Both IDs match entries in parse/data/quant_vram.json
+		// by exact model-ID, so the curated quant/VRAM/ParamSize/Source bake in
+		// genToModelInfoDetailed fires for them. The provider slug "vllm" sorts
+		// after every other fixture provider, so these two append to the end of the
+		// generated slice and the golden excerpt can extend contiguously.
+		//
+		// llama-3.3-70b-instruct carries an upstream context window (128000) that
+		// DELIBERATELY differs from the curated context_window (131072). Because the
+		// curated value wins the bake-context precedence, the baked VRAMContextTokens
+		// is 131072 and the VRAMBytes are computed at 131072 — pinning the precedence
+		// chain. Its three rows have arch facts present, so VRAMEstimatePartial=false.
+		//
+		// llama-3.2-3b-instruct joins an arch-absent curated entry: every row has
+		// KV=0, so VRAMBytes==WeightsBytes and VRAMEstimatePartial=true.
+		"vllm": map[string]any{
+			"name": "vLLM",
+			"models": map[string]any{
+				"llama-3.3-70b-instruct": map[string]any{
+					"id":     "llama-3.3-70b-instruct",
+					"name":   "Llama 3.3 70B Instruct",
+					"family": "llama",
+					"limit": map[string]any{
+						"context": 128000,
+					},
+				},
+				"llama-3.2-3b-instruct": map[string]any{
+					"id":     "llama-3.2-3b-instruct",
+					"name":   "Llama 3.2 3B Instruct",
+					"family": "llama",
 				},
 			},
 		},
@@ -2328,7 +2407,10 @@ func TestCodegen_SortOrder(t *testing.T) {
 		}
 	}
 
-	// Spot-check known order from fixture: cloudflare < kilo < openai.
+	// Spot-check known order from fixture: cloudflare < kilo < openai < vllm.
+	// The curated-join provider "vllm" sorts last, so its two models append to the
+	// end of the slice — which is what lets the static golden excerpt extend
+	// contiguously to cover them.
 	providers := make([]string, 0, len(models))
 	seen := make(map[string]bool)
 	for _, m := range models {
@@ -2337,7 +2419,7 @@ func TestCodegen_SortOrder(t *testing.T) {
 			seen[string(m.Provider)] = true
 		}
 	}
-	wantOrder := []string{"cloudflare-ai-gateway", "kilo", "openai"}
+	wantOrder := []string{"cloudflare-ai-gateway", "kilo", "openai", "vllm"}
 	if len(providers) != len(wantOrder) {
 		t.Fatalf("expected %d providers, got %d: %v", len(wantOrder), len(providers), providers)
 	}
@@ -2859,5 +2941,484 @@ func TestFixturePerReasonCounts(t *testing.T) {
 				"  How to fix: verify the sole-residual promotion logic in ParseFamilyDetailed",
 				fixB1ID, reason)
 		}
+	}
+}
+
+// --------------------------------------------------------------------------
+// Codegen wiring — QuantVRAM baking + determinism tests
+// --------------------------------------------------------------------------
+
+// TestQuantVRAM_Llama33_70b is the 70B anchor: llama-3.3-70b-instruct bakes
+// VRAMBytes = weights + KV at context 131072 with partial=false for all three quants.
+//
+// Expected values (hand-computed):
+//
+//	KV = 2 * 80 * 8 * 128 * 131072 * 2 = 42,949,672,960 bytes
+//	q4_k_m: VRAMBytes = 43,033,509,888 + 42,949,672,960 = 85,983,182,848
+//	q8_0:   VRAMBytes = 75,176,521,728 + 42,949,672,960 = 118,126,194,688
+//	f16:    VRAMBytes = 141,166,166,016 + 42,949,672,960 = 184,115,838,976
+func TestQuantVRAM_Llama33_70b(t *testing.T) {
+	const modelID = bestiary.ModelID("llama-3.3-70b-instruct")
+	const bakeCtx = 131072 // curated context_window from quant_vram.json
+
+	type wantRow struct {
+		quant         bestiary.Quantization
+		weightsBytes  int64
+		vramBytes     int64
+		vramCtxTokens int
+		partial       bool
+	}
+
+	want := []wantRow{
+		{
+			quant:         bestiary.QuantQ4_K_M,
+			weightsBytes:  43_033_509_888,
+			vramBytes:     85_983_182_848,
+			vramCtxTokens: bakeCtx,
+			partial:       false,
+		},
+		{
+			quant:         bestiary.QuantQ8_0,
+			weightsBytes:  75_176_521_728,
+			vramBytes:     118_126_194_688,
+			vramCtxTokens: bakeCtx,
+			partial:       false,
+		},
+		{
+			quant:         bestiary.QuantF16,
+			weightsBytes:  141_166_166_016,
+			vramBytes:     184_115_838_976,
+			vramCtxTokens: bakeCtx,
+			partial:       false,
+		},
+	}
+
+	// Obtain the raw (unbaked) rows from the curated table.
+	rawRows := bestiary.QuantVRAMFor(modelID)
+	if rawRows == nil {
+		t.Fatalf("QuantVRAMFor(%q) returned nil; expected curated rows from quant_vram.json", modelID)
+	}
+	if len(rawRows) != len(want) {
+		t.Fatalf("QuantVRAMFor(%q): got %d rows, want %d", modelID, len(rawRows), len(want))
+	}
+
+	// Bake each row using EstimateVRAMBytes at the curated bake context.
+	for i, row := range rawRows {
+		baked := row
+		baked.VRAMBytes = bestiary.EstimateVRAMBytes(row.WeightsBytes, bakeCtx, row.Layers, row.KVHeads, row.HeadDim)
+		baked.VRAMContextTokens = bakeCtx
+		baked.VRAMEstimatePartial = bestiary.VRAMEstimateIsPartial(row.Layers, row.KVHeads, row.HeadDim)
+
+		w := want[i]
+		if baked.Quant != w.quant {
+			t.Errorf("row %d: Quant = %v, want %v", i, baked.Quant, w.quant)
+		}
+		if baked.WeightsBytes != w.weightsBytes {
+			t.Errorf("row %d (%v): WeightsBytes = %d, want %d", i, baked.Quant, baked.WeightsBytes, w.weightsBytes)
+		}
+		if baked.VRAMBytes != w.vramBytes {
+			t.Errorf("row %d (%v): VRAMBytes = %d, want %d\n"+
+				"  What: baked VRAM does not match expected weights+KV\n"+
+				"  Why: KV = 2*layers*kvHeads*headDim*ctx*2; bakeCtx=%d, layers=%d, kvHeads=%d, headDim=%d\n"+
+				"  How to fix: verify EstimateVRAMBytes formula or quant_vram.json weights_bytes",
+				i, baked.Quant, baked.VRAMBytes, w.vramBytes,
+				bakeCtx, row.Layers, row.KVHeads, row.HeadDim)
+		}
+		if baked.VRAMContextTokens != w.vramCtxTokens {
+			t.Errorf("row %d (%v): VRAMContextTokens = %d, want %d", i, baked.Quant, baked.VRAMContextTokens, w.vramCtxTokens)
+		}
+		if baked.VRAMEstimatePartial != w.partial {
+			t.Errorf("row %d (%v): VRAMEstimatePartial = %v, want %v\n"+
+				"  What: arch facts (layers=%d, kvHeads=%d, headDim=%d) are all present; partial must be false\n"+
+				"  How to fix: verify VRAMEstimateIsPartial predicate",
+				i, baked.Quant, baked.VRAMEstimatePartial, w.partial,
+				row.Layers, row.KVHeads, row.HeadDim)
+		}
+	}
+
+	// ParamSize check.
+	if ps := bestiary.ParamSizeFor(modelID); ps != "70b" {
+		t.Errorf("ParamSizeFor(%q) = %q, want %q", modelID, ps, "70b")
+	}
+	// Source check.
+	if src := bestiary.SourceFor(modelID); src != bestiary.DataSourceOllama {
+		t.Errorf("SourceFor(%q) = %q, want %q", modelID, src, bestiary.DataSourceOllama)
+	}
+}
+
+// TestQuantVRAM_SmallModel covers small models where arch facts are absent
+// (exercises partial path) and ParamSize is populated.
+//
+// llama-3.2-3b-instruct: two quant rows, arch facts absent.
+// llama-3.3-8b-instruct: param-size-only entry (empty rows array); QuantVRAMFor
+// returns nil but ParamSizeFor returns "8b" — demonstrates the (Family,Version,
+// Modifier) wrong-merge split without fabricated GGUF weights.
+func TestQuantVRAM_SmallModel(t *testing.T) {
+	t.Run("llama-3.2-3b-instruct", func(t *testing.T) {
+		const modelID bestiary.ModelID = "llama-3.2-3b-instruct"
+		rows := bestiary.QuantVRAMFor(modelID)
+		if rows == nil {
+			t.Fatalf("QuantVRAMFor(%q) returned nil; expected curated rows", modelID)
+		}
+		if len(rows) != 2 {
+			t.Fatalf("QuantVRAMFor(%q): got %d rows, want 2", modelID, len(rows))
+		}
+
+		// Arch facts should be absent (all zero) for this model.
+		for i, row := range rows {
+			if row.Layers != 0 || row.KVHeads != 0 || row.HeadDim != 0 {
+				t.Errorf("row %d: expected arch facts to be absent (0), got layers=%d kvHeads=%d headDim=%d",
+					i, row.Layers, row.KVHeads, row.HeadDim)
+			}
+			// With arch absent, partial flag must be true after baking.
+			partial := bestiary.VRAMEstimateIsPartial(row.Layers, row.KVHeads, row.HeadDim)
+			if !partial {
+				t.Errorf("row %d: VRAMEstimateIsPartial = false with absent arch facts; want true", i)
+			}
+			if row.WeightsBytes <= 0 {
+				t.Errorf("row %d: WeightsBytes = %d; must be > 0", i, row.WeightsBytes)
+			}
+		}
+
+		if ps := bestiary.ParamSizeFor(modelID); ps != "3b" {
+			t.Errorf("ParamSizeFor(%q) = %q, want %q", modelID, ps, "3b")
+		}
+		if src := bestiary.SourceFor(modelID); src != bestiary.DataSourceOllama {
+			t.Errorf("SourceFor(%q) = %q, want %q", modelID, src, bestiary.DataSourceOllama)
+		}
+	})
+
+	t.Run("llama-3.3-8b-instruct param-size-only", func(t *testing.T) {
+		// This entry has an empty rows array: no GGUF weights curated yet.
+		// QuantVRAMFor must return nil (correct for empty rows), but ParamSizeFor
+		// must return "8b" so codegen splits llama@3.3#8b{instruct} from the 70b entity.
+		const modelID bestiary.ModelID = "llama-3.3-8b-instruct"
+		rows := bestiary.QuantVRAMFor(modelID)
+		if rows != nil {
+			t.Errorf("QuantVRAMFor(%q) = %v, want nil for a param-size-only entry with no curated weights", modelID, rows)
+		}
+		if ps := bestiary.ParamSizeFor(modelID); ps != "8b" {
+			t.Errorf("ParamSizeFor(%q) = %q, want %q", modelID, ps, "8b")
+		}
+		if src := bestiary.SourceFor(modelID); src != bestiary.DataSourceOllama {
+			t.Errorf("SourceFor(%q) = %q, want %q", modelID, src, bestiary.DataSourceOllama)
+		}
+	})
+}
+
+// TestQuantVRAM_PartialWhenArchAbsent verifies the baking rule that
+// arch-absent rows produce VRAMBytes==WeightsBytes AND VRAMEstimatePartial==true,
+// while rows with complete arch facts produce partial=false. Tests both sides of
+// the predicate using the curated seed data.
+func TestQuantVRAM_PartialWhenArchAbsent(t *testing.T) {
+	t.Run("arch_absent_yields_partial", func(t *testing.T) {
+		// llama-3.2-3b-instruct has no arch facts (exercises partial-VRAM path).
+		rows := bestiary.QuantVRAMFor("llama-3.2-3b-instruct")
+		if rows == nil {
+			t.Fatal("QuantVRAMFor(llama-3.2-3b-instruct) returned nil; need curated rows")
+		}
+		for i, row := range rows {
+			bakeCtx := bestiary.ContextWindowFor("llama-3.2-3b-instruct")
+			vram := bestiary.EstimateVRAMBytes(row.WeightsBytes, bakeCtx, row.Layers, row.KVHeads, row.HeadDim)
+			partial := bestiary.VRAMEstimateIsPartial(row.Layers, row.KVHeads, row.HeadDim)
+
+			if vram != row.WeightsBytes {
+				t.Errorf("row %d: VRAMBytes=%d with absent arch, want WeightsBytes=%d (weights-only lower bound)",
+					i, vram, row.WeightsBytes)
+			}
+			if !partial {
+				t.Errorf("row %d: VRAMEstimatePartial=false with absent arch facts (layers=%d kvHeads=%d headDim=%d); want true",
+					i, row.Layers, row.KVHeads, row.HeadDim)
+			}
+		}
+	})
+
+	t.Run("arch_present_yields_not_partial", func(t *testing.T) {
+		// llama-3.3-70b-instruct has full arch facts.
+		rows := bestiary.QuantVRAMFor("llama-3.3-70b-instruct")
+		if rows == nil {
+			t.Fatal("QuantVRAMFor(llama-3.3-70b-instruct) returned nil; need curated rows")
+		}
+		for i, row := range rows {
+			partial := bestiary.VRAMEstimateIsPartial(row.Layers, row.KVHeads, row.HeadDim)
+			if partial {
+				t.Errorf("row %d: VRAMEstimatePartial=true with arch facts present (layers=%d kvHeads=%d headDim=%d); want false",
+					i, row.Layers, row.KVHeads, row.HeadDim)
+			}
+		}
+	})
+}
+
+// TestCodegen_ParamSizeOnlyFromCuratedTable asserts that ParamSize is emitted
+// in the generated static source if and only if a model joins a curated
+// quant_vram.json entry — the carrier of the #size identity dimension. A model
+// WITHOUT a curated entry must emit no ParamSize line, so its EntityRef key stays
+// byte-identical to the pre-paramsize baseline (no migration drift); a model WITH
+// a curated entry must emit exactly the curated param_size token.
+//
+// The hermetic fixture contains exactly two curated-joining IDs
+// (llama-3.2-3b-instruct → "3b", llama-3.3-70b-instruct → "70b") and four
+// uncurated IDs. So the generated source must contain exactly two ParamSize lines
+// with those two values and no others. This makes both directions falsifiable:
+// dropping the join leaves zero ParamSize lines; a stray ParamSize on an
+// uncurated model adds an unexpected line.
+func TestCodegen_ParamSizeOnlyFromCuratedTable(t *testing.T) {
+	fixtureJSON := deterministicFixtureJSON(t)
+	staticSrc, _ := runFixtureCodegen(t, fixtureJSON, "")
+	src := string(staticSrc)
+
+	reParamSize := regexp.MustCompile(`ParamSize:\s+"([^"]*)"`)
+	got := reParamSize.FindAllStringSubmatch(src, -1)
+
+	gotValues := make([]string, 0, len(got))
+	for _, m := range got {
+		gotValues = append(gotValues, m[1])
+	}
+	sort.Strings(gotValues)
+
+	want := []string{"3b", "70b"}
+	if len(gotValues) != len(want) || gotValues[0] != want[0] || gotValues[1] != want[1] {
+		t.Errorf("ParamSize emission mismatch: got %v, want %v\n"+
+			"  What: ParamSize must be emitted only for fixture models that join a curated quant_vram.json entry\n"+
+			"  Why: ParamSize carries the #size identity dimension; an uncurated model emitting it would drift its entity key, "+
+			"and a curated model NOT emitting it would silently disconnect the join\n"+
+			"  Where: genToModelInfoDetailed (info.ParamSize = bestiary.ParamSizeFor(id)) + generateSource ParamSize emission\n"+
+			"  How to fix: ensure the join fires for curated IDs and ParamSize stays empty (unemitted) for the rest",
+			gotValues, want)
+	}
+}
+
+// TestCodegen_IngestedAt_Deterministic verifies that IngestedAt
+// lines in generated source are byte-identical across runs WITHOUT normalization.
+// IngestedAt is committed-snapshot input from datasources.json, never a codegen
+// wall-clock stamp — so two runs always produce the identical value. The test
+// currently only asserts the fixture-based output is stable (no IngestedAt lines
+// are emitted from the fixture, which has no datasource data) as a structural
+// guard. When DatasetIngested emission is wired in the provenance-core work, this
+// test will extend to verify the emitted IngestedAt lines are byte-identical.
+func TestCodegen_IngestedAt_Deterministic(t *testing.T) {
+	fixtureJSON := deterministicFixtureJSON(t)
+
+	// Run twice with DIFFERENT LastSynced stamps to confirm that IngestedAt
+	// (if present) is unaffected by the wall-clock stamp.
+	src1, _ := runFixtureCodegen(t, fixtureJSON, "2000-01-01T00:00:00Z")
+	src2, _ := runFixtureCodegen(t, fixtureJSON, "2099-12-31T23:59:59Z")
+
+	// Normalize LastSynced (the known residual) from both sides.
+	n1 := string(normalizeLastSynced(src1))
+	n2 := string(normalizeLastSynced(src2))
+
+	if n1 != n2 {
+		t.Errorf("IngestedAt determinism: generated source differs after LastSynced normalization\n"+
+			"  What: non-determinism beyond LastSynced detected in static codegen output\n"+
+			"  Why: a field other than LastSynced varies between runs (possible new time.Now() call)\n"+
+			"  Where: cmd/bestiary-gen generateSource\n"+
+			"  How to fix: ensure no codegen field other than LastSynced uses a wall-clock value\n"+
+			"  Diff context: src1 len=%d, src2 len=%d",
+			len(src1), len(src2))
+	}
+
+	// Structural guard: the hermetic fixture carries no datasource data, so no
+	// IngestedAt field may be emitted. Asserting its absence keeps this guard from
+	// going vacuously green — if DatasetIngested emission ever fires for the
+	// fixture without intent, this fails loudly. When DatasetIngested emission is
+	// wired in the provenance-core work, flip this to assert the emitted IngestedAt
+	// lines are present and byte-identical without normalization.
+	if strings.Contains(n1, "IngestedAt:") {
+		t.Errorf("fixture codegen emitted an IngestedAt field; expected none (the fixture has no datasource data)\n" +
+			"  What: an IngestedAt line appeared in fixture-based output that carries no datasource records\n" +
+			"  Why: either DatasetIngested emission was wired without updating this guard, or a stray field leaked\n" +
+			"  Where: cmd/bestiary-gen generateSource\n" +
+			"  How to fix: if DatasetIngested emission is now intended, replace this absence check with a " +
+			"byte-identity assertion over the emitted IngestedAt lines (committed snapshot, never time.Now())",
+		)
+	}
+}
+
+// TestEntitySource_Deterministic is a structural guard that verifies the
+// fixture-based output is byte-identical across same-timestamp runs. When
+// EntitySource emission is wired in the provenance-core work it will be extended
+// to assert sorted (EntityKey, SourceID) order and byte-identity across two runs.
+// The test currently acts as a compile-and-run guard that the fixture codegen
+// still produces valid, deterministic output.
+func TestEntitySource_Deterministic(t *testing.T) {
+	fixtureJSON := deterministicFixtureJSON(t)
+	src1, _ := runFixtureCodegen(t, fixtureJSON, "2000-01-01T00:00:00Z")
+	src2, _ := runFixtureCodegen(t, fixtureJSON, "2000-01-01T00:00:00Z")
+
+	// Both runs with the same timestamp must be byte-identical (no residual).
+	if !bytes.Equal(src1, src2) {
+		t.Errorf("EntitySource determinism: same-timestamp runs produced different output\n" +
+			"  What: codegen is non-deterministic even with a fixed timestamp\n" +
+			"  How to fix: eliminate all non-deterministic sources (map iteration, time.Now, etc.)")
+	}
+}
+
+// TestCodegen_BaseRef_LineageEdge exercises the finetune-lineage wiring directly
+// through appendFinetuneLineage (the helper genToModelInfoDetailed calls), pinning
+// the full parent EntityRef, the append-not-replace semantics, and the defensive
+// copy that prevents aliasing the curated ledger's backing slice. It also pins the
+// parseBaseRef decomposition (Family/Version/ParamSize/Modifier) and a
+// non-decomposable base_ref's behavior.
+func TestCodegen_BaseRef_LineageEdge(t *testing.T) {
+	// parseBaseRef must decompose the curated Ollama-style base ref into the FULL
+	// parent EntityRef — Modifier and ParamSize included. The parent ref is the
+	// finetune edge's key, so a dropped modifier would silently point the edge at
+	// the wrong entity (llama@3#70b instead of llama@3#70b{instruct}).
+	t.Run("parseBaseRef_full_ref", func(t *testing.T) {
+		ref := parseBaseRef("llama3:70b-instruct")
+		if got, want := ref.String(), "llama@3#70b{instruct}"; got != want {
+			t.Errorf("parseBaseRef(%q).String() = %q, want %q\n"+
+				"  What: base_ref decomposition lost a field (Family/Version/ParamSize/Modifier)\n"+
+				"  Where: parseBaseRef tag scan + EntityModifiers projection\n"+
+				"  How to fix: ensure the param-size token and the identity-class modifier are both carried",
+				"llama3:70b-instruct", got, want)
+		}
+		// Pin each component individually so a regression names the lost field.
+		if string(ref.Family) != "llama" {
+			t.Errorf("Family = %q, want %q", ref.Family, "llama")
+		}
+		if ref.Variant != "" {
+			t.Errorf("Variant = %q, want %q", ref.Variant, "")
+		}
+		if ref.Version != "3" {
+			t.Errorf("Version = %q, want %q", ref.Version, "3")
+		}
+		if ref.ParamSize != "70b" {
+			t.Errorf("ParamSize = %q, want %q", ref.ParamSize, "70b")
+		}
+		if len(ref.Modifier) != 1 || ref.Modifier[0] != "instruct" {
+			t.Errorf("Modifier = %v, want [instruct]", ref.Modifier)
+		}
+	})
+
+	// appendFinetuneLineage must append exactly one DerivationFinetune edge whose
+	// parent is the decomposed base ref. Deleting the append (the production-wiring
+	// mutant) leaves Lineage empty and fails here.
+	t.Run("append_edge_from_base_ref", func(t *testing.T) {
+		info := bestiary.ModelInfo{}
+		appendFinetuneLineage(&info, "llama3:70b-instruct")
+		if len(info.Lineage) != 1 {
+			t.Fatalf("len(Lineage) = %d, want 1 (the appended finetune edge)", len(info.Lineage))
+		}
+		got := info.Lineage[0]
+		if got.Kind != bestiary.DerivationFinetune {
+			t.Errorf("Kind = %v, want DerivationFinetune", got.Kind)
+		}
+		if got.Parent.String() != "llama@3#70b{instruct}" {
+			t.Errorf("Parent.String() = %q, want %q", got.Parent.String(), "llama@3#70b{instruct}")
+		}
+	})
+
+	// An empty base_ref is a no-op: models without a curated finetune base keep nil
+	// Lineage (the base-model majority).
+	t.Run("empty_base_ref_is_noop", func(t *testing.T) {
+		info := bestiary.ModelInfo{}
+		appendFinetuneLineage(&info, "")
+		if info.Lineage != nil {
+			t.Errorf("Lineage = %v, want nil for an empty base_ref", info.Lineage)
+		}
+	})
+
+	// A non-decomposable base_ref (no colon, no glued version, no tag tokens) still
+	// appends an edge — parseBaseRef never panics and always returns a non-zero
+	// EntityRef. "123" has no colon and no leading-alpha prefix so the version regex
+	// does not match; strings.Cut gives model="123", tag="". ParseFamilyWithVersion
+	// treats "123" as a family pass-through, so Family="123" and all other fields are
+	// empty. The edge is still recorded rather than dropped.
+	t.Run("non_decomposable_base_ref_still_appends", func(t *testing.T) {
+		info := bestiary.ModelInfo{}
+		appendFinetuneLineage(&info, "123")
+		if len(info.Lineage) != 1 {
+			t.Fatalf("len(Lineage) = %d, want 1 (edge appended even for a degenerate base_ref)", len(info.Lineage))
+		}
+		if info.Lineage[0].Kind != bestiary.DerivationFinetune {
+			t.Errorf("Kind = %v, want DerivationFinetune", info.Lineage[0].Kind)
+		}
+		if got := string(info.Lineage[0].Parent.Family); got != "123" {
+			t.Errorf("Parent.Family = %q, want %q (degenerate input passed through as family)", got, "123")
+		}
+	})
+
+	// Append-not-replace + no-aliasing: when LineageFor already supplied ledger
+	// edges, the base_ref edge is appended after them, and the append must NOT write
+	// into the caller's backing array. We seed a 1-element slice with spare capacity
+	// (cap 4) — a naive append into that array would be observable here.
+	t.Run("append_preserves_existing_and_does_not_alias", func(t *testing.T) {
+		existing := make([]bestiary.LineageEdge, 1, 4)
+		existing[0] = bestiary.LineageEdge{
+			Parent: bestiary.EntityRef{Family: "gemma", Version: "2"},
+			Kind:   bestiary.DerivationDistillation,
+		}
+		info := bestiary.ModelInfo{Lineage: existing}
+
+		appendFinetuneLineage(&info, "llama3:70b-instruct")
+
+		if len(info.Lineage) != 2 {
+			t.Fatalf("len(Lineage) = %d, want 2 (existing ledger edge + appended finetune edge)", len(info.Lineage))
+		}
+		if info.Lineage[0].Kind != bestiary.DerivationDistillation {
+			t.Errorf("first edge Kind = %v, want DerivationDistillation (existing edge must be preserved, not replaced)", info.Lineage[0].Kind)
+		}
+		if info.Lineage[1].Kind != bestiary.DerivationFinetune ||
+			info.Lineage[1].Parent.String() != "llama@3#70b{instruct}" {
+			t.Errorf("second edge = %+v, want DerivationFinetune to llama@3#70b{instruct}", info.Lineage[1])
+		}
+		// Aliasing guard: the caller's original backing array (len 1, cap 4) must
+		// not have been written past index 0. A naive append into the shared array
+		// would have placed the finetune edge at existing[0:2]'s underlying [1].
+		aliased := existing[:2]
+		if aliased[1].Kind == bestiary.DerivationFinetune {
+			t.Errorf("appendFinetuneLineage wrote into the caller's backing array (aliasing)\n"+
+				"  What: the appended edge landed in the shared LineageFor slice storage\n"+
+				"  Why: append reused spare capacity instead of copying first\n"+
+				"  Where: appendFinetuneLineage\n"+
+				"  How to fix: copy info.Lineage into a fresh slice before appending; got aliased[1]=%+v", aliased[1])
+		}
+	})
+}
+
+// TestCodegen_QuantVRAMLiteral_Deterministic verifies that quantVRAMLiteral
+// produces byte-identical output across repeated calls with the same input,
+// using the curated llama-3.3-70b-instruct rows as the baked anchor.
+func TestCodegen_QuantVRAMLiteral_Deterministic(t *testing.T) {
+	// Obtain and bake the llama-3.3-70b rows.
+	const modelID = bestiary.ModelID("llama-3.3-70b-instruct")
+	const bakeCtx = 131072
+
+	rawRows := bestiary.QuantVRAMFor(modelID)
+	if rawRows == nil {
+		t.Fatal("QuantVRAMFor(llama-3.3-70b-instruct) returned nil")
+	}
+	baked := make([]bestiary.QuantVRAM, len(rawRows))
+	for i, row := range rawRows {
+		row.VRAMBytes = bestiary.EstimateVRAMBytes(row.WeightsBytes, bakeCtx, row.Layers, row.KVHeads, row.HeadDim)
+		row.VRAMContextTokens = bakeCtx
+		row.VRAMEstimatePartial = bestiary.VRAMEstimateIsPartial(row.Layers, row.KVHeads, row.HeadDim)
+		baked[i] = row
+	}
+
+	// quantVRAMLiteral must be pure and deterministic.
+	lit1 := quantVRAMLiteral(baked)
+	lit2 := quantVRAMLiteral(baked)
+	if lit1 != lit2 {
+		t.Errorf("quantVRAMLiteral produced different output on repeated calls with the same input\n" +
+			"  What: non-deterministic literal generation\n" +
+			"  How to fix: ensure quantVRAMLiteral does not use map iteration or time.Now()")
+	}
+
+	// Sanity: the literal must contain the expected Quant constant names.
+	if !strings.Contains(lit1, "QuantQ4_K_M") {
+		t.Errorf("quantVRAMLiteral: missing QuantQ4_K_M in output\nliteral: %s", lit1)
+	}
+	if !strings.Contains(lit1, "QuantQ8_0") {
+		t.Errorf("quantVRAMLiteral: missing QuantQ8_0 in output\nliteral: %s", lit1)
+	}
+	if !strings.Contains(lit1, "QuantF16") {
+		t.Errorf("quantVRAMLiteral: missing QuantF16 in output\nliteral: %s", lit1)
+	}
+	// VRAMEstimatePartial must be false for these arch-complete rows.
+	if strings.Contains(lit1, "VRAMEstimatePartial: true") {
+		t.Errorf("quantVRAMLiteral: unexpected VRAMEstimatePartial: true for arch-complete rows\nliteral: %s", lit1)
 	}
 }

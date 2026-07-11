@@ -500,7 +500,7 @@ func TestSnapshotAnalysis_CrossProviderDivergences(t *testing.T) {
 	// borderline-capability), llama-4-scout + qwen3-next ×2 (line-designator + instruct→modifier).
 	// 1 is PERMANENT v0.2.2 LEDGER: nvidia/llama-3.3-nemotron-super-49b-v1.5 (embedded-family — the
 	// ID leads with "llama", canonical is "nemotron"; GH-followup). The set-equality enumerated-
-	// divergence gate is pinned in a later slice.
+	// divergence gate is a separate follow-up; this snapshot analysis test does not assert it.
 	// The Modifier-LIST schema change + ratified modifier-taxonomy
 	// (instruct/turbo/base/reasoning/multimodal/fast/chat → global modifiers, member-guarded;
 	// scout→llama, next→qwen member adds) CONVERGED all 9 modifier-taxonomy-pending stragglers

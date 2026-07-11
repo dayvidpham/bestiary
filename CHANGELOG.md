@@ -14,8 +14,56 @@ for its **Go module tags** (`vX.Y.Z`).
 
 ## [Unreleased]
 
+## [0.2.4] — 2026-07-11
+
+**Schema:** `0.1.0` → `0.2.0` (additive). SQLite store schema `4` → `5`.
+
+The **VRAM + quantization + provenance** epoch: model the memory footprint of a
+model at each quantization, make parameter size part of entity identity, ingest
+the Ollama registry, and record where every model row came from. Addresses the
+roadmap VRAM/quantization issue [#12] (and the size/param+quant strand [#9]).
+
 ### Added
 
+- **Quantization enum** (`quantization.go`): closed `Quantization` int enum over
+  the GGUF/llama.cpp scheme names (`f16`/`bf16`/`f32`, the `q*` k-quants, the
+  `iq*` i-quants) plus reserved HF-ecosystem members (`awq`/`gptq`/`int8`/`int4`),
+  with `none` as the unquantized zero value and `other` as the fail-safe bucket
+  for a recognized-but-unmapped tag. `String`/`MarshalText`/`UnmarshalText`
+  serialize the canonical lowercase wire name (case-insensitive on the way in);
+  `BitsPerWeight()` returns the authoritative llama.cpp bits-per-weight;
+  `DetectQuantization(id)` and `ParseQuantization(s)` extract a quant from a model
+  ID / CLI argument (unknown → `other` on detection, an actionable error on parse).
+- **Per-quantization VRAM** (`vram.go`, `QuantVRAM` on `ProviderInstance` and
+  `ModelInfo`): each quant row carries the ground-truth ingested `WeightsBytes`
+  (GGUF file size) and an estimated `VRAMBytes` = weights + KV-cache **baked at the
+  model's maximum context**, with **no overhead constant** (`VRAMFormulaVersion 2`).
+  When the architectural facts (layers / KV-heads / head-dim) are absent, the KV
+  term is excluded and `VRAMEstimatePartial` is set true so `VRAMBytes` is a
+  weights-only lower bound, never a silent under-estimate. `(QuantVRAM).EstimateVRAM(ctx)`
+  recomputes the figure at a caller-chosen context.
+- **Parameter size as identity** (`EntityRef.ParamSize`, `ModelInfo.ParamSize`):
+  `EntityRef.String()` gains a `#paramsize` segment —
+  `family[/variant][@version][#paramsize]{identity-mods}` — so `llama@3.3#70b{instruct}`
+  and `llama@3.3#8b{instruct}` are distinct entities. The segment is omitted when
+  size is unknown, so every existing entity key stays byte-identical.
+  `EntityByTuple` and the tuple parsers are `#`-aware.
+- **Curated Ollama ingest** (`cmd/bestiary-ollama`, `parse/data/quant_vram.json`):
+  a network-gated, polite-bot offline tool that joins the Ollama registry to the
+  entity model. Community finetunes are **kept**, never dropped; lineage to a base
+  is **inferred** (Ollama exposes no base-model marker) via tuple decomposition and
+  curated alias tables — base-known finetunes carry an inferred finetune lineage
+  edge, base-unknown ones become standalone entities.
+- **BCNF data-source provenance** (`datasource.go`, `parse/data/datasources.json`):
+  a normalized `DataSource` / `DatasetIngested` / `EntitySource` core (the join
+  table carries the entity↔source many-to-many relation) persisted with real
+  foreign keys in the SQLite store. `Entity.Sources` is a derived, sorted read
+  projection of the join table — not a source of truth. `DatasetIngested` carries
+  no URI (a transitive dependency obtained by FK join to `DataSource`); its ingest
+  timestamp is a committed snapshot, never a codegen wall-clock stamp.
+- **CLI**: `bestiary sources <key>` lists the per-source provenance for an entity
+  (joined ingest date and URI, sorted by source); `show`/`providers` JSON carries
+  `Entity.Sources`. A `--quant` filter selects a quantization where applicable.
 - This `CHANGELOG.md`.
 
 ---
@@ -263,4 +311,6 @@ Tag `v0.0.2`. The original entity-normalization epoch groundwork:
 [#18]: https://github.com/dayvidpham/bestiary/issues/18
 [#16]: https://github.com/dayvidpham/bestiary/issues/16
 [#15]: https://github.com/dayvidpham/bestiary/pull/15
+[#12]: https://github.com/dayvidpham/bestiary/issues/12
 [#11]: https://github.com/dayvidpham/bestiary/issues/11
+[#9]: https://github.com/dayvidpham/bestiary/issues/9

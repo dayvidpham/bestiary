@@ -452,10 +452,13 @@ func filterByProvider(refs []ModelRef, hint Provider) []ModelRef {
 }
 
 // isBareIdentifier reports whether s is a simple bare identifier with no slashes,
-// "@" characters, "pkg:" prefix, or other special characters. Used to determine
-// whether the bare-family fallback should be attempted.
+// "@" characters, "#" characters, "pkg:" prefix, or other special characters.
+// Used to determine whether the bare-family fallback should be attempted.
+// '#' is added to the reject set because it is the #paramsize segment separator
+// in entity keys (e.g. "llama@3.3#70b{instruct}") — a string containing '#'
+// is a sized entity key, not a bare family identifier.
 func isBareIdentifier(s string) bool {
-	if strings.Contains(s, "/") || strings.Contains(s, "@") || strings.Contains(s, ":") {
+	if strings.Contains(s, "/") || strings.Contains(s, "@") || strings.Contains(s, ":") || strings.Contains(s, "#") {
 		return false
 	}
 	return true
@@ -659,26 +662,28 @@ func modelMatches(m ModelInfo, matchInput string, scheme CanonicalScheme) bool {
 
 // matchCanonicalSegments parses a canonical-form matchInput (e.g.
 // "claude/opus@2025-11-01", "claude/opus/4.5@2025-11-01[thinking]",
-// "meta/llama@3.1{instruct}", or "openai/gpt/4o{instruct}[turbo]") and checks
-// whether the model m matches the parsed (family, variant, version, date,
-// modifier) tuple.
+// "meta/llama@3.1{instruct}", "llama@3.3#70b{instruct}", or "openai/gpt/4o{instruct}[turbo]")
+// and checks whether the model m matches the parsed (family, variant, version, date,
+// paramsize, modifier) tuple.
 //
-// Parsing rules:
+// Parsing rules (strip order):
 //  1. Strip the trailing "[attributes]" bracket segment if present.
 //  2. Strip the trailing "{identity-mods}" brace segment if present.
-//  3. Strip "@date" suffix if present.
-//  4. Split remaining segments on "/".
-//  5. Provider-prefix detection: when 4 segments remain (provider/family/variant/version),
+//  3. Strip the "#paramsize" segment if present (MUST be before @date split).
+//  4. Strip "@date" suffix if present.
+//  5. Split remaining segments on "/".
+//  6. Provider-prefix detection: when 4 segments remain (provider/family/variant/version),
 //     segment[0] is treated as a provider prefix and skipped.
 //     Similarly for 3 segments (provider/family/variant) when segment[0] does not match
 //     the model's Family but segment[1] does — the provider prefix is skipped.
-//  6. Segment[0] = family; segment[1] = variant (if present); segment[2] = version (if present).
+//  7. Segment[0] = family; segment[1] = variant (if present); segment[2] = version (if present).
 //
 // Matching rules:
 //   - family must match Family (required).
 //   - variant must match Variant when specified.
 //   - version must match Version when specified.
 //   - date must match Date when specified.
+//   - paramsize: when specified (# present), must match ParamSize.
 //   - modifier: the UNION of the "{identity-mods}" and "[attributes]" tokens (when
 //     either segment is present) must equal the model's full canonical modifier
 //     set. Splitting the render across "{}" and "[]" is a presentation detail; the
@@ -705,6 +710,16 @@ func matchCanonicalSegments(m ModelInfo, matchInput string) bool {
 			identityFilter = matchInput[lb+1 : rb]
 			matchInput = matchInput[:lb]
 		}
+	}
+
+	// Extract the "#paramsize" segment. Strip order: [attrs]->{mods}->#size->@version->/
+	// The #size strip MUST happen before the @-LastIndex version split so a '#' token
+	// never reaches the version parser. '#' was chosen because it does not collide with
+	// any existing segment character (verified against the full static model corpus).
+	var paramSizeFilter string
+	if hash := strings.LastIndex(matchInput, "#"); hash >= 0 {
+		paramSizeFilter = matchInput[hash+1:]
+		matchInput = matchInput[:hash]
 	}
 
 	// Extract "@date" suffix.
@@ -757,6 +772,12 @@ func matchCanonicalSegments(m ModelInfo, matchInput string) bool {
 	}
 	// Date filter: when specified, must match.
 	if dateFilter != "" && m.Date != dateFilter {
+		return false
+	}
+	// ParamSize filter: when a #size segment is present, it must match the model's
+	// ParamSize field. An empty paramSizeFilter (no '#' in input) matches any
+	// ParamSize (including ""), preserving backward compatibility.
+	if paramSizeFilter != "" && m.ParamSize != paramSizeFilter {
 		return false
 	}
 	// Modifier filter: when either modifier segment ("{identity-mods}" and/or
