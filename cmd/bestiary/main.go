@@ -11,6 +11,7 @@ import (
 	"sort"
 	"strings"
 	"time"
+	"unicode/utf8"
 
 	"github.com/dayvidpham/bestiary"
 )
@@ -1236,30 +1237,59 @@ func writeEntityMetadata(w io.Writer, m *bestiary.EntityMetadata) {
 // carries every row; the table is capped for readability.
 const benchmarkTableLimit = 5
 
+// benchmarkNameColWidth is the fixed display width of the NAME column. Names
+// wider than this are shortened to a single trailing "…" so the SCORE/METRIC/…
+// columns stay aligned regardless of an individual name's length (e.g.
+// "Artificial Analysis Coding Index"). The full names remain available via
+// --output json. The width matches the column's format verb below and is chosen
+// to hold the common benchmark names without truncation while bounding the outliers.
+const benchmarkNameColWidth = 24
+
+// truncateCell shortens s to at most width display columns, replacing the tail
+// with a single "…" rune when s would overflow, and reports whether truncation
+// occurred. Runes are counted (not bytes), so a multi-byte name is measured by
+// visible length; the returned truncated cell is exactly width runes wide (width-1
+// content runes + the ellipsis), which the "%-*s" verb pads consistently with the
+// untruncated (ASCII) cells so the columns line up. width must be ≥ 1.
+func truncateCell(s string, width int) (string, bool) {
+	if utf8.RuneCountInString(s) <= width {
+		return s, false
+	}
+	return string([]rune(s)[:width-1]) + "…", true
+}
+
 // writeBenchmarkTable prints the lab-reported benchmark claims as a
 // NAME|SCORE|METRIC|HARNESS|DATE|SOURCE table — fields kept in separate columns,
 // never concatenated. At most benchmarkTableLimit rows render; when more exist a
-// "… and N more (use --output json)" footer names the omitted count. Nothing is
-// printed when the entity has no benchmarks.
+// "… and N more (use --output json)" footer names the omitted count. Benchmark
+// names wider than benchmarkNameColWidth are truncated to keep the columns
+// aligned; when any rendered row was truncated a single note points at the full
+// names in --output json. Nothing is printed when the entity has no benchmarks.
 func writeBenchmarkTable(w io.Writer, benchmarks []bestiary.BenchmarkResult) {
 	if len(benchmarks) == 0 {
 		return
 	}
 	fmt.Fprintf(w, "Benchmarks (%d):\n", len(benchmarks))
-	fmt.Fprintf(w, "  %-24s %12s %-14s %-18s %-12s %s\n",
-		"NAME", "SCORE", "METRIC", "HARNESS", "DATE", "SOURCE")
+	fmt.Fprintf(w, "  %-*s %12s %-14s %-18s %-12s %s\n",
+		benchmarkNameColWidth, "NAME", "SCORE", "METRIC", "HARNESS", "DATE", "SOURCE")
 
 	shown := benchmarks
 	if len(shown) > benchmarkTableLimit {
 		shown = shown[:benchmarkTableLimit]
 	}
+	nameTruncated := false
 	for _, b := range shown {
-		fmt.Fprintf(w, "  %-24s %12s %-14s %-18s %-12s %s\n",
-			orDash(b.Name), benchScoreCell(b), orDash(b.Metric),
+		name, truncated := truncateCell(orDash(b.Name), benchmarkNameColWidth)
+		nameTruncated = nameTruncated || truncated
+		fmt.Fprintf(w, "  %-*s %12s %-14s %-18s %-12s %s\n",
+			benchmarkNameColWidth, name, benchScoreCell(b), orDash(b.Metric),
 			orDash(b.Harness), orDash(b.Date), orDash(b.SourceURL))
 	}
 	if len(benchmarks) > benchmarkTableLimit {
 		fmt.Fprintf(w, "  … and %d more (use --output json)\n", len(benchmarks)-benchmarkTableLimit)
+	}
+	if nameTruncated {
+		fmt.Fprintf(w, "  note: benchmark names truncated (use --output json for full names)\n")
 	}
 }
 

@@ -796,6 +796,113 @@ func TestBenchmarkTable_Empty_NoOutput(t *testing.T) {
 	}
 }
 
+// TestBenchmarkTable_LongName_Truncated_Note_Aligned asserts that a benchmark
+// name wider than the NAME column is truncated with a trailing "…", that the
+// columns stay aligned (the NAME cell occupies exactly benchmarkNameColWidth
+// display runes so the SCORE column starts at a fixed offset on every row), and
+// that a single truncation note is printed after the table.
+func TestBenchmarkTable_LongName_Truncated_Note_Aligned(t *testing.T) {
+	const longName = "Artificial Analysis Coding Index" // 32 runes > benchmarkNameColWidth
+	benches := []bestiary.BenchmarkResult{
+		{Name: longName, Metric: "acc", Score: 42},
+		{Name: "MMLU", Metric: "acc", Score: 87.5},
+	}
+
+	var sb strings.Builder
+	writeBenchmarkTable(&sb, benches)
+	out := sb.String()
+
+	// Mutation guard: unbounded rendering would leak the full name verbatim.
+	if strings.Contains(out, longName) {
+		t.Errorf("long benchmark name should be truncated, not rendered in full; got:\n%s", out)
+	}
+	// The truncated cell is (benchmarkNameColWidth-1) content runes + "…".
+	wantCell := string([]rune(longName)[:benchmarkNameColWidth-1]) + "…"
+	if !strings.Contains(out, wantCell) {
+		t.Errorf("expected truncated NAME cell %q; got:\n%s", wantCell, out)
+	}
+	// Mutation guard: the note must be present exactly once when truncation occurred.
+	const note = "note: benchmark names truncated (use --output json for full names)"
+	if n := strings.Count(out, note); n != 1 {
+		t.Errorf("expected exactly one truncation note, got %d; out:\n%s", n, out)
+	}
+
+	// Alignment: on the header row and every data row, the rune two-space indent +
+	// benchmarkNameColWidth is the column separator (a space). Unbounded rendering
+	// of the long name would push a name character into that position.
+	const indent = 2 // "  " row prefix
+	for _, line := range strings.Split(strings.TrimRight(out, "\n"), "\n") {
+		if !strings.HasPrefix(line, "  ") { // the "Benchmarks (N):" title is not a column row
+			continue
+		}
+		if strings.HasPrefix(line, "  … and ") || strings.Contains(line, note) {
+			continue // footers are not column rows
+		}
+		runes := []rune(line)
+		sep := indent + benchmarkNameColWidth
+		if len(runes) <= sep {
+			t.Errorf("row too short to hold the NAME column; line:\n%q", line)
+			continue
+		}
+		if runes[sep] != ' ' {
+			t.Errorf("NAME column not %d wide (misaligned): rune at boundary is %q; line:\n%q",
+				benchmarkNameColWidth, string(runes[sep]), line)
+		}
+	}
+}
+
+// TestBenchmarkTable_ShortNames_NoTruncation_NoNote asserts that when every name
+// fits the NAME column, nothing is truncated and no note is printed. Kept under
+// benchmarkTableLimit rows so the "… and N more" footer (also an ellipsis) never
+// appears and the "no ellipsis" assertion is unambiguous.
+func TestBenchmarkTable_ShortNames_NoTruncation_NoNote(t *testing.T) {
+	benches := []bestiary.BenchmarkResult{
+		{Name: "MMLU", Metric: "acc", Score: 87.5},
+		{Name: "GPQA Diamond", Metric: "acc", Score: 50},
+	}
+
+	var sb strings.Builder
+	writeBenchmarkTable(&sb, benches)
+	out := sb.String()
+
+	if strings.Contains(out, "…") {
+		t.Errorf("short names should not truncate (no ellipsis); got:\n%s", out)
+	}
+	if strings.Contains(out, "note: benchmark names truncated") {
+		t.Errorf("no truncation note expected when all names fit; got:\n%s", out)
+	}
+	for _, want := range []string{"MMLU", "GPQA Diamond"} {
+		if !strings.Contains(out, want) {
+			t.Errorf("short name %q should render in full; got:\n%s", want, out)
+		}
+	}
+}
+
+// TestBenchmarkTable_JSON_FullNames asserts the JSON output path (what
+// `show --by-entity --output json` emits) is unaffected by table truncation: the
+// full benchmark name survives and no truncation note/ellipsis leaks in.
+func TestBenchmarkTable_JSON_FullNames(t *testing.T) {
+	const longName = "Artificial Analysis Coding Index"
+	ent := bestiary.Entity{
+		Metadata: &bestiary.EntityMetadata{
+			Benchmarks: []bestiary.BenchmarkResult{{Name: longName, Metric: "acc", Score: 42}},
+		},
+	}
+
+	var sb strings.Builder
+	if err := writeJSON(&sb, ent); err != nil {
+		t.Fatalf("writeJSON: %v", err)
+	}
+	out := sb.String()
+
+	if !strings.Contains(out, longName) {
+		t.Errorf("JSON output must carry the full benchmark name; got:\n%s", out)
+	}
+	if strings.Contains(out, "truncated") || strings.Contains(out, "…") {
+		t.Errorf("JSON output must not carry table truncation artifacts; got:\n%s", out)
+	}
+}
+
 // TestInstanceTable_StatusColumn asserts the instance table gains a STATUS column
 // only when an instance carries a non-None status, and renders the status name.
 func TestInstanceTable_StatusColumn(t *testing.T) {
