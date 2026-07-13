@@ -3672,3 +3672,146 @@ func TestCodegen_QuantVRAMLiteral_Deterministic(t *testing.T) {
 		t.Errorf("quantVRAMLiteral: unexpected VRAMEstimatePartial: true for arch-complete rows\nliteral: %s", lit1)
 	}
 }
+
+// TestCodegen_UpToDate_RealInput is the real-input regen up-to-date guard. It
+// regenerates every codegen-owned source IN MEMORY from the COMMITTED vendored
+// snapshot (parse/data/modelsdev/catalog.json) via the exact generation sequence
+// run() uses, then byte-compares each fresh source against the COMMITTED
+// *_gen.go file on disk — with LastSynced lines normalized on both sides (the
+// same reLastSynced/normalizeLastSynced machinery TestCodegen_Reproducible_ByteIdentical
+// uses). It FAILS if any generated file is stale relative to the vendored
+// snapshot plus the current emitter logic.
+//
+// This is the guard whose absence let a stale regen ship invisibly: the
+// hermetic TestCodegen_UpToDate checks only golden EXCERPTS from a fixture, and
+// TestCodegen_Reproducible_ByteIdentical proves run-to-run stability but not
+// agreement with what is committed. Only a full committed-vs-fresh comparison
+// over the real 5654-model catalog catches a generated file that was hand-edited,
+// left un-regenerated after an emitter or data change, or captured in a
+// non-canonical form. The comparison is generation-only (the generate* functions
+// return bytes; nothing is written to disk), so the committed files are never
+// mutated by the test.
+//
+// Not parallel: it temporarily repoints the vendoredCatalogPath global at the
+// module-root-resolved committed snapshot.
+func TestCodegen_UpToDate_RealInput(t *testing.T) {
+	// `go test` runs with the package dir as CWD, but the vendored catalog and the
+	// committed generated files live at the module root; resolve both from this
+	// test file's location (two levels up).
+	_, thisFile, _, ok := runtime.Caller(0)
+	if !ok {
+		t.Fatal("runtime.Caller failed; cannot locate the module root")
+	}
+	moduleRoot := filepath.Join(filepath.Dir(thisFile), "..", "..")
+
+	// Point fetchModelsWithRaw at the committed snapshot (absolute, so it resolves
+	// regardless of the test CWD).
+	orig := vendoredCatalogPath
+	vendoredCatalogPath = filepath.Join(moduleRoot, vendoredCatalogPath)
+	t.Cleanup(func() { vendoredCatalogPath = orig })
+
+	_, models, metadata, providerMeta, _, err := fetchModelsWithRaw(context.Background(), true)
+	if err != nil {
+		t.Fatalf("fetchModelsWithRaw(noFetch=true) over the committed vendored catalog: %v\n"+
+			"  How to fix: run the models.dev snapshot refresh (see AGENTS.md)", err)
+	}
+
+	// Reproduce run()'s generation sequence exactly (main.go run()):
+	//   allSlugs (sorted) -> collectFamilies -> applyFilter(no flags) -> the five
+	//   generate* emitters, with slugToConst built from providerConstName.
+	// LastSynced is intentionally NOT stamped here: normalizeLastSynced neutralizes
+	// the field on both sides, so the on-disk wall-clock stamp is irrelevant.
+	allSlugs := make([]string, 0, len(providerMeta))
+	for slug := range providerMeta {
+		allSlugs = append(allSlugs, slug)
+	}
+	sort.Strings(allSlugs)
+
+	familyMeta := collectFamilies(models)
+	filtered := applyFilter(models, nil, nil)
+
+	slugToConst := make(map[string]string, len(allSlugs))
+	for _, slug := range allSlugs {
+		slugToConst[slug] = providerConstName(slug, providerMeta[slug].Name)
+	}
+
+	providersSrc, err := generateProvidersSource(allSlugs, providerMeta)
+	if err != nil {
+		t.Fatalf("generateProvidersSource: %v", err)
+	}
+	familiesSrc, err := generateFamiliesSource(familyMeta)
+	if err != nil {
+		t.Fatalf("generateFamiliesSource: %v", err)
+	}
+	staticSrc, err := generateSource(filtered, slugToConst)
+	if err != nil {
+		t.Fatalf("generateSource: %v", err)
+	}
+	constantsSrc, err := generateConstantsSource(models, slugToConst)
+	if err != nil {
+		t.Fatalf("generateConstantsSource: %v", err)
+	}
+	metadataSrc, err := generateMetadataSource(metadata)
+	if err != nil {
+		t.Fatalf("generateMetadataSource: %v", err)
+	}
+
+	fresh := []struct {
+		relPath string
+		src     []byte
+	}{
+		{outputPath, staticSrc},
+		{outputConstantsPath, constantsSrc},
+		{outputMetadataPath, metadataSrc},
+		{outputFamiliesPath, familiesSrc},
+		{outputProvidersPath, providersSrc},
+	}
+
+	for _, f := range fresh {
+		committedPath := filepath.Join(moduleRoot, f.relPath)
+		committed, readErr := os.ReadFile(committedPath)
+		if readErr != nil {
+			t.Errorf("read committed generated file %q: %v\n"+
+				"  How to fix: run `go generate ./...` to (re)create it", committedPath, readErr)
+			continue
+		}
+
+		freshNorm := normalizeLastSynced(f.src)
+		committedNorm := normalizeLastSynced(committed)
+		if bytes.Equal(freshNorm, committedNorm) {
+			continue
+		}
+
+		// Report the first divergent line to make the staleness reviewable without
+		// dumping the whole (multi-MB) file.
+		freshLines := strings.Split(string(freshNorm), "\n")
+		commLines := strings.Split(string(committedNorm), "\n")
+		firstDiff, ln, freshLn, commLn := -1, 0, "", ""
+		for ln < len(freshLines) || ln < len(commLines) {
+			var fl, cl string
+			if ln < len(freshLines) {
+				fl = freshLines[ln]
+			}
+			if ln < len(commLines) {
+				cl = commLines[ln]
+			}
+			if fl != cl {
+				firstDiff, freshLn, commLn = ln+1, fl, cl
+				break
+			}
+			ln++
+		}
+
+		t.Errorf(
+			"committed %s is STALE relative to the vendored snapshot + current emitter logic\n"+
+				"  What: a fresh --no-fetch regen of this file (LastSynced normalized) does not match what is committed\n"+
+				"  Why: the generated file was hand-edited, or left un-regenerated after an emitter or curated-data change\n"+
+				"  Where: %s (committed) vs in-memory regen from %s\n"+
+				"  First divergent line (%d):\n"+
+				"    committed: %q\n"+
+				"    fresh    : %q\n"+
+				"  How to fix: run `go run ./cmd/bestiary-gen --no-fetch` and commit the regenerated files as a chore(gen) commit",
+			f.relPath, f.relPath, vendoredCatalogPath, firstDiff, commLn, freshLn,
+		)
+	}
+}
