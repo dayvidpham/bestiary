@@ -23,7 +23,16 @@ package bestiary
 //     CapabilityUnion, Entity, DataSource, DatasetIngested, EntitySource).
 //     Additive and backward-COMPATIBLE: every new field is optional/zero-value,
 //     so 0.1.x records still validate.
-const BestiarySchemaVersion = "0.2.0"
+//   - 0.2.0 → 0.3.0: added the v0.2.5 models.dev harmonization fields — the
+//     instance-level ModelInfo props (Description, Status, StatusRaw,
+//     ReasoningOptions, CostInputAudioPerMTok, CostOutputAudioPerMTok,
+//     CostContextOver200k, CostTiers), the Entity.Metadata join projection, and
+//     new $defs ModelStatus, LinkType, ModelLink, BenchmarkResult,
+//     ReasoningOption, TierCost, CostTier, EntityMetadata. (Catalog is a parser
+//     return container, not a serialized output document, so it is deliberately
+//     NOT a $def.) Additive and backward-COMPATIBLE: every new property is
+//     optional/zero-value, so 0.2.x records still validate.
+const BestiarySchemaVersion = "0.3.0"
 
 // UpstreamSchemaVersion identifies the exact snapshot of the models.dev schema
 // that this bestiary schema was derived from. Format: YYYY.MM.DD-sha256

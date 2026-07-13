@@ -206,6 +206,12 @@ type Entity struct {
 	// at least the models.dev origin); it is nil only on a hand-constructed Entity
 	// value that never went through the registry aggregate.
 	Sources []DataSourceID
+	// Metadata is the provider-agnostic model facts (description, license, links,
+	// benchmark claims) joined to this entity from the models.dev models.json
+	// side. It is a pointer because metadata is genuinely optional: nil when no
+	// EntityMetadata was joined to this identity. When present it is owned by the
+	// Entity value and is deep-copied on read alongside the other entity fields.
+	Metadata *EntityMetadata
 }
 
 // Entities returns every model entity in the static registry, each with its

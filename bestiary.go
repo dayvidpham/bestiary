@@ -97,5 +97,34 @@ type ModelInfo struct {
 	// from curated ingest data.
 	Source DataSourceID
 
+	// Instance-level facts from the api.json side of the models.dev catalog.
+
+	// Description is the upstream model description. Empty when none is provided.
+	Description string
+	// Status is the upstream release status for this instance (StatusNone when
+	// none is declared, which means generally available / stable). Status is an
+	// instance-level fact — it is present on the api.json side only and never on
+	// EntityMetadata.
+	Status ModelStatus
+	// StatusRaw carries the verbatim upstream status token, populated only when
+	// Status is StatusOther (an unrecognized token); empty otherwise.
+	StatusRaw string
+	// ReasoningOptions are the reasoning-control options this model exposes
+	// (toggle / effort / budget-tokens). nil when the model exposes none.
+	ReasoningOptions []ReasoningOption
+	// CostInputAudioPerMTok is the audio-input cost in USD per million tokens, or
+	// nil when unknown.
+	CostInputAudioPerMTok *float64
+	// CostOutputAudioPerMTok is the audio-output cost in USD per million tokens,
+	// or nil when unknown.
+	CostOutputAudioPerMTok *float64
+	// CostContextOver200k is the fixed context-over-200k-tokens pricing override,
+	// or nil when the model declares none. It is upstream's legacy fixed-threshold
+	// special case, kept distinct from CostTiers for wire fidelity.
+	CostContextOver200k *TierCost
+	// CostTiers are the general context-size-conditional price tiers. nil when the
+	// model declares none.
+	CostTiers []CostTier
+
 	LastSynced string // RFC3339
 }

@@ -117,6 +117,23 @@ func TestJSONOutput_ConformsToSchema(t *testing.T) {
 			},
 		},
 		Source: bestiary.DataSourceOllama,
+		// v0.2.5 additive fields (schema 0.3.0): exercise the populated
+		// serialization path for the instance-level models.dev harmonization
+		// fields — Description (string), Status (ModelStatus enum string),
+		// ReasoningOptions ([]ReasoningOption with a Kind enum string), the audio
+		// cost pointers, CostContextOver200k (*TierCost), and CostTiers ([]CostTier
+		// with the embedded TierCost fields flattened).
+		Description: "A schema test model.",
+		Status:      bestiary.StatusBeta,
+		ReasoningOptions: []bestiary.ReasoningOption{
+			{Kind: bestiary.ReasoningEffort, Values: []string{"low", "high"}},
+		},
+		CostInputAudioPerMTok:  &cost,
+		CostOutputAudioPerMTok: nil,
+		CostContextOver200k:    &bestiary.TierCost{CostInputPerMTok: &cost},
+		CostTiers: []bestiary.CostTier{
+			{ContextSize: 200000, TierCost: bestiary.TierCost{CostOutputPerMTok: &cost}},
+		},
 	}
 
 	var buf bytes.Buffer
@@ -945,7 +962,7 @@ func TestSchemaDefs_V024_DeepConformance(t *testing.T) {
 				Ref:     bestiary.EntityRef{Family: "llama", Version: "3.3", ParamSize: "70b", Modifier: []string{"instruct"}},
 				Sources: []bestiary.DataSourceID{bestiary.DataSourceModelsDev, bestiary.DataSourceOllama},
 			},
-			expectProps: []string{"Ref", "Instances", "Lineage", "Providers", "Hosts", "PriceInputRange", "PriceOutputRange", "ContextRange", "MaxOutputRange", "Capabilities", "Sources"},
+			expectProps: []string{"Ref", "Instances", "Lineage", "Providers", "Hosts", "PriceInputRange", "PriceOutputRange", "ContextRange", "MaxOutputRange", "Capabilities", "Sources", "Metadata"},
 			expectTypes: map[string]string{
 				"Ref":              "$ref",
 				"Instances":        "array|null",
@@ -958,6 +975,9 @@ func TestSchemaDefs_V024_DeepConformance(t *testing.T) {
 				"MaxOutputRange":   "array",
 				"Capabilities":     "$ref",
 				"Sources":          "array|null",
+				// Metadata is oneOf{$ref EntityMetadata, null} — no plain "type"
+				// node and no direct "$ref" (it is inside the oneOf), so it is
+				// allowlisted from the type cross-check (added in schema 0.3.0).
 			},
 		},
 	}
