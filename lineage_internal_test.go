@@ -282,3 +282,175 @@ func TestSafeLineageTable_DegradesToNoLineage(t *testing.T) {
 		})
 	}
 }
+
+// TestLineage_SizeAgnosticFallback_SizedInheritsUnsizedEdge is falsifiable test (a):
+// a curated edge whose child_ref/parent OMIT param_size is SIZE-AGNOSTIC — a sized
+// entity inherits it through the size-stripped fallback, via BOTH Ancestors and
+// Descendants. Mutation-prove: revert forwardSeed/reverseRootKey to an exact-only
+// lookup (drop the sizeStrippedSeedKey retry) and this test goes RED.
+func TestLineage_SizeAgnosticFallback_SizedInheritsUnsizedEdge(t *testing.T) {
+	const fixture = `{
+	  "schema_version": 2,
+	  "edges": [
+	    {
+	      "child_id": "size-agnostic-child",
+	      "child_ref": { "family": "llama", "version": "3.3", "modifier": ["instruct"] },
+	      "real": false,
+	      "parents": [ { "family": "llama", "version": "3.1", "kind": "finetune" } ]
+	    }
+	  ]
+	}`
+	const (
+		unsizedParentKey = "llama@3.1"
+		unsizedChildKey  = "llama@3.3{instruct}"
+	)
+	tbl, err := parseLineageTable([]byte(fixture))
+	if err != nil {
+		t.Fatalf("parseLineageTable(unsized fixture): %v", err)
+	}
+	withSyntheticLineage(t, tbl, func() {
+		// A SIZED child (llama@3.3#70b{instruct}) inherits the unsized parent via Ancestors.
+		sizedChild := Entity{Ref: EntityRef{Family: FamilyLlama, Version: "3.3", ParamSize: "70b", Modifier: []string{"instruct"}}}
+		anc := sizedChild.Ancestors()
+		if _, ok := refSet(anc...)[unsizedParentKey]; !ok {
+			t.Fatalf("sized child %q Ancestors() = %v, want it to inherit unsized parent %q via the size-stripped fallback",
+				sizedChild.Ref.String(), anc, unsizedParentKey)
+		}
+		// A SIZED parent (llama@3.1#70b) inherits the unsized child via Descendants.
+		sizedParent := Entity{Ref: EntityRef{Family: FamilyLlama, Version: "3.1", ParamSize: "70b"}}
+		desc := sizedParent.Descendants()
+		if _, ok := refSet(desc...)[unsizedChildKey]; !ok {
+			t.Fatalf("sized parent %q Descendants() = %v, want it to inherit unsized child %q via the size-stripped fallback",
+				sizedParent.Ref.String(), desc, unsizedChildKey)
+		}
+	})
+}
+
+// TestLineage_SizeSpecificEdge_OverridesAndDoesNotLeak is falsifiable test (b): a
+// size-specific edge OVERRIDES the size-agnostic one for its own size, and does NOT
+// leak to siblings of other sizes (a differently-sized sibling still gets the
+// unsized edge). Two edges share the unsized stem "qwen@3": the unsized edge points
+// at qwen@2, the 70b edge points at qwen@2.5#70b.
+func TestLineage_SizeSpecificEdge_OverridesAndDoesNotLeak(t *testing.T) {
+	const fixture = `{
+	  "schema_version": 2,
+	  "edges": [
+	    { "child_id": "qwen3-unsized", "child_ref": { "family": "qwen", "version": "3" }, "real": false,
+	      "parents": [ { "family": "qwen", "version": "2", "kind": "finetune" } ] },
+	    { "child_id": "qwen3-70b", "child_ref": { "family": "qwen", "version": "3", "param_size": "70b" }, "real": false,
+	      "parents": [ { "family": "qwen", "version": "2.5", "param_size": "70b", "kind": "finetune" } ] }
+	  ]
+	}`
+	const (
+		unsizedParentKey = "qwen@2"
+		sizedParentKey   = "qwen@2.5#70b"
+	)
+	tbl, err := parseLineageTable([]byte(fixture))
+	if err != nil {
+		t.Fatalf("parseLineageTable(override fixture): %v", err)
+	}
+	withSyntheticLineage(t, tbl, func() {
+		// The 70b entity: its OWN size-specific edge wins; the unsized parent must NOT appear.
+		e70 := Entity{Ref: EntityRef{Family: FamilyQwen, Version: "3", ParamSize: "70b"}}
+		anc70 := refSet(e70.Ancestors()...)
+		if _, ok := anc70[sizedParentKey]; !ok {
+			t.Fatalf("70b entity Ancestors() = %v, missing its size-specific parent %q", e70.Ancestors(), sizedParentKey)
+		}
+		if _, leaked := anc70[unsizedParentKey]; leaked {
+			t.Fatalf("70b entity Ancestors() = %v leaked the unsized parent %q; the exact size-specific edge must win alone",
+				e70.Ancestors(), unsizedParentKey)
+		}
+		// A sibling of a DIFFERENT size (8b, no size-specific edge) gets the unsized edge,
+		// NOT the 70b size-specific one.
+		e8 := Entity{Ref: EntityRef{Family: FamilyQwen, Version: "3", ParamSize: "8b"}}
+		anc8 := refSet(e8.Ancestors()...)
+		if _, ok := anc8[unsizedParentKey]; !ok {
+			t.Fatalf("8b sibling Ancestors() = %v, missing the size-agnostic parent %q", e8.Ancestors(), unsizedParentKey)
+		}
+		if _, leaked := anc8[sizedParentKey]; leaked {
+			t.Fatalf("8b sibling Ancestors() = %v leaked the 70b size-specific parent %q; a size-specific edge must not leak to other sizes",
+				e8.Ancestors(), sizedParentKey)
+		}
+	})
+}
+
+// TestLineage_UnsizedEntity_BehaviorUnchanged is falsifiable test (c): an unsized
+// entity resolves EXACTLY as before — the size-stripped fallback never fires for it
+// (sizeStrippedSeedKey declines an unsized ref), so its exact-key edges are used
+// unchanged for both Ancestors and Descendants.
+func TestLineage_UnsizedEntity_BehaviorUnchanged(t *testing.T) {
+	// The fallback helper must decline an unsized ref (no redundant second lookup).
+	if _, ok := sizeStrippedSeedKey(EntityRef{Family: FamilyPhi, Version: "4"}); ok {
+		t.Fatal("sizeStrippedSeedKey(unsized ref) returned ok=true; an unsized entity must not trigger the size-stripped fallback")
+	}
+
+	const fixture = `{
+	  "schema_version": 2,
+	  "edges": [
+	    { "child_id": "phi4-unsized", "child_ref": { "family": "phi", "version": "4" }, "real": false,
+	      "parents": [ { "family": "phi", "version": "3", "kind": "finetune" } ] }
+	  ]
+	}`
+	tbl, err := parseLineageTable([]byte(fixture))
+	if err != nil {
+		t.Fatalf("parseLineageTable(unsized-entity fixture): %v", err)
+	}
+	withSyntheticLineage(t, tbl, func() {
+		child := Entity{Ref: EntityRef{Family: FamilyPhi, Version: "4"}}
+		if _, ok := refSet(child.Ancestors()...)["phi@3"]; !ok {
+			t.Fatalf("unsized child Ancestors() = %v, want exact-key parent phi@3 (unchanged behavior)", child.Ancestors())
+		}
+		parent := Entity{Ref: EntityRef{Family: FamilyPhi, Version: "3"}}
+		if _, ok := refSet(parent.Descendants()...)["phi@4"]; !ok {
+			t.Fatalf("unsized parent Descendants() = %v, want exact-key child phi@4 (unchanged behavior)", parent.Descendants())
+		}
+	})
+}
+
+// TestLineage_ExactBeforeFallback_Precedence is falsifiable test (d): an entity
+// whose SIZED key AND its size-stripped key both carry curated edges resolves to the
+// EXACT (sized) edge; the size-stripped edge must not appear. Pins that the exact
+// lookup is tried before the fallback, for both Ancestors and Descendants.
+// Mutation-prove: make forwardSeed/reverseRootKey prefer the stripped key (drop the
+// exact-first check) and this test goes RED.
+func TestLineage_ExactBeforeFallback_Precedence(t *testing.T) {
+	const fixture = `{
+	  "schema_version": 2,
+	  "edges": [
+	    { "child_id": "gemma2-unsized", "child_ref": { "family": "gemma", "version": "2" }, "real": false,
+	      "parents": [ { "family": "gemma", "version": "1", "kind": "finetune" } ] },
+	    { "child_id": "gemma2-9b", "child_ref": { "family": "gemma", "version": "2", "param_size": "9b" }, "real": false,
+	      "parents": [ { "family": "gemma", "version": "1", "param_size": "9b", "kind": "finetune" } ] }
+	  ]
+	}`
+	const (
+		strippedParentKey = "gemma@1"
+		sizedParentKey    = "gemma@1#9b"
+	)
+	tbl, err := parseLineageTable([]byte(fixture))
+	if err != nil {
+		t.Fatalf("parseLineageTable(precedence fixture): %v", err)
+	}
+	withSyntheticLineage(t, tbl, func() {
+		// Ancestors: the 9b child has both an exact sized edge and a stripped edge; sized wins.
+		e := Entity{Ref: EntityRef{Family: FamilyGemma, Version: "2", ParamSize: "9b"}}
+		anc := refSet(e.Ancestors()...)
+		if _, ok := anc[sizedParentKey]; !ok {
+			t.Fatalf("Ancestors() for %q = %v, missing the exact sized parent %q", e.Ref.String(), e.Ancestors(), sizedParentKey)
+		}
+		if _, leaked := anc[strippedParentKey]; leaked {
+			t.Fatalf("Ancestors() for %q = %v included the size-stripped parent %q; the exact sized edge must win (precedence)",
+				e.Ref.String(), e.Ancestors(), strippedParentKey)
+		}
+		// Descendants: the 9b parent has both an exact sized reverse edge and a stripped one; sized wins.
+		p := Entity{Ref: EntityRef{Family: FamilyGemma, Version: "1", ParamSize: "9b"}}
+		desc := refSet(p.Descendants()...)
+		if _, ok := desc["gemma@2#9b"]; !ok {
+			t.Fatalf("Descendants() for %q = %v, missing the exact sized child gemma@2#9b", p.Ref.String(), p.Descendants())
+		}
+		if _, leaked := desc["gemma@2"]; leaked {
+			t.Fatalf("Descendants() for %q = %v included the size-stripped child gemma@2; the exact sized reverse edge must win (precedence)",
+				p.Ref.String(), p.Descendants())
+		}
+	})
+}

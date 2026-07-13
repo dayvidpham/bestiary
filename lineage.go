@@ -34,7 +34,10 @@ type LineageRecord struct {
 // ParamSize carries the parent entity's canonical parameter-size token (e.g. "70b")
 // so the reverse index (parent key -> children) is keyed by the SIZED parent key
 // when curation knows the size; it is omitted (and the parent key stays unsized)
-// when the size is unknown.
+// when the size is unknown. An omitted param_size is SIZE-AGNOSTIC: because
+// Descendants falls back from a sized key to its size-stripped form, an unsized
+// parent edge yields descendants for every sized sibling; a specified param_size
+// binds the edge to exactly that parent size.
 type lineageParentJSON struct {
 	Family    Family `json:"family"`
 	Variant   string `json:"variant"`
@@ -53,7 +56,11 @@ type lineageParentJSON struct {
 // It becomes the "#paramsize" segment of the child's EntityRef key so a SIZED entity
 // (whose registry key is family[@version]#size{mods}) is linked to its lineage
 // rather than de-linked. It is omitted when the size is unknown, in which case the
-// child key stays unsized — byte-identical to its pre-size form.
+// child key stays unsized — byte-identical to its pre-size form. An omitted
+// param_size is also SIZE-AGNOSTIC: Ancestors falls back from a sized entity's key
+// to its size-stripped form, so an unsized child edge is inherited by every sized
+// sibling; a specified param_size binds the edge to exactly that size (and, when a
+// sibling has its own sized edge, that size-specific edge wins for it).
 type lineageRefJSON struct {
 	Family    Family   `json:"family"`
 	Variant   string   `json:"variant"`
@@ -334,25 +341,81 @@ func lineageDescendants(rootKey string, rev map[string][]EntityRef) []EntityRef 
 	return out
 }
 
+// sizeStrippedSeedKey returns the SIZE-AGNOSTIC lookup key for ref — ref.String()
+// with the ParamSize (#size) segment removed — and true when ref carries a size.
+// The stripped key is built through the EntityRef machinery (zero ParamSize on a
+// value copy, then String()), never by trimming the rendered string, so it always
+// agrees with how the DAG indices are keyed. It returns ("", false) for an
+// already-unsized ref: an unsized entity has no #size to strip, so its exact and
+// stripped keys would be identical and the second lookup would be a pointless
+// re-miss. The value copy shares ref.Modifier, but only the ParamSize string field
+// is overwritten, so the shared slice is never mutated.
+func sizeStrippedSeedKey(ref EntityRef) (string, bool) {
+	if ref.ParamSize == "" {
+		return "", false
+	}
+	stripped := ref
+	stripped.ParamSize = ""
+	return stripped.String(), true
+}
+
+// forwardSeed resolves the parent edges that seed a sized entity's ancestor
+// traversal, exact-key-first: the SIZE-SPECIFIC edges curated for ref's exact key
+// win when present, and only on a miss does it retry with the SIZE-STRIPPED key so
+// a size-agnostic curated edge (one whose child_ref omits param_size) applies to
+// every sized sibling. An already-unsized ref never triggers the fallback.
+func (t *lineageTable) forwardSeed(ref EntityRef) []LineageEdge {
+	if edges, ok := t.forward[ref.String()]; ok {
+		return edges
+	}
+	if stripped, ok := sizeStrippedSeedKey(ref); ok {
+		return t.forward[stripped]
+	}
+	return nil
+}
+
+// reverseRootKey resolves the reverse-index key that roots a sized entity's
+// descendant traversal, exact-key-first: ref's exact (sized) key wins when it has
+// curated children, and only on a miss does it fall back to the SIZE-STRIPPED key
+// so a size-agnostic parent edge yields descendants for every sized sibling. When
+// neither key is present the exact key is returned unchanged (the traversal simply
+// finds nothing).
+func (t *lineageTable) reverseRootKey(ref EntityRef) string {
+	exact := ref.String()
+	if _, ok := t.reverse[exact]; ok {
+		return exact
+	}
+	if stripped, ok := sizeStrippedSeedKey(ref); ok {
+		if _, ok := t.reverse[stripped]; ok {
+			return stripped
+		}
+	}
+	return exact
+}
+
 // Ancestors returns the transitive set of parent EntityRefs reachable from this
 // entity's lineage, via a cycle-safe depth-first traversal of the curated
 // derivation DAG. The first hop comes from the entity's own Lineage edges (as
 // populated at codegen); deeper hops follow the curated forward index. When the
-// entity carries no edges directly, the curated index keyed by its Ref is used as
-// the seed so a hand-constructed Entity still resolves. A cycle never loops.
+// entity carries no edges directly, the curated index keyed by its Ref seeds the
+// traversal — exact (sized) key first, then the size-stripped key so a
+// size-agnostic curated edge is inherited by every sized sibling (see forwardSeed).
+// A cycle never loops.
 func (e Entity) Ancestors() []EntityRef {
 	t := loadLineageTableSafe()
 	seed := e.Lineage
 	if len(seed) == 0 {
-		seed = t.forward[e.Ref.String()]
+		seed = t.forwardSeed(e.Ref)
 	}
 	return lineageAncestors(seed, t.forward)
 }
 
 // Descendants returns the transitive set of child EntityRefs derived (directly or
 // indirectly) from this entity, via a cycle-safe depth-first traversal of the
-// curated derivation DAG's reverse edges.
+// curated derivation DAG's reverse edges. The root lookup is exact (sized) key
+// first, then the size-stripped key so a size-agnostic parent edge yields
+// descendants for every sized sibling (see reverseRootKey).
 func (e Entity) Descendants() []EntityRef {
 	t := loadLineageTableSafe()
-	return lineageDescendants(e.Ref.String(), t.reverse)
+	return lineageDescendants(t.reverseRootKey(e.Ref), t.reverse)
 }
