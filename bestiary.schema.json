@@ -291,6 +291,10 @@
           "description": "Model version extracted from the family string (e.g. \"4.5\" for claude-opus-4-5, \"2.5\" for gemini-2.5-flash). Empty when the model has no separable version.",
           "type": "string"
         },
+        "ParamSize": {
+          "description": "Canonical parameter-size token (e.g. \"70b\", \"8b\", \"0.5b\"). Part of the canonical identity tuple, mirroring EntityRef.ParamSize: instances of one family at different sizes are distinct identities. Empty when size is unknown. Added in schema 0.3.0; optional for backward compatibility.",
+          "type": "string"
+        },
         "Date": {
           "description": "Release date in YYYY-MM-DD format extracted from the model ID. Empty if none was found.",
           "type": "string"

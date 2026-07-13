@@ -26,7 +26,8 @@ package bestiary
 //   - 0.2.0 → 0.3.0: added the v0.2.5 models.dev harmonization fields — the
 //     instance-level ModelInfo props (Description, Status, StatusRaw,
 //     ReasoningOptions, CostInputAudioPerMTok, CostOutputAudioPerMTok,
-//     CostContextOver200k, CostTiers), the Entity.Metadata join projection, and
+//     CostContextOver200k, CostTiers), the Entity.Metadata join projection,
+//     ModelRef.ParamSize (the #size identity carrier on the identity tuple), and
 //     new $defs ModelStatus, LinkType, ModelLink, BenchmarkResult,
 //     ReasoningOption, TierCost, CostTier, EntityMetadata. (Catalog is a parser
 //     return container, not a serialized output document, so it is deliberately

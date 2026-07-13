@@ -532,6 +532,64 @@ func TestElementEnums_OtherAtZero_RoundTrip(t *testing.T) {
 	}
 }
 
+// TestSchemaDefs_ModelRefParamSize pins the additive ModelRef.ParamSize property
+// (added in schema 0.3.0 alongside the #size identity work — ModelRef gained a
+// ParamSize field so Resolve()'s ambiguity grouping over []ModelRef keeps sized
+// siblings distinct). $defs.ModelRef must declare it as an optional string that
+// is NEVER in required, and a marshaled ModelRef carrying a ParamSize must
+// serialize it as that string.
+func TestSchemaDefs_ModelRefParamSize(t *testing.T) {
+	schemaBytes, err := os.ReadFile("bestiary.schema.json")
+	if err != nil {
+		t.Fatalf("could not read bestiary.schema.json: %v", err)
+	}
+	var schemaDefs struct {
+		Defs map[string]struct {
+			Properties map[string]json.RawMessage `json:"properties"`
+			Required   []string                   `json:"required"`
+		} `json:"$defs"`
+	}
+	if err := json.Unmarshal(schemaBytes, &schemaDefs); err != nil {
+		t.Fatalf("could not unmarshal $defs from bestiary.schema.json: %v", err)
+	}
+	mr, ok := schemaDefs.Defs["ModelRef"]
+	if !ok {
+		t.Fatalf("bestiary.schema.json $defs.ModelRef missing")
+	}
+	// Declared as a string property.
+	raw, ok := mr.Properties["ParamSize"]
+	if !ok {
+		t.Fatalf("bestiary.schema.json $defs.ModelRef is missing the \"ParamSize\" property;\n" +
+			"  how to fix: add a \"ParamSize\" string property to $defs.ModelRef (added in schema 0.3.0)")
+	}
+	var node struct {
+		Type json.RawMessage `json:"type"`
+	}
+	if err := json.Unmarshal(raw, &node); err != nil {
+		t.Fatalf("could not decode $defs.ModelRef.ParamSize: %v", err)
+	}
+	if got, ok := canonSchemaType(node.Type); !ok || got != "string" {
+		t.Errorf("$defs.ModelRef.ParamSize declares type %q, want \"string\"", got)
+	}
+	// Additive: must NOT be required, so pre-0.3.0 ModelRef documents still validate.
+	if slices.Contains(mr.Required, "ParamSize") {
+		t.Errorf("$defs.ModelRef required[] contains \"ParamSize\"; it must stay OPTIONAL for backward compatibility")
+	}
+	// A marshaled ModelRef carrying a ParamSize serializes it as that string.
+	ref := bestiary.ModelRef{ID: "llama-3.3-70b", ParamSize: "70b"}
+	enc, err := json.Marshal(ref)
+	if err != nil {
+		t.Fatalf("json.Marshal(ModelRef) failed: %v", err)
+	}
+	var out map[string]any
+	if err := json.Unmarshal(enc, &out); err != nil {
+		t.Fatalf("could not unmarshal ModelRef JSON: %v", err)
+	}
+	if v, ok := out["ParamSize"].(string); !ok || v != "70b" {
+		t.Errorf("ModelRef.ParamSize serialized as %v (%T), want string \"70b\"", out["ParamSize"], out["ParamSize"])
+	}
+}
+
 // TestSchema_BackwardCompat_V025Fields pins the additive invariant for the
 // v0.2.5 fields: the new ModelInfo properties and the new Entity.Metadata
 // property must NOT appear in any required[] array, so a 0.2.x-shaped record
