@@ -907,7 +907,7 @@ func TestResolve_BracketSuffixStripping_ModifierFilter(t *testing.T) {
 	}
 }
 
-// TestResolve_BracketSuffixStripping_RoundTrip moved to resolve_wave3_internal_test.go
+// TestResolve_BracketSuffixStripping_RoundTrip moved to resolve_synthetic_internal_test.go
 // (package bestiary): the July catalog no longer contains an Anthropic model with both a
 // Modifier and a Date, so the previous data-pinned search silently SKIPPED (zero
 // coverage). It now runs over a synthetic registry so a data refresh can never disable
@@ -1177,7 +1177,7 @@ func TestResolve_ContextN_Direct_Resolve(t *testing.T) {
 	}
 }
 
-// TestResolve_Reasoner_Distinct_FromThinking moved to resolve_wave3_internal_test.go
+// TestResolve_Reasoner_Distinct_FromThinking moved to resolve_synthetic_internal_test.go
 // (package bestiary): the July catalog no longer contains any -reasoner model, so the
 // previous data-pinned test silently SKIPPED (zero coverage). It now runs over a
 // synthetic registry so a data refresh can never disable it.

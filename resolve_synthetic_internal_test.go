@@ -1,6 +1,6 @@
 package bestiary
 
-// resolve_wave3_internal_test.go — synthetic-registry replacements for two resolve
+// resolve_synthetic_internal_test.go — synthetic-registry replacements for two resolve
 // tests that the July catalog refresh silently turned into permanent SKIPs (zero
 // coverage). They now drive the full Resolve pipeline over a controlled registry
 // (withSyntheticRegistry), so a future data refresh can NEVER disable them: the exemplar
