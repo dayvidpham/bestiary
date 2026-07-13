@@ -1604,6 +1604,99 @@ func quantVRAMLiteral(rows []bestiary.QuantVRAM) string {
 	return "[]QuantVRAM{" + strings.Join(parts, ", ") + "}"
 }
 
+// statusExpr renders a ModelStatus as its exported constant name so the generated
+// source references the enum symbolically (e.g. StatusDeprecated). Mirrors
+// derivationKindExpr/quantExpr. StatusNone (the zero value) is the default.
+func statusExpr(s bestiary.ModelStatus) string {
+	switch s {
+	case bestiary.StatusAlpha:
+		return "StatusAlpha"
+	case bestiary.StatusBeta:
+		return "StatusBeta"
+	case bestiary.StatusDeprecated:
+		return "StatusDeprecated"
+	case bestiary.StatusOther:
+		return "StatusOther"
+	default:
+		return "StatusNone"
+	}
+}
+
+// reasoningOptionKindExpr renders a ReasoningOptionKind as its exported constant name.
+// ReasoningOptionOther (the zero value) is the default fail-safe.
+func reasoningOptionKindExpr(k bestiary.ReasoningOptionKind) string {
+	switch k {
+	case bestiary.ReasoningToggle:
+		return "ReasoningToggle"
+	case bestiary.ReasoningEffort:
+		return "ReasoningEffort"
+	case bestiary.ReasoningBudgetTokens:
+		return "ReasoningBudgetTokens"
+	default:
+		return "ReasoningOptionOther"
+	}
+}
+
+// reasoningOptionsLiteral renders a []ReasoningOption as a Go composite literal,
+// preserving the upstream array order (deterministic — no map iteration). Empty→"nil".
+func reasoningOptionsLiteral(opts []bestiary.ReasoningOption) string {
+	if len(opts) == 0 {
+		return "nil"
+	}
+	parts := make([]string, len(opts))
+	for i, o := range opts {
+		parts[i] = fmt.Sprintf(
+			"{Kind: %s, KindRaw: %q, Values: %s, MinTokens: %d, MaxTokens: %d}",
+			reasoningOptionKindExpr(o.Kind), o.KindRaw, goStringSliceLiteral(o.Values), o.MinTokens, o.MaxTokens,
+		)
+	}
+	return "[]ReasoningOption{" + strings.Join(parts, ", ") + "}"
+}
+
+// tierCostLiteral renders a TierCost value as a Go composite literal, emitting only the
+// non-nil per-million-token cost pointers in a FIXED field order (deterministic and
+// compact — an all-nil TierCost renders as "TierCost{}"). Used for CostContextOver200k
+// and each CostTier's embedded bundle.
+func tierCostLiteral(tc bestiary.TierCost) string {
+	var parts []string
+	add := func(name string, p *float64) {
+		if p != nil {
+			parts = append(parts, name+": "+float64PtrExpr(p))
+		}
+	}
+	add("CostInputPerMTok", tc.CostInputPerMTok)
+	add("CostOutputPerMTok", tc.CostOutputPerMTok)
+	add("CostReasoningPerMTok", tc.CostReasoningPerMTok)
+	add("CostCacheReadPerMTok", tc.CostCacheReadPerMTok)
+	add("CostCacheWritePerMTok", tc.CostCacheWritePerMTok)
+	add("CostInputAudioPerMTok", tc.CostInputAudioPerMTok)
+	add("CostOutputAudioPerMTok", tc.CostOutputAudioPerMTok)
+	return "TierCost{" + strings.Join(parts, ", ") + "}"
+}
+
+// tierCostPtrExpr renders a *TierCost as "nil" or "&TierCost{...}" (the address of a
+// composite literal), for the CostContextOver200k pointer field.
+func tierCostPtrExpr(tc *bestiary.TierCost) string {
+	if tc == nil {
+		return "nil"
+	}
+	return "&" + tierCostLiteral(*tc)
+}
+
+// costTiersLiteral renders a []CostTier as a Go composite literal, preserving the
+// upstream tier order (deterministic). Empty→"nil". CostTier embeds TierCost, so the
+// bundle is emitted under the embedded field name.
+func costTiersLiteral(tiers []bestiary.CostTier) string {
+	if len(tiers) == 0 {
+		return "nil"
+	}
+	parts := make([]string, len(tiers))
+	for i, t := range tiers {
+		parts[i] = fmt.Sprintf("{ContextSize: %d, TierCost: %s}", t.ContextSize, tierCostLiteral(t.TierCost))
+	}
+	return "[]CostTier{" + strings.Join(parts, ", ") + "}"
+}
+
 func generateSource(models []bestiary.ModelInfo, slugToConst map[string]string) ([]byte, error) {
 	var buf bytes.Buffer
 
@@ -1658,6 +1751,35 @@ func generateSource(models []bestiary.ModelInfo, slugToConst map[string]string) 
 		// live-sync rows and is emitted explicitly so the field is self-documenting.
 		fmt.Fprintf(&buf, "\t\tSource:                %q,\n", string(m.Source))
 		fmt.Fprintf(&buf, "\t\tQuantVRAM:             %s,\n", quantVRAMLiteral(m.QuantVRAM))
+		// Instance-level facts from the api.json side (description, status, reasoning
+		// options, audio/tier costs). Emitted CONDITIONALLY — only when non-zero —
+		// matching the ParamSize precedent, so the unset majority stays compact. The
+		// wire parse populates these and enrichModelInfo carries them through; dropping
+		// them here would make (e.g.) `list --status deprecated` vacuously empty.
+		if m.Description != "" {
+			fmt.Fprintf(&buf, "\t\tDescription:           %q,\n", m.Description)
+		}
+		if m.Status != bestiary.StatusNone {
+			fmt.Fprintf(&buf, "\t\tStatus:                %s,\n", statusExpr(m.Status))
+		}
+		if m.StatusRaw != "" {
+			fmt.Fprintf(&buf, "\t\tStatusRaw:             %q,\n", m.StatusRaw)
+		}
+		if len(m.ReasoningOptions) > 0 {
+			fmt.Fprintf(&buf, "\t\tReasoningOptions:      %s,\n", reasoningOptionsLiteral(m.ReasoningOptions))
+		}
+		if m.CostInputAudioPerMTok != nil {
+			fmt.Fprintf(&buf, "\t\tCostInputAudioPerMTok:  %s,\n", float64PtrExpr(m.CostInputAudioPerMTok))
+		}
+		if m.CostOutputAudioPerMTok != nil {
+			fmt.Fprintf(&buf, "\t\tCostOutputAudioPerMTok: %s,\n", float64PtrExpr(m.CostOutputAudioPerMTok))
+		}
+		if m.CostContextOver200k != nil {
+			fmt.Fprintf(&buf, "\t\tCostContextOver200k:   %s,\n", tierCostPtrExpr(m.CostContextOver200k))
+		}
+		if len(m.CostTiers) > 0 {
+			fmt.Fprintf(&buf, "\t\tCostTiers:             %s,\n", costTiersLiteral(m.CostTiers))
+		}
 		fmt.Fprintf(&buf, "\t\tLastSynced:            %q,\n", m.LastSynced)
 		buf.WriteString("\t},\n")
 	}

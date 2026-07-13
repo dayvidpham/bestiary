@@ -13,6 +13,7 @@ import (
 	"path/filepath"
 	"reflect"
 	"regexp"
+	"runtime"
 	"sort"
 	"strings"
 	"testing"
@@ -1951,21 +1952,50 @@ func deterministicFixtureJSON(t *testing.T) []byte {
 		//
 		// llama-3.2-3b-instruct joins an arch-absent curated entry: every row has
 		// KV=0, so VRAMBytes==WeightsBytes and VRAMEstimatePartial=true.
+		// The two vllm models ALSO carry the instance-level api.json field groups so the
+		// static golden / UpToDate / N=100 cover the ModelInfo emitter for every new
+		// field: a mutant that drops any group's emission fails those tests.
+		//   - llama-3.3-70b-instruct: description, status "deprecated" (known enum),
+		//     reasoning_options (effort + budget_tokens kinds), audio costs,
+		//     context_over_200k, and a general cost tier.
+		//   - llama-3.2-3b-instruct: status "experimental" (unknown → StatusOther +
+		//     StatusRaw), covering the fail-safe status path.
 		"vllm": map[string]any{
 			"name": "vLLM",
 			"models": map[string]any{
 				"llama-3.3-70b-instruct": map[string]any{
-					"id":     "llama-3.3-70b-instruct",
-					"name":   "Llama 3.3 70B Instruct",
-					"family": "llama",
+					"id":          "llama-3.3-70b-instruct",
+					"name":        "Llama 3.3 70B Instruct",
+					"family":      "llama",
+					"description": "Meta Llama 3.3 70B, instruction-tuned.",
+					"status":      "deprecated",
+					"reasoning_options": []any{
+						map[string]any{"type": "effort", "values": []any{"low", "high"}},
+						map[string]any{"type": "budget_tokens", "min": 1024, "max": 32000},
+					},
 					"limit": map[string]any{
 						"context": 128000,
+					},
+					"cost": map[string]any{
+						"input":             0.5,
+						"output":            1.5,
+						"input_audio":       2,
+						"output_audio":      3,
+						"context_over_200k": map[string]any{"input": 1, "output": 3},
+						"tiers": []any{
+							map[string]any{
+								"tier":   map[string]any{"type": "context", "size": 200000},
+								"input":  0.8,
+								"output": 2.4,
+							},
+						},
 					},
 				},
 				"llama-3.2-3b-instruct": map[string]any{
 					"id":     "llama-3.2-3b-instruct",
 					"name":   "Llama 3.2 3B Instruct",
 					"family": "llama",
+					"status": "experimental",
 				},
 			},
 		},
@@ -2326,6 +2356,87 @@ func TestCodegen_Reproducible_ByteIdentical(t *testing.T) {
 			"  What: the sole-residual proof never fired\n" +
 			"  Why: N may be < 2 or the alternating timestamp logic is broken")
 	}
+}
+
+// TestEmit_VendoredCatalog_CarriesInstanceFields is the END-TO-END seam guard for the
+// ModelInfo emitter over REAL data. It spans the full codegen pipeline —
+// vendored catalog.json -> ParseCatalogJSON (wire parse) -> enrichModelInfo (bake) ->
+// generateSource (emit) — and asserts that the instance-level api.json field GROUPS
+// (status, description, reasoning options, tier/audio costs) survive all the way to the
+// emitted static source. This is the exact seam a prior version silently dropped, which
+// made `list --status deprecated` return an empty set even though 100+ models are
+// tagged deprecated upstream: the wire parse populated the fields, but the emitter never
+// rendered them, so StaticModels() lost them. Keying the check to the committed vendored
+// snapshot (not a fixture) means a future emitter change that drops any field group over
+// real data fails here, not just in the hand-built golden.
+func TestEmit_VendoredCatalog_CarriesInstanceFields(t *testing.T) {
+	// `go test` runs with the package dir as CWD, but vendoredCatalogPath is relative
+	// to the module root; resolve it from this test file's location (two levels up).
+	_, thisFile, _, ok := runtime.Caller(0)
+	if !ok {
+		t.Fatal("runtime.Caller failed; cannot locate the module root")
+	}
+	catalogPath := filepath.Join(filepath.Dir(thisFile), "..", "..", vendoredCatalogPath)
+	raw, err := os.ReadFile(catalogPath)
+	if err != nil {
+		t.Fatalf("read vendored catalog %q: %v\n"+
+			"  How to fix: run the models.dev snapshot refresh (see AGENTS.md)", catalogPath, err)
+	}
+	cat, err := bestiary.ParseCatalogJSON(raw)
+	if err != nil {
+		t.Fatalf("ParseCatalogJSON(vendored): %v", err)
+	}
+
+	models := make([]bestiary.ModelInfo, 0, len(cat.Models))
+	var deprecated, withReasoning, withTiers int
+	for _, base := range cat.Models {
+		info, _ := enrichModelInfo(base)
+		models = append(models, info)
+		if info.Status == bestiary.StatusDeprecated {
+			deprecated++
+		}
+		if len(info.ReasoningOptions) > 0 {
+			withReasoning++
+		}
+		if len(info.CostTiers) > 0 {
+			withTiers++
+		}
+	}
+
+	// Sanity: the vendored snapshot really does carry these groups (so the emitter
+	// assertions below are not vacuous). If the parse/bake seam drops them, this fires
+	// first with a precise message.
+	if deprecated == 0 {
+		t.Fatalf("no StatusDeprecated models after ParseCatalogJSON+enrichModelInfo over the vendored catalog — the status field group is dropped at the parse/bake seam")
+	}
+
+	src, err := generateSource(models, map[string]string{})
+	if err != nil {
+		t.Fatalf("generateSource(vendored): %v", err)
+	}
+	s := string(src)
+
+	// The emitted static source MUST render each instance-level field group. These
+	// markers are gofmt-alignment-insensitive (constant/type names, not aligned
+	// colons). A missing marker means the emitter is dropping that group.
+	for _, want := range []string{
+		"StatusDeprecated",      // ModelStatus enum emission (statusExpr)
+		"Description:",          // description scalar
+		"[]ReasoningOption{",    // reasoning-options literal
+		"[]CostTier{",           // general cost-tier literal
+		"&TierCost{",            // context_over_200k pointer literal
+		"CostInputAudioPerMTok", // audio-cost field
+	} {
+		if !strings.Contains(s, want) {
+			t.Errorf("generated static source is MISSING %q — the emitter is dropping an instance-level field group\n"+
+				"  What: the vendored-catalog -> bake -> emit seam lost a field group\n"+
+				"  Why: generateSource does not render this field (the `list --status`-empty regression)\n"+
+				"  How to fix: extend the generateSource field emission in cmd/bestiary-gen/main.go",
+				want)
+		}
+	}
+	t.Logf("vendored bake: %d models; %d deprecated, %d with reasoning options, %d with cost tiers",
+		len(models), deprecated, withReasoning, withTiers)
 }
 
 // TestCodegen_UpToDate is the up-to-date guard. It regenerates both source
