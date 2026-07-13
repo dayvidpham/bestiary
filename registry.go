@@ -284,11 +284,11 @@ func loadEntityIndex() {
 
 	entitySourceRel = rel
 
-	// Attach compiled-in models.dev metadata (IP5) and fold in any metadata-only
-	// standalone entity it synthesizes. This is a no-op until the codegen slice bakes
-	// real metadata (the accessor returns nil today), so the index — and every
-	// determinism guarantee that rests on its first-seen key order — is unchanged for
-	// the current corpus.
+	// Attach compiled-in models.dev metadata and fold in any metadata-only standalone
+	// entity it synthesizes. This is a no-op until the codegen slice bakes real
+	// metadata (the accessor returns nil today), so the index — and every determinism
+	// guarantee that rests on its first-seen key order — is unchanged for the current
+	// corpus.
 	attachBakedMetadataToIndex()
 }
 
@@ -297,7 +297,7 @@ func loadEntityIndex() {
 // each matched entity's Metadata back into the index and appends any synthesized
 // metadata-only standalone entity to the index in a deterministic position.
 //
-// It returns immediately when no metadata is baked in (the wave-current state: the
+// It returns immediately when no metadata is baked in (the current state: the
 // accessor returns nil until the codegen slice emits the generated metadata file), so
 // entityIndex/entityKeys stay byte-identical to the pre-metadata build until real
 // baked data lands.

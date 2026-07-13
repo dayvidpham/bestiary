@@ -244,10 +244,10 @@ func MergeEntityMetadata(static, cached []EntityMetadata) []EntityMetadata {
 // returned entity is a fresh deep copy), and every attached *EntityMetadata is a fresh
 // clone of the source row (never aliasing the meta slice).
 //
-// C-soft-1 (re-attach, never re-create): a metadata row whose identity key already
-// matches a provided entity — including a standalone synthesized on an earlier pass
-// and fed back in — is RE-ATTACHED onto that entity rather than duplicated, so
-// repeated joins over the same metadata set are idempotent (no growing standalone set).
+// Re-attach, never re-create: a metadata row whose identity key already matches a
+// provided entity — including a standalone synthesized on an earlier pass and fed
+// back in — is RE-ATTACHED onto that entity rather than duplicated, so repeated joins
+// over the same metadata set are idempotent (no growing standalone set).
 func JoinEntityMetadata(ents []Entity, meta []EntityMetadata) (attached []Entity, unlinked []MetadataID, standalone []Entity) {
 	// Deep-copy every input entity up front so the join is pure and so re-attachment
 	// mutates only the copies. Index the copies by their identity key, and record the
@@ -264,24 +264,20 @@ func JoinEntityMetadata(ents []Entity, meta []EntityMetadata) (attached []Entity
 	for i := range meta {
 		m := meta[i]
 
-		// Resolution order: curated alias first (when present), then mechanical.
-		mechRef := metadataEntityRef(m.MetadataID)
-		identity := mechRef
-		matchRefs := []EntityRef{mechRef}
+		// Resolution order, curated > mechanical: a curated alias FULLY overrides the
+		// mechanical decomposition. When an alias exists it is the SOLE identity, used
+		// both for matching and for the two-tier miss policy — there is no fallback to
+		// the mechanical ref. Falling back would let a row whose alias target is absent
+		// attach to a DIFFERENT entity the mechanical decomposition happens to hit,
+		// which is exactly the wrong-attach an alias exists to prevent; instead an
+		// absent alias target flows through the same miss policy on the curated family.
+		identity := metadataEntityRef(m.MetadataID)
 		if aliasRef, ok := metadataAliasRef(m.MetadataID); ok {
-			identity = aliasRef // curated identity wins for the miss policy too
-			matchRefs = []EntityRef{aliasRef, mechRef}
+			identity = aliasRef
 		}
 
-		matched := false
-		for _, ref := range matchRefs {
-			if idx, ok := byKey[ref.String()]; ok {
-				attached[idx].Metadata = cloneEntityMetadata(&m)
-				matched = true
-				break
-			}
-		}
-		if matched {
+		if idx, ok := byKey[identity.String()]; ok {
+			attached[idx].Metadata = cloneEntityMetadata(&m)
 			continue
 		}
 
@@ -298,8 +294,8 @@ func JoinEntityMetadata(ents []Entity, meta []EntityMetadata) (attached []Entity
 // AttachEntityMetadata runs the same join over the provided entities and metadata set
 // and returns the attached entities followed by any newly synthesized standalone
 // entities. It is pure (no store access; inputs never mutated) and re-attaches
-// existing standalones instead of duplicating them (C-soft-1), so a second call with
-// the same metadata set yields the same result with no growing standalone tail.
+// existing standalones instead of duplicating them, so a second call with the same
+// metadata set yields the same result with no growing standalone tail.
 //
 // The unlinked disagreements are intentionally not returned here — this is the CLI
 // overlay entry point, where an unmatched-but-family-known metadata id is simply not
@@ -327,7 +323,7 @@ func synthesizeStandaloneEntity(ref EntityRef, m EntityMetadata) Entity {
 }
 
 // --------------------------------------------------------------------------
-// Baked-metadata accessor (IP5) — declared here, populated by codegen
+// Baked-metadata accessor — declared here, populated by codegen
 // --------------------------------------------------------------------------
 
 // bakedEntityMetadata is the compiled-in models.dev entity-metadata catalog. It is
@@ -338,8 +334,8 @@ func synthesizeStandaloneEntity(ref EntityRef, m EntityMetadata) Entity {
 var bakedEntityMetadata []EntityMetadata
 
 // staticEntityMetadata returns the compiled-in baked models.dev metadata rows. It is
-// the internal IP5 accessor consumed by the registry hook (loadEntityIndex) to attach
-// baked metadata and synthesize metadata-only standalone entities. The generated
+// the internal baked-metadata accessor consumed by the registry hook (loadEntityIndex)
+// to attach baked metadata and synthesize metadata-only standalone entities. The generated
 // metadata file populates bakedEntityMetadata; this stub returns whatever is baked in
 // (nil until then), so the accessor is safe to call before codegen has run.
 func staticEntityMetadata() []EntityMetadata {

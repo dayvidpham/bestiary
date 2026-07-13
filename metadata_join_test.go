@@ -30,9 +30,9 @@ func entityWithRef(family, variant, version, paramSize string, mods ...string) b
 // MergeEntityMetadata
 // --------------------------------------------------------------------------
 
-// TestMergeEntityMetadata_Union pins B-M4: a baked-only metadata row (present only in
-// the static set, never re-synced) SURVIVES a merge with a disjoint cached set, and a
-// cached-only row is added — union semantics, mirroring MergeModels.
+// TestMergeEntityMetadata_Union pins the union property: a baked-only metadata row
+// (present only in the static set, never re-synced) SURVIVES a merge with a disjoint
+// cached set, and a cached-only row is added — union semantics, mirroring MergeModels.
 func TestMergeEntityMetadata_Union(t *testing.T) {
 	static := []bestiary.EntityMetadata{
 		{MetadataID: "lab/baked-only", Name: "Baked", LastSynced: ""},
@@ -157,9 +157,10 @@ func TestJoinEntityMetadata_FamilyAbsentStandalone(t *testing.T) {
 	}
 }
 
-// TestAttachEntityMetadata_Idempotent pins C-soft-1: feeding a prior Attach result
-// (which already contains a synthesized standalone) back through Attach with the same
-// metadata RE-ATTACHES onto the existing standalone rather than duplicating it.
+// TestAttachEntityMetadata_Idempotent pins re-attach idempotency: feeding a prior
+// Attach result (which already contains a synthesized standalone) back through Attach
+// with the same metadata RE-ATTACHES onto the existing standalone rather than
+// duplicating it.
 func TestAttachEntityMetadata_Idempotent(t *testing.T) {
 	ents := []bestiary.Entity{entityWithRef("llama", "", "3.3", "70b", "instruct")}
 	meta := []bestiary.EntityMetadata{{MetadataID: "somelabxyz/frobnik-9-42b", Name: "Frob"}}

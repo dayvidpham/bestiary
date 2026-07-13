@@ -135,7 +135,7 @@ func TestParseModelsdevAliases_LowercasesKeys(t *testing.T) {
 	}
 }
 
-// TestRegistry_AttachesBakedMetadata pins the registry hook (IP5): with baked metadata
+// TestRegistry_AttachesBakedMetadata pins the registry hook: with baked metadata
 // injected, a catalog entity gains the matching Metadata and a family-absent metadata
 // row is folded in as a standalone entity — all via the memoized index.
 func TestRegistry_AttachesBakedMetadata(t *testing.T) {
@@ -201,6 +201,70 @@ func TestRegistry_MetadataDeepCopyIsolatesCache(t *testing.T) {
 		e2, _ := EntityByTuple(Family("llama"), "", "3.3", "70b", "instruct")
 		if e2.Metadata.Name != "Original" || e2.Metadata.Links[0].Label != "card" {
 			t.Errorf("mutating a returned entity's Metadata corrupted the registry cache: %+v", e2.Metadata)
+		}
+	})
+}
+
+// TestJoin_AliasNoFallbackToMechanical pins curated > mechanical at its hardest case:
+// when an alias EXISTS but its target entity is ABSENT, the row must NOT fall back to a
+// mechanical match against a DIFFERENT present entity — it flows through the two-tier
+// miss on the curated family (here: unlinked, because the curated family is present).
+// A mechanical fallback would wrongly attach the row to the llama entity, turning this
+// test RED — which is the exact wrong-attach an alias exists to prevent.
+func TestJoin_AliasNoFallbackToMechanical(t *testing.T) {
+	// mechanical: "meta/llama-3.3-70b-instruct" -> llama@3.3#70b{instruct} (PRESENT).
+	// alias re-points it onto glm@4.6, but only glm@4.5 is present (alias target ABSENT).
+	aliases := map[string]modelsdevAlias{
+		"meta/llama-3.3-70b-instruct": {Family: "glm", Version: "4.6"},
+	}
+	withSyntheticModelsdevAliases(t, aliases, func() {
+		mechTarget := Entity{Ref: EntityRef{Family: "llama", Version: "3.3", ParamSize: "70b", Modifier: []string{"instruct"}}}
+		glmOther := Entity{Ref: EntityRef{Family: "glm", Version: "4.5"}} // glm family present, NOT the alias target
+		meta := []EntityMetadata{{MetadataID: "meta/llama-3.3-70b-instruct", Name: "X"}}
+
+		attached, unlinked, standalone := JoinEntityMetadata([]Entity{mechTarget, glmOther}, meta)
+		if attached[0].Metadata != nil {
+			t.Errorf("alias override must NOT fall back to the mechanical (llama) entity; got %+v", attached[0].Metadata)
+		}
+		if attached[1].Metadata != nil {
+			t.Errorf("glm@4.5 is not the alias target (glm@4.6) and must not be attached; got %+v", attached[1].Metadata)
+		}
+		if len(standalone) != 0 {
+			t.Errorf("glm family is present, so an absent alias target is a disagreement (unlinked), not a standalone; got %d standalones", len(standalone))
+		}
+		if len(unlinked) != 1 || unlinked[0] != "meta/llama-3.3-70b-instruct" {
+			t.Fatalf("absent alias target must flow to unlinked; got %v", unlinked)
+		}
+	})
+}
+
+// TestRegistry_StandaloneOrderingAscending pins the deterministic standalone ordering
+// in the registry attach path: two family-absent metadata rows supplied in REVERSE
+// MetadataID order must appear in Entities() in ASCENDING MetadataID order. Removing
+// the sort.Slice in attachBakedMetadataToIndex leaves them in meta-slice (reverse)
+// order, turning this test RED.
+func TestRegistry_StandaloneOrderingAscending(t *testing.T) {
+	model := syntheticLlamaModel("70b")
+	// Two family-absent metadata rows, supplied in DESCENDING MetadataID order.
+	meta := []EntityMetadata{
+		{MetadataID: "zlab/frobnik-9-42b", Name: "Z"},
+		{MetadataID: "alab/wibble-3-7b", Name: "A"},
+	}
+	withMetadataRegistry(t, []ModelInfo{model}, meta, func() {
+		var order []MetadataID
+		for _, e := range Entities() {
+			if len(e.Instances) == 0 && e.Metadata != nil {
+				order = append(order, e.Metadata.MetadataID)
+			}
+		}
+		want := []MetadataID{"alab/wibble-3-7b", "zlab/frobnik-9-42b"}
+		if len(order) != len(want) {
+			t.Fatalf("standalone count = %d (%v), want %d distinct family-absent standalones", len(order), order, len(want))
+		}
+		for i := range want {
+			if order[i] != want[i] {
+				t.Fatalf("standalone order = %v, want ascending %v (registry sort dropped?)", order, want)
+			}
 		}
 	})
 }
