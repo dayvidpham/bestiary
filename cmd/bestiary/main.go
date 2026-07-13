@@ -92,7 +92,7 @@ func renderError(err error) string {
 
 func run(args []string) error {
 	if len(args) == 0 {
-		return fmt.Errorf("usage: bestiary <list|show|providers|sources|sync> [flags]")
+		return fmt.Errorf("usage: bestiary <list|show|providers|entities|sources|sync> [flags]")
 	}
 
 	cmd := args[0]
@@ -158,6 +158,11 @@ func run(args []string) error {
 				"  version may be given as a trailing /segment or as @version; the optional [attributes] filter is ignored in MVP")
 		}
 		return runProviders(fs.Arg(0), bestiary.OutputFormat(*output), *quant, *dbPath)
+	case "entities":
+		// entities takes no positional: it enumerates the whole registry so
+		// metadata-only standalones (reachable only by exact key elsewhere) are
+		// discoverable. --output selects json (Entity objects) or table (summary).
+		return runEntities(bestiary.OutputFormat(*output), *dbPath)
 	case "sources":
 		// --history and --export are catalog-wide ingest-log views; they take no
 		// entity positional. The default sources view still requires an entity key.
@@ -177,7 +182,7 @@ func run(args []string) error {
 	case "sync":
 		return runSync(*provider, bestiary.OutputFormat(*output), *dbPath)
 	default:
-		return fmt.Errorf("unknown command %q; supported commands: list, show, providers, sources, sync", cmd)
+		return fmt.Errorf("unknown command %q; supported commands: list, show, providers, entities, sources, sync", cmd)
 	}
 }
 
@@ -736,6 +741,49 @@ func runProviders(arg string, format bestiary.OutputFormat, quantFlag, dbPath st
 	fmt.Fprintf(os.Stdout, "Entity: %s\n", ent.Ref.String())
 	writeInstanceTable(os.Stdout, insts)
 	return nil
+}
+
+// runEntities enumerates EVERY entity in the registry — the discoverability
+// surface for identities (notably metadata-only standalones) that are otherwise
+// reachable only by their exact key. It resolves entirely offline over the
+// store-overlaid entity set (so synced metadata and synced-only standalones
+// surface, and the one embedded-catalog notice fires on the zero-synced-rows
+// path), sorts by entity key, and renders per --output: json emits the full Entity
+// objects; table emits the ENTITY KEY | PROVIDERS | METADATA | BENCHMARKS summary.
+func runEntities(format bestiary.OutputFormat, dbPath string) error {
+	if err := validateEntityOutput(format); err != nil {
+		return err
+	}
+	store := openViewStore(dbPath)
+	if store != nil {
+		defer store.Close()
+	}
+	ents := overlayEntities(store)
+	sort.Slice(ents, func(i, j int) bool { return ents[i].Ref.String() < ents[j].Ref.String() })
+	if format == bestiary.FormatJSON {
+		return writeJSON(os.Stdout, ents)
+	}
+	writeEntitiesTable(os.Stdout, ents)
+	return nil
+}
+
+// writeEntitiesTable renders the registry-wide entity summary: one row per entity
+// with its key, provider/host instance count, whether provider-agnostic metadata is
+// attached, and how many benchmark claims that metadata carries. An entity with no
+// metadata shows "-" for METADATA and 0 for BENCHMARKS. Rows are emitted in the
+// caller's order (sorted by key).
+func writeEntitiesTable(w io.Writer, ents []bestiary.Entity) {
+	fmt.Fprintf(w, "Entities (%d):\n", len(ents))
+	fmt.Fprintf(w, "  %-48s %9s %8s %10s\n", "ENTITY KEY", "PROVIDERS", "METADATA", "BENCHMARKS")
+	for _, e := range ents {
+		metadata := "-"
+		benchmarks := 0
+		if e.Metadata != nil {
+			metadata = "yes"
+			benchmarks = len(e.Metadata.Benchmarks)
+		}
+		fmt.Fprintf(w, "  %-48s %9d %8s %10d\n", e.Ref.String(), len(e.Providers), metadata, benchmarks)
+	}
 }
 
 // runSources prints the per-source ingest provenance attesting the entity

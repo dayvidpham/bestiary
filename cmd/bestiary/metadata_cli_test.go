@@ -275,6 +275,7 @@ func TestViewCommands_Offline(t *testing.T) {
 		{"list", "--output", "json", "--db-path", db},
 		{"providers", "--db-path", db, sizedCuratedKey},
 		{"show", "--by-entity", "--db-path", db, sizedCuratedKey},
+		{"entities", "--output", "json", "--db-path", db},
 		{"sources", "--db-path", db, sizedCuratedKey},
 		{"sources", "--history", "--db-path", db},
 	}
@@ -288,6 +289,110 @@ func TestViewCommands_Offline(t *testing.T) {
 				})
 			})
 		})
+	}
+}
+
+// -------------------------------------------------------------------------
+// entities (registry-wide enumeration)
+// -------------------------------------------------------------------------
+
+// entitiesRowFields returns the whitespace-split cells of the `entities` table row
+// whose ENTITY KEY equals key, or nil when no such row exists. Splitting on
+// whitespace makes the assertion robust to the column padding.
+func entitiesRowFields(out, key string) []string {
+	for _, line := range strings.Split(out, "\n") {
+		f := strings.Fields(line)
+		if len(f) >= 1 && f[0] == key {
+			return f
+		}
+	}
+	return nil
+}
+
+// TestEntities_Table_ListsMetadataOnlyStandalone asserts the table enumeration
+// surfaces a metadata-only standalone (a synced identity with no provider
+// instances) with PROVIDERS 0 and METADATA yes — the discoverability the command
+// exists to provide, since such an entity is otherwise reachable only by exact key.
+func TestEntities_Table_ListsMetadataOnlyStandalone(t *testing.T) {
+	db := tempDBPath(t)
+	seedMetadataStore(t, db, syncedStandaloneID, "STANDALONE-DESC", "2026-07-12T00:00:05Z")
+
+	var out string
+	_ = captureStderr(t, func() {
+		out = captureStdout(t, func() {
+			if err := run([]string{"entities", "--output", "table", "--db-path", db}); err != nil {
+				t.Fatalf("entities table: %v", err)
+			}
+		})
+	})
+
+	fields := entitiesRowFields(out, syncedStandaloneKey)
+	if fields == nil {
+		t.Fatalf("entities table missing metadata-only standalone %q; got:\n%s", syncedStandaloneKey, out)
+	}
+	// ENTITY KEY | PROVIDERS | METADATA | BENCHMARKS
+	if len(fields) != 4 || fields[1] != "0" || fields[2] != "yes" || fields[3] != "0" {
+		t.Errorf("standalone row = %v, want [%s 0 yes 0]", fields, syncedStandaloneKey)
+	}
+}
+
+// TestEntities_JSON_RoundTrips_SortedByKey asserts the json enumeration emits the
+// full Entity objects, sorted ascending by entity key, and that the metadata-only
+// standalone round-trips (its metadata and empty provider set both survive).
+func TestEntities_JSON_RoundTrips_SortedByKey(t *testing.T) {
+	db := tempDBPath(t)
+	seedMetadataStore(t, db, syncedStandaloneID, "RT-STANDALONE-DESC", "2026-07-12T00:00:05Z")
+
+	var out string
+	_ = captureStderr(t, func() {
+		out = captureStdout(t, func() {
+			if err := run([]string{"entities", "--output", "json", "--db-path", db}); err != nil {
+				t.Fatalf("entities json: %v", err)
+			}
+		})
+	})
+
+	var ents []bestiary.Entity
+	if err := json.Unmarshal([]byte(out), &ents); err != nil {
+		t.Fatalf("entities json parse: %v\n%s", err, out)
+	}
+	if len(ents) == 0 {
+		t.Fatal("entities json is empty")
+	}
+
+	// Sorted ascending by entity key (pinned order).
+	for i := 1; i < len(ents); i++ {
+		if ents[i].Ref.String() < ents[i-1].Ref.String() {
+			t.Errorf("entities not sorted by key: %q before %q", ents[i-1].Ref.String(), ents[i].Ref.String())
+		}
+	}
+
+	// The metadata-only standalone round-trips: present, metadata preserved, no instances.
+	found := false
+	for _, e := range ents {
+		if e.Ref.String() == syncedStandaloneKey {
+			found = true
+			if e.Metadata == nil || e.Metadata.Description != "RT-STANDALONE-DESC" {
+				t.Errorf("standalone metadata = %+v, want description RT-STANDALONE-DESC", e.Metadata)
+			}
+			if len(e.Providers) != 0 {
+				t.Errorf("standalone Providers = %d, want 0", len(e.Providers))
+			}
+		}
+	}
+	if !found {
+		t.Errorf("entities json missing metadata-only standalone %q", syncedStandaloneKey)
+	}
+}
+
+// TestEntities_UsageMentionsCommand asserts the top-level usage and the
+// unknown-command error both advertise the new `entities` subcommand.
+func TestEntities_UsageMentionsCommand(t *testing.T) {
+	if err := run(nil); err == nil || !strings.Contains(err.Error(), "entities") {
+		t.Errorf("empty-args usage should mention 'entities'; got %v", err)
+	}
+	if err := run([]string{"definitely-not-a-command"}); err == nil || !strings.Contains(err.Error(), "entities") {
+		t.Errorf("unknown-command error should list 'entities'; got %v", err)
 	}
 }
 
