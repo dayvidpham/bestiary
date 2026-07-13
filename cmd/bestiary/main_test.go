@@ -364,24 +364,37 @@ func TestShow_OutputFlagTable(t *testing.T) {
 // TestShow_CanonicalPreference_Claude verifies that bestiary show (default peasant mode)
 // with a canonical claude input returns the Anthropic result, not a rehost provider.
 //
-// Fix #4: "Why this show provider 'qihang-ai' — Anthropic should be the canonical provider here"
+// The model is pinned to claude-haiku-4-5-20251001 (canonical
+// "claude/haiku/4.5@2025-10-01"), which anthropic lists first-party in BOTH the
+// current baked catalog and the newer vendored models.dev catalog. The earlier
+// pin (claude-opus-4-20250514) was dropped from anthropic's first-party listing
+// upstream — only rehosts (e.g. 302ai) still carry it — so a query for it would
+// resolve to a rehost after a catalog refresh and break this canonical-preference
+// assertion.
+//
+// Because anthropic keeps haiku-4-5-20251001 first-party, anthropic always matches
+// this query, so the canonical-provider preference keeps anthropic on top and the
+// query can never resolve to a rehost (302ai is a real rehost of this same model,
+// so a broken preference would surface it here). If a refreshed catalog ever makes
+// the canonical ambiguous, the runErr guard below skips rather than fails — this
+// test therefore stays green across a catalog refresh, never red.
 func TestShow_CanonicalPreference_Claude(t *testing.T) {
 	tmpDB := t.TempDir() + "/test.db"
 
 	var runErr error
 	out := captureStdout(t, func() {
-		runErr = run([]string{"show", "--db-path", tmpDB, "claude/opus@2025-05-14"})
+		runErr = run([]string{"show", "--db-path", tmpDB, "claude/haiku/4.5@2025-10-01"})
 	})
 
 	if runErr != nil {
-		t.Skipf("claude/opus@2025-05-14 not in registry or error: %v", runErr)
+		t.Skipf("claude/haiku/4.5@2025-10-01 not in registry or error: %v", runErr)
 	}
-	// The JSON output must have Provider = "anthropic", not a rehost provider.
-	if strings.Contains(out, "qihang-ai") || strings.Contains(out, "302ai") || strings.Contains(out, "vercel") {
+	// The JSON output must resolve to Provider = "anthropic", not a rehost provider.
+	if !strings.Contains(out, `"Provider": "anthropic"`) {
+		t.Errorf("show canonical claude: expected Provider \"anthropic\" as canonical provider; got:\n%s", out)
+	}
+	if strings.Contains(out, "302ai") || strings.Contains(out, "qihang-ai") || strings.Contains(out, "vercel") {
 		t.Errorf("show canonical claude: got rehost provider in output; Anthropic should be canonical; got:\n%s", out)
-	}
-	if !strings.Contains(out, "anthropic") {
-		t.Errorf("show canonical claude: expected 'anthropic' in output as canonical provider; got:\n%s", out)
 	}
 }
 
