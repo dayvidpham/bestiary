@@ -305,7 +305,14 @@ func loadEntityIndex() {
 // Synthesized standalones are appended to entityKeys in ascending MetadataID order so
 // their position in Entities() is deterministic and independent of map iteration; a
 // synthesized key that collides with a real entity is dropped (a real entity is never
-// overwritten by a standalone).
+// overwritten by a standalone). Each appended standalone is a metadata-only entity
+// attested by models.dev, so it MUST also contribute its (entity_key, source) rows to
+// the entity↔source relation (entitySourceRel): the ratified invariant is "a model is
+// attested by a source iff there is an EntitySource row", and a standalone's derived
+// Entity.Sources projection would otherwise disagree with the relation. Because the
+// standalone is synthesized AFTER buildEntitySourceRelation already ran over the static
+// rows, this function extends the relation in lockstep and re-imposes its
+// (EntityKey, SourceID) total order.
 func attachBakedMetadataToIndex() {
 	meta := staticEntityMetadata()
 	if len(meta) == 0 {
@@ -333,13 +340,38 @@ func attachBakedMetadataToIndex() {
 	sort.Slice(standalone, func(i, j int) bool {
 		return standaloneMetadataID(standalone[i]) < standaloneMetadataID(standalone[j])
 	})
+	relExtended := false
 	for _, s := range standalone {
 		key := s.Ref.String()
 		if _, exists := entityIndex[key]; exists {
 			continue // never overwrite a real entity with a standalone
 		}
+		// Attest the standalone in the relation FIRST, then read the entity's Sources
+		// projection back from it, so the projection stays a faithful derived view of
+		// the relation — exactly the contract real entities get from
+		// buildEntitySourceRelation. sortedSources yields the ascending, de-duplicated
+		// DataSourceID set (a standalone carries [DataSourceModelsDev]).
+		srcs := sortedSources(s.Sources)
+		entitySourceRel.byEntity[key] = srcs
+		for _, src := range srcs {
+			entitySourceRel.rows = append(entitySourceRel.rows, EntitySource{EntityKey: key, SourceID: src})
+			relExtended = true
+		}
+		s.Sources = srcs
 		entityIndex[key] = s
 		entityKeys = append(entityKeys, key)
+	}
+
+	// Re-impose the pinned (EntityKey, SourceID) total order on the relation rows so
+	// the join relation (and any deterministic consumer of it) stays byte-stable after
+	// the standalone extension.
+	if relExtended {
+		sort.Slice(entitySourceRel.rows, func(i, j int) bool {
+			if entitySourceRel.rows[i].EntityKey != entitySourceRel.rows[j].EntityKey {
+				return entitySourceRel.rows[i].EntityKey < entitySourceRel.rows[j].EntityKey
+			}
+			return entitySourceRel.rows[i].SourceID < entitySourceRel.rows[j].SourceID
+		})
 	}
 }
 
