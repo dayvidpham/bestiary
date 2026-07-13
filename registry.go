@@ -367,12 +367,22 @@ func attachBakedMetadataToIndex() {
 	// the standalone extension.
 	if relExtended {
 		sort.Slice(entitySourceRel.rows, func(i, j int) bool {
-			if entitySourceRel.rows[i].EntityKey != entitySourceRel.rows[j].EntityKey {
-				return entitySourceRel.rows[i].EntityKey < entitySourceRel.rows[j].EntityKey
-			}
-			return entitySourceRel.rows[i].SourceID < entitySourceRel.rows[j].SourceID
+			return lessEntitySource(entitySourceRel.rows[i], entitySourceRel.rows[j])
 		})
 	}
+}
+
+// lessEntitySource is the canonical total order on entity↔source relation rows —
+// ascending by EntityKey, then by SourceID. It is the SINGLE source of truth for the
+// relation's deterministic, byte-stable row order: both the initial build
+// (buildEntitySourceRelation) and any later extension (the standalone attestation in
+// attachBakedMetadataToIndex) sort through it, so the canonical order can never drift
+// between the two sites.
+func lessEntitySource(a, b EntitySource) bool {
+	if a.EntityKey != b.EntityKey {
+		return a.EntityKey < b.EntityKey
+	}
+	return a.SourceID < b.SourceID
 }
 
 // standaloneMetadataID returns the MetadataID a synthesized standalone entity carries,
@@ -410,10 +420,7 @@ func buildEntitySourceRelation(order []string, firstSeen map[string][]DataSource
 		}
 	}
 	sort.Slice(rel.rows, func(i, j int) bool {
-		if rel.rows[i].EntityKey != rel.rows[j].EntityKey {
-			return rel.rows[i].EntityKey < rel.rows[j].EntityKey
-		}
-		return rel.rows[i].SourceID < rel.rows[j].SourceID
+		return lessEntitySource(rel.rows[i], rel.rows[j])
 	})
 	return rel
 }
