@@ -25,8 +25,11 @@ const currentSchemaVersion = 6
 // Safe to run on any existing database (CREATE TABLE IF NOT EXISTS).
 const schemaMetaSQL = `CREATE TABLE IF NOT EXISTS schema_meta (version INTEGER NOT NULL);`
 
-// schemaSQL defines the current (v4) models table schema.
-// Used only for fresh databases; existing databases go through migrateSchema.
+// schemaSQL defines the current (v6) models table schema. Used only for fresh
+// databases; existing databases go through migrateSchema. The instance-level
+// models.dev fields at the tail (description … cost_tiers) are appended AFTER
+// last_synced so the fresh column order matches the migrateToV6 ALTER TABLE ADD
+// COLUMN order (SQLite appends new columns), keeping fresh == migrated.
 const schemaSQL = `CREATE TABLE IF NOT EXISTS models (
     model_id          TEXT NOT NULL,
     provider          TEXT NOT NULL,
@@ -56,8 +59,46 @@ const schemaSQL = `CREATE TABLE IF NOT EXISTS models (
     modalities_input  TEXT NOT NULL DEFAULT '',
     modalities_output TEXT NOT NULL DEFAULT '',
     last_synced       TEXT NOT NULL,
+    description       TEXT NOT NULL DEFAULT '',
+    status            TEXT NOT NULL DEFAULT '',
+    status_raw        TEXT NOT NULL DEFAULT '',
+    reasoning_options TEXT NOT NULL DEFAULT '',
+    cost_input_audio  REAL,
+    cost_output_audio REAL,
+    cost_context_over_200k TEXT NOT NULL DEFAULT '',
+    cost_tiers        TEXT NOT NULL DEFAULT '',
     PRIMARY KEY (model_id, provider)
 );`
+
+// modelV6ColumnsSQL is the ordered list of the eight instance-level models.dev
+// columns v6 adds to the models table, each as an ALTER TABLE ADD COLUMN. Every
+// column is either a NOT NULL TEXT with a constant empty-string default or a
+// nullable REAL, both of which SQLite ADD COLUMN accepts. The order matches the
+// schemaSQL tail so a migrated models table is column-order-identical to a fresh one.
+var modelV6ColumnsSQL = []string{
+	`ALTER TABLE models ADD COLUMN description TEXT NOT NULL DEFAULT ''`,
+	`ALTER TABLE models ADD COLUMN status TEXT NOT NULL DEFAULT ''`,
+	`ALTER TABLE models ADD COLUMN status_raw TEXT NOT NULL DEFAULT ''`,
+	`ALTER TABLE models ADD COLUMN reasoning_options TEXT NOT NULL DEFAULT ''`,
+	`ALTER TABLE models ADD COLUMN cost_input_audio REAL`,
+	`ALTER TABLE models ADD COLUMN cost_output_audio REAL`,
+	`ALTER TABLE models ADD COLUMN cost_context_over_200k TEXT NOT NULL DEFAULT ''`,
+	`ALTER TABLE models ADD COLUMN cost_tiers TEXT NOT NULL DEFAULT ''`,
+}
+
+// modelColumns is the ordered column list shared by every models SELECT so the
+// five read paths (QueryModels, QueryModel, QueryModelsByID, QueryByCanonical)
+// can never drift when a column is added. scanModelInfo reads by column NAME, so
+// this order is independent of the table's physical column order.
+const modelColumns = `model_id, provider, display_name, raw_family, family, variant, version, date,
+	context_window, max_output,
+	reasoning, tool_call, attachment, temperature, structured_output, interleaved, interleaved_config, open_weights,
+	cost_input, cost_output, cost_reasoning, cost_cache_read, cost_cache_write,
+	release_date, knowledge,
+	modalities_input, modalities_output,
+	last_synced,
+	description, status, status_raw, reasoning_options,
+	cost_input_audio, cost_output_audio, cost_context_over_200k, cost_tiers`
 
 // indexSQL creates the canonical lookup index used by QueryByCanonical.
 // The (family, variant, version) prefix is used for all non-empty canonical
@@ -814,6 +855,22 @@ func migrateToV6(conn *sqlite.Conn) error {
 	if err = createMetadataTables(conn); err != nil {
 		return fmt.Errorf("create entity-metadata tables: %w", err)
 	}
+
+	// Step 3: add the eight instance-level models.dev columns to the models table.
+	// Each is a defaulted non-PK column, so ALTER TABLE ADD COLUMN is SQLite-safe
+	// (no table recreate). SQLite appends them in declaration order, matching the
+	// schemaSQL tail so a migrated models table is column-order-identical to a
+	// fresh one.
+	for _, alterSQL := range modelV6ColumnsSQL {
+		if err = sqlitex.ExecuteTransient(conn, alterSQL, nil); err != nil {
+			return fmt.Errorf("add v6 models column via %q: %w\n"+
+				"  What: v5→v6 migration failed to add an instance-level models column\n"+
+				"  Why: ALTER TABLE rejected — the column may already exist or the schema is corrupt\n"+
+				"  Where: store.go migrateToV6, models column additions\n"+
+				"  How to fix: inspect the models table schema; if the column already exists this is a version-tracking bug",
+				alterSQL, err)
+		}
+	}
 	return nil
 }
 
@@ -847,7 +904,9 @@ func (s *Store) UpsertModels(ctx context.Context, models []ModelInfo) error {
 		cost_input, cost_output, cost_reasoning, cost_cache_read, cost_cache_write,
 		release_date, knowledge,
 		modalities_input, modalities_output,
-		last_synced
+		last_synced,
+		description, status, status_raw, reasoning_options,
+		cost_input_audio, cost_output_audio, cost_context_over_200k, cost_tiers
 	) VALUES (
 		?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8,
 		?9, ?10,
@@ -855,11 +914,14 @@ func (s *Store) UpsertModels(ctx context.Context, models []ModelInfo) error {
 		?19, ?20, ?21, ?22, ?23,
 		?24, ?25,
 		?26, ?27,
-		?28
+		?28,
+		?29, ?30, ?31, ?32,
+		?33, ?34, ?35, ?36
 	)`
 
 	for i := range models {
 		m := &models[i]
+		statusStr, statusRaw := modelStatusToStore(m.Status, m.StatusRaw)
 		err = sqlitex.Execute(s.conn, upsertSQL, &sqlitex.ExecOptions{
 			Args: []any{
 				string(m.ID),
@@ -890,6 +952,14 @@ func (s *Store) UpsertModels(ctx context.Context, models []ModelInfo) error {
 				modalitiesToString(m.Modalities.Input),
 				modalitiesToString(m.Modalities.Output),
 				now,
+				m.Description,
+				statusStr,
+				statusRaw,
+				reasoningOptionsToString(m.ReasoningOptions),
+				derefFloat64(m.CostInputAudioPerMTok),
+				derefFloat64(m.CostOutputAudioPerMTok),
+				tierCostPtrToString(m.CostContextOver200k),
+				costTiersToString(m.CostTiers),
 			},
 		})
 		if err != nil {
@@ -1332,27 +1402,10 @@ func (s *Store) QueryModels(ctx context.Context, provider Provider) ([]ModelInfo
 	)
 
 	if provider == "" {
-		query = `SELECT
-			model_id, provider, display_name, raw_family, family, variant, version, date,
-			context_window, max_output,
-			reasoning, tool_call, attachment, temperature, structured_output, interleaved, interleaved_config, open_weights,
-			cost_input, cost_output, cost_reasoning, cost_cache_read, cost_cache_write,
-			release_date, knowledge,
-			modalities_input, modalities_output,
-			last_synced
-		FROM models`
+		query = `SELECT ` + modelColumns + ` FROM models`
 		args = nil
 	} else {
-		query = `SELECT
-			model_id, provider, display_name, raw_family, family, variant, version, date,
-			context_window, max_output,
-			reasoning, tool_call, attachment, temperature, structured_output, interleaved, interleaved_config, open_weights,
-			cost_input, cost_output, cost_reasoning, cost_cache_read, cost_cache_write,
-			release_date, knowledge,
-			modalities_input, modalities_output,
-			last_synced
-		FROM models
-		WHERE provider = ?1`
+		query = `SELECT ` + modelColumns + ` FROM models WHERE provider = ?1`
 		args = []any{string(provider)}
 	}
 
@@ -1379,17 +1432,7 @@ func (s *Store) QueryModels(ctx context.Context, provider Provider) ([]ModelInfo
 //
 // ctx is accepted for API compatibility; zombiezen.com/go/sqlite does not support per-operation context cancellation.
 func (s *Store) QueryModel(ctx context.Context, id ModelID) (ModelInfo, error) {
-	const query = `SELECT
-		model_id, provider, display_name, raw_family, family, variant, version, date,
-		context_window, max_output,
-		reasoning, tool_call, attachment, temperature, structured_output, interleaved, interleaved_config, open_weights,
-		cost_input, cost_output, cost_reasoning, cost_cache_read, cost_cache_write,
-		release_date, knowledge,
-		modalities_input, modalities_output,
-		last_synced
-	FROM models
-	WHERE model_id = ?1
-	LIMIT 1`
+	const query = `SELECT ` + modelColumns + ` FROM models WHERE model_id = ?1 LIMIT 1`
 
 	var found bool
 	var result ModelInfo
@@ -1415,16 +1458,7 @@ func (s *Store) QueryModel(ctx context.Context, id ModelID) (ModelInfo, error) {
 //
 // ctx is accepted for API compatibility; zombiezen.com/go/sqlite does not support per-operation context cancellation.
 func (s *Store) QueryModelsByID(ctx context.Context, id ModelID) ([]ModelInfo, error) {
-	const query = `SELECT
-		model_id, provider, display_name, raw_family, family, variant, version, date,
-		context_window, max_output,
-		reasoning, tool_call, attachment, temperature, structured_output, interleaved, interleaved_config, open_weights,
-		cost_input, cost_output, cost_reasoning, cost_cache_read, cost_cache_write,
-		release_date, knowledge,
-		modalities_input, modalities_output,
-		last_synced
-	FROM models
-	WHERE model_id = ?1`
+	const query = `SELECT ` + modelColumns + ` FROM models WHERE model_id = ?1`
 
 	var models []ModelInfo
 	err := sqlitex.Execute(s.conn, query, &sqlitex.ExecOptions{
@@ -1477,15 +1511,7 @@ func (s *Store) QueryByCanonical(ctx context.Context, f CanonicalFilter) ([]Mode
 		paramIdx++
 	}
 
-	query := `SELECT
-		model_id, provider, display_name, raw_family, family, variant, version, date,
-		context_window, max_output,
-		reasoning, tool_call, attachment, temperature, structured_output, interleaved, interleaved_config, open_weights,
-		cost_input, cost_output, cost_reasoning, cost_cache_read, cost_cache_write,
-		release_date, knowledge,
-		modalities_input, modalities_output,
-		last_synced
-	FROM models`
+	query := `SELECT ` + modelColumns + ` FROM models`
 
 	if len(conditions) > 0 {
 		query += "\n\tWHERE " + strings.Join(conditions, " AND ")
@@ -1602,7 +1628,17 @@ func scanModelInfo(stmt *sqlite.Stmt) ModelInfo {
 		ReleaseDate: stmt.GetText("release_date"),
 		Knowledge:   stmt.GetText("knowledge"),
 		LastSynced:  stmt.GetText("last_synced"),
+		Description: stmt.GetText("description"),
 	}
+
+	// Instance-level release status: the enum string form decodes back to a
+	// ModelStatus, and the StatusOther fail-safe carries its verbatim raw token.
+	m.Status, m.StatusRaw = modelStatusFromStore(stmt.GetText("status"), stmt.GetText("status_raw"))
+
+	// Reasoning options and cost tiers: JSON-encoded TEXT columns.
+	m.ReasoningOptions = reasoningOptionsFromString(stmt.GetText("reasoning_options"))
+	m.CostContextOver200k = tierCostPtrFromString(stmt.GetText("cost_context_over_200k"))
+	m.CostTiers = costTiersFromString(stmt.GetText("cost_tiers"))
 
 	// Nullable REAL fields.
 	if !stmt.IsNull("cost_input") {
@@ -1625,6 +1661,14 @@ func scanModelInfo(stmt *sqlite.Stmt) ModelInfo {
 		v := stmt.GetFloat("cost_cache_write")
 		m.CostCacheWritePerMTok = &v
 	}
+	if !stmt.IsNull("cost_input_audio") {
+		v := stmt.GetFloat("cost_input_audio")
+		m.CostInputAudioPerMTok = &v
+	}
+	if !stmt.IsNull("cost_output_audio") {
+		v := stmt.GetFloat("cost_output_audio")
+		m.CostOutputAudioPerMTok = &v
+	}
 
 	// Modalities: comma-separated text columns.
 	m.Modalities = Modalities{
@@ -1633,4 +1677,104 @@ func scanModelInfo(stmt *sqlite.Stmt) ModelInfo {
 	}
 
 	return m
+}
+
+// modelStatusToStore encodes a (Status, StatusRaw) pair for persistence: the
+// status column stores the enum's canonical string form (e.g. "none", "beta",
+// "other") and status_raw carries the verbatim upstream token, which is
+// meaningful only for StatusOther. An out-of-range status (a programming error)
+// degrades to the empty string so the write never fails.
+func modelStatusToStore(status ModelStatus, statusRaw string) (string, string) {
+	if !status.IsKnown() {
+		return "", ""
+	}
+	if status == StatusOther {
+		return status.String(), statusRaw
+	}
+	// Named statuses (including StatusNone) carry no raw token.
+	return status.String(), ""
+}
+
+// modelStatusFromStore decodes the stored status/status_raw columns back to a
+// (ModelStatus, StatusRaw) pair. StatusOther is reconstructed with its verbatim
+// raw token; named statuses (and the empty default from a pre-v6 migrated row)
+// round-trip via ParseModelStatus. An unrecognized token degrades to StatusNone
+// rather than failing the read.
+func modelStatusFromStore(statusStr, statusRaw string) (ModelStatus, string) {
+	if statusStr == StatusOther.String() {
+		return StatusOther, statusRaw
+	}
+	if st, err := ParseModelStatus(statusStr); err == nil {
+		return st, ""
+	}
+	return StatusNone, ""
+}
+
+// reasoningOptionsToString / reasoningOptionsFromString serialise the
+// ReasoningOptions slice to/from a JSON TEXT column. An empty slice stores the
+// empty string (keeping the column's empty-string default) rather than a JSON null.
+// The ReasoningOptionKind discriminant round-trips as its wire name via its
+// Text(Un)Marshaler, so ReasoningOptionOther + KindRaw survive faithfully.
+func reasoningOptionsToString(opts []ReasoningOption) string {
+	if len(opts) == 0 {
+		return ""
+	}
+	b, _ := json.Marshal(opts)
+	return string(b)
+}
+
+func reasoningOptionsFromString(s string) []ReasoningOption {
+	if s == "" {
+		return nil
+	}
+	var out []ReasoningOption
+	if err := json.Unmarshal([]byte(s), &out); err != nil {
+		return nil
+	}
+	return out
+}
+
+// costTiersToString / costTiersFromString serialise the CostTiers slice to/from a
+// JSON TEXT column, with the same empty-slice-stores-empty-string convention. The
+// embedded TierCost's *float64 axes round-trip as JSON null/number.
+func costTiersToString(tiers []CostTier) string {
+	if len(tiers) == 0 {
+		return ""
+	}
+	b, _ := json.Marshal(tiers)
+	return string(b)
+}
+
+func costTiersFromString(s string) []CostTier {
+	if s == "" {
+		return nil
+	}
+	var out []CostTier
+	if err := json.Unmarshal([]byte(s), &out); err != nil {
+		return nil
+	}
+	return out
+}
+
+// tierCostPtrToString / tierCostPtrFromString serialise the optional
+// context_over_200k tier to/from a JSON TEXT column: a nil pointer stores the
+// empty string (matching the empty-string default), a non-nil one stores the
+// marshalled TierCost.
+func tierCostPtrToString(t *TierCost) string {
+	if t == nil {
+		return ""
+	}
+	b, _ := json.Marshal(t)
+	return string(b)
+}
+
+func tierCostPtrFromString(s string) *TierCost {
+	if s == "" {
+		return nil
+	}
+	var t TierCost
+	if err := json.Unmarshal([]byte(s), &t); err != nil {
+		return nil
+	}
+	return &t
 }
