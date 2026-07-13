@@ -907,57 +907,11 @@ func TestResolve_BracketSuffixStripping_ModifierFilter(t *testing.T) {
 	}
 }
 
-// TestResolve_BracketSuffixStripping_RoundTrip verifies that ModelRef.String()
-// (which emits bracket-suffix when Modifier is set) produces a string that
-// Resolve() can successfully resolve back to the same model.
-//
-// This is the full round-trip: ref → String() → Resolve() → ref'.
-// ref' must have the same (Family, Variant, Date, Modifier) as ref.
-//
-// BLOCKER:
-func TestResolve_BracketSuffixStripping_RoundTrip(t *testing.T) {
-	// Find any static model with a non-empty Modifier to exercise the round-trip.
-	var seed *bestiary.ModelRef
-	for _, m := range bestiary.StaticModels() {
-		if len(m.Modifier) > 0 && m.Family != "" && m.Date != "" && m.Provider == bestiary.ProviderAnthropic {
-			ref := m.Ref()
-			seed = &ref
-			break
-		}
-	}
-	if seed == nil {
-		t.Skip("no Anthropic static model with Modifier and Date found; skipping round-trip test")
-	}
-
-	// seed.String() produces canonical form including [modifier] bracket suffix.
-	canonical := seed.String()
-	if canonical == "" {
-		t.Fatalf("ModelRef.String() returned empty string for %+v", *seed)
-	}
-
-	// Resolve must accept the canonical string and return a matching ref.
-	refs, err := bestiary.Resolve(canonical)
-	if err != nil {
-		t.Fatalf("Resolve(%q) = error %v; round-trip must succeed after bracket-suffix fix", canonical, err)
-	}
-	if len(refs) == 0 {
-		t.Fatalf("Resolve(%q) returned empty refs; round-trip must return at least one ref", canonical)
-	}
-
-	// At least one returned ref must match the original seed's (Family, Variant, Date, Modifier).
-	found := false
-	for _, r := range refs {
-		if r.Family == seed.Family && r.Variant == seed.Variant &&
-			r.Date == seed.Date && modJoin(r.Modifier) == modJoin(seed.Modifier) {
-			found = true
-			break
-		}
-	}
-	if !found {
-		t.Errorf("Resolve(%q): no ref matched seed (Family=%q, Variant=%q, Date=%q, Modifier=%q); refs=%v",
-			canonical, seed.Family, seed.Variant, seed.Date, seed.Modifier, refs)
-	}
-}
+// TestResolve_BracketSuffixStripping_RoundTrip moved to resolve_wave3_internal_test.go
+// (package bestiary): the July catalog no longer contains an Anthropic model with both a
+// Modifier and a Date, so the previous data-pinned search silently SKIPPED (zero
+// coverage). It now runs over a synthetic registry so a data refresh can never disable
+// it.
 
 // --- : RehostProviders population ---
 
@@ -1186,25 +1140,28 @@ func TestResolve_ContextN_Distinct_InCandidates(t *testing.T) {
 // of :N models works correctly — each :N variant resolves to its own model entry,
 // not to a merged representative.
 func TestResolve_ContextN_Direct_Resolve(t *testing.T) {
-	refs1, err1 := bestiary.Resolve("claude-3-7-sonnet-thinking:1024")
-	refs2, err2 := bestiary.Resolve("claude-3-7-sonnet-thinking:128000")
+	// Both :N exemplars are present + unambiguous in BOTH the April and July catalogs
+	// (claude-opus-4-1-thinking:{1024,8192}). Their absence is a HARD failure, NOT a
+	// skip: a permanently-skipping test is zero coverage wearing a green badge.
+	refs1, err1 := bestiary.Resolve("claude-opus-4-1-thinking:1024")
+	refs2, err2 := bestiary.Resolve("claude-opus-4-1-thinking:8192")
 
 	if err1 != nil {
-		t.Skipf("claude-3-7-sonnet-thinking:1024 not in registry; skipping: %v", err1)
+		t.Fatalf("claude-opus-4-1-thinking:1024 must resolve (both-datasets :N exemplar), got: %v", err1)
 	}
 	if err2 != nil {
-		t.Skipf("claude-3-7-sonnet-thinking:128000 not in registry; skipping: %v", err2)
+		t.Fatalf("claude-opus-4-1-thinking:8192 must resolve (both-datasets :N exemplar), got: %v", err2)
 	}
 
 	// Each must resolve to its exact ID (different models).
 	for _, r := range refs1 {
-		if r.ID != "claude-3-7-sonnet-thinking:1024" {
+		if r.ID != "claude-opus-4-1-thinking:1024" {
 			t.Errorf("Resolve(:1024) returned ref with ID=%q, want exact :1024", r.ID)
 		}
 	}
 	for _, r := range refs2 {
-		if r.ID != "claude-3-7-sonnet-thinking:128000" {
-			t.Errorf("Resolve(:128000) returned ref with ID=%q, want exact :128000", r.ID)
+		if r.ID != "claude-opus-4-1-thinking:8192" {
+			t.Errorf("Resolve(:8192) returned ref with ID=%q, want exact :8192", r.ID)
 		}
 	}
 
@@ -1220,35 +1177,10 @@ func TestResolve_ContextN_Direct_Resolve(t *testing.T) {
 	}
 }
 
-// TestResolve_Reasoner_Distinct_FromThinking verifies that claude-3-7-sonnet-reasoner
-// is a DISTINCT model from the -thinking:N siblings. It must never be merged into
-// the same group as -thinking variants (per the group-key invariant: -reasoner stays
-// a distinct model).
-//
-// Currently, -reasoner has Date="2025-03-29" and the :N thinking variants have
-// Date="2025-02-24", so they already land in different groups. This test
-// asserts the distinctness is preserved through future key changes.
-func TestResolve_Reasoner_Distinct_FromThinking(t *testing.T) {
-	reasonerRefs, err := bestiary.Resolve("claude-3-7-sonnet-reasoner")
-	if err != nil {
-		t.Skipf("claude-3-7-sonnet-reasoner not in registry; skipping: %v", err)
-	}
-	thinkingRefs, err := bestiary.Resolve("claude-3-7-sonnet-thinking:1024")
-	if err != nil {
-		t.Skipf("claude-3-7-sonnet-thinking:1024 not in registry; skipping: %v", err)
-	}
-
-	// -reasoner and -thinking:1024 must resolve to different model IDs (non-overlapping).
-	reasonerIDs := make(map[bestiary.ModelID]struct{})
-	for _, r := range reasonerRefs {
-		reasonerIDs[r.ID] = struct{}{}
-	}
-	for _, r := range thinkingRefs {
-		if _, overlap := reasonerIDs[r.ID]; overlap {
-			t.Errorf("-reasoner and -thinking:1024 share ID %q — they must be distinct models", r.ID)
-		}
-	}
-}
+// TestResolve_Reasoner_Distinct_FromThinking moved to resolve_wave3_internal_test.go
+// (package bestiary): the July catalog no longer contains any -reasoner model, so the
+// previous data-pinned test silently SKIPPED (zero coverage). It now runs over a
+// synthetic registry so a data refresh can never disable it.
 
 // TestResolve_Peasant_ClaudeOpus41_SingleRep asserts that peasant
 // "claude-opus-4-1" (InputFormatPeasant → SchemeCanonical) resolves to a
