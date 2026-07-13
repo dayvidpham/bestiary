@@ -185,6 +185,7 @@ func modelToYAML(m ModelInfo, indent string) string {
 	writeYAMLString(&sb, indent, "ID", string(m.ID))
 	writeYAMLString(&sb, indent, "Provider", string(m.Provider))
 	writeYAMLString(&sb, indent, "DisplayName", m.DisplayName)
+	writeYAMLString(&sb, indent, "Description", m.Description)
 	writeYAMLString(&sb, indent, "RawFamily", string(m.RawFamily))
 	writeYAMLString(&sb, indent, "Family", string(m.Family))
 	writeYAMLString(&sb, indent, "Variant", m.Variant)
@@ -199,6 +200,10 @@ func modelToYAML(m ModelInfo, indent string) string {
 	writeYAMLBool(&sb, indent, "StructuredOutput", m.StructuredOutput)
 	writeYAMLCapability(&sb, indent, "Interleaved", m.Interleaved)
 	writeYAMLBool(&sb, indent, "OpenWeights", m.OpenWeights)
+	// Status is the api.json instance-level release status; it renders as its
+	// canonical wire name (e.g. "none", "beta"). Added in v0.2.5 alongside
+	// Description as the two flat metadata scalars the minimal serializer carries.
+	writeYAMLString(&sb, indent, "Status", m.Status.String())
 	writeYAMLFloat64Ptr(&sb, indent, "CostInputPerMTok", m.CostInputPerMTok)
 	writeYAMLFloat64Ptr(&sb, indent, "CostOutputPerMTok", m.CostOutputPerMTok)
 	writeYAMLFloat64Ptr(&sb, indent, "CostReasoningPerMTok", m.CostReasoningPerMTok)
