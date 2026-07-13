@@ -264,7 +264,7 @@
   "$defs": {
     "ModelRef": {
       "title": "ModelRef",
-      "description": "The canonical identity of a model. The 7-field tuple (ID, Provider, RawFamily, Family, Variant, Version, Date) is the stable anchor for cross-provider queries, canonical formatting, and the normalization pipeline.",
+      "description": "The canonical identity of a model. The identity tuple (ID, Provider, RawFamily, Family, Variant, Version, ParamSize, Date) is the stable anchor for cross-provider queries, canonical formatting, and the normalization pipeline. ParamSize is part of identity, mirroring EntityRef.ParamSize: instances of one family at different sizes are distinct.",
       "type": "object",
       "properties": {
         "ID": {

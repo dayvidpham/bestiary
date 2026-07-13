@@ -228,9 +228,24 @@ func TestJSONOutput_ConformsToSchema(t *testing.T) {
 	if err := json.Unmarshal(refJSON, &refOut); err != nil {
 		t.Fatalf("could not unmarshal ModelRef JSON: %v", err)
 	}
+	// Bi-directional EXACT-prop conformance for $defs.ModelRef, mirroring the
+	// V024/V025 deep-conformance pattern. The forward arm (schema -> output)
+	// catches a declared property the Go type no longer marshals; the reverse arm
+	// (output -> schema) catches a marshaled Go field the schema fails to declare.
+	// The reverse arm is what a one-directional check lacked: a Go ModelRef field
+	// added without a matching $def property (e.g. ParamSize) marshaled into the
+	// output yet stayed GREEN. Now any such drift fails the suite.
 	for prop := range modelRefDef.Properties {
 		if _, ok := refOut[prop]; !ok {
-			t.Errorf("ModelRef JSON output missing schema $defs.ModelRef property %q", prop)
+			t.Errorf("ModelRef JSON output missing schema $defs.ModelRef property %q;\n"+
+				"  how to fix: ensure bestiary.ModelRef has an exported field %q, or remove the property from $defs.ModelRef", prop, prop)
+		}
+	}
+	for key := range refOut {
+		if _, ok := modelRefDef.Properties[key]; !ok {
+			t.Errorf("ModelRef JSON output key %q is not declared in schema $defs.ModelRef;\n"+
+				"  what went wrong: a marshaled ModelRef field has no matching $def property (Go/schema drift)\n"+
+				"  how to fix: add property %q to $defs.ModelRef in bestiary.schema.json", key, key)
 		}
 	}
 	// The crux of the fix: Modifier MUST be an array, not a string.
