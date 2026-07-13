@@ -183,10 +183,21 @@ func initParseData() (*parseData, error) {
 	}
 
 	// Ensure suffixes are sorted longest-first for correct greedy matching.
+	// The comparator is a TOTAL order — length-descending, then lexicographic on
+	// ties — so the sorted sequence is fixed BY CONSTRUCTION and does not depend on
+	// the sort algorithm's incidental handling of equal-length elements. A
+	// length-only comparator leaves equal-length suffixes in a
+	// sort-implementation-defined order; that order is deterministic for a given Go
+	// build but is a latent tie-break that any greedy suffix scan would inherit.
+	// Pinning the tie to lexicographic makes the whole decomposition pipeline
+	// deterministic without relying on the sort internals.
 	suffixes := make([]string, len(suffixFile.Suffixes))
 	copy(suffixes, suffixFile.Suffixes)
 	sort.Slice(suffixes, func(i, j int) bool {
-		return len(suffixes[i]) > len(suffixes[j])
+		if len(suffixes[i]) != len(suffixes[j]) {
+			return len(suffixes[i]) > len(suffixes[j])
+		}
+		return suffixes[i] < suffixes[j]
 	})
 
 	// Load version_patterns.json.
@@ -270,10 +281,18 @@ func initParseData() (*parseData, error) {
 
 	// Ensure modifiers are sorted longest-first for greedy matching
 	// (prevents "think" from shadowing "thinking" when both are in the list).
+	// Total order (length-descending, then lexicographic on ties) for the same
+	// determinism-by-construction reason as the suffix sort above: equal-length
+	// modifier tokens must have a fixed relative order so the greedy
+	// trimOneTrailingModifier / extractModifiers scan can never depend on the sort
+	// implementation's incidental tie-handling.
 	modifiers := make([]string, len(modifierFile.Modifiers))
 	copy(modifiers, modifierFile.Modifiers)
 	sort.Slice(modifiers, func(i, j int) bool {
-		return len(modifiers[i]) > len(modifiers[j])
+		if len(modifiers[i]) != len(modifiers[j]) {
+			return len(modifiers[i]) > len(modifiers[j])
+		}
+		return modifiers[i] < modifiers[j]
 	})
 
 	// Load families.json.
