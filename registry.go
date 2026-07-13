@@ -283,6 +283,73 @@ func loadEntityIndex() {
 	}
 
 	entitySourceRel = rel
+
+	// Attach compiled-in models.dev metadata (IP5) and fold in any metadata-only
+	// standalone entity it synthesizes. This is a no-op until the codegen slice bakes
+	// real metadata (the accessor returns nil today), so the index — and every
+	// determinism guarantee that rests on its first-seen key order — is unchanged for
+	// the current corpus.
+	attachBakedMetadataToIndex()
+}
+
+// attachBakedMetadataToIndex runs the metadata<->entity join over the just-built
+// entity index using the compiled-in baked metadata (staticEntityMetadata): it writes
+// each matched entity's Metadata back into the index and appends any synthesized
+// metadata-only standalone entity to the index in a deterministic position.
+//
+// It returns immediately when no metadata is baked in (the wave-current state: the
+// accessor returns nil until the codegen slice emits the generated metadata file), so
+// entityIndex/entityKeys stay byte-identical to the pre-metadata build until real
+// baked data lands.
+//
+// Synthesized standalones are appended to entityKeys in ascending MetadataID order so
+// their position in Entities() is deterministic and independent of map iteration; a
+// synthesized key that collides with a real entity is dropped (a real entity is never
+// overwritten by a standalone).
+func attachBakedMetadataToIndex() {
+	meta := staticEntityMetadata()
+	if len(meta) == 0 {
+		return
+	}
+
+	ents := make([]Entity, len(entityKeys))
+	for i, key := range entityKeys {
+		ents[i] = entityIndex[key]
+	}
+
+	attached, _, standalone := JoinEntityMetadata(ents, meta)
+
+	// Write attached metadata back into the index (attached[i] <-> entityKeys[i]).
+	for i, key := range entityKeys {
+		if attached[i].Metadata == nil {
+			continue
+		}
+		e := entityIndex[key]
+		e.Metadata = attached[i].Metadata
+		entityIndex[key] = e
+	}
+
+	// Append synthesized standalones deterministically (ascending MetadataID).
+	sort.Slice(standalone, func(i, j int) bool {
+		return standaloneMetadataID(standalone[i]) < standaloneMetadataID(standalone[j])
+	})
+	for _, s := range standalone {
+		key := s.Ref.String()
+		if _, exists := entityIndex[key]; exists {
+			continue // never overwrite a real entity with a standalone
+		}
+		entityIndex[key] = s
+		entityKeys = append(entityKeys, key)
+	}
+}
+
+// standaloneMetadataID returns the MetadataID a synthesized standalone entity carries,
+// or "" when it has none (defensive — a synthesized standalone always carries one).
+func standaloneMetadataID(e Entity) MetadataID {
+	if e.Metadata == nil {
+		return ""
+	}
+	return e.Metadata.MetadataID
 }
 
 // buildEntitySourceRelation materializes the BCNF entity↔source join relation from
