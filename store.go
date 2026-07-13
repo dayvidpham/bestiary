@@ -19,7 +19,7 @@ import (
 // NOTE: this is the SQLite store migration version (models cache + BCNF
 // provenance tables). It is DISTINCT from BestiarySchemaVersion in version.go,
 // which versions the public JSON output schema; do not conflate the two.
-const currentSchemaVersion = 5
+const currentSchemaVersion = 6
 
 // schemaMetaSQL creates the schema_meta table used to track migration state.
 // Safe to run on any existing database (CREATE TABLE IF NOT EXISTS).
@@ -90,9 +90,13 @@ const dataSourcesTableSQL = `CREATE TABLE IF NOT EXISTS data_sources (
     UNIQUE(uri)
 );`
 
-// datasetIngestedTableSQL records the single current ingest per source. It
-// carries NO uri (a transitive dependency reached via the data_sources FK join),
-// which is the BCNF normalization. The primary key is data_source_id.
+// datasetIngestedTableSQL is the v5 shape of dataset_ingested: it records a
+// single current ingest per source (primary key data_source_id). It carries NO
+// uri (a transitive dependency reached via the data_sources FK join), which is
+// the BCNF normalization. This constant is retained for the v4 to v5 migration
+// path (createProvenanceTables) so a v5 database is faithfully reproduced before
+// migrateToV6 widens the primary key; fresh v6 databases use
+// datasetIngestedV6TableSQL instead.
 const datasetIngestedTableSQL = `CREATE TABLE IF NOT EXISTS dataset_ingested (
     data_source_id TEXT PRIMARY KEY,
     ingested_at    TEXT NOT NULL,
@@ -124,11 +128,87 @@ const entitySourceTableSQL = `CREATE TABLE IF NOT EXISTS entity_source (
     FOREIGN KEY (data_source_id) REFERENCES data_sources(data_source_id)
 );`
 
+// --- v6 append-only ingest log + entity-metadata schema ---
+//
+// v6 widens dataset_ingested from a single current ingest per source to an
+// append-only history (composite primary key), and adds three entity-metadata
+// tables for the provider-agnostic models.dev model facts. All string columns
+// default to the empty string so a minimal row is valid; those defaults are
+// written as prose in these comments (a doubled straight quote in a comment is
+// rewritten by gofmt, so the literal glyph is avoided).
+
+// datasetIngestedV6TableSQL is the v6 shape of dataset_ingested: an append-only
+// ingest history keyed by the composite primary key (data_source_id,
+// ingested_at). A source therefore carries one row per distinct ingest instant
+// instead of a single mutable current row; the current ingest is the row with the
+// maximum ingested_at. It still carries NO uri (reached via the data_sources FK
+// join). Fresh v6 databases create this shape directly; upgrading databases reach
+// it through migrateToV6's dedicated table-recreate.
+const datasetIngestedV6TableSQL = `CREATE TABLE IF NOT EXISTS dataset_ingested (
+    data_source_id TEXT NOT NULL REFERENCES data_sources(data_source_id),
+    ingested_at    TEXT NOT NULL,
+    parser_schema  INTEGER NOT NULL,
+    PRIMARY KEY (data_source_id, ingested_at)
+);`
+
+// entityMetadataTableSQL is the entity-metadata dimension: the provider-agnostic
+// model facts from the models.dev models.json view, keyed by the stable
+// metadata_id. It carries NO status column (status is an api.json / instance-level
+// fact, absent from models.json). source_id is a foreign key into data_sources
+// (the ingest attestation). name / description / license / last_synced default to
+// the empty string.
+const entityMetadataTableSQL = `CREATE TABLE IF NOT EXISTS entity_metadata (
+    metadata_id TEXT PRIMARY KEY,
+    name        TEXT NOT NULL DEFAULT '',
+    description TEXT NOT NULL DEFAULT '',
+    license     TEXT NOT NULL DEFAULT '',
+    source_id   TEXT NOT NULL REFERENCES data_sources(data_source_id),
+    last_synced TEXT NOT NULL DEFAULT ''
+);`
+
+// metadataBenchmarksTableSQL is the benchmark-claims child table of
+// entity_metadata. It deliberately has NO primary key: the benchmark rows are a
+// replaceable set owned by their parent metadata_id, refreshed by delete-then-
+// insert inside the UpsertEntityMetadata transaction, so a row's identity is its
+// insertion order (rowid) within a parent. score defaults to 0; every string
+// column except name defaults to the empty string.
+const metadataBenchmarksTableSQL = `CREATE TABLE IF NOT EXISTS metadata_benchmarks (
+    metadata_id TEXT NOT NULL REFERENCES entity_metadata(metadata_id),
+    name        TEXT NOT NULL,
+    version     TEXT NOT NULL DEFAULT '',
+    variant     TEXT NOT NULL DEFAULT '',
+    dataset     TEXT NOT NULL DEFAULT '',
+    harness     TEXT NOT NULL DEFAULT '',
+    metric      TEXT NOT NULL DEFAULT '',
+    score       REAL NOT NULL DEFAULT 0,
+    score_raw   TEXT NOT NULL DEFAULT '',
+    source_url  TEXT NOT NULL DEFAULT '',
+    date        TEXT NOT NULL DEFAULT ''
+);`
+
+// metadataLinksTableSQL is the reference-links child table of entity_metadata. It
+// also has NO primary key for the same replaceable-set reason as
+// metadata_benchmarks. The type column stores the LinkType string form; type_raw
+// carries the verbatim upstream token only when the type is the other bucket.
+// label / type / type_raw default to the empty string; url is required.
+const metadataLinksTableSQL = `CREATE TABLE IF NOT EXISTS metadata_links (
+    metadata_id TEXT NOT NULL REFERENCES entity_metadata(metadata_id),
+    label       TEXT NOT NULL DEFAULT '',
+    url         TEXT NOT NULL,
+    type        TEXT NOT NULL DEFAULT '',
+    type_raw    TEXT NOT NULL DEFAULT ''
+);`
+
 // createProvenanceTables creates the four v5 BCNF provenance tables in FK
 // dependency order (parents before children): data_sources and entities are
 // dimensions; dataset_ingested and entity_source reference them. Each statement
 // is CREATE TABLE IF NOT EXISTS, so the helper is idempotent and safe to call on
 // the fresh-DB path and from migrateToV5 alike.
+//
+// It creates the v5 (single current-ingest) shape of dataset_ingested. The
+// fresh-DB v6 path uses createProvenanceTablesV6 instead; this helper is retained
+// for the v4 to v5 upgrade arm so migrateToV6's table-recreate has a faithful v5
+// table to migrate.
 func createProvenanceTables(conn *sqlite.Conn) error {
 	stmts := []struct {
 		name string
@@ -145,6 +225,52 @@ func createProvenanceTables(conn *sqlite.Conn) error {
 		}
 	}
 	return nil
+}
+
+// createMetadataTables creates the three v6 entity-metadata tables (the parent
+// entity_metadata dimension before its metadata_benchmarks / metadata_links child
+// tables). Each statement is CREATE TABLE IF NOT EXISTS, so the helper is
+// idempotent and shared by the fresh-DB v6 path and migrateToV6.
+func createMetadataTables(conn *sqlite.Conn) error {
+	stmts := []struct {
+		name string
+		sql  string
+	}{
+		{"entity_metadata", entityMetadataTableSQL},
+		{"metadata_benchmarks", metadataBenchmarksTableSQL},
+		{"metadata_links", metadataLinksTableSQL},
+	}
+	for _, s := range stmts {
+		if err := sqlitex.ExecuteTransient(conn, s.sql, nil); err != nil {
+			return fmt.Errorf("create %s table: %w", s.name, err)
+		}
+	}
+	return nil
+}
+
+// createProvenanceTablesV6 creates the full v6 provenance + metadata shape for a
+// fresh database in FK dependency order: the data_sources / entities dimensions,
+// the append-only dataset_ingested history (composite primary key), the
+// entity_source join, then the three entity-metadata tables. It exists so a fresh
+// v6 database is created directly with the target shape rather than being built at
+// v5 and then migrated — the same fresh-arm discipline the v5 tables already
+// follow.
+func createProvenanceTablesV6(conn *sqlite.Conn) error {
+	stmts := []struct {
+		name string
+		sql  string
+	}{
+		{"data_sources", dataSourcesTableSQL},
+		{"entities", entitiesTableSQL},
+		{"dataset_ingested", datasetIngestedV6TableSQL},
+		{"entity_source", entitySourceTableSQL},
+	}
+	for _, s := range stmts {
+		if err := sqlitex.ExecuteTransient(conn, s.sql, nil); err != nil {
+			return fmt.Errorf("create %s table: %w", s.name, err)
+		}
+	}
+	return createMetadataTables(conn)
 }
 
 // CanonicalFilter selects models by their parsed canonical axes.
@@ -310,10 +436,12 @@ func migrateSchema(conn *sqlite.Conn, fromVersion int) error {
 		if err := sqlitex.ExecuteTransient(conn, indexSQL, nil); err != nil {
 			return fmt.Errorf("bestiary: migrateSchema: create idx_canonical: %w", err)
 		}
-		// Fresh DBs must ALSO get the v5 BCNF provenance tables here: this branch
-		// skips the migrateToVN arms below, so without this call a fresh database
-		// would record schema_meta=5 with no provenance tables.
-		if err := createProvenanceTables(conn); err != nil {
+		// Fresh DBs must ALSO get the full v6 provenance + metadata shape here: this
+		// branch skips the migrateToVN arms below, so without this call a fresh
+		// database would record schema_meta=6 with no provenance tables. The v6
+		// creator makes the append-only dataset_ingested history and the three
+		// entity-metadata tables directly (not the v5 shape followed by a migrate).
+		if err := createProvenanceTablesV6(conn); err != nil {
 			return fmt.Errorf("bestiary: migrateSchema: create provenance tables: %w", err)
 		}
 	} else {
@@ -350,6 +478,15 @@ func migrateSchema(conn *sqlite.Conn, fromVersion int) error {
 		if fromVersion < 5 {
 			if err := migrateToV5(conn); err != nil {
 				return fmt.Errorf("bestiary: migrateSchema: v4→v5: %w", err)
+			}
+		}
+		// The v5→v6 step recreates dataset_ingested with a composite primary key
+		// (append-only history) and adds the three entity-metadata tables. It
+		// applies to every existing database that predates v6, including one just
+		// brought to v5 by the arm above (chained v4→v5→v6).
+		if fromVersion < 6 {
+			if err := migrateToV6(conn); err != nil {
+				return fmt.Errorf("bestiary: migrateSchema: v5→v6: %w", err)
 			}
 		}
 	}
@@ -629,6 +766,57 @@ func migrateToV5(conn *sqlite.Conn) error {
 	return nil
 }
 
+// migrateToV6 upgrades an existing v5 database to the v6 schema:
+//   - Widens dataset_ingested's primary key from (data_source_id) to the composite
+//     (data_source_id, ingested_at) so a source records an append-only ingest
+//     history instead of a single current row.
+//   - Adds the three entity-metadata tables (entity_metadata + its
+//     metadata_benchmarks / metadata_links children).
+//
+// SQLite cannot ALTER a primary key in place, so the dataset_ingested widening
+// uses a DEDICATED table-recreate sequence (create the new table, copy every
+// existing row, drop the old table, rename) rather than the models-specific
+// tableRecreate helper, whose hard-coded models/models_new names do not fit here.
+// dataset_ingested is a leaf (no other table references it), so dropping and
+// renaming it does not disturb any foreign key.
+func migrateToV6(conn *sqlite.Conn) error {
+	endFn := sqlitex.Transaction(conn)
+	var err error
+	defer endFn(&err)
+
+	// Step 1: recreate dataset_ingested with the composite primary key. The new
+	// table is created under a temporary name, populated from the old table, then
+	// swapped in. INSERT OR IGNORE on the copy is defensive: a v5 table has one row
+	// per source (its own primary key), so no composite-key collision can occur, but
+	// OR IGNORE keeps the copy total even if a hand-edited source somehow held two.
+	const createIngestedNewSQL = `CREATE TABLE dataset_ingested_new (
+    data_source_id TEXT NOT NULL REFERENCES data_sources(data_source_id),
+    ingested_at    TEXT NOT NULL,
+    parser_schema  INTEGER NOT NULL,
+    PRIMARY KEY (data_source_id, ingested_at)
+)`
+	if err = sqlitex.ExecuteTransient(conn, createIngestedNewSQL, nil); err != nil {
+		return fmt.Errorf("create dataset_ingested_new: %w", err)
+	}
+	const copyIngestedSQL = `INSERT OR IGNORE INTO dataset_ingested_new (data_source_id, ingested_at, parser_schema)
+        SELECT data_source_id, ingested_at, parser_schema FROM dataset_ingested`
+	if err = sqlitex.ExecuteTransient(conn, copyIngestedSQL, nil); err != nil {
+		return fmt.Errorf("copy dataset_ingested rows: %w", err)
+	}
+	if err = sqlitex.ExecuteTransient(conn, `DROP TABLE dataset_ingested`, nil); err != nil {
+		return fmt.Errorf("drop old dataset_ingested: %w", err)
+	}
+	if err = sqlitex.ExecuteTransient(conn, `ALTER TABLE dataset_ingested_new RENAME TO dataset_ingested`, nil); err != nil {
+		return fmt.Errorf("rename dataset_ingested_new to dataset_ingested: %w", err)
+	}
+
+	// Step 2: add the three entity-metadata tables.
+	if err = createMetadataTables(conn); err != nil {
+		return fmt.Errorf("create entity-metadata tables: %w", err)
+	}
+	return nil
+}
+
 // Close closes the underlying SQLite connection.
 func (s *Store) Close() error {
 	if s.conn == nil {
@@ -712,14 +900,21 @@ func (s *Store) UpsertModels(ctx context.Context, models []ModelInfo) error {
 	return nil
 }
 
-// UpsertDataSources inserts or replaces the data-source dimension rows and their
-// current-ingest rows in a single transaction. Rows are written parents-before-
-// children to satisfy the dataset_ingested.data_source_id foreign key: every
-// DataSource is written first, then every DatasetIngested. A DatasetIngested whose
-// SourceID names a DataSource absent from BOTH this call and the existing
-// data_sources table is rejected by the foreign key (when foreign_keys is ON).
-// Insert-or-replace semantics mean re-ingesting a source overwrites its dimension
-// row and its single current-ingest row.
+// UpsertDataSources writes the data-source dimension rows and appends their
+// ingest rows in a single transaction. Rows are written parents-before-children to
+// satisfy the dataset_ingested.data_source_id foreign key: every DataSource is
+// written first (insert-or-update on the id primary key), then every
+// DatasetIngested. A DatasetIngested whose SourceID names a DataSource absent from
+// BOTH this call and the existing data_sources table is rejected by the foreign
+// key (when foreign_keys is ON).
+//
+// The ingest pass is APPEND-ONLY: it uses INSERT OR IGNORE against the composite
+// primary key (data_source_id, ingested_at). A new (source, timestamp) appends a
+// history row; an identical (source, timestamp) is the same ingest fact re-
+// asserted, so OR IGNORE keeps the original untouched — it can never MUTATE an
+// existing row (unlike OR REPLACE, which would overwrite parser_schema). The
+// current ingest for a source is the row with the maximum ingested_at, surfaced by
+// QueryCurrentIngests / DatasetIngestedFor.
 //
 // ctx is accepted for API compatibility; zombiezen.com/go/sqlite does not support
 // per-operation context cancellation.
@@ -757,7 +952,11 @@ func (s *Store) UpsertDataSources(ctx context.Context, sources []DataSource, ing
 	}
 
 	// Pass 2 (child fact): dataset_ingested references data_sources.data_source_id.
-	const ingestSQL = `INSERT OR REPLACE INTO dataset_ingested (
+	// INSERT OR IGNORE is append-only: a duplicate (data_source_id, ingested_at) is
+	// silently skipped (the original history row is retained), while a genuine
+	// foreign-key violation (unknown data_source_id) still errors — OR IGNORE
+	// suppresses only the listed constraint algorithms, never a foreign-key abort.
+	const ingestSQL = `INSERT OR IGNORE INTO dataset_ingested (
 		data_source_id, ingested_at, parser_schema
 	) VALUES (?1, ?2, ?3)`
 	for i := range ingested {
@@ -766,8 +965,8 @@ func (s *Store) UpsertDataSources(ctx context.Context, sources []DataSource, ing
 			Args: []any{string(di.SourceID), di.IngestedAt, di.ParserSchema},
 		})
 		if err != nil {
-			return fmt.Errorf("bestiary: UpsertDataSources: upsert dataset_ingested for source %q: %w\n"+
-				"  What: writing a current-ingest row failed\n"+
+			return fmt.Errorf("bestiary: UpsertDataSources: append dataset_ingested for source %q: %w\n"+
+				"  What: writing an ingest-history row failed\n"+
 				"  Why: the foreign key data_source_id has no matching data_sources row in this call or the store\n"+
 				"  Where: store.go UpsertDataSources, dataset_ingested insert\n"+
 				"  How to fix: include the DataSource for %q in the sources argument before its DatasetIngested",
@@ -834,6 +1033,291 @@ func (s *Store) UpsertEntitySources(ctx context.Context, sources []EntitySource)
 	}
 
 	return nil
+}
+
+// UpsertEntityMetadata writes each EntityMetadata and its benchmark / link
+// children in a single transaction. The children of a metadata_id are a
+// REPLACEABLE SET owned by their parent: per row the method (1) INSERT OR REPLACE
+// the parent entity_metadata row, (2) DELETE the existing metadata_benchmarks and
+// metadata_links for that metadata_id, then (3) INSERT the current children.
+//
+// This order is foreign-key safe under foreign_keys=ON: INSERT OR REPLACE keeps
+// the same metadata_id, so at the end of that statement any pre-existing children
+// still resolve their parent (the FK is checked at statement end, and a parent
+// with the same key exists). The subsequent delete-then-insert then refreshes the
+// child set. Re-syncing identical metadata is idempotent by CONTENT — the row
+// counts and values are unchanged.
+//
+// Enum-typed columns persist their STRING forms: a link's type column stores
+// LinkType.String() and type_raw carries the verbatim upstream token (populated
+// only when the type is the other bucket). entity_metadata has no status column
+// (status is not present on the models.json side). The parent's source_id is a
+// foreign key into data_sources, so callers must register the DataSource (via
+// UpsertDataSources) before attaching metadata attributed to it.
+//
+// ctx is accepted for API compatibility; zombiezen.com/go/sqlite does not support
+// per-operation context cancellation.
+func (s *Store) UpsertEntityMetadata(ctx context.Context, rows []EntityMetadata) error {
+	endFn := sqlitex.Transaction(s.conn)
+
+	var err error
+	defer endFn(&err)
+
+	const parentSQL = `INSERT OR REPLACE INTO entity_metadata (
+		metadata_id, name, description, license, source_id, last_synced
+	) VALUES (?1, ?2, ?3, ?4, ?5, ?6)`
+	const delBenchSQL = `DELETE FROM metadata_benchmarks WHERE metadata_id = ?1`
+	const delLinkSQL = `DELETE FROM metadata_links WHERE metadata_id = ?1`
+	const insBenchSQL = `INSERT INTO metadata_benchmarks (
+		metadata_id, name, version, variant, dataset, harness, metric, score, score_raw, source_url, date
+	) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11)`
+	const insLinkSQL = `INSERT INTO metadata_links (
+		metadata_id, label, url, type, type_raw
+	) VALUES (?1, ?2, ?3, ?4, ?5)`
+
+	for i := range rows {
+		m := &rows[i]
+		mid := string(m.MetadataID)
+
+		// (1) Parent row. source_id is a FK into data_sources.
+		err = sqlitex.Execute(s.conn, parentSQL, &sqlitex.ExecOptions{
+			Args: []any{mid, m.Name, m.Description, m.License, string(m.Source), m.LastSynced},
+		})
+		if err != nil {
+			return fmt.Errorf("bestiary: UpsertEntityMetadata: upsert entity_metadata %q: %w\n"+
+				"  What: writing the entity-metadata parent row failed\n"+
+				"  Why: the source_id foreign key has no matching data_sources row, or a constraint was violated\n"+
+				"  Where: store.go UpsertEntityMetadata, entity_metadata insert\n"+
+				"  How to fix: register the DataSource for %q via UpsertDataSources before attaching its metadata",
+				mid, err, m.Source)
+		}
+
+		// (2) Clear the replaceable child set for this metadata_id.
+		if err = sqlitex.Execute(s.conn, delBenchSQL, &sqlitex.ExecOptions{Args: []any{mid}}); err != nil {
+			return fmt.Errorf("bestiary: UpsertEntityMetadata: clear metadata_benchmarks for %q: %w\n"+
+				"  What: deleting the prior benchmark rows failed\n"+
+				"  Why: an unexpected SQLite error during the replace-set refresh\n"+
+				"  Where: store.go UpsertEntityMetadata, metadata_benchmarks delete\n"+
+				"  How to fix: verify the v6 metadata tables exist (OpenStore migration)",
+				mid, err)
+		}
+		if err = sqlitex.Execute(s.conn, delLinkSQL, &sqlitex.ExecOptions{Args: []any{mid}}); err != nil {
+			return fmt.Errorf("bestiary: UpsertEntityMetadata: clear metadata_links for %q: %w\n"+
+				"  What: deleting the prior link rows failed\n"+
+				"  Why: an unexpected SQLite error during the replace-set refresh\n"+
+				"  Where: store.go UpsertEntityMetadata, metadata_links delete\n"+
+				"  How to fix: verify the v6 metadata tables exist (OpenStore migration)",
+				mid, err)
+		}
+
+		// (3) Insert the current children in slice order (their rowid becomes the
+		// stable read-back order QueryEntityMetadata reassembles).
+		for j := range m.Benchmarks {
+			b := &m.Benchmarks[j]
+			err = sqlitex.Execute(s.conn, insBenchSQL, &sqlitex.ExecOptions{
+				Args: []any{
+					mid, b.Name, b.Version, b.Variant, b.Dataset,
+					b.Harness, b.Metric, b.Score, b.ScoreRaw, b.SourceURL, b.Date,
+				},
+			})
+			if err != nil {
+				return fmt.Errorf("bestiary: UpsertEntityMetadata: insert benchmark %q for %q: %w\n"+
+					"  What: writing a benchmark child row failed\n"+
+					"  Why: the metadata_id foreign key has no parent, or a constraint was violated\n"+
+					"  Where: store.go UpsertEntityMetadata, metadata_benchmarks insert\n"+
+					"  How to fix: ensure the parent entity_metadata row was written first (it is, within this txn)",
+					b.Name, mid, err)
+			}
+		}
+		for j := range m.Links {
+			l := &m.Links[j]
+			err = sqlitex.Execute(s.conn, insLinkSQL, &sqlitex.ExecOptions{
+				Args: []any{mid, l.Label, l.URL, l.Type.String(), l.TypeRaw},
+			})
+			if err != nil {
+				return fmt.Errorf("bestiary: UpsertEntityMetadata: insert link %q for %q: %w\n"+
+					"  What: writing a link child row failed\n"+
+					"  Why: the metadata_id foreign key has no parent, or a constraint was violated\n"+
+					"  Where: store.go UpsertEntityMetadata, metadata_links insert\n"+
+					"  How to fix: ensure the parent entity_metadata row was written first (it is, within this txn)",
+					l.URL, mid, err)
+			}
+		}
+	}
+
+	return nil
+}
+
+// QueryCurrentIngests returns the CURRENT ingest of every source: the row with the
+// maximum ingested_at per data_source_id, sorted ascending by data_source_id. It
+// reads the append-only dataset_ingested history and collapses it to one current
+// row per source (the ingest-log analogue of DatasetIngestedFor's MAX, across all
+// sources at once).
+//
+// The query relies on SQLite's documented bare-column rule: with a single MAX()
+// aggregate and a GROUP BY, the bare parser_schema column takes its value from the
+// same row that supplied the maximum ingested_at, so the returned parser_schema is
+// the current ingest's, not an arbitrary row's.
+//
+// ctx is accepted for API compatibility; zombiezen.com/go/sqlite does not support
+// per-operation context cancellation.
+func (s *Store) QueryCurrentIngests(ctx context.Context) ([]DatasetIngested, error) {
+	const query = `SELECT data_source_id, MAX(ingested_at) AS ingested_at, parser_schema
+		FROM dataset_ingested
+		GROUP BY data_source_id
+		ORDER BY data_source_id`
+
+	var out []DatasetIngested
+	err := sqlitex.Execute(s.conn, query, &sqlitex.ExecOptions{
+		ResultFunc: func(stmt *sqlite.Stmt) error {
+			out = append(out, DatasetIngested{
+				SourceID:     DataSourceID(stmt.GetText("data_source_id")),
+				IngestedAt:   stmt.GetText("ingested_at"),
+				ParserSchema: int(stmt.GetInt64("parser_schema")),
+			})
+			return nil
+		},
+	})
+	if err != nil {
+		return nil, fmt.Errorf("bestiary: QueryCurrentIngests: %w", err)
+	}
+	return out, nil
+}
+
+// QueryIngestHistory returns every ingest row for a single source, sorted ascending
+// by ingested_at (oldest first). It is the per-source history view behind
+// `sources --history`; an empty slice (not an error) is returned when the source
+// has no ingest rows.
+//
+// ctx is accepted for API compatibility; zombiezen.com/go/sqlite does not support
+// per-operation context cancellation.
+func (s *Store) QueryIngestHistory(ctx context.Context, id DataSourceID) ([]DatasetIngested, error) {
+	const query = `SELECT data_source_id, ingested_at, parser_schema
+		FROM dataset_ingested
+		WHERE data_source_id = ?1
+		ORDER BY ingested_at ASC`
+
+	var out []DatasetIngested
+	err := sqlitex.Execute(s.conn, query, &sqlitex.ExecOptions{
+		Args: []any{string(id)},
+		ResultFunc: func(stmt *sqlite.Stmt) error {
+			out = append(out, DatasetIngested{
+				SourceID:     DataSourceID(stmt.GetText("data_source_id")),
+				IngestedAt:   stmt.GetText("ingested_at"),
+				ParserSchema: int(stmt.GetInt64("parser_schema")),
+			})
+			return nil
+		},
+	})
+	if err != nil {
+		return nil, fmt.Errorf("bestiary: QueryIngestHistory(%q): %w", string(id), err)
+	}
+	return out, nil
+}
+
+// QueryEntityMetadata returns all cached entity metadata with its benchmark and
+// link children reassembled onto each parent. The order is deterministic: parents
+// ascending by metadata_id, and within a parent the children in insertion order
+// (rowid). Enum-typed columns are decoded back from their stored string forms.
+//
+// The reassembly is three sequential passes (parents, then benchmarks, then
+// links): zombiezen.com/go/sqlite does not permit issuing a new statement while a
+// result cursor is open, so nested per-parent child queries are not possible; the
+// flat child passes are keyed back onto their parent by metadata_id.
+//
+// ctx is accepted for API compatibility; zombiezen.com/go/sqlite does not support
+// per-operation context cancellation.
+func (s *Store) QueryEntityMetadata(ctx context.Context) ([]EntityMetadata, error) {
+	// Pass 1: parents, ordered by metadata_id. Build the slice and an index from
+	// metadata_id to its position so the child passes can append in place.
+	var out []EntityMetadata
+	idx := map[MetadataID]int{}
+	const parentQuery = `SELECT metadata_id, name, description, license, source_id, last_synced
+		FROM entity_metadata
+		ORDER BY metadata_id`
+	err := sqlitex.Execute(s.conn, parentQuery, &sqlitex.ExecOptions{
+		ResultFunc: func(stmt *sqlite.Stmt) error {
+			mid := MetadataID(stmt.GetText("metadata_id"))
+			idx[mid] = len(out)
+			out = append(out, EntityMetadata{
+				MetadataID:  mid,
+				Name:        stmt.GetText("name"),
+				Description: stmt.GetText("description"),
+				License:     stmt.GetText("license"),
+				Source:      DataSourceID(stmt.GetText("source_id")),
+				LastSynced:  stmt.GetText("last_synced"),
+			})
+			return nil
+		},
+	})
+	if err != nil {
+		return nil, fmt.Errorf("bestiary: QueryEntityMetadata: read parents: %w", err)
+	}
+
+	// Pass 2: benchmarks, ordered by (metadata_id, rowid) so each parent's set
+	// reassembles in insertion order.
+	const benchQuery = `SELECT metadata_id, name, version, variant, dataset, harness, metric, score, score_raw, source_url, date
+		FROM metadata_benchmarks
+		ORDER BY metadata_id, rowid`
+	err = sqlitex.Execute(s.conn, benchQuery, &sqlitex.ExecOptions{
+		ResultFunc: func(stmt *sqlite.Stmt) error {
+			mid := MetadataID(stmt.GetText("metadata_id"))
+			pos, ok := idx[mid]
+			if !ok {
+				// A child with no parent cannot occur under the FK, but skip rather
+				// than panic if the store was hand-edited with foreign_keys off.
+				return nil
+			}
+			out[pos].Benchmarks = append(out[pos].Benchmarks, BenchmarkResult{
+				Name:      stmt.GetText("name"),
+				Version:   stmt.GetText("version"),
+				Variant:   stmt.GetText("variant"),
+				Dataset:   stmt.GetText("dataset"),
+				Harness:   stmt.GetText("harness"),
+				Metric:    stmt.GetText("metric"),
+				Score:     stmt.GetFloat("score"),
+				ScoreRaw:  stmt.GetText("score_raw"),
+				SourceURL: stmt.GetText("source_url"),
+				Date:      stmt.GetText("date"),
+			})
+			return nil
+		},
+	})
+	if err != nil {
+		return nil, fmt.Errorf("bestiary: QueryEntityMetadata: read benchmarks: %w", err)
+	}
+
+	// Pass 3: links, same (metadata_id, rowid) order. The stored type string decodes
+	// back to a LinkType; an unexpected token degrades to LinkOther rather than
+	// failing the read (the verbatim token is preserved in type_raw regardless).
+	const linkQuery = `SELECT metadata_id, label, url, type, type_raw
+		FROM metadata_links
+		ORDER BY metadata_id, rowid`
+	err = sqlitex.Execute(s.conn, linkQuery, &sqlitex.ExecOptions{
+		ResultFunc: func(stmt *sqlite.Stmt) error {
+			mid := MetadataID(stmt.GetText("metadata_id"))
+			pos, ok := idx[mid]
+			if !ok {
+				return nil
+			}
+			var lt LinkType
+			if uerr := lt.UnmarshalText([]byte(stmt.GetText("type"))); uerr != nil {
+				lt = LinkOther
+			}
+			out[pos].Links = append(out[pos].Links, ModelLink{
+				Label:   stmt.GetText("label"),
+				URL:     stmt.GetText("url"),
+				Type:    lt,
+				TypeRaw: stmt.GetText("type_raw"),
+			})
+			return nil
+		},
+	})
+	if err != nil {
+		return nil, fmt.Errorf("bestiary: QueryEntityMetadata: read links: %w", err)
+	}
+
+	return out, nil
 }
 
 // QueryModels returns all cached models. If provider is non-empty, results are

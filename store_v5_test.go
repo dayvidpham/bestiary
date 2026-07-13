@@ -192,16 +192,17 @@ func TestStoreMigrate_V4toV5(t *testing.T) {
 	}
 	defer store.Close()
 
-	// Schema version must be currentSchemaVersion (5) after migration.
+	// Schema version must reach currentSchemaVersion after migration. A v4 database
+	// now migrates through v5 to v6 (the ladder is chained); this test asserts the
+	// v4→v5 additive step's outcome — the models rows and the four BCNF tables — is
+	// preserved along the way. The exact terminal version is pinned by the dedicated
+	// v6 test.
 	version, err := getSchemaVersion(store.conn)
 	if err != nil {
 		t.Fatalf("getSchemaVersion: %v", err)
 	}
 	if version != currentSchemaVersion {
 		t.Errorf("post-migration version = %d, want %d", version, currentSchemaVersion)
-	}
-	if currentSchemaVersion != 5 {
-		t.Errorf("currentSchemaVersion = %d, want 5", currentSchemaVersion)
 	}
 
 	// Model rows must be intact (additive migration touches only new tables).
@@ -364,63 +365,12 @@ func TestUpsertDataSources_IngestOrphanRejected(t *testing.T) {
 	}
 }
 
-// TestUpsertDataSources_IngestReplaceOnRefresh pins the replace-on-refresh
-// semantic of dataset_ingested: re-ingesting the same source with a newer
-// ingested_at OVERWRITES the single current-ingest row rather than leaving the
-// older one in place. Without this, an OR REPLACE→OR IGNORE regression would
-// silently retain a stale ingested_at while the rest of the suite stayed green.
-func TestUpsertDataSources_IngestReplaceOnRefresh(t *testing.T) {
-	store, err := OpenStore(":memory:")
-	if err != nil {
-		t.Fatalf("OpenStore(:memory:): %v", err)
-	}
-	defer store.Close()
-
-	ctx := context.Background()
-	src := []DataSource{{ID: DataSourceOllama, URI: "https://ollama.com", CanonicalName: "Ollama"}}
-
-	// First ingest at T1.
-	if err := store.UpsertDataSources(ctx, src, []DatasetIngested{
-		{SourceID: DataSourceOllama, IngestedAt: "2026-06-01T00:00:00Z", ParserSchema: 2},
-	}); err != nil {
-		t.Fatalf("UpsertDataSources (T1): %v", err)
-	}
-
-	// Re-ingest the SAME source at a newer T2 with a different parser_schema.
-	if err := store.UpsertDataSources(ctx, src, []DatasetIngested{
-		{SourceID: DataSourceOllama, IngestedAt: "2026-06-09T00:00:00Z", ParserSchema: 3},
-	}); err != nil {
-		t.Fatalf("UpsertDataSources (T2): %v", err)
-	}
-
-	// Still exactly one current-ingest row (PK = data_source_id), now carrying T2.
-	if got := countRows(t, store.conn, "dataset_ingested"); got != 1 {
-		t.Errorf("dataset_ingested row count = %d, want 1 (single current ingest, replaced not appended)", got)
-	}
-	var ingestedAt string
-	var parserSchema int
-	err = sqlitex.Execute(store.conn,
-		`SELECT ingested_at AS ingested_at, parser_schema AS parser_schema
-		 FROM dataset_ingested WHERE data_source_id = ?1`,
-		&sqlitex.ExecOptions{
-			Args: []any{string(DataSourceOllama)},
-			ResultFunc: func(stmt *sqlite.Stmt) error {
-				ingestedAt = stmt.GetText("ingested_at")
-				parserSchema = int(stmt.GetInt64("parser_schema"))
-				return nil
-			},
-		})
-	if err != nil {
-		t.Fatalf("read-back: %v", err)
-	}
-	if ingestedAt != "2026-06-09T00:00:00Z" {
-		t.Errorf("ingested_at after refresh = %q, want T2 %q (replace-on-refresh; an OR IGNORE regression would keep stale T1)",
-			ingestedAt, "2026-06-09T00:00:00Z")
-	}
-	if parserSchema != 3 {
-		t.Errorf("parser_schema after refresh = %d, want 3 (replaced)", parserSchema)
-	}
-}
+// NOTE: the former TestUpsertDataSources_IngestReplaceOnRefresh (single current
+// ingest, replace-on-refresh) was removed at store v6: dataset_ingested is now an
+// append-only history keyed by the composite (data_source_id, ingested_at), so
+// re-ingesting a source at a new timestamp APPENDS a row rather than overwriting
+// one. The v6 append + discriminator (same key, different parser_schema → original
+// retained) semantics are pinned in store_v6_test.go.
 
 // TestUpsertEntitySources_RoundTrip writes attestations through the public API
 // (after registering their source) and reads them back. It proves the two-pass

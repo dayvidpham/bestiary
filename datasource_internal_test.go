@@ -62,6 +62,69 @@ func TestParseDataSourceTable_RejectsDuplicateID(t *testing.T) {
 	}
 }
 
+// TestParseDataSourceTable_MultiRowHistorySorted pins the v3 append-only history:
+// a source MAY carry multiple ingested rows, and the loader must (1) accept them,
+// (2) sort each source's history ASCENDING by ingested_at regardless of file order,
+// and (3) expose the MAX as the current ingest via DatasetIngestedFor's seam. The
+// fixture lists the rows out of order (newest first) so a dropped sort is falsified.
+func TestParseDataSourceTable_MultiRowHistorySorted(t *testing.T) {
+	const src = `{
+	  "schema_version": 3,
+	  "sources": [
+	    {"id": "models.dev", "uri": "https://models.dev/api.json", "canonical_name": "models.dev"}
+	  ],
+	  "ingested": [
+	    {"source_id": "models.dev", "ingested_at": "2026-06-09T00:00:00Z", "parser_schema": 3},
+	    {"source_id": "models.dev", "ingested_at": "2026-01-01T00:00:00Z", "parser_schema": 2},
+	    {"source_id": "models.dev", "ingested_at": "2026-03-15T00:00:00Z", "parser_schema": 2}
+	  ]
+	}`
+	tbl, err := parseDataSourceTable([]byte(src))
+	if err != nil {
+		t.Fatalf("parseDataSourceTable rejected a valid multi-row history: %v", err)
+	}
+	hist := tbl.ingested[DataSourceModelsDev]
+	if len(hist) != 3 {
+		t.Fatalf("history length = %d, want 3 (all rows kept)", len(hist))
+	}
+	wantOrder := []string{"2026-01-01T00:00:00Z", "2026-03-15T00:00:00Z", "2026-06-09T00:00:00Z"}
+	for i, w := range wantOrder {
+		if hist[i].IngestedAt != w {
+			t.Errorf("history[%d].IngestedAt = %q, want %q (ascending regardless of file order)", i, hist[i].IngestedAt, w)
+		}
+	}
+	// The last (maximum) element is the current ingest and carries its own parser_schema.
+	cur := hist[len(hist)-1]
+	if cur.IngestedAt != "2026-06-09T00:00:00Z" || cur.ParserSchema != 3 {
+		t.Errorf("current ingest = %+v, want ingested_at 2026-06-09T00:00:00Z parser_schema 3", cur)
+	}
+}
+
+// TestParseDataSourceTable_RejectsExactDuplicateIngest pins the composite primary
+// key of the append-only log: two rows sharing the SAME (source_id, ingested_at)
+// are the same fact twice and must be rejected with an actionable error that names
+// the timestamp. A different ingested_at for the same source is NOT a duplicate
+// (that is the history case, covered above).
+func TestParseDataSourceTable_RejectsExactDuplicateIngest(t *testing.T) {
+	const bad = `{
+	  "schema_version": 3,
+	  "sources": [
+	    {"id": "models.dev", "uri": "https://models.dev/api.json", "canonical_name": "models.dev"}
+	  ],
+	  "ingested": [
+	    {"source_id": "models.dev", "ingested_at": "2026-06-09T00:00:00Z", "parser_schema": 3},
+	    {"source_id": "models.dev", "ingested_at": "2026-06-09T00:00:00Z", "parser_schema": 2}
+	  ]
+	}`
+	_, err := parseDataSourceTable([]byte(bad))
+	if err == nil {
+		t.Fatal("parseDataSourceTable accepted an exact-duplicate (source_id, ingested_at); want a rejection")
+	}
+	if !strings.Contains(err.Error(), "2026-06-09T00:00:00Z") {
+		t.Errorf("error = %q, want it to name the duplicate ingested_at", err.Error())
+	}
+}
+
 // TestSafeDataSourceTable_DegradesToNoSources exercises the runtime degrade twin of
 // the codegen Validate* hard-fail: when the table fails to load (parse error) or is
 // nil, safeDataSourceTable must fall back to a non-nil EMPTY table so lookups miss
@@ -186,7 +249,7 @@ func TestBuildEntitySourceRelation_SortsRegardlessOfAttestOrder(t *testing.T) {
 func TestValidateDataSourceFKs_RejectsOrphans(t *testing.T) {
 	good := &dataSourceTable{
 		byID:     map[DataSourceID]DataSource{DataSourceModelsDev: {ID: DataSourceModelsDev, URI: "https://models.dev/api.json"}},
-		ingested: map[DataSourceID]DatasetIngested{DataSourceModelsDev: {SourceID: DataSourceModelsDev}},
+		ingested: map[DataSourceID][]DatasetIngested{DataSourceModelsDev: {{SourceID: DataSourceModelsDev}}},
 	}
 	if err := validateDataSourceFKs(good, []EntitySource{{EntityKey: "k", SourceID: DataSourceModelsDev}}); err != nil {
 		t.Fatalf("validateDataSourceFKs rejected a sound table: %v", err)
@@ -194,7 +257,7 @@ func TestValidateDataSourceFKs_RejectsOrphans(t *testing.T) {
 
 	orphanIngest := &dataSourceTable{
 		byID:     map[DataSourceID]DataSource{DataSourceModelsDev: {ID: DataSourceModelsDev}},
-		ingested: map[DataSourceID]DatasetIngested{"ghost": {SourceID: "ghost"}},
+		ingested: map[DataSourceID][]DatasetIngested{"ghost": {{SourceID: "ghost"}}},
 	}
 	if err := validateDataSourceFKs(orphanIngest, nil); err == nil {
 		t.Error("validateDataSourceFKs accepted an ingest whose source_id has no DataSource; want rejection")
@@ -202,7 +265,7 @@ func TestValidateDataSourceFKs_RejectsOrphans(t *testing.T) {
 
 	orphanAttest := &dataSourceTable{
 		byID:     map[DataSourceID]DataSource{DataSourceModelsDev: {ID: DataSourceModelsDev}},
-		ingested: map[DataSourceID]DatasetIngested{},
+		ingested: map[DataSourceID][]DatasetIngested{},
 	}
 	if err := validateDataSourceFKs(orphanAttest, []EntitySource{{EntityKey: "k", SourceID: "ghost"}}); err == nil {
 		t.Error("validateDataSourceFKs accepted an attestation to a source with no DataSource; want rejection")
