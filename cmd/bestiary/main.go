@@ -888,10 +888,14 @@ const datasourcesExportSchemaVersion = 3
 
 // buildSourcesExport assembles the datasources.json v3 export document. The source
 // dimension (id/uri/canonical name) always comes from the curated table
-// (KnownDataSources) — it is stable curated data with no store reader — while the
-// ingest history comes from the store when it holds any ingest rows, else from the
-// curated table (the documented store-empty/absent fallback). Sources are ordered
-// by curated file order; a source's ingest rows stay ascending by ingest time.
+// (KnownDataSources) — it is stable curated data with no store reader. The ingest
+// history is the UNION of the store's ingest log and the curated seed rows,
+// deduplicated on the exact (source_id, ingested_at) key: a live sync writes only
+// its own source's rows to the store, so a store-only export would silently drop
+// provenance that lives only in the curated seed (the offline Ollama ingest, and
+// any models.dev seed row not re-synced this run). Unioning keeps the export
+// complete and safely promotable into parse/data/datasources.json. Sources are
+// ordered by curated file order; a source's ingest rows are ascending by ingest time.
 func buildSourcesExport(store *bestiary.Store) datasourcesExportDoc {
 	doc := datasourcesExportDoc{SchemaVersion: datasourcesExportSchemaVersion}
 
@@ -904,22 +908,9 @@ func buildSourcesExport(store *bestiary.Store) datasourcesExportDoc {
 		})
 	}
 
-	// Prefer the store's ingest log when it holds any rows; otherwise fall back to
-	// the curated ingest table so the export is never empty when curated data exists.
-	useStore := false
-	if store != nil {
-		if cur, err := store.QueryCurrentIngests(context.Background()); err == nil && len(cur) > 0 {
-			useStore = true
-		}
-	}
 	for _, ds := range sources {
-		var hist []bestiary.DatasetIngested
-		if useStore {
-			hist, _ = store.QueryIngestHistory(context.Background(), ds.ID)
-		} else {
-			hist = bestiary.DatasetIngestHistoryFor(ds.ID)
-		}
-		for _, di := range hist {
+		merged := mergeIngestRows(storeIngestHistory(store, ds.ID), bestiary.DatasetIngestHistoryFor(ds.ID))
+		for _, di := range merged {
 			doc.Ingested = append(doc.Ingested, datasetIngestedExport{
 				SourceID:     string(di.SourceID),
 				IngestedAt:   di.IngestedAt,
@@ -928,6 +919,46 @@ func buildSourcesExport(store *bestiary.Store) datasourcesExportDoc {
 		}
 	}
 	return doc
+}
+
+// storeIngestHistory returns a source's ingest history from the store, or nil when
+// there is no store or the read fails (a fresh/absent store yields no rows, not an
+// error). It isolates the best-effort store read so the union in buildSourcesExport
+// degrades to curated-only rather than surfacing a store error on export.
+func storeIngestHistory(store *bestiary.Store, id bestiary.DataSourceID) []bestiary.DatasetIngested {
+	if store == nil {
+		return nil
+	}
+	hist, err := store.QueryIngestHistory(context.Background(), id)
+	if err != nil {
+		return nil
+	}
+	return hist
+}
+
+// mergeIngestRows unions one source's store and curated ingest histories,
+// deduplicating on the exact ingested_at key (the source is fixed per call, so
+// ingested_at IS the (source_id, ingested_at) key) and returning the rows ascending
+// by ingest time. The store row wins when a key exists in both — they describe the
+// same ingest — while curated-only rows (provenance that never entered the store,
+// e.g. the offline Ollama ingest) are preserved. Ascending ingested_at keys are
+// unique after dedup, so the ordering is fully deterministic.
+func mergeIngestRows(storeRows, curatedRows []bestiary.DatasetIngested) []bestiary.DatasetIngested {
+	byTime := make(map[string]bestiary.DatasetIngested, len(storeRows)+len(curatedRows))
+	for _, di := range storeRows {
+		byTime[di.IngestedAt] = di
+	}
+	for _, di := range curatedRows {
+		if _, ok := byTime[di.IngestedAt]; !ok {
+			byTime[di.IngestedAt] = di
+		}
+	}
+	out := make([]bestiary.DatasetIngested, 0, len(byTime))
+	for _, di := range byTime {
+		out = append(out, di)
+	}
+	sort.Slice(out, func(i, j int) bool { return out[i].IngestedAt < out[j].IngestedAt })
+	return out
 }
 
 // runShowEntity renders the aggregate view of one entity: its identity, rolled-up

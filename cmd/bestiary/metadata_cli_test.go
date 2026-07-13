@@ -453,10 +453,29 @@ func TestSourcesExport_CuratedFallback_RoundTrip(t *testing.T) {
 	}
 }
 
-// TestSourcesExport_Store_RoundTrip seeds the store's ingest log and asserts the
-// export reflects the store history (content equality against the store), and that
-// the document is a valid v3 shape (schema_version 3, source dimension present).
-func TestSourcesExport_Store_RoundTrip(t *testing.T) {
+// seedV3Doc loads the committed curated datasources.json seed as a v3 document so
+// union tests assert against the on-disk curated provenance without hardcoding its
+// (refreshable) timestamps.
+func seedV3Doc(t *testing.T) v3Doc {
+	t.Helper()
+	seed, err := os.ReadFile("../../parse/data/datasources.json")
+	if err != nil {
+		t.Fatalf("read committed datasources.json: %v", err)
+	}
+	var doc v3Doc
+	if err := json.Unmarshal(seed, &doc); err != nil {
+		t.Fatalf("parse committed datasources.json: %v", err)
+	}
+	return doc
+}
+
+// TestSourcesExport_Union_StoreAndCurated seeds the store with models.dev ingest
+// rows absent from the curated seed and asserts the export is the UNION of the
+// store history and the curated seed: both the seeded store rows and the curated
+// models.dev rows appear, and the curated-only Ollama provenance survives.
+// Dropping the curated arm of the union would drop the Ollama rows, so this test
+// goes RED — the regression the fix exists to prevent.
+func TestSourcesExport_Union_StoreAndCurated(t *testing.T) {
 	db := tempDBPath(t)
 	store, err := bestiary.OpenStore(db)
 	if err != nil {
@@ -476,7 +495,7 @@ func TestSourcesExport_Store_RoundTrip(t *testing.T) {
 
 	out := captureStdout(t, func() {
 		if err := run([]string{"sources", "--export", "--db-path", db}); err != nil {
-			t.Fatalf("sources --export (store): %v", err)
+			t.Fatalf("sources --export (union): %v", err)
 		}
 	})
 	var got v3Doc
@@ -486,27 +505,90 @@ func TestSourcesExport_Store_RoundTrip(t *testing.T) {
 	if got.SchemaVersion != 3 {
 		t.Errorf("export schema_version = %d, want 3", got.SchemaVersion)
 	}
-	// The source dimension is present (from the curated table).
-	hasModelsDev := false
-	for _, s := range got.Sources {
-		if s.ID == string(bestiary.DataSourceModelsDev) {
-			hasModelsDev = true
+
+	curated := ingestBySource(seedV3Doc(t))
+	gotIng := ingestBySource(got)
+
+	// models.dev: the union is the curated seed rows plus the two seeded store rows.
+	wantMD := map[datasetIngestedExport]bool{}
+	for _, r := range curated[string(bestiary.DataSourceModelsDev)] {
+		wantMD[r] = true
+	}
+	wantMD[datasetIngestedExport{SourceID: string(bestiary.DataSourceModelsDev), IngestedAt: t1, ParserSchema: 3}] = true
+	wantMD[datasetIngestedExport{SourceID: string(bestiary.DataSourceModelsDev), IngestedAt: t2, ParserSchema: 3}] = true
+
+	gotMD := map[datasetIngestedExport]bool{}
+	for _, r := range gotIng[string(bestiary.DataSourceModelsDev)] {
+		gotMD[r] = true
+	}
+	if len(gotMD) != len(wantMD) {
+		t.Errorf("union models.dev has %d distinct rows, want %d; got=%+v", len(gotMD), len(wantMD), gotIng[string(bestiary.DataSourceModelsDev)])
+	}
+	for r := range wantMD {
+		if !gotMD[r] {
+			t.Errorf("union models.dev missing expected row %+v", r)
 		}
 	}
-	if !hasModelsDev {
-		t.Errorf("export sources missing models.dev dimension row")
+
+	// Curated-only source: Ollama provenance lives only in the curated seed (a live
+	// sync never writes it to the store), so it MUST survive the union.
+	ollama := string(bestiary.DataSourceOllama)
+	if len(curated[ollama]) == 0 {
+		t.Fatalf("curated seed unexpectedly has no ollama ingest rows")
 	}
-	// Ingested reflects the store history (t1, t2) for models.dev.
-	md := ingestBySource(got)[string(bestiary.DataSourceModelsDev)]
-	if len(md) != 2 {
-		t.Fatalf("export models.dev ingested = %d rows, want 2 (the seeded store history)", len(md))
+	gotOllama := map[datasetIngestedExport]bool{}
+	for _, r := range gotIng[ollama] {
+		gotOllama[r] = true
 	}
-	seen := map[string]bool{}
-	for _, r := range md {
-		seen[r.IngestedAt] = true
+	for _, r := range curated[ollama] {
+		if !gotOllama[r] {
+			t.Errorf("union dropped curated-only ollama row %+v (curated arm missing?)", r)
+		}
 	}
-	if !seen[t1] || !seen[t2] {
-		t.Errorf("export models.dev ingested = %+v, want to contain %s and %s", md, t1, t2)
+}
+
+// TestSourcesExport_Union_DedupExactKey seeds the store with a models.dev row whose
+// exact (source_id, ingested_at) key already exists in the curated seed and asserts
+// the union carries that key exactly once — no duplicate ingest row.
+func TestSourcesExport_Union_DedupExactKey(t *testing.T) {
+	mdCurated := ingestBySource(seedV3Doc(t))[string(bestiary.DataSourceModelsDev)]
+	if len(mdCurated) == 0 {
+		t.Fatalf("curated seed unexpectedly has no models.dev ingest rows")
+	}
+	dup := mdCurated[0] // a real curated (source_id, ingested_at) to collide on
+
+	db := tempDBPath(t)
+	store, err := bestiary.OpenStore(db)
+	if err != nil {
+		t.Fatalf("OpenStore: %v", err)
+	}
+	ds := bestiary.DataSource{ID: bestiary.DataSourceModelsDev, URI: "https://models.dev/api.json", CanonicalName: "models.dev"}
+	ing := []bestiary.DatasetIngested{
+		{SourceID: bestiary.DataSourceModelsDev, IngestedAt: dup.IngestedAt, ParserSchema: dup.ParserSchema},
+	}
+	if err := store.UpsertDataSources(context.Background(), []bestiary.DataSource{ds}, ing); err != nil {
+		t.Fatalf("UpsertDataSources: %v", err)
+	}
+	store.Close()
+
+	out := captureStdout(t, func() {
+		if err := run([]string{"sources", "--export", "--db-path", db}); err != nil {
+			t.Fatalf("sources --export (dedup): %v", err)
+		}
+	})
+	var got v3Doc
+	if err := json.Unmarshal([]byte(out), &got); err != nil {
+		t.Fatalf("export json parse: %v\n%s", err, out)
+	}
+
+	n := 0
+	for _, r := range got.Ingested {
+		if r.SourceID == string(bestiary.DataSourceModelsDev) && r.IngestedAt == dup.IngestedAt {
+			n++
+		}
+	}
+	if n != 1 {
+		t.Errorf("dedup: models.dev row at %s appears %d times in the union, want exactly 1", dup.IngestedAt, n)
 	}
 }
 
