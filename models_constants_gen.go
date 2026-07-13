@@ -251,7 +251,7 @@ const (
 	Model__Abacus__Mimo__V2__2__Pro                                                          ModelID = "mimo-v2-pro"
 	Model__Abacus__MiniMax__M2__7__2_7                                                       ModelID = "MiniMaxAI/MiniMax-M2.7"
 	Model__Abacus__MiniMax__M3__3                                                            ModelID = "MiniMaxAI/MiniMax-M3"
-	Model__Abacus__Muse__Spark__1__1                                                         ModelID = "muse-spark-1.1"
+	Model__Abacus__Muse__Spark__1_1                                                          ModelID = "muse-spark-1.1"
 	Model__Abacus__O3__3                                                                     ModelID = "o3"
 	Model__Abacus__O3__3__Mini                                                               ModelID = "o3-mini"
 	Model__Abacus__O3__3__Pro                                                                ModelID = "o3-pro"
@@ -2429,7 +2429,7 @@ const (
 	Model__LlmGateway__Mistral__Large__2512                                                  ModelID = "mistral-large-2512"
 	Model__LlmGateway__Mistral__Large__Latest                                                ModelID = "mistral-large-latest"
 	Model__LlmGateway__Mistral__Small__2506                                                  ModelID = "mistral-small-2506"
-	Model__LlmGateway__Muse__Spark__1__1                                                     ModelID = "muse-spark-1.1"
+	Model__LlmGateway__Muse__Spark__1_1                                                      ModelID = "muse-spark-1.1"
 	Model__LlmGateway__Nemotron__3__Ultra__550b__3                                           ModelID = "nemotron-3-ultra-550b"
 	Model__LlmGateway__O1__1                                                                 ModelID = "o1"
 	Model__LlmGateway__O3__3                                                                 ModelID = "o3"
@@ -2602,7 +2602,7 @@ const (
 	Model__MergeGateway__Pixtral__Large__Latest                                              ModelID = "mistral/pixtral-large-latest"
 	Model__MergeGateway__Qwen3__6__Plus__3_6                                                 ModelID = "alibaba/qwen3.6-plus"
 	Model__MergeGateway__Qwen3__7__Max__3_7                                                  ModelID = "alibaba/qwen3.7-max"
-	Model__Meta__Muse__Spark__1__1                                                           ModelID = "muse-spark-1.1"
+	Model__Meta__Muse__Spark__1_1                                                            ModelID = "muse-spark-1.1"
 	Model__MiniMaxCNCodingPlan__MiniMax__M2__1__2_1                                          ModelID = "MiniMax-M2.1"
 	Model__MiniMaxCNCodingPlan__MiniMax__M2__2                                               ModelID = "MiniMax-M2"
 	Model__MiniMaxCNCodingPlan__MiniMax__M2__5__2_5                                          ModelID = "MiniMax-M2.5"
@@ -5285,7 +5285,7 @@ const (
 	Model__Vercel__Mistral__Small                                                            ModelID = "mistral/mistral-small"
 	Model__Vercel__Morph__V3__Fast                                                           ModelID = "morph/morph-v3-fast"
 	Model__Vercel__Morph__V3__Large                                                          ModelID = "morph/morph-v3-large"
-	Model__Vercel__Muse__Spark__1__1                                                         ModelID = "meta/muse-spark-1.1"
+	Model__Vercel__Muse__Spark__1_1                                                          ModelID = "meta/muse-spark-1.1"
 	Model__Vercel__Nemotron__3__Nano__30b__A3b__3                                            ModelID = "nvidia/nemotron-3-nano-30b-a3b"
 	Model__Vercel__Nemotron__3__Super__120b__A12b__3                                         ModelID = "nvidia/nemotron-3-super-120b-a12b"
 	Model__Vercel__Nemotron__3__Ultra__550b__A55b__3                                         ModelID = "nvidia/nemotron-3-ultra-550b-a55b"
@@ -5909,7 +5909,7 @@ var allModelConstants = [...]ModelID{
 	Model__Abacus__Mimo__V2__2__Pro,
 	Model__Abacus__MiniMax__M2__7__2_7,
 	Model__Abacus__MiniMax__M3__3,
-	Model__Abacus__Muse__Spark__1__1,
+	Model__Abacus__Muse__Spark__1_1,
 	Model__Abacus__O3__3,
 	Model__Abacus__O3__3__Mini,
 	Model__Abacus__O3__3__Pro,
@@ -8087,7 +8087,7 @@ var allModelConstants = [...]ModelID{
 	Model__LlmGateway__Mistral__Large__2512,
 	Model__LlmGateway__Mistral__Large__Latest,
 	Model__LlmGateway__Mistral__Small__2506,
-	Model__LlmGateway__Muse__Spark__1__1,
+	Model__LlmGateway__Muse__Spark__1_1,
 	Model__LlmGateway__Nemotron__3__Ultra__550b__3,
 	Model__LlmGateway__O1__1,
 	Model__LlmGateway__O3__3,
@@ -8260,7 +8260,7 @@ var allModelConstants = [...]ModelID{
 	Model__MergeGateway__Pixtral__Large__Latest,
 	Model__MergeGateway__Qwen3__6__Plus__3_6,
 	Model__MergeGateway__Qwen3__7__Max__3_7,
-	Model__Meta__Muse__Spark__1__1,
+	Model__Meta__Muse__Spark__1_1,
 	Model__MiniMaxCNCodingPlan__MiniMax__M2__1__2_1,
 	Model__MiniMaxCNCodingPlan__MiniMax__M2__2,
 	Model__MiniMaxCNCodingPlan__MiniMax__M2__5__2_5,
@@ -10943,7 +10943,7 @@ var allModelConstants = [...]ModelID{
 	Model__Vercel__Mistral__Small,
 	Model__Vercel__Morph__V3__Fast,
 	Model__Vercel__Morph__V3__Large,
-	Model__Vercel__Muse__Spark__1__1,
+	Model__Vercel__Muse__Spark__1_1,
 	Model__Vercel__Nemotron__3__Nano__30b__A3b__3,
 	Model__Vercel__Nemotron__3__Super__120b__A12b__3,
 	Model__Vercel__Nemotron__3__Ultra__550b__A55b__3,
