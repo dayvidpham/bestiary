@@ -1,11 +1,27 @@
-// bestiary-gen fetches the models.dev API and writes four generated files
+// bestiary-gen consumes the models.dev catalog and writes five generated files
 // into the bestiary package root:
-//   - models_static_gen.go    — all ~4168 model records
+//   - models_static_gen.go    — all model records (api.json / providers view)
 //   - providers_gen.go        — one Provider constant per API slug + knownProviders
 //   - families_gen.go         — one Family constant per unique API family value
 //   - models_constants_gen.go — one Model_* constant per eligible (ID, Provider) pair
+//   - models_metadata_gen.go  — baked EntityMetadata (models.json view), populated
+//     into bakedEntityMetadata via init()
 //
-// Run via: go generate ./...
+// Input: the committed catalog.json snapshot at parse/data/modelsdev/catalog.json
+// (the models.dev catalog.json artifact — both the providers and models views from a
+// single upstream deploy). Two modes:
+//   - --no-fetch (the deterministic default for `go generate`): reads the committed
+//     catalog.json. A missing or corrupt snapshot is a LOUD actionable error — codegen
+//     NEVER degrades to an empty catalog.
+//   - fetch (manual snapshot refresh): a single polite GET of the live catalog.json,
+//     which REWRITES the committed catalog.json + SNAPSHOT.json manifest, then regens.
+//
+// Decoding is delegated to the library's ParseCatalogJSON (the single wire-decode path
+// shared with the runtime client) so the generator never carries a second copy of the
+// models.dev wire schema; the generator owns only the post-decode decomposition and the
+// codegen emission.
+//
+// Run the deterministic regen via: go generate ./...
 package main
 
 import (
@@ -206,10 +222,22 @@ const (
 	outputProvidersPath   = "providers_gen.go"
 	outputFamiliesPath    = "families_gen.go"
 	defaultCacheDir       = ".bestiary-gen-cache"
-	cacheFile             = "api_response.json"
 	versionDuplicatesFile = "version_duplicates.json"
 	dotFormAuditFile      = "dot_form_audit.json"
 )
+
+// codegenUserAgent is the descriptive User-Agent the fetch mode sends on its single
+// polite request to the live models.dev catalog (the polite-bot precedent from
+// cmd/bestiary-ollama). It identifies the tool and its purpose so upstream can
+// attribute the request.
+const codegenUserAgent = "bestiary-gen/0.2.5 (+https://github.com/dayvidpham/bestiary; models.dev snapshot refresh)"
+
+// modelsdevUnlinkedFile is the codegen-emitted disagreement report: metadata ids whose
+// decomposed family IS present among the catalog entities but whose full tuple matched
+// no entity (a curator resolves each with a modelsdev_aliases.json entry). It mirrors
+// the parse_failures.json / ollama_unlinked.json report precedent and lives beside the
+// alias table it feeds.
+const modelsdevUnlinkedFile = "parse/data/modelsdev_unlinked.json"
 
 // VersionDuplicateKey identifies a group of models that share (provider, family,
 // variant, version) but differ in date or other attributes. Written to
@@ -257,64 +285,35 @@ type DotFormAuditEnvelope struct {
 	Entries       []DotFormAuditEntry `json:"entries"`
 }
 
-// apiURL is the endpoint bestiary-gen fetches from. Declared as a var (not const)
-// so tests can override it to point at an httptest.Server without build tags or
-// dual code paths.
-var apiURL = "https://models.dev/api.json"
+// catalogURL is the live models.dev catalog.json endpoint the fetch mode GETs.
+// Declared as a var (not const) so tests can override it to point at an
+// httptest.Server without build tags or dual code paths.
+var catalogURL = "https://models.dev/catalog.json"
 
-// --------------------------------------------------------------------------
-// Private wire types for JSON deserialization from models.dev
-// These are defined here (not in the main package) so the codegen tool is
-// self-contained and can handle API schema evolution without breaking the
-// library's wire.go.
-// --------------------------------------------------------------------------
+// vendoredCatalogPath is the committed codegen input: the models.dev catalog.json
+// snapshot. --no-fetch reads it; fetch mode rewrites it. Declared as a var so the
+// loud-error tests can point it at a controlled temp path. Relative to the module
+// root (where go generate runs).
+var vendoredCatalogPath = "parse/data/modelsdev/catalog.json"
 
-type genWireResponse map[string]genWireProvider
+// snapshotManifestPath is the committed provenance sidecar for the vendored catalog.
+// It is informational only — it is NEVER parsed into generated output — and is
+// rewritten alongside the catalog on a live fetch. Declared as a var so tests can
+// redirect it.
+var snapshotManifestPath = "parse/data/modelsdev/SNAPSHOT.json"
 
-type genWireProvider struct {
-	Name   string                  `json:"name"`
-	Models map[string]genWireModel `json:"models"`
-}
-
-// genWireModel mirrors the models.dev model object.
-// interleaved is stored as json.RawMessage because the field is polymorphic:
-// some providers use bool (true) and others use an object ({field: "..."}).
-// Since we only care about our three target providers (anthropic, google, openai)
-// which do not use this field, we just skip it.
-type genWireModel struct {
-	ID               string           `json:"id"`
-	Name             string           `json:"name"`
-	Family           string           `json:"family"`
-	Reasoning        bool             `json:"reasoning"`
-	ToolCall         bool             `json:"tool_call"`
-	Attachment       bool             `json:"attachment"`
-	Temperature      bool             `json:"temperature"`
-	StructuredOutput bool             `json:"structured_output"`
-	Interleaved      json.RawMessage  `json:"interleaved"`
-	OpenWeights      bool             `json:"open_weights"`
-	ReleaseDate      string           `json:"release_date"`
-	Knowledge        string           `json:"knowledge"`
-	Cost             *genWireCost     `json:"cost"`
-	Limit            *genWireLimit    `json:"limit"`
-	Modalities       *genWireModality `json:"modalities"`
-}
-
-type genWireCost struct {
-	Input      *float64 `json:"input"`
-	Output     *float64 `json:"output"`
-	Reasoning  *float64 `json:"reasoning"`
-	CacheRead  *float64 `json:"cache_read"`
-	CacheWrite *float64 `json:"cache_write"`
-}
-
-type genWireLimit struct {
-	Context *int `json:"context"`
-	Output  *int `json:"output"`
-}
-
-type genWireModality struct {
-	Input  []string `json:"input"`
-	Output []string `json:"output"`
+// snapshotManifest is the on-disk shape of parse/data/modelsdev/SNAPSHOT.json. It
+// records the provenance of the vendored catalog.json snapshot. FetchedAt is the
+// real wall-clock fetch time (written ONLY on a live refresh, never on a --no-fetch
+// regen, so it does not perturb deterministic regeneration). UpstreamHeadSHA is
+// best-effort: it is left empty when it cannot be determined from the fetch (the
+// catalog.json artifact does not carry the models.dev repo HEAD).
+type snapshotManifest struct {
+	Comment         string `json:"_comment"`
+	Artifact        string `json:"artifact"`
+	FetchedAt       string `json:"fetched_at"`
+	ETag            string `json:"etag"`
+	UpstreamHeadSHA string `json:"upstream_head_sha"`
 }
 
 func main() {
@@ -460,7 +459,7 @@ func run(args []string) error {
 	ctx := context.Background()
 	now := time.Now().UTC().Format(time.RFC3339)
 
-	// Fail loudly on bad lineage curation (IP-4) BEFORE generating anything: an
+	// Fail loudly on bad lineage curation BEFORE generating anything: an
 	// unknown parent base family or a malformed entry is a curation bug that must
 	// be caught at codegen, not silently degraded to "no lineage" at runtime.
 	if err := bestiary.ValidateLineageTable(); err != nil {
@@ -486,16 +485,20 @@ func run(args []string) error {
 		return fmt.Errorf("validate curated data-source table: %w", err)
 	}
 
-	rawJSON, models, providerMeta, parseFailures, err := fetchModelsWithRaw(ctx, flags.cacheDir, flags.noFetch)
+	rawJSON, models, metadata, providerMeta, parseFailures, err := fetchModelsWithRaw(ctx, flags.noFetch)
 	if err != nil {
 		return err
 	}
 
-	// Cache the raw API JSON for offline analysis (only when we actually fetched).
+	// On a live fetch, REWRITE the committed catalog.json snapshot + its SNAPSHOT.json
+	// manifest so the vendored input matches the just-fetched deploy. This is the only
+	// place the vendored files are mutated; --no-fetch never touches them, so a
+	// deterministic regen leaves them byte-identical. A rewrite failure is fatal: a
+	// stale-but-committed catalog paired with freshly-generated code would silently
+	// diverge, so we refuse to proceed.
 	if !flags.noFetch {
-		if cacheErr := cacheAPIResponse(rawJSON, flags.cacheDir); cacheErr != nil {
-			// Non-fatal: log and continue.
-			fmt.Fprintf(os.Stderr, "bestiary-gen: warning: could not cache API response: %v\n", cacheErr)
+		if wErr := rewriteVendoredSnapshot(rawJSON, lastFetchMeta, now); wErr != nil {
+			return wErr
 		}
 	}
 
@@ -524,7 +527,7 @@ func run(args []string) error {
 				"  Why: the specified provider slugs may be incorrect or absent from the API\n"+
 				"  Where: bestiary-gen model filter\n"+
 				"  How to fix: check slug spelling against the API at %s or remove the filter",
-			flags.only, len(models), apiURL,
+			flags.only, len(models), catalogURL,
 		)
 	}
 
@@ -579,6 +582,27 @@ func run(args []string) error {
 		return err
 	}
 
+	// Generate models_metadata_gen.go — the baked models.dev entity-metadata catalog
+	// (models.json view). It populates bakedEntityMetadata via init(); the emission
+	// sets Source=DataSourceModelsDev and LastSynced="" and orders rows by an explicit
+	// sort on MetadataID (never the first-seen aggregate order).
+	metadataSrc, err := generateMetadataSource(metadata)
+	if err != nil {
+		return fmt.Errorf("generate metadata source: %w", err)
+	}
+	if err := writeFile(outputMetadataPath, metadataSrc); err != nil {
+		return err
+	}
+
+	// Emit modelsdev_unlinked.json — the join-disagreement report. It runs the
+	// metadata↔entity join over the freshly decomposed entity set (built from the
+	// models just generated, NOT the compiled-in registry) so the report reflects
+	// THIS run's data. A write failure is non-fatal (diagnostic aid, parse_failures
+	// precedent); it never blocks the generated .go files.
+	if err := writeModelsdevUnlinked(models, metadata); err != nil {
+		fmt.Fprintf(os.Stderr, "bestiary-gen: warning: could not write %s: %v\n", modelsdevUnlinkedFile, err)
+	}
+
 	// Write parse_failures.json to the cache directory.
 	// Sort failures for stable output (parser output order is non-deterministic
 	// due to map iteration order in the API response). Stable order means
@@ -612,10 +636,11 @@ func run(args []string) error {
 	logPerReasonCounts(parseFailures)
 
 	fmt.Fprintf(os.Stdout,
-		"bestiary-gen: wrote %s with %d models (%d providers), %s with %d constants, %s with %d constants, %s at %s; %d parse failures logged to %s\n",
+		"bestiary-gen: wrote %s with %d models (%d providers), %s with %d constants, %s with %d constants, %s with %d metadata rows, %s at %s; %d parse failures logged to %s\n",
 		outputPath, len(filtered), countUniqueProviders(filtered),
 		outputProvidersPath, len(allSlugs),
 		outputFamiliesPath, len(familyMeta),
+		outputMetadataPath, len(metadata),
 		outputConstantsPath,
 		now,
 		len(parseFailures),
@@ -815,12 +840,71 @@ func writeFile(path string, src []byte) error {
 	return nil
 }
 
-func cacheAPIResponse(raw []byte, dir string) error {
+// fetchMeta captures provenance from the most recent live catalog fetch (currently
+// the HTTP ETag) for the SNAPSHOT.json manifest. It is written only by the fetch path
+// of fetchModelsWithRaw and read only by run() immediately afterwards; it is
+// package-level solely to avoid threading a response-meta value through the shared
+// decode pipeline that the direct-call tests also exercise.
+type fetchMeta struct {
+	etag string
+}
+
+// lastFetchMeta holds the fetchMeta of the most recent live fetch. It is meaningful
+// only in the fetch branch of run(), immediately after fetchModelsWithRaw returns.
+var lastFetchMeta fetchMeta
+
+// rewriteVendoredSnapshot overwrites the committed catalog.json snapshot with the
+// just-fetched bytes and rewrites its SNAPSHOT.json manifest. It is invoked ONLY on a
+// live fetch (never on --no-fetch), so a deterministic regen never perturbs the
+// vendored files. fetchedAt is the RFC3339 fetch time (the run's `now`), recorded as
+// committed provenance.
+func rewriteVendoredSnapshot(rawJSON []byte, meta fetchMeta, fetchedAt string) error {
+	dir := filepath.Dir(vendoredCatalogPath)
 	if err := os.MkdirAll(dir, 0o755); err != nil {
-		return fmt.Errorf("create cache dir %s: %w", dir, err)
+		return fmt.Errorf(
+			"rewriteVendoredSnapshot: create %q: %w\n"+
+				"  What: could not create the vendored snapshot directory\n"+
+				"  Where: %s\n"+
+				"  How to fix: ensure the module root is writable",
+			dir, err, dir,
+		)
 	}
-	dst := filepath.Join(dir, cacheFile)
-	return os.WriteFile(dst, raw, 0o644)
+	if err := os.WriteFile(vendoredCatalogPath, rawJSON, 0o644); err != nil {
+		return fmt.Errorf(
+			"rewriteVendoredSnapshot: write %q: %w\n"+
+				"  What: could not write the vendored catalog.json snapshot\n"+
+				"  Where: %s\n"+
+				"  How to fix: ensure the module root is writable",
+			vendoredCatalogPath, err, vendoredCatalogPath,
+		)
+	}
+
+	manifest := snapshotManifest{
+		Comment: "Provenance sidecar for the committed models.dev catalog.json snapshot. " +
+			"Informational only — NEVER parsed into generated output. Rewritten alongside " +
+			"catalog.json on a live `go run ./cmd/bestiary-gen` fetch; untouched by --no-fetch " +
+			"regen. upstream_head_sha is best-effort (the catalog.json artifact does not carry " +
+			"the models.dev repo HEAD); leave empty when not determinable.",
+		Artifact:        "catalog.json",
+		FetchedAt:       fetchedAt,
+		ETag:            meta.etag,
+		UpstreamHeadSHA: "",
+	}
+	data, err := json.MarshalIndent(manifest, "", "  ")
+	if err != nil {
+		return fmt.Errorf("rewriteVendoredSnapshot: marshal SNAPSHOT.json: %w", err)
+	}
+	data = append(data, '\n')
+	if err := os.WriteFile(snapshotManifestPath, data, 0o644); err != nil {
+		return fmt.Errorf(
+			"rewriteVendoredSnapshot: write %q: %w\n"+
+				"  What: could not write the SNAPSHOT.json manifest\n"+
+				"  Where: %s\n"+
+				"  How to fix: ensure the module root is writable",
+			snapshotManifestPath, err, snapshotManifestPath,
+		)
+	}
+	return nil
 }
 
 // writeParseFailures marshals the given failures into a ParseFailuresEnvelope
@@ -887,119 +971,84 @@ type providerAPIMeta struct {
 	Name string // display name from API (e.g. "Amazon Bedrock", "XAI")
 }
 
-// ErrCacheMiss is returned by fetchModelsWithRaw when --no-fetch is set and the
-// cache file does not exist or is empty.
-type ErrCacheMiss struct {
+// ErrVendoredCatalogMissing is returned by fetchModelsWithRaw when --no-fetch is set
+// and the committed catalog.json snapshot is absent or empty. It is the loud-fail
+// precedent for the codegen input: codegen NEVER degrades to an empty catalog.
+type ErrVendoredCatalogMissing struct {
 	Path string // full resolved path that was missing
 }
 
-func (e *ErrCacheMiss) Error() string {
+func (e *ErrVendoredCatalogMissing) Error() string {
 	return fmt.Sprintf(
-		"cached api_response.json missing or empty\n"+
-			"  Why: --no-fetch was specified; HTTP fetch was skipped\n"+
-			"  Where: %s (during cache load step in fetchModelsWithRaw)\n"+
-			"  When: during cache load step in fetchModelsWithRaw\n"+
-			"  What it means: bestiary-gen cannot proceed without API data\n"+
-			"  How to fix: re-run without --no-fetch (HTTP fetch enabled), OR place a previously-cached api_response.json at %s",
+		"vendored models.dev catalog.json missing or empty\n"+
+			"  What: the committed codegen input is absent or zero-length\n"+
+			"  Why: --no-fetch was specified; the live HTTP fetch was skipped\n"+
+			"  Where: %s (read in fetchModelsWithRaw during the --no-fetch load step)\n"+
+			"  When: codegen input load step\n"+
+			"  What it means: bestiary-gen cannot proceed and never degrades to an empty catalog\n"+
+			"  How to fix: run the models.dev snapshot refresh — `go run ./cmd/bestiary-gen` "+
+			"WITHOUT --no-fetch — to fetch and vendor %s + SNAPSHOT.json, then commit them "+
+			"(see the \"models.dev snapshot refresh\" section in AGENTS.md)",
 		e.Path, e.Path,
 	)
 }
 
-// fetchModelsWithRaw fetches all models from the models.dev API (or loads from
-// the local cache when noFetch is true).
+// fetchModelsWithRaw loads the models.dev catalog (the committed snapshot when noFetch
+// is true, otherwise a single live GET), decodes it through the LIBRARY's
+// ParseCatalogJSON — the single wire-decode path — and runs the codegen decomposition
+// over the parsed models.
 //
-//   - dir: cache directory to write/read api_response.json (default: defaultCacheDir).
-//   - noFetch: when true, skip HTTP and read from dir/api_response.json instead.
-//     Returns *ErrCacheMiss if the cache file is absent or empty.
+//   - noFetch=true: read the committed vendoredCatalogPath. A missing/empty file yields
+//     *ErrVendoredCatalogMissing; a corrupt file yields a loud decode error. It never
+//     degrades to an empty catalog.
+//   - noFetch=false: a single polite GET of catalogURL (descriptive User-Agent). The
+//     caller (run) is responsible for rewriting the vendored files from rawJSON.
 //
-// Returns the raw JSON body, the flat model slice, per-provider metadata, and
-// any parse failures detected during model conversion via genToModelInfoDetailed.
-// Parse failures are non-fatal — the model is still included in the output.
-func fetchModelsWithRaw(ctx context.Context, dir string, noFetch bool) (rawJSON []byte, models []bestiary.ModelInfo, provMeta map[string]providerAPIMeta, failures []bestiary.ParseFailure, err error) {
-	cachePath := filepath.Join(dir, cacheFile)
-
+// Returns the raw catalog bytes, the decomposed model slice (sorted by (Provider, ID)),
+// the baked metadata rows (models.json view, unsorted here — the metadata emitter
+// imposes the MetadataID order), per-provider display-name metadata, and any parse
+// failures from the decomposition (non-fatal — the model is still included).
+func fetchModelsWithRaw(ctx context.Context, noFetch bool) (rawJSON []byte, models []bestiary.ModelInfo, metadata []bestiary.EntityMetadata, provMeta map[string]providerAPIMeta, failures []bestiary.ParseFailure, err error) {
 	if noFetch {
-		// Load from cache; no network call.
-		body, readErr := os.ReadFile(cachePath)
+		body, readErr := os.ReadFile(vendoredCatalogPath)
 		if readErr != nil || len(body) == 0 {
-			absPath, _ := filepath.Abs(cachePath)
+			absPath, _ := filepath.Abs(vendoredCatalogPath)
 			if absPath == "" {
-				absPath = cachePath
+				absPath = vendoredCatalogPath
 			}
-			return nil, nil, nil, nil, &ErrCacheMiss{Path: absPath}
+			return nil, nil, nil, nil, nil, &ErrVendoredCatalogMissing{Path: absPath}
 		}
 		rawJSON = body
 	} else {
-		// Fetch from the API over HTTP.
-		req, reqErr := http.NewRequestWithContext(ctx, http.MethodGet, apiURL, nil)
-		if reqErr != nil {
-			return nil, nil, nil, nil, fmt.Errorf(
-				"create HTTP request for %s: %w\n"+
-					"  What: failed to construct the API request\n"+
-					"  How to fix: this is a programming error — report it",
-				apiURL, reqErr,
-			)
-		}
-
-		client := &http.Client{Timeout: 60 * time.Second}
-		resp, doErr := client.Do(req)
-		if doErr != nil {
-			return nil, nil, nil, nil, fmt.Errorf(
-				"HTTP GET %s: %w\n"+
-					"  What: network request failed\n"+
-					"  How to fix: check network connectivity and retry",
-				apiURL, doErr,
-			)
-		}
-		defer resp.Body.Close()
-
-		if resp.StatusCode != http.StatusOK {
-			return nil, nil, nil, nil, fmt.Errorf(
-				"unexpected HTTP status %d from %s; expected 200 OK\n"+
-					"  What: the API returned a non-success status\n"+
-					"  How to fix: check the API endpoint and try again",
-				resp.StatusCode, apiURL,
-			)
-		}
-
-		const maxBodyBytes = 10 * 1024 * 1024
-		body, readErr := io.ReadAll(io.LimitReader(resp.Body, maxBodyBytes))
-		if readErr != nil {
-			return nil, nil, nil, nil, fmt.Errorf(
-				"read response body from %s: %w\n"+
-					"  What: failed to read the API response body\n"+
-					"  How to fix: retry the operation",
-				apiURL, readErr,
-			)
+		body, fetchErr := fetchLiveCatalog(ctx)
+		if fetchErr != nil {
+			return nil, nil, nil, nil, nil, fetchErr
 		}
 		rawJSON = body
 	}
 
-	var apiResp genWireResponse
-	if err := json.Unmarshal(rawJSON, &apiResp); err != nil {
-		return nil, nil, nil, nil, fmt.Errorf(
-			"decode JSON from %s: %w\n"+
-				"  What: the API response JSON could not be decoded\n"+
-				"  Why: the API schema may have changed in a way not handled by json.RawMessage\n"+
-				"  How to fix: inspect the API response and update the wire types in cmd/bestiary-gen/main.go",
-			apiURL, err,
-		)
+	// Single decode path: the library's ParseCatalogJSON. The generator never carries
+	// a second copy of the models.dev wire schema.
+	cat, parseErr := bestiary.ParseCatalogJSON(rawJSON)
+	if parseErr != nil {
+		return nil, nil, nil, nil, nil, catalogDecodeError(parseErr, noFetch)
 	}
 
-	provMeta = make(map[string]providerAPIMeta, len(apiResp))
-	for providerSlug, prov := range apiResp {
-		provMeta[providerSlug] = providerAPIMeta{Name: prov.Name}
-		for _, wm := range prov.Models {
-			info, failure := genToModelInfoDetailed(providerSlug, wm)
-			models = append(models, info)
-			if failure != nil {
-				failures = append(failures, *failure)
-			}
+	// Decompose each parsed model. The library gives each ModelInfo its raw family on
+	// the Family field (RawFamily unset); enrichModelInfo runs the production
+	// decomposition and the curated bakes over it.
+	models = make([]bestiary.ModelInfo, 0, len(cat.Models))
+	for _, base := range cat.Models {
+		info, failure := enrichModelInfo(base)
+		models = append(models, info)
+		if failure != nil {
+			failures = append(failures, *failure)
 		}
 	}
+	metadata = cat.Metadata
 
 	// Determinism: sort the assembled model set by (Provider, ID) exactly once so
-	// every downstream consumer observes a stable order regardless of API map-
+	// every downstream consumer observes a stable order regardless of catalog map-
 	// iteration order.
 	sort.SliceStable(models, func(i, j int) bool {
 		if models[i].Provider != models[j].Provider {
@@ -1008,7 +1057,123 @@ func fetchModelsWithRaw(ctx context.Context, dir string, noFetch bool) (rawJSON 
 		return models[i].ID < models[j].ID
 	})
 
-	return rawJSON, models, provMeta, failures, nil
+	// Provider display names: the library's decode drops the per-provider "name"
+	// (ModelInfo carries no provider display name), so extract it from the same bytes
+	// with a thin name probe. This is not a second wire-schema copy — it reads only the
+	// stable provider "name" the casing heuristics use as a hint.
+	provMeta, err = extractProviderNames(rawJSON)
+	if err != nil {
+		return nil, nil, nil, nil, nil, err
+	}
+
+	return rawJSON, models, metadata, provMeta, failures, nil
+}
+
+// fetchLiveCatalog performs the single polite GET of the live catalog.json artifact
+// and returns its body (10 MB-limited). It sets a descriptive User-Agent (polite-bot
+// precedent) and records the response ETag on lastFetchMeta for the snapshot manifest.
+func fetchLiveCatalog(ctx context.Context) ([]byte, error) {
+	req, reqErr := http.NewRequestWithContext(ctx, http.MethodGet, catalogURL, nil)
+	if reqErr != nil {
+		return nil, fmt.Errorf(
+			"create HTTP request for %s: %w\n"+
+				"  What: failed to construct the catalog request\n"+
+				"  How to fix: this is a programming error — report it",
+			catalogURL, reqErr,
+		)
+	}
+	req.Header.Set("User-Agent", codegenUserAgent)
+
+	client := &http.Client{Timeout: 60 * time.Second}
+	resp, doErr := client.Do(req)
+	if doErr != nil {
+		return nil, fmt.Errorf(
+			"HTTP GET %s: %w\n"+
+				"  What: network request failed\n"+
+				"  How to fix: check network connectivity and retry",
+			catalogURL, doErr,
+		)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf(
+			"unexpected HTTP status %d from %s; expected 200 OK\n"+
+				"  What: the API returned a non-success status\n"+
+				"  How to fix: check the API endpoint and try again",
+			resp.StatusCode, catalogURL,
+		)
+	}
+
+	const maxBodyBytes = 10 * 1024 * 1024
+	body, readErr := io.ReadAll(io.LimitReader(resp.Body, maxBodyBytes))
+	if readErr != nil {
+		return nil, fmt.Errorf(
+			"read response body from %s: %w\n"+
+				"  What: failed to read the catalog response body\n"+
+				"  How to fix: retry the operation",
+			catalogURL, readErr,
+		)
+	}
+	lastFetchMeta = fetchMeta{etag: resp.Header.Get("ETag")}
+	return body, nil
+}
+
+// catalogDecodeError wraps a ParseCatalogJSON failure in an actionable message. In
+// --no-fetch mode it names the vendored path and the refresh workflow (a corrupt
+// committed snapshot must never silently degrade to an empty catalog); in fetch mode it
+// points at the upstream schema.
+func catalogDecodeError(cause error, noFetch bool) error {
+	if noFetch {
+		absPath, _ := filepath.Abs(vendoredCatalogPath)
+		if absPath == "" {
+			absPath = vendoredCatalogPath
+		}
+		return fmt.Errorf(
+			"decode vendored models.dev catalog.json: %w\n"+
+				"  What: the committed codegen input is not valid catalog.json ({models, providers})\n"+
+				"  Why: the vendored snapshot is corrupt or truncated\n"+
+				"  Where: %s\n"+
+				"  When: codegen input decode step (--no-fetch)\n"+
+				"  What it means: bestiary-gen cannot proceed and never degrades to an empty catalog\n"+
+				"  How to fix: re-run the models.dev snapshot refresh — `go run ./cmd/bestiary-gen` "+
+				"WITHOUT --no-fetch — to re-vendor a clean catalog.json (see AGENTS.md)",
+			cause, absPath,
+		)
+	}
+	return fmt.Errorf(
+		"decode models.dev catalog.json from %s: %w\n"+
+			"  What: the live catalog response could not be decoded as catalog.json\n"+
+			"  Why: the upstream schema may have changed\n"+
+			"  How to fix: inspect the response and update wire.go / ParseCatalogJSON in the library",
+		catalogURL, cause,
+	)
+}
+
+// extractProviderNames reads only the provider display names from the catalog bytes.
+// The library's decode intentionally drops the per-provider "name" (there is no
+// ModelInfo field for it), but codegen uses it as a casing hint for provider/family
+// identifiers, so a thin name probe recovers it without duplicating the model wire
+// schema.
+func extractProviderNames(rawJSON []byte) (map[string]providerAPIMeta, error) {
+	var probe struct {
+		Providers map[string]struct {
+			Name string `json:"name"`
+		} `json:"providers"`
+	}
+	if err := json.Unmarshal(rawJSON, &probe); err != nil {
+		return nil, fmt.Errorf(
+			"extractProviderNames: decode catalog providers view: %w\n"+
+				"  What: could not read the providers map from the catalog bytes\n"+
+				"  How to fix: verify the bytes are the catalog.json artifact ({models, providers})",
+			err,
+		)
+	}
+	out := make(map[string]providerAPIMeta, len(probe.Providers))
+	for slug, p := range probe.Providers {
+		out[slug] = providerAPIMeta{Name: p.Name}
+	}
+	return out, nil
 }
 
 // collectFamilies returns a deduplicated sorted list of unique non-empty raw API
@@ -1028,45 +1193,30 @@ func collectFamilies(models []bestiary.ModelInfo) []string {
 	return out
 }
 
-// parseCapabilityRaw converts a polymorphic JSON field to a bestiary.Capability.
-// The field may be: absent/null/empty → {false}, bool → {b}, object → {true, config}.
-func parseCapabilityRaw(raw json.RawMessage) bestiary.Capability {
-	if len(raw) == 0 {
-		return bestiary.Capability{}
-	}
-	var b bool
-	if err := json.Unmarshal(raw, &b); err == nil {
-		return bestiary.Capability{Supported: b}
-	}
-	var cfg map[string]string
-	if err := json.Unmarshal(raw, &cfg); err == nil {
-		return bestiary.Capability{Supported: true, Config: cfg}
-	}
-	return bestiary.Capability{}
-}
-
-// genToModelInfoDetailed converts a genWireModel to (ModelInfo, *ParseFailure).
-// The *ParseFailure is non-nil when ParseFamilyDetailed detects a known parsing
-// deficiency (see bestiary.ParseFamilyDetailed for the three detected modes).
-// Failure records are collected by fetchModelsWithRaw and written to
-// parse_failures.json at the end of each codegen run.
-func genToModelInfoDetailed(providerSlug string, wm genWireModel) (bestiary.ModelInfo, *bestiary.ParseFailure) {
-	// Derive normalized family, variant, and version.
-	rawFamily := bestiary.Family(wm.Family)
-	id := bestiary.ModelID(wm.ID)
-	provider := bestiary.Provider(providerSlug)
+// enrichModelInfo runs the codegen decomposition + curated bakes over a base
+// ModelInfo the library's ParseCatalogJSON produced. On entry, `base` already carries
+// every api.json-side fact the library decoded (id, provider, display name, costs,
+// limits, modalities, interleaved, description, status, reasoning options, …) with its
+// RAW family on the Family field (RawFamily unset). enrichModelInfo overwrites the
+// identity axes (RawFamily/Family/Variant/Version/Date/Modifier), attaches the serving
+// host, and bakes the curated lineage/param-size/source/quant-VRAM data keyed by ID.
+//
+// It returns (ModelInfo, *ParseFailure); the failure is non-nil when ParseFamilyDetailed
+// detects a known parsing deficiency. Failure records are collected by
+// fetchModelsWithRaw and written to parse_failures.json at the end of each run.
+func enrichModelInfo(base bestiary.ModelInfo) (bestiary.ModelInfo, *bestiary.ParseFailure) {
+	// The library set Family = the raw family string; that is the codegen raw family.
+	rawFamily := base.Family
+	id := base.ID
+	provider := base.Provider
 
 	// Single-ownership: consume the full 5-tuple from ParseFamilyDetailed.
 	// ParseFamilyDetailed(raw="") delegates to InferFamilyFromIDWithVariant +
 	// ExtractModifier, covering the empty-family case.
-	// This is byte-equivalent to the former two-branch structure; the
-	// decomposition snapshot test (TestDecompositionSnapshot) guards correctness.
-	//
 	// (family, variant, version, modifier) all come from ParseFamilyDetailed.
-	// Codegen no longer calls ExtractVersionFromID directly (single-ownership).
 	normFamily, normVariant, normVersion, normModifier, failure := bestiary.ParseFamilyDetailed(rawFamily, id, provider)
 
-	// Serving-host attribute (IP-2). DetectHost surfaces a curated host prefix
+	// Serving-host attribute. DetectHost surfaces a curated host prefix
 	// (e.g. "azure-gpt-4o" → HostAzure) as a per-instance attribute; the same
 	// strip is applied inside ParseFamilyDetailed so the decomposition above is
 	// already host-independent. The full catalog ID is retained as info.ID below
@@ -1095,7 +1245,7 @@ func genToModelInfoDetailed(providerSlug string, wm genWireModel) (bestiary.Mode
 	}
 
 	// Derive normalized date from cleaned model ID (modifier stripped) or release date.
-	normDate := bestiary.ExtractDate(cleanID, wm.ReleaseDate)
+	normDate := bestiary.ExtractDate(cleanID, base.ReleaseDate)
 
 	// If a parse failure was detected, backfill the date into AttemptedParse.
 	if failure != nil {
@@ -1103,61 +1253,32 @@ func genToModelInfoDetailed(providerSlug string, wm genWireModel) (bestiary.Mode
 		// Models where ExtractModifier extracts a known modifier no longer trip
 		// ReasonKnownSuffixOverflow (the modifier is now a first-class field).
 		// Clear the failure record for this case so the audit log shrinks as
-		// expected per the V2-5 design.
+		// expected now that the modifier is captured separately.
 		if failure.Reason == bestiary.ReasonKnownSuffixOverflow && len(normModifier) > 0 {
 			failure = nil
 		}
 	}
 
-	info := bestiary.ModelInfo{
-		ID:               id,
-		Provider:         provider,
-		DisplayName:      wm.Name,
-		RawFamily:        rawFamily,
-		Host:             host,
-		Family:           normFamily,
-		Variant:          normVariant,
-		Version:          normVersion,
-		Date:             normDate,
-		Modifier:         normModifier,
-		Reasoning:        wm.Reasoning,
-		ToolCall:         wm.ToolCall,
-		Attachment:       wm.Attachment,
-		Temperature:      wm.Temperature,
-		StructuredOutput: wm.StructuredOutput,
-		OpenWeights:      wm.OpenWeights,
-		ReleaseDate:      wm.ReleaseDate,
-		Knowledge:        wm.Knowledge,
-		Interleaved:      parseCapabilityRaw(wm.Interleaved),
-		LastSynced:       "",
-	}
+	// Start from the library-decoded base (costs, limits, modalities, interleaved, and
+	// the new api.json-side facts are already populated) and overwrite the identity
+	// axes plus the codegen-baked fields.
+	info := base
+	info.RawFamily = rawFamily
+	info.Host = host
+	info.Family = normFamily
+	info.Variant = normVariant
+	info.Version = normVersion
+	info.Date = normDate
+	info.Modifier = normModifier
+	info.LastSynced = ""
 
-	if wm.Cost != nil {
-		info.CostInputPerMTok = wm.Cost.Input
-		info.CostOutputPerMTok = wm.Cost.Output
-		info.CostReasoningPerMTok = wm.Cost.Reasoning
-		info.CostCacheReadPerMTok = wm.Cost.CacheRead
-		info.CostCacheWritePerMTok = wm.Cost.CacheWrite
-	}
-	if wm.Limit != nil {
-		if wm.Limit.Context != nil {
-			info.ContextWindow = *wm.Limit.Context
-		}
-		if wm.Limit.Output != nil {
-			info.MaxOutput = *wm.Limit.Output
-		}
-	}
-	if wm.Modalities != nil {
-		info.Modalities = genToModalities(wm.Modalities.Input, wm.Modalities.Output)
-	}
-
-	// Lineage (IP-4). Populate the derivation edges from the curated lineage
+	// Lineage. Populate the derivation edges from the curated lineage
 	// ledger (parse/data/lineage.json) for any catalog record whose ID matches a
 	// curated child key. The ledger — not raw_family — is the authoritative
 	// lineage source; nil (no edge) for the overwhelming majority of base models.
 	info.Lineage = bestiary.LineageFor(id)
 
-	// Curated quant/VRAM data (IP-5). Populate ParamSize, Source, and QuantVRAM
+	// Curated quant/VRAM data. Populate ParamSize, Source, and QuantVRAM
 	// from the curated quant_vram.json table. QuantVRAM rows are BAKED here: each
 	// row's VRAMBytes and VRAMContextTokens are filled in by calling
 	// EstimateVRAMBytes at the model's maximum context window. The bake-context
@@ -1188,7 +1309,7 @@ func genToModelInfoDetailed(providerSlug string, wm genWireModel) (bestiary.Mode
 		info.QuantVRAM = baked
 	}
 
-	// Curated finetune base reference (IP-5). When quant_vram.json records a
+	// Curated finetune base reference. When quant_vram.json records a
 	// base_ref for this model, append a DerivationFinetune edge to Lineage. This
 	// path is production-dormant until a curated finetune joins a models.dev
 	// catalog ID: the only base_ref entry today is a non-models.dev community
@@ -1224,25 +1345,6 @@ func appendFinetuneLineage(info *bestiary.ModelInfo, baseRef string) {
 		Kind:   bestiary.DerivationFinetune,
 	})
 	info.Lineage = edges
-}
-
-// genToModalities converts string slices from the API into the typed Modalities
-// value. Unrecognised modality strings are silently skipped.
-func genToModalities(input, output []string) bestiary.Modalities {
-	parseList := func(ss []string) []bestiary.Modality {
-		out := make([]bestiary.Modality, 0, len(ss))
-		for _, s := range ss {
-			var m bestiary.Modality
-			if err := m.UnmarshalText([]byte(s)); err == nil {
-				out = append(out, m)
-			}
-		}
-		return out
-	}
-	return bestiary.Modalities{
-		Input:  parseList(input),
-		Output: parseList(output),
-	}
 }
 
 // --------------------------------------------------------------------------
@@ -1506,7 +1608,7 @@ func generateSource(models []bestiary.ModelInfo, slugToConst map[string]string) 
 	var buf bytes.Buffer
 
 	buf.WriteString("// Code generated by bestiary-gen. DO NOT EDIT.\n")
-	buf.WriteString("//go:generate go run ./cmd/bestiary-gen\n")
+	buf.WriteString("//go:generate go run ./cmd/bestiary-gen --no-fetch\n")
 	buf.WriteString("\n")
 	buf.WriteString("package bestiary\n")
 	buf.WriteString("\n")
@@ -2312,7 +2414,7 @@ func generateConstantsSource(models []bestiary.ModelInfo, slugToConst map[string
 
 	var buf bytes.Buffer
 	buf.WriteString("// Code generated by bestiary-gen. DO NOT EDIT.\n")
-	buf.WriteString("//go:generate go run ./cmd/bestiary-gen\n")
+	buf.WriteString("//go:generate go run ./cmd/bestiary-gen --no-fetch\n")
 	buf.WriteString("\n")
 	buf.WriteString("package bestiary\n\n")
 
@@ -2367,4 +2469,225 @@ func generateConstantsSource(models []bestiary.ModelInfo, slugToConst map[string
 		)
 	}
 	return formatted, nil
+}
+
+// --------------------------------------------------------------------------
+// Metadata generation (models_metadata_gen.go) + join-disagreement report
+// --------------------------------------------------------------------------
+
+// outputMetadataPath is the file generateMetadataSource writes: the baked models.dev
+// entity-metadata catalog (models.json view). It populates bakedEntityMetadata via
+// init(), mirroring how models_static_gen.go owns staticModels.
+const outputMetadataPath = "models_metadata_gen.go"
+
+// generateMetadataSource renders the baked models.dev metadata rows as
+// models_metadata_gen.go. It is self-contained about the bake conventions: every row's
+// Source is set to DataSourceModelsDev and LastSynced to "" (a baked row always loses a
+// most-recent-wins merge to any synced row), and rows are ordered by an EXPLICIT
+// sort.Slice on MetadataID.
+//
+// The MetadataID sort is the determinism guard: the metadata arrives from a Go map
+// (non-deterministic iteration), so a missing sort would make the emission vary run to
+// run. The generated file assigns bakedEntityMetadata inside init() rather than
+// re-declaring it (the var is declared, empty, in metadata_join.go).
+func generateMetadataSource(meta []bestiary.EntityMetadata) ([]byte, error) {
+	baked := make([]bestiary.EntityMetadata, len(meta))
+	copy(baked, meta)
+	for i := range baked {
+		baked[i].Source = bestiary.DataSourceModelsDev
+		baked[i].LastSynced = ""
+	}
+	// Determinism: explicit MetadataID order — NOT a first-seen aggregate order.
+	sort.Slice(baked, func(i, j int) bool {
+		return baked[i].MetadataID < baked[j].MetadataID
+	})
+
+	var buf bytes.Buffer
+	buf.WriteString("// Code generated by bestiary-gen. DO NOT EDIT.\n")
+	buf.WriteString("//go:generate go run ./cmd/bestiary-gen --no-fetch\n")
+	buf.WriteString("\n")
+	buf.WriteString("package bestiary\n\n")
+	buf.WriteString("// init populates the compiled-in models.dev entity-metadata catalog. The\n")
+	buf.WriteString("// bakedEntityMetadata var is declared (empty) in metadata_join.go and owned\n")
+	buf.WriteString("// here, exactly as models_static_gen.go owns staticModels. Rows are ordered by\n")
+	buf.WriteString("// MetadataID; Source is DataSourceModelsDev and LastSynced is empty so a baked\n")
+	buf.WriteString("// row always loses a most-recent-wins merge to a synced row.\n")
+	buf.WriteString("func init() {\n")
+	buf.WriteString("\tbakedEntityMetadata = []EntityMetadata{\n")
+	for _, m := range baked {
+		buf.WriteString("\t\t{\n")
+		fmt.Fprintf(&buf, "\t\t\tMetadataID:  %q,\n", string(m.MetadataID))
+		fmt.Fprintf(&buf, "\t\t\tName:        %q,\n", m.Name)
+		fmt.Fprintf(&buf, "\t\t\tDescription: %q,\n", m.Description)
+		fmt.Fprintf(&buf, "\t\t\tLicense:     %q,\n", m.License)
+		if len(m.Links) > 0 {
+			fmt.Fprintf(&buf, "\t\t\tLinks:       %s,\n", modelLinksLiteral(m.Links))
+		}
+		if len(m.Benchmarks) > 0 {
+			fmt.Fprintf(&buf, "\t\t\tBenchmarks:  %s,\n", benchmarksLiteral(m.Benchmarks))
+		}
+		fmt.Fprintf(&buf, "\t\t\tSource:      %q,\n", string(m.Source))
+		fmt.Fprintf(&buf, "\t\t\tLastSynced:  %q,\n", m.LastSynced)
+		buf.WriteString("\t\t},\n")
+	}
+	buf.WriteString("\t}\n")
+	buf.WriteString("}\n")
+
+	formatted, err := format.Source(buf.Bytes())
+	if err != nil {
+		return nil, fmt.Errorf(
+			"go/format models_metadata_gen.go: %w\n"+
+				"  What: the generated metadata source is not syntactically valid\n"+
+				"  Why: a codegen template bug produced invalid Go\n"+
+				"  How to fix: inspect the unformatted buffer for syntax errors\n"+
+				"  Raw source (first 2000 bytes):\n%s",
+			err, truncate(buf.String(), 2000),
+		)
+	}
+	return formatted, nil
+}
+
+// linkTypeExpr renders a LinkType as its exported constant name so the generated
+// source references the enum symbolically (e.g. LinkBlog) rather than by integer
+// value. Mirrors derivationKindExpr/quantExpr. An out-of-range value falls back to
+// LinkOther defensively (the Other-at-zero fail-safe for this element enum).
+func linkTypeExpr(t bestiary.LinkType) string {
+	switch t {
+	case bestiary.LinkAnnouncement:
+		return "LinkAnnouncement"
+	case bestiary.LinkBlog:
+		return "LinkBlog"
+	case bestiary.LinkDocs:
+		return "LinkDocs"
+	case bestiary.LinkLicense:
+		return "LinkLicense"
+	case bestiary.LinkModelCard:
+		return "LinkModelCard"
+	case bestiary.LinkPaper:
+		return "LinkPaper"
+	case bestiary.LinkWeights:
+		return "LinkWeights"
+	default:
+		return "LinkOther"
+	}
+}
+
+// modelLinksLiteral renders a []ModelLink as a Go composite literal, preserving the
+// upstream (links then folded weights) order the parser produced. The generated file
+// is package bestiary, so ModelLink and LinkType constants are referenced unqualified.
+func modelLinksLiteral(links []bestiary.ModelLink) string {
+	parts := make([]string, len(links))
+	for i, l := range links {
+		parts[i] = fmt.Sprintf(
+			"{Label: %q, URL: %q, Type: %s, TypeRaw: %q}",
+			l.Label, l.URL, linkTypeExpr(l.Type), l.TypeRaw,
+		)
+	}
+	return "[]ModelLink{" + strings.Join(parts, ", ") + "}"
+}
+
+// benchmarksLiteral renders a []BenchmarkResult as a Go composite literal, preserving
+// the upstream array order. Score is emitted via scoreLiteral (a %g-canonical float
+// literal); a non-numeric upstream score rides on ScoreRaw with Score == 0.
+func benchmarksLiteral(bs []bestiary.BenchmarkResult) string {
+	parts := make([]string, len(bs))
+	for i, b := range bs {
+		parts[i] = fmt.Sprintf(
+			"{Name: %q, Version: %q, Variant: %q, Dataset: %q, Harness: %q,"+
+				" Metric: %q, Score: %s, ScoreRaw: %q, SourceURL: %q, Date: %q}",
+			b.Name, b.Version, b.Variant, b.Dataset, b.Harness,
+			b.Metric, scoreLiteral(b.Score), b.ScoreRaw, b.SourceURL, b.Date,
+		)
+	}
+	return "[]BenchmarkResult{" + strings.Join(parts, ", ") + "}"
+}
+
+// scoreLiteral renders a float64 benchmark score as a canonical, byte-stable Go
+// float literal (shortest %g round-trip, e.g. 0, 88.5, 91.2). Using strconv.FormatFloat
+// with 'g'/-1 avoids locale/format drift across codegen runs.
+func scoreLiteral(v float64) string {
+	return strconv.FormatFloat(v, 'g', -1, 64)
+}
+
+// buildEntitySet builds the minimal entity set the join needs from the freshly
+// decomposed models: one Entity per distinct identity key (Family, Variant, Version,
+// ParamSize, identity-class Modifier), constructed EXACTLY as registry.loadEntityIndex
+// builds its keys. Only Ref matters for the unlinked computation (JoinEntityMetadata
+// keys entities by Ref.String() and tests family presence by Ref.Family), so instances
+// and aggregates are intentionally omitted. This mirrors the registry's ref
+// construction without depending on the compiled-in staticModels.
+func buildEntitySet(models []bestiary.ModelInfo) []bestiary.Entity {
+	seen := make(map[string]struct{}, len(models))
+	var ents []bestiary.Entity
+	for _, m := range models {
+		ref := bestiary.EntityRef{
+			Family:    m.Family,
+			Variant:   m.Variant,
+			Version:   m.Version,
+			ParamSize: m.ParamSize,
+			Modifier:  bestiary.EntityModifiers(m.Modifier, m.Family),
+		}
+		key := ref.String()
+		if _, ok := seen[key]; ok {
+			continue
+		}
+		seen[key] = struct{}{}
+		ents = append(ents, bestiary.Entity{Ref: ref})
+	}
+	return ents
+}
+
+// ModelsdevUnlinkedEnvelope is the committed shape of parse/data/modelsdev_unlinked.json:
+// the sorted list of metadata ids whose decomposed family IS present among the catalog
+// entities but whose full tuple matched no entity (a curator resolves each with a
+// modelsdev_aliases.json entry). It carries NO wall-clock timestamp so the committed
+// report is byte-deterministic across regens (unlike the cache-dir parse_failures.json).
+type ModelsdevUnlinkedEnvelope struct {
+	Comment       string   `json:"_comment"`
+	SchemaVersion int      `json:"schema_version"`
+	Count         int      `json:"count"`
+	Unlinked      []string `json:"unlinked"`
+}
+
+// writeModelsdevUnlinked runs the metadata↔entity join over the freshly decomposed
+// entity set and writes the sorted disagreement report to modelsdevUnlinkedFile. It is
+// the codegen-emitted companion to the (empty-by-default) modelsdev_aliases.json: each
+// listed id is a join miss a curator triages into an alias. The report is deterministic
+// (sorted, no timestamp) so a clean regen never churns it.
+func writeModelsdevUnlinked(models []bestiary.ModelInfo, meta []bestiary.EntityMetadata) error {
+	ents := buildEntitySet(models)
+	_, unlinked, _ := bestiary.JoinEntityMetadata(ents, meta)
+
+	ids := make([]string, 0, len(unlinked))
+	for _, id := range unlinked {
+		ids = append(ids, string(id))
+	}
+	sort.Strings(ids)
+
+	envelope := ModelsdevUnlinkedEnvelope{
+		Comment: "Codegen-emitted models.dev join-disagreement report (DO NOT EDIT). Each id is a " +
+			"metadata row whose decomposed family IS present in the catalog but whose full identity " +
+			"tuple matched no entity; a curator resolves it with a parse/data/modelsdev_aliases.json " +
+			"entry. Regenerated by `go generate ./...`; sorted and timestamp-free for byte-stability.",
+		SchemaVersion: 1,
+		Count:         len(ids),
+		Unlinked:      ids,
+	}
+	if envelope.Unlinked == nil {
+		envelope.Unlinked = []string{}
+	}
+
+	data, err := json.MarshalIndent(envelope, "", "  ")
+	if err != nil {
+		return fmt.Errorf("writeModelsdevUnlinked: marshal JSON: %w", err)
+	}
+	data = append(data, '\n')
+	if err := os.WriteFile(modelsdevUnlinkedFile, data, 0o644); err != nil {
+		return fmt.Errorf(
+			"writeModelsdevUnlinked: write %s: %w\n"+
+				"  How to fix: ensure %s is writable",
+			modelsdevUnlinkedFile, err, filepath.Dir(modelsdevUnlinkedFile),
+		)
+	}
+	return nil
 }

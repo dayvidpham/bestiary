@@ -58,27 +58,30 @@ func LoadSnapshotRecords() ([]SnapshotRecord, error) {
 		)
 	}
 
-	var resp genWireResponse
-	if err := json.Unmarshal(body, &resp); err != nil {
+	// Decode the committed api.json snapshot through the LIBRARY's ParseAPIJSON — the
+	// same single wire-decode path the generator now uses — so this loader carries no
+	// second copy of the models.dev wire schema. ParseAPIJSON returns each model with
+	// its RAW family on the Family field (undecomposed), which is exactly the
+	// SnapshotRecord.RawFamily input the divergence analyzer decomposes.
+	models, parseErr := bestiary.ParseAPIJSON(body)
+	if parseErr != nil {
 		return nil, fmt.Errorf(
 			"LoadSnapshotRecords: cannot decode snapshot JSON: %w\n"+
-				"  What: the JSON file does not match the expected models.dev API schema\n"+
+				"  What: the JSON file does not match the expected models.dev api.json schema\n"+
 				"  Why: the snapshot may be corrupt or from an incompatible API version\n"+
-				"  How to fix: re-capture the snapshot from the cache:\n"+
-				"    cp .bestiary-gen-cache/api_response.json cmd/bestiary-gen/testdata/snapshot/models_api.json",
-			err,
+				"  How to fix: re-capture the snapshot from the vendored catalog:\n"+
+				"    jq .providers parse/data/modelsdev/catalog.json > cmd/bestiary-gen/testdata/snapshot/models_api.json",
+			parseErr,
 		)
 	}
 
-	var records []SnapshotRecord
-	for provSlug, prov := range resp {
-		for _, wm := range prov.Models {
-			records = append(records, SnapshotRecord{
-				Provider:  bestiary.Provider(provSlug),
-				ID:        bestiary.ModelID(wm.ID),
-				RawFamily: bestiary.Family(wm.Family),
-			})
-		}
+	records := make([]SnapshotRecord, 0, len(models))
+	for _, m := range models {
+		records = append(records, SnapshotRecord{
+			Provider:  m.Provider,
+			ID:        m.ID,
+			RawFamily: m.Family,
+		})
 	}
 
 	// Sort by (Provider, ID) for deterministic output — mirrors fetchModelsWithRaw.

@@ -6,7 +6,7 @@
 - **Test with race**: `go test -race ./...` (requires CGO_ENABLED=1)
 - **Vet**: `go vet ./...`
 - **Build CLI**: `CGO_ENABLED=0 go build ./cmd/bestiary`
-- **Update static data**: `go generate ./...` (requires network)
+- **Update static data**: `go generate ./...` (offline; reads the committed `parse/data/modelsdev/catalog.json`). To pull a newer upstream deploy, see "models.dev snapshot refresh".
 - **Tidy deps**: `go mod tidy`
 - **Commit**: `git agent-commit -m "..."` (never `git commit`)
 
@@ -182,7 +182,43 @@ When updating wire types for upstream API changes:
 1. Re-derive the SHA-256 hash: `sha256sum ~/codebases/models.dev/packages/core/src/schema.ts`
 2. Get the commit: `cd ~/codebases/models.dev && git log --oneline -1`
 3. Update `UpstreamSchemaVersion`, `UpstreamGitCommit` in `version.go`
-4. Run `go generate ./...` to refresh static data
+4. Refresh the vendored snapshot + regenerate (see "models.dev snapshot refresh" below)
+
+## models.dev snapshot refresh
+
+Codegen consumes a **committed** snapshot of the models.dev catalog, not a live fetch:
+`cmd/bestiary-gen` reads `parse/data/modelsdev/catalog.json` (the upstream `catalog.json`
+artifact — both the `providers` and `models` views from a single deploy). `go generate ./...`
+runs `go run ./cmd/bestiary-gen --no-fetch`, which reads that committed file and is fully
+offline and deterministic; a **missing or corrupt** vendored catalog is a LOUD actionable
+error — codegen never degrades to an empty catalog.
+
+Refreshing the snapshot is a deliberate, occasional, manual act (mirrors the schema-hash
+workflow above). To pull a newer upstream deploy:
+
+1. **Fetch + re-vendor (one polite request).** From the module root run the generator in
+   fetch mode (NO `--no-fetch`):
+   ```
+   go run ./cmd/bestiary-gen
+   ```
+   This does a single GET of `https://models.dev/catalog.json` (descriptive User-Agent),
+   **overwrites** `parse/data/modelsdev/catalog.json` and its
+   `parse/data/modelsdev/SNAPSHOT.json` manifest (`{artifact, fetched_at, etag,
+   upstream_head_sha}` — informational provenance, never parsed into output), and regenerates
+   the `*_gen.go` files from the freshly-fetched data.
+2. **Append the ingest-history row.** Add one row to the `ingested` array in
+   `parse/data/datasources.json` for `source_id: "models.dev"`: set `ingested_at` to the
+   SNAPSHOT.json `fetched_at` value (a COMMITTED timestamp — never load-time wall-clock) and
+   `parser_schema` to the current value (3). Leave the existing rows untouched — the log is
+   append-only and the current ingest is the row with the maximum `ingested_at`.
+3. **Deterministic regen.** Run `go generate ./...` (this is `--no-fetch`; it reads the
+   just-vendored catalog). Review the diff like any curated-data change; the emitted
+   `parse/data/modelsdev_unlinked.json` report lists join-disagreement metadata ids to triage
+   into `parse/data/modelsdev_aliases.json`.
+4. **Commit as a separate `chore(gen):` commit.** Land the regenerated `*_gen.go` files (and
+   the vendored `catalog.json` / `SNAPSHOT.json`) in their own commit, after the feature
+   commit, per the codegen-determinism regen workflow below. `TestCodegen_Reproducible_ByteIdentical`
+   (N=100) and `TestCodegen_UpToDate` must stay green.
 
 ## Releases
 
@@ -207,6 +243,9 @@ mistyped release is caught). Tags pushed by its `GITHUB_TOKEN` do **not** trigge
 | File | Owner | Notes |
 |------|-------|-------|
 | `models_static_gen.go` | `cmd/bestiary-gen` | Never edit by hand. Regenerate with `go generate ./...` |
+| `models_metadata_gen.go` | `cmd/bestiary-gen` | Never edit by hand. Baked models.dev metadata; regenerate with `go generate ./...` |
+| `parse/data/modelsdev/catalog.json` + `SNAPSHOT.json` | `cmd/bestiary-gen` (fetch mode) | Vendored codegen input. Never edit by hand; refresh via "models.dev snapshot refresh" |
+| `parse/data/modelsdev_unlinked.json` | `cmd/bestiary-gen` | Codegen-emitted join-disagreement report. Never edit by hand |
 | `bestiary.schema.json` | Manual | Must stay in sync with Go types. Verified by `TestJSONOutput_ConformsToSchema` |
 | `version.go` | Manual | Update on public type changes or upstream schema updates |
 | All other `.go` files | Developer | Normal development workflow |

@@ -17,7 +17,6 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"sort"
 	"testing"
 
@@ -57,24 +56,21 @@ func TestDrift_SnapshotMatchesLiveAPI(t *testing.T) {
 		committed[key{r.Provider, r.ID}] = driftRecord{r.RawFamily, fam, variant, version, modKey(mods)}
 	}
 
-	// ── Live side: fetch the live API and decompose it the same way. ──────────────
-	rawJSON, _, _, _, err := fetchModelsWithRaw(context.Background(), t.TempDir(), false /* fetch */)
+	// ── Live side: fetch the live catalog and decompose it the same way. ──────────
+	rawJSON, _, _, _, _, err := fetchModelsWithRaw(context.Background(), false /* fetch */)
 	if err != nil {
-		t.Fatalf("drift: fetch live API (needs network; run with -tags drift online): %v", err)
+		t.Fatalf("drift: fetch live catalog (needs network; run with -tags drift online): %v", err)
 	}
-	var resp genWireResponse
-	if err := json.Unmarshal(rawJSON, &resp); err != nil {
-		t.Fatalf("drift: parse live API response: %v", err)
+	cat, err := bestiary.ParseCatalogJSON(rawJSON)
+	if err != nil {
+		t.Fatalf("drift: parse live catalog response: %v", err)
 	}
 	live := make(map[key]driftRecord)
-	for provSlug, prov := range resp {
-		for _, wm := range prov.Models {
-			provider := bestiary.Provider(provSlug)
-			id := bestiary.ModelID(wm.ID)
-			rawFam := bestiary.Family(wm.Family)
-			fam, variant, version, mods, _ := bestiary.ParseFamilyDetailed(rawFam, id, provider)
-			live[key{provider, id}] = driftRecord{rawFam, fam, variant, version, modKey(mods)}
-		}
+	for _, m := range cat.Models {
+		// ParseCatalogJSON leaves the RAW family on m.Family (undecomposed).
+		rawFam := m.Family
+		fam, variant, version, mods, _ := bestiary.ParseFamilyDetailed(rawFam, m.ID, m.Provider)
+		live[key{m.Provider, m.ID}] = driftRecord{rawFam, fam, variant, version, modKey(mods)}
 	}
 
 	// ── Asserted comparator. ──────────────────────────────────────────────────────
