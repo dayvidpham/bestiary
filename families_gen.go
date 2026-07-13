@@ -8,7 +8,7 @@ type Family string
 
 const (
 	FamilyHy                Family = "Hy"
-	FamilyAllam             Family = "allam"
+	FamilyAgi               Family = "agi"
 	FamilyAllenai           Family = "allenai"
 	FamilyAlpha             Family = "alpha"
 	FamilyAura              Family = "aura"
@@ -20,6 +20,7 @@ const (
 	FamilyCanopylabs        Family = "canopylabs"
 	FamilyChutesai          Family = "chutesai"
 	FamilyClaude            Family = "claude"
+	FamilyClaudeFable       Family = "claude-fable"
 	FamilyClaudeHaiku       Family = "claude-haiku"
 	FamilyClaudeOpus        Family = "claude-opus"
 	FamilyClaudeSonnet      Family = "claude-sonnet"
@@ -40,6 +41,7 @@ const (
 	FamilyElevenlabs        Family = "elevenlabs"
 	FamilyErnie             Family = "ernie"
 	FamilyFlux              Family = "flux"
+	FamilyFugu              Family = "fugu"
 	FamilyGemini            Family = "gemini"
 	FamilyGeminiEmbedding   Family = "gemini-embedding"
 	FamilyGeminiFlash       Family = "gemini-flash"
@@ -57,29 +59,32 @@ const (
 	FamilyGPTCodexMini      Family = "gpt-codex-mini"
 	FamilyGPTCodexSpark     Family = "gpt-codex-spark"
 	FamilyGPTImage          Family = "gpt-image"
+	FamilyGPTLuna           Family = "gpt-luna"
 	FamilyGPTMini           Family = "gpt-mini"
 	FamilyGPTNano           Family = "gpt-nano"
 	FamilyGPTOss            Family = "gpt-oss"
 	FamilyGPTPro            Family = "gpt-pro"
+	FamilyGPTSol            Family = "gpt-sol"
+	FamilyGPTTerra          Family = "gpt-terra"
 	FamilyGranite           Family = "granite"
 	FamilyGrok              Family = "grok"
 	FamilyGrokBuild         Family = "grok-build"
 	FamilyGroq              Family = "groq"
 	FamilyHermes            Family = "hermes"
 	FamilyHunyuan           Family = "hunyuan"
+	FamilyHy3               Family = "hy3"
 	FamilyHy3Free           Family = "hy3-free"
 	FamilyIdeogram          Family = "ideogram"
 	FamilyImagen            Family = "imagen"
 	FamilyIndictrans        Family = "indictrans"
-	FamilyIntellect         Family = "intellect"
 	FamilyJais              Family = "jais"
 	FamilyJamba             Family = "jamba"
 	FamilyKatCoder          Family = "kat-coder"
 	FamilyKimi              Family = "kimi"
 	FamilyKimiFree          Family = "kimi-free"
-	FamilyKimiK25           Family = "kimi-k2.5"
-	FamilyKimiK26           Family = "kimi-k2.6"
+	FamilyKimiK2            Family = "kimi-k2"
 	FamilyKimiThinking      Family = "kimi-thinking"
+	FamilyLaguna            Family = "laguna"
 	FamilyLing              Family = "ling"
 	FamilyLingFlashFree     Family = "ling-flash-free"
 	FamilyLiquid            Family = "liquid"
@@ -107,6 +112,8 @@ const (
 	FamilyMiniMaxFree       Family = "minimax-free"
 	FamilyMiniMaxM25        Family = "minimax-m2.5"
 	FamilyMiniMaxM27        Family = "minimax-m2.7"
+	FamilyMiniMaxM3         Family = "minimax-m3"
+	FamilyMiniMaxM3Free     Family = "minimax-m3-free"
 	FamilyMinistral         Family = "ministral"
 	FamilyMistral           Family = "mistral"
 	FamilyMistralEmbed      Family = "mistral-embed"
@@ -118,9 +125,12 @@ const (
 	FamilyMmPoly            Family = "mm-poly"
 	FamilyModelRouter       Family = "model-router"
 	FamilyMorph             Family = "morph"
+	FamilyMuse              Family = "muse"
 	FamilyNanoBanana        Family = "nano-banana"
 	FamilyNemotron          Family = "nemotron"
 	FamilyNemotronFree      Family = "nemotron-free"
+	FamilyNorth             Family = "north"
+	FamilyNorthFree         Family = "north-free"
 	FamilyNousresearch      Family = "nousresearch"
 	FamilyNova              Family = "nova"
 	FamilyNovaLite          Family = "nova-lite"
@@ -131,7 +141,6 @@ const (
 	FamilyOPro              Family = "o-pro"
 	FamilyOsmosis           Family = "osmosis"
 	FamilyPalmyra           Family = "palmyra"
-	FamilyPangu             Family = "pangu"
 	FamilyPhi               Family = "phi"
 	FamilyPixtral           Family = "pixtral"
 	FamilyPlamo             Family = "plamo"
@@ -141,10 +150,10 @@ const (
 	FamilyQwen35            Family = "qwen3.5"
 	FamilyQwen36            Family = "qwen3.6"
 	FamilyQwen37Max         Family = "qwen3.7-max"
+	FamilyQwen37Plus        Family = "qwen3.7-plus"
 	FamilyQwerky            Family = "qwerky"
 	FamilyRay               Family = "ray"
 	FamilyRecraft           Family = "recraft"
-	FamilyRednote           Family = "rednote"
 	FamilyReka              Family = "reka"
 	FamilyRing              Family = "ring"
 	FamilyRing1TFree        Family = "ring-1t-free"
@@ -165,7 +174,6 @@ const (
 	FamilyTako              Family = "tako"
 	FamilyTextEmbedding     Family = "text-embedding"
 	FamilyTitanEmbed        Family = "titan-embed"
-	FamilyTngtech           Family = "tngtech"
 	FamilyTopazlabs         Family = "topazlabs"
 	FamilyTrinity           Family = "trinity"
 	FamilyTrinityMini       Family = "trinity-mini"
@@ -182,7 +190,7 @@ const (
 // allFamilies is the complete list of family values from the models.dev API.
 var allFamilies = [...]Family{
 	"Hy",
-	"allam",
+	"agi",
 	"allenai",
 	"alpha",
 	"aura",
@@ -194,6 +202,7 @@ var allFamilies = [...]Family{
 	"canopylabs",
 	"chutesai",
 	"claude",
+	"claude-fable",
 	"claude-haiku",
 	"claude-opus",
 	"claude-sonnet",
@@ -214,6 +223,7 @@ var allFamilies = [...]Family{
 	"elevenlabs",
 	"ernie",
 	"flux",
+	"fugu",
 	"gemini",
 	"gemini-embedding",
 	"gemini-flash",
@@ -231,29 +241,32 @@ var allFamilies = [...]Family{
 	"gpt-codex-mini",
 	"gpt-codex-spark",
 	"gpt-image",
+	"gpt-luna",
 	"gpt-mini",
 	"gpt-nano",
 	"gpt-oss",
 	"gpt-pro",
+	"gpt-sol",
+	"gpt-terra",
 	"granite",
 	"grok",
 	"grok-build",
 	"groq",
 	"hermes",
 	"hunyuan",
+	"hy3",
 	"hy3-free",
 	"ideogram",
 	"imagen",
 	"indictrans",
-	"intellect",
 	"jais",
 	"jamba",
 	"kat-coder",
 	"kimi",
 	"kimi-free",
-	"kimi-k2.5",
-	"kimi-k2.6",
+	"kimi-k2",
 	"kimi-thinking",
+	"laguna",
 	"ling",
 	"ling-flash-free",
 	"liquid",
@@ -281,6 +294,8 @@ var allFamilies = [...]Family{
 	"minimax-free",
 	"minimax-m2.5",
 	"minimax-m2.7",
+	"minimax-m3",
+	"minimax-m3-free",
 	"ministral",
 	"mistral",
 	"mistral-embed",
@@ -292,9 +307,12 @@ var allFamilies = [...]Family{
 	"mm-poly",
 	"model-router",
 	"morph",
+	"muse",
 	"nano-banana",
 	"nemotron",
 	"nemotron-free",
+	"north",
+	"north-free",
 	"nousresearch",
 	"nova",
 	"nova-lite",
@@ -305,7 +323,6 @@ var allFamilies = [...]Family{
 	"o-pro",
 	"osmosis",
 	"palmyra",
-	"pangu",
 	"phi",
 	"pixtral",
 	"plamo",
@@ -315,10 +332,10 @@ var allFamilies = [...]Family{
 	"qwen3.5",
 	"qwen3.6",
 	"qwen3.7-max",
+	"qwen3.7-plus",
 	"qwerky",
 	"ray",
 	"recraft",
-	"rednote",
 	"reka",
 	"ring",
 	"ring-1t-free",
@@ -339,7 +356,6 @@ var allFamilies = [...]Family{
 	"tako",
 	"text-embedding",
 	"titan-embed",
-	"tngtech",
 	"topazlabs",
 	"trinity",
 	"trinity-mini",

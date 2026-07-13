@@ -1182,6 +1182,13 @@ var justifiedExceptions = map[exceptionKey]string{
 	//    families (∈ allFamilies, attested) → lossless variants, now cat-(b).
 	//  • elevenlabs/elevenlabs-v2.5-turbo — lossless variant-suffix split (v2.5-turbo →
 	//    variant v2.5 + modifier [turbo]); realNonFamilyLoss now recognises the split, cat-(b).
+
+	// ── July snapshot: Tencent Hy family digit-glued raw_family ────────────────
+	{
+		ID:     "hy3-preview-free",
+		Before: `(family="hy3",variant="free",version="",modifier="")`,
+		After:  `(family="hy",variant="free",version="3",modifier="")`,
+	}: "New in the July snapshot (opencode/hy3-preview-free). opencode labels this Tencent model raw_family='hy3-free', gluing the generation digit to the family. The ID-driven path correctly splits 'hy3' into family='hy' + version='3', which CONVERGES it onto the canonical Tencent Hy family — every other provider serves the same model as raw_family='Hy' → hy/version=3 (e.g. crossmodel/zenmux 'tencent/hy3-preview'). The 'free' tier stays the variant. So the change folds an over-captured 'hy3' family root back to the real 'hy' family rather than fracturing it; single-provider (opencode) exact id, no cross-provider divergence introduced.",
 }
 
 func TestPathUnification_ZeroUnexpectedRegression(t *testing.T) {

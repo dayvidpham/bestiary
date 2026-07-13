@@ -2,9 +2,9 @@
   "total_records": 4979,
   "changed_count": 1212,
   "cat_a_divergence_fix_count": 324,
-  "cat_b_improvement_count": 883,
+  "cat_b_improvement_count": 882,
   "cat_c_unexpected_regression_count": 0,
-  "justified_exception_count": 5,
+  "justified_exception_count": 6,
   "id_tuple4_incl_modifier_divergence_frozen_before": 81,
   "id_tuple4_incl_modifier_divergence_current_after": 13,
   "divergence_metric": "4-tuple INCL Modifier (Family,Variant,Version,Modifier); before=frozen baseline, after=current snapshot. DISTINCT from the authoritative cross-provider divergenceExact gate (3-tuple, EXCL Modifier, current snapshot, =0).",
@@ -6067,15 +6067,6 @@
       "reason": "strict enrichment — only previously-empty field(s) populated"
     },
     {
-      "provider": "opencode",
-      "id": "hy3-preview-free",
-      "raw_family": "hy3-free",
-      "before": "(family=\"hy3\",variant=\"free\",version=\"\",modifier=\"\")",
-      "after": "(family=\"hy\",variant=\"free\",version=\"3\",modifier=\"\")",
-      "category": "b:improvement",
-      "reason": "family over-capture reduced to short base — exact family-suffix→variant move (override semantics), OR before ∉ registry \u0026 after ∈ registry; no ID-present non-family field lost (hardened)"
-    },
-    {
       "provider": "poe",
       "id": "ideogramai/ideogram-v2a-turbo",
       "raw_family": "ideogram",
@@ -10907,6 +10898,15 @@
       "after": "(family=\"grok\",variant=\"mini\",version=\"3\",modifier=\"\")",
       "category": "justified-exception",
       "reason": "JUSTIFIED: USER-RATIFIED non-defect (GH#13 release-stage dimension): family corrected to grok + real tier 'mini' (+version 3); the release-stage token 'beta' AND the speed-tier token 'fast' are BOTH dropped — neither can co-occupy the single Variant slot with 'mini' (variant-multiplicity, the variant analogue of the Modifier-LIST, deferred). MECHANISM (corrected) for the related xai/grok-4.20-non-reasoning-beta, which stays Modifier=nil (nil both BEFORE and AFTER — no regression, no gate trip): the trailing 'beta' is the TAIL-ORDER MODIFIER-SCAN BOUNDARY — the scan starts at the tail and halts at 'beta' (a non-collected variant/boundary token) before reaching the inner 'non-reasoning', so the negation branch never executes. Contrast (verified): grok-4.20-non-reasoning [tail='reasoning' preceded by 'non']→[non-reasoning]; grok-4-20-beta-0309-non-reasoning ['beta' MID-string, tail still 'reasoning']→[non-reasoning]; xai/grok-4.20-non-reasoning-beta [tail='beta']→nil. Same release-stage multiplicity tracked under GH#13."
+    },
+    {
+      "provider": "opencode",
+      "id": "hy3-preview-free",
+      "raw_family": "hy3-free",
+      "before": "(family=\"hy3\",variant=\"free\",version=\"\",modifier=\"\")",
+      "after": "(family=\"hy\",variant=\"free\",version=\"3\",modifier=\"\")",
+      "category": "justified-exception",
+      "reason": "JUSTIFIED: New in the July snapshot (opencode/hy3-preview-free). opencode labels this Tencent model raw_family='hy3-free', gluing the generation digit to the family. The ID-driven path correctly splits 'hy3' into family='hy' + version='3', which CONVERGES it onto the canonical Tencent Hy family — every other provider serves the same model as raw_family='Hy' → hy/version=3 (e.g. crossmodel/zenmux 'tencent/hy3-preview'). The 'free' tier stays the variant. So the change folds an over-captured 'hy3' family root back to the real 'hy' family rather than fracturing it; single-provider (opencode) exact id, no cross-provider divergence introduced."
     },
     {
       "provider": "nvidia",

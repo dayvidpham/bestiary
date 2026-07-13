@@ -23,6 +23,11 @@
       "source_id": "ollama",
       "ingested_at": "2026-06-09T00:00:00Z",
       "parser_schema": 3
+    },
+    {
+      "source_id": "models.dev",
+      "ingested_at": "2026-07-13T02:11:52Z",
+      "parser_schema": 3
     }
   ]
 }
