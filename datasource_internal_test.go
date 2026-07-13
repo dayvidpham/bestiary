@@ -67,6 +67,12 @@ func TestParseDataSourceTable_RejectsDuplicateID(t *testing.T) {
 // (2) sort each source's history ASCENDING by ingested_at regardless of file order,
 // and (3) expose the MAX as the current ingest via DatasetIngestedFor's seam. The
 // fixture lists the rows out of order (newest first) so a dropped sort is falsified.
+//
+// It also drives the DatasetIngestedFor / DatasetIngestHistoryFor seams over the
+// MULTI-ROW table (the shipped seed is single-row per source, so those public
+// lookups have no MAX-vs-MIN teeth there): datasetIngestedFrom must return the
+// MAX(ingested_at) row — a hist[0]/MIN mutant fails here — and
+// datasetIngestHistoryFrom must return the full ascending, copy-isolated history.
 func TestParseDataSourceTable_MultiRowHistorySorted(t *testing.T) {
 	const src = `{
 	  "schema_version": 3,
@@ -76,7 +82,7 @@ func TestParseDataSourceTable_MultiRowHistorySorted(t *testing.T) {
 	  "ingested": [
 	    {"source_id": "models.dev", "ingested_at": "2026-06-09T00:00:00Z", "parser_schema": 3},
 	    {"source_id": "models.dev", "ingested_at": "2026-01-01T00:00:00Z", "parser_schema": 2},
-	    {"source_id": "models.dev", "ingested_at": "2026-03-15T00:00:00Z", "parser_schema": 2}
+	    {"source_id": "models.dev", "ingested_at": "2026-03-15T00:00:00Z", "parser_schema": 5}
 	  ]
 	}`
 	tbl, err := parseDataSourceTable([]byte(src))
@@ -93,10 +99,41 @@ func TestParseDataSourceTable_MultiRowHistorySorted(t *testing.T) {
 			t.Errorf("history[%d].IngestedAt = %q, want %q (ascending regardless of file order)", i, hist[i].IngestedAt, w)
 		}
 	}
-	// The last (maximum) element is the current ingest and carries its own parser_schema.
-	cur := hist[len(hist)-1]
+
+	// DatasetIngestedFor seam: the CURRENT ingest is the MAX(ingested_at) row, not
+	// the first (minimum) history row. hist[0] is 2026-01-01 (parser_schema 2), so a
+	// hist[0]/MIN selection mutant is caught by BOTH the timestamp and the schema.
+	cur, ok := datasetIngestedFrom(tbl, DataSourceModelsDev)
+	if !ok {
+		t.Fatal("datasetIngestedFrom(models.dev) missing over a 3-row history")
+	}
 	if cur.IngestedAt != "2026-06-09T00:00:00Z" || cur.ParserSchema != 3 {
-		t.Errorf("current ingest = %+v, want ingested_at 2026-06-09T00:00:00Z parser_schema 3", cur)
+		t.Errorf("current ingest = %+v, want the MAX row {2026-06-09T00:00:00Z, parser_schema 3}; a hist[0]/MIN selection returns 2026-01-01 (parser_schema 2)", cur)
+	}
+	if _, ok := datasetIngestedFrom(tbl, "no-such-source"); ok {
+		t.Error("datasetIngestedFrom(unknown) reported ok; want false")
+	}
+
+	// DatasetIngestHistoryFor seam: full ascending history, last element == current,
+	// and copy-isolated from the cached table.
+	got := datasetIngestHistoryFrom(tbl, DataSourceModelsDev)
+	if len(got) != len(wantOrder) {
+		t.Fatalf("datasetIngestHistoryFrom length = %d, want %d", len(got), len(wantOrder))
+	}
+	for i, w := range wantOrder {
+		if got[i].IngestedAt != w {
+			t.Errorf("datasetIngestHistoryFrom[%d].IngestedAt = %q, want %q (ascending)", i, got[i].IngestedAt, w)
+		}
+	}
+	if got[len(got)-1] != cur {
+		t.Errorf("history last element %+v != current ingest %+v", got[len(got)-1], cur)
+	}
+	got[0].IngestedAt = "mutated-by-test"
+	if again := datasetIngestHistoryFrom(tbl, DataSourceModelsDev); again[0].IngestedAt != "2026-01-01T00:00:00Z" {
+		t.Error("datasetIngestHistoryFrom is not copy-isolated: a caller mutation leaked into the cached table")
+	}
+	if got := datasetIngestHistoryFrom(tbl, "no-such-source"); got != nil {
+		t.Errorf("datasetIngestHistoryFrom(unknown) = %v, want nil", got)
 	}
 }
 

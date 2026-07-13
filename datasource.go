@@ -336,7 +336,17 @@ func DataSourceByID(id DataSourceID) (DataSource, bool) {
 // value carries NO uri; resolve the uri via DataSourceByID(id) (the BCNF join) when
 // it is needed. Use DatasetIngestHistoryFor for the full ordered history.
 func DatasetIngestedFor(id DataSourceID) (DatasetIngested, bool) {
-	hist := loadDataSourceTableSafe().ingested[id]
+	return datasetIngestedFrom(loadDataSourceTableSafe(), id)
+}
+
+// datasetIngestedFrom is the testable seam behind DatasetIngestedFor: it returns the
+// CURRENT ingest (the maximum IngestedAt) for id from table t, and whether any
+// ingest exists. The MAX-over-history selection is split out so it can be falsified
+// over a genuinely multi-row table — the shipped datasources.json carries one ingest
+// row per source, so DatasetIngestedFor alone cannot distinguish MAX from MIN (a
+// hist[0] mutant would survive the whole suite on single-row data).
+func datasetIngestedFrom(t *dataSourceTable, id DataSourceID) (DatasetIngested, bool) {
+	hist := t.ingested[id]
 	if len(hist) == 0 {
 		return DatasetIngested{}, false
 	}
@@ -350,7 +360,15 @@ func DatasetIngestedFor(id DataSourceID) (DatasetIngested, bool) {
 // load failure it returns nil (graceful degrade), never panicking. It is the
 // curated-seed counterpart of Store.QueryIngestHistory.
 func DatasetIngestHistoryFor(id DataSourceID) []DatasetIngested {
-	hist := loadDataSourceTableSafe().ingested[id]
+	return datasetIngestHistoryFrom(loadDataSourceTableSafe(), id)
+}
+
+// datasetIngestHistoryFrom is the testable seam behind DatasetIngestHistoryFor: it
+// returns a fresh ascending copy of the ingest history for id from table t, or nil
+// when there is none. Splitting it out lets the ascending-copy contract be verified
+// over a multi-row table without depending on the single-row shipped seed.
+func datasetIngestHistoryFrom(t *dataSourceTable, id DataSourceID) []DatasetIngested {
+	hist := t.ingested[id]
 	if len(hist) == 0 {
 		return nil
 	}
