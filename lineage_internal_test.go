@@ -132,6 +132,117 @@ func refSet(refs ...EntityRef) map[string]struct{} {
 	return set
 }
 
+// withSyntheticLineage swaps the process-wide curated lineage table for tbl while fn
+// runs, then restores it. It first forces loadLineageTable's sync.Once to fire
+// (reading the real embedded table) so a later lazy load cannot re-run and clobber
+// the injected fixture; the injection then survives until t.Cleanup restores it. This
+// lets the PUBLIC Entity.Ancestors/Descendants methods (which read the global table)
+// run against a controlled fixture.
+//
+// Not safe for concurrent use: it mutates package-global lineage state. Call only from
+// subtests that do NOT run in parallel.
+func withSyntheticLineage(t *testing.T, tbl *lineageTable, fn func()) {
+	t.Helper()
+	_, _ = loadLineageTable() // fire the sync.Once so a later Do can't overwrite the injection
+	origTbl, origErr := lineageTbl, lineageErr
+	lineageTbl, lineageErr = tbl, nil
+	t.Cleanup(func() {
+		lineageTbl, lineageErr = origTbl, origErr
+	})
+	fn()
+}
+
+// TestLineage_SizedFixtureEdge_ResolvesViaAncestorsDescendants is the #size lineage
+// regression test. A curated edge whose child_ref AND parent carry a param_size token
+// must key the forward/reverse indices by the SIZED entity keys (family@version#size
+// {mods}), so a sized entity is linked to its lineage instead of de-linked.
+//
+// No shipped edge references a sized entity today (all registry entities are unsized),
+// so this drives a hand-built fixture edge. It is RED before the param_size threading
+// in lineage.go: without it, parseLineageTable builds the UNSIZED keys ("llama@3.3
+// {instruct}" / "llama@3.1"), the sized-key lookups miss, and the fallback-seed
+// Ancestors()/Descendants() find nothing.
+func TestLineage_SizedFixtureEdge_ResolvesViaAncestorsDescendants(t *testing.T) {
+	const fixture = `{
+	  "schema_version": 2,
+	  "edges": [
+	    {
+	      "child_id": "sized-fixture-child-70b",
+	      "child_ref": { "family": "llama", "variant": "", "version": "3.3", "param_size": "70b", "modifier": ["instruct"] },
+	      "real": false,
+	      "parents": [
+	        { "family": "llama", "variant": "", "version": "3.1", "param_size": "70b", "kind": "finetune" }
+	      ]
+	    }
+	  ]
+	}`
+
+	const (
+		childKey  = "llama@3.3#70b{instruct}" // sized child entity key
+		parentKey = "llama@3.1#70b"           // sized parent entity key
+	)
+
+	tbl, err := parseLineageTable([]byte(fixture))
+	if err != nil {
+		t.Fatalf("parseLineageTable(sized fixture) error: %v", err)
+	}
+
+	// Forward index: the child node is keyed by its SIZED key, and the edge resolves
+	// to the sized parent. The unsized key must be ABSENT — a drop of param_size would
+	// re-key the child unsized and de-link the sized entity.
+	fwd, ok := tbl.forward[childKey]
+	if !ok {
+		t.Fatalf("forward index missing sized child key %q (keys: %v) — child_ref param_size not threaded into the DAG key", childKey, forwardKeys(tbl))
+	}
+	if _, unsized := tbl.forward["llama@3.3{instruct}"]; unsized {
+		t.Error("forward index contains the UNSIZED child key \"llama@3.3{instruct}\"; the sized child must key by its #size form only")
+	}
+	if len(fwd) != 1 || fwd[0].Parent.String() != parentKey {
+		t.Fatalf("forward[%q] = %+v, want one edge to sized parent %q", childKey, fwd, parentKey)
+	}
+
+	// Reverse index: the parent is keyed by its SIZED key and points at the sized child.
+	rev, ok := tbl.reverse[parentKey]
+	if !ok {
+		t.Fatalf("reverse index missing sized parent key %q — parent param_size not threaded into the DAG key", parentKey)
+	}
+	if len(rev) != 1 || rev[0].String() != childKey {
+		t.Fatalf("reverse[%q] = %+v, want the sized child %q", parentKey, rev, childKey)
+	}
+
+	// PUBLIC path: with the fixture injected, Entity.Ancestors()/Descendants() (which
+	// read the global table via the Ref-keyed fallback seed) must resolve for the sized
+	// entity keys — the exact behavior the de-link broke.
+	withSyntheticLineage(t, tbl, func() {
+		child := Entity{Ref: EntityRef{Family: FamilyLlama, Version: "3.3", ParamSize: "70b", Modifier: []string{"instruct"}}}
+		if child.Ref.String() != childKey {
+			t.Fatalf("sized child entity key = %q, want %q", child.Ref.String(), childKey)
+		}
+		anc := child.Ancestors()
+		if _, found := refSet(anc...)[parentKey]; !found {
+			t.Fatalf("Ancestors() for sized child %q = %v, want it to include sized parent %q", childKey, anc, parentKey)
+		}
+
+		parent := Entity{Ref: EntityRef{Family: FamilyLlama, Version: "3.1", ParamSize: "70b"}}
+		if parent.Ref.String() != parentKey {
+			t.Fatalf("sized parent entity key = %q, want %q", parent.Ref.String(), parentKey)
+		}
+		desc := parent.Descendants()
+		if _, found := refSet(desc...)[childKey]; !found {
+			t.Fatalf("Descendants() for sized parent %q = %v, want it to include sized child %q", parentKey, desc, childKey)
+		}
+	})
+}
+
+// forwardKeys returns the forward-index keys of tbl, for readable failure messages.
+func forwardKeys(t *lineageTable) []string {
+	keys := make([]string, 0, len(t.forward))
+	for k := range t.forward {
+		keys = append(keys, k)
+	}
+	return keys
+}
+
 // TestSafeLineageTable_DegradesToNoLineage exercises the runtime
 // degrade twin of the codegen ValidateLineageTable hard-fail: when the table
 // fails to load (parse error) or is nil, safeLineageTable must fall back to a

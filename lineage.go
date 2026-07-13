@@ -31,11 +31,16 @@ type LineageRecord struct {
 // --------------------------------------------------------------------------
 
 // lineageParentJSON is one parent derivation edge as curated in lineage.json.
+// ParamSize carries the parent entity's canonical parameter-size token (e.g. "70b")
+// so the reverse index (parent key -> children) is keyed by the SIZED parent key
+// when curation knows the size; it is omitted (and the parent key stays unsized)
+// when the size is unknown.
 type lineageParentJSON struct {
-	Family  Family `json:"family"`
-	Variant string `json:"variant"`
-	Version string `json:"version"`
-	Kind    string `json:"kind"`
+	Family    Family `json:"family"`
+	Variant   string `json:"variant"`
+	Version   string `json:"version"`
+	ParamSize string `json:"param_size,omitempty"`
+	Kind      string `json:"kind"`
 }
 
 // lineageRefJSON is the child's entity-ref identity (its DAG node) in lineage.json.
@@ -43,11 +48,18 @@ type lineageParentJSON struct {
 // ["instruct"]) so child_ref.String() matches the EntityRef key produced by the
 // registry's identity-class projection. It is omitted for children whose key has
 // no identity modifier.
+//
+// ParamSize carries the child entity's canonical parameter-size token (e.g. "70b").
+// It becomes the "#paramsize" segment of the child's EntityRef key so a SIZED entity
+// (whose registry key is family[@version]#size{mods}) is linked to its lineage
+// rather than de-linked. It is omitted when the size is unknown, in which case the
+// child key stays unsized — byte-identical to its pre-size form.
 type lineageRefJSON struct {
-	Family   Family   `json:"family"`
-	Variant  string   `json:"variant"`
-	Version  string   `json:"version"`
-	Modifier []string `json:"modifier,omitempty"`
+	Family    Family   `json:"family"`
+	Variant   string   `json:"variant"`
+	Version   string   `json:"version"`
+	ParamSize string   `json:"param_size,omitempty"`
+	Modifier  []string `json:"modifier,omitempty"`
 }
 
 // lineageEntryJSON is one curated child→parents record in lineage.json.
@@ -199,12 +211,12 @@ func parseLineageTable(raw []byte) (*lineageTable, error) {
 				)
 			}
 			edges = append(edges, LineageEdge{
-				Parent: EntityRef{Family: p.Family, Variant: p.Variant, Version: p.Version},
+				Parent: EntityRef{Family: p.Family, Variant: p.Variant, Version: p.Version, ParamSize: p.ParamSize},
 				Kind:   kind,
 			})
 		}
 
-		childRef := EntityRef{Family: e.ChildRef.Family, Variant: e.ChildRef.Variant, Version: e.ChildRef.Version, Modifier: e.ChildRef.Modifier}
+		childRef := EntityRef{Family: e.ChildRef.Family, Variant: e.ChildRef.Variant, Version: e.ChildRef.Version, ParamSize: e.ChildRef.ParamSize, Modifier: e.ChildRef.Modifier}
 		rec := LineageRecord{Child: childRef, Edges: edges, Real: e.Real}
 		tbl.byID[childID] = rec
 

@@ -4,11 +4,17 @@ import "fmt"
 
 // ModelRef represents the canonical identity of a model.
 //
-// The 8-field tuple (ID, Provider, RawFamily, Family, Variant, Version, Date, Modifier) is the
-// stable anchor for cross-provider queries, canonical formatting, and the
-// normalization pipeline. ID is the original API model identifier (e.g.
-// "claude-opus-4-20250514"). Family, Variant, Version, and Modifier are populated at
-// codegen time by the normalization pipeline in cmd/bestiary-gen.
+// The tuple (ID, Provider, RawFamily, Family, Variant, Version, ParamSize, Date,
+// Modifier) is the stable anchor for cross-provider queries, canonical formatting,
+// and the normalization pipeline. ID is the original API model identifier (e.g.
+// "claude-opus-4-20250514"). Family, Variant, Version, ParamSize, and Modifier are
+// populated at codegen time by the normalization pipeline in cmd/bestiary-gen.
+//
+// ParamSize is part of the canonical entity identity (mirroring EntityRef): a 70B
+// and an 8B of one family are distinct models, so the size participates in
+// identity-level bucketing (e.g. Resolve's ambiguity grouping). It is empty when the
+// model's size is unknown. Host is a per-instance attribute and is NEVER part of
+// identity.
 type ModelRef struct {
 	ID        ModelID  // Original API model ID (e.g. "claude-opus-4-20250514")
 	Provider  Provider // Hosting provider
@@ -16,15 +22,18 @@ type ModelRef struct {
 	Family    Family   // Canonical family (e.g., "claude"); empty if not yet normalized
 	Variant   string   // Canonical variant (e.g., "opus"); empty if no variant
 	Version   string   // Model version extracted from family (e.g., "4.5", "2.5"); empty if none
+	ParamSize string   // Canonical parameter-size token (e.g. "70b", "8b"); empty when unknown. Part of identity.
 	Date      string   // Release date in YYYY-MM-DD format; empty if none
 	Modifier  []string // Known trailing tokens in canonical order (e.g., ["vision","instruct"]); nil if none
 	Host      Host     // Serving host/backend (per-instance attribute, never part of identity); HostNone if unknown
 }
 
 // Ref returns a ModelRef for this ModelInfo.
-// All eight fields are populated: ID from the API model ID, RawFamily from the
-// raw API family field, and Family, Variant, Version, Date, Modifier from the
-// codegen-baked normalization.
+// Every field is populated: ID from the API model ID, RawFamily from the raw API
+// family field, and Family, Variant, Version, ParamSize, Date, Modifier, Host from
+// the codegen-baked normalization. ParamSize carries the canonical parameter-size
+// token so identity-level consumers (e.g. Resolve's ambiguity grouping) can keep
+// distinct sizes of one family apart.
 func (m ModelInfo) Ref() ModelRef {
 	return ModelRef{
 		ID:        m.ID,
@@ -33,6 +42,7 @@ func (m ModelInfo) Ref() ModelRef {
 		Family:    m.Family,
 		Variant:   m.Variant,
 		Version:   m.Version,
+		ParamSize: m.ParamSize,
 		Date:      m.Date,
 		Modifier:  m.Modifier,
 		Host:      m.Host,
