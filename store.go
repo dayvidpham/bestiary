@@ -70,20 +70,82 @@ const schemaSQL = `CREATE TABLE IF NOT EXISTS models (
     PRIMARY KEY (model_id, provider)
 );`
 
-// modelV6ColumnsSQL is the ordered list of the eight instance-level models.dev
-// columns v6 adds to the models table, each as an ALTER TABLE ADD COLUMN. Every
-// column is either a NOT NULL TEXT with a constant empty-string default or a
-// nullable REAL, both of which SQLite ADD COLUMN accepts. The order matches the
-// schemaSQL tail so a migrated models table is column-order-identical to a fresh one.
-var modelV6ColumnsSQL = []string{
-	`ALTER TABLE models ADD COLUMN description TEXT NOT NULL DEFAULT ''`,
-	`ALTER TABLE models ADD COLUMN status TEXT NOT NULL DEFAULT ''`,
-	`ALTER TABLE models ADD COLUMN status_raw TEXT NOT NULL DEFAULT ''`,
-	`ALTER TABLE models ADD COLUMN reasoning_options TEXT NOT NULL DEFAULT ''`,
-	`ALTER TABLE models ADD COLUMN cost_input_audio REAL`,
-	`ALTER TABLE models ADD COLUMN cost_output_audio REAL`,
-	`ALTER TABLE models ADD COLUMN cost_context_over_200k TEXT NOT NULL DEFAULT ''`,
-	`ALTER TABLE models ADD COLUMN cost_tiers TEXT NOT NULL DEFAULT ''`,
+// modelV6Column is one instance-level column v6 adds to the models table: its
+// NAME (for presence checks) paired with the ALTER TABLE ADD COLUMN that creates
+// it. Carrying the name lets ensureModelColumnsV6 add ONLY the columns a table is
+// missing, which makes the addition idempotent and self-healing.
+type modelV6Column struct {
+	name string
+	sql  string
+}
+
+// modelV6Columns is the ordered list of the eight instance-level models.dev
+// columns v6 adds to the models table. Every column is either a NOT NULL TEXT with
+// a constant empty-string default or a nullable REAL, both of which SQLite ADD
+// COLUMN accepts. The order matches the schemaSQL tail so a migrated models table
+// is column-order-identical to a fresh one.
+var modelV6Columns = []modelV6Column{
+	{"description", `ALTER TABLE models ADD COLUMN description TEXT NOT NULL DEFAULT ''`},
+	{"status", `ALTER TABLE models ADD COLUMN status TEXT NOT NULL DEFAULT ''`},
+	{"status_raw", `ALTER TABLE models ADD COLUMN status_raw TEXT NOT NULL DEFAULT ''`},
+	{"reasoning_options", `ALTER TABLE models ADD COLUMN reasoning_options TEXT NOT NULL DEFAULT ''`},
+	{"cost_input_audio", `ALTER TABLE models ADD COLUMN cost_input_audio REAL`},
+	{"cost_output_audio", `ALTER TABLE models ADD COLUMN cost_output_audio REAL`},
+	{"cost_context_over_200k", `ALTER TABLE models ADD COLUMN cost_context_over_200k TEXT NOT NULL DEFAULT ''`},
+	{"cost_tiers", `ALTER TABLE models ADD COLUMN cost_tiers TEXT NOT NULL DEFAULT ''`},
+}
+
+// ensureModelColumnsV6 adds any of the eight v6 instance-level models columns that
+// the models table is currently missing, ALTERing only the absent ones (presence
+// is read from pragma_table_info). It is idempotent and self-healing: it is safe
+// to run when all columns already exist (a no-op), when only some exist (an
+// interrupted multi-ALTER migration — the group is NOT atomic across process
+// death), and when NONE exist (a v5→v6 upgrade or an intermediate-v6 dev cache
+// whose schema_meta reads 6 but whose models table predates these columns). It
+// does nothing when the models table is absent, leaving table creation to the
+// fresh/migration paths. It manages no transaction of its own, so it composes both
+// inside migrateToV6's transaction and standalone from OpenStore.
+func ensureModelColumnsV6(conn *sqlite.Conn) error {
+	existing, err := tableColumnSet(conn, "models")
+	if err != nil {
+		return fmt.Errorf("read models columns: %w", err)
+	}
+	if len(existing) == 0 {
+		// No models table yet — nothing to heal.
+		return nil
+	}
+	for _, col := range modelV6Columns {
+		if existing[col.name] {
+			continue
+		}
+		if err := sqlitex.ExecuteTransient(conn, col.sql, nil); err != nil {
+			return fmt.Errorf("add missing models column %q: %w\n"+
+				"  What: adding an instance-level models column failed\n"+
+				"  Why: ALTER TABLE ADD COLUMN was rejected on a models table missing the column\n"+
+				"  Where: store.go ensureModelColumnsV6\n"+
+				"  How to fix: inspect the models table schema; delete the cache to rebuild it if corrupt",
+				col.name, err)
+		}
+	}
+	return nil
+}
+
+// tableColumnSet returns the set of column names of table via pragma_table_info.
+// An absent table yields an empty (non-nil) set, so callers distinguish it from a
+// present-but-column-short table.
+func tableColumnSet(conn *sqlite.Conn, table string) (map[string]bool, error) {
+	cols := map[string]bool{}
+	err := sqlitex.Execute(conn, `SELECT name FROM pragma_table_info(?1)`, &sqlitex.ExecOptions{
+		Args: []any{table},
+		ResultFunc: func(stmt *sqlite.Stmt) error {
+			cols[stmt.GetText("name")] = true
+			return nil
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+	return cols, nil
 }
 
 // modelColumns is the ordered column list shared by every models SELECT so the
@@ -394,6 +456,18 @@ func OpenStore(path string) (*Store, error) {
 			_ = conn.Close()
 			return nil, fmt.Errorf("bestiary: OpenStore: migrate %s from v%d: %w", path, version, err)
 		}
+	}
+
+	// Self-heal the v6 instance-level models columns even when schema_meta already
+	// reads currentSchemaVersion. A database created by an intermediate build of
+	// this (unreleased) v6 branch records schema_meta=6 but its models table
+	// predates these columns, so the version-gated migration above never runs and a
+	// query would fail with "no such column". This presence-guarded, idempotent step
+	// backfills the missing columns on open; it is a no-op for an already-complete
+	// models table.
+	if err := ensureModelColumnsV6(conn); err != nil {
+		_ = conn.Close()
+		return nil, fmt.Errorf("bestiary: OpenStore: ensure v6 model columns on %s: %w", path, err)
 	}
 
 	return &Store{conn: conn, path: path}, nil
@@ -858,18 +932,11 @@ func migrateToV6(conn *sqlite.Conn) error {
 
 	// Step 3: add the eight instance-level models.dev columns to the models table.
 	// Each is a defaulted non-PK column, so ALTER TABLE ADD COLUMN is SQLite-safe
-	// (no table recreate). SQLite appends them in declaration order, matching the
-	// schemaSQL tail so a migrated models table is column-order-identical to a
-	// fresh one.
-	for _, alterSQL := range modelV6ColumnsSQL {
-		if err = sqlitex.ExecuteTransient(conn, alterSQL, nil); err != nil {
-			return fmt.Errorf("add v6 models column via %q: %w\n"+
-				"  What: v5→v6 migration failed to add an instance-level models column\n"+
-				"  Why: ALTER TABLE rejected — the column may already exist or the schema is corrupt\n"+
-				"  Where: store.go migrateToV6, models column additions\n"+
-				"  How to fix: inspect the models table schema; if the column already exists this is a version-tracking bug",
-				alterSQL, err)
-		}
+	// (no table recreate). This goes through the presence-guarded ensureModelColumnsV6
+	// so a re-run over a partially-migrated table adds only what is missing rather
+	// than erroring on a duplicate column.
+	if err = ensureModelColumnsV6(conn); err != nil {
+		return fmt.Errorf("add v6 models columns: %w", err)
 	}
 	return nil
 }
