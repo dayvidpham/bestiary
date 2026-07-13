@@ -584,44 +584,54 @@ func validateEntityOutput(format bestiary.OutputFormat) error {
 	}
 }
 
-// openViewStore opens the SQLite metadata cache best-effort for an entity-view
-// command (providers, show --by-entity, sources), mirroring runList's discipline:
-// resolveDBPath → OpenStore. On success it returns the store (the caller closes
-// it) and true. On ANY failure to resolve or open the store it prints the SINGLE
-// embedded-catalog fallback notice to stderr and returns (nil, false) — the
-// command then proceeds against the baked catalog / curated tables. This function
-// is the ONE seam that guarantees the notice appears at most once per command.
-//
-// A missing cache path is NOT a failure: OpenStore creates a fresh (empty) store,
-// which reads back as "no synced metadata" and prints no notice — the notice is
-// reserved for a genuine open failure (an unresolvable or unopenable path).
-func openViewStore(dbPath string) (*bestiary.Store, bool) {
+// openViewStore opens the SQLite metadata cache best-effort for a view command,
+// mirroring runList's discipline: resolveDBPath → OpenStore. It returns the store
+// (the caller closes it) or nil when the path cannot be resolved or opened. It is
+// SILENT: the embedded-catalog fallback notice is NOT decided here — a store that
+// opens can still contribute zero synced rows (the fresh-empty, never-synced case),
+// so the notice decision belongs to the overlay that actually reads the cache.
+func openViewStore(dbPath string) *bestiary.Store {
 	if path, err := resolveDBPath(dbPath); err == nil {
 		if store, oerr := bestiary.OpenStore(path); oerr == nil {
-			return store, true
+			return store
 		}
 	}
-	fmt.Fprintln(os.Stderr, embeddedFallbackNotice)
-	return nil, false
+	return nil
 }
 
 // overlayEntities returns the full entity set with synced (store) metadata
-// overlaid on top of the baked catalog. The overlay runs over the FULL entity set
-// (before any tuple filtering) so metadata-only standalones and re-attached rows
-// both surface. When store is nil it returns the baked set unchanged; when store
-// is non-nil the synced metadata is merged over the baked layer (synced wins per
-// MetadataID via LastSynced; baked-only rows survive) and re-attached across every
-// entity. A store read error degrades to the baked set (the command still
-// succeeds; no second notice — the store DID open).
+// overlaid on top of the baked catalog, and prints the SINGLE embedded-catalog
+// fallback notice exactly when the store contributes ZERO synced metadata rows.
+//
+// This honors the sync-discoverability intent: the notice fires whenever a view
+// shows baked-only metadata — the store is absent (nil), auto-created fresh/empty
+// (never synced), or unreadable — and stays SILENT once a sync has populated the
+// cache. OpenStore auto-creates an empty DB for a never-synced user, so keying the
+// notice on "open failed" would miss that primary audience; keying it on "zero
+// synced rows" catches every baked-only path with one notice per command.
+//
+// The overlay runs over the FULL entity set (before any tuple filtering) so
+// metadata-only standalones and re-attached rows both surface. When synced metadata
+// is present it is merged over the baked layer (synced wins per MetadataID via
+// LastSynced; baked-only rows survive) and re-attached across every entity.
 func overlayEntities(store *bestiary.Store) []bestiary.Entity {
 	ents := bestiary.Entities()
-	if store == nil {
+
+	var cached []bestiary.EntityMetadata
+	if store != nil {
+		if rows, err := store.QueryEntityMetadata(context.Background()); err == nil {
+			cached = rows
+		}
+	}
+
+	if len(cached) == 0 {
+		// Store absent, fresh-empty, or unreadable — the view falls back to the
+		// baked catalog (which already carries baked metadata). Emit the one
+		// sync-discoverability notice.
+		fmt.Fprintln(os.Stderr, embeddedFallbackNotice)
 		return ents
 	}
-	cached, err := store.QueryEntityMetadata(context.Background())
-	if err != nil {
-		return ents
-	}
+
 	baked := bakedEntityMetadataFromEntities(ents)
 	meta := bestiary.MergeEntityMetadata(baked, cached)
 	return bestiary.AttachEntityMetadata(ents, meta)
@@ -707,7 +717,7 @@ func runProviders(arg string, format bestiary.OutputFormat, quantFlag, dbPath st
 	if err != nil {
 		return err
 	}
-	store, _ := openViewStore(dbPath)
+	store := openViewStore(dbPath)
 	if store != nil {
 		defer store.Close()
 	}
@@ -740,7 +750,7 @@ func runSources(arg string, format bestiary.OutputFormat, dbPath string) error {
 	if err := validateEntityOutput(format); err != nil {
 		return err
 	}
-	store, _ := openViewStore(dbPath)
+	store := openViewStore(dbPath)
 	if store != nil {
 		defer store.Close()
 	}
@@ -768,7 +778,7 @@ func runSourcesHistory(format bestiary.OutputFormat, dbPath string) error {
 	if err := validateEntityOutput(format); err != nil {
 		return err
 	}
-	store, _ := openViewStore(dbPath)
+	store := openViewStore(dbPath)
 	if store != nil {
 		defer store.Close()
 	}
@@ -819,7 +829,7 @@ func ingestHistoryRows(store *bestiary.Store) []sourceProvenance {
 // absent the export falls back to the curated table (documented), so the document
 // is always complete and round-trippable.
 func runSourcesExport(dbPath, outPath string) error {
-	store, _ := openViewStore(dbPath)
+	store := openViewStore(dbPath)
 	if store != nil {
 		defer store.Close()
 	}
@@ -930,7 +940,7 @@ func runShowEntity(arg string, format bestiary.OutputFormat, quantFlag, dbPath s
 	if err != nil {
 		return err
 	}
-	store, _ := openViewStore(dbPath)
+	store := openViewStore(dbPath)
 	if store != nil {
 		defer store.Close()
 	}

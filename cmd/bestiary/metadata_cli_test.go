@@ -80,7 +80,13 @@ func TestList_Status_None_KeepsModels(t *testing.T) {
 		t.Fatalf("list --status none returned 0 models; the baked catalog should carry status-none models")
 	}
 
-	// A status no baked model declares → empty result (the filter really filters).
+	// The baked catalog carries a NON-EMPTY set of deprecated models (the vendored
+	// models.dev catalog bakes them), and `--status deprecated` must surface them —
+	// a strict, non-empty subset of the full set. Asserting len > 0 here is the
+	// end-to-end guard that a status drop ANYWHERE on the vendored-catalog → bake →
+	// StaticModels → merge → filter path is caught: without it, a filter that dropped
+	// every non-none match (deprecated → empty) would still satisfy a bare
+	// "deprecated < none" check and pass silently.
 	depOut := captureStdout(t, func() {
 		if err := run([]string{"list", "--status", "deprecated", "--output", "json", "--db-path", db}); err != nil {
 			t.Fatalf("list --status deprecated: %v", err)
@@ -89,6 +95,9 @@ func TestList_Status_None_KeepsModels(t *testing.T) {
 	var depModels []map[string]any
 	if err := json.Unmarshal([]byte(depOut), &depModels); err != nil {
 		t.Fatalf("list --status deprecated json parse: %v", err)
+	}
+	if len(depModels) == 0 {
+		t.Errorf("list --status deprecated returned 0 models; the baked catalog bakes deprecated models, so a status drop on the CLI merge/query/filter path is the likely cause")
 	}
 	if len(depModels) >= len(noneModels) {
 		t.Errorf("status filter not applied: deprecated=%d, none=%d (deprecated should be a strict subset)",
@@ -207,40 +216,52 @@ func TestOverlay_JSON_CarriesMetadata(t *testing.T) {
 	}
 }
 
-// TestEntityView_FallbackNotice_OnlyOnOpenFailure asserts the ONE embedded-catalog
-// stderr notice appears exactly once when the store fails to open, and NOT when the
-// store opens successfully.
-func TestEntityView_FallbackNotice_OnlyOnOpenFailure(t *testing.T) {
-	// Force an open failure: create a regular file, then use a db path UNDER it so
-	// OpenStore's MkdirAll(parent) fails (parent is a file, not a directory).
+// noticeCount runs an entity-view command and returns how many times the
+// embedded-catalog fallback notice was printed to stderr, failing if the command
+// itself errored (a command that errors before the overlay would give a misleading
+// zero).
+func noticeCount(t *testing.T, args ...string) int {
+	t.Helper()
+	var stderr string
+	var runErr error
+	_ = captureStdout(t, func() {
+		stderr = captureStderr(t, func() { runErr = run(args) })
+	})
+	if runErr != nil {
+		t.Fatalf("run %v returned error: %v", args, runErr)
+	}
+	return strings.Count(stderr, "using embedded catalog")
+}
+
+// TestEntityView_FallbackNotice_OnZeroSyncedRows asserts the ONE embedded-catalog
+// stderr notice fires exactly once on EVERY zero-synced-rows path — a store absent
+// / auto-created fresh-empty (the never-synced user), and a genuine open failure —
+// and stays SILENT once a sync has populated the cache with metadata. This is the
+// sync-discoverability intent: a view that shows baked-only metadata always hints
+// at `sync`, and a view backed by synced metadata never nags.
+func TestEntityView_FallbackNotice_OnZeroSyncedRows(t *testing.T) {
+	// (1) Fresh, never-synced store: OpenStore auto-creates an empty DB that
+	// contributes zero synced rows → notice exactly once.
+	if n := noticeCount(t, "providers", "--db-path", tempDBPath(t), sizedCuratedKey); n != 1 {
+		t.Errorf("fresh-empty store: notice appeared %d times, want exactly 1", n)
+	}
+
+	// (2) Genuine open failure (db path under a regular file → MkdirAll fails): still
+	// zero synced rows → notice exactly once.
 	fileAsDir := filepath.Join(t.TempDir(), "not-a-dir")
 	if err := os.WriteFile(fileAsDir, []byte("x"), 0o644); err != nil {
 		t.Fatalf("seed file: %v", err)
 	}
 	badDB := filepath.Join(fileAsDir, "models.db")
-
-	stderr := captureStderr(t, func() {
-		_ = captureStdout(t, func() {
-			// A real baked entity so the command still succeeds against the baked catalog.
-			if err := run([]string{"providers", "--db-path", badDB, sizedCuratedKey}); err != nil {
-				t.Fatalf("providers with unopenable store should still succeed: %v", err)
-			}
-		})
-	})
-	if n := strings.Count(stderr, "using embedded catalog"); n != 1 {
-		t.Errorf("embedded-catalog notice appeared %d times on store-open failure, want exactly 1; stderr:\n%s", n, stderr)
+	if n := noticeCount(t, "providers", "--db-path", badDB, sizedCuratedKey); n != 1 {
+		t.Errorf("open-failure store: notice appeared %d times, want exactly 1", n)
 	}
 
-	// A good store path → the store opens → NO notice.
-	goodStderr := captureStderr(t, func() {
-		_ = captureStdout(t, func() {
-			if err := run([]string{"providers", "--db-path", tempDBPath(t), sizedCuratedKey}); err != nil {
-				t.Fatalf("providers with a good store: %v", err)
-			}
-		})
-	})
-	if strings.Contains(goodStderr, "using embedded catalog") {
-		t.Errorf("embedded-catalog notice printed when the store opened cleanly; stderr:\n%s", goodStderr)
+	// (3) A store populated with synced metadata → SILENT (synced data is present).
+	seeded := tempDBPath(t)
+	seedMetadataStore(t, seeded, syncedStandaloneID, "synced-desc", "2026-07-12T00:00:05Z")
+	if n := noticeCount(t, "providers", "--db-path", seeded, sizedCuratedKey); n != 0 {
+		t.Errorf("synced store: notice appeared %d times, want 0 (silent once synced)", n)
 	}
 }
 
