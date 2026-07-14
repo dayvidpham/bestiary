@@ -2006,6 +2006,7 @@ func deterministicFixtureJSON(t *testing.T) []byte {
 	models := map[string]any{
 		"zhipuai/glm-4.6": map[string]any{
 			"id":          "zhipuai/glm-4.6",
+			"family":      "glm",
 			"name":        "GLM-4.6",
 			"description": "Zhipu AI GLM-4.6 general model.",
 			"license":     "MIT",
@@ -2019,6 +2020,7 @@ func deterministicFixtureJSON(t *testing.T) []byte {
 		},
 		"openai/gpt-5.1": map[string]any{
 			"id":          "openai/gpt-5.1",
+			"family":      "gpt",
 			"name":        "GPT-5.1",
 			"description": "OpenAI GPT-5.1 flagship model.",
 			"license":     "proprietary",
@@ -2031,6 +2033,7 @@ func deterministicFixtureJSON(t *testing.T) []byte {
 		},
 		"anthropic/claude-haiku-3.5": map[string]any{
 			"id":          "anthropic/claude-haiku-3.5",
+			"family":      "claude-haiku",
 			"name":        "Claude Haiku 3.5",
 			"description": "Anthropic Claude Haiku 3.5.",
 			"license":     "proprietary",

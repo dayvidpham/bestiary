@@ -372,6 +372,10 @@ func toEntityMetadata(mapKey string, wm wireModelMetadata) EntityMetadata {
 		Name:        wm.Name,
 		Description: wm.Description,
 		License:     wm.License,
+		// The upstream models.json family verbatim — internal provenance carried so the
+		// metadata<->entity join can key its family-presence gate off the same raw family
+		// the catalog enrichment pipeline uses (see EntityMetadata.RawFamily).
+		RawFamily: Family(wm.Family),
 	}
 
 	// links[] first, then folded weights[] (Type == LinkWeights), preserving order.

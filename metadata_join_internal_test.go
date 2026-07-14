@@ -268,3 +268,92 @@ func TestRegistry_StandaloneOrderingAscending(t *testing.T) {
 		}
 	})
 }
+
+// TestMetadataCensus_SynthesizedStandalonesPinned is the census guard: it pins the SET
+// of synthesized metadata-only standalone entities produced by the production join over
+// the real baked metadata to a CURATED expected list. The list is a LITERAL — updated
+// consciously on each models.dev refresh — NOT derived from production output, so a
+// decomposition or presence-gate regression that invents a standalone for a family the
+// catalog actually serves fails here loudly.
+//
+// Today the only legitimate synthesized standalones are the 4 deepreinforce/ornith rows:
+// ornith has ZERO serving entries in the vendored catalog, so its metadata is a genuine
+// catalog-absent entity. The four join-failures this fix addressed
+// (gemini-omni-flash-preview, gpt-realtime-2.1, laguna-xs-2.1, nemotron-super-49b-v1.5)
+// must NOT appear: three route to the unlinked report and one attaches via a curated
+// alias.
+func TestMetadataCensus_SynthesizedStandalonesPinned(t *testing.T) {
+	// CURATED expected set. Update this ONLY with a deliberate curation decision.
+	want := map[string]bool{
+		"ornith@1.0#9b":   true,
+		"ornith@1.0#31b":  true,
+		"ornith@1.0#35b":  true,
+		"ornith@1.0#397b": true,
+	}
+
+	// Reconstruct the served entity set (the join's left input before standalone append)
+	// by excluding the metadata-only standalones the registry already folded in, then run
+	// the PRODUCTION join over the baked metadata to recompute the standalone set.
+	var served []Entity
+	for _, e := range Entities() {
+		if len(e.Instances) > 0 {
+			served = append(served, e)
+		}
+	}
+	_, _, standalone := JoinEntityMetadata(served, staticEntityMetadata())
+
+	got := make(map[string]bool, len(standalone))
+	for _, s := range standalone {
+		got[s.Ref.String()] = true
+	}
+
+	for k := range got {
+		if !want[k] {
+			t.Errorf(
+				"UNEXPECTED synthesized standalone %q\n"+
+					"  What: the join invented a metadata-only entity not in the curated expected set\n"+
+					"  Why: the decomposition/presence gate likely over-captured a compound family the\n"+
+					"       catalog actually serves (the exact class this guard exists to catch)\n"+
+					"  How to fix: add a parse/data/modelsdev_aliases.json entry (verify the target is a\n"+
+					"       DISTINCT entity — no collision), or correct the decomposition; only widen the\n"+
+					"       expected set for a genuine new catalog-absent lab (0 serving entries)",
+				k,
+			)
+		}
+	}
+	for k := range want {
+		if !got[k] {
+			t.Errorf(
+				"MISSING expected synthesized standalone %q\n"+
+					"  What: a curated catalog-absent standalone is no longer synthesized\n"+
+					"  Why: the metadata row may have gained serving entries, been re-decomposed, or been\n"+
+					"       aliased away\n"+
+					"  How to fix: if intended, remove %q from the curated expected set in this test",
+				k, k,
+			)
+		}
+	}
+}
+
+// TestMetadataAlias_NemotronSuper49bAttaches asserts the ONE clean curated alias lands:
+// nvidia/llama-3.3-nemotron-super-49b-v1.5's metadata attaches to the distinct
+// provider-backed entity nemotron/v1.5@3.3 (deepinfra/kilo/openrouter serve it), rather
+// than being synthesized as a spurious standalone, and that its metadata CONTENT travels
+// with it. (This upstream row carries a description + name but no benchmarks/license, so
+// the content check is on Description — the field it actually populates.)
+func TestMetadataAlias_NemotronSuper49bAttaches(t *testing.T) {
+	e, ok := EntityByTuple(FamilyNemotron, "v1.5", "3.3", "")
+	if !ok {
+		t.Fatalf("entity nemotron/v1.5@3.3 not found in the registry; the alias target must be a real served entity")
+	}
+	if e.Metadata == nil {
+		t.Fatalf("entity %q has no attached Metadata; the curated alias for nvidia/llama-3.3-nemotron-super-49b-v1.5 did not land", e.Ref.String())
+	}
+	if e.Metadata.MetadataID != "nvidia/llama-3.3-nemotron-super-49b-v1.5" {
+		t.Errorf("entity %q Metadata.MetadataID = %q, want %q",
+			e.Ref.String(), e.Metadata.MetadataID, "nvidia/llama-3.3-nemotron-super-49b-v1.5")
+	}
+	if e.Metadata.Description == "" {
+		t.Errorf("entity %q attached Metadata carries an empty Description; the metadata content did not travel with the alias", e.Ref.String())
+	}
+}

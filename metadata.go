@@ -596,6 +596,18 @@ type EntityMetadata struct {
 	Source DataSourceID
 	// LastSynced is an RFC3339 timestamp; empty on baked rows until a sync occurs.
 	LastSynced string
+
+	// RawFamily is the upstream models.json `family` value verbatim (e.g. "gemini",
+	// "nemotron") — the SAME raw-family signal the catalog enrichment pipeline feeds
+	// to ParseFamilyDetailed. It is internal provenance used ONLY to key the
+	// metadata<->entity join's family-PRESENCE gate off the same canonicalization the
+	// catalog side uses, so an over-captured compound family (e.g. "gemini-omni" from
+	// the id-only decomposition) is not mistaken for an absent family and wrongly
+	// synthesized as a standalone. It is NOT part of the public JSON contract
+	// (json:"-") — the entity KEY is still the mechanical decomposition — and it is
+	// NOT persisted by the store, so a value loaded from the cache degrades to "" and
+	// the presence gate falls back to the mechanical family.
+	RawFamily Family `json:"-"`
 }
 
 // Catalog is the parsed catalog.json artifact: the two views models.dev

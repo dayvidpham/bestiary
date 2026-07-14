@@ -182,6 +182,21 @@ func metadataEntityRef(id MetadataID) EntityRef {
 	}
 }
 
+// metadataPresenceFamily returns the CANONICAL family the catalog enrichment
+// pipeline would derive for this metadata row, used only for the join's
+// family-presence gate. Unlike metadataEntityRef (which is id-only and
+// provider/raw-family-agnostic, so it over-captures compound families), this feeds
+// the row's own upstream models.json family into ParseFamilyDetailed together with
+// the FULL lab-scoped id — exactly the (rawFamily, id) inputs enrichModelInfo uses
+// for a serving model — so the presence gate agrees with the served entity's
+// family. The entity KEY itself is deliberately NOT changed by this (that stays the
+// mechanical decomposition + curated aliases); only the standalone-vs-unlinked
+// decision consults it.
+func metadataPresenceFamily(id MetadataID, rawFamily Family) Family {
+	fam, _, _, _, _ := ParseFamilyDetailed(rawFamily, ModelID(id), Provider(""))
+	return fam
+}
+
 // --------------------------------------------------------------------------
 // Merge (most-recent-wins per MetadataID) — MergeModels mirror
 // --------------------------------------------------------------------------
@@ -272,8 +287,10 @@ func JoinEntityMetadata(ents []Entity, meta []EntityMetadata) (attached []Entity
 		// which is exactly the wrong-attach an alias exists to prevent; instead an
 		// absent alias target flows through the same miss policy on the curated family.
 		identity := metadataEntityRef(m.MetadataID)
+		aliased := false
 		if aliasRef, ok := metadataAliasRef(m.MetadataID); ok {
 			identity = aliasRef
+			aliased = true
 		}
 
 		if idx, ok := byKey[identity.String()]; ok {
@@ -282,7 +299,21 @@ func JoinEntityMetadata(ents []Entity, meta []EntityMetadata) (attached []Entity
 		}
 
 		// Miss. Two-tier: family known -> unlinked; family absent -> standalone.
-		if _, known := familyPresent[identity.Family]; known {
+		// The presence gate keys off the CANONICAL family the catalog enrichment
+		// pipeline would derive for this row (metadataPresenceFamily), not the
+		// mechanical id-only decomposition. The id-only path OVER-captures a compound
+		// family (e.g. "gemini-omni-flash-preview" -> "gemini-omni") that is absent
+		// from the catalog even though its short family ("gemini") is served — which
+		// wrongly synthesized a standalone. Feeding the upstream raw family makes the
+		// gate apples-to-apples with enrichModelInfo, so such a row routes to the
+		// unlinked report instead. A curated alias supersedes this (its target family
+		// is authoritative); an empty RawFamily (e.g. a store-loaded row) degrades to
+		// the mechanical family.
+		presenceFamily := identity.Family
+		if !aliased && m.RawFamily != "" {
+			presenceFamily = metadataPresenceFamily(m.MetadataID, m.RawFamily)
+		}
+		if _, known := familyPresent[presenceFamily]; known {
 			unlinked = append(unlinked, m.MetadataID)
 			continue
 		}
