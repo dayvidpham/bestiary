@@ -3713,6 +3713,52 @@ func TestGluedVersionModifier(t *testing.T) {
 	}
 }
 
+// TestDotGluedVariant verifies the LEADING dot-glued variant generalization: a
+// variant glued by a "." to a version with no separating hyphen (laguna-xs.2 →
+// (laguna,"xs","2"); laguna-m.1 → (laguna,"m","1")) decomposes mechanically, the
+// general counterpart of the trailing glued-letter split (glm-4.5v). The bare forms
+// (no vendor prefix) exercise the general machinery directly — no exact-ID entry is
+// consulted — so this pins that the mechanical path, not a curated map, derives them.
+//
+// The must-not-mangle rows are the whole point of the narrow gate: a version-prefixed
+// line ("deepseek-v3.1", the "v" is fused to a digit, not dotted), a genuine dotted
+// version ("gpt-4.1"), and an alphanumeric line designator ("gpt-4o") must all keep
+// their existing decomposition — the generalization must never invent a variant/version
+// split for them.
+func TestDotGluedVariant(t *testing.T) {
+	t.Parallel()
+
+	cases := []struct {
+		desc                             string
+		raw                              bestiary.Family
+		id                               bestiary.ModelID
+		wantFamily, wantVariant, wantVer string
+		wantMod                          string
+	}{
+		// Generalized: dot-glued leading variant, derived mechanically.
+		{"laguna-xs.2 bare → (laguna,xs,2)", "", "laguna-xs.2", "laguna", "xs", "2", ""},
+		{"laguna-m.1 bare → (laguna,m,1)", "", "laguna-m.1", "laguna", "m", "1", ""},
+		{"laguna-xs.2 :free folds identically", "", "laguna-xs.2:free", "laguna", "xs", "2", ""},
+		// Must-not-mangle: leading-letter fused to a digit (no dot) stays one variant token.
+		{"deepseek-v3.1 → variant 'v3.1' (v-prefix line, not dot-glued)", "", "deepseek-v3.1", "deepseek", "v3.1", "", ""},
+		// Must-not-mangle: genuine dotted version, no alpha prefix.
+		{"gpt-4.1 → version '4.1' (no variant invented)", "gpt", "gpt-4.1", "gpt", "", "4.1", ""},
+		// Must-not-mangle: alphanumeric line designator.
+		{"gpt-4o → variant '4o', version '' (unchanged)", "gpt", "gpt-4o", "gpt", "4o", "", ""},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.desc, func(t *testing.T) {
+			t.Parallel()
+			f, va, ve, mod, _ := bestiary.ParseFamilyDetailed(tc.raw, tc.id, "p")
+			if string(f) != tc.wantFamily || va != tc.wantVariant || ve != tc.wantVer || modJoin(mod) != tc.wantMod {
+				t.Errorf("raw=%q id=%q → (%s|%s|%s|mod=%s), want (%s|%s|%s|mod=%s)",
+					tc.raw, tc.id, f, va, ve, mod, tc.wantFamily, tc.wantVariant, tc.wantVer, tc.wantMod)
+			}
+		})
+	}
+}
+
 // TestSeriesLetterSplit verifies (d): letter-prefix model
 // series (kimi→k, minimax→m, mimo→v) decompose to variant=SERIES-LETTER +
 // version=NUMBER, with ALL attested forms normalized consistently. This SUPERSEDES

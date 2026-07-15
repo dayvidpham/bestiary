@@ -7,12 +7,17 @@ import (
 
 // midid_engine_internal_test.go — internal pins for the mid-ID token engine: the
 // phase-B stage/mode harvest in extractModifiers, which recovers identity/attribute
-// modifiers buried before the variant/version boundary. Internal package so the
-// tests can (a) call the unexported extractModifiers directly and (b) temporarily remove
-// an idFamilyOverrides entry to prove the mechanical decomposition matches the pinned
-// override tuple (the before/after equivalence discipline). The overrides themselves are
-// deliberately left in place — retiring them is deferred future work; these tests only
-// prove they are now redundant for the fields the engine owns.
+// modifiers buried before the variant/version boundary. Internal package so the tests can
+// (a) call the unexported extractModifiers directly and (b) read/temporarily remove an
+// idFamilyOverrides entry.
+//
+// The stage/mode overrides the engine subsumed have been RETIRED from idFamilyOverrides.
+// Each retired ID keeps a retained decomposition pin here: a literal (family, variant,
+// version, modifiers) tuple that the mechanical decomposition of the bare ID must
+// reproduce, plus an assertion that its override entry is gone. A few dotted-version
+// gpt-realtime IDs were NOT retired — the engine harvests their realtime modifier but a
+// dotted version glued behind that token is not yet mechanically recovered, so the
+// override still owns the version; those are pinned separately with a promotion tripwire.
 
 // decompStr renders a decomposition tuple for readable failures.
 func decompStr(f Family, v, ver string, mods []string) string {
@@ -47,50 +52,58 @@ func decomposeWithoutOverride(id string) (Family, string, string, []string) {
 	return f, v, ver, mods
 }
 
-// stageModeFullyDerivable is the subset of the v0.2.5 mid-ID stage/mode override block
-// (parse.go idFamilyOverrides) that the engine now decomposes IDENTICALLY to the pinned
-// tuple with the override removed. Verified against the vendored catalog: for each of
-// these the buried omni/livetranslate/realtime token — previously unreachable behind the
-// variant/version/size boundary — is now harvested mechanically, and family/variant/
-// version already agree.
-var stageModeFullyDerivable = []string{
-	"gemini-omni-flash-preview",
-	"google/gemini-omni-flash-preview",
-	"openai/gpt-realtime-2",
-	"openai/gpt-realtime-mini",
-	"qwen-omni-turbo",
-	"qwen-omni-turbo-realtime",
-	"qwen3-omni-flash",
-	"qwen3-omni-flash-realtime",
-	"qwen3.5-omni-flash",
-	"qwen3.5-omni-plus",
-	"qwen/qwen3-omni-30b-a3b-instruct",
-	"qwen/qwen3-omni-30b-a3b-thinking",
-	"qwen3-livetranslate-flash-realtime",
-	"nvidia/nemotron-3-nano-omni-30b-a3b-reasoning",
-	"nvidia/nemotron-3-nano-omni-30b-a3b-reasoning-bf16",
-	"nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free",
+// retiredStageModeOverride is a stage/mode exact-ID entry that was RETIRED from
+// idFamilyOverrides once the mid-ID engine derived it mechanically. Each row carries the
+// exact decomposition the entry used to pin, retained here as a literal so the pin
+// survives the entry's deletion. mods is the pre-canonicalization modifier list.
+type retiredStageModeOverride struct {
+	id      string
+	family  Family
+	variant string
+	version string
+	mods    []string
 }
 
-// TestMidIDEngine_StageOverrideEquivalence_FullyDerivable is the before/after equivalence
-// pin: for every fully-derivable stage/mode override ID, the mechanical decomposition
-// (override REMOVED) must equal the curated override tuple exactly. This proves the engine
-// harvests the buried mid-ID modifier and that the override is redundant for these IDs
-// (retirement-ready — the retirement itself is deliberately deferred). A failure here means
-// the mid-ID harvest regressed OR the override was edited out of agreement.
+// retiredStageModeOverrides is the full set of stage/mode overrides retired in favor of
+// the mid-ID engine. For each, the buried omni/livetranslate/realtime token — previously
+// unreachable behind the variant/version/size boundary — is now harvested mechanically,
+// and family/variant/version already agree, so the mechanical decomposition of the bare
+// ID reproduces the retained tuple with no override present.
+var retiredStageModeOverrides = []retiredStageModeOverride{
+	{"gemini-omni-flash-preview", "gemini", "flash", "", []string{"omni", "preview"}},
+	{"google/gemini-omni-flash-preview", "gemini", "flash", "", []string{"omni", "preview"}},
+	{"openai/gpt-realtime-2", "gpt", "", "2", []string{"realtime"}},
+	{"openai/gpt-realtime-mini", "gpt", "mini", "", []string{"realtime"}},
+	{"qwen-omni-turbo", "qwen", "turbo", "", []string{"omni"}},
+	{"qwen-omni-turbo-realtime", "qwen", "turbo", "", []string{"omni", "realtime"}},
+	{"qwen3-omni-flash", "qwen", "flash", "3", []string{"omni"}},
+	{"qwen3-omni-flash-realtime", "qwen", "flash", "3", []string{"omni", "realtime"}},
+	{"qwen3.5-omni-flash", "qwen", "flash", "3.5", []string{"omni"}},
+	{"qwen3.5-omni-plus", "qwen", "plus", "3.5", []string{"omni"}},
+	{"qwen/qwen3-omni-30b-a3b-instruct", "qwen", "", "3", []string{"omni", "instruct"}},
+	{"qwen/qwen3-omni-30b-a3b-thinking", "qwen", "", "3", []string{"omni", "thinking"}},
+	{"qwen3-livetranslate-flash-realtime", "qwen", "flash", "3", []string{"livetranslate", "realtime"}},
+	{"nvidia/nemotron-3-nano-omni-30b-a3b-reasoning", "nemotron", "nano", "3", []string{"omni", "reasoning"}},
+	{"nvidia/nemotron-3-nano-omni-30b-a3b-reasoning-bf16", "nemotron", "nano", "3", []string{"omni", "reasoning"}},
+	{"nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free", "nemotron", "nano", "3", []string{"omni", "reasoning"}},
+}
+
+// TestMidIDEngine_StageOverrideEquivalence_FullyDerivable is the retained decomposition
+// pin for the retired stage/mode overrides. For each retired ID it asserts (1) the
+// override entry is GONE from idFamilyOverrides (the retirement actually happened) and
+// (2) the mechanical decomposition of the bare ID reproduces the retained tuple exactly.
+// A failure means either the mid-ID harvest regressed or an entry was retired without an
+// equivalent mechanical derivation.
 func TestMidIDEngine_StageOverrideEquivalence_FullyDerivable(t *testing.T) {
-	for _, id := range stageModeFullyDerivable {
-		ov, ok := idFamilyOverrides[strings.ToLower(id)]
-		if !ok {
-			t.Fatalf("%s: expected an idFamilyOverrides entry (test list out of sync with parse.go)", id)
+	for _, c := range retiredStageModeOverrides {
+		if _, ok := idFamilyOverrides[strings.ToLower(c.id)]; ok {
+			t.Errorf("%s: still has an idFamilyOverrides entry — it was retired because the mid-ID engine derives it mechanically", c.id)
 		}
-		wantMods := CanonicalizeModifiers(ov.modifiers)
-		f, v, ver, mods := decomposeWithoutOverride(id)
+		f, v, ver, mods, _ := ParseFamilyDetailed("", ModelID(c.id), "")
 		got := decompStr(f, v, ver, mods)
-		want := decompStr(ov.family, ov.variant, ov.version, wantMods)
+		want := decompStr(c.family, c.variant, c.version, CanonicalizeModifiers(c.mods))
 		if got != want {
-			t.Errorf("%s: mechanical decomposition (override removed) = %s, want (pinned override) = %s",
-				id, got, want)
+			t.Errorf("%s: mechanical decomposition = %s, want (retained pin) = %s", c.id, got, want)
 		}
 	}
 }
@@ -128,7 +141,7 @@ func TestMidIDEngine_StageOverrideEquivalence_RealtimeModifierOnly(t *testing.T)
 		// Documented gap: version not yet mechanically recovered (override still needed).
 		if ver != c.wantVersion {
 			t.Errorf("%s: mechanical version = %q, want %q (version-extraction gap changed — "+
-				"if now == pinned %q, promote this ID into stageModeFullyDerivable)",
+				"if now == pinned %q, retire this override and move the ID into retiredStageModeOverrides)",
 				c.id, ver, c.wantVersion, ov.version)
 		}
 	}
