@@ -1,0 +1,23 @@
+{
+  "cases": [
+    {
+      "name": "fp16 alias documented as Other, not F16",
+      "input": {
+        "id": "llama3.3:70b-instruct-fp16"
+      },
+      "expected": {
+        "q": 35,
+        "raw": "fp16",
+        "stripped": "llama3.3:70b-instruct"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "quantization.go doc: 'fp16' is NOT in quantNames (canonical is 'f16'); DetectQuantization must return QuantizationOther with raw='fp16', never silently alias to QuantF16"
+      },
+      "mutation": {
+        "description": "documents that fp16 is quant-shaped but not a canonical wire name, so it must not be normalised to F16 silently"
+      }
+    }
+  ]
+}

@@ -1,0 +1,232 @@
+{
+  "cases": [
+    {
+      "name": "llama-3.3-70b-class at 128K context",
+      "input": {
+        "weights_bytes": 43000000000,
+        "context_tokens": 131072,
+        "layers": 80,
+        "kv_heads": 8,
+        "head_dim": 128
+      },
+      "expected": 85949672960,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "manual",
+        "ref": "Formula: KV = 2 * layers * kvHeads * headDim * contextTokens * 2; total = weightsBytes + KV. Row derivation \u2014 llama-3.3-70b class (layers=80, kvHeads=8, headDim=128, ctx=131072): KV = 2 * 80 * 8 * 128 * 131072 * 2 = 42,949,672,960; total = 43,000,000,000 + 42,949,672,960 = 85,949,672,960."
+      },
+      "mutation": {
+        "description": "hand-computed VRAM total for a llama-3.3-70b-class model at its 128K max context"
+      }
+    },
+    {
+      "name": "small model at 4K context",
+      "input": {
+        "weights_bytes": 1500000000,
+        "context_tokens": 4096,
+        "layers": 2,
+        "kv_heads": 2,
+        "head_dim": 64
+      },
+      "expected": 1504194304,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "manual",
+        "ref": "Formula: KV = 2 * layers * kvHeads * headDim * contextTokens * 2; total = weightsBytes + KV. Row derivation \u2014 small model (layers=2, kvHeads=2, headDim=64, ctx=4096): KV = 2 * 2 * 2 * 64 * 4096 * 2 = 4,194,304; total = 1,500,000,000 + 4,194,304 = 1,504,194,304."
+      },
+      "mutation": {
+        "description": "hand-computed VRAM total for a small 2-layer model at 4K context"
+      }
+    },
+    {
+      "name": "weights-only: layers zero",
+      "input": {
+        "weights_bytes": 5000000000,
+        "context_tokens": 131072,
+        "layers": 0,
+        "kv_heads": 8,
+        "head_dim": 128
+      },
+      "expected": 5000000000,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "vram.go: when layers<=0 the KV term is dropped entirely; total must equal weightsBytes exactly (weights-only lower bound)"
+      },
+      "mutation": {
+        "description": "layers absent (0) while kvHeads/headDim/context are present"
+      }
+    },
+    {
+      "name": "weights-only: kvHeads zero",
+      "input": {
+        "weights_bytes": 5000000000,
+        "context_tokens": 131072,
+        "layers": 80,
+        "kv_heads": 0,
+        "head_dim": 128
+      },
+      "expected": 5000000000,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "vram.go: when kvHeads<=0 the KV term is dropped entirely; total must equal weightsBytes exactly (weights-only lower bound)"
+      },
+      "mutation": {
+        "description": "kvHeads absent (0) while layers/headDim/context are present"
+      }
+    },
+    {
+      "name": "weights-only: headDim zero",
+      "input": {
+        "weights_bytes": 5000000000,
+        "context_tokens": 131072,
+        "layers": 80,
+        "kv_heads": 8,
+        "head_dim": 0
+      },
+      "expected": 5000000000,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "vram.go: when headDim<=0 the KV term is dropped entirely; total must equal weightsBytes exactly (weights-only lower bound)"
+      },
+      "mutation": {
+        "description": "headDim absent (0) while layers/kvHeads/context are present"
+      }
+    },
+    {
+      "name": "weights-only: contextTokens zero",
+      "input": {
+        "weights_bytes": 5000000000,
+        "context_tokens": 0,
+        "layers": 80,
+        "kv_heads": 8,
+        "head_dim": 128
+      },
+      "expected": 5000000000,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "vram.go: when contextTokens<=0 the KV term is dropped entirely; total must equal weightsBytes exactly (weights-only lower bound)"
+      },
+      "mutation": {
+        "description": "contextTokens absent (0) while layers/kvHeads/headDim are present"
+      }
+    },
+    {
+      "name": "all-zero arch facts with nonzero weights",
+      "input": {
+        "weights_bytes": 5000000000,
+        "context_tokens": 0,
+        "layers": 0,
+        "kv_heads": 0,
+        "head_dim": 0
+      },
+      "expected": 5000000000,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "vram.go: with every arch fact absent, KV=0 and total must equal weightsBytes exactly"
+      },
+      "mutation": {
+        "description": "every arch fact absent (layers=kvHeads=headDim=context=0) with nonzero weights"
+      }
+    },
+    {
+      "name": "all-zero including weights",
+      "input": {
+        "weights_bytes": 0,
+        "context_tokens": 0,
+        "layers": 0,
+        "kv_heads": 0,
+        "head_dim": 0
+      },
+      "expected": 0,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "vram.go: with weights and every arch fact zero, total must be exactly 0"
+      },
+      "mutation": {
+        "description": "every input including weightsBytes is zero"
+      }
+    },
+    {
+      "name": "negative layers",
+      "input": {
+        "weights_bytes": 5000000000,
+        "context_tokens": 131072,
+        "layers": -1,
+        "kv_heads": 8,
+        "head_dim": 128
+      },
+      "expected": 5000000000,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "vram.go: the arch-fact guard is <=0, not ==0, so a negative layers value must also drop the KV term (distinguishes the <=0 guard from a ==0 guard mutant)"
+      },
+      "mutation": {
+        "description": "negative layers value (-1) must be treated as absent, same as zero"
+      }
+    },
+    {
+      "name": "negative kvHeads",
+      "input": {
+        "weights_bytes": 5000000000,
+        "context_tokens": 131072,
+        "layers": 80,
+        "kv_heads": -1,
+        "head_dim": 128
+      },
+      "expected": 5000000000,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "vram.go: the arch-fact guard is <=0, not ==0, so a negative kvHeads value must also drop the KV term (distinguishes the <=0 guard from a ==0 guard mutant)"
+      },
+      "mutation": {
+        "description": "negative kvHeads value (-1) must be treated as absent, same as zero"
+      }
+    },
+    {
+      "name": "negative headDim",
+      "input": {
+        "weights_bytes": 5000000000,
+        "context_tokens": 131072,
+        "layers": 80,
+        "kv_heads": 8,
+        "head_dim": -1
+      },
+      "expected": 5000000000,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "vram.go: the arch-fact guard is <=0, not ==0, so a negative headDim value must also drop the KV term (distinguishes the <=0 guard from a ==0 guard mutant)"
+      },
+      "mutation": {
+        "description": "negative headDim value (-1) must be treated as absent, same as zero"
+      }
+    },
+    {
+      "name": "negative contextTokens",
+      "input": {
+        "weights_bytes": 5000000000,
+        "context_tokens": -1,
+        "layers": 80,
+        "kv_heads": 8,
+        "head_dim": 128
+      },
+      "expected": 5000000000,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "vram.go: the <=0 guard applies to contextTokens too; a negative context must also drop the KV term"
+      },
+      "mutation": {
+        "description": "negative contextTokens value (-1) must be treated as absent, same as zero"
+      }
+    }
+  ]
+}

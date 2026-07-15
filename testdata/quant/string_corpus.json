@@ -1,0 +1,498 @@
+{
+  "cases": [
+    {
+      "name": "none",
+      "input": 0,
+      "expected": "none",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "quantization.go: Quantization.String() for QuantizationNone (iota 0) returns its canonical wire name 'none'"
+      },
+      "mutation": {
+        "description": "pins String() rendering for enum member QuantizationNone"
+      }
+    },
+    {
+      "name": "f16",
+      "input": 1,
+      "expected": "f16",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "quantization.go: Quantization.String() for QuantF16 (iota 1) returns its canonical wire name 'f16'"
+      },
+      "mutation": {
+        "description": "pins String() rendering for enum member QuantF16"
+      }
+    },
+    {
+      "name": "bf16",
+      "input": 2,
+      "expected": "bf16",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "quantization.go: Quantization.String() for QuantBF16 (iota 2) returns its canonical wire name 'bf16'"
+      },
+      "mutation": {
+        "description": "pins String() rendering for enum member QuantBF16"
+      }
+    },
+    {
+      "name": "f32",
+      "input": 3,
+      "expected": "f32",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "quantization.go: Quantization.String() for QuantF32 (iota 3) returns its canonical wire name 'f32'"
+      },
+      "mutation": {
+        "description": "pins String() rendering for enum member QuantF32"
+      }
+    },
+    {
+      "name": "q4_0",
+      "input": 4,
+      "expected": "q4_0",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "quantization.go: Quantization.String() for QuantQ4_0 (iota 4) returns its canonical wire name 'q4_0'"
+      },
+      "mutation": {
+        "description": "pins String() rendering for enum member QuantQ4_0"
+      }
+    },
+    {
+      "name": "q4_1",
+      "input": 5,
+      "expected": "q4_1",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "quantization.go: Quantization.String() for QuantQ4_1 (iota 5) returns its canonical wire name 'q4_1'"
+      },
+      "mutation": {
+        "description": "pins String() rendering for enum member QuantQ4_1"
+      }
+    },
+    {
+      "name": "q5_0",
+      "input": 6,
+      "expected": "q5_0",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "quantization.go: Quantization.String() for QuantQ5_0 (iota 6) returns its canonical wire name 'q5_0'"
+      },
+      "mutation": {
+        "description": "pins String() rendering for enum member QuantQ5_0"
+      }
+    },
+    {
+      "name": "q5_1",
+      "input": 7,
+      "expected": "q5_1",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "quantization.go: Quantization.String() for QuantQ5_1 (iota 7) returns its canonical wire name 'q5_1'"
+      },
+      "mutation": {
+        "description": "pins String() rendering for enum member QuantQ5_1"
+      }
+    },
+    {
+      "name": "q8_0",
+      "input": 8,
+      "expected": "q8_0",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "quantization.go: Quantization.String() for QuantQ8_0 (iota 8) returns its canonical wire name 'q8_0'"
+      },
+      "mutation": {
+        "description": "pins String() rendering for enum member QuantQ8_0"
+      }
+    },
+    {
+      "name": "q2_k",
+      "input": 9,
+      "expected": "q2_k",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "quantization.go: Quantization.String() for QuantQ2_K (iota 9) returns its canonical wire name 'q2_k'"
+      },
+      "mutation": {
+        "description": "pins String() rendering for enum member QuantQ2_K"
+      }
+    },
+    {
+      "name": "q2_k_s",
+      "input": 10,
+      "expected": "q2_k_s",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "quantization.go: Quantization.String() for QuantQ2_K_S (iota 10) returns its canonical wire name 'q2_k_s'"
+      },
+      "mutation": {
+        "description": "pins String() rendering for enum member QuantQ2_K_S"
+      }
+    },
+    {
+      "name": "q3_k_s",
+      "input": 11,
+      "expected": "q3_k_s",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "quantization.go: Quantization.String() for QuantQ3_K_S (iota 11) returns its canonical wire name 'q3_k_s'"
+      },
+      "mutation": {
+        "description": "pins String() rendering for enum member QuantQ3_K_S"
+      }
+    },
+    {
+      "name": "q3_k_m",
+      "input": 12,
+      "expected": "q3_k_m",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "quantization.go: Quantization.String() for QuantQ3_K_M (iota 12) returns its canonical wire name 'q3_k_m'"
+      },
+      "mutation": {
+        "description": "pins String() rendering for enum member QuantQ3_K_M"
+      }
+    },
+    {
+      "name": "q3_k_l",
+      "input": 13,
+      "expected": "q3_k_l",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "quantization.go: Quantization.String() for QuantQ3_K_L (iota 13) returns its canonical wire name 'q3_k_l'"
+      },
+      "mutation": {
+        "description": "pins String() rendering for enum member QuantQ3_K_L"
+      }
+    },
+    {
+      "name": "q4_k_s",
+      "input": 14,
+      "expected": "q4_k_s",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "quantization.go: Quantization.String() for QuantQ4_K_S (iota 14) returns its canonical wire name 'q4_k_s'"
+      },
+      "mutation": {
+        "description": "pins String() rendering for enum member QuantQ4_K_S"
+      }
+    },
+    {
+      "name": "q4_k_m",
+      "input": 15,
+      "expected": "q4_k_m",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "quantization.go: Quantization.String() for QuantQ4_K_M (iota 15) returns its canonical wire name 'q4_k_m'"
+      },
+      "mutation": {
+        "description": "pins String() rendering for enum member QuantQ4_K_M"
+      }
+    },
+    {
+      "name": "q5_k_s",
+      "input": 16,
+      "expected": "q5_k_s",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "quantization.go: Quantization.String() for QuantQ5_K_S (iota 16) returns its canonical wire name 'q5_k_s'"
+      },
+      "mutation": {
+        "description": "pins String() rendering for enum member QuantQ5_K_S"
+      }
+    },
+    {
+      "name": "q5_k_m",
+      "input": 17,
+      "expected": "q5_k_m",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "quantization.go: Quantization.String() for QuantQ5_K_M (iota 17) returns its canonical wire name 'q5_k_m'"
+      },
+      "mutation": {
+        "description": "pins String() rendering for enum member QuantQ5_K_M"
+      }
+    },
+    {
+      "name": "q6_k",
+      "input": 18,
+      "expected": "q6_k",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "quantization.go: Quantization.String() for QuantQ6_K (iota 18) returns its canonical wire name 'q6_k'"
+      },
+      "mutation": {
+        "description": "pins String() rendering for enum member QuantQ6_K"
+      }
+    },
+    {
+      "name": "iq1_s",
+      "input": 19,
+      "expected": "iq1_s",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "quantization.go: Quantization.String() for QuantIQ1_S (iota 19) returns its canonical wire name 'iq1_s'"
+      },
+      "mutation": {
+        "description": "pins String() rendering for enum member QuantIQ1_S"
+      }
+    },
+    {
+      "name": "iq1_m",
+      "input": 20,
+      "expected": "iq1_m",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "quantization.go: Quantization.String() for QuantIQ1_M (iota 20) returns its canonical wire name 'iq1_m'"
+      },
+      "mutation": {
+        "description": "pins String() rendering for enum member QuantIQ1_M"
+      }
+    },
+    {
+      "name": "iq2_xxs",
+      "input": 21,
+      "expected": "iq2_xxs",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "quantization.go: Quantization.String() for QuantIQ2_XXS (iota 21) returns its canonical wire name 'iq2_xxs'"
+      },
+      "mutation": {
+        "description": "pins String() rendering for enum member QuantIQ2_XXS"
+      }
+    },
+    {
+      "name": "iq2_xs",
+      "input": 22,
+      "expected": "iq2_xs",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "quantization.go: Quantization.String() for QuantIQ2_XS (iota 22) returns its canonical wire name 'iq2_xs'"
+      },
+      "mutation": {
+        "description": "pins String() rendering for enum member QuantIQ2_XS"
+      }
+    },
+    {
+      "name": "iq2_s",
+      "input": 23,
+      "expected": "iq2_s",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "quantization.go: Quantization.String() for QuantIQ2_S (iota 23) returns its canonical wire name 'iq2_s'"
+      },
+      "mutation": {
+        "description": "pins String() rendering for enum member QuantIQ2_S"
+      }
+    },
+    {
+      "name": "iq2_m",
+      "input": 24,
+      "expected": "iq2_m",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "quantization.go: Quantization.String() for QuantIQ2_M (iota 24) returns its canonical wire name 'iq2_m'"
+      },
+      "mutation": {
+        "description": "pins String() rendering for enum member QuantIQ2_M"
+      }
+    },
+    {
+      "name": "iq3_xxs",
+      "input": 25,
+      "expected": "iq3_xxs",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "quantization.go: Quantization.String() for QuantIQ3_XXS (iota 25) returns its canonical wire name 'iq3_xxs'"
+      },
+      "mutation": {
+        "description": "pins String() rendering for enum member QuantIQ3_XXS"
+      }
+    },
+    {
+      "name": "iq3_xs",
+      "input": 26,
+      "expected": "iq3_xs",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "quantization.go: Quantization.String() for QuantIQ3_XS (iota 26) returns its canonical wire name 'iq3_xs'"
+      },
+      "mutation": {
+        "description": "pins String() rendering for enum member QuantIQ3_XS"
+      }
+    },
+    {
+      "name": "iq3_s",
+      "input": 27,
+      "expected": "iq3_s",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "quantization.go: Quantization.String() for QuantIQ3_S (iota 27) returns its canonical wire name 'iq3_s'"
+      },
+      "mutation": {
+        "description": "pins String() rendering for enum member QuantIQ3_S"
+      }
+    },
+    {
+      "name": "iq3_m",
+      "input": 28,
+      "expected": "iq3_m",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "quantization.go: Quantization.String() for QuantIQ3_M (iota 28) returns its canonical wire name 'iq3_m'"
+      },
+      "mutation": {
+        "description": "pins String() rendering for enum member QuantIQ3_M"
+      }
+    },
+    {
+      "name": "iq4_xs",
+      "input": 29,
+      "expected": "iq4_xs",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "quantization.go: Quantization.String() for QuantIQ4_XS (iota 29) returns its canonical wire name 'iq4_xs'"
+      },
+      "mutation": {
+        "description": "pins String() rendering for enum member QuantIQ4_XS"
+      }
+    },
+    {
+      "name": "iq4_nl",
+      "input": 30,
+      "expected": "iq4_nl",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "quantization.go: Quantization.String() for QuantIQ4_NL (iota 30) returns its canonical wire name 'iq4_nl'"
+      },
+      "mutation": {
+        "description": "pins String() rendering for enum member QuantIQ4_NL"
+      }
+    },
+    {
+      "name": "awq",
+      "input": 31,
+      "expected": "awq",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "quantization.go: Quantization.String() for QuantAWQ (iota 31) returns its canonical wire name 'awq'"
+      },
+      "mutation": {
+        "description": "pins String() rendering for enum member QuantAWQ"
+      }
+    },
+    {
+      "name": "gptq",
+      "input": 32,
+      "expected": "gptq",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "quantization.go: Quantization.String() for QuantGPTQ (iota 32) returns its canonical wire name 'gptq'"
+      },
+      "mutation": {
+        "description": "pins String() rendering for enum member QuantGPTQ"
+      }
+    },
+    {
+      "name": "int8",
+      "input": 33,
+      "expected": "int8",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "quantization.go: Quantization.String() for QuantInt8 (iota 33) returns its canonical wire name 'int8'"
+      },
+      "mutation": {
+        "description": "pins String() rendering for enum member QuantInt8"
+      }
+    },
+    {
+      "name": "int4",
+      "input": 34,
+      "expected": "int4",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "quantization.go: Quantization.String() for QuantInt4 (iota 34) returns its canonical wire name 'int4'"
+      },
+      "mutation": {
+        "description": "pins String() rendering for enum member QuantInt4"
+      }
+    },
+    {
+      "name": "other",
+      "input": 35,
+      "expected": "other",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "quantization.go: Quantization.String() for QuantizationOther (iota 35) returns its canonical wire name 'other'"
+      },
+      "mutation": {
+        "description": "pins String() rendering for enum member QuantizationOther"
+      }
+    },
+    {
+      "name": "out_of_range_9999",
+      "input": 9999,
+      "expected": "quantization(9999)",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "quantization.go: Quantization(9999).String() renders as 'quantization(9999)' without panicking (out-of-range guard)"
+      },
+      "mutation": {
+        "description": "out-of-range Quantization value 9999, no matching named member"
+      }
+    },
+    {
+      "name": "out_of_range_neg1",
+      "input": -1,
+      "expected": "quantization(-1)",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "quantization.go: Quantization(-1).String() renders as 'quantization(-1)' without panicking (out-of-range guard)"
+      },
+      "mutation": {
+        "description": "out-of-range Quantization value -1, no matching named member"
+      }
+    }
+  ]
+}
