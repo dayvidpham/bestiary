@@ -135,6 +135,13 @@ func TestStageMode_LivetranslateIdentity(t *testing.T) {
 	if !ok {
 		t.Fatal("qwen/flash@3{livetranslate} entity missing — livetranslate identity did not land")
 	}
+	// Assert the EXACT rendered key. EntityByTuple projects its modifier input through the
+	// SAME EntityModifiers classification the key uses, so an identity->attribute class flip
+	// drops "livetranslate" on both sides and the lookup would still match the bare
+	// qwen/flash@3 entity — only pinning the rendered string catches the flip.
+	if e.Ref.String() != "qwen/flash@3{livetranslate}" {
+		t.Errorf("entity key = %q, want qwen/flash@3{livetranslate} (livetranslate must be IDENTITY-class)", e.Ref.String())
+	}
 	if !entityHoldsInstanceContaining(e, "qwen3-livetranslate-flash-realtime") {
 		t.Errorf("qwen/flash@3{livetranslate} missing its instance: %v", instIDs(e))
 	}
