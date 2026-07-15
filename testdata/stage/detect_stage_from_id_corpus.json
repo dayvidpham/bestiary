@@ -1,0 +1,186 @@
+{
+  "cases": [
+    {
+      "name": "chatgpt-4o-latest",
+      "input": "chatgpt-4o-latest",
+      "expected": "latest",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "manual",
+        "ref": "MIGRATED token, now the stage axis (S6 stage-migration ratified set); exact catalog ID"
+      },
+      "mutation": {
+        "description": "pins the ID-detected latest token on a real catalog ID"
+      }
+    },
+    {
+      "name": "claude-3-5-haiku-latest",
+      "input": "claude-3-5-haiku-latest",
+      "expected": "latest",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "manual",
+        "ref": "MIGRATED token, now the stage axis (S6 stage-migration ratified set); exact catalog ID"
+      },
+      "mutation": {
+        "description": "pins the ID-detected latest token on a real catalog ID"
+      }
+    },
+    {
+      "name": "gemini-2.5-flash-preview-09-2025",
+      "input": "gemini-2.5-flash-preview-09-2025",
+      "expected": "preview",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "manual",
+        "ref": "MIGRATED token, now the stage axis (S6 stage-migration ratified set); exact catalog ID"
+      },
+      "mutation": {
+        "description": "pins the ID-detected preview token on a real catalog ID with trailing date tokens"
+      }
+    },
+    {
+      "name": "gemini-3-pro-preview",
+      "input": "gemini-3-pro-preview",
+      "expected": "preview",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "manual",
+        "ref": "MIGRATED token, now the stage axis (S6 stage-migration ratified set); exact catalog ID"
+      },
+      "mutation": {
+        "description": "pins the ID-detected preview token on a real catalog ID"
+      }
+    },
+    {
+      "name": "moonshotai-kimi-k2-thinking-turbo-original",
+      "input": "moonshotai/kimi-k2-thinking-turbo-original",
+      "expected": "original",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "manual",
+        "ref": "MIGRATED token, now the stage axis (S6 stage-migration ratified set); exact catalog ID with provider path prefix"
+      },
+      "mutation": {
+        "description": "pins the ID-detected original token behind a provider/ path prefix"
+      }
+    },
+    {
+      "name": "grok-4.20-beta-0309-reasoning",
+      "input": "grok-4.20-beta-0309-reasoning",
+      "expected": "beta",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "manual",
+        "ref": "DETECT-WITHOUT-STRIP beta exemplar (exact catalog ID). Scanner unit exemplar only -- the full beta row set is never hand-enumerated here: it is census-derived over the whole catalog by TestStageBeta_CensusDerived (stage_migration_test.go), so a new beta ID can never escape a hand glob"
+      },
+      "mutation": {
+        "description": "pins detect-without-strip: the beta token is found without being removed from the ID's decomposition"
+      }
+    },
+    {
+      "name": "deepseek-ai-deepseek-v3.2-exp",
+      "input": "deepseek-ai/deepseek-v3.2-exp",
+      "expected": "none",
+      "classification": "must-fail",
+      "provenance": {
+        "source": "manual",
+        "ref": "NOT ID-detected this epoch -> StageNone (-exp exemplar, deferred GH#13)"
+      },
+      "mutation": {
+        "description": "the -exp short form is not in idDetectedStages, so detection must not fire"
+      }
+    },
+    {
+      "name": "deepseek-ai-deepseek-v3.2-exp-thinking",
+      "input": "deepseek-ai/deepseek-v3.2-exp-thinking",
+      "expected": "none",
+      "classification": "must-fail",
+      "provenance": {
+        "source": "manual",
+        "ref": "NOT ID-detected this epoch -> StageNone (-exp exemplar, deferred GH#13)"
+      },
+      "mutation": {
+        "description": "the -exp short form is not in idDetectedStages even with a trailing modifier token"
+      }
+    },
+    {
+      "name": "learnlm-1.5-pro-experimental",
+      "input": "learnlm-1.5-pro-experimental",
+      "expected": "none",
+      "classification": "must-fail",
+      "provenance": {
+        "source": "manual",
+        "ref": "NOT ID-detected this epoch -> StageNone (experimental ID-detection deferred, GH#13)"
+      },
+      "mutation": {
+        "description": "the experimental token is not in idDetectedStages, so detection must not fire"
+      }
+    },
+    {
+      "name": "openrouter-owl-alpha",
+      "input": "openrouter/owl-alpha",
+      "expected": "none",
+      "classification": "must-fail",
+      "provenance": {
+        "source": "manual",
+        "ref": "NOT ID-detected this epoch -> StageNone (alpha ID-detection deferred, GH#13)"
+      },
+      "mutation": {
+        "description": "the alpha token is not in idDetectedStages, so detection must not fire"
+      }
+    },
+    {
+      "name": "stable-diffusion-3.5-large",
+      "input": "stable-diffusion-3.5-large",
+      "expected": "none",
+      "classification": "must-fail",
+      "provenance": {
+        "source": "manual",
+        "ref": "Family-member guard: \"stable\" is a family name, never a stage"
+      },
+      "mutation": {
+        "description": "the leading stable token belongs to the stable-diffusion family name, not a stage marker"
+      }
+    },
+    {
+      "name": "fal-ai-stable-audio-25-text-to-audio",
+      "input": "fal-ai/stable-audio-25/text-to-audio",
+      "expected": "none",
+      "classification": "must-fail",
+      "provenance": {
+        "source": "manual",
+        "ref": "Family-member guard: \"stable\" is a family name, never a stage"
+      },
+      "mutation": {
+        "description": "the stable token belongs to the stable-audio family name behind a provider/ path prefix"
+      }
+    },
+    {
+      "name": "meta-llama-4-scout-17b-16e",
+      "input": "meta/llama-4-scout-17b-16e",
+      "expected": "none",
+      "classification": "must-fail",
+      "provenance": {
+        "source": "manual",
+        "ref": "No stage marker present in the ID"
+      },
+      "mutation": {
+        "description": "no token in the ID matches any recognized stage marker"
+      }
+    },
+    {
+      "name": "claude-opus-4-5-20251101",
+      "input": "claude-opus-4-5-20251101",
+      "expected": "none",
+      "classification": "must-fail",
+      "provenance": {
+        "source": "manual",
+        "ref": "No stage marker present in the ID"
+      },
+      "mutation": {
+        "description": "no token in the ID matches any recognized stage marker"
+      }
+    }
+  ]
+}

@@ -42,7 +42,7 @@ func TestParseData_RegexesValid(t *testing.T) {
 func TestParseFamily_Overrides(t *testing.T) {
 	t.Parallel()
 	corpus := loadFamilyVariantCorpus(t, familyOverridesCorpusJSON, 60)
-	requireFamilyVariantCoverage(t, corpus, map[string]familyVariantExpected{
+	requireInputCoverage(t, corpus, map[string]familyVariantExpected{
 		"claude-opus":         {Family: "claude", Variant: "opus"},
 		"gpt-oss":             {Family: "gpt", Variant: "oss"},
 		"sonar-deep-research": {Family: "sonar", Variant: "deep-research"},
@@ -55,7 +55,7 @@ func TestParseFamily_Overrides(t *testing.T) {
 func TestParseFamily_Overrides_OpaqueCompounds(t *testing.T) {
 	t.Parallel()
 	corpus := loadFamilyVariantCorpus(t, familyOpaqueCompoundsCorpusJSON, 8)
-	requireFamilyVariantCoverage(t, corpus, map[string]familyVariantExpected{
+	requireInputCoverage(t, corpus, map[string]familyVariantExpected{
 		"text-embedding": {Family: "text-embedding", Variant: ""},
 		"dall-e":         {Family: "dall-e", Variant: ""},
 	})
@@ -66,7 +66,7 @@ func TestParseFamily_Overrides_OpaqueCompounds(t *testing.T) {
 func TestParseFamily_VersionedPatterns(t *testing.T) {
 	t.Parallel()
 	corpus := loadFamilyVariantCorpus(t, familyVersionedPatternsCorpusJSON, 5)
-	requireFamilyVariantCoverage(t, corpus, map[string]familyVariantExpected{
+	requireInputCoverage(t, corpus, map[string]familyVariantExpected{
 		"kimi-k2.5": {Family: "kimi", Variant: "k2.5"},
 		"qwen3.5":   {Family: "qwen", Variant: "3.5"},
 	})
@@ -78,7 +78,7 @@ func TestParseFamily_VersionedPatterns(t *testing.T) {
 func TestParseFamily_HyphenVersion(t *testing.T) {
 	t.Parallel()
 	corpus := loadFamilyVariantCorpus(t, familyHyphenVersionCorpusJSON, 1)
-	requireFamilyVariantCoverage(t, corpus, map[string]familyVariantExpected{
+	requireInputCoverage(t, corpus, map[string]familyVariantExpected{
 		"claude-opus-4-5": {Family: "claude", Variant: "opus-4-5"},
 	})
 	runFamilyVariantCorpus(t, corpus)
@@ -161,7 +161,7 @@ func TestParseFamily_Determinism(t *testing.T) {
 func TestParseFamily_SuffixStripping(t *testing.T) {
 	t.Parallel()
 	corpus := loadFamilyVariantCorpus(t, familySuffixStrippingCorpusJSON, 29)
-	requireFamilyVariantCoverage(t, corpus, map[string]familyVariantExpected{
+	requireInputCoverage(t, corpus, map[string]familyVariantExpected{
 		// longest-first: "-codex-mini" must beat "-mini".
 		"baz-codex-mini": {Family: "baz", Variant: "codex-mini"},
 		// ratified global modifiers are NOT stripped by ParseFamily.
@@ -177,7 +177,7 @@ func TestParseFamily_SuffixStripping(t *testing.T) {
 func TestParseFamily_VPrefix(t *testing.T) {
 	t.Parallel()
 	corpus := loadFamilyVariantCorpus(t, familyVPrefixCorpusJSON, 3)
-	requireFamilyVariantCoverage(t, corpus, map[string]familyVariantExpected{
+	requireInputCoverage(t, corpus, map[string]familyVariantExpected{
 		"somebase-v3.0":  {Family: "somebase", Variant: "v3.0"},
 		"thing-v2.5-pro": {Family: "thing", Variant: "v2.5-pro"},
 	})
@@ -190,7 +190,7 @@ func TestParseFamily_VPrefix(t *testing.T) {
 func TestParseFamily_HyphenVersion_NoOverride(t *testing.T) {
 	t.Parallel()
 	corpus := loadFamilyVariantCorpus(t, familyHyphenVersionNoOverrideCorpusJSON, 2)
-	requireFamilyVariantCoverage(t, corpus, map[string]familyVariantExpected{
+	requireInputCoverage(t, corpus, map[string]familyVariantExpected{
 		"llama-3-1": {Family: "llama", Variant: "3-1"},
 		"phi-4-5":   {Family: "phi", Variant: "4-5"},
 	})
@@ -215,7 +215,7 @@ func TestExtractDate_CalendarValidation(t *testing.T) {
 	t.Parallel()
 	corpus := loadParseCorpus[dateInput, string](t, extractDateCalendarCorpusJSON, 8)
 	// Value coverage: the load-bearing valid/invalid boundary pairs must remain.
-	requireDateCoverage(t, corpus, map[dateInput]string{
+	requireInputCoverage(t, corpus, map[dateInput]string{
 		{ID: "model-9999-99-01"}: "",           // invalid month rejected
 		{ID: "model-2023-02-29"}: "",           // Feb 29 non-leap rejected
 		{ID: "model-2024-02-29"}: "2024-02-29", // Feb 29 leap accepted
@@ -255,7 +255,7 @@ func TestInferFamilyFromID(t *testing.T) {
 func TestParseFamilyWithVersion_Core(t *testing.T) {
 	t.Parallel()
 	corpus := loadParseCorpus[string, familyVersionExpected](t, familyWithVersionCoreCorpusJSON, 8)
-	requireFamilyVersionCoverage(t, corpus, map[string]familyVersionExpected{
+	requireInputCoverage(t, corpus, map[string]familyVersionExpected{
 		"claude-opus-4-5": {Family: "claude", Variant: "opus", Version: "4.5"},
 		"claude-opus":     {Family: "claude", Variant: "opus", Version: ""},
 		"llama-3-1":       {Family: "llama", Variant: "", Version: "3.1"},
@@ -268,7 +268,7 @@ func TestParseFamilyWithVersion_Core(t *testing.T) {
 func TestParseFamilyWithVersion_Gemini(t *testing.T) {
 	t.Parallel()
 	corpus := loadParseCorpus[string, familyVersionExpected](t, familyWithVersionGeminiCorpusJSON, 3)
-	requireFamilyVersionCoverage(t, corpus, map[string]familyVersionExpected{
+	requireInputCoverage(t, corpus, map[string]familyVersionExpected{
 		"gemini-2.5-flash": {Family: "gemini", Variant: "flash", Version: "2.5"},
 		"gemini-2.5":       {Family: "gemini", Variant: "", Version: "2.5"},
 	})
@@ -512,103 +512,14 @@ func TestParseFamilyDetailed_YYMMDateAsVersion(t *testing.T) {
 // The pipeline integration test below covers the end-to-end flow.
 func TestExtractModifier(t *testing.T) {
 	t.Parallel()
-
-	cases := []struct {
-		desc         string
-		id           bestiary.ModelID
-		family       bestiary.Family
-		variant      string
-		wantModifier string
-		wantConsumed string
-	}{
-		// 4-case corpus from the spec.
-		{
-			desc:         "claude-opus-4-1-20250805-thinking",
-			id:           "claude-opus-4-1-20250805-thinking",
-			family:       "claude",
-			variant:      "opus",
-			wantModifier: "thinking",
-			wantConsumed: "-thinking",
-		},
-		{
-			desc:         "claude-opus-4-6-thinking (no date in ID)",
-			id:           "claude-opus-4-6-thinking",
-			family:       "claude",
-			variant:      "opus",
-			wantModifier: "thinking",
-			wantConsumed: "-thinking",
-		},
-		{
-			desc:         "doubao-seed-1-6-thinking-250715",
-			id:           "doubao-seed-1-6-thinking-250715",
-			family:       "doubao",
-			variant:      "seed",
-			wantModifier: "",
-			wantConsumed: "",
-			// 250715 is the trailing token (YYMMDD without dashes), not "thinking".
-			// "thinking" appears before "250715" so it is not the last hyphen-token.
-			// ExtractModifier only matches when the modifier IS the trailing token.
-		},
-		{
-			desc:         "gpt-4o-2024-05-13 (no modifier)",
-			id:           "gpt-4o-2024-05-13",
-			family:       "gpt",
-			variant:      "",
-			wantModifier: "",
-			wantConsumed: "",
-		},
-		// Negative cases.
-		{
-			desc:         "unknown modifier -zen returns empty",
-			id:           "some-model-zen",
-			family:       "some",
-			variant:      "model",
-			wantModifier: "",
-			wantConsumed: "",
-		},
-		{
-			desc:         "trailing token == variant: no double-count",
-			id:           "deepseek-thinking",
-			family:       "deepseek",
-			variant:      "thinking", // variant IS "thinking" — ExtractModifier must return empty (variant-guard, Fix 3)
-			wantModifier: "",
-			wantConsumed: "",
-			// When the trailing modifier token equals the parsed variant, ExtractModifier
-			// returns ("","") to avoid double-counting the same semantic token in both
-			// Variant and Modifier. The variant is the authoritative encoding.
-		},
-		{
-			desc:         "empty ID returns empty",
-			id:           "",
-			family:       "claude",
-			variant:      "opus",
-			wantModifier: "",
-			wantConsumed: "",
-		},
-		{
-			desc:         "think suffix (shorter modifier) does not shadow thinking",
-			id:           "model-thinking",
-			family:       "model",
-			variant:      "",
-			wantModifier: "thinking",
-			wantConsumed: "-thinking",
-		},
-	}
-
-	for _, tc := range cases {
-		t.Run(tc.desc, func(t *testing.T) {
-			t.Parallel()
-			gotModifier, gotConsumed := bestiary.ExtractModifier(tc.id, tc.family, tc.variant)
-			if gotModifier != tc.wantModifier {
-				t.Errorf("ExtractModifier(%q, %q, %q) modifier = %q, want %q",
-					tc.id, tc.family, tc.variant, gotModifier, tc.wantModifier)
-			}
-			if gotConsumed != tc.wantConsumed {
-				t.Errorf("ExtractModifier(%q, %q, %q) consumed = %q, want %q",
-					tc.id, tc.family, tc.variant, gotConsumed, tc.wantConsumed)
-			}
-		})
-	}
+	corpus := loadParseCorpus[modifierInput, modifierExpected](t, extractModifierCorpusJSON, 8)
+	requireInputCoverage(t, corpus, map[modifierInput]modifierExpected{
+		// trailing modifier fires with an empty variant.
+		{ID: "model-thinking", Family: "model", Variant: ""}: {Modifier: "thinking", Consumed: "-thinking"},
+		// variant-guard: trailing token equals variant -> no double-count.
+		{ID: "deepseek-thinking", Family: "deepseek", Variant: "thinking"}: {Modifier: "", Consumed: ""},
+	})
+	runExtractModifierCorpus(t, corpus)
 }
 
 // TestExtractModifier_DoesNotDoubleCountVariant verifies the variant-guard:
@@ -627,86 +538,16 @@ func TestExtractModifier(t *testing.T) {
 // IMPORTANT: this guards against double-counting a variant token that also matches a trailing modifier.
 func TestExtractModifier_DoesNotDoubleCountVariant(t *testing.T) {
 	t.Parallel()
-
-	cases := []struct {
-		desc         string
-		id           bestiary.ModelID
-		family       bestiary.Family
-		variant      string
-		wantModifier string
-		wantConsumed string
-	}{
-		{
-			desc:         "kimi-k2-thinking: trailing token == variant → no double-count",
-			id:           "kimi-k2-thinking",
-			family:       "kimi",
-			variant:      "thinking",
-			wantModifier: "",
-			wantConsumed: "",
-			// variant="thinking" and trailing token "-thinking" match → guard fires → empty.
-		},
-		{
-			desc:         "moonshotai/kimi-k2-thinking: path-stripped, trailing token == variant → no double-count",
-			id:           "moonshotai/kimi-k2-thinking",
-			family:       "kimi",
-			variant:      "thinking",
-			wantModifier: "",
-			wantConsumed: "",
-			// Leading path segment is stripped; same guard applies.
-		},
-		{
-			desc:         "deepseek-thinking: trailing 'thinking' == variant='thinking' → no double-count",
-			id:           "deepseek-thinking",
-			family:       "deepseek",
-			variant:      "thinking",
-			wantModifier: "",
-			wantConsumed: "",
-		},
-		{
-			// Negative case: different trailing token vs. variant — guard must NOT fire.
-			desc:         "claude-opus-4-6-thinking: variant='opus' != trailing 'thinking' → modifier fires",
-			id:           "claude-opus-4-6-thinking",
-			family:       "claude",
-			variant:      "opus",
-			wantModifier: "thinking",
-			wantConsumed: "-thinking",
-		},
-		{
-			// Negative case: no modifier in ID — guard irrelevant.
-			desc:         "claude-opus-4-6: no trailing modifier → empty",
-			id:           "claude-opus-4-6",
-			family:       "claude",
-			variant:      "opus",
-			wantModifier: "",
-			wantConsumed: "",
-		},
-		{
-			// Edge case: variant is empty string — trailing modifier fires normally.
-			desc:         "kimi-k2-thinking: empty variant → modifier fires",
-			id:           "kimi-k2-thinking",
-			family:       "kimi",
-			variant:      "",
-			wantModifier: "thinking",
-			wantConsumed: "-thinking",
-		},
-	}
-
-	for _, tc := range cases {
-		t.Run(tc.desc, func(t *testing.T) {
-			t.Parallel()
-			gotModifier, gotConsumed := bestiary.ExtractModifier(tc.id, tc.family, tc.variant)
-			if gotModifier != tc.wantModifier {
-				t.Errorf("ExtractModifier(%q, %q, %q) modifier = %q, want %q\n"+
-					"  What: modifier was double-counted (same token as variant)\n"+
-					"  Fix: variant-guard in ExtractModifier (Fix 3)",
-					tc.id, tc.family, tc.variant, gotModifier, tc.wantModifier)
-			}
-			if gotConsumed != tc.wantConsumed {
-				t.Errorf("ExtractModifier(%q, %q, %q) consumed = %q, want %q",
-					tc.id, tc.family, tc.variant, gotConsumed, tc.wantConsumed)
-			}
-		})
-	}
+	corpus := loadParseCorpus[modifierInput, modifierExpected](t, extractModifierDoubleCountCorpusJSON, 6)
+	requireInputCoverage(t, corpus, map[modifierInput]modifierExpected{
+		// guard fires: trailing token equals variant.
+		{ID: "kimi-k2-thinking", Family: "kimi", Variant: "thinking"}: {Modifier: "", Consumed: ""},
+		// guard must NOT fire: variant 'opus' != trailing 'thinking'.
+		{ID: "claude-opus-4-6-thinking", Family: "claude", Variant: "opus"}: {Modifier: "thinking", Consumed: "-thinking"},
+		// empty variant: modifier fires normally.
+		{ID: "kimi-k2-thinking", Family: "kimi", Variant: ""}: {Modifier: "thinking", Consumed: "-thinking"},
+	})
+	runExtractModifierCorpus(t, corpus)
 }
 
 // TestUniformModifierSuffix is the acceptance test for the uniform
@@ -725,46 +566,32 @@ func TestExtractModifier_DoesNotDoubleCountVariant(t *testing.T) {
 func TestUniformModifierSuffix(t *testing.T) {
 	t.Parallel()
 
-	cases := []struct {
-		desc         string
-		rawFamily    bestiary.Family
-		id           bestiary.ModelID
-		provider     bestiary.Provider
-		wantFamily   bestiary.Family
-		wantModifier string
-	}{
-		// The two headline cases mandated by the slice spec: BOTH must yield
-		// modifier=thinking with the token NEVER appearing as the variant.
-		{"claude-3-7-sonnet-thinking (empty raw)", "", "claude-3-7-sonnet-thinking", "nano-gpt", "claude", "thinking"},
-		{"kimi-k2-thinking (empty raw)", "", "kimi-k2-thinking", "302ai", "kimi", "thinking"},
-		// Raw-family-encoded modifier with the SAME token also in the ID.
-		{"kimi-k2-thinking (raw=kimi-thinking)", "kimi-thinking", "kimi-k2-thinking", "ollama-cloud", "kimi", "thinking"},
-		// Raw-family-encoded modifier with NO modifier token in the ID — the modifier
-		// must be recovered from the raw family, never silently dropped.
-		{"deepseek-thinking raw, id=deepseek-r1", "deepseek-thinking", "deepseek-r1", "iflowcn", "deepseek", "thinking"},
-		// Vision is treated identically to thinking.
-		{"grok-vision raw + id", "grok-vision", "grok-vision", "xai", "grok", "vision"},
-	}
-
-	for _, tc := range cases {
-		t.Run(tc.desc, func(t *testing.T) {
+	corpus := loadParseCorpus[uniformModInput, uniformModExpected](t, uniformModifierSuffixCorpusJSON, 5)
+	requireInputCoverage(t, corpus, map[uniformModInput]uniformModExpected{
+		// vision is treated identically to thinking.
+		{RawFamily: "grok-vision", ID: "grok-vision", Provider: "xai"}: {Family: "grok", Modifier: "vision"},
+		// raw-family-encoded modifier with no modifier token in the ID.
+		{RawFamily: "deepseek-thinking", ID: "deepseek-r1", Provider: "iflowcn"}: {Family: "deepseek", Modifier: "thinking"},
+	})
+	for _, c := range corpus.Cases {
+		t.Run(c.Name, func(t *testing.T) {
 			t.Parallel()
-			family, variant, _, modifier, _ := bestiary.ParseFamilyDetailed(tc.rawFamily, tc.id, tc.provider)
-			if family != tc.wantFamily {
+			family, variant, _, modifier, _ := bestiary.ParseFamilyDetailed(bestiary.Family(c.Input.RawFamily), bestiary.ModelID(c.Input.ID), bestiary.Provider(c.Input.Provider))
+			if string(family) != c.Expected.Family {
 				t.Errorf("ParseFamilyDetailed(%q, %q) family = %q, want %q",
-					tc.rawFamily, tc.id, family, tc.wantFamily)
+					c.Input.RawFamily, c.Input.ID, family, c.Expected.Family)
 			}
-			if modJoin(modifier) != tc.wantModifier {
+			if modJoin(modifier) != c.Expected.Modifier {
 				t.Errorf("ParseFamilyDetailed(%q, %q) modifier = %q, want %q\n"+
 					"  What: trailing %q token was NOT surfaced as the first-class Modifier\n"+
 					"  Why: uniform migration — thinking/vision are ALWAYS modifiers",
-					tc.rawFamily, tc.id, modifier, tc.wantModifier, tc.wantModifier)
+					c.Input.RawFamily, c.Input.ID, modifier, c.Expected.Modifier, c.Expected.Modifier)
 			}
 			// The invariant: the modifier token must NEVER be encoded as the variant.
-			if variant == tc.wantModifier {
+			if variant == c.Expected.Modifier {
 				t.Errorf("ParseFamilyDetailed(%q, %q) variant = %q — a trailing modifier token "+
 					"must NEVER be classified as the Variant (uniform migration)",
-					tc.rawFamily, tc.id, variant)
+					c.Input.RawFamily, c.Input.ID, variant)
 			}
 		})
 	}
@@ -781,74 +608,43 @@ func TestUniformModifierSuffix(t *testing.T) {
 func TestExtractModifier_PipelineIntegration(t *testing.T) {
 	t.Parallel()
 
-	cases := []struct {
-		desc         string
-		rawID        bestiary.ModelID
-		rawFamily    bestiary.Family
-		wantModifier string
-		wantVersion  string
-		wantDate     string
-	}{
-		{
-			desc:         "claude-opus-4-1-20250805-thinking",
-			rawID:        "claude-opus-4-1-20250805-thinking",
-			rawFamily:    "claude-opus",
-			wantModifier: "thinking",
-			wantVersion:  "4.1",
-			wantDate:     "2025-08-05",
-		},
-		{
-			desc:         "claude-opus-4-6-thinking (no date)",
-			rawID:        "claude-opus-4-6-thinking",
-			rawFamily:    "claude-opus",
-			wantModifier: "thinking",
-			wantVersion:  "4.6",
-			wantDate:     "",
-		},
-		{
-			desc:         "gpt-4o-2024-05-13 (no modifier, version not extracted)",
-			rawID:        "gpt-4o-2024-05-13",
-			rawFamily:    "gpt-4o",
-			wantModifier: "",
-			wantVersion:  "",
-			wantDate:     "2024-05-13",
-		},
-	}
-
-	for _, tc := range cases {
-		t.Run(tc.desc, func(t *testing.T) {
+	corpus := loadParseCorpus[pipelineInput, pipelineExpected](t, extractModifierPipelineCorpusJSON, 3)
+	for _, c := range corpus.Cases {
+		t.Run(c.Name, func(t *testing.T) {
 			t.Parallel()
+			rawID := bestiary.ModelID(c.Input.RawID)
+			rawFamily := bestiary.Family(c.Input.RawFamily)
 
 			// Step 1: ParseFamily
-			family, variant, _ := bestiary.ParseFamilyWithVersion(tc.rawFamily)
+			family, variant, _ := bestiary.ParseFamilyWithVersion(rawFamily)
 
 			// Step 2: ExtractModifier
-			modifier, consumed := bestiary.ExtractModifier(tc.rawID, family, variant)
+			modifier, consumed := bestiary.ExtractModifier(rawID, family, variant)
 
 			// Verify modifier extraction
-			if modifier != tc.wantModifier {
-				t.Errorf("ExtractModifier modifier = %q, want %q", modifier, tc.wantModifier)
+			if modifier != c.Expected.Modifier {
+				t.Errorf("ExtractModifier modifier = %q, want %q", modifier, c.Expected.Modifier)
 			}
 
 			// Step 3: Strip consumed from ID
-			cleanedID := bestiary.ModelID(string(tc.rawID))
+			cleanedID := rawID
 			if consumed != "" {
-				cleanedStr := string(tc.rawID)
+				cleanedStr := string(rawID)
 				if len(cleanedStr) >= len(consumed) && cleanedStr[len(cleanedStr)-len(consumed):] == consumed {
 					cleanedID = bestiary.ModelID(cleanedStr[:len(cleanedStr)-len(consumed)])
 				}
 			}
 
 			// Step 4: ExtractVersionFromID on cleaned ID
-			version := bestiary.ExtractVersionFromID(cleanedID, tc.rawFamily)
-			if version != tc.wantVersion {
-				t.Errorf("ExtractVersionFromID(%q, %q) = %q, want %q", cleanedID, tc.rawFamily, version, tc.wantVersion)
+			version := bestiary.ExtractVersionFromID(cleanedID, rawFamily)
+			if version != c.Expected.Version {
+				t.Errorf("ExtractVersionFromID(%q, %q) = %q, want %q", cleanedID, rawFamily, version, c.Expected.Version)
 			}
 
 			// Step 5: ExtractDate on cleaned ID
 			date := bestiary.ExtractDate(cleanedID, "")
-			if date != tc.wantDate {
-				t.Errorf("ExtractDate(%q, %q) = %q, want %q", cleanedID, "", date, tc.wantDate)
+			if date != c.Expected.Date {
+				t.Errorf("ExtractDate(%q, %q) = %q, want %q", cleanedID, "", date, c.Expected.Date)
 			}
 		})
 	}

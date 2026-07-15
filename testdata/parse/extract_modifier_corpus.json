@@ -1,0 +1,164 @@
+{
+  "cases": [
+    {
+      "name": "claude-opus-4-1-20250805-thinking",
+      "input": {
+        "id": "claude-opus-4-1-20250805-thinking",
+        "family": "claude",
+        "variant": "opus"
+      },
+      "expected": {
+        "modifier": "thinking",
+        "consumed": "-thinking"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "ExtractModifier(id=claude-opus-4-1-20250805-thinking, family=claude, variant=opus) -> modifier 'thinking', consumed '-thinking'"
+      },
+      "mutation": {
+        "description": "trailing-token modifier extraction over id claude-opus-4-1-20250805-thinking"
+      }
+    },
+    {
+      "name": "claude-opus-4-6-thinking (no date in ID)",
+      "input": {
+        "id": "claude-opus-4-6-thinking",
+        "family": "claude",
+        "variant": "opus"
+      },
+      "expected": {
+        "modifier": "thinking",
+        "consumed": "-thinking"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "ExtractModifier(id=claude-opus-4-6-thinking, family=claude, variant=opus) -> modifier 'thinking', consumed '-thinking'"
+      },
+      "mutation": {
+        "description": "trailing-token modifier extraction over id claude-opus-4-6-thinking"
+      }
+    },
+    {
+      "name": "doubao-seed-1-6-thinking-250715",
+      "input": {
+        "id": "doubao-seed-1-6-thinking-250715",
+        "family": "doubao",
+        "variant": "seed"
+      },
+      "expected": {
+        "modifier": "",
+        "consumed": ""
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "ExtractModifier(id=doubao-seed-1-6-thinking-250715, family=doubao, variant=seed) -> modifier '', consumed ''"
+      },
+      "mutation": {
+        "description": "trailing-token modifier extraction over id doubao-seed-1-6-thinking-250715"
+      }
+    },
+    {
+      "name": "gpt-4o-2024-05-13 (no modifier)",
+      "input": {
+        "id": "gpt-4o-2024-05-13",
+        "family": "gpt",
+        "variant": ""
+      },
+      "expected": {
+        "modifier": "",
+        "consumed": ""
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "ExtractModifier(id=gpt-4o-2024-05-13, family=gpt, variant=) -> modifier '', consumed ''"
+      },
+      "mutation": {
+        "description": "trailing-token modifier extraction over id gpt-4o-2024-05-13"
+      }
+    },
+    {
+      "name": "unknown modifier -zen returns empty",
+      "input": {
+        "id": "some-model-zen",
+        "family": "some",
+        "variant": "model"
+      },
+      "expected": {
+        "modifier": "",
+        "consumed": ""
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "ExtractModifier(id=some-model-zen, family=some, variant=model) -> modifier '', consumed ''"
+      },
+      "mutation": {
+        "description": "trailing-token modifier extraction over id some-model-zen"
+      }
+    },
+    {
+      "name": "trailing token == variant: no double-count",
+      "input": {
+        "id": "deepseek-thinking",
+        "family": "deepseek",
+        "variant": "thinking"
+      },
+      "expected": {
+        "modifier": "",
+        "consumed": ""
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "ExtractModifier(id=deepseek-thinking, family=deepseek, variant=thinking) -> modifier '', consumed ''"
+      },
+      "mutation": {
+        "description": "trailing-token modifier extraction over id deepseek-thinking"
+      }
+    },
+    {
+      "name": "empty ID returns empty",
+      "input": {
+        "id": "",
+        "family": "claude",
+        "variant": "opus"
+      },
+      "expected": {
+        "modifier": "",
+        "consumed": ""
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "ExtractModifier(id=, family=claude, variant=opus) -> modifier '', consumed ''"
+      },
+      "mutation": {
+        "description": "trailing-token modifier extraction over id "
+      }
+    },
+    {
+      "name": "think suffix (shorter modifier) does not shadow thinking",
+      "input": {
+        "id": "model-thinking",
+        "family": "model",
+        "variant": ""
+      },
+      "expected": {
+        "modifier": "thinking",
+        "consumed": "-thinking"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "ExtractModifier(id=model-thinking, family=model, variant=) -> modifier 'thinking', consumed '-thinking'"
+      },
+      "mutation": {
+        "description": "trailing-token modifier extraction over id model-thinking"
+      }
+    }
+  ]
+}

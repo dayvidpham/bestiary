@@ -97,6 +97,82 @@ type versionFromIDInput struct {
 	RawFamily string `json:"raw_family"`
 }
 
+// ---- ExtractModifier corpora ----------------------------------------------
+
+//go:embed testdata/parse/extract_modifier_corpus.json
+var extractModifierCorpusJSON []byte
+
+//go:embed testdata/parse/extract_modifier_double_count_corpus.json
+var extractModifierDoubleCountCorpusJSON []byte
+
+//go:embed testdata/parse/uniform_modifier_suffix_corpus.json
+var uniformModifierSuffixCorpusJSON []byte
+
+//go:embed testdata/parse/extract_modifier_pipeline_corpus.json
+var extractModifierPipelineCorpusJSON []byte
+
+// modifierInput is the (id, family, variant) triple fed to ExtractModifier.
+type modifierInput struct {
+	ID      string `json:"id"`
+	Family  string `json:"family"`
+	Variant string `json:"variant"`
+}
+
+// modifierExpected is the (modifier, consumed) pair ExtractModifier returns.
+type modifierExpected struct {
+	Modifier string `json:"modifier"`
+	Consumed string `json:"consumed"`
+}
+
+// uniformModInput is the (rawFamily, id, provider) triple fed to
+// ParseFamilyDetailed for the uniform-modifier acceptance test.
+type uniformModInput struct {
+	RawFamily string `json:"raw_family"`
+	ID        string `json:"id"`
+	Provider  string `json:"provider"`
+}
+
+// uniformModExpected is the (family, modifier) pair asserted by the
+// uniform-modifier acceptance test; the runner also asserts variant != modifier.
+type uniformModExpected struct {
+	Family   string `json:"family"`
+	Modifier string `json:"modifier"`
+}
+
+// pipelineInput is the (rawID, rawFamily) pair fed to the parse-pipeline
+// composition test.
+type pipelineInput struct {
+	RawID     string `json:"raw_id"`
+	RawFamily string `json:"raw_family"`
+}
+
+// pipelineExpected is the (modifier, version, date) triple the parse pipeline
+// must produce with the trailing modifier stripped before version/date.
+type pipelineExpected struct {
+	Modifier string `json:"modifier"`
+	Version  string `json:"version"`
+	Date     string `json:"date"`
+}
+
+// runExtractModifierCorpus drives bestiary.ExtractModifier over every case.
+func runExtractModifierCorpus(t *testing.T, corpus testcase.Corpus[modifierInput, modifierExpected]) {
+	t.Helper()
+	for _, c := range corpus.Cases {
+		t.Run(c.Name, func(t *testing.T) {
+			t.Parallel()
+			gotModifier, gotConsumed := bestiary.ExtractModifier(bestiary.ModelID(c.Input.ID), bestiary.Family(c.Input.Family), c.Input.Variant)
+			if gotModifier != c.Expected.Modifier {
+				t.Errorf("ExtractModifier(%q, %q, %q) modifier = %q, want %q",
+					c.Input.ID, c.Input.Family, c.Input.Variant, gotModifier, c.Expected.Modifier)
+			}
+			if gotConsumed != c.Expected.Consumed {
+				t.Errorf("ExtractModifier(%q, %q, %q) consumed = %q, want %q",
+					c.Input.ID, c.Input.Family, c.Input.Variant, gotConsumed, c.Expected.Consumed)
+			}
+		})
+	}
+}
+
 // loadParseCorpus loads a corpus, enforces the exact case-count control (wantN,
 // the pre-migration inline row count) and the non-vacuity guard, and returns it
 // so the caller can add a value-based coverage assertion before driving the SUT.
@@ -152,22 +228,25 @@ func runExtractDateCorpus(t *testing.T, corpus testcase.Corpus[dateInput, string
 	}
 }
 
-// requireDateCoverage asserts each probed (id,releaseDate) input is still
-// present with its expected date. Value-based coverage guard.
-func requireDateCoverage(t *testing.T, corpus testcase.Corpus[dateInput, string], probes map[dateInput]string) {
+// requireInputCoverage is the value-based coverage guard: it asserts each probed
+// input is still present in the corpus with its expected output. A count-preserving
+// swap that drops a load-bearing case (and adds a filler) reddens here even though
+// the exact-count control cannot see it. Both I and E must be comparable (the
+// all-string input/expected structs used by these corpora are).
+func requireInputCoverage[I comparable, E comparable](t *testing.T, corpus testcase.Corpus[I, E], probes map[I]E) {
 	t.Helper()
-	got := map[dateInput]string{}
+	got := map[I]E{}
 	for _, c := range corpus.Cases {
 		got[c.Input] = c.Expected
 	}
 	for in, want := range probes {
 		have, ok := got[in]
 		if !ok {
-			t.Errorf("value coverage lost: ExtractDate case for input %+v is missing", in)
+			t.Errorf("value coverage lost: case for input %+v is missing", in)
 			continue
 		}
 		if have != want {
-			t.Errorf("value coverage: ExtractDate case %+v has %q, want %q", in, have, want)
+			t.Errorf("value coverage: case %+v has expected %+v, want %+v", in, have, want)
 		}
 	}
 }
@@ -193,44 +272,3 @@ func runFamilyVersionCorpus(t *testing.T, corpus testcase.Corpus[string, familyV
 	}
 }
 
-// requireFamilyVersionCoverage asserts each probed raw input is still present
-// with its expected (family, variant, version). Value-based coverage guard.
-func requireFamilyVersionCoverage(t *testing.T, corpus testcase.Corpus[string, familyVersionExpected], probes map[string]familyVersionExpected) {
-	t.Helper()
-	got := map[string]familyVersionExpected{}
-	for _, c := range corpus.Cases {
-		got[c.Input] = c.Expected
-	}
-	for in, want := range probes {
-		have, ok := got[in]
-		if !ok {
-			t.Errorf("value coverage lost: case for input %q is missing", in)
-			continue
-		}
-		if have != want {
-			t.Errorf("value coverage: case %q has expected %+v, want %+v", in, have, want)
-		}
-	}
-}
-
-// requireFamilyVariantCoverage asserts each probed input is still present in the
-// corpus with its expected decomposition. It is the value-based coverage guard:
-// a count-preserving swap that drops a load-bearing case (and adds a filler)
-// reddens here even though the exact-count control cannot see it.
-func requireFamilyVariantCoverage(t *testing.T, corpus testcase.Corpus[string, familyVariantExpected], probes map[string]familyVariantExpected) {
-	t.Helper()
-	got := map[string]familyVariantExpected{}
-	for _, c := range corpus.Cases {
-		got[c.Input] = c.Expected
-	}
-	for in, want := range probes {
-		have, ok := got[in]
-		if !ok {
-			t.Errorf("value coverage lost: case for input %q is missing", in)
-			continue
-		}
-		if have != want {
-			t.Errorf("value coverage: case %q has expected %+v, want %+v", in, have, want)
-		}
-	}
-}
