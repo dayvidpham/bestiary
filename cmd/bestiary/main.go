@@ -1284,15 +1284,12 @@ func writeHistoryTable(w io.Writer, rows []sourceProvenance) {
 	}
 }
 
-// typContext4K and typContext8K are the two "typical" context lengths at which
-// writeQuantRows recomputes a per-quant VRAM figure (the TYP columns). They answer
-// the common ollama-size confusion — "what does this actually cost to run at a
-// realistic context?" — separately from the baked VRAM figure, which is taken at
-// the model's full maximum context.
-const (
-	typContext4K = 4096
-	typContext8K = 8192
-)
+// typContext4K is the "typical" context length at which writeQuantRows recomputes
+// a per-quant VRAM figure (the TYP column). It answers the common ollama-size
+// confusion — "what does this actually cost to run at a realistic context?" —
+// separately from the baked VRAM figure, which is taken at the model's full
+// maximum context.
+const typContext4K = 4096
 
 // typClampGlyph is rendered in a TYP column when the model's maximum context is
 // smaller than that column's context length: the model cannot serve that many
@@ -1318,22 +1315,22 @@ func typVRAMCell(q bestiary.QuantVRAM, ctx int) string {
 
 // writeQuantRows prints the per-quantization VRAM sub-rows for one instance,
 // indented beneath its main row. Nothing is printed when the instance carries no
-// quant data. The TYP(4K)/TYP(8K) columns show the VRAM estimate recomputed at
-// 4096/8192 tokens via typVRAMCell — the clamp glyph when the model's max context
-// is smaller than that column, weights-only figures on a partial row. The PARTIAL
-// column flags a weights-only VRAM lower bound — true means the KV-cache term was
-// excluded because architecture facts were absent, so VRAMBytes (baked at the
-// model's max context) is not a full estimate.
+// quant data. The TYP(4K) column shows the VRAM estimate recomputed at 4096 tokens
+// via typVRAMCell — the clamp glyph when the model's max context is smaller than
+// 4096, a weights-only figure on a partial row. The PARTIAL column flags a
+// weights-only VRAM lower bound — true means the KV-cache term was excluded because
+// architecture facts were absent, so VRAMBytes (baked at the model's max context)
+// is not a full estimate.
 func writeQuantRows(w io.Writer, rows []bestiary.QuantVRAM) {
 	if len(rows) == 0 {
 		return
 	}
-	fmt.Fprintf(w, "      %-10s %15s %15s %15s %15s %10s %8s\n",
-		"QUANT", "WEIGHTS", "VRAM", "TYP(4K)", "TYP(8K)", "CTX", "PARTIAL")
+	fmt.Fprintf(w, "      %-10s %15s %15s %15s %10s %8s\n",
+		"QUANT", "WEIGHTS", "VRAM", "TYP(4K)", "CTX", "PARTIAL")
 	for _, q := range rows {
-		fmt.Fprintf(w, "      %-10s %15d %15d %15s %15s %10d %8t\n",
+		fmt.Fprintf(w, "      %-10s %15d %15d %15s %10d %8t\n",
 			q.Quant.String(), q.WeightsBytes, q.VRAMBytes,
-			typVRAMCell(q, typContext4K), typVRAMCell(q, typContext8K),
+			typVRAMCell(q, typContext4K),
 			q.VRAMContextTokens, q.VRAMEstimatePartial)
 	}
 }
