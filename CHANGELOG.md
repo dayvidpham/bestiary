@@ -48,6 +48,11 @@ confined to the handful of curated `quant_vram.json` entries.
   read joints, so the SQLite store stays at schema `6` (no `param_size` column).
 - Live-sync rows are now sized identically to the baked static rows for the same ID,
   so the most-recent-wins merge can never de-size an `(ID, Provider)`.
+- **What stays stable:** entity keys for models whose ID carries no size token and no
+  curated pin are byte-identical to v0.2.5 (test-pinned by the successor invariant's
+  enrichment-consistency sweep). Curated lineage needs zero churn: lineage lookups
+  resolve exact-key-first with a size-stripped fallback, so an unsized curated edge is
+  inherited by every newly sized sibling without re-keying `lineage.json`.
 
 ## [0.2.5] — 2026-07-15
 

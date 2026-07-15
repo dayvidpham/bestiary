@@ -107,3 +107,54 @@ func TestParamSizePin_SuppressNeverFallsThrough(t *testing.T) {
 			id, mechTok, mechOK)
 	}
 }
+
+// TestValidateParamSizePins_RejectsNonCanonical exercises the REJECTION arm of the
+// codegen pin fence through the validateParamSizePinsIn seam with injected bad pins
+// (the embedded seed always passes, so the arm is unreachable without the seam). Both
+// non-canonical classes are covered — a malformed token ParseParamSize rejects
+// outright ("17b-16ee") and a token that parses but normalizes differently
+// ("17B-16E" -> "17b-16e") — and the error CONTENT must name every offending
+// id -> token pair so a curator can fix the file from the message alone.
+func TestValidateParamSizePins_RejectsNonCanonical(t *testing.T) {
+	err := validateParamSizePinsIn(map[string]string{
+		"lab/typo-model":      "17b-16ee", // malformed: not a size shape at all
+		"lab/uppercase-model": "17B-16E",  // parses, but canonical form is lowercase
+		"lab/good-model":      "70b",      // canonical: must NOT appear in the error
+	})
+	if err == nil {
+		t.Fatal("validateParamSizePinsIn accepted non-canonical pin tokens; the codegen fence is unreachable")
+	}
+	msg := err.Error()
+	for _, want := range []string{
+		`"lab/typo-model" -> "17b-16ee"`,
+		`"lab/uppercase-model" -> "17B-16E"`,
+	} {
+		if !strings.Contains(msg, want) {
+			t.Errorf("error message missing offending pair %s\n  got: %s", want, msg)
+		}
+	}
+	if strings.Contains(msg, "lab/good-model") {
+		t.Errorf("error message names the CANONICAL pin \"lab/good-model\"; only offenders may be listed\n  got: %s", msg)
+	}
+}
+
+// TestValidateParamSizePins_SuppressSkipped pins that a suppress-pin ("") is never
+// rejected: absence of a size is the intended, canonical state for a suppress entry,
+// so the validator must skip it rather than feed "" to ParseParamSize.
+func TestValidateParamSizePins_SuppressSkipped(t *testing.T) {
+	if err := validateParamSizePinsIn(map[string]string{
+		"lab/context-tier-model": "", // suppress-pin
+	}); err != nil {
+		t.Errorf("validateParamSizePinsIn rejected a suppress-pin: %v", err)
+	}
+}
+
+// TestValidateParamSizePins_EmbeddedSeedPasses runs the exported entry point over the
+// real embedded param_size_overrides.json, pinning that the committed seed is fully
+// canonical — the same check codegen runs before every bake.
+func TestValidateParamSizePins_EmbeddedSeedPasses(t *testing.T) {
+	if err := ValidateParamSizePins(); err != nil {
+		t.Errorf("ValidateParamSizePins over the embedded seed: %v\n"+
+			"  How to fix: correct the offending token(s) in parse/data/param_size_overrides.json", err)
+	}
+}

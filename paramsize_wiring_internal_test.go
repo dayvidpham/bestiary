@@ -4,8 +4,8 @@ package bestiary
 // ParamSize wiring end-to-end. These tests live in package bestiary (internal) so
 // they can temporarily replace staticModels and reset the entity index, making the
 // wiring in registry.go, EntityByTuple, and matchCanonicalSegments falsifiable with
-// controlled fixtures rather than relying solely on production data where all sizes
-// are currently empty.
+// controlled fixtures: each leg isolates exactly one sized/unsized configuration,
+// independent of how the full-bulk re-key happens to size the production catalog.
 //
 // These tests must NOT be run in parallel with each other or with any test that
 // reads entity index state, because withSyntheticRegistry mutates shared package
@@ -19,6 +19,7 @@ package bestiary
 //   - swapping the #size strip to after the @ strip in matchCanonicalSegments
 
 import (
+	"strings"
 	"sync"
 	"testing"
 )
@@ -150,6 +151,14 @@ func TestCodegen_ParamSizePrecedence(t *testing.T) {
 		}
 		if got != "70b" {
 			t.Errorf("on disagreement the value = %q, want the mechanical token %q (precedence still resolves)", got, "70b")
+		}
+		// The error must be actionable on its own: it names the offending ID and BOTH
+		// disagreeing tokens, so a curator can write the resolving pin from the message.
+		msg := err.Error()
+		for _, want := range []string{`"bad/id"`, `"70b"`, `"72b"`} {
+			if !strings.Contains(msg, want) {
+				t.Errorf("disagreement error missing %s\n  got: %s", want, msg)
+			}
 		}
 	})
 

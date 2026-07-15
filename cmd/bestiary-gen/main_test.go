@@ -2134,15 +2134,16 @@ func runFixtureCodegen(t *testing.T, fixtureJSON []byte, lastSynced string) (sta
 // (codegenLastSynced) — so the wall-clock is no longer a residual source of diff and this
 // guard asserts RAW byte-identity across iterations with no masking.
 //
-// Fencing boundary (deliberate): this test injects the stamp VALUE via runFixtureCodegen,
-// so it proves the EMISSION is a pure function of (input, stamp) — it does NOT exercise
-// run()'s stamp SOURCE. A regression of run() back to a wall-clock stamp would not fail
-// this test, and TestCodegen_UpToDate_RealInput still normalizes LastSynced (necessarily,
-// while the committed *_gen.go still carry an old wall-clock stamp). The stamp SOURCE is
-// fenced only once the checked-in files are regenerated with the deterministic stamp and
-// that RealInput normalization is removed. (The obsolete alternating-timestamp /
-// sole-residual machinery is gone; the normalizeLastSynced helper stays for the
-// deliberately wall-clock-injecting tests that still need it.)
+// Fencing boundary: this test injects the stamp VALUE via runFixtureCodegen, so it
+// proves the EMISSION is a pure function of (input, stamp) — it does not itself
+// exercise run()'s stamp SOURCE. That source-side fence is now CLOSED by
+// TestCodegen_UpToDate_RealInput: the committed *_gen.go files carry the
+// deterministic stamp and that guard byte-compares a fresh regen (stamped through
+// the same codegenLastSynced path run() uses) against them EXACTLY, with no
+// LastSynced masking — so a regression of the stamp back to a wall-clock fails
+// there. (The obsolete alternating-timestamp / sole-residual machinery is gone; the
+// normalizeLastSynced helper stays for the deliberately wall-clock-injecting tests
+// that still need it.)
 //
 // Additionally asserts that each raw model ID always receives the same _N suffix
 // across all iterations (stable raw-ID-ordered assignment — deterministic ordering + raw-ID ordinal).

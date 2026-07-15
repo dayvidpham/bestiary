@@ -198,8 +198,16 @@ func enrichModelInfo(m *ModelInfo) {
 // #size key material. The runtime loader stays graceful (a bad file degrades to an
 // empty map); this is the codegen-time discipline that fences the pin file.
 func ValidateParamSizePins() error {
+	return validateParamSizePinsIn(loadParamSizeOverrides())
+}
+
+// validateParamSizePinsIn is the testable seam behind ValidateParamSizePins: it runs
+// the canonical-token check over any pin map, so the rejection path is falsifiable
+// with injected bad pins — the embedded seed is expected to always pass, which would
+// otherwise leave the rejection arm unreachable from tests.
+func validateParamSizePinsIn(pins map[string]string) error {
 	var bad []string
-	for id, tok := range loadParamSizeOverrides() {
+	for id, tok := range pins {
 		if tok == "" {
 			continue // suppress-pin: absence of a size is the intended, canonical state.
 		}

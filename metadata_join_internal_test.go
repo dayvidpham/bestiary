@@ -68,11 +68,44 @@ func TestMetadataEntityRef_Decomposition(t *testing.T) {
 		{"meta/llama-3.3-70b", "llama@3.3#70b"},
 		{"zhipuai/glm-4.6", "glm@4.6"},
 		{"bare-no-lab-7b", "bare#7b"}, // no slash: whole id decomposes
+		// Remainder-pin rule: the stripped remainder "llama-4-scout-17b-instruct" is
+		// byte-equal to a curated pin, so the pin's full-shape token wins over the
+		// mechanical "17b" and the join key agrees with the served entity's #17b-16e
+		// key by construction. Deleting the pin branch in metadataParamSize regresses
+		// this row to "...#17b{...}".
+		{"meta/llama-4-scout-17b-instruct", "llama/scout@4#17b-16e{instruct}"},
 	}
 	for _, tc := range cases {
 		if got := metadataEntityRef(tc.id).String(); got != tc.wantKey {
 			t.Errorf("metadataEntityRef(%q).String() = %q, want %q", tc.id, got, tc.wantKey)
 		}
+	}
+}
+
+// TestMetadataParamSize_ThreeTiers is the focused fence on metadataParamSize's tier
+// order over a lab-stripped remainder: (1) a remainder byte-equal to a pinned ID takes
+// the pin (whose token diverges from the mechanical "17b", so a deleted pin branch is
+// caught, not masked by agreement); (2) an unpinned remainder takes the mechanical
+// ExtractParamSizeToken result; (3) a remainder with no pin and no size token yields "".
+func TestMetadataParamSize_ThreeTiers(t *testing.T) {
+	// Tier 1 — pin: the bare llama-4 scout form is a curated pin ("17b-16e").
+	// Precondition: the mechanical result genuinely diverges, so this leg is
+	// falsifiable by mutation.
+	if mech, ok := ExtractParamSizeToken("llama-4-scout-17b-instruct"); !ok || mech != "17b" {
+		t.Fatalf("precondition: mechanical token = (%q,%v), want (\"17b\",true) — the pin must diverge from mechanical", mech, ok)
+	}
+	if got := metadataParamSize("llama-4-scout-17b-instruct"); got != "17b-16e" {
+		t.Errorf("pinned remainder: metadataParamSize = %q, want %q (pin tier)", got, "17b-16e")
+	}
+
+	// Tier 2 — mechanical: no pin for this remainder; the compound token is lifted whole.
+	if got := metadataParamSize("qwen3-235b-a22b"); got != "235b-a22b" {
+		t.Errorf("unpinned remainder: metadataParamSize = %q, want %q (mechanical tier)", got, "235b-a22b")
+	}
+
+	// Tier 3 — none: no pin, no size token (a dotted version is never a size).
+	if got := metadataParamSize("glm-4.6"); got != "" {
+		t.Errorf("token-less remainder: metadataParamSize = %q, want \"\"", got)
 	}
 }
 
