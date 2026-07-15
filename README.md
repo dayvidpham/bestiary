@@ -72,6 +72,47 @@ auditable and easy to fix. Inputs the parser can't cleanly decompose are recorde
 > for the full rationale. Today every designation is rated *admitted*; promotion to
 > *preferred* is deferred to a later curation pass.
 
+## Canonical entity keys
+
+The section above names *one provider's* copy of a model. Collapse every provider that
+serves the same underlying model into a single cross-provider identity and you get an
+**entity** — the canonical representation bestiary has converged on for a model. An entity
+is written as one canonical key:
+
+```
+family[/variant][@version][#paramsize]{identity-mods}
+```
+
+A trailing `[attributes]` segment is accepted as **input / filter syntax only** — it is
+never rendered into a key, because attributes are per-*instance* data, not part of an
+entity's identity.
+
+| Segment | Meaning |
+|---------|---------|
+| `family` | The canonical, provider-independent model line (`llama`, `gemini`, `gpt`). |
+| `/variant` | The product-line variant/tier within the family (`flash`, `xs`). Omitted when the family has none. |
+| `@version` | The version — **distinct from the release date** (Opus 4.5 ≠ 4.6). |
+| `#paramsize` | Parameter size, which **is** identity: a 70B and an 8B are different models (different weights, VRAM, architecture). **Omitted when the size is unknown**, so keys without a known size are unchanged. |
+| `{identity-mods}` | Identity-class modifiers (`instruct`, `thinking`, `omni`, `livetranslate`, …), emitted in canonical order. These name genuinely different artifacts, so they are **part of the key**. |
+| `[attributes]` | Attribute-class tokens: serving tiers (`realtime`, `fast`) and release-stage tokens (`preview`, `latest`). These are per-instance runtime knobs — **filterable, but never part of the key**. |
+
+Every key below is real — resolve any of them with `bestiary show --by-entity '<key>'`:
+
+| Entity key | What it demonstrates |
+|------------|----------------------|
+| `llama@3.3#70b{instruct}` | Size lives in the key: a *distinct* entity from `llama@3.3#8b{instruct}`. |
+| `gemini/flash{omni}` vs `gemini/flash` | An identity mode token (`omni`) splits one variant into two entities. |
+| `gpt@2.1` | `realtime` rode in as an **attribute** (stripped off `gpt-realtime-2.1`), so it stays out of the key and the version `2.1` is preserved. |
+| `qwen/flash@3{livetranslate}` | A stage/mode token carried as an identity modifier. |
+| `laguna/xs@2.1` | The plain shape: family, variant, version, no modifiers. |
+| `ornith@1.0#9b` | A **metadata-only standalone** — zero providers serve it, but models.dev still publishes facts, so it is synthesized as its own `#size`-keyed entity rather than dropped. |
+
+The rationale for each rule — why parameter size is identity, why `omni`/`livetranslate`
+are identity-class while `realtime`/`preview` are attributes, and how metadata-only
+standalones are synthesized — is recorded in the design-decisions sections of
+[`AGENTS.md`](AGENTS.md): "Parameter size is part of entity identity", "Stage/mode identity
+granularity", and "Alias-first join with a two-tier miss policy".
+
 ## Demo
 
 **Resolve a model by its canonical form** (`bestiary show` defaults to canonical/"peasant" input):
@@ -143,7 +184,7 @@ claude-opus-4-6                           anthropic     claude              1000
 ...
 ```
 
-## v0.2.4 — VRAM, quantization & data-source provenance
+## VRAM, quantization & data-source provenance
 
 v0.2.4 answers "what will this model cost to *run*, at which quantization, and where did
 the data come from?" It adds three things on top of the canonical entity model:
@@ -305,7 +346,7 @@ catalog ID (alias table first, then mechanical decomposition), **keeps** communi
 rather than dropping them, and merges fetch-owned fields into the curated file while
 preserving hand-curated architecture facts. It is **not** part of `go test ./...`.
 
-## v0.2.5 — models.dev harmonization & ingest provenance
+## Model metadata & ingest provenance
 
 v0.2.5 harmonizes bestiary with the full models.dev catalog and turns provenance
 into a first-class, queryable history. It ingests all three models.dev JSON
