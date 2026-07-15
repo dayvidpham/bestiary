@@ -60,6 +60,10 @@ confined to the handful of curated `quant_vram.json` entries.
   a `PARTIAL` row (no phantom KV delta). A companion `TYP(8K)` column was
   considered and dropped at acceptance — the ruling is a single 4K column (the
   8K delta added noise, not signal).
+- **New `testcase` / `testcase/assert` packages** — a pure-data JSON case-corpus
+  harness (stdlib-only; classification + provenance + mutation metadata with
+  non-vacuity validation) — plus `TESTING.md` documenting the corpus standard
+  the parse/entity/quant/VRAM suites migrated onto.
 
 ### Changed — MIGRATION NOTE (entity keys)
 

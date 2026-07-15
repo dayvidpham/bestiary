@@ -63,11 +63,9 @@ func decomposeWithoutOverride(id string) (Family, string, string, []string) {
 // regressed or an entry was retired without an equivalent mechanical derivation.
 func TestMidIDEngine_StageOverrideEquivalence_FullyDerivable(t *testing.T) {
 	corpus := loadMididCorpus[string, mididDecompExpected](t, mididStageOverrideEquivalenceCorpusJSON, 16)
-	ids := make([]string, 0, len(corpus.Cases))
-	for _, c := range corpus.Cases {
-		ids = append(ids, c.Input)
-	}
-	mididRequireIDs(t, ids,
+	// Keyed value coverage (mididDecompExpected carries a mods slice, so it is
+	// not map-keyable; case names are the retired ids).
+	mididRequireNames(t, corpus,
 		"gemini-omni-flash-preview",                          // omni before variant, preview trails
 		"qwen3-livetranslate-flash-realtime",                 // livetranslate + realtime
 		"nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free", // colon-suffixed variant
@@ -96,6 +94,13 @@ func TestMidIDEngine_StageOverrideEquivalence_FullyDerivable(t *testing.T) {
 // stageModeFullyDerivable.
 func TestMidIDEngine_StageOverrideEquivalence_RealtimeModifierOnly(t *testing.T) {
 	corpus := loadMididCorpus[string, string](t, mididRealtimeModifierOnlyCorpusJSON, 3)
+	// Keyed value coverage: all three gap-boundary ids must remain present (case
+	// names are the ids), so a swap cannot silently drop a promotion tripwire.
+	mididRequireNames(t, corpus,
+		"gpt-realtime-2.1",
+		"openai/gpt-realtime-2.1",
+		"openai/gpt-realtime-1.5",
+	)
 	for _, c := range corpus.Cases {
 		id, wantVersion := c.Input, c.Expected
 		ov := idFamilyOverrides[strings.ToLower(id)]
@@ -125,6 +130,13 @@ func TestMidIDEngine_StageOverrideEquivalence_RealtimeModifierOnly(t *testing.T)
 // still see it in place). Phase-A trailing modifiers still populate `consumed` as before.
 func TestMidIDEngine_ExtractModifiers_MidIDHarvest(t *testing.T) {
 	corpus := loadMididCorpus[mididHarvestInput, mididHarvestExpected](t, mididMidIDHarvestCorpusJSON, 5)
+	// Keyed value coverage (mididHarvestExpected carries a mods slice, so it is
+	// not map-keyable): the load-bearing harvest arms must remain present.
+	mididRequireNames(t, corpus,
+		"gpt realtime before bare version, nothing trails",
+		"livetranslate before variant, realtime trails",
+		"omni behind a split MoE size, instruct trails",
+	)
 	for _, c := range corpus.Cases {
 		mods, consumed := extractModifiers(ModelID(c.Input.ID), Family(c.Input.Family), c.Input.Variant)
 		for _, want := range c.Expected.Mods {

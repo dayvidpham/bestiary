@@ -80,6 +80,12 @@ func TestEntityRef_String_IsComparableKey(t *testing.T) {
 // two independently-authored facts the original table pinned per row).
 func TestDerivationKind_TextRoundTrip(t *testing.T) {
 	corpus := loadParseCorpus[int, string](t, entDerivationKindTextRoundTripCorpusJSON, 6)
+	requireInputCoverage(t, corpus, map[int]string{
+		// the zero value and both ends of the enum range stay pinned by ordinal.
+		0: "none",
+		1: "finetune",
+		5: "adapter",
+	})
 	for _, c := range corpus.Cases {
 		t.Run(c.Name, func(t *testing.T) {
 			kind := bestiary.DerivationKind(c.Input)
@@ -245,6 +251,11 @@ func TestEntityModifiers(t *testing.T) {
 // here we lock the key shape.
 func TestEntityRef_ParamSizeDistinct(t *testing.T) {
 	corpus := loadEntRefCorpus(t, entRefParamSizeDistinctCorpusJSON, 2)
+	requireEntRefStringCoverage(t, corpus, []entRefProbe{
+		// both sized siblings stay pinned to their exact keys.
+		{input: entRefInput{Family: "llama", Version: "3.3", ParamSize: "70b", Modifier: []string{"instruct"}}, want: "llama@3.3#70b{instruct}"},
+		{input: entRefInput{Family: "llama", Version: "3.3", ParamSize: "8b", Modifier: []string{"instruct"}}, want: "llama@3.3#8b{instruct}"},
+	})
 	runEntRefStringCorpus(t, corpus)
 
 	// Corpus-wide invariant: every case's expected key must be distinct — the
@@ -446,6 +457,9 @@ func TestLlama4VersionPins_UnifiedEntityMembership(t *testing.T) {
 	}
 
 	corpus := loadParseCorpus[entLlama4Input, entLlama4Expected](t, entLlama4VersionPinsCorpusJSON, 2)
+	// Keyed value coverage (entLlama4Expected carries an id slice, so it is not
+	// map-keyable): both membership legs must remain present by name.
+	requireNameCoverage(t, corpus, "scout", "maverick")
 	for _, c := range corpus.Cases {
 		t.Run(c.Name, func(t *testing.T) {
 			ent, ok := bestiary.EntityByTuple("llama", c.Input.Variant, "4", c.Input.ParamSize, "instruct")

@@ -205,6 +205,12 @@ func TestParseFamily_HyphenVersion_NoOverride(t *testing.T) {
 func TestExtractDate_FromID(t *testing.T) {
 	t.Parallel()
 	corpus := loadParseCorpus[dateInput, string](t, extractDateFromIDCorpusJSON, 7)
+	requireInputCoverage(t, corpus, map[dateInput]string{
+		// an ID-embedded date wins over releaseDate.
+		{ID: "model-20240101", ReleaseDate: "2023-06-15"}: "2024-01-01",
+		// releaseDate fallback when the ID carries no date.
+		{ID: "llama-3", ReleaseDate: "2024-04-18"}: "2024-04-18",
+	})
 	runExtractDateCorpus(t, corpus)
 }
 
@@ -231,6 +237,12 @@ func TestExtractDate_CalendarValidation(t *testing.T) {
 func TestInferFamilyFromID(t *testing.T) {
 	t.Parallel()
 	corpus := loadParseCorpus[providerIDInput, string](t, inferFamilyFromIDCorpusJSON, 6)
+	requireInputCoverage(t, corpus, map[providerIDInput]string{
+		// BDD criterion: prefix extraction from a dated id.
+		{ID: "gpt-4o-2024-08-06", Provider: "openai"}: "gpt",
+		// numeric-only id has no family signal.
+		{ID: "1234", Provider: "local"}: "",
+	})
 	for _, c := range corpus.Cases {
 		t.Run(c.Name, func(t *testing.T) {
 			t.Parallel()
@@ -298,6 +310,11 @@ func TestParseFamilyWithVersion_Empty(t *testing.T) {
 func TestParseFamilyWithVersion_AlphanumericVersion(t *testing.T) {
 	t.Parallel()
 	corpus := loadParseCorpus[string, familyVersionExpected](t, familyWithVersionAlnumCorpusJSON, 2)
+	requireInputCoverage(t, corpus, map[string]familyVersionExpected{
+		// alphanumeric "4o" is not a separable version: full fallback, raw unchanged.
+		"gpt-4o":            {Family: "gpt-4o", Variant: "", Version: ""},
+		"chatgpt-4o-latest": {Family: "chatgpt-4o-latest", Variant: "", Version: ""},
+	})
 	runFamilyVersionCorpus(t, corpus)
 }
 
@@ -307,6 +324,14 @@ func TestParseFamilyWithVersion_AlphanumericVersion(t *testing.T) {
 func TestExtractVersionFromID(t *testing.T) {
 	t.Parallel()
 	corpus := loadParseCorpus[versionFromIDInput, string](t, extractVersionFromIDCorpusJSON, 12)
+	requireInputCoverage(t, corpus, map[versionFromIDInput]string{
+		// required spec case: dated id yields the dotted version.
+		{ID: "claude-opus-4-5-20251101", RawFamily: "claude-opus"}: "4.5",
+		// alphanumeric single-token version after prefix strip.
+		{ID: "gpt-4o", RawFamily: "gpt"}: "4o",
+		// trailing YYYY-MM-DD date stripped before version extraction.
+		{ID: "claude-opus-4-6-2026-02-05", RawFamily: "claude-opus"}: "4.6",
+	})
 	for _, c := range corpus.Cases {
 		t.Run(c.Name, func(t *testing.T) {
 			t.Parallel()
@@ -360,6 +385,11 @@ func TestInferFamilyFromID_Variant(t *testing.T) {
 	t.Parallel()
 
 	corpus := loadParseCorpus[providerIDInput, familyVersionExpected](t, inferFamilyVariantCorpusJSON, 2)
+	requireInputCoverage(t, corpus, map[providerIDInput]familyVersionExpected{
+		// the empty-raw-family path must decompose the full tuple, not first-token.
+		{ID: "claude-opus-4-5-20251101", Provider: "nano-gpt"}: {Family: "claude", Variant: "opus", Version: "4.5"},
+		{ID: "claude-opus-4-6", Provider: "some-provider"}:     {Family: "claude", Variant: "opus", Version: "4.6"},
+	})
 	for _, c := range corpus.Cases {
 		t.Run(c.Name, func(t *testing.T) {
 			t.Parallel()
@@ -609,6 +639,12 @@ func TestExtractModifier_PipelineIntegration(t *testing.T) {
 	t.Parallel()
 
 	corpus := loadParseCorpus[pipelineInput, pipelineExpected](t, extractModifierPipelineCorpusJSON, 3)
+	requireInputCoverage(t, corpus, map[pipelineInput]pipelineExpected{
+		// modifier stripped BEFORE version/date: all three recovered.
+		{RawID: "claude-opus-4-1-20250805-thinking", RawFamily: "claude-opus"}: {Modifier: "thinking", Version: "4.1", Date: "2025-08-05"},
+		// no modifier, version not extracted, date recovered.
+		{RawID: "gpt-4o-2024-05-13", RawFamily: "gpt-4o"}: {Modifier: "", Version: "", Date: "2024-05-13"},
+	})
 	for _, c := range corpus.Cases {
 		t.Run(c.Name, func(t *testing.T) {
 			t.Parallel()
@@ -3029,6 +3065,12 @@ func TestGluedVersionModifier(t *testing.T) {
 	t.Parallel()
 
 	corpus := loadParseCorpus[rawIDInput, fvvmExpected](t, gluedVersionModifierCorpusJSON, 3)
+	requireInputCoverage(t, corpus, map[rawIDInput]fvvmExpected{
+		// trailing glued letter splits off the version.
+		{Raw: "glm", ID: "glm-4.5v"}: {Family: "glm", Variant: "v", Version: "4.5", Mod: ""},
+		// alphanumeric line designator must NOT be split.
+		{Raw: "gpt", ID: "gpt-4o"}: {Family: "gpt", Variant: "4o", Version: "", Mod: ""},
+	})
 	runFamilyDetailedTupleCorpus(t, corpus)
 }
 
@@ -3531,6 +3573,12 @@ func TestParseParamSize_CaseFolding(t *testing.T) {
 	t.Parallel()
 
 	corpus := loadParseCorpus[string, string](t, parseParamSizeCasefoldCorpusJSON, 10)
+	requireInputCoverage(t, corpus, map[string]string{
+		// every shape family folds: dense, active-MoE, count-MoE.
+		"671B":      "671b",
+		"671B-A17B": "671b-a17b",
+		"17B-128E":  "17b-128e",
+	})
 	runParseParamSizeCanonical(t, corpus)
 }
 
@@ -3584,6 +3632,11 @@ func TestParseParamShape_DecimalExact(t *testing.T) {
 	t.Parallel()
 
 	corpus := loadParseCorpus[string, int64](t, parseParamShapeDecimalCorpusJSON, 6)
+	requireInputCoverage(t, corpus, map[string]int64{
+		// the two literals the doc comment pins: exact, never float-rounded.
+		"10.7b": 10_700_000_000,
+		"0.6b":  600_000_000,
+	})
 	for _, c := range corpus.Cases {
 		t.Run(c.Name, func(t *testing.T) {
 			t.Parallel()
@@ -3605,6 +3658,11 @@ func TestParseParamShape_Invalid(t *testing.T) {
 	t.Parallel()
 
 	corpus := loadParseCorpus[string, string](t, parseParamShapeInvalidCorpusJSON, 6)
+	requireInputCoverage(t, corpus, map[string]string{
+		// the substring-trap near-misses must stay rejected.
+		"r7b":   "",
+		"10_7b": "",
+	})
 	for _, c := range corpus.Cases {
 		t.Run(c.Name, func(t *testing.T) {
 			t.Parallel()
@@ -3664,6 +3722,11 @@ func TestExtractParamSizeToken_CompoundInvariantAcrossIDForms(t *testing.T) {
 	t.Parallel()
 
 	corpus := loadParseCorpus[string, string](t, extractParamSizeTokenCompoundCorpusJSON, 4)
+	requireInputCoverage(t, corpus, map[string]string{
+		// never clipped to "235b" under a namespace+suffix or full-uppercase form.
+		"qwen/qwen3-235b-a22b-instruct": "235b-a22b",
+		"Qwen3-235B-A22B":               "235b-a22b",
+	})
 	runExtractParamSizeTokenCorpus(t, corpus)
 }
 

@@ -60,17 +60,22 @@ func loadMididCorpus[I any, E any](t *testing.T, data []byte, wantN int) testcas
 	return corpus
 }
 
-// mididRequireIDs is the value-based coverage guard for the id-keyed midid
-// corpora: it asserts each probed id is still present as some case's input id.
-func mididRequireIDs(t *testing.T, ids []string, probes ...string) {
+// mididRequireNames is the internal-package twin of requireNameCoverage (the
+// external bestiary_test package cannot be imported from here, mirroring the
+// loadParseCorpus/loadMididCorpus split): the keyed value-coverage guard for
+// corpora whose input or expected type is not comparable (the mods slices). It
+// asserts each probed case NAME is still present, so a count-preserving swap
+// that drops a load-bearing case and adds a filler (necessarily under a
+// different name) reddens even at a fixed count.
+func mididRequireNames[I any, E any](t *testing.T, corpus testcase.Corpus[I, E], names ...string) {
 	t.Helper()
 	have := map[string]bool{}
-	for _, id := range ids {
-		have[id] = true
+	for _, c := range corpus.Cases {
+		have[c.Name] = true
 	}
-	for _, p := range probes {
-		if !have[p] {
-			t.Errorf("value coverage lost: midid case for id %q is missing", p)
+	for _, n := range names {
+		if !have[n] {
+			t.Errorf("value coverage lost: midid case named %q is missing", n)
 		}
 	}
 }

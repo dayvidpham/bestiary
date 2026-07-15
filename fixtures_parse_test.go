@@ -401,6 +401,25 @@ func requireInputCoverage[I comparable, E comparable](t *testing.T, corpus testc
 	}
 }
 
+// requireNameCoverage is the keyed sibling of requireInputCoverage for corpora
+// whose input or expected type is not comparable (slice-shaped fields, e.g. the
+// llama-4 membership id arrays): it asserts each probed case NAME is still
+// present. A count-preserving swap that drops a load-bearing case and adds a
+// filler (necessarily under a different name) reddens here, giving the same
+// swap-detection power without the comparability constraint.
+func requireNameCoverage[I any, E any](t *testing.T, corpus testcase.Corpus[I, E], names ...string) {
+	t.Helper()
+	have := map[string]bool{}
+	for _, c := range corpus.Cases {
+		have[c.Name] = true
+	}
+	for _, n := range names {
+		if !have[n] {
+			t.Errorf("value coverage lost: case named %q is missing", n)
+		}
+	}
+}
+
 // runFamilyVersionCorpus drives bestiary.ParseFamilyWithVersion over every case
 // and asserts the (family, variant, version) triple.
 func runFamilyVersionCorpus(t *testing.T, corpus testcase.Corpus[string, familyVersionExpected]) {
