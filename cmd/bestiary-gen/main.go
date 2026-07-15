@@ -450,6 +450,35 @@ func applyFilter(models []bestiary.ModelInfo, only, except []string) []bestiary.
 // guard.
 var validateCuratedDataSourceTable = bestiary.ValidateDataSourceTable
 
+// codegenLastSynced returns the DETERMINISTIC timestamp stamped onto every generated
+// ModelInfo.LastSynced: the CURRENT (maximum) models.dev ingest instant from the
+// COMMITTED parse/data/datasources.json (DatasetIngestedFor(DataSourceModelsDev)), NOT a
+// wall-clock. Pinning the codegen stamp to a committed snapshot instant is what makes a
+// `go run ./cmd/bestiary-gen --no-fetch` regen byte-deterministic: the wall-clock stamp
+// was previously the sole residual non-determinism in the generated output, so with it
+// pinned TestCodegen_Reproducible_ByteIdentical asserts FULL byte-identity.
+//
+// This is CODEGEN-ONLY. The runtime `sync` path deliberately keeps a real UTC wall-clock
+// (correct precisely because a sync is a real event); being later than this committed
+// instant, a synced row consistently wins the store's most-recent-wins merge over a baked
+// static row (see the stamp site in run()).
+//
+// A missing models.dev ingest row is a curation bug, so this is a LOUD actionable error at
+// codegen (the codegen-loud / runtime-graceful discipline), never a silent empty stamp.
+func codegenLastSynced() (string, error) {
+	ingest, ok := bestiary.DatasetIngestedFor(bestiary.DataSourceModelsDev)
+	if !ok || ingest.IngestedAt == "" {
+		return "", fmt.Errorf(
+			"codegen LastSynced: no models.dev ingest instant found\n"+
+				"  What: DatasetIngestedFor(%q) returned no current ingest\n"+
+				"  Why: parse/data/datasources.json has no `ingested` row for source_id %q (or its ingested_at is empty)\n"+
+				"  Where: cmd/bestiary-gen codegenLastSynced (the deterministic LastSynced stamp source)\n"+
+				"  How to fix: add a models.dev ingest row to parse/data/datasources.json per the models.dev snapshot-refresh workflow",
+			bestiary.DataSourceModelsDev, bestiary.DataSourceModelsDev)
+	}
+	return ingest.IngestedAt, nil
+}
+
 func run(args []string) error {
 	flags, err := parseFlags(args)
 	if err != nil {
@@ -502,9 +531,24 @@ func run(args []string) error {
 		}
 	}
 
-	// Stamp LastSynced on all models.
+	// Stamp the DETERMINISTIC codegen LastSynced on every model — the current models.dev
+	// ingest instant from the committed datasources.json (see codegenLastSynced), NOT the
+	// wall-clock `now`. `now` remains the real fetch time for the SNAPSHOT.json provenance
+	// rewrite above and the stdout summary; only the baked LastSynced is pinned to the
+	// committed instant, which is what makes a --no-fetch regen byte-deterministic.
+	//
+	// Merge tie-break implication: every baked static row now carries this STABLE committed
+	// timestamp instead of a per-regen wall-clock. The runtime `sync` path stamps a real UTC
+	// wall-clock (a sync is a real event), which is later than this committed instant, so the
+	// store's most-recent-wins merge (MergeModels: on an (ID, Provider) collision the higher
+	// LastSynced wins) CONSISTENTLY prefers a fresher synced row over the baked static row —
+	// no longer depending on whenever the generated files were last regenerated.
+	lastSynced, err := codegenLastSynced()
+	if err != nil {
+		return err
+	}
 	for i := range models {
-		models[i].LastSynced = now
+		models[i].LastSynced = lastSynced
 	}
 
 	// Collect all unique provider slugs from the API (for constant generation).
