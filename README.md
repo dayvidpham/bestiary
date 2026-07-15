@@ -113,6 +113,76 @@ standalones are synthesized — is recorded in the design-decisions sections of
 [`AGENTS.md`](AGENTS.md): "Parameter size is part of entity identity", "Stage/mode identity
 granularity", and "Alias-first join with a two-tier miss policy".
 
+## Spelling unification & provenance
+
+One model reaches bestiary under many raw spellings — different provider prefixes, casing,
+punctuation, size suffixes, quant tags, and even a missing version segment. Unifying those
+`N` spellings onto **one** entity key is not magic string-munging: every spelling arrives at
+its key through a **deterministic, auditable** pipeline, and the grouping it produces is
+itself queryable. Four mechanisms do the work, in precedence order:
+
+1. **Mechanical canonical decomposition.** Every raw ID is decomposed into the canonical
+   tuple `(family, variant, version, #paramsize, {identity-mods})` by the same suffix tables
+   and version patterns described above (`parse.go`, `parse/data/variant_suffixes.json`,
+   `parse/data/version_patterns.json`). Spellings that differ only in provider prefix, casing,
+   or a stripped quant/attribute tag collapse here, for free.
+2. **Curated exact-ID pins.** Where the mechanical path can't reach the truth, a curated
+   entry in `parse/data/*` overrides it — **size-token pins** (`param_size_overrides.json`),
+   **version pins** and **family/variant overrides** (`family_overrides.json`), each carrying
+   a `_comment` recording *why* the pin exists. A pin is the top precedence tier: it can never
+   be flipped by a mechanical scan or a data refresh.
+3. **Pipeline alias files.** The two ingest pipelines each keep a curated alias map that is
+   consulted *before* mechanical decomposition — `parse/data/ollama_aliases.json` for the
+   Ollama refresh and `parse/data/modelsdev_aliases.json` for the models.dev metadata join.
+   A present alias is the sole identity for that spelling (curated > mechanical).
+4. **The `Instances` list is the grouping.** Once unified, every raw spelling that resolved to
+   a key hangs off that entity as one row in its `Instances` list. That list is the
+   **queryable** evidence of the grouping — `bestiary providers '<key>'` (or `show --by-entity`)
+   prints exactly which raw IDs, under which providers, folded into the entity.
+
+**Worked example — Llama 4 Scout (13 spellings → 1 entity).** All of these key to
+`llama/scout@4#17b-16e{instruct}`:
+
+```
+llama-4-scout                                     meta.llama4-scout-17b-instruct-v1:0
+llama-4-scout-17b-16e-instruct                    us.meta.llama4-scout-17b-instruct-v1:0
+llama-4-scout-17b-16e-instruct-fp8                cerebras-llama-4-scout-17b-16e-instruct
+meta/llama-4-scout-17b-16e-instruct               meta-llama/Llama-4-Scout-17B-16E-Instruct
+@cf/meta/llama-4-scout-17b-16e-instruct           workers-ai/@cf/meta/llama-4-scout-17b-16e-instruct
+```
+
+Three unification steps stack: the provider-prefix / casing / `-fp8` spread collapses
+mechanically; the size-token pins in `param_size_overrides.json` fold the size-less
+(`llama-4-scout`) and bare-`17b` (`…-17b-instruct`, including the two **dotted Bedrock** forms
+`meta.llama4-scout-…v1:0` where the dot is token-internal) spellings up to the full `17b-16e`
+shape; and curated **`@4` version pins** in `family_overrides.json` join the three
+version-less spellings (the two Bedrock forms + `cerebras-…`, whose IDs simply omit the `4`)
+to the ten that already carry it. Without the pins those three would strand as a separate
+`llama/scout#17b-16e{instruct}` entity — provenance-honest, but not what a reader wants.
+
+**Worked example — Grok 4.20 beta (aliases folded into one entity).** The two `-beta-`
+spellings
+
+```
+grok-4.20-beta-0309-reasoning      grok-4-20-beta-0309-reasoning
+```
+
+now key to `grok@4.20{reasoning}`, alongside the non-beta reasoning spellings
+(`grok-4.20-0309-reasoning`, `xai/grok-4.20-reasoning`, `grok-4-20-reasoning`, …). A curated
+ruling reclassified Grok's `beta` from an identity **variant** into a release-stage
+**attribute**: the stage signal is still delivered (a resolved model reports `Stage: beta`),
+but `beta` no longer forks the key, so the `-beta-` aliases stop stranding as a separate
+`grok/beta@4.20{reasoning}` entity. This is a *curated, family-scoped* reclassification —
+`beta` is still frozen as key material for other families where no such ruling exists.
+
+> **Boundary — traceability is derivation-based today, not yet an alias data model.** A
+> spelling reaches its entity by *decomposition + curated pins/aliases*, and the `Instances`
+> list is the evidence of that grouping. What does **not** yet exist is a first-class alias
+> **edge**: an explicit record, per accepted spelling, of *who* asserted the equivalence and
+> *on what basis* (claim attribution). Those alias edges are a planned follow-up, not a
+> shipped data model — for now the curated `_comment` fields in `parse/data/*` are the
+> human-readable provenance trail.
+
 ## Demo
 
 **Resolve a model by its canonical form** (`bestiary show` defaults to canonical/"peasant" input):
@@ -252,10 +322,10 @@ Entity: llama@3.3#70b{instruct}
 Instances (8):
   ID                                       PROVIDER               HOST              IN/MTok     OUT/MTok    CONTEXT     MAXOUT
   llama-3.3-70b-instruct                   azure                  -                  0.7100       0.7100     128000      32768
-      QUANT              WEIGHTS            VRAM        CTX  PARTIAL
-      q4_k_m         43033509888     85983182848     131072    false
-      q8_0           75176521728    118126194688     131072    false
-      f16           141166166016    184115838976     131072    false
+      QUANT              WEIGHTS            VRAM         TYP(4K)        CTX  PARTIAL
+      q4_k_m         43033509888     85983182848     44375687168     131072    false
+      q8_0           75176521728    118126194688     76518699008     131072    false
+      f16           141166166016    184115838976    142508343296     131072    false
   ...
 ```
 
@@ -274,6 +344,13 @@ the KV-cache at a 128K window is as large as the quantized weights themselves. A
 working context the figure is far closer to the file size; `(QuantVRAM).EstimateVRAM(ctx)`
 recomputes it from the stored inputs at any context you choose.
 
+- **`TYP(4K)`** is that recomputation made visible: the same VRAM estimate baked at a
+  *typical* 4096-token working context instead of the full window, so you can size a
+  realistic run at a glance (the 70B q4_k_m needs ≈44.4 GB at 4K versus ≈86 GB at its 131K
+  max). It renders an em dash (`—`) when the model's maximum context is below 4096 — or
+  unknown — since a figure at a context the model cannot serve would be meaningless, and on a
+  `PARTIAL` row it stays weights-only (no phantom KV delta), exactly like `VRAM`.
+
 When the architectural facts (layers / KV-heads / head-dim) are **absent**, the KV term is
 excluded and the row is flagged `PARTIAL true` — `VRAM` then equals `WEIGHTS`, an honest
 weights-only **lower bound**, never a silent under-estimate:
@@ -283,9 +360,9 @@ $ bestiary providers --output table 'llama@3.2#3b{instruct}'
 Entity: llama@3.2#3b{instruct}
 Instances (1):
   ...
-      QUANT              WEIGHTS            VRAM        CTX  PARTIAL
-      q4_k_m          2019139072      2019139072     131072     true
-      q8_0            3419799040      3419799040     131072     true
+      QUANT              WEIGHTS            VRAM         TYP(4K)        CTX  PARTIAL
+      q4_k_m          2019139072      2019139072      2019139072     131072     true
+      q8_0            3419799040      3419799040      3419799040     131072     true
 ```
 
 ### Filtering by quantization
