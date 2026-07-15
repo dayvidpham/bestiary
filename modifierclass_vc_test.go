@@ -19,18 +19,25 @@ func modJoinCanon(mods []string) string {
 // ----------------------------------------------------------------------------
 
 // TestVC6_InventoryTokensPinned pins the class of every token in the curated
-// 24-token inventory (global, family-agnostic). ATTRIBUTE tokens are per-instance
+// 21-token inventory (global, family-agnostic). ATTRIBUTE tokens are per-instance
 // presentation/runtime knobs; IDENTITY tokens distinguish the model artifact. The
 // AMBIGUOUS tokens (turbo/fast/chat/pro/precision) default to IDENTITY globally —
 // the safe over-split — and are demoted to ATTRIBUTE only by a per-family override
 // (see VC7). mini/flash stay IDENTITY-class this epoch (size axis deferred).
 //
+// RE-PINNED for the ReleaseStage migration: preview/latest/original left the
+// modifier-class inventory (24 → 21 tokens) — they MIGRATED to the dedicated stage
+// axis and are asserted separately below. They must NOT classify as attribute (that
+// vocabulary moved) and, critically, must be routed out of the entity key BEFORE the
+// unknown->Identity fail-safe would otherwise promote them (now that they are absent
+// from modifier_class.json).
+//
 // Single source of truth: parse/data/modifier_class.json is canonical for the
 // classification. The token lists below enumerate the same inventory so a reader
-// can cross-check "all 24 pinned" at a glance; if the JSON changes, update both.
+// can cross-check "all 21 pinned" at a glance; if the JSON changes, update both.
 func TestVC6_InventoryTokensPinned(t *testing.T) {
 	attribute := []string{
-		"thinking", "think", "preview", "latest", "original", "highspeed", "lightning",
+		"thinking", "think", "highspeed", "lightning",
 	}
 	identity := []string{
 		// curated identity
@@ -42,8 +49,8 @@ func TestVC6_InventoryTokensPinned(t *testing.T) {
 		"mini", "flash", "reasoning", "distill",
 	}
 
-	if total := len(attribute) + len(identity); total != 24 {
-		t.Fatalf("inventory size = %d, want 24 pinned tokens", total)
+	if total := len(attribute) + len(identity); total != 21 {
+		t.Fatalf("inventory size = %d, want 21 pinned tokens", total)
 	}
 
 	for _, tok := range attribute {
@@ -54,6 +61,20 @@ func TestVC6_InventoryTokensPinned(t *testing.T) {
 	for _, tok := range identity {
 		if got := bestiary.ClassifyModifier(tok, ""); got != bestiary.ModifierClassIdentity {
 			t.Errorf("ClassifyModifier(%q, \"\") = %v, want ModifierClassIdentity", tok, got)
+		}
+	}
+
+	// Migrated stage tokens: preview/latest/original are recognized on the stage
+	// axis (DetectReleaseStage) and, although absent from modifier_class.json, are
+	// routed OUT of the identity key by EntityModifiers (via isStageToken) BEFORE
+	// the fail-safe — so they never split an entity. They are also excluded from the
+	// attribute-render subset (verified by VC12 + the resolve backward-compat test).
+	for _, tok := range []string{"preview", "latest", "original"} {
+		if _, ok := bestiary.DetectReleaseStage(tok); !ok {
+			t.Errorf("DetectReleaseStage(%q) not recognized — migrated stage token must be on the stage axis", tok)
+		}
+		if got := bestiary.EntityModifiers([]string{tok}, "llama"); got != nil {
+			t.Errorf("EntityModifiers([%s], llama) = %v, want nil (stage-routed out of the key before the identity fail-safe)", tok, got)
 		}
 	}
 
@@ -437,12 +458,18 @@ func TestVC12_BackwardCompat(t *testing.T) {
 	}
 
 	// Multiple attribute tokens stay comma-joined in a single [] bracket (legacy form).
+	// RE-PINNED for the ReleaseStage migration: "latest" is no longer an attribute
+	// modifier — it migrated to the stage axis and is routed out of BOTH modifier
+	// segments (attributeModifiers drops it), so the render carries only "thinking".
+	// The token stays in the Modifier field (for constant-name / resolve-filter
+	// stability); it simply no longer renders in "[...]". The stage itself surfaces on
+	// the separate "stage" axis (ModelInfo.Stage), which ModelRef does not render.
 	multiAttr := bestiary.ModelRef{
 		Provider: "anthropic", Family: "claude", Variant: "opus", Version: "4.6",
 		Modifier: []string{"latest", "thinking"},
 	}
-	if got := multiAttr.Format(bestiary.SchemeCanonical); got != "anthropic/claude/opus/4.6[thinking,latest]" {
-		t.Errorf("multi-attribute render = %q, want %q", got, "anthropic/claude/opus/4.6[thinking,latest]")
+	if got := multiAttr.Format(bestiary.SchemeCanonical); got != "anthropic/claude/opus/4.6[thinking]" {
+		t.Errorf("multi-attribute render = %q, want %q (latest migrated to stage axis)", got, "anthropic/claude/opus/4.6[thinking]")
 	}
 
 	// Identity modifier ("instruct") — render CHANGES: token moves into {} (the

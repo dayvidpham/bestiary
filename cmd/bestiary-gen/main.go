@@ -1357,6 +1357,13 @@ func enrichModelInfo(base bestiary.ModelInfo) (bestiary.ModelInfo, *bestiary.Par
 		info.ExpertCount = shape.ExpertCount
 	}
 
+	// Release-stage enrichment. Stage/StageRaw are derived from the ID by the same
+	// pure DetectStageFromID the runtime joints use (wire decode, store read), so
+	// the baked static row and a live-sync row of the same ID carry an identical
+	// stage. Stage is a per-instance attribute and never touches the entity key, so
+	// this bakes a new field without any re-key.
+	info.Stage, info.StageRaw = bestiary.DetectStageFromID(id)
+
 	// Curated Source and QuantVRAM from the curated quant_vram.json table. QuantVRAM
 	// rows are BAKED here: each row's VRAMBytes and VRAMContextTokens are filled in by
 	// calling EstimateVRAMBytes at the model's maximum context window. The bake-context
@@ -1703,6 +1710,32 @@ func statusExpr(s bestiary.ModelStatus) string {
 	}
 }
 
+// stageExpr renders a ReleaseStage as its exported constant name so the generated
+// source references the enum symbolically (e.g. StageBeta). Mirrors statusExpr.
+// StageNone (the zero value) is the default.
+func stageExpr(s bestiary.ReleaseStage) string {
+	switch s {
+	case bestiary.StageStable:
+		return "StageStable"
+	case bestiary.StagePreview:
+		return "StagePreview"
+	case bestiary.StageBeta:
+		return "StageBeta"
+	case bestiary.StageAlpha:
+		return "StageAlpha"
+	case bestiary.StageExperimental:
+		return "StageExperimental"
+	case bestiary.StageLatest:
+		return "StageLatest"
+	case bestiary.StageOriginal:
+		return "StageOriginal"
+	case bestiary.StageOther:
+		return "StageOther"
+	default:
+		return "StageNone"
+	}
+}
+
 // reasoningOptionKindExpr renders a ReasoningOptionKind as its exported constant name.
 // ReasoningOptionOther (the zero value) is the default fail-safe.
 func reasoningOptionKindExpr(k bestiary.ReasoningOptionKind) string {
@@ -1863,6 +1896,16 @@ func generateSource(models []bestiary.ModelInfo, slugToConst map[string]string) 
 		}
 		if m.StatusRaw != "" {
 			fmt.Fprintf(&buf, "\t\tStatusRaw:             %q,\n", m.StatusRaw)
+		}
+		// Release stage (ID-derived, distinct from the api.json Status above).
+		// Emitted CONDITIONALLY — only when a stage was detected — matching the
+		// Status precedent so the unmarked majority stays compact. StageRaw is the
+		// reserved Other-bucket companion and is empty for every ID-derived stage.
+		if m.Stage != bestiary.StageNone {
+			fmt.Fprintf(&buf, "\t\tStage:                 %s,\n", stageExpr(m.Stage))
+		}
+		if m.StageRaw != "" {
+			fmt.Fprintf(&buf, "\t\tStageRaw:              %q,\n", m.StageRaw)
 		}
 		if len(m.ReasoningOptions) > 0 {
 			fmt.Fprintf(&buf, "\t\tReasoningOptions:      %s,\n", reasoningOptionsLiteral(m.ReasoningOptions))
@@ -2471,10 +2514,24 @@ func resolveCollisions(names []string, models []bestiary.ModelInfo) []string {
 			for _, c := range cands {
 				result[c.pos] = baseName + "__" + c.vSuffix
 			}
+		} else if names, ok := disambiguateByDiscriminator(baseName, positions, models); ok {
+			// (b) MEANINGFUL discriminator. When the version segment cannot separate the
+			// colliders, the group is (in this catalog exclusively) the SAME model served
+			// under different backend-route path prefixes — a "TEE/" trusted-execution
+			// route, a "Pro/" tier, a "stealth/" alias, a redundant vendor path, or a bare
+			// direct ID alongside a routed one. The route label is the meaningful
+			// distinguisher, so the constant becomes e.g. Model__NanoGPT__GLM__5__TEE /
+			// __ZaiOrg instead of the opaque, version-lookalike __5_1 / __5_2. Falls
+			// through to the ordinal tie-break below only for a genuine tie no
+			// discriminator separates.
+			for k, pos := range positions {
+				result[pos] = names[k]
+			}
 		} else {
-			// (b) Stable ordinal: order colliders by raw model ID so the _N binding is
-			// reproducible regardless of slice order. (Belt-and-suspenders with the
-			// deterministic (Provider,ID) model ordering's sort.)
+			// (c) Stable ordinal (last resort, TRUE ties only): order colliders by raw
+			// model ID so the _N binding is reproducible regardless of slice order.
+			// (Belt-and-suspenders with the deterministic (Provider,ID) model ordering's
+			// sort.)
 			type member struct {
 				pos   int
 				rawID string
@@ -2520,6 +2577,97 @@ func resolveCollisions(names []string, models []bestiary.ModelInfo) []string {
 	}
 
 	return result
+}
+
+// disambiguateByDiscriminator resolves a same-base-name collision group with a
+// MEANINGFUL suffix instead of an opaque ordinal. It tries the discriminators in
+// collisionDiscriminators order and returns the first assignment (index-aligned with
+// positions) that makes EVERY final constant name in the group distinct; ok is false
+// when none does (the caller then falls back to the ordinal tie-break).
+//
+// A discriminator that returns "" for a member leaves that member on the bare
+// baseName (the "direct", unrouted collider keeps the plain name while the routed
+// siblings gain a route suffix) — this is allowed as long as the resulting set is
+// still all-distinct, which the seen-set check enforces. The per-member iteration is
+// in positions order (models are pre-sorted by (Provider,ID)), so the assignment is
+// deterministic.
+func disambiguateByDiscriminator(baseName string, positions []int, models []bestiary.ModelInfo) ([]string, bool) {
+	for _, disc := range collisionDiscriminators() {
+		names := make([]string, len(positions))
+		seen := make(map[string]bool, len(positions))
+		ok := true
+		for k, pos := range positions {
+			name := baseName
+			if d := disc(models[pos]); d != "" {
+				name = baseName + "__" + d
+			}
+			if seen[name] {
+				ok = false
+				break
+			}
+			seen[name] = true
+			names[k] = name
+		}
+		if ok {
+			return names, true
+		}
+	}
+	return nil, false
+}
+
+// collisionDiscriminators is the priority-ordered list of meaningful collision
+// discriminators tried by disambiguateByDiscriminator:
+//
+//  1. the backend-route path prefix alone (the common, cleanest case);
+//  2. route + release date (when a shared route needs the date to separate).
+//
+// The ordinal tie-break in resolveCollisions is the final fallback for a true tie no
+// discriminator separates; it is intentionally NOT in this list.
+func collisionDiscriminators() []func(bestiary.ModelInfo) string {
+	return []func(bestiary.ModelInfo) string{
+		collisionRouteDisc,
+		func(m bestiary.ModelInfo) string {
+			route, date := collisionRouteDisc(m), collisionDateDisc(m)
+			switch {
+			case route != "" && date != "":
+				return route + "__" + date
+			case route != "":
+				return route
+			default:
+				return date
+			}
+		},
+	}
+}
+
+// collisionRouteDisc renders the backend-route path prefix of a raw model ID (every
+// path segment before the last "/") as a PascalCase constant part, e.g.
+// "TEE/deepseek-v4-pro" → "TEE", "Pro/deepseek-ai/DeepSeek-V3" → "ProDeepseekAI".
+// A bare ID with no path prefix returns "" (a direct, unrouted model). This is the
+// meaningful axis along which the catalog's same-base-name collisions actually differ:
+// the same model re-served under a routing/tier/alias prefix.
+func collisionRouteDisc(m bestiary.ModelInfo) string {
+	rawID := string(m.ID)
+	idx := strings.LastIndexByte(rawID, '/')
+	if idx < 0 {
+		return "" // no path prefix: a direct, unrouted ID.
+	}
+	prefix := strings.TrimLeft(rawID[:idx], "@")
+	toks := strings.FieldsFunc(prefix, func(r rune) bool {
+		return !unicode.IsLetter(r) && !unicode.IsDigit(r)
+	})
+	var sb strings.Builder
+	for _, t := range toks {
+		sb.WriteString(tokenToConstPart(t))
+	}
+	return sb.String()
+}
+
+// collisionDateDisc renders the release date as a compact YYYYMMDD constant part, or
+// "" when the model has no date. It is the secondary discriminator (used only combined
+// with the route when the route alone does not separate a group).
+func collisionDateDisc(m bestiary.ModelInfo) string {
+	return strings.ReplaceAll(m.Date, "-", "")
 }
 
 // extractVersionSegment returns a short string that uniquely identifies the

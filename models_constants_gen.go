@@ -266,8 +266,8 @@ const (
 	Model__Abacus__Qwq__32B                                                                  ModelID = "Qwen/QwQ-32B"
 	Model__Abacus__Route__LLM                                                                ModelID = "route-llm"
 	Model__AbliterationAI__Abliterated__Model                                                ModelID = "abliterated-model"
-	Model__AlibabaCN__DeepSeek__R1__0528__Thinking_1                                         ModelID = "deepseek-r1-0528"
-	Model__AlibabaCN__DeepSeek__R1__0528__Thinking_2                                         ModelID = "siliconflow/deepseek-r1-0528"
+	Model__AlibabaCN__DeepSeek__R1__0528__Thinking                                           ModelID = "deepseek-r1-0528"
+	Model__AlibabaCN__DeepSeek__R1__0528__Thinking__Siliconflow                              ModelID = "siliconflow/deepseek-r1-0528"
 	Model__AlibabaCN__DeepSeek__R1__Distill__Llama__70b__Thinking                            ModelID = "deepseek-r1-distill-llama-70b"
 	Model__AlibabaCN__DeepSeek__R1__Distill__Llama__8b__Thinking                             ModelID = "deepseek-r1-distill-llama-8b"
 	Model__AlibabaCN__DeepSeek__R1__Distill__Qwen__14b                                       ModelID = "deepseek-r1-distill-qwen-14b"
@@ -287,8 +287,8 @@ const (
 	Model__AlibabaCN__GLM__5_1                                                               ModelID = "glm-5.1"
 	Model__AlibabaCN__GLM__5_2                                                               ModelID = "glm-5.2"
 	Model__AlibabaCN__Kimi__K2__2__Thinking                                                  ModelID = "kimi-k2-thinking"
-	Model__AlibabaCN__Kimi__K2__5__2_5_1                                                     ModelID = "kimi-k2.5"
-	Model__AlibabaCN__Kimi__K2__5__2_5_2                                                     ModelID = "kimi/kimi-k2.5"
+	Model__AlibabaCN__Kimi__K2__5__2_5                                                       ModelID = "kimi-k2.5"
+	Model__AlibabaCN__Kimi__K2__5__2_5__Kimi                                                 ModelID = "kimi/kimi-k2.5"
 	Model__AlibabaCN__Kimi__K2__6__2_6                                                       ModelID = "kimi-k2.6"
 	Model__AlibabaCN__MiniMax__M2__5__2_5                                                    ModelID = "MiniMax-M2.5"
 	Model__AlibabaCN__MiniMax__M2__7__2_7                                                    ModelID = "MiniMax/MiniMax-M2.7"
@@ -1947,17 +1947,17 @@ const (
 	Model__Kilo__Claude__Opus__4                                                             ModelID = "anthropic/claude-opus-4"
 	Model__Kilo__Claude__Opus__4_1                                                           ModelID = "anthropic/claude-opus-4.1"
 	Model__Kilo__Claude__Opus__4_5                                                           ModelID = "anthropic/claude-opus-4.5"
-	Model__Kilo__Claude__Opus__4_6_1                                                         ModelID = "anthropic/claude-opus-4.6"
-	Model__Kilo__Claude__Opus__4_6_2                                                         ModelID = "stealth/claude-opus-4.6"
+	Model__Kilo__Claude__Opus__4_6__Anthropic                                                ModelID = "anthropic/claude-opus-4.6"
 	Model__Kilo__Claude__Opus__4_6__Fast                                                     ModelID = "anthropic/claude-opus-4.6-fast"
-	Model__Kilo__Claude__Opus__4_7_1                                                         ModelID = "anthropic/claude-opus-4.7"
-	Model__Kilo__Claude__Opus__4_7_2                                                         ModelID = "stealth/claude-opus-4.7"
+	Model__Kilo__Claude__Opus__4_6__Stealth                                                  ModelID = "stealth/claude-opus-4.6"
+	Model__Kilo__Claude__Opus__4_7__Anthropic                                                ModelID = "anthropic/claude-opus-4.7"
 	Model__Kilo__Claude__Opus__4_7__Fast                                                     ModelID = "anthropic/claude-opus-4.7-fast"
+	Model__Kilo__Claude__Opus__4_7__Stealth                                                  ModelID = "stealth/claude-opus-4.7"
 	Model__Kilo__Claude__Opus__Latest                                                        ModelID = "~anthropic/claude-opus-latest"
 	Model__Kilo__Claude__Sonnet__4                                                           ModelID = "anthropic/claude-sonnet-4"
 	Model__Kilo__Claude__Sonnet__4_5                                                         ModelID = "anthropic/claude-sonnet-4.5"
-	Model__Kilo__Claude__Sonnet__4_6_1                                                       ModelID = "anthropic/claude-sonnet-4.6"
-	Model__Kilo__Claude__Sonnet__4_6_2                                                       ModelID = "stealth/claude-sonnet-4.6"
+	Model__Kilo__Claude__Sonnet__4_6__Anthropic                                              ModelID = "anthropic/claude-sonnet-4.6"
+	Model__Kilo__Claude__Sonnet__4_6__Stealth                                                ModelID = "stealth/claude-sonnet-4.6"
 	Model__Kilo__Claude__Sonnet__Latest                                                      ModelID = "~anthropic/claude-sonnet-latest"
 	Model__Kilo__Cobuddy__Free                                                               ModelID = "baidu/cobuddy:free"
 	Model__Kilo__CodeLlama__7b__Instruct__Solidity__Instruct                                 ModelID = "alfredpros/codellama-7b-instruct-solidity"
@@ -1991,8 +1991,8 @@ const (
 	Model__Kilo__Ernie__4__5__300b__A47b__4_5                                                ModelID = "baidu/ernie-4.5-300b-a47b"
 	Model__Kilo__Ernie__4__5__Vl__28b__A3b__4_5                                              ModelID = "baidu/ernie-4.5-vl-28b-a3b"
 	Model__Kilo__Ernie__4__5__Vl__424b__A47b__4_5                                            ModelID = "baidu/ernie-4.5-vl-424b-a47b"
-	Model__Kilo__Free_1                                                                      ModelID = "kilo-auto/free"
-	Model__Kilo__Free_2                                                                      ModelID = "openrouter/free"
+	Model__Kilo__Free__KiloAuto                                                              ModelID = "kilo-auto/free"
+	Model__Kilo__Free__OpenRouter                                                            ModelID = "openrouter/free"
 	Model__Kilo__Frontier                                                                    ModelID = "kilo-auto/frontier"
 	Model__Kilo__GLM__4_5                                                                    ModelID = "z-ai/glm-4.5"
 	Model__Kilo__GLM__4_6                                                                    ModelID = "z-ai/glm-4.6"
@@ -2805,26 +2805,26 @@ const (
 	Model__NanoGPT__DeepSeek__Reasoner                                                       ModelID = "deepseek-reasoner"
 	Model__NanoGPT__DeepSeek__Reasoner__Cheaper                                              ModelID = "deepseek-reasoner-cheaper"
 	Model__NanoGPT__DeepSeek__V3__0324                                                       ModelID = "deepseek-v3-0324"
-	Model__NanoGPT__DeepSeek__V3__1_1                                                        ModelID = "TEE/deepseek-v3.1"
-	Model__NanoGPT__DeepSeek__V3__1_2                                                        ModelID = "deepseek-ai/DeepSeek-V3.1"
+	Model__NanoGPT__DeepSeek__V3__1__DeepSeekAI                                              ModelID = "deepseek-ai/DeepSeek-V3.1"
 	Model__NanoGPT__DeepSeek__V3__1__Nex__N1                                                 ModelID = "nex-agi/deepseek-v3.1-nex-n1"
+	Model__NanoGPT__DeepSeek__V3__1__Tee                                                     ModelID = "TEE/deepseek-v3.1"
 	Model__NanoGPT__DeepSeek__V3__1__Terminus                                                ModelID = "deepseek-ai/DeepSeek-V3.1-Terminus"
 	Model__NanoGPT__DeepSeek__V3__1__Terminus__Thinking__Thinking                            ModelID = "deepseek-ai/DeepSeek-V3.1-Terminus:thinking"
 	Model__NanoGPT__DeepSeek__V3__1__Thinking__Thinking                                      ModelID = "deepseek-ai/DeepSeek-V3.1:thinking"
-	Model__NanoGPT__DeepSeek__V3__2_1                                                        ModelID = "TEE/deepseek-v3.2"
-	Model__NanoGPT__DeepSeek__V3__2_2                                                        ModelID = "deepseek/deepseek-v3.2"
+	Model__NanoGPT__DeepSeek__V3__2__DeepSeek                                                ModelID = "deepseek/deepseek-v3.2"
 	Model__NanoGPT__DeepSeek__V3__2__Exp                                                     ModelID = "deepseek-ai/deepseek-v3.2-exp"
 	Model__NanoGPT__DeepSeek__V3__2__Exp__Thinking                                           ModelID = "deepseek-ai/deepseek-v3.2-exp-thinking"
 	Model__NanoGPT__DeepSeek__V3__2__Speciale                                                ModelID = "deepseek/deepseek-v3.2-speciale"
+	Model__NanoGPT__DeepSeek__V3__2__Tee                                                     ModelID = "TEE/deepseek-v3.2"
 	Model__NanoGPT__DeepSeek__V3__2__Thinking                                                ModelID = "deepseek/deepseek-v3.2:thinking"
 	Model__NanoGPT__DeepSeek__V4__Flash                                                      ModelID = "deepseek/deepseek-v4-flash"
 	Model__NanoGPT__DeepSeek__V4__Flash__Thinking                                            ModelID = "deepseek/deepseek-v4-flash:thinking"
-	Model__NanoGPT__DeepSeek__V4__Pro_1                                                      ModelID = "TEE/deepseek-v4-pro"
-	Model__NanoGPT__DeepSeek__V4__Pro_2                                                      ModelID = "deepseek/deepseek-v4-pro"
 	Model__NanoGPT__DeepSeek__V4__Pro__Cheaper                                               ModelID = "deepseek/deepseek-v4-pro-cheaper"
 	Model__NanoGPT__DeepSeek__V4__Pro__Cheaper__Thinking                                     ModelID = "deepseek/deepseek-v4-pro-cheaper:thinking"
-	Model__NanoGPT__DeepSeek__V4__Pro__Thinking_1                                            ModelID = "TEE/deepseek-v4-pro:thinking"
-	Model__NanoGPT__DeepSeek__V4__Pro__Thinking_2                                            ModelID = "deepseek/deepseek-v4-pro:thinking"
+	Model__NanoGPT__DeepSeek__V4__Pro__DeepSeek                                              ModelID = "deepseek/deepseek-v4-pro"
+	Model__NanoGPT__DeepSeek__V4__Pro__Tee                                                   ModelID = "TEE/deepseek-v4-pro"
+	Model__NanoGPT__DeepSeek__V4__Pro__Thinking__DeepSeek                                    ModelID = "deepseek/deepseek-v4-pro:thinking"
+	Model__NanoGPT__DeepSeek__V4__Pro__Thinking__Tee                                         ModelID = "TEE/deepseek-v4-pro:thinking"
 	Model__NanoGPT__Deepclaude                                                               ModelID = "deepclaude"
 	Model__NanoGPT__Deephermes__3__Mistral__24B__3__Preview                                  ModelID = "NousResearch/DeepHermes-3-Mistral-24B-Preview"
 	Model__NanoGPT__Devstral__2__123b__Instruct__2512__2__Instruct                           ModelID = "mistralai/devstral-2-123b-instruct-2512"
@@ -2871,9 +2871,9 @@ const (
 	Model__NanoGPT__GLM__4_6                                                                 ModelID = "z-ai/glm-4.6"
 	Model__NanoGPT__GLM__4_6__Original                                                       ModelID = "zai-org/glm-4.6-original"
 	Model__NanoGPT__GLM__4_6__Turbo                                                          ModelID = "zai-org/GLM-4.6-turbo"
-	Model__NanoGPT__GLM__4_7_1                                                               ModelID = "TEE/glm-4.7"
-	Model__NanoGPT__GLM__4_7_2                                                               ModelID = "zai-org/glm-4.7"
 	Model__NanoGPT__GLM__4_7__Original                                                       ModelID = "zai-org/glm-4.7-original"
+	Model__NanoGPT__GLM__4_7__Tee                                                            ModelID = "TEE/glm-4.7"
+	Model__NanoGPT__GLM__4_7__ZaiOrg                                                         ModelID = "zai-org/glm-4.7"
 	Model__NanoGPT__GLM__4__1v__Thinking__Flash                                              ModelID = "glm-4.1v-thinking-flash"
 	Model__NanoGPT__GLM__4__1v__Thinking__Flashx__4_1                                        ModelID = "glm-4.1v-thinking-flashx"
 	Model__NanoGPT__GLM__4__32B__0414__4                                                     ModelID = "THUDM/GLM-4-32B-0414"
@@ -2888,9 +2888,9 @@ const (
 	Model__NanoGPT__GLM__4__6v__4_6                                                          ModelID = "zai-org/glm-4.6v"
 	Model__NanoGPT__GLM__4__6v__4_6__Original                                                ModelID = "zai-org/glm-4.6v-original"
 	Model__NanoGPT__GLM__4__6v__4_6__OriginalFlash                                           ModelID = "zai-org/glm-4.6v-flash-original"
-	Model__NanoGPT__GLM__4__7__Flash__4_7_1                                                  ModelID = "TEE/glm-4.7-flash"
-	Model__NanoGPT__GLM__4__7__Flash__4_7_2                                                  ModelID = "zai-org/glm-4.7-flash"
 	Model__NanoGPT__GLM__4__7__Flash__4_7__Original                                          ModelID = "zai-org/glm-4.7-flash-original"
+	Model__NanoGPT__GLM__4__7__Flash__4_7__Tee                                               ModelID = "TEE/glm-4.7-flash"
+	Model__NanoGPT__GLM__4__7__Flash__4_7__ZaiOrg                                            ModelID = "zai-org/glm-4.7-flash"
 	Model__NanoGPT__GLM__4__7__Flash__Original__Thinking__4_7__Original                      ModelID = "zai-org/glm-4.7-flash-original:thinking"
 	Model__NanoGPT__GLM__4__7__Flash__Thinking__4_7                                          ModelID = "zai-org/glm-4.7-flash:thinking"
 	Model__NanoGPT__GLM__4__7__Original__Thinking__4_7__Original                             ModelID = "zai-org/glm-4.7-original:thinking"
@@ -2903,16 +2903,16 @@ const (
 	Model__NanoGPT__GLM__4__Long__4                                                          ModelID = "glm-4-long"
 	Model__NanoGPT__GLM__4__Plus__0111__4                                                    ModelID = "glm-4-plus-0111"
 	Model__NanoGPT__GLM__4__Plus__4                                                          ModelID = "glm-4-plus"
-	Model__NanoGPT__GLM__5_1                                                                 ModelID = "TEE/glm-5"
-	Model__NanoGPT__GLM__5_1_1                                                               ModelID = "TEE/glm-5.1"
-	Model__NanoGPT__GLM__5_1_2                                                               ModelID = "zai-org/glm-5.1"
+	Model__NanoGPT__GLM__5_1__Tee                                                            ModelID = "TEE/glm-5.1"
 	Model__NanoGPT__GLM__5_1__Thinking                                                       ModelID = "TEE/glm-5.1-thinking"
-	Model__NanoGPT__GLM__5_2                                                                 ModelID = "zai-org/glm-5"
+	Model__NanoGPT__GLM__5_1__ZaiOrg                                                         ModelID = "zai-org/glm-5.1"
 	Model__NanoGPT__GLM__5__1__Thinking                                                      ModelID = "zai-org/glm-5.1:thinking"
 	Model__NanoGPT__GLM__5__Original                                                         ModelID = "zai-org/glm-5-original"
 	Model__NanoGPT__GLM__5__Original__Thinking__5__Original                                  ModelID = "zai-org/glm-5-original:thinking"
+	Model__NanoGPT__GLM__5__Tee                                                              ModelID = "TEE/glm-5"
 	Model__NanoGPT__GLM__5__Thinking                                                         ModelID = "zai-org/glm-5:thinking"
 	Model__NanoGPT__GLM__5__Turbo                                                            ModelID = "z-ai/glm-5-turbo"
+	Model__NanoGPT__GLM__5__ZaiOrg                                                           ModelID = "zai-org/glm-5"
 	Model__NanoGPT__GLM__5v__5__Turbo                                                        ModelID = "z-ai/glm-5v-turbo"
 	Model__NanoGPT__GLM__5v__Turbo__Thinking__5__Turbo                                       ModelID = "z-ai/glm-5v-turbo:thinking"
 	Model__NanoGPT__GLM__Latest                                                              ModelID = "zai-org/glm-latest"
@@ -2954,10 +2954,10 @@ const (
 	Model__NanoGPT__GPT__5__Pro__5                                                           ModelID = "openai/gpt-5-pro"
 	Model__NanoGPT__GPT__ChatLatest                                                          ModelID = "openai/gpt-chat-latest"
 	Model__NanoGPT__GPT__Latest                                                              ModelID = "openai/gpt-latest"
-	Model__NanoGPT__GPT__Oss__120b_1                                                         ModelID = "TEE/gpt-oss-120b"
-	Model__NanoGPT__GPT__Oss__120b_2                                                         ModelID = "openai/gpt-oss-120b"
-	Model__NanoGPT__GPT__Oss__20b_1                                                          ModelID = "TEE/gpt-oss-20b"
-	Model__NanoGPT__GPT__Oss__20b_2                                                          ModelID = "openai/gpt-oss-20b"
+	Model__NanoGPT__GPT__Oss__120b__OpenAI                                                   ModelID = "openai/gpt-oss-120b"
+	Model__NanoGPT__GPT__Oss__120b__Tee                                                      ModelID = "TEE/gpt-oss-120b"
+	Model__NanoGPT__GPT__Oss__20b__OpenAI                                                    ModelID = "openai/gpt-oss-20b"
+	Model__NanoGPT__GPT__Oss__20b__Tee                                                       ModelID = "TEE/gpt-oss-20b"
 	Model__NanoGPT__GPT__Oss__Safeguard__20b                                                 ModelID = "openai/gpt-oss-safeguard-20b"
 	Model__NanoGPT__Gemini__2__0__Flash__001__2_0                                            ModelID = "gemini-2.0-flash-001"
 	Model__NanoGPT__Gemini__2__0__Flash__Exp__Image__Generation__2_0                         ModelID = "gemini-2.0-flash-exp-image-generation"
@@ -3019,8 +3019,8 @@ const (
 	Model__NanoGPT__Gemma__4__31B__Meromero__4                                               ModelID = "gemma-4-31B-MeroMero"
 	Model__NanoGPT__Gemma__4__31B__Musica__V1__4                                             ModelID = "Gemma-4-31B-Musica-v1"
 	Model__NanoGPT__Gemma__4__31B__Queen__4                                                  ModelID = "Gemma-4-31B-Queen"
-	Model__NanoGPT__Gemma__4__31b__It__4_1                                                   ModelID = "TEE/gemma-4-31b-it"
-	Model__NanoGPT__Gemma__4__31b__It__4_2                                                   ModelID = "google/gemma-4-31b-it"
+	Model__NanoGPT__Gemma__4__31b__It__4__Google                                             ModelID = "google/gemma-4-31b-it"
+	Model__NanoGPT__Gemma__4__31b__It__4__Tee                                                ModelID = "TEE/gemma-4-31b-it"
 	Model__NanoGPT__Gemma__4__31b__It__Thinking__4                                           ModelID = "google/gemma-4-31b-it:thinking"
 	Model__NanoGPT__Granite__4__1__8b__4_1                                                   ModelID = "ibm-granite/granite-4.1-8b"
 	Model__NanoGPT__Grayline__Qwen3__8B                                                      ModelID = "soob3123/GrayLine-Qwen3-8B"
@@ -3059,12 +3059,12 @@ const (
 	Model__NanoGPT__Kimi__K2__2__Thinking                                                    ModelID = "moonshotai/kimi-k2-thinking"
 	Model__NanoGPT__Kimi__K2__2__ThinkingOriginal                                            ModelID = "moonshotai/kimi-k2-thinking-original"
 	Model__NanoGPT__Kimi__K2__2__ThinkingTurboOriginal                                       ModelID = "moonshotai/kimi-k2-thinking-turbo-original"
-	Model__NanoGPT__Kimi__K2__5__2_5_1                                                       ModelID = "TEE/kimi-k2.5"
-	Model__NanoGPT__Kimi__K2__5__2_5_2                                                       ModelID = "moonshotai/kimi-k2.5"
+	Model__NanoGPT__Kimi__K2__5__2_5__MoonshotAI                                             ModelID = "moonshotai/kimi-k2.5"
+	Model__NanoGPT__Kimi__K2__5__2_5__Tee                                                    ModelID = "TEE/kimi-k2.5"
 	Model__NanoGPT__Kimi__K2__5__2_5__Thinking                                               ModelID = "TEE/kimi-k2.5-thinking"
 	Model__NanoGPT__Kimi__K2__5__Thinking__2_5__Thinking                                     ModelID = "moonshotai/kimi-k2.5:thinking"
-	Model__NanoGPT__Kimi__K2__6__2_6_1                                                       ModelID = "TEE/kimi-k2.6"
-	Model__NanoGPT__Kimi__K2__6__2_6_2                                                       ModelID = "moonshotai/kimi-k2.6"
+	Model__NanoGPT__Kimi__K2__6__2_6__MoonshotAI                                             ModelID = "moonshotai/kimi-k2.6"
+	Model__NanoGPT__Kimi__K2__6__2_6__Tee                                                    ModelID = "TEE/kimi-k2.6"
 	Model__NanoGPT__Kimi__K2__6__Thinking__2_6__Thinking                                     ModelID = "moonshotai/kimi-k2.6:thinking"
 	Model__NanoGPT__Kimi__K2__Instruct__0711__2__Instruct                                    ModelID = "moonshotai/kimi-k2-instruct-0711"
 	Model__NanoGPT__Kimi__K2__Instruct__0905__2__Instruct                                    ModelID = "moonshotai/Kimi-K2-Instruct-0905"
@@ -3127,8 +3127,8 @@ const (
 	Model__NanoGPT__MiniMax__M1__80k__1                                                      ModelID = "MiniMaxAI/MiniMax-M1-80k"
 	Model__NanoGPT__MiniMax__M2__1__2_1                                                      ModelID = "minimax/minimax-m2.1"
 	Model__NanoGPT__MiniMax__M2__2                                                           ModelID = "MiniMax-M2"
-	Model__NanoGPT__MiniMax__M2__5__2_5_1                                                    ModelID = "TEE/minimax-m2.5"
-	Model__NanoGPT__MiniMax__M2__5__2_5_2                                                    ModelID = "minimax/minimax-m2.5"
+	Model__NanoGPT__MiniMax__M2__5__2_5__MiniMax                                             ModelID = "minimax/minimax-m2.5"
+	Model__NanoGPT__MiniMax__M2__5__2_5__Tee                                                 ModelID = "TEE/minimax-m2.5"
 	Model__NanoGPT__MiniMax__M2__7__2_7                                                      ModelID = "minimax/minimax-m2.7"
 	Model__NanoGPT__MiniMax__M2__7__2_7__Turbo                                               ModelID = "minimax/minimax-m2.7-turbo"
 	Model__NanoGPT__MiniMax__M2__Her                                                         ModelID = "minimax/minimax-m2-her"
@@ -3203,11 +3203,11 @@ const (
 	Model__NanoGPT__Qwen3__235B__A22b__Thinking__2507__3__Thinking                           ModelID = "qwen/Qwen3-235B-A22B-Thinking-2507"
 	Model__NanoGPT__Qwen3__235b__A22b__3                                                     ModelID = "qwen/qwen3-235b-a22b"
 	Model__NanoGPT__Qwen3__30b__A3b__3                                                       ModelID = "qwen/qwen3-30b-a3b"
-	Model__NanoGPT__Qwen3__30b__A3b__Instruct__2507__3__Instruct_1                           ModelID = "TEE/qwen3-30b-a3b-instruct-2507"
-	Model__NanoGPT__Qwen3__30b__A3b__Instruct__2507__3__Instruct_2                           ModelID = "qwen3-30b-a3b-instruct-2507"
+	Model__NanoGPT__Qwen3__30b__A3b__Instruct__2507__3__Instruct                             ModelID = "qwen3-30b-a3b-instruct-2507"
+	Model__NanoGPT__Qwen3__30b__A3b__Instruct__2507__3__Instruct__Tee                        ModelID = "TEE/qwen3-30b-a3b-instruct-2507"
 	Model__NanoGPT__Qwen3__32b__3                                                            ModelID = "qwen/qwen3-32b"
-	Model__NanoGPT__Qwen3__5__122b__A10b__3_5_1                                              ModelID = "TEE/qwen3.5-122b-a10b"
-	Model__NanoGPT__Qwen3__5__122b__A10b__3_5_2                                              ModelID = "qwen3.5-122b-a10b"
+	Model__NanoGPT__Qwen3__5__122b__A10b__3_5                                                ModelID = "qwen3.5-122b-a10b"
+	Model__NanoGPT__Qwen3__5__122b__A10b__3_5__Tee                                           ModelID = "TEE/qwen3.5-122b-a10b"
 	Model__NanoGPT__Qwen3__5__122b__A10b__Thinking__3_5                                      ModelID = "qwen3.5-122b-a10b:thinking"
 	Model__NanoGPT__Qwen3__5__27B__Anko__3_5                                                 ModelID = "Qwen3.5-27B-Anko"
 	Model__NanoGPT__Qwen3__5__27B__Bluestar__Derestricted__3_5                               ModelID = "Qwen3.5-27B-BlueStar-Derestricted"
@@ -3239,13 +3239,13 @@ const (
 	Model__NanoGPT__Qwen3__5__27B__Writer__Derestricted__Lite__3_5                           ModelID = "Qwen3.5-27B-Writer-Derestricted-Lite"
 	Model__NanoGPT__Qwen3__5__27B__Writer__V2__Derestricted__3_5                             ModelID = "Qwen3.5-27B-Writer-V2-Derestricted"
 	Model__NanoGPT__Qwen3__5__27B__Writer__V2__Derestricted__Lite__3_5                       ModelID = "Qwen3.5-27B-Writer-V2-Derestricted-Lite"
-	Model__NanoGPT__Qwen3__5__27b__3_5_1                                                     ModelID = "TEE/qwen3.5-27b"
-	Model__NanoGPT__Qwen3__5__27b__3_5_2                                                     ModelID = "qwen3.5-27b"
+	Model__NanoGPT__Qwen3__5__27b__3_5                                                       ModelID = "qwen3.5-27b"
+	Model__NanoGPT__Qwen3__5__27b__3_5__Tee                                                  ModelID = "TEE/qwen3.5-27b"
 	Model__NanoGPT__Qwen3__5__27b__Thinking__3_5                                             ModelID = "qwen3.5-27b:thinking"
 	Model__NanoGPT__Qwen3__5__35b__A3b__3_5                                                  ModelID = "qwen3.5-35b-a3b"
 	Model__NanoGPT__Qwen3__5__35b__A3b__Thinking__3_5                                        ModelID = "qwen3.5-35b-a3b:thinking"
-	Model__NanoGPT__Qwen3__5__397b__A17b__3_5_1                                              ModelID = "TEE/qwen3.5-397b-a17b"
-	Model__NanoGPT__Qwen3__5__397b__A17b__3_5_2                                              ModelID = "qwen/qwen3.5-397b-a17b"
+	Model__NanoGPT__Qwen3__5__397b__A17b__3_5__Qwen                                          ModelID = "qwen/qwen3.5-397b-a17b"
+	Model__NanoGPT__Qwen3__5__397b__A17b__3_5__Tee                                           ModelID = "TEE/qwen3.5-397b-a17b"
 	Model__NanoGPT__Qwen3__5__397b__A17b__3_5__Thinking                                      ModelID = "qwen/qwen3.5-397b-a17b-thinking"
 	Model__NanoGPT__Qwen3__5__9b__3_5                                                        ModelID = "qwen/qwen3.5-9b"
 	Model__NanoGPT__Qwen3__5__Flash__3_5                                                     ModelID = "qwen3.5-flash"
@@ -4593,8 +4593,8 @@ const (
 	Model__QiniuAI__Kling__V2__6                                                             ModelID = "kling-v2-6"
 	Model__QiniuAI__Longcat__Flash__Chat                                                     ModelID = "meituan/longcat-flash-chat"
 	Model__QiniuAI__Longcat__Flash__Lite                                                     ModelID = "meituan/longcat-flash-lite"
-	Model__QiniuAI__Mimo__V2__Flash_1                                                        ModelID = "mimo-v2-flash"
-	Model__QiniuAI__Mimo__V2__Flash_2                                                        ModelID = "xiaomi/mimo-v2-flash"
+	Model__QiniuAI__Mimo__V2__Flash                                                          ModelID = "mimo-v2-flash"
+	Model__QiniuAI__Mimo__V2__Flash__Xiaomi                                                  ModelID = "xiaomi/mimo-v2-flash"
 	Model__QiniuAI__MiniMax__M1__1                                                           ModelID = "MiniMax-M1"
 	Model__QiniuAI__MiniMax__M2__1__2_1                                                      ModelID = "minimax/minimax-m2.1"
 	Model__QiniuAI__MiniMax__M2__2                                                           ModelID = "minimax/minimax-m2"
@@ -4746,14 +4746,14 @@ const (
 	Model__Scaleway__Voxtral__Small__24b__2507                                               ModelID = "voxtral-small-24b-2507"
 	Model__Scaleway__Whisper__Large__V3__3                                                   ModelID = "whisper-large-v3"
 	Model__SiliconFlowCN__DeepSeek__Ocr                                                      ModelID = "deepseek-ai/DeepSeek-OCR"
-	Model__SiliconFlowCN__DeepSeek__R1__Thinking_1                                           ModelID = "Pro/deepseek-ai/DeepSeek-R1"
-	Model__SiliconFlowCN__DeepSeek__R1__Thinking_2                                           ModelID = "deepseek-ai/DeepSeek-R1"
-	Model__SiliconFlowCN__DeepSeek__V3_1                                                     ModelID = "Pro/deepseek-ai/DeepSeek-V3"
-	Model__SiliconFlowCN__DeepSeek__V3_2                                                     ModelID = "deepseek-ai/DeepSeek-V3"
-	Model__SiliconFlowCN__DeepSeek__V3__1__Terminus_1                                        ModelID = "Pro/deepseek-ai/DeepSeek-V3.1-Terminus"
-	Model__SiliconFlowCN__DeepSeek__V3__1__Terminus_2                                        ModelID = "deepseek-ai/DeepSeek-V3.1-Terminus"
-	Model__SiliconFlowCN__DeepSeek__V3__2_1                                                  ModelID = "Pro/deepseek-ai/DeepSeek-V3.2"
-	Model__SiliconFlowCN__DeepSeek__V3__2_2                                                  ModelID = "deepseek-ai/DeepSeek-V3.2"
+	Model__SiliconFlowCN__DeepSeek__R1__Thinking__DeepSeekAI                                 ModelID = "deepseek-ai/DeepSeek-R1"
+	Model__SiliconFlowCN__DeepSeek__R1__Thinking__ProDeepSeekAI                              ModelID = "Pro/deepseek-ai/DeepSeek-R1"
+	Model__SiliconFlowCN__DeepSeek__V3__1__Terminus__DeepSeekAI                              ModelID = "deepseek-ai/DeepSeek-V3.1-Terminus"
+	Model__SiliconFlowCN__DeepSeek__V3__1__Terminus__ProDeepSeekAI                           ModelID = "Pro/deepseek-ai/DeepSeek-V3.1-Terminus"
+	Model__SiliconFlowCN__DeepSeek__V3__2__DeepSeekAI                                        ModelID = "deepseek-ai/DeepSeek-V3.2"
+	Model__SiliconFlowCN__DeepSeek__V3__2__ProDeepSeekAI                                     ModelID = "Pro/deepseek-ai/DeepSeek-V3.2"
+	Model__SiliconFlowCN__DeepSeek__V3__DeepSeekAI                                           ModelID = "deepseek-ai/DeepSeek-V3"
+	Model__SiliconFlowCN__DeepSeek__V3__ProDeepSeekAI                                        ModelID = "Pro/deepseek-ai/DeepSeek-V3"
 	Model__SiliconFlowCN__DeepSeek__V4__Flash                                                ModelID = "deepseek-ai/DeepSeek-V4-Flash"
 	Model__SiliconFlowCN__DeepSeek__V4__Pro__Thinking                                        ModelID = "deepseek-ai/DeepSeek-V4-Pro"
 	Model__SiliconFlowCN__Ernie__4__5__300B__A47b__4_5                                       ModelID = "baidu/ERNIE-4.5-300B-A47B"
@@ -5924,8 +5924,8 @@ var allModelConstants = [...]ModelID{
 	Model__Abacus__Qwq__32B,
 	Model__Abacus__Route__LLM,
 	Model__AbliterationAI__Abliterated__Model,
-	Model__AlibabaCN__DeepSeek__R1__0528__Thinking_1,
-	Model__AlibabaCN__DeepSeek__R1__0528__Thinking_2,
+	Model__AlibabaCN__DeepSeek__R1__0528__Thinking,
+	Model__AlibabaCN__DeepSeek__R1__0528__Thinking__Siliconflow,
 	Model__AlibabaCN__DeepSeek__R1__Distill__Llama__70b__Thinking,
 	Model__AlibabaCN__DeepSeek__R1__Distill__Llama__8b__Thinking,
 	Model__AlibabaCN__DeepSeek__R1__Distill__Qwen__14b,
@@ -5945,8 +5945,8 @@ var allModelConstants = [...]ModelID{
 	Model__AlibabaCN__GLM__5_1,
 	Model__AlibabaCN__GLM__5_2,
 	Model__AlibabaCN__Kimi__K2__2__Thinking,
-	Model__AlibabaCN__Kimi__K2__5__2_5_1,
-	Model__AlibabaCN__Kimi__K2__5__2_5_2,
+	Model__AlibabaCN__Kimi__K2__5__2_5,
+	Model__AlibabaCN__Kimi__K2__5__2_5__Kimi,
 	Model__AlibabaCN__Kimi__K2__6__2_6,
 	Model__AlibabaCN__MiniMax__M2__5__2_5,
 	Model__AlibabaCN__MiniMax__M2__7__2_7,
@@ -7605,17 +7605,17 @@ var allModelConstants = [...]ModelID{
 	Model__Kilo__Claude__Opus__4,
 	Model__Kilo__Claude__Opus__4_1,
 	Model__Kilo__Claude__Opus__4_5,
-	Model__Kilo__Claude__Opus__4_6_1,
-	Model__Kilo__Claude__Opus__4_6_2,
+	Model__Kilo__Claude__Opus__4_6__Anthropic,
 	Model__Kilo__Claude__Opus__4_6__Fast,
-	Model__Kilo__Claude__Opus__4_7_1,
-	Model__Kilo__Claude__Opus__4_7_2,
+	Model__Kilo__Claude__Opus__4_6__Stealth,
+	Model__Kilo__Claude__Opus__4_7__Anthropic,
 	Model__Kilo__Claude__Opus__4_7__Fast,
+	Model__Kilo__Claude__Opus__4_7__Stealth,
 	Model__Kilo__Claude__Opus__Latest,
 	Model__Kilo__Claude__Sonnet__4,
 	Model__Kilo__Claude__Sonnet__4_5,
-	Model__Kilo__Claude__Sonnet__4_6_1,
-	Model__Kilo__Claude__Sonnet__4_6_2,
+	Model__Kilo__Claude__Sonnet__4_6__Anthropic,
+	Model__Kilo__Claude__Sonnet__4_6__Stealth,
 	Model__Kilo__Claude__Sonnet__Latest,
 	Model__Kilo__Cobuddy__Free,
 	Model__Kilo__CodeLlama__7b__Instruct__Solidity__Instruct,
@@ -7649,8 +7649,8 @@ var allModelConstants = [...]ModelID{
 	Model__Kilo__Ernie__4__5__300b__A47b__4_5,
 	Model__Kilo__Ernie__4__5__Vl__28b__A3b__4_5,
 	Model__Kilo__Ernie__4__5__Vl__424b__A47b__4_5,
-	Model__Kilo__Free_1,
-	Model__Kilo__Free_2,
+	Model__Kilo__Free__KiloAuto,
+	Model__Kilo__Free__OpenRouter,
 	Model__Kilo__Frontier,
 	Model__Kilo__GLM__4_5,
 	Model__Kilo__GLM__4_6,
@@ -8463,26 +8463,26 @@ var allModelConstants = [...]ModelID{
 	Model__NanoGPT__DeepSeek__Reasoner,
 	Model__NanoGPT__DeepSeek__Reasoner__Cheaper,
 	Model__NanoGPT__DeepSeek__V3__0324,
-	Model__NanoGPT__DeepSeek__V3__1_1,
-	Model__NanoGPT__DeepSeek__V3__1_2,
+	Model__NanoGPT__DeepSeek__V3__1__DeepSeekAI,
 	Model__NanoGPT__DeepSeek__V3__1__Nex__N1,
+	Model__NanoGPT__DeepSeek__V3__1__Tee,
 	Model__NanoGPT__DeepSeek__V3__1__Terminus,
 	Model__NanoGPT__DeepSeek__V3__1__Terminus__Thinking__Thinking,
 	Model__NanoGPT__DeepSeek__V3__1__Thinking__Thinking,
-	Model__NanoGPT__DeepSeek__V3__2_1,
-	Model__NanoGPT__DeepSeek__V3__2_2,
+	Model__NanoGPT__DeepSeek__V3__2__DeepSeek,
 	Model__NanoGPT__DeepSeek__V3__2__Exp,
 	Model__NanoGPT__DeepSeek__V3__2__Exp__Thinking,
 	Model__NanoGPT__DeepSeek__V3__2__Speciale,
+	Model__NanoGPT__DeepSeek__V3__2__Tee,
 	Model__NanoGPT__DeepSeek__V3__2__Thinking,
 	Model__NanoGPT__DeepSeek__V4__Flash,
 	Model__NanoGPT__DeepSeek__V4__Flash__Thinking,
-	Model__NanoGPT__DeepSeek__V4__Pro_1,
-	Model__NanoGPT__DeepSeek__V4__Pro_2,
 	Model__NanoGPT__DeepSeek__V4__Pro__Cheaper,
 	Model__NanoGPT__DeepSeek__V4__Pro__Cheaper__Thinking,
-	Model__NanoGPT__DeepSeek__V4__Pro__Thinking_1,
-	Model__NanoGPT__DeepSeek__V4__Pro__Thinking_2,
+	Model__NanoGPT__DeepSeek__V4__Pro__DeepSeek,
+	Model__NanoGPT__DeepSeek__V4__Pro__Tee,
+	Model__NanoGPT__DeepSeek__V4__Pro__Thinking__DeepSeek,
+	Model__NanoGPT__DeepSeek__V4__Pro__Thinking__Tee,
 	Model__NanoGPT__Deepclaude,
 	Model__NanoGPT__Deephermes__3__Mistral__24B__3__Preview,
 	Model__NanoGPT__Devstral__2__123b__Instruct__2512__2__Instruct,
@@ -8529,9 +8529,9 @@ var allModelConstants = [...]ModelID{
 	Model__NanoGPT__GLM__4_6,
 	Model__NanoGPT__GLM__4_6__Original,
 	Model__NanoGPT__GLM__4_6__Turbo,
-	Model__NanoGPT__GLM__4_7_1,
-	Model__NanoGPT__GLM__4_7_2,
 	Model__NanoGPT__GLM__4_7__Original,
+	Model__NanoGPT__GLM__4_7__Tee,
+	Model__NanoGPT__GLM__4_7__ZaiOrg,
 	Model__NanoGPT__GLM__4__1v__Thinking__Flash,
 	Model__NanoGPT__GLM__4__1v__Thinking__Flashx__4_1,
 	Model__NanoGPT__GLM__4__32B__0414__4,
@@ -8546,9 +8546,9 @@ var allModelConstants = [...]ModelID{
 	Model__NanoGPT__GLM__4__6v__4_6,
 	Model__NanoGPT__GLM__4__6v__4_6__Original,
 	Model__NanoGPT__GLM__4__6v__4_6__OriginalFlash,
-	Model__NanoGPT__GLM__4__7__Flash__4_7_1,
-	Model__NanoGPT__GLM__4__7__Flash__4_7_2,
 	Model__NanoGPT__GLM__4__7__Flash__4_7__Original,
+	Model__NanoGPT__GLM__4__7__Flash__4_7__Tee,
+	Model__NanoGPT__GLM__4__7__Flash__4_7__ZaiOrg,
 	Model__NanoGPT__GLM__4__7__Flash__Original__Thinking__4_7__Original,
 	Model__NanoGPT__GLM__4__7__Flash__Thinking__4_7,
 	Model__NanoGPT__GLM__4__7__Original__Thinking__4_7__Original,
@@ -8561,16 +8561,16 @@ var allModelConstants = [...]ModelID{
 	Model__NanoGPT__GLM__4__Long__4,
 	Model__NanoGPT__GLM__4__Plus__0111__4,
 	Model__NanoGPT__GLM__4__Plus__4,
-	Model__NanoGPT__GLM__5_1,
-	Model__NanoGPT__GLM__5_1_1,
-	Model__NanoGPT__GLM__5_1_2,
+	Model__NanoGPT__GLM__5_1__Tee,
 	Model__NanoGPT__GLM__5_1__Thinking,
-	Model__NanoGPT__GLM__5_2,
+	Model__NanoGPT__GLM__5_1__ZaiOrg,
 	Model__NanoGPT__GLM__5__1__Thinking,
 	Model__NanoGPT__GLM__5__Original,
 	Model__NanoGPT__GLM__5__Original__Thinking__5__Original,
+	Model__NanoGPT__GLM__5__Tee,
 	Model__NanoGPT__GLM__5__Thinking,
 	Model__NanoGPT__GLM__5__Turbo,
+	Model__NanoGPT__GLM__5__ZaiOrg,
 	Model__NanoGPT__GLM__5v__5__Turbo,
 	Model__NanoGPT__GLM__5v__Turbo__Thinking__5__Turbo,
 	Model__NanoGPT__GLM__Latest,
@@ -8612,10 +8612,10 @@ var allModelConstants = [...]ModelID{
 	Model__NanoGPT__GPT__5__Pro__5,
 	Model__NanoGPT__GPT__ChatLatest,
 	Model__NanoGPT__GPT__Latest,
-	Model__NanoGPT__GPT__Oss__120b_1,
-	Model__NanoGPT__GPT__Oss__120b_2,
-	Model__NanoGPT__GPT__Oss__20b_1,
-	Model__NanoGPT__GPT__Oss__20b_2,
+	Model__NanoGPT__GPT__Oss__120b__OpenAI,
+	Model__NanoGPT__GPT__Oss__120b__Tee,
+	Model__NanoGPT__GPT__Oss__20b__OpenAI,
+	Model__NanoGPT__GPT__Oss__20b__Tee,
 	Model__NanoGPT__GPT__Oss__Safeguard__20b,
 	Model__NanoGPT__Gemini__2__0__Flash__001__2_0,
 	Model__NanoGPT__Gemini__2__0__Flash__Exp__Image__Generation__2_0,
@@ -8677,8 +8677,8 @@ var allModelConstants = [...]ModelID{
 	Model__NanoGPT__Gemma__4__31B__Meromero__4,
 	Model__NanoGPT__Gemma__4__31B__Musica__V1__4,
 	Model__NanoGPT__Gemma__4__31B__Queen__4,
-	Model__NanoGPT__Gemma__4__31b__It__4_1,
-	Model__NanoGPT__Gemma__4__31b__It__4_2,
+	Model__NanoGPT__Gemma__4__31b__It__4__Google,
+	Model__NanoGPT__Gemma__4__31b__It__4__Tee,
 	Model__NanoGPT__Gemma__4__31b__It__Thinking__4,
 	Model__NanoGPT__Granite__4__1__8b__4_1,
 	Model__NanoGPT__Grayline__Qwen3__8B,
@@ -8717,12 +8717,12 @@ var allModelConstants = [...]ModelID{
 	Model__NanoGPT__Kimi__K2__2__Thinking,
 	Model__NanoGPT__Kimi__K2__2__ThinkingOriginal,
 	Model__NanoGPT__Kimi__K2__2__ThinkingTurboOriginal,
-	Model__NanoGPT__Kimi__K2__5__2_5_1,
-	Model__NanoGPT__Kimi__K2__5__2_5_2,
+	Model__NanoGPT__Kimi__K2__5__2_5__MoonshotAI,
+	Model__NanoGPT__Kimi__K2__5__2_5__Tee,
 	Model__NanoGPT__Kimi__K2__5__2_5__Thinking,
 	Model__NanoGPT__Kimi__K2__5__Thinking__2_5__Thinking,
-	Model__NanoGPT__Kimi__K2__6__2_6_1,
-	Model__NanoGPT__Kimi__K2__6__2_6_2,
+	Model__NanoGPT__Kimi__K2__6__2_6__MoonshotAI,
+	Model__NanoGPT__Kimi__K2__6__2_6__Tee,
 	Model__NanoGPT__Kimi__K2__6__Thinking__2_6__Thinking,
 	Model__NanoGPT__Kimi__K2__Instruct__0711__2__Instruct,
 	Model__NanoGPT__Kimi__K2__Instruct__0905__2__Instruct,
@@ -8785,8 +8785,8 @@ var allModelConstants = [...]ModelID{
 	Model__NanoGPT__MiniMax__M1__80k__1,
 	Model__NanoGPT__MiniMax__M2__1__2_1,
 	Model__NanoGPT__MiniMax__M2__2,
-	Model__NanoGPT__MiniMax__M2__5__2_5_1,
-	Model__NanoGPT__MiniMax__M2__5__2_5_2,
+	Model__NanoGPT__MiniMax__M2__5__2_5__MiniMax,
+	Model__NanoGPT__MiniMax__M2__5__2_5__Tee,
 	Model__NanoGPT__MiniMax__M2__7__2_7,
 	Model__NanoGPT__MiniMax__M2__7__2_7__Turbo,
 	Model__NanoGPT__MiniMax__M2__Her,
@@ -8861,11 +8861,11 @@ var allModelConstants = [...]ModelID{
 	Model__NanoGPT__Qwen3__235B__A22b__Thinking__2507__3__Thinking,
 	Model__NanoGPT__Qwen3__235b__A22b__3,
 	Model__NanoGPT__Qwen3__30b__A3b__3,
-	Model__NanoGPT__Qwen3__30b__A3b__Instruct__2507__3__Instruct_1,
-	Model__NanoGPT__Qwen3__30b__A3b__Instruct__2507__3__Instruct_2,
+	Model__NanoGPT__Qwen3__30b__A3b__Instruct__2507__3__Instruct,
+	Model__NanoGPT__Qwen3__30b__A3b__Instruct__2507__3__Instruct__Tee,
 	Model__NanoGPT__Qwen3__32b__3,
-	Model__NanoGPT__Qwen3__5__122b__A10b__3_5_1,
-	Model__NanoGPT__Qwen3__5__122b__A10b__3_5_2,
+	Model__NanoGPT__Qwen3__5__122b__A10b__3_5,
+	Model__NanoGPT__Qwen3__5__122b__A10b__3_5__Tee,
 	Model__NanoGPT__Qwen3__5__122b__A10b__Thinking__3_5,
 	Model__NanoGPT__Qwen3__5__27B__Anko__3_5,
 	Model__NanoGPT__Qwen3__5__27B__Bluestar__Derestricted__3_5,
@@ -8897,13 +8897,13 @@ var allModelConstants = [...]ModelID{
 	Model__NanoGPT__Qwen3__5__27B__Writer__Derestricted__Lite__3_5,
 	Model__NanoGPT__Qwen3__5__27B__Writer__V2__Derestricted__3_5,
 	Model__NanoGPT__Qwen3__5__27B__Writer__V2__Derestricted__Lite__3_5,
-	Model__NanoGPT__Qwen3__5__27b__3_5_1,
-	Model__NanoGPT__Qwen3__5__27b__3_5_2,
+	Model__NanoGPT__Qwen3__5__27b__3_5,
+	Model__NanoGPT__Qwen3__5__27b__3_5__Tee,
 	Model__NanoGPT__Qwen3__5__27b__Thinking__3_5,
 	Model__NanoGPT__Qwen3__5__35b__A3b__3_5,
 	Model__NanoGPT__Qwen3__5__35b__A3b__Thinking__3_5,
-	Model__NanoGPT__Qwen3__5__397b__A17b__3_5_1,
-	Model__NanoGPT__Qwen3__5__397b__A17b__3_5_2,
+	Model__NanoGPT__Qwen3__5__397b__A17b__3_5__Qwen,
+	Model__NanoGPT__Qwen3__5__397b__A17b__3_5__Tee,
 	Model__NanoGPT__Qwen3__5__397b__A17b__3_5__Thinking,
 	Model__NanoGPT__Qwen3__5__9b__3_5,
 	Model__NanoGPT__Qwen3__5__Flash__3_5,
@@ -10251,8 +10251,8 @@ var allModelConstants = [...]ModelID{
 	Model__QiniuAI__Kling__V2__6,
 	Model__QiniuAI__Longcat__Flash__Chat,
 	Model__QiniuAI__Longcat__Flash__Lite,
-	Model__QiniuAI__Mimo__V2__Flash_1,
-	Model__QiniuAI__Mimo__V2__Flash_2,
+	Model__QiniuAI__Mimo__V2__Flash,
+	Model__QiniuAI__Mimo__V2__Flash__Xiaomi,
 	Model__QiniuAI__MiniMax__M1__1,
 	Model__QiniuAI__MiniMax__M2__1__2_1,
 	Model__QiniuAI__MiniMax__M2__2,
@@ -10404,14 +10404,14 @@ var allModelConstants = [...]ModelID{
 	Model__Scaleway__Voxtral__Small__24b__2507,
 	Model__Scaleway__Whisper__Large__V3__3,
 	Model__SiliconFlowCN__DeepSeek__Ocr,
-	Model__SiliconFlowCN__DeepSeek__R1__Thinking_1,
-	Model__SiliconFlowCN__DeepSeek__R1__Thinking_2,
-	Model__SiliconFlowCN__DeepSeek__V3_1,
-	Model__SiliconFlowCN__DeepSeek__V3_2,
-	Model__SiliconFlowCN__DeepSeek__V3__1__Terminus_1,
-	Model__SiliconFlowCN__DeepSeek__V3__1__Terminus_2,
-	Model__SiliconFlowCN__DeepSeek__V3__2_1,
-	Model__SiliconFlowCN__DeepSeek__V3__2_2,
+	Model__SiliconFlowCN__DeepSeek__R1__Thinking__DeepSeekAI,
+	Model__SiliconFlowCN__DeepSeek__R1__Thinking__ProDeepSeekAI,
+	Model__SiliconFlowCN__DeepSeek__V3__1__Terminus__DeepSeekAI,
+	Model__SiliconFlowCN__DeepSeek__V3__1__Terminus__ProDeepSeekAI,
+	Model__SiliconFlowCN__DeepSeek__V3__2__DeepSeekAI,
+	Model__SiliconFlowCN__DeepSeek__V3__2__ProDeepSeekAI,
+	Model__SiliconFlowCN__DeepSeek__V3__DeepSeekAI,
+	Model__SiliconFlowCN__DeepSeek__V3__ProDeepSeekAI,
 	Model__SiliconFlowCN__DeepSeek__V4__Flash,
 	Model__SiliconFlowCN__DeepSeek__V4__Pro__Thinking,
 	Model__SiliconFlowCN__Ernie__4__5__300B__A47b__4_5,

@@ -172,14 +172,17 @@ func resolveParamSizePrecedence(id, pinToken string, pinned bool, mech string, m
 // enrichModelInfo is the shared per-row enrichment applied at BOTH runtime joints
 // (wire decode toModelInfo and store read scanModelInfo). It derives ParamSize from
 // the model ID via EnrichedParamSize and decomposes it into the flat shape ints
-// (TotalParams/ActiveParams/PerExpertParams/ExpertCount) via ParseParamShape.
+// (TotalParams/ActiveParams/PerExpertParams/ExpertCount) via ParseParamShape, and it
+// derives the release Stage/StageRaw from the same ID via DetectStageFromID.
 //
 // It is a pure function of (ID, embedded curated data): NOTHING is persisted, so the
-// SQLite store needs no param_size column and stays schema v6 — a cached row is
-// re-enriched from its ID on read. A disagreement or an unparseable size degrades
+// SQLite store needs no param_size or stage column and stays schema v6 — a cached row
+// is re-enriched from its ID on read. A disagreement or an unparseable size degrades
 // gracefully (the derived token is still used, shape ints stay zero), so a runtime
 // joint never fails on data; the codegen bake path surfaces the same disagreement as
-// a LOUD error instead.
+// a LOUD error instead. Stage is derived from the ID (not from the decomposed
+// Modifier list) so it is symmetric across all three joints — the wire-decode joint
+// has no decomposition yet, so a live-sync row and its baked static row still agree.
 func enrichModelInfo(m *ModelInfo) {
 	size, _ := EnrichedParamSize(string(m.ID))
 	m.ParamSize = size
@@ -188,6 +191,7 @@ func enrichModelInfo(m *ModelInfo) {
 	m.ActiveParams = shape.ActiveParams
 	m.PerExpertParams = shape.PerExpertParams
 	m.ExpertCount = shape.ExpertCount
+	m.Stage, m.StageRaw = DetectStageFromID(m.ID)
 }
 
 // ValidateParamSizePins checks that every curated pin token in

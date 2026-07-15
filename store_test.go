@@ -128,9 +128,11 @@ func TestUpsertQueryModels_ReEnrichesParamSizeFromID(t *testing.T) {
 	in := bestiary.ModelInfo{
 		ID:           "qwen/qwen3-30b-a3b",
 		Provider:     bestiary.ProviderOpenAI,
-		ParamSize:    "WRONG", // must be ignored on write — there is no param_size column
-		TotalParams:  123,     // must be ignored
-		ActiveParams: 456,     // must be ignored
+		ParamSize:    "WRONG",            // must be ignored on write — there is no param_size column
+		TotalParams:  123,                // must be ignored
+		ActiveParams: 456,                // must be ignored
+		Stage:        bestiary.StageBeta, // must be ignored — there is no stage column
+		StageRaw:     "WRONG",            // must be ignored
 	}
 	if err := s.UpsertModels(ctx, []bestiary.ModelInfo{in}); err != nil {
 		t.Fatalf("UpsertModels: %v", err)
@@ -151,6 +153,41 @@ func TestUpsertQueryModels_ReEnrichesParamSizeFromID(t *testing.T) {
 	}
 	if got.PerExpertParams != 0 || got.ExpertCount != 0 {
 		t.Errorf("active-MoE shape must set no PerExpertParams/ExpertCount, got {%d %d}", got.PerExpertParams, got.ExpertCount)
+	}
+	// Stage/StageRaw are re-derived from the ID by the same enrichment joint — the
+	// store has no stage column, so the persisted WRONG values are ignored and the
+	// no-stage-marker ID re-derives to StageNone/"".
+	if got.Stage != bestiary.StageNone || got.StageRaw != "" {
+		t.Errorf("round-trip Stage/StageRaw = {%v %q}, want {none \"\"} (re-derived, not the persisted WRONG values)", got.Stage, got.StageRaw)
+	}
+}
+
+// TestUpsertQueryModels_ReEnrichesStageFromID is the stage companion to the
+// param-size re-enrichment guard: a model whose ID carries a beta marker re-derives
+// Stage=StageBeta from the ID on read, even though the store persists no stage column
+// (schema v6) and the write deliberately supplies a contradictory Stage value. This
+// keeps a live-sync-then-cached row's stage identical to its baked static row.
+func TestUpsertQueryModels_ReEnrichesStageFromID(t *testing.T) {
+	ctx := context.Background()
+	s := openMemStore(t)
+
+	in := bestiary.ModelInfo{
+		ID:       "grok-4.20-beta-0309-reasoning",
+		Provider: bestiary.ProviderxAI,
+		Stage:    bestiary.StageNone, // contradicts the ID; must be re-derived on read
+	}
+	if err := s.UpsertModels(ctx, []bestiary.ModelInfo{in}); err != nil {
+		t.Fatalf("UpsertModels: %v", err)
+	}
+	got, err := s.QueryModel(ctx, in.ID)
+	if err != nil {
+		t.Fatalf("QueryModel: %v", err)
+	}
+	if got.Stage != bestiary.StageBeta {
+		t.Errorf("round-trip Stage = %v, want StageBeta (re-derived from the -beta ID)", got.Stage)
+	}
+	if got.StageRaw != "" {
+		t.Errorf("round-trip StageRaw = %q, want \"\" (reserved for the Other path)", got.StageRaw)
 	}
 }
 

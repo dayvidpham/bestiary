@@ -53,6 +53,12 @@ type ModelInfo struct {
 	// fallback. Populated by the parse pipeline at codegen time.
 	// widened string → []string for lossless
 	// multi-modifier capture (kimi-k2-thinking-turbo → [thinking, turbo]).
+	//
+	// Release-stage tokens (preview/latest/original) REMAIN in this list as data —
+	// the extraction still captures them — but they are excluded from entity keys
+	// and from the canonical {mods}/[attrs] rendering: the Stage field carries that
+	// axis (see ReleaseStage in stage.go), and EntityModifiers/attributeModifiers
+	// route them out before classification.
 	Modifier []string
 	// ParamSize is the canonical parameter-size token for this model instance
 	// (e.g. "70b", "8b", "0.5b"). Empty when the size is unknown or not applicable.
@@ -129,6 +135,20 @@ type ModelInfo struct {
 	// StatusRaw carries the verbatim upstream status token, populated only when
 	// Status is StatusOther (an unrecognized token); empty otherwise.
 	StatusRaw string
+	// Stage is the release stage DERIVED from this model's ID (preview / beta /
+	// latest / original), distinct in provenance from Status: Status is the
+	// upstream-DECLARED lifecycle from the api.json side, while Stage is read out
+	// of the ID token stream by DetectStageFromID at the same enrichment joints as
+	// ParamSize. StageNone (the zero value) when the ID carries no recognized stage
+	// marker. Stage is a per-instance attribute and never participates in entity
+	// identity (a "-beta"/"-latest" marker does not split the entity). Populated by
+	// enrichModelInfo (pure function of the ID); see stage.go.
+	Stage ReleaseStage
+	// StageRaw carries the verbatim stage token, populated only when Stage is
+	// StageOther — the RESERVED bucket for a future non-ID stage feeder. The
+	// ID-detection path never yields StageOther, so StageRaw is empty for every
+	// ID-derived stage this epoch (mirroring StatusRaw's Other-only convention).
+	StageRaw string
 	// ReasoningOptions are the reasoning-control options this model exposes
 	// (toggle / effort / budget-tokens). nil when the model exposes none.
 	ReasoningOptions []ReasoningOption
