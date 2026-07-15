@@ -3525,7 +3525,7 @@ var idFamilyOverrides = map[string]idFamilyOverrideEntry{
 	"abacusai/dracarys-72b-instruct":           {family: "dracarys"},
 	"gryphe/mythomax-l2-13b":                   {family: "mythomax"},
 
-	// v0.2.5 stage/mode identity granularity (bestiary-iu71c): pin the mid-ID
+	// v0.2.5 stage/mode identity granularity: pin the mid-ID
 	// identity/attribute modifiers the tail-inward {mods} scan cannot reach because
 	// they precede the variant/version. omni + livetranslate are IDENTITY (render in
 	// {…}); realtime is ATTRIBUTE (render in […], instance-only); preview / thinking /

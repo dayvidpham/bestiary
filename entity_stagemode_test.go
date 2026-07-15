@@ -35,8 +35,8 @@ func modContains(mods []string, want string) bool {
 	return false
 }
 
-// TestStageMode_OmniIdentitySplit_Gemini pins the ratified omni IDENTITY split
-// (bestiary-iu71c): gemini-omni-flash-preview keys to gemini/flash{omni}, a DISTINCT
+// TestStageMode_OmniIdentitySplit_Gemini pins the ratified omni IDENTITY split:
+// gemini-omni-flash-preview keys to gemini/flash{omni}, a DISTINCT
 // entity from the bare gemini/flash that holds gemini-flash-latest. The instances must
 // partition — the omni entity holds the omni model, the base entity must NOT.
 func TestStageMode_OmniIdentitySplit_Gemini(t *testing.T) {
@@ -96,8 +96,8 @@ func TestStageMode_RealtimeAttribute_VersionRestored(t *testing.T) {
 	}
 }
 
-// TestStageMode_LagunaThreeWaySplit pins the ratified laguna curated-variant split
-// (bestiary-iu71c): laguna-xs.2, laguna-xs-2.1, and laguna-m.1 key to THREE distinct
+// TestStageMode_LagunaThreeWaySplit pins the ratified laguna curated-variant split:
+// laguna-xs.2, laguna-xs-2.1, and laguna-m.1 key to THREE distinct
 // entities (laguna/xs@2, laguna/xs@2.1, laguna/m@1), and each lab metadata row attaches
 // to its own entity — fixing the pre-existing silent m.1 <-> xs.2 metadata collision.
 func TestStageMode_LagunaThreeWaySplit(t *testing.T) {
