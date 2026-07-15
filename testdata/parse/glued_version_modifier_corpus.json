@@ -1,0 +1,67 @@
+{
+  "cases": [
+    {
+      "name": "glm-4.5v raw=glm → variant 'v'",
+      "input": {
+        "raw": "glm",
+        "id": "glm-4.5v"
+      },
+      "expected": {
+        "family": "glm",
+        "variant": "v",
+        "version": "4.5",
+        "mod": ""
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "ParseFamilyDetailed(raw=glm, id=glm-4.5v) -> (family 'glm', variant 'v', version '4.5', mod '')"
+      },
+      "mutation": {
+        "description": "version glued to a trailing modifier token is split correctly"
+      }
+    },
+    {
+      "name": "glm-4.5v empty raw → variant 'v'",
+      "input": {
+        "raw": "",
+        "id": "glm-4.5v"
+      },
+      "expected": {
+        "family": "glm",
+        "variant": "v",
+        "version": "4.5",
+        "mod": ""
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "ParseFamilyDetailed(raw=, id=glm-4.5v) -> (family 'glm', variant 'v', version '4.5', mod '')"
+      },
+      "mutation": {
+        "description": "version glued to a trailing modifier token is split correctly"
+      }
+    },
+    {
+      "name": "gpt-4o → variant '4o', version ''",
+      "input": {
+        "raw": "gpt",
+        "id": "gpt-4o"
+      },
+      "expected": {
+        "family": "gpt",
+        "variant": "4o",
+        "version": "",
+        "mod": ""
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "ParseFamilyDetailed(raw=gpt, id=gpt-4o) -> (family 'gpt', variant '4o', version '', mod '')"
+      },
+      "mutation": {
+        "description": "version glued to a trailing modifier token is split correctly"
+      }
+    }
+  ]
+}

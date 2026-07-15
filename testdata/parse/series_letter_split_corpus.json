@@ -1,0 +1,382 @@
+{
+  "cases": [
+    {
+      "name": "kimi-k2 empty raw",
+      "input": {
+        "raw": "",
+        "id": "kimi-k2"
+      },
+      "expected": {
+        "family": "kimi",
+        "variant": "k",
+        "version": "2",
+        "mod": ""
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "ParseFamilyDetailed(raw=, id=kimi-k2) -> (family 'kimi', variant 'k', version '2', mod '')"
+      },
+      "mutation": {
+        "description": "letter-prefix series decomposes to variant=series-letter + version=number"
+      }
+    },
+    {
+      "name": "kimi-k2 raw=kimi",
+      "input": {
+        "raw": "kimi",
+        "id": "kimi-k2"
+      },
+      "expected": {
+        "family": "kimi",
+        "variant": "k",
+        "version": "2",
+        "mod": ""
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "ParseFamilyDetailed(raw=kimi, id=kimi-k2) -> (family 'kimi', variant 'k', version '2', mod '')"
+      },
+      "mutation": {
+        "description": "letter-prefix series decomposes to variant=series-letter + version=number"
+      }
+    },
+    {
+      "name": "kimi-k2.5 raw=kimi-k2.5",
+      "input": {
+        "raw": "kimi-k2.5",
+        "id": "kimi-k2.5"
+      },
+      "expected": {
+        "family": "kimi",
+        "variant": "k",
+        "version": "2.5",
+        "mod": ""
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "ParseFamilyDetailed(raw=kimi-k2.5, id=kimi-k2.5) -> (family 'kimi', variant 'k', version '2.5', mod '')"
+      },
+      "mutation": {
+        "description": "letter-prefix series decomposes to variant=series-letter + version=number"
+      }
+    },
+    {
+      "name": "kimi-k2.6 empty raw",
+      "input": {
+        "raw": "",
+        "id": "kimi-k2.6"
+      },
+      "expected": {
+        "family": "kimi",
+        "variant": "k",
+        "version": "2.6",
+        "mod": ""
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "ParseFamilyDetailed(raw=, id=kimi-k2.6) -> (family 'kimi', variant 'k', version '2.6', mod '')"
+      },
+      "mutation": {
+        "description": "letter-prefix series decomposes to variant=series-letter + version=number"
+      }
+    },
+    {
+      "name": "kimi-k2p5 (p=dot)",
+      "input": {
+        "raw": "",
+        "id": "accounts/fireworks/models/kimi-k2p5"
+      },
+      "expected": {
+        "family": "kimi",
+        "variant": "k",
+        "version": "2.5",
+        "mod": ""
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "ParseFamilyDetailed(raw=, id=accounts/fireworks/models/kimi-k2p5) -> (family 'kimi', variant 'k', version '2.5', mod '')"
+      },
+      "mutation": {
+        "description": "letter-prefix series decomposes to variant=series-letter + version=number"
+      }
+    },
+    {
+      "name": "kimi-k2p6 (p=dot)",
+      "input": {
+        "raw": "kimi-thinking",
+        "id": "accounts/fireworks/models/kimi-k2p6"
+      },
+      "expected": {
+        "family": "kimi",
+        "variant": "k",
+        "version": "2.6",
+        "mod": "thinking"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "ParseFamilyDetailed(raw=kimi-thinking, id=accounts/fireworks/models/kimi-k2p6) -> (family 'kimi', variant 'k', version '2.6', mod 'thinking')"
+      },
+      "mutation": {
+        "description": "letter-prefix series decomposes to variant=series-letter + version=number"
+      }
+    },
+    {
+      "name": "kimi-k2-5 (hyphen=dot)",
+      "input": {
+        "raw": "kimi",
+        "id": "kimi-k2-5"
+      },
+      "expected": {
+        "family": "kimi",
+        "variant": "k",
+        "version": "2.5",
+        "mod": ""
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "ParseFamilyDetailed(raw=kimi, id=kimi-k2-5) -> (family 'kimi', variant 'k', version '2.5', mod '')"
+      },
+      "mutation": {
+        "description": "letter-prefix series decomposes to variant=series-letter + version=number"
+      }
+    },
+    {
+      "name": "kimi-k2-0711 (date dropped, ver 2)",
+      "input": {
+        "raw": "kimi",
+        "id": "kimi-k2-0711"
+      },
+      "expected": {
+        "family": "kimi",
+        "variant": "k",
+        "version": "2",
+        "mod": ""
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "ParseFamilyDetailed(raw=kimi, id=kimi-k2-0711) -> (family 'kimi', variant 'k', version '2', mod '')"
+      },
+      "mutation": {
+        "description": "letter-prefix series decomposes to variant=series-letter + version=number"
+      }
+    },
+    {
+      "name": "kimi-k2:1t (context tag, ver 2)",
+      "input": {
+        "raw": "kimi",
+        "id": "kimi-k2:1t"
+      },
+      "expected": {
+        "family": "kimi",
+        "variant": "k",
+        "version": "2",
+        "mod": ""
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "ParseFamilyDetailed(raw=kimi, id=kimi-k2:1t) -> (family 'kimi', variant 'k', version '2', mod '')"
+      },
+      "mutation": {
+        "description": "letter-prefix series decomposes to variant=series-letter + version=number"
+      }
+    },
+    {
+      "name": "kimi-k2-thinking → series + modifier",
+      "input": {
+        "raw": "kimi-thinking",
+        "id": "kimi-k2-thinking"
+      },
+      "expected": {
+        "family": "kimi",
+        "variant": "k",
+        "version": "2",
+        "mod": "thinking"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "ParseFamilyDetailed(raw=kimi-thinking, id=kimi-k2-thinking) -> (family 'kimi', variant 'k', version '2', mod 'thinking')"
+      },
+      "mutation": {
+        "description": "letter-prefix series decomposes to variant=series-letter + version=number"
+      }
+    },
+    {
+      "name": "kimi-k2-thinking empty raw",
+      "input": {
+        "raw": "",
+        "id": "kimi-k2-thinking"
+      },
+      "expected": {
+        "family": "kimi",
+        "variant": "k",
+        "version": "2",
+        "mod": "thinking"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "ParseFamilyDetailed(raw=, id=kimi-k2-thinking) -> (family 'kimi', variant 'k', version '2', mod 'thinking')"
+      },
+      "mutation": {
+        "description": "letter-prefix series decomposes to variant=series-letter + version=number"
+      }
+    },
+    {
+      "name": "minimax-m1 raw=minimax",
+      "input": {
+        "raw": "minimax",
+        "id": "minimax-m1"
+      },
+      "expected": {
+        "family": "minimax",
+        "variant": "m",
+        "version": "1",
+        "mod": ""
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "ParseFamilyDetailed(raw=minimax, id=minimax-m1) -> (family 'minimax', variant 'm', version '1', mod '')"
+      },
+      "mutation": {
+        "description": "letter-prefix series decomposes to variant=series-letter + version=number"
+      }
+    },
+    {
+      "name": "minimax-m1 empty raw",
+      "input": {
+        "raw": "",
+        "id": "minimax-m1"
+      },
+      "expected": {
+        "family": "minimax",
+        "variant": "m",
+        "version": "1",
+        "mod": ""
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "ParseFamilyDetailed(raw=, id=minimax-m1) -> (family 'minimax', variant 'm', version '1', mod '')"
+      },
+      "mutation": {
+        "description": "letter-prefix series decomposes to variant=series-letter + version=number"
+      }
+    },
+    {
+      "name": "MiniMax-M1-80k (context window ignored)",
+      "input": {
+        "raw": "minimax",
+        "id": "MiniMaxAI/MiniMax-M1-80k"
+      },
+      "expected": {
+        "family": "minimax",
+        "variant": "m",
+        "version": "1",
+        "mod": ""
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "ParseFamilyDetailed(raw=minimax, id=MiniMaxAI/MiniMax-M1-80k) -> (family 'minimax', variant 'm', version '1', mod '')"
+      },
+      "mutation": {
+        "description": "letter-prefix series decomposes to variant=series-letter + version=number"
+      }
+    },
+    {
+      "name": "minimax-m2.1",
+      "input": {
+        "raw": "minimax",
+        "id": "minimax-m2.1"
+      },
+      "expected": {
+        "family": "minimax",
+        "variant": "m",
+        "version": "2.1",
+        "mod": ""
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "ParseFamilyDetailed(raw=minimax, id=minimax-m2.1) -> (family 'minimax', variant 'm', version '2.1', mod '')"
+      },
+      "mutation": {
+        "description": "letter-prefix series decomposes to variant=series-letter + version=number"
+      }
+    },
+    {
+      "name": "mimo-v2.5 raw=mimo",
+      "input": {
+        "raw": "mimo",
+        "id": "mimo-v2.5"
+      },
+      "expected": {
+        "family": "mimo",
+        "variant": "v",
+        "version": "2.5",
+        "mod": ""
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "ParseFamilyDetailed(raw=mimo, id=mimo-v2.5) -> (family 'mimo', variant 'v', version '2.5', mod '')"
+      },
+      "mutation": {
+        "description": "letter-prefix series decomposes to variant=series-letter + version=number"
+      }
+    },
+    {
+      "name": "mimo-v2.5 empty raw",
+      "input": {
+        "raw": "",
+        "id": "xiaomi/mimo-v2.5"
+      },
+      "expected": {
+        "family": "mimo",
+        "variant": "v",
+        "version": "2.5",
+        "mod": ""
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "ParseFamilyDetailed(raw=, id=xiaomi/mimo-v2.5) -> (family 'mimo', variant 'v', version '2.5', mod '')"
+      },
+      "mutation": {
+        "description": "letter-prefix series decomposes to variant=series-letter + version=number"
+      }
+    },
+    {
+      "name": "mimo-v1",
+      "input": {
+        "raw": "",
+        "id": "mimo-v1"
+      },
+      "expected": {
+        "family": "mimo",
+        "variant": "v",
+        "version": "1",
+        "mod": ""
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "ParseFamilyDetailed(raw=, id=mimo-v1) -> (family 'mimo', variant 'v', version '1', mod '')"
+      },
+      "mutation": {
+        "description": "letter-prefix series decomposes to variant=series-letter + version=number"
+      }
+    }
+  ]
+}

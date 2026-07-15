@@ -182,6 +182,21 @@ var dotGluedVariantCorpusJSON []byte
 //go:embed testdata/parse/cross_provider_convergences_corpus.json
 var crossProviderConvergencesCorpusJSON []byte
 
+//go:embed testdata/parse/glued_version_modifier_corpus.json
+var gluedVersionModifierCorpusJSON []byte
+
+//go:embed testdata/parse/series_letter_split_corpus.json
+var seriesLetterSplitCorpusJSON []byte
+
+//go:embed testdata/parse/series_tier_modifier_corpus.json
+var seriesTierModifierCorpusJSON []byte
+
+//go:embed testdata/parse/parse_family_detailed_modifier_list_corpus.json
+var parseFamilyDetailedModifierListCorpusJSON []byte
+
+//go:embed testdata/parse/tier1_straggler_convergences_corpus.json
+var tier1StragglerConvergencesCorpusJSON []byte
+
 // rawIDInput is the (rawFamily, id) pair fed to ParseFamilyDetailed.
 type rawIDInput struct {
 	Raw string `json:"raw"`

@@ -3028,27 +3028,8 @@ func TestParamSizeGuard(t *testing.T) {
 func TestGluedVersionModifier(t *testing.T) {
 	t.Parallel()
 
-	cases := []struct {
-		desc                                          string
-		raw                                           bestiary.Family
-		id                                            bestiary.ModelID
-		wantFamily, wantVariant, wantVersion, wantMod string
-	}{
-		{"glm-4.5v raw=glm → variant 'v'", "glm", "glm-4.5v", "glm", "v", "4.5", ""},
-		{"glm-4.5v empty raw → variant 'v'", "", "glm-4.5v", "glm", "v", "4.5", ""},
-		{"gpt-4o → variant '4o', version ''", "gpt", "gpt-4o", "gpt", "4o", "", ""},
-	}
-
-	for _, tc := range cases {
-		t.Run(tc.desc, func(t *testing.T) {
-			t.Parallel()
-			f, va, ve, mod, _ := bestiary.ParseFamilyDetailed(tc.raw, tc.id, "p")
-			if string(f) != tc.wantFamily || va != tc.wantVariant || ve != tc.wantVersion || modJoin(mod) != tc.wantMod {
-				t.Errorf("raw=%q id=%q → (%s|%s|%s|mod=%s), want (%s|%s|%s|mod=%s)",
-					tc.raw, tc.id, f, va, ve, mod, tc.wantFamily, tc.wantVariant, tc.wantVersion, tc.wantMod)
-			}
-		})
-	}
+	corpus := loadParseCorpus[rawIDInput, fvvmExpected](t, gluedVersionModifierCorpusJSON, 3)
+	runFamilyDetailedTupleCorpus(t, corpus)
 }
 
 // TestDotGluedVariant verifies the LEADING dot-glued variant generalization: a
@@ -3089,46 +3070,16 @@ func TestDotGluedVariant(t *testing.T) {
 func TestSeriesLetterSplit(t *testing.T) {
 	t.Parallel()
 
-	cases := []struct {
-		desc                             string
-		raw                              bestiary.Family
-		id                               bestiary.ModelID
-		wantFamily, wantVariant, wantVer string
-		wantMod                          string
-	}{
-		// kimi K-series (empty + populated raw → identical).
-		{"kimi-k2 empty raw", "", "kimi-k2", "kimi", "k", "2", ""},
-		{"kimi-k2 raw=kimi", "kimi", "kimi-k2", "kimi", "k", "2", ""},
-		{"kimi-k2.5 raw=kimi-k2.5", "kimi-k2.5", "kimi-k2.5", "kimi", "k", "2.5", ""},
-		{"kimi-k2.6 empty raw", "", "kimi-k2.6", "kimi", "k", "2.6", ""},
-		{"kimi-k2p5 (p=dot)", "", "accounts/fireworks/models/kimi-k2p5", "kimi", "k", "2.5", ""},
-		{"kimi-k2p6 (p=dot)", "kimi-thinking", "accounts/fireworks/models/kimi-k2p6", "kimi", "k", "2.6", "thinking"},
-		{"kimi-k2-5 (hyphen=dot)", "kimi", "kimi-k2-5", "kimi", "k", "2.5", ""},
-		{"kimi-k2-0711 (date dropped, ver 2)", "kimi", "kimi-k2-0711", "kimi", "k", "2", ""},
-		{"kimi-k2:1t (context tag, ver 2)", "kimi", "kimi-k2:1t", "kimi", "k", "2", ""},
-		{"kimi-k2-thinking → series + modifier", "kimi-thinking", "kimi-k2-thinking", "kimi", "k", "2", "thinking"},
-		{"kimi-k2-thinking empty raw", "", "kimi-k2-thinking", "kimi", "k", "2", "thinking"},
-		// minimax M-series (REVERSES whole-token "m1").
-		{"minimax-m1 raw=minimax", "minimax", "minimax-m1", "minimax", "m", "1", ""},
-		{"minimax-m1 empty raw", "", "minimax-m1", "minimax", "m", "1", ""},
-		{"MiniMax-M1-80k (context window ignored)", "minimax", "MiniMaxAI/MiniMax-M1-80k", "minimax", "m", "1", ""},
-		{"minimax-m2.1", "minimax", "minimax-m2.1", "minimax", "m", "2.1", ""},
-		// mimo V-series.
-		{"mimo-v2.5 raw=mimo", "mimo", "mimo-v2.5", "mimo", "v", "2.5", ""},
-		{"mimo-v2.5 empty raw", "", "xiaomi/mimo-v2.5", "mimo", "v", "2.5", ""},
-		{"mimo-v1", "", "mimo-v1", "mimo", "v", "1", ""},
-	}
-
-	for _, tc := range cases {
-		t.Run(tc.desc, func(t *testing.T) {
-			t.Parallel()
-			f, va, ve, mod, _ := bestiary.ParseFamilyDetailed(tc.raw, tc.id, "p")
-			if string(f) != tc.wantFamily || va != tc.wantVariant || ve != tc.wantVer || modJoin(mod) != tc.wantMod {
-				t.Errorf("raw=%q id=%q → (%s|%s|%s|mod=%s), want (%s|%s|%s|mod=%s)",
-					tc.raw, tc.id, f, va, ve, mod, tc.wantFamily, tc.wantVariant, tc.wantVer, tc.wantMod)
-			}
-		})
-	}
+	corpus := loadParseCorpus[rawIDInput, fvvmExpected](t, seriesLetterSplitCorpusJSON, 18)
+	requireInputCoverage(t, corpus, map[rawIDInput]fvvmExpected{
+		// kimi K-series: empty raw and populated raw resolve identically.
+		{Raw: "", ID: "kimi-k2"}: {Family: "kimi", Variant: "k", Version: "2", Mod: ""},
+		// minimax M-series reverses the whole-token "m1".
+		{Raw: "minimax", ID: "minimax-m1"}: {Family: "minimax", Variant: "m", Version: "1", Mod: ""},
+		// series letter + trailing thinking modifier.
+		{Raw: "kimi-thinking", ID: "kimi-k2-thinking"}: {Family: "kimi", Variant: "k", Version: "2", Mod: "thinking"},
+	})
+	runFamilyDetailedTupleCorpus(t, corpus)
 }
 
 // TestMustNotRegress_RealVersions pins genuine semantic versions that the
@@ -3182,44 +3133,16 @@ func TestMustNotRegress_RealVersions(t *testing.T) {
 func TestSeriesTierModifier(t *testing.T) {
 	t.Parallel()
 
-	cases := []struct {
-		desc                                          string
-		raw                                           bestiary.Family
-		id                                            bestiary.ModelID
-		wantFamily, wantVariant, wantVersion, wantMod string
-	}{
-		// Clean single-tier → modifier (variant = pure series-letter).
-		{"minimax-m2.5-fast (raw)", "minimax", "minimax-m2.5-fast", "minimax", "m", "2.5", "fast"},
-		{"minimax-m2.5-fast (empty raw)", "", "minimax-m2.5-fast", "minimax", "m", "2.5", "fast"},
-		{"minimax-m2.5-highspeed", "minimax", "minimax-m2.5-highspeed", "minimax", "m", "2.5", "highspeed"},
-		{"mimo-v2.5-pro (raw)", "mimo", "mimo-v2.5-pro", "mimo", "v", "2.5", "pro"},
-		{"mimo-v2.5-pro (empty raw)", "", "xiaomi/mimo-v2.5-pro", "mimo", "v", "2.5", "pro"},
-		{"kimi-k2-instruct (raw)", "kimi", "kimi-k2-instruct", "kimi", "k", "2", "instruct"},
-		{"kimi-k2-instruct (empty raw)", "", "moonshotai/kimi-k2-instruct", "kimi", "k", "2", "instruct"},
-		{"kimi-k2.5-fast", "kimi", "kimi-k2.5-fast", "kimi", "k", "2.5", "fast"},
-		{"kimi-k2.6-precision", "kimi-k2.6", "kimi-k2.6-precision", "kimi", "k", "2.6", "precision"},
-		{"mimo-v2-omni (omni curated tier)", "mimo", "mimo-v2-omni", "mimo", "v", "2", "omni"},
-		// EDGE (b): the SAME tokens are VARIANTS for NON-series families — UNCHANGED.
-		{"gpt-5-mini stays variant=mini", "gpt", "openai/gpt-5-mini", "gpt", "mini", "5", ""},
-		{"gemini-2.5-flash stays variant=flash", "gemini-flash", "gemini-2.5-flash", "gemini", "flash", "2.5", ""},
-		{"qwen-turbo stays variant=turbo (member-guard)", "qwen", "qwen-turbo", "qwen", "turbo", "", ""},
-		// 'instruct' is now a GLOBAL modifier (llama non-member) → variant empty, mod [instruct].
-		{"llama-instruct → [instruct] (member-guard)", "llama", "meta-llama/llama-3.1-8b-instruct", "llama", "", "3.1", "instruct"},
-		// MULTI-MODIFIER: tier + capability compose LOSSLESSLY in the Modifier list.
-		{"kimi-k2p6-turbo (raw kimi-thinking) → [thinking,turbo]", "kimi-thinking", "accounts/fireworks/routers/kimi-k2p6-turbo", "kimi", "k", "2.6", "thinking,turbo"},
-		{"kimi-k2-thinking-turbo (raw kimi-thinking) → [thinking,turbo]", "kimi-thinking", "kimi-k2-thinking-turbo", "kimi", "k", "2", "thinking,turbo"},
-	}
-
-	for _, tc := range cases {
-		t.Run(tc.desc, func(t *testing.T) {
-			t.Parallel()
-			f, va, ve, mod, _ := bestiary.ParseFamilyDetailed(tc.raw, tc.id, "p")
-			if string(f) != tc.wantFamily || va != tc.wantVariant || ve != tc.wantVersion || modJoin(mod) != tc.wantMod {
-				t.Errorf("raw=%q id=%q → (%s|%s|%s|mod=%s), want (%s|%s|%s|mod=%s)",
-					tc.raw, tc.id, f, va, ve, mod, tc.wantFamily, tc.wantVariant, tc.wantVersion, tc.wantMod)
-			}
-		})
-	}
+	corpus := loadParseCorpus[rawIDInput, fvvmExpected](t, seriesTierModifierCorpusJSON, 16)
+	requireInputCoverage(t, corpus, map[rawIDInput]fvvmExpected{
+		// tier -> modifier, variant stays the pure series-letter.
+		{Raw: "kimi", ID: "kimi-k2-instruct"}: {Family: "kimi", Variant: "k", Version: "2", Mod: "instruct"},
+		// same token is a VARIANT for a non-series family (unchanged).
+		{Raw: "gpt", ID: "openai/gpt-5-mini"}: {Family: "gpt", Variant: "mini", Version: "5", Mod: ""},
+		// multi-modifier composes losslessly.
+		{Raw: "kimi-thinking", ID: "kimi-k2-thinking-turbo"}: {Family: "kimi", Variant: "k", Version: "2", Mod: "thinking,turbo"},
+	})
+	runFamilyDetailedTupleCorpus(t, corpus)
 }
 
 // The former multi-modifier-deferred-to-modifier-list test was REMOVED.
@@ -3229,56 +3152,16 @@ func TestSeriesTierModifier(t *testing.T) {
 // TestParseFamilyDetailed_ModifierList.
 func TestParseFamilyDetailed_ModifierList(t *testing.T) {
 	t.Parallel()
-	cases := []struct {
-		desc                             string
-		raw                              bestiary.Family
-		id                               bestiary.ModelID
-		wantFamily, wantVariant, wantVer string
-		wantMod                          string // canonical comma-joined
-	}{
-		// Multi-modifier lossless capture (replaces the interim drop).
-		{"kimi-k2-thinking-turbo → [thinking,turbo]", "kimi-thinking", "kimi-k2-thinking-turbo", "kimi", "k", "2", "thinking,turbo"},
-		{"kimi-k2p6-turbo + thinking → [thinking,turbo]", "kimi-thinking", "accounts/fireworks/routers/kimi-k2p6-turbo", "kimi", "k", "2.6", "thinking,turbo"},
-		{"kimi triple → [thinking,turbo,original]", "kimi-thinking", "moonshotai/kimi-k2-thinking-turbo-original", "kimi", "k", "2", "thinking,turbo,original"},
-		// Per-ID convergence targets for the 9 stragglers (canonical order).
-		{"command-a-reasoning → [reasoning]", "command-a", "command-a-reasoning-08-2025", "command", "a", "", "reasoning"},
-		{"llama vision-instruct → [vision,instruct]", "llama", "llama-3.2-11b-vision-instruct", "llama", "", "3.2", "vision,instruct"},
-		{"phi multimodal-instruct → [multimodal,instruct]", "phi", "phi-4-multimodal-instruct", "phi", "", "4", "multimodal,instruct"},
-		{"llama-4-scout(-instruct) → variant scout + [instruct]", "llama", "llama-4-scout-17b-16e-instruct", "llama", "scout", "4", "instruct"},
-		{"qwen3-next(-instruct) → variant next + [instruct]", "qwen", "qwen3-next-80b-a3b-instruct", "qwen", "next", "3", "instruct"},
-		// Must-not-regress (single-modifier + member-variant protection).
-		{"kimi-k2-thinking → [thinking]", "kimi-thinking", "kimi-k2-thinking", "kimi", "k", "2", "thinking"},
-		{"grok-vision → [vision]", "grok-vision", "grok-vision", "grok", "", "", "vision"},
-		{"claude-3-7-sonnet-thinking → [thinking]", "claude-sonnet", "claude-3-7-sonnet-thinking", "claude", "sonnet", "3.7", "thinking"},
-		{"deepseek-chat → variant chat (member-guard)", "deepseek", "deepseek-chat", "deepseek", "chat", "", ""},
-		// RawFamily-embedded member must NOT duplicate
-		// into BOTH Variant and Modifier. Use the CODEGEN-REAL raw="sonar-reasoning"
-		// (the idealized raw="sonar" masked the bug). reasoning stays the VARIANT, no dup.
-		{"sonar-reasoning (raw=sonar-reasoning) → (sonar,reasoning,nil) no dup", "sonar-reasoning", "sonar-reasoning", "sonar", "reasoning", "", ""},
-		{"sonar-reasoning-pro (raw=sonar-reasoning) → (sonar,reasoning,nil) no dup", "sonar-reasoning", "sonar-reasoning-pro", "sonar", "reasoning", "", ""},
-		// Regression guards: other RawFamily-embedded members must also stay variant-only.
-		{"deepseek-chat (raw=deepseek-chat) → variant chat, no dup", "deepseek-chat", "deepseek-chat", "deepseek", "chat", "", ""},
-		{"qwen-turbo → variant turbo (member-guard)", "qwen", "qwen-turbo", "qwen", "turbo", "", ""},
-		{"gemini-pro → variant pro (stays variant)", "gemini", "gemini-pro", "gemini", "pro", "", ""},
-		{"qwen-flash → variant flash (stays variant)", "qwen", "qwen-flash", "qwen", "flash", "", ""},
-		// (FLAG2): whisper + seed registered as families → variant recovers
-		// losslessly; the modifier composes (turbo/instruct), removing the 2 justifiedExceptions.
-		// The whisper-family-gated trailing "-v3" now recovers Version=3 (was "").
-		{"whisper-large-v3-turbo → (whisper,large,3,[turbo])", "whisper", "whisper-large-v3-turbo", "whisper", "large", "3", "turbo"},
-		{"seed-oss-36b-instruct → (seed,oss,[instruct])", "seed", "bytedance/seed-oss-36b-instruct", "seed", "oss", "", "instruct"},
-		// Lossless variant-suffix→modifier split (v2.5-turbo → v2.5 + [turbo]).
-		{"elevenlabs-v2.5-turbo → (elevenlabs,v2.5,[turbo])", "elevenlabs", "elevenlabs/elevenlabs-v2.5-turbo", "elevenlabs", "v2.5", "", "turbo"},
-	}
-	for _, tc := range cases {
-		t.Run(tc.desc, func(t *testing.T) {
-			t.Parallel()
-			f, va, ve, mod, _ := bestiary.ParseFamilyDetailed(tc.raw, tc.id, "p")
-			if string(f) != tc.wantFamily || va != tc.wantVariant || ve != tc.wantVer || modJoin(mod) != tc.wantMod {
-				t.Errorf("raw=%q id=%q → (%s|%s|%s|mod=%v), want (%s|%s|%s|mod=%s)",
-					tc.raw, tc.id, f, va, ve, mod, tc.wantFamily, tc.wantVariant, tc.wantVer, tc.wantMod)
-			}
-		})
-	}
+	corpus := loadParseCorpus[rawIDInput, fvvmExpected](t, parseFamilyDetailedModifierListCorpusJSON, 21)
+	requireInputCoverage(t, corpus, map[rawIDInput]fvvmExpected{
+		// multi-modifier lossless capture (triple).
+		{Raw: "kimi-thinking", ID: "moonshotai/kimi-k2-thinking-turbo-original"}: {Family: "kimi", Variant: "k", Version: "2", Mod: "thinking,turbo,original"},
+		// rawFamily-embedded member must NOT duplicate into both Variant and Modifier.
+		{Raw: "sonar-reasoning", ID: "sonar-reasoning"}: {Family: "sonar", Variant: "reasoning", Version: "", Mod: ""},
+		// lossless variant-suffix -> modifier split.
+		{Raw: "elevenlabs", ID: "elevenlabs/elevenlabs-v2.5-turbo"}: {Family: "elevenlabs", Variant: "v2.5", Version: "", Mod: "turbo"},
+	})
+	runFamilyDetailedTupleCorpus(t, corpus)
 }
 
 // ----------------------------------------------------------------------------
@@ -3493,53 +3376,16 @@ func TestCrossProviderConvergences(t *testing.T) {
 // hy3 bare-gen). Each is non-lossy under the hardened gate (cat-(c)=0). command-a-reasoning is
 // DEFERRED to the systematic modifier ruling (reasoning = borderline-capability, modifier-vs-variant judgment).
 func TestTier1StragglerConvergences(t *testing.T) {
-	cases := []struct {
-		desc                   string
-		raw                    bestiary.Family
-		id                     bestiary.ModelID
-		wFam, wVar, wVer, wMod string
-	}{
-		// COMMITTED — deepseek "chat" product-line member (non-lossy; v3.1 version preserved).
-		{"deepseek-chat-v3-0324 empty → (deepseek,chat)", "", "deepseek/deepseek-chat-v3-0324", "deepseek", "chat", "", ""},
-		{"deepseek-chat-v3-0324 raw=deepseek → (deepseek,chat)", "deepseek", "deepseek/deepseek-chat-v3-0324", "deepseek", "chat", "", ""},
-		{"deepseek-chat-v3.1 empty → (deepseek,chat,3.1)", "", "deepseek/deepseek-chat-v3.1", "deepseek", "chat", "3.1", ""},
-		{"deepseek-chat-v3.1 raw=deepseek → (deepseek,chat,3.1)", "deepseek", "deepseek/deepseek-chat-v3.1", "deepseek", "chat", "3.1", ""},
-		// COMMITTED — cohere command R-line members (date-guard 08/12; "r7b"=member "r"+size "7b").
-		{"command-r-plus-08-2024 empty → (command,r-plus)", "", "cohere/command-r-plus-08-2024", "command", "r-plus", "", ""},
-		{"command-r-plus-08-2024 raw=command-r → (command,r-plus)", "command-r", "cohere/command-r-plus-08-2024", "command", "r-plus", "", ""},
-		// "r7b" = member "r" + param-size "7b"; both sides CONVERGE to (command, r, 12). The
-		// version "12" is the MM of the "12-2024" date — a pre-existing SHARED value on both
-		// providers (NOT introduced here, NOT a divergence); date-guarding it to "" is a future
-		// polish pending a ruling. The convergence (variant r on both) is the fix.
-		{"command-r7b-12-2024 empty → (command,r) [r7b=r+7b-size]", "", "cohere/command-r7b-12-2024", "command", "r", "12", ""},
-		{"command-r7b-12-2024 raw=command-r → (command,r)", "command-r", "cohere/command-r7b-12-2024", "command", "r", "12", ""},
-		// COMMITTED — meta-llama SURGICAL doubled-vendor strip (org "meta-llama/" + "Meta-Llama-…").
-		// 'instruct' → global modifier (llama has no 'instruct' member after the
-		// ratified families.json correction); variant empty, modifier [instruct].
-		{"meta-llama/Meta-Llama-3.1 empty → (llama,'',3.1,[instruct])", "", "meta-llama/Meta-Llama-3.1-8B-Instruct", "llama", "", "3.1", "instruct"},
-		{"meta-llama/Meta-Llama-3.1 raw=llama → (llama,'',3.1,[instruct])", "llama", "meta-llama/Meta-Llama-3.1-8B-Instruct", "llama", "", "3.1", "instruct"},
-		// CONDITIONAL (promoted) — grok product-name member "code-fast" (one unit; no fast-as-modifier judgment).
-		{"grok-code-fast-1 empty → (grok,code-fast,1)", "", "x-ai/grok-code-fast-1", "grok", "code-fast", "1", ""},
-		{"grok-code-fast-1 raw=grok → (grok,code-fast,1)", "grok", "x-ai/grok-code-fast-1", "grok", "code-fast", "1", ""},
-		// CONDITIONAL (promoted) — Qwen3-Embedding: ID-family qwen wins over generic raw "text-embedding".
-		{"Qwen3-Embedding raw=text-embedding → (qwen,embedding,3)", "text-embedding", "Qwen/Qwen3-Embedding-8B", "qwen", "embedding", "3", ""},
-		{"Qwen3-Embedding raw=qwen → (qwen,embedding,3)", "qwen", "Qwen/Qwen3-Embedding-8B", "qwen", "embedding", "3", ""},
-		// CONDITIONAL guard — OpenAI text-embedding-3* MUST stay family "text-embedding" (untouched).
-		{"GUARD: openai text-embedding-3-large stays text-embedding", "text-embedding", "openai/text-embedding-3-large", "text-embedding", "large", "3", ""},
-		{"GUARD: openai text-embedding-3-small stays text-embedding", "text-embedding", "text-embedding-3-small", "text-embedding", "small", "3", ""},
-		// CONDITIONAL (promoted) — hy3 bare-gen (bare "hy" attested via raw="Hy").
-		{"hy3-preview empty → (hy,,3,preview)", "", "tencent/hy3-preview", "hy", "", "3", "preview"},
-		{"hy3-preview raw=Hy → (hy,,3,preview)", "Hy", "tencent/hy3-preview", "hy", "", "3", "preview"},
-	}
-	for _, tc := range cases {
-		t.Run(tc.desc, func(t *testing.T) {
-			f, v, ver, m, _ := bestiary.ParseFamilyDetailed(tc.raw, tc.id, "p")
-			if string(f) != tc.wFam || v != tc.wVar || ver != tc.wVer || modJoin(m) != tc.wMod {
-				t.Errorf("ParseFamilyDetailed(raw=%q,id=%q) = (%q,%q,%q,%q), want (%q,%q,%q,%q)",
-					tc.raw, tc.id, f, v, ver, m, tc.wFam, tc.wVar, tc.wVer, tc.wMod)
-			}
-		})
-	}
+	corpus := loadParseCorpus[rawIDInput, fvvmExpected](t, tier1StragglerConvergencesCorpusJSON, 18)
+	requireInputCoverage(t, corpus, map[rawIDInput]fvvmExpected{
+		// deepseek chat product-line member, version preserved.
+		{Raw: "", ID: "deepseek/deepseek-chat-v3.1"}: {Family: "deepseek", Variant: "chat", Version: "3.1", Mod: ""},
+		// Qwen3-Embedding: ID-family qwen wins over generic raw "text-embedding".
+		{Raw: "text-embedding", ID: "Qwen/Qwen3-Embedding-8B"}: {Family: "qwen", Variant: "embedding", Version: "3", Mod: ""},
+		// GUARD: OpenAI text-embedding-3* stays family text-embedding (untouched).
+		{Raw: "text-embedding", ID: "openai/text-embedding-3-large"}: {Family: "text-embedding", Variant: "large", Version: "3", Mod: ""},
+	})
+	runFamilyDetailedTupleCorpus(t, corpus)
 }
 
 // TestWhisperTrailingVersionRecovery_FamilyGated is the coverage for
