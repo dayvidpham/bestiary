@@ -504,6 +504,78 @@ func TestParamSizePins_Llama4CensusBothLegs(t *testing.T) {
 	t.Logf("llama-4 census guard checked %d scout/maverick IDs (both legs)", checked)
 }
 
+// TestLlama4VersionPins_UnifiedEntityMembership directly asserts that every
+// version-less llama-4 scout/maverick spelling carrying a curated @4 version pin
+// (the exact-ID overrides in parse.go) lands INSIDE the unified @4 entity —
+// llama/scout@4#17b-16e{instruct} for scout, llama@4#17b-128e{instruct} for
+// maverick (maverick is not a curated llama variant member, so its official
+// entity carries no /maverick segment). The sized-entity census literal fences
+// this only indirectly (a dropped pin shifts a count somewhere); this test names
+// the exact spelling that regressed. Membership is checked by EXACT instance-ID
+// match, not substring, because the dotted Bedrock spellings nest
+// ("meta.llama4-…" is a substring of "us.meta.llama4-…").
+func TestLlama4VersionPins_UnifiedEntityMembership(t *testing.T) {
+	holdsExact := func(e bestiary.Entity, id string) bool {
+		for _, inst := range e.Instances {
+			if string(inst.ID) == id {
+				return true
+			}
+		}
+		return false
+	}
+
+	cases := []struct {
+		name      string
+		variant   string
+		paramSize string
+		wantKey   string
+		ids       []string
+	}{
+		{
+			name:      "scout",
+			variant:   "scout",
+			paramSize: "17b-16e",
+			wantKey:   "llama/scout@4#17b-16e{instruct}",
+			ids: []string{
+				"meta.llama4-scout-17b-instruct-v1:0",
+				"us.meta.llama4-scout-17b-instruct-v1:0",
+				"cerebras-llama-4-scout-17b-16e-instruct",
+			},
+		},
+		{
+			name:      "maverick",
+			variant:   "",
+			paramSize: "17b-128e",
+			wantKey:   "llama@4#17b-128e{instruct}",
+			ids: []string{
+				"meta.llama4-maverick-17b-instruct-v1:0",
+				"us.meta.llama4-maverick-17b-instruct-v1:0",
+				"cerebras-llama-4-maverick-17b-128e-instruct",
+				"groq-llama-4-maverick-17b-128e-instruct",
+			},
+		},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			ent, ok := bestiary.EntityByTuple("llama", tc.variant, "4", tc.paramSize, "instruct")
+			if !ok {
+				t.Fatalf("unified entity %q missing from the registry — the @4 target of the version pins does not exist", tc.wantKey)
+			}
+			if got := ent.Ref.String(); got != tc.wantKey {
+				t.Fatalf("entity key = %q, want %q", got, tc.wantKey)
+			}
+			for _, id := range tc.ids {
+				if !holdsExact(ent, id) {
+					t.Errorf("pinned spelling %q is not an instance of %q\n"+
+						"  Why: its curated @4 version pin (exact-ID override) is missing or was dropped, re-splitting the spelling into a version-less entity\n"+
+						"  How to fix: restore the ID's idFamilyOverrides entry in parse.go and regen",
+						id, tc.wantKey)
+				}
+			}
+		})
+	}
+}
+
 // TestEntityRef_String_ParamSizeGrammar locks the full #size grammar for all
 // combinations: present/absent paramsize, with/without variant, version, mods.
 func TestEntityRef_String_ParamSizeGrammar(t *testing.T) {
