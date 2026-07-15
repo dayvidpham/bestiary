@@ -1,0 +1,103 @@
+{
+  "cases": [
+    {
+      "name": "family only",
+      "input": {"family": "llama"},
+      "expected": "llama",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "grammar rule: family[/variant][@version]{identity-mods} — a bare family with no other segment renders as just the family token"
+      },
+      "mutation": {"description": "no variant, version, paramsize, or modifiers present"}
+    },
+    {
+      "name": "family + variant",
+      "input": {"family": "claude", "variant": "opus"},
+      "expected": "claude/opus",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "grammar rule: \"/variant\" is appended only when Variant is non-empty"
+      },
+      "mutation": {"description": "adds a non-empty Variant to the family-only baseline"}
+    },
+    {
+      "name": "family + version",
+      "input": {"family": "llama", "version": "3.1"},
+      "expected": "llama@3.1",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "grammar rule: \"@version\" is appended only when Version is non-empty (identity version, NOT a date)"
+      },
+      "mutation": {"description": "adds a non-empty Version to the family-only baseline"}
+    },
+    {
+      "name": "family + variant + version",
+      "input": {"family": "claude", "variant": "opus", "version": "4.5"},
+      "expected": "claude/opus@4.5",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "grammar rule: /variant and @version compose in order family/variant@version"
+      },
+      "mutation": {"description": "adds both Variant and Version to the family-only baseline"}
+    },
+    {
+      "name": "identity modifier renders in braces and is keyed",
+      "input": {"family": "llama", "version": "3.1", "modifier": ["instruct"]},
+      "expected": "llama@3.1{instruct}",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "grammar rule: \"{identity-mods}\" is appended only when at least one identity modifier is present"
+      },
+      "mutation": {"description": "adds a single identity modifier to a family+version ref"}
+    },
+    {
+      "name": "multiple identity modifiers in canonical order, comma-separated",
+      "input": {"family": "kimi", "version": "k2", "modifier": ["turbo", "thinking"]},
+      "expected": "kimi@k2{thinking,turbo}",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "grammar rule: identity-mod tokens render in canonical order, comma-separated, regardless of input order; input is deliberately out of canonical order (thinking ranks before turbo)"
+      },
+      "mutation": {"description": "supplies two identity modifiers out of canonical order to verify canonicalization on render"}
+    },
+    {
+      "name": "empty modifier list omits braces entirely",
+      "input": {"family": "claude", "variant": "opus", "version": "4.5", "modifier": []},
+      "expected": "claude/opus@4.5",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "grammar rule: braces are OMITTED entirely when the modifier list is empty"
+      },
+      "mutation": {"description": "sets Modifier to a non-nil empty slice ([]string{}) on an otherwise-populated ref"}
+    },
+    {
+      "name": "nil modifier omits braces entirely",
+      "input": {"family": "claude", "variant": "opus", "version": "4.5", "modifier": null},
+      "expected": "claude/opus@4.5",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "grammar rule: braces are OMITTED entirely when Modifier is nil"
+      },
+      "mutation": {"description": "leaves Modifier nil (the zero value) on an otherwise-populated ref"}
+    },
+    {
+      "name": "all-empty modifier tokens collapse to no braces",
+      "input": {"family": "claude", "variant": "opus", "modifier": ["", ""]},
+      "expected": "claude/opus",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "grammar rule: modifier tokens that are all empty strings collapse to no braces"
+      },
+      "mutation": {"description": "supplies two empty-string modifier tokens instead of nil or an empty slice"}
+    }
+  ]
+}

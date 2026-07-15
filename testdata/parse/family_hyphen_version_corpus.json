@@ -1,0 +1,20 @@
+{
+  "cases": [
+    {
+      "name": "claude-opus-4-5 hyphen version",
+      "input": "claude-opus-4-5",
+      "expected": {
+        "family": "claude",
+        "variant": "opus-4-5"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "hyphen-separated version: claude-opus-4-5 splits to family 'claude', variant 'opus-4-5'"
+      },
+      "mutation": {
+        "description": "hyphen-version decomposition for claude-opus-4-5"
+      }
+    }
+  ]
+}

@@ -1,0 +1,41 @@
+{
+  "cases": [
+    {
+      "name": "scout",
+      "input": {"variant": "scout", "param_size": "17b-16e"},
+      "expected": {
+        "want_key": "llama/scout@4#17b-16e{instruct}",
+        "ids": [
+          "meta.llama4-scout-17b-instruct-v1:0",
+          "us.meta.llama4-scout-17b-instruct-v1:0",
+          "cerebras-llama-4-scout-17b-16e-instruct"
+        ]
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "manual",
+        "ref": "curated llama-4 scout spellings (Bedrock meta.llama4-scout-17b-instruct-v1:0 / us.meta.llama4-scout-17b-instruct-v1:0, and Cerebras cerebras-llama-4-scout-17b-16e-instruct) must land inside the unified llama/scout@4#17b-16e{instruct} entity via their curated @4 version pin (exact-ID overrides in parse.go)"
+      },
+      "mutation": {"description": "pins scout's variant + full expert-shape param size and the exact instance IDs expected inside the unified entity"}
+    },
+    {
+      "name": "maverick",
+      "input": {"variant": "", "param_size": "17b-128e"},
+      "expected": {
+        "want_key": "llama@4#17b-128e{instruct}",
+        "ids": [
+          "meta.llama4-maverick-17b-instruct-v1:0",
+          "us.meta.llama4-maverick-17b-instruct-v1:0",
+          "cerebras-llama-4-maverick-17b-128e-instruct",
+          "groq-llama-4-maverick-17b-128e-instruct"
+        ]
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "manual",
+        "ref": "curated llama-4 maverick spellings (Bedrock, Cerebras, Groq) must land inside the unified llama@4#17b-128e{instruct} entity even though maverick is not a curated family variant member (empty Variant)"
+      },
+      "mutation": {"description": "pins maverick's empty variant + full expert-shape param size and the exact instance IDs expected inside the unified entity"}
+    }
+  ]
+}

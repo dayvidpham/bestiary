@@ -52,58 +52,34 @@ func decomposeWithoutOverride(id string) (Family, string, string, []string) {
 	return f, v, ver, mods
 }
 
-// retiredStageModeOverride is a stage/mode exact-ID entry that was RETIRED from
-// idFamilyOverrides once the mid-ID engine derived it mechanically. Each row carries the
-// exact decomposition the entry used to pin, retained here as a literal so the pin
-// survives the entry's deletion. mods is the pre-canonicalization modifier list.
-type retiredStageModeOverride struct {
-	id      string
-	family  Family
-	variant string
-	version string
-	mods    []string
-}
-
-// retiredStageModeOverrides is the full set of stage/mode overrides retired in favor of
-// the mid-ID engine. For each, the buried omni/livetranslate/realtime token — previously
-// unreachable behind the variant/version/size boundary — is now harvested mechanically,
-// and family/variant/version already agree, so the mechanical decomposition of the bare
-// ID reproduces the retained tuple with no override present.
-var retiredStageModeOverrides = []retiredStageModeOverride{
-	{"gemini-omni-flash-preview", "gemini", "flash", "", []string{"omni", "preview"}},
-	{"google/gemini-omni-flash-preview", "gemini", "flash", "", []string{"omni", "preview"}},
-	{"openai/gpt-realtime-2", "gpt", "", "2", []string{"realtime"}},
-	{"openai/gpt-realtime-mini", "gpt", "mini", "", []string{"realtime"}},
-	{"qwen-omni-turbo", "qwen", "turbo", "", []string{"omni"}},
-	{"qwen-omni-turbo-realtime", "qwen", "turbo", "", []string{"omni", "realtime"}},
-	{"qwen3-omni-flash", "qwen", "flash", "3", []string{"omni"}},
-	{"qwen3-omni-flash-realtime", "qwen", "flash", "3", []string{"omni", "realtime"}},
-	{"qwen3.5-omni-flash", "qwen", "flash", "3.5", []string{"omni"}},
-	{"qwen3.5-omni-plus", "qwen", "plus", "3.5", []string{"omni"}},
-	{"qwen/qwen3-omni-30b-a3b-instruct", "qwen", "", "3", []string{"omni", "instruct"}},
-	{"qwen/qwen3-omni-30b-a3b-thinking", "qwen", "", "3", []string{"omni", "thinking"}},
-	{"qwen3-livetranslate-flash-realtime", "qwen", "flash", "3", []string{"livetranslate", "realtime"}},
-	{"nvidia/nemotron-3-nano-omni-30b-a3b-reasoning", "nemotron", "nano", "3", []string{"omni", "reasoning"}},
-	{"nvidia/nemotron-3-nano-omni-30b-a3b-reasoning-bf16", "nemotron", "nano", "3", []string{"omni", "reasoning"}},
-	{"nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free", "nemotron", "nano", "3", []string{"omni", "reasoning"}},
-}
-
 // TestMidIDEngine_StageOverrideEquivalence_FullyDerivable is the retained decomposition
-// pin for the retired stage/mode overrides. For each retired ID it asserts (1) the
-// override entry is GONE from idFamilyOverrides (the retirement actually happened) and
-// (2) the mechanical decomposition of the bare ID reproduces the retained tuple exactly.
-// A failure means either the mid-ID harvest regressed or an entry was retired without an
-// equivalent mechanical derivation.
+// pin for the retired stage/mode overrides. The corpus
+// (testdata/midid/stage_override_equivalence_corpus.json) is the full set of stage/mode
+// overrides retired in favor of the mid-ID engine; each carries the retained (family,
+// variant, version, mods) tuple as a literal so the pin survives the entry's deletion.
+// For each retired ID it asserts (1) the override entry is GONE from idFamilyOverrides
+// (the retirement actually happened) and (2) the mechanical decomposition of the bare ID
+// reproduces the retained tuple exactly. A failure means either the mid-ID harvest
+// regressed or an entry was retired without an equivalent mechanical derivation.
 func TestMidIDEngine_StageOverrideEquivalence_FullyDerivable(t *testing.T) {
-	for _, c := range retiredStageModeOverrides {
-		if _, ok := idFamilyOverrides[strings.ToLower(c.id)]; ok {
-			t.Errorf("%s: still has an idFamilyOverrides entry — it was retired because the mid-ID engine derives it mechanically", c.id)
+	corpus := loadMididCorpus[string, mididDecompExpected](t, mididStageOverrideEquivalenceCorpusJSON, 16)
+	// Keyed value coverage (mididDecompExpected carries a mods slice, so it is
+	// not map-keyable; case names are the retired ids).
+	mididRequireNames(t, corpus,
+		"gemini-omni-flash-preview",                          // omni before variant, preview trails
+		"qwen3-livetranslate-flash-realtime",                 // livetranslate + realtime
+		"nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free", // colon-suffixed variant
+	)
+	for _, c := range corpus.Cases {
+		id := c.Input
+		if _, ok := idFamilyOverrides[strings.ToLower(id)]; ok {
+			t.Errorf("%s: still has an idFamilyOverrides entry — it was retired because the mid-ID engine derives it mechanically", id)
 		}
-		f, v, ver, mods, _ := ParseFamilyDetailed("", ModelID(c.id), "")
+		f, v, ver, mods, _ := ParseFamilyDetailed("", ModelID(id), "")
 		got := decompStr(f, v, ver, mods)
-		want := decompStr(c.family, c.variant, c.version, CanonicalizeModifiers(c.mods))
+		want := decompStr(Family(c.Expected.Family), c.Expected.Variant, c.Expected.Version, CanonicalizeModifiers(c.Expected.Mods))
 		if got != want {
-			t.Errorf("%s: mechanical decomposition = %s, want (retained pin) = %s", c.id, got, want)
+			t.Errorf("%s: mechanical decomposition = %s, want (retained pin) = %s", id, got, want)
 		}
 	}
 }
@@ -117,32 +93,33 @@ func TestMidIDEngine_StageOverrideEquivalence_FullyDerivable(t *testing.T) {
 // extractor later closes it, this test flags the ID for promotion into
 // stageModeFullyDerivable.
 func TestMidIDEngine_StageOverrideEquivalence_RealtimeModifierOnly(t *testing.T) {
-	cases := []struct {
-		id          string
-		wantVersion string // current mechanical version (the documented gap)
-	}{
-		{"gpt-realtime-2.1", ""},
-		{"openai/gpt-realtime-2.1", ""},
-		{"openai/gpt-realtime-1.5", ""},
-	}
-	for _, c := range cases {
-		ov := idFamilyOverrides[strings.ToLower(c.id)]
-		f, v, ver, mods := decomposeWithoutOverride(c.id)
+	corpus := loadMididCorpus[string, string](t, mididRealtimeModifierOnlyCorpusJSON, 3)
+	// Keyed value coverage: all three gap-boundary ids must remain present (case
+	// names are the ids), so a swap cannot silently drop a promotion tripwire.
+	mididRequireNames(t, corpus,
+		"gpt-realtime-2.1",
+		"openai/gpt-realtime-2.1",
+		"openai/gpt-realtime-1.5",
+	)
+	for _, c := range corpus.Cases {
+		id, wantVersion := c.Input, c.Expected
+		ov := idFamilyOverrides[strings.ToLower(id)]
+		f, v, ver, mods := decomposeWithoutOverride(id)
 		// Engine's contribution: realtime harvested, family + variant agree with the pin.
 		if !modsContain(mods, "realtime") {
-			t.Errorf("%s: mid-ID realtime not harvested; mods=%v", c.id, mods)
+			t.Errorf("%s: mid-ID realtime not harvested; mods=%v", id, mods)
 		}
 		if f != ov.family || v != ov.variant {
-			t.Errorf("%s: family/variant = (%q,%q), want (%q,%q)", c.id, f, v, ov.family, ov.variant)
+			t.Errorf("%s: family/variant = (%q,%q), want (%q,%q)", id, f, v, ov.family, ov.variant)
 		}
 		if strings.Join(CanonicalizeModifiers(mods), ",") != strings.Join(CanonicalizeModifiers(ov.modifiers), ",") {
-			t.Errorf("%s: modifiers = %v, want %v", c.id, mods, ov.modifiers)
+			t.Errorf("%s: modifiers = %v, want %v", id, mods, ov.modifiers)
 		}
 		// Documented gap: version not yet mechanically recovered (override still needed).
-		if ver != c.wantVersion {
+		if ver != wantVersion {
 			t.Errorf("%s: mechanical version = %q, want %q (version-extraction gap changed — "+
-				"if now == pinned %q, retire this override and move the ID into retiredStageModeOverrides)",
-				c.id, ver, c.wantVersion, ov.version)
+				"if now == pinned %q, retire this override and move the ID into the stage-override-equivalence corpus)",
+				id, ver, wantVersion, ov.version)
 		}
 	}
 }
@@ -152,50 +129,24 @@ func TestMidIDEngine_StageOverrideEquivalence_RealtimeModifierOnly(t *testing.T)
 // grows `consumed` (it is not a trailing substring, so the version/date extractors must
 // still see it in place). Phase-A trailing modifiers still populate `consumed` as before.
 func TestMidIDEngine_ExtractModifiers_MidIDHarvest(t *testing.T) {
-	cases := []struct {
-		name         string
-		id           ModelID
-		family       Family
-		variant      string
-		wantMods     []string // must all be present (order-independent)
-		wantConsumed string   // exact
-	}{
-		{
-			name: "gemini omni before variant, preview trails",
-			id:   "gemini-omni-flash-preview", family: "gemini", variant: "flash",
-			wantMods: []string{"omni", "preview"}, wantConsumed: "-preview",
-		},
-		{
-			name: "gpt realtime before bare version, nothing trails",
-			id:   "gpt-realtime-2.1", family: "gpt", variant: "",
-			wantMods: []string{"realtime"}, wantConsumed: "",
-		},
-		{
-			name: "livetranslate before variant, realtime trails",
-			id:   "qwen3-livetranslate-flash-realtime", family: "qwen", variant: "flash",
-			wantMods: []string{"livetranslate", "realtime"}, wantConsumed: "-realtime",
-		},
-		{
-			name: "omni behind a split MoE size, instruct trails",
-			id:   "qwen/qwen3-omni-30b-a3b-instruct", family: "qwen", variant: "",
-			wantMods: []string{"omni", "instruct"}, wantConsumed: "-instruct",
-		},
-		{
-			name: "realtime before variant (mini)",
-			id:   "openai/gpt-realtime-mini", family: "gpt", variant: "mini",
-			wantMods: []string{"realtime"}, wantConsumed: "",
-		},
-	}
-	for _, c := range cases {
-		mods, consumed := extractModifiers(c.id, c.family, c.variant)
-		for _, want := range c.wantMods {
+	corpus := loadMididCorpus[mididHarvestInput, mididHarvestExpected](t, mididMidIDHarvestCorpusJSON, 5)
+	// Keyed value coverage (mididHarvestExpected carries a mods slice, so it is
+	// not map-keyable): the load-bearing harvest arms must remain present.
+	mididRequireNames(t, corpus,
+		"gpt realtime before bare version, nothing trails",
+		"livetranslate before variant, realtime trails",
+		"omni behind a split MoE size, instruct trails",
+	)
+	for _, c := range corpus.Cases {
+		mods, consumed := extractModifiers(ModelID(c.Input.ID), Family(c.Input.Family), c.Input.Variant)
+		for _, want := range c.Expected.Mods {
 			if !modsContain(mods, want) {
-				t.Errorf("%s (%s): mods=%v missing %q", c.name, c.id, mods, want)
+				t.Errorf("%s (%s): mods=%v missing %q", c.Name, c.Input.ID, mods, want)
 			}
 		}
-		if consumed != c.wantConsumed {
+		if consumed != c.Expected.Consumed {
 			t.Errorf("%s (%s): consumed=%q, want %q (mid-ID token must NOT grow consumed)",
-				c.name, c.id, consumed, c.wantConsumed)
+				c.Name, c.Input.ID, consumed, c.Expected.Consumed)
 		}
 	}
 }

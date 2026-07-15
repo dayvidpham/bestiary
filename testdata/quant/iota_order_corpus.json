@@ -1,0 +1,472 @@
+{
+  "cases": [
+    {
+      "name": "none",
+      "input": "none",
+      "expected": 0,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "quantization.go: QuantizationNone is iota-assigned 0 in the Quantization enum (IP-1 ratified contract); ParseQuantization('none') resolves it"
+      },
+      "mutation": {
+        "description": "pins the enum member QuantizationNone's assigned integer value; a reordering of the iota block would flip this"
+      }
+    },
+    {
+      "name": "f16",
+      "input": "f16",
+      "expected": 1,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "quantization.go: QuantF16 is iota-assigned 1 in the Quantization enum (IP-1 ratified contract); ParseQuantization('f16') resolves it"
+      },
+      "mutation": {
+        "description": "pins the enum member QuantF16's assigned integer value; a reordering of the iota block would flip this"
+      }
+    },
+    {
+      "name": "bf16",
+      "input": "bf16",
+      "expected": 2,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "quantization.go: QuantBF16 is iota-assigned 2 in the Quantization enum (IP-1 ratified contract); ParseQuantization('bf16') resolves it"
+      },
+      "mutation": {
+        "description": "pins the enum member QuantBF16's assigned integer value; a reordering of the iota block would flip this"
+      }
+    },
+    {
+      "name": "f32",
+      "input": "f32",
+      "expected": 3,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "quantization.go: QuantF32 is iota-assigned 3 in the Quantization enum (IP-1 ratified contract); ParseQuantization('f32') resolves it"
+      },
+      "mutation": {
+        "description": "pins the enum member QuantF32's assigned integer value; a reordering of the iota block would flip this"
+      }
+    },
+    {
+      "name": "q4_0",
+      "input": "q4_0",
+      "expected": 4,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "quantization.go: QuantQ4_0 is iota-assigned 4 in the Quantization enum (IP-1 ratified contract); ParseQuantization('q4_0') resolves it"
+      },
+      "mutation": {
+        "description": "pins the enum member QuantQ4_0's assigned integer value; a reordering of the iota block would flip this"
+      }
+    },
+    {
+      "name": "q4_1",
+      "input": "q4_1",
+      "expected": 5,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "quantization.go: QuantQ4_1 is iota-assigned 5 in the Quantization enum (IP-1 ratified contract); ParseQuantization('q4_1') resolves it"
+      },
+      "mutation": {
+        "description": "pins the enum member QuantQ4_1's assigned integer value; a reordering of the iota block would flip this"
+      }
+    },
+    {
+      "name": "q5_0",
+      "input": "q5_0",
+      "expected": 6,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "quantization.go: QuantQ5_0 is iota-assigned 6 in the Quantization enum (IP-1 ratified contract); ParseQuantization('q5_0') resolves it"
+      },
+      "mutation": {
+        "description": "pins the enum member QuantQ5_0's assigned integer value; a reordering of the iota block would flip this"
+      }
+    },
+    {
+      "name": "q5_1",
+      "input": "q5_1",
+      "expected": 7,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "quantization.go: QuantQ5_1 is iota-assigned 7 in the Quantization enum (IP-1 ratified contract); ParseQuantization('q5_1') resolves it"
+      },
+      "mutation": {
+        "description": "pins the enum member QuantQ5_1's assigned integer value; a reordering of the iota block would flip this"
+      }
+    },
+    {
+      "name": "q8_0",
+      "input": "q8_0",
+      "expected": 8,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "quantization.go: QuantQ8_0 is iota-assigned 8 in the Quantization enum (IP-1 ratified contract); ParseQuantization('q8_0') resolves it"
+      },
+      "mutation": {
+        "description": "pins the enum member QuantQ8_0's assigned integer value; a reordering of the iota block would flip this"
+      }
+    },
+    {
+      "name": "q2_k",
+      "input": "q2_k",
+      "expected": 9,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "quantization.go: QuantQ2_K is iota-assigned 9 in the Quantization enum (IP-1 ratified contract); ParseQuantization('q2_k') resolves it"
+      },
+      "mutation": {
+        "description": "pins the enum member QuantQ2_K's assigned integer value; a reordering of the iota block would flip this"
+      }
+    },
+    {
+      "name": "q2_k_s",
+      "input": "q2_k_s",
+      "expected": 10,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "quantization.go: QuantQ2_K_S is iota-assigned 10 in the Quantization enum (IP-1 ratified contract); ParseQuantization('q2_k_s') resolves it"
+      },
+      "mutation": {
+        "description": "pins the enum member QuantQ2_K_S's assigned integer value; a reordering of the iota block would flip this"
+      }
+    },
+    {
+      "name": "q3_k_s",
+      "input": "q3_k_s",
+      "expected": 11,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "quantization.go: QuantQ3_K_S is iota-assigned 11 in the Quantization enum (IP-1 ratified contract); ParseQuantization('q3_k_s') resolves it"
+      },
+      "mutation": {
+        "description": "pins the enum member QuantQ3_K_S's assigned integer value; a reordering of the iota block would flip this"
+      }
+    },
+    {
+      "name": "q3_k_m",
+      "input": "q3_k_m",
+      "expected": 12,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "quantization.go: QuantQ3_K_M is iota-assigned 12 in the Quantization enum (IP-1 ratified contract); ParseQuantization('q3_k_m') resolves it"
+      },
+      "mutation": {
+        "description": "pins the enum member QuantQ3_K_M's assigned integer value; a reordering of the iota block would flip this"
+      }
+    },
+    {
+      "name": "q3_k_l",
+      "input": "q3_k_l",
+      "expected": 13,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "quantization.go: QuantQ3_K_L is iota-assigned 13 in the Quantization enum (IP-1 ratified contract); ParseQuantization('q3_k_l') resolves it"
+      },
+      "mutation": {
+        "description": "pins the enum member QuantQ3_K_L's assigned integer value; a reordering of the iota block would flip this"
+      }
+    },
+    {
+      "name": "q4_k_s",
+      "input": "q4_k_s",
+      "expected": 14,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "quantization.go: QuantQ4_K_S is iota-assigned 14 in the Quantization enum (IP-1 ratified contract); ParseQuantization('q4_k_s') resolves it"
+      },
+      "mutation": {
+        "description": "pins the enum member QuantQ4_K_S's assigned integer value; a reordering of the iota block would flip this"
+      }
+    },
+    {
+      "name": "q4_k_m",
+      "input": "q4_k_m",
+      "expected": 15,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "quantization.go: QuantQ4_K_M is iota-assigned 15 in the Quantization enum (IP-1 ratified contract); ParseQuantization('q4_k_m') resolves it"
+      },
+      "mutation": {
+        "description": "pins the enum member QuantQ4_K_M's assigned integer value; a reordering of the iota block would flip this"
+      }
+    },
+    {
+      "name": "q5_k_s",
+      "input": "q5_k_s",
+      "expected": 16,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "quantization.go: QuantQ5_K_S is iota-assigned 16 in the Quantization enum (IP-1 ratified contract); ParseQuantization('q5_k_s') resolves it"
+      },
+      "mutation": {
+        "description": "pins the enum member QuantQ5_K_S's assigned integer value; a reordering of the iota block would flip this"
+      }
+    },
+    {
+      "name": "q5_k_m",
+      "input": "q5_k_m",
+      "expected": 17,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "quantization.go: QuantQ5_K_M is iota-assigned 17 in the Quantization enum (IP-1 ratified contract); ParseQuantization('q5_k_m') resolves it"
+      },
+      "mutation": {
+        "description": "pins the enum member QuantQ5_K_M's assigned integer value; a reordering of the iota block would flip this"
+      }
+    },
+    {
+      "name": "q6_k",
+      "input": "q6_k",
+      "expected": 18,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "quantization.go: QuantQ6_K is iota-assigned 18 in the Quantization enum (IP-1 ratified contract); ParseQuantization('q6_k') resolves it"
+      },
+      "mutation": {
+        "description": "pins the enum member QuantQ6_K's assigned integer value; a reordering of the iota block would flip this"
+      }
+    },
+    {
+      "name": "iq1_s",
+      "input": "iq1_s",
+      "expected": 19,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "quantization.go: QuantIQ1_S is iota-assigned 19 in the Quantization enum (IP-1 ratified contract); ParseQuantization('iq1_s') resolves it"
+      },
+      "mutation": {
+        "description": "pins the enum member QuantIQ1_S's assigned integer value; a reordering of the iota block would flip this"
+      }
+    },
+    {
+      "name": "iq1_m",
+      "input": "iq1_m",
+      "expected": 20,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "quantization.go: QuantIQ1_M is iota-assigned 20 in the Quantization enum (IP-1 ratified contract); ParseQuantization('iq1_m') resolves it"
+      },
+      "mutation": {
+        "description": "pins the enum member QuantIQ1_M's assigned integer value; a reordering of the iota block would flip this"
+      }
+    },
+    {
+      "name": "iq2_xxs",
+      "input": "iq2_xxs",
+      "expected": 21,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "quantization.go: QuantIQ2_XXS is iota-assigned 21 in the Quantization enum (IP-1 ratified contract); ParseQuantization('iq2_xxs') resolves it"
+      },
+      "mutation": {
+        "description": "pins the enum member QuantIQ2_XXS's assigned integer value; a reordering of the iota block would flip this"
+      }
+    },
+    {
+      "name": "iq2_xs",
+      "input": "iq2_xs",
+      "expected": 22,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "quantization.go: QuantIQ2_XS is iota-assigned 22 in the Quantization enum (IP-1 ratified contract); ParseQuantization('iq2_xs') resolves it"
+      },
+      "mutation": {
+        "description": "pins the enum member QuantIQ2_XS's assigned integer value; a reordering of the iota block would flip this"
+      }
+    },
+    {
+      "name": "iq2_s",
+      "input": "iq2_s",
+      "expected": 23,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "quantization.go: QuantIQ2_S is iota-assigned 23 in the Quantization enum (IP-1 ratified contract); ParseQuantization('iq2_s') resolves it"
+      },
+      "mutation": {
+        "description": "pins the enum member QuantIQ2_S's assigned integer value; a reordering of the iota block would flip this"
+      }
+    },
+    {
+      "name": "iq2_m",
+      "input": "iq2_m",
+      "expected": 24,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "quantization.go: QuantIQ2_M is iota-assigned 24 in the Quantization enum (IP-1 ratified contract); ParseQuantization('iq2_m') resolves it"
+      },
+      "mutation": {
+        "description": "pins the enum member QuantIQ2_M's assigned integer value; a reordering of the iota block would flip this"
+      }
+    },
+    {
+      "name": "iq3_xxs",
+      "input": "iq3_xxs",
+      "expected": 25,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "quantization.go: QuantIQ3_XXS is iota-assigned 25 in the Quantization enum (IP-1 ratified contract); ParseQuantization('iq3_xxs') resolves it"
+      },
+      "mutation": {
+        "description": "pins the enum member QuantIQ3_XXS's assigned integer value; a reordering of the iota block would flip this"
+      }
+    },
+    {
+      "name": "iq3_xs",
+      "input": "iq3_xs",
+      "expected": 26,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "quantization.go: QuantIQ3_XS is iota-assigned 26 in the Quantization enum (IP-1 ratified contract); ParseQuantization('iq3_xs') resolves it"
+      },
+      "mutation": {
+        "description": "pins the enum member QuantIQ3_XS's assigned integer value; a reordering of the iota block would flip this"
+      }
+    },
+    {
+      "name": "iq3_s",
+      "input": "iq3_s",
+      "expected": 27,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "quantization.go: QuantIQ3_S is iota-assigned 27 in the Quantization enum (IP-1 ratified contract); ParseQuantization('iq3_s') resolves it"
+      },
+      "mutation": {
+        "description": "pins the enum member QuantIQ3_S's assigned integer value; a reordering of the iota block would flip this"
+      }
+    },
+    {
+      "name": "iq3_m",
+      "input": "iq3_m",
+      "expected": 28,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "quantization.go: QuantIQ3_M is iota-assigned 28 in the Quantization enum (IP-1 ratified contract); ParseQuantization('iq3_m') resolves it"
+      },
+      "mutation": {
+        "description": "pins the enum member QuantIQ3_M's assigned integer value; a reordering of the iota block would flip this"
+      }
+    },
+    {
+      "name": "iq4_xs",
+      "input": "iq4_xs",
+      "expected": 29,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "quantization.go: QuantIQ4_XS is iota-assigned 29 in the Quantization enum (IP-1 ratified contract); ParseQuantization('iq4_xs') resolves it"
+      },
+      "mutation": {
+        "description": "pins the enum member QuantIQ4_XS's assigned integer value; a reordering of the iota block would flip this"
+      }
+    },
+    {
+      "name": "iq4_nl",
+      "input": "iq4_nl",
+      "expected": 30,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "quantization.go: QuantIQ4_NL is iota-assigned 30 in the Quantization enum (IP-1 ratified contract); ParseQuantization('iq4_nl') resolves it"
+      },
+      "mutation": {
+        "description": "pins the enum member QuantIQ4_NL's assigned integer value; a reordering of the iota block would flip this"
+      }
+    },
+    {
+      "name": "awq",
+      "input": "awq",
+      "expected": 31,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "quantization.go: QuantAWQ is iota-assigned 31 in the Quantization enum (IP-1 ratified contract); ParseQuantization('awq') resolves it"
+      },
+      "mutation": {
+        "description": "pins the enum member QuantAWQ's assigned integer value; a reordering of the iota block would flip this"
+      }
+    },
+    {
+      "name": "gptq",
+      "input": "gptq",
+      "expected": 32,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "quantization.go: QuantGPTQ is iota-assigned 32 in the Quantization enum (IP-1 ratified contract); ParseQuantization('gptq') resolves it"
+      },
+      "mutation": {
+        "description": "pins the enum member QuantGPTQ's assigned integer value; a reordering of the iota block would flip this"
+      }
+    },
+    {
+      "name": "int8",
+      "input": "int8",
+      "expected": 33,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "quantization.go: QuantInt8 is iota-assigned 33 in the Quantization enum (IP-1 ratified contract); ParseQuantization('int8') resolves it"
+      },
+      "mutation": {
+        "description": "pins the enum member QuantInt8's assigned integer value; a reordering of the iota block would flip this"
+      }
+    },
+    {
+      "name": "int4",
+      "input": "int4",
+      "expected": 34,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "quantization.go: QuantInt4 is iota-assigned 34 in the Quantization enum (IP-1 ratified contract); ParseQuantization('int4') resolves it"
+      },
+      "mutation": {
+        "description": "pins the enum member QuantInt4's assigned integer value; a reordering of the iota block would flip this"
+      }
+    },
+    {
+      "name": "other",
+      "input": "other",
+      "expected": 35,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "quantization.go: QuantizationOther is iota-assigned 35 in the Quantization enum (IP-1 ratified contract); ParseQuantization('other') resolves it"
+      },
+      "mutation": {
+        "description": "pins the enum member QuantizationOther's assigned integer value; a reordering of the iota block would flip this"
+      }
+    }
+  ]
+}

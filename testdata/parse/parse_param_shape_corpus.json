@@ -1,0 +1,100 @@
+{
+  "cases": [
+    {
+      "name": "empty",
+      "input": "",
+      "expected": { "total": -1, "active": -1, "per_expert": -1, "expert_count": -1 },
+      "classification": "must-pass",
+      "provenance": { "source": "boundary", "ref": "empty token -> all four fields NULL (unsized model), no error" },
+      "mutation": { "description": "the empty (unsized) token leaves all four shape fields NULL" }
+    },
+    {
+      "name": "30b dense",
+      "input": "30b",
+      "expected": { "total": 30000000000, "active": -1, "per_expert": -1, "expert_count": 0 },
+      "classification": "must-pass",
+      "provenance": { "source": "requirement", "ref": "dense: TotalParams attested; Active/PerExpert NULL; ExpertCount a genuine 0 (the sole in-domain 0)" },
+      "mutation": { "description": "a dense token sets Total, leaves Active/PerExpert NULL, ExpertCount 0" }
+    },
+    {
+      "name": "560m dense",
+      "input": "560m",
+      "expected": { "total": 560000000, "active": -1, "per_expert": -1, "expert_count": 0 },
+      "classification": "must-pass",
+      "provenance": { "source": "requirement", "ref": "dense m-unit: 560m = 560,000,000 total params; ExpertCount genuine 0" },
+      "mutation": { "description": "a dense million-unit token" }
+    },
+    {
+      "name": "7b dense",
+      "input": "7b",
+      "expected": { "total": 7000000000, "active": -1, "per_expert": -1, "expert_count": 0 },
+      "classification": "must-pass",
+      "provenance": { "source": "requirement", "ref": "dense: 7b = 7,000,000,000 total params; ExpertCount genuine 0" },
+      "mutation": { "description": "a dense billion-unit token" }
+    },
+    {
+      "name": "671b dense",
+      "input": "671b",
+      "expected": { "total": 671000000000, "active": -1, "per_expert": -1, "expert_count": 0 },
+      "classification": "must-pass",
+      "provenance": { "source": "requirement", "ref": "dense: 671b = 671,000,000,000 total params; ExpertCount genuine 0" },
+      "mutation": { "description": "a large dense token" }
+    },
+    {
+      "name": "30b-a3b active-moe",
+      "input": "30b-a3b",
+      "expected": { "total": 30000000000, "active": 3000000000, "per_expert": -1, "expert_count": -1 },
+      "classification": "must-pass",
+      "provenance": { "source": "requirement", "ref": "active-MoE: TotalParams + ActiveParams attested; PerExpert/Experts NULL" },
+      "mutation": { "description": "an active-MoE token records Total and Active, leaves PerExpert/Experts NULL" }
+    },
+    {
+      "name": "235b-a22b active-moe",
+      "input": "235b-a22b",
+      "expected": { "total": 235000000000, "active": 22000000000, "per_expert": -1, "expert_count": -1 },
+      "classification": "must-pass",
+      "provenance": { "source": "requirement", "ref": "active-MoE: 235b total, 22b active; PerExpert/Experts NULL" },
+      "mutation": { "description": "a large active-MoE token" }
+    },
+    {
+      "name": "8x22b nxm-moe (Total NEVER 176e9)",
+      "input": "8x22b",
+      "expected": { "total": -1, "active": -1, "per_expert": 22000000000, "expert_count": 8 },
+      "classification": "must-pass",
+      "provenance": { "source": "requirement", "ref": "NxM MoE: ExpertCount + PerExpertParams attested; Total/Active stay NULL (Total is NEVER N*M = 176e9)" },
+      "mutation": { "description": "an NxM MoE records ExpertCount and PerExpertParams, leaves Total/Active NULL" }
+    },
+    {
+      "name": "8x7b nxm-moe",
+      "input": "8x7b",
+      "expected": { "total": -1, "active": -1, "per_expert": 7000000000, "expert_count": 8 },
+      "classification": "must-pass",
+      "provenance": { "source": "requirement", "ref": "NxM MoE: 8 experts x 7b per-expert; Total/Active NULL" },
+      "mutation": { "description": "an NxM MoE token" }
+    },
+    {
+      "name": "17b-16e count-moe (scout)",
+      "input": "17b-16e",
+      "expected": { "total": -1, "active": 17000000000, "per_expert": -1, "expert_count": 16 },
+      "classification": "must-pass",
+      "provenance": { "source": "requirement", "ref": "count-suffixed MoE (Nb-Ke): ActiveParams + ExpertCount; Total/PerExpert NULL (llama-4-scout shape)" },
+      "mutation": { "description": "a count-suffixed MoE records Active and ExpertCount, leaves Total/PerExpert NULL" }
+    },
+    {
+      "name": "17b-128e count-moe (maverick)",
+      "input": "17b-128e",
+      "expected": { "total": -1, "active": 17000000000, "per_expert": -1, "expert_count": 128 },
+      "classification": "must-pass",
+      "provenance": { "source": "requirement", "ref": "count-suffixed MoE: 17b active, 128 experts (llama-4-maverick shape); Total/PerExpert NULL" },
+      "mutation": { "description": "a count-suffixed MoE with 128 experts" }
+    },
+    {
+      "name": "8X22B uppercase nxm-moe",
+      "input": "8X22B",
+      "expected": { "total": -1, "active": -1, "per_expert": 22000000000, "expert_count": 8 },
+      "classification": "must-pass",
+      "provenance": { "source": "boundary", "ref": "uppercase token is folded before decomposition; same NxM result as 8x22b" },
+      "mutation": { "description": "uppercased an NxM MoE token; must fold before decomposition" }
+    }
+  ]
+}

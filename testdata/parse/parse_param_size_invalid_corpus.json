@@ -1,0 +1,212 @@
+{
+  "cases": [
+    {
+      "name": "bare b",
+      "input": "b",
+      "expected": "",
+      "classification": "must-fail",
+      "provenance": {
+        "source": "boundary",
+        "ref": "ParseParamSize(b) must reject with an actionable error naming the input + 'How to fix'"
+      },
+      "mutation": {
+        "description": "a near-miss/invalid shape the parser must reject"
+      }
+    },
+    {
+      "name": "alpha only",
+      "input": "xyz",
+      "expected": "",
+      "classification": "must-fail",
+      "provenance": {
+        "source": "boundary",
+        "ref": "ParseParamSize(xyz) must reject with an actionable error naming the input + 'How to fix'"
+      },
+      "mutation": {
+        "description": "a near-miss/invalid shape the parser must reject"
+      }
+    },
+    {
+      "name": "hash prefix #70b",
+      "input": "#70b",
+      "expected": "",
+      "classification": "must-fail",
+      "provenance": {
+        "source": "boundary",
+        "ref": "ParseParamSize(#70b) must reject with an actionable error naming the input + 'How to fix'"
+      },
+      "mutation": {
+        "description": "a near-miss/invalid shape the parser must reject"
+      }
+    },
+    {
+      "name": "whitespace embedded",
+      "input": "70 b",
+      "expected": "",
+      "classification": "must-fail",
+      "provenance": {
+        "source": "boundary",
+        "ref": "ParseParamSize(70 b) must reject with an actionable error naming the input + 'How to fix'"
+      },
+      "mutation": {
+        "description": "a near-miss/invalid shape the parser must reject"
+      }
+    },
+    {
+      "name": "digits only 70",
+      "input": "70",
+      "expected": "",
+      "classification": "must-fail",
+      "provenance": {
+        "source": "boundary",
+        "ref": "ParseParamSize(70) must reject with an actionable error naming the input + 'How to fix'"
+      },
+      "mutation": {
+        "description": "a near-miss/invalid shape the parser must reject"
+      }
+    },
+    {
+      "name": "negative -70b",
+      "input": "-70b",
+      "expected": "",
+      "classification": "must-fail",
+      "provenance": {
+        "source": "boundary",
+        "ref": "ParseParamSize(-70b) must reject with an actionable error naming the input + 'How to fix'"
+      },
+      "mutation": {
+        "description": "a near-miss/invalid shape the parser must reject"
+      }
+    },
+    {
+      "name": "word instruct",
+      "input": "instruct",
+      "expected": "",
+      "classification": "must-fail",
+      "provenance": {
+        "source": "boundary",
+        "ref": "ParseParamSize(instruct) must reject with an actionable error naming the input + 'How to fix'"
+      },
+      "mutation": {
+        "description": "a near-miss/invalid shape the parser must reject"
+      }
+    },
+    {
+      "name": "dash only",
+      "input": "-",
+      "expected": "",
+      "classification": "must-fail",
+      "provenance": {
+        "source": "boundary",
+        "ref": "ParseParamSize(-) must reject with an actionable error naming the input + 'How to fix'"
+      },
+      "mutation": {
+        "description": "a near-miss/invalid shape the parser must reject"
+      }
+    },
+    {
+      "name": "version 3.3",
+      "input": "3.3",
+      "expected": "",
+      "classification": "must-fail",
+      "provenance": {
+        "source": "boundary",
+        "ref": "ParseParamSize(3.3) must reject with an actionable error naming the input + 'How to fix'"
+      },
+      "mutation": {
+        "description": "a near-miss/invalid shape the parser must reject"
+      }
+    },
+    {
+      "name": "4o",
+      "input": "4o",
+      "expected": "",
+      "classification": "must-fail",
+      "provenance": {
+        "source": "boundary",
+        "ref": "ParseParamSize(4o) must reject with an actionable error naming the input + 'How to fix'"
+      },
+      "mutation": {
+        "description": "a near-miss/invalid shape the parser must reject"
+      }
+    },
+    {
+      "name": "70k",
+      "input": "70k",
+      "expected": "",
+      "classification": "must-fail",
+      "provenance": {
+        "source": "boundary",
+        "ref": "ParseParamSize(70k) must reject with an actionable error naming the input + 'How to fix'"
+      },
+      "mutation": {
+        "description": "a near-miss/invalid shape the parser must reject"
+      }
+    },
+    {
+      "name": "leading letter r7b",
+      "input": "r7b",
+      "expected": "",
+      "classification": "must-fail",
+      "provenance": {
+        "source": "boundary",
+        "ref": "ParseParamSize(r7b) must reject with an actionable error naming the input + 'How to fix'"
+      },
+      "mutation": {
+        "description": "a near-miss/invalid shape the parser must reject"
+      }
+    },
+    {
+      "name": "underscore-glued 10_7b",
+      "input": "10_7b",
+      "expected": "",
+      "classification": "must-fail",
+      "provenance": {
+        "source": "boundary",
+        "ref": "ParseParamSize(10_7b) must reject with an actionable error naming the input + 'How to fix'"
+      },
+      "mutation": {
+        "description": "a near-miss/invalid shape the parser must reject"
+      }
+    },
+    {
+      "name": "count-moe missing e suffix 17b-16",
+      "input": "17b-16",
+      "expected": "",
+      "classification": "must-fail",
+      "provenance": {
+        "source": "boundary",
+        "ref": "ParseParamSize(17b-16) must reject with an actionable error naming the input + 'How to fix'"
+      },
+      "mutation": {
+        "description": "a near-miss/invalid shape the parser must reject"
+      }
+    },
+    {
+      "name": "count-moe non-numeric experts 17b-xe",
+      "input": "17b-xe",
+      "expected": "",
+      "classification": "must-fail",
+      "provenance": {
+        "source": "boundary",
+        "ref": "ParseParamSize(17b-xe) must reject with an actionable error naming the input + 'How to fix'"
+      },
+      "mutation": {
+        "description": "a near-miss/invalid shape the parser must reject"
+      }
+    },
+    {
+      "name": "bare expert count 16e",
+      "input": "16e",
+      "expected": "",
+      "classification": "must-fail",
+      "provenance": {
+        "source": "boundary",
+        "ref": "ParseParamSize(16e) must reject with an actionable error naming the input + 'How to fix'"
+      },
+      "mutation": {
+        "description": "a near-miss/invalid shape the parser must reject"
+      }
+    }
+  ]
+}

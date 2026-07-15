@@ -1,0 +1,134 @@
+{
+  "cases": [
+    {
+      "name": "70B→70b",
+      "input": "70B",
+      "expected": "70b",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "case-folding: ParseParamSize(70B) = '70b' (canonical lowercase)"
+      },
+      "mutation": {
+        "description": "uppercased a valid size token; must fold to lowercase"
+      }
+    },
+    {
+      "name": "8B→8b",
+      "input": "8B",
+      "expected": "8b",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "case-folding: ParseParamSize(8B) = '8b' (canonical lowercase)"
+      },
+      "mutation": {
+        "description": "uppercased a valid size token; must fold to lowercase"
+      }
+    },
+    {
+      "name": "0.5B→0.5b",
+      "input": "0.5B",
+      "expected": "0.5b",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "case-folding: ParseParamSize(0.5B) = '0.5b' (canonical lowercase)"
+      },
+      "mutation": {
+        "description": "uppercased a valid size token; must fold to lowercase"
+      }
+    },
+    {
+      "name": "1B→1b",
+      "input": "1B",
+      "expected": "1b",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "case-folding: ParseParamSize(1B) = '1b' (canonical lowercase)"
+      },
+      "mutation": {
+        "description": "uppercased a valid size token; must fold to lowercase"
+      }
+    },
+    {
+      "name": "671B→671b",
+      "input": "671B",
+      "expected": "671b",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "case-folding: ParseParamSize(671B) = '671b' (canonical lowercase)"
+      },
+      "mutation": {
+        "description": "uppercased a valid size token; must fold to lowercase"
+      }
+    },
+    {
+      "name": "8X7B→8x7b",
+      "input": "8X7B",
+      "expected": "8x7b",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "case-folding: ParseParamSize(8X7B) = '8x7b' (canonical lowercase)"
+      },
+      "mutation": {
+        "description": "uppercased a valid size token; must fold to lowercase"
+      }
+    },
+    {
+      "name": "671B-A17B→671b-a17b",
+      "input": "671B-A17B",
+      "expected": "671b-a17b",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "case-folding: ParseParamSize(671B-A17B) = '671b-a17b' (canonical lowercase)"
+      },
+      "mutation": {
+        "description": "uppercased a valid size token; must fold to lowercase"
+      }
+    },
+    {
+      "name": "17B-16E→17b-16e",
+      "input": "17B-16E",
+      "expected": "17b-16e",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "case-folding: ParseParamSize(17B-16E) = '17b-16e' (canonical lowercase)"
+      },
+      "mutation": {
+        "description": "uppercased a valid size token; must fold to lowercase"
+      }
+    },
+    {
+      "name": "17B-128E→17b-128e",
+      "input": "17B-128E",
+      "expected": "17b-128e",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "case-folding: ParseParamSize(17B-128E) = '17b-128e' (canonical lowercase)"
+      },
+      "mutation": {
+        "description": "uppercased a valid size token; must fold to lowercase"
+      }
+    },
+    {
+      "name": "10.7B→10.7b",
+      "input": "10.7B",
+      "expected": "10.7b",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "case-folding: ParseParamSize(10.7B) = '10.7b' (canonical lowercase)"
+      },
+      "mutation": {
+        "description": "uppercased a valid size token; must fold to lowercase"
+      }
+    }
+  ]
+}

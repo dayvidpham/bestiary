@@ -1,0 +1,114 @@
+{
+  "cases": [
+    {
+      "name": "paramsize only (no version no mods)",
+      "input": {"family": "llama", "param_size": "70b"},
+      "expected": "llama#70b",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "#size grammar rule: family[/variant][@version][#paramsize]{identity-mods} — #paramsize renders directly after family when version and mods are absent"
+      },
+      "mutation": {"description": "sets ParamSize alone on an otherwise-bare ref"}
+    },
+    {
+      "name": "paramsize after version",
+      "input": {"family": "llama", "version": "3.3", "param_size": "70b"},
+      "expected": "llama@3.3#70b",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "#size grammar rule: #paramsize renders after @version"
+      },
+      "mutation": {"description": "adds Version alongside ParamSize"}
+    },
+    {
+      "name": "paramsize before mods",
+      "input": {"family": "llama", "version": "3.3", "param_size": "70b", "modifier": ["instruct"]},
+      "expected": "llama@3.3#70b{instruct}",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "#size grammar rule: #paramsize renders before {identity-mods}"
+      },
+      "mutation": {"description": "adds an identity modifier alongside Version+ParamSize"}
+    },
+    {
+      "name": "full tuple: family/variant@version#size{mods}",
+      "input": {"family": "qwen", "variant": "coder", "version": "2.5", "param_size": "7b", "modifier": ["instruct"]},
+      "expected": "qwen/coder@2.5#7b{instruct}",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "#size grammar rule: the full tuple composes as family/variant@version#size{mods}"
+      },
+      "mutation": {"description": "populates every segment (variant, version, paramsize, modifier) simultaneously"}
+    },
+    {
+      "name": "active-MoE shape token renders verbatim",
+      "input": {"family": "qwen", "version": "3", "param_size": "30b-a3b"},
+      "expected": "qwen@3#30b-a3b",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "active-MoE param-size shape token (total-b-activeAparams, e.g. qwen3 30b-a3b) renders verbatim in the #size segment"
+      },
+      "mutation": {"description": "uses an active-MoE shape token instead of a plain dense size"}
+    },
+    {
+      "name": "NxM MoE shape token renders verbatim",
+      "input": {"family": "wizardlm", "version": "2", "param_size": "8x22b"},
+      "expected": "wizardlm@2#8x22b",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "NxM MoE param-size shape token (ExpertCount x PerExpertParams, no total, e.g. wizardlm2 8x22b) renders verbatim in the #size segment"
+      },
+      "mutation": {"description": "uses an NxM MoE shape token instead of a plain dense size"}
+    },
+    {
+      "name": "count-suffixed MoE shape token renders verbatim",
+      "input": {"family": "llama", "variant": "scout", "param_size": "17b-16e", "modifier": ["instruct"]},
+      "expected": "llama/scout#17b-16e{instruct}",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "count-suffixed MoE param-size shape token (e.g. llama-4 scout 17b-16e) renders verbatim in the #size segment"
+      },
+      "mutation": {"description": "uses a count-suffixed MoE shape token with a variant and no version"}
+    },
+    {
+      "name": "decimal dense shape token renders verbatim",
+      "input": {"family": "qwen", "variant": "embedding", "version": "3", "param_size": "0.6b"},
+      "expected": "qwen/embedding@3#0.6b",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "decimal dense param-size shape token (e.g. qwen3-embedding 0.6b) renders verbatim and is never coerced to \"6b\""
+      },
+      "mutation": {"description": "uses a decimal dense size token below 1B"}
+    },
+    {
+      "name": "empty paramsize omits # entirely (backward compat)",
+      "input": {"family": "claude", "variant": "opus", "version": "4.5"},
+      "expected": "claude/opus@4.5",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "#size grammar rule: the # segment is OMITTED entirely when ParamSize is unknown, so every pre-v0.2.4 entity key stays byte-identical"
+      },
+      "mutation": {"description": "leaves ParamSize unset (zero value) on a fully-populated pre-#size-era ref"}
+    },
+    {
+      "name": "zero-value paramsize (empty string) omits # entirely",
+      "input": {"family": "llama", "version": "3.3"},
+      "expected": "llama@3.3",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "#size grammar rule: an explicit zero-value (empty string) ParamSize is indistinguishable from unset and omits #"
+      },
+      "mutation": {"description": "leaves ParamSize as the empty-string zero value on a version-only ref"}
+    }
+  ]
+}

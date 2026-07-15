@@ -1,0 +1,84 @@
+{
+  "cases": [
+    {
+      "name": "kimi-k2.5 via k-prefix",
+      "input": "kimi-k2.5",
+      "expected": {
+        "family": "kimi",
+        "variant": "k2.5"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "versioned-variant pattern: kimi-k2.5 splits to family 'kimi', variant 'k2.5'"
+      },
+      "mutation": {
+        "description": "versioned-variant pattern decomposition for kimi-k2.5"
+      }
+    },
+    {
+      "name": "kimi-k2.6 via k-prefix",
+      "input": "kimi-k2.6",
+      "expected": {
+        "family": "kimi",
+        "variant": "k2.6"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "versioned-variant pattern: kimi-k2.6 splits to family 'kimi', variant 'k2.6'"
+      },
+      "mutation": {
+        "description": "versioned-variant pattern decomposition for kimi-k2.6"
+      }
+    },
+    {
+      "name": "someai-m3.0 (not in overrides, m-prefix pattern)",
+      "input": "someai-m3.0",
+      "expected": {
+        "family": "someai",
+        "variant": "m3.0"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "versioned-variant pattern: someai-m3.0 splits to family 'someai', variant 'm3.0'"
+      },
+      "mutation": {
+        "description": "versioned-variant pattern decomposition for someai-m3.0"
+      }
+    },
+    {
+      "name": "qwen3.5 via no-prefix",
+      "input": "qwen3.5",
+      "expected": {
+        "family": "qwen",
+        "variant": "3.5"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "versioned-variant pattern: qwen3.5 splits to family 'qwen', variant '3.5'"
+      },
+      "mutation": {
+        "description": "versioned-variant pattern decomposition for qwen3.5"
+      }
+    },
+    {
+      "name": "qwen3.6 via no-prefix",
+      "input": "qwen3.6",
+      "expected": {
+        "family": "qwen",
+        "variant": "3.6"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "versioned-variant pattern: qwen3.6 splits to family 'qwen', variant '3.6'"
+      },
+      "mutation": {
+        "description": "versioned-variant pattern decomposition for qwen3.6"
+      }
+    }
+  ]
+}

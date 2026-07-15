@@ -1,0 +1,38 @@
+{
+  "cases": [
+    {
+      "name": "gpt-4o",
+      "input": "gpt-4o",
+      "expected": {
+        "family": "gpt-4o",
+        "variant": "",
+        "version": ""
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "ParseFamilyWithVersion(gpt-4o) -> family 'gpt-4o', variant '', version ''"
+      },
+      "mutation": {
+        "description": "family+version decomposition for gpt-4o"
+      }
+    },
+    {
+      "name": "chatgpt-4o-latest",
+      "input": "chatgpt-4o-latest",
+      "expected": {
+        "family": "chatgpt-4o-latest",
+        "variant": "",
+        "version": ""
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "ParseFamilyWithVersion(chatgpt-4o-latest) -> family 'chatgpt-4o-latest', variant '', version ''"
+      },
+      "mutation": {
+        "description": "family+version decomposition for chatgpt-4o-latest"
+      }
+    }
+  ]
+}

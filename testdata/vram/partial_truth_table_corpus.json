@@ -1,0 +1,191 @@
+{
+  "cases": [
+    {
+      "name": "all present",
+      "input": {
+        "layers": 80,
+        "kv_heads": 8,
+        "head_dim": 128
+      },
+      "expected": false,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "vram.go: VRAMEstimateIsPartial(layers=80, kvHeads=8, headDim=128) == false"
+      },
+      "mutation": {
+        "description": "all three arch facts present: not a partial estimate"
+      }
+    },
+    {
+      "name": "layers absent",
+      "input": {
+        "layers": 0,
+        "kv_heads": 8,
+        "head_dim": 128
+      },
+      "expected": true,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "vram.go: VRAMEstimateIsPartial(layers=0, kvHeads=8, headDim=128) == true"
+      },
+      "mutation": {
+        "description": "layers alone absent (0): partial estimate"
+      }
+    },
+    {
+      "name": "kvHeads absent",
+      "input": {
+        "layers": 80,
+        "kv_heads": 0,
+        "head_dim": 128
+      },
+      "expected": true,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "vram.go: VRAMEstimateIsPartial(layers=80, kvHeads=0, headDim=128) == true"
+      },
+      "mutation": {
+        "description": "kvHeads alone absent (0): partial estimate"
+      }
+    },
+    {
+      "name": "headDim absent",
+      "input": {
+        "layers": 80,
+        "kv_heads": 8,
+        "head_dim": 0
+      },
+      "expected": true,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "vram.go: VRAMEstimateIsPartial(layers=80, kvHeads=8, headDim=0) == true"
+      },
+      "mutation": {
+        "description": "headDim alone absent (0): partial estimate"
+      }
+    },
+    {
+      "name": "all absent",
+      "input": {
+        "layers": 0,
+        "kv_heads": 0,
+        "head_dim": 0
+      },
+      "expected": true,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "vram.go: VRAMEstimateIsPartial(layers=0, kvHeads=0, headDim=0) == true"
+      },
+      "mutation": {
+        "description": "all three arch facts absent (0): partial estimate"
+      }
+    },
+    {
+      "name": "layers+kvHeads absent",
+      "input": {
+        "layers": 0,
+        "kv_heads": 0,
+        "head_dim": 128
+      },
+      "expected": true,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "vram.go: VRAMEstimateIsPartial(layers=0, kvHeads=0, headDim=128) == true"
+      },
+      "mutation": {
+        "description": "two of three arch facts absent: partial estimate"
+      }
+    },
+    {
+      "name": "layers+headDim absent",
+      "input": {
+        "layers": 0,
+        "kv_heads": 8,
+        "head_dim": 0
+      },
+      "expected": true,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "vram.go: VRAMEstimateIsPartial(layers=0, kvHeads=8, headDim=0) == true"
+      },
+      "mutation": {
+        "description": "two of three arch facts absent: partial estimate"
+      }
+    },
+    {
+      "name": "kvHeads+headDim absent",
+      "input": {
+        "layers": 80,
+        "kv_heads": 0,
+        "head_dim": 0
+      },
+      "expected": true,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "vram.go: VRAMEstimateIsPartial(layers=80, kvHeads=0, headDim=0) == true"
+      },
+      "mutation": {
+        "description": "two of three arch facts absent: partial estimate"
+      }
+    },
+    {
+      "name": "negative layers",
+      "input": {
+        "layers": -1,
+        "kv_heads": 8,
+        "head_dim": 128
+      },
+      "expected": true,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "vram.go: VRAMEstimateIsPartial(layers=-1, kvHeads=8, headDim=128) == true"
+      },
+      "mutation": {
+        "description": "negative layers (-1) must be treated as absent, same as zero (<=0 guard, not ==0)"
+      }
+    },
+    {
+      "name": "negative kvHeads",
+      "input": {
+        "layers": 80,
+        "kv_heads": -1,
+        "head_dim": 128
+      },
+      "expected": true,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "vram.go: VRAMEstimateIsPartial(layers=80, kvHeads=-1, headDim=128) == true"
+      },
+      "mutation": {
+        "description": "negative kvHeads (-1) must be treated as absent, same as zero (<=0 guard, not ==0)"
+      }
+    },
+    {
+      "name": "negative headDim",
+      "input": {
+        "layers": 80,
+        "kv_heads": 8,
+        "head_dim": -1
+      },
+      "expected": true,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "vram.go: VRAMEstimateIsPartial(layers=80, kvHeads=8, headDim=-1) == true"
+      },
+      "mutation": {
+        "description": "negative headDim (-1) must be treated as absent, same as zero (<=0 guard, not ==0)"
+      }
+    }
+  ]
+}

@@ -1,0 +1,116 @@
+{
+  "cases": [
+    {
+      "name": "claude-opus date from id",
+      "input": {
+        "id": "claude-opus-4-20250514",
+        "release_date": ""
+      },
+      "expected": "2025-05-14",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "ExtractDate id=claude-opus-4-20250514 releaseDate= -> 2025-05-14"
+      },
+      "mutation": {
+        "description": "date extraction over id=claude-opus-4-20250514, releaseDate="
+      }
+    },
+    {
+      "name": "gpt-codex-mini no date",
+      "input": {
+        "id": "gpt-codex-mini",
+        "release_date": ""
+      },
+      "expected": "",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "ExtractDate id=gpt-codex-mini releaseDate= -> "
+      },
+      "mutation": {
+        "description": "date extraction over id=gpt-codex-mini, releaseDate="
+      }
+    },
+    {
+      "name": "id with YYYY-MM-DD",
+      "input": {
+        "id": "gpt-4o-2024-08-06",
+        "release_date": ""
+      },
+      "expected": "2024-08-06",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "ExtractDate id=gpt-4o-2024-08-06 releaseDate= -> 2024-08-06"
+      },
+      "mutation": {
+        "description": "date extraction over id=gpt-4o-2024-08-06, releaseDate="
+      }
+    },
+    {
+      "name": "date from releaseDate",
+      "input": {
+        "id": "llama-3",
+        "release_date": "2024-04-18"
+      },
+      "expected": "2024-04-18",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "ExtractDate id=llama-3 releaseDate=2024-04-18 -> 2024-04-18"
+      },
+      "mutation": {
+        "description": "date extraction over id=llama-3, releaseDate=2024-04-18"
+      }
+    },
+    {
+      "name": "empty id empty releaseDate",
+      "input": {
+        "id": "",
+        "release_date": ""
+      },
+      "expected": "",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "ExtractDate id= releaseDate= -> "
+      },
+      "mutation": {
+        "description": "date extraction over id=, releaseDate="
+      }
+    },
+    {
+      "name": "releaseDate YYYYMMDD",
+      "input": {
+        "id": "some-model",
+        "release_date": "20230901"
+      },
+      "expected": "2023-09-01",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "ExtractDate id=some-model releaseDate=20230901 -> 2023-09-01"
+      },
+      "mutation": {
+        "description": "date extraction over id=some-model, releaseDate=20230901"
+      }
+    },
+    {
+      "name": "id date wins over releaseDate",
+      "input": {
+        "id": "model-20240101",
+        "release_date": "2023-06-15"
+      },
+      "expected": "2024-01-01",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "ExtractDate id=model-20240101 releaseDate=2023-06-15 -> 2024-01-01"
+      },
+      "mutation": {
+        "description": "date extraction over id=model-20240101, releaseDate=2023-06-15"
+      }
+    }
+  ]
+}

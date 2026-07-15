@@ -1,0 +1,173 @@
+{
+  "cases": [
+    {
+      "name": "qwen3-235b-a22b longest window",
+      "input": "qwen3-235b-a22b",
+      "expected": "235b-a22b",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "ExtractParamSizeToken(qwen3-235b-a22b) = token '235b-a22b' (longest whole-window; ok == token!='')"
+      },
+      "mutation": {
+        "description": "longest-window param-size token extraction over a real id form"
+      }
+    },
+    {
+      "name": "llama-4-scout-17b-16e count-moe window",
+      "input": "llama-4-scout-17b-16e",
+      "expected": "17b-16e",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "ExtractParamSizeToken(llama-4-scout-17b-16e) = token '17b-16e' (longest whole-window; ok == token!='')"
+      },
+      "mutation": {
+        "description": "longest-window param-size token extraction over a real id form"
+      }
+    },
+    {
+      "name": "deepseek 671b-a37b",
+      "input": "deepseek-r1-671b-a37b",
+      "expected": "671b-a37b",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "ExtractParamSizeToken(deepseek-r1-671b-a37b) = token '671b-a37b' (longest whole-window; ok == token!='')"
+      },
+      "mutation": {
+        "description": "longest-window param-size token extraction over a real id form"
+      }
+    },
+    {
+      "name": "lfm-2.5-1.2b decimal",
+      "input": "lfm-2.5-1.2b",
+      "expected": "1.2b",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "ExtractParamSizeToken(lfm-2.5-1.2b) = token '1.2b' (longest whole-window; ok == token!='')"
+      },
+      "mutation": {
+        "description": "longest-window param-size token extraction over a real id form"
+      }
+    },
+    {
+      "name": "qwen3-embedding-0.6b never 6b",
+      "input": "qwen3-embedding-0.6b",
+      "expected": "0.6b",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "ExtractParamSizeToken(qwen3-embedding-0.6b) = token '0.6b' (longest whole-window; ok == token!='')"
+      },
+      "mutation": {
+        "description": "longest-window param-size token extraction over a real id form"
+      }
+    },
+    {
+      "name": "meta/llama-4-scout-17b-16e-instruct",
+      "input": "meta/llama-4-scout-17b-16e-instruct",
+      "expected": "17b-16e",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "ExtractParamSizeToken(meta/llama-4-scout-17b-16e-instruct) = token '17b-16e' (longest whole-window; ok == token!='')"
+      },
+      "mutation": {
+        "description": "longest-window param-size token extraction over a real id form"
+      }
+    },
+    {
+      "name": "cf workers-ai path",
+      "input": "workers-ai/@cf/meta/llama-4-scout-17b-16e-instruct",
+      "expected": "17b-16e",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "ExtractParamSizeToken(workers-ai/@cf/meta/llama-4-scout-17b-16e-instruct) = token '17b-16e' (longest whole-window; ok == token!='')"
+      },
+      "mutation": {
+        "description": "longest-window param-size token extraction over a real id form"
+      }
+    },
+    {
+      "name": "uppercase folds",
+      "input": "Meta-Llama-Llama-4-Maverick-17B-128E-Instruct",
+      "expected": "17b-128e",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "ExtractParamSizeToken(Meta-Llama-Llama-4-Maverick-17B-128E-Instruct) = token '17b-128e' (longest whole-window; ok == token!='')"
+      },
+      "mutation": {
+        "description": "longest-window param-size token extraction over a real id form"
+      }
+    },
+    {
+      "name": "command-r7b no substring 7b",
+      "input": "command-r7b",
+      "expected": "",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "ExtractParamSizeToken(command-r7b) = token '' (longest whole-window; ok == token!='')"
+      },
+      "mutation": {
+        "description": "longest-window param-size token extraction over a real id form"
+      }
+    },
+    {
+      "name": "underscore-glued 10_7b no-match",
+      "input": "upstage/solar-10_7b-instruct",
+      "expected": "",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "ExtractParamSizeToken(upstage/solar-10_7b-instruct) = token '' (longest whole-window; ok == token!='')"
+      },
+      "mutation": {
+        "description": "longest-window param-size token extraction over a real id form"
+      }
+    },
+    {
+      "name": "no size token at all",
+      "input": "claude-opus-4-5",
+      "expected": "",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "ExtractParamSizeToken(claude-opus-4-5) = token '' (longest whole-window; ok == token!='')"
+      },
+      "mutation": {
+        "description": "longest-window param-size token extraction over a real id form"
+      }
+    },
+    {
+      "name": "context marker 1m is a token not compound",
+      "input": "qwen3-coder-next-fp8-1m",
+      "expected": "1m",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "ExtractParamSizeToken(qwen3-coder-next-fp8-1m) = token '1m' (longest whole-window; ok == token!='')"
+      },
+      "mutation": {
+        "description": "longest-window param-size token extraction over a real id form"
+      }
+    },
+    {
+      "name": "empty id",
+      "input": "",
+      "expected": "",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "ExtractParamSizeToken() = token '' (longest whole-window; ok == token!='')"
+      },
+      "mutation": {
+        "description": "longest-window param-size token extraction over a real id form"
+      }
+    }
+  ]
+}

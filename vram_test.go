@@ -13,155 +13,16 @@ import (
 // TestEstimateVRAMBytes_ExactValues verifies the formula against literal
 // expected values computed by hand (not re-derived via the same formula).
 // Any change to a formula coefficient (e.g. VRAMKVElemBytes 2→1, factor 2
-// removed) must fail at least one row.
+// removed) must fail at least one row. Each case's provenance.ref carries the
+// hand-computed arithmetic derivation verbatim.
 func TestEstimateVRAMBytes_ExactValues(t *testing.T) {
 	t.Parallel()
-
-	// Hand-computed expected values.
-	//
-	// Formula: KV = 2 * layers * kvHeads * headDim * contextTokens * 2
-	//          total = weightsBytes + KV
-	//
-	// Row derivations:
-	//   llama-3.3-70b class (layers=80, kvHeads=8, headDim=128, ctx=131072):
-	//     KV = 2 * 80 * 8 * 128 * 131072 * 2 = 42,949,672,960
-	//
-	//   small model (layers=2, kvHeads=2, headDim=64, ctx=4096):
-	//     KV = 2 * 2 * 2 * 64 * 4096 * 2 = 4,194,304
-	tests := []struct {
-		name          string
-		weightsBytes  int64
-		contextTokens int
-		layers        int
-		kvHeads       int
-		headDim       int
-		wantTotal     int64
-	}{
-		{
-			name:          "llama-3.3-70b-class at 128K context",
-			weightsBytes:  43_000_000_000,
-			contextTokens: 131072,
-			layers:        80,
-			kvHeads:       8,
-			headDim:       128,
-			// 43,000,000,000 + 42,949,672,960 = 85,949,672,960
-			wantTotal: 85_949_672_960,
-		},
-		{
-			name:          "small model at 4K context",
-			weightsBytes:  1_500_000_000,
-			contextTokens: 4096,
-			layers:        2,
-			kvHeads:       2,
-			headDim:       64,
-			// 1,500,000,000 + 4,194,304 = 1,504,194,304
-			wantTotal: 1_504_194_304,
-		},
-		// Weights-only lower-bound rows: KV term must be zero when ANY arch fact is 0.
-		{
-			name:          "weights-only: layers zero",
-			weightsBytes:  5_000_000_000,
-			contextTokens: 131072,
-			layers:        0,
-			kvHeads:       8,
-			headDim:       128,
-			wantTotal:     5_000_000_000,
-		},
-		{
-			name:          "weights-only: kvHeads zero",
-			weightsBytes:  5_000_000_000,
-			contextTokens: 131072,
-			layers:        80,
-			kvHeads:       0,
-			headDim:       128,
-			wantTotal:     5_000_000_000,
-		},
-		{
-			name:          "weights-only: headDim zero",
-			weightsBytes:  5_000_000_000,
-			contextTokens: 131072,
-			layers:        80,
-			kvHeads:       8,
-			headDim:       0,
-			wantTotal:     5_000_000_000,
-		},
-		{
-			name:          "weights-only: contextTokens zero",
-			weightsBytes:  5_000_000_000,
-			contextTokens: 0,
-			layers:        80,
-			kvHeads:       8,
-			headDim:       128,
-			wantTotal:     5_000_000_000,
-		},
-		{
-			name:          "all-zero arch facts with nonzero weights",
-			weightsBytes:  5_000_000_000,
-			contextTokens: 0,
-			layers:        0,
-			kvHeads:       0,
-			headDim:       0,
-			wantTotal:     5_000_000_000,
-		},
-		{
-			name:          "all-zero including weights",
-			weightsBytes:  0,
-			contextTokens: 0,
-			layers:        0,
-			kvHeads:       0,
-			headDim:       0,
-			wantTotal:     0,
-		},
-		// Negative-value inputs: treated as absent (<=0), KV must be zero.
-		// These distinguish the <=0 guard from a ==0 guard mutant.
-		{
-			name:          "negative layers",
-			weightsBytes:  5_000_000_000,
-			contextTokens: 131072,
-			layers:        -1,
-			kvHeads:       8,
-			headDim:       128,
-			wantTotal:     5_000_000_000,
-		},
-		{
-			name:          "negative kvHeads",
-			weightsBytes:  5_000_000_000,
-			contextTokens: 131072,
-			layers:        80,
-			kvHeads:       -1,
-			headDim:       128,
-			wantTotal:     5_000_000_000,
-		},
-		{
-			name:          "negative headDim",
-			weightsBytes:  5_000_000_000,
-			contextTokens: 131072,
-			layers:        80,
-			kvHeads:       8,
-			headDim:       -1,
-			wantTotal:     5_000_000_000,
-		},
-		{
-			name:          "negative contextTokens",
-			weightsBytes:  5_000_000_000,
-			contextTokens: -1,
-			layers:        80,
-			kvHeads:       8,
-			headDim:       128,
-			wantTotal:     5_000_000_000,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-			got := bestiary.EstimateVRAMBytes(tt.weightsBytes, tt.contextTokens, tt.layers, tt.kvHeads, tt.headDim)
-			if got != tt.wantTotal {
-				t.Errorf("EstimateVRAMBytes(%d, %d, %d, %d, %d) = %d, want %d",
-					tt.weightsBytes, tt.contextTokens, tt.layers, tt.kvHeads, tt.headDim, got, tt.wantTotal)
-			}
-		})
-	}
+	corpus := loadParseCorpus[vramExactInput, int64](t, vramEstimateExactValuesCorpusJSON, 12)
+	requireCoverage(t, corpus, map[vramExactInput]int64{
+		{WeightsBytes: 43_000_000_000, ContextTokens: 131072, Layers: 80, KVHeads: 8, HeadDim: 128}: 85_949_672_960,
+		{WeightsBytes: 1_500_000_000, ContextTokens: 4096, Layers: 2, KVHeads: 2, HeadDim: 64}:      1_504_194_304,
+	})
+	runVRAMEstimateExactValuesCorpus(t, corpus)
 }
 
 // TestEstimateVRAMBytes_NoOverhead asserts that EstimateVRAMBytes(W, 0, 0, 0,
@@ -247,43 +108,12 @@ func TestQuantVRAM_EstimateVRAM_WeightsOnly(t *testing.T) {
 // all single-absent and all-present combinations.
 func TestVRAMEstimateIsPartial_TruthTable(t *testing.T) {
 	t.Parallel()
-
-	tests := []struct {
-		name    string
-		layers  int
-		kvHeads int
-		headDim int
-		want    bool
-	}{
-		// All present — not partial
-		{name: "all present", layers: 80, kvHeads: 8, headDim: 128, want: false},
-		// Each fact absent individually — partial
-		{name: "layers absent", layers: 0, kvHeads: 8, headDim: 128, want: true},
-		{name: "kvHeads absent", layers: 80, kvHeads: 0, headDim: 128, want: true},
-		{name: "headDim absent", layers: 80, kvHeads: 8, headDim: 0, want: true},
-		// All absent — partial
-		{name: "all absent", layers: 0, kvHeads: 0, headDim: 0, want: true},
-		// Two absent — partial
-		{name: "layers+kvHeads absent", layers: 0, kvHeads: 0, headDim: 128, want: true},
-		{name: "layers+headDim absent", layers: 0, kvHeads: 8, headDim: 0, want: true},
-		{name: "kvHeads+headDim absent", layers: 80, kvHeads: 0, headDim: 0, want: true},
-		// Negative values: treated as absent (<=0), so partial.
-		// These distinguish the <=0 guard from a ==0 guard mutant.
-		{name: "negative layers", layers: -1, kvHeads: 8, headDim: 128, want: true},
-		{name: "negative kvHeads", layers: 80, kvHeads: -1, headDim: 128, want: true},
-		{name: "negative headDim", layers: 80, kvHeads: 8, headDim: -1, want: true},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-			got := bestiary.VRAMEstimateIsPartial(tt.layers, tt.kvHeads, tt.headDim)
-			if got != tt.want {
-				t.Errorf("VRAMEstimateIsPartial(%d, %d, %d) = %v, want %v",
-					tt.layers, tt.kvHeads, tt.headDim, got, tt.want)
-			}
-		})
-	}
+	corpus := loadParseCorpus[vramPartialInput, bool](t, vramPartialTruthTableCorpusJSON, 11)
+	requireCoverage(t, corpus, map[vramPartialInput]bool{
+		{Layers: 80, KVHeads: 8, HeadDim: 128}: false,
+		{Layers: 0, KVHeads: 0, HeadDim: 0}:    true,
+	})
+	runVRAMPartialTruthTableCorpus(t, corpus)
 }
 
 // ----------------------------------------------------------------------------

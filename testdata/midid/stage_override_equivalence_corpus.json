@@ -1,0 +1,334 @@
+{
+  "cases": [
+    {
+      "name": "gemini-omni-flash-preview",
+      "input": "gemini-omni-flash-preview",
+      "expected": {
+        "family": "gemini",
+        "variant": "flash",
+        "version": "",
+        "mods": [
+          "omni",
+          "preview"
+        ]
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "manual",
+        "ref": "retired stage/mode override gemini-omni-flash-preview: mid-ID engine derives it mechanically; bare-id decomposition must reproduce (family='gemini',variant='flash',version='',mods=['omni', 'preview']) — override entry must be gone"
+      },
+      "mutation": {
+        "description": "a stage/mode override retired in favor of the mid-ID harvest; buried omni/livetranslate/realtime token now recovered mechanically"
+      }
+    },
+    {
+      "name": "google/gemini-omni-flash-preview",
+      "input": "google/gemini-omni-flash-preview",
+      "expected": {
+        "family": "gemini",
+        "variant": "flash",
+        "version": "",
+        "mods": [
+          "omni",
+          "preview"
+        ]
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "manual",
+        "ref": "retired stage/mode override google/gemini-omni-flash-preview: mid-ID engine derives it mechanically; bare-id decomposition must reproduce (family='gemini',variant='flash',version='',mods=['omni', 'preview']) — override entry must be gone"
+      },
+      "mutation": {
+        "description": "a stage/mode override retired in favor of the mid-ID harvest; buried omni/livetranslate/realtime token now recovered mechanically"
+      }
+    },
+    {
+      "name": "openai/gpt-realtime-2",
+      "input": "openai/gpt-realtime-2",
+      "expected": {
+        "family": "gpt",
+        "variant": "",
+        "version": "2",
+        "mods": [
+          "realtime"
+        ]
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "manual",
+        "ref": "retired stage/mode override openai/gpt-realtime-2: mid-ID engine derives it mechanically; bare-id decomposition must reproduce (family='gpt',variant='',version='2',mods=['realtime']) — override entry must be gone"
+      },
+      "mutation": {
+        "description": "a stage/mode override retired in favor of the mid-ID harvest; buried omni/livetranslate/realtime token now recovered mechanically"
+      }
+    },
+    {
+      "name": "openai/gpt-realtime-mini",
+      "input": "openai/gpt-realtime-mini",
+      "expected": {
+        "family": "gpt",
+        "variant": "mini",
+        "version": "",
+        "mods": [
+          "realtime"
+        ]
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "manual",
+        "ref": "retired stage/mode override openai/gpt-realtime-mini: mid-ID engine derives it mechanically; bare-id decomposition must reproduce (family='gpt',variant='mini',version='',mods=['realtime']) — override entry must be gone"
+      },
+      "mutation": {
+        "description": "a stage/mode override retired in favor of the mid-ID harvest; buried omni/livetranslate/realtime token now recovered mechanically"
+      }
+    },
+    {
+      "name": "qwen-omni-turbo",
+      "input": "qwen-omni-turbo",
+      "expected": {
+        "family": "qwen",
+        "variant": "turbo",
+        "version": "",
+        "mods": [
+          "omni"
+        ]
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "manual",
+        "ref": "retired stage/mode override qwen-omni-turbo: mid-ID engine derives it mechanically; bare-id decomposition must reproduce (family='qwen',variant='turbo',version='',mods=['omni']) — override entry must be gone"
+      },
+      "mutation": {
+        "description": "a stage/mode override retired in favor of the mid-ID harvest; buried omni/livetranslate/realtime token now recovered mechanically"
+      }
+    },
+    {
+      "name": "qwen-omni-turbo-realtime",
+      "input": "qwen-omni-turbo-realtime",
+      "expected": {
+        "family": "qwen",
+        "variant": "turbo",
+        "version": "",
+        "mods": [
+          "omni",
+          "realtime"
+        ]
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "manual",
+        "ref": "retired stage/mode override qwen-omni-turbo-realtime: mid-ID engine derives it mechanically; bare-id decomposition must reproduce (family='qwen',variant='turbo',version='',mods=['omni', 'realtime']) — override entry must be gone"
+      },
+      "mutation": {
+        "description": "a stage/mode override retired in favor of the mid-ID harvest; buried omni/livetranslate/realtime token now recovered mechanically"
+      }
+    },
+    {
+      "name": "qwen3-omni-flash",
+      "input": "qwen3-omni-flash",
+      "expected": {
+        "family": "qwen",
+        "variant": "flash",
+        "version": "3",
+        "mods": [
+          "omni"
+        ]
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "manual",
+        "ref": "retired stage/mode override qwen3-omni-flash: mid-ID engine derives it mechanically; bare-id decomposition must reproduce (family='qwen',variant='flash',version='3',mods=['omni']) — override entry must be gone"
+      },
+      "mutation": {
+        "description": "a stage/mode override retired in favor of the mid-ID harvest; buried omni/livetranslate/realtime token now recovered mechanically"
+      }
+    },
+    {
+      "name": "qwen3-omni-flash-realtime",
+      "input": "qwen3-omni-flash-realtime",
+      "expected": {
+        "family": "qwen",
+        "variant": "flash",
+        "version": "3",
+        "mods": [
+          "omni",
+          "realtime"
+        ]
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "manual",
+        "ref": "retired stage/mode override qwen3-omni-flash-realtime: mid-ID engine derives it mechanically; bare-id decomposition must reproduce (family='qwen',variant='flash',version='3',mods=['omni', 'realtime']) — override entry must be gone"
+      },
+      "mutation": {
+        "description": "a stage/mode override retired in favor of the mid-ID harvest; buried omni/livetranslate/realtime token now recovered mechanically"
+      }
+    },
+    {
+      "name": "qwen3.5-omni-flash",
+      "input": "qwen3.5-omni-flash",
+      "expected": {
+        "family": "qwen",
+        "variant": "flash",
+        "version": "3.5",
+        "mods": [
+          "omni"
+        ]
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "manual",
+        "ref": "retired stage/mode override qwen3.5-omni-flash: mid-ID engine derives it mechanically; bare-id decomposition must reproduce (family='qwen',variant='flash',version='3.5',mods=['omni']) — override entry must be gone"
+      },
+      "mutation": {
+        "description": "a stage/mode override retired in favor of the mid-ID harvest; buried omni/livetranslate/realtime token now recovered mechanically"
+      }
+    },
+    {
+      "name": "qwen3.5-omni-plus",
+      "input": "qwen3.5-omni-plus",
+      "expected": {
+        "family": "qwen",
+        "variant": "plus",
+        "version": "3.5",
+        "mods": [
+          "omni"
+        ]
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "manual",
+        "ref": "retired stage/mode override qwen3.5-omni-plus: mid-ID engine derives it mechanically; bare-id decomposition must reproduce (family='qwen',variant='plus',version='3.5',mods=['omni']) — override entry must be gone"
+      },
+      "mutation": {
+        "description": "a stage/mode override retired in favor of the mid-ID harvest; buried omni/livetranslate/realtime token now recovered mechanically"
+      }
+    },
+    {
+      "name": "qwen/qwen3-omni-30b-a3b-instruct",
+      "input": "qwen/qwen3-omni-30b-a3b-instruct",
+      "expected": {
+        "family": "qwen",
+        "variant": "",
+        "version": "3",
+        "mods": [
+          "omni",
+          "instruct"
+        ]
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "manual",
+        "ref": "retired stage/mode override qwen/qwen3-omni-30b-a3b-instruct: mid-ID engine derives it mechanically; bare-id decomposition must reproduce (family='qwen',variant='',version='3',mods=['omni', 'instruct']) — override entry must be gone"
+      },
+      "mutation": {
+        "description": "a stage/mode override retired in favor of the mid-ID harvest; buried omni/livetranslate/realtime token now recovered mechanically"
+      }
+    },
+    {
+      "name": "qwen/qwen3-omni-30b-a3b-thinking",
+      "input": "qwen/qwen3-omni-30b-a3b-thinking",
+      "expected": {
+        "family": "qwen",
+        "variant": "",
+        "version": "3",
+        "mods": [
+          "omni",
+          "thinking"
+        ]
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "manual",
+        "ref": "retired stage/mode override qwen/qwen3-omni-30b-a3b-thinking: mid-ID engine derives it mechanically; bare-id decomposition must reproduce (family='qwen',variant='',version='3',mods=['omni', 'thinking']) — override entry must be gone"
+      },
+      "mutation": {
+        "description": "a stage/mode override retired in favor of the mid-ID harvest; buried omni/livetranslate/realtime token now recovered mechanically"
+      }
+    },
+    {
+      "name": "qwen3-livetranslate-flash-realtime",
+      "input": "qwen3-livetranslate-flash-realtime",
+      "expected": {
+        "family": "qwen",
+        "variant": "flash",
+        "version": "3",
+        "mods": [
+          "livetranslate",
+          "realtime"
+        ]
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "manual",
+        "ref": "retired stage/mode override qwen3-livetranslate-flash-realtime: mid-ID engine derives it mechanically; bare-id decomposition must reproduce (family='qwen',variant='flash',version='3',mods=['livetranslate', 'realtime']) — override entry must be gone"
+      },
+      "mutation": {
+        "description": "a stage/mode override retired in favor of the mid-ID harvest; buried omni/livetranslate/realtime token now recovered mechanically"
+      }
+    },
+    {
+      "name": "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning",
+      "input": "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning",
+      "expected": {
+        "family": "nemotron",
+        "variant": "nano",
+        "version": "3",
+        "mods": [
+          "omni",
+          "reasoning"
+        ]
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "manual",
+        "ref": "retired stage/mode override nvidia/nemotron-3-nano-omni-30b-a3b-reasoning: mid-ID engine derives it mechanically; bare-id decomposition must reproduce (family='nemotron',variant='nano',version='3',mods=['omni', 'reasoning']) — override entry must be gone"
+      },
+      "mutation": {
+        "description": "a stage/mode override retired in favor of the mid-ID harvest; buried omni/livetranslate/realtime token now recovered mechanically"
+      }
+    },
+    {
+      "name": "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning-bf16",
+      "input": "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning-bf16",
+      "expected": {
+        "family": "nemotron",
+        "variant": "nano",
+        "version": "3",
+        "mods": [
+          "omni",
+          "reasoning"
+        ]
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "manual",
+        "ref": "retired stage/mode override nvidia/nemotron-3-nano-omni-30b-a3b-reasoning-bf16: mid-ID engine derives it mechanically; bare-id decomposition must reproduce (family='nemotron',variant='nano',version='3',mods=['omni', 'reasoning']) — override entry must be gone"
+      },
+      "mutation": {
+        "description": "a stage/mode override retired in favor of the mid-ID harvest; buried omni/livetranslate/realtime token now recovered mechanically"
+      }
+    },
+    {
+      "name": "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free",
+      "input": "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free",
+      "expected": {
+        "family": "nemotron",
+        "variant": "nano",
+        "version": "3",
+        "mods": [
+          "omni",
+          "reasoning"
+        ]
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "manual",
+        "ref": "retired stage/mode override nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free: mid-ID engine derives it mechanically; bare-id decomposition must reproduce (family='nemotron',variant='nano',version='3',mods=['omni', 'reasoning']) — override entry must be gone"
+      },
+      "mutation": {
+        "description": "a stage/mode override retired in favor of the mid-ID harvest; buried omni/livetranslate/realtime token now recovered mechanically"
+      }
+    }
+  ]
+}

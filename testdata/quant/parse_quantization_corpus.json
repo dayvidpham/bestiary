@@ -1,0 +1,251 @@
+{
+  "cases": [
+    {
+      "name": "none",
+      "input": "none",
+      "expected": 0,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "quantization.go: ParseQuantization('none') resolves to QuantizationNone (iota 0), VC-(A)"
+      },
+      "mutation": {
+        "description": "pins ParseQuantization CLI/config parsing for canonical wire name 'none'"
+      }
+    },
+    {
+      "name": "f16",
+      "input": "f16",
+      "expected": 1,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "quantization.go: ParseQuantization('f16') resolves to QuantF16 (iota 1), VC-(A)"
+      },
+      "mutation": {
+        "description": "pins ParseQuantization CLI/config parsing for canonical wire name 'f16'"
+      }
+    },
+    {
+      "name": "bf16",
+      "input": "bf16",
+      "expected": 2,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "quantization.go: ParseQuantization('bf16') resolves to QuantBF16 (iota 2), VC-(A)"
+      },
+      "mutation": {
+        "description": "pins ParseQuantization CLI/config parsing for canonical wire name 'bf16'"
+      }
+    },
+    {
+      "name": "f32",
+      "input": "f32",
+      "expected": 3,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "quantization.go: ParseQuantization('f32') resolves to QuantF32 (iota 3), VC-(A)"
+      },
+      "mutation": {
+        "description": "pins ParseQuantization CLI/config parsing for canonical wire name 'f32'"
+      }
+    },
+    {
+      "name": "q4_0",
+      "input": "q4_0",
+      "expected": 4,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "quantization.go: ParseQuantization('q4_0') resolves to QuantQ4_0 (iota 4), VC-(A)"
+      },
+      "mutation": {
+        "description": "pins ParseQuantization CLI/config parsing for canonical wire name 'q4_0'"
+      }
+    },
+    {
+      "name": "q8_0",
+      "input": "q8_0",
+      "expected": 8,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "quantization.go: ParseQuantization('q8_0') resolves to QuantQ8_0 (iota 8), VC-(A)"
+      },
+      "mutation": {
+        "description": "pins ParseQuantization CLI/config parsing for canonical wire name 'q8_0'"
+      }
+    },
+    {
+      "name": "q4_k_m",
+      "input": "q4_k_m",
+      "expected": 15,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "quantization.go: ParseQuantization('q4_k_m') resolves to QuantQ4_K_M (iota 15), VC-(A)"
+      },
+      "mutation": {
+        "description": "pins ParseQuantization CLI/config parsing for canonical wire name 'q4_k_m'"
+      }
+    },
+    {
+      "name": "q5_k_m",
+      "input": "q5_k_m",
+      "expected": 17,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "quantization.go: ParseQuantization('q5_k_m') resolves to QuantQ5_K_M (iota 17), VC-(A)"
+      },
+      "mutation": {
+        "description": "pins ParseQuantization CLI/config parsing for canonical wire name 'q5_k_m'"
+      }
+    },
+    {
+      "name": "iq4_nl",
+      "input": "iq4_nl",
+      "expected": 30,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "quantization.go: ParseQuantization('iq4_nl') resolves to QuantIQ4_NL (iota 30), VC-(A)"
+      },
+      "mutation": {
+        "description": "pins ParseQuantization CLI/config parsing for canonical wire name 'iq4_nl'"
+      }
+    },
+    {
+      "name": "awq",
+      "input": "awq",
+      "expected": 31,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "quantization.go: ParseQuantization('awq') resolves to QuantAWQ (iota 31), VC-(A)"
+      },
+      "mutation": {
+        "description": "pins ParseQuantization CLI/config parsing for canonical wire name 'awq'"
+      }
+    },
+    {
+      "name": "gptq",
+      "input": "gptq",
+      "expected": 32,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "quantization.go: ParseQuantization('gptq') resolves to QuantGPTQ (iota 32), VC-(A)"
+      },
+      "mutation": {
+        "description": "pins ParseQuantization CLI/config parsing for canonical wire name 'gptq'"
+      }
+    },
+    {
+      "name": "int8",
+      "input": "int8",
+      "expected": 33,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "quantization.go: ParseQuantization('int8') resolves to QuantInt8 (iota 33), VC-(A)"
+      },
+      "mutation": {
+        "description": "pins ParseQuantization CLI/config parsing for canonical wire name 'int8'"
+      }
+    },
+    {
+      "name": "int4",
+      "input": "int4",
+      "expected": 34,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "quantization.go: ParseQuantization('int4') resolves to QuantInt4 (iota 34), VC-(A)"
+      },
+      "mutation": {
+        "description": "pins ParseQuantization CLI/config parsing for canonical wire name 'int4'"
+      }
+    },
+    {
+      "name": "other",
+      "input": "other",
+      "expected": 35,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "quantization.go: ParseQuantization('other') resolves to QuantizationOther (iota 35), VC-(A)"
+      },
+      "mutation": {
+        "description": "pins ParseQuantization CLI/config parsing for canonical wire name 'other'"
+      }
+    },
+    {
+      "name": "case-insensitive Q4_K_M",
+      "input": "Q4_K_M",
+      "expected": 15,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "quantization.go doc: ParseQuantization is case-insensitive, so 'Q4_K_M' resolves to QuantQ4_K_M (iota 15)"
+      },
+      "mutation": {
+        "description": "mixed-case CLI input 'Q4_K_M' must resolve identically to its lowercase form"
+      }
+    },
+    {
+      "name": "case-insensitive Q8_0",
+      "input": "Q8_0",
+      "expected": 8,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "quantization.go doc: ParseQuantization is case-insensitive, so 'Q8_0' resolves to QuantQ8_0 (iota 8)"
+      },
+      "mutation": {
+        "description": "mixed-case CLI input 'Q8_0' must resolve identically to its lowercase form"
+      }
+    },
+    {
+      "name": "case-insensitive F16",
+      "input": "F16",
+      "expected": 1,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "quantization.go doc: ParseQuantization is case-insensitive, so 'F16' resolves to QuantF16 (iota 1)"
+      },
+      "mutation": {
+        "description": "mixed-case CLI input 'F16' must resolve identically to its lowercase form"
+      }
+    },
+    {
+      "name": "case-insensitive IQ4_NL",
+      "input": "IQ4_NL",
+      "expected": 30,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "quantization.go doc: ParseQuantization is case-insensitive, so 'IQ4_NL' resolves to QuantIQ4_NL (iota 30)"
+      },
+      "mutation": {
+        "description": "mixed-case CLI input 'IQ4_NL' must resolve identically to its lowercase form"
+      }
+    },
+    {
+      "name": "case-insensitive AWQ",
+      "input": "AWQ",
+      "expected": 31,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "quantization.go doc: ParseQuantization is case-insensitive, so 'AWQ' resolves to QuantAWQ (iota 31)"
+      },
+      "mutation": {
+        "description": "mixed-case CLI input 'AWQ' must resolve identically to its lowercase form"
+      }
+    }
+  ]
+}

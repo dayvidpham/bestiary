@@ -1,0 +1,124 @@
+{
+  "cases": [
+    {
+      "name": "kimi-k2-thinking: trailing token == variant → no double-count",
+      "input": {
+        "id": "kimi-k2-thinking",
+        "family": "kimi",
+        "variant": "thinking"
+      },
+      "expected": {
+        "modifier": "",
+        "consumed": ""
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "bug",
+        "ref": "variant-guard: ExtractModifier(id=kimi-k2-thinking, family=kimi, variant=thinking) -> modifier ''"
+      },
+      "mutation": {
+        "description": "anti-double-count guard when trailing token equals variant"
+      }
+    },
+    {
+      "name": "moonshotai/kimi-k2-thinking: path-stripped, trailing token == variant → no double-count",
+      "input": {
+        "id": "moonshotai/kimi-k2-thinking",
+        "family": "kimi",
+        "variant": "thinking"
+      },
+      "expected": {
+        "modifier": "",
+        "consumed": ""
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "bug",
+        "ref": "variant-guard: ExtractModifier(id=moonshotai/kimi-k2-thinking, family=kimi, variant=thinking) -> modifier ''"
+      },
+      "mutation": {
+        "description": "anti-double-count guard when trailing token equals variant"
+      }
+    },
+    {
+      "name": "deepseek-thinking: trailing 'thinking' == variant='thinking' → no double-count",
+      "input": {
+        "id": "deepseek-thinking",
+        "family": "deepseek",
+        "variant": "thinking"
+      },
+      "expected": {
+        "modifier": "",
+        "consumed": ""
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "bug",
+        "ref": "variant-guard: ExtractModifier(id=deepseek-thinking, family=deepseek, variant=thinking) -> modifier ''"
+      },
+      "mutation": {
+        "description": "anti-double-count guard when trailing token equals variant"
+      }
+    },
+    {
+      "name": "claude-opus-4-6-thinking: variant='opus' != trailing 'thinking' → modifier fires",
+      "input": {
+        "id": "claude-opus-4-6-thinking",
+        "family": "claude",
+        "variant": "opus"
+      },
+      "expected": {
+        "modifier": "thinking",
+        "consumed": "-thinking"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "bug",
+        "ref": "variant-guard: ExtractModifier(id=claude-opus-4-6-thinking, family=claude, variant=opus) -> modifier 'thinking'"
+      },
+      "mutation": {
+        "description": "anti-double-count guard when trailing token equals variant"
+      }
+    },
+    {
+      "name": "claude-opus-4-6: no trailing modifier → empty",
+      "input": {
+        "id": "claude-opus-4-6",
+        "family": "claude",
+        "variant": "opus"
+      },
+      "expected": {
+        "modifier": "",
+        "consumed": ""
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "bug",
+        "ref": "variant-guard: ExtractModifier(id=claude-opus-4-6, family=claude, variant=opus) -> modifier ''"
+      },
+      "mutation": {
+        "description": "anti-double-count guard when trailing token equals variant"
+      }
+    },
+    {
+      "name": "kimi-k2-thinking: empty variant → modifier fires",
+      "input": {
+        "id": "kimi-k2-thinking",
+        "family": "kimi",
+        "variant": ""
+      },
+      "expected": {
+        "modifier": "thinking",
+        "consumed": "-thinking"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "bug",
+        "ref": "variant-guard: ExtractModifier(id=kimi-k2-thinking, family=kimi, variant=) -> modifier 'thinking'"
+      },
+      "mutation": {
+        "description": "anti-double-count guard when trailing token equals variant"
+      }
+    }
+  ]
+}

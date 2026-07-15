@@ -1,0 +1,132 @@
+{
+  "cases": [
+    {
+      "name": "YYYY-MM-DD month 99 rejected",
+      "input": {
+        "id": "model-9999-99-01",
+        "release_date": ""
+      },
+      "expected": "",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "calendar validation: id=model-9999-99-01 releaseDate= -> "
+      },
+      "mutation": {
+        "description": "structurally-matching date validated by time.Parse round-trip"
+      }
+    },
+    {
+      "name": "YYYY-MM-DD day 99 rejected",
+      "input": {
+        "id": "model-9999-01-99",
+        "release_date": ""
+      },
+      "expected": "",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "calendar validation: id=model-9999-01-99 releaseDate= -> "
+      },
+      "mutation": {
+        "description": "structurally-matching date validated by time.Parse round-trip"
+      }
+    },
+    {
+      "name": "YYYY-MM-DD month+day invalid",
+      "input": {
+        "id": "model-9999-99-99",
+        "release_date": ""
+      },
+      "expected": "",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "calendar validation: id=model-9999-99-99 releaseDate= -> "
+      },
+      "mutation": {
+        "description": "structurally-matching date validated by time.Parse round-trip"
+      }
+    },
+    {
+      "name": "YYYYMMDD month 99 rejected",
+      "input": {
+        "id": "model-99999901",
+        "release_date": ""
+      },
+      "expected": "",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "calendar validation: id=model-99999901 releaseDate= -> "
+      },
+      "mutation": {
+        "description": "structurally-matching date validated by time.Parse round-trip"
+      }
+    },
+    {
+      "name": "valid 2025-01-31",
+      "input": {
+        "id": "model-2025-01-31",
+        "release_date": ""
+      },
+      "expected": "2025-01-31",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "calendar validation: id=model-2025-01-31 releaseDate= -> 2025-01-31"
+      },
+      "mutation": {
+        "description": "structurally-matching date validated by time.Parse round-trip"
+      }
+    },
+    {
+      "name": "valid compact 20250101",
+      "input": {
+        "id": "x-20250101",
+        "release_date": ""
+      },
+      "expected": "2025-01-01",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "calendar validation: id=x-20250101 releaseDate= -> 2025-01-01"
+      },
+      "mutation": {
+        "description": "structurally-matching date validated by time.Parse round-trip"
+      }
+    },
+    {
+      "name": "Feb 29 non-leap year rejected",
+      "input": {
+        "id": "model-2023-02-29",
+        "release_date": ""
+      },
+      "expected": "",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "calendar validation: id=model-2023-02-29 releaseDate= -> "
+      },
+      "mutation": {
+        "description": "structurally-matching date validated by time.Parse round-trip"
+      }
+    },
+    {
+      "name": "Feb 29 leap year accepted",
+      "input": {
+        "id": "model-2024-02-29",
+        "release_date": ""
+      },
+      "expected": "2024-02-29",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "calendar validation: id=model-2024-02-29 releaseDate= -> 2024-02-29"
+      },
+      "mutation": {
+        "description": "structurally-matching date validated by time.Parse round-trip"
+      }
+    }
+  ]
+}

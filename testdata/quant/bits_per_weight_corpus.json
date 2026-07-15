@@ -1,0 +1,485 @@
+{
+  "cases": [
+    {
+      "name": "None",
+      "input": 0,
+      "expected": 0.0,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "quantization.go: QuantizationNone (none) has no single well-defined bpw (reserved/none/other); BitsPerWeight() returns 0"
+      },
+      "mutation": {
+        "description": "pins BitsPerWeight() for enum member QuantizationNone"
+      }
+    },
+    {
+      "name": "F16",
+      "input": 1,
+      "expected": 16.0,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "llama.cpp quantize README (tools/quantize/README.md): QuantF16 (f16) is 16.0 bits-per-weight"
+      },
+      "mutation": {
+        "description": "pins BitsPerWeight() for enum member QuantF16"
+      }
+    },
+    {
+      "name": "BF16",
+      "input": 2,
+      "expected": 16.0,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "llama.cpp quantize README (tools/quantize/README.md): QuantBF16 (bf16) is 16.0 bits-per-weight"
+      },
+      "mutation": {
+        "description": "pins BitsPerWeight() for enum member QuantBF16"
+      }
+    },
+    {
+      "name": "F32",
+      "input": 3,
+      "expected": 32.0,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "llama.cpp quantize README (tools/quantize/README.md): QuantF32 (f32) is 32.0 bits-per-weight"
+      },
+      "mutation": {
+        "description": "pins BitsPerWeight() for enum member QuantF32"
+      }
+    },
+    {
+      "name": "Q4_0",
+      "input": 4,
+      "expected": 4.5,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "llama.cpp quantize README (tools/quantize/README.md): QuantQ4_0 (q4_0) is 4.5 bits-per-weight"
+      },
+      "mutation": {
+        "description": "pins BitsPerWeight() for enum member QuantQ4_0"
+      }
+    },
+    {
+      "name": "Q4_1",
+      "input": 5,
+      "expected": 5.0,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "llama.cpp quantize README (tools/quantize/README.md): QuantQ4_1 (q4_1) is 5.0 bits-per-weight"
+      },
+      "mutation": {
+        "description": "pins BitsPerWeight() for enum member QuantQ4_1"
+      }
+    },
+    {
+      "name": "Q5_0",
+      "input": 6,
+      "expected": 5.5,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "llama.cpp quantize README (tools/quantize/README.md): QuantQ5_0 (q5_0) is 5.5 bits-per-weight"
+      },
+      "mutation": {
+        "description": "pins BitsPerWeight() for enum member QuantQ5_0"
+      }
+    },
+    {
+      "name": "Q5_1",
+      "input": 7,
+      "expected": 6.0,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "llama.cpp quantize README (tools/quantize/README.md): QuantQ5_1 (q5_1) is 6.0 bits-per-weight"
+      },
+      "mutation": {
+        "description": "pins BitsPerWeight() for enum member QuantQ5_1"
+      }
+    },
+    {
+      "name": "Q8_0",
+      "input": 8,
+      "expected": 8.5,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "llama.cpp quantize README (tools/quantize/README.md): QuantQ8_0 (q8_0) is 8.5 bits-per-weight"
+      },
+      "mutation": {
+        "description": "pins BitsPerWeight() for enum member QuantQ8_0"
+      }
+    },
+    {
+      "name": "Q2_K",
+      "input": 9,
+      "expected": 3.16,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "llama.cpp quantize README (tools/quantize/README.md): QuantQ2_K (q2_k) is 3.16 bits-per-weight"
+      },
+      "mutation": {
+        "description": "pins BitsPerWeight() for enum member QuantQ2_K"
+      }
+    },
+    {
+      "name": "Q2_K_S",
+      "input": 10,
+      "expected": 2.97,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "llama.cpp quantize README (tools/quantize/README.md): QuantQ2_K_S (q2_k_s) is 2.97 bits-per-weight"
+      },
+      "mutation": {
+        "description": "pins BitsPerWeight() for enum member QuantQ2_K_S"
+      }
+    },
+    {
+      "name": "Q3_K_S",
+      "input": 11,
+      "expected": 3.64,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "llama.cpp quantize README (tools/quantize/README.md): QuantQ3_K_S (q3_k_s) is 3.64 bits-per-weight"
+      },
+      "mutation": {
+        "description": "pins BitsPerWeight() for enum member QuantQ3_K_S"
+      }
+    },
+    {
+      "name": "Q3_K_M",
+      "input": 12,
+      "expected": 4.0,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "llama.cpp quantize README (tools/quantize/README.md): QuantQ3_K_M (q3_k_m) is 4.0 bits-per-weight"
+      },
+      "mutation": {
+        "description": "pins BitsPerWeight() for enum member QuantQ3_K_M"
+      }
+    },
+    {
+      "name": "Q3_K_L",
+      "input": 13,
+      "expected": 4.3,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "llama.cpp quantize README (tools/quantize/README.md): QuantQ3_K_L (q3_k_l) is 4.3 bits-per-weight"
+      },
+      "mutation": {
+        "description": "pins BitsPerWeight() for enum member QuantQ3_K_L"
+      }
+    },
+    {
+      "name": "Q4_K_S",
+      "input": 14,
+      "expected": 4.67,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "llama.cpp quantize README (tools/quantize/README.md): QuantQ4_K_S (q4_k_s) is 4.67 bits-per-weight"
+      },
+      "mutation": {
+        "description": "pins BitsPerWeight() for enum member QuantQ4_K_S"
+      }
+    },
+    {
+      "name": "Q4_K_M",
+      "input": 15,
+      "expected": 4.89,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "llama.cpp quantize README (tools/quantize/README.md): QuantQ4_K_M (q4_k_m) is 4.89 bits-per-weight"
+      },
+      "mutation": {
+        "description": "pins BitsPerWeight() for enum member QuantQ4_K_M"
+      }
+    },
+    {
+      "name": "Q5_K_S",
+      "input": 16,
+      "expected": 5.57,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "llama.cpp quantize README (tools/quantize/README.md): QuantQ5_K_S (q5_k_s) is 5.57 bits-per-weight"
+      },
+      "mutation": {
+        "description": "pins BitsPerWeight() for enum member QuantQ5_K_S"
+      }
+    },
+    {
+      "name": "Q5_K_M",
+      "input": 17,
+      "expected": 5.7,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "llama.cpp quantize README (tools/quantize/README.md): QuantQ5_K_M (q5_k_m) is 5.7 bits-per-weight"
+      },
+      "mutation": {
+        "description": "pins BitsPerWeight() for enum member QuantQ5_K_M"
+      }
+    },
+    {
+      "name": "Q6_K",
+      "input": 18,
+      "expected": 6.56,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "llama.cpp quantize README (tools/quantize/README.md): QuantQ6_K (q6_k) is 6.56 bits-per-weight"
+      },
+      "mutation": {
+        "description": "pins BitsPerWeight() for enum member QuantQ6_K"
+      }
+    },
+    {
+      "name": "IQ1_S",
+      "input": 19,
+      "expected": 2.0,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "llama.cpp quantize README (tools/quantize/README.md): QuantIQ1_S (iq1_s) is 2.0 bits-per-weight"
+      },
+      "mutation": {
+        "description": "pins BitsPerWeight() for enum member QuantIQ1_S"
+      }
+    },
+    {
+      "name": "IQ1_M",
+      "input": 20,
+      "expected": 2.15,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "llama.cpp quantize README (tools/quantize/README.md): QuantIQ1_M (iq1_m) is 2.15 bits-per-weight"
+      },
+      "mutation": {
+        "description": "pins BitsPerWeight() for enum member QuantIQ1_M"
+      }
+    },
+    {
+      "name": "IQ2_XXS",
+      "input": 21,
+      "expected": 2.38,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "llama.cpp quantize README (tools/quantize/README.md): QuantIQ2_XXS (iq2_xxs) is 2.38 bits-per-weight"
+      },
+      "mutation": {
+        "description": "pins BitsPerWeight() for enum member QuantIQ2_XXS"
+      }
+    },
+    {
+      "name": "IQ2_XS",
+      "input": 22,
+      "expected": 2.59,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "llama.cpp quantize README (tools/quantize/README.md): QuantIQ2_XS (iq2_xs) is 2.59 bits-per-weight"
+      },
+      "mutation": {
+        "description": "pins BitsPerWeight() for enum member QuantIQ2_XS"
+      }
+    },
+    {
+      "name": "IQ2_S",
+      "input": 23,
+      "expected": 2.74,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "llama.cpp quantize README (tools/quantize/README.md): QuantIQ2_S (iq2_s) is 2.74 bits-per-weight"
+      },
+      "mutation": {
+        "description": "pins BitsPerWeight() for enum member QuantIQ2_S"
+      }
+    },
+    {
+      "name": "IQ2_M",
+      "input": 24,
+      "expected": 2.93,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "llama.cpp quantize README (tools/quantize/README.md): QuantIQ2_M (iq2_m) is 2.93 bits-per-weight"
+      },
+      "mutation": {
+        "description": "pins BitsPerWeight() for enum member QuantIQ2_M"
+      }
+    },
+    {
+      "name": "IQ3_XXS",
+      "input": 25,
+      "expected": 3.25,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "llama.cpp quantize README (tools/quantize/README.md): QuantIQ3_XXS (iq3_xxs) is 3.25 bits-per-weight"
+      },
+      "mutation": {
+        "description": "pins BitsPerWeight() for enum member QuantIQ3_XXS"
+      }
+    },
+    {
+      "name": "IQ3_XS",
+      "input": 26,
+      "expected": 3.5,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "llama.cpp quantize README (tools/quantize/README.md): QuantIQ3_XS (iq3_xs) is 3.5 bits-per-weight"
+      },
+      "mutation": {
+        "description": "pins BitsPerWeight() for enum member QuantIQ3_XS"
+      }
+    },
+    {
+      "name": "IQ3_S",
+      "input": 27,
+      "expected": 3.66,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "llama.cpp quantize README (tools/quantize/README.md): QuantIQ3_S (iq3_s) is 3.66 bits-per-weight"
+      },
+      "mutation": {
+        "description": "pins BitsPerWeight() for enum member QuantIQ3_S"
+      }
+    },
+    {
+      "name": "IQ3_M",
+      "input": 28,
+      "expected": 3.76,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "llama.cpp quantize README (tools/quantize/README.md): QuantIQ3_M (iq3_m) is 3.76 bits-per-weight"
+      },
+      "mutation": {
+        "description": "pins BitsPerWeight() for enum member QuantIQ3_M"
+      }
+    },
+    {
+      "name": "IQ4_XS",
+      "input": 29,
+      "expected": 4.46,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "llama.cpp quantize README (tools/quantize/README.md): QuantIQ4_XS (iq4_xs) is 4.46 bits-per-weight"
+      },
+      "mutation": {
+        "description": "pins BitsPerWeight() for enum member QuantIQ4_XS"
+      }
+    },
+    {
+      "name": "IQ4_NL",
+      "input": 30,
+      "expected": 4.68,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "llama.cpp quantize README (tools/quantize/README.md): QuantIQ4_NL (iq4_nl) is 4.68 bits-per-weight"
+      },
+      "mutation": {
+        "description": "pins BitsPerWeight() for enum member QuantIQ4_NL"
+      }
+    },
+    {
+      "name": "AWQ",
+      "input": 31,
+      "expected": 0.0,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "quantization.go: QuantAWQ (awq) has no single well-defined bpw (reserved/none/other); BitsPerWeight() returns 0"
+      },
+      "mutation": {
+        "description": "pins BitsPerWeight() for enum member QuantAWQ"
+      }
+    },
+    {
+      "name": "GPTQ",
+      "input": 32,
+      "expected": 0.0,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "quantization.go: QuantGPTQ (gptq) has no single well-defined bpw (reserved/none/other); BitsPerWeight() returns 0"
+      },
+      "mutation": {
+        "description": "pins BitsPerWeight() for enum member QuantGPTQ"
+      }
+    },
+    {
+      "name": "Int8",
+      "input": 33,
+      "expected": 0.0,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "quantization.go: QuantInt8 (int8) has no single well-defined bpw (reserved/none/other); BitsPerWeight() returns 0"
+      },
+      "mutation": {
+        "description": "pins BitsPerWeight() for enum member QuantInt8"
+      }
+    },
+    {
+      "name": "Int4",
+      "input": 34,
+      "expected": 0.0,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "quantization.go: QuantInt4 (int4) has no single well-defined bpw (reserved/none/other); BitsPerWeight() returns 0"
+      },
+      "mutation": {
+        "description": "pins BitsPerWeight() for enum member QuantInt4"
+      }
+    },
+    {
+      "name": "Other",
+      "input": 35,
+      "expected": 0.0,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "quantization.go: QuantizationOther (other) has no single well-defined bpw (reserved/none/other); BitsPerWeight() returns 0"
+      },
+      "mutation": {
+        "description": "pins BitsPerWeight() for enum member QuantizationOther"
+      }
+    },
+    {
+      "name": "out-of-range",
+      "input": 9999,
+      "expected": 0.0,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "quantization.go: Quantization(9999).BitsPerWeight() returns 0 (out-of-range guard, VC-(c))"
+      },
+      "mutation": {
+        "description": "out-of-range Quantization value 9999, no matching bpw table entry"
+      }
+    }
+  ]
+}

@@ -1,0 +1,64 @@
+{
+  "cases": [
+    {
+      "name": "claude-opus-4-1-20250805-thinking",
+      "input": {
+        "raw_id": "claude-opus-4-1-20250805-thinking",
+        "raw_family": "claude-opus"
+      },
+      "expected": {
+        "modifier": "thinking",
+        "version": "4.1",
+        "date": "2025-08-05"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "pipeline (ParseFamily->ExtractModifier->strip->ExtractVersionFromID->ExtractDate) over id=claude-opus-4-1-20250805-thinking, rawFamily=claude-opus -> modifier 'thinking', version '4.1', date '2025-08-05'"
+      },
+      "mutation": {
+        "description": "function-composition pipeline: modifier stripped before version/date"
+      }
+    },
+    {
+      "name": "claude-opus-4-6-thinking (no date)",
+      "input": {
+        "raw_id": "claude-opus-4-6-thinking",
+        "raw_family": "claude-opus"
+      },
+      "expected": {
+        "modifier": "thinking",
+        "version": "4.6",
+        "date": ""
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "pipeline (ParseFamily->ExtractModifier->strip->ExtractVersionFromID->ExtractDate) over id=claude-opus-4-6-thinking, rawFamily=claude-opus -> modifier 'thinking', version '4.6', date ''"
+      },
+      "mutation": {
+        "description": "function-composition pipeline: modifier stripped before version/date"
+      }
+    },
+    {
+      "name": "gpt-4o-2024-05-13 (no modifier, version not extracted)",
+      "input": {
+        "raw_id": "gpt-4o-2024-05-13",
+        "raw_family": "gpt-4o"
+      },
+      "expected": {
+        "modifier": "",
+        "version": "",
+        "date": "2024-05-13"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "pipeline (ParseFamily->ExtractModifier->strip->ExtractVersionFromID->ExtractDate) over id=gpt-4o-2024-05-13, rawFamily=gpt-4o -> modifier '', version '', date '2024-05-13'"
+      },
+      "mutation": {
+        "description": "function-composition pipeline: modifier stripped before version/date"
+      }
+    }
+  ]
+}

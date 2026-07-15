@@ -1,0 +1,36 @@
+{
+  "cases": [
+    {
+      "name": "qwen3-235b-a22b",
+      "input": "qwen3-235b-a22b",
+      "expected": "235b-a22b",
+      "classification": "must-pass",
+      "provenance": { "source": "manual", "ref": "compound 235b-a22b extracts whole and canonical, never split to 235b (bare id)" },
+      "mutation": { "description": "the bare qwen3 MoE id" }
+    },
+    {
+      "name": "qwen/qwen3-235b-a22b-instruct",
+      "input": "qwen/qwen3-235b-a22b-instruct",
+      "expected": "235b-a22b",
+      "classification": "must-pass",
+      "provenance": { "source": "manual", "ref": "compound survives a namespace prefix and an instruct suffix" },
+      "mutation": { "description": "added a namespace prefix and instruct suffix around the compound" }
+    },
+    {
+      "name": "qwen3-235b-a22b-2507",
+      "input": "qwen3-235b-a22b-2507",
+      "expected": "235b-a22b",
+      "classification": "must-pass",
+      "provenance": { "source": "manual", "ref": "compound survives a trailing date-ish token" },
+      "mutation": { "description": "added a trailing 2507 token after the compound" }
+    },
+    {
+      "name": "Qwen3-235B-A22B",
+      "input": "Qwen3-235B-A22B",
+      "expected": "235b-a22b",
+      "classification": "must-pass",
+      "provenance": { "source": "manual", "ref": "compound is case-folded to the canonical lowercase token" },
+      "mutation": { "description": "uppercased the whole id; must fold to canonical 235b-a22b" }
+    }
+  ]
+}

@@ -37,191 +37,51 @@ func TestParseData_RegexesValid(t *testing.T) {
 // ----------------------------------------------------------------------------
 
 // TestParseFamily_Overrides covers all entries in family_overrides.json
-// that have a non-empty variant. The test table is authoritative: if you
-// add an override to the JSON, add a row here.
+// that have a non-empty variant. The corpus (testdata/parse/family_overrides_corpus.json)
+// is authoritative: if you add an override to the JSON, add a case there.
 func TestParseFamily_Overrides(t *testing.T) {
 	t.Parallel()
-
-	cases := []struct {
-		raw         bestiary.Family
-		wantFamily  bestiary.Family
-		wantVariant string
-	}{
-		// BDD acceptance criterion from slice spec.
-		{"claude-opus", "claude", "opus"},
-		{"claude-haiku", "claude", "haiku"},
-		{"claude-sonnet", "claude", "sonnet"},
-		// Other compound claude families (via overrides).
-		{"codestral-embed", "codestral", "embed"},
-		{"cohere-embed", "cohere", "embed"},
-		{"command-a", "command", "a"},
-		{"command-r", "command", "r"},
-		{"deepseek-flash", "deepseek", "flash"},
-		// deepseek-thinking / grok-vision / kimi-thinking overrides REMOVED —
-		// trailing thinking/vision is now ALWAYS a Modifier (see TestUniformModifierSuffix).
-		{"gemini-embedding", "gemini", "embedding"},
-		{"gemini-flash", "gemini", "flash"},
-		{"gemini-flash-lite", "gemini", "flash-lite"},
-		{"gemini-pro", "gemini", "pro"},
-		{"glm-air", "glm", "air"},
-		{"glm-flash", "glm", "flash"},
-		{"glm-free", "glm", "free"},
-		{"glm-z", "glm", "z"},
-		{"gpt-codex", "gpt", "codex"},
-		{"gpt-codex-mini", "gpt", "codex-mini"},
-		{"gpt-codex-spark", "gpt", "codex-spark"},
-		{"gpt-image", "gpt", "image"},
-		{"gpt-mini", "gpt", "mini"},
-		{"gpt-nano", "gpt", "nano"},
-		{"gpt-oss", "gpt", "oss"},
-		{"gpt-pro", "gpt", "pro"},
-		{"grok-beta", "grok", "beta"},
-		{"hy3-free", "hy3", "free"},
-		{"kat-coder", "kat", "coder"},
-		{"kimi-free", "kimi", "free"},
-		{"ling-flash-free", "ling", "flash-free"},
-		{"magistral-medium", "magistral", "medium"},
-		{"magistral-small", "magistral", "small"},
-		{"mimo-flash-free", "mimo", "flash-free"},
-		{"mimo-omni-free", "mimo", "omni-free"},
-		{"mimo-pro-free", "mimo", "pro-free"},
-		{"mimo-v2-omni", "mimo", "v2-omni"},
-		{"mimo-v2-pro", "mimo", "v2-pro"},
-		{"mimo-v2.5", "mimo", "v2.5"},
-		{"mimo-v2.5-pro", "mimo", "v2.5-pro"},
-		{"minimax-free", "minimax", "free"},
-		{"minimax-m2.5", "minimax", "m2.5"},
-		{"minimax-m2.7", "minimax", "m2.7"},
-		{"mistral-embed", "mistral", "embed"},
-		{"mistral-large", "mistral", "large"},
-		{"mistral-medium", "mistral", "medium"},
-		{"mistral-nemo", "mistral", "nemo"},
-		{"mistral-small", "mistral", "small"},
-		{"nemotron-free", "nemotron", "free"},
-		{"nova-lite", "nova", "lite"},
-		{"nova-micro", "nova", "micro"},
-		{"nova-pro", "nova", "pro"},
-		{"o-mini", "o", "mini"},
-		{"o-pro", "o", "pro"},
-		{"qwen-free", "qwen", "free"},
-		{"solar-mini", "solar", "mini"},
-		{"solar-pro", "solar", "pro"},
-		{"sonar-deep-research", "sonar", "deep-research"},
-		{"sonar-pro", "sonar", "pro"},
-		{"sonar-reasoning", "sonar", "reasoning"},
-		{"titan-embed", "titan", "embed"},
-		{"trinity-mini", "trinity", "mini"},
-	}
-
-	for _, tc := range cases {
-		t.Run(string(tc.raw), func(t *testing.T) {
-			t.Parallel()
-			gotFamily, gotVariant := bestiary.ParseFamily(tc.raw)
-			if gotFamily != tc.wantFamily {
-				t.Errorf("ParseFamily(%q) family = %q, want %q", tc.raw, gotFamily, tc.wantFamily)
-			}
-			if gotVariant != tc.wantVariant {
-				t.Errorf("ParseFamily(%q) variant = %q, want %q", tc.raw, gotVariant, tc.wantVariant)
-			}
-		})
-	}
+	corpus := loadFamilyVariantCorpus(t, familyOverridesCorpusJSON, 60)
+	requireInputCoverage(t, corpus, map[string]familyVariantExpected{
+		"claude-opus":         {Family: "claude", Variant: "opus"},
+		"gpt-oss":             {Family: "gpt", Variant: "oss"},
+		"sonar-deep-research": {Family: "sonar", Variant: "deep-research"},
+	})
+	runFamilyVariantCorpus(t, corpus)
 }
 
 // TestParseFamily_Overrides_OpaqueCompounds tests compound families that are
 // kept as-is (empty variant) because they are atomic branding units.
 func TestParseFamily_Overrides_OpaqueCompounds(t *testing.T) {
 	t.Parallel()
-
-	cases := []struct {
-		raw        bestiary.Family
-		wantFamily bestiary.Family
-	}{
-		{"big-pickle", "big-pickle"},
-		{"dall-e", "dall-e"},
-		{"mm-poly", "mm-poly"},
-		{"model-router", "model-router"},
-		{"nano-banana", "nano-banana"},
-		{"smart-turn", "smart-turn"},
-		{"stable-diffusion", "stable-diffusion"},
-		{"text-embedding", "text-embedding"},
-	}
-
-	for _, tc := range cases {
-		t.Run(string(tc.raw), func(t *testing.T) {
-			t.Parallel()
-			gotFamily, gotVariant := bestiary.ParseFamily(tc.raw)
-			if gotFamily != tc.wantFamily {
-				t.Errorf("ParseFamily(%q) family = %q, want %q", tc.raw, gotFamily, tc.wantFamily)
-			}
-			if gotVariant != "" {
-				t.Errorf("ParseFamily(%q) variant = %q, want empty", tc.raw, gotVariant)
-			}
-		})
-	}
+	corpus := loadFamilyVariantCorpus(t, familyOpaqueCompoundsCorpusJSON, 8)
+	requireInputCoverage(t, corpus, map[string]familyVariantExpected{
+		"text-embedding": {Family: "text-embedding", Variant: ""},
+		"dall-e":         {Family: "dall-e", Variant: ""},
+	})
+	runFamilyVariantCorpus(t, corpus)
 }
 
 // TestParseFamily_VersionedPatterns covers the versioned-variant patterns.
 func TestParseFamily_VersionedPatterns(t *testing.T) {
 	t.Parallel()
-
-	cases := []struct {
-		name        string
-		raw         bestiary.Family
-		wantFamily  bestiary.Family
-		wantVariant string
-	}{
-		// k-prefix (BDD acceptance criterion).
-		{"kimi-k2.5 via k-prefix", "kimi-k2.5", "kimi", "k2.5"},
-		{"kimi-k2.6 via k-prefix", "kimi-k2.6", "kimi", "k2.6"},
-		// m-prefix via pattern only — "someai-m3.0" is NOT in family_overrides.json,
-		// so it falls through to the m-prefix versioned-variant pattern.
-		{"someai-m3.0 (not in overrides, m-prefix pattern)", "someai-m3.0", "someai", "m3.0"},
-		// no-prefix (BDD acceptance criterion).
-		{"qwen3.5 via no-prefix", "qwen3.5", "qwen", "3.5"},
-		{"qwen3.6 via no-prefix", "qwen3.6", "qwen", "3.6"},
-	}
-
-	for _, tc := range cases {
-		t.Run(tc.name, func(t *testing.T) {
-			t.Parallel()
-			gotFamily, gotVariant := bestiary.ParseFamily(tc.raw)
-			if gotFamily != tc.wantFamily {
-				t.Errorf("ParseFamily(%q) family = %q, want %q", tc.raw, gotFamily, tc.wantFamily)
-			}
-			if gotVariant != tc.wantVariant {
-				t.Errorf("ParseFamily(%q) variant = %q, want %q", tc.raw, gotVariant, tc.wantVariant)
-			}
-		})
-	}
+	corpus := loadFamilyVariantCorpus(t, familyVersionedPatternsCorpusJSON, 5)
+	requireInputCoverage(t, corpus, map[string]familyVariantExpected{
+		"kimi-k2.5": {Family: "kimi", Variant: "k2.5"},
+		"qwen3.5":   {Family: "qwen", Variant: "3.5"},
+	})
+	runFamilyVariantCorpus(t, corpus)
 }
 
 // TestParseFamily_HyphenVersion covers the hyphen-separated version rule.
 // BDD criterion: "Given raw 'claude-opus-4-5' When ParseFamily Then returns ('claude', 'opus-4-5')."
 func TestParseFamily_HyphenVersion(t *testing.T) {
 	t.Parallel()
-
-	cases := []struct {
-		name        string
-		raw         bestiary.Family
-		wantFamily  bestiary.Family
-		wantVariant string
-	}{
-		// BDD acceptance criterion.
-		{"claude-opus-4-5 hyphen version", "claude-opus-4-5", "claude", "opus-4-5"},
-	}
-
-	for _, tc := range cases {
-		t.Run(tc.name, func(t *testing.T) {
-			t.Parallel()
-			gotFamily, gotVariant := bestiary.ParseFamily(tc.raw)
-			if gotFamily != tc.wantFamily {
-				t.Errorf("ParseFamily(%q) family = %q, want %q", tc.raw, gotFamily, tc.wantFamily)
-			}
-			if gotVariant != tc.wantVariant {
-				t.Errorf("ParseFamily(%q) variant = %q, want %q", tc.raw, gotVariant, tc.wantVariant)
-			}
-		})
-	}
+	corpus := loadFamilyVariantCorpus(t, familyHyphenVersionCorpusJSON, 1)
+	requireInputCoverage(t, corpus, map[string]familyVariantExpected{
+		"claude-opus-4-5": {Family: "claude", Variant: "opus-4-5"},
+	})
+	runFamilyVariantCorpus(t, corpus)
 }
 
 // TestParseFamily_SingleToken covers raw families that are already single tokens.
@@ -292,150 +152,49 @@ func TestParseFamily_Determinism(t *testing.T) {
 	}
 }
 
-// TestParseFamily_SuffixStripping covers all 30 entries in variant_suffixes.json.
+// TestParseFamily_SuffixStripping covers the entries in variant_suffixes.json.
 // Inputs are chosen to NOT appear in family_overrides.json and to NOT match any
 // versioned-variant pattern, so they route past Steps 1 and 2 and reach the
-// suffix-stripping loop at parse.go:257-264.
-//
-// BLOCKER : suffix-stripping path had zero test coverage.
+// suffix-stripping loop. The corpus also pins the ratified global modifiers
+// (instruct/turbo/base) that ParseFamily no longer strips (empty variant), and
+// the longest-first multi-suffix ordering case.
 func TestParseFamily_SuffixStripping(t *testing.T) {
 	t.Parallel()
-
-	cases := []struct {
-		name        string
-		raw         bestiary.Family
-		wantFamily  bestiary.Family
-		wantVariant string
-	}{
-		// All suffix entries from variant_suffixes.json (listed longest-first
-		// in the JSON, but initParseData re-sorts by length so the order here
-		// is documentary only). REMOVED "-thinking" and "-vision" — they are
-		// now uniform Modifiers (modifiers.json authoritative), never variant suffixes.
-		// ALSO REMOVED "-instruct", "-turbo", "-base" — ratified global
-		// modifiers (member-guarded). ParseFamily no longer strips them, so "acme-instruct"
-		// stays family "acme-instruct" with empty variant (the modifier is extracted later
-		// by ExtractModifier in the ID-driven pipeline, not by ParseFamily on the raw string).
-		{"deep-research", "widget-deep-research", "widget", "deep-research"},
-		{"codex-spark", "acme-codex-spark", "acme", "codex-spark"},
-		{"codex-mini", "baz-codex-mini", "baz", "codex-mini"},
-		{"flash-lite", "acme-flash-lite", "acme", "flash-lite"},
-		{"codex", "acme-codex", "acme", "codex"},
-		{"instruct (now a global Modifier — NOT stripped by ParseFamily)", "acme-instruct", "acme-instruct", ""},
-		{"embed", "acme-embed", "acme", "embed"},
-		{"embedding", "acme-embedding", "acme", "embedding"},
-		{"mini", "foo-mini", "foo", "mini"},
-		{"pro", "foo-pro", "foo", "pro"},
-		{"flash", "foo-flash", "foo", "flash"},
-		{"lite", "foo-lite", "foo", "lite"},
-		{"turbo (now a global Modifier — NOT stripped by ParseFamily)", "foo-turbo", "foo-turbo", ""},
-		{"base (now a global Modifier — NOT stripped by ParseFamily)", "foo-base", "foo-base", ""},
-		{"ultra", "foo-ultra", "foo", "ultra"},
-		{"large", "foo-large", "foo", "large"},
-		{"medium", "foo-medium", "foo", "medium"},
-		{"small", "foo-small", "foo", "small"},
-		{"spark", "foo-spark", "foo", "spark"},
-		{"nano", "foo-nano", "foo", "nano"},
-		{"free", "foo-free", "foo", "free"},
-		{"beta", "foo-beta", "foo", "beta"},
-		{"nemo", "foo-nemo", "foo", "nemo"},
-		{"oss", "foo-oss", "foo", "oss"},
-		{"image", "foo-image", "foo", "image"},
-		{"coder", "foo-coder", "foo", "coder"},
-		{"-r", "foo-r", "foo", "r"},
-		{"-a", "foo-a", "foo", "a"},
-		// Multi-suffix input proving longest-first ordering: "-codex-mini" must
-		// match before "-mini" would, yielding variant="codex-mini" not "mini".
-		{"longest-first: codex-mini beats mini", "baz-codex-mini", "baz", "codex-mini"},
-	}
-
-	for _, tc := range cases {
-		t.Run(tc.name, func(t *testing.T) {
-			t.Parallel()
-			gotFamily, gotVariant := bestiary.ParseFamily(tc.raw)
-			if gotFamily != tc.wantFamily {
-				t.Errorf("ParseFamily(%q) family = %q, want %q", tc.raw, gotFamily, tc.wantFamily)
-			}
-			if gotVariant != tc.wantVariant {
-				t.Errorf("ParseFamily(%q) variant = %q, want %q", tc.raw, gotVariant, tc.wantVariant)
-			}
-		})
-	}
+	corpus := loadFamilyVariantCorpus(t, familySuffixStrippingCorpusJSON, 29)
+	requireInputCoverage(t, corpus, map[string]familyVariantExpected{
+		// longest-first: "-codex-mini" must beat "-mini".
+		"baz-codex-mini": {Family: "baz", Variant: "codex-mini"},
+		// ratified global modifiers are NOT stripped by ParseFamily.
+		"acme-instruct": {Family: "acme-instruct", Variant: ""},
+		"foo-turbo":     {Family: "foo-turbo", Variant: ""},
+		"foo-base":      {Family: "foo-base", Variant: ""},
+	})
+	runFamilyVariantCorpus(t, corpus)
 }
 
 // TestParseFamily_VPrefix covers the v-prefix versioned-variant pattern using
 // base values NOT present in family_overrides.json.
-//
-// IMPORTANT : v-prefix path was previously uncovered — all v-prefix
-// inputs in TestParseFamily_Overrides were intercepted by the overrides table.
 func TestParseFamily_VPrefix(t *testing.T) {
 	t.Parallel()
-
-	cases := []struct {
-		name        string
-		raw         bestiary.Family
-		wantFamily  bestiary.Family
-		wantVariant string
-	}{
-		// "somebase" is not in family_overrides.json; routes through v-prefix pattern.
-		{"somebase-v3.0", "somebase-v3.0", "somebase", "v3.0"},
-		// Multi-part variant (v-prefix with a trailing suffix).
-		{"thing-v2.5-pro", "thing-v2.5-pro", "thing", "v2.5-pro"},
-		// Single-part base with v-prefix version.
-		{"widget-v10.0", "widget-v10.0", "widget", "v10.0"},
-	}
-
-	for _, tc := range cases {
-		t.Run(tc.name, func(t *testing.T) {
-			t.Parallel()
-			gotFamily, gotVariant := bestiary.ParseFamily(tc.raw)
-			if gotFamily != tc.wantFamily {
-				t.Errorf("ParseFamily(%q) family = %q, want %q", tc.raw, gotFamily, tc.wantFamily)
-			}
-			if gotVariant != tc.wantVariant {
-				t.Errorf("ParseFamily(%q) variant = %q, want %q", tc.raw, gotVariant, tc.wantVariant)
-			}
-		})
-	}
+	corpus := loadFamilyVariantCorpus(t, familyVPrefixCorpusJSON, 3)
+	requireInputCoverage(t, corpus, map[string]familyVariantExpected{
+		"somebase-v3.0":  {Family: "somebase", Variant: "v3.0"},
+		"thing-v2.5-pro": {Family: "thing", Variant: "v2.5-pro"},
+	})
+	runFamilyVariantCorpus(t, corpus)
 }
 
 // TestParseFamily_HyphenVersion_NoOverride covers the else-branch of the
-// hyphen-version pattern handler (parse.go:249): when the extracted base is NOT
-// found in the overrides table, the function returns (Family(base), variant)
-// directly.
-//
-// IMPORTANT : only previous case was "claude-opus-4-5" whose base
-// "claude-opus" IS in overrides, leaving the else-branch unreachable in tests.
+// hyphen-version pattern handler: when the extracted base is NOT found in the
+// overrides table, the function returns (Family(base), variant) directly.
 func TestParseFamily_HyphenVersion_NoOverride(t *testing.T) {
 	t.Parallel()
-
-	cases := []struct {
-		name        string
-		raw         bestiary.Family
-		wantFamily  bestiary.Family
-		wantVariant string
-	}{
-		// The hyphen-version regex base group only captures alpha-leading segments:
-		// ^(?P<base>[a-zA-Z][a-zA-Z0-9]*(?:-[a-zA-Z][a-zA-Z0-9]*)*)-(?P<variant>\d+(?:-\d+)*)$
-		// For "llama-3-1": base="llama" (only alpha segment), variant="3-1".
-		// "llama" is not in family_overrides.json → else-branch fires → returns
-		// (Family("llama"), "3-1") directly without consulting overrides further.
-		{"llama-3-1 base not in overrides", "llama-3-1", "llama", "3-1"},
-		// "phi" is not in family_overrides.json; else-branch returns (Family("phi"), "4-5").
-		{"phi-4-5 base not in overrides", "phi-4-5", "phi", "4-5"},
-	}
-
-	for _, tc := range cases {
-		t.Run(tc.name, func(t *testing.T) {
-			t.Parallel()
-			gotFamily, gotVariant := bestiary.ParseFamily(tc.raw)
-			if gotFamily != tc.wantFamily {
-				t.Errorf("ParseFamily(%q) family = %q, want %q", tc.raw, gotFamily, tc.wantFamily)
-			}
-			if gotVariant != tc.wantVariant {
-				t.Errorf("ParseFamily(%q) variant = %q, want %q", tc.raw, gotVariant, tc.wantVariant)
-			}
-		})
-	}
+	corpus := loadFamilyVariantCorpus(t, familyHyphenVersionNoOverrideCorpusJSON, 2)
+	requireInputCoverage(t, corpus, map[string]familyVariantExpected{
+		"llama-3-1": {Family: "llama", Variant: "3-1"},
+		"phi-4-5":   {Family: "phi", Variant: "4-5"},
+	})
+	runFamilyVariantCorpus(t, corpus)
 }
 
 // ----------------------------------------------------------------------------
@@ -445,38 +204,14 @@ func TestParseFamily_HyphenVersion_NoOverride(t *testing.T) {
 // TestExtractDate_FromID covers date extraction from model IDs.
 func TestExtractDate_FromID(t *testing.T) {
 	t.Parallel()
-
-	cases := []struct {
-		name        string
-		id          bestiary.ModelID
-		releaseDate string
-		want        string
-	}{
-		// BDD acceptance criterion: YYYYMMDD in model ID.
-		{"claude-opus date from id", "claude-opus-4-20250514", "", "2025-05-14"},
-		// BDD acceptance criterion: no date.
-		{"gpt-codex-mini no date", "gpt-codex-mini", "", ""},
-		// YYYY-MM-DD in model ID.
-		{"id with YYYY-MM-DD", "gpt-4o-2024-08-06", "", "2024-08-06"},
-		// No date in ID, date in releaseDate.
-		{"date from releaseDate", "llama-3", "2024-04-18", "2024-04-18"},
-		// Both empty.
-		{"empty id empty releaseDate", "", "", ""},
-		// Date in releaseDate YYYYMMDD form.
-		{"releaseDate YYYYMMDD", "some-model", "20230901", "2023-09-01"},
-		// ID takes priority over releaseDate when ID has a date.
-		{"id date wins over releaseDate", "model-20240101", "2023-06-15", "2024-01-01"},
-	}
-
-	for _, tc := range cases {
-		t.Run(tc.name, func(t *testing.T) {
-			t.Parallel()
-			got := bestiary.ExtractDate(tc.id, tc.releaseDate)
-			if got != tc.want {
-				t.Errorf("ExtractDate(%q, %q) = %q, want %q", tc.id, tc.releaseDate, got, tc.want)
-			}
-		})
-	}
+	corpus := loadParseCorpus[dateInput, string](t, extractDateFromIDCorpusJSON, 7)
+	requireInputCoverage(t, corpus, map[dateInput]string{
+		// an ID-embedded date wins over releaseDate.
+		{ID: "model-20240101", ReleaseDate: "2023-06-15"}: "2024-01-01",
+		// releaseDate fallback when the ID carries no date.
+		{ID: "llama-3", ReleaseDate: "2024-04-18"}: "2024-04-18",
+	})
+	runExtractDateCorpus(t, corpus)
 }
 
 // TestExtractDate_CalendarValidation checks that structurally-matching but
@@ -484,40 +219,14 @@ func TestExtractDate_FromID(t *testing.T) {
 // ExtractDate must use time.Parse round-trip to validate range.
 func TestExtractDate_CalendarValidation(t *testing.T) {
 	t.Parallel()
-
-	cases := []struct {
-		name        string
-		id          bestiary.ModelID
-		releaseDate string
-		want        string
-	}{
-		// Invalid month — 99 is not a real month.
-		{"YYYY-MM-DD month 99 rejected", "model-9999-99-01", "", ""},
-		// Invalid day — 99 is not a real day.
-		{"YYYY-MM-DD day 99 rejected", "model-9999-01-99", "", ""},
-		// Both invalid.
-		{"YYYY-MM-DD month+day invalid", "model-9999-99-99", "", ""},
-		// Compact form with invalid month.
-		{"YYYYMMDD month 99 rejected", "model-99999901", "", ""},
-		// Valid edge: last day of a real month.
-		{"valid 2025-01-31", "model-2025-01-31", "", "2025-01-31"},
-		// Valid compact.
-		{"valid compact 20250101", "x-20250101", "", "2025-01-01"},
-		// February 29 on non-leap year rejected (Go's time.Parse rejects this).
-		{"Feb 29 non-leap year rejected", "model-2023-02-29", "", ""},
-		// February 29 on a leap year accepted.
-		{"Feb 29 leap year accepted", "model-2024-02-29", "", "2024-02-29"},
-	}
-
-	for _, tc := range cases {
-		t.Run(tc.name, func(t *testing.T) {
-			t.Parallel()
-			got := bestiary.ExtractDate(tc.id, tc.releaseDate)
-			if got != tc.want {
-				t.Errorf("ExtractDate(%q, %q) = %q, want %q", tc.id, tc.releaseDate, got, tc.want)
-			}
-		})
-	}
+	corpus := loadParseCorpus[dateInput, string](t, extractDateCalendarCorpusJSON, 8)
+	// Value coverage: the load-bearing valid/invalid boundary pairs must remain.
+	requireInputCoverage(t, corpus, map[dateInput]string{
+		{ID: "model-9999-99-01"}: "",           // invalid month rejected
+		{ID: "model-2023-02-29"}: "",           // Feb 29 non-leap rejected
+		{ID: "model-2024-02-29"}: "2024-02-29", // Feb 29 leap accepted
+	})
+	runExtractDateCorpus(t, corpus)
 }
 
 // ----------------------------------------------------------------------------
@@ -527,32 +236,19 @@ func TestExtractDate_CalendarValidation(t *testing.T) {
 // TestInferFamilyFromID covers the empty-family fallback heuristic.
 func TestInferFamilyFromID(t *testing.T) {
 	t.Parallel()
-
-	cases := []struct {
-		name     string
-		id       bestiary.ModelID
-		provider bestiary.Provider
-		want     bestiary.Family
-	}{
-		// BDD acceptance criterion: "gpt" from "gpt-4o-2024-08-06".
-		{"gpt-4o-2024-08-06", "gpt-4o-2024-08-06", bestiary.ProviderOpenAI, "gpt"},
-		// Leading alphabetic prefix extraction.
-		{"llama-3", "llama-3", bestiary.ProviderLocal, "llama"},
-		{"claude-3", "claude-3", bestiary.ProviderAnthropic, "claude"},
-		// Pure version-only ID — no family signal.
-		{"numeric only", "1234", bestiary.ProviderLocal, ""},
-		// Empty ID.
-		{"empty id", "", bestiary.ProviderLocal, ""},
-		// Single alphabetic token.
-		{"single token", "phi", bestiary.ProviderLocal, "phi"},
-	}
-
-	for _, tc := range cases {
-		t.Run(tc.name, func(t *testing.T) {
+	corpus := loadParseCorpus[providerIDInput, string](t, inferFamilyFromIDCorpusJSON, 6)
+	requireInputCoverage(t, corpus, map[providerIDInput]string{
+		// BDD criterion: prefix extraction from a dated id.
+		{ID: "gpt-4o-2024-08-06", Provider: "openai"}: "gpt",
+		// numeric-only id has no family signal.
+		{ID: "1234", Provider: "local"}: "",
+	})
+	for _, c := range corpus.Cases {
+		t.Run(c.Name, func(t *testing.T) {
 			t.Parallel()
-			got := bestiary.InferFamilyFromID(tc.id, tc.provider)
-			if got != tc.want {
-				t.Errorf("InferFamilyFromID(%q, %q) = %q, want %q", tc.id, tc.provider, got, tc.want)
+			got := bestiary.InferFamilyFromID(bestiary.ModelID(c.Input.ID), bestiary.Provider(c.Input.Provider))
+			if string(got) != c.Expected {
+				t.Errorf("InferFamilyFromID(%q, %q) = %q, want %q", c.Input.ID, c.Input.Provider, got, c.Expected)
 			}
 		})
 	}
@@ -570,83 +266,25 @@ func TestInferFamilyFromID(t *testing.T) {
 // Version uses dot separator (4.5) not hyphen (4-5).
 func TestParseFamilyWithVersion_Core(t *testing.T) {
 	t.Parallel()
-
-	cases := []struct {
-		name        string
-		raw         bestiary.Family
-		wantFamily  bestiary.Family
-		wantVariant string
-		wantVersion string
-	}{
-		// Primary criterion: claude families with versioned hyphen suffix.
-		{"claude-opus-4-5", "claude-opus-4-5", "claude", "opus", "4.5"},
-		{"claude-opus-4-6", "claude-opus-4-6", "claude", "opus", "4.6"},
-		{"claude-sonnet-4-5", "claude-sonnet-4-5", "claude", "sonnet", "4.5"},
-		{"claude-haiku-4-5", "claude-haiku-4-5", "claude", "haiku", "4.5"},
-		// No version: vanilla overrides — version should be empty.
-		{"claude-opus no version", "claude-opus", "claude", "opus", ""},
-		{"claude-haiku no version", "claude-haiku", "claude", "haiku", ""},
-		// Single version segment (single numeric after dash).
-		{"llama-3-1 two parts", "llama-3-1", "llama", "", "3.1"},
-		// phi-4-5: base "phi" not in overrides → family=phi, variant empty, version=4.5.
-		{"phi-4-5", "phi-4-5", "phi", "", "4.5"},
-	}
-
-	for _, tc := range cases {
-		t.Run(tc.name, func(t *testing.T) {
-			t.Parallel()
-			gotFamily, gotVariant, gotVersion := bestiary.ParseFamilyWithVersion(tc.raw)
-			if gotFamily != tc.wantFamily {
-				t.Errorf("ParseFamilyWithVersion(%q) family = %q, want %q", tc.raw, gotFamily, tc.wantFamily)
-			}
-			if gotVariant != tc.wantVariant {
-				t.Errorf("ParseFamilyWithVersion(%q) variant = %q, want %q", tc.raw, gotVariant, tc.wantVariant)
-			}
-			if gotVersion != tc.wantVersion {
-				t.Errorf("ParseFamilyWithVersion(%q) version = %q, want %q", tc.raw, gotVersion, tc.wantVersion)
-			}
-		})
-	}
+	corpus := loadParseCorpus[string, familyVersionExpected](t, familyWithVersionCoreCorpusJSON, 8)
+	requireInputCoverage(t, corpus, map[string]familyVersionExpected{
+		"claude-opus-4-5": {Family: "claude", Variant: "opus", Version: "4.5"},
+		"claude-opus":     {Family: "claude", Variant: "opus", Version: ""},
+		"llama-3-1":       {Family: "llama", Variant: "", Version: "3.1"},
+	})
+	runFamilyVersionCorpus(t, corpus)
 }
 
 // TestParseFamilyWithVersion_Gemini covers Gemini models which use a
 // major.minor version in their family string.
 func TestParseFamilyWithVersion_Gemini(t *testing.T) {
 	t.Parallel()
-
-	cases := []struct {
-		name        string
-		raw         bestiary.Family
-		wantFamily  bestiary.Family
-		wantVariant string
-		wantVersion string
-	}{
-		// gemini-2.5-flash: base=gemini, version=2.5 (from no-prefix pattern), variant=flash (override).
-		// The raw family "gemini-flash" is in overrides → (gemini, flash).
-		// But "gemini-2.5-flash" must parse via versioned patterns.
-		// Design: gemini-2.5-flash → family=gemini, variant=flash, version=2.5.
-		{"gemini-2.5-flash", "gemini-2.5-flash", "gemini", "flash", "2.5"},
-		// gemini-2.5 → no variant, version=2.5.
-		{"gemini-2.5", "gemini-2.5", "gemini", "", "2.5"},
-		// gemini-flash (no version): family=gemini, variant=flash, version empty.
-		{"gemini-flash no version", "gemini-flash", "gemini", "flash", ""},
-	}
-
-	for _, tc := range cases {
-		t.Run(tc.name, func(t *testing.T) {
-			t.Parallel()
-			gotFamily, gotVariant, gotVersion := bestiary.ParseFamilyWithVersion(tc.raw)
-			if gotFamily != tc.wantFamily {
-				t.Errorf("ParseFamilyWithVersion(%q) family = %q, want %q", tc.raw, gotFamily, tc.wantFamily)
-			}
-			if gotVariant != tc.wantVariant {
-				t.Errorf("ParseFamilyWithVersion(%q) variant = %q, want %q", tc.raw, gotVariant, tc.wantVariant)
-			}
-			if gotVersion != tc.wantVersion {
-				t.Errorf("ParseFamilyWithVersion(%q) version = %q, want %q", tc.raw, gotVersion, tc.wantVersion)
-			}
-		})
-	}
+	corpus := loadParseCorpus[string, familyVersionExpected](t, familyWithVersionGeminiCorpusJSON, 3)
+	requireInputCoverage(t, corpus, map[string]familyVersionExpected{
+		"gemini-2.5-flash": {Family: "gemini", Variant: "flash", Version: "2.5"},
+		"gemini-2.5":       {Family: "gemini", Variant: "", Version: "2.5"},
+	})
+	runFamilyVersionCorpus(t, corpus)
 }
 
 // TestParseFamilyWithVersion_Empty verifies that empty input returns all-empty results.
@@ -671,37 +309,13 @@ func TestParseFamilyWithVersion_Empty(t *testing.T) {
 // should use ExtractVersionFromID instead, which handles this case.
 func TestParseFamilyWithVersion_AlphanumericVersion(t *testing.T) {
 	t.Parallel()
-
-	cases := []struct {
-		name        string
-		raw         bestiary.Family
-		wantFamily  bestiary.Family
-		wantVariant string
-		wantVersion string
-	}{
-		// "gpt-4o": "4o" is alphanumeric — no pattern strips it; full fallback.
-		// The family field "gpt-4o" is what models.dev actually returns for this model.
-		{"gpt-4o", "gpt-4o", "gpt-4o", "", ""},
-		// "chatgpt-4o-latest": "-latest" is not in the variant_suffixes list and
-		// the trailing token is non-numeric, so full fallback applies.
-		{"chatgpt-4o-latest", "chatgpt-4o-latest", "chatgpt-4o-latest", "", ""},
-	}
-
-	for _, tc := range cases {
-		t.Run(tc.name, func(t *testing.T) {
-			t.Parallel()
-			gotFamily, gotVariant, gotVersion := bestiary.ParseFamilyWithVersion(tc.raw)
-			if gotFamily != tc.wantFamily {
-				t.Errorf("ParseFamilyWithVersion(%q) family = %q, want %q", tc.raw, gotFamily, tc.wantFamily)
-			}
-			if gotVariant != tc.wantVariant {
-				t.Errorf("ParseFamilyWithVersion(%q) variant = %q, want %q", tc.raw, gotVariant, tc.wantVariant)
-			}
-			if gotVersion != tc.wantVersion {
-				t.Errorf("ParseFamilyWithVersion(%q) version = %q, want %q", tc.raw, gotVersion, tc.wantVersion)
-			}
-		})
-	}
+	corpus := loadParseCorpus[string, familyVersionExpected](t, familyWithVersionAlnumCorpusJSON, 2)
+	requireInputCoverage(t, corpus, map[string]familyVersionExpected{
+		// alphanumeric "4o" is not a separable version: full fallback, raw unchanged.
+		"gpt-4o":            {Family: "gpt-4o", Variant: "", Version: ""},
+		"chatgpt-4o-latest": {Family: "chatgpt-4o-latest", Variant: "", Version: ""},
+	})
+	runFamilyVersionCorpus(t, corpus)
 }
 
 // TestExtractVersionFromID covers the ExtractVersionFromID helper introduced in
@@ -709,43 +323,21 @@ func TestParseFamilyWithVersion_AlphanumericVersion(t *testing.T) {
 // model ID when the raw family field does not embed one.
 func TestExtractVersionFromID(t *testing.T) {
 	t.Parallel()
-
-	cases := []struct {
-		name      string
-		id        bestiary.ModelID
-		rawFamily bestiary.Family
-		want      string
-	}{
-		// Required cases per the spec.
-		{"claude-opus-4-5-20251101", "claude-opus-4-5-20251101", "claude-opus", "4.5"},
-		{"claude-opus-4-6-20250514", "claude-opus-4-6-20250514", "claude-opus", "4.6"},
-		{"gemini-2.5-flash", "gemini-2.5-flash", "gemini", "2.5"},
-		{"claude-opus no version", "claude-opus", "claude-opus", ""},
-
-		// Additional coverage.
-		// gpt-4o: single alphanumeric token "4o" after stripping "gpt-"
-		{"gpt-4o", "gpt-4o", "gpt", "4o"},
-		// claude-opus-4-6 without date
-		{"claude-opus-4-6 no date", "claude-opus-4-6", "claude-opus", "4.6"},
-		// ID that exactly equals family: no trailing version
-		{"id equals family", "claude-opus", "claude-opus", ""},
-		// Empty inputs
-		{"empty id", "", "claude-opus", ""},
-		{"empty family", "claude-opus-4-5", "", ""},
-		// ID without the family prefix: no match
-		{"no prefix match", "gpt-4o", "claude-opus", ""},
-		// gemini-2.5: pure dot-version remainder
-		{"gemini-2.5", "gemini-2.5", "gemini", "2.5"},
-		// Trailing YYYY-MM-DD date stripped before version extraction
-		{"claude-opus-4-6-2026-02-05", "claude-opus-4-6-2026-02-05", "claude-opus", "4.6"},
-	}
-
-	for _, tc := range cases {
-		t.Run(tc.name, func(t *testing.T) {
+	corpus := loadParseCorpus[versionFromIDInput, string](t, extractVersionFromIDCorpusJSON, 12)
+	requireInputCoverage(t, corpus, map[versionFromIDInput]string{
+		// required spec case: dated id yields the dotted version.
+		{ID: "claude-opus-4-5-20251101", RawFamily: "claude-opus"}: "4.5",
+		// alphanumeric single-token version after prefix strip.
+		{ID: "gpt-4o", RawFamily: "gpt"}: "4o",
+		// trailing YYYY-MM-DD date stripped before version extraction.
+		{ID: "claude-opus-4-6-2026-02-05", RawFamily: "claude-opus"}: "4.6",
+	})
+	for _, c := range corpus.Cases {
+		t.Run(c.Name, func(t *testing.T) {
 			t.Parallel()
-			got := bestiary.ExtractVersionFromID(tc.id, tc.rawFamily)
-			if got != tc.want {
-				t.Errorf("ExtractVersionFromID(%q, %q) = %q, want %q", tc.id, tc.rawFamily, got, tc.want)
+			got := bestiary.ExtractVersionFromID(bestiary.ModelID(c.Input.ID), bestiary.Family(c.Input.RawFamily))
+			if got != c.Expected {
+				t.Errorf("ExtractVersionFromID(%q, %q) = %q, want %q", c.Input.ID, c.Input.RawFamily, got, c.Expected)
 			}
 		})
 	}
@@ -792,49 +384,29 @@ func TestParseFamilyWithVersion_BackwardCompat(t *testing.T) {
 func TestInferFamilyFromID_Variant(t *testing.T) {
 	t.Parallel()
 
-	cases := []struct {
-		desc        string
-		id          bestiary.ModelID
-		provider    bestiary.Provider
-		wantFamily  bestiary.Family
-		wantVariant string
-		wantVersion string
-	}{
-		{
-			desc:        "claude-opus-4-5-20251101 empty raw_family → (claude, opus, 4.5)",
-			id:          "claude-opus-4-5-20251101",
-			provider:    "nano-gpt",
-			wantFamily:  "claude",
-			wantVariant: "opus",
-			wantVersion: "4.5",
-		},
-		{
-			desc:        "claude-opus-4-6 empty raw_family → (claude, opus, 4.6)",
-			id:          "claude-opus-4-6",
-			provider:    "some-provider",
-			wantFamily:  "claude",
-			wantVariant: "opus",
-			wantVersion: "4.6",
-		},
-	}
-
-	for _, tc := range cases {
-		t.Run(tc.desc, func(t *testing.T) {
+	corpus := loadParseCorpus[providerIDInput, familyVersionExpected](t, inferFamilyVariantCorpusJSON, 2)
+	requireInputCoverage(t, corpus, map[providerIDInput]familyVersionExpected{
+		// the empty-raw-family path must decompose the full tuple, not first-token.
+		{ID: "claude-opus-4-5-20251101", Provider: "nano-gpt"}: {Family: "claude", Variant: "opus", Version: "4.5"},
+		{ID: "claude-opus-4-6", Provider: "some-provider"}:     {Family: "claude", Variant: "opus", Version: "4.6"},
+	})
+	for _, c := range corpus.Cases {
+		t.Run(c.Name, func(t *testing.T) {
 			t.Parallel()
-			gotFamily, gotVariant, gotVersion := bestiary.InferFamilyFromIDWithVariant(tc.id, tc.provider)
-			if gotFamily != tc.wantFamily {
+			gotFamily, gotVariant, gotVersion := bestiary.InferFamilyFromIDWithVariant(bestiary.ModelID(c.Input.ID), bestiary.Provider(c.Input.Provider))
+			if string(gotFamily) != c.Expected.Family {
 				t.Errorf("InferFamilyFromIDWithVariant(%q, %q) family = %q, want %q",
-					tc.id, tc.provider, gotFamily, tc.wantFamily)
+					c.Input.ID, c.Input.Provider, gotFamily, c.Expected.Family)
 			}
-			if gotVariant != tc.wantVariant {
+			if gotVariant != c.Expected.Variant {
 				t.Errorf("InferFamilyFromIDWithVariant(%q, %q) variant = %q, want %q; "+
 					"must apply suffix/pattern logic to extract variant from ID tokens, "+
 					"not just return the first token",
-					tc.id, tc.provider, gotVariant, tc.wantVariant)
+					c.Input.ID, c.Input.Provider, gotVariant, c.Expected.Variant)
 			}
-			if gotVersion != tc.wantVersion {
+			if gotVersion != c.Expected.Version {
 				t.Errorf("InferFamilyFromIDWithVariant(%q, %q) version = %q, want %q",
-					tc.id, tc.provider, gotVersion, tc.wantVersion)
+					c.Input.ID, c.Input.Provider, gotVersion, c.Expected.Version)
 			}
 		})
 	}
@@ -970,103 +542,14 @@ func TestParseFamilyDetailed_YYMMDateAsVersion(t *testing.T) {
 // The pipeline integration test below covers the end-to-end flow.
 func TestExtractModifier(t *testing.T) {
 	t.Parallel()
-
-	cases := []struct {
-		desc         string
-		id           bestiary.ModelID
-		family       bestiary.Family
-		variant      string
-		wantModifier string
-		wantConsumed string
-	}{
-		// 4-case corpus from the spec.
-		{
-			desc:         "claude-opus-4-1-20250805-thinking",
-			id:           "claude-opus-4-1-20250805-thinking",
-			family:       "claude",
-			variant:      "opus",
-			wantModifier: "thinking",
-			wantConsumed: "-thinking",
-		},
-		{
-			desc:         "claude-opus-4-6-thinking (no date in ID)",
-			id:           "claude-opus-4-6-thinking",
-			family:       "claude",
-			variant:      "opus",
-			wantModifier: "thinking",
-			wantConsumed: "-thinking",
-		},
-		{
-			desc:         "doubao-seed-1-6-thinking-250715",
-			id:           "doubao-seed-1-6-thinking-250715",
-			family:       "doubao",
-			variant:      "seed",
-			wantModifier: "",
-			wantConsumed: "",
-			// 250715 is the trailing token (YYMMDD without dashes), not "thinking".
-			// "thinking" appears before "250715" so it is not the last hyphen-token.
-			// ExtractModifier only matches when the modifier IS the trailing token.
-		},
-		{
-			desc:         "gpt-4o-2024-05-13 (no modifier)",
-			id:           "gpt-4o-2024-05-13",
-			family:       "gpt",
-			variant:      "",
-			wantModifier: "",
-			wantConsumed: "",
-		},
-		// Negative cases.
-		{
-			desc:         "unknown modifier -zen returns empty",
-			id:           "some-model-zen",
-			family:       "some",
-			variant:      "model",
-			wantModifier: "",
-			wantConsumed: "",
-		},
-		{
-			desc:         "trailing token == variant: no double-count",
-			id:           "deepseek-thinking",
-			family:       "deepseek",
-			variant:      "thinking", // variant IS "thinking" — ExtractModifier must return empty (variant-guard, Fix 3)
-			wantModifier: "",
-			wantConsumed: "",
-			// When the trailing modifier token equals the parsed variant, ExtractModifier
-			// returns ("","") to avoid double-counting the same semantic token in both
-			// Variant and Modifier. The variant is the authoritative encoding.
-		},
-		{
-			desc:         "empty ID returns empty",
-			id:           "",
-			family:       "claude",
-			variant:      "opus",
-			wantModifier: "",
-			wantConsumed: "",
-		},
-		{
-			desc:         "think suffix (shorter modifier) does not shadow thinking",
-			id:           "model-thinking",
-			family:       "model",
-			variant:      "",
-			wantModifier: "thinking",
-			wantConsumed: "-thinking",
-		},
-	}
-
-	for _, tc := range cases {
-		t.Run(tc.desc, func(t *testing.T) {
-			t.Parallel()
-			gotModifier, gotConsumed := bestiary.ExtractModifier(tc.id, tc.family, tc.variant)
-			if gotModifier != tc.wantModifier {
-				t.Errorf("ExtractModifier(%q, %q, %q) modifier = %q, want %q",
-					tc.id, tc.family, tc.variant, gotModifier, tc.wantModifier)
-			}
-			if gotConsumed != tc.wantConsumed {
-				t.Errorf("ExtractModifier(%q, %q, %q) consumed = %q, want %q",
-					tc.id, tc.family, tc.variant, gotConsumed, tc.wantConsumed)
-			}
-		})
-	}
+	corpus := loadParseCorpus[modifierInput, modifierExpected](t, extractModifierCorpusJSON, 8)
+	requireInputCoverage(t, corpus, map[modifierInput]modifierExpected{
+		// trailing modifier fires with an empty variant.
+		{ID: "model-thinking", Family: "model", Variant: ""}: {Modifier: "thinking", Consumed: "-thinking"},
+		// variant-guard: trailing token equals variant -> no double-count.
+		{ID: "deepseek-thinking", Family: "deepseek", Variant: "thinking"}: {Modifier: "", Consumed: ""},
+	})
+	runExtractModifierCorpus(t, corpus)
 }
 
 // TestExtractModifier_DoesNotDoubleCountVariant verifies the variant-guard:
@@ -1085,86 +568,16 @@ func TestExtractModifier(t *testing.T) {
 // IMPORTANT: this guards against double-counting a variant token that also matches a trailing modifier.
 func TestExtractModifier_DoesNotDoubleCountVariant(t *testing.T) {
 	t.Parallel()
-
-	cases := []struct {
-		desc         string
-		id           bestiary.ModelID
-		family       bestiary.Family
-		variant      string
-		wantModifier string
-		wantConsumed string
-	}{
-		{
-			desc:         "kimi-k2-thinking: trailing token == variant → no double-count",
-			id:           "kimi-k2-thinking",
-			family:       "kimi",
-			variant:      "thinking",
-			wantModifier: "",
-			wantConsumed: "",
-			// variant="thinking" and trailing token "-thinking" match → guard fires → empty.
-		},
-		{
-			desc:         "moonshotai/kimi-k2-thinking: path-stripped, trailing token == variant → no double-count",
-			id:           "moonshotai/kimi-k2-thinking",
-			family:       "kimi",
-			variant:      "thinking",
-			wantModifier: "",
-			wantConsumed: "",
-			// Leading path segment is stripped; same guard applies.
-		},
-		{
-			desc:         "deepseek-thinking: trailing 'thinking' == variant='thinking' → no double-count",
-			id:           "deepseek-thinking",
-			family:       "deepseek",
-			variant:      "thinking",
-			wantModifier: "",
-			wantConsumed: "",
-		},
-		{
-			// Negative case: different trailing token vs. variant — guard must NOT fire.
-			desc:         "claude-opus-4-6-thinking: variant='opus' != trailing 'thinking' → modifier fires",
-			id:           "claude-opus-4-6-thinking",
-			family:       "claude",
-			variant:      "opus",
-			wantModifier: "thinking",
-			wantConsumed: "-thinking",
-		},
-		{
-			// Negative case: no modifier in ID — guard irrelevant.
-			desc:         "claude-opus-4-6: no trailing modifier → empty",
-			id:           "claude-opus-4-6",
-			family:       "claude",
-			variant:      "opus",
-			wantModifier: "",
-			wantConsumed: "",
-		},
-		{
-			// Edge case: variant is empty string — trailing modifier fires normally.
-			desc:         "kimi-k2-thinking: empty variant → modifier fires",
-			id:           "kimi-k2-thinking",
-			family:       "kimi",
-			variant:      "",
-			wantModifier: "thinking",
-			wantConsumed: "-thinking",
-		},
-	}
-
-	for _, tc := range cases {
-		t.Run(tc.desc, func(t *testing.T) {
-			t.Parallel()
-			gotModifier, gotConsumed := bestiary.ExtractModifier(tc.id, tc.family, tc.variant)
-			if gotModifier != tc.wantModifier {
-				t.Errorf("ExtractModifier(%q, %q, %q) modifier = %q, want %q\n"+
-					"  What: modifier was double-counted (same token as variant)\n"+
-					"  Fix: variant-guard in ExtractModifier (Fix 3)",
-					tc.id, tc.family, tc.variant, gotModifier, tc.wantModifier)
-			}
-			if gotConsumed != tc.wantConsumed {
-				t.Errorf("ExtractModifier(%q, %q, %q) consumed = %q, want %q",
-					tc.id, tc.family, tc.variant, gotConsumed, tc.wantConsumed)
-			}
-		})
-	}
+	corpus := loadParseCorpus[modifierInput, modifierExpected](t, extractModifierDoubleCountCorpusJSON, 6)
+	requireInputCoverage(t, corpus, map[modifierInput]modifierExpected{
+		// guard fires: trailing token equals variant.
+		{ID: "kimi-k2-thinking", Family: "kimi", Variant: "thinking"}: {Modifier: "", Consumed: ""},
+		// guard must NOT fire: variant 'opus' != trailing 'thinking'.
+		{ID: "claude-opus-4-6-thinking", Family: "claude", Variant: "opus"}: {Modifier: "thinking", Consumed: "-thinking"},
+		// empty variant: modifier fires normally.
+		{ID: "kimi-k2-thinking", Family: "kimi", Variant: ""}: {Modifier: "thinking", Consumed: "-thinking"},
+	})
+	runExtractModifierCorpus(t, corpus)
 }
 
 // TestUniformModifierSuffix is the acceptance test for the uniform
@@ -1183,46 +596,32 @@ func TestExtractModifier_DoesNotDoubleCountVariant(t *testing.T) {
 func TestUniformModifierSuffix(t *testing.T) {
 	t.Parallel()
 
-	cases := []struct {
-		desc         string
-		rawFamily    bestiary.Family
-		id           bestiary.ModelID
-		provider     bestiary.Provider
-		wantFamily   bestiary.Family
-		wantModifier string
-	}{
-		// The two headline cases mandated by the slice spec: BOTH must yield
-		// modifier=thinking with the token NEVER appearing as the variant.
-		{"claude-3-7-sonnet-thinking (empty raw)", "", "claude-3-7-sonnet-thinking", "nano-gpt", "claude", "thinking"},
-		{"kimi-k2-thinking (empty raw)", "", "kimi-k2-thinking", "302ai", "kimi", "thinking"},
-		// Raw-family-encoded modifier with the SAME token also in the ID.
-		{"kimi-k2-thinking (raw=kimi-thinking)", "kimi-thinking", "kimi-k2-thinking", "ollama-cloud", "kimi", "thinking"},
-		// Raw-family-encoded modifier with NO modifier token in the ID — the modifier
-		// must be recovered from the raw family, never silently dropped.
-		{"deepseek-thinking raw, id=deepseek-r1", "deepseek-thinking", "deepseek-r1", "iflowcn", "deepseek", "thinking"},
-		// Vision is treated identically to thinking.
-		{"grok-vision raw + id", "grok-vision", "grok-vision", "xai", "grok", "vision"},
-	}
-
-	for _, tc := range cases {
-		t.Run(tc.desc, func(t *testing.T) {
+	corpus := loadParseCorpus[uniformModInput, uniformModExpected](t, uniformModifierSuffixCorpusJSON, 5)
+	requireInputCoverage(t, corpus, map[uniformModInput]uniformModExpected{
+		// vision is treated identically to thinking.
+		{RawFamily: "grok-vision", ID: "grok-vision", Provider: "xai"}: {Family: "grok", Modifier: "vision"},
+		// raw-family-encoded modifier with no modifier token in the ID.
+		{RawFamily: "deepseek-thinking", ID: "deepseek-r1", Provider: "iflowcn"}: {Family: "deepseek", Modifier: "thinking"},
+	})
+	for _, c := range corpus.Cases {
+		t.Run(c.Name, func(t *testing.T) {
 			t.Parallel()
-			family, variant, _, modifier, _ := bestiary.ParseFamilyDetailed(tc.rawFamily, tc.id, tc.provider)
-			if family != tc.wantFamily {
+			family, variant, _, modifier, _ := bestiary.ParseFamilyDetailed(bestiary.Family(c.Input.RawFamily), bestiary.ModelID(c.Input.ID), bestiary.Provider(c.Input.Provider))
+			if string(family) != c.Expected.Family {
 				t.Errorf("ParseFamilyDetailed(%q, %q) family = %q, want %q",
-					tc.rawFamily, tc.id, family, tc.wantFamily)
+					c.Input.RawFamily, c.Input.ID, family, c.Expected.Family)
 			}
-			if modJoin(modifier) != tc.wantModifier {
+			if modJoin(modifier) != c.Expected.Modifier {
 				t.Errorf("ParseFamilyDetailed(%q, %q) modifier = %q, want %q\n"+
 					"  What: trailing %q token was NOT surfaced as the first-class Modifier\n"+
 					"  Why: uniform migration — thinking/vision are ALWAYS modifiers",
-					tc.rawFamily, tc.id, modifier, tc.wantModifier, tc.wantModifier)
+					c.Input.RawFamily, c.Input.ID, modifier, c.Expected.Modifier, c.Expected.Modifier)
 			}
 			// The invariant: the modifier token must NEVER be encoded as the variant.
-			if variant == tc.wantModifier {
+			if variant == c.Expected.Modifier {
 				t.Errorf("ParseFamilyDetailed(%q, %q) variant = %q — a trailing modifier token "+
 					"must NEVER be classified as the Variant (uniform migration)",
-					tc.rawFamily, tc.id, variant)
+					c.Input.RawFamily, c.Input.ID, variant)
 			}
 		})
 	}
@@ -1239,74 +638,49 @@ func TestUniformModifierSuffix(t *testing.T) {
 func TestExtractModifier_PipelineIntegration(t *testing.T) {
 	t.Parallel()
 
-	cases := []struct {
-		desc         string
-		rawID        bestiary.ModelID
-		rawFamily    bestiary.Family
-		wantModifier string
-		wantVersion  string
-		wantDate     string
-	}{
-		{
-			desc:         "claude-opus-4-1-20250805-thinking",
-			rawID:        "claude-opus-4-1-20250805-thinking",
-			rawFamily:    "claude-opus",
-			wantModifier: "thinking",
-			wantVersion:  "4.1",
-			wantDate:     "2025-08-05",
-		},
-		{
-			desc:         "claude-opus-4-6-thinking (no date)",
-			rawID:        "claude-opus-4-6-thinking",
-			rawFamily:    "claude-opus",
-			wantModifier: "thinking",
-			wantVersion:  "4.6",
-			wantDate:     "",
-		},
-		{
-			desc:         "gpt-4o-2024-05-13 (no modifier, version not extracted)",
-			rawID:        "gpt-4o-2024-05-13",
-			rawFamily:    "gpt-4o",
-			wantModifier: "",
-			wantVersion:  "",
-			wantDate:     "2024-05-13",
-		},
-	}
-
-	for _, tc := range cases {
-		t.Run(tc.desc, func(t *testing.T) {
+	corpus := loadParseCorpus[pipelineInput, pipelineExpected](t, extractModifierPipelineCorpusJSON, 3)
+	requireInputCoverage(t, corpus, map[pipelineInput]pipelineExpected{
+		// modifier stripped BEFORE version/date: all three recovered.
+		{RawID: "claude-opus-4-1-20250805-thinking", RawFamily: "claude-opus"}: {Modifier: "thinking", Version: "4.1", Date: "2025-08-05"},
+		// no modifier, version not extracted, date recovered.
+		{RawID: "gpt-4o-2024-05-13", RawFamily: "gpt-4o"}: {Modifier: "", Version: "", Date: "2024-05-13"},
+	})
+	for _, c := range corpus.Cases {
+		t.Run(c.Name, func(t *testing.T) {
 			t.Parallel()
+			rawID := bestiary.ModelID(c.Input.RawID)
+			rawFamily := bestiary.Family(c.Input.RawFamily)
 
 			// Step 1: ParseFamily
-			family, variant, _ := bestiary.ParseFamilyWithVersion(tc.rawFamily)
+			family, variant, _ := bestiary.ParseFamilyWithVersion(rawFamily)
 
 			// Step 2: ExtractModifier
-			modifier, consumed := bestiary.ExtractModifier(tc.rawID, family, variant)
+			modifier, consumed := bestiary.ExtractModifier(rawID, family, variant)
 
 			// Verify modifier extraction
-			if modifier != tc.wantModifier {
-				t.Errorf("ExtractModifier modifier = %q, want %q", modifier, tc.wantModifier)
+			if modifier != c.Expected.Modifier {
+				t.Errorf("ExtractModifier modifier = %q, want %q", modifier, c.Expected.Modifier)
 			}
 
 			// Step 3: Strip consumed from ID
-			cleanedID := bestiary.ModelID(string(tc.rawID))
+			cleanedID := rawID
 			if consumed != "" {
-				cleanedStr := string(tc.rawID)
+				cleanedStr := string(rawID)
 				if len(cleanedStr) >= len(consumed) && cleanedStr[len(cleanedStr)-len(consumed):] == consumed {
 					cleanedID = bestiary.ModelID(cleanedStr[:len(cleanedStr)-len(consumed)])
 				}
 			}
 
 			// Step 4: ExtractVersionFromID on cleaned ID
-			version := bestiary.ExtractVersionFromID(cleanedID, tc.rawFamily)
-			if version != tc.wantVersion {
-				t.Errorf("ExtractVersionFromID(%q, %q) = %q, want %q", cleanedID, tc.rawFamily, version, tc.wantVersion)
+			version := bestiary.ExtractVersionFromID(cleanedID, rawFamily)
+			if version != c.Expected.Version {
+				t.Errorf("ExtractVersionFromID(%q, %q) = %q, want %q", cleanedID, rawFamily, version, c.Expected.Version)
 			}
 
 			// Step 5: ExtractDate on cleaned ID
 			date := bestiary.ExtractDate(cleanedID, "")
-			if date != tc.wantDate {
-				t.Errorf("ExtractDate(%q, %q) = %q, want %q", cleanedID, "", date, tc.wantDate)
+			if date != c.Expected.Date {
+				t.Errorf("ExtractDate(%q, %q) = %q, want %q", cleanedID, "", date, c.Expected.Date)
 			}
 		})
 	}
@@ -3690,27 +3064,14 @@ func TestParamSizeGuard(t *testing.T) {
 func TestGluedVersionModifier(t *testing.T) {
 	t.Parallel()
 
-	cases := []struct {
-		desc                                          string
-		raw                                           bestiary.Family
-		id                                            bestiary.ModelID
-		wantFamily, wantVariant, wantVersion, wantMod string
-	}{
-		{"glm-4.5v raw=glm → variant 'v'", "glm", "glm-4.5v", "glm", "v", "4.5", ""},
-		{"glm-4.5v empty raw → variant 'v'", "", "glm-4.5v", "glm", "v", "4.5", ""},
-		{"gpt-4o → variant '4o', version ''", "gpt", "gpt-4o", "gpt", "4o", "", ""},
-	}
-
-	for _, tc := range cases {
-		t.Run(tc.desc, func(t *testing.T) {
-			t.Parallel()
-			f, va, ve, mod, _ := bestiary.ParseFamilyDetailed(tc.raw, tc.id, "p")
-			if string(f) != tc.wantFamily || va != tc.wantVariant || ve != tc.wantVersion || modJoin(mod) != tc.wantMod {
-				t.Errorf("raw=%q id=%q → (%s|%s|%s|mod=%s), want (%s|%s|%s|mod=%s)",
-					tc.raw, tc.id, f, va, ve, mod, tc.wantFamily, tc.wantVariant, tc.wantVersion, tc.wantMod)
-			}
-		})
-	}
+	corpus := loadParseCorpus[rawIDInput, fvvmExpected](t, gluedVersionModifierCorpusJSON, 3)
+	requireInputCoverage(t, corpus, map[rawIDInput]fvvmExpected{
+		// trailing glued letter splits off the version.
+		{Raw: "glm", ID: "glm-4.5v"}: {Family: "glm", Variant: "v", Version: "4.5", Mod: ""},
+		// alphanumeric line designator must NOT be split.
+		{Raw: "gpt", ID: "gpt-4o"}: {Family: "gpt", Variant: "4o", Version: "", Mod: ""},
+	})
+	runFamilyDetailedTupleCorpus(t, corpus)
 }
 
 // TestDotGluedVariant verifies the LEADING dot-glued variant generalization: a
@@ -3728,35 +3089,14 @@ func TestGluedVersionModifier(t *testing.T) {
 func TestDotGluedVariant(t *testing.T) {
 	t.Parallel()
 
-	cases := []struct {
-		desc                             string
-		raw                              bestiary.Family
-		id                               bestiary.ModelID
-		wantFamily, wantVariant, wantVer string
-		wantMod                          string
-	}{
-		// Generalized: dot-glued leading variant, derived mechanically.
-		{"laguna-xs.2 bare → (laguna,xs,2)", "", "laguna-xs.2", "laguna", "xs", "2", ""},
-		{"laguna-m.1 bare → (laguna,m,1)", "", "laguna-m.1", "laguna", "m", "1", ""},
-		{"laguna-xs.2 :free folds identically", "", "laguna-xs.2:free", "laguna", "xs", "2", ""},
-		// Must-not-mangle: leading-letter fused to a digit (no dot) stays one variant token.
-		{"deepseek-v3.1 → variant 'v3.1' (v-prefix line, not dot-glued)", "", "deepseek-v3.1", "deepseek", "v3.1", "", ""},
-		// Must-not-mangle: genuine dotted version, no alpha prefix.
-		{"gpt-4.1 → version '4.1' (no variant invented)", "gpt", "gpt-4.1", "gpt", "", "4.1", ""},
-		// Must-not-mangle: alphanumeric line designator.
-		{"gpt-4o → variant '4o', version '' (unchanged)", "gpt", "gpt-4o", "gpt", "4o", "", ""},
-	}
-
-	for _, tc := range cases {
-		t.Run(tc.desc, func(t *testing.T) {
-			t.Parallel()
-			f, va, ve, mod, _ := bestiary.ParseFamilyDetailed(tc.raw, tc.id, "p")
-			if string(f) != tc.wantFamily || va != tc.wantVariant || ve != tc.wantVer || modJoin(mod) != tc.wantMod {
-				t.Errorf("raw=%q id=%q → (%s|%s|%s|mod=%s), want (%s|%s|%s|mod=%s)",
-					tc.raw, tc.id, f, va, ve, mod, tc.wantFamily, tc.wantVariant, tc.wantVer, tc.wantMod)
-			}
-		})
-	}
+	corpus := loadParseCorpus[rawIDInput, fvvmExpected](t, dotGluedVariantCorpusJSON, 6)
+	requireInputCoverage(t, corpus, map[rawIDInput]fvvmExpected{
+		// dot-glued leading variant derived mechanically.
+		{Raw: "", ID: "laguna-xs.2"}: {Family: "laguna", Variant: "xs", Version: "2", Mod: ""},
+		// must-not-mangle: genuine dotted version, no invented variant.
+		{Raw: "gpt", ID: "gpt-4.1"}: {Family: "gpt", Variant: "", Version: "4.1", Mod: ""},
+	})
+	runFamilyDetailedTupleCorpus(t, corpus)
 }
 
 // TestSeriesLetterSplit verifies (d): letter-prefix model
@@ -3772,46 +3112,16 @@ func TestDotGluedVariant(t *testing.T) {
 func TestSeriesLetterSplit(t *testing.T) {
 	t.Parallel()
 
-	cases := []struct {
-		desc                             string
-		raw                              bestiary.Family
-		id                               bestiary.ModelID
-		wantFamily, wantVariant, wantVer string
-		wantMod                          string
-	}{
-		// kimi K-series (empty + populated raw → identical).
-		{"kimi-k2 empty raw", "", "kimi-k2", "kimi", "k", "2", ""},
-		{"kimi-k2 raw=kimi", "kimi", "kimi-k2", "kimi", "k", "2", ""},
-		{"kimi-k2.5 raw=kimi-k2.5", "kimi-k2.5", "kimi-k2.5", "kimi", "k", "2.5", ""},
-		{"kimi-k2.6 empty raw", "", "kimi-k2.6", "kimi", "k", "2.6", ""},
-		{"kimi-k2p5 (p=dot)", "", "accounts/fireworks/models/kimi-k2p5", "kimi", "k", "2.5", ""},
-		{"kimi-k2p6 (p=dot)", "kimi-thinking", "accounts/fireworks/models/kimi-k2p6", "kimi", "k", "2.6", "thinking"},
-		{"kimi-k2-5 (hyphen=dot)", "kimi", "kimi-k2-5", "kimi", "k", "2.5", ""},
-		{"kimi-k2-0711 (date dropped, ver 2)", "kimi", "kimi-k2-0711", "kimi", "k", "2", ""},
-		{"kimi-k2:1t (context tag, ver 2)", "kimi", "kimi-k2:1t", "kimi", "k", "2", ""},
-		{"kimi-k2-thinking → series + modifier", "kimi-thinking", "kimi-k2-thinking", "kimi", "k", "2", "thinking"},
-		{"kimi-k2-thinking empty raw", "", "kimi-k2-thinking", "kimi", "k", "2", "thinking"},
-		// minimax M-series (REVERSES whole-token "m1").
-		{"minimax-m1 raw=minimax", "minimax", "minimax-m1", "minimax", "m", "1", ""},
-		{"minimax-m1 empty raw", "", "minimax-m1", "minimax", "m", "1", ""},
-		{"MiniMax-M1-80k (context window ignored)", "minimax", "MiniMaxAI/MiniMax-M1-80k", "minimax", "m", "1", ""},
-		{"minimax-m2.1", "minimax", "minimax-m2.1", "minimax", "m", "2.1", ""},
-		// mimo V-series.
-		{"mimo-v2.5 raw=mimo", "mimo", "mimo-v2.5", "mimo", "v", "2.5", ""},
-		{"mimo-v2.5 empty raw", "", "xiaomi/mimo-v2.5", "mimo", "v", "2.5", ""},
-		{"mimo-v1", "", "mimo-v1", "mimo", "v", "1", ""},
-	}
-
-	for _, tc := range cases {
-		t.Run(tc.desc, func(t *testing.T) {
-			t.Parallel()
-			f, va, ve, mod, _ := bestiary.ParseFamilyDetailed(tc.raw, tc.id, "p")
-			if string(f) != tc.wantFamily || va != tc.wantVariant || ve != tc.wantVer || modJoin(mod) != tc.wantMod {
-				t.Errorf("raw=%q id=%q → (%s|%s|%s|mod=%s), want (%s|%s|%s|mod=%s)",
-					tc.raw, tc.id, f, va, ve, mod, tc.wantFamily, tc.wantVariant, tc.wantVer, tc.wantMod)
-			}
-		})
-	}
+	corpus := loadParseCorpus[rawIDInput, fvvmExpected](t, seriesLetterSplitCorpusJSON, 18)
+	requireInputCoverage(t, corpus, map[rawIDInput]fvvmExpected{
+		// kimi K-series: empty raw and populated raw resolve identically.
+		{Raw: "", ID: "kimi-k2"}: {Family: "kimi", Variant: "k", Version: "2", Mod: ""},
+		// minimax M-series reverses the whole-token "m1".
+		{Raw: "minimax", ID: "minimax-m1"}: {Family: "minimax", Variant: "m", Version: "1", Mod: ""},
+		// series letter + trailing thinking modifier.
+		{Raw: "kimi-thinking", ID: "kimi-k2-thinking"}: {Family: "kimi", Variant: "k", Version: "2", Mod: "thinking"},
+	})
+	runFamilyDetailedTupleCorpus(t, corpus)
 }
 
 // TestMustNotRegress_RealVersions pins genuine semantic versions that the
@@ -3865,44 +3175,16 @@ func TestMustNotRegress_RealVersions(t *testing.T) {
 func TestSeriesTierModifier(t *testing.T) {
 	t.Parallel()
 
-	cases := []struct {
-		desc                                          string
-		raw                                           bestiary.Family
-		id                                            bestiary.ModelID
-		wantFamily, wantVariant, wantVersion, wantMod string
-	}{
-		// Clean single-tier → modifier (variant = pure series-letter).
-		{"minimax-m2.5-fast (raw)", "minimax", "minimax-m2.5-fast", "minimax", "m", "2.5", "fast"},
-		{"minimax-m2.5-fast (empty raw)", "", "minimax-m2.5-fast", "minimax", "m", "2.5", "fast"},
-		{"minimax-m2.5-highspeed", "minimax", "minimax-m2.5-highspeed", "minimax", "m", "2.5", "highspeed"},
-		{"mimo-v2.5-pro (raw)", "mimo", "mimo-v2.5-pro", "mimo", "v", "2.5", "pro"},
-		{"mimo-v2.5-pro (empty raw)", "", "xiaomi/mimo-v2.5-pro", "mimo", "v", "2.5", "pro"},
-		{"kimi-k2-instruct (raw)", "kimi", "kimi-k2-instruct", "kimi", "k", "2", "instruct"},
-		{"kimi-k2-instruct (empty raw)", "", "moonshotai/kimi-k2-instruct", "kimi", "k", "2", "instruct"},
-		{"kimi-k2.5-fast", "kimi", "kimi-k2.5-fast", "kimi", "k", "2.5", "fast"},
-		{"kimi-k2.6-precision", "kimi-k2.6", "kimi-k2.6-precision", "kimi", "k", "2.6", "precision"},
-		{"mimo-v2-omni (omni curated tier)", "mimo", "mimo-v2-omni", "mimo", "v", "2", "omni"},
-		// EDGE (b): the SAME tokens are VARIANTS for NON-series families — UNCHANGED.
-		{"gpt-5-mini stays variant=mini", "gpt", "openai/gpt-5-mini", "gpt", "mini", "5", ""},
-		{"gemini-2.5-flash stays variant=flash", "gemini-flash", "gemini-2.5-flash", "gemini", "flash", "2.5", ""},
-		{"qwen-turbo stays variant=turbo (member-guard)", "qwen", "qwen-turbo", "qwen", "turbo", "", ""},
-		// 'instruct' is now a GLOBAL modifier (llama non-member) → variant empty, mod [instruct].
-		{"llama-instruct → [instruct] (member-guard)", "llama", "meta-llama/llama-3.1-8b-instruct", "llama", "", "3.1", "instruct"},
-		// MULTI-MODIFIER: tier + capability compose LOSSLESSLY in the Modifier list.
-		{"kimi-k2p6-turbo (raw kimi-thinking) → [thinking,turbo]", "kimi-thinking", "accounts/fireworks/routers/kimi-k2p6-turbo", "kimi", "k", "2.6", "thinking,turbo"},
-		{"kimi-k2-thinking-turbo (raw kimi-thinking) → [thinking,turbo]", "kimi-thinking", "kimi-k2-thinking-turbo", "kimi", "k", "2", "thinking,turbo"},
-	}
-
-	for _, tc := range cases {
-		t.Run(tc.desc, func(t *testing.T) {
-			t.Parallel()
-			f, va, ve, mod, _ := bestiary.ParseFamilyDetailed(tc.raw, tc.id, "p")
-			if string(f) != tc.wantFamily || va != tc.wantVariant || ve != tc.wantVersion || modJoin(mod) != tc.wantMod {
-				t.Errorf("raw=%q id=%q → (%s|%s|%s|mod=%s), want (%s|%s|%s|mod=%s)",
-					tc.raw, tc.id, f, va, ve, mod, tc.wantFamily, tc.wantVariant, tc.wantVersion, tc.wantMod)
-			}
-		})
-	}
+	corpus := loadParseCorpus[rawIDInput, fvvmExpected](t, seriesTierModifierCorpusJSON, 16)
+	requireInputCoverage(t, corpus, map[rawIDInput]fvvmExpected{
+		// tier -> modifier, variant stays the pure series-letter.
+		{Raw: "kimi", ID: "kimi-k2-instruct"}: {Family: "kimi", Variant: "k", Version: "2", Mod: "instruct"},
+		// same token is a VARIANT for a non-series family (unchanged).
+		{Raw: "gpt", ID: "openai/gpt-5-mini"}: {Family: "gpt", Variant: "mini", Version: "5", Mod: ""},
+		// multi-modifier composes losslessly.
+		{Raw: "kimi-thinking", ID: "kimi-k2-thinking-turbo"}: {Family: "kimi", Variant: "k", Version: "2", Mod: "thinking,turbo"},
+	})
+	runFamilyDetailedTupleCorpus(t, corpus)
 }
 
 // The former multi-modifier-deferred-to-modifier-list test was REMOVED.
@@ -3912,56 +3194,16 @@ func TestSeriesTierModifier(t *testing.T) {
 // TestParseFamilyDetailed_ModifierList.
 func TestParseFamilyDetailed_ModifierList(t *testing.T) {
 	t.Parallel()
-	cases := []struct {
-		desc                             string
-		raw                              bestiary.Family
-		id                               bestiary.ModelID
-		wantFamily, wantVariant, wantVer string
-		wantMod                          string // canonical comma-joined
-	}{
-		// Multi-modifier lossless capture (replaces the interim drop).
-		{"kimi-k2-thinking-turbo → [thinking,turbo]", "kimi-thinking", "kimi-k2-thinking-turbo", "kimi", "k", "2", "thinking,turbo"},
-		{"kimi-k2p6-turbo + thinking → [thinking,turbo]", "kimi-thinking", "accounts/fireworks/routers/kimi-k2p6-turbo", "kimi", "k", "2.6", "thinking,turbo"},
-		{"kimi triple → [thinking,turbo,original]", "kimi-thinking", "moonshotai/kimi-k2-thinking-turbo-original", "kimi", "k", "2", "thinking,turbo,original"},
-		// Per-ID convergence targets for the 9 stragglers (canonical order).
-		{"command-a-reasoning → [reasoning]", "command-a", "command-a-reasoning-08-2025", "command", "a", "", "reasoning"},
-		{"llama vision-instruct → [vision,instruct]", "llama", "llama-3.2-11b-vision-instruct", "llama", "", "3.2", "vision,instruct"},
-		{"phi multimodal-instruct → [multimodal,instruct]", "phi", "phi-4-multimodal-instruct", "phi", "", "4", "multimodal,instruct"},
-		{"llama-4-scout(-instruct) → variant scout + [instruct]", "llama", "llama-4-scout-17b-16e-instruct", "llama", "scout", "4", "instruct"},
-		{"qwen3-next(-instruct) → variant next + [instruct]", "qwen", "qwen3-next-80b-a3b-instruct", "qwen", "next", "3", "instruct"},
-		// Must-not-regress (single-modifier + member-variant protection).
-		{"kimi-k2-thinking → [thinking]", "kimi-thinking", "kimi-k2-thinking", "kimi", "k", "2", "thinking"},
-		{"grok-vision → [vision]", "grok-vision", "grok-vision", "grok", "", "", "vision"},
-		{"claude-3-7-sonnet-thinking → [thinking]", "claude-sonnet", "claude-3-7-sonnet-thinking", "claude", "sonnet", "3.7", "thinking"},
-		{"deepseek-chat → variant chat (member-guard)", "deepseek", "deepseek-chat", "deepseek", "chat", "", ""},
-		// RawFamily-embedded member must NOT duplicate
-		// into BOTH Variant and Modifier. Use the CODEGEN-REAL raw="sonar-reasoning"
-		// (the idealized raw="sonar" masked the bug). reasoning stays the VARIANT, no dup.
-		{"sonar-reasoning (raw=sonar-reasoning) → (sonar,reasoning,nil) no dup", "sonar-reasoning", "sonar-reasoning", "sonar", "reasoning", "", ""},
-		{"sonar-reasoning-pro (raw=sonar-reasoning) → (sonar,reasoning,nil) no dup", "sonar-reasoning", "sonar-reasoning-pro", "sonar", "reasoning", "", ""},
-		// Regression guards: other RawFamily-embedded members must also stay variant-only.
-		{"deepseek-chat (raw=deepseek-chat) → variant chat, no dup", "deepseek-chat", "deepseek-chat", "deepseek", "chat", "", ""},
-		{"qwen-turbo → variant turbo (member-guard)", "qwen", "qwen-turbo", "qwen", "turbo", "", ""},
-		{"gemini-pro → variant pro (stays variant)", "gemini", "gemini-pro", "gemini", "pro", "", ""},
-		{"qwen-flash → variant flash (stays variant)", "qwen", "qwen-flash", "qwen", "flash", "", ""},
-		// (FLAG2): whisper + seed registered as families → variant recovers
-		// losslessly; the modifier composes (turbo/instruct), removing the 2 justifiedExceptions.
-		// The whisper-family-gated trailing "-v3" now recovers Version=3 (was "").
-		{"whisper-large-v3-turbo → (whisper,large,3,[turbo])", "whisper", "whisper-large-v3-turbo", "whisper", "large", "3", "turbo"},
-		{"seed-oss-36b-instruct → (seed,oss,[instruct])", "seed", "bytedance/seed-oss-36b-instruct", "seed", "oss", "", "instruct"},
-		// Lossless variant-suffix→modifier split (v2.5-turbo → v2.5 + [turbo]).
-		{"elevenlabs-v2.5-turbo → (elevenlabs,v2.5,[turbo])", "elevenlabs", "elevenlabs/elevenlabs-v2.5-turbo", "elevenlabs", "v2.5", "", "turbo"},
-	}
-	for _, tc := range cases {
-		t.Run(tc.desc, func(t *testing.T) {
-			t.Parallel()
-			f, va, ve, mod, _ := bestiary.ParseFamilyDetailed(tc.raw, tc.id, "p")
-			if string(f) != tc.wantFamily || va != tc.wantVariant || ve != tc.wantVer || modJoin(mod) != tc.wantMod {
-				t.Errorf("raw=%q id=%q → (%s|%s|%s|mod=%v), want (%s|%s|%s|mod=%s)",
-					tc.raw, tc.id, f, va, ve, mod, tc.wantFamily, tc.wantVariant, tc.wantVer, tc.wantMod)
-			}
-		})
-	}
+	corpus := loadParseCorpus[rawIDInput, fvvmExpected](t, parseFamilyDetailedModifierListCorpusJSON, 21)
+	requireInputCoverage(t, corpus, map[rawIDInput]fvvmExpected{
+		// multi-modifier lossless capture (triple).
+		{Raw: "kimi-thinking", ID: "moonshotai/kimi-k2-thinking-turbo-original"}: {Family: "kimi", Variant: "k", Version: "2", Mod: "thinking,turbo,original"},
+		// rawFamily-embedded member must NOT duplicate into both Variant and Modifier.
+		{Raw: "sonar-reasoning", ID: "sonar-reasoning"}: {Family: "sonar", Variant: "reasoning", Version: "", Mod: ""},
+		// lossless variant-suffix -> modifier split.
+		{Raw: "elevenlabs", ID: "elevenlabs/elevenlabs-v2.5-turbo"}: {Family: "elevenlabs", Variant: "v2.5", Version: "", Mod: "turbo"},
+	})
+	runFamilyDetailedTupleCorpus(t, corpus)
 }
 
 // ----------------------------------------------------------------------------
@@ -4157,60 +3399,16 @@ func TestParseFamilyDetailed_CapabilityModifierDeclined(t *testing.T) {
 // convergence pass ratified; together with the before/after-diff gate (ZERO cat-(c)) these are
 // the specification for the mechanical + o-series + ledger changes.
 func TestCrossProviderConvergences(t *testing.T) {
-	cases := []struct {
-		desc                   string
-		raw                    bestiary.Family
-		id                     bestiary.ModelID
-		wFam, wVar, wVer, wMod string
-	}{
-		// ── O-SERIES restructure ──────────────────────
-		{"o1 → (gpt,o,1)", "", "o1", "gpt", "o", "1", ""},
-		{"o1 raw=o → (gpt,o,1)", "o", "o1", "gpt", "o", "1", ""},
-		{"o1-mini → (gpt,o,1,mini)", "o-mini", "o1-mini", "gpt", "o", "1", "mini"},
-		{"o3-mini → (gpt,o,3,mini)", "o", "o3-mini", "gpt", "o", "3", "mini"},
-		{"o3-pro → (gpt,o,3,pro)", "o-pro", "o3-pro", "gpt", "o", "3", "pro"},
-		{"o4-mini → (gpt,o,4,mini)", "o", "o4-mini", "gpt", "o", "4", "mini"},
-		{"gpt-4o → (gpt,4o,'')", "gpt", "gpt-4o", "gpt", "4o", "", ""},
-		{"gpt-4o empty raw → (gpt,4o,'')", "", "gpt-4o", "gpt", "4o", "", ""},
-		{"gpt-4o-mini → (gpt,4o,'',mini)", "gpt-mini", "gpt-4o-mini", "gpt", "4o", "", "mini"},
-		{"chatgpt-4o-latest → (gpt,4o,'',latest)", "gpt", "chatgpt-4o-latest", "gpt", "4o", "", "latest"},
-		{"gpt-audio-mini → (gpt,audio,'',mini)", "", "openai/gpt-audio-mini", "gpt", "audio", "", "mini"},
-		{"gpt-4 UNCHANGED → (gpt,'',4)", "gpt", "gpt-4", "gpt", "", "4", ""},
-		// ── gpt-codex ID-WINS (#4) + flash-lite NON-regression ───────────────────────
-		// 'chat' is now a global modifier (gpt has no 'chat' member) → captured in the list.
-		{"gpt-5-chat-latest: phantom codex cleared, chat→modifier", "gpt-codex", "gpt-5-chat-latest", "gpt", "", "5", "chat,latest"},
-		{"gpt-5.1-chat: phantom codex cleared, chat→modifier", "gpt-codex", "openai/gpt-5.1-chat", "gpt", "", "5.1", "chat"},
-		{"flash-lite NOT regressed (raw)", "gemini-flash-lite", "gemini-2.5-flash-lite-preview-06-17", "gemini", "flash-lite", "2.5", ""},
-		// 'preview' before the MM-YYYY date is now captured (tail-scan skips the date).
-		{"flash-lite tier (empty raw, #6 compound-member)", "", "gemini-2.5-flash-lite-preview-09-2025", "gemini", "flash-lite", "2.5", "preview"},
-		// ── glm 'v' variant ──────────────────────────────────────────────────────────
-		{"glm-4.5v → (glm,v,4.5)", "glm", "glm-4.5v", "glm", "v", "4.5", ""},
-		{"glm-5v-turbo → (glm,v,5,turbo)", "glm", "glm-5v-turbo", "glm", "v", "5", "turbo"},
-		{"glmv raw → glm + variant v", "glmv", "z-ai/glm-4.5v", "glm", "v", "4.5", ""},
-		// ── canonical-winner ENFORCE (own-family + org leak) ─────────────────────────
-		{"aion mislabelled llama → aion", "llama", "aion-labs/aion-1.0", "aion", "", "1.0", ""},
-		{"mixtral mislabelled mistral → mixtral, instruct→modifier", "mistral", "mistralai/mixtral-8x22b-instruct", "mixtral", "", "", "instruct"},
-		{"nousresearch org leak → hermes", "nousresearch", "nousresearch/hermes-3-llama-3.1-70b", "hermes", "", "3", ""},
-		{"liquid org leak → lfm", "liquid", "liquid/lfm-2-24b-a2b", "lfm", "", "2", ""},
-		{"qwq mislabelled qwen → qwq", "qwen", "qwq-32b", "qwq", "", "", ""},
-		// ── raw-populated over-capture fold (#2) + dotted bare-gen (#3) ───────────────
-		{"qwen3.7-max raw over-capture → (qwen,max,3.7)", "qwen3.7-max", "qwen3.7-max", "qwen", "max", "3.7", ""},
-		{"qwen3.5 dotted bare-gen de-junk → (qwen,'',3.5)", "qwen3.5", "qwen/qwen3.5-27b", "qwen", "", "3.5", ""},
-		// ── member-variant suffix re-recovery (#5, A-1/A-2) ──────────────────────────
-		// 'instruct' → global modifier (not a variant) for these non-member families.
-		{"codellama empty-raw: instruct→modifier", "", "alfredpros/codellama-7b-instruct-solidity", "codellama", "", "", "instruct"},
-		{"rnj empty-raw: instruct→modifier (A-1)", "", "essentialai/rnj-1-instruct", "rnj", "", "1", "instruct"},
-		{"voxtral empty-raw recovers small (A-2)", "", "mistralai/voxtral-small-24b-2507", "voxtral", "small", "", ""},
-	}
-	for _, tc := range cases {
-		t.Run(tc.desc, func(t *testing.T) {
-			f, v, ver, m, _ := bestiary.ParseFamilyDetailed(tc.raw, tc.id, "p")
-			if string(f) != tc.wFam || v != tc.wVar || ver != tc.wVer || modJoin(m) != tc.wMod {
-				t.Errorf("ParseFamilyDetailed(raw=%q,id=%q) = (%q,%q,%q,%q), want (%q,%q,%q,%q)",
-					tc.raw, tc.id, f, v, ver, m, tc.wFam, tc.wVar, tc.wVer, tc.wMod)
-			}
-		})
-	}
+	corpus := loadParseCorpus[rawIDInput, fvvmExpected](t, crossProviderConvergencesCorpusJSON, 29)
+	requireInputCoverage(t, corpus, map[rawIDInput]fvvmExpected{
+		// o-series restructure: o1 -> (gpt, o, 1).
+		{Raw: "", ID: "o1"}: {Family: "gpt", Variant: "o", Version: "1", Mod: ""},
+		// gpt-codex phantom cleared, chat -> modifier list (comma-joined).
+		{Raw: "gpt-codex", ID: "gpt-5-chat-latest"}: {Family: "gpt", Variant: "", Version: "5", Mod: "chat,latest"},
+		// canonical-winner enforce: mislabelled qwen -> qwq.
+		{Raw: "qwen", ID: "qwq-32b"}: {Family: "qwq", Variant: "", Version: "", Mod: ""},
+	})
+	runFamilyDetailedTupleCorpus(t, corpus)
 }
 
 // TestTier1StragglerConvergences pins the straggler convergences,
@@ -4220,53 +3418,16 @@ func TestCrossProviderConvergences(t *testing.T) {
 // hy3 bare-gen). Each is non-lossy under the hardened gate (cat-(c)=0). command-a-reasoning is
 // DEFERRED to the systematic modifier ruling (reasoning = borderline-capability, modifier-vs-variant judgment).
 func TestTier1StragglerConvergences(t *testing.T) {
-	cases := []struct {
-		desc                   string
-		raw                    bestiary.Family
-		id                     bestiary.ModelID
-		wFam, wVar, wVer, wMod string
-	}{
-		// COMMITTED — deepseek "chat" product-line member (non-lossy; v3.1 version preserved).
-		{"deepseek-chat-v3-0324 empty → (deepseek,chat)", "", "deepseek/deepseek-chat-v3-0324", "deepseek", "chat", "", ""},
-		{"deepseek-chat-v3-0324 raw=deepseek → (deepseek,chat)", "deepseek", "deepseek/deepseek-chat-v3-0324", "deepseek", "chat", "", ""},
-		{"deepseek-chat-v3.1 empty → (deepseek,chat,3.1)", "", "deepseek/deepseek-chat-v3.1", "deepseek", "chat", "3.1", ""},
-		{"deepseek-chat-v3.1 raw=deepseek → (deepseek,chat,3.1)", "deepseek", "deepseek/deepseek-chat-v3.1", "deepseek", "chat", "3.1", ""},
-		// COMMITTED — cohere command R-line members (date-guard 08/12; "r7b"=member "r"+size "7b").
-		{"command-r-plus-08-2024 empty → (command,r-plus)", "", "cohere/command-r-plus-08-2024", "command", "r-plus", "", ""},
-		{"command-r-plus-08-2024 raw=command-r → (command,r-plus)", "command-r", "cohere/command-r-plus-08-2024", "command", "r-plus", "", ""},
-		// "r7b" = member "r" + param-size "7b"; both sides CONVERGE to (command, r, 12). The
-		// version "12" is the MM of the "12-2024" date — a pre-existing SHARED value on both
-		// providers (NOT introduced here, NOT a divergence); date-guarding it to "" is a future
-		// polish pending a ruling. The convergence (variant r on both) is the fix.
-		{"command-r7b-12-2024 empty → (command,r) [r7b=r+7b-size]", "", "cohere/command-r7b-12-2024", "command", "r", "12", ""},
-		{"command-r7b-12-2024 raw=command-r → (command,r)", "command-r", "cohere/command-r7b-12-2024", "command", "r", "12", ""},
-		// COMMITTED — meta-llama SURGICAL doubled-vendor strip (org "meta-llama/" + "Meta-Llama-…").
-		// 'instruct' → global modifier (llama has no 'instruct' member after the
-		// ratified families.json correction); variant empty, modifier [instruct].
-		{"meta-llama/Meta-Llama-3.1 empty → (llama,'',3.1,[instruct])", "", "meta-llama/Meta-Llama-3.1-8B-Instruct", "llama", "", "3.1", "instruct"},
-		{"meta-llama/Meta-Llama-3.1 raw=llama → (llama,'',3.1,[instruct])", "llama", "meta-llama/Meta-Llama-3.1-8B-Instruct", "llama", "", "3.1", "instruct"},
-		// CONDITIONAL (promoted) — grok product-name member "code-fast" (one unit; no fast-as-modifier judgment).
-		{"grok-code-fast-1 empty → (grok,code-fast,1)", "", "x-ai/grok-code-fast-1", "grok", "code-fast", "1", ""},
-		{"grok-code-fast-1 raw=grok → (grok,code-fast,1)", "grok", "x-ai/grok-code-fast-1", "grok", "code-fast", "1", ""},
-		// CONDITIONAL (promoted) — Qwen3-Embedding: ID-family qwen wins over generic raw "text-embedding".
-		{"Qwen3-Embedding raw=text-embedding → (qwen,embedding,3)", "text-embedding", "Qwen/Qwen3-Embedding-8B", "qwen", "embedding", "3", ""},
-		{"Qwen3-Embedding raw=qwen → (qwen,embedding,3)", "qwen", "Qwen/Qwen3-Embedding-8B", "qwen", "embedding", "3", ""},
-		// CONDITIONAL guard — OpenAI text-embedding-3* MUST stay family "text-embedding" (untouched).
-		{"GUARD: openai text-embedding-3-large stays text-embedding", "text-embedding", "openai/text-embedding-3-large", "text-embedding", "large", "3", ""},
-		{"GUARD: openai text-embedding-3-small stays text-embedding", "text-embedding", "text-embedding-3-small", "text-embedding", "small", "3", ""},
-		// CONDITIONAL (promoted) — hy3 bare-gen (bare "hy" attested via raw="Hy").
-		{"hy3-preview empty → (hy,,3,preview)", "", "tencent/hy3-preview", "hy", "", "3", "preview"},
-		{"hy3-preview raw=Hy → (hy,,3,preview)", "Hy", "tencent/hy3-preview", "hy", "", "3", "preview"},
-	}
-	for _, tc := range cases {
-		t.Run(tc.desc, func(t *testing.T) {
-			f, v, ver, m, _ := bestiary.ParseFamilyDetailed(tc.raw, tc.id, "p")
-			if string(f) != tc.wFam || v != tc.wVar || ver != tc.wVer || modJoin(m) != tc.wMod {
-				t.Errorf("ParseFamilyDetailed(raw=%q,id=%q) = (%q,%q,%q,%q), want (%q,%q,%q,%q)",
-					tc.raw, tc.id, f, v, ver, m, tc.wFam, tc.wVar, tc.wVer, tc.wMod)
-			}
-		})
-	}
+	corpus := loadParseCorpus[rawIDInput, fvvmExpected](t, tier1StragglerConvergencesCorpusJSON, 18)
+	requireInputCoverage(t, corpus, map[rawIDInput]fvvmExpected{
+		// deepseek chat product-line member, version preserved.
+		{Raw: "", ID: "deepseek/deepseek-chat-v3.1"}: {Family: "deepseek", Variant: "chat", Version: "3.1", Mod: ""},
+		// Qwen3-Embedding: ID-family qwen wins over generic raw "text-embedding".
+		{Raw: "text-embedding", ID: "Qwen/Qwen3-Embedding-8B"}: {Family: "qwen", Variant: "embedding", Version: "3", Mod: ""},
+		// GUARD: OpenAI text-embedding-3* stays family text-embedding (untouched).
+		{Raw: "text-embedding", ID: "openai/text-embedding-3-large"}: {Family: "text-embedding", Variant: "large", Version: "3", Mod: ""},
+	})
+	runFamilyDetailedTupleCorpus(t, corpus)
 }
 
 // TestWhisperTrailingVersionRecovery_FamilyGated is the coverage for
@@ -4374,74 +3535,17 @@ func TestGrokNegationAwareModifier(t *testing.T) {
 func TestParseParamSize_ValidShapes(t *testing.T) {
 	t.Parallel()
 
-	cases := []struct {
-		name string
-		raw  string
-		want string
-	}{
-		// Empty is valid (no-op — not a size, not an error).
-		{"empty", "", ""},
-
-		// Dense size tokens: <digits><unit>
-		{"1b lowercase passthrough", "1b", "1b"},
-		{"7b", "7b", "7b"},
-		{"8b", "8b", "8b"},
-		{"70b", "70b", "70b"},
-		{"671b", "671b", "671b"},
-		{"0.5b", "0.5b", "0.5b"},
-		{"3.8b", "3.8b", "3.8b"},
-		{"72b", "72b", "72b"},
-
-		// Dense token: uppercase → lowercase (ParseParamSize must canonicalize to lowercase).
-		{"70B uppercase → 70b", "70B", "70b"},
-		{"8B uppercase → 8b", "8B", "8b"},
-		{"0.5B uppercase → 0.5b", "0.5B", "0.5b"},
-		{"671B uppercase → 671b", "671B", "671b"},
-
-		// MoE shapes: <total>x<active>b
-		{"8x7b", "8x7b", "8x7b"},
-		{"8x22b", "8x22b", "8x22b"},
-
-		// MoE uppercase → lowercase
-		{"8X7B uppercase → 8x7b", "8X7B", "8x7b"},
-
-		// Active-MoE shapes: <total>b-a<active>b  (e.g. "30b-a3b", "671b-a17b")
-		{"30b-a3b active-moe", "30b-a3b", "30b-a3b"},
-		{"671b-a17b active-moe", "671b-a17b", "671b-a17b"},
-		{"671B-A17B uppercase active-moe → 671b-a17b", "671B-A17B", "671b-a17b"},
-
-		// Count-suffixed MoE (Nb-Ke): <active>b-<experts>e  (e.g. "17b-16e", "17b-128e")
-		{"17b-16e count-moe (llama-4-scout shape)", "17b-16e", "17b-16e"},
-		{"17b-128e count-moe (llama-4-maverick shape)", "17b-128e", "17b-128e"},
-		{"17B-16E uppercase count-moe → 17b-16e", "17B-16E", "17b-16e"},
-
-		// Decimal dense tokens must canonicalize without mangling the fraction.
-		{"10.7b decimal (solar shape)", "10.7b", "10.7b"},
-		{"1.2b decimal (lfm shape)", "1.2b", "1.2b"},
-		{"0.6b decimal (qwen3-embedding shape)", "0.6b", "0.6b"},
-
-		// m-unit dense tokens (the [bm] unit arm for million-parameter models).
-		{"560m", "560m", "560m"},
-		{"350m", "350m", "350m"},
-		{"560M uppercase → 560m", "560M", "560m"},
-	}
-
-	for _, tc := range cases {
-		t.Run(tc.name, func(t *testing.T) {
-			t.Parallel()
-			got, err := bestiary.ParseParamSize(tc.raw)
-			if err != nil {
-				t.Fatalf("ParseParamSize(%q) returned unexpected error: %v\n"+
-					"  What: a valid param-size token was rejected\n"+
-					"  Why: isParamSizeToken returned false for this shape\n"+
-					"  How to fix: verify the size pattern covers this input",
-					tc.raw, err)
-			}
-			if got != tc.want {
-				t.Errorf("ParseParamSize(%q) = %q, want %q (canonical lowercase)", tc.raw, got, tc.want)
-			}
-		})
-	}
+	corpus := loadParseCorpus[string, string](t, parseParamSizeValidCorpusJSON, 28)
+	requireInputCoverage(t, corpus, map[string]string{
+		"":          "",          // empty is valid (no-op)
+		"70B":       "70b",       // uppercase folds
+		"8x22b":     "8x22b",     // NxM MoE
+		"671b-a17b": "671b-a17b", // active-MoE
+		"17b-16e":   "17b-16e",   // count-MoE
+		"10.7b":     "10.7b",     // decimal preserved
+		"560m":      "560m",      // m-unit
+	})
+	runParseParamSizeCanonical(t, corpus)
 }
 
 // TestParseParamSize_InvalidShapes verifies that ParseParamSize rejects inputs
@@ -4452,71 +3556,13 @@ func TestParseParamSize_ValidShapes(t *testing.T) {
 func TestParseParamSize_InvalidShapes(t *testing.T) {
 	t.Parallel()
 
-	invalid := []struct {
-		name string
-		raw  string
-	}{
-		// Bare unit with no digit prefix.
-		{"bare b", "b"},
-		// Letter-only token.
-		{"alpha only", "xyz"},
-		// Size token with a '#' prefix (caller must strip '#' before passing).
-		{"hash prefix #70b", "#70b"},
-		// Whitespace embedded.
-		{"whitespace embedded", "70 b"},
-		// Digit-only (no unit).
-		{"digits only 70", "70"},
-		// Negative number.
-		{"negative -70b", "-70b"},
-		// Random word.
-		{"word instruct", "instruct"},
-		// Empty variant token (dash).
-		{"dash only", "-"},
-		// Version-like token that is not a size.
-		{"version 3.3", "3.3"},
-		// Alphanumeric GPT-style version (not a size unit).
-		{"4o", "4o"},
-		// Unknown unit 'k' (not b or m).
-		{"70k", "70k"},
-		// Leading-letter token: the "r7b" inside "command-r7b" is ONE token and is
-		// not a size — a near-miss for the "7b" substring trap.
-		{"leading letter r7b", "r7b"},
-		// Underscore-glued decimal: "10_7b" ('_' is token-internal, not a separator)
-		// is not a size token — mechanical no-match, sized via curated pin instead.
-		{"underscore-glued 10_7b", "10_7b"},
-		// Count-suffixed MoE missing the 'e' expert unit ("17b-16" is not a shape).
-		{"count-moe missing e suffix 17b-16", "17b-16"},
-		// Count-suffixed MoE with a non-numeric expert count.
-		{"count-moe non-numeric experts 17b-xe", "17b-xe"},
-		// Bare expert-count token with no active-param prefix.
-		{"bare expert count 16e", "16e"},
-	}
-
-	for _, tc := range invalid {
-		t.Run(tc.name, func(t *testing.T) {
-			t.Parallel()
-			_, err := bestiary.ParseParamSize(tc.raw)
-			if err == nil {
-				t.Errorf("ParseParamSize(%q) = nil error, want a rejection error for an invalid shape", tc.raw)
-				return
-			}
-			msg := err.Error()
-			// The error must name the rejected input (actionable-error: callers can diagnose
-			// without reading source).
-			if !strings.Contains(msg, tc.raw) {
-				t.Errorf("ParseParamSize(%q) error message does not mention the rejected input\n"+
-					"  got:  %q\n"+
-					"  want: message containing %q", tc.raw, msg, tc.raw)
-			}
-			// The error must include a "How to fix" clause (parse.go emits this
-			// unconditionally; pinning it prevents the clause from being accidentally removed).
-			if !strings.Contains(msg, "How to fix") {
-				t.Errorf("ParseParamSize(%q) error message missing 'How to fix' clause\n"+
-					"  got: %q\n"+
-					"  want: message containing 'How to fix: ...'", tc.raw, msg)
-			}
-		})
-	}
+	corpus := loadParseCorpus[string, string](t, parseParamSizeInvalidCorpusJSON, 16)
+	requireInputCoverage(t, corpus, map[string]string{
+		"r7b":    "", // leading-letter substring trap
+		"10_7b":  "", // underscore-glued near-miss
+		"17b-16": "", // count-moe missing 'e'
+	})
+	runParseParamSizeInvalid(t, corpus)
 }
 
 // TestParseParamSize_CaseFolding pins the case-folding contract: ParseParamSize
@@ -4526,32 +3572,14 @@ func TestParseParamSize_InvalidShapes(t *testing.T) {
 func TestParseParamSize_CaseFolding(t *testing.T) {
 	t.Parallel()
 
-	pairs := [][2]string{
-		{"70B", "70b"},
-		{"8B", "8b"},
-		{"0.5B", "0.5b"},
-		{"1B", "1b"},
-		{"671B", "671b"},
-		{"8X7B", "8x7b"},
-		{"671B-A17B", "671b-a17b"},
-		{"17B-16E", "17b-16e"},
-		{"17B-128E", "17b-128e"},
-		{"10.7B", "10.7b"},
-	}
-
-	for _, pair := range pairs {
-		raw, want := pair[0], pair[1]
-		t.Run(raw+"→"+want, func(t *testing.T) {
-			t.Parallel()
-			got, err := bestiary.ParseParamSize(raw)
-			if err != nil {
-				t.Fatalf("ParseParamSize(%q) unexpected error: %v (uppercase should be accepted and folded)", raw, err)
-			}
-			if got != want {
-				t.Errorf("ParseParamSize(%q) = %q, want %q (must canonicalize to lowercase)", raw, got, want)
-			}
-		})
-	}
+	corpus := loadParseCorpus[string, string](t, parseParamSizeCasefoldCorpusJSON, 10)
+	requireInputCoverage(t, corpus, map[string]string{
+		// every shape family folds: dense, active-MoE, count-MoE.
+		"671B":      "671b",
+		"671B-A17B": "671b-a17b",
+		"17B-128E":  "17b-128e",
+	})
+	runParseParamSizeCanonical(t, corpus)
 }
 
 // TestParseParamShape_Shapes verifies that ParseParamShape decomposes each of the
@@ -4567,47 +3595,30 @@ func TestParseParamSize_CaseFolding(t *testing.T) {
 func TestParseParamShape_Shapes(t *testing.T) {
 	t.Parallel()
 
-	const null = bestiary.ParamShapeNull
-
-	cases := []struct {
-		name  string
-		token string
-		want  bestiary.ParamShape
-	}{
-		// Empty token → all-NULL shape (unsized model), no error.
-		{"empty", "", bestiary.ParamShape{TotalParams: null, ActiveParams: null, PerExpertParams: null, ExpertCount: null}},
-
-		// Dense: TotalParams attested; Active/PerExpert NULL; ExpertCount a genuine 0.
-		{"30b dense", "30b", bestiary.ParamShape{TotalParams: 30_000_000_000, ActiveParams: null, PerExpertParams: null, ExpertCount: 0}},
-		{"560m dense", "560m", bestiary.ParamShape{TotalParams: 560_000_000, ActiveParams: null, PerExpertParams: null, ExpertCount: 0}},
-		{"7b dense", "7b", bestiary.ParamShape{TotalParams: 7_000_000_000, ActiveParams: null, PerExpertParams: null, ExpertCount: 0}},
-		{"671b dense", "671b", bestiary.ParamShape{TotalParams: 671_000_000_000, ActiveParams: null, PerExpertParams: null, ExpertCount: 0}},
-
-		// Active-MoE: TotalParams + ActiveParams; PerExpert/Experts NULL.
-		{"30b-a3b active-moe", "30b-a3b", bestiary.ParamShape{TotalParams: 30_000_000_000, ActiveParams: 3_000_000_000, PerExpertParams: null, ExpertCount: null}},
-		{"235b-a22b active-moe", "235b-a22b", bestiary.ParamShape{TotalParams: 235_000_000_000, ActiveParams: 22_000_000_000, PerExpertParams: null, ExpertCount: null}},
-
-		// NxM MoE: ExpertCount + PerExpertParams; Total/Active stay NULL (never N*M).
-		{"8x22b nxm-moe (Total NEVER 176e9)", "8x22b", bestiary.ParamShape{TotalParams: null, ActiveParams: null, PerExpertParams: 22_000_000_000, ExpertCount: 8}},
-		{"8x7b nxm-moe", "8x7b", bestiary.ParamShape{TotalParams: null, ActiveParams: null, PerExpertParams: 7_000_000_000, ExpertCount: 8}},
-
-		// Count-suffixed MoE (Nb-Ke): ActiveParams + ExpertCount; Total/PerExpert NULL.
-		{"17b-16e count-moe (scout)", "17b-16e", bestiary.ParamShape{TotalParams: null, ActiveParams: 17_000_000_000, PerExpertParams: null, ExpertCount: 16}},
-		{"17b-128e count-moe (maverick)", "17b-128e", bestiary.ParamShape{TotalParams: null, ActiveParams: 17_000_000_000, PerExpertParams: null, ExpertCount: 128}},
-
-		// Uppercase token is folded before decomposition.
-		{"8X22B uppercase nxm-moe", "8X22B", bestiary.ParamShape{TotalParams: null, ActiveParams: null, PerExpertParams: 22_000_000_000, ExpertCount: 8}},
-	}
-
-	for _, tc := range cases {
-		t.Run(tc.name, func(t *testing.T) {
+	corpus := loadParseCorpus[string, paramShapeExpected](t, parseParamShapeCorpusJSON, 12)
+	requireInputCoverage(t, corpus, map[string]paramShapeExpected{
+		// NxM MoE: Total is NEVER N*M; only PerExpert + ExpertCount attested.
+		"8x22b": {Total: -1, Active: -1, PerExpert: 22_000_000_000, ExpertCount: 8},
+		// dense: ExpertCount is a genuine 0 (the sole in-domain 0).
+		"30b": {Total: 30_000_000_000, Active: -1, PerExpert: -1, ExpertCount: 0},
+		// count-suffixed MoE: Active + ExpertCount only.
+		"17b-16e": {Total: -1, Active: 17_000_000_000, PerExpert: -1, ExpertCount: 16},
+	})
+	for _, c := range corpus.Cases {
+		t.Run(c.Name, func(t *testing.T) {
 			t.Parallel()
-			got, err := bestiary.ParseParamShape(tc.token)
-			if err != nil {
-				t.Fatalf("ParseParamShape(%q) unexpected error: %v", tc.token, err)
+			want := bestiary.ParamShape{
+				TotalParams:     c.Expected.Total,
+				ActiveParams:    c.Expected.Active,
+				PerExpertParams: c.Expected.PerExpert,
+				ExpertCount:     int(c.Expected.ExpertCount),
 			}
-			if got != tc.want {
-				t.Errorf("ParseParamShape(%q) = %+v, want %+v", tc.token, got, tc.want)
+			got, err := bestiary.ParseParamShape(c.Input)
+			if err != nil {
+				t.Fatalf("ParseParamShape(%q) unexpected error: %v", c.Input, err)
+			}
+			if got != want {
+				t.Errorf("ParseParamShape(%q) = %+v, want %+v", c.Input, got, want)
 			}
 		})
 	}
@@ -4620,28 +3631,22 @@ func TestParseParamShape_Shapes(t *testing.T) {
 func TestParseParamShape_DecimalExact(t *testing.T) {
 	t.Parallel()
 
-	cases := []struct {
-		token string
-		want  int64
-	}{
-		{"10.7b", 10_700_000_000},
-		{"0.6b", 600_000_000},
-		{"1.2b", 1_200_000_000},
-		{"0.5b", 500_000_000},
-		{"3.8b", 3_800_000_000},
-		{"1.5b", 1_500_000_000},
-	}
-
-	for _, tc := range cases {
-		t.Run(tc.token, func(t *testing.T) {
+	corpus := loadParseCorpus[string, int64](t, parseParamShapeDecimalCorpusJSON, 6)
+	requireInputCoverage(t, corpus, map[string]int64{
+		// the two literals the doc comment pins: exact, never float-rounded.
+		"10.7b": 10_700_000_000,
+		"0.6b":  600_000_000,
+	})
+	for _, c := range corpus.Cases {
+		t.Run(c.Name, func(t *testing.T) {
 			t.Parallel()
-			got, err := bestiary.ParseParamShape(tc.token)
+			got, err := bestiary.ParseParamShape(c.Input)
 			if err != nil {
-				t.Fatalf("ParseParamShape(%q) unexpected error: %v", tc.token, err)
+				t.Fatalf("ParseParamShape(%q) unexpected error: %v", c.Input, err)
 			}
-			if got.TotalParams != tc.want {
+			if got.TotalParams != c.Expected {
 				t.Errorf("ParseParamShape(%q).TotalParams = %d, want %d (exact string-digit arithmetic, no float truncation)",
-					tc.token, got.TotalParams, tc.want)
+					c.Input, got.TotalParams, c.Expected)
 			}
 		})
 	}
@@ -4652,16 +3657,22 @@ func TestParseParamShape_DecimalExact(t *testing.T) {
 func TestParseParamShape_Invalid(t *testing.T) {
 	t.Parallel()
 
-	for _, bad := range []string{"instruct", "4o", "3.3", "17b-16", "r7b", "10_7b"} {
-		t.Run(bad, func(t *testing.T) {
+	corpus := loadParseCorpus[string, string](t, parseParamShapeInvalidCorpusJSON, 6)
+	requireInputCoverage(t, corpus, map[string]string{
+		// the substring-trap near-misses must stay rejected.
+		"r7b":   "",
+		"10_7b": "",
+	})
+	for _, c := range corpus.Cases {
+		t.Run(c.Name, func(t *testing.T) {
 			t.Parallel()
-			_, err := bestiary.ParseParamShape(bad)
+			_, err := bestiary.ParseParamShape(c.Input)
 			if err == nil {
-				t.Errorf("ParseParamShape(%q) = nil error, want a rejection error", bad)
+				t.Errorf("ParseParamShape(%q) = nil error, want a rejection error", c.Input)
 				return
 			}
-			if !strings.Contains(err.Error(), bad) {
-				t.Errorf("ParseParamShape(%q) error does not name the input: %q", bad, err.Error())
+			if !strings.Contains(err.Error(), c.Input) {
+				t.Errorf("ParseParamShape(%q) error does not name the input: %q", c.Input, err.Error())
 			}
 		})
 	}
@@ -4690,46 +3701,15 @@ func TestParseParamShape_OverflowGuard(t *testing.T) {
 func TestExtractParamSizeToken(t *testing.T) {
 	t.Parallel()
 
-	cases := []struct {
-		name      string
-		id        string
-		wantToken string
-		wantOK    bool
-	}{
-		// Longest whole-window wins: the compound "235b-a22b" beats its "235b" prefix.
-		{"qwen3-235b-a22b longest window", "qwen3-235b-a22b", "235b-a22b", true},
-		{"llama-4-scout-17b-16e count-moe window", "llama-4-scout-17b-16e", "17b-16e", true},
-		{"deepseek 671b-a37b", "deepseek-r1-671b-a37b", "671b-a37b", true},
-
-		// Decimal intact ('.' is token-internal, never a separator).
-		{"lfm-2.5-1.2b decimal", "lfm-2.5-1.2b", "1.2b", true},
-		{"qwen3-embedding-0.6b never 6b", "qwen3-embedding-0.6b", "0.6b", true},
-
-		// Namespaced/colon IDs split on '/' and ':' too.
-		{"meta/llama-4-scout-17b-16e-instruct", "meta/llama-4-scout-17b-16e-instruct", "17b-16e", true},
-		{"cf workers-ai path", "workers-ai/@cf/meta/llama-4-scout-17b-16e-instruct", "17b-16e", true},
-
-		// Case-insensitive; canonical (lowercase) token returned.
-		{"uppercase folds", "Meta-Llama-Llama-4-Maverick-17B-128E-Instruct", "17b-128e", true},
-
-		// Negatives / near-miss substring traps.
-		{"command-r7b no substring 7b", "command-r7b", "", false},
-		{"underscore-glued 10_7b no-match", "upstage/solar-10_7b-instruct", "", false},
-		{"no size token at all", "claude-opus-4-5", "", false},
-		{"context marker 1m is a token not compound", "qwen3-coder-next-fp8-1m", "1m", true},
-		{"empty id", "", "", false},
-	}
-
-	for _, tc := range cases {
-		t.Run(tc.name, func(t *testing.T) {
-			t.Parallel()
-			gotTok, gotOK := bestiary.ExtractParamSizeToken(tc.id)
-			if gotOK != tc.wantOK || gotTok != tc.wantToken {
-				t.Errorf("ExtractParamSizeToken(%q) = (%q, %v), want (%q, %v)",
-					tc.id, gotTok, gotOK, tc.wantToken, tc.wantOK)
-			}
-		})
-	}
+	corpus := loadParseCorpus[string, string](t, extractParamSizeTokenCorpusJSON, 13)
+	requireInputCoverage(t, corpus, map[string]string{
+		// longest whole-window beats the prefix.
+		"qwen3-235b-a22b": "235b-a22b",
+		// near-miss substring traps yield no token.
+		"command-r7b":     "",
+		"claude-opus-4-5": "",
+	})
+	runExtractParamSizeTokenCorpus(t, corpus)
 }
 
 // TestExtractParamSizeToken_CompoundInvariantAcrossIDForms pins the extractor-level
@@ -4741,18 +3721,13 @@ func TestExtractParamSizeToken(t *testing.T) {
 func TestExtractParamSizeToken_CompoundInvariantAcrossIDForms(t *testing.T) {
 	t.Parallel()
 
-	for _, id := range []string{
-		"qwen3-235b-a22b",
-		"qwen/qwen3-235b-a22b-instruct",
-		"qwen3-235b-a22b-2507",
-		"Qwen3-235B-A22B",
-	} {
-		gotTok, ok := bestiary.ExtractParamSizeToken(id)
-		if !ok || gotTok != "235b-a22b" {
-			t.Errorf("ExtractParamSizeToken(%q) = (%q, %v), want (%q, true) — must not yield \"235b\"",
-				id, gotTok, ok, "235b-a22b")
-		}
-	}
+	corpus := loadParseCorpus[string, string](t, extractParamSizeTokenCompoundCorpusJSON, 4)
+	requireInputCoverage(t, corpus, map[string]string{
+		// never clipped to "235b" under a namespace+suffix or full-uppercase form.
+		"qwen/qwen3-235b-a22b-instruct": "235b-a22b",
+		"Qwen3-235B-A22B":               "235b-a22b",
+	})
+	runExtractParamSizeTokenCorpus(t, corpus)
 }
 
 func equalStringSlices(a, b []string) bool {

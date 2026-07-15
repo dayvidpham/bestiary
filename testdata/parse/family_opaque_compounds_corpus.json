@@ -1,0 +1,132 @@
+{
+  "cases": [
+    {
+      "name": "big-pickle",
+      "input": "big-pickle",
+      "expected": {
+        "family": "big-pickle",
+        "variant": ""
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "opaque compound family big-pickle is an atomic branding unit (empty variant)"
+      },
+      "mutation": {
+        "description": "opaque compound kept whole: big-pickle"
+      }
+    },
+    {
+      "name": "dall-e",
+      "input": "dall-e",
+      "expected": {
+        "family": "dall-e",
+        "variant": ""
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "opaque compound family dall-e is an atomic branding unit (empty variant)"
+      },
+      "mutation": {
+        "description": "opaque compound kept whole: dall-e"
+      }
+    },
+    {
+      "name": "mm-poly",
+      "input": "mm-poly",
+      "expected": {
+        "family": "mm-poly",
+        "variant": ""
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "opaque compound family mm-poly is an atomic branding unit (empty variant)"
+      },
+      "mutation": {
+        "description": "opaque compound kept whole: mm-poly"
+      }
+    },
+    {
+      "name": "model-router",
+      "input": "model-router",
+      "expected": {
+        "family": "model-router",
+        "variant": ""
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "opaque compound family model-router is an atomic branding unit (empty variant)"
+      },
+      "mutation": {
+        "description": "opaque compound kept whole: model-router"
+      }
+    },
+    {
+      "name": "nano-banana",
+      "input": "nano-banana",
+      "expected": {
+        "family": "nano-banana",
+        "variant": ""
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "opaque compound family nano-banana is an atomic branding unit (empty variant)"
+      },
+      "mutation": {
+        "description": "opaque compound kept whole: nano-banana"
+      }
+    },
+    {
+      "name": "smart-turn",
+      "input": "smart-turn",
+      "expected": {
+        "family": "smart-turn",
+        "variant": ""
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "opaque compound family smart-turn is an atomic branding unit (empty variant)"
+      },
+      "mutation": {
+        "description": "opaque compound kept whole: smart-turn"
+      }
+    },
+    {
+      "name": "stable-diffusion",
+      "input": "stable-diffusion",
+      "expected": {
+        "family": "stable-diffusion",
+        "variant": ""
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "opaque compound family stable-diffusion is an atomic branding unit (empty variant)"
+      },
+      "mutation": {
+        "description": "opaque compound kept whole: stable-diffusion"
+      }
+    },
+    {
+      "name": "text-embedding",
+      "input": "text-embedding",
+      "expected": {
+        "family": "text-embedding",
+        "variant": ""
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "opaque compound family text-embedding is an atomic branding unit (empty variant)"
+      },
+      "mutation": {
+        "description": "opaque compound kept whole: text-embedding"
+      }
+    }
+  ]
+}

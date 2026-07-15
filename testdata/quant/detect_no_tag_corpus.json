@@ -1,0 +1,99 @@
+{
+  "cases": [
+    {
+      "name": "llama3.3:latest",
+      "input": {
+        "id": "llama3.3:latest"
+      },
+      "expected": {
+        "q": 0,
+        "raw": "",
+        "stripped": "llama3.3:latest"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "id 'llama3.3:latest' carries no quantization tag; DetectQuantization must return (None, \"\", id unchanged)"
+      },
+      "mutation": {
+        "description": "no quant tag present in id: negative control for the tag-detection scan"
+      }
+    },
+    {
+      "name": "llama3.3:70b-instruct",
+      "input": {
+        "id": "llama3.3:70b-instruct"
+      },
+      "expected": {
+        "q": 0,
+        "raw": "",
+        "stripped": "llama3.3:70b-instruct"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "id 'llama3.3:70b-instruct' carries no quantization tag; DetectQuantization must return (None, \"\", id unchanged)"
+      },
+      "mutation": {
+        "description": "no quant tag present in id: negative control for the tag-detection scan"
+      }
+    },
+    {
+      "name": "gpt-4o",
+      "input": {
+        "id": "gpt-4o"
+      },
+      "expected": {
+        "q": 0,
+        "raw": "",
+        "stripped": "gpt-4o"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "id 'gpt-4o' carries no quantization tag; DetectQuantization must return (None, \"\", id unchanged)"
+      },
+      "mutation": {
+        "description": "no quant tag present in id: negative control for the tag-detection scan"
+      }
+    },
+    {
+      "name": "claude-opus-4-5-20251101",
+      "input": {
+        "id": "claude-opus-4-5-20251101"
+      },
+      "expected": {
+        "q": 0,
+        "raw": "",
+        "stripped": "claude-opus-4-5-20251101"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "id 'claude-opus-4-5-20251101' carries no quantization tag; DetectQuantization must return (None, \"\", id unchanged)"
+      },
+      "mutation": {
+        "description": "no quant tag present in id: negative control for the tag-detection scan"
+      }
+    },
+    {
+      "name": "mistral:7b",
+      "input": {
+        "id": "mistral:7b"
+      },
+      "expected": {
+        "q": 0,
+        "raw": "",
+        "stripped": "mistral:7b"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "id 'mistral:7b' carries no quantization tag; DetectQuantization must return (None, \"\", id unchanged)"
+      },
+      "mutation": {
+        "description": "no quant tag present in id: negative control for the tag-detection scan"
+      }
+    }
+  ]
+}
