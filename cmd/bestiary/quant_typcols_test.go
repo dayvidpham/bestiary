@@ -95,11 +95,11 @@ func TestWriteQuantRows_TypValues_FullArch(t *testing.T) {
 	}
 }
 
-// TestWriteQuantRows_TypPartial_WeightsOnly pins BDD row 223: a PARTIAL row (arch
-// facts absent) renders a weights-only TYP figure that NEVER implies a KV delta.
-// EstimateVRAM contributes no KV term without arch facts, so both TYP cells equal
-// WeightsBytes. Falsifier: any implementation that fabricates a KV delta for a
-// partial row would push TYP above WeightsBytes.
+// TestWriteQuantRows_TypPartial_WeightsOnly pins the partial-row contract: a
+// PARTIAL row (arch facts absent) renders a weights-only TYP figure that NEVER
+// implies a KV delta. EstimateVRAM contributes no KV term without arch facts, so
+// both TYP cells equal WeightsBytes. Falsifier: any implementation that fabricates
+// a KV delta for a partial row would push TYP above WeightsBytes.
 func TestWriteQuantRows_TypPartial_WeightsOnly(t *testing.T) {
 	q := bestiary.QuantVRAM{
 		Quant:               bestiary.QuantQ4_K_M,
