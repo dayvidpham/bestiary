@@ -179,20 +179,24 @@
       "type": "string"
     },
     "TotalParams": {
-      "description": "Total parameter count decomposed from ParamSize (e.g. 30000000000 for \"30b\"; exact for decimal tokens, e.g. 10700000000 for \"10.7b\"). 0 when the size is unattested OR when the shape carries no total: an NxM MoE token (\"8x22b\") records ExpertCount and PerExpertParams but NO total (the product is never computed), and a count-suffixed token (\"17b-16e\") records ActiveParams and ExpertCount but no total. Derived presentation fact, never entity-key material. Optional (additive).",
-      "type": "integer"
+      "description": "Total parameter count decomposed from ParamSize (e.g. 30000000000 for \"30b\"; exact for decimal tokens, e.g. 10700000000 for \"10.7b\"). In-domain NULL sentinel contract: -1 means NULL (not populated by parser or curation) — set when the shape carries no total (an NxM token \"8x22b\" records ExpertCount and PerExpertParams; a count-suffixed token \"17b-16e\" records ActiveParams and ExpertCount; the product is never computed) OR when the size is unknown (all four are -1). A positive value is an attested count; 0 never appears on this field. Derived presentation fact, never entity-key material. Optional (additive).",
+      "type": "integer",
+      "minimum": -1
     },
     "ActiveParams": {
-      "description": "Active (per-forward-pass) parameter count of a mixture-of-experts model (e.g. 3000000000 for \"30b-a3b\"; 17000000000 for \"17b-16e\"). 0 for a dense model or when the size is unattested. Derived presentation fact, never entity-key material. Optional (additive).",
-      "type": "integer"
+      "description": "Active (per-forward-pass) parameter count of a mixture-of-experts model (e.g. 3000000000 for \"30b-a3b\"; 17000000000 for \"17b-16e\"). In-domain NULL sentinel contract: -1 means NULL (not populated) — set for a dense model or when the size is unknown. A positive value is an attested count; 0 never appears on this field. Derived presentation fact, never entity-key material. Optional (additive).",
+      "type": "integer",
+      "minimum": -1
     },
     "PerExpertParams": {
-      "description": "Per-expert parameter count of an NxM MoE token (e.g. 22000000000 for \"8x22b\"). 0 unless the shape is NxM (only \"NxMb\" tokens populate it) or when the size is unattested. Derived presentation fact, never entity-key material. Optional (additive).",
-      "type": "integer"
+      "description": "Per-expert parameter count of an NxM MoE token (e.g. 22000000000 for \"8x22b\"). In-domain NULL sentinel contract: -1 means NULL (not populated) — set unless the shape is NxM (only \"NxMb\" tokens populate it) or when the size is unknown. A positive value is an attested count; 0 never appears on this field. Derived presentation fact, never entity-key material. Optional (additive).",
+      "type": "integer",
+      "minimum": -1
     },
     "ExpertCount": {
-      "description": "Number of experts of a mixture-of-experts model (8 for \"8x22b\", 16 for \"17b-16e\", 128 for \"17b-128e\"). 0 for a dense model or when the size is unattested. Derived presentation fact, never entity-key material. Optional (additive).",
-      "type": "integer"
+      "description": "Number of experts of a mixture-of-experts model (8 for \"8x22b\", 16 for \"17b-16e\", 128 for \"17b-128e\"). In-domain NULL sentinel contract: -1 means NULL (not populated) — set for a MoE shape that carries no expert count (active-MoE \"30b-a3b\") or when the size is unknown. A genuine 0 is reachable ONLY on this field: a dense shape attests exactly zero experts. A positive value is an attested count. Derived presentation fact, never entity-key material. Optional (additive).",
+      "type": "integer",
+      "minimum": -1
     },
     "QuantVRAM": {
       "description": "Per-quantization weight and VRAM footprint rows for this model instance. null when no quantization data is available. Populated at codegen time from curated data; live-sync rows carry null.",

@@ -151,8 +151,8 @@ func TestUpsertQueryModels_ReEnrichesParamSizeFromID(t *testing.T) {
 		t.Errorf("round-trip shape ints = {total:%d active:%d}, want {30000000000 3000000000} (re-derived, not persisted)",
 			got.TotalParams, got.ActiveParams)
 	}
-	if got.PerExpertParams != 0 || got.ExpertCount != 0 {
-		t.Errorf("active-MoE shape must set no PerExpertParams/ExpertCount, got {%d %d}", got.PerExpertParams, got.ExpertCount)
+	if got.PerExpertParams != bestiary.ParamShapeNull || got.ExpertCount != bestiary.ParamShapeNull {
+		t.Errorf("active-MoE shape must leave PerExpertParams/ExpertCount NULL (-1), got {%d %d}", got.PerExpertParams, got.ExpertCount)
 	}
 	// Stage/StageRaw are re-derived from the ID by the same enrichment joint — the
 	// store has no stage column, so the persisted WRONG values are ignored and the

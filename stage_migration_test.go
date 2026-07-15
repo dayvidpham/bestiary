@@ -69,29 +69,37 @@ func TestStageMigration_SyntheticGrokMiniFastBeta(t *testing.T) {
 	}
 }
 
-// TestStageMigration_BetaKeyFrozen pins the exact catalog exemplar
-// grok-4.20-beta-0309-reasoning: Stage=StageBeta is SET while the entity key is
-// UNCHANGED — "beta" stays in the Variant (it is entity-key material for grok today),
-// so the model still keys to grok/beta@4.20{reasoning}. Re-keying beta out of the
-// variant is deferred to a future ruling; this epoch freezes the key.
-func TestStageMigration_BetaKeyFrozen(t *testing.T) {
+// TestGrokBetaUnification_KeyMerged pins the exact catalog exemplar
+// grok-4.20-beta-0309-reasoning after the curated grok beta-alias unification:
+// Stage=StageBeta is still SET (detect-without-strip is independent of the key), but
+// the exact-ID override now maps the beta spelling onto the NON-beta decomposition, so
+// it keys grok@4.20{reasoning} — the SAME entity as the official grok-4.20-0309-reasoning
+// name. The old split grok/beta@4.20{reasoning} entity must NO LONGER exist. This is a
+// grok-only unification; the general beta freeze stays for non-grok names.
+func TestGrokBetaUnification_KeyMerged(t *testing.T) {
 	const id = "grok-4.20-beta-0309-reasoning" // exact catalog ID.
 
+	// Stage is still detected from the ID, independent of the (now-unified) key.
 	stage, _ := bestiary.DetectStageFromID(id)
 	if stage != bestiary.StageBeta {
-		t.Errorf("Stage = %v, want StageBeta", stage)
+		t.Errorf("Stage = %v, want StageBeta (detection is independent of the key)", stage)
 	}
 
-	// The entity is keyed with beta in the Variant slot (frozen), reachable by tuple.
-	ent, ok := bestiary.EntityByTuple("grok", "beta", "4.20", "", "reasoning")
+	// The beta spelling now keys the unified non-beta entity, reachable by tuple.
+	ent, ok := bestiary.EntityByTuple("grok", "", "4.20", "", "reasoning")
 	if !ok {
-		t.Fatal("grok/beta@4.20{reasoning} entity missing — beta must stay in the Variant (key frozen)")
+		t.Fatal("grok@4.20{reasoning} entity missing — the beta spelling must unify onto the non-beta key")
 	}
-	if got := ent.Ref.String(); got != "grok/beta@4.20{reasoning}" {
-		t.Errorf("entity key = %q, want grok/beta@4.20{reasoning} (unchanged by S6)", got)
+	if got := ent.Ref.String(); got != "grok@4.20{reasoning}" {
+		t.Errorf("entity key = %q, want grok@4.20{reasoning} (beta unified out of the Variant)", got)
 	}
 	if !entityHoldsInstanceContaining(ent, "grok-4.20-beta-0309-reasoning") {
-		t.Errorf("grok/beta@4.20{reasoning} missing its beta instance; instances=%v", instIDs(ent))
+		t.Errorf("grok@4.20{reasoning} missing its beta instance; instances=%v", instIDs(ent))
+	}
+
+	// The old split entity must be gone: no grok/beta@4.20 spelling survives the unification.
+	if _, gone := bestiary.EntityByTuple("grok", "beta", "4.20", "", "reasoning"); gone {
+		t.Error("grok/beta@4.20{reasoning} still present — the beta-alias unification must remove the split entity")
 	}
 }
 

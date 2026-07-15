@@ -26,7 +26,13 @@ confined to the handful of curated `quant_vram.json` entries.
   `PerExpertParams`, `ExpertCount`), decomposed from `ParamSize` — derived
   presentation facts, never entity-key material. Grouped along shape joints and
   never cross-computed (an NxM MoE token like `8x22b` sets `ExpertCount` +
-  `PerExpertParams` but no total).
+  `PerExpertParams` but no total). Each field is an **in-domain NULLable integer**
+  under the new `ParamShapeNull` (`-1`) sentinel contract: `-1` means "not populated
+  by parser or curation" (the shape carries no such fact, or the size is unknown), a
+  positive value is an attested count, and a genuine `0` is reachable **only** for
+  `ExpertCount` (a dense shape attests zero experts). An unsized model bakes all four
+  as `-1`. The schema pins `minimum: -1` on each. Every row now emits all four fields
+  explicitly (a `0` is meaningful and must be distinguished from the NULL sentinel).
 - **`EnrichedParamSize(id)`** — the single param-size precedence authority
   (pin > mechanical > `ParamSizeFor`), shared by the two runtime enrichment joints
   (`toModelInfo`, `scanModelInfo`) and the codegen bake, plus `ValidateParamSizePins`
@@ -75,9 +81,23 @@ confined to the handful of curated `quant_vram.json` entries.
   key-excluded before, stage-routed = key-excluded after). The tokens STAY in the
   `Modifier` data field (so constant names and the `[attr]` resolve filter are
   byte-stable). `beta` is detect-without-strip: `Stage=StageBeta` is set wherever a
-  standalone `beta` token appears, but its decomposition is untouched and its key is
-  frozen (grok-4.20-beta keys stay `grok/beta@4.20{…}`). Re-keying beta out of the
-  variant is deferred ([#13]).
+  standalone `beta` token appears, independent of the key. For the
+  **grok-4.20 line**, curated exact-ID overrides now **unify** the beta-alias spellings
+  onto their non-beta entity — `grok-4.20-beta-0309-reasoning` and the `…-reasoning-beta`
+  / dashed / multi-agent variants key `grok@4.20{…}`, the same entity as the official
+  `grok-4.20-0309-reasoning`, while still carrying `Stage=StageBeta`. The **general beta
+  freeze stays for non-grok names** (e.g. `interfaze-beta` keeps `beta` in its key);
+  a wholesale beta re-key is deferred ([#13]).
+- **Version-less `llama-4` `@4` unification.** The `llama-4` scout/maverick spellings
+  that omit the `-4-` version token — the AWS Bedrock dotted forms
+  (`meta.llama4-scout-17b-instruct-v1:0`, `us.meta.llama4-…`) and the aggregator
+  provider-prefixed forms (`cerebras-…`, `groq-…`) — now carry a curated `@4` version
+  pin (exact-ID override) so they merge into the existing `@4` entity their canonical
+  siblings key (`llama/scout@4#17b-16e{instruct}`, `llama@4#17b-128e{instruct}`).
+  This removes the pre-existing version-presence split. (Note: `scout` is a curated
+  `llama` variant member so it keys under `/scout`, but `maverick` is not, so the
+  official maverick entity is `llama@4` — the pins set variant `""` to merge, not mint
+  a new entity.)
 
 ### Changed — BREAKING (Go API: exported constant renames)
 

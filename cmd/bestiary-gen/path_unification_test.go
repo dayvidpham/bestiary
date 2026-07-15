@@ -1150,7 +1150,7 @@ var justifiedExceptions = map[exceptionKey]string{
 		ID:     "grok-3-mini-fast-beta",
 		Before: `(family="grok-3-mini-fast",variant="beta",version="3",modifier="")`,
 		After:  `(family="grok",variant="mini",version="3",modifier="")`,
-	}: "USER-RATIFIED non-defect (GH#13 release-stage dimension): family corrected to grok + real tier 'mini' (+version 3); the release-stage token 'beta' AND the speed-tier token 'fast' are BOTH dropped — neither can co-occupy the single Variant slot with 'mini' (variant-multiplicity, the variant analogue of the Modifier-LIST, deferred). MECHANISM (corrected) for the related xai/grok-4.20-non-reasoning-beta, which stays Modifier=nil (nil both BEFORE and AFTER — no regression, no gate trip): the trailing 'beta' is the TAIL-ORDER MODIFIER-SCAN BOUNDARY — the scan starts at the tail and halts at 'beta' (a non-collected variant/boundary token) before reaching the inner 'non-reasoning', so the negation branch never executes. Contrast (verified): grok-4.20-non-reasoning [tail='reasoning' preceded by 'non']→[non-reasoning]; grok-4-20-beta-0309-non-reasoning ['beta' MID-string, tail still 'reasoning']→[non-reasoning]; xai/grok-4.20-non-reasoning-beta [tail='beta']→nil. Same release-stage multiplicity tracked under GH#13.",
+	}: "USER-RATIFIED non-defect (GH#13 release-stage dimension): family corrected to grok + real tier 'mini' (+version 3); the release-stage token 'beta' AND the speed-tier token 'fast' are BOTH dropped — neither can co-occupy the single Variant slot with 'mini' (variant-multiplicity, the variant analogue of the Modifier-LIST, deferred). This is a SYNTHETIC exemplar (not a catalog ID); the real catalog grok-4.20 beta spellings are unified onto their non-beta entities by the exact-ID overrides enumerated below (the beta-alias unification), which also restores the inner 'non-reasoning'/'reasoning' modifier that the tail-'beta' boundary formerly hid. Same release-stage dimension tracked under GH#13.",
 	{
 		ID:     "azure-gpt-4-turbo",
 		Before: `(family="azure-gpt-4",variant="turbo",version="4",modifier="")`,
@@ -1172,6 +1172,60 @@ var justifiedExceptions = map[exceptionKey]string{
 		Before: `(family="llama",variant="instruct",version="",modifier="")`,
 		After:  `(family="dracarys",variant="",version="",modifier="")`,
 	}: "GH#11 lineage (VC14): nano-gpt served Dracarys-72B with raw_family='llama', folding the dracarys finetune into the llama base and erasing its lineage. idFamilyOverrides restores family=dracarys + a finetune-from-llama edge. The 'instruct' token is intentionally not re-attached so this 72B keys as the bare 'dracarys' entity, DISTINCT from the separate dracarys-llama-3.1-70b ('dracarys{instruct}') — preventing a wrong-merge of two different artifacts. Single-provider exact-ID override; no divergence introduced.",
+
+	// ── grok-4.20 beta-alias unification (idFamilyOverrides) ──────────────
+	// USER-RATIFIED (GH#13 release-stage dimension): xAI ships the grok-4.20 line under
+	// both an official name (grok-4.20-0309-reasoning) and beta-alias spellings that glue
+	// a standalone "beta" token into the name. Mechanically the tail-inward scan captures
+	// "beta" as the Variant, splitting the aliases into a separate grok/beta@4.20 entity.
+	// The user ruled these are the SAME artifact and must key the SAME entity, so an
+	// exact-ID override maps each beta spelling onto the non-beta decomposition (variant
+	// "", the modifier the official name carries; multi-agent follows the official name and
+	// drops to the bare grok@4.20). Stage=StageBeta is still detected from the ID
+	// independently of the key, so no beta information is lost. The Variant "beta"→"" move
+	// is an INTENDED de-split, not a regression; each is enumerated here. (The general beta
+	// freeze stays for non-grok names, e.g. interfaze-beta.)
+	{
+		ID:     "grok-4.20-beta-0309-reasoning",
+		Before: `(family="grok",variant="beta",version="4.20",modifier="")`,
+		After:  `(family="grok",variant="",version="4.20",modifier="reasoning")`,
+	}: "USER-RATIFIED grok beta-alias unification: beta spelling merges onto grok@4.20{reasoning}; Stage=StageBeta retained via ID detection.",
+	{
+		ID:     "grok-4.20-beta-0309-non-reasoning",
+		Before: `(family="grok",variant="beta",version="4.20",modifier="")`,
+		After:  `(family="grok",variant="",version="4.20",modifier="non-reasoning")`,
+	}: "USER-RATIFIED grok beta-alias unification: beta spelling merges onto grok@4.20{non-reasoning}; Stage=StageBeta retained via ID detection.",
+	{
+		ID:     "grok-4-20-beta-0309-reasoning",
+		Before: `(family="grok",variant="beta",version="4.20",modifier="")`,
+		After:  `(family="grok",variant="",version="4.20",modifier="reasoning")`,
+	}: "USER-RATIFIED grok beta-alias unification: dashed 4-20 beta spelling merges onto grok@4.20{reasoning}; Stage=StageBeta retained via ID detection.",
+	{
+		ID:     "grok-4-20-beta-0309-non-reasoning",
+		Before: `(family="grok",variant="beta",version="4.20",modifier="")`,
+		After:  `(family="grok",variant="",version="4.20",modifier="non-reasoning")`,
+	}: "USER-RATIFIED grok beta-alias unification: dashed 4-20 beta spelling merges onto grok@4.20{non-reasoning}; Stage=StageBeta retained via ID detection.",
+	{
+		ID:     "grok-4.20-multi-agent-beta-0309",
+		Before: `(family="grok",variant="beta",version="4.20",modifier="")`,
+		After:  `(family="grok",variant="",version="4.20",modifier="")`,
+	}: "USER-RATIFIED grok beta-alias unification: multi-agent beta spelling merges onto the bare grok@4.20 (following the official grok-4.20-multi-agent-0309); Stage=StageBeta retained via ID detection.",
+	{
+		ID:     "xai/grok-4.20-reasoning-beta",
+		Before: `(family="grok",variant="beta",version="4.20",modifier="")`,
+		After:  `(family="grok",variant="",version="4.20",modifier="reasoning")`,
+	}: "USER-RATIFIED grok beta-alias unification: trailing-beta spelling merges onto grok@4.20{reasoning}; Stage=StageBeta retained via ID detection.",
+	{
+		ID:     "xai/grok-4.20-non-reasoning-beta",
+		Before: `(family="grok",variant="beta",version="4.20",modifier="")`,
+		After:  `(family="grok",variant="",version="4.20",modifier="non-reasoning")`,
+	}: "USER-RATIFIED grok beta-alias unification: trailing-beta spelling merges onto grok@4.20{non-reasoning} (the inner 'non-reasoning', formerly lost behind the tail 'beta' boundary, is restored by the override); Stage=StageBeta retained via ID detection.",
+	{
+		ID:     "xai/grok-4.20-multi-agent-beta",
+		Before: `(family="grok",variant="beta",version="4.20",modifier="")`,
+		After:  `(family="grok",variant="",version="4.20",modifier="")`,
+	}: "USER-RATIFIED grok beta-alias unification: multi-agent trailing-beta spelling merges onto the bare grok@4.20; Stage=StageBeta retained via ID detection.",
+
 	// RESOLVED & de-ledgered:
 	//  • nvidia/llama-3.3-nemotron-super-49b-v1.5 — folded to nemotron via idFamilyOverrides
 	//    (cross-provider divergence 1→0).

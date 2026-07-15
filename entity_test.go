@@ -381,17 +381,17 @@ func TestEntityRef_NoMigrationDrift(t *testing.T) {
 	// (a) Census literals — pinned to the full-bulk re-key snapshot. A change here is
 	// an intentional re-key event, not incidental drift.
 	const (
-		wantSizedCatalog    = 337
+		wantSizedCatalog    = 335
 		wantSizedStandalone = 4
 	)
 
 	// (b) Per-shape exemplar keys that must be present after the re-key.
 	wantExemplars := []string{
-		"llama@3.1#8b{instruct}",        // dense
-		"qwen/embedding@3#0.6b",         // decimal dense — never "6b"
-		"qwen@3#30b-a3b",                // active MoE
-		"wizardlm@2#8x22b",              // NxM MoE (ExpertCount + PerExpertParams, no total)
-		"llama/scout#17b-16e{instruct}", // count-suffixed MoE via the curated llama-4 pin
+		"llama@3.1#8b{instruct}",          // dense
+		"qwen/embedding@3#0.6b",           // decimal dense — never "6b"
+		"qwen@3#30b-a3b",                  // active MoE
+		"wizardlm@2#8x22b",                // NxM MoE (ExpertCount + PerExpertParams, no total)
+		"llama/scout@4#17b-16e{instruct}", // count-suffixed MoE via the curated llama-4 pin (@4 after the version unification)
 	}
 	keyIndex := make(map[string]bestiary.Entity, len(entities))
 	for _, e := range entities {
@@ -462,11 +462,14 @@ func TestEntityRef_NoMigrationDrift(t *testing.T) {
 // literal-substring leg ("llama4"/"llama-4") — must key its FULL expert-shape size:
 // scout = 17b-16e, maverick = 17b-128e; never a bare 17b and never unsized.
 //
-// Neither leg alone is sufficient, which is the whole point: the four dotted Bedrock
-// forms (meta.llama4-*, us.meta.llama4-*-17b-instruct-v1:0) decompose with an empty
-// Version/Variant, so they ESCAPE the decomposition leg and are reached only by the
-// substring sweep plus their explicit curated pins. A purely-decomposition census
-// would silently leave those bare #17b — this guard fails if that regresses.
+// Neither leg alone is sufficient, which is the whole point: the maverick spellings
+// key llama@4 with an EMPTY variant ("maverick" is not a curated family member), so
+// they ESCAPE the (variant scout|maverick) decomposition leg and are reached only by
+// the substring sweep plus their explicit curated pins. A purely-decomposition census
+// would silently leave those bare #17b — this guard fails if that regresses. (The
+// version-less scout/maverick spellings now carry a curated @4 version pin, so they no
+// longer split on version presence; the size pins guarded here are independent of that
+// and unchanged.)
 func TestParamSizePins_Llama4CensusBothLegs(t *testing.T) {
 	checked := 0
 	for _, m := range bestiary.StaticModels() {
