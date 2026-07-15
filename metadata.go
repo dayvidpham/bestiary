@@ -604,9 +604,12 @@ type EntityMetadata struct {
 	// catalog side uses, so an over-captured compound family (e.g. "gemini-omni" from
 	// the id-only decomposition) is not mistaken for an absent family and wrongly
 	// synthesized as a standalone. It is NOT part of the public JSON contract
-	// (json:"-") — the entity KEY is still the mechanical decomposition — and it is
-	// NOT persisted by the store, so a value loaded from the cache degrades to "" and
-	// the presence gate falls back to the mechanical family.
+	// (json:"-") — the entity KEY is still the mechanical decomposition — but it IS
+	// persisted by the store (entity_metadata.raw_family) and round-trips through
+	// UpsertEntityMetadata / QueryEntityMetadata, so a synced/cached row keeps the same
+	// signal the baked rows carry. It is empty ("") only for a value that never had one:
+	// a legacy pre-column cache row until it is re-synced, or a hand-constructed
+	// EntityMetadata; the presence gate falls back to the mechanical family in that case.
 	RawFamily Family `json:"-"`
 }
 

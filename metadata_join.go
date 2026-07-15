@@ -307,8 +307,11 @@ func JoinEntityMetadata(ents []Entity, meta []EntityMetadata) (attached []Entity
 		// wrongly synthesized a standalone. Feeding the upstream raw family makes the
 		// gate apples-to-apples with enrichModelInfo, so such a row routes to the
 		// unlinked report instead. A curated alias supersedes this (its target family
-		// is authoritative); an empty RawFamily (e.g. a store-loaded row) degrades to
-		// the mechanical family.
+		// is authoritative). RawFamily is carried on both the baked rows and the
+		// store round-trip (entity_metadata.raw_family), so it is empty only for a value
+		// that never had one — a legacy pre-column cache row until re-synced, or a
+		// hand-constructed EntityMetadata — in which case the gate degrades to the
+		// mechanical family.
 		presenceFamily := identity.Family
 		if !aliased && m.RawFamily != "" {
 			presenceFamily = metadataPresenceFamily(m.MetadataID, m.RawFamily)
