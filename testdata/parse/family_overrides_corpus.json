@@ -1,0 +1,964 @@
+{
+  "cases": [
+    {
+      "name": "claude-opus",
+      "input": "claude-opus",
+      "expected": {
+        "family": "claude",
+        "variant": "opus"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "family_overrides.json: claude-opus decomposes to family 'claude', variant 'opus'"
+      },
+      "mutation": {
+        "description": "curated compound-family override for claude-opus"
+      }
+    },
+    {
+      "name": "claude-haiku",
+      "input": "claude-haiku",
+      "expected": {
+        "family": "claude",
+        "variant": "haiku"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "family_overrides.json: claude-haiku decomposes to family 'claude', variant 'haiku'"
+      },
+      "mutation": {
+        "description": "curated compound-family override for claude-haiku"
+      }
+    },
+    {
+      "name": "claude-sonnet",
+      "input": "claude-sonnet",
+      "expected": {
+        "family": "claude",
+        "variant": "sonnet"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "family_overrides.json: claude-sonnet decomposes to family 'claude', variant 'sonnet'"
+      },
+      "mutation": {
+        "description": "curated compound-family override for claude-sonnet"
+      }
+    },
+    {
+      "name": "codestral-embed",
+      "input": "codestral-embed",
+      "expected": {
+        "family": "codestral",
+        "variant": "embed"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "family_overrides.json: codestral-embed decomposes to family 'codestral', variant 'embed'"
+      },
+      "mutation": {
+        "description": "curated compound-family override for codestral-embed"
+      }
+    },
+    {
+      "name": "cohere-embed",
+      "input": "cohere-embed",
+      "expected": {
+        "family": "cohere",
+        "variant": "embed"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "family_overrides.json: cohere-embed decomposes to family 'cohere', variant 'embed'"
+      },
+      "mutation": {
+        "description": "curated compound-family override for cohere-embed"
+      }
+    },
+    {
+      "name": "command-a",
+      "input": "command-a",
+      "expected": {
+        "family": "command",
+        "variant": "a"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "family_overrides.json: command-a decomposes to family 'command', variant 'a'"
+      },
+      "mutation": {
+        "description": "curated compound-family override for command-a"
+      }
+    },
+    {
+      "name": "command-r",
+      "input": "command-r",
+      "expected": {
+        "family": "command",
+        "variant": "r"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "family_overrides.json: command-r decomposes to family 'command', variant 'r'"
+      },
+      "mutation": {
+        "description": "curated compound-family override for command-r"
+      }
+    },
+    {
+      "name": "deepseek-flash",
+      "input": "deepseek-flash",
+      "expected": {
+        "family": "deepseek",
+        "variant": "flash"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "family_overrides.json: deepseek-flash decomposes to family 'deepseek', variant 'flash'"
+      },
+      "mutation": {
+        "description": "curated compound-family override for deepseek-flash"
+      }
+    },
+    {
+      "name": "gemini-embedding",
+      "input": "gemini-embedding",
+      "expected": {
+        "family": "gemini",
+        "variant": "embedding"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "family_overrides.json: gemini-embedding decomposes to family 'gemini', variant 'embedding'"
+      },
+      "mutation": {
+        "description": "curated compound-family override for gemini-embedding"
+      }
+    },
+    {
+      "name": "gemini-flash",
+      "input": "gemini-flash",
+      "expected": {
+        "family": "gemini",
+        "variant": "flash"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "family_overrides.json: gemini-flash decomposes to family 'gemini', variant 'flash'"
+      },
+      "mutation": {
+        "description": "curated compound-family override for gemini-flash"
+      }
+    },
+    {
+      "name": "gemini-flash-lite",
+      "input": "gemini-flash-lite",
+      "expected": {
+        "family": "gemini",
+        "variant": "flash-lite"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "family_overrides.json: gemini-flash-lite decomposes to family 'gemini', variant 'flash-lite'"
+      },
+      "mutation": {
+        "description": "curated compound-family override for gemini-flash-lite"
+      }
+    },
+    {
+      "name": "gemini-pro",
+      "input": "gemini-pro",
+      "expected": {
+        "family": "gemini",
+        "variant": "pro"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "family_overrides.json: gemini-pro decomposes to family 'gemini', variant 'pro'"
+      },
+      "mutation": {
+        "description": "curated compound-family override for gemini-pro"
+      }
+    },
+    {
+      "name": "glm-air",
+      "input": "glm-air",
+      "expected": {
+        "family": "glm",
+        "variant": "air"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "family_overrides.json: glm-air decomposes to family 'glm', variant 'air'"
+      },
+      "mutation": {
+        "description": "curated compound-family override for glm-air"
+      }
+    },
+    {
+      "name": "glm-flash",
+      "input": "glm-flash",
+      "expected": {
+        "family": "glm",
+        "variant": "flash"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "family_overrides.json: glm-flash decomposes to family 'glm', variant 'flash'"
+      },
+      "mutation": {
+        "description": "curated compound-family override for glm-flash"
+      }
+    },
+    {
+      "name": "glm-free",
+      "input": "glm-free",
+      "expected": {
+        "family": "glm",
+        "variant": "free"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "family_overrides.json: glm-free decomposes to family 'glm', variant 'free'"
+      },
+      "mutation": {
+        "description": "curated compound-family override for glm-free"
+      }
+    },
+    {
+      "name": "glm-z",
+      "input": "glm-z",
+      "expected": {
+        "family": "glm",
+        "variant": "z"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "family_overrides.json: glm-z decomposes to family 'glm', variant 'z'"
+      },
+      "mutation": {
+        "description": "curated compound-family override for glm-z"
+      }
+    },
+    {
+      "name": "gpt-codex",
+      "input": "gpt-codex",
+      "expected": {
+        "family": "gpt",
+        "variant": "codex"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "family_overrides.json: gpt-codex decomposes to family 'gpt', variant 'codex'"
+      },
+      "mutation": {
+        "description": "curated compound-family override for gpt-codex"
+      }
+    },
+    {
+      "name": "gpt-codex-mini",
+      "input": "gpt-codex-mini",
+      "expected": {
+        "family": "gpt",
+        "variant": "codex-mini"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "family_overrides.json: gpt-codex-mini decomposes to family 'gpt', variant 'codex-mini'"
+      },
+      "mutation": {
+        "description": "curated compound-family override for gpt-codex-mini"
+      }
+    },
+    {
+      "name": "gpt-codex-spark",
+      "input": "gpt-codex-spark",
+      "expected": {
+        "family": "gpt",
+        "variant": "codex-spark"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "family_overrides.json: gpt-codex-spark decomposes to family 'gpt', variant 'codex-spark'"
+      },
+      "mutation": {
+        "description": "curated compound-family override for gpt-codex-spark"
+      }
+    },
+    {
+      "name": "gpt-image",
+      "input": "gpt-image",
+      "expected": {
+        "family": "gpt",
+        "variant": "image"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "family_overrides.json: gpt-image decomposes to family 'gpt', variant 'image'"
+      },
+      "mutation": {
+        "description": "curated compound-family override for gpt-image"
+      }
+    },
+    {
+      "name": "gpt-mini",
+      "input": "gpt-mini",
+      "expected": {
+        "family": "gpt",
+        "variant": "mini"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "family_overrides.json: gpt-mini decomposes to family 'gpt', variant 'mini'"
+      },
+      "mutation": {
+        "description": "curated compound-family override for gpt-mini"
+      }
+    },
+    {
+      "name": "gpt-nano",
+      "input": "gpt-nano",
+      "expected": {
+        "family": "gpt",
+        "variant": "nano"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "family_overrides.json: gpt-nano decomposes to family 'gpt', variant 'nano'"
+      },
+      "mutation": {
+        "description": "curated compound-family override for gpt-nano"
+      }
+    },
+    {
+      "name": "gpt-oss",
+      "input": "gpt-oss",
+      "expected": {
+        "family": "gpt",
+        "variant": "oss"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "family_overrides.json: gpt-oss decomposes to family 'gpt', variant 'oss'"
+      },
+      "mutation": {
+        "description": "curated compound-family override for gpt-oss"
+      }
+    },
+    {
+      "name": "gpt-pro",
+      "input": "gpt-pro",
+      "expected": {
+        "family": "gpt",
+        "variant": "pro"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "family_overrides.json: gpt-pro decomposes to family 'gpt', variant 'pro'"
+      },
+      "mutation": {
+        "description": "curated compound-family override for gpt-pro"
+      }
+    },
+    {
+      "name": "grok-beta",
+      "input": "grok-beta",
+      "expected": {
+        "family": "grok",
+        "variant": "beta"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "family_overrides.json: grok-beta decomposes to family 'grok', variant 'beta'"
+      },
+      "mutation": {
+        "description": "curated compound-family override for grok-beta"
+      }
+    },
+    {
+      "name": "hy3-free",
+      "input": "hy3-free",
+      "expected": {
+        "family": "hy3",
+        "variant": "free"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "family_overrides.json: hy3-free decomposes to family 'hy3', variant 'free'"
+      },
+      "mutation": {
+        "description": "curated compound-family override for hy3-free"
+      }
+    },
+    {
+      "name": "kat-coder",
+      "input": "kat-coder",
+      "expected": {
+        "family": "kat",
+        "variant": "coder"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "family_overrides.json: kat-coder decomposes to family 'kat', variant 'coder'"
+      },
+      "mutation": {
+        "description": "curated compound-family override for kat-coder"
+      }
+    },
+    {
+      "name": "kimi-free",
+      "input": "kimi-free",
+      "expected": {
+        "family": "kimi",
+        "variant": "free"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "family_overrides.json: kimi-free decomposes to family 'kimi', variant 'free'"
+      },
+      "mutation": {
+        "description": "curated compound-family override for kimi-free"
+      }
+    },
+    {
+      "name": "ling-flash-free",
+      "input": "ling-flash-free",
+      "expected": {
+        "family": "ling",
+        "variant": "flash-free"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "family_overrides.json: ling-flash-free decomposes to family 'ling', variant 'flash-free'"
+      },
+      "mutation": {
+        "description": "curated compound-family override for ling-flash-free"
+      }
+    },
+    {
+      "name": "magistral-medium",
+      "input": "magistral-medium",
+      "expected": {
+        "family": "magistral",
+        "variant": "medium"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "family_overrides.json: magistral-medium decomposes to family 'magistral', variant 'medium'"
+      },
+      "mutation": {
+        "description": "curated compound-family override for magistral-medium"
+      }
+    },
+    {
+      "name": "magistral-small",
+      "input": "magistral-small",
+      "expected": {
+        "family": "magistral",
+        "variant": "small"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "family_overrides.json: magistral-small decomposes to family 'magistral', variant 'small'"
+      },
+      "mutation": {
+        "description": "curated compound-family override for magistral-small"
+      }
+    },
+    {
+      "name": "mimo-flash-free",
+      "input": "mimo-flash-free",
+      "expected": {
+        "family": "mimo",
+        "variant": "flash-free"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "family_overrides.json: mimo-flash-free decomposes to family 'mimo', variant 'flash-free'"
+      },
+      "mutation": {
+        "description": "curated compound-family override for mimo-flash-free"
+      }
+    },
+    {
+      "name": "mimo-omni-free",
+      "input": "mimo-omni-free",
+      "expected": {
+        "family": "mimo",
+        "variant": "omni-free"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "family_overrides.json: mimo-omni-free decomposes to family 'mimo', variant 'omni-free'"
+      },
+      "mutation": {
+        "description": "curated compound-family override for mimo-omni-free"
+      }
+    },
+    {
+      "name": "mimo-pro-free",
+      "input": "mimo-pro-free",
+      "expected": {
+        "family": "mimo",
+        "variant": "pro-free"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "family_overrides.json: mimo-pro-free decomposes to family 'mimo', variant 'pro-free'"
+      },
+      "mutation": {
+        "description": "curated compound-family override for mimo-pro-free"
+      }
+    },
+    {
+      "name": "mimo-v2-omni",
+      "input": "mimo-v2-omni",
+      "expected": {
+        "family": "mimo",
+        "variant": "v2-omni"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "family_overrides.json: mimo-v2-omni decomposes to family 'mimo', variant 'v2-omni'"
+      },
+      "mutation": {
+        "description": "curated compound-family override for mimo-v2-omni"
+      }
+    },
+    {
+      "name": "mimo-v2-pro",
+      "input": "mimo-v2-pro",
+      "expected": {
+        "family": "mimo",
+        "variant": "v2-pro"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "family_overrides.json: mimo-v2-pro decomposes to family 'mimo', variant 'v2-pro'"
+      },
+      "mutation": {
+        "description": "curated compound-family override for mimo-v2-pro"
+      }
+    },
+    {
+      "name": "mimo-v2.5",
+      "input": "mimo-v2.5",
+      "expected": {
+        "family": "mimo",
+        "variant": "v2.5"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "family_overrides.json: mimo-v2.5 decomposes to family 'mimo', variant 'v2.5'"
+      },
+      "mutation": {
+        "description": "curated compound-family override for mimo-v2.5"
+      }
+    },
+    {
+      "name": "mimo-v2.5-pro",
+      "input": "mimo-v2.5-pro",
+      "expected": {
+        "family": "mimo",
+        "variant": "v2.5-pro"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "family_overrides.json: mimo-v2.5-pro decomposes to family 'mimo', variant 'v2.5-pro'"
+      },
+      "mutation": {
+        "description": "curated compound-family override for mimo-v2.5-pro"
+      }
+    },
+    {
+      "name": "minimax-free",
+      "input": "minimax-free",
+      "expected": {
+        "family": "minimax",
+        "variant": "free"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "family_overrides.json: minimax-free decomposes to family 'minimax', variant 'free'"
+      },
+      "mutation": {
+        "description": "curated compound-family override for minimax-free"
+      }
+    },
+    {
+      "name": "minimax-m2.5",
+      "input": "minimax-m2.5",
+      "expected": {
+        "family": "minimax",
+        "variant": "m2.5"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "family_overrides.json: minimax-m2.5 decomposes to family 'minimax', variant 'm2.5'"
+      },
+      "mutation": {
+        "description": "curated compound-family override for minimax-m2.5"
+      }
+    },
+    {
+      "name": "minimax-m2.7",
+      "input": "minimax-m2.7",
+      "expected": {
+        "family": "minimax",
+        "variant": "m2.7"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "family_overrides.json: minimax-m2.7 decomposes to family 'minimax', variant 'm2.7'"
+      },
+      "mutation": {
+        "description": "curated compound-family override for minimax-m2.7"
+      }
+    },
+    {
+      "name": "mistral-embed",
+      "input": "mistral-embed",
+      "expected": {
+        "family": "mistral",
+        "variant": "embed"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "family_overrides.json: mistral-embed decomposes to family 'mistral', variant 'embed'"
+      },
+      "mutation": {
+        "description": "curated compound-family override for mistral-embed"
+      }
+    },
+    {
+      "name": "mistral-large",
+      "input": "mistral-large",
+      "expected": {
+        "family": "mistral",
+        "variant": "large"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "family_overrides.json: mistral-large decomposes to family 'mistral', variant 'large'"
+      },
+      "mutation": {
+        "description": "curated compound-family override for mistral-large"
+      }
+    },
+    {
+      "name": "mistral-medium",
+      "input": "mistral-medium",
+      "expected": {
+        "family": "mistral",
+        "variant": "medium"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "family_overrides.json: mistral-medium decomposes to family 'mistral', variant 'medium'"
+      },
+      "mutation": {
+        "description": "curated compound-family override for mistral-medium"
+      }
+    },
+    {
+      "name": "mistral-nemo",
+      "input": "mistral-nemo",
+      "expected": {
+        "family": "mistral",
+        "variant": "nemo"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "family_overrides.json: mistral-nemo decomposes to family 'mistral', variant 'nemo'"
+      },
+      "mutation": {
+        "description": "curated compound-family override for mistral-nemo"
+      }
+    },
+    {
+      "name": "mistral-small",
+      "input": "mistral-small",
+      "expected": {
+        "family": "mistral",
+        "variant": "small"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "family_overrides.json: mistral-small decomposes to family 'mistral', variant 'small'"
+      },
+      "mutation": {
+        "description": "curated compound-family override for mistral-small"
+      }
+    },
+    {
+      "name": "nemotron-free",
+      "input": "nemotron-free",
+      "expected": {
+        "family": "nemotron",
+        "variant": "free"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "family_overrides.json: nemotron-free decomposes to family 'nemotron', variant 'free'"
+      },
+      "mutation": {
+        "description": "curated compound-family override for nemotron-free"
+      }
+    },
+    {
+      "name": "nova-lite",
+      "input": "nova-lite",
+      "expected": {
+        "family": "nova",
+        "variant": "lite"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "family_overrides.json: nova-lite decomposes to family 'nova', variant 'lite'"
+      },
+      "mutation": {
+        "description": "curated compound-family override for nova-lite"
+      }
+    },
+    {
+      "name": "nova-micro",
+      "input": "nova-micro",
+      "expected": {
+        "family": "nova",
+        "variant": "micro"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "family_overrides.json: nova-micro decomposes to family 'nova', variant 'micro'"
+      },
+      "mutation": {
+        "description": "curated compound-family override for nova-micro"
+      }
+    },
+    {
+      "name": "nova-pro",
+      "input": "nova-pro",
+      "expected": {
+        "family": "nova",
+        "variant": "pro"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "family_overrides.json: nova-pro decomposes to family 'nova', variant 'pro'"
+      },
+      "mutation": {
+        "description": "curated compound-family override for nova-pro"
+      }
+    },
+    {
+      "name": "o-mini",
+      "input": "o-mini",
+      "expected": {
+        "family": "o",
+        "variant": "mini"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "family_overrides.json: o-mini decomposes to family 'o', variant 'mini'"
+      },
+      "mutation": {
+        "description": "curated compound-family override for o-mini"
+      }
+    },
+    {
+      "name": "o-pro",
+      "input": "o-pro",
+      "expected": {
+        "family": "o",
+        "variant": "pro"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "family_overrides.json: o-pro decomposes to family 'o', variant 'pro'"
+      },
+      "mutation": {
+        "description": "curated compound-family override for o-pro"
+      }
+    },
+    {
+      "name": "qwen-free",
+      "input": "qwen-free",
+      "expected": {
+        "family": "qwen",
+        "variant": "free"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "family_overrides.json: qwen-free decomposes to family 'qwen', variant 'free'"
+      },
+      "mutation": {
+        "description": "curated compound-family override for qwen-free"
+      }
+    },
+    {
+      "name": "solar-mini",
+      "input": "solar-mini",
+      "expected": {
+        "family": "solar",
+        "variant": "mini"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "family_overrides.json: solar-mini decomposes to family 'solar', variant 'mini'"
+      },
+      "mutation": {
+        "description": "curated compound-family override for solar-mini"
+      }
+    },
+    {
+      "name": "solar-pro",
+      "input": "solar-pro",
+      "expected": {
+        "family": "solar",
+        "variant": "pro"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "family_overrides.json: solar-pro decomposes to family 'solar', variant 'pro'"
+      },
+      "mutation": {
+        "description": "curated compound-family override for solar-pro"
+      }
+    },
+    {
+      "name": "sonar-deep-research",
+      "input": "sonar-deep-research",
+      "expected": {
+        "family": "sonar",
+        "variant": "deep-research"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "family_overrides.json: sonar-deep-research decomposes to family 'sonar', variant 'deep-research'"
+      },
+      "mutation": {
+        "description": "curated compound-family override for sonar-deep-research"
+      }
+    },
+    {
+      "name": "sonar-pro",
+      "input": "sonar-pro",
+      "expected": {
+        "family": "sonar",
+        "variant": "pro"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "family_overrides.json: sonar-pro decomposes to family 'sonar', variant 'pro'"
+      },
+      "mutation": {
+        "description": "curated compound-family override for sonar-pro"
+      }
+    },
+    {
+      "name": "sonar-reasoning",
+      "input": "sonar-reasoning",
+      "expected": {
+        "family": "sonar",
+        "variant": "reasoning"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "family_overrides.json: sonar-reasoning decomposes to family 'sonar', variant 'reasoning'"
+      },
+      "mutation": {
+        "description": "curated compound-family override for sonar-reasoning"
+      }
+    },
+    {
+      "name": "titan-embed",
+      "input": "titan-embed",
+      "expected": {
+        "family": "titan",
+        "variant": "embed"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "family_overrides.json: titan-embed decomposes to family 'titan', variant 'embed'"
+      },
+      "mutation": {
+        "description": "curated compound-family override for titan-embed"
+      }
+    },
+    {
+      "name": "trinity-mini",
+      "input": "trinity-mini",
+      "expected": {
+        "family": "trinity",
+        "variant": "mini"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "family_overrides.json: trinity-mini decomposes to family 'trinity', variant 'mini'"
+      },
+      "mutation": {
+        "description": "curated compound-family override for trinity-mini"
+      }
+    }
+  ]
+}

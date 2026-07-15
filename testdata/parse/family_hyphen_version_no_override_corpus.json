@@ -1,0 +1,36 @@
+{
+  "cases": [
+    {
+      "name": "llama-3-1 base not in overrides",
+      "input": "llama-3-1",
+      "expected": {
+        "family": "llama",
+        "variant": "3-1"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "hyphen-version else-branch (base not in overrides): llama-3-1 returns family 'llama', variant '3-1'"
+      },
+      "mutation": {
+        "description": "hyphen-version no-override branch for llama-3-1"
+      }
+    },
+    {
+      "name": "phi-4-5 base not in overrides",
+      "input": "phi-4-5",
+      "expected": {
+        "family": "phi",
+        "variant": "4-5"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "hyphen-version else-branch (base not in overrides): phi-4-5 returns family 'phi', variant '4-5'"
+      },
+      "mutation": {
+        "description": "hyphen-version no-override branch for phi-4-5"
+      }
+    }
+  ]
+}

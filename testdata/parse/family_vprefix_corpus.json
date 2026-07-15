@@ -1,0 +1,52 @@
+{
+  "cases": [
+    {
+      "name": "somebase-v3.0",
+      "input": "somebase-v3.0",
+      "expected": {
+        "family": "somebase",
+        "variant": "v3.0"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "v-prefix versioned-variant pattern: somebase-v3.0 splits to family 'somebase', variant 'v3.0'"
+      },
+      "mutation": {
+        "description": "v-prefix pattern decomposition for somebase-v3.0"
+      }
+    },
+    {
+      "name": "thing-v2.5-pro",
+      "input": "thing-v2.5-pro",
+      "expected": {
+        "family": "thing",
+        "variant": "v2.5-pro"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "v-prefix versioned-variant pattern: thing-v2.5-pro splits to family 'thing', variant 'v2.5-pro'"
+      },
+      "mutation": {
+        "description": "v-prefix pattern decomposition for thing-v2.5-pro"
+      }
+    },
+    {
+      "name": "widget-v10.0",
+      "input": "widget-v10.0",
+      "expected": {
+        "family": "widget",
+        "variant": "v10.0"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "v-prefix versioned-variant pattern: widget-v10.0 splits to family 'widget', variant 'v10.0'"
+      },
+      "mutation": {
+        "description": "v-prefix pattern decomposition for widget-v10.0"
+      }
+    }
+  ]
+}
