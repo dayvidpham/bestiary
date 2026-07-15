@@ -1182,8 +1182,10 @@ var reVersionMarkerToken = regexp.MustCompile(`^v[0-9]+(\.[0-9]+)?$`)
 // Every OTHER modifier (instruct/thinking/reasoning/preview/…) trails the variant and is
 // already recovered by phase A, so restricting the mid-ID harvest to this closed set is
 // the safe generalization: it can never reclassify a mid-ID instance of a trailing
-// modifier, and it targets exactly the tokens the ~26 exact-ID idFamilyOverrides pin
-// today (the v0.2.5 stage/mode block). Classification (omni/livetranslate = IDENTITY,
+// modifier, and it targets exactly the tokens the stage/mode exact-ID idFamilyOverrides
+// used to pin — once the engine covered them those entries were retired (a few
+// dotted-version gpt-realtime IDs remain, for a separate version-extraction gap).
+// Classification (omni/livetranslate = IDENTITY,
 // realtime = ATTRIBUTE) is owned by modifier_class.json / ClassifyModifier — this set
 // owns REACHABILITY only, never class.
 var midIDModifierTokens = map[string]struct{}{
@@ -1263,8 +1265,8 @@ func isModifierTransparentToken(tok string) bool {
 //	stage/mode token set (omni/livetranslate/realtime — see midIDModifierTokens) that
 //	structurally precedes the variant/version and so is unreachable by phase A
 //	(e.g. the "omni" in "gemini-omni-flash-preview", the "realtime" in "gpt-realtime-2.1").
-//	This generalizes the ~26 exact-ID idFamilyOverrides that pin these tokens today: with
-//	the override removed the ID decomposes IDENTICALLY (equivalence-pinned in the tests).
+//	This generalizes the stage/mode exact-ID idFamilyOverrides that once pinned these
+//	tokens: with the entry retired the ID decomposes IDENTICALLY (pinned in the tests).
 //
 // Size-domain recognition is shared with the size grammar via isParamSizeToken (through
 // isModifierTransparentToken): a size token — including a split "30b"/"a3b" half of a
@@ -2177,6 +2179,51 @@ func canonicalizeGlmV(family Family, variant, version string, modifier []string,
 	return family, "v", m[1], CanonicalizeModifiers(newMod)
 }
 
+// reDotGluedVariant matches a family-stripped remainder that is a single dot-glued
+// variant token: an all-letters variant prefix glued by a "." to a numeric version,
+// with NO hyphen between them (e.g. "xs.2", "m.1"). The leading group is purely
+// alphabetic, so a version-prefix letter fused to a digit ("v3.1" is one token "v3.1",
+// never "v"+"3.1"), a bare numeric version ("4.1"), and an alphanumeric line designator
+// ("4o") all fail to match; the trailing group is a genuine numeric version (integer or
+// N.M dotted). Capture 1 = variant, capture 2 = version.
+var reDotGluedVariant = regexp.MustCompile(`^([a-z]+)\.(\d+(?:\.\d+)?)$`)
+
+// canonicalizeDotGluedVariant generalizes the LEADING dot-glued variant form — a
+// variant glued by a "." to a version with no separating hyphen (poolside/laguna-xs.2 →
+// (laguna, "xs", "2"); laguna-m.1 → (laguna, "m", "1")). It is the mechanical
+// counterpart of the TRAILING glued-letter split (splitGluedVersionModifier, glm-4.5v):
+// the two together cover both glue positions of a letter-and-version fusion. Before this
+// generalization the leading dot-glued variant was reachable only through exact-ID
+// curated entries; the general machinery derives it from any family whose stripped
+// remainder is a lone dot-glued token, so a future such ID needs no new curated entry.
+//
+// It fires ONLY when the decomposition left BOTH variant and version empty (it never
+// overwrites a value the pipeline already resolved) and the family-stripped remainder is
+// EXACTLY one dot-glued token — a deliberately narrow gate so no genuine version
+// ("gpt-4.1"), version-prefixed line ("deepseek-v3.1"), or alphanumeric line designator
+// ("gpt-4o") is ever mangled.
+func canonicalizeDotGluedVariant(family Family, variant, version string, modifier []string, id ModelID) (Family, string, string, []string) {
+	if family == "" || variant != "" || version != "" {
+		return family, variant, version, modifier
+	}
+	// Strip the vendor namespace and any trailing ":tag" context/free marker, then the
+	// family prefix, leaving the token that carries the glued variant+version.
+	clean := strings.ToLower(lastPathSegment(stripVendorNamespace(string(id))))
+	if idx := strings.IndexByte(clean, ':'); idx >= 0 {
+		clean = clean[:idx]
+	}
+	famPrefix := strings.ToLower(string(family)) + "-"
+	if !strings.HasPrefix(clean, famPrefix) {
+		return family, variant, version, modifier
+	}
+	remainder := clean[len(famPrefix):]
+	m := reDotGluedVariant.FindStringSubmatch(remainder)
+	if m == nil {
+		return family, variant, version, modifier
+	}
+	return family, m[1], m[2], modifier
+}
+
 // containsToken reports whether toks contains tok exactly.
 func containsToken(toks []string, tok string) bool {
 	for _, t := range toks {
@@ -2318,6 +2365,7 @@ func ParseFamilyDetailed(raw Family, id ModelID, p Provider) (Family, string, st
 		family, variant, version, modifier := idDrivenDecompose(id, p)
 		family, variant, version, modifier = canonicalizeOpenAILine(family, variant, version, modifier, id)
 		family, variant, version, modifier = canonicalizeGlmV(family, variant, version, modifier, id)
+		family, variant, version, modifier = canonicalizeDotGluedVariant(family, variant, version, modifier, id)
 		if pd, pdErr := loadParseData(); pdErr == nil {
 			variant, modifier = promoteVariantModifier(pd, family, variant, modifier)
 		}
@@ -2332,6 +2380,7 @@ func ParseFamilyDetailed(raw Family, id ModelID, p Provider) (Family, string, st
 		rf, rv, rver, rmod := reconcileIDDriven(f, v, ver, m, id, p)
 		rf, rv, rver, rmod = canonicalizeOpenAILine(rf, rv, rver, rmod, id)
 		rf, rv, rver, rmod = canonicalizeGlmV(rf, rv, rver, rmod, id)
+		rf, rv, rver, rmod = canonicalizeDotGluedVariant(rf, rv, rver, rmod, id)
 		if pd, pdErr := loadParseData(); pdErr == nil {
 			rv, rmod = promoteVariantModifier(pd, rf, rv, rmod)
 		}
@@ -3831,11 +3880,12 @@ var seriesTierModifiers = map[string]struct{}{
 // idFamilyOverrideEntry is the curated (family, variant, version, modifiers) an exact
 // model ID maps to. modifiers is the FULL modifier list (identity + attribute, in any
 // order — CanonicalizeModifiers reorders and EntityModifiers splits identity from
-// attribute at the key boundary). It pins tokens the tail-inward modifier scan cannot
-// reach because they sit BEFORE the variant/version (e.g. the "omni" in
-// gemini-omni-flash-preview, the "realtime" in gpt-realtime-2.1): a mid-ID
-// identity/attribute modifier the general {mods} mechanism structurally misses. Empty
-// modifiers preserves the pre-existing family-only override behavior.
+// attribute at the key boundary). The general mid-ID modifier engine now harvests a
+// buried identity/attribute modifier that sits BEFORE the variant/version (the "omni" in
+// gemini-omni-flash-preview, the "realtime" in gpt-realtime-2), so the stage/mode entries
+// that only needed that harvest were retired; the residual stage/mode entries pin a
+// SEPARATE gap the engine does not yet close — a dotted version glued behind the mid-ID
+// token (gpt-realtime-2.1). Empty modifiers preserves the family-only override behavior.
 type idFamilyOverrideEntry struct {
 	family    Family
 	variant   string
@@ -3880,39 +3930,19 @@ var idFamilyOverrides = map[string]idFamilyOverrideEntry{
 	"abacusai/dracarys-72b-instruct":           {family: "dracarys"},
 	"gryphe/mythomax-l2-13b":                   {family: "mythomax"},
 
-	// v0.2.5 stage/mode identity granularity: pin the mid-ID
-	// identity/attribute modifiers the tail-inward {mods} scan cannot reach because
-	// they precede the variant/version. omni + livetranslate are IDENTITY (render in
-	// {…}); realtime is ATTRIBUTE (render in […], instance-only); preview / thinking /
-	// reasoning / instruct keep their pipeline class but are re-listed because the
-	// override bypasses the normal modifier extraction. Keys are lowercase exact IDs
-	// (the lookup lowercases, so one key covers case-variants; org-prefixed, dash/dot,
-	// and :free forms are distinct keys).
-	//
-	// gemini omni (mid-ID omni; preview stays attribute):
-	"gemini-omni-flash-preview":        {family: "gemini", variant: "flash", modifiers: []string{"omni", "preview"}},
-	"google/gemini-omni-flash-preview": {family: "gemini", variant: "flash", modifiers: []string{"omni", "preview"}},
-	// gpt realtime (attribute; VERSION RESTORED — realtime otherwise swallows it):
-	"gpt-realtime-2.1":         {family: "gpt", version: "2.1", modifiers: []string{"realtime"}},
-	"openai/gpt-realtime-2.1":  {family: "gpt", version: "2.1", modifiers: []string{"realtime"}},
-	"openai/gpt-realtime-2":    {family: "gpt", version: "2", modifiers: []string{"realtime"}},
-	"openai/gpt-realtime-1.5":  {family: "gpt", version: "1.5", modifiers: []string{"realtime"}},
-	"openai/gpt-realtime-mini": {family: "gpt", variant: "mini", modifiers: []string{"realtime"}},
-	// qwen omni (mid-ID omni):
-	"qwen-omni-turbo":                  {family: "qwen", variant: "turbo", modifiers: []string{"omni"}},
-	"qwen-omni-turbo-realtime":         {family: "qwen", variant: "turbo", modifiers: []string{"omni", "realtime"}},
-	"qwen3-omni-flash":                 {family: "qwen", variant: "flash", version: "3", modifiers: []string{"omni"}},
-	"qwen3-omni-flash-realtime":        {family: "qwen", variant: "flash", version: "3", modifiers: []string{"omni", "realtime"}},
-	"qwen3.5-omni-flash":               {family: "qwen", variant: "flash", version: "3.5", modifiers: []string{"omni"}},
-	"qwen3.5-omni-plus":                {family: "qwen", variant: "plus", version: "3.5", modifiers: []string{"omni"}},
-	"qwen/qwen3-omni-30b-a3b-instruct": {family: "qwen", version: "3", modifiers: []string{"omni", "instruct"}},
-	"qwen/qwen3-omni-30b-a3b-thinking": {family: "qwen", version: "3", modifiers: []string{"omni", "thinking"}},
-	// qwen livetranslate (mid-ID identity; realtime attribute trails):
-	"qwen3-livetranslate-flash-realtime": {family: "qwen", variant: "flash", version: "3", modifiers: []string{"livetranslate", "realtime"}},
-	// nemotron nano omni reasoning (omni sits before the size/reasoning tail; the scan drops it):
-	"nvidia/nemotron-3-nano-omni-30b-a3b-reasoning":      {family: "nemotron", variant: "nano", version: "3", modifiers: []string{"omni", "reasoning"}},
-	"nvidia/nemotron-3-nano-omni-30b-a3b-reasoning-bf16": {family: "nemotron", variant: "nano", version: "3", modifiers: []string{"omni", "reasoning"}},
-	"nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free": {family: "nemotron", variant: "nano", version: "3", modifiers: []string{"omni", "reasoning"}},
+	// The remaining stage/mode entries: gpt-realtime IDs whose version is a DOTTED value
+	// glued behind the mid-ID "realtime" token. The general mid-ID modifier engine now
+	// harvests the buried "realtime" attribute and resolves family=gpt for the whole
+	// gpt-realtime line, so the entries that only needed that harvest were retired. What
+	// remains is a narrower gap: the dotted version sitting behind the mid-ID token is not
+	// yet mechanically recovered (a bare-integer version like gpt-realtime-2 IS recovered,
+	// which is why that sibling was retired), so these three still own the version.
+	// realtime is an ATTRIBUTE modifier (renders in […], instance-only). Keys are
+	// lowercase exact IDs (the lookup lowercases, so one key covers case-variants;
+	// org-prefixed and :free forms are distinct keys).
+	"gpt-realtime-2.1":        {family: "gpt", version: "2.1", modifiers: []string{"realtime"}},
+	"openai/gpt-realtime-2.1": {family: "gpt", version: "2.1", modifiers: []string{"realtime"}},
+	"openai/gpt-realtime-1.5": {family: "gpt", version: "1.5", modifiers: []string{"realtime"}},
 	// laguna curated xs/m variants (dot + dash forms; :free folds to the same entity).
 	// These are the SERVING ids (poolside is the provider). The metadata rows attach via
 	// parse/data/modelsdev_aliases.json (poolside is also the lab, so the join strips
