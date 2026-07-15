@@ -1,0 +1,43 @@
+{
+  "cases": [
+    {
+      "name": "gpt-realtime-2.1",
+      "input": "gpt-realtime-2.1",
+      "expected": "",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "dotted-version gpt-realtime id gpt-realtime-2.1: engine harvests the mid-ID realtime token and resolves family=gpt, but the dotted version behind it is not yet mechanically recovered (documented gap); current mechanical version = ''"
+      },
+      "mutation": {
+        "description": "pins the version-extraction gap boundary: realtime harvested but dotted version still owned by the override"
+      }
+    },
+    {
+      "name": "openai/gpt-realtime-2.1",
+      "input": "openai/gpt-realtime-2.1",
+      "expected": "",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "dotted-version gpt-realtime id openai/gpt-realtime-2.1: engine harvests the mid-ID realtime token and resolves family=gpt, but the dotted version behind it is not yet mechanically recovered (documented gap); current mechanical version = ''"
+      },
+      "mutation": {
+        "description": "pins the version-extraction gap boundary: realtime harvested but dotted version still owned by the override"
+      }
+    },
+    {
+      "name": "openai/gpt-realtime-1.5",
+      "input": "openai/gpt-realtime-1.5",
+      "expected": "",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "dotted-version gpt-realtime id openai/gpt-realtime-1.5: engine harvests the mid-ID realtime token and resolves family=gpt, but the dotted version behind it is not yet mechanically recovered (documented gap); current mechanical version = ''"
+      },
+      "mutation": {
+        "description": "pins the version-extraction gap boundary: realtime harvested but dotted version still owned by the override"
+      }
+    }
+  ]
+}
