@@ -2,7 +2,7 @@
 
 Go module and CLI for querying AI model metadata from [models.dev](https://models.dev), with a **canonical naming scheme** that gives every model a stable, cross-provider identity.
 
-Provides strongly-typed providers and model IDs, a static model registry (~4,300 models across ~115 providers), entity normalization (Family / Variant / Version / Date / Modifier), an HTTP client with retry, and a local SQLite cache for offline queries.
+Provides strongly-typed providers and model IDs, a static model registry (~5,650 models across ~162 providers), entity normalization (Family / Variant / Version / Date / Modifier), an HTTP client with retry, and a local SQLite cache for offline queries.
 
 ## Install
 
@@ -305,10 +305,206 @@ catalog ID (alias table first, then mechanical decomposition), **keeps** communi
 rather than dropping them, and merges fetch-owned fields into the curated file while
 preserving hand-curated architecture facts. It is **not** part of `go test ./...`.
 
+## v0.2.5 — models.dev harmonization & ingest provenance
+
+v0.2.5 harmonizes bestiary with the full models.dev catalog and turns provenance
+into a first-class, queryable history. It ingests all three models.dev JSON
+artifacts (api.json, models.json, catalog.json), bakes a **provider-agnostic
+metadata dimension** (descriptions, licenses, benchmark claims, links) that
+attaches at the *entity* level, adds an `entities` census and a `--status`
+filter, and makes the ingest log an **append-only history** with a round-trip
+export. The static catalog is refreshed from a vendored July snapshot: **162
+providers, 5,654 models, 810 entities** (up from the April baseline of ~138
+providers / ~4,300 models).
+
+### Enumerating every entity (`entities`)
+
+`bestiary entities` walks the whole registry and prints one row per canonical
+entity — including **metadata-only standalones** that no provider currently
+serves but that models.dev still publishes facts about, which are otherwise only
+reachable by their exact key:
+
+```sh
+$ bestiary entities --output table
+Entities (810):
+  ENTITY KEY                                       PROVIDERS METADATA BENCHMARKS
+  ...
+  claude/opus@4.7                                         32      yes         19
+  ...
+  glm/air@4.5                                             20      yes          3
+  ...
+  ornith@1.0#35b                                           0      yes          7
+  ...
+  whisper/large@3{turbo}                                   2      yes          0
+  ...
+```
+
+`PROVIDERS` counts the serving instances, `METADATA` marks whether the entity
+carries a models.dev metadata row, and `BENCHMARKS` counts its lab-reported
+benchmark claims. The `ornith@1.0#35b` row is a **metadata-only standalone**:
+`PROVIDERS 0` (no instance serves it) yet `METADATA yes` with 7 benchmarks — the
+join synthesizes it as its own `#size`-keyed entity rather than dropping the
+facts. When the SQLite cache has never been synced, entity-view commands print a
+single notice to **stderr** and read the embedded catalog:
+
+```
+bestiary: using embedded catalog (run 'bestiary sync' to refresh metadata)
+```
+
+### Entity metadata: description, license & benchmarks
+
+`show --by-entity --output table` now renders the provider-agnostic metadata
+block — description, license, and the benchmark-claims table — under the entity
+header (Providers/Hosts/Instances elided here):
+
+```sh
+$ bestiary show glm-4.6 --by-entity --output table
+Entity: glm@4.6
+  Family:        glm
+  Variant:       -
+  Version:       4.6
+  Identity-mods: -
+Providers (24): 302ai, abacus, deepinfra, …
+...
+Capabilities: reasoning, tool-call, attachment, temperature, structured-output, interleaved, open-weights
+Description: Late GLM-4 workhorse for coding agents, reasoning, and structured tasks
+License:     -
+Benchmarks (4):
+  NAME                            SCORE METRIC         HARNESS            DATE         SOURCE
+  Artificial Analysis Cod…         29.5 index          -                  2026-05-22   https://openrouter.ai/z-ai/glm-4.6/benchmarks
+  SciCode                          38.4 percent correct -                  2026-05-22   https://openrouter.ai/z-ai/glm-4.6/benchmarks
+  Terminal-Bench Hard                25 success rate   -                  2026-05-22   https://openrouter.ai/z-ai/glm-4.6/benchmarks
+  SWE-Bench Pro                    9.67 resolve rate   -                  -            https://labs.scale.com/leaderboard/swe_bench_pro_public
+  note: benchmark names truncated (use --output json for full names)
+Lineage (0):
+Instances (28):
+  ...
+```
+
+The benchmark table keeps every claim in a **separate column** (name, score,
+metric, harness, date, source) — never concatenated — so a future canonical
+benchmark dimension can join on the parts. Two readability rules apply, and both
+announce themselves:
+
+- **Names truncate at 24 columns.** `Artificial Analysis Coding Index` renders as
+  `Artificial Analysis Cod…`; the `note: benchmark names truncated` line points at
+  `--output json` for the full names.
+- **The table caps at the top 5 rows.** glm-4.6 has 4, so all show. An entity with
+  more prints a `… and N more` footer — e.g. `claude/opus@4.7` (19 benchmarks)
+  renders five rows then `… and 14 more (use --output json)`.
+
+The full, untruncated set — every benchmark row, both score forms, all links — is
+always available via `--output json`.
+
+### Filtering by release status (`list --status`)
+
+`list --status` keeps only the models carrying a given models.dev release status
+(`none`, `alpha`, `beta`, `deprecated`):
+
+```sh
+$ bestiary list --status deprecated --output table
+ID                                        Provider      Family              Context  MaxOutput  Reason  Tools   CostIn/MTok
+----------------------------------------  ------------  ----------------  ---------  ---------  ------  -----  ------------
+claude-opus-4-1                           anthropic     claude               200000      32000     yes    yes        $15.00
+mistralai/devstral-2512                   anyapi        devstral             262144     262144      no    yes             —
+MiniMaxAI/MiniMax-M2.5                    baseten       minimax              204000     204000     yes    yes         $0.30
+...                                                                          # 119 deprecated models
+```
+
+An unrecognized status is rejected with an actionable error rather than silently
+matching nothing:
+
+```sh
+$ bestiary list --status bogus
+bestiary: ParseModelStatus: unrecognized status "bogus"; why: the input does not match any known model status (case-insensitive); where: ParseModelStatus; valid values: none, alpha, beta, deprecated; how to fix: pass one of the valid values listed above
+```
+
+### Provenance history & export (`sources --history` / `--export`)
+
+The ingest log is now an **append-only history** — a source carries one row per
+distinct ingest instant, and the *current* ingest is simply the row with the
+latest timestamp. A fresh, never-synced cache serves the embedded catalog (the
+stderr notice above); `bestiary sync` then fetches api.json + models.json live,
+persists the models, metadata, and attestations, and **appends** one ingest row
+stamped with the real UTC wall-clock time. A materially stale vendored snapshot
+also warns when more than 50 live model IDs are missing from the embedded
+catalog (shape shown — `sync` requires the network, and `<N>` is the live
+missing-model count):
+
+```sh
+$ bestiary sync
+bestiary: warning: <N> live model IDs are absent from the embedded catalog; the vendored models.dev snapshot is stale — refresh it and regenerate (see AGENTS.md "models.dev snapshot refresh")
+...
+```
+
+`sources --history` prints the whole log, ascending by ingest time, offline from
+the committed seed (no entity argument):
+
+```sh
+$ bestiary sources --history --output table
+Ingest history (3):
+  SOURCE       URI                                INGESTED                 PARSER
+  models.dev   https://models.dev/api.json        2026-06-09T00:00:00Z          3
+  models.dev   https://models.dev/api.json        2026-07-13T02:11:52Z          3
+  ollama       https://registry.ollama.ai         2026-06-09T00:00:00Z          3
+```
+
+`sources --export` emits the store's ingest provenance as a `datasources.json`
+**v3 document** — the **union** of the store's synced history and the curated
+seed, so the curated `ollama` row rides along even when only models.dev was
+synced. The output is round-trippable and promotable straight back into
+`parse/data/datasources.json`:
+
+```sh
+$ bestiary sources --export
+{
+  "schema_version": 3,
+  "sources": [
+    {
+      "id": "models.dev",
+      "uri": "https://models.dev/api.json",
+      "canonical_name": "models.dev"
+    },
+    {
+      "id": "ollama",
+      "uri": "https://registry.ollama.ai",
+      "canonical_name": "Ollama Registry"
+    }
+  ],
+  "ingested": [
+    {
+      "source_id": "models.dev",
+      "ingested_at": "2026-06-09T00:00:00Z",
+      "parser_schema": 3
+    },
+    {
+      "source_id": "models.dev",
+      "ingested_at": "2026-07-13T02:11:52Z",
+      "parser_schema": 3
+    },
+    {
+      "source_id": "ollama",
+      "ingested_at": "2026-06-09T00:00:00Z",
+      "parser_schema": 3
+    }
+  ]
+}
+```
+
+### Vendored codegen snapshot
+
+Codegen no longer fetches the catalog at build time. `go generate ./...` reads a
+**committed** snapshot — `parse/data/modelsdev/catalog.json` plus its
+`SNAPSHOT.json` provenance sidecar — so it is fully offline and deterministic, and
+a missing or corrupt snapshot is a **loud** error (codegen never bakes an empty
+catalog). Refreshing that snapshot from a newer upstream deploy is a deliberate,
+occasional manual step — see the **"models.dev snapshot refresh"** workflow in
+[`AGENTS.md`](AGENTS.md).
+
 ## CLI
 
 ```
-bestiary <list|show|providers|sources|sync> [flags]
+bestiary <list|show|providers|entities|sources|sync> [flags]
 ```
 
 ### Commands
@@ -337,12 +533,26 @@ bestiary providers --output table 'llama@3.3#70b{instruct}'
 bestiary providers --output table --quant q4_k_m 'llama@3.3#70b{instruct}'
 ```
 
+**entities** — enumerate every canonical entity in the registry (offline; no argument).
+Each row carries its provider count, whether it has models.dev metadata, and its
+benchmark-claim count; metadata-only standalones (no serving provider) are included so
+they are discoverable.
+
+```sh
+bestiary entities --output table   # summary table (ENTITY KEY / PROVIDERS / METADATA / BENCHMARKS)
+bestiary entities                  # full Entity objects, JSON
+```
+
 **sources** — resolve an entity key and print its data-source provenance (one row per
-attesting source: URI, ingest date, parser-schema version). Offline.
+attesting source: URI, ingest date, parser-schema version). The `--history` and `--export`
+views take no entity argument and read the catalog-wide ingest log. Offline.
 
 ```sh
 bestiary sources --output table 'llama@3.3#70b{instruct}'   # dual-attested: models.dev + ollama
 bestiary sources 'claude/opus@4.5'                          # JSON; models.dev-only
+bestiary sources --history --output table                   # full append-only ingest log (ascending)
+bestiary sources --export                                   # datasources.json v3 to stdout
+bestiary sources --export sources.json                      # ...or to a file
 ```
 
 **list** — query models from the static registry + local cache (offline).
@@ -350,6 +560,7 @@ bestiary sources 'claude/opus@4.5'                          # JSON; models.dev-o
 ```sh
 bestiary list                                       # all models, JSON
 bestiary list --provider anthropic --output table   # Anthropic models, table
+bestiary list --status deprecated --output table    # only deprecated models
 bestiary list --output yaml                          # all models, YAML
 ```
 
@@ -371,7 +582,10 @@ After syncing, `list` and `show` merge static + cached data. When both sources h
 | `--format` | `show` | `peasant` | **Input** scheme for the model argument: `peasant` (canonical), `huggingface`/`hf`, `purl`, `raw`. No auto-detection — non-canonical inputs must select their format. |
 | `--by-entity` | `show` | `false` | Resolve the argument as a `#size`-aware entity key and print the aggregated entity instead of a single model row. |
 | `--quant` | `providers`, `show --by-entity` | (all) | Keep only instances carrying a matching quantization row (e.g. `q4_k_m`, `f16`). An unrecognized value is rejected with an actionable error. |
+| `--status` | `list` | (all) | Keep only models with the given release status: `none`, `alpha`, `beta`, `deprecated`. An unrecognized value is rejected with an actionable error. |
 | `--provider` | `list`, `sync` | (all) | Filter by provider slug (e.g. `anthropic`, `google`, `openai`). |
+| `--history` | `sources` | `false` | Print the full append-only ingest log per source (ascending). Takes no entity argument. |
+| `--export` | `sources` | `false` | Export the ingest provenance as a `datasources.json` v3 document (optional positional path; stdout otherwise). |
 | `--db-path` | all | `$XDG_CACHE_HOME/bestiary/models.db` | SQLite cache location. |
 | `--scheme` | `show` | — | **Deprecated** alias for `--format`; kept for v0.0.1 scripts. `--format` wins if both are set. |
 
