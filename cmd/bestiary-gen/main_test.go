@@ -2220,7 +2220,7 @@ func TestCodegen_Reproducible_ByteIdentical(t *testing.T) {
 	if !strings.Contains(refNorm, `Model__CloudflareAIGateway__Claude__3__5__Haiku__3_5_2 ModelID = "anthropic/claude-3.5-haiku"`) {
 		t.Errorf("reference output: C group _2 pin mismatch; want anthropic/claude-3.5-haiku\nconstants:\n%s", refStr)
 	}
-	// B group pins: distinct backend-route prefixes disambiguate MEANINGFULLY (r66e) —
+	// B group pins: distinct backend-route prefixes disambiguate MEANINGFULLY —
 	// "kilo-auto/free" → __KiloAuto, "openrouter/free" → __OpenRouter — instead of the
 	// old opaque _1/_2 ordinals.
 	if !strings.Contains(refNorm, `Model__Kilo__Free__KiloAuto ModelID = "kilo-auto/free"`) {
@@ -2562,7 +2562,7 @@ func TestCodegen_GoldenPins_C(t *testing.T) {
 }
 
 // TestCodegen_GoldenPins_B verifies the B group (kilo prefix collision) resolves with
-// the MEANINGFUL route discriminator (r66e), not an opaque ordinal: the same base
+// the MEANINGFUL route discriminator, not an opaque ordinal: the same base
 // model served under two distinct backend-route prefixes disambiguates as
 // "kilo-auto/free" → Model__Kilo__Free__KiloAuto, "openrouter/free" →
 // Model__Kilo__Free__OpenRouter.

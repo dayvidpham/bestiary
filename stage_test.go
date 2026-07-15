@@ -159,11 +159,11 @@ func TestDetectStageFromID(t *testing.T) {
 		{"gemini-2.5-flash-preview-09-2025", bestiary.StagePreview},
 		{"gemini-3-pro-preview", bestiary.StagePreview},
 		{"moonshotai/kimi-k2-thinking-turbo-original", bestiary.StageOriginal},
-		// DETECT-WITHOUT-STRIP census-derived beta set (exact catalog IDs).
+		// DETECT-WITHOUT-STRIP beta exemplar (exact catalog ID). Scanner unit
+		// exemplar only — the full beta ROW SET is never hand-enumerated here: it is
+		// census-derived over the whole catalog by TestStageBeta_CensusDerived
+		// (stage_migration_test.go), so a new beta ID can never escape a hand glob.
 		{"grok-4.20-beta-0309-reasoning", bestiary.StageBeta},
-		{"grok-4.20-multi-agent-beta-0309", bestiary.StageBeta},
-		{"interfaze/interfaze-beta", bestiary.StageBeta},
-		{"xai/grok-4.20-reasoning-beta", bestiary.StageBeta},
 		// NOT ID-detected this epoch → StageNone.
 		{"deepseek-ai/deepseek-v3.2-exp", bestiary.StageNone},          // -exp exemplar
 		{"deepseek-ai/deepseek-v3.2-exp-thinking", bestiary.StageNone}, // -exp exemplar

@@ -95,6 +95,88 @@ func TestStageMigration_BetaKeyFrozen(t *testing.T) {
 	}
 }
 
+// betaTokenInName reports whether the name part of a model ID (after any path
+// prefix) carries a STANDALONE "beta" token. It is the census test's OWN selector —
+// deliberately independent of DetectStageFromID, so the census is not a tautology of
+// the production scanner asserting against itself: the selector picks the rows by raw
+// tokenization, the assertion checks the BAKED Stage field on the static row.
+func betaTokenInName(id string) bool {
+	s := strings.ToLower(id)
+	if idx := strings.LastIndexByte(s, '/'); idx >= 0 {
+		s = s[idx+1:]
+	}
+	for _, tok := range strings.FieldsFunc(s, func(r rune) bool {
+		return !(r >= 'a' && r <= 'z') && !(r >= '0' && r <= '9')
+	}) {
+		if tok == "beta" {
+			return true
+		}
+	}
+	return false
+}
+
+// TestStageBeta_CensusDerived is the automated census guard for the
+// detect-without-strip beta set (the dual-leg llama-4 census precedent applied to the
+// stage axis). The row set is SELF-DERIVED from StaticModels(), never hand-enumerated
+// — a hand glob is exactly what the census rule exists to prevent (a new beta ID
+// added by a catalog refresh must be caught without a curator editing a test):
+//
+//   - forward leg: every catalog row whose ID carries a standalone beta token (per
+//     the test's own independent tokenizer) must bake Stage == StageBeta;
+//   - inverse leg: every baked StageBeta row must carry a standalone beta token (no
+//     beta stage can appear without an ID marker while the ID path is the sole feeder);
+//   - vacuity guard: the census must find at least 9 distinct beta IDs (the count at
+//     the time this guard was cut — the grok-4.20 spellings + interfaze-beta), so a
+//     catalog refresh that silently empties the census fails loudly.
+func TestStageBeta_CensusDerived(t *testing.T) {
+	distinct := map[string]bool{}
+	for _, m := range bestiary.StaticModels() {
+		hasBetaTok := betaTokenInName(string(m.ID))
+		if hasBetaTok {
+			distinct[strings.ToLower(string(m.ID))] = true
+			if m.Stage != bestiary.StageBeta {
+				t.Errorf("catalog row %q (provider %q) carries a standalone beta token but bakes Stage=%v, want StageBeta\n"+
+					"  Why: the beta row set is census-derived — every beta-token row must carry the stage",
+					m.ID, m.Provider, m.Stage)
+			}
+		}
+		if m.Stage == bestiary.StageBeta && !hasBetaTok {
+			t.Errorf("catalog row %q (provider %q) bakes StageBeta but its ID carries no standalone beta token\n"+
+				"  Why: the ID scan is the only stage feeder this epoch — a beta stage without an ID marker is a bake bug",
+				m.ID, m.Provider)
+		}
+	}
+	if len(distinct) < 9 {
+		t.Fatalf("beta census found only %d distinct beta IDs, want >= 9 — the census went vacuous (a catalog refresh dropped the beta rows, or the selector regressed); IDs: %v",
+			len(distinct), distinct)
+	}
+	t.Logf("beta census: %d distinct beta IDs, all baked StageBeta", len(distinct))
+}
+
+// TestStageMigration_NoStageTokenInAnyEntityKey is the catalog-wide permanent fence
+// for the migration invariant: NO migrated stage token (preview/latest/original) may
+// appear in ANY baked entity key's {mods} segment. VC6 pins the realistic mutation
+// (the classify/route seam); this sweep covers every entity the registry actually
+// builds, so any FUTURE alternate path into the identity projection that bypasses the
+// stage routing is caught against real data, not just the unit seam.
+func TestStageMigration_NoStageTokenInAnyEntityKey(t *testing.T) {
+	migrated := map[string]bool{"preview": true, "latest": true, "original": true}
+	entities := bestiary.Entities()
+	if len(entities) == 0 {
+		t.Fatal("Entities() returned no entities — the sweep is vacuous")
+	}
+	for _, e := range entities {
+		for _, mod := range e.Ref.Modifier {
+			if migrated[strings.ToLower(mod)] {
+				t.Errorf("entity key %q carries migrated stage token %q in its {mods} segment\n"+
+					"  Why: preview/latest/original migrated to the Stage axis and must never be identity-key material\n"+
+					"  Where: the identity projection (EntityModifiers) must route stage tokens out before the fail-safe",
+					e.Ref.String(), mod)
+			}
+		}
+	}
+}
+
 // TestStageMigration_MigratedTokensRetainedButRoutedOut verifies the migration
 // mechanics for preview/latest/original: the token STAYS in the Modifier data field
 // (so the entity-key constant name and the resolve [attr] filter are byte-stable — no

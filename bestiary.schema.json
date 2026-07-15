@@ -39,7 +39,7 @@
       "type": "string"
     },
     "Modifier": {
-      "description": "List of known trailing tokens extracted from the model ID that carry semantic meaning beyond family/variant/version/date (e.g. [\"thinking\"], [\"vision\",\"instruct\"]). Stored in deterministic canonical order (capability > speed > format/stage, alpha fallback). null when no known modifier is found. Widened from string to array of strings for lossless multi-modifier capture.",
+      "description": "List of known trailing tokens extracted from the model ID that carry semantic meaning beyond family/variant/version/date (e.g. [\"thinking\"], [\"vision\",\"instruct\"]). Stored in deterministic canonical order (capability > speed > format/stage, alpha fallback). null when no known modifier is found. Widened from string to array of strings for lossless multi-modifier capture. Release-stage tokens (preview/latest/original) remain in this list as data but are excluded from entity keys and canonical rendering — the Stage property carries that axis (see the ReleaseStage $def).",
       "type": ["array", "null"],
       "items": { "type": "string" }
     },

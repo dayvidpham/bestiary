@@ -53,6 +53,12 @@ type ModelInfo struct {
 	// fallback. Populated by the parse pipeline at codegen time.
 	// widened string → []string for lossless
 	// multi-modifier capture (kimi-k2-thinking-turbo → [thinking, turbo]).
+	//
+	// Release-stage tokens (preview/latest/original) REMAIN in this list as data —
+	// the extraction still captures them — but they are excluded from entity keys
+	// and from the canonical {mods}/[attrs] rendering: the Stage field carries that
+	// axis (see ReleaseStage in stage.go), and EntityModifiers/attributeModifiers
+	// route them out before classification.
 	Modifier []string
 	// ParamSize is the canonical parameter-size token for this model instance
 	// (e.g. "70b", "8b", "0.5b"). Empty when the size is unknown or not applicable.
