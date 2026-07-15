@@ -18,66 +18,16 @@ import (
 //	  - "{identity-mods}" only when at least one identity modifier is present;
 //	    tokens in canonical order, comma-separated; braces OMITTED when empty
 //	  - the "[attributes]" segment is NEVER emitted (attributes are not identity)
+//
+// Cases are the corpus at testdata/entity/entity_ref_string_contract_corpus.json.
 func TestEntityRef_String_Contract(t *testing.T) {
-	cases := []struct {
-		name string
-		ref  bestiary.EntityRef
-		want string
-	}{
-		{
-			name: "family only",
-			ref:  bestiary.EntityRef{Family: "llama"},
-			want: "llama",
-		},
-		{
-			name: "family + variant",
-			ref:  bestiary.EntityRef{Family: "claude", Variant: "opus"},
-			want: "claude/opus",
-		},
-		{
-			name: "family + version",
-			ref:  bestiary.EntityRef{Family: "llama", Version: "3.1"},
-			want: "llama@3.1",
-		},
-		{
-			name: "family + variant + version",
-			ref:  bestiary.EntityRef{Family: "claude", Variant: "opus", Version: "4.5"},
-			want: "claude/opus@4.5",
-		},
-		{
-			name: "identity modifier renders in braces and is keyed",
-			ref:  bestiary.EntityRef{Family: "llama", Version: "3.1", Modifier: []string{"instruct"}},
-			want: "llama@3.1{instruct}",
-		},
-		{
-			name: "multiple identity modifiers in canonical order, comma-separated",
-			// Input deliberately out of canonical order: thinking ranks before turbo.
-			ref:  bestiary.EntityRef{Family: "kimi", Version: "k2", Modifier: []string{"turbo", "thinking"}},
-			want: "kimi@k2{thinking,turbo}",
-		},
-		{
-			name: "empty modifier list omits braces entirely",
-			ref:  bestiary.EntityRef{Family: "claude", Variant: "opus", Version: "4.5", Modifier: []string{}},
-			want: "claude/opus@4.5",
-		},
-		{
-			name: "nil modifier omits braces entirely",
-			ref:  bestiary.EntityRef{Family: "claude", Variant: "opus", Version: "4.5", Modifier: nil},
-			want: "claude/opus@4.5",
-		},
-		{
-			name: "all-empty modifier tokens collapse to no braces",
-			ref:  bestiary.EntityRef{Family: "claude", Variant: "opus", Modifier: []string{"", ""}},
-			want: "claude/opus",
-		},
-	}
-	for _, tc := range cases {
-		t.Run(tc.name, func(t *testing.T) {
-			if got := tc.ref.String(); got != tc.want {
-				t.Errorf("EntityRef.String() = %q, want %q", got, tc.want)
-			}
-		})
-	}
+	corpus := loadEntRefCorpus(t, entRefStringContractCorpusJSON, 9)
+	requireEntRefStringCoverage(t, corpus, []entRefProbe{
+		{input: entRefInput{Family: "llama"}, want: "llama"},
+		{input: entRefInput{Family: "kimi", Version: "k2", Modifier: []string{"turbo", "thinking"}}, want: "kimi@k2{thinking,turbo}"},
+		{input: entRefInput{Family: "claude", Variant: "opus", Modifier: []string{"", ""}}, want: "claude/opus"},
+	})
+	runEntRefStringCorpus(t, corpus)
 }
 
 // TestEntityRef_String_VersionIsNotDate guards the IP-1 clarification: @version
@@ -124,40 +74,34 @@ func TestEntityRef_String_IsComparableKey(t *testing.T) {
 
 // TestDerivationKind_TextRoundTrip locks the lossless MarshalText/UnmarshalText
 // round-trip for every DerivationKind constant, the wire names, and JSON
-// embedding (DerivationKind must serialize as a string, not an integer).
+// embedding (DerivationKind must serialize as a string, not an integer). Cases
+// are the corpus at testdata/entity/derivation_kind_text_roundtrip_corpus.json
+// (input is the enum's raw int ordinal, expected is the wire name — the same
+// two independently-authored facts the original table pinned per row).
 func TestDerivationKind_TextRoundTrip(t *testing.T) {
-	cases := []struct {
-		kind bestiary.DerivationKind
-		wire string
-	}{
-		{bestiary.DerivationNone, "none"},
-		{bestiary.DerivationFinetune, "finetune"},
-		{bestiary.DerivationMerge, "merge"},
-		{bestiary.DerivationDistillation, "distillation"},
-		{bestiary.DerivationQuantized, "quantized"},
-		{bestiary.DerivationAdapter, "adapter"},
-	}
-	for _, tc := range cases {
-		t.Run(tc.wire, func(t *testing.T) {
+	corpus := loadParseCorpus[int, string](t, entDerivationKindTextRoundTripCorpusJSON, 6)
+	for _, c := range corpus.Cases {
+		t.Run(c.Name, func(t *testing.T) {
+			kind := bestiary.DerivationKind(c.Input)
 			// String() matches the wire name.
-			if got := tc.kind.String(); got != tc.wire {
-				t.Errorf("String() = %q, want %q", got, tc.wire)
+			if got := kind.String(); got != c.Expected {
+				t.Errorf("String() = %q, want %q", got, c.Expected)
 			}
 			// MarshalText emits the wire name.
-			b, err := tc.kind.MarshalText()
+			b, err := kind.MarshalText()
 			if err != nil {
 				t.Fatalf("MarshalText() error: %v", err)
 			}
-			if string(b) != tc.wire {
-				t.Errorf("MarshalText() = %q, want %q", string(b), tc.wire)
+			if string(b) != c.Expected {
+				t.Errorf("MarshalText() = %q, want %q", string(b), c.Expected)
 			}
 			// UnmarshalText round-trips back to the same kind.
 			var got bestiary.DerivationKind
-			if err := got.UnmarshalText([]byte(tc.wire)); err != nil {
-				t.Fatalf("UnmarshalText(%q) error: %v", tc.wire, err)
+			if err := got.UnmarshalText([]byte(c.Expected)); err != nil {
+				t.Fatalf("UnmarshalText(%q) error: %v", c.Expected, err)
 			}
-			if got != tc.kind {
-				t.Errorf("UnmarshalText(%q) = %v, want %v", tc.wire, got, tc.kind)
+			if got != kind {
+				t.Errorf("UnmarshalText(%q) = %v, want %v", c.Expected, got, kind)
 			}
 		})
 	}
@@ -294,47 +238,23 @@ func TestEntityModifiers(t *testing.T) {
 // TestEntityRef_ParamSizeDistinct verifies that two ModelInfo rows identical in
 // every identity field except ParamSize produce DISTINCT entity keys via the
 // registry grouping path (#size carrier), and that each key contains the
-// expected "#<size>" segment.
+// expected "#<size>" segment (subsumed by the full-key equality check below:
+// an exact match implies the substring is present). Cases are the corpus at
+// testdata/entity/entity_ref_paramsize_distinct_corpus.json; the registry
+// grouping path itself is tested via registry_test and entity_aggregate_test —
+// here we lock the key shape.
 func TestEntityRef_ParamSizeDistinct(t *testing.T) {
-	// Build the two EntityRefs directly (the registry grouping path is tested via
-	// registry_test and entity_aggregate_test; here we lock the key shape).
-	ref70 := bestiary.EntityRef{
-		Family:    "llama",
-		Version:   "3.3",
-		ParamSize: "70b",
-		Modifier:  []string{"instruct"},
-	}
-	ref8 := bestiary.EntityRef{
-		Family:    "llama",
-		Version:   "3.3",
-		ParamSize: "8b",
-		Modifier:  []string{"instruct"},
-	}
+	corpus := loadEntRefCorpus(t, entRefParamSizeDistinctCorpusJSON, 2)
+	runEntRefStringCorpus(t, corpus)
 
-	key70 := ref70.String()
-	key8 := ref8.String()
-
-	// Keys must be distinct.
-	if key70 == key8 {
-		t.Fatalf("70b and 8b refs produced identical key %q; expected distinct keys", key70)
-	}
-
-	// Each key must contain the expected #size segment.
-	if !strings.Contains(key70, "#70b") {
-		t.Errorf("key70 = %q; expected it to contain \"#70b\"", key70)
-	}
-	if !strings.Contains(key8, "#8b") {
-		t.Errorf("key8 = %q; expected it to contain \"#8b\"", key8)
-	}
-
-	// Full expected key forms.
-	wantKey70 := "llama@3.3#70b{instruct}"
-	wantKey8 := "llama@3.3#8b{instruct}"
-	if key70 != wantKey70 {
-		t.Errorf("key70 = %q, want %q", key70, wantKey70)
-	}
-	if key8 != wantKey8 {
-		t.Errorf("key8 = %q, want %q", key8, wantKey8)
+	// Corpus-wide invariant: every case's expected key must be distinct — the
+	// whole point of #size carrying identity.
+	seenBy := map[string]string{} // expected key -> case name that claimed it
+	for _, c := range corpus.Cases {
+		if priorName, ok := seenBy[c.Expected]; ok {
+			t.Fatalf("expected keys collide: case %q and case %q both render %q; #size must produce distinct keys", priorName, c.Name, c.Expected)
+		}
+		seenBy[c.Expected] = c.Name
 	}
 }
 
@@ -513,7 +433,8 @@ func TestParamSizePins_Llama4CensusBothLegs(t *testing.T) {
 // this only indirectly (a dropped pin shifts a count somewhere); this test names
 // the exact spelling that regressed. Membership is checked by EXACT instance-ID
 // match, not substring, because the dotted Bedrock spellings nest
-// ("meta.llama4-…" is a substring of "us.meta.llama4-…").
+// ("meta.llama4-…" is a substring of "us.meta.llama4-…"). Cases are the corpus
+// at testdata/entity/llama4_version_pins_corpus.json.
 func TestLlama4VersionPins_UnifiedEntityMembership(t *testing.T) {
 	holdsExact := func(e bestiary.Entity, id string) bool {
 		for _, inst := range e.Instances {
@@ -524,52 +445,22 @@ func TestLlama4VersionPins_UnifiedEntityMembership(t *testing.T) {
 		return false
 	}
 
-	cases := []struct {
-		name      string
-		variant   string
-		paramSize string
-		wantKey   string
-		ids       []string
-	}{
-		{
-			name:      "scout",
-			variant:   "scout",
-			paramSize: "17b-16e",
-			wantKey:   "llama/scout@4#17b-16e{instruct}",
-			ids: []string{
-				"meta.llama4-scout-17b-instruct-v1:0",
-				"us.meta.llama4-scout-17b-instruct-v1:0",
-				"cerebras-llama-4-scout-17b-16e-instruct",
-			},
-		},
-		{
-			name:      "maverick",
-			variant:   "",
-			paramSize: "17b-128e",
-			wantKey:   "llama@4#17b-128e{instruct}",
-			ids: []string{
-				"meta.llama4-maverick-17b-instruct-v1:0",
-				"us.meta.llama4-maverick-17b-instruct-v1:0",
-				"cerebras-llama-4-maverick-17b-128e-instruct",
-				"groq-llama-4-maverick-17b-128e-instruct",
-			},
-		},
-	}
-	for _, tc := range cases {
-		t.Run(tc.name, func(t *testing.T) {
-			ent, ok := bestiary.EntityByTuple("llama", tc.variant, "4", tc.paramSize, "instruct")
+	corpus := loadParseCorpus[entLlama4Input, entLlama4Expected](t, entLlama4VersionPinsCorpusJSON, 2)
+	for _, c := range corpus.Cases {
+		t.Run(c.Name, func(t *testing.T) {
+			ent, ok := bestiary.EntityByTuple("llama", c.Input.Variant, "4", c.Input.ParamSize, "instruct")
 			if !ok {
-				t.Fatalf("unified entity %q missing from the registry — the @4 target of the version pins does not exist", tc.wantKey)
+				t.Fatalf("unified entity %q missing from the registry — the @4 target of the version pins does not exist", c.Expected.WantKey)
 			}
-			if got := ent.Ref.String(); got != tc.wantKey {
-				t.Fatalf("entity key = %q, want %q", got, tc.wantKey)
+			if got := ent.Ref.String(); got != c.Expected.WantKey {
+				t.Fatalf("entity key = %q, want %q", got, c.Expected.WantKey)
 			}
-			for _, id := range tc.ids {
+			for _, id := range c.Expected.IDs {
 				if !holdsExact(ent, id) {
 					t.Errorf("pinned spelling %q is not an instance of %q\n"+
 						"  Why: its curated @4 version pin (exact-ID override) is missing or was dropped, re-splitting the spelling into a version-less entity\n"+
 						"  How to fix: restore the ID's idFamilyOverrides entry in parse.go and regen",
-						id, tc.wantKey)
+						id, c.Expected.WantKey)
 				}
 			}
 		})
@@ -578,68 +469,13 @@ func TestLlama4VersionPins_UnifiedEntityMembership(t *testing.T) {
 
 // TestEntityRef_String_ParamSizeGrammar locks the full #size grammar for all
 // combinations: present/absent paramsize, with/without variant, version, mods.
+// Cases are the corpus at testdata/entity/entity_ref_string_paramsize_grammar_corpus.json.
 func TestEntityRef_String_ParamSizeGrammar(t *testing.T) {
-	cases := []struct {
-		name string
-		ref  bestiary.EntityRef
-		want string
-	}{
-		{
-			name: "paramsize only (no version no mods)",
-			ref:  bestiary.EntityRef{Family: "llama", ParamSize: "70b"},
-			want: "llama#70b",
-		},
-		{
-			name: "paramsize after version",
-			ref:  bestiary.EntityRef{Family: "llama", Version: "3.3", ParamSize: "70b"},
-			want: "llama@3.3#70b",
-		},
-		{
-			name: "paramsize before mods",
-			ref:  bestiary.EntityRef{Family: "llama", Version: "3.3", ParamSize: "70b", Modifier: []string{"instruct"}},
-			want: "llama@3.3#70b{instruct}",
-		},
-		{
-			name: "full tuple: family/variant@version#size{mods}",
-			ref:  bestiary.EntityRef{Family: "qwen", Variant: "coder", Version: "2.5", ParamSize: "7b", Modifier: []string{"instruct"}},
-			want: "qwen/coder@2.5#7b{instruct}",
-		},
-		{
-			name: "active-MoE shape token renders verbatim",
-			ref:  bestiary.EntityRef{Family: "qwen", Version: "3", ParamSize: "30b-a3b"},
-			want: "qwen@3#30b-a3b",
-		},
-		{
-			name: "NxM MoE shape token renders verbatim",
-			ref:  bestiary.EntityRef{Family: "wizardlm", Version: "2", ParamSize: "8x22b"},
-			want: "wizardlm@2#8x22b",
-		},
-		{
-			name: "count-suffixed MoE shape token renders verbatim",
-			ref:  bestiary.EntityRef{Family: "llama", Variant: "scout", ParamSize: "17b-16e", Modifier: []string{"instruct"}},
-			want: "llama/scout#17b-16e{instruct}",
-		},
-		{
-			name: "decimal dense shape token renders verbatim",
-			ref:  bestiary.EntityRef{Family: "qwen", Variant: "embedding", Version: "3", ParamSize: "0.6b"},
-			want: "qwen/embedding@3#0.6b",
-		},
-		{
-			name: "empty paramsize omits # entirely (backward compat)",
-			ref:  bestiary.EntityRef{Family: "claude", Variant: "opus", Version: "4.5"},
-			want: "claude/opus@4.5",
-		},
-		{
-			name: "zero-value paramsize (empty string) omits # entirely",
-			ref:  bestiary.EntityRef{Family: "llama", Version: "3.3"},
-			want: "llama@3.3",
-		},
-	}
-	for _, tc := range cases {
-		t.Run(tc.name, func(t *testing.T) {
-			if got := tc.ref.String(); got != tc.want {
-				t.Errorf("EntityRef.String() = %q, want %q", got, tc.want)
-			}
-		})
-	}
+	corpus := loadEntRefCorpus(t, entRefStringParamSizeGrammarCorpusJSON, 10)
+	requireEntRefStringCoverage(t, corpus, []entRefProbe{
+		{input: entRefInput{Family: "llama", ParamSize: "70b"}, want: "llama#70b"},
+		{input: entRefInput{Family: "qwen", Version: "3", ParamSize: "30b-a3b"}, want: "qwen@3#30b-a3b"},
+		{input: entRefInput{Family: "qwen", Variant: "embedding", Version: "3", ParamSize: "0.6b"}, want: "qwen/embedding@3#0.6b"},
+	})
+	runEntRefStringCorpus(t, corpus)
 }

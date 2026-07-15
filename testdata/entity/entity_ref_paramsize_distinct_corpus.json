@@ -1,0 +1,26 @@
+{
+  "cases": [
+    {
+      "name": "70b",
+      "input": {"family": "llama", "version": "3.3", "param_size": "70b", "modifier": ["instruct"]},
+      "expected": "llama@3.3#70b{instruct}",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "v0.2.4 #size identity requirement: ParamSize is part of entity identity, so a ModelInfo row at 70b keys distinctly from its 8b sibling and renders the #70b segment"
+      },
+      "mutation": {"description": "pins the 70b leg of the distinct-#size-identity pair; the 8b case shares every other field"}
+    },
+    {
+      "name": "8b",
+      "input": {"family": "llama", "version": "3.3", "param_size": "8b", "modifier": ["instruct"]},
+      "expected": "llama@3.3#8b{instruct}",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "v0.2.4 #size identity requirement: the 8b sibling of the same family/version/modifier must key distinctly from 70b and render the #8b segment"
+      },
+      "mutation": {"description": "pins the 8b leg of the distinct-#size-identity pair; combined with the 70b case, distinctness of the two expected keys is the corpus-level invariant under test"}
+    }
+  ]
+}
