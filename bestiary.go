@@ -58,7 +58,27 @@ type ModelInfo struct {
 	// (e.g. "70b", "8b", "0.5b"). Empty when the size is unknown or not applicable.
 	// Populated at codegen time from curated data; participates in entity identity
 	// via the #size segment of EntityRef.String().
-	ParamSize             string
+	ParamSize string
+	// TotalParams, ActiveParams, PerExpertParams, and ExpertCount are the flat
+	// parameter-shape facts decomposed from ParamSize (see ParamShape and
+	// ParseParamShape). They are DERIVED presentation facts, never entity-key
+	// material — the identity carrier is ParamSize (the raw #size token). All four
+	// are zero when ParamSize is empty. They are grouped along parameter-shape
+	// joints, never collapsed: an NxM MoE token ("8x22b") records ExpertCount and
+	// PerExpertParams but NO TotalParams (the product is deliberately not computed),
+	// while an active-MoE token ("30b-a3b") records TotalParams and ActiveParams.
+	// TotalParams is the total parameter count (e.g. 30_000_000_000 for "30b").
+	TotalParams int64
+	// ActiveParams is the active (per-forward-pass) parameter count of a MoE model
+	// (e.g. 3_000_000_000 for "30b-a3b", 17_000_000_000 for "17b-16e"). Zero for a
+	// dense model.
+	ActiveParams int64
+	// PerExpertParams is the per-expert parameter count of an NxM MoE token (e.g.
+	// 22_000_000_000 for "8x22b"). Zero unless the shape is NxM.
+	PerExpertParams int64
+	// ExpertCount is the number of experts of a MoE model (8 for "8x22b", 16 for
+	// "17b-16e"). Zero for a dense model.
+	ExpertCount           int
 	ContextWindow         int
 	MaxOutput             int
 	Reasoning             bool
@@ -127,4 +147,27 @@ type ModelInfo struct {
 	CostTiers []CostTier
 
 	LastSynced string // RFC3339
+}
+
+// ParamShape is the pure decomposition of a canonical parameter-size token into
+// flat parameter-count facts. It is produced by ParseParamShape and carries the
+// same four values that ModelInfo exposes inline (TotalParams / ActiveParams /
+// PerExpertParams / ExpertCount).
+//
+// The fields are grouped along parameter-shape joints and are NEVER concatenated
+// or cross-computed. In particular an NxM MoE token ("8x22b") sets ExpertCount
+// and PerExpertParams but leaves TotalParams zero — the total is deliberately NOT
+// N*M, because upstream does not publish it and inventing it would misstate the
+// footprint. An active-MoE token ("30b-a3b") sets TotalParams and ActiveParams; a
+// count-suffixed MoE token ("17b-16e") sets ActiveParams and ExpertCount but no
+// TotalParams; a dense token ("30b", "560m", "10.7b") sets only TotalParams.
+//
+// Counts are exact int64 parameter counts (e.g. 30_000_000_000 for "30b"),
+// computed with string-digit decimal arithmetic so a decimal token such as
+// "10.7b" yields exactly 10_700_000_000 (never a float64 rounding of 10.7e9).
+type ParamShape struct {
+	TotalParams     int64
+	ActiveParams    int64
+	PerExpertParams int64
+	ExpertCount     int
 }

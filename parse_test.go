@@ -4364,6 +4364,16 @@ func TestParseParamSize_ValidShapes(t *testing.T) {
 		{"671b-a17b active-moe", "671b-a17b", "671b-a17b"},
 		{"671B-A17B uppercase active-moe → 671b-a17b", "671B-A17B", "671b-a17b"},
 
+		// Count-suffixed MoE (Nb-Ke): <active>b-<experts>e  (e.g. "17b-16e", "17b-128e")
+		{"17b-16e count-moe (llama-4-scout shape)", "17b-16e", "17b-16e"},
+		{"17b-128e count-moe (llama-4-maverick shape)", "17b-128e", "17b-128e"},
+		{"17B-16E uppercase count-moe → 17b-16e", "17B-16E", "17b-16e"},
+
+		// Decimal dense tokens must canonicalize without mangling the fraction.
+		{"10.7b decimal (solar shape)", "10.7b", "10.7b"},
+		{"1.2b decimal (lfm shape)", "1.2b", "1.2b"},
+		{"0.6b decimal (qwen3-embedding shape)", "0.6b", "0.6b"},
+
 		// m-unit dense tokens (the [bm] unit arm for million-parameter models).
 		{"560m", "560m", "560m"},
 		{"350m", "350m", "350m"},
@@ -4422,6 +4432,18 @@ func TestParseParamSize_InvalidShapes(t *testing.T) {
 		{"4o", "4o"},
 		// Unknown unit 'k' (not b or m).
 		{"70k", "70k"},
+		// Leading-letter token: the "r7b" inside "command-r7b" is ONE token and is
+		// not a size — a near-miss for the "7b" substring trap.
+		{"leading letter r7b", "r7b"},
+		// Underscore-glued decimal: "10_7b" ('_' is token-internal, not a separator)
+		// is not a size token — mechanical no-match, sized via curated pin instead.
+		{"underscore-glued 10_7b", "10_7b"},
+		// Count-suffixed MoE missing the 'e' expert unit ("17b-16" is not a shape).
+		{"count-moe missing e suffix 17b-16", "17b-16"},
+		// Count-suffixed MoE with a non-numeric expert count.
+		{"count-moe non-numeric experts 17b-xe", "17b-xe"},
+		// Bare expert-count token with no active-param prefix.
+		{"bare expert count 16e", "16e"},
 	}
 
 	for _, tc := range invalid {
@@ -4466,6 +4488,9 @@ func TestParseParamSize_CaseFolding(t *testing.T) {
 		{"671B", "671b"},
 		{"8X7B", "8x7b"},
 		{"671B-A17B", "671b-a17b"},
+		{"17B-16E", "17b-16e"},
+		{"17B-128E", "17b-128e"},
+		{"10.7B", "10.7b"},
 	}
 
 	for _, pair := range pairs {
@@ -4480,6 +4505,201 @@ func TestParseParamSize_CaseFolding(t *testing.T) {
 				t.Errorf("ParseParamSize(%q) = %q, want %q (must canonicalize to lowercase)", raw, got, want)
 			}
 		})
+	}
+}
+
+// TestParseParamShape_Shapes verifies that ParseParamShape decomposes each of the
+// four size shapes along its parameter-shape joints, populating exactly the fields
+// that shape carries and leaving the others zero. The load-bearing invariants are:
+// an NxM MoE ("8x22b") records ExpertCount and PerExpertParams but NO TotalParams
+// (Total is NEVER N*M); an active-MoE ("30b-a3b") records Total and Active; a
+// count-suffixed MoE ("17b-16e") records Active and ExpertCount but no Total.
+func TestParseParamShape_Shapes(t *testing.T) {
+	t.Parallel()
+
+	cases := []struct {
+		name  string
+		token string
+		want  bestiary.ParamShape
+	}{
+		// Empty token → zero shape (unsized model), no error.
+		{"empty", "", bestiary.ParamShape{}},
+
+		// Dense: only TotalParams.
+		{"30b dense", "30b", bestiary.ParamShape{TotalParams: 30_000_000_000}},
+		{"560m dense", "560m", bestiary.ParamShape{TotalParams: 560_000_000}},
+		{"7b dense", "7b", bestiary.ParamShape{TotalParams: 7_000_000_000}},
+		{"671b dense", "671b", bestiary.ParamShape{TotalParams: 671_000_000_000}},
+
+		// Active-MoE: TotalParams + ActiveParams.
+		{"30b-a3b active-moe", "30b-a3b", bestiary.ParamShape{TotalParams: 30_000_000_000, ActiveParams: 3_000_000_000}},
+		{"235b-a22b active-moe", "235b-a22b", bestiary.ParamShape{TotalParams: 235_000_000_000, ActiveParams: 22_000_000_000}},
+
+		// NxM MoE: ExpertCount + PerExpertParams; Total stays ZERO (never N*M).
+		{"8x22b nxm-moe (Total NEVER 176e9)", "8x22b", bestiary.ParamShape{ExpertCount: 8, PerExpertParams: 22_000_000_000}},
+		{"8x7b nxm-moe", "8x7b", bestiary.ParamShape{ExpertCount: 8, PerExpertParams: 7_000_000_000}},
+
+		// Count-suffixed MoE (Nb-Ke): ActiveParams + ExpertCount; no Total.
+		{"17b-16e count-moe (scout)", "17b-16e", bestiary.ParamShape{ActiveParams: 17_000_000_000, ExpertCount: 16}},
+		{"17b-128e count-moe (maverick)", "17b-128e", bestiary.ParamShape{ActiveParams: 17_000_000_000, ExpertCount: 128}},
+
+		// Uppercase token is folded before decomposition.
+		{"8X22B uppercase nxm-moe", "8X22B", bestiary.ParamShape{ExpertCount: 8, PerExpertParams: 22_000_000_000}},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			got, err := bestiary.ParseParamShape(tc.token)
+			if err != nil {
+				t.Fatalf("ParseParamShape(%q) unexpected error: %v", tc.token, err)
+			}
+			if got != tc.want {
+				t.Errorf("ParseParamShape(%q) = %+v, want %+v", tc.token, got, tc.want)
+			}
+		})
+	}
+}
+
+// TestParseParamShape_DecimalExact pins the EXACT string-digit decimal arithmetic:
+// a decimal size token must decompose to the exact integer parameter count, never a
+// float64-rounded approximation. "10.7b" is exactly 10_700_000_000 and "0.6b" is
+// exactly 600_000_000 — pinned as literals so a float64 rewrite cannot pass.
+func TestParseParamShape_DecimalExact(t *testing.T) {
+	t.Parallel()
+
+	cases := []struct {
+		token string
+		want  int64
+	}{
+		{"10.7b", 10_700_000_000},
+		{"0.6b", 600_000_000},
+		{"1.2b", 1_200_000_000},
+		{"0.5b", 500_000_000},
+		{"3.8b", 3_800_000_000},
+		{"1.5b", 1_500_000_000},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.token, func(t *testing.T) {
+			t.Parallel()
+			got, err := bestiary.ParseParamShape(tc.token)
+			if err != nil {
+				t.Fatalf("ParseParamShape(%q) unexpected error: %v", tc.token, err)
+			}
+			if got.TotalParams != tc.want {
+				t.Errorf("ParseParamShape(%q).TotalParams = %d, want %d (exact string-digit arithmetic, no float truncation)",
+					tc.token, got.TotalParams, tc.want)
+			}
+		})
+	}
+}
+
+// TestParseParamShape_Invalid verifies that a non-empty token that is not a
+// recognized size shape returns an actionable error naming the input.
+func TestParseParamShape_Invalid(t *testing.T) {
+	t.Parallel()
+
+	for _, bad := range []string{"instruct", "4o", "3.3", "17b-16", "r7b", "10_7b"} {
+		t.Run(bad, func(t *testing.T) {
+			t.Parallel()
+			_, err := bestiary.ParseParamShape(bad)
+			if err == nil {
+				t.Errorf("ParseParamShape(%q) = nil error, want a rejection error", bad)
+				return
+			}
+			if !strings.Contains(err.Error(), bad) {
+				t.Errorf("ParseParamShape(%q) error does not name the input: %q", bad, err.Error())
+			}
+		})
+	}
+}
+
+// TestParseParamShape_OverflowGuard pins the int64 overflow rejection: a
+// pathological size token whose parameter count exceeds int64 ("9300000000b" =
+// 9.3e18 > math.MaxInt64 ~ 9.22e18) must return the documented error, never a
+// silently wrapped (negative or garbage) count.
+func TestParseParamShape_OverflowGuard(t *testing.T) {
+	t.Parallel()
+
+	shape, err := bestiary.ParseParamShape("9300000000b")
+	if err == nil {
+		t.Fatalf("ParseParamShape(\"9300000000b\") = (%+v, nil), want an int64-overflow rejection error", shape)
+	}
+	if !strings.Contains(err.Error(), "int64") {
+		t.Errorf("overflow error should name the int64 limit, got: %q", err.Error())
+	}
+}
+
+// TestExtractParamSizeToken pins the single-grammar extractor's contract: longest
+// whole-window match over the [-:/] separator set, returning the CANONICAL token;
+// '.' and '_' are token-internal (never separators); and no substring trap. Rows
+// use real catalog ID spellings wherever one exists for the shape.
+func TestExtractParamSizeToken(t *testing.T) {
+	t.Parallel()
+
+	cases := []struct {
+		name      string
+		id        string
+		wantToken string
+		wantOK    bool
+	}{
+		// Longest whole-window wins: the compound "235b-a22b" beats its "235b" prefix.
+		{"qwen3-235b-a22b longest window", "qwen3-235b-a22b", "235b-a22b", true},
+		{"llama-4-scout-17b-16e count-moe window", "llama-4-scout-17b-16e", "17b-16e", true},
+		{"deepseek 671b-a37b", "deepseek-r1-671b-a37b", "671b-a37b", true},
+
+		// Decimal intact ('.' is token-internal, never a separator).
+		{"lfm-2.5-1.2b decimal", "lfm-2.5-1.2b", "1.2b", true},
+		{"qwen3-embedding-0.6b never 6b", "qwen3-embedding-0.6b", "0.6b", true},
+
+		// Namespaced/colon IDs split on '/' and ':' too.
+		{"meta/llama-4-scout-17b-16e-instruct", "meta/llama-4-scout-17b-16e-instruct", "17b-16e", true},
+		{"cf workers-ai path", "workers-ai/@cf/meta/llama-4-scout-17b-16e-instruct", "17b-16e", true},
+
+		// Case-insensitive; canonical (lowercase) token returned.
+		{"uppercase folds", "Meta-Llama-Llama-4-Maverick-17B-128E-Instruct", "17b-128e", true},
+
+		// Negatives / near-miss substring traps.
+		{"command-r7b no substring 7b", "command-r7b", "", false},
+		{"underscore-glued 10_7b no-match", "upstage/solar-10_7b-instruct", "", false},
+		{"no size token at all", "claude-opus-4-5", "", false},
+		{"context marker 1m is a token not compound", "qwen3-coder-next-fp8-1m", "1m", true},
+		{"empty id", "", "", false},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			gotTok, gotOK := bestiary.ExtractParamSizeToken(tc.id)
+			if gotOK != tc.wantOK || gotTok != tc.wantToken {
+				t.Errorf("ExtractParamSizeToken(%q) = (%q, %v), want (%q, %v)",
+					tc.id, gotTok, gotOK, tc.wantToken, tc.wantOK)
+			}
+		})
+	}
+}
+
+// TestExtractParamSizeToken_CompoundInvariantAcrossIDForms pins the extractor-level
+// invariant that any caller inherits: the compound "235b-a22b" extracts whole and
+// canonical for the qwen3 MoE ID regardless of the surrounding tokens — namespace
+// prefix, instruct/date suffixes, or casing — and is never split to "235b". Callers
+// that delegate to ExtractParamSizeToken therefore size these IDs identically for
+// free; this test pins the extractor's own behavior, not any caller's wiring.
+func TestExtractParamSizeToken_CompoundInvariantAcrossIDForms(t *testing.T) {
+	t.Parallel()
+
+	for _, id := range []string{
+		"qwen3-235b-a22b",
+		"qwen/qwen3-235b-a22b-instruct",
+		"qwen3-235b-a22b-2507",
+		"Qwen3-235B-A22B",
+	} {
+		gotTok, ok := bestiary.ExtractParamSizeToken(id)
+		if !ok || gotTok != "235b-a22b" {
+			t.Errorf("ExtractParamSizeToken(%q) = (%q, %v), want (%q, true) — must not yield \"235b\"",
+				id, gotTok, ok, "235b-a22b")
+		}
 	}
 }
 
