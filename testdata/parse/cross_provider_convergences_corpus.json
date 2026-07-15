@@ -1,0 +1,613 @@
+{
+  "cases": [
+    {
+      "name": "o1 → (gpt,o,1)",
+      "input": {
+        "raw": "",
+        "id": "o1"
+      },
+      "expected": {
+        "family": "gpt",
+        "variant": "o",
+        "version": "1",
+        "mod": ""
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "cross-provider convergence: ParseFamilyDetailed(raw=, id=o1) -> (family 'gpt', variant 'o', version '1', mod '')"
+      },
+      "mutation": {
+        "description": "cross-provider/canonical-winner convergence of a raw+id pair to one entity tuple"
+      }
+    },
+    {
+      "name": "o1 raw=o → (gpt,o,1)",
+      "input": {
+        "raw": "o",
+        "id": "o1"
+      },
+      "expected": {
+        "family": "gpt",
+        "variant": "o",
+        "version": "1",
+        "mod": ""
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "cross-provider convergence: ParseFamilyDetailed(raw=o, id=o1) -> (family 'gpt', variant 'o', version '1', mod '')"
+      },
+      "mutation": {
+        "description": "cross-provider/canonical-winner convergence of a raw+id pair to one entity tuple"
+      }
+    },
+    {
+      "name": "o1-mini → (gpt,o,1,mini)",
+      "input": {
+        "raw": "o-mini",
+        "id": "o1-mini"
+      },
+      "expected": {
+        "family": "gpt",
+        "variant": "o",
+        "version": "1",
+        "mod": "mini"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "cross-provider convergence: ParseFamilyDetailed(raw=o-mini, id=o1-mini) -> (family 'gpt', variant 'o', version '1', mod 'mini')"
+      },
+      "mutation": {
+        "description": "cross-provider/canonical-winner convergence of a raw+id pair to one entity tuple"
+      }
+    },
+    {
+      "name": "o3-mini → (gpt,o,3,mini)",
+      "input": {
+        "raw": "o",
+        "id": "o3-mini"
+      },
+      "expected": {
+        "family": "gpt",
+        "variant": "o",
+        "version": "3",
+        "mod": "mini"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "cross-provider convergence: ParseFamilyDetailed(raw=o, id=o3-mini) -> (family 'gpt', variant 'o', version '3', mod 'mini')"
+      },
+      "mutation": {
+        "description": "cross-provider/canonical-winner convergence of a raw+id pair to one entity tuple"
+      }
+    },
+    {
+      "name": "o3-pro → (gpt,o,3,pro)",
+      "input": {
+        "raw": "o-pro",
+        "id": "o3-pro"
+      },
+      "expected": {
+        "family": "gpt",
+        "variant": "o",
+        "version": "3",
+        "mod": "pro"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "cross-provider convergence: ParseFamilyDetailed(raw=o-pro, id=o3-pro) -> (family 'gpt', variant 'o', version '3', mod 'pro')"
+      },
+      "mutation": {
+        "description": "cross-provider/canonical-winner convergence of a raw+id pair to one entity tuple"
+      }
+    },
+    {
+      "name": "o4-mini → (gpt,o,4,mini)",
+      "input": {
+        "raw": "o",
+        "id": "o4-mini"
+      },
+      "expected": {
+        "family": "gpt",
+        "variant": "o",
+        "version": "4",
+        "mod": "mini"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "cross-provider convergence: ParseFamilyDetailed(raw=o, id=o4-mini) -> (family 'gpt', variant 'o', version '4', mod 'mini')"
+      },
+      "mutation": {
+        "description": "cross-provider/canonical-winner convergence of a raw+id pair to one entity tuple"
+      }
+    },
+    {
+      "name": "gpt-4o → (gpt,4o,'')",
+      "input": {
+        "raw": "gpt",
+        "id": "gpt-4o"
+      },
+      "expected": {
+        "family": "gpt",
+        "variant": "4o",
+        "version": "",
+        "mod": ""
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "cross-provider convergence: ParseFamilyDetailed(raw=gpt, id=gpt-4o) -> (family 'gpt', variant '4o', version '', mod '')"
+      },
+      "mutation": {
+        "description": "cross-provider/canonical-winner convergence of a raw+id pair to one entity tuple"
+      }
+    },
+    {
+      "name": "gpt-4o empty raw → (gpt,4o,'')",
+      "input": {
+        "raw": "",
+        "id": "gpt-4o"
+      },
+      "expected": {
+        "family": "gpt",
+        "variant": "4o",
+        "version": "",
+        "mod": ""
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "cross-provider convergence: ParseFamilyDetailed(raw=, id=gpt-4o) -> (family 'gpt', variant '4o', version '', mod '')"
+      },
+      "mutation": {
+        "description": "cross-provider/canonical-winner convergence of a raw+id pair to one entity tuple"
+      }
+    },
+    {
+      "name": "gpt-4o-mini → (gpt,4o,'',mini)",
+      "input": {
+        "raw": "gpt-mini",
+        "id": "gpt-4o-mini"
+      },
+      "expected": {
+        "family": "gpt",
+        "variant": "4o",
+        "version": "",
+        "mod": "mini"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "cross-provider convergence: ParseFamilyDetailed(raw=gpt-mini, id=gpt-4o-mini) -> (family 'gpt', variant '4o', version '', mod 'mini')"
+      },
+      "mutation": {
+        "description": "cross-provider/canonical-winner convergence of a raw+id pair to one entity tuple"
+      }
+    },
+    {
+      "name": "chatgpt-4o-latest → (gpt,4o,'',latest)",
+      "input": {
+        "raw": "gpt",
+        "id": "chatgpt-4o-latest"
+      },
+      "expected": {
+        "family": "gpt",
+        "variant": "4o",
+        "version": "",
+        "mod": "latest"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "cross-provider convergence: ParseFamilyDetailed(raw=gpt, id=chatgpt-4o-latest) -> (family 'gpt', variant '4o', version '', mod 'latest')"
+      },
+      "mutation": {
+        "description": "cross-provider/canonical-winner convergence of a raw+id pair to one entity tuple"
+      }
+    },
+    {
+      "name": "gpt-audio-mini → (gpt,audio,'',mini)",
+      "input": {
+        "raw": "",
+        "id": "openai/gpt-audio-mini"
+      },
+      "expected": {
+        "family": "gpt",
+        "variant": "audio",
+        "version": "",
+        "mod": "mini"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "cross-provider convergence: ParseFamilyDetailed(raw=, id=openai/gpt-audio-mini) -> (family 'gpt', variant 'audio', version '', mod 'mini')"
+      },
+      "mutation": {
+        "description": "cross-provider/canonical-winner convergence of a raw+id pair to one entity tuple"
+      }
+    },
+    {
+      "name": "gpt-4 UNCHANGED → (gpt,'',4)",
+      "input": {
+        "raw": "gpt",
+        "id": "gpt-4"
+      },
+      "expected": {
+        "family": "gpt",
+        "variant": "",
+        "version": "4",
+        "mod": ""
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "cross-provider convergence: ParseFamilyDetailed(raw=gpt, id=gpt-4) -> (family 'gpt', variant '', version '4', mod '')"
+      },
+      "mutation": {
+        "description": "cross-provider/canonical-winner convergence of a raw+id pair to one entity tuple"
+      }
+    },
+    {
+      "name": "gpt-5-chat-latest: phantom codex cleared, chat→modifier",
+      "input": {
+        "raw": "gpt-codex",
+        "id": "gpt-5-chat-latest"
+      },
+      "expected": {
+        "family": "gpt",
+        "variant": "",
+        "version": "5",
+        "mod": "chat,latest"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "cross-provider convergence: ParseFamilyDetailed(raw=gpt-codex, id=gpt-5-chat-latest) -> (family 'gpt', variant '', version '5', mod 'chat,latest')"
+      },
+      "mutation": {
+        "description": "cross-provider/canonical-winner convergence of a raw+id pair to one entity tuple"
+      }
+    },
+    {
+      "name": "gpt-5.1-chat: phantom codex cleared, chat→modifier",
+      "input": {
+        "raw": "gpt-codex",
+        "id": "openai/gpt-5.1-chat"
+      },
+      "expected": {
+        "family": "gpt",
+        "variant": "",
+        "version": "5.1",
+        "mod": "chat"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "cross-provider convergence: ParseFamilyDetailed(raw=gpt-codex, id=openai/gpt-5.1-chat) -> (family 'gpt', variant '', version '5.1', mod 'chat')"
+      },
+      "mutation": {
+        "description": "cross-provider/canonical-winner convergence of a raw+id pair to one entity tuple"
+      }
+    },
+    {
+      "name": "flash-lite NOT regressed (raw)",
+      "input": {
+        "raw": "gemini-flash-lite",
+        "id": "gemini-2.5-flash-lite-preview-06-17"
+      },
+      "expected": {
+        "family": "gemini",
+        "variant": "flash-lite",
+        "version": "2.5",
+        "mod": ""
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "cross-provider convergence: ParseFamilyDetailed(raw=gemini-flash-lite, id=gemini-2.5-flash-lite-preview-06-17) -> (family 'gemini', variant 'flash-lite', version '2.5', mod '')"
+      },
+      "mutation": {
+        "description": "cross-provider/canonical-winner convergence of a raw+id pair to one entity tuple"
+      }
+    },
+    {
+      "name": "flash-lite tier (empty raw, #6 compound-member)",
+      "input": {
+        "raw": "",
+        "id": "gemini-2.5-flash-lite-preview-09-2025"
+      },
+      "expected": {
+        "family": "gemini",
+        "variant": "flash-lite",
+        "version": "2.5",
+        "mod": "preview"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "cross-provider convergence: ParseFamilyDetailed(raw=, id=gemini-2.5-flash-lite-preview-09-2025) -> (family 'gemini', variant 'flash-lite', version '2.5', mod 'preview')"
+      },
+      "mutation": {
+        "description": "cross-provider/canonical-winner convergence of a raw+id pair to one entity tuple"
+      }
+    },
+    {
+      "name": "glm-4.5v → (glm,v,4.5)",
+      "input": {
+        "raw": "glm",
+        "id": "glm-4.5v"
+      },
+      "expected": {
+        "family": "glm",
+        "variant": "v",
+        "version": "4.5",
+        "mod": ""
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "cross-provider convergence: ParseFamilyDetailed(raw=glm, id=glm-4.5v) -> (family 'glm', variant 'v', version '4.5', mod '')"
+      },
+      "mutation": {
+        "description": "cross-provider/canonical-winner convergence of a raw+id pair to one entity tuple"
+      }
+    },
+    {
+      "name": "glm-5v-turbo → (glm,v,5,turbo)",
+      "input": {
+        "raw": "glm",
+        "id": "glm-5v-turbo"
+      },
+      "expected": {
+        "family": "glm",
+        "variant": "v",
+        "version": "5",
+        "mod": "turbo"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "cross-provider convergence: ParseFamilyDetailed(raw=glm, id=glm-5v-turbo) -> (family 'glm', variant 'v', version '5', mod 'turbo')"
+      },
+      "mutation": {
+        "description": "cross-provider/canonical-winner convergence of a raw+id pair to one entity tuple"
+      }
+    },
+    {
+      "name": "glmv raw → glm + variant v",
+      "input": {
+        "raw": "glmv",
+        "id": "z-ai/glm-4.5v"
+      },
+      "expected": {
+        "family": "glm",
+        "variant": "v",
+        "version": "4.5",
+        "mod": ""
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "cross-provider convergence: ParseFamilyDetailed(raw=glmv, id=z-ai/glm-4.5v) -> (family 'glm', variant 'v', version '4.5', mod '')"
+      },
+      "mutation": {
+        "description": "cross-provider/canonical-winner convergence of a raw+id pair to one entity tuple"
+      }
+    },
+    {
+      "name": "aion mislabelled llama → aion",
+      "input": {
+        "raw": "llama",
+        "id": "aion-labs/aion-1.0"
+      },
+      "expected": {
+        "family": "aion",
+        "variant": "",
+        "version": "1.0",
+        "mod": ""
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "cross-provider convergence: ParseFamilyDetailed(raw=llama, id=aion-labs/aion-1.0) -> (family 'aion', variant '', version '1.0', mod '')"
+      },
+      "mutation": {
+        "description": "cross-provider/canonical-winner convergence of a raw+id pair to one entity tuple"
+      }
+    },
+    {
+      "name": "mixtral mislabelled mistral → mixtral, instruct→modifier",
+      "input": {
+        "raw": "mistral",
+        "id": "mistralai/mixtral-8x22b-instruct"
+      },
+      "expected": {
+        "family": "mixtral",
+        "variant": "",
+        "version": "",
+        "mod": "instruct"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "cross-provider convergence: ParseFamilyDetailed(raw=mistral, id=mistralai/mixtral-8x22b-instruct) -> (family 'mixtral', variant '', version '', mod 'instruct')"
+      },
+      "mutation": {
+        "description": "cross-provider/canonical-winner convergence of a raw+id pair to one entity tuple"
+      }
+    },
+    {
+      "name": "nousresearch org leak → hermes",
+      "input": {
+        "raw": "nousresearch",
+        "id": "nousresearch/hermes-3-llama-3.1-70b"
+      },
+      "expected": {
+        "family": "hermes",
+        "variant": "",
+        "version": "3",
+        "mod": ""
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "cross-provider convergence: ParseFamilyDetailed(raw=nousresearch, id=nousresearch/hermes-3-llama-3.1-70b) -> (family 'hermes', variant '', version '3', mod '')"
+      },
+      "mutation": {
+        "description": "cross-provider/canonical-winner convergence of a raw+id pair to one entity tuple"
+      }
+    },
+    {
+      "name": "liquid org leak → lfm",
+      "input": {
+        "raw": "liquid",
+        "id": "liquid/lfm-2-24b-a2b"
+      },
+      "expected": {
+        "family": "lfm",
+        "variant": "",
+        "version": "2",
+        "mod": ""
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "cross-provider convergence: ParseFamilyDetailed(raw=liquid, id=liquid/lfm-2-24b-a2b) -> (family 'lfm', variant '', version '2', mod '')"
+      },
+      "mutation": {
+        "description": "cross-provider/canonical-winner convergence of a raw+id pair to one entity tuple"
+      }
+    },
+    {
+      "name": "qwq mislabelled qwen → qwq",
+      "input": {
+        "raw": "qwen",
+        "id": "qwq-32b"
+      },
+      "expected": {
+        "family": "qwq",
+        "variant": "",
+        "version": "",
+        "mod": ""
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "cross-provider convergence: ParseFamilyDetailed(raw=qwen, id=qwq-32b) -> (family 'qwq', variant '', version '', mod '')"
+      },
+      "mutation": {
+        "description": "cross-provider/canonical-winner convergence of a raw+id pair to one entity tuple"
+      }
+    },
+    {
+      "name": "qwen3.7-max raw over-capture → (qwen,max,3.7)",
+      "input": {
+        "raw": "qwen3.7-max",
+        "id": "qwen3.7-max"
+      },
+      "expected": {
+        "family": "qwen",
+        "variant": "max",
+        "version": "3.7",
+        "mod": ""
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "cross-provider convergence: ParseFamilyDetailed(raw=qwen3.7-max, id=qwen3.7-max) -> (family 'qwen', variant 'max', version '3.7', mod '')"
+      },
+      "mutation": {
+        "description": "cross-provider/canonical-winner convergence of a raw+id pair to one entity tuple"
+      }
+    },
+    {
+      "name": "qwen3.5 dotted bare-gen de-junk → (qwen,'',3.5)",
+      "input": {
+        "raw": "qwen3.5",
+        "id": "qwen/qwen3.5-27b"
+      },
+      "expected": {
+        "family": "qwen",
+        "variant": "",
+        "version": "3.5",
+        "mod": ""
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "cross-provider convergence: ParseFamilyDetailed(raw=qwen3.5, id=qwen/qwen3.5-27b) -> (family 'qwen', variant '', version '3.5', mod '')"
+      },
+      "mutation": {
+        "description": "cross-provider/canonical-winner convergence of a raw+id pair to one entity tuple"
+      }
+    },
+    {
+      "name": "codellama empty-raw: instruct→modifier",
+      "input": {
+        "raw": "",
+        "id": "alfredpros/codellama-7b-instruct-solidity"
+      },
+      "expected": {
+        "family": "codellama",
+        "variant": "",
+        "version": "",
+        "mod": "instruct"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "cross-provider convergence: ParseFamilyDetailed(raw=, id=alfredpros/codellama-7b-instruct-solidity) -> (family 'codellama', variant '', version '', mod 'instruct')"
+      },
+      "mutation": {
+        "description": "cross-provider/canonical-winner convergence of a raw+id pair to one entity tuple"
+      }
+    },
+    {
+      "name": "rnj empty-raw: instruct→modifier (A-1)",
+      "input": {
+        "raw": "",
+        "id": "essentialai/rnj-1-instruct"
+      },
+      "expected": {
+        "family": "rnj",
+        "variant": "",
+        "version": "1",
+        "mod": "instruct"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "cross-provider convergence: ParseFamilyDetailed(raw=, id=essentialai/rnj-1-instruct) -> (family 'rnj', variant '', version '1', mod 'instruct')"
+      },
+      "mutation": {
+        "description": "cross-provider/canonical-winner convergence of a raw+id pair to one entity tuple"
+      }
+    },
+    {
+      "name": "voxtral empty-raw recovers small (A-2)",
+      "input": {
+        "raw": "",
+        "id": "mistralai/voxtral-small-24b-2507"
+      },
+      "expected": {
+        "family": "voxtral",
+        "variant": "small",
+        "version": "",
+        "mod": ""
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "cross-provider convergence: ParseFamilyDetailed(raw=, id=mistralai/voxtral-small-24b-2507) -> (family 'voxtral', variant 'small', version '', mod '')"
+      },
+      "mutation": {
+        "description": "cross-provider/canonical-winner convergence of a raw+id pair to one entity tuple"
+      }
+    }
+  ]
+}

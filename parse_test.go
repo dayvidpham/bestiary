@@ -3066,35 +3066,14 @@ func TestGluedVersionModifier(t *testing.T) {
 func TestDotGluedVariant(t *testing.T) {
 	t.Parallel()
 
-	cases := []struct {
-		desc                             string
-		raw                              bestiary.Family
-		id                               bestiary.ModelID
-		wantFamily, wantVariant, wantVer string
-		wantMod                          string
-	}{
-		// Generalized: dot-glued leading variant, derived mechanically.
-		{"laguna-xs.2 bare → (laguna,xs,2)", "", "laguna-xs.2", "laguna", "xs", "2", ""},
-		{"laguna-m.1 bare → (laguna,m,1)", "", "laguna-m.1", "laguna", "m", "1", ""},
-		{"laguna-xs.2 :free folds identically", "", "laguna-xs.2:free", "laguna", "xs", "2", ""},
-		// Must-not-mangle: leading-letter fused to a digit (no dot) stays one variant token.
-		{"deepseek-v3.1 → variant 'v3.1' (v-prefix line, not dot-glued)", "", "deepseek-v3.1", "deepseek", "v3.1", "", ""},
-		// Must-not-mangle: genuine dotted version, no alpha prefix.
-		{"gpt-4.1 → version '4.1' (no variant invented)", "gpt", "gpt-4.1", "gpt", "", "4.1", ""},
-		// Must-not-mangle: alphanumeric line designator.
-		{"gpt-4o → variant '4o', version '' (unchanged)", "gpt", "gpt-4o", "gpt", "4o", "", ""},
-	}
-
-	for _, tc := range cases {
-		t.Run(tc.desc, func(t *testing.T) {
-			t.Parallel()
-			f, va, ve, mod, _ := bestiary.ParseFamilyDetailed(tc.raw, tc.id, "p")
-			if string(f) != tc.wantFamily || va != tc.wantVariant || ve != tc.wantVer || modJoin(mod) != tc.wantMod {
-				t.Errorf("raw=%q id=%q → (%s|%s|%s|mod=%s), want (%s|%s|%s|mod=%s)",
-					tc.raw, tc.id, f, va, ve, mod, tc.wantFamily, tc.wantVariant, tc.wantVer, tc.wantMod)
-			}
-		})
-	}
+	corpus := loadParseCorpus[rawIDInput, fvvmExpected](t, dotGluedVariantCorpusJSON, 6)
+	requireInputCoverage(t, corpus, map[rawIDInput]fvvmExpected{
+		// dot-glued leading variant derived mechanically.
+		{Raw: "", ID: "laguna-xs.2"}: {Family: "laguna", Variant: "xs", Version: "2", Mod: ""},
+		// must-not-mangle: genuine dotted version, no invented variant.
+		{Raw: "gpt", ID: "gpt-4.1"}: {Family: "gpt", Variant: "", Version: "4.1", Mod: ""},
+	})
+	runFamilyDetailedTupleCorpus(t, corpus)
 }
 
 // TestSeriesLetterSplit verifies (d): letter-prefix model
@@ -3495,60 +3474,16 @@ func TestParseFamilyDetailed_CapabilityModifierDeclined(t *testing.T) {
 // convergence pass ratified; together with the before/after-diff gate (ZERO cat-(c)) these are
 // the specification for the mechanical + o-series + ledger changes.
 func TestCrossProviderConvergences(t *testing.T) {
-	cases := []struct {
-		desc                   string
-		raw                    bestiary.Family
-		id                     bestiary.ModelID
-		wFam, wVar, wVer, wMod string
-	}{
-		// ── O-SERIES restructure ──────────────────────
-		{"o1 → (gpt,o,1)", "", "o1", "gpt", "o", "1", ""},
-		{"o1 raw=o → (gpt,o,1)", "o", "o1", "gpt", "o", "1", ""},
-		{"o1-mini → (gpt,o,1,mini)", "o-mini", "o1-mini", "gpt", "o", "1", "mini"},
-		{"o3-mini → (gpt,o,3,mini)", "o", "o3-mini", "gpt", "o", "3", "mini"},
-		{"o3-pro → (gpt,o,3,pro)", "o-pro", "o3-pro", "gpt", "o", "3", "pro"},
-		{"o4-mini → (gpt,o,4,mini)", "o", "o4-mini", "gpt", "o", "4", "mini"},
-		{"gpt-4o → (gpt,4o,'')", "gpt", "gpt-4o", "gpt", "4o", "", ""},
-		{"gpt-4o empty raw → (gpt,4o,'')", "", "gpt-4o", "gpt", "4o", "", ""},
-		{"gpt-4o-mini → (gpt,4o,'',mini)", "gpt-mini", "gpt-4o-mini", "gpt", "4o", "", "mini"},
-		{"chatgpt-4o-latest → (gpt,4o,'',latest)", "gpt", "chatgpt-4o-latest", "gpt", "4o", "", "latest"},
-		{"gpt-audio-mini → (gpt,audio,'',mini)", "", "openai/gpt-audio-mini", "gpt", "audio", "", "mini"},
-		{"gpt-4 UNCHANGED → (gpt,'',4)", "gpt", "gpt-4", "gpt", "", "4", ""},
-		// ── gpt-codex ID-WINS (#4) + flash-lite NON-regression ───────────────────────
-		// 'chat' is now a global modifier (gpt has no 'chat' member) → captured in the list.
-		{"gpt-5-chat-latest: phantom codex cleared, chat→modifier", "gpt-codex", "gpt-5-chat-latest", "gpt", "", "5", "chat,latest"},
-		{"gpt-5.1-chat: phantom codex cleared, chat→modifier", "gpt-codex", "openai/gpt-5.1-chat", "gpt", "", "5.1", "chat"},
-		{"flash-lite NOT regressed (raw)", "gemini-flash-lite", "gemini-2.5-flash-lite-preview-06-17", "gemini", "flash-lite", "2.5", ""},
-		// 'preview' before the MM-YYYY date is now captured (tail-scan skips the date).
-		{"flash-lite tier (empty raw, #6 compound-member)", "", "gemini-2.5-flash-lite-preview-09-2025", "gemini", "flash-lite", "2.5", "preview"},
-		// ── glm 'v' variant ──────────────────────────────────────────────────────────
-		{"glm-4.5v → (glm,v,4.5)", "glm", "glm-4.5v", "glm", "v", "4.5", ""},
-		{"glm-5v-turbo → (glm,v,5,turbo)", "glm", "glm-5v-turbo", "glm", "v", "5", "turbo"},
-		{"glmv raw → glm + variant v", "glmv", "z-ai/glm-4.5v", "glm", "v", "4.5", ""},
-		// ── canonical-winner ENFORCE (own-family + org leak) ─────────────────────────
-		{"aion mislabelled llama → aion", "llama", "aion-labs/aion-1.0", "aion", "", "1.0", ""},
-		{"mixtral mislabelled mistral → mixtral, instruct→modifier", "mistral", "mistralai/mixtral-8x22b-instruct", "mixtral", "", "", "instruct"},
-		{"nousresearch org leak → hermes", "nousresearch", "nousresearch/hermes-3-llama-3.1-70b", "hermes", "", "3", ""},
-		{"liquid org leak → lfm", "liquid", "liquid/lfm-2-24b-a2b", "lfm", "", "2", ""},
-		{"qwq mislabelled qwen → qwq", "qwen", "qwq-32b", "qwq", "", "", ""},
-		// ── raw-populated over-capture fold (#2) + dotted bare-gen (#3) ───────────────
-		{"qwen3.7-max raw over-capture → (qwen,max,3.7)", "qwen3.7-max", "qwen3.7-max", "qwen", "max", "3.7", ""},
-		{"qwen3.5 dotted bare-gen de-junk → (qwen,'',3.5)", "qwen3.5", "qwen/qwen3.5-27b", "qwen", "", "3.5", ""},
-		// ── member-variant suffix re-recovery (#5, A-1/A-2) ──────────────────────────
-		// 'instruct' → global modifier (not a variant) for these non-member families.
-		{"codellama empty-raw: instruct→modifier", "", "alfredpros/codellama-7b-instruct-solidity", "codellama", "", "", "instruct"},
-		{"rnj empty-raw: instruct→modifier (A-1)", "", "essentialai/rnj-1-instruct", "rnj", "", "1", "instruct"},
-		{"voxtral empty-raw recovers small (A-2)", "", "mistralai/voxtral-small-24b-2507", "voxtral", "small", "", ""},
-	}
-	for _, tc := range cases {
-		t.Run(tc.desc, func(t *testing.T) {
-			f, v, ver, m, _ := bestiary.ParseFamilyDetailed(tc.raw, tc.id, "p")
-			if string(f) != tc.wFam || v != tc.wVar || ver != tc.wVer || modJoin(m) != tc.wMod {
-				t.Errorf("ParseFamilyDetailed(raw=%q,id=%q) = (%q,%q,%q,%q), want (%q,%q,%q,%q)",
-					tc.raw, tc.id, f, v, ver, m, tc.wFam, tc.wVar, tc.wVer, tc.wMod)
-			}
-		})
-	}
+	corpus := loadParseCorpus[rawIDInput, fvvmExpected](t, crossProviderConvergencesCorpusJSON, 29)
+	requireInputCoverage(t, corpus, map[rawIDInput]fvvmExpected{
+		// o-series restructure: o1 -> (gpt, o, 1).
+		{Raw: "", ID: "o1"}: {Family: "gpt", Variant: "o", Version: "1", Mod: ""},
+		// gpt-codex phantom cleared, chat -> modifier list (comma-joined).
+		{Raw: "gpt-codex", ID: "gpt-5-chat-latest"}: {Family: "gpt", Variant: "", Version: "5", Mod: "chat,latest"},
+		// canonical-winner enforce: mislabelled qwen -> qwq.
+		{Raw: "qwen", ID: "qwq-32b"}: {Family: "qwq", Variant: "", Version: "", Mod: ""},
+	})
+	runFamilyDetailedTupleCorpus(t, corpus)
 }
 
 // TestTier1StragglerConvergences pins the straggler convergences,

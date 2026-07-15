@@ -174,6 +174,45 @@ func runExtractModifierCorpus(t *testing.T, corpus testcase.Corpus[modifierInput
 	}
 }
 
+// ---- ParseFamilyDetailed tuple corpora (dot-glued, cross-provider) ---------
+
+//go:embed testdata/parse/dot_glued_variant_corpus.json
+var dotGluedVariantCorpusJSON []byte
+
+//go:embed testdata/parse/cross_provider_convergences_corpus.json
+var crossProviderConvergencesCorpusJSON []byte
+
+// rawIDInput is the (rawFamily, id) pair fed to ParseFamilyDetailed.
+type rawIDInput struct {
+	Raw string `json:"raw"`
+	ID  string `json:"id"`
+}
+
+// fvvmExpected is the (family, variant, version, mod) tuple ParseFamilyDetailed
+// produces; mod is the modJoin of the returned modifier list.
+type fvvmExpected struct {
+	Family  string `json:"family"`
+	Variant string `json:"variant"`
+	Version string `json:"version"`
+	Mod     string `json:"mod"`
+}
+
+// runFamilyDetailedTupleCorpus drives bestiary.ParseFamilyDetailed(raw, id, "p")
+// over every case and asserts the (family, variant, version, modJoin(mod)) tuple.
+func runFamilyDetailedTupleCorpus(t *testing.T, corpus testcase.Corpus[rawIDInput, fvvmExpected]) {
+	t.Helper()
+	for _, c := range corpus.Cases {
+		t.Run(c.Name, func(t *testing.T) {
+			t.Parallel()
+			f, v, ver, mod, _ := bestiary.ParseFamilyDetailed(bestiary.Family(c.Input.Raw), bestiary.ModelID(c.Input.ID), "p")
+			if string(f) != c.Expected.Family || v != c.Expected.Variant || ver != c.Expected.Version || modJoin(mod) != c.Expected.Mod {
+				t.Errorf("ParseFamilyDetailed(raw=%q,id=%q) = (%q,%q,%q,%q), want (%q,%q,%q,%q)",
+					c.Input.Raw, c.Input.ID, f, v, ver, modJoin(mod), c.Expected.Family, c.Expected.Variant, c.Expected.Version, c.Expected.Mod)
+			}
+		})
+	}
+}
+
 // ---- ParseParamSize / ParseParamShape / ExtractParamSizeToken corpora ------
 
 //go:embed testdata/parse/parse_param_size_valid_corpus.json
