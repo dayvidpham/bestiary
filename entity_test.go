@@ -381,17 +381,17 @@ func TestEntityRef_NoMigrationDrift(t *testing.T) {
 	// (a) Census literals — pinned to the full-bulk re-key snapshot. A change here is
 	// an intentional re-key event, not incidental drift.
 	const (
-		wantSizedCatalog    = 337
+		wantSizedCatalog    = 335
 		wantSizedStandalone = 4
 	)
 
 	// (b) Per-shape exemplar keys that must be present after the re-key.
 	wantExemplars := []string{
-		"llama@3.1#8b{instruct}",        // dense
-		"qwen/embedding@3#0.6b",         // decimal dense — never "6b"
-		"qwen@3#30b-a3b",                // active MoE
-		"wizardlm@2#8x22b",              // NxM MoE (ExpertCount + PerExpertParams, no total)
-		"llama/scout#17b-16e{instruct}", // count-suffixed MoE via the curated llama-4 pin
+		"llama@3.1#8b{instruct}",          // dense
+		"qwen/embedding@3#0.6b",           // decimal dense — never "6b"
+		"qwen@3#30b-a3b",                  // active MoE
+		"wizardlm@2#8x22b",                // NxM MoE (ExpertCount + PerExpertParams, no total)
+		"llama/scout@4#17b-16e{instruct}", // count-suffixed MoE via the curated llama-4 pin (@4 after the version unification)
 	}
 	keyIndex := make(map[string]bestiary.Entity, len(entities))
 	for _, e := range entities {
@@ -462,11 +462,14 @@ func TestEntityRef_NoMigrationDrift(t *testing.T) {
 // literal-substring leg ("llama4"/"llama-4") — must key its FULL expert-shape size:
 // scout = 17b-16e, maverick = 17b-128e; never a bare 17b and never unsized.
 //
-// Neither leg alone is sufficient, which is the whole point: the four dotted Bedrock
-// forms (meta.llama4-*, us.meta.llama4-*-17b-instruct-v1:0) decompose with an empty
-// Version/Variant, so they ESCAPE the decomposition leg and are reached only by the
-// substring sweep plus their explicit curated pins. A purely-decomposition census
-// would silently leave those bare #17b — this guard fails if that regresses.
+// Neither leg alone is sufficient, which is the whole point: the maverick spellings
+// key llama@4 with an EMPTY variant ("maverick" is not a curated family member), so
+// they ESCAPE the (variant scout|maverick) decomposition leg and are reached only by
+// the substring sweep plus their explicit curated pins. A purely-decomposition census
+// would silently leave those bare #17b — this guard fails if that regresses. (The
+// version-less scout/maverick spellings now carry a curated @4 version pin, so they no
+// longer split on version presence; the size pins guarded here are independent of that
+// and unchanged.)
 func TestParamSizePins_Llama4CensusBothLegs(t *testing.T) {
 	checked := 0
 	for _, m := range bestiary.StaticModels() {
@@ -499,6 +502,78 @@ func TestParamSizePins_Llama4CensusBothLegs(t *testing.T) {
 		t.Fatal("no llama-4 scout/maverick IDs found — the census guard is vacuous; the vendored catalog changed")
 	}
 	t.Logf("llama-4 census guard checked %d scout/maverick IDs (both legs)", checked)
+}
+
+// TestLlama4VersionPins_UnifiedEntityMembership directly asserts that every
+// version-less llama-4 scout/maverick spelling carrying a curated @4 version pin
+// (the exact-ID overrides in parse.go) lands INSIDE the unified @4 entity —
+// llama/scout@4#17b-16e{instruct} for scout, llama@4#17b-128e{instruct} for
+// maverick (maverick is not a curated llama variant member, so its official
+// entity carries no /maverick segment). The sized-entity census literal fences
+// this only indirectly (a dropped pin shifts a count somewhere); this test names
+// the exact spelling that regressed. Membership is checked by EXACT instance-ID
+// match, not substring, because the dotted Bedrock spellings nest
+// ("meta.llama4-…" is a substring of "us.meta.llama4-…").
+func TestLlama4VersionPins_UnifiedEntityMembership(t *testing.T) {
+	holdsExact := func(e bestiary.Entity, id string) bool {
+		for _, inst := range e.Instances {
+			if string(inst.ID) == id {
+				return true
+			}
+		}
+		return false
+	}
+
+	cases := []struct {
+		name      string
+		variant   string
+		paramSize string
+		wantKey   string
+		ids       []string
+	}{
+		{
+			name:      "scout",
+			variant:   "scout",
+			paramSize: "17b-16e",
+			wantKey:   "llama/scout@4#17b-16e{instruct}",
+			ids: []string{
+				"meta.llama4-scout-17b-instruct-v1:0",
+				"us.meta.llama4-scout-17b-instruct-v1:0",
+				"cerebras-llama-4-scout-17b-16e-instruct",
+			},
+		},
+		{
+			name:      "maverick",
+			variant:   "",
+			paramSize: "17b-128e",
+			wantKey:   "llama@4#17b-128e{instruct}",
+			ids: []string{
+				"meta.llama4-maverick-17b-instruct-v1:0",
+				"us.meta.llama4-maverick-17b-instruct-v1:0",
+				"cerebras-llama-4-maverick-17b-128e-instruct",
+				"groq-llama-4-maverick-17b-128e-instruct",
+			},
+		},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			ent, ok := bestiary.EntityByTuple("llama", tc.variant, "4", tc.paramSize, "instruct")
+			if !ok {
+				t.Fatalf("unified entity %q missing from the registry — the @4 target of the version pins does not exist", tc.wantKey)
+			}
+			if got := ent.Ref.String(); got != tc.wantKey {
+				t.Fatalf("entity key = %q, want %q", got, tc.wantKey)
+			}
+			for _, id := range tc.ids {
+				if !holdsExact(ent, id) {
+					t.Errorf("pinned spelling %q is not an instance of %q\n"+
+						"  Why: its curated @4 version pin (exact-ID override) is missing or was dropped, re-splitting the spelling into a version-less entity\n"+
+						"  How to fix: restore the ID's idFamilyOverrides entry in parse.go and regen",
+						id, tc.wantKey)
+				}
+			}
+		})
+	}
 }
 
 // TestEntityRef_String_ParamSizeGrammar locks the full #size grammar for all

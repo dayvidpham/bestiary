@@ -178,7 +178,8 @@ func resolveParamSizePrecedence(id, pinToken string, pinned bool, mech string, m
 // It is a pure function of (ID, embedded curated data): NOTHING is persisted, so the
 // SQLite store needs no param_size or stage column and stays schema v6 — a cached row
 // is re-enriched from its ID on read. A disagreement or an unparseable size degrades
-// gracefully (the derived token is still used, shape ints stay zero), so a runtime
+// gracefully (the derived token is still used; ParseParamShape returns the all-NULL
+// shape so the shape ints read ParamShapeNull, not a masquerading 0), so a runtime
 // joint never fails on data; the codegen bake path surfaces the same disagreement as
 // a LOUD error instead. Stage is derived from the ID (not from the decomposed
 // Modifier list) so it is symmetric across all three joints — the wire-decode joint

@@ -1350,12 +1350,18 @@ func enrichModelInfo(base bestiary.ModelInfo) (bestiary.ModelInfo, *bestiary.Par
 		return info, failure, fmt.Errorf("codegen param-size enrichment for %q: %w", id, sizeErr)
 	}
 	info.ParamSize = enrichedSize
-	if shape, shapeErr := bestiary.ParseParamShape(enrichedSize); shapeErr == nil {
-		info.TotalParams = shape.TotalParams
-		info.ActiveParams = shape.ActiveParams
-		info.PerExpertParams = shape.PerExpertParams
-		info.ExpertCount = shape.ExpertCount
-	}
+	// ParseParamShape returns the all-NULL (ParamShapeNull) shape for an empty token
+	// AND on any decomposition error, so the assignment is unconditional: an unsized
+	// or unparseable row bakes the four NULL sentinels, never a masquerading 0. The
+	// shapeErr is intentionally discarded — enrichedSize is a canonical-or-empty token
+	// (EnrichedParamSize already surfaced any disagreement as a fatal error above), so
+	// a shape error here would be a grammar-drift bug whose NULL fallback is still the
+	// correct bake.
+	shape, _ := bestiary.ParseParamShape(enrichedSize)
+	info.TotalParams = shape.TotalParams
+	info.ActiveParams = shape.ActiveParams
+	info.PerExpertParams = shape.PerExpertParams
+	info.ExpertCount = shape.ExpertCount
 
 	// Release-stage enrichment. Stage/StageRaw are derived from the ID by the same
 	// pure DetectStageFromID the runtime joints use (wire decode, store read), so
@@ -1862,23 +1868,16 @@ func generateSource(models []bestiary.ModelInfo, slugToConst map[string]string) 
 			fmt.Fprintf(&buf, "\t\tParamSize:             %q,\n", m.ParamSize)
 		}
 		// Parameter-shape ints: DERIVED from ParamSize by ParseParamShape and baked so
-		// static rows carry them without a runtime joint. Emitted CONDITIONALLY (only
-		// when non-zero), matching the ParamSize precedent — the unsized/dense majority
-		// stays compact. A given shape only ever sets a subset (e.g. an NxM MoE sets
-		// ExpertCount + PerExpertParams but never TotalParams), so each is guarded
-		// independently.
-		if m.TotalParams != 0 {
-			fmt.Fprintf(&buf, "\t\tTotalParams:           %d,\n", m.TotalParams)
-		}
-		if m.ActiveParams != 0 {
-			fmt.Fprintf(&buf, "\t\tActiveParams:          %d,\n", m.ActiveParams)
-		}
-		if m.PerExpertParams != 0 {
-			fmt.Fprintf(&buf, "\t\tPerExpertParams:       %d,\n", m.PerExpertParams)
-		}
-		if m.ExpertCount != 0 {
-			fmt.Fprintf(&buf, "\t\tExpertCount:           %d,\n", m.ExpertCount)
-		}
+		// static rows carry them without a runtime joint. Emitted UNCONDITIONALLY (all
+		// four, every row) under the ParamShapeNull sentinel contract: an omitted field
+		// would default to the Go zero 0, but 0 is a MEANINGFUL value here (a dense
+		// shape's ExpertCount) that must be distinguished from the NULL sentinel -1, so
+		// every field is written explicitly. This makes the bake byte-identical to the
+		// runtime enrichModelInfo decomposition of the same ID.
+		fmt.Fprintf(&buf, "\t\tTotalParams:           %d,\n", m.TotalParams)
+		fmt.Fprintf(&buf, "\t\tActiveParams:          %d,\n", m.ActiveParams)
+		fmt.Fprintf(&buf, "\t\tPerExpertParams:       %d,\n", m.PerExpertParams)
+		fmt.Fprintf(&buf, "\t\tExpertCount:           %d,\n", m.ExpertCount)
 		// Source: always emit; DataSourceNone ("") is the correct zero value for
 		// live-sync rows and is emitted explicitly so the field is self-documenting.
 		fmt.Fprintf(&buf, "\t\tSource:                %q,\n", string(m.Source))

@@ -3281,63 +3281,86 @@ var (
 // "10.7b" -> TotalParams 10_700_000_000 and "0.6b" -> TotalParams 600_000_000.
 //
 // An NxM MoE token records ExpertCount and PerExpertParams but leaves TotalParams
-// zero — the product is deliberately NOT computed (upstream does not publish a
-// total for these and N*M would misstate the footprint). A count-suffixed token
-// ("17b-16e") records ActiveParams and ExpertCount but no TotalParams.
+// and ActiveParams at ParamShapeNull (-1) — the product is deliberately NOT computed
+// (upstream does not publish a total for these and N*M would misstate the footprint).
+// A count-suffixed token ("17b-16e") records ActiveParams and ExpertCount and leaves
+// TotalParams/PerExpertParams NULL. See the ParamShapeNull sentinel contract.
 //
-// The empty token yields the zero ParamShape with no error (an unsized model). A
-// non-empty token that is not a recognized size shape returns an actionable error
-// (the same rejection surface as ParseParamSize).
+// Every field the matched shape does NOT carry is set to ParamShapeNull (-1), the
+// in-domain NULL sentinel — never a masquerading 0. The sole genuine 0 is a dense
+// token's ExpertCount (a dense model attests exactly zero experts). The empty token
+// yields the ALL-NULL shape with no error (an unsized model). A non-empty token that
+// is not a recognized size shape returns an actionable error AND the all-NULL shape
+// (nothing was populated), the same rejection surface as ParseParamSize.
 //
-//	ParseParamShape("30b")     -> {TotalParams: 30e9}
-//	ParseParamShape("560m")    -> {TotalParams: 560e6}
-//	ParseParamShape("30b-a3b") -> {TotalParams: 30e9, ActiveParams: 3e9}
-//	ParseParamShape("8x22b")   -> {ExpertCount: 8, PerExpertParams: 22e9}   // Total NEVER N*M
-//	ParseParamShape("17b-16e") -> {ActiveParams: 17e9, ExpertCount: 16}
+//	ParseParamShape("")        -> {Total:-1, Active:-1, PerExpert:-1, Experts:-1}
+//	ParseParamShape("8b")      -> {Total: 8e9, Active:-1, PerExpert:-1, Experts: 0}   // dense: Experts genuine 0
+//	ParseParamShape("30b-a3b") -> {Total:30e9, Active: 3e9, PerExpert:-1, Experts:-1}
+//	ParseParamShape("8x22b")   -> {Total: -1, Active: -1, PerExpert:22e9, Experts: 8} // Total NEVER N*M
+//	ParseParamShape("17b-16e") -> {Total: -1, Active:17e9, PerExpert:-1, Experts:16}
 func ParseParamShape(sizeToken string) (ParamShape, error) {
+	// nullShape is the all-NULL base: every field ParamShapeNull. A recognized shape
+	// overwrites exactly the fields it carries; the rest stay NULL.
+	nullShape := ParamShape{
+		TotalParams:     ParamShapeNull,
+		ActiveParams:    ParamShapeNull,
+		PerExpertParams: ParamShapeNull,
+		ExpertCount:     ParamShapeNull,
+	}
 	if sizeToken == "" {
-		return ParamShape{}, nil
+		return nullShape, nil
 	}
 	tok, err := ParseParamSize(sizeToken)
 	if err != nil {
-		return ParamShape{}, err
+		return nullShape, err
 	}
-	// tok is the canonical lowercase token; classify by shape.
+	// tok is the canonical lowercase token; classify by shape. Each arm starts from
+	// nullShape and populates only its carried fields, leaving the others NULL.
 	if m := reShapeNxM.FindStringSubmatch(tok); m != nil {
 		experts, cerr := strconv.Atoi(m[1])
 		perExpert, perr := paramTokenToInt64(m[2])
 		if err := firstNonNil(cerr, perr); err != nil {
-			return ParamShape{}, paramShapeArithErr(tok, err)
+			return nullShape, paramShapeArithErr(tok, err)
 		}
-		return ParamShape{ExpertCount: experts, PerExpertParams: perExpert}, nil
+		s := nullShape
+		s.ExpertCount, s.PerExpertParams = experts, perExpert
+		return s, nil
 	}
 	if m := reShapeActiveMoE.FindStringSubmatch(tok); m != nil {
 		total, terr := paramTokenToInt64(m[1])
 		active, aerr := paramTokenToInt64(m[2])
 		if err := firstNonNil(terr, aerr); err != nil {
-			return ParamShape{}, paramShapeArithErr(tok, err)
+			return nullShape, paramShapeArithErr(tok, err)
 		}
-		return ParamShape{TotalParams: total, ActiveParams: active}, nil
+		s := nullShape
+		s.TotalParams, s.ActiveParams = total, active
+		return s, nil
 	}
 	if m := reShapeCountMoE.FindStringSubmatch(tok); m != nil {
 		active, aerr := paramTokenToInt64(m[1])
 		experts, cerr := strconv.Atoi(m[2])
 		if err := firstNonNil(aerr, cerr); err != nil {
-			return ParamShape{}, paramShapeArithErr(tok, err)
+			return nullShape, paramShapeArithErr(tok, err)
 		}
-		return ParamShape{ActiveParams: active, ExpertCount: experts}, nil
+		s := nullShape
+		s.ActiveParams, s.ExpertCount = active, experts
+		return s, nil
 	}
 	if m := reShapeDense.FindStringSubmatch(tok); m != nil {
 		total, terr := paramTokenToInt64(m[1])
 		if terr != nil {
-			return ParamShape{}, paramShapeArithErr(tok, terr)
+			return nullShape, paramShapeArithErr(tok, terr)
 		}
-		return ParamShape{TotalParams: total}, nil
+		// Dense: TotalParams attested; Active/PerExpert NULL; ExpertCount a genuine 0
+		// (a dense model attests zero experts — the only in-domain 0 in the contract).
+		s := nullShape
+		s.TotalParams, s.ExpertCount = total, 0
+		return s, nil
 	}
 	// Unreachable in practice: ParseParamSize accepted the token, so exactly one
 	// sub-shape regex above must have matched. Fail loudly rather than return a
 	// silently-empty shape if the two grammars ever drift apart.
-	return ParamShape{}, fmt.Errorf(
+	return nullShape, fmt.Errorf(
 		"bestiary: ParseParamShape: %q passed ParseParamSize but matched no shape\n"+
 			"  What: a token accepted as a size did not decompose into a shape\n"+
 			"  Why: reParamSizeToken and the ParseParamShape sub-shape regexes have drifted\n"+
@@ -3953,6 +3976,56 @@ var idFamilyOverrides = map[string]idFamilyOverrideEntry{
 	"poolside/laguna-xs-2.1:free": {family: "laguna", variant: "xs", version: "2.1"},
 	"poolside/laguna-m.1":         {family: "laguna", variant: "m", version: "1"},
 	"poolside/laguna-m.1:free":    {family: "laguna", variant: "m", version: "1"},
+
+	// grok-4.20 beta-alias unification. xAI ships the grok-4.20 line under both an
+	// official spelling (grok-4.20-0309-reasoning) and beta-alias spellings that glue a
+	// standalone "beta" token into the name (grok-4.20-beta-0309-reasoning,
+	// xai/grok-4.20-reasoning-beta, …). Mechanically the tail-inward scan halts at the
+	// non-modifier "beta" boundary and captures it as the VARIANT, splitting the aliases
+	// into a separate grok/beta@4.20 entity — but the beta spelling is the SAME artifact
+	// as the official name and must key to the same entity. These exact-ID overrides map
+	// each censused grok-4.20/4-20 beta spelling onto the NON-beta decomposition
+	// (variant "", version "4.20", the same modifier the official name carries), so the
+	// alias merges into grok@4.20{…}. Stage is UNAFFECTED: DetectStageFromID scans the
+	// ID independently of the key, so every one of these rows still bakes Stage=StageBeta
+	// (detect-without-strip). This is a curated grok-only unification; the general beta
+	// freeze stays for non-grok names (e.g. interfaze-beta keeps beta in its key). The
+	// multi-agent spellings follow the official grok-4.20-multi-agent-0309, which drops
+	// "multi-agent" and keys the bare grok@4.20 (nil modifier).
+	"grok-4.20-beta-0309-non-reasoning": {family: "grok", version: "4.20", modifiers: []string{"non-reasoning"}},
+	"grok-4.20-beta-0309-reasoning":     {family: "grok", version: "4.20", modifiers: []string{"reasoning"}},
+	"grok-4.20-multi-agent-beta-0309":   {family: "grok", version: "4.20"},
+	"grok-4-20-beta-0309-non-reasoning": {family: "grok", version: "4.20", modifiers: []string{"non-reasoning"}},
+	"grok-4-20-beta-0309-reasoning":     {family: "grok", version: "4.20", modifiers: []string{"reasoning"}},
+	"xai/grok-4.20-multi-agent-beta":    {family: "grok", version: "4.20"},
+	"xai/grok-4.20-non-reasoning-beta":  {family: "grok", version: "4.20", modifiers: []string{"non-reasoning"}},
+	"xai/grok-4.20-reasoning-beta":      {family: "grok", version: "4.20", modifiers: []string{"reasoning"}},
+
+	// Version-less llama-4 scout/maverick pins. A handful of catalog spellings for the
+	// llama-4 scout/maverick artifacts omit the "-4-" version token that the canonical
+	// hyphenated spellings carry, so they mechanically decompose with an EMPTY version
+	// and split off into a separate version-less entity. Two prefix families do this:
+	// the AWS Bedrock dotted forms (meta.llama4-…, us.meta.llama4-…-17b-instruct-v1:0)
+	// and the aggregator provider-prefixed forms (cerebras-…, groq-…) whose leading
+	// token perturbs the version scan. These exact-ID overrides pin version "4" so each
+	// spelling merges into the existing @4 entity its canonical siblings key. The set is
+	// the FULL version-less census (3 scout instances + 4 maverick instances over the
+	// vendored catalog), not just the Bedrock subset — leaving any version-less spelling
+	// unpinned would keep the split the unification exists to remove. The #size segment
+	// is carried separately by the param_size_overrides.json pins (17b-16e scout /
+	// 17b-128e maverick), so with the @4 version pin scout keys
+	// llama/scout@4#17b-16e{instruct} and maverick keys llama@4#17b-128e{instruct}. NOTE
+	// the asymmetry: "scout" is a curated llama variant member (families.json) so it
+	// stays in the key, but "maverick" is NOT a member — the official maverick entity is
+	// llama@4 (no maverick variant), so these pins set variant "" to merge into it
+	// rather than minting a new entity.
+	"meta.llama4-scout-17b-instruct-v1:0":         {family: "llama", variant: "scout", version: "4", modifiers: []string{"instruct"}},
+	"us.meta.llama4-scout-17b-instruct-v1:0":      {family: "llama", variant: "scout", version: "4", modifiers: []string{"instruct"}},
+	"cerebras-llama-4-scout-17b-16e-instruct":     {family: "llama", variant: "scout", version: "4", modifiers: []string{"instruct"}},
+	"meta.llama4-maverick-17b-instruct-v1:0":      {family: "llama", version: "4", modifiers: []string{"instruct"}},
+	"us.meta.llama4-maverick-17b-instruct-v1:0":   {family: "llama", version: "4", modifiers: []string{"instruct"}},
+	"cerebras-llama-4-maverick-17b-128e-instruct": {family: "llama", version: "4", modifiers: []string{"instruct"}},
+	"groq-llama-4-maverick-17b-128e-instruct":     {family: "llama", version: "4", modifiers: []string{"instruct"}},
 }
 
 func isSeriesTierToken(tok string) bool {

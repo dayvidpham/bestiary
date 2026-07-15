@@ -36,11 +36,14 @@ package bestiary
 //   - 0.3.0 → 0.4.0: stamps the v0.2.6 parameter-shape fields decomposed from
 //     ParamSize (ModelInfo.TotalParams, ActiveParams, PerExpertParams,
 //     ExpertCount). These are DERIVED presentation facts, never entity-key
-//     material. Additive and backward-COMPATIBLE: every new property is
-//     optional/zero-value, so 0.3.x records still validate. (The full-bulk #size
-//     re-key that lands this epoch changes many EntityRef keys but is a data
-//     change, not a schema-shape change — the ParamSize carrier and its grammar
-//     are unchanged.)
+//     material, and follow the ParamShapeNull (-1) in-domain NULL sentinel
+//     contract: -1 = not populated by parser or curation, a positive value = an
+//     attested count, and a genuine 0 is reachable only for ExpertCount (a dense
+//     shape attests zero experts). The schema pins minimum -1 on each. Additive and
+//     backward-COMPATIBLE: every new property is optional, so 0.3.x records still
+//     validate. (The full-bulk #size re-key that lands this epoch changes many
+//     EntityRef keys but is a data change, not a schema-shape change — the ParamSize
+//     carrier and its grammar are unchanged.)
 const BestiarySchemaVersion = "0.4.0"
 
 // UpstreamSchemaVersion identifies the exact snapshot of the models.dev schema

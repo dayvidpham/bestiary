@@ -177,20 +177,23 @@ func TestCodegen_ParamSizePrecedence(t *testing.T) {
 // ParamSize AND the four flat shape ints from the ID in one joint, honoring the
 // presence-based precedence (pin > mechanical > ParamSizeFor) and each param-shape
 // family. It pins the PerExpertParams NxM case (ExpertCount + PerExpertParams, NEVER a
-// total) and the suppress-pin (no size, no ints) so a regression in either the joint
-// wiring or the shape decomposition is caught.
+// total) and the suppress-pin (no size, all four ints NULL) so a regression in either
+// the joint wiring or the shape decomposition is caught. Unpopulated fields carry the
+// ParamShapeNull (-1) sentinel; a dense ExpertCount is a genuine 0.
 func TestEnrichModelInfo_ShapeInts(t *testing.T) {
+	const null = ParamShapeNull
+
 	cases := []struct {
 		name, id, wantSize                   string
 		wantTotal, wantActive, wantPerExpert int64
 		wantExperts                          int
 	}{
-		{"dense", "meta-llama/Llama-3.3-70B-Instruct", "70b", 70_000_000_000, 0, 0, 0},
-		{"decimal dense", "qwen/qwen3-embedding-0.6b", "0.6b", 600_000_000, 0, 0, 0},
-		{"active MoE", "qwen/qwen3-30b-a3b", "30b-a3b", 30_000_000_000, 3_000_000_000, 0, 0},
-		{"NxM MoE — PerExpertParams, no total", "mistralai/mixtral-8x22b", "8x22b", 0, 0, 22_000_000_000, 8},
-		{"count-suffixed MoE via curated pin", "llama-4-scout-17b-instruct", "17b-16e", 0, 17_000_000_000, 0, 16},
-		{"suppress-pin yields no size, no ints", "qwen/qwen3-coder-next-fp8-1m", "", 0, 0, 0, 0},
+		{"dense", "meta-llama/Llama-3.3-70B-Instruct", "70b", 70_000_000_000, null, null, 0},
+		{"decimal dense", "qwen/qwen3-embedding-0.6b", "0.6b", 600_000_000, null, null, 0},
+		{"active MoE", "qwen/qwen3-30b-a3b", "30b-a3b", 30_000_000_000, 3_000_000_000, null, null},
+		{"NxM MoE — PerExpertParams, no total", "mistralai/mixtral-8x22b", "8x22b", null, null, 22_000_000_000, 8},
+		{"count-suffixed MoE via curated pin", "llama-4-scout-17b-instruct", "17b-16e", null, 17_000_000_000, null, 16},
+		{"suppress-pin yields no size, all-NULL ints", "qwen/qwen3-coder-next-fp8-1m", "", null, null, null, null},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {

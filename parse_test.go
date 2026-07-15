@@ -4556,41 +4556,47 @@ func TestParseParamSize_CaseFolding(t *testing.T) {
 
 // TestParseParamShape_Shapes verifies that ParseParamShape decomposes each of the
 // four size shapes along its parameter-shape joints, populating exactly the fields
-// that shape carries and leaving the others zero. The load-bearing invariants are:
-// an NxM MoE ("8x22b") records ExpertCount and PerExpertParams but NO TotalParams
-// (Total is NEVER N*M); an active-MoE ("30b-a3b") records Total and Active; a
-// count-suffixed MoE ("17b-16e") records Active and ExpertCount but no Total.
+// that shape carries and setting the others to the ParamShapeNull (-1) sentinel. The
+// load-bearing invariants are: an NxM MoE ("8x22b") records ExpertCount and
+// PerExpertParams but leaves TotalParams/ActiveParams NULL (Total is NEVER N*M); an
+// active-MoE ("30b-a3b") records Total and Active and leaves PerExpert/Experts NULL;
+// a count-suffixed MoE ("17b-16e") records Active and ExpertCount and leaves
+// Total/PerExpert NULL; a dense token sets Total, leaves Active/PerExpert NULL, and
+// sets ExpertCount to a genuine 0 (the sole in-domain 0 in the contract); the empty
+// token leaves ALL FOUR NULL.
 func TestParseParamShape_Shapes(t *testing.T) {
 	t.Parallel()
+
+	const null = bestiary.ParamShapeNull
 
 	cases := []struct {
 		name  string
 		token string
 		want  bestiary.ParamShape
 	}{
-		// Empty token → zero shape (unsized model), no error.
-		{"empty", "", bestiary.ParamShape{}},
+		// Empty token → all-NULL shape (unsized model), no error.
+		{"empty", "", bestiary.ParamShape{TotalParams: null, ActiveParams: null, PerExpertParams: null, ExpertCount: null}},
 
-		// Dense: only TotalParams.
-		{"30b dense", "30b", bestiary.ParamShape{TotalParams: 30_000_000_000}},
-		{"560m dense", "560m", bestiary.ParamShape{TotalParams: 560_000_000}},
-		{"7b dense", "7b", bestiary.ParamShape{TotalParams: 7_000_000_000}},
-		{"671b dense", "671b", bestiary.ParamShape{TotalParams: 671_000_000_000}},
+		// Dense: TotalParams attested; Active/PerExpert NULL; ExpertCount a genuine 0.
+		{"30b dense", "30b", bestiary.ParamShape{TotalParams: 30_000_000_000, ActiveParams: null, PerExpertParams: null, ExpertCount: 0}},
+		{"560m dense", "560m", bestiary.ParamShape{TotalParams: 560_000_000, ActiveParams: null, PerExpertParams: null, ExpertCount: 0}},
+		{"7b dense", "7b", bestiary.ParamShape{TotalParams: 7_000_000_000, ActiveParams: null, PerExpertParams: null, ExpertCount: 0}},
+		{"671b dense", "671b", bestiary.ParamShape{TotalParams: 671_000_000_000, ActiveParams: null, PerExpertParams: null, ExpertCount: 0}},
 
-		// Active-MoE: TotalParams + ActiveParams.
-		{"30b-a3b active-moe", "30b-a3b", bestiary.ParamShape{TotalParams: 30_000_000_000, ActiveParams: 3_000_000_000}},
-		{"235b-a22b active-moe", "235b-a22b", bestiary.ParamShape{TotalParams: 235_000_000_000, ActiveParams: 22_000_000_000}},
+		// Active-MoE: TotalParams + ActiveParams; PerExpert/Experts NULL.
+		{"30b-a3b active-moe", "30b-a3b", bestiary.ParamShape{TotalParams: 30_000_000_000, ActiveParams: 3_000_000_000, PerExpertParams: null, ExpertCount: null}},
+		{"235b-a22b active-moe", "235b-a22b", bestiary.ParamShape{TotalParams: 235_000_000_000, ActiveParams: 22_000_000_000, PerExpertParams: null, ExpertCount: null}},
 
-		// NxM MoE: ExpertCount + PerExpertParams; Total stays ZERO (never N*M).
-		{"8x22b nxm-moe (Total NEVER 176e9)", "8x22b", bestiary.ParamShape{ExpertCount: 8, PerExpertParams: 22_000_000_000}},
-		{"8x7b nxm-moe", "8x7b", bestiary.ParamShape{ExpertCount: 8, PerExpertParams: 7_000_000_000}},
+		// NxM MoE: ExpertCount + PerExpertParams; Total/Active stay NULL (never N*M).
+		{"8x22b nxm-moe (Total NEVER 176e9)", "8x22b", bestiary.ParamShape{TotalParams: null, ActiveParams: null, PerExpertParams: 22_000_000_000, ExpertCount: 8}},
+		{"8x7b nxm-moe", "8x7b", bestiary.ParamShape{TotalParams: null, ActiveParams: null, PerExpertParams: 7_000_000_000, ExpertCount: 8}},
 
-		// Count-suffixed MoE (Nb-Ke): ActiveParams + ExpertCount; no Total.
-		{"17b-16e count-moe (scout)", "17b-16e", bestiary.ParamShape{ActiveParams: 17_000_000_000, ExpertCount: 16}},
-		{"17b-128e count-moe (maverick)", "17b-128e", bestiary.ParamShape{ActiveParams: 17_000_000_000, ExpertCount: 128}},
+		// Count-suffixed MoE (Nb-Ke): ActiveParams + ExpertCount; Total/PerExpert NULL.
+		{"17b-16e count-moe (scout)", "17b-16e", bestiary.ParamShape{TotalParams: null, ActiveParams: 17_000_000_000, PerExpertParams: null, ExpertCount: 16}},
+		{"17b-128e count-moe (maverick)", "17b-128e", bestiary.ParamShape{TotalParams: null, ActiveParams: 17_000_000_000, PerExpertParams: null, ExpertCount: 128}},
 
 		// Uppercase token is folded before decomposition.
-		{"8X22B uppercase nxm-moe", "8X22B", bestiary.ParamShape{ExpertCount: 8, PerExpertParams: 22_000_000_000}},
+		{"8X22B uppercase nxm-moe", "8X22B", bestiary.ParamShape{TotalParams: null, ActiveParams: null, PerExpertParams: 22_000_000_000, ExpertCount: 8}},
 	}
 
 	for _, tc := range cases {
