@@ -437,6 +437,11 @@ func testMetadataRow() EntityMetadata {
 		},
 		Source:     DataSourceModelsDev,
 		LastSynced: "2026-06-09T00:00:00Z",
+		// RawFamily is the upstream family provenance; persisting it is what keeps the
+		// after-sync join's family-presence gate working. A non-empty value here makes
+		// TestUpsertEntityMetadata_RoundTrip's DeepEqual cover the raw_family column
+		// (it was "" -> mismatch before the column round-tripped).
+		RawFamily: "glm",
 	}
 }
 

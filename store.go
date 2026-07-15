@@ -130,6 +130,49 @@ func ensureModelColumnsV6(conn *sqlite.Conn) error {
 	return nil
 }
 
+// entityMetadataV6Columns is the ordered list of entity_metadata columns that a
+// LATER v6 revision adds to a table an earlier v6 build already created. Today it is
+// just raw_family (the upstream family provenance). It mirrors modelV6Columns so the
+// entity_metadata dimension self-heals with the same discipline as the models table.
+var entityMetadataV6Columns = []modelV6Column{
+	{"raw_family", `ALTER TABLE entity_metadata ADD COLUMN raw_family TEXT NOT NULL DEFAULT ''`},
+}
+
+// ensureEntityMetadataColumnsV6 adds any entity_metadata column in
+// entityMetadataV6Columns that the table is currently missing, ALTERing only the
+// absent ones (presence read from pragma_table_info). It is the entity_metadata
+// sibling of ensureModelColumnsV6: idempotent and self-healing, so it is a no-op
+// when the column already exists (a fresh v6 table, or a re-run) and backfills it on
+// an intermediate-v6 dev cache whose schema_meta reads 6 but whose entity_metadata
+// table predates the column. It does nothing when the entity_metadata table is
+// absent, leaving creation to the fresh/migration paths, and manages no transaction
+// of its own so it composes inside migrateToV6's transaction and standalone from
+// OpenStore.
+func ensureEntityMetadataColumnsV6(conn *sqlite.Conn) error {
+	existing, err := tableColumnSet(conn, "entity_metadata")
+	if err != nil {
+		return fmt.Errorf("read entity_metadata columns: %w", err)
+	}
+	if len(existing) == 0 {
+		// No entity_metadata table yet — nothing to heal.
+		return nil
+	}
+	for _, col := range entityMetadataV6Columns {
+		if existing[col.name] {
+			continue
+		}
+		if err := sqlitex.ExecuteTransient(conn, col.sql, nil); err != nil {
+			return fmt.Errorf("add missing entity_metadata column %q: %w\n"+
+				"  What: adding an entity_metadata provenance column failed\n"+
+				"  Why: ALTER TABLE ADD COLUMN was rejected on an entity_metadata table missing the column\n"+
+				"  Where: store.go ensureEntityMetadataColumnsV6\n"+
+				"  How to fix: inspect the entity_metadata table schema; delete the cache to rebuild it if corrupt",
+				col.name, err)
+		}
+	}
+	return nil
+}
+
 // tableColumnSet returns the set of column names of table via pragma_table_info.
 // An absent table yields an empty (non-nil) set, so callers distinguish it from a
 // present-but-column-short table.
@@ -260,13 +303,21 @@ const datasetIngestedV6TableSQL = `CREATE TABLE IF NOT EXISTS dataset_ingested (
 // fact, absent from models.json). source_id is a foreign key into data_sources
 // (the ingest attestation). name / description / license / last_synced default to
 // the empty string.
+// raw_family is the upstream models.json family verbatim (EntityMetadata.RawFamily),
+// persisted so a synced/cached row round-trips the same raw-family signal the baked
+// rows carry — the metadata<->entity join keys its family-presence gate off it, so a
+// row loaded from the store must not lose it and degrade to the mechanical family. It
+// is LAST in the column list to match the ALTER TABLE ADD COLUMN position the
+// self-heal (ensureEntityMetadataColumnsV6) uses on an intermediate-v6 cache, so a
+// fresh and a healed table are column-order-identical.
 const entityMetadataTableSQL = `CREATE TABLE IF NOT EXISTS entity_metadata (
     metadata_id TEXT PRIMARY KEY,
     name        TEXT NOT NULL DEFAULT '',
     description TEXT NOT NULL DEFAULT '',
     license     TEXT NOT NULL DEFAULT '',
     source_id   TEXT NOT NULL REFERENCES data_sources(data_source_id),
-    last_synced TEXT NOT NULL DEFAULT ''
+    last_synced TEXT NOT NULL DEFAULT '',
+    raw_family  TEXT NOT NULL DEFAULT ''
 );`
 
 // metadataBenchmarksTableSQL is the benchmark-claims child table of
@@ -468,6 +519,16 @@ func OpenStore(path string) (*Store, error) {
 	if err := ensureModelColumnsV6(conn); err != nil {
 		_ = conn.Close()
 		return nil, fmt.Errorf("bestiary: OpenStore: ensure v6 model columns on %s: %w", path, err)
+	}
+
+	// Self-heal the entity_metadata provenance columns for the same
+	// intermediate-v6-cache reason: a database created before raw_family was added
+	// records schema_meta=6 but its entity_metadata table lacks the column, so the
+	// version-gated migration never runs and a metadata read/write would fail. This
+	// presence-guarded, idempotent step backfills it on open; a no-op otherwise.
+	if err := ensureEntityMetadataColumnsV6(conn); err != nil {
+		_ = conn.Close()
+		return nil, fmt.Errorf("bestiary: OpenStore: ensure v6 entity_metadata columns on %s: %w", path, err)
 	}
 
 	return &Store{conn: conn, path: path}, nil
@@ -925,9 +986,16 @@ func migrateToV6(conn *sqlite.Conn) error {
 		return fmt.Errorf("rename dataset_ingested_new to dataset_ingested: %w", err)
 	}
 
-	// Step 2: add the three entity-metadata tables.
+	// Step 2: add the three entity-metadata tables. createMetadataTables is
+	// CREATE TABLE IF NOT EXISTS, so on an intermediate-v6 cache whose entity_metadata
+	// predates raw_family it leaves the older table untouched; the presence-guarded
+	// self-heal below backfills the column so both the fresh-create and
+	// already-present paths converge on the same shape.
 	if err = createMetadataTables(conn); err != nil {
 		return fmt.Errorf("create entity-metadata tables: %w", err)
+	}
+	if err = ensureEntityMetadataColumnsV6(conn); err != nil {
+		return fmt.Errorf("add v6 entity_metadata columns: %w", err)
 	}
 
 	// Step 3: add the eight instance-level models.dev columns to the models table.
@@ -1201,8 +1269,8 @@ func (s *Store) UpsertEntityMetadata(ctx context.Context, rows []EntityMetadata)
 	defer endFn(&err)
 
 	const parentSQL = `INSERT OR REPLACE INTO entity_metadata (
-		metadata_id, name, description, license, source_id, last_synced
-	) VALUES (?1, ?2, ?3, ?4, ?5, ?6)`
+		metadata_id, name, description, license, source_id, last_synced, raw_family
+	) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)`
 	const delBenchSQL = `DELETE FROM metadata_benchmarks WHERE metadata_id = ?1`
 	const delLinkSQL = `DELETE FROM metadata_links WHERE metadata_id = ?1`
 	const insBenchSQL = `INSERT INTO metadata_benchmarks (
@@ -1218,7 +1286,7 @@ func (s *Store) UpsertEntityMetadata(ctx context.Context, rows []EntityMetadata)
 
 		// (1) Parent row. source_id is a FK into data_sources.
 		err = sqlitex.Execute(s.conn, parentSQL, &sqlitex.ExecOptions{
-			Args: []any{mid, m.Name, m.Description, m.License, string(m.Source), m.LastSynced},
+			Args: []any{mid, m.Name, m.Description, m.License, string(m.Source), m.LastSynced, string(m.RawFamily)},
 		})
 		if err != nil {
 			return fmt.Errorf("bestiary: UpsertEntityMetadata: upsert entity_metadata %q: %w\n"+
@@ -1369,7 +1437,7 @@ func (s *Store) QueryEntityMetadata(ctx context.Context) ([]EntityMetadata, erro
 	// metadata_id to its position so the child passes can append in place.
 	var out []EntityMetadata
 	idx := map[MetadataID]int{}
-	const parentQuery = `SELECT metadata_id, name, description, license, source_id, last_synced
+	const parentQuery = `SELECT metadata_id, name, description, license, source_id, last_synced, raw_family
 		FROM entity_metadata
 		ORDER BY metadata_id`
 	err := sqlitex.Execute(s.conn, parentQuery, &sqlitex.ExecOptions{
@@ -1383,6 +1451,7 @@ func (s *Store) QueryEntityMetadata(ctx context.Context) ([]EntityMetadata, erro
 				License:     stmt.GetText("license"),
 				Source:      DataSourceID(stmt.GetText("source_id")),
 				LastSynced:  stmt.GetText("last_synced"),
+				RawFamily:   Family(stmt.GetText("raw_family")),
 			})
 			return nil
 		},
