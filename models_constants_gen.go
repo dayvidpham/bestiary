@@ -514,8 +514,8 @@ const (
 	Model__AmazonBedrock__Meta__Llama3__1__70b__Instruct__V1__0__Instruct                    ModelID = "meta.llama3-1-70b-instruct-v1:0"
 	Model__AmazonBedrock__Meta__Llama3__1__8b__Instruct__V1__0__Instruct                     ModelID = "meta.llama3-1-8b-instruct-v1:0"
 	Model__AmazonBedrock__Meta__Llama3__3__70b__Instruct__V1__0__Instruct                    ModelID = "meta.llama3-3-70b-instruct-v1:0"
-	Model__AmazonBedrock__Meta__Llama4__Maverick__17b__Instruct__V1__0__Instruct             ModelID = "meta.llama4-maverick-17b-instruct-v1:0"
-	Model__AmazonBedrock__Meta__Llama4__Scout__17b__Instruct__V1__0__Instruct                ModelID = "meta.llama4-scout-17b-instruct-v1:0"
+	Model__AmazonBedrock__Meta__Llama4__Maverick__17b__Instruct__V1__0__4__Instruct          ModelID = "meta.llama4-maverick-17b-instruct-v1:0"
+	Model__AmazonBedrock__Meta__Llama4__Scout__17b__Instruct__V1__0__4__Instruct             ModelID = "meta.llama4-scout-17b-instruct-v1:0"
 	Model__AmazonBedrock__MiniMax__MiniMax__M2__1__2_1                                       ModelID = "minimax.minimax-m2.1"
 	Model__AmazonBedrock__MiniMax__MiniMax__M2__2                                            ModelID = "minimax.minimax-m2"
 	Model__AmazonBedrock__MiniMax__MiniMax__M2__5__2_5                                       ModelID = "minimax.minimax-m2.5"
@@ -560,8 +560,8 @@ const (
 	Model__AmazonBedrock__Us__Anthropic__Claude__Sonnet__4__6                                ModelID = "us.anthropic.claude-sonnet-4-6"
 	Model__AmazonBedrock__Us__Anthropic__Claude__Sonnet__5                                   ModelID = "us.anthropic.claude-sonnet-5"
 	Model__AmazonBedrock__Us__DeepSeek__R1__V1__0__Thinking                                  ModelID = "us.deepseek.r1-v1:0"
-	Model__AmazonBedrock__Us__Meta__Llama4__Maverick__17b__Instruct__V1__0__Instruct         ModelID = "us.meta.llama4-maverick-17b-instruct-v1:0"
-	Model__AmazonBedrock__Us__Meta__Llama4__Scout__17b__Instruct__V1__0__Instruct            ModelID = "us.meta.llama4-scout-17b-instruct-v1:0"
+	Model__AmazonBedrock__Us__Meta__Llama4__Maverick__17b__Instruct__V1__0__4__Instruct      ModelID = "us.meta.llama4-maverick-17b-instruct-v1:0"
+	Model__AmazonBedrock__Us__Meta__Llama4__Scout__17b__Instruct__V1__0__4__Instruct         ModelID = "us.meta.llama4-scout-17b-instruct-v1:0"
 	Model__AmazonBedrock__Writer__Palmyra__X4__V1__0                                         ModelID = "writer.palmyra-x4-v1:0"
 	Model__AmazonBedrock__Writer__Palmyra__X5__V1__0                                         ModelID = "writer.palmyra-x5-v1:0"
 	Model__AmazonBedrock__Zai__GLM__4__7                                                     ModelID = "zai.glm-4.7"
@@ -2296,9 +2296,9 @@ const (
 	Model__Lilac__Gemma__4__31b__It__4                                                       ModelID = "google/gemma-4-31b-it"
 	Model__Lilac__Kimi__K2__6__2_6                                                           ModelID = "moonshotai/kimi-k2.6"
 	Model__Lilac__MiniMax__M3__3                                                             ModelID = "minimaxai/minimax-m3"
-	Model__Llama__Cerebras__Llama__4__Maverick__17b__128e__Instruct                          ModelID = "cerebras-llama-4-maverick-17b-128e-instruct"
-	Model__Llama__Cerebras__Llama__4__Scout__17b__16e__Instruct                              ModelID = "cerebras-llama-4-scout-17b-16e-instruct"
-	Model__Llama__Groq__Llama__4__Maverick__17b__128e__Instruct                              ModelID = "groq-llama-4-maverick-17b-128e-instruct"
+	Model__Llama__Cerebras__Llama__4__Maverick__17b__128e__4__Instruct                       ModelID = "cerebras-llama-4-maverick-17b-128e-instruct"
+	Model__Llama__Cerebras__Llama__4__Scout__17b__16e__4__Instruct                           ModelID = "cerebras-llama-4-scout-17b-16e-instruct"
+	Model__Llama__Groq__Llama__4__Maverick__17b__128e__4__Instruct                           ModelID = "groq-llama-4-maverick-17b-128e-instruct"
 	Model__Llama__Llama__3__3__70b__3_3__Instruct                                            ModelID = "llama-3.3-70b-instruct"
 	Model__Llama__Llama__3__3__8b__3_3__Instruct                                             ModelID = "llama-3.3-8b-instruct"
 	Model__Llama__Llama__4__Maverick__17b__128e__Instruct__Fp8__4__Instruct                  ModelID = "llama-4-maverick-17b-128e-instruct-fp8"
@@ -5215,8 +5215,8 @@ const (
 	Model__Vercel__Grok__4__20__Multi__Agent__4_20                                           ModelID = "xai/grok-4.20-multi-agent"
 	Model__Vercel__Grok__4__20__Multi__Agent__Beta__4_20                                     ModelID = "xai/grok-4.20-multi-agent-beta"
 	Model__Vercel__Grok__4__20__Non__Reasoning__4_20__Non_Reasoning                          ModelID = "xai/grok-4.20-non-reasoning"
-	Model__Vercel__Grok__4__20__Non__Reasoning__Beta__4_20                                   ModelID = "xai/grok-4.20-non-reasoning-beta"
-	Model__Vercel__Grok__4__20__Reasoning__Beta__4_20                                        ModelID = "xai/grok-4.20-reasoning-beta"
+	Model__Vercel__Grok__4__20__Non__Reasoning__Beta__4_20__Non_Reasoning                    ModelID = "xai/grok-4.20-non-reasoning-beta"
+	Model__Vercel__Grok__4__20__Reasoning__Beta__4_20__Reasoning                             ModelID = "xai/grok-4.20-reasoning-beta"
 	Model__Vercel__Grok__Build__0_1                                                          ModelID = "xai/grok-build-0.1"
 	Model__Vercel__Grok__Imagine__Image                                                      ModelID = "xai/grok-imagine-image"
 	Model__Vercel__Grok__Imagine__Video                                                      ModelID = "xai/grok-imagine-video"
@@ -6172,8 +6172,8 @@ var allModelConstants = [...]ModelID{
 	Model__AmazonBedrock__Meta__Llama3__1__70b__Instruct__V1__0__Instruct,
 	Model__AmazonBedrock__Meta__Llama3__1__8b__Instruct__V1__0__Instruct,
 	Model__AmazonBedrock__Meta__Llama3__3__70b__Instruct__V1__0__Instruct,
-	Model__AmazonBedrock__Meta__Llama4__Maverick__17b__Instruct__V1__0__Instruct,
-	Model__AmazonBedrock__Meta__Llama4__Scout__17b__Instruct__V1__0__Instruct,
+	Model__AmazonBedrock__Meta__Llama4__Maverick__17b__Instruct__V1__0__4__Instruct,
+	Model__AmazonBedrock__Meta__Llama4__Scout__17b__Instruct__V1__0__4__Instruct,
 	Model__AmazonBedrock__MiniMax__MiniMax__M2__1__2_1,
 	Model__AmazonBedrock__MiniMax__MiniMax__M2__2,
 	Model__AmazonBedrock__MiniMax__MiniMax__M2__5__2_5,
@@ -6218,8 +6218,8 @@ var allModelConstants = [...]ModelID{
 	Model__AmazonBedrock__Us__Anthropic__Claude__Sonnet__4__6,
 	Model__AmazonBedrock__Us__Anthropic__Claude__Sonnet__5,
 	Model__AmazonBedrock__Us__DeepSeek__R1__V1__0__Thinking,
-	Model__AmazonBedrock__Us__Meta__Llama4__Maverick__17b__Instruct__V1__0__Instruct,
-	Model__AmazonBedrock__Us__Meta__Llama4__Scout__17b__Instruct__V1__0__Instruct,
+	Model__AmazonBedrock__Us__Meta__Llama4__Maverick__17b__Instruct__V1__0__4__Instruct,
+	Model__AmazonBedrock__Us__Meta__Llama4__Scout__17b__Instruct__V1__0__4__Instruct,
 	Model__AmazonBedrock__Writer__Palmyra__X4__V1__0,
 	Model__AmazonBedrock__Writer__Palmyra__X5__V1__0,
 	Model__AmazonBedrock__Zai__GLM__4__7,
@@ -7954,9 +7954,9 @@ var allModelConstants = [...]ModelID{
 	Model__Lilac__Gemma__4__31b__It__4,
 	Model__Lilac__Kimi__K2__6__2_6,
 	Model__Lilac__MiniMax__M3__3,
-	Model__Llama__Cerebras__Llama__4__Maverick__17b__128e__Instruct,
-	Model__Llama__Cerebras__Llama__4__Scout__17b__16e__Instruct,
-	Model__Llama__Groq__Llama__4__Maverick__17b__128e__Instruct,
+	Model__Llama__Cerebras__Llama__4__Maverick__17b__128e__4__Instruct,
+	Model__Llama__Cerebras__Llama__4__Scout__17b__16e__4__Instruct,
+	Model__Llama__Groq__Llama__4__Maverick__17b__128e__4__Instruct,
 	Model__Llama__Llama__3__3__70b__3_3__Instruct,
 	Model__Llama__Llama__3__3__8b__3_3__Instruct,
 	Model__Llama__Llama__4__Maverick__17b__128e__Instruct__Fp8__4__Instruct,
@@ -10873,8 +10873,8 @@ var allModelConstants = [...]ModelID{
 	Model__Vercel__Grok__4__20__Multi__Agent__4_20,
 	Model__Vercel__Grok__4__20__Multi__Agent__Beta__4_20,
 	Model__Vercel__Grok__4__20__Non__Reasoning__4_20__Non_Reasoning,
-	Model__Vercel__Grok__4__20__Non__Reasoning__Beta__4_20,
-	Model__Vercel__Grok__4__20__Reasoning__Beta__4_20,
+	Model__Vercel__Grok__4__20__Non__Reasoning__Beta__4_20__Non_Reasoning,
+	Model__Vercel__Grok__4__20__Reasoning__Beta__4_20__Reasoning,
 	Model__Vercel__Grok__Build__0_1,
 	Model__Vercel__Grok__Imagine__Image,
 	Model__Vercel__Grok__Imagine__Video,
