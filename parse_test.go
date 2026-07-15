@@ -3712,74 +3712,17 @@ func TestGrokNegationAwareModifier(t *testing.T) {
 func TestParseParamSize_ValidShapes(t *testing.T) {
 	t.Parallel()
 
-	cases := []struct {
-		name string
-		raw  string
-		want string
-	}{
-		// Empty is valid (no-op — not a size, not an error).
-		{"empty", "", ""},
-
-		// Dense size tokens: <digits><unit>
-		{"1b lowercase passthrough", "1b", "1b"},
-		{"7b", "7b", "7b"},
-		{"8b", "8b", "8b"},
-		{"70b", "70b", "70b"},
-		{"671b", "671b", "671b"},
-		{"0.5b", "0.5b", "0.5b"},
-		{"3.8b", "3.8b", "3.8b"},
-		{"72b", "72b", "72b"},
-
-		// Dense token: uppercase → lowercase (ParseParamSize must canonicalize to lowercase).
-		{"70B uppercase → 70b", "70B", "70b"},
-		{"8B uppercase → 8b", "8B", "8b"},
-		{"0.5B uppercase → 0.5b", "0.5B", "0.5b"},
-		{"671B uppercase → 671b", "671B", "671b"},
-
-		// MoE shapes: <total>x<active>b
-		{"8x7b", "8x7b", "8x7b"},
-		{"8x22b", "8x22b", "8x22b"},
-
-		// MoE uppercase → lowercase
-		{"8X7B uppercase → 8x7b", "8X7B", "8x7b"},
-
-		// Active-MoE shapes: <total>b-a<active>b  (e.g. "30b-a3b", "671b-a17b")
-		{"30b-a3b active-moe", "30b-a3b", "30b-a3b"},
-		{"671b-a17b active-moe", "671b-a17b", "671b-a17b"},
-		{"671B-A17B uppercase active-moe → 671b-a17b", "671B-A17B", "671b-a17b"},
-
-		// Count-suffixed MoE (Nb-Ke): <active>b-<experts>e  (e.g. "17b-16e", "17b-128e")
-		{"17b-16e count-moe (llama-4-scout shape)", "17b-16e", "17b-16e"},
-		{"17b-128e count-moe (llama-4-maverick shape)", "17b-128e", "17b-128e"},
-		{"17B-16E uppercase count-moe → 17b-16e", "17B-16E", "17b-16e"},
-
-		// Decimal dense tokens must canonicalize without mangling the fraction.
-		{"10.7b decimal (solar shape)", "10.7b", "10.7b"},
-		{"1.2b decimal (lfm shape)", "1.2b", "1.2b"},
-		{"0.6b decimal (qwen3-embedding shape)", "0.6b", "0.6b"},
-
-		// m-unit dense tokens (the [bm] unit arm for million-parameter models).
-		{"560m", "560m", "560m"},
-		{"350m", "350m", "350m"},
-		{"560M uppercase → 560m", "560M", "560m"},
-	}
-
-	for _, tc := range cases {
-		t.Run(tc.name, func(t *testing.T) {
-			t.Parallel()
-			got, err := bestiary.ParseParamSize(tc.raw)
-			if err != nil {
-				t.Fatalf("ParseParamSize(%q) returned unexpected error: %v\n"+
-					"  What: a valid param-size token was rejected\n"+
-					"  Why: isParamSizeToken returned false for this shape\n"+
-					"  How to fix: verify the size pattern covers this input",
-					tc.raw, err)
-			}
-			if got != tc.want {
-				t.Errorf("ParseParamSize(%q) = %q, want %q (canonical lowercase)", tc.raw, got, tc.want)
-			}
-		})
-	}
+	corpus := loadParseCorpus[string, string](t, parseParamSizeValidCorpusJSON, 28)
+	requireInputCoverage(t, corpus, map[string]string{
+		"":          "",          // empty is valid (no-op)
+		"70B":       "70b",       // uppercase folds
+		"8x22b":     "8x22b",     // NxM MoE
+		"671b-a17b": "671b-a17b", // active-MoE
+		"17b-16e":   "17b-16e",   // count-MoE
+		"10.7b":     "10.7b",     // decimal preserved
+		"560m":      "560m",      // m-unit
+	})
+	runParseParamSizeCanonical(t, corpus)
 }
 
 // TestParseParamSize_InvalidShapes verifies that ParseParamSize rejects inputs
@@ -3790,71 +3733,13 @@ func TestParseParamSize_ValidShapes(t *testing.T) {
 func TestParseParamSize_InvalidShapes(t *testing.T) {
 	t.Parallel()
 
-	invalid := []struct {
-		name string
-		raw  string
-	}{
-		// Bare unit with no digit prefix.
-		{"bare b", "b"},
-		// Letter-only token.
-		{"alpha only", "xyz"},
-		// Size token with a '#' prefix (caller must strip '#' before passing).
-		{"hash prefix #70b", "#70b"},
-		// Whitespace embedded.
-		{"whitespace embedded", "70 b"},
-		// Digit-only (no unit).
-		{"digits only 70", "70"},
-		// Negative number.
-		{"negative -70b", "-70b"},
-		// Random word.
-		{"word instruct", "instruct"},
-		// Empty variant token (dash).
-		{"dash only", "-"},
-		// Version-like token that is not a size.
-		{"version 3.3", "3.3"},
-		// Alphanumeric GPT-style version (not a size unit).
-		{"4o", "4o"},
-		// Unknown unit 'k' (not b or m).
-		{"70k", "70k"},
-		// Leading-letter token: the "r7b" inside "command-r7b" is ONE token and is
-		// not a size — a near-miss for the "7b" substring trap.
-		{"leading letter r7b", "r7b"},
-		// Underscore-glued decimal: "10_7b" ('_' is token-internal, not a separator)
-		// is not a size token — mechanical no-match, sized via curated pin instead.
-		{"underscore-glued 10_7b", "10_7b"},
-		// Count-suffixed MoE missing the 'e' expert unit ("17b-16" is not a shape).
-		{"count-moe missing e suffix 17b-16", "17b-16"},
-		// Count-suffixed MoE with a non-numeric expert count.
-		{"count-moe non-numeric experts 17b-xe", "17b-xe"},
-		// Bare expert-count token with no active-param prefix.
-		{"bare expert count 16e", "16e"},
-	}
-
-	for _, tc := range invalid {
-		t.Run(tc.name, func(t *testing.T) {
-			t.Parallel()
-			_, err := bestiary.ParseParamSize(tc.raw)
-			if err == nil {
-				t.Errorf("ParseParamSize(%q) = nil error, want a rejection error for an invalid shape", tc.raw)
-				return
-			}
-			msg := err.Error()
-			// The error must name the rejected input (actionable-error: callers can diagnose
-			// without reading source).
-			if !strings.Contains(msg, tc.raw) {
-				t.Errorf("ParseParamSize(%q) error message does not mention the rejected input\n"+
-					"  got:  %q\n"+
-					"  want: message containing %q", tc.raw, msg, tc.raw)
-			}
-			// The error must include a "How to fix" clause (parse.go emits this
-			// unconditionally; pinning it prevents the clause from being accidentally removed).
-			if !strings.Contains(msg, "How to fix") {
-				t.Errorf("ParseParamSize(%q) error message missing 'How to fix' clause\n"+
-					"  got: %q\n"+
-					"  want: message containing 'How to fix: ...'", tc.raw, msg)
-			}
-		})
-	}
+	corpus := loadParseCorpus[string, string](t, parseParamSizeInvalidCorpusJSON, 16)
+	requireInputCoverage(t, corpus, map[string]string{
+		"r7b":    "", // leading-letter substring trap
+		"10_7b":  "", // underscore-glued near-miss
+		"17b-16": "", // count-moe missing 'e'
+	})
+	runParseParamSizeInvalid(t, corpus)
 }
 
 // TestParseParamSize_CaseFolding pins the case-folding contract: ParseParamSize
@@ -3864,32 +3749,8 @@ func TestParseParamSize_InvalidShapes(t *testing.T) {
 func TestParseParamSize_CaseFolding(t *testing.T) {
 	t.Parallel()
 
-	pairs := [][2]string{
-		{"70B", "70b"},
-		{"8B", "8b"},
-		{"0.5B", "0.5b"},
-		{"1B", "1b"},
-		{"671B", "671b"},
-		{"8X7B", "8x7b"},
-		{"671B-A17B", "671b-a17b"},
-		{"17B-16E", "17b-16e"},
-		{"17B-128E", "17b-128e"},
-		{"10.7B", "10.7b"},
-	}
-
-	for _, pair := range pairs {
-		raw, want := pair[0], pair[1]
-		t.Run(raw+"→"+want, func(t *testing.T) {
-			t.Parallel()
-			got, err := bestiary.ParseParamSize(raw)
-			if err != nil {
-				t.Fatalf("ParseParamSize(%q) unexpected error: %v (uppercase should be accepted and folded)", raw, err)
-			}
-			if got != want {
-				t.Errorf("ParseParamSize(%q) = %q, want %q (must canonicalize to lowercase)", raw, got, want)
-			}
-		})
-	}
+	corpus := loadParseCorpus[string, string](t, parseParamSizeCasefoldCorpusJSON, 10)
+	runParseParamSizeCanonical(t, corpus)
 }
 
 // TestParseParamShape_Shapes verifies that ParseParamShape decomposes each of the
@@ -3905,47 +3766,30 @@ func TestParseParamSize_CaseFolding(t *testing.T) {
 func TestParseParamShape_Shapes(t *testing.T) {
 	t.Parallel()
 
-	const null = bestiary.ParamShapeNull
-
-	cases := []struct {
-		name  string
-		token string
-		want  bestiary.ParamShape
-	}{
-		// Empty token → all-NULL shape (unsized model), no error.
-		{"empty", "", bestiary.ParamShape{TotalParams: null, ActiveParams: null, PerExpertParams: null, ExpertCount: null}},
-
-		// Dense: TotalParams attested; Active/PerExpert NULL; ExpertCount a genuine 0.
-		{"30b dense", "30b", bestiary.ParamShape{TotalParams: 30_000_000_000, ActiveParams: null, PerExpertParams: null, ExpertCount: 0}},
-		{"560m dense", "560m", bestiary.ParamShape{TotalParams: 560_000_000, ActiveParams: null, PerExpertParams: null, ExpertCount: 0}},
-		{"7b dense", "7b", bestiary.ParamShape{TotalParams: 7_000_000_000, ActiveParams: null, PerExpertParams: null, ExpertCount: 0}},
-		{"671b dense", "671b", bestiary.ParamShape{TotalParams: 671_000_000_000, ActiveParams: null, PerExpertParams: null, ExpertCount: 0}},
-
-		// Active-MoE: TotalParams + ActiveParams; PerExpert/Experts NULL.
-		{"30b-a3b active-moe", "30b-a3b", bestiary.ParamShape{TotalParams: 30_000_000_000, ActiveParams: 3_000_000_000, PerExpertParams: null, ExpertCount: null}},
-		{"235b-a22b active-moe", "235b-a22b", bestiary.ParamShape{TotalParams: 235_000_000_000, ActiveParams: 22_000_000_000, PerExpertParams: null, ExpertCount: null}},
-
-		// NxM MoE: ExpertCount + PerExpertParams; Total/Active stay NULL (never N*M).
-		{"8x22b nxm-moe (Total NEVER 176e9)", "8x22b", bestiary.ParamShape{TotalParams: null, ActiveParams: null, PerExpertParams: 22_000_000_000, ExpertCount: 8}},
-		{"8x7b nxm-moe", "8x7b", bestiary.ParamShape{TotalParams: null, ActiveParams: null, PerExpertParams: 7_000_000_000, ExpertCount: 8}},
-
-		// Count-suffixed MoE (Nb-Ke): ActiveParams + ExpertCount; Total/PerExpert NULL.
-		{"17b-16e count-moe (scout)", "17b-16e", bestiary.ParamShape{TotalParams: null, ActiveParams: 17_000_000_000, PerExpertParams: null, ExpertCount: 16}},
-		{"17b-128e count-moe (maverick)", "17b-128e", bestiary.ParamShape{TotalParams: null, ActiveParams: 17_000_000_000, PerExpertParams: null, ExpertCount: 128}},
-
-		// Uppercase token is folded before decomposition.
-		{"8X22B uppercase nxm-moe", "8X22B", bestiary.ParamShape{TotalParams: null, ActiveParams: null, PerExpertParams: 22_000_000_000, ExpertCount: 8}},
-	}
-
-	for _, tc := range cases {
-		t.Run(tc.name, func(t *testing.T) {
+	corpus := loadParseCorpus[string, paramShapeExpected](t, parseParamShapeCorpusJSON, 12)
+	requireInputCoverage(t, corpus, map[string]paramShapeExpected{
+		// NxM MoE: Total is NEVER N*M; only PerExpert + ExpertCount attested.
+		"8x22b": {Total: -1, Active: -1, PerExpert: 22_000_000_000, ExpertCount: 8},
+		// dense: ExpertCount is a genuine 0 (the sole in-domain 0).
+		"30b": {Total: 30_000_000_000, Active: -1, PerExpert: -1, ExpertCount: 0},
+		// count-suffixed MoE: Active + ExpertCount only.
+		"17b-16e": {Total: -1, Active: 17_000_000_000, PerExpert: -1, ExpertCount: 16},
+	})
+	for _, c := range corpus.Cases {
+		t.Run(c.Name, func(t *testing.T) {
 			t.Parallel()
-			got, err := bestiary.ParseParamShape(tc.token)
-			if err != nil {
-				t.Fatalf("ParseParamShape(%q) unexpected error: %v", tc.token, err)
+			want := bestiary.ParamShape{
+				TotalParams:     c.Expected.Total,
+				ActiveParams:    c.Expected.Active,
+				PerExpertParams: c.Expected.PerExpert,
+				ExpertCount:     int(c.Expected.ExpertCount),
 			}
-			if got != tc.want {
-				t.Errorf("ParseParamShape(%q) = %+v, want %+v", tc.token, got, tc.want)
+			got, err := bestiary.ParseParamShape(c.Input)
+			if err != nil {
+				t.Fatalf("ParseParamShape(%q) unexpected error: %v", c.Input, err)
+			}
+			if got != want {
+				t.Errorf("ParseParamShape(%q) = %+v, want %+v", c.Input, got, want)
 			}
 		})
 	}
@@ -3958,28 +3802,17 @@ func TestParseParamShape_Shapes(t *testing.T) {
 func TestParseParamShape_DecimalExact(t *testing.T) {
 	t.Parallel()
 
-	cases := []struct {
-		token string
-		want  int64
-	}{
-		{"10.7b", 10_700_000_000},
-		{"0.6b", 600_000_000},
-		{"1.2b", 1_200_000_000},
-		{"0.5b", 500_000_000},
-		{"3.8b", 3_800_000_000},
-		{"1.5b", 1_500_000_000},
-	}
-
-	for _, tc := range cases {
-		t.Run(tc.token, func(t *testing.T) {
+	corpus := loadParseCorpus[string, int64](t, parseParamShapeDecimalCorpusJSON, 6)
+	for _, c := range corpus.Cases {
+		t.Run(c.Name, func(t *testing.T) {
 			t.Parallel()
-			got, err := bestiary.ParseParamShape(tc.token)
+			got, err := bestiary.ParseParamShape(c.Input)
 			if err != nil {
-				t.Fatalf("ParseParamShape(%q) unexpected error: %v", tc.token, err)
+				t.Fatalf("ParseParamShape(%q) unexpected error: %v", c.Input, err)
 			}
-			if got.TotalParams != tc.want {
+			if got.TotalParams != c.Expected {
 				t.Errorf("ParseParamShape(%q).TotalParams = %d, want %d (exact string-digit arithmetic, no float truncation)",
-					tc.token, got.TotalParams, tc.want)
+					c.Input, got.TotalParams, c.Expected)
 			}
 		})
 	}
@@ -3990,16 +3823,17 @@ func TestParseParamShape_DecimalExact(t *testing.T) {
 func TestParseParamShape_Invalid(t *testing.T) {
 	t.Parallel()
 
-	for _, bad := range []string{"instruct", "4o", "3.3", "17b-16", "r7b", "10_7b"} {
-		t.Run(bad, func(t *testing.T) {
+	corpus := loadParseCorpus[string, string](t, parseParamShapeInvalidCorpusJSON, 6)
+	for _, c := range corpus.Cases {
+		t.Run(c.Name, func(t *testing.T) {
 			t.Parallel()
-			_, err := bestiary.ParseParamShape(bad)
+			_, err := bestiary.ParseParamShape(c.Input)
 			if err == nil {
-				t.Errorf("ParseParamShape(%q) = nil error, want a rejection error", bad)
+				t.Errorf("ParseParamShape(%q) = nil error, want a rejection error", c.Input)
 				return
 			}
-			if !strings.Contains(err.Error(), bad) {
-				t.Errorf("ParseParamShape(%q) error does not name the input: %q", bad, err.Error())
+			if !strings.Contains(err.Error(), c.Input) {
+				t.Errorf("ParseParamShape(%q) error does not name the input: %q", c.Input, err.Error())
 			}
 		})
 	}
@@ -4028,46 +3862,15 @@ func TestParseParamShape_OverflowGuard(t *testing.T) {
 func TestExtractParamSizeToken(t *testing.T) {
 	t.Parallel()
 
-	cases := []struct {
-		name      string
-		id        string
-		wantToken string
-		wantOK    bool
-	}{
-		// Longest whole-window wins: the compound "235b-a22b" beats its "235b" prefix.
-		{"qwen3-235b-a22b longest window", "qwen3-235b-a22b", "235b-a22b", true},
-		{"llama-4-scout-17b-16e count-moe window", "llama-4-scout-17b-16e", "17b-16e", true},
-		{"deepseek 671b-a37b", "deepseek-r1-671b-a37b", "671b-a37b", true},
-
-		// Decimal intact ('.' is token-internal, never a separator).
-		{"lfm-2.5-1.2b decimal", "lfm-2.5-1.2b", "1.2b", true},
-		{"qwen3-embedding-0.6b never 6b", "qwen3-embedding-0.6b", "0.6b", true},
-
-		// Namespaced/colon IDs split on '/' and ':' too.
-		{"meta/llama-4-scout-17b-16e-instruct", "meta/llama-4-scout-17b-16e-instruct", "17b-16e", true},
-		{"cf workers-ai path", "workers-ai/@cf/meta/llama-4-scout-17b-16e-instruct", "17b-16e", true},
-
-		// Case-insensitive; canonical (lowercase) token returned.
-		{"uppercase folds", "Meta-Llama-Llama-4-Maverick-17B-128E-Instruct", "17b-128e", true},
-
-		// Negatives / near-miss substring traps.
-		{"command-r7b no substring 7b", "command-r7b", "", false},
-		{"underscore-glued 10_7b no-match", "upstage/solar-10_7b-instruct", "", false},
-		{"no size token at all", "claude-opus-4-5", "", false},
-		{"context marker 1m is a token not compound", "qwen3-coder-next-fp8-1m", "1m", true},
-		{"empty id", "", "", false},
-	}
-
-	for _, tc := range cases {
-		t.Run(tc.name, func(t *testing.T) {
-			t.Parallel()
-			gotTok, gotOK := bestiary.ExtractParamSizeToken(tc.id)
-			if gotOK != tc.wantOK || gotTok != tc.wantToken {
-				t.Errorf("ExtractParamSizeToken(%q) = (%q, %v), want (%q, %v)",
-					tc.id, gotTok, gotOK, tc.wantToken, tc.wantOK)
-			}
-		})
-	}
+	corpus := loadParseCorpus[string, string](t, extractParamSizeTokenCorpusJSON, 13)
+	requireInputCoverage(t, corpus, map[string]string{
+		// longest whole-window beats the prefix.
+		"qwen3-235b-a22b": "235b-a22b",
+		// near-miss substring traps yield no token.
+		"command-r7b":     "",
+		"claude-opus-4-5": "",
+	})
+	runExtractParamSizeTokenCorpus(t, corpus)
 }
 
 // TestExtractParamSizeToken_CompoundInvariantAcrossIDForms pins the extractor-level
@@ -4079,18 +3882,8 @@ func TestExtractParamSizeToken(t *testing.T) {
 func TestExtractParamSizeToken_CompoundInvariantAcrossIDForms(t *testing.T) {
 	t.Parallel()
 
-	for _, id := range []string{
-		"qwen3-235b-a22b",
-		"qwen/qwen3-235b-a22b-instruct",
-		"qwen3-235b-a22b-2507",
-		"Qwen3-235B-A22B",
-	} {
-		gotTok, ok := bestiary.ExtractParamSizeToken(id)
-		if !ok || gotTok != "235b-a22b" {
-			t.Errorf("ExtractParamSizeToken(%q) = (%q, %v), want (%q, true) — must not yield \"235b\"",
-				id, gotTok, ok, "235b-a22b")
-		}
-	}
+	corpus := loadParseCorpus[string, string](t, extractParamSizeTokenCompoundCorpusJSON, 4)
+	runExtractParamSizeTokenCorpus(t, corpus)
 }
 
 func equalStringSlices(a, b []string) bool {

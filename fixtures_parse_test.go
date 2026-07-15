@@ -7,6 +7,7 @@ package bestiary_test
 
 import (
 	_ "embed"
+	"strings"
 	"testing"
 
 	"github.com/dayvidpham/bestiary"
@@ -173,6 +174,101 @@ func runExtractModifierCorpus(t *testing.T, corpus testcase.Corpus[modifierInput
 	}
 }
 
+// ---- ParseParamSize / ParseParamShape / ExtractParamSizeToken corpora ------
+
+//go:embed testdata/parse/parse_param_size_valid_corpus.json
+var parseParamSizeValidCorpusJSON []byte
+
+//go:embed testdata/parse/parse_param_size_casefold_corpus.json
+var parseParamSizeCasefoldCorpusJSON []byte
+
+//go:embed testdata/parse/parse_param_size_invalid_corpus.json
+var parseParamSizeInvalidCorpusJSON []byte
+
+//go:embed testdata/parse/parse_param_shape_corpus.json
+var parseParamShapeCorpusJSON []byte
+
+//go:embed testdata/parse/parse_param_shape_decimal_corpus.json
+var parseParamShapeDecimalCorpusJSON []byte
+
+//go:embed testdata/parse/parse_param_shape_invalid_corpus.json
+var parseParamShapeInvalidCorpusJSON []byte
+
+//go:embed testdata/parse/extract_param_size_token_corpus.json
+var extractParamSizeTokenCorpusJSON []byte
+
+//go:embed testdata/parse/extract_param_size_token_compound_corpus.json
+var extractParamSizeTokenCompoundCorpusJSON []byte
+
+// paramShapeExpected is the four-joint decomposition of a size token. Each field
+// holds a genuine parameter count, a genuine 0 (dense ExpertCount), or -1
+// (bestiary.ParamShapeNull) for a joint that shape does not carry.
+type paramShapeExpected struct {
+	Total       int64 `json:"total"`
+	Active      int64 `json:"active"`
+	PerExpert   int64 `json:"per_expert"`
+	ExpertCount int64 `json:"expert_count"`
+}
+
+// runParseParamSizeCanonical drives bestiary.ParseParamSize and asserts the
+// canonical (lowercase) result, with no error. Shared by the valid-shapes and
+// case-folding corpora.
+func runParseParamSizeCanonical(t *testing.T, corpus testcase.Corpus[string, string]) {
+	t.Helper()
+	for _, c := range corpus.Cases {
+		t.Run(c.Name, func(t *testing.T) {
+			t.Parallel()
+			got, err := bestiary.ParseParamSize(c.Input)
+			if err != nil {
+				t.Fatalf("ParseParamSize(%q) unexpected error: %v", c.Input, err)
+			}
+			if got != c.Expected {
+				t.Errorf("ParseParamSize(%q) = %q, want %q (canonical lowercase)", c.Input, got, c.Expected)
+			}
+		})
+	}
+}
+
+// runParseParamSizeInvalid drives bestiary.ParseParamSize over the reject corpus
+// and asserts an actionable error naming the input and carrying "How to fix".
+func runParseParamSizeInvalid(t *testing.T, corpus testcase.Corpus[string, string]) {
+	t.Helper()
+	for _, c := range corpus.Cases {
+		t.Run(c.Name, func(t *testing.T) {
+			t.Parallel()
+			_, err := bestiary.ParseParamSize(c.Input)
+			if err == nil {
+				t.Errorf("ParseParamSize(%q) = nil error, want a rejection error for an invalid shape", c.Input)
+				return
+			}
+			msg := err.Error()
+			if !strings.Contains(msg, c.Input) {
+				t.Errorf("ParseParamSize(%q) error does not mention the rejected input: %q", c.Input, msg)
+			}
+			if !strings.Contains(msg, "How to fix") {
+				t.Errorf("ParseParamSize(%q) error missing 'How to fix' clause: %q", c.Input, msg)
+			}
+		})
+	}
+}
+
+// runExtractParamSizeTokenCorpus drives bestiary.ExtractParamSizeToken and
+// asserts the canonical token; ok is exactly (token != "").
+func runExtractParamSizeTokenCorpus(t *testing.T, corpus testcase.Corpus[string, string]) {
+	t.Helper()
+	for _, c := range corpus.Cases {
+		t.Run(c.Name, func(t *testing.T) {
+			t.Parallel()
+			gotTok, gotOK := bestiary.ExtractParamSizeToken(c.Input)
+			wantOK := c.Expected != ""
+			if gotTok != c.Expected || gotOK != wantOK {
+				t.Errorf("ExtractParamSizeToken(%q) = (%q, %v), want (%q, %v)",
+					c.Input, gotTok, gotOK, c.Expected, wantOK)
+			}
+		})
+	}
+}
+
 // loadParseCorpus loads a corpus, enforces the exact case-count control (wantN,
 // the pre-migration inline row count) and the non-vacuity guard, and returns it
 // so the caller can add a value-based coverage assertion before driving the SUT.
@@ -271,4 +367,3 @@ func runFamilyVersionCorpus(t *testing.T, corpus testcase.Corpus[string, familyV
 		})
 	}
 }
-

@@ -1,0 +1,52 @@
+{
+  "cases": [
+    {
+      "name": "instruct",
+      "input": "instruct",
+      "expected": "",
+      "classification": "must-fail",
+      "provenance": { "source": "boundary", "ref": "a modifier word is not a size shape; error must name the input" },
+      "mutation": { "description": "a non-size word the parser must reject" }
+    },
+    {
+      "name": "4o",
+      "input": "4o",
+      "expected": "",
+      "classification": "must-fail",
+      "provenance": { "source": "boundary", "ref": "a GPT-style alphanumeric version is not a size unit" },
+      "mutation": { "description": "an alphanumeric version token the parser must reject" }
+    },
+    {
+      "name": "3.3",
+      "input": "3.3",
+      "expected": "",
+      "classification": "must-fail",
+      "provenance": { "source": "boundary", "ref": "a version-like decimal with no unit is not a size" },
+      "mutation": { "description": "a unit-less decimal the parser must reject" }
+    },
+    {
+      "name": "17b-16",
+      "input": "17b-16",
+      "expected": "",
+      "classification": "must-fail",
+      "provenance": { "source": "boundary", "ref": "count-suffixed MoE missing the 'e' expert unit is not a shape" },
+      "mutation": { "description": "dropped the trailing 'e' expert unit, making the shape invalid" }
+    },
+    {
+      "name": "r7b",
+      "input": "r7b",
+      "expected": "",
+      "classification": "must-fail",
+      "provenance": { "source": "boundary", "ref": "leading-letter token (the 'r7b' inside command-r7b) is one token, not a size" },
+      "mutation": { "description": "a leading-letter near-miss for the 7b substring trap" }
+    },
+    {
+      "name": "10_7b",
+      "input": "10_7b",
+      "expected": "",
+      "classification": "must-fail",
+      "provenance": { "source": "boundary", "ref": "underscore-glued decimal ('_' is token-internal, not a separator) is not a size token" },
+      "mutation": { "description": "underscore-glued the decimal so it is a single non-size token" }
+    }
+  ]
+}
