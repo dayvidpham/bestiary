@@ -1,0 +1,25 @@
+{
+  "_comment": "Curated exact-ID -> canonical parameter-size TOKEN pins (GH#9). TOP precedence tier: an entry here overrides the mechanical ExtractParamSizeToken decomposition AND the fetch-owned ParamSizeFor fallback (pin > mechanical > ParamSizeFor), so a curated identity size can never be flipped by an ollama-bot refresh or a greedy scan. KEYING: 'id' is the lowercase exact model ID (matched case-insensitively). VALUE: 'param_size' is the canonical size token verbatim (e.g. '17b-16e', '10.7b'); an EMPTY param_size is a SUPPRESS-pin — NO size is extracted for that ID (no #size segment, no shape ints) — used for size-shaped tokens that are not sizes. Presence, not the value, decides: a suppress-pin's '' never falls through to the mechanical extractor. SEED CENSUS (S2): (1) every catalog llama-4 scout/maverick ID that LACKS the expert-count suffix is pinned to its full-shape token ('17b-16e' for scout / '17b-128e' for maverick) so every variant of the artifact keys to ONE entity — this is the dual-leg census (decomposition family=llama version=4 variant=scout|maverick UNION a literal 'llama4'/'llama-4' substring sweep). The 4 dotted Bedrock forms escape a substring census and are enumerated explicitly below: meta.llama4-maverick-17b-instruct-v1:0, us.meta.llama4-maverick-17b-instruct-v1:0, meta.llama4-scout-17b-instruct-v1:0, us.meta.llama4-scout-17b-instruct-v1:0 (each mechanically extracts only '17b', so the pin is load-bearing). (2) upstage/solar-10_7b-instruct -> '10.7b' (underscore-glued decimal; '_' is not a separator so the mechanical extractor cannot reach it). (3) qwen/qwen3-coder-next-fp8-1m -> '' (suppress: '1m' is a 1M-context tier marker, not params). Full-bulk re-key + the wider pin inventory land in a later slice; this is the grammar-slice seed only.",
+  "schema_version": 1,
+  "entries": [
+    {"id": "llama-4-scout", "param_size": "17b-16e", "_comment": "size-less scout form -> full scout shape"},
+    {"id": "llama-4-scout-17b-instruct", "param_size": "17b-16e", "_comment": "bare-17b scout form (mechanical '17b') -> full scout shape"},
+    {"id": "meta/llama-4-scout", "param_size": "17b-16e"},
+    {"id": "meta/llama-4-scout-17b-instruct", "param_size": "17b-16e", "_comment": "models.json (metadata-id) scout form; mechanical '17b'"},
+    {"id": "meta-llama/llama-4-scout", "param_size": "17b-16e"},
+    {"id": "meta.llama4-scout-17b-instruct-v1:0", "param_size": "17b-16e", "_comment": "Bedrock dotted form (mechanical '17b'); dot is token-internal"},
+    {"id": "us.meta.llama4-scout-17b-instruct-v1:0", "param_size": "17b-16e", "_comment": "Bedrock dotted form (mechanical '17b'); dot is token-internal"},
+
+    {"id": "llama-4-maverick", "param_size": "17b-128e", "_comment": "size-less maverick form -> full maverick shape"},
+    {"id": "llama-4-maverick-17b-instruct", "param_size": "17b-128e", "_comment": "bare-17b maverick form (mechanical '17b') -> full maverick shape"},
+    {"id": "meta/llama-4-maverick", "param_size": "17b-128e"},
+    {"id": "meta/llama-4-maverick-17b-instruct", "param_size": "17b-128e", "_comment": "models.json (metadata-id) maverick form; mechanical '17b'"},
+    {"id": "meta-llama/llama-4-maverick", "param_size": "17b-128e"},
+    {"id": "meta.llama4-maverick-17b-instruct-v1:0", "param_size": "17b-128e", "_comment": "Bedrock dotted form (mechanical '17b'); dot is token-internal"},
+    {"id": "us.meta.llama4-maverick-17b-instruct-v1:0", "param_size": "17b-128e", "_comment": "Bedrock dotted form (mechanical '17b'); dot is token-internal"},
+
+    {"id": "upstage/solar-10_7b-instruct", "param_size": "10.7b", "_comment": "underscore-glued decimal '10_7b'; '_' is not a separator so the mechanical extractor cannot reach it"},
+
+    {"id": "qwen/qwen3-coder-next-fp8-1m", "param_size": "", "_comment": "SUPPRESS: '1m' is a 1M-context tier marker, not params; extractor honestly returns ('1m', true) so this pin overrides at enrichment tier"}
+  ]
+}

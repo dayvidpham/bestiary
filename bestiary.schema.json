@@ -178,6 +178,22 @@
       "description": "Canonical parameter-size token for this model instance (e.g. \"70b\", \"8b\", \"0.5b\"). Empty string when the size is unknown or not applicable. Participates in entity identity via the #size segment of EntityRef.String(). Optional; absent for models without curated size data.",
       "type": "string"
     },
+    "TotalParams": {
+      "description": "Total parameter count decomposed from ParamSize (e.g. 30000000000 for \"30b\"; exact for decimal tokens, e.g. 10700000000 for \"10.7b\"). 0 when the size is unattested OR when the shape carries no total: an NxM MoE token (\"8x22b\") records ExpertCount and PerExpertParams but NO total (the product is never computed), and a count-suffixed token (\"17b-16e\") records ActiveParams and ExpertCount but no total. Derived presentation fact, never entity-key material. Optional (additive).",
+      "type": "integer"
+    },
+    "ActiveParams": {
+      "description": "Active (per-forward-pass) parameter count of a mixture-of-experts model (e.g. 3000000000 for \"30b-a3b\"; 17000000000 for \"17b-16e\"). 0 for a dense model or when the size is unattested. Derived presentation fact, never entity-key material. Optional (additive).",
+      "type": "integer"
+    },
+    "PerExpertParams": {
+      "description": "Per-expert parameter count of an NxM MoE token (e.g. 22000000000 for \"8x22b\"). 0 unless the shape is NxM (only \"NxMb\" tokens populate it) or when the size is unattested. Derived presentation fact, never entity-key material. Optional (additive).",
+      "type": "integer"
+    },
+    "ExpertCount": {
+      "description": "Number of experts of a mixture-of-experts model (8 for \"8x22b\", 16 for \"17b-16e\", 128 for \"17b-128e\"). 0 for a dense model or when the size is unattested. Derived presentation fact, never entity-key material. Optional (additive).",
+      "type": "integer"
+    },
     "QuantVRAM": {
       "description": "Per-quantization weight and VRAM footprint rows for this model instance. null when no quantization data is available. Populated at codegen time from curated data; live-sync rows carry null.",
       "type": ["array", "null"],

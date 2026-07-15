@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"regexp"
 	"sort"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -3053,10 +3054,11 @@ func isDateShapedToken(tok string) bool {
 //   - dense param count:  "120b", "20b", "7b", "1.5b", "560m", "7m"
 //   - MoE "NxNNb":        "8x22b", "8x7b"
 //   - MoE active-params:  "30b-a3b", "300b-a47b", "235b-a22b", "480b-a35b"
+//   - MoE count-suffixed: "17b-16e", "17b-128e"  (Nb-Ke: active params + expert count)
 //
 // Genuine version tokens are NOT matched because they have no b/m unit suffix:
 // "4o" (ends "o"), "4.5", "5", "3.1", "2603" (date, also guarded separately).
-var reParamSizeToken = regexp.MustCompile(`^(?i:\d+(?:\.\d+)?[bm]|\d+x\d+b|\d+b-a\d+b)$`)
+var reParamSizeToken = regexp.MustCompile(`^(?i:\d+(?:\.\d+)?[bm]|\d+x\d+b|\d+b-a\d+b|\d+b-\d+e)$`)
 
 // isParamSizeToken reports whether tok is a parameter-count / model-size token
 // (e.g. "120b", "7m", "8x22b", "30b-a3b"). Such tokens are dropped from version
@@ -3098,7 +3100,8 @@ func ParseParamSize(raw string) (string, error) {
 			"bestiary: ParseParamSize: %q is not a valid param-size token\n"+
 				"  What: the input does not match the expected parameter-count shape\n"+
 				"  Why: valid shapes are dense (e.g. \"70b\", \"0.5b\", \"560m\"),"+
-				" MoE (e.g. \"8x22b\"), or active-param MoE (e.g. \"30b-a3b\")\n"+
+				" MoE (e.g. \"8x22b\"), active-param MoE (e.g. \"30b-a3b\"),"+
+				" or count-suffixed MoE (e.g. \"17b-16e\")\n"+
 				"  Where: bestiary.ParseParamSize\n"+
 				"  How to fix: supply a token ending in 'b' or 'm' with an optional"+
 				" leading count (e.g. \"8b\", \"70b\", \"0.5b\")",
@@ -3106,6 +3109,251 @@ func ParseParamSize(raw string) (string, error) {
 		)
 	}
 	return lower, nil
+}
+
+// Sub-shape recognizers for ParseParamShape. Each operates on the already
+// lowercased, already-validated canonical token, so the dispatch is a plain
+// suffix-keyed classification rather than a re-validation. The order in which
+// ParseParamShape tries them is significant only for readability — the four
+// shapes are mutually exclusive.
+var (
+	reShapeNxM       = regexp.MustCompile(`^(\d+)x(\d+b)$`)        // "8x22b": experts x per-expert
+	reShapeActiveMoE = regexp.MustCompile(`^(\d+b)-a(\d+b)$`)      // "30b-a3b": total - active
+	reShapeCountMoE  = regexp.MustCompile(`^(\d+b)-(\d+)e$`)       // "17b-16e": active - expert count
+	reShapeDense     = regexp.MustCompile(`^(\d+(?:\.\d+)?[bm])$`) // "30b", "560m", "10.7b"
+)
+
+// ParseParamShape decomposes a canonical parameter-size token into its flat
+// parameter-count facts. It is a PURE, suffix-keyed decomposition: the token's
+// shape (dense / NxM / active-MoE / count-suffixed-MoE) selects which fields are
+// populated, and no field is ever cross-computed from another.
+//
+// The counts are EXACT int64 values derived with string-digit decimal arithmetic
+// (never a float64 multiply), so a decimal token is exact to the parameter:
+// "10.7b" -> TotalParams 10_700_000_000 and "0.6b" -> TotalParams 600_000_000.
+//
+// An NxM MoE token records ExpertCount and PerExpertParams but leaves TotalParams
+// zero — the product is deliberately NOT computed (upstream does not publish a
+// total for these and N*M would misstate the footprint). A count-suffixed token
+// ("17b-16e") records ActiveParams and ExpertCount but no TotalParams.
+//
+// The empty token yields the zero ParamShape with no error (an unsized model). A
+// non-empty token that is not a recognized size shape returns an actionable error
+// (the same rejection surface as ParseParamSize).
+//
+//	ParseParamShape("30b")     -> {TotalParams: 30e9}
+//	ParseParamShape("560m")    -> {TotalParams: 560e6}
+//	ParseParamShape("30b-a3b") -> {TotalParams: 30e9, ActiveParams: 3e9}
+//	ParseParamShape("8x22b")   -> {ExpertCount: 8, PerExpertParams: 22e9}   // Total NEVER N*M
+//	ParseParamShape("17b-16e") -> {ActiveParams: 17e9, ExpertCount: 16}
+func ParseParamShape(sizeToken string) (ParamShape, error) {
+	if sizeToken == "" {
+		return ParamShape{}, nil
+	}
+	tok, err := ParseParamSize(sizeToken)
+	if err != nil {
+		return ParamShape{}, err
+	}
+	// tok is the canonical lowercase token; classify by shape.
+	if m := reShapeNxM.FindStringSubmatch(tok); m != nil {
+		experts, cerr := strconv.Atoi(m[1])
+		perExpert, perr := paramTokenToInt64(m[2])
+		if err := firstNonNil(cerr, perr); err != nil {
+			return ParamShape{}, paramShapeArithErr(tok, err)
+		}
+		return ParamShape{ExpertCount: experts, PerExpertParams: perExpert}, nil
+	}
+	if m := reShapeActiveMoE.FindStringSubmatch(tok); m != nil {
+		total, terr := paramTokenToInt64(m[1])
+		active, aerr := paramTokenToInt64(m[2])
+		if err := firstNonNil(terr, aerr); err != nil {
+			return ParamShape{}, paramShapeArithErr(tok, err)
+		}
+		return ParamShape{TotalParams: total, ActiveParams: active}, nil
+	}
+	if m := reShapeCountMoE.FindStringSubmatch(tok); m != nil {
+		active, aerr := paramTokenToInt64(m[1])
+		experts, cerr := strconv.Atoi(m[2])
+		if err := firstNonNil(aerr, cerr); err != nil {
+			return ParamShape{}, paramShapeArithErr(tok, err)
+		}
+		return ParamShape{ActiveParams: active, ExpertCount: experts}, nil
+	}
+	if m := reShapeDense.FindStringSubmatch(tok); m != nil {
+		total, terr := paramTokenToInt64(m[1])
+		if terr != nil {
+			return ParamShape{}, paramShapeArithErr(tok, terr)
+		}
+		return ParamShape{TotalParams: total}, nil
+	}
+	// Unreachable in practice: ParseParamSize accepted the token, so exactly one
+	// sub-shape regex above must have matched. Fail loudly rather than return a
+	// silently-empty shape if the two grammars ever drift apart.
+	return ParamShape{}, fmt.Errorf(
+		"bestiary: ParseParamShape: %q passed ParseParamSize but matched no shape\n"+
+			"  What: a token accepted as a size did not decompose into a shape\n"+
+			"  Why: reParamSizeToken and the ParseParamShape sub-shape regexes have drifted\n"+
+			"  Where: bestiary.ParseParamShape\n"+
+			"  How to fix: add the new shape's decomposition arm to ParseParamShape",
+		tok,
+	)
+}
+
+// firstNonNil returns the first non-nil error among its arguments, or nil.
+func firstNonNil(errs ...error) error {
+	for _, e := range errs {
+		if e != nil {
+			return e
+		}
+	}
+	return nil
+}
+
+// paramShapeArithErr wraps an int64 conversion failure inside ParseParamShape with
+// an actionable message. It is only reachable for a pathologically large count
+// that overflows int64 (real catalog sizes are ~1e12, far below the int64 max).
+func paramShapeArithErr(tok string, cause error) error {
+	return fmt.Errorf(
+		"bestiary: ParseParamShape: %q: parameter count does not fit int64: %w\n"+
+			"  What: a numeric field in the size token overflowed int64\n"+
+			"  Where: bestiary.ParseParamShape\n"+
+			"  How to fix: this indicates an implausibly large size token; verify the input",
+		tok, cause,
+	)
+}
+
+// paramTokenToInt64 converts a single dense unit token ("30b", "560m", "10.7b",
+// "0.6b") to its EXACT int64 parameter count using string-digit decimal
+// arithmetic — never a float64 multiply. The token's trailing unit selects a
+// power-of-ten magnitude (b -> 10^9, m -> 10^6); the leading number's fractional
+// digits are absorbed into the exponent so, e.g., "10.7b" = 107 * 10^8 =
+// 10_700_000_000 and "0.6b" = 6 * 10^8 = 600_000_000, both exact.
+func paramTokenToInt64(tok string) (int64, error) {
+	if tok == "" {
+		return 0, fmt.Errorf("empty unit token")
+	}
+	unit := tok[len(tok)-1]
+	var unitExp int
+	switch unit {
+	case 'b':
+		unitExp = 9
+	case 'm':
+		unitExp = 6
+	default:
+		return 0, fmt.Errorf("token %q has no recognized b/m unit suffix", tok)
+	}
+	num := tok[:len(tok)-1] // strip the unit
+	intPart, fracPart, hasDot := strings.Cut(num, ".")
+	if !hasDot {
+		fracPart = ""
+	}
+	// The significand is the digits with the decimal point removed; the value is
+	// significand * 10^(unitExp - len(fracPart)). Leading zeros ("0.6b" -> "06")
+	// parse cleanly to the intended integer.
+	significand, err := strconv.ParseInt(intPart+fracPart, 10, 64)
+	if err != nil {
+		return 0, fmt.Errorf("cannot parse significand of %q: %w", tok, err)
+	}
+	exp := unitExp - len(fracPart)
+	if exp < 0 {
+		// More fractional digits than the unit magnitude (e.g. a sub-million
+		// fraction on an m-token). Not seen in real catalog data; divide exactly.
+		return significand / pow10i64(-exp), nil
+	}
+	return significand * pow10i64(exp), nil
+}
+
+// pow10i64 returns 10^n as an int64 for a small non-negative n (n <= 18). Used by
+// the exact decimal arithmetic in paramTokenToInt64; callers only ever pass the
+// unit exponent (<= 9) minus a fractional-digit count.
+func pow10i64(n int) int64 {
+	out := int64(1)
+	for i := 0; i < n; i++ {
+		out *= 10
+	}
+	return out
+}
+
+// paramSizeTokenSpans returns the [start,end) index spans of the maximal runs of
+// NON-separator characters in id, where the separator set is [-:/] ONLY. '.' and
+// '_' are intentionally NOT separators: '.' carries decimal sizes ("0.6b") and '_'
+// matches the no-underscore behavior of both existing extractor sites
+// (metadata_join.go, cmd/bestiary-ollama) and has zero extraction benefit
+// catalog-wide. A window built from spans[i].start..spans[j].end therefore always
+// reproduces a contiguous substring of id (its interior separators are the ID's
+// own original separators).
+func paramSizeTokenSpans(id string) [][2]int {
+	var spans [][2]int
+	start := -1
+	for i := 0; i < len(id); i++ {
+		c := id[i]
+		if c == '-' || c == ':' || c == '/' {
+			if start >= 0 {
+				spans = append(spans, [2]int{start, i})
+				start = -1
+			}
+			continue
+		}
+		if start < 0 {
+			start = i
+		}
+	}
+	if start >= 0 {
+		spans = append(spans, [2]int{start, len(id)})
+	}
+	return spans
+}
+
+// ExtractParamSizeToken is the single grammar authority for pulling a
+// parameter-size token out of a model ID. It is shared (by the enrichment path,
+// the metadata join, the offline Ollama tool, and parseBaseRef) so every site
+// decomposes sizes identically and no site re-implements a greedy scan.
+//
+// It tokenizes id on [-:/] ONLY — '.' and '_' are NOT separators ('.' carries
+// decimal sizes; '_' matches both existing sites' no-underscore behavior and has
+// zero extraction benefit catalog-wide). Candidate windows are contiguous token
+// runs rejoined with their ORIGINAL separators (each window is a contiguous
+// substring of id); the LONGEST window that is a valid size wins (ties break to
+// the leftmost). It returns the CANONICAL token (ParseParamSize-normalized), so
+// callers get the same spelling the entity key uses. Any static-vs-derived skew
+// (a baked ParamSize that disagrees with what this returns) is caught by
+// TestCodegen_UpToDate rather than silently tolerated.
+//
+//	"qwen3-235b-a22b"              -> ("235b-a22b", true)   // longest whole window, not "235b"
+//	"llama-4-scout-17b-16e"        -> ("17b-16e", true)
+//	"lfm-2.5-1.2b"                 -> ("1.2b", true)        // decimal intact
+//	"qwen3-embedding-0.6b"         -> ("0.6b", true)        // never "6b"
+//	"command-r7b"                  -> ("", false)           // r7b is one token; never substring "7b"
+//	"upstage/solar-10_7b-instruct" -> ("", false)           // '_' not a separator; sized via curated pin
+func ExtractParamSizeToken(id string) (token string, ok bool) {
+	if id == "" {
+		return "", false
+	}
+	spans := paramSizeTokenSpans(id)
+	var (
+		best      string
+		bestLen   int
+		bestStart = -1
+	)
+	for i := 0; i < len(spans); i++ {
+		for j := i; j < len(spans); j++ {
+			window := id[spans[i][0]:spans[j][1]]
+			canon, err := ParseParamSize(window)
+			if err != nil || canon == "" {
+				continue
+			}
+			wlen := len(window)
+			if wlen > bestLen || (wlen == bestLen && spans[i][0] < bestStart) {
+				best = canon
+				bestLen = wlen
+				bestStart = spans[i][0]
+			}
+		}
+	}
+	if best == "" {
+		return "", false
+	}
+	return best, true
 }
 
 // --------------------------------------------------------------------------
