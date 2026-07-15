@@ -5,13 +5,14 @@ import (
 	"testing"
 )
 
-// midid_engine_internal_test.go — internal pins for the p0w6f mid-ID token engine
-// (the phase-B mid-ID stage/mode harvest in extractModifiers). Internal package so the
+// midid_engine_internal_test.go — internal pins for the mid-ID token engine: the
+// phase-B stage/mode harvest in extractModifiers, which recovers identity/attribute
+// modifiers buried before the variant/version boundary. Internal package so the
 // tests can (a) call the unexported extractModifiers directly and (b) temporarily remove
 // an idFamilyOverrides entry to prove the mechanical decomposition matches the pinned
 // override tuple (the before/after equivalence discipline). The overrides themselves are
-// left in place — retirement is a separate slice; these tests only prove they are now
-// redundant for the fields the engine owns.
+// deliberately left in place — retiring them is deferred future work; these tests only
+// prove they are now redundant for the fields the engine owns.
 
 // decompStr renders a decomposition tuple for readable failures.
 func decompStr(f Family, v, ver string, mods []string) string {
@@ -71,13 +72,13 @@ var stageModeFullyDerivable = []string{
 	"nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free",
 }
 
-// TestMidIDEngine_Iu71cEquivalence_FullyDerivable is the before/after equivalence pin: for
-// every fully-derivable stage/mode override ID, the mechanical decomposition (override
-// REMOVED) must equal the curated override tuple exactly. This proves the engine harvests
-// the buried mid-ID modifier and that the override is redundant for these IDs (retirement-
-// ready — retirement itself is deferred to a later slice). A failure here means the mid-ID
-// harvest regressed OR the override was edited out of agreement.
-func TestMidIDEngine_Iu71cEquivalence_FullyDerivable(t *testing.T) {
+// TestMidIDEngine_StageOverrideEquivalence_FullyDerivable is the before/after equivalence
+// pin: for every fully-derivable stage/mode override ID, the mechanical decomposition
+// (override REMOVED) must equal the curated override tuple exactly. This proves the engine
+// harvests the buried mid-ID modifier and that the override is redundant for these IDs
+// (retirement-ready — the retirement itself is deliberately deferred). A failure here means
+// the mid-ID harvest regressed OR the override was edited out of agreement.
+func TestMidIDEngine_StageOverrideEquivalence_FullyDerivable(t *testing.T) {
 	for _, id := range stageModeFullyDerivable {
 		ov, ok := idFamilyOverrides[strings.ToLower(id)]
 		if !ok {
@@ -94,14 +95,15 @@ func TestMidIDEngine_Iu71cEquivalence_FullyDerivable(t *testing.T) {
 	}
 }
 
-// TestMidIDEngine_Iu71cEquivalence_RealtimeModifierOnly pins the boundary of the engine's
-// reach: the dotted-version gpt-realtime IDs. The engine DOES harvest the mid-ID realtime
-// token (its job) and resolves family=gpt, but a SEPARATE version-extraction gap (a dotted
-// version sitting behind the mid-ID realtime token) leaves the version unrecovered, so
-// these are NOT yet fully retirement-ready — the override still owns the version. Pinning
-// the exact current mechanical version documents the gap: if the version extractor later
-// closes it, this test flags the ID for promotion into stageModeFullyDerivable.
-func TestMidIDEngine_Iu71cEquivalence_RealtimeModifierOnly(t *testing.T) {
+// TestMidIDEngine_StageOverrideEquivalence_RealtimeModifierOnly pins the boundary of the
+// engine's reach: the dotted-version gpt-realtime IDs. The engine DOES harvest the mid-ID
+// realtime token (its job) and resolves family=gpt, but a SEPARATE version-extraction gap
+// (a dotted version sitting behind the mid-ID realtime token) leaves the version
+// unrecovered, so these are NOT yet fully retirement-ready — the override still owns the
+// version. Pinning the exact current mechanical version documents the gap: if the version
+// extractor later closes it, this test flags the ID for promotion into
+// stageModeFullyDerivable.
+func TestMidIDEngine_StageOverrideEquivalence_RealtimeModifierOnly(t *testing.T) {
 	cases := []struct {
 		id          string
 		wantVersion string // current mechanical version (the documented gap)
