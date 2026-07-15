@@ -14,6 +14,75 @@ for its **Go module tags** (`vX.Y.Z`).
 
 ## [Unreleased]
 
+## [0.2.5] — 2026-07-15
+
+**Schema:** `0.2.0` → `0.3.0` (additive). SQLite store schema `5` → `6`.
+
+The **models.dev harmonization + provenance history** epoch: ingest all three
+models.dev JSON artifacts (api.json, models.json, catalog.json), bake the new
+provider-agnostic metadata dimension (benchmarks, licenses, links), refresh the
+static catalog from a vendored July snapshot, make the ingest log an append-only
+history with a round-trip export, and land the `#size` lookup prerequisites.
+Relates [#9] (size prereqs) and [#13] (stage tokens remain a deferred dimension).
+
+### Added
+
+- **Three-artifact ingestion** (`wire.go`, `client.go`): exported
+  `ParseAPIJSON`/`ParseModelsJSON`/`ParseCatalogJSON` plus
+  `Client.FetchModelMetadata`/`FetchCatalog` on one shared decode path; wire
+  types refreshed for the upstream schema drift (`reasoning_options`, `status`,
+  `description`, cost tiers/audio/`context_over_200k`); benchmark scores
+  tolerate upstream `number|string` (`ScoreRaw`).
+- **Entity metadata dimension** (`metadata.go`): `EntityMetadata`
+  (description, license, typed `Links`, `Benchmarks`) attached at the entity
+  level via an alias-first join with a two-tier miss policy (unlinked report /
+  genuine-absence standalones); `BenchmarkResult` keeps criterion identity,
+  harness, score, and claim attribution (`SourceURL`, lab-reported) as separate
+  fields; closed enums `ModelStatus`, `LinkType`, `ReasoningOptionKind`;
+  `ModelInfo` gains description/status/reasoning-options/cost-tier fields.
+- **CLI**: new `entities` subcommand (enumerates every entity, including
+  metadata-only standalones); `list --status`; `sources --history` and
+  `sources --export` (union of store history and the curated seed, promotable
+  into `datasources.json`); one stderr notice when views serve embedded-only
+  metadata; sync drift warning; benchmark table renders top-5 with a count
+  footer and ellipsis-truncated names.
+- **Vendored codegen input** (`parse/data/modelsdev/`): committed
+  `catalog.json` + `SNAPSHOT.json` provenance sidecar; codegen is fully offline
+  and fails loudly on a missing/corrupt snapshot; new `models_metadata_gen.go`
+  bake; `modelsdev_unlinked.json` join report + `modelsdev_aliases.json`
+  curation; a real-input regen up-to-date guard.
+- **Store v6** (`store.go`): `dataset_ingested` becomes an append-only history
+  (composite primary key, `INSERT OR IGNORE`, current = latest); new
+  `entity_metadata`/`metadata_benchmarks`/`metadata_links` tables (including
+  `raw_family`); the `models` table persists the new instance-level fields;
+  presence-guarded self-heals for intermediate v6 caches; sync now persists
+  provenance (ingest rows, metadata, attestations).
+- **`#size` prerequisites**: lineage keys carry `param_size` with a
+  size-agnostic fallback (unsized edges apply to every sized sibling;
+  size-specific edges win); `Resolve()` ambiguity grouping and `ModelRef` gain
+  the size axis.
+- **Stage/mode identity granularity**: `omni`/`livetranslate` are
+  identity-class modifiers, `realtime` is an attribute-class serving tier, and
+  the laguna `xs`/`m` product lines are curated variants — distinct lab models
+  no longer collapse into shared entities.
+
+### Changed
+
+- Static catalog refreshed from the July models.dev snapshot: 162 providers,
+  5,654 models, 810 entities (April baseline: 138 providers, ~4,300 models).
+- `UpstreamSchemaVersion` pinned to the July schema; ingest `parser_schema`
+  is now `3`; `datasources.json` is schema v3 (multi-row ingest history).
+
+### Fixed
+
+- Metadata join family-presence gate no longer synthesizes standalone entities
+  for models the catalog actually serves (the presence check now uses the same
+  family canonicalization as the enrichment pipeline).
+- Sized entities no longer silently lose lineage; `gpt-realtime-*` versions are
+  no longer swallowed by the `realtime` token; the laguna metadata collision is
+  resolved; parse-time suffix/modifier tie-breaks are total-ordered
+  (determinism by construction).
+
 ## [0.2.4] — 2026-07-11
 
 **Schema:** `0.1.0` → `0.2.0` (additive). SQLite store schema `4` → `5`.
@@ -299,7 +368,9 @@ Tag `v0.0.2`. The original entity-normalization epoch groundwork:
   the `CanonicalScheme` enum.
 - New types: `Designation`, `AcceptabilityRating`.
 
-[Unreleased]: https://github.com/dayvidpham/bestiary/compare/v0.2.3...HEAD
+[Unreleased]: https://github.com/dayvidpham/bestiary/compare/v0.2.5...HEAD
+[0.2.5]: https://github.com/dayvidpham/bestiary/compare/v0.2.4...v0.2.5
+[0.2.4]: https://github.com/dayvidpham/bestiary/compare/v0.2.3...v0.2.4
 [0.2.3]: https://github.com/dayvidpham/bestiary/compare/v0.2.2...v0.2.3
 [0.2.2]: https://github.com/dayvidpham/bestiary/compare/v0.2.1...v0.2.2
 [0.2.1]: https://github.com/dayvidpham/bestiary/compare/v0.2.0...v0.2.1
@@ -311,6 +382,7 @@ Tag `v0.0.2`. The original entity-normalization epoch groundwork:
 [#18]: https://github.com/dayvidpham/bestiary/issues/18
 [#16]: https://github.com/dayvidpham/bestiary/issues/16
 [#15]: https://github.com/dayvidpham/bestiary/pull/15
+[#13]: https://github.com/dayvidpham/bestiary/issues/13
 [#12]: https://github.com/dayvidpham/bestiary/issues/12
 [#11]: https://github.com/dayvidpham/bestiary/issues/11
 [#9]: https://github.com/dayvidpham/bestiary/issues/9

@@ -3,7 +3,7 @@
   "$id": "https://github.com/dayvidpham/bestiary/bestiary.schema.json",
   "title": "ModelInfo",
   "description": "Metadata for a single AI model as produced by the bestiary CLI JSON formatter.",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "type": "object",
   "properties": {
     "ID": {
@@ -186,6 +186,49 @@
     "Source": {
       "description": "Data source that provided this model row (e.g. \"models.dev\", \"ollama\"). Empty string (DataSourceNone) on live-sync rows; populated at codegen time from curated ingest data.",
       "type": "string"
+    },
+    "Description": {
+      "description": "Upstream model description from the api.json side of the models.dev catalog. Empty string when none is provided. Added in schema 0.3.0; optional for backward compatibility with 0.2.x records.",
+      "type": "string"
+    },
+    "Status": {
+      "description": "Upstream release status for this model instance (\"none\" means generally available / stable). An instance-level fact from the api.json side. Added in schema 0.3.0; optional for backward compatibility.",
+      "$ref": "#/$defs/ModelStatus"
+    },
+    "StatusRaw": {
+      "description": "Verbatim upstream status token, populated only when Status is \"other\" (an unrecognized token); empty otherwise. Added in schema 0.3.0; optional for backward compatibility.",
+      "type": "string"
+    },
+    "ReasoningOptions": {
+      "description": "Reasoning-control options this model exposes (toggle / effort / budget-tokens). null when the model exposes none. Added in schema 0.3.0; optional for backward compatibility.",
+      "type": ["array", "null"],
+      "items": { "$ref": "#/$defs/ReasoningOption" }
+    },
+    "CostInputAudioPerMTok": {
+      "description": "Cost in USD per million audio-input tokens, or null if unknown. Added in schema 0.3.0; optional for backward compatibility.",
+      "oneOf": [
+        { "type": "number", "minimum": 0 },
+        { "type": "null" }
+      ]
+    },
+    "CostOutputAudioPerMTok": {
+      "description": "Cost in USD per million audio-output tokens, or null if unknown. Added in schema 0.3.0; optional for backward compatibility.",
+      "oneOf": [
+        { "type": "number", "minimum": 0 },
+        { "type": "null" }
+      ]
+    },
+    "CostContextOver200k": {
+      "description": "Fixed context-over-200k-tokens pricing override, or null when the model declares none. Upstream's legacy fixed-threshold special case, kept distinct from CostTiers for wire fidelity. Added in schema 0.3.0; optional for backward compatibility.",
+      "oneOf": [
+        { "$ref": "#/$defs/TierCost" },
+        { "type": "null" }
+      ]
+    },
+    "CostTiers": {
+      "description": "General context-size-conditional price tiers. null when the model declares none. Added in schema 0.3.0; optional for backward compatibility.",
+      "type": ["array", "null"],
+      "items": { "$ref": "#/$defs/CostTier" }
     }
   },
   "required": [
@@ -221,7 +264,7 @@
   "$defs": {
     "ModelRef": {
       "title": "ModelRef",
-      "description": "The canonical identity of a model. The 7-field tuple (ID, Provider, RawFamily, Family, Variant, Version, Date) is the stable anchor for cross-provider queries, canonical formatting, and the normalization pipeline.",
+      "description": "The canonical identity of a model. The identity tuple (ID, Provider, RawFamily, Family, Variant, Version, ParamSize, Date) is the stable anchor for cross-provider queries, canonical formatting, and the normalization pipeline. ParamSize is part of identity, mirroring EntityRef.ParamSize: instances of one family at different sizes are distinct.",
       "type": "object",
       "properties": {
         "ID": {
@@ -246,6 +289,10 @@
         },
         "Version": {
           "description": "Model version extracted from the family string (e.g. \"4.5\" for claude-opus-4-5, \"2.5\" for gemini-2.5-flash). Empty when the model has no separable version.",
+          "type": "string"
+        },
+        "ParamSize": {
+          "description": "Canonical parameter-size token (e.g. \"70b\", \"8b\", \"0.5b\"). Part of the canonical identity tuple, mirroring EntityRef.ParamSize: instances of one family at different sizes are distinct identities. Empty when size is unknown. Added in schema 0.3.0; optional for backward compatibility.",
           "type": "string"
         },
         "Date": {
@@ -614,6 +661,13 @@
           "description": "Derived, sorted set of data sources attesting this entity's instances. Always contains at least \"models.dev\" for catalog entities. A read projection over the EntitySource join table, not a source of truth. Added in schema 0.2.0.",
           "type": ["array", "null"],
           "items": { "type": "string" }
+        },
+        "Metadata": {
+          "description": "Provider-agnostic model facts (description, license, links, benchmark claims) joined to this entity from the models.dev models.json side, or null when none was joined. A pointer field: genuinely optional. Added in schema 0.3.0.",
+          "oneOf": [
+            { "$ref": "#/$defs/EntityMetadata" },
+            { "type": "null" }
+          ]
         }
       },
       "required": ["Ref", "Instances", "Lineage", "Providers", "Hosts", "PriceInputRange", "PriceOutputRange", "ContextRange", "MaxOutputRange", "Capabilities"]
@@ -674,6 +728,269 @@
         }
       },
       "required": ["EntityKey", "SourceID"]
+    },
+    "ModelStatus": {
+      "title": "ModelStatus",
+      "description": "Upstream release status an instance declares (from the api.json status field), identified by its canonical lowercase wire name. Serializes as a string via encoding.TextMarshaler. \"none\" is the zero value and means generally available / stable (absence is meaningful on this scalar field); \"other\" is the fail-safe bucket for an unrecognized token, whose raw value is carried on ModelInfo.StatusRaw. Added in schema 0.3.0.",
+      "type": "string",
+      "enum": ["none", "alpha", "beta", "deprecated", "other"],
+      "x-enum-descriptions": {
+        "none": "No status declared: generally available / stable (the zero value).",
+        "alpha": "An early, unstable preview.",
+        "beta": "A later preview, more stable than alpha but not yet GA.",
+        "deprecated": "Scheduled for or already past end-of-life.",
+        "other": "Fail-safe bucket for a status token present upstream but unrecognized; raw token carried on ModelInfo.StatusRaw."
+      }
+    },
+    "LinkType": {
+      "title": "LinkType",
+      "description": "Classifies a model reference link (the type tag on a models.json links[] row, or the synthetic tag for a folded-in weights[] row), identified by its canonical lowercase wire name. Serializes as a string via encoding.TextMarshaler. \"other\" is the zero value and fail-safe bucket for an unrecognized tag (raw token carried on ModelLink.TypeRaw) — on an element type the upstream tag is always present, so a zero value can only mean unrecognized. Added in schema 0.3.0.",
+      "type": "string",
+      "enum": ["other", "announcement", "blog", "docs", "license", "model_card", "paper", "weights"],
+      "x-enum-descriptions": {
+        "other": "Fail-safe bucket (the zero value) for an unrecognized link type; raw token carried on ModelLink.TypeRaw.",
+        "announcement": "A launch or announcement post.",
+        "blog": "A blog article.",
+        "docs": "Product or API documentation.",
+        "license": "The model's license text.",
+        "model_card": "A model card (e.g. on a model hub).",
+        "paper": "A research paper or technical report.",
+        "weights": "A downloadable-weights reference (a folded-in weights[] row)."
+      }
+    },
+    "ModelLink": {
+      "title": "ModelLink",
+      "description": "One reference link for a model: a labeled URL with a classified type. Upstream weights[] rows fold in here with Type \"weights\".",
+      "type": "object",
+      "properties": {
+        "Label": {
+          "description": "Human-facing link text.",
+          "type": "string"
+        },
+        "URL": {
+          "description": "Link target.",
+          "type": "string"
+        },
+        "Type": {
+          "description": "Classified link type. Serializes as a LinkType enum string.",
+          "$ref": "#/$defs/LinkType"
+        },
+        "TypeRaw": {
+          "description": "Verbatim upstream type token, populated only when Type is \"other\" (an unrecognized tag); empty otherwise.",
+          "type": "string"
+        }
+      },
+      "required": ["Label", "URL", "Type", "TypeRaw"]
+    },
+    "BenchmarkResult": {
+      "title": "BenchmarkResult",
+      "description": "One benchmark claim as reported by the publishing organization. Fields are grouped along the assessment-provenance joints (criterion identity: Name/Version/Variant/Dataset; apparatus: Harness; assessment value: Metric/Score/ScoreRaw; claim attribution: SourceURL/Date) and are never concatenated. Scores are attributed claims by the publishing lab, not independent measurements.",
+      "type": "object",
+      "properties": {
+        "Name": {
+          "description": "Benchmark name (required upstream, e.g. \"MMLU\", \"GPQA\").",
+          "type": "string"
+        },
+        "Version": {
+          "description": "Benchmark version, when the source distinguishes one.",
+          "type": "string"
+        },
+        "Variant": {
+          "description": "Benchmark variant / subtask, when the source distinguishes one.",
+          "type": "string"
+        },
+        "Dataset": {
+          "description": "Evaluation dataset, when the source names one.",
+          "type": "string"
+        },
+        "Harness": {
+          "description": "Evaluation harness / framework used, when the source names one.",
+          "type": "string"
+        },
+        "Metric": {
+          "description": "Reported metric name (e.g. \"accuracy\", \"pass@1\").",
+          "type": "string"
+        },
+        "Score": {
+          "description": "Numeric score, or 0 when the upstream score is non-numeric (see ScoreRaw).",
+          "type": "number"
+        },
+        "ScoreRaw": {
+          "description": "Verbatim upstream score when it is non-numeric; empty when Score is numeric. Upstream reports a score as either a number or a string, so a string score is preserved here rather than dropping the row.",
+          "type": "string"
+        },
+        "SourceURL": {
+          "description": "URL of the original claimant (the lab blog or model card). Named SourceURL, not Source, to avoid colliding with the DataSourceID-typed ingest-attestation fields: claim attribution and ingest attestation are different provenance levels.",
+          "type": "string"
+        },
+        "Date": {
+          "description": "Claim date in YYYY-MM-DD format, when the source gives one.",
+          "type": "string"
+        }
+      },
+      "required": ["Name", "Version", "Variant", "Dataset", "Harness", "Metric", "Score", "ScoreRaw", "SourceURL", "Date"]
+    },
+    "ReasoningOption": {
+      "title": "ReasoningOption",
+      "description": "One reasoning-control option a model exposes, as a discriminated union keyed by Kind. Only the payload fields relevant to Kind carry data: \"effort\" populates Values; \"budget_tokens\" populates MinTokens/MaxTokens; \"toggle\" carries neither.",
+      "type": "object",
+      "properties": {
+        "Kind": {
+          "description": "Discriminates which payload fields are meaningful. Serializes as a ReasoningOptionKind enum string (\"other\"/\"toggle\"/\"effort\"/\"budget_tokens\").",
+          "$ref": "#/$defs/ReasoningOptionKind"
+        },
+        "KindRaw": {
+          "description": "Verbatim upstream kind token, populated only when Kind is \"other\" (an unrecognized tag); empty otherwise.",
+          "type": "string"
+        },
+        "Values": {
+          "description": "Discrete choices for an \"effort\" option; null otherwise.",
+          "type": ["array", "null"],
+          "items": { "type": "string" }
+        },
+        "MinTokens": {
+          "description": "Lower budget bound for a \"budget_tokens\" option; 0 otherwise.",
+          "type": "integer",
+          "minimum": 0
+        },
+        "MaxTokens": {
+          "description": "Upper budget bound for a \"budget_tokens\" option; 0 otherwise.",
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "required": ["Kind", "KindRaw", "Values", "MinTokens", "MaxTokens"]
+    },
+    "ReasoningOptionKind": {
+      "title": "ReasoningOptionKind",
+      "description": "Discriminates the kind of a reasoning-control option, identified by its canonical lowercase wire name. Serializes as a string via encoding.TextMarshaler. \"other\" is the zero value and fail-safe bucket for an unrecognized tag (raw token carried on ReasoningOption.KindRaw). Added in schema 0.3.0.",
+      "type": "string",
+      "enum": ["other", "toggle", "effort", "budget_tokens"],
+      "x-enum-descriptions": {
+        "other": "Fail-safe bucket (the zero value) for an unrecognized reasoning-option kind; raw token carried on ReasoningOption.KindRaw.",
+        "toggle": "A plain on/off reasoning switch.",
+        "effort": "A discrete effort selector; the choices are on ReasoningOption.Values.",
+        "budget_tokens": "A token-budget control; the bounds are on ReasoningOption.MinTokens/MaxTokens."
+      }
+    },
+    "TierCost": {
+      "title": "TierCost",
+      "description": "One bundle of cost overrides; every axis is optional (a null pointer means not overridden). Mirrors the flat cost fields on ModelInfo and adds audio input/output rates. Serialized as an object when present (ModelInfo.CostContextOver200k) and flattened into CostTier when embedded.",
+      "type": "object",
+      "properties": {
+        "CostInputPerMTok": {
+          "description": "Input cost in USD per million tokens, or null when unset.",
+          "oneOf": [ { "type": "number", "minimum": 0 }, { "type": "null" } ]
+        },
+        "CostOutputPerMTok": {
+          "description": "Output cost in USD per million tokens, or null when unset.",
+          "oneOf": [ { "type": "number", "minimum": 0 }, { "type": "null" } ]
+        },
+        "CostReasoningPerMTok": {
+          "description": "Reasoning cost in USD per million tokens, or null when unset.",
+          "oneOf": [ { "type": "number", "minimum": 0 }, { "type": "null" } ]
+        },
+        "CostCacheReadPerMTok": {
+          "description": "Cache-read cost in USD per million tokens, or null when unset.",
+          "oneOf": [ { "type": "number", "minimum": 0 }, { "type": "null" } ]
+        },
+        "CostCacheWritePerMTok": {
+          "description": "Cache-write cost in USD per million tokens, or null when unset.",
+          "oneOf": [ { "type": "number", "minimum": 0 }, { "type": "null" } ]
+        },
+        "CostInputAudioPerMTok": {
+          "description": "Audio-input cost in USD per million tokens, or null when unset.",
+          "oneOf": [ { "type": "number", "minimum": 0 }, { "type": "null" } ]
+        },
+        "CostOutputAudioPerMTok": {
+          "description": "Audio-output cost in USD per million tokens, or null when unset.",
+          "oneOf": [ { "type": "number", "minimum": 0 }, { "type": "null" } ]
+        }
+      },
+      "required": ["CostInputPerMTok", "CostOutputPerMTok", "CostReasoningPerMTok", "CostCacheReadPerMTok", "CostCacheWritePerMTok", "CostInputAudioPerMTok", "CostOutputAudioPerMTok"]
+    },
+    "CostTier": {
+      "title": "CostTier",
+      "description": "A context-size-conditional price tier: the cost overrides apply once the request context reaches ContextSize tokens. Upstream, a tier's type is always \"context\", so only the token threshold is modeled (ContextSize); the embedded TierCost cost fields flatten to the tier level. Kept distinct from ModelInfo.CostContextOver200k (upstream's legacy fixed-threshold special case) for wire fidelity.",
+      "type": "object",
+      "properties": {
+        "ContextSize": {
+          "description": "Token threshold at which this tier's overrides apply.",
+          "type": "integer",
+          "minimum": 0
+        },
+        "CostInputPerMTok": {
+          "description": "Input cost in USD per million tokens at this tier, or null when unset.",
+          "oneOf": [ { "type": "number", "minimum": 0 }, { "type": "null" } ]
+        },
+        "CostOutputPerMTok": {
+          "description": "Output cost in USD per million tokens at this tier, or null when unset.",
+          "oneOf": [ { "type": "number", "minimum": 0 }, { "type": "null" } ]
+        },
+        "CostReasoningPerMTok": {
+          "description": "Reasoning cost in USD per million tokens at this tier, or null when unset.",
+          "oneOf": [ { "type": "number", "minimum": 0 }, { "type": "null" } ]
+        },
+        "CostCacheReadPerMTok": {
+          "description": "Cache-read cost in USD per million tokens at this tier, or null when unset.",
+          "oneOf": [ { "type": "number", "minimum": 0 }, { "type": "null" } ]
+        },
+        "CostCacheWritePerMTok": {
+          "description": "Cache-write cost in USD per million tokens at this tier, or null when unset.",
+          "oneOf": [ { "type": "number", "minimum": 0 }, { "type": "null" } ]
+        },
+        "CostInputAudioPerMTok": {
+          "description": "Audio-input cost in USD per million tokens at this tier, or null when unset.",
+          "oneOf": [ { "type": "number", "minimum": 0 }, { "type": "null" } ]
+        },
+        "CostOutputAudioPerMTok": {
+          "description": "Audio-output cost in USD per million tokens at this tier, or null when unset.",
+          "oneOf": [ { "type": "number", "minimum": 0 }, { "type": "null" } ]
+        }
+      },
+      "required": ["ContextSize", "CostInputPerMTok", "CostOutputPerMTok", "CostReasoningPerMTok", "CostCacheReadPerMTok", "CostCacheWritePerMTok", "CostInputAudioPerMTok", "CostOutputAudioPerMTok"]
+    },
+    "EntityMetadata": {
+      "title": "EntityMetadata",
+      "description": "Provider-agnostic model facts from the models.dev models.json side: description, license, reference links, and lab-reported benchmark claims, keyed by the stable MetadataID. Carries NO status property (status is an api.json / instance-level fact and lives on ModelInfo only).",
+      "type": "object",
+      "properties": {
+        "MetadataID": {
+          "description": "Stable models.dev metadata key (e.g. \"zhipuai/glm-4.6\").",
+          "type": "string"
+        },
+        "Name": {
+          "description": "Display name.",
+          "type": "string"
+        },
+        "Description": {
+          "description": "Model description.",
+          "type": "string"
+        },
+        "License": {
+          "description": "License identifier or name.",
+          "type": "string"
+        },
+        "Links": {
+          "description": "Reference links; upstream weights[] rows fold in with Type \"weights\". null when the source lists none.",
+          "type": ["array", "null"],
+          "items": { "$ref": "#/$defs/ModelLink" }
+        },
+        "Benchmarks": {
+          "description": "Lab-reported benchmark claims. null when the source lists none.",
+          "type": ["array", "null"],
+          "items": { "$ref": "#/$defs/BenchmarkResult" }
+        },
+        "Source": {
+          "description": "Ingest attestation — the data source this metadata was read from (e.g. \"models.dev\"). Empty string (DataSourceNone) when unassigned.",
+          "type": "string"
+        },
+        "LastSynced": {
+          "description": "RFC3339 timestamp; empty on baked rows until a sync occurs.",
+          "type": "string"
+        }
+      },
+      "required": ["MetadataID", "Name", "Description", "License", "Links", "Benchmarks", "Source", "LastSynced"]
     }
   }
 }

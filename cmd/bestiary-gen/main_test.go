@@ -13,6 +13,7 @@ import (
 	"path/filepath"
 	"reflect"
 	"regexp"
+	"runtime"
 	"sort"
 	"strings"
 	"testing"
@@ -663,86 +664,61 @@ func makeTestModels() []bestiary.ModelInfo {
 	return out
 }
 
-// minimalAPIJSON returns a minimal valid api_response.json body for tests.
-// One provider ("testprovider") with one model.
-func minimalAPIJSON(t *testing.T) []byte {
-	t.Helper()
-	payload := map[string]any{
-		"testprovider": map[string]any{
-			"name": "Test Provider",
-			"models": map[string]any{
-				"test-model-1": map[string]any{
-					"id":   "test-model-1",
-					"name": "Test Model 1",
-				},
-			},
-		},
+// genBase constructs the library-shaped base ModelInfo that ParseCatalogJSON would
+// hand enrichModelInfo: the RAW family lives on the Family field (RawFamily unset), and
+// the api.json-side facts are already decoded. It mirrors the toModelInfo contract
+// enrichModelInfo depends on.
+func genBase(providerSlug, id, name, rawFamily, releaseDate string) bestiary.ModelInfo {
+	return bestiary.ModelInfo{
+		ID:          bestiary.ModelID(id),
+		Provider:    bestiary.Provider(providerSlug),
+		DisplayName: name,
+		Family:      bestiary.Family(rawFamily), // library sets Family = raw family
+		ReleaseDate: releaseDate,
 	}
-	b, err := json.Marshal(payload)
-	if err != nil {
-		t.Fatalf("minimalAPIJSON: marshal: %v", err)
-	}
-	return b
 }
 
 // TestGenToModelInfo_EmptyFamily verifies that the InferFamilyFromID code path in
-// genToModelInfoDetailed fires when the model's family field is empty (~25% of real models).
-// This exercises the else branch in genToModelInfoDetailed that the parse_test.go unit
-// tests for InferFamilyFromID do not cover at the codegen integration layer.
+// enrichModelInfo fires when the model's family field is empty (~25% of real models).
+// This exercises the else branch in enrichModelInfo that the parse_test.go unit tests
+// for InferFamilyFromID do not cover at the codegen integration layer.
 func TestGenToModelInfo_EmptyFamily(t *testing.T) {
-	wm := genWireModel{
-		ID:     "claude-haiku-no-family",
-		Name:   "Claude Haiku (no family)",
-		Family: "", // empty — must trigger InferFamilyFromID
-	}
-	info, _ := genToModelInfoDetailed("anthropic", wm)
+	base := genBase("anthropic", "claude-haiku-no-family", "Claude Haiku (no family)", "", "")
+	info, _ := enrichModelInfo(base)
 
 	if info.RawFamily != "" {
 		t.Errorf("RawFamily: got %q, want empty (raw field was empty)", info.RawFamily)
 	}
 	// InferFamilyFromID("claude-haiku-no-family", "anthropic") must populate Family.
 	if info.Family == "" {
-		t.Errorf("Family: got empty; InferFamilyFromID should infer a non-empty family from ID %q", wm.ID)
+		t.Errorf("Family: got empty; InferFamilyFromID should infer a non-empty family from ID %q", base.ID)
 	}
 	// Variant may or may not be empty depending on InferFamilyFromID behavior.
 	// The key property is that Family is populated (no silent no-op).
-	t.Logf("genToModelInfoDetailed empty-family: Family=%q Variant=%q", info.Family, info.Variant)
+	t.Logf("enrichModelInfo empty-family: Family=%q Variant=%q", info.Family, info.Variant)
 }
 
-// TestGenToModelInfo_CanonicalFields verifies that genToModelInfoDetailed correctly
-// populates Family, Variant, and Date for models with known inputs.
-// This guards against regressions in the genToModelInfoDetailed normalization splice path.
+// TestGenToModelInfo_CanonicalFields verifies that enrichModelInfo correctly populates
+// Family, Variant, and Date for models with known inputs.
+// This guards against regressions in the enrichModelInfo normalization splice path.
 func TestGenToModelInfo_CanonicalFields(t *testing.T) {
 	cases := []struct {
 		desc             string
-		providerSlug     string
-		wm               genWireModel
+		base             bestiary.ModelInfo
 		wantFamily       string
 		wantVariant      string
 		wantDateContains string // substring of Date (may be empty for no-date models)
 	}{
 		{
-			desc:         "claude-opus-4-20250514: family=claude-opus, date in ID",
-			providerSlug: "anthropic",
-			wm: genWireModel{
-				ID:          "claude-opus-4-20250514",
-				Name:        "Claude Opus 4",
-				Family:      "claude-opus",
-				ReleaseDate: "2025-05-14",
-			},
+			desc:             "claude-opus-4-20250514: family=claude-opus, date in ID",
+			base:             genBase("anthropic", "claude-opus-4-20250514", "Claude Opus 4", "claude-opus", "2025-05-14"),
 			wantFamily:       "claude",
 			wantVariant:      "opus",
 			wantDateContains: "2025-05-14",
 		},
 		{
-			desc:         "gpt-4o-2024-08-06: family=gpt, variant=4o, date in ID",
-			providerSlug: "openai",
-			wm: genWireModel{
-				ID:          "gpt-4o-2024-08-06",
-				Name:        "GPT-4o",
-				Family:      "gpt-4o",
-				ReleaseDate: "2024-08-06",
-			},
+			desc: "gpt-4o-2024-08-06: family=gpt, variant=4o, date in ID",
+			base: genBase("openai", "gpt-4o-2024-08-06", "GPT-4o", "gpt-4o", "2024-08-06"),
 			// gpt-4o decomposes to family "gpt" with the
 			// line designator "4o" as the VARIANT (version empty); Date still from the ID.
 			wantFamily:       "gpt",
@@ -750,13 +726,8 @@ func TestGenToModelInfo_CanonicalFields(t *testing.T) {
 			wantDateContains: "2024-08-06",
 		},
 		{
-			desc:         "empty family: Family inferred from ID",
-			providerSlug: "anthropic",
-			wm: genWireModel{
-				ID:     "claude-haiku-no-family",
-				Name:   "Claude Haiku",
-				Family: "",
-			},
+			desc:             "empty family: Family inferred from ID",
+			base:             genBase("anthropic", "claude-haiku-no-family", "Claude Haiku", "", ""),
 			wantFamily:       "claude", // InferFamilyFromID should infer "claude"
 			wantDateContains: "",       // no date
 		},
@@ -764,7 +735,7 @@ func TestGenToModelInfo_CanonicalFields(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			info, _ := genToModelInfoDetailed(tc.providerSlug, tc.wm)
+			info, _ := enrichModelInfo(tc.base)
 
 			if string(info.Family) != tc.wantFamily {
 				t.Errorf("Family: got %q, want %q", info.Family, tc.wantFamily)
@@ -784,26 +755,76 @@ func TestGenToModelInfo_CanonicalFields(t *testing.T) {
 	}
 }
 
-// TestNoFetch_MalformedCache verifies that --no-fetch with a corrupt cache file
-// returns an actionable error describing the JSON decode failure.
-// This exercises the json.Unmarshal error path in fetchModelsWithRaw.
-func TestNoFetch_MalformedCache(t *testing.T) {
-	tmpDir := t.TempDir()
-	cachePath := filepath.Join(tmpDir, cacheFile)
-
-	// Write invalid JSON to the cache file.
-	if err := os.WriteFile(cachePath, []byte("{not valid json"), 0o644); err != nil {
-		t.Fatalf("setup: write malformed cache file: %v", err)
+// minimalCatalogJSON returns a minimal valid catalog.json body ({models, providers})
+// for tests: one provider ("testprovider") with one model, and an empty metadata view.
+func minimalCatalogJSON(t *testing.T) []byte {
+	t.Helper()
+	payload := map[string]any{
+		"providers": map[string]any{
+			"testprovider": map[string]any{
+				"name": "Test Provider",
+				"models": map[string]any{
+					"test-model-1": map[string]any{
+						"id":   "test-model-1",
+						"name": "Test Model 1",
+					},
+				},
+			},
+		},
+		"models": map[string]any{},
 	}
+	b, err := json.Marshal(payload)
+	if err != nil {
+		t.Fatalf("minimalCatalogJSON: marshal: %v", err)
+	}
+	return b
+}
 
-	_, _, _, _, err := fetchModelsWithRaw(context.Background(), tmpDir, true)
+// withVendoredCatalog points vendoredCatalogPath at a fresh temp file (or, when body is
+// nil, at a path that does not exist) and restores it on cleanup. It returns the path.
+func withVendoredCatalog(t *testing.T, body []byte) string {
+	t.Helper()
+	dir := t.TempDir()
+	path := filepath.Join(dir, "catalog.json")
+	if body != nil {
+		if err := os.WriteFile(path, body, 0o644); err != nil {
+			t.Fatalf("withVendoredCatalog: write %q: %v", path, err)
+		}
+	}
+	orig := vendoredCatalogPath
+	vendoredCatalogPath = path
+	t.Cleanup(func() { vendoredCatalogPath = orig })
+	return path
+}
+
+// TestNoFetch_CorruptVendoredCatalog verifies that --no-fetch with a corrupt committed
+// catalog.json returns a LOUD actionable error naming the path and the refresh workflow
+// — codegen NEVER degrades to an empty catalog. Exercises the ParseCatalogJSON error
+// path in fetchModelsWithRaw.
+func TestNoFetch_CorruptVendoredCatalog(t *testing.T) {
+	path := withVendoredCatalog(t, []byte("{not valid json"))
+
+	_, _, _, _, _, err := fetchModelsWithRaw(context.Background(), true)
 	if err == nil {
-		t.Fatal("fetchModelsWithRaw(noFetch=true, malformed cache): expected error, got nil")
+		t.Fatal("fetchModelsWithRaw(noFetch=true, corrupt vendored catalog): expected error, got nil")
 	}
 	msg := err.Error()
-	// The error must reference the decode failure (not a generic "operation failed").
-	if !strings.Contains(msg, "decode JSON") && !strings.Contains(msg, "json") && !strings.Contains(msg, "JSON") {
-		t.Errorf("error for malformed cache does not mention JSON decode failure:\n%s", msg)
+	// The error must reference the decode failure of the vendored catalog.
+	if !strings.Contains(msg, "catalog.json") {
+		t.Errorf("error for corrupt vendored catalog does not mention catalog.json:\n%s", msg)
+	}
+	// It must never claim to have degraded to an empty catalog — it must point at the fix.
+	if !strings.Contains(msg, "never degrades to an empty catalog") {
+		t.Errorf("error must state it never degrades to an empty catalog:\n%s", msg)
+	}
+	// Actionable: name the refresh workflow so a curator knows how to recover.
+	if !strings.Contains(msg, "snapshot refresh") {
+		t.Errorf("error must name the snapshot refresh workflow:\n%s", msg)
+	}
+	// It must name the offending path.
+	absPath, _ := filepath.Abs(path)
+	if !strings.Contains(msg, absPath) {
+		t.Errorf("error must name the corrupt file path %q:\n%s", absPath, msg)
 	}
 }
 
@@ -823,25 +844,28 @@ func TestCacheDirFlag_EmptyValue(t *testing.T) {
 	}
 }
 
-// TestCacheDirFlag verifies that bestiary-gen --cache-dir <tmpdir> writes
-// api_response.json into the given directory (not the default .bestiary-gen-cache).
-// This test exercises the full run() code path end-to-end via apiURL override.
+// TestCacheDirFlag verifies that a fetch-mode run rewrites the vendored catalog.json +
+// SNAPSHOT.json and routes diagnostics to --cache-dir (not the default
+// .bestiary-gen-cache). It exercises the full run() code path end-to-end via a catalogURL
+// override, chdir'd into a temp dir so the vendored rewrite and generated files stay
+// isolated from the repo.
 func TestCacheDirFlag(t *testing.T) {
-	// Serve a minimal API response over HTTP.
+	// Serve a minimal catalog.json over HTTP.
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
+		w.Header().Set("ETag", "\"test-etag\"")
 		w.WriteHeader(http.StatusOK)
-		_, _ = w.Write(minimalAPIJSON(t))
+		_, _ = w.Write(minimalCatalogJSON(t))
 	}))
 	defer srv.Close()
 
-	// Override the package-level apiURL var so run() fetches from the test server.
-	origURL := apiURL
-	apiURL = srv.URL
-	defer func() { apiURL = origURL }()
+	// Override the package-level catalogURL var so run() fetches from the test server.
+	origURL := catalogURL
+	catalogURL = srv.URL
+	defer func() { catalogURL = origURL }()
 
-	// run() writes generated .go files to the working directory; use a temp dir
-	// as cwd so we don't pollute the repo root.
+	// run() writes generated .go files AND the vendored snapshot to paths relative to
+	// the working directory; use a temp dir as cwd so we don't pollute the repo root.
 	tmpDir := t.TempDir()
 	origDir, err := os.Getwd()
 	if err != nil {
@@ -854,44 +878,38 @@ func TestCacheDirFlag(t *testing.T) {
 
 	cacheDir := filepath.Join(tmpDir, "my-custom-cache")
 
-	// Call run() with --cache-dir pointing to our custom directory.
+	// Call run() with --cache-dir pointing to our custom directory (fetch mode).
 	if err := run([]string{"-cache-dir=" + cacheDir}); err != nil {
 		t.Fatalf("run(-cache-dir=%s): unexpected error: %v", cacheDir, err)
 	}
 
-	// Assert api_response.json was written to cacheDir (not defaultCacheDir).
-	wantPath := filepath.Join(cacheDir, cacheFile)
-	info, statErr := os.Stat(wantPath)
-	if statErr != nil {
-		t.Fatalf("cache file not written to --cache-dir %q: %v", cacheDir, statErr)
-	}
-	if info.Size() == 0 {
-		t.Fatalf("cache file at %q is empty; expected non-empty JSON", wantPath)
+	// The fetch REWRITES the vendored catalog.json + SNAPSHOT.json (relative paths →
+	// under tmpDir). Both must exist and be non-empty.
+	for _, rel := range []string{vendoredCatalogPath, snapshotManifestPath} {
+		info, statErr := os.Stat(filepath.Join(tmpDir, rel))
+		if statErr != nil {
+			t.Fatalf("vendored file %q not written on fetch: %v", rel, statErr)
+		}
+		if info.Size() == 0 {
+			t.Fatalf("vendored file %q is empty; expected non-empty content", rel)
+		}
 	}
 
-	// Assert the default cache dir was NOT created (no side-effects).
+	// Diagnostics (parse_failures.json) must go to --cache-dir, not the default.
+	if _, statErr := os.Stat(filepath.Join(cacheDir, "parse_failures.json")); statErr != nil {
+		t.Fatalf("parse_failures.json not written to --cache-dir %q: %v", cacheDir, statErr)
+	}
 	defaultPath := filepath.Join(tmpDir, defaultCacheDir)
 	if _, statErr := os.Stat(defaultPath); statErr == nil {
-		t.Errorf("default cache dir %q was created; run() should only write to --cache-dir", defaultPath)
+		t.Errorf("default cache dir %q was created; run() should only write diagnostics to --cache-dir", defaultPath)
 	}
 }
 
-// TestNoFetch_HitsCache verifies that --no-fetch reads from a pre-populated
-// cache file without making any HTTP request.
-// The httptest.Server is wired into apiURL so that if fetchModelsWithRaw ever
-// makes an outbound request via apiURL, the contacted flag trips.
-//
-// Note: contacted trips only if a regression calls apiURL. A regression that
-// uses a hardcoded URL or a separate http.Get would not be caught by this guard.
-func TestNoFetch_HitsCache(t *testing.T) {
-	tmpDir := t.TempDir()
-	raw := minimalAPIJSON(t)
-
-	// Pre-populate the cache.
-	cachePath := filepath.Join(tmpDir, cacheFile)
-	if err := os.WriteFile(cachePath, raw, 0o644); err != nil {
-		t.Fatalf("setup: write cache file: %v", err)
-	}
+// TestNoFetch_ReadsVendoredCatalog verifies that --no-fetch reads the committed
+// catalog.json without making any HTTP request. A guard server wired into catalogURL
+// trips the contacted flag if fetchModelsWithRaw ever dials out.
+func TestNoFetch_ReadsVendoredCatalog(t *testing.T) {
+	withVendoredCatalog(t, minimalCatalogJSON(t))
 
 	// A test server that fails the test if contacted — no HTTP should happen.
 	contacted := false
@@ -901,13 +919,11 @@ func TestNoFetch_HitsCache(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	// Override apiURL so any accidental HTTP fetch would hit our guard server.
-	origURL := apiURL
-	apiURL = srv.URL
-	defer func() { apiURL = origURL }()
+	origURL := catalogURL
+	catalogURL = srv.URL
+	defer func() { catalogURL = origURL }()
 
-	// fetchModelsWithRaw with noFetch=true must read from cache, not contact srv.
-	gotRaw, models, provMeta, _, err := fetchModelsWithRaw(context.Background(), tmpDir, true)
+	gotRaw, models, _, provMeta, _, err := fetchModelsWithRaw(context.Background(), true)
 	if err != nil {
 		t.Fatalf("fetchModelsWithRaw(noFetch=true): unexpected error: %v", err)
 	}
@@ -925,52 +941,50 @@ func TestNoFetch_HitsCache(t *testing.T) {
 	}
 }
 
-// TestNoFetch_MissingCache_ActionableError verifies that --no-fetch with a
-// missing cache file returns an *ErrCacheMiss with all 6 required actionable
-// fields: What, Why, Where, When, what-it-means, how-to-fix.
-func TestNoFetch_MissingCache_ActionableError(t *testing.T) {
-	tmpDir := t.TempDir()
-	// Deliberately do NOT create api_response.json in tmpDir.
+// TestNoFetch_MissingVendoredCatalog_ActionableError verifies that --no-fetch with a
+// missing committed catalog.json returns an *ErrVendoredCatalogMissing carrying all six
+// actionable fields: What, Why, Where, When, what-it-means, how-to-fix (naming the
+// refresh workflow). Codegen must never degrade to an empty catalog.
+func TestNoFetch_MissingVendoredCatalog_ActionableError(t *testing.T) {
+	// Point at a path that does NOT exist (body == nil).
+	path := withVendoredCatalog(t, nil)
 
-	_, _, _, _, err := fetchModelsWithRaw(context.Background(), tmpDir, true)
+	_, _, _, _, _, err := fetchModelsWithRaw(context.Background(), true)
 	if err == nil {
-		t.Fatal("fetchModelsWithRaw(noFetch=true, missing cache): expected error, got nil")
+		t.Fatal("fetchModelsWithRaw(noFetch=true, missing vendored catalog): expected error, got nil")
 	}
 
-	// Must be an *ErrCacheMiss.
-	var cacheMiss *ErrCacheMiss
-	if !errors.As(err, &cacheMiss) {
-		t.Fatalf("expected *ErrCacheMiss, got %T: %v", err, err)
+	var missing *ErrVendoredCatalogMissing
+	if !errors.As(err, &missing) {
+		t.Fatalf("expected *ErrVendoredCatalogMissing, got %T: %v", err, err)
 	}
 
-	// All 6 actionability fields must be present in the error message.
-	wantPath := filepath.Join(tmpDir, cacheFile)
-	absWant, _ := filepath.Abs(wantPath)
-	msg := cacheMiss.Error()
+	absWant, _ := filepath.Abs(path)
+	msg := missing.Error()
 
-	// (1) What: describes what went wrong — the missing/empty cache file.
-	if !strings.Contains(msg, "cached api_response.json missing or empty") {
-		t.Errorf("error message missing 'What' field (cached api_response.json missing or empty):\n%s", msg)
+	// (1) What: the missing/empty committed input.
+	if !strings.Contains(msg, "vendored models.dev catalog.json missing or empty") {
+		t.Errorf("error message missing 'What' field:\n%s", msg)
 	}
-	// (2) Why: explains the cause — --no-fetch was set.
+	// (2) Why: --no-fetch skipped the fetch.
 	if !strings.Contains(msg, "--no-fetch") {
 		t.Errorf("error message missing 'Why' field (--no-fetch):\n%s", msg)
 	}
-	// (3) Where: the file path that was missing.
+	// (3) Where: the missing path.
 	if !strings.Contains(msg, absWant) {
 		t.Errorf("error message missing 'Where' field (path %q):\n%s", absWant, msg)
 	}
-	// (4) When: the step at which it failed.
+	// (4) When: the load step.
 	if !strings.Contains(msg, "fetchModelsWithRaw") {
 		t.Errorf("error message missing 'When' field (fetchModelsWithRaw):\n%s", msg)
 	}
-	// (5) What it means: consequence for the caller.
-	if !strings.Contains(msg, "cannot proceed without API data") {
-		t.Errorf("error message missing 'what-it-means' field (cannot proceed without API data):\n%s", msg)
+	// (5) What it means: never degrades to an empty catalog.
+	if !strings.Contains(msg, "never degrades to an empty catalog") {
+		t.Errorf("error message missing 'what-it-means' field:\n%s", msg)
 	}
-	// (6) How to fix: actionable remediation.
-	if !strings.Contains(msg, "re-run without --no-fetch") {
-		t.Errorf("error message missing 'how-to-fix' field (re-run without --no-fetch):\n%s", msg)
+	// (6) How to fix: the snapshot-refresh workflow.
+	if !strings.Contains(msg, "snapshot refresh") {
+		t.Errorf("error message missing 'how-to-fix' field (snapshot refresh):\n%s", msg)
 	}
 }
 
@@ -1428,13 +1442,13 @@ type Family = string
 
 const parseFailuresFile = "parse_failures.json"
 
-// failureAPIJSON returns a minimal API response with models that will produce
-// parse failures at codegen time. Specifically, it includes models with
-// raw_family values that trigger the YYMM-date-as-version false-positive
-// (e.g. "mistral-2401") so that the failure count is predictable.
-func failureAPIJSON(t *testing.T) []byte {
+// failureCatalogJSON returns a minimal catalog.json ({providers, models}) whose
+// providers view carries models that produce parse failures at codegen time.
+// Specifically it includes raw_family values that trigger the YYMM-date-as-version
+// false-positive (e.g. "mistral-2401") so the failure count is predictable.
+func failureCatalogJSON(t *testing.T) []byte {
 	t.Helper()
-	payload := map[string]any{
+	providers := map[string]any{
 		// testprovider: a clean model with no parse failures
 		"testprovider": map[string]any{
 			"name": "Test Provider",
@@ -1463,9 +1477,9 @@ func failureAPIJSON(t *testing.T) []byte {
 			},
 		},
 	}
-	b, err := json.Marshal(payload)
+	b, err := json.Marshal(map[string]any{"providers": providers, "models": map[string]any{}})
 	if err != nil {
-		t.Fatalf("failureAPIJSON: marshal: %v", err)
+		t.Fatalf("failureCatalogJSON: marshal: %v", err)
 	}
 	return b
 }
@@ -1723,13 +1737,13 @@ func TestRun_WritesParseFailuresJSON(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
-		_, _ = w.Write(failureAPIJSON(t))
+		_, _ = w.Write(failureCatalogJSON(t))
 	}))
 	defer srv.Close()
 
-	origURL := apiURL
-	apiURL = srv.URL
-	defer func() { apiURL = origURL }()
+	origURL := catalogURL
+	catalogURL = srv.URL
+	defer func() { catalogURL = origURL }()
 
 	tmpDir := t.TempDir()
 	origDir, err := os.Getwd()
@@ -1766,7 +1780,7 @@ func TestRun_WritesParseFailuresJSON(t *testing.T) {
 	if envelope.SchemaVersion != 1 {
 		t.Errorf("SchemaVersion = %d, want 1", envelope.SchemaVersion)
 	}
-	// failureAPIJSON injects exactly 2 YYMM-failure models (mistral-2401 + mistral-2403).
+	// failureCatalogJSON injects exactly 2 YYMM-failure models (mistral-2401 + mistral-2403).
 	// Asserting FailureCount guards against a regression where failure_count is always 0.
 	const wantFailureCount = 2
 	if envelope.FailureCount != wantFailureCount {
@@ -1853,8 +1867,9 @@ func normalizeLastSynced(src []byte) []byte {
 	return reLastSynced.ReplaceAll(src, []byte(lastSyncedSentinel))
 }
 
-// deterministicFixtureJSON returns the hermetic fixture JSON for the reproducibility
-// tests. It contains three collision groups:
+// deterministicFixtureJSON returns the hermetic CATALOG.json fixture ({models,
+// providers}) for the reproducibility tests. The "providers" view carries three
+// collision groups:
 //
 //   - B (prefix/kilo): "openrouter/free" + "kilo-auto/free" → both produce
 //     Model__Kilo__Free → resolved by raw-ID-ordered fallback (b)
@@ -1869,9 +1884,15 @@ func normalizeLastSynced(src []byte) []byte {
 //     → extractVersionSegment yields distinct suffixes "5_1" / "5_2"
 //     → resolved by version-suffix pass (a) — NOT the fallback
 //     → constant names: Model__OpenAI__GPT__5_1 and Model__OpenAI__GPT__5_2
+//
+// The "models" view carries THREE metadata entries (each with populated benchmarks and
+// links), DELIBERATELY inserted out of MetadataID order so the metadata bake's
+// sort.Slice is load-bearing: without it, Go map iteration would reorder the emitted
+// rows run-to-run and the N=100 byte-identity assertion would fail. One benchmark
+// carries a STRING score to exercise the ScoreRaw tolerant-decode path.
 func deterministicFixtureJSON(t *testing.T) []byte {
 	t.Helper()
-	fixture := map[string]any{
+	providers := map[string]any{
 		"cloudflare-ai-gateway": map[string]any{
 			"name": "Cloudflare AI Gateway",
 			"models": map[string]any{
@@ -1919,7 +1940,7 @@ func deterministicFixtureJSON(t *testing.T) []byte {
 		},
 		// Curated-join models. Both IDs match entries in parse/data/quant_vram.json
 		// by exact model-ID, so the curated quant/VRAM/ParamSize/Source bake in
-		// genToModelInfoDetailed fires for them. The provider slug "vllm" sorts
+		// enrichModelInfo fires for them. The provider slug "vllm" sorts
 		// after every other fixture provider, so these two append to the end of the
 		// generated slice and the golden excerpt can extend contiguously.
 		//
@@ -1931,36 +1952,111 @@ func deterministicFixtureJSON(t *testing.T) []byte {
 		//
 		// llama-3.2-3b-instruct joins an arch-absent curated entry: every row has
 		// KV=0, so VRAMBytes==WeightsBytes and VRAMEstimatePartial=true.
+		// The two vllm models ALSO carry the instance-level api.json field groups so the
+		// static golden / UpToDate / N=100 cover the ModelInfo emitter for every new
+		// field: a mutant that drops any group's emission fails those tests.
+		//   - llama-3.3-70b-instruct: description, status "deprecated" (known enum),
+		//     reasoning_options (effort + budget_tokens kinds), audio costs,
+		//     context_over_200k, and a general cost tier.
+		//   - llama-3.2-3b-instruct: status "experimental" (unknown → StatusOther +
+		//     StatusRaw), covering the fail-safe status path.
 		"vllm": map[string]any{
 			"name": "vLLM",
 			"models": map[string]any{
 				"llama-3.3-70b-instruct": map[string]any{
-					"id":     "llama-3.3-70b-instruct",
-					"name":   "Llama 3.3 70B Instruct",
-					"family": "llama",
+					"id":          "llama-3.3-70b-instruct",
+					"name":        "Llama 3.3 70B Instruct",
+					"family":      "llama",
+					"description": "Meta Llama 3.3 70B, instruction-tuned.",
+					"status":      "deprecated",
+					"reasoning_options": []any{
+						map[string]any{"type": "effort", "values": []any{"low", "high"}},
+						map[string]any{"type": "budget_tokens", "min": 1024, "max": 32000},
+					},
 					"limit": map[string]any{
 						"context": 128000,
+					},
+					"cost": map[string]any{
+						"input":             0.5,
+						"output":            1.5,
+						"input_audio":       2,
+						"output_audio":      3,
+						"context_over_200k": map[string]any{"input": 1, "output": 3},
+						"tiers": []any{
+							map[string]any{
+								"tier":   map[string]any{"type": "context", "size": 200000},
+								"input":  0.8,
+								"output": 2.4,
+							},
+						},
 					},
 				},
 				"llama-3.2-3b-instruct": map[string]any{
 					"id":     "llama-3.2-3b-instruct",
 					"name":   "Llama 3.2 3B Instruct",
 					"family": "llama",
+					"status": "experimental",
 				},
 			},
 		},
 	}
-	b, err := json.Marshal(fixture)
+
+	// models.json view: ≥3 metadata entries, benchmarks + links, keys inserted
+	// out of sorted order (zhipuai > openai > anthropic) — the emitter must sort.
+	models := map[string]any{
+		"zhipuai/glm-4.6": map[string]any{
+			"id":          "zhipuai/glm-4.6",
+			"family":      "glm",
+			"name":        "GLM-4.6",
+			"description": "Zhipu AI GLM-4.6 general model.",
+			"license":     "MIT",
+			"links": []any{
+				map[string]any{"label": "Model card", "url": "https://huggingface.co/zai-org/GLM-4.6", "type": "model_card"},
+			},
+			"benchmarks": []any{
+				// String score → exercises the ScoreRaw tolerant-decode path.
+				map[string]any{"name": "SWE-bench", "score": "pass", "metric": "resolved", "source": "https://z.ai/glm-4-6"},
+			},
+		},
+		"openai/gpt-5.1": map[string]any{
+			"id":          "openai/gpt-5.1",
+			"family":      "gpt",
+			"name":        "GPT-5.1",
+			"description": "OpenAI GPT-5.1 flagship model.",
+			"license":     "proprietary",
+			"links": []any{
+				map[string]any{"label": "Announcement", "url": "https://openai.com/gpt-5-1", "type": "announcement"},
+			},
+			"benchmarks": []any{
+				map[string]any{"name": "MMLU", "score": 91.2, "metric": "accuracy", "source": "https://openai.com/gpt-5-1"},
+			},
+		},
+		"anthropic/claude-haiku-3.5": map[string]any{
+			"id":          "anthropic/claude-haiku-3.5",
+			"family":      "claude-haiku",
+			"name":        "Claude Haiku 3.5",
+			"description": "Anthropic Claude Haiku 3.5.",
+			"license":     "proprietary",
+			"links": []any{
+				map[string]any{"label": "Docs", "url": "https://docs.anthropic.com/claude-haiku", "type": "docs"},
+			},
+			"benchmarks": []any{
+				map[string]any{"name": "GPQA", "score": 41.6, "metric": "accuracy", "source": "https://anthropic.com/claude-haiku"},
+			},
+		},
+	}
+
+	b, err := json.Marshal(map[string]any{"providers": providers, "models": models})
 	if err != nil {
 		t.Fatalf("deterministicFixtureJSON: marshal: %v", err)
 	}
 	return b
 }
 
-// runFixtureCodegen performs one full codegen cycle using the hermetic fixture:
-// spin up an httptest.Server, override apiURL, call fetchModelsWithRaw, optionally
-// stamp LastSynced (mirroring run() main.go:363-365), build slugToConst, and return
-// both generated sources.
+// runFixtureCodegen performs one full codegen cycle using the hermetic catalog
+// fixture: spin up an httptest.Server, override catalogURL, call fetchModelsWithRaw,
+// optionally stamp LastSynced (mirroring run()'s stamping path), build slugToConst, and
+// return the three generated sources (static, constants, metadata).
 //
 // lastSynced controls the LastSynced stamp applied to every model before source
 // generation:
@@ -1969,9 +2065,15 @@ func deterministicFixtureJSON(t *testing.T) []byte {
 //   - any non-empty RFC3339 string: stamp models[i].LastSynced with that value,
 //     exactly mirroring the run() pipeline path
 //
-// Each call re-randomizes the Go map iteration order, which is the nondeterminism
-// source the codegen ordering guarantees defend against.
-func runFixtureCodegen(t *testing.T, fixtureJSON []byte, lastSynced string) (staticSrc, constantsSrc []byte) {
+// The metadata source is generated from the fixture's models.json view; its rows are
+// NOT stamped (baked metadata keeps LastSynced="") so the metadata output is a fixed
+// function of the (map-randomized) metadata input — which is exactly what makes the
+// missing-sort bug observable under N=100.
+//
+// Each call re-randomizes the Go map iteration order (both the providers models and the
+// metadata map), which is the nondeterminism source the codegen ordering guarantees
+// defend against.
+func runFixtureCodegen(t *testing.T, fixtureJSON []byte, lastSynced string) (staticSrc, constantsSrc, metadataSrc []byte) {
 	t.Helper()
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
@@ -1980,17 +2082,17 @@ func runFixtureCodegen(t *testing.T, fixtureJSON []byte, lastSynced string) (sta
 	}))
 	defer srv.Close()
 
-	origURL := apiURL
-	apiURL = srv.URL
-	defer func() { apiURL = origURL }()
+	origURL := catalogURL
+	catalogURL = srv.URL
+	defer func() { catalogURL = origURL }()
 
-	_, models, provMeta, _, err := fetchModelsWithRaw(context.Background(), t.TempDir(), false)
+	_, models, metadata, provMeta, _, err := fetchModelsWithRaw(context.Background(), false)
 	if err != nil {
 		t.Fatalf("runFixtureCodegen: fetchModelsWithRaw: %v", err)
 	}
 
-	// Mirror run() main.go:363-365: stamp LastSynced on all models when a timestamp
-	// is injected. Leaving lastSynced empty preserves the "" zero-value (fixture path).
+	// Mirror run()'s stamping path: stamp LastSynced on all models when a timestamp is
+	// injected. Leaving lastSynced empty preserves the "" zero-value (fixture path).
 	if lastSynced != "" {
 		for i := range models {
 			models[i].LastSynced = lastSynced
@@ -2015,7 +2117,11 @@ func runFixtureCodegen(t *testing.T, fixtureJSON []byte, lastSynced string) (sta
 	if err != nil {
 		t.Fatalf("runFixtureCodegen: generateConstantsSource: %v", err)
 	}
-	return staticSrc, constantsSrc
+	metadataSrc, err = generateMetadataSource(metadata)
+	if err != nil {
+		t.Fatalf("runFixtureCodegen: generateMetadataSource: %v", err)
+	}
+	return staticSrc, constantsSrc, metadataSrc
 }
 
 // TestCodegen_Reproducible_ByteIdentical verifies that N=100 successive codegen
@@ -2049,7 +2155,35 @@ func TestCodegen_Reproducible_ByteIdentical(t *testing.T) {
 
 	// Run once (iteration 0 → tsB) to establish the reference output with a stamped
 	// LastSynced. The reference uses the run()-equivalent stamping path.
-	refStatic, refConstants := runFixtureCodegen(t, fixtureJSON, tsB)
+	refStatic, refConstants, refMetadata := runFixtureCodegen(t, fixtureJSON, tsB)
+
+	// The metadata bake must emit rows in ascending MetadataID order regardless of the
+	// map-iteration order the fixture's models.json view arrived in. Assert the sorted
+	// order directly: anthropic/… < openai/… < zhipuai/… (the fixture inserts them in
+	// the reverse-ish order zhipuai, openai, anthropic). If the sort is dropped, this
+	// pin AND the N=100 byte-identity check below fail.
+	refMetaStr := string(refMetadata)
+	iA := strings.Index(refMetaStr, `MetadataID:  "anthropic/claude-haiku-3.5"`)
+	iO := strings.Index(refMetaStr, `MetadataID:  "openai/gpt-5.1"`)
+	iZ := strings.Index(refMetaStr, `MetadataID:  "zhipuai/glm-4.6"`)
+	if iA < 0 || iO < 0 || iZ < 0 {
+		t.Fatalf("reference metadata: expected all three baked MetadataIDs present\nmetadata:\n%s", refMetaStr)
+	}
+	if !(iA < iO && iO < iZ) {
+		t.Errorf("reference metadata: rows not in ascending MetadataID order (anthropic<openai<zhipuai)\n"+
+			"  positions: anthropic=%d openai=%d zhipuai=%d\n"+
+			"  Why: generateMetadataSource dropped the sort.Slice on MetadataID\nmetadata:\n%s",
+			iA, iO, iZ, refMetaStr)
+	}
+	// Baked rows must carry Source=DataSourceModelsDev and empty LastSynced, and the
+	// string benchmark score must ride on ScoreRaw (Score 0).
+	if !strings.Contains(refMetaStr, `Source:      "models.dev"`) {
+		t.Errorf("reference metadata: baked Source is not models.dev\nmetadata:\n%s", refMetaStr)
+	}
+	if !strings.Contains(refMetaStr, `ScoreRaw: "pass"`) {
+		t.Errorf("reference metadata: string benchmark score not captured on ScoreRaw\nmetadata:\n%s", refMetaStr)
+	}
+	refMetadataNorm := normalizeLastSynced(refMetadata)
 
 	// Verify reference constants contain the expected golden pins.
 	refStr := string(refConstants)
@@ -2130,7 +2264,7 @@ func TestCodegen_Reproducible_ByteIdentical(t *testing.T) {
 		if i%2 == 1 {
 			ts = tsA // odd iteration → different timestamp than reference (tsB)
 		}
-		staticSrc, constantsSrc := runFixtureCodegen(t, fixtureJSON, ts)
+		staticSrc, constantsSrc, metadataSrc := runFixtureCodegen(t, fixtureJSON, ts)
 
 		// --- Sole-residual proof (first odd iteration) ---
 		// Runs stamped with tsA must differ from the tsB reference in the raw bytes
@@ -2183,6 +2317,19 @@ func TestCodegen_Reproducible_ByteIdentical(t *testing.T) {
 				i+1, ts)
 		}
 
+		// --- Metadata byte-identity ---
+		// The fixture's models.json view (≥3 unsorted entries) arrives in random map
+		// order each iteration; the emitted metadata source must be byte-identical to the
+		// reference, which is what proves the explicit sort.Slice on MetadataID.
+		if !bytes.Equal(refMetadataNorm, normalizeLastSynced(metadataSrc)) {
+			t.Fatalf("iteration %d (ts=%s): generateMetadataSource output differs from reference\n"+
+				"  What: the baked metadata order/content changed between runs\n"+
+				"  Why: the metadata bake did not impose a deterministic MetadataID order\n"+
+				"  Where: generateMetadataSource sort.Slice(baked, ...) on MetadataID\n"+
+				"  How to fix: ensure generateMetadataSource sorts by MetadataID before emitting",
+				i+1, ts)
+		}
+
 		// Verify raw-ID → constant-name stability.
 		iterStr := string(constantsSrc)
 		for _, line := range strings.Split(iterStr, "\n") {
@@ -2214,6 +2361,87 @@ func TestCodegen_Reproducible_ByteIdentical(t *testing.T) {
 	}
 }
 
+// TestEmit_VendoredCatalog_CarriesInstanceFields is the END-TO-END seam guard for the
+// ModelInfo emitter over REAL data. It spans the full codegen pipeline —
+// vendored catalog.json -> ParseCatalogJSON (wire parse) -> enrichModelInfo (bake) ->
+// generateSource (emit) — and asserts that the instance-level api.json field GROUPS
+// (status, description, reasoning options, tier/audio costs) survive all the way to the
+// emitted static source. This is the exact seam a prior version silently dropped, which
+// made `list --status deprecated` return an empty set even though 100+ models are
+// tagged deprecated upstream: the wire parse populated the fields, but the emitter never
+// rendered them, so StaticModels() lost them. Keying the check to the committed vendored
+// snapshot (not a fixture) means a future emitter change that drops any field group over
+// real data fails here, not just in the hand-built golden.
+func TestEmit_VendoredCatalog_CarriesInstanceFields(t *testing.T) {
+	// `go test` runs with the package dir as CWD, but vendoredCatalogPath is relative
+	// to the module root; resolve it from this test file's location (two levels up).
+	_, thisFile, _, ok := runtime.Caller(0)
+	if !ok {
+		t.Fatal("runtime.Caller failed; cannot locate the module root")
+	}
+	catalogPath := filepath.Join(filepath.Dir(thisFile), "..", "..", vendoredCatalogPath)
+	raw, err := os.ReadFile(catalogPath)
+	if err != nil {
+		t.Fatalf("read vendored catalog %q: %v\n"+
+			"  How to fix: run the models.dev snapshot refresh (see AGENTS.md)", catalogPath, err)
+	}
+	cat, err := bestiary.ParseCatalogJSON(raw)
+	if err != nil {
+		t.Fatalf("ParseCatalogJSON(vendored): %v", err)
+	}
+
+	models := make([]bestiary.ModelInfo, 0, len(cat.Models))
+	var deprecated, withReasoning, withTiers int
+	for _, base := range cat.Models {
+		info, _ := enrichModelInfo(base)
+		models = append(models, info)
+		if info.Status == bestiary.StatusDeprecated {
+			deprecated++
+		}
+		if len(info.ReasoningOptions) > 0 {
+			withReasoning++
+		}
+		if len(info.CostTiers) > 0 {
+			withTiers++
+		}
+	}
+
+	// Sanity: the vendored snapshot really does carry these groups (so the emitter
+	// assertions below are not vacuous). If the parse/bake seam drops them, this fires
+	// first with a precise message.
+	if deprecated == 0 {
+		t.Fatalf("no StatusDeprecated models after ParseCatalogJSON+enrichModelInfo over the vendored catalog — the status field group is dropped at the parse/bake seam")
+	}
+
+	src, err := generateSource(models, map[string]string{})
+	if err != nil {
+		t.Fatalf("generateSource(vendored): %v", err)
+	}
+	s := string(src)
+
+	// The emitted static source MUST render each instance-level field group. These
+	// markers are gofmt-alignment-insensitive (constant/type names, not aligned
+	// colons). A missing marker means the emitter is dropping that group.
+	for _, want := range []string{
+		"StatusDeprecated",      // ModelStatus enum emission (statusExpr)
+		"Description:",          // description scalar
+		"[]ReasoningOption{",    // reasoning-options literal
+		"[]CostTier{",           // general cost-tier literal
+		"&TierCost{",            // context_over_200k pointer literal
+		"CostInputAudioPerMTok", // audio-cost field
+	} {
+		if !strings.Contains(s, want) {
+			t.Errorf("generated static source is MISSING %q — the emitter is dropping an instance-level field group\n"+
+				"  What: the vendored-catalog -> bake -> emit seam lost a field group\n"+
+				"  Why: generateSource does not render this field (the `list --status`-empty regression)\n"+
+				"  How to fix: extend the generateSource field emission in cmd/bestiary-gen/main.go",
+				want)
+		}
+	}
+	t.Logf("vendored bake: %d models; %d deprecated, %d with reasoning options, %d with cost tiers",
+		len(models), deprecated, withReasoning, withTiers)
+}
+
 // TestCodegen_UpToDate is the up-to-date guard. It regenerates both source
 // files from the hermetic fixture in-process and compares against committed golden
 // excerpts in testdata/. Both sides are normalized with normalizeWhitespace
@@ -2227,6 +2455,8 @@ func TestCodegen_UpToDate(t *testing.T) {
 	constantsGoldenPath := filepath.Join("testdata", "expected_constants_excerpt.go.golden")
 	staticGoldenPath := filepath.Join("testdata", "expected_static_excerpt.go.golden")
 
+	metadataGoldenPath := filepath.Join("testdata", "expected_metadata_excerpt.go.golden")
+
 	constantsGoldenRaw, err := os.ReadFile(constantsGoldenPath)
 	if err != nil {
 		t.Fatalf("up-to-date guard: could not read constants golden %q: %v\n"+
@@ -2239,13 +2469,19 @@ func TestCodegen_UpToDate(t *testing.T) {
 			"  How to fix: ensure testdata/expected_static_excerpt.go.golden is committed",
 			staticGoldenPath, err)
 	}
+	metadataGoldenRaw, err := os.ReadFile(metadataGoldenPath)
+	if err != nil {
+		t.Fatalf("up-to-date guard: could not read metadata golden %q: %v\n"+
+			"  How to fix: ensure testdata/expected_metadata_excerpt.go.golden is committed",
+			metadataGoldenPath, err)
+	}
 
 	// Regenerate from the fixture.
 	// Pass a representative injected timestamp to exercise the run() stamping path.
 	// normalizeLastSynced is applied to both sides before comparison, so the guard
 	// is insensitive to the codegen wall-clock (true zero-diff is a separate follow-up).
 	fixtureJSON := deterministicFixtureJSON(t)
-	staticSrc, constantsSrc := runFixtureCodegen(t, fixtureJSON, "2000-01-01T00:00:00Z")
+	staticSrc, constantsSrc, metadataSrc := runFixtureCodegen(t, fixtureJSON, "2000-01-01T00:00:00Z")
 
 	// stripGenHeader strips the 2-line "// Code generated..." / "//go:generate..." header
 	// from a generated Go file, then normalizes whitespace for comparison.
@@ -2305,6 +2541,20 @@ func TestCodegen_UpToDate(t *testing.T) {
 			normStaticGolden, normStatic)
 	}
 
+	normMetadata := normalizeAndStrip(metadataSrc)
+	normMetadataGolden := normalizeWhitespace(string(normalizeLastSynced(metadataGoldenRaw)))
+
+	// The golden excerpt must appear as a substring in the generated metadata output.
+	if !strings.Contains(normMetadata, normMetadataGolden) {
+		t.Errorf("up-to-date guard: metadata file does not contain golden excerpt\n"+
+			"  What: generateMetadataSource output differs from testdata/expected_metadata_excerpt.go.golden\n"+
+			"  Why: the baked metadata rows/order changed, or codegen logic was modified without re-running regen\n"+
+			"  Where: cmd/bestiary-gen/main.go generateMetadataSource\n"+
+			"  How to fix: run `go run ./cmd/bestiary-gen --no-fetch && git add models_metadata_gen.go`\n"+
+			"\nGolden excerpt (normalized):\n%s\n\nGenerated (normalized, header stripped):\n%s",
+			normMetadataGolden, normMetadata)
+	}
+
 	// Sanity-check: the constants golden must contain at least one expected binding.
 	// This guards against an accidentally empty or truncated golden file.
 	if !strings.Contains(string(constantsGoldenRaw), `ModelID = "anthropic/claude-3-5-haiku"`) {
@@ -2322,7 +2572,7 @@ func TestCodegen_UpToDate(t *testing.T) {
 // collision suffix _1/_2 still applies via raw-ID-ordered fallback.
 func TestCodegen_GoldenPins_C(t *testing.T) {
 	fixtureJSON := deterministicFixtureJSON(t)
-	_, constantsSrc := runFixtureCodegen(t, fixtureJSON, "")
+	_, constantsSrc, _ := runFixtureCodegen(t, fixtureJSON, "")
 	s := normalizeWhitespace(string(constantsSrc))
 
 	if !strings.Contains(s, `Model__CloudflareAIGateway__Claude__3__5__Haiku__3_5_1 ModelID = "anthropic/claude-3-5-haiku"`) {
@@ -2337,7 +2587,7 @@ func TestCodegen_GoldenPins_C(t *testing.T) {
 // "kilo-auto/free" → _1, "openrouter/free" → _2.
 func TestCodegen_GoldenPins_B(t *testing.T) {
 	fixtureJSON := deterministicFixtureJSON(t)
-	_, constantsSrc := runFixtureCodegen(t, fixtureJSON, "")
+	_, constantsSrc, _ := runFixtureCodegen(t, fixtureJSON, "")
 	s := normalizeWhitespace(string(constantsSrc))
 
 	if !strings.Contains(s, `Model__Kilo__Free_1 ModelID = "kilo-auto/free"`) {
@@ -2354,7 +2604,7 @@ func TestCodegen_GoldenPins_B(t *testing.T) {
 // Asserts: exact names present; no fragment/doubled-ordinal variant.
 func TestCodegen_GoldenPins_E(t *testing.T) {
 	fixtureJSON := deterministicFixtureJSON(t)
-	_, constantsSrc := runFixtureCodegen(t, fixtureJSON, "")
+	_, constantsSrc, _ := runFixtureCodegen(t, fixtureJSON, "")
 	s := normalizeWhitespace(string(constantsSrc))
 
 	if !strings.Contains(s, `Model__OpenAI__GPT__5_1 ModelID = "gpt-5.1"`) {
@@ -2385,11 +2635,11 @@ func TestCodegen_SortOrder(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	origURL := apiURL
-	apiURL = srv.URL
-	defer func() { apiURL = origURL }()
+	origURL := catalogURL
+	catalogURL = srv.URL
+	defer func() { catalogURL = origURL }()
 
-	_, models, _, _, err := fetchModelsWithRaw(context.Background(), t.TempDir(), false)
+	_, models, _, _, _, err := fetchModelsWithRaw(context.Background(), false)
 	if err != nil {
 		t.Fatalf("fetchModelsWithRaw: %v", err)
 	}
@@ -2455,27 +2705,30 @@ type decompositionSnapshotEntry struct {
 	Modifier string `json:"modifier"`
 }
 
-// fixtureAPIJSON returns the contents of testdata/fixture_api.json. This fixture
-// contains the full fixture corpus (active-class, residual, empty-raw_family passthrough-guard,
-// YYMM) and is the hermetic input for TestDecompositionSnapshot.
-func fixtureAPIJSON(t *testing.T) []byte {
+// fixtureCatalogJSON returns the contents of testdata/fixture_catalog.json. This
+// catalog.json-shaped fixture ({providers, models}) contains the full providers corpus
+// (active-class, residual, empty-raw_family passthrough-guard, YYMM) plus a small
+// metadata view; it is the hermetic input for TestDecompositionSnapshot and the run()
+// diagnostics tests.
+func fixtureCatalogJSON(t *testing.T) []byte {
 	t.Helper()
-	path := filepath.Join("testdata", "fixture_api.json")
+	path := filepath.Join("testdata", "fixture_catalog.json")
 	data, err := os.ReadFile(path)
 	if err != nil {
-		t.Fatalf("fixtureAPIJSON: could not read %q: %v\n"+
-			"  How to fix: ensure testdata/fixture_api.json is committed",
+		t.Fatalf("fixtureCatalogJSON: could not read %q: %v\n"+
+			"  How to fix: ensure testdata/fixture_catalog.json is committed",
 			path, err)
 	}
 	return data
 }
 
-// runFixtureAPICodegen is like runFixtureCodegen but uses fixtureAPIJSON (the full
-// fixture corpus from testdata/fixture_api.json) instead of the collision-group-focused
-// deterministicFixtureJSON. It returns all models + parse failures from the run.
-func runFixtureAPICodegen(t *testing.T) (models []bestiary.ModelInfo, failures []bestiary.ParseFailure) {
+// runFixtureCatalogCodegen is like runFixtureCodegen but uses fixtureCatalogJSON (the
+// full providers corpus from testdata/fixture_catalog.json) instead of the
+// collision-group-focused deterministicFixtureJSON. It returns all models + parse
+// failures from the run.
+func runFixtureCatalogCodegen(t *testing.T) (models []bestiary.ModelInfo, failures []bestiary.ParseFailure) {
 	t.Helper()
-	fixtureJSON := fixtureAPIJSON(t)
+	fixtureJSON := fixtureCatalogJSON(t)
 
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
@@ -2484,11 +2737,11 @@ func runFixtureAPICodegen(t *testing.T) (models []bestiary.ModelInfo, failures [
 	}))
 	defer srv.Close()
 
-	origURL := apiURL
-	apiURL = srv.URL
-	defer func() { apiURL = origURL }()
+	origURL := catalogURL
+	catalogURL = srv.URL
+	defer func() { catalogURL = origURL }()
 
-	_, models, _, failures, err := fetchModelsWithRaw(context.Background(), t.TempDir(), false)
+	_, models, _, _, failures, err := fetchModelsWithRaw(context.Background(), false)
 	if err != nil {
 		t.Fatalf("runFixtureAPICodegen: fetchModelsWithRaw: %v", err)
 	}
@@ -2506,7 +2759,7 @@ func runFixtureAPICodegen(t *testing.T) (models []bestiary.ModelInfo, failures [
 //
 // This test is fixture-based only (NOT a real-data ==0 gate).
 func TestDecompositionSnapshot(t *testing.T) {
-	models, _ := runFixtureAPICodegen(t)
+	models, _ := runFixtureCatalogCodegen(t)
 
 	// Collect decomposition entries, sorted by (provider, model_id) for determinism.
 	entries := make([]decompositionSnapshotEntry, 0, len(models))
@@ -2560,7 +2813,7 @@ func TestDecompositionSnapshot(t *testing.T) {
 // active-class model in the fixture corpus has a non-empty Version field.
 // This is the per-row version!="" check for the active class.
 func TestDecompositionSnapshot_ActiveClassVersionPopulated(t *testing.T) {
-	models, _ := runFixtureAPICodegen(t)
+	models, _ := runFixtureCatalogCodegen(t)
 
 	// Active-class models: those expected to have version populated.
 	// parser correctly extracts version for these cases.
@@ -2626,7 +2879,7 @@ func TestDecompositionSnapshot_ActiveClassVersionPopulated(t *testing.T) {
 //
 // This is the per-row version=="" check for the bare-4-digit-date guard models (fixture-based, not real-data).
 func TestDecompositionSnapshot_NoVersionForBare4Digit(t *testing.T) {
-	models, _ := runFixtureAPICodegen(t)
+	models, _ := runFixtureCatalogCodegen(t)
 
 	modelsByID := make(map[string]bestiary.ModelInfo, len(models))
 	for _, m := range models {
@@ -2673,7 +2926,7 @@ func TestDecompositionSnapshot_NoVersionForBare4Digit(t *testing.T) {
 // Uses fixture_api.json which contains haiku models that both resolve to version="3.5"
 // under cloudflare-ai-gateway (same provider/family/variant/version → duplicate group).
 func TestRun_WritesVersionDuplicates(t *testing.T) {
-	fixtureJSON := fixtureAPIJSON(t)
+	fixtureJSON := fixtureCatalogJSON(t)
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
@@ -2681,9 +2934,9 @@ func TestRun_WritesVersionDuplicates(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	origURL := apiURL
-	apiURL = srv.URL
-	defer func() { apiURL = origURL }()
+	origURL := catalogURL
+	catalogURL = srv.URL
+	defer func() { catalogURL = origURL }()
 
 	tmpDir := t.TempDir()
 	origDir, err := os.Getwd()
@@ -2730,7 +2983,7 @@ func TestRun_WritesVersionDuplicates(t *testing.T) {
 // TestRun_WritesDotFormAudit verifies that run() writes dot_form_audit.json with
 // models whose Version contains a dot (dot-form populated).
 func TestRun_WritesDotFormAudit(t *testing.T) {
-	fixtureJSON := fixtureAPIJSON(t)
+	fixtureJSON := fixtureCatalogJSON(t)
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
@@ -2738,9 +2991,9 @@ func TestRun_WritesDotFormAudit(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	origURL := apiURL
-	apiURL = srv.URL
-	defer func() { apiURL = origURL }()
+	origURL := catalogURL
+	catalogURL = srv.URL
+	defer func() { catalogURL = origURL }()
 
 	tmpDir := t.TempDir()
 	origDir, err := os.Getwd()
@@ -2852,7 +3105,7 @@ func TestWriteDotFormAudit_Unit(t *testing.T) {
 
 // TestFixturePerReasonCounts asserts per-reason FailureCount expectations over the
 // full fixture corpus. This mirrors the TestRun_WritesParseFailuresJSON pattern
-// but uses fixture_api.json instead of failureAPIJSON.
+// but uses fixture_catalog.json instead of failureCatalogJSON.
 //
 // Expectations:
 //   - ReasonVersionDigitsNotExtracted (active class) → 0: now correctly
@@ -2870,7 +3123,7 @@ func TestWriteDotFormAudit_Unit(t *testing.T) {
 //
 // This test is NOT a ==0 gate on real data — fixture-based only (by design).
 func TestFixturePerReasonCounts(t *testing.T) {
-	_, failures := runFixtureAPICodegen(t)
+	_, failures := runFixtureCatalogCodegen(t)
 
 	// Count per-reason occurrences.
 	counts := make(map[bestiary.ParseFailureReason]int)
@@ -3164,7 +3417,7 @@ func TestQuantVRAM_PartialWhenArchAbsent(t *testing.T) {
 // uncurated model adds an unexpected line.
 func TestCodegen_ParamSizeOnlyFromCuratedTable(t *testing.T) {
 	fixtureJSON := deterministicFixtureJSON(t)
-	staticSrc, _ := runFixtureCodegen(t, fixtureJSON, "")
+	staticSrc, _, _ := runFixtureCodegen(t, fixtureJSON, "")
 	src := string(staticSrc)
 
 	reParamSize := regexp.MustCompile(`ParamSize:\s+"([^"]*)"`)
@@ -3201,8 +3454,8 @@ func TestCodegen_IngestedAt_Deterministic(t *testing.T) {
 
 	// Run twice with DIFFERENT LastSynced stamps to confirm that IngestedAt
 	// (if present) is unaffected by the wall-clock stamp.
-	src1, _ := runFixtureCodegen(t, fixtureJSON, "2000-01-01T00:00:00Z")
-	src2, _ := runFixtureCodegen(t, fixtureJSON, "2099-12-31T23:59:59Z")
+	src1, _, _ := runFixtureCodegen(t, fixtureJSON, "2000-01-01T00:00:00Z")
+	src2, _, _ := runFixtureCodegen(t, fixtureJSON, "2099-12-31T23:59:59Z")
 
 	// Normalize LastSynced (the known residual) from both sides.
 	n1 := string(normalizeLastSynced(src1))
@@ -3243,8 +3496,8 @@ func TestCodegen_IngestedAt_Deterministic(t *testing.T) {
 // still produces valid, deterministic output.
 func TestEntitySource_Deterministic(t *testing.T) {
 	fixtureJSON := deterministicFixtureJSON(t)
-	src1, _ := runFixtureCodegen(t, fixtureJSON, "2000-01-01T00:00:00Z")
-	src2, _ := runFixtureCodegen(t, fixtureJSON, "2000-01-01T00:00:00Z")
+	src1, _, _ := runFixtureCodegen(t, fixtureJSON, "2000-01-01T00:00:00Z")
+	src2, _, _ := runFixtureCodegen(t, fixtureJSON, "2000-01-01T00:00:00Z")
 
 	// Both runs with the same timestamp must be byte-identical (no residual).
 	if !bytes.Equal(src1, src2) {
@@ -3420,5 +3673,148 @@ func TestCodegen_QuantVRAMLiteral_Deterministic(t *testing.T) {
 	// VRAMEstimatePartial must be false for these arch-complete rows.
 	if strings.Contains(lit1, "VRAMEstimatePartial: true") {
 		t.Errorf("quantVRAMLiteral: unexpected VRAMEstimatePartial: true for arch-complete rows\nliteral: %s", lit1)
+	}
+}
+
+// TestCodegen_UpToDate_RealInput is the real-input regen up-to-date guard. It
+// regenerates every codegen-owned source IN MEMORY from the COMMITTED vendored
+// snapshot (parse/data/modelsdev/catalog.json) via the exact generation sequence
+// run() uses, then byte-compares each fresh source against the COMMITTED
+// *_gen.go file on disk — with LastSynced lines normalized on both sides (the
+// same reLastSynced/normalizeLastSynced machinery TestCodegen_Reproducible_ByteIdentical
+// uses). It FAILS if any generated file is stale relative to the vendored
+// snapshot plus the current emitter logic.
+//
+// This is the guard whose absence let a stale regen ship invisibly: the
+// hermetic TestCodegen_UpToDate checks only golden EXCERPTS from a fixture, and
+// TestCodegen_Reproducible_ByteIdentical proves run-to-run stability but not
+// agreement with what is committed. Only a full committed-vs-fresh comparison
+// over the real 5654-model catalog catches a generated file that was hand-edited,
+// left un-regenerated after an emitter or data change, or captured in a
+// non-canonical form. The comparison is generation-only (the generate* functions
+// return bytes; nothing is written to disk), so the committed files are never
+// mutated by the test.
+//
+// Not parallel: it temporarily repoints the vendoredCatalogPath global at the
+// module-root-resolved committed snapshot.
+func TestCodegen_UpToDate_RealInput(t *testing.T) {
+	// `go test` runs with the package dir as CWD, but the vendored catalog and the
+	// committed generated files live at the module root; resolve both from this
+	// test file's location (two levels up).
+	_, thisFile, _, ok := runtime.Caller(0)
+	if !ok {
+		t.Fatal("runtime.Caller failed; cannot locate the module root")
+	}
+	moduleRoot := filepath.Join(filepath.Dir(thisFile), "..", "..")
+
+	// Point fetchModelsWithRaw at the committed snapshot (absolute, so it resolves
+	// regardless of the test CWD).
+	orig := vendoredCatalogPath
+	vendoredCatalogPath = filepath.Join(moduleRoot, vendoredCatalogPath)
+	t.Cleanup(func() { vendoredCatalogPath = orig })
+
+	_, models, metadata, providerMeta, _, err := fetchModelsWithRaw(context.Background(), true)
+	if err != nil {
+		t.Fatalf("fetchModelsWithRaw(noFetch=true) over the committed vendored catalog: %v\n"+
+			"  How to fix: run the models.dev snapshot refresh (see AGENTS.md)", err)
+	}
+
+	// Reproduce run()'s generation sequence exactly (main.go run()):
+	//   allSlugs (sorted) -> collectFamilies -> applyFilter(no flags) -> the five
+	//   generate* emitters, with slugToConst built from providerConstName.
+	// LastSynced is intentionally NOT stamped here: normalizeLastSynced neutralizes
+	// the field on both sides, so the on-disk wall-clock stamp is irrelevant.
+	allSlugs := make([]string, 0, len(providerMeta))
+	for slug := range providerMeta {
+		allSlugs = append(allSlugs, slug)
+	}
+	sort.Strings(allSlugs)
+
+	familyMeta := collectFamilies(models)
+	filtered := applyFilter(models, nil, nil)
+
+	slugToConst := make(map[string]string, len(allSlugs))
+	for _, slug := range allSlugs {
+		slugToConst[slug] = providerConstName(slug, providerMeta[slug].Name)
+	}
+
+	providersSrc, err := generateProvidersSource(allSlugs, providerMeta)
+	if err != nil {
+		t.Fatalf("generateProvidersSource: %v", err)
+	}
+	familiesSrc, err := generateFamiliesSource(familyMeta)
+	if err != nil {
+		t.Fatalf("generateFamiliesSource: %v", err)
+	}
+	staticSrc, err := generateSource(filtered, slugToConst)
+	if err != nil {
+		t.Fatalf("generateSource: %v", err)
+	}
+	constantsSrc, err := generateConstantsSource(models, slugToConst)
+	if err != nil {
+		t.Fatalf("generateConstantsSource: %v", err)
+	}
+	metadataSrc, err := generateMetadataSource(metadata)
+	if err != nil {
+		t.Fatalf("generateMetadataSource: %v", err)
+	}
+
+	fresh := []struct {
+		relPath string
+		src     []byte
+	}{
+		{outputPath, staticSrc},
+		{outputConstantsPath, constantsSrc},
+		{outputMetadataPath, metadataSrc},
+		{outputFamiliesPath, familiesSrc},
+		{outputProvidersPath, providersSrc},
+	}
+
+	for _, f := range fresh {
+		committedPath := filepath.Join(moduleRoot, f.relPath)
+		committed, readErr := os.ReadFile(committedPath)
+		if readErr != nil {
+			t.Errorf("read committed generated file %q: %v\n"+
+				"  How to fix: run `go generate ./...` to (re)create it", committedPath, readErr)
+			continue
+		}
+
+		freshNorm := normalizeLastSynced(f.src)
+		committedNorm := normalizeLastSynced(committed)
+		if bytes.Equal(freshNorm, committedNorm) {
+			continue
+		}
+
+		// Report the first divergent line to make the staleness reviewable without
+		// dumping the whole (multi-MB) file.
+		freshLines := strings.Split(string(freshNorm), "\n")
+		commLines := strings.Split(string(committedNorm), "\n")
+		firstDiff, ln, freshLn, commLn := -1, 0, "", ""
+		for ln < len(freshLines) || ln < len(commLines) {
+			var fl, cl string
+			if ln < len(freshLines) {
+				fl = freshLines[ln]
+			}
+			if ln < len(commLines) {
+				cl = commLines[ln]
+			}
+			if fl != cl {
+				firstDiff, freshLn, commLn = ln+1, fl, cl
+				break
+			}
+			ln++
+		}
+
+		t.Errorf(
+			"committed %s is STALE relative to the vendored snapshot + current emitter logic\n"+
+				"  What: a fresh --no-fetch regen of this file (LastSynced normalized) does not match what is committed\n"+
+				"  Why: the generated file was hand-edited, or left un-regenerated after an emitter or curated-data change\n"+
+				"  Where: %s (committed) vs in-memory regen from %s\n"+
+				"  First divergent line (%d):\n"+
+				"    committed: %q\n"+
+				"    fresh    : %q\n"+
+				"  How to fix: run `go run ./cmd/bestiary-gen --no-fetch` and commit the regenerated files as a chore(gen) commit",
+			f.relPath, f.relPath, vendoredCatalogPath, firstDiff, commLn, freshLn,
+		)
 	}
 }

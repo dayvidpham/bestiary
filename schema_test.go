@@ -117,6 +117,23 @@ func TestJSONOutput_ConformsToSchema(t *testing.T) {
 			},
 		},
 		Source: bestiary.DataSourceOllama,
+		// v0.2.5 additive fields (schema 0.3.0): exercise the populated
+		// serialization path for the instance-level models.dev harmonization
+		// fields — Description (string), Status (ModelStatus enum string),
+		// ReasoningOptions ([]ReasoningOption with a Kind enum string), the audio
+		// cost pointers, CostContextOver200k (*TierCost), and CostTiers ([]CostTier
+		// with the embedded TierCost fields flattened).
+		Description: "A schema test model.",
+		Status:      bestiary.StatusBeta,
+		ReasoningOptions: []bestiary.ReasoningOption{
+			{Kind: bestiary.ReasoningEffort, Values: []string{"low", "high"}},
+		},
+		CostInputAudioPerMTok:  &cost,
+		CostOutputAudioPerMTok: nil,
+		CostContextOver200k:    &bestiary.TierCost{CostInputPerMTok: &cost},
+		CostTiers: []bestiary.CostTier{
+			{ContextSize: 200000, TierCost: bestiary.TierCost{CostOutputPerMTok: &cost}},
+		},
 	}
 
 	var buf bytes.Buffer
@@ -211,9 +228,24 @@ func TestJSONOutput_ConformsToSchema(t *testing.T) {
 	if err := json.Unmarshal(refJSON, &refOut); err != nil {
 		t.Fatalf("could not unmarshal ModelRef JSON: %v", err)
 	}
+	// Bi-directional EXACT-prop conformance for $defs.ModelRef, mirroring the
+	// V024/V025 deep-conformance pattern. The forward arm (schema -> output)
+	// catches a declared property the Go type no longer marshals; the reverse arm
+	// (output -> schema) catches a marshaled Go field the schema fails to declare.
+	// The reverse arm is what a one-directional check lacked: a Go ModelRef field
+	// added without a matching $def property (e.g. ParamSize) marshaled into the
+	// output yet stayed GREEN. Now any such drift fails the suite.
 	for prop := range modelRefDef.Properties {
 		if _, ok := refOut[prop]; !ok {
-			t.Errorf("ModelRef JSON output missing schema $defs.ModelRef property %q", prop)
+			t.Errorf("ModelRef JSON output missing schema $defs.ModelRef property %q;\n"+
+				"  how to fix: ensure bestiary.ModelRef has an exported field %q, or remove the property from $defs.ModelRef", prop, prop)
+		}
+	}
+	for key := range refOut {
+		if _, ok := modelRefDef.Properties[key]; !ok {
+			t.Errorf("ModelRef JSON output key %q is not declared in schema $defs.ModelRef;\n"+
+				"  what went wrong: a marshaled ModelRef field has no matching $def property (Go/schema drift)\n"+
+				"  how to fix: add property %q to $defs.ModelRef in bestiary.schema.json", key, key)
 		}
 	}
 	// The crux of the fix: Modifier MUST be an array, not a string.
@@ -945,7 +977,7 @@ func TestSchemaDefs_V024_DeepConformance(t *testing.T) {
 				Ref:     bestiary.EntityRef{Family: "llama", Version: "3.3", ParamSize: "70b", Modifier: []string{"instruct"}},
 				Sources: []bestiary.DataSourceID{bestiary.DataSourceModelsDev, bestiary.DataSourceOllama},
 			},
-			expectProps: []string{"Ref", "Instances", "Lineage", "Providers", "Hosts", "PriceInputRange", "PriceOutputRange", "ContextRange", "MaxOutputRange", "Capabilities", "Sources"},
+			expectProps: []string{"Ref", "Instances", "Lineage", "Providers", "Hosts", "PriceInputRange", "PriceOutputRange", "ContextRange", "MaxOutputRange", "Capabilities", "Sources", "Metadata"},
 			expectTypes: map[string]string{
 				"Ref":              "$ref",
 				"Instances":        "array|null",
@@ -958,6 +990,9 @@ func TestSchemaDefs_V024_DeepConformance(t *testing.T) {
 				"MaxOutputRange":   "array",
 				"Capabilities":     "$ref",
 				"Sources":          "array|null",
+				// Metadata is oneOf{$ref EntityMetadata, null} — no plain "type"
+				// node and no direct "$ref" (it is inside the oneOf), so it is
+				// allowlisted from the type cross-check (added in schema 0.3.0).
 			},
 		},
 	}

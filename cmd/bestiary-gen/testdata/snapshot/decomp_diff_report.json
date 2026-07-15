@@ -1,10 +1,10 @@
 {
   "total_records": 4979,
-  "changed_count": 1212,
+  "changed_count": 1233,
   "cat_a_divergence_fix_count": 324,
-  "cat_b_improvement_count": 883,
+  "cat_b_improvement_count": 903,
   "cat_c_unexpected_regression_count": 0,
-  "justified_exception_count": 5,
+  "justified_exception_count": 6,
   "id_tuple4_incl_modifier_divergence_frozen_before": 81,
   "id_tuple4_incl_modifier_divergence_current_after": 13,
   "divergence_metric": "4-tuple INCL Modifier (Family,Variant,Version,Modifier); before=frozen baseline, after=current snapshot. DISTINCT from the authoritative cross-provider divergenceExact gate (3-tuple, EXCL Modifier, current snapshot, =0).",
@@ -3920,7 +3920,7 @@
       "id": "Qwen/Qwen3-Omni-30B-A3B-Instruct",
       "raw_family": "qwen",
       "before": "(family=\"qwen\",variant=\"instruct\",version=\"3\",modifier=\"\")",
-      "after": "(family=\"qwen\",variant=\"\",version=\"3\",modifier=\"instruct\")",
+      "after": "(family=\"qwen\",variant=\"\",version=\"3\",modifier=\"instruct,omni\")",
       "category": "b:improvement",
       "reason": "family-preserving de-noise/enrich: only phantom losses and/or enrichments, no ID-present field lost"
     },
@@ -3929,7 +3929,7 @@
       "id": "Qwen/Qwen3-Omni-30B-A3B-Instruct",
       "raw_family": "qwen",
       "before": "(family=\"qwen\",variant=\"instruct\",version=\"3\",modifier=\"\")",
-      "after": "(family=\"qwen\",variant=\"\",version=\"3\",modifier=\"instruct\")",
+      "after": "(family=\"qwen\",variant=\"\",version=\"3\",modifier=\"instruct,omni\")",
       "category": "b:improvement",
       "reason": "family-preserving de-noise/enrich: only phantom losses and/or enrichments, no ID-present field lost"
     },
@@ -3938,7 +3938,7 @@
       "id": "Qwen/Qwen3-Omni-30B-A3B-Thinking",
       "raw_family": "qwen",
       "before": "(family=\"qwen\",variant=\"\",version=\"3\",modifier=\"\")",
-      "after": "(family=\"qwen\",variant=\"\",version=\"3\",modifier=\"thinking\")",
+      "after": "(family=\"qwen\",variant=\"\",version=\"3\",modifier=\"thinking,omni\")",
       "category": "b:improvement",
       "reason": "strict enrichment — only previously-empty field(s) populated"
     },
@@ -3947,7 +3947,7 @@
       "id": "Qwen/Qwen3-Omni-30B-A3B-Thinking",
       "raw_family": "qwen",
       "before": "(family=\"qwen\",variant=\"\",version=\"3\",modifier=\"\")",
-      "after": "(family=\"qwen\",variant=\"\",version=\"3\",modifier=\"thinking\")",
+      "after": "(family=\"qwen\",variant=\"\",version=\"3\",modifier=\"thinking,omni\")",
       "category": "b:improvement",
       "reason": "strict enrichment — only previously-empty field(s) populated"
     },
@@ -6067,15 +6067,6 @@
       "reason": "strict enrichment — only previously-empty field(s) populated"
     },
     {
-      "provider": "opencode",
-      "id": "hy3-preview-free",
-      "raw_family": "hy3-free",
-      "before": "(family=\"hy3\",variant=\"free\",version=\"\",modifier=\"\")",
-      "after": "(family=\"hy\",variant=\"free\",version=\"3\",modifier=\"\")",
-      "category": "b:improvement",
-      "reason": "family over-capture reduced to short base — exact family-suffix→variant move (override semantics), OR before ∉ registry \u0026 after ∈ registry; no ID-present non-family field lost (hardened)"
-    },
-    {
       "provider": "poe",
       "id": "ideogramai/ideogram-v2a-turbo",
       "raw_family": "ideogram",
@@ -8047,6 +8038,15 @@
       "reason": "strict enrichment — only previously-empty field(s) populated"
     },
     {
+      "provider": "digitalocean",
+      "id": "nemotron-3-nano-omni",
+      "raw_family": "nemotron",
+      "before": "(family=\"nemotron\",variant=\"nano\",version=\"3\",modifier=\"\")",
+      "after": "(family=\"nemotron\",variant=\"nano\",version=\"3\",modifier=\"omni\")",
+      "category": "b:improvement",
+      "reason": "strict enrichment — only previously-empty field(s) populated"
+    },
+    {
       "provider": "stackit",
       "id": "neuralmagic/Meta-Llama-3.1-8B-Instruct-FP8",
       "raw_family": "llama",
@@ -8092,11 +8092,20 @@
       "reason": "family-preserving de-noise/enrich: only phantom losses and/or enrichments, no ID-present field lost"
     },
     {
+      "provider": "nebius",
+      "id": "nvidia/Nemotron-3-Nano-Omni",
+      "raw_family": "",
+      "before": "(family=\"nemotron\",variant=\"nano\",version=\"3\",modifier=\"\")",
+      "after": "(family=\"nemotron\",variant=\"nano\",version=\"3\",modifier=\"omni\")",
+      "category": "b:improvement",
+      "reason": "strict enrichment — only previously-empty field(s) populated"
+    },
+    {
       "provider": "vultr",
       "id": "nvidia/Nemotron-3-Nano-Omni-30B-A3B-Reasoning-BF16",
       "raw_family": "nemotron",
       "before": "(family=\"nemotron\",variant=\"nano\",version=\"3\",modifier=\"\")",
-      "after": "(family=\"nemotron\",variant=\"nano\",version=\"3\",modifier=\"reasoning\")",
+      "after": "(family=\"nemotron\",variant=\"nano\",version=\"3\",modifier=\"reasoning,omni\")",
       "category": "b:improvement",
       "reason": "strict enrichment — only previously-empty field(s) populated"
     },
@@ -8114,7 +8123,7 @@
       "id": "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning",
       "raw_family": "nemotron",
       "before": "(family=\"nemotron\",variant=\"nano\",version=\"3\",modifier=\"\")",
-      "after": "(family=\"nemotron\",variant=\"nano\",version=\"3\",modifier=\"reasoning\")",
+      "after": "(family=\"nemotron\",variant=\"nano\",version=\"3\",modifier=\"reasoning,omni\")",
       "category": "b:improvement",
       "reason": "strict enrichment — only previously-empty field(s) populated"
     },
@@ -8123,7 +8132,7 @@
       "id": "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free",
       "raw_family": "",
       "before": "(family=\"nemotron\",variant=\"nano\",version=\"3\",modifier=\"\")",
-      "after": "(family=\"nemotron\",variant=\"nano\",version=\"3\",modifier=\"reasoning\")",
+      "after": "(family=\"nemotron\",variant=\"nano\",version=\"3\",modifier=\"reasoning,omni\")",
       "category": "b:improvement",
       "reason": "strict enrichment — only previously-empty field(s) populated"
     },
@@ -8132,7 +8141,7 @@
       "id": "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free",
       "raw_family": "nemotron",
       "before": "(family=\"nemotron\",variant=\"nano\",version=\"3\",modifier=\"\")",
-      "after": "(family=\"nemotron\",variant=\"nano\",version=\"3\",modifier=\"reasoning\")",
+      "after": "(family=\"nemotron\",variant=\"nano\",version=\"3\",modifier=\"reasoning,omni\")",
       "category": "b:improvement",
       "reason": "strict enrichment — only previously-empty field(s) populated"
     },
@@ -8758,6 +8767,60 @@
       "reason": "strict enrichment — only previously-empty field(s) populated"
     },
     {
+      "provider": "poolside",
+      "id": "poolside/laguna-m.1",
+      "raw_family": "",
+      "before": "(family=\"laguna\",variant=\"\",version=\"\",modifier=\"\")",
+      "after": "(family=\"laguna\",variant=\"m\",version=\"1\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "strict enrichment — only previously-empty field(s) populated"
+    },
+    {
+      "provider": "kilo",
+      "id": "poolside/laguna-m.1:free",
+      "raw_family": "",
+      "before": "(family=\"laguna\",variant=\"\",version=\"\",modifier=\"\")",
+      "after": "(family=\"laguna\",variant=\"m\",version=\"1\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "strict enrichment — only previously-empty field(s) populated"
+    },
+    {
+      "provider": "openrouter",
+      "id": "poolside/laguna-m.1:free",
+      "raw_family": "",
+      "before": "(family=\"laguna\",variant=\"\",version=\"\",modifier=\"\")",
+      "after": "(family=\"laguna\",variant=\"m\",version=\"1\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "strict enrichment — only previously-empty field(s) populated"
+    },
+    {
+      "provider": "poolside",
+      "id": "poolside/laguna-xs.2",
+      "raw_family": "",
+      "before": "(family=\"laguna\",variant=\"\",version=\"\",modifier=\"\")",
+      "after": "(family=\"laguna\",variant=\"xs\",version=\"2\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "strict enrichment — only previously-empty field(s) populated"
+    },
+    {
+      "provider": "kilo",
+      "id": "poolside/laguna-xs.2:free",
+      "raw_family": "",
+      "before": "(family=\"laguna\",variant=\"\",version=\"\",modifier=\"\")",
+      "after": "(family=\"laguna\",variant=\"xs\",version=\"2\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "strict enrichment — only previously-empty field(s) populated"
+    },
+    {
+      "provider": "openrouter",
+      "id": "poolside/laguna-xs.2:free",
+      "raw_family": "",
+      "before": "(family=\"laguna\",variant=\"\",version=\"\",modifier=\"\")",
+      "after": "(family=\"laguna\",variant=\"xs\",version=\"2\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "strict enrichment — only previously-empty field(s) populated"
+    },
+    {
       "provider": "digitalocean",
       "id": "qwen-2.5-14b-instruct",
       "raw_family": "qwen",
@@ -8774,6 +8837,51 @@
       "after": "(family=\"qwen\",variant=\"\",version=\"2.5\",modifier=\"instruct\")",
       "category": "b:improvement",
       "reason": "family-preserving de-noise/enrich: only phantom losses and/or enrichments, no ID-present field lost"
+    },
+    {
+      "provider": "alibaba",
+      "id": "qwen-omni-turbo",
+      "raw_family": "qwen",
+      "before": "(family=\"qwen\",variant=\"turbo\",version=\"\",modifier=\"\")",
+      "after": "(family=\"qwen\",variant=\"turbo\",version=\"\",modifier=\"omni\")",
+      "category": "b:improvement",
+      "reason": "strict enrichment — only previously-empty field(s) populated"
+    },
+    {
+      "provider": "alibaba-cn",
+      "id": "qwen-omni-turbo",
+      "raw_family": "qwen",
+      "before": "(family=\"qwen\",variant=\"turbo\",version=\"\",modifier=\"\")",
+      "after": "(family=\"qwen\",variant=\"turbo\",version=\"\",modifier=\"omni\")",
+      "category": "b:improvement",
+      "reason": "strict enrichment — only previously-empty field(s) populated"
+    },
+    {
+      "provider": "llmgateway",
+      "id": "qwen-omni-turbo",
+      "raw_family": "qwen",
+      "before": "(family=\"qwen\",variant=\"turbo\",version=\"\",modifier=\"\")",
+      "after": "(family=\"qwen\",variant=\"turbo\",version=\"\",modifier=\"omni\")",
+      "category": "b:improvement",
+      "reason": "strict enrichment — only previously-empty field(s) populated"
+    },
+    {
+      "provider": "alibaba",
+      "id": "qwen-omni-turbo-realtime",
+      "raw_family": "qwen",
+      "before": "(family=\"qwen\",variant=\"turbo\",version=\"\",modifier=\"\")",
+      "after": "(family=\"qwen\",variant=\"turbo\",version=\"\",modifier=\"omni,realtime\")",
+      "category": "b:improvement",
+      "reason": "strict enrichment — only previously-empty field(s) populated"
+    },
+    {
+      "provider": "alibaba-cn",
+      "id": "qwen-omni-turbo-realtime",
+      "raw_family": "qwen",
+      "before": "(family=\"qwen\",variant=\"turbo\",version=\"\",modifier=\"\")",
+      "after": "(family=\"qwen\",variant=\"turbo\",version=\"\",modifier=\"omni,realtime\")",
+      "category": "b:improvement",
+      "reason": "strict enrichment — only previously-empty field(s) populated"
     },
     {
       "provider": "amazon-bedrock",
@@ -9131,9 +9239,18 @@
       "id": "qwen/qwen3-omni-30b-a3b-instruct",
       "raw_family": "qwen",
       "before": "(family=\"qwen\",variant=\"instruct\",version=\"3\",modifier=\"\")",
-      "after": "(family=\"qwen\",variant=\"\",version=\"3\",modifier=\"instruct\")",
+      "after": "(family=\"qwen\",variant=\"\",version=\"3\",modifier=\"instruct,omni\")",
       "category": "b:improvement",
       "reason": "family-preserving de-noise/enrich: only phantom losses and/or enrichments, no ID-present field lost"
+    },
+    {
+      "provider": "novita-ai",
+      "id": "qwen/qwen3-omni-30b-a3b-thinking",
+      "raw_family": "",
+      "before": "(family=\"qwen\",variant=\"\",version=\"3\",modifier=\"thinking\")",
+      "after": "(family=\"qwen\",variant=\"\",version=\"3\",modifier=\"thinking,omni\")",
+      "category": "b:improvement",
+      "reason": "strict enrichment — only previously-empty field(s) populated"
     },
     {
       "provider": "kilo",
@@ -9368,6 +9485,24 @@
       "after": "(family=\"qwen\",variant=\"\",version=\"2\",modifier=\"instruct\")",
       "category": "b:improvement",
       "reason": "family-preserving de-noise/enrich: only phantom losses and/or enrichments, no ID-present field lost"
+    },
+    {
+      "provider": "alibaba",
+      "id": "qwen2-5-omni-7b",
+      "raw_family": "qwen",
+      "before": "(family=\"qwen\",variant=\"\",version=\"2\",modifier=\"\")",
+      "after": "(family=\"qwen\",variant=\"\",version=\"2\",modifier=\"omni\")",
+      "category": "b:improvement",
+      "reason": "strict enrichment — only previously-empty field(s) populated"
+    },
+    {
+      "provider": "alibaba-cn",
+      "id": "qwen2-5-omni-7b",
+      "raw_family": "qwen",
+      "before": "(family=\"qwen\",variant=\"\",version=\"2\",modifier=\"\")",
+      "after": "(family=\"qwen\",variant=\"\",version=\"2\",modifier=\"omni\")",
+      "category": "b:improvement",
+      "reason": "strict enrichment — only previously-empty field(s) populated"
     },
     {
       "provider": "llmgateway",
@@ -9748,6 +9883,15 @@
       "reason": "generic 'text-embedding' descriptor corrected to the ID-derived real family"
     },
     {
+      "provider": "alibaba",
+      "id": "qwen3-livetranslate-flash-realtime",
+      "raw_family": "qwen",
+      "before": "(family=\"qwen\",variant=\"flash\",version=\"3\",modifier=\"\")",
+      "after": "(family=\"qwen\",variant=\"flash\",version=\"3\",modifier=\"livetranslate,realtime\")",
+      "category": "b:improvement",
+      "reason": "strict enrichment — only previously-empty field(s) populated"
+    },
+    {
       "provider": "venice",
       "id": "qwen3-next-80b",
       "raw_family": "qwen",
@@ -9798,6 +9942,42 @@
       "raw_family": "",
       "before": "(family=\"qwen\",variant=\"\",version=\"3\",modifier=\"thinking\")",
       "after": "(family=\"qwen\",variant=\"next\",version=\"3\",modifier=\"thinking\")",
+      "category": "b:improvement",
+      "reason": "strict enrichment — only previously-empty field(s) populated"
+    },
+    {
+      "provider": "alibaba",
+      "id": "qwen3-omni-flash",
+      "raw_family": "qwen",
+      "before": "(family=\"qwen\",variant=\"flash\",version=\"3\",modifier=\"\")",
+      "after": "(family=\"qwen\",variant=\"flash\",version=\"3\",modifier=\"omni\")",
+      "category": "b:improvement",
+      "reason": "strict enrichment — only previously-empty field(s) populated"
+    },
+    {
+      "provider": "alibaba-cn",
+      "id": "qwen3-omni-flash",
+      "raw_family": "qwen",
+      "before": "(family=\"qwen\",variant=\"flash\",version=\"3\",modifier=\"\")",
+      "after": "(family=\"qwen\",variant=\"flash\",version=\"3\",modifier=\"omni\")",
+      "category": "b:improvement",
+      "reason": "strict enrichment — only previously-empty field(s) populated"
+    },
+    {
+      "provider": "alibaba",
+      "id": "qwen3-omni-flash-realtime",
+      "raw_family": "qwen",
+      "before": "(family=\"qwen\",variant=\"flash\",version=\"3\",modifier=\"\")",
+      "after": "(family=\"qwen\",variant=\"flash\",version=\"3\",modifier=\"omni,realtime\")",
+      "category": "b:improvement",
+      "reason": "strict enrichment — only previously-empty field(s) populated"
+    },
+    {
+      "provider": "alibaba-cn",
+      "id": "qwen3-omni-flash-realtime",
+      "raw_family": "qwen",
+      "before": "(family=\"qwen\",variant=\"flash\",version=\"3\",modifier=\"\")",
+      "after": "(family=\"qwen\",variant=\"flash\",version=\"3\",modifier=\"omni,realtime\")",
       "category": "b:improvement",
       "reason": "strict enrichment — only previously-empty field(s) populated"
     },
@@ -10907,6 +11087,15 @@
       "after": "(family=\"grok\",variant=\"mini\",version=\"3\",modifier=\"\")",
       "category": "justified-exception",
       "reason": "JUSTIFIED: USER-RATIFIED non-defect (GH#13 release-stage dimension): family corrected to grok + real tier 'mini' (+version 3); the release-stage token 'beta' AND the speed-tier token 'fast' are BOTH dropped — neither can co-occupy the single Variant slot with 'mini' (variant-multiplicity, the variant analogue of the Modifier-LIST, deferred). MECHANISM (corrected) for the related xai/grok-4.20-non-reasoning-beta, which stays Modifier=nil (nil both BEFORE and AFTER — no regression, no gate trip): the trailing 'beta' is the TAIL-ORDER MODIFIER-SCAN BOUNDARY — the scan starts at the tail and halts at 'beta' (a non-collected variant/boundary token) before reaching the inner 'non-reasoning', so the negation branch never executes. Contrast (verified): grok-4.20-non-reasoning [tail='reasoning' preceded by 'non']→[non-reasoning]; grok-4-20-beta-0309-non-reasoning ['beta' MID-string, tail still 'reasoning']→[non-reasoning]; xai/grok-4.20-non-reasoning-beta [tail='beta']→nil. Same release-stage multiplicity tracked under GH#13."
+    },
+    {
+      "provider": "opencode",
+      "id": "hy3-preview-free",
+      "raw_family": "hy3-free",
+      "before": "(family=\"hy3\",variant=\"free\",version=\"\",modifier=\"\")",
+      "after": "(family=\"hy\",variant=\"free\",version=\"3\",modifier=\"\")",
+      "category": "justified-exception",
+      "reason": "JUSTIFIED: New in the July snapshot (opencode/hy3-preview-free). opencode labels this Tencent model raw_family='hy3-free', gluing the generation digit to the family. The ID-driven path correctly splits 'hy3' into family='hy' + version='3', which CONVERGES it onto the canonical Tencent Hy family — every other provider serves the same model as raw_family='Hy' → hy/version=3 (e.g. crossmodel/zenmux 'tencent/hy3-preview'). The 'free' tier stays the variant. So the change folds an over-captured 'hy3' family root back to the real 'hy' family rather than fracturing it; single-provider (opencode) exact id, no cross-provider divergence introduced."
     },
     {
       "provider": "nvidia",

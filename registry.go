@@ -283,6 +283,115 @@ func loadEntityIndex() {
 	}
 
 	entitySourceRel = rel
+
+	// Attach compiled-in models.dev metadata and fold in any metadata-only standalone
+	// entity it synthesizes. This is a no-op until the codegen slice bakes real
+	// metadata (the accessor returns nil today), so the index — and every determinism
+	// guarantee that rests on its first-seen key order — is unchanged for the current
+	// corpus.
+	attachBakedMetadataToIndex()
+}
+
+// attachBakedMetadataToIndex runs the metadata<->entity join over the just-built
+// entity index using the compiled-in baked metadata (staticEntityMetadata): it writes
+// each matched entity's Metadata back into the index and appends any synthesized
+// metadata-only standalone entity to the index in a deterministic position.
+//
+// It returns immediately when no metadata is baked in (the current state: the
+// accessor returns nil until the codegen slice emits the generated metadata file), so
+// entityIndex/entityKeys stay byte-identical to the pre-metadata build until real
+// baked data lands.
+//
+// Synthesized standalones are appended to entityKeys in ascending MetadataID order so
+// their position in Entities() is deterministic and independent of map iteration; a
+// synthesized key that collides with a real entity is dropped (a real entity is never
+// overwritten by a standalone). Each appended standalone is a metadata-only entity
+// attested by models.dev, so it MUST also contribute its (entity_key, source) rows to
+// the entity↔source relation (entitySourceRel): the ratified invariant is "a model is
+// attested by a source iff there is an EntitySource row", and a standalone's derived
+// Entity.Sources projection would otherwise disagree with the relation. Because the
+// standalone is synthesized AFTER buildEntitySourceRelation already ran over the static
+// rows, this function extends the relation in lockstep and re-imposes its
+// (EntityKey, SourceID) total order.
+func attachBakedMetadataToIndex() {
+	meta := staticEntityMetadata()
+	if len(meta) == 0 {
+		return
+	}
+
+	ents := make([]Entity, len(entityKeys))
+	for i, key := range entityKeys {
+		ents[i] = entityIndex[key]
+	}
+
+	attached, _, standalone := JoinEntityMetadata(ents, meta)
+
+	// Write attached metadata back into the index (attached[i] <-> entityKeys[i]).
+	for i, key := range entityKeys {
+		if attached[i].Metadata == nil {
+			continue
+		}
+		e := entityIndex[key]
+		e.Metadata = attached[i].Metadata
+		entityIndex[key] = e
+	}
+
+	// Append synthesized standalones deterministically (ascending MetadataID).
+	sort.Slice(standalone, func(i, j int) bool {
+		return standaloneMetadataID(standalone[i]) < standaloneMetadataID(standalone[j])
+	})
+	relExtended := false
+	for _, s := range standalone {
+		key := s.Ref.String()
+		if _, exists := entityIndex[key]; exists {
+			continue // never overwrite a real entity with a standalone
+		}
+		// Attest the standalone in the relation FIRST, then read the entity's Sources
+		// projection back from it, so the projection stays a faithful derived view of
+		// the relation — exactly the contract real entities get from
+		// buildEntitySourceRelation. sortedSources yields the ascending, de-duplicated
+		// DataSourceID set (a standalone carries [DataSourceModelsDev]).
+		srcs := sortedSources(s.Sources)
+		entitySourceRel.byEntity[key] = srcs
+		for _, src := range srcs {
+			entitySourceRel.rows = append(entitySourceRel.rows, EntitySource{EntityKey: key, SourceID: src})
+			relExtended = true
+		}
+		s.Sources = srcs
+		entityIndex[key] = s
+		entityKeys = append(entityKeys, key)
+	}
+
+	// Re-impose the pinned (EntityKey, SourceID) total order on the relation rows so
+	// the join relation (and any deterministic consumer of it) stays byte-stable after
+	// the standalone extension.
+	if relExtended {
+		sort.Slice(entitySourceRel.rows, func(i, j int) bool {
+			return lessEntitySource(entitySourceRel.rows[i], entitySourceRel.rows[j])
+		})
+	}
+}
+
+// lessEntitySource is the canonical total order on entity↔source relation rows —
+// ascending by EntityKey, then by SourceID. It is the SINGLE source of truth for the
+// relation's deterministic, byte-stable row order: both the initial build
+// (buildEntitySourceRelation) and any later extension (the standalone attestation in
+// attachBakedMetadataToIndex) sort through it, so the canonical order can never drift
+// between the two sites.
+func lessEntitySource(a, b EntitySource) bool {
+	if a.EntityKey != b.EntityKey {
+		return a.EntityKey < b.EntityKey
+	}
+	return a.SourceID < b.SourceID
+}
+
+// standaloneMetadataID returns the MetadataID a synthesized standalone entity carries,
+// or "" when it has none (defensive — a synthesized standalone always carries one).
+func standaloneMetadataID(e Entity) MetadataID {
+	if e.Metadata == nil {
+		return ""
+	}
+	return e.Metadata.MetadataID
 }
 
 // buildEntitySourceRelation materializes the BCNF entity↔source join relation from
@@ -311,10 +420,7 @@ func buildEntitySourceRelation(order []string, firstSeen map[string][]DataSource
 		}
 	}
 	sort.Slice(rel.rows, func(i, j int) bool {
-		if rel.rows[i].EntityKey != rel.rows[j].EntityKey {
-			return rel.rows[i].EntityKey < rel.rows[j].EntityKey
-		}
-		return rel.rows[i].SourceID < rel.rows[j].SourceID
+		return lessEntitySource(rel.rows[i], rel.rows[j])
 	})
 	return rel
 }

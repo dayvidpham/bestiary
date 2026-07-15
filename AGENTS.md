@@ -6,7 +6,7 @@
 - **Test with race**: `go test -race ./...` (requires CGO_ENABLED=1)
 - **Vet**: `go vet ./...`
 - **Build CLI**: `CGO_ENABLED=0 go build ./cmd/bestiary`
-- **Update static data**: `go generate ./...` (requires network)
+- **Update static data**: `go generate ./...` (offline; reads the committed `parse/data/modelsdev/catalog.json`). To pull a newer upstream deploy, see "models.dev snapshot refresh".
 - **Tidy deps**: `go mod tidy`
 - **Commit**: `git agent-commit -m "..."` (never `git commit`)
 
@@ -26,24 +26,27 @@ bestiary/
 ├── format.go                # JSON, YAML (internal serializer), table output
 ├── harness.go               # Harness type — identifies coding tool / dev environment
 ├── merge.go                 # MergeModels() — dedup by (ID, Provider), most-recent-wins
+├── metadata.go              # models.dev entity-metadata types: EntityMetadata, BenchmarkResult, ModelStatus/LinkType/ReasoningOptionKind enums
+├── metadata_join.go         # metadata↔entity join: alias-first + two-tier miss policy (unlinked report / standalone); MergeEntityMetadata/AttachEntityMetadata
 ├── modality.go              # Modality int enum, Modalities struct
 ├── modelref.go              # ModelRef 8-field tuple + Ref()/Format() (RawFamily/Family/Variant/Version/Date/Modifier)
-├── models_constants_gen.go  # GENERATED — Model__ string constants (~8650 entries, double-underscore fields)
-├── models_static_gen.go     # GENERATED — ~4,300 ModelInfo structs from ~115 providers
-├── parse.go                 # ParseFamily, ParseFamilyWithVersion, ExtractVersionFromID, ExtractModifier; parse-failure audit
+├── models_constants_gen.go  # GENERATED — Model__ string constants (double-underscore fields)
+├── models_metadata_gen.go   # GENERATED — baked models.dev EntityMetadata (descriptions, licenses, benchmarks, links)
+├── models_static_gen.go     # GENERATED — ~5,650 ModelInfo structs from ~162 providers
+├── parse.go                 # ParseFamily, ParseFamilyWithVersion, ExtractVersionFromID, ExtractModifier; stage/mode identity overrides; parse-failure audit
 ├── provider.go              # Provider string type, IsKnown(), Providers()
 ├── providers_gen.go         # GENERATED — ~115 provider constants from API
 ├── quantization.go          # Quantization closed int enum + DetectQuantization/ParseQuantization/BitsPerWeight
 ├── quant_vram_data.go       # Curated loaders: QuantVRAMFor/ParamSizeFor/SourceFor + ValidateQuantVRAMTable (graceful-degrade)
 ├── registry.go              # StaticModels(), LookupModel(), LookupModelByProvider(), ModelsByProvider/Family(); entity index + entity↔source join relation build
 ├── resolve.go               # Resolve() with InputFormat selection (peasant default, no auto-detect) + canonical-provider preference; ErrAmbiguous candidate listing
-├── store.go                 # SQLite cache (zombiezen driver), schema v5 migrations + BCNF provenance tables (real FK)
+├── store.go                 # SQLite cache (zombiezen driver), schema v6 migrations + BCNF provenance + append-only ingest history + entity-metadata tables (real FK)
 ├── vram.go                  # EstimateVRAMBytes (weights + KV, no overhead) + (QuantVRAM).EstimateVRAM(ctx); VRAMFormulaVersion 2
 ├── version.go               # 4 provenance consts (schema + upstream versions)
-├── wire.go                  # Internal JSON wire types for models.dev API deserialization
+├── wire.go                  # Internal JSON wire types for the models.dev api.json/models.json/catalog.json three-artifact deserialization
 ├── parse/data/*.json        # Curated codegen inputs (quant_vram.json, datasources.json, ollama_aliases.json, lineage.json, …)
 ├── bestiary.schema.json     # JSON Schema (draft-2020-12) for public output types
-├── cmd/bestiary/main.go     # CLI entry point: list, show, providers, sources, sync
+├── cmd/bestiary/main.go     # CLI entry point: list, show, providers, entities, sources, sync
 ├── cmd/bestiary-gen/main.go # Codegen: fetches API, bakes static catalog (incl. QuantVRAM/Source/EntitySource)
 └── cmd/bestiary-ollama/main.go # OFFLINE network-gated Ollama refresh tool (polite-bot; rebuilds quant_vram.json)
 ```
@@ -171,6 +174,126 @@ handoff `bestiary-84su7` (the full ratified surface + implementation notes) and 
   `currentSchemaVersion` (migrations) goes `4` → `5`. These are **distinct** numbers; do not
   conflate them. `TestJSONOutput_ConformsToSchema` enforces schema/type agreement.
 
+## v0.2.5 design decisions (models.dev harmonization & ingest provenance)
+
+These are enduring facts about how the codebase ingests the full models.dev catalog, models
+the provider-agnostic metadata dimension, and records ingest provenance as a queryable
+history. The authoritative summary of the epoch is the `CHANGELOG.md` `[0.2.5]` entry; the
+*why* behind each decision is captured below.
+
+- **Three-artifact ingestion on one decode path** (`wire.go`, `client.go`). models.dev
+  publishes three **built JSON artifacts** from a single upstream deploy — `api.json` (the
+  providers view: pricing + per-provider facts), `models.json` (provider-agnostic model
+  facts), and `catalog.json` (`{models, providers}`: both views in one payload). bestiary
+  ingests **only these built artifacts** — never the upstream TOML sources and never its merge
+  engine. There is **one shared decode path**: `ParseAPIJSON` / `ParseModelsJSON` /
+  `ParseCatalogJSON` are the single conversions (`modelsFromProviderMap` / `metadataFromMap`),
+  and `Client.FetchModels` / `FetchModelMetadata` / `FetchCatalog` are thin fetch wrappers over
+  the *same* parsers, so codegen (from a committed snapshot), the live client, and the tests
+  all produce byte-identical results for the same bytes. `catalog.json` is exactly the
+  composition of the other two over the `providers`/`models` values. `Catalog` is a **parser
+  return container, not a serialized output document**, so it is deliberately NOT a
+  `bestiary.schema.json` `$def`. A benchmark score arrives upstream as `number|string`, so it
+  is captured on `ScoreRaw` and never fails the parse or drops a row.
+
+- **Entity metadata is a provider-agnostic dimension attached at the entity level**
+  (`metadata.go`). The description, license, typed `Links`, and `Benchmarks` a lab publishes
+  are facts about the *model*, not about any one provider's hosting of it, so `EntityMetadata`
+  attaches to the **entity**, keyed by the stable lab-scoped `MetadataID` (e.g.
+  `zhipuai/glm-4.6`) — which is **immune to entity re-keying** (unlike an `EntityRef.String()`).
+  `BenchmarkResult` fields are grouped along **assessment-provenance joints** and are **never
+  concatenated**: criterion identity (`Name`/`Version`/`Variant`/`Dataset`), harness
+  (`Harness`), assessment value (`Metric`/`Score`/`ScoreRaw`), and claim attribution
+  (`SourceURL`/`Date`) are separate fields so a future canonical benchmark dimension can join
+  on the parts. These scores are **lab-reported claims** (a blog post or model card), **not
+  independent measurements** — hence `SourceURL` (the claimant) is named distinctly from the
+  `Source` (`DataSourceID`) ingest attestation: a *who reported it* and a *which source we read
+  it from* are different provenance levels and must not share a field name. The new closed int
+  enums (`ModelStatus`, `LinkType`, `ReasoningOptionKind`) follow the `Quantization` /
+  `DerivationKind` precedent, but their zero-value convention **deliberately diverges** by
+  role: `ModelStatus` is a scalar where absence is meaningful (`StatusNone` at zero, `Other` as
+  the fail-safe), while the element enums always arrive with a discriminating tag (`Other` sits
+  *at* zero). `ModelInfo` gains the instance-level fields (`Description`, `Status`/`StatusRaw`,
+  `ReasoningOptions`, audio/context-tier costs).
+
+- **Alias-first join with a two-tier miss policy** (`metadata_join.go`). Mapping a metadata
+  row onto its entity is **curated > mechanical**: a `parse/data/modelsdev_aliases.json` entry
+  is the *sole* identity when present (no fallback to the mechanical ref — falling back would
+  let a row whose alias target is absent wrongly attach to whatever the mechanical
+  decomposition happens to hit); otherwise the `<lab>/` prefix is stripped and the remainder
+  decomposed through the **production parse pipeline** (`ParseFamilyDetailed` + `ParseParamSize`),
+  building the `EntityRef` key exactly the way the registry does. A row is **never silently
+  dropped**. On a miss the policy forks on a **family-presence gate**: family present but no
+  tuple match → a *disagreement*, collected into the sorted `modelsdev_unlinked.json` report
+  for a curator to alias; family genuinely absent → a **metadata-only standalone** entity is
+  synthesized (empty `Instances`, `Sources = [models.dev]`, metadata attached). The presence
+  gate keys off the **canonical family the enrichment pipeline derives** (`metadataPresenceFamily`,
+  fed the row's own upstream `RawFamily`), **not** the id-only decomposition — the lesson from
+  the empty-raw over-capture: an id-only path over-captures a compound family (e.g.
+  `gemini-omni-flash-preview` → `gemini-omni`, absent from the catalog even though `gemini` is
+  served) and wrongly synthesized a standalone. `RawFamily` is `json:"-"` (internal provenance,
+  not the public contract) but is **persisted** (`entity_metadata.raw_family`) so a cached row
+  keeps the signal. The join is **pure** (deep-copies, never mutates inputs) and **idempotent**
+  (re-attach a fed-back standalone, never re-create). A **literal census guard**
+  (`TestMetadataCensus_SynthesizedStandalonesPinned`) pins the exact synthesized-standalone set
+  (the four `ornith` rows), so any join change that adds or drops a standalone is caught.
+
+- **Vendored codegen input is the determinism pin — loud at codegen, graceful at runtime**
+  (`cmd/bestiary-gen`, `parse/data/modelsdev/`). Upstream artifacts are **unpinnable** (a live
+  URL changes under you), so codegen consumes a **committed** `catalog.json` + a `SNAPSHOT.json`
+  provenance sidecar. The two **failure disciplines are distinct and deliberate**: at *codegen*
+  a missing/corrupt vendored catalog is a **LOUD actionable error** — bestiary-gen never bakes
+  an empty catalog — whereas at *runtime* the curated `go:embed` loaders (aliases, datasources,
+  modifier-class, lineage) **degrade gracefully** to an empty (non-nil) map on a missing/corrupt
+  file (the `lineage.go` precedent: never panic, never nil). A **real-input regen up-to-date
+  guard** re-runs codegen over the committed snapshot and diffs against the shipped `*_gen.go`,
+  so a stale bake is caught in CI. See the `## models.dev snapshot refresh` workflow for the
+  deliberate, occasional re-vendor + append-ingest-row + deterministic-regen procedure.
+
+- **Store v6: append-only ingest history + MetadataID-keyed metadata tables** (`store.go`,
+  `datasource.go`). `dataset_ingested` widens to an **append-only history**: a **composite
+  primary key** `(data_source_id, ingested_at)`, `INSERT OR IGNORE` (an exact-duplicate instant
+  is a no-op, never an error), and the **current ingest = `MAX(ingested_at)`** for a source (it
+  still carries no URI — reached by FK join to `data_sources`). The three new metadata tables
+  (`entity_metadata` + child `metadata_benchmarks` / `metadata_links`) are keyed by the stable
+  `metadata_id`, so they are **immune to entity re-keying**; the child tables are replaceable
+  sets (no PK, delete-then-insert inside the upsert transaction). Migrations are
+  **presence-guarded self-heals**: `ensureModelColumnsV6` / `ensureEntityMetadataColumnsV6` add
+  only the columns actually missing (read from `pragma_table_info`), so an intermediate-v6 dev
+  cache whose `schema_meta` reads 6 but predates a column backfills idempotently. `sync` now
+  **persists full provenance** (the ingest row, the entity metadata, and one models.dev
+  attestation per distinct synced entity), stamping the runtime ingest with a real UTC
+  wall-clock RFC3339 timestamp — correct precisely because it is a real event (unlike the
+  committed `datasources.json` snapshot timestamps, which are pinned for deterministic codegen).
+  The `sources --export` union shares the **`datasources.json` v3 schema**, so the export is
+  round-trippable and promotable straight back into the curated seed.
+
+- **`#size` lineage: size-agnostic fallback** (`lineage.go`). Lineage keys now carry
+  `param_size`, resolved **exact-key-first with a size-stripped fallback**: a size-specific
+  curated edge wins for its exact key, and only on a miss does the seed/root lookup retry with
+  the size-stripped key — so a single **unsized** curated edge is inherited by **every sized
+  sibling** (`forwardSeed` / `reverseRootKey` / `sizeStrippedSeedKey`). An already-unsized ref
+  never triggers the fallback (it has no `#size` to strip). The user principle behind the
+  fallback: parameter size **basically never changes lineage** (a 70B and an 8B of a line share
+  the same derivation), so an unsized edge is the sensible default and a size-specific edge is
+  the rare override.
+
+- **Stage/mode identity granularity** (`parse.go`, `parse/data/modifier_class.json`,
+  `parse/data/modifiers.json`). The stage/mode tokens get their proper identity class so
+  distinct lab models stop collapsing into one entity: `omni` and `livetranslate` are
+  **identity-class** modifiers (part of the `{...}` key), while `realtime` is an
+  **attribute-class** serving tier — a per-instance runtime knob like `fast`, not a distinct
+  artifact. `preview` and `latest` **stay attributes** (a typed release-stage dimension is
+  deferred to GH#13). `fast`/`turbo` classification is **family-aware by design**: a **global
+  identity fail-safe** (never silently collapse two artifacts) with **per-family attribute
+  demotions** (`claude`/`glm`/`kimi`/`deepseek`/`minimax`) where curation has established the
+  token is a speed tier there — a wholesale flip is explicitly rejected. The tail-inward
+  `{mods}` scan **structurally cannot reach a token that precedes the variant/version**, so
+  **mid-ID** tokens are carried by **exact-ID curated overrides** (`idFamilyOverrideEntry` gained
+  a `modifiers` field) until the general mid-ID extraction lands — deferred and merging with the
+  param-size work (GH#9). These overrides also restored versions the greedy tokens were
+  swallowing (e.g. `gpt-realtime-2.1` → `gpt@2.1` with `realtime` as an attribute).
+
 ## Schema versioning
 
 When modifying public types (ModelInfo, Provider, Capability, Modalities):
@@ -182,7 +305,43 @@ When updating wire types for upstream API changes:
 1. Re-derive the SHA-256 hash: `sha256sum ~/codebases/models.dev/packages/core/src/schema.ts`
 2. Get the commit: `cd ~/codebases/models.dev && git log --oneline -1`
 3. Update `UpstreamSchemaVersion`, `UpstreamGitCommit` in `version.go`
-4. Run `go generate ./...` to refresh static data
+4. Refresh the vendored snapshot + regenerate (see "models.dev snapshot refresh" below)
+
+## models.dev snapshot refresh
+
+Codegen consumes a **committed** snapshot of the models.dev catalog, not a live fetch:
+`cmd/bestiary-gen` reads `parse/data/modelsdev/catalog.json` (the upstream `catalog.json`
+artifact — both the `providers` and `models` views from a single deploy). `go generate ./...`
+runs `go run ./cmd/bestiary-gen --no-fetch`, which reads that committed file and is fully
+offline and deterministic; a **missing or corrupt** vendored catalog is a LOUD actionable
+error — codegen never degrades to an empty catalog.
+
+Refreshing the snapshot is a deliberate, occasional, manual act (mirrors the schema-hash
+workflow above). To pull a newer upstream deploy:
+
+1. **Fetch + re-vendor (one polite request).** From the module root run the generator in
+   fetch mode (NO `--no-fetch`):
+   ```
+   go run ./cmd/bestiary-gen
+   ```
+   This does a single GET of `https://models.dev/catalog.json` (descriptive User-Agent),
+   **overwrites** `parse/data/modelsdev/catalog.json` and its
+   `parse/data/modelsdev/SNAPSHOT.json` manifest (`{artifact, fetched_at, etag,
+   upstream_head_sha}` — informational provenance, never parsed into output), and regenerates
+   the `*_gen.go` files from the freshly-fetched data.
+2. **Append the ingest-history row.** Add one row to the `ingested` array in
+   `parse/data/datasources.json` for `source_id: "models.dev"`: set `ingested_at` to the
+   SNAPSHOT.json `fetched_at` value (a COMMITTED timestamp — never load-time wall-clock) and
+   `parser_schema` to the current value (3). Leave the existing rows untouched — the log is
+   append-only and the current ingest is the row with the maximum `ingested_at`.
+3. **Deterministic regen.** Run `go generate ./...` (this is `--no-fetch`; it reads the
+   just-vendored catalog). Review the diff like any curated-data change; the emitted
+   `parse/data/modelsdev_unlinked.json` report lists join-disagreement metadata ids to triage
+   into `parse/data/modelsdev_aliases.json`.
+4. **Commit as a separate `chore(gen):` commit.** Land the regenerated `*_gen.go` files (and
+   the vendored `catalog.json` / `SNAPSHOT.json`) in their own commit, after the feature
+   commit, per the codegen-determinism regen workflow below. `TestCodegen_Reproducible_ByteIdentical`
+   (N=100) and `TestCodegen_UpToDate` must stay green.
 
 ## Releases
 
@@ -207,6 +366,9 @@ mistyped release is caught). Tags pushed by its `GITHUB_TOKEN` do **not** trigge
 | File | Owner | Notes |
 |------|-------|-------|
 | `models_static_gen.go` | `cmd/bestiary-gen` | Never edit by hand. Regenerate with `go generate ./...` |
+| `models_metadata_gen.go` | `cmd/bestiary-gen` | Never edit by hand. Baked models.dev metadata; regenerate with `go generate ./...` |
+| `parse/data/modelsdev/catalog.json` + `SNAPSHOT.json` | `cmd/bestiary-gen` (fetch mode) | Vendored codegen input. Never edit by hand; refresh via "models.dev snapshot refresh" |
+| `parse/data/modelsdev_unlinked.json` | `cmd/bestiary-gen` | Codegen-emitted join-disagreement report. Never edit by hand |
 | `bestiary.schema.json` | Manual | Must stay in sync with Go types. Verified by `TestJSONOutput_ConformsToSchema` |
 | `version.go` | Manual | Update on public type changes or upstream schema updates |
 | All other `.go` files | Developer | Normal development workflow |

@@ -342,9 +342,15 @@ func TestEntityRef_ParamSizeDistinct(t *testing.T) {
 // the #size grammar over the real static catalog. It enforces four invariants,
 // asserted below in this order:
 //
-//	(a) NO unintended drift: every entity NOT in the curated sized set must have
-//	    a '#'-free key. Any model acquiring a '#size' segment unexpectedly signals
-//	    an accidental wrong-merge or a misapplied curation entry.
+//	(a) NO unintended drift: every '#'-bearing entity must be EITHER a curated
+//	    CATALOG sized entity (in wantSizedKeys) OR a metadata-only STANDALONE entity
+//	    (no provider instances — a models.dev metadata row whose family is absent from
+//	    the catalog, whose id legitimately carries a size token). A '#size' segment on
+//	    an UNCURATED CATALOG entity (one with instances) signals an accidental
+//	    wrong-merge or a misapplied curation entry — a mechanically-sized catalog
+//	    entity, which stays deferred. Standalone sizes are CORRECT and intentional:
+//	    e.g. ornith#9b vs ornith#31b are genuinely distinct models that would
+//	    wrong-merge without their sizes (the #size-identity precedent).
 //
 //	(b) INTENDED sizing: the three curated models.dev IDs with an explicit
 //	    param_size in quant_vram.json must each produce an entity with the
@@ -355,8 +361,12 @@ func TestEntityRef_ParamSizeDistinct(t *testing.T) {
 //	(c) ENTITY-COUNT FLOOR: the registry must hold at least wantMinEntities, so an
 //	    inadvertent truncation of the catalog is caught.
 //
-//	(d) SIZED-COUNT PIN: the number of '#'-bearing entities must equal the curated
-//	    set size exactly, so neither a missing nor an extra sized entity slips by.
+//	(d) CATALOG-SIZED-COUNT PIN: the number of '#'-bearing CATALOG entities (those
+//	    with provider instances) must equal the curated set size exactly, so neither a
+//	    missing curated join nor a stray param_size leaking onto an uncurated catalog
+//	    model slips by. Metadata-standalone sizes are additions, not catalog drift, so
+//	    they are excluded from this pin — the count is NOT derived from production
+//	    output (no tautology): it is anchored to the curated quant_vram.json seed.
 //
 // The body asserts (b) first (building the actual-key index it reuses), then (a),
 // then (c), then (d).
@@ -370,6 +380,12 @@ func TestEntityRef_NoMigrationDrift(t *testing.T) {
 	if len(entities) == 0 {
 		t.Fatal("static registry is empty; cannot check migration drift")
 	}
+
+	// A metadata-only standalone entity has NO provider instances (it is synthesized
+	// from a models.dev metadata row whose family is absent from the catalog). Every
+	// real catalog entity carries at least one instance, so len(Instances)==0 uniquely
+	// identifies a standalone.
+	isStandalone := func(e bestiary.Entity) bool { return len(e.Instances) == 0 }
 
 	// (b) Pin the exact expected keys for the curated sized entities.
 	wantSizedKeys := map[string]string{
@@ -401,19 +417,23 @@ func TestEntityRef_NoMigrationDrift(t *testing.T) {
 		}
 	}
 
-	// Assert (a): every entity NOT in the curated sized set must be '#'-free.
-	// Any unexpected '#' signals unintended drift.
+	// Assert (a): every '#'-bearing entity is either a curated CATALOG sized entity or
+	// a metadata-only STANDALONE. A '#' on an uncurated CATALOG entity is drift.
 	for _, e := range entities {
 		key := e.Ref.String()
+		if !strings.Contains(key, "#") {
+			continue
+		}
 		if _, isCuratedSized := wantSizedKeys[key]; isCuratedSized {
-			continue // expected sized entity — skip the '#'-free check
+			continue // expected curated catalog sized entity
 		}
-		if strings.Contains(key, "#") {
-			t.Errorf("unexpected '#' in entity key %q (ParamSize=%q): this entity is not in the curated sized set\n"+
-				"  What: an entity acquired a '#size' segment without a matching quant_vram.json entry\n"+
-				"  How to fix: either add the model_id to wantSizedKeys above (if intentional), or remove the param_size from quant_vram.json",
-				key, e.Ref.ParamSize)
+		if isStandalone(e) {
+			continue // metadata-only standalone — a legitimate sized addition
 		}
+		t.Errorf("unexpected '#' in CATALOG entity key %q (ParamSize=%q): this entity has provider instances but is not in the curated sized set\n"+
+			"  What: a catalog entity acquired a '#size' segment without a matching quant_vram.json entry\n"+
+			"  How to fix: either add the model_id to wantSizedKeys above (if intentional), or remove the param_size from quant_vram.json",
+			key, e.Ref.ParamSize)
 	}
 
 	// (c) Pin the entity count floor so inadvertent registry truncation is caught.
@@ -422,23 +442,31 @@ func TestEntityRef_NoMigrationDrift(t *testing.T) {
 		t.Errorf("entity count = %d, want >= %d; a large drop signals registry truncation", len(entities), wantMinEntities)
 	}
 
-	// (d) Pin the sized count: exactly len(wantSizedKeys) curated sized entities
-	// must exist in the registry — neither fewer (a dropped join) nor more (a stray
-	// param_size leaking onto an uncurated model).
-	sizedCount := 0
+	// (d) Pin the CATALOG sized count: exactly len(wantSizedKeys) curated sized CATALOG
+	// entities must exist — neither fewer (a dropped join) nor more (a stray param_size
+	// leaking onto an uncurated catalog model). Metadata-standalone sizes are excluded
+	// (they are additions, not catalog drift); the pin stays anchored to the curated
+	// seed, not derived from production output.
+	catalogSized, standaloneSized := 0, 0
 	for _, e := range entities {
-		if strings.Contains(e.Ref.String(), "#") {
-			sizedCount++
+		if !strings.Contains(e.Ref.String(), "#") {
+			continue
+		}
+		if isStandalone(e) {
+			standaloneSized++
+		} else {
+			catalogSized++
 		}
 	}
-	if sizedCount != len(wantSizedKeys) {
-		t.Errorf("sized entity count = %d, want %d (one per curated models.dev entry in quant_vram.json)\n"+
-			"  What: sized entity count does not match the curated seed\n"+
+	if catalogSized != len(wantSizedKeys) {
+		t.Errorf("catalog sized entity count = %d, want %d (one per curated models.dev entry in quant_vram.json)\n"+
+			"  What: sized CATALOG entity count does not match the curated seed\n"+
 			"  How to fix: ensure quant_vram.json and wantSizedKeys above are in sync",
-			sizedCount, len(wantSizedKeys))
+			catalogSized, len(wantSizedKeys))
 	}
 
-	t.Logf("checked %d entities: %d sized (curated), %d unsized", len(entities), sizedCount, len(entities)-sizedCount)
+	t.Logf("checked %d entities: %d curated-sized (catalog), %d standalone-sized (metadata), %d unsized",
+		len(entities), catalogSized, standaloneSized, len(entities)-catalogSized-standaloneSized)
 }
 
 // TestEntityRef_String_ParamSizeGrammar locks the full #size grammar for all

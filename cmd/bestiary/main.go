@@ -10,6 +10,8 @@ import (
 	"os"
 	"sort"
 	"strings"
+	"time"
+	"unicode/utf8"
 
 	"github.com/dayvidpham/bestiary"
 )
@@ -17,6 +19,37 @@ import (
 // errPrefix is the single namespace prefix the CLI guarantees on every error
 // line it prints to stderr.
 const errPrefix = "bestiary: "
+
+// modelsDevParserSchema is the curated-data schema version stamped on the
+// dataset_ingested row `sync` appends for a models.dev fetch. It tracks
+// parse/data/datasources.json's schema_version (3): the ingest row records "the
+// curated-data schema version this ingest was parsed under", so a runtime sync
+// row and the committed seed rows share the same current schema number. Bump this
+// in lockstep with the datasources.json schema_version on the next schema change.
+const modelsDevParserSchema = 3
+
+// driftWarningThreshold is the number of live models.dev model IDs that may be
+// absent from the embedded (vendored) catalog before `sync` warns that the
+// vendored snapshot is materially behind upstream.
+//
+// The vendored catalog.json is refreshed on-demand (see the "models.dev snapshot
+// refresh" workflow in AGENTS.md), so a handful of newly-added upstream models
+// between refreshes is expected and harmless — those models still sync into the
+// local cache. Only when MORE than this many live model IDs are missing from the
+// embedded catalog is the snapshot stale enough to warrant a regen.
+//
+// A COUNT threshold is deliberately chosen over a ratio or a snapshot-age
+// heuristic: it is trivially testable (inject N synthetic new models and assert
+// the warning fires only at N > threshold) and avoids a brittle heuristic soup.
+// The value is a judgement call justified as "about a provider's worth" of new
+// models — a drift that large means several upstream releases have accumulated
+// unvendored.
+const driftWarningThreshold = 50
+
+// embeddedFallbackNotice is the single stderr line an entity-view command prints
+// when it cannot open the SQLite cache and falls back to the embedded (baked)
+// catalog. It is emitted at most once per command invocation (see openViewStore).
+const embeddedFallbackNotice = errPrefix + "using embedded catalog (run 'bestiary sync' to refresh metadata)"
 
 func main() {
 	if err := run(os.Args[1:]); err != nil {
@@ -59,7 +92,7 @@ func renderError(err error) string {
 
 func run(args []string) error {
 	if len(args) == 0 {
-		return fmt.Errorf("usage: bestiary <list|show|providers|sources|sync> [flags]")
+		return fmt.Errorf("usage: bestiary <list|show|providers|entities|sources|sync> [flags]")
 	}
 
 	cmd := args[0]
@@ -87,6 +120,19 @@ func run(args []string) error {
 	// (e.g. q4_k_m, f16). It is parsed via bestiary.ParseQuantization, which rejects
 	// an unrecognised value with an actionable error rather than silently ignoring it.
 	quant := fs.String("quant", "", "filter instances by quantization (e.g. q4_k_m, f16); applies to providers and show --by-entity")
+	// --status filters `list` output to models carrying the given release status
+	// (alpha, beta, deprecated, none). It is parsed via bestiary.ParseModelStatus,
+	// which rejects an unrecognised value with an actionable error rather than
+	// silently matching nothing. Empty (the default) leaves list output unchanged.
+	status := fs.String("status", "", "filter list output by release status: none, alpha, beta, deprecated")
+	// --history (sources only) prints the full append-only ingest history for every
+	// data source, ascending by ingest time, instead of the per-entity provenance view.
+	history := fs.Bool("history", false, "sources: print the full ingest history per source (ascending)")
+	// --export (sources only) emits the store's ingest provenance as a datasources.json
+	// v3 document. The optional positional argument is the output path; with none (or
+	// "-") it writes to stdout. When the store is empty or absent it falls back to the
+	// curated table.
+	export := fs.Bool("export", false, "sources: export ingest provenance as datasources.json v3 (positional path, or stdout)")
 
 	if err := fs.Parse(reorderArgs(fs, args[1:])); err != nil {
 		return err
@@ -94,13 +140,13 @@ func run(args []string) error {
 
 	switch cmd {
 	case "list":
-		return runList(*provider, bestiary.OutputFormat(*output), *dbPath)
+		return runList(*provider, bestiary.OutputFormat(*output), *dbPath, *status)
 	case "show":
 		if *byEntity {
 			if fs.NArg() < 1 {
 				return fmt.Errorf("usage: bestiary show --by-entity <model-id | family[/variant][/version|@version]{identity-mods}> [--output=<json|table>]")
 			}
-			return runShowEntity(fs.Arg(0), bestiary.OutputFormat(*output), *quant)
+			return runShowEntity(fs.Arg(0), bestiary.OutputFormat(*output), *quant, *dbPath)
 		}
 		if fs.NArg() < 1 {
 			return fmt.Errorf("usage: bestiary show <model-id> [--format=<peasant|huggingface|hf|purl|raw>] [--output=<json|yaml|table>] [flags]")
@@ -111,17 +157,32 @@ func run(args []string) error {
 			return fmt.Errorf("usage: bestiary providers <family>[/<variant>][/<version>|@<version>]{identity-mods} [--output=<json|table>]\n" +
 				"  version may be given as a trailing /segment or as @version; the optional [attributes] filter is ignored in MVP")
 		}
-		return runProviders(fs.Arg(0), bestiary.OutputFormat(*output), *quant)
+		return runProviders(fs.Arg(0), bestiary.OutputFormat(*output), *quant, *dbPath)
+	case "entities":
+		// entities takes no positional: it enumerates the whole registry so
+		// metadata-only standalones (reachable only by exact key elsewhere) are
+		// discoverable. --output selects json (Entity objects) or table (summary).
+		return runEntities(bestiary.OutputFormat(*output), *dbPath)
 	case "sources":
+		// --history and --export are catalog-wide ingest-log views; they take no
+		// entity positional. The default sources view still requires an entity key.
+		if *history {
+			return runSourcesHistory(bestiary.OutputFormat(*output), *dbPath)
+		}
+		if *export {
+			return runSourcesExport(*dbPath, fs.Arg(0))
+		}
 		if fs.NArg() < 1 {
 			return fmt.Errorf("usage: bestiary sources <family>[/<variant>][@<version>][#<paramsize>]{identity-mods} [--output=<json|table>]\n" +
-				"  prints the per-source ingest provenance (uri via FK join, ingest date, parser schema) that attests the entity, sorted by source")
+				"  prints the per-source ingest provenance (uri via FK join, ingest date, parser schema) that attests the entity, sorted by source\n" +
+				"  bestiary sources --history [--output=<json|table>]   full append-only ingest history per source (ascending)\n" +
+				"  bestiary sources --export [path]                     export ingest provenance as datasources.json v3 (stdout when path omitted)")
 		}
-		return runSources(fs.Arg(0), bestiary.OutputFormat(*output))
+		return runSources(fs.Arg(0), bestiary.OutputFormat(*output), *dbPath)
 	case "sync":
 		return runSync(*provider, bestiary.OutputFormat(*output), *dbPath)
 	default:
-		return fmt.Errorf("unknown command %q; supported commands: list, show, providers, sources, sync", cmd)
+		return fmt.Errorf("unknown command %q; supported commands: list, show, providers, entities, sources, sync", cmd)
 	}
 }
 
@@ -223,8 +284,25 @@ func resolveDBPath(dbPath string) (string, error) {
 }
 
 // runList lists models from static registry merged with any cached models.
-// Gracefully falls back to static-only if the store cannot be opened.
-func runList(provider string, format bestiary.OutputFormat, dbPath string) error {
+// Gracefully falls back to static-only if the store cannot be opened. When
+// statusFlag is non-empty the merged set is filtered to models whose release
+// status matches it exactly (parsed via ParseModelStatus, which rejects an
+// unknown value with an actionable error); an empty statusFlag leaves the
+// default output unchanged.
+func runList(provider string, format bestiary.OutputFormat, dbPath, statusFlag string) error {
+	// Parse the status filter up front so an unknown value fails fast with an
+	// actionable error before any work is done.
+	statusFilter := bestiary.StatusNone
+	filterStatus := false
+	if statusFlag != "" {
+		s, err := bestiary.ParseModelStatus(statusFlag)
+		if err != nil {
+			return err
+		}
+		statusFilter = s
+		filterStatus = true
+	}
+
 	// Fetch static models, optionally filtered by provider.
 	var static []bestiary.ModelInfo
 	if provider != "" {
@@ -249,7 +327,23 @@ func runList(provider string, format bestiary.OutputFormat, dbPath string) error
 	}
 
 	merged := bestiary.MergeModels(static, cached)
+	if filterStatus {
+		merged = filterModelsByStatus(merged, statusFilter)
+	}
 	return bestiary.FormatModels(os.Stdout, merged, format)
+}
+
+// filterModelsByStatus returns the models whose Status equals want. The input is
+// never mutated; the result is a freshly allocated slice (possibly empty). It is
+// an exact-match filter — `--status none` selects models with no declared status.
+func filterModelsByStatus(models []bestiary.ModelInfo, want bestiary.ModelStatus) []bestiary.ModelInfo {
+	out := make([]bestiary.ModelInfo, 0, len(models))
+	for _, m := range models {
+		if m.Status == want {
+			out = append(out, m)
+		}
+	}
+	return out
 }
 
 // runShow resolves a model by input string and prints it in the requested format.
@@ -496,12 +590,132 @@ func validateEntityOutput(format bestiary.OutputFormat) error {
 	}
 }
 
+// openViewStore opens the SQLite metadata cache best-effort for a view command,
+// mirroring runList's discipline: resolveDBPath → OpenStore. It returns the store
+// (the caller closes it) or nil when the path cannot be resolved or opened. It is
+// SILENT: the embedded-catalog fallback notice is NOT decided here — a store that
+// opens can still contribute zero synced rows (the fresh-empty, never-synced case),
+// so the notice decision belongs to the overlay that actually reads the cache.
+func openViewStore(dbPath string) *bestiary.Store {
+	if path, err := resolveDBPath(dbPath); err == nil {
+		if store, oerr := bestiary.OpenStore(path); oerr == nil {
+			return store
+		}
+	}
+	return nil
+}
+
+// overlayEntities returns the full entity set with synced (store) metadata
+// overlaid on top of the baked catalog, and prints the SINGLE embedded-catalog
+// fallback notice exactly when the store contributes ZERO synced metadata rows.
+//
+// This honors the sync-discoverability intent: the notice fires whenever a view
+// shows baked-only metadata — the store is absent (nil), auto-created fresh/empty
+// (never synced), or unreadable — and stays SILENT once a sync has populated the
+// cache. OpenStore auto-creates an empty DB for a never-synced user, so keying the
+// notice on "open failed" would miss that primary audience; keying it on "zero
+// synced rows" catches every baked-only path with one notice per command.
+//
+// The overlay runs over the FULL entity set (before any tuple filtering) so
+// metadata-only standalones and re-attached rows both surface. When synced metadata
+// is present it is merged over the baked layer (synced wins per MetadataID via
+// LastSynced; baked-only rows survive) and re-attached across every entity.
+func overlayEntities(store *bestiary.Store) []bestiary.Entity {
+	ents := bestiary.Entities()
+
+	var cached []bestiary.EntityMetadata
+	if store != nil {
+		if rows, err := store.QueryEntityMetadata(context.Background()); err == nil {
+			cached = rows
+		}
+	}
+
+	if len(cached) == 0 {
+		// Store absent, fresh-empty, or unreadable — the view falls back to the
+		// baked catalog (which already carries baked metadata). Emit the one
+		// sync-discoverability notice.
+		fmt.Fprintln(os.Stderr, embeddedFallbackNotice)
+		return ents
+	}
+
+	baked := bakedEntityMetadataFromEntities(ents)
+	meta := bestiary.MergeEntityMetadata(baked, cached)
+	return bestiary.AttachEntityMetadata(ents, meta)
+}
+
+// bakedEntityMetadataFromEntities gathers the baked metadata rows currently
+// attached to the static entity set. The registry attaches baked models.dev
+// metadata to entities (and synthesizes baked standalone entities) at load, so the
+// set of non-nil Entity.Metadata over Entities() IS the baked metadata surfaced in
+// views. It is the base layer MergeEntityMetadata overlays synced metadata onto;
+// there is no exported baked-slice accessor and this reconstruction needs none
+// (unlinked baked rows are intentionally never surfaced in views anyway).
+func bakedEntityMetadataFromEntities(ents []bestiary.Entity) []bestiary.EntityMetadata {
+	var out []bestiary.EntityMetadata
+	for i := range ents {
+		if ents[i].Metadata != nil {
+			out = append(out, *ents[i].Metadata)
+		}
+	}
+	return out
+}
+
+// entityRefForModel builds the identity EntityRef for a model exactly the way the
+// registry aggregate (loadEntityIndex) builds entity keys: the identity-class
+// projection of the raw modifiers (EntityModifiers), never the raw list. It is the
+// single derivation used both to attest synced models (entitySourcesForModels) and
+// to locate an entity within an overlaid set (findEntityInSet), so the CLI and the
+// registry always agree on an entity's key.
+func entityRefForModel(m bestiary.ModelInfo) bestiary.EntityRef {
+	return bestiary.EntityRef{
+		Family:    m.Family,
+		Variant:   m.Variant,
+		Version:   m.Version,
+		ParamSize: m.ParamSize,
+		Modifier:  bestiary.EntityModifiers(m.Modifier, m.Family),
+	}
+}
+
+// findEntityInSet resolves arg to an entity within the provided (possibly
+// overlaid) set. It mirrors lookupEntity's two-path resolution — an identity tuple
+// first, then a concrete-model-ID fallback — but searches the given slice instead
+// of the registry, so a synced-only standalone entity (present only after the
+// store overlay) is found. The set is indexed by EntityRef.String(); the returned
+// entity is the slice element (already a defensive deep copy from Entities()).
+func findEntityInSet(ents []bestiary.Entity, arg string) (bestiary.Entity, bool) {
+	index := make(map[string]int, len(ents))
+	for i := range ents {
+		index[ents[i].Ref.String()] = i
+	}
+	// Tuple path: parse the identity tuple and build its key.
+	if fam, variant, version, paramSize, mods, err := parseEntityTuple(arg); err == nil {
+		ref := bestiary.EntityRef{
+			Family:    fam,
+			Variant:   variant,
+			Version:   version,
+			ParamSize: paramSize,
+			Modifier:  bestiary.EntityModifiers(mods, fam),
+		}
+		if i, ok := index[ref.String()]; ok {
+			return ents[i], true
+		}
+	}
+	// Fallback: arg may be a concrete model ID rather than a tuple.
+	if m, ok := bestiary.LookupModel(bestiary.ModelID(arg)); ok {
+		if i, ok := index[entityRefForModel(m).String()]; ok {
+			return ents[i], true
+		}
+	}
+	return bestiary.Entity{}, false
+}
+
 // runProviders lists every provider/host instance of the entity identified by the
 // given tuple (or model ID). When quantFlag is non-empty the instance set is
 // filtered to those carrying a QuantVRAM row matching that quantization; an
 // unrecognised quantFlag is rejected with an actionable error (never silently
-// ignored or mapped to QuantizationOther).
-func runProviders(arg string, format bestiary.OutputFormat, quantFlag string) error {
+// ignored or mapped to QuantizationOther). The entity is resolved over the
+// store-overlaid entity set so synced metadata and standalones surface.
+func runProviders(arg string, format bestiary.OutputFormat, quantFlag, dbPath string) error {
 	if err := validateEntityOutput(format); err != nil {
 		return err
 	}
@@ -509,7 +723,11 @@ func runProviders(arg string, format bestiary.OutputFormat, quantFlag string) er
 	if err != nil {
 		return err
 	}
-	ent, ok := lookupEntity(arg)
+	store := openViewStore(dbPath)
+	if store != nil {
+		defer store.Close()
+	}
+	ent, ok := findEntityInSet(overlayEntities(store), arg)
 	if !ok {
 		return &bestiary.ErrNotFound{What: "entity", Key: arg}
 	}
@@ -525,6 +743,49 @@ func runProviders(arg string, format bestiary.OutputFormat, quantFlag string) er
 	return nil
 }
 
+// runEntities enumerates EVERY entity in the registry — the discoverability
+// surface for identities (notably metadata-only standalones) that are otherwise
+// reachable only by their exact key. It resolves entirely offline over the
+// store-overlaid entity set (so synced metadata and synced-only standalones
+// surface, and the one embedded-catalog notice fires on the zero-synced-rows
+// path), sorts by entity key, and renders per --output: json emits the full Entity
+// objects; table emits the ENTITY KEY | PROVIDERS | METADATA | BENCHMARKS summary.
+func runEntities(format bestiary.OutputFormat, dbPath string) error {
+	if err := validateEntityOutput(format); err != nil {
+		return err
+	}
+	store := openViewStore(dbPath)
+	if store != nil {
+		defer store.Close()
+	}
+	ents := overlayEntities(store)
+	sort.Slice(ents, func(i, j int) bool { return ents[i].Ref.String() < ents[j].Ref.String() })
+	if format == bestiary.FormatJSON {
+		return writeJSON(os.Stdout, ents)
+	}
+	writeEntitiesTable(os.Stdout, ents)
+	return nil
+}
+
+// writeEntitiesTable renders the registry-wide entity summary: one row per entity
+// with its key, provider/host instance count, whether provider-agnostic metadata is
+// attached, and how many benchmark claims that metadata carries. An entity with no
+// metadata shows "-" for METADATA and 0 for BENCHMARKS. Rows are emitted in the
+// caller's order (sorted by key).
+func writeEntitiesTable(w io.Writer, ents []bestiary.Entity) {
+	fmt.Fprintf(w, "Entities (%d):\n", len(ents))
+	fmt.Fprintf(w, "  %-48s %9s %8s %10s\n", "ENTITY KEY", "PROVIDERS", "METADATA", "BENCHMARKS")
+	for _, e := range ents {
+		metadata := "-"
+		benchmarks := 0
+		if e.Metadata != nil {
+			metadata = "yes"
+			benchmarks = len(e.Metadata.Benchmarks)
+		}
+		fmt.Fprintf(w, "  %-48s %9d %8s %10d\n", e.Ref.String(), len(e.Providers), metadata, benchmarks)
+	}
+}
+
 // runSources prints the per-source ingest provenance attesting the entity
 // identified by arg: one record per attesting data source (from Entity.Sources),
 // each JOINED across the BCNF provenance tables — uri + canonical-name from the
@@ -534,11 +795,15 @@ func runProviders(arg string, format bestiary.OutputFormat, quantFlag string) er
 // SOURCE|URI|INGESTED|PARSER view; it deliberately does NOT add a SOURCE column to
 // the show/list instance tables (deferred). An unknown key yields an actionable
 // ErrNotFound.
-func runSources(arg string, format bestiary.OutputFormat) error {
+func runSources(arg string, format bestiary.OutputFormat, dbPath string) error {
 	if err := validateEntityOutput(format); err != nil {
 		return err
 	}
-	ent, ok := lookupEntity(arg)
+	store := openViewStore(dbPath)
+	if store != nil {
+		defer store.Close()
+	}
+	ent, ok := findEntityInSet(overlayEntities(store), arg)
 	if !ok {
 		return &bestiary.ErrNotFound{What: "entity", Key: arg}
 	}
@@ -551,10 +816,203 @@ func runSources(arg string, format bestiary.OutputFormat) error {
 	return nil
 }
 
+// runSourcesHistory prints the full append-only ingest history for every data
+// source, ascending by ingest time. It opens the store best-effort: when the store
+// opens its dataset_ingested log is read (Store.QueryIngestHistory per source);
+// when it does not, the command falls back to the curated ingest history
+// (DatasetIngestHistoryFor). Either way the source dimension (id/uri/canonical
+// name) is resolved via the curated DataSourceByID FK join, and rows are grouped by
+// source (ascending source id) then by ingest time (ascending).
+func runSourcesHistory(format bestiary.OutputFormat, dbPath string) error {
+	if err := validateEntityOutput(format); err != nil {
+		return err
+	}
+	store := openViewStore(dbPath)
+	if store != nil {
+		defer store.Close()
+	}
+	rows := ingestHistoryRows(store)
+	if format == bestiary.FormatJSON {
+		return writeJSON(os.Stdout, rows)
+	}
+	writeHistoryTable(os.Stdout, rows)
+	return nil
+}
+
+// ingestHistoryRows builds the full per-source ingest history as joined provenance
+// rows. For each curated data source it reads the ingest history from the store
+// (when store is non-nil and the read succeeds) or the curated table otherwise,
+// joins the source dimension via DataSourceByID, and emits one row per ingest.
+// Sources are visited in ascending id order and each source's rows stay ascending
+// by ingest time (the reader contract), so the result is fully deterministic.
+func ingestHistoryRows(store *bestiary.Store) []sourceProvenance {
+	sources := bestiary.KnownDataSources()
+	sort.Slice(sources, func(i, j int) bool { return sources[i].ID < sources[j].ID })
+
+	var rows []sourceProvenance
+	for _, ds := range sources {
+		var hist []bestiary.DatasetIngested
+		if store != nil {
+			if h, err := store.QueryIngestHistory(context.Background(), ds.ID); err == nil && len(h) > 0 {
+				hist = h
+			}
+		}
+		if hist == nil {
+			hist = bestiary.DatasetIngestHistoryFor(ds.ID)
+		}
+		for _, di := range hist {
+			rows = append(rows, sourceProvenance{
+				DataSource:   ds,
+				IngestedAt:   di.IngestedAt,
+				ParserSchema: di.ParserSchema,
+			})
+		}
+	}
+	return rows
+}
+
+// runSourcesExport emits the store's ingest provenance as a datasources.json v3
+// document — the SAME schema the curated seed loader parses, so an export is
+// diffable against / promotable into parse/data/datasources.json. It writes to
+// outPath, or to stdout when outPath is empty or "-". When the store is empty or
+// absent the export falls back to the curated table (documented), so the document
+// is always complete and round-trippable.
+func runSourcesExport(dbPath, outPath string) error {
+	store := openViewStore(dbPath)
+	if store != nil {
+		defer store.Close()
+	}
+	doc := buildSourcesExport(store)
+	data, err := json.MarshalIndent(doc, "", "  ")
+	if err != nil {
+		return fmt.Errorf("sources --export: marshal datasources document: %w", err)
+	}
+	data = append(data, '\n')
+
+	if outPath == "" || outPath == "-" {
+		_, err = os.Stdout.Write(data)
+		if err != nil {
+			return fmt.Errorf("sources --export: write to stdout: %w", err)
+		}
+		return nil
+	}
+	if err := os.WriteFile(outPath, data, 0o644); err != nil {
+		return fmt.Errorf(
+			"sources --export: write datasources document to %s: %w;"+
+				" why: the output file could not be created or written;"+
+				" where: runSourcesExport;"+
+				" how to fix: pass a writable path, or omit the path to write to stdout",
+			outPath, err,
+		)
+	}
+	return nil
+}
+
+// datasourcesExportDoc is the datasources.json v3 export shape. Its JSON tags match
+// the curated-seed loader's dataSourceFileJSON EXACTLY (schema_version / sources /
+// ingested with id,uri,canonical_name and source_id,ingested_at,parser_schema), so
+// the emitted document round-trips through that loader with content equality.
+type datasourcesExportDoc struct {
+	SchemaVersion int                     `json:"schema_version"`
+	Sources       []datasourceExportRow   `json:"sources"`
+	Ingested      []datasetIngestedExport `json:"ingested"`
+}
+
+type datasourceExportRow struct {
+	ID            string `json:"id"`
+	URI           string `json:"uri"`
+	CanonicalName string `json:"canonical_name"`
+}
+
+type datasetIngestedExport struct {
+	SourceID     string `json:"source_id"`
+	IngestedAt   string `json:"ingested_at"`
+	ParserSchema int    `json:"parser_schema"`
+}
+
+// datasourcesExportSchemaVersion is the schema_version the export document carries.
+// It matches parse/data/datasources.json's committed schema_version (3).
+const datasourcesExportSchemaVersion = 3
+
+// buildSourcesExport assembles the datasources.json v3 export document. The source
+// dimension (id/uri/canonical name) always comes from the curated table
+// (KnownDataSources) — it is stable curated data with no store reader. The ingest
+// history is the UNION of the store's ingest log and the curated seed rows,
+// deduplicated on the exact (source_id, ingested_at) key: a live sync writes only
+// its own source's rows to the store, so a store-only export would silently drop
+// provenance that lives only in the curated seed (the offline Ollama ingest, and
+// any models.dev seed row not re-synced this run). Unioning keeps the export
+// complete and safely promotable into parse/data/datasources.json. Sources are
+// ordered by curated file order; a source's ingest rows are ascending by ingest time.
+func buildSourcesExport(store *bestiary.Store) datasourcesExportDoc {
+	doc := datasourcesExportDoc{SchemaVersion: datasourcesExportSchemaVersion}
+
+	sources := bestiary.KnownDataSources()
+	for _, ds := range sources {
+		doc.Sources = append(doc.Sources, datasourceExportRow{
+			ID:            string(ds.ID),
+			URI:           ds.URI,
+			CanonicalName: ds.CanonicalName,
+		})
+	}
+
+	for _, ds := range sources {
+		merged := mergeIngestRows(storeIngestHistory(store, ds.ID), bestiary.DatasetIngestHistoryFor(ds.ID))
+		for _, di := range merged {
+			doc.Ingested = append(doc.Ingested, datasetIngestedExport{
+				SourceID:     string(di.SourceID),
+				IngestedAt:   di.IngestedAt,
+				ParserSchema: di.ParserSchema,
+			})
+		}
+	}
+	return doc
+}
+
+// storeIngestHistory returns a source's ingest history from the store, or nil when
+// there is no store or the read fails (a fresh/absent store yields no rows, not an
+// error). It isolates the best-effort store read so the union in buildSourcesExport
+// degrades to curated-only rather than surfacing a store error on export.
+func storeIngestHistory(store *bestiary.Store, id bestiary.DataSourceID) []bestiary.DatasetIngested {
+	if store == nil {
+		return nil
+	}
+	hist, err := store.QueryIngestHistory(context.Background(), id)
+	if err != nil {
+		return nil
+	}
+	return hist
+}
+
+// mergeIngestRows unions one source's store and curated ingest histories,
+// deduplicating on the exact ingested_at key (the source is fixed per call, so
+// ingested_at IS the (source_id, ingested_at) key) and returning the rows ascending
+// by ingest time. The store row wins when a key exists in both — they describe the
+// same ingest — while curated-only rows (provenance that never entered the store,
+// e.g. the offline Ollama ingest) are preserved. Ascending ingested_at keys are
+// unique after dedup, so the ordering is fully deterministic.
+func mergeIngestRows(storeRows, curatedRows []bestiary.DatasetIngested) []bestiary.DatasetIngested {
+	byTime := make(map[string]bestiary.DatasetIngested, len(storeRows)+len(curatedRows))
+	for _, di := range storeRows {
+		byTime[di.IngestedAt] = di
+	}
+	for _, di := range curatedRows {
+		if _, ok := byTime[di.IngestedAt]; !ok {
+			byTime[di.IngestedAt] = di
+		}
+	}
+	out := make([]bestiary.DatasetIngested, 0, len(byTime))
+	for _, di := range byTime {
+		out = append(out, di)
+	}
+	sort.Slice(out, func(i, j int) bool { return out[i].IngestedAt < out[j].IngestedAt })
+	return out
+}
+
 // runShowEntity renders the aggregate view of one entity: its identity, rolled-up
 // provider/host lists, price/context/max-output ranges, capability union, lineage
 // edges, and the underlying instances.
-func runShowEntity(arg string, format bestiary.OutputFormat, quantFlag string) error {
+func runShowEntity(arg string, format bestiary.OutputFormat, quantFlag, dbPath string) error {
 	if err := validateEntityOutput(format); err != nil {
 		return err
 	}
@@ -562,7 +1020,11 @@ func runShowEntity(arg string, format bestiary.OutputFormat, quantFlag string) e
 	if err != nil {
 		return err
 	}
-	ent, ok := lookupEntity(arg)
+	store := openViewStore(dbPath)
+	if store != nil {
+		defer store.Close()
+	}
+	ent, ok := findEntityInSet(overlayEntities(store), arg)
 	if !ok {
 		return &bestiary.ErrNotFound{What: "entity", Key: arg}
 	}
@@ -696,17 +1158,89 @@ func fmtHost(h bestiary.Host) string {
 	return string(h)
 }
 
-// writeInstanceTable prints a fixed-width table of provider instances.
+// writeInstanceTable prints a fixed-width table of provider instances, resolving
+// each instance's release status from the static registry (ProviderInstance is a
+// rolled-up view and carries no status of its own; status is an api.json /
+// instance-level fact on ModelInfo, reached here by LookupModelByProvider).
 func writeInstanceTable(w io.Writer, insts []bestiary.ProviderInstance) {
+	writeInstanceTableWithStatus(w, insts, instanceStatuses(insts))
+}
+
+// instanceStatuses resolves the release status of each instance by looking up its
+// backing ModelInfo in the static registry (by provider + id). An instance with no
+// registry match — e.g. a synced-only standalone — resolves to StatusNone. The
+// returned slice is index-aligned with insts.
+func instanceStatuses(insts []bestiary.ProviderInstance) []bestiary.ModelStatus {
+	out := make([]bestiary.ModelStatus, len(insts))
+	for i, in := range insts {
+		if m, ok := bestiary.LookupModelByProvider(in.Provider, string(in.ID)); ok {
+			out[i] = m.Status
+		}
+	}
+	return out
+}
+
+// writeInstanceTableWithStatus is the pure formatter behind writeInstanceTable: it
+// renders the instance table and, when ANY instance carries a non-None status,
+// gains a trailing STATUS column. statuses is index-aligned with insts; the
+// separation of resolution (instanceStatuses) from formatting keeps the column
+// logic unit-testable with synthetic statuses. Status is instance-level data, so
+// it renders here on instance rows and never on the entity-metadata block.
+func writeInstanceTableWithStatus(w io.Writer, insts []bestiary.ProviderInstance, statuses []bestiary.ModelStatus) {
+	showStatus := false
+	for _, s := range statuses {
+		if s != bestiary.StatusNone {
+			showStatus = true
+			break
+		}
+	}
+
 	fmt.Fprintf(w, "Instances (%d):\n", len(insts))
-	fmt.Fprintf(w, "  %-40s %-22s %-12s %12s %12s %10s %10s\n",
-		"ID", "PROVIDER", "HOST", "IN/MTok", "OUT/MTok", "CONTEXT", "MAXOUT")
-	for _, in := range insts {
-		fmt.Fprintf(w, "  %-40s %-22s %-12s %12s %12s %10d %10d\n",
-			string(in.ID), string(in.Provider), fmtHost(in.Host),
-			fmtPrice(in.CostInputPerMTok), fmtPrice(in.CostOutputPerMTok),
-			in.ContextWindow, in.MaxOutput)
+	if showStatus {
+		fmt.Fprintf(w, "  %-40s %-22s %-12s %12s %12s %10s %10s %-12s\n",
+			"ID", "PROVIDER", "HOST", "IN/MTok", "OUT/MTok", "CONTEXT", "MAXOUT", "STATUS")
+	} else {
+		fmt.Fprintf(w, "  %-40s %-22s %-12s %12s %12s %10s %10s\n",
+			"ID", "PROVIDER", "HOST", "IN/MTok", "OUT/MTok", "CONTEXT", "MAXOUT")
+	}
+	for i, in := range insts {
+		if showStatus {
+			status := bestiary.StatusNone
+			if i < len(statuses) {
+				status = statuses[i]
+			}
+			fmt.Fprintf(w, "  %-40s %-22s %-12s %12s %12s %10d %10d %-12s\n",
+				string(in.ID), string(in.Provider), fmtHost(in.Host),
+				fmtPrice(in.CostInputPerMTok), fmtPrice(in.CostOutputPerMTok),
+				in.ContextWindow, in.MaxOutput, fmtStatus(status))
+		} else {
+			fmt.Fprintf(w, "  %-40s %-22s %-12s %12s %12s %10d %10d\n",
+				string(in.ID), string(in.Provider), fmtHost(in.Host),
+				fmtPrice(in.CostInputPerMTok), fmtPrice(in.CostOutputPerMTok),
+				in.ContextWindow, in.MaxOutput)
+		}
 		writeQuantRows(w, in.QuantVRAM)
+	}
+}
+
+// fmtStatus renders a ModelStatus for a table cell, mapping the zero value
+// (StatusNone) to a dash so a bare "none" never clutters the column.
+func fmtStatus(s bestiary.ModelStatus) string {
+	if s == bestiary.StatusNone {
+		return "-"
+	}
+	return s.String()
+}
+
+// writeHistoryTable prints the full ingest history as a SOURCE|URI|INGESTED|PARSER
+// table (the same columns as the per-entity sources view). Each row is one ingest;
+// the row count reflects total ingests across all sources.
+func writeHistoryTable(w io.Writer, rows []sourceProvenance) {
+	fmt.Fprintf(w, "Ingest history (%d):\n", len(rows))
+	fmt.Fprintf(w, "  %-12s %-34s %-22s %8s\n", "SOURCE", "URI", "INGESTED", "PARSER")
+	for _, r := range rows {
+		fmt.Fprintf(w, "  %-12s %-34s %-22s %8d\n",
+			string(r.ID), orDash(r.URI), orDash(r.IngestedAt), r.ParserSchema)
 	}
 }
 
@@ -752,12 +1286,101 @@ func writeEntityView(w io.Writer, e bestiary.Entity) {
 	fmt.Fprintf(w, "Max output:         %s\n", fmtRangeInt(e.MaxOutputRange))
 	fmt.Fprintf(w, "Capabilities: %s\n", orDash(strings.Join(capList(e.Capabilities), ", ")))
 
+	writeEntityMetadata(w, e.Metadata)
+
 	fmt.Fprintf(w, "Lineage (%d):\n", len(e.Lineage))
 	for _, edge := range e.Lineage {
 		fmt.Fprintf(w, "  -> %s %s\n", edge.Kind.String(), edge.Parent.String())
 	}
 
 	writeInstanceTable(w, e.Instances)
+}
+
+// writeEntityMetadata renders the models.dev entity metadata (provider-agnostic
+// facts) attached to an entity: its description, license, and a benchmark table.
+// It is a no-op when no metadata is joined (m == nil), so an entity with no
+// metadata renders exactly as before. Description and license are entity-level
+// facts (models.json side); status is deliberately absent here — it is
+// instance-level and renders only on the instance table.
+func writeEntityMetadata(w io.Writer, m *bestiary.EntityMetadata) {
+	if m == nil {
+		return
+	}
+	fmt.Fprintf(w, "Description: %s\n", orDash(m.Description))
+	fmt.Fprintf(w, "License:     %s\n", orDash(m.License))
+	writeBenchmarkTable(w, m.Benchmarks)
+}
+
+// benchmarkTableLimit is the maximum number of benchmark rows the TABLE view
+// renders before truncating with a "… and N more" footer. The JSON output always
+// carries every row; the table is capped for readability.
+const benchmarkTableLimit = 5
+
+// benchmarkNameColWidth is the fixed display width of the NAME column. Names
+// wider than this are shortened to a single trailing "…" so the SCORE/METRIC/…
+// columns stay aligned regardless of an individual name's length (e.g.
+// "Artificial Analysis Coding Index"). The full names remain available via
+// --output json. The width matches the column's format verb below and is chosen
+// to hold the common benchmark names without truncation while bounding the outliers.
+const benchmarkNameColWidth = 24
+
+// truncateCell shortens s to at most width display columns, replacing the tail
+// with a single "…" rune when s would overflow, and reports whether truncation
+// occurred. Runes are counted (not bytes), so a multi-byte name is measured by
+// visible length; the returned truncated cell is exactly width runes wide (width-1
+// content runes + the ellipsis), which the "%-*s" verb pads consistently with the
+// untruncated (ASCII) cells so the columns line up. width must be ≥ 1.
+func truncateCell(s string, width int) (string, bool) {
+	if utf8.RuneCountInString(s) <= width {
+		return s, false
+	}
+	return string([]rune(s)[:width-1]) + "…", true
+}
+
+// writeBenchmarkTable prints the lab-reported benchmark claims as a
+// NAME|SCORE|METRIC|HARNESS|DATE|SOURCE table — fields kept in separate columns,
+// never concatenated. At most benchmarkTableLimit rows render; when more exist a
+// "… and N more (use --output json)" footer names the omitted count. Benchmark
+// names wider than benchmarkNameColWidth are truncated to keep the columns
+// aligned; when any rendered row was truncated a single note points at the full
+// names in --output json. Nothing is printed when the entity has no benchmarks.
+func writeBenchmarkTable(w io.Writer, benchmarks []bestiary.BenchmarkResult) {
+	if len(benchmarks) == 0 {
+		return
+	}
+	fmt.Fprintf(w, "Benchmarks (%d):\n", len(benchmarks))
+	fmt.Fprintf(w, "  %-*s %12s %-14s %-18s %-12s %s\n",
+		benchmarkNameColWidth, "NAME", "SCORE", "METRIC", "HARNESS", "DATE", "SOURCE")
+
+	shown := benchmarks
+	if len(shown) > benchmarkTableLimit {
+		shown = shown[:benchmarkTableLimit]
+	}
+	nameTruncated := false
+	for _, b := range shown {
+		name, truncated := truncateCell(orDash(b.Name), benchmarkNameColWidth)
+		nameTruncated = nameTruncated || truncated
+		fmt.Fprintf(w, "  %-*s %12s %-14s %-18s %-12s %s\n",
+			benchmarkNameColWidth, name, benchScoreCell(b), orDash(b.Metric),
+			orDash(b.Harness), orDash(b.Date), orDash(b.SourceURL))
+	}
+	if len(benchmarks) > benchmarkTableLimit {
+		fmt.Fprintf(w, "  … and %d more (use --output json)\n", len(benchmarks)-benchmarkTableLimit)
+	}
+	if nameTruncated {
+		fmt.Fprintf(w, "  note: benchmark names truncated (use --output json for full names)\n")
+	}
+}
+
+// benchScoreCell renders the SCORE cell for a benchmark row: the verbatim upstream
+// value (ScoreRaw) when the score was non-numeric, otherwise the numeric Score.
+// This guarantees the cell is never blank — a string score ("pass", an em-dash,
+// etc.) rides through on ScoreRaw rather than collapsing to a bare 0.
+func benchScoreCell(b bestiary.BenchmarkResult) string {
+	if b.ScoreRaw != "" {
+		return b.ScoreRaw
+	}
+	return fmt.Sprintf("%g", b.Score)
 }
 
 // orDash returns s, or "-" when s is empty.
@@ -816,17 +1439,43 @@ func capList(c bestiary.CapabilityUnion) []string {
 	return out
 }
 
-// runSync fetches live model data from the API, persists to store, and prints results.
-// Unlike list/show, sync requires a functional store (no graceful fallback).
+// syncNow returns the RFC3339 (second-precision, UTC) timestamp stamped on the
+// dataset_ingested row `sync` appends and on the synced metadata's LastSynced. It
+// is a package var so tests can install a deterministic clock; production uses the
+// wall clock. Second precision (NOT RFC3339Nano) is deliberate: it matches the
+// committed datasources.json snapshot timestamps so store rows and seed rows sort
+// consistently under lexicographic MAX(ingested_at).
+var syncNow = func() string { return time.Now().UTC().Format(time.RFC3339) }
+
+// runSync fetches live model data from the API, persists to store, and prints
+// results. Unlike list/show, sync requires a functional store (no graceful
+// fallback). It delegates to runSyncClient with the production client; tests
+// exercise the SAME code path with a WithBaseURL client pointed at httptest.
 func runSync(provider string, format bestiary.OutputFormat, dbPath string) error {
+	return runSyncClient(bestiary.NewClient(), provider, format, dbPath)
+}
+
+// runSyncClient is the testable core of `sync`: it fetches the api.json models and
+// the models.json entity metadata through the given client, warns on large drift
+// versus the embedded catalog, then persists everything in the store —
+//
+//   - UpsertModels: the fetched api.json models (existing behavior).
+//   - UpsertDataSources: registers the models.dev DataSource dimension row and
+//     APPENDS one dataset_ingested row stamped with the sync wall-clock (a runtime
+//     ingest is a genuine event, so a wall-clock RFC3339 timestamp is correct here
+//     — this is NOT the committed-snapshot kind that must stay byte-deterministic).
+//   - UpsertEntityMetadata: the fetched metadata, attributed to models.dev and
+//     stamped with the same sync timestamp (its parent row's source_id is an FK, so
+//     the DataSource must be registered first — hence the ordering above).
+//   - UpsertEntitySources: one models.dev attestation per distinct synced entity
+//     key, derived the SAME way the registry aggregate builds entity keys.
+func runSyncClient(client *bestiary.Client, provider string, format bestiary.OutputFormat, dbPath string) error {
 	ctx := context.Background()
 
 	path, err := resolveDBPath(dbPath)
 	if err != nil {
 		return fmt.Errorf("sync: %w", err)
 	}
-
-	client := bestiary.NewClient()
 
 	var fetched []bestiary.ModelInfo
 	if provider != "" {
@@ -836,6 +1485,20 @@ func runSync(provider string, format bestiary.OutputFormat, dbPath string) error
 	}
 	if err != nil {
 		return fmt.Errorf("sync: fetch models: %w", err)
+	}
+
+	metadata, err := client.FetchModelMetadata(ctx)
+	if err != nil {
+		return fmt.Errorf("sync: fetch model metadata: %w", err)
+	}
+
+	// Drift warning: a materially stale vendored snapshot warrants a regen.
+	if n := driftedModelCount(fetched, bestiary.StaticModels()); n > driftWarningThreshold {
+		fmt.Fprintf(os.Stderr,
+			"%swarning: %d live model IDs are absent from the embedded catalog;"+
+				" the vendored models.dev snapshot is stale — refresh it and regenerate"+
+				" (see AGENTS.md \"models.dev snapshot refresh\")\n",
+			errPrefix, n)
 	}
 
 	store, err := bestiary.OpenStore(path)
@@ -848,5 +1511,88 @@ func runSync(provider string, format bestiary.OutputFormat, dbPath string) error
 		return fmt.Errorf("sync: persist models: %w", err)
 	}
 
+	// Provenance timestamp for this sync. A runtime ingest is a real event, so a
+	// wall-clock RFC3339 (UTC) stamp is correct — unlike the committed datasources.json
+	// snapshot timestamps, which are pinned to keep generated output deterministic.
+	now := syncNow()
+
+	// Register the models.dev DataSource dimension row (reusing the curated
+	// id/uri/canonical-name when available so provenance stays consistent with the
+	// seed) and append one ingest-history row. UpsertEntityMetadata's parent FK
+	// references data_sources(data_source_id), so this MUST precede it.
+	ds, ok := bestiary.DataSourceByID(bestiary.DataSourceModelsDev)
+	if !ok {
+		// The curated seed (parse/data/datasources.json) normally supplies the
+		// models.dev dimension row; this literal is a graceful fallback for a
+		// degraded seed so the ingest row's FK still resolves.
+		ds = bestiary.DataSource{
+			ID:            bestiary.DataSourceModelsDev,
+			URI:           "https://models.dev/api.json",
+			CanonicalName: string(bestiary.DataSourceModelsDev),
+		}
+	}
+	ingest := bestiary.DatasetIngested{
+		SourceID:     bestiary.DataSourceModelsDev,
+		IngestedAt:   now,
+		ParserSchema: modelsDevParserSchema,
+	}
+	if err := store.UpsertDataSources(ctx, []bestiary.DataSource{ds}, []bestiary.DatasetIngested{ingest}); err != nil {
+		return fmt.Errorf("sync: persist data source + ingest row: %w", err)
+	}
+
+	// Attribute the fetched metadata to models.dev and stamp it, then persist.
+	for i := range metadata {
+		metadata[i].Source = bestiary.DataSourceModelsDev
+		metadata[i].LastSynced = now
+	}
+	if err := store.UpsertEntityMetadata(ctx, metadata); err != nil {
+		return fmt.Errorf("sync: persist entity metadata: %w", err)
+	}
+
+	// Attest every distinct synced entity to models.dev.
+	if err := store.UpsertEntitySources(ctx, entitySourcesForModels(fetched)); err != nil {
+		return fmt.Errorf("sync: persist entity attestations: %w", err)
+	}
+
 	return bestiary.FormatModels(os.Stdout, fetched, format)
+}
+
+// driftedModelCount reports how many fetched (live) models are absent from the
+// embedded catalog, keyed by the composite (Provider, ID) that identifies a model
+// row. It is the falsifiable core of the drift warning: it depends only on its two
+// slice arguments, so it can be unit-tested with synthetic data independent of the
+// threshold.
+func driftedModelCount(fetched, embedded []bestiary.ModelInfo) int {
+	have := make(map[string]struct{}, len(embedded))
+	for _, m := range embedded {
+		have[string(m.Provider)+"\x00"+string(m.ID)] = struct{}{}
+	}
+	n := 0
+	for _, m := range fetched {
+		if _, ok := have[string(m.Provider)+"\x00"+string(m.ID)]; !ok {
+			n++
+		}
+	}
+	return n
+}
+
+// entitySourcesForModels derives the models.dev entity→source attestations for a
+// set of synced models. Each model's entity key is built via entityRefForModel —
+// the SAME identity-class derivation the registry aggregate uses — and duplicate
+// keys (many models share one entity) collapse to a single attestation row. Every
+// returned row attests DataSourceModelsDev; the sync writes them with
+// UpsertEntitySources (INSERT OR REPLACE per (entity_key, source), so a re-sync is
+// idempotent and never duplicates an attestation).
+func entitySourcesForModels(models []bestiary.ModelInfo) []bestiary.EntitySource {
+	seen := make(map[string]struct{}, len(models))
+	var out []bestiary.EntitySource
+	for _, m := range models {
+		key := entityRefForModel(m).String()
+		if _, dup := seen[key]; dup {
+			continue
+		}
+		seen[key] = struct{}{}
+		out = append(out, bestiary.EntitySource{EntityKey: key, SourceID: bestiary.DataSourceModelsDev})
+	}
+	return out
 }

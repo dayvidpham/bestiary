@@ -238,19 +238,21 @@ func Resolve(input string, opts ...ResolveOption) ([]ModelRef, error) {
 	// genuinely distinct models (different variants, versions, context windows, etc.)
 	// land in separate groups.
 	//
-	// The group-key invariant: the key now carries Version, Modifier, and a locally-parsed
-	// ":N" context-window discriminator (parseContextN). This prevents context-window
-	// variants (e.g. claude-3-7-sonnet-thinking:1024 vs :128000) from being silently
-	// collapsed into a single representative — they share identical canonical fields
-	// but differ only in the raw ":N" suffix.
+	// The group-key invariant: the key now carries Version, ParamSize, Modifier, and a
+	// locally-parsed ":N" context-window discriminator (parseContextN). This prevents
+	// context-window variants (e.g. claude-3-7-sonnet-thinking:1024 vs :128000) and
+	// distinct parameter sizes (e.g. llama@3.3#8b vs #70b — genuinely different
+	// entities) from being silently collapsed into a single representative when they
+	// share the other canonical fields.
 	type groupKey struct {
-		id       ModelID // non-empty for ID-based grouping
-		family   Family
-		variant  string
-		version  string
-		modifier string
-		date     string
-		contextN string // parsed ":N" from ID (e.g., "1024", "128000", "")
+		id        ModelID // non-empty for ID-based grouping
+		family    Family
+		variant   string
+		version   string
+		paramsize string // canonical parameter-size token (e.g. "8b", "70b", ""); keeps sized siblings distinct
+		modifier  string
+		date      string
+		contextN  string // parsed ":N" from ID (e.g., "1024", "128000", "")
 	}
 	byGroup := make(map[groupKey][]ModelRef)
 	var order []groupKey // preserve insertion order for deterministic output
@@ -262,12 +264,16 @@ func Resolve(input string, opts ...ResolveOption) ([]ModelRef, error) {
 			key = groupKey{id: ref.ID}
 		} else {
 			// Group by extended canonical identity for SchemeCanonical non-exact inputs.
-			// Version, Modifier, and contextN distinguish sub-variants that share the
-			// same (Family, Variant, Date) triple.
+			// Version, ParamSize, Modifier, and contextN distinguish sub-variants that
+			// share the same (Family, Variant, Date) triple.
 			key = groupKey{
 				family:  ref.Family,
 				variant: ref.Variant,
 				version: ref.Version,
+				// ParamSize participates in identity: a 70B and an 8B of one family are
+				// distinct entities, so they must land in separate ambiguity groups
+				// instead of collapsing into a single cross-provider representative.
+				paramsize: ref.ParamSize,
 				// the Modifier component is the ORDER-INDEPENDENT canonical
 				// key (modifierKey), so [thinking,turbo] and [turbo,thinking] never
 				// split a group; the ":N" context-window still discriminates per the group-key invariant.

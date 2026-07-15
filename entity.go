@@ -206,6 +206,12 @@ type Entity struct {
 	// at least the models.dev origin); it is nil only on a hand-constructed Entity
 	// value that never went through the registry aggregate.
 	Sources []DataSourceID
+	// Metadata is the provider-agnostic model facts (description, license, links,
+	// benchmark claims) joined to this entity from the models.dev models.json
+	// side. It is a pointer because metadata is genuinely optional: nil when no
+	// EntityMetadata was joined to this identity. When present it is owned by the
+	// Entity value and is deep-copied on read alongside the other entity fields.
+	Metadata *EntityMetadata
 }
 
 // Entities returns every model entity in the static registry, each with its
@@ -272,9 +278,30 @@ func cloneEntity(e Entity) Entity {
 	if e.Sources != nil {
 		c.Sources = append([]DataSourceID(nil), e.Sources...)
 	}
+	c.Metadata = cloneEntityMetadata(e.Metadata)
 	c.PriceInputRange = cloneFloatPair(e.PriceInputRange)
 	c.PriceOutputRange = cloneFloatPair(e.PriceOutputRange)
 	return c
+}
+
+// cloneEntityMetadata deep-copies an *EntityMetadata: it duplicates the struct
+// and gives its Links and Benchmarks slices fresh backing arrays. ModelLink and
+// BenchmarkResult rows contain only value types (no nested pointers or slices),
+// so a shallow element copy of each slice is a full deep copy. Returns nil for a
+// nil input (the nil-means-unjoined convention), so a caller can never reach back
+// into the registry-owned metadata through a returned Entity.
+func cloneEntityMetadata(m *EntityMetadata) *EntityMetadata {
+	if m == nil {
+		return nil
+	}
+	c := *m
+	if m.Links != nil {
+		c.Links = append([]ModelLink(nil), m.Links...)
+	}
+	if m.Benchmarks != nil {
+		c.Benchmarks = append([]BenchmarkResult(nil), m.Benchmarks...)
+	}
+	return &c
 }
 
 // cloneRef deep-copies an EntityRef, duplicating its Modifier slice.

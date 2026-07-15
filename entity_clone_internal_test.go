@@ -7,6 +7,8 @@ package bestiary
 //   - cloneQuantVRAM body replaced with `return in` (returns aliased slice)
 //   - the `c.QuantVRAM = cloneQuantVRAM(...)` assignment deleted from cloneInstances
 //   - the Sources copy block deleted from cloneEntity
+//   - the `c.Metadata = cloneEntityMetadata(...)` assignment deleted from cloneEntity
+//   - cloneEntityMetadata's Links/Benchmarks copy replaced with a plain struct copy
 
 import "testing"
 
@@ -165,6 +167,74 @@ func TestCloneEntity_Internal_SourcesNilPreserved(t *testing.T) {
 	c := cloneEntity(e)
 	if c.Sources != nil {
 		t.Errorf("cloneEntity: nil Sources became %v after clone; must remain nil", c.Sources)
+	}
+}
+
+// TestCloneEntity_Internal_MetadataMutationIsolation calls cloneEntity directly
+// with a populated Metadata pointer (including Links and Benchmarks rows) and
+// verifies bidirectional mutation isolation: mutating the clone's Metadata struct
+// fields or its Links/Benchmarks rows does not affect the original, and vice
+// versa. This makes the Entity.Metadata deep-copy-on-read invariant a regression
+// gate rather than a documented-but-unenforced claim.
+//
+// Mutant killers:
+//   - deleting `c.Metadata = cloneEntityMetadata(e.Metadata)` from cloneEntity:
+//     clone and original share the same *EntityMetadata, so the scalar/row checks
+//     below fail (and the pointer-identity assertion fails outright).
+//   - replacing cloneEntityMetadata's Links/Benchmarks copy with a plain `c := *m`:
+//     the slices stay aliased, so the row-mutation checks fail.
+func TestCloneEntity_Internal_MetadataMutationIsolation(t *testing.T) {
+	original := Entity{
+		Ref: EntityRef{Family: "llama", Version: "3.3"},
+		Metadata: &EntityMetadata{
+			MetadataID:  "meta/llama-3.3",
+			Name:        "Llama 3.3",
+			Description: "orig",
+			Links:       []ModelLink{{Label: "Card", URL: "https://example.com", Type: LinkModelCard}},
+			Benchmarks:  []BenchmarkResult{{Name: "MMLU", Metric: "accuracy", Score: 80}},
+			Source:      DataSourceModelsDev,
+		},
+	}
+	cloned := cloneEntity(original)
+
+	if cloned.Metadata == nil {
+		t.Fatal("cloneEntity: cloned.Metadata is nil, want a populated deep copy")
+	}
+	// The clone must not share the original pointer.
+	if cloned.Metadata == original.Metadata {
+		t.Fatal("cloneEntity: cloned.Metadata shares the original pointer; it must be a deep copy")
+	}
+
+	// Mutate clone scalar → original unchanged.
+	cloned.Metadata.Name = "mutated"
+	if original.Metadata.Name != "Llama 3.3" {
+		t.Errorf("cloneEntity: mutating cloned.Metadata.Name changed original to %q; clone must not alias original", original.Metadata.Name)
+	}
+	// Mutate clone Links row → original unchanged.
+	cloned.Metadata.Links[0].Label = "mutated"
+	if original.Metadata.Links[0].Label != "Card" {
+		t.Errorf("cloneEntity: mutating cloned.Metadata.Links[0].Label changed original to %q; Links clone must be independent", original.Metadata.Links[0].Label)
+	}
+	// Mutate clone Benchmarks row → original unchanged.
+	cloned.Metadata.Benchmarks[0].Score = 1
+	if original.Metadata.Benchmarks[0].Score != 80 {
+		t.Errorf("cloneEntity: mutating cloned.Metadata.Benchmarks[0].Score changed original to %v; Benchmarks clone must be independent", original.Metadata.Benchmarks[0].Score)
+	}
+
+	// Mutate original Links row → clone unchanged.
+	original.Metadata.Links[0].URL = "https://mutated"
+	if cloned.Metadata.Links[0].URL != "https://example.com" {
+		t.Errorf("cloneEntity: mutating original.Metadata.Links[0].URL changed clone to %q; original must not alias clone", cloned.Metadata.Links[0].URL)
+	}
+}
+
+// TestCloneEntity_Internal_MetadataNilPreserved verifies cloneEntity preserves a
+// nil Metadata pointer (the zero value for entities with no joined metadata).
+func TestCloneEntity_Internal_MetadataNilPreserved(t *testing.T) {
+	e := Entity{Ref: EntityRef{Family: "llama"}}
+	c := cloneEntity(e)
+	if c.Metadata != nil {
+		t.Errorf("cloneEntity: nil Metadata became %v after clone; must remain nil", c.Metadata)
 	}
 }
 

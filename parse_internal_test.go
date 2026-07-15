@@ -181,3 +181,98 @@ func TestExtractVersionBetweenFamilyAndVariant_Parity(t *testing.T) {
 		})
 	}
 }
+
+// assertLengthThenLexOrder verifies that slice s is sorted by descending length,
+// then ascending lexicographic on equal-length runs — the TOTAL order the two
+// initParseData sorts (suffixes, modifiers) commit to. It pins the exact
+// tie-break: for any adjacent pair of equal length, the earlier element must be
+// lexicographically smaller. This is the invariant that makes greedy suffix /
+// modifier matching deterministic BY CONSTRUCTION rather than by the sort
+// implementation's incidental handling of equal-length elements.
+func assertLengthThenLexOrder(t *testing.T, label string, s []string) {
+	t.Helper()
+	for i := 1; i < len(s); i++ {
+		prev, cur := s[i-1], s[i]
+		if len(prev) < len(cur) {
+			t.Fatalf(
+				"%s not length-descending at index %d: %q (len %d) precedes %q (len %d)\n"+
+					"  What: the load-time sort left a shorter element before a longer one\n"+
+					"  Why: greedy longest-first matching requires descending length\n"+
+					"  How to fix: restore the length-descending comparator in initParseData",
+				label, i, prev, len(prev), cur, len(cur),
+			)
+		}
+		if len(prev) == len(cur) && prev >= cur {
+			t.Fatalf(
+				"%s tie-break not lexicographic at index %d: %q is not < %q (both len %d)\n"+
+					"  What: two equal-length elements are not in ascending lexicographic order\n"+
+					"  Why: an equal-length tie must resolve to a FIXED order (lexicographic) so the\n"+
+					"       decomposition never depends on the sort algorithm's incidental tie-handling\n"+
+					"  How to fix: keep the total-order comparator (length desc, then s[i] < s[j]) in initParseData",
+				label, i, prev, cur, len(prev),
+			)
+		}
+	}
+}
+
+// TestParseData_SortsAreTotalOrdered pins the tie-break of the two load-time
+// sorts (variant suffixes and modifiers). A length-only comparator is not a total
+// order: equal-length entries are left in a sort-implementation-defined order that
+// is deterministic for a given Go build but is a latent tie-break the greedy
+// matchers inherit. The comparators now break ties lexicographically; this test
+// asserts the resulting slices honor (length desc, then lex asc) so a regression
+// back to a length-only comparator — or any change that reintroduces an
+// order-unstable tie — fails here.
+func TestParseData_SortsAreTotalOrdered(t *testing.T) {
+	t.Parallel()
+
+	pd, err := loadParseData()
+	if err != nil {
+		t.Fatalf("loadParseData: %v", err)
+	}
+	assertLengthThenLexOrder(t, "pd.suffixes", pd.suffixes)
+	assertLengthThenLexOrder(t, "pd.modifiers", pd.modifiers)
+}
+
+// TestMuseSpark_DecompositionStable pins the canonical decomposition of the
+// muse-spark-1.1 model across the ID/raw-family forms it appears under in the July
+// catalog (dot-form ID, namespaced ID, dash-form ID, and the empty-raw path). The
+// stable tuple is (family=muse, variant=spark, version=1.1, no modifier). This is
+// the outcome that a prior codegen (0d25c87) captured in a non-canonical
+// undecomposed form (variant/version empty); the parse pipeline is deterministic
+// on this input (verified across thousands of fresh-process runs), and this test
+// guards the committed stable form at the unit level so any regression that
+// re-empties the variant/version is caught without a full regen.
+func TestMuseSpark_DecompositionStable(t *testing.T) {
+	t.Parallel()
+
+	cases := []struct {
+		desc string
+		raw  Family
+		id   ModelID
+		prov Provider
+	}{
+		{"raw=muse dot-form id", "muse", "muse-spark-1.1", "abacus"},
+		{"raw=muse namespaced id", "muse", "meta/muse-spark-1.1", "vercel"},
+		{"raw=muse dash-form id", "muse", "muse-spark-1-1", "empiriolabs"},
+		{"empty-raw dot-form id", "", "muse-spark-1.1", "abacus"},
+	}
+	for _, tc := range cases {
+		t.Run(tc.desc, func(t *testing.T) {
+			t.Parallel()
+
+			fam, variant, version, modifier, _ := ParseFamilyDetailed(tc.raw, tc.id, tc.prov)
+			if fam != "muse" || variant != "spark" || version != "1.1" || len(modifier) != 0 {
+				t.Errorf(
+					"ParseFamilyDetailed(raw=%q, id=%q, prov=%q) = (family=%q, variant=%q, version=%q, modifier=%v)\n"+
+						"  want (family=\"muse\", variant=\"spark\", version=\"1.1\", modifier=[])\n"+
+						"  What: muse-spark-1.1 must decompose to its canonical (muse/spark/1.1) tuple\n"+
+						"  Why: an undecomposed (muse, \"\", \"\") form is the non-canonical variant a prior\n"+
+						"       stale regen captured; the committed catalog carries the decomposed form\n"+
+						"  How to fix: do not regress the ID-driven variant/version recovery for this family",
+					tc.raw, tc.id, tc.prov, fam, variant, version, modifier,
+				)
+			}
+		})
+	}
+}

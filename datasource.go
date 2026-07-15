@@ -3,6 +3,7 @@ package bestiary
 import (
 	"encoding/json"
 	"fmt"
+	"sort"
 	"sync"
 )
 
@@ -15,7 +16,8 @@ import (
 // type and well-known source constants; the BCNF provenance types (DataSource
 // dimension, DatasetIngested fact, EntitySource join row); the curated loader for
 // parse/data/datasources.json with its runtime degrade seam; the public lookups
-// (KnownDataSources, DataSourceByID, DatasetIngestedFor, EntitySources); and the
+// (KnownDataSources, DataSourceByID, DatasetIngestedFor, DatasetIngestHistoryFor,
+// EntitySources); and the
 // codegen FK guards (ValidateDataSourceTable, ValidateEntitySourceTable). The
 // entity↔source join relation itself is built by the registry aggregate in
 // registry.go (loadEntityIndex / buildEntitySourceRelation); EntitySources here
@@ -52,12 +54,16 @@ type DataSource struct {
 	CanonicalName string
 }
 
-// DatasetIngested records the single current ingest of a data source. The URI is
-// deliberately ABSENT: it is a transitive dependency (URI depends on SourceID via
-// DataSource), so it is reached by joining to DataSource via SourceID rather than duplicated
+// DatasetIngested records one ingest of a data source. The URI is deliberately
+// ABSENT: it is a transitive dependency (URI depends on SourceID via DataSource),
+// so it is reached by joining to DataSource via SourceID rather than duplicated
 // here — this is the BCNF normalization that removes the transitive dependency.
-// The primary key is SourceID (one current ingest per source; the append-only
-// ingest history is deferred to a later schema).
+//
+// A source may have MANY DatasetIngested rows: the ingest log is append-only, so a
+// source accumulates one row per distinct ingest instant. The identity of a row is
+// the composite (SourceID, IngestedAt); the CURRENT ingest for a source is the row
+// with the maximum IngestedAt (DatasetIngestedFor), and the full ordered history is
+// DatasetIngestHistoryFor.
 //
 //   - SourceID is the DataSourceID that was ingested (FK to DataSource).
 //   - IngestedAt is a COMMITTED snapshot timestamp from datasources.json. It is
@@ -119,15 +125,18 @@ type dataSourceFileJSON struct {
 }
 
 // dataSourceTable is the parsed, validated curated data-source dimension + its
-// current-ingest rows.
+// per-source ingest history.
 //
 //   - sources preserves the curated file order so KnownDataSources is deterministic.
 //   - byID indexes the dimension rows by DataSourceID for O(1) FK resolution.
-//   - ingested indexes the single current ingest per source by DataSourceID.
+//   - ingested maps a DataSourceID to its ingest history: a slice of DatasetIngested
+//     sorted ASCENDING by IngestedAt. The current ingest is the last element (the
+//     maximum IngestedAt); DatasetIngestedFor returns it and DatasetIngestHistoryFor
+//     returns the whole slice.
 type dataSourceTable struct {
 	sources  []DataSource
 	byID     map[DataSourceID]DataSource
-	ingested map[DataSourceID]DatasetIngested
+	ingested map[DataSourceID][]DatasetIngested
 }
 
 // emptyDataSourceTable is the degraded (load-failure) value: a non-nil table whose
@@ -136,7 +145,7 @@ func emptyDataSourceTable() *dataSourceTable {
 	return &dataSourceTable{
 		sources:  nil,
 		byID:     map[DataSourceID]DataSource{},
-		ingested: map[DataSourceID]DatasetIngested{},
+		ingested: map[DataSourceID][]DatasetIngested{},
 	}
 }
 
@@ -254,6 +263,10 @@ func parseDataSourceTable(raw []byte) (*dataSourceTable, error) {
 		tbl.byID[s.ID] = ds
 	}
 
+	// The ingest log is append-only history: a source MAY carry multiple rows. Only
+	// an EXACT-duplicate (source_id, ingested_at) is rejected — that composite is the
+	// append-only primary key, so a repeat is the same fact asserted twice.
+	seenIngest := map[string]int{}
 	for i, ing := range file.Ingested {
 		if _, ok := tbl.byID[ing.SourceID]; !ok {
 			return nil, fmt.Errorf(
@@ -265,21 +278,32 @@ func parseDataSourceTable(raw []byte) (*dataSourceTable, error) {
 				i, ing.SourceID, i, ing.SourceID,
 			)
 		}
-		if _, dup := tbl.ingested[ing.SourceID]; dup {
+		compositeKey := string(ing.SourceID) + "\x00" + ing.IngestedAt
+		if prev, dup := seenIngest[compositeKey]; dup {
 			return nil, fmt.Errorf(
-				"bestiary datasource: duplicate ingest for source_id %q at #%d\n"+
-					"  What: two dataset-ingested rows share a source_id\n"+
+				"bestiary datasource: duplicate ingest for source_id %q at ingested_at %q (rows #%d and #%d)\n"+
+					"  What: two dataset-ingested rows share the same (source_id, ingested_at)\n"+
 					"  Where: parse/data/datasources.json ingested[%d]\n"+
-					"  Why: the current-ingest table has primary key source_id (single current ingest)\n"+
-					"  How to fix: keep one ingest row per source",
-				ing.SourceID, i, i,
+					"  Why: (source_id, ingested_at) is the composite primary key of the append-only ingest log; an exact duplicate is the same fact asserted twice\n"+
+					"  How to fix: remove the duplicate ingested row, or correct its ingested_at",
+				ing.SourceID, ing.IngestedAt, prev, i, i,
 			)
 		}
-		tbl.ingested[ing.SourceID] = DatasetIngested{
+		seenIngest[compositeKey] = i
+		tbl.ingested[ing.SourceID] = append(tbl.ingested[ing.SourceID], DatasetIngested{
 			SourceID:     ing.SourceID,
 			IngestedAt:   ing.IngestedAt,
 			ParserSchema: ing.ParserSchema,
-		}
+		})
+	}
+
+	// Sort each source's history ascending by IngestedAt so the current ingest is the
+	// last element. Comparison is lexicographic on the RFC3339 string; committed
+	// snapshots are UTC (Z-suffixed), so lexicographic order equals chronological.
+	for id := range tbl.ingested {
+		hist := tbl.ingested[id]
+		sort.Slice(hist, func(a, b int) bool { return hist[a].IngestedAt < hist[b].IngestedAt })
+		tbl.ingested[id] = hist
 	}
 	return tbl, nil
 }
@@ -307,12 +331,48 @@ func DataSourceByID(id DataSourceID) (DataSource, bool) {
 	return ds, ok
 }
 
-// DatasetIngestedFor returns the single current DatasetIngested for the source id
-// and whether one exists. The returned value carries NO uri; resolve the uri via
-// DataSourceByID(id) (the BCNF join) when it is needed.
+// DatasetIngestedFor returns the CURRENT DatasetIngested for the source id — the
+// row with the maximum IngestedAt — and whether any ingest exists. The returned
+// value carries NO uri; resolve the uri via DataSourceByID(id) (the BCNF join) when
+// it is needed. Use DatasetIngestHistoryFor for the full ordered history.
 func DatasetIngestedFor(id DataSourceID) (DatasetIngested, bool) {
-	ing, ok := loadDataSourceTableSafe().ingested[id]
-	return ing, ok
+	return datasetIngestedFrom(loadDataSourceTableSafe(), id)
+}
+
+// datasetIngestedFrom is the testable seam behind DatasetIngestedFor: it returns the
+// CURRENT ingest (the maximum IngestedAt) for id from table t, and whether any
+// ingest exists. The MAX-over-history selection is split out so it can be falsified
+// over a genuinely multi-row table — the shipped datasources.json carries one ingest
+// row per source, so DatasetIngestedFor alone cannot distinguish MAX from MIN (a
+// hist[0] mutant would survive the whole suite on single-row data).
+func datasetIngestedFrom(t *dataSourceTable, id DataSourceID) (DatasetIngested, bool) {
+	hist := t.ingested[id]
+	if len(hist) == 0 {
+		return DatasetIngested{}, false
+	}
+	// The history is sorted ascending by IngestedAt, so the last element is current.
+	return hist[len(hist)-1], true
+}
+
+// DatasetIngestHistoryFor returns the full ingest history for the source id, sorted
+// ascending by IngestedAt (oldest first), or nil when the source has no ingest
+// rows. The result is a fresh slice (callers cannot mutate the cached table). On a
+// load failure it returns nil (graceful degrade), never panicking. It is the
+// curated-seed counterpart of Store.QueryIngestHistory.
+func DatasetIngestHistoryFor(id DataSourceID) []DatasetIngested {
+	return datasetIngestHistoryFrom(loadDataSourceTableSafe(), id)
+}
+
+// datasetIngestHistoryFrom is the testable seam behind DatasetIngestHistoryFor: it
+// returns a fresh ascending copy of the ingest history for id from table t, or nil
+// when there is none. Splitting it out lets the ascending-copy contract be verified
+// over a multi-row table without depending on the single-row shipped seed.
+func datasetIngestHistoryFrom(t *dataSourceTable, id DataSourceID) []DatasetIngested {
+	hist := t.ingested[id]
+	if len(hist) == 0 {
+		return nil
+	}
+	return append([]DatasetIngested(nil), hist...)
 }
 
 // EntitySources returns the sorted, de-duplicated DataSourceIDs that attest the

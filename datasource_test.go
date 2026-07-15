@@ -180,6 +180,54 @@ func TestEntitySources_Deterministic(t *testing.T) {
 	}
 }
 
+// TestDatasetIngestHistoryFor_SeedAndCurrent asserts the v3 public history lookup
+// over the shipped seed: DatasetIngestHistoryFor returns the source's ingest rows
+// ascending, its final (maximum) element equals DatasetIngestedFor (the current
+// ingest), and an unknown source yields nil. The shipped seed carries one committed
+// snapshot row per source, so the single-element history is the current ingest.
+func TestDatasetIngestHistoryFor_SeedAndCurrent(t *testing.T) {
+	hist := bestiary.DatasetIngestHistoryFor(bestiary.DataSourceModelsDev)
+	if len(hist) == 0 {
+		t.Fatal("DatasetIngestHistoryFor(models.dev) returned no rows; expected the committed seed row")
+	}
+	// Ascending by IngestedAt.
+	for i := 1; i < len(hist); i++ {
+		if hist[i-1].IngestedAt > hist[i].IngestedAt {
+			t.Errorf("history not ascending at %d: %q > %q", i, hist[i-1].IngestedAt, hist[i].IngestedAt)
+		}
+	}
+	// Every row carries the queried source id and a committed (non-empty) timestamp.
+	for _, di := range hist {
+		if di.SourceID != bestiary.DataSourceModelsDev {
+			t.Errorf("history row SourceID = %q, want %q", di.SourceID, bestiary.DataSourceModelsDev)
+		}
+		if di.IngestedAt == "" {
+			t.Error("history row has empty IngestedAt; expected a committed snapshot timestamp")
+		}
+	}
+	// The current ingest (DatasetIngestedFor) is the maximum = last history element.
+	cur, ok := bestiary.DatasetIngestedFor(bestiary.DataSourceModelsDev)
+	if !ok {
+		t.Fatal("DatasetIngestedFor(models.dev) missing")
+	}
+	last := hist[len(hist)-1]
+	if cur != last {
+		t.Errorf("DatasetIngestedFor = %+v, want the maximum history row %+v", cur, last)
+	}
+
+	// Mutating the returned history must not leak into the memoized table.
+	hist[0].IngestedAt = "mutated-by-test"
+	again := bestiary.DatasetIngestHistoryFor(bestiary.DataSourceModelsDev)
+	if again[0].IngestedAt == "mutated-by-test" {
+		t.Error("DatasetIngestHistoryFor is not copy-isolated: a caller mutation leaked into the cached table")
+	}
+
+	// An unknown source has no history.
+	if got := bestiary.DatasetIngestHistoryFor("no-such-source"); got != nil {
+		t.Errorf("DatasetIngestHistoryFor(unknown) = %v, want nil", got)
+	}
+}
+
 // TestKnownDataSources_SeedPresent asserts the shipped seed contains both the
 // models.dev and ollama dimension rows with their candidate-key uris.
 func TestKnownDataSources_SeedPresent(t *testing.T) {

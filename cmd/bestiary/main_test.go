@@ -361,27 +361,57 @@ func TestShow_OutputFlagTable(t *testing.T) {
 	}
 }
 
-// TestShow_CanonicalPreference_Claude verifies that bestiary show (default peasant mode)
-// with a canonical claude input returns the Anthropic result, not a rehost provider.
+// TestShow_CanonicalPreference_Claude verifies that bestiary show (default peasant
+// mode) with a canonical claude input surfaces Anthropic as THE canonical provider,
+// never a rehost. It is pinned to claude-opus-4-1-20250805 (canonical
+// "claude/opus/4.1@2025-08-05"), which anthropic lists first-party in every shipped
+// catalog.
 //
-// Fix #4: "Why this show provider 'qihang-ai' — Anthropic should be the canonical provider here"
+// The vendored models.dev catalog carries many rehosts of each claude model (with
+// -thinking / @-date sibling IDs), so a claude canonical query is now AMBIGUOUS:
+// Resolve cannot collapse to a single ref and instead lists the canonical-provider
+// candidate separately from rehosts. This test therefore verifies the
+// canonical-provider preference in BOTH observable outcomes and NEVER skips — a
+// permanently-skipping test is zero coverage wearing a green badge:
+//   - a clean resolution → the chosen Provider must be "anthropic", not a rehost;
+//   - an ambiguity → the disambiguation must mark anthropic as THE canonical
+//     provider (the "* anthropic/..." row), with rehosts listed separately.
+//
+// A not-found or any other error is a FAILURE, not a skip: the pinned model must
+// resolve one of those two ways, so a catalog refresh that dropped anthropic (or
+// broke the preference) fails loudly instead of silently skipping.
 func TestShow_CanonicalPreference_Claude(t *testing.T) {
 	tmpDB := t.TempDir() + "/test.db"
+	const query = "claude/opus/4.1@2025-08-05"
 
 	var runErr error
-	out := captureStdout(t, func() {
-		runErr = run([]string{"show", "--db-path", tmpDB, "claude/opus@2025-05-14"})
+	var stderr string
+	stdout := captureStdout(t, func() {
+		stderr = captureStderr(t, func() {
+			runErr = run([]string{"show", "--db-path", tmpDB, query})
+		})
 	})
 
-	if runErr != nil {
-		t.Skipf("claude/opus@2025-05-14 not in registry or error: %v", runErr)
+	if runErr == nil {
+		// Clean resolution: anthropic must be the chosen provider, not a rehost.
+		if !strings.Contains(stdout, `"Provider": "anthropic"`) {
+			t.Errorf("clean resolution did not choose anthropic as canonical provider; stdout:\n%s", stdout)
+		}
+		for _, rehost := range []string{"302ai", "qihang-ai", "vercel"} {
+			if strings.Contains(stdout, rehost) {
+				t.Errorf("clean resolution surfaced rehost %q; anthropic should be canonical; stdout:\n%s", rehost, stdout)
+			}
+		}
+		return
 	}
-	// The JSON output must have Provider = "anthropic", not a rehost provider.
-	if strings.Contains(out, "qihang-ai") || strings.Contains(out, "302ai") || strings.Contains(out, "vercel") {
-		t.Errorf("show canonical claude: got rehost provider in output; Anthropic should be canonical; got:\n%s", out)
+
+	// Not clean: it MUST be the ambiguity path (a not-found is a hard failure).
+	if !strings.Contains(runErr.Error(), "ambiguous") {
+		t.Fatalf("show %q must resolve to anthropic OR present an ambiguity marking anthropic canonical; got error: %v", query, runErr)
 	}
-	if !strings.Contains(out, "anthropic") {
-		t.Errorf("show canonical claude: expected 'anthropic' in output as canonical provider; got:\n%s", out)
+	// The disambiguation (stderr) must mark anthropic as THE canonical provider.
+	if !strings.Contains(stderr, "* anthropic/") {
+		t.Errorf("ambiguity did not mark anthropic as the canonical provider; stderr:\n%s", stderr)
 	}
 }
 
@@ -411,8 +441,8 @@ func TestList_OutputFlagStillWorks(t *testing.T) {
 //   - Route to the correct scheme dispatch
 //   - Be overridden by explicit --format when both are supplied
 //
-// Addresses C2-IMPORTANT finding from SLICE-FIX-V2-2 cycle 1 review: --scheme
-// backward-compat path was implemented but not tested at the CLI integration level.
+// This covers the --scheme backward-compat path at the CLI integration level (it
+// was implemented but previously exercised only below the CLI boundary).
 func TestShow_LegacySchemeFlag_BackwardCompat(t *testing.T) {
 	tmpDB := t.TempDir() + "/test.db"
 
