@@ -45,6 +45,15 @@ confined to the handful of curated `quant_vram.json` entries.
   `StageLatest`/`StageOriginal` name a moving target, not a fixed artifact property.
   Schema `0.4.0` gains additive `Stage`/`StageRaw` properties and a `ReleaseStage`
   `$def` (neither required).
+- **`TYP(4K)` quant-table column** (`cmd/bestiary`): the per-quantization VRAM
+  sub-rows gain one typical-context column — `(QuantVRAM).EstimateVRAM(4096)`
+  recomputed from the row's stored arch-facts — alongside the max-context `VRAM`
+  figure, so a realistic-run cost is readable at a glance. Renders an em dash
+  (`—`) when the model's maximum context is below 4096 or unknown (a figure at a
+  context the model cannot serve would be meaningless), and stays weights-only on
+  a `PARTIAL` row (no phantom KV delta). A companion `TYP(8K)` column was
+  considered and dropped at acceptance — the ruling is a single 4K column (the
+  8K delta added noise, not signal).
 
 ### Changed — MIGRATION NOTE (entity keys)
 

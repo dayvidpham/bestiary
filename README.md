@@ -127,10 +127,12 @@ itself queryable. Four mechanisms do the work, in precedence order:
    `parse/data/version_patterns.json`). Spellings that differ only in provider prefix, casing,
    or a stripped quant/attribute tag collapse here, for free.
 2. **Curated exact-ID pins.** Where the mechanical path can't reach the truth, a curated
-   entry in `parse/data/*` overrides it — **size-token pins** (`param_size_overrides.json`),
-   **version pins** and **family/variant overrides** (`family_overrides.json`), each carrying
-   a `_comment` recording *why* the pin exists. A pin is the top precedence tier: it can never
-   be flipped by a mechanical scan or a data refresh.
+   entry overrides it — **size-token pins** (`parse/data/param_size_overrides.json`) and
+   **raw-family → family/variant overrides** (`parse/data/family_overrides.json`), each
+   JSON entry carrying a `_comment` recording *why* the pin exists, plus exact-ID
+   **family/variant/version pins** in the curated `idFamilyOverrides` table in `parse.go`
+   (provenance recorded in Go comments). A pin is the top precedence tier: it can never be
+   flipped by a mechanical scan or a data refresh.
 3. **Pipeline alias files.** The two ingest pipelines each keep a curated alias map that is
    consulted *before* mechanical decomposition — `parse/data/ollama_aliases.json` for the
    Ollama refresh and `parse/data/modelsdev_aliases.json` for the models.dev metadata join.
@@ -155,9 +157,9 @@ Three unification steps stack: the provider-prefix / casing / `-fp8` spread coll
 mechanically; the size-token pins in `param_size_overrides.json` fold the size-less
 (`llama-4-scout`) and bare-`17b` (`…-17b-instruct`, including the two **dotted Bedrock** forms
 `meta.llama4-scout-…v1:0` where the dot is token-internal) spellings up to the full `17b-16e`
-shape; and curated **`@4` version pins** in `family_overrides.json` join the three
-version-less spellings (the two Bedrock forms + `cerebras-…`, whose IDs simply omit the `4`)
-to the ten that already carry it. Without the pins those three would strand as a separate
+shape; and curated **`@4` version pins** in `parse.go`'s exact-ID `idFamilyOverrides` table
+join the three version-less spellings (the two Bedrock forms + `cerebras-…`, whose IDs
+simply omit the `4`) to the ten that already carry it. Without the pins those three would strand as a separate
 `llama/scout#17b-16e{instruct}` entity — provenance-honest, but not what a reader wants.
 
 **Worked example — Grok 4.20 beta (aliases folded into one entity).** The two `-beta-`
@@ -180,8 +182,8 @@ but `beta` no longer forks the key, so the `-beta-` aliases stop stranding as a 
 > list is the evidence of that grouping. What does **not** yet exist is a first-class alias
 > **edge**: an explicit record, per accepted spelling, of *who* asserted the equivalence and
 > *on what basis* (claim attribution). Those alias edges are a planned follow-up, not a
-> shipped data model — for now the curated `_comment` fields in `parse/data/*` are the
-> human-readable provenance trail.
+> shipped data model — for now the curated `_comment` fields in `parse/data/*` (and the Go
+> comments on `parse.go`'s curated override tables) are the human-readable provenance trail.
 
 ## Demo
 
