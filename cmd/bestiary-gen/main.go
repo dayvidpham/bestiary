@@ -1357,6 +1357,13 @@ func enrichModelInfo(base bestiary.ModelInfo) (bestiary.ModelInfo, *bestiary.Par
 		info.ExpertCount = shape.ExpertCount
 	}
 
+	// Release-stage enrichment. Stage/StageRaw are derived from the ID by the same
+	// pure DetectStageFromID the runtime joints use (wire decode, store read), so
+	// the baked static row and a live-sync row of the same ID carry an identical
+	// stage. Stage is a per-instance attribute and never touches the entity key, so
+	// this bakes a new field without any re-key.
+	info.Stage, info.StageRaw = bestiary.DetectStageFromID(id)
+
 	// Curated Source and QuantVRAM from the curated quant_vram.json table. QuantVRAM
 	// rows are BAKED here: each row's VRAMBytes and VRAMContextTokens are filled in by
 	// calling EstimateVRAMBytes at the model's maximum context window. The bake-context
@@ -1703,6 +1710,32 @@ func statusExpr(s bestiary.ModelStatus) string {
 	}
 }
 
+// stageExpr renders a ReleaseStage as its exported constant name so the generated
+// source references the enum symbolically (e.g. StageBeta). Mirrors statusExpr.
+// StageNone (the zero value) is the default.
+func stageExpr(s bestiary.ReleaseStage) string {
+	switch s {
+	case bestiary.StageStable:
+		return "StageStable"
+	case bestiary.StagePreview:
+		return "StagePreview"
+	case bestiary.StageBeta:
+		return "StageBeta"
+	case bestiary.StageAlpha:
+		return "StageAlpha"
+	case bestiary.StageExperimental:
+		return "StageExperimental"
+	case bestiary.StageLatest:
+		return "StageLatest"
+	case bestiary.StageOriginal:
+		return "StageOriginal"
+	case bestiary.StageOther:
+		return "StageOther"
+	default:
+		return "StageNone"
+	}
+}
+
 // reasoningOptionKindExpr renders a ReasoningOptionKind as its exported constant name.
 // ReasoningOptionOther (the zero value) is the default fail-safe.
 func reasoningOptionKindExpr(k bestiary.ReasoningOptionKind) string {
@@ -1863,6 +1896,16 @@ func generateSource(models []bestiary.ModelInfo, slugToConst map[string]string) 
 		}
 		if m.StatusRaw != "" {
 			fmt.Fprintf(&buf, "\t\tStatusRaw:             %q,\n", m.StatusRaw)
+		}
+		// Release stage (ID-derived, distinct from the api.json Status above).
+		// Emitted CONDITIONALLY — only when a stage was detected — matching the
+		// Status precedent so the unmarked majority stays compact. StageRaw is the
+		// reserved Other-bucket companion and is empty for every ID-derived stage.
+		if m.Stage != bestiary.StageNone {
+			fmt.Fprintf(&buf, "\t\tStage:                 %s,\n", stageExpr(m.Stage))
+		}
+		if m.StageRaw != "" {
+			fmt.Fprintf(&buf, "\t\tStageRaw:              %q,\n", m.StageRaw)
 		}
 		if len(m.ReasoningOptions) > 0 {
 			fmt.Fprintf(&buf, "\t\tReasoningOptions:      %s,\n", reasoningOptionsLiteral(m.ReasoningOptions))

@@ -215,6 +215,14 @@
       "description": "Verbatim upstream status token, populated only when Status is \"other\" (an unrecognized token); empty otherwise. Added in schema 0.3.0; optional for backward compatibility.",
       "type": "string"
     },
+    "Stage": {
+      "description": "Release stage DERIVED from the model ID (preview/beta/latest/original), distinct in provenance from Status: Status is upstream-declared lifecycle from the api.json side, while Stage is read out of the ID token stream. \"none\" (the zero value) when the ID carries no recognized stage marker. A per-instance attribute; never entity-key material. Added in schema 0.4.0; optional for backward compatibility.",
+      "$ref": "#/$defs/ReleaseStage"
+    },
+    "StageRaw": {
+      "description": "Verbatim stage token, populated only when Stage is \"other\" (the reserved bucket for a future non-ID stage feeder); empty for every ID-derived stage this epoch. Mirrors StatusRaw. Added in schema 0.4.0; optional for backward compatibility.",
+      "type": "string"
+    },
     "ReasoningOptions": {
       "description": "Reasoning-control options this model exposes (toggle / effort / budget-tokens). null when the model exposes none. Added in schema 0.3.0; optional for backward compatibility.",
       "type": ["array", "null"],
@@ -756,6 +764,23 @@
         "beta": "A later preview, more stable than alpha but not yet GA.",
         "deprecated": "Scheduled for or already past end-of-life.",
         "other": "Fail-safe bucket for a status token present upstream but unrecognized; raw token carried on ModelInfo.StatusRaw."
+      }
+    },
+    "ReleaseStage": {
+      "title": "ReleaseStage",
+      "description": "Release stage DERIVED from a model ID (an instance fact read out of the ID token stream by DetectStageFromID), identified by its canonical lowercase wire name. Serializes as a string via encoding.TextMarshaler. Deliberately SEPARATE from ModelStatus even where the tokens overlap (e.g. \"beta\"): Status is upstream-declared lifecycle, Stage is ID-derived. \"none\" is the zero value (absence is meaningful on this scalar field: the ID carries no stage marker); \"other\" is the RESERVED fail-safe for a future non-ID feeder (unused by the ID-detection path this epoch, raw value carried on ModelInfo.StageRaw). ID-detected tokens this epoch: preview/beta/latest/original; stable/alpha/experimental are enum members for parse completeness but are not ID-detected yet. Added in schema 0.4.0.",
+      "type": "string",
+      "enum": ["none", "stable", "preview", "beta", "alpha", "experimental", "latest", "original", "other"],
+      "x-enum-descriptions": {
+        "none": "The ID carries no recognized stage marker (the zero value): a normal, generally-available release.",
+        "stable": "An explicitly stable/GA release. Enum member for parse completeness; not ID-detected this epoch.",
+        "preview": "A preview / early-access release (ID-detected).",
+        "beta": "A beta release (ID-detected, without stripping the token from the decomposition).",
+        "alpha": "An early, unstable alpha release. Enum member for parse completeness; not ID-detected this epoch.",
+        "experimental": "An experimental release. Enum member for parse completeness; neither it nor the \"-exp\" short form is ID-detected this epoch.",
+        "latest": "A rolling \"latest\" alias (ID-detected). Names a moving target, not a fixed artifact property.",
+        "original": "A rolling \"original\" alias (ID-detected). Names a moving target, not a fixed artifact property.",
+        "other": "Reserved fail-safe bucket for a future non-ID stage feeder; unused by the ID path this epoch. Raw token carried on ModelInfo.StageRaw."
       }
     },
     "LinkType": {

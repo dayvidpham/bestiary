@@ -845,7 +845,7 @@ func TestSync_PersistsMetadataAndIngestLog(t *testing.T) {
 // decomposition is a codegen-time step, so a live-sync row keeps its raw family — a
 // pre-existing codegen-vs-runtime difference outside the #size re-key.)
 func TestSync_KeyIdentity_ReDerivesSizeAndSources(t *testing.T) {
-	const sizedAPIJSON = `{"testprov":{"models":{"qwen3-30b-a3b":{"id":"qwen3-30b-a3b","name":"Q","family":"qwen"}}}}`
+	const sizedAPIJSON = `{"testprov":{"models":{"qwen3-30b-a3b":{"id":"qwen3-30b-a3b","name":"Q","family":"qwen"},"grok-4.20-beta-0309-reasoning":{"id":"grok-4.20-beta-0309-reasoning","name":"G","family":"grok"}}}}`
 	srv := syncTestServer(t, sizedAPIJSON, "{}")
 	client := bestiary.NewClient(bestiary.WithBaseURL(srv.URL + "/api.json"))
 	db := tempDBPath(t)
@@ -897,6 +897,30 @@ func TestSync_KeyIdentity_ReDerivesSizeAndSources(t *testing.T) {
 	att := entitySourcesForModels([]bestiary.ModelInfo{*m})
 	if len(att) != 1 || att[0].SourceID != bestiary.DataSourceModelsDev || att[0].EntityKey != key {
 		t.Errorf("attestations = %+v, want one models.dev row for entity key %q", att, key)
+	}
+
+	// Stage/StageRaw re-derived on the same cache read path, identical to the static
+	// decomposition. The sized (qwen) row carries no stage marker; the beta row
+	// re-derives Stage=StageBeta from its ID. This proves the stage axis rides the
+	// same enrichment joint as ParamSize (a synced-then-cached row's stage matches the
+	// baked static row).
+	if m.Stage != bestiary.StageNone || m.StageRaw != "" {
+		t.Errorf("synced qwen Stage/StageRaw = {%v %q}, want {none \"\"}", m.Stage, m.StageRaw)
+	}
+	var beta *bestiary.ModelInfo
+	for i := range models {
+		if models[i].ID == "grok-4.20-beta-0309-reasoning" {
+			beta = &models[i]
+		}
+	}
+	if beta == nil {
+		t.Fatalf("synced beta model not found; got %d cached rows", len(models))
+	}
+	if beta.Stage != bestiary.StageBeta {
+		t.Errorf("synced beta Stage = %v, want StageBeta (re-derived from the -beta ID on read)", beta.Stage)
+	}
+	if beta.StageRaw != "" {
+		t.Errorf("synced beta StageRaw = %q, want \"\" (reserved for the Other path)", beta.StageRaw)
 	}
 }
 
@@ -1165,21 +1189,56 @@ func TestInstanceTable_StatusColumn(t *testing.T) {
 		{ID: "m2", Provider: "p2"},
 	}
 
+	noStages := []bestiary.ReleaseStage{bestiary.StageNone, bestiary.StageNone}
+
 	// All None → no STATUS column.
 	var noStatus strings.Builder
-	writeInstanceTableWithStatus(&noStatus, insts, []bestiary.ModelStatus{bestiary.StatusNone, bestiary.StatusNone})
+	writeInstanceTableWithStatus(&noStatus, insts, []bestiary.ModelStatus{bestiary.StatusNone, bestiary.StatusNone}, noStages)
 	if strings.Contains(noStatus.String(), "STATUS") {
 		t.Errorf("STATUS column present when no instance carries a status:\n%s", noStatus.String())
 	}
 
 	// One Beta → STATUS column with the status name.
 	var withStatus strings.Builder
-	writeInstanceTableWithStatus(&withStatus, insts, []bestiary.ModelStatus{bestiary.StatusBeta, bestiary.StatusNone})
+	writeInstanceTableWithStatus(&withStatus, insts, []bestiary.ModelStatus{bestiary.StatusBeta, bestiary.StatusNone}, noStages)
 	out := withStatus.String()
 	if !strings.Contains(out, "STATUS") {
 		t.Errorf("STATUS column missing when an instance carries a status:\n%s", out)
 	}
 	if !strings.Contains(out, "beta") {
 		t.Errorf("STATUS column should render the status name 'beta':\n%s", out)
+	}
+}
+
+// TestInstanceTable_StageColumn asserts the instance table gains a STAGE column —
+// distinct from STATUS — only when an instance carries a non-None release stage, and
+// that the two columns are independent (stage present, status absent renders STAGE
+// but not STATUS).
+func TestInstanceTable_StageColumn(t *testing.T) {
+	insts := []bestiary.ProviderInstance{
+		{ID: "m1", Provider: "p1"},
+		{ID: "m2", Provider: "p2"},
+	}
+	noStatuses := []bestiary.ModelStatus{bestiary.StatusNone, bestiary.StatusNone}
+
+	// All None → no STAGE column.
+	var noStage strings.Builder
+	writeInstanceTableWithStatus(&noStage, insts, noStatuses, []bestiary.ReleaseStage{bestiary.StageNone, bestiary.StageNone})
+	if strings.Contains(noStage.String(), "STAGE") {
+		t.Errorf("STAGE column present when no instance carries a stage:\n%s", noStage.String())
+	}
+
+	// One Beta stage, no status → STAGE column present, STATUS column absent (independent columns).
+	var withStage strings.Builder
+	writeInstanceTableWithStatus(&withStage, insts, noStatuses, []bestiary.ReleaseStage{bestiary.StageBeta, bestiary.StageNone})
+	out := withStage.String()
+	if !strings.Contains(out, "STAGE") {
+		t.Errorf("STAGE column missing when an instance carries a stage:\n%s", out)
+	}
+	if strings.Contains(out, "STATUS") {
+		t.Errorf("STATUS column must be absent when no instance carries a status (columns are independent):\n%s", out)
+	}
+	if !strings.Contains(out, "beta") {
+		t.Errorf("STAGE column should render the stage name 'beta':\n%s", out)
 	}
 }
