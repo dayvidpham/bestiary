@@ -53,8 +53,8 @@ func TestParseParamSizeOverrides_MalformedDegrades(t *testing.T) {
 
 // TestParamSizePin_Seed exercises paramSizePin against the REAL embedded seed
 // (parse/data/param_size_overrides.json): a llama-4 census pin, a suppress pin, an
-// absent ID, and case-insensitive matching. It anchors the ratified seed set so a
-// later re-pin can't silently drop these load-bearing entries.
+// absent ID, and case-insensitive matching. It anchors the curated seed entries so
+// a future re-pin can't silently drop these load-bearing rows.
 func TestParamSizePin_Seed(t *testing.T) {
 	cases := []struct {
 		name      string

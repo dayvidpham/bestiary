@@ -4564,7 +4564,7 @@ func TestParseParamShape_Shapes(t *testing.T) {
 // TestParseParamShape_DecimalExact pins the EXACT string-digit decimal arithmetic:
 // a decimal size token must decompose to the exact integer parameter count, never a
 // float64-rounded approximation. "10.7b" is exactly 10_700_000_000 and "0.6b" is
-// exactly 600_000_000 — the specific literals the ratified proposal pins.
+// exactly 600_000_000 — pinned as literals so a float64 rewrite cannot pass.
 func TestParseParamShape_DecimalExact(t *testing.T) {
 	t.Parallel()
 
@@ -4615,10 +4615,26 @@ func TestParseParamShape_Invalid(t *testing.T) {
 	}
 }
 
+// TestParseParamShape_OverflowGuard pins the int64 overflow rejection: a
+// pathological size token whose parameter count exceeds int64 ("9300000000b" =
+// 9.3e18 > math.MaxInt64 ~ 9.22e18) must return the documented error, never a
+// silently wrapped (negative or garbage) count.
+func TestParseParamShape_OverflowGuard(t *testing.T) {
+	t.Parallel()
+
+	shape, err := bestiary.ParseParamShape("9300000000b")
+	if err == nil {
+		t.Fatalf("ParseParamShape(\"9300000000b\") = (%+v, nil), want an int64-overflow rejection error", shape)
+	}
+	if !strings.Contains(err.Error(), "int64") {
+		t.Errorf("overflow error should name the int64 limit, got: %q", err.Error())
+	}
+}
+
 // TestExtractParamSizeToken pins the single-grammar extractor's contract: longest
 // whole-window match over the [-:/] separator set, returning the CANONICAL token;
-// '.' and '_' are token-internal (never separators); and no substring trap. The
-// rows are the ratified BDD exemplars.
+// '.' and '_' are token-internal (never separators); and no substring trap. Rows
+// use real catalog ID spellings wherever one exists for the shape.
 func TestExtractParamSizeToken(t *testing.T) {
 	t.Parallel()
 
@@ -4664,11 +4680,13 @@ func TestExtractParamSizeToken(t *testing.T) {
 	}
 }
 
-// TestExtractParamSizeToken_AllFourSitesAgreeOn235b is the cross-site BDD invariant:
-// the compound extractor yields the SAME canonical "235b-a22b" for the qwen3 MoE ID
-// regardless of the surrounding tokens, so every delegating site (enrichment, the
-// metadata join, the Ollama tool, parseBaseRef) sizes it identically — never "235b".
-func TestExtractParamSizeToken_AllFourSitesAgreeOn235b(t *testing.T) {
+// TestExtractParamSizeToken_CompoundInvariantAcrossIDForms pins the extractor-level
+// invariant that any caller inherits: the compound "235b-a22b" extracts whole and
+// canonical for the qwen3 MoE ID regardless of the surrounding tokens — namespace
+// prefix, instruct/date suffixes, or casing — and is never split to "235b". Callers
+// that delegate to ExtractParamSizeToken therefore size these IDs identically for
+// free; this test pins the extractor's own behavior, not any caller's wiring.
+func TestExtractParamSizeToken_CompoundInvariantAcrossIDForms(t *testing.T) {
 	t.Parallel()
 
 	for _, id := range []string{

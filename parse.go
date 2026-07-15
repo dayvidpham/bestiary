@@ -4,6 +4,7 @@ import (
 	"embed"
 	"encoding/json"
 	"fmt"
+	"math"
 	"regexp"
 	"sort"
 	"strconv"
@@ -3260,7 +3261,15 @@ func paramTokenToInt64(tok string) (int64, error) {
 		// fraction on an m-token). Not seen in real catalog data; divide exactly.
 		return significand / pow10i64(-exp), nil
 	}
-	return significand * pow10i64(exp), nil
+	// Overflow guard: the significand fit int64 (ParseInt checked that), but the
+	// magnitude multiply could still wrap for a pathological token (e.g.
+	// "9300000000b" = 9.3e18 > math.MaxInt64). Reject loudly instead of silently
+	// returning a wrapped count.
+	mult := pow10i64(exp)
+	if significand > math.MaxInt64/mult {
+		return 0, fmt.Errorf("parameter count of %q exceeds the int64 range (max %d)", tok, int64(math.MaxInt64))
+	}
+	return significand * mult, nil
 }
 
 // pow10i64 returns 10^n as an int64 for a small non-negative n (n <= 18). Used by
