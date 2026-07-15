@@ -33,7 +33,15 @@ package bestiary
 //     return container, not a serialized output document, so it is deliberately
 //     NOT a $def.) Additive and backward-COMPATIBLE: every new property is
 //     optional/zero-value, so 0.2.x records still validate.
-const BestiarySchemaVersion = "0.3.0"
+//   - 0.3.0 → 0.4.0: stamps the v0.2.6 parameter-shape fields decomposed from
+//     ParamSize (ModelInfo.TotalParams, ActiveParams, PerExpertParams,
+//     ExpertCount). These are DERIVED presentation facts, never entity-key
+//     material. Additive and backward-COMPATIBLE: every new property is
+//     optional/zero-value, so 0.3.x records still validate. (The full-bulk #size
+//     re-key that lands this epoch changes many EntityRef keys but is a data
+//     change, not a schema-shape change — the ParamSize carrier and its grammar
+//     are unchanged.)
+const BestiarySchemaVersion = "0.4.0"
 
 // UpstreamSchemaVersion identifies the exact snapshot of the models.dev schema
 // that this bestiary schema was derived from. Format: YYYY.MM.DD-sha256

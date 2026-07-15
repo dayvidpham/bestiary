@@ -337,14 +337,16 @@ func TestMetadataCensus_SynthesizedStandalonesPinned(t *testing.T) {
 
 // TestMetadataAlias_NemotronSuper49bAttaches asserts the ONE clean curated alias lands:
 // nvidia/llama-3.3-nemotron-super-49b-v1.5's metadata attaches to the distinct
-// provider-backed entity nemotron/v1.5@3.3 (deepinfra/kilo/openrouter serve it), rather
-// than being synthesized as a spurious standalone, and that its metadata CONTENT travels
-// with it. (This upstream row carries a description + name but no benchmarks/license, so
-// the content check is on Description — the field it actually populates.)
+// provider-backed entity nemotron/v1.5@3.3#49b (deepinfra/kilo/openrouter serve it),
+// rather than being synthesized as a spurious standalone, and that its metadata CONTENT
+// travels with it. The alias carries param_size "49b" because the full-bulk size re-key
+// gave the served entity a #49b segment; the alias target was re-pinned to match. (This
+// upstream row carries a description + name but no benchmarks/license, so the content
+// check is on Description — the field it actually populates.)
 func TestMetadataAlias_NemotronSuper49bAttaches(t *testing.T) {
-	e, ok := EntityByTuple(FamilyNemotron, "v1.5", "3.3", "")
+	e, ok := EntityByTuple(FamilyNemotron, "v1.5", "3.3", "49b")
 	if !ok {
-		t.Fatalf("entity nemotron/v1.5@3.3 not found in the registry; the alias target must be a real served entity")
+		t.Fatalf("entity nemotron/v1.5@3.3#49b not found in the registry; the alias target must be a real served entity")
 	}
 	if e.Metadata == nil {
 		t.Fatalf("entity %q has no attached Metadata; the curated alias for nvidia/llama-3.3-nemotron-super-49b-v1.5 did not land", e.Ref.String())

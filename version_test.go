@@ -79,13 +79,13 @@ func TestSchemaFile_VersionAndModifierType(t *testing.T) {
 }
 
 // TestBestiarySchemaVersion_Exact asserts that BestiarySchemaVersion equals
-// exactly "0.3.0" — bumped for the additive v0.2.5 models.dev harmonization
-// fields (ModelInfo Description/Status/StatusRaw/ReasoningOptions/audio-cost/
-// CostContextOver200k/CostTiers, Entity.Metadata, $defs ModelStatus/LinkType/
-// ModelLink/BenchmarkResult/ReasoningOption/TierCost/CostTier/EntityMetadata).
+// exactly "0.4.0" — bumped ONCE for the additive v0.2.6 parameter-shape fields
+// (ModelInfo TotalParams/ActiveParams/PerExpertParams/ExpertCount, derived from
+// ParamSize). The full-bulk #size re-key that lands this epoch changes many entity
+// keys but is a data change, not a schema-shape change.
 // Update this test when a new schema version is released.
 func TestBestiarySchemaVersion_Exact(t *testing.T) {
-	const want = "0.3.0"
+	const want = "0.4.0"
 	if bestiary.BestiarySchemaVersion != want {
 		t.Errorf(
 			"BestiarySchemaVersion = %q, want %q;\n"+

@@ -14,6 +14,41 @@ for its **Go module tags** (`vX.Y.Z`).
 
 ## [Unreleased]
 
+**Schema:** `0.3.0` → `0.4.0` (additive). SQLite store schema **unchanged** at `6`.
+
+The **full-bulk `#size` re-key** epoch (GH#9): one shared enrichment now sizes every
+model whose ID carries a parameter-size token, so a `#size` segment is no longer
+confined to the handful of curated `quant_vram.json` entries.
+
+### Added
+
+- **Parameter-shape fields** on `ModelInfo` (`TotalParams`, `ActiveParams`,
+  `PerExpertParams`, `ExpertCount`), decomposed from `ParamSize` — derived
+  presentation facts, never entity-key material. Grouped along shape joints and
+  never cross-computed (an NxM MoE token like `8x22b` sets `ExpertCount` +
+  `PerExpertParams` but no total).
+- **`EnrichedParamSize(id)`** — the single param-size precedence authority
+  (pin > mechanical > `ParamSizeFor`), shared by the two runtime enrichment joints
+  (`toModelInfo`, `scanModelInfo`) and the codegen bake, plus `ValidateParamSizePins`
+  (a codegen-time guard that rejects a non-canonical curated pin token).
+
+### Changed — MIGRATION NOTE (entity keys)
+
+- **Full-bulk `#size` re-key.** Entity keys now carry a `#size` segment for every
+  model whose ID yields a size token (mechanical `ExtractParamSizeToken`), or that
+  matches a curated pin. This re-keys roughly a third of catalog entities
+  (`llama-3.1-8b-instruct` → `llama@3.1#8b{instruct}`; `qwen3-30b-a3b` →
+  `qwen@3#30b-a3b`; `mixtral-8x22b` → `…#8x22b`). Callers that pinned pre-v0.2.6
+  unsized keys (e.g. `dracarys` → `dracarys#72b`, `mythomax` → `mythomax#13b`) must
+  update to the sized key. Curated `llama-4` scout/maverick IDs pin to their full
+  expert shape (`#17b-16e` / `#17b-128e`) so every spelling of one artifact keys to
+  ONE entity, and a suppress-pin keeps a context-tier token out of the key
+  (`qwen3-coder-next-fp8-1m` stays unsized — `1m` is a context marker, not params).
+- **No store migration.** The size is a pure function of the ID re-derived at both
+  read joints, so the SQLite store stays at schema `6` (no `param_size` column).
+- Live-sync rows are now sized identically to the baked static rows for the same ID,
+  so the most-recent-wins merge can never de-size an `(ID, Provider)`.
+
 ## [0.2.5] — 2026-07-15
 
 **Schema:** `0.2.0` → `0.3.0` (additive). SQLite store schema `5` → `6`.

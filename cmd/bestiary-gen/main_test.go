@@ -684,7 +684,7 @@ func genBase(providerSlug, id, name, rawFamily, releaseDate string) bestiary.Mod
 // for InferFamilyFromID do not cover at the codegen integration layer.
 func TestGenToModelInfo_EmptyFamily(t *testing.T) {
 	base := genBase("anthropic", "claude-haiku-no-family", "Claude Haiku (no family)", "", "")
-	info, _ := enrichModelInfo(base)
+	info, _, _ := enrichModelInfo(base)
 
 	if info.RawFamily != "" {
 		t.Errorf("RawFamily: got %q, want empty (raw field was empty)", info.RawFamily)
@@ -735,7 +735,7 @@ func TestGenToModelInfo_CanonicalFields(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			info, _ := enrichModelInfo(tc.base)
+			info, _, _ := enrichModelInfo(tc.base)
 
 			if string(info.Family) != tc.wantFamily {
 				t.Errorf("Family: got %q, want %q", info.Family, tc.wantFamily)
@@ -2362,7 +2362,7 @@ func TestEmit_VendoredCatalog_CarriesInstanceFields(t *testing.T) {
 	models := make([]bestiary.ModelInfo, 0, len(cat.Models))
 	var deprecated, withReasoning, withTiers int
 	for _, base := range cat.Models {
-		info, _ := enrichModelInfo(base)
+		info, _, _ := enrichModelInfo(base)
 		models = append(models, info)
 		if info.Status == bestiary.StatusDeprecated {
 			deprecated++
@@ -3377,44 +3377,13 @@ func TestQuantVRAM_PartialWhenArchAbsent(t *testing.T) {
 	})
 }
 
-// TestCodegen_ParamSizeOnlyFromCuratedTable asserts that ParamSize is emitted
-// in the generated static source if and only if a model joins a curated
-// quant_vram.json entry — the carrier of the #size identity dimension. A model
-// WITHOUT a curated entry must emit no ParamSize line, so its EntityRef key stays
-// byte-identical to the pre-paramsize baseline (no migration drift); a model WITH
-// a curated entry must emit exactly the curated param_size token.
-//
-// The hermetic fixture contains exactly two curated-joining IDs
-// (llama-3.2-3b-instruct → "3b", llama-3.3-70b-instruct → "70b") and four
-// uncurated IDs. So the generated source must contain exactly two ParamSize lines
-// with those two values and no others. This makes both directions falsifiable:
-// dropping the join leaves zero ParamSize lines; a stray ParamSize on an
-// uncurated model adds an unexpected line.
-func TestCodegen_ParamSizeOnlyFromCuratedTable(t *testing.T) {
-	fixtureJSON := deterministicFixtureJSON(t)
-	staticSrc, _, _ := runFixtureCodegen(t, fixtureJSON, "")
-	src := string(staticSrc)
-
-	reParamSize := regexp.MustCompile(`ParamSize:\s+"([^"]*)"`)
-	got := reParamSize.FindAllStringSubmatch(src, -1)
-
-	gotValues := make([]string, 0, len(got))
-	for _, m := range got {
-		gotValues = append(gotValues, m[1])
-	}
-	sort.Strings(gotValues)
-
-	want := []string{"3b", "70b"}
-	if len(gotValues) != len(want) || gotValues[0] != want[0] || gotValues[1] != want[1] {
-		t.Errorf("ParamSize emission mismatch: got %v, want %v\n"+
-			"  What: ParamSize must be emitted only for fixture models that join a curated quant_vram.json entry\n"+
-			"  Why: ParamSize carries the #size identity dimension; an uncurated model emitting it would drift its entity key, "+
-			"and a curated model NOT emitting it would silently disconnect the join\n"+
-			"  Where: genToModelInfoDetailed (info.ParamSize = bestiary.ParamSizeFor(id)) + generateSource ParamSize emission\n"+
-			"  How to fix: ensure the join fires for curated IDs and ParamSize stays empty (unemitted) for the rest",
-			gotValues, want)
-	}
-}
+// The presence-based param-size precedence (pin > mechanical > ParamSizeFor) that the
+// codegen bake shares with the runtime enrichment joints is pinned by
+// TestCodegen_ParamSizePrecedence in the library package (paramsize_wiring_internal_test.go),
+// where it can reach both the exported EnrichedParamSize and the unexported precedence
+// helper for the token-less-fallback and disagreement legs no catalog ID reaches. It
+// replaces the pre-v0.2.6 curated-only ParamSize emission guard, which the full-bulk
+// re-key retired.
 
 // TestCodegen_IngestedAt_Deterministic verifies that IngestedAt
 // lines in generated source are byte-identical across runs WITHOUT normalization.
@@ -3517,6 +3486,38 @@ func TestCodegen_BaseRef_LineageEdge(t *testing.T) {
 		}
 		if len(ref.Modifier) != 1 || ref.Modifier[0] != "instruct" {
 			t.Errorf("Modifier = %v, want [instruct]", ref.Modifier)
+		}
+	})
+
+	// parseBaseRef must decompose a COMPOUND base_ref whose size is a multi-part MoE
+	// shape token into the FULL parent EntityRef, capturing the WHOLE size window
+	// (family + version + #size(compound) + identity modifier). This is the payoff of
+	// delegating to ExtractParamSizeToken: the pre-delegation greedy per-token scan
+	// would clip "235b-a22b" to "235b" (and drop "a22b" as a stray modifier), pointing
+	// the finetune edge at the wrong parent entity.
+	t.Run("parseBaseRef_compound_moe_size", func(t *testing.T) {
+		cases := []struct {
+			baseRef, want, wantSize string
+		}{
+			{"qwen3:235b-a22b-instruct", "qwen@3#235b-a22b{instruct}", "235b-a22b"}, // active MoE — whole window, not "235b"
+			{"mixtral:8x22b-instruct", "mixtral#8x22b{instruct}", "8x22b"},          // NxM MoE shape
+			{"llama4:17b-16e-instruct", "llama@4#17b-16e{instruct}", "17b-16e"},     // count-suffixed MoE
+		}
+		for _, tc := range cases {
+			ref := parseBaseRef(tc.baseRef)
+			if got := ref.String(); got != tc.want {
+				t.Errorf("parseBaseRef(%q).String() = %q, want %q\n"+
+					"  What: a compound MoE size window was clipped or a modifier was lost\n"+
+					"  Where: parseBaseRef ExtractParamSizeToken delegation + modifier remainder scan\n"+
+					"  How to fix: the whole size window must be captured and the remaining tokens treated as modifiers",
+					tc.baseRef, got, tc.want)
+			}
+			if ref.ParamSize != tc.wantSize {
+				t.Errorf("parseBaseRef(%q).ParamSize = %q, want %q (whole-window size, not a clipped prefix)", tc.baseRef, ref.ParamSize, tc.wantSize)
+			}
+			if len(ref.Modifier) != 1 || ref.Modifier[0] != "instruct" {
+				t.Errorf("parseBaseRef(%q).Modifier = %v, want [instruct] (remainder after excising the size window)", tc.baseRef, ref.Modifier)
+			}
 		}
 	})
 
@@ -3654,11 +3655,12 @@ func TestCodegen_QuantVRAMLiteral_Deterministic(t *testing.T) {
 // TestCodegen_UpToDate_RealInput is the real-input regen up-to-date guard. It
 // regenerates every codegen-owned source IN MEMORY from the COMMITTED vendored
 // snapshot (parse/data/modelsdev/catalog.json) via the exact generation sequence
-// run() uses, then byte-compares each fresh source against the COMMITTED
-// *_gen.go file on disk — with LastSynced lines normalized on both sides (the
-// same reLastSynced/normalizeLastSynced machinery TestCodegen_Reproducible_ByteIdentical
-// uses). It FAILS if any generated file is stale relative to the vendored
-// snapshot plus the current emitter logic.
+// run() uses — INCLUDING the deterministic LastSynced stamp — then byte-compares each
+// fresh source against the COMMITTED *_gen.go file on disk with NO masking. Because the
+// baked LastSynced is now deterministic (the committed models.dev ingest instant, not a
+// wall-clock), the comparison is exact; a wall-clock leaking back into the stamp would
+// fail here. It FAILS if any generated file is stale relative to the vendored snapshot
+// plus the current emitter logic.
 //
 // This is the guard whose absence let a stale regen ship invisibly: the
 // hermetic TestCodegen_UpToDate checks only golden EXCERPTS from a fixture, and
@@ -3695,10 +3697,24 @@ func TestCodegen_UpToDate_RealInput(t *testing.T) {
 	}
 
 	// Reproduce run()'s generation sequence exactly (main.go run()):
-	//   allSlugs (sorted) -> collectFamilies -> applyFilter(no flags) -> the five
-	//   generate* emitters, with slugToConst built from providerConstName.
-	// LastSynced is intentionally NOT stamped here: normalizeLastSynced neutralizes
-	// the field on both sides, so the on-disk wall-clock stamp is irrelevant.
+	//   stamp the deterministic LastSynced -> allSlugs (sorted) -> collectFamilies ->
+	//   applyFilter(no flags) -> the five generate* emitters, with slugToConst built from
+	//   providerConstName.
+	//
+	// LastSynced IS stamped here with the same deterministic codegenLastSynced value run()
+	// uses (the committed models.dev ingest instant, NOT a wall-clock), so the comparison
+	// below is an EXACT byte match with NO LastSynced masking. This permanently fences
+	// run()'s stamp source: if a wall-clock ever leaks back into the baked LastSynced, the
+	// fresh regen's deterministic stamp would diverge from the committed files and fail
+	// here — which masking would have hidden.
+	lastSynced, err := codegenLastSynced()
+	if err != nil {
+		t.Fatalf("codegenLastSynced: %v", err)
+	}
+	for i := range models {
+		models[i].LastSynced = lastSynced
+	}
+
 	allSlugs := make([]string, 0, len(providerMeta))
 	for slug := range providerMeta {
 		allSlugs = append(allSlugs, slug)
@@ -3754,16 +3770,14 @@ func TestCodegen_UpToDate_RealInput(t *testing.T) {
 			continue
 		}
 
-		freshNorm := normalizeLastSynced(f.src)
-		committedNorm := normalizeLastSynced(committed)
-		if bytes.Equal(freshNorm, committedNorm) {
+		if bytes.Equal(f.src, committed) {
 			continue
 		}
 
 		// Report the first divergent line to make the staleness reviewable without
 		// dumping the whole (multi-MB) file.
-		freshLines := strings.Split(string(freshNorm), "\n")
-		commLines := strings.Split(string(committedNorm), "\n")
+		freshLines := strings.Split(string(f.src), "\n")
+		commLines := strings.Split(string(committed), "\n")
 		firstDiff, ln, freshLn, commLn := -1, 0, "", ""
 		for ln < len(freshLines) || ln < len(commLines) {
 			var fl, cl string
@@ -3782,7 +3796,7 @@ func TestCodegen_UpToDate_RealInput(t *testing.T) {
 
 		t.Errorf(
 			"committed %s is STALE relative to the vendored snapshot + current emitter logic\n"+
-				"  What: a fresh --no-fetch regen of this file (LastSynced normalized) does not match what is committed\n"+
+				"  What: a fresh --no-fetch regen of this file (deterministic LastSynced, no masking) does not match what is committed\n"+
 				"  Why: the generated file was hand-edited, or left un-regenerated after an emitter or curated-data change\n"+
 				"  Where: %s (committed) vs in-memory regen from %s\n"+
 				"  First divergent line (%d):\n"+

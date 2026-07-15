@@ -503,6 +503,14 @@ func run(args []string) error {
 		return fmt.Errorf("validate curated quant-VRAM table: %w", err)
 	}
 
+	// Fail loudly on a non-canonical param-size pin BEFORE generating anything: a
+	// typo'd size token in param_size_overrides.json would otherwise flow verbatim
+	// into #size entity-key material. The runtime loader degrades gracefully; this
+	// codegen-time check fences the pin file.
+	if err := bestiary.ValidateParamSizePins(); err != nil {
+		return fmt.Errorf("validate curated param-size pins: %w", err)
+	}
+
 	// Fail loudly on bad data-source curation BEFORE generating anything: a duplicate
 	// source id/uri, an ingest source_id absent from the dimension, or an entity↔source
 	// attestation naming a source absent from the curated datasources.json is a curation
@@ -1083,7 +1091,10 @@ func fetchModelsWithRaw(ctx context.Context, noFetch bool) (rawJSON []byte, mode
 	// decomposition and the curated bakes over it.
 	models = make([]bestiary.ModelInfo, 0, len(cat.Models))
 	for _, base := range cat.Models {
-		info, failure := enrichModelInfo(base)
+		info, failure, enrichErr := enrichModelInfo(base)
+		if enrichErr != nil {
+			return nil, nil, nil, nil, nil, enrichErr
+		}
 		models = append(models, info)
 		if failure != nil {
 			failures = append(failures, *failure)
@@ -1245,10 +1256,13 @@ func collectFamilies(models []bestiary.ModelInfo) []string {
 // identity axes (RawFamily/Family/Variant/Version/Date/Modifier), attaches the serving
 // host, and bakes the curated lineage/param-size/source/quant-VRAM data keyed by ID.
 //
-// It returns (ModelInfo, *ParseFailure); the failure is non-nil when ParseFamilyDetailed
-// detects a known parsing deficiency. Failure records are collected by
-// fetchModelsWithRaw and written to parse_failures.json at the end of each run.
-func enrichModelInfo(base bestiary.ModelInfo) (bestiary.ModelInfo, *bestiary.ParseFailure) {
+// It returns (ModelInfo, *ParseFailure, error). The *ParseFailure is non-nil when
+// ParseFamilyDetailed detects a known parsing deficiency (collected by
+// fetchModelsWithRaw and written to parse_failures.json). The error is a LOUD,
+// FATAL codegen failure — currently a param-size disagreement surfaced by
+// EnrichedParamSize (mechanical vs curated ParamSizeFor) — that must abort the bake
+// rather than silently baking a contested size.
+func enrichModelInfo(base bestiary.ModelInfo) (bestiary.ModelInfo, *bestiary.ParseFailure, error) {
 	// The library set Family = the raw family string; that is the codegen raw family.
 	rawFamily := base.Family
 	id := base.ID
@@ -1322,15 +1336,34 @@ func enrichModelInfo(base bestiary.ModelInfo) (bestiary.ModelInfo, *bestiary.Par
 	// lineage source; nil (no edge) for the overwhelming majority of base models.
 	info.Lineage = bestiary.LineageFor(id)
 
-	// Curated quant/VRAM data. Populate ParamSize, Source, and QuantVRAM
-	// from the curated quant_vram.json table. QuantVRAM rows are BAKED here: each
-	// row's VRAMBytes and VRAMContextTokens are filled in by calling
-	// EstimateVRAMBytes at the model's maximum context window. The bake-context
-	// precedence is: (1) curated context_window from quant_vram.json (most
-	// specific); (2) ModelInfo.ContextWindow from the upstream models.dev catalog;
-	// (3) 0 (weights-only lower bound). VRAMEstimatePartial is set when the arch
-	// facts (Layers, KVHeads, HeadDim) are absent, per VRAMEstimateIsPartial.
-	info.ParamSize = bestiary.ParamSizeFor(id)
+	// Parameter-size enrichment (folded into the shared library precedence pin >
+	// mechanical > ParamSizeFor). The size is baked here so the static entity keys
+	// re-key in full bulk: a mechanical ExtractParamSizeToken token now sizes the
+	// majority of catalog IDs that carry no curated quant_vram.json param_size. A
+	// disagreement between the mechanical token and the fetch-owned ParamSizeFor
+	// fallback is a LOUD, FATAL codegen error (a curator must add a pin) rather than
+	// a silently baked contested size. The flat shape ints are decomposed from the
+	// resolved token via ParseParamShape so the baked static row carries them without
+	// going through a runtime joint.
+	enrichedSize, sizeErr := bestiary.EnrichedParamSize(string(id))
+	if sizeErr != nil {
+		return info, failure, fmt.Errorf("codegen param-size enrichment for %q: %w", id, sizeErr)
+	}
+	info.ParamSize = enrichedSize
+	if shape, shapeErr := bestiary.ParseParamShape(enrichedSize); shapeErr == nil {
+		info.TotalParams = shape.TotalParams
+		info.ActiveParams = shape.ActiveParams
+		info.PerExpertParams = shape.PerExpertParams
+		info.ExpertCount = shape.ExpertCount
+	}
+
+	// Curated Source and QuantVRAM from the curated quant_vram.json table. QuantVRAM
+	// rows are BAKED here: each row's VRAMBytes and VRAMContextTokens are filled in by
+	// calling EstimateVRAMBytes at the model's maximum context window. The bake-context
+	// precedence is: (1) curated context_window from quant_vram.json (most specific);
+	// (2) ModelInfo.ContextWindow from the upstream models.dev catalog; (3) 0
+	// (weights-only lower bound). VRAMEstimatePartial is set when the arch facts
+	// (Layers, KVHeads, HeadDim) are absent, per VRAMEstimateIsPartial.
 	info.Source = bestiary.SourceFor(id)
 
 	rawRows := bestiary.QuantVRAMFor(id)
@@ -1360,7 +1393,7 @@ func enrichModelInfo(base bestiary.ModelInfo) (bestiary.ModelInfo, *bestiary.Par
 	// finetune that never joins during codegen.
 	appendFinetuneLineage(&info, bestiary.BaseRefFor(id))
 
-	return info, failure
+	return info, failure, nil
 }
 
 // appendFinetuneLineage appends a DerivationFinetune edge to info.Lineage when
@@ -1476,19 +1509,23 @@ func parseBaseRef(baseRef string) bestiary.EntityRef {
 	var modifiers []string
 
 	if tag != "" {
-		tokens := strings.Split(tag, "-")
-		for _, tok := range tokens {
+		// Delegate the size lift to the shared ExtractParamSizeToken grammar authority
+		// (longest whole-window match), so a compound token like "17b-16e" or
+		// "235b-a22b" is captured WHOLE rather than clipped to its first "17b"/"235b"
+		// by a greedy per-token scan. The remaining tokens (the tag with the matched
+		// size window removed) are candidate modifiers; EntityModifiers projects only
+		// identity-class tokens for the resolved family. Lowercasing first makes the
+		// canonical size token a literal substring of the tag so it can be excised.
+		tagLower := strings.ToLower(tag)
+		rest := tagLower
+		if ps, ok := bestiary.ExtractParamSizeToken(tagLower); ok {
+			paramSize = ps
+			rest = strings.Replace(tagLower, ps, "", 1)
+		}
+		for _, tok := range strings.Split(rest, "-") {
 			if tok == "" {
 				continue
 			}
-			if paramSize == "" {
-				if ps, err := bestiary.ParseParamSize(tok); err == nil && ps != "" {
-					paramSize = ps
-					continue
-				}
-			}
-			// Non-size tokens are candidate modifiers; EntityModifiers will project
-			// only identity-class tokens for the resolved family.
 			modifiers = append(modifiers, tok)
 		}
 	}
@@ -1790,6 +1827,24 @@ func generateSource(models []bestiary.ModelInfo, slugToConst map[string]string) 
 		// so the output stays compact for the unsized majority.
 		if m.ParamSize != "" {
 			fmt.Fprintf(&buf, "\t\tParamSize:             %q,\n", m.ParamSize)
+		}
+		// Parameter-shape ints: DERIVED from ParamSize by ParseParamShape and baked so
+		// static rows carry them without a runtime joint. Emitted CONDITIONALLY (only
+		// when non-zero), matching the ParamSize precedent — the unsized/dense majority
+		// stays compact. A given shape only ever sets a subset (e.g. an NxM MoE sets
+		// ExpertCount + PerExpertParams but never TotalParams), so each is guarded
+		// independently.
+		if m.TotalParams != 0 {
+			fmt.Fprintf(&buf, "\t\tTotalParams:           %d,\n", m.TotalParams)
+		}
+		if m.ActiveParams != 0 {
+			fmt.Fprintf(&buf, "\t\tActiveParams:          %d,\n", m.ActiveParams)
+		}
+		if m.PerExpertParams != 0 {
+			fmt.Fprintf(&buf, "\t\tPerExpertParams:       %d,\n", m.PerExpertParams)
+		}
+		if m.ExpertCount != 0 {
+			fmt.Fprintf(&buf, "\t\tExpertCount:           %d,\n", m.ExpertCount)
 		}
 		// Source: always emit; DataSourceNone ("") is the correct zero value for
 		// live-sync rows and is emitted explicitly so the field is self-documenting.

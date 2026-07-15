@@ -221,9 +221,9 @@ func TestLineage_IDFamilyOverride_FoldToLlamaDerivatives(t *testing.T) {
 	// Cross-provider linking: the mythomax entity must now aggregate BOTH the
 	// nano-gpt instance (previously split off as family=llama) and the providers
 	// that always served it as mythomax — one entity, multiple providers.
-	ent, ok := bestiary.EntityByTuple(bestiary.Family("mythomax"), "", "", "")
+	ent, ok := bestiary.EntityByTuple(bestiary.Family("mythomax"), "", "", "13b")
 	if !ok {
-		t.Fatal("EntityByTuple(mythomax): the mythomax entity must exist")
+		t.Fatal("EntityByTuple(mythomax#13b): the mythomax entity must exist")
 	}
 	var providers = map[bestiary.Provider]bool{}
 	for _, inst := range ent.Instances {
@@ -258,24 +258,26 @@ func TestLineage_Dracarys_NoWrongMerge(t *testing.T) {
 	const id72 = bestiary.ModelID("abacusai/Dracarys-72B-Instruct")
 	const id70 = bestiary.ModelID("abacusai/dracarys-llama-3_1-70b-instruct")
 
-	ent72, ok72 := bestiary.EntityByTuple(bestiary.Family("dracarys"), "", "", "")
+	ent72, ok72 := bestiary.EntityByTuple(bestiary.Family("dracarys"), "", "", "72b")
 	if !ok72 {
-		t.Fatal("EntityByTuple(dracarys): the bare 72B entity must exist")
+		t.Fatal("EntityByTuple(dracarys#72b): the bare 72B entity must exist")
 	}
-	ent70, ok70 := bestiary.EntityByTuple(bestiary.Family("dracarys"), "", "", "", "instruct")
+	ent70, ok70 := bestiary.EntityByTuple(bestiary.Family("dracarys"), "", "", "70b", "instruct")
 	if !ok70 {
-		t.Fatal("EntityByTuple(dracarys,…,instruct): the dracarys{instruct} 70B entity must exist")
+		t.Fatal("EntityByTuple(dracarys#70b,…,instruct): the dracarys#70b{instruct} 70B entity must exist")
 	}
 
-	// Distinct identities: different EntityRef keys.
+	// Distinct identities: different EntityRef keys. The full-bulk size re-key gives
+	// each artifact its own #size (72b vs 70b), which makes the separation explicit
+	// on the size axis as well as the modifier axis.
 	if ent72.Ref.String() == ent70.Ref.String() {
 		t.Fatalf("the two dracarys artifacts share an EntityRef key %q — they must be SEPARATE entities (wrong-merge)", ent72.Ref.String())
 	}
-	if ent72.Ref.String() != "dracarys" {
-		t.Errorf("72B entity key = %q, want \"dracarys\"", ent72.Ref.String())
+	if ent72.Ref.String() != "dracarys#72b" {
+		t.Errorf("72B entity key = %q, want \"dracarys#72b\"", ent72.Ref.String())
 	}
-	if ent70.Ref.String() != "dracarys{instruct}" {
-		t.Errorf("70B entity key = %q, want \"dracarys{instruct}\"", ent70.Ref.String())
+	if ent70.Ref.String() != "dracarys#70b{instruct}" {
+		t.Errorf("70B entity key = %q, want \"dracarys#70b{instruct}\"", ent70.Ref.String())
 	}
 
 	// Disjoint instance sets: the 72B entity holds the 72B record and NOT the 70B,
@@ -377,11 +379,11 @@ func TestLineage_Dracarys70B_ChildRefAlignsToEntityKey(t *testing.T) {
 	const id70 = bestiary.ModelID("abacusai/dracarys-llama-3_1-70b-instruct")
 
 	// The entity the registry actually indexes for the 70B record.
-	ent, ok := bestiary.EntityByTuple(bestiary.Family("dracarys"), "", "", "", "instruct")
+	ent, ok := bestiary.EntityByTuple(bestiary.Family("dracarys"), "", "", "70b", "instruct")
 	if !ok {
-		t.Fatal("EntityByTuple(dracarys,…,instruct): the 70B entity must exist")
+		t.Fatal("EntityByTuple(dracarys#70b,…,instruct): the 70B entity must exist")
 	}
-	const wantKey = "dracarys{instruct}"
+	const wantKey = "dracarys#70b{instruct}"
 	if ent.Ref.String() != wantKey {
 		t.Fatalf("70B entity key = %q, want %q", ent.Ref.String(), wantKey)
 	}
