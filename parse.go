@@ -1172,6 +1172,54 @@ var quantizationTokens = map[string]struct{}{
 // "grok-code-fast-1") is deliberately NOT matched, so it still stops the scan.
 var reVersionMarkerToken = regexp.MustCompile(`^v[0-9]+(\.[0-9]+)?$`)
 
+// midIDModifierTokens is the CLOSED stage/mode token set the mid-ID harvest phase of
+// extractModifiers reaches for. Each denotes a model's operating MODE and structurally
+// appears BEFORE the variant/version in an ID — e.g. "gemini-omni-flash-preview",
+// "gpt-realtime-2.1", "qwen3-livetranslate-flash-realtime" — so the tail-inward phase-A
+// scan (which stops at the first variant/version/member boundary) cannot reach them.
+// Every OTHER modifier (instruct/thinking/reasoning/preview/…) trails the variant and is
+// already recovered by phase A, so restricting the mid-ID harvest to this closed set is
+// the safe generalization: it can never reclassify a mid-ID instance of a trailing
+// modifier, and it targets exactly the tokens the ~26 exact-ID idFamilyOverrides pin
+// today (the v0.2.5 stage/mode block). Classification (omni/livetranslate = IDENTITY,
+// realtime = ATTRIBUTE) is owned by modifier_class.json / ClassifyModifier — this set
+// owns REACHABILITY only, never class.
+var midIDModifierTokens = map[string]struct{}{
+	"omni":          {},
+	"livetranslate": {},
+	"realtime":      {},
+}
+
+// isMidIDModifierToken reports whether tok is a curated stage/mode token eligible for
+// the mid-ID harvest (case-insensitive). See midIDModifierTokens.
+func isMidIDModifierToken(tok string) bool {
+	if tok == "" {
+		return false
+	}
+	_, ok := midIDModifierTokens[strings.ToLower(tok)]
+	return ok
+}
+
+// variantHasComponent reports whether tok is a hyphen-separated component of variant
+// (both already lowercased by the caller). It is the mid-ID harvest's variant-guard: a
+// COMPOUND variant such as "omni-free" (an upstream raw_family quirk on mimo-v2-omni-free)
+// already accounts for its "omni" component, so the harvest must not ALSO emit "omni" as a
+// separate modifier. Covers the plain single-token case (variant == tok) too.
+func variantHasComponent(variant, tok string) bool {
+	if variant == "" || tok == "" {
+		return false
+	}
+	if variant == tok {
+		return true
+	}
+	for _, c := range strings.Split(variant, "-") {
+		if c == tok {
+			return true
+		}
+	}
+	return false
+}
+
 // isModifierTransparentToken reports whether a tail token should be SKIPPED (consumed
 // but not collected) while scanning for buried modifiers: a date fragment, a param-size
 // token, a context-window token, a quantization/serving-format token, or a 4+ digit
@@ -1197,19 +1245,39 @@ func isModifierTransparentToken(tok string) bool {
 	return false
 }
 
-// extractModifiers is the multi-modifier companion to ExtractModifier. It
-// scans the model ID's tail tokens (after the vendor/path strip, '@'→'-' normalized)
-// from the END inward, collecting EVERY modifier token (member-guarded, case-insensitive)
-// and SKIPPING transparent date/param/quant/context tokens, stopping at the first real
-// boundary token (a variant/version/family token). This recovers modifiers buried behind
-// quantization or date suffixes (e.g. "Llama-3.3-70B-Instruct-FP8-Fast" → [fast, instruct])
-// that a strictly-trailing match would miss.
+// extractModifiers is the multi-modifier companion to ExtractModifier. It scans the
+// model ID's tail tokens (after the vendor/path strip, '@'→'-' normalized) from the END
+// inward in TWO phases, ONE traversal over the SAME token stream, recognizing tokens
+// across two domains (modifiers and — transparently — sizes):
+//
+//	Phase A (trailing run): collect EVERY trailing modifier token (member-guarded,
+//	case-insensitive) and SKIP transparent date/param-size/quant/context tokens,
+//	stopping at the first real boundary token (a variant/version/family/member). This
+//	recovers modifiers buried behind quantization or date suffixes (e.g.
+//	"Llama-3.3-70B-Instruct-FP8-Fast" → [fast, instruct]). Byte-identical to the
+//	pre-engine scan: the `consumed` return and its stripping semantics are unchanged.
+//
+//	Phase B (mid-ID harvest): continue PAST the phase-A boundary, collecting the CLOSED
+//	stage/mode token set (omni/livetranslate/realtime — see midIDModifierTokens) that
+//	structurally precedes the variant/version and so is unreachable by phase A
+//	(e.g. the "omni" in "gemini-omni-flash-preview", the "realtime" in "gpt-realtime-2.1").
+//	This generalizes the ~26 exact-ID idFamilyOverrides that pin these tokens today: with
+//	the override removed the ID decomposes IDENTICALLY (equivalence-pinned in the tests).
+//
+// Size-domain recognition is shared with the size grammar via isParamSizeToken (through
+// isModifierTransparentToken): a size token — including a split "30b"/"a3b" half of a
+// buried MoE size — never blocks the mid-ID harvest, so a stage/mode token behind it
+// stays reachable.
 //
 // Returns (mods, consumed): mods are lowercase canonical tokens in tail-inward PEEL order
-// (the caller passes them through CanonicalizeModifiers); consumed is the full trailing
-// substring spanned by the scan (modifiers + skipped transparent tokens), suitable for
-// stripping from the ID before version/date logic. The member-guard and the variant-guard
-// (token == resolved variant) both apply so a per-family product LINE token is never peeled.
+// (the caller passes them through CanonicalizeModifiers); consumed is the phase-A trailing
+// substring spanned by the scan (trailing modifiers + skipped transparent tokens),
+// suitable for stripping from the ID before version/date logic. A phase-B mid-ID modifier
+// is NOT a trailing substring, so it is added to mods but NEVER grows `consumed` — the
+// version/date extractors must still see the mid-ID token in place. The member-guard and
+// the variant-guard (token == resolved variant) apply in BOTH phases; phase B additionally
+// guards the family token so a family literally named for a stage/mode token is never
+// harvested.
 func extractModifiers(id ModelID, family Family, variant string) (mods []string, consumed string) {
 	pd, err := loadParseData()
 	if err != nil {
@@ -1222,14 +1290,23 @@ func extractModifiers(id ModelID, family Family, variant string) (mods []string,
 	idStr = strings.ReplaceAll(idStr, "@", "-")
 	toks := strings.Split(idStr, "-")
 	lowVariant := strings.ToLower(variant)
+	lowFamily := strings.ToLower(string(family))
 
+	// normTok lowercases and strips a trailing ":N" context-window tag.
+	normTok := func(s string) string {
+		s = strings.ToLower(s)
+		if j := strings.IndexByte(s, ':'); j >= 0 {
+			s = s[:j]
+		}
+		return s
+	}
+
+	// ── Phase A: trailing run (byte-identical to the pre-engine scan) ──
 	consumedTokens := 0 // number of trailing tokens consumed (modifiers + transparent)
 	prevAfterYear := false
+	midStart := -1 // index to resume the mid-ID harvest from; -1 = phase A reached the head
 	for i := len(toks) - 1; i >= 0; i-- {
-		t := strings.ToLower(toks[i])
-		if j := strings.IndexByte(t, ':'); j >= 0 {
-			t = t[:j] // strip ":N" context-window tag for the test
-		}
+		t := normTok(toks[i])
 		// MM-of-MM-YYYY date fragment: a 1-2 digit numeric immediately PRECEDING (in
 		// tail order) a 4-digit year is the month half of an "MM-YYYY" date — transparent
 		// (e.g. "08" in "command-a-reasoning-08-2025"). Lets the scan reach a buried modifier.
@@ -1251,6 +1328,8 @@ func extractModifiers(id ModelID, family Family, variant string) (mods []string,
 				// deeper than it was ever consumed. Halting here means the ONLY change is
 				// "<mod>"→"non-<mod>" — the out-of-scope grok "fast" handling (GH#13) is left
 				// untouched (it stays absent on these *-fast-non-reasoning ids, exactly as before).
+				// midStart stays -1: the "non" boundary suppresses the mid-ID harvest too, so
+				// nothing deeper than it is ever collected (no such catalog ID exists anyway).
 				consumedTokens = len(toks) - (i - 1)
 				i = -1
 			} else {
@@ -1263,7 +1342,9 @@ func extractModifiers(id ModelID, family Family, variant string) (mods []string,
 			prevAfterYear = len(t) == 4 && isAllDigits(t)
 			continue
 		default:
-			// real boundary token (variant/version/family) → stop.
+			// real boundary token (variant/version/family/member) → phase A stops here;
+			// the mid-ID harvest resumes from this boundary token inward.
+			midStart = i
 			i = -1
 		}
 	}
@@ -1271,6 +1352,23 @@ func extractModifiers(id ModelID, family Family, variant string) (mods []string,
 		// Rebuild the consumed trailing substring (covers the skipped transparent tokens
 		// interleaved before the innermost collected modifier).
 		consumed = "-" + strings.Join(toks[len(toks)-consumedTokens:], "-")
+	}
+
+	// ── Phase B: mid-ID stage/mode harvest ──
+	// From the phase-A boundary inward, collect the closed stage/mode set that structurally
+	// precedes the variant/version. This NEVER grows `consumed` (a mid-ID token is not a
+	// trailing substring). Non-stage/mode tokens — the boundary variant/version itself,
+	// family members, sizes (incl. split "30b"/"a3b" halves), dates, quant — are skipped so
+	// a stage/mode token buried behind them stays reachable. The member/variant guards from
+	// phase A apply, plus a family-token guard.
+	if midStart >= 0 {
+		for i := midStart; i >= 0; i-- {
+			t := normTok(toks[i])
+			if isMidIDModifierToken(t) && !variantHasComponent(lowVariant, t) && t != lowFamily &&
+				!isFamilyMemberToken(pd, family, t) {
+				mods = append(mods, t)
+			}
+		}
 	}
 	return mods, consumed
 }

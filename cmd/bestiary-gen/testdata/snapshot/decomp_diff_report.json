@@ -1,8 +1,8 @@
 {
   "total_records": 4979,
-  "changed_count": 1233,
+  "changed_count": 1235,
   "cat_a_divergence_fix_count": 324,
-  "cat_b_improvement_count": 903,
+  "cat_b_improvement_count": 905,
   "cat_c_unexpected_regression_count": 0,
   "justified_exception_count": 6,
   "id_tuple4_incl_modifier_divergence_frozen_before": 81,
@@ -3912,6 +3912,24 @@
       "raw_family": "",
       "before": "(family=\"qwen\",variant=\"\",version=\"3\",modifier=\"\")",
       "after": "(family=\"qwen\",variant=\"next\",version=\"3\",modifier=\"thinking,fast\")",
+      "category": "b:improvement",
+      "reason": "strict enrichment — only previously-empty field(s) populated"
+    },
+    {
+      "provider": "siliconflow",
+      "id": "Qwen/Qwen3-Omni-30B-A3B-Captioner",
+      "raw_family": "qwen",
+      "before": "(family=\"qwen\",variant=\"\",version=\"3\",modifier=\"\")",
+      "after": "(family=\"qwen\",variant=\"\",version=\"3\",modifier=\"omni\")",
+      "category": "b:improvement",
+      "reason": "strict enrichment — only previously-empty field(s) populated"
+    },
+    {
+      "provider": "siliconflow-cn",
+      "id": "Qwen/Qwen3-Omni-30B-A3B-Captioner",
+      "raw_family": "qwen",
+      "before": "(family=\"qwen\",variant=\"\",version=\"3\",modifier=\"\")",
+      "after": "(family=\"qwen\",variant=\"\",version=\"3\",modifier=\"omni\")",
       "category": "b:improvement",
       "reason": "strict enrichment — only previously-empty field(s) populated"
     },
