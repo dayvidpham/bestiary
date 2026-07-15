@@ -455,8 +455,8 @@ var validateCuratedDataSourceTable = bestiary.ValidateDataSourceTable
 // COMMITTED parse/data/datasources.json (DatasetIngestedFor(DataSourceModelsDev)), NOT a
 // wall-clock. Pinning the codegen stamp to a committed snapshot instant is what makes a
 // `go run ./cmd/bestiary-gen --no-fetch` regen byte-deterministic: the wall-clock stamp
-// was previously the SOLE residual non-determinism (tracker bestiary-vq6k), so with it
-// pinned TestCodegen_Reproducible_ByteIdentical now asserts FULL byte-identity.
+// was previously the sole residual non-determinism in the generated output, so with it
+// pinned TestCodegen_Reproducible_ByteIdentical asserts FULL byte-identity.
 //
 // This is CODEGEN-ONLY. The runtime `sync` path deliberately keeps a real UTC wall-clock
 // (correct precisely because a sync is a real event); being later than this committed

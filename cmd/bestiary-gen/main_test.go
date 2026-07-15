@@ -2129,12 +2129,19 @@ func runFixtureCodegen(t *testing.T, fixtureJSON []byte, lastSynced string) (sta
 // fetchModelsWithRaw) produce FULLY byte-identical output for generateSource,
 // generateConstantsSource, and generateMetadataSource — with NO normalization.
 //
-// The codegen LastSynced stamp is now DETERMINISTIC (bestiary-vq6k): every run stamps the
-// SAME value — the current models.dev ingest instant from the committed datasources.json
-// (codegenLastSynced) — so the wall-clock is no longer a residual source of diff. This
-// guard therefore asserts RAW byte-identity and catches ANY divergence, including a stray
-// time.Now() creeping back into a baked field. (The obsolete alternating-timestamp /
-// sole-residual machinery it replaces is gone; the normalizeLastSynced helper stays for the
+// The codegen LastSynced stamp is DETERMINISTIC: every run stamps the SAME value — the
+// current models.dev ingest instant from the committed datasources.json
+// (codegenLastSynced) — so the wall-clock is no longer a residual source of diff and this
+// guard asserts RAW byte-identity across iterations with no masking.
+//
+// Fencing boundary (deliberate): this test injects the stamp VALUE via runFixtureCodegen,
+// so it proves the EMISSION is a pure function of (input, stamp) — it does NOT exercise
+// run()'s stamp SOURCE. A regression of run() back to a wall-clock stamp would not fail
+// this test, and TestCodegen_UpToDate_RealInput still normalizes LastSynced (necessarily,
+// while the committed *_gen.go still carry an old wall-clock stamp). The stamp SOURCE is
+// fenced only once the checked-in files are regenerated with the deterministic stamp and
+// that RealInput normalization is removed. (The obsolete alternating-timestamp /
+// sole-residual machinery is gone; the normalizeLastSynced helper stays for the
 // deliberately wall-clock-injecting tests that still need it.)
 //
 // Additionally asserts that each raw model ID always receives the same _N suffix
@@ -2261,10 +2268,11 @@ func TestCodegen_Reproducible_ByteIdentical(t *testing.T) {
 		}
 	}
 
-	// Run N-1 more iterations and assert FULL byte-identity (NO normalization). Because the
-	// LastSynced stamp is deterministic, ANY diff — including a LastSynced line — is a real
-	// non-determinism regression, so this now catches a stray wall-clock as well as the
-	// original map-order/collision-ordinal bugs.
+	// Run N-1 more iterations and assert FULL byte-identity (NO normalization). The stamp
+	// is a constant here, so ANY diff between iterations — including a LastSynced line —
+	// is a real non-determinism regression in the emission (a generator consulting a clock,
+	// map-order leakage, or an unstable collision ordinal). run()'s stamp SOURCE is outside
+	// this test's reach (see the fencing-boundary note above).
 	for i := 1; i < N; i++ {
 		staticSrc, constantsSrc, metadataSrc := runFixtureCodegen(t, fixtureJSON, ts)
 
@@ -2437,10 +2445,11 @@ func TestCodegen_UpToDate(t *testing.T) {
 			metadataGoldenPath, err)
 	}
 
-	// Regenerate from the fixture. The codegen LastSynced stamp is now deterministic
-	// (bestiary-vq6k), so this guard no longer injects a timestamp and normalizes it out:
-	// the golden excerpts carry LastSynced: "" and the fixture path (lastSynced "") emits
-	// exactly that, so the comparison is an EXACT content match with no LastSynced masking.
+	// Regenerate from the fixture. The codegen LastSynced stamp is deterministic (pinned
+	// to the committed models.dev ingest instant, not a wall-clock), so this guard no
+	// longer injects a timestamp and normalizes it out: the golden excerpts carry
+	// LastSynced: "" and the fixture path (lastSynced "") emits exactly that, so the
+	// comparison is an EXACT content match with no LastSynced masking.
 	// Keeping the golden's stamp empty also decouples this content/ordering guard from the
 	// committed ingest instant, so a snapshot refresh never forces a golden re-cut here.
 	fixtureJSON := deterministicFixtureJSON(t)
