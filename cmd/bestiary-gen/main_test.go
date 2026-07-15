@@ -2220,12 +2220,14 @@ func TestCodegen_Reproducible_ByteIdentical(t *testing.T) {
 	if !strings.Contains(refNorm, `Model__CloudflareAIGateway__Claude__3__5__Haiku__3_5_2 ModelID = "anthropic/claude-3.5-haiku"`) {
 		t.Errorf("reference output: C group _2 pin mismatch; want anthropic/claude-3.5-haiku\nconstants:\n%s", refStr)
 	}
-	// B group pins: kilo-auto/free < openrouter/free.
-	if !strings.Contains(refNorm, `Model__Kilo__Free_1 ModelID = "kilo-auto/free"`) {
-		t.Errorf("reference output: B group _1 pin mismatch; want kilo-auto/free\nconstants:\n%s", refStr)
+	// B group pins: distinct backend-route prefixes disambiguate MEANINGFULLY (r66e) —
+	// "kilo-auto/free" → __KiloAuto, "openrouter/free" → __OpenRouter — instead of the
+	// old opaque _1/_2 ordinals.
+	if !strings.Contains(refNorm, `Model__Kilo__Free__KiloAuto ModelID = "kilo-auto/free"`) {
+		t.Errorf("reference output: B group KiloAuto pin mismatch; want kilo-auto/free\nconstants:\n%s", refStr)
 	}
-	if !strings.Contains(refNorm, `Model__Kilo__Free_2 ModelID = "openrouter/free"`) {
-		t.Errorf("reference output: B group _2 pin mismatch; want openrouter/free\nconstants:\n%s", refStr)
+	if !strings.Contains(refNorm, `Model__Kilo__Free__OpenRouter ModelID = "openrouter/free"`) {
+		t.Errorf("reference output: B group OpenRouter pin mismatch; want openrouter/free\nconstants:\n%s", refStr)
 	}
 	// E control: version-suffix pass (a), not fallback. Exact constant names.
 	if !strings.Contains(refNorm, `Model__OpenAI__GPT__5_1 ModelID = "gpt-5.1"`) {
@@ -2559,18 +2561,21 @@ func TestCodegen_GoldenPins_C(t *testing.T) {
 	}
 }
 
-// TestCodegen_GoldenPins_B verifies the B group (kilo prefix collision):
-// "kilo-auto/free" → _1, "openrouter/free" → _2.
+// TestCodegen_GoldenPins_B verifies the B group (kilo prefix collision) resolves with
+// the MEANINGFUL route discriminator (r66e), not an opaque ordinal: the same base
+// model served under two distinct backend-route prefixes disambiguates as
+// "kilo-auto/free" → Model__Kilo__Free__KiloAuto, "openrouter/free" →
+// Model__Kilo__Free__OpenRouter.
 func TestCodegen_GoldenPins_B(t *testing.T) {
 	fixtureJSON := deterministicFixtureJSON(t)
 	_, constantsSrc, _ := runFixtureCodegen(t, fixtureJSON, "")
 	s := normalizeWhitespace(string(constantsSrc))
 
-	if !strings.Contains(s, `Model__Kilo__Free_1 ModelID = "kilo-auto/free"`) {
-		t.Errorf("B group _1 pin: expected kilo-auto/free\nconstants:\n%s", string(constantsSrc))
+	if !strings.Contains(s, `Model__Kilo__Free__KiloAuto ModelID = "kilo-auto/free"`) {
+		t.Errorf("B group KiloAuto pin: expected kilo-auto/free\nconstants:\n%s", string(constantsSrc))
 	}
-	if !strings.Contains(s, `Model__Kilo__Free_2 ModelID = "openrouter/free"`) {
-		t.Errorf("B group _2 pin: expected openrouter/free\nconstants:\n%s", string(constantsSrc))
+	if !strings.Contains(s, `Model__Kilo__Free__OpenRouter ModelID = "openrouter/free"`) {
+		t.Errorf("B group OpenRouter pin: expected openrouter/free\nconstants:\n%s", string(constantsSrc))
 	}
 }
 

@@ -31,6 +31,20 @@ confined to the handful of curated `quant_vram.json` entries.
   (pin > mechanical > `ParamSizeFor`), shared by the two runtime enrichment joints
   (`toModelInfo`, `scanModelInfo`) and the codegen bake, plus `ValidateParamSizePins`
   (a codegen-time guard that rejects a non-canonical curated pin token).
+- **Release-stage axis** (`stage.go`, [#13]): a closed int enum `ReleaseStage`
+  (`StageNone`/`StageStable`/`StagePreview`/`StageBeta`/`StageAlpha`/
+  `StageExperimental`/`StageLatest`/`StageOriginal`/`StageOther`) with
+  `ParseReleaseStage` (CLI/config parse), `DetectReleaseStage` (ID-token
+  detection, known-members-only), and `DetectStageFromID` (the shared ID scanner).
+  `ModelInfo` gains `Stage`/`StageRaw`, derived from the ID at the SAME enrichment
+  joints as `ParamSize` (so a live-sync row and its baked static row always agree).
+  Stage is DELIBERATELY separate from `ModelStatus`: `Status` is upstream-declared
+  lifecycle, `Stage` is ID-derived — `show`'s instance table renders them under
+  distinct `STATUS` / `STAGE` columns. `StageOther` is a RESERVED bucket for a
+  future non-ID feeder (Quantization precedent); the ID path never produces it.
+  `StageLatest`/`StageOriginal` name a moving target, not a fixed artifact property.
+  Schema `0.4.0` gains additive `Stage`/`StageRaw` properties and a `ReleaseStage`
+  `$def` (neither required).
 
 ### Changed — MIGRATION NOTE (entity keys)
 
@@ -53,6 +67,32 @@ confined to the handful of curated `quant_vram.json` entries.
   enrichment-consistency sweep). Curated lineage needs zero churn: lineage lookups
   resolve exact-key-first with a size-stripped fallback, so an unsized curated edge is
   inherited by every newly sized sibling without re-keying `lineage.json`.
+- **Stage-token vocabulary migration (no entity-key change).** `preview`, `latest`,
+  and `original` left the modifier-class attribute set — they now populate the
+  `Stage` axis instead of rendering as `[preview]`/`[latest]` attributes. They are
+  routed out of both render segments AND the entity key BEFORE the modifier
+  identity fail-safe, so the key is unchanged (they were attribute-class =
+  key-excluded before, stage-routed = key-excluded after). The tokens STAY in the
+  `Modifier` data field (so constant names and the `[attr]` resolve filter are
+  byte-stable). `beta` is detect-without-strip: `Stage=StageBeta` is set wherever a
+  standalone `beta` token appears, but its decomposition is untouched and its key is
+  frozen (grok-4.20-beta keys stay `grok/beta@4.20{…}`). Re-keying beta out of the
+  variant is deferred ([#13]).
+
+### Changed — BREAKING (Go API: exported constant renames)
+
+- **Meaningful collision-group constant names** (`models_constants_gen.go`, r66e).
+  Same-base-name model constants that previously fell back to opaque ordinals
+  (`Model__…__5_1` / `_2` — visually indistinguishable from a `5.1` version segment)
+  are now disambiguated by their backend-route path prefix, the axis along which the
+  collisions actually differ (the same model re-served under a `TEE/`, `Pro/`,
+  `stealth/`, `openrouter/`, or vendor-path route). Renames include
+  `Model__Kilo__Free_1`/`_2` → `Model__Kilo__Free__KiloAuto`/`__OpenRouter`,
+  `Model__NanoGPT__GLM__5_1`/`_2` → `Model__NanoGPT__GLM__5__Tee`/`__ZaiOrg`, and 56
+  others (58 constants total). The alphabetical-raw-ID ordinal fallback is retained
+  only for a genuine tie no discriminator separates (e.g. the same route + date under
+  a punctuation-only ID difference). Any code referencing a renamed `Model__…_N`
+  constant must update to the new route-suffixed name.
 
 ## [0.2.5] — 2026-07-15
 

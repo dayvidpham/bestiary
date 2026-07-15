@@ -1,8 +1,8 @@
 const (
 	Model__CloudflareAIGateway__Claude__3__5__Haiku__3_5_1 ModelID = "anthropic/claude-3-5-haiku"
 	Model__CloudflareAIGateway__Claude__3__5__Haiku__3_5_2 ModelID = "anthropic/claude-3.5-haiku"
-	Model__Kilo__Free_1                                    ModelID = "kilo-auto/free"
-	Model__Kilo__Free_2                                    ModelID = "openrouter/free"
+	Model__Kilo__Free__KiloAuto                            ModelID = "kilo-auto/free"
+	Model__Kilo__Free__OpenRouter                          ModelID = "openrouter/free"
 	Model__OpenAI__GPT__5_1                                ModelID = "gpt-5.1"
 	Model__OpenAI__GPT__5_2                                ModelID = "gpt-5.2"
 	Model__VLLM__Llama__3__2__3b__3_2__Instruct            ModelID = "llama-3.2-3b-instruct"
