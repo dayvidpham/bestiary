@@ -2175,7 +2175,7 @@ func ParseFamilyDetailed(raw Family, id ModelID, p Provider) (Family, string, st
 	// preserving the pipeline-derived variant/version so no ID-present field is dropped
 	// (enforce-blessed family-only correction; cat-(c)=0).
 	if ov, ok := idFamilyOverrides[strings.ToLower(string(id))]; ok {
-		return ov.family, ov.variant, ov.version, nil, nil
+		return ov.family, ov.variant, ov.version, CanonicalizeModifiers(ov.modifiers), nil
 	}
 
 	// (uniform thinking/vision-as-modifier migration): a trailing
@@ -3473,11 +3473,19 @@ var seriesTierModifiers = map[string]struct{}{
 	"omni": {},
 }
 
-// idFamilyOverrideEntry is the curated (family, variant, version) an exact model ID maps to.
+// idFamilyOverrideEntry is the curated (family, variant, version, modifiers) an exact
+// model ID maps to. modifiers is the FULL modifier list (identity + attribute, in any
+// order — CanonicalizeModifiers reorders and EntityModifiers splits identity from
+// attribute at the key boundary). It pins tokens the tail-inward modifier scan cannot
+// reach because they sit BEFORE the variant/version (e.g. the "omni" in
+// gemini-omni-flash-preview, the "realtime" in gpt-realtime-2.1): a mid-ID
+// identity/attribute modifier the general {mods} mechanism structurally misses. Empty
+// modifiers preserves the pre-existing family-only override behavior.
 type idFamilyOverrideEntry struct {
-	family  Family
-	variant string
-	version string
+	family    Family
+	variant   string
+	version   string
+	modifiers []string
 }
 
 // idFamilyOverrides is the curated, CLOSED, exact-
@@ -3516,6 +3524,50 @@ var idFamilyOverrides = map[string]idFamilyOverrideEntry{
 	"nvidia/llama-3.3-nemotron-super-49b-v1.5": {family: "nemotron", variant: "v1.5", version: "3.3"},
 	"abacusai/dracarys-72b-instruct":           {family: "dracarys"},
 	"gryphe/mythomax-l2-13b":                   {family: "mythomax"},
+
+	// v0.2.5 stage/mode identity granularity (bestiary-iu71c): pin the mid-ID
+	// identity/attribute modifiers the tail-inward {mods} scan cannot reach because
+	// they precede the variant/version. omni + livetranslate are IDENTITY (render in
+	// {…}); realtime is ATTRIBUTE (render in […], instance-only); preview / thinking /
+	// reasoning / instruct keep their pipeline class but are re-listed because the
+	// override bypasses the normal modifier extraction. Keys are lowercase exact IDs
+	// (the lookup lowercases, so one key covers case-variants; org-prefixed, dash/dot,
+	// and :free forms are distinct keys).
+	//
+	// gemini omni (mid-ID omni; preview stays attribute):
+	"gemini-omni-flash-preview":        {family: "gemini", variant: "flash", modifiers: []string{"omni", "preview"}},
+	"google/gemini-omni-flash-preview": {family: "gemini", variant: "flash", modifiers: []string{"omni", "preview"}},
+	// gpt realtime (attribute; VERSION RESTORED — realtime otherwise swallows it):
+	"gpt-realtime-2.1":         {family: "gpt", version: "2.1", modifiers: []string{"realtime"}},
+	"openai/gpt-realtime-2.1":  {family: "gpt", version: "2.1", modifiers: []string{"realtime"}},
+	"openai/gpt-realtime-2":    {family: "gpt", version: "2", modifiers: []string{"realtime"}},
+	"openai/gpt-realtime-1.5":  {family: "gpt", version: "1.5", modifiers: []string{"realtime"}},
+	"openai/gpt-realtime-mini": {family: "gpt", variant: "mini", modifiers: []string{"realtime"}},
+	// qwen omni (mid-ID omni):
+	"qwen-omni-turbo":                  {family: "qwen", variant: "turbo", modifiers: []string{"omni"}},
+	"qwen-omni-turbo-realtime":         {family: "qwen", variant: "turbo", modifiers: []string{"omni", "realtime"}},
+	"qwen3-omni-flash":                 {family: "qwen", variant: "flash", version: "3", modifiers: []string{"omni"}},
+	"qwen3-omni-flash-realtime":        {family: "qwen", variant: "flash", version: "3", modifiers: []string{"omni", "realtime"}},
+	"qwen3.5-omni-flash":               {family: "qwen", variant: "flash", version: "3.5", modifiers: []string{"omni"}},
+	"qwen3.5-omni-plus":                {family: "qwen", variant: "plus", version: "3.5", modifiers: []string{"omni"}},
+	"qwen/qwen3-omni-30b-a3b-instruct": {family: "qwen", version: "3", modifiers: []string{"omni", "instruct"}},
+	"qwen/qwen3-omni-30b-a3b-thinking": {family: "qwen", version: "3", modifiers: []string{"omni", "thinking"}},
+	// qwen livetranslate (mid-ID identity; realtime attribute trails):
+	"qwen3-livetranslate-flash-realtime": {family: "qwen", variant: "flash", version: "3", modifiers: []string{"livetranslate", "realtime"}},
+	// nemotron nano omni reasoning (omni sits before the size/reasoning tail; the scan drops it):
+	"nvidia/nemotron-3-nano-omni-30b-a3b-reasoning":      {family: "nemotron", variant: "nano", version: "3", modifiers: []string{"omni", "reasoning"}},
+	"nvidia/nemotron-3-nano-omni-30b-a3b-reasoning-bf16": {family: "nemotron", variant: "nano", version: "3", modifiers: []string{"omni", "reasoning"}},
+	"nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free": {family: "nemotron", variant: "nano", version: "3", modifiers: []string{"omni", "reasoning"}},
+	// laguna curated xs/m variants (dot + dash forms; :free folds to the same entity).
+	// These are the SERVING ids (poolside is the provider). The metadata rows attach via
+	// parse/data/modelsdev_aliases.json (poolside is also the lab, so the join strips
+	// "poolside/" off the MetadataID and the mechanical decomposition alone would miss).
+	"poolside/laguna-xs.2":        {family: "laguna", variant: "xs", version: "2"},
+	"poolside/laguna-xs.2:free":   {family: "laguna", variant: "xs", version: "2"},
+	"poolside/laguna-xs-2.1":      {family: "laguna", variant: "xs", version: "2.1"},
+	"poolside/laguna-xs-2.1:free": {family: "laguna", variant: "xs", version: "2.1"},
+	"poolside/laguna-m.1":         {family: "laguna", variant: "m", version: "1"},
+	"poolside/laguna-m.1:free":    {family: "laguna", variant: "m", version: "1"},
 }
 
 func isSeriesTierToken(tok string) bool {
