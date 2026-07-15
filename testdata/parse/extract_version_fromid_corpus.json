@@ -1,0 +1,196 @@
+{
+  "cases": [
+    {
+      "name": "claude-opus-4-5-20251101",
+      "input": {
+        "id": "claude-opus-4-5-20251101",
+        "raw_family": "claude-opus"
+      },
+      "expected": "4.5",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "ExtractVersionFromID(id=claude-opus-4-5-20251101, rawFamily=claude-opus) -> 4.5"
+      },
+      "mutation": {
+        "description": "version extracted from id given raw family claude-opus"
+      }
+    },
+    {
+      "name": "claude-opus-4-6-20250514",
+      "input": {
+        "id": "claude-opus-4-6-20250514",
+        "raw_family": "claude-opus"
+      },
+      "expected": "4.6",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "ExtractVersionFromID(id=claude-opus-4-6-20250514, rawFamily=claude-opus) -> 4.6"
+      },
+      "mutation": {
+        "description": "version extracted from id given raw family claude-opus"
+      }
+    },
+    {
+      "name": "gemini-2.5-flash",
+      "input": {
+        "id": "gemini-2.5-flash",
+        "raw_family": "gemini"
+      },
+      "expected": "2.5",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "ExtractVersionFromID(id=gemini-2.5-flash, rawFamily=gemini) -> 2.5"
+      },
+      "mutation": {
+        "description": "version extracted from id given raw family gemini"
+      }
+    },
+    {
+      "name": "claude-opus no version",
+      "input": {
+        "id": "claude-opus",
+        "raw_family": "claude-opus"
+      },
+      "expected": "",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "ExtractVersionFromID(id=claude-opus, rawFamily=claude-opus) -> "
+      },
+      "mutation": {
+        "description": "version extracted from id given raw family claude-opus"
+      }
+    },
+    {
+      "name": "gpt-4o",
+      "input": {
+        "id": "gpt-4o",
+        "raw_family": "gpt"
+      },
+      "expected": "4o",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "ExtractVersionFromID(id=gpt-4o, rawFamily=gpt) -> 4o"
+      },
+      "mutation": {
+        "description": "version extracted from id given raw family gpt"
+      }
+    },
+    {
+      "name": "claude-opus-4-6 no date",
+      "input": {
+        "id": "claude-opus-4-6",
+        "raw_family": "claude-opus"
+      },
+      "expected": "4.6",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "ExtractVersionFromID(id=claude-opus-4-6, rawFamily=claude-opus) -> 4.6"
+      },
+      "mutation": {
+        "description": "version extracted from id given raw family claude-opus"
+      }
+    },
+    {
+      "name": "id equals family",
+      "input": {
+        "id": "claude-opus",
+        "raw_family": "claude-opus"
+      },
+      "expected": "",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "ExtractVersionFromID(id=claude-opus, rawFamily=claude-opus) -> "
+      },
+      "mutation": {
+        "description": "version extracted from id given raw family claude-opus"
+      }
+    },
+    {
+      "name": "empty id",
+      "input": {
+        "id": "",
+        "raw_family": "claude-opus"
+      },
+      "expected": "",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "ExtractVersionFromID(id=, rawFamily=claude-opus) -> "
+      },
+      "mutation": {
+        "description": "version extracted from id given raw family claude-opus"
+      }
+    },
+    {
+      "name": "empty family",
+      "input": {
+        "id": "claude-opus-4-5",
+        "raw_family": ""
+      },
+      "expected": "",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "ExtractVersionFromID(id=claude-opus-4-5, rawFamily=) -> "
+      },
+      "mutation": {
+        "description": "version extracted from id given raw family "
+      }
+    },
+    {
+      "name": "no prefix match",
+      "input": {
+        "id": "gpt-4o",
+        "raw_family": "claude-opus"
+      },
+      "expected": "",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "ExtractVersionFromID(id=gpt-4o, rawFamily=claude-opus) -> "
+      },
+      "mutation": {
+        "description": "version extracted from id given raw family claude-opus"
+      }
+    },
+    {
+      "name": "gemini-2.5",
+      "input": {
+        "id": "gemini-2.5",
+        "raw_family": "gemini"
+      },
+      "expected": "2.5",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "ExtractVersionFromID(id=gemini-2.5, rawFamily=gemini) -> 2.5"
+      },
+      "mutation": {
+        "description": "version extracted from id given raw family gemini"
+      }
+    },
+    {
+      "name": "claude-opus-4-6-2026-02-05",
+      "input": {
+        "id": "claude-opus-4-6-2026-02-05",
+        "raw_family": "claude-opus"
+      },
+      "expected": "4.6",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "ExtractVersionFromID(id=claude-opus-4-6-2026-02-05, rawFamily=claude-opus) -> 4.6"
+      },
+      "mutation": {
+        "description": "version extracted from id given raw family claude-opus"
+      }
+    }
+  ]
+}

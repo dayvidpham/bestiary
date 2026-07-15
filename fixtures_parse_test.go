@@ -37,6 +37,32 @@ var familyVPrefixCorpusJSON []byte
 //go:embed testdata/parse/family_hyphen_version_no_override_corpus.json
 var familyHyphenVersionNoOverrideCorpusJSON []byte
 
+// ---- ExtractDate / InferFamily / ParseFamilyWithVersion / ExtractVersion ----
+
+//go:embed testdata/parse/extract_date_fromid_corpus.json
+var extractDateFromIDCorpusJSON []byte
+
+//go:embed testdata/parse/extract_date_calendar_corpus.json
+var extractDateCalendarCorpusJSON []byte
+
+//go:embed testdata/parse/infer_family_fromid_corpus.json
+var inferFamilyFromIDCorpusJSON []byte
+
+//go:embed testdata/parse/family_with_version_core_corpus.json
+var familyWithVersionCoreCorpusJSON []byte
+
+//go:embed testdata/parse/family_with_version_gemini_corpus.json
+var familyWithVersionGeminiCorpusJSON []byte
+
+//go:embed testdata/parse/family_with_version_alnum_corpus.json
+var familyWithVersionAlnumCorpusJSON []byte
+
+//go:embed testdata/parse/extract_version_fromid_corpus.json
+var extractVersionFromIDCorpusJSON []byte
+
+//go:embed testdata/parse/infer_family_variant_corpus.json
+var inferFamilyVariantCorpusJSON []byte
+
 // familyVariantExpected is the expected output of one ParseFamily case: the
 // decomposed family and variant.
 type familyVariantExpected struct {
@@ -44,21 +70,53 @@ type familyVariantExpected struct {
 	Variant string `json:"variant"`
 }
 
-// loadFamilyVariantCorpus loads a ParseFamily corpus, enforces the exact
-// case-count control (wantN, the pre-migration inline row count), and the
-// non-vacuity guard. It returns the loaded corpus so the caller can add a
-// value-based coverage assertion before driving ParseFamily.
-func loadFamilyVariantCorpus(t *testing.T, data []byte, wantN int) testcase.Corpus[string, familyVariantExpected] {
+// familyVersionExpected is the (family, variant, version) triple produced by
+// ParseFamilyWithVersion and InferFamilyFromIDWithVariant.
+type familyVersionExpected struct {
+	Family  string `json:"family"`
+	Variant string `json:"variant"`
+	Version string `json:"version"`
+}
+
+// dateInput is the (id, releaseDate) pair fed to ExtractDate.
+type dateInput struct {
+	ID          string `json:"id"`
+	ReleaseDate string `json:"release_date"`
+}
+
+// providerIDInput is the (id, provider) pair fed to InferFamilyFromID and
+// InferFamilyFromIDWithVariant.
+type providerIDInput struct {
+	ID       string `json:"id"`
+	Provider string `json:"provider"`
+}
+
+// versionFromIDInput is the (id, rawFamily) pair fed to ExtractVersionFromID.
+type versionFromIDInput struct {
+	ID        string `json:"id"`
+	RawFamily string `json:"raw_family"`
+}
+
+// loadParseCorpus loads a corpus, enforces the exact case-count control (wantN,
+// the pre-migration inline row count) and the non-vacuity guard, and returns it
+// so the caller can add a value-based coverage assertion before driving the SUT.
+func loadParseCorpus[I any, E any](t *testing.T, data []byte, wantN int) testcase.Corpus[I, E] {
 	t.Helper()
-	corpus, err := testcase.LoadCorpus[string, familyVariantExpected](data)
+	corpus, err := testcase.LoadCorpus[I, E](data)
 	if err != nil {
-		t.Fatalf("load ParseFamily corpus: %v", err)
+		t.Fatalf("load corpus: %v", err)
 	}
 	if got := len(corpus.Cases); got != wantN {
-		t.Fatalf("ParseFamily corpus has %d cases, want exactly %d", got, wantN)
+		t.Fatalf("corpus has %d cases, want exactly %d", got, wantN)
 	}
 	tcassert.RequireValid(t, corpus)
 	return corpus
+}
+
+// loadFamilyVariantCorpus is the ParseFamily specialization of loadParseCorpus.
+func loadFamilyVariantCorpus(t *testing.T, data []byte, wantN int) testcase.Corpus[string, familyVariantExpected] {
+	t.Helper()
+	return loadParseCorpus[string, familyVariantExpected](t, data, wantN)
 }
 
 // runFamilyVariantCorpus drives bestiary.ParseFamily over every case and
@@ -77,6 +135,81 @@ func runFamilyVariantCorpus(t *testing.T, corpus testcase.Corpus[string, familyV
 				t.Errorf("ParseFamily(%q) variant = %q, want %q", c.Input, gotVariant, c.Expected.Variant)
 			}
 		})
+	}
+}
+
+// runExtractDateCorpus drives bestiary.ExtractDate over every case.
+func runExtractDateCorpus(t *testing.T, corpus testcase.Corpus[dateInput, string]) {
+	t.Helper()
+	for _, c := range corpus.Cases {
+		t.Run(c.Name, func(t *testing.T) {
+			t.Parallel()
+			got := bestiary.ExtractDate(bestiary.ModelID(c.Input.ID), c.Input.ReleaseDate)
+			if got != c.Expected {
+				t.Errorf("ExtractDate(%q, %q) = %q, want %q", c.Input.ID, c.Input.ReleaseDate, got, c.Expected)
+			}
+		})
+	}
+}
+
+// requireDateCoverage asserts each probed (id,releaseDate) input is still
+// present with its expected date. Value-based coverage guard.
+func requireDateCoverage(t *testing.T, corpus testcase.Corpus[dateInput, string], probes map[dateInput]string) {
+	t.Helper()
+	got := map[dateInput]string{}
+	for _, c := range corpus.Cases {
+		got[c.Input] = c.Expected
+	}
+	for in, want := range probes {
+		have, ok := got[in]
+		if !ok {
+			t.Errorf("value coverage lost: ExtractDate case for input %+v is missing", in)
+			continue
+		}
+		if have != want {
+			t.Errorf("value coverage: ExtractDate case %+v has %q, want %q", in, have, want)
+		}
+	}
+}
+
+// runFamilyVersionCorpus drives bestiary.ParseFamilyWithVersion over every case
+// and asserts the (family, variant, version) triple.
+func runFamilyVersionCorpus(t *testing.T, corpus testcase.Corpus[string, familyVersionExpected]) {
+	t.Helper()
+	for _, c := range corpus.Cases {
+		t.Run(c.Name, func(t *testing.T) {
+			t.Parallel()
+			gotFamily, gotVariant, gotVersion := bestiary.ParseFamilyWithVersion(bestiary.Family(c.Input))
+			if string(gotFamily) != c.Expected.Family {
+				t.Errorf("ParseFamilyWithVersion(%q) family = %q, want %q", c.Input, gotFamily, c.Expected.Family)
+			}
+			if gotVariant != c.Expected.Variant {
+				t.Errorf("ParseFamilyWithVersion(%q) variant = %q, want %q", c.Input, gotVariant, c.Expected.Variant)
+			}
+			if gotVersion != c.Expected.Version {
+				t.Errorf("ParseFamilyWithVersion(%q) version = %q, want %q", c.Input, gotVersion, c.Expected.Version)
+			}
+		})
+	}
+}
+
+// requireFamilyVersionCoverage asserts each probed raw input is still present
+// with its expected (family, variant, version). Value-based coverage guard.
+func requireFamilyVersionCoverage(t *testing.T, corpus testcase.Corpus[string, familyVersionExpected], probes map[string]familyVersionExpected) {
+	t.Helper()
+	got := map[string]familyVersionExpected{}
+	for _, c := range corpus.Cases {
+		got[c.Input] = c.Expected
+	}
+	for in, want := range probes {
+		have, ok := got[in]
+		if !ok {
+			t.Errorf("value coverage lost: case for input %q is missing", in)
+			continue
+		}
+		if have != want {
+			t.Errorf("value coverage: case %q has expected %+v, want %+v", in, have, want)
+		}
 	}
 }
 

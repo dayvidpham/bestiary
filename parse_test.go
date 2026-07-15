@@ -204,38 +204,8 @@ func TestParseFamily_HyphenVersion_NoOverride(t *testing.T) {
 // TestExtractDate_FromID covers date extraction from model IDs.
 func TestExtractDate_FromID(t *testing.T) {
 	t.Parallel()
-
-	cases := []struct {
-		name        string
-		id          bestiary.ModelID
-		releaseDate string
-		want        string
-	}{
-		// BDD acceptance criterion: YYYYMMDD in model ID.
-		{"claude-opus date from id", "claude-opus-4-20250514", "", "2025-05-14"},
-		// BDD acceptance criterion: no date.
-		{"gpt-codex-mini no date", "gpt-codex-mini", "", ""},
-		// YYYY-MM-DD in model ID.
-		{"id with YYYY-MM-DD", "gpt-4o-2024-08-06", "", "2024-08-06"},
-		// No date in ID, date in releaseDate.
-		{"date from releaseDate", "llama-3", "2024-04-18", "2024-04-18"},
-		// Both empty.
-		{"empty id empty releaseDate", "", "", ""},
-		// Date in releaseDate YYYYMMDD form.
-		{"releaseDate YYYYMMDD", "some-model", "20230901", "2023-09-01"},
-		// ID takes priority over releaseDate when ID has a date.
-		{"id date wins over releaseDate", "model-20240101", "2023-06-15", "2024-01-01"},
-	}
-
-	for _, tc := range cases {
-		t.Run(tc.name, func(t *testing.T) {
-			t.Parallel()
-			got := bestiary.ExtractDate(tc.id, tc.releaseDate)
-			if got != tc.want {
-				t.Errorf("ExtractDate(%q, %q) = %q, want %q", tc.id, tc.releaseDate, got, tc.want)
-			}
-		})
-	}
+	corpus := loadParseCorpus[dateInput, string](t, extractDateFromIDCorpusJSON, 7)
+	runExtractDateCorpus(t, corpus)
 }
 
 // TestExtractDate_CalendarValidation checks that structurally-matching but
@@ -243,40 +213,14 @@ func TestExtractDate_FromID(t *testing.T) {
 // ExtractDate must use time.Parse round-trip to validate range.
 func TestExtractDate_CalendarValidation(t *testing.T) {
 	t.Parallel()
-
-	cases := []struct {
-		name        string
-		id          bestiary.ModelID
-		releaseDate string
-		want        string
-	}{
-		// Invalid month — 99 is not a real month.
-		{"YYYY-MM-DD month 99 rejected", "model-9999-99-01", "", ""},
-		// Invalid day — 99 is not a real day.
-		{"YYYY-MM-DD day 99 rejected", "model-9999-01-99", "", ""},
-		// Both invalid.
-		{"YYYY-MM-DD month+day invalid", "model-9999-99-99", "", ""},
-		// Compact form with invalid month.
-		{"YYYYMMDD month 99 rejected", "model-99999901", "", ""},
-		// Valid edge: last day of a real month.
-		{"valid 2025-01-31", "model-2025-01-31", "", "2025-01-31"},
-		// Valid compact.
-		{"valid compact 20250101", "x-20250101", "", "2025-01-01"},
-		// February 29 on non-leap year rejected (Go's time.Parse rejects this).
-		{"Feb 29 non-leap year rejected", "model-2023-02-29", "", ""},
-		// February 29 on a leap year accepted.
-		{"Feb 29 leap year accepted", "model-2024-02-29", "", "2024-02-29"},
-	}
-
-	for _, tc := range cases {
-		t.Run(tc.name, func(t *testing.T) {
-			t.Parallel()
-			got := bestiary.ExtractDate(tc.id, tc.releaseDate)
-			if got != tc.want {
-				t.Errorf("ExtractDate(%q, %q) = %q, want %q", tc.id, tc.releaseDate, got, tc.want)
-			}
-		})
-	}
+	corpus := loadParseCorpus[dateInput, string](t, extractDateCalendarCorpusJSON, 8)
+	// Value coverage: the load-bearing valid/invalid boundary pairs must remain.
+	requireDateCoverage(t, corpus, map[dateInput]string{
+		{ID: "model-9999-99-01"}: "",           // invalid month rejected
+		{ID: "model-2023-02-29"}: "",           // Feb 29 non-leap rejected
+		{ID: "model-2024-02-29"}: "2024-02-29", // Feb 29 leap accepted
+	})
+	runExtractDateCorpus(t, corpus)
 }
 
 // ----------------------------------------------------------------------------
@@ -286,32 +230,13 @@ func TestExtractDate_CalendarValidation(t *testing.T) {
 // TestInferFamilyFromID covers the empty-family fallback heuristic.
 func TestInferFamilyFromID(t *testing.T) {
 	t.Parallel()
-
-	cases := []struct {
-		name     string
-		id       bestiary.ModelID
-		provider bestiary.Provider
-		want     bestiary.Family
-	}{
-		// BDD acceptance criterion: "gpt" from "gpt-4o-2024-08-06".
-		{"gpt-4o-2024-08-06", "gpt-4o-2024-08-06", bestiary.ProviderOpenAI, "gpt"},
-		// Leading alphabetic prefix extraction.
-		{"llama-3", "llama-3", bestiary.ProviderLocal, "llama"},
-		{"claude-3", "claude-3", bestiary.ProviderAnthropic, "claude"},
-		// Pure version-only ID — no family signal.
-		{"numeric only", "1234", bestiary.ProviderLocal, ""},
-		// Empty ID.
-		{"empty id", "", bestiary.ProviderLocal, ""},
-		// Single alphabetic token.
-		{"single token", "phi", bestiary.ProviderLocal, "phi"},
-	}
-
-	for _, tc := range cases {
-		t.Run(tc.name, func(t *testing.T) {
+	corpus := loadParseCorpus[providerIDInput, string](t, inferFamilyFromIDCorpusJSON, 6)
+	for _, c := range corpus.Cases {
+		t.Run(c.Name, func(t *testing.T) {
 			t.Parallel()
-			got := bestiary.InferFamilyFromID(tc.id, tc.provider)
-			if got != tc.want {
-				t.Errorf("InferFamilyFromID(%q, %q) = %q, want %q", tc.id, tc.provider, got, tc.want)
+			got := bestiary.InferFamilyFromID(bestiary.ModelID(c.Input.ID), bestiary.Provider(c.Input.Provider))
+			if string(got) != c.Expected {
+				t.Errorf("InferFamilyFromID(%q, %q) = %q, want %q", c.Input.ID, c.Input.Provider, got, c.Expected)
 			}
 		})
 	}
@@ -329,83 +254,25 @@ func TestInferFamilyFromID(t *testing.T) {
 // Version uses dot separator (4.5) not hyphen (4-5).
 func TestParseFamilyWithVersion_Core(t *testing.T) {
 	t.Parallel()
-
-	cases := []struct {
-		name        string
-		raw         bestiary.Family
-		wantFamily  bestiary.Family
-		wantVariant string
-		wantVersion string
-	}{
-		// Primary criterion: claude families with versioned hyphen suffix.
-		{"claude-opus-4-5", "claude-opus-4-5", "claude", "opus", "4.5"},
-		{"claude-opus-4-6", "claude-opus-4-6", "claude", "opus", "4.6"},
-		{"claude-sonnet-4-5", "claude-sonnet-4-5", "claude", "sonnet", "4.5"},
-		{"claude-haiku-4-5", "claude-haiku-4-5", "claude", "haiku", "4.5"},
-		// No version: vanilla overrides — version should be empty.
-		{"claude-opus no version", "claude-opus", "claude", "opus", ""},
-		{"claude-haiku no version", "claude-haiku", "claude", "haiku", ""},
-		// Single version segment (single numeric after dash).
-		{"llama-3-1 two parts", "llama-3-1", "llama", "", "3.1"},
-		// phi-4-5: base "phi" not in overrides → family=phi, variant empty, version=4.5.
-		{"phi-4-5", "phi-4-5", "phi", "", "4.5"},
-	}
-
-	for _, tc := range cases {
-		t.Run(tc.name, func(t *testing.T) {
-			t.Parallel()
-			gotFamily, gotVariant, gotVersion := bestiary.ParseFamilyWithVersion(tc.raw)
-			if gotFamily != tc.wantFamily {
-				t.Errorf("ParseFamilyWithVersion(%q) family = %q, want %q", tc.raw, gotFamily, tc.wantFamily)
-			}
-			if gotVariant != tc.wantVariant {
-				t.Errorf("ParseFamilyWithVersion(%q) variant = %q, want %q", tc.raw, gotVariant, tc.wantVariant)
-			}
-			if gotVersion != tc.wantVersion {
-				t.Errorf("ParseFamilyWithVersion(%q) version = %q, want %q", tc.raw, gotVersion, tc.wantVersion)
-			}
-		})
-	}
+	corpus := loadParseCorpus[string, familyVersionExpected](t, familyWithVersionCoreCorpusJSON, 8)
+	requireFamilyVersionCoverage(t, corpus, map[string]familyVersionExpected{
+		"claude-opus-4-5": {Family: "claude", Variant: "opus", Version: "4.5"},
+		"claude-opus":     {Family: "claude", Variant: "opus", Version: ""},
+		"llama-3-1":       {Family: "llama", Variant: "", Version: "3.1"},
+	})
+	runFamilyVersionCorpus(t, corpus)
 }
 
 // TestParseFamilyWithVersion_Gemini covers Gemini models which use a
 // major.minor version in their family string.
 func TestParseFamilyWithVersion_Gemini(t *testing.T) {
 	t.Parallel()
-
-	cases := []struct {
-		name        string
-		raw         bestiary.Family
-		wantFamily  bestiary.Family
-		wantVariant string
-		wantVersion string
-	}{
-		// gemini-2.5-flash: base=gemini, version=2.5 (from no-prefix pattern), variant=flash (override).
-		// The raw family "gemini-flash" is in overrides → (gemini, flash).
-		// But "gemini-2.5-flash" must parse via versioned patterns.
-		// Design: gemini-2.5-flash → family=gemini, variant=flash, version=2.5.
-		{"gemini-2.5-flash", "gemini-2.5-flash", "gemini", "flash", "2.5"},
-		// gemini-2.5 → no variant, version=2.5.
-		{"gemini-2.5", "gemini-2.5", "gemini", "", "2.5"},
-		// gemini-flash (no version): family=gemini, variant=flash, version empty.
-		{"gemini-flash no version", "gemini-flash", "gemini", "flash", ""},
-	}
-
-	for _, tc := range cases {
-		t.Run(tc.name, func(t *testing.T) {
-			t.Parallel()
-			gotFamily, gotVariant, gotVersion := bestiary.ParseFamilyWithVersion(tc.raw)
-			if gotFamily != tc.wantFamily {
-				t.Errorf("ParseFamilyWithVersion(%q) family = %q, want %q", tc.raw, gotFamily, tc.wantFamily)
-			}
-			if gotVariant != tc.wantVariant {
-				t.Errorf("ParseFamilyWithVersion(%q) variant = %q, want %q", tc.raw, gotVariant, tc.wantVariant)
-			}
-			if gotVersion != tc.wantVersion {
-				t.Errorf("ParseFamilyWithVersion(%q) version = %q, want %q", tc.raw, gotVersion, tc.wantVersion)
-			}
-		})
-	}
+	corpus := loadParseCorpus[string, familyVersionExpected](t, familyWithVersionGeminiCorpusJSON, 3)
+	requireFamilyVersionCoverage(t, corpus, map[string]familyVersionExpected{
+		"gemini-2.5-flash": {Family: "gemini", Variant: "flash", Version: "2.5"},
+		"gemini-2.5":       {Family: "gemini", Variant: "", Version: "2.5"},
+	})
+	runFamilyVersionCorpus(t, corpus)
 }
 
 // TestParseFamilyWithVersion_Empty verifies that empty input returns all-empty results.
@@ -430,37 +297,8 @@ func TestParseFamilyWithVersion_Empty(t *testing.T) {
 // should use ExtractVersionFromID instead, which handles this case.
 func TestParseFamilyWithVersion_AlphanumericVersion(t *testing.T) {
 	t.Parallel()
-
-	cases := []struct {
-		name        string
-		raw         bestiary.Family
-		wantFamily  bestiary.Family
-		wantVariant string
-		wantVersion string
-	}{
-		// "gpt-4o": "4o" is alphanumeric — no pattern strips it; full fallback.
-		// The family field "gpt-4o" is what models.dev actually returns for this model.
-		{"gpt-4o", "gpt-4o", "gpt-4o", "", ""},
-		// "chatgpt-4o-latest": "-latest" is not in the variant_suffixes list and
-		// the trailing token is non-numeric, so full fallback applies.
-		{"chatgpt-4o-latest", "chatgpt-4o-latest", "chatgpt-4o-latest", "", ""},
-	}
-
-	for _, tc := range cases {
-		t.Run(tc.name, func(t *testing.T) {
-			t.Parallel()
-			gotFamily, gotVariant, gotVersion := bestiary.ParseFamilyWithVersion(tc.raw)
-			if gotFamily != tc.wantFamily {
-				t.Errorf("ParseFamilyWithVersion(%q) family = %q, want %q", tc.raw, gotFamily, tc.wantFamily)
-			}
-			if gotVariant != tc.wantVariant {
-				t.Errorf("ParseFamilyWithVersion(%q) variant = %q, want %q", tc.raw, gotVariant, tc.wantVariant)
-			}
-			if gotVersion != tc.wantVersion {
-				t.Errorf("ParseFamilyWithVersion(%q) version = %q, want %q", tc.raw, gotVersion, tc.wantVersion)
-			}
-		})
-	}
+	corpus := loadParseCorpus[string, familyVersionExpected](t, familyWithVersionAlnumCorpusJSON, 2)
+	runFamilyVersionCorpus(t, corpus)
 }
 
 // TestExtractVersionFromID covers the ExtractVersionFromID helper introduced in
@@ -468,43 +306,13 @@ func TestParseFamilyWithVersion_AlphanumericVersion(t *testing.T) {
 // model ID when the raw family field does not embed one.
 func TestExtractVersionFromID(t *testing.T) {
 	t.Parallel()
-
-	cases := []struct {
-		name      string
-		id        bestiary.ModelID
-		rawFamily bestiary.Family
-		want      string
-	}{
-		// Required cases per the spec.
-		{"claude-opus-4-5-20251101", "claude-opus-4-5-20251101", "claude-opus", "4.5"},
-		{"claude-opus-4-6-20250514", "claude-opus-4-6-20250514", "claude-opus", "4.6"},
-		{"gemini-2.5-flash", "gemini-2.5-flash", "gemini", "2.5"},
-		{"claude-opus no version", "claude-opus", "claude-opus", ""},
-
-		// Additional coverage.
-		// gpt-4o: single alphanumeric token "4o" after stripping "gpt-"
-		{"gpt-4o", "gpt-4o", "gpt", "4o"},
-		// claude-opus-4-6 without date
-		{"claude-opus-4-6 no date", "claude-opus-4-6", "claude-opus", "4.6"},
-		// ID that exactly equals family: no trailing version
-		{"id equals family", "claude-opus", "claude-opus", ""},
-		// Empty inputs
-		{"empty id", "", "claude-opus", ""},
-		{"empty family", "claude-opus-4-5", "", ""},
-		// ID without the family prefix: no match
-		{"no prefix match", "gpt-4o", "claude-opus", ""},
-		// gemini-2.5: pure dot-version remainder
-		{"gemini-2.5", "gemini-2.5", "gemini", "2.5"},
-		// Trailing YYYY-MM-DD date stripped before version extraction
-		{"claude-opus-4-6-2026-02-05", "claude-opus-4-6-2026-02-05", "claude-opus", "4.6"},
-	}
-
-	for _, tc := range cases {
-		t.Run(tc.name, func(t *testing.T) {
+	corpus := loadParseCorpus[versionFromIDInput, string](t, extractVersionFromIDCorpusJSON, 12)
+	for _, c := range corpus.Cases {
+		t.Run(c.Name, func(t *testing.T) {
 			t.Parallel()
-			got := bestiary.ExtractVersionFromID(tc.id, tc.rawFamily)
-			if got != tc.want {
-				t.Errorf("ExtractVersionFromID(%q, %q) = %q, want %q", tc.id, tc.rawFamily, got, tc.want)
+			got := bestiary.ExtractVersionFromID(bestiary.ModelID(c.Input.ID), bestiary.Family(c.Input.RawFamily))
+			if got != c.Expected {
+				t.Errorf("ExtractVersionFromID(%q, %q) = %q, want %q", c.Input.ID, c.Input.RawFamily, got, c.Expected)
 			}
 		})
 	}
@@ -551,49 +359,24 @@ func TestParseFamilyWithVersion_BackwardCompat(t *testing.T) {
 func TestInferFamilyFromID_Variant(t *testing.T) {
 	t.Parallel()
 
-	cases := []struct {
-		desc        string
-		id          bestiary.ModelID
-		provider    bestiary.Provider
-		wantFamily  bestiary.Family
-		wantVariant string
-		wantVersion string
-	}{
-		{
-			desc:        "claude-opus-4-5-20251101 empty raw_family → (claude, opus, 4.5)",
-			id:          "claude-opus-4-5-20251101",
-			provider:    "nano-gpt",
-			wantFamily:  "claude",
-			wantVariant: "opus",
-			wantVersion: "4.5",
-		},
-		{
-			desc:        "claude-opus-4-6 empty raw_family → (claude, opus, 4.6)",
-			id:          "claude-opus-4-6",
-			provider:    "some-provider",
-			wantFamily:  "claude",
-			wantVariant: "opus",
-			wantVersion: "4.6",
-		},
-	}
-
-	for _, tc := range cases {
-		t.Run(tc.desc, func(t *testing.T) {
+	corpus := loadParseCorpus[providerIDInput, familyVersionExpected](t, inferFamilyVariantCorpusJSON, 2)
+	for _, c := range corpus.Cases {
+		t.Run(c.Name, func(t *testing.T) {
 			t.Parallel()
-			gotFamily, gotVariant, gotVersion := bestiary.InferFamilyFromIDWithVariant(tc.id, tc.provider)
-			if gotFamily != tc.wantFamily {
+			gotFamily, gotVariant, gotVersion := bestiary.InferFamilyFromIDWithVariant(bestiary.ModelID(c.Input.ID), bestiary.Provider(c.Input.Provider))
+			if string(gotFamily) != c.Expected.Family {
 				t.Errorf("InferFamilyFromIDWithVariant(%q, %q) family = %q, want %q",
-					tc.id, tc.provider, gotFamily, tc.wantFamily)
+					c.Input.ID, c.Input.Provider, gotFamily, c.Expected.Family)
 			}
-			if gotVariant != tc.wantVariant {
+			if gotVariant != c.Expected.Variant {
 				t.Errorf("InferFamilyFromIDWithVariant(%q, %q) variant = %q, want %q; "+
 					"must apply suffix/pattern logic to extract variant from ID tokens, "+
 					"not just return the first token",
-					tc.id, tc.provider, gotVariant, tc.wantVariant)
+					c.Input.ID, c.Input.Provider, gotVariant, c.Expected.Variant)
 			}
-			if gotVersion != tc.wantVersion {
+			if gotVersion != c.Expected.Version {
 				t.Errorf("InferFamilyFromIDWithVariant(%q, %q) version = %q, want %q",
-					tc.id, tc.provider, gotVersion, tc.wantVersion)
+					c.Input.ID, c.Input.Provider, gotVersion, c.Expected.Version)
 			}
 		})
 	}
