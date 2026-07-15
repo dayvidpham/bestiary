@@ -337,17 +337,15 @@ func normalizeOllamaName(name string) string {
 	return strings.Join(parts, "-")
 }
 
-// paramSizeFromID scans an ID's hyphen/colon/slash tokens for the first
-// recognised parameter-size token (e.g. "70b", "8x22b"), returning its canonical
-// form or "". It never splits on '.' so dotted versions ("3.3") are not mistaken
-// for sizes.
+// paramSizeFromID resolves an ID's canonical parameter-size token (e.g. "70b",
+// "8x22b", "235b-a22b"), returning its canonical form or "". It delegates to the
+// shared ExtractParamSizeToken grammar authority (longest whole-window match over
+// [-:/] only) so this site decomposes sizes identically to the library and never
+// re-implements a greedy per-token scan; '.' is never a separator, so dotted
+// versions ("3.3") are not mistaken for sizes.
 func paramSizeFromID(id string) string {
-	for _, tok := range strings.FieldsFunc(id, func(r rune) bool {
-		return r == '-' || r == ':' || r == '/'
-	}) {
-		if ps, err := bestiary.ParseParamSize(tok); err == nil && ps != "" {
-			return ps
-		}
+	if tok, ok := bestiary.ExtractParamSizeToken(id); ok {
+		return tok
 	}
 	return ""
 }

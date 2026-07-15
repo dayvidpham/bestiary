@@ -3,6 +3,7 @@ package bestiary
 import (
 	"encoding/json"
 	"fmt"
+	"sort"
 	"strings"
 	"sync"
 )
@@ -115,4 +116,116 @@ func parseParamSizeOverrides(raw []byte) (map[string]string, error) {
 func paramSizePin(id string) (token string, found bool) {
 	token, found = loadParamSizeOverrides()[strings.ToLower(strings.TrimSpace(id))]
 	return token, found
+}
+
+// EnrichedParamSize resolves the canonical parameter-size token for a model ID via
+// the PRESENCE-based precedence pin > mechanical > ParamSizeFor:
+//
+//   - a curated pin (param_size_overrides.json) is authoritative when PRESENT, even
+//     when its token is "" — a suppress-pin deliberately yields NO size and must
+//     never fall through to the mechanical extractor (presence, not value, decides);
+//   - else the mechanical ExtractParamSizeToken decomposition of the ID;
+//   - else the fetch-owned ParamSizeFor fallback (curated quant_vram.json), which
+//     ranks LAST so an Ollama-bot refresh of a fetch-owned param_size can never flip
+//     a stable ID-derived entity key.
+//
+// The returned err is a DISAGREEMENT signal — non-nil only when the ID is UNPINNED
+// and BOTH the mechanical token and the ParamSizeFor fallback are present yet differ.
+// That is a curation gap a human must resolve (add a pin). The returned token is
+// still valid (the mechanical token wins per precedence), so runtime callers ignore
+// the error and degrade gracefully; codegen treats it as a LOUD, actionable failure.
+func EnrichedParamSize(id string) (token string, err error) {
+	pinToken, pinned := paramSizePin(id)
+	mech, mechOK := ExtractParamSizeToken(id)
+	fallback := ParamSizeFor(ModelID(id))
+	return resolveParamSizePrecedence(id, pinToken, pinned, mech, mechOK, fallback)
+}
+
+// resolveParamSizePrecedence applies the presence-based precedence pin > mechanical >
+// ParamSizeFor to already-resolved tier values. It is separated from the table
+// lookups so the precedence itself is unit-testable with injected tiers — in
+// particular the token-less-fallback and disagreement paths that no current catalog
+// ID reaches (all four quant_vram.json param_sizes agree with the mechanical token
+// today, and every disagreeing ID is pinned). Callers pass the three tiers pre-fetched
+// from paramSizePin / ExtractParamSizeToken / ParamSizeFor.
+func resolveParamSizePrecedence(id, pinToken string, pinned bool, mech string, mechOK bool, fallback string) (string, error) {
+	if pinned {
+		return pinToken, nil // a PRESENT pin wins outright; "" suppresses all tiers.
+	}
+	if mechOK && fallback != "" && mech != fallback {
+		return mech, fmt.Errorf(
+			"bestiary: param-size disagreement for %q: mechanical token %q != curated ParamSizeFor %q\n"+
+				"  What: the ID-derived size token and the fetch-owned quant_vram.json param_size differ\n"+
+				"  Why: a curated fallback and the mechanical decomposition point at different sizes\n"+
+				"  Where: bestiary.EnrichedParamSize (codegen bake / runtime enrichment joint)\n"+
+				"  How to fix: add a curated pin in parse/data/param_size_overrides.json for %q resolving the size, "+
+				"or correct the quant_vram.json param_size so it matches the ID",
+			id, mech, fallback, id,
+		)
+	}
+	if mechOK {
+		return mech, nil
+	}
+	return fallback, nil
+}
+
+// enrichModelInfo is the shared per-row enrichment applied at BOTH runtime joints
+// (wire decode toModelInfo and store read scanModelInfo). It derives ParamSize from
+// the model ID via EnrichedParamSize and decomposes it into the flat shape ints
+// (TotalParams/ActiveParams/PerExpertParams/ExpertCount) via ParseParamShape.
+//
+// It is a pure function of (ID, embedded curated data): NOTHING is persisted, so the
+// SQLite store needs no param_size column and stays schema v6 — a cached row is
+// re-enriched from its ID on read. A disagreement or an unparseable size degrades
+// gracefully (the derived token is still used, shape ints stay zero), so a runtime
+// joint never fails on data; the codegen bake path surfaces the same disagreement as
+// a LOUD error instead.
+func enrichModelInfo(m *ModelInfo) {
+	size, _ := EnrichedParamSize(string(m.ID))
+	m.ParamSize = size
+	shape, _ := ParseParamShape(size)
+	m.TotalParams = shape.TotalParams
+	m.ActiveParams = shape.ActiveParams
+	m.PerExpertParams = shape.PerExpertParams
+	m.ExpertCount = shape.ExpertCount
+}
+
+// ValidateParamSizePins checks that every curated pin token in
+// param_size_overrides.json is CANONICAL: a non-empty token must round-trip through
+// ParseParamSize to itself (a suppress-pin "" is allowed and skipped). It returns an
+// actionable error naming every offending id -> token pair so a typo (e.g.
+// "17b-16ee") is caught at CODEGEN, before a non-canonical token can ever flow into
+// #size key material. The runtime loader stays graceful (a bad file degrades to an
+// empty map); this is the codegen-time discipline that fences the pin file.
+func ValidateParamSizePins() error {
+	return validateParamSizePinsIn(loadParamSizeOverrides())
+}
+
+// validateParamSizePinsIn is the testable seam behind ValidateParamSizePins: it runs
+// the canonical-token check over any pin map, so the rejection path is falsifiable
+// with injected bad pins — the embedded seed is expected to always pass, which would
+// otherwise leave the rejection arm unreachable from tests.
+func validateParamSizePinsIn(pins map[string]string) error {
+	var bad []string
+	for id, tok := range pins {
+		if tok == "" {
+			continue // suppress-pin: absence of a size is the intended, canonical state.
+		}
+		canon, perr := ParseParamSize(tok)
+		if perr != nil || canon != tok {
+			bad = append(bad, fmt.Sprintf("%q -> %q", id, tok))
+		}
+	}
+	if len(bad) == 0 {
+		return nil
+	}
+	sort.Strings(bad)
+	return fmt.Errorf(
+		"bestiary: non-canonical param-size pin(s) in param_size_overrides.json: %s\n"+
+			"  What: a curated pin token is not a canonical size (ParseParamSize rejected it or normalized it differently)\n"+
+			"  Why: a typo'd or non-normalized token would flow verbatim into #size entity-key material\n"+
+			"  Where: parse/data/param_size_overrides.json\n"+
+			"  How to fix: correct each token to its canonical form (e.g. \"17b-16e\", \"10.7b\"); use \"\" for a suppress-pin",
+		strings.Join(bad, ", "),
+	)
 }

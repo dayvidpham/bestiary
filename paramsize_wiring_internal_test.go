@@ -4,8 +4,8 @@ package bestiary
 // ParamSize wiring end-to-end. These tests live in package bestiary (internal) so
 // they can temporarily replace staticModels and reset the entity index, making the
 // wiring in registry.go, EntityByTuple, and matchCanonicalSegments falsifiable with
-// controlled fixtures rather than relying solely on production data where all sizes
-// are currently empty.
+// controlled fixtures: each leg isolates exactly one sized/unsized configuration,
+// independent of how the full-bulk re-key happens to size the production catalog.
 //
 // These tests must NOT be run in parallel with each other or with any test that
 // reads entity index state, because withSyntheticRegistry mutates shared package
@@ -19,6 +19,7 @@ package bestiary
 //   - swapping the #size strip to after the @ strip in matchCanonicalSegments
 
 import (
+	"strings"
 	"sync"
 	"testing"
 )
@@ -65,6 +66,152 @@ func syntheticLlamaModel(paramSize string) ModelInfo {
 		Version:   "3.3",
 		Modifier:  []string{"instruct"},
 		ParamSize: paramSize,
+	}
+}
+
+// TestCodegen_ParamSizePrecedence pins the presence-based precedence pin > mechanical
+// > ParamSizeFor that the codegen bake and both runtime enrichment joints share. It
+// replaces the pre-v0.2.6 "ParamSize only from the curated table" guard: the full-bulk
+// re-key now sizes every ID with a mechanical token, so the enduring invariant is the
+// PRECEDENCE, not a curated-only emission. The reachable tiers are exercised against
+// the real embedded tables via EnrichedParamSize; the token-less-fallback and
+// disagreement paths — which no current catalog ID reaches — are exercised against the
+// pure resolveParamSizePrecedence helper with injected tiers.
+func TestCodegen_ParamSizePrecedence(t *testing.T) {
+	t.Run("pin wins over a divergent mechanical token (llama-4 seed)", func(t *testing.T) {
+		const id = "llama-4-scout-17b-instruct"
+		if mech, _ := ExtractParamSizeToken(id); mech != "17b" {
+			t.Fatalf("precondition: mechanical token = %q, want %q (the pin must genuinely diverge)", mech, "17b")
+		}
+		got, err := EnrichedParamSize(id)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if got != "17b-16e" {
+			t.Errorf("EnrichedParamSize(%q) = %q, want %q (pin must override the divergent mechanical token)", id, got, "17b-16e")
+		}
+	})
+
+	t.Run("suppress-pin never falls through to mechanical (non-vacuity pinned)", func(t *testing.T) {
+		const id = "qwen/qwen3-coder-next-fp8-1m"
+		// Non-vacuity: the extractor HONESTLY returns ("1m", true), so the suppress-pin
+		// is doing real work — without it the ID would key #1m. This pins the extractor
+		// result so the suppress leg can never go dead.
+		if mech, ok := ExtractParamSizeToken(id); mech != "1m" || !ok {
+			t.Fatalf("precondition: ExtractParamSizeToken(%q) = (%q,%v), want (\"1m\",true) — else the suppress-pin is vacuous", id, mech, ok)
+		}
+		got, err := EnrichedParamSize(id)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if got != "" {
+			t.Errorf("EnrichedParamSize(%q) = %q, want \"\" (suppress-pin must not fall through to mechanical)", id, got)
+		}
+	})
+
+	t.Run("mechanical fills an unpinned, uncurated ID", func(t *testing.T) {
+		const id = "qwen/qwen3-30b-a3b"
+		if got := ParamSizeFor(ModelID(id)); got != "" {
+			t.Fatalf("precondition: ParamSizeFor(%q) = %q, want \"\" (this leg must exercise the mechanical tier, not the fallback)", id, got)
+		}
+		got, err := EnrichedParamSize(id)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if got != "30b-a3b" {
+			t.Errorf("EnrichedParamSize(%q) = %q, want %q (mechanical tier)", id, got, "30b-a3b")
+		}
+	})
+
+	// Precedence-decision legs via the pure helper with injected tiers.
+	t.Run("ParamSizeFor fills only when there is no mechanical token", func(t *testing.T) {
+		got, err := resolveParamSizePrecedence("some/quant-tagged-ollama-id", "", false, "", false, "13b")
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if got != "13b" {
+			t.Errorf("token-less fallback = %q, want %q (ParamSizeFor is the last tier)", got, "13b")
+		}
+	})
+
+	t.Run("mechanical outranks ParamSizeFor when both agree", func(t *testing.T) {
+		got, err := resolveParamSizePrecedence("id", "", false, "8b", true, "8b")
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if got != "8b" {
+			t.Errorf("got %q, want %q", got, "8b")
+		}
+	})
+
+	t.Run("unpinned mechanical-vs-ParamSizeFor disagreement is a loud error", func(t *testing.T) {
+		got, err := resolveParamSizePrecedence("bad/id", "", false, "70b", true, "72b")
+		if err == nil {
+			t.Fatalf("mechanical %q != fallback %q returned no error; codegen would silently bake a contested size", "70b", "72b")
+		}
+		if got != "70b" {
+			t.Errorf("on disagreement the value = %q, want the mechanical token %q (precedence still resolves)", got, "70b")
+		}
+		// The error must be actionable on its own: it names the offending ID and BOTH
+		// disagreeing tokens, so a curator can write the resolving pin from the message.
+		msg := err.Error()
+		for _, want := range []string{`"bad/id"`, `"70b"`, `"72b"`} {
+			if !strings.Contains(msg, want) {
+				t.Errorf("disagreement error missing %s\n  got: %s", want, msg)
+			}
+		}
+	})
+
+	t.Run("a present pin resolves the disagreement without error", func(t *testing.T) {
+		got, err := resolveParamSizePrecedence("id", "17b-16e", true, "70b", true, "72b")
+		if err != nil {
+			t.Fatalf("a pin must resolve a disagreement without error, got %v", err)
+		}
+		if got != "17b-16e" {
+			t.Errorf("got %q, want %q (pin wins)", got, "17b-16e")
+		}
+	})
+}
+
+// TestEnrichModelInfo_ShapeInts verifies the shared read/decode enrichment populates
+// ParamSize AND the four flat shape ints from the ID in one joint, honoring the
+// presence-based precedence (pin > mechanical > ParamSizeFor) and each param-shape
+// family. It pins the PerExpertParams NxM case (ExpertCount + PerExpertParams, NEVER a
+// total) and the suppress-pin (no size, no ints) so a regression in either the joint
+// wiring or the shape decomposition is caught.
+func TestEnrichModelInfo_ShapeInts(t *testing.T) {
+	cases := []struct {
+		name, id, wantSize                   string
+		wantTotal, wantActive, wantPerExpert int64
+		wantExperts                          int
+	}{
+		{"dense", "meta-llama/Llama-3.3-70B-Instruct", "70b", 70_000_000_000, 0, 0, 0},
+		{"decimal dense", "qwen/qwen3-embedding-0.6b", "0.6b", 600_000_000, 0, 0, 0},
+		{"active MoE", "qwen/qwen3-30b-a3b", "30b-a3b", 30_000_000_000, 3_000_000_000, 0, 0},
+		{"NxM MoE — PerExpertParams, no total", "mistralai/mixtral-8x22b", "8x22b", 0, 0, 22_000_000_000, 8},
+		{"count-suffixed MoE via curated pin", "llama-4-scout-17b-instruct", "17b-16e", 0, 17_000_000_000, 0, 16},
+		{"suppress-pin yields no size, no ints", "qwen/qwen3-coder-next-fp8-1m", "", 0, 0, 0, 0},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			m := ModelInfo{ID: ModelID(tc.id)}
+			enrichModelInfo(&m)
+			if m.ParamSize != tc.wantSize {
+				t.Errorf("ParamSize = %q, want %q", m.ParamSize, tc.wantSize)
+			}
+			if m.TotalParams != tc.wantTotal {
+				t.Errorf("TotalParams = %d, want %d", m.TotalParams, tc.wantTotal)
+			}
+			if m.ActiveParams != tc.wantActive {
+				t.Errorf("ActiveParams = %d, want %d", m.ActiveParams, tc.wantActive)
+			}
+			if m.PerExpertParams != tc.wantPerExpert {
+				t.Errorf("PerExpertParams = %d, want %d", m.PerExpertParams, tc.wantPerExpert)
+			}
+			if m.ExpertCount != tc.wantExperts {
+				t.Errorf("ExpertCount = %d, want %d", m.ExpertCount, tc.wantExperts)
+			}
+		})
 	}
 }
 

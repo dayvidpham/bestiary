@@ -115,6 +115,45 @@ func TestUpsertQueryModels_RoundTrip(t *testing.T) {
 	}
 }
 
+// TestUpsertQueryModels_ReEnrichesParamSizeFromID is the store round-trip guard for
+// the read-path enrichment joint. The models table has NO param_size column, so a
+// cached row's ParamSize + shape ints are RE-DERIVED from its ID by scanModelInfo on
+// every read. A row inserted with deliberately WRONG size fields must read back with
+// the correct enriched values, proving the size is never persisted — the store stays
+// at schema v6 and a merge can never de-size an (ID, Provider).
+func TestUpsertQueryModels_ReEnrichesParamSizeFromID(t *testing.T) {
+	ctx := context.Background()
+	s := openMemStore(t)
+
+	in := bestiary.ModelInfo{
+		ID:           "qwen/qwen3-30b-a3b",
+		Provider:     bestiary.ProviderOpenAI,
+		ParamSize:    "WRONG", // must be ignored on write — there is no param_size column
+		TotalParams:  123,     // must be ignored
+		ActiveParams: 456,     // must be ignored
+	}
+	if err := s.UpsertModels(ctx, []bestiary.ModelInfo{in}); err != nil {
+		t.Fatalf("UpsertModels: %v", err)
+	}
+
+	got, err := s.QueryModel(ctx, in.ID)
+	if err != nil {
+		t.Fatalf("QueryModel: %v", err)
+	}
+	// Re-derived from the ID via the shared enrichment, not the persisted WRONG values.
+	wantSize, _ := bestiary.EnrichedParamSize(string(in.ID))
+	if got.ParamSize != wantSize || got.ParamSize != "30b-a3b" {
+		t.Errorf("round-trip ParamSize = %q, want %q (re-derived from the ID)", got.ParamSize, "30b-a3b")
+	}
+	if got.TotalParams != 30_000_000_000 || got.ActiveParams != 3_000_000_000 {
+		t.Errorf("round-trip shape ints = {total:%d active:%d}, want {30000000000 3000000000} (re-derived, not persisted)",
+			got.TotalParams, got.ActiveParams)
+	}
+	if got.PerExpertParams != 0 || got.ExpertCount != 0 {
+		t.Errorf("active-MoE shape must set no PerExpertParams/ExpertCount, got {%d %d}", got.PerExpertParams, got.ExpertCount)
+	}
+}
+
 // TestCanonicalFields_RoundTrip verifies that Family, Variant, and Date survive a
 // UpsertModels + QueryModel round-trip with non-zero values. This test exists because
 // these fields were added in v3 and the base testModel fixture intentionally sets them;

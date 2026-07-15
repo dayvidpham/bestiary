@@ -833,6 +833,73 @@ func TestSync_PersistsMetadataAndIngestLog(t *testing.T) {
 	}
 }
 
+// TestSync_KeyIdentity_ReDerivesSizeAndSources drives runSyncClient against httptest
+// with a size-bearing model ID and asserts the sync/cache round-trip re-derives the
+// SIZE dimension identically to the static decomposition: the persisted row carries no
+// param_size column, so a correct read-back proves the wire-decode joint (on the way
+// in) and the store-scan joint (on the way out) agree with the codegen bake. Because
+// ParamSize is a pure function of the ID, a synced (ID, Provider) can never be de-sized
+// by the most-recent-wins merge — the static and synced rows resolve the same size. It
+// also pins the entity key's #size segment and the [models.dev] Sources projection.
+// (The Family/Version decomposition is deliberately NOT asserted here: full family
+// decomposition is a codegen-time step, so a live-sync row keeps its raw family — a
+// pre-existing codegen-vs-runtime difference outside the #size re-key.)
+func TestSync_KeyIdentity_ReDerivesSizeAndSources(t *testing.T) {
+	const sizedAPIJSON = `{"testprov":{"models":{"qwen3-30b-a3b":{"id":"qwen3-30b-a3b","name":"Q","family":"qwen"}}}}`
+	srv := syncTestServer(t, sizedAPIJSON, "{}")
+	client := bestiary.NewClient(bestiary.WithBaseURL(srv.URL + "/api.json"))
+	db := tempDBPath(t)
+
+	_ = captureStdout(t, func() {
+		if err := runSyncClient(client, "", bestiary.FormatJSON, db); err != nil {
+			t.Fatalf("runSyncClient: %v", err)
+		}
+	})
+
+	store, err := bestiary.OpenStore(db)
+	if err != nil {
+		t.Fatalf("OpenStore: %v", err)
+	}
+	defer store.Close()
+
+	models, err := store.QueryModels(context.Background(), "")
+	if err != nil {
+		t.Fatalf("QueryModels: %v", err)
+	}
+	var m *bestiary.ModelInfo
+	for i := range models {
+		if models[i].ID == "qwen3-30b-a3b" {
+			m = &models[i]
+		}
+	}
+	if m == nil {
+		t.Fatalf("synced model not found; got %d cached rows", len(models))
+	}
+
+	// ParamSize + shape ints re-derived on the cache read path, identical to the static
+	// decomposition of the same ID.
+	wantSize, _ := bestiary.EnrichedParamSize("qwen3-30b-a3b")
+	wantShape, _ := bestiary.ParseParamShape(wantSize)
+	if m.ParamSize != wantSize || m.ParamSize != "30b-a3b" {
+		t.Errorf("synced ParamSize = %q, want %q (re-derived from ID; merge must not de-size)", m.ParamSize, "30b-a3b")
+	}
+	if m.TotalParams != wantShape.TotalParams || m.ActiveParams != wantShape.ActiveParams {
+		t.Errorf("synced shape ints = {total:%d active:%d}, want {%d %d}",
+			m.TotalParams, m.ActiveParams, wantShape.TotalParams, wantShape.ActiveParams)
+	}
+
+	// The entity key carries the re-derived #size segment, and the Sources projection is
+	// exactly one models.dev attestation keyed by that entity.
+	key := entityRefForModel(*m).String()
+	if !strings.Contains(key, "#30b-a3b") {
+		t.Errorf("synced entity key = %q, want a #30b-a3b segment", key)
+	}
+	att := entitySourcesForModels([]bestiary.ModelInfo{*m})
+	if len(att) != 1 || att[0].SourceID != bestiary.DataSourceModelsDev || att[0].EntityKey != key {
+		t.Errorf("attestations = %+v, want one models.dev row for entity key %q", att, key)
+	}
+}
+
 // TestEntitySourcesForModels_DerivesAndDedups asserts the attestation derivation
 // builds one models.dev row per DISTINCT entity key (many models → one entity
 // collapse) using the same identity projection the registry uses.

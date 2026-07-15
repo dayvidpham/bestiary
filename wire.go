@@ -233,8 +233,10 @@ type wireCatalog struct {
 // toModelInfo converts a wire-level api.json model entry to the public ModelInfo
 // type. providerSlug is the map key from wireResponse (e.g., "anthropic").
 // LastSynced is intentionally left empty — callers set it on persist.
-// ParamSize is intentionally left "" — live sync rows are unsized; curated
-// param-size data is baked at codegen time, not available from the live API.
+// ParamSize and the parameter-shape ints are derived from the ID by enrichModelInfo
+// (the same joint the store read path uses): the size is a pure function of the ID
+// and the embedded curated tables, so a live-sync row is sized identically to the
+// baked static row for the same ID (their entity keys agree and merge cannot de-size).
 // QuantVRAM is intentionally left nil — live sync rows carry no quant/VRAM data;
 // curated VRAM is baked at codegen time, not available from the live API.
 // Source is intentionally left DataSourceNone — live sync rows have no curated
@@ -291,6 +293,11 @@ func toModelInfo(providerSlug string, wm wireModel) ModelInfo {
 	if wm.Modalities != nil {
 		info.Modalities = toModalities(wm.Modalities.Input, wm.Modalities.Output)
 	}
+
+	// Size enrichment joint: derive ParamSize + the flat shape ints from the ID via
+	// the shared, pure enrichment (pin > mechanical > ParamSizeFor). Nothing is
+	// persisted — the store read path re-derives the same values.
+	enrichModelInfo(&info)
 
 	return info
 }

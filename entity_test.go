@@ -338,43 +338,34 @@ func TestEntityRef_ParamSizeDistinct(t *testing.T) {
 	}
 }
 
-// TestEntityRef_NoMigrationDrift is the registry-level migration-drift guard for
-// the #size grammar over the real static catalog. It enforces four invariants,
-// asserted below in this order:
+// TestEntityRef_NoMigrationDrift is the registry-level successor invariant for the
+// full-bulk #size re-key. Before v0.2.6 only three curated quant_vram.json IDs were
+// sized; the shared enrichment now sizes every ID that carries a mechanical size
+// token, so the guard shifts from "no catalog entity may bear a #" to a bounded,
+// consistency-checked census. It enforces four invariants:
 //
-//	(a) NO unintended drift: every '#'-bearing entity must be EITHER a curated
-//	    CATALOG sized entity (in wantSizedKeys) OR a metadata-only STANDALONE entity
-//	    (no provider instances — a models.dev metadata row whose family is absent from
-//	    the catalog, whose id legitimately carries a size token). A '#size' segment on
-//	    an UNCURATED CATALOG entity (one with instances) signals an accidental
-//	    wrong-merge or a misapplied curation entry — a mechanically-sized catalog
-//	    entity, which stays deferred. Standalone sizes are CORRECT and intentional:
-//	    e.g. ornith#9b vs ornith#31b are genuinely distinct models that would
-//	    wrong-merge without their sizes (the #size-identity precedent).
+//	(a) CENSUS-LITERAL sized-entity count: the number of '#'-bearing CATALOG entities
+//	    (with provider instances) and metadata-only STANDALONE entities (no instances)
+//	    are each pinned to an exact literal. These literals change ONCE, intentionally,
+//	    with the full-bulk re-key; any later drift signals a silently added or dropped
+//	    sized entity.
 //
-//	(b) INTENDED sizing: the three curated models.dev IDs with an explicit
-//	    param_size in quant_vram.json must each produce an entity with the
-//	    correct '#size' segment in its key. This pins the exact expected keys so
-//	    a regression in the ParamSize carrier (registry.go -> EntityRef -> String())
-//	    is caught immediately.
+//	(b) PER-SHAPE EXEMPLAR KEY PINS: one representative of each param-shape family must
+//	    exist with the exact #size segment — dense (#8b), decimal dense (#0.6b), active
+//	    MoE (#30b-a3b), NxM MoE (#8x22b), and count-suffixed MoE (#17b-16e, a curated
+//	    llama-4 scout pin) — so a regression in any shape's carrier is caught.
 //
-//	(c) ENTITY-COUNT FLOOR: the registry must hold at least wantMinEntities, so an
-//	    inadvertent truncation of the catalog is caught.
+//	(c) ENRICHMENT-CONSISTENCY SWEEP (forward AND inverse in one pass): every CATALOG
+//	    entity's baked ParamSize must equal the LIVE EnrichedParamSize of each of its
+//	    instance IDs. Forward — a #size is present only when the ID genuinely resolves
+//	    one (no invented size); inverse — an unsized key means NO instance resolves a
+//	    size, which is exactly how the suppress-pin (qwen3-coder-next-fp8-1m, where
+//	    "1m" is a context-tier marker) is verified to hold: its entity must stay
+//	    unsized. The sweep re-derives from the ID rather than reading the baked value,
+//	    so it is not a tautology on production output.
 //
-//	(d) CATALOG-SIZED-COUNT PIN: the number of '#'-bearing CATALOG entities (those
-//	    with provider instances) must equal the curated set size exactly, so neither a
-//	    missing curated join nor a stray param_size leaking onto an uncurated catalog
-//	    model slips by. Metadata-standalone sizes are additions, not catalog drift, so
-//	    they are excluded from this pin — the count is NOT derived from production
-//	    output (no tautology): it is anchored to the curated quant_vram.json seed.
-//
-// The body asserts (b) first (building the actual-key index it reuses), then (a),
-// then (c), then (d).
-//
-// The curated sized set (models.dev IDs with param_size in quant_vram.json):
-//   - llama-3.3-70b-instruct -> llama@3.3#70b{instruct}
-//   - llama-3.3-8b-instruct  -> llama@3.3#8b{instruct}
-//   - llama-3.2-3b-instruct  -> llama@3.2#3b{instruct}
+//	(d) ENTITY-COUNT FLOOR (retained): the registry must hold at least wantMinEntities,
+//	    so an inadvertent truncation of the catalog is caught.
 func TestEntityRef_NoMigrationDrift(t *testing.T) {
 	entities := bestiary.Entities()
 	if len(entities) == 0 {
@@ -387,86 +378,127 @@ func TestEntityRef_NoMigrationDrift(t *testing.T) {
 	// identifies a standalone.
 	isStandalone := func(e bestiary.Entity) bool { return len(e.Instances) == 0 }
 
-	// (b) Pin the exact expected keys for the curated sized entities.
-	wantSizedKeys := map[string]string{
-		"llama@3.3#70b{instruct}": "llama-3.3-70b-instruct",
-		"llama@3.3#8b{instruct}":  "llama-3.3-8b-instruct",
-		"llama@3.2#3b{instruct}":  "llama-3.2-3b-instruct",
-	}
+	// (a) Census literals — pinned to the full-bulk re-key snapshot. A change here is
+	// an intentional re-key event, not incidental drift.
+	const (
+		wantSizedCatalog    = 337
+		wantSizedStandalone = 4
+	)
 
-	// Build index of actual entity keys for assertion (b).
-	actualKeys := make(map[string]bestiary.EntityRef, len(entities))
+	// (b) Per-shape exemplar keys that must be present after the re-key.
+	wantExemplars := []string{
+		"llama@3.1#8b{instruct}",        // dense
+		"qwen/embedding@3#0.6b",         // decimal dense — never "6b"
+		"qwen@3#30b-a3b",                // active MoE
+		"wizardlm@2#8x22b",              // NxM MoE (ExpertCount + PerExpertParams, no total)
+		"llama/scout#17b-16e{instruct}", // count-suffixed MoE via the curated llama-4 pin
+	}
+	keyIndex := make(map[string]bestiary.Entity, len(entities))
 	for _, e := range entities {
-		actualKeys[e.Ref.String()] = e.Ref
+		keyIndex[e.Ref.String()] = e
 	}
-
-	// Assert (b): each expected sized key must exist in the registry with the
-	// correct '#size' segment.
-	for wantKey, modelID := range wantSizedKeys {
-		ref, ok := actualKeys[wantKey]
-		if !ok {
-			t.Errorf("curated model %q: expected entity key %q not found in registry\n"+
-				"  What: the sized entity is missing — re-keyed quant_vram.json entry did not join\n"+
-				"  Why: either regen has not been run, or the model_id does not match the models.dev catalog ID\n"+
-				"  How to fix: run 'go run ./cmd/bestiary-gen --no-fetch' to regenerate static data",
-				modelID, wantKey)
-			continue
-		}
-		if ref.ParamSize == "" {
-			t.Errorf("entity %q: ParamSize is empty, want non-empty", wantKey)
+	for _, want := range wantExemplars {
+		if _, ok := keyIndex[want]; !ok {
+			t.Errorf("per-shape exemplar sized key %q missing from the registry\n"+
+				"  What: a representative #size entity for one param-shape is absent\n"+
+				"  Why: a regression in the size carrier, the shape grammar, or a curated pin\n"+
+				"  How to fix: run 'go run ./cmd/bestiary-gen --no-fetch'; if the re-key intentionally moved this key, update the exemplar",
+				want)
 		}
 	}
 
-	// Assert (a): every '#'-bearing entity is either a curated CATALOG sized entity or
-	// a metadata-only STANDALONE. A '#' on an uncurated CATALOG entity is drift.
+	// (a)+(c): count '#'-bearing entities and run the enrichment-consistency sweep.
+	sizedCatalog, sizedStandalone := 0, 0
 	for _, e := range entities {
-		key := e.Ref.String()
-		if !strings.Contains(key, "#") {
-			continue
-		}
-		if _, isCuratedSized := wantSizedKeys[key]; isCuratedSized {
-			continue // expected curated catalog sized entity
+		if strings.Contains(e.Ref.String(), "#") {
+			if isStandalone(e) {
+				sizedStandalone++
+			} else {
+				sizedCatalog++
+			}
 		}
 		if isStandalone(e) {
-			continue // metadata-only standalone — a legitimate sized addition
+			continue // standalones carry no instance IDs to re-derive the size from.
 		}
-		t.Errorf("unexpected '#' in CATALOG entity key %q (ParamSize=%q): this entity has provider instances but is not in the curated sized set\n"+
-			"  What: a catalog entity acquired a '#size' segment without a matching quant_vram.json entry\n"+
-			"  How to fix: either add the model_id to wantSizedKeys above (if intentional), or remove the param_size from quant_vram.json",
-			key, e.Ref.ParamSize)
+		for _, inst := range e.Instances {
+			got, _ := bestiary.EnrichedParamSize(string(inst.ID))
+			if got != e.Ref.ParamSize {
+				t.Errorf("instance %q: live EnrichedParamSize=%q but entity %q baked ParamSize=%q\n"+
+					"  What: the baked static size and the re-derived size disagree\n"+
+					"  How to fix: run 'go run ./cmd/bestiary-gen --no-fetch' to re-bake, or fix the enrichment precedence",
+					inst.ID, got, e.Ref.String(), e.Ref.ParamSize)
+			}
+		}
+	}
+	if sizedCatalog != wantSizedCatalog {
+		t.Errorf("sized CATALOG entity count = %d, want %d (census literal)\n"+
+			"  What: the number of '#'-bearing catalog entities changed\n"+
+			"  How to fix: if the re-key intentionally shifted this, update wantSizedCatalog; otherwise regen",
+			sizedCatalog, wantSizedCatalog)
+	}
+	if sizedStandalone != wantSizedStandalone {
+		t.Errorf("sized STANDALONE entity count = %d, want %d (census literal)", sizedStandalone, wantSizedStandalone)
 	}
 
-	// (c) Pin the entity count floor so inadvertent registry truncation is caught.
+	// (c) explicit suppress-pin guard: the ONE suppress-pinned ID must resolve to NO
+	// size, so it never keys #1m and stays grouped with its unsized siblings.
+	if got, _ := bestiary.EnrichedParamSize("qwen/qwen3-coder-next-fp8-1m"); got != "" {
+		t.Errorf("suppress-pin failed: EnrichedParamSize(qwen/qwen3-coder-next-fp8-1m) = %q, want \"\" (\"1m\" is a 1M-context tier marker, not params)", got)
+	}
+
+	// (d) entity-count floor.
 	const wantMinEntities = 600
 	if len(entities) < wantMinEntities {
 		t.Errorf("entity count = %d, want >= %d; a large drop signals registry truncation", len(entities), wantMinEntities)
 	}
 
-	// (d) Pin the CATALOG sized count: exactly len(wantSizedKeys) curated sized CATALOG
-	// entities must exist — neither fewer (a dropped join) nor more (a stray param_size
-	// leaking onto an uncurated catalog model). Metadata-standalone sizes are excluded
-	// (they are additions, not catalog drift); the pin stays anchored to the curated
-	// seed, not derived from production output.
-	catalogSized, standaloneSized := 0, 0
-	for _, e := range entities {
-		if !strings.Contains(e.Ref.String(), "#") {
+	t.Logf("checked %d entities: %d sized (catalog), %d sized (standalone), %d unsized",
+		len(entities), sizedCatalog, sizedStandalone, len(entities)-sizedCatalog-sizedStandalone)
+}
+
+// TestParamSizePins_Llama4CensusBothLegs is the automated guard for the dual-method
+// llama-4 pin census. Every catalog llama-4 scout/maverick ID — identified by BOTH
+// the decomposition leg (family=llama, version=4, variant scout|maverick) AND the
+// literal-substring leg ("llama4"/"llama-4") — must key its FULL expert-shape size:
+// scout = 17b-16e, maverick = 17b-128e; never a bare 17b and never unsized.
+//
+// Neither leg alone is sufficient, which is the whole point: the four dotted Bedrock
+// forms (meta.llama4-*, us.meta.llama4-*-17b-instruct-v1:0) decompose with an empty
+// Version/Variant, so they ESCAPE the decomposition leg and are reached only by the
+// substring sweep plus their explicit curated pins. A purely-decomposition census
+// would silently leave those bare #17b — this guard fails if that regresses.
+func TestParamSizePins_Llama4CensusBothLegs(t *testing.T) {
+	checked := 0
+	for _, m := range bestiary.StaticModels() {
+		id := strings.ToLower(string(m.ID))
+		substrLeg := strings.Contains(id, "llama4") || strings.Contains(id, "llama-4")
+		decompLeg := m.Family == bestiary.FamilyLlama && m.Version == "4" &&
+			(m.Variant == "scout" || m.Variant == "maverick")
+		if !substrLeg && !decompLeg {
 			continue
 		}
-		if isStandalone(e) {
-			standaloneSized++
-		} else {
-			catalogSized++
+		isScout := strings.Contains(id, "scout")
+		isMaverick := strings.Contains(id, "maverick")
+		if !isScout && !isMaverick {
+			continue // a llama-4 that is neither scout nor maverick carries no pin.
+		}
+		checked++
+		want := "17b-16e"
+		if isMaverick {
+			want = "17b-128e"
+		}
+		if m.ParamSize != want {
+			t.Errorf("llama-4 %q keys ParamSize=%q, want %q\n"+
+				"  What: a llama-4 scout/maverick ID is not carrying its full expert shape\n"+
+				"  Why: a curated pin is missing (census gap) — a bare #17b splits the artifact from its siblings\n"+
+				"  How to fix: add the ID to parse/data/param_size_overrides.json with the full-shape token",
+				m.ID, m.ParamSize, want)
 		}
 	}
-	if catalogSized != len(wantSizedKeys) {
-		t.Errorf("catalog sized entity count = %d, want %d (one per curated models.dev entry in quant_vram.json)\n"+
-			"  What: sized CATALOG entity count does not match the curated seed\n"+
-			"  How to fix: ensure quant_vram.json and wantSizedKeys above are in sync",
-			catalogSized, len(wantSizedKeys))
+	if checked == 0 {
+		t.Fatal("no llama-4 scout/maverick IDs found — the census guard is vacuous; the vendored catalog changed")
 	}
-
-	t.Logf("checked %d entities: %d curated-sized (catalog), %d standalone-sized (metadata), %d unsized",
-		len(entities), catalogSized, standaloneSized, len(entities)-catalogSized-standaloneSized)
+	t.Logf("llama-4 census guard checked %d scout/maverick IDs (both legs)", checked)
 }
 
 // TestEntityRef_String_ParamSizeGrammar locks the full #size grammar for all
@@ -496,6 +528,26 @@ func TestEntityRef_String_ParamSizeGrammar(t *testing.T) {
 			name: "full tuple: family/variant@version#size{mods}",
 			ref:  bestiary.EntityRef{Family: "qwen", Variant: "coder", Version: "2.5", ParamSize: "7b", Modifier: []string{"instruct"}},
 			want: "qwen/coder@2.5#7b{instruct}",
+		},
+		{
+			name: "active-MoE shape token renders verbatim",
+			ref:  bestiary.EntityRef{Family: "qwen", Version: "3", ParamSize: "30b-a3b"},
+			want: "qwen@3#30b-a3b",
+		},
+		{
+			name: "NxM MoE shape token renders verbatim",
+			ref:  bestiary.EntityRef{Family: "wizardlm", Version: "2", ParamSize: "8x22b"},
+			want: "wizardlm@2#8x22b",
+		},
+		{
+			name: "count-suffixed MoE shape token renders verbatim",
+			ref:  bestiary.EntityRef{Family: "llama", Variant: "scout", ParamSize: "17b-16e", Modifier: []string{"instruct"}},
+			want: "llama/scout#17b-16e{instruct}",
+		},
+		{
+			name: "decimal dense shape token renders verbatim",
+			ref:  bestiary.EntityRef{Family: "qwen", Variant: "embedding", Version: "3", ParamSize: "0.6b"},
+			want: "qwen/embedding@3#0.6b",
 		},
 		{
 			name: "empty paramsize omits # entirely (backward compat)",
