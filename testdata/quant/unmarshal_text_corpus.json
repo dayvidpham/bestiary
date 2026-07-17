@@ -1,0 +1,550 @@
+{
+  "cases": [
+    {
+      "name": "none",
+      "input": "none",
+      "expected": 0,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "quantization.go: UnmarshalText round-trip \u2014 MarshalText(QuantizationNone) then UnmarshalText must return QuantizationNone (iota 0) unchanged"
+      },
+      "mutation": {
+        "description": "lossless MarshalText/UnmarshalText round trip for enum member QuantizationNone"
+      }
+    },
+    {
+      "name": "f16",
+      "input": "f16",
+      "expected": 1,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "quantization.go: UnmarshalText round-trip \u2014 MarshalText(QuantF16) then UnmarshalText must return QuantF16 (iota 1) unchanged"
+      },
+      "mutation": {
+        "description": "lossless MarshalText/UnmarshalText round trip for enum member QuantF16"
+      }
+    },
+    {
+      "name": "bf16",
+      "input": "bf16",
+      "expected": 2,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "quantization.go: UnmarshalText round-trip \u2014 MarshalText(QuantBF16) then UnmarshalText must return QuantBF16 (iota 2) unchanged"
+      },
+      "mutation": {
+        "description": "lossless MarshalText/UnmarshalText round trip for enum member QuantBF16"
+      }
+    },
+    {
+      "name": "f32",
+      "input": "f32",
+      "expected": 3,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "quantization.go: UnmarshalText round-trip \u2014 MarshalText(QuantF32) then UnmarshalText must return QuantF32 (iota 3) unchanged"
+      },
+      "mutation": {
+        "description": "lossless MarshalText/UnmarshalText round trip for enum member QuantF32"
+      }
+    },
+    {
+      "name": "q4_0",
+      "input": "q4_0",
+      "expected": 4,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "quantization.go: UnmarshalText round-trip \u2014 MarshalText(QuantQ4_0) then UnmarshalText must return QuantQ4_0 (iota 4) unchanged"
+      },
+      "mutation": {
+        "description": "lossless MarshalText/UnmarshalText round trip for enum member QuantQ4_0"
+      }
+    },
+    {
+      "name": "q4_1",
+      "input": "q4_1",
+      "expected": 5,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "quantization.go: UnmarshalText round-trip \u2014 MarshalText(QuantQ4_1) then UnmarshalText must return QuantQ4_1 (iota 5) unchanged"
+      },
+      "mutation": {
+        "description": "lossless MarshalText/UnmarshalText round trip for enum member QuantQ4_1"
+      }
+    },
+    {
+      "name": "q5_0",
+      "input": "q5_0",
+      "expected": 6,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "quantization.go: UnmarshalText round-trip \u2014 MarshalText(QuantQ5_0) then UnmarshalText must return QuantQ5_0 (iota 6) unchanged"
+      },
+      "mutation": {
+        "description": "lossless MarshalText/UnmarshalText round trip for enum member QuantQ5_0"
+      }
+    },
+    {
+      "name": "q5_1",
+      "input": "q5_1",
+      "expected": 7,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "quantization.go: UnmarshalText round-trip \u2014 MarshalText(QuantQ5_1) then UnmarshalText must return QuantQ5_1 (iota 7) unchanged"
+      },
+      "mutation": {
+        "description": "lossless MarshalText/UnmarshalText round trip for enum member QuantQ5_1"
+      }
+    },
+    {
+      "name": "q8_0",
+      "input": "q8_0",
+      "expected": 8,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "quantization.go: UnmarshalText round-trip \u2014 MarshalText(QuantQ8_0) then UnmarshalText must return QuantQ8_0 (iota 8) unchanged"
+      },
+      "mutation": {
+        "description": "lossless MarshalText/UnmarshalText round trip for enum member QuantQ8_0"
+      }
+    },
+    {
+      "name": "q2_k",
+      "input": "q2_k",
+      "expected": 9,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "quantization.go: UnmarshalText round-trip \u2014 MarshalText(QuantQ2_K) then UnmarshalText must return QuantQ2_K (iota 9) unchanged"
+      },
+      "mutation": {
+        "description": "lossless MarshalText/UnmarshalText round trip for enum member QuantQ2_K"
+      }
+    },
+    {
+      "name": "q2_k_s",
+      "input": "q2_k_s",
+      "expected": 10,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "quantization.go: UnmarshalText round-trip \u2014 MarshalText(QuantQ2_K_S) then UnmarshalText must return QuantQ2_K_S (iota 10) unchanged"
+      },
+      "mutation": {
+        "description": "lossless MarshalText/UnmarshalText round trip for enum member QuantQ2_K_S"
+      }
+    },
+    {
+      "name": "q3_k_s",
+      "input": "q3_k_s",
+      "expected": 11,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "quantization.go: UnmarshalText round-trip \u2014 MarshalText(QuantQ3_K_S) then UnmarshalText must return QuantQ3_K_S (iota 11) unchanged"
+      },
+      "mutation": {
+        "description": "lossless MarshalText/UnmarshalText round trip for enum member QuantQ3_K_S"
+      }
+    },
+    {
+      "name": "q3_k_m",
+      "input": "q3_k_m",
+      "expected": 12,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "quantization.go: UnmarshalText round-trip \u2014 MarshalText(QuantQ3_K_M) then UnmarshalText must return QuantQ3_K_M (iota 12) unchanged"
+      },
+      "mutation": {
+        "description": "lossless MarshalText/UnmarshalText round trip for enum member QuantQ3_K_M"
+      }
+    },
+    {
+      "name": "q3_k_l",
+      "input": "q3_k_l",
+      "expected": 13,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "quantization.go: UnmarshalText round-trip \u2014 MarshalText(QuantQ3_K_L) then UnmarshalText must return QuantQ3_K_L (iota 13) unchanged"
+      },
+      "mutation": {
+        "description": "lossless MarshalText/UnmarshalText round trip for enum member QuantQ3_K_L"
+      }
+    },
+    {
+      "name": "q4_k_s",
+      "input": "q4_k_s",
+      "expected": 14,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "quantization.go: UnmarshalText round-trip \u2014 MarshalText(QuantQ4_K_S) then UnmarshalText must return QuantQ4_K_S (iota 14) unchanged"
+      },
+      "mutation": {
+        "description": "lossless MarshalText/UnmarshalText round trip for enum member QuantQ4_K_S"
+      }
+    },
+    {
+      "name": "q4_k_m",
+      "input": "q4_k_m",
+      "expected": 15,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "quantization.go: UnmarshalText round-trip \u2014 MarshalText(QuantQ4_K_M) then UnmarshalText must return QuantQ4_K_M (iota 15) unchanged"
+      },
+      "mutation": {
+        "description": "lossless MarshalText/UnmarshalText round trip for enum member QuantQ4_K_M"
+      }
+    },
+    {
+      "name": "q5_k_s",
+      "input": "q5_k_s",
+      "expected": 16,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "quantization.go: UnmarshalText round-trip \u2014 MarshalText(QuantQ5_K_S) then UnmarshalText must return QuantQ5_K_S (iota 16) unchanged"
+      },
+      "mutation": {
+        "description": "lossless MarshalText/UnmarshalText round trip for enum member QuantQ5_K_S"
+      }
+    },
+    {
+      "name": "q5_k_m",
+      "input": "q5_k_m",
+      "expected": 17,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "quantization.go: UnmarshalText round-trip \u2014 MarshalText(QuantQ5_K_M) then UnmarshalText must return QuantQ5_K_M (iota 17) unchanged"
+      },
+      "mutation": {
+        "description": "lossless MarshalText/UnmarshalText round trip for enum member QuantQ5_K_M"
+      }
+    },
+    {
+      "name": "q6_k",
+      "input": "q6_k",
+      "expected": 18,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "quantization.go: UnmarshalText round-trip \u2014 MarshalText(QuantQ6_K) then UnmarshalText must return QuantQ6_K (iota 18) unchanged"
+      },
+      "mutation": {
+        "description": "lossless MarshalText/UnmarshalText round trip for enum member QuantQ6_K"
+      }
+    },
+    {
+      "name": "iq1_s",
+      "input": "iq1_s",
+      "expected": 19,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "quantization.go: UnmarshalText round-trip \u2014 MarshalText(QuantIQ1_S) then UnmarshalText must return QuantIQ1_S (iota 19) unchanged"
+      },
+      "mutation": {
+        "description": "lossless MarshalText/UnmarshalText round trip for enum member QuantIQ1_S"
+      }
+    },
+    {
+      "name": "iq1_m",
+      "input": "iq1_m",
+      "expected": 20,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "quantization.go: UnmarshalText round-trip \u2014 MarshalText(QuantIQ1_M) then UnmarshalText must return QuantIQ1_M (iota 20) unchanged"
+      },
+      "mutation": {
+        "description": "lossless MarshalText/UnmarshalText round trip for enum member QuantIQ1_M"
+      }
+    },
+    {
+      "name": "iq2_xxs",
+      "input": "iq2_xxs",
+      "expected": 21,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "quantization.go: UnmarshalText round-trip \u2014 MarshalText(QuantIQ2_XXS) then UnmarshalText must return QuantIQ2_XXS (iota 21) unchanged"
+      },
+      "mutation": {
+        "description": "lossless MarshalText/UnmarshalText round trip for enum member QuantIQ2_XXS"
+      }
+    },
+    {
+      "name": "iq2_xs",
+      "input": "iq2_xs",
+      "expected": 22,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "quantization.go: UnmarshalText round-trip \u2014 MarshalText(QuantIQ2_XS) then UnmarshalText must return QuantIQ2_XS (iota 22) unchanged"
+      },
+      "mutation": {
+        "description": "lossless MarshalText/UnmarshalText round trip for enum member QuantIQ2_XS"
+      }
+    },
+    {
+      "name": "iq2_s",
+      "input": "iq2_s",
+      "expected": 23,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "quantization.go: UnmarshalText round-trip \u2014 MarshalText(QuantIQ2_S) then UnmarshalText must return QuantIQ2_S (iota 23) unchanged"
+      },
+      "mutation": {
+        "description": "lossless MarshalText/UnmarshalText round trip for enum member QuantIQ2_S"
+      }
+    },
+    {
+      "name": "iq2_m",
+      "input": "iq2_m",
+      "expected": 24,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "quantization.go: UnmarshalText round-trip \u2014 MarshalText(QuantIQ2_M) then UnmarshalText must return QuantIQ2_M (iota 24) unchanged"
+      },
+      "mutation": {
+        "description": "lossless MarshalText/UnmarshalText round trip for enum member QuantIQ2_M"
+      }
+    },
+    {
+      "name": "iq3_xxs",
+      "input": "iq3_xxs",
+      "expected": 25,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "quantization.go: UnmarshalText round-trip \u2014 MarshalText(QuantIQ3_XXS) then UnmarshalText must return QuantIQ3_XXS (iota 25) unchanged"
+      },
+      "mutation": {
+        "description": "lossless MarshalText/UnmarshalText round trip for enum member QuantIQ3_XXS"
+      }
+    },
+    {
+      "name": "iq3_xs",
+      "input": "iq3_xs",
+      "expected": 26,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "quantization.go: UnmarshalText round-trip \u2014 MarshalText(QuantIQ3_XS) then UnmarshalText must return QuantIQ3_XS (iota 26) unchanged"
+      },
+      "mutation": {
+        "description": "lossless MarshalText/UnmarshalText round trip for enum member QuantIQ3_XS"
+      }
+    },
+    {
+      "name": "iq3_s",
+      "input": "iq3_s",
+      "expected": 27,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "quantization.go: UnmarshalText round-trip \u2014 MarshalText(QuantIQ3_S) then UnmarshalText must return QuantIQ3_S (iota 27) unchanged"
+      },
+      "mutation": {
+        "description": "lossless MarshalText/UnmarshalText round trip for enum member QuantIQ3_S"
+      }
+    },
+    {
+      "name": "iq3_m",
+      "input": "iq3_m",
+      "expected": 28,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "quantization.go: UnmarshalText round-trip \u2014 MarshalText(QuantIQ3_M) then UnmarshalText must return QuantIQ3_M (iota 28) unchanged"
+      },
+      "mutation": {
+        "description": "lossless MarshalText/UnmarshalText round trip for enum member QuantIQ3_M"
+      }
+    },
+    {
+      "name": "iq4_xs",
+      "input": "iq4_xs",
+      "expected": 29,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "quantization.go: UnmarshalText round-trip \u2014 MarshalText(QuantIQ4_XS) then UnmarshalText must return QuantIQ4_XS (iota 29) unchanged"
+      },
+      "mutation": {
+        "description": "lossless MarshalText/UnmarshalText round trip for enum member QuantIQ4_XS"
+      }
+    },
+    {
+      "name": "iq4_nl",
+      "input": "iq4_nl",
+      "expected": 30,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "quantization.go: UnmarshalText round-trip \u2014 MarshalText(QuantIQ4_NL) then UnmarshalText must return QuantIQ4_NL (iota 30) unchanged"
+      },
+      "mutation": {
+        "description": "lossless MarshalText/UnmarshalText round trip for enum member QuantIQ4_NL"
+      }
+    },
+    {
+      "name": "awq",
+      "input": "awq",
+      "expected": 31,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "quantization.go: UnmarshalText round-trip \u2014 MarshalText(QuantAWQ) then UnmarshalText must return QuantAWQ (iota 31) unchanged"
+      },
+      "mutation": {
+        "description": "lossless MarshalText/UnmarshalText round trip for enum member QuantAWQ"
+      }
+    },
+    {
+      "name": "gptq",
+      "input": "gptq",
+      "expected": 32,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "quantization.go: UnmarshalText round-trip \u2014 MarshalText(QuantGPTQ) then UnmarshalText must return QuantGPTQ (iota 32) unchanged"
+      },
+      "mutation": {
+        "description": "lossless MarshalText/UnmarshalText round trip for enum member QuantGPTQ"
+      }
+    },
+    {
+      "name": "int8",
+      "input": "int8",
+      "expected": 33,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "quantization.go: UnmarshalText round-trip \u2014 MarshalText(QuantInt8) then UnmarshalText must return QuantInt8 (iota 33) unchanged"
+      },
+      "mutation": {
+        "description": "lossless MarshalText/UnmarshalText round trip for enum member QuantInt8"
+      }
+    },
+    {
+      "name": "int4",
+      "input": "int4",
+      "expected": 34,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "quantization.go: UnmarshalText round-trip \u2014 MarshalText(QuantInt4) then UnmarshalText must return QuantInt4 (iota 34) unchanged"
+      },
+      "mutation": {
+        "description": "lossless MarshalText/UnmarshalText round trip for enum member QuantInt4"
+      }
+    },
+    {
+      "name": "other",
+      "input": "other",
+      "expected": 35,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "quantization.go: UnmarshalText round-trip \u2014 MarshalText(QuantizationOther) then UnmarshalText must return QuantizationOther (iota 35) unchanged"
+      },
+      "mutation": {
+        "description": "lossless MarshalText/UnmarshalText round trip for enum member QuantizationOther"
+      }
+    },
+    {
+      "name": "case-insensitive Q4_K_M",
+      "input": "Q4_K_M",
+      "expected": 15,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "quantization.go doc: UnmarshalText is case-insensitive so Ollama's mixed-case file_type values (e.g. 'Q4_K_M') round-trip correctly"
+      },
+      "mutation": {
+        "description": "mixed-case wire token 'Q4_K_M' must resolve identically to its lowercase form"
+      }
+    },
+    {
+      "name": "case-insensitive Q8_0",
+      "input": "Q8_0",
+      "expected": 8,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "quantization.go doc: UnmarshalText is case-insensitive so Ollama's mixed-case file_type values (e.g. 'Q8_0') round-trip correctly"
+      },
+      "mutation": {
+        "description": "mixed-case wire token 'Q8_0' must resolve identically to its lowercase form"
+      }
+    },
+    {
+      "name": "case-insensitive F16",
+      "input": "F16",
+      "expected": 1,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "quantization.go doc: UnmarshalText is case-insensitive so Ollama's mixed-case file_type values (e.g. 'F16') round-trip correctly"
+      },
+      "mutation": {
+        "description": "mixed-case wire token 'F16' must resolve identically to its lowercase form"
+      }
+    },
+    {
+      "name": "case-insensitive IQ4_NL",
+      "input": "IQ4_NL",
+      "expected": 30,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "quantization.go doc: UnmarshalText is case-insensitive so Ollama's mixed-case file_type values (e.g. 'IQ4_NL') round-trip correctly"
+      },
+      "mutation": {
+        "description": "mixed-case wire token 'IQ4_NL' must resolve identically to its lowercase form"
+      }
+    },
+    {
+      "name": "case-insensitive AWQ",
+      "input": "AWQ",
+      "expected": 31,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "quantization.go doc: UnmarshalText is case-insensitive so Ollama's mixed-case file_type values (e.g. 'AWQ') round-trip correctly"
+      },
+      "mutation": {
+        "description": "mixed-case wire token 'AWQ' must resolve identically to its lowercase form"
+      }
+    },
+    {
+      "name": "case-insensitive OTHER",
+      "input": "OTHER",
+      "expected": 35,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "quantization.go doc: UnmarshalText is case-insensitive so Ollama's mixed-case file_type values (e.g. 'OTHER') round-trip correctly"
+      },
+      "mutation": {
+        "description": "mixed-case wire token 'OTHER' must resolve identically to its lowercase form"
+      }
+    }
+  ]
+}

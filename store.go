@@ -1812,6 +1812,12 @@ func scanModelInfo(stmt *sqlite.Stmt) ModelInfo {
 		Output: modalitiesFromString(stmt.GetText("modalities_output")),
 	}
 
+	// Size enrichment joint (READ-path only): the models table has no param_size
+	// column, so ParamSize + the shape ints are re-derived from the ID here, exactly
+	// as the wire decode joint does. This keeps the store at schema v6 — enrichment
+	// is a pure function of the ID, never persisted state.
+	enrichModelInfo(&m)
+
 	return m
 }
 

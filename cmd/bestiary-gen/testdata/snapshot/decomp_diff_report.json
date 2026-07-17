@@ -1,10 +1,10 @@
 {
   "total_records": 4979,
-  "changed_count": 1233,
+  "changed_count": 1239,
   "cat_a_divergence_fix_count": 324,
-  "cat_b_improvement_count": 903,
+  "cat_b_improvement_count": 901,
   "cat_c_unexpected_regression_count": 0,
-  "justified_exception_count": 6,
+  "justified_exception_count": 14,
   "id_tuple4_incl_modifier_divergence_frozen_before": 81,
   "id_tuple4_incl_modifier_divergence_current_after": 13,
   "divergence_metric": "4-tuple INCL Modifier (Family,Variant,Version,Modifier); before=frozen baseline, after=current snapshot. DISTINCT from the authoritative cross-provider divergenceExact gate (3-tuple, EXCL Modifier, current snapshot, =0).",
@@ -3917,6 +3917,24 @@
     },
     {
       "provider": "siliconflow",
+      "id": "Qwen/Qwen3-Omni-30B-A3B-Captioner",
+      "raw_family": "qwen",
+      "before": "(family=\"qwen\",variant=\"\",version=\"3\",modifier=\"\")",
+      "after": "(family=\"qwen\",variant=\"\",version=\"3\",modifier=\"omni\")",
+      "category": "b:improvement",
+      "reason": "strict enrichment — only previously-empty field(s) populated"
+    },
+    {
+      "provider": "siliconflow-cn",
+      "id": "Qwen/Qwen3-Omni-30B-A3B-Captioner",
+      "raw_family": "qwen",
+      "before": "(family=\"qwen\",variant=\"\",version=\"3\",modifier=\"\")",
+      "after": "(family=\"qwen\",variant=\"\",version=\"3\",modifier=\"omni\")",
+      "category": "b:improvement",
+      "reason": "strict enrichment — only previously-empty field(s) populated"
+    },
+    {
+      "provider": "siliconflow",
       "id": "Qwen/Qwen3-Omni-30B-A3B-Instruct",
       "raw_family": "qwen",
       "before": "(family=\"qwen\",variant=\"instruct\",version=\"3\",modifier=\"\")",
@@ -4469,7 +4487,7 @@
       "id": "cerebras-llama-4-maverick-17b-128e-instruct",
       "raw_family": "llama",
       "before": "(family=\"llama\",variant=\"instruct\",version=\"\",modifier=\"\")",
-      "after": "(family=\"llama\",variant=\"\",version=\"\",modifier=\"instruct\")",
+      "after": "(family=\"llama\",variant=\"\",version=\"4\",modifier=\"instruct\")",
       "category": "b:improvement",
       "reason": "family-preserving de-noise/enrich: only phantom losses and/or enrichments, no ID-present field lost"
     },
@@ -4478,7 +4496,7 @@
       "id": "cerebras-llama-4-scout-17b-16e-instruct",
       "raw_family": "llama",
       "before": "(family=\"llama\",variant=\"instruct\",version=\"\",modifier=\"\")",
-      "after": "(family=\"llama\",variant=\"scout\",version=\"\",modifier=\"instruct\")",
+      "after": "(family=\"llama\",variant=\"scout\",version=\"4\",modifier=\"instruct\")",
       "category": "b:improvement",
       "reason": "family-preserving de-noise/enrich: only phantom losses and/or enrichments, no ID-present field lost"
     },
@@ -5680,24 +5698,6 @@
       "reason": "strict enrichment — only previously-empty field(s) populated"
     },
     {
-      "provider": "llmgateway",
-      "id": "grok-4-20-beta-0309-non-reasoning",
-      "raw_family": "grok",
-      "before": "(family=\"grok\",variant=\"beta\",version=\"4.20\",modifier=\"\")",
-      "after": "(family=\"grok\",variant=\"beta\",version=\"4.20\",modifier=\"non-reasoning\")",
-      "category": "b:improvement",
-      "reason": "strict enrichment — only previously-empty field(s) populated"
-    },
-    {
-      "provider": "llmgateway",
-      "id": "grok-4-20-beta-0309-reasoning",
-      "raw_family": "grok",
-      "before": "(family=\"grok\",variant=\"beta\",version=\"4.20\",modifier=\"\")",
-      "after": "(family=\"grok\",variant=\"beta\",version=\"4.20\",modifier=\"reasoning\")",
-      "category": "b:improvement",
-      "reason": "strict enrichment — only previously-empty field(s) populated"
-    },
-    {
       "provider": "azure",
       "id": "grok-4-20-non-reasoning",
       "raw_family": "grok",
@@ -5842,24 +5842,6 @@
       "reason": "strict enrichment — only previously-empty field(s) populated"
     },
     {
-      "provider": "302ai",
-      "id": "grok-4.20-beta-0309-non-reasoning",
-      "raw_family": "",
-      "before": "(family=\"grok\",variant=\"beta\",version=\"4.20\",modifier=\"\")",
-      "after": "(family=\"grok\",variant=\"beta\",version=\"4.20\",modifier=\"non-reasoning\")",
-      "category": "b:improvement",
-      "reason": "strict enrichment — only previously-empty field(s) populated"
-    },
-    {
-      "provider": "302ai",
-      "id": "grok-4.20-beta-0309-reasoning",
-      "raw_family": "",
-      "before": "(family=\"grok\",variant=\"beta\",version=\"4.20\",modifier=\"\")",
-      "after": "(family=\"grok\",variant=\"beta\",version=\"4.20\",modifier=\"reasoning\")",
-      "category": "b:improvement",
-      "reason": "strict enrichment — only previously-empty field(s) populated"
-    },
-    {
       "provider": "abacus",
       "id": "grok-code-fast-1",
       "raw_family": "grok",
@@ -5909,7 +5891,7 @@
       "id": "groq-llama-4-maverick-17b-128e-instruct",
       "raw_family": "llama",
       "before": "(family=\"llama\",variant=\"instruct\",version=\"\",modifier=\"\")",
-      "after": "(family=\"llama\",variant=\"\",version=\"\",modifier=\"instruct\")",
+      "after": "(family=\"llama\",variant=\"\",version=\"4\",modifier=\"instruct\")",
       "category": "b:improvement",
       "reason": "family-preserving de-noise/enrich: only phantom losses and/or enrichments, no ID-present field lost"
     },
@@ -7142,7 +7124,7 @@
       "id": "meta.llama4-maverick-17b-instruct-v1:0",
       "raw_family": "llama",
       "before": "(family=\"llama\",variant=\"instruct\",version=\"\",modifier=\"\")",
-      "after": "(family=\"llama\",variant=\"\",version=\"\",modifier=\"instruct\")",
+      "after": "(family=\"llama\",variant=\"\",version=\"4\",modifier=\"instruct\")",
       "category": "b:improvement",
       "reason": "family-preserving de-noise/enrich: only phantom losses and/or enrichments, no ID-present field lost"
     },
@@ -7151,7 +7133,7 @@
       "id": "meta.llama4-scout-17b-instruct-v1:0",
       "raw_family": "llama",
       "before": "(family=\"llama\",variant=\"instruct\",version=\"\",modifier=\"\")",
-      "after": "(family=\"llama\",variant=\"scout\",version=\"\",modifier=\"instruct\")",
+      "after": "(family=\"llama\",variant=\"scout\",version=\"4\",modifier=\"instruct\")",
       "category": "b:improvement",
       "reason": "family-preserving de-noise/enrich: only phantom losses and/or enrichments, no ID-present field lost"
     },
@@ -10247,7 +10229,7 @@
       "id": "us.meta.llama4-maverick-17b-instruct-v1:0",
       "raw_family": "llama",
       "before": "(family=\"llama\",variant=\"instruct\",version=\"\",modifier=\"\")",
-      "after": "(family=\"llama\",variant=\"\",version=\"\",modifier=\"instruct\")",
+      "after": "(family=\"llama\",variant=\"\",version=\"4\",modifier=\"instruct\")",
       "category": "b:improvement",
       "reason": "family-preserving de-noise/enrich: only phantom losses and/or enrichments, no ID-present field lost"
     },
@@ -10256,7 +10238,7 @@
       "id": "us.meta.llama4-scout-17b-instruct-v1:0",
       "raw_family": "llama",
       "before": "(family=\"llama\",variant=\"instruct\",version=\"\",modifier=\"\")",
-      "after": "(family=\"llama\",variant=\"scout\",version=\"\",modifier=\"instruct\")",
+      "after": "(family=\"llama\",variant=\"scout\",version=\"4\",modifier=\"instruct\")",
       "category": "b:improvement",
       "reason": "family-preserving de-noise/enrich: only phantom losses and/or enrichments, no ID-present field lost"
     },
@@ -11086,7 +11068,52 @@
       "before": "(family=\"grok-3-mini-fast\",variant=\"beta\",version=\"3\",modifier=\"\")",
       "after": "(family=\"grok\",variant=\"mini\",version=\"3\",modifier=\"\")",
       "category": "justified-exception",
-      "reason": "JUSTIFIED: USER-RATIFIED non-defect (GH#13 release-stage dimension): family corrected to grok + real tier 'mini' (+version 3); the release-stage token 'beta' AND the speed-tier token 'fast' are BOTH dropped — neither can co-occupy the single Variant slot with 'mini' (variant-multiplicity, the variant analogue of the Modifier-LIST, deferred). MECHANISM (corrected) for the related xai/grok-4.20-non-reasoning-beta, which stays Modifier=nil (nil both BEFORE and AFTER — no regression, no gate trip): the trailing 'beta' is the TAIL-ORDER MODIFIER-SCAN BOUNDARY — the scan starts at the tail and halts at 'beta' (a non-collected variant/boundary token) before reaching the inner 'non-reasoning', so the negation branch never executes. Contrast (verified): grok-4.20-non-reasoning [tail='reasoning' preceded by 'non']→[non-reasoning]; grok-4-20-beta-0309-non-reasoning ['beta' MID-string, tail still 'reasoning']→[non-reasoning]; xai/grok-4.20-non-reasoning-beta [tail='beta']→nil. Same release-stage multiplicity tracked under GH#13."
+      "reason": "JUSTIFIED: USER-RATIFIED non-defect (GH#13 release-stage dimension): family corrected to grok + real tier 'mini' (+version 3); the release-stage token 'beta' AND the speed-tier token 'fast' are BOTH dropped — neither can co-occupy the single Variant slot with 'mini' (variant-multiplicity, the variant analogue of the Modifier-LIST, deferred). This is a SYNTHETIC exemplar (not a catalog ID); the real catalog grok-4.20 beta spellings are unified onto their non-beta entities by the exact-ID overrides enumerated below (the beta-alias unification), which also restores the inner 'non-reasoning'/'reasoning' modifier that the tail-'beta' boundary formerly hid. Same release-stage dimension tracked under GH#13."
+    },
+    {
+      "provider": "llmgateway",
+      "id": "grok-4-20-beta-0309-non-reasoning",
+      "raw_family": "grok",
+      "before": "(family=\"grok\",variant=\"beta\",version=\"4.20\",modifier=\"\")",
+      "after": "(family=\"grok\",variant=\"\",version=\"4.20\",modifier=\"non-reasoning\")",
+      "category": "justified-exception",
+      "reason": "JUSTIFIED: USER-RATIFIED grok beta-alias unification: dashed 4-20 beta spelling merges onto grok@4.20{non-reasoning}; Stage=StageBeta retained via ID detection."
+    },
+    {
+      "provider": "llmgateway",
+      "id": "grok-4-20-beta-0309-reasoning",
+      "raw_family": "grok",
+      "before": "(family=\"grok\",variant=\"beta\",version=\"4.20\",modifier=\"\")",
+      "after": "(family=\"grok\",variant=\"\",version=\"4.20\",modifier=\"reasoning\")",
+      "category": "justified-exception",
+      "reason": "JUSTIFIED: USER-RATIFIED grok beta-alias unification: dashed 4-20 beta spelling merges onto grok@4.20{reasoning}; Stage=StageBeta retained via ID detection."
+    },
+    {
+      "provider": "302ai",
+      "id": "grok-4.20-beta-0309-non-reasoning",
+      "raw_family": "",
+      "before": "(family=\"grok\",variant=\"beta\",version=\"4.20\",modifier=\"\")",
+      "after": "(family=\"grok\",variant=\"\",version=\"4.20\",modifier=\"non-reasoning\")",
+      "category": "justified-exception",
+      "reason": "JUSTIFIED: USER-RATIFIED grok beta-alias unification: beta spelling merges onto grok@4.20{non-reasoning}; Stage=StageBeta retained via ID detection."
+    },
+    {
+      "provider": "302ai",
+      "id": "grok-4.20-beta-0309-reasoning",
+      "raw_family": "",
+      "before": "(family=\"grok\",variant=\"beta\",version=\"4.20\",modifier=\"\")",
+      "after": "(family=\"grok\",variant=\"\",version=\"4.20\",modifier=\"reasoning\")",
+      "category": "justified-exception",
+      "reason": "JUSTIFIED: USER-RATIFIED grok beta-alias unification: beta spelling merges onto grok@4.20{reasoning}; Stage=StageBeta retained via ID detection."
+    },
+    {
+      "provider": "302ai",
+      "id": "grok-4.20-multi-agent-beta-0309",
+      "raw_family": "",
+      "before": "(family=\"grok\",variant=\"beta\",version=\"4.20\",modifier=\"\")",
+      "after": "(family=\"grok\",variant=\"\",version=\"4.20\",modifier=\"\")",
+      "category": "justified-exception",
+      "reason": "JUSTIFIED: USER-RATIFIED grok beta-alias unification: multi-agent beta spelling merges onto the bare grok@4.20 (following the official grok-4.20-multi-agent-0309); Stage=StageBeta retained via ID detection."
     },
     {
       "provider": "opencode",
@@ -11105,6 +11132,33 @@
       "after": "(family=\"solar\",variant=\"\",version=\"\",modifier=\"instruct\")",
       "category": "justified-exception",
       "reason": "JUSTIFIED: USER-RATIFIED non-defect (future taxonomy): solar ∉ allFamilies and has no fold target (only attested as solar-mini/solar-pro); 'instruct'→Modifier re-surfaces (no token loss). 10.7b=size GH#9."
+    },
+    {
+      "provider": "vercel",
+      "id": "xai/grok-4.20-multi-agent-beta",
+      "raw_family": "grok",
+      "before": "(family=\"grok\",variant=\"beta\",version=\"4.20\",modifier=\"\")",
+      "after": "(family=\"grok\",variant=\"\",version=\"4.20\",modifier=\"\")",
+      "category": "justified-exception",
+      "reason": "JUSTIFIED: USER-RATIFIED grok beta-alias unification: multi-agent trailing-beta spelling merges onto the bare grok@4.20; Stage=StageBeta retained via ID detection."
+    },
+    {
+      "provider": "vercel",
+      "id": "xai/grok-4.20-non-reasoning-beta",
+      "raw_family": "grok",
+      "before": "(family=\"grok\",variant=\"beta\",version=\"4.20\",modifier=\"\")",
+      "after": "(family=\"grok\",variant=\"\",version=\"4.20\",modifier=\"non-reasoning\")",
+      "category": "justified-exception",
+      "reason": "JUSTIFIED: USER-RATIFIED grok beta-alias unification: trailing-beta spelling merges onto grok@4.20{non-reasoning} (the inner 'non-reasoning', formerly lost behind the tail 'beta' boundary, is restored by the override); Stage=StageBeta retained via ID detection."
+    },
+    {
+      "provider": "vercel",
+      "id": "xai/grok-4.20-reasoning-beta",
+      "raw_family": "grok",
+      "before": "(family=\"grok\",variant=\"beta\",version=\"4.20\",modifier=\"\")",
+      "after": "(family=\"grok\",variant=\"\",version=\"4.20\",modifier=\"reasoning\")",
+      "category": "justified-exception",
+      "reason": "JUSTIFIED: USER-RATIFIED grok beta-alias unification: trailing-beta spelling merges onto grok@4.20{reasoning}; Stage=StageBeta retained via ID detection."
     }
   ]
 }

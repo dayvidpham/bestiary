@@ -1,0 +1,52 @@
+{
+  "cases": [
+    {
+      "name": "10.7b",
+      "input": "10.7b",
+      "expected": 10700000000,
+      "classification": "must-pass",
+      "provenance": { "source": "manual", "ref": "exact string-digit arithmetic: 10.7b = 10_700_000_000 (never a float64-rounded approximation)" },
+      "mutation": { "description": "a decimal dense token whose exact integer count is pinned as a literal" }
+    },
+    {
+      "name": "0.6b",
+      "input": "0.6b",
+      "expected": 600000000,
+      "classification": "must-pass",
+      "provenance": { "source": "manual", "ref": "exact string-digit arithmetic: 0.6b = 600_000_000" },
+      "mutation": { "description": "a sub-billion decimal token" }
+    },
+    {
+      "name": "1.2b",
+      "input": "1.2b",
+      "expected": 1200000000,
+      "classification": "must-pass",
+      "provenance": { "source": "manual", "ref": "exact string-digit arithmetic: 1.2b = 1_200_000_000" },
+      "mutation": { "description": "a decimal token just above one billion" }
+    },
+    {
+      "name": "0.5b",
+      "input": "0.5b",
+      "expected": 500000000,
+      "classification": "must-pass",
+      "provenance": { "source": "manual", "ref": "exact string-digit arithmetic: 0.5b = 500_000_000" },
+      "mutation": { "description": "a half-billion decimal token" }
+    },
+    {
+      "name": "3.8b",
+      "input": "3.8b",
+      "expected": 3800000000,
+      "classification": "must-pass",
+      "provenance": { "source": "manual", "ref": "exact string-digit arithmetic: 3.8b = 3_800_000_000" },
+      "mutation": { "description": "a decimal token with a nonzero fraction" }
+    },
+    {
+      "name": "1.5b",
+      "input": "1.5b",
+      "expected": 1500000000,
+      "classification": "must-pass",
+      "provenance": { "source": "manual", "ref": "exact string-digit arithmetic: 1.5b = 1_500_000_000" },
+      "mutation": { "description": "a decimal token with a half fraction" }
+    }
+  ]
+}

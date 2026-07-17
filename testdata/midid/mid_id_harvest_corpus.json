@@ -1,0 +1,117 @@
+{
+  "cases": [
+    {
+      "name": "gemini omni before variant, preview trails",
+      "input": {
+        "id": "gemini-omni-flash-preview",
+        "family": "gemini",
+        "variant": "flash"
+      },
+      "expected": {
+        "mods": [
+          "omni",
+          "preview"
+        ],
+        "consumed": "-preview"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "phase-B harvest of gemini-omni-flash-preview: mods ['omni', 'preview'] all present (order-independent); consumed='-preview' — a mid-ID token adds to mods but NEVER grows consumed"
+      },
+      "mutation": {
+        "description": "exercises the mid-ID harvest and pins the consumed invariant for a buried stage/mode token"
+      }
+    },
+    {
+      "name": "gpt realtime before bare version, nothing trails",
+      "input": {
+        "id": "gpt-realtime-2.1",
+        "family": "gpt",
+        "variant": ""
+      },
+      "expected": {
+        "mods": [
+          "realtime"
+        ],
+        "consumed": ""
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "phase-B harvest of gpt-realtime-2.1: mods ['realtime'] all present (order-independent); consumed='' — a mid-ID token adds to mods but NEVER grows consumed"
+      },
+      "mutation": {
+        "description": "exercises the mid-ID harvest and pins the consumed invariant for a buried stage/mode token"
+      }
+    },
+    {
+      "name": "livetranslate before variant, realtime trails",
+      "input": {
+        "id": "qwen3-livetranslate-flash-realtime",
+        "family": "qwen",
+        "variant": "flash"
+      },
+      "expected": {
+        "mods": [
+          "livetranslate",
+          "realtime"
+        ],
+        "consumed": "-realtime"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "phase-B harvest of qwen3-livetranslate-flash-realtime: mods ['livetranslate', 'realtime'] all present (order-independent); consumed='-realtime' — a mid-ID token adds to mods but NEVER grows consumed"
+      },
+      "mutation": {
+        "description": "exercises the mid-ID harvest and pins the consumed invariant for a buried stage/mode token"
+      }
+    },
+    {
+      "name": "omni behind a split MoE size, instruct trails",
+      "input": {
+        "id": "qwen/qwen3-omni-30b-a3b-instruct",
+        "family": "qwen",
+        "variant": ""
+      },
+      "expected": {
+        "mods": [
+          "omni",
+          "instruct"
+        ],
+        "consumed": "-instruct"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "phase-B harvest of qwen/qwen3-omni-30b-a3b-instruct: mods ['omni', 'instruct'] all present (order-independent); consumed='-instruct' — a mid-ID token adds to mods but NEVER grows consumed"
+      },
+      "mutation": {
+        "description": "exercises the mid-ID harvest and pins the consumed invariant for a buried stage/mode token"
+      }
+    },
+    {
+      "name": "realtime before variant (mini)",
+      "input": {
+        "id": "openai/gpt-realtime-mini",
+        "family": "gpt",
+        "variant": "mini"
+      },
+      "expected": {
+        "mods": [
+          "realtime"
+        ],
+        "consumed": ""
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "phase-B harvest of openai/gpt-realtime-mini: mods ['realtime'] all present (order-independent); consumed='' — a mid-ID token adds to mods but NEVER grows consumed"
+      },
+      "mutation": {
+        "description": "exercises the mid-ID harvest and pins the consumed invariant for a buried stage/mode token"
+      }
+    }
+  ]
+}

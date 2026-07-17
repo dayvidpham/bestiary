@@ -1,0 +1,147 @@
+{
+  "cases": [
+    {
+      "name": "empty-input-yields-none",
+      "input": "",
+      "expected": "none",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "ParseReleaseStage(\"\") returns StageNone with no error -- the empty string is the valid zero-value input"
+      },
+      "mutation": {
+        "description": "empty string is the documented zero-value shortcut, not an error"
+      }
+    },
+    {
+      "name": "stable",
+      "input": "stable",
+      "expected": "stable",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "releaseStageNames: stable is accepted by ParseReleaseStage (CLI-completeness half, even though it is not ID-detected)"
+      },
+      "mutation": {
+        "description": "pins stable as an accepted CLI parse token"
+      }
+    },
+    {
+      "name": "preview",
+      "input": "preview",
+      "expected": "preview",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "releaseStageNames: preview is accepted by ParseReleaseStage"
+      },
+      "mutation": {
+        "description": "pins preview as an accepted CLI parse token"
+      }
+    },
+    {
+      "name": "beta",
+      "input": "beta",
+      "expected": "beta",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "releaseStageNames: beta is accepted by ParseReleaseStage"
+      },
+      "mutation": {
+        "description": "pins beta as an accepted CLI parse token"
+      }
+    },
+    {
+      "name": "alpha",
+      "input": "alpha",
+      "expected": "alpha",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "releaseStageNames: alpha is accepted by ParseReleaseStage (CLI-completeness half, even though it is not ID-detected)"
+      },
+      "mutation": {
+        "description": "pins alpha as an accepted CLI parse token"
+      }
+    },
+    {
+      "name": "experimental",
+      "input": "experimental",
+      "expected": "experimental",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "releaseStageNames: experimental is accepted by ParseReleaseStage (CLI-completeness half, even though it is not ID-detected)"
+      },
+      "mutation": {
+        "description": "pins experimental as an accepted CLI parse token"
+      }
+    },
+    {
+      "name": "latest",
+      "input": "latest",
+      "expected": "latest",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "releaseStageNames: latest is accepted by ParseReleaseStage"
+      },
+      "mutation": {
+        "description": "pins latest as an accepted CLI parse token"
+      }
+    },
+    {
+      "name": "original",
+      "input": "original",
+      "expected": "original",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "releaseStageNames: original is accepted by ParseReleaseStage"
+      },
+      "mutation": {
+        "description": "pins original as an accepted CLI parse token"
+      }
+    },
+    {
+      "name": "beta-case-insensitive",
+      "input": "BETA",
+      "expected": "beta",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "ParseReleaseStage lowercases before matching releaseStageNames"
+      },
+      "mutation": {
+        "description": "uppercase BETA still resolves to StageBeta"
+      }
+    },
+    {
+      "name": "other-sentinel-rejected",
+      "input": "other",
+      "expected": "",
+      "classification": "must-fail",
+      "provenance": {
+        "source": "requirement",
+        "ref": "ParseReleaseStage rejects the internal \"other\" sentinel -- StageOther is not user-selectable"
+      },
+      "mutation": {
+        "description": "input is the reserved internal sentinel name, which must never parse successfully"
+      }
+    },
+    {
+      "name": "unknown-token-rejected",
+      "input": "gamma",
+      "expected": "",
+      "classification": "must-fail",
+      "provenance": {
+        "source": "boundary",
+        "ref": "ParseReleaseStage returns an actionable error for any unrecognized token rather than silently bucketing to Other"
+      },
+      "mutation": {
+        "description": "input is an unrecognized token not present in releaseStageNames"
+      }
+    }
+  ]
+}

@@ -53,12 +53,48 @@ type ModelInfo struct {
 	// fallback. Populated by the parse pipeline at codegen time.
 	// widened string → []string for lossless
 	// multi-modifier capture (kimi-k2-thinking-turbo → [thinking, turbo]).
+	//
+	// Release-stage tokens (preview/latest/original) REMAIN in this list as data —
+	// the extraction still captures them — but they are excluded from entity keys
+	// and from the canonical {mods}/[attrs] rendering: the Stage field carries that
+	// axis (see ReleaseStage in stage.go), and EntityModifiers/attributeModifiers
+	// route them out before classification.
 	Modifier []string
 	// ParamSize is the canonical parameter-size token for this model instance
 	// (e.g. "70b", "8b", "0.5b"). Empty when the size is unknown or not applicable.
 	// Populated at codegen time from curated data; participates in entity identity
 	// via the #size segment of EntityRef.String().
-	ParamSize             string
+	ParamSize string
+	// TotalParams, ActiveParams, PerExpertParams, and ExpertCount are the flat
+	// parameter-shape facts decomposed from ParamSize (see ParamShape and
+	// ParseParamShape). They are DERIVED presentation facts, never entity-key
+	// material — the identity carrier is ParamSize (the raw #size token). Each is an
+	// in-domain NULLable integer under the ParamShapeNull sentinel contract:
+	// ParamShapeNull (-1) means "not populated by the parser or curation" (the shape
+	// does not carry that fact, or the size is unknown), a positive value is an
+	// attested count, and a genuine 0 is reachable ONLY for ExpertCount (a dense
+	// shape attests zero experts). All four are ParamShapeNull when ParamSize is
+	// empty. They are grouped along parameter-shape joints, never collapsed: an NxM
+	// MoE token ("8x22b") records ExpertCount and PerExpertParams but leaves
+	// TotalParams and ActiveParams NULL (the product is deliberately not computed),
+	// while an active-MoE token ("30b-a3b") records TotalParams and ActiveParams and
+	// leaves PerExpertParams/ExpertCount NULL.
+	// TotalParams is the total parameter count (e.g. 30_000_000_000 for "30b");
+	// ParamShapeNull (-1) when the shape carries no total (NxM, count-suffixed) or
+	// the size is unknown.
+	TotalParams int64
+	// ActiveParams is the active (per-forward-pass) parameter count of a MoE model
+	// (e.g. 3_000_000_000 for "30b-a3b", 17_000_000_000 for "17b-16e").
+	// ParamShapeNull (-1) for a dense model or when the size is unknown.
+	ActiveParams int64
+	// PerExpertParams is the per-expert parameter count of an NxM MoE token (e.g.
+	// 22_000_000_000 for "8x22b"). ParamShapeNull (-1) unless the shape is NxM.
+	PerExpertParams int64
+	// ExpertCount is the number of experts of a MoE model (8 for "8x22b", 16 for
+	// "17b-16e"). A genuine 0 for a dense model (it attests zero experts);
+	// ParamShapeNull (-1) for a MoE shape that carries no count (active-MoE
+	// "30b-a3b") or when the size is unknown.
+	ExpertCount           int
 	ContextWindow         int
 	MaxOutput             int
 	Reasoning             bool
@@ -109,6 +145,20 @@ type ModelInfo struct {
 	// StatusRaw carries the verbatim upstream status token, populated only when
 	// Status is StatusOther (an unrecognized token); empty otherwise.
 	StatusRaw string
+	// Stage is the release stage DERIVED from this model's ID (preview / beta /
+	// latest / original), distinct in provenance from Status: Status is the
+	// upstream-DECLARED lifecycle from the api.json side, while Stage is read out
+	// of the ID token stream by DetectStageFromID at the same enrichment joints as
+	// ParamSize. StageNone (the zero value) when the ID carries no recognized stage
+	// marker. Stage is a per-instance attribute and never participates in entity
+	// identity (a "-beta"/"-latest" marker does not split the entity). Populated by
+	// enrichModelInfo (pure function of the ID); see stage.go.
+	Stage ReleaseStage
+	// StageRaw carries the verbatim stage token, populated only when Stage is
+	// StageOther — the RESERVED bucket for a future non-ID stage feeder. The
+	// ID-detection path never yields StageOther, so StageRaw is empty for every
+	// ID-derived stage this epoch (mirroring StatusRaw's Other-only convention).
+	StageRaw string
 	// ReasoningOptions are the reasoning-control options this model exposes
 	// (toggle / effort / budget-tokens). nil when the model exposes none.
 	ReasoningOptions []ReasoningOption
@@ -127,4 +177,44 @@ type ModelInfo struct {
 	CostTiers []CostTier
 
 	LastSynced string // RFC3339
+}
+
+// ParamShapeNull is the in-domain NULL sentinel for the four parameter-shape
+// integer fields (ParamShape and the inline ModelInfo TotalParams / ActiveParams /
+// PerExpertParams / ExpertCount). A field set to ParamShapeNull means "not populated
+// by the parser or curation": the shape genuinely does not carry that fact (a dense
+// token attests no active or per-expert count), or the size is entirely unknown. It
+// is DISTINCT from a genuine 0, which under this contract is reachable only for
+// ExpertCount (a dense shape attests exactly zero experts). Modelling the fields as a
+// NULLable tabular domain — rather than overloading 0 for both "absent" and "zero" —
+// lets a consumer tell an unpopulated field from an attested count. See
+// ParseParamShape for the per-shape population contract.
+const ParamShapeNull = -1
+
+// ParamShape is the pure decomposition of a canonical parameter-size token into
+// flat parameter-count facts. It is produced by ParseParamShape and carries the
+// same four values that ModelInfo exposes inline (TotalParams / ActiveParams /
+// PerExpertParams / ExpertCount).
+//
+// Each field is a NULLable integer under the ParamShapeNull (-1) sentinel contract:
+// a field the shape does not carry is ParamShapeNull, never a masquerading 0. The
+// fields are grouped along parameter-shape joints and are NEVER concatenated or
+// cross-computed. In particular an NxM MoE token ("8x22b") sets ExpertCount and
+// PerExpertParams but leaves TotalParams and ActiveParams NULL — the total is
+// deliberately NOT N*M, because upstream does not publish it and inventing it would
+// misstate the footprint. An active-MoE token ("30b-a3b") sets TotalParams and
+// ActiveParams and leaves PerExpertParams/ExpertCount NULL; a count-suffixed MoE
+// token ("17b-16e") sets ActiveParams and ExpertCount and leaves TotalParams and
+// PerExpertParams NULL; a dense token ("30b", "560m", "10.7b") sets TotalParams,
+// leaves ActiveParams and PerExpertParams NULL, and sets ExpertCount to a genuine 0
+// (a dense model attests zero experts). The empty token leaves ALL FOUR NULL.
+//
+// Counts are exact int64 parameter counts (e.g. 30_000_000_000 for "30b"),
+// computed with string-digit decimal arithmetic so a decimal token such as
+// "10.7b" yields exactly 10_700_000_000 (never a float64 rounding of 10.7e9).
+type ParamShape struct {
+	TotalParams     int64
+	ActiveParams    int64
+	PerExpertParams int64
+	ExpertCount     int
 }

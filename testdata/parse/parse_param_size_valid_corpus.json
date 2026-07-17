@@ -1,0 +1,368 @@
+{
+  "cases": [
+    {
+      "name": "empty",
+      "input": "",
+      "expected": "",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "ParseParamSize() canonicalizes to ''"
+      },
+      "mutation": {
+        "description": "valid param-size shape, canonicalized to lowercase"
+      }
+    },
+    {
+      "name": "1b lowercase passthrough",
+      "input": "1b",
+      "expected": "1b",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "ParseParamSize(1b) canonicalizes to '1b'"
+      },
+      "mutation": {
+        "description": "valid param-size shape, canonicalized to lowercase"
+      }
+    },
+    {
+      "name": "7b",
+      "input": "7b",
+      "expected": "7b",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "ParseParamSize(7b) canonicalizes to '7b'"
+      },
+      "mutation": {
+        "description": "valid param-size shape, canonicalized to lowercase"
+      }
+    },
+    {
+      "name": "8b",
+      "input": "8b",
+      "expected": "8b",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "ParseParamSize(8b) canonicalizes to '8b'"
+      },
+      "mutation": {
+        "description": "valid param-size shape, canonicalized to lowercase"
+      }
+    },
+    {
+      "name": "70b",
+      "input": "70b",
+      "expected": "70b",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "ParseParamSize(70b) canonicalizes to '70b'"
+      },
+      "mutation": {
+        "description": "valid param-size shape, canonicalized to lowercase"
+      }
+    },
+    {
+      "name": "671b",
+      "input": "671b",
+      "expected": "671b",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "ParseParamSize(671b) canonicalizes to '671b'"
+      },
+      "mutation": {
+        "description": "valid param-size shape, canonicalized to lowercase"
+      }
+    },
+    {
+      "name": "0.5b",
+      "input": "0.5b",
+      "expected": "0.5b",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "ParseParamSize(0.5b) canonicalizes to '0.5b'"
+      },
+      "mutation": {
+        "description": "valid param-size shape, canonicalized to lowercase"
+      }
+    },
+    {
+      "name": "3.8b",
+      "input": "3.8b",
+      "expected": "3.8b",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "ParseParamSize(3.8b) canonicalizes to '3.8b'"
+      },
+      "mutation": {
+        "description": "valid param-size shape, canonicalized to lowercase"
+      }
+    },
+    {
+      "name": "72b",
+      "input": "72b",
+      "expected": "72b",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "ParseParamSize(72b) canonicalizes to '72b'"
+      },
+      "mutation": {
+        "description": "valid param-size shape, canonicalized to lowercase"
+      }
+    },
+    {
+      "name": "70B uppercase → 70b",
+      "input": "70B",
+      "expected": "70b",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "ParseParamSize(70B) canonicalizes to '70b'"
+      },
+      "mutation": {
+        "description": "valid param-size shape, canonicalized to lowercase"
+      }
+    },
+    {
+      "name": "8B uppercase → 8b",
+      "input": "8B",
+      "expected": "8b",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "ParseParamSize(8B) canonicalizes to '8b'"
+      },
+      "mutation": {
+        "description": "valid param-size shape, canonicalized to lowercase"
+      }
+    },
+    {
+      "name": "0.5B uppercase → 0.5b",
+      "input": "0.5B",
+      "expected": "0.5b",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "ParseParamSize(0.5B) canonicalizes to '0.5b'"
+      },
+      "mutation": {
+        "description": "valid param-size shape, canonicalized to lowercase"
+      }
+    },
+    {
+      "name": "671B uppercase → 671b",
+      "input": "671B",
+      "expected": "671b",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "ParseParamSize(671B) canonicalizes to '671b'"
+      },
+      "mutation": {
+        "description": "valid param-size shape, canonicalized to lowercase"
+      }
+    },
+    {
+      "name": "8x7b",
+      "input": "8x7b",
+      "expected": "8x7b",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "ParseParamSize(8x7b) canonicalizes to '8x7b'"
+      },
+      "mutation": {
+        "description": "valid param-size shape, canonicalized to lowercase"
+      }
+    },
+    {
+      "name": "8x22b",
+      "input": "8x22b",
+      "expected": "8x22b",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "ParseParamSize(8x22b) canonicalizes to '8x22b'"
+      },
+      "mutation": {
+        "description": "valid param-size shape, canonicalized to lowercase"
+      }
+    },
+    {
+      "name": "8X7B uppercase → 8x7b",
+      "input": "8X7B",
+      "expected": "8x7b",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "ParseParamSize(8X7B) canonicalizes to '8x7b'"
+      },
+      "mutation": {
+        "description": "valid param-size shape, canonicalized to lowercase"
+      }
+    },
+    {
+      "name": "30b-a3b active-moe",
+      "input": "30b-a3b",
+      "expected": "30b-a3b",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "ParseParamSize(30b-a3b) canonicalizes to '30b-a3b'"
+      },
+      "mutation": {
+        "description": "valid param-size shape, canonicalized to lowercase"
+      }
+    },
+    {
+      "name": "671b-a17b active-moe",
+      "input": "671b-a17b",
+      "expected": "671b-a17b",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "ParseParamSize(671b-a17b) canonicalizes to '671b-a17b'"
+      },
+      "mutation": {
+        "description": "valid param-size shape, canonicalized to lowercase"
+      }
+    },
+    {
+      "name": "671B-A17B uppercase active-moe → 671b-a17b",
+      "input": "671B-A17B",
+      "expected": "671b-a17b",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "ParseParamSize(671B-A17B) canonicalizes to '671b-a17b'"
+      },
+      "mutation": {
+        "description": "valid param-size shape, canonicalized to lowercase"
+      }
+    },
+    {
+      "name": "17b-16e count-moe (llama-4-scout shape)",
+      "input": "17b-16e",
+      "expected": "17b-16e",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "ParseParamSize(17b-16e) canonicalizes to '17b-16e'"
+      },
+      "mutation": {
+        "description": "valid param-size shape, canonicalized to lowercase"
+      }
+    },
+    {
+      "name": "17b-128e count-moe (llama-4-maverick shape)",
+      "input": "17b-128e",
+      "expected": "17b-128e",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "ParseParamSize(17b-128e) canonicalizes to '17b-128e'"
+      },
+      "mutation": {
+        "description": "valid param-size shape, canonicalized to lowercase"
+      }
+    },
+    {
+      "name": "17B-16E uppercase count-moe → 17b-16e",
+      "input": "17B-16E",
+      "expected": "17b-16e",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "ParseParamSize(17B-16E) canonicalizes to '17b-16e'"
+      },
+      "mutation": {
+        "description": "valid param-size shape, canonicalized to lowercase"
+      }
+    },
+    {
+      "name": "10.7b decimal (solar shape)",
+      "input": "10.7b",
+      "expected": "10.7b",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "ParseParamSize(10.7b) canonicalizes to '10.7b'"
+      },
+      "mutation": {
+        "description": "valid param-size shape, canonicalized to lowercase"
+      }
+    },
+    {
+      "name": "1.2b decimal (lfm shape)",
+      "input": "1.2b",
+      "expected": "1.2b",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "ParseParamSize(1.2b) canonicalizes to '1.2b'"
+      },
+      "mutation": {
+        "description": "valid param-size shape, canonicalized to lowercase"
+      }
+    },
+    {
+      "name": "0.6b decimal (qwen3-embedding shape)",
+      "input": "0.6b",
+      "expected": "0.6b",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "ParseParamSize(0.6b) canonicalizes to '0.6b'"
+      },
+      "mutation": {
+        "description": "valid param-size shape, canonicalized to lowercase"
+      }
+    },
+    {
+      "name": "560m",
+      "input": "560m",
+      "expected": "560m",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "ParseParamSize(560m) canonicalizes to '560m'"
+      },
+      "mutation": {
+        "description": "valid param-size shape, canonicalized to lowercase"
+      }
+    },
+    {
+      "name": "350m",
+      "input": "350m",
+      "expected": "350m",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "ParseParamSize(350m) canonicalizes to '350m'"
+      },
+      "mutation": {
+        "description": "valid param-size shape, canonicalized to lowercase"
+      }
+    },
+    {
+      "name": "560M uppercase → 560m",
+      "input": "560M",
+      "expected": "560m",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "ParseParamSize(560M) canonicalizes to '560m'"
+      },
+      "mutation": {
+        "description": "valid param-size shape, canonicalized to lowercase"
+      }
+    }
+  ]
+}

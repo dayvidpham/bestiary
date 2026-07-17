@@ -1,0 +1,55 @@
+{
+  "cases": [
+    {
+      "name": "gemini-2.5-flash",
+      "input": "gemini-2.5-flash",
+      "expected": {
+        "family": "gemini",
+        "variant": "flash",
+        "version": "2.5"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "ParseFamilyWithVersion(gemini-2.5-flash) -> family 'gemini', variant 'flash', version '2.5'"
+      },
+      "mutation": {
+        "description": "family+version decomposition for gemini-2.5-flash"
+      }
+    },
+    {
+      "name": "gemini-2.5",
+      "input": "gemini-2.5",
+      "expected": {
+        "family": "gemini",
+        "variant": "",
+        "version": "2.5"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "ParseFamilyWithVersion(gemini-2.5) -> family 'gemini', variant '', version '2.5'"
+      },
+      "mutation": {
+        "description": "family+version decomposition for gemini-2.5"
+      }
+    },
+    {
+      "name": "gemini-flash no version",
+      "input": "gemini-flash",
+      "expected": {
+        "family": "gemini",
+        "variant": "flash",
+        "version": ""
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "ParseFamilyWithVersion(gemini-flash) -> family 'gemini', variant 'flash', version ''"
+      },
+      "mutation": {
+        "description": "family+version decomposition for gemini-flash"
+      }
+    }
+  ]
+}

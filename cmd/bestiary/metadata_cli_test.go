@@ -833,6 +833,97 @@ func TestSync_PersistsMetadataAndIngestLog(t *testing.T) {
 	}
 }
 
+// TestSync_KeyIdentity_ReDerivesSizeAndSources drives runSyncClient against httptest
+// with a size-bearing model ID and asserts the sync/cache round-trip re-derives the
+// SIZE dimension identically to the static decomposition: the persisted row carries no
+// param_size column, so a correct read-back proves the wire-decode joint (on the way
+// in) and the store-scan joint (on the way out) agree with the codegen bake. Because
+// ParamSize is a pure function of the ID, a synced (ID, Provider) can never be de-sized
+// by the most-recent-wins merge — the static and synced rows resolve the same size. It
+// also pins the entity key's #size segment and the [models.dev] Sources projection.
+// (The Family/Version decomposition is deliberately NOT asserted here: full family
+// decomposition is a codegen-time step, so a live-sync row keeps its raw family — a
+// pre-existing codegen-vs-runtime difference outside the #size re-key.)
+func TestSync_KeyIdentity_ReDerivesSizeAndSources(t *testing.T) {
+	const sizedAPIJSON = `{"testprov":{"models":{"qwen3-30b-a3b":{"id":"qwen3-30b-a3b","name":"Q","family":"qwen"},"grok-4.20-beta-0309-reasoning":{"id":"grok-4.20-beta-0309-reasoning","name":"G","family":"grok"}}}}`
+	srv := syncTestServer(t, sizedAPIJSON, "{}")
+	client := bestiary.NewClient(bestiary.WithBaseURL(srv.URL + "/api.json"))
+	db := tempDBPath(t)
+
+	_ = captureStdout(t, func() {
+		if err := runSyncClient(client, "", bestiary.FormatJSON, db); err != nil {
+			t.Fatalf("runSyncClient: %v", err)
+		}
+	})
+
+	store, err := bestiary.OpenStore(db)
+	if err != nil {
+		t.Fatalf("OpenStore: %v", err)
+	}
+	defer store.Close()
+
+	models, err := store.QueryModels(context.Background(), "")
+	if err != nil {
+		t.Fatalf("QueryModels: %v", err)
+	}
+	var m *bestiary.ModelInfo
+	for i := range models {
+		if models[i].ID == "qwen3-30b-a3b" {
+			m = &models[i]
+		}
+	}
+	if m == nil {
+		t.Fatalf("synced model not found; got %d cached rows", len(models))
+	}
+
+	// ParamSize + shape ints re-derived on the cache read path, identical to the static
+	// decomposition of the same ID.
+	wantSize, _ := bestiary.EnrichedParamSize("qwen3-30b-a3b")
+	wantShape, _ := bestiary.ParseParamShape(wantSize)
+	if m.ParamSize != wantSize || m.ParamSize != "30b-a3b" {
+		t.Errorf("synced ParamSize = %q, want %q (re-derived from ID; merge must not de-size)", m.ParamSize, "30b-a3b")
+	}
+	if m.TotalParams != wantShape.TotalParams || m.ActiveParams != wantShape.ActiveParams {
+		t.Errorf("synced shape ints = {total:%d active:%d}, want {%d %d}",
+			m.TotalParams, m.ActiveParams, wantShape.TotalParams, wantShape.ActiveParams)
+	}
+
+	// The entity key carries the re-derived #size segment, and the Sources projection is
+	// exactly one models.dev attestation keyed by that entity.
+	key := entityRefForModel(*m).String()
+	if !strings.Contains(key, "#30b-a3b") {
+		t.Errorf("synced entity key = %q, want a #30b-a3b segment", key)
+	}
+	att := entitySourcesForModels([]bestiary.ModelInfo{*m})
+	if len(att) != 1 || att[0].SourceID != bestiary.DataSourceModelsDev || att[0].EntityKey != key {
+		t.Errorf("attestations = %+v, want one models.dev row for entity key %q", att, key)
+	}
+
+	// Stage/StageRaw re-derived on the same cache read path, identical to the static
+	// decomposition. The sized (qwen) row carries no stage marker; the beta row
+	// re-derives Stage=StageBeta from its ID. This proves the stage axis rides the
+	// same enrichment joint as ParamSize (a synced-then-cached row's stage matches the
+	// baked static row).
+	if m.Stage != bestiary.StageNone || m.StageRaw != "" {
+		t.Errorf("synced qwen Stage/StageRaw = {%v %q}, want {none \"\"}", m.Stage, m.StageRaw)
+	}
+	var beta *bestiary.ModelInfo
+	for i := range models {
+		if models[i].ID == "grok-4.20-beta-0309-reasoning" {
+			beta = &models[i]
+		}
+	}
+	if beta == nil {
+		t.Fatalf("synced beta model not found; got %d cached rows", len(models))
+	}
+	if beta.Stage != bestiary.StageBeta {
+		t.Errorf("synced beta Stage = %v, want StageBeta (re-derived from the -beta ID on read)", beta.Stage)
+	}
+	if beta.StageRaw != "" {
+		t.Errorf("synced beta StageRaw = %q, want \"\" (reserved for the Other path)", beta.StageRaw)
+	}
+}
+
 // TestEntitySourcesForModels_DerivesAndDedups asserts the attestation derivation
 // builds one models.dev row per DISTINCT entity key (many models → one entity
 // collapse) using the same identity projection the registry uses.
@@ -1098,21 +1189,56 @@ func TestInstanceTable_StatusColumn(t *testing.T) {
 		{ID: "m2", Provider: "p2"},
 	}
 
+	noStages := []bestiary.ReleaseStage{bestiary.StageNone, bestiary.StageNone}
+
 	// All None → no STATUS column.
 	var noStatus strings.Builder
-	writeInstanceTableWithStatus(&noStatus, insts, []bestiary.ModelStatus{bestiary.StatusNone, bestiary.StatusNone})
+	writeInstanceTableWithStatus(&noStatus, insts, []bestiary.ModelStatus{bestiary.StatusNone, bestiary.StatusNone}, noStages)
 	if strings.Contains(noStatus.String(), "STATUS") {
 		t.Errorf("STATUS column present when no instance carries a status:\n%s", noStatus.String())
 	}
 
 	// One Beta → STATUS column with the status name.
 	var withStatus strings.Builder
-	writeInstanceTableWithStatus(&withStatus, insts, []bestiary.ModelStatus{bestiary.StatusBeta, bestiary.StatusNone})
+	writeInstanceTableWithStatus(&withStatus, insts, []bestiary.ModelStatus{bestiary.StatusBeta, bestiary.StatusNone}, noStages)
 	out := withStatus.String()
 	if !strings.Contains(out, "STATUS") {
 		t.Errorf("STATUS column missing when an instance carries a status:\n%s", out)
 	}
 	if !strings.Contains(out, "beta") {
 		t.Errorf("STATUS column should render the status name 'beta':\n%s", out)
+	}
+}
+
+// TestInstanceTable_StageColumn asserts the instance table gains a STAGE column —
+// distinct from STATUS — only when an instance carries a non-None release stage, and
+// that the two columns are independent (stage present, status absent renders STAGE
+// but not STATUS).
+func TestInstanceTable_StageColumn(t *testing.T) {
+	insts := []bestiary.ProviderInstance{
+		{ID: "m1", Provider: "p1"},
+		{ID: "m2", Provider: "p2"},
+	}
+	noStatuses := []bestiary.ModelStatus{bestiary.StatusNone, bestiary.StatusNone}
+
+	// All None → no STAGE column.
+	var noStage strings.Builder
+	writeInstanceTableWithStatus(&noStage, insts, noStatuses, []bestiary.ReleaseStage{bestiary.StageNone, bestiary.StageNone})
+	if strings.Contains(noStage.String(), "STAGE") {
+		t.Errorf("STAGE column present when no instance carries a stage:\n%s", noStage.String())
+	}
+
+	// One Beta stage, no status → STAGE column present, STATUS column absent (independent columns).
+	var withStage strings.Builder
+	writeInstanceTableWithStatus(&withStage, insts, noStatuses, []bestiary.ReleaseStage{bestiary.StageBeta, bestiary.StageNone})
+	out := withStage.String()
+	if !strings.Contains(out, "STAGE") {
+		t.Errorf("STAGE column missing when an instance carries a stage:\n%s", out)
+	}
+	if strings.Contains(out, "STATUS") {
+		t.Errorf("STATUS column must be absent when no instance carries a status (columns are independent):\n%s", out)
+	}
+	if !strings.Contains(out, "beta") {
+		t.Errorf("STAGE column should render the stage name 'beta':\n%s", out)
 	}
 }

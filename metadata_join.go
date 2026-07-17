@@ -147,17 +147,21 @@ func stripMetadataLab(id string) string {
 	return id
 }
 
-// metadataParamSize scans a decomposed metadata remainder for the first recognised
-// parameter-size token (e.g. "70b", "8x22b") and returns its canonical form, or ""
-// when none is present. It never splits on '.' so a dotted version ("4.6") is never
-// mistaken for a size — mirroring the ollama tool's paramSizeFromID.
+// metadataParamSize resolves the canonical parameter-size token for a lab-stripped
+// metadata remainder. It applies the curated pin FIRST — the remainder-pin rule: a
+// param_size_overrides.json pin keyed byte-equal to the stripped remainder wins, so
+// the metadata join agrees with the entity key by construction (a pinned llama-4
+// scout keys #17b-16e on both sides, not a mechanical #17b, and a suppress-pin yields
+// no size). Otherwise it delegates to the shared ExtractParamSizeToken grammar
+// authority (longest whole-window match over [-:/] only), so this site never
+// re-implements a greedy scan and never splits on '.' (a dotted version "4.6" is
+// never mistaken for a size).
 func metadataParamSize(remainder string) string {
-	for _, tok := range strings.FieldsFunc(remainder, func(r rune) bool {
-		return r == '-' || r == ':' || r == '/'
-	}) {
-		if ps, err := ParseParamSize(tok); err == nil && ps != "" {
-			return ps
-		}
+	if pinToken, pinned := paramSizePin(remainder); pinned {
+		return pinToken // PRESENT pin wins; "" is a deliberate suppress.
+	}
+	if tok, ok := ExtractParamSizeToken(remainder); ok {
+		return tok
 	}
 	return ""
 }

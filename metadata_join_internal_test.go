@@ -68,11 +68,44 @@ func TestMetadataEntityRef_Decomposition(t *testing.T) {
 		{"meta/llama-3.3-70b", "llama@3.3#70b"},
 		{"zhipuai/glm-4.6", "glm@4.6"},
 		{"bare-no-lab-7b", "bare#7b"}, // no slash: whole id decomposes
+		// Remainder-pin rule: the stripped remainder "llama-4-scout-17b-instruct" is
+		// byte-equal to a curated pin, so the pin's full-shape token wins over the
+		// mechanical "17b" and the join key agrees with the served entity's #17b-16e
+		// key by construction. Deleting the pin branch in metadataParamSize regresses
+		// this row to "...#17b{...}".
+		{"meta/llama-4-scout-17b-instruct", "llama/scout@4#17b-16e{instruct}"},
 	}
 	for _, tc := range cases {
 		if got := metadataEntityRef(tc.id).String(); got != tc.wantKey {
 			t.Errorf("metadataEntityRef(%q).String() = %q, want %q", tc.id, got, tc.wantKey)
 		}
+	}
+}
+
+// TestMetadataParamSize_ThreeTiers is the focused fence on metadataParamSize's tier
+// order over a lab-stripped remainder: (1) a remainder byte-equal to a pinned ID takes
+// the pin (whose token diverges from the mechanical "17b", so a deleted pin branch is
+// caught, not masked by agreement); (2) an unpinned remainder takes the mechanical
+// ExtractParamSizeToken result; (3) a remainder with no pin and no size token yields "".
+func TestMetadataParamSize_ThreeTiers(t *testing.T) {
+	// Tier 1 — pin: the bare llama-4 scout form is a curated pin ("17b-16e").
+	// Precondition: the mechanical result genuinely diverges, so this leg is
+	// falsifiable by mutation.
+	if mech, ok := ExtractParamSizeToken("llama-4-scout-17b-instruct"); !ok || mech != "17b" {
+		t.Fatalf("precondition: mechanical token = (%q,%v), want (\"17b\",true) — the pin must diverge from mechanical", mech, ok)
+	}
+	if got := metadataParamSize("llama-4-scout-17b-instruct"); got != "17b-16e" {
+		t.Errorf("pinned remainder: metadataParamSize = %q, want %q (pin tier)", got, "17b-16e")
+	}
+
+	// Tier 2 — mechanical: no pin for this remainder; the compound token is lifted whole.
+	if got := metadataParamSize("qwen3-235b-a22b"); got != "235b-a22b" {
+		t.Errorf("unpinned remainder: metadataParamSize = %q, want %q (mechanical tier)", got, "235b-a22b")
+	}
+
+	// Tier 3 — none: no pin, no size token (a dotted version is never a size).
+	if got := metadataParamSize("glm-4.6"); got != "" {
+		t.Errorf("token-less remainder: metadataParamSize = %q, want \"\"", got)
 	}
 }
 
@@ -337,14 +370,16 @@ func TestMetadataCensus_SynthesizedStandalonesPinned(t *testing.T) {
 
 // TestMetadataAlias_NemotronSuper49bAttaches asserts the ONE clean curated alias lands:
 // nvidia/llama-3.3-nemotron-super-49b-v1.5's metadata attaches to the distinct
-// provider-backed entity nemotron/v1.5@3.3 (deepinfra/kilo/openrouter serve it), rather
-// than being synthesized as a spurious standalone, and that its metadata CONTENT travels
-// with it. (This upstream row carries a description + name but no benchmarks/license, so
-// the content check is on Description — the field it actually populates.)
+// provider-backed entity nemotron/v1.5@3.3#49b (deepinfra/kilo/openrouter serve it),
+// rather than being synthesized as a spurious standalone, and that its metadata CONTENT
+// travels with it. The alias carries param_size "49b" because the full-bulk size re-key
+// gave the served entity a #49b segment; the alias target was re-pinned to match. (This
+// upstream row carries a description + name but no benchmarks/license, so the content
+// check is on Description — the field it actually populates.)
 func TestMetadataAlias_NemotronSuper49bAttaches(t *testing.T) {
-	e, ok := EntityByTuple(FamilyNemotron, "v1.5", "3.3", "")
+	e, ok := EntityByTuple(FamilyNemotron, "v1.5", "3.3", "49b")
 	if !ok {
-		t.Fatalf("entity nemotron/v1.5@3.3 not found in the registry; the alias target must be a real served entity")
+		t.Fatalf("entity nemotron/v1.5@3.3#49b not found in the registry; the alias target must be a real served entity")
 	}
 	if e.Metadata == nil {
 		t.Fatalf("entity %q has no attached Metadata; the curated alias for nvidia/llama-3.3-nemotron-super-49b-v1.5 did not land", e.Ref.String())

@@ -4,8 +4,10 @@ import (
 	"embed"
 	"encoding/json"
 	"fmt"
+	"math"
 	"regexp"
 	"sort"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -1172,6 +1174,56 @@ var quantizationTokens = map[string]struct{}{
 // "grok-code-fast-1") is deliberately NOT matched, so it still stops the scan.
 var reVersionMarkerToken = regexp.MustCompile(`^v[0-9]+(\.[0-9]+)?$`)
 
+// midIDModifierTokens is the CLOSED stage/mode token set the mid-ID harvest phase of
+// extractModifiers reaches for. Each denotes a model's operating MODE and structurally
+// appears BEFORE the variant/version in an ID — e.g. "gemini-omni-flash-preview",
+// "gpt-realtime-2.1", "qwen3-livetranslate-flash-realtime" — so the tail-inward phase-A
+// scan (which stops at the first variant/version/member boundary) cannot reach them.
+// Every OTHER modifier (instruct/thinking/reasoning/preview/…) trails the variant and is
+// already recovered by phase A, so restricting the mid-ID harvest to this closed set is
+// the safe generalization: it can never reclassify a mid-ID instance of a trailing
+// modifier, and it targets exactly the tokens the stage/mode exact-ID idFamilyOverrides
+// used to pin — once the engine covered them those entries were retired (a few
+// dotted-version gpt-realtime IDs remain, for a separate version-extraction gap).
+// Classification (omni/livetranslate = IDENTITY,
+// realtime = ATTRIBUTE) is owned by modifier_class.json / ClassifyModifier — this set
+// owns REACHABILITY only, never class.
+var midIDModifierTokens = map[string]struct{}{
+	"omni":          {},
+	"livetranslate": {},
+	"realtime":      {},
+}
+
+// isMidIDModifierToken reports whether tok is a curated stage/mode token eligible for
+// the mid-ID harvest (case-insensitive). See midIDModifierTokens.
+func isMidIDModifierToken(tok string) bool {
+	if tok == "" {
+		return false
+	}
+	_, ok := midIDModifierTokens[strings.ToLower(tok)]
+	return ok
+}
+
+// variantHasComponent reports whether tok is a hyphen-separated component of variant
+// (both already lowercased by the caller). It is the mid-ID harvest's variant-guard: a
+// COMPOUND variant such as "omni-free" (an upstream raw_family quirk on mimo-v2-omni-free)
+// already accounts for its "omni" component, so the harvest must not ALSO emit "omni" as a
+// separate modifier. Covers the plain single-token case (variant == tok) too.
+func variantHasComponent(variant, tok string) bool {
+	if variant == "" || tok == "" {
+		return false
+	}
+	if variant == tok {
+		return true
+	}
+	for _, c := range strings.Split(variant, "-") {
+		if c == tok {
+			return true
+		}
+	}
+	return false
+}
+
 // isModifierTransparentToken reports whether a tail token should be SKIPPED (consumed
 // but not collected) while scanning for buried modifiers: a date fragment, a param-size
 // token, a context-window token, a quantization/serving-format token, or a 4+ digit
@@ -1197,19 +1249,39 @@ func isModifierTransparentToken(tok string) bool {
 	return false
 }
 
-// extractModifiers is the multi-modifier companion to ExtractModifier. It
-// scans the model ID's tail tokens (after the vendor/path strip, '@'→'-' normalized)
-// from the END inward, collecting EVERY modifier token (member-guarded, case-insensitive)
-// and SKIPPING transparent date/param/quant/context tokens, stopping at the first real
-// boundary token (a variant/version/family token). This recovers modifiers buried behind
-// quantization or date suffixes (e.g. "Llama-3.3-70B-Instruct-FP8-Fast" → [fast, instruct])
-// that a strictly-trailing match would miss.
+// extractModifiers is the multi-modifier companion to ExtractModifier. It scans the
+// model ID's tail tokens (after the vendor/path strip, '@'→'-' normalized) from the END
+// inward in TWO phases, ONE traversal over the SAME token stream, recognizing tokens
+// across two domains (modifiers and — transparently — sizes):
+//
+//	Phase A (trailing run): collect EVERY trailing modifier token (member-guarded,
+//	case-insensitive) and SKIP transparent date/param-size/quant/context tokens,
+//	stopping at the first real boundary token (a variant/version/family/member). This
+//	recovers modifiers buried behind quantization or date suffixes (e.g.
+//	"Llama-3.3-70B-Instruct-FP8-Fast" → [fast, instruct]). Byte-identical to the
+//	pre-engine scan: the `consumed` return and its stripping semantics are unchanged.
+//
+//	Phase B (mid-ID harvest): continue PAST the phase-A boundary, collecting the CLOSED
+//	stage/mode token set (omni/livetranslate/realtime — see midIDModifierTokens) that
+//	structurally precedes the variant/version and so is unreachable by phase A
+//	(e.g. the "omni" in "gemini-omni-flash-preview", the "realtime" in "gpt-realtime-2.1").
+//	This generalizes the stage/mode exact-ID idFamilyOverrides that once pinned these
+//	tokens: with the entry retired the ID decomposes IDENTICALLY (pinned in the tests).
+//
+// Size-domain recognition is shared with the size grammar via isParamSizeToken (through
+// isModifierTransparentToken): a size token — including a split "30b"/"a3b" half of a
+// buried MoE size — never blocks the mid-ID harvest, so a stage/mode token behind it
+// stays reachable.
 //
 // Returns (mods, consumed): mods are lowercase canonical tokens in tail-inward PEEL order
-// (the caller passes them through CanonicalizeModifiers); consumed is the full trailing
-// substring spanned by the scan (modifiers + skipped transparent tokens), suitable for
-// stripping from the ID before version/date logic. The member-guard and the variant-guard
-// (token == resolved variant) both apply so a per-family product LINE token is never peeled.
+// (the caller passes them through CanonicalizeModifiers); consumed is the phase-A trailing
+// substring spanned by the scan (trailing modifiers + skipped transparent tokens),
+// suitable for stripping from the ID before version/date logic. A phase-B mid-ID modifier
+// is NOT a trailing substring, so it is added to mods but NEVER grows `consumed` — the
+// version/date extractors must still see the mid-ID token in place. The member-guard and
+// the variant-guard (token == resolved variant) apply in BOTH phases; phase B additionally
+// guards the family token so a family literally named for a stage/mode token is never
+// harvested.
 func extractModifiers(id ModelID, family Family, variant string) (mods []string, consumed string) {
 	pd, err := loadParseData()
 	if err != nil {
@@ -1222,14 +1294,23 @@ func extractModifiers(id ModelID, family Family, variant string) (mods []string,
 	idStr = strings.ReplaceAll(idStr, "@", "-")
 	toks := strings.Split(idStr, "-")
 	lowVariant := strings.ToLower(variant)
+	lowFamily := strings.ToLower(string(family))
 
+	// normTok lowercases and strips a trailing ":N" context-window tag.
+	normTok := func(s string) string {
+		s = strings.ToLower(s)
+		if j := strings.IndexByte(s, ':'); j >= 0 {
+			s = s[:j]
+		}
+		return s
+	}
+
+	// ── Phase A: trailing run (byte-identical to the pre-engine scan) ──
 	consumedTokens := 0 // number of trailing tokens consumed (modifiers + transparent)
 	prevAfterYear := false
+	midStart := -1 // index to resume the mid-ID harvest from; -1 = phase A reached the head
 	for i := len(toks) - 1; i >= 0; i-- {
-		t := strings.ToLower(toks[i])
-		if j := strings.IndexByte(t, ':'); j >= 0 {
-			t = t[:j] // strip ":N" context-window tag for the test
-		}
+		t := normTok(toks[i])
 		// MM-of-MM-YYYY date fragment: a 1-2 digit numeric immediately PRECEDING (in
 		// tail order) a 4-digit year is the month half of an "MM-YYYY" date — transparent
 		// (e.g. "08" in "command-a-reasoning-08-2025"). Lets the scan reach a buried modifier.
@@ -1251,6 +1332,8 @@ func extractModifiers(id ModelID, family Family, variant string) (mods []string,
 				// deeper than it was ever consumed. Halting here means the ONLY change is
 				// "<mod>"→"non-<mod>" — the out-of-scope grok "fast" handling (GH#13) is left
 				// untouched (it stays absent on these *-fast-non-reasoning ids, exactly as before).
+				// midStart stays -1: the "non" boundary suppresses the mid-ID harvest too, so
+				// nothing deeper than it is ever collected (no such catalog ID exists anyway).
 				consumedTokens = len(toks) - (i - 1)
 				i = -1
 			} else {
@@ -1263,7 +1346,9 @@ func extractModifiers(id ModelID, family Family, variant string) (mods []string,
 			prevAfterYear = len(t) == 4 && isAllDigits(t)
 			continue
 		default:
-			// real boundary token (variant/version/family) → stop.
+			// real boundary token (variant/version/family/member) → phase A stops here;
+			// the mid-ID harvest resumes from this boundary token inward.
+			midStart = i
 			i = -1
 		}
 	}
@@ -1271,6 +1356,23 @@ func extractModifiers(id ModelID, family Family, variant string) (mods []string,
 		// Rebuild the consumed trailing substring (covers the skipped transparent tokens
 		// interleaved before the innermost collected modifier).
 		consumed = "-" + strings.Join(toks[len(toks)-consumedTokens:], "-")
+	}
+
+	// ── Phase B: mid-ID stage/mode harvest ──
+	// From the phase-A boundary inward, collect the closed stage/mode set that structurally
+	// precedes the variant/version. This NEVER grows `consumed` (a mid-ID token is not a
+	// trailing substring). Non-stage/mode tokens — the boundary variant/version itself,
+	// family members, sizes (incl. split "30b"/"a3b" halves), dates, quant — are skipped so
+	// a stage/mode token buried behind them stays reachable. The member/variant guards from
+	// phase A apply, plus a family-token guard.
+	if midStart >= 0 {
+		for i := midStart; i >= 0; i-- {
+			t := normTok(toks[i])
+			if isMidIDModifierToken(t) && !variantHasComponent(lowVariant, t) && t != lowFamily &&
+				!isFamilyMemberToken(pd, family, t) {
+				mods = append(mods, t)
+			}
+		}
 	}
 	return mods, consumed
 }
@@ -2077,6 +2179,51 @@ func canonicalizeGlmV(family Family, variant, version string, modifier []string,
 	return family, "v", m[1], CanonicalizeModifiers(newMod)
 }
 
+// reDotGluedVariant matches a family-stripped remainder that is a single dot-glued
+// variant token: an all-letters variant prefix glued by a "." to a numeric version,
+// with NO hyphen between them (e.g. "xs.2", "m.1"). The leading group is purely
+// alphabetic, so a version-prefix letter fused to a digit ("v3.1" is one token "v3.1",
+// never "v"+"3.1"), a bare numeric version ("4.1"), and an alphanumeric line designator
+// ("4o") all fail to match; the trailing group is a genuine numeric version (integer or
+// N.M dotted). Capture 1 = variant, capture 2 = version.
+var reDotGluedVariant = regexp.MustCompile(`^([a-z]+)\.(\d+(?:\.\d+)?)$`)
+
+// canonicalizeDotGluedVariant generalizes the LEADING dot-glued variant form — a
+// variant glued by a "." to a version with no separating hyphen (poolside/laguna-xs.2 →
+// (laguna, "xs", "2"); laguna-m.1 → (laguna, "m", "1")). It is the mechanical
+// counterpart of the TRAILING glued-letter split (splitGluedVersionModifier, glm-4.5v):
+// the two together cover both glue positions of a letter-and-version fusion. Before this
+// generalization the leading dot-glued variant was reachable only through exact-ID
+// curated entries; the general machinery derives it from any family whose stripped
+// remainder is a lone dot-glued token, so a future such ID needs no new curated entry.
+//
+// It fires ONLY when the decomposition left BOTH variant and version empty (it never
+// overwrites a value the pipeline already resolved) and the family-stripped remainder is
+// EXACTLY one dot-glued token — a deliberately narrow gate so no genuine version
+// ("gpt-4.1"), version-prefixed line ("deepseek-v3.1"), or alphanumeric line designator
+// ("gpt-4o") is ever mangled.
+func canonicalizeDotGluedVariant(family Family, variant, version string, modifier []string, id ModelID) (Family, string, string, []string) {
+	if family == "" || variant != "" || version != "" {
+		return family, variant, version, modifier
+	}
+	// Strip the vendor namespace and any trailing ":tag" context/free marker, then the
+	// family prefix, leaving the token that carries the glued variant+version.
+	clean := strings.ToLower(lastPathSegment(stripVendorNamespace(string(id))))
+	if idx := strings.IndexByte(clean, ':'); idx >= 0 {
+		clean = clean[:idx]
+	}
+	famPrefix := strings.ToLower(string(family)) + "-"
+	if !strings.HasPrefix(clean, famPrefix) {
+		return family, variant, version, modifier
+	}
+	remainder := clean[len(famPrefix):]
+	m := reDotGluedVariant.FindStringSubmatch(remainder)
+	if m == nil {
+		return family, variant, version, modifier
+	}
+	return family, m[1], m[2], modifier
+}
+
 // containsToken reports whether toks contains tok exactly.
 func containsToken(toks []string, tok string) bool {
 	for _, t := range toks {
@@ -2218,6 +2365,7 @@ func ParseFamilyDetailed(raw Family, id ModelID, p Provider) (Family, string, st
 		family, variant, version, modifier := idDrivenDecompose(id, p)
 		family, variant, version, modifier = canonicalizeOpenAILine(family, variant, version, modifier, id)
 		family, variant, version, modifier = canonicalizeGlmV(family, variant, version, modifier, id)
+		family, variant, version, modifier = canonicalizeDotGluedVariant(family, variant, version, modifier, id)
 		if pd, pdErr := loadParseData(); pdErr == nil {
 			variant, modifier = promoteVariantModifier(pd, family, variant, modifier)
 		}
@@ -2232,6 +2380,7 @@ func ParseFamilyDetailed(raw Family, id ModelID, p Provider) (Family, string, st
 		rf, rv, rver, rmod := reconcileIDDriven(f, v, ver, m, id, p)
 		rf, rv, rver, rmod = canonicalizeOpenAILine(rf, rv, rver, rmod, id)
 		rf, rv, rver, rmod = canonicalizeGlmV(rf, rv, rver, rmod, id)
+		rf, rv, rver, rmod = canonicalizeDotGluedVariant(rf, rv, rver, rmod, id)
 		if pd, pdErr := loadParseData(); pdErr == nil {
 			rv, rmod = promoteVariantModifier(pd, rf, rv, rmod)
 		}
@@ -3053,10 +3202,11 @@ func isDateShapedToken(tok string) bool {
 //   - dense param count:  "120b", "20b", "7b", "1.5b", "560m", "7m"
 //   - MoE "NxNNb":        "8x22b", "8x7b"
 //   - MoE active-params:  "30b-a3b", "300b-a47b", "235b-a22b", "480b-a35b"
+//   - MoE count-suffixed: "17b-16e", "17b-128e"  (Nb-Ke: active params + expert count)
 //
 // Genuine version tokens are NOT matched because they have no b/m unit suffix:
 // "4o" (ends "o"), "4.5", "5", "3.1", "2603" (date, also guarded separately).
-var reParamSizeToken = regexp.MustCompile(`^(?i:\d+(?:\.\d+)?[bm]|\d+x\d+b|\d+b-a\d+b)$`)
+var reParamSizeToken = regexp.MustCompile(`^(?i:\d+(?:\.\d+)?[bm]|\d+x\d+b|\d+b-a\d+b|\d+b-\d+e)$`)
 
 // isParamSizeToken reports whether tok is a parameter-count / model-size token
 // (e.g. "120b", "7m", "8x22b", "30b-a3b"). Such tokens are dropped from version
@@ -3098,7 +3248,8 @@ func ParseParamSize(raw string) (string, error) {
 			"bestiary: ParseParamSize: %q is not a valid param-size token\n"+
 				"  What: the input does not match the expected parameter-count shape\n"+
 				"  Why: valid shapes are dense (e.g. \"70b\", \"0.5b\", \"560m\"),"+
-				" MoE (e.g. \"8x22b\"), or active-param MoE (e.g. \"30b-a3b\")\n"+
+				" MoE (e.g. \"8x22b\"), active-param MoE (e.g. \"30b-a3b\"),"+
+				" or count-suffixed MoE (e.g. \"17b-16e\")\n"+
 				"  Where: bestiary.ParseParamSize\n"+
 				"  How to fix: supply a token ending in 'b' or 'm' with an optional"+
 				" leading count (e.g. \"8b\", \"70b\", \"0.5b\")",
@@ -3106,6 +3257,282 @@ func ParseParamSize(raw string) (string, error) {
 		)
 	}
 	return lower, nil
+}
+
+// Sub-shape recognizers for ParseParamShape. Each operates on the already
+// lowercased, already-validated canonical token, so the dispatch is a plain
+// suffix-keyed classification rather than a re-validation. The order in which
+// ParseParamShape tries them is significant only for readability — the four
+// shapes are mutually exclusive.
+var (
+	reShapeNxM       = regexp.MustCompile(`^(\d+)x(\d+b)$`)        // "8x22b": experts x per-expert
+	reShapeActiveMoE = regexp.MustCompile(`^(\d+b)-a(\d+b)$`)      // "30b-a3b": total - active
+	reShapeCountMoE  = regexp.MustCompile(`^(\d+b)-(\d+)e$`)       // "17b-16e": active - expert count
+	reShapeDense     = regexp.MustCompile(`^(\d+(?:\.\d+)?[bm])$`) // "30b", "560m", "10.7b"
+)
+
+// ParseParamShape decomposes a canonical parameter-size token into its flat
+// parameter-count facts. It is a PURE, suffix-keyed decomposition: the token's
+// shape (dense / NxM / active-MoE / count-suffixed-MoE) selects which fields are
+// populated, and no field is ever cross-computed from another.
+//
+// The counts are EXACT int64 values derived with string-digit decimal arithmetic
+// (never a float64 multiply), so a decimal token is exact to the parameter:
+// "10.7b" -> TotalParams 10_700_000_000 and "0.6b" -> TotalParams 600_000_000.
+//
+// An NxM MoE token records ExpertCount and PerExpertParams but leaves TotalParams
+// and ActiveParams at ParamShapeNull (-1) — the product is deliberately NOT computed
+// (upstream does not publish a total for these and N*M would misstate the footprint).
+// A count-suffixed token ("17b-16e") records ActiveParams and ExpertCount and leaves
+// TotalParams/PerExpertParams NULL. See the ParamShapeNull sentinel contract.
+//
+// Every field the matched shape does NOT carry is set to ParamShapeNull (-1), the
+// in-domain NULL sentinel — never a masquerading 0. The sole genuine 0 is a dense
+// token's ExpertCount (a dense model attests exactly zero experts). The empty token
+// yields the ALL-NULL shape with no error (an unsized model). A non-empty token that
+// is not a recognized size shape returns an actionable error AND the all-NULL shape
+// (nothing was populated), the same rejection surface as ParseParamSize.
+//
+//	ParseParamShape("")        -> {Total:-1, Active:-1, PerExpert:-1, Experts:-1}
+//	ParseParamShape("8b")      -> {Total: 8e9, Active:-1, PerExpert:-1, Experts: 0}   // dense: Experts genuine 0
+//	ParseParamShape("30b-a3b") -> {Total:30e9, Active: 3e9, PerExpert:-1, Experts:-1}
+//	ParseParamShape("8x22b")   -> {Total: -1, Active: -1, PerExpert:22e9, Experts: 8} // Total NEVER N*M
+//	ParseParamShape("17b-16e") -> {Total: -1, Active:17e9, PerExpert:-1, Experts:16}
+func ParseParamShape(sizeToken string) (ParamShape, error) {
+	// nullShape is the all-NULL base: every field ParamShapeNull. A recognized shape
+	// overwrites exactly the fields it carries; the rest stay NULL.
+	nullShape := ParamShape{
+		TotalParams:     ParamShapeNull,
+		ActiveParams:    ParamShapeNull,
+		PerExpertParams: ParamShapeNull,
+		ExpertCount:     ParamShapeNull,
+	}
+	if sizeToken == "" {
+		return nullShape, nil
+	}
+	tok, err := ParseParamSize(sizeToken)
+	if err != nil {
+		return nullShape, err
+	}
+	// tok is the canonical lowercase token; classify by shape. Each arm starts from
+	// nullShape and populates only its carried fields, leaving the others NULL.
+	if m := reShapeNxM.FindStringSubmatch(tok); m != nil {
+		experts, cerr := strconv.Atoi(m[1])
+		perExpert, perr := paramTokenToInt64(m[2])
+		if err := firstNonNil(cerr, perr); err != nil {
+			return nullShape, paramShapeArithErr(tok, err)
+		}
+		s := nullShape
+		s.ExpertCount, s.PerExpertParams = experts, perExpert
+		return s, nil
+	}
+	if m := reShapeActiveMoE.FindStringSubmatch(tok); m != nil {
+		total, terr := paramTokenToInt64(m[1])
+		active, aerr := paramTokenToInt64(m[2])
+		if err := firstNonNil(terr, aerr); err != nil {
+			return nullShape, paramShapeArithErr(tok, err)
+		}
+		s := nullShape
+		s.TotalParams, s.ActiveParams = total, active
+		return s, nil
+	}
+	if m := reShapeCountMoE.FindStringSubmatch(tok); m != nil {
+		active, aerr := paramTokenToInt64(m[1])
+		experts, cerr := strconv.Atoi(m[2])
+		if err := firstNonNil(aerr, cerr); err != nil {
+			return nullShape, paramShapeArithErr(tok, err)
+		}
+		s := nullShape
+		s.ActiveParams, s.ExpertCount = active, experts
+		return s, nil
+	}
+	if m := reShapeDense.FindStringSubmatch(tok); m != nil {
+		total, terr := paramTokenToInt64(m[1])
+		if terr != nil {
+			return nullShape, paramShapeArithErr(tok, terr)
+		}
+		// Dense: TotalParams attested; Active/PerExpert NULL; ExpertCount a genuine 0
+		// (a dense model attests zero experts — the only in-domain 0 in the contract).
+		s := nullShape
+		s.TotalParams, s.ExpertCount = total, 0
+		return s, nil
+	}
+	// Unreachable in practice: ParseParamSize accepted the token, so exactly one
+	// sub-shape regex above must have matched. Fail loudly rather than return a
+	// silently-empty shape if the two grammars ever drift apart.
+	return nullShape, fmt.Errorf(
+		"bestiary: ParseParamShape: %q passed ParseParamSize but matched no shape\n"+
+			"  What: a token accepted as a size did not decompose into a shape\n"+
+			"  Why: reParamSizeToken and the ParseParamShape sub-shape regexes have drifted\n"+
+			"  Where: bestiary.ParseParamShape\n"+
+			"  How to fix: add the new shape's decomposition arm to ParseParamShape",
+		tok,
+	)
+}
+
+// firstNonNil returns the first non-nil error among its arguments, or nil.
+func firstNonNil(errs ...error) error {
+	for _, e := range errs {
+		if e != nil {
+			return e
+		}
+	}
+	return nil
+}
+
+// paramShapeArithErr wraps an int64 conversion failure inside ParseParamShape with
+// an actionable message. It is only reachable for a pathologically large count
+// that overflows int64 (real catalog sizes are ~1e12, far below the int64 max).
+func paramShapeArithErr(tok string, cause error) error {
+	return fmt.Errorf(
+		"bestiary: ParseParamShape: %q: parameter count does not fit int64: %w\n"+
+			"  What: a numeric field in the size token overflowed int64\n"+
+			"  Where: bestiary.ParseParamShape\n"+
+			"  How to fix: this indicates an implausibly large size token; verify the input",
+		tok, cause,
+	)
+}
+
+// paramTokenToInt64 converts a single dense unit token ("30b", "560m", "10.7b",
+// "0.6b") to its EXACT int64 parameter count using string-digit decimal
+// arithmetic — never a float64 multiply. The token's trailing unit selects a
+// power-of-ten magnitude (b -> 10^9, m -> 10^6); the leading number's fractional
+// digits are absorbed into the exponent so, e.g., "10.7b" = 107 * 10^8 =
+// 10_700_000_000 and "0.6b" = 6 * 10^8 = 600_000_000, both exact.
+func paramTokenToInt64(tok string) (int64, error) {
+	if tok == "" {
+		return 0, fmt.Errorf("empty unit token")
+	}
+	unit := tok[len(tok)-1]
+	var unitExp int
+	switch unit {
+	case 'b':
+		unitExp = 9
+	case 'm':
+		unitExp = 6
+	default:
+		return 0, fmt.Errorf("token %q has no recognized b/m unit suffix", tok)
+	}
+	num := tok[:len(tok)-1] // strip the unit
+	intPart, fracPart, hasDot := strings.Cut(num, ".")
+	if !hasDot {
+		fracPart = ""
+	}
+	// The significand is the digits with the decimal point removed; the value is
+	// significand * 10^(unitExp - len(fracPart)). Leading zeros ("0.6b" -> "06")
+	// parse cleanly to the intended integer.
+	significand, err := strconv.ParseInt(intPart+fracPart, 10, 64)
+	if err != nil {
+		return 0, fmt.Errorf("cannot parse significand of %q: %w", tok, err)
+	}
+	exp := unitExp - len(fracPart)
+	if exp < 0 {
+		// More fractional digits than the unit magnitude (e.g. a sub-million
+		// fraction on an m-token). Not seen in real catalog data; divide exactly.
+		return significand / pow10i64(-exp), nil
+	}
+	// Overflow guard: the significand fit int64 (ParseInt checked that), but the
+	// magnitude multiply could still wrap for a pathological token (e.g.
+	// "9300000000b" = 9.3e18 > math.MaxInt64). Reject loudly instead of silently
+	// returning a wrapped count.
+	mult := pow10i64(exp)
+	if significand > math.MaxInt64/mult {
+		return 0, fmt.Errorf("parameter count of %q exceeds the int64 range (max %d)", tok, int64(math.MaxInt64))
+	}
+	return significand * mult, nil
+}
+
+// pow10i64 returns 10^n as an int64 for a small non-negative n (n <= 18). Used by
+// the exact decimal arithmetic in paramTokenToInt64; callers only ever pass the
+// unit exponent (<= 9) minus a fractional-digit count.
+func pow10i64(n int) int64 {
+	out := int64(1)
+	for i := 0; i < n; i++ {
+		out *= 10
+	}
+	return out
+}
+
+// paramSizeTokenSpans returns the [start,end) index spans of the maximal runs of
+// NON-separator characters in id, where the separator set is [-:/] ONLY. '.' and
+// '_' are intentionally NOT separators: '.' carries decimal sizes ("0.6b") and '_'
+// matches the no-underscore behavior of both existing extractor sites
+// (metadata_join.go, cmd/bestiary-ollama) and has zero extraction benefit
+// catalog-wide. A window built from spans[i].start..spans[j].end therefore always
+// reproduces a contiguous substring of id (its interior separators are the ID's
+// own original separators).
+func paramSizeTokenSpans(id string) [][2]int {
+	var spans [][2]int
+	start := -1
+	for i := 0; i < len(id); i++ {
+		c := id[i]
+		if c == '-' || c == ':' || c == '/' {
+			if start >= 0 {
+				spans = append(spans, [2]int{start, i})
+				start = -1
+			}
+			continue
+		}
+		if start < 0 {
+			start = i
+		}
+	}
+	if start >= 0 {
+		spans = append(spans, [2]int{start, len(id)})
+	}
+	return spans
+}
+
+// ExtractParamSizeToken is the single grammar authority for pulling a
+// parameter-size token out of a model ID. It is shared (by the enrichment path,
+// the metadata join, the offline Ollama tool, and parseBaseRef) so every site
+// decomposes sizes identically and no site re-implements a greedy scan.
+//
+// It tokenizes id on [-:/] ONLY — '.' and '_' are NOT separators ('.' carries
+// decimal sizes; '_' matches both existing sites' no-underscore behavior and has
+// zero extraction benefit catalog-wide). Candidate windows are contiguous token
+// runs rejoined with their ORIGINAL separators (each window is a contiguous
+// substring of id); the LONGEST window that is a valid size wins (ties break to
+// the leftmost). It returns the CANONICAL token (ParseParamSize-normalized), so
+// callers get the same spelling the entity key uses. Any static-vs-derived skew
+// (a baked ParamSize that disagrees with what this returns) is caught by
+// TestCodegen_UpToDate rather than silently tolerated.
+//
+//	"qwen3-235b-a22b"              -> ("235b-a22b", true)   // longest whole window, not "235b"
+//	"llama-4-scout-17b-16e"        -> ("17b-16e", true)
+//	"lfm-2.5-1.2b"                 -> ("1.2b", true)        // decimal intact
+//	"qwen3-embedding-0.6b"         -> ("0.6b", true)        // never "6b"
+//	"command-r7b"                  -> ("", false)           // r7b is one token; never substring "7b"
+//	"upstage/solar-10_7b-instruct" -> ("", false)           // '_' not a separator; sized via curated pin
+func ExtractParamSizeToken(id string) (token string, ok bool) {
+	if id == "" {
+		return "", false
+	}
+	spans := paramSizeTokenSpans(id)
+	var (
+		best      string
+		bestLen   int
+		bestStart = -1
+	)
+	for i := 0; i < len(spans); i++ {
+		for j := i; j < len(spans); j++ {
+			window := id[spans[i][0]:spans[j][1]]
+			canon, err := ParseParamSize(window)
+			if err != nil || canon == "" {
+				continue
+			}
+			wlen := len(window)
+			if wlen > bestLen || (wlen == bestLen && spans[i][0] < bestStart) {
+				best = canon
+				bestLen = wlen
+				bestStart = spans[i][0]
+			}
+		}
+	}
+	if best == "" {
+		return "", false
+	}
+	return best, true
 }
 
 // --------------------------------------------------------------------------
@@ -3476,11 +3903,12 @@ var seriesTierModifiers = map[string]struct{}{
 // idFamilyOverrideEntry is the curated (family, variant, version, modifiers) an exact
 // model ID maps to. modifiers is the FULL modifier list (identity + attribute, in any
 // order — CanonicalizeModifiers reorders and EntityModifiers splits identity from
-// attribute at the key boundary). It pins tokens the tail-inward modifier scan cannot
-// reach because they sit BEFORE the variant/version (e.g. the "omni" in
-// gemini-omni-flash-preview, the "realtime" in gpt-realtime-2.1): a mid-ID
-// identity/attribute modifier the general {mods} mechanism structurally misses. Empty
-// modifiers preserves the pre-existing family-only override behavior.
+// attribute at the key boundary). The general mid-ID modifier engine now harvests a
+// buried identity/attribute modifier that sits BEFORE the variant/version (the "omni" in
+// gemini-omni-flash-preview, the "realtime" in gpt-realtime-2), so the stage/mode entries
+// that only needed that harvest were retired; the residual stage/mode entries pin a
+// SEPARATE gap the engine does not yet close — a dotted version glued behind the mid-ID
+// token (gpt-realtime-2.1). Empty modifiers preserves the family-only override behavior.
 type idFamilyOverrideEntry struct {
 	family    Family
 	variant   string
@@ -3525,39 +3953,19 @@ var idFamilyOverrides = map[string]idFamilyOverrideEntry{
 	"abacusai/dracarys-72b-instruct":           {family: "dracarys"},
 	"gryphe/mythomax-l2-13b":                   {family: "mythomax"},
 
-	// v0.2.5 stage/mode identity granularity: pin the mid-ID
-	// identity/attribute modifiers the tail-inward {mods} scan cannot reach because
-	// they precede the variant/version. omni + livetranslate are IDENTITY (render in
-	// {…}); realtime is ATTRIBUTE (render in […], instance-only); preview / thinking /
-	// reasoning / instruct keep their pipeline class but are re-listed because the
-	// override bypasses the normal modifier extraction. Keys are lowercase exact IDs
-	// (the lookup lowercases, so one key covers case-variants; org-prefixed, dash/dot,
-	// and :free forms are distinct keys).
-	//
-	// gemini omni (mid-ID omni; preview stays attribute):
-	"gemini-omni-flash-preview":        {family: "gemini", variant: "flash", modifiers: []string{"omni", "preview"}},
-	"google/gemini-omni-flash-preview": {family: "gemini", variant: "flash", modifiers: []string{"omni", "preview"}},
-	// gpt realtime (attribute; VERSION RESTORED — realtime otherwise swallows it):
-	"gpt-realtime-2.1":         {family: "gpt", version: "2.1", modifiers: []string{"realtime"}},
-	"openai/gpt-realtime-2.1":  {family: "gpt", version: "2.1", modifiers: []string{"realtime"}},
-	"openai/gpt-realtime-2":    {family: "gpt", version: "2", modifiers: []string{"realtime"}},
-	"openai/gpt-realtime-1.5":  {family: "gpt", version: "1.5", modifiers: []string{"realtime"}},
-	"openai/gpt-realtime-mini": {family: "gpt", variant: "mini", modifiers: []string{"realtime"}},
-	// qwen omni (mid-ID omni):
-	"qwen-omni-turbo":                  {family: "qwen", variant: "turbo", modifiers: []string{"omni"}},
-	"qwen-omni-turbo-realtime":         {family: "qwen", variant: "turbo", modifiers: []string{"omni", "realtime"}},
-	"qwen3-omni-flash":                 {family: "qwen", variant: "flash", version: "3", modifiers: []string{"omni"}},
-	"qwen3-omni-flash-realtime":        {family: "qwen", variant: "flash", version: "3", modifiers: []string{"omni", "realtime"}},
-	"qwen3.5-omni-flash":               {family: "qwen", variant: "flash", version: "3.5", modifiers: []string{"omni"}},
-	"qwen3.5-omni-plus":                {family: "qwen", variant: "plus", version: "3.5", modifiers: []string{"omni"}},
-	"qwen/qwen3-omni-30b-a3b-instruct": {family: "qwen", version: "3", modifiers: []string{"omni", "instruct"}},
-	"qwen/qwen3-omni-30b-a3b-thinking": {family: "qwen", version: "3", modifiers: []string{"omni", "thinking"}},
-	// qwen livetranslate (mid-ID identity; realtime attribute trails):
-	"qwen3-livetranslate-flash-realtime": {family: "qwen", variant: "flash", version: "3", modifiers: []string{"livetranslate", "realtime"}},
-	// nemotron nano omni reasoning (omni sits before the size/reasoning tail; the scan drops it):
-	"nvidia/nemotron-3-nano-omni-30b-a3b-reasoning":      {family: "nemotron", variant: "nano", version: "3", modifiers: []string{"omni", "reasoning"}},
-	"nvidia/nemotron-3-nano-omni-30b-a3b-reasoning-bf16": {family: "nemotron", variant: "nano", version: "3", modifiers: []string{"omni", "reasoning"}},
-	"nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free": {family: "nemotron", variant: "nano", version: "3", modifiers: []string{"omni", "reasoning"}},
+	// The remaining stage/mode entries: gpt-realtime IDs whose version is a DOTTED value
+	// glued behind the mid-ID "realtime" token. The general mid-ID modifier engine now
+	// harvests the buried "realtime" attribute and resolves family=gpt for the whole
+	// gpt-realtime line, so the entries that only needed that harvest were retired. What
+	// remains is a narrower gap: the dotted version sitting behind the mid-ID token is not
+	// yet mechanically recovered (a bare-integer version like gpt-realtime-2 IS recovered,
+	// which is why that sibling was retired), so these three still own the version.
+	// realtime is an ATTRIBUTE modifier (renders in […], instance-only). Keys are
+	// lowercase exact IDs (the lookup lowercases, so one key covers case-variants;
+	// org-prefixed and :free forms are distinct keys).
+	"gpt-realtime-2.1":        {family: "gpt", version: "2.1", modifiers: []string{"realtime"}},
+	"openai/gpt-realtime-2.1": {family: "gpt", version: "2.1", modifiers: []string{"realtime"}},
+	"openai/gpt-realtime-1.5": {family: "gpt", version: "1.5", modifiers: []string{"realtime"}},
 	// laguna curated xs/m variants (dot + dash forms; :free folds to the same entity).
 	// These are the SERVING ids (poolside is the provider). The metadata rows attach via
 	// parse/data/modelsdev_aliases.json (poolside is also the lab, so the join strips
@@ -3568,6 +3976,56 @@ var idFamilyOverrides = map[string]idFamilyOverrideEntry{
 	"poolside/laguna-xs-2.1:free": {family: "laguna", variant: "xs", version: "2.1"},
 	"poolside/laguna-m.1":         {family: "laguna", variant: "m", version: "1"},
 	"poolside/laguna-m.1:free":    {family: "laguna", variant: "m", version: "1"},
+
+	// grok-4.20 beta-alias unification. xAI ships the grok-4.20 line under both an
+	// official spelling (grok-4.20-0309-reasoning) and beta-alias spellings that glue a
+	// standalone "beta" token into the name (grok-4.20-beta-0309-reasoning,
+	// xai/grok-4.20-reasoning-beta, …). Mechanically the tail-inward scan halts at the
+	// non-modifier "beta" boundary and captures it as the VARIANT, splitting the aliases
+	// into a separate grok/beta@4.20 entity — but the beta spelling is the SAME artifact
+	// as the official name and must key to the same entity. These exact-ID overrides map
+	// each censused grok-4.20/4-20 beta spelling onto the NON-beta decomposition
+	// (variant "", version "4.20", the same modifier the official name carries), so the
+	// alias merges into grok@4.20{…}. Stage is UNAFFECTED: DetectStageFromID scans the
+	// ID independently of the key, so every one of these rows still bakes Stage=StageBeta
+	// (detect-without-strip). This is a curated grok-only unification; the general beta
+	// freeze stays for non-grok names (e.g. interfaze-beta keeps beta in its key). The
+	// multi-agent spellings follow the official grok-4.20-multi-agent-0309, which drops
+	// "multi-agent" and keys the bare grok@4.20 (nil modifier).
+	"grok-4.20-beta-0309-non-reasoning": {family: "grok", version: "4.20", modifiers: []string{"non-reasoning"}},
+	"grok-4.20-beta-0309-reasoning":     {family: "grok", version: "4.20", modifiers: []string{"reasoning"}},
+	"grok-4.20-multi-agent-beta-0309":   {family: "grok", version: "4.20"},
+	"grok-4-20-beta-0309-non-reasoning": {family: "grok", version: "4.20", modifiers: []string{"non-reasoning"}},
+	"grok-4-20-beta-0309-reasoning":     {family: "grok", version: "4.20", modifiers: []string{"reasoning"}},
+	"xai/grok-4.20-multi-agent-beta":    {family: "grok", version: "4.20"},
+	"xai/grok-4.20-non-reasoning-beta":  {family: "grok", version: "4.20", modifiers: []string{"non-reasoning"}},
+	"xai/grok-4.20-reasoning-beta":      {family: "grok", version: "4.20", modifiers: []string{"reasoning"}},
+
+	// Version-less llama-4 scout/maverick pins. A handful of catalog spellings for the
+	// llama-4 scout/maverick artifacts omit the "-4-" version token that the canonical
+	// hyphenated spellings carry, so they mechanically decompose with an EMPTY version
+	// and split off into a separate version-less entity. Two prefix families do this:
+	// the AWS Bedrock dotted forms (meta.llama4-…, us.meta.llama4-…-17b-instruct-v1:0)
+	// and the aggregator provider-prefixed forms (cerebras-…, groq-…) whose leading
+	// token perturbs the version scan. These exact-ID overrides pin version "4" so each
+	// spelling merges into the existing @4 entity its canonical siblings key. The set is
+	// the FULL version-less census (3 scout instances + 4 maverick instances over the
+	// vendored catalog), not just the Bedrock subset — leaving any version-less spelling
+	// unpinned would keep the split the unification exists to remove. The #size segment
+	// is carried separately by the param_size_overrides.json pins (17b-16e scout /
+	// 17b-128e maverick), so with the @4 version pin scout keys
+	// llama/scout@4#17b-16e{instruct} and maverick keys llama@4#17b-128e{instruct}. NOTE
+	// the asymmetry: "scout" is a curated llama variant member (families.json) so it
+	// stays in the key, but "maverick" is NOT a member — the official maverick entity is
+	// llama@4 (no maverick variant), so these pins set variant "" to merge into it
+	// rather than minting a new entity.
+	"meta.llama4-scout-17b-instruct-v1:0":         {family: "llama", variant: "scout", version: "4", modifiers: []string{"instruct"}},
+	"us.meta.llama4-scout-17b-instruct-v1:0":      {family: "llama", variant: "scout", version: "4", modifiers: []string{"instruct"}},
+	"cerebras-llama-4-scout-17b-16e-instruct":     {family: "llama", variant: "scout", version: "4", modifiers: []string{"instruct"}},
+	"meta.llama4-maverick-17b-instruct-v1:0":      {family: "llama", version: "4", modifiers: []string{"instruct"}},
+	"us.meta.llama4-maverick-17b-instruct-v1:0":   {family: "llama", version: "4", modifiers: []string{"instruct"}},
+	"cerebras-llama-4-maverick-17b-128e-instruct": {family: "llama", version: "4", modifiers: []string{"instruct"}},
+	"groq-llama-4-maverick-17b-128e-instruct":     {family: "llama", version: "4", modifiers: []string{"instruct"}},
 }
 
 func isSeriesTierToken(tok string) bool {

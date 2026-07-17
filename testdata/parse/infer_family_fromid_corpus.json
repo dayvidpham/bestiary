@@ -1,0 +1,52 @@
+{
+  "cases": [
+    {
+      "name": "gpt-4o-2024-08-06",
+      "input": { "id": "gpt-4o-2024-08-06", "provider": "openai" },
+      "expected": "gpt",
+      "classification": "must-pass",
+      "provenance": { "source": "requirement", "ref": "BDD: infer 'gpt' from 'gpt-4o-2024-08-06'" },
+      "mutation": { "description": "leading alphabetic prefix extraction from a dated id" }
+    },
+    {
+      "name": "llama-3",
+      "input": { "id": "llama-3", "provider": "local" },
+      "expected": "llama",
+      "classification": "must-pass",
+      "provenance": { "source": "requirement", "ref": "leading alphabetic prefix 'llama' from 'llama-3'" },
+      "mutation": { "description": "leading alphabetic prefix extraction" }
+    },
+    {
+      "name": "claude-3",
+      "input": { "id": "claude-3", "provider": "anthropic" },
+      "expected": "claude",
+      "classification": "must-pass",
+      "provenance": { "source": "requirement", "ref": "leading alphabetic prefix 'claude' from 'claude-3'" },
+      "mutation": { "description": "leading alphabetic prefix extraction" }
+    },
+    {
+      "name": "numeric only",
+      "input": { "id": "1234", "provider": "local" },
+      "expected": "",
+      "classification": "must-fail",
+      "provenance": { "source": "boundary", "ref": "pure version-only id has no family signal" },
+      "mutation": { "description": "stripped all alphabetic tokens, leaving a numeric-only id" }
+    },
+    {
+      "name": "empty id",
+      "input": { "id": "", "provider": "local" },
+      "expected": "",
+      "classification": "must-fail",
+      "provenance": { "source": "boundary", "ref": "empty id yields no family" },
+      "mutation": { "description": "cleared the id to empty" }
+    },
+    {
+      "name": "single token",
+      "input": { "id": "phi", "provider": "local" },
+      "expected": "phi",
+      "classification": "must-pass",
+      "provenance": { "source": "boundary", "ref": "single alphabetic token id is its own family" },
+      "mutation": { "description": "a single-token id with no version or variant" }
+    }
+  ]
+}

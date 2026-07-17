@@ -1,0 +1,382 @@
+{
+  "cases": [
+    {
+      "name": "deepseek-chat-v3-0324 empty → (deepseek,chat)",
+      "input": {
+        "raw": "",
+        "id": "deepseek/deepseek-chat-v3-0324"
+      },
+      "expected": {
+        "family": "deepseek",
+        "variant": "chat",
+        "version": "",
+        "mod": ""
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "ParseFamilyDetailed(raw=, id=deepseek/deepseek-chat-v3-0324) -> (family 'deepseek', variant 'chat', version '', mod '')"
+      },
+      "mutation": {
+        "description": "tier-1 straggler convergence to one canonical entity tuple"
+      }
+    },
+    {
+      "name": "deepseek-chat-v3-0324 raw=deepseek → (deepseek,chat)",
+      "input": {
+        "raw": "deepseek",
+        "id": "deepseek/deepseek-chat-v3-0324"
+      },
+      "expected": {
+        "family": "deepseek",
+        "variant": "chat",
+        "version": "",
+        "mod": ""
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "ParseFamilyDetailed(raw=deepseek, id=deepseek/deepseek-chat-v3-0324) -> (family 'deepseek', variant 'chat', version '', mod '')"
+      },
+      "mutation": {
+        "description": "tier-1 straggler convergence to one canonical entity tuple"
+      }
+    },
+    {
+      "name": "deepseek-chat-v3.1 empty → (deepseek,chat,3.1)",
+      "input": {
+        "raw": "",
+        "id": "deepseek/deepseek-chat-v3.1"
+      },
+      "expected": {
+        "family": "deepseek",
+        "variant": "chat",
+        "version": "3.1",
+        "mod": ""
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "ParseFamilyDetailed(raw=, id=deepseek/deepseek-chat-v3.1) -> (family 'deepseek', variant 'chat', version '3.1', mod '')"
+      },
+      "mutation": {
+        "description": "tier-1 straggler convergence to one canonical entity tuple"
+      }
+    },
+    {
+      "name": "deepseek-chat-v3.1 raw=deepseek → (deepseek,chat,3.1)",
+      "input": {
+        "raw": "deepseek",
+        "id": "deepseek/deepseek-chat-v3.1"
+      },
+      "expected": {
+        "family": "deepseek",
+        "variant": "chat",
+        "version": "3.1",
+        "mod": ""
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "ParseFamilyDetailed(raw=deepseek, id=deepseek/deepseek-chat-v3.1) -> (family 'deepseek', variant 'chat', version '3.1', mod '')"
+      },
+      "mutation": {
+        "description": "tier-1 straggler convergence to one canonical entity tuple"
+      }
+    },
+    {
+      "name": "command-r-plus-08-2024 empty → (command,r-plus)",
+      "input": {
+        "raw": "",
+        "id": "cohere/command-r-plus-08-2024"
+      },
+      "expected": {
+        "family": "command",
+        "variant": "r-plus",
+        "version": "",
+        "mod": ""
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "ParseFamilyDetailed(raw=, id=cohere/command-r-plus-08-2024) -> (family 'command', variant 'r-plus', version '', mod '')"
+      },
+      "mutation": {
+        "description": "tier-1 straggler convergence to one canonical entity tuple"
+      }
+    },
+    {
+      "name": "command-r-plus-08-2024 raw=command-r → (command,r-plus)",
+      "input": {
+        "raw": "command-r",
+        "id": "cohere/command-r-plus-08-2024"
+      },
+      "expected": {
+        "family": "command",
+        "variant": "r-plus",
+        "version": "",
+        "mod": ""
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "ParseFamilyDetailed(raw=command-r, id=cohere/command-r-plus-08-2024) -> (family 'command', variant 'r-plus', version '', mod '')"
+      },
+      "mutation": {
+        "description": "tier-1 straggler convergence to one canonical entity tuple"
+      }
+    },
+    {
+      "name": "command-r7b-12-2024 empty → (command,r) [r7b=r+7b-size]",
+      "input": {
+        "raw": "",
+        "id": "cohere/command-r7b-12-2024"
+      },
+      "expected": {
+        "family": "command",
+        "variant": "r",
+        "version": "12",
+        "mod": ""
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "ParseFamilyDetailed(raw=, id=cohere/command-r7b-12-2024) -> (family 'command', variant 'r', version '12', mod '')"
+      },
+      "mutation": {
+        "description": "tier-1 straggler convergence to one canonical entity tuple"
+      }
+    },
+    {
+      "name": "command-r7b-12-2024 raw=command-r → (command,r)",
+      "input": {
+        "raw": "command-r",
+        "id": "cohere/command-r7b-12-2024"
+      },
+      "expected": {
+        "family": "command",
+        "variant": "r",
+        "version": "12",
+        "mod": ""
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "ParseFamilyDetailed(raw=command-r, id=cohere/command-r7b-12-2024) -> (family 'command', variant 'r', version '12', mod '')"
+      },
+      "mutation": {
+        "description": "tier-1 straggler convergence to one canonical entity tuple"
+      }
+    },
+    {
+      "name": "meta-llama/Meta-Llama-3.1 empty → (llama,'',3.1,[instruct])",
+      "input": {
+        "raw": "",
+        "id": "meta-llama/Meta-Llama-3.1-8B-Instruct"
+      },
+      "expected": {
+        "family": "llama",
+        "variant": "",
+        "version": "3.1",
+        "mod": "instruct"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "ParseFamilyDetailed(raw=, id=meta-llama/Meta-Llama-3.1-8B-Instruct) -> (family 'llama', variant '', version '3.1', mod 'instruct')"
+      },
+      "mutation": {
+        "description": "tier-1 straggler convergence to one canonical entity tuple"
+      }
+    },
+    {
+      "name": "meta-llama/Meta-Llama-3.1 raw=llama → (llama,'',3.1,[instruct])",
+      "input": {
+        "raw": "llama",
+        "id": "meta-llama/Meta-Llama-3.1-8B-Instruct"
+      },
+      "expected": {
+        "family": "llama",
+        "variant": "",
+        "version": "3.1",
+        "mod": "instruct"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "ParseFamilyDetailed(raw=llama, id=meta-llama/Meta-Llama-3.1-8B-Instruct) -> (family 'llama', variant '', version '3.1', mod 'instruct')"
+      },
+      "mutation": {
+        "description": "tier-1 straggler convergence to one canonical entity tuple"
+      }
+    },
+    {
+      "name": "grok-code-fast-1 empty → (grok,code-fast,1)",
+      "input": {
+        "raw": "",
+        "id": "x-ai/grok-code-fast-1"
+      },
+      "expected": {
+        "family": "grok",
+        "variant": "code-fast",
+        "version": "1",
+        "mod": ""
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "ParseFamilyDetailed(raw=, id=x-ai/grok-code-fast-1) -> (family 'grok', variant 'code-fast', version '1', mod '')"
+      },
+      "mutation": {
+        "description": "tier-1 straggler convergence to one canonical entity tuple"
+      }
+    },
+    {
+      "name": "grok-code-fast-1 raw=grok → (grok,code-fast,1)",
+      "input": {
+        "raw": "grok",
+        "id": "x-ai/grok-code-fast-1"
+      },
+      "expected": {
+        "family": "grok",
+        "variant": "code-fast",
+        "version": "1",
+        "mod": ""
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "ParseFamilyDetailed(raw=grok, id=x-ai/grok-code-fast-1) -> (family 'grok', variant 'code-fast', version '1', mod '')"
+      },
+      "mutation": {
+        "description": "tier-1 straggler convergence to one canonical entity tuple"
+      }
+    },
+    {
+      "name": "Qwen3-Embedding raw=text-embedding → (qwen,embedding,3)",
+      "input": {
+        "raw": "text-embedding",
+        "id": "Qwen/Qwen3-Embedding-8B"
+      },
+      "expected": {
+        "family": "qwen",
+        "variant": "embedding",
+        "version": "3",
+        "mod": ""
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "ParseFamilyDetailed(raw=text-embedding, id=Qwen/Qwen3-Embedding-8B) -> (family 'qwen', variant 'embedding', version '3', mod '')"
+      },
+      "mutation": {
+        "description": "tier-1 straggler convergence to one canonical entity tuple"
+      }
+    },
+    {
+      "name": "Qwen3-Embedding raw=qwen → (qwen,embedding,3)",
+      "input": {
+        "raw": "qwen",
+        "id": "Qwen/Qwen3-Embedding-8B"
+      },
+      "expected": {
+        "family": "qwen",
+        "variant": "embedding",
+        "version": "3",
+        "mod": ""
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "ParseFamilyDetailed(raw=qwen, id=Qwen/Qwen3-Embedding-8B) -> (family 'qwen', variant 'embedding', version '3', mod '')"
+      },
+      "mutation": {
+        "description": "tier-1 straggler convergence to one canonical entity tuple"
+      }
+    },
+    {
+      "name": "GUARD: openai text-embedding-3-large stays text-embedding",
+      "input": {
+        "raw": "text-embedding",
+        "id": "openai/text-embedding-3-large"
+      },
+      "expected": {
+        "family": "text-embedding",
+        "variant": "large",
+        "version": "3",
+        "mod": ""
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "ParseFamilyDetailed(raw=text-embedding, id=openai/text-embedding-3-large) -> (family 'text-embedding', variant 'large', version '3', mod '')"
+      },
+      "mutation": {
+        "description": "tier-1 straggler convergence to one canonical entity tuple"
+      }
+    },
+    {
+      "name": "GUARD: openai text-embedding-3-small stays text-embedding",
+      "input": {
+        "raw": "text-embedding",
+        "id": "text-embedding-3-small"
+      },
+      "expected": {
+        "family": "text-embedding",
+        "variant": "small",
+        "version": "3",
+        "mod": ""
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "ParseFamilyDetailed(raw=text-embedding, id=text-embedding-3-small) -> (family 'text-embedding', variant 'small', version '3', mod '')"
+      },
+      "mutation": {
+        "description": "tier-1 straggler convergence to one canonical entity tuple"
+      }
+    },
+    {
+      "name": "hy3-preview empty → (hy,,3,preview)",
+      "input": {
+        "raw": "",
+        "id": "tencent/hy3-preview"
+      },
+      "expected": {
+        "family": "hy",
+        "variant": "",
+        "version": "3",
+        "mod": "preview"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "ParseFamilyDetailed(raw=, id=tencent/hy3-preview) -> (family 'hy', variant '', version '3', mod 'preview')"
+      },
+      "mutation": {
+        "description": "tier-1 straggler convergence to one canonical entity tuple"
+      }
+    },
+    {
+      "name": "hy3-preview raw=Hy → (hy,,3,preview)",
+      "input": {
+        "raw": "Hy",
+        "id": "tencent/hy3-preview"
+      },
+      "expected": {
+        "family": "hy",
+        "variant": "",
+        "version": "3",
+        "mod": "preview"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "ParseFamilyDetailed(raw=Hy, id=tencent/hy3-preview) -> (family 'hy', variant '', version '3', mod 'preview')"
+      },
+      "mutation": {
+        "description": "tier-1 straggler convergence to one canonical entity tuple"
+      }
+    }
+  ]
+}

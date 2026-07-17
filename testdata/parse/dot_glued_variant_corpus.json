@@ -1,0 +1,130 @@
+{
+  "cases": [
+    {
+      "name": "laguna-xs.2 bare → (laguna,xs,2)",
+      "input": {
+        "raw": "",
+        "id": "laguna-xs.2"
+      },
+      "expected": {
+        "family": "laguna",
+        "variant": "xs",
+        "version": "2",
+        "mod": ""
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "dot-glued: ParseFamilyDetailed(raw=, id=laguna-xs.2) -> (family 'laguna', variant 'xs', version '2', mod '')"
+      },
+      "mutation": {
+        "description": "dot-glued leading variant vs must-not-mangle dotted version/alnum line"
+      }
+    },
+    {
+      "name": "laguna-m.1 bare → (laguna,m,1)",
+      "input": {
+        "raw": "",
+        "id": "laguna-m.1"
+      },
+      "expected": {
+        "family": "laguna",
+        "variant": "m",
+        "version": "1",
+        "mod": ""
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "dot-glued: ParseFamilyDetailed(raw=, id=laguna-m.1) -> (family 'laguna', variant 'm', version '1', mod '')"
+      },
+      "mutation": {
+        "description": "dot-glued leading variant vs must-not-mangle dotted version/alnum line"
+      }
+    },
+    {
+      "name": "laguna-xs.2 :free folds identically",
+      "input": {
+        "raw": "",
+        "id": "laguna-xs.2:free"
+      },
+      "expected": {
+        "family": "laguna",
+        "variant": "xs",
+        "version": "2",
+        "mod": ""
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "dot-glued: ParseFamilyDetailed(raw=, id=laguna-xs.2:free) -> (family 'laguna', variant 'xs', version '2', mod '')"
+      },
+      "mutation": {
+        "description": "dot-glued leading variant vs must-not-mangle dotted version/alnum line"
+      }
+    },
+    {
+      "name": "deepseek-v3.1 → variant 'v3.1' (v-prefix line, not dot-glued)",
+      "input": {
+        "raw": "",
+        "id": "deepseek-v3.1"
+      },
+      "expected": {
+        "family": "deepseek",
+        "variant": "v3.1",
+        "version": "",
+        "mod": ""
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "dot-glued: ParseFamilyDetailed(raw=, id=deepseek-v3.1) -> (family 'deepseek', variant 'v3.1', version '', mod '')"
+      },
+      "mutation": {
+        "description": "dot-glued leading variant vs must-not-mangle dotted version/alnum line"
+      }
+    },
+    {
+      "name": "gpt-4.1 → version '4.1' (no variant invented)",
+      "input": {
+        "raw": "gpt",
+        "id": "gpt-4.1"
+      },
+      "expected": {
+        "family": "gpt",
+        "variant": "",
+        "version": "4.1",
+        "mod": ""
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "dot-glued: ParseFamilyDetailed(raw=gpt, id=gpt-4.1) -> (family 'gpt', variant '', version '4.1', mod '')"
+      },
+      "mutation": {
+        "description": "dot-glued leading variant vs must-not-mangle dotted version/alnum line"
+      }
+    },
+    {
+      "name": "gpt-4o → variant '4o', version '' (unchanged)",
+      "input": {
+        "raw": "gpt",
+        "id": "gpt-4o"
+      },
+      "expected": {
+        "family": "gpt",
+        "variant": "4o",
+        "version": "",
+        "mod": ""
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "dot-glued: ParseFamilyDetailed(raw=gpt, id=gpt-4o) -> (family 'gpt', variant '4o', version '', mod '')"
+      },
+      "mutation": {
+        "description": "dot-glued leading variant vs must-not-mangle dotted version/alnum line"
+      }
+    }
+  ]
+}

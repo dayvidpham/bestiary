@@ -1,0 +1,43 @@
+{
+  "cases": [
+    {
+      "name": "none",
+      "input": 0,
+      "expected": "{\"q\":\"none\"}",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "encoding/json wraps Quantization via its TextMarshaler/TextUnmarshaler (MarshalText/UnmarshalText), so QuantizationNone marshals as a JSON string, not an integer"
+      },
+      "mutation": {
+        "description": "JSON wire-format contract for enum member QuantizationNone: string, not integer"
+      }
+    },
+    {
+      "name": "q4_k_m",
+      "input": 15,
+      "expected": "{\"q\":\"q4_k_m\"}",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "encoding/json wraps Quantization via its TextMarshaler/TextUnmarshaler (MarshalText/UnmarshalText), so QuantQ4_K_M marshals as a JSON string, not an integer"
+      },
+      "mutation": {
+        "description": "JSON wire-format contract for enum member QuantQ4_K_M: string, not integer"
+      }
+    },
+    {
+      "name": "other",
+      "input": 35,
+      "expected": "{\"q\":\"other\"}",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "encoding/json wraps Quantization via its TextMarshaler/TextUnmarshaler (MarshalText/UnmarshalText), so QuantizationOther marshals as a JSON string, not an integer"
+      },
+      "mutation": {
+        "description": "JSON wire-format contract for enum member QuantizationOther: string, not integer"
+      }
+    }
+  ]
+}

@@ -1,0 +1,80 @@
+{
+  "cases": [
+    {
+      "name": "unknown q-prefix tag",
+      "input": {
+        "id": "somemodel:7b-instruct-q99_X"
+      },
+      "expected": {
+        "q": 35,
+        "raw": "q99_X",
+        "stripped": "somemodel:7b-instruct"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "q99_X looks like a quant tag (q-prefix + digit) but is not in quantNames; must map to QuantizationOther, not be silently dropped"
+      },
+      "mutation": {
+        "description": "unrecognised but quant-shaped q-prefix token"
+      }
+    },
+    {
+      "name": "unknown iq-prefix tag",
+      "input": {
+        "id": "somemodel:7b-iq99_super"
+      },
+      "expected": {
+        "q": 35,
+        "raw": "iq99_super",
+        "stripped": "somemodel:7b"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "iq99_super looks like a quant tag (iq-prefix + digit) but is not in quantNames; must map to QuantizationOther"
+      },
+      "mutation": {
+        "description": "unrecognised but quant-shaped iq-prefix token"
+      }
+    },
+    {
+      "name": "unknown f-prefix tag",
+      "input": {
+        "id": "somemodel:7b-f99"
+      },
+      "expected": {
+        "q": 35,
+        "raw": "f99",
+        "stripped": "somemodel:7b"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "f99 looks like a quant tag (f-prefix + digit) but is not in quantNames; must map to QuantizationOther"
+      },
+      "mutation": {
+        "description": "unrecognised but quant-shaped f-prefix token"
+      }
+    },
+    {
+      "name": "colon-free unknown q-prefix tag",
+      "input": {
+        "id": "somemodel-7b-q99_X"
+      },
+      "expected": {
+        "q": 35,
+        "raw": "q99_X",
+        "stripped": "somemodel-7b"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "colon-free id exercises the hadColon==false arm of rebuildStrippedID on the QuantizationOther path"
+      },
+      "mutation": {
+        "description": "unrecognised quant-shaped token in a colon-free id form"
+      }
+    }
+  ]
+}

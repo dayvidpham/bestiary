@@ -1,0 +1,70 @@
+{
+  "cases": [
+    {
+      "name": "none",
+      "input": 0,
+      "expected": "none",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "DerivationKind zero value DerivationNone renders wire name \"none\" (no derivation relationship / a base model)"
+      },
+      "mutation": {"description": "round-trips the zero-value enum member through String/MarshalText/UnmarshalText"}
+    },
+    {
+      "name": "finetune",
+      "input": 1,
+      "expected": "finetune",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "DerivationFinetune wire name \"finetune\" (parameters further trained on additional data, e.g. dracarys finetuned from llama)"
+      },
+      "mutation": {"description": "round-trips the finetune enum member through String/MarshalText/UnmarshalText"}
+    },
+    {
+      "name": "merge",
+      "input": 2,
+      "expected": "merge",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "DerivationMerge wire name \"merge\" (weights combined from two or more parent models)"
+      },
+      "mutation": {"description": "round-trips the merge enum member through String/MarshalText/UnmarshalText"}
+    },
+    {
+      "name": "distillation",
+      "input": 3,
+      "expected": "distillation",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "DerivationDistillation wire name \"distillation\" (a smaller/student model trained to mimic a larger teacher model)"
+      },
+      "mutation": {"description": "round-trips the distillation enum member through String/MarshalText/UnmarshalText"}
+    },
+    {
+      "name": "quantized",
+      "input": 4,
+      "expected": "quantized",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "DerivationQuantized wire name \"quantized\" (a lower-precision copy of a parent model)"
+      },
+      "mutation": {"description": "round-trips the quantized enum member through String/MarshalText/UnmarshalText"}
+    },
+    {
+      "name": "adapter",
+      "input": 5,
+      "expected": "adapter",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "DerivationAdapter wire name \"adapter\" (a parameter-efficient adapter, e.g. LoRA, applied over a base model)"
+      },
+      "mutation": {"description": "round-trips the adapter enum member through String/MarshalText/UnmarshalText"}
+    }
+  ]
+}

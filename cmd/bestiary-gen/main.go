@@ -450,6 +450,35 @@ func applyFilter(models []bestiary.ModelInfo, only, except []string) []bestiary.
 // guard.
 var validateCuratedDataSourceTable = bestiary.ValidateDataSourceTable
 
+// codegenLastSynced returns the DETERMINISTIC timestamp stamped onto every generated
+// ModelInfo.LastSynced: the CURRENT (maximum) models.dev ingest instant from the
+// COMMITTED parse/data/datasources.json (DatasetIngestedFor(DataSourceModelsDev)), NOT a
+// wall-clock. Pinning the codegen stamp to a committed snapshot instant is what makes a
+// `go run ./cmd/bestiary-gen --no-fetch` regen byte-deterministic: the wall-clock stamp
+// was previously the sole residual non-determinism in the generated output, so with it
+// pinned TestCodegen_Reproducible_ByteIdentical asserts FULL byte-identity.
+//
+// This is CODEGEN-ONLY. The runtime `sync` path deliberately keeps a real UTC wall-clock
+// (correct precisely because a sync is a real event); being later than this committed
+// instant, a synced row consistently wins the store's most-recent-wins merge over a baked
+// static row (see the stamp site in run()).
+//
+// A missing models.dev ingest row is a curation bug, so this is a LOUD actionable error at
+// codegen (the codegen-loud / runtime-graceful discipline), never a silent empty stamp.
+func codegenLastSynced() (string, error) {
+	ingest, ok := bestiary.DatasetIngestedFor(bestiary.DataSourceModelsDev)
+	if !ok || ingest.IngestedAt == "" {
+		return "", fmt.Errorf(
+			"codegen LastSynced: no models.dev ingest instant found\n"+
+				"  What: DatasetIngestedFor(%q) returned no current ingest\n"+
+				"  Why: parse/data/datasources.json has no `ingested` row for source_id %q (or its ingested_at is empty)\n"+
+				"  Where: cmd/bestiary-gen codegenLastSynced (the deterministic LastSynced stamp source)\n"+
+				"  How to fix: add a models.dev ingest row to parse/data/datasources.json per the models.dev snapshot-refresh workflow",
+			bestiary.DataSourceModelsDev, bestiary.DataSourceModelsDev)
+	}
+	return ingest.IngestedAt, nil
+}
+
 func run(args []string) error {
 	flags, err := parseFlags(args)
 	if err != nil {
@@ -472,6 +501,14 @@ func run(args []string) error {
 	// baking wrong VRAM estimates or provenance into the generated static data.
 	if err := bestiary.ValidateQuantVRAMTable(); err != nil {
 		return fmt.Errorf("validate curated quant-VRAM table: %w", err)
+	}
+
+	// Fail loudly on a non-canonical param-size pin BEFORE generating anything: a
+	// typo'd size token in param_size_overrides.json would otherwise flow verbatim
+	// into #size entity-key material. The runtime loader degrades gracefully; this
+	// codegen-time check fences the pin file.
+	if err := bestiary.ValidateParamSizePins(); err != nil {
+		return fmt.Errorf("validate curated param-size pins: %w", err)
 	}
 
 	// Fail loudly on bad data-source curation BEFORE generating anything: a duplicate
@@ -502,9 +539,24 @@ func run(args []string) error {
 		}
 	}
 
-	// Stamp LastSynced on all models.
+	// Stamp the DETERMINISTIC codegen LastSynced on every model — the current models.dev
+	// ingest instant from the committed datasources.json (see codegenLastSynced), NOT the
+	// wall-clock `now`. `now` remains the real fetch time for the SNAPSHOT.json provenance
+	// rewrite above and the stdout summary; only the baked LastSynced is pinned to the
+	// committed instant, which is what makes a --no-fetch regen byte-deterministic.
+	//
+	// Merge tie-break implication: every baked static row now carries this STABLE committed
+	// timestamp instead of a per-regen wall-clock. The runtime `sync` path stamps a real UTC
+	// wall-clock (a sync is a real event), which is later than this committed instant, so the
+	// store's most-recent-wins merge (MergeModels: on an (ID, Provider) collision the higher
+	// LastSynced wins) CONSISTENTLY prefers a fresher synced row over the baked static row —
+	// no longer depending on whenever the generated files were last regenerated.
+	lastSynced, err := codegenLastSynced()
+	if err != nil {
+		return err
+	}
 	for i := range models {
-		models[i].LastSynced = now
+		models[i].LastSynced = lastSynced
 	}
 
 	// Collect all unique provider slugs from the API (for constant generation).
@@ -1039,7 +1091,10 @@ func fetchModelsWithRaw(ctx context.Context, noFetch bool) (rawJSON []byte, mode
 	// decomposition and the curated bakes over it.
 	models = make([]bestiary.ModelInfo, 0, len(cat.Models))
 	for _, base := range cat.Models {
-		info, failure := enrichModelInfo(base)
+		info, failure, enrichErr := enrichModelInfo(base)
+		if enrichErr != nil {
+			return nil, nil, nil, nil, nil, enrichErr
+		}
 		models = append(models, info)
 		if failure != nil {
 			failures = append(failures, *failure)
@@ -1201,10 +1256,13 @@ func collectFamilies(models []bestiary.ModelInfo) []string {
 // identity axes (RawFamily/Family/Variant/Version/Date/Modifier), attaches the serving
 // host, and bakes the curated lineage/param-size/source/quant-VRAM data keyed by ID.
 //
-// It returns (ModelInfo, *ParseFailure); the failure is non-nil when ParseFamilyDetailed
-// detects a known parsing deficiency. Failure records are collected by
-// fetchModelsWithRaw and written to parse_failures.json at the end of each run.
-func enrichModelInfo(base bestiary.ModelInfo) (bestiary.ModelInfo, *bestiary.ParseFailure) {
+// It returns (ModelInfo, *ParseFailure, error). The *ParseFailure is non-nil when
+// ParseFamilyDetailed detects a known parsing deficiency (collected by
+// fetchModelsWithRaw and written to parse_failures.json). The error is a LOUD,
+// FATAL codegen failure — currently a param-size disagreement surfaced by
+// EnrichedParamSize (mechanical vs curated ParamSizeFor) — that must abort the bake
+// rather than silently baking a contested size.
+func enrichModelInfo(base bestiary.ModelInfo) (bestiary.ModelInfo, *bestiary.ParseFailure, error) {
 	// The library set Family = the raw family string; that is the codegen raw family.
 	rawFamily := base.Family
 	id := base.ID
@@ -1278,15 +1336,47 @@ func enrichModelInfo(base bestiary.ModelInfo) (bestiary.ModelInfo, *bestiary.Par
 	// lineage source; nil (no edge) for the overwhelming majority of base models.
 	info.Lineage = bestiary.LineageFor(id)
 
-	// Curated quant/VRAM data. Populate ParamSize, Source, and QuantVRAM
-	// from the curated quant_vram.json table. QuantVRAM rows are BAKED here: each
-	// row's VRAMBytes and VRAMContextTokens are filled in by calling
-	// EstimateVRAMBytes at the model's maximum context window. The bake-context
-	// precedence is: (1) curated context_window from quant_vram.json (most
-	// specific); (2) ModelInfo.ContextWindow from the upstream models.dev catalog;
-	// (3) 0 (weights-only lower bound). VRAMEstimatePartial is set when the arch
-	// facts (Layers, KVHeads, HeadDim) are absent, per VRAMEstimateIsPartial.
-	info.ParamSize = bestiary.ParamSizeFor(id)
+	// Parameter-size enrichment (folded into the shared library precedence pin >
+	// mechanical > ParamSizeFor). The size is baked here so the static entity keys
+	// re-key in full bulk: a mechanical ExtractParamSizeToken token now sizes the
+	// majority of catalog IDs that carry no curated quant_vram.json param_size. A
+	// disagreement between the mechanical token and the fetch-owned ParamSizeFor
+	// fallback is a LOUD, FATAL codegen error (a curator must add a pin) rather than
+	// a silently baked contested size. The flat shape ints are decomposed from the
+	// resolved token via ParseParamShape so the baked static row carries them without
+	// going through a runtime joint.
+	enrichedSize, sizeErr := bestiary.EnrichedParamSize(string(id))
+	if sizeErr != nil {
+		return info, failure, fmt.Errorf("codegen param-size enrichment for %q: %w", id, sizeErr)
+	}
+	info.ParamSize = enrichedSize
+	// ParseParamShape returns the all-NULL (ParamShapeNull) shape for an empty token
+	// AND on any decomposition error, so the assignment is unconditional: an unsized
+	// or unparseable row bakes the four NULL sentinels, never a masquerading 0. The
+	// shapeErr is intentionally discarded — enrichedSize is a canonical-or-empty token
+	// (EnrichedParamSize already surfaced any disagreement as a fatal error above), so
+	// a shape error here would be a grammar-drift bug whose NULL fallback is still the
+	// correct bake.
+	shape, _ := bestiary.ParseParamShape(enrichedSize)
+	info.TotalParams = shape.TotalParams
+	info.ActiveParams = shape.ActiveParams
+	info.PerExpertParams = shape.PerExpertParams
+	info.ExpertCount = shape.ExpertCount
+
+	// Release-stage enrichment. Stage/StageRaw are derived from the ID by the same
+	// pure DetectStageFromID the runtime joints use (wire decode, store read), so
+	// the baked static row and a live-sync row of the same ID carry an identical
+	// stage. Stage is a per-instance attribute and never touches the entity key, so
+	// this bakes a new field without any re-key.
+	info.Stage, info.StageRaw = bestiary.DetectStageFromID(id)
+
+	// Curated Source and QuantVRAM from the curated quant_vram.json table. QuantVRAM
+	// rows are BAKED here: each row's VRAMBytes and VRAMContextTokens are filled in by
+	// calling EstimateVRAMBytes at the model's maximum context window. The bake-context
+	// precedence is: (1) curated context_window from quant_vram.json (most specific);
+	// (2) ModelInfo.ContextWindow from the upstream models.dev catalog; (3) 0
+	// (weights-only lower bound). VRAMEstimatePartial is set when the arch facts
+	// (Layers, KVHeads, HeadDim) are absent, per VRAMEstimateIsPartial.
 	info.Source = bestiary.SourceFor(id)
 
 	rawRows := bestiary.QuantVRAMFor(id)
@@ -1316,7 +1406,7 @@ func enrichModelInfo(base bestiary.ModelInfo) (bestiary.ModelInfo, *bestiary.Par
 	// finetune that never joins during codegen.
 	appendFinetuneLineage(&info, bestiary.BaseRefFor(id))
 
-	return info, failure
+	return info, failure, nil
 }
 
 // appendFinetuneLineage appends a DerivationFinetune edge to info.Lineage when
@@ -1432,19 +1522,23 @@ func parseBaseRef(baseRef string) bestiary.EntityRef {
 	var modifiers []string
 
 	if tag != "" {
-		tokens := strings.Split(tag, "-")
-		for _, tok := range tokens {
+		// Delegate the size lift to the shared ExtractParamSizeToken grammar authority
+		// (longest whole-window match), so a compound token like "17b-16e" or
+		// "235b-a22b" is captured WHOLE rather than clipped to its first "17b"/"235b"
+		// by a greedy per-token scan. The remaining tokens (the tag with the matched
+		// size window removed) are candidate modifiers; EntityModifiers projects only
+		// identity-class tokens for the resolved family. Lowercasing first makes the
+		// canonical size token a literal substring of the tag so it can be excised.
+		tagLower := strings.ToLower(tag)
+		rest := tagLower
+		if ps, ok := bestiary.ExtractParamSizeToken(tagLower); ok {
+			paramSize = ps
+			rest = strings.Replace(tagLower, ps, "", 1)
+		}
+		for _, tok := range strings.Split(rest, "-") {
 			if tok == "" {
 				continue
 			}
-			if paramSize == "" {
-				if ps, err := bestiary.ParseParamSize(tok); err == nil && ps != "" {
-					paramSize = ps
-					continue
-				}
-			}
-			// Non-size tokens are candidate modifiers; EntityModifiers will project
-			// only identity-class tokens for the resolved family.
 			modifiers = append(modifiers, tok)
 		}
 	}
@@ -1622,6 +1716,32 @@ func statusExpr(s bestiary.ModelStatus) string {
 	}
 }
 
+// stageExpr renders a ReleaseStage as its exported constant name so the generated
+// source references the enum symbolically (e.g. StageBeta). Mirrors statusExpr.
+// StageNone (the zero value) is the default.
+func stageExpr(s bestiary.ReleaseStage) string {
+	switch s {
+	case bestiary.StageStable:
+		return "StageStable"
+	case bestiary.StagePreview:
+		return "StagePreview"
+	case bestiary.StageBeta:
+		return "StageBeta"
+	case bestiary.StageAlpha:
+		return "StageAlpha"
+	case bestiary.StageExperimental:
+		return "StageExperimental"
+	case bestiary.StageLatest:
+		return "StageLatest"
+	case bestiary.StageOriginal:
+		return "StageOriginal"
+	case bestiary.StageOther:
+		return "StageOther"
+	default:
+		return "StageNone"
+	}
+}
+
 // reasoningOptionKindExpr renders a ReasoningOptionKind as its exported constant name.
 // ReasoningOptionOther (the zero value) is the default fail-safe.
 func reasoningOptionKindExpr(k bestiary.ReasoningOptionKind) string {
@@ -1747,6 +1867,17 @@ func generateSource(models []bestiary.ModelInfo, slugToConst map[string]string) 
 		if m.ParamSize != "" {
 			fmt.Fprintf(&buf, "\t\tParamSize:             %q,\n", m.ParamSize)
 		}
+		// Parameter-shape ints: DERIVED from ParamSize by ParseParamShape and baked so
+		// static rows carry them without a runtime joint. Emitted UNCONDITIONALLY (all
+		// four, every row) under the ParamShapeNull sentinel contract: an omitted field
+		// would default to the Go zero 0, but 0 is a MEANINGFUL value here (a dense
+		// shape's ExpertCount) that must be distinguished from the NULL sentinel -1, so
+		// every field is written explicitly. This makes the bake byte-identical to the
+		// runtime enrichModelInfo decomposition of the same ID.
+		fmt.Fprintf(&buf, "\t\tTotalParams:           %d,\n", m.TotalParams)
+		fmt.Fprintf(&buf, "\t\tActiveParams:          %d,\n", m.ActiveParams)
+		fmt.Fprintf(&buf, "\t\tPerExpertParams:       %d,\n", m.PerExpertParams)
+		fmt.Fprintf(&buf, "\t\tExpertCount:           %d,\n", m.ExpertCount)
 		// Source: always emit; DataSourceNone ("") is the correct zero value for
 		// live-sync rows and is emitted explicitly so the field is self-documenting.
 		fmt.Fprintf(&buf, "\t\tSource:                %q,\n", string(m.Source))
@@ -1764,6 +1895,16 @@ func generateSource(models []bestiary.ModelInfo, slugToConst map[string]string) 
 		}
 		if m.StatusRaw != "" {
 			fmt.Fprintf(&buf, "\t\tStatusRaw:             %q,\n", m.StatusRaw)
+		}
+		// Release stage (ID-derived, distinct from the api.json Status above).
+		// Emitted CONDITIONALLY — only when a stage was detected — matching the
+		// Status precedent so the unmarked majority stays compact. StageRaw is the
+		// reserved Other-bucket companion and is empty for every ID-derived stage.
+		if m.Stage != bestiary.StageNone {
+			fmt.Fprintf(&buf, "\t\tStage:                 %s,\n", stageExpr(m.Stage))
+		}
+		if m.StageRaw != "" {
+			fmt.Fprintf(&buf, "\t\tStageRaw:              %q,\n", m.StageRaw)
 		}
 		if len(m.ReasoningOptions) > 0 {
 			fmt.Fprintf(&buf, "\t\tReasoningOptions:      %s,\n", reasoningOptionsLiteral(m.ReasoningOptions))
@@ -2372,10 +2513,24 @@ func resolveCollisions(names []string, models []bestiary.ModelInfo) []string {
 			for _, c := range cands {
 				result[c.pos] = baseName + "__" + c.vSuffix
 			}
+		} else if names, ok := disambiguateByDiscriminator(baseName, positions, models); ok {
+			// (b) MEANINGFUL discriminator. When the version segment cannot separate the
+			// colliders, the group is (in this catalog exclusively) the SAME model served
+			// under different backend-route path prefixes — a "TEE/" trusted-execution
+			// route, a "Pro/" tier, a "stealth/" alias, a redundant vendor path, or a bare
+			// direct ID alongside a routed one. The route label is the meaningful
+			// distinguisher, so the constant becomes e.g. Model__NanoGPT__GLM__5__TEE /
+			// __ZaiOrg instead of the opaque, version-lookalike __5_1 / __5_2. Falls
+			// through to the ordinal tie-break below only for a genuine tie no
+			// discriminator separates.
+			for k, pos := range positions {
+				result[pos] = names[k]
+			}
 		} else {
-			// (b) Stable ordinal: order colliders by raw model ID so the _N binding is
-			// reproducible regardless of slice order. (Belt-and-suspenders with the
-			// deterministic (Provider,ID) model ordering's sort.)
+			// (c) Stable ordinal (last resort, TRUE ties only): order colliders by raw
+			// model ID so the _N binding is reproducible regardless of slice order.
+			// (Belt-and-suspenders with the deterministic (Provider,ID) model ordering's
+			// sort.)
 			type member struct {
 				pos   int
 				rawID string
@@ -2421,6 +2576,97 @@ func resolveCollisions(names []string, models []bestiary.ModelInfo) []string {
 	}
 
 	return result
+}
+
+// disambiguateByDiscriminator resolves a same-base-name collision group with a
+// MEANINGFUL suffix instead of an opaque ordinal. It tries the discriminators in
+// collisionDiscriminators order and returns the first assignment (index-aligned with
+// positions) that makes EVERY final constant name in the group distinct; ok is false
+// when none does (the caller then falls back to the ordinal tie-break).
+//
+// A discriminator that returns "" for a member leaves that member on the bare
+// baseName (the "direct", unrouted collider keeps the plain name while the routed
+// siblings gain a route suffix) — this is allowed as long as the resulting set is
+// still all-distinct, which the seen-set check enforces. The per-member iteration is
+// in positions order (models are pre-sorted by (Provider,ID)), so the assignment is
+// deterministic.
+func disambiguateByDiscriminator(baseName string, positions []int, models []bestiary.ModelInfo) ([]string, bool) {
+	for _, disc := range collisionDiscriminators() {
+		names := make([]string, len(positions))
+		seen := make(map[string]bool, len(positions))
+		ok := true
+		for k, pos := range positions {
+			name := baseName
+			if d := disc(models[pos]); d != "" {
+				name = baseName + "__" + d
+			}
+			if seen[name] {
+				ok = false
+				break
+			}
+			seen[name] = true
+			names[k] = name
+		}
+		if ok {
+			return names, true
+		}
+	}
+	return nil, false
+}
+
+// collisionDiscriminators is the priority-ordered list of meaningful collision
+// discriminators tried by disambiguateByDiscriminator:
+//
+//  1. the backend-route path prefix alone (the common, cleanest case);
+//  2. route + release date (when a shared route needs the date to separate).
+//
+// The ordinal tie-break in resolveCollisions is the final fallback for a true tie no
+// discriminator separates; it is intentionally NOT in this list.
+func collisionDiscriminators() []func(bestiary.ModelInfo) string {
+	return []func(bestiary.ModelInfo) string{
+		collisionRouteDisc,
+		func(m bestiary.ModelInfo) string {
+			route, date := collisionRouteDisc(m), collisionDateDisc(m)
+			switch {
+			case route != "" && date != "":
+				return route + "__" + date
+			case route != "":
+				return route
+			default:
+				return date
+			}
+		},
+	}
+}
+
+// collisionRouteDisc renders the backend-route path prefix of a raw model ID (every
+// path segment before the last "/") as a PascalCase constant part, e.g.
+// "TEE/deepseek-v4-pro" → "TEE", "Pro/deepseek-ai/DeepSeek-V3" → "ProDeepseekAI".
+// A bare ID with no path prefix returns "" (a direct, unrouted model). This is the
+// meaningful axis along which the catalog's same-base-name collisions actually differ:
+// the same model re-served under a routing/tier/alias prefix.
+func collisionRouteDisc(m bestiary.ModelInfo) string {
+	rawID := string(m.ID)
+	idx := strings.LastIndexByte(rawID, '/')
+	if idx < 0 {
+		return "" // no path prefix: a direct, unrouted ID.
+	}
+	prefix := strings.TrimLeft(rawID[:idx], "@")
+	toks := strings.FieldsFunc(prefix, func(r rune) bool {
+		return !unicode.IsLetter(r) && !unicode.IsDigit(r)
+	})
+	var sb strings.Builder
+	for _, t := range toks {
+		sb.WriteString(tokenToConstPart(t))
+	}
+	return sb.String()
+}
+
+// collisionDateDisc renders the release date as a compact YYYYMMDD constant part, or
+// "" when the model has no date. It is the secondary discriminator (used only combined
+// with the route when the route alone does not separate a group).
+func collisionDateDisc(m bestiary.ModelInfo) string {
+	return strings.ReplaceAll(m.Date, "-", "")
 }
 
 // extractVersionSegment returns a short string that uniquely identifies the

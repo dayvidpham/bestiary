@@ -3,7 +3,7 @@
   "$id": "https://github.com/dayvidpham/bestiary/bestiary.schema.json",
   "title": "ModelInfo",
   "description": "Metadata for a single AI model as produced by the bestiary CLI JSON formatter.",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "type": "object",
   "properties": {
     "ID": {
@@ -39,7 +39,7 @@
       "type": "string"
     },
     "Modifier": {
-      "description": "List of known trailing tokens extracted from the model ID that carry semantic meaning beyond family/variant/version/date (e.g. [\"thinking\"], [\"vision\",\"instruct\"]). Stored in deterministic canonical order (capability > speed > format/stage, alpha fallback). null when no known modifier is found. Widened from string to array of strings for lossless multi-modifier capture.",
+      "description": "List of known trailing tokens extracted from the model ID that carry semantic meaning beyond family/variant/version/date (e.g. [\"thinking\"], [\"vision\",\"instruct\"]). Stored in deterministic canonical order (capability > speed > format/stage, alpha fallback). null when no known modifier is found. Widened from string to array of strings for lossless multi-modifier capture. Release-stage tokens (preview/latest/original) remain in this list as data but are excluded from entity keys and canonical rendering — the Stage property carries that axis (see the ReleaseStage $def).",
       "type": ["array", "null"],
       "items": { "type": "string" }
     },
@@ -178,6 +178,26 @@
       "description": "Canonical parameter-size token for this model instance (e.g. \"70b\", \"8b\", \"0.5b\"). Empty string when the size is unknown or not applicable. Participates in entity identity via the #size segment of EntityRef.String(). Optional; absent for models without curated size data.",
       "type": "string"
     },
+    "TotalParams": {
+      "description": "Total parameter count decomposed from ParamSize (e.g. 30000000000 for \"30b\"; exact for decimal tokens, e.g. 10700000000 for \"10.7b\"). In-domain NULL sentinel contract: -1 means NULL (not populated by parser or curation) — set when the shape carries no total (an NxM token \"8x22b\" records ExpertCount and PerExpertParams; a count-suffixed token \"17b-16e\" records ActiveParams and ExpertCount; the product is never computed) OR when the size is unknown (all four are -1). A positive value is an attested count; 0 never appears on this field. Derived presentation fact, never entity-key material. Optional (additive).",
+      "type": "integer",
+      "minimum": -1
+    },
+    "ActiveParams": {
+      "description": "Active (per-forward-pass) parameter count of a mixture-of-experts model (e.g. 3000000000 for \"30b-a3b\"; 17000000000 for \"17b-16e\"). In-domain NULL sentinel contract: -1 means NULL (not populated) — set for a dense model or when the size is unknown. A positive value is an attested count; 0 never appears on this field. Derived presentation fact, never entity-key material. Optional (additive).",
+      "type": "integer",
+      "minimum": -1
+    },
+    "PerExpertParams": {
+      "description": "Per-expert parameter count of an NxM MoE token (e.g. 22000000000 for \"8x22b\"). In-domain NULL sentinel contract: -1 means NULL (not populated) — set unless the shape is NxM (only \"NxMb\" tokens populate it) or when the size is unknown. A positive value is an attested count; 0 never appears on this field. Derived presentation fact, never entity-key material. Optional (additive).",
+      "type": "integer",
+      "minimum": -1
+    },
+    "ExpertCount": {
+      "description": "Number of experts of a mixture-of-experts model (8 for \"8x22b\", 16 for \"17b-16e\", 128 for \"17b-128e\"). In-domain NULL sentinel contract: -1 means NULL (not populated) — set for a MoE shape that carries no expert count (active-MoE \"30b-a3b\") or when the size is unknown. A genuine 0 is reachable ONLY on this field: a dense shape attests exactly zero experts. A positive value is an attested count. Derived presentation fact, never entity-key material. Optional (additive).",
+      "type": "integer",
+      "minimum": -1
+    },
     "QuantVRAM": {
       "description": "Per-quantization weight and VRAM footprint rows for this model instance. null when no quantization data is available. Populated at codegen time from curated data; live-sync rows carry null.",
       "type": ["array", "null"],
@@ -197,6 +217,14 @@
     },
     "StatusRaw": {
       "description": "Verbatim upstream status token, populated only when Status is \"other\" (an unrecognized token); empty otherwise. Added in schema 0.3.0; optional for backward compatibility.",
+      "type": "string"
+    },
+    "Stage": {
+      "description": "Release stage DERIVED from the model ID (preview/beta/latest/original), distinct in provenance from Status: Status is upstream-declared lifecycle from the api.json side, while Stage is read out of the ID token stream. \"none\" (the zero value) when the ID carries no recognized stage marker. A per-instance attribute; never entity-key material. Added in schema 0.4.0; optional for backward compatibility.",
+      "$ref": "#/$defs/ReleaseStage"
+    },
+    "StageRaw": {
+      "description": "Verbatim stage token, populated only when Stage is \"other\" (the reserved bucket for a future non-ID stage feeder); empty for every ID-derived stage this epoch. Mirrors StatusRaw. Added in schema 0.4.0; optional for backward compatibility.",
       "type": "string"
     },
     "ReasoningOptions": {
@@ -740,6 +768,23 @@
         "beta": "A later preview, more stable than alpha but not yet GA.",
         "deprecated": "Scheduled for or already past end-of-life.",
         "other": "Fail-safe bucket for a status token present upstream but unrecognized; raw token carried on ModelInfo.StatusRaw."
+      }
+    },
+    "ReleaseStage": {
+      "title": "ReleaseStage",
+      "description": "Release stage DERIVED from a model ID (an instance fact read out of the ID token stream by DetectStageFromID), identified by its canonical lowercase wire name. Serializes as a string via encoding.TextMarshaler. Deliberately SEPARATE from ModelStatus even where the tokens overlap (e.g. \"beta\"): Status is upstream-declared lifecycle, Stage is ID-derived. \"none\" is the zero value (absence is meaningful on this scalar field: the ID carries no stage marker); \"other\" is the RESERVED fail-safe for a future non-ID feeder (unused by the ID-detection path this epoch, raw value carried on ModelInfo.StageRaw). ID-detected tokens this epoch: preview/beta/latest/original; stable/alpha/experimental are enum members for parse completeness but are not ID-detected yet. Added in schema 0.4.0.",
+      "type": "string",
+      "enum": ["none", "stable", "preview", "beta", "alpha", "experimental", "latest", "original", "other"],
+      "x-enum-descriptions": {
+        "none": "The ID carries no recognized stage marker (the zero value): a normal, generally-available release.",
+        "stable": "An explicitly stable/GA release. Enum member for parse completeness; not ID-detected this epoch.",
+        "preview": "A preview / early-access release (ID-detected).",
+        "beta": "A beta release (ID-detected, without stripping the token from the decomposition).",
+        "alpha": "An early, unstable alpha release. Enum member for parse completeness; not ID-detected this epoch.",
+        "experimental": "An experimental release. Enum member for parse completeness; neither it nor the \"-exp\" short form is ID-detected this epoch.",
+        "latest": "A rolling \"latest\" alias (ID-detected). Names a moving target, not a fixed artifact property.",
+        "original": "A rolling \"original\" alias (ID-detected). Names a moving target, not a fixed artifact property.",
+        "other": "Reserved fail-safe bucket for a future non-ID stage feeder; unused by the ID path this epoch. Raw token carried on ModelInfo.StageRaw."
       }
     },
     "LinkType": {

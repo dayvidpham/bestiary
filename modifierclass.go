@@ -177,11 +177,27 @@ func parseModifierClass(s string) (ModifierClass, bool) {
 	}
 }
 
+// isStageToken reports whether a modifier token is a recognized release-stage
+// marker that MIGRATED to the ReleaseStage axis (preview/latest/original — see
+// stage.go). Such a token belongs to NEITHER modifier segment: it is neither an
+// identity modifier (it does not split the entity) nor an attribute modifier (it
+// renders on the separate "stage" axis, not in "[...]"). This check MUST run BEFORE
+// ClassifyModifier so a migrated token — now absent from modifier_class.json — never
+// hits the unknown->Identity fail-safe and gets promoted into the entity key. It is
+// the routing rule that makes "no entity key change" hold by construction: preview/
+// latest/original were attribute-class (key-excluded) before the migration and are
+// stage-routed (still key-excluded) after it.
+func isStageToken(token string) bool {
+	_, ok := DetectReleaseStage(token)
+	return ok
+}
+
 // attributeModifiers returns the ATTRIBUTE-class subset of mods, de-duplicated and
 // in canonical order — the complement of EntityModifiers. It is the projection
 // used to build the "[attributes]" segment of a canonical render: identity-class
-// modifiers are dropped because they belong in the "{identity-mods}" segment. An
-// empty/all-identity input returns nil.
+// modifiers are dropped because they belong in the "{identity-mods}" segment, and
+// stage-axis tokens (preview/latest/original) are dropped because they render on
+// the separate "stage" axis. An empty/all-identity input returns nil.
 func attributeModifiers(mods []string, fam Family) []string {
 	canon := CanonicalizeModifiers(mods)
 	if len(canon) == 0 {
@@ -189,6 +205,9 @@ func attributeModifiers(mods []string, fam Family) []string {
 	}
 	out := make([]string, 0, len(canon))
 	for _, m := range canon {
+		if isStageToken(m) {
+			continue // migrated to the ReleaseStage axis; renders as "stage", not "[...]"
+		}
 		if ClassifyModifier(m, fam) == ModifierClassAttribute {
 			out = append(out, m)
 		}
@@ -208,7 +227,10 @@ func attributeModifiers(mods []string, fam Family) []string {
 // EntityModifiers is implemented in terms of ClassifyModifier, so it tracks the
 // curated table automatically: a token classifies as identity (and is retained
 // here) unless the table — global or per-family override — demotes it to
-// attribute. Unknown tokens default to identity and are retained.
+// attribute. Unknown tokens default to identity and are retained — EXCEPT
+// migrated stage-axis tokens (preview/latest/original), which are routed out
+// FIRST (via isStageToken, before ClassifyModifier) so their absence from the
+// curated table never lets the identity fail-safe pull them into the key.
 func EntityModifiers(mods []string, fam Family) []string {
 	canon := CanonicalizeModifiers(mods)
 	if len(canon) == 0 {
@@ -216,6 +238,13 @@ func EntityModifiers(mods []string, fam Family) []string {
 	}
 	out := make([]string, 0, len(canon))
 	for _, m := range canon {
+		if isStageToken(m) {
+			// Stage-axis token (preview/latest/original): routed out BEFORE the
+			// ClassifyModifier fail-safe so a token absent from modifier_class.json
+			// is never promoted to identity. It was attribute-class (key-excluded)
+			// pre-migration and stays key-excluded — the entity key is unchanged.
+			continue
+		}
 		if ClassifyModifier(m, fam) == ModifierClassIdentity {
 			out = append(out, m)
 		}

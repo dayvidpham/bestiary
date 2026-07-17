@@ -1,0 +1,173 @@
+{
+  "cases": [
+    {
+      "name": "preview",
+      "input": "preview",
+      "expected": "preview",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "idDetectedStages: preview is ID-detected"
+      },
+      "mutation": {
+        "description": "pins the ID-detected preview token"
+      }
+    },
+    {
+      "name": "beta",
+      "input": "beta",
+      "expected": "beta",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "idDetectedStages: beta is ID-detected"
+      },
+      "mutation": {
+        "description": "pins the ID-detected beta token"
+      }
+    },
+    {
+      "name": "latest",
+      "input": "latest",
+      "expected": "latest",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "idDetectedStages: latest is ID-detected"
+      },
+      "mutation": {
+        "description": "pins the ID-detected latest token"
+      }
+    },
+    {
+      "name": "original",
+      "input": "original",
+      "expected": "original",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "idDetectedStages: original is ID-detected"
+      },
+      "mutation": {
+        "description": "pins the ID-detected original token"
+      }
+    },
+    {
+      "name": "Beta-case-insensitive",
+      "input": "Beta",
+      "expected": "beta",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "DetectReleaseStage lowercases before the idDetectedStages lookup"
+      },
+      "mutation": {
+        "description": "case-insensitive standalone token match: mixed-case Beta still resolves to StageBeta"
+      }
+    },
+    {
+      "name": "stable-deferred",
+      "input": "stable",
+      "expected": "none",
+      "classification": "must-fail",
+      "provenance": {
+        "source": "requirement",
+        "ref": "stage.go idDetectedStages doc: \"stable\" ID-detection deferred (GH#13) -- far more often a family name than a stage marker"
+      },
+      "mutation": {
+        "description": "stable is not present in idDetectedStages this epoch"
+      }
+    },
+    {
+      "name": "alpha-deferred",
+      "input": "alpha",
+      "expected": "none",
+      "classification": "must-fail",
+      "provenance": {
+        "source": "requirement",
+        "ref": "stage.go idDetectedStages doc: \"alpha\" ID-detection deferred (GH#13)"
+      },
+      "mutation": {
+        "description": "alpha is not present in idDetectedStages this epoch"
+      }
+    },
+    {
+      "name": "experimental-deferred",
+      "input": "experimental",
+      "expected": "none",
+      "classification": "must-fail",
+      "provenance": {
+        "source": "requirement",
+        "ref": "stage.go idDetectedStages doc: \"experimental\" ID-detection deferred (GH#13)"
+      },
+      "mutation": {
+        "description": "experimental is not present in idDetectedStages this epoch"
+      }
+    },
+    {
+      "name": "exp-shortform-deferred",
+      "input": "exp",
+      "expected": "none",
+      "classification": "must-fail",
+      "provenance": {
+        "source": "requirement",
+        "ref": "stage.go idDetectedStages doc: the \"-exp\" short form ID-detection deferred (GH#13)"
+      },
+      "mutation": {
+        "description": "the exp short form is not present in idDetectedStages this epoch"
+      }
+    },
+    {
+      "name": "empty-token",
+      "input": "",
+      "expected": "none",
+      "classification": "must-fail",
+      "provenance": {
+        "source": "boundary",
+        "ref": "DetectReleaseStage(\"\") short-circuits to (StageNone, false) before the map lookup"
+      },
+      "mutation": {
+        "description": "empty token is rejected by the leading tok == \"\" guard"
+      }
+    },
+    {
+      "name": "instruct-not-a-stage",
+      "input": "instruct",
+      "expected": "none",
+      "classification": "must-fail",
+      "provenance": {
+        "source": "boundary",
+        "ref": "instruct is a capability modifier, never a release stage"
+      },
+      "mutation": {
+        "description": "instruct is not present in idDetectedStages"
+      }
+    },
+    {
+      "name": "frobnicate-unknown",
+      "input": "frobnicate",
+      "expected": "none",
+      "classification": "must-fail",
+      "provenance": {
+        "source": "boundary",
+        "ref": "arbitrary unrecognized token, not in idDetectedStages"
+      },
+      "mutation": {
+        "description": "frobnicate matches no known stage token"
+      }
+    },
+    {
+      "name": "stable-diffusion-family-guard",
+      "input": "stable-diffusion",
+      "expected": "none",
+      "classification": "must-fail",
+      "provenance": {
+        "source": "boundary",
+        "ref": "Family-member guard: a compound family token is never a standalone stage"
+      },
+      "mutation": {
+        "description": "the whole compound token stable-diffusion is not an exact key in idDetectedStages"
+      }
+    }
+  ]
+}

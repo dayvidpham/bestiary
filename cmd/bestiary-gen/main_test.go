@@ -684,7 +684,7 @@ func genBase(providerSlug, id, name, rawFamily, releaseDate string) bestiary.Mod
 // for InferFamilyFromID do not cover at the codegen integration layer.
 func TestGenToModelInfo_EmptyFamily(t *testing.T) {
 	base := genBase("anthropic", "claude-haiku-no-family", "Claude Haiku (no family)", "", "")
-	info, _ := enrichModelInfo(base)
+	info, _, _ := enrichModelInfo(base)
 
 	if info.RawFamily != "" {
 		t.Errorf("RawFamily: got %q, want empty (raw field was empty)", info.RawFamily)
@@ -735,7 +735,7 @@ func TestGenToModelInfo_CanonicalFields(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			info, _ := enrichModelInfo(tc.base)
+			info, _, _ := enrichModelInfo(tc.base)
 
 			if string(info.Family) != tc.wantFamily {
 				t.Errorf("Family: got %q, want %q", info.Family, tc.wantFamily)
@@ -2124,18 +2124,26 @@ func runFixtureCodegen(t *testing.T, fixtureJSON []byte, lastSynced string) (sta
 	return staticSrc, constantsSrc, metadataSrc
 }
 
-// TestCodegen_Reproducible_ByteIdentical verifies that N=100 successive codegen
-// runs over the same fixture data (each re-randomizing map iteration order via a
-// fresh fetchModelsWithRaw) produce byte-identical output for BOTH generateSource
-// and generateConstantsSource AFTER normalizing the LastSynced timestamp.
+// TestCodegen_Reproducible_ByteIdentical verifies that N=100 successive codegen runs
+// over the same fixture data (each re-randomizing map iteration order via a fresh
+// fetchModelsWithRaw) produce FULLY byte-identical output for generateSource,
+// generateConstantsSource, and generateMetadataSource — with NO normalization.
 //
-// LastSynced is injected via the same path as run() (main.go:363-365), using TWO
-// DIFFERENT RFC3339 timestamps that alternate across iterations. This means:
-//   - Odd iterations use tsA, even iterations use tsB.
-//   - Without normalization, two differently-stamped runs WILL differ in the
-//     LastSynced lines — this is proved by an explicit assertion below.
-//   - After normalizeLastSynced(), the output must be byte-identical — proving
-//     that LastSynced is the SOLE residual non-determinism.
+// The codegen LastSynced stamp is DETERMINISTIC: every run stamps the SAME value — the
+// current models.dev ingest instant from the committed datasources.json
+// (codegenLastSynced) — so the wall-clock is no longer a residual source of diff and this
+// guard asserts RAW byte-identity across iterations with no masking.
+//
+// Fencing boundary: this test injects the stamp VALUE via runFixtureCodegen, so it
+// proves the EMISSION is a pure function of (input, stamp) — it does not itself
+// exercise run()'s stamp SOURCE. That source-side fence is now CLOSED by
+// TestCodegen_UpToDate_RealInput: the committed *_gen.go files carry the
+// deterministic stamp and that guard byte-compares a fresh regen (stamped through
+// the same codegenLastSynced path run() uses) against them EXACTLY, with no
+// LastSynced masking — so a regression of the stamp back to a wall-clock fails
+// there. (The obsolete alternating-timestamp / sole-residual machinery is gone; the
+// normalizeLastSynced helper stays for the deliberately wall-clock-injecting tests
+// that still need it.)
 //
 // Additionally asserts that each raw model ID always receives the same _N suffix
 // across all iterations (stable raw-ID-ordered assignment — deterministic ordering + raw-ID ordinal).
@@ -2146,16 +2154,29 @@ func runFixtureCodegen(t *testing.T, fixtureJSON []byte, lastSynced string) (sta
 //   - E (version-pair / negative control): exact constant names with NO doubled-ordinal variant
 func TestCodegen_Reproducible_ByteIdentical(t *testing.T) {
 	const N = 100
-	// Two distinct RFC3339 timestamps used on alternating iterations to exercise the
-	// run() LastSynced stamping path and prove sole-residual non-determinism.
-	const tsA = "2000-01-01T00:00:00Z" // odd iterations (1, 3, 5, …)
-	const tsB = "2099-12-31T23:59:59Z" // even iterations (0, 2, 4, …)
+
+	// The single deterministic stamp used on EVERY iteration — the production codegen path.
+	ts, err := codegenLastSynced()
+	if err != nil {
+		t.Fatalf("codegenLastSynced: %v", err)
+	}
+	// Pin the stamp to the models.dev current-ingest instant (source of truth), non-empty —
+	// tying this byte-identity guard to the real datasources.json without a brittle literal,
+	// so a snapshot refresh that appends a newer ingest instant moves both sides in lockstep.
+	curIngest, ok := bestiary.DatasetIngestedFor(bestiary.DataSourceModelsDev)
+	if !ok || curIngest.IngestedAt == "" {
+		t.Fatalf("expected a models.dev current ingest in the committed datasources.json")
+	}
+	if ts != curIngest.IngestedAt {
+		t.Fatalf("codegen LastSynced stamp %q != models.dev current ingest instant %q\n"+
+			"  Why: codegenLastSynced must return DatasetIngestedFor(DataSourceModelsDev).IngestedAt",
+			ts, curIngest.IngestedAt)
+	}
 
 	fixtureJSON := deterministicFixtureJSON(t)
 
-	// Run once (iteration 0 → tsB) to establish the reference output with a stamped
-	// LastSynced. The reference uses the run()-equivalent stamping path.
-	refStatic, refConstants, refMetadata := runFixtureCodegen(t, fixtureJSON, tsB)
+	// Reference run (iteration 0). Every run uses the SAME deterministic stamp `ts`.
+	refStatic, refConstants, refMetadata := runFixtureCodegen(t, fixtureJSON, ts)
 
 	// The metadata bake must emit rows in ascending MetadataID order regardless of the
 	// map-iteration order the fixture's models.json view arrived in. Assert the sorted
@@ -2183,7 +2204,6 @@ func TestCodegen_Reproducible_ByteIdentical(t *testing.T) {
 	if !strings.Contains(refMetaStr, `ScoreRaw: "pass"`) {
 		t.Errorf("reference metadata: string benchmark score not captured on ScoreRaw\nmetadata:\n%s", refMetaStr)
 	}
-	refMetadataNorm := normalizeLastSynced(refMetadata)
 
 	// Verify reference constants contain the expected golden pins.
 	refStr := string(refConstants)
@@ -2200,12 +2220,14 @@ func TestCodegen_Reproducible_ByteIdentical(t *testing.T) {
 	if !strings.Contains(refNorm, `Model__CloudflareAIGateway__Claude__3__5__Haiku__3_5_2 ModelID = "anthropic/claude-3.5-haiku"`) {
 		t.Errorf("reference output: C group _2 pin mismatch; want anthropic/claude-3.5-haiku\nconstants:\n%s", refStr)
 	}
-	// B group pins: kilo-auto/free < openrouter/free.
-	if !strings.Contains(refNorm, `Model__Kilo__Free_1 ModelID = "kilo-auto/free"`) {
-		t.Errorf("reference output: B group _1 pin mismatch; want kilo-auto/free\nconstants:\n%s", refStr)
+	// B group pins: distinct backend-route prefixes disambiguate MEANINGFULLY —
+	// "kilo-auto/free" → __KiloAuto, "openrouter/free" → __OpenRouter — instead of the
+	// old opaque _1/_2 ordinals.
+	if !strings.Contains(refNorm, `Model__Kilo__Free__KiloAuto ModelID = "kilo-auto/free"`) {
+		t.Errorf("reference output: B group KiloAuto pin mismatch; want kilo-auto/free\nconstants:\n%s", refStr)
 	}
-	if !strings.Contains(refNorm, `Model__Kilo__Free_2 ModelID = "openrouter/free"`) {
-		t.Errorf("reference output: B group _2 pin mismatch; want openrouter/free\nconstants:\n%s", refStr)
+	if !strings.Contains(refNorm, `Model__Kilo__Free__OpenRouter ModelID = "openrouter/free"`) {
+		t.Errorf("reference output: B group OpenRouter pin mismatch; want openrouter/free\nconstants:\n%s", refStr)
 	}
 	// E control: version-suffix pass (a), not fallback. Exact constant names.
 	if !strings.Contains(refNorm, `Model__OpenAI__GPT__5_1 ModelID = "gpt-5.1"`) {
@@ -2221,20 +2243,16 @@ func TestCodegen_Reproducible_ByteIdentical(t *testing.T) {
 		t.Errorf("reference output: E control has doubled-ordinal variant (fragment suffix leaked)\nconstants:\n%s", refStr)
 	}
 
-	// Prove that the reference static file was actually stamped: it must contain tsB in a
-	// LastSynced line. (The constants file does not contain LastSynced fields.)
+	// Prove that the reference static file was actually stamped with the deterministic value:
+	// it must contain `ts` in a LastSynced line. (The constants file has no LastSynced fields.)
 	refStaticStr := string(refStatic)
-	if !strings.Contains(refStaticStr, `LastSynced:`) || !strings.Contains(refStaticStr, tsB) {
-		t.Errorf("reference static output: LastSynced stamp not found (expected %q in a LastSynced field)\n"+
-			"  What: run() stamping path not exercised\n"+
-			"  Why: runFixtureCodegen did not mirror run() main.go:363-365\n"+
+	if !strings.Contains(refStaticStr, `LastSynced:`) || !strings.Contains(refStaticStr, ts) {
+		t.Errorf("reference static output: deterministic LastSynced stamp %q not found\n"+
+			"  What: run()'s stamping path was not exercised\n"+
+			"  Why: runFixtureCodegen did not stamp models[i].LastSynced with the deterministic value\n"+
 			"  How to fix: verify that runFixtureCodegen stamps models[i].LastSynced when lastSynced != \"\"",
-			tsB)
+			ts)
 	}
-
-	// Pre-compute normalized reference (LastSynced stripped) for byte-identity comparison.
-	refStaticNorm := normalizeLastSynced(refStatic)
-	refConstantsNorm := normalizeLastSynced(refConstants)
 
 	// Build a per-rawID → constantName index from the reference for stability assertion.
 	// Parse lines of the form: \t<ConstName>...<spaces>...ModelID = "<rawID>"
@@ -2253,81 +2271,42 @@ func TestCodegen_Reproducible_ByteIdentical(t *testing.T) {
 		}
 	}
 
-	// Run N-1 more iterations and assert byte-equality after LastSynced normalization.
-	// Odd iterations use tsA, even iterations use tsB (alternating across the full run).
-	// At least one iteration with tsA WILL produce raw bytes that differ from the tsB
-	// reference — we assert that below to prove sole-residual.
-	foundDifferentRawStatic := false
-
+	// Run N-1 more iterations and assert FULL byte-identity (NO normalization). The stamp
+	// is a constant here, so ANY diff between iterations — including a LastSynced line —
+	// is a real non-determinism regression in the emission (a generator consulting a clock,
+	// map-order leakage, or an unstable collision ordinal). run()'s stamp SOURCE is outside
+	// this test's reach (see the fencing-boundary note above).
 	for i := 1; i < N; i++ {
-		ts := tsB
-		if i%2 == 1 {
-			ts = tsA // odd iteration → different timestamp than reference (tsB)
-		}
 		staticSrc, constantsSrc, metadataSrc := runFixtureCodegen(t, fixtureJSON, ts)
 
-		// --- Sole-residual proof (first odd iteration) ---
-		// Runs stamped with tsA must differ from the tsB reference in the raw bytes
-		// of the static file (LastSynced lines differ), but ONLY in LastSynced lines.
-		if ts == tsA && !foundDifferentRawStatic {
-			if bytes.Equal(refStatic, staticSrc) {
-				t.Errorf("sole-residual check: two runs with different timestamps produced identical raw bytes\n"+
-					"  What: expected LastSynced lines to differ (tsA=%q vs tsB=%q)\n"+
-					"  Why: LastSynced was not stamped by runFixtureCodegen\n"+
-					"  How to fix: verify runFixtureCodegen stamps models[i].LastSynced",
-					tsA, tsB)
-			} else {
-				foundDifferentRawStatic = true
-				// Assert that every differing line contains "LastSynced" — proving it is the
-				// sole source of non-determinism between two correctly-stamped runs.
-				refLines := strings.Split(string(refStatic), "\n")
-				iterLines := strings.Split(string(staticSrc), "\n")
-				if len(refLines) == len(iterLines) {
-					for lineIdx, refLine := range refLines {
-						if refLine != iterLines[lineIdx] && !strings.Contains(refLine, "LastSynced") {
-							t.Errorf("sole-residual check: line %d differs but does not contain 'LastSynced'\n"+
-								"  What: a non-LastSynced line changed between runs with different timestamps\n"+
-								"  Why: residual non-determinism beyond LastSynced exists\n"+
-								"  ref:  %q\n  iter: %q",
-								lineIdx+1, refLine, iterLines[lineIdx])
-						}
-					}
-				}
-			}
-		}
-
-		// --- Byte-identity after normalization ---
-		staticNorm := normalizeLastSynced(staticSrc)
-		constantsNorm := normalizeLastSynced(constantsSrc)
-
-		if !bytes.Equal(refStaticNorm, staticNorm) {
-			t.Fatalf("iteration %d (ts=%s): generateSource output differs from reference after LastSynced normalization\n"+
-				"  What: the static model list changed between runs (beyond LastSynced)\n"+
-				"  Why: the deterministic-ordering sort or fetchModelsWithRaw map-range is nondeterministic\n"+
+		if !bytes.Equal(refStatic, staticSrc) {
+			t.Fatalf("iteration %d: generateSource output is not byte-identical to the reference\n"+
+				"  What: the static model list changed between runs\n"+
+				"  Why: nondeterminism in the fetchModelsWithRaw map-range, the ordering sort, or a wall-clock in a baked field\n"+
 				"  Where: fetchModelsWithRaw or generateSource\n"+
-				"  How to fix: ensure sort.SliceStable(models, ...) runs before return in fetchModelsWithRaw",
-				i+1, ts)
+				"  How to fix: ensure the model slice is sorted before return and no baked field uses time.Now()",
+				i+1)
 		}
-		if !bytes.Equal(refConstantsNorm, constantsNorm) {
-			t.Fatalf("iteration %d (ts=%s): generateConstantsSource output differs from reference after LastSynced normalization\n"+
+		if !bytes.Equal(refConstants, constantsSrc) {
+			t.Fatalf("iteration %d: generateConstantsSource output is not byte-identical to the reference\n"+
 				"  What: the constants file changed between runs\n"+
 				"  Why: collision _N assignment is position-dependent (raw-ID ordinal not applied)\n"+
 				"  Where: resolveCollisions fallback or final-uniqueness pass\n"+
-				"  How to fix: replace sort.Ints(sortedPos) with raw-ID-keyed member sort in resolveCollisions",
-				i+1, ts)
+				"  How to fix: replace sort.Ints(sortedPos) with a raw-ID-keyed member sort in resolveCollisions",
+				i+1)
 		}
 
-		// --- Metadata byte-identity ---
-		// The fixture's models.json view (≥3 unsorted entries) arrives in random map
-		// order each iteration; the emitted metadata source must be byte-identical to the
-		// reference, which is what proves the explicit sort.Slice on MetadataID.
-		if !bytes.Equal(refMetadataNorm, normalizeLastSynced(metadataSrc)) {
-			t.Fatalf("iteration %d (ts=%s): generateMetadataSource output differs from reference\n"+
+		// The fixture's models.json view (≥3 unsorted entries) arrives in random map order
+		// each iteration; the emitted metadata source must be byte-identical to the reference,
+		// which is what proves the explicit sort.Slice on MetadataID. Metadata rows are never
+		// stamped, so this needs no normalization either.
+		if !bytes.Equal(refMetadata, metadataSrc) {
+			t.Fatalf("iteration %d: generateMetadataSource output is not byte-identical to the reference\n"+
 				"  What: the baked metadata order/content changed between runs\n"+
 				"  Why: the metadata bake did not impose a deterministic MetadataID order\n"+
 				"  Where: generateMetadataSource sort.Slice(baked, ...) on MetadataID\n"+
 				"  How to fix: ensure generateMetadataSource sorts by MetadataID before emitting",
-				i+1, ts)
+				i+1)
 		}
 
 		// Verify raw-ID → constant-name stability.
@@ -2351,13 +2330,6 @@ func TestCodegen_Reproducible_ByteIdentical(t *testing.T) {
 					i+1, rawID, constName, prev)
 			}
 		}
-	}
-
-	// Ensure we actually hit the sole-residual check at least once.
-	if !foundDifferentRawStatic {
-		t.Error("sole-residual check: no odd iteration produced raw-byte differences in the static file\n" +
-			"  What: the sole-residual proof never fired\n" +
-			"  Why: N may be < 2 or the alternating timestamp logic is broken")
 	}
 }
 
@@ -2393,7 +2365,7 @@ func TestEmit_VendoredCatalog_CarriesInstanceFields(t *testing.T) {
 	models := make([]bestiary.ModelInfo, 0, len(cat.Models))
 	var deprecated, withReasoning, withTiers int
 	for _, base := range cat.Models {
-		info, _ := enrichModelInfo(base)
+		info, _, _ := enrichModelInfo(base)
 		models = append(models, info)
 		if info.Status == bestiary.StatusDeprecated {
 			deprecated++
@@ -2476,12 +2448,15 @@ func TestCodegen_UpToDate(t *testing.T) {
 			metadataGoldenPath, err)
 	}
 
-	// Regenerate from the fixture.
-	// Pass a representative injected timestamp to exercise the run() stamping path.
-	// normalizeLastSynced is applied to both sides before comparison, so the guard
-	// is insensitive to the codegen wall-clock (true zero-diff is a separate follow-up).
+	// Regenerate from the fixture. The codegen LastSynced stamp is deterministic (pinned
+	// to the committed models.dev ingest instant, not a wall-clock), so this guard no
+	// longer injects a timestamp and normalizes it out: the golden excerpts carry
+	// LastSynced: "" and the fixture path (lastSynced "") emits exactly that, so the
+	// comparison is an EXACT content match with no LastSynced masking.
+	// Keeping the golden's stamp empty also decouples this content/ordering guard from the
+	// committed ingest instant, so a snapshot refresh never forces a golden re-cut here.
 	fixtureJSON := deterministicFixtureJSON(t)
-	staticSrc, constantsSrc, metadataSrc := runFixtureCodegen(t, fixtureJSON, "2000-01-01T00:00:00Z")
+	staticSrc, constantsSrc, metadataSrc := runFixtureCodegen(t, fixtureJSON, "")
 
 	// stripGenHeader strips the 2-line "// Code generated..." / "//go:generate..." header
 	// from a generated Go file, then normalizes whitespace for comparison.
@@ -2502,17 +2477,20 @@ func TestCodegen_UpToDate(t *testing.T) {
 		return normalizeWhitespace(s)
 	}
 
-	// normalizeAndStrip applies both normalizeLastSynced and stripGenHeader so that
-	// both the wall-clock stamp and gofmt alignment are factored out.
+	// normalizeAndStrip strips the generated-file header and normalizes whitespace. It no
+	// longer strips LastSynced: the stamp is deterministic and the fixture path emits the
+	// golden's empty LastSynced verbatim, so no masking is needed (masking would weaken this
+	// to a content-only guard).
 	normalizeAndStrip := func(src []byte) string {
-		return stripGenHeader(normalizeLastSynced(src))
+		return stripGenHeader(src)
 	}
 
-	// Normalize both sides: generated output (LastSynced stripped, header stripped) and
-	// golden excerpt (LastSynced stripped). The golden file has LastSynced: "" because it
-	// was produced by the fixture path; after normalization both map to the same sentinel.
+	// Both sides: generated output (header stripped, whitespace normalized) and golden
+	// excerpt (whitespace normalized). The golden excerpt carries LastSynced: "" and the
+	// fixture path emits exactly that, so this is an EXACT match on content INCLUDING the
+	// empty stamp.
 	normConstants := normalizeAndStrip(constantsSrc)
-	normConstantsGolden := normalizeWhitespace(string(normalizeLastSynced(constantsGoldenRaw)))
+	normConstantsGolden := normalizeWhitespace(string(constantsGoldenRaw))
 
 	// The golden excerpt must appear as a substring in the generated output.
 	// Normalizing whitespace on both sides makes the comparison insensitive to
@@ -2523,12 +2501,12 @@ func TestCodegen_UpToDate(t *testing.T) {
 			"  Why: collision _N bindings may have changed, or codegen logic was modified without re-running regen\n"+
 			"  Where: cmd/bestiary-gen/main.go generateConstantsSource or resolveCollisions\n"+
 			"  How to fix: run `go run ./cmd/bestiary-gen --no-fetch && git add models_constants_gen.go models_static_gen.go`\n"+
-			"\nGolden excerpt (normalized, LastSynced stripped):\n%s\n\nGenerated (normalized, header+LastSynced stripped):\n%s",
+			"\nGolden excerpt (normalized):\n%s\n\nGenerated (normalized, header stripped):\n%s",
 			normConstantsGolden, normConstants)
 	}
 
 	normStatic := normalizeAndStrip(staticSrc)
-	normStaticGolden := normalizeWhitespace(string(normalizeLastSynced(staticGoldenRaw)))
+	normStaticGolden := normalizeWhitespace(string(staticGoldenRaw))
 
 	// The golden excerpt must appear as a substring in the generated static output.
 	if !strings.Contains(normStatic, normStaticGolden) {
@@ -2537,12 +2515,12 @@ func TestCodegen_UpToDate(t *testing.T) {
 			"  Why: model ordering changed, or codegen logic was modified without re-running regen\n"+
 			"  Where: cmd/bestiary-gen/main.go generateSource\n"+
 			"  How to fix: run `go run ./cmd/bestiary-gen --no-fetch && git add models_constants_gen.go models_static_gen.go`\n"+
-			"\nGolden excerpt (normalized, LastSynced stripped):\n%s\n\nGenerated (normalized, header+LastSynced stripped):\n%s",
+			"\nGolden excerpt (normalized):\n%s\n\nGenerated (normalized, header stripped):\n%s",
 			normStaticGolden, normStatic)
 	}
 
 	normMetadata := normalizeAndStrip(metadataSrc)
-	normMetadataGolden := normalizeWhitespace(string(normalizeLastSynced(metadataGoldenRaw)))
+	normMetadataGolden := normalizeWhitespace(string(metadataGoldenRaw))
 
 	// The golden excerpt must appear as a substring in the generated metadata output.
 	if !strings.Contains(normMetadata, normMetadataGolden) {
@@ -2583,18 +2561,21 @@ func TestCodegen_GoldenPins_C(t *testing.T) {
 	}
 }
 
-// TestCodegen_GoldenPins_B verifies the B group (kilo prefix collision):
-// "kilo-auto/free" → _1, "openrouter/free" → _2.
+// TestCodegen_GoldenPins_B verifies the B group (kilo prefix collision) resolves with
+// the MEANINGFUL route discriminator, not an opaque ordinal: the same base
+// model served under two distinct backend-route prefixes disambiguates as
+// "kilo-auto/free" → Model__Kilo__Free__KiloAuto, "openrouter/free" →
+// Model__Kilo__Free__OpenRouter.
 func TestCodegen_GoldenPins_B(t *testing.T) {
 	fixtureJSON := deterministicFixtureJSON(t)
 	_, constantsSrc, _ := runFixtureCodegen(t, fixtureJSON, "")
 	s := normalizeWhitespace(string(constantsSrc))
 
-	if !strings.Contains(s, `Model__Kilo__Free_1 ModelID = "kilo-auto/free"`) {
-		t.Errorf("B group _1 pin: expected kilo-auto/free\nconstants:\n%s", string(constantsSrc))
+	if !strings.Contains(s, `Model__Kilo__Free__KiloAuto ModelID = "kilo-auto/free"`) {
+		t.Errorf("B group KiloAuto pin: expected kilo-auto/free\nconstants:\n%s", string(constantsSrc))
 	}
-	if !strings.Contains(s, `Model__Kilo__Free_2 ModelID = "openrouter/free"`) {
-		t.Errorf("B group _2 pin: expected openrouter/free\nconstants:\n%s", string(constantsSrc))
+	if !strings.Contains(s, `Model__Kilo__Free__OpenRouter ModelID = "openrouter/free"`) {
+		t.Errorf("B group OpenRouter pin: expected openrouter/free\nconstants:\n%s", string(constantsSrc))
 	}
 }
 
@@ -3402,44 +3383,13 @@ func TestQuantVRAM_PartialWhenArchAbsent(t *testing.T) {
 	})
 }
 
-// TestCodegen_ParamSizeOnlyFromCuratedTable asserts that ParamSize is emitted
-// in the generated static source if and only if a model joins a curated
-// quant_vram.json entry — the carrier of the #size identity dimension. A model
-// WITHOUT a curated entry must emit no ParamSize line, so its EntityRef key stays
-// byte-identical to the pre-paramsize baseline (no migration drift); a model WITH
-// a curated entry must emit exactly the curated param_size token.
-//
-// The hermetic fixture contains exactly two curated-joining IDs
-// (llama-3.2-3b-instruct → "3b", llama-3.3-70b-instruct → "70b") and four
-// uncurated IDs. So the generated source must contain exactly two ParamSize lines
-// with those two values and no others. This makes both directions falsifiable:
-// dropping the join leaves zero ParamSize lines; a stray ParamSize on an
-// uncurated model adds an unexpected line.
-func TestCodegen_ParamSizeOnlyFromCuratedTable(t *testing.T) {
-	fixtureJSON := deterministicFixtureJSON(t)
-	staticSrc, _, _ := runFixtureCodegen(t, fixtureJSON, "")
-	src := string(staticSrc)
-
-	reParamSize := regexp.MustCompile(`ParamSize:\s+"([^"]*)"`)
-	got := reParamSize.FindAllStringSubmatch(src, -1)
-
-	gotValues := make([]string, 0, len(got))
-	for _, m := range got {
-		gotValues = append(gotValues, m[1])
-	}
-	sort.Strings(gotValues)
-
-	want := []string{"3b", "70b"}
-	if len(gotValues) != len(want) || gotValues[0] != want[0] || gotValues[1] != want[1] {
-		t.Errorf("ParamSize emission mismatch: got %v, want %v\n"+
-			"  What: ParamSize must be emitted only for fixture models that join a curated quant_vram.json entry\n"+
-			"  Why: ParamSize carries the #size identity dimension; an uncurated model emitting it would drift its entity key, "+
-			"and a curated model NOT emitting it would silently disconnect the join\n"+
-			"  Where: genToModelInfoDetailed (info.ParamSize = bestiary.ParamSizeFor(id)) + generateSource ParamSize emission\n"+
-			"  How to fix: ensure the join fires for curated IDs and ParamSize stays empty (unemitted) for the rest",
-			gotValues, want)
-	}
-}
+// The presence-based param-size precedence (pin > mechanical > ParamSizeFor) that the
+// codegen bake shares with the runtime enrichment joints is pinned by
+// TestCodegen_ParamSizePrecedence in the library package (paramsize_wiring_internal_test.go),
+// where it can reach both the exported EnrichedParamSize and the unexported precedence
+// helper for the token-less-fallback and disagreement legs no catalog ID reaches. It
+// replaces the pre-v0.2.6 curated-only ParamSize emission guard, which the full-bulk
+// re-key retired.
 
 // TestCodegen_IngestedAt_Deterministic verifies that IngestedAt
 // lines in generated source are byte-identical across runs WITHOUT normalization.
@@ -3542,6 +3492,38 @@ func TestCodegen_BaseRef_LineageEdge(t *testing.T) {
 		}
 		if len(ref.Modifier) != 1 || ref.Modifier[0] != "instruct" {
 			t.Errorf("Modifier = %v, want [instruct]", ref.Modifier)
+		}
+	})
+
+	// parseBaseRef must decompose a COMPOUND base_ref whose size is a multi-part MoE
+	// shape token into the FULL parent EntityRef, capturing the WHOLE size window
+	// (family + version + #size(compound) + identity modifier). This is the payoff of
+	// delegating to ExtractParamSizeToken: the pre-delegation greedy per-token scan
+	// would clip "235b-a22b" to "235b" (and drop "a22b" as a stray modifier), pointing
+	// the finetune edge at the wrong parent entity.
+	t.Run("parseBaseRef_compound_moe_size", func(t *testing.T) {
+		cases := []struct {
+			baseRef, want, wantSize string
+		}{
+			{"qwen3:235b-a22b-instruct", "qwen@3#235b-a22b{instruct}", "235b-a22b"}, // active MoE — whole window, not "235b"
+			{"mixtral:8x22b-instruct", "mixtral#8x22b{instruct}", "8x22b"},          // NxM MoE shape
+			{"llama4:17b-16e-instruct", "llama@4#17b-16e{instruct}", "17b-16e"},     // count-suffixed MoE
+		}
+		for _, tc := range cases {
+			ref := parseBaseRef(tc.baseRef)
+			if got := ref.String(); got != tc.want {
+				t.Errorf("parseBaseRef(%q).String() = %q, want %q\n"+
+					"  What: a compound MoE size window was clipped or a modifier was lost\n"+
+					"  Where: parseBaseRef ExtractParamSizeToken delegation + modifier remainder scan\n"+
+					"  How to fix: the whole size window must be captured and the remaining tokens treated as modifiers",
+					tc.baseRef, got, tc.want)
+			}
+			if ref.ParamSize != tc.wantSize {
+				t.Errorf("parseBaseRef(%q).ParamSize = %q, want %q (whole-window size, not a clipped prefix)", tc.baseRef, ref.ParamSize, tc.wantSize)
+			}
+			if len(ref.Modifier) != 1 || ref.Modifier[0] != "instruct" {
+				t.Errorf("parseBaseRef(%q).Modifier = %v, want [instruct] (remainder after excising the size window)", tc.baseRef, ref.Modifier)
+			}
 		}
 	})
 
@@ -3679,11 +3661,12 @@ func TestCodegen_QuantVRAMLiteral_Deterministic(t *testing.T) {
 // TestCodegen_UpToDate_RealInput is the real-input regen up-to-date guard. It
 // regenerates every codegen-owned source IN MEMORY from the COMMITTED vendored
 // snapshot (parse/data/modelsdev/catalog.json) via the exact generation sequence
-// run() uses, then byte-compares each fresh source against the COMMITTED
-// *_gen.go file on disk — with LastSynced lines normalized on both sides (the
-// same reLastSynced/normalizeLastSynced machinery TestCodegen_Reproducible_ByteIdentical
-// uses). It FAILS if any generated file is stale relative to the vendored
-// snapshot plus the current emitter logic.
+// run() uses — INCLUDING the deterministic LastSynced stamp — then byte-compares each
+// fresh source against the COMMITTED *_gen.go file on disk with NO masking. Because the
+// baked LastSynced is now deterministic (the committed models.dev ingest instant, not a
+// wall-clock), the comparison is exact; a wall-clock leaking back into the stamp would
+// fail here. It FAILS if any generated file is stale relative to the vendored snapshot
+// plus the current emitter logic.
 //
 // This is the guard whose absence let a stale regen ship invisibly: the
 // hermetic TestCodegen_UpToDate checks only golden EXCERPTS from a fixture, and
@@ -3720,10 +3703,24 @@ func TestCodegen_UpToDate_RealInput(t *testing.T) {
 	}
 
 	// Reproduce run()'s generation sequence exactly (main.go run()):
-	//   allSlugs (sorted) -> collectFamilies -> applyFilter(no flags) -> the five
-	//   generate* emitters, with slugToConst built from providerConstName.
-	// LastSynced is intentionally NOT stamped here: normalizeLastSynced neutralizes
-	// the field on both sides, so the on-disk wall-clock stamp is irrelevant.
+	//   stamp the deterministic LastSynced -> allSlugs (sorted) -> collectFamilies ->
+	//   applyFilter(no flags) -> the five generate* emitters, with slugToConst built from
+	//   providerConstName.
+	//
+	// LastSynced IS stamped here with the same deterministic codegenLastSynced value run()
+	// uses (the committed models.dev ingest instant, NOT a wall-clock), so the comparison
+	// below is an EXACT byte match with NO LastSynced masking. This permanently fences
+	// run()'s stamp source: if a wall-clock ever leaks back into the baked LastSynced, the
+	// fresh regen's deterministic stamp would diverge from the committed files and fail
+	// here — which masking would have hidden.
+	lastSynced, err := codegenLastSynced()
+	if err != nil {
+		t.Fatalf("codegenLastSynced: %v", err)
+	}
+	for i := range models {
+		models[i].LastSynced = lastSynced
+	}
+
 	allSlugs := make([]string, 0, len(providerMeta))
 	for slug := range providerMeta {
 		allSlugs = append(allSlugs, slug)
@@ -3779,16 +3776,14 @@ func TestCodegen_UpToDate_RealInput(t *testing.T) {
 			continue
 		}
 
-		freshNorm := normalizeLastSynced(f.src)
-		committedNorm := normalizeLastSynced(committed)
-		if bytes.Equal(freshNorm, committedNorm) {
+		if bytes.Equal(f.src, committed) {
 			continue
 		}
 
 		// Report the first divergent line to make the staleness reviewable without
 		// dumping the whole (multi-MB) file.
-		freshLines := strings.Split(string(freshNorm), "\n")
-		commLines := strings.Split(string(committedNorm), "\n")
+		freshLines := strings.Split(string(f.src), "\n")
+		commLines := strings.Split(string(committed), "\n")
 		firstDiff, ln, freshLn, commLn := -1, 0, "", ""
 		for ln < len(freshLines) || ln < len(commLines) {
 			var fl, cl string
@@ -3807,7 +3802,7 @@ func TestCodegen_UpToDate_RealInput(t *testing.T) {
 
 		t.Errorf(
 			"committed %s is STALE relative to the vendored snapshot + current emitter logic\n"+
-				"  What: a fresh --no-fetch regen of this file (LastSynced normalized) does not match what is committed\n"+
+				"  What: a fresh --no-fetch regen of this file (deterministic LastSynced, no masking) does not match what is committed\n"+
 				"  Why: the generated file was hand-edited, or left un-regenerated after an emitter or curated-data change\n"+
 				"  Where: %s (committed) vs in-memory regen from %s\n"+
 				"  First divergent line (%d):\n"+

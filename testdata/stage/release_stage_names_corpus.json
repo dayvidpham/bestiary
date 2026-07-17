@@ -1,0 +1,121 @@
+{
+  "cases": [
+    {
+      "name": "StageNone",
+      "input": 0,
+      "expected": "none",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "stage.go: releaseStageNames[0] = StageNone -> \"none\" (the zero value: no recognized stage marker)"
+      },
+      "mutation": {
+        "description": "pins String/MarshalText/UnmarshalText round-trip for StageNone"
+      }
+    },
+    {
+      "name": "StageStable",
+      "input": 1,
+      "expected": "stable",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "stage.go: releaseStageNames[1] = StageStable -> \"stable\""
+      },
+      "mutation": {
+        "description": "pins String/MarshalText/UnmarshalText round-trip for StageStable"
+      }
+    },
+    {
+      "name": "StagePreview",
+      "input": 2,
+      "expected": "preview",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "stage.go: releaseStageNames[2] = StagePreview -> \"preview\""
+      },
+      "mutation": {
+        "description": "pins String/MarshalText/UnmarshalText round-trip for StagePreview"
+      }
+    },
+    {
+      "name": "StageBeta",
+      "input": 3,
+      "expected": "beta",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "stage.go: releaseStageNames[3] = StageBeta -> \"beta\""
+      },
+      "mutation": {
+        "description": "pins String/MarshalText/UnmarshalText round-trip for StageBeta"
+      }
+    },
+    {
+      "name": "StageAlpha",
+      "input": 4,
+      "expected": "alpha",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "stage.go: releaseStageNames[4] = StageAlpha -> \"alpha\""
+      },
+      "mutation": {
+        "description": "pins String/MarshalText/UnmarshalText round-trip for StageAlpha"
+      }
+    },
+    {
+      "name": "StageExperimental",
+      "input": 5,
+      "expected": "experimental",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "stage.go: releaseStageNames[5] = StageExperimental -> \"experimental\""
+      },
+      "mutation": {
+        "description": "pins String/MarshalText/UnmarshalText round-trip for StageExperimental"
+      }
+    },
+    {
+      "name": "StageLatest",
+      "input": 6,
+      "expected": "latest",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "stage.go: releaseStageNames[6] = StageLatest -> \"latest\""
+      },
+      "mutation": {
+        "description": "pins String/MarshalText/UnmarshalText round-trip for StageLatest"
+      }
+    },
+    {
+      "name": "StageOriginal",
+      "input": 7,
+      "expected": "original",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "stage.go: releaseStageNames[7] = StageOriginal -> \"original\""
+      },
+      "mutation": {
+        "description": "pins String/MarshalText/UnmarshalText round-trip for StageOriginal"
+      }
+    },
+    {
+      "name": "StageOther",
+      "input": 8,
+      "expected": "other",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "stage.go: releaseStageNames[8] = StageOther -> \"other\" (reserved fail-safe bucket; round-trips even though ParseReleaseStage rejects it as an internal sentinel)"
+      },
+      "mutation": {
+        "description": "pins String/MarshalText/UnmarshalText round-trip for StageOther"
+      }
+    }
+  ]
+}

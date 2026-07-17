@@ -1,0 +1,468 @@
+{
+  "cases": [
+    {
+      "name": "deep-research",
+      "input": "widget-deep-research",
+      "expected": {
+        "family": "widget",
+        "variant": "deep-research"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "variant_suffixes.json: widget-deep-research strips to family 'widget', variant 'deep-research'"
+      },
+      "mutation": {
+        "description": "suffix-stripping decomposition for widget-deep-research"
+      }
+    },
+    {
+      "name": "codex-spark",
+      "input": "acme-codex-spark",
+      "expected": {
+        "family": "acme",
+        "variant": "codex-spark"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "variant_suffixes.json: acme-codex-spark strips to family 'acme', variant 'codex-spark'"
+      },
+      "mutation": {
+        "description": "suffix-stripping decomposition for acme-codex-spark"
+      }
+    },
+    {
+      "name": "codex-mini",
+      "input": "baz-codex-mini",
+      "expected": {
+        "family": "baz",
+        "variant": "codex-mini"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "variant_suffixes.json: baz-codex-mini strips to family 'baz', variant 'codex-mini'"
+      },
+      "mutation": {
+        "description": "suffix-stripping decomposition for baz-codex-mini"
+      }
+    },
+    {
+      "name": "flash-lite",
+      "input": "acme-flash-lite",
+      "expected": {
+        "family": "acme",
+        "variant": "flash-lite"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "variant_suffixes.json: acme-flash-lite strips to family 'acme', variant 'flash-lite'"
+      },
+      "mutation": {
+        "description": "suffix-stripping decomposition for acme-flash-lite"
+      }
+    },
+    {
+      "name": "codex",
+      "input": "acme-codex",
+      "expected": {
+        "family": "acme",
+        "variant": "codex"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "variant_suffixes.json: acme-codex strips to family 'acme', variant 'codex'"
+      },
+      "mutation": {
+        "description": "suffix-stripping decomposition for acme-codex"
+      }
+    },
+    {
+      "name": "instruct (now a global Modifier — NOT stripped by ParseFamily)",
+      "input": "acme-instruct",
+      "expected": {
+        "family": "acme-instruct",
+        "variant": ""
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "variant_suffixes.json: acme-instruct strips to family 'acme-instruct', variant ''"
+      },
+      "mutation": {
+        "description": "suffix-stripping decomposition for acme-instruct"
+      }
+    },
+    {
+      "name": "embed",
+      "input": "acme-embed",
+      "expected": {
+        "family": "acme",
+        "variant": "embed"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "variant_suffixes.json: acme-embed strips to family 'acme', variant 'embed'"
+      },
+      "mutation": {
+        "description": "suffix-stripping decomposition for acme-embed"
+      }
+    },
+    {
+      "name": "embedding",
+      "input": "acme-embedding",
+      "expected": {
+        "family": "acme",
+        "variant": "embedding"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "variant_suffixes.json: acme-embedding strips to family 'acme', variant 'embedding'"
+      },
+      "mutation": {
+        "description": "suffix-stripping decomposition for acme-embedding"
+      }
+    },
+    {
+      "name": "mini",
+      "input": "foo-mini",
+      "expected": {
+        "family": "foo",
+        "variant": "mini"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "variant_suffixes.json: foo-mini strips to family 'foo', variant 'mini'"
+      },
+      "mutation": {
+        "description": "suffix-stripping decomposition for foo-mini"
+      }
+    },
+    {
+      "name": "pro",
+      "input": "foo-pro",
+      "expected": {
+        "family": "foo",
+        "variant": "pro"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "variant_suffixes.json: foo-pro strips to family 'foo', variant 'pro'"
+      },
+      "mutation": {
+        "description": "suffix-stripping decomposition for foo-pro"
+      }
+    },
+    {
+      "name": "flash",
+      "input": "foo-flash",
+      "expected": {
+        "family": "foo",
+        "variant": "flash"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "variant_suffixes.json: foo-flash strips to family 'foo', variant 'flash'"
+      },
+      "mutation": {
+        "description": "suffix-stripping decomposition for foo-flash"
+      }
+    },
+    {
+      "name": "lite",
+      "input": "foo-lite",
+      "expected": {
+        "family": "foo",
+        "variant": "lite"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "variant_suffixes.json: foo-lite strips to family 'foo', variant 'lite'"
+      },
+      "mutation": {
+        "description": "suffix-stripping decomposition for foo-lite"
+      }
+    },
+    {
+      "name": "turbo (now a global Modifier — NOT stripped by ParseFamily)",
+      "input": "foo-turbo",
+      "expected": {
+        "family": "foo-turbo",
+        "variant": ""
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "variant_suffixes.json: foo-turbo strips to family 'foo-turbo', variant ''"
+      },
+      "mutation": {
+        "description": "suffix-stripping decomposition for foo-turbo"
+      }
+    },
+    {
+      "name": "base (now a global Modifier — NOT stripped by ParseFamily)",
+      "input": "foo-base",
+      "expected": {
+        "family": "foo-base",
+        "variant": ""
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "variant_suffixes.json: foo-base strips to family 'foo-base', variant ''"
+      },
+      "mutation": {
+        "description": "suffix-stripping decomposition for foo-base"
+      }
+    },
+    {
+      "name": "ultra",
+      "input": "foo-ultra",
+      "expected": {
+        "family": "foo",
+        "variant": "ultra"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "variant_suffixes.json: foo-ultra strips to family 'foo', variant 'ultra'"
+      },
+      "mutation": {
+        "description": "suffix-stripping decomposition for foo-ultra"
+      }
+    },
+    {
+      "name": "large",
+      "input": "foo-large",
+      "expected": {
+        "family": "foo",
+        "variant": "large"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "variant_suffixes.json: foo-large strips to family 'foo', variant 'large'"
+      },
+      "mutation": {
+        "description": "suffix-stripping decomposition for foo-large"
+      }
+    },
+    {
+      "name": "medium",
+      "input": "foo-medium",
+      "expected": {
+        "family": "foo",
+        "variant": "medium"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "variant_suffixes.json: foo-medium strips to family 'foo', variant 'medium'"
+      },
+      "mutation": {
+        "description": "suffix-stripping decomposition for foo-medium"
+      }
+    },
+    {
+      "name": "small",
+      "input": "foo-small",
+      "expected": {
+        "family": "foo",
+        "variant": "small"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "variant_suffixes.json: foo-small strips to family 'foo', variant 'small'"
+      },
+      "mutation": {
+        "description": "suffix-stripping decomposition for foo-small"
+      }
+    },
+    {
+      "name": "spark",
+      "input": "foo-spark",
+      "expected": {
+        "family": "foo",
+        "variant": "spark"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "variant_suffixes.json: foo-spark strips to family 'foo', variant 'spark'"
+      },
+      "mutation": {
+        "description": "suffix-stripping decomposition for foo-spark"
+      }
+    },
+    {
+      "name": "nano",
+      "input": "foo-nano",
+      "expected": {
+        "family": "foo",
+        "variant": "nano"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "variant_suffixes.json: foo-nano strips to family 'foo', variant 'nano'"
+      },
+      "mutation": {
+        "description": "suffix-stripping decomposition for foo-nano"
+      }
+    },
+    {
+      "name": "free",
+      "input": "foo-free",
+      "expected": {
+        "family": "foo",
+        "variant": "free"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "variant_suffixes.json: foo-free strips to family 'foo', variant 'free'"
+      },
+      "mutation": {
+        "description": "suffix-stripping decomposition for foo-free"
+      }
+    },
+    {
+      "name": "beta",
+      "input": "foo-beta",
+      "expected": {
+        "family": "foo",
+        "variant": "beta"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "variant_suffixes.json: foo-beta strips to family 'foo', variant 'beta'"
+      },
+      "mutation": {
+        "description": "suffix-stripping decomposition for foo-beta"
+      }
+    },
+    {
+      "name": "nemo",
+      "input": "foo-nemo",
+      "expected": {
+        "family": "foo",
+        "variant": "nemo"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "variant_suffixes.json: foo-nemo strips to family 'foo', variant 'nemo'"
+      },
+      "mutation": {
+        "description": "suffix-stripping decomposition for foo-nemo"
+      }
+    },
+    {
+      "name": "oss",
+      "input": "foo-oss",
+      "expected": {
+        "family": "foo",
+        "variant": "oss"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "variant_suffixes.json: foo-oss strips to family 'foo', variant 'oss'"
+      },
+      "mutation": {
+        "description": "suffix-stripping decomposition for foo-oss"
+      }
+    },
+    {
+      "name": "image",
+      "input": "foo-image",
+      "expected": {
+        "family": "foo",
+        "variant": "image"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "variant_suffixes.json: foo-image strips to family 'foo', variant 'image'"
+      },
+      "mutation": {
+        "description": "suffix-stripping decomposition for foo-image"
+      }
+    },
+    {
+      "name": "coder",
+      "input": "foo-coder",
+      "expected": {
+        "family": "foo",
+        "variant": "coder"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "variant_suffixes.json: foo-coder strips to family 'foo', variant 'coder'"
+      },
+      "mutation": {
+        "description": "suffix-stripping decomposition for foo-coder"
+      }
+    },
+    {
+      "name": "-r",
+      "input": "foo-r",
+      "expected": {
+        "family": "foo",
+        "variant": "r"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "variant_suffixes.json: foo-r strips to family 'foo', variant 'r'"
+      },
+      "mutation": {
+        "description": "suffix-stripping decomposition for foo-r"
+      }
+    },
+    {
+      "name": "-a",
+      "input": "foo-a",
+      "expected": {
+        "family": "foo",
+        "variant": "a"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "variant_suffixes.json: foo-a strips to family 'foo', variant 'a'"
+      },
+      "mutation": {
+        "description": "suffix-stripping decomposition for foo-a"
+      }
+    },
+    {
+      "name": "longest-first: codex-mini beats mini",
+      "input": "baz-codex-mini",
+      "expected": {
+        "family": "baz",
+        "variant": "codex-mini"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "variant_suffixes.json: baz-codex-mini strips to family 'baz', variant 'codex-mini'"
+      },
+      "mutation": {
+        "description": "suffix-stripping decomposition for baz-codex-mini"
+      }
+    }
+  ]
+}

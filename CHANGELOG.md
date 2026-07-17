@@ -14,6 +14,119 @@ for its **Go module tags** (`vX.Y.Z`).
 
 ## [Unreleased]
 
+**Schema:** `0.3.0` → `0.4.0` (additive). SQLite store schema **unchanged** at `6`.
+
+The **full-bulk `#size` re-key** epoch (GH#9): one shared enrichment now sizes every
+model whose ID carries a parameter-size token, so a `#size` segment is no longer
+confined to the handful of curated `quant_vram.json` entries.
+
+### Added
+
+- **Parameter-shape fields** on `ModelInfo` (`TotalParams`, `ActiveParams`,
+  `PerExpertParams`, `ExpertCount`), decomposed from `ParamSize` — derived
+  presentation facts, never entity-key material. Grouped along shape joints and
+  never cross-computed (an NxM MoE token like `8x22b` sets `ExpertCount` +
+  `PerExpertParams` but no total). Each field is an **in-domain NULLable integer**
+  under the new `ParamShapeNull` (`-1`) sentinel contract: `-1` means "not populated
+  by parser or curation" (the shape carries no such fact, or the size is unknown), a
+  positive value is an attested count, and a genuine `0` is reachable **only** for
+  `ExpertCount` (a dense shape attests zero experts). An unsized model bakes all four
+  as `-1`. The schema pins `minimum: -1` on each. Every row now emits all four fields
+  explicitly (a `0` is meaningful and must be distinguished from the NULL sentinel).
+- **`EnrichedParamSize(id)`** — the single param-size precedence authority
+  (pin > mechanical > `ParamSizeFor`), shared by the two runtime enrichment joints
+  (`toModelInfo`, `scanModelInfo`) and the codegen bake, plus `ValidateParamSizePins`
+  (a codegen-time guard that rejects a non-canonical curated pin token).
+- **Release-stage axis** (`stage.go`, [#13]): a closed int enum `ReleaseStage`
+  (`StageNone`/`StageStable`/`StagePreview`/`StageBeta`/`StageAlpha`/
+  `StageExperimental`/`StageLatest`/`StageOriginal`/`StageOther`) with
+  `ParseReleaseStage` (CLI/config parse), `DetectReleaseStage` (ID-token
+  detection, known-members-only), and `DetectStageFromID` (the shared ID scanner).
+  `ModelInfo` gains `Stage`/`StageRaw`, derived from the ID at the SAME enrichment
+  joints as `ParamSize` (so a live-sync row and its baked static row always agree).
+  Stage is DELIBERATELY separate from `ModelStatus`: `Status` is upstream-declared
+  lifecycle, `Stage` is ID-derived — `show`'s instance table renders them under
+  distinct `STATUS` / `STAGE` columns. `StageOther` is a RESERVED bucket for a
+  future non-ID feeder (Quantization precedent); the ID path never produces it.
+  `StageLatest`/`StageOriginal` name a moving target, not a fixed artifact property.
+  Schema `0.4.0` gains additive `Stage`/`StageRaw` properties and a `ReleaseStage`
+  `$def` (neither required).
+- **`TYP(4K)` quant-table column** (`cmd/bestiary`): the per-quantization VRAM
+  sub-rows gain one typical-context column — `(QuantVRAM).EstimateVRAM(4096)`
+  recomputed from the row's stored arch-facts — alongside the max-context `VRAM`
+  figure, so a realistic-run cost is readable at a glance. Renders an em dash
+  (`—`) when the model's maximum context is below 4096 or unknown (a figure at a
+  context the model cannot serve would be meaningless), and stays weights-only on
+  a `PARTIAL` row (no phantom KV delta). A companion `TYP(8K)` column was
+  considered and dropped at acceptance — the ruling is a single 4K column (the
+  8K delta added noise, not signal).
+- **New `testcase` / `testcase/assert` packages** — a pure-data JSON case-corpus
+  harness (stdlib-only; classification + provenance + mutation metadata with
+  non-vacuity validation) — plus `TESTING.md` documenting the corpus standard
+  the parse/entity/quant/VRAM suites migrated onto.
+
+### Changed — MIGRATION NOTE (entity keys)
+
+- **Full-bulk `#size` re-key.** Entity keys now carry a `#size` segment for every
+  model whose ID yields a size token (mechanical `ExtractParamSizeToken`), or that
+  matches a curated pin. This re-keys roughly a third of catalog entities
+  (`llama-3.1-8b-instruct` → `llama@3.1#8b{instruct}`; `qwen3-30b-a3b` →
+  `qwen@3#30b-a3b`; `mixtral-8x22b` → `…#8x22b`). Callers that pinned pre-v0.2.6
+  unsized keys (e.g. `dracarys` → `dracarys#72b`, `mythomax` → `mythomax#13b`) must
+  update to the sized key. Curated `llama-4` scout/maverick IDs pin to their full
+  expert shape (`#17b-16e` / `#17b-128e`) so every spelling of one artifact keys to
+  ONE entity, and a suppress-pin keeps a context-tier token out of the key
+  (`qwen3-coder-next-fp8-1m` stays unsized — `1m` is a context marker, not params).
+- **No store migration.** The size is a pure function of the ID re-derived at both
+  read joints, so the SQLite store stays at schema `6` (no `param_size` column).
+- Live-sync rows are now sized identically to the baked static rows for the same ID,
+  so the most-recent-wins merge can never de-size an `(ID, Provider)`.
+- **What stays stable:** entity keys for models whose ID carries no size token and no
+  curated pin are byte-identical to v0.2.5 (test-pinned by the successor invariant's
+  enrichment-consistency sweep). Curated lineage needs zero churn: lineage lookups
+  resolve exact-key-first with a size-stripped fallback, so an unsized curated edge is
+  inherited by every newly sized sibling without re-keying `lineage.json`.
+- **Stage-token vocabulary migration (no entity-key change).** `preview`, `latest`,
+  and `original` left the modifier-class attribute set — they now populate the
+  `Stage` axis instead of rendering as `[preview]`/`[latest]` attributes. They are
+  routed out of both render segments AND the entity key BEFORE the modifier
+  identity fail-safe, so the key is unchanged (they were attribute-class =
+  key-excluded before, stage-routed = key-excluded after). The tokens STAY in the
+  `Modifier` data field (so constant names and the `[attr]` resolve filter are
+  byte-stable). `beta` is detect-without-strip: `Stage=StageBeta` is set wherever a
+  standalone `beta` token appears, independent of the key. For the
+  **grok-4.20 line**, curated exact-ID overrides now **unify** the beta-alias spellings
+  onto their non-beta entity — `grok-4.20-beta-0309-reasoning` and the `…-reasoning-beta`
+  / dashed / multi-agent variants key `grok@4.20{…}`, the same entity as the official
+  `grok-4.20-0309-reasoning`, while still carrying `Stage=StageBeta`. The **general beta
+  freeze stays for non-grok names** (e.g. `interfaze-beta` keeps `beta` in its key);
+  a wholesale beta re-key is deferred ([#13]).
+- **Version-less `llama-4` `@4` unification.** The `llama-4` scout/maverick spellings
+  that omit the `-4-` version token — the AWS Bedrock dotted forms
+  (`meta.llama4-scout-17b-instruct-v1:0`, `us.meta.llama4-…`) and the aggregator
+  provider-prefixed forms (`cerebras-…`, `groq-…`) — now carry a curated `@4` version
+  pin (exact-ID override) so they merge into the existing `@4` entity their canonical
+  siblings key (`llama/scout@4#17b-16e{instruct}`, `llama@4#17b-128e{instruct}`).
+  This removes the pre-existing version-presence split. (Note: `scout` is a curated
+  `llama` variant member so it keys under `/scout`, but `maverick` is not, so the
+  official maverick entity is `llama@4` — the pins set variant `""` to merge, not mint
+  a new entity.)
+
+### Changed — BREAKING (Go API: exported constant renames)
+
+- **Meaningful collision-group constant names** (`models_constants_gen.go`, r66e).
+  Same-base-name model constants that previously fell back to opaque ordinals
+  (`Model__…__5_1` / `_2` — visually indistinguishable from a `5.1` version segment)
+  are now disambiguated by their backend-route path prefix, the axis along which the
+  collisions actually differ (the same model re-served under a `TEE/`, `Pro/`,
+  `stealth/`, `openrouter/`, or vendor-path route). Renames include
+  `Model__Kilo__Free_1`/`_2` → `Model__Kilo__Free__KiloAuto`/`__OpenRouter`,
+  `Model__NanoGPT__GLM__5_1`/`_2` → `Model__NanoGPT__GLM__5__Tee`/`__ZaiOrg`, and 56
+  others (58 constants total). The alphabetical-raw-ID ordinal fallback is retained
+  only for a genuine tie no discriminator separates (e.g. the same route + date under
+  a punctuation-only ID difference). Any code referencing a renamed `Model__…_N`
+  constant must update to the new route-suffixed name.
+
 ## [0.2.5] — 2026-07-15
 
 **Schema:** `0.2.0` → `0.3.0` (additive). SQLite store schema `5` → `6`.

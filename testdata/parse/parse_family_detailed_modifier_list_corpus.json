@@ -1,0 +1,445 @@
+{
+  "cases": [
+    {
+      "name": "kimi-k2-thinking-turbo → [thinking,turbo]",
+      "input": {
+        "raw": "kimi-thinking",
+        "id": "kimi-k2-thinking-turbo"
+      },
+      "expected": {
+        "family": "kimi",
+        "variant": "k",
+        "version": "2",
+        "mod": "thinking,turbo"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "ParseFamilyDetailed(raw=kimi-thinking, id=kimi-k2-thinking-turbo) -> (family 'kimi', variant 'k', version '2', mod 'thinking,turbo')"
+      },
+      "mutation": {
+        "description": "canonical comma-joined modifier list from ParseFamilyDetailed"
+      }
+    },
+    {
+      "name": "kimi-k2p6-turbo + thinking → [thinking,turbo]",
+      "input": {
+        "raw": "kimi-thinking",
+        "id": "accounts/fireworks/routers/kimi-k2p6-turbo"
+      },
+      "expected": {
+        "family": "kimi",
+        "variant": "k",
+        "version": "2.6",
+        "mod": "thinking,turbo"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "ParseFamilyDetailed(raw=kimi-thinking, id=accounts/fireworks/routers/kimi-k2p6-turbo) -> (family 'kimi', variant 'k', version '2.6', mod 'thinking,turbo')"
+      },
+      "mutation": {
+        "description": "canonical comma-joined modifier list from ParseFamilyDetailed"
+      }
+    },
+    {
+      "name": "kimi triple → [thinking,turbo,original]",
+      "input": {
+        "raw": "kimi-thinking",
+        "id": "moonshotai/kimi-k2-thinking-turbo-original"
+      },
+      "expected": {
+        "family": "kimi",
+        "variant": "k",
+        "version": "2",
+        "mod": "thinking,turbo,original"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "ParseFamilyDetailed(raw=kimi-thinking, id=moonshotai/kimi-k2-thinking-turbo-original) -> (family 'kimi', variant 'k', version '2', mod 'thinking,turbo,original')"
+      },
+      "mutation": {
+        "description": "canonical comma-joined modifier list from ParseFamilyDetailed"
+      }
+    },
+    {
+      "name": "command-a-reasoning → [reasoning]",
+      "input": {
+        "raw": "command-a",
+        "id": "command-a-reasoning-08-2025"
+      },
+      "expected": {
+        "family": "command",
+        "variant": "a",
+        "version": "",
+        "mod": "reasoning"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "ParseFamilyDetailed(raw=command-a, id=command-a-reasoning-08-2025) -> (family 'command', variant 'a', version '', mod 'reasoning')"
+      },
+      "mutation": {
+        "description": "canonical comma-joined modifier list from ParseFamilyDetailed"
+      }
+    },
+    {
+      "name": "llama vision-instruct → [vision,instruct]",
+      "input": {
+        "raw": "llama",
+        "id": "llama-3.2-11b-vision-instruct"
+      },
+      "expected": {
+        "family": "llama",
+        "variant": "",
+        "version": "3.2",
+        "mod": "vision,instruct"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "ParseFamilyDetailed(raw=llama, id=llama-3.2-11b-vision-instruct) -> (family 'llama', variant '', version '3.2', mod 'vision,instruct')"
+      },
+      "mutation": {
+        "description": "canonical comma-joined modifier list from ParseFamilyDetailed"
+      }
+    },
+    {
+      "name": "phi multimodal-instruct → [multimodal,instruct]",
+      "input": {
+        "raw": "phi",
+        "id": "phi-4-multimodal-instruct"
+      },
+      "expected": {
+        "family": "phi",
+        "variant": "",
+        "version": "4",
+        "mod": "multimodal,instruct"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "ParseFamilyDetailed(raw=phi, id=phi-4-multimodal-instruct) -> (family 'phi', variant '', version '4', mod 'multimodal,instruct')"
+      },
+      "mutation": {
+        "description": "canonical comma-joined modifier list from ParseFamilyDetailed"
+      }
+    },
+    {
+      "name": "llama-4-scout(-instruct) → variant scout + [instruct]",
+      "input": {
+        "raw": "llama",
+        "id": "llama-4-scout-17b-16e-instruct"
+      },
+      "expected": {
+        "family": "llama",
+        "variant": "scout",
+        "version": "4",
+        "mod": "instruct"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "ParseFamilyDetailed(raw=llama, id=llama-4-scout-17b-16e-instruct) -> (family 'llama', variant 'scout', version '4', mod 'instruct')"
+      },
+      "mutation": {
+        "description": "canonical comma-joined modifier list from ParseFamilyDetailed"
+      }
+    },
+    {
+      "name": "qwen3-next(-instruct) → variant next + [instruct]",
+      "input": {
+        "raw": "qwen",
+        "id": "qwen3-next-80b-a3b-instruct"
+      },
+      "expected": {
+        "family": "qwen",
+        "variant": "next",
+        "version": "3",
+        "mod": "instruct"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "ParseFamilyDetailed(raw=qwen, id=qwen3-next-80b-a3b-instruct) -> (family 'qwen', variant 'next', version '3', mod 'instruct')"
+      },
+      "mutation": {
+        "description": "canonical comma-joined modifier list from ParseFamilyDetailed"
+      }
+    },
+    {
+      "name": "kimi-k2-thinking → [thinking]",
+      "input": {
+        "raw": "kimi-thinking",
+        "id": "kimi-k2-thinking"
+      },
+      "expected": {
+        "family": "kimi",
+        "variant": "k",
+        "version": "2",
+        "mod": "thinking"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "ParseFamilyDetailed(raw=kimi-thinking, id=kimi-k2-thinking) -> (family 'kimi', variant 'k', version '2', mod 'thinking')"
+      },
+      "mutation": {
+        "description": "canonical comma-joined modifier list from ParseFamilyDetailed"
+      }
+    },
+    {
+      "name": "grok-vision → [vision]",
+      "input": {
+        "raw": "grok-vision",
+        "id": "grok-vision"
+      },
+      "expected": {
+        "family": "grok",
+        "variant": "",
+        "version": "",
+        "mod": "vision"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "ParseFamilyDetailed(raw=grok-vision, id=grok-vision) -> (family 'grok', variant '', version '', mod 'vision')"
+      },
+      "mutation": {
+        "description": "canonical comma-joined modifier list from ParseFamilyDetailed"
+      }
+    },
+    {
+      "name": "claude-3-7-sonnet-thinking → [thinking]",
+      "input": {
+        "raw": "claude-sonnet",
+        "id": "claude-3-7-sonnet-thinking"
+      },
+      "expected": {
+        "family": "claude",
+        "variant": "sonnet",
+        "version": "3.7",
+        "mod": "thinking"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "ParseFamilyDetailed(raw=claude-sonnet, id=claude-3-7-sonnet-thinking) -> (family 'claude', variant 'sonnet', version '3.7', mod 'thinking')"
+      },
+      "mutation": {
+        "description": "canonical comma-joined modifier list from ParseFamilyDetailed"
+      }
+    },
+    {
+      "name": "deepseek-chat → variant chat (member-guard)",
+      "input": {
+        "raw": "deepseek",
+        "id": "deepseek-chat"
+      },
+      "expected": {
+        "family": "deepseek",
+        "variant": "chat",
+        "version": "",
+        "mod": ""
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "ParseFamilyDetailed(raw=deepseek, id=deepseek-chat) -> (family 'deepseek', variant 'chat', version '', mod '')"
+      },
+      "mutation": {
+        "description": "canonical comma-joined modifier list from ParseFamilyDetailed"
+      }
+    },
+    {
+      "name": "sonar-reasoning (raw=sonar-reasoning) → (sonar,reasoning,nil) no dup",
+      "input": {
+        "raw": "sonar-reasoning",
+        "id": "sonar-reasoning"
+      },
+      "expected": {
+        "family": "sonar",
+        "variant": "reasoning",
+        "version": "",
+        "mod": ""
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "ParseFamilyDetailed(raw=sonar-reasoning, id=sonar-reasoning) -> (family 'sonar', variant 'reasoning', version '', mod '')"
+      },
+      "mutation": {
+        "description": "canonical comma-joined modifier list from ParseFamilyDetailed"
+      }
+    },
+    {
+      "name": "sonar-reasoning-pro (raw=sonar-reasoning) → (sonar,reasoning,nil) no dup",
+      "input": {
+        "raw": "sonar-reasoning",
+        "id": "sonar-reasoning-pro"
+      },
+      "expected": {
+        "family": "sonar",
+        "variant": "reasoning",
+        "version": "",
+        "mod": ""
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "ParseFamilyDetailed(raw=sonar-reasoning, id=sonar-reasoning-pro) -> (family 'sonar', variant 'reasoning', version '', mod '')"
+      },
+      "mutation": {
+        "description": "canonical comma-joined modifier list from ParseFamilyDetailed"
+      }
+    },
+    {
+      "name": "deepseek-chat (raw=deepseek-chat) → variant chat, no dup",
+      "input": {
+        "raw": "deepseek-chat",
+        "id": "deepseek-chat"
+      },
+      "expected": {
+        "family": "deepseek",
+        "variant": "chat",
+        "version": "",
+        "mod": ""
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "ParseFamilyDetailed(raw=deepseek-chat, id=deepseek-chat) -> (family 'deepseek', variant 'chat', version '', mod '')"
+      },
+      "mutation": {
+        "description": "canonical comma-joined modifier list from ParseFamilyDetailed"
+      }
+    },
+    {
+      "name": "qwen-turbo → variant turbo (member-guard)",
+      "input": {
+        "raw": "qwen",
+        "id": "qwen-turbo"
+      },
+      "expected": {
+        "family": "qwen",
+        "variant": "turbo",
+        "version": "",
+        "mod": ""
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "ParseFamilyDetailed(raw=qwen, id=qwen-turbo) -> (family 'qwen', variant 'turbo', version '', mod '')"
+      },
+      "mutation": {
+        "description": "canonical comma-joined modifier list from ParseFamilyDetailed"
+      }
+    },
+    {
+      "name": "gemini-pro → variant pro (stays variant)",
+      "input": {
+        "raw": "gemini",
+        "id": "gemini-pro"
+      },
+      "expected": {
+        "family": "gemini",
+        "variant": "pro",
+        "version": "",
+        "mod": ""
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "ParseFamilyDetailed(raw=gemini, id=gemini-pro) -> (family 'gemini', variant 'pro', version '', mod '')"
+      },
+      "mutation": {
+        "description": "canonical comma-joined modifier list from ParseFamilyDetailed"
+      }
+    },
+    {
+      "name": "qwen-flash → variant flash (stays variant)",
+      "input": {
+        "raw": "qwen",
+        "id": "qwen-flash"
+      },
+      "expected": {
+        "family": "qwen",
+        "variant": "flash",
+        "version": "",
+        "mod": ""
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "ParseFamilyDetailed(raw=qwen, id=qwen-flash) -> (family 'qwen', variant 'flash', version '', mod '')"
+      },
+      "mutation": {
+        "description": "canonical comma-joined modifier list from ParseFamilyDetailed"
+      }
+    },
+    {
+      "name": "whisper-large-v3-turbo → (whisper,large,3,[turbo])",
+      "input": {
+        "raw": "whisper",
+        "id": "whisper-large-v3-turbo"
+      },
+      "expected": {
+        "family": "whisper",
+        "variant": "large",
+        "version": "3",
+        "mod": "turbo"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "ParseFamilyDetailed(raw=whisper, id=whisper-large-v3-turbo) -> (family 'whisper', variant 'large', version '3', mod 'turbo')"
+      },
+      "mutation": {
+        "description": "canonical comma-joined modifier list from ParseFamilyDetailed"
+      }
+    },
+    {
+      "name": "seed-oss-36b-instruct → (seed,oss,[instruct])",
+      "input": {
+        "raw": "seed",
+        "id": "bytedance/seed-oss-36b-instruct"
+      },
+      "expected": {
+        "family": "seed",
+        "variant": "oss",
+        "version": "",
+        "mod": "instruct"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "ParseFamilyDetailed(raw=seed, id=bytedance/seed-oss-36b-instruct) -> (family 'seed', variant 'oss', version '', mod 'instruct')"
+      },
+      "mutation": {
+        "description": "canonical comma-joined modifier list from ParseFamilyDetailed"
+      }
+    },
+    {
+      "name": "elevenlabs-v2.5-turbo → (elevenlabs,v2.5,[turbo])",
+      "input": {
+        "raw": "elevenlabs",
+        "id": "elevenlabs/elevenlabs-v2.5-turbo"
+      },
+      "expected": {
+        "family": "elevenlabs",
+        "variant": "v2.5",
+        "version": "",
+        "mod": "turbo"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "ParseFamilyDetailed(raw=elevenlabs, id=elevenlabs/elevenlabs-v2.5-turbo) -> (family 'elevenlabs', variant 'v2.5', version '', mod 'turbo')"
+      },
+      "mutation": {
+        "description": "canonical comma-joined modifier list from ParseFamilyDetailed"
+      }
+    }
+  ]
+}

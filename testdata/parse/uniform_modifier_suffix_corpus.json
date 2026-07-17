@@ -1,0 +1,104 @@
+{
+  "cases": [
+    {
+      "name": "claude-3-7-sonnet-thinking (empty raw)",
+      "input": {
+        "raw_family": "",
+        "id": "claude-3-7-sonnet-thinking",
+        "provider": "nano-gpt"
+      },
+      "expected": {
+        "family": "claude",
+        "modifier": "thinking"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "uniform thinking/vision-as-modifier: ParseFamilyDetailed(raw=, id=claude-3-7-sonnet-thinking) -> family 'claude', modifier 'thinking' (never variant)"
+      },
+      "mutation": {
+        "description": "trailing thinking/vision token always surfaces as Modifier"
+      }
+    },
+    {
+      "name": "kimi-k2-thinking (empty raw)",
+      "input": {
+        "raw_family": "",
+        "id": "kimi-k2-thinking",
+        "provider": "302ai"
+      },
+      "expected": {
+        "family": "kimi",
+        "modifier": "thinking"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "uniform thinking/vision-as-modifier: ParseFamilyDetailed(raw=, id=kimi-k2-thinking) -> family 'kimi', modifier 'thinking' (never variant)"
+      },
+      "mutation": {
+        "description": "trailing thinking/vision token always surfaces as Modifier"
+      }
+    },
+    {
+      "name": "kimi-k2-thinking (raw=kimi-thinking)",
+      "input": {
+        "raw_family": "kimi-thinking",
+        "id": "kimi-k2-thinking",
+        "provider": "ollama-cloud"
+      },
+      "expected": {
+        "family": "kimi",
+        "modifier": "thinking"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "uniform thinking/vision-as-modifier: ParseFamilyDetailed(raw=kimi-thinking, id=kimi-k2-thinking) -> family 'kimi', modifier 'thinking' (never variant)"
+      },
+      "mutation": {
+        "description": "trailing thinking/vision token always surfaces as Modifier"
+      }
+    },
+    {
+      "name": "deepseek-thinking raw, id=deepseek-r1",
+      "input": {
+        "raw_family": "deepseek-thinking",
+        "id": "deepseek-r1",
+        "provider": "iflowcn"
+      },
+      "expected": {
+        "family": "deepseek",
+        "modifier": "thinking"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "uniform thinking/vision-as-modifier: ParseFamilyDetailed(raw=deepseek-thinking, id=deepseek-r1) -> family 'deepseek', modifier 'thinking' (never variant)"
+      },
+      "mutation": {
+        "description": "trailing thinking/vision token always surfaces as Modifier"
+      }
+    },
+    {
+      "name": "grok-vision raw + id",
+      "input": {
+        "raw_family": "grok-vision",
+        "id": "grok-vision",
+        "provider": "xai"
+      },
+      "expected": {
+        "family": "grok",
+        "modifier": "vision"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "uniform thinking/vision-as-modifier: ParseFamilyDetailed(raw=grok-vision, id=grok-vision) -> family 'grok', modifier 'vision' (never variant)"
+      },
+      "mutation": {
+        "description": "trailing thinking/vision token always surfaces as Modifier"
+      }
+    }
+  ]
+}

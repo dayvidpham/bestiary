@@ -1,0 +1,140 @@
+{
+  "cases": [
+    {
+      "name": "claude-opus-4-5",
+      "input": "claude-opus-4-5",
+      "expected": {
+        "family": "claude",
+        "variant": "opus",
+        "version": "4.5"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "ParseFamilyWithVersion(claude-opus-4-5) -> family 'claude', variant 'opus', version '4.5'"
+      },
+      "mutation": {
+        "description": "family+version decomposition for claude-opus-4-5"
+      }
+    },
+    {
+      "name": "claude-opus-4-6",
+      "input": "claude-opus-4-6",
+      "expected": {
+        "family": "claude",
+        "variant": "opus",
+        "version": "4.6"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "ParseFamilyWithVersion(claude-opus-4-6) -> family 'claude', variant 'opus', version '4.6'"
+      },
+      "mutation": {
+        "description": "family+version decomposition for claude-opus-4-6"
+      }
+    },
+    {
+      "name": "claude-sonnet-4-5",
+      "input": "claude-sonnet-4-5",
+      "expected": {
+        "family": "claude",
+        "variant": "sonnet",
+        "version": "4.5"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "ParseFamilyWithVersion(claude-sonnet-4-5) -> family 'claude', variant 'sonnet', version '4.5'"
+      },
+      "mutation": {
+        "description": "family+version decomposition for claude-sonnet-4-5"
+      }
+    },
+    {
+      "name": "claude-haiku-4-5",
+      "input": "claude-haiku-4-5",
+      "expected": {
+        "family": "claude",
+        "variant": "haiku",
+        "version": "4.5"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "ParseFamilyWithVersion(claude-haiku-4-5) -> family 'claude', variant 'haiku', version '4.5'"
+      },
+      "mutation": {
+        "description": "family+version decomposition for claude-haiku-4-5"
+      }
+    },
+    {
+      "name": "claude-opus no version",
+      "input": "claude-opus",
+      "expected": {
+        "family": "claude",
+        "variant": "opus",
+        "version": ""
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "ParseFamilyWithVersion(claude-opus) -> family 'claude', variant 'opus', version ''"
+      },
+      "mutation": {
+        "description": "family+version decomposition for claude-opus"
+      }
+    },
+    {
+      "name": "claude-haiku no version",
+      "input": "claude-haiku",
+      "expected": {
+        "family": "claude",
+        "variant": "haiku",
+        "version": ""
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "ParseFamilyWithVersion(claude-haiku) -> family 'claude', variant 'haiku', version ''"
+      },
+      "mutation": {
+        "description": "family+version decomposition for claude-haiku"
+      }
+    },
+    {
+      "name": "llama-3-1 two parts",
+      "input": "llama-3-1",
+      "expected": {
+        "family": "llama",
+        "variant": "",
+        "version": "3.1"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "ParseFamilyWithVersion(llama-3-1) -> family 'llama', variant '', version '3.1'"
+      },
+      "mutation": {
+        "description": "family+version decomposition for llama-3-1"
+      }
+    },
+    {
+      "name": "phi-4-5",
+      "input": "phi-4-5",
+      "expected": {
+        "family": "phi",
+        "variant": "",
+        "version": "4.5"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "ParseFamilyWithVersion(phi-4-5) -> family 'phi', variant '', version '4.5'"
+      },
+      "mutation": {
+        "description": "family+version decomposition for phi-4-5"
+      }
+    }
+  ]
+}

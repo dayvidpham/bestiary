@@ -1,0 +1,118 @@
+{
+  "cases": [
+    {
+      "name": "llama3.3 q4_K_M",
+      "input": {
+        "id": "llama3.3:70b-instruct-q4_K_M"
+      },
+      "expected": {
+        "q": 15,
+        "raw": "q4_K_M",
+        "stripped": "llama3.3:70b-instruct"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "manual",
+        "ref": "real Ollama model id llama3.3:70b-instruct-q4_K_M carries a q4_K_M quant tag"
+      },
+      "mutation": {
+        "description": "trailing colon-tag-part quant token q4_K_M stripped from a real Ollama id"
+      }
+    },
+    {
+      "name": "qwen2.5 q8_0",
+      "input": {
+        "id": "qwen2.5:0.5b-instruct-q8_0"
+      },
+      "expected": {
+        "q": 8,
+        "raw": "q8_0",
+        "stripped": "qwen2.5:0.5b-instruct"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "manual",
+        "ref": "real Ollama model id qwen2.5:0.5b-instruct-q8_0 carries a q8_0 quant tag"
+      },
+      "mutation": {
+        "description": "trailing colon-tag-part quant token q8_0 stripped from a real Ollama id"
+      }
+    },
+    {
+      "name": "llama3.3 f16",
+      "input": {
+        "id": "llama3.3:70b-instruct-f16"
+      },
+      "expected": {
+        "q": 1,
+        "raw": "f16",
+        "stripped": "llama3.3:70b-instruct"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "manual",
+        "ref": "real Ollama model id llama3.3:70b-instruct-f16 carries an f16 quant tag"
+      },
+      "mutation": {
+        "description": "trailing colon-tag-part quant token f16 stripped from a real Ollama id"
+      }
+    },
+    {
+      "name": "mistral q5_K_M",
+      "input": {
+        "id": "mistral:7b-instruct-q5_K_M"
+      },
+      "expected": {
+        "q": 17,
+        "raw": "q5_K_M",
+        "stripped": "mistral:7b-instruct"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "manual",
+        "ref": "real Ollama model id mistral:7b-instruct-q5_K_M carries a q5_K_M quant tag"
+      },
+      "mutation": {
+        "description": "trailing colon-tag-part quant token q5_K_M stripped from a real Ollama id"
+      }
+    },
+    {
+      "name": "gemma2 q2_K",
+      "input": {
+        "id": "gemma2:9b-instruct-q2_K"
+      },
+      "expected": {
+        "q": 9,
+        "raw": "q2_K",
+        "stripped": "gemma2:9b-instruct"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "manual",
+        "ref": "real Ollama model id gemma2:9b-instruct-q2_K carries a q2_K quant tag"
+      },
+      "mutation": {
+        "description": "trailing colon-tag-part quant token q2_K stripped from a real Ollama id"
+      }
+    },
+    {
+      "name": "colon-free q4_0",
+      "input": {
+        "id": "llama-3-70b-q4_0"
+      },
+      "expected": {
+        "q": 4,
+        "raw": "q4_0",
+        "stripped": "llama-3-70b"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "manual",
+        "ref": "colon-free HF/GGUF-style id llama-3-70b-q4_0 exercises the hadColon==false arm of rebuildStrippedID"
+      },
+      "mutation": {
+        "description": "colon-free id form (no ':' separator) must still strip the trailing quant token"
+      }
+    }
+  ]
+}

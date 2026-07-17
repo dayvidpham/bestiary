@@ -9,6 +9,7 @@ import (
 	"io"
 	"os"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 	"unicode/utf8"
@@ -1163,7 +1164,7 @@ func fmtHost(h bestiary.Host) string {
 // rolled-up view and carries no status of its own; status is an api.json /
 // instance-level fact on ModelInfo, reached here by LookupModelByProvider).
 func writeInstanceTable(w io.Writer, insts []bestiary.ProviderInstance) {
-	writeInstanceTableWithStatus(w, insts, instanceStatuses(insts))
+	writeInstanceTableWithStatus(w, insts, instanceStatuses(insts), instanceStages(insts))
 }
 
 // instanceStatuses resolves the release status of each instance by looking up its
@@ -1180,13 +1181,30 @@ func instanceStatuses(insts []bestiary.ProviderInstance) []bestiary.ModelStatus 
 	return out
 }
 
+// instanceStages resolves the release STAGE of each instance from its ID via the
+// pure DetectStageFromID scanner (index-aligned with insts). Stage is ID-derived and
+// so needs no registry lookup — it is a property of the instance ID itself, distinct
+// in provenance from the upstream-declared Status resolved by instanceStatuses.
+func instanceStages(insts []bestiary.ProviderInstance) []bestiary.ReleaseStage {
+	out := make([]bestiary.ReleaseStage, len(insts))
+	for i, in := range insts {
+		out[i], _ = bestiary.DetectStageFromID(in.ID)
+	}
+	return out
+}
+
 // writeInstanceTableWithStatus is the pure formatter behind writeInstanceTable: it
-// renders the instance table and, when ANY instance carries a non-None status,
-// gains a trailing STATUS column. statuses is index-aligned with insts; the
-// separation of resolution (instanceStatuses) from formatting keeps the column
-// logic unit-testable with synthetic statuses. Status is instance-level data, so
-// it renders here on instance rows and never on the entity-metadata block.
-func writeInstanceTableWithStatus(w io.Writer, insts []bestiary.ProviderInstance, statuses []bestiary.ModelStatus) {
+// renders the instance table and gains a trailing STATUS column when ANY instance
+// carries a non-None status AND, INDEPENDENTLY, a trailing STAGE column when ANY
+// instance carries a non-None stage. statuses and stages are index-aligned with
+// insts; the separation of resolution (instanceStatuses / instanceStages) from
+// formatting keeps the column logic unit-testable with synthetic values.
+//
+// STATUS and STAGE are DISTINCT columns by design: Status is the upstream-DECLARED
+// lifecycle (api.json), Stage is the ID-DERIVED release stage. Rendering them under
+// separate labels keeps the two provenance levels from blurring together (a model can
+// carry one, both, or neither).
+func writeInstanceTableWithStatus(w io.Writer, insts []bestiary.ProviderInstance, statuses []bestiary.ModelStatus, stages []bestiary.ReleaseStage) {
 	showStatus := false
 	for _, s := range statuses {
 		if s != bestiary.StatusNone {
@@ -1194,31 +1212,44 @@ func writeInstanceTableWithStatus(w io.Writer, insts []bestiary.ProviderInstance
 			break
 		}
 	}
+	showStage := false
+	for _, s := range stages {
+		if s != bestiary.StageNone {
+			showStage = true
+			break
+		}
+	}
 
 	fmt.Fprintf(w, "Instances (%d):\n", len(insts))
+	header := fmt.Sprintf("  %-40s %-22s %-12s %12s %12s %10s %10s",
+		"ID", "PROVIDER", "HOST", "IN/MTok", "OUT/MTok", "CONTEXT", "MAXOUT")
 	if showStatus {
-		fmt.Fprintf(w, "  %-40s %-22s %-12s %12s %12s %10s %10s %-12s\n",
-			"ID", "PROVIDER", "HOST", "IN/MTok", "OUT/MTok", "CONTEXT", "MAXOUT", "STATUS")
-	} else {
-		fmt.Fprintf(w, "  %-40s %-22s %-12s %12s %12s %10s %10s\n",
-			"ID", "PROVIDER", "HOST", "IN/MTok", "OUT/MTok", "CONTEXT", "MAXOUT")
+		header += fmt.Sprintf(" %-12s", "STATUS")
 	}
+	if showStage {
+		header += fmt.Sprintf(" %-12s", "STAGE")
+	}
+	fmt.Fprintln(w, header)
 	for i, in := range insts {
+		row := fmt.Sprintf("  %-40s %-22s %-12s %12s %12s %10d %10d",
+			string(in.ID), string(in.Provider), fmtHost(in.Host),
+			fmtPrice(in.CostInputPerMTok), fmtPrice(in.CostOutputPerMTok),
+			in.ContextWindow, in.MaxOutput)
 		if showStatus {
 			status := bestiary.StatusNone
 			if i < len(statuses) {
 				status = statuses[i]
 			}
-			fmt.Fprintf(w, "  %-40s %-22s %-12s %12s %12s %10d %10d %-12s\n",
-				string(in.ID), string(in.Provider), fmtHost(in.Host),
-				fmtPrice(in.CostInputPerMTok), fmtPrice(in.CostOutputPerMTok),
-				in.ContextWindow, in.MaxOutput, fmtStatus(status))
-		} else {
-			fmt.Fprintf(w, "  %-40s %-22s %-12s %12s %12s %10d %10d\n",
-				string(in.ID), string(in.Provider), fmtHost(in.Host),
-				fmtPrice(in.CostInputPerMTok), fmtPrice(in.CostOutputPerMTok),
-				in.ContextWindow, in.MaxOutput)
+			row += fmt.Sprintf(" %-12s", fmtStatus(status))
 		}
+		if showStage {
+			stage := bestiary.StageNone
+			if i < len(stages) {
+				stage = stages[i]
+			}
+			row += fmt.Sprintf(" %-12s", fmtStage(stage))
+		}
+		fmt.Fprintln(w, row)
 		writeQuantRows(w, in.QuantVRAM)
 	}
 }
@@ -1227,6 +1258,15 @@ func writeInstanceTableWithStatus(w io.Writer, insts []bestiary.ProviderInstance
 // (StatusNone) to a dash so a bare "none" never clutters the column.
 func fmtStatus(s bestiary.ModelStatus) string {
 	if s == bestiary.StatusNone {
+		return "-"
+	}
+	return s.String()
+}
+
+// fmtStage renders a ReleaseStage for a table cell, mapping the zero value
+// (StageNone) to a dash so a bare "none" never clutters the column.
+func fmtStage(s bestiary.ReleaseStage) string {
+	if s == bestiary.StageNone {
 		return "-"
 	}
 	return s.String()
@@ -1244,20 +1284,54 @@ func writeHistoryTable(w io.Writer, rows []sourceProvenance) {
 	}
 }
 
+// typContext4K is the "typical" context length at which writeQuantRows recomputes
+// a per-quant VRAM figure (the TYP column). It answers the common ollama-size
+// confusion — "what does this actually cost to run at a realistic context?" —
+// separately from the baked VRAM figure, which is taken at the model's full
+// maximum context.
+const typContext4K = 4096
+
+// typClampGlyph is rendered in a TYP column when the model's maximum context is
+// smaller than that column's context length: the model cannot serve that many
+// tokens, so a VRAM figure would be meaningless. It is an em dash, deliberately
+// distinct from orDash's ASCII "-" (an absent field): here it means "context out
+// of range", not "value absent".
+const typClampGlyph = "—"
+
+// typVRAMCell renders the "typical" VRAM figure for one quant row at a chosen
+// context length. It returns typClampGlyph when the model's maximum context
+// (q.VRAMContextTokens, the window the row was baked at) is below ctx — including
+// the unknown-context case (VRAMContextTokens == 0), where no ceiling is known.
+// Otherwise it returns (QuantVRAM).EstimateVRAM(ctx) recomputed from the row's
+// stored arch-facts. For a PARTIAL row (arch-facts absent) EstimateVRAM adds no KV
+// term, so the figure equals WeightsBytes — an honest weights-only lower bound
+// that never implies a phantom KV delta.
+func typVRAMCell(q bestiary.QuantVRAM, ctx int) string {
+	if q.VRAMContextTokens < ctx {
+		return typClampGlyph
+	}
+	return strconv.FormatInt(q.EstimateVRAM(ctx), 10)
+}
+
 // writeQuantRows prints the per-quantization VRAM sub-rows for one instance,
 // indented beneath its main row. Nothing is printed when the instance carries no
-// quant data. The PARTIAL column flags a weights-only VRAM lower bound — true
-// means the KV-cache term was excluded because architecture facts were absent, so
-// VRAMBytes is not a full estimate.
+// quant data. The TYP(4K) column shows the VRAM estimate recomputed at 4096 tokens
+// via typVRAMCell — the clamp glyph when the model's max context is smaller than
+// 4096, a weights-only figure on a partial row. The PARTIAL column flags a
+// weights-only VRAM lower bound — true means the KV-cache term was excluded because
+// architecture facts were absent, so VRAMBytes (baked at the model's max context)
+// is not a full estimate.
 func writeQuantRows(w io.Writer, rows []bestiary.QuantVRAM) {
 	if len(rows) == 0 {
 		return
 	}
-	fmt.Fprintf(w, "      %-10s %15s %15s %10s %8s\n",
-		"QUANT", "WEIGHTS", "VRAM", "CTX", "PARTIAL")
+	fmt.Fprintf(w, "      %-10s %15s %15s %15s %10s %8s\n",
+		"QUANT", "WEIGHTS", "VRAM", "TYP(4K)", "CTX", "PARTIAL")
 	for _, q := range rows {
-		fmt.Fprintf(w, "      %-10s %15d %15d %10d %8t\n",
-			q.Quant.String(), q.WeightsBytes, q.VRAMBytes, q.VRAMContextTokens, q.VRAMEstimatePartial)
+		fmt.Fprintf(w, "      %-10s %15d %15d %15s %10d %8t\n",
+			q.Quant.String(), q.WeightsBytes, q.VRAMBytes,
+			typVRAMCell(q, typContext4K),
+			q.VRAMContextTokens, q.VRAMEstimatePartial)
 	}
 }
 

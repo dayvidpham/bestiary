@@ -115,6 +115,82 @@ func TestUpsertQueryModels_RoundTrip(t *testing.T) {
 	}
 }
 
+// TestUpsertQueryModels_ReEnrichesParamSizeFromID is the store round-trip guard for
+// the read-path enrichment joint. The models table has NO param_size column, so a
+// cached row's ParamSize + shape ints are RE-DERIVED from its ID by scanModelInfo on
+// every read. A row inserted with deliberately WRONG size fields must read back with
+// the correct enriched values, proving the size is never persisted — the store stays
+// at schema v6 and a merge can never de-size an (ID, Provider).
+func TestUpsertQueryModels_ReEnrichesParamSizeFromID(t *testing.T) {
+	ctx := context.Background()
+	s := openMemStore(t)
+
+	in := bestiary.ModelInfo{
+		ID:           "qwen/qwen3-30b-a3b",
+		Provider:     bestiary.ProviderOpenAI,
+		ParamSize:    "WRONG",            // must be ignored on write — there is no param_size column
+		TotalParams:  123,                // must be ignored
+		ActiveParams: 456,                // must be ignored
+		Stage:        bestiary.StageBeta, // must be ignored — there is no stage column
+		StageRaw:     "WRONG",            // must be ignored
+	}
+	if err := s.UpsertModels(ctx, []bestiary.ModelInfo{in}); err != nil {
+		t.Fatalf("UpsertModels: %v", err)
+	}
+
+	got, err := s.QueryModel(ctx, in.ID)
+	if err != nil {
+		t.Fatalf("QueryModel: %v", err)
+	}
+	// Re-derived from the ID via the shared enrichment, not the persisted WRONG values.
+	wantSize, _ := bestiary.EnrichedParamSize(string(in.ID))
+	if got.ParamSize != wantSize || got.ParamSize != "30b-a3b" {
+		t.Errorf("round-trip ParamSize = %q, want %q (re-derived from the ID)", got.ParamSize, "30b-a3b")
+	}
+	if got.TotalParams != 30_000_000_000 || got.ActiveParams != 3_000_000_000 {
+		t.Errorf("round-trip shape ints = {total:%d active:%d}, want {30000000000 3000000000} (re-derived, not persisted)",
+			got.TotalParams, got.ActiveParams)
+	}
+	if got.PerExpertParams != bestiary.ParamShapeNull || got.ExpertCount != bestiary.ParamShapeNull {
+		t.Errorf("active-MoE shape must leave PerExpertParams/ExpertCount NULL (-1), got {%d %d}", got.PerExpertParams, got.ExpertCount)
+	}
+	// Stage/StageRaw are re-derived from the ID by the same enrichment joint — the
+	// store has no stage column, so the persisted WRONG values are ignored and the
+	// no-stage-marker ID re-derives to StageNone/"".
+	if got.Stage != bestiary.StageNone || got.StageRaw != "" {
+		t.Errorf("round-trip Stage/StageRaw = {%v %q}, want {none \"\"} (re-derived, not the persisted WRONG values)", got.Stage, got.StageRaw)
+	}
+}
+
+// TestUpsertQueryModels_ReEnrichesStageFromID is the stage companion to the
+// param-size re-enrichment guard: a model whose ID carries a beta marker re-derives
+// Stage=StageBeta from the ID on read, even though the store persists no stage column
+// (schema v6) and the write deliberately supplies a contradictory Stage value. This
+// keeps a live-sync-then-cached row's stage identical to its baked static row.
+func TestUpsertQueryModels_ReEnrichesStageFromID(t *testing.T) {
+	ctx := context.Background()
+	s := openMemStore(t)
+
+	in := bestiary.ModelInfo{
+		ID:       "grok-4.20-beta-0309-reasoning",
+		Provider: bestiary.ProviderxAI,
+		Stage:    bestiary.StageNone, // contradicts the ID; must be re-derived on read
+	}
+	if err := s.UpsertModels(ctx, []bestiary.ModelInfo{in}); err != nil {
+		t.Fatalf("UpsertModels: %v", err)
+	}
+	got, err := s.QueryModel(ctx, in.ID)
+	if err != nil {
+		t.Fatalf("QueryModel: %v", err)
+	}
+	if got.Stage != bestiary.StageBeta {
+		t.Errorf("round-trip Stage = %v, want StageBeta (re-derived from the -beta ID)", got.Stage)
+	}
+	if got.StageRaw != "" {
+		t.Errorf("round-trip StageRaw = %q, want \"\" (reserved for the Other path)", got.StageRaw)
+	}
+}
+
 // TestCanonicalFields_RoundTrip verifies that Family, Variant, and Date survive a
 // UpsertModels + QueryModel round-trip with non-zero values. This test exists because
 // these fields were added in v3 and the base testModel fixture intentionally sets them;
