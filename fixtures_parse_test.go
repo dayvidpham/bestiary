@@ -197,6 +197,21 @@ var parseFamilyDetailedModifierListCorpusJSON []byte
 //go:embed testdata/parse/tier1_straggler_convergences_corpus.json
 var tier1StragglerConvergencesCorpusJSON []byte
 
+//go:embed testdata/parse/azure_serving_host_corpus.json
+var azureServingHostCorpusJSON []byte
+
+//go:embed testdata/parse/meta_llama_no_slash_corpus.json
+var metaLlamaNoSlashCorpusJSON []byte
+
+//go:embed testdata/parse/namespace_suffix_transparency_corpus.json
+var namespaceSuffixTransparencyCorpusJSON []byte
+
+//go:embed testdata/parse/text_embedding_sole_variant_corpus.json
+var textEmbeddingSoleVariantCorpusJSON []byte
+
+//go:embed testdata/parse/grok_documented_residual_corpus.json
+var grokDocumentedResidualCorpusJSON []byte
+
 // rawIDInput is the (rawFamily, id) pair fed to ParseFamilyDetailed.
 type rawIDInput struct {
 	Raw string `json:"raw"`

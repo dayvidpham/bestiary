@@ -1,0 +1,67 @@
+{
+  "cases": [
+    {
+      "name": "azure-gpt-4-turbo -> gpt@4{turbo} (host stripped, version 4, turbo modifier)",
+      "input": {
+        "raw": "",
+        "id": "azure-gpt-4-turbo"
+      },
+      "expected": {
+        "family": "gpt",
+        "variant": "",
+        "version": "4",
+        "mod": "turbo"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "ParseFamilyDetailed(raw=, id=azure-gpt-4-turbo) -> (gpt,'',4,turbo); the serving-host 'azure-' prefix is stripped for decomposition so the tuple is host-independent"
+      },
+      "mutation": {
+        "description": "host-prefix strip yields the host-independent (family,variant,version,mod) tuple, converging with the plainly-served gpt-4-turbo"
+      }
+    },
+    {
+      "name": "azure-gpt-4o -> gpt/4o (host stripped, 4o is a VARIANT not a version)",
+      "input": {
+        "raw": "",
+        "id": "azure-gpt-4o"
+      },
+      "expected": {
+        "family": "gpt",
+        "variant": "4o",
+        "version": "",
+        "mod": ""
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "ParseFamilyDetailed(raw=, id=azure-gpt-4o) -> (gpt,4o,'',''); 4o is an alphanumeric line designator (VARIANT), never a dotted version"
+      },
+      "mutation": {
+        "description": "host-prefix strip preserves the 4o variant; must not promote 4o to version"
+      }
+    },
+    {
+      "name": "azure-gpt-4o-mini -> gpt/4o{mini} (host stripped, 4o variant + mini modifier)",
+      "input": {
+        "raw": "",
+        "id": "azure-gpt-4o-mini"
+      },
+      "expected": {
+        "family": "gpt",
+        "variant": "4o",
+        "version": "",
+        "mod": "mini"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "ParseFamilyDetailed(raw=, id=azure-gpt-4o-mini) -> (gpt,4o,'',mini); host strip + 4o variant + trailing mini modifier"
+      },
+      "mutation": {
+        "description": "host-prefix strip preserves 4o variant and the trailing mini modifier"
+      }
+    }
+  ]
+}

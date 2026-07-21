@@ -1,8 +1,8 @@
 {
   "total_records": 4979,
-  "changed_count": 1239,
-  "cat_a_divergence_fix_count": 324,
-  "cat_b_improvement_count": 901,
+  "changed_count": 1243,
+  "cat_a_divergence_fix_count": 326,
+  "cat_b_improvement_count": 903,
   "cat_c_unexpected_regression_count": 0,
   "justified_exception_count": 14,
   "id_tuple4_incl_modifier_divergence_frozen_before": 81,
@@ -176,9 +176,27 @@
       "id": "cohere/command-r7b-12-2024",
       "raw_family": "",
       "before": "(family=\"command\",variant=\"\",version=\"12\",modifier=\"\")",
-      "after": "(family=\"command\",variant=\"r\",version=\"12\",modifier=\"\")",
+      "after": "(family=\"command\",variant=\"r\",version=\"\",modifier=\"\")",
       "category": "a:divergence-fix",
-      "reason": "now matches a tuple another provider already produced for this ID (BEFORE); only phantom non-family loss permitted"
+      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted"
+    },
+    {
+      "provider": "merge-gateway",
+      "id": "cohere/command-r7b-12-2024",
+      "raw_family": "command-r",
+      "before": "(family=\"command\",variant=\"r\",version=\"12\",modifier=\"\")",
+      "after": "(family=\"command\",variant=\"r\",version=\"\",modifier=\"\")",
+      "category": "a:divergence-fix",
+      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted"
+    },
+    {
+      "provider": "openrouter",
+      "id": "cohere/command-r7b-12-2024",
+      "raw_family": "command-r",
+      "before": "(family=\"command\",variant=\"r\",version=\"12\",modifier=\"\")",
+      "after": "(family=\"command\",variant=\"r\",version=\"\",modifier=\"\")",
+      "category": "a:divergence-fix",
+      "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted"
     },
     {
       "provider": "cohere",
@@ -4697,6 +4715,24 @@
       "after": "(family=\"command\",variant=\"r-plus\",version=\"\",modifier=\"\")",
       "category": "b:improvement",
       "reason": "variant refinement: \"r\" → \"r-plus\" (ID names a more specific variant)"
+    },
+    {
+      "provider": "cohere",
+      "id": "command-r7b-12-2024",
+      "raw_family": "command-r",
+      "before": "(family=\"command\",variant=\"r\",version=\"12\",modifier=\"\")",
+      "after": "(family=\"command\",variant=\"r\",version=\"\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "family-preserving de-noise/enrich: only phantom losses and/or enrichments, no ID-present field lost"
+    },
+    {
+      "provider": "cohere",
+      "id": "command-r7b-arabic-02-2025",
+      "raw_family": "command-r",
+      "before": "(family=\"command\",variant=\"r\",version=\"02\",modifier=\"\")",
+      "after": "(family=\"command\",variant=\"r\",version=\"\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "family-preserving de-noise/enrich: only phantom losses and/or enrichments, no ID-present field lost"
     },
     {
       "provider": "github-models",

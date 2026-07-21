@@ -1,0 +1,28 @@
+{
+  "cases": [
+    {
+      "name": "au.anthropic.claude-sonnet-4-5-20250929-v1:0 -> (claude,sonnet) no vendor-namespace family",
+      "input": { "raw": "claude-sonnet", "id": "au.anthropic.claude-sonnet-4-5-20250929-v1:0" },
+      "expected": { "family": "claude", "variant": "sonnet", "version": "", "mod": "" },
+      "classification": "must-pass",
+      "provenance": { "source": "requirement", "ref": "dotted vendor namespace 'au.anthropic.' + '-v1:0' Bedrock suffix must decompose to family claude (never mint a vendor-namespace family like 'au.anthropic.claude'); variant sonnet" },
+      "mutation": { "description": "dotted-namespace + -v1:0 suffix form decomposes to the plain claude/sonnet family+variant (no vendor-namespace family minted)" }
+    },
+    {
+      "name": "au.anthropic.claude-sonnet-4-5-20250929@default -> same tuple as -v1:0 (@default transparent)",
+      "input": { "raw": "claude-sonnet", "id": "au.anthropic.claude-sonnet-4-5-20250929@default" },
+      "expected": { "family": "claude", "variant": "sonnet", "version": "", "mod": "" },
+      "classification": "must-pass",
+      "provenance": { "source": "requirement", "ref": "the '@default' routing suffix is transparent: it yields the identical (claude,sonnet,'','') tuple as the '-v1:0' and ':0' spellings" },
+      "mutation": { "description": "@default suffix transparency: identical family/variant tuple to the -v1:0 spelling" }
+    },
+    {
+      "name": "au.anthropic.claude-sonnet-4-5-20250929:0 -> same tuple as -v1:0 (:0 transparent)",
+      "input": { "raw": "claude-sonnet", "id": "au.anthropic.claude-sonnet-4-5-20250929:0" },
+      "expected": { "family": "claude", "variant": "sonnet", "version": "", "mod": "" },
+      "classification": "must-pass",
+      "provenance": { "source": "requirement", "ref": "the trailing ':0' version-pin suffix is transparent: it yields the identical (claude,sonnet,'','') tuple as the '-v1:0' and '@default' spellings" },
+      "mutation": { "description": ":0 suffix transparency: identical family/variant tuple to the -v1:0 spelling" }
+    }
+  ]
+}

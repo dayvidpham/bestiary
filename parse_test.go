@@ -384,11 +384,15 @@ func TestParseFamilyWithVersion_BackwardCompat(t *testing.T) {
 func TestInferFamilyFromID_Variant(t *testing.T) {
 	t.Parallel()
 
-	corpus := loadParseCorpus[providerIDInput, familyVersionExpected](t, inferFamilyVariantCorpusJSON, 2)
+	corpus := loadParseCorpus[providerIDInput, familyVersionExpected](t, inferFamilyVariantCorpusJSON, 4)
 	requireInputCoverage(t, corpus, map[providerIDInput]familyVersionExpected{
 		// the empty-raw-family path must decompose the full tuple, not first-token.
 		{ID: "claude-opus-4-5-20251101", Provider: "nano-gpt"}: {Family: "claude", Variant: "opus", Version: "4.5"},
 		{ID: "claude-opus-4-6", Provider: "some-provider"}:     {Family: "claude", Variant: "opus", Version: "4.6"},
+		// empty-raw version-before-variant forms must recover version 3.5 (both
+		// dotted "3.5-haiku" and dashed "3-5-haiku" spellings), not drop it.
+		{ID: "claude-3.5-haiku", Provider: "some-provider"}: {Family: "claude", Variant: "haiku", Version: "3.5"},
+		{ID: "claude-3-5-haiku", Provider: "some-provider"}: {Family: "claude", Variant: "haiku", Version: "3.5"},
 	})
 	for _, c := range corpus.Cases {
 		t.Run(c.Name, func(t *testing.T) {
@@ -3426,6 +3430,98 @@ func TestTier1StragglerConvergences(t *testing.T) {
 		{Raw: "text-embedding", ID: "Qwen/Qwen3-Embedding-8B"}: {Family: "qwen", Variant: "embedding", Version: "3", Mod: ""},
 		// GUARD: OpenAI text-embedding-3* stays family text-embedding (untouched).
 		{Raw: "text-embedding", ID: "openai/text-embedding-3-large"}: {Family: "text-embedding", Variant: "large", Version: "3", Mod: ""},
+		// cohere command-r7b-12-2024: the trailing MM-YYYY group "12-2024" is a date,
+		// so Version stays empty (never leaks the month "12"); variant is the bare
+		// member "r" (the "7b" is param-size noise dropped from the tuple).
+		{Raw: "command-r", ID: "cohere/command-r7b-12-2024"}: {Family: "command", Variant: "r", Version: "", Mod: ""},
+	})
+	runFamilyDetailedTupleCorpus(t, corpus)
+}
+
+// TestAzureServingHostCapture pins the serving-host decomposition of the NanoGPT
+// azure-* backend-routed OpenAI models: the curated "azure-" host prefix is
+// stripped for decomposition (DetectHost, ID-prefix-only) so the resulting
+// (family,variant,version,mod) tuple is host-independent and converges with the
+// plainly-served model. The three tuples exercise the three distinct shapes:
+// gpt@4{turbo} (version + modifier), gpt/4o (4o as VARIANT not version), and
+// gpt/4o{mini} (variant + modifier). The provider-independence negative control
+// (the strip never consults the Provider field) lives in host_detect_test.go.
+func TestAzureServingHostCapture(t *testing.T) {
+	corpus := loadParseCorpus[rawIDInput, fvvmExpected](t, azureServingHostCorpusJSON, 3)
+	requireInputCoverage(t, corpus, map[rawIDInput]fvvmExpected{
+		{Raw: "", ID: "azure-gpt-4-turbo"}: {Family: "gpt", Variant: "", Version: "4", Mod: "turbo"},
+		// 4o is an alphanumeric line designator (VARIANT), never a dotted version.
+		{Raw: "", ID: "azure-gpt-4o"}:      {Family: "gpt", Variant: "4o", Version: "", Mod: ""},
+		{Raw: "", ID: "azure-gpt-4o-mini"}: {Family: "gpt", Variant: "4o", Version: "", Mod: "mini"},
+	})
+	runFamilyDetailedTupleCorpus(t, corpus)
+}
+
+// TestMetaLlamaNoSlashCapture pins the no-slash doubled-vendor fold (the scoped
+// "meta-llama-" prefix strip): the eight attested no-slash meta-llama IDs
+// (dotted/dashed/underscored version spellings) all decompose NATIVELY to family
+// llama (never "meta"), and the three-spellings-one-entity convergence rows show
+// that the slash-org doubled-vendor form, the slash-org Llama-only form, and the
+// no-slash form all fold to the SAME (llama,”,3.1,instruct) tuple. The
+// underscore spelling ("3_3") is a pinned documented residual: the family fold
+// holds but the underscore-glued version is dropped.
+func TestMetaLlamaNoSlashCapture(t *testing.T) {
+	corpus := loadParseCorpus[rawIDInput, fvvmExpected](t, metaLlamaNoSlashCorpusJSON, 11)
+	requireInputCoverage(t, corpus, map[rawIDInput]fvvmExpected{
+		// dashed spelling recovers 3.1; dotted spelling too.
+		{Raw: "", ID: "meta-llama-3-1-8b-instruct"}: {Family: "llama", Variant: "", Version: "3.1", Mod: "instruct"},
+		{Raw: "", ID: "meta-llama-3.1-8b-instruct"}: {Family: "llama", Variant: "", Version: "3.1", Mod: "instruct"},
+		// underscore spelling: documented residual, version drops but family folds.
+		{Raw: "", ID: "meta-llama-3_3-70b-instruct"}: {Family: "llama", Variant: "", Version: "", Mod: "instruct"},
+		// three-spellings-one-entity convergence (raw-populated "llama").
+		{Raw: "llama", ID: "meta-llama/Meta-Llama-3.1-8B-Instruct"}: {Family: "llama", Variant: "", Version: "3.1", Mod: "instruct"},
+		{Raw: "llama", ID: "meta-llama/Llama-3.1-8B-Instruct"}:      {Family: "llama", Variant: "", Version: "3.1", Mod: "instruct"},
+		{Raw: "llama", ID: "meta-llama-3.1-8b-instruct"}:            {Family: "llama", Variant: "", Version: "3.1", Mod: "instruct"},
+	})
+	runFamilyDetailedTupleCorpus(t, corpus)
+}
+
+// TestNamespaceSuffixTransparencyCapture pins wi36: a dotted vendor-namespace
+// Bedrock ID ("au.anthropic.claude-sonnet-4-5-20250929" with the "-v1:0",
+// "@default", and ":0" routing suffixes) decomposes to the plain (claude,sonnet)
+// family+variant — it must NEVER mint a vendor-namespace family — and all three
+// suffix spellings are transparent (identical tuples). NOTE: at HEAD the dotted
+// form's Version is empty (the dotted "region.vendor." prefix defeats the
+// ID-based version recovery that the plain sibling gets — a measured divergence
+// reported for adjudication, NOT pinned here as correct); this corpus pins only
+// the family/variant convergence + suffix transparency that genuinely hold.
+func TestNamespaceSuffixTransparencyCapture(t *testing.T) {
+	corpus := loadParseCorpus[rawIDInput, fvvmExpected](t, namespaceSuffixTransparencyCorpusJSON, 3)
+	requireInputCoverage(t, corpus, map[rawIDInput]fvvmExpected{
+		{Raw: "claude-sonnet", ID: "au.anthropic.claude-sonnet-4-5-20250929-v1:0"}:    {Family: "claude", Variant: "sonnet", Version: "", Mod: ""},
+		{Raw: "claude-sonnet", ID: "au.anthropic.claude-sonnet-4-5-20250929@default"}: {Family: "claude", Variant: "sonnet", Version: "", Mod: ""},
+		{Raw: "claude-sonnet", ID: "au.anthropic.claude-sonnet-4-5-20250929:0"}:       {Family: "claude", Variant: "sonnet", Version: "", Mod: ""},
+	})
+	runFamilyDetailedTupleCorpus(t, corpus)
+}
+
+// TestTextEmbeddingSoleVariantCapture pins ibtb/ptr9-2: OpenAI's
+// text-embedding-3-{small,large} keep the compound family "text-embedding" (no
+// reduction to a bare "text" over-capture), promote the sole trailing variant
+// (small/large), and recover version 3 between the family and the variant.
+func TestTextEmbeddingSoleVariantCapture(t *testing.T) {
+	corpus := loadParseCorpus[rawIDInput, fvvmExpected](t, textEmbeddingSoleVariantCorpusJSON, 2)
+	requireInputCoverage(t, corpus, map[rawIDInput]fvvmExpected{
+		{Raw: "text-embedding", ID: "text-embedding-3-small"}: {Family: "text-embedding", Variant: "small", Version: "3", Mod: ""},
+		{Raw: "text-embedding", ID: "text-embedding-3-large"}: {Family: "text-embedding", Variant: "large", Version: "3", Mod: ""},
+	})
+	runFamilyDetailedTupleCorpus(t, corpus)
+}
+
+// TestGrokDocumentedResidualCapture pins ptr9-3 as a documented residual: at HEAD
+// "grok-3-mini-fast-beta" decomposes to (grok,mini,3) with the mid-ID serving
+// tier "fast" and trailing stage "beta" dropped (GH#9 mid-ID engine territory).
+// The ID is absent from the current catalog; the row is pinned so a future mid-ID
+// extraction that recovers fast/beta surfaces as a deliberate change.
+func TestGrokDocumentedResidualCapture(t *testing.T) {
+	corpus := loadParseCorpus[rawIDInput, fvvmExpected](t, grokDocumentedResidualCorpusJSON, 1)
+	requireInputCoverage(t, corpus, map[rawIDInput]fvvmExpected{
+		{Raw: "grok", ID: "grok-3-mini-fast-beta"}: {Family: "grok", Variant: "mini", Version: "3", Mod: ""},
 	})
 	runFamilyDetailedTupleCorpus(t, corpus)
 }

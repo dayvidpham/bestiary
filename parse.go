@@ -1587,6 +1587,16 @@ func inferFamilyFromIDWithVariantBase(id ModelID, p Provider) (Family, string, s
 			}
 		}
 		recoveredVariant := recoverMemberVariant(remainingTokens, baseFamily)
+		// Recover a version that sits BETWEEN the family and the recovered variant
+		// (empty-raw "claude-3.5-haiku" / "claude-3-5-haiku" -> version "3.5"), so this
+		// empty-raw path converges with the raw-populated sibling instead of dropping the
+		// version at the return below. Only fills an empty version; a bare-generation
+		// split (splitBareGen) already took precedence when present.
+		if bareVersion == "" && recoveredVariant != "" {
+			if v, _ := ExtractVersionBetweenFamilyAndVariant(id, baseFamily, recoveredVariant); v != "" {
+				bareVersion = v
+			}
+		}
 		// Case-fold: baseFamily is already lowercased above.
 		return baseFamily, recoveredVariant, bareVersion
 	}
@@ -2845,8 +2855,9 @@ func stripVendorNamespace(id string) string {
 	// reach here with the redundant leading "meta-" intact, deriving family "meta" instead
 	// of "llama" (and dropping the version, since the extractor mis-aligns). Strip the
 	// redundant "meta-" so they decompose NATIVELY to llama with the version preserved —
-	// the SAME outcome as the slash form. Scoped to the literal "meta-llama-" prefix (only
-	// the 2 attested no-slash meta-llama ids), zero collateral.
+	// the SAME outcome as the slash form. Scoped to the literal "meta-llama-" prefix (the
+	// attested no-slash meta-llama ids — currently the eight dotted/dashed/underscored
+	// version spellings), zero collateral.
 	if strings.HasPrefix(strings.ToLower(idStr), "meta-llama-") {
 		idStr = idStr[len("meta-"):]
 	}
@@ -4440,6 +4451,16 @@ func ExtractVersionBetweenFamilyAndVariant(id ModelID, family Family, variant st
 		// Stop at the variant boundary.
 		if variantFirst != "" && tok == variantFirst {
 			variantStart = i
+			break
+		}
+		// MM-YYYY trailing-date lookahead (cohere "command-r7b-12-2024"): a numeric
+		// token that forms an MM-YYYY group with the NEXT token is the leading half of a
+		// trailing date, not a version component. Stop before consuming it so the date
+		// group ("12-2024") stays a date rather than leaking its month ("12") into
+		// Version. Mirrors the single-remainder isMMYYYYTwoGroup guard in
+		// ExtractVersionFromID; the four/six-digit isDateShapedToken guard below cannot
+		// see a two-token MM-YYYY split.
+		if i+1 < len(tokens) && isMMYYYYTwoGroup(tok+"-"+tokens[i+1]) {
 			break
 		}
 		if isVersionToken(tok) && !isDateShapedToken(tok) {

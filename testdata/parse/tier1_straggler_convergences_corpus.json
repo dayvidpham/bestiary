@@ -127,7 +127,7 @@
       }
     },
     {
-      "name": "command-r7b-12-2024 empty → (command,r) [r7b=r+7b-size]",
+      "name": "command-r7b-12-2024 empty → (command,r) [r7b=r+7b-size; MM-YYYY date not version]",
       "input": {
         "raw": "",
         "id": "cohere/command-r7b-12-2024"
@@ -135,13 +135,13 @@
       "expected": {
         "family": "command",
         "variant": "r",
-        "version": "12",
+        "version": "",
         "mod": ""
       },
       "classification": "must-pass",
       "provenance": {
         "source": "requirement",
-        "ref": "ParseFamilyDetailed(raw=, id=cohere/command-r7b-12-2024) -> (family 'command', variant 'r', version '12', mod '')"
+        "ref": "ParseFamilyDetailed(raw=, id=cohere/command-r7b-12-2024) -> (family 'command', variant 'r', version '', mod ''); trailing MM-YYYY '12-2024' is a date, never version '12'"
       },
       "mutation": {
         "description": "tier-1 straggler convergence to one canonical entity tuple"
@@ -156,13 +156,13 @@
       "expected": {
         "family": "command",
         "variant": "r",
-        "version": "12",
+        "version": "",
         "mod": ""
       },
       "classification": "must-pass",
       "provenance": {
         "source": "requirement",
-        "ref": "ParseFamilyDetailed(raw=command-r, id=cohere/command-r7b-12-2024) -> (family 'command', variant 'r', version '12', mod '')"
+        "ref": "ParseFamilyDetailed(raw=command-r, id=cohere/command-r7b-12-2024) -> (family 'command', variant 'r', version '', mod ''); trailing MM-YYYY '12-2024' is a date, never version '12'"
       },
       "mutation": {
         "description": "tier-1 straggler convergence to one canonical entity tuple"

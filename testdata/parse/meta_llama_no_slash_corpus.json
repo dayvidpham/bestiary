@@ -1,0 +1,92 @@
+{
+  "cases": [
+    {
+      "name": "meta-llama-3.1-405b-instruct empty-raw -> (llama,'',3.1,instruct)",
+      "input": { "raw": "", "id": "meta-llama-3.1-405b-instruct" },
+      "expected": { "family": "llama", "variant": "", "version": "3.1", "mod": "instruct" },
+      "classification": "must-pass",
+      "provenance": { "source": "requirement", "ref": "no-slash doubled-vendor fold: 'meta-llama-3.1-405b-instruct' strips the redundant leading 'meta-' and decomposes NATIVELY to family llama (not meta), version preserved" },
+      "mutation": { "description": "no-slash meta-llama- prefix fold to family llama (dotted version spelling)" }
+    },
+    {
+      "name": "meta-llama-3.1-70b-instruct empty-raw -> (llama,'',3.1,instruct)",
+      "input": { "raw": "", "id": "meta-llama-3.1-70b-instruct" },
+      "expected": { "family": "llama", "variant": "", "version": "3.1", "mod": "instruct" },
+      "classification": "must-pass",
+      "provenance": { "source": "requirement", "ref": "no-slash doubled-vendor fold: family llama, version 3.1 preserved (dotted spelling, 70b size dropped as GH#9 noise)" },
+      "mutation": { "description": "no-slash meta-llama- prefix fold to family llama (dotted version spelling)" }
+    },
+    {
+      "name": "meta-llama-3-1-8b-instruct empty-raw -> (llama,'',3.1,instruct)",
+      "input": { "raw": "", "id": "meta-llama-3-1-8b-instruct" },
+      "expected": { "family": "llama", "variant": "", "version": "3.1", "mod": "instruct" },
+      "classification": "must-pass",
+      "provenance": { "source": "requirement", "ref": "no-slash doubled-vendor fold: dashed version '3-1' recovers as 3.1 after the meta- fold to family llama" },
+      "mutation": { "description": "no-slash meta-llama- prefix fold to family llama (dashed version spelling)" }
+    },
+    {
+      "name": "meta-llama-3.1-8b-instruct empty-raw -> (llama,'',3.1,instruct)",
+      "input": { "raw": "", "id": "meta-llama-3.1-8b-instruct" },
+      "expected": { "family": "llama", "variant": "", "version": "3.1", "mod": "instruct" },
+      "classification": "must-pass",
+      "provenance": { "source": "requirement", "ref": "no-slash doubled-vendor fold: family llama, version 3.1 (dotted spelling)" },
+      "mutation": { "description": "no-slash meta-llama- prefix fold to family llama (dotted version spelling)" }
+    },
+    {
+      "name": "meta-llama-3-3-70b-instruct empty-raw -> (llama,'',3.3,instruct)",
+      "input": { "raw": "", "id": "meta-llama-3-3-70b-instruct" },
+      "expected": { "family": "llama", "variant": "", "version": "3.3", "mod": "instruct" },
+      "classification": "must-pass",
+      "provenance": { "source": "requirement", "ref": "no-slash doubled-vendor fold: dashed version '3-3' recovers as 3.3 after the meta- fold to family llama" },
+      "mutation": { "description": "no-slash meta-llama- prefix fold to family llama (dashed version spelling)" }
+    },
+    {
+      "name": "meta-llama-3_3-70b-instruct empty-raw -> (llama,'','',instruct) [underscore residual, version drops]",
+      "input": { "raw": "", "id": "meta-llama-3_3-70b-instruct" },
+      "expected": { "family": "llama", "variant": "", "version": "", "mod": "instruct" },
+      "classification": "must-pass",
+      "provenance": { "source": "bug", "ref": "underscore version spelling '3_3' is NOT recovered as a version at HEAD (documented residual): the family fold to llama still holds, but the underscore-glued version is dropped — pinned so a future underscore-version recovery is caught as a change" },
+      "mutation": { "description": "no-slash meta-llama- prefix fold to family llama; underscore version spelling is a documented residual (version empty)" }
+    },
+    {
+      "name": "meta-llama-3-70b-instruct empty-raw -> (llama,'',3,instruct)",
+      "input": { "raw": "", "id": "meta-llama-3-70b-instruct" },
+      "expected": { "family": "llama", "variant": "", "version": "3", "mod": "instruct" },
+      "classification": "must-pass",
+      "provenance": { "source": "requirement", "ref": "no-slash doubled-vendor fold: family llama, bare generation version 3 (70b size dropped)" },
+      "mutation": { "description": "no-slash meta-llama- prefix fold to family llama (bare generation version)" }
+    },
+    {
+      "name": "meta-llama-3-8b-instruct empty-raw -> (llama,'',3,instruct)",
+      "input": { "raw": "", "id": "meta-llama-3-8b-instruct" },
+      "expected": { "family": "llama", "variant": "", "version": "3", "mod": "instruct" },
+      "classification": "must-pass",
+      "provenance": { "source": "requirement", "ref": "no-slash doubled-vendor fold: family llama, bare generation version 3 (8b size dropped)" },
+      "mutation": { "description": "no-slash meta-llama- prefix fold to family llama (bare generation version)" }
+    },
+    {
+      "name": "convergence: meta-llama/Meta-Llama-3.1-8B-Instruct raw=llama -> (llama,'',3.1,instruct)",
+      "input": { "raw": "llama", "id": "meta-llama/Meta-Llama-3.1-8B-Instruct" },
+      "expected": { "family": "llama", "variant": "", "version": "3.1", "mod": "instruct" },
+      "classification": "must-pass",
+      "provenance": { "source": "requirement", "ref": "three-spellings-one-entity: slash-org doubled-vendor form (org meta-llama + name Meta-Llama-…) folds to the SAME (llama,'',3.1,instruct) tuple as the no-slash and Llama-only spellings" },
+      "mutation": { "description": "slash-org doubled-vendor fold converges to the shared llama entity tuple" }
+    },
+    {
+      "name": "convergence: meta-llama/Llama-3.1-8B-Instruct raw=llama -> (llama,'',3.1,instruct)",
+      "input": { "raw": "llama", "id": "meta-llama/Llama-3.1-8B-Instruct" },
+      "expected": { "family": "llama", "variant": "", "version": "3.1", "mod": "instruct" },
+      "classification": "must-pass",
+      "provenance": { "source": "requirement", "ref": "three-spellings-one-entity: slash-org Llama-only spelling folds to the SAME (llama,'',3.1,instruct) tuple as the doubled-vendor and no-slash spellings" },
+      "mutation": { "description": "slash-org Llama-only spelling converges to the shared llama entity tuple" }
+    },
+    {
+      "name": "convergence: meta-llama-3.1-8b-instruct raw=llama -> (llama,'',3.1,instruct)",
+      "input": { "raw": "llama", "id": "meta-llama-3.1-8b-instruct" },
+      "expected": { "family": "llama", "variant": "", "version": "3.1", "mod": "instruct" },
+      "classification": "must-pass",
+      "provenance": { "source": "requirement", "ref": "three-spellings-one-entity: no-slash spelling (raw-populated 'llama') folds to the SAME (llama,'',3.1,instruct) tuple as the two slash-org spellings" },
+      "mutation": { "description": "no-slash spelling with raw-populated llama converges to the shared llama entity tuple" }
+    }
+  ]
+}
