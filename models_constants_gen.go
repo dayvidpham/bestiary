@@ -1009,8 +1009,8 @@ const (
 	Model__Cohere__Command__A__Reasoning__Reasoning__20250821                                ModelID = "command-a-reasoning-08-2025"
 	Model__Cohere__Command__A__Translate__20250828                                           ModelID = "command-a-translate-08-2025"
 	Model__Cohere__Command__A__Vision__Vision__20250731                                      ModelID = "command-a-vision-07-2025"
-	Model__Cohere__Command__R7b__12__20241202                                                ModelID = "command-r7b-12-2024"
-	Model__Cohere__Command__R7b__Arabic__02__20250227                                        ModelID = "command-r7b-arabic-02-2025"
+	Model__Cohere__Command__R7b__20241202                                                    ModelID = "command-r7b-12-2024"
+	Model__Cohere__Command__R7b__Arabic__20250227                                            ModelID = "command-r7b-arabic-02-2025"
 	Model__Cohere__Command__R__20240830                                                      ModelID = "command-r-08-2024"
 	Model__Cohere__Command__R__Plus__20240830                                                ModelID = "command-r-plus-08-2024"
 	Model__Cohere__North__Mini__Code__1__0                                                   ModelID = "north-mini-code-1-0"
@@ -1965,7 +1965,7 @@ const (
 	Model__Kilo__Codestral__2508                                                             ModelID = "mistralai/codestral-2508"
 	Model__Kilo__Cogito__V2__1__671b                                                         ModelID = "deepcogito/cogito-v2.1-671b"
 	Model__Kilo__Command__A                                                                  ModelID = "cohere/command-a"
-	Model__Kilo__Command__R7b__12__20241202                                                  ModelID = "cohere/command-r7b-12-2024"
+	Model__Kilo__Command__R7b__20241202                                                      ModelID = "cohere/command-r7b-12-2024"
 	Model__Kilo__Command__R__20240830                                                        ModelID = "cohere/command-r-08-2024"
 	Model__Kilo__Command__R__Plus__20240830                                                  ModelID = "cohere/command-r-plus-08-2024"
 	Model__Kilo__Cydonia__24b__V4__1                                                         ModelID = "thedrummer/cydonia-24b-v4.1"
@@ -2521,7 +2521,7 @@ const (
 	Model__MergeGateway__Claude__Sonnet__4__20250514                                         ModelID = "anthropic/claude-sonnet-4-20250514"
 	Model__MergeGateway__Codestral__Latest                                                   ModelID = "mistral/codestral-latest"
 	Model__MergeGateway__Command__A__20250313                                                ModelID = "cohere/command-a-03-2025"
-	Model__MergeGateway__Command__R7b__12__20241202                                          ModelID = "cohere/command-r7b-12-2024"
+	Model__MergeGateway__Command__R7b__20241202                                              ModelID = "cohere/command-r7b-12-2024"
 	Model__MergeGateway__Command__R__20240830                                                ModelID = "cohere/command-r-08-2024"
 	Model__MergeGateway__Command__R__Plus__20240830                                          ModelID = "cohere/command-r-plus-08-2024"
 	Model__MergeGateway__DeepSeek__V4__Flash                                                 ModelID = "deepseek/deepseek-v4-flash"
@@ -2784,7 +2784,7 @@ const (
 	Model__NanoGPT__Coding__Router__Max                                                      ModelID = "nanogpt/coding-router:max"
 	Model__NanoGPT__Coding__Router__Medium                                                   ModelID = "nanogpt/coding-router:medium"
 	Model__NanoGPT__Cogito__V1__Preview__Qwen__32B                                           ModelID = "deepcogito/cogito-v1-preview-qwen-32B"
-	Model__NanoGPT__Command__A__Plus__05__20260522                                           ModelID = "command-a-plus-05-2026"
+	Model__NanoGPT__Command__A__Plus__20260522                                               ModelID = "command-a-plus-05-2026"
 	Model__NanoGPT__Command__A__Reasoning__Reasoning__20250822                               ModelID = "command-a-reasoning-08-2025"
 	Model__NanoGPT__Command__R                                                               ModelID = "cohere/command-r"
 	Model__NanoGPT__Command__R__Plus__20240830                                               ModelID = "cohere/command-r-plus-08-2024"
@@ -3880,7 +3880,7 @@ const (
 	Model__OpenRouter__Codestral__2508                                                       ModelID = "mistralai/codestral-2508"
 	Model__OpenRouter__Cogito__V2__1__671b                                                   ModelID = "deepcogito/cogito-v2.1-671b"
 	Model__OpenRouter__Command__A                                                            ModelID = "cohere/command-a"
-	Model__OpenRouter__Command__R7b__12__20241202                                            ModelID = "cohere/command-r7b-12-2024"
+	Model__OpenRouter__Command__R7b__20241202                                                ModelID = "cohere/command-r7b-12-2024"
 	Model__OpenRouter__Command__R__20240830                                                  ModelID = "cohere/command-r-08-2024"
 	Model__OpenRouter__Command__R__Plus__20240830                                            ModelID = "cohere/command-r-plus-08-2024"
 	Model__OpenRouter__Cydonia__24b__V4__1                                                   ModelID = "thedrummer/cydonia-24b-v4.1"
@@ -6667,8 +6667,8 @@ var allModelConstants = [...]ModelID{
 	Model__Cohere__Command__A__Reasoning__Reasoning__20250821,
 	Model__Cohere__Command__A__Translate__20250828,
 	Model__Cohere__Command__A__Vision__Vision__20250731,
-	Model__Cohere__Command__R7b__12__20241202,
-	Model__Cohere__Command__R7b__Arabic__02__20250227,
+	Model__Cohere__Command__R7b__20241202,
+	Model__Cohere__Command__R7b__Arabic__20250227,
 	Model__Cohere__Command__R__20240830,
 	Model__Cohere__Command__R__Plus__20240830,
 	Model__Cohere__North__Mini__Code__1__0,
@@ -7623,7 +7623,7 @@ var allModelConstants = [...]ModelID{
 	Model__Kilo__Codestral__2508,
 	Model__Kilo__Cogito__V2__1__671b,
 	Model__Kilo__Command__A,
-	Model__Kilo__Command__R7b__12__20241202,
+	Model__Kilo__Command__R7b__20241202,
 	Model__Kilo__Command__R__20240830,
 	Model__Kilo__Command__R__Plus__20240830,
 	Model__Kilo__Cydonia__24b__V4__1,
@@ -8179,7 +8179,7 @@ var allModelConstants = [...]ModelID{
 	Model__MergeGateway__Claude__Sonnet__4__20250514,
 	Model__MergeGateway__Codestral__Latest,
 	Model__MergeGateway__Command__A__20250313,
-	Model__MergeGateway__Command__R7b__12__20241202,
+	Model__MergeGateway__Command__R7b__20241202,
 	Model__MergeGateway__Command__R__20240830,
 	Model__MergeGateway__Command__R__Plus__20240830,
 	Model__MergeGateway__DeepSeek__V4__Flash,
@@ -8442,7 +8442,7 @@ var allModelConstants = [...]ModelID{
 	Model__NanoGPT__Coding__Router__Max,
 	Model__NanoGPT__Coding__Router__Medium,
 	Model__NanoGPT__Cogito__V1__Preview__Qwen__32B,
-	Model__NanoGPT__Command__A__Plus__05__20260522,
+	Model__NanoGPT__Command__A__Plus__20260522,
 	Model__NanoGPT__Command__A__Reasoning__Reasoning__20250822,
 	Model__NanoGPT__Command__R,
 	Model__NanoGPT__Command__R__Plus__20240830,
@@ -9538,7 +9538,7 @@ var allModelConstants = [...]ModelID{
 	Model__OpenRouter__Codestral__2508,
 	Model__OpenRouter__Cogito__V2__1__671b,
 	Model__OpenRouter__Command__A,
-	Model__OpenRouter__Command__R7b__12__20241202,
+	Model__OpenRouter__Command__R7b__20241202,
 	Model__OpenRouter__Command__R__20240830,
 	Model__OpenRouter__Command__R__Plus__20240830,
 	Model__OpenRouter__Cydonia__24b__V4__1,
