@@ -93,7 +93,7 @@ func renderError(err error) string {
 
 func run(args []string) error {
 	if len(args) == 0 {
-		return fmt.Errorf("usage: bestiary <list|show|providers|entities|sources|sync> [flags]")
+		return fmt.Errorf("usage: bestiary <list|show|providers|entities|series|sources|sync> [flags]")
 	}
 
 	cmd := args[0]
@@ -164,6 +164,16 @@ func run(args []string) error {
 		// metadata-only standalones (reachable only by exact key elsewhere) are
 		// discoverable. --output selects json (Entity objects) or table (summary).
 		return runEntities(bestiary.OutputFormat(*output), *dbPath)
+	case "series":
+		// series takes an OPTIONAL positional: with none it lists every line in the
+		// registry, with one it details that line's releases and their entities.
+		// --db-path is REJECTED rather than ignored: the view computes from the
+		// compiled-in registry, so the flag cannot be honoured, and silently
+		// accepting it would imply a cache read that never happens.
+		if flagWasSet(fs, "db-path") {
+			return errSeriesDBPath
+		}
+		return runSeries(fs.Arg(0), bestiary.OutputFormat(*output))
 	case "sources":
 		// --history and --export are catalog-wide ingest-log views; they take no
 		// entity positional. The default sources view still requires an entity key.
@@ -183,7 +193,7 @@ func run(args []string) error {
 	case "sync":
 		return runSync(*provider, bestiary.OutputFormat(*output), *dbPath)
 	default:
-		return fmt.Errorf("unknown command %q; supported commands: list, show, providers, entities, sources, sync", cmd)
+		return fmt.Errorf("unknown command %q; supported commands: list, show, providers, entities, series, sources, sync", cmd)
 	}
 }
 
@@ -270,6 +280,21 @@ func flagIsBool(fs *flag.FlagSet, name string) bool {
 	}
 	bf, ok := f.Value.(interface{ IsBoolFlag() bool })
 	return ok && bf.IsBoolFlag()
+}
+
+// flagWasSet reports whether the named flag was EXPLICITLY given on the command
+// line, as opposed to merely carrying its default. flag.FlagSet.Visit walks only
+// the flags that were actually set, which is the distinction a command needs to
+// reject a flag it cannot honour without also rejecting every invocation that
+// simply inherited the shared flagset's default.
+func flagWasSet(fs *flag.FlagSet, name string) bool {
+	set := false
+	fs.Visit(func(f *flag.Flag) {
+		if f.Name == name {
+			set = true
+		}
+	})
+	return set
 }
 
 // resolveDBPath returns dbPath if non-empty, otherwise calls DefaultDBPath().
@@ -788,6 +813,182 @@ func writeEntitiesTable(w io.Writer, ents []bestiary.Entity) {
 			benchmarks = len(e.Metadata.Benchmarks)
 		}
 		fmt.Fprintf(w, "  %-48s %9d %8s %10d\n", e.Ref.String(), len(e.Providers), metadata, benchmarks)
+	}
+}
+
+// errSeriesDBPath is returned when `series` is given an explicit --db-path. The
+// flag is registered on the shared flagset every subcommand parses, so it PARSES
+// for series; rejecting it here is what keeps the CLI honest, because the series
+// view computes from the compiled-in registry and never opens the cache. Accepting
+// it silently would let a caller believe they had scoped the view to a synced
+// database. No "bestiary:" prefix — main() prepends it.
+var errSeriesDBPath = errors.New(
+	"series computes from the compiled-in registry and does not read the cache; " +
+		"--db-path has no effect here (use entities/show for cache-aware views)",
+)
+
+// seriesSummary is the JSON/table row of the registry-wide `series` listing: one
+// line with its counts. Releases/Entities are counts, not the objects, so the
+// listing stays a summary — `bestiary series <selector>` is the detail view.
+type seriesSummary struct {
+	Series     string
+	Family     bestiary.Family
+	Generation string
+	Releases   int
+	Entities   int
+}
+
+// seriesDetail is the JSON shape of the selected-line view: the line plus its
+// releases, each with the canonical keys of its member entities.
+type seriesDetail struct {
+	Series     string
+	Family     bestiary.Family
+	Generation string
+	Releases   []releaseDetail
+}
+
+// releaseDetail is one release within a seriesDetail. Name is empty for the
+// bare (un-named) line; Release carries the display rendering either way.
+type releaseDetail struct {
+	Name     string
+	Release  string
+	Entities []string
+}
+
+// runSeries renders the computed Series/Release hierarchy.
+//
+// With no selector it lists every line in the registry (sorted by family, then
+// generation) with its release and entity counts. With a selector it details the
+// matching lines: each release and the canonical entity keys under it.
+//
+// The view is OFFLINE and STATIC by construction: the hierarchy is computed from
+// the compiled-in registry (SeriesAll/ReleasesOf/EntitiesOf), so — unlike the
+// `entities` view — it never consults the SQLite cache and takes no --db-path. A
+// synced row cannot introduce a line; that is a property of the taxonomy being a
+// function of the baked catalog's key components, not a limitation of the cache.
+func runSeries(selector string, format bestiary.OutputFormat) error {
+	if err := validateEntityOutput(format); err != nil {
+		return err
+	}
+	all := bestiary.SeriesAll()
+	if selector == "" {
+		if format == bestiary.FormatJSON {
+			return writeJSON(os.Stdout, seriesSummaries(all))
+		}
+		writeSeriesTable(os.Stdout, seriesSummaries(all))
+		return nil
+	}
+
+	matches := selectSeries(all, selector)
+	if len(matches) == 0 {
+		return &bestiary.ErrNotFound{What: "series", Key: selector}
+	}
+	details := make([]seriesDetail, 0, len(matches))
+	for _, s := range matches {
+		details = append(details, seriesDetailOf(s))
+	}
+	if format == bestiary.FormatJSON {
+		return writeJSON(os.Stdout, details)
+	}
+	writeSeriesDetailTable(os.Stdout, details)
+	return nil
+}
+
+// selectSeries resolves a positional selector to the lines it names, as the UNION
+// of two readings — both deterministic, and the union so a selector can never
+// silently hide a line the user could reasonably have meant:
+//
+//   - the LINE reading: the selector equals a line's display rendering
+//     ("llama-4", "gemini-3.0"), which is exactly what the listing prints, so
+//     copy-pasting a row from `bestiary series` always resolves;
+//   - the FAMILY reading: the selector equals a family name ("gemma"), which
+//     selects every generation of that family.
+//
+// The union matters where a family name is also a bare line's rendering: "gemma"
+// returns the un-versioned gemma line AND gemma-2/3/4, rather than the bare line
+// alone. Matching is case-folded. The result keeps SeriesAll's ordering.
+func selectSeries(all []bestiary.Series, selector string) []bestiary.Series {
+	want := strings.ToLower(strings.TrimSpace(selector))
+	if want == "" {
+		return nil
+	}
+	var out []bestiary.Series
+	for _, s := range all {
+		if strings.ToLower(s.String()) == want || strings.ToLower(string(s.Family)) == want {
+			out = append(out, s)
+		}
+	}
+	return out
+}
+
+// seriesSummaries builds the listing rows for the given lines, preserving order.
+func seriesSummaries(all []bestiary.Series) []seriesSummary {
+	out := make([]seriesSummary, 0, len(all))
+	for _, s := range all {
+		releases := bestiary.ReleasesOf(s)
+		entities := 0
+		for _, r := range releases {
+			entities += len(bestiary.EntitiesOf(r))
+		}
+		out = append(out, seriesSummary{
+			Series:     s.String(),
+			Family:     s.Family,
+			Generation: s.Generation,
+			Releases:   len(releases),
+			Entities:   entities,
+		})
+	}
+	return out
+}
+
+// seriesDetailOf builds the detail view of one line: its releases in
+// ReleasesOf order, each with its member entity keys in EntitiesOf order.
+func seriesDetailOf(s bestiary.Series) seriesDetail {
+	d := seriesDetail{Series: s.String(), Family: s.Family, Generation: s.Generation}
+	for _, r := range bestiary.ReleasesOf(s) {
+		ents := bestiary.EntitiesOf(r)
+		keys := make([]string, 0, len(ents))
+		for _, e := range ents {
+			keys = append(keys, e.Ref.String())
+		}
+		d.Releases = append(d.Releases, releaseDetail{Name: r.Name, Release: r.String(), Entities: keys})
+	}
+	return d
+}
+
+// writeSeriesTable renders the registry-wide line listing: one row per Series with
+// its release and entity counts. An un-versioned line shows "-" for GENERATION.
+func writeSeriesTable(w io.Writer, rows []seriesSummary) {
+	fmt.Fprintf(w, "Series (%d):\n", len(rows))
+	fmt.Fprintf(w, "  %-40s %-24s %-12s %9s %9s\n", "SERIES", "FAMILY", "GENERATION", "RELEASES", "ENTITIES")
+	for _, r := range rows {
+		generation := r.Generation
+		if generation == "" {
+			generation = "-"
+		}
+		fmt.Fprintf(w, "  %-40s %-24s %-12s %9d %9d\n", r.Series, string(r.Family), generation, r.Releases, r.Entities)
+	}
+}
+
+// writeSeriesDetailTable renders the selected lines: each release under its line,
+// with the member entity keys indented beneath it. The un-named bare release is
+// labelled "(bare line)" so an empty name is never rendered as blank space.
+func writeSeriesDetailTable(w io.Writer, details []seriesDetail) {
+	for i, d := range details {
+		if i > 0 {
+			fmt.Fprintln(w)
+		}
+		fmt.Fprintf(w, "Series %s (%d releases):\n", d.Series, len(d.Releases))
+		for _, r := range d.Releases {
+			name := r.Name
+			if name == "" {
+				name = "(bare line)"
+			}
+			fmt.Fprintf(w, "  %-24s %d entities\n", name, len(r.Entities))
+			for _, key := range r.Entities {
+				fmt.Fprintf(w, "      %s\n", key)
+			}
+		}
 	}
 }
 

@@ -1,8 +1,8 @@
 {
   "total_records": 4979,
-  "changed_count": 1274,
+  "changed_count": 1280,
   "cat_a_divergence_fix_count": 326,
-  "cat_b_improvement_count": 934,
+  "cat_b_improvement_count": 940,
   "cat_c_unexpected_regression_count": 0,
   "justified_exception_count": 14,
   "id_tuple4_incl_modifier_divergence_frozen_before": 81,
@@ -4550,7 +4550,7 @@
       "id": "cerebras-llama-4-maverick-17b-128e-instruct",
       "raw_family": "llama",
       "before": "(family=\"llama\",variant=\"instruct\",version=\"\",modifier=\"\")",
-      "after": "(family=\"llama\",variant=\"\",version=\"4\",modifier=\"instruct\")",
+      "after": "(family=\"llama\",variant=\"maverick\",version=\"4\",modifier=\"instruct\")",
       "category": "b:improvement",
       "reason": "family-preserving de-noise/enrich: only phantom losses and/or enrichments, no ID-present field lost"
     },
@@ -6098,7 +6098,7 @@
       "id": "groq-llama-4-maverick-17b-128e-instruct",
       "raw_family": "llama",
       "before": "(family=\"llama\",variant=\"instruct\",version=\"\",modifier=\"\")",
-      "after": "(family=\"llama\",variant=\"\",version=\"4\",modifier=\"instruct\")",
+      "after": "(family=\"llama\",variant=\"maverick\",version=\"4\",modifier=\"instruct\")",
       "category": "b:improvement",
       "reason": "family-preserving de-noise/enrich: only phantom losses and/or enrichments, no ID-present field lost"
     },
@@ -6197,7 +6197,7 @@
       "id": "hf:meta-llama/Llama-4-Maverick-17B-128E-Instruct-FP8",
       "raw_family": "llama",
       "before": "(family=\"llama\",variant=\"instruct\",version=\"4\",modifier=\"\")",
-      "after": "(family=\"llama\",variant=\"\",version=\"4\",modifier=\"instruct\")",
+      "after": "(family=\"llama\",variant=\"maverick\",version=\"4\",modifier=\"instruct\")",
       "category": "b:improvement",
       "reason": "family-preserving de-noise/enrich: only phantom losses and/or enrichments, no ID-present field lost"
     },
@@ -6616,11 +6616,29 @@
       "reason": "family-preserving de-noise/enrich: only phantom losses and/or enrichments, no ID-present field lost"
     },
     {
+      "provider": "digitalocean",
+      "id": "llama-4-maverick",
+      "raw_family": "llama",
+      "before": "(family=\"llama\",variant=\"\",version=\"4\",modifier=\"\")",
+      "after": "(family=\"llama\",variant=\"maverick\",version=\"4\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "strict enrichment — only previously-empty field(s) populated"
+    },
+    {
+      "provider": "helicone",
+      "id": "llama-4-maverick",
+      "raw_family": "llama",
+      "before": "(family=\"llama\",variant=\"\",version=\"4\",modifier=\"\")",
+      "after": "(family=\"llama\",variant=\"maverick\",version=\"4\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "strict enrichment — only previously-empty field(s) populated"
+    },
+    {
       "provider": "azure",
       "id": "llama-4-maverick-17b-128e-instruct-fp8",
       "raw_family": "llama",
       "before": "(family=\"llama\",variant=\"instruct\",version=\"4\",modifier=\"\")",
-      "after": "(family=\"llama\",variant=\"\",version=\"4\",modifier=\"instruct\")",
+      "after": "(family=\"llama\",variant=\"maverick\",version=\"4\",modifier=\"instruct\")",
       "category": "b:improvement",
       "reason": "family-preserving de-noise/enrich: only phantom losses and/or enrichments, no ID-present field lost"
     },
@@ -6629,7 +6647,7 @@
       "id": "llama-4-maverick-17b-128e-instruct-fp8",
       "raw_family": "llama",
       "before": "(family=\"llama\",variant=\"instruct\",version=\"4\",modifier=\"\")",
-      "after": "(family=\"llama\",variant=\"\",version=\"4\",modifier=\"instruct\")",
+      "after": "(family=\"llama\",variant=\"maverick\",version=\"4\",modifier=\"instruct\")",
       "category": "b:improvement",
       "reason": "family-preserving de-noise/enrich: only phantom losses and/or enrichments, no ID-present field lost"
     },
@@ -6638,7 +6656,7 @@
       "id": "llama-4-maverick-17b-128e-instruct-fp8",
       "raw_family": "llama",
       "before": "(family=\"llama\",variant=\"instruct\",version=\"4\",modifier=\"\")",
-      "after": "(family=\"llama\",variant=\"\",version=\"4\",modifier=\"instruct\")",
+      "after": "(family=\"llama\",variant=\"maverick\",version=\"4\",modifier=\"instruct\")",
       "category": "b:improvement",
       "reason": "family-preserving de-noise/enrich: only phantom losses and/or enrichments, no ID-present field lost"
     },
@@ -6647,7 +6665,7 @@
       "id": "llama-4-maverick-17b-instruct",
       "raw_family": "llama",
       "before": "(family=\"llama\",variant=\"instruct\",version=\"4\",modifier=\"\")",
-      "after": "(family=\"llama\",variant=\"\",version=\"4\",modifier=\"instruct\")",
+      "after": "(family=\"llama\",variant=\"maverick\",version=\"4\",modifier=\"instruct\")",
       "category": "b:improvement",
       "reason": "family-preserving de-noise/enrich: only phantom losses and/or enrichments, no ID-present field lost"
     },
@@ -7016,7 +7034,7 @@
       "id": "meta-llama/Llama-4-Maverick-17B-128E-Instruct-FP8",
       "raw_family": "llama",
       "before": "(family=\"llama\",variant=\"instruct\",version=\"4\",modifier=\"\")",
-      "after": "(family=\"llama\",variant=\"\",version=\"4\",modifier=\"instruct\")",
+      "after": "(family=\"llama\",variant=\"maverick\",version=\"4\",modifier=\"instruct\")",
       "category": "b:improvement",
       "reason": "family-preserving de-noise/enrich: only phantom losses and/or enrichments, no ID-present field lost"
     },
@@ -7025,7 +7043,7 @@
       "id": "meta-llama/Llama-4-Maverick-17B-128E-Instruct-FP8",
       "raw_family": "llama",
       "before": "(family=\"llama\",variant=\"instruct\",version=\"4\",modifier=\"\")",
-      "after": "(family=\"llama\",variant=\"\",version=\"4\",modifier=\"instruct\")",
+      "after": "(family=\"llama\",variant=\"maverick\",version=\"4\",modifier=\"instruct\")",
       "category": "b:improvement",
       "reason": "family-preserving de-noise/enrich: only phantom losses and/or enrichments, no ID-present field lost"
     },
@@ -7034,7 +7052,7 @@
       "id": "meta-llama/Llama-4-Maverick-17B-128E-Instruct-FP8",
       "raw_family": "llama",
       "before": "(family=\"llama\",variant=\"instruct\",version=\"4\",modifier=\"\")",
-      "after": "(family=\"llama\",variant=\"\",version=\"4\",modifier=\"instruct\")",
+      "after": "(family=\"llama\",variant=\"maverick\",version=\"4\",modifier=\"instruct\")",
       "category": "b:improvement",
       "reason": "family-preserving de-noise/enrich: only phantom losses and/or enrichments, no ID-present field lost"
     },
@@ -7291,11 +7309,38 @@
       "reason": "strict enrichment — only previously-empty field(s) populated"
     },
     {
+      "provider": "kilo",
+      "id": "meta-llama/llama-4-maverick",
+      "raw_family": "",
+      "before": "(family=\"llama\",variant=\"\",version=\"4\",modifier=\"\")",
+      "after": "(family=\"llama\",variant=\"maverick\",version=\"4\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "strict enrichment — only previously-empty field(s) populated"
+    },
+    {
+      "provider": "nano-gpt",
+      "id": "meta-llama/llama-4-maverick",
+      "raw_family": "llama",
+      "before": "(family=\"llama\",variant=\"\",version=\"4\",modifier=\"\")",
+      "after": "(family=\"llama\",variant=\"maverick\",version=\"4\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "strict enrichment — only previously-empty field(s) populated"
+    },
+    {
+      "provider": "openrouter",
+      "id": "meta-llama/llama-4-maverick",
+      "raw_family": "llama",
+      "before": "(family=\"llama\",variant=\"\",version=\"4\",modifier=\"\")",
+      "after": "(family=\"llama\",variant=\"maverick\",version=\"4\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "strict enrichment — only previously-empty field(s) populated"
+    },
+    {
       "provider": "groq",
       "id": "meta-llama/llama-4-maverick-17b-128e-instruct",
       "raw_family": "llama",
       "before": "(family=\"llama\",variant=\"instruct\",version=\"4\",modifier=\"\")",
-      "after": "(family=\"llama\",variant=\"\",version=\"4\",modifier=\"instruct\")",
+      "after": "(family=\"llama\",variant=\"maverick\",version=\"4\",modifier=\"instruct\")",
       "category": "b:improvement",
       "reason": "family-preserving de-noise/enrich: only phantom losses and/or enrichments, no ID-present field lost"
     },
@@ -7304,7 +7349,7 @@
       "id": "meta-llama/llama-4-maverick-17b-128e-instruct-fp8",
       "raw_family": "",
       "before": "(family=\"llama\",variant=\"instruct\",version=\"4\",modifier=\"\")",
-      "after": "(family=\"llama\",variant=\"\",version=\"4\",modifier=\"instruct\")",
+      "after": "(family=\"llama\",variant=\"maverick\",version=\"4\",modifier=\"instruct\")",
       "category": "b:improvement",
       "reason": "family-preserving de-noise/enrich: only phantom losses and/or enrichments, no ID-present field lost"
     },
@@ -7367,7 +7412,7 @@
       "id": "meta.llama4-maverick-17b-instruct-v1:0",
       "raw_family": "llama",
       "before": "(family=\"llama\",variant=\"instruct\",version=\"\",modifier=\"\")",
-      "after": "(family=\"llama\",variant=\"\",version=\"4\",modifier=\"instruct\")",
+      "after": "(family=\"llama\",variant=\"maverick\",version=\"4\",modifier=\"instruct\")",
       "category": "b:improvement",
       "reason": "family-preserving de-noise/enrich: only phantom losses and/or enrichments, no ID-present field lost"
     },
@@ -7489,11 +7534,20 @@
       "reason": "family-preserving de-noise/enrich: only phantom losses and/or enrichments, no ID-present field lost"
     },
     {
+      "provider": "vercel",
+      "id": "meta/llama-4-maverick",
+      "raw_family": "llama",
+      "before": "(family=\"llama\",variant=\"\",version=\"4\",modifier=\"\")",
+      "after": "(family=\"llama\",variant=\"maverick\",version=\"4\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "strict enrichment — only previously-empty field(s) populated"
+    },
+    {
       "provider": "nvidia",
       "id": "meta/llama-4-maverick-17b-128e-instruct",
       "raw_family": "",
       "before": "(family=\"llama-4-maverick-17b-128e\",variant=\"instruct\",version=\"4\",modifier=\"\")",
-      "after": "(family=\"llama\",variant=\"\",version=\"4\",modifier=\"instruct\")",
+      "after": "(family=\"llama\",variant=\"maverick\",version=\"4\",modifier=\"instruct\")",
       "category": "b:improvement",
       "reason": "family over-capture reduced to short base — exact family-suffix→variant move (override semantics), OR before ∉ registry \u0026 after ∈ registry; no ID-present non-family field lost (hardened)"
     },
@@ -7502,7 +7556,7 @@
       "id": "meta/llama-4-maverick-17b-128e-instruct-fp8",
       "raw_family": "llama",
       "before": "(family=\"llama\",variant=\"instruct\",version=\"4\",modifier=\"\")",
-      "after": "(family=\"llama\",variant=\"\",version=\"4\",modifier=\"instruct\")",
+      "after": "(family=\"llama\",variant=\"maverick\",version=\"4\",modifier=\"instruct\")",
       "category": "b:improvement",
       "reason": "family-preserving de-noise/enrich: only phantom losses and/or enrichments, no ID-present field lost"
     },
@@ -7511,7 +7565,7 @@
       "id": "meta/llama-4-maverick-17b-128e-instruct-maas",
       "raw_family": "llama",
       "before": "(family=\"llama\",variant=\"instruct\",version=\"4\",modifier=\"\")",
-      "after": "(family=\"llama\",variant=\"\",version=\"4\",modifier=\"instruct\")",
+      "after": "(family=\"llama\",variant=\"maverick\",version=\"4\",modifier=\"instruct\")",
       "category": "b:improvement",
       "reason": "family-preserving de-noise/enrich: only phantom losses and/or enrichments, no ID-present field lost"
     },
@@ -10544,7 +10598,7 @@
       "id": "us.meta.llama4-maverick-17b-instruct-v1:0",
       "raw_family": "llama",
       "before": "(family=\"llama\",variant=\"instruct\",version=\"\",modifier=\"\")",
-      "after": "(family=\"llama\",variant=\"\",version=\"4\",modifier=\"instruct\")",
+      "after": "(family=\"llama\",variant=\"maverick\",version=\"4\",modifier=\"instruct\")",
       "category": "b:improvement",
       "reason": "family-preserving de-noise/enrich: only phantom losses and/or enrichments, no ID-present field lost"
     },

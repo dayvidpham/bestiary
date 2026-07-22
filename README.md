@@ -624,7 +624,7 @@ occasional manual step — see the **"models.dev snapshot refresh"** workflow in
 ## CLI
 
 ```
-bestiary <list|show|providers|entities|sources|sync> [flags]
+bestiary <list|show|providers|entities|series|sources|sync> [flags]
 ```
 
 ### Commands
@@ -661,6 +661,29 @@ they are discoverable.
 ```sh
 bestiary entities --output table   # summary table (ENTITY KEY / PROVIDERS / METADATA / BENCHMARKS)
 bestiary entities                  # full Entity objects, JSON
+```
+
+**series** — browse the computed **Series/Release** hierarchy above entity keys (offline;
+static registry only — it never reads the SQLite cache, and **rejects** `--db-path` with an
+actionable error rather than accepting a flag it cannot honour). With no argument it lists every versioned
+line — `Series{Family, Generation}` such as `llama-4` or `gemini-3.0` — with its release and
+entity counts. With a selector it details that line: each **Release** (a named member such as
+`scout`, `maverick`, `flash`, plus the un-named bare line) and the canonical entity keys under
+it. The selector reads as a **line rendering** (`llama-4`, exactly what the listing prints) or
+as a **family name** (`gemma`, selecting every generation of that family) — the union of both,
+case-folded, so a selector never hides a line you could reasonably have meant.
+
+Two refinements keep one line from splitting on a spelling accident: a bare generation `N`
+folds into `N.0` when the same family also spells `N.0` (so `gemini@3` and `gemini@3.0` share
+`gemini-3.0`, while `llama-4` — with no dotted sibling — keeps its bare generation), and the
+curated `parse/data/series.json` re-homes the few families whose line cannot be derived
+(`gemma4` → `gemma-4`). **Neither affects entity keys**: the hierarchy is computed *above*
+them and never feeds back into identity.
+
+```sh
+bestiary series --output table          # every line: SERIES / FAMILY / GENERATION / RELEASES / ENTITIES
+bestiary series llama-4 --output table  # that line's releases (bare, maverick, scout) + entity keys
+bestiary series gemma                   # every gemma generation, JSON
 ```
 
 **sources** — resolve an entity key and print its data-source provenance (one row per

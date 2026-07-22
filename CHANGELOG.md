@@ -36,6 +36,30 @@ for its **Go module tags** (`vX.Y.Z`).
   `ProviderInstance.Region`, and the `Entity.Regions` jurisdiction aggregate
   (e.g. Bedrock-served entities report `[unspecified, us, eu, global, au, jp]`),
   rendered in table/YAML/JSON. Not part of entity identity.
+- **Series/Release hierarchy** (`taxonomy.go`): a computed, read-only grouping above
+  entity keys. `Series{Family, Generation}` is the versioned line (`llama-4`,
+  `gemini-3.0`) and `Release{Series, Name}` is a named member of it (`scout`,
+  `maverick`, `flash`) — version above variant. Both are COMPUTED from key components
+  already on `EntityRef`, never stored and never fed back into keys: the hierarchy can
+  be re-shaped without re-keying anything. Read APIs: `SeriesAll()` (422 lines, sorted
+  by family then generation), `ReleasesOf(Series)`, `EntitiesOf(Release)`, plus
+  `SeriesOf(EntityRef)`/`ReleaseOf(EntityRef)` for the entity → line direction; all
+  orders are explicit sorts and all results are defensive copies. Two refinements keep
+  one line from splitting on a spelling accident: a bare-integer generation `N` folds
+  into `N.0` when the same family also spells `N.0` (so `gemini@3` and `gemini@3.0`
+  share `gemini-3.0`, while `llama-4` — which has no dotted sibling — keeps its bare
+  generation), and the curated `parse/data/series.json` re-homes the few families whose
+  line the computation cannot derive (`gemma4` and `gemma-4-31b-larkspur` onto
+  `gemma-4`, `gemini-exp` onto `gemini`). The curated file is graceful-degrade: missing
+  or malformed, the taxonomy falls back to pure computation. **Entity keys are
+  untouched by both.**
+- **`bestiary series` subcommand** (read-only, offline, static registry — it never reads
+  the SQLite cache and *rejects* `--db-path` with an actionable error rather than
+  accepting a flag it cannot honour): bare, it lists every line with its release and entity counts; with a
+  selector it details that line's releases and their entity keys. The selector reads as
+  a line rendering (`llama-4`) or a family name (`gemma`, every generation of it) —
+  the union of both, case-folded. Table and JSON output; no schema change, since this
+  renders Go relations rather than a new public JSON document type.
 - **Store v7**: `nomina` table (PK `(value, scheme, entity_key)`, FK →
   `data_sources` — enforcement regression-tested) + `region` column, with
   presence-guarded self-heal from v6 on both paths and zero data loss.
@@ -56,6 +80,29 @@ for its **Go module tags** (`vX.Y.Z`).
   information moves to the API: `ProvidersOf(ref EntityRef) []Provider` and
   `ProvidersOfModel(id ModelID) []Provider` return an entity's serving providers
   (sorted, de-duplicated). `ModelIDs()` → `EntityKeys()`.
+
+- **`llama-4 maverick` is a named release** (BREAKING for two entity keys). `maverick`
+  joins `scout` as a curated `llama` variant member, so the 23 maverick instance rows
+  key under `/maverick` as siblings of scout instead of collapsing into the
+  variant-less `llama@4` line. This is the epoch's ONE deliberate entity re-key; every
+  other key is byte-identical and the entity census is unchanged at 975 (a move, not a
+  mint). Migration:
+
+  | Old key (gone) | New key |
+  |---|---|
+  | `llama@4#17b-128e` | `llama/maverick@4#17b-128e` |
+  | `llama@4#17b-128e{instruct}` | `llama/maverick@4#17b-128e{instruct}` |
+
+  | Old constant (gone) | New constant |
+  |---|---|
+  | `Entity__Llama__Version_4__Size_17b_128e` | `Entity__Llama__Maverick__Version_4__Size_17b_128e` |
+  | `Entity__Llama__Version_4__Size_17b_128e__Instruct` | `Entity__Llama__Maverick__Version_4__Size_17b_128e__Instruct` |
+
+  The four spellings whose form puts the maverick token out of the mechanical member
+  scan's reach — the dotted Bedrock forms (`meta.llama4-maverick-…`,
+  `us.meta.llama4-maverick-…`) and the aggregator provider-prefixed forms
+  (`cerebras-…`, `groq-…`) — carry an exact-ID variant pin so all 23 rows stay in one
+  artifact rather than fragmenting across two keys.
 
 ### Removed
 - **`Model__*` constants + `ModelIDs()`** (BREAKING). Migration:

@@ -618,6 +618,67 @@ func sortedProviders(in []Provider) []Provider {
 	return out
 }
 
+// SeriesAll returns every distinct Series in the static registry — one entry per
+// (family, generation) line — sorted ascending by family, then by generation.
+// Lines with an empty generation (families whose entities carry no identity
+// version) are INCLUDED: an unversioned line is a real line, not a missing one.
+//
+// The result is COMPUTED from entity key components on first use and memoized
+// (see taxonomy.go); it never affects entity identity. The returned slice is a
+// fresh copy the caller may mutate.
+func SeriesAll() []Series {
+	idx := loadTaxonomyIndex()
+	out := make([]Series, len(idx.series))
+	copy(out, idx.series)
+	return out
+}
+
+// ReleasesOf returns the Releases of the given Series — its named members
+// (llama-4's scout and maverick; gemini-3.0's flash, flash-lite and pro) plus the
+// un-named bare-line release when the line has entities with no variant — sorted
+// ascending by release name (the empty name sorts first).
+//
+// A Series with no entities in the static registry yields nil (no error — an
+// unknown line simply has no releases), so a caller distinguishes "unknown line"
+// from "known line, no releases" by the line's presence in SeriesAll, not by this
+// result. The returned slice is a fresh copy.
+func ReleasesOf(s Series) []Release {
+	idx := loadTaxonomyIndex()
+	rs := idx.releases[seriesKey(s)]
+	if len(rs) == 0 {
+		return nil
+	}
+	out := make([]Release, len(rs))
+	copy(out, rs)
+	return out
+}
+
+// EntitiesOf returns the entities that belong to the given Release, ordered
+// ascending by canonical entity key (an EXPLICIT sort, so the sequence is
+// identical on every run — the sized siblings of one release, e.g.
+// llama/maverick@4#17b-128e and its {instruct} sibling, always come back in the
+// same order).
+//
+// A Release with no entities yields nil. Each returned Entity is a DEFENSIVE DEEP
+// COPY, exactly as with Entities() — mutating a result can never corrupt the
+// registry or alias another entity.
+func EntitiesOf(r Release) []Entity {
+	idx := loadTaxonomyIndex()
+	keys := idx.members[releaseKey(r)]
+	if len(keys) == 0 {
+		return nil
+	}
+	out := make([]Entity, 0, len(keys))
+	for _, k := range keys {
+		e, ok := entityIndexLookup(k)
+		if !ok {
+			continue
+		}
+		out = append(out, cloneEntity(e))
+	}
+	return out
+}
+
 // LookupModelByProvider searches the static registry for a model matching both
 // the given provider and name (model ID string). It returns the model and true
 // if found, or the zero value and false otherwise.

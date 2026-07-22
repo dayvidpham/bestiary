@@ -394,11 +394,13 @@ func TestEntityRef_NoMigrationDrift(t *testing.T) {
 // literal-substring leg ("llama4"/"llama-4") — must key its FULL expert-shape size:
 // scout = 17b-16e, maverick = 17b-128e; never a bare 17b and never unsized.
 //
-// Neither leg alone is sufficient, which is the whole point: the maverick spellings
-// key llama@4 with an EMPTY variant ("maverick" is not a curated family member), so
-// they ESCAPE the (variant scout|maverick) decomposition leg and are reached only by
-// the substring sweep plus their explicit curated pins. A purely-decomposition census
-// would silently leave those bare #17b — this guard fails if that regresses. (The
+// Neither leg alone is sufficient, which is the whole point: a spelling that glues the
+// generation into the family token ("meta.llama4-maverick-…") or leads with a provider
+// token ("groq-llama-4-maverick-…") puts the member name out of the mechanical scan's
+// reach, so it decomposes with an EMPTY variant unless an exact-ID pin supplies one —
+// escaping the (variant scout|maverick) decomposition leg and reachable only by the
+// substring sweep plus those curated pins. A purely-decomposition census would silently
+// leave such an ID bare #17b — this guard fails if that regresses. (The
 // version-less scout/maverick spellings now carry a curated @4 version pin, so they no
 // longer split on version presence; the size pins guarded here are independent of that
 // and unchanged.)
@@ -439,9 +441,9 @@ func TestParamSizePins_Llama4CensusBothLegs(t *testing.T) {
 // TestLlama4VersionPins_UnifiedEntityMembership directly asserts that every
 // version-less llama-4 scout/maverick spelling carrying a curated @4 version pin
 // (the exact-ID overrides in parse.go) lands INSIDE the unified @4 entity —
-// llama/scout@4#17b-16e{instruct} for scout, llama@4#17b-128e{instruct} for
-// maverick (maverick is not a curated llama variant member, so its official
-// entity carries no /maverick segment). The sized-entity census literal fences
+// llama/scout@4#17b-16e{instruct} for scout, llama/maverick@4#17b-128e{instruct}
+// for maverick (both are curated llama variant members, so both keep their name
+// in the key). The sized-entity census literal fences
 // this only indirectly (a dropped pin shifts a count somewhere); this test names
 // the exact spelling that regressed. Membership is checked by EXACT instance-ID
 // match, not substring, because the dotted Bedrock spellings nest
