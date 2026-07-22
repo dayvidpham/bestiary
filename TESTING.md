@@ -127,7 +127,7 @@ func Test<Name>(t *testing.T) {
 
 ## The corpus census, and what is deliberately still inline
 
-At the close of the naming-layer epoch the repository carries **102 corpora**:
+At the close of the naming-layer epoch the repository carries **103 corpora**:
 
 | Area | Corpora | What lives there |
 |---|---|---|
@@ -138,7 +138,7 @@ At the close of the naming-layer epoch the repository carries **102 corpora**:
 | `testdata/stage/` | 4 | the ReleaseStage axis |
 | `testdata/midid/` | 3 | the internal mid-ID token engine |
 | `testdata/metadata/` | 3 | the models.dev ingest detectors (status / link type / reasoning-option kind) |
-| `testdata/resolve/` | 2 | the internal group-key helpers |
+| `testdata/resolve/` | 3 | the internal group-key helpers, and the canonical-provider preference on provider-unqualified exact-ID lookups |
 | `testdata/vram/` | 2 | the VRAM arithmetic anchors |
 | `cmd/bestiary-gen/testdata/gen/` | 9 | the identifier builders (`slugToIdentifier`, `providerConstName`, `styleSegment`, `entityConstName`, `splitComma`) |
 | `cmd/bestiary-ollama/testdata/ollama/` | 1 | Ollama tag normalization |
@@ -149,7 +149,8 @@ would be a category error:
 
 - **census/property sweeps** over the built catalog (`StaticModels()` / `Entities()`
   walks, the injectivity guard, the empty-seed suppression sweep, the parse-failure
-  audits, `TestHostSplit_EntityParity`, `TestVersionPresenceConsistency_ClassA`);
+  audits, `TestHostSplit_EntityParity`, `TestVersionPresenceConsistency_ClassA`,
+  `TestResolve_CanonicalProviderPreference_CatalogSweep`);
 - **codegen determinism machinery** (`TestCodegen_Reproducible_ByteIdentical`,
   `TestCodegen_UpToDate`, the golden-excerpt fences, `TestDecompositionSnapshot`);
 - **store migration fixtures** (`store_migration_test.go`, `store_v5/v6/v7_test.go`) —

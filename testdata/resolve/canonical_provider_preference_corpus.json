@@ -1,0 +1,174 @@
+{
+  "_comment": "Provider-unqualified exact-ID lookups through Resolve (peasant/SchemeCanonical). Each input is a real catalog model ID hosted by two or more providers; each expected records WHICH provider heads the returned slice — the representative a single-model consumer such as `bestiary show` renders — and whether the canonical-provider preference collapsed the slice to that provider alone. sole=true means the family carries a curated CanonicalProvider() that hosts this exact ID, so the preference fires and the rehosts drop out. sole=false is a fall-through control: either the family has no curated canonical, or its canonical does not host this ID, so the FULL match set is returned and the head is simply the alphabetically-first provider (the static registry is sorted by (Provider, ID)) — that value is pinned as an observed catalog fact, not as a designed guarantee.",
+  "cases": [
+    {
+      "name": "claude-sonnet-exact-id-prefers-anthropic",
+      "input": "claude-sonnet-4-5-20250929",
+      "expected": { "provider": "anthropic", "sole": true },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "bug",
+        "ref": "Impl-UAT report: `bestiary show claude-sonnet-4-5-20250929` rendered Provider 302ai instead of anthropic"
+      },
+      "mutation": {
+        "description": "the reported defect input verbatim: an exact raw ID, provider-unqualified, whose family's curated canonical publisher also hosts it"
+      }
+    },
+    {
+      "name": "claude-opus-exact-id-prefers-anthropic",
+      "input": "claude-opus-4-1-20250805",
+      "expected": { "provider": "anthropic", "sole": true },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "bug",
+        "ref": "the model pinned by the pre-existing exact-ID false-ambiguity regression test, whose provider set previously came back 302ai-first"
+      },
+      "mutation": {
+        "description": "a second claude ID, dated and variant-bearing, guarding against a fix that special-cases one ID"
+      }
+    },
+    {
+      "name": "gemini-exact-id-prefers-google",
+      "input": "gemini-2.5-pro",
+      "expected": { "provider": "google", "sole": true },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "manual",
+        "ref": "catalog ID gemini-2.5-pro, hosted by google plus 14 rehosts"
+      },
+      "mutation": {
+        "description": "family gemini — the curated google mapping, on the widest rehost set in the catalog"
+      }
+    },
+    {
+      "name": "gemma-exact-id-prefers-google",
+      "input": "gemma-4-31b-it",
+      "expected": { "provider": "google", "sole": true },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "manual",
+        "ref": "catalog ID gemma-4-31b-it, hosted by google plus crof/kenari/llmgateway"
+      },
+      "mutation": {
+        "description": "family gemma — the second family sharing the google canonical mapping"
+      }
+    },
+    {
+      "name": "gpt-exact-id-prefers-openai",
+      "input": "gpt-4.1",
+      "expected": { "provider": "openai", "sole": true },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "manual",
+        "ref": "catalog ID gpt-4.1, hosted by openai plus 11 rehosts including azure"
+      },
+      "mutation": {
+        "description": "family gpt — the curated openai mapping, over a set whose alphabetical head (302ai) is a rehost"
+      }
+    },
+    {
+      "name": "mistral-exact-id-prefers-mistral",
+      "input": "mistral-large-2512",
+      "expected": { "provider": "mistral", "sole": true },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "manual",
+        "ref": "catalog ID mistral-large-2512, hosted by mistral plus 302ai/cortecs/llmgateway"
+      },
+      "mutation": {
+        "description": "family mistral — the case where publisher and provider name coincide"
+      }
+    },
+    {
+      "name": "devstral-exact-id-prefers-mistral",
+      "input": "devstral-2512",
+      "expected": { "provider": "mistral", "sole": true },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "manual",
+        "ref": "catalog ID devstral-2512, hosted by mistral plus cortecs/llmgateway"
+      },
+      "mutation": {
+        "description": "family devstral — a family whose name does NOT match its curated canonical provider"
+      }
+    },
+    {
+      "name": "deepseek-exact-id-prefers-deepseek",
+      "input": "deepseek-chat",
+      "expected": { "provider": "deepseek", "sole": true },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "manual",
+        "ref": "catalog ID deepseek-chat, hosted by deepseek plus 302ai/nano-gpt"
+      },
+      "mutation": {
+        "description": "family deepseek — a bare, undated, unversioned ID"
+      }
+    },
+    {
+      "name": "qwen-exact-id-prefers-alibaba",
+      "input": "qwen-plus",
+      "expected": { "provider": "alibaba", "sole": true },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "manual",
+        "ref": "catalog ID qwen-plus, hosted by alibaba plus alibaba-cn/302ai/llmgateway/nano-gpt"
+      },
+      "mutation": {
+        "description": "family qwen — the canonical alibaba must win over the near-miss regional sibling alibaba-cn"
+      }
+    },
+    {
+      "name": "codestral-canonical-absent-falls-through",
+      "input": "codestral-2501",
+      "expected": { "provider": "azure", "sole": false },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "catalog ID codestral-2501, hosted only by azure and azure-cognitive-services — mistral does not serve it"
+      },
+      "mutation": {
+        "description": "control: the family HAS a curated canonical (mistral) but it is absent from the match set, so the full set must be returned unchanged"
+      }
+    },
+    {
+      "name": "llama-canonical-absent-falls-through",
+      "input": "llama-3.3-70b-instruct",
+      "expected": { "provider": "azure", "sole": false },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "catalog ID llama-3.3-70b-instruct, hosted by 8 providers; the llama canonical is the synthetic `local` provider, which serves nothing in the built catalog"
+      },
+      "mutation": {
+        "description": "control: family llama's curated canonical can never be present, so every llama exact-ID lookup falls through"
+      }
+    },
+    {
+      "name": "qwen-hf-style-id-canonical-absent-falls-through",
+      "input": "Qwen/Qwen3-32B",
+      "expected": { "provider": "abacus", "sole": false },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "catalog ID Qwen/Qwen3-32B, hosted by 7 inference providers; alibaba does not serve the open-weights HF-style ID"
+      },
+      "mutation": {
+        "description": "control: same family as the qwen-plus positive case, but the canonical is absent for THIS id — the preference is per-match-set, not per-family"
+      }
+    },
+    {
+      "name": "minimax-no-curated-canonical-falls-through",
+      "input": "MiniMax-M1",
+      "expected": { "provider": "302ai", "sole": false },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "catalog ID MiniMax-M1, hosted by 302ai/nano-gpt/qiniu-ai; family minimax has no CanonicalProvider mapping"
+      },
+      "mutation": {
+        "description": "negative control: a family with NO curated canonical keeps the full match set and the deterministic alphabetically-first head"
+      }
+    }
+  ]
+}
