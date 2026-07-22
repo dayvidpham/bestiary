@@ -1,10 +1,10 @@
 {
   "total_records": 4979,
-  "changed_count": 1280,
+  "changed_count": 1285,
   "cat_a_divergence_fix_count": 326,
   "cat_b_improvement_count": 940,
   "cat_c_unexpected_regression_count": 0,
-  "justified_exception_count": 14,
+  "justified_exception_count": 19,
   "id_tuple4_incl_modifier_divergence_frozen_before": 81,
   "id_tuple4_incl_modifier_divergence_current_after": 13,
   "divergence_metric": "4-tuple INCL Modifier (Family,Variant,Version,Modifier); before=frozen baseline, after=current snapshot. DISTINCT from the authoritative cross-provider divergenceExact gate (3-tuple, EXCL Modifier, current snapshot, =0).",
@@ -11414,6 +11414,15 @@
     },
     {
       "provider": "nano-gpt",
+      "id": "Qwen2.5-32B-EVA-v0.2",
+      "raw_family": "",
+      "before": "(family=\"qwen2.5-32b-eva\",variant=\"v0.2\",version=\"\",modifier=\"\")",
+      "after": "(family=\"eva\",variant=\"\",version=\"0.2\",modifier=\"\")",
+      "category": "justified-exception",
+      "reason": "JUSTIFIED: USER-RATIFIED, dracarys precedent: EVA-UNIT-01's roleplay finetune is named after the model it was trained FROM, so the leading-token pipeline swallowed the whole base name as a compound family ('qwen2.5-32b-eva') and read EVA's own release as a variant ('v0.2'). The curated exact-id override splits the two identities: family 'eva' with version '0.2' (EVA's release line), the 32B size still read off the id, and the base relationship carried as an explicit DerivationFinetune edge to qwen@2.5#32b in lineage.json — so the derivation is stated rather than smuggled into a family token. Single-provider (nano-gpt) exact id; no cross-provider divergence introduced, no token lost."
+    },
+    {
+      "provider": "nano-gpt",
       "id": "abacusai/Dracarys-72B-Instruct",
       "raw_family": "llama",
       "before": "(family=\"llama\",variant=\"instruct\",version=\"\",modifier=\"\")",
@@ -11429,6 +11438,33 @@
       "after": "(family=\"dracarys\",variant=\"\",version=\"\",modifier=\"instruct\")",
       "category": "justified-exception",
       "reason": "JUSTIFIED: USER-RATIFIED non-defect (GH#11 model-lineage): dracarys is a llama fine-tune with its own lineage, ∉ allFamilies; 'instruct'→Modifier re-surfaces (no token loss). Family-root precision is a taxonomy call, not a regression."
+    },
+    {
+      "provider": "cortecs",
+      "id": "claude-opus4-5",
+      "raw_family": "claude-opus",
+      "before": "(family=\"claude\",variant=\"opus\",version=\"5\",modifier=\"\")",
+      "after": "(family=\"claude\",variant=\"opus\",version=\"4.5\",modifier=\"\")",
+      "category": "justified-exception",
+      "reason": "JUSTIFIED: USER-RATIFIED cortecs glued-version correction: cortecs glues the major version onto the VARIANT token, so claude-opus4-5 is Opus 4.5 - not an Opus 5. Every other provider spells this model claude-opus-4-5, and cortecs' own release date for the row (2025-11-24) is the real 4.5 launch date, so the reading is evidence-backed rather than inferred. Left alone the mis-read minted a PHANTOM claude/opus@5 entity holding this single cortecs instance while stranding it away from the real claude/opus@4.5 entity that carries every other provider; the pin merges it back. Curated pins rather than a general glued-token rule: a catalog sweep found cortecs is the only emitter of the variant-glued shape (the other 30 \u003cletters\u003e\u003cdigit\u003e-\u003cdigit\u003e ids glue the digit onto the FAMILY, a different reading a variant-targeted rule must not touch)."
+    },
+    {
+      "provider": "cortecs",
+      "id": "claude-opus4-6",
+      "raw_family": "claude-opus",
+      "before": "(family=\"claude\",variant=\"opus\",version=\"6\",modifier=\"\")",
+      "after": "(family=\"claude\",variant=\"opus\",version=\"4.6\",modifier=\"\")",
+      "category": "justified-exception",
+      "reason": "JUSTIFIED: USER-RATIFIED cortecs glued-version correction: cortecs glues the major version onto the VARIANT token, so claude-opus4-6 is Opus 4.6 - not an Opus 6. Every other provider spells this model claude-opus-4-6, and cortecs' own release date for the row (2026-02-05) is the real 4.6 launch date, so the reading is evidence-backed rather than inferred. Left alone the mis-read minted a PHANTOM claude/opus@6 entity holding this single cortecs instance while stranding it away from the real claude/opus@4.6 entity that carries every other provider; the pin merges it back. Curated pins rather than a general glued-token rule: a catalog sweep found cortecs is the only emitter of the variant-glued shape (the other 30 \u003cletters\u003e\u003cdigit\u003e-\u003cdigit\u003e ids glue the digit onto the FAMILY, a different reading a variant-targeted rule must not touch)."
+    },
+    {
+      "provider": "cortecs",
+      "id": "claude-opus4-7",
+      "raw_family": "claude-opus",
+      "before": "(family=\"claude\",variant=\"opus\",version=\"7\",modifier=\"\")",
+      "after": "(family=\"claude\",variant=\"opus\",version=\"4.7\",modifier=\"\")",
+      "category": "justified-exception",
+      "reason": "JUSTIFIED: USER-RATIFIED cortecs glued-version correction: cortecs glues the major version onto the VARIANT token, so claude-opus4-7 is Opus 4.7 - not an Opus 7. Every other provider spells this model claude-opus-4-7, and cortecs' own release date for the row (2026-04-16) is the real 4.7 launch date, so the reading is evidence-backed rather than inferred. Left alone the mis-read minted a PHANTOM claude/opus@7 entity holding this single cortecs instance while stranding it away from the real claude/opus@4.7 entity that carries every other provider; the pin merges it back. Curated pins rather than a general glued-token rule: a catalog sweep found cortecs is the only emitter of the variant-glued shape (the other 30 \u003cletters\u003e\u003cdigit\u003e-\u003cdigit\u003e ids glue the digit onto the FAMILY, a different reading a variant-targeted rule must not touch)."
     },
     {
       "provider": "nano-gpt",
@@ -11492,6 +11528,15 @@
       "after": "(family=\"hy\",variant=\"free\",version=\"3\",modifier=\"\")",
       "category": "justified-exception",
       "reason": "JUSTIFIED: New in the July snapshot (opencode/hy3-preview-free). opencode labels this Tencent model raw_family='hy3-free', gluing the generation digit to the family. The ID-driven path correctly splits 'hy3' into family='hy' + version='3', which CONVERGES it onto the canonical Tencent Hy family — every other provider serves the same model as raw_family='Hy' → hy/version=3 (e.g. crossmodel/zenmux 'tencent/hy3-preview'). The 'free' tier stays the variant. So the change folds an over-captured 'hy3' family root back to the real 'hy' family rather than fracturing it; single-provider (opencode) exact id, no cross-provider divergence introduced."
+    },
+    {
+      "provider": "vercel",
+      "id": "interfaze/interfaze-beta",
+      "raw_family": "",
+      "before": "(family=\"interfaze\",variant=\"beta\",version=\"\",modifier=\"\")",
+      "after": "(family=\"interfaze\",variant=\"\",version=\"\",modifier=\"\")",
+      "category": "justified-exception",
+      "reason": "JUSTIFIED: USER-RATIFIED beta-always-stage ruling: beta is a RELEASE STAGE and never part of an identity. vercel serves this row with an empty raw_family, so the leading-token pipeline promoted the trailing 'beta' into the VARIANT slot — while the same row already carried Stage=beta, asserting beta on both axes and splitting one artifact line into a beta and a (future) non-beta entity. The curated exact-id pin lands it on the bare interfaze family; Stage is unaffected because DetectStageFromID scans the id independently of the key (detect-without-strip, the grok precedent). This transition REVERSES an earlier documented exception that deliberately kept beta in this key while unifying only the grok line; the ruling collapsed that contrast, and ValidateNoBetaInIdentity now enforces the rule at bake time so no future decomposition can reintroduce it. Single-provider (vercel) exact id; a rename, not a merge — no entity is created or destroyed."
     },
     {
       "provider": "nvidia",

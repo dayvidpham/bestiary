@@ -680,10 +680,27 @@ curated `parse/data/series.json` re-homes the few families whose line cannot be 
 (`gemma4` → `gemma-4`). **Neither affects entity keys**: the hierarchy is computed *above*
 them and never feeds back into identity.
 
+`--provider`, `--quant` and `--status` narrow the **entity list inside each release**. Each is
+a per-entity predicate satisfied by the entity's *instances*: `--provider` keeps entities with
+an instance served by that provider, `--quant` those with an instance carrying a matching
+`QuantVRAM` row, `--status` those with an instance whose model has that release status.
+Combined filters must be satisfied by **one instance at once** — `--provider=X --quant=Y`
+means "X serves it at Y", not "X serves it *and* somebody serves it at Y". The drops
+**cascade**: an emptied release is omitted, an emptied line is omitted from both views, and
+the listing's counts are post-filter, so `series --provider X` lists exactly the lines and
+counts `series <line> --provider X` will then render. An unknown `--quant` or `--status` value
+is rejected with an actionable error rather than silently matching nothing, and a selector
+that names a real line the filters empty is its own actionable error (not "not found" — the
+line exists; the filter is what matched nothing).
+
 ```sh
-bestiary series --output table          # every line: SERIES / FAMILY / GENERATION / RELEASES / ENTITIES
-bestiary series llama-4 --output table  # that line's releases (bare, maverick, scout) + entity keys
-bestiary series gemma                   # every gemma generation, JSON
+bestiary series --output table            # every line: SERIES / FAMILY / GENERATION / RELEASES / ENTITIES
+bestiary series llama-4 --output table    # that line's releases (bare, maverick, scout) + entity keys
+bestiary series gemma                     # every gemma generation, JSON
+bestiary series --provider cohere         # only lines cohere serves, with post-filter counts
+bestiary series --quant q4_k_m            # only lines with a q4_k_m-quantized instance
+bestiary series --status beta             # only lines with a beta-status instance
+bestiary series llama-3.3 --quant q4_k_m  # detail view, entity list narrowed the same way
 ```
 
 **sources** — resolve an entity key and print its data-source provenance (one row per

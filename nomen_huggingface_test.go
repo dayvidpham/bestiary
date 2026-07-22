@@ -8,16 +8,37 @@ import (
 )
 
 // hfSeedClaims mirrors the curated huggingface claims in parse/data/nomen_claims.json:
-// the Hub org/repo path an open-weight entity's weights live at, and the entity key it
-// names. Each repo path is a real raw model ID present in the committed catalog.
+// the Hub org/repo path an open-weight entity's weights live at, the entity key it
+// names, and the claimant SourceURL attesting it. Each repo path is a real raw model ID
+// present in the committed catalog.
+//
+// sourceURL is pinned as an archive.org SNAPSHOT of the Hub model card, per the curated
+// claims archive policy (see Nomen.SourceURL and the claim file's _comment): a claim is
+// evidence of what a lab published, and a Hub model card is edited and deleted without
+// notice, so a live URL silently stops attesting the claim. These assertions were
+// previously "https://huggingface.co/" + repo — the live page — and were re-pinned when
+// the policy landed.
 var hfSeedClaims = []struct {
 	repo      string
 	entityKey string
+	sourceURL string
 }{
-	{"meta-llama/Llama-4-Scout-17B-16E-Instruct", "llama/scout@4#17b-16e{instruct}"},
-	{"meta-llama/Llama-3.3-70B-Instruct", "llama@3.3#70b{instruct}"},
-	{"Qwen/Qwen3-Coder-480B-A35B-Instruct", "qwen/coder@3#480b-a35b{instruct}"},
-	{"deepseek-ai/DeepSeek-V3.2", "deepseek/v3.2"},
+	{
+		"meta-llama/Llama-4-Scout-17B-16E-Instruct", "llama/scout@4#17b-16e{instruct}",
+		"https://web.archive.org/web/20260715030540/https://huggingface.co/meta-llama/Llama-4-Scout-17B-16E-Instruct",
+	},
+	{
+		"meta-llama/Llama-3.3-70B-Instruct", "llama@3.3#70b{instruct}",
+		"https://web.archive.org/web/20260718133241/https://huggingface.co/meta-llama/Llama-3.3-70B-Instruct",
+	},
+	{
+		"Qwen/Qwen3-Coder-480B-A35B-Instruct", "qwen/coder@3#480b-a35b{instruct}",
+		"https://web.archive.org/web/20260715051853/https://huggingface.co/Qwen/Qwen3-Coder-480B-A35B-Instruct",
+	},
+	{
+		"deepseek-ai/DeepSeek-V3.2", "deepseek/v3.2",
+		"https://web.archive.org/web/20260717140422/https://huggingface.co/deepseek-ai/DeepSeek-V3.2",
+	},
 }
 
 // TestNomenLookup_HuggingFaceSeeds is the end-to-end fence for the curated Hub claims:
@@ -47,8 +68,20 @@ func TestNomenLookup_HuggingFaceSeeds(t *testing.T) {
 			if n.Source != bestiary.DataSourceCurated {
 				t.Errorf("%q ingest source = %q, want the curated claim file", seed.repo, n.Source)
 			}
-			if want := "https://huggingface.co/" + seed.repo; n.SourceURL != want {
-				t.Errorf("%q claimant SourceURL = %q, want %q", seed.repo, n.SourceURL, want)
+			if n.SourceURL != seed.sourceURL {
+				t.Errorf("%q claimant SourceURL = %q, want the pinned archive snapshot %q", seed.repo, n.SourceURL, seed.sourceURL)
+			}
+			// The policy's own justification, asserted rather than assumed: the
+			// snapshot is durable AND self-describing — the live Hub model card the
+			// claim was read from is recoverable verbatim from the snapshot's tail,
+			// which is why no separate archive_url field exists.
+			if !strings.HasPrefix(n.SourceURL, archiveSnapshotPrefix) {
+				t.Errorf("%q claimant SourceURL = %q, want an %s snapshot: a curated claim must cite durable evidence, not a live page",
+					seed.repo, n.SourceURL, archiveSnapshotPrefix)
+			}
+			if live := "https://huggingface.co/" + seed.repo; !strings.HasSuffix(n.SourceURL, live) {
+				t.Errorf("%q snapshot %q does not end in the original claimant URL %q; the live address must stay recoverable from the value itself",
+					seed.repo, n.SourceURL, live)
 			}
 		}
 		if !found {

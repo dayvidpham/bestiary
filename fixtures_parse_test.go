@@ -200,6 +200,9 @@ var tier1StragglerConvergencesCorpusJSON []byte
 //go:embed testdata/parse/azure_serving_host_corpus.json
 var azureServingHostCorpusJSON []byte
 
+//go:embed testdata/parse/family_o_overcapture_corpus.json
+var familyOOverCaptureCorpusJSON []byte
+
 //go:embed testdata/parse/meta_llama_no_slash_corpus.json
 var metaLlamaNoSlashCorpusJSON []byte
 

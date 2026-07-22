@@ -43,8 +43,18 @@ func TestRun_ShowByEntity_GrokBetaNomen(t *testing.T) {
 			if n.Scheme != bestiary.NomenSchemeAlias {
 				t.Errorf("grok-beta scheme = %v, want alias", n.Scheme)
 			}
-			if !strings.Contains(n.SourceURL, "x.ai") {
-				t.Errorf("grok-beta SourceURL = %q, want the xAI claimant page", n.SourceURL)
+			// Pinned to the exact archive.org snapshot the curated claim cites, per
+			// the curated-claims archive policy (see Nomen.SourceURL). Re-pinned from
+			// a loose strings.Contains("x.ai") match — which the snapshot URL still
+			// satisfies — so the CLI surface asserts the policy rather than passing
+			// through it silently.
+			const grokBetaClaimantSnapshot = "https://web.archive.org/web/20260204041847/https://docs.x.ai/docs/models"
+			if n.SourceURL != grokBetaClaimantSnapshot {
+				t.Errorf("grok-beta SourceURL = %q, want the archived xAI claimant page %q", n.SourceURL, grokBetaClaimantSnapshot)
+			}
+			if !strings.HasSuffix(n.SourceURL, "https://docs.x.ai/docs/models") {
+				t.Errorf("grok-beta SourceURL = %q does not end in the original xAI claimant URL; the live "+
+					"address must stay recoverable from the snapshot", n.SourceURL)
 			}
 			if n.Source != bestiary.DataSourceCurated {
 				t.Errorf("grok-beta Source = %q, want curated (the honest ingest, distinct from the claimant)", n.Source)

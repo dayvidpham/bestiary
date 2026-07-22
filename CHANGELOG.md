@@ -22,7 +22,7 @@ for its **Go module tags** (`vX.Y.Z`).
   `NomenScheme` classifier (canonical / provider-id / huggingface / purl / alias)
   and ISO 1087 `AcceptabilityRating` statuses. Minted by one shared production
   function over the entity index plus the curated `parse/data/nomen_claims.json`
-  (3,768 nomina: 975 canonical Preferred, 2,792 provider-ID Admitted, 1 curated
+  (3,763 nomina: 971 canonical Preferred, 2,791 provider-ID Admitted, 1 curated
   alias claim). `Entity.Nomina()` and `NomenLookup()` (homonym-aware) are the
   read APIs; claim attribution keeps *who asserts* (`SourceURL`) distinct from
   *which ingest we read* (`Source` — curated claims attribute the new `curated`
@@ -41,7 +41,7 @@ for its **Go module tags** (`vX.Y.Z`).
   `gemini-3.0`) and `Release{Series, Name}` is a named member of it (`scout`,
   `maverick`, `flash`) — version above variant. Both are COMPUTED from key components
   already on `EntityRef`, never stored and never fed back into keys: the hierarchy can
-  be re-shaped without re-keying anything. Read APIs: `SeriesAll()` (422 lines, sorted
+  be re-shaped without re-keying anything. Read APIs: `SeriesAll()` (418 lines, sorted
   by family then generation), `ReleasesOf(Series)`, `EntitiesOf(Release)`, plus
   `SeriesOf(EntityRef)`/`ReleaseOf(EntityRef)` for the entity → line direction; all
   orders are explicit sorts and all results are defensive copies. Two refinements keep
@@ -90,7 +90,7 @@ for its **Go module tags** (`vX.Y.Z`).
   claimant `SourceURL` pointing at the Hub page, and all surface through
   `Entity.Nomina()` / `NomenLookup()`. This is the durable, **entity-level** external
   identifier: the Hub name holds regardless of which provider is serving the entity.
-  Minted census moves to 3,772 (975 canonical, 2,792 provider-ID, 4 huggingface, 1 alias).
+  Minted census moves to 3,767 (971 canonical, 2,791 provider-ID, 4 huggingface, 1 alias).
 
 ### Changed
 - **Designation layer activated**: `ModelRef.Designations()` now rates the
@@ -98,7 +98,7 @@ for its **Go module tags** (`vX.Y.Z`).
   prerequisite for truthful `skos:prefLabel`/`altLabel` export (GH#24 ask 3).
 - **Constants surface is now entity-level** (BREAKING). The ~5,650
   provider-flavored `Model__<Provider>__…` constants are replaced by one
-  provider-agnostic `Entity__*` constant per model entity (975), each valued by
+  provider-agnostic `Entity__*` constant per model entity (971), each valued by
   its canonical entity key (e.g.
   `Entity__Llama__Scout__Version_4__Size_17b_16e__Instruct = "llama/scout@4#17b-16e{instruct}"`).
   Names follow a word-sentinel grammar — `Entity__<Family>[__<Variant>][__Version_<v>][__Size_<s>][__<Mod>…]`,
@@ -113,8 +113,8 @@ for its **Go module tags** (`vX.Y.Z`).
   joins `scout` as a curated `llama` variant member, so the 23 maverick instance rows
   key under `/maverick` as siblings of scout instead of collapsing into the
   variant-less `llama@4` line. This is the epoch's ONE deliberate entity re-key; every
-  other key is byte-identical and the entity census is unchanged at 975 (a move, not a
-  mint). Migration:
+  other key is byte-identical and that re-key leaves the entity census unchanged (a move,
+  not a mint). Migration:
 
   | Old key (gone) | New key |
   |---|---|
@@ -151,6 +151,115 @@ for its **Go module tags** (`vX.Y.Z`).
   for entity-key lookups; use `LookupModel(id)` for raw-ID instance lookups.
 
 ### Fixed
+- **beta is ALWAYS a release stage, never an identity.** The two axes were already
+  independent by construction (`DetectStageFromID` scans the ID *without* stripping), but one
+  row asserted beta on both: vercel's `interfaze/interfaze-beta` arrives with an empty
+  `raw_family`, so the leading-token pipeline promoted the trailing `beta` into the **variant**
+  slot, giving the key `interfaze/beta` while the same record carried `Stage=beta`. That is
+  contradictory rather than merely redundant — it splits a lab's beta and non-beta spellings of
+  one artifact into two entities that the stage axis simultaneously calls the same model at
+  different maturities. A curated exact-ID pin lands the row on the bare `interfaze` family and
+  its stage still reads beta. This **reverses an earlier documented exception** that kept beta
+  in that key while unifying only the grok line; the comment recording the old rule is
+  rewritten. New LOUD codegen guard `ValidateNoBetaInIdentity` aborts the bake if any future
+  decomposition puts beta into a key — either as the variant or as an identity modifier —
+  naming the offending entity key and the model IDs that landed on it. **No allowlist**: the
+  one exception was resolved by curation rather than exempted, and an allowlist would let the
+  next one accumulate silently. A rename, so the entity census does not move.
+- **`turbo` demoted to an attribute for kimi and minimax** (`parse/data/modifier_class.json`
+  `family_overrides`, the glm precedent). Turbo stays IDENTITY globally — `gpt-4-turbo` is a
+  different artifact from `gpt-4` — and is demoted only where curation established it names a
+  serving speed tier over the *same* artifact. The evidence differs in strength between the two
+  and the curated comment says so: **kimi** has repo-identity proof (moonshot serves
+  `kimi-k2-thinking` and `kimi-k2-thinking-turbo` from the identical Kimi-K2-Thinking Hub repo,
+  so the turbo spelling cannot denote different weights); **minimax** is graded *lower
+  confidence* — no repo-identity proof, just the rev-2 URL census resolving the M2.7 /
+  M2.5-highspeed serving names back to the plain repos plus lab-practice inference, flagged as
+  the first row to revisit. Three entities fold into their plain siblings
+  (`kimi/k@2{turbo}`, `kimi/k@2.6{turbo}`, `minimax/m@2.7{turbo}`); the turbo ID spellings
+  survive as **Admitted provider-ID nomina** on the merged entities — a demotion changes what
+  is *identity*, never what is *recorded*. Three `Entity__*` constants are removed and none is
+  renamed, since the surviving siblings' keys never changed.
+- **The z8w3 suppression seed still ships EMPTY, and its collision guard proved itself.** The
+  first entry attempted (kimi turbo) was rejected at codegen: suppressing the modifier would
+  have made `kimi/k@2{turbo}` and the pre-existing `kimi/k@2` both prefer the naming
+  `kimi/k@2`, and the guard's own message diagnosed it — *"the modifier is evidently NOT
+  redundant — it distinguishes them"*. That is what routed the change to a modifier-class
+  demotion instead. The seed's optional `source_url` also picks up the curated-claims
+  **archive policy**: present-but-live is now a loud load-time rejection, while a
+  missing/corrupt seed still degrades to "no suppression".
+- **`series` filter flags are real** (`--provider`, `--quant`, `--status`). They parse on the
+  shared flagset for every subcommand, so `bestiary series --provider cohere` was accepted
+  and then silently ignored — the worst shape for a filter, since the output looks like an
+  answer. They now narrow the **entity list inside each release**, as per-entity predicates
+  satisfied by an entity's *instances*: an instance from that provider, an instance carrying
+  a matching `QuantVRAM` row, an instance whose model has that release status. Combined
+  filters must be satisfied by **one instance simultaneously** (`--provider=X --quant=Y` means
+  "X serves it at Y", never "X serves it *and* somebody serves it at Y" — the per-dimension
+  reading can report a pairing that does not exist). The drops **cascade**: an emptied release
+  is omitted, an emptied line is omitted from both views, and the listing's counts are
+  post-filter, so the listing and the detail view can never disagree. An unknown `--quant` or
+  `--status` is rejected with an actionable error before any view is computed (the
+  `parseQuantFilter` precedent — never a silent empty result), and a selector naming a real
+  line the filters empty gets its own actionable error rather than `ErrNotFound`, because the
+  selector was good and the filter was what matched nothing. `--db-path` stays **rejected**:
+  the view is still registry-static.
+- **Canonical-provider preference applies to exact-ID lookups** (`resolve.go`). `bestiary show
+  claude-sonnet-4-5-20250929` reported Provider `302ai` for a first-party Anthropic model. The
+  preference carried an exact-ID carve-out justified as "those have deterministic
+  cross-provider identity" — but that conflated the *identity* an input resolves to (one
+  group, stable across runs, which the ID-based grouping already guarantees) with *which* of
+  the co-hosting providers becomes the representative a single-model consumer renders. The
+  latter was whichever row the static registry listed first: deterministic, but arbitrary.
+  Every provider-unqualified canonical-form lookup now prefers the family's curated
+  `CanonicalProvider()` when it is non-empty and present in the match set, else returns the
+  full match set unchanged. Provider-qualified forms (PURL namespace, `LookupModelByProvider`),
+  the multi-group `ErrAmbiguous` path, and `--format=raw` are untouched.
+- **Curated claim `SourceURL`s are archive.org snapshots**, enforced at load. A claim is
+  evidence of what a lab published, and the model cards and docs pages it cited are edited and
+  deleted without notice, so a live URL silently stops attesting the claim. All five curated
+  claims now cite a snapshot captured at claim time, and `parseNomenClaims` **rejects** a
+  non-archive `source_url` with an actionable error. No new field: the snapshot embeds the
+  original URL verbatim in its tail, so the live address stays recoverable. The file-level
+  contract is unchanged — a missing or corrupt claims file still degrades gracefully to an
+  empty table (the `lineage.go` precedent); a claim that is *present* and violates the policy
+  is loud.
+- **Decomposition corrections** (curated exact-ID overrides, the dracarys precedent):
+  `Qwen2.5-32B-EVA-v0.2` was read as the compound family `qwen2.5-32b-eva` with EVA's own
+  release in the variant slot — it is now `eva@0.2#32b`, with the base relationship promoted
+  from a family token to an explicit `DerivationFinetune` edge to `qwen@2.5#32b`.
+  `command-a-plus-05-2026` was **split across two entities** by a provider disagreement
+  (cohere's `raw_family` mapped to variant `a`, dropping the `+`; nano-gpt's empty
+  `raw_family` captured `command-a-plus` whole) — both rows now converge on `command/a-plus`,
+  the sibling shape `command/r-plus` already had. cortecs glues the major version onto the
+  *variant* (`claude-opus4-5` is Opus 4.5, not an Opus 5), which minted four phantom
+  `claude/opus@5…@8` entities and stranded the cortecs instances away from the real ones;
+  four curated pins merge them back. Entity census 975 → 971 — the first two are renames, the
+  cortecs merge retires exactly the four phantoms.
+- **The family-`o` junk bucket is emptied, without evicting the real o-series.** vercel labels
+  a swathe of unrelated models with the upstream `raw_family` `"o"` — the OpenAI o-series
+  family — and bestiary faithfully preserved the attestation, so Alibaba's Wan video models,
+  OpenAI's TTS speech models, quiverai's arrow and Cohere's rerankers all decomposed into
+  family `o` and shared one entity with the genuine o-series. The mislabel is **upstream's,
+  not a mis-parse**: the vendored catalog carries `family="o"` verbatim on 17 vercel rows and
+  2 digitalocean ones, and the ID-driven path already decomposed every one of them correctly
+  when `raw_family` was empty — so the correction only stops a junk label from overriding an
+  answer that was already right. 13 over-captured rows re-home to `wan` / `tts` / `arrow` /
+  `rerank`, plus 2 vendor-leak rows (`voyage/rerank-2.5` and its lite sibling, labelled with
+  the **org** rather than a family — the leak the enforce ledger exists to correct). The
+  genuine o-series is untouched: `openai/o1` and `openai/o3` still resolve through the
+  OpenAI-line canonicalization to `gpt/o@N`, and digitalocean's `openai-o1` / `openai-o3` /
+  `openai-o3-mini` legitimately **keep** family `o`. Entity census 971 → 982: a bucket holding
+  many distinct models becomes many distinct entities, so this is the branch's one correction
+  that *adds* keys (15 new, 4 retired).
+- **Codegen emitted no `ParamSize` on a lineage parent** (`lineageLiteral`). The first curated
+  edge to name a sized parent exposed it: the runtime `lineage.json` path returned
+  `qwen@2.5#32b` while the baked `ModelInfo.Lineage` said `qwen@2.5` — the same curated edge
+  disagreeing with itself across the two paths.
+- **`Family.CanonicalProvider()` had no mapping for `command`**, so provider-unqualified
+  lookups of Cohere models fell through to the full match set. Cohere publishes the Command
+  line; the mapping now says so (base family plus the `command-a` / `command-r` compound
+  spellings the catalog emits).
 - **PURL render restricted to HuggingFace** (behavior change; the previous output was
   spec-invalid). `ModelRef.Format(SchemePURL)` used to interpolate the *serving provider*
   as the purl namespace — `pkg:huggingface/anthropic/claude-opus-4-1` for a model that has

@@ -290,17 +290,36 @@ func Resolve(input string, opts ...ResolveOption) ([]ModelRef, error) {
 
 	if len(byGroup) == 1 {
 		// All matches share the same group: cross-provider hosting.
-		// Fix #4 (canonical-provider preference): when resolving in canonical form
-		// (peasant/SchemeCanonical) and not an exact-ID lookup, prefer the canonical
+		//
+		// Fix #4 (canonical-provider preference): a provider-UNQUALIFIED canonical-form
+		// lookup that collapses to a single group prefers the family's curated
 		// originating provider over rehosts.
 		//
 		// Applies when:
 		//   1. Scheme is SchemeCanonical (canonical-form input, not raw/HF/PURL)
-		//   2. Not an exact-ID lookup (exactIDInput = false), since those have
-		//      deterministic cross-provider identity
-		//   3. CanonicalProvider() returns a non-empty Provider
-		//   4. That Provider is present in the match set
-		if scheme == SchemeCanonical && !exactIDInput && len(matches) > 0 {
+		//   2. CanonicalProvider() returns a non-empty Provider
+		//   3. That Provider is present in the match set
+		// Otherwise the full match set is returned unchanged, exactly as before.
+		//
+		// The preference deliberately covers exact-ID inputs too. The earlier
+		// carve-out excluded them on the rationale that an exact ID already has
+		// "deterministic cross-provider identity" — but that conflated two different
+		// things. Determinism is about the *identity* the input resolves to (one
+		// group, stable across runs), which the ID-based grouping above already
+		// guarantees; it says nothing about WHICH of the co-hosting providers is the
+		// representative a single-model consumer (e.g. `bestiary show`) renders. With
+		// the carve-out, that representative was whichever row the static registry
+		// listed first — i.e. the alphabetically-first provider, so an exact-ID lookup
+		// of a first-party Anthropic model reported a rehost as its provider. Deterministic,
+		// but arbitrary and wrong. Preferring the curated publisher is both.
+		//
+		// Provider-QUALIFIED inputs are unaffected. A PURL namespace is applied earlier
+		// as a providerHint filter, and SchemePURL is not SchemeCanonical, so the
+		// preference never sees it; LookupModelByProvider does not route through
+		// Resolve at all. (A HuggingFace-style "<namespace>/<id>" prefix is STRIPPED
+		// rather than filtered — long-standing behavior this change does not touch —
+		// so those inputs land on SchemeHuggingFace and likewise skip the preference.)
+		if scheme == SchemeCanonical && len(matches) > 0 {
 			canonicalProv := matches[0].Family.CanonicalProvider()
 			if canonicalProv != "" {
 				filtered := filterByProvider(matches, canonicalProv)

@@ -4042,6 +4042,84 @@ var idFamilyOverrides = map[string]idFamilyOverrideEntry{
 	"abacusai/dracarys-72b-instruct":           {family: "dracarys"},
 	"gryphe/mythomax-l2-13b":                   {family: "mythomax"},
 
+	// EVA-Qwen2.5-32B-v0.2 follows the dracarys precedent: a finetune whose name
+	// leads with its BASE model, so the leading-token pipeline over-captures the whole
+	// prefix as a compound family ("qwen2.5-32b-eva") and reads the finetune's own
+	// release as a variant ("v0.2"). EVA is the artifact the lab published; Qwen2.5-32B
+	// is what it was trained FROM. Splitting them puts the derivation where it belongs:
+	// family "eva" with version "0.2" (EVA's own release line), the 32B size recovered
+	// mechanically from the ID, and the base relationship carried as a curated
+	// DerivationFinetune edge in lineage.json rather than smuggled into the family
+	// token. Same shape as dracarys/mythomax: an exact-ID key, zero collateral.
+	"qwen2.5-32b-eva-v0.2": {family: "eva", version: "0.2"},
+
+	// interfaze-beta is the last row that put "beta" into an identity. vercel serves
+	// interfaze/interfaze-beta with an empty raw_family, so the leading-token pipeline
+	// read "interfaze" as the family and promoted the trailing "beta" to the VARIANT
+	// slot — giving the entity key interfaze/beta while the SAME row also carried
+	// Stage=beta. beta was therefore both identity and stage on one record, which is the
+	// degenerate coexistence the release-stage axis exists to prevent.
+	//
+	// Pinned to the bare family. Stage is unaffected and still reads beta, because
+	// DetectStageFromID scans the ID independently of the key (detect-without-strip, the
+	// grok precedent above). A future non-beta interfaze model will share this entity,
+	// which is correct — they are one artifact line differing only by release stage.
+	"interfaze/interfaze-beta": {family: "interfaze"},
+
+	// vercel labels a swathe of unrelated models raw_family "o" — the OpenAI o-series
+	// family — so alibaba's video models, openai's speech models and quiverai's arrow
+	// all decomposed into family "o" and shared one junk-bucket entity with the real
+	// o-series. The raw value is upstream's, not a bestiary mis-parse: the vendored
+	// catalog carries family="o" verbatim on all of them.
+	//
+	// Those rows are corrected by the family_enforce ledger (wan / tts / arrow /
+	// rerank), NOT here — the ledger is the general tool for a raw_family mislabel and
+	// it fires wherever the ID-derived family equals one of its keys, so a new vercel
+	// spelling of an existing line is self-correcting. Only the row below needs a pin.
+
+	// cohere/rerank-v4-pro is the ONE row the family_enforce ledger cannot reach. The
+	// ledger fires when the ID-DERIVED family is one of its members, and this ID
+	// derives the COMPOUND family "rerank-v4" (the "-v4-" segment glues onto the
+	// family token before "pro" is read as the variant), which is not the enforce key
+	// "rerank". Its sibling cohere/rerank-v4-fast derives the bare "rerank" and is
+	// corrected by the ledger, so without this pin the two halves of one product line
+	// would sit in different families. Pinned to match the sibling exactly: family
+	// rerank with the tier token as a modifier.
+	"cohere/rerank-v4-pro": {family: "rerank", modifiers: []string{"pro"}},
+
+	// cortecs glues the major version onto the VARIANT token — "claude-opus4-5" is
+	// Opus 4.5, not an Opus 5. Every other provider spells the same models
+	// claude-opus-4-5 / -4-6 / -4-7 / -4-8, and cortecs' own release dates match the
+	// real 4.5–4.8 launches exactly, so the reading is not in doubt. Left alone the
+	// glue was doubly wrong: it minted four phantom claude/opus@5…@8 entities (one
+	// cortecs instance each) AND stranded those instances away from the real
+	// entities that carry every other provider's rows.
+	//
+	// These are curated PINS rather than a general glued-token rule, deliberately.
+	// A catalog sweep for the <letters><digit>-<digit> shape finds 34 ids, but 30 of
+	// them glue the digit onto the FAMILY (qwen2-5-…, llama3-3-…, wan2-2-…), which is
+	// a different shape with a different correct reading — and one a variant-targeted
+	// rule must not touch. cortecs is the ONLY emitter of the variant-glued form, so a
+	// general rule would carry regression risk across those 30 ids while covering
+	// exactly the four below. If a second vendor ever ships this spelling, that is the
+	// moment the general path earns its risk.
+	"claude-opus4-5": {family: "claude", variant: "opus", version: "4.5"},
+	"claude-opus4-6": {family: "claude", variant: "opus", version: "4.6"},
+	"claude-opus4-7": {family: "claude", variant: "opus", version: "4.7"},
+	"claude-opus4-8": {family: "claude", variant: "opus", version: "4.8"},
+
+	// command-a-plus-05-2026 is Cohere's Command A+ — variant "a-plus" of the command
+	// family, the exact sibling of the command/r-plus line that already decomposes that
+	// way. Its two providers disagreed at the source and split one model across two
+	// entities: cohere tags raw_family "command-a", which the family_overrides ledger
+	// maps to variant "a" (dropping the "+"), while nano-gpt sends an empty raw_family,
+	// leaving the leading-token pipeline to capture "command-a-plus" whole as a compound
+	// family. Neither reaches "a-plus". Being provider-agnostic and keyed to the exact
+	// ID, this entry converges BOTH rows on command/a-plus. Only the family/variant is
+	// pinned: the ID's MM-YYYY tail stays with the date pipeline, which reads each
+	// provider's own release date, so the month-leak guard is untouched.
+	"command-a-plus-05-2026": {family: "command", variant: "a-plus"},
+
 	// The remaining stage/mode entries: gpt-realtime IDs whose version is a DOTTED value
 	// glued behind the mid-ID "realtime" token. The general mid-ID modifier engine now
 	// harvests the buried "realtime" attribute and resolves family=gpt for the whole
@@ -4077,10 +4155,17 @@ var idFamilyOverrides = map[string]idFamilyOverrideEntry{
 	// (variant "", version "4.20", the same modifier the official name carries), so the
 	// alias merges into grok@4.20{…}. Stage is UNAFFECTED: DetectStageFromID scans the
 	// ID independently of the key, so every one of these rows still bakes Stage=StageBeta
-	// (detect-without-strip). This is a curated grok-only unification; the general beta
-	// freeze stays for non-grok names (e.g. interfaze-beta keeps beta in its key). The
-	// multi-agent spellings follow the official grok-4.20-multi-agent-0309, which drops
-	// "multi-agent" and keys the bare grok@4.20 (nil modifier).
+	// (detect-without-strip). The multi-agent spellings follow the official
+	// grok-4.20-multi-agent-0309, which drops "multi-agent" and keys the bare grok@4.20
+	// (nil modifier).
+	//
+	// These entries were once described as a grok-ONLY unification, with the general beta
+	// freeze left in place for other names (interfaze-beta was the cited example, and it
+	// kept beta in its key). That exception is gone: beta is now ALWAYS a release-stage
+	// attribute and never part of an identity, so the interfaze row is pinned below on the
+	// same principle and a codegen guard enforces the rule for every future decomposition.
+	// What made these grok entries special was never the beta ruling — it was the alias
+	// spellings needing to converge on one artifact.
 	"grok-4.20-beta-0309-non-reasoning": {family: "grok", version: "4.20", modifiers: []string{"non-reasoning"}},
 	"grok-4.20-beta-0309-reasoning":     {family: "grok", version: "4.20", modifiers: []string{"reasoning"}},
 	"grok-4.20-multi-agent-beta-0309":   {family: "grok", version: "4.20"},

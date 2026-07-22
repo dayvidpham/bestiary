@@ -32,10 +32,26 @@ func TestEntityConstants_Unique(t *testing.T) {
 	}
 
 	// Exact census: the hard-cut bake emits one Entity__ constant per registry entity.
-	// At this bake the registry holds 975 entities. This is an EXACT pin (not a floor):
+	// At this bake the registry holds 971 entities. This is an EXACT pin (not a floor):
 	// a change to the entity count is a deliberate act that must move this literal in the
 	// same commit, so a silent drift is caught.
-	const wantEntityCount = 975
+	//
+	// 975 → 971 when the curated cortecs pins landed: four phantom claude/opus@5…@8
+	// entities (one cortecs instance each, created by a glued-token mis-parse) merged
+	// into the real claude/opus@4.5…@4.8 entities they always belonged to.
+	//
+	// 971 → 982 when the family-"o" over-capture was corrected: vercel labels a swathe
+	// of unrelated models raw_family "o", so alibaba's video models, openai's speech
+	// models, quiverai's arrow and cohere's rerankers all shared one junk-bucket entity
+	// with the real o-series. Splitting them into wan / tts / arrow / rerank ADDS
+	// entities (15 new keys, 4 retired) because a bucket holding many distinct models
+	// becomes many distinct entities.
+	//
+	// 982 → 979 with the curated kimi/minimax turbo demotions: turbo leaves the key for
+	// those families, so kimi/k@2{turbo}, kimi/k@2.6{turbo} and minimax/m@2.7{turbo} fold
+	// into their plain siblings. Three constants are REMOVED and none is renamed — the
+	// surviving siblings' keys never changed.
+	const wantEntityCount = 979
 	if len(keys) != wantEntityCount {
 		t.Errorf("EntityKeys() returned %d constants; expected exactly %d — "+
 			"re-run go generate ./... and update this census literal if the entity count changed intentionally",

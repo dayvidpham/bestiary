@@ -474,12 +474,7 @@ func TestRun_ShowByEntity_QuantFilter(t *testing.T) {
 	}
 }
 
-// instanceHasQuant reports whether inst carries a QuantVRAM row of quantization q.
-func instanceHasQuant(inst bestiary.ProviderInstance, q bestiary.Quantization) bool {
-	for _, qv := range inst.QuantVRAM {
-		if qv.Quant == q {
-			return true
-		}
-	}
-	return false
-}
+// instanceHasQuant used to be defined here as a test-local copy of the predicate.
+// It now lives in main.go as the single implementation shared by the --quant
+// filters and by these tests, so a change to the predicate cannot pass here while
+// the CLI behaves differently.

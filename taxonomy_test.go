@@ -56,20 +56,43 @@ func equalStrings(a, b []string) bool {
 // identity version). It is reconciled from the raw pair count so a future drift is
 // attributable rather than merely "different":
 //
-//	431 raw (family, identity-version) pairs over the 975 registry entities
+//	430 raw (family, identity-version) pairs over the 982 registry entities
 //	 -6 bare/dotted generation folds (the N + N.0 sibling collapses; see
 //	    TestSeries_GenerationNormalization_CensusExact)
 //	 -3 curated strays folded into an existing line (parse/data/series.json)
-//	=422 Series
+//	=421 Series
 //
 // This is an exact pin, not a floor: a change to the line count is a deliberate act
 // (a catalog refresh, a stray row, a normalization change) that must move this
 // literal in the same commit, so silent drift is caught.
+//
+// 422 → 421 when the curated eva and command-a-plus overrides landed. Both retired a
+// compound-family line, and only one of them created a new one, so the split moved
+// -2 bare / +1 versioned:
+//   - "qwen2.5-32b-eva" (bare line, its only entity re-keyed) → "eva" generation 0.2,
+//     a NEW versioned line;
+//   - "command-a-plus" (bare line) → absorbed into the existing "command" line as the
+//     a-plus variant, adding no line.
+//
+// 421 → 418 when the curated cortecs pins landed, all three from the versioned side
+// (217 → 214, bare unchanged). The pins retired FOUR phantom entities but only THREE
+// lines: claude/opus@5…@8 were the sole occupants of the claude-6, claude-7 and
+// claude-8 lines, which vanish with them — but claude-5 SURVIVES, because the real
+// Claude 5 line is populated by claude/sonnet@5. Entity count and line count move by
+// different amounts here, which is exactly why both are pinned.
+//
+// 418 → 421 with the family-"o" over-capture fix, +4 versioned / -1 bare -> +3 net:
+//   - arrow-1.1, rerank-2.5, tts-1 (three NEW versioned lines)
+//   - wan (a new BARE line; the wan rows carry variants, not identity versions)
+//   - voyage (its only two entities were voyage-labelled rerankers, which the rerank
+//     enforce entry re-homes onto the rerank line — the vendor-leak correction)
+//
+// The rerank BARE line already existed (nvidia/rerank-qa-mistral-4b), so it is not new.
 func TestSeriesAll_CensusExact(t *testing.T) {
 	const (
-		wantSeries        = 422
-		wantVersionLines  = 216 // lines with a non-empty generation
-		wantBareLines     = 206 // lines whose entities carry no identity version
+		wantSeries        = 421
+		wantVersionLines  = 217 // lines with a non-empty generation
+		wantBareLines     = 204 // lines whose entities carry no identity version
 		minExpectedSeries = 300 // the ratified floor
 	)
 	all := bestiary.SeriesAll()
@@ -109,7 +132,7 @@ func TestSeriesAll_CensusExact(t *testing.T) {
 // making an entity a named member (as the maverick member-ize did) adds a Release
 // without adding a Series, since the line already existed.
 func TestReleases_CensusExact(t *testing.T) {
-	const wantReleases = 668
+	const wantReleases = 674
 
 	summed := 0
 	for _, s := range bestiary.SeriesAll() {

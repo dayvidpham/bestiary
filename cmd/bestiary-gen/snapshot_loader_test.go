@@ -151,3 +151,62 @@ type testingTB interface {
 	Helper()
 	Fatalf(format string, args ...any)
 }
+
+// LoadVendoredCatalogRecords reads the COMMITTED CODEGEN INPUT —
+// parse/data/modelsdev/catalog.json — and returns one SnapshotRecord per
+// (provider, model) entry, sorted like LoadSnapshotRecords.
+//
+// It is the sibling of LoadSnapshotRecords and deliberately NOT a replacement. The two
+// corpora answer different questions and both are needed:
+//
+//   - the frozen testdata snapshot is a HISTORICAL BASELINE. The path-unification diff,
+//     the drift analysis and the divergence report all measure change RELATIVE to it, so
+//     it must stay pinned in the past — regrounding it would erase the very baseline
+//     those assertions compare against.
+//   - the vendored catalog is the data codegen actually consumes. A guard asking "is this
+//     curated entry grounded in real data?" means the data the bake reads, so grounding it
+//     in a fixture that has since fallen behind reports live entries as dead.
+//
+// Both are committed files read from disk with no network access, so this stays as
+// hermetic and deterministic as the frozen loader.
+func LoadVendoredCatalogRecords() ([]SnapshotRecord, error) {
+	// The tests run from cmd/bestiary-gen; the vendored catalog path is module-relative.
+	path := filepath.Join("..", "..", vendoredCatalogPath)
+	body, err := os.ReadFile(path)
+	if err != nil {
+		abs, _ := filepath.Abs(path)
+		return nil, fmt.Errorf(
+			"LoadVendoredCatalogRecords: cannot read the vendored catalog at %s: %w\n"+
+				"  What: the committed codegen input is missing or unreadable\n"+
+				"  Why: parse/data/modelsdev/catalog.json is the file `go generate` bakes from;\n"+
+				"       it must be tracked by git\n"+
+				"  How to fix: verify the file exists (git status parse/data/modelsdev/), or refresh\n"+
+				"       it via the models.dev snapshot-refresh workflow in CLAUDE.md",
+			abs, err,
+		)
+	}
+	catalog, err := bestiary.ParseCatalogJSON(body)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"LoadVendoredCatalogRecords: cannot decode the vendored catalog: %w\n"+
+				"  What: parse/data/modelsdev/catalog.json is not valid catalog JSON\n"+
+				"  How to fix: re-vendor it via the models.dev snapshot-refresh workflow",
+			err,
+		)
+	}
+	records := make([]SnapshotRecord, 0, len(catalog.Models))
+	for _, m := range catalog.Models {
+		records = append(records, SnapshotRecord{
+			Provider:  m.Provider,
+			ID:        m.ID,
+			RawFamily: m.Family,
+		})
+	}
+	sort.Slice(records, func(i, j int) bool {
+		if records[i].Provider != records[j].Provider {
+			return records[i].Provider < records[j].Provider
+		}
+		return records[i].ID < records[j].ID
+	})
+	return records, nil
+}

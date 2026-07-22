@@ -19,15 +19,42 @@ func nominaCensus(ns []bestiary.Nomen) map[bestiary.NomenScheme]int {
 
 // TestNomina_CensusExact pins the EXACT per-scheme census of the minted nomen set
 // over the static registry (the "census literal pinned at bake"). The counts are
-// derived from the committed models_static_gen.go: 975 canonical (one Preferred nomen
-// per distinct entity key), 2792 provider-ID (one Admitted nomen per distinct instance
+// derived from the committed models_static_gen.go: 979 canonical (one Preferred nomen
+// per distinct entity key), 2791 provider-ID (one Admitted nomen per distinct instance
 // ID spelling, deduped within an entity), 1 alias (the grok-beta seed claim) and 4
 // huggingface (the curated Hub org/repo seeds). On a models.dev snapshot refresh — or a
 // curated-claim addition — these move consciously, like the other census pins.
+//
+// provider-ID went 2792 → 2791 when the curated command-a-plus override landed. The
+// dedup is per distinct ID spelling WITHIN an entity, and command-a-plus-05-2026 was
+// split across two entities by a provider disagreement (cohere's raw_family said
+// command/a, nano-gpt's empty raw_family produced the compound family
+// "command-a-plus"), so the one ID spelling minted a provider-ID nomen in each. The
+// override converges both rows on command/a-plus, where the two spellings dedup to
+// one — a duplicate naming removed, not a naming lost. That re-key left canonical
+// unmoved: it drops one entity key and adds one.
+//
+// canonical went 975 → 971 when the curated cortecs pins landed: four phantom
+// claude/opus@5…@8 entities (a glued-token mis-parse gave each one cortecs instance)
+// merged into the real claude/opus@4.5…@4.8 entities, retiring four entity keys and
+// therefore four Preferred nomina. provider-ID is untouched by that merge — the four
+// cortecs ID spellings still mint one nomen each, now inside the real entities.
+//
+// canonical went 971 → 982 with the family-"o" over-capture fix: the junk-bucket entity
+// that had held alibaba's video models, openai's speech models, quiverai's arrow and
+// cohere's rerankers split into the 15 distinct entities those models always were
+// (4 bucket keys retired). One Preferred nomen per entity key, so canonical tracks it
+// exactly; provider-ID is again untouched, since no ID spelling was added or removed.
+//
+// canonical went 982 → 979 with the kimi/minimax turbo demotions: three {turbo}
+// entities folded into their plain siblings, retiring three keys and therefore three
+// Preferred nomina. provider-ID is untouched AGAIN, and here that is the load-bearing
+// part: the turbo ID spellings survive as Admitted provider-ID nomina on the merged
+// entities. A demotion changes what is IDENTITY, never what is recorded.
 func TestNomina_CensusExact(t *testing.T) {
 	const (
-		wantCanonical   = 975
-		wantProviderID  = 2792
+		wantCanonical   = 979
+		wantProviderID  = 2791
 		wantAlias       = 1
 		wantHuggingFace = 4
 		wantTotal       = wantCanonical + wantProviderID + wantAlias + wantHuggingFace
@@ -150,8 +177,19 @@ func TestNomenLookup_GrokBeta(t *testing.T) {
 	if got := n.ResolvesTo.String(); got != "grok@4.20{reasoning}" {
 		t.Errorf("grok-beta resolves to %q, want grok@4.20{reasoning}", got)
 	}
-	if n.SourceURL == "" || !strings.Contains(n.SourceURL, "x.ai") {
-		t.Errorf("grok-beta SourceURL = %q, want the xAI claimant page", n.SourceURL)
+	// Claim attribution is pinned to the exact archive.org SNAPSHOT of the xAI docs
+	// page, per the curated-claims archive policy (see Nomen.SourceURL). This
+	// assertion previously matched the live URL loosely (strings.Contains "x.ai"),
+	// which the snapshot URL still satisfies — so it was re-pinned to the exact value
+	// when the policy landed, rather than left silently passing.
+	const grokBetaClaimantSnapshot = "https://web.archive.org/web/20260204041847/https://docs.x.ai/docs/models"
+	if n.SourceURL != grokBetaClaimantSnapshot {
+		t.Errorf("grok-beta SourceURL = %q, want the archived xAI claimant page %q", n.SourceURL, grokBetaClaimantSnapshot)
+	}
+	// The original claimant address stays recoverable from the snapshot itself —
+	// which is why the policy adds no separate archive_url field.
+	if !strings.HasSuffix(n.SourceURL, "https://docs.x.ai/docs/models") {
+		t.Errorf("grok-beta SourceURL = %q does not end in the original xAI claimant URL", n.SourceURL)
 	}
 	if n.Source != bestiary.DataSourceCurated {
 		t.Errorf("grok-beta Source = %q, want curated (the honest ingest — read from bestiary's own claim file, distinct from the xAI claimant)", n.Source)

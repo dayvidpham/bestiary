@@ -3436,6 +3436,30 @@ func TestAzureServingHostCapture(t *testing.T) {
 	runFamilyDetailedTupleCorpus(t, corpus)
 }
 
+// TestParse_FamilyO_OverCapture is the fence for the family-"o" over-capture. vercel
+// labels a swathe of unrelated models with the upstream raw_family "o" — the OpenAI
+// o-series family — so Alibaba's Wan video models, OpenAI's TTS speech models,
+// quiverai's arrow and Cohere's rerankers all decomposed into family "o" and shared
+// one junk-bucket entity with the real o-series.
+//
+// The corpus carries BOTH directions, and the negative controls are the load-bearing
+// half: four genuine o-series ids that must be untouched, two of which legitimately
+// KEEP family "o". A fix that emptied the bucket by evicting its rightful occupants
+// would pass a positives-only corpus and fail here.
+func TestParse_FamilyO_OverCapture(t *testing.T) {
+	corpus := loadParseCorpus[rawIDInput, fvvmExpected](t, familyOOverCaptureCorpusJSON, 20)
+	requireInputCoverage(t, corpus, map[rawIDInput]fvvmExpected{
+		// one over-capture per correcting mechanism
+		{Raw: "o", ID: "alibaba/wan-v2.6-i2v"}: {Family: "wan", Variant: "v2.6-i2v"},
+		{Raw: "o", ID: "cohere/rerank-v3.5"}:   {Family: "rerank", Variant: "v3.5"},
+		{Raw: "o", ID: "cohere/rerank-v4-pro"}: {Family: "rerank", Mod: "pro"},
+		// and the two negative controls that must KEEP family "o"
+		{Raw: "o", ID: "openai-o1"}:           {Family: "o"},
+		{Raw: "o-mini", ID: "openai-o3-mini"}: {Family: "o", Variant: "mini"},
+	})
+	runFamilyDetailedTupleCorpus(t, corpus)
+}
+
 // TestMetaLlamaNoSlashCapture pins the no-slash doubled-vendor fold (the scoped
 // "meta-llama-" prefix strip): the eight attested no-slash meta-llama IDs
 // (dotted/dashed/underscored version spellings) all decompose NATIVELY to family

@@ -170,10 +170,12 @@ func run(args []string) error {
 		// --db-path is REJECTED rather than ignored: the view computes from the
 		// compiled-in registry, so the flag cannot be honoured, and silently
 		// accepting it would imply a cache read that never happens.
+		// --provider/--quant/--status are real entity-level filters here (see
+		// seriesFilter); --db-path remains rejected because the view is registry-static.
 		if flagWasSet(fs, "db-path") {
 			return errSeriesDBPath
 		}
-		return runSeries(fs.Arg(0), bestiary.OutputFormat(*output))
+		return runSeries(fs.Arg(0), bestiary.OutputFormat(*output), *provider, *quant, *status)
 	case "sources":
 		// --history and --export are catalog-wide ingest-log views; they take no
 		// entity positional. The default sources view still requires an entity key.
@@ -875,16 +877,45 @@ type releaseDetail struct {
 // `entities` view — it never consults the SQLite cache and takes no --db-path. A
 // synced row cannot introduce a line; that is a property of the taxonomy being a
 // function of the baked catalog's key components, not a limitation of the cache.
-func runSeries(selector string, format bestiary.OutputFormat) error {
+//
+// # Filters
+//
+// --provider, --quant and --status narrow the ENTITY list inside each release. They
+// are per-entity predicates satisfied by an entity's INSTANCES:
+//
+//	--provider=<slug>   the entity has an instance served by that provider
+//	--quant=<quant>     the entity has an instance carrying a matching QuantVRAM row
+//	--status=<status>   the entity has an instance whose model has that release status
+//
+// Combined filters must be satisfied by ONE instance simultaneously, not by
+// different instances each satisfying a different flag — see seriesFilter for why
+// the per-dimension reading would report a provider/quant pairing that does not
+// exist. An unknown --quant or --status value is rejected with an actionable error
+// rather than silently matching nothing.
+//
+// The drops CASCADE: a release whose entities all filter away is omitted, and a
+// line whose releases all empty is omitted from both views. The listing counts are
+// post-filter, so `series --provider X` lists exactly the lines and counts that
+// `series <line> --provider X` will then render. A selector that names real lines
+// which the filters empty is a distinct, actionable error — not ErrNotFound, since
+// the selector was good and the filter was what matched nothing.
+func runSeries(selector string, format bestiary.OutputFormat, providerFlag, quantFlag, statusFlag string) error {
 	if err := validateEntityOutput(format); err != nil {
 		return err
 	}
+	// Parse the filters up front so an unknown --quant or --status value fails fast
+	// with an actionable error, before any view is computed.
+	filter, err := newSeriesFilter(providerFlag, quantFlag, statusFlag)
+	if err != nil {
+		return err
+	}
+
 	all := bestiary.SeriesAll()
 	if selector == "" {
 		if format == bestiary.FormatJSON {
-			return writeJSON(os.Stdout, seriesSummaries(all))
+			return writeJSON(os.Stdout, seriesSummaries(all, filter))
 		}
-		writeSeriesTable(os.Stdout, seriesSummaries(all))
+		writeSeriesTable(os.Stdout, seriesSummaries(all, filter))
 		return nil
 	}
 
@@ -894,13 +925,163 @@ func runSeries(selector string, format bestiary.OutputFormat) error {
 	}
 	details := make([]seriesDetail, 0, len(matches))
 	for _, s := range matches {
-		details = append(details, seriesDetailOf(s))
+		if d, ok := seriesDetailOf(s, filter); ok {
+			details = append(details, d)
+		}
+	}
+	// The selector named real lines but the filters emptied every one of them. That is
+	// a different outcome from "no such series" and says so: the caller's selector was
+	// good and their filter was the thing that matched nothing.
+	if len(details) == 0 {
+		return fmt.Errorf(
+			"series %q matched %d line(s) but %s left no entities\n"+
+				"  What: every release of every matched line filtered away to empty\n"+
+				"  Where: bestiary series (registry-static view)\n"+
+				"  Why: no entity in those lines has an instance satisfying all the given filters at once\n"+
+				"  How to fix: relax or drop a filter, or run `bestiary series %s` unfiltered to see the full lines",
+			selector, len(matches), filter.describe(), selector)
 	}
 	if format == bestiary.FormatJSON {
 		return writeJSON(os.Stdout, details)
 	}
 	writeSeriesDetailTable(os.Stdout, details)
 	return nil
+}
+
+// seriesFilter is the entity-level predicate the series views apply. All three
+// flags select ENTITIES by what their instances carry: an entity survives when at
+// least one of its instances satisfies the filter.
+//
+// The conjunction is PER INSTANCE, not per dimension: with --provider and --quant
+// both set, one single instance must satisfy both, rather than one instance
+// matching the provider while a different one matches the quant. The per-dimension
+// reading would answer "this line has an ollama instance somewhere, and a q4_k_m
+// instance somewhere" — which reads as "ollama serves this at q4_k_m" and can be
+// false. The per-instance reading cannot mislead that way.
+//
+// Status is a MODEL-level fact rather than an instance-level one, so it is reached
+// through the instance's (Provider, ID) — the same pairing `show` uses to respect a
+// provider choice — and mirrors the `list --status` semantics exactly: an exact
+// match on the parsed status, with the zero value StatusNone being a real,
+// selectable value rather than "unset".
+type seriesFilter struct {
+	provider   bestiary.Provider
+	byProvider bool
+
+	quant   bestiary.Quantization
+	byQuant bool
+
+	status   bestiary.ModelStatus
+	byStatus bool
+}
+
+// newSeriesFilter parses the flag values into the predicate set, rejecting an
+// unknown --quant or --status with the same actionable errors the other
+// subcommands raise (never a silent no-match).
+func newSeriesFilter(providerFlag, quantFlag, statusFlag string) (seriesFilter, error) {
+	var f seriesFilter
+	if providerFlag != "" {
+		f.provider = bestiary.Provider(providerFlag)
+		f.byProvider = true
+	}
+	quant, byQuant, err := parseQuantFilter(quantFlag)
+	if err != nil {
+		return seriesFilter{}, err
+	}
+	f.quant, f.byQuant = quant, byQuant
+	if statusFlag != "" {
+		s, err := bestiary.ParseModelStatus(statusFlag)
+		if err != nil {
+			return seriesFilter{}, err
+		}
+		f.status, f.byStatus = s, true
+	}
+	return f, nil
+}
+
+// active reports whether any filter is set. When none is, the views take their
+// original unfiltered path and every entity is kept without inspection.
+func (f seriesFilter) active() bool { return f.byProvider || f.byQuant || f.byStatus }
+
+// describe renders the active filters for the actionable empty-result error.
+func (f seriesFilter) describe() string {
+	var parts []string
+	if f.byProvider {
+		parts = append(parts, fmt.Sprintf("--provider=%s", f.provider))
+	}
+	if f.byQuant {
+		parts = append(parts, fmt.Sprintf("--quant=%s", f.quant))
+	}
+	if f.byStatus {
+		parts = append(parts, fmt.Sprintf("--status=%s", f.status))
+	}
+	if len(parts) == 0 {
+		return "no filter"
+	}
+	return strings.Join(parts, " ")
+}
+
+// keep reports whether the entity survives the filters: true when no filter is
+// active, otherwise true when at least ONE instance satisfies every active
+// predicate simultaneously.
+func (f seriesFilter) keep(e bestiary.Entity) bool {
+	if !f.active() {
+		return true
+	}
+	for _, in := range e.Instances {
+		if f.byProvider && in.Provider != f.provider {
+			continue
+		}
+		if f.byQuant && !instanceHasQuant(in, f.quant) {
+			continue
+		}
+		if f.byStatus && !instanceHasStatus(in, f.status) {
+			continue
+		}
+		return true
+	}
+	return false
+}
+
+// instanceHasQuant reports whether the instance carries a QuantVRAM row for q.
+// Mirrors filterInstancesByQuant's predicate, which selects instances by the
+// presence of a matching row rather than pruning the rows themselves.
+func instanceHasQuant(in bestiary.ProviderInstance, q bestiary.Quantization) bool {
+	for _, qv := range in.QuantVRAM {
+		if qv.Quant == q {
+			return true
+		}
+	}
+	return false
+}
+
+// instanceHasStatus reports whether the model behind this instance carries the
+// given release status. The instance is a registry projection and does not carry
+// Status, so the fact is read from the (Provider, ID) row it projects — the
+// provider-respecting lookup, not the bare LookupModel, which would answer from
+// whichever provider's row happened to come first. An instance whose row is absent
+// (a cache-only overlay row) simply does not match.
+func instanceHasStatus(in bestiary.ProviderInstance, want bestiary.ModelStatus) bool {
+	m, ok := bestiary.LookupModelByProvider(in.Provider, string(in.ID))
+	if !ok {
+		return false
+	}
+	return m.Status == want
+}
+
+// filterEntities keeps the entities satisfying the filter, preserving order. The
+// input slice is never mutated.
+func filterEntities(ents []bestiary.Entity, f seriesFilter) []bestiary.Entity {
+	if !f.active() {
+		return ents
+	}
+	out := make([]bestiary.Entity, 0, len(ents))
+	for _, e := range ents {
+		if f.keep(e) {
+			out = append(out, e)
+		}
+	}
+	return out
 }
 
 // selectSeries resolves a positional selector to the lines it names, as the UNION
@@ -931,38 +1112,65 @@ func selectSeries(all []bestiary.Series, selector string) []bestiary.Series {
 }
 
 // seriesSummaries builds the listing rows for the given lines, preserving order.
-func seriesSummaries(all []bestiary.Series) []seriesSummary {
+//
+// The counts are POST-FILTER, and the drop rules cascade the same way the detail
+// view's do: a release whose entities all filter away contributes nothing, and a
+// line left with no releases is omitted from the listing entirely. That keeps the
+// listing and the detail view telling the same story — `series --provider X` lists
+// exactly the lines `series <line> --provider X` will render, with exactly the
+// counts it will show.
+func seriesSummaries(all []bestiary.Series, f seriesFilter) []seriesSummary {
 	out := make([]seriesSummary, 0, len(all))
 	for _, s := range all {
-		releases := bestiary.ReleasesOf(s)
-		entities := 0
-		for _, r := range releases {
-			entities += len(bestiary.EntitiesOf(r))
+		releases, entities := filteredReleaseCounts(s, f)
+		if f.active() && releases == 0 {
+			continue
 		}
 		out = append(out, seriesSummary{
 			Series:     s.String(),
 			Family:     s.Family,
 			Generation: s.Generation,
-			Releases:   len(releases),
+			Releases:   releases,
 			Entities:   entities,
 		})
 	}
 	return out
 }
 
+// filteredReleaseCounts returns the number of releases of s that retain at least
+// one entity under f, and the total surviving entities across them.
+func filteredReleaseCounts(s bestiary.Series, f seriesFilter) (releases, entities int) {
+	for _, r := range bestiary.ReleasesOf(s) {
+		kept := filterEntities(bestiary.EntitiesOf(r), f)
+		if len(kept) == 0 {
+			continue
+		}
+		releases++
+		entities += len(kept)
+	}
+	return releases, entities
+}
+
 // seriesDetailOf builds the detail view of one line: its releases in
 // ReleasesOf order, each with its member entity keys in EntitiesOf order.
-func seriesDetailOf(s bestiary.Series) seriesDetail {
+//
+// Releases emptied by the filter are dropped, and the bool reports whether the line
+// itself survived — false when every release emptied, so the caller can omit the
+// line rather than print a header over nothing.
+func seriesDetailOf(s bestiary.Series, f seriesFilter) (seriesDetail, bool) {
 	d := seriesDetail{Series: s.String(), Family: s.Family, Generation: s.Generation}
 	for _, r := range bestiary.ReleasesOf(s) {
-		ents := bestiary.EntitiesOf(r)
+		ents := filterEntities(bestiary.EntitiesOf(r), f)
+		if len(ents) == 0 {
+			continue
+		}
 		keys := make([]string, 0, len(ents))
 		for _, e := range ents {
 			keys = append(keys, e.Ref.String())
 		}
 		d.Releases = append(d.Releases, releaseDetail{Name: r.Name, Release: r.String(), Entities: keys})
 	}
-	return d
+	return d, len(d.Releases) > 0
 }
 
 // writeSeriesTable renders the registry-wide line listing: one row per Series with

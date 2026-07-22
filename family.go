@@ -32,6 +32,12 @@ func (f Family) CanonicalProvider() Provider {
 	case FamilyMistral, FamilyCodestral, FamilyDevstral:
 		// Mistral AI is the canonical publisher for mistral, codestral, and devstral families.
 		return ProviderMistral
+	case FamilyCommand, FamilyCommandA, FamilyCommandR:
+		// Cohere is the canonical publisher of the Command line. The two compound
+		// spellings are listed alongside the base family because they are real
+		// raw_family values the upstream catalog emits, so a row can reach
+		// CanonicalProvider carrying either one.
+		return ProviderCohere
 	case FamilyDeepSeek:
 		// DeepSeek is the canonical publisher for deepseek family models.
 		return ProviderDeepSeek

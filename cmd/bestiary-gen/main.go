@@ -1599,6 +1599,13 @@ func derivationKindExpr(k bestiary.DerivationKind) string {
 // generated source, mirroring goStringSliceLiteral's empty→"nil" contract so the
 // base-model majority emits a bare nil. The generated file is package bestiary,
 // so LineageEdge / EntityRef / DerivationKind constants are referenced unqualified.
+//
+// Every EntityRef field the curated ledger can set must be emitted here, ParamSize
+// included: a parent may name a specific size (a 32B finetune derives from the 32B
+// base, not from the whole line), and an emitter that skips the field silently
+// widens that edge to the size-agnostic parent in the BAKED data while the runtime
+// lineage.json path keeps the size — the two would then disagree about the same
+// curated edge. The field went unemitted until the first curated edge used it.
 func lineageLiteral(edges []bestiary.LineageEdge) string {
 	if len(edges) == 0 {
 		return "nil"
@@ -1606,8 +1613,8 @@ func lineageLiteral(edges []bestiary.LineageEdge) string {
 	parts := make([]string, len(edges))
 	for i, e := range edges {
 		parts[i] = fmt.Sprintf(
-			"{Parent: EntityRef{Family: %q, Variant: %q, Version: %q, Modifier: %s}, Kind: %s}",
-			string(e.Parent.Family), e.Parent.Variant, e.Parent.Version,
+			"{Parent: EntityRef{Family: %q, Variant: %q, Version: %q, ParamSize: %q, Modifier: %s}, Kind: %s}",
+			string(e.Parent.Family), e.Parent.Variant, e.Parent.Version, e.Parent.ParamSize,
 			goStringSliceLiteral(e.Parent.Modifier), derivationKindExpr(e.Kind),
 		)
 	}
