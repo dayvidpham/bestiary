@@ -1,10 +1,10 @@
 {
   "total_records": 4979,
-  "changed_count": 1284,
+  "changed_count": 1285,
   "cat_a_divergence_fix_count": 326,
   "cat_b_improvement_count": 940,
   "cat_c_unexpected_regression_count": 0,
-  "justified_exception_count": 18,
+  "justified_exception_count": 19,
   "id_tuple4_incl_modifier_divergence_frozen_before": 81,
   "id_tuple4_incl_modifier_divergence_current_after": 13,
   "divergence_metric": "4-tuple INCL Modifier (Family,Variant,Version,Modifier); before=frozen baseline, after=current snapshot. DISTINCT from the authoritative cross-provider divergenceExact gate (3-tuple, EXCL Modifier, current snapshot, =0).",
@@ -11528,6 +11528,15 @@
       "after": "(family=\"hy\",variant=\"free\",version=\"3\",modifier=\"\")",
       "category": "justified-exception",
       "reason": "JUSTIFIED: New in the July snapshot (opencode/hy3-preview-free). opencode labels this Tencent model raw_family='hy3-free', gluing the generation digit to the family. The ID-driven path correctly splits 'hy3' into family='hy' + version='3', which CONVERGES it onto the canonical Tencent Hy family — every other provider serves the same model as raw_family='Hy' → hy/version=3 (e.g. crossmodel/zenmux 'tencent/hy3-preview'). The 'free' tier stays the variant. So the change folds an over-captured 'hy3' family root back to the real 'hy' family rather than fracturing it; single-provider (opencode) exact id, no cross-provider divergence introduced."
+    },
+    {
+      "provider": "vercel",
+      "id": "interfaze/interfaze-beta",
+      "raw_family": "",
+      "before": "(family=\"interfaze\",variant=\"beta\",version=\"\",modifier=\"\")",
+      "after": "(family=\"interfaze\",variant=\"\",version=\"\",modifier=\"\")",
+      "category": "justified-exception",
+      "reason": "JUSTIFIED: USER-RATIFIED beta-always-stage ruling: beta is a RELEASE STAGE and never part of an identity. vercel serves this row with an empty raw_family, so the leading-token pipeline promoted the trailing 'beta' into the VARIANT slot — while the same row already carried Stage=beta, asserting beta on both axes and splitting one artifact line into a beta and a (future) non-beta entity. The curated exact-id pin lands it on the bare interfaze family; Stage is unaffected because DetectStageFromID scans the id independently of the key (detect-without-strip, the grok precedent). This transition REVERSES an earlier documented exception that deliberately kept beta in this key while unifying only the grok line; the ruling collapsed that contrast, and ValidateNoBetaInIdentity now enforces the rule at bake time so no future decomposition can reintroduce it. Single-provider (vercel) exact id; a rename, not a merge — no entity is created or destroyed."
     },
     {
       "provider": "nvidia",

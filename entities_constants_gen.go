@@ -429,7 +429,7 @@ const (
 	Entity__Indictrans__Size_1b                                           = "indictrans#1b"
 	Entity__Inflection__Version_3                                         = "inflection@3"
 	Entity__Intellect__Version_3                                          = "intellect@3"
-	Entity__Interfaze__Beta                                               = "interfaze/beta"
+	Entity__Interfaze                                                     = "interfaze"
 	Entity__Jais__Size_30b__Chat                                          = "jais#30b{chat}"
 	Entity__Jamba__Large                                                  = "jamba/large"
 	Entity__Jamba__Large__Version_1_6                                     = "jamba/large@1.6"
@@ -1413,7 +1413,7 @@ var allEntityConstants = [...]string{
 	Entity__Indictrans__Size_1b,
 	Entity__Inflection__Version_3,
 	Entity__Intellect__Version_3,
-	Entity__Interfaze__Beta,
+	Entity__Interfaze,
 	Entity__Jais__Size_30b__Chat,
 	Entity__Jamba__Large,
 	Entity__Jamba__Large__Version_1_6,

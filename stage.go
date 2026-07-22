@@ -2,6 +2,7 @@ package bestiary
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 )
 
@@ -284,4 +285,77 @@ func DetectStageFromID(id ModelID) (ReleaseStage, string) {
 // is a separator.
 func isAlnumByte(b byte) bool {
 	return (b >= 'a' && b <= 'z') || (b >= 'A' && b <= 'Z') || (b >= '0' && b <= '9')
+}
+
+// ValidateNoBetaInIdentity is the LOUD codegen guard for the beta-always-stage rule:
+// beta is a RELEASE STAGE, never part of a model's identity.
+//
+// The two axes are independent by design — DetectStageFromID scans the ID without
+// stripping, so a row can carry Stage=StageBeta while its entity key says nothing
+// about beta. The failure this guard catches is the COEXISTENCE: a decomposition that
+// also promotes the beta token into the key, so one record asserts beta as both a
+// stage and an identity. That is not merely redundant, it is contradictory — it splits
+// a lab's beta and non-beta spellings of one artifact into two entities that the stage
+// axis simultaneously claims are the same model at different maturities.
+//
+// Scope is exactly two shapes, because those are the two ways a token reaches a key:
+//
+//   - Variant == "beta"        (the token promoted into the variant slot)
+//   - "beta" among the entity's IDENTITY modifiers (the token in the {…} segment)
+//
+// An ATTRIBUTE-class beta would not reach the key and is not a violation; neither is a
+// family or version that merely contains the substring (only whole-token equality
+// counts, case-folded). The error names the offending entity key and every model ID
+// that landed on it, so a curator can pin the row the way interfaze/interfaze-beta is
+// pinned rather than hunting for it.
+//
+// Codegen calls this over the assembled entity set and ABORTS the bake; the runtime
+// never calls it. There is deliberately NO allowlist: the last exception
+// (interfaze/beta) was resolved by curation rather than exempted, and an allowlist
+// would let the next one accumulate silently.
+func ValidateNoBetaInIdentity(entities []Entity) error {
+	for _, e := range entities {
+		var why string
+		switch {
+		case strings.EqualFold(e.Ref.Variant, "beta"):
+			why = `the variant slot is "beta"`
+		case hasFoldedToken(e.Ref.Modifier, "beta"):
+			why = `"beta" is an identity modifier (it renders in the {…} key segment)`
+		default:
+			continue
+		}
+		ids := make([]string, 0, len(e.Instances))
+		for _, in := range e.Instances {
+			ids = append(ids, string(in.ID))
+		}
+		sort.Strings(ids)
+		return fmt.Errorf(
+			"bestiary stage: entity %q puts beta into its IDENTITY — %s\n"+
+				"  What: a decomposition promoted a beta token into the entity key\n"+
+				"  Where: the entity key %q, minted from model id(s): %s\n"+
+				"  When: validating the assembled entity set at codegen, before any constant is emitted\n"+
+				"  Why: beta is a RELEASE STAGE, never an identity. Stage is detected from the ID\n"+
+				"       without stripping, so this record now asserts beta on BOTH axes — splitting the\n"+
+				"       beta and non-beta spellings of one artifact into separate entities while the\n"+
+				"       stage axis says they are the same model at different maturities\n"+
+				"  What it means for the caller: the bake is ABORTED; no constants are emitted\n"+
+				"  How to fix: add a curated exact-id override in parse.go mapping the offending id to\n"+
+				"       its bare identity (see the interfaze/interfaze-beta entry). Stage is unaffected:\n"+
+				"       DetectStageFromID keeps reading beta off the id",
+			e.Ref.String(), why, e.Ref.String(), strings.Join(ids, ", "),
+		)
+	}
+	return nil
+}
+
+// hasFoldedToken reports whether toks contains want under case-folded WHOLE-token
+// equality. Substring matching would be wrong here: a family or variant that merely
+// contains "beta" (say a hypothetical "betamax") is not a beta release.
+func hasFoldedToken(toks []string, want string) bool {
+	for _, t := range toks {
+		if strings.EqualFold(t, want) {
+			return true
+		}
+	}
+	return false
 }

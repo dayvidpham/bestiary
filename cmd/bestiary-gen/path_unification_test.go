@@ -1251,6 +1251,13 @@ var justifiedExceptions = map[exceptionKey]string{
 		After:  `(family="eva",variant="",version="0.2",modifier="")`,
 	}: "USER-RATIFIED, dracarys precedent: EVA-UNIT-01's roleplay finetune is named after the model it was trained FROM, so the leading-token pipeline swallowed the whole base name as a compound family ('qwen2.5-32b-eva') and read EVA's own release as a variant ('v0.2'). The curated exact-id override splits the two identities: family 'eva' with version '0.2' (EVA's release line), the 32B size still read off the id, and the base relationship carried as an explicit DerivationFinetune edge to qwen@2.5#32b in lineage.json — so the derivation is stated rather than smuggled into a family token. Single-provider (nano-gpt) exact id; no cross-provider divergence introduced, no token lost.",
 
+	// beta-always-stage: the last row that put beta into an identity
+	{
+		ID:     "interfaze/interfaze-beta",
+		Before: `(family="interfaze",variant="beta",version="",modifier="")`,
+		After:  `(family="interfaze",variant="",version="",modifier="")`,
+	}: "USER-RATIFIED beta-always-stage ruling: beta is a RELEASE STAGE and never part of an identity. vercel serves this row with an empty raw_family, so the leading-token pipeline promoted the trailing 'beta' into the VARIANT slot — while the same row already carried Stage=beta, asserting beta on both axes and splitting one artifact line into a beta and a (future) non-beta entity. The curated exact-id pin lands it on the bare interfaze family; Stage is unaffected because DetectStageFromID scans the id independently of the key (detect-without-strip, the grok precedent). This transition REVERSES an earlier documented exception that deliberately kept beta in this key while unifying only the grok line; the ruling collapsed that contrast, and ValidateNoBetaInIdentity now enforces the rule at bake time so no future decomposition can reintroduce it. Single-provider (vercel) exact id; a rename, not a merge — no entity is created or destroyed.",
+
 	// cortecs glued major version on the variant token. Only THREE of the four pins
 	// appear here: claude-opus4-8 postdates the frozen baseline, so it produces no
 	// change record and a ledger entry for it would be dormant — and this ledger holds

@@ -202,6 +202,11 @@ func generateEntitiesConstantsSource(models []bestiary.ModelInfo, metadata []bes
 	if err := bestiary.ValidateSuppression(entities); err != nil {
 		return nil, fmt.Errorf("validate suppression seed against the catalog: %w", err)
 	}
+	// Same reason, same place: the beta-always-stage rule is entity-relative, so it is
+	// checked once the full entity set exists and ABORTS the bake rather than degrading.
+	if err := bestiary.ValidateNoBetaInIdentity(entities); err != nil {
+		return nil, fmt.Errorf("validate the beta-always-stage rule against the catalog: %w", err)
+	}
 	nomina := bestiary.MintNomina(entities)
 	entries, err := buildEntityConstEntries(nomina, keySet)
 	if err != nil {

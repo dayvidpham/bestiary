@@ -151,6 +151,21 @@ for its **Go module tags** (`vX.Y.Z`).
   for entity-key lookups; use `LookupModel(id)` for raw-ID instance lookups.
 
 ### Fixed
+- **beta is ALWAYS a release stage, never an identity.** The two axes were already
+  independent by construction (`DetectStageFromID` scans the ID *without* stripping), but one
+  row asserted beta on both: vercel's `interfaze/interfaze-beta` arrives with an empty
+  `raw_family`, so the leading-token pipeline promoted the trailing `beta` into the **variant**
+  slot, giving the key `interfaze/beta` while the same record carried `Stage=beta`. That is
+  contradictory rather than merely redundant — it splits a lab's beta and non-beta spellings of
+  one artifact into two entities that the stage axis simultaneously calls the same model at
+  different maturities. A curated exact-ID pin lands the row on the bare `interfaze` family and
+  its stage still reads beta. This **reverses an earlier documented exception** that kept beta
+  in that key while unifying only the grok line; the comment recording the old rule is
+  rewritten. New LOUD codegen guard `ValidateNoBetaInIdentity` aborts the bake if any future
+  decomposition puts beta into a key — either as the variant or as an identity modifier —
+  naming the offending entity key and the model IDs that landed on it. **No allowlist**: the
+  one exception was resolved by curation rather than exempted, and an allowlist would let the
+  next one accumulate silently. A rename, so the entity census does not move.
 - **`turbo` demoted to an attribute for kimi and minimax** (`parse/data/modifier_class.json`
   `family_overrides`, the glm precedent). Turbo stays IDENTITY globally — `gpt-4-turbo` is a
   different artifact from `gpt-4` — and is demoted only where curation established it names a

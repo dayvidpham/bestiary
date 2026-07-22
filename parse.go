@@ -4053,6 +4053,19 @@ var idFamilyOverrides = map[string]idFamilyOverrideEntry{
 	// token. Same shape as dracarys/mythomax: an exact-ID key, zero collateral.
 	"qwen2.5-32b-eva-v0.2": {family: "eva", version: "0.2"},
 
+	// interfaze-beta is the last row that put "beta" into an identity. vercel serves
+	// interfaze/interfaze-beta with an empty raw_family, so the leading-token pipeline
+	// read "interfaze" as the family and promoted the trailing "beta" to the VARIANT
+	// slot — giving the entity key interfaze/beta while the SAME row also carried
+	// Stage=beta. beta was therefore both identity and stage on one record, which is the
+	// degenerate coexistence the release-stage axis exists to prevent.
+	//
+	// Pinned to the bare family. Stage is unaffected and still reads beta, because
+	// DetectStageFromID scans the ID independently of the key (detect-without-strip, the
+	// grok precedent above). A future non-beta interfaze model will share this entity,
+	// which is correct — they are one artifact line differing only by release stage.
+	"interfaze/interfaze-beta": {family: "interfaze"},
+
 	// vercel labels a swathe of unrelated models raw_family "o" — the OpenAI o-series
 	// family — so alibaba's video models, openai's speech models and quiverai's arrow
 	// all decomposed into family "o" and shared one junk-bucket entity with the real
@@ -4161,10 +4174,17 @@ var idFamilyOverrides = map[string]idFamilyOverrideEntry{
 	// (variant "", version "4.20", the same modifier the official name carries), so the
 	// alias merges into grok@4.20{…}. Stage is UNAFFECTED: DetectStageFromID scans the
 	// ID independently of the key, so every one of these rows still bakes Stage=StageBeta
-	// (detect-without-strip). This is a curated grok-only unification; the general beta
-	// freeze stays for non-grok names (e.g. interfaze-beta keeps beta in its key). The
-	// multi-agent spellings follow the official grok-4.20-multi-agent-0309, which drops
-	// "multi-agent" and keys the bare grok@4.20 (nil modifier).
+	// (detect-without-strip). The multi-agent spellings follow the official
+	// grok-4.20-multi-agent-0309, which drops "multi-agent" and keys the bare grok@4.20
+	// (nil modifier).
+	//
+	// These entries were once described as a grok-ONLY unification, with the general beta
+	// freeze left in place for other names (interfaze-beta was the cited example, and it
+	// kept beta in its key). That exception is gone: beta is now ALWAYS a release-stage
+	// attribute and never part of an identity, so the interfaze row is pinned below on the
+	// same principle and a codegen guard enforces the rule for every future decomposition.
+	// What made these grok entries special was never the beta ruling — it was the alias
+	// spellings needing to converge on one artifact.
 	"grok-4.20-beta-0309-non-reasoning": {family: "grok", version: "4.20", modifiers: []string{"non-reasoning"}},
 	"grok-4.20-beta-0309-reasoning":     {family: "grok", version: "4.20", modifiers: []string{"reasoning"}},
 	"grok-4.20-multi-agent-beta-0309":   {family: "grok", version: "4.20"},

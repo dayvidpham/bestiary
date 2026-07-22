@@ -202149,7 +202149,7 @@ var staticModels = []ModelInfo{
 		DisplayName:           "Interfaze Beta",
 		RawFamily:             "",
 		Family:                "interfaze",
-		Variant:               "beta",
+		Variant:               "",
 		Version:               "",
 		Date:                  "2025-10-07",
 		Modifier:              nil,
