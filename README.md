@@ -669,9 +669,31 @@ actionable error rather than accepting a flag it cannot honour). With no argumen
 line — `Series{Family, Generation}` such as `llama-4` or `gemini-3.0` — with its release and
 entity counts. With a selector it details that line: each **Release** (a named member such as
 `scout`, `maverick`, `flash`, plus the un-named bare line) and the canonical entity keys under
-it. The selector reads as a **line rendering** (`llama-4`, exactly what the listing prints) or
-as a **family name** (`gemma`, selecting every generation of that family) — the union of both,
-case-folded, so a selector never hides a line you could reasonably have meant.
+it.
+
+The selector is a **specificity ladder** — ask for as much or as little as you know:
+
+| Selector | Returns |
+|---|---|
+| `bestiary series claude` | every claude line, all generations |
+| `bestiary series claude-4` | every claude **4.x** line (the major union) |
+| `bestiary series claude --version 4` | identical to the row above |
+| `bestiary series claude-4.8` | the one `claude-4.8` line |
+
+The major rung is a **union, not a re-grouping**: it returns several Series in the same
+multi-line output shape the family rung already produces, and the hierarchy itself is
+untouched — `claude-4.0` and `claude-4.5` remain distinct lines that a narrower selector still
+addresses individually. Membership is a **strict string rule**: a generation belongs to version
+`4` iff it *is* `4` or begins `4.`. Nothing is numerically normalized, so `4` never swallows
+`42`, `1` never reaches the mis-parsed `ling@1t` or the leading-zero `gemini@001`, and `glm@5p1`
+(GLM 5.1 spelled with a `p` upstream) stays out of the `glm-5` union — repairing those
+spellings belongs in `parse/`, where the raw IDs are, not in a selector that would have to
+guess. Sub-1.0 generations need no special case: `mistral-0` unions `mistral-0.1` and
+`mistral-0.3` like any other version. Where a family spells both a bare `N` and dotted
+siblings (`claude-3`, `glm-4`, `gpt-5`, …), the union **includes the bare line**. `--version`
+is exactly equivalent to appending `-<value>` to the positional, and is rejected with an
+actionable error when given without a family — it selects *within* one. Matching is
+case-folded, and the filters below apply *after* the selection.
 
 Two refinements keep one line from splitting on a spelling accident: a bare generation `N`
 folds into `N.0` when the same family also spells `N.0` (so `gemini@3` and `gemini@3.0` share
@@ -697,6 +719,9 @@ line exists; the filter is what matched nothing).
 bestiary series --output table            # every line: SERIES / FAMILY / GENERATION / RELEASES / ENTITIES
 bestiary series llama-4 --output table    # that line's releases (bare, maverick, scout) + entity keys
 bestiary series gemma                     # every gemma generation, JSON
+bestiary series claude-4                  # every claude 4.x line: 4.0, 4.1, 4.5, 4.6, 4.7, 4.8
+bestiary series claude --version 4        # identical to the line above
+bestiary series claude-4.8                # just that line
 bestiary series --provider cohere         # only lines cohere serves, with post-filter counts
 bestiary series --quant q4_k_m            # only lines with a q4_k_m-quantized instance
 bestiary series --status beta             # only lines with a beta-status instance

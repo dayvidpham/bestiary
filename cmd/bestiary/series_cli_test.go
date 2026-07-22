@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"flag"
+	"reflect"
 	"strings"
 	"testing"
 
@@ -181,7 +182,9 @@ func TestRun_Series_SelectorIsCaseFolded(t *testing.T) {
 
 // TestRun_Series_GeminiNormalizationVisible is the end-to-end fence on the ruled
 // generation fold: the CLI shows ONE gemini-3.0 line holding both the "@3" and
-// "@3.0" spellings' entities, and no gemini-3 line exists to select.
+// "@3.0" spellings' entities, and gemini-3 is not a line of its own. It also draws
+// the distinction the version selectors introduce — "gemini-3" is not a LINE but is
+// a valid major SELECTOR, and those are different things.
 func TestRun_Series_GeminiNormalizationVisible(t *testing.T) {
 	var details []seriesDetail
 	runSeriesJSON(t, &details, "gemini-3.0")
@@ -197,12 +200,271 @@ func TestRun_Series_GeminiNormalizationVisible(t *testing.T) {
 	if want := []string{"gemini/flash@3", "gemini/flash@3.0"}; !equalStringSlices(flash, want) {
 		t.Errorf("gemini-3.0/flash entities = %v, want %v (both spellings under one line)", flash, want)
 	}
-	// The un-normalized rendering is NOT selectable.
+	// The un-normalized rendering is still not a LINE — the fold is structural and
+	// SeriesAll never lists "gemini-3"...
+	for _, s := range bestiary.SeriesAll() {
+		if s.Family == "gemini" && s.Generation == "3" {
+			t.Error("SeriesAll() exposes the folded line gemini-3; the N -> N.0 fold must still apply")
+		}
+	}
+	// ...but it IS a valid MAJOR selector, which is a selection path rather than a
+	// line: it unions every gemini 3.x line, the folded gemini-3.0 among them.
+	var union []seriesDetail
+	runSeriesJSON(t, &union, "gemini-3")
+	got := make([]string, 0, len(union))
+	for _, d := range union {
+		got = append(got, d.Series)
+	}
+	if want := []string{"gemini-3.0", "gemini-3.1", "gemini-3.5"}; !equalStringSlices(got, want) {
+		t.Errorf("series gemini-3 = %v, want the major union %v", got, want)
+	}
+}
+
+// seriesNamesFor runs `series <args…> --output=json` and returns the rendered line
+// names of the detail view, in output order.
+func seriesNamesFor(t *testing.T, args ...string) []string {
+	t.Helper()
+	var details []seriesDetail
+	runSeriesJSON(t, &details, args...)
+	out := make([]string, 0, len(details))
+	for _, d := range details {
+		out = append(out, d.Series)
+	}
+	return out
+}
+
+// TestRun_Series_SpecificityLadder is the ruled selector semantics end to end: each
+// rung of family → family-MAJOR → family-MAJOR.MINOR is strictly narrower than the
+// one above, and the major rung returns every 4.x line as a UNION rather than
+// re-grouping anything.
+//
+// This is the user's ask in its own words — asking for `claude-4` returns all of the
+// 4.x series, while the more specific `4.8` or `4.0` returns the narrower selection.
+func TestRun_Series_SpecificityLadder(t *testing.T) {
+	family := seriesNamesFor(t, "claude")
+	major := seriesNamesFor(t, "claude-4")
+	minor := seriesNamesFor(t, "claude-4.0")
+
+	wantFamily := []string{
+		"claude", "claude-3", "claude-3.5", "claude-3.7",
+		"claude-4.0", "claude-4.1", "claude-4.5", "claude-4.6", "claude-4.7", "claude-4.8",
+		"claude-5",
+	}
+	if !equalStringSlices(family, wantFamily) {
+		t.Errorf("series claude = %v, want %v", family, wantFamily)
+	}
+	wantMajor := []string{"claude-4.0", "claude-4.1", "claude-4.5", "claude-4.6", "claude-4.7", "claude-4.8"}
+	if !equalStringSlices(major, wantMajor) {
+		t.Errorf("series claude-4 = %v, want the six 4.x lines %v", major, wantMajor)
+	}
+	if !equalStringSlices(minor, []string{"claude-4.0"}) {
+		t.Errorf("series claude-4.0 = %v, want exactly [claude-4.0]", minor)
+	}
+
+	// Strictly narrowing, and every rung a subset of the one above — the property that
+	// makes the ladder a ladder rather than three unrelated lookups.
+	if !(len(family) > len(major) && len(major) > len(minor)) {
+		t.Errorf("rungs are not strictly narrowing: family %d, major %d, minor %d",
+			len(family), len(major), len(minor))
+	}
+	inFamily := map[string]bool{}
+	for _, s := range family {
+		inFamily[s] = true
+	}
+	inMajor := map[string]bool{}
+	for _, s := range major {
+		inMajor[s] = true
+		if !inFamily[s] {
+			t.Errorf("major rung returned %q, which the family rung does not", s)
+		}
+	}
+	for _, s := range minor {
+		if !inMajor[s] {
+			t.Errorf("minor rung returned %q, which the major rung does not", s)
+		}
+	}
+
+	// The major rung selects; it does NOT re-group. Every returned line keeps its own
+	// exact generation, and the entities stay under the line they were already in.
+	var details []seriesDetail
+	runSeriesJSON(t, &details, "claude-4")
+	for _, d := range details {
+		if d.Family != "claude" || d.Generation == "4" {
+			t.Errorf("major union altered a line's identity: %+v (generations must stay exact)", d)
+		}
+	}
+}
+
+// TestRun_Series_VersionFlagEquivalence pins `--version` as sugar for the same
+// selection, on both the major and the minor rung. Equivalence is asserted on the
+// FULL decoded output, not just the line names, so the flag cannot diverge in the
+// detail it renders either.
+func TestRun_Series_VersionFlagEquivalence(t *testing.T) {
+	cases := []struct{ selector, family, version string }{
+		{"claude-4", "claude", "4"},     // major union
+		{"claude-4.8", "claude", "4.8"}, // one line
+		{"llama-4", "llama", "4"},       // a bare-integer line with no dotted siblings
+		{"mistral-0", "mistral", "0"},   // sub-1.0 lines union under 0 like any other
+	}
+	for _, tc := range cases {
+		var viaSelector, viaFlag []seriesDetail
+		runSeriesJSON(t, &viaSelector, tc.selector)
+		runSeriesJSON(t, &viaFlag, tc.family, "--version", tc.version)
+		if !reflect.DeepEqual(viaSelector, viaFlag) {
+			t.Errorf("`series %s` and `series %s --version %s` disagree:\n  selector: %+v\n      flag: %+v",
+				tc.selector, tc.family, tc.version, viaSelector, viaFlag)
+		}
+		if len(viaFlag) == 0 {
+			t.Errorf("`series %s --version %s` returned nothing; the case is vacuous", tc.family, tc.version)
+		}
+	}
+
+	// An unknown version is the SAME error class as an unknown selector — a normal
+	// negative naming what was asked for, never silence or a panic.
 	var runErr error
-	captureStdout(t, func() { runErr = run([]string{"series", "--output=json", "gemini-3"}) })
+	captureStdout(t, func() { runErr = run([]string{"series", "--output=json", "claude", "--version", "9"}) })
 	var notFound *bestiary.ErrNotFound
 	if !errors.As(runErr, &notFound) {
-		t.Errorf("selecting the folded line 'gemini-3' returned %v, want ErrNotFound", runErr)
+		t.Fatalf("`series claude --version 9` returned %v, want *bestiary.ErrNotFound", runErr)
+	}
+	if notFound.What != "series" || notFound.Key != "claude-9" {
+		t.Errorf("ErrNotFound = %+v, want what=series key=claude-9", notFound)
+	}
+}
+
+// TestRun_Series_VersionFlagRequiresFamily is the negative control on the flag's
+// scope: --version selects WITHIN a family, so without one it is rejected with an
+// actionable error rather than silently ignored or silently widened to the registry.
+func TestRun_Series_VersionFlagRequiresFamily(t *testing.T) {
+	cases := []struct {
+		name string
+		args []string
+		want []string
+	}{
+		{
+			"no family",
+			[]string{"series", "--output=json", "--version", "4"},
+			[]string{"--version", "without a family", "bestiary series claude --version 4"},
+		},
+		{
+			"no value",
+			[]string{"series", "--output=json", "--version="},
+			[]string{"--version", "no value"},
+		},
+		{
+			"blank value",
+			[]string{"series", "--output=json", "--version", "   ", "claude"},
+			[]string{"--version", "no value"},
+		},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			var runErr error
+			out := captureStdout(t, func() { runErr = run(tc.args) })
+			if runErr == nil {
+				t.Fatalf("run %v succeeded; it must be rejected. stdout:\n%s", tc.args, out)
+			}
+			for _, want := range tc.want {
+				if !strings.Contains(runErr.Error(), want) {
+					t.Errorf("error %q does not mention %q", runErr, want)
+				}
+			}
+			if strings.TrimSpace(out) != "" {
+				t.Errorf("run %v wrote a view before failing:\n%s", tc.args, out)
+			}
+		})
+	}
+}
+
+// TestRun_Series_MajorUnionStrictMembership is the negative-control fence on the
+// membership rule: a generation joins version V only when it IS V or begins "V." —
+// no numeric normalization, no bare-prefix swallowing.
+//
+// Each case below is a real catalog spelling that a looser rule would mis-select, so
+// the test states what the selector deliberately does NOT reach as well as what it
+// does. The excluded spellings (glm's "5p1"/"5p2", "1t", "01"/"001") are parse-level
+// artifacts; repairing them belongs where the upstream raw IDs are, not in a selector
+// that would have to guess.
+func TestRun_Series_MajorUnionStrictMembership(t *testing.T) {
+	cases := []struct {
+		selector string
+		want     []string
+		why      string
+	}{
+		{"glm-5", []string{"glm-5", "glm-5.1", "glm-5.2"},
+			"glm-5p1/5p2 use a 'p' where the catalog elsewhere uses a dot; the strict rule excludes them"},
+		{"gemini-1", []string{"gemini-1.5"},
+			"gemini-001 is a leading-zero spelling, not a member of version 1"},
+		{"mistral-0", []string{"mistral-0.1", "mistral-0.3"},
+			"sub-1.0 generations union under 0 exactly like any other version"},
+		{"llama-4", []string{"llama-4"},
+			"a bare-integer line with no dotted siblings is its own union of one"},
+		{"claude-3", []string{"claude-3", "claude-3.5", "claude-3.7"},
+			"where a bare N line coexists with dotted siblings, the union INCLUDES the bare line"},
+		{"minimax-2", []string{"minimax-2", "minimax-2.1", "minimax-2.5", "minimax-2.7"},
+			"minimax-25 and minimax-27 are dot-lost spellings and are NOT members of version 2"},
+	}
+	for _, tc := range cases {
+		t.Run(tc.selector, func(t *testing.T) {
+			if got := seriesNamesFor(t, tc.selector); !equalStringSlices(got, tc.want) {
+				t.Errorf("series %s = %v, want %v\n  rule: %s", tc.selector, got, tc.want, tc.why)
+			}
+		})
+	}
+
+	// Versions that match NO line are a normal negative, not an accidental match:
+	// "ling-1" must not reach ling-1t, and a bare-prefix rule would have let it.
+	for _, selector := range []string{"ling-1", "ring-1", "text-embedding-0"} {
+		var runErr error
+		captureStdout(t, func() { runErr = run([]string{"series", "--output=json", selector}) })
+		var notFound *bestiary.ErrNotFound
+		if !errors.As(runErr, &notFound) {
+			t.Errorf("series %s returned %v, want ErrNotFound (the strict rule must not match "+
+				"a non-dotted spelling)", selector, runErr)
+		}
+	}
+}
+
+// TestGenerationInMajorUnion unit-tests the membership rule directly, including the
+// shapes the end-to-end cases above exercise only indirectly.
+func TestGenerationInMajorUnion(t *testing.T) {
+	cases := []struct {
+		generation, version string
+		want                bool
+	}{
+		{"4", "4", true}, {"4.0", "4", true}, {"4.8", "4", true}, {"4.20", "4", true},
+		{"0.1", "0", true}, {"0.3", "0", true},
+		{"12.1", "12", true},
+		{"4.8", "4.8", true}, {"4.8.1", "4.8", true},
+		// The mandatory dot: no bare-prefix swallowing, no numeric normalization.
+		{"42", "4", false}, {"4a", "4", false}, {"4p1", "4", false},
+		{"1t", "1", false}, {"01", "1", false}, {"001", "1", false},
+		{"25", "2", false}, {"35", "3", false},
+		{"4.0", "4.8", false}, {"3.5", "4", false},
+		{"", "4", false}, {"4", "", false},
+	}
+	for _, tc := range cases {
+		if got := generationInMajorUnion(tc.generation, tc.version); got != tc.want {
+			t.Errorf("generationInMajorUnion(%q, %q) = %v, want %v", tc.generation, tc.version, got, tc.want)
+		}
+	}
+}
+
+// TestApplyVersionFlag unit-tests the sugar: --version composes onto the positional,
+// which is what makes the two spellings one query rather than two implementations.
+func TestApplyVersionFlag(t *testing.T) {
+	cases := []struct{ selector, version, want string }{
+		{"claude", "4", "claude-4"},
+		{"claude", "4.8", "claude-4.8"},
+		{"grok-build", "0.1", "grok-build-0.1"},
+		{"  claude  ", "  4  ", "claude-4"},
+		{"claude", "", "claude"}, // unset leaves the selector alone
+		{"", "", ""},
+	}
+	for _, tc := range cases {
+		if got := applyVersionFlag(tc.selector, tc.version); got != tc.want {
+			t.Errorf("applyVersionFlag(%q, %q) = %q, want %q", tc.selector, tc.version, got, tc.want)
+		}
 	}
 }
 
@@ -317,12 +579,16 @@ func TestFlagWasSet(t *testing.T) {
 	}
 }
 
-// TestSelectSeries_UnitReadings unit-tests the selector resolution directly,
-// including the union case where a family name equals a bare line's rendering.
+// TestSelectSeries_UnitReadings unit-tests the selector resolution directly: the
+// family, major-union and line readings, the case where a family name equals a bare
+// line's rendering, and the dashed-family case that a "split on the last dash" parse
+// would get wrong.
 func TestSelectSeries_UnitReadings(t *testing.T) {
 	all := []bestiary.Series{
 		{Family: "gemma"},
 		{Family: "gemma", Generation: "4"},
+		{Family: "gemma", Generation: "4.1"},
+		{Family: "grok-build", Generation: "0.1"},
 		{Family: "llama", Generation: "4"},
 	}
 	cases := []struct {
@@ -330,9 +596,25 @@ func TestSelectSeries_UnitReadings(t *testing.T) {
 		want     []bestiary.Series
 	}{
 		{"llama-4", []bestiary.Series{{Family: "llama", Generation: "4"}}},
-		{"gemma-4", []bestiary.Series{{Family: "gemma", Generation: "4"}}},
-		{"gemma", []bestiary.Series{{Family: "gemma"}, {Family: "gemma", Generation: "4"}}},
+		{"gemma", []bestiary.Series{
+			{Family: "gemma"}, {Family: "gemma", Generation: "4"}, {Family: "gemma", Generation: "4.1"},
+		}},
+		// The MAJOR reading: a bare-integer version unions the bare line with its
+		// dotted siblings, in SeriesAll order.
+		{"gemma-4", []bestiary.Series{
+			{Family: "gemma", Generation: "4"}, {Family: "gemma", Generation: "4.1"},
+		}},
+		// The LINE reading: fully specified, so the union is of one.
+		{"gemma-4.1", []bestiary.Series{{Family: "gemma", Generation: "4.1"}}},
 		{"  LLAMA-4  ", []bestiary.Series{{Family: "llama", Generation: "4"}}},
+		// A dashed family name is split on the FAMILY, not the last dash.
+		{"grok-build-0", []bestiary.Series{{Family: "grok-build", Generation: "0.1"}}},
+		{"grok-build-0.1", []bestiary.Series{{Family: "grok-build", Generation: "0.1"}}},
+		{"grok-build", []bestiary.Series{{Family: "grok-build", Generation: "0.1"}}},
+		// Strict membership: no bare-prefix swallowing, and a version nothing spells
+		// is a normal negative.
+		{"gemma-41", nil},
+		{"llama-5", nil},
 		{"nope", nil},
 		{"", nil},
 	}

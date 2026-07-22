@@ -134,6 +134,13 @@ func run(args []string) error {
 	// "-") it writes to stdout. When the store is empty or absent it falls back to the
 	// curated table.
 	export := fs.Bool("export", false, "sources: export ingest provenance as datasources.json v3 (positional path, or stdout)")
+	// --version (series only) selects a generation of the family named by the
+	// positional, and is exactly equivalent to appending "-<value>" to it:
+	// `series claude --version 4` ≡ `series claude-4` (the 4.x union) and
+	// `series claude --version 4.8` ≡ `series claude-4.8` (the one line). It exists
+	// because "which generation" is a dimension of the query, not part of the family's
+	// name, and it is the spelling a script composes without string-building.
+	seriesVersion := fs.String("version", "", "series: generation to select within the family (e.g. 4 for the 4.x union, 4.8 for one line)")
 
 	if err := fs.Parse(reorderArgs(fs, args[1:])); err != nil {
 		return err
@@ -175,7 +182,28 @@ func run(args []string) error {
 		if flagWasSet(fs, "db-path") {
 			return errSeriesDBPath
 		}
-		return runSeries(fs.Arg(0), bestiary.OutputFormat(*output), *provider, *quant, *status)
+		// --version selects WITHIN a family, so it is meaningless without one: it is
+		// rejected rather than silently ignored (or silently widened to the whole
+		// registry), for the same reason --db-path is.
+		if flagWasSet(fs, "version") {
+			if strings.TrimSpace(*seriesVersion) == "" {
+				return fmt.Errorf("--version was given no value\n" +
+					"  What: `series --version` requires a generation to select\n" +
+					"  Where: bestiary series\n" +
+					"  How to fix: pass one, e.g. `bestiary series claude --version 4` (the 4.x union) " +
+					"or `bestiary series claude --version 4.8` (that one line)")
+			}
+			if fs.NArg() < 1 {
+				return fmt.Errorf("--version %s was given without a family\n"+
+					"  What: `series --version` selects a generation WITHIN a family, so it needs one to select within\n"+
+					"  Where: bestiary series\n"+
+					"  Why: on its own it would name every %s-ish line in the registry across unrelated families\n"+
+					"  How to fix: name the family, e.g. `bestiary series claude --version %s` "+
+					"(equivalently `bestiary series claude-%s`)",
+					*seriesVersion, *seriesVersion, *seriesVersion, *seriesVersion)
+			}
+		}
+		return runSeries(fs.Arg(0), bestiary.OutputFormat(*output), *provider, *quant, *status, *seriesVersion)
 	case "sources":
 		// --history and --export are catalog-wide ingest-log views; they take no
 		// entity positional. The default sources view still requires an entity key.
@@ -872,6 +900,27 @@ type releaseDetail struct {
 // generation) with its release and entity counts. With a selector it details the
 // matching lines: each release and the canonical entity keys under it.
 //
+// # Selector semantics: a specificity ladder
+//
+// A Series is a family at one exact generation (claude-4.0 and claude-4.5 are two
+// lines), and the selector chooses how much of that structure to ask for. Each rung
+// is strictly narrower than the one above:
+//
+//	bestiary series claude              every claude line, all generations
+//	bestiary series claude-4            every claude 4.x line (the MAJOR union)
+//	bestiary series claude --version 4  identical to the line above
+//	bestiary series claude-4.8          the one claude-4.8 line
+//
+// The major rung is a UNION, not a re-grouping: it returns several Series in the
+// same multi-line output shape the family rung already produces, and the underlying
+// hierarchy is untouched. Membership is a STRICT string rule (see
+// generationInMajorUnion) — a generation belongs to major "4" iff it IS "4" or
+// begins "4." — so a family that spells both a bare "4" and dotted siblings has the
+// bare line included, and nothing is numerically normalized on the way in.
+//
+// versionFlag is the --version value and is exactly equivalent to appending
+// "-<value>" to the positional, so the two spellings cannot drift apart.
+//
 // The view is OFFLINE and STATIC by construction: the hierarchy is computed from
 // the compiled-in registry (SeriesAll/ReleasesOf/EntitiesOf), so — unlike the
 // `entities` view — it never consults the SQLite cache and takes no --db-path. A
@@ -899,10 +948,11 @@ type releaseDetail struct {
 // `series <line> --provider X` will then render. A selector that names real lines
 // which the filters empty is a distinct, actionable error — not ErrNotFound, since
 // the selector was good and the filter was what matched nothing.
-func runSeries(selector string, format bestiary.OutputFormat, providerFlag, quantFlag, statusFlag string) error {
+func runSeries(selector string, format bestiary.OutputFormat, providerFlag, quantFlag, statusFlag, versionFlag string) error {
 	if err := validateEntityOutput(format); err != nil {
 		return err
 	}
+	selector = applyVersionFlag(selector, versionFlag)
 	// Parse the filters up front so an unknown --quant or --status value fails fast
 	// with an actionable error, before any view is computed.
 	filter, err := newSeriesFilter(providerFlag, quantFlag, statusFlag)
@@ -1084,19 +1134,42 @@ func filterEntities(ents []bestiary.Entity, f seriesFilter) []bestiary.Entity {
 	return out
 }
 
+// applyVersionFlag folds the --version value into the positional selector, which is
+// what makes `series claude --version 4` and `series claude-4` the SAME query rather
+// than two implementations that must be kept in agreement. An empty flag leaves the
+// selector untouched; run() has already rejected a --version given without a
+// positional or without a value, so no empty-family selector can reach here.
+func applyVersionFlag(selector, versionFlag string) string {
+	version := strings.TrimSpace(versionFlag)
+	if version == "" {
+		return selector
+	}
+	return strings.TrimSpace(selector) + "-" + version
+}
+
 // selectSeries resolves a positional selector to the lines it names, as the UNION
-// of two readings — both deterministic, and the union so a selector can never
-// silently hide a line the user could reasonably have meant:
+// of three readings — all deterministic, and the union so a selector can never
+// silently hide a line the user could reasonably have meant. They form a specificity
+// ladder, each rung narrower than the one above:
 //
-//   - the LINE reading: the selector equals a line's display rendering
-//     ("llama-4", "gemini-3.0"), which is exactly what the listing prints, so
-//     copy-pasting a row from `bestiary series` always resolves;
 //   - the FAMILY reading: the selector equals a family name ("gemma"), which
-//     selects every generation of that family.
+//     selects every generation of that family;
+//   - the MAJOR reading: the selector is "<family>-<version>" and the line's
+//     generation falls in that version's union ("claude-4" → claude-4.0, -4.1, -4.5,
+//     -4.6, -4.7, -4.8), so a user can ask for a whole generation without knowing
+//     which point releases exist;
+//   - the LINE reading: the selector equals a line's display rendering
+//     ("llama-4", "claude-4.8"), which is exactly what the listing prints, so
+//     copy-pasting a row from `bestiary series` always resolves.
 //
-// The union matters where a family name is also a bare line's rendering: "gemma"
-// returns the un-versioned gemma line AND gemma-2/3/4, rather than the bare line
-// alone. Matching is case-folded. The result keeps SeriesAll's ordering.
+// The major and line readings do not conflict: a fully-specified "claude-4.8" is its
+// own union of one (nothing spells "4.8.x"), so the ladder narrows smoothly rather
+// than needing a mode switch. The union across readings matters where a family name
+// is also a bare line's rendering: "gemma" returns the un-versioned gemma line AND
+// gemma-2/3/4, rather than the bare line alone.
+//
+// Matching is case-folded. The result keeps SeriesAll's ordering, so a union comes
+// back sorted by generation exactly as the listing prints it.
 func selectSeries(all []bestiary.Series, selector string) []bestiary.Series {
 	want := strings.ToLower(strings.TrimSpace(selector))
 	if want == "" {
@@ -1104,11 +1177,55 @@ func selectSeries(all []bestiary.Series, selector string) []bestiary.Series {
 	}
 	var out []bestiary.Series
 	for _, s := range all {
-		if strings.ToLower(s.String()) == want || strings.ToLower(string(s.Family)) == want {
+		if strings.ToLower(s.String()) == want || strings.ToLower(string(s.Family)) == want ||
+			seriesInMajorUnion(s, want) {
 			out = append(out, s)
 		}
 	}
 	return out
+}
+
+// seriesInMajorUnion reports whether the case-folded selector reads as
+// "<this line's family>-<version>" with this line's generation in that version's
+// union.
+//
+// The family is what SPLITS the selector — not the last dash — because a family name
+// may itself contain one: "grok-build-0.1" must split as (grok-build, 0.1), and
+// testing each candidate line's own family is what gets that right without a parser.
+// A bare line (empty generation) is never matched: it has no generation to select.
+func seriesInMajorUnion(s bestiary.Series, want string) bool {
+	if s.Generation == "" {
+		return false
+	}
+	prefix := strings.ToLower(string(s.Family)) + "-"
+	if !strings.HasPrefix(want, prefix) {
+		return false
+	}
+	version := want[len(prefix):]
+	if version == "" {
+		return false
+	}
+	return generationInMajorUnion(strings.ToLower(s.Generation), version)
+}
+
+// generationInMajorUnion is the STRICT membership rule for a version selection: a
+// generation belongs to version V iff it IS V, or begins with V followed by a DOT.
+//
+// The mandatory dot is the whole rule, and it is deliberately a string test with NO
+// numeric normalization — which is what keeps the selection honest on the catalog's
+// messier generation spellings:
+//
+//   - "4" selects 4, 4.0, 4.1, 4.5 … but NOT 42 or 4a (a bare prefix test would
+//     wrongly swallow both);
+//   - "5" does NOT select glm's "5p1"/"5p2" — those are GLM 5.1/5.2 spelled with a
+//     "p" upstream, and repairing that spelling belongs in parse/ where the raw IDs
+//     are, not in a selector that would have to guess;
+//   - "1" does NOT select "1t" (a mis-parsed 1-trillion parameter size) or the
+//     leading-zero "01"/"001" spellings;
+//   - "0" DOES select 0.1, 0.2 and 0.3, so the sub-1.0 lines union under 0 like any
+//     other generation — no special case is needed for them.
+func generationInMajorUnion(generation, version string) bool {
+	return generation == version || strings.HasPrefix(generation, version+".")
 }
 
 // seriesSummaries builds the listing rows for the given lines, preserving order.

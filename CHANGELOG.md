@@ -57,9 +57,24 @@ for its **Go module tags** (`vX.Y.Z`).
 - **`bestiary series` subcommand** (read-only, offline, static registry — it never reads
   the SQLite cache and *rejects* `--db-path` with an actionable error rather than
   accepting a flag it cannot honour): bare, it lists every line with its release and entity counts; with a
-  selector it details that line's releases and their entity keys. The selector reads as
-  a line rendering (`llama-4`) or a family name (`gemma`, every generation of it) —
-  the union of both, case-folded. Table and JSON output; no schema change, since this
+  selector it details that line's releases and their entity keys. The selector is a
+  **specificity ladder**, case-folded, each rung narrower than the one above: a family
+  name (`claude`) returns every generation of it; a **major version** (`claude-4`, or
+  equivalently `claude --version 4`) returns every `claude-4.x` line as a UNION; and a
+  full line rendering (`claude-4.8`) returns that one line. The major rung SELECTS, it
+  does not re-group — it returns several Series in the same multi-line shape the family
+  rung produces, and `claude-4.0`/`claude-4.5` remain distinct lines a narrower selector
+  still addresses individually. Membership is a strict string rule (a generation belongs
+  to version `4` iff it IS `4` or begins `4.`) with no numeric normalization, so `4`
+  never swallows `42`, `1` never reaches the mis-parsed `ling@1t` or the leading-zero
+  `gemini@001`, and `glm@5p1` stays out of the `glm-5` union — those spellings are
+  parse-level artifacts and repairing them belongs where the raw IDs are. Sub-1.0
+  generations need no special case (`mistral-0` unions `0.1` and `0.3`), and where a
+  family spells both a bare `N` and dotted siblings the union includes the bare line.
+  The new `--version` flag is exactly equivalent to appending `-<value>` to the
+  positional, composes with `--provider`/`--quant`/`--status` (selection first, entity
+  filters after), and is rejected with an actionable error when given without a family
+  or without a value. Table and JSON output; no schema change, since this
   renders Go relations rather than a new public JSON document type.
 - **Store v7**: `nomina` table (PK `(value, scheme, entity_key)`, FK →
   `data_sources` — enforcement regression-tested) + `region` column, with

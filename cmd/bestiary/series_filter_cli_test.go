@@ -12,6 +12,9 @@ package main
 // only a genuine filter regression reddens.
 
 import (
+	"encoding/json"
+	"errors"
+	"reflect"
 	"strings"
 	"testing"
 
@@ -331,6 +334,83 @@ func TestSeries_FilterEmptiesSelectedLine(t *testing.T) {
 	}
 	if strings.TrimSpace(out) != "" {
 		t.Errorf("run %v printed a view before failing. stdout:\n%s", args, out)
+	}
+}
+
+// TestSeries_FiltersComposeWithVersionSelection is the composition fence between the
+// two orthogonal mechanisms: the version selection picks WHICH lines, and the filters
+// then narrow the entities INSIDE them. The order matters and is asserted — filtering
+// a union must give the same answer as filtering each of its lines and dropping the
+// empties, or the union would be a second, divergent code path.
+func TestSeries_FiltersComposeWithVersionSelection(t *testing.T) {
+	const provider = bestiary.Provider("anthropic")
+
+	// The union, unfiltered, is the ground truth for which lines are in play.
+	unionLines := seriesNamesFor(t, "claude-4")
+	if len(unionLines) < 2 {
+		t.Fatalf("catalog precondition lost: `series claude-4` returned %d lines, need a real union", len(unionLines))
+	}
+
+	// Filtering the union == filtering each line individually, empties dropped.
+	var filteredUnion []seriesDetail
+	runSeriesJSON(t, &filteredUnion, "claude-4", "--provider", string(provider))
+	perLine := map[string][]releaseDetail{}
+	for _, line := range unionLines {
+		var one []seriesDetail
+		var runErr error
+		out := captureStdout(t, func() {
+			runErr = run([]string{"series", "--output=json", line, "--provider", string(provider)})
+		})
+		if runErr != nil {
+			continue // this line filtered away to empty; it must be absent from the union too
+		}
+		if err := json.Unmarshal([]byte(out), &one); err != nil {
+			t.Fatalf("series %s --provider=%s produced undecodable JSON: %v", line, provider, err)
+		}
+		for _, d := range one {
+			perLine[d.Series] = d.Releases
+		}
+	}
+	if len(filteredUnion) != len(perLine) {
+		t.Errorf("filtered union has %d lines, filtering each line individually gives %d",
+			len(filteredUnion), len(perLine))
+	}
+	for _, d := range filteredUnion {
+		want, ok := perLine[d.Series]
+		if !ok {
+			t.Errorf("line %q survived the filtered union but not when filtered alone", d.Series)
+			continue
+		}
+		if !reflect.DeepEqual(d.Releases, want) {
+			t.Errorf("line %q renders differently inside the union than alone:\n got: %+v\nwant: %+v",
+				d.Series, d.Releases, want)
+		}
+	}
+
+	// --version composes identically (it is the same selection by construction), and
+	// a filter that empties every line of a union is the actionable filter error, not
+	// ErrNotFound — the selector was good.
+	var viaFlag []seriesDetail
+	runSeriesJSON(t, &viaFlag, "claude", "--version", "4", "--provider", string(provider))
+	if !reflect.DeepEqual(viaFlag, filteredUnion) {
+		t.Errorf("`--version 4` + filter disagrees with `claude-4` + filter:\n got: %+v\nwant: %+v",
+			viaFlag, filteredUnion)
+	}
+
+	args := []string{"series", "claude-4", "--provider", "cohere"}
+	var runErr error
+	out := captureStdout(t, func() { runErr = run(args) })
+	if runErr == nil {
+		t.Fatalf("run %v succeeded; cohere serves no claude line, so the union must empty. stdout:\n%s", args, out)
+	}
+	if !strings.Contains(runErr.Error(), "left no entities") {
+		t.Errorf("error %q is not the emptied-selection error; a good selector emptied by a "+
+			"filter must not report not-found", runErr)
+	}
+	var notFound *bestiary.ErrNotFound
+	if errors.As(runErr, &notFound) {
+		t.Errorf("error %q is ErrNotFound; the union matched real lines and the filter is what "+
+			"matched nothing", runErr)
 	}
 }
 
