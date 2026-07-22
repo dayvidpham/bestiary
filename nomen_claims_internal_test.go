@@ -8,11 +8,16 @@ import (
 // TestParseNomenClaims_Valid exercises the happy path with defaults: a claim with no
 // scheme/status/source_id defaults to (alias, admitted, models.dev), and the
 // resolves_to tuple decomposes through the identity-class projection.
+//
+// The fixture's source_url is an archive.org snapshot because the loader now REQUIRES
+// one (see the archive policy on Nomen.SourceURL). It was a live URL until the policy
+// landed — a synthetic fixture, but one that has to satisfy the same rule the shipped
+// curation does, or the happy path would be testing a document the loader rejects.
 func TestParseNomenClaims_Valid(t *testing.T) {
 	raw := []byte(`{
       "schema_version": 1,
       "claims": [
-        {"value": "grok-beta", "resolves_to": {"family": "grok", "version": "4.20", "modifier": ["reasoning"]}, "source_url": "https://docs.x.ai/docs/models"}
+        {"value": "grok-beta", "resolves_to": {"family": "grok", "version": "4.20", "modifier": ["reasoning"]}, "source_url": "https://web.archive.org/web/20260204041847/https://docs.x.ai/docs/models"}
       ]
     }`)
 	tbl, err := parseNomenClaims(raw)
@@ -38,16 +43,33 @@ func TestParseNomenClaims_Valid(t *testing.T) {
 }
 
 // TestParseNomenClaims_Rejects verifies the LOUD codegen-side validation: an empty
-// value, a missing claimant (source_url), or an unknown family are actionable errors.
+// value, a missing claimant (source_url), a claimant that is not an archive.org
+// snapshot, or an unknown family are actionable errors.
+//
+// The archive-shape rejection is the LOUD half of the curated-claims archive policy.
+// Its failure discipline is deliberately split from the file-level one: a missing or
+// corrupt claim file degrades to an empty table (loadNomenClaimsSafe, the lineage.go
+// precedent), because a build without curated claims still works — but a claim that
+// is PRESENT and cites a live page is rejected, because minting a nomen whose evidence
+// can rot is precisely what the policy exists to prevent.
+//
+// Each non-archive case carries a VALID snapshot URL so it fails for its own stated
+// reason rather than tripping the archive check first — the ordering is part of what
+// is being tested.
 func TestParseNomenClaims_Rejects(t *testing.T) {
+	const snap = "https://web.archive.org/web/20260204041847/https://docs.x.ai/docs/models"
 	cases := []struct {
 		name string
 		raw  string
 		want string
 	}{
-		{"empty value", `{"claims":[{"value":"","resolves_to":{"family":"grok"},"source_url":"https://x"}]}`, "empty value"},
+		{"empty value", `{"claims":[{"value":"","resolves_to":{"family":"grok"},"source_url":"` + snap + `"}]}`, "empty value"},
 		{"no claimant", `{"claims":[{"value":"grok-beta","resolves_to":{"family":"grok"}}]}`, "source_url"},
-		{"unknown family", `{"claims":[{"value":"x","resolves_to":{"family":"not-a-family"},"source_url":"https://x"}]}`, "unknown base family"},
+		{"unknown family", `{"claims":[{"value":"x","resolves_to":{"family":"not-a-family"},"source_url":"` + snap + `"}]}`, "unknown base family"},
+		// The archive policy, enforced at load.
+		{"live claimant page", `{"claims":[{"value":"grok-beta","resolves_to":{"family":"grok"},"source_url":"https://docs.x.ai/docs/models"}]}`, "not an archive.org snapshot"},
+		{"archive prefix without a timestamp", `{"claims":[{"value":"grok-beta","resolves_to":{"family":"grok"},"source_url":"https://web.archive.org/web/https://docs.x.ai/docs/models"}]}`, "not an archive.org snapshot"},
+		{"snapshot with no original url in its tail", `{"claims":[{"value":"grok-beta","resolves_to":{"family":"grok"},"source_url":"https://web.archive.org/web/20260204041847/"}]}`, "not an archive.org snapshot"},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {

@@ -3,10 +3,32 @@ package bestiary
 import (
 	"encoding/json"
 	"fmt"
+	"regexp"
 	"sort"
 	"strings"
 	"sync"
 )
+
+// The curated-claims ARCHIVE POLICY, enforced at load.
+//
+// Every source_url in nomen_claims.json must be an archive.org snapshot of the
+// claimant page, captured when the claim was created. See Nomen.SourceURL for the
+// rationale; the short form is that a claim is evidence of what a lab published, and
+// live model cards and docs pages are edited and deleted without notice.
+//
+// The failure disciplines here are deliberately split, matching the lineage.go
+// precedent this file already follows: a MISSING or CORRUPT file degrades gracefully
+// to an empty table (loadNomenClaimsSafe), because a build without curated claims is
+// still a working library — but a claim that is PRESENT and violates the policy is
+// LOUD, because silently minting a nomen whose evidence can rot is exactly the
+// outcome the policy exists to prevent. Same split the empty-source_url rejection
+// above already implements.
+const archiveSnapshotURLPrefix = "https://web.archive.org/web/"
+
+// archiveSnapshotURL is the snapshot shape: the prefix, a 14-digit capture
+// timestamp, then the original claimant URL retained verbatim (which is why the
+// policy needs no second archive_url field).
+var archiveSnapshotURL = regexp.MustCompile(`^https://web\.archive\.org/web/\d{14}/https?://.+$`)
 
 // This file loads the curated third-party naming claims (parse/data/nomen_claims.json)
 // and turns them into Alias/HuggingFace/PURL Nomina. It follows the lineage.go
@@ -139,7 +161,8 @@ func parseNomenClaims(raw []byte) (*nomenClaimsTable, error) {
 				i, i,
 			)
 		}
-		if strings.TrimSpace(c.SourceURL) == "" {
+		sourceURL := strings.TrimSpace(c.SourceURL)
+		if sourceURL == "" {
 			return nil, fmt.Errorf(
 				"bestiary nomen: invalid claim #%d (value=%q): empty source_url\n"+
 					"  What: a naming claim has no claimant attribution\n"+
@@ -147,6 +170,22 @@ func parseNomenClaims(raw []byte) (*nomenClaimsTable, error) {
 					"  Why: SourceURL records WHO asserts the naming; an unattributable claim defeats the purpose\n"+
 					"  How to fix: set source_url to the asserting lab/vendor page",
 				i, value, i,
+			)
+		}
+		if !archiveSnapshotURL.MatchString(sourceURL) {
+			return nil, fmt.Errorf(
+				"bestiary nomen: invalid claim #%d (value=%q): source_url %q is not an archive.org snapshot\n"+
+					"  What: a curated naming claim cites a live page instead of an archived one\n"+
+					"  Where: parse/data/nomen_claims.json claims[%d].source_url\n"+
+					"  When: loading the curated claim table (parseNomenClaims), before any nomen is minted\n"+
+					"  Why: a claim is evidence of what a lab published, and model cards and docs pages are\n"+
+					"       edited and deleted without notice — a live URL silently stops attesting the claim\n"+
+					"       it was cited for. The snapshot embeds the original URL in its tail, so the live\n"+
+					"       address stays recoverable and no separate archive_url field is needed\n"+
+					"  What it means for the caller: the claim is REJECTED; no nomen is minted from this file\n"+
+					"  How to fix: capture the claimant page at web.archive.org, verify the snapshot loads,\n"+
+					"       then use that URL — the form is %ssnapshot-timestamp/<original-url>",
+				i, value, sourceURL, i, archiveSnapshotURLPrefix,
 			)
 		}
 
