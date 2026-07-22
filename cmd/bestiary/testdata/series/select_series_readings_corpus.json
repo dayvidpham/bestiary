@@ -1,0 +1,101 @@
+{
+  "_comment": "selectSeries unit readings over the synthetic line universe declared in series_cli_test.go (gemma, gemma-4, gemma-4.1, grok-build-0.1, llama-4). Exercises the family / major-union / line readings, the dashed-family split, and the negatives — without depending on the real catalog. Expected is the rendered line names in SeriesAll order. See TESTING.md.",
+  "cases": [
+    {
+      "name": "line_reading_exact_rendering",
+      "input": "llama-4",
+      "expected": ["llama-4"],
+      "classification": "must-pass",
+      "provenance": { "source": "requirement", "ref": "the line reading: a selector equal to a line's display rendering resolves, so copy-pasting a listing row always works" },
+      "mutation": { "description": "the selector is exactly one line's rendering, and that family has no dotted siblings to union" }
+    },
+    {
+      "name": "family_reading_returns_every_generation",
+      "input": "gemma",
+      "expected": ["gemma", "gemma-4", "gemma-4.1"],
+      "classification": "must-pass",
+      "provenance": { "source": "requirement", "ref": "the family reading, including the bare line whose rendering equals the family name — the union across readings is what stops 'gemma' hiding the bare gemma line" },
+      "mutation": { "description": "the selector is a family name that is also a bare line's rendering" }
+    },
+    {
+      "name": "major_reading_unions_bare_line_with_dotted_sibling",
+      "input": "gemma-4",
+      "expected": ["gemma-4", "gemma-4.1"],
+      "classification": "must-pass",
+      "provenance": { "source": "requirement", "ref": "ruled: where a family has BOTH a bare-N line and N.x siblings, the union includes the bare line" },
+      "mutation": { "description": "the selector names a bare-integer generation that is simultaneously its own line and a union" }
+    },
+    {
+      "name": "line_reading_narrows_a_dotted_generation",
+      "input": "gemma-4.1",
+      "expected": ["gemma-4.1"],
+      "classification": "must-pass",
+      "provenance": { "source": "requirement", "ref": "the narrow rung: a fully specified generation is a union of one, never the whole major" },
+      "mutation": { "description": "the selector's generation gains a minor part, which must exclude the bare gemma-4 sibling" }
+    },
+    {
+      "name": "matching_is_case_folded_and_trimmed",
+      "input": "  LLAMA-4  ",
+      "expected": ["llama-4"],
+      "classification": "must-pass",
+      "provenance": { "source": "boundary", "ref": "selectors arrive from a shell and must not be case- or whitespace-sensitive" },
+      "mutation": { "description": "the selector is upper-cased and padded" }
+    },
+    {
+      "name": "dashed_family_major_reading_splits_on_the_family",
+      "input": "grok-build-0",
+      "expected": ["grok-build-0.1"],
+      "classification": "must-pass",
+      "provenance": { "source": "bug", "ref": "grok-build is a real family whose name contains a dash; splitting on the LAST dash would read the family as 'grok-build-0' or the version as 'build-0' and miss" },
+      "mutation": { "description": "the selector's family segment itself contains the separator, so a last-dash parse would resolve wrongly" }
+    },
+    {
+      "name": "dashed_family_line_reading",
+      "input": "grok-build-0.1",
+      "expected": ["grok-build-0.1"],
+      "classification": "must-pass",
+      "provenance": { "source": "manual", "ref": "the same dashed family reached by its exact line rendering" },
+      "mutation": { "description": "the full dotted generation is given rather than the major" }
+    },
+    {
+      "name": "dashed_family_family_reading",
+      "input": "grok-build",
+      "expected": ["grok-build-0.1"],
+      "classification": "must-pass",
+      "provenance": { "source": "manual", "ref": "the family reading on a dashed family name" },
+      "mutation": { "description": "no version is given, so only the family reading may fire" }
+    },
+    {
+      "name": "bare_prefix_without_dot_selects_nothing",
+      "input": "gemma-41",
+      "expected": [],
+      "classification": "must-fail",
+      "provenance": { "source": "requirement", "ref": "the mandatory dot: 'gemma-41' must not reach gemma-4.1 by string prefix" },
+      "mutation": { "description": "the dot is removed from a real line's generation, which must break the match rather than widen it" }
+    },
+    {
+      "name": "absent_generation_selects_nothing",
+      "input": "llama-5",
+      "expected": [],
+      "classification": "must-fail",
+      "provenance": { "source": "boundary", "ref": "a version the family does not spell is a normal negative" },
+      "mutation": { "description": "the version is changed to one no line carries" }
+    },
+    {
+      "name": "unknown_family_selects_nothing",
+      "input": "nope",
+      "expected": [],
+      "classification": "must-fail",
+      "provenance": { "source": "boundary", "ref": "an unknown family matches no reading" },
+      "mutation": { "description": "the selector names a family absent from the universe" }
+    },
+    {
+      "name": "empty_selector_selects_nothing",
+      "input": "",
+      "expected": [],
+      "classification": "must-fail",
+      "provenance": { "source": "boundary", "ref": "the empty selector is the no-argument listing path and must never resolve to lines here" },
+      "mutation": { "description": "the selector is emptied, the degenerate input a careless prefix test would treat as universal" }
+    }
+  ]
+}

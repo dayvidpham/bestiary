@@ -935,6 +935,26 @@ func ExtractVersionFromID(id ModelID, rawFamily Family) string {
 		return remainder
 	}
 
+	// Path (b2): "p"-as-dot version token — "5p1" -> "5.1".
+	//
+	// This must run BEFORE path (c), which would otherwise accept "5p1" verbatim as
+	// an alphanumeric version (the shape that produced the phantom glm@5p1 and
+	// glm@5p2 entities) and strand them beside their real dotted siblings.
+	//
+	// The convention is NOT new here: parseSeriesNumber has always read "p" as a dot
+	// inside the letter-prefix series split (kimi-k2p6 -> k@2.6), which is why the
+	// kimi/minimax/mimo spellings already decompose correctly. Generalizing that one
+	// rule to the ordinary version-token position is what extends the same treatment
+	// to families with no series letter, rather than adding a SECOND, provider-gated
+	// mechanism for the same phenomenon.
+	//
+	// The shape is deliberately narrow — digits, a literal "p", digits, and nothing
+	// else — so a unit-suffixed size ("120b"), a letter version ("4o") and any
+	// literal-p token that is not flanked by digits on both sides are untouched.
+	if decoded, ok := decodePNotationVersion(remainder); ok {
+		return decoded
+	}
+
 	// Path (c): single alphanumeric-suffix token (e.g. "4o" from "gpt-4o").
 	// Must start with a digit and contain only alphanumeric characters (no hyphens).
 	// Must not be a pure-alpha word (which would be a variant, not a version).
@@ -986,6 +1006,27 @@ var reHyphenDigits = regexp.MustCompile(`^\d+(?:-\d+)*$`)
 // reBareVersion matches a bare "N.M" dot-version with optional additional segments.
 // e.g. "2.5", "10.3" — but NOT "4o", "4-5", "flash"
 var reBareVersion = regexp.MustCompile(`^\d+\.\d+$`)
+
+// reDotPVersion matches a "p"-as-dot version token: digits, a literal "p", digits,
+// and nothing else. "5p1", "2p6", "5p2" — but NOT "4o", "120b", "3px", "p1".
+//
+// Some providers publish a version with "p" where the dot belongs, because their id
+// namespace disallows the dot; their own display names spell it with the dot. The
+// shape is narrow on purpose: requiring digits on BOTH sides is what keeps a literal
+// "p" in a size or codename token from being read as a decimal point.
+var reDotPVersion = regexp.MustCompile(`^(\d+)p(\d+)$`)
+
+// decodePNotationVersion decodes a "p"-as-dot version token into its dotted form,
+// reporting whether the token had that shape. It is the SINGLE definition of the
+// convention, shared by the ordinary version-token path (ExtractVersionFromID) and
+// the letter-prefix series split (parseSeriesNumber), so the two can never drift
+// into disagreeing about what "5p1" means.
+func decodePNotationVersion(tok string) (string, bool) {
+	if m := reDotPVersion.FindStringSubmatch(tok); m != nil {
+		return m[1] + "." + m[2], true
+	}
+	return "", false
+}
 
 // reAlphaNumVersion matches a single token that starts with a digit and contains
 // only alphanumeric characters (letters and digits). This captures version
@@ -3009,6 +3050,21 @@ func splitBareGen(pd *parseData, tok string) (Family, string, bool) {
 	if pd == nil || tok == "" {
 		return "", "", false
 	}
+	// A GLUED "p"-as-dot generation ("qwen3p7") is tried FIRST, because the digit/dot
+	// scan below stops at the "p" and would leave the base "qwen3" — which clause 2
+	// then rejects as digit-suffixed, dropping the version entirely. This is the same
+	// single rule ExtractVersionFromID and parseSeriesNumber share
+	// (decodePNotationVersion): a third POSITION the rule reaches, not a third
+	// definition of it. The base-side clauses are unchanged, so this admits a new
+	// SHAPE, never a new permission.
+	if m := reGluedPNotationGen.FindStringSubmatch(tok); m != nil {
+		if decoded, okDecode := decodePNotationVersion(m[2]); okDecode {
+			if base, okBase := bareGenBase(pd, m[1]); okBase {
+				return base, decoded, true
+			}
+		}
+	}
+
 	// Maximal trailing run of digits and dots = the generation version.
 	end := len(tok)
 	i := end
@@ -3024,23 +3080,44 @@ func splitBareGen(pd *parseData, tok string) (Family, string, bool) {
 		return "", "", false // no trailing digit/dot run
 	}
 	version := tok[i:]
-	base := tok[:i]
-	// Consume a single separating hyphen ("gpt-5" → base "gpt").
-	base = strings.TrimSuffix(base, "-")
 	// version must contain at least one digit (guard against a lone "." tail).
-	if base == "" || !strings.ContainsAny(version, "0123456789") {
+	if !strings.ContainsAny(version, "0123456789") {
 		return "", "", false
+	}
+	base, ok := bareGenBase(pd, tok[:i])
+	if !ok {
+		return "", "", false
+	}
+	return base, version, true
+}
+
+// reGluedPNotationGen matches a token ending in a GLUED "p"-as-dot generation:
+// everything before it is the (possibly hyphen-terminated) base, and the trailing
+// digit-p-digit run is the generation. "qwen3p7" → ("qwen", "3p7").
+var reGluedPNotationGen = regexp.MustCompile(`^(.+?)(\d+p\d+)$`)
+
+// bareGenBase applies the BASE-side clauses of the bare-generation predicate to a
+// candidate base string: it consumes a single separating hyphen ("gpt-5" → "gpt"),
+// then enforces clause 2 (the base does not itself end in a digit) and clauses 1 and 3
+// (the base is a families.json entry carrying the curated bare_gen_split flag).
+//
+// It is shared by both split paths above so the two can never disagree about which
+// bases may be split.
+func bareGenBase(pd *parseData, raw string) (Family, bool) {
+	base := strings.TrimSuffix(raw, "-")
+	if base == "" {
+		return "", false
 	}
 	// Clause 2: base-name-not-digit-suffixed.
 	if last := base[len(base)-1]; last >= '0' && last <= '9' {
-		return "", "", false
+		return "", false
 	}
 	// Clause 1 (has-entry) + Clause 3 (bare_gen_split flag attested in snapshot).
 	info, ok := pd.families[Family(base)]
 	if !ok || !info.BareGenSplit {
-		return "", "", false
+		return "", false
 	}
-	return Family(base), version, true
+	return Family(base), true
 }
 
 // recoverMemberVariant recovers a variant token from idTokens (the hyphen-split
@@ -3730,6 +3807,13 @@ func parseSeriesNumber(rest string) (version string, hadSep bool, ok bool) {
 	if rest == "" {
 		return "", false, false
 	}
+	// An explicit "." or "p" separator, both handled by reSeriesDotP's "[.p]" class.
+	// This pre-existing regex is where the letter-prefix split has always encoded the
+	// p-as-dot convention; because "[.p]" is a superset of the "p"-only shape
+	// decodePNotationVersion recognises, reSeriesDotP always matches a "5p1" here
+	// first, so a separate decodePNotationVersion call in this function would be dead.
+	// The shared definition still governs the OTHER positions (ExtractVersionFromID and
+	// splitBareGen's glued-generation arm), so the convention cannot drift.
 	if m := reSeriesDotP.FindStringSubmatch(rest); m != nil {
 		return m[1] + "." + m[2], true, true
 	}

@@ -1,10 +1,10 @@
 {
   "total_records": 4979,
-  "changed_count": 1285,
+  "changed_count": 1287,
   "cat_a_divergence_fix_count": 326,
-  "cat_b_improvement_count": 940,
+  "cat_b_improvement_count": 941,
   "cat_c_unexpected_regression_count": 0,
-  "justified_exception_count": 19,
+  "justified_exception_count": 20,
   "id_tuple4_incl_modifier_divergence_frozen_before": 81,
   "id_tuple4_incl_modifier_divergence_current_after": 13,
   "divergence_metric": "4-tuple INCL Modifier (Family,Variant,Version,Modifier); before=frozen baseline, after=current snapshot. DISTINCT from the authoritative cross-provider divergenceExact gate (3-tuple, EXCL Modifier, current snapshot, =0).",
@@ -4196,10 +4196,19 @@
     },
     {
       "provider": "fireworks-ai",
+      "id": "accounts/fireworks/models/qwen3p6-plus",
+      "raw_family": "qwen",
+      "before": "(family=\"qwen\",variant=\"plus\",version=\"\",modifier=\"\")",
+      "after": "(family=\"qwen\",variant=\"plus\",version=\"3.6\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "strict enrichment — only previously-empty field(s) populated"
+    },
+    {
+      "provider": "fireworks-ai",
       "id": "accounts/fireworks/routers/glm-5p1-fast",
       "raw_family": "glm",
       "before": "(family=\"glm\",variant=\"\",version=\"\",modifier=\"\")",
-      "after": "(family=\"glm\",variant=\"\",version=\"5p1\",modifier=\"fast\")",
+      "after": "(family=\"glm\",variant=\"\",version=\"5.1\",modifier=\"fast\")",
       "category": "b:improvement",
       "reason": "strict enrichment — only previously-empty field(s) populated"
     },
@@ -11438,6 +11447,15 @@
       "after": "(family=\"dracarys\",variant=\"\",version=\"\",modifier=\"instruct\")",
       "category": "justified-exception",
       "reason": "JUSTIFIED: USER-RATIFIED non-defect (GH#11 model-lineage): dracarys is a llama fine-tune with its own lineage, ∉ allFamilies; 'instruct'→Modifier re-surfaces (no token loss). Family-root precision is a taxonomy call, not a regression."
+    },
+    {
+      "provider": "fireworks-ai",
+      "id": "accounts/fireworks/models/glm-5p1",
+      "raw_family": "glm",
+      "before": "(family=\"glm\",variant=\"\",version=\"5p1\",modifier=\"\")",
+      "after": "(family=\"glm\",variant=\"\",version=\"5.1\",modifier=\"\")",
+      "category": "justified-exception",
+      "reason": "JUSTIFIED: USER-RATIFIED: p-as-dot decode; glm-5p1 is GLM 5.1 and now merges into the real glm@5.1 entity instead of minting a phantom glm@5p1."
     },
     {
       "provider": "cortecs",

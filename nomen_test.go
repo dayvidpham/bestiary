@@ -51,9 +51,16 @@ func nominaCensus(ns []bestiary.Nomen) map[bestiary.NomenScheme]int {
 // Preferred nomina. provider-ID is untouched AGAIN, and here that is the load-bearing
 // part: the turbo ID spellings survive as Admitted provider-ID nomina on the merged
 // entities. A demotion changes what is IDENTITY, never what is recorded.
+//
+// canonical went 979 → 977 with the "p"-as-dot version decode: the phantom glm@5p1 and
+// glm@5p2 entities merge into the real glm@5.1 and glm@5.2, retiring two keys and
+// therefore two Preferred nomina. provider-ID is untouched a THIRD time, and again that
+// is the load-bearing part — the fireworks "5p1"/"5p2" ID spellings survive as Admitted
+// provider-ID nomina on the merged entities, so decoding a spelling for IDENTITY never
+// erases the spelling from the record.
 func TestNomina_CensusExact(t *testing.T) {
 	const (
-		wantCanonical   = 979
+		wantCanonical   = 977
 		wantProviderID  = 2791
 		wantAlias       = 1
 		wantHuggingFace = 4
@@ -95,7 +102,7 @@ func TestNomina_CensusExact(t *testing.T) {
 			fromModels, wantProviderID, wantAlias, wantHuggingFace)
 	}
 	if fromModels[bestiary.NomenSchemeCanonical] != wantFromModelsCanonical {
-		t.Errorf("MintNominaFromModels canonical = %d, want %d (975 entities minus 4 metadata-only standalones)",
+		t.Errorf("MintNominaFromModels canonical = %d, want %d (the 977 entities minus the 4 metadata-only standalones)",
 			fromModels[bestiary.NomenSchemeCanonical], wantFromModelsCanonical)
 	}
 }

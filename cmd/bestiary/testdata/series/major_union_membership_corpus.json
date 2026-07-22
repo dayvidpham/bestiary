@@ -1,0 +1,173 @@
+{
+  "_comment": "The strict major-union membership rule, unit level: a generation belongs to version V iff it IS V or begins with V followed by a DOT. String test, mandatory dot, no numeric normalization. must-fail cases are non-members. This corpus is the 1:1 successor of the pre-migration inline TestGenerationInMajorUnion table (21 cases): the second sub-1.0 member (0.3/0) and the second dot-lost negative (35/3) are restored here so the migration preserves the full authored coverage rather than the earlier 19. See TESTING.md.",
+  "cases": [
+    {
+      "name": "exact_bare_integer_is_a_member",
+      "input": { "generation": "4", "version": "4" },
+      "expected": true,
+      "classification": "must-pass",
+      "provenance": { "source": "requirement", "ref": "the IS-V arm of the rule: a bare-integer line is a member of its own version" },
+      "mutation": { "description": "generation equals the version exactly, the simplest member" }
+    },
+    {
+      "name": "dotted_zero_minor_is_a_member",
+      "input": { "generation": "4.0", "version": "4" },
+      "expected": true,
+      "classification": "must-pass",
+      "provenance": { "source": "manual", "ref": "claude-4.0 is the fold target of claude@4 and must be in the claude-4 union" },
+      "mutation": { "description": "generation gains a .0 minor, the spelling the N->N.0 fold produces" }
+    },
+    {
+      "name": "dotted_minor_is_a_member",
+      "input": { "generation": "4.8", "version": "4" },
+      "expected": true,
+      "classification": "must-pass",
+      "provenance": { "source": "requirement", "ref": "user ruling: claude-4 returns all of the 4.x series, 4.8 among them" },
+      "mutation": { "description": "generation carries a non-zero minor" }
+    },
+    {
+      "name": "two_digit_minor_is_a_member",
+      "input": { "generation": "4.20", "version": "4" },
+      "expected": true,
+      "classification": "must-pass",
+      "provenance": { "source": "manual", "ref": "grok@4.20 is a real catalog generation; a two-digit minor must not confuse the rule" },
+      "mutation": { "description": "the minor part is two digits, so a naive single-char assumption would break" }
+    },
+    {
+      "name": "multi_digit_major_is_a_member",
+      "input": { "generation": "12.1", "version": "12" },
+      "expected": true,
+      "classification": "must-pass",
+      "provenance": { "source": "boundary", "ref": "the major is not restricted to a single digit" },
+      "mutation": { "description": "the major part is two digits" }
+    },
+    {
+      "name": "sub_one_minor_is_a_member_of_zero",
+      "input": { "generation": "0.1", "version": "0" },
+      "expected": true,
+      "classification": "must-pass",
+      "provenance": { "source": "requirement", "ref": "ruled: sub-1.0 lines union under version 0 verbatim, needing no exemption" },
+      "mutation": { "description": "the version is 0, the value that would need a special case under a numeric rule" }
+    },
+    {
+      "name": "second_sub_one_minor_is_a_member_of_zero",
+      "input": { "generation": "0.3", "version": "0" },
+      "expected": true,
+      "classification": "must-pass",
+      "provenance": { "source": "manual", "ref": "Mistral 7B v0.3 is a genuinely distinct sub-1.0 line alongside v0.1; both union under version 0, so a second sub-1.0 member is pinned distinctly from 0.1" },
+      "mutation": { "description": "a second, higher sub-1.0 minor under the same version 0, proving the sub-1.0 admission is not special-cased to 0.1 alone" }
+    },
+    {
+      "name": "fully_specified_version_matches_itself",
+      "input": { "generation": "4.8", "version": "4.8" },
+      "expected": true,
+      "classification": "must-pass",
+      "provenance": { "source": "requirement", "ref": "the narrow rung is the same rule as the union rung: a fully specified version is a union of one" },
+      "mutation": { "description": "the version carries a minor, so the rule must still admit the exact match" }
+    },
+    {
+      "name": "patch_level_joins_its_minor",
+      "input": { "generation": "4.8.1", "version": "4.8" },
+      "expected": true,
+      "classification": "must-pass",
+      "provenance": { "source": "boundary", "ref": "no such generation exists today, but the rule must be well-defined if a patch level ever appears" },
+      "mutation": { "description": "a third version component is added, which the begins-with-V-dot arm must admit" }
+    },
+    {
+      "name": "bare_prefix_without_dot_is_not_a_member",
+      "input": { "generation": "42", "version": "4" },
+      "expected": false,
+      "classification": "must-fail",
+      "provenance": { "source": "requirement", "ref": "the mandatory dot: a plain string-prefix rule would wrongly swallow 42 into version 4" },
+      "mutation": { "description": "the dot is removed from a would-be member, which must make it a non-member" }
+    },
+    {
+      "name": "letter_suffix_is_not_a_member",
+      "input": { "generation": "4a", "version": "4" },
+      "expected": false,
+      "classification": "must-fail",
+      "provenance": { "source": "boundary", "ref": "the separator must be a dot specifically, not merely any non-digit" },
+      "mutation": { "description": "the dot is replaced by a letter" }
+    },
+    {
+      "name": "p_notation_is_not_a_member",
+      "input": { "generation": "4p1", "version": "4" },
+      "expected": false,
+      "classification": "must-fail",
+      "provenance": { "source": "requirement", "ref": "the taxonomy stays p-unaware: p-notation is decoded at PARSE into a real dotted version, never admitted by a p-aware selector rule" },
+      "mutation": { "description": "the dot is replaced by a p, the upstream spelling the parse layer decodes" }
+    },
+    {
+      "name": "param_size_token_is_not_a_member",
+      "input": { "generation": "1t", "version": "1" },
+      "expected": false,
+      "classification": "must-fail",
+      "provenance": { "source": "manual", "ref": "ling@1t and ring@1t are mis-parsed 1-trillion parameter sizes, not versions; they must not be reachable by --version 1" },
+      "mutation": { "description": "a unit letter follows the digit instead of a dotted minor" }
+    },
+    {
+      "name": "leading_zero_two_digit_is_not_a_member",
+      "input": { "generation": "01", "version": "1" },
+      "expected": false,
+      "classification": "must-fail",
+      "provenance": { "source": "manual", "ref": "minimax@01 is a real generation spelling; no numeric normalization means it is not version 1" },
+      "mutation": { "description": "a leading zero is added, which a numeric rule would erase and a string rule must not" }
+    },
+    {
+      "name": "leading_zero_three_digit_is_not_a_member",
+      "input": { "generation": "001", "version": "1" },
+      "expected": false,
+      "classification": "must-fail",
+      "provenance": { "source": "manual", "ref": "gemini@001 and text-embedding@002/@005 are real generation spellings excluded by the strict rule" },
+      "mutation": { "description": "two leading zeros are added" }
+    },
+    {
+      "name": "dot_lost_spelling_is_not_a_member",
+      "input": { "generation": "25", "version": "2" },
+      "expected": false,
+      "classification": "must-fail",
+      "provenance": { "source": "manual", "ref": "minimax@25 and qwen@25 are dot-lost upstream spellings; the selector must not guess where the dot went" },
+      "mutation": { "description": "the dot is deleted from 2.5, which must make it a non-member rather than a silent member" }
+    },
+    {
+      "name": "second_dot_lost_spelling_is_not_a_member",
+      "input": { "generation": "35", "version": "3" },
+      "expected": false,
+      "classification": "must-fail",
+      "provenance": { "source": "manual", "ref": "qwen@35 is a second dot-lost upstream spelling alongside minimax/qwen@25; pinned distinctly from 25/2 so the no-guess rule is proven for more than one major" },
+      "mutation": { "description": "the dot is deleted from 3.5 under a different major, which must stay a non-member exactly as 25 does under major 2" }
+    },
+    {
+      "name": "different_major_is_not_a_member",
+      "input": { "generation": "3.5", "version": "4" },
+      "expected": false,
+      "classification": "must-fail",
+      "provenance": { "source": "boundary", "ref": "the ordinary negative: a generation of another major is not in this union" },
+      "mutation": { "description": "the major part differs" }
+    },
+    {
+      "name": "sibling_minor_is_not_in_a_narrow_selection",
+      "input": { "generation": "4.0", "version": "4.8" },
+      "expected": false,
+      "classification": "must-fail",
+      "provenance": { "source": "requirement", "ref": "the narrow rung must NOT be equivalent to the union — this is the user's core refinement" },
+      "mutation": { "description": "the version is fully specified to a different minor of the same major" }
+    },
+    {
+      "name": "empty_generation_is_not_a_member",
+      "input": { "generation": "", "version": "4" },
+      "expected": false,
+      "classification": "must-fail",
+      "provenance": { "source": "boundary", "ref": "an un-versioned (bare) line has no generation to select and must never join a version union" },
+      "mutation": { "description": "the generation is emptied, the shape carried by the 204 bare lines" }
+    },
+    {
+      "name": "empty_version_selects_nothing",
+      "input": { "generation": "4", "version": "" },
+      "expected": false,
+      "classification": "must-fail",
+      "provenance": { "source": "boundary", "ref": "an empty version must not degenerate into a prefix that matches everything" },
+      "mutation": { "description": "the version is emptied, the degenerate input a careless prefix test would treat as universal" }
+    }
+  ]
+}

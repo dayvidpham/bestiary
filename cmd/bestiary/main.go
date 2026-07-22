@@ -134,6 +134,17 @@ func run(args []string) error {
 	// "-") it writes to stdout. When the store is empty or absent it falls back to the
 	// curated table.
 	export := fs.Bool("export", false, "sources: export ingest provenance as datasources.json v3 (positional path, or stdout)")
+	// --version (series only) selects a generation of the family named by the
+	// positional, and is exactly equivalent to appending "-<value>" to it:
+	// `series claude --version 4` ≡ `series claude-4` (the 4.x union) and
+	// `series claude --version 4.8` ≡ `series claude-4.8` (the one line). It exists
+	// because "which generation" is a dimension of the query, not part of the family's
+	// name, and it is the spelling a script composes without string-building.
+	seriesVersion := fs.String("version", "", "series: generation to select within the family (e.g. 4 for the 4.x union, 4.8 for one line)")
+	// --input-format (series only) pins the grammar the selector is read under, for
+	// scripting that must not depend on inference: canonical (the entity grammar,
+	// no fallback), models.dev (a raw catalog id), or the default infer.
+	seriesInput := fs.String("input-format", "", "series: selector grammar: canonical, models.dev, or infer (default)")
 
 	if err := fs.Parse(reorderArgs(fs, args[1:])); err != nil {
 		return err
@@ -175,7 +186,38 @@ func run(args []string) error {
 		if flagWasSet(fs, "db-path") {
 			return errSeriesDBPath
 		}
-		return runSeries(fs.Arg(0), bestiary.OutputFormat(*output), *provider, *quant, *status)
+		// --version selects WITHIN a family, so it is meaningless without one: it is
+		// rejected rather than silently ignored (or silently widened to the whole
+		// registry), for the same reason --db-path is.
+		if flagWasSet(fs, "version") {
+			if strings.TrimSpace(*seriesVersion) == "" {
+				return fmt.Errorf("--version was given no value\n" +
+					"  What: `series --version` requires a generation to select\n" +
+					"  Where: bestiary series\n" +
+					"  How to fix: pass one, e.g. `bestiary series claude --version 4` (the 4.x union) " +
+					"or `bestiary series claude --version 4.8` (that one line)")
+			}
+			if fs.NArg() < 1 {
+				return fmt.Errorf("--version %s was given without a family\n"+
+					"  What: `series --version` selects a generation WITHIN a family, so it needs one to select within\n"+
+					"  Where: bestiary series\n"+
+					"  Why: on its own it would name every %s-ish line in the registry across unrelated families\n"+
+					"  How to fix: name the family, e.g. `bestiary series claude --version %s` "+
+					"(equivalently `bestiary series claude-%s`)",
+					*seriesVersion, *seriesVersion, *seriesVersion, *seriesVersion)
+			}
+		}
+		// --input-format pins the selector grammar, so like --version it is
+		// meaningless without a selector to read.
+		if flagWasSet(fs, "input-format") && fs.NArg() < 1 {
+			return fmt.Errorf("--input-format %s was given without a selector\n"+
+				"  What: `series --input-format` pins the grammar the SELECTOR is read under, so it needs one\n"+
+				"  Where: bestiary series\n"+
+				"  How to fix: pass a selector, e.g. `bestiary series claude/opus@4 --input-format=canonical`, "+
+				"or drop the flag to list every line",
+				*seriesInput)
+		}
+		return runSeries(fs.Arg(0), bestiary.OutputFormat(*output), *provider, *quant, *status, *seriesVersion, *seriesInput)
 	case "sources":
 		// --history and --export are catalog-wide ingest-log views; they take no
 		// entity positional. The default sources view still requires an entity key.
@@ -872,6 +914,27 @@ type releaseDetail struct {
 // generation) with its release and entity counts. With a selector it details the
 // matching lines: each release and the canonical entity keys under it.
 //
+// # Selector semantics: a specificity ladder
+//
+// A Series is a family at one exact generation (claude-4.0 and claude-4.5 are two
+// lines), and the selector chooses how much of that structure to ask for. Each rung
+// is strictly narrower than the one above:
+//
+//	bestiary series claude              every claude line, all generations
+//	bestiary series claude-4            every claude 4.x line (the MAJOR union)
+//	bestiary series claude --version 4  identical to the line above
+//	bestiary series claude-4.8          the one claude-4.8 line
+//
+// The major rung is a UNION, not a re-grouping: it returns several Series in the
+// same multi-line output shape the family rung already produces, and the underlying
+// hierarchy is untouched. Membership is a STRICT string rule (see
+// generationInMajorUnion) — a generation belongs to major "4" iff it IS "4" or
+// begins "4." — so a family that spells both a bare "4" and dotted siblings has the
+// bare line included, and nothing is numerically normalized on the way in.
+//
+// versionFlag is the --version value and is exactly equivalent to appending
+// "-<value>" to the positional, so the two spellings cannot drift apart.
+//
 // The view is OFFLINE and STATIC by construction: the hierarchy is computed from
 // the compiled-in registry (SeriesAll/ReleasesOf/EntitiesOf), so — unlike the
 // `entities` view — it never consults the SQLite cache and takes no --db-path. A
@@ -899,15 +962,23 @@ type releaseDetail struct {
 // `series <line> --provider X` will then render. A selector that names real lines
 // which the filters empty is a distinct, actionable error — not ErrNotFound, since
 // the selector was good and the filter was what matched nothing.
-func runSeries(selector string, format bestiary.OutputFormat, providerFlag, quantFlag, statusFlag string) error {
+func runSeries(selector string, format bestiary.OutputFormat, providerFlag, quantFlag, statusFlag, versionFlag, inputFormatFlag string) error {
 	if err := validateEntityOutput(format); err != nil {
+		return err
+	}
+	inputFormat, err := parseSeriesInputFormat(inputFormatFlag)
+	if err != nil {
+		return err
+	}
+	candidates, err := applyVersionFlag(selector, versionFlag, inputFormat)
+	if err != nil {
 		return err
 	}
 	// Parse the filters up front so an unknown --quant or --status value fails fast
 	// with an actionable error, before any view is computed.
-	filter, err := newSeriesFilter(providerFlag, quantFlag, statusFlag)
-	if err != nil {
-		return err
+	filter, filterErr := newSeriesFilter(providerFlag, quantFlag, statusFlag)
+	if filterErr != nil {
+		return filterErr
 	}
 
 	all := bestiary.SeriesAll()
@@ -919,15 +990,66 @@ func runSeries(selector string, format bestiary.OutputFormat, providerFlag, quan
 		return nil
 	}
 
-	matches := selectSeries(all, selector)
+	// Resolve every candidate spelling --version produced, unioning what they name so
+	// the flag behaves identically on the ladder and canonical grammars.
+	var selection seriesSelection
+	var lastErr error
+	for _, candidate := range candidates {
+		got, err := resolveSeriesSelector(all, candidate, inputFormat)
+		if err != nil {
+			lastErr = err
+			continue
+		}
+		selection = unionSeriesSelections(selection, got)
+	}
+	matches := selection.lines
 	if len(matches) == 0 {
+		// A hard grammar/lookup error from a RESTRICTED format is the useful message
+		// (it says what was wrong with the spelling); otherwise the selector simply
+		// named nothing.
+		if lastErr != nil && inputFormat != seriesInputInfer {
+			return lastErr
+		}
 		return &bestiary.ErrNotFound{What: "series", Key: selector}
 	}
+
+	// A provider-qualified selector feeds the ORDINARY entity filter rather than a
+	// second filtering mechanism, so `anthropic/claude@4` and `claude@4
+	// --provider anthropic` narrow identically. An explicit --provider that
+	// disagrees is a contradiction, not a precedence question.
+	if selection.hasProvider {
+		if filter.byProvider && filter.provider != selection.provider {
+			return fmt.Errorf(
+				"selector %q and --provider %s disagree\n"+
+					"  What: the selector is qualified to provider %q while --provider asks for %q\n"+
+					"  Where: bestiary series\n"+
+					"  Why: an entity cannot be narrowed to two different providers at once, and "+
+					"silently preferring one would hide the contradiction\n"+
+					"  How to fix: drop --provider to use the selector's %q, or drop the %q/ prefix "+
+					"from the selector to use --provider %s",
+				selector, filter.provider, selection.provider, filter.provider,
+				selection.provider, selection.provider, filter.provider)
+		}
+		filter.provider, filter.byProvider = selection.provider, true
+	}
+
 	details := make([]seriesDetail, 0, len(matches))
 	for _, s := range matches {
-		if d, ok := seriesDetailOf(s, filter); ok {
-			details = append(details, d)
+		d, ok := seriesDetailOf(s, filter)
+		if !ok {
+			continue
 		}
+		// A release-level cut ("claude/opus") keeps only the named release of each
+		// line. A line that does not carry that release drops out entirely, under the
+		// same cascade rule an emptying filter follows — a header printed over nothing
+		// would claim the line has an opus release when it does not.
+		if selection.hasRelease {
+			d.Releases = releasesNamed(d.Releases, selection.release)
+			if len(d.Releases) == 0 {
+				continue
+			}
+		}
+		details = append(details, d)
 	}
 	// The selector named real lines but the filters emptied every one of them. That is
 	// a different outcome from "no such series" and says so: the caller's selector was
@@ -1084,19 +1206,185 @@ func filterEntities(ents []bestiary.Entity, f seriesFilter) []bestiary.Entity {
 	return out
 }
 
+// seriesInputFormat is the closed set of grammars `series` will read its selector
+// under (--input-format). It is a typed enum rather than a bare string so an
+// unrecognized value is rejected at parse time with the members listed, and so the
+// three readings below can never be confused at a call site.
+type seriesInputFormat int
+
+const (
+	// seriesInputInfer is the DEFAULT: try every reading and union the results,
+	// falling back to a raw model ID only when nothing else matched.
+	seriesInputInfer seriesInputFormat = iota
+	// seriesInputCanonical restricts the selector to the canonical entity grammar,
+	// with NO fallback — the spelling for a script that must fail loudly rather
+	// than silently resolve some other way.
+	seriesInputCanonical
+	// seriesInputModelsDev restricts the selector to a raw models.dev model ID,
+	// resolved through the ordinary catalog lookup to the line of its entity.
+	seriesInputModelsDev
+)
+
+func (f seriesInputFormat) String() string {
+	switch f {
+	case seriesInputCanonical:
+		return "canonical"
+	case seriesInputModelsDev:
+		return "models.dev"
+	default:
+		return "infer"
+	}
+}
+
+// parseSeriesInputFormat maps the --input-format flag value onto the enum. An
+// unrecognized value is an actionable error naming every member, never a silent
+// fall-through to the default — a script that misspells "models.dev" must be told,
+// not quietly given the inferring behaviour it was trying to avoid.
+func parseSeriesInputFormat(s string) (seriesInputFormat, error) {
+	switch strings.ToLower(strings.TrimSpace(s)) {
+	case "", "infer":
+		return seriesInputInfer, nil
+	case "canonical":
+		return seriesInputCanonical, nil
+	case "models.dev", "modelsdev":
+		return seriesInputModelsDev, nil
+	}
+	return 0, fmt.Errorf(
+		"unsupported --input-format %q\n"+
+			"  What: `series --input-format` accepts canonical, models.dev, or infer\n"+
+			"  Where: bestiary series\n"+
+			"  Why: the selector grammar decides how %q is read, so an unknown value cannot be guessed at\n"+
+			"  How to fix: use --input-format=canonical (claude/opus@4), --input-format=models.dev "+
+			"(a raw catalog id), or omit the flag for the default infer",
+		s, s)
+}
+
+// applyVersionFlag folds the --version value into the positional selector and
+// returns the candidate spellings to resolve. Folding it into the SELECTOR — rather
+// than carrying it as a separate parameter through the resolution — is what makes
+// `series claude --version 4` and `series claude-4` the same query rather than two
+// implementations that must be kept in agreement.
+//
+// A version-less selector yields TWO candidates because the two grammars spell a
+// version differently, and either may be what the user meant:
+//
+//	claude       --version 4  ->  "claude-4"  (ladder)  and  "claude@4"  (canonical)
+//	claude/opus  --version 4  ->  "claude/opus-4"       and  "claude/opus@4"
+//
+// Only one of a pair ever resolves in practice; unioning them means the flag works
+// identically on both grammars without the caller having to know which one they are
+// writing. Under --input-format=canonical only the canonical spelling is offered,
+// since that format promises no other reading.
+//
+// A selector that ALREADY pins a version is not extended: the flag must AGREE with
+// it, and a disagreement is an actionable error rather than a silent win for one of
+// them. Both grammars are fenced SYMMETRICALLY — the canonical "@version" always, and
+// the ladder's dash-embedded version under infer — so `claude-4.8 --version 5` fails
+// as loudly as `claude@4.8 --version 5` instead of silently building an unresolvable
+// `claude-4.8-5` and surfacing a bare "series not found" for a line the user spelled
+// correctly. An AGREEING redundant flag (`claude-4 --version 4`) is left intact and
+// resolves. run() has already rejected a --version given without a positional or
+// without a value.
+func applyVersionFlag(selector, versionFlag string, format seriesInputFormat) ([]string, error) {
+	sel := strings.TrimSpace(selector)
+	version := strings.TrimSpace(versionFlag)
+	if version == "" {
+		return []string{sel}, nil
+	}
+	// Canonical "@version" — a syntactic pin, fenced under every format.
+	if at := strings.LastIndex(sel, "@"); at >= 0 {
+		if existing := sel[at+1:]; existing != version {
+			return nil, seriesVersionDisagreeError(sel, "@", existing, version)
+		}
+		return []string{sel}, nil
+	}
+	// Ladder "family-version" — a dash-embedded version is only a reading under infer
+	// (canonical spells versions with "@"; models.dev takes a raw id), and it is
+	// recognised as a purely numeric, optionally-dotted trailing segment so a family
+	// whose NAME contains a dash ("grok-build") is not mistaken for a pinned version.
+	if format == seriesInputInfer {
+		if dash := strings.LastIndex(sel, "-"); dash >= 0 {
+			if existing := sel[dash+1:]; isLadderVersionToken(existing) {
+				if existing != version {
+					return nil, seriesVersionDisagreeError(sel, "-", existing, version)
+				}
+				return []string{sel}, nil
+			}
+		}
+	}
+	if format == seriesInputCanonical {
+		return []string{sel + "@" + version}, nil
+	}
+	return []string{sel + "-" + version, sel + "@" + version}, nil
+}
+
+// seriesVersionDisagreeError is the actionable contradiction reported when a selector
+// already pins a version and --version asks for a different one. It is shared by both
+// grammars — sep is "@" for the canonical pin and "-" for the ladder's dash pin — so
+// the two spellings the README advertises as equivalent fail identically (what / why /
+// where / how), and the fix names the exact segment to drop.
+func seriesVersionDisagreeError(sel, sep, existing, version string) error {
+	return fmt.Errorf(
+		"selector %q and --version %s disagree\n"+
+			"  What: the selector already pins version %q while --version asks for %q\n"+
+			"  Where: bestiary series\n"+
+			"  Why: two different versions cannot both be selected, and silently preferring one "+
+			"would hide the contradiction\n"+
+			"  How to fix: drop --version to use the selector's %q, or drop the %s%s from the "+
+			"selector to use --version %s",
+		sel, version, existing, version, existing, sep, existing, version)
+}
+
+// isLadderVersionToken reports whether s is a purely numeric, optionally-dotted
+// version token (4, 4.8, 0.1, 12.1, 4.8.1) — exactly the shape the major-union rule
+// accepts and no other. A leading dot, a trailing dot, a doubled dot, or any
+// non-digit character (so a family segment like "build" or a "4a" spelling) is
+// rejected, which is what lets the dash split distinguish a pinned ladder version
+// from a family name that merely contains a dash.
+func isLadderVersionToken(s string) bool {
+	if s == "" {
+		return false
+	}
+	prevDot := true // also guards against a leading dot
+	for _, r := range s {
+		switch {
+		case r >= '0' && r <= '9':
+			prevDot = false
+		case r == '.':
+			if prevDot {
+				return false
+			}
+			prevDot = true
+		default:
+			return false
+		}
+	}
+	return !prevDot // a trailing dot leaves this set
+}
+
 // selectSeries resolves a positional selector to the lines it names, as the UNION
-// of two readings — both deterministic, and the union so a selector can never
-// silently hide a line the user could reasonably have meant:
+// of three readings — all deterministic, and the union so a selector can never
+// silently hide a line the user could reasonably have meant. They form a specificity
+// ladder, each rung narrower than the one above:
 //
-//   - the LINE reading: the selector equals a line's display rendering
-//     ("llama-4", "gemini-3.0"), which is exactly what the listing prints, so
-//     copy-pasting a row from `bestiary series` always resolves;
 //   - the FAMILY reading: the selector equals a family name ("gemma"), which
-//     selects every generation of that family.
+//     selects every generation of that family;
+//   - the MAJOR reading: the selector is "<family>-<version>" and the line's
+//     generation falls in that version's union ("claude-4" → claude-4.0, -4.1, -4.5,
+//     -4.6, -4.7, -4.8), so a user can ask for a whole generation without knowing
+//     which point releases exist;
+//   - the LINE reading: the selector equals a line's display rendering
+//     ("llama-4", "claude-4.8"), which is exactly what the listing prints, so
+//     copy-pasting a row from `bestiary series` always resolves.
 //
-// The union matters where a family name is also a bare line's rendering: "gemma"
-// returns the un-versioned gemma line AND gemma-2/3/4, rather than the bare line
-// alone. Matching is case-folded. The result keeps SeriesAll's ordering.
+// The major and line readings do not conflict: a fully-specified "claude-4.8" is its
+// own union of one (nothing spells "4.8.x"), so the ladder narrows smoothly rather
+// than needing a mode switch. The union across readings matters where a family name
+// is also a bare line's rendering: "gemma" returns the un-versioned gemma line AND
+// gemma-2/3/4, rather than the bare line alone.
+//
+// Matching is case-folded. The result keeps SeriesAll's ordering, so a union comes
+// back sorted by generation exactly as the listing prints it.
 func selectSeries(all []bestiary.Series, selector string) []bestiary.Series {
 	want := strings.ToLower(strings.TrimSpace(selector))
 	if want == "" {
@@ -1104,11 +1392,280 @@ func selectSeries(all []bestiary.Series, selector string) []bestiary.Series {
 	}
 	var out []bestiary.Series
 	for _, s := range all {
-		if strings.ToLower(s.String()) == want || strings.ToLower(string(s.Family)) == want {
+		if strings.ToLower(s.String()) == want || strings.ToLower(string(s.Family)) == want ||
+			seriesInMajorUnion(s, want) {
 			out = append(out, s)
 		}
 	}
 	return out
+}
+
+// seriesSelection is a resolved selector: which lines were named, plus the two
+// narrowings a canonical selector can carry with it.
+//
+// release is the RELEASE-LEVEL cut ("claude/opus" → only the opus release of each
+// line). provider is the provider qualification ("anthropic/claude@4" → only
+// anthropic-served entities), which is fed into the ordinary seriesFilter rather
+// than being a second filtering mechanism.
+type seriesSelection struct {
+	lines []bestiary.Series
+
+	release    string
+	hasRelease bool
+
+	provider    bestiary.Provider
+	hasProvider bool
+}
+
+// resolveSeriesSelector resolves a selector under the given input format.
+//
+// # Reading precedence
+//
+// Under INFER (the default) the readings are tried in this order and the first two
+// are UNIONED, so a selector can never silently lose an interpretation:
+//
+//  1. the LADDER readings — family / major-union / line rendering (selectSeries);
+//  2. the CANONICAL reading — [provider/]family[/variant][@version], which adds the
+//     release cut and the provider qualification;
+//  3. the RAW MODEL ID reading — tried ONLY when 1 and 2 both found nothing, so a
+//     catalog id resolves to its entity's line without ever shadowing a line whose
+//     rendering happens to look like an id.
+//
+// Under CANONICAL only reading 2 runs, and a selector that does not parse (or names
+// nothing) is an error with no fallback. Under MODELS.DEV only reading 3 runs.
+//
+// Note the grammar's "@" is the entity VERSION here, exactly as in an entity key
+// (claude/opus@4.5) — NOT the @-date form the `show` resolver accepts. Series live
+// above entity keys, so they inherit the key grammar.
+func resolveSeriesSelector(all []bestiary.Series, selector string, format seriesInputFormat) (seriesSelection, error) {
+	switch format {
+	case seriesInputCanonical:
+		sel, err := canonicalSeriesSelection(all, selector)
+		if err != nil {
+			return seriesSelection{}, err
+		}
+		return sel, nil
+	case seriesInputModelsDev:
+		return rawIDSeriesSelection(all, selector)
+	}
+
+	// INFER: ladder ∪ canonical, then the raw-id fallback.
+	sel := seriesSelection{lines: selectSeries(all, selector)}
+	if canonical, err := canonicalSeriesSelection(all, selector); err == nil && len(canonical.lines) > 0 {
+		sel = unionSeriesSelections(sel, canonical)
+	}
+	if len(sel.lines) > 0 {
+		return sel, nil
+	}
+	byID, err := rawIDSeriesSelection(all, selector)
+	if err != nil {
+		// The raw-id reading is the LAST fallback, so its miss is reported as the
+		// ordinary not-found for the selector as written rather than as an
+		// id-specific error — the user did not necessarily mean an id at all.
+		return seriesSelection{}, nil
+	}
+	return byID, nil
+}
+
+// unionSeriesSelections merges the ladder and canonical readings, keeping SeriesAll
+// order and de-duplicating. The narrowings come from the canonical side (the ladder
+// reading never sets one), so they are carried across verbatim.
+func unionSeriesSelections(ladder, canonical seriesSelection) seriesSelection {
+	seen := map[bestiary.Series]bool{}
+	for _, s := range ladder.lines {
+		seen[s] = true
+	}
+	out := ladder
+	for _, s := range canonical.lines {
+		if !seen[s] {
+			seen[s] = true
+			out.lines = append(out.lines, s)
+		}
+	}
+	sort.Slice(out.lines, func(i, j int) bool {
+		if out.lines[i].Family != out.lines[j].Family {
+			return out.lines[i].Family < out.lines[j].Family
+		}
+		return out.lines[i].Generation < out.lines[j].Generation
+	})
+	out.release, out.hasRelease = canonical.release, canonical.hasRelease
+	out.provider, out.hasProvider = canonical.provider, canonical.hasProvider
+	return out
+}
+
+// canonicalSeriesSelection reads the selector as the canonical entity grammar and
+// maps each component onto its SERIES-level meaning:
+//
+//	claude@4             the major-4 union (identical to the ladder's claude-4)
+//	claude@4.5           the one claude-4.5 line
+//	claude/opus          the opus RELEASE across every claude generation
+//	claude/opus@4        the opus release within the major-4 union
+//	anthropic/claude@4   the major-4 union, narrowed to anthropic-served entities
+//
+// The tuple is parsed by the SAME parseEntityTuple the entity commands use — there
+// is deliberately no second parser — and the provider prefix is peeled off first,
+// since parseEntityTuple would otherwise read "anthropic" as the family. A #size or
+// {mods} segment parses without error but has no series-level meaning (a Series is a
+// family and a generation), so it simply does not narrow anything.
+func canonicalSeriesSelection(all []bestiary.Series, selector string) (seriesSelection, error) {
+	raw := strings.TrimSpace(selector)
+	if raw == "" {
+		return seriesSelection{}, fmt.Errorf(
+			"empty canonical selector\n" +
+				"  What: --input-format=canonical needs a selector to parse\n" +
+				"  Where: bestiary series\n" +
+				"  How to fix: pass one, e.g. `bestiary series claude/opus@4 --input-format=canonical`")
+	}
+
+	var provider bestiary.Provider
+	hasProvider := false
+	// Peel a leading "<provider>/" ONLY when it names a known provider and something
+	// follows it. Requiring IsKnown is what keeps "claude/opus" reading as
+	// family/variant rather than as a provider called "claude".
+	if slash := strings.Index(raw, "/"); slash > 0 {
+		if p := bestiary.Provider(strings.ToLower(raw[:slash])); p.IsKnown() && slash+1 < len(raw) {
+			provider, hasProvider = p, true
+			raw = raw[slash+1:]
+		}
+	}
+
+	fam, variant, version, _, _, err := parseEntityTuple(raw)
+	if err != nil {
+		return seriesSelection{}, fmt.Errorf(
+			"selector %q is not the canonical grammar: %w\n"+
+				"  What: expected [provider/]family[/variant][@version]\n"+
+				"  Where: bestiary series --input-format=canonical\n"+
+				"  How to fix: e.g. claude, claude@4, claude/opus, claude/opus@4, anthropic/claude@4",
+			selector, err)
+	}
+
+	wantFamily := strings.ToLower(string(fam))
+	sel := seriesSelection{provider: provider, hasProvider: hasProvider}
+	if variant != "" {
+		sel.release, sel.hasRelease = variant, true
+	}
+	for _, s := range all {
+		if strings.ToLower(string(s.Family)) != wantFamily {
+			continue
+		}
+		// No version given: every generation of the family, exactly like the family
+		// rung of the ladder. A version given: the strict major-union rule, so
+		// "@4" unions the 4.x lines and "@4.5" narrows to one.
+		if version != "" && !generationInMajorUnion(strings.ToLower(s.Generation), strings.ToLower(version)) {
+			continue
+		}
+		// A release cut selects only the lines that actually CARRY that release. This
+		// is what makes the variant segment part of the selection rather than a
+		// post-filter: "claude/opus" names the lines with an opus release, so a line
+		// without one is not selected at all (and a variant no line carries selects
+		// nothing, rather than matching every line and then emptying).
+		if sel.hasRelease && !seriesHasRelease(s, sel.release) {
+			continue
+		}
+		sel.lines = append(sel.lines, s)
+	}
+	// Naming nothing is reported here rather than left to the caller's generic
+	// not-found, because the canonical reading knows WHICH component missed — and
+	// under --input-format=canonical, where there is no fallback to soften it, that
+	// distinction is the whole value of the strict mode.
+	if len(sel.lines) == 0 {
+		if sel.hasRelease {
+			return seriesSelection{}, fmt.Errorf(
+				"selector %q names no line\n"+
+					"  What: no %s line carries a %q release\n"+
+					"  Where: bestiary series (canonical grammar)\n"+
+					"  How to fix: run `bestiary series %s` to see the releases that family does carry",
+				selector, wantFamily, sel.release, wantFamily)
+		}
+		if version != "" {
+			return seriesSelection{}, fmt.Errorf(
+				"selector %q names no line\n"+
+					"  What: family %q exists in the registry but spells no generation in the %q union\n"+
+					"  Where: bestiary series (canonical grammar)\n"+
+					"  How to fix: run `bestiary series %s` to see the generations that family does spell",
+				selector, wantFamily, version, wantFamily)
+		}
+		return seriesSelection{}, fmt.Errorf(
+			"selector %q names no line\n"+
+				"  What: no family %q is in the compiled-in registry\n"+
+				"  Where: bestiary series (canonical grammar)\n"+
+				"  Why: the canonical grammar reads %q as [provider/]family[/variant][@version], so the "+
+				"first segment must be a family — a raw catalog id is a different grammar\n"+
+				"  How to fix: use a family (e.g. `claude/opus@4`), or pass "+
+				"--input-format=models.dev to read the selector as a raw model id",
+			selector, wantFamily, selector)
+	}
+	return sel, nil
+}
+
+// rawIDSeriesSelection reads the selector as a raw models.dev model ID and returns
+// the line of the entity that id belongs to.
+//
+// It goes through the ordinary catalog lookup (lookupEntity — the same tuple-then-id
+// path the entity commands use), so a provider-unqualified id gets the established
+// canonical-provider preference rather than a second, divergent resolution rule.
+func rawIDSeriesSelection(all []bestiary.Series, selector string) (seriesSelection, error) {
+	id := strings.TrimSpace(selector)
+	m, ok := bestiary.LookupModel(bestiary.ModelID(id))
+	if !ok {
+		return seriesSelection{}, &bestiary.ErrNotFound{What: "model id", Key: selector}
+	}
+	line := bestiary.SeriesOf(bestiary.EntityRef{
+		Family:    m.Family,
+		Variant:   m.Variant,
+		Version:   m.Version,
+		ParamSize: m.ParamSize,
+		Modifier:  bestiary.EntityModifiers(m.Modifier, m.Family),
+	})
+	for _, s := range all {
+		if s == line {
+			return seriesSelection{lines: []bestiary.Series{s}}, nil
+		}
+	}
+	return seriesSelection{}, &bestiary.ErrNotFound{What: "series for model id", Key: selector}
+}
+
+// seriesInMajorUnion reports whether the case-folded selector reads as
+// "<this line's family>-<version>" with this line's generation in that version's
+// union.
+//
+// The family is what SPLITS the selector — not the last dash — because a family name
+// may itself contain one: "grok-build-0.1" must split as (grok-build, 0.1), and
+// testing each candidate line's own family is what gets that right without a parser.
+// A bare line (empty generation) is never matched: it has no generation to select.
+func seriesInMajorUnion(s bestiary.Series, want string) bool {
+	if s.Generation == "" {
+		return false
+	}
+	prefix := strings.ToLower(string(s.Family)) + "-"
+	if !strings.HasPrefix(want, prefix) {
+		return false
+	}
+	version := want[len(prefix):]
+	if version == "" {
+		return false
+	}
+	return generationInMajorUnion(strings.ToLower(s.Generation), version)
+}
+
+// generationInMajorUnion is the STRICT membership rule for a version selection: a
+// generation belongs to version V iff it IS V, or begins with V followed by a DOT.
+//
+// The mandatory dot is the whole rule, and it is deliberately a string test with NO
+// numeric normalization — which is what keeps the selection honest on the catalog's
+// messier generation spellings:
+//
+//   - "4" selects 4, 4.0, 4.1, 4.5 … but NOT 42 or 4a (a bare prefix test would
+//     wrongly swallow both);
+//   - "5" does NOT select glm's "5p1"/"5p2" — those are GLM 5.1/5.2 spelled with a
+//     "p" upstream, and repairing that spelling belongs in parse/ where the raw IDs
+//     are, not in a selector that would have to guess;
+//   - "1" does NOT select "1t" (a mis-parsed 1-trillion parameter size) or the
+//     leading-zero "01"/"001" spellings;
+//   - "0" DOES select 0.1, 0.2 and 0.3, so the sub-1.0 lines union under 0 like any
+//     other generation — no special case is needed for them.
+func generationInMajorUnion(generation, version string) bool {
+	return generation == version || strings.HasPrefix(generation, version+".")
 }
 
 // seriesSummaries builds the listing rows for the given lines, preserving order.
@@ -1149,6 +1706,36 @@ func filteredReleaseCounts(s bestiary.Series, f seriesFilter) (releases, entitie
 		entities += len(kept)
 	}
 	return releases, entities
+}
+
+// seriesHasRelease reports whether the line carries a release of that name
+// (case-folded). It reads the registry rather than a filtered view, so the SELECTION
+// is decided by what the line genuinely holds and not by what a --provider or
+// --quant filter happens to leave behind.
+func seriesHasRelease(s bestiary.Series, name string) bool {
+	for _, r := range bestiary.ReleasesOf(s) {
+		if strings.EqualFold(r.Name, name) {
+			return true
+		}
+	}
+	return false
+}
+
+// releasesNamed keeps the releases whose name matches (case-folded), which is how a
+// canonical selector's variant segment becomes a RELEASE-LEVEL cut. It returns a
+// fresh slice and never mutates its input.
+//
+// The empty name is matchable in principle (it is the real, un-named bare release),
+// but a canonical selector cannot express it — "claude/" has no variant segment — so
+// in practice this only ever selects named releases.
+func releasesNamed(in []releaseDetail, name string) []releaseDetail {
+	out := make([]releaseDetail, 0, 1)
+	for _, r := range in {
+		if strings.EqualFold(r.Name, name) {
+			out = append(out, r)
+		}
+	}
+	return out
 }
 
 // seriesDetailOf builds the detail view of one line: its releases in

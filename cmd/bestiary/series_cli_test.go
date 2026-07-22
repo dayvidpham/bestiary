@@ -4,10 +4,12 @@ import (
 	"encoding/json"
 	"errors"
 	"flag"
+	"reflect"
 	"strings"
 	"testing"
 
 	"github.com/dayvidpham/bestiary"
+	"github.com/dayvidpham/bestiary/testcase"
 )
 
 // runSeriesJSON drives `series [selector] --output=json` end-to-end and decodes
@@ -37,7 +39,7 @@ func TestRun_Series_ListTable(t *testing.T) {
 	// Census header tracks the library-side Series pin (TestSeriesAll_CensusExact),
 	// which moved 422 → 421 when the curated eva and command-a-plus overrides retired
 	// two compound-family lines and created one.
-	if want := "Series (421):"; !strings.Contains(out, want) {
+	if want := "Series (419):"; !strings.Contains(out, want) {
 		t.Errorf("listing missing the census header %q; got first line:\n%s", want, firstLine(out))
 	}
 	for _, want := range []string{"SERIES", "FAMILY", "GENERATION", "RELEASES", "ENTITIES"} {
@@ -181,7 +183,9 @@ func TestRun_Series_SelectorIsCaseFolded(t *testing.T) {
 
 // TestRun_Series_GeminiNormalizationVisible is the end-to-end fence on the ruled
 // generation fold: the CLI shows ONE gemini-3.0 line holding both the "@3" and
-// "@3.0" spellings' entities, and no gemini-3 line exists to select.
+// "@3.0" spellings' entities, and gemini-3 is not a line of its own. It also draws
+// the distinction the version selectors introduce — "gemini-3" is not a LINE but is
+// a valid major SELECTOR, and those are different things.
 func TestRun_Series_GeminiNormalizationVisible(t *testing.T) {
 	var details []seriesDetail
 	runSeriesJSON(t, &details, "gemini-3.0")
@@ -197,12 +201,391 @@ func TestRun_Series_GeminiNormalizationVisible(t *testing.T) {
 	if want := []string{"gemini/flash@3", "gemini/flash@3.0"}; !equalStringSlices(flash, want) {
 		t.Errorf("gemini-3.0/flash entities = %v, want %v (both spellings under one line)", flash, want)
 	}
-	// The un-normalized rendering is NOT selectable.
+	// The un-normalized rendering is still not a LINE — the fold is structural and
+	// SeriesAll never lists "gemini-3"...
+	for _, s := range bestiary.SeriesAll() {
+		if s.Family == "gemini" && s.Generation == "3" {
+			t.Error("SeriesAll() exposes the folded line gemini-3; the N -> N.0 fold must still apply")
+		}
+	}
+	// ...but it IS a valid MAJOR selector, which is a selection path rather than a
+	// line: it unions every gemini 3.x line, the folded gemini-3.0 among them.
+	var union []seriesDetail
+	runSeriesJSON(t, &union, "gemini-3")
+	got := make([]string, 0, len(union))
+	for _, d := range union {
+		got = append(got, d.Series)
+	}
+	if want := []string{"gemini-3.0", "gemini-3.1", "gemini-3.5"}; !equalStringSlices(got, want) {
+		t.Errorf("series gemini-3 = %v, want the major union %v", got, want)
+	}
+}
+
+// seriesNamesFor runs `series <args…> --output=json` and returns the rendered line
+// names of the detail view, in output order.
+func seriesNamesFor(t *testing.T, args ...string) []string {
+	t.Helper()
+	var details []seriesDetail
+	runSeriesJSON(t, &details, args...)
+	out := make([]string, 0, len(details))
+	for _, d := range details {
+		out = append(out, d.Series)
+	}
+	return out
+}
+
+// TestRun_Series_SpecificityLadder is the ruled selector semantics end to end: each
+// rung of family → family-MAJOR → family-MAJOR.MINOR is strictly narrower than the
+// one above, and the major rung returns every 4.x line as a UNION rather than
+// re-grouping anything.
+//
+// This is the user's ask in its own words — asking for `claude-4` returns all of the
+// 4.x series, while the more specific `4.8` or `4.0` returns the narrower selection.
+func TestRun_Series_SpecificityLadder(t *testing.T) {
+	family := seriesNamesFor(t, "claude")
+	major := seriesNamesFor(t, "claude-4")
+	minor := seriesNamesFor(t, "claude-4.0")
+
+	// The per-rung MEMBERSHIP is pinned as authored data in the resolution corpus
+	// (TestRun_Series_SelectorResolutionCorpus). What is asserted here is the
+	// structural PROPERTY between rungs, which is computed from those results rather
+	// than authored, and so stays inline per TESTING.md.
+
+	// Strictly narrowing, and every rung a subset of the one above — the property that
+	// makes the ladder a ladder rather than three unrelated lookups.
+	if !(len(family) > len(major) && len(major) > len(minor)) {
+		t.Errorf("rungs are not strictly narrowing: family %d, major %d, minor %d",
+			len(family), len(major), len(minor))
+	}
+	inFamily := map[string]bool{}
+	for _, s := range family {
+		inFamily[s] = true
+	}
+	inMajor := map[string]bool{}
+	for _, s := range major {
+		inMajor[s] = true
+		if !inFamily[s] {
+			t.Errorf("major rung returned %q, which the family rung does not", s)
+		}
+	}
+	for _, s := range minor {
+		if !inMajor[s] {
+			t.Errorf("minor rung returned %q, which the major rung does not", s)
+		}
+	}
+
+	// The major rung selects; it does NOT re-group. Every returned line keeps its own
+	// exact generation, and the entities stay under the line they were already in.
+	var details []seriesDetail
+	runSeriesJSON(t, &details, "claude-4")
+	for _, d := range details {
+		if d.Family != "claude" || d.Generation == "4" {
+			t.Errorf("major union altered a line's identity: %+v (generations must stay exact)", d)
+		}
+	}
+}
+
+// TestRun_Series_SelectorResolutionCorpus is the end-to-end fence over the whole
+// selector surface: the specificity ladder, the canonical grammar readings (version,
+// release-level cut, provider qualification), --version, --input-format, and the
+// disagreement errors. Each case drives run() with the argv a user would type.
+//
+// The rows are AUTHORED data facts — a selector and the exact lines it must return —
+// so they live in a JSON corpus under the three-guard discipline (exact count,
+// value coverage, non-vacuity) rather than inline. See TESTING.md.
+func TestRun_Series_SelectorResolutionCorpus(t *testing.T) {
+	corpus := loadSeriesCorpus[seriesResolutionInput, seriesResolutionExpected](
+		t, seriesSelectorResolutionCorpusJSON, 28)
+
+	// Value coverage: a count-preserving swap that dropped one of the ruled examples
+	// and added a filler would survive the exact-count guard, so the load-bearing
+	// selectors are asserted present by value.
+	requireSeriesCorpusCoverage(t, corpus, []seriesResolutionInput{
+		{Selector: "claude"},
+		{Selector: "claude-4"},
+		{Selector: "claude", Version: "4"},
+		{Selector: "claude-4.0"},
+		{Selector: "claude@4"},
+		{Selector: "claude/opus"},
+		{Selector: "anthropic/claude@4"},
+		{Selector: "claude-sonnet-4-5-20250929", InputFormat: "models.dev"},
+	})
+
+	for _, c := range corpus.Cases {
+		t.Run(c.Name, func(t *testing.T) {
+			var runErr error
+			out := captureStdout(t, func() { runErr = run(c.Input.args()) })
+
+			if c.Classification == testcase.MustFail {
+				if runErr == nil {
+					t.Fatalf("run %v succeeded; the case requires a rejection. stdout:\n%s", c.Input.args(), out)
+				}
+				for _, want := range c.Expected.ErrorContains {
+					if !strings.Contains(runErr.Error(), want) {
+						t.Errorf("error %q does not mention %q", runErr, want)
+					}
+				}
+				if strings.TrimSpace(out) != "" {
+					t.Errorf("run %v wrote a view before failing:\n%s", c.Input.args(), out)
+				}
+				return
+			}
+
+			if runErr != nil {
+				t.Fatalf("run %v returned error: %v", c.Input.args(), runErr)
+			}
+			var details []seriesDetail
+			if err := json.Unmarshal([]byte(out), &details); err != nil {
+				t.Fatalf("run %v produced undecodable JSON: %v\noutput:\n%s", c.Input.args(), err, out)
+			}
+			got := make([]string, 0, len(details))
+			for _, d := range details {
+				got = append(got, d.Series)
+			}
+			if !equalStringSlices(got, c.Expected.Series) {
+				t.Errorf("run %v returned lines %v, want %v", c.Input.args(), got, c.Expected.Series)
+			}
+			// A release-level cut additionally pins the releases every returned line
+			// must show — without this, `claude/opus` would pass by returning the right
+			// lines with all their releases intact.
+			if len(c.Expected.Releases) > 0 {
+				for _, d := range details {
+					names := make([]string, 0, len(d.Releases))
+					for _, r := range d.Releases {
+						names = append(names, r.Name)
+					}
+					if !equalStringSlices(names, c.Expected.Releases) {
+						t.Errorf("line %q shows releases %v, want %v (the release cut did not apply)",
+							d.Series, names, c.Expected.Releases)
+					}
+				}
+			}
+		})
+	}
+}
+
+// requireSeriesCorpusCoverage asserts each probe input is still present in the
+// corpus by value — the guard an exact case count cannot provide.
+func requireSeriesCorpusCoverage(t *testing.T, corpus testcase.Corpus[seriesResolutionInput, seriesResolutionExpected], probes []seriesResolutionInput) {
+	t.Helper()
+	for _, p := range probes {
+		found := false
+		for _, c := range corpus.Cases {
+			if c.Input == p {
+				found = true
+				break
+			}
+		}
+		if !found {
+			t.Errorf("value coverage lost: no corpus case for input %+v", p)
+		}
+	}
+}
+
+// TestRun_Series_VersionFlagEquivalence pins `--version` as sugar for the same
+// selection. Equivalence is asserted on the FULL decoded output, not just the line
+// names, so the flag cannot diverge in the detail it renders either.
+//
+// The pairs are COMPUTED against each other rather than against an authored expected
+// value — the assertion is "these two invocations agree", which has no fixed table —
+// so this stays inline while the per-selector membership lives in the corpus.
+func TestRun_Series_VersionFlagEquivalence(t *testing.T) {
+	cases := []struct{ selector, family, version string }{
+		{"claude-4", "claude", "4"},           // major union
+		{"claude-4.8", "claude", "4.8"},       // one line
+		{"llama-4", "llama", "4"},             // a bare-integer line with no dotted siblings
+		{"mistral-0", "mistral", "0"},         // sub-1.0 lines union under 0 like any other
+		{"claude/opus@4", "claude/opus", "4"}, // the canonical grammar, version supplied by flag
+	}
+	for _, tc := range cases {
+		var viaSelector, viaFlag []seriesDetail
+		runSeriesJSON(t, &viaSelector, tc.selector)
+		runSeriesJSON(t, &viaFlag, tc.family, "--version", tc.version)
+		if !reflect.DeepEqual(viaSelector, viaFlag) {
+			t.Errorf("`series %s` and `series %s --version %s` disagree:\n  selector: %+v\n      flag: %+v",
+				tc.selector, tc.family, tc.version, viaSelector, viaFlag)
+		}
+		if len(viaFlag) == 0 {
+			t.Errorf("`series %s --version %s` returned nothing; the case is vacuous", tc.family, tc.version)
+		}
+	}
+
+	// An unknown version is the SAME error class as an unknown selector — a normal
+	// negative naming what was asked for, never silence or a panic.
 	var runErr error
-	captureStdout(t, func() { runErr = run([]string{"series", "--output=json", "gemini-3"}) })
+	captureStdout(t, func() { runErr = run([]string{"series", "--output=json", "claude", "--version", "9"}) })
 	var notFound *bestiary.ErrNotFound
 	if !errors.As(runErr, &notFound) {
-		t.Errorf("selecting the folded line 'gemini-3' returned %v, want ErrNotFound", runErr)
+		t.Fatalf("`series claude --version 9` returned %v, want *bestiary.ErrNotFound", runErr)
+	}
+	if notFound.What != "series" {
+		t.Errorf("ErrNotFound = %+v, want what=series", notFound)
+	}
+}
+
+// TestRun_Series_VersionFlagRequiresFamily is the negative control on the flag's
+// scope: --version selects WITHIN a family, so without one it is rejected with an
+// actionable error rather than silently ignored or silently widened to the registry.
+func TestRun_Series_VersionFlagRequiresFamily(t *testing.T) {
+	cases := []struct {
+		name string
+		args []string
+		want []string
+	}{
+		{
+			"no family",
+			[]string{"series", "--output=json", "--version", "4"},
+			[]string{"--version", "without a family", "bestiary series claude --version 4"},
+		},
+		{
+			"no value",
+			[]string{"series", "--output=json", "--version="},
+			[]string{"--version", "no value"},
+		},
+		{
+			"blank value",
+			[]string{"series", "--output=json", "--version", "   ", "claude"},
+			[]string{"--version", "no value"},
+		},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			var runErr error
+			out := captureStdout(t, func() { runErr = run(tc.args) })
+			if runErr == nil {
+				t.Fatalf("run %v succeeded; it must be rejected. stdout:\n%s", tc.args, out)
+			}
+			for _, want := range tc.want {
+				if !strings.Contains(runErr.Error(), want) {
+					t.Errorf("error %q does not mention %q", runErr, want)
+				}
+			}
+			if strings.TrimSpace(out) != "" {
+				t.Errorf("run %v wrote a view before failing:\n%s", tc.args, out)
+			}
+		})
+	}
+}
+
+// TestRun_Series_StrictMembershipNegatives is the end-to-end negative control on the
+// membership rule: a version that matches NO line must be a normal not-found, never
+// an accidental match. "ling-1" must not reach ling@1t, which a bare-prefix rule
+// would have allowed.
+//
+// The POSITIVE membership rows (which lines each union returns) are authored data and
+// live in the resolution corpus; these three are computed negatives over the built
+// catalog, so they stay inline.
+func TestRun_Series_StrictMembershipNegatives(t *testing.T) {
+	for _, selector := range []string{"ling-1", "ring-1", "text-embedding-0"} {
+		var runErr error
+		captureStdout(t, func() { runErr = run([]string{"series", "--output=json", selector}) })
+		var notFound *bestiary.ErrNotFound
+		if !errors.As(runErr, &notFound) {
+			t.Errorf("series %s returned %v, want ErrNotFound (the strict rule must not match "+
+				"a non-dotted spelling)", selector, runErr)
+		}
+	}
+}
+
+// TestGenerationInMajorUnion unit-tests the strict membership rule directly, over the
+// authored corpus of generation/version pairs — including the real catalog spellings
+// (p-notation, 1t, leading zeros, dot-lost tokens) a looser rule would mis-admit.
+func TestGenerationInMajorUnion(t *testing.T) {
+	corpus := loadSeriesCorpus[seriesMembershipInput, bool](t, seriesMajorUnionMembershipCorpusJSON, 21)
+
+	// Value coverage: the load-bearing exclusions must still be present by value.
+	// The two second-of-a-kind rows (0.3/0, 35/3) are pinned here too so the 1:1
+	// restoration of the pre-migration inline table cannot silently regress again.
+	wantPresent := []seriesMembershipInput{
+		{Generation: "4.8", Version: "4"},
+		{Generation: "42", Version: "4"},
+		{Generation: "4p1", Version: "4"},
+		{Generation: "1t", Version: "1"},
+		{Generation: "001", Version: "1"},
+		{Generation: "0.1", Version: "0"},
+		{Generation: "0.3", Version: "0"},
+		{Generation: "25", Version: "2"},
+		{Generation: "35", Version: "3"},
+		{Generation: "4.0", Version: "4.8"},
+	}
+	for _, want := range wantPresent {
+		found := false
+		for _, c := range corpus.Cases {
+			if c.Input == want {
+				found = true
+				break
+			}
+		}
+		if !found {
+			t.Errorf("value coverage lost: no corpus case for %+v", want)
+		}
+	}
+
+	for _, c := range corpus.Cases {
+		t.Run(c.Name, func(t *testing.T) {
+			got := generationInMajorUnion(c.Input.Generation, c.Input.Version)
+			if got != c.Expected {
+				t.Errorf("generationInMajorUnion(%q, %q) = %v, want %v",
+					c.Input.Generation, c.Input.Version, got, c.Expected)
+			}
+			// The classification and the expected value must agree, so a row cannot
+			// claim to be a negative control while asserting membership.
+			if wantMember := c.Classification == testcase.MustPass; wantMember != c.Expected {
+				t.Errorf("case %q is classified %s but expects %v", c.Name, c.Classification, c.Expected)
+			}
+		})
+	}
+}
+
+// TestApplyVersionFlag unit-tests the sugar: --version folds onto the positional to
+// produce the candidate spellings, which is what makes the two spellings one query
+// rather than two implementations that must be kept in agreement.
+func TestApplyVersionFlag(t *testing.T) {
+	corpus := loadSeriesCorpus[seriesComposeInput, seriesComposeExpected](t, seriesVersionComposeCorpusJSON, 10)
+
+	sawBothGrammars, sawCanonicalOnly, sawRejection := false, false, false
+	for _, c := range corpus.Cases {
+		t.Run(c.Name, func(t *testing.T) {
+			format, err := parseSeriesInputFormat(c.Input.InputFormat)
+			if err != nil {
+				t.Fatalf("corpus case names an unparseable --input-format %q: %v", c.Input.InputFormat, err)
+			}
+			got, err := applyVersionFlag(c.Input.Selector, c.Input.Version, format)
+
+			if c.Classification == testcase.MustFail {
+				if err == nil {
+					t.Fatalf("applyVersionFlag(%q, %q, %v) = %v, want a rejection",
+						c.Input.Selector, c.Input.Version, format, got)
+				}
+				for _, want := range c.Expected.ErrorContains {
+					if !strings.Contains(err.Error(), want) {
+						t.Errorf("error %q does not mention %q", err, want)
+					}
+				}
+				sawRejection = true
+				return
+			}
+			if err != nil {
+				t.Fatalf("applyVersionFlag(%q, %q, %v) returned error: %v",
+					c.Input.Selector, c.Input.Version, format, err)
+			}
+			if !equalStringSlices(got, c.Expected.Candidates) {
+				t.Errorf("applyVersionFlag(%q, %q, %v) = %v, want %v",
+					c.Input.Selector, c.Input.Version, format, got, c.Expected.Candidates)
+			}
+			if len(got) == 2 {
+				sawBothGrammars = true
+			}
+			if format == seriesInputCanonical && len(got) == 1 && c.Input.Version != "" {
+				sawCanonicalOnly = true
+			}
+		})
+	}
+	// Non-vacuity beyond Validate: the corpus must actually exercise each behaviour
+	// the function has, not just the easy arm.
+	if !sawBothGrammars || !sawCanonicalOnly || !sawRejection {
+		t.Errorf("corpus does not cover every behaviour: bothGrammars=%v canonicalOnly=%v rejection=%v",
+			sawBothGrammars, sawCanonicalOnly, sawRejection)
 	}
 }
 
@@ -317,36 +700,55 @@ func TestFlagWasSet(t *testing.T) {
 	}
 }
 
-// TestSelectSeries_UnitReadings unit-tests the selector resolution directly,
-// including the union case where a family name equals a bare line's rendering.
+// TestSelectSeries_UnitReadings unit-tests the selector resolution directly: the
+// family, major-union and line readings, the case where a family name equals a bare
+// line's rendering, and the dashed-family case that a "split on the last dash" parse
+// would get wrong.
 func TestSelectSeries_UnitReadings(t *testing.T) {
+	// The synthetic line universe the corpus rows are authored against. It is shared
+	// SETUP rather than a case table: every row is resolved against this same
+	// universe, chosen to carry the three shapes the readings must distinguish — a
+	// family name that is also a bare line's rendering (gemma), a bare-integer line
+	// with a dotted sibling (gemma-4 / gemma-4.1), and a family whose NAME contains
+	// the ladder separator (grok-build).
 	all := []bestiary.Series{
 		{Family: "gemma"},
 		{Family: "gemma", Generation: "4"},
+		{Family: "gemma", Generation: "4.1"},
+		{Family: "grok-build", Generation: "0.1"},
 		{Family: "llama", Generation: "4"},
 	}
-	cases := []struct {
-		selector string
-		want     []bestiary.Series
-	}{
-		{"llama-4", []bestiary.Series{{Family: "llama", Generation: "4"}}},
-		{"gemma-4", []bestiary.Series{{Family: "gemma", Generation: "4"}}},
-		{"gemma", []bestiary.Series{{Family: "gemma"}, {Family: "gemma", Generation: "4"}}},
-		{"  LLAMA-4  ", []bestiary.Series{{Family: "llama", Generation: "4"}}},
-		{"nope", nil},
-		{"", nil},
-	}
-	for _, tc := range cases {
-		got := selectSeries(all, tc.selector)
-		if len(got) != len(tc.want) {
-			t.Errorf("selectSeries(%q) = %v, want %v", tc.selector, got, tc.want)
-			continue
-		}
-		for i := range got {
-			if got[i] != tc.want[i] {
-				t.Errorf("selectSeries(%q)[%d] = %+v, want %+v", tc.selector, i, got[i], tc.want[i])
+
+	corpus := loadSeriesCorpus[string, []string](t, seriesSelectReadingsCorpusJSON, 12)
+	for _, want := range []string{"gemma", "gemma-4", "gemma-4.1", "grok-build-0", "gemma-41"} {
+		found := false
+		for _, c := range corpus.Cases {
+			if c.Input == want {
+				found = true
+				break
 			}
 		}
+		if !found {
+			t.Errorf("value coverage lost: no corpus case for selector %q", want)
+		}
+	}
+
+	for _, c := range corpus.Cases {
+		t.Run(c.Name, func(t *testing.T) {
+			got := make([]string, 0, 4)
+			for _, s := range selectSeries(all, c.Input) {
+				got = append(got, s.String())
+			}
+			if !equalStringSlices(got, c.Expected) {
+				t.Errorf("selectSeries(%q) = %v, want %v", c.Input, got, c.Expected)
+			}
+			// A must-fail row is one that must select NOTHING; a must-pass row must
+			// select something. This keeps a negative control from silently becoming
+			// a positive one when the expected list is edited.
+			if wantEmpty := c.Classification == testcase.MustFail; wantEmpty != (len(got) == 0) {
+				t.Errorf("case %q is classified %s but selected %d line(s)", c.Name, c.Classification, len(got))
+			}
+		})
 	}
 }
 
