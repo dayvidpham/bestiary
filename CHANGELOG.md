@@ -22,7 +22,8 @@ for its **Go module tags** (`vX.Y.Z`).
   `NomenScheme` classifier (canonical / provider-id / huggingface / purl / alias)
   and ISO 1087 `AcceptabilityRating` statuses. Minted by one shared production
   function over the entity index plus the curated `parse/data/nomen_claims.json`
-  (3,763 nomina: 971 canonical Preferred, 2,791 provider-ID Admitted, 1 curated
+  (3,775 nomina at release: 979 canonical Preferred, 2,791 provider-ID Admitted,
+  4 huggingface, 1 curated
   alias claim). `Entity.Nomina()` and `NomenLookup()` (homonym-aware) are the
   read APIs; claim attribution keeps *who asserts* (`SourceURL`) distinct from
   *which ingest we read* (`Source` — curated claims attribute the new `curated`
@@ -41,7 +42,7 @@ for its **Go module tags** (`vX.Y.Z`).
   `gemini-3.0`) and `Release{Series, Name}` is a named member of it (`scout`,
   `maverick`, `flash`) — version above variant. Both are COMPUTED from key components
   already on `EntityRef`, never stored and never fed back into keys: the hierarchy can
-  be re-shaped without re-keying anything. Read APIs: `SeriesAll()` (418 lines, sorted
+  be re-shaped without re-keying anything. Read APIs: `SeriesAll()` (421 lines, sorted
   by family then generation), `ReleasesOf(Series)`, `EntitiesOf(Release)`, plus
   `SeriesOf(EntityRef)`/`ReleaseOf(EntityRef)` for the entity → line direction; all
   orders are explicit sorts and all results are defensive copies. Two refinements keep
@@ -90,7 +91,7 @@ for its **Go module tags** (`vX.Y.Z`).
   claimant `SourceURL` pointing at the Hub page, and all surface through
   `Entity.Nomina()` / `NomenLookup()`. This is the durable, **entity-level** external
   identifier: the Hub name holds regardless of which provider is serving the entity.
-  Minted census moves to 3,767 (971 canonical, 2,791 provider-ID, 4 huggingface, 1 alias).
+  Minted census at release: 3,775 (979 canonical, 2,791 provider-ID, 4 huggingface, 1 alias).
 
 ### Changed
 - **Designation layer activated**: `ModelRef.Designations()` now rates the
@@ -98,7 +99,7 @@ for its **Go module tags** (`vX.Y.Z`).
   prerequisite for truthful `skos:prefLabel`/`altLabel` export (GH#24 ask 3).
 - **Constants surface is now entity-level** (BREAKING). The ~5,650
   provider-flavored `Model__<Provider>__…` constants are replaced by one
-  provider-agnostic `Entity__*` constant per model entity (971), each valued by
+  provider-agnostic `Entity__*` constant per model entity (979), each valued by
   its canonical entity key (e.g.
   `Entity__Llama__Scout__Version_4__Size_17b_16e__Instruct = "llama/scout@4#17b-16e{instruct}"`).
   Names follow a word-sentinel grammar — `Entity__<Family>[__<Variant>][__Version_<v>][__Size_<s>][__<Mod>…]`,
