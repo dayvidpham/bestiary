@@ -1243,6 +1243,13 @@ var justifiedExceptions = map[exceptionKey]string{
 		Before: `(family="hy3",variant="free",version="",modifier="")`,
 		After:  `(family="hy",variant="free",version="3",modifier="")`,
 	}: "New in the July snapshot (opencode/hy3-preview-free). opencode labels this Tencent model raw_family='hy3-free', gluing the generation digit to the family. The ID-driven path correctly splits 'hy3' into family='hy' + version='3', which CONVERGES it onto the canonical Tencent Hy family — every other provider serves the same model as raw_family='Hy' → hy/version=3 (e.g. crossmodel/zenmux 'tencent/hy3-preview'). The 'free' tier stays the variant. So the change folds an over-captured 'hy3' family root back to the real 'hy' family rather than fracturing it; single-provider (opencode) exact id, no cross-provider divergence introduced.",
+
+	// ── EVA finetune split out of its base-model name ──────────────────────────
+	{
+		ID:     "Qwen2.5-32B-EVA-v0.2",
+		Before: `(family="qwen2.5-32b-eva",variant="v0.2",version="",modifier="")`,
+		After:  `(family="eva",variant="",version="0.2",modifier="")`,
+	}: "USER-RATIFIED, dracarys precedent: EVA-UNIT-01's roleplay finetune is named after the model it was trained FROM, so the leading-token pipeline swallowed the whole base name as a compound family ('qwen2.5-32b-eva') and read EVA's own release as a variant ('v0.2'). The curated exact-id override splits the two identities: family 'eva' with version '0.2' (EVA's release line), the 32B size still read off the id, and the base relationship carried as an explicit DerivationFinetune edge to qwen@2.5#32b in lineage.json — so the derivation is stated rather than smuggled into a family token. Single-provider (nano-gpt) exact id; no cross-provider divergence introduced, no token lost.",
 }
 
 func TestPathUnification_ZeroUnexpectedRegression(t *testing.T) {

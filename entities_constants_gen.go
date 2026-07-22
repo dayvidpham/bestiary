@@ -111,10 +111,10 @@ const (
 	Entity__Command__A                                                    = "command/a"
 	Entity__Command__A__Reasoning                                         = "command/a{reasoning}"
 	Entity__Command__A__Vision                                            = "command/a{vision}"
+	Entity__Command__A_plus                                               = "command/a-plus"
 	Entity__Command__R                                                    = "command/r"
 	Entity__Command__R7b__Size_7b                                         = "command/r7b#7b"
 	Entity__Command__R_plus                                               = "command/r-plus"
-	Entity__Command_a_plus                                                = "command-a-plus"
 	Entity__Cosmos__Size_2b                                               = "cosmos#2b"
 	Entity__Cosmos__Size_5b                                               = "cosmos#5b"
 	Entity__Cosmos__Size_7b                                               = "cosmos#7b"
@@ -197,6 +197,7 @@ const (
 	Entity__Ernie__Version_5_1                                            = "ernie@5.1"
 	Entity__Esm2__Size_650m                                               = "esm2#650m"
 	Entity__Esmfold                                                       = "esmfold"
+	Entity__Eva__Version_0_2__Size_32b                                    = "eva@0.2#32b"
 	Entity__Exa                                                           = "exa"
 	Entity__Exa_research__Pro                                             = "exa-research/pro"
 	Entity__Fast__Fast                                                    = "fast{fast}"
@@ -713,7 +714,6 @@ const (
 	Entity__Qianfan__Fast                                                 = "qianfan{fast}"
 	Entity__Qvq                                                           = "qvq"
 	Entity__Qwen                                                          = "qwen"
-	Entity__Qwen2_5_32b_eva__V0_2__Size_32b                               = "qwen2.5-32b-eva/v0.2#32b"
 	Entity__Qwen3_5_27b_omega_evolution__V2_0_Derestricted_Lite__Size_27b = "qwen3.5-27b-omega-evolution/v2.0-Derestricted-Lite#27b"
 	Entity__Qwen3_5_27b_omega_evolution__V2_0_Derestricted__Size_27b      = "qwen3.5-27b-omega-evolution/v2.0-Derestricted#27b"
 	Entity__Qwen3_5_27b_omega_evolution__V2_2_Derestricted_Lite__Size_27b = "qwen3.5-27b-omega-evolution/v2.2-Derestricted-Lite#27b"
@@ -1091,10 +1091,10 @@ var allEntityConstants = [...]string{
 	Entity__Command__A,
 	Entity__Command__A__Reasoning,
 	Entity__Command__A__Vision,
+	Entity__Command__A_plus,
 	Entity__Command__R,
 	Entity__Command__R7b__Size_7b,
 	Entity__Command__R_plus,
-	Entity__Command_a_plus,
 	Entity__Cosmos__Size_2b,
 	Entity__Cosmos__Size_5b,
 	Entity__Cosmos__Size_7b,
@@ -1177,6 +1177,7 @@ var allEntityConstants = [...]string{
 	Entity__Ernie__Version_5_1,
 	Entity__Esm2__Size_650m,
 	Entity__Esmfold,
+	Entity__Eva__Version_0_2__Size_32b,
 	Entity__Exa,
 	Entity__Exa_research__Pro,
 	Entity__Fast__Fast,
@@ -1693,7 +1694,6 @@ var allEntityConstants = [...]string{
 	Entity__Qianfan__Fast,
 	Entity__Qvq,
 	Entity__Qwen,
-	Entity__Qwen2_5_32b_eva__V0_2__Size_32b,
 	Entity__Qwen3_5_27b_omega_evolution__V2_0_Derestricted_Lite__Size_27b,
 	Entity__Qwen3_5_27b_omega_evolution__V2_0_Derestricted__Size_27b,
 	Entity__Qwen3_5_27b_omega_evolution__V2_2_Derestricted_Lite__Size_27b,

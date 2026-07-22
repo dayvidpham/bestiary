@@ -4042,6 +4042,29 @@ var idFamilyOverrides = map[string]idFamilyOverrideEntry{
 	"abacusai/dracarys-72b-instruct":           {family: "dracarys"},
 	"gryphe/mythomax-l2-13b":                   {family: "mythomax"},
 
+	// EVA-Qwen2.5-32B-v0.2 follows the dracarys precedent: a finetune whose name
+	// leads with its BASE model, so the leading-token pipeline over-captures the whole
+	// prefix as a compound family ("qwen2.5-32b-eva") and reads the finetune's own
+	// release as a variant ("v0.2"). EVA is the artifact the lab published; Qwen2.5-32B
+	// is what it was trained FROM. Splitting them puts the derivation where it belongs:
+	// family "eva" with version "0.2" (EVA's own release line), the 32B size recovered
+	// mechanically from the ID, and the base relationship carried as a curated
+	// DerivationFinetune edge in lineage.json rather than smuggled into the family
+	// token. Same shape as dracarys/mythomax: an exact-ID key, zero collateral.
+	"qwen2.5-32b-eva-v0.2": {family: "eva", version: "0.2"},
+
+	// command-a-plus-05-2026 is Cohere's Command A+ — variant "a-plus" of the command
+	// family, the exact sibling of the command/r-plus line that already decomposes that
+	// way. Its two providers disagreed at the source and split one model across two
+	// entities: cohere tags raw_family "command-a", which the family_overrides ledger
+	// maps to variant "a" (dropping the "+"), while nano-gpt sends an empty raw_family,
+	// leaving the leading-token pipeline to capture "command-a-plus" whole as a compound
+	// family. Neither reaches "a-plus". Being provider-agnostic and keyed to the exact
+	// ID, this entry converges BOTH rows on command/a-plus. Only the family/variant is
+	// pinned: the ID's MM-YYYY tail stays with the date pipeline, which reads each
+	// provider's own release date, so the month-leak guard is untouched.
+	"command-a-plus-05-2026": {family: "command", variant: "a-plus"},
+
 	// The remaining stage/mode entries: gpt-realtime IDs whose version is a DOTTED value
 	// glued behind the mid-ID "realtime" token. The general mid-ID modifier engine now
 	// harvests the buried "realtime" attribute and resolves family=gpt for the whole

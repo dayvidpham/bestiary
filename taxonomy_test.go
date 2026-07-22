@@ -56,20 +56,28 @@ func equalStrings(a, b []string) bool {
 // identity version). It is reconciled from the raw pair count so a future drift is
 // attributable rather than merely "different":
 //
-//	431 raw (family, identity-version) pairs over the 975 registry entities
+//	430 raw (family, identity-version) pairs over the 975 registry entities
 //	 -6 bare/dotted generation folds (the N + N.0 sibling collapses; see
 //	    TestSeries_GenerationNormalization_CensusExact)
 //	 -3 curated strays folded into an existing line (parse/data/series.json)
-//	=422 Series
+//	=421 Series
 //
 // This is an exact pin, not a floor: a change to the line count is a deliberate act
 // (a catalog refresh, a stray row, a normalization change) that must move this
 // literal in the same commit, so silent drift is caught.
+//
+// 422 → 421 when the curated eva and command-a-plus overrides landed. Both retired a
+// compound-family line, and only one of them created a new one, so the split moved
+// -2 bare / +1 versioned:
+//   - "qwen2.5-32b-eva" (bare line, its only entity re-keyed) → "eva" generation 0.2,
+//     a NEW versioned line;
+//   - "command-a-plus" (bare line) → absorbed into the existing "command" line as the
+//     a-plus variant, adding no line.
 func TestSeriesAll_CensusExact(t *testing.T) {
 	const (
-		wantSeries        = 422
-		wantVersionLines  = 216 // lines with a non-empty generation
-		wantBareLines     = 206 // lines whose entities carry no identity version
+		wantSeries        = 421
+		wantVersionLines  = 217 // lines with a non-empty generation
+		wantBareLines     = 204 // lines whose entities carry no identity version
 		minExpectedSeries = 300 // the ratified floor
 	)
 	all := bestiary.SeriesAll()

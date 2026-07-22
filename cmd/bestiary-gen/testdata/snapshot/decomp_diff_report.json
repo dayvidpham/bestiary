@@ -1,10 +1,10 @@
 {
   "total_records": 4979,
-  "changed_count": 1280,
+  "changed_count": 1281,
   "cat_a_divergence_fix_count": 326,
   "cat_b_improvement_count": 940,
   "cat_c_unexpected_regression_count": 0,
-  "justified_exception_count": 14,
+  "justified_exception_count": 15,
   "id_tuple4_incl_modifier_divergence_frozen_before": 81,
   "id_tuple4_incl_modifier_divergence_current_after": 13,
   "divergence_metric": "4-tuple INCL Modifier (Family,Variant,Version,Modifier); before=frozen baseline, after=current snapshot. DISTINCT from the authoritative cross-provider divergenceExact gate (3-tuple, EXCL Modifier, current snapshot, =0).",
@@ -11411,6 +11411,15 @@
       "after": "(family=\"mythomax\",variant=\"\",version=\"\",modifier=\"\")",
       "category": "justified-exception",
       "reason": "JUSTIFIED: GH#11 lineage (VC14): nano-gpt served MythoMax-L2-13B with raw_family='llama', folding it to the llama base and splitting it from the mythomax entity served by every other provider (raw=''). idFamilyOverrides restores family=mythomax, converging all providers onto the one mythomax merge entity. Single-provider exact-ID override; no cross-provider divergence introduced."
+    },
+    {
+      "provider": "nano-gpt",
+      "id": "Qwen2.5-32B-EVA-v0.2",
+      "raw_family": "",
+      "before": "(family=\"qwen2.5-32b-eva\",variant=\"v0.2\",version=\"\",modifier=\"\")",
+      "after": "(family=\"eva\",variant=\"\",version=\"0.2\",modifier=\"\")",
+      "category": "justified-exception",
+      "reason": "JUSTIFIED: USER-RATIFIED, dracarys precedent: EVA-UNIT-01's roleplay finetune is named after the model it was trained FROM, so the leading-token pipeline swallowed the whole base name as a compound family ('qwen2.5-32b-eva') and read EVA's own release as a variant ('v0.2'). The curated exact-id override splits the two identities: family 'eva' with version '0.2' (EVA's release line), the 32B size still read off the id, and the base relationship carried as an explicit DerivationFinetune edge to qwen@2.5#32b in lineage.json — so the derivation is stated rather than smuggled into a family token. Single-provider (nano-gpt) exact id; no cross-provider divergence introduced, no token lost."
     },
     {
       "provider": "nano-gpt",

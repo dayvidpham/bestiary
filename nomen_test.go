@@ -20,14 +20,23 @@ func nominaCensus(ns []bestiary.Nomen) map[bestiary.NomenScheme]int {
 // TestNomina_CensusExact pins the EXACT per-scheme census of the minted nomen set
 // over the static registry (the "census literal pinned at bake"). The counts are
 // derived from the committed models_static_gen.go: 975 canonical (one Preferred nomen
-// per distinct entity key), 2792 provider-ID (one Admitted nomen per distinct instance
+// per distinct entity key), 2791 provider-ID (one Admitted nomen per distinct instance
 // ID spelling, deduped within an entity), 1 alias (the grok-beta seed claim) and 4
 // huggingface (the curated Hub org/repo seeds). On a models.dev snapshot refresh — or a
 // curated-claim addition — these move consciously, like the other census pins.
+//
+// provider-ID went 2792 → 2791 when the curated command-a-plus override landed. The
+// dedup is per distinct ID spelling WITHIN an entity, and command-a-plus-05-2026 was
+// split across two entities by a provider disagreement (cohere's raw_family said
+// command/a, nano-gpt's empty raw_family produced the compound family
+// "command-a-plus"), so the one ID spelling minted a provider-ID nomen in each. The
+// override converges both rows on command/a-plus, where the two spellings dedup to
+// one — a duplicate naming removed, not a naming lost. Canonical stays 975: the same
+// re-key drops one entity key and adds one.
 func TestNomina_CensusExact(t *testing.T) {
 	const (
 		wantCanonical   = 975
-		wantProviderID  = 2792
+		wantProviderID  = 2791
 		wantAlias       = 1
 		wantHuggingFace = 4
 		wantTotal       = wantCanonical + wantProviderID + wantAlias + wantHuggingFace
