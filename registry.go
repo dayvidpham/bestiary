@@ -534,6 +534,63 @@ func ModelsByFamily(family Family) []ModelInfo {
 	return out
 }
 
+// ProvidersOf returns the distinct providers that serve the entity identified by
+// ref, sorted ascending by provider string. It is the API-level replacement for the
+// provider-flavored Model__ constants removed in the entity-constants hard cut: rather
+// than one constant per (entity, provider) pair, an entity has a single Entity__
+// constant and its serving providers are queried here.
+//
+// The lookup keys off ref.String() (the canonical entity key), so the ref need only
+// carry the identity tuple; the returned slice is a fresh copy the caller may mutate.
+// An entity absent from the static registry yields nil (no error — a ref for an
+// unknown entity simply has no providers), so a caller distinguishes "unknown entity"
+// from "known entity, no providers" by the entity's presence elsewhere, not by this
+// result.
+func ProvidersOf(ref EntityRef) []Provider {
+	e, ok := entityIndexLookup(ref.String())
+	if !ok {
+		return nil
+	}
+	return sortedProviders(e.Providers)
+}
+
+// ProvidersOfModel returns the distinct providers that serve the entity the given
+// model ID belongs to, sorted ascending. It is the instance-level convenience over
+// ProvidersOf: it resolves the model to its entity identity (the same
+// identity-class projection the registry index uses) and delegates. An ID absent from
+// the static registry yields nil.
+//
+// Note a single raw ID can be served by several providers under one entity; this
+// returns ALL of that entity's providers, not only the first-matched instance's.
+func ProvidersOfModel(id ModelID) []Provider {
+	m, ok := LookupModel(id)
+	if !ok {
+		return nil
+	}
+	ref := EntityRef{
+		Family:    m.Family,
+		Variant:   m.Variant,
+		Version:   m.Version,
+		ParamSize: m.ParamSize,
+		Modifier:  EntityModifiers(m.Modifier, m.Family),
+	}
+	return ProvidersOf(ref)
+}
+
+// sortedProviders returns a fresh slice holding the elements of in in ascending
+// provider-string order. The registry's Entity.Providers aggregate is de-duplicated
+// but in first-seen order; this imposes the deterministic ascending order ProvidersOf
+// promises (the sortedSources / sortedRegions projection-sort discipline). An empty
+// input returns nil.
+func sortedProviders(in []Provider) []Provider {
+	if len(in) == 0 {
+		return nil
+	}
+	out := append([]Provider(nil), in...)
+	sort.Slice(out, func(i, j int) bool { return out[i] < out[j] })
+	return out
+}
+
 // LookupModelByProvider searches the static registry for a model matching both
 // the given provider and name (model ID string). It returns the model and true
 // if found, or the zero value and false otherwise.
@@ -550,7 +607,8 @@ func LookupModelByProvider(p Provider, name string) (ModelInfo, bool) {
 // a defensive copy so callers cannot mutate the registry. This is the preferred
 // API for external callers; StaticModels is an implementation detail.
 //
-// See ModelIDs() (in models_constants_gen.go) for the canonical Model_* constant slice.
+// See EntityKeys() (in entities_constants_gen.go) for the canonical Entity__* entity-key
+// constant slice, and ProvidersOf to enumerate an entity's serving providers.
 func Models() []ModelInfo {
 	return StaticModels()
 }

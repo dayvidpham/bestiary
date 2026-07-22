@@ -44,6 +44,29 @@ for its **Go module tags** (`vX.Y.Z`).
 - **Designation layer activated**: `ModelRef.Designations()` now rates the
   canonical form `Preferred` (raw/HuggingFace/PURL stay `Admitted`) — the
   prerequisite for truthful `skos:prefLabel`/`altLabel` export (GH#24 ask 3).
+- **Constants surface is now entity-level** (BREAKING). The ~5,650
+  provider-flavored `Model__<Provider>__…` constants are replaced by one
+  provider-agnostic `Entity__*` constant per model entity (975), each valued by
+  its canonical entity key (e.g.
+  `Entity__Llama__Scout__Version_4__Size_17b_16e__Instruct = "llama/scout@4#17b-16e{instruct}"`).
+  Names follow a word-sentinel grammar — `Entity__<Family>[__<Variant>][__Version_<v>][__Size_<s>][__<Mod>…]`,
+  plain-Pascal segments with a separator-preserving sanitizer (every
+  non-alphanumeric character → `_`, never camel-folded) — kept injective by a
+  loud codegen guard that fails the bake on any duplicate identifier. Provider
+  information moves to the API: `ProvidersOf(ref EntityRef) []Provider` and
+  `ProvidersOfModel(id ModelID) []Provider` return an entity's serving providers
+  (sorted, de-duplicated). `ModelIDs()` → `EntityKeys()`.
+
+### Removed
+- **`Model__*` constants + `ModelIDs()`** (BREAKING). Migration:
+
+  | Old (removed) | New |
+  |---|---|
+  | `Model__<Provider>__…` (an entity served by one provider) | `Entity__<…>` (the entity) + `ProvidersOf(ref)` to list its providers |
+  | `bestiary.ModelIDs()` (all provider-flavored IDs) | `bestiary.EntityKeys()` (all canonical entity keys) |
+  | constant → a specific provider's instance | `LookupModelByProvider(provider, id)` (or `LookupModel(id)`) for instance-level fields |
+  | constant → the entity's identity | `Entity__<…>` constant, or `EntityByTuple(family, variant, version, paramSize, mods…)` |
+
 ### Fixed
 - **Empty-raw claude version recovery**: `claude-3.5-haiku` / `claude-3-5-haiku`
   empty-raw forms now decompose to `(claude, haiku, 3.5)` instead of dropping the

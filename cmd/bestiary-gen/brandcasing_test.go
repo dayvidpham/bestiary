@@ -102,26 +102,6 @@ func TestStyleSegment_DigitLeading(t *testing.T) {
 	}
 }
 
-// TestTokenToConstPart_BrandAndCompound asserts the Model__ segment builder applies the
-// brand table and preserves the compound-split underscore-join + verbatim digit suffix.
-func TestTokenToConstPart_BrandAndCompound(t *testing.T) {
-	cases := []struct{ tok, want string }{
-		{"deepseek", "DeepSeek"},
-		{"openrouter", "OpenRouter"},
-		{"gpt", "GPT"},
-		{"glm", "GLM"},
-		{"4o", "4o"},                       // verbatim within-segment
-		{"302ai", "302AI"},                 // curated suffix
-		{"deep-research", "Deep_Research"}, // compound → underscore-join
-		{"flash", "Flash"},                 // un-curated → title
-	}
-	for _, c := range cases {
-		if got := tokenToConstPart(c.tok); got != c.want {
-			t.Errorf("tokenToConstPart(%q) = %q, want %q", c.tok, got, c.want)
-		}
-	}
-}
-
 // TestSlugToIdentifier_BrandAndAcronyms asserts the Provider/Family symbol builder applies
 // the brand table per-segment, preserves the existing multi-token acronyms (AIHubMix /
 // AlibabaCN / AmazonBedrock), and keeps the name-hint fallback for un-curated tokens.
