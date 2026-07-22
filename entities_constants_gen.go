@@ -290,8 +290,6 @@ const (
 	Entity__Glm__Version_5                                                = "glm@5"
 	Entity__Glm__Version_5_1                                              = "glm@5.1"
 	Entity__Glm__Version_5_2                                              = "glm@5.2"
-	Entity__Glm__Version_5p1                                              = "glm@5p1"
-	Entity__Glm__Version_5p2                                              = "glm@5p2"
 	Entity__Glm__Z                                                        = "glm/z"
 	Entity__Glm__Z__Size_32b                                              = "glm/z#32b"
 	Entity__Glm__Z__Size_9b                                               = "glm/z#9b"
@@ -1274,8 +1272,6 @@ var allEntityConstants = [...]string{
 	Entity__Glm__Version_5,
 	Entity__Glm__Version_5_1,
 	Entity__Glm__Version_5_2,
-	Entity__Glm__Version_5p1,
-	Entity__Glm__Version_5p2,
 	Entity__Glm__Z,
 	Entity__Glm__Z__Size_32b,
 	Entity__Glm__Z__Size_9b,
