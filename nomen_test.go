@@ -126,8 +126,8 @@ func TestNomina_SameTripleConflict_Loud(t *testing.T) {
 
 // TestNomenLookup_GrokBeta is the grok-beta worked example: the curated xAI alias
 // claim resolves to the real grok@4.20{reasoning} entity, is Admitted, and carries
-// claim attribution (SourceURL = the xAI page) DISTINCT from Source (the models.dev
-// ingest) — the SourceURL-vs-Source discipline demonstrated end-to-end.
+// claim attribution (SourceURL = the xAI page) DISTINCT from Source (the curated
+// ingest we read it from) — the SourceURL-vs-Source discipline demonstrated end-to-end.
 func TestNomenLookup_GrokBeta(t *testing.T) {
 	matches, ok := bestiary.NomenLookup("grok-beta")
 	if !ok || len(matches) != 1 {
@@ -146,8 +146,8 @@ func TestNomenLookup_GrokBeta(t *testing.T) {
 	if n.SourceURL == "" || !strings.Contains(n.SourceURL, "x.ai") {
 		t.Errorf("grok-beta SourceURL = %q, want the xAI claimant page", n.SourceURL)
 	}
-	if n.Source != bestiary.DataSourceModelsDev {
-		t.Errorf("grok-beta Source = %q, want models.dev (the ingest, distinct from the claimant)", n.Source)
+	if n.Source != bestiary.DataSourceCurated {
+		t.Errorf("grok-beta Source = %q, want curated (the honest ingest — read from bestiary's own claim file, distinct from the xAI claimant)", n.Source)
 	}
 	// The alias target must be a real entity, so the CLI can show it end-to-end.
 	if _, exists := bestiary.EntityByTuple("grok", "", "4.20", "", "reasoning"); !exists {

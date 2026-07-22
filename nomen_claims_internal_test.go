@@ -29,8 +29,8 @@ func TestParseNomenClaims_Valid(t *testing.T) {
 	if c.Status != AcceptabilityAdmitted {
 		t.Errorf("default status = %v, want admitted", c.Status)
 	}
-	if c.Source != DataSourceModelsDev {
-		t.Errorf("default source = %q, want models.dev", c.Source)
+	if c.Source != DataSourceCurated {
+		t.Errorf("default source = %q, want curated", c.Source)
 	}
 	if c.ResolvesTo.String() != "grok@4.20{reasoning}" {
 		t.Errorf("resolves_to = %q, want grok@4.20{reasoning}", c.ResolvesTo.String())

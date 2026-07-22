@@ -1636,7 +1636,31 @@ func runSyncClient(client *bestiary.Client, provider string, format bestiary.Out
 		IngestedAt:   now,
 		ParserSchema: modelsDevParserSchema,
 	}
-	if err := store.UpsertDataSources(ctx, []bestiary.DataSource{ds}, []bestiary.DatasetIngested{ingest}); err != nil {
+	// Also register the curated DataSource: the nomina persisted below include
+	// curated third-party alias claims whose Source is DataSourceCurated (the honest
+	// ingest — bestiary read them from its own committed claim files, not from
+	// models.dev). The nomina.source_id foreign key references data_sources, so the
+	// curated dimension row MUST exist before UpsertNomina. Its committed ingest
+	// timestamp comes from the seed (a curation snapshot, not this sync's wall-clock).
+	curatedDS, ok := bestiary.DataSourceByID(bestiary.DataSourceCurated)
+	if !ok {
+		curatedDS = bestiary.DataSource{
+			ID:            bestiary.DataSourceCurated,
+			URI:           "https://github.com/dayvidpham/bestiary/tree/main/parse/data",
+			CanonicalName: "bestiary curated claim files",
+		}
+	}
+	curatedIngest, ok := bestiary.DatasetIngestedFor(bestiary.DataSourceCurated)
+	if !ok {
+		curatedIngest = bestiary.DatasetIngested{
+			SourceID:     bestiary.DataSourceCurated,
+			IngestedAt:   now,
+			ParserSchema: modelsDevParserSchema,
+		}
+	}
+	if err := store.UpsertDataSources(ctx,
+		[]bestiary.DataSource{ds, curatedDS},
+		[]bestiary.DatasetIngested{ingest, curatedIngest}); err != nil {
 		return fmt.Errorf("sync: persist data source + ingest row: %w", err)
 	}
 

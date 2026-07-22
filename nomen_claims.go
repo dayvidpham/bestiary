@@ -42,7 +42,9 @@ type nomenClaimRefJSON struct {
 //   - SourceURL is WHO asserts the claim (the lab/vendor page). Required: a claim with
 //     no claimant is a claim we cannot attribute, which defeats the purpose.
 //   - SourceID is WHICH ingest we read it from (a DataSourceID). Defaults to
-//     "models.dev" (a curated alias is layered on the models.dev catalog we decomposed).
+//     DataSourceCurated: bestiary read the claim from its OWN curated claim file, not
+//     from models.dev or Ollama. This is the honest ingest provenance; it is DISTINCT
+//     from SourceURL (who asserts the naming).
 type nomenClaimJSON struct {
 	Value     string            `json:"value"`
 	Scheme    string            `json:"scheme,omitempty"`
@@ -192,7 +194,7 @@ func parseNomenClaims(raw []byte) (*nomenClaimsTable, error) {
 			Modifier:  EntityModifiers(c.ResolveTo.Modifier, c.ResolveTo.Family),
 		}
 
-		source := DataSourceModelsDev
+		source := DataSourceCurated
 		if s := strings.TrimSpace(c.SourceID); s != "" {
 			source = DataSourceID(s)
 		}

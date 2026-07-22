@@ -35,6 +35,14 @@ const (
 	// DataSourceOllama identifies the Ollama registry as the originating
 	// data source.
 	DataSourceOllama DataSourceID = "ollama"
+
+	// DataSourceCurated identifies bestiary's own curated claim files (e.g.
+	// parse/data/nomen_claims.json) as the ingest a naming was read from. It is the
+	// honest Source for a curated third-party naming CLAIM: bestiary never read the
+	// claim from models.dev or Ollama — it read it from its own committed curation.
+	// This is DISTINCT from a Nomen's SourceURL, which attributes WHO asserts the
+	// naming (e.g. the xAI model page); Source records WHICH ingest we read it from.
+	DataSourceCurated DataSourceID = "curated"
 )
 
 // --------------------------------------------------------------------------

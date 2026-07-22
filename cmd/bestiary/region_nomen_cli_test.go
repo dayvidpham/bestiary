@@ -46,8 +46,8 @@ func TestRun_ShowByEntity_GrokBetaNomen(t *testing.T) {
 			if !strings.Contains(n.SourceURL, "x.ai") {
 				t.Errorf("grok-beta SourceURL = %q, want the xAI claimant page", n.SourceURL)
 			}
-			if n.Source != bestiary.DataSourceModelsDev {
-				t.Errorf("grok-beta Source = %q, want models.dev (distinct from the claimant)", n.Source)
+			if n.Source != bestiary.DataSourceCurated {
+				t.Errorf("grok-beta Source = %q, want curated (the honest ingest, distinct from the claimant)", n.Source)
 			}
 		}
 	}

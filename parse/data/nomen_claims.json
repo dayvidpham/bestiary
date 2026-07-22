@@ -1,5 +1,5 @@
 {
-  "_comment": "Curated third-party NAMING CLAIMS: naming assertions a lab or vendor publishes that bestiary cannot derive mechanically from the catalog (aliases, HuggingFace repo mappings, purls). This is the claim INPUTS layer of the naming stack: the parse/data decomposition files are decomposition CONFIG, this file is claim INPUTS, and the minted Nomina are the queryable OUTPUT records. Each claim carries SourceURL (WHO asserts the naming — a claimant URL) DISTINCT from source_id (WHICH ingest we read it from — a DataSourceID FK). scheme defaults to 'alias'; status defaults to 'admitted' (a third-party claim is admitted, never preferred — only the canonical key is preferred); source_id defaults to 'models.dev' (a curated alias is layered on the catalog we decomposed). Graceful-degrade at runtime, LOUD at codegen (see nomen_claims.go).",
+  "_comment": "Curated third-party NAMING CLAIMS: naming assertions a lab or vendor publishes that bestiary cannot derive mechanically from the catalog (aliases, HuggingFace repo mappings, purls). This is the claim INPUTS layer of the naming stack: the parse/data decomposition files are decomposition CONFIG, this file is claim INPUTS, and the minted Nomina are the queryable OUTPUT records. Each claim carries source_url (WHO asserts the naming — a claimant URL) DISTINCT from source_id (WHICH ingest we read it from — a DataSourceID FK). scheme defaults to 'alias'; status defaults to 'admitted' (a third-party claim is admitted, never preferred — only the canonical key is preferred); source_id defaults to 'curated' (bestiary read the claim from THIS committed curation file, not from models.dev or Ollama — the honest ingest provenance, distinct from the claimant source_url). Graceful-degrade at runtime, LOUD at codegen (see nomen_claims.go).",
   "schema_version": 1,
   "claims": [
     {
@@ -7,8 +7,7 @@
       "scheme": "alias",
       "status": "admitted",
       "resolves_to": { "family": "grok", "version": "4.20", "modifier": ["reasoning"] },
-      "source_url": "https://docs.x.ai/docs/models",
-      "source_id": "models.dev"
+      "source_url": "https://docs.x.ai/docs/models"
     }
   ]
 }
