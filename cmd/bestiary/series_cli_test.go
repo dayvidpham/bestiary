@@ -37,7 +37,7 @@ func TestRun_Series_ListTable(t *testing.T) {
 	// Census header tracks the library-side Series pin (TestSeriesAll_CensusExact),
 	// which moved 422 → 421 when the curated eva and command-a-plus overrides retired
 	// two compound-family lines and created one.
-	if want := "Series (421):"; !strings.Contains(out, want) {
+	if want := "Series (418):"; !strings.Contains(out, want) {
 		t.Errorf("listing missing the census header %q; got first line:\n%s", want, firstLine(out))
 	}
 	for _, want := range []string{"SERIES", "FAMILY", "GENERATION", "RELEASES", "ENTITIES"} {

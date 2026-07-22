@@ -1,18 +1,21 @@
 package bestiary_test
 
-// Fences for the two curated compound-family re-keys.
+// Fences for the curated exact-ID decomposition corrections.
 //
-// Both fix the same failure mode: a model whose ID leads with something other than
-// its own family name, which the leading-token decomposition swallowed whole as a
-// compound family. The corrections are exact-ID curated overrides (the dracarys
-// precedent), and each one MOVES an entity key — so what is pinned here is the new
-// key, the fact that the old key is gone, the instances that landed on it, and the
-// registry census that must not move as a side effect.
+// All three fix a decomposition that read part of a model's NAME as part of its
+// IDENTITY. The corrections are exact-ID curated overrides (the dracarys precedent),
+// and each one MOVES an entity key — so what is pinned here is the new key, the fact
+// that the old key is gone, the instances that landed on it, and the registry census
+// delta, which differs per correction and is accounted for in full below.
 //
 //   - Qwen2.5-32B-EVA-v0.2: "qwen2.5-32b-eva/v0.2#32b" → "eva@0.2#32b", with the base
 //     relationship promoted from a family token to a curated lineage edge.
 //   - command-a-plus-05-2026: "command-a-plus" → "command/a-plus", converging the two
 //     providers that previously disagreed about the model's identity.
+//   - claude-opus4-5…-8 (cortecs): a glued major version read as the whole version,
+//     minting four phantom claude/opus@5…@8 entities. These MERGE into the real
+//     claude/opus@4.5…@4.8 rather than renaming, so they are the one correction here
+//     that moves the registry census.
 
 import (
 	"testing"
@@ -136,15 +139,114 @@ func TestEntityRekey_CommandAPlus(t *testing.T) {
 	}
 }
 
-// TestEntityRekey_CensusUnmoved is the side-effect fence: both corrections RENAME an
-// entity, they do not create or destroy one, so the registry census must be exactly
-// what it was. A move that changed the count would mean an entity merged into or split
-// off from something else — the collateral these narrow, exact-ID overrides exist to
-// avoid.
-func TestEntityRekey_CensusUnmoved(t *testing.T) {
-	const wantEntities = 975
+// TestEntityRekey_CortecsGluedVersion pins the cortecs correction. cortecs glues the
+// major version onto the variant — "claude-opus4-5" is Opus 4.5, not an Opus 5 — and
+// the mis-read was doubly wrong: it minted a phantom entity per spelling AND stranded
+// the cortecs instance away from the real entity holding every other provider's rows.
+//
+// The date evidence is asserted alongside the tuple because it is what makes the
+// reading certain rather than merely plausible: each cortecs row carries the real
+// 4.5/4.6/4.7/4.8 release date.
+func TestEntityRekey_CortecsGluedVersion(t *testing.T) {
+	cases := []struct {
+		id      bestiary.ModelID
+		version string
+		key     string
+		date    string
+	}{
+		{"claude-opus4-5", "4.5", "claude/opus@4.5", "2025-11-24"},
+		{"claude-opus4-6", "4.6", "claude/opus@4.6", "2026-02-05"},
+		{"claude-opus4-7", "4.7", "claude/opus@4.7", "2026-04-16"},
+		{"claude-opus4-8", "4.8", "claude/opus@4.8", "2026-05-28"},
+	}
+
+	for _, c := range cases {
+		t.Run(string(c.id), func(t *testing.T) {
+			m, ok := bestiary.LookupModelByProvider("cortecs", string(c.id))
+			if !ok {
+				t.Fatalf("LookupModelByProvider(cortecs, %q) not found — the catalog row is gone; "+
+					"re-check the pin against the current snapshot", c.id)
+			}
+			if m.Family != "claude" || m.Variant != "opus" || m.Version != c.version {
+				t.Errorf("%q decomposes to (%q, %q, %q), want (claude, opus, %s) — "+
+					"the glued major version must not be read as the whole version",
+					c.id, m.Family, m.Variant, m.Version, c.version)
+			}
+			if m.Date != c.date {
+				t.Errorf("%q date = %q, want %q — this is the evidence the row IS Opus %s",
+					c.id, m.Date, c.date, c.version)
+			}
+
+			// The instance must live on the real entity, beside every other provider's rows.
+			e, found := bestiary.EntityByKey(c.key)
+			if !found {
+				t.Fatalf("EntityByKey(%q) not found", c.key)
+			}
+			var onEntity bool
+			for _, i := range e.Instances {
+				if i.Provider == "cortecs" && i.ID == c.id {
+					onEntity = true
+				}
+			}
+			if !onEntity {
+				t.Errorf("the cortecs %q instance is not on entity %q — the pin must merge it into "+
+					"the real entity, not merely re-version it", c.id, c.key)
+			}
+			if len(e.Instances) < 10 {
+				t.Errorf("entity %q holds only %d instances; expected the real multi-provider entity "+
+					"(the cortecs row must not have landed on a near-empty phantom)", c.key, len(e.Instances))
+			}
+		})
+	}
+}
+
+// TestEntityRekey_NoPhantomOpusEntities is the negative half of the cortecs fence: the
+// four phantom entities and the series lines that existed ONLY to hold them must be
+// gone. claude-5 is deliberately excluded — that line is real, populated by
+// claude/sonnet@5 — so this asserts the phantoms went without taking a real line with
+// them.
+func TestEntityRekey_NoPhantomOpusEntities(t *testing.T) {
+	for _, key := range []string{"claude/opus@5", "claude/opus@6", "claude/opus@7", "claude/opus@8"} {
+		if e, present := bestiary.EntityByKey(key); present {
+			t.Errorf("phantom entity %q is present again with %d instance(s) — a glued cortecs "+
+				"version is being read as a whole major version", key, len(e.Instances))
+		}
+	}
+
+	lines := map[bestiary.Series]bool{}
+	for _, s := range bestiary.SeriesAll() {
+		lines[s] = true
+	}
+	for _, gen := range []string{"6", "7", "8"} {
+		if lines[bestiary.Series{Family: "claude", Generation: gen}] {
+			t.Errorf("series line claude-%s exists; it had no members but the four phantom opus "+
+				"entities, so its return means the phantoms are back", gen)
+		}
+	}
+	// The real Claude 5 line must survive: it is NOT a phantom.
+	if !lines[bestiary.Series{Family: "claude", Generation: "5"}] {
+		t.Error("series line claude-5 is missing — it is a REAL line (claude/sonnet@5), and the " +
+			"cortecs correction must not have removed it")
+	}
+}
+
+// TestEntityRekey_CensusAccounted is the side-effect fence over all three curated
+// corrections on this branch. The arithmetic is the point:
+//
+//	975  entities at the previous bake
+//	  0  eva            — a RENAME (qwen2.5-32b-eva/v0.2#32b → eva@0.2#32b)
+//	  0  command-a-plus — a RENAME (command-a-plus → command/a-plus)
+//	 -4  cortecs        — a MERGE (four phantom claude/opus@5…@8 absorbed into the
+//	                      real claude/opus@4.5…@4.8, which already existed)
+//	=971
+//
+// A rename that moved the count would mean an entity had merged into or split off
+// from something else — collateral these narrow exact-ID overrides exist to avoid.
+// The merge moves it by exactly the number of phantoms retired, and no more.
+func TestEntityRekey_CensusAccounted(t *testing.T) {
+	const wantEntities = 971
 	if got := len(bestiary.Entities()); got != wantEntities {
-		t.Errorf("registry census = %d entities, want %d — the curated re-keys must be renames, "+
-			"not merges or splits", got, wantEntities)
+		t.Errorf("registry census = %d entities, want %d — the eva and command-a-plus overrides "+
+			"must be renames (count unmoved) and the cortecs pins a 4-entity merge", got, wantEntities)
 	}
 }

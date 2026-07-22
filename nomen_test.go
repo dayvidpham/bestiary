@@ -19,7 +19,7 @@ func nominaCensus(ns []bestiary.Nomen) map[bestiary.NomenScheme]int {
 
 // TestNomina_CensusExact pins the EXACT per-scheme census of the minted nomen set
 // over the static registry (the "census literal pinned at bake"). The counts are
-// derived from the committed models_static_gen.go: 975 canonical (one Preferred nomen
+// derived from the committed models_static_gen.go: 971 canonical (one Preferred nomen
 // per distinct entity key), 2791 provider-ID (one Admitted nomen per distinct instance
 // ID spelling, deduped within an entity), 1 alias (the grok-beta seed claim) and 4
 // huggingface (the curated Hub org/repo seeds). On a models.dev snapshot refresh — or a
@@ -31,11 +31,17 @@ func nominaCensus(ns []bestiary.Nomen) map[bestiary.NomenScheme]int {
 // command/a, nano-gpt's empty raw_family produced the compound family
 // "command-a-plus"), so the one ID spelling minted a provider-ID nomen in each. The
 // override converges both rows on command/a-plus, where the two spellings dedup to
-// one — a duplicate naming removed, not a naming lost. Canonical stays 975: the same
-// re-key drops one entity key and adds one.
+// one — a duplicate naming removed, not a naming lost. That re-key left canonical
+// unmoved: it drops one entity key and adds one.
+//
+// canonical went 975 → 971 when the curated cortecs pins landed: four phantom
+// claude/opus@5…@8 entities (a glued-token mis-parse gave each one cortecs instance)
+// merged into the real claude/opus@4.5…@4.8 entities, retiring four entity keys and
+// therefore four Preferred nomina. provider-ID is untouched by that merge — the four
+// cortecs ID spellings still mint one nomen each, now inside the real entities.
 func TestNomina_CensusExact(t *testing.T) {
 	const (
-		wantCanonical   = 975
+		wantCanonical   = 971
 		wantProviderID  = 2791
 		wantAlias       = 1
 		wantHuggingFace = 4

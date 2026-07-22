@@ -56,11 +56,11 @@ func equalStrings(a, b []string) bool {
 // identity version). It is reconciled from the raw pair count so a future drift is
 // attributable rather than merely "different":
 //
-//	430 raw (family, identity-version) pairs over the 975 registry entities
+//	427 raw (family, identity-version) pairs over the 971 registry entities
 //	 -6 bare/dotted generation folds (the N + N.0 sibling collapses; see
 //	    TestSeries_GenerationNormalization_CensusExact)
 //	 -3 curated strays folded into an existing line (parse/data/series.json)
-//	=421 Series
+//	=418 Series
 //
 // This is an exact pin, not a floor: a change to the line count is a deliberate act
 // (a catalog refresh, a stray row, a normalization change) that must move this
@@ -73,10 +73,17 @@ func equalStrings(a, b []string) bool {
 //     a NEW versioned line;
 //   - "command-a-plus" (bare line) → absorbed into the existing "command" line as the
 //     a-plus variant, adding no line.
+//
+// 421 → 418 when the curated cortecs pins landed, all three from the versioned side
+// (217 → 214, bare unchanged). The pins retired FOUR phantom entities but only THREE
+// lines: claude/opus@5…@8 were the sole occupants of the claude-6, claude-7 and
+// claude-8 lines, which vanish with them — but claude-5 SURVIVES, because the real
+// Claude 5 line is populated by claude/sonnet@5. Entity count and line count move by
+// different amounts here, which is exactly why both are pinned.
 func TestSeriesAll_CensusExact(t *testing.T) {
 	const (
-		wantSeries        = 421
-		wantVersionLines  = 217 // lines with a non-empty generation
+		wantSeries        = 418
+		wantVersionLines  = 214 // lines with a non-empty generation
 		wantBareLines     = 204 // lines whose entities carry no identity version
 		minExpectedSeries = 300 // the ratified floor
 	)
@@ -117,7 +124,7 @@ func TestSeriesAll_CensusExact(t *testing.T) {
 // making an entity a named member (as the maverick member-ize did) adds a Release
 // without adding a Series, since the line already existed.
 func TestReleases_CensusExact(t *testing.T) {
-	const wantReleases = 668
+	const wantReleases = 664
 
 	summed := 0
 	for _, s := range bestiary.SeriesAll() {

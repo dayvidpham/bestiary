@@ -4053,6 +4053,27 @@ var idFamilyOverrides = map[string]idFamilyOverrideEntry{
 	// token. Same shape as dracarys/mythomax: an exact-ID key, zero collateral.
 	"qwen2.5-32b-eva-v0.2": {family: "eva", version: "0.2"},
 
+	// cortecs glues the major version onto the VARIANT token — "claude-opus4-5" is
+	// Opus 4.5, not an Opus 5. Every other provider spells the same models
+	// claude-opus-4-5 / -4-6 / -4-7 / -4-8, and cortecs' own release dates match the
+	// real 4.5–4.8 launches exactly, so the reading is not in doubt. Left alone the
+	// glue was doubly wrong: it minted four phantom claude/opus@5…@8 entities (one
+	// cortecs instance each) AND stranded those instances away from the real
+	// entities that carry every other provider's rows.
+	//
+	// These are curated PINS rather than a general glued-token rule, deliberately.
+	// A catalog sweep for the <letters><digit>-<digit> shape finds 34 ids, but 30 of
+	// them glue the digit onto the FAMILY (qwen2-5-…, llama3-3-…, wan2-2-…), which is
+	// a different shape with a different correct reading — and one a variant-targeted
+	// rule must not touch. cortecs is the ONLY emitter of the variant-glued form, so a
+	// general rule would carry regression risk across those 30 ids while covering
+	// exactly the four below. If a second vendor ever ships this spelling, that is the
+	// moment the general path earns its risk.
+	"claude-opus4-5": {family: "claude", variant: "opus", version: "4.5"},
+	"claude-opus4-6": {family: "claude", variant: "opus", version: "4.6"},
+	"claude-opus4-7": {family: "claude", variant: "opus", version: "4.7"},
+	"claude-opus4-8": {family: "claude", variant: "opus", version: "4.8"},
+
 	// command-a-plus-05-2026 is Cohere's Command A+ — variant "a-plus" of the command
 	// family, the exact sibling of the command/r-plus line that already decomposes that
 	// way. Its two providers disagreed at the source and split one model across two

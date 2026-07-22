@@ -1,10 +1,10 @@
 {
   "total_records": 4979,
-  "changed_count": 1281,
+  "changed_count": 1284,
   "cat_a_divergence_fix_count": 326,
   "cat_b_improvement_count": 940,
   "cat_c_unexpected_regression_count": 0,
-  "justified_exception_count": 15,
+  "justified_exception_count": 18,
   "id_tuple4_incl_modifier_divergence_frozen_before": 81,
   "id_tuple4_incl_modifier_divergence_current_after": 13,
   "divergence_metric": "4-tuple INCL Modifier (Family,Variant,Version,Modifier); before=frozen baseline, after=current snapshot. DISTINCT from the authoritative cross-provider divergenceExact gate (3-tuple, EXCL Modifier, current snapshot, =0).",
@@ -11438,6 +11438,33 @@
       "after": "(family=\"dracarys\",variant=\"\",version=\"\",modifier=\"instruct\")",
       "category": "justified-exception",
       "reason": "JUSTIFIED: USER-RATIFIED non-defect (GH#11 model-lineage): dracarys is a llama fine-tune with its own lineage, ∉ allFamilies; 'instruct'→Modifier re-surfaces (no token loss). Family-root precision is a taxonomy call, not a regression."
+    },
+    {
+      "provider": "cortecs",
+      "id": "claude-opus4-5",
+      "raw_family": "claude-opus",
+      "before": "(family=\"claude\",variant=\"opus\",version=\"5\",modifier=\"\")",
+      "after": "(family=\"claude\",variant=\"opus\",version=\"4.5\",modifier=\"\")",
+      "category": "justified-exception",
+      "reason": "JUSTIFIED: USER-RATIFIED cortecs glued-version correction: cortecs glues the major version onto the VARIANT token, so claude-opus4-5 is Opus 4.5 - not an Opus 5. Every other provider spells this model claude-opus-4-5, and cortecs' own release date for the row (2025-11-24) is the real 4.5 launch date, so the reading is evidence-backed rather than inferred. Left alone the mis-read minted a PHANTOM claude/opus@5 entity holding this single cortecs instance while stranding it away from the real claude/opus@4.5 entity that carries every other provider; the pin merges it back. Curated pins rather than a general glued-token rule: a catalog sweep found cortecs is the only emitter of the variant-glued shape (the other 30 \u003cletters\u003e\u003cdigit\u003e-\u003cdigit\u003e ids glue the digit onto the FAMILY, a different reading a variant-targeted rule must not touch)."
+    },
+    {
+      "provider": "cortecs",
+      "id": "claude-opus4-6",
+      "raw_family": "claude-opus",
+      "before": "(family=\"claude\",variant=\"opus\",version=\"6\",modifier=\"\")",
+      "after": "(family=\"claude\",variant=\"opus\",version=\"4.6\",modifier=\"\")",
+      "category": "justified-exception",
+      "reason": "JUSTIFIED: USER-RATIFIED cortecs glued-version correction: cortecs glues the major version onto the VARIANT token, so claude-opus4-6 is Opus 4.6 - not an Opus 6. Every other provider spells this model claude-opus-4-6, and cortecs' own release date for the row (2026-02-05) is the real 4.6 launch date, so the reading is evidence-backed rather than inferred. Left alone the mis-read minted a PHANTOM claude/opus@6 entity holding this single cortecs instance while stranding it away from the real claude/opus@4.6 entity that carries every other provider; the pin merges it back. Curated pins rather than a general glued-token rule: a catalog sweep found cortecs is the only emitter of the variant-glued shape (the other 30 \u003cletters\u003e\u003cdigit\u003e-\u003cdigit\u003e ids glue the digit onto the FAMILY, a different reading a variant-targeted rule must not touch)."
+    },
+    {
+      "provider": "cortecs",
+      "id": "claude-opus4-7",
+      "raw_family": "claude-opus",
+      "before": "(family=\"claude\",variant=\"opus\",version=\"7\",modifier=\"\")",
+      "after": "(family=\"claude\",variant=\"opus\",version=\"4.7\",modifier=\"\")",
+      "category": "justified-exception",
+      "reason": "JUSTIFIED: USER-RATIFIED cortecs glued-version correction: cortecs glues the major version onto the VARIANT token, so claude-opus4-7 is Opus 4.7 - not an Opus 7. Every other provider spells this model claude-opus-4-7, and cortecs' own release date for the row (2026-04-16) is the real 4.7 launch date, so the reading is evidence-backed rather than inferred. Left alone the mis-read minted a PHANTOM claude/opus@7 entity holding this single cortecs instance while stranding it away from the real claude/opus@4.7 entity that carries every other provider; the pin merges it back. Curated pins rather than a general glued-token rule: a catalog sweep found cortecs is the only emitter of the variant-glued shape (the other 30 \u003cletters\u003e\u003cdigit\u003e-\u003cdigit\u003e ids glue the digit onto the FAMILY, a different reading a variant-targeted rule must not touch)."
     },
     {
       "provider": "nano-gpt",

@@ -1250,6 +1250,28 @@ var justifiedExceptions = map[exceptionKey]string{
 		Before: `(family="qwen2.5-32b-eva",variant="v0.2",version="",modifier="")`,
 		After:  `(family="eva",variant="",version="0.2",modifier="")`,
 	}: "USER-RATIFIED, dracarys precedent: EVA-UNIT-01's roleplay finetune is named after the model it was trained FROM, so the leading-token pipeline swallowed the whole base name as a compound family ('qwen2.5-32b-eva') and read EVA's own release as a variant ('v0.2'). The curated exact-id override splits the two identities: family 'eva' with version '0.2' (EVA's release line), the 32B size still read off the id, and the base relationship carried as an explicit DerivationFinetune edge to qwen@2.5#32b in lineage.json — so the derivation is stated rather than smuggled into a family token. Single-provider (nano-gpt) exact id; no cross-provider divergence introduced, no token lost.",
+
+	// cortecs glued major version on the variant token. Only THREE of the four pins
+	// appear here: claude-opus4-8 postdates the frozen baseline, so it produces no
+	// change record and a ledger entry for it would be dormant — and this ledger holds
+	// only LIVE entries (the two earlier dormant keys were pruned for the same reason).
+	// A baseline refresh that starts carrying that id will surface it as a cat-(c) and
+	// is the moment to add it, with the same rationale as its three siblings.
+	{
+		ID:     "claude-opus4-5",
+		Before: `(family="claude",variant="opus",version="5",modifier="")`,
+		After:  `(family="claude",variant="opus",version="4.5",modifier="")`,
+	}: "USER-RATIFIED cortecs glued-version correction: cortecs glues the major version onto the VARIANT token, so claude-opus4-5 is Opus 4.5 - not an Opus 5. Every other provider spells this model claude-opus-4-5, and cortecs' own release date for the row (2025-11-24) is the real 4.5 launch date, so the reading is evidence-backed rather than inferred. Left alone the mis-read minted a PHANTOM claude/opus@5 entity holding this single cortecs instance while stranding it away from the real claude/opus@4.5 entity that carries every other provider; the pin merges it back. Curated pins rather than a general glued-token rule: a catalog sweep found cortecs is the only emitter of the variant-glued shape (the other 30 <letters><digit>-<digit> ids glue the digit onto the FAMILY, a different reading a variant-targeted rule must not touch).",
+	{
+		ID:     "claude-opus4-6",
+		Before: `(family="claude",variant="opus",version="6",modifier="")`,
+		After:  `(family="claude",variant="opus",version="4.6",modifier="")`,
+	}: "USER-RATIFIED cortecs glued-version correction: cortecs glues the major version onto the VARIANT token, so claude-opus4-6 is Opus 4.6 - not an Opus 6. Every other provider spells this model claude-opus-4-6, and cortecs' own release date for the row (2026-02-05) is the real 4.6 launch date, so the reading is evidence-backed rather than inferred. Left alone the mis-read minted a PHANTOM claude/opus@6 entity holding this single cortecs instance while stranding it away from the real claude/opus@4.6 entity that carries every other provider; the pin merges it back. Curated pins rather than a general glued-token rule: a catalog sweep found cortecs is the only emitter of the variant-glued shape (the other 30 <letters><digit>-<digit> ids glue the digit onto the FAMILY, a different reading a variant-targeted rule must not touch).",
+	{
+		ID:     "claude-opus4-7",
+		Before: `(family="claude",variant="opus",version="7",modifier="")`,
+		After:  `(family="claude",variant="opus",version="4.7",modifier="")`,
+	}: "USER-RATIFIED cortecs glued-version correction: cortecs glues the major version onto the VARIANT token, so claude-opus4-7 is Opus 4.7 - not an Opus 7. Every other provider spells this model claude-opus-4-7, and cortecs' own release date for the row (2026-04-16) is the real 4.7 launch date, so the reading is evidence-backed rather than inferred. Left alone the mis-read minted a PHANTOM claude/opus@7 entity holding this single cortecs instance while stranding it away from the real claude/opus@4.7 entity that carries every other provider; the pin merges it back. Curated pins rather than a general glued-token rule: a catalog sweep found cortecs is the only emitter of the variant-glued shape (the other 30 <letters><digit>-<digit> ids glue the digit onto the FAMILY, a different reading a variant-targeted rule must not touch).",
 }
 
 func TestPathUnification_ZeroUnexpectedRegression(t *testing.T) {

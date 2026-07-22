@@ -78,10 +78,6 @@ const (
 	Entity__Claude__Opus__Version_4_6                                     = "claude/opus@4.6"
 	Entity__Claude__Opus__Version_4_7                                     = "claude/opus@4.7"
 	Entity__Claude__Opus__Version_4_8                                     = "claude/opus@4.8"
-	Entity__Claude__Opus__Version_5                                       = "claude/opus@5"
-	Entity__Claude__Opus__Version_6                                       = "claude/opus@6"
-	Entity__Claude__Opus__Version_7                                       = "claude/opus@7"
-	Entity__Claude__Opus__Version_8                                       = "claude/opus@8"
 	Entity__Claude__Sonnet                                                = "claude/sonnet"
 	Entity__Claude__Sonnet__Version_3                                     = "claude/sonnet@3"
 	Entity__Claude__Sonnet__Version_3_5                                   = "claude/sonnet@3.5"
@@ -1058,10 +1054,6 @@ var allEntityConstants = [...]string{
 	Entity__Claude__Opus__Version_4_6,
 	Entity__Claude__Opus__Version_4_7,
 	Entity__Claude__Opus__Version_4_8,
-	Entity__Claude__Opus__Version_5,
-	Entity__Claude__Opus__Version_6,
-	Entity__Claude__Opus__Version_7,
-	Entity__Claude__Opus__Version_8,
 	Entity__Claude__Sonnet,
 	Entity__Claude__Sonnet__Version_3,
 	Entity__Claude__Sonnet__Version_3_5,

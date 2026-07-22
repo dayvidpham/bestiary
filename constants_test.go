@@ -32,10 +32,14 @@ func TestEntityConstants_Unique(t *testing.T) {
 	}
 
 	// Exact census: the hard-cut bake emits one Entity__ constant per registry entity.
-	// At this bake the registry holds 975 entities. This is an EXACT pin (not a floor):
+	// At this bake the registry holds 971 entities. This is an EXACT pin (not a floor):
 	// a change to the entity count is a deliberate act that must move this literal in the
 	// same commit, so a silent drift is caught.
-	const wantEntityCount = 975
+	//
+	// 975 → 971 when the curated cortecs pins landed: four phantom claude/opus@5…@8
+	// entities (one cortecs instance each, created by a glued-token mis-parse) merged
+	// into the real claude/opus@4.5…@4.8 entities they always belonged to.
+	const wantEntityCount = 971
 	if len(keys) != wantEntityCount {
 		t.Errorf("EntityKeys() returned %d constants; expected exactly %d — "+
 			"re-run go generate ./... and update this census literal if the entity count changed intentionally",
