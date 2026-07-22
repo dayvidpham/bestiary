@@ -21,14 +21,16 @@ func nominaCensus(ns []bestiary.Nomen) map[bestiary.NomenScheme]int {
 // over the static registry (the "census literal pinned at bake"). The counts are
 // derived from the committed models_static_gen.go: 975 canonical (one Preferred nomen
 // per distinct entity key), 2792 provider-ID (one Admitted nomen per distinct instance
-// ID spelling, deduped within an entity), and 1 alias (the grok-beta seed claim). On a
-// models.dev snapshot refresh these move consciously, like the other census pins.
+// ID spelling, deduped within an entity), 1 alias (the grok-beta seed claim) and 4
+// huggingface (the curated Hub org/repo seeds). On a models.dev snapshot refresh — or a
+// curated-claim addition — these move consciously, like the other census pins.
 func TestNomina_CensusExact(t *testing.T) {
 	const (
-		wantCanonical  = 975
-		wantProviderID = 2792
-		wantAlias      = 1
-		wantTotal      = wantCanonical + wantProviderID + wantAlias
+		wantCanonical   = 975
+		wantProviderID  = 2792
+		wantAlias       = 1
+		wantHuggingFace = 4
+		wantTotal       = wantCanonical + wantProviderID + wantAlias + wantHuggingFace
 	)
 	all := bestiary.MintNomina(bestiary.Entities())
 	if len(all) != wantTotal {
@@ -44,6 +46,9 @@ func TestNomina_CensusExact(t *testing.T) {
 	if c[bestiary.NomenSchemeAlias] != wantAlias {
 		t.Errorf("alias nomina = %d, want %d", c[bestiary.NomenSchemeAlias], wantAlias)
 	}
+	if c[bestiary.NomenSchemeHuggingFace] != wantHuggingFace {
+		t.Errorf("huggingface nomina = %d, want %d", c[bestiary.NomenSchemeHuggingFace], wantHuggingFace)
+	}
 	// The registry Nomina() convenience must agree with MintNomina(Entities()).
 	if got := len(bestiary.Nomina()); got != wantTotal {
 		t.Errorf("Nomina() total = %d, want %d", got, wantTotal)
@@ -57,8 +62,10 @@ func TestNomina_CensusExact(t *testing.T) {
 	const wantFromModelsCanonical = wantCanonical - 4
 	fromModels := nominaCensus(bestiary.MintNominaFromModels(bestiary.StaticModels()))
 	if fromModels[bestiary.NomenSchemeProviderID] != wantProviderID ||
-		fromModels[bestiary.NomenSchemeAlias] != wantAlias {
-		t.Errorf("MintNominaFromModels provider-id/alias census = %v, want %d/%d", fromModels, wantProviderID, wantAlias)
+		fromModels[bestiary.NomenSchemeAlias] != wantAlias ||
+		fromModels[bestiary.NomenSchemeHuggingFace] != wantHuggingFace {
+		t.Errorf("MintNominaFromModels provider-id/alias/huggingface census = %v, want %d/%d/%d",
+			fromModels, wantProviderID, wantAlias, wantHuggingFace)
 	}
 	if fromModels[bestiary.NomenSchemeCanonical] != wantFromModelsCanonical {
 		t.Errorf("MintNominaFromModels canonical = %d, want %d (975 entities minus 4 metadata-only standalones)",
