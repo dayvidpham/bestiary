@@ -18,7 +18,7 @@ import (
 // fireworks GLM rows land in the real glm@5.1 / glm@5.2 entities rather than minting
 // phantoms beside them), which is what the ruling actually asked for.
 func TestPNotationVersion_Corpus(t *testing.T) {
-	corpus := loadInternalCorpus[pNotationInput, pNotationExpected](t, internalPNotationVersionCorpusJSON, 25)
+	corpus := loadInternalCorpus[pNotationInput, pNotationExpected](t, internalPNotationVersionCorpusJSON, 26)
 
 	// Value coverage: the two rows the ruling is ABOUT, the two known residual
 	// defects, and the synthetic literal-p hazard must all still be present.
@@ -27,6 +27,7 @@ func TestPNotationVersion_Corpus(t *testing.T) {
 		{ID: "accounts/fireworks/models/glm-5p2", Provider: "fireworks-ai"},
 		{ID: "k2p7", Provider: "kimi-for-coding"},
 		{ID: "accounts/fireworks/models/qwen3p7-plus", Provider: "fireworks-ai"},
+		{ID: "qwen3-coder", Provider: "helicone"},
 		{Token: "3px"},
 		{Token: "120b"},
 	})

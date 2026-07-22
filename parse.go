@@ -3050,6 +3050,21 @@ func splitBareGen(pd *parseData, tok string) (Family, string, bool) {
 	if pd == nil || tok == "" {
 		return "", "", false
 	}
+	// A GLUED "p"-as-dot generation ("qwen3p7") is tried FIRST, because the digit/dot
+	// scan below stops at the "p" and would leave the base "qwen3" — which clause 2
+	// then rejects as digit-suffixed, dropping the version entirely. This is the same
+	// single rule ExtractVersionFromID and parseSeriesNumber share
+	// (decodePNotationVersion): a third POSITION the rule reaches, not a third
+	// definition of it. The base-side clauses are unchanged, so this admits a new
+	// SHAPE, never a new permission.
+	if m := reGluedPNotationGen.FindStringSubmatch(tok); m != nil {
+		if decoded, okDecode := decodePNotationVersion(m[2]); okDecode {
+			if base, okBase := bareGenBase(pd, m[1]); okBase {
+				return base, decoded, true
+			}
+		}
+	}
+
 	// Maximal trailing run of digits and dots = the generation version.
 	end := len(tok)
 	i := end
@@ -3065,23 +3080,44 @@ func splitBareGen(pd *parseData, tok string) (Family, string, bool) {
 		return "", "", false // no trailing digit/dot run
 	}
 	version := tok[i:]
-	base := tok[:i]
-	// Consume a single separating hyphen ("gpt-5" → base "gpt").
-	base = strings.TrimSuffix(base, "-")
 	// version must contain at least one digit (guard against a lone "." tail).
-	if base == "" || !strings.ContainsAny(version, "0123456789") {
+	if !strings.ContainsAny(version, "0123456789") {
 		return "", "", false
+	}
+	base, ok := bareGenBase(pd, tok[:i])
+	if !ok {
+		return "", "", false
+	}
+	return base, version, true
+}
+
+// reGluedPNotationGen matches a token ending in a GLUED "p"-as-dot generation:
+// everything before it is the (possibly hyphen-terminated) base, and the trailing
+// digit-p-digit run is the generation. "qwen3p7" → ("qwen", "3p7").
+var reGluedPNotationGen = regexp.MustCompile(`^(.+?)(\d+p\d+)$`)
+
+// bareGenBase applies the BASE-side clauses of the bare-generation predicate to a
+// candidate base string: it consumes a single separating hyphen ("gpt-5" → "gpt"),
+// then enforces clause 2 (the base does not itself end in a digit) and clauses 1 and 3
+// (the base is a families.json entry carrying the curated bare_gen_split flag).
+//
+// It is shared by both split paths above so the two can never disagree about which
+// bases may be split.
+func bareGenBase(pd *parseData, raw string) (Family, bool) {
+	base := strings.TrimSuffix(raw, "-")
+	if base == "" {
+		return "", false
 	}
 	// Clause 2: base-name-not-digit-suffixed.
 	if last := base[len(base)-1]; last >= '0' && last <= '9' {
-		return "", "", false
+		return "", false
 	}
 	// Clause 1 (has-entry) + Clause 3 (bare_gen_split flag attested in snapshot).
 	info, ok := pd.families[Family(base)]
 	if !ok || !info.BareGenSplit {
-		return "", "", false
+		return "", false
 	}
-	return Family(base), version, true
+	return Family(base), true
 }
 
 // recoverMemberVariant recovers a variant token from idTokens (the hyphen-split

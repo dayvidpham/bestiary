@@ -203,12 +203,26 @@ for its **Go module tags** (`vX.Y.Z`).
   releases, 3,775 → 3,773 nomina. The `5p1`/`5p2` id spellings survive as Admitted
   provider-ID nomina on the merged entities — decoding a spelling for *identity* never
   erases it from the record — and `series glm-5` now returns 5.1 and 5.2 as ordinary
-  dotted members of the union, with no `p`-awareness anywhere in the taxonomy. Two
-  *residual* defects are pinned rather than fixed, because they are family-decomposition
-  bugs the decode never reaches: `k2p7` (kimi-for-coding) lands in the compound family
-  `kimi-k2` with an empty version, unlike its `k2p5`/`k2p6` siblings, and
-  `qwen3p7-plus` glues the version into the family token so it is dropped before the
-  decode runs.
+  dotted members of the union, with no `p`-awareness anywhere in the taxonomy.
+
+  The rule reaches **three positions**, sharing one definition: the ordinary
+  version-token path, the letter-prefix series split (where it already lived), and the
+  **glued** generation token — `qwen3p7-plus` had its version dropped entirely, because
+  `splitBareGen`'s trailing digit/dot scan stops at the `p` and leaves the
+  digit-suffixed base `qwen3`, which the not-digit-suffixed clause then rejects. It now
+  decomposes to `qwen/plus@3.7` and joins the **pre-existing** entity of that key, so
+  no key is created or retired and the census is unmoved (the base-side clauses are
+  untouched — the new arm admits a *shape*, never a new permission).
+
+  One *residual* defect is **diagnosed and deferred**: `k2p7` (kimi-for-coding) lands
+  in the compound family `kimi-k2` with an empty version. The asymmetry is neither the
+  id nor the `p` — its `k2p5`/`k2p6` siblings arrive with upstream family
+  `kimi-thinking` and resolve, while `k2p7` arrives with the compound `kimi-k2`; fed
+  `kimi-thinking`, the very same id decomposes to `kimi/k@2.7`. The gap is therefore
+  the *(compound raw family + bare series-token id)* combination in the shared
+  family-recovery path that every kimi/minimax/mimo row traverses — too broad a blast
+  radius for one affected row, so it is pinned as a bug-classified corpus case rather
+  than fixed here.
 - **beta is ALWAYS a release stage, never an identity.** The two axes were already
   independent by construction (`DetectStageFromID` scans the ID *without* stripping), but one
   row asserted beta on both: vercel's `interfaze/interfaze-beta` arrives with an empty

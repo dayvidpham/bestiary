@@ -1,8 +1,8 @@
 {
   "total_records": 4979,
-  "changed_count": 1286,
+  "changed_count": 1287,
   "cat_a_divergence_fix_count": 326,
-  "cat_b_improvement_count": 940,
+  "cat_b_improvement_count": 941,
   "cat_c_unexpected_regression_count": 0,
   "justified_exception_count": 20,
   "id_tuple4_incl_modifier_divergence_frozen_before": 81,
@@ -4193,6 +4193,15 @@
       "after": "(family=\"qwen\",variant=\"\",version=\"3\",modifier=\"instruct\")",
       "category": "b:improvement",
       "reason": "family-preserving de-noise/enrich: only phantom losses and/or enrichments, no ID-present field lost"
+    },
+    {
+      "provider": "fireworks-ai",
+      "id": "accounts/fireworks/models/qwen3p6-plus",
+      "raw_family": "qwen",
+      "before": "(family=\"qwen\",variant=\"plus\",version=\"\",modifier=\"\")",
+      "after": "(family=\"qwen\",variant=\"plus\",version=\"3.6\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "strict enrichment — only previously-empty field(s) populated"
     },
     {
       "provider": "fireworks-ai",
