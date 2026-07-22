@@ -19,7 +19,7 @@ func nominaCensus(ns []bestiary.Nomen) map[bestiary.NomenScheme]int {
 
 // TestNomina_CensusExact pins the EXACT per-scheme census of the minted nomen set
 // over the static registry (the "census literal pinned at bake"). The counts are
-// derived from the committed models_static_gen.go: 971 canonical (one Preferred nomen
+// derived from the committed models_static_gen.go: 982 canonical (one Preferred nomen
 // per distinct entity key), 2791 provider-ID (one Admitted nomen per distinct instance
 // ID spelling, deduped within an entity), 1 alias (the grok-beta seed claim) and 4
 // huggingface (the curated Hub org/repo seeds). On a models.dev snapshot refresh — or a
@@ -39,9 +39,15 @@ func nominaCensus(ns []bestiary.Nomen) map[bestiary.NomenScheme]int {
 // merged into the real claude/opus@4.5…@4.8 entities, retiring four entity keys and
 // therefore four Preferred nomina. provider-ID is untouched by that merge — the four
 // cortecs ID spellings still mint one nomen each, now inside the real entities.
+//
+// canonical went 971 → 982 with the family-"o" over-capture fix: the junk-bucket entity
+// that had held alibaba's video models, openai's speech models, quiverai's arrow and
+// cohere's rerankers split into the 15 distinct entities those models always were
+// (4 bucket keys retired). One Preferred nomen per entity key, so canonical tracks it
+// exactly; provider-ID is again untouched, since no ID spelling was added or removed.
 func TestNomina_CensusExact(t *testing.T) {
 	const (
-		wantCanonical   = 971
+		wantCanonical   = 982
 		wantProviderID  = 2791
 		wantAlias       = 1
 		wantHuggingFace = 4

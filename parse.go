@@ -4053,6 +4053,46 @@ var idFamilyOverrides = map[string]idFamilyOverrideEntry{
 	// token. Same shape as dracarys/mythomax: an exact-ID key, zero collateral.
 	"qwen2.5-32b-eva-v0.2": {family: "eva", version: "0.2"},
 
+	// vercel labels a swathe of unrelated models raw_family "o" — the OpenAI o-series
+	// family — so alibaba's video models, openai's speech models and quiverai's arrow
+	// all decomposed into family "o" and shared one junk-bucket entity with the real
+	// o-series. The raw value is upstream's, not a bestiary mis-parse: the vendored
+	// catalog carries family="o" verbatim on all of them.
+	//
+	// The family_enforce ledger is the right general tool for a mislabel like this, and
+	// it IS used here for "rerank". It could not be used for wan / tts / arrow: the
+	// ledger's integrity guard grounds every entry in the frozen decomposition snapshot,
+	// and that snapshot predates these vercel rows, so those three entries would be
+	// (correctly) rejected as dead. Rather than weaken a guard to admit them, each row is
+	// pinned exactly — the same exact-ID mechanism used elsewhere in this table.
+	//
+	// Each pin restates the tuple the ID-driven path already derives when raw_family is
+	// EMPTY, so the pins encode no new judgement: they only stop a junk raw_family from
+	// overriding a decomposition that was already correct. Genuine o-series ids are
+	// untouched — openai/o1 resolves through the OpenAI-line canonicalization to gpt/o@1
+	// regardless of raw_family, and digitalocean's openai-o1 / openai-o3 keep family "o".
+	"alibaba/wan-v2.5-t2v-preview": {family: "wan", variant: "v2.5-t2v", modifiers: []string{"preview"}},
+	"alibaba/wan-v2.6-i2v":         {family: "wan", variant: "v2.6-i2v"},
+	"alibaba/wan-v2.6-i2v-flash":   {family: "wan", variant: "v2.6-i2v-flash"},
+	"alibaba/wan-v2.6-r2v":         {family: "wan", variant: "v2.6-r2v"},
+	"alibaba/wan-v2.6-r2v-flash":   {family: "wan", variant: "v2.6-r2v-flash"},
+	"alibaba/wan-v2.6-t2v":         {family: "wan", variant: "v2.6-t2v"},
+	"alibaba/wan-v2.7-r2v":         {family: "wan", variant: "v2.7-r2v"},
+	"alibaba/wan-v2.7-t2v":         {family: "wan", variant: "v2.7-t2v"},
+	"openai/tts-1":                 {family: "tts", version: "1"},
+	"openai/tts-1-hd":              {family: "tts", version: "1"},
+	"quiverai/arrow-1.1":           {family: "arrow", version: "1.1"},
+
+	// cohere/rerank-v4-pro is the one row the family_enforce ledger cannot reach. The
+	// ledger fires when the ID-DERIVED family is one of its members, and this ID
+	// derives the COMPOUND family "rerank-v4" (the "-v4-" segment glues onto the
+	// family token before "pro" is read as the variant), which is not the enforce key
+	// "rerank". Its sibling cohere/rerank-v4-fast derives the bare "rerank" and is
+	// corrected by the ledger, so without this pin the two halves of one product line
+	// would sit in different families. Pinned to match the sibling exactly: family
+	// rerank with the tier token as a modifier.
+	"cohere/rerank-v4-pro": {family: "rerank", modifiers: []string{"pro"}},
+
 	// cortecs glues the major version onto the VARIANT token — "claude-opus4-5" is
 	// Opus 4.5, not an Opus 5. Every other provider spells the same models
 	// claude-opus-4-5 / -4-6 / -4-7 / -4-8, and cortecs' own release dates match the

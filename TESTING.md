@@ -127,11 +127,11 @@ func Test<Name>(t *testing.T) {
 
 ## The corpus census, and what is deliberately still inline
 
-At the close of the naming-layer epoch the repository carries **103 corpora**:
+At the close of the naming-layer epoch the repository carries **104 corpora**:
 
 | Area | Corpora | What lives there |
 |---|---|---|
-| `testdata/parse/` | 42 | family/variant/version decomposition, modifier extraction, param-size tokens, serving-host capture, the `ReasonUnknownSuffixOverflow` reachability capture |
+| `testdata/parse/` | 43 | family/variant/version decomposition, modifier extraction, param-size tokens, serving-host capture, the `ReasonUnknownSuffixOverflow` reachability capture, the vercel family-`o` over-capture (with its genuine-o-series negative controls) |
 | `testdata/enum/` | 14 | closed-enum `String()`, `Parse*`, and JSON round-trip/reject tables (Modality, AcceptabilityRating, CanonicalScheme, Harness, Family, Provider) |
 | `testdata/quant/` | 14 | the Quantization enum surface plus the curated quant/VRAM lookups |
 | `testdata/entity/` | 8 | `EntityRef.String()` grammar, the llama-4 and laguna entity projections, Series/Release rendering, the suppression per-entry fence |

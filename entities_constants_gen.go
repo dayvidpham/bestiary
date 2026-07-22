@@ -34,6 +34,7 @@ const (
 	Entity__Aion_labs_aion__Version_3_0                                   = "aion-labs-aion@3.0"
 	Entity__Anubis_70b__V1_1__Size_70b                                    = "anubis-70b/v1.1#70b"
 	Entity__Anubis__Size_70b                                              = "anubis#70b"
+	Entity__Arrow__Version_1_1                                            = "arrow@1.1"
 	Entity__Asi1__Mini                                                    = "asi1/mini"
 	Entity__Aura                                                          = "aura"
 	Entity__Aura__Version_2                                               = "aura@2"
@@ -675,10 +676,7 @@ const (
 	Entity__Nv                                                            = "nv"
 	Entity__Nv__Size_7b                                                   = "nv#7b"
 	Entity__O                                                             = "o"
-	Entity__O__Fast                                                       = "o{fast}"
-	Entity__O__Flash                                                      = "o/flash"
 	Entity__O__Mini                                                       = "o/mini"
-	Entity__O__Pro                                                        = "o/pro"
 	Entity__Olmo__Version_3__Size_32b                                     = "olmo@3#32b"
 	Entity__Ornith__Version_1_0__Size_31b                                 = "ornith@1.0#31b"
 	Entity__Ornith__Version_1_0__Size_35b                                 = "ornith@1.0#35b"
@@ -858,7 +856,12 @@ const (
 	Entity__Relace                                                        = "relace"
 	Entity__Relace_apply__Version_3                                       = "relace-apply@3"
 	Entity__Remm__Size_13b                                                = "remm#13b"
+	Entity__Rerank__Fast                                                  = "rerank{fast}"
+	Entity__Rerank__Lite__Version_2_5                                     = "rerank/lite@2.5"
+	Entity__Rerank__Pro                                                   = "rerank{pro}"
 	Entity__Rerank__Size_4b                                               = "rerank#4b"
+	Entity__Rerank__V3_5                                                  = "rerank/v3.5"
+	Entity__Rerank__Version_2_5                                           = "rerank@2.5"
 	Entity__Ring_1t__Free__Version_2_6                                    = "ring-1t/free@2.6"
 	Entity__Ring__Version_1t                                              = "ring@1t"
 	Entity__Ring__Version_2_6                                             = "ring@2.6"
@@ -937,6 +940,7 @@ const (
 	Entity__Topazlabs                                                     = "topazlabs"
 	Entity__Trinity__Large                                                = "trinity/large"
 	Entity__Trinity__Mini                                                 = "trinity/mini"
+	Entity__Tts__Version_1                                                = "tts@1"
 	Entity__Ui__Size_7b                                                   = "ui#7b"
 	Entity__Universal                                                     = "universal"
 	Entity__Unslopnemo_12b__V4_1__Size_12b                                = "unslopnemo-12b/v4.1#12b"
@@ -959,7 +963,6 @@ const (
 	Entity__Veo__Version_3__Fast                                          = "veo@3{fast}"
 	Entity__Virtuoso__Large                                               = "virtuoso/large"
 	Entity__Voxtral__Small__Size_24b                                      = "voxtral/small#24b"
-	Entity__Voyage                                                        = "voyage"
 	Entity__Voyage__Large__Version_3                                      = "voyage/large@3"
 	Entity__Voyage__Large__Version_4                                      = "voyage/large@4"
 	Entity__Voyage__Lite__Version_3_5                                     = "voyage/lite@3.5"
@@ -971,6 +974,14 @@ const (
 	Entity__Wan2_7__Image                                                 = "wan2.7/image"
 	Entity__Wan2_7_image__Pro                                             = "wan2.7-image/pro"
 	Entity__Wan2__Version_2                                               = "wan2@2"
+	Entity__Wan__V2_5_t2v                                                 = "wan/v2.5-t2v"
+	Entity__Wan__V2_6_i2v                                                 = "wan/v2.6-i2v"
+	Entity__Wan__V2_6_i2v_flash                                           = "wan/v2.6-i2v-flash"
+	Entity__Wan__V2_6_r2v                                                 = "wan/v2.6-r2v"
+	Entity__Wan__V2_6_r2v_flash                                           = "wan/v2.6-r2v-flash"
+	Entity__Wan__V2_6_t2v                                                 = "wan/v2.6-t2v"
+	Entity__Wan__V2_7_r2v                                                 = "wan/v2.7-r2v"
+	Entity__Wan__V2_7_t2v                                                 = "wan/v2.7-t2v"
 	Entity__Wan_v2__Version_6                                             = "wan-v2@6"
 	Entity__Weaver                                                        = "weaver"
 	Entity__Whisper__Large                                                = "whisper/large"
@@ -1010,6 +1021,7 @@ var allEntityConstants = [...]string{
 	Entity__Aion_labs_aion__Version_3_0,
 	Entity__Anubis_70b__V1_1__Size_70b,
 	Entity__Anubis__Size_70b,
+	Entity__Arrow__Version_1_1,
 	Entity__Asi1__Mini,
 	Entity__Aura,
 	Entity__Aura__Version_2,
@@ -1651,10 +1663,7 @@ var allEntityConstants = [...]string{
 	Entity__Nv,
 	Entity__Nv__Size_7b,
 	Entity__O,
-	Entity__O__Fast,
-	Entity__O__Flash,
 	Entity__O__Mini,
-	Entity__O__Pro,
 	Entity__Olmo__Version_3__Size_32b,
 	Entity__Ornith__Version_1_0__Size_31b,
 	Entity__Ornith__Version_1_0__Size_35b,
@@ -1834,7 +1843,12 @@ var allEntityConstants = [...]string{
 	Entity__Relace,
 	Entity__Relace_apply__Version_3,
 	Entity__Remm__Size_13b,
+	Entity__Rerank__Fast,
+	Entity__Rerank__Lite__Version_2_5,
+	Entity__Rerank__Pro,
 	Entity__Rerank__Size_4b,
+	Entity__Rerank__V3_5,
+	Entity__Rerank__Version_2_5,
 	Entity__Ring_1t__Free__Version_2_6,
 	Entity__Ring__Version_1t,
 	Entity__Ring__Version_2_6,
@@ -1913,6 +1927,7 @@ var allEntityConstants = [...]string{
 	Entity__Topazlabs,
 	Entity__Trinity__Large,
 	Entity__Trinity__Mini,
+	Entity__Tts__Version_1,
 	Entity__Ui__Size_7b,
 	Entity__Universal,
 	Entity__Unslopnemo_12b__V4_1__Size_12b,
@@ -1935,7 +1950,6 @@ var allEntityConstants = [...]string{
 	Entity__Veo__Version_3__Fast,
 	Entity__Virtuoso__Large,
 	Entity__Voxtral__Small__Size_24b,
-	Entity__Voyage,
 	Entity__Voyage__Large__Version_3,
 	Entity__Voyage__Large__Version_4,
 	Entity__Voyage__Lite__Version_3_5,
@@ -1947,6 +1961,14 @@ var allEntityConstants = [...]string{
 	Entity__Wan2_7__Image,
 	Entity__Wan2_7_image__Pro,
 	Entity__Wan2__Version_2,
+	Entity__Wan__V2_5_t2v,
+	Entity__Wan__V2_6_i2v,
+	Entity__Wan__V2_6_i2v_flash,
+	Entity__Wan__V2_6_r2v,
+	Entity__Wan__V2_6_r2v_flash,
+	Entity__Wan__V2_6_t2v,
+	Entity__Wan__V2_7_r2v,
+	Entity__Wan__V2_7_t2v,
 	Entity__Wan_v2__Version_6,
 	Entity__Weaver,
 	Entity__Whisper__Large,
