@@ -54177,7 +54177,7 @@ var staticModels = []ModelInfo{
 		RawFamily:             "qwen",
 		Family:                "qwen",
 		Variant:               "plus",
-		Version:               "",
+		Version:               "3.7",
 		Date:                  "2026-06-12",
 		Modifier:              nil,
 		ContextWindow:         262144,
