@@ -25,7 +25,13 @@ const (
 	SchemeHuggingFace
 
 	// SchemePURL produces a Package URL (purl-spec + ECMA-427) form:
-	//   pkg:huggingface/<provider>/<raw-id>
+	//   pkg:huggingface/<org>/<repo>
+	//
+	// RENDER is restricted to HuggingFace-hosted refs, where the raw model ID already
+	// is the Hub org/repo path; every other provider renders "" rather than a
+	// fabricated foreign key (see ModelRef.formatPURL for the reasoning). PARSE stays
+	// lenient: Resolve accepts the legacy "pkg:huggingface/<provider>/<raw-id>"
+	// spelling this package once emitted (Postel).
 	SchemePURL
 
 	// SchemeRaw returns the original API model ID verbatim (string(ModelRef.ID)).

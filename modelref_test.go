@@ -148,10 +148,25 @@ func TestFormatHuggingFace(t *testing.T) {
 	}
 }
 
-// TestFormatPURL verifies that Format(SchemePURL) produces
-// "pkg:huggingface/<provider>/<raw-id>".
+// TestFormatPURL verifies the RESTRICTED purl render: "pkg:huggingface/<org>/<repo>"
+// for a HuggingFace-hosted ref (its raw ID already IS the Hub repo path), and "" for
+// every other provider.
+//
+// This test previously asserted the old "pkg:huggingface/<provider>/<raw-id>" render,
+// which was spec-invalid (the serving provider is not the artifact's registry
+// namespace). It is re-cut deliberately; the full fence set lives in purl_test.go.
 func TestFormatPURL(t *testing.T) {
-	ref := bestiary.ModelRef{
+	hf := bestiary.ModelRef{
+		ID:       "meta-llama/Llama-3.3-70B-Instruct",
+		Provider: bestiary.ProviderHuggingFace,
+		Family:   "llama",
+		Version:  "3.3",
+	}
+	if got, want := hf.Format(bestiary.SchemePURL), "pkg:huggingface/meta-llama/Llama-3.3-70B-Instruct"; got != want {
+		t.Errorf("Format(SchemePURL) for a HuggingFace ref = %q, want %q", got, want)
+	}
+
+	nonHF := bestiary.ModelRef{
 		ID:       "claude-opus-4-20250514",
 		Provider: bestiary.ProviderAnthropic,
 		Family:   "claude",
@@ -159,10 +174,8 @@ func TestFormatPURL(t *testing.T) {
 		Version:  "",
 		Date:     "2025-05-14",
 	}
-	got := ref.Format(bestiary.SchemePURL)
-	want := "pkg:huggingface/anthropic/claude-opus-4-20250514"
-	if got != want {
-		t.Errorf("Format(SchemePURL) = %q, want %q", got, want)
+	if got := nonHF.Format(bestiary.SchemePURL); got != "" {
+		t.Errorf("Format(SchemePURL) for a non-HuggingFace ref = %q, want \"\"", got)
 	}
 }
 
@@ -284,14 +297,16 @@ func TestModelRef_Designations_RatingByScheme(t *testing.T) {
 
 // TestModelRef_Designations_CoversSchemes verifies that all four CanonicalSchemes
 // are represented in the Designations() output.
+//
+// It uses a HUGGINGFACE-hosted ref deliberately: the purl designation is minted only
+// where the artifact's registry home is known, so the HF ref is the case that carries
+// all four schemes. The non-HF drop is fenced in purl_test.go.
 func TestModelRef_Designations_CoversSchemes(t *testing.T) {
 	ref := bestiary.ModelRef{
-		ID:       "claude-opus-4-20250514",
-		Provider: bestiary.ProviderAnthropic,
-		Family:   "claude",
-		Variant:  "opus",
-		Version:  "",
-		Date:     "2025-05-14",
+		ID:       "meta-llama/Llama-3.3-70B-Instruct",
+		Provider: bestiary.ProviderHuggingFace,
+		Family:   "llama",
+		Version:  "3.3",
 	}
 	designations := ref.Designations()
 	schemesSeen := make(map[bestiary.CanonicalScheme]bool)

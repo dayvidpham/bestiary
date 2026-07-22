@@ -63,6 +63,34 @@ for its **Go module tags** (`vX.Y.Z`).
 - **Store v7**: `nomina` table (PK `(value, scheme, entity_key)`, FK →
   `data_sources` — enforcement regression-tested) + `region` column, with
   presence-guarded self-heal from v6 on both paths and zero data loss.
+- **IRI minting** (`iri.go`): `EntityRef.IRI(base)` and `ModelRef.IRI(base)` render an
+  identity as a dereferenceable RFC 3987 name — the caller-supplied namespace base with
+  the percent-encoded canonical string appended as exactly ONE path segment. The base is
+  a **parameter by design and is never defaulted**: bestiary owns no public namespace, so
+  the consumer supplies its own (`https://w3id.org/…`, an internal https namespace, a
+  `urn:` prefix); it is used verbatim and the only rejected value is the empty string
+  (which would yield a relative reference, not an IRI — that returns `""`). Escaping is
+  `url.PathEscape` (the path-segment escaper — `url.QueryEscape` would render a space as
+  `+`, which does not decode back in a path position) plus an explicit `@` → `%40` pass,
+  because `@` is a legal `pchar` that `PathEscape` leaves raw while the grammar uses it as
+  the version delimiter. Every grammar delimiter is therefore encoded — `#` most
+  importantly, since raw it would start a URI *fragment* and silently truncate the
+  identifier at the size segment. Additive Go API only: no schema, store or output change.
+  `llama/scout@4#17b-16e{instruct}` →
+  `https://w3id.org/bestiary/entity/llama%2Fscout%404%2317b-16e%7Binstruct%7D`, and the
+  round trip back through `url.PathUnescape` is fenced over a delimiter torture set and
+  over every entity and model ref in the committed registry.
+- **Curated HuggingFace nomina** (`parse/data/nomen_claims.json`): four
+  `NomenSchemeHuggingFace` seed claims mapping flagship open-weight entities to the Hub
+  org/repo their weights live at — `meta-llama/Llama-4-Scout-17B-16E-Instruct` →
+  `llama/scout@4#17b-16e{instruct}` (an entity served by 13 providers), plus
+  `meta-llama/Llama-3.3-70B-Instruct`, `Qwen/Qwen3-Coder-480B-A35B-Instruct` and
+  `deepseek-ai/DeepSeek-V3.2`. Each repo path is verified verbatim against the committed
+  catalog's raw model IDs (fenced), each is `Admitted` with `Source = curated` and a
+  claimant `SourceURL` pointing at the Hub page, and all surface through
+  `Entity.Nomina()` / `NomenLookup()`. This is the durable, **entity-level** external
+  identifier: the Hub name holds regardless of which provider is serving the entity.
+  Minted census moves to 3,772 (975 canonical, 2,792 provider-ID, 4 huggingface, 1 alias).
 
 ### Changed
 - **Designation layer activated**: `ModelRef.Designations()` now rates the
@@ -123,6 +151,20 @@ for its **Go module tags** (`vX.Y.Z`).
   for entity-key lookups; use `LookupModel(id)` for raw-ID instance lookups.
 
 ### Fixed
+- **PURL render restricted to HuggingFace** (behavior change; the previous output was
+  spec-invalid). `ModelRef.Format(SchemePURL)` used to interpolate the *serving provider*
+  as the purl namespace — `pkg:huggingface/anthropic/claude-opus-4-1` for a model that has
+  no HuggingFace repo at all, and `pkg:huggingface/huggingface/meta-llama/Llama-3.3-70B-Instruct`
+  (double-`huggingface`) for HuggingFace's own rows. A purl is a foreign key into someone
+  else's registry, so it is now minted only where the artifact's registry home is known:
+  the ~51 huggingface-provider instances, whose raw ID already *is* the Hub org/repo path,
+  render `pkg:huggingface/<org>/<repo>`; every other provider renders `""`, and
+  `Designations()` **drops** the purl entry rather than emitting an empty-valued
+  designation (3 designations for a non-HF ref, 4 for an HF one — canonical stays
+  `Preferred`). The **input** side is deliberately unchanged (Postel): `Resolve` and
+  `--scheme purl` still accept the legacy `pkg:huggingface/<provider>/<raw-id>` spelling,
+  since downstream SBOMs may hold strings bestiary itself emitted. The provider-independent
+  identifier story is the entity-level Hub nomen above; this render is the stopgap.
 - **Empty-raw claude version recovery**: `claude-3.5-haiku` / `claude-3-5-haiku`
   empty-raw forms now decompose to `(claude, haiku, 3.5)` instead of dropping the
   version.
@@ -154,6 +196,13 @@ for its **Go module tags** (`vX.Y.Z`).
 - Research deliverables (report-only, decisions user-gated): the turbo/fast
   per-family evidence report (URL-census methodology over the baked metadata
   links) and the general-beta evidence memo.
+- IRI round-trip fences: a delimiter torture set (`/`, `@`, `#`, `{`, `}`, `,`, the
+  ref-level `[attributes]` brackets) plus every entity and every model ref in the
+  committed registry, each asserted to decode back byte-identically; the escaping
+  contract itself and the empty-base/verbatim-base rules are pinned separately.
+- PURL fences: a real catalog HF row renders the repo-path purl, every huggingface-provider
+  row is checked against double-namespacing, a non-HF ref renders `""`, no designation is
+  ever emitted empty-valued corpus-wide, and the lenient legacy purl *input* still resolves.
 - Parse-residual capture corpora: 59 → 65 corpora (azure serving-host,
   meta-llama no-slash census, namespace suffix transparency, text-embedding
   sole-variant, grok documented-residual, region capture), all under the
