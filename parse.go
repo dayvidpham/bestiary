@@ -1587,6 +1587,16 @@ func inferFamilyFromIDWithVariantBase(id ModelID, p Provider) (Family, string, s
 			}
 		}
 		recoveredVariant := recoverMemberVariant(remainingTokens, baseFamily)
+		// Recover a version that sits BETWEEN the family and the recovered variant
+		// (empty-raw "claude-3.5-haiku" / "claude-3-5-haiku" -> version "3.5"), so this
+		// empty-raw path converges with the raw-populated sibling instead of dropping the
+		// version at the return below. Only fills an empty version; a bare-generation
+		// split (splitBareGen) already took precedence when present.
+		if bareVersion == "" && recoveredVariant != "" {
+			if v, _ := ExtractVersionBetweenFamilyAndVariant(id, baseFamily, recoveredVariant); v != "" {
+				bareVersion = v
+			}
+		}
 		// Case-fold: baseFamily is already lowercased above.
 		return baseFamily, recoveredVariant, bareVersion
 	}
@@ -2845,12 +2855,91 @@ func stripVendorNamespace(id string) string {
 	// reach here with the redundant leading "meta-" intact, deriving family "meta" instead
 	// of "llama" (and dropping the version, since the extractor mis-aligns). Strip the
 	// redundant "meta-" so they decompose NATIVELY to llama with the version preserved —
-	// the SAME outcome as the slash form. Scoped to the literal "meta-llama-" prefix (only
-	// the 2 attested no-slash meta-llama ids), zero collateral.
+	// the SAME outcome as the slash form. Scoped to the literal "meta-llama-" prefix (the
+	// attested no-slash meta-llama ids — currently the eight dotted/dashed/underscored
+	// version spellings), zero collateral.
 	if strings.HasPrefix(strings.ToLower(idStr), "meta-llama-") {
 		idStr = idStr[len("meta-"):]
 	}
+	// AWS Bedrock cross-region inference-profile normalization. A Bedrock id is
+	// "<region>.<vendor>.<model>[-v<N>:<M>]" (e.g.
+	// "us.anthropic.claude-sonnet-4-5-20250929-v1:0"); the region+vendor prefix and
+	// the trailing profile-version tag are ROUTING metadata, not model identity, so a
+	// dotted Bedrock form must decompose to the SAME (family,variant,version) tuple —
+	// and thus the SAME entity — as the plainly-served model. Stripping them here
+	// makes every ID-based extractor (family, version, date) see through the dotted
+	// namespace at once.
+	idStr = stripBedrockProfile(idStr)
 	return idStr
+}
+
+// bedrockRegionCodes is the CLOSED set of AWS Bedrock cross-region inference-profile
+// region prefixes recognized by stripBedrockProfile / DetectRegion. It gates the
+// normalization so that only a genuine "<region>.<vendor>.<model>" Bedrock id is
+// touched — other-provider dotted spellings whose leading segment is NOT a region
+// (e.g. "openai.gpt-5-...", "minimax.minimax-m2-...", "deepseek.v3-...") are left
+// untouched, since there the dotted segments carry model identity, not routing.
+//
+// The attested catalog prefixes are us/eu/au/jp/global; "apac" is the reserved
+// Bedrock scope (0 attested). "ca"/"sa" are recognized-but-unnamed here so a future
+// spelling routes to the RegionOther + RegionRaw fail-safe (regionFromToken) rather
+// than being silently ignored.
+var bedrockRegionCodes = map[string]struct{}{
+	"us": {}, "eu": {}, "au": {}, "jp": {}, "apac": {}, "global": {}, "ca": {}, "sa": {},
+}
+
+// reBedrockTierTag matches a trailing Bedrock routing tier tag: a ":<digits>"
+// inference-profile index (the ":0" of "-v1:0") or an "@<tag>" routing alias
+// (e.g. "@default"). reBedrockVersionTag matches the trailing "-v<digits>"
+// inference-profile version once the tier tag is removed ("-v1:0" -> "-v1" -> "").
+var (
+	reBedrockTierTag    = regexp.MustCompile(`(?::\d+|@[A-Za-z0-9._-]+)$`)
+	reBedrockVersionTag = regexp.MustCompile(`-v\d+$`)
+)
+
+// bedrockProfile parses an AWS Bedrock cross-region inference-profile id of the
+// form "<region>.<vendor>.<model>[-v<N>:<M>]". On a match it returns the lowercase
+// region token, the plain (prefix- and profile-suffix-stripped) model id, and
+// ok=true; a non-Bedrock id (no region.vendor. prefix) returns ("", id, false), so
+// callers leave it untouched. The region+vendor prefix and the trailing routing tag
+// are Bedrock ROUTING metadata, never model identity, so the returned model
+// decomposes identically to the plainly-served model and keys to one entity.
+func bedrockProfile(id string) (regionTok, model string, ok bool) {
+	i := strings.IndexByte(id, '.')
+	if i <= 0 {
+		return "", id, false
+	}
+	regionTok = strings.ToLower(id[:i])
+	if _, isRegion := bedrockRegionCodes[regionTok]; !isRegion {
+		return "", id, false // leading segment is not a Bedrock region.
+	}
+	rest := id[i+1:]
+	j := strings.IndexByte(rest, '.')
+	if j <= 0 {
+		return "", id, false // no "<vendor>." segment.
+	}
+	model = rest[j+1:]
+	if model == "" {
+		return "", id, false
+	}
+	// Strip the Bedrock inference-profile routing suffix, scoped to this branch so
+	// there is zero collateral on non-Bedrock ids: tier tag first (":0"/"@default"),
+	// then the "-v<N>" version token it sat behind.
+	model = reBedrockTierTag.ReplaceAllString(model, "")
+	model = reBedrockVersionTag.ReplaceAllString(model, "")
+	return regionTok, model, true
+}
+
+// stripBedrockProfile returns the plain model id for an AWS Bedrock cross-region
+// inference-profile id (see bedrockProfile), or the id unchanged when it is not a
+// Bedrock form. It is the string-normalization half consumed by stripVendorNamespace
+// so every ID-based extractor (family, version, date) sees through the dotted
+// namespace; DetectRegion is the sibling that surfaces the region as an attribute.
+func stripBedrockProfile(id string) string {
+	if _, model, ok := bedrockProfile(id); ok {
+		return model
+	}
+	return id
 }
 
 // NOTE (post-v0.2.2 correction, bestiary host-dimension follow-up): a curated
@@ -4001,6 +4090,24 @@ var idFamilyOverrides = map[string]idFamilyOverrideEntry{
 	"xai/grok-4.20-non-reasoning-beta":  {family: "grok", version: "4.20", modifiers: []string{"non-reasoning"}},
 	"xai/grok-4.20-reasoning-beta":      {family: "grok", version: "4.20", modifiers: []string{"reasoning"}},
 
+	// Cohere Command R7B. Cohere markets "Command R7B" as its own model, distinct from
+	// Command R and Command R+ (see docs.cohere.com/docs/command-r7b): R, R+, and R7B
+	// are DISTINCT variants of the command family, and "r7b" is the canonical variant
+	// token (kept whole, NOT split into member "r" + a 7b size). The models.dev API tags
+	// these with the LESS specific raw_family "command-r", whose curated override
+	// (family_overrides.json "command-r" -> variant "r") would otherwise erase the r7b
+	// distinction — so the ID (more specific than the raw) pins the variant here. Version
+	// is empty (the trailing MM-YYYY group is a date, handled by the between-family
+	// MM-YYYY guard). The 7b parameter size is carried SEPARATELY by the
+	// param_size_overrides.json "7b" pins (dual-carry: variant KEEPS r7b, ParamSize ALSO
+	// records 7b -> entity key command/r7b#7b). The arabic spelling drops "arabic" per the
+	// existing modifier handling (arabic is not a curated modifier), so it keys the same
+	// command/r7b#7b entity as its sibling, differing only by the per-instance Date. Keys
+	// are exact lowercase IDs; the org-prefixed "cohere/" form is a distinct key.
+	"command-r7b-12-2024":        {family: "command", variant: "r7b"},
+	"cohere/command-r7b-12-2024": {family: "command", variant: "r7b"},
+	"command-r7b-arabic-02-2025": {family: "command", variant: "r7b"},
+
 	// Version-less llama-4 scout/maverick pins. A handful of catalog spellings for the
 	// llama-4 scout/maverick artifacts omit the "-4-" version token that the canonical
 	// hyphenated spellings carry, so they mechanically decompose with an EMPTY version
@@ -4440,6 +4547,16 @@ func ExtractVersionBetweenFamilyAndVariant(id ModelID, family Family, variant st
 		// Stop at the variant boundary.
 		if variantFirst != "" && tok == variantFirst {
 			variantStart = i
+			break
+		}
+		// MM-YYYY trailing-date lookahead (cohere "command-r7b-12-2024"): a numeric
+		// token that forms an MM-YYYY group with the NEXT token is the leading half of a
+		// trailing date, not a version component. Stop before consuming it so the date
+		// group ("12-2024") stays a date rather than leaking its month ("12") into
+		// Version. Mirrors the single-remainder isMMYYYYTwoGroup guard in
+		// ExtractVersionFromID; the four/six-digit isDateShapedToken guard below cannot
+		// see a two-token MM-YYYY split.
+		if i+1 < len(tokens) && isMMYYYYTwoGroup(tok+"-"+tokens[i+1]) {
 			break
 		}
 		if isVersionToken(tok) && !isDateShapedToken(tok) {

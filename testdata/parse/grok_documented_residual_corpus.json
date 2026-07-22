@@ -1,0 +1,12 @@
+{
+  "cases": [
+    {
+      "name": "grok-3-mini-fast-beta -> (grok,mini,3) [documented residual: fast+beta mid-ID tokens dropped]",
+      "input": { "raw": "grok", "id": "grok-3-mini-fast-beta" },
+      "expected": { "family": "grok", "variant": "mini", "version": "3", "mod": "" },
+      "classification": "must-pass",
+      "provenance": { "source": "bug", "ref": "documented residual (GH#9 mid-ID engine territory): 'grok-3-mini-fast-beta' currently decomposes to (grok,mini,3) with the mid-ID 'fast' serving tier and trailing 'beta' stage dropped; absent from the current catalog. Pinned so a future mid-ID extraction that recovers fast/beta is caught as a deliberate change" },
+      "mutation": { "description": "mid-ID serving-tier ('fast') and release-stage ('beta') tokens are documented residuals, not yet surfaced; variant mini + version 3 recovered" }
+    }
+  ]
+}

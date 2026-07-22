@@ -15,6 +15,22 @@
       "classification": "must-pass",
       "provenance": { "source": "requirement", "ref": "empty raw_family path decomposes undated id to (claude, opus, 4.6)" },
       "mutation": { "description": "id-only decomposition of an undated versioned id" }
+    },
+    {
+      "name": "claude-3.5-haiku empty raw_family -> (claude, haiku, 3.5)",
+      "input": { "id": "claude-3.5-haiku", "provider": "some-provider" },
+      "expected": { "family": "claude", "variant": "haiku", "version": "3.5" },
+      "classification": "must-pass",
+      "provenance": { "source": "bug", "ref": "empty-raw dot-version-before-variant form must recover version 3.5 between family and variant, not drop it at the empty-raw return path" },
+      "mutation": { "description": "version-between-family-and-variant recovery on the empty-raw return path (dotted spelling)" }
+    },
+    {
+      "name": "claude-3-5-haiku empty raw_family -> (claude, haiku, 3.5)",
+      "input": { "id": "claude-3-5-haiku", "provider": "some-provider" },
+      "expected": { "family": "claude", "variant": "haiku", "version": "3.5" },
+      "classification": "must-pass",
+      "provenance": { "source": "bug", "ref": "empty-raw dashed-version-before-variant form must recover version 3.5 between family and variant, not drop it at the empty-raw return path" },
+      "mutation": { "description": "version-between-family-and-variant recovery on the empty-raw return path (dashed spelling)" }
     }
   ]
 }

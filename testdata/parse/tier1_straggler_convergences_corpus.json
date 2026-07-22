@@ -127,45 +127,87 @@
       }
     },
     {
-      "name": "command-r7b-12-2024 empty → (command,r) [r7b=r+7b-size]",
+      "name": "command-r7b-12-2024 empty → (command,r7b) [r7b is a distinct variant; MM-YYYY date not version]",
       "input": {
         "raw": "",
         "id": "cohere/command-r7b-12-2024"
       },
       "expected": {
         "family": "command",
-        "variant": "r",
-        "version": "12",
+        "variant": "r7b",
+        "version": "",
         "mod": ""
       },
       "classification": "must-pass",
       "provenance": {
         "source": "requirement",
-        "ref": "ParseFamilyDetailed(raw=, id=cohere/command-r7b-12-2024) -> (family 'command', variant 'r', version '12', mod '')"
+        "ref": "ParseFamilyDetailed(raw=, id=cohere/command-r7b-12-2024) -> (command, r7b, '', ''); Cohere markets Command R7B as a distinct variant (docs.cohere.com/docs/command-r7b) so 'r7b' is kept whole (7b carried separately as ParamSize); trailing MM-YYYY '12-2024' is a date, never version '12'"
       },
       "mutation": {
         "description": "tier-1 straggler convergence to one canonical entity tuple"
       }
     },
     {
-      "name": "command-r7b-12-2024 raw=command-r → (command,r)",
+      "name": "command-r7b-12-2024 raw=command-r → (command,r7b)",
       "input": {
         "raw": "command-r",
         "id": "cohere/command-r7b-12-2024"
       },
       "expected": {
         "family": "command",
-        "variant": "r",
-        "version": "12",
+        "variant": "r7b",
+        "version": "",
         "mod": ""
       },
       "classification": "must-pass",
       "provenance": {
         "source": "requirement",
-        "ref": "ParseFamilyDetailed(raw=command-r, id=cohere/command-r7b-12-2024) -> (family 'command', variant 'r', version '12', mod '')"
+        "ref": "ParseFamilyDetailed(raw=command-r, id=cohere/command-r7b-12-2024) -> (command, r7b, '', ''); the less-specific raw_family 'command-r' does NOT erase the r7b variant (ID-specific idFamilyOverride); trailing MM-YYYY '12-2024' is a date, never version '12'"
       },
       "mutation": {
         "description": "tier-1 straggler convergence to one canonical entity tuple"
+      }
+    },
+    {
+      "name": "command-r-08-2024 raw=command-r → (command,r) [negative control: plain R unchanged]",
+      "input": {
+        "raw": "command-r",
+        "id": "command-r-08-2024"
+      },
+      "expected": {
+        "family": "command",
+        "variant": "r",
+        "version": "",
+        "mod": ""
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "negative control: plain Command R (command-r-08-2024) stays variant 'r' — the r7b fix must NOT bleed into the sibling R variant"
+      },
+      "mutation": {
+        "description": "plain command-r sibling decomposition is unchanged by the r7b variant pin"
+      }
+    },
+    {
+      "name": "command-r-plus-08-2024 raw=command-r-plus → (command,r-plus) [negative control: R+ unchanged]",
+      "input": {
+        "raw": "command-r-plus",
+        "id": "command-r-plus-08-2024"
+      },
+      "expected": {
+        "family": "command",
+        "variant": "r-plus",
+        "version": "",
+        "mod": ""
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "negative control: Command R+ (command-r-plus-08-2024) stays variant 'r-plus' — the r7b fix must NOT bleed into the sibling R+ variant"
+      },
+      "mutation": {
+        "description": "plain command-r-plus sibling decomposition is unchanged by the r7b variant pin"
       }
     },
     {

@@ -197,6 +197,52 @@ var parseFamilyDetailedModifierListCorpusJSON []byte
 //go:embed testdata/parse/tier1_straggler_convergences_corpus.json
 var tier1StragglerConvergencesCorpusJSON []byte
 
+//go:embed testdata/parse/azure_serving_host_corpus.json
+var azureServingHostCorpusJSON []byte
+
+//go:embed testdata/parse/meta_llama_no_slash_corpus.json
+var metaLlamaNoSlashCorpusJSON []byte
+
+//go:embed testdata/parse/namespace_suffix_transparency_corpus.json
+var namespaceSuffixTransparencyCorpusJSON []byte
+
+//go:embed testdata/parse/text_embedding_sole_variant_corpus.json
+var textEmbeddingSoleVariantCorpusJSON []byte
+
+//go:embed testdata/parse/grok_documented_residual_corpus.json
+var grokDocumentedResidualCorpusJSON []byte
+
+//go:embed testdata/parse/region_capture_corpus.json
+var regionCaptureCorpusJSON []byte
+
+// regionExpected is the (region, region_raw) pair DetectRegion produces: region is
+// the Region.String() rendering, region_raw the fail-safe raw carrier (non-empty
+// only for RegionOther). The region+profile-suffix strip is owned by
+// stripBedrockProfile (exercised end-to-end by the namespace-convergence corpus),
+// so DetectRegion returns the attribute pair, not a stripped ID.
+type regionExpected struct {
+	Region    string `json:"region"`
+	RegionRaw string `json:"region_raw"`
+}
+
+// runRegionCaptureCorpus drives bestiary.DetectRegion over every case and asserts
+// the (Region.String(), RegionRaw) pair.
+func runRegionCaptureCorpus(t *testing.T, corpus testcase.Corpus[string, regionExpected]) {
+	t.Helper()
+	for _, c := range corpus.Cases {
+		t.Run(c.Name, func(t *testing.T) {
+			t.Parallel()
+			region, raw := bestiary.DetectRegion(bestiary.ModelID(c.Input))
+			if region.String() != c.Expected.Region {
+				t.Errorf("DetectRegion(%q) region = %q, want %q", c.Input, region, c.Expected.Region)
+			}
+			if raw != c.Expected.RegionRaw {
+				t.Errorf("DetectRegion(%q) regionRaw = %q, want %q", c.Input, raw, c.Expected.RegionRaw)
+			}
+		})
+	}
+}
+
 // rawIDInput is the (rawFamily, id) pair fed to ParseFamilyDetailed.
 type rawIDInput struct {
 	Raw string `json:"raw"`

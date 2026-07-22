@@ -1,0 +1,20 @@
+{
+  "cases": [
+    {
+      "name": "text-embedding-3-small -> (text-embedding, small, 3) no 'text' over-capture",
+      "input": { "raw": "text-embedding", "id": "text-embedding-3-small" },
+      "expected": { "family": "text-embedding", "variant": "small", "version": "3", "mod": "" },
+      "classification": "must-pass",
+      "provenance": { "source": "requirement", "ref": "ParseFamilyDetailed(raw=text-embedding, id=text-embedding-3-small) -> (text-embedding,small,3,''); the compound family stays 'text-embedding' (no reduction to 'text'), version 3 between family and the sole 'small' variant" },
+      "mutation": { "description": "compound family text-embedding preserved; sole trailing variant 'small' promoted with version 3 recovered" }
+    },
+    {
+      "name": "text-embedding-3-large -> (text-embedding, large, 3) no 'text' over-capture",
+      "input": { "raw": "text-embedding", "id": "text-embedding-3-large" },
+      "expected": { "family": "text-embedding", "variant": "large", "version": "3", "mod": "" },
+      "classification": "must-pass",
+      "provenance": { "source": "requirement", "ref": "ParseFamilyDetailed(raw=text-embedding, id=text-embedding-3-large) -> (text-embedding,large,3,''); the compound family stays 'text-embedding' (no reduction to 'text'), version 3 between family and the sole 'large' variant" },
+      "mutation": { "description": "compound family text-embedding preserved; sole trailing variant 'large' promoted with version 3 recovered" }
+    }
+  ]
+}

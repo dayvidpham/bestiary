@@ -14,6 +14,38 @@ for its **Go module tags** (`vX.Y.Z`).
 
 ## [Unreleased]
 
+### Added
+- **Region axis (parse half)**: `Region` closed int enum (`region.go`) capturing the
+  geographic/jurisdictional boundary an instance's serving is scoped to (Amazon
+  Bedrock cross-region inference profiles: `us.`/`eu.`/`au.`/`jp.`/`global.`).
+  Members follow ISO 3166-1 alpha-2 where applicable; `RegionNone` renders
+  `"unspecified"`; unknown tokens land in `RegionOther` with the raw token
+  preserved. `ModelRef` gains `Region`/`RegionRaw` (internal this release-candidate;
+  public JSON/schema wiring lands with the 0.5.0 schema bump). Not part of entity
+  identity.
+
+### Fixed
+- **Empty-raw claude version recovery**: `claude-3.5-haiku` / `claude-3-5-haiku`
+  empty-raw forms now decompose to `(claude, haiku, 3.5)` instead of dropping the
+  version.
+- **MM-YYYY month leak**: a trailing `MM-YYYY` date no longer leaks its month into
+  `Version` (`command-r7b-12-2024` → version `""`, date `2024-12`; also
+  `command-r7b-arabic-02-2025`, `command-a-plus-05-2026`).
+- **Command R7B identity**: `command-r7b*` ids keep the variant whole and carry the
+  size — entity key `command/r7b#7b` ("Command R7B" is Cohere's own model name;
+  `command-r` and `command-r-plus` unchanged).
+- **Bedrock dotted-namespace convergence**: `us./eu./au./jp./global.` vendor-dotted
+  Bedrock ids now recover the same version as their plain siblings and share one
+  entity (previously they split into version-less sibling entities).
+
+### Testing
+- Parse-residual capture corpora: 59 → 65 corpora (azure serving-host,
+  meta-llama no-slash census, namespace suffix transparency, text-embedding
+  sole-variant, grok documented-residual, region capture), all under the
+  three-guard discipline.
+
+## [0.2.6] — 2026-07-16
+
 **Schema:** `0.3.0` → `0.4.0` (additive). SQLite store schema **unchanged** at `6`.
 
 The **full-bulk `#size` re-key** epoch (GH#9): one shared enrichment now sizes every

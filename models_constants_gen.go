@@ -475,41 +475,41 @@ const (
 	Model__AmazonBedrock__Anthropic__Claude__Sonnet__4__5__20250929__V1__0                   ModelID = "anthropic.claude-sonnet-4-5-20250929-v1:0"
 	Model__AmazonBedrock__Anthropic__Claude__Sonnet__4__6                                    ModelID = "anthropic.claude-sonnet-4-6"
 	Model__AmazonBedrock__Anthropic__Claude__Sonnet__5                                       ModelID = "anthropic.claude-sonnet-5"
-	Model__AmazonBedrock__Au__Anthropic__Claude__Haiku__4__5__20251001__V1__0                ModelID = "au.anthropic.claude-haiku-4-5-20251001-v1:0"
-	Model__AmazonBedrock__Au__Anthropic__Claude__Opus__4__6__V1                              ModelID = "au.anthropic.claude-opus-4-6-v1"
-	Model__AmazonBedrock__Au__Anthropic__Claude__Opus__4__8                                  ModelID = "au.anthropic.claude-opus-4-8"
-	Model__AmazonBedrock__Au__Anthropic__Claude__Sonnet__4__5__20250929__V1__0               ModelID = "au.anthropic.claude-sonnet-4-5-20250929-v1:0"
-	Model__AmazonBedrock__Au__Anthropic__Claude__Sonnet__4__6                                ModelID = "au.anthropic.claude-sonnet-4-6"
+	Model__AmazonBedrock__Au__Anthropic__Claude__Haiku__4__5__20251001__V1__0__4_5           ModelID = "au.anthropic.claude-haiku-4-5-20251001-v1:0"
+	Model__AmazonBedrock__Au__Anthropic__Claude__Opus__4_8                                   ModelID = "au.anthropic.claude-opus-4-8"
+	Model__AmazonBedrock__Au__Anthropic__Claude__Opus__4__6__V1__4_6                         ModelID = "au.anthropic.claude-opus-4-6-v1"
+	Model__AmazonBedrock__Au__Anthropic__Claude__Sonnet__4_6                                 ModelID = "au.anthropic.claude-sonnet-4-6"
+	Model__AmazonBedrock__Au__Anthropic__Claude__Sonnet__4__5__20250929__V1__0__4_5          ModelID = "au.anthropic.claude-sonnet-4-5-20250929-v1:0"
 	Model__AmazonBedrock__Au__Anthropic__Claude__Sonnet__5                                   ModelID = "au.anthropic.claude-sonnet-5"
 	Model__AmazonBedrock__DeepSeek__R1__V1__0__Thinking                                      ModelID = "deepseek.r1-v1:0"
 	Model__AmazonBedrock__DeepSeek__V3__2                                                    ModelID = "deepseek.v3.2"
 	Model__AmazonBedrock__DeepSeek__V3__V1__0                                                ModelID = "deepseek.v3-v1:0"
 	Model__AmazonBedrock__Eu__Anthropic__Claude__Fable__5                                    ModelID = "eu.anthropic.claude-fable-5"
-	Model__AmazonBedrock__Eu__Anthropic__Claude__Haiku__4__5__20251001__V1__0                ModelID = "eu.anthropic.claude-haiku-4-5-20251001-v1:0"
-	Model__AmazonBedrock__Eu__Anthropic__Claude__Opus__4__5__20251101__V1__0                 ModelID = "eu.anthropic.claude-opus-4-5-20251101-v1:0"
-	Model__AmazonBedrock__Eu__Anthropic__Claude__Opus__4__6__V1                              ModelID = "eu.anthropic.claude-opus-4-6-v1"
-	Model__AmazonBedrock__Eu__Anthropic__Claude__Opus__4__7                                  ModelID = "eu.anthropic.claude-opus-4-7"
-	Model__AmazonBedrock__Eu__Anthropic__Claude__Opus__4__8                                  ModelID = "eu.anthropic.claude-opus-4-8"
-	Model__AmazonBedrock__Eu__Anthropic__Claude__Sonnet__4__5__20250929__V1__0               ModelID = "eu.anthropic.claude-sonnet-4-5-20250929-v1:0"
-	Model__AmazonBedrock__Eu__Anthropic__Claude__Sonnet__4__6                                ModelID = "eu.anthropic.claude-sonnet-4-6"
+	Model__AmazonBedrock__Eu__Anthropic__Claude__Haiku__4__5__20251001__V1__0__4_5           ModelID = "eu.anthropic.claude-haiku-4-5-20251001-v1:0"
+	Model__AmazonBedrock__Eu__Anthropic__Claude__Opus__4_7                                   ModelID = "eu.anthropic.claude-opus-4-7"
+	Model__AmazonBedrock__Eu__Anthropic__Claude__Opus__4_8                                   ModelID = "eu.anthropic.claude-opus-4-8"
+	Model__AmazonBedrock__Eu__Anthropic__Claude__Opus__4__5__20251101__V1__0__4_5            ModelID = "eu.anthropic.claude-opus-4-5-20251101-v1:0"
+	Model__AmazonBedrock__Eu__Anthropic__Claude__Opus__4__6__V1__4_6                         ModelID = "eu.anthropic.claude-opus-4-6-v1"
+	Model__AmazonBedrock__Eu__Anthropic__Claude__Sonnet__4_6                                 ModelID = "eu.anthropic.claude-sonnet-4-6"
+	Model__AmazonBedrock__Eu__Anthropic__Claude__Sonnet__4__5__20250929__V1__0__4_5          ModelID = "eu.anthropic.claude-sonnet-4-5-20250929-v1:0"
 	Model__AmazonBedrock__Eu__Anthropic__Claude__Sonnet__5                                   ModelID = "eu.anthropic.claude-sonnet-5"
 	Model__AmazonBedrock__Global__Anthropic__Claude__Fable__5                                ModelID = "global.anthropic.claude-fable-5"
-	Model__AmazonBedrock__Global__Anthropic__Claude__Haiku__4__5__20251001__V1__0            ModelID = "global.anthropic.claude-haiku-4-5-20251001-v1:0"
-	Model__AmazonBedrock__Global__Anthropic__Claude__Opus__4__5__20251101__V1__0             ModelID = "global.anthropic.claude-opus-4-5-20251101-v1:0"
-	Model__AmazonBedrock__Global__Anthropic__Claude__Opus__4__6__V1                          ModelID = "global.anthropic.claude-opus-4-6-v1"
-	Model__AmazonBedrock__Global__Anthropic__Claude__Opus__4__7                              ModelID = "global.anthropic.claude-opus-4-7"
-	Model__AmazonBedrock__Global__Anthropic__Claude__Opus__4__8                              ModelID = "global.anthropic.claude-opus-4-8"
-	Model__AmazonBedrock__Global__Anthropic__Claude__Sonnet__4__5__20250929__V1__0           ModelID = "global.anthropic.claude-sonnet-4-5-20250929-v1:0"
-	Model__AmazonBedrock__Global__Anthropic__Claude__Sonnet__4__6                            ModelID = "global.anthropic.claude-sonnet-4-6"
+	Model__AmazonBedrock__Global__Anthropic__Claude__Haiku__4__5__20251001__V1__0__4_5       ModelID = "global.anthropic.claude-haiku-4-5-20251001-v1:0"
+	Model__AmazonBedrock__Global__Anthropic__Claude__Opus__4_7                               ModelID = "global.anthropic.claude-opus-4-7"
+	Model__AmazonBedrock__Global__Anthropic__Claude__Opus__4_8                               ModelID = "global.anthropic.claude-opus-4-8"
+	Model__AmazonBedrock__Global__Anthropic__Claude__Opus__4__5__20251101__V1__0__4_5        ModelID = "global.anthropic.claude-opus-4-5-20251101-v1:0"
+	Model__AmazonBedrock__Global__Anthropic__Claude__Opus__4__6__V1__4_6                     ModelID = "global.anthropic.claude-opus-4-6-v1"
+	Model__AmazonBedrock__Global__Anthropic__Claude__Sonnet__4_6                             ModelID = "global.anthropic.claude-sonnet-4-6"
+	Model__AmazonBedrock__Global__Anthropic__Claude__Sonnet__4__5__20250929__V1__0__4_5      ModelID = "global.anthropic.claude-sonnet-4-5-20250929-v1:0"
 	Model__AmazonBedrock__Global__Anthropic__Claude__Sonnet__5                               ModelID = "global.anthropic.claude-sonnet-5"
 	Model__AmazonBedrock__Google__Gemma__3__12b__It                                          ModelID = "google.gemma-3-12b-it"
 	Model__AmazonBedrock__Google__Gemma__3__27b__It                                          ModelID = "google.gemma-3-27b-it"
 	Model__AmazonBedrock__Google__Gemma__3__4b__It                                           ModelID = "google.gemma-3-4b-it"
-	Model__AmazonBedrock__Jp__Anthropic__Claude__Haiku__4__5__20251001__V1__0                ModelID = "jp.anthropic.claude-haiku-4-5-20251001-v1:0"
-	Model__AmazonBedrock__Jp__Anthropic__Claude__Opus__4__7                                  ModelID = "jp.anthropic.claude-opus-4-7"
-	Model__AmazonBedrock__Jp__Anthropic__Claude__Opus__4__8                                  ModelID = "jp.anthropic.claude-opus-4-8"
-	Model__AmazonBedrock__Jp__Anthropic__Claude__Sonnet__4__5__20250929__V1__0               ModelID = "jp.anthropic.claude-sonnet-4-5-20250929-v1:0"
-	Model__AmazonBedrock__Jp__Anthropic__Claude__Sonnet__4__6                                ModelID = "jp.anthropic.claude-sonnet-4-6"
+	Model__AmazonBedrock__Jp__Anthropic__Claude__Haiku__4__5__20251001__V1__0__4_5           ModelID = "jp.anthropic.claude-haiku-4-5-20251001-v1:0"
+	Model__AmazonBedrock__Jp__Anthropic__Claude__Opus__4_7                                   ModelID = "jp.anthropic.claude-opus-4-7"
+	Model__AmazonBedrock__Jp__Anthropic__Claude__Opus__4_8                                   ModelID = "jp.anthropic.claude-opus-4-8"
+	Model__AmazonBedrock__Jp__Anthropic__Claude__Sonnet__4_6                                 ModelID = "jp.anthropic.claude-sonnet-4-6"
+	Model__AmazonBedrock__Jp__Anthropic__Claude__Sonnet__4__5__20250929__V1__0__4_5          ModelID = "jp.anthropic.claude-sonnet-4-5-20250929-v1:0"
 	Model__AmazonBedrock__Jp__Anthropic__Claude__Sonnet__5                                   ModelID = "jp.anthropic.claude-sonnet-5"
 	Model__AmazonBedrock__Meta__Llama3__1__70b__Instruct__V1__0__Instruct                    ModelID = "meta.llama3-1-70b-instruct-v1:0"
 	Model__AmazonBedrock__Meta__Llama3__1__8b__Instruct__V1__0__Instruct                     ModelID = "meta.llama3-1-8b-instruct-v1:0"
@@ -550,14 +550,14 @@ const (
 	Model__AmazonBedrock__Qwen__Qwen3__Next__80b__A3b                                        ModelID = "qwen.qwen3-next-80b-a3b"
 	Model__AmazonBedrock__Qwen__Qwen3__Vl__235b__A22b                                        ModelID = "qwen.qwen3-vl-235b-a22b"
 	Model__AmazonBedrock__Us__Anthropic__Claude__Fable__5                                    ModelID = "us.anthropic.claude-fable-5"
-	Model__AmazonBedrock__Us__Anthropic__Claude__Haiku__4__5__20251001__V1__0                ModelID = "us.anthropic.claude-haiku-4-5-20251001-v1:0"
-	Model__AmazonBedrock__Us__Anthropic__Claude__Opus__4__1__20250805__V1__0                 ModelID = "us.anthropic.claude-opus-4-1-20250805-v1:0"
-	Model__AmazonBedrock__Us__Anthropic__Claude__Opus__4__5__20251101__V1__0                 ModelID = "us.anthropic.claude-opus-4-5-20251101-v1:0"
-	Model__AmazonBedrock__Us__Anthropic__Claude__Opus__4__6__V1                              ModelID = "us.anthropic.claude-opus-4-6-v1"
-	Model__AmazonBedrock__Us__Anthropic__Claude__Opus__4__7                                  ModelID = "us.anthropic.claude-opus-4-7"
-	Model__AmazonBedrock__Us__Anthropic__Claude__Opus__4__8                                  ModelID = "us.anthropic.claude-opus-4-8"
-	Model__AmazonBedrock__Us__Anthropic__Claude__Sonnet__4__5__20250929__V1__0               ModelID = "us.anthropic.claude-sonnet-4-5-20250929-v1:0"
-	Model__AmazonBedrock__Us__Anthropic__Claude__Sonnet__4__6                                ModelID = "us.anthropic.claude-sonnet-4-6"
+	Model__AmazonBedrock__Us__Anthropic__Claude__Haiku__4__5__20251001__V1__0__4_5           ModelID = "us.anthropic.claude-haiku-4-5-20251001-v1:0"
+	Model__AmazonBedrock__Us__Anthropic__Claude__Opus__4_7                                   ModelID = "us.anthropic.claude-opus-4-7"
+	Model__AmazonBedrock__Us__Anthropic__Claude__Opus__4_8                                   ModelID = "us.anthropic.claude-opus-4-8"
+	Model__AmazonBedrock__Us__Anthropic__Claude__Opus__4__1__20250805__V1__0__4_1            ModelID = "us.anthropic.claude-opus-4-1-20250805-v1:0"
+	Model__AmazonBedrock__Us__Anthropic__Claude__Opus__4__5__20251101__V1__0__4_5            ModelID = "us.anthropic.claude-opus-4-5-20251101-v1:0"
+	Model__AmazonBedrock__Us__Anthropic__Claude__Opus__4__6__V1__4_6                         ModelID = "us.anthropic.claude-opus-4-6-v1"
+	Model__AmazonBedrock__Us__Anthropic__Claude__Sonnet__4_6                                 ModelID = "us.anthropic.claude-sonnet-4-6"
+	Model__AmazonBedrock__Us__Anthropic__Claude__Sonnet__4__5__20250929__V1__0__4_5          ModelID = "us.anthropic.claude-sonnet-4-5-20250929-v1:0"
 	Model__AmazonBedrock__Us__Anthropic__Claude__Sonnet__5                                   ModelID = "us.anthropic.claude-sonnet-5"
 	Model__AmazonBedrock__Us__DeepSeek__R1__V1__0__Thinking                                  ModelID = "us.deepseek.r1-v1:0"
 	Model__AmazonBedrock__Us__Meta__Llama4__Maverick__17b__Instruct__V1__0__4__Instruct      ModelID = "us.meta.llama4-maverick-17b-instruct-v1:0"
@@ -1009,8 +1009,8 @@ const (
 	Model__Cohere__Command__A__Reasoning__Reasoning__20250821                                ModelID = "command-a-reasoning-08-2025"
 	Model__Cohere__Command__A__Translate__20250828                                           ModelID = "command-a-translate-08-2025"
 	Model__Cohere__Command__A__Vision__Vision__20250731                                      ModelID = "command-a-vision-07-2025"
-	Model__Cohere__Command__R7b__12__20241202                                                ModelID = "command-r7b-12-2024"
-	Model__Cohere__Command__R7b__Arabic__02__20250227                                        ModelID = "command-r7b-arabic-02-2025"
+	Model__Cohere__Command__R7b__20241202                                                    ModelID = "command-r7b-12-2024"
+	Model__Cohere__Command__R7b__Arabic__20250227                                            ModelID = "command-r7b-arabic-02-2025"
 	Model__Cohere__Command__R__20240830                                                      ModelID = "command-r-08-2024"
 	Model__Cohere__Command__R__Plus__20240830                                                ModelID = "command-r-plus-08-2024"
 	Model__Cohere__North__Mini__Code__1__0                                                   ModelID = "north-mini-code-1-0"
@@ -1965,7 +1965,7 @@ const (
 	Model__Kilo__Codestral__2508                                                             ModelID = "mistralai/codestral-2508"
 	Model__Kilo__Cogito__V2__1__671b                                                         ModelID = "deepcogito/cogito-v2.1-671b"
 	Model__Kilo__Command__A                                                                  ModelID = "cohere/command-a"
-	Model__Kilo__Command__R7b__12__20241202                                                  ModelID = "cohere/command-r7b-12-2024"
+	Model__Kilo__Command__R7b__20241202                                                      ModelID = "cohere/command-r7b-12-2024"
 	Model__Kilo__Command__R__20240830                                                        ModelID = "cohere/command-r-08-2024"
 	Model__Kilo__Command__R__Plus__20240830                                                  ModelID = "cohere/command-r-plus-08-2024"
 	Model__Kilo__Cydonia__24b__V4__1                                                         ModelID = "thedrummer/cydonia-24b-v4.1"
@@ -2521,7 +2521,7 @@ const (
 	Model__MergeGateway__Claude__Sonnet__4__20250514                                         ModelID = "anthropic/claude-sonnet-4-20250514"
 	Model__MergeGateway__Codestral__Latest                                                   ModelID = "mistral/codestral-latest"
 	Model__MergeGateway__Command__A__20250313                                                ModelID = "cohere/command-a-03-2025"
-	Model__MergeGateway__Command__R7b__12__20241202                                          ModelID = "cohere/command-r7b-12-2024"
+	Model__MergeGateway__Command__R7b__20241202                                              ModelID = "cohere/command-r7b-12-2024"
 	Model__MergeGateway__Command__R__20240830                                                ModelID = "cohere/command-r-08-2024"
 	Model__MergeGateway__Command__R__Plus__20240830                                          ModelID = "cohere/command-r-plus-08-2024"
 	Model__MergeGateway__DeepSeek__V4__Flash                                                 ModelID = "deepseek/deepseek-v4-flash"
@@ -2784,7 +2784,7 @@ const (
 	Model__NanoGPT__Coding__Router__Max                                                      ModelID = "nanogpt/coding-router:max"
 	Model__NanoGPT__Coding__Router__Medium                                                   ModelID = "nanogpt/coding-router:medium"
 	Model__NanoGPT__Cogito__V1__Preview__Qwen__32B                                           ModelID = "deepcogito/cogito-v1-preview-qwen-32B"
-	Model__NanoGPT__Command__A__Plus__05__20260522                                           ModelID = "command-a-plus-05-2026"
+	Model__NanoGPT__Command__A__Plus__20260522                                               ModelID = "command-a-plus-05-2026"
 	Model__NanoGPT__Command__A__Reasoning__Reasoning__20250822                               ModelID = "command-a-reasoning-08-2025"
 	Model__NanoGPT__Command__R                                                               ModelID = "cohere/command-r"
 	Model__NanoGPT__Command__R__Plus__20240830                                               ModelID = "cohere/command-r-plus-08-2024"
@@ -3880,7 +3880,7 @@ const (
 	Model__OpenRouter__Codestral__2508                                                       ModelID = "mistralai/codestral-2508"
 	Model__OpenRouter__Cogito__V2__1__671b                                                   ModelID = "deepcogito/cogito-v2.1-671b"
 	Model__OpenRouter__Command__A                                                            ModelID = "cohere/command-a"
-	Model__OpenRouter__Command__R7b__12__20241202                                            ModelID = "cohere/command-r7b-12-2024"
+	Model__OpenRouter__Command__R7b__20241202                                                ModelID = "cohere/command-r7b-12-2024"
 	Model__OpenRouter__Command__R__20240830                                                  ModelID = "cohere/command-r-08-2024"
 	Model__OpenRouter__Command__R__Plus__20240830                                            ModelID = "cohere/command-r-plus-08-2024"
 	Model__OpenRouter__Cydonia__24b__V4__1                                                   ModelID = "thedrummer/cydonia-24b-v4.1"
@@ -6133,41 +6133,41 @@ var allModelConstants = [...]ModelID{
 	Model__AmazonBedrock__Anthropic__Claude__Sonnet__4__5__20250929__V1__0,
 	Model__AmazonBedrock__Anthropic__Claude__Sonnet__4__6,
 	Model__AmazonBedrock__Anthropic__Claude__Sonnet__5,
-	Model__AmazonBedrock__Au__Anthropic__Claude__Haiku__4__5__20251001__V1__0,
-	Model__AmazonBedrock__Au__Anthropic__Claude__Opus__4__6__V1,
-	Model__AmazonBedrock__Au__Anthropic__Claude__Opus__4__8,
-	Model__AmazonBedrock__Au__Anthropic__Claude__Sonnet__4__5__20250929__V1__0,
-	Model__AmazonBedrock__Au__Anthropic__Claude__Sonnet__4__6,
+	Model__AmazonBedrock__Au__Anthropic__Claude__Haiku__4__5__20251001__V1__0__4_5,
+	Model__AmazonBedrock__Au__Anthropic__Claude__Opus__4_8,
+	Model__AmazonBedrock__Au__Anthropic__Claude__Opus__4__6__V1__4_6,
+	Model__AmazonBedrock__Au__Anthropic__Claude__Sonnet__4_6,
+	Model__AmazonBedrock__Au__Anthropic__Claude__Sonnet__4__5__20250929__V1__0__4_5,
 	Model__AmazonBedrock__Au__Anthropic__Claude__Sonnet__5,
 	Model__AmazonBedrock__DeepSeek__R1__V1__0__Thinking,
 	Model__AmazonBedrock__DeepSeek__V3__2,
 	Model__AmazonBedrock__DeepSeek__V3__V1__0,
 	Model__AmazonBedrock__Eu__Anthropic__Claude__Fable__5,
-	Model__AmazonBedrock__Eu__Anthropic__Claude__Haiku__4__5__20251001__V1__0,
-	Model__AmazonBedrock__Eu__Anthropic__Claude__Opus__4__5__20251101__V1__0,
-	Model__AmazonBedrock__Eu__Anthropic__Claude__Opus__4__6__V1,
-	Model__AmazonBedrock__Eu__Anthropic__Claude__Opus__4__7,
-	Model__AmazonBedrock__Eu__Anthropic__Claude__Opus__4__8,
-	Model__AmazonBedrock__Eu__Anthropic__Claude__Sonnet__4__5__20250929__V1__0,
-	Model__AmazonBedrock__Eu__Anthropic__Claude__Sonnet__4__6,
+	Model__AmazonBedrock__Eu__Anthropic__Claude__Haiku__4__5__20251001__V1__0__4_5,
+	Model__AmazonBedrock__Eu__Anthropic__Claude__Opus__4_7,
+	Model__AmazonBedrock__Eu__Anthropic__Claude__Opus__4_8,
+	Model__AmazonBedrock__Eu__Anthropic__Claude__Opus__4__5__20251101__V1__0__4_5,
+	Model__AmazonBedrock__Eu__Anthropic__Claude__Opus__4__6__V1__4_6,
+	Model__AmazonBedrock__Eu__Anthropic__Claude__Sonnet__4_6,
+	Model__AmazonBedrock__Eu__Anthropic__Claude__Sonnet__4__5__20250929__V1__0__4_5,
 	Model__AmazonBedrock__Eu__Anthropic__Claude__Sonnet__5,
 	Model__AmazonBedrock__Global__Anthropic__Claude__Fable__5,
-	Model__AmazonBedrock__Global__Anthropic__Claude__Haiku__4__5__20251001__V1__0,
-	Model__AmazonBedrock__Global__Anthropic__Claude__Opus__4__5__20251101__V1__0,
-	Model__AmazonBedrock__Global__Anthropic__Claude__Opus__4__6__V1,
-	Model__AmazonBedrock__Global__Anthropic__Claude__Opus__4__7,
-	Model__AmazonBedrock__Global__Anthropic__Claude__Opus__4__8,
-	Model__AmazonBedrock__Global__Anthropic__Claude__Sonnet__4__5__20250929__V1__0,
-	Model__AmazonBedrock__Global__Anthropic__Claude__Sonnet__4__6,
+	Model__AmazonBedrock__Global__Anthropic__Claude__Haiku__4__5__20251001__V1__0__4_5,
+	Model__AmazonBedrock__Global__Anthropic__Claude__Opus__4_7,
+	Model__AmazonBedrock__Global__Anthropic__Claude__Opus__4_8,
+	Model__AmazonBedrock__Global__Anthropic__Claude__Opus__4__5__20251101__V1__0__4_5,
+	Model__AmazonBedrock__Global__Anthropic__Claude__Opus__4__6__V1__4_6,
+	Model__AmazonBedrock__Global__Anthropic__Claude__Sonnet__4_6,
+	Model__AmazonBedrock__Global__Anthropic__Claude__Sonnet__4__5__20250929__V1__0__4_5,
 	Model__AmazonBedrock__Global__Anthropic__Claude__Sonnet__5,
 	Model__AmazonBedrock__Google__Gemma__3__12b__It,
 	Model__AmazonBedrock__Google__Gemma__3__27b__It,
 	Model__AmazonBedrock__Google__Gemma__3__4b__It,
-	Model__AmazonBedrock__Jp__Anthropic__Claude__Haiku__4__5__20251001__V1__0,
-	Model__AmazonBedrock__Jp__Anthropic__Claude__Opus__4__7,
-	Model__AmazonBedrock__Jp__Anthropic__Claude__Opus__4__8,
-	Model__AmazonBedrock__Jp__Anthropic__Claude__Sonnet__4__5__20250929__V1__0,
-	Model__AmazonBedrock__Jp__Anthropic__Claude__Sonnet__4__6,
+	Model__AmazonBedrock__Jp__Anthropic__Claude__Haiku__4__5__20251001__V1__0__4_5,
+	Model__AmazonBedrock__Jp__Anthropic__Claude__Opus__4_7,
+	Model__AmazonBedrock__Jp__Anthropic__Claude__Opus__4_8,
+	Model__AmazonBedrock__Jp__Anthropic__Claude__Sonnet__4_6,
+	Model__AmazonBedrock__Jp__Anthropic__Claude__Sonnet__4__5__20250929__V1__0__4_5,
 	Model__AmazonBedrock__Jp__Anthropic__Claude__Sonnet__5,
 	Model__AmazonBedrock__Meta__Llama3__1__70b__Instruct__V1__0__Instruct,
 	Model__AmazonBedrock__Meta__Llama3__1__8b__Instruct__V1__0__Instruct,
@@ -6208,14 +6208,14 @@ var allModelConstants = [...]ModelID{
 	Model__AmazonBedrock__Qwen__Qwen3__Next__80b__A3b,
 	Model__AmazonBedrock__Qwen__Qwen3__Vl__235b__A22b,
 	Model__AmazonBedrock__Us__Anthropic__Claude__Fable__5,
-	Model__AmazonBedrock__Us__Anthropic__Claude__Haiku__4__5__20251001__V1__0,
-	Model__AmazonBedrock__Us__Anthropic__Claude__Opus__4__1__20250805__V1__0,
-	Model__AmazonBedrock__Us__Anthropic__Claude__Opus__4__5__20251101__V1__0,
-	Model__AmazonBedrock__Us__Anthropic__Claude__Opus__4__6__V1,
-	Model__AmazonBedrock__Us__Anthropic__Claude__Opus__4__7,
-	Model__AmazonBedrock__Us__Anthropic__Claude__Opus__4__8,
-	Model__AmazonBedrock__Us__Anthropic__Claude__Sonnet__4__5__20250929__V1__0,
-	Model__AmazonBedrock__Us__Anthropic__Claude__Sonnet__4__6,
+	Model__AmazonBedrock__Us__Anthropic__Claude__Haiku__4__5__20251001__V1__0__4_5,
+	Model__AmazonBedrock__Us__Anthropic__Claude__Opus__4_7,
+	Model__AmazonBedrock__Us__Anthropic__Claude__Opus__4_8,
+	Model__AmazonBedrock__Us__Anthropic__Claude__Opus__4__1__20250805__V1__0__4_1,
+	Model__AmazonBedrock__Us__Anthropic__Claude__Opus__4__5__20251101__V1__0__4_5,
+	Model__AmazonBedrock__Us__Anthropic__Claude__Opus__4__6__V1__4_6,
+	Model__AmazonBedrock__Us__Anthropic__Claude__Sonnet__4_6,
+	Model__AmazonBedrock__Us__Anthropic__Claude__Sonnet__4__5__20250929__V1__0__4_5,
 	Model__AmazonBedrock__Us__Anthropic__Claude__Sonnet__5,
 	Model__AmazonBedrock__Us__DeepSeek__R1__V1__0__Thinking,
 	Model__AmazonBedrock__Us__Meta__Llama4__Maverick__17b__Instruct__V1__0__4__Instruct,
@@ -6667,8 +6667,8 @@ var allModelConstants = [...]ModelID{
 	Model__Cohere__Command__A__Reasoning__Reasoning__20250821,
 	Model__Cohere__Command__A__Translate__20250828,
 	Model__Cohere__Command__A__Vision__Vision__20250731,
-	Model__Cohere__Command__R7b__12__20241202,
-	Model__Cohere__Command__R7b__Arabic__02__20250227,
+	Model__Cohere__Command__R7b__20241202,
+	Model__Cohere__Command__R7b__Arabic__20250227,
 	Model__Cohere__Command__R__20240830,
 	Model__Cohere__Command__R__Plus__20240830,
 	Model__Cohere__North__Mini__Code__1__0,
@@ -7623,7 +7623,7 @@ var allModelConstants = [...]ModelID{
 	Model__Kilo__Codestral__2508,
 	Model__Kilo__Cogito__V2__1__671b,
 	Model__Kilo__Command__A,
-	Model__Kilo__Command__R7b__12__20241202,
+	Model__Kilo__Command__R7b__20241202,
 	Model__Kilo__Command__R__20240830,
 	Model__Kilo__Command__R__Plus__20240830,
 	Model__Kilo__Cydonia__24b__V4__1,
@@ -8179,7 +8179,7 @@ var allModelConstants = [...]ModelID{
 	Model__MergeGateway__Claude__Sonnet__4__20250514,
 	Model__MergeGateway__Codestral__Latest,
 	Model__MergeGateway__Command__A__20250313,
-	Model__MergeGateway__Command__R7b__12__20241202,
+	Model__MergeGateway__Command__R7b__20241202,
 	Model__MergeGateway__Command__R__20240830,
 	Model__MergeGateway__Command__R__Plus__20240830,
 	Model__MergeGateway__DeepSeek__V4__Flash,
@@ -8442,7 +8442,7 @@ var allModelConstants = [...]ModelID{
 	Model__NanoGPT__Coding__Router__Max,
 	Model__NanoGPT__Coding__Router__Medium,
 	Model__NanoGPT__Cogito__V1__Preview__Qwen__32B,
-	Model__NanoGPT__Command__A__Plus__05__20260522,
+	Model__NanoGPT__Command__A__Plus__20260522,
 	Model__NanoGPT__Command__A__Reasoning__Reasoning__20250822,
 	Model__NanoGPT__Command__R,
 	Model__NanoGPT__Command__R__Plus__20240830,
@@ -9538,7 +9538,7 @@ var allModelConstants = [...]ModelID{
 	Model__OpenRouter__Codestral__2508,
 	Model__OpenRouter__Cogito__V2__1__671b,
 	Model__OpenRouter__Command__A,
-	Model__OpenRouter__Command__R7b__12__20241202,
+	Model__OpenRouter__Command__R7b__20241202,
 	Model__OpenRouter__Command__R__20240830,
 	Model__OpenRouter__Command__R__Plus__20240830,
 	Model__OpenRouter__Cydonia__24b__V4__1,
