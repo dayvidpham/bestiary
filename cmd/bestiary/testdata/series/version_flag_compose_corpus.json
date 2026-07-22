@@ -1,5 +1,5 @@
 {
-  "_comment": "applyVersionFlag: how --version folds into the positional selector, producing the candidate spellings to resolve. A version-less selector yields both grammars' spellings (ladder '-' and canonical '@') under infer, and only the canonical one under --input-format=canonical. A selector that already pins @version must AGREE. See TESTING.md.",
+  "_comment": "applyVersionFlag: how --version folds into the positional selector, producing the candidate spellings to resolve. A version-less selector yields both grammars' spellings (ladder '-' and canonical '@') under infer, and only the canonical one under --input-format=canonical. A selector that already pins a version must AGREE — fenced symmetrically for the canonical '@version' AND the ladder's dash-embedded version (claude-4.8) so both advertised spellings fail identically on a contradiction and pass on a redundant match. See TESTING.md.",
   "cases": [
     {
       "name": "unset_version_leaves_the_selector_alone",
@@ -64,6 +64,22 @@
       "classification": "must-fail",
       "provenance": { "source": "requirement", "ref": "ruled: a canonical selector plus a disagreeing --version is an actionable error, never a silent precedence win for either" },
       "mutation": { "description": "--version is set to a version different from the selector's @version" }
+    },
+    {
+      "name": "disagreeing_dash_version_is_rejected",
+      "input": { "selector": "claude-4.8", "version": "5", "input_format": "infer" },
+      "expected": { "error_contains": ["disagree", "already pins version", "drop the -4.8"] },
+      "classification": "must-fail",
+      "provenance": { "source": "requirement", "ref": "the ladder (dash) grammar the README teaches first must fence a contradicting --version identically to the canonical '@' grammar, not silently build an unresolvable claude-4.8-5 and report a bare not-found" },
+      "mutation": { "description": "a dash-embedded ladder version disagrees with --version, which must raise the same actionable disagreement error the '@' grammar does" }
+    },
+    {
+      "name": "agreeing_dash_version_is_left_intact",
+      "input": { "selector": "claude-4", "version": "4", "input_format": "infer" },
+      "expected": { "candidates": ["claude-4"] },
+      "classification": "must-pass",
+      "provenance": { "source": "boundary", "ref": "a redundant but consistent --version on the dash grammar (claude-4 --version 4) must resolve, not double-append into the unresolvable claude-4-4" },
+      "mutation": { "description": "--version repeats the version the dash selector already pins, so the selector is passed through untouched" }
     }
   ]
 }

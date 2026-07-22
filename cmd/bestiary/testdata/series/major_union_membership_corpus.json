@@ -1,5 +1,5 @@
 {
-  "_comment": "The strict major-union membership rule, unit level: a generation belongs to version V iff it IS V or begins with V followed by a DOT. String test, mandatory dot, no numeric normalization. must-fail cases are non-members. See TESTING.md.",
+  "_comment": "The strict major-union membership rule, unit level: a generation belongs to version V iff it IS V or begins with V followed by a DOT. String test, mandatory dot, no numeric normalization. must-fail cases are non-members. This corpus is the 1:1 successor of the pre-migration inline TestGenerationInMajorUnion table (21 cases): the second sub-1.0 member (0.3/0) and the second dot-lost negative (35/3) are restored here so the migration preserves the full authored coverage rather than the earlier 19. See TESTING.md.",
   "cases": [
     {
       "name": "exact_bare_integer_is_a_member",
@@ -48,6 +48,14 @@
       "classification": "must-pass",
       "provenance": { "source": "requirement", "ref": "ruled: sub-1.0 lines union under version 0 verbatim, needing no exemption" },
       "mutation": { "description": "the version is 0, the value that would need a special case under a numeric rule" }
+    },
+    {
+      "name": "second_sub_one_minor_is_a_member_of_zero",
+      "input": { "generation": "0.3", "version": "0" },
+      "expected": true,
+      "classification": "must-pass",
+      "provenance": { "source": "manual", "ref": "Mistral 7B v0.3 is a genuinely distinct sub-1.0 line alongside v0.1; both union under version 0, so a second sub-1.0 member is pinned distinctly from 0.1" },
+      "mutation": { "description": "a second, higher sub-1.0 minor under the same version 0, proving the sub-1.0 admission is not special-cased to 0.1 alone" }
     },
     {
       "name": "fully_specified_version_matches_itself",
@@ -120,6 +128,14 @@
       "classification": "must-fail",
       "provenance": { "source": "manual", "ref": "minimax@25 and qwen@25 are dot-lost upstream spellings; the selector must not guess where the dot went" },
       "mutation": { "description": "the dot is deleted from 2.5, which must make it a non-member rather than a silent member" }
+    },
+    {
+      "name": "second_dot_lost_spelling_is_not_a_member",
+      "input": { "generation": "35", "version": "3" },
+      "expected": false,
+      "classification": "must-fail",
+      "provenance": { "source": "manual", "ref": "qwen@35 is a second dot-lost upstream spelling alongside minimax/qwen@25; pinned distinctly from 25/2 so the no-guess rule is proven for more than one major" },
+      "mutation": { "description": "the dot is deleted from 3.5 under a different major, which must stay a non-member exactly as 25 does under major 2" }
     },
     {
       "name": "different_major_is_not_a_member",

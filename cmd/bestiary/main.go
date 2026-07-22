@@ -1276,34 +1276,90 @@ func parseSeriesInputFormat(s string) (seriesInputFormat, error) {
 // writing. Under --input-format=canonical only the canonical spelling is offered,
 // since that format promises no other reading.
 //
-// A selector that ALREADY carries an explicit @version is not extended: the flag
-// must AGREE with it, and a disagreement is an actionable error rather than a
-// silent win for one of them. run() has already rejected a --version given without
-// a positional or without a value.
+// A selector that ALREADY pins a version is not extended: the flag must AGREE with
+// it, and a disagreement is an actionable error rather than a silent win for one of
+// them. Both grammars are fenced SYMMETRICALLY — the canonical "@version" always, and
+// the ladder's dash-embedded version under infer — so `claude-4.8 --version 5` fails
+// as loudly as `claude@4.8 --version 5` instead of silently building an unresolvable
+// `claude-4.8-5` and surfacing a bare "series not found" for a line the user spelled
+// correctly. An AGREEING redundant flag (`claude-4 --version 4`) is left intact and
+// resolves. run() has already rejected a --version given without a positional or
+// without a value.
 func applyVersionFlag(selector, versionFlag string, format seriesInputFormat) ([]string, error) {
 	sel := strings.TrimSpace(selector)
 	version := strings.TrimSpace(versionFlag)
 	if version == "" {
 		return []string{sel}, nil
 	}
+	// Canonical "@version" — a syntactic pin, fenced under every format.
 	if at := strings.LastIndex(sel, "@"); at >= 0 {
 		if existing := sel[at+1:]; existing != version {
-			return nil, fmt.Errorf(
-				"selector %q and --version %s disagree\n"+
-					"  What: the selector already pins version %q while --version asks for %q\n"+
-					"  Where: bestiary series\n"+
-					"  Why: two different versions cannot both be selected, and silently preferring one "+
-					"would hide the contradiction\n"+
-					"  How to fix: drop --version to use the selector's %q, or drop the @%s from the "+
-					"selector to use --version %s",
-				sel, version, existing, version, existing, existing, version)
+			return nil, seriesVersionDisagreeError(sel, "@", existing, version)
 		}
 		return []string{sel}, nil
+	}
+	// Ladder "family-version" — a dash-embedded version is only a reading under infer
+	// (canonical spells versions with "@"; models.dev takes a raw id), and it is
+	// recognised as a purely numeric, optionally-dotted trailing segment so a family
+	// whose NAME contains a dash ("grok-build") is not mistaken for a pinned version.
+	if format == seriesInputInfer {
+		if dash := strings.LastIndex(sel, "-"); dash >= 0 {
+			if existing := sel[dash+1:]; isLadderVersionToken(existing) {
+				if existing != version {
+					return nil, seriesVersionDisagreeError(sel, "-", existing, version)
+				}
+				return []string{sel}, nil
+			}
+		}
 	}
 	if format == seriesInputCanonical {
 		return []string{sel + "@" + version}, nil
 	}
 	return []string{sel + "-" + version, sel + "@" + version}, nil
+}
+
+// seriesVersionDisagreeError is the actionable contradiction reported when a selector
+// already pins a version and --version asks for a different one. It is shared by both
+// grammars — sep is "@" for the canonical pin and "-" for the ladder's dash pin — so
+// the two spellings the README advertises as equivalent fail identically (what / why /
+// where / how), and the fix names the exact segment to drop.
+func seriesVersionDisagreeError(sel, sep, existing, version string) error {
+	return fmt.Errorf(
+		"selector %q and --version %s disagree\n"+
+			"  What: the selector already pins version %q while --version asks for %q\n"+
+			"  Where: bestiary series\n"+
+			"  Why: two different versions cannot both be selected, and silently preferring one "+
+			"would hide the contradiction\n"+
+			"  How to fix: drop --version to use the selector's %q, or drop the %s%s from the "+
+			"selector to use --version %s",
+		sel, version, existing, version, existing, sep, existing, version)
+}
+
+// isLadderVersionToken reports whether s is a purely numeric, optionally-dotted
+// version token (4, 4.8, 0.1, 12.1, 4.8.1) — exactly the shape the major-union rule
+// accepts and no other. A leading dot, a trailing dot, a doubled dot, or any
+// non-digit character (so a family segment like "build" or a "4a" spelling) is
+// rejected, which is what lets the dash split distinguish a pinned ladder version
+// from a family name that merely contains a dash.
+func isLadderVersionToken(s string) bool {
+	if s == "" {
+		return false
+	}
+	prevDot := true // also guards against a leading dot
+	for _, r := range s {
+		switch {
+		case r >= '0' && r <= '9':
+			prevDot = false
+		case r == '.':
+			if prevDot {
+				return false
+			}
+			prevDot = true
+		default:
+			return false
+		}
+	}
+	return !prevDot // a trailing dot leaves this set
 }
 
 // selectSeries resolves a positional selector to the lines it names, as the UNION

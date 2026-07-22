@@ -491,9 +491,11 @@ func TestRun_Series_StrictMembershipNegatives(t *testing.T) {
 // authored corpus of generation/version pairs — including the real catalog spellings
 // (p-notation, 1t, leading zeros, dot-lost tokens) a looser rule would mis-admit.
 func TestGenerationInMajorUnion(t *testing.T) {
-	corpus := loadSeriesCorpus[seriesMembershipInput, bool](t, seriesMajorUnionMembershipCorpusJSON, 19)
+	corpus := loadSeriesCorpus[seriesMembershipInput, bool](t, seriesMajorUnionMembershipCorpusJSON, 21)
 
 	// Value coverage: the load-bearing exclusions must still be present by value.
+	// The two second-of-a-kind rows (0.3/0, 35/3) are pinned here too so the 1:1
+	// restoration of the pre-migration inline table cannot silently regress again.
 	wantPresent := []seriesMembershipInput{
 		{Generation: "4.8", Version: "4"},
 		{Generation: "42", Version: "4"},
@@ -501,6 +503,9 @@ func TestGenerationInMajorUnion(t *testing.T) {
 		{Generation: "1t", Version: "1"},
 		{Generation: "001", Version: "1"},
 		{Generation: "0.1", Version: "0"},
+		{Generation: "0.3", Version: "0"},
+		{Generation: "25", Version: "2"},
+		{Generation: "35", Version: "3"},
 		{Generation: "4.0", Version: "4.8"},
 	}
 	for _, want := range wantPresent {
@@ -536,7 +541,7 @@ func TestGenerationInMajorUnion(t *testing.T) {
 // produce the candidate spellings, which is what makes the two spellings one query
 // rather than two implementations that must be kept in agreement.
 func TestApplyVersionFlag(t *testing.T) {
-	corpus := loadSeriesCorpus[seriesComposeInput, seriesComposeExpected](t, seriesVersionComposeCorpusJSON, 8)
+	corpus := loadSeriesCorpus[seriesComposeInput, seriesComposeExpected](t, seriesVersionComposeCorpusJSON, 10)
 
 	sawBothGrammars, sawCanonicalOnly, sawRejection := false, false, false
 	for _, c := range corpus.Cases {
