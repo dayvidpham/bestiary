@@ -211,6 +211,10 @@ func modelToYAML(m ModelInfo, indent string) string {
 	writeYAMLFloat64Ptr(&sb, indent, "CostCacheWritePerMTok", m.CostCacheWritePerMTok)
 	writeYAMLString(&sb, indent, "ReleaseDate", m.ReleaseDate)
 	writeYAMLString(&sb, indent, "Knowledge", m.Knowledge)
+	// Region is the per-instance serving jurisdiction (AWS Bedrock cross-region
+	// inference profile); it renders as its lowercase token ("unspecified" for the
+	// RegionNone zero value, never blank). Added in v0.2.7.
+	writeYAMLString(&sb, indent, "Region", m.Region.String())
 	writeYAMLString(&sb, indent, "LastSynced", m.LastSynced)
 	writeYAMLModalities(&sb, indent, m.Modalities)
 	return sb.String()

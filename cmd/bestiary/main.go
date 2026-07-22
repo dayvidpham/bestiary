@@ -762,7 +762,11 @@ func runEntities(format bestiary.OutputFormat, dbPath string) error {
 	ents := overlayEntities(store)
 	sort.Slice(ents, func(i, j int) bool { return ents[i].Ref.String() < ents[j].Ref.String() })
 	if format == bestiary.FormatJSON {
-		return writeJSON(os.Stdout, ents)
+		out := make([]entityJSON, len(ents))
+		for i, e := range ents {
+			out[i] = withNomina(e)
+		}
+		return writeJSON(os.Stdout, out)
 	}
 	writeEntitiesTable(os.Stdout, ents)
 	return nil
@@ -1033,10 +1037,27 @@ func runShowEntity(arg string, format bestiary.OutputFormat, quantFlag, dbPath s
 		ent.Instances = filterInstancesByQuant(ent.Instances, quant)
 	}
 	if format == bestiary.FormatJSON {
-		return writeJSON(os.Stdout, ent)
+		return writeJSON(os.Stdout, withNomina(ent))
 	}
 	writeEntityView(os.Stdout, ent)
 	return nil
+}
+
+// entityJSON augments a marshaled Entity with its derived Nomina projection so the
+// read-only naming layer (canonical Preferred nomen, provider-ID Admitted nomina, and
+// any curated claim-attributed alias) surfaces in the `show --by-entity` / `entities`
+// JSON output. Nomina is a method on Entity, not a struct field, so it would not
+// appear in a plain marshal; embedding Entity promotes its fields and this adds the
+// Nomina array alongside them (matching $defs.Entity.Nomina).
+type entityJSON struct {
+	bestiary.Entity
+	Nomina []bestiary.Nomen
+}
+
+// withNomina wraps e for JSON output, attaching e.Nomina() (the sorted, derived
+// naming projection). It is the single seam the CLI JSON entity paths route through.
+func withNomina(e bestiary.Entity) entityJSON {
+	return entityJSON{Entity: e, Nomina: e.Nomina()}
 }
 
 // parseQuantFilter interprets the --quant flag value. An empty string means "no
@@ -1351,8 +1372,13 @@ func writeEntityView(w io.Writer, e bestiary.Entity) {
 	for i, h := range e.Hosts {
 		hosts[i] = fmtHost(h)
 	}
+	regions := make([]string, len(e.Regions))
+	for i, r := range e.Regions {
+		regions[i] = r.String()
+	}
 	fmt.Fprintf(w, "Providers (%d): %s\n", len(e.Providers), orDash(strings.Join(providers, ", ")))
 	fmt.Fprintf(w, "Hosts (%d): %s\n", len(e.Hosts), orDash(strings.Join(hosts, ", ")))
+	fmt.Fprintf(w, "Regions (%d): %s\n", len(e.Regions), orDash(strings.Join(regions, ", ")))
 
 	fmt.Fprintf(w, "Price input  /MTok: %s\n", fmtRangePtr(e.PriceInputRange))
 	fmt.Fprintf(w, "Price output /MTok: %s\n", fmtRangePtr(e.PriceOutputRange))
@@ -1626,6 +1652,14 @@ func runSyncClient(client *bestiary.Client, provider string, format bestiary.Out
 	// Attest every distinct synced entity to models.dev.
 	if err := store.UpsertEntitySources(ctx, entitySourcesForModels(fetched)); err != nil {
 		return fmt.Errorf("sync: persist entity attestations: %w", err)
+	}
+
+	// Persist the naming layer (v7): mint the provider-ID + canonical nomina from the
+	// fetched models plus the curated alias claims, through the same shared joint the
+	// registry uses, and upsert them. The nomina source_id FK is satisfied by the
+	// models.dev DataSource written above.
+	if err := store.UpsertNomina(ctx, bestiary.MintNominaFromModels(fetched)); err != nil {
+		return fmt.Errorf("sync: persist nomina: %w", err)
 	}
 
 	return bestiary.FormatModels(os.Stdout, fetched, format)

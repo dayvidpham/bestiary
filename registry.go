@@ -62,6 +62,14 @@ type entityAgg struct {
 	hosts     []Host
 	hostSeen  map[Host]struct{}
 
+	// regions accumulates the de-duplicated per-instance Region values in first-seen
+	// order; the SORTED, deterministic Entity.Regions output is produced by an explicit
+	// sort in loadEntityIndex (the aggregate is sorted by ascending Region value, NOT
+	// first-seen — mirroring the Sources determinism discipline, not the Providers/Hosts
+	// first-seen order).
+	regions    []Region
+	regionSeen map[Region]struct{}
+
 	lineage []LineageEdge
 	linSeen map[string]struct{}
 
@@ -112,11 +120,12 @@ func loadEntityIndex() {
 		a := aggs[key]
 		if a == nil {
 			a = &entityAgg{
-				ref:      ref,
-				provSeen: make(map[Provider]struct{}),
-				hostSeen: make(map[Host]struct{}),
-				linSeen:  make(map[string]struct{}),
-				srcSeen:  make(map[DataSourceID]struct{}),
+				ref:        ref,
+				provSeen:   make(map[Provider]struct{}),
+				hostSeen:   make(map[Host]struct{}),
+				regionSeen: make(map[Region]struct{}),
+				linSeen:    make(map[string]struct{}),
+				srcSeen:    make(map[DataSourceID]struct{}),
 			}
 			aggs[key] = a
 			order = append(order, key)
@@ -126,6 +135,8 @@ func loadEntityIndex() {
 			ID:                m.ID,
 			Provider:          m.Provider,
 			Host:              m.Host,
+			Region:            m.Region,
+			RegionRaw:         m.RegionRaw,
 			CostInputPerMTok:  m.CostInputPerMTok,
 			CostOutputPerMTok: m.CostOutputPerMTok,
 			ContextWindow:     m.ContextWindow,
@@ -146,6 +157,10 @@ func loadEntityIndex() {
 		if _, dup := a.hostSeen[m.Host]; !dup {
 			a.hostSeen[m.Host] = struct{}{}
 			a.hosts = append(a.hosts, m.Host)
+		}
+		if _, dup := a.regionSeen[m.Region]; !dup {
+			a.regionSeen[m.Region] = struct{}{}
+			a.regions = append(a.regions, m.Region)
 		}
 
 		// Attestation rule (BCNF entity↔source join). Every static row originates
@@ -266,6 +281,7 @@ func loadEntityIndex() {
 			Lineage:        a.lineage,
 			Providers:      a.providers,
 			Hosts:          a.hosts,
+			Regions:        sortedRegions(a.regions),
 			ContextRange:   [2]int{a.ctxMin, a.ctxMax},
 			MaxOutputRange: [2]int{a.moMin, a.moMax},
 			Capabilities:   a.caps,
@@ -435,6 +451,22 @@ func sortedSources(in []DataSourceID) []DataSourceID {
 		return nil
 	}
 	out := append([]DataSourceID(nil), in...)
+	sort.Slice(out, func(i, j int) bool { return out[i] < out[j] })
+	return out
+}
+
+// sortedRegions returns a fresh slice holding the elements of in sorted ascending
+// by Region enum value. Like sortedSources it is the deterministic projection-sort
+// seam: the registry feeds it the first-seen per-instance Region order, and the
+// explicit sort makes Entity.Regions output independent of instance order. Sorting
+// by the int enum value (not the String token) is the natural total order for a
+// closed int enum and keeps the aggregate stable across bakes. An empty input
+// returns nil.
+func sortedRegions(in []Region) []Region {
+	if len(in) == 0 {
+		return nil
+	}
+	out := append([]Region(nil), in...)
 	sort.Slice(out, func(i, j int) bool { return out[i] < out[j] })
 	return out
 }
