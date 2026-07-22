@@ -254,9 +254,10 @@ func TestModelRef_String(t *testing.T) {
 	}
 }
 
-// TestModelRef_Designations_AllAdmitted verifies that every Designation
-// returned by Designations() has Rating == AcceptabilityAdmitted.
-func TestModelRef_Designations_AllAdmitted(t *testing.T) {
+// TestModelRef_Designations_RatingByScheme verifies the ACTIVE acceptability split:
+// the canonical designation is AcceptabilityPreferred and every other scheme (raw /
+// HuggingFace / PURL) is AcceptabilityAdmitted.
+func TestModelRef_Designations_RatingByScheme(t *testing.T) {
 	ref := bestiary.ModelRef{
 		ID:       "claude-opus-4-20250514",
 		Provider: bestiary.ProviderAnthropic,
@@ -270,9 +271,13 @@ func TestModelRef_Designations_AllAdmitted(t *testing.T) {
 		t.Fatal("Designations() returned empty slice")
 	}
 	for _, d := range designations {
-		if d.Rating != bestiary.AcceptabilityAdmitted {
-			t.Errorf("designation %q has Rating=%v, want AcceptabilityAdmitted",
-				d.Value, d.Rating)
+		want := bestiary.AcceptabilityAdmitted
+		if d.Scheme == bestiary.SchemeCanonical {
+			want = bestiary.AcceptabilityPreferred
+		}
+		if d.Rating != want {
+			t.Errorf("designation %q (scheme %v) has Rating=%v, want %v",
+				d.Value, d.Scheme, d.Rating, want)
 		}
 	}
 }
@@ -306,15 +311,22 @@ func TestModelRef_Designations_CoversSchemes(t *testing.T) {
 	}
 }
 
-// TestModelRef_Designations_StaticModels verifies the per-model-info invariant:
-// every Designation from a static model's Ref().Designations() has Rating == Admitted.
+// TestModelRef_Designations_StaticModels verifies the per-model-info acceptability
+// invariant now that acceptability is ACTIVE: every static model's canonical
+// designation is AcceptabilityPreferred and every other scheme (raw / HuggingFace /
+// PURL) is AcceptabilityAdmitted. No designation is ever AcceptabilityDeprecated this
+// epoch.
 func TestModelRef_Designations_StaticModels(t *testing.T) {
 	models := bestiary.StaticModels()
 	for _, m := range models {
 		for _, d := range m.Ref().Designations() {
-			if d.Rating != bestiary.AcceptabilityAdmitted {
-				t.Errorf("model %q designation %q: Rating=%v, want AcceptabilityAdmitted",
-					m.ID, d.Value, d.Rating)
+			want := bestiary.AcceptabilityAdmitted
+			if d.Scheme == bestiary.SchemeCanonical {
+				want = bestiary.AcceptabilityPreferred
+			}
+			if d.Rating != want {
+				t.Errorf("model %q designation %q (scheme %v): Rating=%v, want %v",
+					m.ID, d.Value, d.Scheme, d.Rating, want)
 			}
 		}
 	}

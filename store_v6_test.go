@@ -148,8 +148,8 @@ func TestStoreMigrate_V5toV6(t *testing.T) {
 	if version != currentSchemaVersion {
 		t.Errorf("post-migration version = %d, want %d", version, currentSchemaVersion)
 	}
-	if currentSchemaVersion != 6 {
-		t.Errorf("currentSchemaVersion = %d, want 6", currentSchemaVersion)
+	if currentSchemaVersion != 7 {
+		t.Errorf("currentSchemaVersion = %d, want 7", currentSchemaVersion)
 	}
 
 	assertV6Tables(t, store.conn)

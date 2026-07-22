@@ -87,9 +87,11 @@ func TestStoreV6_SelfHealsMissingEntityMetadataRawFamily(t *testing.T) {
 	}
 	defer store.Close()
 
-	// schema_meta must remain 6 (self-heal is not a version bump).
-	if v, _ := getSchemaVersion(store.conn); v != 6 {
-		t.Errorf("schema version = %d, want 6 (self-heal must not change it)", v)
+	// Opening an intermediate-v6 cache now also applies the additive v6→v7 migration,
+	// so schema_meta advances to currentSchemaVersion; the entity_metadata self-heal
+	// still backfills raw_family alongside it.
+	if v, _ := getSchemaVersion(store.conn); v != currentSchemaVersion {
+		t.Errorf("schema version = %d, want %d (v6 cache migrates to current on open)", v, currentSchemaVersion)
 	}
 	// Column backfilled.
 	postCols, err := tableColumnSet(store.conn, "entity_metadata")
