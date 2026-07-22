@@ -24,6 +24,26 @@ var internalIsBareIdentifierCorpusJSON []byte
 //go:embed testdata/parse/is_yymm_date_token_corpus.json
 var internalIsYYMMDateTokenCorpusJSON []byte
 
+//go:embed testdata/parse/p_notation_version_corpus.json
+var internalPNotationVersionCorpusJSON []byte
+
+// pNotationInput is one row of the p-notation corpus. It carries EITHER a bare Token
+// (a unit probe of decodePNotationVersion) OR an Id + Provider (a catalog probe of
+// the entity a real registry row resolves to) — the two kinds share a corpus because
+// they pin one rule at its two levels, and the runner dispatches on which field is set.
+type pNotationInput struct {
+	Token    string `json:"token"`
+	ID       string `json:"id"`
+	Provider string `json:"provider"`
+}
+
+// pNotationExpected is the decoded version for a unit row, or the entity key for a
+// catalog row. An empty Decoded on a must-fail unit row means "must not decode".
+type pNotationExpected struct {
+	Decoded   string `json:"decoded"`
+	EntityKey string `json:"entity_key"`
+}
+
 // loadInternalCorpus loads a corpus for an internal-package test under the exact
 // case-count control (wantN, the pre-migration inline row count) and the non-vacuity
 // guard.

@@ -1,0 +1,205 @@
+{
+  "_comment": "The 'p'-as-dot version decode. Two kinds of row: the UNIT rows probe decodePNotationVersion directly (token -> decoded form, or must-fail for a token that must NOT decode), and the CATALOG rows pin every digit-p-digit model id in the committed registry to the entity key it resolves to. The catalog set is exactly 14 ids, all from fireworks-ai and kimi-for-coding; a census sweep asserts that confinement separately. See TESTING.md.",
+  "cases": [
+    {
+      "name": "unit_decodes_glm_5p1",
+      "input": { "token": "5p1" },
+      "expected": { "decoded": "5.1" },
+      "classification": "must-pass",
+      "provenance": { "source": "manual", "ref": "accounts/fireworks/models/glm-5p1 — fireworks publishes GLM 5.1 with a p where the dot belongs; their own display name spells the dot" },
+      "mutation": { "description": "the canonical p-notation shape: digits, p, digits" }
+    },
+    {
+      "name": "unit_decodes_glm_5p2",
+      "input": { "token": "5p2" },
+      "expected": { "decoded": "5.2" },
+      "classification": "must-pass",
+      "provenance": { "source": "manual", "ref": "accounts/fireworks/models/glm-5p2 — the second GLM 5.x spelling" },
+      "mutation": { "description": "a different minor digit, so the decode is not pinned to one value" }
+    },
+    {
+      "name": "unit_decodes_series_minor",
+      "input": { "token": "2p6" },
+      "expected": { "decoded": "2.6" },
+      "classification": "must-pass",
+      "provenance": { "source": "manual", "ref": "the version part of kimi-k2p6 — the shape parseSeriesNumber has always decoded, now sharing one definition with the ordinary version path" },
+      "mutation": { "description": "the token the letter-prefix series split feeds in, proving both callers agree" }
+    },
+    {
+      "name": "unit_decodes_multi_digit_parts",
+      "input": { "token": "12p10" },
+      "expected": { "decoded": "12.10" },
+      "classification": "must-pass",
+      "provenance": { "source": "boundary", "ref": "neither side of the separator is restricted to a single digit" },
+      "mutation": { "description": "both parts are multi-digit" }
+    },
+    {
+      "name": "unit_rejects_letter_version",
+      "input": { "token": "4o" },
+      "expected": { "decoded": "" },
+      "classification": "must-fail",
+      "provenance": { "source": "manual", "ref": "gpt-4o — a genuine alphanumeric version that must keep reaching the existing path unchanged" },
+      "mutation": { "description": "the separator is a letter other than p, with no trailing digits" }
+    },
+    {
+      "name": "unit_rejects_param_size_token",
+      "input": { "token": "120b" },
+      "expected": { "decoded": "" },
+      "classification": "must-fail",
+      "provenance": { "source": "manual", "ref": "gpt-oss-120b — a parameter size, and one published by fireworks-ai itself, so the decode must not reach it" },
+      "mutation": { "description": "a unit letter follows the digits instead of a digit-p-digit shape" }
+    },
+    {
+      "name": "unit_rejects_literal_p_before_letters",
+      "input": { "token": "3px" },
+      "expected": { "decoded": "" },
+      "classification": "must-fail",
+      "provenance": { "source": "boundary", "ref": "the synthetic literal-p hazard: no such token exists in the catalog today, and if one appears it must NOT be read as a decimal point" },
+      "mutation": { "description": "the p is followed by a letter rather than a digit, so the mandatory trailing digits are absent" }
+    },
+    {
+      "name": "unit_rejects_leading_p",
+      "input": { "token": "p1" },
+      "expected": { "decoded": "" },
+      "classification": "must-fail",
+      "provenance": { "source": "boundary", "ref": "digits are required on BOTH sides; this is the half that guards the leading side" },
+      "mutation": { "description": "the leading digits are removed" }
+    },
+    {
+      "name": "unit_rejects_trailing_p",
+      "input": { "token": "5p" },
+      "expected": { "decoded": "" },
+      "classification": "must-fail",
+      "provenance": { "source": "boundary", "ref": "the other half of the both-sides requirement" },
+      "mutation": { "description": "the trailing digits are removed" }
+    },
+    {
+      "name": "unit_rejects_embedded_shape_with_extra_text",
+      "input": { "token": "v5p1" },
+      "expected": { "decoded": "" },
+      "classification": "must-fail",
+      "provenance": { "source": "boundary", "ref": "the match is anchored to the whole token, so a decorated token is not silently rewritten" },
+      "mutation": { "description": "a version-marker letter is prepended, breaking the whole-token anchor" }
+    },
+    {
+      "name": "unit_rejects_dotted_version",
+      "input": { "token": "5.1" },
+      "expected": { "decoded": "" },
+      "classification": "must-fail",
+      "provenance": { "source": "boundary", "ref": "an already-dotted version is handled by the ordinary path and must not round-trip through the decoder" },
+      "mutation": { "description": "the p is replaced by the dot it decodes to, which this function must not claim" }
+    },
+    {
+      "name": "catalog_glm_5p1_merges_into_the_real_line",
+      "input": { "id": "accounts/fireworks/models/glm-5p1", "provider": "fireworks-ai" },
+      "expected": { "entity_key": "glm@5.1" },
+      "classification": "must-pass",
+      "provenance": { "source": "bug", "ref": "before the decode this id minted a phantom glm@5p1 entity stranded beside the 50-instance real glm@5.1; the user ruled it must resolve to glm@5.1 and join the glm-5 union" },
+      "mutation": { "description": "the p-notation id must land in the dotted entity rather than a private one" }
+    },
+    {
+      "name": "catalog_glm_5p1_fast_router",
+      "input": { "id": "accounts/fireworks/routers/glm-5p1-fast", "provider": "fireworks-ai" },
+      "expected": { "entity_key": "glm@5.1" },
+      "classification": "must-pass",
+      "provenance": { "source": "bug", "ref": "the router sibling of glm-5p1; fast is an attribute-class modifier so it does not split the entity" },
+      "mutation": { "description": "a serving-tier suffix follows the p-notation version" }
+    },
+    {
+      "name": "catalog_glm_5p2_merges_into_the_real_line",
+      "input": { "id": "accounts/fireworks/models/glm-5p2", "provider": "fireworks-ai" },
+      "expected": { "entity_key": "glm@5.2" },
+      "classification": "must-pass",
+      "provenance": { "source": "bug", "ref": "the second phantom, stranded beside the 65-instance real glm@5.2" },
+      "mutation": { "description": "the second p-notation glm id must land in its dotted entity" }
+    },
+    {
+      "name": "catalog_glm_5p2_fast_router",
+      "input": { "id": "accounts/fireworks/routers/glm-5p2-fast", "provider": "fireworks-ai" },
+      "expected": { "entity_key": "glm@5.2" },
+      "classification": "must-pass",
+      "provenance": { "source": "bug", "ref": "the router sibling of glm-5p2" },
+      "mutation": { "description": "a serving-tier suffix follows the second p-notation version" }
+    },
+    {
+      "name": "catalog_kimi_k2p6_already_correct",
+      "input": { "id": "accounts/fireworks/models/kimi-k2p6", "provider": "fireworks-ai" },
+      "expected": { "entity_key": "kimi/k@2.6" },
+      "classification": "must-pass",
+      "provenance": { "source": "manual", "ref": "kimi carries a series_letter, so the letter-prefix split already decoded this p BEFORE the general rule landed; pinned so the generalization is proven not to have disturbed it" },
+      "mutation": { "description": "a p-notation id on a series-letter family, which must resolve identically before and after the change" }
+    },
+    {
+      "name": "catalog_kimi_k2p6_fast_router",
+      "input": { "id": "accounts/fireworks/routers/kimi-k2p6-fast", "provider": "fireworks-ai" },
+      "expected": { "entity_key": "kimi/k@2.6" },
+      "classification": "must-pass",
+      "provenance": { "source": "manual", "ref": "router sibling; fast is attribute-class and does not split the entity" },
+      "mutation": { "description": "a serving-tier suffix on a series-letter p-notation id" }
+    },
+    {
+      "name": "catalog_kimi_k2p6_turbo_router",
+      "input": { "id": "accounts/fireworks/routers/kimi-k2p6-turbo", "provider": "fireworks-ai" },
+      "expected": { "entity_key": "kimi/k@2.6" },
+      "classification": "must-pass",
+      "provenance": { "source": "manual", "ref": "turbo is a curated attribute-class demotion for kimi, so it does not split the entity either" },
+      "mutation": { "description": "a demoted turbo tier on a p-notation id" }
+    },
+    {
+      "name": "catalog_kimi_k2p7_code",
+      "input": { "id": "accounts/fireworks/models/kimi-k2p7-code", "provider": "fireworks-ai" },
+      "expected": { "entity_key": "kimi/k@2.7{code}" },
+      "classification": "must-pass",
+      "provenance": { "source": "manual", "ref": "code is an identity-class modifier, so unlike fast/turbo it IS part of the key" },
+      "mutation": { "description": "an identity-class modifier follows the p-notation version" }
+    },
+    {
+      "name": "catalog_kimi_k2p7_code_fast_router",
+      "input": { "id": "accounts/fireworks/routers/kimi-k2p7-code-fast", "provider": "fireworks-ai" },
+      "expected": { "entity_key": "kimi/k@2.7{code}" },
+      "classification": "must-pass",
+      "provenance": { "source": "manual", "ref": "both modifier classes on one id: code stays in the key, fast does not" },
+      "mutation": { "description": "an identity-class and an attribute-class modifier together" }
+    },
+    {
+      "name": "catalog_minimax_m2p7",
+      "input": { "id": "accounts/fireworks/models/minimax-m2p7", "provider": "fireworks-ai" },
+      "expected": { "entity_key": "minimax/m@2.7" },
+      "classification": "must-pass",
+      "provenance": { "source": "manual", "ref": "minimax carries series_letter m, so this too was already decoded by the letter-prefix split" },
+      "mutation": { "description": "a p-notation id on the second series-letter family" }
+    },
+    {
+      "name": "catalog_kimi_for_coding_k2p5",
+      "input": { "id": "k2p5", "provider": "kimi-for-coding" },
+      "expected": { "entity_key": "kimi/k@2.5" },
+      "classification": "must-pass",
+      "provenance": { "source": "manual", "ref": "the second provider publishing p-notation; the id is the bare series token with no family prefix and still resolves" },
+      "mutation": { "description": "a bare series token carrying p-notation, with no family prefix in the id" }
+    },
+    {
+      "name": "catalog_kimi_for_coding_k2p6",
+      "input": { "id": "k2p6", "provider": "kimi-for-coding" },
+      "expected": { "entity_key": "kimi/k@2.6" },
+      "classification": "must-pass",
+      "provenance": { "source": "manual", "ref": "the k2p6 bare token joins the same entity the fireworks spelling does — cross-provider convergence on one key" },
+      "mutation": { "description": "a second bare series token, converging with a differently-spelled id from another provider" }
+    },
+    {
+      "name": "catalog_k2p7_known_residual_defect",
+      "input": { "id": "k2p7", "provider": "kimi-for-coding" },
+      "expected": { "entity_key": "kimi-k2" },
+      "classification": "must-pass",
+      "provenance": { "source": "bug", "ref": "PINS A KNOWN DEFECT, not a desired outcome: k2p7 lands in the compound family kimi-k2 with an EMPTY version, unlike its k2p5/k2p6 siblings. This is a family-decomposition defect (a bare series token whose sibling rows recover and this one does not), NOT a p-decode failure — the decode is never reached. Pinned so the defect is visible and its future fix is a conscious census move" },
+      "mutation": { "description": "the bare series token that does NOT recover its family, in contrast with k2p5/k2p6 which do" }
+    },
+    {
+      "name": "catalog_qwen3p7_plus_known_residual_defect",
+      "input": { "id": "accounts/fireworks/models/qwen3p7-plus", "provider": "fireworks-ai" },
+      "expected": { "entity_key": "qwen/plus" },
+      "classification": "must-pass",
+      "provenance": { "source": "bug", "ref": "PINS A KNOWN DEFECT: the version is glued into the family token (qwen3p7), so the family prefix check never matches and the version is dropped before the decode can run. A family-decomposition defect, not a p-decode failure; pinned so it is visible and its fix is a conscious census move" },
+      "mutation": { "description": "the p-notation version is glued to the family token rather than being a separate version token" }
+    }
+  ]
+}

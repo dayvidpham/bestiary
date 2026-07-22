@@ -1118,6 +1118,29 @@ type exceptionKey struct {
 // NOT in this ledger, so new regressions are never silently absorbed. ADDING an entry
 // is a reviewed decision (committed in the diff artifact).
 var justifiedExceptions = map[exceptionKey]string{
+	// ── "p"-as-dot version decode ──────────────────────────────────
+	// The mechanical classifier sees a populated Version change value without
+	// converging on another provider's spelling, which is category (c) by its rules.
+	// It is a FIX: fireworks publishes GLM 5.1/5.2 with a "p" where the dot belongs
+	// (their own display names spell the dot), and reading it verbatim minted phantom
+	// glm@5p1 / glm@5p2 entities stranded beside the 50- and 65-instance real ones.
+	// The decode is the SAME p-as-dot convention parseSeriesNumber has always applied
+	// inside the letter-prefix series split (kimi-k2p6 -> k@2.6); generalizing it to
+	// the ordinary version-token position is what reaches families with no series
+	// letter. Post-decode these rows join glm@5.1 / glm@5.2, so the change CONVERGES —
+	// the classifier simply cannot see it, because the target spelling comes from
+	// other providers' rows rather than from this id.
+	{
+		ID:     "accounts/fireworks/models/glm-5p1",
+		Before: `(family="glm",variant="",version="5p1",modifier="")`,
+		After:  `(family="glm",variant="",version="5.1",modifier="")`,
+	}: "USER-RATIFIED: p-as-dot decode; glm-5p1 is GLM 5.1 and now merges into the real glm@5.1 entity instead of minting a phantom glm@5p1.",
+	{
+		ID:     "accounts/fireworks/models/glm-5p2",
+		Before: `(family="glm",variant="",version="5p2",modifier="")`,
+		After:  `(family="glm",variant="",version="5.2",modifier="")`,
+	}: "USER-RATIFIED: p-as-dot decode; glm-5p2 is GLM 5.2 and now merges into the real glm@5.2 entity instead of minting a phantom glm@5p2.",
+
 	// The 2 earlier DORMANT keys
 	// (gemini-2.5-pro-preview-tts, qwen3.6-plus-free) were PRUNED — they no longer fire a
 	// live change record against the current snapshot, so they were dead ledger weight.

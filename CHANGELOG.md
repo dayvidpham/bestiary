@@ -22,7 +22,7 @@ for its **Go module tags** (`vX.Y.Z`).
   `NomenScheme` classifier (canonical / provider-id / huggingface / purl / alias)
   and ISO 1087 `AcceptabilityRating` statuses. Minted by one shared production
   function over the entity index plus the curated `parse/data/nomen_claims.json`
-  (3,775 nomina at release: 979 canonical Preferred, 2,791 provider-ID Admitted,
+  (3,773 nomina at release: 977 canonical Preferred, 2,791 provider-ID Admitted,
   4 huggingface, 1 curated
   alias claim). `Entity.Nomina()` and `NomenLookup()` (homonym-aware) are the
   read APIs; claim attribution keeps *who asserts* (`SourceURL`) distinct from
@@ -42,7 +42,7 @@ for its **Go module tags** (`vX.Y.Z`).
   `gemini-3.0`) and `Release{Series, Name}` is a named member of it (`scout`,
   `maverick`, `flash`) — version above variant. Both are COMPUTED from key components
   already on `EntityRef`, never stored and never fed back into keys: the hierarchy can
-  be re-shaped without re-keying anything. Read APIs: `SeriesAll()` (421 lines, sorted
+  be re-shaped without re-keying anything. Read APIs: `SeriesAll()` (419 lines, sorted
   by family then generation), `ReleasesOf(Series)`, `EntitiesOf(Release)`, plus
   `SeriesOf(EntityRef)`/`ReleaseOf(EntityRef)` for the entity → line direction; all
   orders are explicit sorts and all results are defensive copies. Two refinements keep
@@ -67,8 +67,9 @@ for its **Go module tags** (`vX.Y.Z`).
   still addresses individually. Membership is a strict string rule (a generation belongs
   to version `4` iff it IS `4` or begins `4.`) with no numeric normalization, so `4`
   never swallows `42`, `1` never reaches the mis-parsed `ling@1t` or the leading-zero
-  `gemini@001`, and `glm@5p1` stays out of the `glm-5` union — those spellings are
-  parse-level artifacts and repairing them belongs where the raw IDs are. Sub-1.0
+  `gemini@001`. GLM's `5p1`/`5p2` spellings are decoded at PARSE into real `5.1`/`5.2`
+  versions (see Fixed), so they join the `glm-5` union as ordinary dotted members —
+  there is no `p`-awareness in the taxonomy. Sub-1.0
   generations need no special case (`mistral-0` unions `0.1` and `0.3`), and where a
   family spells both a bare `N` and dotted siblings the union includes the bare line.
   The new `--version` flag is exactly equivalent to appending `-<value>` to the
@@ -125,7 +126,7 @@ for its **Go module tags** (`vX.Y.Z`).
   claimant `SourceURL` pointing at the Hub page, and all surface through
   `Entity.Nomina()` / `NomenLookup()`. This is the durable, **entity-level** external
   identifier: the Hub name holds regardless of which provider is serving the entity.
-  Minted census at release: 3,775 (979 canonical, 2,791 provider-ID, 4 huggingface, 1 alias).
+  Minted census at release: 3,773 (977 canonical, 2,791 provider-ID, 4 huggingface, 1 alias).
 
 ### Changed
 - **Designation layer activated**: `ModelRef.Designations()` now rates the
@@ -133,7 +134,7 @@ for its **Go module tags** (`vX.Y.Z`).
   prerequisite for truthful `skos:prefLabel`/`altLabel` export (GH#24 ask 3).
 - **Constants surface is now entity-level** (BREAKING). The ~5,650
   provider-flavored `Model__<Provider>__…` constants are replaced by one
-  provider-agnostic `Entity__*` constant per model entity (979), each valued by
+  provider-agnostic `Entity__*` constant per model entity (977), each valued by
   its canonical entity key (e.g.
   `Entity__Llama__Scout__Version_4__Size_17b_16e__Instruct = "llama/scout@4#17b-16e{instruct}"`).
   Names follow a word-sentinel grammar — `Entity__<Family>[__<Variant>][__Version_<v>][__Size_<s>][__<Mod>…]`,
@@ -186,6 +187,28 @@ for its **Go module tags** (`vX.Y.Z`).
   for entity-key lookups; use `LookupModel(id)` for raw-ID instance lookups.
 
 ### Fixed
+- **`p`-as-dot version decode** (`parse.go`). Some providers publish a version with a
+  `p` where the dot belongs, because their id namespace disallows the dot — their own
+  display names spell the dot. Reading it verbatim minted **phantom entities**:
+  `glm@5p1` and `glm@5p2` sat stranded beside the real 50- and 65-instance `glm@5.1`
+  and `glm@5.2`, so "the GLM 5 line" was silently incomplete. The decode is the SAME
+  convention `parseSeriesNumber` has always applied inside the letter-prefix series
+  split (`kimi-k2p6` → `k@2.6`, which is why the kimi/minimax spellings already
+  resolved); generalizing that one rule to the ordinary version-token position — rather
+  than adding a second, provider-gated mechanism for the same phenomenon — is what
+  reaches families with no series letter. The shape is narrow on purpose (digits, a
+  literal `p`, digits, whole-token), so `4o`, `120b` and any literal `p` not flanked by
+  digits are untouched. **Census: 979 → 977 entities** (the two phantoms merge into
+  their real siblings; two keys retired, none renamed), 421 → 419 series, 674 → 672
+  releases, 3,775 → 3,773 nomina. The `5p1`/`5p2` id spellings survive as Admitted
+  provider-ID nomina on the merged entities — decoding a spelling for *identity* never
+  erases it from the record — and `series glm-5` now returns 5.1 and 5.2 as ordinary
+  dotted members of the union, with no `p`-awareness anywhere in the taxonomy. Two
+  *residual* defects are pinned rather than fixed, because they are family-decomposition
+  bugs the decode never reaches: `k2p7` (kimi-for-coding) lands in the compound family
+  `kimi-k2` with an empty version, unlike its `k2p5`/`k2p6` siblings, and
+  `qwen3p7-plus` glues the version into the family token so it is dropped before the
+  decode runs.
 - **beta is ALWAYS a release stage, never an identity.** The two axes were already
   independent by construction (`DetectStageFromID` scans the ID *without* stripping), but one
   row asserted beta on both: vercel's `interfaze/interfaze-beta` arrives with an empty

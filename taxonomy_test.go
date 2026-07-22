@@ -90,8 +90,8 @@ func equalStrings(a, b []string) bool {
 // The rerank BARE line already existed (nvidia/rerank-qa-mistral-4b), so it is not new.
 func TestSeriesAll_CensusExact(t *testing.T) {
 	const (
-		wantSeries        = 421
-		wantVersionLines  = 217 // lines with a non-empty generation
+		wantSeries        = 419
+		wantVersionLines  = 215 // lines with a non-empty generation
 		wantBareLines     = 204 // lines whose entities carry no identity version
 		minExpectedSeries = 300 // the ratified floor
 	)
@@ -132,7 +132,7 @@ func TestSeriesAll_CensusExact(t *testing.T) {
 // making an entity a named member (as the maverick member-ize did) adds a Release
 // without adding a Series, since the line already existed.
 func TestReleases_CensusExact(t *testing.T) {
-	const wantReleases = 674
+	const wantReleases = 672
 
 	summed := 0
 	for _, s := range bestiary.SeriesAll() {

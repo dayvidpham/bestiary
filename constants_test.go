@@ -51,7 +51,13 @@ func TestEntityConstants_Unique(t *testing.T) {
 	// those families, so kimi/k@2{turbo}, kimi/k@2.6{turbo} and minimax/m@2.7{turbo} fold
 	// into their plain siblings. Three constants are REMOVED and none is renamed — the
 	// surviving siblings' keys never changed.
-	const wantEntityCount = 979
+	//
+	// 979 → 977 with the "p"-as-dot version decode: fireworks publishes GLM 5.1/5.2 with
+	// a "p" where the dot belongs, which minted phantom glm@5p1 / glm@5p2 entities beside
+	// the real ones. Decoding the spelling merges those two rows into the existing
+	// glm@5.1 and glm@5.2, so two constants are REMOVED and none is renamed — again the
+	// surviving siblings' keys never changed.
+	const wantEntityCount = 977
 	if len(keys) != wantEntityCount {
 		t.Errorf("EntityKeys() returned %d constants; expected exactly %d — "+
 			"re-run go generate ./... and update this census literal if the entity count changed intentionally",

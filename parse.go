@@ -935,6 +935,26 @@ func ExtractVersionFromID(id ModelID, rawFamily Family) string {
 		return remainder
 	}
 
+	// Path (b2): "p"-as-dot version token — "5p1" -> "5.1".
+	//
+	// This must run BEFORE path (c), which would otherwise accept "5p1" verbatim as
+	// an alphanumeric version (the shape that produced the phantom glm@5p1 and
+	// glm@5p2 entities) and strand them beside their real dotted siblings.
+	//
+	// The convention is NOT new here: parseSeriesNumber has always read "p" as a dot
+	// inside the letter-prefix series split (kimi-k2p6 -> k@2.6), which is why the
+	// kimi/minimax/mimo spellings already decompose correctly. Generalizing that one
+	// rule to the ordinary version-token position is what extends the same treatment
+	// to families with no series letter, rather than adding a SECOND, provider-gated
+	// mechanism for the same phenomenon.
+	//
+	// The shape is deliberately narrow — digits, a literal "p", digits, and nothing
+	// else — so a unit-suffixed size ("120b"), a letter version ("4o") and any
+	// literal-p token that is not flanked by digits on both sides are untouched.
+	if decoded, ok := decodePNotationVersion(remainder); ok {
+		return decoded
+	}
+
 	// Path (c): single alphanumeric-suffix token (e.g. "4o" from "gpt-4o").
 	// Must start with a digit and contain only alphanumeric characters (no hyphens).
 	// Must not be a pure-alpha word (which would be a variant, not a version).
@@ -986,6 +1006,27 @@ var reHyphenDigits = regexp.MustCompile(`^\d+(?:-\d+)*$`)
 // reBareVersion matches a bare "N.M" dot-version with optional additional segments.
 // e.g. "2.5", "10.3" — but NOT "4o", "4-5", "flash"
 var reBareVersion = regexp.MustCompile(`^\d+\.\d+$`)
+
+// reDotPVersion matches a "p"-as-dot version token: digits, a literal "p", digits,
+// and nothing else. "5p1", "2p6", "5p2" — but NOT "4o", "120b", "3px", "p1".
+//
+// Some providers publish a version with "p" where the dot belongs, because their id
+// namespace disallows the dot; their own display names spell it with the dot. The
+// shape is narrow on purpose: requiring digits on BOTH sides is what keeps a literal
+// "p" in a size or codename token from being read as a decimal point.
+var reDotPVersion = regexp.MustCompile(`^(\d+)p(\d+)$`)
+
+// decodePNotationVersion decodes a "p"-as-dot version token into its dotted form,
+// reporting whether the token had that shape. It is the SINGLE definition of the
+// convention, shared by the ordinary version-token path (ExtractVersionFromID) and
+// the letter-prefix series split (parseSeriesNumber), so the two can never drift
+// into disagreeing about what "5p1" means.
+func decodePNotationVersion(tok string) (string, bool) {
+	if m := reDotPVersion.FindStringSubmatch(tok); m != nil {
+		return m[1] + "." + m[2], true
+	}
+	return "", false
+}
 
 // reAlphaNumVersion matches a single token that starts with a digit and contains
 // only alphanumeric characters (letters and digits). This captures version
@@ -3730,8 +3771,14 @@ func parseSeriesNumber(rest string) (version string, hadSep bool, ok bool) {
 	if rest == "" {
 		return "", false, false
 	}
+	// An explicit "." or "p" separator. The "p" arm delegates to
+	// decodePNotationVersion so the convention has exactly one definition shared with
+	// the ordinary version-token path.
 	if m := reSeriesDotP.FindStringSubmatch(rest); m != nil {
 		return m[1] + "." + m[2], true, true
+	}
+	if decoded, ok := decodePNotationVersion(rest); ok {
+		return decoded, true, true
 	}
 	if isAllDigits(rest) {
 		if isDateShapedToken(rest) {
