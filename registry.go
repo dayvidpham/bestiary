@@ -510,6 +510,33 @@ func LookupModel(id ModelID) (ModelInfo, bool) {
 	return ModelInfo{}, false
 }
 
+// EntityByKey looks up a single entity by its canonical entity-key STRING — the value
+// carried by every generated Entity__* constant and returned by EntityKeys() (grammar:
+// family[/variant][@version][#size]{identity-mods}). It is the string-keyed sibling of
+// EntityByTuple: it decomposes the key with the internal parser (parseEntityKey, the exact
+// inverse of EntityRef.String()) and delegates, so the enumerate-then-lookup idiom works
+// end-to-end again:
+//
+//	for _, key := range EntityKeys() {
+//		e, ok := EntityByKey(key) // ok is always true for a constant's value
+//		...
+//	}
+//
+// The bool reports whether a matching entity exists; a malformed or unknown key returns
+// (Entity{}, false) with NO error — matching EntityByTuple's contract (a key is data, so
+// an absent match is a normal negative, not an exceptional condition). The returned Entity
+// is a defensive deep copy (see Entities).
+//
+// IMPORTANT: an entity key is NOT a raw ModelID. Do not pass an entity key to
+// LookupModel / LookupModelByProvider / Resolve — those accept provider-ID grammar (raw
+// catalog IDs), a different grammar entirely. Use EntityByKey or EntityByTuple for
+// entity-key lookups; use LookupModel(id) / LookupModelByProvider(provider, id) for
+// instance-level (provider-ID) lookups.
+func EntityByKey(key string) (Entity, bool) {
+	ref := parseEntityKey(key)
+	return EntityByTuple(ref.Family, ref.Variant, ref.Version, ref.ParamSize, ref.Modifier...)
+}
+
 // ModelsByProvider returns all static models from the given provider.
 func ModelsByProvider(p Provider) []ModelInfo {
 	var out []ModelInfo

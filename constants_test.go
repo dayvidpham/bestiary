@@ -77,6 +77,42 @@ func TestEntityConstants_RoundTrip(t *testing.T) {
 	}
 }
 
+// TestEntityConstants_EntityByKeyRoundTrip is the migration fence: EVERY Entity__* value
+// must round-trip through the exported string-keyed lookup EntityByKey — ok=true and the
+// returned Entity's Ref.String() equal to the constant's value. This proves the
+// enumerate-then-lookup idiom the CHANGELOG points migrating consumers at
+// (`for _, key := range EntityKeys() { e, _ := EntityByKey(key) }`) actually works for all
+// 975 constants, closing the gap where the values are canonical keys with no lookup entrypoint.
+func TestEntityConstants_EntityByKeyRoundTrip(t *testing.T) {
+	keys := bestiary.EntityKeys()
+	if len(keys) == 0 {
+		t.Skip("EntityKeys() returned empty; skipping — run go generate ./... first")
+	}
+	for _, k := range keys {
+		e, ok := bestiary.EntityByKey(k)
+		if !ok {
+			t.Errorf("EntityByKey(%q) = ok=false; every Entity__ constant value must resolve", k)
+			continue
+		}
+		if got := e.Ref.String(); got != k {
+			t.Errorf("EntityByKey(%q).Ref.String() = %q; want the same canonical key (round-trip)", k, got)
+		}
+	}
+
+	// Negative + composition: an unknown key returns ok=false (no panic), and EntityByKey's
+	// Ref composes into ProvidersOf.
+	if _, ok := bestiary.EntityByKey("definitely/not@a#real{key}"); ok {
+		t.Error("EntityByKey on an unknown key returned ok=true; want false")
+	}
+	scout, ok := bestiary.EntityByKey(bestiary.Entity__Llama__Scout__Version_4__Size_17b_16e__Instruct)
+	if !ok {
+		t.Fatal("EntityByKey did not resolve the scout constant")
+	}
+	if provs := bestiary.ProvidersOf(scout.Ref); len(provs) != 11 {
+		t.Errorf("ProvidersOf(EntityByKey(scout).Ref) = %d providers; want 11", len(provs))
+	}
+}
+
 // TestProvidersOf_ScoutCensus pins the ProvidersOf census for the scout entity and
 // exercises a generated Entity__ constant end-to-end (the BDD case: the constant
 // compiles, resolves to an entity, and ProvidersOf returns 11 distinct providers across

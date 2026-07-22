@@ -63,9 +63,17 @@ for its **Go module tags** (`vX.Y.Z`).
   | Old (removed) | New |
   |---|---|
   | `Model__<Provider>__…` (an entity served by one provider) | `Entity__<…>` (the entity) + `ProvidersOf(ref)` to list its providers |
-  | `bestiary.ModelIDs()` (all provider-flavored IDs) | `bestiary.EntityKeys()` (all canonical entity keys) |
+  | `bestiary.ModelIDs()` (all provider-flavored IDs) | `bestiary.EntityKeys()` (all canonical entity keys) + `EntityByKey(key)` — enumerate-then-lookup works again: `for _, key := range EntityKeys() { e, _ := EntityByKey(key); … }` |
   | constant → a specific provider's instance | `LookupModelByProvider(provider, id)` (or `LookupModel(id)`) for instance-level fields |
-  | constant → the entity's identity | `Entity__<…>` constant, or `EntityByTuple(family, variant, version, paramSize, mods…)` |
+  | constant → the entity's identity | `Entity__<…>` constant, then `EntityByKey(value)` — or `EntityByTuple(family, variant, version, paramSize, mods…)` from a decomposed tuple |
+
+  **Caveat — entity keys are NOT `ModelID`s.** `EntityKeys()`/`Entity__*` values are
+  canonical ENTITY keys (grammar `family[/variant][@version][#size]{mods}`, where `@` is
+  the identity VERSION), a different grammar from raw catalog `ModelID`s and from
+  `Resolve`'s `<provider>/<family>/<variant>@<date>` form (where `@` is a DATE). Do NOT
+  pass an entity key to `LookupModel` / `LookupModelByProvider` / `Resolve` — they take
+  provider-ID grammar and will silently miss. Use `EntityByKey(key)` (or `EntityByTuple`)
+  for entity-key lookups; use `LookupModel(id)` for raw-ID instance lookups.
 
 ### Fixed
 - **Empty-raw claude version recovery**: `claude-3.5-haiku` / `claude-3-5-haiku`
