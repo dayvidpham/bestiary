@@ -173,6 +173,15 @@ func (r ModelRef) String() string {
 // NomenSchemeCanonical nomen's AcceptabilityPreferred status (the Designations↔Nomen
 // consistency fence: shared schemes agree on rating).
 //
+// Redundant-modifier suppression (suppression.go) is deliberately OUT of this
+// projection's reach. Suppression is an ENTITY-level naming policy: it chooses which
+// spelling of an entity KEY is preferred. A Designation renders a ModelRef — a
+// per-instance form that carries date and attribute-class modifiers an entity key
+// never has — so applying an entity-key policy here would silently rewrite a different
+// grammar. The two stay consistent on the axis they share (the RATING: canonical is
+// Preferred in both), and a seeded entity's preferred entity-key VALUE is read from
+// Entity.PreferredName / PreferredNomenValue, never from here.
+//
 // The returned slice contains:
 //  1. A SchemeRaw designation using the original API model ID (Admitted).
 //  2. A SchemeCanonical designation, the canonical slash-separated form (Preferred).

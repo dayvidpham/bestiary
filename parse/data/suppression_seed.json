@@ -1,0 +1,5 @@
+{
+  "_comment": "Curated redundant-modifier suppression seed. An entry declares that an identity-class modifier is REDUNDANT for one entity because the capability it names is innate to that entity (e.g. a model that is always a reasoning model does not need a 'thinking' modifier to say so). Suppression is a NAMING-STATUS POLICY, never a key change: the entity key is untouched, the spelling WITH the modifier stays recorded as an ADMITTED nomen, and the PREFERRED nomen's value omits the modifier. Deleting an entry is a full reversal — the preferred value grows the modifier back. Each entry must cite a reason; source_url records WHO documents the innate capability (the lab page), distinct from which ingest we read the catalog from. THE SEED SHIPS EMPTY: every entry is user-confirmed curation, and each entry requires its own literal before/after fence row in testdata/entity/suppression_fence_corpus.json (exact-N parity is asserted, so an entry with no fence row fails the suite).",
+  "schema_version": 1,
+  "entries": []
+}

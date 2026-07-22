@@ -30,6 +30,11 @@ var entRefStringParamSizeGrammarCorpusJSON []byte
 //go:embed testdata/entity/derivation_kind_text_roundtrip_corpus.json
 var entDerivationKindTextRoundTripCorpusJSON []byte
 
+// ---- redundant-modifier suppression per-entry fence corpus -----------------
+
+//go:embed testdata/entity/suppression_fence_corpus.json
+var suppressionFenceCorpusJSON []byte
+
 // ---- llama-4 unified @4 entity membership corpus ---------------------------
 
 //go:embed testdata/entity/llama4_version_pins_corpus.json

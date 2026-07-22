@@ -149,18 +149,51 @@ type Nomen struct {
 // is deterministically sorted (lessNomen). The entity's own Sources drive the
 // per-nomen Source: a nomen's Source is the ingest that attests the entity
 // (DataSourceModelsDev for every registry entity).
+//
+// It reads the curated redundant-modifier suppression seed through the shared
+// mintEntityNominaWith seam so the production path and the fences exercise ONE
+// implementation of the policy.
 func mintEntityNomina(e Entity) []Nomen {
-	src := entitySourceForNomen(e)
-	out := make([]Nomen, 0, len(e.Instances)+1)
+	return mintEntityNominaWith(e, loadSuppressionSafe())
+}
 
-	// Canonical nomen: the entity key itself is the Preferred designation.
+// mintEntityNominaWith is the suppression-aware minting core: the single place the
+// redundant-modifier naming policy is applied to the canonical nomina. The table is a
+// parameter (dependency injection) rather than a package global read inline, so a
+// fence can drive the SAME production function over a synthetic seed — there is no
+// test-only mint path.
+//
+// The policy, in full:
+//   - The PREFERRED canonical nomen's value is PreferredNomenValue(e.Ref) — the key
+//     with every seed-suppressed modifier omitted. With no applicable entry this is
+//     byte-identically e.Ref.String().
+//   - When suppression applies, the KEY spelling is ALSO minted, as an ADMITTED
+//     canonical nomen: the fuller spelling is recorded, resolvable, never dropped.
+//   - ResolvesTo is e.Ref in both cases: the entity key is untouched.
+func mintEntityNominaWith(e Entity, suppression *suppressionTable) []Nomen {
+	src := entitySourceForNomen(e)
+	out := make([]Nomen, 0, len(e.Instances)+2)
+
+	// Canonical nomina: the preferred naming (key minus any redundant modifier) is the
+	// Preferred designation; when they differ, the key spelling stays Admitted.
+	key := e.Ref.String()
+	preferred := preferredNomenValueWith(e.Ref, suppression)
 	out = append(out, Nomen{
-		Value:      e.Ref.String(),
+		Value:      preferred,
 		Scheme:     NomenSchemeCanonical,
 		Status:     AcceptabilityPreferred,
 		ResolvesTo: e.Ref,
 		Source:     src,
 	})
+	if preferred != key {
+		out = append(out, Nomen{
+			Value:      key,
+			Scheme:     NomenSchemeCanonical,
+			Status:     AcceptabilityAdmitted,
+			ResolvesTo: e.Ref,
+			Source:     src,
+		})
+	}
 
 	// ProviderID nomina: every distinct instance ID spelling is an Admitted naming.
 	// Deduped by the raw ID within this entity (the same ID served by two providers
@@ -286,16 +319,29 @@ func MintNominaFromModels(models []ModelInfo) []Nomen {
 		g.ids = append(g.ids, id)
 	}
 
+	suppression := loadSuppressionSafe()
 	var out []Nomen
 	for _, key := range order {
 		g := groups[key]
+		// Same suppression policy as mintEntityNominaWith: preferred value omits any
+		// seed-suppressed modifier, the key spelling stays admitted when they differ.
+		preferred := preferredNomenValueWith(g.ref, suppression)
 		out = append(out, Nomen{
-			Value:      key,
+			Value:      preferred,
 			Scheme:     NomenSchemeCanonical,
 			Status:     AcceptabilityPreferred,
 			ResolvesTo: g.ref,
 			Source:     DataSourceModelsDev,
 		})
+		if preferred != key {
+			out = append(out, Nomen{
+				Value:      key,
+				Scheme:     NomenSchemeCanonical,
+				Status:     AcceptabilityAdmitted,
+				ResolvesTo: g.ref,
+				Source:     DataSourceModelsDev,
+			})
+		}
 		for _, id := range g.ids {
 			out = append(out, Nomen{
 				Value:      id,

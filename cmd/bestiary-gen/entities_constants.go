@@ -166,8 +166,16 @@ func buildEntityConstEntries(nomina []bestiary.Nomen, keySet map[string]bool) ([
 // the registry uses) AND folds in the metadata-only standalone entities the runtime
 // registry synthesizes (attachBakedMetadataToIndex), so the constant set matches
 // Entities() exactly. It then mints the nomina through the shared MintNomina path and
-// derives the constants from the Preferred nomina. A name collision is a LOUD error
+// derives the constants from the canonical nomina. A name collision is a LOUD error
 // (see buildEntityConstEntries).
+//
+// Interaction with redundant-modifier suppression (suppression.go): a seeded entity
+// mints TWO canonical nomina — the preferred (modifier-omitting) spelling and the key
+// spelling, admitted. buildEntityConstEntries keeps only the nomen whose VALUE is in
+// keySet, i.e. the KEY spelling, so a constant's value stays an entity key that
+// parseEntityKey round-trips and the registry resolves. Constant NAMES derive from
+// ResolvesTo, which suppression never touches. A seed entry therefore leaves this file
+// byte-identical — by construction, not by coincidence.
 func generateEntitiesConstantsSource(models []bestiary.ModelInfo, metadata []bestiary.EntityMetadata) ([]byte, error) {
 	entities := buildEntitySet(models)
 	keySet := make(map[string]bool, len(entities))
@@ -186,6 +194,13 @@ func generateEntitiesConstantsSource(models []bestiary.ModelInfo, metadata []bes
 		}
 		keySet[k] = true
 		entities = append(entities, s)
+	}
+	// The full entity set exists exactly here, so this is where the entity-relative
+	// suppression guards run: a seed entry naming an absent entity is dead curation,
+	// and two entities preferring one spelling would make the preferred naming
+	// ambiguous. Both abort the bake rather than degrade.
+	if err := bestiary.ValidateSuppression(entities); err != nil {
+		return nil, fmt.Errorf("validate suppression seed against the catalog: %w", err)
 	}
 	nomina := bestiary.MintNomina(entities)
 	entries, err := buildEntityConstEntries(nomina, keySet)

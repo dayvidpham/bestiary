@@ -712,6 +712,15 @@ func findEntityInSet(ents []bestiary.Entity, arg string) (bestiary.Entity, bool)
 	index := make(map[string]int, len(ents))
 	for i := range ents {
 		index[ents[i].Ref.String()] = i
+		// A redundant-modifier suppression entry makes the PREFERRED spelling shorter
+		// than the key, and the preferred spelling is what the entity views print — so
+		// it must resolve back here, or the CLI would render a name it cannot accept.
+		// With no seed entry this is the same string and the assignment is a no-op.
+		if preferred := ents[i].PreferredName(); preferred != ents[i].Ref.String() {
+			if _, taken := index[preferred]; !taken {
+				index[preferred] = i
+			}
+		}
 	}
 	// Tuple path: parse the identity tuple and build its key.
 	if fam, variant, version, paramSize, mods, err := parseEntityTuple(arg); err == nil {
@@ -764,7 +773,7 @@ func runProviders(arg string, format bestiary.OutputFormat, quantFlag, dbPath st
 	if format == bestiary.FormatJSON {
 		return writeJSON(os.Stdout, insts)
 	}
-	fmt.Fprintf(os.Stdout, "Entity: %s\n", ent.Ref.String())
+	fmt.Fprintf(os.Stdout, "Entity: %s\n", ent.PreferredName())
 	writeInstanceTable(os.Stdout, insts)
 	return nil
 }
@@ -812,7 +821,7 @@ func writeEntitiesTable(w io.Writer, ents []bestiary.Entity) {
 			metadata = "yes"
 			benchmarks = len(e.Metadata.Benchmarks)
 		}
-		fmt.Fprintf(w, "  %-48s %9d %8s %10d\n", e.Ref.String(), len(e.Providers), metadata, benchmarks)
+		fmt.Fprintf(w, "  %-48s %9d %8s %10d\n", e.PreferredName(), len(e.Providers), metadata, benchmarks)
 	}
 }
 
@@ -1017,7 +1026,7 @@ func runSources(arg string, format bestiary.OutputFormat, dbPath string) error {
 	if format == bestiary.FormatJSON {
 		return writeJSON(os.Stdout, rows)
 	}
-	fmt.Fprintf(os.Stdout, "Entity: %s\n", ent.Ref.String())
+	fmt.Fprintf(os.Stdout, "Entity: %s\n", ent.PreferredName())
 	writeSourceTable(os.Stdout, rows)
 	return nil
 }
@@ -1559,7 +1568,7 @@ func writeQuantRows(w io.Writer, rows []bestiary.QuantVRAM) {
 
 // writeEntityView prints the human-readable aggregate entity view.
 func writeEntityView(w io.Writer, e bestiary.Entity) {
-	fmt.Fprintf(w, "Entity: %s\n", e.Ref.String())
+	fmt.Fprintf(w, "Entity: %s\n", e.PreferredName())
 	fmt.Fprintf(w, "  Family:        %s\n", string(e.Ref.Family))
 	fmt.Fprintf(w, "  Variant:       %s\n", orDash(e.Ref.Variant))
 	fmt.Fprintf(w, "  Version:       %s\n", orDash(e.Ref.Version))
