@@ -3509,23 +3509,30 @@ func TestNamespaceSuffixTransparencyCapture(t *testing.T) {
 }
 
 // TestRegionCapture pins the Region-attribute extraction (DetectRegion): each
-// attested AWS Bedrock region prefix (us/eu/au/jp/global) surfaces its Region member
-// (au and jp map to RegionAPAC) with the id normalized to the plain model, and the
-// negative controls confirm Region is orthogonal to Host (a nano-gpt azure-* host id
-// stays RegionNone) and closed to non-region dotted segments (openai.gpt-5-codex
-// stays RegionNone, unchanged).
+// attested AWS Bedrock region prefix surfaces its DISTINCT jurisdiction member
+// (us->RegionUS, eu->RegionEU, au->RegionAU, jp->RegionJP, global->RegionGlobal —
+// au and jp are their OWN members, NOT folded into APAC). The reserved "apac." scope
+// and the RegionOther+raw fail-safe ("ca.") are pinned synthetically (0 attested).
+// The negative controls confirm Region is orthogonal to Host (a nano-gpt azure-* host
+// id stays RegionNone) and closed to non-region dotted segments (openai.gpt-5-codex
+// stays RegionNone).
 func TestRegionCapture(t *testing.T) {
-	corpus := loadParseCorpus[string, regionExpected](t, regionCaptureCorpusJSON, 10)
+	corpus := loadParseCorpus[string, regionExpected](t, regionCaptureCorpusJSON, 12)
 	requireInputCoverage(t, corpus, map[string]regionExpected{
-		"us.anthropic.claude-sonnet-4-5-20250929-v1:0":    {Region: "us", RegionRaw: "", Stripped: "claude-sonnet-4-5-20250929"},
-		"au.anthropic.claude-sonnet-4-5-20250929-v1:0":    {Region: "apac", RegionRaw: "", Stripped: "claude-sonnet-4-5-20250929"},
-		"jp.anthropic.claude-sonnet-4-5-20250929-v1:0":    {Region: "apac", RegionRaw: "", Stripped: "claude-sonnet-4-5-20250929"},
-		"global.anthropic.claude-haiku-4-5-20251001-v1:0": {Region: "global", RegionRaw: "", Stripped: "claude-haiku-4-5-20251001"},
-		"us.meta.llama4-scout-17b-instruct-v1:0":          {Region: "us", RegionRaw: "", Stripped: "llama4-scout-17b-instruct"},
+		"us.anthropic.claude-sonnet-4-5-20250929-v1:0": {Region: "us", RegionRaw: ""},
+		"eu.anthropic.claude-haiku-4-5-20251001-v1:0":  {Region: "eu", RegionRaw: ""},
+		// au and jp are DISTINCT jurisdictions, never APAC.
+		"au.anthropic.claude-sonnet-4-5-20250929-v1:0":    {Region: "au", RegionRaw: ""},
+		"jp.anthropic.claude-sonnet-4-5-20250929-v1:0":    {Region: "jp", RegionRaw: ""},
+		"global.anthropic.claude-haiku-4-5-20251001-v1:0": {Region: "global", RegionRaw: ""},
+		"us.meta.llama4-scout-17b-instruct-v1:0":          {Region: "us", RegionRaw: ""},
+		// reserved apac scope + RegionOther+raw fail-safe (synthetic).
+		"apac.anthropic.claude-sonnet-4-5-20250929-v1:0": {Region: "apac", RegionRaw: ""},
+		"ca.anthropic.claude-sonnet-4-5-20250929-v1:0":   {Region: "other", RegionRaw: "ca"},
 		// negative controls: host id and non-Bedrock dotted id both stay RegionNone.
-		"azure-gpt-4o":               {Region: "unspecified", RegionRaw: "", Stripped: "azure-gpt-4o"},
-		"openai.gpt-5-codex":         {Region: "unspecified", RegionRaw: "", Stripped: "openai.gpt-5-codex"},
-		"claude-sonnet-4-5-20250929": {Region: "unspecified", RegionRaw: "", Stripped: "claude-sonnet-4-5-20250929"},
+		"azure-gpt-4o":               {Region: "unspecified", RegionRaw: ""},
+		"openai.gpt-5-codex":         {Region: "unspecified", RegionRaw: ""},
+		"claude-sonnet-4-5-20250929": {Region: "unspecified", RegionRaw: ""},
 	})
 	runRegionCaptureCorpus(t, corpus)
 }

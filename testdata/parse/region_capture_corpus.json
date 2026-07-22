@@ -3,82 +3,98 @@
     {
       "name": "us.anthropic.* -> RegionUS (us)",
       "input": "us.anthropic.claude-sonnet-4-5-20250929-v1:0",
-      "expected": { "region": "us", "region_raw": "", "stripped": "claude-sonnet-4-5-20250929" },
+      "expected": { "region": "us", "region_raw": "" },
       "classification": "must-pass",
-      "provenance": { "source": "requirement", "ref": "DetectRegion strips the 'us.anthropic.' prefix + '-v1:0' tag, surfacing Region=us; the stripped id is the plain model id" },
-      "mutation": { "description": "us Bedrock prefix -> RegionUS, id normalized to plain model" }
+      "provenance": { "source": "requirement", "ref": "DetectRegion surfaces Region=us from the 'us.anthropic.' Bedrock prefix (ISO 3166-1 alpha-2 US)" },
+      "mutation": { "description": "us Bedrock prefix -> RegionUS" }
     },
     {
       "name": "eu.anthropic.* -> RegionEU (eu)",
       "input": "eu.anthropic.claude-haiku-4-5-20251001-v1:0",
-      "expected": { "region": "eu", "region_raw": "", "stripped": "claude-haiku-4-5-20251001" },
+      "expected": { "region": "eu", "region_raw": "" },
       "classification": "must-pass",
-      "provenance": { "source": "requirement", "ref": "DetectRegion surfaces Region=eu from the 'eu.anthropic.' prefix" },
+      "provenance": { "source": "requirement", "ref": "DetectRegion surfaces Region=eu from the 'eu.anthropic.' prefix (ISO exceptionally-reserved EU)" },
       "mutation": { "description": "eu Bedrock prefix -> RegionEU" }
     },
     {
-      "name": "au.anthropic.* -> RegionAPAC (au maps to apac)",
+      "name": "au.anthropic.* -> RegionAU (au is its OWN jurisdiction, not APAC)",
       "input": "au.anthropic.claude-sonnet-4-5-20250929-v1:0",
-      "expected": { "region": "apac", "region_raw": "", "stripped": "claude-sonnet-4-5-20250929" },
+      "expected": { "region": "au", "region_raw": "" },
       "classification": "must-pass",
-      "provenance": { "source": "requirement", "ref": "au (Australia) maps to RegionAPAC (String 'apac'); the Asia-Pacific family groups au and jp" },
-      "mutation": { "description": "au Bedrock prefix -> RegionAPAC" }
+      "provenance": { "source": "requirement", "ref": "au (Australia, Privacy Act) is a DISTINCT jurisdiction -> RegionAU, never folded into APAC (jurisdiction fidelity ruling)" },
+      "mutation": { "description": "au Bedrock prefix -> RegionAU (distinct member, not APAC)" }
     },
     {
-      "name": "jp.anthropic.* -> RegionAPAC (jp maps to apac)",
+      "name": "jp.anthropic.* -> RegionJP (jp is its OWN jurisdiction, not APAC)",
       "input": "jp.anthropic.claude-sonnet-4-5-20250929-v1:0",
-      "expected": { "region": "apac", "region_raw": "", "stripped": "claude-sonnet-4-5-20250929" },
+      "expected": { "region": "jp", "region_raw": "" },
       "classification": "must-pass",
-      "provenance": { "source": "requirement", "ref": "jp (Japan) maps to RegionAPAC (String 'apac'); the Asia-Pacific family groups au and jp" },
-      "mutation": { "description": "jp Bedrock prefix -> RegionAPAC" }
+      "provenance": { "source": "requirement", "ref": "jp (Japan, APPI) is a DISTINCT jurisdiction -> RegionJP, never folded into APAC (jurisdiction fidelity ruling)" },
+      "mutation": { "description": "jp Bedrock prefix -> RegionJP (distinct member, not APAC)" }
     },
     {
       "name": "global.anthropic.* -> RegionGlobal (global)",
       "input": "global.anthropic.claude-haiku-4-5-20251001-v1:0",
-      "expected": { "region": "global", "region_raw": "", "stripped": "claude-haiku-4-5-20251001" },
+      "expected": { "region": "global", "region_raw": "" },
       "classification": "must-pass",
-      "provenance": { "source": "requirement", "ref": "DetectRegion surfaces Region=global from the 'global.anthropic.' prefix" },
+      "provenance": { "source": "requirement", "ref": "DetectRegion surfaces Region=global from the 'global.anthropic.' prefix (provider-defined scope, outside ISO)" },
       "mutation": { "description": "global Bedrock prefix -> RegionGlobal" }
     },
     {
-      "name": "us.meta.* -> RegionUS (non-anthropic vendor)",
+      "name": "us.meta.* -> RegionUS (region detection is vendor-agnostic)",
       "input": "us.meta.llama4-scout-17b-instruct-v1:0",
-      "expected": { "region": "us", "region_raw": "", "stripped": "llama4-scout-17b-instruct" },
+      "expected": { "region": "us", "region_raw": "" },
       "classification": "must-pass",
-      "provenance": { "source": "requirement", "ref": "region detection is vendor-agnostic: 'us.meta.' surfaces Region=us and strips to the plain llama4 model id" },
-      "mutation": { "description": "us.meta Bedrock prefix -> RegionUS, vendor-agnostic strip" }
+      "provenance": { "source": "requirement", "ref": "region detection is vendor-agnostic: 'us.meta.' surfaces Region=us regardless of the vendor segment" },
+      "mutation": { "description": "us.meta Bedrock prefix -> RegionUS, vendor-agnostic" }
     },
     {
-      "name": "us.deepseek.* -> RegionUS (non-anthropic vendor)",
+      "name": "us.deepseek.* -> RegionUS (region detection is vendor-agnostic)",
       "input": "us.deepseek.r1-v1:0",
-      "expected": { "region": "us", "region_raw": "", "stripped": "r1" },
+      "expected": { "region": "us", "region_raw": "" },
       "classification": "must-pass",
-      "provenance": { "source": "requirement", "ref": "'us.deepseek.' surfaces Region=us and strips to the plain 'r1' model id" },
-      "mutation": { "description": "us.deepseek Bedrock prefix -> RegionUS, vendor-agnostic strip" }
+      "provenance": { "source": "requirement", "ref": "'us.deepseek.' surfaces Region=us, vendor-agnostic" },
+      "mutation": { "description": "us.deepseek Bedrock prefix -> RegionUS, vendor-agnostic" }
     },
     {
-      "name": "plain id -> RegionNone (unspecified), unchanged",
-      "input": "claude-sonnet-4-5-20250929",
-      "expected": { "region": "unspecified", "region_raw": "", "stripped": "claude-sonnet-4-5-20250929" },
+      "name": "apac.anthropic.* -> RegionAPAC (reserved scope, synthetic — 0 attested)",
+      "input": "apac.anthropic.claude-sonnet-4-5-20250929-v1:0",
+      "expected": { "region": "apac", "region_raw": "" },
       "classification": "must-pass",
-      "provenance": { "source": "boundary", "ref": "negative control: a plainly-served id has no Bedrock region prefix -> RegionNone (String 'unspecified'), id unchanged" },
-      "mutation": { "description": "no region prefix -> RegionNone, id returned unchanged" }
+      "provenance": { "source": "boundary", "ref": "RegionAPAC is RESERVED for Bedrock's documented 'apac.' cross-region scope; synthetic pin (0 attested instances today) so the reserved member is covered and cannot silently break" },
+      "mutation": { "description": "reserved 'apac.' prefix -> RegionAPAC (provider-defined scope, outside ISO)" }
+    },
+    {
+      "name": "ca.anthropic.* -> RegionOther + raw 'ca' (fail-safe, synthetic)",
+      "input": "ca.anthropic.claude-sonnet-4-5-20250929-v1:0",
+      "expected": { "region": "other", "region_raw": "ca" },
+      "classification": "must-pass",
+      "provenance": { "source": "boundary", "ref": "a gated-but-unnamed region token routes to the RegionOther fail-safe with the raw token carried on RegionRaw (never dropped); synthetic 'ca' pin exercises the carrier path" },
+      "mutation": { "description": "gated-but-unnamed region token -> RegionOther + RegionRaw='ca'" }
+    },
+    {
+      "name": "plain id -> RegionNone (unspecified)",
+      "input": "claude-sonnet-4-5-20250929",
+      "expected": { "region": "unspecified", "region_raw": "" },
+      "classification": "must-pass",
+      "provenance": { "source": "boundary", "ref": "negative control: a plainly-served id has no Bedrock region prefix -> RegionNone (String 'unspecified')" },
+      "mutation": { "description": "no region prefix -> RegionNone" }
     },
     {
       "name": "azure-gpt-4o -> RegionNone (host is orthogonal to region)",
       "input": "azure-gpt-4o",
-      "expected": { "region": "unspecified", "region_raw": "", "stripped": "azure-gpt-4o" },
+      "expected": { "region": "unspecified", "region_raw": "" },
       "classification": "must-pass",
-      "provenance": { "source": "boundary", "ref": "negative control: a nano-gpt azure-* host-routed id carries a HOST prefix, not a region prefix -> RegionNone; host and region are orthogonal axes" },
-      "mutation": { "description": "host prefix is not a region prefix -> RegionNone (orthogonality of Host and Region)" }
+      "provenance": { "source": "boundary", "ref": "negative control: a nano-gpt azure-* id carries a HOST prefix, not a region prefix -> RegionNone; Host and Region are orthogonal axes" },
+      "mutation": { "description": "host prefix is not a region prefix -> RegionNone (Host/Region orthogonality)" }
     },
     {
       "name": "openai.gpt-5-codex -> RegionNone (non-Bedrock dotted, unchanged)",
       "input": "openai.gpt-5-codex",
-      "expected": { "region": "unspecified", "region_raw": "", "stripped": "openai.gpt-5-codex" },
+      "expected": { "region": "unspecified", "region_raw": "" },
       "classification": "must-pass",
-      "provenance": { "source": "boundary", "ref": "negative control: 'openai.' is a vendor segment, NOT a region code, so the region gate rejects it -> RegionNone, id unchanged (no dotted-segment strip on non-Bedrock forms)" },
-      "mutation": { "description": "non-region leading dotted segment -> RegionNone, id unchanged (region-gate closed set)" }
+      "provenance": { "source": "boundary", "ref": "negative control: 'openai' is a vendor segment, NOT a region code, so the closed region gate rejects it -> RegionNone" },
+      "mutation": { "description": "non-region leading dotted segment -> RegionNone (region-gate closed set)" }
     }
   ]
 }

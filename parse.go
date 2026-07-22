@@ -2874,13 +2874,18 @@ func stripVendorNamespace(id string) string {
 }
 
 // bedrockRegionCodes is the CLOSED set of AWS Bedrock cross-region inference-profile
-// region prefixes. It gates stripBedrockProfile so that only a genuine
-// "<region>.<vendor>.<model>" Bedrock id is normalized — other-provider dotted
-// spellings whose leading segment is NOT a region (e.g. "openai.gpt-5-...",
-// "minimax.minimax-m2-...", "deepseek.v3-...") are left untouched, since there the
-// dotted segments carry model identity, not routing.
+// region prefixes recognized by stripBedrockProfile / DetectRegion. It gates the
+// normalization so that only a genuine "<region>.<vendor>.<model>" Bedrock id is
+// touched — other-provider dotted spellings whose leading segment is NOT a region
+// (e.g. "openai.gpt-5-...", "minimax.minimax-m2-...", "deepseek.v3-...") are left
+// untouched, since there the dotted segments carry model identity, not routing.
+//
+// The attested catalog prefixes are us/eu/au/jp/global; "apac" is the reserved
+// Bedrock scope (0 attested). "ca"/"sa" are recognized-but-unnamed here so a future
+// spelling routes to the RegionOther + RegionRaw fail-safe (regionFromToken) rather
+// than being silently ignored.
 var bedrockRegionCodes = map[string]struct{}{
-	"us": {}, "eu": {}, "ap": {}, "au": {}, "ca": {}, "sa": {}, "jp": {}, "global": {},
+	"us": {}, "eu": {}, "au": {}, "jp": {}, "apac": {}, "global": {}, "ca": {}, "sa": {},
 }
 
 // reBedrockTierTag matches a trailing Bedrock routing tier tag: a ":<digits>"
