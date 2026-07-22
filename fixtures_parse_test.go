@@ -487,7 +487,7 @@ func runFamilyVersionCorpus(t *testing.T, corpus testcase.Corpus[string, familyV
 	}
 }
 
-// ---- ReasonUnknownSuffixOverflow reachability capture (e9pi) ----------------
+// ---- unknown-suffix-overflow ParseFailure capture ---------------------------
 
 //go:embed testdata/parse/unknown_suffix_overflow_corpus.json
 var parseUnknownSuffixOverflowCorpusJSON []byte

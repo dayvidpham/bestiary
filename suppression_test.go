@@ -120,9 +120,36 @@ func assertCanonicalStatus(t *testing.T, value string, want bestiary.Acceptabili
 //
 // The sweep is non-vacuous by construction: it fails if the catalog is empty, and it
 // pins the census size so a collapse cannot pass silently.
+//
+// WHY IT SKIPS ITSELF ON A NON-EMPTY SEED — this is a deliberate scope boundary, not a
+// coverage gap. What this test asserts is a UNIVERSAL no-op ("suppression changes
+// nothing, anywhere"), and that proposition is definitionally true only while the seed
+// is empty: the first curated entry is *supposed* to change one entity's preferred
+// naming, so continuing to demand universal no-op would assert the machinery does not
+// work. Weakening the sweep to "no-op except the seeded entities" would also be wrong —
+// it would silently stop policing the 974 entities it exists to police the moment one
+// entry lands. So it steps aside cleanly, and three sibling fences take over:
+//
+//   - a MALFORMED entry never reaches here at all: ValidateSuppressionSeed (unknown
+//     family, missing reason, a modifier the entity does not carry, duplicate entity)
+//     and ValidateSuppression (absent entity, preferred-naming collision) both fail the
+//     BAKE, loudly, before any output is produced;
+//   - a VALID entry's correctness is TestSuppressionSeed_PerEntryFenceParity's job: it
+//     requires one literal before/after fence row per entry and asserts both spellings
+//     resolve with the right acceptability — per entry, which is the right granularity
+//     for a per-entry policy;
+//   - the machinery itself stays covered unconditionally by
+//     TestSuppression_SyntheticEntry_EndToEnd, which injects a synthetic seed into the
+//     production functions and so never depends on what the shipped seed contains.
+//
+// The skip is therefore load-bearing information: reaching it means "the seed grew, go
+// read the per-entry fence", and the skip message says exactly that.
 func TestSuppression_EmptySeedNoOpCensus(t *testing.T) {
 	if got := len(bestiary.SuppressionSeed()); got != 0 {
-		t.Skipf("suppression seed is no longer empty (%d entries); the no-op census applies to the empty seed only", got)
+		t.Skipf("suppression seed is no longer empty (%d entries), so the UNIVERSAL no-op this sweep asserts "+
+			"no longer holds by design; per-entry correctness is TestSuppressionSeed_PerEntryFenceParity's job, "+
+			"malformed entries are caught at the bake by ValidateSuppressionSeed/ValidateSuppression, and the "+
+			"machinery stays covered by TestSuppression_SyntheticEntry_EndToEnd", got)
 	}
 
 	entities := bestiary.Entities()
