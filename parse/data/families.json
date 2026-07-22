@@ -9,7 +9,7 @@
   "grok": { "members": ["beta", "code-fast"], "bare_gen_split": false },
   "hy": { "members": [], "bare_gen_split": true },
   "kimi": { "members": ["free"], "bare_gen_split": false, "series_letter": "k" },
-  "llama": { "members": ["scout"], "bare_gen_split": false },
+  "llama": { "members": ["maverick", "scout"], "bare_gen_split": false },
   "magistral": { "members": ["medium", "small"], "bare_gen_split": false },
   "mimo": { "members": [], "bare_gen_split": false, "series_letter": "v" },
   "minimax": { "members": ["free"], "bare_gen_split": false, "series_letter": "m" },

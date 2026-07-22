@@ -92,7 +92,9 @@ func TestParseEntityKey_RoundTrip(t *testing.T) {
 		"grok@4.20{reasoning}",
 		"claude/sonnet@4.5",
 		"llama/scout@4#17b-16e{instruct}",
-		"llama@4#17b-128e{instruct}",
+		"llama/maverick@4#17b-128e{instruct}",
+		"gemma@4#31b{turbo}", // variant-less + size + mods: the shape maverick had before it became a named release
+
 		"deepseek@3.2",
 	}
 	for _, k := range keys {

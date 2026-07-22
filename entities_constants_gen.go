@@ -476,6 +476,8 @@ const (
 	Entity__Llama__Embed__Size_300m                                       = "llama/embed#300m"
 	Entity__Llama__Large__Size_70b                                        = "llama/large#70b"
 	Entity__Llama__Lite__Version_3__Size_8b                               = "llama/lite@3#8b"
+	Entity__Llama__Maverick__Version_4__Size_17b_128e                     = "llama/maverick@4#17b-128e"
+	Entity__Llama__Maverick__Version_4__Size_17b_128e__Instruct           = "llama/maverick@4#17b-128e{instruct}"
 	Entity__Llama__R__Version_2__Size_70b                                 = "llama/r@2#70b"
 	Entity__Llama__Scout__Version_4__Size_17b_16e                         = "llama/scout@4#17b-16e"
 	Entity__Llama__Scout__Version_4__Size_17b_16e__Instruct               = "llama/scout@4#17b-16e{instruct}"
@@ -515,8 +517,6 @@ const (
 	Entity__Llama__Version_3__Size_8b__Instruct                           = "llama@3#8b{instruct}"
 	Entity__Llama__Version_4                                              = "llama@4"
 	Entity__Llama__Version_4__Size_12b                                    = "llama@4#12b"
-	Entity__Llama__Version_4__Size_17b_128e                               = "llama@4#17b-128e"
-	Entity__Llama__Version_4__Size_17b_128e__Instruct                     = "llama@4#17b-128e{instruct}"
 	Entity__Longcat                                                       = "longcat"
 	Entity__Longcat__Flash__Chat                                          = "longcat/flash{chat}"
 	Entity__Longcat__Flash_lite                                           = "longcat/flash-lite"
@@ -1456,6 +1456,8 @@ var allEntityConstants = [...]string{
 	Entity__Llama__Embed__Size_300m,
 	Entity__Llama__Large__Size_70b,
 	Entity__Llama__Lite__Version_3__Size_8b,
+	Entity__Llama__Maverick__Version_4__Size_17b_128e,
+	Entity__Llama__Maverick__Version_4__Size_17b_128e__Instruct,
 	Entity__Llama__R__Version_2__Size_70b,
 	Entity__Llama__Scout__Version_4__Size_17b_16e,
 	Entity__Llama__Scout__Version_4__Size_17b_16e__Instruct,
@@ -1495,8 +1497,6 @@ var allEntityConstants = [...]string{
 	Entity__Llama__Version_3__Size_8b__Instruct,
 	Entity__Llama__Version_4,
 	Entity__Llama__Version_4__Size_12b,
-	Entity__Llama__Version_4__Size_17b_128e,
-	Entity__Llama__Version_4__Size_17b_128e__Instruct,
 	Entity__Longcat,
 	Entity__Longcat__Flash__Chat,
 	Entity__Longcat__Flash_lite,

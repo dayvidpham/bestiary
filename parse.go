@@ -4121,18 +4121,24 @@ var idFamilyOverrides = map[string]idFamilyOverrideEntry{
 	// unpinned would keep the split the unification exists to remove. The #size segment
 	// is carried separately by the param_size_overrides.json pins (17b-16e scout /
 	// 17b-128e maverick), so with the @4 version pin scout keys
-	// llama/scout@4#17b-16e{instruct} and maverick keys llama@4#17b-128e{instruct}. NOTE
-	// the asymmetry: "scout" is a curated llama variant member (families.json) so it
-	// stays in the key, but "maverick" is NOT a member — the official maverick entity is
-	// llama@4 (no maverick variant), so these pins set variant "" to merge into it
-	// rather than minting a new entity.
+	// llama/scout@4#17b-16e{instruct} and maverick keys
+	// llama/maverick@4#17b-128e{instruct}.
+	//
+	// scout and maverick are BOTH curated llama variant members (families.json), so
+	// both keep their name in the key and these pins spell it out for the spellings
+	// the mechanical member recovery cannot reach: the dotted Bedrock forms glue the
+	// generation into the family token ("llama4-maverick"), and the aggregator forms
+	// carry a leading provider token — in both the member scan never sees a bare
+	// "maverick" token to recover. Without these rows those four instances would
+	// fragment away from their siblings into a variant-less llama@4 entity, splitting
+	// one artifact across two keys.
 	"meta.llama4-scout-17b-instruct-v1:0":         {family: "llama", variant: "scout", version: "4", modifiers: []string{"instruct"}},
 	"us.meta.llama4-scout-17b-instruct-v1:0":      {family: "llama", variant: "scout", version: "4", modifiers: []string{"instruct"}},
 	"cerebras-llama-4-scout-17b-16e-instruct":     {family: "llama", variant: "scout", version: "4", modifiers: []string{"instruct"}},
-	"meta.llama4-maverick-17b-instruct-v1:0":      {family: "llama", version: "4", modifiers: []string{"instruct"}},
-	"us.meta.llama4-maverick-17b-instruct-v1:0":   {family: "llama", version: "4", modifiers: []string{"instruct"}},
-	"cerebras-llama-4-maverick-17b-128e-instruct": {family: "llama", version: "4", modifiers: []string{"instruct"}},
-	"groq-llama-4-maverick-17b-128e-instruct":     {family: "llama", version: "4", modifiers: []string{"instruct"}},
+	"meta.llama4-maverick-17b-instruct-v1:0":      {family: "llama", variant: "maverick", version: "4", modifiers: []string{"instruct"}},
+	"us.meta.llama4-maverick-17b-instruct-v1:0":   {family: "llama", variant: "maverick", version: "4", modifiers: []string{"instruct"}},
+	"cerebras-llama-4-maverick-17b-128e-instruct": {family: "llama", variant: "maverick", version: "4", modifiers: []string{"instruct"}},
+	"groq-llama-4-maverick-17b-128e-instruct":     {family: "llama", variant: "maverick", version: "4", modifiers: []string{"instruct"}},
 }
 
 func isSeriesTierToken(tok string) bool {
