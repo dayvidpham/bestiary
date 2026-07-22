@@ -1,5 +1,5 @@
 {
-  "_comment": "Curated modifier-class table. Each known trailing modifier token (the Modifier field of a decomposed ModelRef) is tagged IDENTITY or ATTRIBUTE. IDENTITY modifiers distinguish a genuinely different model artifact (different weights/behavior) and are PART of the entity key \u2014 they render in the '{...}' segment. ATTRIBUTE modifiers describe a per-instance presentation or runtime knob that does NOT change identity and are EXCLUDED from the key \u2014 they render in the '[...]' segment. ClassifyModifier consults 'global' first-pass and 'family_overrides' as a per-family override that BEATS the global classification (mirroring the existing per-family member-guard pattern in modifiers.json): the same token can be identity-bearing for one family and a mere speed/runtime attribute for another (gpt-4-turbo: turbo=IDENTITY vs glm-5-turbo: turbo=ATTRIBUTE). Any token absent from BOTH layers defaults to IDENTITY (the fail-safe over-split \u2014 never silently collapse two artifacts into one entity). The global default for the AMBIGUOUS tokens (turbo/fast/chat/pro/precision) is therefore IDENTITY; per-family overrides demote specific ones to ATTRIBUTE where curation has established the token is a speed/runtime tier for that family. mini/pro/flash STAY IDENTITY-class modifiers this epoch (a dedicated size/param axis is deferred to GH#9 \u2014 NO modifier->variant reclassification here). The stage tokens preview/latest/original are DELIBERATELY absent: they MIGRATED to the dedicated ReleaseStage axis (stage.go) and are routed out of both modifier segments by EntityModifiers/attributeModifiers BEFORE this table's identity fail-safe is consulted, so their absence here never promotes them into the entity key. All keys lowercase; matching is case-insensitive at runtime.",
+  "_comment": "Curated modifier-class table. Each known trailing modifier token (the Modifier field of a decomposed ModelRef) is tagged IDENTITY or ATTRIBUTE. IDENTITY modifiers distinguish a genuinely different model artifact (different weights/behavior) and are PART of the entity key — they render in the '{...}' segment. ATTRIBUTE modifiers describe a per-instance presentation or runtime knob that does NOT change identity and are EXCLUDED from the key — they render in the '[...]' segment. ClassifyModifier consults 'global' first-pass and 'family_overrides' as a per-family override that BEATS the global classification (mirroring the existing per-family member-guard pattern in modifiers.json): the same token can be identity-bearing for one family and a mere speed/runtime attribute for another (gpt-4-turbo: turbo=IDENTITY vs glm-5-turbo: turbo=ATTRIBUTE). Any token absent from BOTH layers defaults to IDENTITY (the fail-safe over-split — never silently collapse two artifacts into one entity). The global default for the AMBIGUOUS tokens (turbo/fast/chat/pro/precision) is therefore IDENTITY; per-family overrides demote specific ones to ATTRIBUTE where curation has established the token is a speed/runtime tier for that family. mini/pro/flash STAY IDENTITY-class modifiers this epoch (a dedicated size/param axis is deferred to GH#9 — NO modifier->variant reclassification here). The stage tokens preview/latest/original are DELIBERATELY absent: they MIGRATED to the dedicated ReleaseStage axis (stage.go) and are routed out of both modifier segments by EntityModifiers/attributeModifiers BEFORE this table's identity fail-safe is consulted, so their absence here never promotes them into the entity key. All keys lowercase; matching is case-insensitive at runtime.",
   "schema_version": 1,
   "global": {
     "thinking": "attribute",
@@ -35,13 +35,16 @@
       "fast": "attribute"
     },
     "kimi": {
-      "fast": "attribute"
+      "fast": "attribute",
+      "turbo": "attribute"
     },
     "deepseek": {
       "fast": "attribute"
     },
     "minimax": {
-      "fast": "attribute"
+      "fast": "attribute",
+      "turbo": "attribute"
     }
-  }
+  },
+  "_comment_turbo_demotions": "Evidence for the kimi and minimax turbo->attribute demotions (the glm precedent). KIMI: moonshot serves kimi-k2-thinking and kimi-k2-thinking-turbo from the IDENTICAL Kimi-K2-Thinking HuggingFace repo — same weights, so turbo names a serving speed tier, not a different artifact; the lab's own turbo-preview announcement describes it as the same model at higher output speed (archived: https://web.archive.org/web/20251205134314/https://kimi-k2.org/blog/08-kimi-k2-turbo-preview). MINIMAX: graded LOWER CONFIDENCE — there is no repo-identity proof. The evidence is the rev-2 URL census, in which the M2.7 and M2.5-highspeed serving names resolve back to the plain M2.7 / M2.5 repos, plus the lab-practice inference that minimax markets turbo the way it markets highspeed (already an attribute). If a future census shows minimax shipping distinct turbo weights, this row is the one to revisit first."
 }

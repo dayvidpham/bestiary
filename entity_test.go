@@ -220,13 +220,23 @@ func TestEntityModifiers(t *testing.T) {
 	if got := bestiary.EntityModifiers([]string{"", ""}, "llama"); got != nil {
 		t.Errorf("EntityModifiers(all-empty) = %v, want nil", got)
 	}
-	// ATTRIBUTE-class tokens are dropped from the identity projection: "thinking"
-	// is attribute, "turbo" is identity (global default; kimi has no override), so
-	// the de-duplicated projection keeps only "turbo".
+	// ATTRIBUTE-class tokens are dropped from the identity projection. Both tokens
+	// here are attribute-class for kimi — "thinking" globally, and "turbo" by the
+	// curated per-family demotion (moonshot serves kimi-k2-thinking and
+	// kimi-k2-thinking-turbo from the identical HuggingFace repo, so turbo names a
+	// serving speed tier, not a different artifact) — so the projection is EMPTY.
+	//
+	// This case previously used kimi as a family with no turbo override and expected
+	// ["turbo"]; it was re-cut when the demotion landed. The identity arm it used to
+	// carry is preserved below on gpt, where turbo genuinely IS identity
+	// (gpt-4-turbo is a distinct artifact from gpt-4).
+	if got := bestiary.EntityModifiers([]string{"turbo", "thinking", "turbo"}, "gpt"); len(got) != 1 || got[0] != "turbo" {
+		t.Fatalf("EntityModifiers([turbo thinking turbo], gpt) = %v, want [turbo] — turbo is identity for gpt", got)
+	}
 	got := bestiary.EntityModifiers([]string{"turbo", "thinking", "turbo"}, "kimi")
-	want := []string{"turbo"}
+	var want []string
 	if len(got) != len(want) {
-		t.Fatalf("EntityModifiers dedup/class-filter = %v, want %v", got, want)
+		t.Fatalf("EntityModifiers dedup/class-filter = %v, want %v (both tokens are attribute-class for kimi)", got, want)
 	}
 	for i := range want {
 		if got[i] != want[i] {
@@ -234,10 +244,18 @@ func TestEntityModifiers(t *testing.T) {
 		}
 	}
 	// The projection feeds EntityRef.String(): keying on the projected mods must
-	// match rendering them directly. "thinking" never reaches the key.
+	// match rendering them directly. For kimi BOTH tokens are attribute-class, so the
+	// key carries no brace segment at all — the empty projection must render as a
+	// bare key rather than an empty "{}".
 	ref := bestiary.EntityRef{Family: "kimi", Version: "k2", Modifier: got}
-	if ref.String() != "kimi@k2{turbo}" {
-		t.Errorf("EntityRef keyed on EntityModifiers = %q, want %q", ref.String(), "kimi@k2{turbo}")
+	if ref.String() != "kimi@k2" {
+		t.Errorf("EntityRef keyed on EntityModifiers = %q, want %q", ref.String(), "kimi@k2")
+	}
+	// The identity arm of the same contract, on a family where turbo IS identity:
+	// the projected token reaches the key and renders in the brace segment.
+	gptRef := bestiary.EntityRef{Family: "gpt", Version: "4", Modifier: bestiary.EntityModifiers([]string{"turbo", "thinking"}, "gpt")}
+	if gptRef.String() != "gpt@4{turbo}" {
+		t.Errorf("EntityRef keyed on EntityModifiers = %q, want %q", gptRef.String(), "gpt@4{turbo}")
 	}
 }
 

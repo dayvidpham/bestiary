@@ -446,11 +446,9 @@ const (
 	Entity__Kimi__K__Version_2                                            = "kimi/k@2"
 	Entity__Kimi__K__Version_2_5                                          = "kimi/k@2.5"
 	Entity__Kimi__K__Version_2_6                                          = "kimi/k@2.6"
-	Entity__Kimi__K__Version_2_6__Turbo                                   = "kimi/k@2.6{turbo}"
 	Entity__Kimi__K__Version_2_7                                          = "kimi/k@2.7"
 	Entity__Kimi__K__Version_2_7__Code                                    = "kimi/k@2.7{code}"
 	Entity__Kimi__K__Version_2__Instruct                                  = "kimi/k@2{instruct}"
-	Entity__Kimi__K__Version_2__Turbo                                     = "kimi/k@2{turbo}"
 	Entity__Kimi_k2                                                       = "kimi-k2"
 	Entity__Kimi_k2__Code                                                 = "kimi-k2{code}"
 	Entity__Kimi_k2__Instruct                                             = "kimi-k2{instruct}"
@@ -565,7 +563,6 @@ const (
 	Entity__Minimax__M__Version_2_1                                       = "minimax/m@2.1"
 	Entity__Minimax__M__Version_2_5                                       = "minimax/m@2.5"
 	Entity__Minimax__M__Version_2_7                                       = "minimax/m@2.7"
-	Entity__Minimax__M__Version_2_7__Turbo                                = "minimax/m@2.7{turbo}"
 	Entity__Minimax__M__Version_3                                         = "minimax/m@3"
 	Entity__Minimax__Version_01                                           = "minimax@01"
 	Entity__Minimax_m3__Free                                              = "minimax-m3/free"
@@ -1433,11 +1430,9 @@ var allEntityConstants = [...]string{
 	Entity__Kimi__K__Version_2,
 	Entity__Kimi__K__Version_2_5,
 	Entity__Kimi__K__Version_2_6,
-	Entity__Kimi__K__Version_2_6__Turbo,
 	Entity__Kimi__K__Version_2_7,
 	Entity__Kimi__K__Version_2_7__Code,
 	Entity__Kimi__K__Version_2__Instruct,
-	Entity__Kimi__K__Version_2__Turbo,
 	Entity__Kimi_k2,
 	Entity__Kimi_k2__Code,
 	Entity__Kimi_k2__Instruct,
@@ -1552,7 +1547,6 @@ var allEntityConstants = [...]string{
 	Entity__Minimax__M__Version_2_1,
 	Entity__Minimax__M__Version_2_5,
 	Entity__Minimax__M__Version_2_7,
-	Entity__Minimax__M__Version_2_7__Turbo,
 	Entity__Minimax__M__Version_3,
 	Entity__Minimax__Version_01,
 	Entity__Minimax_m3__Free,

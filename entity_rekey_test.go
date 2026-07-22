@@ -244,7 +244,7 @@ func TestEntityRekey_NoPhantomOpusEntities(t *testing.T) {
 // from something else — collateral these narrow exact-ID overrides exist to avoid.
 // The merge moves it by exactly the number of phantoms retired, and no more.
 func TestEntityRekey_CensusAccounted(t *testing.T) {
-	const wantEntities = 982
+	const wantEntities = 979
 	if got := len(bestiary.Entities()); got != wantEntities {
 		t.Errorf("registry census = %d entities, want %d — the eva and command-a-plus overrides "+
 			"must be renames (count unmoved) and the cortecs pins a 4-entity merge", got, wantEntities)

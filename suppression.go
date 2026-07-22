@@ -61,7 +61,10 @@ type suppressionRefJSON struct {
 //     unexplained naming policy is un-reviewable.
 //   - SourceURL is WHO documents the innate capability (the lab page). Optional, and
 //     deliberately distinct from the ingest provenance (Nomen.Source): a *who says so*
-//     and a *which catalog we read* are different provenance levels.
+//     and a *which catalog we read* are different provenance levels. When PRESENT it
+//     must be an archive.org snapshot, under the same curated-claims archive policy the
+//     nomen claims follow (see Nomen.SourceURL): a lab page is edited and deleted
+//     without notice, and an entry citing a rotted page cannot be reviewed or reversed.
 type suppressionEntryJSON struct {
 	Entity    suppressionRefJSON `json:"entity"`
 	Suppress  []string           `json:"suppress"`
@@ -182,6 +185,28 @@ func parseSuppressionSeed(raw []byte) (*suppressionTable, error) {
 					"  Why: suppression is a naming-policy judgement; an unexplained entry cannot be reviewed or reversed with confidence\n"+
 					"  How to fix: state why the capability is innate to this entity",
 				i, e.Entity.Family, i,
+			)
+		}
+		// The curated-claims ARCHIVE POLICY, applied to this seed's claim attribution
+		// too. source_url is OPTIONAL here (unlike a nomen claim, whose whole purpose is
+		// attribution) — but when present it must be an archive.org snapshot, for the same
+		// reason: a lab page documenting an innate capability is edited and deleted
+		// without notice, and a suppression entry that cites a rotted page cannot be
+		// reviewed or reversed with confidence, which is precisely what the reason and
+		// source_url fields exist to enable.
+		if url := strings.TrimSpace(e.SourceURL); url != "" && !archiveSnapshotURL.MatchString(url) {
+			return nil, fmt.Errorf(
+				"bestiary suppression: invalid entry #%d (family=%q): source_url %q is not an archive.org snapshot\n"+
+					"  What: a curated suppression entry cites a live page instead of an archived one\n"+
+					"  Where: parse/data/suppression_seed.json entries[%d].source_url\n"+
+					"  When: loading the curated suppression seed, before any preferred naming is computed\n"+
+					"  Why: the entry documents a naming-policy judgement, and a live lab page can change or\n"+
+					"       vanish — leaving the judgement unreviewable. The snapshot embeds the original URL\n"+
+					"       in its tail, so the live address stays recoverable\n"+
+					"  What it means for the caller: the entry is REJECTED; no suppression is applied\n"+
+					"  How to fix: capture the lab page at web.archive.org, verify the snapshot loads, then\n"+
+					"       use that URL — the form is %ssnapshot-timestamp/<original-url>",
+				i, e.Entity.Family, url, i, archiveSnapshotURLPrefix,
 			)
 		}
 

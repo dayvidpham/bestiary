@@ -247,7 +247,16 @@ func TestStageMigration_MigratedTokensRetainedButRoutedOut(t *testing.T) {
 	if modHas(keyMods, "original") {
 		t.Errorf("EntityModifiers(%v, %s) = %v must exclude original (stage-routed)", kmods, kfam, keyMods)
 	}
-	if !modHas(keyMods, "turbo") {
-		t.Errorf("EntityModifiers(%v, %s) = %v must keep turbo (identity for kimi)", kmods, kfam, keyMods)
+	// turbo is EXCLUDED for kimi as well, by the curated per-family demotion — but for
+	// a different reason than original, and the distinction is the point of asserting
+	// both: original is routed out because it is a release STAGE, turbo because it is
+	// a serving speed tier rather than a distinct artifact. This assertion previously
+	// required turbo to be KEPT; it was re-cut when the demotion landed.
+	if modHas(keyMods, "turbo") {
+		t.Errorf("EntityModifiers(%v, %s) = %v must exclude turbo (attribute for kimi by curated demotion)", kmods, kfam, keyMods)
+	}
+	// The retained-token guarantee still holds: the instance-level Modifier keeps both.
+	if !modHas(kmods, "turbo") {
+		t.Errorf("Modifier %v should RETAIN turbo at instance level even though the key drops it", kmods)
 	}
 }

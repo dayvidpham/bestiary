@@ -151,6 +151,28 @@ for its **Go module tags** (`vX.Y.Z`).
   for entity-key lookups; use `LookupModel(id)` for raw-ID instance lookups.
 
 ### Fixed
+- **`turbo` demoted to an attribute for kimi and minimax** (`parse/data/modifier_class.json`
+  `family_overrides`, the glm precedent). Turbo stays IDENTITY globally — `gpt-4-turbo` is a
+  different artifact from `gpt-4` — and is demoted only where curation established it names a
+  serving speed tier over the *same* artifact. The evidence differs in strength between the two
+  and the curated comment says so: **kimi** has repo-identity proof (moonshot serves
+  `kimi-k2-thinking` and `kimi-k2-thinking-turbo` from the identical Kimi-K2-Thinking Hub repo,
+  so the turbo spelling cannot denote different weights); **minimax** is graded *lower
+  confidence* — no repo-identity proof, just the rev-2 URL census resolving the M2.7 /
+  M2.5-highspeed serving names back to the plain repos plus lab-practice inference, flagged as
+  the first row to revisit. Three entities fold into their plain siblings
+  (`kimi/k@2{turbo}`, `kimi/k@2.6{turbo}`, `minimax/m@2.7{turbo}`); the turbo ID spellings
+  survive as **Admitted provider-ID nomina** on the merged entities — a demotion changes what
+  is *identity*, never what is *recorded*. Three `Entity__*` constants are removed and none is
+  renamed, since the surviving siblings' keys never changed.
+- **The z8w3 suppression seed still ships EMPTY, and its collision guard proved itself.** The
+  first entry attempted (kimi turbo) was rejected at codegen: suppressing the modifier would
+  have made `kimi/k@2{turbo}` and the pre-existing `kimi/k@2` both prefer the naming
+  `kimi/k@2`, and the guard's own message diagnosed it — *"the modifier is evidently NOT
+  redundant — it distinguishes them"*. That is what routed the change to a modifier-class
+  demotion instead. The seed's optional `source_url` also picks up the curated-claims
+  **archive policy**: present-but-live is now a loud load-time rejection, while a
+  missing/corrupt seed still degrades to "no suppression".
 - **`series` filter flags are real** (`--provider`, `--quant`, `--status`). They parse on the
   shared flagset for every subcommand, so `bestiary series --provider cohere` was accepted
   and then silently ignored — the worst shape for a filter, since the output looks like an

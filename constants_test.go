@@ -46,7 +46,12 @@ func TestEntityConstants_Unique(t *testing.T) {
 	// with the real o-series. Splitting them into wan / tts / arrow / rerank ADDS
 	// entities (15 new keys, 4 retired) because a bucket holding many distinct models
 	// becomes many distinct entities.
-	const wantEntityCount = 982
+	//
+	// 982 → 979 with the curated kimi/minimax turbo demotions: turbo leaves the key for
+	// those families, so kimi/k@2{turbo}, kimi/k@2.6{turbo} and minimax/m@2.7{turbo} fold
+	// into their plain siblings. Three constants are REMOVED and none is renamed — the
+	// surviving siblings' keys never changed.
+	const wantEntityCount = 979
 	if len(keys) != wantEntityCount {
 		t.Errorf("EntityKeys() returned %d constants; expected exactly %d — "+
 			"re-run go generate ./... and update this census literal if the entity count changed intentionally",

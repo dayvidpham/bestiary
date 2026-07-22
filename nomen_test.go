@@ -19,7 +19,7 @@ func nominaCensus(ns []bestiary.Nomen) map[bestiary.NomenScheme]int {
 
 // TestNomina_CensusExact pins the EXACT per-scheme census of the minted nomen set
 // over the static registry (the "census literal pinned at bake"). The counts are
-// derived from the committed models_static_gen.go: 982 canonical (one Preferred nomen
+// derived from the committed models_static_gen.go: 979 canonical (one Preferred nomen
 // per distinct entity key), 2791 provider-ID (one Admitted nomen per distinct instance
 // ID spelling, deduped within an entity), 1 alias (the grok-beta seed claim) and 4
 // huggingface (the curated Hub org/repo seeds). On a models.dev snapshot refresh — or a
@@ -45,9 +45,15 @@ func nominaCensus(ns []bestiary.Nomen) map[bestiary.NomenScheme]int {
 // cohere's rerankers split into the 15 distinct entities those models always were
 // (4 bucket keys retired). One Preferred nomen per entity key, so canonical tracks it
 // exactly; provider-ID is again untouched, since no ID spelling was added or removed.
+//
+// canonical went 982 → 979 with the kimi/minimax turbo demotions: three {turbo}
+// entities folded into their plain siblings, retiring three keys and therefore three
+// Preferred nomina. provider-ID is untouched AGAIN, and here that is the load-bearing
+// part: the turbo ID spellings survive as Admitted provider-ID nomina on the merged
+// entities. A demotion changes what is IDENTITY, never what is recorded.
 func TestNomina_CensusExact(t *testing.T) {
 	const (
-		wantCanonical   = 982
+		wantCanonical   = 979
 		wantProviderID  = 2791
 		wantAlias       = 1
 		wantHuggingFace = 4

@@ -17,7 +17,7 @@ const syntheticSuppressionSeed = `{
       "entity": {"family": "llama", "version": "4", "param_size": "17b-16e", "modifier": ["instruct"]},
       "suppress": ["instruct"],
       "reason": "synthetic fence entry: exercises the suppression machinery end to end",
-      "source_url": "https://example.invalid/synthetic-fence"
+      "source_url": "https://web.archive.org/web/20260101000000/https://example.invalid/synthetic-fence"
     }
   ]
 }`
@@ -134,6 +134,12 @@ func TestSuppression_SuppressedModifiersLookup(t *testing.T) {
 	}
 }
 
+// The synthetic fixture's source_url is archive.org-SHAPED because the loader now
+// requires it (see the archive policy on suppressionEntryJSON.SourceURL). It was a
+// plain https://example.invalid URL until the policy landed — a synthetic fixture, but
+// one that has to satisfy the same rule the shipped curation does, or the happy path
+// would be exercising a document the loader rejects.
+
 // TestParseSuppressionSeed_Rejects pins the LOUD curation guards: every rejection is a
 // mutation of one valid entry, so no case is vacuous.
 func TestParseSuppressionSeed_Rejects(t *testing.T) {
@@ -161,6 +167,19 @@ func TestParseSuppressionSeed_Rejects(t *testing.T) {
 			name:    "no modifiers suppressed",
 			raw:     `{"entries":[{"entity":{"family":"llama","version":"4","modifier":["instruct"]},"suppress":[],"reason":"r"}]}`,
 			wantSub: "no modifiers suppressed",
+		},
+		{
+			// The curated-claims ARCHIVE POLICY, applied to this seed's optional claim
+			// attribution: a present source_url must be an archive.org snapshot, because
+			// a live lab page can change or vanish and leave the judgement unreviewable.
+			name:    "live source_url",
+			raw:     `{"entries":[{"entity":{"family":"llama","version":"4","modifier":["instruct"]},"suppress":["instruct"],"reason":"r","source_url":"https://ai.meta.com/blog/llama-4"}]}`,
+			wantSub: "not an archive.org snapshot",
+		},
+		{
+			name:    "archive prefix without a capture timestamp",
+			raw:     `{"entries":[{"entity":{"family":"llama","version":"4","modifier":["instruct"]},"suppress":["instruct"],"reason":"r","source_url":"https://web.archive.org/web/https://ai.meta.com/blog/llama-4"}]}`,
+			wantSub: "not an archive.org snapshot",
 		},
 		{
 			name:    "empty suppress token",
