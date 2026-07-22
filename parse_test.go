@@ -3484,8 +3484,8 @@ func TestMetaLlamaNoSlashCapture(t *testing.T) {
 	runFamilyDetailedTupleCorpus(t, corpus)
 }
 
-// TestNamespaceSuffixTransparencyCapture pins wi36 FULL convergence: every dotted
-// AWS Bedrock cross-region form
+// TestNamespaceSuffixTransparencyCapture pins FULL namespace/suffix convergence:
+// every dotted AWS Bedrock cross-region form
 // ("<region>.anthropic.claude-sonnet-4-5-20250929-v1:0" for us/eu/au/jp/global, plus
 // the bare ":0" profile-index spelling) decomposes to the SAME (claude,sonnet,4.5)
 // tuple as the plainly-served sibling — version INCLUDED — so all key to the one
@@ -3537,9 +3537,9 @@ func TestRegionCapture(t *testing.T) {
 	runRegionCaptureCorpus(t, corpus)
 }
 
-// TestTextEmbeddingSoleVariantCapture pins ibtb/ptr9-2: OpenAI's
-// text-embedding-3-{small,large} keep the compound family "text-embedding" (no
-// reduction to a bare "text" over-capture), promote the sole trailing variant
+// TestTextEmbeddingSoleVariantCapture pins the compound-family sole-variant case:
+// OpenAI's text-embedding-3-{small,large} keep the compound family "text-embedding"
+// (no reduction to a bare "text" over-capture), promote the sole trailing variant
 // (small/large), and recover version 3 between the family and the variant.
 func TestTextEmbeddingSoleVariantCapture(t *testing.T) {
 	corpus := loadParseCorpus[rawIDInput, fvvmExpected](t, textEmbeddingSoleVariantCorpusJSON, 2)
@@ -3550,7 +3550,7 @@ func TestTextEmbeddingSoleVariantCapture(t *testing.T) {
 	runFamilyDetailedTupleCorpus(t, corpus)
 }
 
-// TestGrokDocumentedResidualCapture pins ptr9-3 as a documented residual: at HEAD
+// TestGrokDocumentedResidualCapture pins a documented residual: at HEAD
 // "grok-3-mini-fast-beta" decomposes to (grok,mini,3) with the mid-ID serving
 // tier "fast" and trailing stage "beta" dropped (GH#9 mid-ID engine territory).
 // The ID is absent from the current catalog; the row is pinned so a future mid-ID
