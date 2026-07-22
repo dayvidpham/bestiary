@@ -30,10 +30,11 @@ import (
 // gemini-3.0, claude-4.5). It is COMPUTED from an entity's Family plus its
 // identity Version — never stored, never part of any key.
 //
-// Generation is the identity version verbatim, with one normalization applied
-// (see SeriesOf): when a family spells the same generation both bare and dotted
-// ("3" and "3.0"), both collapse onto the dotted spelling so one line is not
-// split in two by a spelling difference. Generation is EMPTY for an unversioned
+// Generation is the identity version verbatim, with one normalization applied:
+// a bare-integer generation "N" folds into "N.0" if and only if the SAME family
+// also spells "N.0", so one line is never split in two by a spelling difference
+// while a family with no dotted sibling (llama-4) keeps its bare generation.
+// Generation is EMPTY for an unversioned
 // line (e.g. the bare "gemma" entities) — an empty generation is a real Series,
 // not a missing one, so it is included in SeriesAll.
 type Series struct {

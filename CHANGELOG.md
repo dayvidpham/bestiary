@@ -53,6 +53,12 @@ for its **Go module tags** (`vX.Y.Z`).
   `gemma-4`, `gemini-exp` onto `gemini`). The curated file is graceful-degrade: missing
   or malformed, the taxonomy falls back to pure computation. **Entity keys are
   untouched by both.**
+- **`bestiary series` subcommand** (read-only, offline, static registry — takes no
+  `--db-path`): bare, it lists every line with its release and entity counts; with a
+  selector it details that line's releases and their entity keys. The selector reads as
+  a line rendering (`llama-4`) or a family name (`gemma`, every generation of it) —
+  the union of both, case-folded. Table and JSON output; no schema change, since this
+  renders Go relations rather than a new public JSON document type.
 - **Store v7**: `nomina` table (PK `(value, scheme, entity_key)`, FK →
   `data_sources` — enforcement regression-tested) + `region` column, with
   presence-guarded self-heal from v6 on both paths and zero data loss.
