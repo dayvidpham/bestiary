@@ -85,7 +85,7 @@ func TestSchemaFile_VersionAndModifierType(t *testing.T) {
 // keys but is a data change, not a schema-shape change.
 // Update this test when a new schema version is released.
 func TestBestiarySchemaVersion_Exact(t *testing.T) {
-	const want = "0.4.0"
+	const want = "0.5.0"
 	if bestiary.BestiarySchemaVersion != want {
 		t.Errorf(
 			"BestiarySchemaVersion = %q, want %q;\n"+

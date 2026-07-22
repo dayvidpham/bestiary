@@ -118,6 +118,17 @@ type ModelInfo struct {
 	// participates in entity identity. HostNone (zero value) when unknown or when
 	// the provider serves the model directly. Populated by the host-split slice.
 	Host Host
+	// Region is the serving JURISDICTION of this instance: the AWS Bedrock
+	// cross-region inference-profile region encoded in the model-ID prefix (us./eu./
+	// au./jp./global.). Like Host it is a per-instance ATTRIBUTE and never
+	// participates in entity identity. RegionNone (zero value) when the ID carries no
+	// region prefix; it renders "unspecified". Populated by enrichModelInfo via
+	// DetectRegion (a pure function of the ID); see region.go.
+	Region Region
+	// RegionRaw carries the verbatim region token, populated only when Region is the
+	// fail-safe RegionOther (a recognized-but-unmapped region token); empty for every
+	// named member and for RegionNone (the Quantization/QuantRaw carrier precedent).
+	RegionRaw string
 	// Lineage is the set of derivation edges from this model to its parent
 	// model(s) (finetune, merge, distillation, …). nil when the model is a base
 	// model or no curated lineage is known. Populated at codegen time from the

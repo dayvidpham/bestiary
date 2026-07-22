@@ -11,6 +11,11 @@
       "id": "ollama",
       "uri": "https://registry.ollama.ai",
       "canonical_name": "Ollama Registry"
+    },
+    {
+      "id": "curated",
+      "uri": "https://github.com/dayvidpham/bestiary/tree/main/parse/data",
+      "canonical_name": "bestiary curated claim files"
     }
   ],
   "ingested": [
@@ -27,6 +32,11 @@
     {
       "source_id": "models.dev",
       "ingested_at": "2026-07-13T02:11:52Z",
+      "parser_schema": 3
+    },
+    {
+      "source_id": "curated",
+      "ingested_at": "2026-07-20T00:00:00Z",
       "parser_schema": 3
     }
   ]

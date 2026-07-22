@@ -135,6 +135,41 @@ func (r EntityRef) String() string {
 	return b.String()
 }
 
+// parseEntityKey is the inverse of EntityRef.String(): it decomposes a canonical
+// entity-key string (family[/variant][@version][#size]{mod1,mod2,...}) back into an
+// EntityRef. It strips the segments in the reverse of the render order — trailing
+// {mods}, then #size, then @version, then /variant, leaving family — because those
+// separators never appear inside a segment (version uses '.', not '/'). Modifiers are
+// stored already-canonical in the key, so a split on ',' round-trips through
+// EntityRef.String() byte-identically. It is used by the store (QueryNomina) to
+// rebuild ResolvesTo from a persisted key; a caller that already holds the ref never
+// needs it.
+func parseEntityKey(key string) EntityRef {
+	var ref EntityRef
+	s := key
+	if i := strings.LastIndexByte(s, '{'); i >= 0 && strings.HasSuffix(s, "}") {
+		inner := s[i+1 : len(s)-1]
+		s = s[:i]
+		if inner != "" {
+			ref.Modifier = strings.Split(inner, ",")
+		}
+	}
+	if i := strings.LastIndexByte(s, '#'); i >= 0 {
+		ref.ParamSize = s[i+1:]
+		s = s[:i]
+	}
+	if i := strings.IndexByte(s, '@'); i >= 0 {
+		ref.Version = s[i+1:]
+		s = s[:i]
+	}
+	if i := strings.IndexByte(s, '/'); i >= 0 {
+		ref.Variant = s[i+1:]
+		s = s[:i]
+	}
+	ref.Family = Family(s)
+	return ref
+}
+
 // LineageEdge is one directed derivation relationship: this model was derived
 // from Parent via technique Kind. A model with multiple parents (e.g. a MERGE)
 // carries multiple LineageEdges; Parent is a full EntityRef so a parent can be
@@ -150,9 +185,16 @@ type LineageEdge struct {
 // per-instance ATTRIBUTES — they vary across instances of the same entity and so
 // are excluded from EntityRef.
 type ProviderInstance struct {
-	ID                ModelID
-	Provider          Provider
-	Host              Host
+	ID       ModelID
+	Provider Provider
+	Host     Host
+	// Region is the serving jurisdiction of this instance (AWS Bedrock cross-region
+	// inference profile), projected from ModelInfo.Region at registry roll-up. Like
+	// Host it is a per-instance attribute, never part of identity; RegionNone when
+	// the ID carries no region prefix (renders "unspecified"). RegionRaw carries the
+	// verbatim token only for the fail-safe RegionOther.
+	Region            Region
+	RegionRaw         string
 	CostInputPerMTok  *float64 // nil when unknown
 	CostOutputPerMTok *float64 // nil when unknown
 	ContextWindow     int
@@ -189,11 +231,18 @@ type CapabilityUnion struct {
 //     nil-deref, no spurious zero). Indices: [0]=min, [1]=max.
 //   - ContextRange / MaxOutputRange: [min,max] over instance context/max-output.
 type Entity struct {
-	Ref              EntityRef
-	Instances        []ProviderInstance
-	Lineage          []LineageEdge
-	Providers        []Provider
-	Hosts            []Host
+	Ref       EntityRef
+	Instances []ProviderInstance
+	Lineage   []LineageEdge
+	Providers []Provider
+	Hosts     []Host
+	// Regions is the sorted (ascending Region value), de-duplicated aggregate of the
+	// per-instance Region across every instance of this entity — the Providers/Hosts
+	// aggregate pattern. An entity served in multiple jurisdictions (e.g. a Bedrock
+	// claude offered us/eu/au/jp/global) surfaces all its regions here. It is nil only
+	// on a hand-constructed Entity that never went through the registry aggregate; a
+	// registry entity with no region prefix on any instance carries [RegionNone].
+	Regions          []Region
 	PriceInputRange  [2]*float64
 	PriceOutputRange [2]*float64
 	ContextRange     [2]int
@@ -274,6 +323,9 @@ func cloneEntity(e Entity) Entity {
 	}
 	if e.Hosts != nil {
 		c.Hosts = append([]Host(nil), e.Hosts...)
+	}
+	if e.Regions != nil {
+		c.Regions = append([]Region(nil), e.Regions...)
 	}
 	if e.Sources != nil {
 		c.Sources = append([]DataSourceID(nil), e.Sources...)

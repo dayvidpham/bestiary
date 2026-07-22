@@ -44,7 +44,20 @@ package bestiary
 //     validate. (The full-bulk #size re-key that lands this epoch changes many
 //     EntityRef keys but is a data change, not a schema-shape change — the ParamSize
 //     carrier and its grammar are unchanged.)
-const BestiarySchemaVersion = "0.4.0"
+//   - 0.4.0 → 0.5.0: adds the v0.2.7 naming layer and the Region axis. The naming
+//     layer: new $defs Nomen + NomenScheme and an optional Entity.Nomina array (the
+//     read projection of an entity's recorded namings — canonical Preferred nomen,
+//     provider-ID Admitted nomina, curated third-party alias claims). The Region axis:
+//     ModelInfo.Region + ModelInfo.RegionRaw (the AWS Bedrock cross-region
+//     inference-profile jurisdiction, a per-instance attribute never part of entity
+//     identity), ProviderInstance.Region + RegionRaw projected at registry roll-up,
+//     an optional Entity.Regions sorted-unique aggregate, and a new $defs Region
+//     closed string enum (which INCLUDES "unspecified" for the RegionNone zero value).
+//     Additive and backward-COMPATIBLE: every new property is optional/zero-value
+//     (Region defaults to "unspecified", RegionRaw to "", Nomina/Regions absent), so
+//     0.4.x records still validate. This is the SOLE schema bump for the naming +
+//     region work — do not add another this epoch.
+const BestiarySchemaVersion = "0.5.0"
 
 // UpstreamSchemaVersion identifies the exact snapshot of the models.dev schema
 // that this bestiary schema was derived from. Format: YYYY.MM.DD-sha256

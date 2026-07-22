@@ -162,14 +162,22 @@ func (r ModelRef) String() string {
 }
 
 // Designations returns all string designations for this ModelRef.
-// Every designation carries AcceptabilityAdmitted in this epoch.
-// Promotion to Preferred is deferred to a follow-up curation epoch.
+//
+// Acceptability is now ACTIVATED (this is the epoch that promotes it): the
+// SchemeCanonical designation carries AcceptabilityPreferred — the canonical
+// decomposed key IS the preferred designation of the identity — while the raw ID,
+// HuggingFace, and PURL forms stay AcceptabilityAdmitted (recognized, usable, not
+// preferred). This is the READ-PROJECTION half of the naming layer: a Designation is
+// the ref-level rendering of the same fact a Nomen records at the entity level, so
+// the SchemeCanonical designation's Preferred rating agrees by construction with the
+// NomenSchemeCanonical nomen's AcceptabilityPreferred status (the Designations↔Nomen
+// consistency fence: shared schemes agree on rating).
 //
 // The returned slice contains:
-//  1. A SchemeRaw designation using the original API model ID.
-//  2. A SchemeCanonical designation (the canonical slash-separated form).
-//  3. A SchemeHuggingFace designation.
-//  4. A SchemePURL designation.
+//  1. A SchemeRaw designation using the original API model ID (Admitted).
+//  2. A SchemeCanonical designation, the canonical slash-separated form (Preferred).
+//  3. A SchemeHuggingFace designation (Admitted).
+//  4. A SchemePURL designation (Admitted).
 func (r ModelRef) Designations() []Designation {
 	return []Designation{
 		{
@@ -182,7 +190,7 @@ func (r ModelRef) Designations() []Designation {
 			Value:    r.Format(SchemeCanonical),
 			Scheme:   SchemeCanonical,
 			Provider: r.Provider,
-			Rating:   AcceptabilityAdmitted,
+			Rating:   AcceptabilityPreferred,
 		},
 		{
 			Value:    r.Format(SchemeHuggingFace),

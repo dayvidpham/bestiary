@@ -1281,6 +1281,13 @@ func enrichModelInfo(base bestiary.ModelInfo) (bestiary.ModelInfo, *bestiary.Par
 	// — Host records the backend without mutating the record's identity.
 	host, _ := bestiary.DetectHost(id)
 
+	// Serving-jurisdiction attribute. DetectRegion surfaces an AWS Bedrock
+	// cross-region inference-profile prefix (e.g. "eu.anthropic.claude-..." → RegionEU)
+	// as a per-instance attribute; the same prefix is stripped inside
+	// ParseFamilyDetailed so the decomposition above is already region-independent.
+	// Like Host, Region records the jurisdiction without mutating identity.
+	region, regionRaw := bestiary.DetectRegion(id)
+
 	// Compute cleanID (modifier-stripped) for ExtractDate. The modifier consumed
 	// value is a trailing suffix of the model ID; strip it to avoid date extraction
 	// from tokens that are part of the modifier (e.g. "thinking", "preview").
@@ -1323,6 +1330,8 @@ func enrichModelInfo(base bestiary.ModelInfo) (bestiary.ModelInfo, *bestiary.Par
 	info := base
 	info.RawFamily = rawFamily
 	info.Host = host
+	info.Region = region
+	info.RegionRaw = regionRaw
 	info.Family = normFamily
 	info.Variant = normVariant
 	info.Version = normVersion
@@ -1742,6 +1751,31 @@ func stageExpr(s bestiary.ReleaseStage) string {
 	}
 }
 
+// regionExpr renders a Region as its exported constant name so the generated source
+// references the enum symbolically (e.g. RegionEU). Mirrors statusExpr/stageExpr.
+// RegionNone (the zero value) is the default and is never emitted (the caller guards
+// on it), but is returned here for completeness.
+func regionExpr(r bestiary.Region) string {
+	switch r {
+	case bestiary.RegionUS:
+		return "RegionUS"
+	case bestiary.RegionEU:
+		return "RegionEU"
+	case bestiary.RegionAPAC:
+		return "RegionAPAC"
+	case bestiary.RegionGlobal:
+		return "RegionGlobal"
+	case bestiary.RegionAU:
+		return "RegionAU"
+	case bestiary.RegionJP:
+		return "RegionJP"
+	case bestiary.RegionOther:
+		return "RegionOther"
+	default:
+		return "RegionNone"
+	}
+}
+
 // reasoningOptionKindExpr renders a ReasoningOptionKind as its exported constant name.
 // ReasoningOptionOther (the zero value) is the default fail-safe.
 func reasoningOptionKindExpr(k bestiary.ReasoningOptionKind) string {
@@ -1860,6 +1894,16 @@ func generateSource(models []bestiary.ModelInfo, slugToConst map[string]string) 
 		fmt.Fprintf(&buf, "\t\tKnowledge:             %q,\n", m.Knowledge)
 		fmt.Fprintf(&buf, "\t\tModalities:            %s,\n", modalitiesExpr(m.Modalities))
 		fmt.Fprintf(&buf, "\t\tHost:                  %q,\n", string(m.Host))
+		// Region (AWS Bedrock cross-region inference profile) is an int enum, emitted
+		// CONDITIONALLY — only when a prefix was detected — matching the Stage/Status
+		// precedent so the unregioned majority stays compact. RegionRaw is the reserved
+		// Other-bucket carrier and is empty for every named-member region.
+		if m.Region != bestiary.RegionNone {
+			fmt.Fprintf(&buf, "\t\tRegion:                %s,\n", regionExpr(m.Region))
+		}
+		if m.RegionRaw != "" {
+			fmt.Fprintf(&buf, "\t\tRegionRaw:             %q,\n", m.RegionRaw)
+		}
 		fmt.Fprintf(&buf, "\t\tLineage:               %s,\n", lineageLiteral(m.Lineage))
 		// ParamSize: only emit when non-empty, matching how other optional string
 		// fields (Variant, Version, Date) are handled — zero value omitted entirely

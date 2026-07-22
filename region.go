@@ -82,6 +82,53 @@ func (r Region) String() string {
 	}
 }
 
+// MarshalText implements encoding.TextMarshaler so a Region serializes as its
+// canonical lowercase token in JSON/YAML (the ModelStatus precedent), NOT as its
+// underlying int. RegionNone emits "unspecified" and RegionOther emits "other";
+// every other member emits its ISO/scope token. It never errors: String covers
+// every value including out-of-range (degrades to "unspecified").
+func (r Region) MarshalText() ([]byte, error) {
+	return []byte(r.String()), nil
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler, the inverse of MarshalText.
+// It accepts every String() token — including "other" (→ RegionOther) and the two
+// spellings of absence ("unspecified"/"" → RegionNone) — so a marshaled Region
+// round-trips totally through JSON. This is DELIBERATELY more permissive than the
+// CLI-facing ParseRegion (which rejects "other" to force an actionable typo error):
+// deserialization must accept anything the serializer can emit, while the parse
+// path guides a human toward the closed set.
+func (r *Region) UnmarshalText(text []byte) error {
+	switch strings.ToLower(strings.TrimSpace(string(text))) {
+	case "", "unspecified":
+		*r = RegionNone
+	case "us":
+		*r = RegionUS
+	case "eu":
+		*r = RegionEU
+	case "apac":
+		*r = RegionAPAC
+	case "global":
+		*r = RegionGlobal
+	case "au":
+		*r = RegionAU
+	case "jp":
+		*r = RegionJP
+	case "other":
+		*r = RegionOther
+	default:
+		return fmt.Errorf(
+			"bestiary: cannot unmarshal Region from %q\n"+
+				"  What: the token does not match any known region\n"+
+				"  Why: only {unspecified, us, eu, apac, global, au, jp, other} are accepted\n"+
+				"  Where: bestiary.Region.UnmarshalText (region.go)\n"+
+				"  How to fix: use one of the accepted region tokens",
+			string(text),
+		)
+	}
+	return nil
+}
+
 // ParseRegion is the inverse of String for the named members: it maps a canonical
 // token back to its Region. "unspecified" and "" both round-trip to RegionNone
 // (the two spellings of absence). An unknown non-empty token is an actionable
@@ -115,6 +162,19 @@ func ParseRegion(s string) (Region, error) {
 			s,
 		)
 	}
+}
+
+// regionFromStore decodes a Region from its stored String() token. It is the store
+// scan seam (mirroring modelStatusFromStore): it uses the permissive UnmarshalText
+// mapping and degrades a malformed/empty token to RegionNone rather than failing the
+// scan — the store column NOT NULL defaults to the empty string (which decodes to
+// RegionNone), so an old v6 row backfilled by the migration reads back as RegionNone.
+func regionFromStore(tok string) Region {
+	var r Region
+	if err := r.UnmarshalText([]byte(tok)); err != nil {
+		return RegionNone
+	}
+	return r
 }
 
 // regionFromToken maps a lowercase Bedrock region prefix token (as parsed by

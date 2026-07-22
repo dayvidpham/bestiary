@@ -14,16 +14,36 @@ for its **Go module tags** (`vX.Y.Z`).
 
 ## [Unreleased]
 
+**Schema:** `0.4.0` → `0.5.0` (additive). SQLite store schema `6` → `7`.
+
 ### Added
-- **Region axis (parse half)**: `Region` closed int enum (`region.go`) capturing the
+- **Nomen naming layer**: one queryable record for every way anything names a model
+  entity — `Nomen{Value, Scheme, Status, ResolvesTo, SourceURL, Source}` with the
+  `NomenScheme` classifier (canonical / provider-id / huggingface / purl / alias)
+  and ISO 1087 `AcceptabilityRating` statuses. Minted by one shared production
+  function over the entity index plus the curated `parse/data/nomen_claims.json`
+  (3,768 nomina: 975 canonical Preferred, 2,792 provider-ID Admitted, 1 curated
+  alias claim). `Entity.Nomina()` and `NomenLookup()` (homonym-aware) are the
+  read APIs; claim attribution keeps *who asserts* (`SourceURL`) distinct from
+  *which ingest we read* (`Source` — curated claims attribute the new `curated`
+  data source, never models.dev).
+- **Region axis**: `Region` closed int enum (`region.go`) capturing the
   geographic/jurisdictional boundary an instance's serving is scoped to (Amazon
   Bedrock cross-region inference profiles: `us.`/`eu.`/`au.`/`jp.`/`global.`).
   Members follow ISO 3166-1 alpha-2 where applicable; `RegionNone` renders
   `"unspecified"`; unknown tokens land in `RegionOther` with the raw token
-  preserved. `ModelRef` gains `Region`/`RegionRaw` (internal this release-candidate;
-  public JSON/schema wiring lands with the 0.5.0 schema bump). Not part of entity
-  identity.
+  preserved. Public surface: `ModelInfo.Region`/`RegionRaw`, per-instance
+  `ProviderInstance.Region`, and the `Entity.Regions` jurisdiction aggregate
+  (e.g. Bedrock-served entities report `[unspecified, us, eu, global, au, jp]`),
+  rendered in table/YAML/JSON. Not part of entity identity.
+- **Store v7**: `nomina` table (PK `(value, scheme, entity_key)`, FK →
+  `data_sources` — enforcement regression-tested) + `region` column, with
+  presence-guarded self-heal from v6 on both paths and zero data loss.
 
+### Changed
+- **Designation layer activated**: `ModelRef.Designations()` now rates the
+  canonical form `Preferred` (raw/HuggingFace/PURL stay `Admitted`) — the
+  prerequisite for truthful `skos:prefLabel`/`altLabel` export (GH#24 ask 3).
 ### Fixed
 - **Empty-raw claude version recovery**: `claude-3.5-haiku` / `claude-3-5-haiku`
   empty-raw forms now decompose to `(claude, haiku, 3.5)` instead of dropping the
