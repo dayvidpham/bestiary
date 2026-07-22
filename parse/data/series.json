@@ -1,0 +1,23 @@
+{
+  "_comment": "Curated Series STRAYS: entity families whose versioned line cannot be derived from their own key components, mapped onto the line they actually belong to. The Series/Release hierarchy is COMPUTED (family+identity-version -> Series, variant -> Release name); this file is the small curated exception list, never the primary mechanism — add a row only when the computation genuinely cannot reach the right line. A stray row re-homes an entity within the HIERARCHY ONLY: it never changes an entity key, and the taxonomy never feeds back into keys. KEYING: 'family' is the lowercase entity family token to re-home (matched case-folded). 'series' is the target line ({family, generation}; an empty generation is the un-versioned line). 'release', when present, overrides the computed release name (the entity's variant) for every entity of that family; when absent the computed variant is kept. LOADING is graceful-degrade (the lineage.json / modifier_class.json precedent): a missing or malformed file degrades to no strays (pure computation), and a single unusable row is skipped rather than costing the whole table. CURRENT ENTRIES: (1) gemma4 -- the catalog spells the generation INTO the family token, so its decomposed version is empty and it would otherwise form a line of its own; it is gemma at generation 4. (2) gemma-4-31b-larkspur -- a codenamed gemma-4 release whose codename (and size) were absorbed into the family token, leaving a point-release variant ('v0.5') that is not a release name; re-homed to gemma-4 and named 'larkspur' after the codename. (3) gemini-exp -- the experimental gemini line, spelled as its own family token; it is a release of the un-versioned gemini line. NOT LISTED: phi (phi 3 / 3.5 / 4 decompose correctly and need no row).",
+  "schema_version": 1,
+  "strays": [
+    {
+      "family": "gemma4",
+      "series": { "family": "gemma", "generation": "4" },
+      "_comment": "generation glued into the family token (gemma4#31b) -> gemma-4"
+    },
+    {
+      "family": "gemma-4-31b-larkspur",
+      "series": { "family": "gemma", "generation": "4" },
+      "release": "larkspur",
+      "_comment": "codename + size glued into the family token; variant is the point release v0.5, not a release name"
+    },
+    {
+      "family": "gemini-exp",
+      "series": { "family": "gemini", "generation": "" },
+      "release": "exp",
+      "_comment": "experimental gemini line spelled as its own family token"
+    }
+  ]
+}
