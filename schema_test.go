@@ -661,8 +661,10 @@ func TestDesignation_AllAcceptabilityRatings(t *testing.T) {
 		}
 
 		// Designations() from a ModelRef now carries ACTIVE acceptability: the
-		// canonical designation is Preferred, the other three schemes are Admitted.
-		// Verify Designations() returns 4 entries with that rating split.
+		// canonical designation is Preferred, the others are Admitted. This ref is
+		// anthropic-hosted, so it carries THREE designations — the purl entry is
+		// minted only for a ref whose registry home is known (HuggingFace-hosted),
+		// and is dropped rather than emitted empty-valued for every other provider.
 		if tc.rating == bestiary.AcceptabilityAdmitted {
 			ref := bestiary.ModelRef{
 				ID:       "claude-opus-4-20250514",
@@ -673,10 +675,10 @@ func TestDesignation_AllAcceptabilityRatings(t *testing.T) {
 				Date:     "2025-05-14",
 			}
 			designations := ref.Designations()
-			if len(designations) != 4 {
+			if len(designations) != 3 {
 				t.Errorf(
-					"ModelRef.Designations() returned %d designations, want 4;\n"+
-						"  what: expected Raw, Canonical, HuggingFace, and PURL designations\n"+
+					"ModelRef.Designations() returned %d designations, want 3;\n"+
+						"  what: expected Raw, Canonical and HuggingFace designations (no PURL for a non-HuggingFace provider)\n"+
 						"  where: schema_test.go TestDesignation_AllAcceptabilityRatings",
 					len(designations),
 				)

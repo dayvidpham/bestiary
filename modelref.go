@@ -64,7 +64,8 @@ func (m ModelInfo) Ref() ModelRef {
 //     only when date is non-empty. Falls back to "<provider>/<raw-id>" when both
 //     Family and Variant are empty (e.g., provider-specific representation).
 //   - SchemeHuggingFace: "<provider>/<raw-id>" (HuggingFace Hub form).
-//   - SchemePURL: "pkg:huggingface/<provider>/<raw-id>" (purl-spec + ECMA-427).
+//   - SchemePURL: "pkg:huggingface/<raw-id>" — RESTRICTED to Provider ==
+//     ProviderHuggingFace; every other provider renders "" (see formatPURL).
 //   - SchemeRaw: string(r.ID) — the original API model identifier verbatim.
 func (r ModelRef) Format(s CanonicalScheme) string {
 	switch s {
@@ -73,13 +74,42 @@ func (r ModelRef) Format(s CanonicalScheme) string {
 	case SchemeHuggingFace:
 		return fmt.Sprintf("%s/%s", r.Provider, r.ID)
 	case SchemePURL:
-		return fmt.Sprintf("pkg:huggingface/%s/%s", r.Provider, r.ID)
+		return r.formatPURL()
 	case SchemeRaw:
 		return string(r.ID)
 	default:
 		// Unrecognized scheme: fall back to raw ID for safety.
 		return string(r.ID)
 	}
+}
+
+// formatPURL produces the SchemePURL string, RESTRICTED to HuggingFace-hosted refs.
+//
+// A purl is a FOREIGN KEY into someone else's package registry, so bestiary mints one
+// only where the artifact's registry home is actually known. That is exactly the
+// huggingface-provider rows: their raw model ID already IS the Hub org/repo path (e.g.
+// "meta-llama/Llama-3.3-70B-Instruct"), so the render is the purl-spec shape
+// "pkg:huggingface/<namespace>/<name>" with nothing invented.
+//
+// Every other provider renders "" — an honest empty rather than a fabricated foreign
+// key. The previous render interpolated the SERVING PROVIDER as the purl namespace
+// ("pkg:huggingface/anthropic/claude-opus-4-20250514"), which was spec-invalid on two
+// counts: an anthropic-served model has no HuggingFace repo at all, and HuggingFace's
+// own rows came out double-namespaced ("pkg:huggingface/huggingface/meta-llama/…").
+// Serving provider is not artifact home.
+//
+// This restricts the OUTPUT side only. The input side stays lenient (Postel): Resolve
+// still accepts the legacy "pkg:huggingface/<provider>/<id>" spelling, because
+// downstream SBOMs may hold strings bestiary itself once emitted.
+//
+// The durable, provider-independent identifier story is the entity-level Nomen
+// (curated NomenSchemeHuggingFace claims map an entity to its Hub repo regardless of
+// which of its providers is serving it); this per-ref render is the stopgap.
+func (r ModelRef) formatPURL() string {
+	if r.Provider != ProviderHuggingFace {
+		return ""
+	}
+	return fmt.Sprintf("pkg:huggingface/%s", r.ID)
 }
 
 // formatCanonical produces the SchemeCanonical string.
@@ -177,9 +207,15 @@ func (r ModelRef) String() string {
 //  1. A SchemeRaw designation using the original API model ID (Admitted).
 //  2. A SchemeCanonical designation, the canonical slash-separated form (Preferred).
 //  3. A SchemeHuggingFace designation (Admitted).
-//  4. A SchemePURL designation (Admitted).
+//  4. A SchemePURL designation (Admitted) — ONLY for a HuggingFace-hosted ref.
+//
+// The purl entry is DROPPED entirely (not emitted with an empty value) for every other
+// provider, because Format(SchemePURL) is restricted to the refs whose registry home is
+// known (see formatPURL). A designation is an assertion that a thing IS called
+// something; an empty-valued one would assert a name that does not exist. So a non-HF
+// ref yields three designations, an HF ref four.
 func (r ModelRef) Designations() []Designation {
-	return []Designation{
+	out := []Designation{
 		{
 			Value:    r.Format(SchemeRaw),
 			Scheme:   SchemeRaw,
@@ -198,13 +234,16 @@ func (r ModelRef) Designations() []Designation {
 			Provider: r.Provider,
 			Rating:   AcceptabilityAdmitted,
 		},
-		{
-			Value:    r.Format(SchemePURL),
+	}
+	if purl := r.Format(SchemePURL); purl != "" {
+		out = append(out, Designation{
+			Value:    purl,
 			Scheme:   SchemePURL,
 			Provider: r.Provider,
 			Rating:   AcceptabilityAdmitted,
-		},
+		})
 	}
+	return out
 }
 
 // ProvidersForFamily returns the set of providers that host models with

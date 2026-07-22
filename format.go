@@ -33,8 +33,12 @@ const (
 	//   <provider>/<raw-model-id>
 	InputFormatHuggingFace InputFormat = "huggingface"
 
-	// InputFormatPURL is the Package URL (PURL) form:
-	//   pkg:huggingface/<provider>/<raw-model-id>
+	// InputFormatPURL is the Package URL (PURL) form. This is an INPUT format, and
+	// input stays lenient (Postel): both the registry-accurate
+	// "pkg:huggingface/<org>/<repo>" spelling and the legacy
+	// "pkg:huggingface/<provider>/<raw-model-id>" spelling this package once emitted
+	// are accepted. The corresponding OUTPUT render (SchemePURL) is narrower — it is
+	// minted only for HuggingFace-hosted refs (see canonical.go SchemePURL).
 	InputFormatPURL InputFormat = "purl"
 
 	// InputFormatRaw is the raw API model ID (exact match):
