@@ -127,6 +127,21 @@ type Nomen struct {
 	ResolvesTo EntityRef
 	// SourceURL is WHO asserts this naming (claim attribution). Empty for
 	// bestiary-minted nomina.
+	//
+	// Curated-claims archive policy: every SourceURL carried by a claim in
+	// parse/data/nomen_claims.json is an archive.org snapshot URL
+	// (https://web.archive.org/web/<timestamp>/<original-url>) captured when the
+	// claim was created, never the live claimant page. A claim is evidence of what
+	// a lab published, and model cards and docs pages are edited and deleted
+	// without notice — a live URL quietly stops attesting the claim it was cited
+	// for. There is deliberately NO second "archive_url" field: the snapshot URL
+	// embeds the original claimant URL verbatim in its tail, so the live address
+	// stays recoverable from the value itself.
+	//
+	// The policy binds the CURATED claims layer. It says nothing about SourceURLs
+	// that arrive through an upstream ingest (e.g. BenchmarkResult.SourceURL from
+	// the models.dev catalog), which are recorded exactly as upstream published
+	// them.
 	SourceURL string
 	// Source is WHICH ingest we read this naming from (a DataSourceID FK).
 	Source DataSourceID

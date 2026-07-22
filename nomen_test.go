@@ -150,8 +150,19 @@ func TestNomenLookup_GrokBeta(t *testing.T) {
 	if got := n.ResolvesTo.String(); got != "grok@4.20{reasoning}" {
 		t.Errorf("grok-beta resolves to %q, want grok@4.20{reasoning}", got)
 	}
-	if n.SourceURL == "" || !strings.Contains(n.SourceURL, "x.ai") {
-		t.Errorf("grok-beta SourceURL = %q, want the xAI claimant page", n.SourceURL)
+	// Claim attribution is pinned to the exact archive.org SNAPSHOT of the xAI docs
+	// page, per the curated-claims archive policy (see Nomen.SourceURL). This
+	// assertion previously matched the live URL loosely (strings.Contains "x.ai"),
+	// which the snapshot URL still satisfies — so it was re-pinned to the exact value
+	// when the policy landed, rather than left silently passing.
+	const grokBetaClaimantSnapshot = "https://web.archive.org/web/20260204041847/https://docs.x.ai/docs/models"
+	if n.SourceURL != grokBetaClaimantSnapshot {
+		t.Errorf("grok-beta SourceURL = %q, want the archived xAI claimant page %q", n.SourceURL, grokBetaClaimantSnapshot)
+	}
+	// The original claimant address stays recoverable from the snapshot itself —
+	// which is why the policy adds no separate archive_url field.
+	if !strings.HasSuffix(n.SourceURL, "https://docs.x.ai/docs/models") {
+		t.Errorf("grok-beta SourceURL = %q does not end in the original xAI claimant URL", n.SourceURL)
 	}
 	if n.Source != bestiary.DataSourceCurated {
 		t.Errorf("grok-beta Source = %q, want curated (the honest ingest — read from bestiary's own claim file, distinct from the xAI claimant)", n.Source)
