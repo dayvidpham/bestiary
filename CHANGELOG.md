@@ -236,6 +236,22 @@ for its **Go module tags** (`vX.Y.Z`).
   `claude/opus@5…@8` entities and stranded the cortecs instances away from the real ones;
   four curated pins merge them back. Entity census 975 → 971 — the first two are renames, the
   cortecs merge retires exactly the four phantoms.
+- **The family-`o` junk bucket is emptied, without evicting the real o-series.** vercel labels
+  a swathe of unrelated models with the upstream `raw_family` `"o"` — the OpenAI o-series
+  family — and bestiary faithfully preserved the attestation, so Alibaba's Wan video models,
+  OpenAI's TTS speech models, quiverai's arrow and Cohere's rerankers all decomposed into
+  family `o` and shared one entity with the genuine o-series. The mislabel is **upstream's,
+  not a mis-parse**: the vendored catalog carries `family="o"` verbatim on 17 vercel rows and
+  2 digitalocean ones, and the ID-driven path already decomposed every one of them correctly
+  when `raw_family` was empty — so the correction only stops a junk label from overriding an
+  answer that was already right. 13 over-captured rows re-home to `wan` / `tts` / `arrow` /
+  `rerank`, plus 2 vendor-leak rows (`voyage/rerank-2.5` and its lite sibling, labelled with
+  the **org** rather than a family — the leak the enforce ledger exists to correct). The
+  genuine o-series is untouched: `openai/o1` and `openai/o3` still resolve through the
+  OpenAI-line canonicalization to `gpt/o@N`, and digitalocean's `openai-o1` / `openai-o3` /
+  `openai-o3-mini` legitimately **keep** family `o`. Entity census 971 → 982: a bucket holding
+  many distinct models becomes many distinct entities, so this is the branch's one correction
+  that *adds* keys (15 new, 4 retired).
 - **Codegen emitted no `ParamSize` on a lineage parent** (`lineageLiteral`). The first curated
   edge to name a sized parent exposed it: the runtime `lineage.json` path returned
   `qwen@2.5#32b` while the baked `ModelInfo.Lineage` said `qwen@2.5` — the same curated edge
