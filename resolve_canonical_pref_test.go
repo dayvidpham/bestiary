@@ -76,11 +76,13 @@ func containsProvider(ps []bestiary.Provider, want bestiary.Provider) bool {
 // built catalog: a case that quietly became single-host is no longer exercising
 // the preference and fails loudly instead of passing vacuously.
 func TestResolve_CanonicalProviderPreference_ExactID_Corpus(t *testing.T) {
-	corpus := loadParseCorpus[string, canonicalPrefExpected](t, resolveCanonicalPrefCorpusJSON, 13)
+	corpus := loadParseCorpus[string, canonicalPrefExpected](t, resolveCanonicalPrefCorpusJSON, 14)
 
 	requireInputCoverage(t, corpus, map[string]canonicalPrefExpected{
 		// the reported defect, pinned by value
 		"claude-sonnet-4-5-20250929": {Provider: "anthropic", Sole: true},
+		// the command→cohere mapping, pinned by value
+		"command-a-plus-05-2026": {Provider: "cohere", Sole: true},
 		// one fall-through control of each kind
 		"codestral-2501": {Provider: "azure", Sole: false},
 		"MiniMax-M1":     {Provider: "302ai", Sole: false},

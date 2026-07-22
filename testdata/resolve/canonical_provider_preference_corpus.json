@@ -119,6 +119,19 @@
       }
     },
     {
+      "name": "command-exact-id-prefers-cohere",
+      "input": "command-a-plus-05-2026",
+      "expected": { "provider": "cohere", "sole": true },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "manual",
+        "ref": "catalog ID command-a-plus-05-2026, hosted by cohere and nano-gpt"
+      },
+      "mutation": {
+        "description": "family command — the curated cohere mapping. NOTE the discriminating assertion here is sole=true, not the head provider: cohere happens to sort first among this id's hosts, so the returned HEAD would read the same either way. What only the preference can produce is a slice of length 1 — without the cohere mapping the family's canonical would be empty and both hosts would come back. Every multi-provider command id cohere serves has cohere alphabetically first in the current catalog, so no stronger case exists to pin."
+      }
+    },
+    {
       "name": "codestral-canonical-absent-falls-through",
       "input": "codestral-2501",
       "expected": { "provider": "azure", "sole": false },
