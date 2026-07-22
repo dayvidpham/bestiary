@@ -3,6 +3,7 @@ package bestiary
 import (
 	"context"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"zombiezen.com/go/sqlite"
@@ -223,6 +224,65 @@ func TestStore_NominaHomonymyPositiveFence(t *testing.T) {
 	}
 	if len(entities) != 3 {
 		t.Errorf("homonym %q resolved to %d distinct entities, want 3", value, len(entities))
+	}
+}
+
+// TestStoreV7_NominaForeignKeyEnforced verifies, on a FRESH in-memory v7 database,
+// that (1) the nomina table exists on the fresh-DB path, (2) the source_id
+// foreign_keys pragma actually bites — UpsertNomina of a nomen whose Source has no
+// data_sources parent is REJECTED with the wrapped FK error and no partial write — and
+// (3) the same nomen inserts once its DataSource is registered. The rejection arm is
+// the guard that PRAGMA foreign_keys=ON is set and the nominaTableSQL REFERENCES clause
+// is intact; without it SQLite silently accepts the orphan and corrupts nomen
+// provenance. Sibling of TestStoreV5_ForeignKeysEnforced (entity_source).
+func TestStoreV7_NominaForeignKeyEnforced(t *testing.T) {
+	store := openMemStoreInternal(t)
+	ctx := context.Background()
+
+	// (1) Fresh-DB path must have created the nomina table.
+	if exists, err := tableExists(store.conn, "nomina"); err != nil {
+		t.Fatalf("tableExists(nomina): %v", err)
+	} else if !exists {
+		t.Fatal("fresh v7 DB is missing the nomina table; the fresh-DB migration path must create it")
+	}
+
+	ref := EntityRef{Family: "grok", Version: "4.20", Modifier: []string{"reasoning"}}
+
+	// (2) Orphan source: the referenced DataSource is NOT registered (deliberately no
+	// seed), so the source_id FK must reject the write.
+	orphan := []Nomen{{
+		Value: "grok-beta", Scheme: NomenSchemeAlias, Status: AcceptabilityAdmitted,
+		ResolvesTo: ref, SourceURL: "https://docs.x.ai/docs/models", Source: DataSourceID("no-such-source"),
+	}}
+	err := store.UpsertNomina(ctx, orphan)
+	if err == nil {
+		t.Error(
+			"orphan nomina insert was ACCEPTED; foreign keys are not enforced.\n" +
+				"  What: a nomina row referencing a non-existent source_id was allowed\n" +
+				"  Why: PRAGMA foreign_keys=ON is not set on the connection (or the FK clause is missing)\n" +
+				"  Where: store.go OpenStore (pragma) / nominaTableSQL (source_id FK clause)\n" +
+				"  How to fix: set PRAGMA foreign_keys=ON before migrations and keep the nomina source_id FK",
+		)
+	} else if !strings.Contains(err.Error(), "no-such-source") {
+		t.Errorf("FK rejection error is not actionable about the offending source: %v", err)
+	}
+	// The rejected write must leave the table empty (no partial/silent insert).
+	if got := countRows(t, store.conn, "nomina"); got != 0 {
+		t.Errorf("after a rejected FK insert, nomina has %d rows, want 0", got)
+	}
+
+	// (3) A fully parented nomen must insert: register the source, then persist a nomen
+	// whose Source resolves.
+	seedModelsDevSource(t, store)
+	valid := []Nomen{{
+		Value: "grok-beta", Scheme: NomenSchemeAlias, Status: AcceptabilityAdmitted,
+		ResolvesTo: ref, SourceURL: "https://docs.x.ai/docs/models", Source: DataSourceModelsDev,
+	}}
+	if err := store.UpsertNomina(ctx, valid); err != nil {
+		t.Fatalf("valid nomina insert (registered source) was rejected: %v", err)
+	}
+	if got := countRows(t, store.conn, "nomina"); got != 1 {
+		t.Errorf("nomina row count = %d, want 1 after the parented insert", got)
 	}
 }
 
