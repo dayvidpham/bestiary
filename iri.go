@@ -48,7 +48,10 @@ func mintIRI(base, canonical string) string {
 //
 // The result decodes back byte-identically through url.PathUnescape — the round-trip
 // fence (iri_test.go) asserts exactly that over a torture set and over the whole
-// committed registry.
+// committed registry. The space rationale above is not merely defensive prose: no key
+// the grammar produces today contains a space, so the torture set carries a SYNTHETIC
+// space-bearing case whose only job is to pin this escaper choice
+// (TestIRI_SpacePinsEscaperChoice reddens if this line becomes url.QueryEscape).
 func escapeIRISegment(canonical string) string {
 	return strings.ReplaceAll(url.PathEscape(canonical), "@", "%40")
 }

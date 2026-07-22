@@ -28,6 +28,12 @@ var iriTortureRefs = []struct {
 	{bestiary.EntityRef{Family: "qwen", Variant: "coder", Version: "3", ParamSize: "480b-a35b", Modifier: []string{"instruct"}}, "qwen/coder@3#480b-a35b{instruct}"},
 	{bestiary.EntityRef{Family: "deepseek", Variant: "v3.2"}, "deepseek/v3.2"},
 	{bestiary.EntityRef{Family: "gemini", Version: "3.0"}, "gemini@3.0"},
+	// SYNTHETIC — see TestIRI_SpacePinsEscaperChoice. No key in the committed
+	// registry carries a literal space (the decomposition pipeline tokenizes on
+	// separators, so whitespace cannot reach a key segment today). The case exists
+	// because space is the ONE byte on which the candidate escapers diverge, and it
+	// is what makes the escaper choice a tested claim rather than a comment.
+	{bestiary.EntityRef{Family: "synthetic", Variant: "space case"}, "synthetic/space case"},
 }
 
 // iriBase is a stand-in for the consumer's (still-pending) w3id namespace. The base is a
@@ -76,6 +82,66 @@ func TestEntityRef_IRI_EncodesGrammarDelimiters(t *testing.T) {
 	want := iriBase + "llama%2Fscout%404%2317b-16e%7Binstruct%7D"
 	if iri != want {
 		t.Errorf("IRI = %q, want %q", iri, want)
+	}
+}
+
+// TestIRI_SpacePinsEscaperChoice pins the ESCAPER CHOICE itself — the one behavioural
+// difference between the two plausible stdlib escapers — and is the fence that makes the
+// choice a tested claim rather than a comment.
+//
+// url.PathEscape and url.QueryEscape agree byte-for-byte on every character the identity
+// grammar mechanically produces TODAY: no key in the committed registry contains a
+// literal space (the decomposition pipeline tokenizes on separators, so whitespace never
+// reaches a key segment), and space is precisely the byte on which the two diverge —
+// PathEscape emits "%20", QueryEscape emits "+". A '+' is a query-string convention: it
+// does NOT decode back to a space through url.PathUnescape, so it would break the
+// round-trip contract while every other fence in this file stayed green.
+//
+// The input is therefore SYNTHETIC ON PURPOSE. It is a mutation fence: swap
+// escapeIRISegment to QueryEscape and this test — and only this test — must redden.
+func TestIRI_SpacePinsEscaperChoice(t *testing.T) {
+	const key = "synthetic/space case"
+	ref := bestiary.EntityRef{Family: "synthetic", Variant: "space case"}
+	if got := ref.String(); got != key {
+		t.Fatalf("fixture drift: EntityRef.String() = %q, want %q", got, key)
+	}
+
+	tail := strings.TrimPrefix(ref.IRI(iriBase), iriBase)
+	// Direction 1 — the encoding: a space MUST encode as "%20", never as '+'.
+	if !strings.Contains(tail, "%20") {
+		t.Errorf("minted IRI tail %q does not encode the space as %%20 — the path-segment escaper is not in use", tail)
+	}
+	if strings.Contains(tail, "+") {
+		t.Errorf("minted IRI tail %q encodes the space as '+' (a query-string convention that is a literal plus sign in a path segment)", tail)
+	}
+	if want := "synthetic%2Fspace%20case"; tail != want {
+		t.Errorf("minted IRI tail = %q, want %q", tail, want)
+	}
+
+	// Direction 2 — the decoding: the space survives the path round trip. This is the
+	// half a '+' encoding would silently corrupt (PathUnescape leaves '+' alone, so the
+	// key would come back as "synthetic/space+case").
+	decoded, err := url.PathUnescape(tail)
+	if err != nil {
+		t.Fatalf("PathUnescape(%q) failed: %v", tail, err)
+	}
+	if decoded != key {
+		t.Errorf("round trip for %q: decoded %q — the space did not survive", key, decoded)
+	}
+
+	// The same fence at the ref level, where the canonical string carries the provider
+	// segment as well.
+	mref := bestiary.ModelRef{ID: "synthetic space id", Provider: "synthetic provider", Family: "synthetic", Variant: "space case"}
+	mtail := strings.TrimPrefix(mref.IRI(iriBase), iriBase)
+	if strings.Contains(mtail, "+") {
+		t.Errorf("ModelRef IRI tail %q encodes a space as '+'", mtail)
+	}
+	mdecoded, err := url.PathUnescape(mtail)
+	if err != nil {
+		t.Fatalf("PathUnescape(%q) failed: %v", mtail, err)
+	}
+	if want := mref.Format(bestiary.SchemeCanonical); mdecoded != want {
+		t.Errorf("ModelRef round trip: decoded %q, want %q", mdecoded, want)
 	}
 }
 
