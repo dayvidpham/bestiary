@@ -1,0 +1,57 @@
+{
+  "_comment": "SourceFor hit cases over the curated quant_vram.json seed: every seed row is attested by the Ollama ingest, so the ingest provenance (a DataSourceID FK, distinct from any claimant URL) must come back as ollama.",
+  "cases": [
+    {
+      "name": "llama-3.3-70b-instruct",
+      "input": "llama-3.3-70b-instruct",
+      "expected": "ollama",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "manual",
+        "ref": "quant_vram.json seed row llama-3.3-70b-instruct, ingested from Ollama"
+      },
+      "mutation": {
+        "description": "pins the ingest attestation for llama-3.3-70b-instruct"
+      }
+    },
+    {
+      "name": "llama-3.3-8b-instruct",
+      "input": "llama-3.3-8b-instruct",
+      "expected": "ollama",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "manual",
+        "ref": "quant_vram.json seed row llama-3.3-8b-instruct, ingested from Ollama"
+      },
+      "mutation": {
+        "description": "pins the ingest attestation for llama-3.3-8b-instruct"
+      }
+    },
+    {
+      "name": "llama-3.2-3b-instruct",
+      "input": "llama-3.2-3b-instruct",
+      "expected": "ollama",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "manual",
+        "ref": "quant_vram.json seed row llama-3.2-3b-instruct, ingested from Ollama"
+      },
+      "mutation": {
+        "description": "pins the ingest attestation for llama-3.2-3b-instruct"
+      }
+    },
+    {
+      "name": "ollama-dracarys2-llama-3-70b-instruct",
+      "input": "ollama/dracarys2-llama-3-70b-instruct",
+      "expected": "ollama",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "manual",
+        "ref": "quant_vram.json seed row ollama/dracarys2-llama-3-70b-instruct, ingested from Ollama"
+      },
+      "mutation": {
+        "description": "pins the ingest attestation for ollama/dracarys2-llama-3-70b-instruct"
+      }
+    }
+  ]
+}

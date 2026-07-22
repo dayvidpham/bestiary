@@ -1,0 +1,101 @@
+{
+  "_comment": "detectReasoningOptionKind over a models.json reasoning-option kind tag. Like LinkType this is an ELEMENT enum (Other at zero): an EMPTY token is Other with NO raw, an unknown-but-present token is Other WITH its raw.",
+  "cases": [
+    {
+      "name": "empty-is-other-no-raw",
+      "input": "",
+      "expected": {
+        "token": "other",
+        "raw": ""
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "an absent reasoning-option kind"
+      },
+      "mutation": {
+        "description": "empties the tag entirely, probing the Other-at-zero convention"
+      }
+    },
+    {
+      "name": "toggle",
+      "input": "toggle",
+      "expected": {
+        "token": "toggle",
+        "raw": ""
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "bestiary.ReasoningToggle"
+      },
+      "mutation": {
+        "description": "names a recognized reasoning-option kind"
+      }
+    },
+    {
+      "name": "upper-effort-case-insensitive",
+      "input": "EFFORT",
+      "expected": {
+        "token": "effort",
+        "raw": ""
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "case-insensitive kind parse"
+      },
+      "mutation": {
+        "description": "upper-cases a recognized token"
+      }
+    },
+    {
+      "name": "budget-tokens",
+      "input": "budget_tokens",
+      "expected": {
+        "token": "budget_tokens",
+        "raw": ""
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "bestiary.ReasoningBudgetTokens"
+      },
+      "mutation": {
+        "description": "names the multi-word recognized kind"
+      }
+    },
+    {
+      "name": "unknown-custom-keeps-raw",
+      "input": "custom",
+      "expected": {
+        "token": "other",
+        "raw": "custom"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "an unknown-but-present kind"
+      },
+      "mutation": {
+        "description": "substitutes a token the enum does not know, which must land in Other WITH its raw preserved"
+      }
+    },
+    {
+      "name": "upstream-literal-other-keeps-raw",
+      "input": "other",
+      "expected": {
+        "token": "other",
+        "raw": "other"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "the upstream literal 'other' arrives as a present token"
+      },
+      "mutation": {
+        "description": "uses the fail-safe bucket's own name as the input, which must still be carried as raw"
+      }
+    }
+  ]
+}

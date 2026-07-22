@@ -1,0 +1,83 @@
+{
+  "_comment": "Harness.String() over every well-known coding-tool / dev-environment constant. Harness is a string type, so input is the constant's underlying token.",
+  "cases": [
+    {
+      "name": "claude-code",
+      "input": "claude-code",
+      "expected": "claude-code",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "bestiary.Harness constant claude-code"
+      },
+      "mutation": {
+        "description": "renders the claude-code harness constant"
+      }
+    },
+    {
+      "name": "gemini-cli",
+      "input": "gemini-cli",
+      "expected": "gemini-cli",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "bestiary.Harness constant gemini-cli"
+      },
+      "mutation": {
+        "description": "renders the gemini-cli harness constant"
+      }
+    },
+    {
+      "name": "codex",
+      "input": "codex",
+      "expected": "codex",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "bestiary.Harness constant codex"
+      },
+      "mutation": {
+        "description": "renders the codex harness constant"
+      }
+    },
+    {
+      "name": "opencode",
+      "input": "opencode",
+      "expected": "opencode",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "bestiary.Harness constant opencode"
+      },
+      "mutation": {
+        "description": "renders the opencode harness constant"
+      }
+    },
+    {
+      "name": "cursor",
+      "input": "cursor",
+      "expected": "cursor",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "bestiary.Harness constant cursor"
+      },
+      "mutation": {
+        "description": "renders the cursor harness constant"
+      }
+    },
+    {
+      "name": "antigravity",
+      "input": "antigravity",
+      "expected": "antigravity",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "bestiary.Harness constant antigravity"
+      },
+      "mutation": {
+        "description": "renders the antigravity harness constant"
+      }
+    }
+  ]
+}

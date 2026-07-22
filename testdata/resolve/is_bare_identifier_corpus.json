@@ -1,0 +1,109 @@
+{
+  "_comment": "isBareIdentifier gates the fallback matching path: only a bare family-like word qualifies. Any key punctuation ('#', '@', '/', ':') disqualifies it, so a SIZED entity key such as llama@3.3#70b{instruct} is never mistaken for a bare family name.",
+  "cases": [
+    {
+      "name": "bare-llama",
+      "input": "llama",
+      "expected": true,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "manual",
+        "ref": "a bare family word"
+      },
+      "mutation": {
+        "description": "uses a plain family name with no key punctuation"
+      }
+    },
+    {
+      "name": "bare-claude",
+      "input": "claude",
+      "expected": true,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "manual",
+        "ref": "a second bare family word"
+      },
+      "mutation": {
+        "description": "confirms the accept arm is not pinned to one token"
+      }
+    },
+    {
+      "name": "hash-size",
+      "input": "llama#70b",
+      "expected": false,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "bug",
+        "ref": "the #size segment must disqualify a bare identifier"
+      },
+      "mutation": {
+        "description": "adds the #size sentinel to a bare family word"
+      }
+    },
+    {
+      "name": "version-and-hash",
+      "input": "llama@3.3#70b",
+      "expected": false,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "bug",
+        "ref": "a fully-sized key must disqualify a bare identifier"
+      },
+      "mutation": {
+        "description": "adds both the @version and #size sentinels"
+      }
+    },
+    {
+      "name": "slash-variant",
+      "input": "llama/opus",
+      "expected": false,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "the /variant separator disqualifies a bare identifier"
+      },
+      "mutation": {
+        "description": "adds a variant segment"
+      }
+    },
+    {
+      "name": "purl-colon",
+      "input": "pkg:foo",
+      "expected": false,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "a PURL colon disqualifies a bare identifier"
+      },
+      "mutation": {
+        "description": "adds a scheme colon"
+      }
+    },
+    {
+      "name": "leading-at",
+      "input": "@version",
+      "expected": false,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "a leading @ disqualifies a bare identifier"
+      },
+      "mutation": {
+        "description": "strips the family away, leaving only the version sentinel"
+      }
+    },
+    {
+      "name": "hash-only",
+      "input": "hash#only",
+      "expected": false,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "any embedded # disqualifies a bare identifier"
+      },
+      "mutation": {
+        "description": "embeds the # sentinel mid-token"
+      }
+    }
+  ]
+}

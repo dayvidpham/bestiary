@@ -1,0 +1,213 @@
+{
+  "_comment": "parseContextN extracts the digit-only ':N' context suffix from a raw model ID, returning '' when the suffix is absent, empty, or not all digits. The empty-expected arm is what keeps a NanoGPT context variant from being mistaken for part of the identity.",
+  "cases": [
+    {
+      "name": "nanogpt-thinking-1024",
+      "input": "claude-3-7-sonnet-thinking:1024",
+      "expected": "1024",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "manual",
+        "ref": "NanoGPT-style context-variant id claude-3-7-sonnet-thinking:1024"
+      },
+      "mutation": {
+        "description": "canonical NanoGPT-style :N context variant"
+      }
+    },
+    {
+      "name": "nanogpt-thinking-128000",
+      "input": "claude-3-7-sonnet-thinking:128000",
+      "expected": "128000",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "manual",
+        "ref": "NanoGPT-style context-variant id claude-3-7-sonnet-thinking:128000"
+      },
+      "mutation": {
+        "description": "a six-digit context suffix"
+      }
+    },
+    {
+      "name": "nanogpt-thinking-32768",
+      "input": "claude-3-7-sonnet-thinking:32768",
+      "expected": "32768",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "manual",
+        "ref": "NanoGPT-style context-variant id claude-3-7-sonnet-thinking:32768"
+      },
+      "mutation": {
+        "description": "a five-digit context suffix"
+      }
+    },
+    {
+      "name": "nanogpt-thinking-8192",
+      "input": "claude-3-7-sonnet-thinking:8192",
+      "expected": "8192",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "manual",
+        "ref": "NanoGPT-style context-variant id claude-3-7-sonnet-thinking:8192"
+      },
+      "mutation": {
+        "description": "a four-digit context suffix"
+      }
+    },
+    {
+      "name": "opus-thinking-1024",
+      "input": "claude-opus-4-thinking:1024",
+      "expected": "1024",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "manual",
+        "ref": "NanoGPT-style context-variant id claude-opus-4-thinking:1024"
+      },
+      "mutation": {
+        "description": "the same suffix on a different base id"
+      }
+    },
+    {
+      "name": "opus-thinking-32000",
+      "input": "claude-opus-4-thinking:32000",
+      "expected": "32000",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "manual",
+        "ref": "NanoGPT-style context-variant id claude-opus-4-thinking:32000"
+      },
+      "mutation": {
+        "description": "a five-digit suffix on a different base id"
+      }
+    },
+    {
+      "name": "no-colon-thinking",
+      "input": "claude-3-7-sonnet-thinking",
+      "expected": "",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "id claude-3-7-sonnet-thinking carries no digit-only context suffix"
+      },
+      "mutation": {
+        "description": "removes the colon suffix entirely"
+      }
+    },
+    {
+      "name": "no-colon-dated",
+      "input": "claude-opus-4-20250514",
+      "expected": "",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "id claude-opus-4-20250514 carries no digit-only context suffix"
+      },
+      "mutation": {
+        "description": "uses a dated id whose digits are NOT a context suffix"
+      }
+    },
+    {
+      "name": "no-colon-plain",
+      "input": "gpt-4o",
+      "expected": "",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "id gpt-4o carries no digit-only context suffix"
+      },
+      "mutation": {
+        "description": "uses a plain id with no colon at all"
+      }
+    },
+    {
+      "name": "trailing-word-low",
+      "input": "anthropic/claude-opus-4.6:thinking:low",
+      "expected": "",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "id anthropic/claude-opus-4.6:thinking:low carries no digit-only context suffix"
+      },
+      "mutation": {
+        "description": "appends a non-digit word after the last colon"
+      }
+    },
+    {
+      "name": "trailing-word-max",
+      "input": "anthropic/claude-opus-4.6:thinking:max",
+      "expected": "",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "id anthropic/claude-opus-4.6:thinking:max carries no digit-only context suffix"
+      },
+      "mutation": {
+        "description": "appends a different non-digit word after the last colon"
+      }
+    },
+    {
+      "name": "word-suffix",
+      "input": "foo:bar",
+      "expected": "",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "id foo:bar carries no digit-only context suffix"
+      },
+      "mutation": {
+        "description": "replaces the digits with a bare word"
+      }
+    },
+    {
+      "name": "mixed-alnum-suffix",
+      "input": "foo:1a2b",
+      "expected": "",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "id foo:1a2b carries no digit-only context suffix"
+      },
+      "mutation": {
+        "description": "mixes letters into the digit run"
+      }
+    },
+    {
+      "name": "empty-suffix",
+      "input": "foo:",
+      "expected": "",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "id foo: carries no digit-only context suffix"
+      },
+      "mutation": {
+        "description": "empties the suffix after the colon"
+      }
+    },
+    {
+      "name": "purl-style",
+      "input": "pkg:huggingface/anthropic/claude-opus-4-20250514",
+      "expected": "",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "id pkg:huggingface/anthropic/claude-opus-4-20250514 carries no digit-only context suffix"
+      },
+      "mutation": {
+        "description": "uses a PURL whose last colon precedes a non-digit segment"
+      }
+    },
+    {
+      "name": "lone-colon-digits",
+      "input": ":42",
+      "expected": "42",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "a degenerate id that is nothing but a colon and digits"
+      },
+      "mutation": {
+        "description": "strips the base id away entirely, leaving only the suffix"
+      }
+    }
+  ]
+}

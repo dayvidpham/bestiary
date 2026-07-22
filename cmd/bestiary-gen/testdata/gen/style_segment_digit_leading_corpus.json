@@ -1,0 +1,101 @@
+{
+  "_comment": "The per-segment digit-prefix rule, including the preserveDigitSuffix divergence: the Model__/Entity__ segment rule keeps a single-char alpha suffix VERBATIM (4o), while the slug rule title-cases it (4O). A curated suffix override wins under BOTH settings.",
+  "cases": [
+    {
+      "name": "302ai-preserve-false",
+      "input": {
+        "token": "302ai",
+        "preserve": false
+      },
+      "expected": "302AI",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "manual",
+        "ref": "curated suffix override under the slug rule"
+      },
+      "mutation": {
+        "description": "turns preserve OFF, which must not change a curated suffix"
+      }
+    },
+    {
+      "name": "302ai-preserve-true",
+      "input": {
+        "token": "302ai",
+        "preserve": true
+      },
+      "expected": "302AI",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "manual",
+        "ref": "curated suffix override under the segment rule"
+      },
+      "mutation": {
+        "description": "turns preserve ON, which must not change a curated suffix either"
+      }
+    },
+    {
+      "name": "4o-preserve-true",
+      "input": {
+        "token": "4o",
+        "preserve": true
+      },
+      "expected": "4o",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "the Model__/Entity__ segment rule preserves a single-char alpha suffix verbatim"
+      },
+      "mutation": {
+        "description": "turns preserve ON for an UNCURATED suffix, the half of the divergence that keeps 4o lowercase"
+      }
+    },
+    {
+      "name": "4o-preserve-false",
+      "input": {
+        "token": "4o",
+        "preserve": false
+      },
+      "expected": "4O",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "the slug rule title-cases a single-char alpha suffix"
+      },
+      "mutation": {
+        "description": "flips preserve OFF on the same token, which is the ONLY difference producing 4O"
+      }
+    },
+    {
+      "name": "all-digits",
+      "input": {
+        "token": "123",
+        "preserve": true
+      },
+      "expected": "123",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "an all-digit token has no alpha suffix to case"
+      },
+      "mutation": {
+        "description": "removes the alpha suffix entirely"
+      }
+    },
+    {
+      "name": "curated-alpha-after-digit",
+      "input": {
+        "token": "3deepseek",
+        "preserve": true
+      },
+      "expected": "3DeepSeek",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "manual",
+        "ref": "a curated brand as the alpha suffix after a digit prefix"
+      },
+      "mutation": {
+        "description": "substitutes a curated brand for the single-char suffix"
+      }
+    }
+  ]
+}

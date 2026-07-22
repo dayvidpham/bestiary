@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/dayvidpham/bestiary"
+	"github.com/dayvidpham/bestiary/testcase"
 )
 
 // ----------------------------------------------------------------------------
@@ -784,67 +785,42 @@ func TestParseFamilyDetailed_UnknownSuffixOverflow(t *testing.T) {
 	// This subtest is LIVE (not skipped). ParseFamilyWithVersion Step-5 bounded
 	// reorder prevents the pure-fallback from absorbing all trailing tokens, making
 	// ReasonUnknownSuffixOverflow reachable for the claude-opus-4-1-extra-stuff-zen fixture.
-	unknownTrailingWithOverflow := []struct {
-		rawFamily bestiary.Family
-		id        bestiary.ModelID
-		provider  bestiary.Provider
-		name      string
-	}{
-		{
-			name:      "UnknownSuffixOverflow_PositiveCase",
-			rawFamily: "claude-opus-4-1-extra-stuff-zen",
-			id:        "claude-opus-4-1-extra-stuff-zen",
-			provider:  "anthropic",
-		},
-	}
-	for _, tc := range unknownTrailingWithOverflow {
-		t.Run(tc.name, func(t *testing.T) {
+	// The reachability cases are a CAPTURE corpus (testdata/parse/unknown_suffix_overflow_corpus.json):
+	// the positive row is the synthetic input that reaches the >2 unaccounted-token
+	// threshold with an unknown trailing token, and the two must-fail rows are the
+	// negative controls pinning the conservative boundary (an unknown trailing token
+	// alone is NOT sufficient). Acceptance is the ParseFailure the parser RETURNS.
+	corpus := loadParseCorpus[suffixOverflowInput, suffixOverflowExpected](t, parseUnknownSuffixOverflowCorpusJSON, 3)
+	requireNameCoverage(t, corpus,
+		"UnknownSuffixOverflow_PositiveCase",
+		"no-overflow-gpt-4-zen",
+		"no-overflow-claude-opus-foobar",
+	)
+	for _, c := range corpus.Cases {
+		t.Run(c.Name, func(t *testing.T) {
 			t.Parallel()
-			// ParseFamilyWithVersion Step-5 bounded reorder decomposes
-			// rawFamily="claude-opus-4-1-extra-stuff-zen" to (claude, opus, 4.1) via hyphen-version;
-			// "extra-stuff-zen" are unaccounted tokens (>2 threshold) → detectSuffixOverflow fires
-			// → "zen" is not in pd.modifiers → ReasonUnknownSuffixOverflow.
-			_, _, _, _, failure := bestiary.ParseFamilyDetailed(tc.rawFamily, tc.id, tc.provider)
-			if failure == nil {
-				t.Errorf("ParseFamilyDetailed(%q, %q): expected ParseFailure with Reason=%q, got nil\n"+
-					"  What: ReasonUnknownSuffixOverflow was not emitted\n"+
-					"  Why: ParseFamilyWithVersion Step-5 bounded reorder must decompose\n"+
-					"       the input so that 'extra-stuff-zen' tokens are unaccounted (>2 threshold)\n"+
-					"  How to fix: verify ParseFamilyWithVersion returns (claude,opus,4.1) not raw passthrough",
-					tc.rawFamily, tc.id, bestiary.ReasonUnknownSuffixOverflow)
+			_, _, _, _, failure := bestiary.ParseFamilyDetailed(
+				bestiary.Family(c.Input.RawFamily), bestiary.ModelID(c.Input.ID), bestiary.Provider(c.Input.Provider))
+			if c.Classification == testcase.MustFail {
+				// Negative control: the overflow reason must NOT fire.
+				if failure != nil && string(failure.Reason) == string(bestiary.ReasonUnknownSuffixOverflow) {
+					t.Errorf("ParseFamilyDetailed(%q, %q): got ReasonUnknownSuffixOverflow; "+
+						"this case must not fire Mode 2 (trailing token is unknown but there is no overflow)",
+						c.Input.RawFamily, c.Input.ID)
+				}
 				return
 			}
-			if failure.Reason != bestiary.ReasonUnknownSuffixOverflow {
-				t.Errorf("ParseFamilyDetailed(%q, %q): failure.Reason = %q, want %q\n"+
-					"  What: wrong failure reason — expected UnknownSuffixOverflow\n"+
-					"  Why: trailing token 'zen' is not in pd.modifiers but overflow was detected",
-					tc.rawFamily, tc.id, failure.Reason, bestiary.ReasonUnknownSuffixOverflow)
+			if failure == nil {
+				t.Fatalf("ParseFamilyDetailed(%q, %q): expected a ParseFailure with Reason=%q, got nil\n"+
+					"  What: ReasonUnknownSuffixOverflow was not emitted\n"+
+					"  Why: ParseFamilyWithVersion Step-5 bounded reorder must decompose the input so the\n"+
+					"       trailing tokens are unaccounted (>2 threshold)\n"+
+					"  How to fix: verify ParseFamilyWithVersion returns (claude,opus,4.1), not a raw passthrough",
+					c.Input.RawFamily, c.Input.ID, c.Expected.Reason)
 			}
-		})
-	}
-
-	// Negative: unknown suffix token does NOT fire Mode 2 unless detectSuffixOverflow
-	// also fires. These cases document the boundary: an unknown trailing token alone
-	// is NOT sufficient to trigger Mode 2; the detectSuffixOverflow threshold (>2 extra
-	// tokens) must also be met. This means the current Mode 2 detection is conservative:
-	// novel-but-semantic modifiers like "-zen" go unreported unless there is a broader
-	// overflow pattern. Extend the allowlist to catch specific new modifiers.
-	unknownTrailingNotOverflow := []struct {
-		rawFamily bestiary.Family
-		id        bestiary.ModelID
-		provider  bestiary.Provider
-	}{
-		{rawFamily: "gpt-4", id: "gpt-4-zen", provider: "openai"},
-		{rawFamily: "claude-opus", id: "claude-opus-foobar", provider: "anthropic"},
-	}
-	for _, tc := range unknownTrailingNotOverflow {
-		t.Run("no-overflow/"+string(tc.id), func(t *testing.T) {
-			t.Parallel()
-			_, _, _, _, failure := bestiary.ParseFamilyDetailed(tc.rawFamily, tc.id, tc.provider)
-			if failure != nil && failure.Reason == bestiary.ReasonUnknownSuffixOverflow {
-				t.Errorf("ParseFamilyDetailed(%q, %q): got ReasonUnknownSuffixOverflow; "+
-					"this case should not fire Mode 2 (trailing token is unknown but no overflow)",
-					tc.rawFamily, tc.id)
+			if string(failure.Reason) != c.Expected.Reason {
+				t.Errorf("ParseFamilyDetailed(%q, %q): failure.Reason = %q, want %q",
+					c.Input.RawFamily, c.Input.ID, failure.Reason, c.Expected.Reason)
 			}
 		})
 	}

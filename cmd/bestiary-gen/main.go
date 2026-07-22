@@ -511,6 +511,16 @@ func run(args []string) error {
 		return fmt.Errorf("validate curated param-size pins: %w", err)
 	}
 
+	// Fail loudly on bad redundant-modifier suppression curation BEFORE generating
+	// anything: an unknown family, a missing rationale, or a modifier the entity does
+	// not carry would otherwise degrade at runtime to "no suppression", silently
+	// reverting the curated naming policy instead of reporting the bad entry. (The
+	// entity-relative existence/collision checks need the built entity set and run
+	// later, once the models are decomposed — see ValidateSuppression.)
+	if err := bestiary.ValidateSuppressionSeed(); err != nil {
+		return fmt.Errorf("validate curated suppression seed: %w", err)
+	}
+
 	// Fail loudly on bad data-source curation BEFORE generating anything: a duplicate
 	// source id/uri, an ingest source_id absent from the dimension, or an entity↔source
 	// attestation naming a source absent from the curated datasources.json is a curation

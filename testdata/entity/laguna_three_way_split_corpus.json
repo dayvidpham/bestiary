@@ -1,0 +1,62 @@
+{
+  "_comment": "The ratified laguna curated-variant split: laguna-xs.2, laguna-xs-2.1 and laguna-m.1 key to THREE distinct entities, and each lab metadata row attaches to its own entity. This fixes a pre-existing SILENT metadata collision between m.1 and xs.2, so each row is load-bearing against a regression that produced no error.",
+  "cases": [
+    {
+      "name": "laguna-xs-2",
+      "input": {
+        "variant": "xs",
+        "version": "2"
+      },
+      "expected": {
+        "want_key": "laguna/xs@2",
+        "metadata_id": "poolside/laguna-xs.2"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "ratified laguna variant split: laguna-xs.2 -> laguna/xs@2"
+      },
+      "mutation": {
+        "description": "pins the xs variant at version 2, the half of the collision that used to lose its metadata"
+      }
+    },
+    {
+      "name": "laguna-xs-2-1",
+      "input": {
+        "variant": "xs",
+        "version": "2.1"
+      },
+      "expected": {
+        "want_key": "laguna/xs@2.1",
+        "metadata_id": "poolside/laguna-xs-2.1"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "ratified laguna variant split: laguna-xs-2.1 -> laguna/xs@2.1"
+      },
+      "mutation": {
+        "description": "changes only the version within the same variant, so a version-collapsing regression reddens"
+      }
+    },
+    {
+      "name": "laguna-m-1",
+      "input": {
+        "variant": "m",
+        "version": "1"
+      },
+      "expected": {
+        "want_key": "laguna/m@1",
+        "metadata_id": "poolside/laguna-m.1"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "ratified laguna variant split: laguna-m.1 -> laguna/m@1"
+      },
+      "mutation": {
+        "description": "changes the variant, the other half of the collision that used to steal the xs.2 metadata"
+      }
+    }
+  ]
+}

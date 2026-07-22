@@ -33,23 +33,19 @@ func TestHarness_IsKnown(t *testing.T) {
 	}
 }
 
+// TestHarness_String drives Harness.String() over every well-known constant, loaded
+// from testdata/enum/harness_string_corpus.json. requireHarnessKnown additionally
+// pins that each corpus token is still a recognized Harness.
 func TestHarness_String(t *testing.T) {
-	cases := []struct {
-		h    bestiary.Harness
-		want string
-	}{
-		{bestiary.HarnessClaudeCode, "claude-code"},
-		{bestiary.HarnessGeminiCLI, "gemini-cli"},
-		{bestiary.HarnessCodex, "codex"},
-		{bestiary.HarnessOpenCode, "opencode"},
-		{bestiary.HarnessCursor, "cursor"},
-		{bestiary.HarnessAntigravity, "antigravity"},
-	}
-	for _, tc := range cases {
-		if got := tc.h.String(); got != tc.want {
-			t.Errorf("Harness(%q).String() = %q, want %q", tc.h, got, tc.want)
-		}
-	}
+	corpus := loadEnumStringCorpus(t, enumHarnessStringCorpusJSON, 6)
+	requireInputCoverage(t, corpus, map[string]string{
+		string(bestiary.HarnessClaudeCode):  "claude-code",
+		string(bestiary.HarnessAntigravity): "antigravity",
+	})
+	requireHarnessKnown(t, corpus)
+	runEnumStringCorpus(t, corpus, func(_ *testing.T, in string) string {
+		return bestiary.Harness(in).String()
+	})
 }
 
 func TestHarness_MarshalUnmarshalText(t *testing.T) {

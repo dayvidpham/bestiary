@@ -1,0 +1,57 @@
+{
+  "_comment": "AcceptabilityRating.String() over every ISO-1087 member plus the out-of-range fallback. Input is the enum's int value.",
+  "cases": [
+    {
+      "name": "admitted",
+      "input": 0,
+      "expected": "admitted",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "bestiary.AcceptabilityAdmitted (iota 0)"
+      },
+      "mutation": {
+        "description": "renders the default rating"
+      }
+    },
+    {
+      "name": "preferred",
+      "input": 1,
+      "expected": "preferred",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "bestiary.AcceptabilityPreferred (iota 1)"
+      },
+      "mutation": {
+        "description": "renders the recommended-form rating"
+      }
+    },
+    {
+      "name": "deprecated",
+      "input": 2,
+      "expected": "deprecated",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "bestiary.AcceptabilityDeprecated (iota 2)"
+      },
+      "mutation": {
+        "description": "renders the no-longer-recommended rating"
+      }
+    },
+    {
+      "name": "out-of-range-99",
+      "input": 99,
+      "expected": "AcceptabilityRating(99)",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "int value 99 is past the last member (deprecated=2)"
+      },
+      "mutation": {
+        "description": "pushes the value past the end of the enum"
+      }
+    }
+  ]
+}

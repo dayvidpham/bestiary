@@ -1,0 +1,57 @@
+{
+  "_comment": "Provider.String() returns the underlying slug. Provider is a string type with well-known constants; this corpus pins the four the package documents by name.",
+  "cases": [
+    {
+      "name": "anthropic",
+      "input": "anthropic",
+      "expected": "anthropic",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "bestiary.ProviderAnthropic"
+      },
+      "mutation": {
+        "description": "renders the anthropic provider constant"
+      }
+    },
+    {
+      "name": "google",
+      "input": "google",
+      "expected": "google",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "bestiary.ProviderGoogle"
+      },
+      "mutation": {
+        "description": "renders the google provider constant"
+      }
+    },
+    {
+      "name": "openai",
+      "input": "openai",
+      "expected": "openai",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "bestiary.ProviderOpenai"
+      },
+      "mutation": {
+        "description": "renders the openai provider constant"
+      }
+    },
+    {
+      "name": "local",
+      "input": "local",
+      "expected": "local",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "bestiary.ProviderLocal"
+      },
+      "mutation": {
+        "description": "renders the local provider constant"
+      }
+    }
+  ]
+}

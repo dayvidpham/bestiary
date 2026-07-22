@@ -1,0 +1,70 @@
+{
+  "_comment": "Modality.String() over every member of the closed Modality enum. Input is the enum's int value; expected is its lowercase wire token.",
+  "cases": [
+    {
+      "name": "text",
+      "input": 0,
+      "expected": "text",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "bestiary.Modality member text"
+      },
+      "mutation": {
+        "description": "renders enum member text to its wire token"
+      }
+    },
+    {
+      "name": "image",
+      "input": 1,
+      "expected": "image",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "bestiary.Modality member image"
+      },
+      "mutation": {
+        "description": "renders enum member image to its wire token"
+      }
+    },
+    {
+      "name": "pdf",
+      "input": 2,
+      "expected": "pdf",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "bestiary.Modality member pdf"
+      },
+      "mutation": {
+        "description": "renders enum member pdf to its wire token"
+      }
+    },
+    {
+      "name": "audio",
+      "input": 3,
+      "expected": "audio",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "bestiary.Modality member audio"
+      },
+      "mutation": {
+        "description": "renders enum member audio to its wire token"
+      }
+    },
+    {
+      "name": "video",
+      "input": 4,
+      "expected": "video",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "bestiary.Modality member video"
+      },
+      "mutation": {
+        "description": "renders enum member video to its wire token"
+      }
+    }
+  ]
+}

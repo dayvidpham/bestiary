@@ -1,0 +1,117 @@
+{
+  "_comment": "providerConstName wraps slugToIdentifier with the Provider prefix and must always yield a VALID Go identifier \u2014 which is exactly why a digit-leading slug is safe here.",
+  "cases": [
+    {
+      "name": "302ai",
+      "input": {
+        "slug": "302ai",
+        "name_hint": "302AI"
+      },
+      "expected": "Provider302AI",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "manual",
+        "ref": "provider slug 302ai"
+      },
+      "mutation": {
+        "description": "prefixes a digit-leading identifier, the case that makes the prefix load-bearing"
+      }
+    },
+    {
+      "name": "xai",
+      "input": {
+        "slug": "xai",
+        "name_hint": "xAI"
+      },
+      "expected": "ProviderxAI",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "manual",
+        "ref": "provider slug xai"
+      },
+      "mutation": {
+        "description": "prefixes a lowercase-initial brand casing"
+      }
+    },
+    {
+      "name": "sap-ai-core",
+      "input": {
+        "slug": "sap-ai-core",
+        "name_hint": "SAP AI Core"
+      },
+      "expected": "ProviderSAPAICore",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "manual",
+        "ref": "provider slug sap-ai-core"
+      },
+      "mutation": {
+        "description": "prefixes a two-override multi-token slug"
+      }
+    },
+    {
+      "name": "amazon-bedrock",
+      "input": {
+        "slug": "amazon-bedrock",
+        "name_hint": "Amazon Bedrock"
+      },
+      "expected": "ProviderAmazonBedrock",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "manual",
+        "ref": "provider slug amazon-bedrock"
+      },
+      "mutation": {
+        "description": "prefixes a plain hyphenated slug"
+      }
+    },
+    {
+      "name": "anthropic",
+      "input": {
+        "slug": "anthropic",
+        "name_hint": "Anthropic"
+      },
+      "expected": "ProviderAnthropic",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "manual",
+        "ref": "provider slug anthropic"
+      },
+      "mutation": {
+        "description": "prefixes the simplest single token"
+      }
+    },
+    {
+      "name": "google",
+      "input": {
+        "slug": "google",
+        "name_hint": "Google"
+      },
+      "expected": "ProviderGoogle",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "manual",
+        "ref": "provider slug google"
+      },
+      "mutation": {
+        "description": "a second plain single token"
+      }
+    },
+    {
+      "name": "cloudflare-ai-gateway",
+      "input": {
+        "slug": "cloudflare-ai-gateway",
+        "name_hint": "Cloudflare AI Gateway"
+      },
+      "expected": "ProviderCloudflareAIGateway",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "manual",
+        "ref": "provider slug cloudflare-ai-gateway"
+      },
+      "mutation": {
+        "description": "prefixes a three-token slug with a mid-slug override"
+      }
+    }
+  ]
+}

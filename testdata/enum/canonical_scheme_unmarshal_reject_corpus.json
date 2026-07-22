@@ -1,0 +1,44 @@
+{
+  "_comment": "CanonicalScheme.UnmarshalJSON must REJECT non-string and unknown-token JSON with a non-empty, actionable error rather than degrading to the zero value.",
+  "cases": [
+    {
+      "name": "wrong-type-number",
+      "input": "42",
+      "expected": "",
+      "classification": "must-fail",
+      "provenance": {
+        "source": "boundary",
+        "ref": "a JSON number where a string enum token is required"
+      },
+      "mutation": {
+        "description": "replaces the valid string token with a JSON number"
+      }
+    },
+    {
+      "name": "wrong-type-null",
+      "input": "null",
+      "expected": "",
+      "classification": "must-fail",
+      "provenance": {
+        "source": "boundary",
+        "ref": "a JSON null where a string enum token is required"
+      },
+      "mutation": {
+        "description": "replaces the valid string token with JSON null"
+      }
+    },
+    {
+      "name": "unknown-string-value",
+      "input": "\"bogus\"",
+      "expected": "",
+      "classification": "must-fail",
+      "provenance": {
+        "source": "boundary",
+        "ref": "a syntactically valid string that names no scheme"
+      },
+      "mutation": {
+        "description": "replaces the valid token with an unknown word"
+      }
+    }
+  ]
+}

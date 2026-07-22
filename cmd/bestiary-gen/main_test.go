@@ -29,78 +29,35 @@ var updateGolden = flag.Bool("update", false, "regenerate golden files instead o
 // TestSlugToIdentifier verifies the slug-to-PascalCase conversion, including
 // digit-leading slugs, casing overrides, and hyphen-separated tokens.
 func TestSlugToIdentifier(t *testing.T) {
-	cases := []struct {
-		slug     string
-		nameHint string
-		want     string
-	}{
-		// Digit-leading slug: "302" stays verbatim; "ai" → "AI" via casingOverrides.
-		{"302ai", "302AI", "302AI"},
-		// Single-token brand-casing.
-		{"xai", "xAI", "xAI"},
-		// Multi-token with two overrides (SAP + AI).
-		{"sap-ai-core", "SAP AI Core", "SAPAICore"},
-		// Hyphenated without overrides — title-case each token.
-		{"amazon-bedrock", "Amazon Bedrock", "AmazonBedrock"},
-		// Simple single token.
-		{"anthropic", "Anthropic", "Anthropic"},
-		{"google", "Google", "Google"},
-		// Multi-token with AI override.
-		{"cloudflare-ai-gateway", "Cloudflare AI Gateway", "CloudflareAIGateway"},
-		// AWS override.
-		{"aws", "AWS", "AWS"},
-		// openrouter — name hint "OpenRouter" provides the display casing.
-		{"openrouter", "OpenRouter", "OpenRouter"},
-	}
-
-	for _, tc := range cases {
-		t.Run(tc.slug, func(t *testing.T) {
-			got := slugToIdentifier(tc.slug, tc.nameHint)
-			if got != tc.want {
-				t.Errorf("slugToIdentifier(%q, %q) = %q, want %q", tc.slug, tc.nameHint, got, tc.want)
-			}
-		})
-	}
+	corpus := loadGenCorpus[genSlugInput, string](t, genSlugToIdentifierCorpusJSON, 9)
+	genRequireInputCoverage(t, corpus, map[genSlugInput]string{
+		{Slug: "302ai", NameHint: "302AI"}:                                 "302AI",
+		{Slug: "sap-ai-core", NameHint: "SAP AI Core"}:                     "SAPAICore",
+		{Slug: "cloudflare-ai-gateway", NameHint: "Cloudflare AI Gateway"}: "CloudflareAIGateway",
+	})
+	runGenSlugCorpus(t, corpus)
 }
 
 // TestSlugToIdentifier_DigitLeadingVariants covers digit-alpha combinations.
 func TestSlugToIdentifier_DigitLeadingVariants(t *testing.T) {
-	cases := []struct {
-		slug string
-		name string
-		want string
-	}{
-		{"302ai", "302AI", "302AI"},
-		{"3ai", "3AI", "3AI"},
-	}
-	for _, tc := range cases {
-		got := slugToIdentifier(tc.slug, tc.name)
-		if got != tc.want {
-			t.Errorf("slugToIdentifier(%q, %q) = %q, want %q", tc.slug, tc.name, got, tc.want)
-		}
-	}
+	corpus := loadGenCorpus[genSlugInput, string](t, genSlugToIdentifierDigitLeadingCorpusJSON, 2)
+	genRequireInputCoverage(t, corpus, map[genSlugInput]string{
+		{Slug: "3ai", NameHint: "3AI"}: "3AI",
+	})
+	runGenSlugCorpus(t, corpus)
 }
 
 // TestProviderConstName verifies that providerConstName produces valid Go identifiers.
 func TestProviderConstName(t *testing.T) {
-	cases := []struct {
-		slug string
-		name string
-		want string
-	}{
-		{"302ai", "302AI", "Provider302AI"},
-		{"xai", "xAI", "ProviderxAI"},
-		{"sap-ai-core", "SAP AI Core", "ProviderSAPAICore"},
-		{"amazon-bedrock", "Amazon Bedrock", "ProviderAmazonBedrock"},
-		{"anthropic", "Anthropic", "ProviderAnthropic"},
-		{"google", "Google", "ProviderGoogle"},
-		{"cloudflare-ai-gateway", "Cloudflare AI Gateway", "ProviderCloudflareAIGateway"},
-	}
-	for _, tc := range cases {
-		t.Run(tc.slug, func(t *testing.T) {
-			got := providerConstName(tc.slug, tc.name)
-			if got != tc.want {
-				t.Errorf("providerConstName(%q, %q) = %q, want %q", tc.slug, tc.name, got, tc.want)
+	corpus := loadGenCorpus[genSlugInput, string](t, genProviderConstNameCorpusJSON, 7)
+	genRequireInputCoverage(t, corpus, map[genSlugInput]string{
+		{Slug: "302ai", NameHint: "302AI"}: "Provider302AI",
+		{Slug: "xai", NameHint: "xAI"}:     "ProviderxAI",
+	})
+	for _, c := range corpus.Cases {
+		t.Run(c.Name, func(t *testing.T) {
+			if got := providerConstName(c.Input.Slug, c.Input.NameHint); got != c.Expected {
+				t.Errorf("providerConstName(%q, %q) = %q, want %q", c.Input.Slug, c.Input.NameHint, got, c.Expected)
 			}
 		})
 	}
@@ -221,26 +178,20 @@ func TestFilterFlags_NoFlags(t *testing.T) {
 
 // TestSplitComma verifies the comma-splitting helper.
 func TestSplitComma(t *testing.T) {
-	cases := []struct {
-		in   string
-		want []string
-	}{
-		{"anthropic,google", []string{"anthropic", "google"}},
-		{"anthropic", []string{"anthropic"}},
-		{"", nil},
-		{"anthropic, google", []string{"anthropic", "google"}},
-	}
-	for _, tc := range cases {
-		got := splitComma(tc.in)
-		if len(got) != len(tc.want) {
-			t.Errorf("splitComma(%q) = %v, want %v", tc.in, got, tc.want)
-			continue
-		}
-		for i, g := range got {
-			if g != tc.want[i] {
-				t.Errorf("splitComma(%q)[%d] = %q, want %q", tc.in, i, g, tc.want[i])
+	corpus := loadGenCorpus[string, []string](t, genSplitCommaCorpusJSON, 4)
+	genRequireNameCoverage(t, corpus, "two-values", "empty-is-nil", "padded-values")
+	for _, c := range corpus.Cases {
+		t.Run(c.Name, func(t *testing.T) {
+			got := splitComma(c.Input)
+			if len(got) != len(c.Expected) {
+				t.Fatalf("splitComma(%q) = %v, want %v", c.Input, got, c.Expected)
 			}
-		}
+			for i, g := range got {
+				if g != c.Expected[i] {
+					t.Errorf("splitComma(%q)[%d] = %q, want %q", c.Input, i, g, c.Expected[i])
+				}
+			}
+		})
 	}
 }
 
@@ -259,21 +210,25 @@ func canonNomen(ref bestiary.EntityRef) bestiary.Nomen {
 // The version-vs-variant pins (deepseek@3.2 vs deepseek/v3.2) and the version-sanitize
 // pins (qwen@3.5 vs qwen@35) are the injectivity-critical cases.
 func TestEntityConstName_PinnedExamples(t *testing.T) {
-	cases := []struct {
-		ref  bestiary.EntityRef
-		want string
-	}{
-		{bestiary.EntityRef{Family: "deepseek", Version: "3.2"}, "Entity__Deepseek__Version_3_2"},
-		{bestiary.EntityRef{Family: "deepseek", Variant: "v3.2"}, "Entity__Deepseek__V3_2"},
-		{bestiary.EntityRef{Family: "qwen", Version: "3.5"}, "Entity__Qwen__Version_3_5"},
-		{bestiary.EntityRef{Family: "qwen", Version: "35"}, "Entity__Qwen__Version_35"},
-		{bestiary.EntityRef{Family: "llama", Variant: "scout", Version: "4", ParamSize: "17b-16e", Modifier: []string{"instruct"}}, "Entity__Llama__Scout__Version_4__Size_17b_16e__Instruct"},
-		{bestiary.EntityRef{Family: "command", Variant: "r7b", ParamSize: "7b"}, "Entity__Command__R7b__Size_7b"},
-	}
-	for _, tc := range cases {
-		if got := entityConstName(tc.ref); got != tc.want {
-			t.Errorf("entityConstName(%q) = %q, want %q", tc.ref.String(), got, tc.want)
-		}
+	corpus := loadGenCorpus[genEntityRefInput, string](t, genEntityConstNamePinnedCorpusJSON, 6)
+	genRequireNameCoverage(t, corpus,
+		"deepseek-version-3-2", "deepseek-variant-v3-2",
+		"qwen-version-3-5", "qwen-version-35",
+		"llama-scout-full-tuple",
+	)
+	for _, c := range corpus.Cases {
+		t.Run(c.Name, func(t *testing.T) {
+			ref := bestiary.EntityRef{
+				Family:    bestiary.Family(c.Input.Family),
+				Variant:   c.Input.Variant,
+				Version:   c.Input.Version,
+				ParamSize: c.Input.ParamSize,
+				Modifier:  c.Input.Modifier,
+			}
+			if got := entityConstName(ref); got != c.Expected {
+				t.Errorf("entityConstName(%q) = %q, want %q", ref.String(), got, c.Expected)
+			}
+		})
 	}
 }
 
@@ -994,28 +949,11 @@ func TestParseFlags_DoubleHyphen(t *testing.T) {
 // TestSlugToIdentifier_ChatGPT verifies that the chatgpt casing override is
 // applied correctly: chatgpt → ChatGPT.
 func TestSlugToIdentifier_ChatGPT(t *testing.T) {
-	cases := []struct {
-		slug     string
-		nameHint string
-		want     string
-	}{
-		// Full slug "chatgpt" → "ChatGPT" (single-token casing override).
-		{"chatgpt", "ChatGPT", "ChatGPT"},
-		// "chatgpt-4o" splits into ["chatgpt", "4o"]:
-		// chatgpt → ChatGPT via casing override.
-		// 4o: digit-leading, alpha "o" has no casing override → title-cased to "O"
-		// (slugToIdentifier uppercases single-char alpha suffixes in provider/family symbols;
-		// the Entity__ grammar, by contrast, preserves within-segment characters verbatim).
-		{"chatgpt-4o", "ChatGPT-4o", "ChatGPT4O"},
-	}
-	for _, tc := range cases {
-		t.Run(tc.slug, func(t *testing.T) {
-			got := slugToIdentifier(tc.slug, tc.nameHint)
-			if got != tc.want {
-				t.Errorf("slugToIdentifier(%q, %q) = %q, want %q", tc.slug, tc.nameHint, got, tc.want)
-			}
-		})
-	}
+	corpus := loadGenCorpus[genSlugInput, string](t, genSlugToIdentifierChatGPTCorpusJSON, 2)
+	genRequireInputCoverage(t, corpus, map[genSlugInput]string{
+		{Slug: "chatgpt-4o", NameHint: "ChatGPT-4o"}: "ChatGPT4O",
+	})
+	runGenSlugCorpus(t, corpus)
 }
 
 // TestValidateGeneratedFamilyType verifies that validateGeneratedFamilyType

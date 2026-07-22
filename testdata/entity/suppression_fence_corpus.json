@@ -1,0 +1,4 @@
+{
+  "_comment": "PER-ENTRY FENCE for the redundant-modifier suppression seed (parse/data/suppression_seed.json). Exactly one row per seed entry, asserted by exact-N parity: an entry with no row here, or a row with no entry, fails TestSuppressionSeed_PerEntryFenceParity. Each row pins the LITERAL before/after pair — 'key' is the entity key (which suppression never changes) and 'preferred' is the naming the seed makes preferred — plus the admitted spellings that must stay resolvable. Deleting a seed entry therefore reddens two independent assertions (the parity count and this row's literals), which is what makes every entry load-bearing. The seed ships EMPTY, so this corpus ships empty; the machinery itself is exercised end-to-end by the synthetic entry in TestSuppression_SyntheticEntry_EndToEnd.",
+  "cases": []
+}

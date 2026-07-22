@@ -130,21 +130,17 @@ func TestProviderMarshalUnmarshalRoundTrip(t *testing.T) {
 	}
 }
 
+// TestProviderString drives Provider.String() over the documented well-known
+// constants, from testdata/enum/provider_string_corpus.json.
 func TestProviderString(t *testing.T) {
-	cases := []struct {
-		p    bestiary.Provider
-		want string
-	}{
-		{bestiary.ProviderAnthropic, "anthropic"},
-		{bestiary.ProviderGoogle, "google"},
-		{bestiary.ProviderOpenAI, "openai"},
-		{bestiary.ProviderLocal, "local"},
-	}
-	for _, tc := range cases {
-		if got := tc.p.String(); got != tc.want {
-			t.Errorf("Provider(%q).String() = %q, want %q", tc.p, got, tc.want)
-		}
-	}
+	corpus := loadEnumStringCorpus(t, enumProviderStringCorpusJSON, 4)
+	requireInputCoverage(t, corpus, map[string]string{
+		string(bestiary.ProviderAnthropic): "anthropic",
+		string(bestiary.ProviderLocal):     "local",
+	})
+	runEnumStringCorpus(t, corpus, func(_ *testing.T, in string) string {
+		return bestiary.Provider(in).String()
+	})
 }
 
 // TestProviders_GoldenFile snapshots the sorted list of all provider slugs

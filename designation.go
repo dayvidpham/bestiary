@@ -15,6 +15,12 @@ import (
 // HuggingFace / PURL forms stay AcceptabilityAdmitted. AcceptabilityDeprecated is
 // still unused (no designation is deprecated yet); its assignment is deferred to a
 // follow-up curation epoch.
+//
+// Preferred is not necessarily UNIQUE per entity within the canonical scheme: the
+// redundant-modifier suppression policy (suppression.go) can demote an entity's KEY
+// spelling to Admitted and promote the shorter, modifier-free spelling to Preferred.
+// Both are canonical nomina of the same entity and both resolve to it — the rating
+// records which spelling bestiary recommends, never which spelling is the identity.
 type AcceptabilityRating int
 
 const (

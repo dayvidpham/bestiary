@@ -1,0 +1,83 @@
+{
+  "_comment": "AcceptabilityRating.UnmarshalJSON accepts its wire tokens case-insensitively. Input is the raw JSON literal; expected is the resulting rating's String().",
+  "cases": [
+    {
+      "name": "upper-admitted",
+      "input": "\"ADMITTED\"",
+      "expected": "admitted",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "case-insensitive parse of the admitted token"
+      },
+      "mutation": {
+        "description": "upper-cases every letter of the wire token"
+      }
+    },
+    {
+      "name": "title-admitted",
+      "input": "\"Admitted\"",
+      "expected": "admitted",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "case-insensitive parse of the admitted token"
+      },
+      "mutation": {
+        "description": "title-cases the wire token"
+      }
+    },
+    {
+      "name": "upper-preferred",
+      "input": "\"PREFERRED\"",
+      "expected": "preferred",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "case-insensitive parse of the preferred token"
+      },
+      "mutation": {
+        "description": "upper-cases every letter of the wire token"
+      }
+    },
+    {
+      "name": "title-preferred",
+      "input": "\"Preferred\"",
+      "expected": "preferred",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "case-insensitive parse of the preferred token"
+      },
+      "mutation": {
+        "description": "title-cases the wire token"
+      }
+    },
+    {
+      "name": "upper-deprecated",
+      "input": "\"DEPRECATED\"",
+      "expected": "deprecated",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "case-insensitive parse of the deprecated token"
+      },
+      "mutation": {
+        "description": "upper-cases every letter of the wire token"
+      }
+    },
+    {
+      "name": "title-deprecated",
+      "input": "\"Deprecated\"",
+      "expected": "deprecated",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "case-insensitive parse of the deprecated token"
+      },
+      "mutation": {
+        "description": "title-cases the wire token"
+      }
+    }
+  ]
+}

@@ -136,7 +136,24 @@ for its **Go module tags** (`vX.Y.Z`).
   Bedrock ids now recover the same version as their plain siblings and share one
   entity (previously they split into version-less sibling entities).
 
+### Added (naming policy)
+- **Redundant-modifier suppression machinery** (ships with an **empty seed** —
+  entries are curated case-by-case): a curated seed entry marks a modifier
+  redundant for an entity, making the spelling with the modifier an `Admitted`
+  nomen while the `Preferred` value omits it. The entity key is never changed
+  and the policy is fully reversible; with the empty seed every rendered name
+  is byte-identical to the key (census-fenced). Loud codegen validators reject
+  malformed or colliding seed entries.
+
 ### Testing
+- Fixture-extraction completion: corpus census 65 → 102 (every remaining
+  targeted inline table migrated 1:1 under the three-guard discipline);
+  unknown-suffix-overflow captured as a corpus; entity-projection probes on the
+  two projection corpora; `TESTING.md` documents the census and what
+  deliberately stays inline.
+- Research deliverables (report-only, decisions user-gated): the turbo/fast
+  per-family evidence report (URL-census methodology over the baked metadata
+  links) and the general-beta evidence memo.
 - Parse-residual capture corpora: 59 → 65 corpora (azure serving-host,
   meta-llama no-slash census, namespace suffix transparency, text-embedding
   sole-variant, grok documented-residual, region capture), all under the

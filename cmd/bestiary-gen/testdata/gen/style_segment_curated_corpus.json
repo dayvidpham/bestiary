@@ -1,0 +1,343 @@
+{
+  "_comment": "styleSegment applies the CURATED brand table and reports handled=true (curated entries are definitive, so the name-hint never overrides them). Input matching is case-insensitive.",
+  "cases": [
+    {
+      "name": "nvidia",
+      "input": "nvidia",
+      "expected": "Nvidia",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "curated brand-casing entry for nvidia"
+      },
+      "mutation": {
+        "description": "renders the curated casing for nvidia"
+      }
+    },
+    {
+      "name": "togetherai",
+      "input": "togetherai",
+      "expected": "TogetherAI",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "curated brand-casing entry for togetherai"
+      },
+      "mutation": {
+        "description": "renders the curated casing for togetherai"
+      }
+    },
+    {
+      "name": "llmgateway",
+      "input": "llmgateway",
+      "expected": "LlmGateway",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "curated brand-casing entry for llmgateway"
+      },
+      "mutation": {
+        "description": "renders the curated casing for llmgateway"
+      }
+    },
+    {
+      "name": "iflowcn",
+      "input": "iflowcn",
+      "expected": "iFlowCN",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "curated brand-casing entry for iflowcn"
+      },
+      "mutation": {
+        "description": "renders the curated casing for iflowcn"
+      }
+    },
+    {
+      "name": "nearai",
+      "input": "nearai",
+      "expected": "NearAI",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "curated brand-casing entry for nearai"
+      },
+      "mutation": {
+        "description": "renders the curated casing for nearai"
+      }
+    },
+    {
+      "name": "gmicloud",
+      "input": "gmicloud",
+      "expected": "GMICloud",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "curated brand-casing entry for gmicloud"
+      },
+      "mutation": {
+        "description": "renders the curated casing for gmicloud"
+      }
+    },
+    {
+      "name": "openrouter",
+      "input": "openrouter",
+      "expected": "OpenRouter",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "curated brand-casing entry for openrouter"
+      },
+      "mutation": {
+        "description": "renders the curated casing for openrouter"
+      }
+    },
+    {
+      "name": "deepseek",
+      "input": "deepseek",
+      "expected": "DeepSeek",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "curated brand-casing entry for deepseek"
+      },
+      "mutation": {
+        "description": "renders the curated casing for deepseek"
+      }
+    },
+    {
+      "name": "minimax",
+      "input": "minimax",
+      "expected": "MiniMax",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "curated brand-casing entry for minimax"
+      },
+      "mutation": {
+        "description": "renders the curated casing for minimax"
+      }
+    },
+    {
+      "name": "openai",
+      "input": "openai",
+      "expected": "OpenAI",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "curated brand-casing entry for openai"
+      },
+      "mutation": {
+        "description": "renders the curated casing for openai"
+      }
+    },
+    {
+      "name": "deepinfra",
+      "input": "deepinfra",
+      "expected": "DeepInfra",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "curated brand-casing entry for deepinfra"
+      },
+      "mutation": {
+        "description": "renders the curated casing for deepinfra"
+      }
+    },
+    {
+      "name": "huggingface",
+      "input": "huggingface",
+      "expected": "HuggingFace",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "curated brand-casing entry for huggingface"
+      },
+      "mutation": {
+        "description": "renders the curated casing for huggingface"
+      }
+    },
+    {
+      "name": "moonshotai",
+      "input": "moonshotai",
+      "expected": "MoonshotAI",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "curated brand-casing entry for moonshotai"
+      },
+      "mutation": {
+        "description": "renders the curated casing for moonshotai"
+      }
+    },
+    {
+      "name": "xai",
+      "input": "xai",
+      "expected": "xAI",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "curated brand-casing entry for xai"
+      },
+      "mutation": {
+        "description": "renders the curated casing for xai"
+      }
+    },
+    {
+      "name": "github",
+      "input": "github",
+      "expected": "GitHub",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "curated brand-casing entry for github"
+      },
+      "mutation": {
+        "description": "renders the curated casing for github"
+      }
+    },
+    {
+      "name": "gitlab",
+      "input": "gitlab",
+      "expected": "GitLab",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "curated brand-casing entry for gitlab"
+      },
+      "mutation": {
+        "description": "renders the curated casing for gitlab"
+      }
+    },
+    {
+      "name": "gpt",
+      "input": "gpt",
+      "expected": "GPT",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "curated brand-casing entry for gpt"
+      },
+      "mutation": {
+        "description": "renders the curated casing for gpt"
+      }
+    },
+    {
+      "name": "glm",
+      "input": "glm",
+      "expected": "GLM",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "curated brand-casing entry for glm"
+      },
+      "mutation": {
+        "description": "renders the curated casing for glm"
+      }
+    },
+    {
+      "name": "qwen",
+      "input": "qwen",
+      "expected": "Qwen",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "curated brand-casing entry for qwen"
+      },
+      "mutation": {
+        "description": "renders the curated casing for qwen"
+      }
+    },
+    {
+      "name": "olmo",
+      "input": "olmo",
+      "expected": "OLMo",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "curated brand-casing entry for olmo"
+      },
+      "mutation": {
+        "description": "renders the curated casing for olmo"
+      }
+    },
+    {
+      "name": "internlm",
+      "input": "internlm",
+      "expected": "InternLM",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "curated brand-casing entry for internlm"
+      },
+      "mutation": {
+        "description": "renders the curated casing for internlm"
+      }
+    },
+    {
+      "name": "smollm",
+      "input": "smollm",
+      "expected": "SmolLM",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "curated brand-casing entry for smollm"
+      },
+      "mutation": {
+        "description": "renders the curated casing for smollm"
+      }
+    },
+    {
+      "name": "wizardlm",
+      "input": "wizardlm",
+      "expected": "WizardLM",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "curated brand-casing entry for wizardlm"
+      },
+      "mutation": {
+        "description": "renders the curated casing for wizardlm"
+      }
+    },
+    {
+      "name": "codellama",
+      "input": "codellama",
+      "expected": "CodeLlama",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "curated brand-casing entry for codellama"
+      },
+      "mutation": {
+        "description": "renders the curated casing for codellama"
+      }
+    },
+    {
+      "name": "case-insensitive-DeepSeek",
+      "input": "DeepSeek",
+      "expected": "DeepSeek",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "already-cased input must still match the curated entry"
+      },
+      "mutation": {
+        "description": "pre-cases the input token, probing the case-insensitive match"
+      }
+    },
+    {
+      "name": "case-insensitive-XAI",
+      "input": "XAI",
+      "expected": "xAI",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "an upper-cased input must still yield the curated lowercase-initial casing"
+      },
+      "mutation": {
+        "description": "upper-cases the input token, which must NOT survive into the output"
+      }
+    }
+  ]
+}

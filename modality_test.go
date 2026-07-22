@@ -6,39 +6,26 @@ import (
 	"github.com/dayvidpham/bestiary"
 )
 
+// TestModalityString_ValidValues drives Modality.String() over every member of the
+// closed enum, loaded from testdata/enum/modality_string_valid_corpus.json.
 func TestModalityString_ValidValues(t *testing.T) {
-	cases := []struct {
-		m    bestiary.Modality
-		want string
-	}{
-		{bestiary.ModalityText, "text"},
-		{bestiary.ModalityImage, "image"},
-		{bestiary.ModalityPDF, "pdf"},
-		{bestiary.ModalityAudio, "audio"},
-		{bestiary.ModalityVideo, "video"},
-	}
-	for _, tc := range cases {
-		if got := tc.m.String(); got != tc.want {
-			t.Errorf("Modality(%d).String() = %q, want %q", int(tc.m), got, tc.want)
-		}
-	}
+	corpus := loadEnumIntCorpus(t, enumModalityStringValidCorpusJSON, 5)
+	requireInputCoverage(t, corpus, map[int]string{
+		int(bestiary.ModalityText):  "text",
+		int(bestiary.ModalityVideo): "video",
+	})
+	runEnumIntStringCorpus(t, corpus, func(v int) string { return bestiary.Modality(v).String() })
 }
 
+// TestModalityString_OutOfRange drives Modality.String() over values outside the
+// closed enum: the fallback must render a diagnosable Modality(N) form.
 func TestModalityString_OutOfRange(t *testing.T) {
-	cases := []struct {
-		m    bestiary.Modality
-		want string
-	}{
-		{bestiary.Modality(99), "Modality(99)"},
-		{bestiary.Modality(-1), "Modality(-1)"},
-		{bestiary.Modality(5), "Modality(5)"},
-	}
-	for _, tc := range cases {
-		got := tc.m.String()
-		if got != tc.want {
-			t.Errorf("Modality(%d).String() = %q, want %q", int(tc.m), got, tc.want)
-		}
-	}
+	corpus := loadEnumIntCorpus(t, enumModalityStringOutOfRangeCorpusJSON, 3)
+	requireInputCoverage(t, corpus, map[int]string{
+		-1: "Modality(-1)",
+		5:  "Modality(5)",
+	})
+	runEnumIntStringCorpus(t, corpus, func(v int) string { return bestiary.Modality(v).String() })
 }
 
 func TestModalityMarshalUnmarshalRoundTrip(t *testing.T) {

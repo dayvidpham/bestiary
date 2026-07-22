@@ -1,0 +1,252 @@
+{
+  "_comment": "isFourDigitDateToken is the generalized date guard: ANY 4-digit all-numeric token is a date/release id and must NOT be read as a version. The corpus keeps the original YYMM rows alongside the MMDD rows and the two tokens (1234, 3000) whose classification FLIPPED when the guard was generalized beyond the 19xx-29xx range.",
+  "cases": [
+    {
+      "name": "yymm-2603",
+      "input": "2603",
+      "expected": true,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "manual",
+        "ref": "mistral-small-2603 (YYMM, in range)"
+      },
+      "mutation": {
+        "description": "uses a 4-digit YYMM token that must be rejected as a version"
+      }
+    },
+    {
+      "name": "yymm-2512",
+      "input": "2512",
+      "expected": true,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "manual",
+        "ref": "YYMM for december 2025"
+      },
+      "mutation": {
+        "description": "uses a 4-digit YYMM token that must be rejected as a version"
+      }
+    },
+    {
+      "name": "yymm-2411",
+      "input": "2411",
+      "expected": true,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "manual",
+        "ref": "the pixtral-style YYMM token"
+      },
+      "mutation": {
+        "description": "uses a 4-digit YYMM token that must be rejected as a version"
+      }
+    },
+    {
+      "name": "yymm-2401",
+      "input": "2401",
+      "expected": true,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "manual",
+        "ref": "mistral-2401"
+      },
+      "mutation": {
+        "description": "uses a 4-digit YYMM token that must be rejected as a version"
+      }
+    },
+    {
+      "name": "yymm-2503",
+      "input": "2503",
+      "expected": true,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "manual",
+        "ref": "a further YYMM token"
+      },
+      "mutation": {
+        "description": "uses a 4-digit YYMM token that must be rejected as a version"
+      }
+    },
+    {
+      "name": "mmdd-0528",
+      "input": "0528",
+      "expected": true,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "manual",
+        "ref": "deepseek-r1-0528 (MMDD, below the 19xx range)"
+      },
+      "mutation": {
+        "description": "uses a 4-digit token outside the YYMM range that the generalized guard still rejects as a version"
+      }
+    },
+    {
+      "name": "mmdd-0324",
+      "input": "0324",
+      "expected": true,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "manual",
+        "ref": "deepseek-v3-0324 (MMDD)"
+      },
+      "mutation": {
+        "description": "uses a 4-digit token outside the YYMM range that the generalized guard still rejects as a version"
+      }
+    },
+    {
+      "name": "mmdd-0905",
+      "input": "0905",
+      "expected": true,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "manual",
+        "ref": "a generic MMDD date"
+      },
+      "mutation": {
+        "description": "uses a 4-digit token outside the YYMM range that the generalized guard still rejects as a version"
+      }
+    },
+    {
+      "name": "mmdd-0711",
+      "input": "0711",
+      "expected": true,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "manual",
+        "ref": "a further generic MMDD date"
+      },
+      "mutation": {
+        "description": "uses a 4-digit token outside the YYMM range that the generalized guard still rejects as a version"
+      }
+    },
+    {
+      "name": "mmdd-1206",
+      "input": "1206",
+      "expected": true,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "manual",
+        "ref": "MMDD for december"
+      },
+      "mutation": {
+        "description": "uses a 4-digit token outside the YYMM range that the generalized guard still rejects as a version"
+      }
+    },
+    {
+      "name": "mmdd-1234",
+      "input": "1234",
+      "expected": true,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "manual",
+        "ref": "previously false below 19xx; TRUE under the generalized any-4-digit guard"
+      },
+      "mutation": {
+        "description": "uses a 4-digit token outside the YYMM range that the generalized guard still rejects as a version"
+      }
+    },
+    {
+      "name": "mmdd-3000",
+      "input": "3000",
+      "expected": true,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "manual",
+        "ref": "previously false above 29xx; TRUE under the generalized any-4-digit guard"
+      },
+      "mutation": {
+        "description": "uses a 4-digit token outside the YYMM range that the generalized guard still rejects as a version"
+      }
+    },
+    {
+      "name": "version-45",
+      "input": "45",
+      "expected": false,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "a two-digit version token"
+      },
+      "mutation": {
+        "description": "shortens or de-digits the token so it is a genuine version, not a date"
+      }
+    },
+    {
+      "name": "version-46",
+      "input": "46",
+      "expected": false,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "a second two-digit version token"
+      },
+      "mutation": {
+        "description": "shortens or de-digits the token so it is a genuine version, not a date"
+      }
+    },
+    {
+      "name": "version-4o",
+      "input": "4o",
+      "expected": false,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "an alphanumeric variant token, not pure digits"
+      },
+      "mutation": {
+        "description": "shortens or de-digits the token so it is a genuine version, not a date"
+      }
+    },
+    {
+      "name": "version-2",
+      "input": "2",
+      "expected": false,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "a single-digit version"
+      },
+      "mutation": {
+        "description": "shortens or de-digits the token so it is a genuine version, not a date"
+      }
+    },
+    {
+      "name": "version-35",
+      "input": "35",
+      "expected": false,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "a two-digit version"
+      },
+      "mutation": {
+        "description": "shortens or de-digits the token so it is a genuine version, not a date"
+      }
+    },
+    {
+      "name": "version-100",
+      "input": "100",
+      "expected": false,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "a three-digit version"
+      },
+      "mutation": {
+        "description": "shortens or de-digits the token so it is a genuine version, not a date"
+      }
+    },
+    {
+      "name": "empty",
+      "input": "",
+      "expected": false,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "the empty token is not a date"
+      },
+      "mutation": {
+        "description": "empties the token entirely"
+      }
+    }
+  ]
+}

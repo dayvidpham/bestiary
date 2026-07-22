@@ -16,45 +16,36 @@ func modJoin(mods []string) string {
 	return strings.Join(bestiary.CanonicalizeModifiers(mods), ",")
 }
 
+// TestCanonicalScheme_String drives CanonicalScheme.String() over every render codec
+// plus the out-of-range fallback, loaded from
+// testdata/enum/canonical_scheme_string_corpus.json.
 func TestCanonicalScheme_String(t *testing.T) {
-	tests := []struct {
-		scheme bestiary.CanonicalScheme
-		want   string
-	}{
-		{bestiary.SchemeCanonical, "canonical"},
-		{bestiary.SchemeHuggingFace, "huggingface"},
-		{bestiary.SchemePURL, "purl"},
-		{bestiary.SchemeRaw, "raw"},
-		{bestiary.CanonicalScheme(99), "CanonicalScheme(99)"},
-	}
-	for _, tt := range tests {
-		got := tt.scheme.String()
-		if got != tt.want {
-			t.Errorf("CanonicalScheme(%d).String() = %q, want %q", int(tt.scheme), got, tt.want)
-		}
-	}
+	corpus := loadEnumIntCorpus(t, enumCanonicalSchemeStringCorpusJSON, 5)
+	requireInputCoverage(t, corpus, map[int]string{
+		int(bestiary.SchemeCanonical): "canonical",
+		99:                            "CanonicalScheme(99)",
+	})
+	runEnumIntStringCorpus(t, corpus, func(v int) string {
+		return bestiary.CanonicalScheme(v).String()
+	})
 }
 
+// TestParseScheme_Valid drives ParseScheme over every wire token and renders the
+// result back, so the corpus asserts a full token round trip. Loaded from
+// testdata/enum/parse_scheme_valid_corpus.json.
 func TestParseScheme_Valid(t *testing.T) {
-	tests := []struct {
-		input string
-		want  bestiary.CanonicalScheme
-	}{
-		{"canonical", bestiary.SchemeCanonical},
-		{"huggingface", bestiary.SchemeHuggingFace},
-		{"purl", bestiary.SchemePURL},
-		{"raw", bestiary.SchemeRaw},
-	}
-	for _, tt := range tests {
-		got, err := bestiary.ParseScheme(tt.input)
+	corpus := loadEnumStringCorpus(t, enumParseSchemeValidCorpusJSON, 4)
+	requireInputCoverage(t, corpus, map[string]string{
+		"canonical": "canonical",
+		"raw":       "raw",
+	})
+	runEnumStringCorpus(t, corpus, func(t *testing.T, in string) string {
+		got, err := bestiary.ParseScheme(in)
 		if err != nil {
-			t.Errorf("ParseScheme(%q) returned error: %v", tt.input, err)
-			continue
+			t.Fatalf("ParseScheme(%q) returned error: %v", in, err)
 		}
-		if got != tt.want {
-			t.Errorf("ParseScheme(%q) = %v, want %v", tt.input, got, tt.want)
-		}
-	}
+		return got.String()
+	})
 }
 
 func TestParseScheme_Invalid(t *testing.T) {
@@ -156,53 +147,37 @@ func TestCanonicalScheme_JSON_RoundTrip(t *testing.T) {
 	}
 }
 
+// TestCanonicalScheme_UnmarshalJSON_CaseInsensitive drives the JSON decode over every
+// case-folded spelling of each codec token, loaded from
+// testdata/enum/canonical_scheme_unmarshal_caseinsensitive_corpus.json.
 func TestCanonicalScheme_UnmarshalJSON_CaseInsensitive(t *testing.T) {
-	tests := []struct {
-		input string
-		want  bestiary.CanonicalScheme
-	}{
-		{`"CANONICAL"`, bestiary.SchemeCanonical},
-		{`"Canonical"`, bestiary.SchemeCanonical},
-		{`"HUGGINGFACE"`, bestiary.SchemeHuggingFace},
-		{`"HuggingFace"`, bestiary.SchemeHuggingFace},
-		{`"PURL"`, bestiary.SchemePURL},
-		{`"Purl"`, bestiary.SchemePURL},
-		{`"RAW"`, bestiary.SchemeRaw},
-		{`"Raw"`, bestiary.SchemeRaw},
-	}
-	for _, tt := range tests {
+	corpus := loadEnumStringCorpus(t, enumCanonicalSchemeUnmarshalCICorpusJSON, 8)
+	requireInputCoverage(t, corpus, map[string]string{
+		`"CANONICAL"`:   "canonical",
+		`"HuggingFace"`: "huggingface",
+	})
+	runEnumStringCorpus(t, corpus, func(t *testing.T, in string) string {
 		var got bestiary.CanonicalScheme
-		if err := json.Unmarshal([]byte(tt.input), &got); err != nil {
-			t.Errorf("Unmarshal(%s) error: %v", tt.input, err)
-			continue
+		if err := json.Unmarshal([]byte(in), &got); err != nil {
+			t.Fatalf("Unmarshal(%s) error: %v", in, err)
 		}
-		if got != tt.want {
-			t.Errorf("Unmarshal(%s) = %v, want %v", tt.input, got, tt.want)
-		}
-	}
+		return got.String()
+	})
 }
 
+// TestCanonicalScheme_UnmarshalJSON_RejectsBadInput drives the must-fail arm: every
+// input must be rejected with a non-empty error, never silently degraded to the zero
+// value. Loaded from testdata/enum/canonical_scheme_unmarshal_reject_corpus.json.
 func TestCanonicalScheme_UnmarshalJSON_RejectsBadInput(t *testing.T) {
-	tests := []struct {
-		desc  string
-		input string
-	}{
-		{"wrong type: number", `42`},
-		{"wrong type: null", `null`},
-		{"unknown string value", `"bogus"`},
-	}
-	for _, tt := range tests {
+	corpus := loadEnumStringCorpus(t, enumCanonicalSchemeUnmarshalRejectCorpusJSON, 3)
+	requireInputCoverage(t, corpus, map[string]string{
+		`42`:      "",
+		`"bogus"`: "",
+	})
+	runEnumRejectCorpus(t, corpus, func(in string) error {
 		var got bestiary.CanonicalScheme
-		err := json.Unmarshal([]byte(tt.input), &got)
-		if err == nil {
-			t.Errorf("Unmarshal(%s) [%s] succeeded with %v, want error", tt.input, tt.desc, got)
-			continue
-		}
-		msg := err.Error()
-		if msg == "" {
-			t.Errorf("Unmarshal(%s) [%s] returned empty error message", tt.input, tt.desc)
-		}
-	}
+		return json.Unmarshal([]byte(in), &got)
+	})
 }
 
 // ----------------------------------------------------------------------------

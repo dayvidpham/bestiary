@@ -9,69 +9,44 @@ import "testing"
 
 // TestStyleSegment_Curated asserts the shared seam applies the curated brand table.
 func TestStyleSegment_Curated(t *testing.T) {
-	cases := []struct {
-		tok  string
-		want string
-	}{
-		// RATIFIED casings.
-		{"nvidia", "Nvidia"},
-		{"togetherai", "TogetherAI"},
-		{"llmgateway", "LlmGateway"},
-		{"iflowcn", "iFlowCN"},
-		{"nearai", "NearAI"},
-		{"gmicloud", "GMICloud"},
-		// AUTO-APPLY batch.
-		{"openrouter", "OpenRouter"},
-		{"deepseek", "DeepSeek"},
-		{"minimax", "MiniMax"},
-		{"openai", "OpenAI"},
-		{"deepinfra", "DeepInfra"},
-		{"huggingface", "HuggingFace"},
-		{"moonshotai", "MoonshotAI"},
-		{"xai", "xAI"},
-		{"github", "GitHub"},
-		{"gitlab", "GitLab"},
-		{"gpt", "GPT"},
-		{"glm", "GLM"},
-		{"qwen", "Qwen"},
-		{"olmo", "OLMo"},
-		{"internlm", "InternLM"},
-		{"smollm", "SmolLM"},
-		{"wizardlm", "WizardLM"},
-		{"codellama", "CodeLlama"},
-		// Case-insensitive on input.
-		{"DeepSeek", "DeepSeek"},
-		{"XAI", "xAI"},
-	}
-	for _, c := range cases {
-		got, handled := styleSegment(c.tok, false)
-		if got != c.want {
-			t.Errorf("styleSegment(%q) = %q, want %q", c.tok, got, c.want)
-		}
-		if !handled {
-			t.Errorf("styleSegment(%q) handled=false, want true (curated brand entries are definitive)", c.tok)
-		}
+	corpus := loadGenCorpus[string, string](t, genStyleSegmentCuratedCorpusJSON, 26)
+	genRequireInputCoverage(t, corpus, map[string]string{
+		"xai":      "xAI",
+		"olmo":     "OLMo",
+		"XAI":      "xAI",
+		"DeepSeek": "DeepSeek",
+	})
+	for _, c := range corpus.Cases {
+		t.Run(c.Name, func(t *testing.T) {
+			got, handled := styleSegment(c.Input, false)
+			if got != c.Expected {
+				t.Errorf("styleSegment(%q) = %q, want %q", c.Input, got, c.Expected)
+			}
+			if !handled {
+				t.Errorf("styleSegment(%q) handled=false, want true (curated brand entries are definitive)", c.Input)
+			}
+		})
 	}
 }
 
 // TestStyleSegment_DefaultTitleCase asserts an un-curated token defaults to title-case
 // and is reported NON-definitive (so slugToIdentifier may apply its name-hint).
 func TestStyleSegment_DefaultTitleCase(t *testing.T) {
-	cases := []struct{ tok, want string }{
-		{"anthropic", "Anthropic"},
-		{"google", "Google"},
-		{"mistral", "Mistral"},
-		{"foobar", "Foobar"},
-		{"claude", "Claude"},
-	}
-	for _, c := range cases {
-		got, handled := styleSegment(c.tok, false)
-		if got != c.want {
-			t.Errorf("styleSegment(%q) = %q, want %q (title-case default)", c.tok, got, c.want)
-		}
-		if handled {
-			t.Errorf("styleSegment(%q) handled=true, want false (un-curated token is not definitive)", c.tok)
-		}
+	corpus := loadGenCorpus[string, string](t, genStyleSegmentDefaultTitleCaseCorpusJSON, 5)
+	genRequireInputCoverage(t, corpus, map[string]string{
+		"anthropic": "Anthropic",
+		"foobar":    "Foobar",
+	})
+	for _, c := range corpus.Cases {
+		t.Run(c.Name, func(t *testing.T) {
+			got, handled := styleSegment(c.Input, false)
+			if got != c.Expected {
+				t.Errorf("styleSegment(%q) = %q, want %q (title-case default)", c.Input, got, c.Expected)
+			}
+			if handled {
+				t.Errorf("styleSegment(%q) handled=true, want false (un-curated token is not definitive)", c.Input)
+			}
+		})
 	}
 }
 
@@ -79,26 +54,21 @@ func TestStyleSegment_DefaultTitleCase(t *testing.T) {
 // preserveDigitSuffix difference between the Model__ segment rule (verbatim "4o") and the
 // slug identifier rule (title-case suffix).
 func TestStyleSegment_DigitLeading(t *testing.T) {
-	cases := []struct {
-		tok      string
-		preserve bool
-		want     string
-	}{
-		{"302ai", false, "302AI"},        // curated suffix override wins regardless of preserve
-		{"302ai", true, "302AI"},         //
-		{"4o", true, "4o"},               // Model__ segment rule: verbatim suffix
-		{"4o", false, "4O"},              // slug rule: title-case suffix
-		{"123", true, "123"},             // all digits → verbatim
-		{"3deepseek", true, "3DeepSeek"}, // curated alpha suffix after digit
-	}
-	for _, c := range cases {
-		got, handled := styleSegment(c.tok, c.preserve)
-		if got != c.want {
-			t.Errorf("styleSegment(%q, preserve=%v) = %q, want %q", c.tok, c.preserve, got, c.want)
-		}
-		if !handled {
-			t.Errorf("styleSegment(%q) handled=false, want true (digit-leading is definitive)", c.tok)
-		}
+	corpus := loadGenCorpus[genStyleSegmentInput, string](t, genStyleSegmentDigitLeadingCorpusJSON, 6)
+	genRequireInputCoverage(t, corpus, map[genStyleSegmentInput]string{
+		{Token: "4o", Preserve: true}:  "4o",
+		{Token: "4o", Preserve: false}: "4O",
+	})
+	for _, c := range corpus.Cases {
+		t.Run(c.Name, func(t *testing.T) {
+			got, handled := styleSegment(c.Input.Token, c.Input.Preserve)
+			if got != c.Expected {
+				t.Errorf("styleSegment(%q, preserve=%v) = %q, want %q", c.Input.Token, c.Input.Preserve, got, c.Expected)
+			}
+			if !handled {
+				t.Errorf("styleSegment(%q) handled=false, want true (digit-leading is definitive)", c.Input.Token)
+			}
+		})
 	}
 }
 

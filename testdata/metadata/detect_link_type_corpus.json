@@ -1,0 +1,101 @@
+{
+  "_comment": "detectLinkType over a models.json link type tag. LinkType is an ELEMENT enum: the discriminating tag always arrives, so Other sits AT zero and an EMPTY token maps to Other with NO raw (there was nothing to preserve), while an unknown-but-present token maps to Other WITH its raw.",
+  "cases": [
+    {
+      "name": "empty-is-other-no-raw",
+      "input": "",
+      "expected": {
+        "token": "other",
+        "raw": ""
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "an absent link type"
+      },
+      "mutation": {
+        "description": "empties the tag entirely, probing the Other-at-zero convention"
+      }
+    },
+    {
+      "name": "announcement",
+      "input": "announcement",
+      "expected": {
+        "token": "announcement",
+        "raw": ""
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "bestiary.LinkAnnouncement"
+      },
+      "mutation": {
+        "description": "names a recognized link type"
+      }
+    },
+    {
+      "name": "upper-model-card-case-insensitive",
+      "input": "MODEL_CARD",
+      "expected": {
+        "token": "model_card",
+        "raw": ""
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "case-insensitive link-type parse"
+      },
+      "mutation": {
+        "description": "upper-cases a recognized token"
+      }
+    },
+    {
+      "name": "weights",
+      "input": "weights",
+      "expected": {
+        "token": "weights",
+        "raw": ""
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "bestiary.LinkWeights (the load-bearing type for lineage evidence)"
+      },
+      "mutation": {
+        "description": "names the weights link type"
+      }
+    },
+    {
+      "name": "unknown-forum-keeps-raw",
+      "input": "forum",
+      "expected": {
+        "token": "other",
+        "raw": "forum"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "an unknown-but-present link type"
+      },
+      "mutation": {
+        "description": "substitutes a token the enum does not know, which must land in Other WITH its raw preserved"
+      }
+    },
+    {
+      "name": "upstream-literal-other-keeps-raw",
+      "input": "other",
+      "expected": {
+        "token": "other",
+        "raw": "other"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "the upstream literal 'other' arrives as a present token"
+      },
+      "mutation": {
+        "description": "uses the fail-safe bucket's own name as the input, which must still be carried as raw"
+      }
+    }
+  ]
+}

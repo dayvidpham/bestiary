@@ -1,0 +1,65 @@
+{
+  "_comment": "splitComma parses the -only-providers / -all-providers-except flag values: it trims surrounding whitespace and returns NIL (not an empty-string element) for an empty input, so an empty flag never selects a provider named ''.",
+  "cases": [
+    {
+      "name": "two-values",
+      "input": "anthropic,google",
+      "expected": [
+        "anthropic",
+        "google"
+      ],
+      "classification": "must-pass",
+      "provenance": {
+        "source": "manual",
+        "ref": "a two-provider filter flag value"
+      },
+      "mutation": {
+        "description": "splits on a bare comma"
+      }
+    },
+    {
+      "name": "single-value",
+      "input": "anthropic",
+      "expected": [
+        "anthropic"
+      ],
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "a single-provider filter flag value"
+      },
+      "mutation": {
+        "description": "removes the comma entirely"
+      }
+    },
+    {
+      "name": "empty-is-nil",
+      "input": "",
+      "expected": null,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "an empty filter flag value must yield NO entries, never one empty-string entry"
+      },
+      "mutation": {
+        "description": "empties the flag value"
+      }
+    },
+    {
+      "name": "padded-values",
+      "input": "anthropic, google",
+      "expected": [
+        "anthropic",
+        "google"
+      ],
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "a filter value with a space after the comma"
+      },
+      "mutation": {
+        "description": "adds whitespace after the separator, probing the trim"
+      }
+    }
+  ]
+}

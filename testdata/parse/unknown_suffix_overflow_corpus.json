@@ -1,0 +1,62 @@
+{
+  "_comment": "ReasonUnknownSuffixOverflow reachability. CAPTURE of the live TestParseFamilyDetailed_UnknownSuffixOverflow subtest: the POSITIVE row is a SYNTHETIC input (no real catalog id reaches the >2 unaccounted-token threshold with an unknown trailing token), asserted by the ParseFailure the production parser RETURNS \u2014 never by watching an audit log fire on real input. The two must-fail rows are the negative controls that pin the conservative boundary: an unknown trailing token alone is not sufficient.",
+  "cases": [
+    {
+      "name": "UnknownSuffixOverflow_PositiveCase",
+      "input": {
+        "raw_family": "claude-opus-4-1-extra-stuff-zen",
+        "id": "claude-opus-4-1-extra-stuff-zen",
+        "provider": "anthropic"
+      },
+      "expected": {
+        "reason": "suffix overflow: trailing token is an unknown modifier (extend allowlist)"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "bug",
+        "ref": "the only way ReasonUnknownSuffixOverflow is reachable is a SYNTHETIC input \u2014 no real catalog id produces >2 unaccounted tokens with an unknown trailing token. The audit-log path is therefore verified by asserting the returned ParseFailure, never by watching a real id."
+      },
+      "mutation": {
+        "description": "appends three synthetic trailing tokens (extra-stuff-zen) to a real decomposable id, pushing the unaccounted-token count past the >2 overflow threshold while leaving the trailing token outside the known-modifier set"
+      }
+    },
+    {
+      "name": "no-overflow-gpt-4-zen",
+      "input": {
+        "raw_family": "gpt-4",
+        "id": "gpt-4-zen",
+        "provider": "openai"
+      },
+      "expected": {
+        "reason": ""
+      },
+      "classification": "must-fail",
+      "provenance": {
+        "source": "boundary",
+        "ref": "an unknown trailing token ALONE must not fire Mode 2: the >2 unaccounted-token overflow threshold must also be met"
+      },
+      "mutation": {
+        "description": "removes the extra unaccounted tokens, leaving a single unknown trailing token below the overflow threshold"
+      }
+    },
+    {
+      "name": "no-overflow-claude-opus-foobar",
+      "input": {
+        "raw_family": "claude-opus",
+        "id": "claude-opus-foobar",
+        "provider": "anthropic"
+      },
+      "expected": {
+        "reason": ""
+      },
+      "classification": "must-fail",
+      "provenance": {
+        "source": "boundary",
+        "ref": "the conservative Mode 2 boundary: a novel-but-semantic trailing token goes unreported without a broader overflow pattern"
+      },
+      "mutation": {
+        "description": "substitutes a single novel trailing token on a fully-decomposable family, again below the overflow threshold"
+      }
+    }
+  ]
+}

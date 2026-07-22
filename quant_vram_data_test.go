@@ -173,57 +173,41 @@ func TestQuantVRAMFor_Finetune(t *testing.T) {
 // TestParamSizeFor_Present / TestSourceFor_Present: hit cases for the lookup
 // functions, covering all seed models.
 func TestParamSizeFor_Present(t *testing.T) {
-	cases := []struct {
-		id   bestiary.ModelID
-		want string
-	}{
-		{"llama-3.3-70b-instruct", "70b"},
-		{"llama-3.3-8b-instruct", "8b"},
-		{"llama-3.2-3b-instruct", "3b"},
-		{"ollama/dracarys2-llama-3-70b-instruct", "70b"},
-	}
-	for _, tc := range cases {
-		got := bestiary.ParamSizeFor(tc.id)
-		if got != tc.want {
-			t.Errorf("ParamSizeFor(%q) = %q, want %q", tc.id, got, tc.want)
-		}
-	}
+	corpus := loadEnumStringCorpus(t, quantParamSizeForPresentCorpusJSON, 4)
+	requireInputCoverage(t, corpus, map[string]string{
+		"llama-3.3-70b-instruct":                "70b",
+		"ollama/dracarys2-llama-3-70b-instruct": "70b",
+	})
+	runEnumStringCorpus(t, corpus, func(_ *testing.T, in string) string {
+		return bestiary.ParamSizeFor(bestiary.ModelID(in))
+	})
 }
 
 func TestSourceFor_Present(t *testing.T) {
-	cases := []struct {
-		id   bestiary.ModelID
-		want bestiary.DataSourceID
-	}{
-		{"llama-3.3-70b-instruct", bestiary.DataSourceOllama},
-		{"llama-3.3-8b-instruct", bestiary.DataSourceOllama},
-		{"llama-3.2-3b-instruct", bestiary.DataSourceOllama},
-		{"ollama/dracarys2-llama-3-70b-instruct", bestiary.DataSourceOllama},
-	}
-	for _, tc := range cases {
-		got := bestiary.SourceFor(tc.id)
-		if got != tc.want {
-			t.Errorf("SourceFor(%q) = %q, want %q", tc.id, got, tc.want)
-		}
-	}
+	corpus := loadEnumStringCorpus(t, quantSourceForPresentCorpusJSON, 4)
+	requireInputCoverage(t, corpus, map[string]string{
+		"llama-3.3-70b-instruct":                string(bestiary.DataSourceOllama),
+		"ollama/dracarys2-llama-3-70b-instruct": string(bestiary.DataSourceOllama),
+	})
+	runEnumStringCorpus(t, corpus, func(_ *testing.T, in string) string {
+		return string(bestiary.SourceFor(bestiary.ModelID(in)))
+	})
 }
 
 // TestContextWindowFor_Present: the curated context_window field is accessible
 // for models that declare it.
 func TestContextWindowFor_Present(t *testing.T) {
-	cases := []struct {
-		id   bestiary.ModelID
-		want int
-	}{
-		{"llama-3.3-70b-instruct", 131072},
-		{"llama-3.2-3b-instruct", 131072},
-		{"ollama/dracarys2-llama-3-70b-instruct", 8192},
-	}
-	for _, tc := range cases {
-		got := bestiary.ContextWindowFor(tc.id)
-		if got != tc.want {
-			t.Errorf("ContextWindowFor(%q) = %d, want %d", tc.id, got, tc.want)
-		}
+	corpus := loadParseCorpus[string, int](t, quantContextWindowForPresentCorpusJSON, 3)
+	requireInputCoverage(t, corpus, map[string]int{
+		"llama-3.3-70b-instruct":                131072,
+		"ollama/dracarys2-llama-3-70b-instruct": 8192,
+	})
+	for _, c := range corpus.Cases {
+		t.Run(c.Name, func(t *testing.T) {
+			if got := bestiary.ContextWindowFor(bestiary.ModelID(c.Input)); got != c.Expected {
+				t.Errorf("ContextWindowFor(%q) = %d, want %d", c.Input, got, c.Expected)
+			}
+		})
 	}
 }
 

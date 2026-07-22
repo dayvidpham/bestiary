@@ -1,0 +1,44 @@
+{
+  "_comment": "Modality.String() on values OUTSIDE the closed enum: the fallback must render a diagnosable Modality(N) form rather than panicking or returning an empty string.",
+  "cases": [
+    {
+      "name": "above-range-99",
+      "input": 99,
+      "expected": "Modality(99)",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "int value 99 is past the last member (video=4)"
+      },
+      "mutation": {
+        "description": "pushes the value past the end of the enum table"
+      }
+    },
+    {
+      "name": "negative-minus-one",
+      "input": -1,
+      "expected": "Modality(-1)",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "int value -1 is below the first member (text=0)"
+      },
+      "mutation": {
+        "description": "pushes the value below the start of the enum table"
+      }
+    },
+    {
+      "name": "one-past-last-5",
+      "input": 5,
+      "expected": "Modality(5)",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "int value 5 is exactly one past the last member (video=4)"
+      },
+      "mutation": {
+        "description": "probes the off-by-one edge immediately after the last member"
+      }
+    }
+  ]
+}

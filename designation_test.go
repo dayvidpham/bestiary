@@ -8,22 +8,18 @@ import (
 	"github.com/dayvidpham/bestiary"
 )
 
+// TestAcceptabilityRating_String drives AcceptabilityRating.String() over every
+// ISO-1087 member plus the out-of-range fallback, loaded from
+// testdata/enum/acceptability_string_corpus.json.
 func TestAcceptabilityRating_String(t *testing.T) {
-	tests := []struct {
-		rating bestiary.AcceptabilityRating
-		want   string
-	}{
-		{bestiary.AcceptabilityAdmitted, "admitted"},
-		{bestiary.AcceptabilityPreferred, "preferred"},
-		{bestiary.AcceptabilityDeprecated, "deprecated"},
-		{bestiary.AcceptabilityRating(99), "AcceptabilityRating(99)"},
-	}
-	for _, tt := range tests {
-		got := tt.rating.String()
-		if got != tt.want {
-			t.Errorf("AcceptabilityRating(%d).String() = %q, want %q", int(tt.rating), got, tt.want)
-		}
-	}
+	corpus := loadEnumIntCorpus(t, enumAcceptabilityStringCorpusJSON, 4)
+	requireInputCoverage(t, corpus, map[int]string{
+		int(bestiary.AcceptabilityPreferred): "preferred",
+		99:                                   "AcceptabilityRating(99)",
+	})
+	runEnumIntStringCorpus(t, corpus, func(v int) string {
+		return bestiary.AcceptabilityRating(v).String()
+	})
 }
 
 func TestAcceptabilityRating_IotaOrder(t *testing.T) {
@@ -123,49 +119,35 @@ func TestAcceptabilityRating_JSON_RoundTrip(t *testing.T) {
 	}
 }
 
+// TestAcceptabilityRating_UnmarshalJSON_CaseInsensitive drives the JSON decode over
+// every case-folded spelling of each wire token, loaded from
+// testdata/enum/acceptability_unmarshal_caseinsensitive_corpus.json.
 func TestAcceptabilityRating_UnmarshalJSON_CaseInsensitive(t *testing.T) {
-	tests := []struct {
-		input string
-		want  bestiary.AcceptabilityRating
-	}{
-		{`"ADMITTED"`, bestiary.AcceptabilityAdmitted},
-		{`"Admitted"`, bestiary.AcceptabilityAdmitted},
-		{`"PREFERRED"`, bestiary.AcceptabilityPreferred},
-		{`"Preferred"`, bestiary.AcceptabilityPreferred},
-		{`"DEPRECATED"`, bestiary.AcceptabilityDeprecated},
-		{`"Deprecated"`, bestiary.AcceptabilityDeprecated},
-	}
-	for _, tt := range tests {
+	corpus := loadEnumStringCorpus(t, enumAcceptabilityUnmarshalCICorpusJSON, 6)
+	requireInputCoverage(t, corpus, map[string]string{
+		`"ADMITTED"`:   "admitted",
+		`"Deprecated"`: "deprecated",
+	})
+	runEnumStringCorpus(t, corpus, func(t *testing.T, in string) string {
 		var got bestiary.AcceptabilityRating
-		if err := json.Unmarshal([]byte(tt.input), &got); err != nil {
-			t.Errorf("Unmarshal(%s) error: %v", tt.input, err)
-			continue
+		if err := json.Unmarshal([]byte(in), &got); err != nil {
+			t.Fatalf("Unmarshal(%s) error: %v", in, err)
 		}
-		if got != tt.want {
-			t.Errorf("Unmarshal(%s) = %v, want %v", tt.input, got, tt.want)
-		}
-	}
+		return got.String()
+	})
 }
 
+// TestAcceptabilityRating_UnmarshalJSON_RejectsBadInput drives the must-fail arm:
+// every input must be rejected with a non-empty error, never silently degraded to the
+// zero value. Loaded from testdata/enum/acceptability_unmarshal_reject_corpus.json.
 func TestAcceptabilityRating_UnmarshalJSON_RejectsBadInput(t *testing.T) {
-	tests := []struct {
-		desc  string
-		input string
-	}{
-		{"wrong type: number", `42`},
-		{"wrong type: null", `null`},
-		{"unknown string value", `"bogus"`},
-	}
-	for _, tt := range tests {
+	corpus := loadEnumStringCorpus(t, enumAcceptabilityUnmarshalRejectCorpusJSON, 3)
+	requireInputCoverage(t, corpus, map[string]string{
+		`null`:    "",
+		`"bogus"`: "",
+	})
+	runEnumRejectCorpus(t, corpus, func(in string) error {
 		var got bestiary.AcceptabilityRating
-		err := json.Unmarshal([]byte(tt.input), &got)
-		if err == nil {
-			t.Errorf("Unmarshal(%s) [%s] succeeded with %v, want error", tt.input, tt.desc, got)
-			continue
-		}
-		msg := err.Error()
-		if msg == "" {
-			t.Errorf("Unmarshal(%s) [%s] returned empty error message", tt.input, tt.desc)
-		}
-	}
+		return json.Unmarshal([]byte(in), &got)
+	})
 }
