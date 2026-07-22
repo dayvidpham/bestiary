@@ -3807,14 +3807,15 @@ func parseSeriesNumber(rest string) (version string, hadSep bool, ok bool) {
 	if rest == "" {
 		return "", false, false
 	}
-	// An explicit "." or "p" separator. The "p" arm delegates to
-	// decodePNotationVersion so the convention has exactly one definition shared with
-	// the ordinary version-token path.
+	// An explicit "." or "p" separator, both handled by reSeriesDotP's "[.p]" class.
+	// This pre-existing regex is where the letter-prefix split has always encoded the
+	// p-as-dot convention; because "[.p]" is a superset of the "p"-only shape
+	// decodePNotationVersion recognises, reSeriesDotP always matches a "5p1" here
+	// first, so a separate decodePNotationVersion call in this function would be dead.
+	// The shared definition still governs the OTHER positions (ExtractVersionFromID and
+	// splitBareGen's glued-generation arm), so the convention cannot drift.
 	if m := reSeriesDotP.FindStringSubmatch(rest); m != nil {
 		return m[1] + "." + m[2], true, true
-	}
-	if decoded, ok := decodePNotationVersion(rest); ok {
-		return decoded, true, true
 	}
 	if isAllDigits(rest) {
 		if isDateShapedToken(rest) {
