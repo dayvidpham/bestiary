@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"errors"
+	"flag"
 	"strings"
 	"testing"
 
@@ -230,6 +231,86 @@ func TestRun_Series_UnsupportedOutput(t *testing.T) {
 	}
 	if !strings.Contains(err.Error(), "unsupported --output") {
 		t.Errorf("error = %v, want an unsupported --output message", err)
+	}
+}
+
+// TestRun_Series_RejectsExplicitDBPath asserts that --db-path is REJECTED rather
+// than silently ignored. The flag parses (it is registered on the shared flagset
+// every subcommand uses), but series computes from the compiled-in registry and
+// never opens the cache, so accepting it would let a caller believe they had
+// scoped the view to a synced database. The message must name the cache-aware
+// alternative so the user knows where to go.
+func TestRun_Series_RejectsExplicitDBPath(t *testing.T) {
+	for _, args := range [][]string{
+		{"series", "--db-path=/tmp/does-not-exist.db"},
+		{"series", "--db-path", "/tmp/does-not-exist.db", "llama-4"},
+		{"series", "llama-4", "--db-path=/tmp/does-not-exist.db"}, // flag after the positional
+	} {
+		var runErr error
+		out := captureStdout(t, func() { runErr = run(args) })
+		if runErr == nil {
+			t.Errorf("run %v returned nil error; --db-path must be rejected, not ignored", args)
+			continue
+		}
+		msg := runErr.Error()
+		for _, want := range []string{"--db-path", "does not read the cache", "entities"} {
+			if !strings.Contains(msg, want) {
+				t.Errorf("run %v error %q missing %q", args, msg, want)
+			}
+		}
+		if strings.TrimSpace(out) != "" {
+			t.Errorf("run %v wrote to stdout despite failing:\n%s", args, out)
+		}
+	}
+}
+
+// TestRun_Series_DefaultDBPathIsNotRejected is the other half of the contract: the
+// flag is only rejected when EXPLICITLY set. A plain invocation inherits the shared
+// flagset's default and must still work — a rejection keyed on the value rather
+// than on explicit setting would break every normal call.
+func TestRun_Series_DefaultDBPathIsNotRejected(t *testing.T) {
+	var runErr error
+	out := captureStdout(t, func() { runErr = run([]string{"series", "--output=table", "llama-4"}) })
+	if runErr != nil {
+		t.Fatalf("plain series invocation returned error: %v", runErr)
+	}
+	if !strings.Contains(out, "Series llama-4") {
+		t.Errorf("plain series invocation produced no output:\n%s", out)
+	}
+}
+
+// TestFlagWasSet unit-tests the explicit-vs-default distinction the rejection
+// keys off.
+func TestFlagWasSet(t *testing.T) {
+	newFS := func() (*flag.FlagSet, *string) {
+		fs := flag.NewFlagSet("test", flag.ContinueOnError)
+		v := fs.String("db-path", "", "")
+		return fs, v
+	}
+	fs, _ := newFS()
+	if err := fs.Parse([]string{}); err != nil {
+		t.Fatal(err)
+	}
+	if flagWasSet(fs, "db-path") {
+		t.Error("flagWasSet = true for an unset flag")
+	}
+	fs, _ = newFS()
+	if err := fs.Parse([]string{"--db-path=/x"}); err != nil {
+		t.Fatal(err)
+	}
+	if !flagWasSet(fs, "db-path") {
+		t.Error("flagWasSet = false for an explicitly set flag")
+	}
+	// Explicitly set to the DEFAULT value still counts as set.
+	fs, _ = newFS()
+	if err := fs.Parse([]string{"--db-path="}); err != nil {
+		t.Fatal(err)
+	}
+	if !flagWasSet(fs, "db-path") {
+		t.Error("flagWasSet = false for a flag explicitly set to its default value")
+	}
+	if flagWasSet(fs, "no-such-flag") {
+		t.Error("flagWasSet = true for an unregistered flag")
 	}
 }
 

@@ -664,7 +664,8 @@ bestiary entities                  # full Entity objects, JSON
 ```
 
 **series** — browse the computed **Series/Release** hierarchy above entity keys (offline;
-static registry only, so it takes no `--db-path`). With no argument it lists every versioned
+static registry only — it never reads the SQLite cache, and **rejects** `--db-path` with an
+actionable error rather than accepting a flag it cannot honour). With no argument it lists every versioned
 line — `Series{Family, Generation}` such as `llama-4` or `gemini-3.0` — with its release and
 entity counts. With a selector it details that line: each **Release** (a named member such as
 `scout`, `maverick`, `flash`, plus the un-named bare line) and the canonical entity keys under

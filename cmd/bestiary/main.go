@@ -167,6 +167,12 @@ func run(args []string) error {
 	case "series":
 		// series takes an OPTIONAL positional: with none it lists every line in the
 		// registry, with one it details that line's releases and their entities.
+		// --db-path is REJECTED rather than ignored: the view computes from the
+		// compiled-in registry, so the flag cannot be honoured, and silently
+		// accepting it would imply a cache read that never happens.
+		if flagWasSet(fs, "db-path") {
+			return errSeriesDBPath
+		}
 		return runSeries(fs.Arg(0), bestiary.OutputFormat(*output))
 	case "sources":
 		// --history and --export are catalog-wide ingest-log views; they take no
@@ -274,6 +280,21 @@ func flagIsBool(fs *flag.FlagSet, name string) bool {
 	}
 	bf, ok := f.Value.(interface{ IsBoolFlag() bool })
 	return ok && bf.IsBoolFlag()
+}
+
+// flagWasSet reports whether the named flag was EXPLICITLY given on the command
+// line, as opposed to merely carrying its default. flag.FlagSet.Visit walks only
+// the flags that were actually set, which is the distinction a command needs to
+// reject a flag it cannot honour without also rejecting every invocation that
+// simply inherited the shared flagset's default.
+func flagWasSet(fs *flag.FlagSet, name string) bool {
+	set := false
+	fs.Visit(func(f *flag.Flag) {
+		if f.Name == name {
+			set = true
+		}
+	})
+	return set
 }
 
 // resolveDBPath returns dbPath if non-empty, otherwise calls DefaultDBPath().
@@ -794,6 +815,17 @@ func writeEntitiesTable(w io.Writer, ents []bestiary.Entity) {
 		fmt.Fprintf(w, "  %-48s %9d %8s %10d\n", e.Ref.String(), len(e.Providers), metadata, benchmarks)
 	}
 }
+
+// errSeriesDBPath is returned when `series` is given an explicit --db-path. The
+// flag is registered on the shared flagset every subcommand parses, so it PARSES
+// for series; rejecting it here is what keeps the CLI honest, because the series
+// view computes from the compiled-in registry and never opens the cache. Accepting
+// it silently would let a caller believe they had scoped the view to a synced
+// database. No "bestiary:" prefix — main() prepends it.
+var errSeriesDBPath = errors.New(
+	"series computes from the compiled-in registry and does not read the cache; " +
+		"--db-path has no effect here (use entities/show for cache-aware views)",
+)
 
 // seriesSummary is the JSON/table row of the registry-wide `series` listing: one
 // line with its counts. Releases/Entities are counts, not the objects, so the

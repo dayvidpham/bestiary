@@ -53,8 +53,9 @@ for its **Go module tags** (`vX.Y.Z`).
   `gemma-4`, `gemini-exp` onto `gemini`). The curated file is graceful-degrade: missing
   or malformed, the taxonomy falls back to pure computation. **Entity keys are
   untouched by both.**
-- **`bestiary series` subcommand** (read-only, offline, static registry — takes no
-  `--db-path`): bare, it lists every line with its release and entity counts; with a
+- **`bestiary series` subcommand** (read-only, offline, static registry — it never reads
+  the SQLite cache and *rejects* `--db-path` with an actionable error rather than
+  accepting a flag it cannot honour): bare, it lists every line with its release and entity counts; with a
   selector it details that line's releases and their entity keys. The selector reads as
   a line rendering (`llama-4`) or a family name (`gemma`, every generation of it) —
   the union of both, case-folded. Table and JSON output; no schema change, since this

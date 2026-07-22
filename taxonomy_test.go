@@ -94,6 +94,51 @@ func TestSeriesAll_CensusExact(t *testing.T) {
 	}
 }
 
+// TestReleases_CensusExact pins the EXACT Release census — the second half of the
+// hierarchy's size, sibling to the Series literal above.
+//
+// A Release is one (line, variant-name) pair, so the total counts every named
+// member of every line PLUS each line's un-named bare release. It is measured two
+// independent ways here (summing ReleasesOf over SeriesAll, and counting the
+// distinct releases the entities themselves map to via ReleaseOf) because the two
+// disagree if the release index and the entity mapping ever drift apart — a single
+// summation would pin the number without proving it consistent.
+//
+// The literal is exact for the same reason the Series literal is: it moves only by
+// a deliberate act. Note it is sensitive to re-keys that the Series count is NOT —
+// making an entity a named member (as the maverick member-ize did) adds a Release
+// without adding a Series, since the line already existed.
+func TestReleases_CensusExact(t *testing.T) {
+	const wantReleases = 668
+
+	summed := 0
+	for _, s := range bestiary.SeriesAll() {
+		summed += len(bestiary.ReleasesOf(s))
+	}
+	if summed != wantReleases {
+		t.Errorf("sum of ReleasesOf over SeriesAll() = %d, want exactly %d — "+
+			"update this census literal in the same commit if the release count changed intentionally",
+			summed, wantReleases)
+	}
+
+	// Independent method: the distinct releases reached from the entity side.
+	distinct := map[bestiary.Release]bool{}
+	for _, e := range bestiary.Entities() {
+		distinct[bestiary.ReleaseOf(e.Ref)] = true
+	}
+	if len(distinct) != wantReleases {
+		t.Errorf("distinct ReleaseOf over Entities() = %d, want %d — the release index and the "+
+			"entity mapping disagree", len(distinct), wantReleases)
+	}
+
+	// The llama-4 line carries three releases (bare, maverick, scout); the maverick
+	// one exists only because of the member-ize re-key, and is the difference between
+	// this census and its pre-re-key value.
+	if got := len(bestiary.ReleasesOf(bestiary.Series{Family: "llama", Generation: "4"})); got != 3 {
+		t.Errorf("llama-4 has %d releases, want 3 (bare, maverick, scout)", got)
+	}
+}
+
 // TestSeriesAll_SortedDeduplicatedDeterministic verifies the ordering contract:
 // strictly ascending by (Family, Generation) — which also proves de-duplication —
 // and byte-identical across two calls (no map-iteration order leaking out).
