@@ -312,7 +312,7 @@ func TestEntityRef_NoMigrationDrift(t *testing.T) {
 	// (a) Census literals — pinned to the full-bulk re-key snapshot. A change here is
 	// an intentional re-key event, not incidental drift.
 	const (
-		wantSizedCatalog    = 335
+		wantSizedCatalog    = 336
 		wantSizedStandalone = 4
 	)
 
@@ -323,6 +323,7 @@ func TestEntityRef_NoMigrationDrift(t *testing.T) {
 		"qwen@3#30b-a3b",                  // active MoE
 		"wizardlm@2#8x22b",                // NxM MoE (ExpertCount + PerExpertParams, no total)
 		"llama/scout@4#17b-16e{instruct}", // count-suffixed MoE via the curated llama-4 pin (@4 after the version unification)
+		"command/r7b#7b",                  // Cohere Command R7B dual-carry: variant r7b kept whole + 7b as ParamSize
 	}
 	keyIndex := make(map[string]bestiary.Entity, len(entities))
 	for _, e := range entities {

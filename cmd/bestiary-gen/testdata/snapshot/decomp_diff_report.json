@@ -1,8 +1,8 @@
 {
   "total_records": 4979,
-  "changed_count": 1243,
+  "changed_count": 1274,
   "cat_a_divergence_fix_count": 326,
-  "cat_b_improvement_count": 903,
+  "cat_b_improvement_count": 934,
   "cat_c_unexpected_regression_count": 0,
   "justified_exception_count": 14,
   "id_tuple4_incl_modifier_divergence_frozen_before": 81,
@@ -176,7 +176,7 @@
       "id": "cohere/command-r7b-12-2024",
       "raw_family": "",
       "before": "(family=\"command\",variant=\"\",version=\"12\",modifier=\"\")",
-      "after": "(family=\"command\",variant=\"r\",version=\"\",modifier=\"\")",
+      "after": "(family=\"command\",variant=\"r7b\",version=\"\",modifier=\"\")",
       "category": "a:divergence-fix",
       "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted"
     },
@@ -185,7 +185,7 @@
       "id": "cohere/command-r7b-12-2024",
       "raw_family": "command-r",
       "before": "(family=\"command\",variant=\"r\",version=\"12\",modifier=\"\")",
-      "after": "(family=\"command\",variant=\"r\",version=\"\",modifier=\"\")",
+      "after": "(family=\"command\",variant=\"r7b\",version=\"\",modifier=\"\")",
       "category": "a:divergence-fix",
       "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted"
     },
@@ -194,7 +194,7 @@
       "id": "cohere/command-r7b-12-2024",
       "raw_family": "command-r",
       "before": "(family=\"command\",variant=\"r\",version=\"12\",modifier=\"\")",
-      "after": "(family=\"command\",variant=\"r\",version=\"\",modifier=\"\")",
+      "after": "(family=\"command\",variant=\"r7b\",version=\"\",modifier=\"\")",
       "category": "a:divergence-fix",
       "reason": "all providers for this ID now agree post-unification; only phantom non-family loss permitted"
     },
@@ -4393,6 +4393,51 @@
       "reason": "strict enrichment — only previously-empty field(s) populated"
     },
     {
+      "provider": "amazon-bedrock",
+      "id": "au.anthropic.claude-haiku-4-5-20251001-v1:0",
+      "raw_family": "claude-haiku",
+      "before": "(family=\"claude\",variant=\"haiku\",version=\"\",modifier=\"\")",
+      "after": "(family=\"claude\",variant=\"haiku\",version=\"4.5\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "strict enrichment — only previously-empty field(s) populated"
+    },
+    {
+      "provider": "amazon-bedrock",
+      "id": "au.anthropic.claude-opus-4-6-v1",
+      "raw_family": "claude-opus",
+      "before": "(family=\"claude\",variant=\"opus\",version=\"\",modifier=\"\")",
+      "after": "(family=\"claude\",variant=\"opus\",version=\"4.6\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "strict enrichment — only previously-empty field(s) populated"
+    },
+    {
+      "provider": "amazon-bedrock",
+      "id": "au.anthropic.claude-opus-4-8",
+      "raw_family": "claude-opus",
+      "before": "(family=\"claude\",variant=\"opus\",version=\"\",modifier=\"\")",
+      "after": "(family=\"claude\",variant=\"opus\",version=\"4.8\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "strict enrichment — only previously-empty field(s) populated"
+    },
+    {
+      "provider": "amazon-bedrock",
+      "id": "au.anthropic.claude-sonnet-4-5-20250929-v1:0",
+      "raw_family": "claude-sonnet",
+      "before": "(family=\"claude\",variant=\"sonnet\",version=\"\",modifier=\"\")",
+      "after": "(family=\"claude\",variant=\"sonnet\",version=\"4.5\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "strict enrichment — only previously-empty field(s) populated"
+    },
+    {
+      "provider": "amazon-bedrock",
+      "id": "au.anthropic.claude-sonnet-4-6",
+      "raw_family": "claude-sonnet",
+      "before": "(family=\"claude\",variant=\"sonnet\",version=\"\",modifier=\"\")",
+      "after": "(family=\"claude\",variant=\"sonnet\",version=\"4.6\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "strict enrichment — only previously-empty field(s) populated"
+    },
+    {
       "provider": "nano-gpt",
       "id": "azure-gpt-4-turbo",
       "raw_family": "",
@@ -4721,7 +4766,7 @@
       "id": "command-r7b-12-2024",
       "raw_family": "command-r",
       "before": "(family=\"command\",variant=\"r\",version=\"12\",modifier=\"\")",
-      "after": "(family=\"command\",variant=\"r\",version=\"\",modifier=\"\")",
+      "after": "(family=\"command\",variant=\"r7b\",version=\"\",modifier=\"\")",
       "category": "b:improvement",
       "reason": "family-preserving de-noise/enrich: only phantom losses and/or enrichments, no ID-present field lost"
     },
@@ -4730,7 +4775,7 @@
       "id": "command-r7b-arabic-02-2025",
       "raw_family": "command-r",
       "before": "(family=\"command\",variant=\"r\",version=\"02\",modifier=\"\")",
-      "after": "(family=\"command\",variant=\"r\",version=\"\",modifier=\"\")",
+      "after": "(family=\"command\",variant=\"r7b\",version=\"\",modifier=\"\")",
       "category": "b:improvement",
       "reason": "family-preserving de-noise/enrich: only phantom losses and/or enrichments, no ID-present field lost"
     },
@@ -5059,6 +5104,69 @@
       "reason": "family-preserving de-noise/enrich: only phantom losses and/or enrichments, no ID-present field lost"
     },
     {
+      "provider": "amazon-bedrock",
+      "id": "eu.anthropic.claude-haiku-4-5-20251001-v1:0",
+      "raw_family": "claude-haiku",
+      "before": "(family=\"claude\",variant=\"haiku\",version=\"\",modifier=\"\")",
+      "after": "(family=\"claude\",variant=\"haiku\",version=\"4.5\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "strict enrichment — only previously-empty field(s) populated"
+    },
+    {
+      "provider": "amazon-bedrock",
+      "id": "eu.anthropic.claude-opus-4-5-20251101-v1:0",
+      "raw_family": "claude-opus",
+      "before": "(family=\"claude\",variant=\"opus\",version=\"\",modifier=\"\")",
+      "after": "(family=\"claude\",variant=\"opus\",version=\"4.5\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "strict enrichment — only previously-empty field(s) populated"
+    },
+    {
+      "provider": "amazon-bedrock",
+      "id": "eu.anthropic.claude-opus-4-6-v1",
+      "raw_family": "claude-opus",
+      "before": "(family=\"claude\",variant=\"opus\",version=\"\",modifier=\"\")",
+      "after": "(family=\"claude\",variant=\"opus\",version=\"4.6\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "strict enrichment — only previously-empty field(s) populated"
+    },
+    {
+      "provider": "amazon-bedrock",
+      "id": "eu.anthropic.claude-opus-4-7",
+      "raw_family": "claude-opus",
+      "before": "(family=\"claude\",variant=\"opus\",version=\"\",modifier=\"\")",
+      "after": "(family=\"claude\",variant=\"opus\",version=\"4.7\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "strict enrichment — only previously-empty field(s) populated"
+    },
+    {
+      "provider": "amazon-bedrock",
+      "id": "eu.anthropic.claude-opus-4-8",
+      "raw_family": "claude-opus",
+      "before": "(family=\"claude\",variant=\"opus\",version=\"\",modifier=\"\")",
+      "after": "(family=\"claude\",variant=\"opus\",version=\"4.8\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "strict enrichment — only previously-empty field(s) populated"
+    },
+    {
+      "provider": "amazon-bedrock",
+      "id": "eu.anthropic.claude-sonnet-4-5-20250929-v1:0",
+      "raw_family": "claude-sonnet",
+      "before": "(family=\"claude\",variant=\"sonnet\",version=\"\",modifier=\"\")",
+      "after": "(family=\"claude\",variant=\"sonnet\",version=\"4.5\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "strict enrichment — only previously-empty field(s) populated"
+    },
+    {
+      "provider": "amazon-bedrock",
+      "id": "eu.anthropic.claude-sonnet-4-6",
+      "raw_family": "claude-sonnet",
+      "before": "(family=\"claude\",variant=\"sonnet\",version=\"\",modifier=\"\")",
+      "after": "(family=\"claude\",variant=\"sonnet\",version=\"4.6\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "strict enrichment — only previously-empty field(s) populated"
+    },
+    {
       "provider": "nano-gpt",
       "id": "failspy/Meta-Llama-3-70B-Instruct-abliterated-v3.5",
       "raw_family": "llama",
@@ -5282,6 +5390,69 @@
       "after": "(family=\"glm\",variant=\"v\",version=\"5\",modifier=\"turbo\")",
       "category": "b:improvement",
       "reason": "glued family-suffix moved to variant (e.g. glmv → glm + variant 'v')"
+    },
+    {
+      "provider": "amazon-bedrock",
+      "id": "global.anthropic.claude-haiku-4-5-20251001-v1:0",
+      "raw_family": "claude-haiku",
+      "before": "(family=\"claude\",variant=\"haiku\",version=\"\",modifier=\"\")",
+      "after": "(family=\"claude\",variant=\"haiku\",version=\"4.5\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "strict enrichment — only previously-empty field(s) populated"
+    },
+    {
+      "provider": "amazon-bedrock",
+      "id": "global.anthropic.claude-opus-4-5-20251101-v1:0",
+      "raw_family": "claude-opus",
+      "before": "(family=\"claude\",variant=\"opus\",version=\"\",modifier=\"\")",
+      "after": "(family=\"claude\",variant=\"opus\",version=\"4.5\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "strict enrichment — only previously-empty field(s) populated"
+    },
+    {
+      "provider": "amazon-bedrock",
+      "id": "global.anthropic.claude-opus-4-6-v1",
+      "raw_family": "claude-opus",
+      "before": "(family=\"claude\",variant=\"opus\",version=\"\",modifier=\"\")",
+      "after": "(family=\"claude\",variant=\"opus\",version=\"4.6\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "strict enrichment — only previously-empty field(s) populated"
+    },
+    {
+      "provider": "amazon-bedrock",
+      "id": "global.anthropic.claude-opus-4-7",
+      "raw_family": "claude-opus",
+      "before": "(family=\"claude\",variant=\"opus\",version=\"\",modifier=\"\")",
+      "after": "(family=\"claude\",variant=\"opus\",version=\"4.7\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "strict enrichment — only previously-empty field(s) populated"
+    },
+    {
+      "provider": "amazon-bedrock",
+      "id": "global.anthropic.claude-opus-4-8",
+      "raw_family": "claude-opus",
+      "before": "(family=\"claude\",variant=\"opus\",version=\"\",modifier=\"\")",
+      "after": "(family=\"claude\",variant=\"opus\",version=\"4.8\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "strict enrichment — only previously-empty field(s) populated"
+    },
+    {
+      "provider": "amazon-bedrock",
+      "id": "global.anthropic.claude-sonnet-4-5-20250929-v1:0",
+      "raw_family": "claude-sonnet",
+      "before": "(family=\"claude\",variant=\"sonnet\",version=\"\",modifier=\"\")",
+      "after": "(family=\"claude\",variant=\"sonnet\",version=\"4.5\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "strict enrichment — only previously-empty field(s) populated"
+    },
+    {
+      "provider": "amazon-bedrock",
+      "id": "global.anthropic.claude-sonnet-4-6",
+      "raw_family": "claude-sonnet",
+      "before": "(family=\"claude\",variant=\"sonnet\",version=\"\",modifier=\"\")",
+      "after": "(family=\"claude\",variant=\"sonnet\",version=\"4.6\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "strict enrichment — only previously-empty field(s) populated"
     },
     {
       "provider": "kilo",
@@ -6108,6 +6279,42 @@
       "raw_family": "text-embedding",
       "before": "(family=\"text-embedding\",variant=\"\",version=\"\",modifier=\"\")",
       "after": "(family=\"text-embedding\",variant=\"large\",version=\"\",modifier=\"instruct\")",
+      "category": "b:improvement",
+      "reason": "strict enrichment — only previously-empty field(s) populated"
+    },
+    {
+      "provider": "amazon-bedrock",
+      "id": "jp.anthropic.claude-opus-4-7",
+      "raw_family": "claude-opus",
+      "before": "(family=\"claude\",variant=\"opus\",version=\"\",modifier=\"\")",
+      "after": "(family=\"claude\",variant=\"opus\",version=\"4.7\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "strict enrichment — only previously-empty field(s) populated"
+    },
+    {
+      "provider": "amazon-bedrock",
+      "id": "jp.anthropic.claude-opus-4-8",
+      "raw_family": "claude-opus",
+      "before": "(family=\"claude\",variant=\"opus\",version=\"\",modifier=\"\")",
+      "after": "(family=\"claude\",variant=\"opus\",version=\"4.8\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "strict enrichment — only previously-empty field(s) populated"
+    },
+    {
+      "provider": "amazon-bedrock",
+      "id": "jp.anthropic.claude-sonnet-4-5-20250929-v1:0",
+      "raw_family": "claude-sonnet",
+      "before": "(family=\"claude\",variant=\"sonnet\",version=\"\",modifier=\"\")",
+      "after": "(family=\"claude\",variant=\"sonnet\",version=\"4.5\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "strict enrichment — only previously-empty field(s) populated"
+    },
+    {
+      "provider": "amazon-bedrock",
+      "id": "jp.anthropic.claude-sonnet-4-6",
+      "raw_family": "claude-sonnet",
+      "before": "(family=\"claude\",variant=\"sonnet\",version=\"\",modifier=\"\")",
+      "after": "(family=\"claude\",variant=\"sonnet\",version=\"4.6\",modifier=\"\")",
       "category": "b:improvement",
       "reason": "strict enrichment — only previously-empty field(s) populated"
     },
@@ -10257,6 +10464,78 @@
       "raw_family": "unsloth",
       "before": "(family=\"unsloth\",variant=\"\",version=\"\",modifier=\"\")",
       "after": "(family=\"unsloth\",variant=\"\",version=\"\",modifier=\"instruct\")",
+      "category": "b:improvement",
+      "reason": "strict enrichment — only previously-empty field(s) populated"
+    },
+    {
+      "provider": "amazon-bedrock",
+      "id": "us.anthropic.claude-haiku-4-5-20251001-v1:0",
+      "raw_family": "claude-haiku",
+      "before": "(family=\"claude\",variant=\"haiku\",version=\"\",modifier=\"\")",
+      "after": "(family=\"claude\",variant=\"haiku\",version=\"4.5\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "strict enrichment — only previously-empty field(s) populated"
+    },
+    {
+      "provider": "amazon-bedrock",
+      "id": "us.anthropic.claude-opus-4-1-20250805-v1:0",
+      "raw_family": "claude-opus",
+      "before": "(family=\"claude\",variant=\"opus\",version=\"\",modifier=\"\")",
+      "after": "(family=\"claude\",variant=\"opus\",version=\"4.1\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "strict enrichment — only previously-empty field(s) populated"
+    },
+    {
+      "provider": "amazon-bedrock",
+      "id": "us.anthropic.claude-opus-4-5-20251101-v1:0",
+      "raw_family": "claude-opus",
+      "before": "(family=\"claude\",variant=\"opus\",version=\"\",modifier=\"\")",
+      "after": "(family=\"claude\",variant=\"opus\",version=\"4.5\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "strict enrichment — only previously-empty field(s) populated"
+    },
+    {
+      "provider": "amazon-bedrock",
+      "id": "us.anthropic.claude-opus-4-6-v1",
+      "raw_family": "claude-opus",
+      "before": "(family=\"claude\",variant=\"opus\",version=\"\",modifier=\"\")",
+      "after": "(family=\"claude\",variant=\"opus\",version=\"4.6\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "strict enrichment — only previously-empty field(s) populated"
+    },
+    {
+      "provider": "amazon-bedrock",
+      "id": "us.anthropic.claude-opus-4-7",
+      "raw_family": "claude-opus",
+      "before": "(family=\"claude\",variant=\"opus\",version=\"\",modifier=\"\")",
+      "after": "(family=\"claude\",variant=\"opus\",version=\"4.7\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "strict enrichment — only previously-empty field(s) populated"
+    },
+    {
+      "provider": "amazon-bedrock",
+      "id": "us.anthropic.claude-opus-4-8",
+      "raw_family": "claude-opus",
+      "before": "(family=\"claude\",variant=\"opus\",version=\"\",modifier=\"\")",
+      "after": "(family=\"claude\",variant=\"opus\",version=\"4.8\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "strict enrichment — only previously-empty field(s) populated"
+    },
+    {
+      "provider": "amazon-bedrock",
+      "id": "us.anthropic.claude-sonnet-4-5-20250929-v1:0",
+      "raw_family": "claude-sonnet",
+      "before": "(family=\"claude\",variant=\"sonnet\",version=\"\",modifier=\"\")",
+      "after": "(family=\"claude\",variant=\"sonnet\",version=\"4.5\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "strict enrichment — only previously-empty field(s) populated"
+    },
+    {
+      "provider": "amazon-bedrock",
+      "id": "us.anthropic.claude-sonnet-4-6",
+      "raw_family": "claude-sonnet",
+      "before": "(family=\"claude\",variant=\"sonnet\",version=\"\",modifier=\"\")",
+      "after": "(family=\"claude\",variant=\"sonnet\",version=\"4.6\",modifier=\"\")",
       "category": "b:improvement",
       "reason": "strict enrichment — only previously-empty field(s) populated"
     },

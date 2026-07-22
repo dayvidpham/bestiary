@@ -3422,7 +3422,7 @@ func TestCrossProviderConvergences(t *testing.T) {
 // hy3 bare-gen). Each is non-lossy under the hardened gate (cat-(c)=0). command-a-reasoning is
 // DEFERRED to the systematic modifier ruling (reasoning = borderline-capability, modifier-vs-variant judgment).
 func TestTier1StragglerConvergences(t *testing.T) {
-	corpus := loadParseCorpus[rawIDInput, fvvmExpected](t, tier1StragglerConvergencesCorpusJSON, 18)
+	corpus := loadParseCorpus[rawIDInput, fvvmExpected](t, tier1StragglerConvergencesCorpusJSON, 20)
 	requireInputCoverage(t, corpus, map[rawIDInput]fvvmExpected{
 		// deepseek chat product-line member, version preserved.
 		{Raw: "", ID: "deepseek/deepseek-chat-v3.1"}: {Family: "deepseek", Variant: "chat", Version: "3.1", Mod: ""},
@@ -3430,10 +3430,13 @@ func TestTier1StragglerConvergences(t *testing.T) {
 		{Raw: "text-embedding", ID: "Qwen/Qwen3-Embedding-8B"}: {Family: "qwen", Variant: "embedding", Version: "3", Mod: ""},
 		// GUARD: OpenAI text-embedding-3* stays family text-embedding (untouched).
 		{Raw: "text-embedding", ID: "openai/text-embedding-3-large"}: {Family: "text-embedding", Variant: "large", Version: "3", Mod: ""},
-		// cohere command-r7b-12-2024: the trailing MM-YYYY group "12-2024" is a date,
-		// so Version stays empty (never leaks the month "12"); variant is the bare
-		// member "r" (the "7b" is param-size noise dropped from the tuple).
-		{Raw: "command-r", ID: "cohere/command-r7b-12-2024"}: {Family: "command", Variant: "r", Version: "", Mod: ""},
+		// cohere command-r7b-12-2024: "r7b" is Cohere's distinct marketed variant (kept
+		// whole; the 7b is carried separately as ParamSize), and the trailing MM-YYYY
+		// group "12-2024" is a date, so Version stays empty (never leaks the month "12").
+		{Raw: "command-r", ID: "cohere/command-r7b-12-2024"}: {Family: "command", Variant: "r7b", Version: "", Mod: ""},
+		// negative controls: the r7b pin must not bleed into plain R / R+ siblings.
+		{Raw: "command-r", ID: "command-r-08-2024"}:           {Family: "command", Variant: "r", Version: "", Mod: ""},
+		{Raw: "command-r-plus", ID: "command-r-plus-08-2024"}: {Family: "command", Variant: "r-plus", Version: "", Mod: ""},
 	})
 	runFamilyDetailedTupleCorpus(t, corpus)
 }
@@ -3481,23 +3484,50 @@ func TestMetaLlamaNoSlashCapture(t *testing.T) {
 	runFamilyDetailedTupleCorpus(t, corpus)
 }
 
-// TestNamespaceSuffixTransparencyCapture pins wi36: a dotted vendor-namespace
-// Bedrock ID ("au.anthropic.claude-sonnet-4-5-20250929" with the "-v1:0",
-// "@default", and ":0" routing suffixes) decomposes to the plain (claude,sonnet)
-// family+variant — it must NEVER mint a vendor-namespace family — and all three
-// suffix spellings are transparent (identical tuples). NOTE: at HEAD the dotted
-// form's Version is empty (the dotted "region.vendor." prefix defeats the
-// ID-based version recovery that the plain sibling gets — a measured divergence
-// reported for adjudication, NOT pinned here as correct); this corpus pins only
-// the family/variant convergence + suffix transparency that genuinely hold.
+// TestNamespaceSuffixTransparencyCapture pins wi36 FULL convergence: every dotted
+// AWS Bedrock cross-region form
+// ("<region>.anthropic.claude-sonnet-4-5-20250929-v1:0" for us/eu/au/jp/global, plus
+// the bare ":0" profile-index spelling) decomposes to the SAME (claude,sonnet,4.5)
+// tuple as the plainly-served sibling — version INCLUDED — so all key to the one
+// entity claude/sonnet@4.5. The dotted region.vendor. prefix and the -v1:0 / :0
+// profile tag are routing metadata seen through by stripBedrockProfile before
+// version recovery; the region itself is captured as a per-instance attribute (see
+// TestRegionCapture), never in the key.
 func TestNamespaceSuffixTransparencyCapture(t *testing.T) {
-	corpus := loadParseCorpus[rawIDInput, fvvmExpected](t, namespaceSuffixTransparencyCorpusJSON, 3)
+	corpus := loadParseCorpus[rawIDInput, fvvmExpected](t, namespaceSuffixTransparencyCorpusJSON, 7)
 	requireInputCoverage(t, corpus, map[rawIDInput]fvvmExpected{
-		{Raw: "claude-sonnet", ID: "au.anthropic.claude-sonnet-4-5-20250929-v1:0"}:    {Family: "claude", Variant: "sonnet", Version: "", Mod: ""},
-		{Raw: "claude-sonnet", ID: "au.anthropic.claude-sonnet-4-5-20250929@default"}: {Family: "claude", Variant: "sonnet", Version: "", Mod: ""},
-		{Raw: "claude-sonnet", ID: "au.anthropic.claude-sonnet-4-5-20250929:0"}:       {Family: "claude", Variant: "sonnet", Version: "", Mod: ""},
+		{Raw: "claude-sonnet", ID: "us.anthropic.claude-sonnet-4-5-20250929-v1:0"}:     {Family: "claude", Variant: "sonnet", Version: "4.5", Mod: ""},
+		{Raw: "claude-sonnet", ID: "eu.anthropic.claude-sonnet-4-5-20250929-v1:0"}:     {Family: "claude", Variant: "sonnet", Version: "4.5", Mod: ""},
+		{Raw: "claude-sonnet", ID: "au.anthropic.claude-sonnet-4-5-20250929-v1:0"}:     {Family: "claude", Variant: "sonnet", Version: "4.5", Mod: ""},
+		{Raw: "claude-sonnet", ID: "jp.anthropic.claude-sonnet-4-5-20250929-v1:0"}:     {Family: "claude", Variant: "sonnet", Version: "4.5", Mod: ""},
+		{Raw: "claude-sonnet", ID: "global.anthropic.claude-sonnet-4-5-20250929-v1:0"}: {Family: "claude", Variant: "sonnet", Version: "4.5", Mod: ""},
+		// bare :0 profile index (no -v1) is transparent; plain sibling is the target.
+		{Raw: "claude-sonnet", ID: "us.anthropic.claude-sonnet-4-5-20250929:0"}: {Family: "claude", Variant: "sonnet", Version: "4.5", Mod: ""},
+		{Raw: "claude-sonnet", ID: "claude-sonnet-4-5-20250929"}:                {Family: "claude", Variant: "sonnet", Version: "4.5", Mod: ""},
 	})
 	runFamilyDetailedTupleCorpus(t, corpus)
+}
+
+// TestRegionCapture pins the Region-attribute extraction (DetectRegion): each
+// attested AWS Bedrock region prefix (us/eu/au/jp/global) surfaces its Region member
+// (au and jp map to RegionAPAC) with the id normalized to the plain model, and the
+// negative controls confirm Region is orthogonal to Host (a nano-gpt azure-* host id
+// stays RegionNone) and closed to non-region dotted segments (openai.gpt-5-codex
+// stays RegionNone, unchanged).
+func TestRegionCapture(t *testing.T) {
+	corpus := loadParseCorpus[string, regionExpected](t, regionCaptureCorpusJSON, 10)
+	requireInputCoverage(t, corpus, map[string]regionExpected{
+		"us.anthropic.claude-sonnet-4-5-20250929-v1:0":    {Region: "us", RegionRaw: "", Stripped: "claude-sonnet-4-5-20250929"},
+		"au.anthropic.claude-sonnet-4-5-20250929-v1:0":    {Region: "apac", RegionRaw: "", Stripped: "claude-sonnet-4-5-20250929"},
+		"jp.anthropic.claude-sonnet-4-5-20250929-v1:0":    {Region: "apac", RegionRaw: "", Stripped: "claude-sonnet-4-5-20250929"},
+		"global.anthropic.claude-haiku-4-5-20251001-v1:0": {Region: "global", RegionRaw: "", Stripped: "claude-haiku-4-5-20251001"},
+		"us.meta.llama4-scout-17b-instruct-v1:0":          {Region: "us", RegionRaw: "", Stripped: "llama4-scout-17b-instruct"},
+		// negative controls: host id and non-Bedrock dotted id both stay RegionNone.
+		"azure-gpt-4o":               {Region: "unspecified", RegionRaw: "", Stripped: "azure-gpt-4o"},
+		"openai.gpt-5-codex":         {Region: "unspecified", RegionRaw: "", Stripped: "openai.gpt-5-codex"},
+		"claude-sonnet-4-5-20250929": {Region: "unspecified", RegionRaw: "", Stripped: "claude-sonnet-4-5-20250929"},
+	})
+	runRegionCaptureCorpus(t, corpus)
 }
 
 // TestTextEmbeddingSoleVariantCapture pins ibtb/ptr9-2: OpenAI's

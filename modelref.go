@@ -26,6 +26,14 @@ type ModelRef struct {
 	Date      string   // Release date in YYYY-MM-DD format; empty if none
 	Modifier  []string // Known trailing tokens in canonical order (e.g., ["vision","instruct"]); nil if none
 	Host      Host     // Serving host/backend (per-instance attribute, never part of identity); HostNone if unknown
+	// Region is the serving jurisdiction / AWS Bedrock region (per-instance attribute,
+	// never part of identity; RegionNone if unspecified). RegionRaw is the fail-safe
+	// carrier for RegionOther. Both are json:"-" for now: the field exists (the parse
+	// half), but exposing Region on the public JSON contract is a schema change deferred
+	// to the schema-0.5.0 bump — until then it is excluded from serialization so it
+	// causes no schema drift, exactly as it is excluded from all key rendering.
+	Region    Region `json:"-"`
+	RegionRaw string `json:"-"`
 }
 
 // Ref returns a ModelRef for this ModelInfo.

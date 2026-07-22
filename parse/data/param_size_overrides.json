@@ -20,6 +20,10 @@
 
     {"id": "upstage/solar-10_7b-instruct", "param_size": "10.7b", "_comment": "underscore-glued decimal '10_7b'; '_' is not a separator so the mechanical extractor cannot reach it"},
 
+    {"id": "command-r7b-12-2024", "param_size": "7b", "_comment": "Cohere Command R7B: dual-carry -> variant 'r7b' kept whole (idFamilyOverrides), 7b ALSO recorded as ParamSize; mechanical ExtractParamSizeToken('command-r7b') is '' (7b is token-internal to r7b)"},
+    {"id": "cohere/command-r7b-12-2024", "param_size": "7b", "_comment": "Cohere Command R7B org-prefixed spelling; same dual-carry 7b pin"},
+    {"id": "command-r7b-arabic-02-2025", "param_size": "7b", "_comment": "Cohere Command R7B Arabic; same dual-carry 7b pin"},
+
     {"id": "qwen/qwen3-coder-next-fp8-1m", "param_size": "", "_comment": "SUPPRESS: '1m' is a 1M-context tier marker, not params; extractor honestly returns ('1m', true) so this pin overrides at enrichment tier"}
   ]
 }

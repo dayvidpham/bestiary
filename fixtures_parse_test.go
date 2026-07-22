@@ -212,6 +212,40 @@ var textEmbeddingSoleVariantCorpusJSON []byte
 //go:embed testdata/parse/grok_documented_residual_corpus.json
 var grokDocumentedResidualCorpusJSON []byte
 
+//go:embed testdata/parse/region_capture_corpus.json
+var regionCaptureCorpusJSON []byte
+
+// regionExpected is the (region, region_raw, stripped) triple DetectRegion
+// produces: region is the Region.String() rendering, region_raw the fail-safe raw
+// carrier (non-empty only for RegionOther), stripped the region+profile-suffix-
+// stripped model ID.
+type regionExpected struct {
+	Region    string `json:"region"`
+	RegionRaw string `json:"region_raw"`
+	Stripped  string `json:"stripped"`
+}
+
+// runRegionCaptureCorpus drives bestiary.DetectRegion over every case and asserts
+// the (Region.String(), RegionRaw, stripped-ID) triple.
+func runRegionCaptureCorpus(t *testing.T, corpus testcase.Corpus[string, regionExpected]) {
+	t.Helper()
+	for _, c := range corpus.Cases {
+		t.Run(c.Name, func(t *testing.T) {
+			t.Parallel()
+			region, raw, stripped := bestiary.DetectRegion(bestiary.ModelID(c.Input))
+			if region.String() != c.Expected.Region {
+				t.Errorf("DetectRegion(%q) region = %q, want %q", c.Input, region, c.Expected.Region)
+			}
+			if raw != c.Expected.RegionRaw {
+				t.Errorf("DetectRegion(%q) regionRaw = %q, want %q", c.Input, raw, c.Expected.RegionRaw)
+			}
+			if string(stripped) != c.Expected.Stripped {
+				t.Errorf("DetectRegion(%q) stripped = %q, want %q", c.Input, stripped, c.Expected.Stripped)
+			}
+		})
+	}
+}
+
 // rawIDInput is the (rawFamily, id) pair fed to ParseFamilyDetailed.
 type rawIDInput struct {
 	Raw string `json:"raw"`

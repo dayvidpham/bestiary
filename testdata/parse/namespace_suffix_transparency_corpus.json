@@ -1,28 +1,60 @@
 {
   "cases": [
     {
-      "name": "au.anthropic.claude-sonnet-4-5-20250929-v1:0 -> (claude,sonnet) no vendor-namespace family",
+      "name": "us.anthropic.claude-sonnet-4-5-20250929-v1:0 -> (claude,sonnet,4.5) full convergence",
+      "input": { "raw": "claude-sonnet", "id": "us.anthropic.claude-sonnet-4-5-20250929-v1:0" },
+      "expected": { "family": "claude", "variant": "sonnet", "version": "4.5", "mod": "" },
+      "classification": "must-pass",
+      "provenance": { "source": "requirement", "ref": "AWS Bedrock cross-region form must decompose to the SAME (claude,sonnet,4.5) tuple as the plain sibling -> same entity claude/sonnet@4.5; the dotted 'us.anthropic.' prefix and '-v1:0' profile tag are routing metadata stripped before version recovery" },
+      "mutation": { "description": "Bedrock region.vendor. prefix + -v1:0 tag see-through: full version convergence with the plain sibling" }
+    },
+    {
+      "name": "eu.anthropic.claude-sonnet-4-5-20250929-v1:0 -> (claude,sonnet,4.5) full convergence",
+      "input": { "raw": "claude-sonnet", "id": "eu.anthropic.claude-sonnet-4-5-20250929-v1:0" },
+      "expected": { "family": "claude", "variant": "sonnet", "version": "4.5", "mod": "" },
+      "classification": "must-pass",
+      "provenance": { "source": "requirement", "ref": "eu region Bedrock form converges to claude/sonnet@4.5 (same entity as plain), version recovered through the dotted prefix + profile tag" },
+      "mutation": { "description": "eu Bedrock form full version convergence with the plain sibling" }
+    },
+    {
+      "name": "au.anthropic.claude-sonnet-4-5-20250929-v1:0 -> (claude,sonnet,4.5) full convergence",
       "input": { "raw": "claude-sonnet", "id": "au.anthropic.claude-sonnet-4-5-20250929-v1:0" },
-      "expected": { "family": "claude", "variant": "sonnet", "version": "", "mod": "" },
+      "expected": { "family": "claude", "variant": "sonnet", "version": "4.5", "mod": "" },
       "classification": "must-pass",
-      "provenance": { "source": "requirement", "ref": "dotted vendor namespace 'au.anthropic.' + '-v1:0' Bedrock suffix must decompose to family claude (never mint a vendor-namespace family like 'au.anthropic.claude'); variant sonnet" },
-      "mutation": { "description": "dotted-namespace + -v1:0 suffix form decomposes to the plain claude/sonnet family+variant (no vendor-namespace family minted)" }
+      "provenance": { "source": "requirement", "ref": "au region Bedrock form converges to claude/sonnet@4.5 (same entity as plain); region APAC is a per-instance attribute, not part of the key" },
+      "mutation": { "description": "au Bedrock form full version convergence with the plain sibling" }
     },
     {
-      "name": "au.anthropic.claude-sonnet-4-5-20250929@default -> same tuple as -v1:0 (@default transparent)",
-      "input": { "raw": "claude-sonnet", "id": "au.anthropic.claude-sonnet-4-5-20250929@default" },
-      "expected": { "family": "claude", "variant": "sonnet", "version": "", "mod": "" },
+      "name": "jp.anthropic.claude-sonnet-4-5-20250929-v1:0 -> (claude,sonnet,4.5) full convergence",
+      "input": { "raw": "claude-sonnet", "id": "jp.anthropic.claude-sonnet-4-5-20250929-v1:0" },
+      "expected": { "family": "claude", "variant": "sonnet", "version": "4.5", "mod": "" },
       "classification": "must-pass",
-      "provenance": { "source": "requirement", "ref": "the '@default' routing suffix is transparent: it yields the identical (claude,sonnet,'','') tuple as the '-v1:0' and ':0' spellings" },
-      "mutation": { "description": "@default suffix transparency: identical family/variant tuple to the -v1:0 spelling" }
+      "provenance": { "source": "requirement", "ref": "jp region Bedrock form converges to claude/sonnet@4.5 (same entity as plain); region APAC is a per-instance attribute, not part of the key" },
+      "mutation": { "description": "jp Bedrock form full version convergence with the plain sibling" }
     },
     {
-      "name": "au.anthropic.claude-sonnet-4-5-20250929:0 -> same tuple as -v1:0 (:0 transparent)",
-      "input": { "raw": "claude-sonnet", "id": "au.anthropic.claude-sonnet-4-5-20250929:0" },
-      "expected": { "family": "claude", "variant": "sonnet", "version": "", "mod": "" },
+      "name": "global.anthropic.claude-sonnet-4-5-20250929-v1:0 -> (claude,sonnet,4.5) full convergence",
+      "input": { "raw": "claude-sonnet", "id": "global.anthropic.claude-sonnet-4-5-20250929-v1:0" },
+      "expected": { "family": "claude", "variant": "sonnet", "version": "4.5", "mod": "" },
       "classification": "must-pass",
-      "provenance": { "source": "requirement", "ref": "the trailing ':0' version-pin suffix is transparent: it yields the identical (claude,sonnet,'','') tuple as the '-v1:0' and '@default' spellings" },
-      "mutation": { "description": ":0 suffix transparency: identical family/variant tuple to the -v1:0 spelling" }
+      "provenance": { "source": "requirement", "ref": "global region Bedrock form converges to claude/sonnet@4.5 (same entity as plain), version recovered through the dotted prefix + profile tag" },
+      "mutation": { "description": "global Bedrock form full version convergence with the plain sibling" }
+    },
+    {
+      "name": "us.anthropic.claude-sonnet-4-5-20250929:0 -> (claude,sonnet,4.5) :0 suffix transparent",
+      "input": { "raw": "claude-sonnet", "id": "us.anthropic.claude-sonnet-4-5-20250929:0" },
+      "expected": { "family": "claude", "variant": "sonnet", "version": "4.5", "mod": "" },
+      "classification": "must-pass",
+      "provenance": { "source": "requirement", "ref": "the bare ':0' inference-profile index (without the '-v1' token) is transparent: it converges to the same claude/sonnet@4.5 tuple as the '-v1:0' and plain spellings" },
+      "mutation": { "description": ":0 profile-index suffix transparency: same tuple as -v1:0 and plain" }
+    },
+    {
+      "name": "claude-sonnet-4-5-20250929 -> (claude,sonnet,4.5) plain sibling (convergence target)",
+      "input": { "raw": "claude-sonnet", "id": "claude-sonnet-4-5-20250929" },
+      "expected": { "family": "claude", "variant": "sonnet", "version": "4.5", "mod": "" },
+      "classification": "must-pass",
+      "provenance": { "source": "requirement", "ref": "the plainly-served sibling establishes the convergence target (claude,sonnet,4.5); every dotted Bedrock region form above must key to this same entity" },
+      "mutation": { "description": "plain sibling anchors the shared claude/sonnet@4.5 entity the Bedrock forms converge onto" }
     }
   ]
 }
