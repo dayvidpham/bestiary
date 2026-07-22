@@ -680,6 +680,35 @@ The selector is a **specificity ladder** — ask for as much or as little as you
 | `bestiary series claude --version 4` | identical to the row above |
 | `bestiary series claude-4.8` | the one `claude-4.8` line |
 
+The **canonical entity grammar** is accepted too, mapped to its series-level meaning. Note the
+`@` here is the entity **version**, exactly as in an entity key (`claude/opus@4.5`) — not the
+`@`-date form the `show` resolver accepts; series live above entity keys, so they inherit the
+key grammar.
+
+| Selector | Returns |
+|---|---|
+| `bestiary series claude@4` | the major-4 union (identical to `claude-4`) |
+| `bestiary series claude@4.5` | the one `claude-4.5` line |
+| `bestiary series claude/opus` | the **opus release across every claude generation** |
+| `bestiary series claude/opus@4` | the opus release within the 4.x lines |
+| `bestiary series anthropic/claude@4` | the 4.x lines, narrowed to anthropic-served entities |
+
+A variant segment is a **release-level cut**: it selects the lines that actually carry that
+release and shows only that release in each, so a line without an opus release drops out rather
+than appearing with the rest of its releases intact. A leading `<provider>/` is peeled only when
+it names a *known* provider (so `claude/opus` still reads as family/variant), and it feeds the
+ordinary `--provider` machinery rather than a second filter — an explicit `--provider` that
+disagrees with the prefix is an actionable error, as is a `--version` that disagrees with the
+selector's `@version`.
+
+`--input-format` pins the grammar for scripting that must not depend on inference:
+
+| Value | Behaviour |
+|---|---|
+| `infer` (default) | ladder and canonical readings are tried and **unioned**; a raw model ID is the **final** fallback, used only when both find nothing |
+| `canonical` | the selector must be `[provider/]family[/variant][@version]` — **no fallback**; a raw ID fails loudly and is told which format would read it |
+| `models.dev` | the selector is a raw catalog ID, resolved through the ordinary lookup to its entity's line (`claude-sonnet-4-5-20250929` → `claude-4.5`) |
+
 The major rung is a **union, not a re-grouping**: it returns several Series in the same
 multi-line output shape the family rung already produces, and the hierarchy itself is
 untouched — `claude-4.0` and `claude-4.5` remain distinct lines that a narrower selector still
@@ -722,6 +751,9 @@ bestiary series gemma                     # every gemma generation, JSON
 bestiary series claude-4                  # every claude 4.x line: 4.0, 4.1, 4.5, 4.6, 4.7, 4.8
 bestiary series claude --version 4        # identical to the line above
 bestiary series claude-4.8                # just that line
+bestiary series claude/opus               # the opus release across every claude generation
+bestiary series anthropic/claude@4        # the 4.x lines, anthropic-served entities only
+bestiary series claude-sonnet-4-5-20250929 --input-format models.dev   # a raw id -> its line
 bestiary series --provider cohere         # only lines cohere serves, with post-filter counts
 bestiary series --quant q4_k_m            # only lines with a q4_k_m-quantized instance
 bestiary series --status beta             # only lines with a beta-status instance

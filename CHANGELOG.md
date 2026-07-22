@@ -74,7 +74,26 @@ for its **Go module tags** (`vX.Y.Z`).
   The new `--version` flag is exactly equivalent to appending `-<value>` to the
   positional, composes with `--provider`/`--quant`/`--status` (selection first, entity
   filters after), and is rejected with an actionable error when given without a family
-  or without a value. Table and JSON output; no schema change, since this
+  or without a value.
+
+  The **canonical entity grammar** is accepted as a selector too, mapped to its
+  series-level meaning — `claude@4` (the major union), `claude@4.5` (one line),
+  `claude/opus` (a RELEASE-LEVEL cut: the opus release across every claude generation),
+  `claude/opus@4`, and `anthropic/claude@4` (provider-qualified). The `@` is the entity
+  VERSION, as in an entity key, not the `show` resolver's `@`-date form; series live
+  above entity keys and inherit the key grammar. Parsing reuses the same
+  `parseEntityTuple` the entity commands use — there is no second parser. A release cut
+  SELECTS the lines carrying that release (a line without one drops out rather than
+  rendering its other releases), and a provider prefix feeds the ordinary `--provider`
+  machinery; a `--provider` or `--version` that contradicts the selector is an
+  actionable error rather than a silent precedence win.
+
+  The new `--input-format` flag pins the selector grammar for scripting: `canonical`
+  (the entity grammar, NO fallback — a raw id fails loudly and is told which format
+  would read it), `models.dev` (a raw catalog id resolved through the ordinary lookup
+  to its entity's line), or the default `infer` (ladder and canonical readings unioned,
+  with the raw-id reading as the FINAL fallback — the precedence is documented rather
+  than emergent). Table and JSON output; no schema change, since this
   renders Go relations rather than a new public JSON document type.
 - **Store v7**: `nomina` table (PK `(value, scheme, entity_key)`, FK →
   `data_sources` — enforcement regression-tested) + `region` column, with

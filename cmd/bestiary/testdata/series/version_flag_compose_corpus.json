@@ -1,0 +1,69 @@
+{
+  "_comment": "applyVersionFlag: how --version folds into the positional selector, producing the candidate spellings to resolve. A version-less selector yields both grammars' spellings (ladder '-' and canonical '@') under infer, and only the canonical one under --input-format=canonical. A selector that already pins @version must AGREE. See TESTING.md.",
+  "cases": [
+    {
+      "name": "unset_version_leaves_the_selector_alone",
+      "input": { "selector": "claude", "version": "", "input_format": "infer" },
+      "expected": { "candidates": ["claude"] },
+      "classification": "must-pass",
+      "provenance": { "source": "requirement", "ref": "the flag is optional; with it unset the selector must reach resolution untouched" },
+      "mutation": { "description": "no version is supplied, so no candidate may be synthesized" }
+    },
+    {
+      "name": "infer_offers_both_grammars",
+      "input": { "selector": "claude", "version": "4", "input_format": "infer" },
+      "expected": { "candidates": ["claude-4", "claude@4"] },
+      "classification": "must-pass",
+      "provenance": { "source": "requirement", "ref": "the two grammars spell a version differently; unioning both is what makes --version work identically on either without the caller knowing which they wrote" },
+      "mutation": { "description": "a version is supplied on a version-less selector under the default format" }
+    },
+    {
+      "name": "infer_offers_both_grammars_for_a_variant_selector",
+      "input": { "selector": "claude/opus", "version": "4", "input_format": "infer" },
+      "expected": { "candidates": ["claude/opus-4", "claude/opus@4"] },
+      "classification": "must-pass",
+      "provenance": { "source": "requirement", "ref": "a canonical selector with a variant must still accept --version; only the '@' candidate will resolve, but offering both keeps one rule for all selectors" },
+      "mutation": { "description": "the selector carries a variant segment, so the ladder candidate is nonsense and the canonical one must carry the query" }
+    },
+    {
+      "name": "canonical_format_offers_only_the_canonical_spelling",
+      "input": { "selector": "claude", "version": "4", "input_format": "canonical" },
+      "expected": { "candidates": ["claude@4"] },
+      "classification": "must-pass",
+      "provenance": { "source": "requirement", "ref": "--input-format=canonical promises exactly one grammar, so synthesizing a ladder candidate would contradict the promise" },
+      "mutation": { "description": "the strict canonical format is requested, which must suppress the ladder candidate" }
+    },
+    {
+      "name": "agreeing_at_version_is_left_intact",
+      "input": { "selector": "claude@4", "version": "4", "input_format": "infer" },
+      "expected": { "candidates": ["claude@4"] },
+      "classification": "must-pass",
+      "provenance": { "source": "boundary", "ref": "a redundant but consistent --version is harmless and must not double-append a second version segment" },
+      "mutation": { "description": "--version repeats the version the selector already pins" }
+    },
+    {
+      "name": "whitespace_is_trimmed_on_both_sides",
+      "input": { "selector": "  claude  ", "version": "  4  ", "input_format": "infer" },
+      "expected": { "candidates": ["claude-4", "claude@4"] },
+      "classification": "must-pass",
+      "provenance": { "source": "boundary", "ref": "shell quoting can leave padding on either value; it must not reach the resolver as part of a name" },
+      "mutation": { "description": "both inputs are padded with spaces" }
+    },
+    {
+      "name": "dashed_family_composes_correctly",
+      "input": { "selector": "grok-build", "version": "0.1", "input_format": "infer" },
+      "expected": { "candidates": ["grok-build-0.1", "grok-build@0.1"] },
+      "classification": "must-pass",
+      "provenance": { "source": "manual", "ref": "grok-build is a real family whose name contains a dash; composition must append rather than reinterpret the existing dash" },
+      "mutation": { "description": "the family name itself contains the ladder separator" }
+    },
+    {
+      "name": "disagreeing_at_version_is_rejected",
+      "input": { "selector": "claude@4.5", "version": "4", "input_format": "infer" },
+      "expected": { "error_contains": ["disagree", "already pins version"] },
+      "classification": "must-fail",
+      "provenance": { "source": "requirement", "ref": "ruled: a canonical selector plus a disagreeing --version is an actionable error, never a silent precedence win for either" },
+      "mutation": { "description": "--version is set to a version different from the selector's @version" }
+    }
+  ]
+}

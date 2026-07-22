@@ -127,7 +127,7 @@ func Test<Name>(t *testing.T) {
 
 ## The corpus census, and what is deliberately still inline
 
-At the close of the naming-layer epoch the repository carries **104 corpora**:
+At the close of the naming-layer epoch the repository carries **108 corpora**:
 
 | Area | Corpora | What lives there |
 |---|---|---|
@@ -140,6 +140,7 @@ At the close of the naming-layer epoch the repository carries **104 corpora**:
 | `testdata/metadata/` | 3 | the models.dev ingest detectors (status / link type / reasoning-option kind) |
 | `testdata/resolve/` | 3 | the internal group-key helpers, and the canonical-provider preference on provider-unqualified exact-ID lookups |
 | `testdata/vram/` | 2 | the VRAM arithmetic anchors |
+| `cmd/bestiary/testdata/series/` | 4 | the `series` selector surface: end-to-end selector resolution (specificity ladder, canonical grammar, `--version`, `--input-format`, disagreement errors), the strict major-union membership rule, `--version` composition, and the `selectSeries` readings over a synthetic universe |
 | `cmd/bestiary-gen/testdata/gen/` | 9 | the identifier builders (`slugToIdentifier`, `providerConstName`, `styleSegment`, `entityConstName`, `splitComma`) |
 | `cmd/bestiary-ollama/testdata/ollama/` | 1 | Ollama tag normalization |
 
@@ -158,8 +159,12 @@ would be a category error:
 - **graceful-degrade loader tables** (`TestSafe*_Degrades*`, `TestParse*_Rejects`) —
   each row is a distinct malformed *document*, and inlining keeps the corruption visible
   next to the assertion;
-- **CLI argv/flag tables** (`cmd/bestiary/cli_warts_test.go`) — the rows are argv
-  vectors exercising flag-parsing order, not data facts;
+- **CLI argv/flag tables** (`cmd/bestiary/cli_warts_test.go`, and the
+  `--version`/`--input-format` rejection tables in `series_cli_test.go`) — the rows are
+  argv vectors exercising flag *mechanics* (a flag given without its required
+  positional, or without a value), not data facts about the catalog. The selector→lines
+  rows from the same file ARE data facts, and live in
+  `cmd/bestiary/testdata/series/selector_resolution_corpus.json`;
 - **`host_detect_test.go`'s curated-prefix table** — its rows are already pinned as data
   in `testdata/parse/azure_serving_host_corpus.json`; extracting the second copy would
   duplicate the same facts in two places.
