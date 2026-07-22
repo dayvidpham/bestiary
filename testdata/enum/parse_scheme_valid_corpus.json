@@ -1,0 +1,57 @@
+{
+  "_comment": "ParseScheme accepts every canonical wire token. Expected is the parsed scheme's String(), so the corpus asserts a full token round-trip.",
+  "cases": [
+    {
+      "name": "canonical",
+      "input": "canonical",
+      "expected": "canonical",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "wire token for bestiary.CanonicalScheme member canonical"
+      },
+      "mutation": {
+        "description": "parses the canonical wire token"
+      }
+    },
+    {
+      "name": "huggingface",
+      "input": "huggingface",
+      "expected": "huggingface",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "wire token for bestiary.CanonicalScheme member huggingface"
+      },
+      "mutation": {
+        "description": "parses the huggingface wire token"
+      }
+    },
+    {
+      "name": "purl",
+      "input": "purl",
+      "expected": "purl",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "wire token for bestiary.CanonicalScheme member purl"
+      },
+      "mutation": {
+        "description": "parses the purl wire token"
+      }
+    },
+    {
+      "name": "raw",
+      "input": "raw",
+      "expected": "raw",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "wire token for bestiary.CanonicalScheme member raw"
+      },
+      "mutation": {
+        "description": "parses the raw wire token"
+      }
+    }
+  ]
+}

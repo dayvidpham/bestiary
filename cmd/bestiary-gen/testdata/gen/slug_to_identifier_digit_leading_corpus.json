@@ -1,0 +1,37 @@
+{
+  "_comment": "slugToIdentifier digit-leading variants: a slug beginning with digits keeps them verbatim (a Go identifier cannot start with a digit, so the emitted symbol relies on its Provider/Entity prefix) while the alpha suffix takes its casing override.",
+  "cases": [
+    {
+      "name": "302ai",
+      "input": {
+        "slug": "302ai",
+        "name_hint": "302AI"
+      },
+      "expected": "302AI",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "manual",
+        "ref": "provider slug 302ai"
+      },
+      "mutation": {
+        "description": "uses a three-digit prefix"
+      }
+    },
+    {
+      "name": "3ai",
+      "input": {
+        "slug": "3ai",
+        "name_hint": "3AI"
+      },
+      "expected": "3AI",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "manual",
+        "ref": "a single-digit-prefixed slug"
+      },
+      "mutation": {
+        "description": "shortens the digit run to one, probing the boundary of the digit-prefix rule"
+      }
+    }
+  ]
+}

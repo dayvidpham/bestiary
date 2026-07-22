@@ -35,6 +35,39 @@ var entDerivationKindTextRoundTripCorpusJSON []byte
 //go:embed testdata/entity/suppression_fence_corpus.json
 var suppressionFenceCorpusJSON []byte
 
+// ---- laguna curated-variant three-way split corpus --------------------------
+
+//go:embed testdata/entity/laguna_three_way_split_corpus.json
+var entLagunaThreeWaySplitCorpusJSON []byte
+
+// entLagunaInput is the (variant, version) leg of the split probe; the family
+// (laguna) is invariant across the corpus, matching the original inline table.
+type entLagunaInput struct {
+	Variant string `json:"variant"`
+	Version string `json:"version"`
+}
+
+// entLagunaExpected is the entity key the tuple must render to plus the lab
+// metadata row that must attach to THAT entity (the collision-free attach).
+type entLagunaExpected struct {
+	WantKey    string `json:"want_key"`
+	MetadataID string `json:"metadata_id"`
+}
+
+// ---- Series/Release display-rendering corpus --------------------------------
+
+//go:embed testdata/entity/series_release_string_corpus.json
+var entSeriesReleaseStringCorpusJSON []byte
+
+// entReleaseInput is the JSON-decodable projection of a bestiary.Release: the series
+// (family + generation) plus the release name. Empty segments are the load-bearing
+// cases, so they are plain strings rather than optional fields.
+type entReleaseInput struct {
+	Family     string `json:"family"`
+	Generation string `json:"generation"`
+	Name       string `json:"name"`
+}
+
 // ---- llama-4 unified @4 entity membership corpus ---------------------------
 
 //go:embed testdata/entity/llama4_version_pins_corpus.json
@@ -125,5 +158,54 @@ func requireEntRefStringCoverage(t *testing.T, corpus testcase.Corpus[entRefInpu
 		if !found {
 			t.Errorf("value coverage lost: case for input %+v is missing", p.input)
 		}
+	}
+}
+
+// requireEntityProjections is the PROJECTION PROBE shared by the two corpora whose
+// expected value is an ENTITY rather than a parse result (the llama-4 version pins and
+// the laguna three-way split). Pinning only the rendered key would leave the derived
+// read projections unchecked, so this probe drives the SAME entity through them:
+//
+//   - Nomina() must carry exactly one PREFERRED canonical nomen, and (with an empty
+//     suppression seed) its value must be the entity key — the naming layer and the key
+//     cannot silently disagree;
+//   - every instance ID must also appear as an ADMITTED provider-id nomen, so a
+//     membership pin is not satisfied by an entity whose nomina lost the spelling;
+//   - Sources must attest models.dev — the derived provenance projection of the
+//     entity<->source join.
+func requireEntityProjections(t *testing.T, ent bestiary.Entity, wantKey string) {
+	t.Helper()
+	preferred := 0
+	admitted := map[string]bool{}
+	for _, n := range ent.Nomina() {
+		switch {
+		case n.Scheme == bestiary.NomenSchemeCanonical && n.Status == bestiary.AcceptabilityPreferred:
+			preferred++
+			if n.Value != wantKey {
+				t.Errorf("projection: preferred canonical nomen = %q, want the entity key %q", n.Value, wantKey)
+			}
+		case n.Scheme == bestiary.NomenSchemeProviderID:
+			admitted[n.Value] = true
+		}
+		if got := n.ResolvesTo.String(); got != wantKey {
+			t.Errorf("projection: nomen %q resolves to %q, want %q", n.Value, got, wantKey)
+		}
+	}
+	if preferred != 1 {
+		t.Errorf("projection: %q has %d preferred canonical nomina, want exactly 1", wantKey, preferred)
+	}
+	for _, inst := range ent.Instances {
+		if !admitted[string(inst.ID)] {
+			t.Errorf("projection: instance spelling %q of %q has no admitted provider-id nomen", inst.ID, wantKey)
+		}
+	}
+	attested := false
+	for _, s := range ent.Sources {
+		if s == bestiary.DataSourceModelsDev {
+			attested = true
+		}
+	}
+	if !attested {
+		t.Errorf("projection: %q Sources = %v, want the models.dev attestation", wantKey, ent.Sources)
 	}
 }

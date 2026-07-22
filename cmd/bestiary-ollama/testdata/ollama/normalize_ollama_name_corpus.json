@@ -1,0 +1,109 @@
+{
+  "_comment": "normalizeOllamaName splits a glued family/version Ollama tag, with a SINGLE-LETTER SERIES GUARD. Relaxing the alnum-split pattern from {2,} to + would split deepseek-r1 into deepseek-r-1 and redden the glued rows \u2014 which is exactly what those rows exist to catch.",
+  "cases": [
+    {
+      "name": "llama3.3",
+      "input": "llama3.3",
+      "expected": "llama-3.3",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "manual",
+        "ref": "Ollama tag llama3.3"
+      },
+      "mutation": {
+        "description": "splits a glued multi-digit dotted version"
+      }
+    },
+    {
+      "name": "qwen2.5",
+      "input": "qwen2.5",
+      "expected": "qwen-2.5",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "manual",
+        "ref": "Ollama tag qwen2.5"
+      },
+      "mutation": {
+        "description": "splits a glued dotted version on a different family"
+      }
+    },
+    {
+      "name": "gemma2",
+      "input": "gemma2",
+      "expected": "gemma-2",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "manual",
+        "ref": "Ollama tag gemma2"
+      },
+      "mutation": {
+        "description": "splits a glued single-digit version"
+      }
+    },
+    {
+      "name": "phi4",
+      "input": "phi4",
+      "expected": "phi-4",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "manual",
+        "ref": "Ollama tag phi4"
+      },
+      "mutation": {
+        "description": "splits a glued single-digit version on a three-letter family"
+      }
+    },
+    {
+      "name": "deepseek-r1-stays-glued",
+      "input": "deepseek-r1",
+      "expected": "deepseek-r1",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "bug",
+        "ref": "the single-letter series token r1 must NOT be split"
+      },
+      "mutation": {
+        "description": "shortens the pre-digit token to a SINGLE letter, which the guard must refuse to split"
+      }
+    },
+    {
+      "name": "kimi-k2-stays-glued",
+      "input": "kimi-k2",
+      "expected": "kimi-k2",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "bug",
+        "ref": "the single-letter series token k2 must NOT be split"
+      },
+      "mutation": {
+        "description": "a second single-letter series token, so the guard is not pinned to one family"
+      }
+    },
+    {
+      "name": "mistral-nemo-unchanged",
+      "input": "mistral-nemo",
+      "expected": "mistral-nemo",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "a tag with no glued version at all"
+      },
+      "mutation": {
+        "description": "removes the digits entirely, leaving nothing to split"
+      }
+    },
+    {
+      "name": "llama3.2-vision",
+      "input": "llama3.2-vision",
+      "expected": "llama-3.2-vision",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "a glued version followed by a trailing modifier"
+      },
+      "mutation": {
+        "description": "appends a trailing token after the glued version, which must survive the split"
+      }
+    }
+  ]
+}

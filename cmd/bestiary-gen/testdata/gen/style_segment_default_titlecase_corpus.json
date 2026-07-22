@@ -1,0 +1,70 @@
+{
+  "_comment": "An UN-curated token defaults to title-case and is reported handled=false, so slugToIdentifier remains free to apply its name-hint instead. The handled=false half is what keeps the curated table authoritative without swallowing every token.",
+  "cases": [
+    {
+      "name": "anthropic",
+      "input": "anthropic",
+      "expected": "Anthropic",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "anthropic is deliberately absent from the curated brand table"
+      },
+      "mutation": {
+        "description": "uses an uncurated token, so the default title-case path runs"
+      }
+    },
+    {
+      "name": "google",
+      "input": "google",
+      "expected": "Google",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "google is deliberately absent from the curated brand table"
+      },
+      "mutation": {
+        "description": "uses an uncurated token, so the default title-case path runs"
+      }
+    },
+    {
+      "name": "mistral",
+      "input": "mistral",
+      "expected": "Mistral",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "mistral is deliberately absent from the curated brand table"
+      },
+      "mutation": {
+        "description": "uses an uncurated token, so the default title-case path runs"
+      }
+    },
+    {
+      "name": "foobar",
+      "input": "foobar",
+      "expected": "Foobar",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "foobar is deliberately absent from the curated brand table"
+      },
+      "mutation": {
+        "description": "uses an uncurated token, so the default title-case path runs"
+      }
+    },
+    {
+      "name": "claude",
+      "input": "claude",
+      "expected": "Claude",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "claude is deliberately absent from the curated brand table"
+      },
+      "mutation": {
+        "description": "uses an uncurated token, so the default title-case path runs"
+      }
+    }
+  ]
+}

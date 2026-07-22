@@ -101,29 +101,25 @@ func TestStageMode_RealtimeAttribute_VersionRestored(t *testing.T) {
 // entities (laguna/xs@2, laguna/xs@2.1, laguna/m@1), and each lab metadata row attaches
 // to its own entity — fixing the pre-existing silent m.1 <-> xs.2 metadata collision.
 func TestStageMode_LagunaThreeWaySplit(t *testing.T) {
-	cases := []struct {
-		variant, version, wantKey, metaID string
-	}{
-		{"xs", "2", "laguna/xs@2", "poolside/laguna-xs.2"},
-		{"xs", "2.1", "laguna/xs@2.1", "poolside/laguna-xs-2.1"},
-		{"m", "1", "laguna/m@1", "poolside/laguna-m.1"},
-	}
+	corpus := loadParseCorpus[entLagunaInput, entLagunaExpected](t, entLagunaThreeWaySplitCorpusJSON, 3)
+	requireNameCoverage(t, corpus, "laguna-xs-2", "laguna-xs-2-1", "laguna-m-1")
 	distinct := map[string]bool{}
-	for _, c := range cases {
-		e, ok := bestiary.EntityByTuple(bestiary.FamilyLaguna, c.variant, c.version, "")
+	for _, c := range corpus.Cases {
+		e, ok := bestiary.EntityByTuple(bestiary.FamilyLaguna, c.Input.Variant, c.Input.Version, "")
 		if !ok {
-			t.Fatalf("entity %s missing — the laguna variant split did not land", c.wantKey)
+			t.Fatalf("entity %s missing — the laguna variant split did not land", c.Expected.WantKey)
 		}
-		if e.Ref.String() != c.wantKey {
-			t.Errorf("laguna entity key = %q, want %q", e.Ref.String(), c.wantKey)
+		if e.Ref.String() != c.Expected.WantKey {
+			t.Errorf("laguna entity key = %q, want %q", e.Ref.String(), c.Expected.WantKey)
 		}
 		distinct[e.Ref.String()] = true
-		if e.Metadata == nil || e.Metadata.MetadataID != bestiary.MetadataID(c.metaID) {
-			t.Errorf("%s metadata = %v, want %s (collision-free attach)", c.wantKey, e.Metadata, c.metaID)
+		requireEntityProjections(t, e, c.Expected.WantKey)
+		if e.Metadata == nil || e.Metadata.MetadataID != bestiary.MetadataID(c.Expected.MetadataID) {
+			t.Errorf("%s metadata = %v, want %s (collision-free attach)", c.Expected.WantKey, e.Metadata, c.Expected.MetadataID)
 		}
 	}
-	if len(distinct) != 3 {
-		t.Errorf("expected 3 distinct laguna entities, got %d: %v", len(distinct), distinct)
+	if len(distinct) != len(corpus.Cases) {
+		t.Errorf("expected %d distinct laguna entities, got %d: %v", len(corpus.Cases), len(distinct), distinct)
 	}
 }
 

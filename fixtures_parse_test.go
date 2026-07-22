@@ -486,3 +486,23 @@ func runFamilyVersionCorpus(t *testing.T, corpus testcase.Corpus[string, familyV
 		})
 	}
 }
+
+// ---- ReasonUnknownSuffixOverflow reachability capture (e9pi) ----------------
+
+//go:embed testdata/parse/unknown_suffix_overflow_corpus.json
+var parseUnknownSuffixOverflowCorpusJSON []byte
+
+// suffixOverflowInput is the (rawFamily, id, provider) triple ParseFamilyDetailed
+// takes. The rawFamily is carried separately from the id because the overflow is
+// detected against the DECOMPOSED family, not against the id alone.
+type suffixOverflowInput struct {
+	RawFamily string `json:"raw_family"`
+	ID        string `json:"id"`
+	Provider  string `json:"provider"`
+}
+
+// suffixOverflowExpected is the ParseFailure reason the parser must RETURN. It is
+// empty on the negative controls, which must not fire the overflow reason at all.
+type suffixOverflowExpected struct {
+	Reason string `json:"reason"`
+}

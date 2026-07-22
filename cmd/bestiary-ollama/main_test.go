@@ -165,20 +165,18 @@ func TestParseConfigBlob(t *testing.T) {
 // reAlphaNumSplit from {2,} to + must split "deepseek-r1" into "deepseek-r-1"
 // and fail this table.
 func TestNormalizeOllamaName(t *testing.T) {
-	cases := []struct{ in, want string }{
-		{"llama3.3", "llama-3.3"},
-		{"qwen2.5", "qwen-2.5"},
-		{"gemma2", "gemma-2"},
-		{"phi4", "phi-4"},
-		{"deepseek-r1", "deepseek-r1"}, // single-letter series token stays glued
-		{"kimi-k2", "kimi-k2"},         // single-letter series token stays glued
-		{"mistral-nemo", "mistral-nemo"},
-		{"llama3.2-vision", "llama-3.2-vision"},
-	}
-	for _, tc := range cases {
-		if got := normalizeOllamaName(tc.in); got != tc.want {
-			t.Errorf("normalizeOllamaName(%q) = %q, want %q", tc.in, got, tc.want)
-		}
+	corpus := loadOllamaCorpus[string, string](t, ollamaNormalizeNameCorpusJSON, 8)
+	ollamaRequireInputCoverage(t, corpus, map[string]string{
+		"llama3.3":    "llama-3.3",
+		"deepseek-r1": "deepseek-r1",
+		"kimi-k2":     "kimi-k2",
+	})
+	for _, c := range corpus.Cases {
+		t.Run(c.Name, func(t *testing.T) {
+			if got := normalizeOllamaName(c.Input); got != c.Expected {
+				t.Errorf("normalizeOllamaName(%q) = %q, want %q", c.Input, got, c.Expected)
+			}
+		})
 	}
 }
 

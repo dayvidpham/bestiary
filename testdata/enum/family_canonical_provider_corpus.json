@@ -1,0 +1,161 @@
+{
+  "_comment": "Family.CanonicalProvider() for the popular families that ARE mapped. The rest of the family space is deliberately stubbed to the empty Provider (never a wrong-but-plausible guess) and is covered by TestFamily_CanonicalProvider_UnknownReturnsEmpty.",
+  "cases": [
+    {
+      "name": "claude",
+      "input": "claude",
+      "expected": "anthropic",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "manual",
+        "ref": "Anthropic is the lab behind claude"
+      },
+      "mutation": {
+        "description": "maps a mapped family to its lab"
+      }
+    },
+    {
+      "name": "claude-opus",
+      "input": "claude-opus",
+      "expected": "anthropic",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "manual",
+        "ref": "Anthropic is the lab behind claude-opus"
+      },
+      "mutation": {
+        "description": "maps a variant-bearing family constant to its lab"
+      }
+    },
+    {
+      "name": "claude-sonnet",
+      "input": "claude-sonnet",
+      "expected": "anthropic",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "manual",
+        "ref": "Anthropic is the lab behind claude-sonnet"
+      },
+      "mutation": {
+        "description": "maps a variant-bearing family constant to its lab"
+      }
+    },
+    {
+      "name": "claude-haiku",
+      "input": "claude-haiku",
+      "expected": "anthropic",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "manual",
+        "ref": "Anthropic is the lab behind claude-haiku"
+      },
+      "mutation": {
+        "description": "maps a variant-bearing family constant to its lab"
+      }
+    },
+    {
+      "name": "gemini",
+      "input": "gemini",
+      "expected": "google",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "manual",
+        "ref": "Google is the lab behind gemini"
+      },
+      "mutation": {
+        "description": "maps a mapped family to its lab"
+      }
+    },
+    {
+      "name": "gemma",
+      "input": "gemma",
+      "expected": "google",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "manual",
+        "ref": "Google is the lab behind gemma"
+      },
+      "mutation": {
+        "description": "maps a mapped family to its lab"
+      }
+    },
+    {
+      "name": "gpt",
+      "input": "gpt",
+      "expected": "openai",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "manual",
+        "ref": "OpenAI is the lab behind gpt"
+      },
+      "mutation": {
+        "description": "maps a mapped family to its lab"
+      }
+    },
+    {
+      "name": "o",
+      "input": "o",
+      "expected": "openai",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "manual",
+        "ref": "o1/o3/o4 all carry Family=o; OpenAI is the lab"
+      },
+      "mutation": {
+        "description": "maps the single-letter reasoning family to its lab"
+      }
+    },
+    {
+      "name": "llama",
+      "input": "llama",
+      "expected": "local",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "manual",
+        "ref": "llama is open-weights, so its canonical provider is local"
+      },
+      "mutation": {
+        "description": "maps an open-weights family to the local provider rather than a hosting vendor"
+      }
+    },
+    {
+      "name": "mistral",
+      "input": "mistral",
+      "expected": "mistral",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "manual",
+        "ref": "Mistral is the lab behind mistral"
+      },
+      "mutation": {
+        "description": "maps a mapped family to its lab"
+      }
+    },
+    {
+      "name": "deepseek",
+      "input": "deepseek",
+      "expected": "deepseek",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "manual",
+        "ref": "DeepSeek is the lab behind deepseek"
+      },
+      "mutation": {
+        "description": "maps a mapped family to its lab"
+      }
+    },
+    {
+      "name": "qwen",
+      "input": "qwen",
+      "expected": "alibaba",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "manual",
+        "ref": "Alibaba is the lab behind qwen"
+      },
+      "mutation": {
+        "description": "maps a family whose lab name differs from the family name"
+      }
+    }
+  ]
+}

@@ -444,19 +444,21 @@ func TestTaxonomy_UnknownLookups(t *testing.T) {
 // TestSeriesRelease_StringRendering pins the display renderings, including the
 // bare-line and un-named-release cases.
 func TestSeriesRelease_StringRendering(t *testing.T) {
-	cases := []struct {
-		rel  bestiary.Release
-		want string
-	}{
-		{bestiary.Release{Series: bestiary.Series{Family: "llama", Generation: "4"}, Name: "scout"}, "llama-4/scout"},
-		{bestiary.Release{Series: bestiary.Series{Family: "gemini", Generation: "3.0"}, Name: "flash"}, "gemini-3.0/flash"},
-		{bestiary.Release{Series: bestiary.Series{Family: "deepseek", Generation: "3.2"}}, "deepseek-3.2"},
-		{bestiary.Release{Series: bestiary.Series{Family: "gemma"}}, "gemma"},
-		{bestiary.Release{Series: bestiary.Series{Family: "gemma"}, Name: "larkspur"}, "gemma/larkspur"},
-	}
-	for _, tc := range cases {
-		if got := tc.rel.String(); got != tc.want {
-			t.Errorf("Release.String() = %q, want %q", got, tc.want)
-		}
+	corpus := loadParseCorpus[entReleaseInput, string](t, entSeriesReleaseStringCorpusJSON, 5)
+	requireInputCoverage(t, corpus, map[entReleaseInput]string{
+		{Family: "llama", Generation: "4", Name: "scout"}:    "llama-4/scout",
+		{Family: "gemini", Generation: "3.0", Name: "flash"}: "gemini-3.0/flash",
+		{Family: "gemma"}: "gemma",
+	})
+	for _, c := range corpus.Cases {
+		t.Run(c.Name, func(t *testing.T) {
+			rel := bestiary.Release{
+				Series: bestiary.Series{Family: bestiary.Family(c.Input.Family), Generation: c.Input.Generation},
+				Name:   c.Input.Name,
+			}
+			if got := rel.String(); got != c.Expected {
+				t.Errorf("Release.String() = %q, want %q", got, c.Expected)
+			}
+		})
 	}
 }

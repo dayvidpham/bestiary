@@ -1,0 +1,109 @@
+{
+  "_comment": "CanonicalScheme.UnmarshalJSON accepts its wire tokens case-insensitively. Input is the raw JSON literal; expected is the resulting scheme's String().",
+  "cases": [
+    {
+      "name": "upper-canonical",
+      "input": "\"CANONICAL\"",
+      "expected": "canonical",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "case-insensitive parse of the canonical token"
+      },
+      "mutation": {
+        "description": "upper-cases every letter of the wire token"
+      }
+    },
+    {
+      "name": "title-canonical",
+      "input": "\"Canonical\"",
+      "expected": "canonical",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "case-insensitive parse of the canonical token"
+      },
+      "mutation": {
+        "description": "title-cases the wire token"
+      }
+    },
+    {
+      "name": "upper-huggingface",
+      "input": "\"HUGGINGFACE\"",
+      "expected": "huggingface",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "case-insensitive parse of the huggingface token"
+      },
+      "mutation": {
+        "description": "upper-cases every letter of the wire token"
+      }
+    },
+    {
+      "name": "camel-huggingface",
+      "input": "\"HuggingFace\"",
+      "expected": "huggingface",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "case-insensitive parse of the huggingface token"
+      },
+      "mutation": {
+        "description": "camel-cases the wire token as the vendor brands it"
+      }
+    },
+    {
+      "name": "upper-purl",
+      "input": "\"PURL\"",
+      "expected": "purl",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "case-insensitive parse of the purl token"
+      },
+      "mutation": {
+        "description": "upper-cases every letter of the wire token"
+      }
+    },
+    {
+      "name": "title-purl",
+      "input": "\"Purl\"",
+      "expected": "purl",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "case-insensitive parse of the purl token"
+      },
+      "mutation": {
+        "description": "title-cases the wire token"
+      }
+    },
+    {
+      "name": "upper-raw",
+      "input": "\"RAW\"",
+      "expected": "raw",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "case-insensitive parse of the raw token"
+      },
+      "mutation": {
+        "description": "upper-cases every letter of the wire token"
+      }
+    },
+    {
+      "name": "title-raw",
+      "input": "\"Raw\"",
+      "expected": "raw",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "case-insensitive parse of the raw token"
+      },
+      "mutation": {
+        "description": "title-cases the wire token"
+      }
+    }
+  ]
+}

@@ -472,6 +472,7 @@ func TestLlama4VersionPins_UnifiedEntityMembership(t *testing.T) {
 			if got := ent.Ref.String(); got != c.Expected.WantKey {
 				t.Fatalf("entity key = %q, want %q", got, c.Expected.WantKey)
 			}
+			requireEntityProjections(t, ent, c.Expected.WantKey)
 			for _, id := range c.Expected.IDs {
 				if !holdsExact(ent, id) {
 					t.Errorf("pinned spelling %q is not an instance of %q\n"+

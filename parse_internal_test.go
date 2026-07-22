@@ -17,41 +17,20 @@ import (
 func TestIsYYMMDateToken(t *testing.T) {
 	t.Parallel()
 
-	cases := []struct {
-		tok  string
-		want bool
-	}{
-		// True: YYMM-range tokens (should be rejected as versions — original guard cases).
-		{"2603", true}, // mistral-small-2603 (YYMM in-range)
-		{"2512", true}, // YYMM dec 2025
-		{"2411", true}, // pixtral-style
-		{"2401", true}, // mistral-2401
-		{"2503", true}, // another YYMM
-		// True: generalized guard — ANY 4-digit all-numeric token is a date/release-id.
-		{"0528", true}, // deepseek-r1-0528 (MMDD format, below 19xx range)
-		{"0324", true}, // deepseek-v3-0324 (MMDD format)
-		{"0905", true}, // generic MMDD-format date
-		{"0711", true}, // generic MMDD-format date
-		{"1206", true}, // MMDD december
-		{"1234", true}, // previously false (below 19xx), now true under the generalized guard
-		{"3000", true}, // previously false (above 29xx), now true under the generalized guard
-		// False: genuine version tokens (non-4-digit or non-purely-numeric).
-		{"45", false},  // two-digit (not 4-digit)
-		{"46", false},  // two-digit
-		{"4o", false},  // alphanumeric (not pure digits)
-		{"2", false},   // single digit
-		{"35", false},  // two-digit version
-		{"100", false}, // three digits
-		// False: empty.
-		{"", false},
-	}
-
-	for _, tc := range cases {
-		t.Run(tc.tok, func(t *testing.T) {
+	corpus := loadInternalCorpus[string, bool](t, internalIsYYMMDateTokenCorpusJSON, 19)
+	internalRequireInputCoverage(t, corpus, map[string]bool{
+		"2603": true,
+		"0528": true,
+		"1234": true,
+		"3000": true,
+		"4o":   false,
+		"":     false,
+	})
+	for _, c := range corpus.Cases {
+		t.Run(c.Name, func(t *testing.T) {
 			t.Parallel()
-			got := isFourDigitDateToken(tc.tok)
-			if got != tc.want {
-				t.Errorf("isFourDigitDateToken(%q) = %v, want %v", tc.tok, got, tc.want)
+			if got := isFourDigitDateToken(c.Input); got != c.Expected {
+				t.Errorf("isFourDigitDateToken(%q) = %v, want %v", c.Input, got, c.Expected)
 			}
 		})
 	}

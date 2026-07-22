@@ -1,0 +1,90 @@
+{
+  "_comment": "Release.String() display renderings across the Series/Release hierarchy: family[-generation][/release]. The bare-line and un-named-release rows pin that an empty segment is OMITTED ENTIRELY rather than rendered as a dangling separator.",
+  "cases": [
+    {
+      "name": "llama-4-scout",
+      "input": {
+        "family": "llama",
+        "generation": "4",
+        "name": "scout"
+      },
+      "expected": "llama-4/scout",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "the worked Series/Release example: llama-4 line, scout release"
+      },
+      "mutation": {
+        "description": "renders a fully-populated release: family, generation and release name"
+      }
+    },
+    {
+      "name": "gemini-3.0-flash",
+      "input": {
+        "family": "gemini",
+        "generation": "3.0",
+        "name": "flash"
+      },
+      "expected": "gemini-3.0/flash",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "the ratified gemini 3 -> 3.0 generation normalization"
+      },
+      "mutation": {
+        "description": "uses a DOTTED generation, so a normalization that dropped the .0 would redden"
+      }
+    },
+    {
+      "name": "deepseek-3.2-bare-release",
+      "input": {
+        "family": "deepseek",
+        "generation": "3.2",
+        "name": ""
+      },
+      "expected": "deepseek-3.2",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "a versioned line with no named release"
+      },
+      "mutation": {
+        "description": "empties the release name, so only the series renders"
+      }
+    },
+    {
+      "name": "gemma-bare-line",
+      "input": {
+        "family": "gemma",
+        "generation": "",
+        "name": ""
+      },
+      "expected": "gemma",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "an un-versioned line with no named release"
+      },
+      "mutation": {
+        "description": "empties BOTH the generation and the release name, the fully degenerate rendering"
+      }
+    },
+    {
+      "name": "gemma-larkspur",
+      "input": {
+        "family": "gemma",
+        "generation": "",
+        "name": "larkspur"
+      },
+      "expected": "gemma/larkspur",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "a named release on an un-versioned line"
+      },
+      "mutation": {
+        "description": "restores the release name while leaving the generation empty, so the separator must still appear"
+      }
+    }
+  ]
+}
