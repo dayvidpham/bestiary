@@ -714,10 +714,13 @@ multi-line output shape the family rung already produces, and the hierarchy itse
 untouched — `claude-4.0` and `claude-4.5` remain distinct lines that a narrower selector still
 addresses individually. Membership is a **strict string rule**: a generation belongs to version
 `4` iff it *is* `4` or begins `4.`. Nothing is numerically normalized, so `4` never swallows
-`42`, `1` never reaches the mis-parsed `ling@1t` or the leading-zero `gemini@001`, and `glm@5p1`
-(GLM 5.1 spelled with a `p` upstream) stays out of the `glm-5` union — repairing those
-spellings belongs in `parse/`, where the raw IDs are, not in a selector that would have to
-guess. Sub-1.0 generations need no special case: `mistral-0` unions `mistral-0.1` and
+`42`, `1` never reaches the mis-parsed `ling@1t` or the leading-zero `gemini@001`. Upstream
+`p`-for-dot spellings *are* repaired — at **parse** time, not in the selector: `glm-5p1`/`glm-5p2`
+decode to the real `glm@5.1`/`glm@5.2`, so `series glm-5` returns them as ordinary dotted union
+members. That repair lives in `parse/`, where the raw IDs are, which is also why the spellings it
+does *not* yet reach — a compound-family case like `k2p7`, which decomposes to a version-less
+`kimi-k2` rather than `kimi/k@2.7` — stay out of any union until `parse/` fixes them too, never a
+selector that would have to guess. Sub-1.0 generations need no special case: `mistral-0` unions `mistral-0.1` and
 `mistral-0.3` like any other version. Where a family spells both a bare `N` and dotted
 siblings (`claude-3`, `glm-4`, `gpt-5`, …), the union **includes the bare line**. `--version`
 is exactly equivalent to appending `-<value>` to the positional, and is rejected with an
