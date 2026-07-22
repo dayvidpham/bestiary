@@ -1,5 +1,5 @@
 {
-  "_comment": "vercel labels a swathe of unrelated models with the upstream raw_family \"o\" — the OpenAI o-series family — so Alibaba's Wan video models, OpenAI's TTS speech models, quiverai's arrow and Cohere's rerankers all decomposed into family \"o\" and shared one junk-bucket entity with the real o-series. The raw value is UPSTREAM's, not a bestiary mis-parse: the vendored catalog carries family=\"o\" verbatim. Corrections come from two mechanisms and the corpus records which applies to each row: the family_enforce ledger (rerank — its id-derived family equals the enforce key) and exact-id pins (wan/tts/arrow, whose enforce entries would fail the ledger's snapshot-grounding guard, and rerank-v4-pro, whose id derives a compound family the ledger cannot key on). The four NEGATIVE CONTROLS at the end are genuine o-series ids that must be untouched, including two that legitimately KEEP family \"o\" — the fix must empty the bucket without evicting its rightful occupants.",
+  "_comment": "vercel labels a swathe of unrelated models with the upstream raw_family \"o\" — the OpenAI o-series family — so Alibaba's Wan video models, OpenAI's TTS speech models, quiverai's arrow and Cohere's rerankers all decomposed into family \"o\" and shared one junk-bucket entity with the real o-series. The raw value is UPSTREAM's, not a bestiary mis-parse: the vendored catalog carries family=\"o\" verbatim. Corrections come from two mechanisms and the corpus records which applies to each row: the family_enforce ledger (wan / tts / arrow / rerank — their id-derived family equals the enforce key, so a NEW vercel spelling of an existing line is self-correcting) and a single exact-id pin (cohere/rerank-v4-pro, whose id derives the compound family \"rerank-v4\" that the ledger cannot key on). The four NEGATIVE CONTROLS at the end are genuine o-series ids that must be untouched, including two that legitimately KEEP family \"o\" — the fix must empty the bucket without evicting its rightful occupants.",
   "cases": [
     {
       "name": "wan-wan-v2.5-t2v-preview-escapes-o-bucket",
@@ -19,7 +19,7 @@
         "ref": "vercel serves alibaba/wan-v2.5-t2v-preview with upstream raw_family \"o\"; the model is Alibaba's Wan video line"
       },
       "mutation": {
-        "description": "vercel's junk raw_family must not override the id-driven decomposition, which already reads the wan family correctly"
+        "description": "vercel's junk raw_family must not override the id-driven decomposition, which already reads the wan family correctly; corrected by the family_enforce ledger entry for wan"
       }
     },
     {
@@ -40,7 +40,7 @@
         "ref": "vercel serves alibaba/wan-v2.6-i2v with upstream raw_family \"o\"; the model is Alibaba's Wan video line"
       },
       "mutation": {
-        "description": "vercel's junk raw_family must not override the id-driven decomposition, which already reads the wan family correctly"
+        "description": "vercel's junk raw_family must not override the id-driven decomposition, which already reads the wan family correctly; corrected by the family_enforce ledger entry for wan"
       }
     },
     {
@@ -61,7 +61,7 @@
         "ref": "vercel serves alibaba/wan-v2.6-i2v-flash with upstream raw_family \"o\"; the model is Alibaba's Wan video line"
       },
       "mutation": {
-        "description": "vercel's junk raw_family must not override the id-driven decomposition, which already reads the wan family correctly"
+        "description": "vercel's junk raw_family must not override the id-driven decomposition, which already reads the wan family correctly; corrected by the family_enforce ledger entry for wan"
       }
     },
     {
@@ -82,7 +82,7 @@
         "ref": "vercel serves alibaba/wan-v2.6-r2v with upstream raw_family \"o\"; the model is Alibaba's Wan video line"
       },
       "mutation": {
-        "description": "vercel's junk raw_family must not override the id-driven decomposition, which already reads the wan family correctly"
+        "description": "vercel's junk raw_family must not override the id-driven decomposition, which already reads the wan family correctly; corrected by the family_enforce ledger entry for wan"
       }
     },
     {
@@ -103,7 +103,7 @@
         "ref": "vercel serves alibaba/wan-v2.6-r2v-flash with upstream raw_family \"o\"; the model is Alibaba's Wan video line"
       },
       "mutation": {
-        "description": "vercel's junk raw_family must not override the id-driven decomposition, which already reads the wan family correctly"
+        "description": "vercel's junk raw_family must not override the id-driven decomposition, which already reads the wan family correctly; corrected by the family_enforce ledger entry for wan"
       }
     },
     {
@@ -124,7 +124,7 @@
         "ref": "vercel serves alibaba/wan-v2.6-t2v with upstream raw_family \"o\"; the model is Alibaba's Wan video line"
       },
       "mutation": {
-        "description": "vercel's junk raw_family must not override the id-driven decomposition, which already reads the wan family correctly"
+        "description": "vercel's junk raw_family must not override the id-driven decomposition, which already reads the wan family correctly; corrected by the family_enforce ledger entry for wan"
       }
     },
     {
@@ -145,7 +145,7 @@
         "ref": "vercel serves alibaba/wan-v2.7-r2v with upstream raw_family \"o\"; the model is Alibaba's Wan video line"
       },
       "mutation": {
-        "description": "vercel's junk raw_family must not override the id-driven decomposition, which already reads the wan family correctly"
+        "description": "vercel's junk raw_family must not override the id-driven decomposition, which already reads the wan family correctly; corrected by the family_enforce ledger entry for wan"
       }
     },
     {
@@ -166,7 +166,7 @@
         "ref": "vercel serves alibaba/wan-v2.7-t2v with upstream raw_family \"o\"; the model is Alibaba's Wan video line"
       },
       "mutation": {
-        "description": "vercel's junk raw_family must not override the id-driven decomposition, which already reads the wan family correctly"
+        "description": "vercel's junk raw_family must not override the id-driven decomposition, which already reads the wan family correctly; corrected by the family_enforce ledger entry for wan"
       }
     },
     {
@@ -187,7 +187,7 @@
         "ref": "vercel serves openai/tts-1 with upstream raw_family \"o\"; the model is OpenAI's TTS-1 speech model"
       },
       "mutation": {
-        "description": "a speech model must not share a family with the o-series reasoning line"
+        "description": "a speech model must not share a family with the o-series reasoning line; corrected by the family_enforce ledger entry for tts"
       }
     },
     {
@@ -208,7 +208,7 @@
         "ref": "vercel serves openai/tts-1-hd with upstream raw_family \"o\""
       },
       "mutation": {
-        "description": "the HD sibling lands on the same family; note it still shares tts@1 with tts-1, a pre-existing token-loss the family fix does not change"
+        "description": "the HD sibling lands on the same family via the same ledger entry; note it still shares tts@1 with tts-1, a pre-existing token-loss the family fix does not change"
       }
     },
     {
@@ -229,7 +229,7 @@
         "ref": "vercel serves quiverai/arrow-1.1 with upstream raw_family \"o\""
       },
       "mutation": {
-        "description": "a third-party model wrongly labelled with OpenAI's family must decompose to its own"
+        "description": "a third-party model wrongly labelled with OpenAI's family must decompose to its own; corrected by the family_enforce ledger entry for arrow"
       }
     },
     {
@@ -247,7 +247,7 @@
       "classification": "must-pass",
       "provenance": {
         "source": "bug",
-        "ref": "vercel serves cohere/rerank-v3.5 with upstream raw_family \"o\"; corrected via the family_enforce ledger, not a pin"
+        "ref": "vercel serves cohere/rerank-v3.5 with upstream raw_family \"o\"; corrected via the family_enforce ledger"
       },
       "mutation": {
         "description": "the enforce ledger fires because the id-derived family is exactly the enforce key \"rerank\""
@@ -292,7 +292,7 @@
         "ref": "vercel serves cohere/rerank-v4-pro with upstream raw_family \"o\"; the enforce ledger cannot reach it"
       },
       "mutation": {
-        "description": "id-driven decomposition derives the COMPOUND family \"rerank-v4\", which is not the enforce key, so this row needs an exact-id pin to join its own product line"
+        "description": "id-driven decomposition derives the COMPOUND family \"rerank-v4\", which is not the enforce key, so this row needs the branch's ONE exact-id pin to join its own product line"
       }
     },
     {

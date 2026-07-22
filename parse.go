@@ -4072,31 +4072,12 @@ var idFamilyOverrides = map[string]idFamilyOverrideEntry{
 	// o-series. The raw value is upstream's, not a bestiary mis-parse: the vendored
 	// catalog carries family="o" verbatim on all of them.
 	//
-	// The family_enforce ledger is the right general tool for a mislabel like this, and
-	// it IS used here for "rerank". It could not be used for wan / tts / arrow: the
-	// ledger's integrity guard grounds every entry in the frozen decomposition snapshot,
-	// and that snapshot predates these vercel rows, so those three entries would be
-	// (correctly) rejected as dead. Rather than weaken a guard to admit them, each row is
-	// pinned exactly — the same exact-ID mechanism used elsewhere in this table.
-	//
-	// Each pin restates the tuple the ID-driven path already derives when raw_family is
-	// EMPTY, so the pins encode no new judgement: they only stop a junk raw_family from
-	// overriding a decomposition that was already correct. Genuine o-series ids are
-	// untouched — openai/o1 resolves through the OpenAI-line canonicalization to gpt/o@1
-	// regardless of raw_family, and digitalocean's openai-o1 / openai-o3 keep family "o".
-	"alibaba/wan-v2.5-t2v-preview": {family: "wan", variant: "v2.5-t2v", modifiers: []string{"preview"}},
-	"alibaba/wan-v2.6-i2v":         {family: "wan", variant: "v2.6-i2v"},
-	"alibaba/wan-v2.6-i2v-flash":   {family: "wan", variant: "v2.6-i2v-flash"},
-	"alibaba/wan-v2.6-r2v":         {family: "wan", variant: "v2.6-r2v"},
-	"alibaba/wan-v2.6-r2v-flash":   {family: "wan", variant: "v2.6-r2v-flash"},
-	"alibaba/wan-v2.6-t2v":         {family: "wan", variant: "v2.6-t2v"},
-	"alibaba/wan-v2.7-r2v":         {family: "wan", variant: "v2.7-r2v"},
-	"alibaba/wan-v2.7-t2v":         {family: "wan", variant: "v2.7-t2v"},
-	"openai/tts-1":                 {family: "tts", version: "1"},
-	"openai/tts-1-hd":              {family: "tts", version: "1"},
-	"quiverai/arrow-1.1":           {family: "arrow", version: "1.1"},
+	// Those rows are corrected by the family_enforce ledger (wan / tts / arrow /
+	// rerank), NOT here — the ledger is the general tool for a raw_family mislabel and
+	// it fires wherever the ID-derived family equals one of its keys, so a new vercel
+	// spelling of an existing line is self-correcting. Only the row below needs a pin.
 
-	// cohere/rerank-v4-pro is the one row the family_enforce ledger cannot reach. The
+	// cohere/rerank-v4-pro is the ONE row the family_enforce ledger cannot reach. The
 	// ledger fires when the ID-DERIVED family is one of its members, and this ID
 	// derives the COMPOUND family "rerank-v4" (the "-v4-" segment glues onto the
 	// family token before "pro" is read as the variant), which is not the enforce key
