@@ -475,41 +475,41 @@ const (
 	Model__AmazonBedrock__Anthropic__Claude__Sonnet__4__5__20250929__V1__0                   ModelID = "anthropic.claude-sonnet-4-5-20250929-v1:0"
 	Model__AmazonBedrock__Anthropic__Claude__Sonnet__4__6                                    ModelID = "anthropic.claude-sonnet-4-6"
 	Model__AmazonBedrock__Anthropic__Claude__Sonnet__5                                       ModelID = "anthropic.claude-sonnet-5"
-	Model__AmazonBedrock__Au__Anthropic__Claude__Haiku__4__5__20251001__V1__0                ModelID = "au.anthropic.claude-haiku-4-5-20251001-v1:0"
-	Model__AmazonBedrock__Au__Anthropic__Claude__Opus__4__6__V1                              ModelID = "au.anthropic.claude-opus-4-6-v1"
-	Model__AmazonBedrock__Au__Anthropic__Claude__Opus__4__8                                  ModelID = "au.anthropic.claude-opus-4-8"
-	Model__AmazonBedrock__Au__Anthropic__Claude__Sonnet__4__5__20250929__V1__0               ModelID = "au.anthropic.claude-sonnet-4-5-20250929-v1:0"
-	Model__AmazonBedrock__Au__Anthropic__Claude__Sonnet__4__6                                ModelID = "au.anthropic.claude-sonnet-4-6"
+	Model__AmazonBedrock__Au__Anthropic__Claude__Haiku__4__5__20251001__V1__0__4_5           ModelID = "au.anthropic.claude-haiku-4-5-20251001-v1:0"
+	Model__AmazonBedrock__Au__Anthropic__Claude__Opus__4_8                                   ModelID = "au.anthropic.claude-opus-4-8"
+	Model__AmazonBedrock__Au__Anthropic__Claude__Opus__4__6__V1__4_6                         ModelID = "au.anthropic.claude-opus-4-6-v1"
+	Model__AmazonBedrock__Au__Anthropic__Claude__Sonnet__4_6                                 ModelID = "au.anthropic.claude-sonnet-4-6"
+	Model__AmazonBedrock__Au__Anthropic__Claude__Sonnet__4__5__20250929__V1__0__4_5          ModelID = "au.anthropic.claude-sonnet-4-5-20250929-v1:0"
 	Model__AmazonBedrock__Au__Anthropic__Claude__Sonnet__5                                   ModelID = "au.anthropic.claude-sonnet-5"
 	Model__AmazonBedrock__DeepSeek__R1__V1__0__Thinking                                      ModelID = "deepseek.r1-v1:0"
 	Model__AmazonBedrock__DeepSeek__V3__2                                                    ModelID = "deepseek.v3.2"
 	Model__AmazonBedrock__DeepSeek__V3__V1__0                                                ModelID = "deepseek.v3-v1:0"
 	Model__AmazonBedrock__Eu__Anthropic__Claude__Fable__5                                    ModelID = "eu.anthropic.claude-fable-5"
-	Model__AmazonBedrock__Eu__Anthropic__Claude__Haiku__4__5__20251001__V1__0                ModelID = "eu.anthropic.claude-haiku-4-5-20251001-v1:0"
-	Model__AmazonBedrock__Eu__Anthropic__Claude__Opus__4__5__20251101__V1__0                 ModelID = "eu.anthropic.claude-opus-4-5-20251101-v1:0"
-	Model__AmazonBedrock__Eu__Anthropic__Claude__Opus__4__6__V1                              ModelID = "eu.anthropic.claude-opus-4-6-v1"
-	Model__AmazonBedrock__Eu__Anthropic__Claude__Opus__4__7                                  ModelID = "eu.anthropic.claude-opus-4-7"
-	Model__AmazonBedrock__Eu__Anthropic__Claude__Opus__4__8                                  ModelID = "eu.anthropic.claude-opus-4-8"
-	Model__AmazonBedrock__Eu__Anthropic__Claude__Sonnet__4__5__20250929__V1__0               ModelID = "eu.anthropic.claude-sonnet-4-5-20250929-v1:0"
-	Model__AmazonBedrock__Eu__Anthropic__Claude__Sonnet__4__6                                ModelID = "eu.anthropic.claude-sonnet-4-6"
+	Model__AmazonBedrock__Eu__Anthropic__Claude__Haiku__4__5__20251001__V1__0__4_5           ModelID = "eu.anthropic.claude-haiku-4-5-20251001-v1:0"
+	Model__AmazonBedrock__Eu__Anthropic__Claude__Opus__4_7                                   ModelID = "eu.anthropic.claude-opus-4-7"
+	Model__AmazonBedrock__Eu__Anthropic__Claude__Opus__4_8                                   ModelID = "eu.anthropic.claude-opus-4-8"
+	Model__AmazonBedrock__Eu__Anthropic__Claude__Opus__4__5__20251101__V1__0__4_5            ModelID = "eu.anthropic.claude-opus-4-5-20251101-v1:0"
+	Model__AmazonBedrock__Eu__Anthropic__Claude__Opus__4__6__V1__4_6                         ModelID = "eu.anthropic.claude-opus-4-6-v1"
+	Model__AmazonBedrock__Eu__Anthropic__Claude__Sonnet__4_6                                 ModelID = "eu.anthropic.claude-sonnet-4-6"
+	Model__AmazonBedrock__Eu__Anthropic__Claude__Sonnet__4__5__20250929__V1__0__4_5          ModelID = "eu.anthropic.claude-sonnet-4-5-20250929-v1:0"
 	Model__AmazonBedrock__Eu__Anthropic__Claude__Sonnet__5                                   ModelID = "eu.anthropic.claude-sonnet-5"
 	Model__AmazonBedrock__Global__Anthropic__Claude__Fable__5                                ModelID = "global.anthropic.claude-fable-5"
-	Model__AmazonBedrock__Global__Anthropic__Claude__Haiku__4__5__20251001__V1__0            ModelID = "global.anthropic.claude-haiku-4-5-20251001-v1:0"
-	Model__AmazonBedrock__Global__Anthropic__Claude__Opus__4__5__20251101__V1__0             ModelID = "global.anthropic.claude-opus-4-5-20251101-v1:0"
-	Model__AmazonBedrock__Global__Anthropic__Claude__Opus__4__6__V1                          ModelID = "global.anthropic.claude-opus-4-6-v1"
-	Model__AmazonBedrock__Global__Anthropic__Claude__Opus__4__7                              ModelID = "global.anthropic.claude-opus-4-7"
-	Model__AmazonBedrock__Global__Anthropic__Claude__Opus__4__8                              ModelID = "global.anthropic.claude-opus-4-8"
-	Model__AmazonBedrock__Global__Anthropic__Claude__Sonnet__4__5__20250929__V1__0           ModelID = "global.anthropic.claude-sonnet-4-5-20250929-v1:0"
-	Model__AmazonBedrock__Global__Anthropic__Claude__Sonnet__4__6                            ModelID = "global.anthropic.claude-sonnet-4-6"
+	Model__AmazonBedrock__Global__Anthropic__Claude__Haiku__4__5__20251001__V1__0__4_5       ModelID = "global.anthropic.claude-haiku-4-5-20251001-v1:0"
+	Model__AmazonBedrock__Global__Anthropic__Claude__Opus__4_7                               ModelID = "global.anthropic.claude-opus-4-7"
+	Model__AmazonBedrock__Global__Anthropic__Claude__Opus__4_8                               ModelID = "global.anthropic.claude-opus-4-8"
+	Model__AmazonBedrock__Global__Anthropic__Claude__Opus__4__5__20251101__V1__0__4_5        ModelID = "global.anthropic.claude-opus-4-5-20251101-v1:0"
+	Model__AmazonBedrock__Global__Anthropic__Claude__Opus__4__6__V1__4_6                     ModelID = "global.anthropic.claude-opus-4-6-v1"
+	Model__AmazonBedrock__Global__Anthropic__Claude__Sonnet__4_6                             ModelID = "global.anthropic.claude-sonnet-4-6"
+	Model__AmazonBedrock__Global__Anthropic__Claude__Sonnet__4__5__20250929__V1__0__4_5      ModelID = "global.anthropic.claude-sonnet-4-5-20250929-v1:0"
 	Model__AmazonBedrock__Global__Anthropic__Claude__Sonnet__5                               ModelID = "global.anthropic.claude-sonnet-5"
 	Model__AmazonBedrock__Google__Gemma__3__12b__It                                          ModelID = "google.gemma-3-12b-it"
 	Model__AmazonBedrock__Google__Gemma__3__27b__It                                          ModelID = "google.gemma-3-27b-it"
 	Model__AmazonBedrock__Google__Gemma__3__4b__It                                           ModelID = "google.gemma-3-4b-it"
-	Model__AmazonBedrock__Jp__Anthropic__Claude__Haiku__4__5__20251001__V1__0                ModelID = "jp.anthropic.claude-haiku-4-5-20251001-v1:0"
-	Model__AmazonBedrock__Jp__Anthropic__Claude__Opus__4__7                                  ModelID = "jp.anthropic.claude-opus-4-7"
-	Model__AmazonBedrock__Jp__Anthropic__Claude__Opus__4__8                                  ModelID = "jp.anthropic.claude-opus-4-8"
-	Model__AmazonBedrock__Jp__Anthropic__Claude__Sonnet__4__5__20250929__V1__0               ModelID = "jp.anthropic.claude-sonnet-4-5-20250929-v1:0"
-	Model__AmazonBedrock__Jp__Anthropic__Claude__Sonnet__4__6                                ModelID = "jp.anthropic.claude-sonnet-4-6"
+	Model__AmazonBedrock__Jp__Anthropic__Claude__Haiku__4__5__20251001__V1__0__4_5           ModelID = "jp.anthropic.claude-haiku-4-5-20251001-v1:0"
+	Model__AmazonBedrock__Jp__Anthropic__Claude__Opus__4_7                                   ModelID = "jp.anthropic.claude-opus-4-7"
+	Model__AmazonBedrock__Jp__Anthropic__Claude__Opus__4_8                                   ModelID = "jp.anthropic.claude-opus-4-8"
+	Model__AmazonBedrock__Jp__Anthropic__Claude__Sonnet__4_6                                 ModelID = "jp.anthropic.claude-sonnet-4-6"
+	Model__AmazonBedrock__Jp__Anthropic__Claude__Sonnet__4__5__20250929__V1__0__4_5          ModelID = "jp.anthropic.claude-sonnet-4-5-20250929-v1:0"
 	Model__AmazonBedrock__Jp__Anthropic__Claude__Sonnet__5                                   ModelID = "jp.anthropic.claude-sonnet-5"
 	Model__AmazonBedrock__Meta__Llama3__1__70b__Instruct__V1__0__Instruct                    ModelID = "meta.llama3-1-70b-instruct-v1:0"
 	Model__AmazonBedrock__Meta__Llama3__1__8b__Instruct__V1__0__Instruct                     ModelID = "meta.llama3-1-8b-instruct-v1:0"
@@ -550,14 +550,14 @@ const (
 	Model__AmazonBedrock__Qwen__Qwen3__Next__80b__A3b                                        ModelID = "qwen.qwen3-next-80b-a3b"
 	Model__AmazonBedrock__Qwen__Qwen3__Vl__235b__A22b                                        ModelID = "qwen.qwen3-vl-235b-a22b"
 	Model__AmazonBedrock__Us__Anthropic__Claude__Fable__5                                    ModelID = "us.anthropic.claude-fable-5"
-	Model__AmazonBedrock__Us__Anthropic__Claude__Haiku__4__5__20251001__V1__0                ModelID = "us.anthropic.claude-haiku-4-5-20251001-v1:0"
-	Model__AmazonBedrock__Us__Anthropic__Claude__Opus__4__1__20250805__V1__0                 ModelID = "us.anthropic.claude-opus-4-1-20250805-v1:0"
-	Model__AmazonBedrock__Us__Anthropic__Claude__Opus__4__5__20251101__V1__0                 ModelID = "us.anthropic.claude-opus-4-5-20251101-v1:0"
-	Model__AmazonBedrock__Us__Anthropic__Claude__Opus__4__6__V1                              ModelID = "us.anthropic.claude-opus-4-6-v1"
-	Model__AmazonBedrock__Us__Anthropic__Claude__Opus__4__7                                  ModelID = "us.anthropic.claude-opus-4-7"
-	Model__AmazonBedrock__Us__Anthropic__Claude__Opus__4__8                                  ModelID = "us.anthropic.claude-opus-4-8"
-	Model__AmazonBedrock__Us__Anthropic__Claude__Sonnet__4__5__20250929__V1__0               ModelID = "us.anthropic.claude-sonnet-4-5-20250929-v1:0"
-	Model__AmazonBedrock__Us__Anthropic__Claude__Sonnet__4__6                                ModelID = "us.anthropic.claude-sonnet-4-6"
+	Model__AmazonBedrock__Us__Anthropic__Claude__Haiku__4__5__20251001__V1__0__4_5           ModelID = "us.anthropic.claude-haiku-4-5-20251001-v1:0"
+	Model__AmazonBedrock__Us__Anthropic__Claude__Opus__4_7                                   ModelID = "us.anthropic.claude-opus-4-7"
+	Model__AmazonBedrock__Us__Anthropic__Claude__Opus__4_8                                   ModelID = "us.anthropic.claude-opus-4-8"
+	Model__AmazonBedrock__Us__Anthropic__Claude__Opus__4__1__20250805__V1__0__4_1            ModelID = "us.anthropic.claude-opus-4-1-20250805-v1:0"
+	Model__AmazonBedrock__Us__Anthropic__Claude__Opus__4__5__20251101__V1__0__4_5            ModelID = "us.anthropic.claude-opus-4-5-20251101-v1:0"
+	Model__AmazonBedrock__Us__Anthropic__Claude__Opus__4__6__V1__4_6                         ModelID = "us.anthropic.claude-opus-4-6-v1"
+	Model__AmazonBedrock__Us__Anthropic__Claude__Sonnet__4_6                                 ModelID = "us.anthropic.claude-sonnet-4-6"
+	Model__AmazonBedrock__Us__Anthropic__Claude__Sonnet__4__5__20250929__V1__0__4_5          ModelID = "us.anthropic.claude-sonnet-4-5-20250929-v1:0"
 	Model__AmazonBedrock__Us__Anthropic__Claude__Sonnet__5                                   ModelID = "us.anthropic.claude-sonnet-5"
 	Model__AmazonBedrock__Us__DeepSeek__R1__V1__0__Thinking                                  ModelID = "us.deepseek.r1-v1:0"
 	Model__AmazonBedrock__Us__Meta__Llama4__Maverick__17b__Instruct__V1__0__4__Instruct      ModelID = "us.meta.llama4-maverick-17b-instruct-v1:0"
@@ -6133,41 +6133,41 @@ var allModelConstants = [...]ModelID{
 	Model__AmazonBedrock__Anthropic__Claude__Sonnet__4__5__20250929__V1__0,
 	Model__AmazonBedrock__Anthropic__Claude__Sonnet__4__6,
 	Model__AmazonBedrock__Anthropic__Claude__Sonnet__5,
-	Model__AmazonBedrock__Au__Anthropic__Claude__Haiku__4__5__20251001__V1__0,
-	Model__AmazonBedrock__Au__Anthropic__Claude__Opus__4__6__V1,
-	Model__AmazonBedrock__Au__Anthropic__Claude__Opus__4__8,
-	Model__AmazonBedrock__Au__Anthropic__Claude__Sonnet__4__5__20250929__V1__0,
-	Model__AmazonBedrock__Au__Anthropic__Claude__Sonnet__4__6,
+	Model__AmazonBedrock__Au__Anthropic__Claude__Haiku__4__5__20251001__V1__0__4_5,
+	Model__AmazonBedrock__Au__Anthropic__Claude__Opus__4_8,
+	Model__AmazonBedrock__Au__Anthropic__Claude__Opus__4__6__V1__4_6,
+	Model__AmazonBedrock__Au__Anthropic__Claude__Sonnet__4_6,
+	Model__AmazonBedrock__Au__Anthropic__Claude__Sonnet__4__5__20250929__V1__0__4_5,
 	Model__AmazonBedrock__Au__Anthropic__Claude__Sonnet__5,
 	Model__AmazonBedrock__DeepSeek__R1__V1__0__Thinking,
 	Model__AmazonBedrock__DeepSeek__V3__2,
 	Model__AmazonBedrock__DeepSeek__V3__V1__0,
 	Model__AmazonBedrock__Eu__Anthropic__Claude__Fable__5,
-	Model__AmazonBedrock__Eu__Anthropic__Claude__Haiku__4__5__20251001__V1__0,
-	Model__AmazonBedrock__Eu__Anthropic__Claude__Opus__4__5__20251101__V1__0,
-	Model__AmazonBedrock__Eu__Anthropic__Claude__Opus__4__6__V1,
-	Model__AmazonBedrock__Eu__Anthropic__Claude__Opus__4__7,
-	Model__AmazonBedrock__Eu__Anthropic__Claude__Opus__4__8,
-	Model__AmazonBedrock__Eu__Anthropic__Claude__Sonnet__4__5__20250929__V1__0,
-	Model__AmazonBedrock__Eu__Anthropic__Claude__Sonnet__4__6,
+	Model__AmazonBedrock__Eu__Anthropic__Claude__Haiku__4__5__20251001__V1__0__4_5,
+	Model__AmazonBedrock__Eu__Anthropic__Claude__Opus__4_7,
+	Model__AmazonBedrock__Eu__Anthropic__Claude__Opus__4_8,
+	Model__AmazonBedrock__Eu__Anthropic__Claude__Opus__4__5__20251101__V1__0__4_5,
+	Model__AmazonBedrock__Eu__Anthropic__Claude__Opus__4__6__V1__4_6,
+	Model__AmazonBedrock__Eu__Anthropic__Claude__Sonnet__4_6,
+	Model__AmazonBedrock__Eu__Anthropic__Claude__Sonnet__4__5__20250929__V1__0__4_5,
 	Model__AmazonBedrock__Eu__Anthropic__Claude__Sonnet__5,
 	Model__AmazonBedrock__Global__Anthropic__Claude__Fable__5,
-	Model__AmazonBedrock__Global__Anthropic__Claude__Haiku__4__5__20251001__V1__0,
-	Model__AmazonBedrock__Global__Anthropic__Claude__Opus__4__5__20251101__V1__0,
-	Model__AmazonBedrock__Global__Anthropic__Claude__Opus__4__6__V1,
-	Model__AmazonBedrock__Global__Anthropic__Claude__Opus__4__7,
-	Model__AmazonBedrock__Global__Anthropic__Claude__Opus__4__8,
-	Model__AmazonBedrock__Global__Anthropic__Claude__Sonnet__4__5__20250929__V1__0,
-	Model__AmazonBedrock__Global__Anthropic__Claude__Sonnet__4__6,
+	Model__AmazonBedrock__Global__Anthropic__Claude__Haiku__4__5__20251001__V1__0__4_5,
+	Model__AmazonBedrock__Global__Anthropic__Claude__Opus__4_7,
+	Model__AmazonBedrock__Global__Anthropic__Claude__Opus__4_8,
+	Model__AmazonBedrock__Global__Anthropic__Claude__Opus__4__5__20251101__V1__0__4_5,
+	Model__AmazonBedrock__Global__Anthropic__Claude__Opus__4__6__V1__4_6,
+	Model__AmazonBedrock__Global__Anthropic__Claude__Sonnet__4_6,
+	Model__AmazonBedrock__Global__Anthropic__Claude__Sonnet__4__5__20250929__V1__0__4_5,
 	Model__AmazonBedrock__Global__Anthropic__Claude__Sonnet__5,
 	Model__AmazonBedrock__Google__Gemma__3__12b__It,
 	Model__AmazonBedrock__Google__Gemma__3__27b__It,
 	Model__AmazonBedrock__Google__Gemma__3__4b__It,
-	Model__AmazonBedrock__Jp__Anthropic__Claude__Haiku__4__5__20251001__V1__0,
-	Model__AmazonBedrock__Jp__Anthropic__Claude__Opus__4__7,
-	Model__AmazonBedrock__Jp__Anthropic__Claude__Opus__4__8,
-	Model__AmazonBedrock__Jp__Anthropic__Claude__Sonnet__4__5__20250929__V1__0,
-	Model__AmazonBedrock__Jp__Anthropic__Claude__Sonnet__4__6,
+	Model__AmazonBedrock__Jp__Anthropic__Claude__Haiku__4__5__20251001__V1__0__4_5,
+	Model__AmazonBedrock__Jp__Anthropic__Claude__Opus__4_7,
+	Model__AmazonBedrock__Jp__Anthropic__Claude__Opus__4_8,
+	Model__AmazonBedrock__Jp__Anthropic__Claude__Sonnet__4_6,
+	Model__AmazonBedrock__Jp__Anthropic__Claude__Sonnet__4__5__20250929__V1__0__4_5,
 	Model__AmazonBedrock__Jp__Anthropic__Claude__Sonnet__5,
 	Model__AmazonBedrock__Meta__Llama3__1__70b__Instruct__V1__0__Instruct,
 	Model__AmazonBedrock__Meta__Llama3__1__8b__Instruct__V1__0__Instruct,
@@ -6208,14 +6208,14 @@ var allModelConstants = [...]ModelID{
 	Model__AmazonBedrock__Qwen__Qwen3__Next__80b__A3b,
 	Model__AmazonBedrock__Qwen__Qwen3__Vl__235b__A22b,
 	Model__AmazonBedrock__Us__Anthropic__Claude__Fable__5,
-	Model__AmazonBedrock__Us__Anthropic__Claude__Haiku__4__5__20251001__V1__0,
-	Model__AmazonBedrock__Us__Anthropic__Claude__Opus__4__1__20250805__V1__0,
-	Model__AmazonBedrock__Us__Anthropic__Claude__Opus__4__5__20251101__V1__0,
-	Model__AmazonBedrock__Us__Anthropic__Claude__Opus__4__6__V1,
-	Model__AmazonBedrock__Us__Anthropic__Claude__Opus__4__7,
-	Model__AmazonBedrock__Us__Anthropic__Claude__Opus__4__8,
-	Model__AmazonBedrock__Us__Anthropic__Claude__Sonnet__4__5__20250929__V1__0,
-	Model__AmazonBedrock__Us__Anthropic__Claude__Sonnet__4__6,
+	Model__AmazonBedrock__Us__Anthropic__Claude__Haiku__4__5__20251001__V1__0__4_5,
+	Model__AmazonBedrock__Us__Anthropic__Claude__Opus__4_7,
+	Model__AmazonBedrock__Us__Anthropic__Claude__Opus__4_8,
+	Model__AmazonBedrock__Us__Anthropic__Claude__Opus__4__1__20250805__V1__0__4_1,
+	Model__AmazonBedrock__Us__Anthropic__Claude__Opus__4__5__20251101__V1__0__4_5,
+	Model__AmazonBedrock__Us__Anthropic__Claude__Opus__4__6__V1__4_6,
+	Model__AmazonBedrock__Us__Anthropic__Claude__Sonnet__4_6,
+	Model__AmazonBedrock__Us__Anthropic__Claude__Sonnet__4__5__20250929__V1__0__4_5,
 	Model__AmazonBedrock__Us__Anthropic__Claude__Sonnet__5,
 	Model__AmazonBedrock__Us__DeepSeek__R1__V1__0__Thinking,
 	Model__AmazonBedrock__Us__Meta__Llama4__Maverick__17b__Instruct__V1__0__4__Instruct,
