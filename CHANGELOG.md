@@ -22,9 +22,10 @@ for its **Go module tags** (`vX.Y.Z`).
   `NomenScheme` classifier (canonical / provider-id / huggingface / purl / alias)
   and ISO 1087 `AcceptabilityRating` statuses. Minted by one shared production
   function over the entity index plus the curated `parse/data/nomen_claims.json`
-  (3,773 nomina at release: 977 canonical Preferred, 2,791 provider-ID Admitted,
+  (3,743 nomina at release: 947 canonical Preferred, 2,791 provider-ID Admitted,
   4 huggingface, 1 curated
-  alias claim). `Entity.Nomina()` and `NomenLookup()` (homonym-aware) are the
+  alias claim — after the closing Impl-UAT batch below folded the entity census
+  977 → 947). `Entity.Nomina()` and `NomenLookup()` (homonym-aware) are the
   read APIs; claim attribution keeps *who asserts* (`SourceURL`) distinct from
   *which ingest we read* (`Source` — curated claims attribute the new `curated`
   data source, never models.dev).
@@ -66,7 +67,8 @@ for its **Go module tags** (`vX.Y.Z`).
   rung produces, and `claude-4.0`/`claude-4.5` remain distinct lines a narrower selector
   still addresses individually. Membership is a strict string rule (a generation belongs
   to version `4` iff it IS `4` or begins `4.`) with no numeric normalization, so `4`
-  never swallows `42`, `1` never reaches the mis-parsed `ling@1t` or the leading-zero
+  never swallows `42`, `1` never reaches `ling#1t` (whose `1t` is a param-size, not a
+  version — see the closing batch below) or the leading-zero
   `gemini@001`. GLM's `5p1`/`5p2` spellings are decoded at PARSE into real `5.1`/`5.2`
   versions (see Fixed), so they join the `glm-5` union as ordinary dotted members —
   there is no `p`-awareness in the taxonomy. Sub-1.0
@@ -126,7 +128,7 @@ for its **Go module tags** (`vX.Y.Z`).
   claimant `SourceURL` pointing at the Hub page, and all surface through
   `Entity.Nomina()` / `NomenLookup()`. This is the durable, **entity-level** external
   identifier: the Hub name holds regardless of which provider is serving the entity.
-  Minted census at release: 3,773 (977 canonical, 2,791 provider-ID, 4 huggingface, 1 alias).
+  Minted census at release: 3,743 (947 canonical, 2,791 provider-ID, 4 huggingface, 1 alias).
 
 ### Changed
 - **Designation layer activated**: `ModelRef.Designations()` now rates the
@@ -134,7 +136,8 @@ for its **Go module tags** (`vX.Y.Z`).
   prerequisite for truthful `skos:prefLabel`/`altLabel` export (GH#24 ask 3).
 - **Constants surface is now entity-level** (BREAKING). The ~5,650
   provider-flavored `Model__<Provider>__…` constants are replaced by one
-  provider-agnostic `Entity__*` constant per model entity (977), each valued by
+  provider-agnostic `Entity__*` constant per model entity (947 after the closing
+  Impl-UAT batch below), each valued by
   its canonical entity key (e.g.
   `Entity__Llama__Scout__Version_4__Size_17b_16e__Instruct = "llama/scout@4#17b-16e{instruct}"`).
   Names follow a word-sentinel grammar — `Entity__<Family>[__<Variant>][__Version_<v>][__Size_<s>][__<Mod>…]`,
@@ -214,15 +217,100 @@ for its **Go module tags** (`vX.Y.Z`).
   no key is created or retired and the census is unmoved (the base-side clauses are
   untouched — the new arm admits a *shape*, never a new permission).
 
-  One *residual* defect is **diagnosed and deferred**: `k2p7` (kimi-for-coding) lands
-  in the compound family `kimi-k2` with an empty version. The asymmetry is neither the
-  id nor the `p` — its `k2p5`/`k2p6` siblings arrive with upstream family
-  `kimi-thinking` and resolve, while `k2p7` arrives with the compound `kimi-k2`; fed
-  `kimi-thinking`, the very same id decomposes to `kimi/k@2.7`. The gap is therefore
-  the *(compound raw family + bare series-token id)* combination in the shared
-  family-recovery path that every kimi/minimax/mimo row traverses — too broad a blast
-  radius for one affected row, so it is pinned as a bug-classified corpus case rather
-  than fixed here.
+  The one *residual* `k2p7` (kimi-for-coding) defect noted during the p-decode work is
+  now **fixed in the closing Impl-UAT batch below**: it landed in the compound family
+  `kimi-k2` with an empty version because — unlike its `k2p5`/`k2p6` siblings, which
+  arrive with upstream family `kimi-thinking` and resolve — it arrives with the compound
+  `kimi-k2`, the *(compound raw family + bare series-token id)* combination the shared
+  family-recovery path does not close. Rather than a catalog-wide recovery-path change
+  (too broad a blast radius across every kimi/minimax/mimo row), it is pinned with a
+  narrow curated exact-id override so it now resolves to **`kimi/k@2.7`** and joins the
+  `kimi-2.7` union alongside its `k2p5`/`k2p6` siblings (distinct from the fireworks
+  `kimi/k@2.7{code}` coding router). The general recovery-path fix stays deferred.
+- **Closing Impl-UAT batch — five user-ratified identity corrections** (BREAKING for
+  38 `Entity__*` constants). The final acceptance pass folded five spelling/identity
+  defects that had each split one model across two entities or stranded it under a junk
+  key. Entity census **977 → 947** (canonical nomina 977 → 947, total 3,773 → 3,743;
+  provider-ID **unchanged at 2,791** throughout — every fix MOVES instances, never drops
+  one, so each corrected spelling survives as an Admitted provider-ID nomen); Series
+  419 → 411 (a flat −8 versioned lines, bare unchanged at 204); Releases 672 → 659;
+  sized-catalog entities 336 → 323.
+
+  1. **C4 entity-level `N` → `N.0` fold** (`registry.go`, `NormalizeEntityVersion`). A
+     family that spells BOTH a bare integer version `N` and the dotted `N.0` for the
+     SAME (variant, param-size, identity-modifiers) folds the bare entity onto the
+     dotted one — one canonical spelling per generation. A pure MERGE (never a rename):
+     `llama@4`, with no `4.0` sibling, is untouched. Eight pairs fold. A bare-version
+     EXPRESSION still resolves: `EntityByKey("claude/opus@4")` and
+     `EntityByTuple(claude, opus, "4", "")` return the `claude/opus@4.0` entity. The
+     specificity ladder is untouched — selector `claude-4` remains the 4.x union.
+  2. **o-series dual-identity unified** (`parse.go`, `canonicalizeOpenAILine`). The same
+     OpenAI o-series model was two identities by spelling: `openai/o1` → `gpt/o@1`, but
+     digitalocean's hyphen-glued `openai-o1` stranded in a junk family `o`. Both now
+     converge on `gpt/o@1` / `gpt/o@3` / `gpt/o@3{mini}`; family `o` empties.
+  3. **Dot-lost version spellings repaired** (`parse.go`, `dotLostVersionOverrides`;
+     26 dash-glued `qwen2-5-…`/`qwen3-6-…` + 7 dotless `minimax-m25`/`qwen35-…`/
+     `mistral-small-31-…` ids) — a version-only curated exact-id override that corrects
+     ONLY the version, so family/variant/size/modifier/stage are untouched. Each merges
+     into (or re-keys onto) the heavily-attested dotted sibling.
+  4. **`k2p7` routed to `kimi/k@2.7`** — the residual defect from the `p`-decode work
+     above, fixed with a narrow curated exact-id override (see that entry).
+  5. **`tts-1-hd` split to `tts@1{hd}`** — OpenAI documents tts-1-hd as a distinct
+     higher-quality product, so `hd` is now an IDENTITY modifier (a new entity, split
+     from `tts@1`).
+  6. **`1t` routed to the param-size axis** (`parse.go`, trillion unit `t`). Ling-1T /
+     Ring-1T are 1-trillion-parameter models, so `1t` is a SIZE not a version:
+     `ling@1t` → `ling#1t`, and the `1t` in `ling-2.6-1t` rides beside version 2.6
+     (`ling@2.6#1t`). The ollama `:1t` tag on `kimi-k2:1t` (suppress-pinned) and the
+     token-internal `r1t2` (`deepseek-…-r1t2-chimera`) are unaffected.
+
+  **Constant migration (38 removed; 8 of the replacements are NEW, the rest are the
+  pre-existing dotted constants).** The full list is reproducible via
+  `git diff <base>..HEAD -- entities_constants_gen.go`.
+
+  | Old constant (gone) | New constant |
+  |---|---|
+  | `Entity__Claude__Opus__Version_4` | `Entity__Claude__Opus__Version_4_0` |
+  | `Entity__Claude__Sonnet__Version_4` | `Entity__Claude__Sonnet__Version_4_0` |
+  | `Entity__Gemini__Flash__Version_3` | `Entity__Gemini__Flash__Version_3_0` |
+  | `Entity__Gemini__Pro__Version_3` | `Entity__Gemini__Pro__Version_3_0` |
+  | `Entity__Imagen__Version_4` | `Entity__Imagen__Version_4_0` |
+  | `Entity__Imagen__Version_4__Fast` | `Entity__Imagen__Version_4_0__Fast` |
+  | `Entity__Imagen__Ultra__Version_4` | `Entity__Imagen__Ultra__Version_4_0` |
+  | `Entity__Veo__Version_3` | `Entity__Veo__Version_3_0` |
+  | `Entity__O` | `Entity__Gpt__O__Version_1`, `Entity__Gpt__O__Version_3` |
+  | `Entity__O__Mini` | `Entity__Gpt__O__Version_3__Mini` |
+  | `Entity__Minimax__M__Version_25` | `Entity__Minimax__M__Version_2_5` |
+  | `Entity__Minimax__M__Version_27` | `Entity__Minimax__M__Version_2_7` |
+  | `Entity__Mistral__Small__Version_31__Size_24b__Instruct` | `Entity__Mistral__Small__Version_3_1__Size_24b__Instruct` |
+  | `Entity__Qwen__Coder__Version_2__Size_32b__Instruct` | `Entity__Qwen__Coder__Version_2_5__Size_32b__Instruct` |
+  | `Entity__Qwen__Coder__Version_2__Size_7b__Instruct` | `Entity__Qwen__Coder__Version_2_5__Size_7b__Instruct` **(new)** |
+  | `Entity__Qwen__Plus__Version_3` | `Entity__Qwen__Plus__Version_3_5` / `__Version_3_6` / `__Version_3_7` |
+  | `Entity__Qwen__Version_2__Size_14b__Instruct` | `Entity__Qwen__Version_2_5__Size_14b__Instruct` |
+  | `Entity__Qwen__Version_2__Size_32b__Instruct` | `Entity__Qwen__Version_2_5__Size_32b__Instruct` |
+  | `Entity__Qwen__Version_2__Size_72b__Instruct` | `Entity__Qwen__Version_2_5__Size_72b__Instruct` |
+  | `Entity__Qwen__Version_2__Size_7b__Instruct` | `Entity__Qwen__Version_2_5__Size_7b__Instruct` |
+  | `Entity__Qwen__Version_2__Size_7b__Omni` | `Entity__Qwen__Version_2_5__Size_7b__Omni` **(new)** |
+  | `Entity__Qwen__Version_35__Size_122b_a10b` | `Entity__Qwen__Version_3_5__Size_122b_a10b` |
+  | `Entity__Qwen__Version_35__Size_397b_a17b` | `Entity__Qwen__Version_3_5__Size_397b_a17b` |
+  | `Entity__Qwen__Version_3__Size_122b_a10b` | `Entity__Qwen__Version_3_5__Size_122b_a10b` |
+  | `Entity__Qwen__Version_3__Size_27b` | `Entity__Qwen__Version_3_5__Size_27b`, `Entity__Qwen__Version_3_6__Size_27b` |
+  | `Entity__Qwen__Version_3__Size_35b_a3b` | `Entity__Qwen__Version_3_5__Size_35b_a3b` |
+  | `Entity__Qwen__Version_3__Size_35b` | `Entity__Qwen__Version_3_6__Size_35b` **(new)** |
+  | `Entity__Qwen__Version_3__Size_397b_a17b` | `Entity__Qwen__Version_3_5__Size_397b_a17b` |
+  | `Entity__Qwen__Version_3__Size_9b` | `Entity__Qwen__Version_3_5__Size_9b` |
+  | `Entity__Qwen__Vl__Version_25__Size_72b__Instruct` | `Entity__Qwen__Vl__Version_2_5__Size_72b__Instruct` |
+  | `Entity__Qwen__Vl__Version_2__Size_32b__Instruct` | `Entity__Qwen__Vl__Version_2_5__Size_32b__Instruct` |
+  | `Entity__Qwen__Vl__Version_2__Size_72b__Instruct` | `Entity__Qwen__Vl__Version_2_5__Size_72b__Instruct` |
+  | `Entity__Qwen__Vl__Version_2__Size_7b__Instruct` | `Entity__Qwen__Vl__Version_2_5__Size_7b__Instruct` |
+  | `Entity__Ling__Version_1t` | `Entity__Ling__Size_1t` **(new)** |
+  | `Entity__Ling__Version_2_6` | `Entity__Ling__Version_2_6__Size_1t` **(new)** |
+  | `Entity__Ring__Version_1t` | `Entity__Ring__Size_1t` **(new)** |
+  | `Entity__Ring__Version_2_6` | `Entity__Ring__Version_2_6__Size_1t` **(new)** |
+  | `Entity__Ring_1t__Free__Version_2_6` | `Entity__Ring__Version_2_6__Size_1t` |
+
+  One constant is ADDED with no removal counterpart: `Entity__Tts__Version_1__Hd`
+  (`"tts@1{hd}"`, item 5).
 - **beta is ALWAYS a release stage, never an identity.** The two axes were already
   independent by construction (`DetectStageFromID` scans the ID *without* stripping), but one
   row asserted beta on both: vercel's `interfaze/interfaze-beta` arrives with an empty
@@ -320,8 +408,11 @@ for its **Go module tags** (`vX.Y.Z`).
   `rerank`, plus 2 vendor-leak rows (`voyage/rerank-2.5` and its lite sibling, labelled with
   the **org** rather than a family — the leak the enforce ledger exists to correct). The
   genuine o-series is untouched: `openai/o1` and `openai/o3` still resolve through the
-  OpenAI-line canonicalization to `gpt/o@N`, and digitalocean's `openai-o1` / `openai-o3` /
-  `openai-o3-mini` legitimately **keep** family `o`. Entity census 971 → 982: a bucket holding
+  OpenAI-line canonicalization to `gpt/o@N`. (At the time of this entry digitalocean's
+  hyphen-glued `openai-o1` / `openai-o3` / `openai-o3-mini` still kept family `o`; the
+  **closing Impl-UAT batch below** finished the unification, converging those dashed
+  spellings onto `gpt/o@1` / `gpt/o@3` / `gpt/o@3{mini}` so family `o` empties entirely.)
+  Entity census 971 → 982: a bucket holding
   many distinct models becomes many distinct entities, so this is the branch's one correction
   that *adds* keys (15 new, 4 retired).
 - **Codegen emitted no `ParamSize` on a lineage parent** (`lineageLiteral`). The first curated
