@@ -1,5 +1,5 @@
 {
-  "_comment": "vercel labels a swathe of unrelated models with the upstream raw_family \"o\" — the OpenAI o-series family — so Alibaba's Wan video models, OpenAI's TTS speech models, quiverai's arrow and Cohere's rerankers all decomposed into family \"o\" and shared one junk-bucket entity with the real o-series. The raw value is UPSTREAM's, not a bestiary mis-parse: the vendored catalog carries family=\"o\" verbatim. Corrections come from two mechanisms and the corpus records which applies to each row: the family_enforce ledger (wan / tts / arrow / rerank — their id-derived family equals the enforce key, so a NEW vercel spelling of an existing line is self-correcting) and a single exact-id pin (cohere/rerank-v4-pro, whose id derives the compound family \"rerank-v4\" that the ledger cannot key on). The four NEGATIVE CONTROLS at the end are genuine o-series ids that must be untouched, including two that legitimately KEEP family \"o\" — the fix must empty the bucket without evicting its rightful occupants.",
+  "_comment": "vercel labels a swathe of unrelated models with the upstream raw_family \"o\" — the OpenAI o-series family — so Alibaba's Wan video models, OpenAI's TTS speech models, quiverai's arrow and Cohere's rerankers all decomposed into family \"o\" and shared one junk-bucket entity with the real o-series. The raw value is UPSTREAM's, not a bestiary mis-parse: the vendored catalog carries family=\"o\" verbatim. Corrections come from two mechanisms and the corpus records which applies to each row: the family_enforce ledger (wan / tts / arrow / rerank — their id-derived family equals the enforce key, so a NEW vercel spelling of an existing line is self-correcting) and a single exact-id pin (cohere/rerank-v4-pro, whose id derives the compound family \"rerank-v4\" that the ledger cannot key on). The four cases at the end are genuine o-series ids: the two slash-form spellings (openai/o1, openai/o3) are NEGATIVE CONTROLS that must keep resolving to gpt/o, and the two hyphen-glued spellings (openai-o1, openai-o3-mini) are CONVERGENCE cases — once defect pins that stranded them in a junk family \"o\", now fixed so the dashed spelling yields the same gpt/o identity as the slash spelling. No o-series id keeps family \"o\" any longer; the bucket empties completely.",
   "cases": [
     {
       "name": "wan-wan-v2.5-t2v-preview-escapes-o-bucket",
@@ -200,15 +200,15 @@
         "family": "tts",
         "variant": "",
         "version": "1",
-        "mod": ""
+        "mod": "hd"
       },
       "classification": "must-pass",
       "provenance": {
         "source": "bug",
-        "ref": "vercel serves openai/tts-1-hd with upstream raw_family \"o\""
+        "ref": "vercel serves openai/tts-1-hd with upstream raw_family \"o\"; OpenAI documents tts-1-hd as a distinct higher-quality product (https://platform.openai.com/docs/models/tts-1-hd), so hd is an IDENTITY modifier and tts-1-hd is a different artifact from tts-1"
       },
       "mutation": {
-        "description": "the HD sibling lands on the same family via the same ledger entry; note it still shares tts@1 with tts-1, a pre-existing token-loss the family fix does not change"
+        "description": "the HD sibling lands on the same family via the same ledger entry, and its hd token is now peeled as an IDENTITY modifier so it keys as tts@1{hd}, distinct from tts@1 (tts-1) rather than wrongly sharing it"
       }
     },
     {
@@ -386,18 +386,18 @@
         "id": "openai-o1"
       },
       "expected": {
-        "family": "o",
-        "variant": "",
-        "version": "",
+        "family": "gpt",
+        "variant": "o",
+        "version": "1",
         "mod": ""
       },
       "classification": "must-pass",
       "provenance": {
-        "source": "boundary",
-        "ref": "digitalocean's openai-o1 is a REAL o-series model whose vendor-prefixed spelling misses the o-series canonicalization"
+        "source": "bug",
+        "ref": "digitalocean serves the SAME o1 model as openai-o1 (vendor label hyphen-glued onto the id) that vercel serves as openai/o1; both must canonicalize to the ONE identity gpt/o@1, not split into gpt/o@1 vs a junk family-\"o\" entity"
       },
       "mutation": {
-        "description": "NEGATIVE CONTROL: this row legitimately KEEPS family \"o\" — the fix must empty the junk bucket without evicting its rightful occupants"
+        "description": "CONVERGENCE: canonicalizeOpenAILine drops the leading \"openai\" vendor token so the hyphen-glued spelling reads the o-series designator from the same position as the slash spelling — the dashed and slash forms now yield the identical tuple gpt/o@1"
       }
     },
     {
@@ -407,18 +407,18 @@
         "id": "openai-o3-mini"
       },
       "expected": {
-        "family": "o",
-        "variant": "mini",
-        "version": "",
-        "mod": ""
+        "family": "gpt",
+        "variant": "o",
+        "version": "3",
+        "mod": "mini"
       },
       "classification": "must-pass",
       "provenance": {
-        "source": "boundary",
-        "ref": "digitalocean's openai-o3-mini, raw_family \"o-mini\" mapped by the family_overrides ledger"
+        "source": "bug",
+        "ref": "digitalocean's openai-o3-mini (raw_family \"o-mini\") is o3-mini; it must join gpt/o@3{mini} alongside every provider's openai/o3-mini rather than strand in family \"o\""
       },
       "mutation": {
-        "description": "NEGATIVE CONTROL: the o-mini override path must be unaffected by the over-capture fix"
+        "description": "CONVERGENCE: with the leading \"openai\" token dropped, the o-series line designator (o3) and the size token (mini, demoted to an identity modifier) resolve exactly as the slash spelling does — gpt/o@3{mini}"
       }
     }
   ]

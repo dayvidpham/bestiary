@@ -57,7 +57,28 @@ func TestEntityConstants_Unique(t *testing.T) {
 	// the real ones. Decoding the spelling merges those two rows into the existing
 	// glm@5.1 and glm@5.2, so two constants are REMOVED and none is renamed — again the
 	// surviving siblings' keys never changed.
-	const wantEntityCount = 977
+	//
+	// 977 → 978 with the tts-1-hd identity split: OpenAI documents tts-1-hd as a distinct
+	// higher-quality product, so "hd" is now peeled as an IDENTITY modifier and tts@1{hd}
+	// splits off from tts@1 (one constant ADDED, none renamed).
+	//
+	// 978 → 976 with the o-series dual-identity fix: the digitalocean openai-o1 / openai-o3
+	// / openai-o3-mini rows (hyphen-glued vendor spelling) now canonicalize onto the
+	// EXISTING gpt/o@1, gpt/o@3, gpt/o@3{mini} entities, vacating the two junk family-"o"
+	// keys (o and o/mini). Two constants REMOVED, none renamed.
+	//
+	// 976 → 955 with the dot-lost version repair + 1t param-size routing: the dot-lost
+	// exact-id overrides fold the dotless (minimax-m25, qwen35-…) and dash-glued
+	// (qwen2-5-…, qwen3-6-…) spellings onto their real dotted entities (mostly merges, a
+	// few re-keys), and 1t routing re-keys ling@1t/ring@1t to ling#1t/ring#1t and merges
+	// ring-2.6-1t-free into ring@2.6#1t. Net −21 (measured; merges dominate).
+	//
+	// 955 → 947 with the entity-level MERGE-only N→N.0 fold (the C4 ruling): a family that
+	// spells both a bare N and N.0 for the SAME (variant, size, modifiers) folds the bare
+	// entity onto the dotted one — 8 pairs (claude/opus@4, claude/sonnet@4, gemini/flash@3,
+	// gemini/pro@3, imagen@4, imagen@4{fast}, imagen/ultra@4, veo@3). A pure MERGE: 8 bare
+	// keys retired, none renamed; llama@4 (no 4.0 sibling) is untouched.
+	const wantEntityCount = 947
 	if len(keys) != wantEntityCount {
 		t.Errorf("EntityKeys() returned %d constants; expected exactly %d — "+
 			"re-run go generate ./... and update this census literal if the entity count changed intentionally",

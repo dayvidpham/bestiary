@@ -714,25 +714,30 @@ multi-line output shape the family rung already produces, and the hierarchy itse
 untouched — `claude-4.0` and `claude-4.5` remain distinct lines that a narrower selector still
 addresses individually. Membership is a **strict string rule**: a generation belongs to version
 `4` iff it *is* `4` or begins `4.`. Nothing is numerically normalized, so `4` never swallows
-`42`, `1` never reaches the mis-parsed `ling@1t` or the leading-zero `gemini@001`. Upstream
-`p`-for-dot spellings *are* repaired — at **parse** time, not in the selector: `glm-5p1`/`glm-5p2`
-decode to the real `glm@5.1`/`glm@5.2`, so `series glm-5` returns them as ordinary dotted union
-members. That repair lives in `parse/`, where the raw IDs are, which is also why the spellings it
-does *not* yet reach — a compound-family case like `k2p7`, which decomposes to a version-less
-`kimi-k2` rather than `kimi/k@2.7` — stay out of any union until `parse/` fixes them too, never a
-selector that would have to guess. Sub-1.0 generations need no special case: `mistral-0` unions `mistral-0.1` and
+`42`, `1` never reaches `ling#1t` (whose `1t` is a param-size, not a version) or the leading-zero
+`gemini@001`. Upstream spelling defects *are* repaired — at **parse** time, not in the selector:
+`glm-5p1`/`glm-5p2` decode to the real `glm@5.1`/`glm@5.2`, and the closing Impl-UAT batch extended
+the same discipline — the compound-family `k2p7` now resolves to `kimi/k@2.7` (a curated exact-id
+override) and joins the `kimi-2.7` union alongside its `k2p5`/`k2p6` siblings, the dot-lost
+`qwen2-5-…`/`minimax-m25` spellings merge into their dotted entities, and `ling-1t`/`ring-1t` route
+their `1t` to the param-size axis. Those repairs live in `parse/`, where the raw IDs are, so
+`series` never has to guess. Sub-1.0 generations need no special case: `mistral-0` unions `mistral-0.1` and
 `mistral-0.3` like any other version. Where a family spells both a bare `N` and dotted
 siblings (`claude-3`, `glm-4`, `gpt-5`, …), the union **includes the bare line**. `--version`
 is exactly equivalent to appending `-<value>` to the positional, and is rejected with an
 actionable error when given without a family — it selects *within* one. Matching is
 case-folded, and the filters below apply *after* the selection.
 
-Two refinements keep one line from splitting on a spelling accident: a bare generation `N`
-folds into `N.0` when the same family also spells `N.0` (so `gemini@3` and `gemini@3.0` share
-`gemini-3.0`, while `llama-4` — with no dotted sibling — keeps its bare generation), and the
-curated `parse/data/series.json` re-homes the few families whose line cannot be derived
-(`gemma4` → `gemma-4`). **Neither affects entity keys**: the hierarchy is computed *above*
-them and never feeds back into identity.
+Two refinements keep one line from splitting on a spelling accident. First, a bare generation
+`N` folds into `N.0` when the same family also spells `N.0` for the SAME (variant, param-size,
+identity-modifiers) — and, as of the C4 ruling, this fold is realized at **entity identity**:
+`gemini/flash@3` and `gemini/flash@3.0` are no longer two entities sharing a line, they MERGE
+into the single `gemini/flash@3.0` entity (a bare-version expression like `EntityByKey("gemini/flash@3")`
+resolves to it), while `llama@4` — with no dotted sibling — keeps its bare key untouched. Second,
+the curated `parse/data/series.json` re-homes the few families whose line cannot be derived
+(`gemma4` → `gemma-4`); this one is purely a hierarchy view and does **not** affect entity keys.
+The series-level generation fold in `taxonomy.go` is retained as a safety net but is now subsumed
+by the entity merge — no bare-`N` entity survives for it to fold.
 
 `--provider`, `--quant` and `--status` narrow the **entity list inside each release**. Each is
 a per-entity predicate satisfied by the entity's *instances*: `--provider` keeps entities with

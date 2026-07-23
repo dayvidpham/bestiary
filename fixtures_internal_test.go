@@ -27,6 +27,12 @@ var internalIsYYMMDateTokenCorpusJSON []byte
 //go:embed testdata/parse/p_notation_version_corpus.json
 var internalPNotationVersionCorpusJSON []byte
 
+//go:embed testdata/parse/dot_lost_version_corpus.json
+var internalDotLostVersionCorpusJSON []byte
+
+//go:embed testdata/parse/param_size_1t_corpus.json
+var internalParamSize1TCorpusJSON []byte
+
 // pNotationInput is one row of the p-notation corpus. It carries EITHER a bare Token
 // (a unit probe of decodePNotationVersion) OR an Id + Provider (a catalog probe of
 // the entity a real registry row resolves to) — the two kinds share a corpus because

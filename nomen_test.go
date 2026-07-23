@@ -58,9 +58,31 @@ func nominaCensus(ns []bestiary.Nomen) map[bestiary.NomenScheme]int {
 // is the load-bearing part — the fireworks "5p1"/"5p2" ID spellings survive as Admitted
 // provider-ID nomina on the merged entities, so decoding a spelling for IDENTITY never
 // erases the spelling from the record.
+//
+// canonical went 977 → 978 with the tts-1-hd identity split: "hd" becomes an IDENTITY
+// modifier so tts@1{hd} splits off from tts@1, adding one Preferred canonical nomen.
+// provider-ID is UNCHANGED at 2791 — the split moves an existing instance to a new
+// entity, it adds no instance, so no provider-ID nomen is minted or lost.
+//
+// canonical went 978 → 976 with the o-series dual-identity fix: openai-o1 / openai-o3 /
+// openai-o3-mini fold onto the existing gpt/o entities, retiring the two junk family-"o"
+// keys and their two Preferred nomina. provider-ID is UNCHANGED at 2791 (the three
+// digitalocean ID spellings survive as Admitted provider-ID nomina on the merged
+// entities — folding a spelling for IDENTITY never erases it from the record).
+//
+// canonical went 976 → 955 with the dot-lost version repair + 1t param-size routing: the
+// dot-lost merges and the 1t re-keys retire 21 Preferred canonical nomina. provider-ID is
+// UNCHANGED at 2791 AGAIN — every repair MOVES instances onto the corrected entity, it
+// removes none, so the dotless/dash/1t ID spellings all survive as Admitted provider-ID
+// nomina on the merged entities.
+//
+// canonical went 955 → 947 with the entity-level MERGE-only N→N.0 fold (C4): 8 bare-N
+// entities fold onto their N.0 siblings, retiring 8 Preferred canonical nomina. provider-ID
+// UNCHANGED at 2791 a THIRD time — the fold merges two entities, moving no instance, so the
+// bare-version ID spellings survive as Admitted provider-ID nomina on the merged entities.
 func TestNomina_CensusExact(t *testing.T) {
 	const (
-		wantCanonical   = 977
+		wantCanonical   = 947
 		wantProviderID  = 2791
 		wantAlias       = 1
 		wantHuggingFace = 4
@@ -102,7 +124,7 @@ func TestNomina_CensusExact(t *testing.T) {
 			fromModels, wantProviderID, wantAlias, wantHuggingFace)
 	}
 	if fromModels[bestiary.NomenSchemeCanonical] != wantFromModelsCanonical {
-		t.Errorf("MintNominaFromModels canonical = %d, want %d (the 977 entities minus the 4 metadata-only standalones)",
+		t.Errorf("MintNominaFromModels canonical = %d, want %d (the 947 entities minus the 4 metadata-only standalones)",
 			fromModels[bestiary.NomenSchemeCanonical], wantFromModelsCanonical)
 	}
 }

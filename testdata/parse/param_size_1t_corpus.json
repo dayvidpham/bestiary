@@ -1,0 +1,184 @@
+{
+  "cases": [
+    {
+      "classification": "must-pass",
+      "expected": {
+        "decoded": "",
+        "entity_key": "ling#1t"
+      },
+      "input": {
+        "id": "inclusionai/ling-1t",
+        "provider": "zenmux",
+        "token": ""
+      },
+      "mutation": {
+        "description": "'1t' rides as the trillion param-size token so inclusionai/ling-1t keys as ling#1t"
+      },
+      "name": "onet_inclusionai_ling_1t",
+      "provenance": {
+        "ref": "Ling/Ring 1T is a 1-trillion-parameter model, so '1t' is a SIZE not a version; routed to the param-size axis, \"inclusionai/ling-1t\" resolves to \"ling#1t\" (2 instance(s) share this identity)",
+        "source": "bug"
+      }
+    },
+    {
+      "classification": "must-pass",
+      "expected": {
+        "decoded": "",
+        "entity_key": "ling@2.6#1t"
+      },
+      "input": {
+        "id": "inclusionai/ling-2.6-1t",
+        "provider": "kilo",
+        "token": ""
+      },
+      "mutation": {
+        "description": "'1t' rides as the trillion param-size token so inclusionai/ling-2.6-1t keys as ling@2.6#1t"
+      },
+      "name": "onet_inclusionai_ling_2_6_1t",
+      "provenance": {
+        "ref": "Ling/Ring 1T is a 1-trillion-parameter model, so '1t' is a SIZE not a version; routed to the param-size axis, \"inclusionai/ling-2.6-1t\" resolves to \"ling@2.6#1t\" (4 instance(s) share this identity)",
+        "source": "bug"
+      }
+    },
+    {
+      "classification": "must-pass",
+      "expected": {
+        "decoded": "",
+        "entity_key": "ring#1t"
+      },
+      "input": {
+        "id": "inclusionai/ring-1t",
+        "provider": "zenmux",
+        "token": ""
+      },
+      "mutation": {
+        "description": "'1t' rides as the trillion param-size token so inclusionai/ring-1t keys as ring#1t"
+      },
+      "name": "onet_inclusionai_ring_1t",
+      "provenance": {
+        "ref": "Ling/Ring 1T is a 1-trillion-parameter model, so '1t' is a SIZE not a version; routed to the param-size axis, \"inclusionai/ring-1t\" resolves to \"ring#1t\" (2 instance(s) share this identity)",
+        "source": "bug"
+      }
+    },
+    {
+      "classification": "must-pass",
+      "expected": {
+        "decoded": "",
+        "entity_key": "ring@2.6#1t"
+      },
+      "input": {
+        "id": "inclusionai/ring-2.6-1t",
+        "provider": "kilo",
+        "token": ""
+      },
+      "mutation": {
+        "description": "'1t' rides as the trillion param-size token so inclusionai/ring-2.6-1t keys as ring@2.6#1t"
+      },
+      "name": "onet_inclusionai_ring_2_6_1t",
+      "provenance": {
+        "ref": "Ling/Ring 1T is a 1-trillion-parameter model, so '1t' is a SIZE not a version; routed to the param-size axis, \"inclusionai/ring-2.6-1t\" resolves to \"ring@2.6#1t\" (6 instance(s) share this identity)",
+        "source": "bug"
+      }
+    },
+    {
+      "classification": "must-pass",
+      "expected": {
+        "decoded": "",
+        "entity_key": "ling#1t"
+      },
+      "input": {
+        "id": "Ling-1T",
+        "provider": "bailing",
+        "token": ""
+      },
+      "mutation": {
+        "description": "'1t' rides as the trillion param-size token so Ling-1T keys as ling#1t"
+      },
+      "name": "onet_Ling_1T_bailing",
+      "provenance": {
+        "ref": "Ling/Ring 1T is a 1-trillion-parameter model, so '1t' is a SIZE not a version; routed to the param-size axis, \"Ling-1T\" resolves to \"ling#1t\" (2 instance(s) share this identity)",
+        "source": "bug"
+      }
+    },
+    {
+      "classification": "must-pass",
+      "expected": {
+        "decoded": "",
+        "entity_key": "ring#1t"
+      },
+      "input": {
+        "id": "Ring-1T",
+        "provider": "bailing",
+        "token": ""
+      },
+      "mutation": {
+        "description": "'1t' rides as the trillion param-size token so Ring-1T keys as ring#1t"
+      },
+      "name": "onet_Ring_1T_bailing",
+      "provenance": {
+        "ref": "Ling/Ring 1T is a 1-trillion-parameter model, so '1t' is a SIZE not a version; routed to the param-size axis, \"Ring-1T\" resolves to \"ring#1t\" (2 instance(s) share this identity)",
+        "source": "bug"
+      }
+    },
+    {
+      "classification": "must-pass",
+      "expected": {
+        "decoded": "",
+        "entity_key": "ring@2.6#1t"
+      },
+      "input": {
+        "id": "ring-2.6-1t-free",
+        "provider": "opencode",
+        "token": ""
+      },
+      "mutation": {
+        "description": "'1t' rides as the trillion param-size token so ring-2.6-1t-free keys as ring@2.6#1t"
+      },
+      "name": "onet_ring_2_6_1t_free",
+      "provenance": {
+        "ref": "Ling/Ring 1T is a 1-trillion-parameter model, so '1t' is a SIZE not a version; routed to the param-size axis, \"ring-2.6-1t-free\" resolves to \"ring@2.6#1t\" (6 instance(s) share this identity)",
+        "source": "bug"
+      }
+    },
+    {
+      "classification": "must-pass",
+      "expected": {
+        "decoded": "",
+        "entity_key": "kimi/k@2"
+      },
+      "input": {
+        "id": "kimi-k2:1t",
+        "provider": "ollama-cloud",
+        "token": ""
+      },
+      "mutation": {
+        "description": "the repair must leave kimi-k2:1t untouched at kimi/k@2"
+      },
+      "name": "onet_negctl_kimi_k2_1t",
+      "provenance": {
+        "ref": "NEGATIVE CONTROL — the ollama ':1t' registry TAG is not a size; suppress-pinned in param_size_overrides.json so kimi-k2:1t stays on kimi/k@2",
+        "source": "boundary"
+      }
+    },
+    {
+      "classification": "must-pass",
+      "expected": {
+        "decoded": "",
+        "entity_key": "deepseek"
+      },
+      "input": {
+        "id": "deepseek-tng-r1t2-chimera",
+        "provider": "helicone",
+        "token": ""
+      },
+      "mutation": {
+        "description": "the repair must leave deepseek-tng-r1t2-chimera untouched at deepseek"
+      },
+      "name": "onet_negctl_deepseek_tng_r1t2_chimera",
+      "provenance": {
+        "ref": "NEGATIVE CONTROL — 'r1t2' is a token-internal codename, never a standalone Nt size token, so the trillion unit leaves it as deepseek",
+        "source": "boundary"
+      }
+    }
+  ]
+}

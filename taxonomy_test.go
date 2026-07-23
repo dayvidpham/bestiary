@@ -88,10 +88,21 @@ func equalStrings(a, b []string) bool {
 //     enforce entry re-homes onto the rerank line — the vendor-leak correction)
 //
 // The rerank BARE line already existed (nvidia/rerank-qa-mistral-4b), so it is not new.
+//
+// 419 → 418 with the o-series dual-identity fix (-1 bare / versioned unchanged): the
+// digitalocean openai-o1 / openai-o3 / openai-o3-mini rows canonicalize to the EXISTING
+// gpt/o@1, gpt/o@3, gpt/o@3{mini} entities, which vacates the family-"o" bare line (its
+// only occupants). No versioned line is added (the gpt/o generations already existed).
+//
+// 418 → 411 with the dot-lost version repair + 1t param-size routing (-8 versioned / +1
+// bare): the dot-lost merges fold whole versioned qwen/minimax lines (e.g. the dotless
+// minimax/m@25, qwen@35 lines) into their dotted siblings, retiring 8 versioned lines;
+// 1t routing empties the ling@1t/ring@1t VERSIONS (1t is now a size), so ling and ring
+// become bare lines — ring already had a bare presence, ling adds one, net +1 bare.
 func TestSeriesAll_CensusExact(t *testing.T) {
 	const (
-		wantSeries        = 419
-		wantVersionLines  = 215 // lines with a non-empty generation
+		wantSeries        = 411
+		wantVersionLines  = 207 // lines with a non-empty generation
 		wantBareLines     = 204 // lines whose entities carry no identity version
 		minExpectedSeries = 300 // the ratified floor
 	)
@@ -131,8 +142,15 @@ func TestSeriesAll_CensusExact(t *testing.T) {
 // a deliberate act. Note it is sensitive to re-keys that the Series count is NOT —
 // making an entity a named member (as the maverick member-ize did) adds a Release
 // without adding a Series, since the line already existed.
+// 672 → 670 with the o-series dual-identity fix: vacating the family-"o" line retires
+// its two releases (the bare "o" release and the "mini" release); the o1/o3 rows land on
+// releases that already existed under gpt/o, so none is added.
+//
+// 670 → 659 with the dot-lost version repair + 1t param-size routing: the dot-lost merges
+// retire the releases carried by the folded dotless/dash lines, and the 1t re-keys move
+// ling/ring onto releases that already existed; net −11.
 func TestReleases_CensusExact(t *testing.T) {
-	const wantReleases = 672
+	const wantReleases = 659
 
 	summed := 0
 	for _, s := range bestiary.SeriesAll() {
@@ -222,9 +240,14 @@ func TestTaxonomy_DefensiveCopies(t *testing.T) {
 	}
 }
 
-// TestSeries_GenerationNormalization_Gemini is the ratified gemini ruling: the raw
-// versions "3" and "3.0" are one generation, so both spellings map into the single
-// Series{gemini, "3.0"} — and the ENTITY KEYS ARE UNTOUCHED on both sides.
+// TestSeries_GenerationNormalization_Gemini is the ratified gemini ruling, now realized
+// at ENTITY IDENTITY level (the C4 MERGE-only N->N.0 fold): a family that spells both a
+// bare "3" and "3.0" for the same variant no longer carries two entities — gemini/flash@3
+// MERGES into gemini/flash@3.0. So the bare spelling is not a separate entity at all: the
+// bare EXPRESSION resolves through the merge to the single dotted entity, and the series
+// view sees one line, Series{gemini, "3.0"}. (The series-level generation fold in
+// taxonomy.go is retained as a safety net, but the entity merge now subsumes it — there
+// is no longer a bare-"3" entity for it to fold.)
 func TestSeries_GenerationNormalization_Gemini(t *testing.T) {
 	set := seriesSet(bestiary.SeriesAll())
 	normalized := bestiary.Series{Family: "gemini", Generation: "3.0"}
@@ -239,24 +262,28 @@ func TestSeries_GenerationNormalization_Gemini(t *testing.T) {
 		t.Errorf("ReleasesOf(gemini-3) = %v, want nil (the line folded into gemini-3.0)", got)
 	}
 
-	// Both spellings compute to the SAME Series...
+	// Both spellings resolve to the SAME single merged entity gemini/flash@3.0: the bare
+	// key is an alias, the dotted key is the entity itself.
+	dotted := "gemini/flash@3.0"
 	for _, key := range []string{"gemini/flash@3", "gemini/flash@3.0"} {
 		e, ok := bestiary.EntityByKey(key)
 		if !ok {
-			t.Fatalf("EntityByKey(%q) = false; the fixture entity is missing from the registry", key)
+			t.Fatalf("EntityByKey(%q) = false; the merged entity is missing from the registry", key)
+		}
+		// The resolved entity is the DOTTED one regardless of which spelling was asked for
+		// — the merge moved the bare spelling onto it.
+		if got := e.Ref.String(); got != dotted {
+			t.Errorf("EntityByKey(%q) resolved to %q, want the merged entity %q", key, got, dotted)
 		}
 		if got := bestiary.SeriesOf(e.Ref); got != normalized {
 			t.Errorf("SeriesOf(%q) = %+v, want %+v", key, got, normalized)
 		}
-		// ...and neither key moved: normalization is a SERIES-level view only.
-		if got := e.Ref.String(); got != key {
-			t.Errorf("entity key changed under normalization: %q != %q", got, key)
-		}
 	}
 
-	// The flash release of the normalized line holds BOTH spellings' entities.
+	// The flash release of the normalized line holds the ONE merged entity (the two
+	// spellings are no longer two entities).
 	flash := bestiary.Release{Series: normalized, Name: "flash"}
-	wantKeys := []string{"gemini/flash@3", "gemini/flash@3.0"}
+	wantKeys := []string{"gemini/flash@3.0"}
 	if got := entityKeysOf(bestiary.EntitiesOf(flash)); !equalStrings(got, wantKeys) {
 		t.Errorf("EntitiesOf(gemini-3.0/flash) = %v, want %v", got, wantKeys)
 	}

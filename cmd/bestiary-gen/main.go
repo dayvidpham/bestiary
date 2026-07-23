@@ -2393,6 +2393,23 @@ func scoreLiteral(v float64) string {
 // and aggregates are intentionally omitted. This mirrors the registry's ref
 // construction without depending on the compiled-in staticModels.
 func buildEntitySet(models []bestiary.ModelInfo) []bestiary.Entity {
+	// Pre-pass: the raw (pre-fold) entity-key set, so the MERGE-only N->N.0 version fold
+	// can ask whether a bare-integer version's dotted sibling exists — the SAME condition
+	// the runtime registry (loadEntityIndex) uses, via the SAME shared primitive
+	// (bestiary.NormalizeEntityVersion), so the generated Entity__ constants can never
+	// drift from the entities Entities() exposes.
+	rawKeys := make(map[string]struct{}, len(models))
+	for _, m := range models {
+		ref := bestiary.EntityRef{
+			Family:    m.Family,
+			Variant:   m.Variant,
+			Version:   m.Version,
+			ParamSize: m.ParamSize,
+			Modifier:  bestiary.EntityModifiers(m.Modifier, m.Family),
+		}
+		rawKeys[ref.String()] = struct{}{}
+	}
+
 	seen := make(map[string]struct{}, len(models))
 	var ents []bestiary.Entity
 	for _, m := range models {
@@ -2402,6 +2419,9 @@ func buildEntitySet(models []bestiary.ModelInfo) []bestiary.Entity {
 			Version:   m.Version,
 			ParamSize: m.ParamSize,
 			Modifier:  bestiary.EntityModifiers(m.Modifier, m.Family),
+		}
+		if dotted, merged := bestiary.NormalizeEntityVersion(ref, rawKeys); merged {
+			ref = dotted
 		}
 		key := ref.String()
 		if _, ok := seen[key]; ok {

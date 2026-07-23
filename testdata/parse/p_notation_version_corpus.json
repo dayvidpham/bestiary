@@ -405,21 +405,21 @@
       }
     },
     {
-      "name": "catalog_k2p7_known_residual_defect",
+      "name": "catalog_k2p7_curated_override",
       "input": {
         "id": "k2p7",
         "provider": "kimi-for-coding"
       },
       "expected": {
-        "entity_key": "kimi-k2"
+        "entity_key": "kimi/k@2.7"
       },
       "classification": "must-pass",
       "provenance": {
         "source": "bug",
-        "ref": "PINS A KNOWN DEFECT, diagnosed and DEFERRED. The asymmetry is neither the id nor the p: k2p5/k2p6 arrive with upstream family 'kimi-thinking' and resolve correctly, while k2p7 arrives with the COMPOUND upstream family 'kimi-k2' and does not. Fed 'kimi-thinking', the very same id decomposes to kimi/k@2.7 \u2014 so the gap is the (compound raw family + bare series-token id) combination in the shared family-recovery path, which every kimi/minimax/mimo row also traverses"
+        "ref": "WAS a known deferred defect (phantom compound entity 'kimi-k2'), now FIXED by a narrow exact-id override. The asymmetry is neither the id nor the p: k2p5/k2p6 arrive with upstream family 'kimi-thinking' and resolve correctly, while k2p7 arrives with the COMPOUND upstream family 'kimi-k2' \u2014 the (compound raw family + bare series-token id) combination the shared family-recovery path does not close. Rather than a catalog-wide recovery-path change (which the blast measurement showed risks a reshuffle across every kimi/minimax/mimo row), k2p7 is pinned to its k2p5/k2p6 sibling via idFamilyOverrides (kimi-for-coding is the sole provider of the bare 'k2p7' id \u2192 zero collateral); the general fix stays deferred"
       },
       "mutation": {
-        "description": "the same bare series token as k2p5/k2p6 but labelled upstream with a compound family, which is the single variable that changes the outcome"
+        "description": "the same bare series token as k2p5/k2p6 but labelled upstream with a compound family; the override closes that one combination so k2p7 joins the line as kimi/k@2.7, distinct from fireworks' kimi/k@2.7{code}"
       }
     },
     {

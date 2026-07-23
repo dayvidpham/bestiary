@@ -37,9 +37,10 @@ func TestRun_Series_ListTable(t *testing.T) {
 		t.Fatalf("run series returned error: %v", runErr)
 	}
 	// Census header tracks the library-side Series pin (TestSeriesAll_CensusExact),
-	// which moved 422 → 421 when the curated eva and command-a-plus overrides retired
-	// two compound-family lines and created one.
-	if want := "Series (419):"; !strings.Contains(out, want) {
+	// which moved 419 → 418 (o-series dual-identity) then 418 → 411 (dot-lost version
+	// repair + 1t param-size routing folding dotless/dash qwen lines and re-keying
+	// ling@1t/ring@1t to size-only #1t entities).
+	if want := "Series (411):"; !strings.Contains(out, want) {
 		t.Errorf("listing missing the census header %q; got first line:\n%s", want, firstLine(out))
 	}
 	for _, want := range []string{"SERIES", "FAMILY", "GENERATION", "RELEASES", "ENTITIES"} {
@@ -182,10 +183,11 @@ func TestRun_Series_SelectorIsCaseFolded(t *testing.T) {
 }
 
 // TestRun_Series_GeminiNormalizationVisible is the end-to-end fence on the ruled
-// generation fold: the CLI shows ONE gemini-3.0 line holding both the "@3" and
-// "@3.0" spellings' entities, and gemini-3 is not a line of its own. It also draws
-// the distinction the version selectors introduce — "gemini-3" is not a LINE but is
-// a valid major SELECTOR, and those are different things.
+// generation fold, now realized at ENTITY IDENTITY level: the CLI shows ONE gemini-3.0
+// line whose flash release holds the SINGLE merged gemini/flash@3.0 entity (the "@3" and
+// "@3.0" spellings merged into it — they are no longer two entities), and gemini-3 is not
+// a line of its own. It also draws the distinction the version selectors introduce —
+// "gemini-3" is not a LINE but is a valid major SELECTOR, and those are different things.
 func TestRun_Series_GeminiNormalizationVisible(t *testing.T) {
 	var details []seriesDetail
 	runSeriesJSON(t, &details, "gemini-3.0")
@@ -198,8 +200,8 @@ func TestRun_Series_GeminiNormalizationVisible(t *testing.T) {
 			flash = r.Entities
 		}
 	}
-	if want := []string{"gemini/flash@3", "gemini/flash@3.0"}; !equalStringSlices(flash, want) {
-		t.Errorf("gemini-3.0/flash entities = %v, want %v (both spellings under one line)", flash, want)
+	if want := []string{"gemini/flash@3.0"}; !equalStringSlices(flash, want) {
+		t.Errorf("gemini-3.0/flash entities = %v, want %v (the two spellings merged into one entity)", flash, want)
 	}
 	// The un-normalized rendering is still not a LINE — the fold is structural and
 	// SeriesAll never lists "gemini-3"...

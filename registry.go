@@ -24,7 +24,48 @@ var (
 	entityIndex     map[string]Entity
 	entityKeys      []string
 	entitySourceRel *entitySourceRelation
+	// versionMergeAlias maps a bare-integer entity key that was folded into its dotted
+	// N.0 sibling ("claude/opus@4" -> "claude/opus@4.0") so a bare-version lookup still
+	// resolves to the merged entity. Built under entityIndexOnce alongside the index.
+	versionMergeAlias map[string]string
 )
+
+// NormalizeEntityVersion applies the MERGE-only N->N.0 version fold to a single entity
+// ref, given the set of ALL raw (pre-fold) entity keys. When ref carries a bare-integer
+// version N AND an entity with the IDENTICAL (family, variant, param-size, modifiers) but
+// version exactly "N.0" exists in rawKeys, it returns the ref with Version bumped to "N.0"
+// (so it lands squarely on that entity) and true; otherwise it returns ref unchanged and
+// false. It is a pure MERGE — a family that spells only a bare N with no N.0 sibling
+// (llama@4) is never touched, and no new/renamed key is ever created.
+//
+// Exported so cmd/bestiary-gen's buildEntitySet folds byte-identically to the runtime
+// registry: one rule, one implementation, so the generated Entity__ constants can never
+// drift from the entities Entities() actually exposes.
+func NormalizeEntityVersion(ref EntityRef, rawKeys map[string]struct{}) (EntityRef, bool) {
+	if !isBareIntegerVersion(ref.Version) {
+		return ref, false
+	}
+	dotted := ref
+	dotted.Version = ref.Version + ".0"
+	if _, exists := rawKeys[dotted.String()]; !exists {
+		return ref, false
+	}
+	return dotted, true
+}
+
+// isBareIntegerVersion reports whether v is a non-empty run of decimal digits with no
+// dot (e.g. "4", "3" — but not "4.0", "1t", "" or "4o").
+func isBareIntegerVersion(v string) bool {
+	if v == "" {
+		return false
+	}
+	for _, r := range v {
+		if r < '0' || r > '9' {
+			return false
+		}
+	}
+	return true
+}
 
 // entitySourceRelation is the in-memory BCNF join relation between entities and the
 // data sources that attest them, built once alongside entityIndex (same sync.Once)
@@ -100,6 +141,30 @@ func loadEntityIndex() {
 	aggs := make(map[string]*entityAgg)
 	var order []string
 
+	// Pre-pass: collect the raw entity-key set (before any N->N.0 normalization) so the
+	// MERGE-only version fold below can ask "does the dotted sibling exist at the IDENTICAL
+	// key?" — the whole condition for the fold. Building it separately keeps the fold a
+	// pure MERGE: a bare-integer version is normalized to N.0 ONLY when an entity with the
+	// same (family, variant, param-size, modifiers) and version exactly N.0 already exists,
+	// so the bare entity lands EXACTLY on it and never creates a renamed/new key.
+	rawKeys := make(map[string]struct{}, len(staticModels))
+	for i := range staticModels {
+		m := staticModels[i]
+		ref := EntityRef{
+			Family:    m.Family,
+			Variant:   m.Variant,
+			Version:   m.Version,
+			ParamSize: m.ParamSize,
+			Modifier:  EntityModifiers(m.Modifier, m.Family),
+		}
+		rawKeys[ref.String()] = struct{}{}
+	}
+	// versionMergeAlias maps a bare-integer entity key ("claude/opus@4") to the dotted key
+	// it folds into ("claude/opus@4.0"), for the lookup path (entityIndexLookup): a
+	// bare-version EXPRESSION must resolve to the dotted entity even though the bare key no
+	// longer exists in the index. Populated in lockstep with the grouping fold below.
+	versionMergeAlias = make(map[string]string)
+
 	for i := range staticModels {
 		m := staticModels[i]
 
@@ -116,6 +181,21 @@ func loadEntityIndex() {
 			Modifier:  EntityModifiers(m.Modifier, m.Family),
 		}
 		key := ref.String()
+
+		// MERGE-only N->N.0 version normalization. When this entity carries a bare-integer
+		// version N and the SAME key with version N.0 exists in the raw key set, fold the
+		// bare spelling onto the dotted entity: bump the ref to N.0 so its stored Ref
+		// renders the canonical spelling regardless of scan order, re-key the aggregate,
+		// and record the bare->dotted alias for lookups. This is the entity-identity
+		// realization of the user's C4 ruling (one canonical spelling per family
+		// generation) — a pure merge (claude/opus@4 + claude/opus@4.0 -> claude/opus@4.0),
+		// never a rename: a family that spells only a bare N with no N.0 sibling (llama@4)
+		// is untouched.
+		if dotted, merged := NormalizeEntityVersion(ref, rawKeys); merged {
+			versionMergeAlias[key] = dotted.String()
+			ref = dotted
+			key = dotted.String()
+		}
 
 		a := aggs[key]
 		if a == nil {
@@ -476,8 +556,20 @@ func sortedRegions(in []Region) []Region {
 // callers that hand it to external code MUST clone it first.
 func entityIndexLookup(key string) (Entity, bool) {
 	entityIndexOnce.Do(loadEntityIndex)
-	e, ok := entityIndex[key]
-	return e, ok
+	if e, ok := entityIndex[key]; ok {
+		return e, true
+	}
+	// MERGE-only N->N.0 fold: a bare-integer version key that was folded into its dotted
+	// sibling no longer exists in the index, so a bare-version expression (EntityByKey
+	// "claude/opus@4", EntityByTuple(claude, opus, "4", ""), a CLI selector) resolves
+	// through the alias to the dotted entity. Consulted ONLY on a direct miss, so a real
+	// dotted key never pays the indirection.
+	if dotted, ok := versionMergeAlias[key]; ok {
+		if e, ok := entityIndex[dotted]; ok {
+			return e, true
+		}
+	}
+	return Entity{}, false
 }
 
 // entityIndexAll returns the cached entities in deterministic key order (NOT

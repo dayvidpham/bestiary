@@ -1141,6 +1141,101 @@ var justifiedExceptions = map[exceptionKey]string{
 		After:  `(family="glm",variant="",version="5.2",modifier="")`,
 	}: "USER-RATIFIED: p-as-dot decode; glm-5p2 is GLM 5.2 and now merges into the real glm@5.2 entity instead of minting a phantom glm@5p2.",
 
+	// ── o-series dual-identity unification ─────────────────────────
+	// digitalocean serves the SAME OpenAI o-series models as vercel, but with the vendor
+	// label hyphen-glued onto the id (openai-o1) instead of as a path segment (openai/o1).
+	// The mechanical classifier sees the family field change value (o → gpt) without a
+	// same-id target, so it flags category (c). It is a FIX/CONVERGENCE: dropping the
+	// leading "openai" token in canonicalizeOpenAILine lets the dashed spelling read the
+	// o-series designator from the same position as the slash spelling, so these rows now
+	// join the EXISTING gpt/o@1, gpt/o@3, gpt/o@3{mini} entities (the SAME identity vercel
+	// et al. already resolve o1/o3/o3-mini to) instead of stranding in a junk family "o".
+	// The classifier cannot see the convergence because the target spelling comes from
+	// other providers' rows, not from this id — the identical situation as the glm rows above.
+	{
+		ID:     "openai-o1",
+		Before: `(family="o",variant="",version="",modifier="")`,
+		After:  `(family="gpt",variant="o",version="1",modifier="")`,
+	}: "USER-RATIFIED: o-series dual-identity fix; digitalocean's hyphen-glued openai-o1 now converges on gpt/o@1, the same identity vercel's openai/o1 already resolves to.",
+	{
+		ID:     "openai-o3",
+		Before: `(family="o",variant="",version="",modifier="")`,
+		After:  `(family="gpt",variant="o",version="3",modifier="")`,
+	}: "USER-RATIFIED: o-series dual-identity fix; digitalocean's hyphen-glued openai-o3 now converges on gpt/o@3, the same identity vercel's openai/o3 already resolves to.",
+	{
+		ID:     "openai-o3-mini",
+		Before: `(family="o",variant="mini",version="",modifier="")`,
+		After:  `(family="gpt",variant="o",version="3",modifier="mini")`,
+	}: "USER-RATIFIED: o-series dual-identity fix; digitalocean's hyphen-glued openai-o3-mini now converges on gpt/o@3{mini}, the same identity every provider's openai/o3-mini already resolves to.",
+
+	// ── dot-lost version spellings (dotless: minor digit fused to the major) ──
+	// minimax-m25 / m27 and qwen25-… / qwen35-… spell a minor version with NO dot, so the
+	// decomposition captured only the fused integer ("25", "35"). Corrected via a curated
+	// exact-id VERSION-ONLY override to the real dotted release. The classifier flags a
+	// populated Version changing value without a same-id target (category c); it CONVERGES
+	// on the heavily-attested dotted sibling (minimax/m@2.5 56 inst, minimax/m@2.7 52 inst,
+	// qwen/vl@2.5#72b{instruct}, qwen@3.5#397b-a17b), invisible to the per-id classifier for
+	// the same reason as the glm p-decode rows above.
+	{
+		ID:     "minimax-m25",
+		Before: `(family="minimax",variant="m",version="25",modifier="")`,
+		After:  `(family="minimax",variant="m",version="2.5",modifier="")`,
+	}: "USER-RATIFIED dot-lost repair: minimax-m25 is MiniMax M2.5; merges into minimax/m@2.5.",
+	{
+		ID:     "public/minimax-m25",
+		Before: `(family="minimax",variant="m",version="25",modifier="")`,
+		After:  `(family="minimax",variant="m",version="2.5",modifier="")`,
+	}: "USER-RATIFIED dot-lost repair: drun's namespaced minimax-m25 is MiniMax M2.5; merges into minimax/m@2.5.",
+	{
+		ID:     "minimax-m27",
+		Before: `(family="minimax",variant="m",version="27",modifier="")`,
+		After:  `(family="minimax",variant="m",version="2.7",modifier="")`,
+	}: "USER-RATIFIED dot-lost repair: minimax-m27 is MiniMax M2.7; merges into minimax/m@2.7.",
+	{
+		ID:     "qwen25-vl-72b-instruct",
+		Before: `(family="qwen",variant="vl",version="25",modifier="")`,
+		After:  `(family="qwen",variant="vl",version="2.5",modifier="instruct")`,
+	}: "USER-RATIFIED dot-lost repair: qwen25-vl-72b-instruct is Qwen2.5-VL-72B-Instruct; merges into qwen/vl@2.5#72b{instruct}.",
+	{
+		ID:     "qwen35-397b-a17b",
+		Before: `(family="qwen",variant="",version="35",modifier="")`,
+		After:  `(family="qwen",variant="",version="3.5",modifier="")`,
+	}: "USER-RATIFIED dot-lost repair: qwen35-397b-a17b is Qwen3.5-397B-A17B; merges into qwen@3.5#397b-a17b.",
+
+	// ── 1t param-size routing (trillion unit) ──────────────────────
+	// Ling-1T / Ring-1T are 1-trillion-parameter models; "1t" is a SIZE, not a version, so
+	// the trillion unit routes it to ParamSize and the Version empties (ling@1t -> ling#1t).
+	// ring-2.6-1t-free additionally arrived with the upstream raw_family "ring-1t-free"
+	// (size+tier fused into the family label), which stranded it on a phantom "ring-1t"
+	// line; the exact-id override lands it on ring, and #1t is recovered mechanically, so it
+	// joins ring@2.6#1t. The classifier flags the populated field change (category c); each
+	// is a ratified re-key of a size-shaped token off the version/family axis.
+	{
+		ID:     "Ling-1T",
+		Before: `(family="ling",variant="",version="1t",modifier="")`,
+		After:  `(family="ling",variant="",version="",modifier="")`,
+	}: "USER-RATIFIED 1t routing: Ling-1T's '1t' is a 1-trillion param SIZE, not a version; re-keys to ling#1t.",
+	{
+		ID:     "inclusionai/ling-1t",
+		Before: `(family="ling",variant="",version="1t",modifier="")`,
+		After:  `(family="ling",variant="",version="",modifier="")`,
+	}: "USER-RATIFIED 1t routing: inclusionai/ling-1t's '1t' is a 1-trillion param SIZE; re-keys to ling#1t.",
+	{
+		ID:     "Ring-1T",
+		Before: `(family="ring",variant="",version="1t",modifier="")`,
+		After:  `(family="ring",variant="",version="",modifier="")`,
+	}: "USER-RATIFIED 1t routing: Ring-1T's '1t' is a 1-trillion param SIZE, not a version; re-keys to ring#1t.",
+	{
+		ID:     "inclusionai/ring-1t",
+		Before: `(family="ring",variant="",version="1t",modifier="")`,
+		After:  `(family="ring",variant="",version="",modifier="")`,
+	}: "USER-RATIFIED 1t routing: inclusionai/ring-1t's '1t' is a 1-trillion param SIZE; re-keys to ring#1t.",
+	{
+		ID:     "ring-2.6-1t-free",
+		Before: `(family="ring-1t",variant="free",version="2.6",modifier="")`,
+		After:  `(family="ring",variant="",version="2.6",modifier="")`,
+	}: "USER-RATIFIED 1t routing: ring-2.6-1t-free arrived with raw_family 'ring-1t-free'; pinned to family ring so #1t is recovered as a size and it joins ring@2.6#1t.",
+
 	// The 2 earlier DORMANT keys
 	// (gemini-2.5-pro-preview-tts, qwen3.6-plus-free) were PRUNED — they no longer fire a
 	// live change record against the current snapshot, so they were dead ledger weight.
