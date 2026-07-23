@@ -200,14 +200,22 @@ func parseHFNomina(raw []byte) (*hfNominaTable, error) {
 			)
 		}
 
-		if !n.ResolveTo.Family.IsKnown() {
+		// The harvested layer resolves to WHATEVER catalog entity the repo joins to —
+		// not necessarily a curated BASE family (unlike nomen_claims.json). A community
+		// finetune's repo legitimately names an entity whose family is real in the
+		// catalog but not in curatedBaseFamilies (e.g. codellama, hermes, qwq). So the
+		// load-time check is only that the family is NON-EMPTY (an entity key needs a
+		// family); the meaningful guard — that the nomen resolves to a REAL entity — is
+		// the codegen ValidateHFNomina entity FK check (which has the registry), the
+		// datasource.go FK-guard precedent. Keep-never-drop: a nomen resolving to no
+		// entity still mints (NomenLookup returns it) but attests nothing.
+		if strings.TrimSpace(string(n.ResolveTo.Family)) == "" {
 			return nil, fmt.Errorf(
-				"bestiary nomen: invalid huggingface nomen #%d (value=%q): unknown base family %q in resolves_to\n"+
-					"  What: a harvested nomen resolves to a family that is not a known base family\n"+
+				"bestiary nomen: invalid huggingface nomen #%d (value=%q): empty resolves_to.family\n"+
+					"  What: a harvested nomen has no family to key its entity by\n"+
 					"  Where: parse/data/huggingface_nomina.json nomina[%d].resolves_to.family\n"+
-					"  Why: every nomen must resolve to a known base family (Family.IsKnown)\n"+
-					"  How to fix: correct the family, or register it in family.go (curatedBaseFamilies)",
-				i, value, n.ResolveTo.Family, i,
+					"  How to fix: set the family the Hub repo's weights belong to",
+				i, value, i,
 			)
 		}
 
@@ -255,13 +263,47 @@ func hfNominaClaims() []Nomen {
 }
 
 // ValidateHFNomina is the LOUD codegen guard over the harvested HF seed: it
-// surfaces any load/parse/validation error (empty value, non-org/repo value,
-// source_url that is not the live Hub URL for the value, unknown resolves_to
-// family, duplicate). Codegen (cmd/bestiary-gen run()) calls it alongside the
-// other Validate* guards and aborts the bake on a non-nil result, so a malformed
-// or case-mangled harvested seed never bakes into the static catalog. The runtime
-// loader (loadHFNominaSafe) degrades gracefully instead.
+// surfaces any load/parse error (empty value, non-org/repo value, source_url that
+// is not the live Hub URL for the value, empty family, duplicate), AND checks the
+// entity FK — every harvested nomen must resolve to a REAL registry entity (the
+// meaningful integrity guard for the harvested layer, the datasource.go FK-guard
+// precedent). Codegen (cmd/bestiary-gen run()) calls it alongside the other
+// Validate* guards and aborts the bake on a non-nil result, so a malformed,
+// case-mangled, or orphan-resolving harvested seed never bakes into the static
+// catalog. The runtime loader (loadHFNominaSafe) degrades gracefully instead.
 func ValidateHFNomina() error {
-	_, err := loadHFNomina()
-	return err
+	t, err := loadHFNomina()
+	if err != nil {
+		return err
+	}
+	return validateHFEntityFKs(t.nomina, func(key string) bool {
+		_, ok := EntityByKey(key)
+		return ok
+	})
+}
+
+// validateHFEntityFKs is the testable seam behind ValidateHFNomina's entity FK
+// check: every harvested nomen's ResolvesTo must resolve via the supplied resolver
+// (the production resolver is the registry entity index). It takes the resolver
+// explicitly so a constructed orphan — a harvested nomen keyed to a non-existent
+// entity — can be falsified in a unit test without injecting fake entities into
+// the global registry (the validateEntityKeyFKs precedent).
+func validateHFEntityFKs(nomina []Nomen, resolves func(entityKey string) bool) error {
+	for _, n := range nomina {
+		key := n.ResolvesTo.String()
+		if !resolves(key) {
+			return fmt.Errorf(
+				"bestiary nomen: harvested huggingface nomen %q resolves to no entity (key %q)\n"+
+					"  What: a harvested HF naming names an entity that is not in the registry\n"+
+					"  Where: parse/data/huggingface_nomina.json (the entity FK check)\n"+
+					"  Why: a harvested nomen must name a REAL catalog entity; the bot only writes\n"+
+					"       repos whose decomposition matched a catalog key, so an orphan means the\n"+
+					"       seed was hand-edited or the catalog changed under it\n"+
+					"  How to fix: re-run cmd/bestiary-hf to refresh the seed, add an hf_aliases.json\n"+
+					"       override pinning the repo to a real entity, or remove the stale entry",
+				n.Value, key,
+			)
+		}
+	}
+	return nil
 }

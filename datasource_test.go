@@ -84,18 +84,21 @@ func TestEntitySources_ProjectionAgrees(t *testing.T) {
 }
 
 // TestEntitySource_MultiSource (VC-NORM4) asserts the curated llama-3.3-70b entity
-// is attested by BOTH models.dev and ollama (two attestations, sorted), and that
-// each attesting source's DatasetIngested resolves via the FK join. This is the
-// multi-source case the BCNF normalization exists for: a single entity, two join
-// rows, NOT two entities and NOT an array-valued source-of-truth.
+// is attested by models.dev, ollama, AND huggingface (three attestations, sorted),
+// and that each attesting source's DatasetIngested resolves via the FK join. This is
+// the multi-source case the BCNF normalization exists for: a single entity, three
+// join rows, NOT three entities and NOT an array-valued source-of-truth. The
+// huggingface leg is the v0.2.8 HF-bot dual-attestation: this entity carries a
+// harvested HF nomen (meta-llama/Llama-3.3-70B-Instruct), so it attests huggingface
+// on top of its pre-existing models.dev + ollama enrichment (§3.5).
 func TestEntitySource_MultiSource(t *testing.T) {
 	e, ok := bestiary.EntityByTuple("llama", "", "3.3", "70b", "instruct")
 	if !ok {
 		t.Fatal("curated entity llama@3.3#70b{instruct} not found in registry")
 	}
-	want := []bestiary.DataSourceID{bestiary.DataSourceModelsDev, bestiary.DataSourceOllama}
+	want := []bestiary.DataSourceID{bestiary.DataSourceHuggingFace, bestiary.DataSourceModelsDev, bestiary.DataSourceOllama}
 	if !reflect.DeepEqual(e.Sources, want) {
-		t.Fatalf("70b entity Sources = %v, want %v (sorted dual attestation)", e.Sources, want)
+		t.Fatalf("70b entity Sources = %v, want %v (sorted triple attestation: huggingface + models.dev + ollama)", e.Sources, want)
 	}
 	for _, sid := range e.Sources {
 		di, ok := bestiary.DatasetIngestedFor(sid)
@@ -167,9 +170,9 @@ func TestEntitySources_Deterministic(t *testing.T) {
 	if second[0] == "mutated-by-test" {
 		t.Fatalf("EntitySources(%q) is not copy-isolated: a caller mutation leaked into the memoized relation", key)
 	}
-	want := []bestiary.DataSourceID{bestiary.DataSourceModelsDev, bestiary.DataSourceOllama}
+	want := []bestiary.DataSourceID{bestiary.DataSourceHuggingFace, bestiary.DataSourceModelsDev, bestiary.DataSourceOllama}
 	if !reflect.DeepEqual(second, want) {
-		t.Fatalf("EntitySources(%q) = %v, want %v (sorted dual attestation)", key, second, want)
+		t.Fatalf("EntitySources(%q) = %v, want %v (sorted triple attestation: huggingface + models.dev + ollama)", key, second, want)
 	}
 	// And every entity's projection is independently sorted (relation-wide pin).
 	for _, e := range bestiary.Entities() {

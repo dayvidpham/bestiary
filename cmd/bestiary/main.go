@@ -2663,9 +2663,31 @@ func runSyncClient(client *bestiary.Client, provider string, format bestiary.Out
 			ParserSchema: modelsDevParserSchema,
 		}
 	}
+	// Also register the huggingface DataSource: the nomina persisted below include
+	// HARVESTED HuggingFace nomina (the embedded huggingface_nomina.json seed, folded
+	// by MintNominaFromModels) whose Source is DataSourceHuggingFace. The
+	// nomina.source_id foreign key references data_sources, so this dimension row MUST
+	// exist before UpsertNomina. Its committed ingest timestamp comes from the seed
+	// (the offline cmd/bestiary-hf run's snapshot, not this sync's wall-clock).
+	hfDS, ok := bestiary.DataSourceByID(bestiary.DataSourceHuggingFace)
+	if !ok {
+		hfDS = bestiary.DataSource{
+			ID:            bestiary.DataSourceHuggingFace,
+			URI:           "https://huggingface.co/api/models",
+			CanonicalName: "HuggingFace Hub",
+		}
+	}
+	hfIngest, ok := bestiary.DatasetIngestedFor(bestiary.DataSourceHuggingFace)
+	if !ok {
+		hfIngest = bestiary.DatasetIngested{
+			SourceID:     bestiary.DataSourceHuggingFace,
+			IngestedAt:   now,
+			ParserSchema: modelsDevParserSchema,
+		}
+	}
 	if err := store.UpsertDataSources(ctx,
-		[]bestiary.DataSource{ds, curatedDS},
-		[]bestiary.DatasetIngested{ingest, curatedIngest}); err != nil {
+		[]bestiary.DataSource{ds, curatedDS, hfDS},
+		[]bestiary.DatasetIngested{ingest, curatedIngest, hfIngest}); err != nil {
 		return fmt.Errorf("sync: persist data source + ingest row: %w", err)
 	}
 

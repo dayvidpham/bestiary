@@ -1,0 +1,18 @@
+{
+  "_comment": "Curated JOIN overrides for the HuggingFace harvest (cmd/bestiary-hf). A key is a case-preserved Hub org/repo path; its value is the precise entity tuple the repo names, used where the mechanical decomposition would land on the WRONG (usually coarser) entity — e.g. 'deepseek-ai/DeepSeek-V3.2' decomposes to the coarse 'deepseek' bucket while the repo names the 'deepseek/v3.2' entity every other provider serves. Curated > mechanical (the parse/ curated-overrides precedent). A repo listed here is ALWAYS included in a live run's fetch list (a curator explicitly wants it verified), regardless of the request cap. The four entries below mirror the curated huggingface claims in nomen_claims.json EXACTLY (same resolves_to tuple), so a harvested attestation for each coalesces onto the curated claim's (Value, huggingface-scheme, ResolvesTo) triple — the same-triple multi-attestation union (validation case 3). Case must match the curated claim's repo path or the triples will not collide.",
+  "schema_version": 1,
+  "aliases": {
+    "meta-llama/Llama-4-Scout-17B-16E-Instruct": {
+      "family": "llama", "variant": "scout", "version": "4", "param_size": "17b-16e", "modifier": ["instruct"]
+    },
+    "meta-llama/Llama-3.3-70B-Instruct": {
+      "family": "llama", "variant": "", "version": "3.3", "param_size": "70b", "modifier": ["instruct"]
+    },
+    "Qwen/Qwen3-Coder-480B-A35B-Instruct": {
+      "family": "qwen", "variant": "coder", "version": "3", "param_size": "480b-a35b", "modifier": ["instruct"]
+    },
+    "deepseek-ai/DeepSeek-V3.2": {
+      "family": "deepseek", "variant": "v3.2", "version": "", "param_size": "", "modifier": []
+    }
+  }
+}

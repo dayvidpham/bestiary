@@ -92,11 +92,34 @@ func TestParseHFNomina_NonOrgRepo_MustFail(t *testing.T) {
 	}
 }
 
-func TestParseHFNomina_UnknownFamily_MustFail(t *testing.T) {
+// The harvested layer accepts a NON-base family at parse (a community finetune's
+// repo legitimately names a real catalog entity whose family is not in
+// curatedBaseFamilies — e.g. codellama/hermes/qwq). Only an EMPTY family is a
+// parse-level reject; the real-entity guard is the codegen entity FK check below.
+func TestParseHFNomina_EmptyFamily_MustFail(t *testing.T) {
 	const repo = "some-org/some-model"
-	raw := hfSeedBytes(repo, "not-a-real-family-xyz", "", hfLiveURLPrefix+repo)
+	raw := hfSeedBytes(repo, "", "", hfLiveURLPrefix+repo)
 	if _, err := parseHFNomina(raw); err == nil {
-		t.Fatalf("want rejection: resolves_to.family must be a known base family")
+		t.Fatalf("want rejection: resolves_to.family must be non-empty (an entity key needs a family)")
+	}
+}
+
+func TestParseHFNomina_NonBaseFamily_ParsesButFKCatchesOrphan(t *testing.T) {
+	const repo = "some-org/some-model"
+	// A non-base family parses (harvested layer is not restricted to base families).
+	raw := hfSeedBytes(repo, "codellama", `, "param_size": "7b"`, hfLiveURLPrefix+repo)
+	tbl, err := parseHFNomina(raw)
+	if err != nil {
+		t.Fatalf("parseHFNomina rejected a non-base family; the harvested layer must accept it: %v", err)
+	}
+	// The entity FK guard rejects a nomen resolving to no real entity (constructed
+	// orphan: nothing resolves).
+	if err := validateHFEntityFKs(tbl.nomina, func(string) bool { return false }); err == nil {
+		t.Fatalf("want rejection: a harvested nomen resolving to no entity is an orphan")
+	}
+	// ... and accepts it when the entity exists.
+	if err := validateHFEntityFKs(tbl.nomina, func(string) bool { return true }); err != nil {
+		t.Errorf("entity FK check must accept a nomen that resolves: %v", err)
 	}
 }
 

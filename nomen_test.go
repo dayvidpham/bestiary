@@ -19,11 +19,13 @@ func nominaCensus(ns []bestiary.Nomen) map[bestiary.NomenScheme]int {
 
 // TestNomina_CensusExact pins the EXACT per-scheme census of the minted nomen set
 // over the static registry (the "census literal pinned at bake"). The counts are
-// derived from the committed models_static_gen.go: 979 canonical (one Preferred nomen
-// per distinct entity key), 2791 provider-ID (one Admitted nomen per distinct instance
-// ID spelling, deduped within an entity), 1 alias (the grok-beta seed claim) and 4
-// huggingface (the curated Hub org/repo seeds). On a models.dev snapshot refresh — or a
-// curated-claim addition — these move consciously, like the other census pins.
+// derived from the committed models_static_gen.go: 957 canonical (one Preferred nomen
+// per distinct entity key), 2834 provider-ID (one Admitted nomen per distinct instance
+// ID spelling, deduped within an entity), 1 alias (the grok-beta seed claim) and 179
+// huggingface (4 curated Hub seeds + 175 distinct-triple repos harvested by the
+// cmd/bestiary-hf live run; the 4 curated coalesce with their harvested twins). On a
+// models.dev snapshot refresh, a curated-claim addition, or a re-run of the HF harvest,
+// these move consciously, like the other census pins.
 //
 // provider-ID went 2792 → 2791 when the curated command-a-plus override landed. The
 // dedup is per distinct ID spelling WITHIN an entity, and command-a-plus-05-2026 was
@@ -85,17 +87,17 @@ func TestNomina_CensusExact(t *testing.T) {
 		wantCanonical   = 957  // 947 -> 958: 2026-07-23 snapshot refresh (upstream additions); 958 -> 957: v0.2.8 curation slice — command/a{translate} split (+1) minus deepseek@1/@2 dot-lost merges (−2), one canonical nomen per entity
 		wantProviderID  = 2834 // 2791 -> 2834: 2026-07-23 refresh, +43 new upstream instance spellings; UNCHANGED by the v0.2.8 slice — the re-keyed instances keep their provider-ID spellings as Admitted nomina on the merged/split entities (the C4-fold precedent)
 		wantAlias       = 1
-		wantHuggingFace = 4
+		wantHuggingFace = 179 // 4 -> 179: v0.2.8 HF-bot slice. The cmd/bestiary-hf live run harvested 179 open-weight Hub repos that JOIN a catalog entity. Of those, 4 are the pre-existing curated Hub claims (nomen_claims.json), aliased to their EXACT curated (Value, huggingface-scheme, ResolvesTo) triples, so each harvested attestation COALESCES onto its curated claim — one nomen carrying TWO attestations (curated + huggingface), adding 0 to the nomen count (validation case 3). The other 175 harvested repos are distinct triples: +175. 4 + 175 = 179.
 		wantTotal       = wantCanonical + wantProviderID + wantAlias + wantHuggingFace
 	)
-	// v0.2.8 multi-attestation lift is CENSUS-NEUTRAL: coalesceNomina groups by the
-	// (Value, Scheme, ResolvesTo) triple, and the shipped single-source set has NO
-	// duplicate triples (mintEntityNomina dedups provider-IDs within an entity; distinct
-	// entities never share an entity_key; the alias scheme collides with no minted
-	// scheme). So every input row survives as exactly one coalesced Nomen carrying one
-	// attestation — 958 + 2834 + 1 + 4 = 3797, unchanged from v0.2.7. The counts move
-	// only when a NEW attester (the HF bot / OCI mint, later slices) lands, not from the
-	// attestation refactor itself.
+	// v0.2.8 multi-attestation lift: coalesceNomina groups by the (Value, Scheme,
+	// ResolvesTo) triple. The attestation refactor itself is census-NEUTRAL (one row,
+	// one attestation), but the HF-bot slice's harvested seed IS a new attester, so the
+	// huggingface count moves 4 -> 179 (see wantHuggingFace). The genuinely-new union
+	// fires where a harvested repo shares a curated claim's triple: the 4 curated Hub
+	// claims each coalesce with their aliased harvested twin into ONE nomen carrying TWO
+	// attestations (curated + huggingface), so those 4 add 0 — the count grows only by
+	// the 175 distinct-triple harvested repos. Total 957 + 2834 + 1 + 179 = 3971.
 	all := bestiary.MintNomina(bestiary.Entities())
 	if len(all) != wantTotal {
 		t.Errorf("MintNomina total = %d, want %d", len(all), wantTotal)

@@ -346,6 +346,30 @@ func TestGatherCandidates_OrgRepoOpenWeightsOnly(t *testing.T) {
 	}
 }
 
+func TestSelectCandidates_AlwaysIncludesAliasesExemptFromCap(t *testing.T) {
+	base := []string{"a/1", "b/2", "c/3", "d/4"}
+	aliases := map[string]hfAlias{"zzz/pinned": {Family: "llama"}}
+	// limit 2 would drop c/3, d/4 AND zzz/pinned (which sorts last) — but the alias
+	// must survive the cap.
+	got := selectCandidates(base, aliases, 2)
+	set := map[string]bool{}
+	for _, c := range got {
+		set[c] = true
+	}
+	if !set["zzz/pinned"] {
+		t.Fatalf("aliased repo dropped by the cap: %v", got)
+	}
+	if !set["a/1"] || !set["b/2"] {
+		t.Errorf("capped base candidates missing: %v", got)
+	}
+	// Sorted + deduped.
+	for i := 1; i < len(got); i++ {
+		if got[i] <= got[i-1] {
+			t.Errorf("not sorted/deduped: %v", got)
+		}
+	}
+}
+
 func TestLooksLikeOrgRepo(t *testing.T) {
 	yes := []string{"meta-llama/Llama-3.3-70B-Instruct", "Qwen/Qwen3", "a/b"}
 	no := []string{"gpt-4o", "a/b/c", "/b", "a/", ""}

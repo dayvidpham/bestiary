@@ -120,6 +120,10 @@ type hfDoer struct {
 	// Captured from the most recent response for the caller to read after Get.
 	lastStatus int
 	lastLink   string
+
+	// count429 is the cumulative number of 429 responses observed across the run
+	// (each triggers a Retry-After backoff), surfaced in the run summary.
+	count429 int
 }
 
 func newHFDoer(inner politebot.Doer, sleep func(time.Duration)) *hfDoer {
@@ -144,6 +148,7 @@ func (d *hfDoer) Do(req *http.Request) (*http.Response, error) {
 			return resp, err
 		}
 		if resp.StatusCode == http.StatusTooManyRequests && attempt < d.maxRetry {
+			d.count429++
 			wait := parseRetryAfter(resp.Header.Get("Retry-After"))
 			if resp.Body != nil {
 				resp.Body.Close()
@@ -376,6 +381,42 @@ func gatherCandidates(catalog []bestiary.ModelInfo) []string {
 		}
 		seen[id] = struct{}{}
 		out = append(out, id)
+	}
+	sort.Strings(out)
+	return out
+}
+
+// selectCandidates builds the fetch list: the open-weight org/repo candidates
+// capped at limit, UNIONED with every repo named by an alias (always fetched,
+// exempt from the cap — a curator explicitly wants an aliased repo verified). The
+// result is sorted and de-duplicated. Aliased repos are guaranteed present even if
+// they would fall beyond the cap in the sorted candidate order.
+func selectCandidates(base []string, aliases map[string]hfAlias, limit int) []string {
+	set := map[string]struct{}{}
+	var out []string
+	add := func(id string) {
+		if _, dup := set[id]; dup {
+			return
+		}
+		set[id] = struct{}{}
+		out = append(out, id)
+	}
+	// Alias repos first (always included).
+	aliasRepos := make([]string, 0, len(aliases))
+	for repo := range aliases {
+		aliasRepos = append(aliasRepos, repo)
+	}
+	sort.Strings(aliasRepos)
+	for _, repo := range aliasRepos {
+		add(repo)
+	}
+	// Then the capped base candidates.
+	capped := base
+	if len(capped) > limit {
+		capped = capped[:limit]
+	}
+	for _, id := range capped {
+		add(id)
 	}
 	sort.Strings(out)
 	return out
@@ -738,10 +779,13 @@ func run(args []string) error {
 	}
 
 	catalog := bestiary.StaticModels()
-	candidates := gatherCandidates(catalog)
-	if len(candidates) > limit {
-		candidates = candidates[:limit]
-	}
+	// The fetch list is the open-weight org/repo candidates, capped at the request
+	// budget, UNIONED with every repo an alias names — an aliased repo is one a
+	// curator explicitly wants verified, so it is ALWAYS fetched (exempt from the
+	// cap). This guarantees the curated-claim repos (which carry aliases pinning them
+	// to their exact entity) are covered, so their harvested attestations coalesce
+	// onto the curated same-triple claims (validation case 3).
+	candidates := selectCandidates(gatherCandidates(catalog), aliases, limit)
 	keys := catalogKeySet(catalog)
 
 	var joined []joinResult
@@ -800,8 +844,8 @@ func run(args []string) error {
 	}
 
 	fmt.Fprintf(os.Stderr,
-		"bestiary-hf: %d candidates; %d verified (%d linked, %d unlinked), %d absent, %d unchanged; stamped huggingface ingested_at=%s\n",
-		len(candidates), verified, len(out.Nomina), len(unlinked), missing, unchanged, snapshot)
+		"bestiary-hf: %d candidates fetched; %d verified (%d linked, %d unlinked), %d absent(404/401), %d unchanged(304), %d rate-limited(429); stamped huggingface ingested_at=%s\n",
+		len(candidates), verified, len(out.Nomina), len(unlinked), missing, unchanged, d.count429, snapshot)
 	return nil
 }
 
