@@ -369,6 +369,10 @@ for its **Go module tags** (`vX.Y.Z`).
   malformed or colliding seed entries.
 
 ### Added (tooling)
+- **Release binaries**: the release tagger now pushes tags with a token minted
+  from the release GitHub App, so tag pushes trigger the new `release-build`
+  workflow — `bestiary` binaries for linux/darwin x amd64/arm64 (plus sha256
+  sums) attach to each GitHub release from the next release onward.
 - **Makefile**: `make build` / `test` / `vet` / `fmt` / `generate` / `gates` /
   `install` encode the project's invocation discipline (`CGO_ENABLED=0
   GOWORK=off`) once; `make gates` is the full pre-commit suite including the

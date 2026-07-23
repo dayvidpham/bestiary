@@ -1,0 +1,59 @@
+name: release-build
+
+# Builds the bestiary CLI for linux/darwin x amd64/arm64 when a release tag
+# lands, and attaches the binaries to the GitHub release for that tag
+# (creating the release if the tagger has not already).
+#
+# Trigger note: this fires only for tags pushed with a token that triggers
+# downstream workflows — the tag-on-release-merge workflow pushes with a
+# release-App token for exactly this reason. A tag pushed manually with a
+# personal token also works.
+
+on:
+  push:
+    tags:
+      - "v[0-9]+.[0-9]+.[0-9]+*"
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - { goos: linux,  goarch: amd64 }
+          - { goos: linux,  goarch: arm64 }
+          - { goos: darwin, goarch: amd64 }
+          - { goos: darwin, goarch: arm64 }
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Build
+        env:
+          CGO_ENABLED: "0"
+          GOWORK: "off"
+          GOOS: ${{ matrix.goos }}
+          GOARCH: ${{ matrix.goarch }}
+        run: |
+          out="bestiary_${GITHUB_REF_NAME}_${GOOS}_${GOARCH}"
+          go build -trimpath -ldflags="-s -w" -o "$out" ./cmd/bestiary
+          sha256sum "$out" > "$out.sha256"
+
+      - name: Attach to the release (create it if absent)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          tag="$GITHUB_REF_NAME"
+          if ! gh release view "$tag" >/dev/null 2>&1; then
+            # First matrix job to get here creates the release; races lose
+            # harmlessly and fall through to upload.
+            gh release create "$tag" --title "$tag" --verify-tag \
+              --notes "See CHANGELOG.md for the $tag entry." || true
+          fi
+          gh release upload "$tag" bestiary_* --clobber
