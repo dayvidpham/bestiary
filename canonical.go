@@ -36,6 +36,18 @@ const (
 
 	// SchemeRaw returns the original API model ID verbatim (string(ModelRef.ID)).
 	SchemeRaw
+
+	// SchemeOCI is the purl-spec `pkg:oci` external-identifier scheme token. It is
+	// APPENDED at the iota tail (after SchemeRaw) so every pre-existing scheme's wire
+	// int is unchanged (wire stability, the quant "reserved at end" discipline).
+	//
+	// OCI identity is CONTENT-ADDRESSED and per-quant: the manifest digest that makes a
+	// `pkg:oci` purl unique lives on QuantVRAM.OCIDigest (entity.go), not on ModelRef.
+	// So this token is recognized for CLI --scheme/--format selection and JSON round-trip,
+	// but ModelRef.Format(SchemeOCI) returns "" BY DESIGN (a bare ref has no single OCI
+	// identity). The render helpers live at quant altitude: formatOCIPurl (oci.go) and
+	// (QuantVRAM).OCIPurl.
+	SchemeOCI
 )
 
 // String returns a human-readable name for the scheme.
@@ -50,6 +62,8 @@ func (s CanonicalScheme) String() string {
 		return "purl"
 	case SchemeRaw:
 		return "raw"
+	case SchemeOCI:
+		return "oci"
 	default:
 		return fmt.Sprintf("CanonicalScheme(%d)", int(s))
 	}
@@ -63,7 +77,7 @@ func (s CanonicalScheme) MarshalJSON() ([]byte, error) {
 }
 
 // UnmarshalJSON deserializes a JSON string into a CanonicalScheme.
-// Accepted values: "canonical", "huggingface", "purl", "raw" (case-insensitive).
+// Accepted values: "canonical", "huggingface", "purl", "raw", "oci" (case-insensitive).
 // Returns an error if the string is not recognized.
 func (s *CanonicalScheme) UnmarshalJSON(b []byte) error {
 	var raw string
@@ -71,7 +85,7 @@ func (s *CanonicalScheme) UnmarshalJSON(b []byte) error {
 		return fmt.Errorf(
 			"bestiary: CanonicalScheme.UnmarshalJSON: expected a JSON string, got %s;\n"+
 				"  what went wrong: cannot unmarshal non-string JSON value into CanonicalScheme\n"+
-				"  why: CanonicalScheme is serialized as a string enum (\"canonical\", \"huggingface\", \"purl\", \"raw\")\n"+
+				"  why: CanonicalScheme is serialized as a string enum (\"canonical\", \"huggingface\", \"purl\", \"raw\", \"oci\")\n"+
 				"  where: canonical.go CanonicalScheme.UnmarshalJSON\n"+
 				"  how to fix: provide a JSON string value for CanonicalScheme",
 			b,
@@ -83,7 +97,7 @@ func (s *CanonicalScheme) UnmarshalJSON(b []byte) error {
 			"bestiary: CanonicalScheme.UnmarshalJSON: unrecognized scheme value %q;\n"+
 				"  what went wrong: %w\n"+
 				"  where: canonical.go CanonicalScheme.UnmarshalJSON\n"+
-				"  how to fix: use one of \"canonical\", \"huggingface\", \"purl\", \"raw\"",
+				"  how to fix: use one of \"canonical\", \"huggingface\", \"purl\", \"raw\", \"oci\"",
 			raw, err,
 		)
 	}
@@ -92,8 +106,8 @@ func (s *CanonicalScheme) UnmarshalJSON(b []byte) error {
 }
 
 // ParseInputFormat converts a --format flag string to an InputFormat.
-// Accepted values: "peasant", "huggingface", "hf", "purl", "raw" (case-insensitive).
-// Returns an error if the string is not a recognized input format.
+// Accepted values: "peasant", "huggingface", "hf", "purl", "raw", "oci"
+// (case-insensitive). Returns an error if the string is not a recognized input format.
 // Used by CLI flag parsing (--format flag in cmd/bestiary show).
 func ParseInputFormat(s string) (InputFormat, error) {
 	switch strings.ToLower(s) {
@@ -105,14 +119,16 @@ func ParseInputFormat(s string) (InputFormat, error) {
 		return InputFormatPURL, nil
 	case "raw":
 		return InputFormatRaw, nil
+	case "oci":
+		return InputFormatOCI, nil
 	default:
 		return InputFormatPeasant, fmt.Errorf(
 			"bestiary: unrecognized input format %q\n"+
 				"  what: %q is not a valid input format\n"+
-				"  why: only %q, %q, %q, and %q are accepted (\"hf\" is an alias for \"huggingface\")\n"+
+				"  why: only %q, %q, %q, %q, and %q are accepted (\"hf\" is an alias for \"huggingface\")\n"+
 				"  where: ParseInputFormat\n"+
 				"  how to fix: pass one of the accepted format strings",
-			s, s, "peasant", "huggingface", "purl", "raw",
+			s, s, "peasant", "huggingface", "purl", "raw", "oci",
 		)
 	}
 }
@@ -127,6 +143,8 @@ func inputFormatToScheme(f InputFormat) CanonicalScheme {
 		return SchemePURL
 	case InputFormatRaw:
 		return SchemeRaw
+	case InputFormatOCI:
+		return SchemeOCI
 	default:
 		// InputFormatPeasant → SchemeCanonical
 		return SchemeCanonical
@@ -134,7 +152,7 @@ func inputFormatToScheme(f InputFormat) CanonicalScheme {
 }
 
 // ParseScheme converts a string to a CanonicalScheme.
-// Accepted values: "canonical", "huggingface", "purl", "raw".
+// Accepted values: "canonical", "huggingface", "purl", "raw", "oci".
 // Returns an error if the string is not a recognized scheme.
 // Used by CLI flag parsing (--scheme flag in cmd/bestiary).
 func ParseScheme(s string) (CanonicalScheme, error) {
@@ -147,14 +165,16 @@ func ParseScheme(s string) (CanonicalScheme, error) {
 		return SchemePURL, nil
 	case "raw":
 		return SchemeRaw, nil
+	case "oci":
+		return SchemeOCI, nil
 	default:
 		return SchemeCanonical, fmt.Errorf(
 			"bestiary: unrecognized scheme %q\n"+
 				"  what: %q is not a valid CanonicalScheme\n"+
-				"  why: only %q, %q, %q, and %q are accepted\n"+
+				"  why: only %q, %q, %q, %q, and %q are accepted\n"+
 				"  where: ParseScheme\n"+
 				"  how to fix: pass one of the accepted scheme strings",
-			s, s, "canonical", "huggingface", "purl", "raw",
+			s, s, "canonical", "huggingface", "purl", "raw", "oci",
 		)
 	}
 }

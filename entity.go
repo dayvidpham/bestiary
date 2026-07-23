@@ -58,6 +58,22 @@ type QuantVRAM struct {
 	// VRAMBytes because at least one of Layers, KVHeads, or HeadDim is zero.
 	// Callers must check this flag before treating VRAMBytes as a full estimate.
 	VRAMEstimatePartial bool
+	// OCIDigest is the "sha256:<hex>" content-addressed manifest digest of this
+	// quantization's Ollama-registry artifact — the value that makes a `pkg:oci`
+	// purl (OCIPurl) uniquely identify the artifact. "" when absent (the digest is a
+	// FETCH-OWNED field, captured by the offline cmd/bestiary-ollama refresh; it is
+	// empty for every curated row until the next deliberate refresh harvests it).
+	OCIDigest string
+}
+
+// OCIPurl renders this quantization's purl-spec `pkg:oci` package URL, passing the
+// row's own OCIDigest as the content-addressed version. It returns "" when OCIDigest
+// is empty — an OCI purl is never minted without a digest (the digest is what makes
+// it identify an artifact). name is the repository name (the last fragment is
+// lowercased per spec); tag and registry become the optional repository_url/tag
+// qualifiers when non-empty. See formatOCIPurl (oci.go) for the full render contract.
+func (q QuantVRAM) OCIPurl(name, tag, registry string) string {
+	return formatOCIPurl(name, q.OCIDigest, tag, registry)
 }
 
 // EntityRef is the canonical IDENTITY of a model entity — the tuple that

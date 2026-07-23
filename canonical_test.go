@@ -20,7 +20,7 @@ func modJoin(mods []string) string {
 // plus the out-of-range fallback, loaded from
 // testdata/enum/canonical_scheme_string_corpus.json.
 func TestCanonicalScheme_String(t *testing.T) {
-	corpus := loadEnumIntCorpus(t, enumCanonicalSchemeStringCorpusJSON, 5)
+	corpus := loadEnumIntCorpus(t, enumCanonicalSchemeStringCorpusJSON, 6)
 	requireInputCoverage(t, corpus, map[int]string{
 		int(bestiary.SchemeCanonical): "canonical",
 		99:                            "CanonicalScheme(99)",
@@ -34,7 +34,7 @@ func TestCanonicalScheme_String(t *testing.T) {
 // result back, so the corpus asserts a full token round trip. Loaded from
 // testdata/enum/parse_scheme_valid_corpus.json.
 func TestParseScheme_Valid(t *testing.T) {
-	corpus := loadEnumStringCorpus(t, enumParseSchemeValidCorpusJSON, 4)
+	corpus := loadEnumStringCorpus(t, enumParseSchemeValidCorpusJSON, 5)
 	requireInputCoverage(t, corpus, map[string]string{
 		"canonical": "canonical",
 		"raw":       "raw",
@@ -151,7 +151,7 @@ func TestCanonicalScheme_JSON_RoundTrip(t *testing.T) {
 // case-folded spelling of each codec token, loaded from
 // testdata/enum/canonical_scheme_unmarshal_caseinsensitive_corpus.json.
 func TestCanonicalScheme_UnmarshalJSON_CaseInsensitive(t *testing.T) {
-	corpus := loadEnumStringCorpus(t, enumCanonicalSchemeUnmarshalCICorpusJSON, 8)
+	corpus := loadEnumStringCorpus(t, enumCanonicalSchemeUnmarshalCICorpusJSON, 9)
 	requireInputCoverage(t, corpus, map[string]string{
 		`"CANONICAL"`:   "canonical",
 		`"HuggingFace"`: "huggingface",

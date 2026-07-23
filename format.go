@@ -44,6 +44,12 @@ const (
 	// InputFormatRaw is the raw API model ID (exact match):
 	//   <raw-model-id>
 	InputFormatRaw InputFormat = "raw"
+
+	// InputFormatOCI is the purl-spec `pkg:oci` external-identifier form. It maps to
+	// SchemeOCI. OCI identity is per-quant-digest (QuantVRAM.OCIDigest), so a bare
+	// ModelRef has no OCI render — the format is recognized for scheme selection and
+	// JSON round-trip symmetry, but its ModelRef render is "" by design.
+	InputFormatOCI InputFormat = "oci"
 )
 
 // FormatModels writes a list of models to w in the specified format.
