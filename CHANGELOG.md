@@ -472,6 +472,10 @@ for its **Go module tags** (`vX.Y.Z`).
   from the release GitHub App, so tag pushes trigger the new `release-build`
   workflow — `bestiary` binaries for linux/darwin x amd64/arm64 (plus sha256
   sums) attach to each GitHub release from the next release onward.
+- **Single go:generate directive**: the generator no longer emits a
+  `//go:generate` directive into its own generated files (three of them carried
+  one, so `go generate ./...` ran the generator three times per invocation);
+  the one directive lives in hand-owned `bestiary.go`.
 - **Makefile**: `make build` / `test` / `vet` / `fmt` / `generate` / `gates` /
   `install` encode the project's invocation discipline (`CGO_ENABLED=0
   GOWORK=off`) once; `make gates` is the full pre-commit suite including the
