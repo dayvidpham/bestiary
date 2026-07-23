@@ -460,6 +460,14 @@ for its **Go module tags** (`vX.Y.Z`).
   malformed or colliding seed entries.
 
 ### Added (tooling)
+- **Concept & architecture docs**: `docs/CONCEPTS.md` (the working vocabulary —
+  entity, nomen, appellation, canonicalized expression, series/release — with
+  its ISO 1087 / IFLA-LRM/LRMoo grounding) and `docs/architecture.md` (the full
+  architecture with ASCII diagrams: data pipeline, parse precedence, naming
+  layer, provenance core, storage, test architecture, version axes), both
+  cross-referenced from README and AGENTS. Also corrects two stale README
+  claims (the designation layer is active, not deferred; generated constants
+  are the entity-level `Entity__*` surface, not `Model__*`).
 - **Release binaries**: the release tagger now pushes tags with a token minted
   from the release GitHub App, so tag pushes trigger the new `release-build`
   workflow — `bestiary` binaries for linux/darwin x amd64/arm64 (plus sha256

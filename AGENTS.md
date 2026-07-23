@@ -1,5 +1,12 @@
 # Agent Guidelines for bestiary
 
+> **Read first:** [`docs/CONCEPTS.md`](docs/CONCEPTS.md) — the vocabulary
+> (entity, nomen, appellation, canonical expression, series/release) and its
+> ISO 1087 / IFLA-LRM grounding. [`docs/architecture.md`](docs/architecture.md)
+> — the full architecture with diagrams (data pipeline, parse precedence,
+> naming layer, provenance core, test architecture). The sections below are
+> the per-epoch design-decision record and operational workflows.
+
 ## Commands
 
 - **Test**: `CGO_ENABLED=0 go test ./...`

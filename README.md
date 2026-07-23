@@ -4,6 +4,12 @@ Go module and CLI for querying AI model metadata from [models.dev](https://model
 
 Provides strongly-typed providers and model IDs, a static model registry (~5,650 models across ~162 providers), entity normalization (Family / Variant / Version / Date / Modifier), an HTTP client with retry, and a local SQLite cache for offline queries.
 
+> **Documentation map:** [`docs/CONCEPTS.md`](docs/CONCEPTS.md) defines the
+> vocabulary (entity, nomen, appellation, series, …) and its ISO 1087 /
+> IFLA-LRM grounding; [`docs/architecture.md`](docs/architecture.md) describes
+> the full architecture with diagrams; [`TESTING.md`](TESTING.md) the corpus
+> standard; [`AGENTS.md`](AGENTS.md) the per-epoch design decisions.
+
 ## Install
 
 **As a Go library:**
@@ -68,9 +74,12 @@ auditable and easy to fix. Inputs the parser can't cleanly decompose are recorde
 `.bestiary-gen-cache/parse_failures.json` at codegen time rather than silently mangled.
 
 > The design draws on ISO 1087 / IFLA-LRM terminology concepts (a concept vs. its
-> designations); see [`docs/research/entity-normalization.md`](docs/research/entity-normalization.md)
-> for the full rationale. Today every designation is rated *admitted*; promotion to
-> *preferred* is deferred to a later curation pass.
+> designations) — see [`docs/CONCEPTS.md`](docs/CONCEPTS.md) for the working
+> vocabulary and [`docs/research/entity-normalization.md`](docs/research/entity-normalization.md)
+> for the full rationale. The designation layer is active: the canonical form is
+> rated *preferred*, raw provider spellings *admitted*, and every recorded name
+> is a first-class **nomen** with claim attribution (`Entity.Nomina()` /
+> `NomenLookup`).
 
 ## Canonical entity keys
 
@@ -878,9 +887,20 @@ models, err := client.FetchModels(ctx)
 // or: client.FetchModelsByProvider(ctx, bestiary.ProviderGoogle)
 ```
 
-**Generated constants.** `go generate` emits a `Model__*` constant for every model, named
-`Model__<Provider>__<Family>__<Variant>__<Version>__<Modifier>__<Date>` (double underscores
-between components, single within), e.g. `Model__Anthropic__Claude__Opus__4_6__20260205`.
+**Generated constants.** `go generate` emits one provider-agnostic `Entity__*` constant per
+canonical entity, valued by its entity key — a word-sentinel grammar with `Version_` and
+`Size_` segment markers, kept injective by a loud codegen guard:
+
+```go
+bestiary.Entity__Llama__Scout__Version_4__Size_17b_16e__Instruct // = "llama/scout@4#17b-16e{instruct}"
+
+e, ok := bestiary.EntityByKey(bestiary.Entity__Llama__Scout__Version_4__Size_17b_16e__Instruct)
+providers := bestiary.ProvidersOf(e.Ref) // the entity's serving providers, sorted
+```
+
+(The pre-v0.2.7 provider-flavored `Model__*` constants are removed — see the CHANGELOG's
+breaking-migration table. Provider access moved to the API: `ProvidersOf` / `ProvidersOfModel`;
+enumerate-then-lookup is `EntityKeys()` + `EntityByKey`.)
 
 ## Types
 
