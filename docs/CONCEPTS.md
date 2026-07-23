@@ -208,10 +208,13 @@ precedent: each statement carries one rank — `Preferred` ("assigned to the
 [...] statement(s) that best represent consensus"), `Normal` (the default,
 "no judgement [...] of a value's accuracy"), `Deprecated` ("known to include
 errors [...] or [...] outdated knowledge") — attached to the *statement*,
-while references attach separately and severally: *"if there are many
-references for a claim, each of them makes the claim independently of the
-others."* That split mirrors bestiary's: `Status` is the one-per-Nomen
-rank-like judgment (Wikidata-rank analogue); `AttestationAuthority` /
+while references attach separately and severally: *"If there are many
+references, it means that each of them makes the claim (independently from
+the others)."* (Wikidata's data-model documentation, not the ranking page —
+see Sources below; the rank and the reference-independence rule are
+documented in two different places, which is itself the tell that they are
+two different mechanisms.) That split mirrors bestiary's: `Status` is the
+one-per-Nomen rank-like judgment (Wikidata-rank analogue); `AttestationAuthority` /
 `IngestMethod` / `SourceURL` / `Source` live on each independent attestation
 (Wikidata-reference analogue) — kept apart because a statement's standing and
 an individual reference's provenance answer different questions.
@@ -232,7 +235,10 @@ IFLA LRM (2017-12 consolidated edition, `ifla-lrm-august-2017_rev201712.pdf`),
 example); CIDOC CRM 7.1.2, class `E13 Attribute Assignment` and properties
 `P140`/`P141`/`P177`; CRMinf v1.2 (April 2025), class declarations for `I2
 Belief`, `I6 Belief Value`, `I7 Belief Adoption`; Wikidata `Help:Ranking`
-(statement rank definitions, current as of this writing).
+(statement rank definitions) and, separately, the "Adding source information:
+claims and references" subsection of `Wikidata/Data model update` on
+Meta-Wiki (the reference-independence quote) — both current as of this
+writing.
 
 ## External identifiers
 

@@ -4,8 +4,10 @@ A procedure the **user** executes by hand to register `https://w3id.org/bestiary
 as a permanent-identifier namespace for bestiary entity IRIs. This document is a
 runbook only: **no agent performs registration**, and none of the steps below have
 been carried out. It exists so the decision (what the namespace resolves to, and
-why) is recorded before the user files the PR, and so the URL scheme it commits to
-is the same one already shipping in `iri.go`.
+why) is recorded before the user files the PR, and so the URL scheme it commits
+to is pinned down precisely — **including where that scheme is still ahead of
+what `iri.go` ships today** (§5 states the gap and the precondition it implies
+for registration).
 
 See [`CONCEPTS.md`](CONCEPTS.md) for the Entity/Nomen vocabulary and
 [`research/v0.2.8-registry-ingest-creator.md`](research/v0.2.8-registry-ingest-creator.md)
@@ -116,45 +118,85 @@ The `entity/` segment is deliberate and leaves room in the `bestiary/`
 namespace for future non-entity paths (a series/release IRI, a vocabulary
 document, etc.) without a migration.
 
-## 5. URL scheme (RQ1 ruling)
+## 5. URL scheme (RQ1 ruling) — ratified target vs. what ships today
 
-The entity path segment is the **percent-encoded canonical key**, exactly as
-`EntityRef.IRI` already renders it — this is a ratification amendment (RQ1)
-on the v0.2.8 proposal and is restated here because it is the one fact this
-runbook and the `cmd/bestiary-web` URL scheme (§17.4) must agree on
-byte-for-byte:
+RQ1 (the ratification amendment on the v0.2.8 proposal) rules on the URL
+scheme the `w3id.org/bestiary/entity/` namespace and the `cmd/bestiary-web`
+URL scheme (§17.4) must agree on byte-for-byte. This section states the
+ruling honestly in three parts, because as of **this commit the shipped
+code does not yet implement it** — conflating "ratified" with "shipped"
+here would make a compliance claim this runbook cannot back.
 
-- The canonical key's own multi-segment structure (`family/variant@version#size{mods}`)
-  is carried through **literally** — `/` inside the key is NOT re-escaped into
-  a single opaque token. A key with a variant renders as a genuine multi-segment
-  path (`.../llama%2Fscout%404...` is one escaped segment per `escapeIRISegment`'s
-  contract — see `iri.go`: the whole canonical string is escaped as ONE path
-  segment, so `/` *inside* the key is percent-encoded to `%2F`, never left raw).
-  The ruling's point is about which characters get escaped, not about
-  introducing new literal path segments beyond the one the key already is.
-- `@`, `#`, `{`, `}` are percent-encoded (`escapeIRISegment` in `iri.go` handles
-  this: `url.PathEscape` for `#{}` and an explicit `@` → `%40` pass, since `@`
-  is a legal `pchar` that `PathEscape` would otherwise leave raw).
-- This is a **documented v0.2.7 → v0.6.0 IRI output change** — `escapeIRISegment`
-  was aligned to this ruling, so IRIs minted before and after the ruling differ
-  byte-for-byte for any key containing `@`, `#`, `{`, or `}`. Any external
-  consumer that captured a pre-ruling IRI must re-mint it.
-- **Query parameters are view-state only, never identity.** A `?family=llama`
-  or `?sort=price` on a `cmd/bestiary-web` list URL is UI state (filters,
-  sort order) that Datastar's `ReplaceURLQuerystring` writes for shareable
-  filtered views (§17.4/§17.6) — it is never part of what an entity IRI
-  *names*. The w3id redirect rules operate on the path only; a query string
-  passed through a w3id redirect (`[QSA]` in §3's rules) rides along as
-  view-state on the target, not as part of the entity's identity.
+**(a) Ratified target (RQ1, verbatim intent).** Entity URLs are
+**multi-segment**: the canonical key's own structure
+(`family/variant@version#size{mods}`) is carried through as **literal `/`
+path separators**, so a key with a variant is a genuine multi-segment path
+(e.g. `.../llama/scout@4#17b-16e%7Binstruct%7D`, not one opaque
+percent-escaped blob). Within that multi-segment path, `@`, `#`, `{`, `}`
+are percent-encoded (they are identity-grammar delimiters, not path
+separators). Query parameters are **view-state only, never identity** — see
+the query-parameter bullet below, which already reflects the ratified
+behavior. RQ1 is recorded as a **v0.2.7 → v0.6.0 IRI output change**: once
+implemented, IRIs differ byte-for-byte from every IRI minted before it, for
+any key containing `/`.
+
+**(b) Current shipped behavior (this commit).** `EntityRef.IRI` /
+`escapeIRISegment` (`iri.go`) does **not** implement (a) yet: the *whole*
+canonical string — including every `/` inside it — is escaped as **one**
+opaque path segment via `url.PathEscape` (`#`/`{`/`}` percent-encoded by
+`PathEscape` itself; `@` percent-encoded by an explicit follow-up pass,
+since `PathEscape` alone leaves `@` raw). Today's actual output for a
+variant-bearing key is:
+
+```go
+ref.IRI("https://w3id.org/bestiary/entity/")
+// → "https://w3id.org/bestiary/entity/llama%2Fscout%404%2317b-16e%7Binstruct%7D"
+//                                       ^^^^^ literal '/' is %2F-escaped here — NOT (a)'s literal-'/' target
+```
+
+This is the same example shown in §4 above — it is today's real,
+correct-for-today output, not a mistake, but it is **pre-RQ1**: `/` inside
+the key is still an opaque escape, not a path separator.
+
+**(c) Sequencing — a registration precondition, not a registration blocker.**
+Aligning `escapeIRISegment` to leave `/` literal is scheduled work within
+this same v0.2.8 release (owned by the web-core slice, alongside
+`cmd/bestiary-web`'s own URL scheme, §17.4 — the two must land together
+since they share the one grammar). **The user MUST NOT file the w3id
+registration PR (§2) against a build where (b) still holds.** Concretely,
+add this as an explicit precondition step ahead of §2 step 1:
+
+> **Precondition:** confirm `iri.go`'s `escapeIRISegment` has been aligned
+> to RQ1 (literal `/` path separators; `@`/`#`/`{`/`}` still percent-encoded)
+> before registering the namespace or publishing any `w3id.org/bestiary/entity/…`
+> link. Registering (or publicizing) an IRI shape that a later code change
+> will silently alter is exactly the kind of identifier instability w3id's
+> own permanence norm (§2) exists to prevent.
+
+**Query parameters are view-state only, never identity** (this part of the
+ruling holds under both (a) and (b) — it is unaffected by the `/`-escaping
+question). A `?family=llama` or `?sort=price` on a `cmd/bestiary-web` list
+URL is UI state (filters, sort order) that Datastar's
+`ReplaceURLQuerystring` writes for shareable filtered views (§17.4/§17.6) —
+it is never part of what an entity IRI *names*. The w3id redirect rules
+operate on the path only; a query string passed through a w3id redirect
+(`[QSA]` in §3's rules) rides along as view-state on the target, not as
+part of the entity's identity.
 
 ## 6. Summary of what the user still has to do
 
-1. Stand up `cmd/bestiary-web` at a stable public host (§17, separate slices).
-2. Fork `perma-id/w3id.org`, add `bestiary/.htaccess` + `bestiary/README.md`
+1. **Precondition (§5c): confirm `escapeIRISegment` has landed RQ1's literal-`/`
+   alignment** in the build being deployed — check `iri.go` against §5(a)/(b)
+   above, or check whether the web-core slice's `cmd/bestiary-web` landing has
+   already brought it in. Do not proceed past this step on a pre-alignment
+   build.
+2. Stand up `cmd/bestiary-web` at a stable public host (§17, separate slices).
+3. Fork `perma-id/w3id.org`, add `bestiary/.htaccess` + `bestiary/README.md`
    following §3, pointing at that host.
-3. Open the PR; once merged, pass `https://w3id.org/bestiary/entity/` as the
+4. Open the PR; once merged, pass `https://w3id.org/bestiary/entity/` as the
    base at every `EntityRef.IRI(base)` call site that should mint a public,
    resolvable IRI.
 
 No code in this repository changes as a result of registering the namespace —
-`IRI(base)` already accepts whatever base the caller supplies.
+`IRI(base)` already accepts whatever base the caller supplies. Step 1 is the
+only precondition on *code* state; steps 2-4 are the user's own actions.
