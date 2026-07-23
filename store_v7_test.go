@@ -148,10 +148,12 @@ func TestStore_NominaRoundTrip(t *testing.T) {
 	seedModelsDevSource(t, store)
 
 	ref := EntityRef{Family: "grok", Version: "4.20", Modifier: []string{"reasoning"}}
+	// v0.2.8: provenance is per-attestation. The v7 store persists a single attestation
+	// via the transitional single-attestation bridge (source_url/source_id columns).
 	in := []Nomen{
-		{Value: "grok@4.20{reasoning}", Scheme: NomenSchemeCanonical, Status: AcceptabilityPreferred, ResolvesTo: ref, Source: DataSourceModelsDev},
-		{Value: "grok-4.20-0309-reasoning", Scheme: NomenSchemeProviderID, Status: AcceptabilityAdmitted, ResolvesTo: ref, Source: DataSourceModelsDev},
-		{Value: "grok-beta", Scheme: NomenSchemeAlias, Status: AcceptabilityAdmitted, ResolvesTo: ref, SourceURL: "https://docs.x.ai/docs/models", Source: DataSourceModelsDev},
+		{Value: "grok@4.20{reasoning}", Scheme: NomenSchemeCanonical, Status: AcceptabilityPreferred, ResolvesTo: ref, Attestations: []NomenAttestation{{Source: DataSourceModelsDev}}},
+		{Value: "grok-4.20-0309-reasoning", Scheme: NomenSchemeProviderID, Status: AcceptabilityAdmitted, ResolvesTo: ref, Attestations: []NomenAttestation{{Source: DataSourceModelsDev}}},
+		{Value: "grok-beta", Scheme: NomenSchemeAlias, Status: AcceptabilityAdmitted, ResolvesTo: ref, Attestations: []NomenAttestation{{SourceURL: "https://docs.x.ai/docs/models", Source: DataSourceModelsDev}}},
 	}
 	if err := store.UpsertNomina(ctx, in); err != nil {
 		t.Fatalf("UpsertNomina: %v", err)
@@ -177,8 +179,13 @@ func TestStore_NominaRoundTrip(t *testing.T) {
 	for _, n := range out {
 		if n.Value == "grok-beta" {
 			found = true
-			if n.SourceURL != "https://docs.x.ai/docs/models" || n.Source != DataSourceModelsDev {
-				t.Errorf("grok-beta provenance lost: url=%q source=%q", n.SourceURL, n.Source)
+			// transitional single-attestation bridge: the v7 store round-trips the
+			// primary attestation's SourceURL/Source through the source_url/source_id
+			// columns. (The full multi-attestation zero-loss round-trip is the v8
+			// EXTEND owned by the store-v8 slice.)
+			at := n.Attestations[0]
+			if at.SourceURL != "https://docs.x.ai/docs/models" || at.Source != DataSourceModelsDev {
+				t.Errorf("grok-beta provenance lost: url=%q source=%q", at.SourceURL, at.Source)
 			}
 			if n.ResolvesTo.String() != "grok@4.20{reasoning}" {
 				t.Errorf("grok-beta ResolvesTo not reconstructed: %q", n.ResolvesTo.String())
@@ -200,9 +207,9 @@ func TestStore_NominaHomonymyPositiveFence(t *testing.T) {
 
 	const value = "shared-spelling"
 	in := []Nomen{
-		{Value: value, Scheme: NomenSchemeProviderID, Status: AcceptabilityAdmitted, ResolvesTo: EntityRef{Family: "grok", Version: "1"}, Source: DataSourceModelsDev},
-		{Value: value, Scheme: NomenSchemeProviderID, Status: AcceptabilityAdmitted, ResolvesTo: EntityRef{Family: "grok", Version: "2"}, Source: DataSourceModelsDev},
-		{Value: value, Scheme: NomenSchemeProviderID, Status: AcceptabilityAdmitted, ResolvesTo: EntityRef{Family: "claude", Variant: "opus"}, Source: DataSourceModelsDev},
+		{Value: value, Scheme: NomenSchemeProviderID, Status: AcceptabilityAdmitted, ResolvesTo: EntityRef{Family: "grok", Version: "1"}, Attestations: []NomenAttestation{{Source: DataSourceModelsDev}}},
+		{Value: value, Scheme: NomenSchemeProviderID, Status: AcceptabilityAdmitted, ResolvesTo: EntityRef{Family: "grok", Version: "2"}, Attestations: []NomenAttestation{{Source: DataSourceModelsDev}}},
+		{Value: value, Scheme: NomenSchemeProviderID, Status: AcceptabilityAdmitted, ResolvesTo: EntityRef{Family: "claude", Variant: "opus"}, Attestations: []NomenAttestation{{Source: DataSourceModelsDev}}},
 	}
 	if err := store.UpsertNomina(ctx, in); err != nil {
 		t.Fatalf("UpsertNomina: %v", err)
@@ -252,7 +259,7 @@ func TestStoreV7_NominaForeignKeyEnforced(t *testing.T) {
 	// seed), so the source_id FK must reject the write.
 	orphan := []Nomen{{
 		Value: "grok-beta", Scheme: NomenSchemeAlias, Status: AcceptabilityAdmitted,
-		ResolvesTo: ref, SourceURL: "https://docs.x.ai/docs/models", Source: DataSourceID("no-such-source"),
+		ResolvesTo: ref, Attestations: []NomenAttestation{{SourceURL: "https://docs.x.ai/docs/models", Source: DataSourceID("no-such-source")}},
 	}}
 	err := store.UpsertNomina(ctx, orphan)
 	if err == nil {
@@ -276,7 +283,7 @@ func TestStoreV7_NominaForeignKeyEnforced(t *testing.T) {
 	seedModelsDevSource(t, store)
 	valid := []Nomen{{
 		Value: "grok-beta", Scheme: NomenSchemeAlias, Status: AcceptabilityAdmitted,
-		ResolvesTo: ref, SourceURL: "https://docs.x.ai/docs/models", Source: DataSourceModelsDev,
+		ResolvesTo: ref, Attestations: []NomenAttestation{{SourceURL: "https://docs.x.ai/docs/models", Source: DataSourceModelsDev}},
 	}}
 	if err := store.UpsertNomina(ctx, valid); err != nil {
 		t.Fatalf("valid nomina insert (registered source) was rejected: %v", err)

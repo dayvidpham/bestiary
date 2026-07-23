@@ -43,21 +43,23 @@ func TestRun_ShowByEntity_GrokBetaNomen(t *testing.T) {
 			if n.Scheme != bestiary.NomenSchemeAlias {
 				t.Errorf("grok-beta scheme = %v, want alias", n.Scheme)
 			}
-			// Pinned to the exact archive.org snapshot the curated claim cites, per
-			// the curated-claims archive policy (see Nomen.SourceURL). Re-pinned from
-			// a loose strings.Contains("x.ai") match — which the snapshot URL still
-			// satisfies — so the CLI surface asserts the policy rather than passing
-			// through it silently.
+			// Pinned to the exact archive.org snapshot the curated claim cites, per the
+			// curated-claims archive policy (see NomenAttestation.SourceURL). v0.2.8:
+			// claim attribution is per-attestation; the curated claim carries one.
 			const grokBetaClaimantSnapshot = "https://web.archive.org/web/20260204041847/https://docs.x.ai/docs/models"
-			if n.SourceURL != grokBetaClaimantSnapshot {
-				t.Errorf("grok-beta SourceURL = %q, want the archived xAI claimant page %q", n.SourceURL, grokBetaClaimantSnapshot)
+			if len(n.Attestations) != 1 {
+				t.Fatalf("grok-beta carries %d attestations, want 1 (the curated claim)", len(n.Attestations))
 			}
-			if !strings.HasSuffix(n.SourceURL, "https://docs.x.ai/docs/models") {
+			at := n.Attestations[0]
+			if at.SourceURL != grokBetaClaimantSnapshot {
+				t.Errorf("grok-beta SourceURL = %q, want the archived xAI claimant page %q", at.SourceURL, grokBetaClaimantSnapshot)
+			}
+			if !strings.HasSuffix(at.SourceURL, "https://docs.x.ai/docs/models") {
 				t.Errorf("grok-beta SourceURL = %q does not end in the original xAI claimant URL; the live "+
-					"address must stay recoverable from the snapshot", n.SourceURL)
+					"address must stay recoverable from the snapshot", at.SourceURL)
 			}
-			if n.Source != bestiary.DataSourceCurated {
-				t.Errorf("grok-beta Source = %q, want curated (the honest ingest, distinct from the claimant)", n.Source)
+			if at.Source != bestiary.DataSourceCurated {
+				t.Errorf("grok-beta Source = %q, want curated (the honest ingest, distinct from the claimant)", at.Source)
 			}
 		}
 	}
