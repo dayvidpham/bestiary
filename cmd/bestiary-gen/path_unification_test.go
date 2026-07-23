@@ -1404,7 +1404,7 @@ var justifiedExceptions = map[exceptionKey]string{
 	// spellings lose the dot, so the leading-token pipeline reads only the trailing integer
 	// as the VERSION (deepseek@1 / deepseek@2), minting phantom "v1"/"v2" entities. Corrected
 	// via an exact-id idFamilyOverride that pins the variant to the dotted form, converging
-	// each row onto the heavily-attested dotted entity (deepseek/v3.1 = 14 serving instances).
+	// each row onto the heavily-attested dotted entity (deepseek/v3.1 = 10 serving instances).
 	// The classifier flags a populated field changing value without a same-id target (cat c);
 	// it CONVERGES on the dotted sibling, invisible to the per-id classifier because the
 	// target spelling comes from other providers' rows — the same situation as the dot-lost
@@ -1413,7 +1413,7 @@ var justifiedExceptions = map[exceptionKey]string{
 		ID:     "deepseek-v3-1",
 		Before: `(family="deepseek",variant="",version="1",modifier="")`,
 		After:  `(family="deepseek",variant="v3.1",version="",modifier="")`,
-	}: "EVIDENCE-BACKED dot-lost repair: DeepSeek-V3.1 is a real release (https://api-docs.deepseek.com/news/news250929); the dash-glued deepseek-v3-1 lost the dot and minted a phantom deepseek@1. The pin converges it onto deepseek/v3.1 (14 serving instances), the same identity the dotted deepseek-v3.1 spelling resolves to.",
+	}: "EVIDENCE-BACKED dot-lost repair: DeepSeek-V3.1 is a real release (https://api-docs.deepseek.com/news/news250929); the dash-glued deepseek-v3-1 lost the dot and minted a phantom deepseek@1. The pin converges it onto deepseek/v3.1 (10 serving instances), the same identity the dotted deepseek-v3.1 spelling resolves to.",
 	{
 		ID:     "deepseek-ai/DeepSeek-V3-1",
 		Before: `(family="deepseek",variant="",version="1",modifier="")`,

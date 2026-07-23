@@ -4358,7 +4358,7 @@ var idFamilyOverrides = map[string]idFamilyOverrideEntry{
 	// spellings deepseek-v3-1 / deepseek-v3-2-exp lose the dot: the leading-token pipeline
 	// reads only the trailing integer as the VERSION (deepseek@1 / deepseek@2), minting
 	// phantom "DeepSeek v1"/"v2" entities that fragment single-instance rows away from the
-	// heavily-attested dotted lines (deepseek/v3.1 = 14 serving instances; deepseek/v3.2-exp
+	// heavily-attested dotted lines (deepseek/v3.1 = 10 serving instances; deepseek/v3.2-exp
 	// served). A version-only dotLostVersionOverrides fix would NOT merge here (it targets
 	// the version field, while deepseek carries the point release in the variant), so the
 	// repair is variant-targeted and pinned per exact ID. Evidence: DeepSeek-V3.1 and

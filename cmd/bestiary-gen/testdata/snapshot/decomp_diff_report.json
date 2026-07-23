@@ -11554,7 +11554,7 @@
       "before": "(family=\"deepseek\",variant=\"\",version=\"1\",modifier=\"\")",
       "after": "(family=\"deepseek\",variant=\"v3.1\",version=\"\",modifier=\"\")",
       "category": "justified-exception",
-      "reason": "JUSTIFIED: EVIDENCE-BACKED dot-lost repair: DeepSeek-V3.1 is a real release (https://api-docs.deepseek.com/news/news250929); the dash-glued deepseek-v3-1 lost the dot and minted a phantom deepseek@1. The pin converges it onto deepseek/v3.1 (14 serving instances), the same identity the dotted deepseek-v3.1 spelling resolves to."
+      "reason": "JUSTIFIED: EVIDENCE-BACKED dot-lost repair: DeepSeek-V3.1 is a real release (https://api-docs.deepseek.com/news/news250929); the dash-glued deepseek-v3-1 lost the dot and minted a phantom deepseek@1. The pin converges it onto deepseek/v3.1 (10 serving instances), the same identity the dotted deepseek-v3.1 spelling resolves to."
     },
     {
       "provider": "alibaba-cn",

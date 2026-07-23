@@ -16,7 +16,7 @@
       },
       "name": "curation_deepseek_v3_1_dashed",
       "provenance": {
-        "ref": "deepseek encodes its point release as a VARIANT token (deepseek-v3.1 -> deepseek/v3.1), so the dash-glued deepseek-v3-1 lost the dot and minted a phantom deepseek@1; an exact-id idFamilyOverride pins variant v3.1, converging it onto deepseek/v3.1 (14 serving instances). DeepSeek-V3.1 is a real release: https://api-docs.deepseek.com/news/news250929",
+        "ref": "deepseek encodes its point release as a VARIANT token (deepseek-v3.1 -> deepseek/v3.1), so the dash-glued deepseek-v3-1 lost the dot and minted a phantom deepseek@1; an exact-id idFamilyOverride pins variant v3.1, converging it onto deepseek/v3.1 (10 serving instances). DeepSeek-V3.1 is a real release: https://api-docs.deepseek.com/news/news250929",
         "source": "bug"
       }
     },
