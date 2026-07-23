@@ -1385,6 +1385,17 @@ func primaryAttestation(n Nomen) NomenAttestation {
 // the §3.2 defaults table where the nomen kind is determinable, else leaves them at
 // the Unknown zero — never a guess. The v8 child table persists these losslessly and
 // makes this reconstruction unnecessary.
+//
+// CONSTRAINT: because the v7 row carries no authority/method columns, this
+// derivation is NOT a best-effort fallback for the truly-unknown case only — it is
+// the ENTIRE read-back. An explicit curated Authority override (e.g. a claim
+// authored with Authority=Secondary to mark "an aggregator relaying" a
+// curated-sourced naming, see nomen_claims.go) is NOT round-tripped through the v7
+// bridge: UpsertNomina has nowhere to persist it, so QueryNomina always reads it back
+// as the scheme/source default (AuthorityPrimary for DataSourceCurated) regardless of
+// what was originally minted. This is latent today (no curated row exercises a
+// non-default Authority) but will silently discard the override the moment one does,
+// until the v8 child table lands.
 func bridgeAttestationKind(scheme NomenScheme, source DataSourceID) (AttestationAuthority, IngestMethod) {
 	// A curated ingest is Method=Curated regardless of scheme (an alias or a
 	// huggingface-scheme name can both arrive through the curated layer).
@@ -1485,6 +1496,11 @@ func (s *Store) QueryNomina(ctx context.Context) ([]Nomen, error) {
 			// where the kind is determinable, else left at their Unknown zero — never
 			// guessed. IngestedAt has no v7 column, so it is honestly "". The v8 child
 			// table carries these fields losslessly.
+			//
+			// CONSTRAINT (see bridgeAttestationKind): this derivation is the entire
+			// read-back, not a fallback — an explicit curated Authority override (e.g.
+			// Authority=Secondary) is NOT preserved by the v7 row and reads back here as
+			// the scheme/source default until the v8 child table lands.
 			sourceID := DataSourceID(stmt.GetText("source_id"))
 			authority, method := bridgeAttestationKind(scheme, sourceID)
 			out = append(out, Nomen{

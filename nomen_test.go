@@ -137,15 +137,18 @@ func TestNomina_CensusExact(t *testing.T) {
 	}
 }
 
-// TestNomina_DeterministicSortedEmission verifies INV3 for the mint output: the
-// slice is sorted by (Value, Scheme, entity key) and two mint calls are byte-order
-// identical (no reliance on map iteration order). It is EXTENDED for the v0.2.8
-// multi-attestation lift: the former top-level SourceURL/Source scalars are gone, so
-// the guard now walks each nomen's COALESCED Attestations slice and asserts the two
-// mint calls agree element-for-element on every attestation field — pinning the TOTAL
-// attestation sort order (Source, SourceURL, Authority, Method, IngestedAt), the B2
-// determinism fix's actual guard. Comparing only the top-level scalars (as this test
-// once did) would leave the new attestation ordering unpinned.
+// TestNomina_DeterministicSortedEmission verifies INV3 for the mint output over the
+// REAL shipped bake: the slice is sorted by (Value, Scheme, entity key) and two mint
+// calls are byte-order identical (no reliance on map iteration order). It is EXTENDED
+// for the v0.2.8 multi-attestation lift to also compare each nomen's Attestations
+// slice element-for-element across the two calls — but on shipped data every nomen
+// carries at most one attestation (0 of 3797 carry >1, per the current census), so
+// this only ever compares slices of length <=1: it catches true cross-call
+// nondeterminism (e.g. map-iteration leakage reaching the emitted order) but does
+// NOT exercise — and cannot pin — lessAttestation's multi-element sort-key
+// correctness. That guard is TestCoalesceNomina_UnionsSameTripleAttestations
+// (nomen_coalesce_internal_test.go), which constructs a real 2-attestation union and
+// reddens on a dropped-attestation or weakened-sort-key mutation.
 func TestNomina_DeterministicSortedEmission(t *testing.T) {
 	a := bestiary.MintNomina(bestiary.Entities())
 	b := bestiary.MintNomina(bestiary.Entities())

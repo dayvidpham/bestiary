@@ -67,7 +67,7 @@ func TestNomenLookup_HuggingFaceSeeds(t *testing.T) {
 			}
 			// v0.2.8: provenance is per-attestation; this curated HF seed carries one.
 			// (Reading HF provenance fully off the attestation is the store-v8/HF-bot
-			// slice's EXTEND; here it is the minimal single-attestation re-pin.)
+			// slice's EXTEND; here it is the minimal single-attestation bridge re-pin.)
 			if len(n.Attestations) != 1 {
 				t.Fatalf("%q carries %d attestations, want 1", seed.repo, len(n.Attestations))
 			}
