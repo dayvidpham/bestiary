@@ -64,6 +64,7 @@ func TestParseScheme_RoundTrip(t *testing.T) {
 		bestiary.SchemeHuggingFace,
 		bestiary.SchemePURL,
 		bestiary.SchemeRaw,
+		bestiary.SchemeOCI,
 	}
 	for _, s := range schemes {
 		parsed, err := bestiary.ParseScheme(s.String())
@@ -92,8 +93,8 @@ func TestParseScheme_ErrorIsActionable(t *testing.T) {
 		t.Errorf("error message does not contain the bad input %q:\n  %s", "badscheme", msg)
 	}
 
-	// The error must name all 4 valid scheme strings.
-	for _, scheme := range []string{"canonical", "huggingface", "purl", "raw"} {
+	// The error must name all 5 valid scheme strings.
+	for _, scheme := range []string{"canonical", "huggingface", "purl", "raw", "oci"} {
 		if !strings.Contains(msg, scheme) {
 			t.Errorf("error message does not mention valid scheme %q:\n  %s", scheme, msg)
 		}
@@ -108,7 +109,10 @@ func TestParseScheme_ErrorIsActionable(t *testing.T) {
 }
 
 func TestCanonicalScheme_IotaOrder(t *testing.T) {
-	// Verify iota ordering is stable: Canonical=0, HF=1, PURL=2, Raw=3.
+	// Verify iota ordering is stable: Canonical=0, HF=1, PURL=2, Raw=3, OCI=4.
+	// SchemeOCI is APPENDED after SchemeRaw (the iota tail, per canonical.go's
+	// wire-stability comment), so this pins it at position 4 — one past the
+	// pre-existing members' final position — rather than inserting mid-sequence.
 	if int(bestiary.SchemeCanonical) != 0 {
 		t.Errorf("SchemeCanonical = %d, want 0", int(bestiary.SchemeCanonical))
 	}
@@ -121,6 +125,9 @@ func TestCanonicalScheme_IotaOrder(t *testing.T) {
 	if int(bestiary.SchemeRaw) != 3 {
 		t.Errorf("SchemeRaw = %d, want 3", int(bestiary.SchemeRaw))
 	}
+	if int(bestiary.SchemeOCI) != 4 {
+		t.Errorf("SchemeOCI = %d, want 4", int(bestiary.SchemeOCI))
+	}
 }
 
 func TestCanonicalScheme_JSON_RoundTrip(t *testing.T) {
@@ -129,6 +136,7 @@ func TestCanonicalScheme_JSON_RoundTrip(t *testing.T) {
 		bestiary.SchemeHuggingFace,
 		bestiary.SchemePURL,
 		bestiary.SchemeRaw,
+		bestiary.SchemeOCI,
 	}
 	for _, s := range schemes {
 		b, err := json.Marshal(s)
