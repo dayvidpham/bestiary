@@ -103,6 +103,7 @@ const (
 	Entity__Cohere__Embed                                                 = "cohere/embed"
 	Entity__Command__A                                                    = "command/a"
 	Entity__Command__A__Reasoning                                         = "command/a{reasoning}"
+	Entity__Command__A__Translate                                         = "command/a{translate}"
 	Entity__Command__A__Vision                                            = "command/a{vision}"
 	Entity__Command__A_plus                                               = "command/a-plus"
 	Entity__Command__R                                                    = "command/r"
@@ -138,8 +139,6 @@ const (
 	Entity__Deepseek__V3_2_exp                                            = "deepseek/v3.2-exp"
 	Entity__Deepseek__V3_2_maas                                           = "deepseek/v3.2-maas"
 	Entity__Deepseek__V3_2_speciale                                       = "deepseek/v3.2-speciale"
-	Entity__Deepseek__Version_1                                           = "deepseek@1"
-	Entity__Deepseek__Version_2                                           = "deepseek@2"
 	Entity__Deepseek__Version_3_2                                         = "deepseek@3.2"
 	Entity__Deepseek_flash__Free                                          = "deepseek-flash/free"
 	Entity__Deepseek_ocr__Version_2                                       = "deepseek-ocr@2"
@@ -1066,6 +1065,7 @@ var allEntityConstants = [...]string{
 	Entity__Cohere__Embed,
 	Entity__Command__A,
 	Entity__Command__A__Reasoning,
+	Entity__Command__A__Translate,
 	Entity__Command__A__Vision,
 	Entity__Command__A_plus,
 	Entity__Command__R,
@@ -1101,8 +1101,6 @@ var allEntityConstants = [...]string{
 	Entity__Deepseek__V3_2_exp,
 	Entity__Deepseek__V3_2_maas,
 	Entity__Deepseek__V3_2_speciale,
-	Entity__Deepseek__Version_1,
-	Entity__Deepseek__Version_2,
 	Entity__Deepseek__Version_3_2,
 	Entity__Deepseek_flash__Free,
 	Entity__Deepseek_ocr__Version_2,
