@@ -271,3 +271,91 @@ func seedCuratedSource(t *testing.T, store *Store) {
 		t.Fatalf("seed curated source: %v", err)
 	}
 }
+
+// TestStore_NomenAttestationsRawRowCountIdempotent upserts the SAME nomen 3 times and
+// asserts the RAW nomen_attestations row count via direct SQL — bypassing QueryNomina's
+// read-side dedup (sortAndDedupAttestations), which would otherwise mask a broken
+// delete-then-insert step: QueryNomina always reads back a deduplicated set even if the
+// underlying table has silently accumulated duplicate rows across re-upserts. Step (2) of
+// UpsertNomina (delete the prior replaceable-attestation-set rows for the triple) must run
+// on every upsert, so the raw row count after N upserts of an unchanged attestation set
+// must equal the attestation-set size, never N times it.
+func TestStore_NomenAttestationsRawRowCountIdempotent(t *testing.T) {
+	store := openMemStoreInternal(t)
+	ctx := context.Background()
+	seedModelsDevSource(t, store)
+	seedCuratedSource(t, store)
+
+	ref := EntityRef{Family: "grok", Version: "4.20"}
+	attestations := []NomenAttestation{
+		{Source: DataSourceModelsDev, Authority: AuthorityPrimary, Method: IngestMethodSelfMinted},
+		{SourceURL: "https://docs.x.ai/docs/models", Source: DataSourceCurated, Authority: AuthoritySecondary, Method: IngestMethodCurated, IngestedAt: "2026-07-20T00:00:00Z"},
+	}
+	in := []Nomen{
+		{Value: "grok@4.20", Scheme: NomenSchemeCanonical, Status: AcceptabilityPreferred, ResolvesTo: ref, Attestations: attestations},
+	}
+
+	for i := 0; i < 3; i++ {
+		if err := store.UpsertNomina(ctx, in); err != nil {
+			t.Fatalf("UpsertNomina (upsert #%d): %v", i+1, err)
+		}
+	}
+
+	// The QueryNomina-side view still reports the correct, deduplicated set — this alone
+	// does NOT prove the delete step ran; it is exactly what the masked bug looked like.
+	out, err := store.QueryNomina(ctx)
+	if err != nil {
+		t.Fatalf("QueryNomina: %v", err)
+	}
+	if len(out) != 1 || len(out[0].Attestations) != len(attestations) {
+		t.Fatalf("QueryNomina after 3 upserts = %+v, want 1 nomen with %d attestations", out, len(attestations))
+	}
+
+	// The falsifiable assertion: the RAW table, read directly via SQL, must carry exactly
+	// len(attestations) rows — not 3x that — regardless of what QueryNomina's dedup reports.
+	if got := countRows(t, store.conn, "nomen_attestations"); got != len(attestations) {
+		t.Errorf("raw nomen_attestations row count = %d after 3 identical upserts, want %d "+
+			"(the delete-then-insert replace-set step must clear prior rows on every upsert, "+
+			"not just accumulate new ones)", got, len(attestations))
+	}
+}
+
+// TestStoreV8_NomenAttestationsForeignKeyEnforced pins the nomen_attestations.source_id
+// foreign key into data_sources directly at the SQL layer (the TestStoreV5_ForeignKeysEnforced
+// / TestStoreV7_NominaForeignKeyEnforced precedent), independent of the UpsertNomina Go-API
+// wrapper: a raw INSERT naming an unregistered source_id must be rejected by SQLite with
+// PRAGMA foreign_keys=ON, and must leave the table with zero rows (no partial write).
+func TestStoreV8_NomenAttestationsForeignKeyEnforced(t *testing.T) {
+	store := openMemStoreInternal(t)
+
+	err := sqlitex.Execute(store.conn,
+		`INSERT INTO nomen_attestations (value, scheme, entity_key, source_id) VALUES (?1, ?2, ?3, ?4)`,
+		&sqlitex.ExecOptions{Args: []any{"grok-beta", "alias", "grok@4.20", "no-such-source"}})
+	if err == nil {
+		t.Error(
+			"orphan nomen_attestations insert was ACCEPTED; foreign keys are not enforced.\n" +
+				"  What: a nomen_attestations row referencing a non-existent source_id was allowed\n" +
+				"  Why: PRAGMA foreign_keys=ON is not set on the connection (or the FK clause is missing)\n" +
+				"  Where: store.go OpenStore (pragma) / nomenAttestationsTableSQL (source_id FK clause)\n" +
+				"  How to fix: set PRAGMA foreign_keys=ON before migrations and keep the nomen_attestations source_id FK",
+		)
+	}
+	if got := countRows(t, store.conn, "nomen_attestations"); got != 0 {
+		t.Errorf("after a rejected FK insert, nomen_attestations has %d rows, want 0", got)
+	}
+
+	// A fully parented attestation must insert once its source is registered.
+	seedModelsDevSource(t, store)
+	if err := sqlitex.Execute(store.conn,
+		`INSERT INTO nomina (value, scheme, entity_key, status) VALUES ('grok-beta', 'alias', 'grok@4.20', 'admitted')`, nil); err != nil {
+		t.Fatalf("seed nomina parent row: %v", err)
+	}
+	if err := sqlitex.Execute(store.conn,
+		`INSERT INTO nomen_attestations (value, scheme, entity_key, source_id) VALUES (?1, ?2, ?3, ?4)`,
+		&sqlitex.ExecOptions{Args: []any{"grok-beta", "alias", "grok@4.20", string(DataSourceModelsDev)}}); err != nil {
+		t.Fatalf("valid nomen_attestations insert (registered source) was rejected: %v", err)
+	}
+	if got := countRows(t, store.conn, "nomen_attestations"); got != 1 {
+		t.Errorf("nomen_attestations row count = %d, want 1 after the parented insert", got)
+	}
+}
