@@ -18,14 +18,13 @@ import (
 // fireworks GLM rows land in the real glm@5.1 / glm@5.2 entities rather than minting
 // phantoms beside them), which is what the ruling actually asked for.
 func TestPNotationVersion_Corpus(t *testing.T) {
-	corpus := loadInternalCorpus[pNotationInput, pNotationExpected](t, internalPNotationVersionCorpusJSON, 26)
+	corpus := loadInternalCorpus[pNotationInput, pNotationExpected](t, internalPNotationVersionCorpusJSON, 23)
 
 	// Value coverage: the two rows the ruling is ABOUT, the two known residual
 	// defects, and the synthetic literal-p hazard must all still be present.
 	requirePNotationCoverage(t, corpus, []pNotationInput{
 		{ID: "accounts/fireworks/models/glm-5p1", Provider: "fireworks-ai"},
 		{ID: "accounts/fireworks/models/glm-5p2", Provider: "fireworks-ai"},
-		{ID: "k2p7", Provider: "kimi-for-coding"},
 		{ID: "accounts/fireworks/models/qwen3p7-plus", Provider: "fireworks-ai"},
 		{ID: "qwen3-coder", Provider: "helicone"},
 		{Token: "3px"},
@@ -109,9 +108,9 @@ var reDigitPDigitID = regexp.MustCompile(`[0-9]p[0-9]`)
 // corpus row covers, so the decode's blast radius can never widen unnoticed.
 func TestPNotation_CatalogCensus(t *testing.T) {
 	const (
-		wantIDs             = 14
+		wantIDs             = 11 // 14 -> 11: kimi-for-coding retired its k2p5/k2p6/k2p7 ids at the 2026-07-23 refresh
 		wantFireworks       = 11
-		wantKimiForCoding   = 3
+		wantKimiForCoding   = 0 // provider still exists; its digit-p-digit ids are gone
 		wantUndecodedInKeys = 0
 	)
 	byProvider := map[Provider]int{}

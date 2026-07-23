@@ -39,13 +39,13 @@ func TestDotLostVersion_Corpus(t *testing.T) {
 // the blast radius: the ollama ":1t" tag on kimi-k2:1t (suppress-pinned) and the
 // token-internal "r1t2" in deepseek-tng-r1t2-chimera must be unaffected.
 func TestParamSize1T_Corpus(t *testing.T) {
-	corpus := loadInternalCorpus[pNotationInput, pNotationExpected](t, internalParamSize1TCorpusJSON, 9)
+	corpus := loadInternalCorpus[pNotationInput, pNotationExpected](t, internalParamSize1TCorpusJSON, 8)
 
 	requireEntityKeyCoverage(t, corpus, map[string]string{
-		"Ling-1T":                   "ling#1t",
-		"inclusionai/ring-2.6-1t":   "ring@2.6#1t",
-		"ring-2.6-1t-free":          "ring@2.6#1t",
-		"kimi-k2:1t":                "kimi/k@2", // NEGATIVE CONTROL (ollama :1t tag)
+		"Ling-1T":                 "ling#1t",
+		"inclusionai/ring-2.6-1t": "ring@2.6#1t",
+		"ring-2.6-1t-free":        "ring@2.6#1t",
+		// kimi-k2:1t (the ollama :1t-tag negative control) retired with its upstream row, 2026-07-23 refresh.
 		"deepseek-tng-r1t2-chimera": "deepseek", // NEGATIVE CONTROL (token-internal r1t2)
 	})
 

@@ -82,8 +82,8 @@ func nominaCensus(ns []bestiary.Nomen) map[bestiary.NomenScheme]int {
 // bare-version ID spellings survive as Admitted provider-ID nomina on the merged entities.
 func TestNomina_CensusExact(t *testing.T) {
 	const (
-		wantCanonical   = 947
-		wantProviderID  = 2791
+		wantCanonical   = 958  // 947 -> 958: 2026-07-23 snapshot refresh (upstream additions)
+		wantProviderID  = 2834 // 2791 -> 2834: 2026-07-23 refresh, +43 new upstream instance spellings
 		wantAlias       = 1
 		wantHuggingFace = 4
 		wantTotal       = wantCanonical + wantProviderID + wantAlias + wantHuggingFace
@@ -124,7 +124,7 @@ func TestNomina_CensusExact(t *testing.T) {
 			fromModels, wantProviderID, wantAlias, wantHuggingFace)
 	}
 	if fromModels[bestiary.NomenSchemeCanonical] != wantFromModelsCanonical {
-		t.Errorf("MintNominaFromModels canonical = %d, want %d (the 947 entities minus the 4 metadata-only standalones)",
+		t.Errorf("MintNominaFromModels canonical = %d, want %d (the entity census minus the 4 metadata-only standalones)",
 			fromModels[bestiary.NomenSchemeCanonical], wantFromModelsCanonical)
 	}
 }

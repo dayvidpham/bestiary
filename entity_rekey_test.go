@@ -263,7 +263,9 @@ func TestEntityRekey_CensusAccounted(t *testing.T) {
 	// 955 → 947 with the entity-level MERGE-only N→N.0 fold (C4): 8 bare-N entities fold
 	// onto their N.0 siblings (claude/opus, claude/sonnet, gemini/flash, gemini/pro,
 	// imagen, imagen{fast}, imagen/ultra, veo). A pure MERGE, none renamed.
-	const wantEntities = 947
+	// 947 -> 958 with the 2026-07-23 snapshot refresh: +11 upstream additions on top of the
+	// closing-batch arithmetic below (which still holds relative to its own base).
+	const wantEntities = 958
 	if got := len(bestiary.Entities()); got != wantEntities {
 		t.Errorf("registry census = %d entities, want %d — the eva and command-a-plus overrides "+
 			"must be renames (count unmoved) and the cortecs pins a 4-entity merge", got, wantEntities)
@@ -294,12 +296,13 @@ func TestEntityMerge_NToN0_MergeOnly(t *testing.T) {
 	merges := map[string]merge{
 		"claude/opus@4":   {"claude/opus@4.0", 22},
 		"claude/sonnet@4": {"claude/sonnet@4.0", 27},
-		"gemini/flash@3":  {"gemini/flash@3.0", 29},
-		"gemini/pro@3":    {"gemini/pro@3.0", 26},
-		"imagen@4":        {"imagen@4.0", 4},
-		"imagen@4{fast}":  {"imagen@4.0{fast}", 2},
-		"imagen/ultra@4":  {"imagen/ultra@4.0", 2},
-		"veo@3":           {"veo@3.0", 3},
+		// 29 -> 28: an upstream rehost row left at the 2026-07-23 refresh.
+		"gemini/flash@3": {"gemini/flash@3.0", 28},
+		"gemini/pro@3":   {"gemini/pro@3.0", 26},
+		"imagen@4":       {"imagen@4.0", 4},
+		"imagen@4{fast}": {"imagen@4.0{fast}", 2},
+		"imagen/ultra@4": {"imagen/ultra@4.0", 2},
+		"veo@3":          {"veo@3.0", 3},
 	}
 
 	// The bare keys must be ABSENT from the entity set (they folded away, never renamed).

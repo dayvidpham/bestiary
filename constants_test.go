@@ -78,7 +78,8 @@ func TestEntityConstants_Unique(t *testing.T) {
 	// entity onto the dotted one — 8 pairs (claude/opus@4, claude/sonnet@4, gemini/flash@3,
 	// gemini/pro@3, imagen@4, imagen@4{fast}, imagen/ultra@4, veo@3). A pure MERGE: 8 bare
 	// keys retired, none renamed; llama@4 (no 4.0 sibling) is untouched.
-	const wantEntityCount = 947
+	// 947 -> 958 with the 2026-07-23 snapshot refresh (upstream additions; no repair moved).
+	const wantEntityCount = 958
 	if len(keys) != wantEntityCount {
 		t.Errorf("EntityKeys() returned %d constants; expected exactly %d — "+
 			"re-run go generate ./... and update this census literal if the entity count changed intentionally",

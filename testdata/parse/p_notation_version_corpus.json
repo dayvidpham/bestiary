@@ -1,5 +1,5 @@
 {
-  "_comment": "The 'p'-as-dot version decode. Two kinds of row: the UNIT rows probe decodePNotationVersion directly (token -> decoded form, or must-fail for a token that must NOT decode), and the CATALOG rows pin every digit-p-digit model id in the committed registry to the entity key it resolves to. The catalog set is the 14 digit-p-digit ids (all from fireworks-ai and kimi-for-coding; a census sweep asserts that confinement separately) plus one non-p glued-generation regression control. See TESTING.md.",
+  "_comment": "The 'p'-as-dot version decode. Two kinds of row: the UNIT rows probe decodePNotationVersion directly (token -> decoded form, or must-fail for a token that must NOT decode), and the CATALOG rows pin every digit-p-digit model id in the committed registry to the entity key it resolves to. The catalog set is the 14 digit-p-digit ids (all from fireworks-ai and kimi-for-coding; a census sweep asserts that confinement separately) plus one non-p glued-generation regression control. See TESTING.md. RETIRED 2026-07-23 snapshot refresh: the kimi-for-coding k2p5/k2p6/k2p7 ids left the upstream catalog (provider replaced its listing); their three rows are retired with the ids, and the k2p7 exact-id override is removed from parse.go. The fireworks kimi-k2p* rows remain and still pin the p-as-dot decode for the kimi family.",
   "cases": [
     {
       "name": "unit_decodes_glm_5p1",
@@ -366,60 +366,6 @@
       },
       "mutation": {
         "description": "a p-notation id on the second series-letter family"
-      }
-    },
-    {
-      "name": "catalog_kimi_for_coding_k2p5",
-      "input": {
-        "id": "k2p5",
-        "provider": "kimi-for-coding"
-      },
-      "expected": {
-        "entity_key": "kimi/k@2.5"
-      },
-      "classification": "must-pass",
-      "provenance": {
-        "source": "manual",
-        "ref": "the second provider publishing p-notation; the id is the bare series token with no family prefix and still resolves"
-      },
-      "mutation": {
-        "description": "a bare series token carrying p-notation, with no family prefix in the id"
-      }
-    },
-    {
-      "name": "catalog_kimi_for_coding_k2p6",
-      "input": {
-        "id": "k2p6",
-        "provider": "kimi-for-coding"
-      },
-      "expected": {
-        "entity_key": "kimi/k@2.6"
-      },
-      "classification": "must-pass",
-      "provenance": {
-        "source": "manual",
-        "ref": "the k2p6 bare token joins the same entity the fireworks spelling does \u2014 cross-provider convergence on one key"
-      },
-      "mutation": {
-        "description": "a second bare series token, converging with a differently-spelled id from another provider"
-      }
-    },
-    {
-      "name": "catalog_k2p7_curated_override",
-      "input": {
-        "id": "k2p7",
-        "provider": "kimi-for-coding"
-      },
-      "expected": {
-        "entity_key": "kimi/k@2.7"
-      },
-      "classification": "must-pass",
-      "provenance": {
-        "source": "bug",
-        "ref": "WAS a known deferred defect (phantom compound entity 'kimi-k2'), now FIXED by a narrow exact-id override. The asymmetry is neither the id nor the p: k2p5/k2p6 arrive with upstream family 'kimi-thinking' and resolve correctly, while k2p7 arrives with the COMPOUND upstream family 'kimi-k2' \u2014 the (compound raw family + bare series-token id) combination the shared family-recovery path does not close. Rather than a catalog-wide recovery-path change (which the blast measurement showed risks a reshuffle across every kimi/minimax/mimo row), k2p7 is pinned to its k2p5/k2p6 sibling via idFamilyOverrides (kimi-for-coding is the sole provider of the bare 'k2p7' id \u2192 zero collateral); the general fix stays deferred"
-      },
-      "mutation": {
-        "description": "the same bare series token as k2p5/k2p6 but labelled upstream with a compound family; the override closes that one combination so k2p7 joins the line as kimi/k@2.7, distinct from fireworks' kimi/k@2.7{code}"
       }
     },
     {

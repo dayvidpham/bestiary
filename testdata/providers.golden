@@ -3,6 +3,7 @@ abacus
 abliteration-ai
 ai-router
 aihubmix
+aki-io
 alibaba
 alibaba-cn
 alibaba-coding-plan
@@ -25,6 +26,7 @@ cerebras
 chutes
 clarifai
 claudinio
+cline-pass
 cloudferro-sherlock
 cloudflare-ai-gateway
 cloudflare-workers-ai
@@ -39,6 +41,7 @@ deepseek
 digitalocean
 dinference
 drun
+ebcloud
 empiriolabs
 evroc
 fastrouter
@@ -76,6 +79,7 @@ lmstudio
 local
 longcat
 lucidquery
+lynkr
 meganova
 merge-gateway
 meta
@@ -99,6 +103,7 @@ neuralwatt
 nova
 novita-ai
 nvidia
+ofox
 ollama-cloud
 openai
 opencode
@@ -127,6 +132,8 @@ snowflake-cortex
 stackit
 stepfun
 stepfun-ai
+stepfun-ai-step-plan
+stepfun-step-plan
 subconscious
 submodel
 synthetic
@@ -134,6 +141,7 @@ tencent-coding-plan
 tencent-token-plan
 tencent-tokenhub
 the-grid-ai
+thinkingmachines
 tinfoil
 togetherai
 trustedrouter

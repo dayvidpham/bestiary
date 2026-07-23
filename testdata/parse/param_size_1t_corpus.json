@@ -144,26 +144,6 @@
       "classification": "must-pass",
       "expected": {
         "decoded": "",
-        "entity_key": "kimi/k@2"
-      },
-      "input": {
-        "id": "kimi-k2:1t",
-        "provider": "ollama-cloud",
-        "token": ""
-      },
-      "mutation": {
-        "description": "the repair must leave kimi-k2:1t untouched at kimi/k@2"
-      },
-      "name": "onet_negctl_kimi_k2_1t",
-      "provenance": {
-        "ref": "NEGATIVE CONTROL — the ollama ':1t' registry TAG is not a size; suppress-pinned in param_size_overrides.json so kimi-k2:1t stays on kimi/k@2",
-        "source": "boundary"
-      }
-    },
-    {
-      "classification": "must-pass",
-      "expected": {
-        "decoded": "",
         "entity_key": "deepseek"
       },
       "input": {
@@ -176,9 +156,10 @@
       },
       "name": "onet_negctl_deepseek_tng_r1t2_chimera",
       "provenance": {
-        "ref": "NEGATIVE CONTROL — 'r1t2' is a token-internal codename, never a standalone Nt size token, so the trillion unit leaves it as deepseek",
+        "ref": "NEGATIVE CONTROL \u2014 'r1t2' is a token-internal codename, never a standalone Nt size token, so the trillion unit leaves it as deepseek",
         "source": "boundary"
       }
     }
-  ]
+  ],
+  "_comment": "RETIRED 2026-07-23 snapshot refresh: the ollama-cloud kimi-k2:1t row (the suppress-pinned :1t tag negative control) left the upstream catalog; the deepseek r1t2 negative control remains and keeps the non-1t-shape guard non-vacuous."
 }

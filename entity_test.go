@@ -334,7 +334,7 @@ func TestEntityRef_NoMigrationDrift(t *testing.T) {
 	// etc.) into their dotted siblings (net −N sized catalog entities), while 1t routing
 	// adds a handful of #1t entities (ling#1t, ring#1t) — the merges dominate, net −13.
 	const (
-		wantSizedCatalog    = 323
+		wantSizedCatalog    = 319 // 323 -> 319: 2026-07-23 refresh, four sized rows left upstream
 		wantSizedStandalone = 4
 	)
 

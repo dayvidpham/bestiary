@@ -40,7 +40,7 @@ func TestRun_Series_ListTable(t *testing.T) {
 	// which moved 419 → 418 (o-series dual-identity) then 418 → 411 (dot-lost version
 	// repair + 1t param-size routing folding dotless/dash qwen lines and re-keying
 	// ling@1t/ring@1t to size-only #1t entities).
-	if want := "Series (411):"; !strings.Contains(out, want) {
+	if want := "Series (419):"; /* 411 -> 419: 2026-07-23 refresh */ !strings.Contains(out, want) {
 		t.Errorf("listing missing the census header %q; got first line:\n%s", want, firstLine(out))
 	}
 	for _, want := range []string{"SERIES", "FAMILY", "GENERATION", "RELEASES", "ENTITIES"} {
@@ -218,7 +218,7 @@ func TestRun_Series_GeminiNormalizationVisible(t *testing.T) {
 	for _, d := range union {
 		got = append(got, d.Series)
 	}
-	if want := []string{"gemini-3.0", "gemini-3.1", "gemini-3.5"}; !equalStringSlices(got, want) {
+	if want := []string{"gemini-3.0", "gemini-3.1", "gemini-3.5", "gemini-3.6"}; !equalStringSlices(got, want) { // +3.6: new upstream line, 2026-07-23 refresh
 		t.Errorf("series gemini-3 = %v, want the major union %v", got, want)
 	}
 }

@@ -4226,20 +4226,13 @@ var idFamilyOverrides = map[string]idFamilyOverrideEntry{
 	// of this exact id → zero collateral.
 	"ring-2.6-1t-free": {family: "ring", version: "2.6"},
 
-	// k2p7 (kimi-for-coding) is Kimi K2.7, the exact sibling of k2p5 → kimi/k@2.5 and
-	// k2p6 → kimi/k@2.6. The p-as-dot decode reaches k2p5/k2p6 because they arrive with
-	// the upstream raw_family "kimi-thinking"; k2p7 alone arrives with the COMPOUND
-	// raw_family "kimi-k2", and the (compound raw family + bare series-token id)
-	// combination is the one path the shared family-recovery does not close — so the
-	// version was lost and this single row minted the phantom compound entity "kimi-k2".
-	// Fed "kimi-thinking", the very same id decomposes correctly, which confirms the id
-	// itself is fine; the defect is upstream-label-shaped. Pinned as a NARROW exact-id
-	// override (kimi-for-coding is the only provider of the bare "k2p7" id → zero
-	// collateral) so it joins the k2p5/k2p6 line as kimi/k@2.7; the general
-	// compound-family recovery fix stays deferred. This is the plain kimi/k@2.7 entity,
-	// deliberately DISTINCT from fireworks' kimi/k@2.7{code} (kimi-k2p7-code) — the coding
-	// router carries an identity {code} modifier this bare id does not.
-	"k2p7": {family: "kimi", variant: "k", version: "2.7"},
+	// NOTE (retired override): the bare "k2p7" id (kimi-for-coding) previously needed a
+	// narrow exact-id override to kimi/k@2.7 — its upstream compound raw_family "kimi-k2"
+	// defeated the shared family-recovery (the general compound-family recovery fix stays
+	// deferred). The 2026-07-23 snapshot retired the id from the catalog entirely
+	// (kimi-for-coding replaced its listing), so the override is removed rather than kept
+	// dormant; if a bare series-token id with a compound raw family reappears, the same
+	// narrow-override remedy applies.
 
 	// command-a-plus-05-2026 is Cohere's Command A+ — variant "a-plus" of the command
 	// family, the exact sibling of the command/r-plus line that already decomposes that
