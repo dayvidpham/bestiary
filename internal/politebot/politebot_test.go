@@ -46,8 +46,8 @@ func (c *fakeClock) now() time.Time          { return c.t }
 func (c *fakeClock) doSleep(d time.Duration) { c.slept = append(c.slept, d); c.t = c.t.Add(d) }
 
 // newTestClient builds a Client through the SAME exported injection seam
-// (New + With* options) that cmd/bestiary-hf uses in production — not a
-// test-only construction path — wired to a canned transport and fake clock.
+// (New + With* options) that production consumers use — not a test-only
+// construction path — wired to a canned transport and fake clock.
 func newTestClient(body string) (*Client, *recordingDoer, *fakeClock) {
 	rd := &recordingDoer{body: body}
 	fc := &fakeClock{t: time.Unix(1_700_000_000, 0)}
@@ -99,6 +99,22 @@ func TestClient_RejectsNon2xx(t *testing.T) {
 	c := New(testUA, WithDoer(rd), WithClock(fc.now), WithSleep(fc.doSleep))
 	if _, err := c.Get(context.Background(), "https://x/missing", ""); err == nil {
 		t.Fatalf("want error for a 404 status")
+	}
+}
+
+// The response body is capped at MaxResponseBytes: an oversize 2xx body is
+// TRUNCATED to exactly MaxResponseBytes (io.LimitReader semantics, no error).
+// This pins the cap value — raising or lowering MaxResponseBytes changes the
+// returned length and fails this test (the mutation guard).
+func TestClient_CapsResponseBody(t *testing.T) {
+	oversize := strings.Repeat("a", MaxResponseBytes+1024)
+	c, _, _ := newTestClient(oversize)
+	got, err := c.Get(context.Background(), "https://x/big", "")
+	if err != nil {
+		t.Fatalf("Get: %v (an oversize body is truncated, not an error)", err)
+	}
+	if len(got) != MaxResponseBytes {
+		t.Fatalf("body length = %d, want exactly MaxResponseBytes=%d (cap not enforced)", len(got), MaxResponseBytes)
 	}
 }
 

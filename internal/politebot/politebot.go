@@ -1,5 +1,6 @@
 // Package politebot is the shared, compiler-private polite-HTTP plumbing for the
-// offline registry-ingest tools (cmd/bestiary-ollama, cmd/bestiary-hf).
+// offline registry-ingest tools. Its current consumer is cmd/bestiary-ollama;
+// intended future consumers include a HuggingFace Hub bot (cmd/bestiary-hf).
 //
 // It exists so the project's politeness policy — a descriptive, versioned
 // User-Agent and at least one second between outbound requests (a user-stated
