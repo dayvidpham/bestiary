@@ -63,9 +63,15 @@ func nominaCensus(ns []bestiary.Nomen) map[bestiary.NomenScheme]int {
 // modifier so tts@1{hd} splits off from tts@1, adding one Preferred canonical nomen.
 // provider-ID is UNCHANGED at 2791 — the split moves an existing instance to a new
 // entity, it adds no instance, so no provider-ID nomen is minted or lost.
+//
+// canonical went 978 → 976 with the o-series dual-identity fix: openai-o1 / openai-o3 /
+// openai-o3-mini fold onto the existing gpt/o entities, retiring the two junk family-"o"
+// keys and their two Preferred nomina. provider-ID is UNCHANGED at 2791 (the three
+// digitalocean ID spellings survive as Admitted provider-ID nomina on the merged
+// entities — folding a spelling for IDENTITY never erases it from the record).
 func TestNomina_CensusExact(t *testing.T) {
 	const (
-		wantCanonical   = 978
+		wantCanonical   = 976
 		wantProviderID  = 2791
 		wantAlias       = 1
 		wantHuggingFace = 4
@@ -107,7 +113,7 @@ func TestNomina_CensusExact(t *testing.T) {
 			fromModels, wantProviderID, wantAlias, wantHuggingFace)
 	}
 	if fromModels[bestiary.NomenSchemeCanonical] != wantFromModelsCanonical {
-		t.Errorf("MintNominaFromModels canonical = %d, want %d (the 978 entities minus the 4 metadata-only standalones)",
+		t.Errorf("MintNominaFromModels canonical = %d, want %d (the 976 entities minus the 4 metadata-only standalones)",
 			fromModels[bestiary.NomenSchemeCanonical], wantFromModelsCanonical)
 	}
 }

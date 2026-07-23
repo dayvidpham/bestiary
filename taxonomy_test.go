@@ -88,11 +88,16 @@ func equalStrings(a, b []string) bool {
 //     enforce entry re-homes onto the rerank line — the vendor-leak correction)
 //
 // The rerank BARE line already existed (nvidia/rerank-qa-mistral-4b), so it is not new.
+//
+// 419 → 418 with the o-series dual-identity fix (-1 bare / versioned unchanged): the
+// digitalocean openai-o1 / openai-o3 / openai-o3-mini rows canonicalize to the EXISTING
+// gpt/o@1, gpt/o@3, gpt/o@3{mini} entities, which vacates the family-"o" bare line (its
+// only occupants). No versioned line is added (the gpt/o generations already existed).
 func TestSeriesAll_CensusExact(t *testing.T) {
 	const (
-		wantSeries        = 419
+		wantSeries        = 418
 		wantVersionLines  = 215 // lines with a non-empty generation
-		wantBareLines     = 204 // lines whose entities carry no identity version
+		wantBareLines     = 203 // lines whose entities carry no identity version
 		minExpectedSeries = 300 // the ratified floor
 	)
 	all := bestiary.SeriesAll()
@@ -131,8 +136,11 @@ func TestSeriesAll_CensusExact(t *testing.T) {
 // a deliberate act. Note it is sensitive to re-keys that the Series count is NOT —
 // making an entity a named member (as the maverick member-ize did) adds a Release
 // without adding a Series, since the line already existed.
+// 672 → 670 with the o-series dual-identity fix: vacating the family-"o" line retires
+// its two releases (the bare "o" release and the "mini" release); the o1/o3 rows land on
+// releases that already existed under gpt/o, so none is added.
 func TestReleases_CensusExact(t *testing.T) {
-	const wantReleases = 672
+	const wantReleases = 670
 
 	summed := 0
 	for _, s := range bestiary.SeriesAll() {

@@ -37,9 +37,9 @@ func TestRun_Series_ListTable(t *testing.T) {
 		t.Fatalf("run series returned error: %v", runErr)
 	}
 	// Census header tracks the library-side Series pin (TestSeriesAll_CensusExact),
-	// which moved 422 → 421 when the curated eva and command-a-plus overrides retired
-	// two compound-family lines and created one.
-	if want := "Series (419):"; !strings.Contains(out, want) {
+	// which moved 419 → 418 when the o-series dual-identity fix vacated the family-"o"
+	// line (its openai-o1/o3 rows canonicalized onto the existing gpt/o entities).
+	if want := "Series (418):"; !strings.Contains(out, want) {
 		t.Errorf("listing missing the census header %q; got first line:\n%s", want, firstLine(out))
 	}
 	for _, want := range []string{"SERIES", "FAMILY", "GENERATION", "RELEASES", "ENTITIES"} {

@@ -2161,6 +2161,20 @@ func canonicalizeOpenAILine(family Family, variant, version string, modifier []s
 	clean := strings.ToLower(lastPathSegment(stripVendorNamespace(string(id))))
 	clean = strings.ReplaceAll(clean, "@", "-")
 	toks := strings.Split(clean, "-")
+	// Some providers glue the "openai" vendor label onto the id with a hyphen
+	// (digitalocean / snowflake-cortex / venice: "openai-o1", "openai-o3-mini",
+	// "openai-gpt-4o") rather than as a path segment ("openai/o1", which
+	// lastPathSegment already strips). Drop a leading "openai" token so the o-series
+	// LINE designator is read from the SAME position as the path-segment spelling —
+	// otherwise toks[0]=="openai" hides the "o1"/"o3" and the model strands in the junk
+	// family "o" (its dashed and slash spellings would decompose to two different
+	// identities). This only re-exposes the existing designator gates (reOSeriesLine on
+	// toks[0]; containsToken for 4o/audio) to the real leading token; a non-o-series gpt
+	// id (openai-gpt-5, openai-gpt-oss-120b, openai-gpt-image-1) still falls through to
+	// the unchanged default branch and is untouched.
+	if len(toks) > 1 && toks[0] == "openai" {
+		toks = toks[1:]
+	}
 	if len(toks) == 0 {
 		return family, variant, version, modifier
 	}

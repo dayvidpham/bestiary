@@ -251,7 +251,11 @@ func TestEntityRekey_CensusAccounted(t *testing.T) {
 	//
 	// 977 → 978 with the tts-1-hd identity split: "hd" becomes an IDENTITY modifier so
 	// tts@1{hd} splits off from tts@1 (a SPLIT: one key added, none renamed).
-	const wantEntities = 978
+	//
+	// 978 → 976 with the o-series dual-identity fix: openai-o1 / openai-o3 / openai-o3-mini
+	// canonicalize onto the existing gpt/o entities, vacating the two junk family-"o" keys
+	// (a MERGE: two keys retired, none renamed).
+	const wantEntities = 976
 	if got := len(bestiary.Entities()); got != wantEntities {
 		t.Errorf("registry census = %d entities, want %d — the eva and command-a-plus overrides "+
 			"must be renames (count unmoved) and the cortecs pins a 4-entity merge", got, wantEntities)

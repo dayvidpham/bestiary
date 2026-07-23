@@ -670,8 +670,6 @@ const (
 	Entity__Nova__Version_3                                               = "nova@3"
 	Entity__Nv                                                            = "nv"
 	Entity__Nv__Size_7b                                                   = "nv#7b"
-	Entity__O                                                             = "o"
-	Entity__O__Mini                                                       = "o/mini"
 	Entity__Olmo__Version_3__Size_32b                                     = "olmo@3#32b"
 	Entity__Ornith__Version_1_0__Size_31b                                 = "ornith@1.0#31b"
 	Entity__Ornith__Version_1_0__Size_35b                                 = "ornith@1.0#35b"
@@ -1653,8 +1651,6 @@ var allEntityConstants = [...]string{
 	Entity__Nova__Version_3,
 	Entity__Nv,
 	Entity__Nv__Size_7b,
-	Entity__O,
-	Entity__O__Mini,
 	Entity__Olmo__Version_3__Size_32b,
 	Entity__Ornith__Version_1_0__Size_31b,
 	Entity__Ornith__Version_1_0__Size_35b,

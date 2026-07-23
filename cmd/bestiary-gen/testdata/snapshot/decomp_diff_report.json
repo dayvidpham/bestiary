@@ -1,10 +1,10 @@
 {
   "total_records": 4979,
-  "changed_count": 1287,
+  "changed_count": 1290,
   "cat_a_divergence_fix_count": 326,
   "cat_b_improvement_count": 941,
   "cat_c_unexpected_regression_count": 0,
-  "justified_exception_count": 20,
+  "justified_exception_count": 23,
   "id_tuple4_incl_modifier_divergence_frozen_before": 81,
   "id_tuple4_incl_modifier_divergence_current_after": 13,
   "divergence_metric": "4-tuple INCL Modifier (Family,Variant,Version,Modifier); before=frozen baseline, after=current snapshot. DISTINCT from the authoritative cross-provider divergenceExact gate (3-tuple, EXCL Modifier, current snapshot, =0).",
@@ -11555,6 +11555,33 @@
       "after": "(family=\"interfaze\",variant=\"\",version=\"\",modifier=\"\")",
       "category": "justified-exception",
       "reason": "JUSTIFIED: USER-RATIFIED beta-always-stage ruling: beta is a RELEASE STAGE and never part of an identity. vercel serves this row with an empty raw_family, so the leading-token pipeline promoted the trailing 'beta' into the VARIANT slot — while the same row already carried Stage=beta, asserting beta on both axes and splitting one artifact line into a beta and a (future) non-beta entity. The curated exact-id pin lands it on the bare interfaze family; Stage is unaffected because DetectStageFromID scans the id independently of the key (detect-without-strip, the grok precedent). This transition REVERSES an earlier documented exception that deliberately kept beta in this key while unifying only the grok line; the ruling collapsed that contrast, and ValidateNoBetaInIdentity now enforces the rule at bake time so no future decomposition can reintroduce it. Single-provider (vercel) exact id; a rename, not a merge — no entity is created or destroyed."
+    },
+    {
+      "provider": "digitalocean",
+      "id": "openai-o1",
+      "raw_family": "o",
+      "before": "(family=\"o\",variant=\"\",version=\"\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"o\",version=\"1\",modifier=\"\")",
+      "category": "justified-exception",
+      "reason": "JUSTIFIED: USER-RATIFIED: o-series dual-identity fix; digitalocean's hyphen-glued openai-o1 now converges on gpt/o@1, the same identity vercel's openai/o1 already resolves to."
+    },
+    {
+      "provider": "digitalocean",
+      "id": "openai-o3",
+      "raw_family": "o",
+      "before": "(family=\"o\",variant=\"\",version=\"\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"\")",
+      "category": "justified-exception",
+      "reason": "JUSTIFIED: USER-RATIFIED: o-series dual-identity fix; digitalocean's hyphen-glued openai-o3 now converges on gpt/o@3, the same identity vercel's openai/o3 already resolves to."
+    },
+    {
+      "provider": "digitalocean",
+      "id": "openai-o3-mini",
+      "raw_family": "o-mini",
+      "before": "(family=\"o\",variant=\"mini\",version=\"\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"mini\")",
+      "category": "justified-exception",
+      "reason": "JUSTIFIED: USER-RATIFIED: o-series dual-identity fix; digitalocean's hyphen-glued openai-o3-mini now converges on gpt/o@3{mini}, the same identity every provider's openai/o3-mini already resolves to."
     },
     {
       "provider": "nvidia",

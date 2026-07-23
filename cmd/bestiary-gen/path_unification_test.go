@@ -1141,6 +1141,33 @@ var justifiedExceptions = map[exceptionKey]string{
 		After:  `(family="glm",variant="",version="5.2",modifier="")`,
 	}: "USER-RATIFIED: p-as-dot decode; glm-5p2 is GLM 5.2 and now merges into the real glm@5.2 entity instead of minting a phantom glm@5p2.",
 
+	// ── o-series dual-identity unification ─────────────────────────
+	// digitalocean serves the SAME OpenAI o-series models as vercel, but with the vendor
+	// label hyphen-glued onto the id (openai-o1) instead of as a path segment (openai/o1).
+	// The mechanical classifier sees the family field change value (o → gpt) without a
+	// same-id target, so it flags category (c). It is a FIX/CONVERGENCE: dropping the
+	// leading "openai" token in canonicalizeOpenAILine lets the dashed spelling read the
+	// o-series designator from the same position as the slash spelling, so these rows now
+	// join the EXISTING gpt/o@1, gpt/o@3, gpt/o@3{mini} entities (the SAME identity vercel
+	// et al. already resolve o1/o3/o3-mini to) instead of stranding in a junk family "o".
+	// The classifier cannot see the convergence because the target spelling comes from
+	// other providers' rows, not from this id — the identical situation as the glm rows above.
+	{
+		ID:     "openai-o1",
+		Before: `(family="o",variant="",version="",modifier="")`,
+		After:  `(family="gpt",variant="o",version="1",modifier="")`,
+	}: "USER-RATIFIED: o-series dual-identity fix; digitalocean's hyphen-glued openai-o1 now converges on gpt/o@1, the same identity vercel's openai/o1 already resolves to.",
+	{
+		ID:     "openai-o3",
+		Before: `(family="o",variant="",version="",modifier="")`,
+		After:  `(family="gpt",variant="o",version="3",modifier="")`,
+	}: "USER-RATIFIED: o-series dual-identity fix; digitalocean's hyphen-glued openai-o3 now converges on gpt/o@3, the same identity vercel's openai/o3 already resolves to.",
+	{
+		ID:     "openai-o3-mini",
+		Before: `(family="o",variant="mini",version="",modifier="")`,
+		After:  `(family="gpt",variant="o",version="3",modifier="mini")`,
+	}: "USER-RATIFIED: o-series dual-identity fix; digitalocean's hyphen-glued openai-o3-mini now converges on gpt/o@3{mini}, the same identity every provider's openai/o3-mini already resolves to.",
+
 	// The 2 earlier DORMANT keys
 	// (gemini-2.5-pro-preview-tts, qwen3.6-plus-free) were PRUNED — they no longer fire a
 	// live change record against the current snapshot, so they were dead ledger weight.

@@ -3442,10 +3442,12 @@ func TestAzureServingHostCapture(t *testing.T) {
 // quiverai's arrow and Cohere's rerankers all decomposed into family "o" and shared
 // one junk-bucket entity with the real o-series.
 //
-// The corpus carries BOTH directions, and the negative controls are the load-bearing
-// half: four genuine o-series ids that must be untouched, two of which legitimately
-// KEEP family "o". A fix that emptied the bucket by evicting its rightful occupants
-// would pass a positives-only corpus and fail here.
+// The corpus carries BOTH directions. The slash-form o-series ids are the load-bearing
+// negative controls (they must keep resolving to gpt/o); the hyphen-glued spellings are
+// CONVERGENCE cases — the dashed openai-o1 / openai-o3-mini once stranded in a junk
+// family "o", now canonicalized to the SAME gpt/o identity as the slash spelling, so no
+// o-series id keeps family "o" any longer. A fix that emptied the bucket by evicting the
+// slash-form occupants, or one that left the dashed spelling stranded, fails here.
 func TestParse_FamilyO_OverCapture(t *testing.T) {
 	corpus := loadParseCorpus[rawIDInput, fvvmExpected](t, familyOOverCaptureCorpusJSON, 20)
 	requireInputCoverage(t, corpus, map[rawIDInput]fvvmExpected{
@@ -3453,9 +3455,10 @@ func TestParse_FamilyO_OverCapture(t *testing.T) {
 		{Raw: "o", ID: "alibaba/wan-v2.6-i2v"}: {Family: "wan", Variant: "v2.6-i2v"},
 		{Raw: "o", ID: "cohere/rerank-v3.5"}:   {Family: "rerank", Variant: "v3.5"},
 		{Raw: "o", ID: "cohere/rerank-v4-pro"}: {Family: "rerank", Mod: "pro"},
-		// and the two negative controls that must KEEP family "o"
-		{Raw: "o", ID: "openai-o1"}:           {Family: "o"},
-		{Raw: "o-mini", ID: "openai-o3-mini"}: {Family: "o", Variant: "mini"},
+		// the slash-form negative control, and the dashed spellings now CONVERGING on it
+		{Raw: "o", ID: "openai/o1"}:           {Family: "gpt", Variant: "o", Version: "1"},
+		{Raw: "o", ID: "openai-o1"}:           {Family: "gpt", Variant: "o", Version: "1"},
+		{Raw: "o-mini", ID: "openai-o3-mini"}: {Family: "gpt", Variant: "o", Version: "3", Mod: "mini"},
 	})
 	runFamilyDetailedTupleCorpus(t, corpus)
 }

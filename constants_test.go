@@ -61,7 +61,12 @@ func TestEntityConstants_Unique(t *testing.T) {
 	// 977 → 978 with the tts-1-hd identity split: OpenAI documents tts-1-hd as a distinct
 	// higher-quality product, so "hd" is now peeled as an IDENTITY modifier and tts@1{hd}
 	// splits off from tts@1 (one constant ADDED, none renamed).
-	const wantEntityCount = 978
+	//
+	// 978 → 976 with the o-series dual-identity fix: the digitalocean openai-o1 / openai-o3
+	// / openai-o3-mini rows (hyphen-glued vendor spelling) now canonicalize onto the
+	// EXISTING gpt/o@1, gpt/o@3, gpt/o@3{mini} entities, vacating the two junk family-"o"
+	// keys (o and o/mini). Two constants REMOVED, none renamed.
+	const wantEntityCount = 976
 	if len(keys) != wantEntityCount {
 		t.Errorf("EntityKeys() returned %d constants; expected exactly %d — "+
 			"re-run go generate ./... and update this census literal if the entity count changed intentionally",
