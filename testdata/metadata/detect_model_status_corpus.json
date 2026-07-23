@@ -1,0 +1,117 @@
+{
+  "_comment": "detectModelStatus over the api.json status field. Expected.token is the ModelStatus wire token; expected.raw is the verbatim token preserved ONLY for the fail-safe Other bucket. ModelStatus uses the None-at-zero convention (absence is meaningful on a scalar), so an empty/whitespace input is StatusNone and NOT Other.",
+  "cases": [
+    {
+      "name": "empty-is-none",
+      "input": "",
+      "expected": {
+        "token": "none",
+        "raw": ""
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "an absent status field"
+      },
+      "mutation": {
+        "description": "empties the token entirely"
+      }
+    },
+    {
+      "name": "whitespace-is-none",
+      "input": "   ",
+      "expected": {
+        "token": "none",
+        "raw": ""
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "a whitespace-only status field"
+      },
+      "mutation": {
+        "description": "replaces the token with whitespace, probing the trim"
+      }
+    },
+    {
+      "name": "alpha",
+      "input": "alpha",
+      "expected": {
+        "token": "alpha",
+        "raw": ""
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "bestiary.StatusAlpha"
+      },
+      "mutation": {
+        "description": "names a recognized status token"
+      }
+    },
+    {
+      "name": "upper-beta-case-insensitive",
+      "input": "BETA",
+      "expected": {
+        "token": "beta",
+        "raw": ""
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "case-insensitive status parse"
+      },
+      "mutation": {
+        "description": "upper-cases a recognized token"
+      }
+    },
+    {
+      "name": "padded-deprecated",
+      "input": " deprecated ",
+      "expected": {
+        "token": "deprecated",
+        "raw": ""
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "a padded status token"
+      },
+      "mutation": {
+        "description": "surrounds a recognized token with whitespace"
+      }
+    },
+    {
+      "name": "unknown-experimental-keeps-raw",
+      "input": "experimental",
+      "expected": {
+        "token": "other",
+        "raw": "experimental"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "an unknown-but-present status token"
+      },
+      "mutation": {
+        "description": "substitutes a token the enum does not know, which must land in Other WITH its raw preserved"
+      }
+    },
+    {
+      "name": "upstream-literal-other-keeps-raw",
+      "input": "other",
+      "expected": {
+        "token": "other",
+        "raw": "other"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "the upstream literal 'other' is not itself a known status"
+      },
+      "mutation": {
+        "description": "uses the fail-safe bucket's own name as the input, which must still be carried as raw"
+      }
+    }
+  ]
+}

@@ -1,0 +1,121 @@
+{
+  "_comment": "The ratified Entity__ word-sentinel grammar (Plan-UAT: __Version_/__Size_ word sentinels replace the earlier __At/__S glyph mnemonics). The deepseek version-vs-variant pair and the qwen 3.5-vs-35 pair are the INJECTIVITY-critical rows: each pair must render distinctly or two entities collapse onto one constant.",
+  "cases": [
+    {
+      "name": "deepseek-version-3-2",
+      "input": {
+        "family": "deepseek",
+        "variant": "",
+        "version": "3.2",
+        "param_size": "",
+        "modifier": null
+      },
+      "expected": "Entity__Deepseek__Version_3_2",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "deepseek@3.2 renders the version with the Version_ sentinel"
+      },
+      "mutation": {
+        "description": "carries the 3.2 token as a VERSION, half of the injectivity pair"
+      }
+    },
+    {
+      "name": "deepseek-variant-v3-2",
+      "input": {
+        "family": "deepseek",
+        "variant": "v3.2",
+        "version": "",
+        "param_size": "",
+        "modifier": null
+      },
+      "expected": "Entity__Deepseek__V3_2",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "deepseek/v3.2 renders the variant with no sentinel"
+      },
+      "mutation": {
+        "description": "moves the same 3.2 token to the VARIANT slot, the other half of the pair"
+      }
+    },
+    {
+      "name": "qwen-version-3-5",
+      "input": {
+        "family": "qwen",
+        "variant": "",
+        "version": "3.5",
+        "param_size": "",
+        "modifier": null
+      },
+      "expected": "Entity__Qwen__Version_3_5",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "qwen@3.5 sanitizes the dot to an underscore"
+      },
+      "mutation": {
+        "description": "uses a dotted version, half of the sanitize pair"
+      }
+    },
+    {
+      "name": "qwen-version-35",
+      "input": {
+        "family": "qwen",
+        "variant": "",
+        "version": "35",
+        "param_size": "",
+        "modifier": null
+      },
+      "expected": "Entity__Qwen__Version_35",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "qwen@35 has no separator to preserve"
+      },
+      "mutation": {
+        "description": "removes the dot, which must NOT collide with the 3.5 rendering"
+      }
+    },
+    {
+      "name": "llama-scout-full-tuple",
+      "input": {
+        "family": "llama",
+        "variant": "scout",
+        "version": "4",
+        "param_size": "17b-16e",
+        "modifier": [
+          "instruct"
+        ]
+      },
+      "expected": "Entity__Llama__Scout__Version_4__Size_17b_16e__Instruct",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "the fully-populated worked example from the ratified grammar"
+      },
+      "mutation": {
+        "description": "populates EVERY segment at once, pinning segment order and both word sentinels"
+      }
+    },
+    {
+      "name": "command-r7b-size-7b",
+      "input": {
+        "family": "command",
+        "variant": "r7b",
+        "version": "",
+        "param_size": "7b",
+        "modifier": null
+      },
+      "expected": "Entity__Command__R7b__Size_7b",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "a variant that LOOKS like a size next to a real size segment"
+      },
+      "mutation": {
+        "description": "places a size-like token in the VARIANT slot beside a genuine #size, so only the Size_ sentinel distinguishes them"
+      }
+    }
+  ]
+}

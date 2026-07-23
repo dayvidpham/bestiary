@@ -125,6 +125,50 @@ func Test<Name>(t *testing.T) {
 }
 ```
 
+## The corpus census, and what is deliberately still inline
+
+At the close of the naming-layer epoch the repository carries **111 corpora**:
+
+| Area | Corpora | What lives there |
+|---|---|---|
+| `testdata/parse/` | 46 | family/variant/version decomposition, modifier extraction, param-size tokens, serving-host capture, the `ReasonUnknownSuffixOverflow` reachability capture, the vercel family-`o` over-capture (with its o-series slash negative controls + the dashed openai-o convergence rows), the "p"-as-dot version decode (unit shapes + every digit-p-digit catalog id), the dot-lost version repair (dotless + dash-glued qwen/minimax/mistral spellings) and the `1t` trillion param-size routing (with the kimi-k2:1t / r1t2 negative controls) |
+| `testdata/enum/` | 14 | closed-enum `String()`, `Parse*`, and JSON round-trip/reject tables (Modality, AcceptabilityRating, CanonicalScheme, Harness, Family, Provider) |
+| `testdata/quant/` | 14 | the Quantization enum surface plus the curated quant/VRAM lookups |
+| `testdata/entity/` | 8 | `EntityRef.String()` grammar, the llama-4 and laguna entity projections, Series/Release rendering, the suppression per-entry fence |
+| `testdata/stage/` | 4 | the ReleaseStage axis |
+| `testdata/midid/` | 3 | the internal mid-ID token engine |
+| `testdata/metadata/` | 3 | the models.dev ingest detectors (status / link type / reasoning-option kind) |
+| `testdata/resolve/` | 3 | the internal group-key helpers, and the canonical-provider preference on provider-unqualified exact-ID lookups |
+| `testdata/vram/` | 2 | the VRAM arithmetic anchors |
+| `cmd/bestiary/testdata/series/` | 4 | the `series` selector surface: end-to-end selector resolution (specificity ladder, canonical grammar, `--version`, `--input-format`, disagreement errors), the strict major-union membership rule, `--version` composition, and the `selectSeries` readings over a synthetic universe |
+| `cmd/bestiary-gen/testdata/gen/` | 9 | the identifier builders (`slugToIdentifier`, `providerConstName`, `styleSegment`, `entityConstName`, `splitComma`) |
+| `cmd/bestiary-ollama/testdata/ollama/` | 1 | Ollama tag normalization |
+
+**Still inline, by the rule at the top of this document** — these are not stragglers,
+they are tests whose "cases" are computed rather than authored, and extracting them
+would be a category error:
+
+- **census/property sweeps** over the built catalog (`StaticModels()` / `Entities()`
+  walks, the injectivity guard, the empty-seed suppression sweep, the parse-failure
+  audits, `TestHostSplit_EntityParity`, `TestVersionPresenceConsistency_ClassA`,
+  `TestResolve_CanonicalProviderPreference_CatalogSweep`);
+- **codegen determinism machinery** (`TestCodegen_Reproducible_ByteIdentical`,
+  `TestCodegen_UpToDate`, the golden-excerpt fences, `TestDecompositionSnapshot`);
+- **store migration fixtures** (`store_migration_test.go`, `store_v5/v6/v7_test.go`) —
+  the rows are *seed database state* for a migration, not `{input, expected}` cases;
+- **graceful-degrade loader tables** (`TestSafe*_Degrades*`, `TestParse*_Rejects`) —
+  each row is a distinct malformed *document*, and inlining keeps the corruption visible
+  next to the assertion;
+- **CLI argv/flag tables** (`cmd/bestiary/cli_warts_test.go`, and the
+  `--version`/`--input-format` rejection tables in `series_cli_test.go`) — the rows are
+  argv vectors exercising flag *mechanics* (a flag given without its required
+  positional, or without a value), not data facts about the catalog. The selector→lines
+  rows from the same file ARE data facts, and live in
+  `cmd/bestiary/testdata/series/selector_resolution_corpus.json`;
+- **`host_detect_test.go`'s curated-prefix table** — its rows are already pinned as data
+  in `testdata/parse/azure_serving_host_corpus.json`; extracting the second copy would
+  duplicate the same facts in two places.
+
 ## Running
 
 ```bash

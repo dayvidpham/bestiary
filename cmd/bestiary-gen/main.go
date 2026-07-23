@@ -511,6 +511,16 @@ func run(args []string) error {
 		return fmt.Errorf("validate curated param-size pins: %w", err)
 	}
 
+	// Fail loudly on bad redundant-modifier suppression curation BEFORE generating
+	// anything: an unknown family, a missing rationale, or a modifier the entity does
+	// not carry would otherwise degrade at runtime to "no suppression", silently
+	// reverting the curated naming policy instead of reporting the bad entry. (The
+	// entity-relative existence/collision checks need the built entity set and run
+	// later, once the models are decomposed — see ValidateSuppression.)
+	if err := bestiary.ValidateSuppressionSeed(); err != nil {
+		return fmt.Errorf("validate curated suppression seed: %w", err)
+	}
+
 	// Fail loudly on bad data-source curation BEFORE generating anything: a duplicate
 	// source id/uri, an ingest source_id absent from the dimension, or an entity↔source
 	// attestation naming a source absent from the curated datasources.json is a curation
@@ -624,13 +634,16 @@ func run(args []string) error {
 		return err
 	}
 
-	// Generate models_constants_gen.go — Model_* constants for all eligible models.
-	// Uses the full (unfiltered) model set so that constants cover all providers.
-	constantsSrc, err := generateConstantsSource(models, slugToConst)
+	// Generate entities_constants_gen.go — one Entity__ constant per model ENTITY
+	// (provider-agnostic canonical key), derived through the shared MintNomina path over
+	// the full (unfiltered) model set. Uses the full set so every entity is covered
+	// regardless of the --only/--except filter. A name collision fails the bake loudly
+	// (injectivity guard).
+	entitiesConstSrc, err := generateEntitiesConstantsSource(models, metadata)
 	if err != nil {
-		return fmt.Errorf("generate constants source: %w", err)
+		return fmt.Errorf("generate entity constants source: %w", err)
 	}
-	if err := writeFile(outputConstantsPath, constantsSrc); err != nil {
+	if err := writeFile(outputEntitiesConstantsPath, entitiesConstSrc); err != nil {
 		return err
 	}
 
@@ -693,7 +706,7 @@ func run(args []string) error {
 		outputProvidersPath, len(allSlugs),
 		outputFamiliesPath, len(familyMeta),
 		outputMetadataPath, len(metadata),
-		outputConstantsPath,
+		outputEntitiesConstantsPath,
 		now,
 		len(parseFailures),
 		filepath.Join(flags.cacheDir, "parse_failures.json"),
@@ -1281,6 +1294,13 @@ func enrichModelInfo(base bestiary.ModelInfo) (bestiary.ModelInfo, *bestiary.Par
 	// — Host records the backend without mutating the record's identity.
 	host, _ := bestiary.DetectHost(id)
 
+	// Serving-jurisdiction attribute. DetectRegion surfaces an AWS Bedrock
+	// cross-region inference-profile prefix (e.g. "eu.anthropic.claude-..." → RegionEU)
+	// as a per-instance attribute; the same prefix is stripped inside
+	// ParseFamilyDetailed so the decomposition above is already region-independent.
+	// Like Host, Region records the jurisdiction without mutating identity.
+	region, regionRaw := bestiary.DetectRegion(id)
+
 	// Compute cleanID (modifier-stripped) for ExtractDate. The modifier consumed
 	// value is a trailing suffix of the model ID; strip it to avoid date extraction
 	// from tokens that are part of the modifier (e.g. "thinking", "preview").
@@ -1323,6 +1343,8 @@ func enrichModelInfo(base bestiary.ModelInfo) (bestiary.ModelInfo, *bestiary.Par
 	info := base
 	info.RawFamily = rawFamily
 	info.Host = host
+	info.Region = region
+	info.RegionRaw = regionRaw
 	info.Family = normFamily
 	info.Variant = normVariant
 	info.Version = normVersion
@@ -1577,6 +1599,13 @@ func derivationKindExpr(k bestiary.DerivationKind) string {
 // generated source, mirroring goStringSliceLiteral's empty→"nil" contract so the
 // base-model majority emits a bare nil. The generated file is package bestiary,
 // so LineageEdge / EntityRef / DerivationKind constants are referenced unqualified.
+//
+// Every EntityRef field the curated ledger can set must be emitted here, ParamSize
+// included: a parent may name a specific size (a 32B finetune derives from the 32B
+// base, not from the whole line), and an emitter that skips the field silently
+// widens that edge to the size-agnostic parent in the BAKED data while the runtime
+// lineage.json path keeps the size — the two would then disagree about the same
+// curated edge. The field went unemitted until the first curated edge used it.
 func lineageLiteral(edges []bestiary.LineageEdge) string {
 	if len(edges) == 0 {
 		return "nil"
@@ -1584,8 +1613,8 @@ func lineageLiteral(edges []bestiary.LineageEdge) string {
 	parts := make([]string, len(edges))
 	for i, e := range edges {
 		parts[i] = fmt.Sprintf(
-			"{Parent: EntityRef{Family: %q, Variant: %q, Version: %q, Modifier: %s}, Kind: %s}",
-			string(e.Parent.Family), e.Parent.Variant, e.Parent.Version,
+			"{Parent: EntityRef{Family: %q, Variant: %q, Version: %q, ParamSize: %q, Modifier: %s}, Kind: %s}",
+			string(e.Parent.Family), e.Parent.Variant, e.Parent.Version, e.Parent.ParamSize,
 			goStringSliceLiteral(e.Parent.Modifier), derivationKindExpr(e.Kind),
 		)
 	}
@@ -1742,6 +1771,31 @@ func stageExpr(s bestiary.ReleaseStage) string {
 	}
 }
 
+// regionExpr renders a Region as its exported constant name so the generated source
+// references the enum symbolically (e.g. RegionEU). Mirrors statusExpr/stageExpr.
+// RegionNone (the zero value) is the default and is never emitted (the caller guards
+// on it), but is returned here for completeness.
+func regionExpr(r bestiary.Region) string {
+	switch r {
+	case bestiary.RegionUS:
+		return "RegionUS"
+	case bestiary.RegionEU:
+		return "RegionEU"
+	case bestiary.RegionAPAC:
+		return "RegionAPAC"
+	case bestiary.RegionGlobal:
+		return "RegionGlobal"
+	case bestiary.RegionAU:
+		return "RegionAU"
+	case bestiary.RegionJP:
+		return "RegionJP"
+	case bestiary.RegionOther:
+		return "RegionOther"
+	default:
+		return "RegionNone"
+	}
+}
+
 // reasoningOptionKindExpr renders a ReasoningOptionKind as its exported constant name.
 // ReasoningOptionOther (the zero value) is the default fail-safe.
 func reasoningOptionKindExpr(k bestiary.ReasoningOptionKind) string {
@@ -1821,7 +1875,6 @@ func generateSource(models []bestiary.ModelInfo, slugToConst map[string]string) 
 	var buf bytes.Buffer
 
 	buf.WriteString("// Code generated by bestiary-gen. DO NOT EDIT.\n")
-	buf.WriteString("//go:generate go run ./cmd/bestiary-gen --no-fetch\n")
 	buf.WriteString("\n")
 	buf.WriteString("package bestiary\n")
 	buf.WriteString("\n")
@@ -1860,6 +1913,16 @@ func generateSource(models []bestiary.ModelInfo, slugToConst map[string]string) 
 		fmt.Fprintf(&buf, "\t\tKnowledge:             %q,\n", m.Knowledge)
 		fmt.Fprintf(&buf, "\t\tModalities:            %s,\n", modalitiesExpr(m.Modalities))
 		fmt.Fprintf(&buf, "\t\tHost:                  %q,\n", string(m.Host))
+		// Region (AWS Bedrock cross-region inference profile) is an int enum, emitted
+		// CONDITIONALLY — only when a prefix was detected — matching the Stage/Status
+		// precedent so the unregioned majority stays compact. RegionRaw is the reserved
+		// Other-bucket carrier and is empty for every named-member region.
+		if m.Region != bestiary.RegionNone {
+			fmt.Fprintf(&buf, "\t\tRegion:                %s,\n", regionExpr(m.Region))
+		}
+		if m.RegionRaw != "" {
+			fmt.Fprintf(&buf, "\t\tRegionRaw:             %q,\n", m.RegionRaw)
+		}
 		fmt.Fprintf(&buf, "\t\tLineage:               %s,\n", lineageLiteral(m.Lineage))
 		// ParamSize: only emit when non-empty, matching how other optional string
 		// fields (Variant, Version, Date) are handled — zero value omitted entirely
@@ -2181,665 +2244,6 @@ func truncate(s string, max int) string {
 }
 
 // --------------------------------------------------------------------------
-// Model_ constants generation
-// --------------------------------------------------------------------------
-
-// outputConstantsPath is the file that generateConstantsSource writes.
-const outputConstantsPath = "models_constants_gen.go"
-
-// tokenToConstPart converts a single hyphen/dot-split token from a model ID into
-// a constant-name segment via the shared styleSegment seam. Rules (in order):
-//  1. curated brandCasing wins for the full token (e.g. "gpt" → "GPT", "deepseek" → "DeepSeek").
-//  2. Digit-leading token: keep digit prefix verbatim; brandCasing or VERBATIM alpha suffix
-//     ("4o" stays "4o", not "4O"/"4_o" — within-component characters preserved).
-//  3. Otherwise: title-case. A multi-token value (e.g. the modifier "deep-research" passed
-//     whole) is split on any non-alphanumeric separator, each sub-token styled, joined with
-//     a single within-segment underscore ("deep-research" → "Deep_Research").
-func tokenToConstPart(tok string) string {
-	if tok == "" {
-		return ""
-	}
-	lower := strings.ToLower(tok)
-
-	// 1. Curated brand-casing for the FULL token (before any compound split).
-	if s, ok := brandCasing[lower]; ok {
-		return s
-	}
-
-	// 3. Compound (internal separator) → split, style each sub via the shared seam
-	// (preserveDigitSuffix=true: Model__ segment rule), join with "_".
-	subs := strings.FieldsFunc(tok, func(r rune) bool {
-		return !unicode.IsLetter(r) && !unicode.IsDigit(r)
-	})
-	if len(subs) > 1 {
-		for i, s := range subs {
-			styled, _ := styleSegment(s, true)
-			subs[i] = styled
-		}
-		return strings.Join(subs, "_")
-	}
-
-	// 1+2. Single token: shared seam (brand → digit-leading [verbatim suffix] → title-case).
-	styled, _ := styleSegment(tok, true)
-	return styled
-}
-
-// nameForCanonical derives the Model__* constant name for a single ModelInfo.
-//
-// The slugToConst map (slug → Go constant name, e.g. "openai" → "ProviderOpenAI")
-// is used to resolve the provider suffix with the correct display casing.
-// Pass nil to fall back to slugToIdentifier without a name hint.
-//
-// Algorithm:
-//  1. Provider segment: strip "Provider" prefix from the constant name.
-//  2. Strip any provider prefix from the raw ID (anything up to and including "/").
-//  3. Determine if the Date is embedded in the raw ID (all forms:
-//     YYYYMMDD, YYYY-MM-DD, MM-YYYY, MM-DD). Strip that form from the end of the ID.
-//  4. If Version is non-empty, compute a version segment ("4.5" → "4_5")
-//     and strip the version tokens from the end of the ID (before the date).
-//  5. Split remaining raw ID on non-alphanumeric characters; map each token through
-//     tokenToConstPart.
-//  6. Join all parts with "__" (double underscore), prefix "Model__<ProviderSuffix>__".
-//  7. If a version segment was produced, append "__<version>".
-//  8. Append "__YYYYMMDD" when the date was found in the raw ID.
-//
-// Naming: Model__<Provider>__<Family>__<Variant>?__<Version>?__<Date>?
-// Double underscores separate top-level segments; single underscores appear only
-// within a segment (e.g. version "4.5" → "4_5", date always YYYYMMDD).
-//
-// Returns "" when the skip rule applies (Family == "").
-func nameForCanonical(m bestiary.ModelInfo) string {
-	return nameForCanonicalWithMap(m, nil)
-}
-
-// nameForCanonicalWithMap is the full implementation of nameForCanonical with
-// an optional slugToConst map for correct provider casing.
-func nameForCanonicalWithMap(m bestiary.ModelInfo, slugToConst map[string]string) string {
-	if m.Family == "" {
-		return "" // skip rule: no family, no extractable family
-	}
-
-	// Derive provider suffix.
-	provSuffix := ""
-	if slugToConst != nil {
-		if constName, ok := slugToConst[string(m.Provider)]; ok {
-			provSuffix = strings.TrimPrefix(constName, "Provider")
-		}
-	}
-	if provSuffix == "" {
-		provSuffix = slugToIdentifier(string(m.Provider), "")
-	}
-	if provSuffix == "" {
-		provSuffix = "Unknown"
-	}
-
-	rawID := string(m.ID)
-
-	// Strip any leading path segments from the raw ID.
-	// Some providers use multi-segment paths in model IDs:
-	//   - "accounts/fireworks/models/deepseek-v3p1" → strip "accounts/fireworks/models/"
-	//   - "workers-ai/@cf/meta/llama-3.1-8b-instruct" → strip "workers-ai/@cf/meta/"
-	//   - "@cf/meta/llama-3.1-8b-instruct" → strip "@cf/meta/"
-	//   - "anthropic/claude-opus-4-20250514" → strip "anthropic/"
-	// We strip everything up to and including the last "/" to get just the model name.
-	if idx := strings.LastIndexByte(rawID, '/'); idx >= 0 {
-		rawID = rawID[idx+1:]
-	}
-	// Strip a leading "@" if present (e.g. "@cf/..." already stripped to "..." above,
-	// but catch remaining "@" characters in ID suffixes).
-	rawID = strings.TrimLeft(rawID, "@")
-
-	// Strip modifier trailing token from raw ID before date/version extraction.
-	// Modifier (e.g. "-thinking") appears as the trailing hyphen-separated token.
-	// It must be stripped before date and version logic runs so it doesn't produce
-	// spurious tokens in the constant name.
-	// Modifier is a LIST. Greedily strip EVERY trailing modifier token from
-	// the raw ID (they may appear in any order in the ID), then build the constant
-	// segment from the stored CANONICAL order so the identifier is deterministic and
-	// byte-stable (e.g. ["vision","instruct"] → "VisionInstruct").
-	modifierSegment := ""
-	if len(m.Modifier) > 0 {
-		modSet := make(map[string]struct{}, len(m.Modifier))
-		for _, mod := range m.Modifier {
-			modSet[mod] = struct{}{}
-		}
-		// Peel trailing "-<modifier>" tokens until the tail is no longer a modifier.
-		for {
-			lastDash := strings.LastIndexByte(rawID, '-')
-			if lastDash < 0 {
-				break
-			}
-			tail := rawID[lastDash+1:]
-			if _, ok := modSet[strings.ToLower(tail)]; !ok {
-				break
-			}
-			rawID = strings.TrimRight(rawID[:lastDash], "-.")
-		}
-		// Cased segment in canonical order (m.Modifier is already canonical).
-		for _, mod := range m.Modifier {
-			modifierSegment += tokenToConstPart(mod)
-		}
-	}
-
-	// Compute date segment (compact form, no hyphens).
-	dateCompact := strings.ReplaceAll(m.Date, "-", "") // YYYYMMDD or ""
-
-	// Strip the date from the raw ID and remember if we found it
-	// (we only append the date constant if the ID actually contains the date).
-	// Note: Google Vertex Anthropic uses "@" as date separator (e.g. "claude-opus-4@20250514").
-	// We must also strip the "@YYYYMMDD" form.
-	rawIDForDate := strings.ReplaceAll(rawID, "@", "-")
-	rawIDStripped, dateFoundInID := stripDateFromID(rawIDForDate, m.Date, dateCompact)
-
-	// Compute version segment: Version "4.5" → "4_5".
-	// If Version is non-empty, strip the version tokens from the end of
-	// rawIDStripped (they appear immediately before the date in the raw ID).
-	versionSegment := ""
-	if m.Version != "" {
-		// Convert "4.5" → "4_5" (dots to underscores; no hyphens expected in Version).
-		versionSegment = strings.ReplaceAll(m.Version, ".", "_")
-
-		// Strip the version portion from rawIDStripped. The version appears in the
-		// raw ID as hyphen-separated digits/tokens (e.g. "4-5" for version "4.5").
-		// We try the hyphenated form and the dotted form as suffixes.
-		versionHyphen := strings.ReplaceAll(m.Version, ".", "-")
-		for _, vSuffix := range []string{versionHyphen, m.Version} {
-			if vSuffix == "" {
-				continue
-			}
-			if strings.HasSuffix(rawIDStripped, "-"+vSuffix) {
-				rawIDStripped = strings.TrimSuffix(rawIDStripped, "-"+vSuffix)
-				rawIDStripped = strings.TrimRight(rawIDStripped, "-.")
-				break
-			}
-			if strings.HasSuffix(rawIDStripped, "."+vSuffix) {
-				rawIDStripped = strings.TrimSuffix(rawIDStripped, "."+vSuffix)
-				rawIDStripped = strings.TrimRight(rawIDStripped, "-.")
-				break
-			}
-		}
-	}
-
-	// Split on any non-alphanumeric character to produce clean identifier tokens.
-	// This handles all separator styles: hyphens, dots, colons, underscores, slashes,
-	// at-signs, etc. found in the wild across various provider model ID formats.
-	tokens := strings.FieldsFunc(rawIDStripped, func(r rune) bool {
-		return !unicode.IsLetter(r) && !unicode.IsDigit(r)
-	})
-
-	var parts []string
-	for _, tok := range tokens {
-		if tok == "" {
-			continue
-		}
-		p := tokenToConstPart(tok)
-		if p != "" {
-			parts = append(parts, p)
-		}
-	}
-
-	// Join parts with double underscores (between-component separator).
-	// Single underscores appear only within a segment (e.g. version "4_5").
-	name := "Model__" + provSuffix + "__" + strings.Join(parts, "__")
-	if versionSegment != "" {
-		name += "__" + versionSegment
-	}
-	// Insert modifier segment between version and date.
-	if modifierSegment != "" {
-		name += "__" + modifierSegment
-	}
-	if dateFoundInID && dateCompact != "" {
-		name += "__" + dateCompact
-	}
-	return name
-}
-
-// stripDateFromID strips the date portion from the end of a model ID string.
-// It recognizes several date forms (in priority order):
-//  1. YYYYMMDD compact (e.g. "20250514" in "claude-opus-4-20250514")
-//  2. YYYY-MM-DD hyphenated (e.g. "2024-08-06" in "gpt-4o-2024-08-06")
-//  3. MM-YYYY (e.g. "09-2025" in "gemini-2.5-flash-lite-preview-09-2025")
-//  4. MM-DD   (e.g. "06-17" in "gemini-2.5-flash-lite-preview-06-17")
-//
-// Returns (strippedID, true) when any form is found, or (rawID, false) when no
-// date form is found in the ID.
-func stripDateFromID(rawID, normalizedDate, dateCompact string) (string, bool) {
-	if normalizedDate == "" {
-		return rawID, false
-	}
-
-	// Form 1: compact YYYYMMDD suffix.
-	if strings.HasSuffix(rawID, dateCompact) {
-		stripped := strings.TrimSuffix(rawID, dateCompact)
-		stripped = strings.TrimRight(stripped, "-.")
-		return stripped, true
-	}
-
-	// Form 2: YYYY-MM-DD suffix.
-	if strings.HasSuffix(rawID, normalizedDate) {
-		stripped := strings.TrimSuffix(rawID, normalizedDate)
-		stripped = strings.TrimRight(stripped, "-.")
-		return stripped, true
-	}
-
-	// Forms 3 and 4 require parsing YYYY-MM-DD into parts.
-	parts := strings.SplitN(normalizedDate, "-", 3)
-	if len(parts) != 3 {
-		return rawID, false
-	}
-	// yyyy, mm, dd := parts[0], parts[1], parts[2]
-	mm, dd, yyyy := parts[1], parts[2], parts[0]
-
-	// Form 3: MM-YYYY (e.g. "09-2025").
-	mmYYYY := mm + "-" + yyyy
-	if strings.HasSuffix(rawID, mmYYYY) {
-		stripped := strings.TrimSuffix(rawID, mmYYYY)
-		stripped = strings.TrimRight(stripped, "-.")
-		return stripped, true
-	}
-
-	// Form 4: MM-DD (e.g. "06-17").
-	mmDD := mm + "-" + dd
-	if strings.HasSuffix(rawID, mmDD) {
-		stripped := strings.TrimSuffix(rawID, mmDD)
-		stripped = strings.TrimRight(stripped, "-.")
-		return stripped, true
-	}
-
-	return rawID, false
-}
-
-// resolveCollisions takes a slice of candidate constant names (parallel to
-// models) and returns a slice of final, unique names. The input name "" means
-// "skip this model" — the output preserves "" at those positions.
-//
-// Two-pass algorithm:
-//
-//	Pass 1: detect all positions that share the same candidate name (collisions).
-//	Pass 2: for each collision group, apply disambiguators in priority order:
-//	  (a) Append a version segment extracted from the raw model ID.
-//	  (b) Append "_2", "_3", … (sequential suffix, last resort).
-func resolveCollisions(names []string, models []bestiary.ModelInfo) []string {
-	result := make([]string, len(names))
-	copy(result, names)
-
-	// Pass 1: group positions by their candidate name.
-	nameToPositions := make(map[string][]int, len(names))
-	for i, n := range names {
-		if n == "" {
-			continue // skip-rule models have no constant
-		}
-		nameToPositions[n] = append(nameToPositions[n], i)
-	}
-
-	// Pass 2: resolve each collision group.
-	for baseName, positions := range nameToPositions {
-		if len(positions) < 2 {
-			continue // no collision — keep as-is
-		}
-
-		// (a) Try to append a version segment extracted from the model ID.
-		// Version segment: the part of the raw ID that is between the date-stripped
-		// common prefix and the date. We use the tokenized ID minus the common tokens.
-		// Simplified heuristic: extract version-like tokens not present in other models.
-		type candidate struct {
-			pos     int
-			vSuffix string // "" means no usable version suffix was found
-		}
-		cands := make([]candidate, len(positions))
-		for k, pos := range positions {
-			cands[k] = candidate{pos: pos, vSuffix: extractVersionSegment(models[pos])}
-		}
-
-		// Check if all version suffixes are distinct and non-empty.
-		vSuffixSeen := make(map[string]int)
-		for _, c := range cands {
-			if c.vSuffix != "" {
-				vSuffixSeen[c.vSuffix]++
-			}
-		}
-		allDistinct := true
-		for _, c := range cands {
-			if c.vSuffix == "" || vSuffixSeen[c.vSuffix] > 1 {
-				allDistinct = false
-				break
-			}
-		}
-
-		if allDistinct {
-			// Version suffix disambiguates all colliders.
-			// Use "__" to separate the version disambiguation suffix from the base name
-			// (consistent with the Model__<Provider>__<...> double-underscore template).
-			for _, c := range cands {
-				result[c.pos] = baseName + "__" + c.vSuffix
-			}
-		} else if names, ok := disambiguateByDiscriminator(baseName, positions, models); ok {
-			// (b) MEANINGFUL discriminator. When the version segment cannot separate the
-			// colliders, the group is (in this catalog exclusively) the SAME model served
-			// under different backend-route path prefixes — a "TEE/" trusted-execution
-			// route, a "Pro/" tier, a "stealth/" alias, a redundant vendor path, or a bare
-			// direct ID alongside a routed one. The route label is the meaningful
-			// distinguisher, so the constant becomes e.g. Model__NanoGPT__GLM__5__TEE /
-			// __ZaiOrg instead of the opaque, version-lookalike __5_1 / __5_2. Falls
-			// through to the ordinal tie-break below only for a genuine tie no
-			// discriminator separates.
-			for k, pos := range positions {
-				result[pos] = names[k]
-			}
-		} else {
-			// (c) Stable ordinal (last resort, TRUE ties only): order colliders by raw
-			// model ID so the _N binding is reproducible regardless of slice order.
-			// (Belt-and-suspenders with the deterministic (Provider,ID) model ordering's
-			// sort.)
-			type member struct {
-				pos   int
-				rawID string
-			}
-			ms := make([]member, len(positions))
-			for k, pos := range positions {
-				ms[k] = member{pos, string(models[pos].ID)}
-			}
-			sort.Slice(ms, func(i, j int) bool { return ms[i].rawID < ms[j].rawID })
-			for idx, m := range ms {
-				result[m.pos] = baseName + "_" + strconv.Itoa(idx+1)
-			}
-		}
-	}
-
-	// Final uniqueness pass: if version-suffix disambiguation introduced new collisions
-	// (rare), fall back to sequential suffixes for remaining groups.
-	finalSeen := make(map[string][]int)
-	for i, n := range result {
-		if n == "" {
-			continue
-		}
-		finalSeen[n] = append(finalSeen[n], i)
-	}
-	for _, positions := range finalSeen {
-		if len(positions) < 2 {
-			continue
-		}
-		// Stable ordinal: order by raw model ID so the _N binding is reproducible.
-		type member struct {
-			pos   int
-			rawID string
-		}
-		ms := make([]member, len(positions))
-		for k, pos := range positions {
-			ms[k] = member{pos, string(models[pos].ID)}
-		}
-		sort.Slice(ms, func(i, j int) bool { return ms[i].rawID < ms[j].rawID })
-		// Append _<n> to break the tie.
-		for idx, m := range ms {
-			result[m.pos] = result[m.pos] + "_" + strconv.Itoa(idx+1)
-		}
-	}
-
-	return result
-}
-
-// disambiguateByDiscriminator resolves a same-base-name collision group with a
-// MEANINGFUL suffix instead of an opaque ordinal. It tries the discriminators in
-// collisionDiscriminators order and returns the first assignment (index-aligned with
-// positions) that makes EVERY final constant name in the group distinct; ok is false
-// when none does (the caller then falls back to the ordinal tie-break).
-//
-// A discriminator that returns "" for a member leaves that member on the bare
-// baseName (the "direct", unrouted collider keeps the plain name while the routed
-// siblings gain a route suffix) — this is allowed as long as the resulting set is
-// still all-distinct, which the seen-set check enforces. The per-member iteration is
-// in positions order (models are pre-sorted by (Provider,ID)), so the assignment is
-// deterministic.
-func disambiguateByDiscriminator(baseName string, positions []int, models []bestiary.ModelInfo) ([]string, bool) {
-	for _, disc := range collisionDiscriminators() {
-		names := make([]string, len(positions))
-		seen := make(map[string]bool, len(positions))
-		ok := true
-		for k, pos := range positions {
-			name := baseName
-			if d := disc(models[pos]); d != "" {
-				name = baseName + "__" + d
-			}
-			if seen[name] {
-				ok = false
-				break
-			}
-			seen[name] = true
-			names[k] = name
-		}
-		if ok {
-			return names, true
-		}
-	}
-	return nil, false
-}
-
-// collisionDiscriminators is the priority-ordered list of meaningful collision
-// discriminators tried by disambiguateByDiscriminator:
-//
-//  1. the backend-route path prefix alone (the common, cleanest case);
-//  2. route + release date (when a shared route needs the date to separate).
-//
-// The ordinal tie-break in resolveCollisions is the final fallback for a true tie no
-// discriminator separates; it is intentionally NOT in this list.
-func collisionDiscriminators() []func(bestiary.ModelInfo) string {
-	return []func(bestiary.ModelInfo) string{
-		collisionRouteDisc,
-		func(m bestiary.ModelInfo) string {
-			route, date := collisionRouteDisc(m), collisionDateDisc(m)
-			switch {
-			case route != "" && date != "":
-				return route + "__" + date
-			case route != "":
-				return route
-			default:
-				return date
-			}
-		},
-	}
-}
-
-// collisionRouteDisc renders the backend-route path prefix of a raw model ID (every
-// path segment before the last "/") as a PascalCase constant part, e.g.
-// "TEE/deepseek-v4-pro" → "TEE", "Pro/deepseek-ai/DeepSeek-V3" → "ProDeepseekAI".
-// A bare ID with no path prefix returns "" (a direct, unrouted model). This is the
-// meaningful axis along which the catalog's same-base-name collisions actually differ:
-// the same model re-served under a routing/tier/alias prefix.
-func collisionRouteDisc(m bestiary.ModelInfo) string {
-	rawID := string(m.ID)
-	idx := strings.LastIndexByte(rawID, '/')
-	if idx < 0 {
-		return "" // no path prefix: a direct, unrouted ID.
-	}
-	prefix := strings.TrimLeft(rawID[:idx], "@")
-	toks := strings.FieldsFunc(prefix, func(r rune) bool {
-		return !unicode.IsLetter(r) && !unicode.IsDigit(r)
-	})
-	var sb strings.Builder
-	for _, t := range toks {
-		sb.WriteString(tokenToConstPart(t))
-	}
-	return sb.String()
-}
-
-// collisionDateDisc renders the release date as a compact YYYYMMDD constant part, or
-// "" when the model has no date. It is the secondary discriminator (used only combined
-// with the route when the route alone does not separate a group).
-func collisionDateDisc(m bestiary.ModelInfo) string {
-	return strings.ReplaceAll(m.Date, "-", "")
-}
-
-// extractVersionSegment returns a short string that uniquely identifies the
-// version of a model within its family+variant. It is used as a tie-breaker
-// in collision pass (a).
-//
-// Strategy:
-//  1. Strip provider prefix from raw ID.
-//  2. Strip date suffix from raw ID (using stripDateFromID for all date forms).
-//  3. Strip the Family prefix from the remaining ID tokens.
-//  4. Strip the Variant prefix from the remaining tokens.
-//  5. Whatever is left is the version segment (joined with "_").
-//
-// Returns "" when no distinct version can be extracted.
-func extractVersionSegment(m bestiary.ModelInfo) string {
-	rawID := string(m.ID)
-
-	// Strip any leading path segments (same logic as nameForCanonicalWithMap).
-	if idx := strings.LastIndexByte(rawID, '/'); idx >= 0 {
-		rawID = rawID[idx+1:]
-	}
-	rawID = strings.TrimLeft(rawID, "@")
-
-	dateCompact := strings.ReplaceAll(m.Date, "-", "")
-
-	// Normalize "@" date separator (Google Vertex Anthropic style).
-	rawIDForDate := strings.ReplaceAll(rawID, "@", "-")
-
-	// Strip date from end using the same logic as nameForCanonical.
-	rawIDStripped, _ := stripDateFromID(rawIDForDate, m.Date, dateCompact)
-
-	// Tokenize — split on any non-alphanumeric character.
-	tokens := strings.FieldsFunc(rawIDStripped, func(r rune) bool {
-		return !unicode.IsLetter(r) && !unicode.IsDigit(r)
-	})
-
-	// Strip known family tokens.
-	// NOTE: Family and Variant only use hyphens and dots as separators
-	// (models.dev normalized fields). Using the narrow hyphen-dot splitter
-	// here is intentional and matches all real data. If a future provider introduces
-	// underscores or other separators in a normalized family slug, unify this with the
-	// universal non-alphanumeric splitter used above for rawIDStripped.
-	familyTokens := strings.FieldsFunc(string(m.Family), func(r rune) bool {
-		return r == '-' || r == '.'
-	})
-	variantTokens := strings.FieldsFunc(m.Variant, func(r rune) bool {
-		return r == '-' || r == '.'
-	})
-
-	// Build a set of "known" tokens (family + variant) to skip.
-	knownTokens := make(map[string]struct{}, len(familyTokens)+len(variantTokens))
-	for _, t := range familyTokens {
-		knownTokens[strings.ToLower(t)] = struct{}{}
-	}
-	for _, t := range variantTokens {
-		knownTokens[strings.ToLower(t)] = struct{}{}
-	}
-
-	var versionParts []string
-	for _, tok := range tokens {
-		if _, known := knownTokens[strings.ToLower(tok)]; !known {
-			p := tokenToConstPart(tok)
-			if p != "" {
-				versionParts = append(versionParts, p)
-			}
-		}
-	}
-
-	return strings.Join(versionParts, "_")
-}
-
-// generateConstantsSource generates models_constants_gen.go containing one
-// Model__* constant per eligible model in the static data, plus a ModelIDs()
-// function returning a defensive copy.
-//
-// slugToConst maps provider slug → Go constant name (e.g. "openai" → "ProviderOpenAI").
-// It is used for correct provider casing in the generated constant names.
-// Pass nil to use the slug directly with slugToIdentifier (less accurate casing).
-//
-// Eligibility: Family must be non-empty.
-// Naming: Model__<Provider>__<Family>__<Variant>?__<Version>?__<Date>?
-// Double underscores separate top-level segments; single underscores appear only
-// within a segment (e.g. version "4.5" → "4_5").
-// Collision resolution: two-pass (version suffix → sequential suffix).
-func generateConstantsSource(models []bestiary.ModelInfo, slugToConst map[string]string) ([]byte, error) {
-	// Build candidate names.
-	candidateNames := make([]string, len(models))
-	for i, m := range models {
-		candidateNames[i] = nameForCanonicalWithMap(m, slugToConst)
-	}
-
-	// Resolve collisions.
-	resolvedNames := resolveCollisions(candidateNames, models)
-
-	// Build the sorted list of (constName, modelID) pairs for output.
-	// Skip entries where constName == "" (skip-rule models).
-	type constEntry struct {
-		constName string
-		modelID   bestiary.ModelID
-	}
-	var entries []constEntry
-	for i, name := range resolvedNames {
-		if name == "" {
-			continue
-		}
-		entries = append(entries, constEntry{constName: name, modelID: models[i].ID})
-	}
-
-	// Sort by constant name for deterministic output.
-	sort.Slice(entries, func(i, j int) bool {
-		return entries[i].constName < entries[j].constName
-	})
-
-	var buf bytes.Buffer
-	buf.WriteString("// Code generated by bestiary-gen. DO NOT EDIT.\n")
-	buf.WriteString("//go:generate go run ./cmd/bestiary-gen --no-fetch\n")
-	buf.WriteString("\n")
-	buf.WriteString("package bestiary\n\n")
-
-	if len(entries) > 0 {
-		buf.WriteString("// Model__* constants provide compile-time references to every eligible model\n")
-		buf.WriteString("// in the static model registry. Names follow the pattern:\n")
-		buf.WriteString("//   Model__<Provider>__<Family>__<Variant>?__<Version>?__<Date>?\n")
-		buf.WriteString("// where each component uses the same casing rules as Provider and Family\n")
-		buf.WriteString("// constants. Double underscores separate top-level components; single\n")
-		buf.WriteString("// underscores appear only within a component (e.g. version \"4.5\" → \"4_5\",\n")
-		buf.WriteString("// \"4o\" stays \"4o\" within a component).\n")
-		buf.WriteString("const (\n")
-		for _, e := range entries {
-			fmt.Fprintf(&buf, "\t%s ModelID = %q\n", e.constName, e.modelID)
-		}
-		buf.WriteString(")\n\n")
-	}
-
-	// allModelConstants: backing array for ModelIDs().
-	buf.WriteString("// allModelConstants is the complete list of generated Model__* constants.\n")
-	buf.WriteString("var allModelConstants = [...]ModelID{\n")
-	for _, e := range entries {
-		fmt.Fprintf(&buf, "\t%s,\n", e.constName)
-	}
-	buf.WriteString("}\n\n")
-
-	// ModelIDs() defensive copy.
-	// NOTE: Models() in registry.go returns []ModelInfo (full metadata). This function
-	// returns []ModelID (the constant values only). The distinct name avoids a compile-
-	// time conflict with the existing registry.go:Models() function.
-	buf.WriteString("// ModelIDs returns the canonical Model_<...> constant values from the codegen\n")
-	buf.WriteString("// pipeline. The name diverges from the original spec (Models() []ModelID) to\n")
-	buf.WriteString("// avoid clashing with registry.go:Models() []ModelInfo.\n")
-	buf.WriteString("//\n")
-	buf.WriteString("// The returned slice is a defensive copy; mutating it does not affect future calls.\n")
-	buf.WriteString("// See Models() in registry.go for the full ModelInfo slice (metadata + constants).\n")
-	buf.WriteString("func ModelIDs() []ModelID {\n")
-	buf.WriteString("\tout := make([]ModelID, len(allModelConstants))\n")
-	buf.WriteString("\tcopy(out, allModelConstants[:])\n")
-	buf.WriteString("\treturn out\n")
-	buf.WriteString("}\n")
-
-	formatted, err := format.Source(buf.Bytes())
-	if err != nil {
-		return nil, fmt.Errorf(
-			"go/format models_constants_gen.go: %w\n"+
-				"  What: the generated constants source is not syntactically valid\n"+
-				"  Why: a codegen template bug produced invalid Go\n"+
-				"  How to fix: inspect the unformatted buffer for syntax errors\n"+
-				"  Raw source (first 2000 bytes):\n%s",
-			err, truncate(buf.String(), 2000),
-		)
-	}
-	return formatted, nil
-}
-
-// --------------------------------------------------------------------------
 // Metadata generation (models_metadata_gen.go) + join-disagreement report
 // --------------------------------------------------------------------------
 
@@ -2872,7 +2276,6 @@ func generateMetadataSource(meta []bestiary.EntityMetadata) ([]byte, error) {
 
 	var buf bytes.Buffer
 	buf.WriteString("// Code generated by bestiary-gen. DO NOT EDIT.\n")
-	buf.WriteString("//go:generate go run ./cmd/bestiary-gen --no-fetch\n")
 	buf.WriteString("\n")
 	buf.WriteString("package bestiary\n\n")
 	buf.WriteString("// init populates the compiled-in models.dev entity-metadata catalog. The\n")
@@ -2988,6 +2391,23 @@ func scoreLiteral(v float64) string {
 // and aggregates are intentionally omitted. This mirrors the registry's ref
 // construction without depending on the compiled-in staticModels.
 func buildEntitySet(models []bestiary.ModelInfo) []bestiary.Entity {
+	// Pre-pass: the raw (pre-fold) entity-key set, so the MERGE-only N->N.0 version fold
+	// can ask whether a bare-integer version's dotted sibling exists — the SAME condition
+	// the runtime registry (loadEntityIndex) uses, via the SAME shared primitive
+	// (bestiary.NormalizeEntityVersion), so the generated Entity__ constants can never
+	// drift from the entities Entities() exposes.
+	rawKeys := make(map[string]struct{}, len(models))
+	for _, m := range models {
+		ref := bestiary.EntityRef{
+			Family:    m.Family,
+			Variant:   m.Variant,
+			Version:   m.Version,
+			ParamSize: m.ParamSize,
+			Modifier:  bestiary.EntityModifiers(m.Modifier, m.Family),
+		}
+		rawKeys[ref.String()] = struct{}{}
+	}
+
 	seen := make(map[string]struct{}, len(models))
 	var ents []bestiary.Entity
 	for _, m := range models {
@@ -2997,6 +2417,9 @@ func buildEntitySet(models []bestiary.ModelInfo) []bestiary.Entity {
 			Version:   m.Version,
 			ParamSize: m.ParamSize,
 			Modifier:  bestiary.EntityModifiers(m.Modifier, m.Family),
+		}
+		if dotted, merged := bestiary.NormalizeEntityVersion(ref, rawKeys); merged {
+			ref = dotted
 		}
 		key := ref.String()
 		if _, ok := seen[key]; ok {

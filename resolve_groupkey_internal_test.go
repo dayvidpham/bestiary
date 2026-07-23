@@ -17,44 +17,17 @@ import (
 // TestParseContextN verifies that parseContextN extracts the digit-only ":N"
 // suffix from a raw model ID, returning "" when absent or non-digit.
 func TestParseContextN(t *testing.T) {
-	tests := []struct {
-		id   string
-		want string
-	}{
-		// Canonical NanoGPT-style :N variants
-		{"claude-3-7-sonnet-thinking:1024", "1024"},
-		{"claude-3-7-sonnet-thinking:128000", "128000"},
-		{"claude-3-7-sonnet-thinking:32768", "32768"},
-		{"claude-3-7-sonnet-thinking:8192", "8192"},
-		{"claude-opus-4-thinking:1024", "1024"},
-		{"claude-opus-4-thinking:32000", "32000"},
-
-		// No colon — no contextN
-		{"claude-3-7-sonnet-thinking", ""},
-		{"claude-opus-4-20250514", ""},
-		{"gpt-4o", ""},
-
-		// Multi-word suffix after colon — not all digits → ""
-		{"anthropic/claude-opus-4.6:thinking:low", ""},
-		{"anthropic/claude-opus-4.6:thinking:max", ""},
-		{"foo:bar", ""},
-		{"foo:1a2b", ""},
-
-		// Empty suffix after colon → ""
-		{"foo:", ""},
-
-		// PURL-style (contains pkg:) — last colon is before huggingface segment;
-		// "huggingface/..." suffix is not all digits → ""
-		{"pkg:huggingface/anthropic/claude-opus-4-20250514", ""},
-
-		// Lone colon suffix with digits: edge case
-		{":42", "42"},
-	}
-	for _, tt := range tests {
-		t.Run(tt.id, func(t *testing.T) {
-			got := parseContextN(ModelID(tt.id))
-			if got != tt.want {
-				t.Errorf("parseContextN(%q) = %q, want %q", tt.id, got, tt.want)
+	corpus := loadInternalCorpus[string, string](t, internalParseContextNCorpusJSON, 16)
+	internalRequireInputCoverage(t, corpus, map[string]string{
+		"claude-3-7-sonnet-thinking:1024": "1024",
+		"claude-3-7-sonnet-thinking":      "",
+		"foo:1a2b":                        "",
+		":42":                             "42",
+	})
+	for _, c := range corpus.Cases {
+		t.Run(c.Name, func(t *testing.T) {
+			if got := parseContextN(ModelID(c.Input)); got != c.Expected {
+				t.Errorf("parseContextN(%q) = %q, want %q", c.Input, got, c.Expected)
 			}
 		})
 	}
@@ -185,24 +158,16 @@ func TestSelectRepresentative_CanonicalAbsent_LexicographicWins(t *testing.T) {
 // for strings containing '#', so sized entity keys (e.g. "llama@3.3#70b{instruct}")
 // are not treated as bare family names for the fallback matching path.
 func TestIsBareIdentifier_RejectsHash(t *testing.T) {
-	cases := []struct {
-		input string
-		want  bool
-	}{
-		{"llama", true},
-		{"claude", true},
-		{"llama#70b", false},     // has #
-		{"llama@3.3#70b", false}, // has @ and #
-		{"llama/opus", false},    // has /
-		{"pkg:foo", false},       // has :
-		{"@version", false},      // has @
-		{"hash#only", false},     // has #
-	}
-	for _, tc := range cases {
-		t.Run(tc.input, func(t *testing.T) {
-			got := isBareIdentifier(tc.input)
-			if got != tc.want {
-				t.Errorf("isBareIdentifier(%q) = %v, want %v", tc.input, got, tc.want)
+	corpus := loadInternalCorpus[string, bool](t, internalIsBareIdentifierCorpusJSON, 8)
+	internalRequireInputCoverage(t, corpus, map[string]bool{
+		"llama":         true,
+		"llama#70b":     false,
+		"llama@3.3#70b": false,
+	})
+	for _, c := range corpus.Cases {
+		t.Run(c.Name, func(t *testing.T) {
+			if got := isBareIdentifier(c.Input); got != c.Expected {
+				t.Errorf("isBareIdentifier(%q) = %v, want %v", c.Input, got, c.Expected)
 			}
 		})
 	}

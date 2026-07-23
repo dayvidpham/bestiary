@@ -1,0 +1,37 @@
+{
+  "_comment": "The chatgpt casing override. The -4o row also pins the DELIBERATE divergence between the two identifier builders: slugToIdentifier title-cases a single-char alpha suffix (4o -> 4O), whereas the Entity__ grammar preserves within-segment characters verbatim.",
+  "cases": [
+    {
+      "name": "chatgpt",
+      "input": {
+        "slug": "chatgpt",
+        "name_hint": "ChatGPT"
+      },
+      "expected": "ChatGPT",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "manual",
+        "ref": "the chatgpt single-token casing override"
+      },
+      "mutation": {
+        "description": "uses the bare override token"
+      }
+    },
+    {
+      "name": "chatgpt-4o",
+      "input": {
+        "slug": "chatgpt-4o",
+        "name_hint": "ChatGPT-4o"
+      },
+      "expected": "ChatGPT4O",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "manual",
+        "ref": "chatgpt-4o splits into [chatgpt, 4o]; 4o has no casing override so its single-char alpha suffix title-cases"
+      },
+      "mutation": {
+        "description": "appends a digit-leading second token, exposing the slug rule's title-cased single-char suffix"
+      }
+    }
+  ]
+}

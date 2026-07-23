@@ -9,9 +9,18 @@ import (
 // AcceptabilityRating classifies a Designation by its acceptability status,
 // following ISO 1087 terminology principles.
 //
-// All designations generated in this epoch default to AcceptabilityAdmitted.
-// Promotion to AcceptabilityPreferred and assignment of AcceptabilityDeprecated
-// are deferred to a follow-up curation epoch.
+// Acceptability is ACTIVE as of the naming-layer epoch: the SchemeCanonical
+// designation (and the NomenSchemeCanonical nomen) carry AcceptabilityPreferred — the
+// canonical decomposed key is the preferred designation of an identity — while raw /
+// HuggingFace / PURL forms stay AcceptabilityAdmitted. AcceptabilityDeprecated is
+// still unused (no designation is deprecated yet); its assignment is deferred to a
+// follow-up curation epoch.
+//
+// Preferred is not necessarily UNIQUE per entity within the canonical scheme: the
+// redundant-modifier suppression policy (suppression.go) can demote an entity's KEY
+// spelling to Admitted and promote the shorter, modifier-free spelling to Preferred.
+// Both are canonical nomina of the same entity and both resolve to it — the rating
+// records which spelling bestiary recommends, never which spelling is the identity.
 type AcceptabilityRating int
 
 const (
@@ -19,8 +28,9 @@ const (
 	// recognized and may be used, but is not the preferred form.
 	AcceptabilityAdmitted AcceptabilityRating = iota
 
-	// AcceptabilityPreferred marks the designation as the recommended form.
-	// Currently no designations are promoted to Preferred in this epoch.
+	// AcceptabilityPreferred marks the designation as the recommended form. The
+	// SchemeCanonical designation and the NomenSchemeCanonical nomen carry it: the
+	// canonical decomposed key is an identity's preferred designation.
 	AcceptabilityPreferred
 
 	// AcceptabilityDeprecated marks the designation as no longer recommended.
@@ -105,8 +115,8 @@ func parseRating(s string) (AcceptabilityRating, error) {
 //
 // A single ModelRef may have multiple Designations: a canonical form, a raw
 // API ID form, and optionally provider-specific alias forms. Each carries an
-// AcceptabilityRating. In this epoch all generated designations default to
-// AcceptabilityAdmitted.
+// AcceptabilityRating: the canonical form is AcceptabilityPreferred, the others are
+// AcceptabilityAdmitted (see ModelRef.Designations).
 type Designation struct {
 	// Value is the serialized model identifier under Scheme.
 	Value string

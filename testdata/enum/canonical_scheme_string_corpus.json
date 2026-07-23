@@ -1,0 +1,70 @@
+{
+  "_comment": "CanonicalScheme.String() over every render codec plus the out-of-range fallback. Input is the enum's int value.",
+  "cases": [
+    {
+      "name": "canonical",
+      "input": 0,
+      "expected": "canonical",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "bestiary.SchemeCanonical"
+      },
+      "mutation": {
+        "description": "renders the canonical codec token"
+      }
+    },
+    {
+      "name": "huggingface",
+      "input": 1,
+      "expected": "huggingface",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "bestiary.SchemeHuggingFace"
+      },
+      "mutation": {
+        "description": "renders the HuggingFace codec token"
+      }
+    },
+    {
+      "name": "purl",
+      "input": 2,
+      "expected": "purl",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "bestiary.SchemePURL"
+      },
+      "mutation": {
+        "description": "renders the Package-URL codec token"
+      }
+    },
+    {
+      "name": "raw",
+      "input": 3,
+      "expected": "raw",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "bestiary.SchemeRaw"
+      },
+      "mutation": {
+        "description": "renders the raw-id codec token"
+      }
+    },
+    {
+      "name": "out-of-range-99",
+      "input": 99,
+      "expected": "CanonicalScheme(99)",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "int value 99 is past the last member (raw=3)"
+      },
+      "mutation": {
+        "description": "pushes the value past the end of the enum"
+      }
+    }
+  ]
+}

@@ -1,0 +1,149 @@
+{
+  "_comment": "slugToIdentifier: the provider/family Go-symbol builder. Covers digit-leading slugs, curated casing overrides, hyphen-separated multi-token slugs, and the name-hint fallback.",
+  "cases": [
+    {
+      "name": "302ai",
+      "input": {
+        "slug": "302ai",
+        "name_hint": "302AI"
+      },
+      "expected": "302AI",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "manual",
+        "ref": "provider slug 302ai (name 302AI)"
+      },
+      "mutation": {
+        "description": "keeps a digit-leading token verbatim while the alpha suffix takes its curated AI casing"
+      }
+    },
+    {
+      "name": "xai",
+      "input": {
+        "slug": "xai",
+        "name_hint": "xAI"
+      },
+      "expected": "xAI",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "manual",
+        "ref": "provider slug xai (name xAI)"
+      },
+      "mutation": {
+        "description": "uses a single-token brand whose curated casing starts lowercase"
+      }
+    },
+    {
+      "name": "sap-ai-core",
+      "input": {
+        "slug": "sap-ai-core",
+        "name_hint": "SAP AI Core"
+      },
+      "expected": "SAPAICore",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "manual",
+        "ref": "provider slug sap-ai-core"
+      },
+      "mutation": {
+        "description": "combines TWO casing overrides (SAP + AI) in one multi-token slug"
+      }
+    },
+    {
+      "name": "amazon-bedrock",
+      "input": {
+        "slug": "amazon-bedrock",
+        "name_hint": "Amazon Bedrock"
+      },
+      "expected": "AmazonBedrock",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "manual",
+        "ref": "provider slug amazon-bedrock"
+      },
+      "mutation": {
+        "description": "uses a hyphenated slug with NO override, so each token title-cases"
+      }
+    },
+    {
+      "name": "anthropic",
+      "input": {
+        "slug": "anthropic",
+        "name_hint": "Anthropic"
+      },
+      "expected": "Anthropic",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "manual",
+        "ref": "provider slug anthropic"
+      },
+      "mutation": {
+        "description": "uses the simplest single uncurated token"
+      }
+    },
+    {
+      "name": "google",
+      "input": {
+        "slug": "google",
+        "name_hint": "Google"
+      },
+      "expected": "Google",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "manual",
+        "ref": "provider slug google"
+      },
+      "mutation": {
+        "description": "a second plain single token, so the accept arm is not pinned to one value"
+      }
+    },
+    {
+      "name": "cloudflare-ai-gateway",
+      "input": {
+        "slug": "cloudflare-ai-gateway",
+        "name_hint": "Cloudflare AI Gateway"
+      },
+      "expected": "CloudflareAIGateway",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "manual",
+        "ref": "provider slug cloudflare-ai-gateway"
+      },
+      "mutation": {
+        "description": "places the AI override in the MIDDLE of a three-token slug"
+      }
+    },
+    {
+      "name": "aws",
+      "input": {
+        "slug": "aws",
+        "name_hint": "AWS"
+      },
+      "expected": "AWS",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "manual",
+        "ref": "provider slug aws"
+      },
+      "mutation": {
+        "description": "uses an all-caps acronym override"
+      }
+    },
+    {
+      "name": "openrouter",
+      "input": {
+        "slug": "openrouter",
+        "name_hint": "OpenRouter"
+      },
+      "expected": "OpenRouter",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "manual",
+        "ref": "provider slug openrouter"
+      },
+      "mutation": {
+        "description": "relies on the name hint to supply the internal capital"
+      }
+    }
+  ]
+}

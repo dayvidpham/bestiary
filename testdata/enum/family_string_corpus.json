@@ -1,0 +1,83 @@
+{
+  "_comment": "Family.String() returns the underlying string value verbatim. Family is a permissive string type, so the corpus covers well-known constants AND the unknown/empty values the contract must pass through unchanged.",
+  "cases": [
+    {
+      "name": "claude",
+      "input": "claude",
+      "expected": "claude",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "bestiary.FamilyClaude"
+      },
+      "mutation": {
+        "description": "renders a well-known family constant"
+      }
+    },
+    {
+      "name": "gemini",
+      "input": "gemini",
+      "expected": "gemini",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "bestiary.FamilyGemini"
+      },
+      "mutation": {
+        "description": "renders a well-known family constant"
+      }
+    },
+    {
+      "name": "gpt",
+      "input": "gpt",
+      "expected": "gpt",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "bestiary.FamilyGPT"
+      },
+      "mutation": {
+        "description": "renders a well-known family constant"
+      }
+    },
+    {
+      "name": "llama",
+      "input": "llama",
+      "expected": "llama",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "bestiary.FamilyLlama"
+      },
+      "mutation": {
+        "description": "renders a well-known family constant"
+      }
+    },
+    {
+      "name": "unknown-custom-value",
+      "input": "custom-value",
+      "expected": "custom-value",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "an unregistered family value"
+      },
+      "mutation": {
+        "description": "substitutes an unregistered value for a known constant, probing the permissive contract"
+      }
+    },
+    {
+      "name": "empty",
+      "input": "",
+      "expected": "",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "the empty Family zero value"
+      },
+      "mutation": {
+        "description": "empties the family entirely, probing the zero value"
+      }
+    }
+  ]
+}

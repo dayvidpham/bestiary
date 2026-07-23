@@ -26,6 +26,14 @@ type ModelRef struct {
 	Date      string   // Release date in YYYY-MM-DD format; empty if none
 	Modifier  []string // Known trailing tokens in canonical order (e.g., ["vision","instruct"]); nil if none
 	Host      Host     // Serving host/backend (per-instance attribute, never part of identity); HostNone if unknown
+	// Region is the serving jurisdiction / AWS Bedrock region (per-instance attribute,
+	// never part of identity; RegionNone if unspecified). RegionRaw is the fail-safe
+	// carrier for RegionOther. Both are json:"-" for now: the field exists (the parse
+	// half), but exposing Region on the public JSON contract is a schema change deferred
+	// to the schema-0.5.0 bump — until then it is excluded from serialization so it
+	// causes no schema drift, exactly as it is excluded from all key rendering.
+	Region    Region `json:"-"`
+	RegionRaw string `json:"-"`
 }
 
 // Ref returns a ModelRef for this ModelInfo.
@@ -56,7 +64,8 @@ func (m ModelInfo) Ref() ModelRef {
 //     only when date is non-empty. Falls back to "<provider>/<raw-id>" when both
 //     Family and Variant are empty (e.g., provider-specific representation).
 //   - SchemeHuggingFace: "<provider>/<raw-id>" (HuggingFace Hub form).
-//   - SchemePURL: "pkg:huggingface/<provider>/<raw-id>" (purl-spec + ECMA-427).
+//   - SchemePURL: "pkg:huggingface/<raw-id>" — RESTRICTED to Provider ==
+//     ProviderHuggingFace; every other provider renders "" (see formatPURL).
 //   - SchemeRaw: string(r.ID) — the original API model identifier verbatim.
 func (r ModelRef) Format(s CanonicalScheme) string {
 	switch s {
@@ -65,13 +74,42 @@ func (r ModelRef) Format(s CanonicalScheme) string {
 	case SchemeHuggingFace:
 		return fmt.Sprintf("%s/%s", r.Provider, r.ID)
 	case SchemePURL:
-		return fmt.Sprintf("pkg:huggingface/%s/%s", r.Provider, r.ID)
+		return r.formatPURL()
 	case SchemeRaw:
 		return string(r.ID)
 	default:
 		// Unrecognized scheme: fall back to raw ID for safety.
 		return string(r.ID)
 	}
+}
+
+// formatPURL produces the SchemePURL string, RESTRICTED to HuggingFace-hosted refs.
+//
+// A purl is a FOREIGN KEY into someone else's package registry, so bestiary mints one
+// only where the artifact's registry home is actually known. That is exactly the
+// huggingface-provider rows: their raw model ID already IS the Hub org/repo path (e.g.
+// "meta-llama/Llama-3.3-70B-Instruct"), so the render is the purl-spec shape
+// "pkg:huggingface/<namespace>/<name>" with nothing invented.
+//
+// Every other provider renders "" — an honest empty rather than a fabricated foreign
+// key. The previous render interpolated the SERVING PROVIDER as the purl namespace
+// ("pkg:huggingface/anthropic/claude-opus-4-20250514"), which was spec-invalid on two
+// counts: an anthropic-served model has no HuggingFace repo at all, and HuggingFace's
+// own rows came out double-namespaced ("pkg:huggingface/huggingface/meta-llama/…").
+// Serving provider is not artifact home.
+//
+// This restricts the OUTPUT side only. The input side stays lenient (Postel): Resolve
+// still accepts the legacy "pkg:huggingface/<provider>/<id>" spelling, because
+// downstream SBOMs may hold strings bestiary itself once emitted.
+//
+// The durable, provider-independent identifier story is the entity-level Nomen
+// (curated NomenSchemeHuggingFace claims map an entity to its Hub repo regardless of
+// which of its providers is serving it); this per-ref render is the stopgap.
+func (r ModelRef) formatPURL() string {
+	if r.Provider != ProviderHuggingFace {
+		return ""
+	}
+	return fmt.Sprintf("pkg:huggingface/%s", r.ID)
 }
 
 // formatCanonical produces the SchemeCanonical string.
@@ -154,16 +192,39 @@ func (r ModelRef) String() string {
 }
 
 // Designations returns all string designations for this ModelRef.
-// Every designation carries AcceptabilityAdmitted in this epoch.
-// Promotion to Preferred is deferred to a follow-up curation epoch.
+//
+// Acceptability is now ACTIVATED (this is the epoch that promotes it): the
+// SchemeCanonical designation carries AcceptabilityPreferred — the canonical
+// decomposed key IS the preferred designation of the identity — while the raw ID,
+// HuggingFace, and PURL forms stay AcceptabilityAdmitted (recognized, usable, not
+// preferred). This is the READ-PROJECTION half of the naming layer: a Designation is
+// the ref-level rendering of the same fact a Nomen records at the entity level, so
+// the SchemeCanonical designation's Preferred rating agrees by construction with the
+// NomenSchemeCanonical nomen's AcceptabilityPreferred status (the Designations↔Nomen
+// consistency fence: shared schemes agree on rating).
+//
+// Redundant-modifier suppression (suppression.go) is deliberately OUT of this
+// projection's reach. Suppression is an ENTITY-level naming policy: it chooses which
+// spelling of an entity KEY is preferred. A Designation renders a ModelRef — a
+// per-instance form that carries date and attribute-class modifiers an entity key
+// never has — so applying an entity-key policy here would silently rewrite a different
+// grammar. The two stay consistent on the axis they share (the RATING: canonical is
+// Preferred in both), and a seeded entity's preferred entity-key VALUE is read from
+// Entity.PreferredName / PreferredNomenValue, never from here.
 //
 // The returned slice contains:
-//  1. A SchemeRaw designation using the original API model ID.
-//  2. A SchemeCanonical designation (the canonical slash-separated form).
-//  3. A SchemeHuggingFace designation.
-//  4. A SchemePURL designation.
+//  1. A SchemeRaw designation using the original API model ID (Admitted).
+//  2. A SchemeCanonical designation, the canonical slash-separated form (Preferred).
+//  3. A SchemeHuggingFace designation (Admitted).
+//  4. A SchemePURL designation (Admitted) — ONLY for a HuggingFace-hosted ref.
+//
+// The purl entry is DROPPED entirely (not emitted with an empty value) for every other
+// provider, because Format(SchemePURL) is restricted to the refs whose registry home is
+// known (see formatPURL). A designation is an assertion that a thing IS called
+// something; an empty-valued one would assert a name that does not exist. So a non-HF
+// ref yields three designations, an HF ref four.
 func (r ModelRef) Designations() []Designation {
-	return []Designation{
+	out := []Designation{
 		{
 			Value:    r.Format(SchemeRaw),
 			Scheme:   SchemeRaw,
@@ -174,7 +235,7 @@ func (r ModelRef) Designations() []Designation {
 			Value:    r.Format(SchemeCanonical),
 			Scheme:   SchemeCanonical,
 			Provider: r.Provider,
-			Rating:   AcceptabilityAdmitted,
+			Rating:   AcceptabilityPreferred,
 		},
 		{
 			Value:    r.Format(SchemeHuggingFace),
@@ -182,13 +243,16 @@ func (r ModelRef) Designations() []Designation {
 			Provider: r.Provider,
 			Rating:   AcceptabilityAdmitted,
 		},
-		{
-			Value:    r.Format(SchemePURL),
+	}
+	if purl := r.Format(SchemePURL); purl != "" {
+		out = append(out, Designation{
+			Value:    purl,
 			Scheme:   SchemePURL,
 			Provider: r.Provider,
 			Rating:   AcceptabilityAdmitted,
-		},
+		})
 	}
+	return out
 }
 
 // ProvidersForFamily returns the set of providers that host models with

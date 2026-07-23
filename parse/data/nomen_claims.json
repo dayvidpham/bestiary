@@ -1,0 +1,42 @@
+{
+  "_comment": "Curated third-party NAMING CLAIMS: naming assertions a lab or vendor publishes that bestiary cannot derive mechanically from the catalog (aliases, HuggingFace repo mappings, purls). This is the claim INPUTS layer of the naming stack: the parse/data decomposition files are decomposition CONFIG, this file is claim INPUTS, and the minted Nomina are the queryable OUTPUT records. Each claim carries source_url (WHO asserts the naming — a claimant URL) DISTINCT from source_id (WHICH ingest we read it from — a DataSourceID FK). scheme defaults to 'alias'; status defaults to 'admitted' (a third-party claim is admitted, never preferred — only the canonical key is preferred); source_id defaults to 'curated' (bestiary read the claim from THIS committed curation file, not from models.dev or Ollama — the honest ingest provenance, distinct from the claimant source_url). Graceful-degrade at runtime, LOUD at codegen (see nomen_claims.go). ARCHIVE POLICY: every source_url in this file MUST be an archive.org snapshot URL (https://web.archive.org/web/<timestamp>/<original-url>), snapshotted at the time the claim is created — not the live claimant page. A claim is durable evidence of what a lab published, and live model cards and docs pages are edited and deleted without notice, so a live URL silently stops attesting the claim it was cited for. The snapshot is self-describing: the original claimant URL is recoverable verbatim from the tail of the snapshot URL, so nothing is lost and no second field is needed. When adding a claim: capture the claimant page at web.archive.org first, verify the snapshot loads, then paste that URL here.",
+  "schema_version": 1,
+  "_comment_huggingface": "The 'huggingface' claims record the Hub org/repo path an open-weight entity's WEIGHTS live at — an ENTITY-level fact, independent of which of its providers is serving it (an entity served by 29 providers still has exactly one Hub home). Each value is a real repo path present verbatim among the catalog's raw model ids, not a guess. Curated > mechanical applies here too: a claim states the entity the repo actually names, which can be more precise than the entity bestiary's mechanical decomposition assigns to the huggingface-provider row itself (e.g. 'deepseek-ai/DeepSeek-V3.2' decomposes to the coarse 'deepseek' bucket, while the repo names the 'deepseek/v3.2' entity every other provider serves).",
+  "claims": [
+    {
+      "value": "grok-beta",
+      "scheme": "alias",
+      "status": "admitted",
+      "resolves_to": { "family": "grok", "version": "4.20", "modifier": ["reasoning"] },
+      "source_url": "https://web.archive.org/web/20260204041847/https://docs.x.ai/docs/models"
+    },
+    {
+      "value": "meta-llama/Llama-4-Scout-17B-16E-Instruct",
+      "scheme": "huggingface",
+      "status": "admitted",
+      "resolves_to": { "family": "llama", "variant": "scout", "version": "4", "param_size": "17b-16e", "modifier": ["instruct"] },
+      "source_url": "https://web.archive.org/web/20260715030540/https://huggingface.co/meta-llama/Llama-4-Scout-17B-16E-Instruct"
+    },
+    {
+      "value": "meta-llama/Llama-3.3-70B-Instruct",
+      "scheme": "huggingface",
+      "status": "admitted",
+      "resolves_to": { "family": "llama", "version": "3.3", "param_size": "70b", "modifier": ["instruct"] },
+      "source_url": "https://web.archive.org/web/20260718133241/https://huggingface.co/meta-llama/Llama-3.3-70B-Instruct"
+    },
+    {
+      "value": "Qwen/Qwen3-Coder-480B-A35B-Instruct",
+      "scheme": "huggingface",
+      "status": "admitted",
+      "resolves_to": { "family": "qwen", "variant": "coder", "version": "3", "param_size": "480b-a35b", "modifier": ["instruct"] },
+      "source_url": "https://web.archive.org/web/20260715051853/https://huggingface.co/Qwen/Qwen3-Coder-480B-A35B-Instruct"
+    },
+    {
+      "value": "deepseek-ai/DeepSeek-V3.2",
+      "scheme": "huggingface",
+      "status": "admitted",
+      "resolves_to": { "family": "deepseek", "variant": "v3.2" },
+      "source_url": "https://web.archive.org/web/20260717140422/https://huggingface.co/deepseek-ai/DeepSeek-V3.2"
+    }
+  ]
+}

@@ -220,13 +220,23 @@ func TestEntityModifiers(t *testing.T) {
 	if got := bestiary.EntityModifiers([]string{"", ""}, "llama"); got != nil {
 		t.Errorf("EntityModifiers(all-empty) = %v, want nil", got)
 	}
-	// ATTRIBUTE-class tokens are dropped from the identity projection: "thinking"
-	// is attribute, "turbo" is identity (global default; kimi has no override), so
-	// the de-duplicated projection keeps only "turbo".
+	// ATTRIBUTE-class tokens are dropped from the identity projection. Both tokens
+	// here are attribute-class for kimi — "thinking" globally, and "turbo" by the
+	// curated per-family demotion (moonshot serves kimi-k2-thinking and
+	// kimi-k2-thinking-turbo from the identical HuggingFace repo, so turbo names a
+	// serving speed tier, not a different artifact) — so the projection is EMPTY.
+	//
+	// This case previously used kimi as a family with no turbo override and expected
+	// ["turbo"]; it was re-cut when the demotion landed. The identity arm it used to
+	// carry is preserved below on gpt, where turbo genuinely IS identity
+	// (gpt-4-turbo is a distinct artifact from gpt-4).
+	if got := bestiary.EntityModifiers([]string{"turbo", "thinking", "turbo"}, "gpt"); len(got) != 1 || got[0] != "turbo" {
+		t.Fatalf("EntityModifiers([turbo thinking turbo], gpt) = %v, want [turbo] — turbo is identity for gpt", got)
+	}
 	got := bestiary.EntityModifiers([]string{"turbo", "thinking", "turbo"}, "kimi")
-	want := []string{"turbo"}
+	var want []string
 	if len(got) != len(want) {
-		t.Fatalf("EntityModifiers dedup/class-filter = %v, want %v", got, want)
+		t.Fatalf("EntityModifiers dedup/class-filter = %v, want %v (both tokens are attribute-class for kimi)", got, want)
 	}
 	for i := range want {
 		if got[i] != want[i] {
@@ -234,10 +244,18 @@ func TestEntityModifiers(t *testing.T) {
 		}
 	}
 	// The projection feeds EntityRef.String(): keying on the projected mods must
-	// match rendering them directly. "thinking" never reaches the key.
+	// match rendering them directly. For kimi BOTH tokens are attribute-class, so the
+	// key carries no brace segment at all — the empty projection must render as a
+	// bare key rather than an empty "{}".
 	ref := bestiary.EntityRef{Family: "kimi", Version: "k2", Modifier: got}
-	if ref.String() != "kimi@k2{turbo}" {
-		t.Errorf("EntityRef keyed on EntityModifiers = %q, want %q", ref.String(), "kimi@k2{turbo}")
+	if ref.String() != "kimi@k2" {
+		t.Errorf("EntityRef keyed on EntityModifiers = %q, want %q", ref.String(), "kimi@k2")
+	}
+	// The identity arm of the same contract, on a family where turbo IS identity:
+	// the projected token reaches the key and renders in the brace segment.
+	gptRef := bestiary.EntityRef{Family: "gpt", Version: "4", Modifier: bestiary.EntityModifiers([]string{"turbo", "thinking"}, "gpt")}
+	if gptRef.String() != "gpt@4{turbo}" {
+		t.Errorf("EntityRef keyed on EntityModifiers = %q, want %q", gptRef.String(), "gpt@4{turbo}")
 	}
 }
 
@@ -311,8 +329,12 @@ func TestEntityRef_NoMigrationDrift(t *testing.T) {
 
 	// (a) Census literals — pinned to the full-bulk re-key snapshot. A change here is
 	// an intentional re-key event, not incidental drift.
+	// 336 → 323 with the dot-lost version repair and the 1t param-size routing: the
+	// dot-lost merges fold sized qwen entities (qwen@2#Nb{instruct} → qwen@2.5#Nb{instruct},
+	// etc.) into their dotted siblings (net −N sized catalog entities), while 1t routing
+	// adds a handful of #1t entities (ling#1t, ring#1t) — the merges dominate, net −13.
 	const (
-		wantSizedCatalog    = 335
+		wantSizedCatalog    = 319 // 323 -> 319: 2026-07-23 refresh, four sized rows left upstream
 		wantSizedStandalone = 4
 	)
 
@@ -323,6 +345,7 @@ func TestEntityRef_NoMigrationDrift(t *testing.T) {
 		"qwen@3#30b-a3b",                  // active MoE
 		"wizardlm@2#8x22b",                // NxM MoE (ExpertCount + PerExpertParams, no total)
 		"llama/scout@4#17b-16e{instruct}", // count-suffixed MoE via the curated llama-4 pin (@4 after the version unification)
+		"command/r7b#7b",                  // Cohere Command R7B dual-carry: variant r7b kept whole + 7b as ParamSize
 	}
 	keyIndex := make(map[string]bestiary.Entity, len(entities))
 	for _, e := range entities {
@@ -393,11 +416,13 @@ func TestEntityRef_NoMigrationDrift(t *testing.T) {
 // literal-substring leg ("llama4"/"llama-4") — must key its FULL expert-shape size:
 // scout = 17b-16e, maverick = 17b-128e; never a bare 17b and never unsized.
 //
-// Neither leg alone is sufficient, which is the whole point: the maverick spellings
-// key llama@4 with an EMPTY variant ("maverick" is not a curated family member), so
-// they ESCAPE the (variant scout|maverick) decomposition leg and are reached only by
-// the substring sweep plus their explicit curated pins. A purely-decomposition census
-// would silently leave those bare #17b — this guard fails if that regresses. (The
+// Neither leg alone is sufficient, which is the whole point: a spelling that glues the
+// generation into the family token ("meta.llama4-maverick-…") or leads with a provider
+// token ("groq-llama-4-maverick-…") puts the member name out of the mechanical scan's
+// reach, so it decomposes with an EMPTY variant unless an exact-ID pin supplies one —
+// escaping the (variant scout|maverick) decomposition leg and reachable only by the
+// substring sweep plus those curated pins. A purely-decomposition census would silently
+// leave such an ID bare #17b — this guard fails if that regresses. (The
 // version-less scout/maverick spellings now carry a curated @4 version pin, so they no
 // longer split on version presence; the size pins guarded here are independent of that
 // and unchanged.)
@@ -438,9 +463,9 @@ func TestParamSizePins_Llama4CensusBothLegs(t *testing.T) {
 // TestLlama4VersionPins_UnifiedEntityMembership directly asserts that every
 // version-less llama-4 scout/maverick spelling carrying a curated @4 version pin
 // (the exact-ID overrides in parse.go) lands INSIDE the unified @4 entity —
-// llama/scout@4#17b-16e{instruct} for scout, llama@4#17b-128e{instruct} for
-// maverick (maverick is not a curated llama variant member, so its official
-// entity carries no /maverick segment). The sized-entity census literal fences
+// llama/scout@4#17b-16e{instruct} for scout, llama/maverick@4#17b-128e{instruct}
+// for maverick (both are curated llama variant members, so both keep their name
+// in the key). The sized-entity census literal fences
 // this only indirectly (a dropped pin shifts a count somewhere); this test names
 // the exact spelling that regressed. Membership is checked by EXACT instance-ID
 // match, not substring, because the dotted Bedrock spellings nest
@@ -469,6 +494,7 @@ func TestLlama4VersionPins_UnifiedEntityMembership(t *testing.T) {
 			if got := ent.Ref.String(); got != c.Expected.WantKey {
 				t.Fatalf("entity key = %q, want %q", got, c.Expected.WantKey)
 			}
+			requireEntityProjections(t, ent, c.Expected.WantKey)
 			for _, id := range c.Expected.IDs {
 				if !holdsExact(ent, id) {
 					t.Errorf("pinned spelling %q is not an instance of %q\n"+

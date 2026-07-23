@@ -85,58 +85,41 @@ func TestFamily_IsKnown(t *testing.T) {
 	})
 }
 
-// TestFamily_String verifies that String() returns the underlying string value.
+// TestFamily_String verifies that String() returns the underlying string value,
+// over testdata/enum/family_string_corpus.json.
 func TestFamily_String(t *testing.T) {
-	cases := []struct {
-		f    bestiary.Family
-		want string
-	}{
-		{bestiary.FamilyClaude, "claude"},
-		{bestiary.FamilyGemini, "gemini"},
-		{bestiary.FamilyGPT, "gpt"},
-		{bestiary.FamilyLlama, "llama"},
-		{bestiary.Family("custom-value"), "custom-value"},
-		{bestiary.Family(""), ""},
-	}
-	for _, tc := range cases {
-		if got := tc.f.String(); got != tc.want {
-			t.Errorf("Family(%q).String() = %q, want %q", tc.f, got, tc.want)
-		}
-	}
+	corpus := loadEnumStringCorpus(t, enumFamilyStringCorpusJSON, 6)
+	requireInputCoverage(t, corpus, map[string]string{
+		string(bestiary.FamilyClaude): "claude",
+		"":                            "",
+	})
+	runEnumStringCorpus(t, corpus, func(_ *testing.T, in string) string {
+		return bestiary.Family(in).String()
+	})
 }
 
-// TestFamily_RoundTrip verifies that MarshalText → UnmarshalText is idempotent
-// for both known and unknown Family values.
+// TestFamily_RoundTrip verifies that MarshalText → UnmarshalText is idempotent for
+// both known and unknown Family values, over
+// testdata/enum/family_roundtrip_corpus.json. The corpus's expected value is the
+// input, so a case asserts the round trip is the identity.
 func TestFamily_RoundTrip(t *testing.T) {
-	cases := []struct {
-		name   string
-		family bestiary.Family
-	}{
-		{"claude", bestiary.FamilyClaude},
-		{"gemini", bestiary.FamilyGemini},
-		{"gpt", bestiary.FamilyGPT},
-		{"llama", bestiary.FamilyLlama},
-		{"mistral", bestiary.FamilyMistral},
-		{"deepseek", bestiary.FamilyDeepSeek},
-		// Unknown family: permissive contract must round-trip unknown values.
-		{"unknown", bestiary.Family("totally-unknown-family-xyz")},
-	}
-	for _, tc := range cases {
-		tc := tc
-		t.Run(tc.name, func(t *testing.T) {
-			b, err := tc.family.MarshalText()
-			if err != nil {
-				t.Fatalf("Family(%q).MarshalText() error = %v", tc.family, err)
-			}
-			var got bestiary.Family
-			if err := got.UnmarshalText(b); err != nil {
-				t.Fatalf("Family.UnmarshalText(%q) error = %v", b, err)
-			}
-			if got != tc.family {
-				t.Errorf("round-trip: got %q, want %q", got, tc.family)
-			}
-		})
-	}
+	corpus := loadEnumStringCorpus(t, enumFamilyRoundTripCorpusJSON, 7)
+	requireInputCoverage(t, corpus, map[string]string{
+		string(bestiary.FamilyClaude): "claude",
+		"totally-unknown-family-xyz":  "totally-unknown-family-xyz",
+	})
+	runEnumStringCorpus(t, corpus, func(t *testing.T, in string) string {
+		family := bestiary.Family(in)
+		b, err := family.MarshalText()
+		if err != nil {
+			t.Fatalf("Family(%q).MarshalText() error = %v", family, err)
+		}
+		var got bestiary.Family
+		if err := got.UnmarshalText(b); err != nil {
+			t.Fatalf("Family.UnmarshalText(%q) error = %v", b, err)
+		}
+		return string(got)
+	})
 }
 
 // TestFamily_UnmarshalUnknownAccepted verifies the permissive contract:
@@ -189,34 +172,15 @@ func TestFamily_UnmarshalText_NilReceiver(t *testing.T) {
 // Fix #4: "For now, we can just determine the canonical providers
 // for the most popular models and stub the rest with a placeholder value."
 func TestFamily_CanonicalProvider_WellKnown(t *testing.T) {
-	cases := []struct {
-		family   bestiary.Family
-		wantProv bestiary.Provider
-	}{
-		{bestiary.FamilyClaude, bestiary.ProviderAnthropic},
-		{bestiary.FamilyClaudeOpus, bestiary.ProviderAnthropic},
-		{bestiary.FamilyClaudeSonnet, bestiary.ProviderAnthropic},
-		{bestiary.FamilyClaudeHaiku, bestiary.ProviderAnthropic},
-		{bestiary.FamilyGemini, bestiary.ProviderGoogle},
-		{bestiary.FamilyGemma, bestiary.ProviderGoogle},
-		{bestiary.FamilyGPT, bestiary.ProviderOpenAI},
-		{bestiary.FamilyO, bestiary.ProviderOpenAI}, // o1, o3, o4 carry Family="o"
-		{bestiary.FamilyLlama, bestiary.ProviderLocal},
-		{bestiary.FamilyMistral, bestiary.ProviderMistral},
-		{bestiary.FamilyDeepSeek, bestiary.ProviderDeepSeek},
-		{bestiary.FamilyQwen, bestiary.ProviderAlibaba},
-	}
-
-	for _, tc := range cases {
-		tc := tc
-		t.Run(string(tc.family), func(t *testing.T) {
-			got := tc.family.CanonicalProvider()
-			if got != tc.wantProv {
-				t.Errorf("Family(%q).CanonicalProvider() = %q, want %q",
-					tc.family, got, tc.wantProv)
-			}
-		})
-	}
+	corpus := loadEnumStringCorpus(t, enumFamilyCanonicalProviderCorpusJSON, 12)
+	requireInputCoverage(t, corpus, map[string]string{
+		string(bestiary.FamilyO):     string(bestiary.ProviderOpenAI),
+		string(bestiary.FamilyLlama): string(bestiary.ProviderLocal),
+		string(bestiary.FamilyQwen):  string(bestiary.ProviderAlibaba),
+	})
+	runEnumStringCorpus(t, corpus, func(_ *testing.T, in string) string {
+		return string(bestiary.Family(in).CanonicalProvider())
+	})
 }
 
 // TestFamily_CanonicalProvider_UnknownReturnsEmpty verifies that unknown families

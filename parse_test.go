@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/dayvidpham/bestiary"
+	"github.com/dayvidpham/bestiary/testcase"
 )
 
 // ----------------------------------------------------------------------------
@@ -384,11 +385,15 @@ func TestParseFamilyWithVersion_BackwardCompat(t *testing.T) {
 func TestInferFamilyFromID_Variant(t *testing.T) {
 	t.Parallel()
 
-	corpus := loadParseCorpus[providerIDInput, familyVersionExpected](t, inferFamilyVariantCorpusJSON, 2)
+	corpus := loadParseCorpus[providerIDInput, familyVersionExpected](t, inferFamilyVariantCorpusJSON, 4)
 	requireInputCoverage(t, corpus, map[providerIDInput]familyVersionExpected{
 		// the empty-raw-family path must decompose the full tuple, not first-token.
 		{ID: "claude-opus-4-5-20251101", Provider: "nano-gpt"}: {Family: "claude", Variant: "opus", Version: "4.5"},
 		{ID: "claude-opus-4-6", Provider: "some-provider"}:     {Family: "claude", Variant: "opus", Version: "4.6"},
+		// empty-raw version-before-variant forms must recover version 3.5 (both
+		// dotted "3.5-haiku" and dashed "3-5-haiku" spellings), not drop it.
+		{ID: "claude-3.5-haiku", Provider: "some-provider"}: {Family: "claude", Variant: "haiku", Version: "3.5"},
+		{ID: "claude-3-5-haiku", Provider: "some-provider"}: {Family: "claude", Variant: "haiku", Version: "3.5"},
 	})
 	for _, c := range corpus.Cases {
 		t.Run(c.Name, func(t *testing.T) {
@@ -780,67 +785,42 @@ func TestParseFamilyDetailed_UnknownSuffixOverflow(t *testing.T) {
 	// This subtest is LIVE (not skipped). ParseFamilyWithVersion Step-5 bounded
 	// reorder prevents the pure-fallback from absorbing all trailing tokens, making
 	// ReasonUnknownSuffixOverflow reachable for the claude-opus-4-1-extra-stuff-zen fixture.
-	unknownTrailingWithOverflow := []struct {
-		rawFamily bestiary.Family
-		id        bestiary.ModelID
-		provider  bestiary.Provider
-		name      string
-	}{
-		{
-			name:      "UnknownSuffixOverflow_PositiveCase",
-			rawFamily: "claude-opus-4-1-extra-stuff-zen",
-			id:        "claude-opus-4-1-extra-stuff-zen",
-			provider:  "anthropic",
-		},
-	}
-	for _, tc := range unknownTrailingWithOverflow {
-		t.Run(tc.name, func(t *testing.T) {
+	// The reachability cases are a CAPTURE corpus (testdata/parse/unknown_suffix_overflow_corpus.json):
+	// the positive row is the synthetic input that reaches the >2 unaccounted-token
+	// threshold with an unknown trailing token, and the two must-fail rows are the
+	// negative controls pinning the conservative boundary (an unknown trailing token
+	// alone is NOT sufficient). Acceptance is the ParseFailure the parser RETURNS.
+	corpus := loadParseCorpus[suffixOverflowInput, suffixOverflowExpected](t, parseUnknownSuffixOverflowCorpusJSON, 3)
+	requireNameCoverage(t, corpus,
+		"UnknownSuffixOverflow_PositiveCase",
+		"no-overflow-gpt-4-zen",
+		"no-overflow-claude-opus-foobar",
+	)
+	for _, c := range corpus.Cases {
+		t.Run(c.Name, func(t *testing.T) {
 			t.Parallel()
-			// ParseFamilyWithVersion Step-5 bounded reorder decomposes
-			// rawFamily="claude-opus-4-1-extra-stuff-zen" to (claude, opus, 4.1) via hyphen-version;
-			// "extra-stuff-zen" are unaccounted tokens (>2 threshold) → detectSuffixOverflow fires
-			// → "zen" is not in pd.modifiers → ReasonUnknownSuffixOverflow.
-			_, _, _, _, failure := bestiary.ParseFamilyDetailed(tc.rawFamily, tc.id, tc.provider)
-			if failure == nil {
-				t.Errorf("ParseFamilyDetailed(%q, %q): expected ParseFailure with Reason=%q, got nil\n"+
-					"  What: ReasonUnknownSuffixOverflow was not emitted\n"+
-					"  Why: ParseFamilyWithVersion Step-5 bounded reorder must decompose\n"+
-					"       the input so that 'extra-stuff-zen' tokens are unaccounted (>2 threshold)\n"+
-					"  How to fix: verify ParseFamilyWithVersion returns (claude,opus,4.1) not raw passthrough",
-					tc.rawFamily, tc.id, bestiary.ReasonUnknownSuffixOverflow)
+			_, _, _, _, failure := bestiary.ParseFamilyDetailed(
+				bestiary.Family(c.Input.RawFamily), bestiary.ModelID(c.Input.ID), bestiary.Provider(c.Input.Provider))
+			if c.Classification == testcase.MustFail {
+				// Negative control: the overflow reason must NOT fire.
+				if failure != nil && string(failure.Reason) == string(bestiary.ReasonUnknownSuffixOverflow) {
+					t.Errorf("ParseFamilyDetailed(%q, %q): got ReasonUnknownSuffixOverflow; "+
+						"this case must not fire Mode 2 (trailing token is unknown but there is no overflow)",
+						c.Input.RawFamily, c.Input.ID)
+				}
 				return
 			}
-			if failure.Reason != bestiary.ReasonUnknownSuffixOverflow {
-				t.Errorf("ParseFamilyDetailed(%q, %q): failure.Reason = %q, want %q\n"+
-					"  What: wrong failure reason — expected UnknownSuffixOverflow\n"+
-					"  Why: trailing token 'zen' is not in pd.modifiers but overflow was detected",
-					tc.rawFamily, tc.id, failure.Reason, bestiary.ReasonUnknownSuffixOverflow)
+			if failure == nil {
+				t.Fatalf("ParseFamilyDetailed(%q, %q): expected a ParseFailure with Reason=%q, got nil\n"+
+					"  What: ReasonUnknownSuffixOverflow was not emitted\n"+
+					"  Why: ParseFamilyWithVersion Step-5 bounded reorder must decompose the input so the\n"+
+					"       trailing tokens are unaccounted (>2 threshold)\n"+
+					"  How to fix: verify ParseFamilyWithVersion returns (claude,opus,4.1), not a raw passthrough",
+					c.Input.RawFamily, c.Input.ID, c.Expected.Reason)
 			}
-		})
-	}
-
-	// Negative: unknown suffix token does NOT fire Mode 2 unless detectSuffixOverflow
-	// also fires. These cases document the boundary: an unknown trailing token alone
-	// is NOT sufficient to trigger Mode 2; the detectSuffixOverflow threshold (>2 extra
-	// tokens) must also be met. This means the current Mode 2 detection is conservative:
-	// novel-but-semantic modifiers like "-zen" go unreported unless there is a broader
-	// overflow pattern. Extend the allowlist to catch specific new modifiers.
-	unknownTrailingNotOverflow := []struct {
-		rawFamily bestiary.Family
-		id        bestiary.ModelID
-		provider  bestiary.Provider
-	}{
-		{rawFamily: "gpt-4", id: "gpt-4-zen", provider: "openai"},
-		{rawFamily: "claude-opus", id: "claude-opus-foobar", provider: "anthropic"},
-	}
-	for _, tc := range unknownTrailingNotOverflow {
-		t.Run("no-overflow/"+string(tc.id), func(t *testing.T) {
-			t.Parallel()
-			_, _, _, _, failure := bestiary.ParseFamilyDetailed(tc.rawFamily, tc.id, tc.provider)
-			if failure != nil && failure.Reason == bestiary.ReasonUnknownSuffixOverflow {
-				t.Errorf("ParseFamilyDetailed(%q, %q): got ReasonUnknownSuffixOverflow; "+
-					"this case should not fire Mode 2 (trailing token is unknown but no overflow)",
-					tc.rawFamily, tc.id)
+			if string(failure.Reason) != c.Expected.Reason {
+				t.Errorf("ParseFamilyDetailed(%q, %q): failure.Reason = %q, want %q",
+					c.Input.RawFamily, c.Input.ID, failure.Reason, c.Expected.Reason)
 			}
 		})
 	}
@@ -3418,7 +3398,7 @@ func TestCrossProviderConvergences(t *testing.T) {
 // hy3 bare-gen). Each is non-lossy under the hardened gate (cat-(c)=0). command-a-reasoning is
 // DEFERRED to the systematic modifier ruling (reasoning = borderline-capability, modifier-vs-variant judgment).
 func TestTier1StragglerConvergences(t *testing.T) {
-	corpus := loadParseCorpus[rawIDInput, fvvmExpected](t, tier1StragglerConvergencesCorpusJSON, 18)
+	corpus := loadParseCorpus[rawIDInput, fvvmExpected](t, tier1StragglerConvergencesCorpusJSON, 20)
 	requireInputCoverage(t, corpus, map[rawIDInput]fvvmExpected{
 		// deepseek chat product-line member, version preserved.
 		{Raw: "", ID: "deepseek/deepseek-chat-v3.1"}: {Family: "deepseek", Variant: "chat", Version: "3.1", Mod: ""},
@@ -3426,6 +3406,162 @@ func TestTier1StragglerConvergences(t *testing.T) {
 		{Raw: "text-embedding", ID: "Qwen/Qwen3-Embedding-8B"}: {Family: "qwen", Variant: "embedding", Version: "3", Mod: ""},
 		// GUARD: OpenAI text-embedding-3* stays family text-embedding (untouched).
 		{Raw: "text-embedding", ID: "openai/text-embedding-3-large"}: {Family: "text-embedding", Variant: "large", Version: "3", Mod: ""},
+		// cohere command-r7b-12-2024: "r7b" is Cohere's distinct marketed variant (kept
+		// whole; the 7b is carried separately as ParamSize), and the trailing MM-YYYY
+		// group "12-2024" is a date, so Version stays empty (never leaks the month "12").
+		{Raw: "command-r", ID: "cohere/command-r7b-12-2024"}: {Family: "command", Variant: "r7b", Version: "", Mod: ""},
+		// negative controls: the r7b pin must not bleed into plain R / R+ siblings.
+		{Raw: "command-r", ID: "command-r-08-2024"}:           {Family: "command", Variant: "r", Version: "", Mod: ""},
+		{Raw: "command-r-plus", ID: "command-r-plus-08-2024"}: {Family: "command", Variant: "r-plus", Version: "", Mod: ""},
+	})
+	runFamilyDetailedTupleCorpus(t, corpus)
+}
+
+// TestAzureServingHostCapture pins the serving-host decomposition of the NanoGPT
+// azure-* backend-routed OpenAI models: the curated "azure-" host prefix is
+// stripped for decomposition (DetectHost, ID-prefix-only) so the resulting
+// (family,variant,version,mod) tuple is host-independent and converges with the
+// plainly-served model. The three tuples exercise the three distinct shapes:
+// gpt@4{turbo} (version + modifier), gpt/4o (4o as VARIANT not version), and
+// gpt/4o{mini} (variant + modifier). The provider-independence negative control
+// (the strip never consults the Provider field) lives in host_detect_test.go.
+func TestAzureServingHostCapture(t *testing.T) {
+	corpus := loadParseCorpus[rawIDInput, fvvmExpected](t, azureServingHostCorpusJSON, 3)
+	requireInputCoverage(t, corpus, map[rawIDInput]fvvmExpected{
+		{Raw: "", ID: "azure-gpt-4-turbo"}: {Family: "gpt", Variant: "", Version: "4", Mod: "turbo"},
+		// 4o is an alphanumeric line designator (VARIANT), never a dotted version.
+		{Raw: "", ID: "azure-gpt-4o"}:      {Family: "gpt", Variant: "4o", Version: "", Mod: ""},
+		{Raw: "", ID: "azure-gpt-4o-mini"}: {Family: "gpt", Variant: "4o", Version: "", Mod: "mini"},
+	})
+	runFamilyDetailedTupleCorpus(t, corpus)
+}
+
+// TestParse_FamilyO_OverCapture is the fence for the family-"o" over-capture. vercel
+// labels a swathe of unrelated models with the upstream raw_family "o" — the OpenAI
+// o-series family — so Alibaba's Wan video models, OpenAI's TTS speech models,
+// quiverai's arrow and Cohere's rerankers all decomposed into family "o" and shared
+// one junk-bucket entity with the real o-series.
+//
+// The corpus carries BOTH directions. The slash-form o-series ids are the load-bearing
+// negative controls (they must keep resolving to gpt/o); the hyphen-glued spellings are
+// CONVERGENCE cases — the dashed openai-o1 / openai-o3-mini once stranded in a junk
+// family "o", now canonicalized to the SAME gpt/o identity as the slash spelling, so no
+// o-series id keeps family "o" any longer. A fix that emptied the bucket by evicting the
+// slash-form occupants, or one that left the dashed spelling stranded, fails here.
+func TestParse_FamilyO_OverCapture(t *testing.T) {
+	corpus := loadParseCorpus[rawIDInput, fvvmExpected](t, familyOOverCaptureCorpusJSON, 20)
+	requireInputCoverage(t, corpus, map[rawIDInput]fvvmExpected{
+		// one over-capture per correcting mechanism
+		{Raw: "o", ID: "alibaba/wan-v2.6-i2v"}: {Family: "wan", Variant: "v2.6-i2v"},
+		{Raw: "o", ID: "cohere/rerank-v3.5"}:   {Family: "rerank", Variant: "v3.5"},
+		{Raw: "o", ID: "cohere/rerank-v4-pro"}: {Family: "rerank", Mod: "pro"},
+		// the slash-form negative control, and the dashed spellings now CONVERGING on it
+		{Raw: "o", ID: "openai/o1"}:           {Family: "gpt", Variant: "o", Version: "1"},
+		{Raw: "o", ID: "openai-o1"}:           {Family: "gpt", Variant: "o", Version: "1"},
+		{Raw: "o-mini", ID: "openai-o3-mini"}: {Family: "gpt", Variant: "o", Version: "3", Mod: "mini"},
+	})
+	runFamilyDetailedTupleCorpus(t, corpus)
+}
+
+// TestMetaLlamaNoSlashCapture pins the no-slash doubled-vendor fold (the scoped
+// "meta-llama-" prefix strip): the eight attested no-slash meta-llama IDs
+// (dotted/dashed/underscored version spellings) all decompose NATIVELY to family
+// llama (never "meta"), and the three-spellings-one-entity convergence rows show
+// that the slash-org doubled-vendor form, the slash-org Llama-only form, and the
+// no-slash form all fold to the SAME (llama,”,3.1,instruct) tuple. The
+// underscore spelling ("3_3") is a pinned documented residual: the family fold
+// holds but the underscore-glued version is dropped.
+func TestMetaLlamaNoSlashCapture(t *testing.T) {
+	corpus := loadParseCorpus[rawIDInput, fvvmExpected](t, metaLlamaNoSlashCorpusJSON, 11)
+	requireInputCoverage(t, corpus, map[rawIDInput]fvvmExpected{
+		// dashed spelling recovers 3.1; dotted spelling too.
+		{Raw: "", ID: "meta-llama-3-1-8b-instruct"}: {Family: "llama", Variant: "", Version: "3.1", Mod: "instruct"},
+		{Raw: "", ID: "meta-llama-3.1-8b-instruct"}: {Family: "llama", Variant: "", Version: "3.1", Mod: "instruct"},
+		// underscore spelling: documented residual, version drops but family folds.
+		{Raw: "", ID: "meta-llama-3_3-70b-instruct"}: {Family: "llama", Variant: "", Version: "", Mod: "instruct"},
+		// three-spellings-one-entity convergence (raw-populated "llama").
+		{Raw: "llama", ID: "meta-llama/Meta-Llama-3.1-8B-Instruct"}: {Family: "llama", Variant: "", Version: "3.1", Mod: "instruct"},
+		{Raw: "llama", ID: "meta-llama/Llama-3.1-8B-Instruct"}:      {Family: "llama", Variant: "", Version: "3.1", Mod: "instruct"},
+		{Raw: "llama", ID: "meta-llama-3.1-8b-instruct"}:            {Family: "llama", Variant: "", Version: "3.1", Mod: "instruct"},
+	})
+	runFamilyDetailedTupleCorpus(t, corpus)
+}
+
+// TestNamespaceSuffixTransparencyCapture pins FULL namespace/suffix convergence:
+// every dotted AWS Bedrock cross-region form
+// ("<region>.anthropic.claude-sonnet-4-5-20250929-v1:0" for us/eu/au/jp/global, plus
+// the bare ":0" profile-index spelling) decomposes to the SAME (claude,sonnet,4.5)
+// tuple as the plainly-served sibling — version INCLUDED — so all key to the one
+// entity claude/sonnet@4.5. The dotted region.vendor. prefix and the -v1:0 / :0
+// profile tag are routing metadata seen through by stripBedrockProfile before
+// version recovery; the region itself is captured as a per-instance attribute (see
+// TestRegionCapture), never in the key.
+func TestNamespaceSuffixTransparencyCapture(t *testing.T) {
+	corpus := loadParseCorpus[rawIDInput, fvvmExpected](t, namespaceSuffixTransparencyCorpusJSON, 7)
+	requireInputCoverage(t, corpus, map[rawIDInput]fvvmExpected{
+		{Raw: "claude-sonnet", ID: "us.anthropic.claude-sonnet-4-5-20250929-v1:0"}:     {Family: "claude", Variant: "sonnet", Version: "4.5", Mod: ""},
+		{Raw: "claude-sonnet", ID: "eu.anthropic.claude-sonnet-4-5-20250929-v1:0"}:     {Family: "claude", Variant: "sonnet", Version: "4.5", Mod: ""},
+		{Raw: "claude-sonnet", ID: "au.anthropic.claude-sonnet-4-5-20250929-v1:0"}:     {Family: "claude", Variant: "sonnet", Version: "4.5", Mod: ""},
+		{Raw: "claude-sonnet", ID: "jp.anthropic.claude-sonnet-4-5-20250929-v1:0"}:     {Family: "claude", Variant: "sonnet", Version: "4.5", Mod: ""},
+		{Raw: "claude-sonnet", ID: "global.anthropic.claude-sonnet-4-5-20250929-v1:0"}: {Family: "claude", Variant: "sonnet", Version: "4.5", Mod: ""},
+		// bare :0 profile index (no -v1) is transparent; plain sibling is the target.
+		{Raw: "claude-sonnet", ID: "us.anthropic.claude-sonnet-4-5-20250929:0"}: {Family: "claude", Variant: "sonnet", Version: "4.5", Mod: ""},
+		{Raw: "claude-sonnet", ID: "claude-sonnet-4-5-20250929"}:                {Family: "claude", Variant: "sonnet", Version: "4.5", Mod: ""},
+	})
+	runFamilyDetailedTupleCorpus(t, corpus)
+}
+
+// TestRegionCapture pins the Region-attribute extraction (DetectRegion): each
+// attested AWS Bedrock region prefix surfaces its DISTINCT jurisdiction member
+// (us->RegionUS, eu->RegionEU, au->RegionAU, jp->RegionJP, global->RegionGlobal —
+// au and jp are their OWN members, NOT folded into APAC). The reserved "apac." scope
+// and the RegionOther+raw fail-safe ("ca.") are pinned synthetically (0 attested).
+// The negative controls confirm Region is orthogonal to Host (a nano-gpt azure-* host
+// id stays RegionNone) and closed to non-region dotted segments (openai.gpt-5-codex
+// stays RegionNone).
+func TestRegionCapture(t *testing.T) {
+	corpus := loadParseCorpus[string, regionExpected](t, regionCaptureCorpusJSON, 12)
+	requireInputCoverage(t, corpus, map[string]regionExpected{
+		"us.anthropic.claude-sonnet-4-5-20250929-v1:0": {Region: "us", RegionRaw: ""},
+		"eu.anthropic.claude-haiku-4-5-20251001-v1:0":  {Region: "eu", RegionRaw: ""},
+		// au and jp are DISTINCT jurisdictions, never APAC.
+		"au.anthropic.claude-sonnet-4-5-20250929-v1:0":    {Region: "au", RegionRaw: ""},
+		"jp.anthropic.claude-sonnet-4-5-20250929-v1:0":    {Region: "jp", RegionRaw: ""},
+		"global.anthropic.claude-haiku-4-5-20251001-v1:0": {Region: "global", RegionRaw: ""},
+		"us.meta.llama4-scout-17b-instruct-v1:0":          {Region: "us", RegionRaw: ""},
+		// reserved apac scope + RegionOther+raw fail-safe (synthetic).
+		"apac.anthropic.claude-sonnet-4-5-20250929-v1:0": {Region: "apac", RegionRaw: ""},
+		"ca.anthropic.claude-sonnet-4-5-20250929-v1:0":   {Region: "other", RegionRaw: "ca"},
+		// negative controls: host id and non-Bedrock dotted id both stay RegionNone.
+		"azure-gpt-4o":               {Region: "unspecified", RegionRaw: ""},
+		"openai.gpt-5-codex":         {Region: "unspecified", RegionRaw: ""},
+		"claude-sonnet-4-5-20250929": {Region: "unspecified", RegionRaw: ""},
+	})
+	runRegionCaptureCorpus(t, corpus)
+}
+
+// TestTextEmbeddingSoleVariantCapture pins the compound-family sole-variant case:
+// OpenAI's text-embedding-3-{small,large} keep the compound family "text-embedding"
+// (no reduction to a bare "text" over-capture), promote the sole trailing variant
+// (small/large), and recover version 3 between the family and the variant.
+func TestTextEmbeddingSoleVariantCapture(t *testing.T) {
+	corpus := loadParseCorpus[rawIDInput, fvvmExpected](t, textEmbeddingSoleVariantCorpusJSON, 2)
+	requireInputCoverage(t, corpus, map[rawIDInput]fvvmExpected{
+		{Raw: "text-embedding", ID: "text-embedding-3-small"}: {Family: "text-embedding", Variant: "small", Version: "3", Mod: ""},
+		{Raw: "text-embedding", ID: "text-embedding-3-large"}: {Family: "text-embedding", Variant: "large", Version: "3", Mod: ""},
+	})
+	runFamilyDetailedTupleCorpus(t, corpus)
+}
+
+// TestGrokDocumentedResidualCapture pins a documented residual: at HEAD
+// "grok-3-mini-fast-beta" decomposes to (grok,mini,3) with the mid-ID serving
+// tier "fast" and trailing stage "beta" dropped (GH#9 mid-ID engine territory).
+// The ID is absent from the current catalog; the row is pinned so a future mid-ID
+// extraction that recovers fast/beta surfaces as a deliberate change.
+func TestGrokDocumentedResidualCapture(t *testing.T) {
+	corpus := loadParseCorpus[rawIDInput, fvvmExpected](t, grokDocumentedResidualCorpusJSON, 1)
+	requireInputCoverage(t, corpus, map[rawIDInput]fvvmExpected{
+		{Raw: "grok", ID: "grok-3-mini-fast-beta"}: {Family: "grok", Variant: "mini", Version: "3", Mod: ""},
 	})
 	runFamilyDetailedTupleCorpus(t, corpus)
 }

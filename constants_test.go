@@ -7,115 +7,231 @@ import (
 	"github.com/dayvidpham/bestiary"
 )
 
-// TestModelConstants_Unique verifies that Model_* constant names are unique.
+// TestEntityConstants_Unique verifies runtime properties of the generated Entity__*
+// constants (the provider-agnostic successor to the removed Model__* surface).
 //
-// Uniqueness of constant NAMES is a compile-time Go guarantee (duplicate const
-// declarations are a compile error). This test verifies runtime properties of
-// the constants:
-//  1. ModelIDs() returns a non-empty slice (constants exist).
-//  2. No empty string values are present (each constant maps to a real model ID).
-//  3. The two-pass resolver ran (at least one constant is in the returned slice).
+// Uniqueness of constant NAMES is a compile-time Go guarantee (a duplicate const
+// declaration is a compile error) AND a codegen-time guarantee (the injectivity guard
+// fails the bake on any duplicate name). This test verifies the runtime shape:
+//  1. EntityKeys() returns a non-empty slice (constants exist).
+//  2. No empty-string values are present (each constant maps to a real entity key).
 //
-// Note: ModelID VALUES may be non-unique across the allModelConstants array
-// because the same model ID is often hosted by multiple providers, each of
-// which receives a distinct constant name (e.g. Model_Anthropic_Claude_Opus_4_20250514
-// and Model_OpenRouter_Claude_Opus_4_20250514 both have value "claude-opus-4-20250514").
-// That cross-provider hosting is intentional and correct.
-func TestModelConstants_Unique(t *testing.T) {
-	ids := bestiary.ModelIDs()
-	if len(ids) == 0 {
-		t.Fatal("ModelIDs() returned an empty slice; models_constants_gen.go may not have been generated")
+// Unlike the old Model__ surface, Entity__ VALUES are unique: one constant per entity,
+// no provider flavoring. The value-uniqueness itself is pinned in
+// TestEntityConstants_ValuesAreCanonicalKeys.
+func TestEntityConstants_Unique(t *testing.T) {
+	keys := bestiary.EntityKeys()
+	if len(keys) == 0 {
+		t.Fatal("EntityKeys() returned an empty slice; entities_constants_gen.go may not have been generated")
 	}
 
-	// Each constant value must be a non-empty string.
-	for i, id := range ids {
-		if id == "" {
-			t.Errorf("ModelIDs()[%d]: empty ModelID (should never occur in generated constants)", i)
+	for i, k := range keys {
+		if k == "" {
+			t.Errorf("EntityKeys()[%d]: empty entity key (should never occur in generated constants)", i)
 		}
 	}
 
-	// The full list must be large enough to be credible (regression guard).
-	// At time of writing (2026-04-25) the generated registry contains 4327 constants.
-	// A floor of 4000 catches silent codegen collapses while allowing natural growth.
-	const minExpected = 4000
-	if len(ids) < minExpected {
-		t.Errorf("ModelIDs() returned only %d constants; expected at least %d — "+
-			"re-run go generate ./... to regenerate models_constants_gen.go", len(ids), minExpected)
+	// Exact census: the hard-cut bake emits one Entity__ constant per registry entity.
+	// At this bake the registry holds 971 entities. This is an EXACT pin (not a floor):
+	// a change to the entity count is a deliberate act that must move this literal in the
+	// same commit, so a silent drift is caught.
+	//
+	// 975 → 971 when the curated cortecs pins landed: four phantom claude/opus@5…@8
+	// entities (one cortecs instance each, created by a glued-token mis-parse) merged
+	// into the real claude/opus@4.5…@4.8 entities they always belonged to.
+	//
+	// 971 → 982 when the family-"o" over-capture was corrected: vercel labels a swathe
+	// of unrelated models raw_family "o", so alibaba's video models, openai's speech
+	// models, quiverai's arrow and cohere's rerankers all shared one junk-bucket entity
+	// with the real o-series. Splitting them into wan / tts / arrow / rerank ADDS
+	// entities (15 new keys, 4 retired) because a bucket holding many distinct models
+	// becomes many distinct entities.
+	//
+	// 982 → 979 with the curated kimi/minimax turbo demotions: turbo leaves the key for
+	// those families, so kimi/k@2{turbo}, kimi/k@2.6{turbo} and minimax/m@2.7{turbo} fold
+	// into their plain siblings. Three constants are REMOVED and none is renamed — the
+	// surviving siblings' keys never changed.
+	//
+	// 979 → 977 with the "p"-as-dot version decode: fireworks publishes GLM 5.1/5.2 with
+	// a "p" where the dot belongs, which minted phantom glm@5p1 / glm@5p2 entities beside
+	// the real ones. Decoding the spelling merges those two rows into the existing
+	// glm@5.1 and glm@5.2, so two constants are REMOVED and none is renamed — again the
+	// surviving siblings' keys never changed.
+	//
+	// 977 → 978 with the tts-1-hd identity split: OpenAI documents tts-1-hd as a distinct
+	// higher-quality product, so "hd" is now peeled as an IDENTITY modifier and tts@1{hd}
+	// splits off from tts@1 (one constant ADDED, none renamed).
+	//
+	// 978 → 976 with the o-series dual-identity fix: the digitalocean openai-o1 / openai-o3
+	// / openai-o3-mini rows (hyphen-glued vendor spelling) now canonicalize onto the
+	// EXISTING gpt/o@1, gpt/o@3, gpt/o@3{mini} entities, vacating the two junk family-"o"
+	// keys (o and o/mini). Two constants REMOVED, none renamed.
+	//
+	// 976 → 955 with the dot-lost version repair + 1t param-size routing: the dot-lost
+	// exact-id overrides fold the dotless (minimax-m25, qwen35-…) and dash-glued
+	// (qwen2-5-…, qwen3-6-…) spellings onto their real dotted entities (mostly merges, a
+	// few re-keys), and 1t routing re-keys ling@1t/ring@1t to ling#1t/ring#1t and merges
+	// ring-2.6-1t-free into ring@2.6#1t. Net −21 (measured; merges dominate).
+	//
+	// 955 → 947 with the entity-level MERGE-only N→N.0 fold (the C4 ruling): a family that
+	// spells both a bare N and N.0 for the SAME (variant, size, modifiers) folds the bare
+	// entity onto the dotted one — 8 pairs (claude/opus@4, claude/sonnet@4, gemini/flash@3,
+	// gemini/pro@3, imagen@4, imagen@4{fast}, imagen/ultra@4, veo@3). A pure MERGE: 8 bare
+	// keys retired, none renamed; llama@4 (no 4.0 sibling) is untouched.
+	// 947 -> 958 with the 2026-07-23 snapshot refresh (upstream additions; no repair moved).
+	const wantEntityCount = 958
+	if len(keys) != wantEntityCount {
+		t.Errorf("EntityKeys() returned %d constants; expected exactly %d — "+
+			"re-run go generate ./... and update this census literal if the entity count changed intentionally",
+			len(keys), wantEntityCount)
+	}
+
+	// Floor guard (defense-in-depth against a silent codegen collapse that also edits the
+	// census literal): the count must never fall below a credible floor.
+	const minExpected = 800
+	if len(keys) < minExpected {
+		t.Errorf("EntityKeys() returned only %d constants; expected at least %d — "+
+			"re-run go generate ./... to regenerate entities_constants_gen.go", len(keys), minExpected)
 	}
 }
 
-// TestModelConstants_RoundTrip verifies that for every Model_* constant the
-// ModelID value is non-empty and appears in the static model registry (LookupModel).
-//
-// NOTE: This test depends on the static model registry (models_static_gen.go).
-// It does NOT depend on the Resolve API. When Resolve is
-// available, a richer round-trip test (Format → Resolve → check) can be added.
-func TestModelConstants_RoundTrip(t *testing.T) {
-	ids := bestiary.ModelIDs()
-	if len(ids) == 0 {
-		t.Skip("ModelIDs() returned empty; skipping — run go generate ./... first")
+// TestEntityConstants_RoundTrip verifies that every Entity__* constant value is a real
+// entity key: it appears among the entities the static registry exposes via Entities().
+// This is the entity-level analog of the old Model__/LookupModel round-trip (the
+// constant set is derived from the SAME registry index, so every value must round-trip).
+func TestEntityConstants_RoundTrip(t *testing.T) {
+	keys := bestiary.EntityKeys()
+	if len(keys) == 0 {
+		t.Skip("EntityKeys() returned empty; skipping — run go generate ./... first")
 	}
 
-	for _, id := range ids {
-		if id == "" {
-			t.Errorf("ModelIDs() contains empty ModelID value")
+	registryKeys := make(map[string]bool)
+	for _, e := range bestiary.Entities() {
+		registryKeys[e.Ref.String()] = true
+	}
+
+	for _, k := range keys {
+		if k == "" {
+			t.Errorf("EntityKeys() contains empty value")
 			continue
 		}
-		// Each constant must resolve to at least one entry in the static registry.
-		_, found := bestiary.LookupModel(id)
-		if !found {
-			t.Errorf("Model constant %q not found in static registry via LookupModel", id)
+		if !registryKeys[k] {
+			t.Errorf("Entity constant value %q not found among registry entities (Entities())", k)
 		}
 	}
 }
 
-// TestModelConstants_ValuesAreRawIDs verifies that values are raw API model IDs
-// (e.g. "claude-opus-4-20250514"), not Go identifier strings — values must never
-// start with "Model_".
-//
-// Note: Defensive copy is verified separately by TestModelIDs_DefensiveCopy.
-// Codegen idempotency (re-running `go generate` produces the same output)
-// is verified by the golden-file tests in cmd/bestiary-gen, which capture the
-// full generated source. This test only checks runtime value format of ModelIDs().
-func TestModelConstants_ValuesAreRawIDs(t *testing.T) {
-	ids := bestiary.ModelIDs()
-
-	if len(ids) == 0 {
-		t.Skip("ModelIDs() returned empty; skipping — run go generate ./... first")
+// TestEntityConstants_EntityByKeyRoundTrip is the migration fence: EVERY Entity__* value
+// must round-trip through the exported string-keyed lookup EntityByKey — ok=true and the
+// returned Entity's Ref.String() equal to the constant's value. This proves the
+// enumerate-then-lookup idiom the CHANGELOG points migrating consumers at
+// (`for _, key := range EntityKeys() { e, _ := EntityByKey(key) }`) actually works for all
+// 975 constants, closing the gap where the values are canonical keys with no lookup entrypoint.
+func TestEntityConstants_EntityByKeyRoundTrip(t *testing.T) {
+	keys := bestiary.EntityKeys()
+	if len(keys) == 0 {
+		t.Skip("EntityKeys() returned empty; skipping — run go generate ./... first")
 	}
-
-	for _, id := range ids {
-		if id == "" {
-			t.Errorf("ModelIDs() contains empty ModelID value")
+	for _, k := range keys {
+		e, ok := bestiary.EntityByKey(k)
+		if !ok {
+			t.Errorf("EntityByKey(%q) = ok=false; every Entity__ constant value must resolve", k)
 			continue
 		}
-		s := string(id)
-		// ModelIDs() must return raw API model ID values (e.g. "claude-opus-4-20250514"),
-		// NOT Go identifier strings (the constant names live in the generated source).
-		// The constant names all start with "Model_"; the values never should.
-		if strings.HasPrefix(s, "Model_") {
-			t.Errorf("ModelIDs(): value %q looks like a constant name, not a model ID; "+
-				"ModelIDs() should return raw API ID string values, not Go identifier strings", s)
+		if got := e.Ref.String(); got != k {
+			t.Errorf("EntityByKey(%q).Ref.String() = %q; want the same canonical key (round-trip)", k, got)
+		}
+	}
+
+	// Negative + composition: an unknown key returns ok=false (no panic), and EntityByKey's
+	// Ref composes into ProvidersOf.
+	if _, ok := bestiary.EntityByKey("definitely/not@a#real{key}"); ok {
+		t.Error("EntityByKey on an unknown key returned ok=true; want false")
+	}
+	scout, ok := bestiary.EntityByKey(bestiary.Entity__Llama__Scout__Version_4__Size_17b_16e__Instruct)
+	if !ok {
+		t.Fatal("EntityByKey did not resolve the scout constant")
+	}
+	if provs := bestiary.ProvidersOf(scout.Ref); len(provs) != 11 {
+		t.Errorf("ProvidersOf(EntityByKey(scout).Ref) = %d providers; want 11", len(provs))
+	}
+}
+
+// TestProvidersOf_ScoutCensus pins the ProvidersOf census for the scout entity and
+// exercises a generated Entity__ constant end-to-end (the BDD case: the constant
+// compiles, resolves to an entity, and ProvidersOf returns 11 distinct providers across
+// its 13 instances — no provider-flavored entity constant remains).
+func TestProvidersOf_ScoutCensus(t *testing.T) {
+	// The generated constant compiles and carries the canonical key.
+	const scoutKey = bestiary.Entity__Llama__Scout__Version_4__Size_17b_16e__Instruct
+	if scoutKey != "llama/scout@4#17b-16e{instruct}" {
+		t.Fatalf("Entity__Llama__Scout__Version_4__Size_17b_16e__Instruct = %q; want %q", scoutKey, "llama/scout@4#17b-16e{instruct}")
+	}
+
+	ent, ok := bestiary.EntityByTuple("llama", "scout", "4", "17b-16e", "instruct")
+	if !ok {
+		t.Fatalf("EntityByTuple did not find the scout entity %q", scoutKey)
+	}
+	if len(ent.Instances) != 13 {
+		t.Errorf("scout instances = %d; want 13", len(ent.Instances))
+	}
+
+	provs := bestiary.ProvidersOf(ent.Ref)
+	if len(provs) != 11 {
+		t.Errorf("ProvidersOf(scout) = %d providers; want 11 (across 13 instances)", len(provs))
+	}
+	// The result must be sorted ascending and de-duplicated.
+	for i := 1; i < len(provs); i++ {
+		if !(provs[i-1] < provs[i]) {
+			t.Errorf("ProvidersOf(scout) not strictly ascending/deduped at index %d: %q then %q", i, provs[i-1], provs[i])
 		}
 	}
 }
 
-// TestModelIDs_DefensiveCopy verifies that the slice returned by ModelIDs()
-// is a defensive copy: mutating the returned slice does not affect subsequent calls.
-func TestModelIDs_DefensiveCopy(t *testing.T) {
-	ids1 := bestiary.ModelIDs()
-	if len(ids1) == 0 {
-		t.Skip("ModelIDs() returned empty; skipping — run go generate ./... first")
+// TestEntityConstants_ValuesAreCanonicalKeys verifies that the constant VALUES are
+// canonical entity-key strings (e.g. "llama/scout@4#17b-16e{instruct}"), NOT the Go
+// identifier names — a value must never start with "Entity_". It also pins value
+// uniqueness (one entity per constant). This is the successor to the old
+// ValuesAreRawIDs check, renamed because the values are now canonical keys.
+func TestEntityConstants_ValuesAreCanonicalKeys(t *testing.T) {
+	keys := bestiary.EntityKeys()
+	if len(keys) == 0 {
+		t.Skip("EntityKeys() returned empty; skipping — run go generate ./... first")
 	}
 
-	original := ids1[0]
-	ids1[0] = "mutated"
-
-	ids2 := bestiary.ModelIDs()
-	if len(ids2) == 0 {
-		t.Fatal("ModelIDs() returned empty on second call")
+	seen := make(map[string]struct{}, len(keys))
+	for _, k := range keys {
+		if k == "" {
+			t.Errorf("EntityKeys() contains empty value")
+			continue
+		}
+		if strings.HasPrefix(k, "Entity_") {
+			t.Errorf("EntityKeys(): value %q looks like a constant name, not an entity key; "+
+				"EntityKeys() must return canonical key string values, not Go identifier strings", k)
+		}
+		if _, dup := seen[k]; dup {
+			t.Errorf("EntityKeys(): duplicate value %q — Entity__ constants must be one-per-entity (no provider flavoring)", k)
+		}
+		seen[k] = struct{}{}
 	}
-	if ids2[0] != original {
-		t.Errorf("ModelIDs(): not a defensive copy; second call returned %q, want %q", ids2[0], original)
+}
+
+// TestEntityKeys_DefensiveCopy verifies that the slice returned by EntityKeys() is a
+// defensive copy: mutating it does not affect subsequent calls.
+func TestEntityKeys_DefensiveCopy(t *testing.T) {
+	k1 := bestiary.EntityKeys()
+	if len(k1) == 0 {
+		t.Skip("EntityKeys() returned empty; skipping — run go generate ./... first")
+	}
+
+	original := k1[0]
+	k1[0] = "mutated"
+
+	k2 := bestiary.EntityKeys()
+	if len(k2) == 0 {
+		t.Fatal("EntityKeys() returned empty on second call")
+	}
+	if k2[0] != original {
+		t.Errorf("EntityKeys(): not a defensive copy; second call returned %q, want %q", k2[0], original)
 	}
 }

@@ -133,15 +133,14 @@ func betaTokenInName(id string) bool {
 //     the test's own independent tokenizer) must bake Stage == StageBeta;
 //   - inverse leg: every baked StageBeta row must carry a standalone beta token (no
 //     beta stage can appear without an ID marker while the ID path is the sole feeder);
-//   - key-direction legs (both directions, self-deriving over the same census): a
-//     GROK-family beta row must NEVER key with beta in the Variant slot — the curated
-//     beta-alias unification maps every grok beta spelling onto its non-beta entity, so
-//     a deleted or missing exact-ID pin (or a future grok beta spelling arriving
-//     un-pinned via a catalog refresh) re-splits the alias into a grok/beta entity and
-//     trips this leg; a NON-grok beta row is the CONTRAST fence — the general beta
-//     freeze keeps beta as key material (the mechanical scan captures it in the
-//     Variant, e.g. interfaze-beta), so a wholesale beta re-key that silently swept the
-//     non-grok names is caught too;
+//   - key-direction leg (self-deriving over the same census): NO beta row may key with
+//     beta in the Variant slot, whatever its family. beta is ALWAYS a release stage and
+//     never an identity, so a beta Variant means a curated pin is missing or was dropped
+//     — for grok, one of the beta-alias unification entries; for any other family, the
+//     bare-identity pin the interfaze row established. This leg previously CONTRASTED the
+//     two families (grok unified, non-grok frozen with beta as key material); the ruling
+//     that beta is always a stage collapsed the contrast into one universal rule, and the
+//     ValidateNoBetaInIdentity codegen guard now enforces the same invariant at bake time;
 //   - vacuity guard: the census must find at least 9 distinct beta IDs (the count at
 //     the time this guard was cut — the grok-4.20 spellings + interfaze-beta), so a
 //     catalog refresh that silently empties the census fails loudly.
@@ -156,18 +155,11 @@ func TestStageBeta_CensusDerived(t *testing.T) {
 					"  Why: the beta row set is census-derived — every beta-token row must carry the stage",
 					m.ID, m.Provider, m.Stage)
 			}
-			if m.Family == "grok" {
-				if strings.EqualFold(m.Variant, "beta") {
-					t.Errorf("grok beta row %q (provider %q) keys with Variant=\"beta\" — the beta-alias unification must map it onto the non-beta entity\n"+
-						"  Why: every grok beta spelling is curated-unified onto grok@4.20{…}; a beta Variant means its exact-ID override is missing or was dropped\n"+
-						"  How to fix: add/restore the ID's idFamilyOverrides entry mapping it to the non-beta decomposition",
-						m.ID, m.Provider)
-				}
-			} else if !strings.EqualFold(m.Variant, "beta") {
-				t.Errorf("non-grok beta row %q (provider %q, family %q) keys with Variant=%q, want \"beta\"\n"+
-					"  Why: the general beta freeze keeps beta as key material for non-grok names — only the grok line is curated-unified\n"+
-					"  How to fix: a wholesale beta re-key is deferred; if this ID was intentionally unified, extend this contrast fence",
-					m.ID, m.Provider, m.Family, m.Variant)
+			if strings.EqualFold(m.Variant, "beta") {
+				t.Errorf("beta row %q (provider %q, family %q) keys with Variant=\"beta\" — beta is a release STAGE, never an identity\n"+
+					"  Why: the stage axis already carries beta for this row (detect-without-strip), so a beta Variant asserts it twice and splits one artifact line in two\n"+
+					"  How to fix: add/restore the ID's idFamilyOverrides entry mapping it to its bare identity (grok: the beta-alias unification entries; others: the interfaze/interfaze-beta precedent)",
+					m.ID, m.Provider, m.Family)
 			}
 		}
 		if m.Stage == bestiary.StageBeta && !hasBetaTok {
@@ -180,7 +172,7 @@ func TestStageBeta_CensusDerived(t *testing.T) {
 		t.Fatalf("beta census found only %d distinct beta IDs, want >= 9 — the census went vacuous (a catalog refresh dropped the beta rows, or the selector regressed); IDs: %v",
 			len(distinct), distinct)
 	}
-	t.Logf("beta census: %d distinct beta IDs, all baked StageBeta (grok keys unified, non-grok keys frozen)", len(distinct))
+	t.Logf("beta census: %d distinct beta IDs, all baked StageBeta and none keying beta into its identity", len(distinct))
 }
 
 // TestStageMigration_NoStageTokenInAnyEntityKey is the catalog-wide permanent fence
@@ -247,7 +239,16 @@ func TestStageMigration_MigratedTokensRetainedButRoutedOut(t *testing.T) {
 	if modHas(keyMods, "original") {
 		t.Errorf("EntityModifiers(%v, %s) = %v must exclude original (stage-routed)", kmods, kfam, keyMods)
 	}
-	if !modHas(keyMods, "turbo") {
-		t.Errorf("EntityModifiers(%v, %s) = %v must keep turbo (identity for kimi)", kmods, kfam, keyMods)
+	// turbo is EXCLUDED for kimi as well, by the curated per-family demotion — but for
+	// a different reason than original, and the distinction is the point of asserting
+	// both: original is routed out because it is a release STAGE, turbo because it is
+	// a serving speed tier rather than a distinct artifact. This assertion previously
+	// required turbo to be KEPT; it was re-cut when the demotion landed.
+	if modHas(keyMods, "turbo") {
+		t.Errorf("EntityModifiers(%v, %s) = %v must exclude turbo (attribute for kimi by curated demotion)", kmods, kfam, keyMods)
+	}
+	// The retained-token guarantee still holds: the instance-level Modifier keeps both.
+	if !modHas(kmods, "turbo") {
+		t.Errorf("Modifier %v should RETAIN turbo at instance level even though the key drops it", kmods)
 	}
 }

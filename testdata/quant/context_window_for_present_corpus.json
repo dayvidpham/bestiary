@@ -1,0 +1,44 @@
+{
+  "_comment": "ContextWindowFor hit cases: the curated context_window is CURATION-OWNED (an Ollama refresh preserves it) and is the context the baked VRAM figure is computed at, so these literals are load-bearing for the VRAM arithmetic.",
+  "cases": [
+    {
+      "name": "llama-3.3-70b-instruct",
+      "input": "llama-3.3-70b-instruct",
+      "expected": 131072,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "manual",
+        "ref": "quant_vram.json curated context_window for llama-3.3-70b-instruct (128K = 131072)"
+      },
+      "mutation": {
+        "description": "pins the 128K curated context"
+      }
+    },
+    {
+      "name": "llama-3.2-3b-instruct",
+      "input": "llama-3.2-3b-instruct",
+      "expected": 131072,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "manual",
+        "ref": "quant_vram.json curated context_window for llama-3.2-3b-instruct (128K = 131072)"
+      },
+      "mutation": {
+        "description": "pins the same 128K context on a different size, so the value is not tied to one row"
+      }
+    },
+    {
+      "name": "ollama-dracarys2-llama-3-70b-instruct",
+      "input": "ollama/dracarys2-llama-3-70b-instruct",
+      "expected": 8192,
+      "classification": "must-pass",
+      "provenance": {
+        "source": "manual",
+        "ref": "quant_vram.json curated context_window for the dracarys2 finetune (8K = 8192)"
+      },
+      "mutation": {
+        "description": "pins a SHORTER curated context, so a hard-coded 128K default would redden"
+      }
+    }
+  ]
+}

@@ -83,8 +83,10 @@ const (
 	FamilyKimi              Family = "kimi"
 	FamilyKimiFree          Family = "kimi-free"
 	FamilyKimiK2            Family = "kimi-k2"
+	FamilyKimiK3            Family = "kimi-k3"
 	FamilyKimiThinking      Family = "kimi-thinking"
 	FamilyLaguna            Family = "laguna"
+	FamilyLagunaS           Family = "laguna-s"
 	FamilyLing              Family = "ling"
 	FamilyLingFlashFree     Family = "ling-flash-free"
 	FamilyLiquid            Family = "liquid"
@@ -265,8 +267,10 @@ var allFamilies = [...]Family{
 	"kimi",
 	"kimi-free",
 	"kimi-k2",
+	"kimi-k3",
 	"kimi-thinking",
 	"laguna",
+	"laguna-s",
 	"ling",
 	"ling-flash-free",
 	"liquid",

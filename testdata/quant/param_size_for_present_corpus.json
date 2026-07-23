@@ -1,0 +1,57 @@
+{
+  "_comment": "ParamSizeFor hit cases over the curated quant_vram.json seed: every seed model's canonical parameter-size token. ParamSize is part of entity identity (the #size segment), so a wrong token here re-keys an entity.",
+  "cases": [
+    {
+      "name": "llama-3.3-70b-instruct",
+      "input": "llama-3.3-70b-instruct",
+      "expected": "70b",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "manual",
+        "ref": "quant_vram.json seed row llama-3.3-70b-instruct"
+      },
+      "mutation": {
+        "description": "pins the curated 70b size token"
+      }
+    },
+    {
+      "name": "llama-3.3-8b-instruct",
+      "input": "llama-3.3-8b-instruct",
+      "expected": "8b",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "manual",
+        "ref": "quant_vram.json seed row llama-3.3-8b-instruct"
+      },
+      "mutation": {
+        "description": "pins a single-digit size token, distinguishing it from the 70b sibling"
+      }
+    },
+    {
+      "name": "llama-3.2-3b-instruct",
+      "input": "llama-3.2-3b-instruct",
+      "expected": "3b",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "manual",
+        "ref": "quant_vram.json seed row llama-3.2-3b-instruct"
+      },
+      "mutation": {
+        "description": "pins a third size under a different version, so size and version cannot be conflated"
+      }
+    },
+    {
+      "name": "ollama-dracarys2-llama-3-70b-instruct",
+      "input": "ollama/dracarys2-llama-3-70b-instruct",
+      "expected": "70b",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "manual",
+        "ref": "quant_vram.json seed row for the dracarys2 community finetune"
+      },
+      "mutation": {
+        "description": "pins a namespaced community-finetune id, whose size must resolve like a first-party one"
+      }
+    }
+  ]
+}

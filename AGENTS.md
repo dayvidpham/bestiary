@@ -1,5 +1,12 @@
 # Agent Guidelines for bestiary
 
+> **Read first:** [`docs/CONCEPTS.md`](docs/CONCEPTS.md) — the vocabulary
+> (entity, nomen, appellation, canonical expression, series/release) and its
+> ISO 1087 / IFLA-LRM grounding. [`docs/architecture.md`](docs/architecture.md)
+> — the full architecture with diagrams (data pipeline, parse precedence,
+> naming layer, provenance core, test architecture). The sections below are
+> the per-epoch design-decision record and operational workflows.
+
 ## Commands
 
 - **Test**: `CGO_ENABLED=0 go test ./...`
@@ -41,6 +48,7 @@ bestiary/
 ├── registry.go              # StaticModels(), LookupModel(), LookupModelByProvider(), ModelsByProvider/Family(); entity index + entity↔source join relation build
 ├── resolve.go               # Resolve() with InputFormat selection (peasant default, no auto-detect) + canonical-provider preference; ErrAmbiguous candidate listing
 ├── store.go                 # SQLite cache (zombiezen driver), schema v6 migrations + BCNF provenance + append-only ingest history + entity-metadata tables (real FK)
+├── taxonomy.go              # Computed Series/Release hierarchy above stable keys: Series{Family,Generation} + Release{Series,Name}, SeriesAll/ReleasesOf/EntitiesOf, generation normalization, curated strays (series.json, graceful-degrade)
 ├── vram.go                  # EstimateVRAMBytes (weights + KV, no overhead) + (QuantVRAM).EstimateVRAM(ctx); VRAMFormulaVersion 2
 ├── version.go               # 4 provenance consts (schema + upstream versions)
 ├── wire.go                  # Internal JSON wire types for the models.dev api.json/models.json/catalog.json three-artifact deserialization

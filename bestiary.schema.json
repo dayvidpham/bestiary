@@ -3,7 +3,7 @@
   "$id": "https://github.com/dayvidpham/bestiary/bestiary.schema.json",
   "title": "ModelInfo",
   "description": "Metadata for a single AI model as produced by the bestiary CLI JSON formatter.",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "type": "object",
   "properties": {
     "ID": {
@@ -257,6 +257,14 @@
       "description": "General context-size-conditional price tiers. null when the model declares none. Added in schema 0.3.0; optional for backward compatibility.",
       "type": ["array", "null"],
       "items": { "$ref": "#/$defs/CostTier" }
+    },
+    "Region": {
+      "description": "Serving jurisdiction of this instance: the AWS Bedrock cross-region inference-profile region encoded in the model-ID prefix (us./eu./au./jp./global.). A per-instance attribute that never participates in entity identity. \"unspecified\" (the zero value) when the ID carries no region prefix. Added in schema 0.5.0; optional for backward compatibility.",
+      "$ref": "#/$defs/Region"
+    },
+    "RegionRaw": {
+      "description": "Verbatim region token, populated only when Region is \"other\" (a recognized-but-unmapped region token); empty for every named member and for \"unspecified\". Mirrors StatusRaw/StageRaw. Added in schema 0.5.0; optional for backward compatibility.",
+      "type": "string"
     }
   },
   "required": [
@@ -563,6 +571,14 @@
           "description": "Serving host / backend that runs this instance (e.g. \"azure\"), distinct from Provider. Empty string when unknown or served directly.",
           "type": "string"
         },
+        "Region": {
+          "description": "Serving jurisdiction of this instance (AWS Bedrock cross-region inference profile), projected from ModelInfo.Region. A per-instance attribute, never part of identity. \"unspecified\" when the ID carries no region prefix. Added in schema 0.5.0.",
+          "$ref": "#/$defs/Region"
+        },
+        "RegionRaw": {
+          "description": "Verbatim region token, populated only when Region is \"other\". Added in schema 0.5.0.",
+          "type": "string"
+        },
         "CostInputPerMTok": {
           "description": "Cost in USD per million input tokens, or null if unknown.",
           "oneOf": [
@@ -642,6 +658,16 @@
           "description": "Distinct serving hosts for this entity. null when none.",
           "type": ["array", "null"],
           "items": { "type": "string" }
+        },
+        "Regions": {
+          "description": "Distinct serving jurisdictions (AWS Bedrock regions) for this entity, sorted ascending by Region enum value and de-duplicated. null when the entity went through no registry aggregate; a registry entity with no region prefix on any instance carries [\"unspecified\"]. Added in schema 0.5.0.",
+          "type": ["array", "null"],
+          "items": { "$ref": "#/$defs/Region" }
+        },
+        "Nomina": {
+          "description": "Recorded namings of this entity (read-only projection surfaced in show --by-entity JSON output): the canonical key (Preferred), each distinct provider-ID spelling (Admitted), and any curated third-party alias claim resolving to this entity. Added in schema 0.5.0; optional (a derived projection, absent from the plain Entity struct marshaling).",
+          "type": ["array", "null"],
+          "items": { "$ref": "#/$defs/Nomen" }
         },
         "PriceInputRange": {
           "description": "[min,max] input cost in USD per million tokens over the NON-nil instance costs. Each bound is null when no instance has a known input cost.",
@@ -786,6 +812,68 @@
         "original": "A rolling \"original\" alias (ID-detected). Names a moving target, not a fixed artifact property.",
         "other": "Reserved fail-safe bucket for a future non-ID stage feeder; unused by the ID path this epoch. Raw token carried on ModelInfo.StageRaw."
       }
+    },
+    "Region": {
+      "title": "Region",
+      "description": "Serving jurisdiction of a model instance: the AWS Bedrock cross-region inference-profile region encoded in a dotted \"<region>.<vendor>.\" model-ID prefix. A per-instance attribute that never participates in entity identity. Serializes as a lowercase token via encoding.TextMarshaler. \"unspecified\" is the zero value (RegionNone — the ID carries no region prefix; rendered as a word, never blank, for external-reader clarity); \"other\" is the fail-safe bucket for a recognized-but-unmapped token (raw carried on RegionRaw). Member values follow ISO 3166-1 alpha-2 where applicable (us/au/jp; eu is the ISO exceptionally-reserved code); apac/global are provider-defined scopes outside ISO. au and jp are DISTINCT members (never folded into a single Asia-Pacific bucket) for data-protection-jurisdiction fidelity. Added in schema 0.5.0.",
+      "type": "string",
+      "enum": ["unspecified", "us", "eu", "apac", "global", "au", "jp", "other"],
+      "x-enum-descriptions": {
+        "unspecified": "The zero value (RegionNone): the model ID carries no Bedrock region prefix.",
+        "us": "AWS \"us\" cross-region inference profile (ISO 3166-1 alpha-2 US).",
+        "eu": "AWS \"eu\" cross-region inference profile (ISO exceptionally-reserved EU).",
+        "apac": "AWS \"apac\" cross-region scope (provider-defined, outside ISO). RESERVED: documented by Bedrock but zero attested instances today.",
+        "global": "AWS \"global\" cross-region scope (provider-defined, outside ISO).",
+        "au": "AWS \"au\" cross-region inference profile (ISO 3166-1 alpha-2 AU, Australia — a distinct data-protection jurisdiction).",
+        "jp": "AWS \"jp\" cross-region inference profile (ISO 3166-1 alpha-2 JP, Japan — a distinct data-protection jurisdiction).",
+        "other": "Fail-safe bucket for a recognized-but-unmapped region token; raw carried on RegionRaw."
+      }
+    },
+    "NomenScheme": {
+      "title": "NomenScheme",
+      "description": "Classifies a Nomen by the KIND of naming it records — a provenance classifier, NOT a rendering codec (deliberately distinct from CanonicalScheme, which is a render codec). Serializes as a lowercase token via encoding.TextMarshaler. Element-enum convention: every nomen is minted with a known scheme, so \"other\" is the fail-safe bucket at the zero value. Added in schema 0.5.0.",
+      "type": "string",
+      "enum": ["other", "canonical", "provider-id", "huggingface", "purl", "alias"],
+      "x-enum-descriptions": {
+        "other": "Fail-safe bucket (the zero value) for an unclassifiable naming.",
+        "canonical": "The entity key itself (the Preferred designation of an entity).",
+        "provider-id": "A provider's verbatim model-ID spelling (an Admitted designation).",
+        "huggingface": "A HuggingFace Hub org/repo naming (reserved; seeded via curated claims).",
+        "purl": "A Package-URL naming (reserved for the external-identifier slice).",
+        "alias": "A third-party-asserted alias, claim-attributed via SourceURL (an Admitted designation)."
+      }
+    },
+    "Nomen": {
+      "title": "Nomen",
+      "description": "One recorded NAMING of an entity: a value string classified by scheme, carrying its acceptability status, the entity it resolves to, and a provenance split into two DISTINCT levels — SourceURL (WHO asserts the naming, a claimant URL, empty for bestiary-minted nomina) and Source (WHICH ingest we read it from, a DataSourceID). These must never be conflated (the BenchmarkResult SourceURL-vs-Source discipline). An Entity HAS-MANY Nomina; the canonical key IS the entity's Preferred nomen. Added in schema 0.5.0.",
+      "type": "object",
+      "properties": {
+        "Value": {
+          "description": "The naming string (a raw model ID, a canonical key, or an alias spelling).",
+          "type": "string"
+        },
+        "Scheme": {
+          "description": "The KIND of naming (provenance classifier).",
+          "$ref": "#/$defs/NomenScheme"
+        },
+        "Status": {
+          "description": "ISO-1087 acceptability rating. Canonical nomina are \"preferred\"; provider-ID and alias nomina are \"admitted\".",
+          "$ref": "#/$defs/AcceptabilityRating"
+        },
+        "ResolvesTo": {
+          "description": "The entity this naming denotes. One spelling may resolve to several entities (homonymy).",
+          "$ref": "#/$defs/EntityRef"
+        },
+        "SourceURL": {
+          "description": "WHO asserts this naming (claim attribution). Empty for bestiary-minted nomina.",
+          "type": "string"
+        },
+        "Source": {
+          "description": "WHICH ingest we read this naming from (a DataSourceID; e.g. \"models.dev\").",
+          "type": "string"
+        }
+      },
+      "required": ["Value", "Scheme", "Status", "ResolvesTo", "SourceURL", "Source"]
     },
     "LinkType": {
       "title": "LinkType",

@@ -23,8 +23,13 @@ func (f Family) CanonicalProvider() Provider {
 		// Google is the canonical publisher for gemini and gemma families.
 		return ProviderGoogle
 	case FamilyGPT, FamilyO:
-		// OpenAI is the canonical publisher for gpt-family models (includes chatgpt-* IDs,
-		// which carry Family="gpt") and o-family models (o1, o3, o4 carry Family="o").
+		// OpenAI is the canonical publisher for gpt-family models. The o-series reasoning
+		// line (o1, o3, o4) canonicalizes to Family="gpt" with the line designator in the
+		// VARIANT slot (gpt/o@1, gpt/o@3) via canonicalizeOpenAILine — for BOTH the
+		// path-segment spelling (openai/o1) and the hyphen-glued spelling (openai-o1) — so
+		// no o-series model carries Family="o" any longer. FamilyO is retained as a
+		// canonical-provider mapping so any residual or future raw_family="o" row still
+		// resolves to OpenAI rather than falling through.
 		return ProviderOpenAI
 	case FamilyLlama:
 		// Meta's Llama models are published under the "local" provider (project decision).
@@ -32,6 +37,12 @@ func (f Family) CanonicalProvider() Provider {
 	case FamilyMistral, FamilyCodestral, FamilyDevstral:
 		// Mistral AI is the canonical publisher for mistral, codestral, and devstral families.
 		return ProviderMistral
+	case FamilyCommand, FamilyCommandA, FamilyCommandR:
+		// Cohere is the canonical publisher of the Command line. The two compound
+		// spellings are listed alongside the base family because they are real
+		// raw_family values the upstream catalog emits, so a row can reach
+		// CanonicalProvider carrying either one.
+		return ProviderCohere
 	case FamilyDeepSeek:
 		// DeepSeek is the canonical publisher for deepseek family models.
 		return ProviderDeepSeek

@@ -8,6 +8,7 @@ const (
 	ProviderAbliterationAI         Provider = "abliteration-ai"
 	ProviderAIRouter               Provider = "ai-router"
 	ProviderAIHubMix               Provider = "aihubmix"
+	ProviderAkiIO                  Provider = "aki-io"
 	ProviderAlibaba                Provider = "alibaba"
 	ProviderAlibabaCN              Provider = "alibaba-cn"
 	ProviderAlibabaCodingPlan      Provider = "alibaba-coding-plan"
@@ -30,6 +31,7 @@ const (
 	ProviderChutes                 Provider = "chutes"
 	ProviderClarifai               Provider = "clarifai"
 	ProviderClaudinio              Provider = "claudinio"
+	ProviderClinePass              Provider = "cline-pass"
 	ProviderCloudFerroSherlock     Provider = "cloudferro-sherlock"
 	ProviderCloudflareAIGateway    Provider = "cloudflare-ai-gateway"
 	ProviderCloudflareWorkersAI    Provider = "cloudflare-workers-ai"
@@ -44,6 +46,7 @@ const (
 	ProviderDigitalOcean           Provider = "digitalocean"
 	ProviderDInference             Provider = "dinference"
 	ProviderDrun                   Provider = "drun"
+	ProviderEBCloud                Provider = "ebcloud"
 	ProviderEmpirioLabs            Provider = "empiriolabs"
 	ProviderEvroc                  Provider = "evroc"
 	ProviderFastRouter             Provider = "fastrouter"
@@ -80,6 +83,7 @@ const (
 	ProviderLMStudio               Provider = "lmstudio"
 	ProviderLongCat                Provider = "longcat"
 	ProviderLucidQuery             Provider = "lucidquery"
+	ProviderLynkr                  Provider = "lynkr"
 	ProviderMeganova               Provider = "meganova"
 	ProviderMergeGateway           Provider = "merge-gateway"
 	ProviderMeta                   Provider = "meta"
@@ -103,6 +107,7 @@ const (
 	ProviderNova                   Provider = "nova"
 	ProviderNovitaAI               Provider = "novita-ai"
 	ProviderNvidia                 Provider = "nvidia"
+	ProviderOfox                   Provider = "ofox"
 	ProviderOllamaCloud            Provider = "ollama-cloud"
 	ProviderOpenAI                 Provider = "openai"
 	ProviderOpenCode               Provider = "opencode"
@@ -131,6 +136,8 @@ const (
 	ProviderSTACKIT                Provider = "stackit"
 	ProviderStepFun                Provider = "stepfun"
 	ProviderStepFunAI              Provider = "stepfun-ai"
+	ProviderStepFunAIStepPlan      Provider = "stepfun-ai-step-plan"
+	ProviderStepFunStepPlan        Provider = "stepfun-step-plan"
 	ProviderSubconscious           Provider = "subconscious"
 	ProviderSubmodel               Provider = "submodel"
 	ProviderSynthetic              Provider = "synthetic"
@@ -138,6 +145,7 @@ const (
 	ProviderTencentTokenPlan       Provider = "tencent-token-plan"
 	ProviderTencentTokenHub        Provider = "tencent-tokenhub"
 	ProviderTheGridAI              Provider = "the-grid-ai"
+	ProviderThinkingmachines       Provider = "thinkingmachines"
 	ProviderTinfoil                Provider = "tinfoil"
 	ProviderTogetherAI             Provider = "togetherai"
 	ProviderTrustedRouter          Provider = "trustedrouter"
@@ -175,6 +183,7 @@ var knownProviders = [...]Provider{
 	ProviderAbliterationAI,
 	ProviderAIRouter,
 	ProviderAIHubMix,
+	ProviderAkiIO,
 	ProviderAlibaba,
 	ProviderAlibabaCN,
 	ProviderAlibabaCodingPlan,
@@ -197,6 +206,7 @@ var knownProviders = [...]Provider{
 	ProviderChutes,
 	ProviderClarifai,
 	ProviderClaudinio,
+	ProviderClinePass,
 	ProviderCloudFerroSherlock,
 	ProviderCloudflareAIGateway,
 	ProviderCloudflareWorkersAI,
@@ -211,6 +221,7 @@ var knownProviders = [...]Provider{
 	ProviderDigitalOcean,
 	ProviderDInference,
 	ProviderDrun,
+	ProviderEBCloud,
 	ProviderEmpirioLabs,
 	ProviderEvroc,
 	ProviderFastRouter,
@@ -247,6 +258,7 @@ var knownProviders = [...]Provider{
 	ProviderLMStudio,
 	ProviderLongCat,
 	ProviderLucidQuery,
+	ProviderLynkr,
 	ProviderMeganova,
 	ProviderMergeGateway,
 	ProviderMeta,
@@ -270,6 +282,7 @@ var knownProviders = [...]Provider{
 	ProviderNova,
 	ProviderNovitaAI,
 	ProviderNvidia,
+	ProviderOfox,
 	ProviderOllamaCloud,
 	ProviderOpenAI,
 	ProviderOpenCode,
@@ -298,6 +311,8 @@ var knownProviders = [...]Provider{
 	ProviderSTACKIT,
 	ProviderStepFun,
 	ProviderStepFunAI,
+	ProviderStepFunAIStepPlan,
+	ProviderStepFunStepPlan,
 	ProviderSubconscious,
 	ProviderSubmodel,
 	ProviderSynthetic,
@@ -305,6 +320,7 @@ var knownProviders = [...]Provider{
 	ProviderTencentTokenPlan,
 	ProviderTencentTokenHub,
 	ProviderTheGridAI,
+	ProviderThinkingmachines,
 	ProviderTinfoil,
 	ProviderTogetherAI,
 	ProviderTrustedRouter,

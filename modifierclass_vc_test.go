@@ -105,9 +105,19 @@ func TestVC7_AmbiguousBothArms(t *testing.T) {
 		t.Errorf("ClassifyModifier(turbo, glm) = %v, want ModifierClassAttribute", got)
 	}
 
-	// The override is family-scoped: it must NOT leak to other families.
-	if got := bestiary.ClassifyModifier("turbo", "kimi"); got != bestiary.ModifierClassIdentity {
-		t.Errorf("ClassifyModifier(turbo, kimi) = %v, want ModifierClassIdentity (override is glm-only)", got)
+	// The override is family-scoped: it must NOT leak to families without one.
+	// llama is the probe because it carries no turbo override; kimi used to play this
+	// role and can no longer, since kimi gained its own curated turbo demotion — a
+	// scoping fence has to be anchored on a family that is genuinely un-overridden,
+	// or it stops testing scoping at all.
+	if got := bestiary.ClassifyModifier("turbo", "llama"); got != bestiary.ModifierClassIdentity {
+		t.Errorf("ClassifyModifier(turbo, llama) = %v, want ModifierClassIdentity (no override for llama)", got)
+	}
+	// …and the families that DO carry one are demoted, each for its own curated reason.
+	for _, fam := range []bestiary.Family{"glm", "kimi", "minimax"} {
+		if got := bestiary.ClassifyModifier("turbo", fam); got != bestiary.ModifierClassAttribute {
+			t.Errorf("ClassifyModifier(turbo, %s) = %v, want ModifierClassAttribute (curated per-family demotion)", fam, got)
+		}
 	}
 
 	// Projected into the identity key: gpt keeps turbo, glm drops it.
@@ -484,5 +494,90 @@ func TestVC12_BackwardCompat(t *testing.T) {
 	}
 	if strings.Contains(got, "[instruct]") {
 		t.Errorf("identity render %q must NOT use the legacy [instruct] form", got)
+	}
+}
+
+// TestTurboPerFamilyDemotion_KimiMinimax pins the curated turbo demotions for kimi
+// and minimax, with the literal before/after entity keys each one moves.
+//
+// Turbo is IDENTITY by global default, and rightly so: gpt-4-turbo is a different
+// artifact from gpt-4. It is demoted per-family only where curation established the
+// token names a serving speed tier over the SAME artifact. Evidence differs in
+// strength between the two families and the corpus records that honestly:
+//
+//   - kimi: moonshot serves kimi-k2-thinking and kimi-k2-thinking-turbo from the
+//     IDENTICAL Kimi-K2-Thinking HuggingFace repo — same weights, so the turbo
+//     spelling cannot denote a different artifact. Repo-identity evidence.
+//   - minimax: no repo-identity proof. The rev-2 URL census resolves the M2.7 and
+//     M2.5-highspeed serving names back to the plain repos, and minimax markets
+//     turbo the way it markets highspeed (already an attribute). Inference, graded
+//     lower — flagged in the curated entry so it is the first row to revisit.
+//
+// The three entities that merged are asserted by key, because a demotion that
+// silently failed to merge them would leave the classification "correct" while the
+// registry still carried the split.
+func TestTurboPerFamilyDemotion_KimiMinimax(t *testing.T) {
+	// Classification arm.
+	for _, fam := range []bestiary.Family{"kimi", "minimax"} {
+		if got := bestiary.ClassifyModifier("turbo", fam); got != bestiary.ModifierClassAttribute {
+			t.Errorf("ClassifyModifier(turbo, %s) = %v, want ModifierClassAttribute", fam, got)
+		}
+		if got := bestiary.EntityModifiers([]string{"turbo"}, fam); got != nil {
+			t.Errorf("EntityModifiers([turbo], %s) = %v, want nil — an attribute must not reach the key", fam, got)
+		}
+	}
+
+	// Merge arm: the {turbo} keys are GONE and their instances sit on the plain
+	// sibling, whose key never changed.
+	for _, tc := range []struct{ gone, survivor string }{
+		{"kimi/k@2{turbo}", "kimi/k@2"},
+		{"kimi/k@2.6{turbo}", "kimi/k@2.6"},
+		{"minimax/m@2.7{turbo}", "minimax/m@2.7"},
+	} {
+		// The retired key must be absent from the registry's own key set. EntityByKey is
+		// deliberately NOT used for this: it applies the identity-class projection to its
+		// argument, so it resolves the {turbo} spelling onto the survivor — useful for a
+		// caller, useless as an absence check.
+		for _, e := range bestiary.Entities() {
+			if e.Ref.String() == tc.gone {
+				t.Errorf("entity key %q is still minted; the turbo demotion must fold it into %q", tc.gone, tc.survivor)
+			}
+		}
+		// The projection is what a caller sees: looking the old spelling up now lands on
+		// the survivor rather than 404ing, so a consumer holding the pre-demotion key is
+		// carried across instead of broken.
+		if folded, ok := bestiary.EntityByKey(tc.gone); !ok || folded.Ref.String() != tc.survivor {
+			t.Errorf("EntityByKey(%q) = (%q, ok=%v), want it to resolve onto %q",
+				tc.gone, folded.Ref.String(), ok, tc.survivor)
+		}
+		e, ok := bestiary.EntityByKey(tc.survivor)
+		if !ok {
+			t.Fatalf("survivor entity %q is missing", tc.survivor)
+		}
+		// The turbo SPELLING is not lost — it stays an Admitted provider-ID nomen on
+		// the merged entity. Demotion changes what is IDENTITY, never what is recorded.
+		var sawTurboNomen bool
+		for _, n := range e.Nomina() {
+			if n.Scheme != bestiary.NomenSchemeProviderID || !strings.Contains(strings.ToLower(n.Value), "turbo") {
+				continue
+			}
+			sawTurboNomen = true
+			if n.Status != bestiary.AcceptabilityAdmitted {
+				t.Errorf("turbo nomen %q on %q has status %v, want admitted", n.Value, tc.survivor, n.Status)
+			}
+		}
+		if !sawTurboNomen {
+			t.Errorf("entity %q carries no turbo-spelled provider-ID nomen; the merge must PRESERVE the "+
+				"spelling as an admitted naming, not discard it", tc.survivor)
+		}
+	}
+
+	// Scoping control: the demotion is per-family and must not leak. gpt keeps turbo
+	// in its key, which is the whole reason the global default is identity.
+	if got := bestiary.ClassifyModifier("turbo", "gpt"); got != bestiary.ModifierClassIdentity {
+		t.Errorf("ClassifyModifier(turbo, gpt) = %v, want ModifierClassIdentity", got)
+	}
+	if _, ok := bestiary.EntityByKey("gpt@4{turbo}"); !ok {
+		t.Error("entity gpt@4{turbo} is missing — the kimi/minimax demotion must not leak to gpt")
 	}
 }

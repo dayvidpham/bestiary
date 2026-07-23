@@ -228,8 +228,10 @@ func TestDatasetIngestHistoryFor_SeedAndCurrent(t *testing.T) {
 	}
 }
 
-// TestKnownDataSources_SeedPresent asserts the shipped seed contains both the
-// models.dev and ollama dimension rows with their candidate-key uris.
+// TestKnownDataSources_SeedPresent asserts the shipped seed contains the models.dev,
+// ollama, and curated dimension rows with their candidate-key uris. The curated row
+// is the ingest a curated naming CLAIM (nomen_claims.json) is honestly attributed to —
+// bestiary read the claim from its own committed curation, not from a fetched source.
 func TestKnownDataSources_SeedPresent(t *testing.T) {
 	byID := map[bestiary.DataSourceID]bestiary.DataSource{}
 	for _, ds := range bestiary.KnownDataSources() {
@@ -248,5 +250,12 @@ func TestKnownDataSources_SeedPresent(t *testing.T) {
 	}
 	if ol.URI == "" {
 		t.Error("ollama source has an empty uri")
+	}
+	cur, ok := byID[bestiary.DataSourceCurated]
+	if !ok {
+		t.Fatal("KnownDataSources missing curated")
+	}
+	if cur.URI == "" {
+		t.Error("curated source has an empty uri")
 	}
 }

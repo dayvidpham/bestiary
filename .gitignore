@@ -11,6 +11,7 @@
 # path component named bestiary, silently ignoring new files under cmd/bestiary/).
 /bestiary
 /bestiary-gen
+/bestiary-ollama
 .bestiary-gen-cache/
 *.exe
 *.exe~

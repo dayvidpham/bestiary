@@ -33,8 +33,12 @@ const (
 	//   <provider>/<raw-model-id>
 	InputFormatHuggingFace InputFormat = "huggingface"
 
-	// InputFormatPURL is the Package URL (PURL) form:
-	//   pkg:huggingface/<provider>/<raw-model-id>
+	// InputFormatPURL is the Package URL (PURL) form. This is an INPUT format, and
+	// input stays lenient (Postel): both the registry-accurate
+	// "pkg:huggingface/<org>/<repo>" spelling and the legacy
+	// "pkg:huggingface/<provider>/<raw-model-id>" spelling this package once emitted
+	// are accepted. The corresponding OUTPUT render (SchemePURL) is narrower — it is
+	// minted only for HuggingFace-hosted refs (see canonical.go SchemePURL).
 	InputFormatPURL InputFormat = "purl"
 
 	// InputFormatRaw is the raw API model ID (exact match):
@@ -211,6 +215,10 @@ func modelToYAML(m ModelInfo, indent string) string {
 	writeYAMLFloat64Ptr(&sb, indent, "CostCacheWritePerMTok", m.CostCacheWritePerMTok)
 	writeYAMLString(&sb, indent, "ReleaseDate", m.ReleaseDate)
 	writeYAMLString(&sb, indent, "Knowledge", m.Knowledge)
+	// Region is the per-instance serving jurisdiction (AWS Bedrock cross-region
+	// inference profile); it renders as its lowercase token ("unspecified" for the
+	// RegionNone zero value, never blank). Added in v0.2.7.
+	writeYAMLString(&sb, indent, "Region", m.Region.String())
 	writeYAMLString(&sb, indent, "LastSynced", m.LastSynced)
 	writeYAMLModalities(&sb, indent, m.Modalities)
 	return sb.String()

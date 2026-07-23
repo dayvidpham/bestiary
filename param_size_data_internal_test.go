@@ -68,6 +68,12 @@ func TestParamSizePin_Seed(t *testing.T) {
 		{"Bedrock dotted scout → 17b-16e", "us.meta.llama4-scout-17b-instruct-v1:0", "17b-16e", true},
 		{"Bedrock dotted maverick → 17b-128e", "meta.llama4-maverick-17b-instruct-v1:0", "17b-128e", true},
 		{"underscore solar → 10.7b", "upstage/solar-10_7b-instruct", "10.7b", true},
+		// Cohere Command R7B dual-carry: variant "r7b" is kept whole (idFamilyOverrides)
+		// while 7b is ALSO recorded here as ParamSize (mechanical ExtractParamSizeToken is
+		// "" because 7b is token-internal to r7b) → entity key command/r7b#7b.
+		{"command-r7b bare → 7b", "command-r7b-12-2024", "7b", true},
+		{"command-r7b org-prefixed → 7b", "cohere/command-r7b-12-2024", "7b", true},
+		{"command-r7b arabic → 7b", "command-r7b-arabic-02-2025", "7b", true},
 		{"suppress fp8-1m → \"\" found", "qwen/qwen3-coder-next-fp8-1m", "", true},
 		{"case-insensitive scout", "LLAMA-4-SCOUT", "17b-16e", true},
 		{"absent id → not found", "claude-opus-4-5", "", false},

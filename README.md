@@ -4,6 +4,12 @@ Go module and CLI for querying AI model metadata from [models.dev](https://model
 
 Provides strongly-typed providers and model IDs, a static model registry (~5,650 models across ~162 providers), entity normalization (Family / Variant / Version / Date / Modifier), an HTTP client with retry, and a local SQLite cache for offline queries.
 
+> **Documentation map:** [`docs/CONCEPTS.md`](docs/CONCEPTS.md) defines the
+> vocabulary (entity, nomen, appellation, series, …) and its ISO 1087 /
+> IFLA-LRM grounding; [`docs/architecture.md`](docs/architecture.md) describes
+> the full architecture with diagrams; [`TESTING.md`](TESTING.md) the corpus
+> standard; [`AGENTS.md`](AGENTS.md) the per-epoch design decisions.
+
 ## Install
 
 **As a Go library:**
@@ -68,9 +74,12 @@ auditable and easy to fix. Inputs the parser can't cleanly decompose are recorde
 `.bestiary-gen-cache/parse_failures.json` at codegen time rather than silently mangled.
 
 > The design draws on ISO 1087 / IFLA-LRM terminology concepts (a concept vs. its
-> designations); see [`docs/research/entity-normalization.md`](docs/research/entity-normalization.md)
-> for the full rationale. Today every designation is rated *admitted*; promotion to
-> *preferred* is deferred to a later curation pass.
+> designations) — see [`docs/CONCEPTS.md`](docs/CONCEPTS.md) for the working
+> vocabulary and [`docs/research/entity-normalization.md`](docs/research/entity-normalization.md)
+> for the full rationale. The designation layer is active: the canonical form is
+> rated *preferred*, raw provider spellings *admitted*, and every recorded name
+> is a first-class **nomen** with claim attribution (`Entity.Nomina()` /
+> `NomenLookup`).
 
 ## Canonical entity keys
 
@@ -624,7 +633,7 @@ occasional manual step — see the **"models.dev snapshot refresh"** workflow in
 ## CLI
 
 ```
-bestiary <list|show|providers|entities|sources|sync> [flags]
+bestiary <list|show|providers|entities|series|sources|sync> [flags]
 ```
 
 ### Commands
@@ -661,6 +670,111 @@ they are discoverable.
 ```sh
 bestiary entities --output table   # summary table (ENTITY KEY / PROVIDERS / METADATA / BENCHMARKS)
 bestiary entities                  # full Entity objects, JSON
+```
+
+**series** — browse the computed **Series/Release** hierarchy above entity keys (offline;
+static registry only — it never reads the SQLite cache, and **rejects** `--db-path` with an
+actionable error rather than accepting a flag it cannot honour). With no argument it lists every versioned
+line — `Series{Family, Generation}` such as `llama-4` or `gemini-3.0` — with its release and
+entity counts. With a selector it details that line: each **Release** (a named member such as
+`scout`, `maverick`, `flash`, plus the un-named bare line) and the canonical entity keys under
+it.
+
+The selector is a **specificity ladder** — ask for as much or as little as you know:
+
+| Selector | Returns |
+|---|---|
+| `bestiary series claude` | every claude line, all generations |
+| `bestiary series claude-4` | every claude **4.x** line (the major union) |
+| `bestiary series claude --version 4` | identical to the row above |
+| `bestiary series claude-4.8` | the one `claude-4.8` line |
+
+The **canonical entity grammar** is accepted too, mapped to its series-level meaning. Note the
+`@` here is the entity **version**, exactly as in an entity key (`claude/opus@4.5`) — not the
+`@`-date form the `show` resolver accepts; series live above entity keys, so they inherit the
+key grammar.
+
+| Selector | Returns |
+|---|---|
+| `bestiary series claude@4` | the major-4 union (identical to `claude-4`) |
+| `bestiary series claude@4.5` | the one `claude-4.5` line |
+| `bestiary series claude/opus` | the **opus release across every claude generation** |
+| `bestiary series claude/opus@4` | the opus release within the 4.x lines |
+| `bestiary series anthropic/claude@4` | the 4.x lines, narrowed to anthropic-served entities |
+
+A variant segment is a **release-level cut**: it selects the lines that actually carry that
+release and shows only that release in each, so a line without an opus release drops out rather
+than appearing with the rest of its releases intact. A leading `<provider>/` is peeled only when
+it names a *known* provider (so `claude/opus` still reads as family/variant), and it feeds the
+ordinary `--provider` machinery rather than a second filter — an explicit `--provider` that
+disagrees with the prefix is an actionable error, as is a `--version` that disagrees with the
+selector's `@version`.
+
+`--input-format` pins the grammar for scripting that must not depend on inference:
+
+| Value | Behaviour |
+|---|---|
+| `infer` (default) | ladder and canonical readings are tried and **unioned**; a raw model ID is the **final** fallback, used only when both find nothing |
+| `canonical` | the selector must be `[provider/]family[/variant][@version]` — **no fallback**; a raw ID fails loudly and is told which format would read it |
+| `models.dev` | the selector is a raw catalog ID, resolved through the ordinary lookup to its entity's line (`claude-sonnet-4-5-20250929` → `claude-4.5`) |
+
+The major rung is a **union, not a re-grouping**: it returns several Series in the same
+multi-line output shape the family rung already produces, and the hierarchy itself is
+untouched — `claude-4.0` and `claude-4.5` remain distinct lines that a narrower selector still
+addresses individually. Membership is a **strict string rule**: a generation belongs to version
+`4` iff it *is* `4` or begins `4.`. Nothing is numerically normalized, so `4` never swallows
+`42`, `1` never reaches `ling#1t` (whose `1t` is a param-size, not a version) or the leading-zero
+`gemini@001`. Upstream spelling defects *are* repaired — at **parse** time, not in the selector:
+`glm-5p1`/`glm-5p2` decode to the real `glm@5.1`/`glm@5.2`, and the closing Impl-UAT batch extended
+the same discipline — the compound-family `k2p7` now resolves to `kimi/k@2.7` (a curated exact-id
+override) and joins the `kimi-2.7` union alongside its `k2p5`/`k2p6` siblings, the dot-lost
+`qwen2-5-…`/`minimax-m25` spellings merge into their dotted entities, and `ling-1t`/`ring-1t` route
+their `1t` to the param-size axis. Those repairs live in `parse/`, where the raw IDs are, so
+`series` never has to guess. Sub-1.0 generations need no special case: `mistral-0` unions `mistral-0.1` and
+`mistral-0.3` like any other version. Where a family spells both a bare `N` and dotted
+siblings (`claude-3`, `glm-4`, `gpt-5`, …), the union **includes the bare line**. `--version`
+is exactly equivalent to appending `-<value>` to the positional, and is rejected with an
+actionable error when given without a family — it selects *within* one. Matching is
+case-folded, and the filters below apply *after* the selection.
+
+Two refinements keep one line from splitting on a spelling accident. First, a bare generation
+`N` folds into `N.0` when the same family also spells `N.0` for the SAME (variant, param-size,
+identity-modifiers) — and, as of the C4 ruling, this fold is realized at **entity identity**:
+`gemini/flash@3` and `gemini/flash@3.0` are no longer two entities sharing a line, they MERGE
+into the single `gemini/flash@3.0` entity (a bare-version expression like `EntityByKey("gemini/flash@3")`
+resolves to it), while `llama@4` — with no dotted sibling — keeps its bare key untouched. Second,
+the curated `parse/data/series.json` re-homes the few families whose line cannot be derived
+(`gemma4` → `gemma-4`); this one is purely a hierarchy view and does **not** affect entity keys.
+The series-level generation fold in `taxonomy.go` is retained as a safety net but is now subsumed
+by the entity merge — no bare-`N` entity survives for it to fold.
+
+`--provider`, `--quant` and `--status` narrow the **entity list inside each release**. Each is
+a per-entity predicate satisfied by the entity's *instances*: `--provider` keeps entities with
+an instance served by that provider, `--quant` those with an instance carrying a matching
+`QuantVRAM` row, `--status` those with an instance whose model has that release status.
+Combined filters must be satisfied by **one instance at once** — `--provider=X --quant=Y`
+means "X serves it at Y", not "X serves it *and* somebody serves it at Y". The drops
+**cascade**: an emptied release is omitted, an emptied line is omitted from both views, and
+the listing's counts are post-filter, so `series --provider X` lists exactly the lines and
+counts `series <line> --provider X` will then render. An unknown `--quant` or `--status` value
+is rejected with an actionable error rather than silently matching nothing, and a selector
+that names a real line the filters empty is its own actionable error (not "not found" — the
+line exists; the filter is what matched nothing).
+
+```sh
+bestiary series --output table            # every line: SERIES / FAMILY / GENERATION / RELEASES / ENTITIES
+bestiary series llama-4 --output table    # that line's releases (bare, maverick, scout) + entity keys
+bestiary series gemma                     # every gemma generation, JSON
+bestiary series claude-4                  # every claude 4.x line: 4.0, 4.1, 4.5, 4.6, 4.7, 4.8
+bestiary series claude --version 4        # identical to the line above
+bestiary series claude-4.8                # just that line
+bestiary series claude/opus               # the opus release across every claude generation
+bestiary series anthropic/claude@4        # the 4.x lines, anthropic-served entities only
+bestiary series claude-sonnet-4-5-20250929 --input-format models.dev   # a raw id -> its line
+bestiary series --provider cohere         # only lines cohere serves, with post-filter counts
+bestiary series --quant q4_k_m            # only lines with a q4_k_m-quantized instance
+bestiary series --status beta             # only lines with a beta-status instance
+bestiary series llama-3.3 --quant q4_k_m  # detail view, entity list narrowed the same way
 ```
 
 **sources** — resolve an entity key and print its data-source provenance (one row per
@@ -773,9 +887,20 @@ models, err := client.FetchModels(ctx)
 // or: client.FetchModelsByProvider(ctx, bestiary.ProviderGoogle)
 ```
 
-**Generated constants.** `go generate` emits a `Model__*` constant for every model, named
-`Model__<Provider>__<Family>__<Variant>__<Version>__<Modifier>__<Date>` (double underscores
-between components, single within), e.g. `Model__Anthropic__Claude__Opus__4_6__20260205`.
+**Generated constants.** `go generate` emits one provider-agnostic `Entity__*` constant per
+canonical entity, valued by its entity key — a word-sentinel grammar with `Version_` and
+`Size_` segment markers, kept injective by a loud codegen guard:
+
+```go
+bestiary.Entity__Llama__Scout__Version_4__Size_17b_16e__Instruct // = "llama/scout@4#17b-16e{instruct}"
+
+e, ok := bestiary.EntityByKey(bestiary.Entity__Llama__Scout__Version_4__Size_17b_16e__Instruct)
+providers := bestiary.ProvidersOf(e.Ref) // the entity's serving providers, sorted
+```
+
+(The pre-v0.2.7 provider-flavored `Model__*` constants are removed — see the CHANGELOG's
+breaking-migration table. Provider access moved to the API: `ProvidersOf` / `ProvidersOfModel`;
+enumerate-then-lookup is `EntityKeys()` + `EntityByKey`.)
 
 ## Types
 

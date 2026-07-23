@@ -73,6 +73,15 @@ var quantDetectNoTagCorpusJSON []byte
 //go:embed testdata/quant/detect_unknown_corpus.json
 var quantDetectUnknownCorpusJSON []byte
 
+//go:embed testdata/quant/param_size_for_present_corpus.json
+var quantParamSizeForPresentCorpusJSON []byte
+
+//go:embed testdata/quant/source_for_present_corpus.json
+var quantSourceForPresentCorpusJSON []byte
+
+//go:embed testdata/quant/context_window_for_present_corpus.json
+var quantContextWindowForPresentCorpusJSON []byte
+
 //go:embed testdata/quant/detect_fp16_alias_corpus.json
 var quantDetectFP16AliasCorpusJSON []byte
 

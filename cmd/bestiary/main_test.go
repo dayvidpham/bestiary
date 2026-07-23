@@ -415,6 +415,48 @@ func TestShow_CanonicalPreference_Claude(t *testing.T) {
 	}
 }
 
+// TestShow_ExactRawID_RendersCanonicalProvider is the end-to-end fence for the
+// reported defect, pinned to the user's exact command line:
+//
+//	bestiary show claude-sonnet-4-5-20250929
+//
+// An exact raw model ID, provider-unqualified, in the default (peasant) input
+// format. The catalog hosts this Anthropic model under eight providers; before
+// the fix, `show` rendered whichever the static registry listed first — 302ai,
+// the alphabetically-first rehost — because the canonical-provider preference
+// carved out exact-ID lookups. It must now render the curated publisher.
+//
+// This is a CLI-level test on purpose: the library-level fences live in
+// resolve_canonical_pref_test.go, but the defect was reported against what the
+// command prints, so the command is what is pinned here.
+func TestShow_ExactRawID_RendersCanonicalProvider(t *testing.T) {
+	tmpDB := t.TempDir() + "/test.db"
+	const query = "claude-sonnet-4-5-20250929"
+
+	var runErr error
+	stdout := captureStdout(t, func() {
+		runErr = run([]string{"show", "--db-path", tmpDB, query})
+	})
+	if runErr != nil {
+		t.Fatalf("run show %q returned error: %v", query, runErr)
+	}
+
+	if !strings.Contains(stdout, `"Provider": "anthropic"`) {
+		t.Errorf("show %q did not render the canonical provider anthropic; stdout:\n%s", query, stdout)
+	}
+	// The rehosts that previously won the representative slot must not appear.
+	for _, rehost := range []string{"302ai", "abacus", "helicone", "jiekou", "llmgateway", "nano-gpt", "qihang-ai"} {
+		if strings.Contains(stdout, rehost) {
+			t.Errorf("show %q surfaced rehost %q as the representative; anthropic is the canonical publisher; stdout:\n%s",
+				query, rehost, stdout)
+		}
+	}
+	// Sanity: it is still the model that was asked for.
+	if !strings.Contains(stdout, `"ID": "`+query+`"`) {
+		t.Errorf("show %q did not render the requested id; stdout:\n%s", query, stdout)
+	}
+}
+
 // TestList_OutputFlagStillWorks verifies that the 'list' command still accepts
 // the --output flag (renamed from --format in v0.0.1).
 func TestList_OutputFlagStillWorks(t *testing.T) {

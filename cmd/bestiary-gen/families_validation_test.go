@@ -170,20 +170,31 @@ func loadFamilyEnforce(t *testing.T) []string {
 
 // TestFamilyEnforce_IntegrityGuard is the integrity guard for the
 // canonical-winner ENFORCE set. It asserts that EVERY family_enforce.json entry decomposes
-// from >=1 REAL model in the committed snapshot — the analogue of the o-series allowlist's
+// from >=1 REAL model — the analogue of the o-series allowlist's
 // ConformsToRatification, and of the families.json member-reachability guard. The set CANNOT
 // be validated against allFamilies: 11/18 entries (aion, codellama, inflection, lfm, magnum,
 // olmo, owl, qwq, remm, weaver, wizardlm) are DELIBERATELY absent from the upstream registry —
 // they are distinct models a provider mislabels as a parent, which is the whole point of the
-// enforce set. So the guard grounds each entry in real snapshot data instead.
+// enforce set. So the guard grounds each entry in real data instead.
+//
+// "Real data" is the VENDORED CATALOG (parse/data/modelsdev/catalog.json), not the frozen
+// testdata snapshot. The guard asks whether a curated entry is live or dead curation, and
+// the only corpus that can answer is the one the bake actually reads. It used to consult
+// the frozen snapshot, which has since fallen behind the vendored catalog — so entries
+// grounded in the data codegen consumes were reported as dead, and the correction was to
+// avoid the ledger rather than to fix the corpus. Both loaders read committed files with no
+// network access, so the regrounding costs nothing in hermeticity or determinism; the frozen
+// snapshot stays in place for the assertions that genuinely need a HISTORICAL baseline (the
+// path-unification diff, the drift analysis, the divergence report), which measure change
+// relative to it and would be meaningless if it moved.
 func TestFamilyEnforce_IntegrityGuard(t *testing.T) {
 	enforce := loadFamilyEnforce(t)
 	if len(enforce) == 0 {
 		t.Fatal("family_enforce.json has no entries")
 	}
-	records, err := LoadSnapshotRecords()
+	records, err := LoadVendoredCatalogRecords()
 	if err != nil {
-		t.Fatalf("LoadSnapshotRecords: %v", err)
+		t.Fatalf("LoadVendoredCatalogRecords: %v", err)
 	}
 	famCount := make(map[string]int)
 	for _, r := range records {
@@ -198,15 +209,15 @@ func TestFamilyEnforce_IntegrityGuard(t *testing.T) {
 		}
 		// …and must ground in >=1 real model (else it is dead/speculative and must be removed).
 		if famCount[lf] == 0 {
-			t.Errorf("family_enforce.json entry %q maps to ZERO snapshot models — dead/speculative entry\n"+
-				"  What: a canonical-winner enforce family is not produced by any committed snapshot record\n"+
+			t.Errorf("family_enforce.json entry %q maps to ZERO models in the vendored catalog — dead/speculative entry\n"+
+				"  What: a canonical-winner enforce family is not produced by any row of the committed codegen input\n"+
 				"  Why: the enforce set must be grounded in real data (it cannot be validated vs allFamilies,\n"+
 				"       since distinct-model entries are intentionally absent from the upstream registry)\n"+
 				"  How to fix: remove the entry from parse/data/family_enforce.json, or correct its spelling",
 				f)
 		}
 	}
-	t.Logf("family_enforce integrity: %d entries, all grounded in >=1 snapshot model", len(enforce))
+	t.Logf("family_enforce integrity: %d entries, all grounded in >=1 vendored-catalog model", len(enforce))
 }
 
 // TestIsEnforcedCanonicalFamily_Unit is the direct true/false unit

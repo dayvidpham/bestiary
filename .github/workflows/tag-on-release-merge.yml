@@ -4,6 +4,11 @@ name: tag-on-release-merge
 # is merged. The version is carried in the title scope, so no VERSION file is
 # needed. No-op for any other PR title. FAILS LOUDLY if the tag already exists
 # (it never force-moves a published tag) so a duplicate/mistyped release is caught.
+#
+# The tag is pushed with a token minted from the release GitHub App
+# (RELEASE_APP_ID / RELEASE_APP_PRIVATE_KEY repo secrets) rather than the
+# implicit GITHUB_TOKEN: GITHUB_TOKEN-pushed tags do NOT trigger downstream
+# `on: push: tags` workflows (release-build.yml), App-pushed tags do.
 
 on:
   pull_request:
@@ -21,6 +26,13 @@ jobs:
       startsWith(github.event.pull_request.title, 'release(')
     runs-on: ubuntu-latest
     steps:
+      - name: Mint an App token (so the tag push triggers release-build)
+        id: app-token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ secrets.RELEASE_APP_ID }}
+          private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
+
       - uses: actions/checkout@v4
         with:
           # Check out the base branch (e.g. main) at full depth so the merge
@@ -29,6 +41,8 @@ jobs:
           ref: ${{ github.event.pull_request.base.ref }}
           fetch-depth: 0
           fetch-tags: true
+          # Persist the App token for the push step below (not GITHUB_TOKEN).
+          token: ${{ steps.app-token.outputs.token }}
 
       - name: Extract + strictly validate version from PR title
         id: ver

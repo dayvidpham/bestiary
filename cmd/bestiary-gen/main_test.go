@@ -29,78 +29,35 @@ var updateGolden = flag.Bool("update", false, "regenerate golden files instead o
 // TestSlugToIdentifier verifies the slug-to-PascalCase conversion, including
 // digit-leading slugs, casing overrides, and hyphen-separated tokens.
 func TestSlugToIdentifier(t *testing.T) {
-	cases := []struct {
-		slug     string
-		nameHint string
-		want     string
-	}{
-		// Digit-leading slug: "302" stays verbatim; "ai" → "AI" via casingOverrides.
-		{"302ai", "302AI", "302AI"},
-		// Single-token brand-casing.
-		{"xai", "xAI", "xAI"},
-		// Multi-token with two overrides (SAP + AI).
-		{"sap-ai-core", "SAP AI Core", "SAPAICore"},
-		// Hyphenated without overrides — title-case each token.
-		{"amazon-bedrock", "Amazon Bedrock", "AmazonBedrock"},
-		// Simple single token.
-		{"anthropic", "Anthropic", "Anthropic"},
-		{"google", "Google", "Google"},
-		// Multi-token with AI override.
-		{"cloudflare-ai-gateway", "Cloudflare AI Gateway", "CloudflareAIGateway"},
-		// AWS override.
-		{"aws", "AWS", "AWS"},
-		// openrouter — name hint "OpenRouter" provides the display casing.
-		{"openrouter", "OpenRouter", "OpenRouter"},
-	}
-
-	for _, tc := range cases {
-		t.Run(tc.slug, func(t *testing.T) {
-			got := slugToIdentifier(tc.slug, tc.nameHint)
-			if got != tc.want {
-				t.Errorf("slugToIdentifier(%q, %q) = %q, want %q", tc.slug, tc.nameHint, got, tc.want)
-			}
-		})
-	}
+	corpus := loadGenCorpus[genSlugInput, string](t, genSlugToIdentifierCorpusJSON, 9)
+	genRequireInputCoverage(t, corpus, map[genSlugInput]string{
+		{Slug: "302ai", NameHint: "302AI"}:                                 "302AI",
+		{Slug: "sap-ai-core", NameHint: "SAP AI Core"}:                     "SAPAICore",
+		{Slug: "cloudflare-ai-gateway", NameHint: "Cloudflare AI Gateway"}: "CloudflareAIGateway",
+	})
+	runGenSlugCorpus(t, corpus)
 }
 
 // TestSlugToIdentifier_DigitLeadingVariants covers digit-alpha combinations.
 func TestSlugToIdentifier_DigitLeadingVariants(t *testing.T) {
-	cases := []struct {
-		slug string
-		name string
-		want string
-	}{
-		{"302ai", "302AI", "302AI"},
-		{"3ai", "3AI", "3AI"},
-	}
-	for _, tc := range cases {
-		got := slugToIdentifier(tc.slug, tc.name)
-		if got != tc.want {
-			t.Errorf("slugToIdentifier(%q, %q) = %q, want %q", tc.slug, tc.name, got, tc.want)
-		}
-	}
+	corpus := loadGenCorpus[genSlugInput, string](t, genSlugToIdentifierDigitLeadingCorpusJSON, 2)
+	genRequireInputCoverage(t, corpus, map[genSlugInput]string{
+		{Slug: "3ai", NameHint: "3AI"}: "3AI",
+	})
+	runGenSlugCorpus(t, corpus)
 }
 
 // TestProviderConstName verifies that providerConstName produces valid Go identifiers.
 func TestProviderConstName(t *testing.T) {
-	cases := []struct {
-		slug string
-		name string
-		want string
-	}{
-		{"302ai", "302AI", "Provider302AI"},
-		{"xai", "xAI", "ProviderxAI"},
-		{"sap-ai-core", "SAP AI Core", "ProviderSAPAICore"},
-		{"amazon-bedrock", "Amazon Bedrock", "ProviderAmazonBedrock"},
-		{"anthropic", "Anthropic", "ProviderAnthropic"},
-		{"google", "Google", "ProviderGoogle"},
-		{"cloudflare-ai-gateway", "Cloudflare AI Gateway", "ProviderCloudflareAIGateway"},
-	}
-	for _, tc := range cases {
-		t.Run(tc.slug, func(t *testing.T) {
-			got := providerConstName(tc.slug, tc.name)
-			if got != tc.want {
-				t.Errorf("providerConstName(%q, %q) = %q, want %q", tc.slug, tc.name, got, tc.want)
+	corpus := loadGenCorpus[genSlugInput, string](t, genProviderConstNameCorpusJSON, 7)
+	genRequireInputCoverage(t, corpus, map[genSlugInput]string{
+		{Slug: "302ai", NameHint: "302AI"}: "Provider302AI",
+		{Slug: "xai", NameHint: "xAI"}:     "ProviderxAI",
+	})
+	for _, c := range corpus.Cases {
+		t.Run(c.Name, func(t *testing.T) {
+			if got := providerConstName(c.Input.Slug, c.Input.NameHint); got != c.Expected {
+				t.Errorf("providerConstName(%q, %q) = %q, want %q", c.Input.Slug, c.Input.NameHint, got, c.Expected)
 			}
 		})
 	}
@@ -221,429 +178,174 @@ func TestFilterFlags_NoFlags(t *testing.T) {
 
 // TestSplitComma verifies the comma-splitting helper.
 func TestSplitComma(t *testing.T) {
-	cases := []struct {
-		in   string
-		want []string
-	}{
-		{"anthropic,google", []string{"anthropic", "google"}},
-		{"anthropic", []string{"anthropic"}},
-		{"", nil},
-		{"anthropic, google", []string{"anthropic", "google"}},
-	}
-	for _, tc := range cases {
-		got := splitComma(tc.in)
-		if len(got) != len(tc.want) {
-			t.Errorf("splitComma(%q) = %v, want %v", tc.in, got, tc.want)
-			continue
-		}
-		for i, g := range got {
-			if g != tc.want[i] {
-				t.Errorf("splitComma(%q)[%d] = %q, want %q", tc.in, i, g, tc.want[i])
+	corpus := loadGenCorpus[string, []string](t, genSplitCommaCorpusJSON, 4)
+	genRequireNameCoverage(t, corpus, "two-values", "empty-is-nil", "padded-values")
+	for _, c := range corpus.Cases {
+		t.Run(c.Name, func(t *testing.T) {
+			got := splitComma(c.Input)
+			if len(got) != len(c.Expected) {
+				t.Fatalf("splitComma(%q) = %v, want %v", c.Input, got, c.Expected)
 			}
-		}
-	}
-}
-
-// --------------------------------------------------------------------------
-// tests: nameForCanonical, resolveCollisions, generateConstantsSource
-// --------------------------------------------------------------------------
-
-// testSlugToConst is a minimal slugToConst map for tests, providing the correct
-// provider constant names (with proper casing) for the providers used in golden examples.
-var testSlugToConst = map[string]string{
-	"anthropic":     "ProviderAnthropic",
-	"openai":        "ProviderOpenAI",
-	"google":        "ProviderGoogle",
-	"google-vertex": "ProviderGoogleVertex",
-	"openrouter":    "ProviderOpenRouter",
-}
-
-// TestNameForCanonical_KnownExamples verifies that nameForCanonicalWithMap produces
-// the expected constant names for the spec-defined golden examples.
-// Updated to new double-underscore template: Model__<Provider>__<Family>__<Variant>?__<Version>?__<Date>?
-// (double underscores between components, single underscores within components).
-//
-// The naming uses double underscores between EVERY token from the raw ID (after date strip),
-// plus the provider prefix and date suffix. Tokens from the raw ID (hyphen/dot split) each
-// become a separate __-separated component. The Version field produces a single
-// underscore-within-component segment when it is non-empty (e.g. "4.5" → "4_5").
-func TestNameForCanonical_KnownExamples(t *testing.T) {
-	cases := []struct {
-		desc     string
-		model    bestiary.ModelInfo
-		wantName string
-	}{
-		{
-			desc: "claude-opus-4-20250514 on Anthropic",
-			model: bestiary.ModelInfo{
-				ID:       "claude-opus-4-20250514",
-				Provider: "anthropic",
-				Family:   "claude",
-				Variant:  "opus",
-				Date:     "2025-05-14",
-			},
-			// Tokens after date strip: [claude→Claude, opus→Opus, 4→4]
-			// Double-underscore join + provSuffix + date.
-			wantName: "Model__Anthropic__Claude__Opus__4__20250514",
-		},
-		{
-			desc: "claude-opus-4-1 on Anthropic (date not in ID, from release field)",
-			model: bestiary.ModelInfo{
-				ID:       "claude-opus-4-1",
-				Provider: "anthropic",
-				Family:   "claude",
-				Variant:  "opus",
-				// Date comes from release field, NOT from ID content.
-				// The ID "claude-opus-4-1" has no YYYYMMDD/YYYY-MM-DD date.
-				// So date should NOT be appended to the constant name.
-				Date: "2025-08-05",
-			},
-			// Tokens: [Claude, Opus, 4, 1]; date not in ID → no date suffix.
-			wantName: "Model__Anthropic__Claude__Opus__4__1",
-		},
-		{
-			desc: "gpt-4o-2024-08-06 on OpenAI",
-			model: bestiary.ModelInfo{
-				ID:       "gpt-4o-2024-08-06",
-				Provider: "openai",
-				Family:   "gpt",
-				Variant:  "",
-				Date:     "2024-08-06",
-			},
-			// Tokens after date strip: [gpt→GPT, 4o→4o]
-			wantName: "Model__OpenAI__GPT__4o__20240806",
-		},
-		{
-			desc: "gemini-2.5-flash-lite-preview-06-17 on GoogleVertex (MM-DD date form)",
-			model: bestiary.ModelInfo{
-				ID:       "gemini-2.5-flash-lite-preview-06-17",
-				Provider: "google-vertex",
-				Family:   "gemini",
-				Variant:  "flash-lite",
-				Date:     "2025-06-17",
-			},
-			// ID has "06-17" which is the MM-DD form of Date "2025-06-17".
-			// stripDateFromID strips "06-17", leaving "gemini-2.5-flash-lite-preview".
-			// Tokens: [Gemini, 2, 5, Flash, Lite, Preview] — each becomes own __ segment.
-			wantName: "Model__GoogleVertex__Gemini__2__5__Flash__Lite__Preview__20250617",
-		},
-		{
-			desc: "model with no date",
-			model: bestiary.ModelInfo{
-				ID:       "claude-haiku",
-				Provider: "anthropic",
-				Family:   "claude",
-				Variant:  "haiku",
-				Date:     "",
-			},
-			wantName: "Model__Anthropic__Claude__Haiku",
-		},
-		{
-			desc: "provider-prefixed ID (openrouter style)",
-			model: bestiary.ModelInfo{
-				ID:       "anthropic/claude-opus-4-20250514",
-				Provider: "openrouter",
-				Family:   "claude",
-				Variant:  "opus",
-				Date:     "2025-05-14",
-			},
-			wantName: "Model__OpenRouter__Claude__Opus__4__20250514",
-		},
-	}
-
-	for _, tc := range cases {
-		t.Run(tc.desc, func(t *testing.T) {
-			got := nameForCanonicalWithMap(tc.model, testSlugToConst)
-			if got != tc.wantName {
-				t.Errorf("nameForCanonicalWithMap: got %q, want %q", got, tc.wantName)
+			for i, g := range got {
+				if g != c.Expected[i] {
+					t.Errorf("splitComma(%q)[%d] = %q, want %q", c.Input, i, g, c.Expected[i])
+				}
 			}
 		})
 	}
 }
 
-// TestSkipEmptyFamily verifies that nameForCanonical returns "" when Family is empty.
-func TestSkipEmptyFamily(t *testing.T) {
-	m := bestiary.ModelInfo{
-		ID:       "some-model-123",
-		Provider: "anthropic",
-		Family:   "", // empty → skip
-		Variant:  "",
-		Date:     "2025-01-01",
-	}
-	got := nameForCanonical(m)
-	if got != "" {
-		t.Errorf("nameForCanonical: expected empty string for empty Family, got %q", got)
+// --------------------------------------------------------------------------
+// tests: entityConstName, buildEntityConstEntries, generateEntitiesConstantsSource
+// --------------------------------------------------------------------------
+
+// canonNomen builds a Canonical-scheme Nomen for ref — the shape
+// buildEntityConstEntries consumes when deriving Entity__ constants.
+func canonNomen(ref bestiary.EntityRef) bestiary.Nomen {
+	return bestiary.Nomen{Value: ref.String(), Scheme: bestiary.NomenSchemeCanonical, ResolvesTo: ref}
+}
+
+// TestEntityConstName_PinnedExamples pins the Entity__ word-sentinel grammar on the
+// ratified worked examples (Plan-UAT: __Version_/__Size_ word sentinels replace __At/__S).
+// The version-vs-variant pins (deepseek@3.2 vs deepseek/v3.2) and the version-sanitize
+// pins (qwen@3.5 vs qwen@35) are the injectivity-critical cases.
+func TestEntityConstName_PinnedExamples(t *testing.T) {
+	corpus := loadGenCorpus[genEntityRefInput, string](t, genEntityConstNamePinnedCorpusJSON, 6)
+	genRequireNameCoverage(t, corpus,
+		"deepseek-version-3-2", "deepseek-variant-v3-2",
+		"qwen-version-3-5", "qwen-version-35",
+		"llama-scout-full-tuple",
+	)
+	for _, c := range corpus.Cases {
+		t.Run(c.Name, func(t *testing.T) {
+			ref := bestiary.EntityRef{
+				Family:    bestiary.Family(c.Input.Family),
+				Variant:   c.Input.Variant,
+				Version:   c.Input.Version,
+				ParamSize: c.Input.ParamSize,
+				Modifier:  c.Input.Modifier,
+			}
+			if got := entityConstName(ref); got != c.Expected {
+				t.Errorf("entityConstName(%q) = %q, want %q", ref.String(), got, c.Expected)
+			}
+		})
 	}
 }
 
-// TestResolveCollisions_VersionSuffix verifies that when two models share the
-// same naive name but have distinguishable version segments in their raw IDs,
-// the version segment is used as a disambiguator (pass (a)).
-func TestResolveCollisions_VersionSuffix(t *testing.T) {
-	// Two models that produce the same naive name Model__Anthropic__Claude__Opus
-	// but whose IDs have different version tokens (4 vs 3_5).
-	models := []bestiary.ModelInfo{
-		{
-			ID:       "claude-opus-4",
-			Provider: "anthropic",
-			Family:   "claude",
-			Variant:  "opus",
-			Date:     "",
-		},
-		{
-			ID:       "claude-opus-3-5",
-			Provider: "anthropic",
-			Family:   "claude",
-			Variant:  "opus",
-			Date:     "",
-		},
+// TestEntityConstName_SeparatorPreserving verifies the sanitizer is separator-preserving
+// (no camel-fold): "3.2" -> "3_2" is DISTINCT from "32" -> "32", and a hyphenated family
+// keeps each separator as its own underscore (no fold to camelCase).
+func TestEntityConstName_SeparatorPreserving(t *testing.T) {
+	if a, b := entityConstName(bestiary.EntityRef{Family: "qwen", Version: "3.5"}), entityConstName(bestiary.EntityRef{Family: "qwen", Version: "35"}); a == b {
+		t.Errorf("version 3.5 and 35 must render distinctly, both = %q", a)
 	}
-	// Both produce "Model__Anthropic__Claude__Opus" as the naive name (double-underscore).
-	names := []string{
-		"Model__Anthropic__Claude__Opus",
-		"Model__Anthropic__Claude__Opus",
-	}
-
-	resolved := resolveCollisions(names, models)
-	if len(resolved) != 2 {
-		t.Fatalf("resolveCollisions: want 2 results, got %d", len(resolved))
-	}
-
-	// Both must be non-empty and distinct.
-	if resolved[0] == "" || resolved[1] == "" {
-		t.Errorf("resolveCollisions: got empty string in result: %v", resolved)
-	}
-	if resolved[0] == resolved[1] {
-		t.Errorf("resolveCollisions: not unique: both = %q", resolved[0])
-	}
-
-	// Version-suffix disambiguation (pass a) must produce the exact expected names.
-	// claude-opus-4 → version segment "4"; claude-opus-3-5 → version segment "3_5".
-	// Under the new template the separator between the naive name and the version suffix is "__".
-	want0 := "Model__Anthropic__Claude__Opus__4"
-	want1 := "Model__Anthropic__Claude__Opus__3_5"
-	if (resolved[0] != want0 || resolved[1] != want1) && (resolved[0] != want1 || resolved[1] != want0) {
-		t.Errorf("resolveCollisions: unexpected version-suffix results:\n  got  [%q, %q]\n  want [%q, %q] (either order)",
-			resolved[0], resolved[1], want0, want1)
+	if got, want := entityConstName(bestiary.EntityRef{Family: "text-embedding", Version: "3"}), "Entity__Text_embedding__Version_3"; got != want {
+		t.Errorf("hyphenated family: got %q, want %q", got, want)
 	}
 }
 
-// TestResolveCollisions_SequentialSuffix verifies that when version-suffix
-// disambiguation fails (no distinct version), sequential _<n> suffixes are appended.
-func TestResolveCollisions_SequentialSuffix(t *testing.T) {
-	// Two models with the same naive name and same (or indistinguishable) version.
-	// We force this by using models with matching version tokens.
-	models := []bestiary.ModelInfo{
-		{
-			ID:       "mystery-model",
-			Provider: "anthropic",
-			Family:   "mystery",
-			Variant:  "",
-			Date:     "",
-		},
-		{
-			ID:       "mystery-model",
-			Provider: "anthropic",
-			Family:   "mystery",
-			Variant:  "",
-			Date:     "",
-		},
+// TestBuildEntityConstEntries_RealPairsPass verifies the injectivity-critical real
+// collision pairs (deepseek version-vs-variant, qwen version-sanitize) PASS the guard:
+// they render to DISTINCT names, so the bake succeeds and emits all four.
+func TestBuildEntityConstEntries_RealPairsPass(t *testing.T) {
+	refs := []bestiary.EntityRef{
+		{Family: "deepseek", Version: "3.2"},
+		{Family: "deepseek", Variant: "v3.2"},
+		{Family: "qwen", Version: "3.5"},
+		{Family: "qwen", Version: "35"},
 	}
-	names := []string{
-		"Model__Anthropic__Mystery__Model",
-		"Model__Anthropic__Mystery__Model",
+	var nomina []bestiary.Nomen
+	keySet := map[string]bool{}
+	for _, r := range refs {
+		nomina = append(nomina, canonNomen(r))
+		keySet[r.String()] = true
 	}
-
-	resolved := resolveCollisions(names, models)
-	if len(resolved) != 2 {
-		t.Fatalf("resolveCollisions: want 2 results, got %d", len(resolved))
-	}
-	if resolved[0] == resolved[1] {
-		t.Errorf("resolveCollisions: sequential fallback failed; both = %q", resolved[0])
-	}
-	// Must have numeric suffix (sequential disambiguator appended with "_" within the suffix).
-	if !strings.Contains(resolved[0], "_1") && !strings.Contains(resolved[0], "_2") {
-		t.Errorf("resolveCollisions: expected numeric suffix in %q", resolved[0])
-	}
-	if !strings.Contains(resolved[1], "_1") && !strings.Contains(resolved[1], "_2") {
-		t.Errorf("resolveCollisions: expected numeric suffix in %q", resolved[1])
-	}
-}
-
-// TestGenerateConstantsSource_Compiles verifies that generateConstantsSource
-// returns valid Go source that passes go/format for a small set of test models.
-func TestGenerateConstantsSource_Compiles(t *testing.T) {
-	models := []bestiary.ModelInfo{
-		{
-			ID:       "claude-opus-4-20250514",
-			Provider: "anthropic",
-			Family:   "claude",
-			Variant:  "opus",
-			Date:     "2025-05-14",
-		},
-		{
-			ID:       "gpt-4o-2024-08-06",
-			Provider: "openai",
-			Family:   "gpt",
-			Variant:  "",
-			Date:     "2024-08-06",
-		},
-		{
-			// Skip-rule: empty family.
-			ID:       "unknown-xyz",
-			Provider: "some-provider",
-			Family:   "",
-			Variant:  "",
-			Date:     "",
-		},
-	}
-
-	src, err := generateConstantsSource(models, testSlugToConst)
+	entries, err := buildEntityConstEntries(nomina, keySet)
 	if err != nil {
-		t.Fatalf("generateConstantsSource: unexpected error: %v", err)
+		t.Fatalf("buildEntityConstEntries: unexpected collision error on distinct real pairs: %v", err)
+	}
+	if len(entries) != len(refs) {
+		t.Fatalf("buildEntityConstEntries: got %d entries, want %d", len(entries), len(refs))
+	}
+}
+
+// TestBuildEntityConstEntries_InjectivityGuard_NegativeControl is the guard's negative
+// control: two DISTINCT entity keys crafted to render the SAME identifier (a variant
+// "bar" and a modifier "bar" both become the "__Bar" segment) MUST fail the bake loudly.
+// Without this control, the real-data pairs pass whether or not the guard is live.
+func TestBuildEntityConstEntries_InjectivityGuard_NegativeControl(t *testing.T) {
+	refVariant := bestiary.EntityRef{Family: "foo", Variant: "bar"}
+	refMod := bestiary.EntityRef{Family: "foo", Modifier: []string{"bar"}}
+	if refVariant.String() == refMod.String() {
+		t.Fatalf("test setup: keys must be distinct, both = %q", refVariant.String())
+	}
+	if entityConstName(refVariant) != entityConstName(refMod) {
+		t.Fatalf("test setup: the crafted refs must collide on name; got %q vs %q", entityConstName(refVariant), entityConstName(refMod))
+	}
+	nomina := []bestiary.Nomen{canonNomen(refVariant), canonNomen(refMod)}
+	keySet := map[string]bool{refVariant.String(): true, refMod.String(): true}
+	if _, err := buildEntityConstEntries(nomina, keySet); err == nil {
+		t.Fatal("buildEntityConstEntries: expected a LOUD collision error on the crafted duplicate-name pair, got nil")
+	} else if !strings.Contains(err.Error(), "collision") || !strings.Contains(err.Error(), refVariant.String()) || !strings.Contains(err.Error(), refMod.String()) {
+		t.Errorf("buildEntityConstEntries: collision error must name both colliding keys; got: %v", err)
+	}
+}
+
+// TestBuildEntityConstEntries_FiltersNonCanonical verifies only Preferred (Canonical)
+// nomina become constants — ProviderID/Alias nomina are ignored — and a Canonical nomen
+// whose key is absent from keySet (a claim for a non-catalog entity) is dropped.
+func TestBuildEntityConstEntries_FiltersNonCanonical(t *testing.T) {
+	ref := bestiary.EntityRef{Family: "deepseek", Version: "3.2"}
+	nomina := []bestiary.Nomen{
+		canonNomen(ref),
+		{Value: "deepseek-v3.2", Scheme: bestiary.NomenSchemeProviderID, ResolvesTo: ref},
+		{Value: "grok-beta", Scheme: bestiary.NomenSchemeAlias, ResolvesTo: bestiary.EntityRef{Family: "grok", Version: "4.20"}},
+		{Value: "ghost@9", Scheme: bestiary.NomenSchemeCanonical, ResolvesTo: bestiary.EntityRef{Family: "ghost", Version: "9"}},
+	}
+	keySet := map[string]bool{ref.String(): true}
+	entries, err := buildEntityConstEntries(nomina, keySet)
+	if err != nil {
+		t.Fatalf("buildEntityConstEntries: %v", err)
+	}
+	if len(entries) != 1 || entries[0].key != ref.String() {
+		t.Fatalf("buildEntityConstEntries: want exactly the one Canonical in-set entry, got %+v", entries)
+	}
+}
+
+// TestGenerateEntitiesConstantsSource_Compiles verifies the emitter returns valid Go
+// source (passes go/format) carrying the expected Entity__ constant, the
+// allEntityConstants backing array, and the EntityKeys() accessor.
+func TestGenerateEntitiesConstantsSource_Compiles(t *testing.T) {
+	models := []bestiary.ModelInfo{
+		{ID: "claude-opus-4-20250514", Provider: "anthropic", Family: "claude", Variant: "opus", Version: "4"},
+		{ID: "gpt-4o", Provider: "openai", Family: "gpt", Variant: "4o"},
+	}
+	src, err := generateEntitiesConstantsSource(models, nil)
+	if err != nil {
+		t.Fatalf("generateEntitiesConstantsSource: unexpected error: %v", err)
 	}
 	if len(src) == 0 {
-		t.Fatal("generateConstantsSource: returned empty source")
+		t.Fatal("generateEntitiesConstantsSource: returned empty source")
 	}
-	// Must contain the expected constant names (double-underscore between components).
-	srcStr := string(src)
-	if !strings.Contains(srcStr, "Model__Anthropic__Claude__Opus__4__20250514") {
-		t.Errorf("generated source missing Model__Anthropic__Claude__Opus__4__20250514:\n%s", srcStr[:min(500, len(srcStr))])
-	}
-	if !strings.Contains(srcStr, "Model__OpenAI__GPT__4o__20240806") {
-		t.Errorf("generated source missing Model__OpenAI__GPT__4o__20240806:\n%s", srcStr[:min(500, len(srcStr))])
-	}
-	// Must NOT contain a constant for the skip-rule model.
-	if strings.Contains(srcStr, "unknown-xyz") {
-		t.Errorf("generated source should not contain skip-rule model 'unknown-xyz'")
-	}
-	// Must contain ModelIDs() function (named to avoid clash with registry.go:Models() []ModelInfo).
-	if !strings.Contains(srcStr, "func ModelIDs()") {
-		t.Errorf("generated source missing ModelIDs() function")
+	srcNorm := normalizeWhitespace(string(src))
+	for _, want := range []string{
+		`Entity__Claude__Opus__Version_4 = "claude/opus@4"`,
+		`Entity__Gpt__4o = "gpt/4o"`,
+		"func EntityKeys()",
+		"var allEntityConstants",
+	} {
+		if !strings.Contains(srcNorm, normalizeWhitespace(want)) {
+			t.Errorf("generated entity-constants source missing %q\n%s", want, string(src)[:min(800, len(src))])
+		}
 	}
 }
 
-// min is a helper for older Go versions that don't have built-in min for integers.
+// min is a small helper kept local for error-truncation slices in this package's tests.
 func min(a, b int) int {
 	if a < b {
 		return a
 	}
 	return b
-}
-
-// --------------------------------------------------------------------------
-// Tests: Modifier slot in Model__ constants
-// --------------------------------------------------------------------------
-
-// TestNameForCanonical_ModifierSlot verifies that when a ModelInfo has a Modifier
-// field set, nameForCanonicalWithMap emits the __Modifier__ slot between version
-// and date in the constant name.
-//
-// These tests will FAIL until nameForCanonicalWithMap is updated to include the
-// Modifier segment between version and date.
-func TestNameForCanonical_ModifierSlot(t *testing.T) {
-	cases := []struct {
-		desc     string
-		model    bestiary.ModelInfo
-		wantName string
-	}{
-		{
-			desc: "claude-opus-4-6-thinking (date not in ID, only in Date field)",
-			model: bestiary.ModelInfo{
-				ID:       "claude-opus-4-6-thinking",
-				Provider: "anthropic",
-				Family:   "claude",
-				Variant:  "opus",
-				Version:  "4.6",
-				Date:     "2026-02-05",
-				Modifier: []string{"thinking"},
-			},
-			// Date "2026-02-05" is NOT in the raw ID "claude-opus-4-6-thinking",
-			// so dateFoundInID = false → no date suffix in constant.
-			// Modifier slot "Thinking" appears between version "4_6" and end.
-			// Expected: Model__Anthropic__Claude__Opus__4_6__Thinking
-			wantName: "Model__Anthropic__Claude__Opus__4_6__Thinking",
-		},
-		{
-			desc: "claude-opus-4-1-20250805-thinking with date in ID",
-			model: bestiary.ModelInfo{
-				ID:       "claude-opus-4-1-20250805-thinking",
-				Provider: "anthropic",
-				Family:   "claude",
-				Variant:  "opus",
-				Version:  "4.1",
-				Date:     "2025-08-05",
-				Modifier: []string{"thinking"},
-			},
-			// Compact date "20250805" IS in the raw ID → dateFoundInID = true.
-			// Modifier "-thinking" is the trailing token, stripped before tokenizing.
-			// After modifier+date strip: "claude-opus-4-1" → after version strip: "claude-opus"
-			// Tokens: [Claude, Opus]; version: "4_1"; date: "20250805"; modifier: "Thinking"
-			// Expected: Model__Anthropic__Claude__Opus__4_1__Thinking__20250805
-			wantName: "Model__Anthropic__Claude__Opus__4_1__Thinking__20250805",
-		},
-		{
-			desc: "model with modifier but no date",
-			model: bestiary.ModelInfo{
-				ID:       "claude-opus-4-6-thinking",
-				Provider: "anthropic",
-				Family:   "claude",
-				Variant:  "opus",
-				Version:  "4.6",
-				Date:     "",
-				Modifier: []string{"thinking"},
-			},
-			// No date → modifier becomes trailing segment.
-			// Expected: Model__Anthropic__Claude__Opus__4_6__Thinking
-			wantName: "Model__Anthropic__Claude__Opus__4_6__Thinking",
-		},
-		{
-			desc: "gpt-4o-2024-05-13 (no modifier)",
-			model: bestiary.ModelInfo{
-				ID:       "gpt-4o-2024-05-13",
-				Provider: "openai",
-				Family:   "gpt",
-				Variant:  "",
-				Version:  "",
-				Date:     "2024-05-13",
-				Modifier: nil,
-			},
-			// No modifier → no __Modifier__ slot (preserves current form).
-			wantName: "Model__OpenAI__GPT__4o__20240513",
-		},
-	}
-
-	for _, tc := range cases {
-		tc := tc
-		t.Run(tc.desc, func(t *testing.T) {
-			got := nameForCanonicalWithMap(tc.model, testSlugToConst)
-			if got != tc.wantName {
-				t.Errorf("nameForCanonicalWithMap: got %q, want %q", got, tc.wantName)
-			}
-		})
-	}
-}
-
-// TestTokenToConstPart_ModifierCasing verifies that modifier tokens receive the
-// correct casing via tokenToConstPart (e.g. "thinking" → "Thinking").
-func TestTokenToConstPart_ModifierCasing(t *testing.T) {
-	cases := []struct {
-		tok  string
-		want string
-	}{
-		{"thinking", "Thinking"},
-		{"vision", "Vision"},
-		{"latest", "Latest"},
-		{"code", "Code"},
-		{"preview", "Preview"},
-		{"think", "Think"},
-	}
-	for _, tc := range cases {
-		got := tokenToConstPart(tc.tok)
-		if got != tc.want {
-			t.Errorf("tokenToConstPart(%q) = %q, want %q", tc.tok, got, tc.want)
-		}
-	}
 }
 
 // --------------------------------------------------------------------------
@@ -1247,109 +949,11 @@ func TestParseFlags_DoubleHyphen(t *testing.T) {
 // TestSlugToIdentifier_ChatGPT verifies that the chatgpt casing override is
 // applied correctly: chatgpt → ChatGPT.
 func TestSlugToIdentifier_ChatGPT(t *testing.T) {
-	cases := []struct {
-		slug     string
-		nameHint string
-		want     string
-	}{
-		// Full slug "chatgpt" → "ChatGPT" (single-token casing override).
-		{"chatgpt", "ChatGPT", "ChatGPT"},
-		// "chatgpt-4o" splits into ["chatgpt", "4o"]:
-		// chatgpt → ChatGPT via casing override.
-		// 4o: digit-leading, alpha "o" has no casing override → title-cased to "O"
-		// (slugToIdentifier uppercases single-char alpha suffixes; see tokenToConstPart for
-		// the model-ID tokenization path that preserves them).
-		{"chatgpt-4o", "ChatGPT-4o", "ChatGPT4O"},
-	}
-	for _, tc := range cases {
-		t.Run(tc.slug, func(t *testing.T) {
-			got := slugToIdentifier(tc.slug, tc.nameHint)
-			if got != tc.want {
-				t.Errorf("slugToIdentifier(%q, %q) = %q, want %q", tc.slug, tc.nameHint, got, tc.want)
-			}
-		})
-	}
-}
-
-// TestNameForCanonical_DoubleUnderscoreTemplate verifies the new Model__ naming
-// convention (double underscores between field components, single underscores
-// within a component, e.g. version "4.5" → "4_5").
-//
-// Model__<Provider>__<Family>__<Variant>?__<Version>?__<Date>?
-//
-// When Version is non-empty, the version "4.5" is encoded as a single
-// segment "4_5" (dot→underscore). The raw ID version tokens are replaced by this
-// single compact segment so that "4_5" uses single underscores within.
-//
-// These tests will FAIL until the join separator is changed and version-segment logic is added.
-func TestNameForCanonical_DoubleUnderscoreTemplate(t *testing.T) {
-	cases := []struct {
-		desc     string
-		model    bestiary.ModelInfo
-		wantName string
-	}{
-		{
-			desc: "claude-opus-4-5 with Version on Anthropic (golden)",
-			model: bestiary.ModelInfo{
-				ID:       "claude-opus-4-5-20251101",
-				Provider: "anthropic",
-				Family:   "claude",
-				Variant:  "opus",
-				Version:  "4.5",
-				Date:     "2025-11-01",
-			},
-			// Version "4.5" → segment "4_5" (single underscores within, double between).
-			// Raw version tokens ("4","5") replaced by the Version segment.
-			wantName: "Model__Anthropic__Claude__Opus__4_5__20251101",
-		},
-		{
-			desc: "gpt-4o without version or date on OpenAI (golden)",
-			model: bestiary.ModelInfo{
-				ID:       "gpt-4o",
-				Provider: "openai",
-				Family:   "gpt",
-				Variant:  "",
-				Version:  "",
-				Date:     "",
-			},
-			// No Version → raw ID tokens: [GPT, 4o]; joined with __.
-			wantName: "Model__OpenAI__GPT__4o",
-		},
-		{
-			desc: "chatgpt model uses ChatGPT casing",
-			model: bestiary.ModelInfo{
-				ID:       "chatgpt-4o",
-				Provider: "openai",
-				Family:   "chatgpt",
-				Variant:  "",
-				Version:  "",
-				Date:     "",
-			},
-			// chatgpt → ChatGPT via casingOverrides; 4o from raw ID.
-			wantName: "Model__OpenAI__ChatGPT__4o",
-		},
-		{
-			desc: "claude-haiku no date, double underscore between provider and family",
-			model: bestiary.ModelInfo{
-				ID:       "claude-haiku",
-				Provider: "anthropic",
-				Family:   "claude",
-				Variant:  "haiku",
-				Version:  "",
-				Date:     "",
-			},
-			wantName: "Model__Anthropic__Claude__Haiku",
-		},
-	}
-
-	for _, tc := range cases {
-		t.Run(tc.desc, func(t *testing.T) {
-			got := nameForCanonicalWithMap(tc.model, testSlugToConst)
-			if got != tc.wantName {
-				t.Errorf("nameForCanonicalWithMap: got %q, want %q", got, tc.wantName)
-			}
-		})
-	}
+	corpus := loadGenCorpus[genSlugInput, string](t, genSlugToIdentifierChatGPTCorpusJSON, 2)
+	genRequireInputCoverage(t, corpus, map[genSlugInput]string{
+		{Slug: "chatgpt-4o", NameHint: "ChatGPT-4o"}: "ChatGPT4O",
+	})
+	runGenSlugCorpus(t, corpus)
 }
 
 // TestValidateGeneratedFamilyType verifies that validateGeneratedFamilyType
@@ -1868,22 +1472,19 @@ func normalizeLastSynced(src []byte) []byte {
 }
 
 // deterministicFixtureJSON returns the hermetic CATALOG.json fixture ({models,
-// providers}) for the reproducibility tests. The "providers" view carries three
-// collision groups:
+// providers}) for the reproducibility tests. Under the entity-constants hard cut the
+// three groups exercise convergence vs. distinctness of the Entity__ surface:
 //
-//   - B (prefix/kilo): "openrouter/free" + "kilo-auto/free" → both produce
-//     Model__Kilo__Free → resolved by raw-ID-ordered fallback (b)
-//     → _1="kilo-auto/free", _2="openrouter/free"
+//   - B (prefix/kilo): "openrouter/free" + "kilo-auto/free" both decompose to the entity
+//     "free" → they CONVERGE onto the single Entity__Free constant (no backend-route flavor).
 //
 //   - C (punctuation/cloudflare): "anthropic/claude-3.5-haiku" + "anthropic/claude-3-5-haiku"
-//     → both produce Model__CloudflareAIGateway__Claude__3__5__Haiku
-//     → resolved by raw-ID-ordered fallback (b)
-//     → _1="anthropic/claude-3-5-haiku" ('-' < '.'), _2="anthropic/claude-3.5-haiku"
+//     both decompose to the entity claude/haiku@3.5 → they CONVERGE onto the single
+//     Entity__Claude__Haiku__Version_3_5 constant (no provider flavor, no _N ordinal).
 //
-//   - E (version-pair / negative control): "gpt-5.1" + "gpt-5.2"
-//     → extractVersionSegment yields distinct suffixes "5_1" / "5_2"
-//     → resolved by version-suffix pass (a) — NOT the fallback
-//     → constant names: Model__OpenAI__GPT__5_1 and Model__OpenAI__GPT__5_2
+//   - E (version-pair / negative control): "gpt-5.1" + "gpt-5.2" decompose to DISTINCT
+//     entities gpt@5.1 / gpt@5.2 → distinct Entity__Gpt__Version_5_1 / Entity__Gpt__Version_5_2
+//     constants (the __Version_ word sentinel keeps them apart; injectivity guard never fires).
 //
 // The "models" view carries THREE metadata entries (each with populated benchmarks and
 // links), DELIBERATELY inserted out of MetadataID order so the metadata bake's
@@ -2113,9 +1714,9 @@ func runFixtureCodegen(t *testing.T, fixtureJSON []byte, lastSynced string) (sta
 	if err != nil {
 		t.Fatalf("runFixtureCodegen: generateSource: %v", err)
 	}
-	constantsSrc, err = generateConstantsSource(models, slugToConst)
+	constantsSrc, err = generateEntitiesConstantsSource(models, metadata)
 	if err != nil {
-		t.Fatalf("runFixtureCodegen: generateConstantsSource: %v", err)
+		t.Fatalf("runFixtureCodegen: generateEntitiesConstantsSource: %v", err)
 	}
 	metadataSrc, err = generateMetadataSource(metadata)
 	if err != nil {
@@ -2127,7 +1728,7 @@ func runFixtureCodegen(t *testing.T, fixtureJSON []byte, lastSynced string) (sta
 // TestCodegen_Reproducible_ByteIdentical verifies that N=100 successive codegen runs
 // over the same fixture data (each re-randomizing map iteration order via a fresh
 // fetchModelsWithRaw) produce FULLY byte-identical output for generateSource,
-// generateConstantsSource, and generateMetadataSource — with NO normalization.
+// generateEntitiesConstantsSource, and generateMetadataSource — with NO normalization.
 //
 // The codegen LastSynced stamp is DETERMINISTIC: every run stamps the SAME value — the
 // current models.dev ingest instant from the committed datasources.json
@@ -2205,42 +1806,40 @@ func TestCodegen_Reproducible_ByteIdentical(t *testing.T) {
 		t.Errorf("reference metadata: string benchmark score not captured on ScoreRaw\nmetadata:\n%s", refMetaStr)
 	}
 
-	// Verify reference constants contain the expected golden pins.
+	// Verify reference constants contain the expected golden pins. In the entity-constants
+	// world the provider leak is GONE: IDs that used to yield distinct provider-flavored
+	// Model__ constants now CONVERGE onto one Entity__ constant per identity, and a name
+	// collision is a loud bake error (never a silent _N ordinal).
 	refStr := string(refConstants)
 	// refNorm is the whitespace-normalized version for substring matching.
 	refNorm := normalizeWhitespace(refStr)
 
-	// C group pins: '-' (0x2D) < '.' (0x2E) means claude-3-5-haiku < claude-3.5-haiku.
-	// With parser active, version="3.5" is now extracted from both IDs
-	// (family=claude, variant=haiku, version=3.5). Both map to the same base constant
-	// Model__CloudflareAIGateway__Claude__3__5__Haiku__3_5; collision suffix applies.
-	if !strings.Contains(refNorm, `Model__CloudflareAIGateway__Claude__3__5__Haiku__3_5_1 ModelID = "anthropic/claude-3-5-haiku"`) {
-		t.Errorf("reference output: C group _1 pin mismatch; want anthropic/claude-3-5-haiku\nconstants:\n%s", refStr)
+	// C group (convergence): both cloudflare-ai-gateway spellings — "anthropic/claude-3-5-haiku"
+	// and "anthropic/claude-3.5-haiku" — decompose to the SAME entity claude/haiku@3.5, so they
+	// collapse to ONE constant (no _1/_2 collision ordinal, no provider flavoring).
+	if !strings.Contains(refNorm, `Entity__Claude__Haiku__Version_3_5 = "claude/haiku@3.5"`) {
+		t.Errorf("reference output: C group convergence pin missing; want the single claude/haiku@3.5 entity\nconstants:\n%s", refStr)
 	}
-	if !strings.Contains(refNorm, `Model__CloudflareAIGateway__Claude__3__5__Haiku__3_5_2 ModelID = "anthropic/claude-3.5-haiku"`) {
-		t.Errorf("reference output: C group _2 pin mismatch; want anthropic/claude-3.5-haiku\nconstants:\n%s", refStr)
+	if strings.Contains(refNorm, "CloudflareAIGateway") || strings.Contains(refNorm, "Version_3_5_1") || strings.Contains(refNorm, "Version_3_5_2") {
+		t.Errorf("reference output: C group must not carry a provider-flavored or _N-ordinal constant\nconstants:\n%s", refStr)
 	}
-	// B group pins: distinct backend-route prefixes disambiguate MEANINGFULLY —
-	// "kilo-auto/free" → __KiloAuto, "openrouter/free" → __OpenRouter — instead of the
-	// old opaque _1/_2 ordinals.
-	if !strings.Contains(refNorm, `Model__Kilo__Free__KiloAuto ModelID = "kilo-auto/free"`) {
-		t.Errorf("reference output: B group KiloAuto pin mismatch; want kilo-auto/free\nconstants:\n%s", refStr)
+	// B group (convergence): "kilo-auto/free" and "openrouter/free" both decompose to the entity
+	// "free" — one constant, no backend-route disambiguator (that was a Model__-surface concern).
+	if !strings.Contains(refNorm, `Entity__Free = "free"`) {
+		t.Errorf("reference output: B group convergence pin missing; want the single free entity\nconstants:\n%s", refStr)
 	}
-	if !strings.Contains(refNorm, `Model__Kilo__Free__OpenRouter ModelID = "openrouter/free"`) {
-		t.Errorf("reference output: B group OpenRouter pin mismatch; want openrouter/free\nconstants:\n%s", refStr)
+	// E control: distinct versions stay distinct entities. Exact constant names.
+	if !strings.Contains(refNorm, `Entity__Gpt__Version_5_1 = "gpt@5.1"`) {
+		t.Errorf("reference output: E control Entity__Gpt__Version_5_1 missing or wrong\nconstants:\n%s", refStr)
 	}
-	// E control: version-suffix pass (a), not fallback. Exact constant names.
-	if !strings.Contains(refNorm, `Model__OpenAI__GPT__5_1 ModelID = "gpt-5.1"`) {
-		t.Errorf("reference output: E control Model__OpenAI__GPT__5_1 missing or wrong\nconstants:\n%s", refStr)
+	if !strings.Contains(refNorm, `Entity__Gpt__Version_5_2 = "gpt@5.2"`) {
+		t.Errorf("reference output: E control Entity__Gpt__Version_5_2 missing or wrong\nconstants:\n%s", refStr)
 	}
-	if !strings.Contains(refNorm, `Model__OpenAI__GPT__5_2 ModelID = "gpt-5.2"`) {
-		t.Errorf("reference output: E control Model__OpenAI__GPT__5_2 missing or wrong\nconstants:\n%s", refStr)
-	}
-	// E control: assert NO fragment/doubled-ordinal variant (e.g. Model__OpenAI__GPT__5_1_1).
-	// Note: Model__OpenAI__GPT__5_1 and Model__OpenAI__GPT__5_2 are distinct by version-suffix
-	// pass (a), not the fallback collision suffix, so no _N suffix is appended.
-	if strings.Contains(refNorm, "Model__OpenAI__GPT__5_1_") || strings.Contains(refNorm, "Model__OpenAI__GPT__5_2_") {
-		t.Errorf("reference output: E control has doubled-ordinal variant (fragment suffix leaked)\nconstants:\n%s", refStr)
+	// E control: assert NO doubled-ordinal fragment (e.g. Entity__Gpt__Version_5_1_1). Distinct
+	// versions render distinctly by the sentinel grammar, so the injectivity guard never fires
+	// and no _N suffix is ever appended.
+	if strings.Contains(refNorm, "Entity__Gpt__Version_5_1_") || strings.Contains(refNorm, "Entity__Gpt__Version_5_2_") {
+		t.Errorf("reference output: E control has a doubled-ordinal fragment (should never happen)\nconstants:\n%s", refStr)
 	}
 
 	// Prove that the reference static file was actually stamped with the deterministic value:
@@ -2254,20 +1853,24 @@ func TestCodegen_Reproducible_ByteIdentical(t *testing.T) {
 			ts)
 	}
 
-	// Build a per-rawID → constantName index from the reference for stability assertion.
-	// Parse lines of the form: \t<ConstName>...<spaces>...ModelID = "<rawID>"
-	// Use normalizeWhitespace per-line so the " ModelID = " split works despite gofmt alignment.
-	refIDToConst := make(map[string]string)
+	// Build a per-constantName → entity-key index from the reference for stability
+	// assertion. Parse const-declaration lines of the form: \t<ConstName> = "<entity-key>"
+	// Use normalizeWhitespace per-line so the " = " split works despite gofmt alignment.
+	// (The allEntityConstants array lines end in "," with no " = " and are skipped.)
+	refConstToKey := make(map[string]string)
 	for _, line := range strings.Split(refStr, "\n") {
 		norm := normalizeWhitespace(line)
-		parts := strings.SplitN(norm, " ModelID = ", 2)
+		if !strings.HasPrefix(norm, "Entity__") {
+			continue
+		}
+		parts := strings.SplitN(norm, " = ", 2)
 		if len(parts) != 2 {
 			continue
 		}
 		constName := strings.TrimSpace(parts[0])
-		rawID := strings.Trim(strings.TrimSpace(parts[1]), `"`)
-		if constName != "" && rawID != "" {
-			refIDToConst[rawID] = constName
+		key := strings.Trim(strings.TrimSpace(parts[1]), `"`)
+		if constName != "" && key != "" {
+			refConstToKey[constName] = key
 		}
 	}
 
@@ -2288,11 +1891,11 @@ func TestCodegen_Reproducible_ByteIdentical(t *testing.T) {
 				i+1)
 		}
 		if !bytes.Equal(refConstants, constantsSrc) {
-			t.Fatalf("iteration %d: generateConstantsSource output is not byte-identical to the reference\n"+
-				"  What: the constants file changed between runs\n"+
-				"  Why: collision _N assignment is position-dependent (raw-ID ordinal not applied)\n"+
-				"  Where: resolveCollisions fallback or final-uniqueness pass\n"+
-				"  How to fix: replace sort.Ints(sortedPos) with a raw-ID-keyed member sort in resolveCollisions",
+			t.Fatalf("iteration %d: generateEntitiesConstantsSource output is not byte-identical to the reference\n"+
+				"  What: the entity-constants file changed between runs\n"+
+				"  Why: entity grouping or the ascending-name sort is order-dependent (map-iteration leakage)\n"+
+				"  Where: generateEntitiesConstantsSource / buildEntityConstEntries\n"+
+				"  How to fix: ensure the const entries are sorted by name before emitting (they are — investigate any new map range)",
 				i+1)
 		}
 
@@ -2309,25 +1912,28 @@ func TestCodegen_Reproducible_ByteIdentical(t *testing.T) {
 				i+1)
 		}
 
-		// Verify raw-ID → constant-name stability.
+		// Verify constant-name → entity-key stability.
 		iterStr := string(constantsSrc)
 		for _, line := range strings.Split(iterStr, "\n") {
 			norm := normalizeWhitespace(line)
-			parts := strings.SplitN(norm, " ModelID = ", 2)
+			if !strings.HasPrefix(norm, "Entity__") {
+				continue
+			}
+			parts := strings.SplitN(norm, " = ", 2)
 			if len(parts) != 2 {
 				continue
 			}
 			constName := strings.TrimSpace(parts[0])
-			rawID := strings.Trim(strings.TrimSpace(parts[1]), `"`)
-			if constName == "" || rawID == "" {
+			key := strings.Trim(strings.TrimSpace(parts[1]), `"`)
+			if constName == "" || key == "" {
 				continue
 			}
-			if prev, ok := refIDToConst[rawID]; ok && prev != constName {
-				t.Errorf("iteration %d: raw ID %q mapped to %q in iteration but %q in reference\n"+
-					"  What: _N suffix for this raw ID changed between runs\n"+
-					"  Why: raw-ID ordinal is not stable\n"+
-					"  How to fix: verify resolveCollisions uses raw-ID-keyed sort",
-					i+1, rawID, constName, prev)
+			if prev, ok := refConstToKey[constName]; ok && prev != key {
+				t.Errorf("iteration %d: constant %q mapped to key %q in iteration but %q in reference\n"+
+					"  What: an entity constant's value changed between runs\n"+
+					"  Why: entity grouping is not stable across map-iteration order\n"+
+					"  How to fix: verify buildEntitySet/MintNomina impose a deterministic order",
+					i+1, constName, key, prev)
 			}
 		}
 	}
@@ -2496,11 +2102,11 @@ func TestCodegen_UpToDate(t *testing.T) {
 	// Normalizing whitespace on both sides makes the comparison insensitive to
 	// gofmt alignment and minor formatting differences.
 	if !strings.Contains(normConstants, normConstantsGolden) {
-		t.Errorf("up-to-date guard: constants file does not contain golden excerpt\n"+
-			"  What: generateConstantsSource output differs from testdata/expected_constants_excerpt.go.golden\n"+
-			"  Why: collision _N bindings may have changed, or codegen logic was modified without re-running regen\n"+
-			"  Where: cmd/bestiary-gen/main.go generateConstantsSource or resolveCollisions\n"+
-			"  How to fix: run `go run ./cmd/bestiary-gen --no-fetch && git add models_constants_gen.go models_static_gen.go`\n"+
+		t.Errorf("up-to-date guard: entity-constants file does not contain golden excerpt\n"+
+			"  What: generateEntitiesConstantsSource output differs from testdata/expected_constants_excerpt.go.golden\n"+
+			"  Why: the entity set or the Entity__ grammar changed, or codegen logic was modified without re-running regen\n"+
+			"  Where: cmd/bestiary-gen entities_constants.go generateEntitiesConstantsSource\n"+
+			"  How to fix: run `go run ./cmd/bestiary-gen --no-fetch && git add entities_constants_gen.go models_static_gen.go`\n"+
 			"\nGolden excerpt (normalized):\n%s\n\nGenerated (normalized, header stripped):\n%s",
 			normConstantsGolden, normConstants)
 	}
@@ -2535,72 +2141,68 @@ func TestCodegen_UpToDate(t *testing.T) {
 
 	// Sanity-check: the constants golden must contain at least one expected binding.
 	// This guards against an accidentally empty or truncated golden file.
-	if !strings.Contains(string(constantsGoldenRaw), `ModelID = "anthropic/claude-3-5-haiku"`) {
+	if !strings.Contains(string(constantsGoldenRaw), `= "claude/haiku@3.5"`) {
 		t.Errorf("up-to-date guard: constants golden file appears empty or truncated (missing expected binding)\n" +
 			"  How to fix: ensure testdata/expected_constants_excerpt.go.golden is correctly committed")
 	}
 }
 
-// TestCodegen_GoldenPins_C verifies the C group (cloudflare-ai-gateway punctuation
-// collision): "anthropic/claude-3-5-haiku" → _1, "anthropic/claude-3.5-haiku" → _2.
-// ASCII ordering: '-' (0x2D) < '.' (0x2E).
-//
-// With parser active, both IDs parse to version="3.5" (family=claude,
-// variant=haiku). The constant base becomes Model__CloudflareAIGateway__Claude__3__5__Haiku__3_5;
-// collision suffix _1/_2 still applies via raw-ID-ordered fallback.
+// TestCodegen_GoldenPins_C verifies the C group under the entity-constants hard cut: the
+// two cloudflare-ai-gateway spellings "anthropic/claude-3-5-haiku" and
+// "anthropic/claude-3.5-haiku" both decompose to the SAME entity claude/haiku@3.5, so the
+// provider-flavored/_N-collision Model__ pair is gone — they CONVERGE onto ONE Entity__
+// constant. (The old _1/_2 ordinal was a provider-leak artifact the cut eliminates.)
 func TestCodegen_GoldenPins_C(t *testing.T) {
 	fixtureJSON := deterministicFixtureJSON(t)
 	_, constantsSrc, _ := runFixtureCodegen(t, fixtureJSON, "")
 	s := normalizeWhitespace(string(constantsSrc))
 
-	if !strings.Contains(s, `Model__CloudflareAIGateway__Claude__3__5__Haiku__3_5_1 ModelID = "anthropic/claude-3-5-haiku"`) {
-		t.Errorf("C group _1 pin: expected anthropic/claude-3-5-haiku\nconstants:\n%s", string(constantsSrc))
+	if !strings.Contains(s, `Entity__Claude__Haiku__Version_3_5 = "claude/haiku@3.5"`) {
+		t.Errorf("C group convergence: expected the single claude/haiku@3.5 entity\nconstants:\n%s", string(constantsSrc))
 	}
-	if !strings.Contains(s, `Model__CloudflareAIGateway__Claude__3__5__Haiku__3_5_2 ModelID = "anthropic/claude-3.5-haiku"`) {
-		t.Errorf("C group _2 pin: expected anthropic/claude-3.5-haiku\nconstants:\n%s", string(constantsSrc))
+	if strings.Contains(s, "CloudflareAIGateway") || strings.Contains(s, "Version_3_5_1") || strings.Contains(s, "Version_3_5_2") {
+		t.Errorf("C group: no provider-flavored or _N-ordinal constant may survive the hard cut\nconstants:\n%s", string(constantsSrc))
 	}
 }
 
-// TestCodegen_GoldenPins_B verifies the B group (kilo prefix collision) resolves with
-// the MEANINGFUL route discriminator, not an opaque ordinal: the same base
-// model served under two distinct backend-route prefixes disambiguates as
-// "kilo-auto/free" → Model__Kilo__Free__KiloAuto, "openrouter/free" →
-// Model__Kilo__Free__OpenRouter.
+// TestCodegen_GoldenPins_B verifies the B group under the hard cut: "kilo-auto/free" and
+// "openrouter/free" both decompose to the entity "free", so — like the C group — they
+// CONVERGE onto ONE Entity__ constant. The backend-route disambiguator that the old
+// Model__ surface needed is no longer relevant (provider/route is queried via the API).
 func TestCodegen_GoldenPins_B(t *testing.T) {
 	fixtureJSON := deterministicFixtureJSON(t)
 	_, constantsSrc, _ := runFixtureCodegen(t, fixtureJSON, "")
 	s := normalizeWhitespace(string(constantsSrc))
 
-	if !strings.Contains(s, `Model__Kilo__Free__KiloAuto ModelID = "kilo-auto/free"`) {
-		t.Errorf("B group KiloAuto pin: expected kilo-auto/free\nconstants:\n%s", string(constantsSrc))
+	if !strings.Contains(s, `Entity__Free = "free"`) {
+		t.Errorf("B group convergence: expected the single free entity\nconstants:\n%s", string(constantsSrc))
 	}
-	if !strings.Contains(s, `Model__Kilo__Free__OpenRouter ModelID = "openrouter/free"`) {
-		t.Errorf("B group OpenRouter pin: expected openrouter/free\nconstants:\n%s", string(constantsSrc))
+	if strings.Contains(s, "KiloAuto") || strings.Contains(s, "__OpenRouter") {
+		t.Errorf("B group: no backend-route-flavored constant may survive the hard cut\nconstants:\n%s", string(constantsSrc))
 	}
 }
 
-// TestCodegen_GoldenPins_E verifies the E group (openai version-pair negative control):
-// "gpt-5.1" → Model__OpenAI__GPT__5_1, "gpt-5.2" → Model__OpenAI__GPT__5_2.
-// The _1 and _2 here are VERSION DIGITS from pass (a), NOT collision suffixes from fallback (b).
-// Asserts: exact names present; no fragment/doubled-ordinal variant.
+// TestCodegen_GoldenPins_E verifies the E group (version-pair negative control) under the
+// hard cut: "gpt-5.1" → Entity__Gpt__Version_5_1, "gpt-5.2" → Entity__Gpt__Version_5_2.
+// Distinct versions render distinctly via the __Version_ word sentinel, so the injectivity
+// guard never fires — asserts exact names present and NO doubled-ordinal fragment.
 func TestCodegen_GoldenPins_E(t *testing.T) {
 	fixtureJSON := deterministicFixtureJSON(t)
 	_, constantsSrc, _ := runFixtureCodegen(t, fixtureJSON, "")
 	s := normalizeWhitespace(string(constantsSrc))
 
-	if !strings.Contains(s, `Model__OpenAI__GPT__5_1 ModelID = "gpt-5.1"`) {
-		t.Errorf("E control: Model__OpenAI__GPT__5_1 missing or wrong value\nconstants:\n%s", string(constantsSrc))
+	if !strings.Contains(s, `Entity__Gpt__Version_5_1 = "gpt@5.1"`) {
+		t.Errorf("E control: Entity__Gpt__Version_5_1 missing or wrong value\nconstants:\n%s", string(constantsSrc))
 	}
-	if !strings.Contains(s, `Model__OpenAI__GPT__5_2 ModelID = "gpt-5.2"`) {
-		t.Errorf("E control: Model__OpenAI__GPT__5_2 missing or wrong value\nconstants:\n%s", string(constantsSrc))
+	if !strings.Contains(s, `Entity__Gpt__Version_5_2 = "gpt@5.2"`) {
+		t.Errorf("E control: Entity__Gpt__Version_5_2 missing or wrong value\nconstants:\n%s", string(constantsSrc))
 	}
-	// No doubled-ordinal or fragment variant (these would appear as Model__OpenAI__GPT__5_1_ in the raw form).
 	rawStr := string(constantsSrc)
-	if strings.Contains(rawStr, "Model__OpenAI__GPT__5_1_") {
-		t.Errorf("E control: Model__OpenAI__GPT__5_1 has unexpected suffix (doubled ordinal or fragment)\nconstants:\n%s", rawStr)
+	if strings.Contains(rawStr, "Entity__Gpt__Version_5_1_") {
+		t.Errorf("E control: Entity__Gpt__Version_5_1 has an unexpected suffix (doubled ordinal or fragment)\nconstants:\n%s", rawStr)
 	}
-	if strings.Contains(rawStr, "Model__OpenAI__GPT__5_2_") {
-		t.Errorf("E control: Model__OpenAI__GPT__5_2 has unexpected suffix (doubled ordinal or fragment)\nconstants:\n%s", rawStr)
+	if strings.Contains(rawStr, "Entity__Gpt__Version_5_2_") {
+		t.Errorf("E control: Entity__Gpt__Version_5_2 has an unexpected suffix (doubled ordinal or fragment)\nconstants:\n%s", rawStr)
 	}
 }
 
@@ -3747,9 +3349,9 @@ func TestCodegen_UpToDate_RealInput(t *testing.T) {
 	if err != nil {
 		t.Fatalf("generateSource: %v", err)
 	}
-	constantsSrc, err := generateConstantsSource(models, slugToConst)
+	constantsSrc, err := generateEntitiesConstantsSource(models, metadata)
 	if err != nil {
-		t.Fatalf("generateConstantsSource: %v", err)
+		t.Fatalf("generateEntitiesConstantsSource: %v", err)
 	}
 	metadataSrc, err := generateMetadataSource(metadata)
 	if err != nil {
@@ -3761,7 +3363,7 @@ func TestCodegen_UpToDate_RealInput(t *testing.T) {
 		src     []byte
 	}{
 		{outputPath, staticSrc},
-		{outputConstantsPath, constantsSrc},
+		{outputEntitiesConstantsPath, constantsSrc},
 		{outputMetadataPath, metadataSrc},
 		{outputFamiliesPath, familiesSrc},
 		{outputProvidersPath, providersSrc},

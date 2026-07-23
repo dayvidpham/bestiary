@@ -935,6 +935,26 @@ func ExtractVersionFromID(id ModelID, rawFamily Family) string {
 		return remainder
 	}
 
+	// Path (b2): "p"-as-dot version token — "5p1" -> "5.1".
+	//
+	// This must run BEFORE path (c), which would otherwise accept "5p1" verbatim as
+	// an alphanumeric version (the shape that produced the phantom glm@5p1 and
+	// glm@5p2 entities) and strand them beside their real dotted siblings.
+	//
+	// The convention is NOT new here: parseSeriesNumber has always read "p" as a dot
+	// inside the letter-prefix series split (kimi-k2p6 -> k@2.6), which is why the
+	// kimi/minimax/mimo spellings already decompose correctly. Generalizing that one
+	// rule to the ordinary version-token position is what extends the same treatment
+	// to families with no series letter, rather than adding a SECOND, provider-gated
+	// mechanism for the same phenomenon.
+	//
+	// The shape is deliberately narrow — digits, a literal "p", digits, and nothing
+	// else — so a unit-suffixed size ("120b"), a letter version ("4o") and any
+	// literal-p token that is not flanked by digits on both sides are untouched.
+	if decoded, ok := decodePNotationVersion(remainder); ok {
+		return decoded
+	}
+
 	// Path (c): single alphanumeric-suffix token (e.g. "4o" from "gpt-4o").
 	// Must start with a digit and contain only alphanumeric characters (no hyphens).
 	// Must not be a pure-alpha word (which would be a variant, not a version).
@@ -986,6 +1006,27 @@ var reHyphenDigits = regexp.MustCompile(`^\d+(?:-\d+)*$`)
 // reBareVersion matches a bare "N.M" dot-version with optional additional segments.
 // e.g. "2.5", "10.3" — but NOT "4o", "4-5", "flash"
 var reBareVersion = regexp.MustCompile(`^\d+\.\d+$`)
+
+// reDotPVersion matches a "p"-as-dot version token: digits, a literal "p", digits,
+// and nothing else. "5p1", "2p6", "5p2" — but NOT "4o", "120b", "3px", "p1".
+//
+// Some providers publish a version with "p" where the dot belongs, because their id
+// namespace disallows the dot; their own display names spell it with the dot. The
+// shape is narrow on purpose: requiring digits on BOTH sides is what keeps a literal
+// "p" in a size or codename token from being read as a decimal point.
+var reDotPVersion = regexp.MustCompile(`^(\d+)p(\d+)$`)
+
+// decodePNotationVersion decodes a "p"-as-dot version token into its dotted form,
+// reporting whether the token had that shape. It is the SINGLE definition of the
+// convention, shared by the ordinary version-token path (ExtractVersionFromID) and
+// the letter-prefix series split (parseSeriesNumber), so the two can never drift
+// into disagreeing about what "5p1" means.
+func decodePNotationVersion(tok string) (string, bool) {
+	if m := reDotPVersion.FindStringSubmatch(tok); m != nil {
+		return m[1] + "." + m[2], true
+	}
+	return "", false
+}
 
 // reAlphaNumVersion matches a single token that starts with a digit and contains
 // only alphanumeric characters (letters and digits). This captures version
@@ -1587,6 +1628,16 @@ func inferFamilyFromIDWithVariantBase(id ModelID, p Provider) (Family, string, s
 			}
 		}
 		recoveredVariant := recoverMemberVariant(remainingTokens, baseFamily)
+		// Recover a version that sits BETWEEN the family and the recovered variant
+		// (empty-raw "claude-3.5-haiku" / "claude-3-5-haiku" -> version "3.5"), so this
+		// empty-raw path converges with the raw-populated sibling instead of dropping the
+		// version at the return below. Only fills an empty version; a bare-generation
+		// split (splitBareGen) already took precedence when present.
+		if bareVersion == "" && recoveredVariant != "" {
+			if v, _ := ExtractVersionBetweenFamilyAndVariant(id, baseFamily, recoveredVariant); v != "" {
+				bareVersion = v
+			}
+		}
 		// Case-fold: baseFamily is already lowercased above.
 		return baseFamily, recoveredVariant, bareVersion
 	}
@@ -2110,6 +2161,20 @@ func canonicalizeOpenAILine(family Family, variant, version string, modifier []s
 	clean := strings.ToLower(lastPathSegment(stripVendorNamespace(string(id))))
 	clean = strings.ReplaceAll(clean, "@", "-")
 	toks := strings.Split(clean, "-")
+	// Some providers glue the "openai" vendor label onto the id with a hyphen
+	// (digitalocean / snowflake-cortex / venice: "openai-o1", "openai-o3-mini",
+	// "openai-gpt-4o") rather than as a path segment ("openai/o1", which
+	// lastPathSegment already strips). Drop a leading "openai" token so the o-series
+	// LINE designator is read from the SAME position as the path-segment spelling —
+	// otherwise toks[0]=="openai" hides the "o1"/"o3" and the model strands in the junk
+	// family "o" (its dashed and slash spellings would decompose to two different
+	// identities). This only re-exposes the existing designator gates (reOSeriesLine on
+	// toks[0]; containsToken for 4o/audio) to the real leading token; a non-o-series gpt
+	// id (openai-gpt-5, openai-gpt-oss-120b, openai-gpt-image-1) still falls through to
+	// the unchanged default branch and is untouched.
+	if len(toks) > 1 && toks[0] == "openai" {
+		toks = toks[1:]
+	}
 	if len(toks) == 0 {
 		return family, variant, version, modifier
 	}
@@ -2369,6 +2434,7 @@ func ParseFamilyDetailed(raw Family, id ModelID, p Provider) (Family, string, st
 		if pd, pdErr := loadParseData(); pdErr == nil {
 			variant, modifier = promoteVariantModifier(pd, family, variant, modifier)
 		}
+		version = correctDotLostVersion(id, version)
 		return family, variant, version, modifier, nil
 	}
 
@@ -2384,6 +2450,7 @@ func ParseFamilyDetailed(raw Family, id ModelID, p Provider) (Family, string, st
 		if pd, pdErr := loadParseData(); pdErr == nil {
 			rv, rmod = promoteVariantModifier(pd, rf, rv, rmod)
 		}
+		rver = correctDotLostVersion(id, rver)
 		return rf, rv, rver, rmod, fail
 	}
 
@@ -2845,12 +2912,91 @@ func stripVendorNamespace(id string) string {
 	// reach here with the redundant leading "meta-" intact, deriving family "meta" instead
 	// of "llama" (and dropping the version, since the extractor mis-aligns). Strip the
 	// redundant "meta-" so they decompose NATIVELY to llama with the version preserved —
-	// the SAME outcome as the slash form. Scoped to the literal "meta-llama-" prefix (only
-	// the 2 attested no-slash meta-llama ids), zero collateral.
+	// the SAME outcome as the slash form. Scoped to the literal "meta-llama-" prefix (the
+	// attested no-slash meta-llama ids — currently the eight dotted/dashed/underscored
+	// version spellings), zero collateral.
 	if strings.HasPrefix(strings.ToLower(idStr), "meta-llama-") {
 		idStr = idStr[len("meta-"):]
 	}
+	// AWS Bedrock cross-region inference-profile normalization. A Bedrock id is
+	// "<region>.<vendor>.<model>[-v<N>:<M>]" (e.g.
+	// "us.anthropic.claude-sonnet-4-5-20250929-v1:0"); the region+vendor prefix and
+	// the trailing profile-version tag are ROUTING metadata, not model identity, so a
+	// dotted Bedrock form must decompose to the SAME (family,variant,version) tuple —
+	// and thus the SAME entity — as the plainly-served model. Stripping them here
+	// makes every ID-based extractor (family, version, date) see through the dotted
+	// namespace at once.
+	idStr = stripBedrockProfile(idStr)
 	return idStr
+}
+
+// bedrockRegionCodes is the CLOSED set of AWS Bedrock cross-region inference-profile
+// region prefixes recognized by stripBedrockProfile / DetectRegion. It gates the
+// normalization so that only a genuine "<region>.<vendor>.<model>" Bedrock id is
+// touched — other-provider dotted spellings whose leading segment is NOT a region
+// (e.g. "openai.gpt-5-...", "minimax.minimax-m2-...", "deepseek.v3-...") are left
+// untouched, since there the dotted segments carry model identity, not routing.
+//
+// The attested catalog prefixes are us/eu/au/jp/global; "apac" is the reserved
+// Bedrock scope (0 attested). "ca"/"sa" are recognized-but-unnamed here so a future
+// spelling routes to the RegionOther + RegionRaw fail-safe (regionFromToken) rather
+// than being silently ignored.
+var bedrockRegionCodes = map[string]struct{}{
+	"us": {}, "eu": {}, "au": {}, "jp": {}, "apac": {}, "global": {}, "ca": {}, "sa": {},
+}
+
+// reBedrockTierTag matches a trailing Bedrock routing tier tag: a ":<digits>"
+// inference-profile index (the ":0" of "-v1:0") or an "@<tag>" routing alias
+// (e.g. "@default"). reBedrockVersionTag matches the trailing "-v<digits>"
+// inference-profile version once the tier tag is removed ("-v1:0" -> "-v1" -> "").
+var (
+	reBedrockTierTag    = regexp.MustCompile(`(?::\d+|@[A-Za-z0-9._-]+)$`)
+	reBedrockVersionTag = regexp.MustCompile(`-v\d+$`)
+)
+
+// bedrockProfile parses an AWS Bedrock cross-region inference-profile id of the
+// form "<region>.<vendor>.<model>[-v<N>:<M>]". On a match it returns the lowercase
+// region token, the plain (prefix- and profile-suffix-stripped) model id, and
+// ok=true; a non-Bedrock id (no region.vendor. prefix) returns ("", id, false), so
+// callers leave it untouched. The region+vendor prefix and the trailing routing tag
+// are Bedrock ROUTING metadata, never model identity, so the returned model
+// decomposes identically to the plainly-served model and keys to one entity.
+func bedrockProfile(id string) (regionTok, model string, ok bool) {
+	i := strings.IndexByte(id, '.')
+	if i <= 0 {
+		return "", id, false
+	}
+	regionTok = strings.ToLower(id[:i])
+	if _, isRegion := bedrockRegionCodes[regionTok]; !isRegion {
+		return "", id, false // leading segment is not a Bedrock region.
+	}
+	rest := id[i+1:]
+	j := strings.IndexByte(rest, '.')
+	if j <= 0 {
+		return "", id, false // no "<vendor>." segment.
+	}
+	model = rest[j+1:]
+	if model == "" {
+		return "", id, false
+	}
+	// Strip the Bedrock inference-profile routing suffix, scoped to this branch so
+	// there is zero collateral on non-Bedrock ids: tier tag first (":0"/"@default"),
+	// then the "-v<N>" version token it sat behind.
+	model = reBedrockTierTag.ReplaceAllString(model, "")
+	model = reBedrockVersionTag.ReplaceAllString(model, "")
+	return regionTok, model, true
+}
+
+// stripBedrockProfile returns the plain model id for an AWS Bedrock cross-region
+// inference-profile id (see bedrockProfile), or the id unchanged when it is not a
+// Bedrock form. It is the string-normalization half consumed by stripVendorNamespace
+// so every ID-based extractor (family, version, date) sees through the dotted
+// namespace; DetectRegion is the sibling that surfaces the region as an attribute.
+func stripBedrockProfile(id string) string {
+	if _, model, ok := bedrockProfile(id); ok {
+		return model
+	}
+	return id
 }
 
 // NOTE (post-v0.2.2 correction, bestiary host-dimension follow-up): a curated
@@ -2920,6 +3066,21 @@ func splitBareGen(pd *parseData, tok string) (Family, string, bool) {
 	if pd == nil || tok == "" {
 		return "", "", false
 	}
+	// A GLUED "p"-as-dot generation ("qwen3p7") is tried FIRST, because the digit/dot
+	// scan below stops at the "p" and would leave the base "qwen3" — which clause 2
+	// then rejects as digit-suffixed, dropping the version entirely. This is the same
+	// single rule ExtractVersionFromID and parseSeriesNumber share
+	// (decodePNotationVersion): a third POSITION the rule reaches, not a third
+	// definition of it. The base-side clauses are unchanged, so this admits a new
+	// SHAPE, never a new permission.
+	if m := reGluedPNotationGen.FindStringSubmatch(tok); m != nil {
+		if decoded, okDecode := decodePNotationVersion(m[2]); okDecode {
+			if base, okBase := bareGenBase(pd, m[1]); okBase {
+				return base, decoded, true
+			}
+		}
+	}
+
 	// Maximal trailing run of digits and dots = the generation version.
 	end := len(tok)
 	i := end
@@ -2935,23 +3096,44 @@ func splitBareGen(pd *parseData, tok string) (Family, string, bool) {
 		return "", "", false // no trailing digit/dot run
 	}
 	version := tok[i:]
-	base := tok[:i]
-	// Consume a single separating hyphen ("gpt-5" → base "gpt").
-	base = strings.TrimSuffix(base, "-")
 	// version must contain at least one digit (guard against a lone "." tail).
-	if base == "" || !strings.ContainsAny(version, "0123456789") {
+	if !strings.ContainsAny(version, "0123456789") {
 		return "", "", false
+	}
+	base, ok := bareGenBase(pd, tok[:i])
+	if !ok {
+		return "", "", false
+	}
+	return base, version, true
+}
+
+// reGluedPNotationGen matches a token ending in a GLUED "p"-as-dot generation:
+// everything before it is the (possibly hyphen-terminated) base, and the trailing
+// digit-p-digit run is the generation. "qwen3p7" → ("qwen", "3p7").
+var reGluedPNotationGen = regexp.MustCompile(`^(.+?)(\d+p\d+)$`)
+
+// bareGenBase applies the BASE-side clauses of the bare-generation predicate to a
+// candidate base string: it consumes a single separating hyphen ("gpt-5" → "gpt"),
+// then enforces clause 2 (the base does not itself end in a digit) and clauses 1 and 3
+// (the base is a families.json entry carrying the curated bare_gen_split flag).
+//
+// It is shared by both split paths above so the two can never disagree about which
+// bases may be split.
+func bareGenBase(pd *parseData, raw string) (Family, bool) {
+	base := strings.TrimSuffix(raw, "-")
+	if base == "" {
+		return "", false
 	}
 	// Clause 2: base-name-not-digit-suffixed.
 	if last := base[len(base)-1]; last >= '0' && last <= '9' {
-		return "", "", false
+		return "", false
 	}
 	// Clause 1 (has-entry) + Clause 3 (bare_gen_split flag attested in snapshot).
 	info, ok := pd.families[Family(base)]
 	if !ok || !info.BareGenSplit {
-		return "", "", false
+		return "", false
 	}
-	return Family(base), version, true
+	return Family(base), true
 }
 
 // recoverMemberVariant recovers a variant token from idTokens (the hyphen-split
@@ -3198,15 +3380,21 @@ func isDateShapedToken(tok string) bool {
 // Size/Quantization dimension) — explicitly NOT a version and NOT a cross-provider
 // divergence. Mirrors the YYMM/date guard pattern.
 //
-// Shapes covered (case-insensitive; the b/m unit suffix is the discriminator):
-//   - dense param count:  "120b", "20b", "7b", "1.5b", "560m", "7m"
+// Shapes covered (case-insensitive; the b/m/t unit suffix is the discriminator):
+//   - dense param count:  "120b", "20b", "7b", "1.5b", "560m", "7m", "1t" (trillion)
 //   - MoE "NxNNb":        "8x22b", "8x7b"
 //   - MoE active-params:  "30b-a3b", "300b-a47b", "235b-a22b", "480b-a35b"
 //   - MoE count-suffixed: "17b-16e", "17b-128e"  (Nb-Ke: active params + expert count)
 //
-// Genuine version tokens are NOT matched because they have no b/m unit suffix:
+// The trillion unit "t" (Ling-1T / Ring-1T are 1-trillion-parameter models) is a size,
+// not a version — so ling-1t → ling#1t (not ling@1t) and the "1t" in ling-2.6-1t rides
+// as the size beside version 2.6. Only a standalone hyphen/path-delimited "Nt" token is a
+// size; a token-internal "t" (deepseek r1t2) or an ollama ":1t" tag (kimi-k2:1t, stripped
+// before size extraction) is unaffected.
+//
+// Genuine version tokens are NOT matched because they have no b/m/t unit suffix:
 // "4o" (ends "o"), "4.5", "5", "3.1", "2603" (date, also guarded separately).
-var reParamSizeToken = regexp.MustCompile(`^(?i:\d+(?:\.\d+)?[bm]|\d+x\d+b|\d+b-a\d+b|\d+b-\d+e)$`)
+var reParamSizeToken = regexp.MustCompile(`^(?i:\d+(?:\.\d+)?[bmt]|\d+x\d+b|\d+b-a\d+b|\d+b-\d+e)$`)
 
 // isParamSizeToken reports whether tok is a parameter-count / model-size token
 // (e.g. "120b", "7m", "8x22b", "30b-a3b"). Such tokens are dropped from version
@@ -3265,10 +3453,10 @@ func ParseParamSize(raw string) (string, error) {
 // ParseParamShape tries them is significant only for readability — the four
 // shapes are mutually exclusive.
 var (
-	reShapeNxM       = regexp.MustCompile(`^(\d+)x(\d+b)$`)        // "8x22b": experts x per-expert
-	reShapeActiveMoE = regexp.MustCompile(`^(\d+b)-a(\d+b)$`)      // "30b-a3b": total - active
-	reShapeCountMoE  = regexp.MustCompile(`^(\d+b)-(\d+)e$`)       // "17b-16e": active - expert count
-	reShapeDense     = regexp.MustCompile(`^(\d+(?:\.\d+)?[bm])$`) // "30b", "560m", "10.7b"
+	reShapeNxM       = regexp.MustCompile(`^(\d+)x(\d+b)$`)         // "8x22b": experts x per-expert
+	reShapeActiveMoE = regexp.MustCompile(`^(\d+b)-a(\d+b)$`)       // "30b-a3b": total - active
+	reShapeCountMoE  = regexp.MustCompile(`^(\d+b)-(\d+)e$`)        // "17b-16e": active - expert count
+	reShapeDense     = regexp.MustCompile(`^(\d+(?:\.\d+)?[bmt])$`) // "30b", "560m", "10.7b", "1t"
 )
 
 // ParseParamShape decomposes a canonical parameter-size token into its flat
@@ -3406,12 +3594,14 @@ func paramTokenToInt64(tok string) (int64, error) {
 	unit := tok[len(tok)-1]
 	var unitExp int
 	switch unit {
+	case 't':
+		unitExp = 12
 	case 'b':
 		unitExp = 9
 	case 'm':
 		unitExp = 6
 	default:
-		return 0, fmt.Errorf("token %q has no recognized b/m unit suffix", tok)
+		return 0, fmt.Errorf("token %q has no recognized b/m/t unit suffix", tok)
 	}
 	num := tok[:len(tok)-1] // strip the unit
 	intPart, fracPart, hasDot := strings.Cut(num, ".")
@@ -3641,6 +3831,13 @@ func parseSeriesNumber(rest string) (version string, hadSep bool, ok bool) {
 	if rest == "" {
 		return "", false, false
 	}
+	// An explicit "." or "p" separator, both handled by reSeriesDotP's "[.p]" class.
+	// This pre-existing regex is where the letter-prefix split has always encoded the
+	// p-as-dot convention; because "[.p]" is a superset of the "p"-only shape
+	// decodePNotationVersion recognises, reSeriesDotP always matches a "5p1" here
+	// first, so a separate decodePNotationVersion call in this function would be dead.
+	// The shared definition still governs the OTHER positions (ExtractVersionFromID and
+	// splitBareGen's glued-generation arm), so the convention cannot drift.
 	if m := reSeriesDotP.FindStringSubmatch(rest); m != nil {
 		return m[1] + "." + m[2], true, true
 	}
@@ -3953,6 +4150,102 @@ var idFamilyOverrides = map[string]idFamilyOverrideEntry{
 	"abacusai/dracarys-72b-instruct":           {family: "dracarys"},
 	"gryphe/mythomax-l2-13b":                   {family: "mythomax"},
 
+	// EVA-Qwen2.5-32B-v0.2 follows the dracarys precedent: a finetune whose name
+	// leads with its BASE model, so the leading-token pipeline over-captures the whole
+	// prefix as a compound family ("qwen2.5-32b-eva") and reads the finetune's own
+	// release as a variant ("v0.2"). EVA is the artifact the lab published; Qwen2.5-32B
+	// is what it was trained FROM. Splitting them puts the derivation where it belongs:
+	// family "eva" with version "0.2" (EVA's own release line), the 32B size recovered
+	// mechanically from the ID, and the base relationship carried as a curated
+	// DerivationFinetune edge in lineage.json rather than smuggled into the family
+	// token. Same shape as dracarys/mythomax: an exact-ID key, zero collateral.
+	"qwen2.5-32b-eva-v0.2": {family: "eva", version: "0.2"},
+
+	// interfaze-beta is the last row that put "beta" into an identity. vercel serves
+	// interfaze/interfaze-beta with an empty raw_family, so the leading-token pipeline
+	// read "interfaze" as the family and promoted the trailing "beta" to the VARIANT
+	// slot — giving the entity key interfaze/beta while the SAME row also carried
+	// Stage=beta. beta was therefore both identity and stage on one record, which is the
+	// degenerate coexistence the release-stage axis exists to prevent.
+	//
+	// Pinned to the bare family. Stage is unaffected and still reads beta, because
+	// DetectStageFromID scans the ID independently of the key (detect-without-strip, the
+	// grok precedent above). A future non-beta interfaze model will share this entity,
+	// which is correct — they are one artifact line differing only by release stage.
+	"interfaze/interfaze-beta": {family: "interfaze"},
+
+	// vercel labels a swathe of unrelated models raw_family "o" — the OpenAI o-series
+	// family — so alibaba's video models, openai's speech models and quiverai's arrow
+	// all decomposed into family "o" and shared one junk-bucket entity with the real
+	// o-series. The raw value is upstream's, not a bestiary mis-parse: the vendored
+	// catalog carries family="o" verbatim on all of them.
+	//
+	// Those rows are corrected by the family_enforce ledger (wan / tts / arrow /
+	// rerank), NOT here — the ledger is the general tool for a raw_family mislabel and
+	// it fires wherever the ID-derived family equals one of its keys, so a new vercel
+	// spelling of an existing line is self-correcting. Only the row below needs a pin.
+
+	// cohere/rerank-v4-pro is the ONE row the family_enforce ledger cannot reach. The
+	// ledger fires when the ID-DERIVED family is one of its members, and this ID
+	// derives the COMPOUND family "rerank-v4" (the "-v4-" segment glues onto the
+	// family token before "pro" is read as the variant), which is not the enforce key
+	// "rerank". Its sibling cohere/rerank-v4-fast derives the bare "rerank" and is
+	// corrected by the ledger, so without this pin the two halves of one product line
+	// would sit in different families. Pinned to match the sibling exactly: family
+	// rerank with the tier token as a modifier.
+	"cohere/rerank-v4-pro": {family: "rerank", modifiers: []string{"pro"}},
+
+	// cortecs glues the major version onto the VARIANT token — "claude-opus4-5" is
+	// Opus 4.5, not an Opus 5. Every other provider spells the same models
+	// claude-opus-4-5 / -4-6 / -4-7 / -4-8, and cortecs' own release dates match the
+	// real 4.5–4.8 launches exactly, so the reading is not in doubt. Left alone the
+	// glue was doubly wrong: it minted four phantom claude/opus@5…@8 entities (one
+	// cortecs instance each) AND stranded those instances away from the real
+	// entities that carry every other provider's rows.
+	//
+	// These are curated PINS rather than a general glued-token rule, deliberately.
+	// A catalog sweep for the <letters><digit>-<digit> shape finds 34 ids, but 30 of
+	// them glue the digit onto the FAMILY (qwen2-5-…, llama3-3-…, wan2-2-…), which is
+	// a different shape with a different correct reading — and one a variant-targeted
+	// rule must not touch. cortecs is the ONLY emitter of the variant-glued form, so a
+	// general rule would carry regression risk across those 30 ids while covering
+	// exactly the four below. If a second vendor ever ships this spelling, that is the
+	// moment the general path earns its risk.
+	"claude-opus4-5": {family: "claude", variant: "opus", version: "4.5"},
+	"claude-opus4-6": {family: "claude", variant: "opus", version: "4.6"},
+	"claude-opus4-7": {family: "claude", variant: "opus", version: "4.7"},
+	"claude-opus4-8": {family: "claude", variant: "opus", version: "4.8"},
+
+	// ring-2.6-1t-free (opencode) arrives with the upstream raw_family "ring-1t-free" —
+	// the "1t" size and the "free" tier are both fused into the family label — so it
+	// decomposed to family "ring-1t", variant "free" and stranded on a phantom "ring-1t"
+	// line instead of joining the real Ring 2.6 (a 1-trillion-parameter model). Pinned to
+	// the bare ring family with its 2.6 version; the "1t" size is recovered mechanically
+	// (the trillion unit) as a #1t segment and the "free" pricing tier drops from identity,
+	// so this row converges on ring@2.6#1t alongside inclusionai/ring-2.6-1t. Sole provider
+	// of this exact id → zero collateral.
+	"ring-2.6-1t-free": {family: "ring", version: "2.6"},
+
+	// NOTE (retired override): the bare "k2p7" id (kimi-for-coding) previously needed a
+	// narrow exact-id override to kimi/k@2.7 — its upstream compound raw_family "kimi-k2"
+	// defeated the shared family-recovery (the general compound-family recovery fix stays
+	// deferred). The 2026-07-23 snapshot retired the id from the catalog entirely
+	// (kimi-for-coding replaced its listing), so the override is removed rather than kept
+	// dormant; if a bare series-token id with a compound raw family reappears, the same
+	// narrow-override remedy applies.
+
+	// command-a-plus-05-2026 is Cohere's Command A+ — variant "a-plus" of the command
+	// family, the exact sibling of the command/r-plus line that already decomposes that
+	// way. Its two providers disagreed at the source and split one model across two
+	// entities: cohere tags raw_family "command-a", which the family_overrides ledger
+	// maps to variant "a" (dropping the "+"), while nano-gpt sends an empty raw_family,
+	// leaving the leading-token pipeline to capture "command-a-plus" whole as a compound
+	// family. Neither reaches "a-plus". Being provider-agnostic and keyed to the exact
+	// ID, this entry converges BOTH rows on command/a-plus. Only the family/variant is
+	// pinned: the ID's MM-YYYY tail stays with the date pipeline, which reads each
+	// provider's own release date, so the month-leak guard is untouched.
+	"command-a-plus-05-2026": {family: "command", variant: "a-plus"},
+
 	// The remaining stage/mode entries: gpt-realtime IDs whose version is a DOTTED value
 	// glued behind the mid-ID "realtime" token. The general mid-ID modifier engine now
 	// harvests the buried "realtime" attribute and resolves family=gpt for the whole
@@ -3988,10 +4281,17 @@ var idFamilyOverrides = map[string]idFamilyOverrideEntry{
 	// (variant "", version "4.20", the same modifier the official name carries), so the
 	// alias merges into grok@4.20{…}. Stage is UNAFFECTED: DetectStageFromID scans the
 	// ID independently of the key, so every one of these rows still bakes Stage=StageBeta
-	// (detect-without-strip). This is a curated grok-only unification; the general beta
-	// freeze stays for non-grok names (e.g. interfaze-beta keeps beta in its key). The
-	// multi-agent spellings follow the official grok-4.20-multi-agent-0309, which drops
-	// "multi-agent" and keys the bare grok@4.20 (nil modifier).
+	// (detect-without-strip). The multi-agent spellings follow the official
+	// grok-4.20-multi-agent-0309, which drops "multi-agent" and keys the bare grok@4.20
+	// (nil modifier).
+	//
+	// These entries were once described as a grok-ONLY unification, with the general beta
+	// freeze left in place for other names (interfaze-beta was the cited example, and it
+	// kept beta in its key). That exception is gone: beta is now ALWAYS a release-stage
+	// attribute and never part of an identity, so the interfaze row is pinned below on the
+	// same principle and a codegen guard enforces the rule for every future decomposition.
+	// What made these grok entries special was never the beta ruling — it was the alias
+	// spellings needing to converge on one artifact.
 	"grok-4.20-beta-0309-non-reasoning": {family: "grok", version: "4.20", modifiers: []string{"non-reasoning"}},
 	"grok-4.20-beta-0309-reasoning":     {family: "grok", version: "4.20", modifiers: []string{"reasoning"}},
 	"grok-4.20-multi-agent-beta-0309":   {family: "grok", version: "4.20"},
@@ -4000,6 +4300,24 @@ var idFamilyOverrides = map[string]idFamilyOverrideEntry{
 	"xai/grok-4.20-multi-agent-beta":    {family: "grok", version: "4.20"},
 	"xai/grok-4.20-non-reasoning-beta":  {family: "grok", version: "4.20", modifiers: []string{"non-reasoning"}},
 	"xai/grok-4.20-reasoning-beta":      {family: "grok", version: "4.20", modifiers: []string{"reasoning"}},
+
+	// Cohere Command R7B. Cohere markets "Command R7B" as its own model, distinct from
+	// Command R and Command R+ (see docs.cohere.com/docs/command-r7b): R, R+, and R7B
+	// are DISTINCT variants of the command family, and "r7b" is the canonical variant
+	// token (kept whole, NOT split into member "r" + a 7b size). The models.dev API tags
+	// these with the LESS specific raw_family "command-r", whose curated override
+	// (family_overrides.json "command-r" -> variant "r") would otherwise erase the r7b
+	// distinction — so the ID (more specific than the raw) pins the variant here. Version
+	// is empty (the trailing MM-YYYY group is a date, handled by the between-family
+	// MM-YYYY guard). The 7b parameter size is carried SEPARATELY by the
+	// param_size_overrides.json "7b" pins (dual-carry: variant KEEPS r7b, ParamSize ALSO
+	// records 7b -> entity key command/r7b#7b). The arabic spelling drops "arabic" per the
+	// existing modifier handling (arabic is not a curated modifier), so it keys the same
+	// command/r7b#7b entity as its sibling, differing only by the per-instance Date. Keys
+	// are exact lowercase IDs; the org-prefixed "cohere/" form is a distinct key.
+	"command-r7b-12-2024":        {family: "command", variant: "r7b"},
+	"cohere/command-r7b-12-2024": {family: "command", variant: "r7b"},
+	"command-r7b-arabic-02-2025": {family: "command", variant: "r7b"},
 
 	// Version-less llama-4 scout/maverick pins. A handful of catalog spellings for the
 	// llama-4 scout/maverick artifacts omit the "-4-" version token that the canonical
@@ -4014,18 +4332,101 @@ var idFamilyOverrides = map[string]idFamilyOverrideEntry{
 	// unpinned would keep the split the unification exists to remove. The #size segment
 	// is carried separately by the param_size_overrides.json pins (17b-16e scout /
 	// 17b-128e maverick), so with the @4 version pin scout keys
-	// llama/scout@4#17b-16e{instruct} and maverick keys llama@4#17b-128e{instruct}. NOTE
-	// the asymmetry: "scout" is a curated llama variant member (families.json) so it
-	// stays in the key, but "maverick" is NOT a member — the official maverick entity is
-	// llama@4 (no maverick variant), so these pins set variant "" to merge into it
-	// rather than minting a new entity.
+	// llama/scout@4#17b-16e{instruct} and maverick keys
+	// llama/maverick@4#17b-128e{instruct}.
+	//
+	// scout and maverick are BOTH curated llama variant members (families.json), so
+	// both keep their name in the key and these pins spell it out for the spellings
+	// the mechanical member recovery cannot reach: the dotted Bedrock forms glue the
+	// generation into the family token ("llama4-maverick"), and the aggregator forms
+	// carry a leading provider token — in both the member scan never sees a bare
+	// "maverick" token to recover. Without these rows those four instances would
+	// fragment away from their siblings into a variant-less llama@4 entity, splitting
+	// one artifact across two keys.
 	"meta.llama4-scout-17b-instruct-v1:0":         {family: "llama", variant: "scout", version: "4", modifiers: []string{"instruct"}},
 	"us.meta.llama4-scout-17b-instruct-v1:0":      {family: "llama", variant: "scout", version: "4", modifiers: []string{"instruct"}},
 	"cerebras-llama-4-scout-17b-16e-instruct":     {family: "llama", variant: "scout", version: "4", modifiers: []string{"instruct"}},
-	"meta.llama4-maverick-17b-instruct-v1:0":      {family: "llama", version: "4", modifiers: []string{"instruct"}},
-	"us.meta.llama4-maverick-17b-instruct-v1:0":   {family: "llama", version: "4", modifiers: []string{"instruct"}},
-	"cerebras-llama-4-maverick-17b-128e-instruct": {family: "llama", version: "4", modifiers: []string{"instruct"}},
-	"groq-llama-4-maverick-17b-128e-instruct":     {family: "llama", version: "4", modifiers: []string{"instruct"}},
+	"meta.llama4-maverick-17b-instruct-v1:0":      {family: "llama", variant: "maverick", version: "4", modifiers: []string{"instruct"}},
+	"us.meta.llama4-maverick-17b-instruct-v1:0":   {family: "llama", variant: "maverick", version: "4", modifiers: []string{"instruct"}},
+	"cerebras-llama-4-maverick-17b-128e-instruct": {family: "llama", variant: "maverick", version: "4", modifiers: []string{"instruct"}},
+	"groq-llama-4-maverick-17b-128e-instruct":     {family: "llama", variant: "maverick", version: "4", modifiers: []string{"instruct"}},
+}
+
+// dotLostVersionOverrides is the curated, CLOSED, exact-model-ID map for the "dot-lost"
+// version-spelling defect: an upstream id spells a minor version WITHOUT its separating
+// dot — either dotless ("minimax-m25", "qwen35-122b-a10b", "mistral-small-31-…") or
+// dash-glued onto a digit-suffixed family token ("qwen2-5-7b-instruct", "qwen3-6-plus") —
+// so the decomposition captured only the leading integer (25 → "25", 2-5 → "2") and lost
+// the minor. Unlike idFamilyOverrides this corrects ONLY the Version field: the family,
+// variant, parameter size, modifier and release stage the pipeline already derived are
+// all correct and are LEFT UNTOUCHED, so a dot-lost repair can never disturb another
+// field. Each key is the EXACT (lowercase) model id and each value the corrected dotted
+// version; the map is consulted at the end of ParseFamilyDetailed on BOTH the empty-raw
+// and raw-populated paths.
+//
+// Every entry is EVIDENCE-BACKED: the target dotted version is a real, heavily-attested
+// Qwen/MiniMax/Mistral release, and the id's own spelling (the "2-5" / "25" is the minor
+// digit) fixes which dot was lost. The 23 whose corrected key already exists MERGE into
+// the dotted sibling; three (qwen2-5-coder-7b-instruct, qwen2-5-omni-7b, qwen3-6-35b) have
+// no same-key sibling and RE-KEY onto a new (correct) dotted key — they carry the same
+// unambiguous 2-5/3-6 spelling as their merging siblings (Qwen2.5-Coder-7B-Instruct,
+// Qwen2.5-Omni-7B and Qwen3.6-35B are documented models), so leaving them on the
+// known-false integer version would be incoherent. No general "NM → N.M" decode is used:
+// the catalog's other <letters><digit>-<digit> ids (llama3-3-, wan2-2-) glue the digit
+// onto the FAMILY with a different correct reading a general rule must not touch, so the
+// repair is pinned per exact id.
+var dotLostVersionOverrides = map[string]string{
+	// ── dotless (no separator): the minor digit is fused to the major ──
+	"minimax-m25":                   "2.5", // MiniMax M2.5 (sibling minimax/m@2.5, 56 inst)
+	"public/minimax-m25":            "2.5", // same model, drun's namespaced spelling
+	"minimax-m27":                   "2.7", // MiniMax M2.7 (sibling minimax/m@2.7, 52 inst)
+	"qwen25-vl-72b-instruct":        "2.5", // Qwen2.5-VL-72B-Instruct (sibling qwen/vl@2.5#72b{instruct}, 7 inst)
+	"qwen35-122b-a10b":              "3.5", // Qwen3.5-122B-A10B (sibling qwen@3.5#122b-a10b, 17 inst)
+	"qwen35-397b-a17b":              "3.5", // Qwen3.5-397B-A17B (sibling qwen@3.5#397b-a17b, 27 inst)
+	"mistral-small-31-24b-instruct": "3.1", // Mistral Small 3.1 24B (sibling mistral/small@3.1#24b{instruct}, 4 inst)
+
+	// ── dash-glued onto a digit-suffixed family token (qwen2-5-… / qwen3-N-…) ──
+	// qwen 2.5 line (all MERGE except the two noted RE-KEYs)
+	"qwen2-5-7b-instruct":        "2.5", // → qwen@2.5#7b{instruct} (merge, 5 inst)
+	"qwen2-5-math-7b-instruct":   "2.5", // → qwen@2.5#7b{instruct} (merge)
+	"qwen2-5-14b-instruct":       "2.5", // → qwen@2.5#14b{instruct} (merge, 1 inst)
+	"qwen2-5-32b-instruct":       "2.5", // → qwen@2.5#32b{instruct} (merge, 1 inst)
+	"qwen2-5-72b-instruct":       "2.5", // → qwen@2.5#72b{instruct} (merge, 8 inst)
+	"qwen2-5-math-72b-instruct":  "2.5", // → qwen@2.5#72b{instruct} (merge)
+	"qwen2-5-coder-32b-instruct": "2.5", // → qwen/coder@2.5#32b{instruct} (merge, 6 inst)
+	"qwen2-5-coder-7b-instruct":  "2.5", // → qwen/coder@2.5#7b{instruct} (RE-KEY: no same-key sibling; Qwen2.5-Coder-7B-Instruct is real)
+	"qwen2-5-omni-7b":            "2.5", // → qwen@2.5#7b{omni} (RE-KEY: no same-key sibling; Qwen2.5-Omni-7B is real)
+	"qwen2-5-vl-7b-instruct":     "2.5", // → qwen/vl@2.5#7b{instruct} (merge, 1 inst)
+	"qwen2-5-vl-32b-instruct":    "2.5", // → qwen/vl@2.5#32b{instruct} (merge, 2 inst)
+	"qwen2-5-vl-72b-instruct":    "2.5", // → qwen/vl@2.5#72b{instruct} (merge, 7 inst)
+	// qwen 3.5 line
+	"qwen3-5-4b":        "3.5", // → qwen@3.5#4b (merge, 1 inst)
+	"qwen3-5-9b":        "3.5", // → qwen@3.5#9b (merge, 15 inst)
+	"qwen3-5-27b":       "3.5", // → qwen@3.5#27b (merge, 30 inst)
+	"qwen3-5-35b-a3b":   "3.5", // → qwen@3.5#35b-a3b (merge, 13 inst)
+	"qwen3-5-122b-a10b": "3.5", // → qwen@3.5#122b-a10b (merge, 17 inst)
+	"qwen3-5-397b-a17b": "3.5", // → qwen@3.5#397b-a17b (merge, 27 inst)
+	"qwen3-5-plus":      "3.5", // → qwen/plus@3.5 (merge, 16 inst)
+	// qwen 3.6 line
+	"qwen3-6-27b":         "3.6", // → qwen@3.6#27b (merge, 20 inst)
+	"qwen3-6-35b":         "3.6", // → qwen@3.6#35b (RE-KEY: no same-key sibling; Qwen3.6-35B)
+	"qwen3-6-flash":       "3.6", // → qwen/flash@3.6 (merge, 13 inst)
+	"qwen3-6-max-preview": "3.6", // → qwen/max@3.6 (merge, 9 inst; "preview" stays a stage, detected off the id)
+	"qwen3-6-plus":        "3.6", // → qwen/plus@3.6 (merge, 24 inst)
+	// qwen 3.7 line
+	"qwen3-7-max":  "3.7", // → qwen/max@3.7 (merge, 22 inst)
+	"qwen3-7-plus": "3.7", // → qwen/plus@3.7 (merge, 17 inst)
+}
+
+// correctDotLostVersion returns the curated dotted version for a dot-lost model id, or
+// the pipeline-derived version unchanged when the id carries no dot-lost defect. It is
+// keyed on the EXACT lowercase id and touches only the version, so it is a no-op for
+// every id outside the enumerated dotLostVersionOverrides set.
+func correctDotLostVersion(id ModelID, version string) string {
+	if v, ok := dotLostVersionOverrides[strings.ToLower(string(id))]; ok {
+		return v
+	}
+	return version
 }
 
 func isSeriesTierToken(tok string) bool {
@@ -4440,6 +4841,16 @@ func ExtractVersionBetweenFamilyAndVariant(id ModelID, family Family, variant st
 		// Stop at the variant boundary.
 		if variantFirst != "" && tok == variantFirst {
 			variantStart = i
+			break
+		}
+		// MM-YYYY trailing-date lookahead (cohere "command-r7b-12-2024"): a numeric
+		// token that forms an MM-YYYY group with the NEXT token is the leading half of a
+		// trailing date, not a version component. Stop before consuming it so the date
+		// group ("12-2024") stays a date rather than leaking its month ("12") into
+		// Version. Mirrors the single-remainder isMMYYYYTwoGroup guard in
+		// ExtractVersionFromID; the four/six-digit isDateShapedToken guard below cannot
+		// see a two-token MM-YYYY split.
+		if i+1 < len(tokens) && isMMYYYYTwoGroup(tok+"-"+tokens[i+1]) {
 			break
 		}
 		if isVersionToken(tok) && !isDateShapedToken(tok) {

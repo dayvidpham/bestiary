@@ -1,0 +1,96 @@
+{
+  "_comment": "Family MarshalText -> UnmarshalText is idempotent for known AND unknown values (the permissive string-type contract). Input and expected are the same token: the round trip must be the identity.",
+  "cases": [
+    {
+      "name": "claude",
+      "input": "claude",
+      "expected": "claude",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "bestiary.FamilyClaude"
+      },
+      "mutation": {
+        "description": "round-trips the claude family constant"
+      }
+    },
+    {
+      "name": "gemini",
+      "input": "gemini",
+      "expected": "gemini",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "bestiary.FamilyGemini"
+      },
+      "mutation": {
+        "description": "round-trips the gemini family constant"
+      }
+    },
+    {
+      "name": "gpt",
+      "input": "gpt",
+      "expected": "gpt",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "bestiary.FamilyGpt"
+      },
+      "mutation": {
+        "description": "round-trips the gpt family constant"
+      }
+    },
+    {
+      "name": "llama",
+      "input": "llama",
+      "expected": "llama",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "bestiary.FamilyLlama"
+      },
+      "mutation": {
+        "description": "round-trips the llama family constant"
+      }
+    },
+    {
+      "name": "mistral",
+      "input": "mistral",
+      "expected": "mistral",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "bestiary.FamilyMistral"
+      },
+      "mutation": {
+        "description": "round-trips the mistral family constant"
+      }
+    },
+    {
+      "name": "deepseek",
+      "input": "deepseek",
+      "expected": "deepseek",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "bestiary.FamilyDeepseek"
+      },
+      "mutation": {
+        "description": "round-trips the deepseek family constant"
+      }
+    },
+    {
+      "name": "unknown",
+      "input": "totally-unknown-family-xyz",
+      "expected": "totally-unknown-family-xyz",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "an unregistered family value"
+      },
+      "mutation": {
+        "description": "substitutes an unregistered value, pinning that the permissive contract round-trips unknowns"
+      }
+    }
+  ]
+}

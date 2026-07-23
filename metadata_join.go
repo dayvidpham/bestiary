@@ -273,10 +273,13 @@ func JoinEntityMetadata(ents []Entity, meta []EntityMetadata) (attached []Entity
 	// set of families present for the two-tier miss policy.
 	attached = make([]Entity, len(ents))
 	byKey := make(map[string]int, len(ents))
+	keySet := make(map[string]struct{}, len(ents))
 	familyPresent := make(map[Family]struct{}, len(ents))
 	for i := range ents {
 		attached[i] = cloneEntity(ents[i])
-		byKey[attached[i].Ref.String()] = i
+		k := attached[i].Ref.String()
+		byKey[k] = i
+		keySet[k] = struct{}{}
 		familyPresent[attached[i].Ref.Family] = struct{}{}
 	}
 
@@ -295,6 +298,15 @@ func JoinEntityMetadata(ents []Entity, meta []EntityMetadata) (attached []Entity
 		if aliasRef, ok := metadataAliasRef(m.MetadataID); ok {
 			identity = aliasRef
 			aliased = true
+		}
+
+		// MERGE-only N->N.0 fold: a metadata row (or a curated alias) may decompose to a
+		// bare-integer version key ("claude/opus@4") whose entity folded into its dotted
+		// sibling ("claude/opus@4.0"); resolve the identity through the SAME shared fold so
+		// the lab metadata still attaches to the merged entity instead of being reported as
+		// an unlinked disagreement. A no-op for any key without a dotted sibling.
+		if dotted, merged := NormalizeEntityVersion(identity, keySet); merged {
+			identity = dotted
 		}
 
 		if idx, ok := byKey[identity.String()]; ok {

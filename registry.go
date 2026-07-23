@@ -24,7 +24,48 @@ var (
 	entityIndex     map[string]Entity
 	entityKeys      []string
 	entitySourceRel *entitySourceRelation
+	// versionMergeAlias maps a bare-integer entity key that was folded into its dotted
+	// N.0 sibling ("claude/opus@4" -> "claude/opus@4.0") so a bare-version lookup still
+	// resolves to the merged entity. Built under entityIndexOnce alongside the index.
+	versionMergeAlias map[string]string
 )
+
+// NormalizeEntityVersion applies the MERGE-only N->N.0 version fold to a single entity
+// ref, given the set of ALL raw (pre-fold) entity keys. When ref carries a bare-integer
+// version N AND an entity with the IDENTICAL (family, variant, param-size, modifiers) but
+// version exactly "N.0" exists in rawKeys, it returns the ref with Version bumped to "N.0"
+// (so it lands squarely on that entity) and true; otherwise it returns ref unchanged and
+// false. It is a pure MERGE — a family that spells only a bare N with no N.0 sibling
+// (llama@4) is never touched, and no new/renamed key is ever created.
+//
+// Exported so cmd/bestiary-gen's buildEntitySet folds byte-identically to the runtime
+// registry: one rule, one implementation, so the generated Entity__ constants can never
+// drift from the entities Entities() actually exposes.
+func NormalizeEntityVersion(ref EntityRef, rawKeys map[string]struct{}) (EntityRef, bool) {
+	if !isBareIntegerVersion(ref.Version) {
+		return ref, false
+	}
+	dotted := ref
+	dotted.Version = ref.Version + ".0"
+	if _, exists := rawKeys[dotted.String()]; !exists {
+		return ref, false
+	}
+	return dotted, true
+}
+
+// isBareIntegerVersion reports whether v is a non-empty run of decimal digits with no
+// dot (e.g. "4", "3" — but not "4.0", "1t", "" or "4o").
+func isBareIntegerVersion(v string) bool {
+	if v == "" {
+		return false
+	}
+	for _, r := range v {
+		if r < '0' || r > '9' {
+			return false
+		}
+	}
+	return true
+}
 
 // entitySourceRelation is the in-memory BCNF join relation between entities and the
 // data sources that attest them, built once alongside entityIndex (same sync.Once)
@@ -62,6 +103,14 @@ type entityAgg struct {
 	hosts     []Host
 	hostSeen  map[Host]struct{}
 
+	// regions accumulates the de-duplicated per-instance Region values in first-seen
+	// order; the SORTED, deterministic Entity.Regions output is produced by an explicit
+	// sort in loadEntityIndex (the aggregate is sorted by ascending Region value, NOT
+	// first-seen — mirroring the Sources determinism discipline, not the Providers/Hosts
+	// first-seen order).
+	regions    []Region
+	regionSeen map[Region]struct{}
+
 	lineage []LineageEdge
 	linSeen map[string]struct{}
 
@@ -92,6 +141,30 @@ func loadEntityIndex() {
 	aggs := make(map[string]*entityAgg)
 	var order []string
 
+	// Pre-pass: collect the raw entity-key set (before any N->N.0 normalization) so the
+	// MERGE-only version fold below can ask "does the dotted sibling exist at the IDENTICAL
+	// key?" — the whole condition for the fold. Building it separately keeps the fold a
+	// pure MERGE: a bare-integer version is normalized to N.0 ONLY when an entity with the
+	// same (family, variant, param-size, modifiers) and version exactly N.0 already exists,
+	// so the bare entity lands EXACTLY on it and never creates a renamed/new key.
+	rawKeys := make(map[string]struct{}, len(staticModels))
+	for i := range staticModels {
+		m := staticModels[i]
+		ref := EntityRef{
+			Family:    m.Family,
+			Variant:   m.Variant,
+			Version:   m.Version,
+			ParamSize: m.ParamSize,
+			Modifier:  EntityModifiers(m.Modifier, m.Family),
+		}
+		rawKeys[ref.String()] = struct{}{}
+	}
+	// versionMergeAlias maps a bare-integer entity key ("claude/opus@4") to the dotted key
+	// it folds into ("claude/opus@4.0"), for the lookup path (entityIndexLookup): a
+	// bare-version EXPRESSION must resolve to the dotted entity even though the bare key no
+	// longer exists in the index. Populated in lockstep with the grouping fold below.
+	versionMergeAlias = make(map[string]string)
+
 	for i := range staticModels {
 		m := staticModels[i]
 
@@ -109,14 +182,30 @@ func loadEntityIndex() {
 		}
 		key := ref.String()
 
+		// MERGE-only N->N.0 version normalization. When this entity carries a bare-integer
+		// version N and the SAME key with version N.0 exists in the raw key set, fold the
+		// bare spelling onto the dotted entity: bump the ref to N.0 so its stored Ref
+		// renders the canonical spelling regardless of scan order, re-key the aggregate,
+		// and record the bare->dotted alias for lookups. This is the entity-identity
+		// realization of the user's C4 ruling (one canonical spelling per family
+		// generation) — a pure merge (claude/opus@4 + claude/opus@4.0 -> claude/opus@4.0),
+		// never a rename: a family that spells only a bare N with no N.0 sibling (llama@4)
+		// is untouched.
+		if dotted, merged := NormalizeEntityVersion(ref, rawKeys); merged {
+			versionMergeAlias[key] = dotted.String()
+			ref = dotted
+			key = dotted.String()
+		}
+
 		a := aggs[key]
 		if a == nil {
 			a = &entityAgg{
-				ref:      ref,
-				provSeen: make(map[Provider]struct{}),
-				hostSeen: make(map[Host]struct{}),
-				linSeen:  make(map[string]struct{}),
-				srcSeen:  make(map[DataSourceID]struct{}),
+				ref:        ref,
+				provSeen:   make(map[Provider]struct{}),
+				hostSeen:   make(map[Host]struct{}),
+				regionSeen: make(map[Region]struct{}),
+				linSeen:    make(map[string]struct{}),
+				srcSeen:    make(map[DataSourceID]struct{}),
 			}
 			aggs[key] = a
 			order = append(order, key)
@@ -126,6 +215,8 @@ func loadEntityIndex() {
 			ID:                m.ID,
 			Provider:          m.Provider,
 			Host:              m.Host,
+			Region:            m.Region,
+			RegionRaw:         m.RegionRaw,
 			CostInputPerMTok:  m.CostInputPerMTok,
 			CostOutputPerMTok: m.CostOutputPerMTok,
 			ContextWindow:     m.ContextWindow,
@@ -146,6 +237,10 @@ func loadEntityIndex() {
 		if _, dup := a.hostSeen[m.Host]; !dup {
 			a.hostSeen[m.Host] = struct{}{}
 			a.hosts = append(a.hosts, m.Host)
+		}
+		if _, dup := a.regionSeen[m.Region]; !dup {
+			a.regionSeen[m.Region] = struct{}{}
+			a.regions = append(a.regions, m.Region)
 		}
 
 		// Attestation rule (BCNF entity↔source join). Every static row originates
@@ -266,6 +361,7 @@ func loadEntityIndex() {
 			Lineage:        a.lineage,
 			Providers:      a.providers,
 			Hosts:          a.hosts,
+			Regions:        sortedRegions(a.regions),
 			ContextRange:   [2]int{a.ctxMin, a.ctxMax},
 			MaxOutputRange: [2]int{a.moMin, a.moMax},
 			Capabilities:   a.caps,
@@ -439,13 +535,41 @@ func sortedSources(in []DataSourceID) []DataSourceID {
 	return out
 }
 
+// sortedRegions returns a fresh slice holding the elements of in sorted ascending
+// by Region enum value. Like sortedSources it is the deterministic projection-sort
+// seam: the registry feeds it the first-seen per-instance Region order, and the
+// explicit sort makes Entity.Regions output independent of instance order. Sorting
+// by the int enum value (not the String token) is the natural total order for a
+// closed int enum and keeps the aggregate stable across bakes. An empty input
+// returns nil.
+func sortedRegions(in []Region) []Region {
+	if len(in) == 0 {
+		return nil
+	}
+	out := append([]Region(nil), in...)
+	sort.Slice(out, func(i, j int) bool { return out[i] < out[j] })
+	return out
+}
+
 // entityIndexLookup returns the cached entity for the given EntityRef key and
 // whether it exists. The returned Entity is the cached value (NOT a copy);
 // callers that hand it to external code MUST clone it first.
 func entityIndexLookup(key string) (Entity, bool) {
 	entityIndexOnce.Do(loadEntityIndex)
-	e, ok := entityIndex[key]
-	return e, ok
+	if e, ok := entityIndex[key]; ok {
+		return e, true
+	}
+	// MERGE-only N->N.0 fold: a bare-integer version key that was folded into its dotted
+	// sibling no longer exists in the index, so a bare-version expression (EntityByKey
+	// "claude/opus@4", EntityByTuple(claude, opus, "4", ""), a CLI selector) resolves
+	// through the alias to the dotted entity. Consulted ONLY on a direct miss, so a real
+	// dotted key never pays the indirection.
+	if dotted, ok := versionMergeAlias[key]; ok {
+		if e, ok := entityIndex[dotted]; ok {
+			return e, true
+		}
+	}
+	return Entity{}, false
 }
 
 // entityIndexAll returns the cached entities in deterministic key order (NOT
@@ -478,6 +602,33 @@ func LookupModel(id ModelID) (ModelInfo, bool) {
 	return ModelInfo{}, false
 }
 
+// EntityByKey looks up a single entity by its canonical entity-key STRING — the value
+// carried by every generated Entity__* constant and returned by EntityKeys() (grammar:
+// family[/variant][@version][#size]{identity-mods}). It is the string-keyed sibling of
+// EntityByTuple: it decomposes the key with the internal parser (parseEntityKey, the exact
+// inverse of EntityRef.String()) and delegates, so the enumerate-then-lookup idiom works
+// end-to-end again:
+//
+//	for _, key := range EntityKeys() {
+//		e, ok := EntityByKey(key) // ok is always true for a constant's value
+//		...
+//	}
+//
+// The bool reports whether a matching entity exists; a malformed or unknown key returns
+// (Entity{}, false) with NO error — matching EntityByTuple's contract (a key is data, so
+// an absent match is a normal negative, not an exceptional condition). The returned Entity
+// is a defensive deep copy (see Entities).
+//
+// IMPORTANT: an entity key is NOT a raw ModelID. Do not pass an entity key to
+// LookupModel / LookupModelByProvider / Resolve — those accept provider-ID grammar (raw
+// catalog IDs), a different grammar entirely. Use EntityByKey or EntityByTuple for
+// entity-key lookups; use LookupModel(id) / LookupModelByProvider(provider, id) for
+// instance-level (provider-ID) lookups.
+func EntityByKey(key string) (Entity, bool) {
+	ref := parseEntityKey(key)
+	return EntityByTuple(ref.Family, ref.Variant, ref.Version, ref.ParamSize, ref.Modifier...)
+}
+
 // ModelsByProvider returns all static models from the given provider.
 func ModelsByProvider(p Provider) []ModelInfo {
 	var out []ModelInfo
@@ -502,6 +653,124 @@ func ModelsByFamily(family Family) []ModelInfo {
 	return out
 }
 
+// ProvidersOf returns the distinct providers that serve the entity identified by
+// ref, sorted ascending by provider string. It is the API-level replacement for the
+// provider-flavored Model__ constants removed in the entity-constants hard cut: rather
+// than one constant per (entity, provider) pair, an entity has a single Entity__
+// constant and its serving providers are queried here.
+//
+// The lookup keys off ref.String() (the canonical entity key), so the ref need only
+// carry the identity tuple; the returned slice is a fresh copy the caller may mutate.
+// An entity absent from the static registry yields nil (no error — a ref for an
+// unknown entity simply has no providers), so a caller distinguishes "unknown entity"
+// from "known entity, no providers" by the entity's presence elsewhere, not by this
+// result.
+func ProvidersOf(ref EntityRef) []Provider {
+	e, ok := entityIndexLookup(ref.String())
+	if !ok {
+		return nil
+	}
+	return sortedProviders(e.Providers)
+}
+
+// ProvidersOfModel returns the distinct providers that serve the entity the given
+// model ID belongs to, sorted ascending. It is the instance-level convenience over
+// ProvidersOf: it resolves the model to its entity identity (the same
+// identity-class projection the registry index uses) and delegates. An ID absent from
+// the static registry yields nil.
+//
+// Note a single raw ID can be served by several providers under one entity; this
+// returns ALL of that entity's providers, not only the first-matched instance's.
+func ProvidersOfModel(id ModelID) []Provider {
+	m, ok := LookupModel(id)
+	if !ok {
+		return nil
+	}
+	ref := EntityRef{
+		Family:    m.Family,
+		Variant:   m.Variant,
+		Version:   m.Version,
+		ParamSize: m.ParamSize,
+		Modifier:  EntityModifiers(m.Modifier, m.Family),
+	}
+	return ProvidersOf(ref)
+}
+
+// sortedProviders returns a fresh slice holding the elements of in in ascending
+// provider-string order. The registry's Entity.Providers aggregate is de-duplicated
+// but in first-seen order; this imposes the deterministic ascending order ProvidersOf
+// promises (the sortedSources / sortedRegions projection-sort discipline). An empty
+// input returns nil.
+func sortedProviders(in []Provider) []Provider {
+	if len(in) == 0 {
+		return nil
+	}
+	out := append([]Provider(nil), in...)
+	sort.Slice(out, func(i, j int) bool { return out[i] < out[j] })
+	return out
+}
+
+// SeriesAll returns every distinct Series in the static registry — one entry per
+// (family, generation) line — sorted ascending by family, then by generation.
+// Lines with an empty generation (families whose entities carry no identity
+// version) are INCLUDED: an unversioned line is a real line, not a missing one.
+//
+// The result is COMPUTED from entity key components on first use and memoized
+// (see taxonomy.go); it never affects entity identity. The returned slice is a
+// fresh copy the caller may mutate.
+func SeriesAll() []Series {
+	idx := loadTaxonomyIndex()
+	out := make([]Series, len(idx.series))
+	copy(out, idx.series)
+	return out
+}
+
+// ReleasesOf returns the Releases of the given Series — its named members
+// (llama-4's scout and maverick; gemini-3.0's flash, flash-lite and pro) plus the
+// un-named bare-line release when the line has entities with no variant — sorted
+// ascending by release name (the empty name sorts first).
+//
+// A Series with no entities in the static registry yields nil (no error — an
+// unknown line simply has no releases), so a caller distinguishes "unknown line"
+// from "known line, no releases" by the line's presence in SeriesAll, not by this
+// result. The returned slice is a fresh copy.
+func ReleasesOf(s Series) []Release {
+	idx := loadTaxonomyIndex()
+	rs := idx.releases[seriesKey(s)]
+	if len(rs) == 0 {
+		return nil
+	}
+	out := make([]Release, len(rs))
+	copy(out, rs)
+	return out
+}
+
+// EntitiesOf returns the entities that belong to the given Release, ordered
+// ascending by canonical entity key (an EXPLICIT sort, so the sequence is
+// identical on every run — the sized siblings of one release, e.g.
+// llama/maverick@4#17b-128e and its {instruct} sibling, always come back in the
+// same order).
+//
+// A Release with no entities yields nil. Each returned Entity is a DEFENSIVE DEEP
+// COPY, exactly as with Entities() — mutating a result can never corrupt the
+// registry or alias another entity.
+func EntitiesOf(r Release) []Entity {
+	idx := loadTaxonomyIndex()
+	keys := idx.members[releaseKey(r)]
+	if len(keys) == 0 {
+		return nil
+	}
+	out := make([]Entity, 0, len(keys))
+	for _, k := range keys {
+		e, ok := entityIndexLookup(k)
+		if !ok {
+			continue
+		}
+		out = append(out, cloneEntity(e))
+	}
+	return out
+}
+
 // LookupModelByProvider searches the static registry for a model matching both
 // the given provider and name (model ID string). It returns the model and true
 // if found, or the zero value and false otherwise.
@@ -518,7 +787,8 @@ func LookupModelByProvider(p Provider, name string) (ModelInfo, bool) {
 // a defensive copy so callers cannot mutate the registry. This is the preferred
 // API for external callers; StaticModels is an implementation detail.
 //
-// See ModelIDs() (in models_constants_gen.go) for the canonical Model_* constant slice.
+// See EntityKeys() (in entities_constants_gen.go) for the canonical Entity__* entity-key
+// constant slice, and ProvidersOf to enumerate an entity's serving providers.
 func Models() []ModelInfo {
 	return StaticModels()
 }

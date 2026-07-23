@@ -1,10 +1,9 @@
 const (
-	Model__CloudflareAIGateway__Claude__3__5__Haiku__3_5_1 ModelID = "anthropic/claude-3-5-haiku"
-	Model__CloudflareAIGateway__Claude__3__5__Haiku__3_5_2 ModelID = "anthropic/claude-3.5-haiku"
-	Model__Kilo__Free__KiloAuto                            ModelID = "kilo-auto/free"
-	Model__Kilo__Free__OpenRouter                          ModelID = "openrouter/free"
-	Model__OpenAI__GPT__5_1                                ModelID = "gpt-5.1"
-	Model__OpenAI__GPT__5_2                                ModelID = "gpt-5.2"
-	Model__VLLM__Llama__3__2__3b__3_2__Instruct            ModelID = "llama-3.2-3b-instruct"
-	Model__VLLM__Llama__3__3__70b__3_3__Instruct           ModelID = "llama-3.3-70b-instruct"
+	Entity__Claude__Haiku__Version_3_5             = "claude/haiku@3.5"
+	Entity__Free                                   = "free"
+	Entity__Glm__Version_4_6                       = "glm@4.6"
+	Entity__Gpt__Version_5_1                       = "gpt@5.1"
+	Entity__Gpt__Version_5_2                       = "gpt@5.2"
+	Entity__Llama__Version_3_2__Size_3b__Instruct  = "llama@3.2#3b{instruct}"
+	Entity__Llama__Version_3_3__Size_70b__Instruct = "llama@3.3#70b{instruct}"
 )

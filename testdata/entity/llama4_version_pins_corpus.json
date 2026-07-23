@@ -20,9 +20,9 @@
     },
     {
       "name": "maverick",
-      "input": {"variant": "", "param_size": "17b-128e"},
+      "input": {"variant": "maverick", "param_size": "17b-128e"},
       "expected": {
-        "want_key": "llama@4#17b-128e{instruct}",
+        "want_key": "llama/maverick@4#17b-128e{instruct}",
         "ids": [
           "meta.llama4-maverick-17b-instruct-v1:0",
           "us.meta.llama4-maverick-17b-instruct-v1:0",
@@ -33,9 +33,9 @@
       "classification": "must-pass",
       "provenance": {
         "source": "manual",
-        "ref": "curated llama-4 maverick spellings (Bedrock, Cerebras, Groq) must land inside the unified llama@4#17b-128e{instruct} entity even though maverick is not a curated family variant member (empty Variant)"
+        "ref": "curated llama-4 maverick spellings (Bedrock, Cerebras, Groq) must land inside the unified llama/maverick@4#17b-128e{instruct} entity; maverick is a curated llama variant member, so these spellings — whose glued or provider-prefixed form puts the maverick token out of the mechanical member scan's reach — carry an exact-ID variant pin"
       },
-      "mutation": {"description": "pins maverick's empty variant + full expert-shape param size and the exact instance IDs expected inside the unified entity"}
+      "mutation": {"description": "pins maverick's curated variant + full expert-shape param size and the exact instance IDs expected inside the unified entity"}
     }
   ]
 }

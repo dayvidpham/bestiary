@@ -660,8 +660,11 @@ func TestDesignation_AllAcceptabilityRatings(t *testing.T) {
 			)
 		}
 
-		// Designations() from a ModelRef always uses AcceptabilityAdmitted in this epoch.
-		// Verify Designations() returns 4 entries and all have rating "admitted".
+		// Designations() from a ModelRef now carries ACTIVE acceptability: the
+		// canonical designation is Preferred, the others are Admitted. This ref is
+		// anthropic-hosted, so it carries THREE designations — the purl entry is
+		// minted only for a ref whose registry home is known (HuggingFace-hosted),
+		// and is dropped rather than emitted empty-valued for every other provider.
 		if tc.rating == bestiary.AcceptabilityAdmitted {
 			ref := bestiary.ModelRef{
 				ID:       "claude-opus-4-20250514",
@@ -672,22 +675,25 @@ func TestDesignation_AllAcceptabilityRatings(t *testing.T) {
 				Date:     "2025-05-14",
 			}
 			designations := ref.Designations()
-			if len(designations) != 4 {
+			if len(designations) != 3 {
 				t.Errorf(
-					"ModelRef.Designations() returned %d designations, want 4;\n"+
-						"  what: expected Raw, Canonical, HuggingFace, and PURL designations\n"+
+					"ModelRef.Designations() returned %d designations, want 3;\n"+
+						"  what: expected Raw, Canonical and HuggingFace designations (no PURL for a non-HuggingFace provider)\n"+
 						"  where: schema_test.go TestDesignation_AllAcceptabilityRatings",
 					len(designations),
 				)
 			}
 			for i, dg := range designations {
-				if dg.Rating != bestiary.AcceptabilityAdmitted {
+				want := bestiary.AcceptabilityAdmitted
+				if dg.Scheme == bestiary.SchemeCanonical {
+					want = bestiary.AcceptabilityPreferred
+				}
+				if dg.Rating != want {
 					t.Errorf(
-						"Designation[%d].Rating = %v, want AcceptabilityAdmitted;\n"+
-							"  what: all epoch-generated designations must default to admitted\n"+
-							"  why: promotion to preferred is deferred\n"+
+						"Designation[%d] (scheme %v).Rating = %v, want %v;\n"+
+							"  what: the canonical designation is Preferred; raw/HF/PURL stay Admitted\n"+
 							"  where: schema_test.go TestDesignation_AllAcceptabilityRatings",
-						i, dg.Rating,
+						i, dg.Scheme, dg.Rating, want,
 					)
 				}
 			}
@@ -850,6 +856,12 @@ func TestSchemaDefs_V024_DeepConformance(t *testing.T) {
 		value       any
 		expectProps []string
 		expectTypes map[string]string
+		// projectionProps are schema properties that are DERIVED projections (a method
+		// on the Go type, surfaced by a CLI wrapper) rather than struct fields, so they
+		// are legitimately absent from the plain-value marshal. They must still be
+		// declared in the $def (the expectProps arms above enforce that), but are
+		// exempt from the marshaled-output presence check.
+		projectionProps []string
 	}
 	cost := 2.0
 	checks := []deepCheck{
@@ -894,11 +906,14 @@ func TestSchemaDefs_V024_DeepConformance(t *testing.T) {
 				},
 				Source: bestiary.DataSourceOllama,
 			},
-			expectProps: []string{"ID", "Provider", "Host", "CostInputPerMTok", "CostOutputPerMTok", "ContextWindow", "MaxOutput", "QuantVRAM", "Source"},
+			expectProps: []string{"ID", "Provider", "Host", "Region", "RegionRaw", "CostInputPerMTok", "CostOutputPerMTok", "ContextWindow", "MaxOutput", "QuantVRAM", "Source"},
 			expectTypes: map[string]string{
 				"ID":       "string",
 				"Provider": "string",
 				"Host":     "string",
+				"Region":   "$ref",
+				// RegionRaw is a plain string sibling (the RegionOther carrier).
+				"RegionRaw": "string",
 				// CostInputPerMTok / CostOutputPerMTok: oneOf{number,null} — no plain "type" node (allowlisted).
 				"ContextWindow": "integer",
 				"MaxOutput":     "integer",
@@ -977,13 +992,14 @@ func TestSchemaDefs_V024_DeepConformance(t *testing.T) {
 				Ref:     bestiary.EntityRef{Family: "llama", Version: "3.3", ParamSize: "70b", Modifier: []string{"instruct"}},
 				Sources: []bestiary.DataSourceID{bestiary.DataSourceModelsDev, bestiary.DataSourceOllama},
 			},
-			expectProps: []string{"Ref", "Instances", "Lineage", "Providers", "Hosts", "PriceInputRange", "PriceOutputRange", "ContextRange", "MaxOutputRange", "Capabilities", "Sources", "Metadata"},
+			expectProps: []string{"Ref", "Instances", "Lineage", "Providers", "Hosts", "Regions", "Nomina", "PriceInputRange", "PriceOutputRange", "ContextRange", "MaxOutputRange", "Capabilities", "Sources", "Metadata"},
 			expectTypes: map[string]string{
 				"Ref":              "$ref",
 				"Instances":        "array|null",
 				"Lineage":          "array|null",
 				"Providers":        "array|null",
 				"Hosts":            "array|null",
+				"Regions":          "array|null",
 				"PriceInputRange":  "array",
 				"PriceOutputRange": "array",
 				"ContextRange":     "array",
@@ -993,7 +1009,12 @@ func TestSchemaDefs_V024_DeepConformance(t *testing.T) {
 				// Metadata is oneOf{$ref EntityMetadata, null} — no plain "type"
 				// node and no direct "$ref" (it is inside the oneOf), so it is
 				// allowlisted from the type cross-check (added in schema 0.3.0).
+				// Nomina is a DERIVED PROJECTION (Entity.Nomina() method, surfaced by
+				// the CLI wrapper), not a struct field, so it is intentionally absent
+				// from the plain-Entity marshal and allowlisted from the presence +
+				// type cross-check via projectionProps below (added in schema 0.5.0).
 			},
+			projectionProps: []string{"Nomina"},
 		},
 	}
 
@@ -1035,6 +1056,9 @@ func TestSchemaDefs_V024_DeepConformance(t *testing.T) {
 			continue
 		}
 		for prop := range def.Properties {
+			if slices.Contains(c.projectionProps, prop) {
+				continue // a derived-projection property is not in the plain-value marshal
+			}
 			if _, ok := out[prop]; !ok {
 				t.Errorf("%s JSON output is missing schema $defs.%s property %q;\n"+
 					"  how to fix: ensure bestiary.%s has an exported field %q matching the schema $def",

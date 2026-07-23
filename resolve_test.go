@@ -394,35 +394,63 @@ func TestResolve_CanonicalFamily_ReturnsErrAmbiguous(t *testing.T) {
 // ErrAmbiguous — the input is unambiguous because the model ID is exact. The
 // fix groups by model ID (not canonical triple) when all matches share the same
 // raw ID.
+//
+// The cross-provider clause of this test was re-cut when the canonical-provider
+// preference was extended to exact-ID inputs. The regression it guards is
+// unchanged — an exact ID in canonical mode must NOT come back ambiguous — but
+// the ID-grouping is no longer observable as "two or more providers in the
+// returned slice": once the matches collapse into one group, the preference
+// narrows that group to its curated canonical provider. The grouping is
+// therefore asserted at its true seam (one group, no error, anthropic returned)
+// with the multi-host precondition measured directly from the catalog, so a
+// future single-host catalog cannot make this test pass vacuously.
 func TestResolve_ExactIDInCanonicalMode_NotAmbiguous(t *testing.T) {
+	const id = "claude-opus-4-1-20250805"
+
+	// Precondition, measured from the built catalog rather than from Resolve's
+	// output: the id really is hosted by several providers, so a clean resolution
+	// proves the divergent per-provider tuples were grouped by id.
+	hosts := map[bestiary.Provider]struct{}{}
+	for _, m := range bestiary.StaticModels() {
+		if string(m.ID) == id {
+			hosts[m.Provider] = struct{}{}
+		}
+	}
+	if len(hosts) < 2 {
+		t.Fatalf("catalog precondition lost: %q is hosted by %d provider(s), want >= 2 — "+
+			"this regression test needs a cross-provider id to be meaningful", id, len(hosts))
+	}
+
 	// claude-opus-4-1-20250805 is hosted across multiple providers. Even if some
 	// providers omit the API family field (yielding a divergent Variant "" vs
 	// "opus" for the same model), resolving the EXACT id in canonical mode must NOT
 	// be treated as ambiguous — all matches share one raw id, so they group by id.
-	refs, err := bestiary.Resolve("claude-opus-4-1-20250805", bestiary.WithScheme(bestiary.SchemeCanonical))
+	refs, err := bestiary.Resolve(id, bestiary.WithScheme(bestiary.SchemeCanonical))
 	if err != nil {
-		t.Fatalf("Resolve(\"claude-opus-4-1-20250805\", SchemeCanonical) returned error (false ambiguity): %v", err)
+		t.Fatalf("Resolve(%q, SchemeCanonical) returned error (false ambiguity): %v", id, err)
 	}
 	if len(refs) == 0 {
-		t.Fatal("Resolve(\"claude-opus-4-1-20250805\", SchemeCanonical) returned empty slice")
+		t.Fatalf("Resolve(%q, SchemeCanonical) returned empty slice", id)
 	}
 	// Every returned ref must have the exact input ID.
 	for _, r := range refs {
-		if r.ID != "claude-opus-4-1-20250805" {
-			t.Errorf("ref.ID = %q, want \"claude-opus-4-1-20250805\"", r.ID)
+		if string(r.ID) != id {
+			t.Errorf("ref.ID = %q, want %q", r.ID, id)
 		}
 	}
-	// Multiple providers must be present (cross-provider hosting).
+	// Anthropic — the curated canonical publisher — must be the answer, and the
+	// rehosts must have been dropped by the canonical-provider preference.
 	providers := make(map[bestiary.Provider]struct{})
 	for _, r := range refs {
 		providers[r.Provider] = struct{}{}
 	}
-	if len(providers) < 2 {
-		t.Errorf("Resolve returned only %d provider(s), want cross-provider hosting (>=2)", len(providers))
-	}
-	// Anthropic must be among them.
 	if _, ok := providers[bestiary.ProviderAnthropic]; !ok {
 		t.Errorf("ProviderAnthropic not in results; providers seen: %v", providers)
+	}
+	if len(refs) != 1 {
+		t.Errorf("Resolve(%q, SchemeCanonical) returned %d refs, want exactly 1: the id groups into a single "+
+			"cross-provider group and the canonical-provider preference narrows it to anthropic; providers seen: %v",
+			id, len(refs), providers)
 	}
 }
 

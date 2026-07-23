@@ -19,7 +19,7 @@ import (
 // NOTE: this is the SQLite store migration version (models cache + BCNF
 // provenance tables). It is DISTINCT from BestiarySchemaVersion in version.go,
 // which versions the public JSON output schema; do not conflate the two.
-const currentSchemaVersion = 6
+const currentSchemaVersion = 7
 
 // schemaMetaSQL creates the schema_meta table used to track migration state.
 // Safe to run on any existing database (CREATE TABLE IF NOT EXISTS).
@@ -67,6 +67,8 @@ const schemaSQL = `CREATE TABLE IF NOT EXISTS models (
     cost_output_audio REAL,
     cost_context_over_200k TEXT NOT NULL DEFAULT '',
     cost_tiers        TEXT NOT NULL DEFAULT '',
+    region            TEXT NOT NULL DEFAULT '',
+    region_raw        TEXT NOT NULL DEFAULT '',
     PRIMARY KEY (model_id, provider)
 );`
 
@@ -173,6 +175,50 @@ func ensureEntityMetadataColumnsV6(conn *sqlite.Conn) error {
 	return nil
 }
 
+// modelV7Columns is the ordered list of the two per-instance region columns v7 adds
+// to the models table: region (the Region String() token — the enum-column-as-TEXT
+// precedent already used for status) and region_raw (the fail-safe RegionOther
+// carrier). Both are NOT NULL TEXT with an empty-string default, which SQLite ADD
+// COLUMN accepts. The order matches the schemaSQL tail so a migrated models table is
+// column-order-identical to a fresh one.
+var modelV7Columns = []modelV6Column{
+	{"region", `ALTER TABLE models ADD COLUMN region TEXT NOT NULL DEFAULT ''`},
+	{"region_raw", `ALTER TABLE models ADD COLUMN region_raw TEXT NOT NULL DEFAULT ''`},
+}
+
+// ensureModelColumnsV7 adds any of the v7 region columns the models table is missing,
+// ALTERing only the absent ones (presence read from pragma_table_info). It is the v7
+// sibling of ensureModelColumnsV6: idempotent and self-healing, so it is a no-op when
+// the columns already exist (a fresh v7 table, or a re-run), backfills them on a
+// v6→v7 upgrade, and heals an intermediate-v7 dev cache whose schema_meta reads 7 but
+// whose models table predates the columns. It does nothing when the models table is
+// absent, and manages no transaction of its own so it composes inside migrateToV7's
+// transaction and standalone from OpenStore.
+func ensureModelColumnsV7(conn *sqlite.Conn) error {
+	existing, err := tableColumnSet(conn, "models")
+	if err != nil {
+		return fmt.Errorf("read models columns: %w", err)
+	}
+	if len(existing) == 0 {
+		// No models table yet — nothing to heal.
+		return nil
+	}
+	for _, col := range modelV7Columns {
+		if existing[col.name] {
+			continue
+		}
+		if err := sqlitex.ExecuteTransient(conn, col.sql, nil); err != nil {
+			return fmt.Errorf("add missing models column %q: %w\n"+
+				"  What: adding a per-instance region column failed\n"+
+				"  Why: ALTER TABLE ADD COLUMN was rejected on a models table missing the column\n"+
+				"  Where: store.go ensureModelColumnsV7\n"+
+				"  How to fix: inspect the models table schema; delete the cache to rebuild it if corrupt",
+				col.name, err)
+		}
+	}
+	return nil
+}
+
 // tableColumnSet returns the set of column names of table via pragma_table_info.
 // An absent table yields an empty (non-nil) set, so callers distinguish it from a
 // present-but-column-short table.
@@ -203,7 +249,8 @@ const modelColumns = `model_id, provider, display_name, raw_family, family, vari
 	modalities_input, modalities_output,
 	last_synced,
 	description, status, status_raw, reasoning_options,
-	cost_input_audio, cost_output_audio, cost_context_over_200k, cost_tiers`
+	cost_input_audio, cost_output_audio, cost_context_over_200k, cost_tiers,
+	region, region_raw`
 
 // indexSQL creates the canonical lookup index used by QueryByCanonical.
 // The (family, variant, version) prefix is used for all non-empty canonical
@@ -352,6 +399,51 @@ const metadataLinksTableSQL = `CREATE TABLE IF NOT EXISTS metadata_links (
     type        TEXT NOT NULL DEFAULT '',
     type_raw    TEXT NOT NULL DEFAULT ''
 );`
+
+// nominaTableSQL is the v7 naming table: one row per recorded naming of an entity,
+// keyed by the composite primary key (value, scheme, entity_key) so a single spelling
+// may resolve to several entities (homonymy — the PK admits N rows for one value). It
+// carries claim attribution split into two provenance levels: source_url (WHO asserts
+// the naming) distinct from source_id (WHICH ingest we read it from, a foreign key
+// into data_sources). entity_key is NOT an FK — the entities table is a stub dimension
+// and a minted canonical/provider-id nomen may name an entity never written to it;
+// this is the documented deviation the plan ratified. status stores the
+// AcceptabilityRating token; scheme stores the NomenScheme token.
+const nominaTableSQL = `CREATE TABLE IF NOT EXISTS nomina (
+    value       TEXT NOT NULL,
+    scheme      TEXT NOT NULL,
+    entity_key  TEXT NOT NULL,
+    status      TEXT NOT NULL DEFAULT 'admitted',
+    source_url  TEXT NOT NULL DEFAULT '',
+    source_id   TEXT NOT NULL REFERENCES data_sources(data_source_id),
+    PRIMARY KEY (value, scheme, entity_key)
+);`
+
+// createNominaTable creates the v7 nomina table. It is CREATE TABLE IF NOT EXISTS, so
+// it is idempotent and safe on the fresh-DB v7 path and from migrateToV7 alike. It
+// references data_sources, so callers create it AFTER the provenance dimensions.
+func createNominaTable(conn *sqlite.Conn) error {
+	if err := sqlitex.ExecuteTransient(conn, nominaTableSQL, nil); err != nil {
+		return fmt.Errorf("create nomina table: %w", err)
+	}
+	return nil
+}
+
+// migrateToV7 upgrades a v6 database to v7: it backfills the two per-instance region
+// columns on the models table (ensureModelColumnsV7, presence-guarded so a partial
+// intermediate-v7 cache heals idempotently) and creates the nomina naming table. Both
+// steps are additive — no table recreation, so it is zero-data-loss. It runs inside
+// migrateSchema's flow; the region self-heal and nomina creation are also reachable
+// standalone from OpenStore for an intermediate-v7 cache.
+func migrateToV7(conn *sqlite.Conn) error {
+	if err := ensureModelColumnsV7(conn); err != nil {
+		return fmt.Errorf("v6→v7: add region columns: %w", err)
+	}
+	if err := createNominaTable(conn); err != nil {
+		return fmt.Errorf("v6→v7: create nomina table: %w", err)
+	}
+	return nil
+}
 
 // createProvenanceTables creates the four v5 BCNF provenance tables in FK
 // dependency order (parents before children): data_sources and entities are
@@ -531,6 +623,21 @@ func OpenStore(path string) (*Store, error) {
 		return nil, fmt.Errorf("bestiary: OpenStore: ensure v6 entity_metadata columns on %s: %w", path, err)
 	}
 
+	// Self-heal the v7 per-instance region columns and the nomina naming table for
+	// the same intermediate-cache reason: a database created by an intermediate v7
+	// build records schema_meta=7 but its models table may predate the region columns
+	// (or the nomina table may be absent), so the version-gated migration never runs.
+	// Both steps are presence-guarded and idempotent — a no-op for an already-complete
+	// v7 database.
+	if err := ensureModelColumnsV7(conn); err != nil {
+		_ = conn.Close()
+		return nil, fmt.Errorf("bestiary: OpenStore: ensure v7 region columns on %s: %w", path, err)
+	}
+	if err := createNominaTable(conn); err != nil {
+		_ = conn.Close()
+		return nil, fmt.Errorf("bestiary: OpenStore: ensure v7 nomina table on %s: %w", path, err)
+	}
+
 	return &Store{conn: conn, path: path}, nil
 }
 
@@ -620,6 +727,13 @@ func migrateSchema(conn *sqlite.Conn, fromVersion int) error {
 		if err := createProvenanceTablesV6(conn); err != nil {
 			return fmt.Errorf("bestiary: migrateSchema: create provenance tables: %w", err)
 		}
+		// v7 naming table: created on the fresh path (the models table already carries
+		// the v7 region columns via schemaSQL) so a fresh v7 database is never left with
+		// schema_meta=7 but no nomina table — the same fresh-arm discipline the v5/v6
+		// tables follow.
+		if err := createNominaTable(conn); err != nil {
+			return fmt.Errorf("bestiary: migrateSchema: create nomina table: %w", err)
+		}
 	} else {
 		if fromVersion < 2 {
 			// Existing database with v0/v1 schema needs migration to v2.
@@ -663,6 +777,15 @@ func migrateSchema(conn *sqlite.Conn, fromVersion int) error {
 		if fromVersion < 6 {
 			if err := migrateToV6(conn); err != nil {
 				return fmt.Errorf("bestiary: migrateSchema: v5→v6: %w", err)
+			}
+		}
+		// The v6→v7 step adds the per-instance region columns to the models table and
+		// creates the nomina naming table. Both are additive (no table recreation), so
+		// it applies to every existing database that predates v7, including one just
+		// brought to v6 by the arm above (chained …→v6→v7).
+		if fromVersion < 7 {
+			if err := migrateToV7(conn); err != nil {
+				return fmt.Errorf("bestiary: migrateSchema: v6→v7: %w", err)
 			}
 		}
 	}
@@ -1041,7 +1164,8 @@ func (s *Store) UpsertModels(ctx context.Context, models []ModelInfo) error {
 		modalities_input, modalities_output,
 		last_synced,
 		description, status, status_raw, reasoning_options,
-		cost_input_audio, cost_output_audio, cost_context_over_200k, cost_tiers
+		cost_input_audio, cost_output_audio, cost_context_over_200k, cost_tiers,
+		region, region_raw
 	) VALUES (
 		?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8,
 		?9, ?10,
@@ -1051,7 +1175,8 @@ func (s *Store) UpsertModels(ctx context.Context, models []ModelInfo) error {
 		?26, ?27,
 		?28,
 		?29, ?30, ?31, ?32,
-		?33, ?34, ?35, ?36
+		?33, ?34, ?35, ?36,
+		?37, ?38
 	)`
 
 	for i := range models {
@@ -1095,6 +1220,8 @@ func (s *Store) UpsertModels(ctx context.Context, models []ModelInfo) error {
 				derefFloat64(m.CostOutputAudioPerMTok),
 				tierCostPtrToString(m.CostContextOver200k),
 				costTiersToString(m.CostTiers),
+				m.Region.String(),
+				m.RegionRaw,
 			},
 		})
 		if err != nil {
@@ -1238,6 +1365,93 @@ func (s *Store) UpsertEntitySources(ctx context.Context, sources []EntitySource)
 	}
 
 	return nil
+}
+
+// UpsertNomina writes the naming rows into the v7 nomina table in a single
+// transaction. Each row is a per-triple IDEMPOTENT insert keyed by the primary key
+// (value, scheme, entity_key): INSERT OR IGNORE, so re-persisting the same triple is
+// a no-op that never MUTATES an existing row (unlike OR REPLACE). A same-triple
+// CONFLICT is NOT reconciled here by last-write-wins — the codegen guard
+// ValidateNomina rejects a conflicting mint before it ever reaches the store, and OR
+// IGNORE keeps the incumbent so a stray duplicate at sync cannot silently overwrite.
+//
+// The source_id foreign key into data_sources is NOT auto-satisfied: callers must
+// have populated data_sources first (via UpsertDataSources), so a nomen naming an
+// unknown source is rejected when foreign_keys is ON. entity_key is deliberately NOT
+// an FK (the entities table is a stub dimension; a minted canonical/provider-id nomen
+// may name an entity never written to it).
+//
+// ctx is accepted for API compatibility; zombiezen.com/go/sqlite does not support
+// per-operation context cancellation.
+func (s *Store) UpsertNomina(ctx context.Context, nomina []Nomen) error {
+	endFn := sqlitex.Transaction(s.conn)
+
+	var err error
+	defer endFn(&err)
+
+	const nomenSQL = `INSERT OR IGNORE INTO nomina (
+		value, scheme, entity_key, status, source_url, source_id
+	) VALUES (?1, ?2, ?3, ?4, ?5, ?6)`
+	for i := range nomina {
+		n := &nomina[i]
+		err = sqlitex.Execute(s.conn, nomenSQL, &sqlitex.ExecOptions{
+			Args: []any{
+				n.Value,
+				n.Scheme.String(),
+				n.ResolvesTo.String(),
+				n.Status.String(),
+				n.SourceURL,
+				string(n.Source),
+			},
+		})
+		if err != nil {
+			return fmt.Errorf("bestiary: UpsertNomina: upsert nomen (value=%q, scheme=%q, entity=%q): %w\n"+
+				"  What: writing a naming row failed\n"+
+				"  Why: most likely the source_id foreign key has no matching data_sources row\n"+
+				"  Where: store.go UpsertNomina, nomina insert\n"+
+				"  How to fix: call UpsertDataSources with the DataSource for %q before persisting nomina attributed to it",
+				n.Value, n.Scheme.String(), n.ResolvesTo.String(), err, n.Source)
+		}
+	}
+
+	return nil
+}
+
+// QueryNomina reads every persisted naming row back as []Nomen, sorted
+// deterministically (lessNomen) so a round-trip is order-stable. The ResolvesTo
+// EntityRef is reconstructed by PARSING the stored entity_key back into its tuple
+// (parseEntityKey) — the store persists the key string, and the parse recovers the
+// family/variant/version/param-size/modifier so a read yields a usable EntityRef,
+// not just an opaque key. scheme/status tokens decode via their permissive parsers.
+//
+// ctx is accepted for API compatibility; zombiezen.com/go/sqlite does not support
+// per-operation context cancellation.
+func (s *Store) QueryNomina(ctx context.Context) ([]Nomen, error) {
+	var out []Nomen
+	const query = `SELECT value, scheme, entity_key, status, source_url, source_id FROM nomina`
+	err := sqlitex.Execute(s.conn, query, &sqlitex.ExecOptions{
+		ResultFunc: func(stmt *sqlite.Stmt) error {
+			var scheme NomenScheme
+			if e := scheme.UnmarshalText([]byte(stmt.GetText("scheme"))); e != nil {
+				scheme = NomenSchemeOther
+			}
+			status, _ := parseRating(strings.ToLower(stmt.GetText("status")))
+			out = append(out, Nomen{
+				Value:      stmt.GetText("value"),
+				Scheme:     scheme,
+				Status:     status,
+				ResolvesTo: parseEntityKey(stmt.GetText("entity_key")),
+				SourceURL:  stmt.GetText("source_url"),
+				Source:     DataSourceID(stmt.GetText("source_id")),
+			})
+			return nil
+		},
+	})
+	if err != nil {
+		return nil, fmt.Errorf("bestiary: QueryNomina: read nomina: %w", err)
+	}
+	sortNomina(out)
+	return out, nil
 }
 
 // UpsertEntityMetadata writes each EntityMetadata and its benchmark / link
@@ -1775,6 +1989,13 @@ func scanModelInfo(stmt *sqlite.Stmt) ModelInfo {
 	m.ReasoningOptions = reasoningOptionsFromString(stmt.GetText("reasoning_options"))
 	m.CostContextOver200k = tierCostPtrFromString(stmt.GetText("cost_context_over_200k"))
 	m.CostTiers = costTiersFromString(stmt.GetText("cost_tiers"))
+
+	// Per-instance region: the Region String() token decodes back via UnmarshalText
+	// (permissive — accepts every token the store can hold, including "other" and the
+	// empty/"unspecified" spellings of RegionNone). A malformed token degrades to
+	// RegionNone rather than failing the scan. RegionRaw carries the RegionOther token.
+	m.Region = regionFromStore(stmt.GetText("region"))
+	m.RegionRaw = stmt.GetText("region_raw")
 
 	// Nullable REAL fields.
 	if !stmt.IsNull("cost_input") {

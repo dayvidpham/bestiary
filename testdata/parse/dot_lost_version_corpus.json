@@ -1,0 +1,664 @@
+{
+  "cases": [
+    {
+      "classification": "must-pass",
+      "expected": {
+        "decoded": "",
+        "entity_key": "minimax/m@2.5"
+      },
+      "input": {
+        "id": "minimax-m25",
+        "provider": "venice",
+        "token": ""
+      },
+      "mutation": {
+        "description": "the lost version dot is restored so minimax-m25 merges into the dotted sibling minimax/m@2.5"
+      },
+      "name": "dotlost_minimax_m25",
+      "provenance": {
+        "ref": "dot-lost version spelling: \"minimax-m25\" is the dotted-dot-dropped form of minimax/m@2.5; it MERGES into the heavily-attested dotted sibling entity \"minimax/m@2.5\", now attested by 58 instances (the sibling evidence that fixes which dot was lost)",
+        "source": "bug"
+      }
+    },
+    {
+      "classification": "must-pass",
+      "expected": {
+        "decoded": "",
+        "entity_key": "minimax/m@2.7"
+      },
+      "input": {
+        "id": "minimax-m27",
+        "provider": "venice",
+        "token": ""
+      },
+      "mutation": {
+        "description": "the lost version dot is restored so minimax-m27 merges into the dotted sibling minimax/m@2.7"
+      },
+      "name": "dotlost_minimax_m27",
+      "provenance": {
+        "ref": "dot-lost version spelling: \"minimax-m27\" is the dotted-dot-dropped form of minimax/m@2.7; it MERGES into the heavily-attested dotted sibling entity \"minimax/m@2.7\", now attested by 53 instances (the sibling evidence that fixes which dot was lost)",
+        "source": "bug"
+      }
+    },
+    {
+      "classification": "must-pass",
+      "expected": {
+        "decoded": "",
+        "entity_key": "mistral/small@3.1#24b{instruct}"
+      },
+      "input": {
+        "id": "mistral-small-31-24b-instruct",
+        "provider": "nano-gpt",
+        "token": ""
+      },
+      "mutation": {
+        "description": "the lost version dot is restored so mistral-small-31-24b-instruct merges into the dotted sibling mistral/small@3.1#24b{instruct}"
+      },
+      "name": "dotlost_mistral_small_31_24b_instruct",
+      "provenance": {
+        "ref": "dot-lost version spelling: \"mistral-small-31-24b-instruct\" is the dotted-dot-dropped form of mistral/small@3.1#24b{instruct}; it MERGES into the heavily-attested dotted sibling entity \"mistral/small@3.1#24b{instruct}\", now attested by 5 instances (the sibling evidence that fixes which dot was lost)",
+        "source": "bug"
+      }
+    },
+    {
+      "classification": "must-pass",
+      "expected": {
+        "decoded": "",
+        "entity_key": "minimax/m@2.5"
+      },
+      "input": {
+        "id": "public/minimax-m25",
+        "provider": "drun",
+        "token": ""
+      },
+      "mutation": {
+        "description": "the lost version dot is restored so public/minimax-m25 merges into the dotted sibling minimax/m@2.5"
+      },
+      "name": "dotlost_public_minimax_m25",
+      "provenance": {
+        "ref": "dot-lost version spelling: \"public/minimax-m25\" is the dotted-dot-dropped form of minimax/m@2.5; it MERGES into the heavily-attested dotted sibling entity \"minimax/m@2.5\", now attested by 58 instances (the sibling evidence that fixes which dot was lost)",
+        "source": "bug"
+      }
+    },
+    {
+      "classification": "must-pass",
+      "expected": {
+        "decoded": "",
+        "entity_key": "qwen@2.5#14b{instruct}"
+      },
+      "input": {
+        "id": "qwen2-5-14b-instruct",
+        "provider": "alibaba",
+        "token": ""
+      },
+      "mutation": {
+        "description": "the lost version dot is restored so qwen2-5-14b-instruct merges into the dotted sibling qwen@2.5#14b{instruct}"
+      },
+      "name": "dotlost_qwen2_5_14b_instruct",
+      "provenance": {
+        "ref": "dot-lost version spelling: \"qwen2-5-14b-instruct\" is the dotted-dot-dropped form of qwen@2.5#14b{instruct}; it MERGES into the heavily-attested dotted sibling entity \"qwen@2.5#14b{instruct}\", now attested by 3 instances (the sibling evidence that fixes which dot was lost)",
+        "source": "bug"
+      }
+    },
+    {
+      "classification": "must-pass",
+      "expected": {
+        "decoded": "",
+        "entity_key": "qwen@2.5#32b{instruct}"
+      },
+      "input": {
+        "id": "qwen2-5-32b-instruct",
+        "provider": "alibaba",
+        "token": ""
+      },
+      "mutation": {
+        "description": "the lost version dot is restored so qwen2-5-32b-instruct merges into the dotted sibling qwen@2.5#32b{instruct}"
+      },
+      "name": "dotlost_qwen2_5_32b_instruct",
+      "provenance": {
+        "ref": "dot-lost version spelling: \"qwen2-5-32b-instruct\" is the dotted-dot-dropped form of qwen@2.5#32b{instruct}; it MERGES into the heavily-attested dotted sibling entity \"qwen@2.5#32b{instruct}\", now attested by 3 instances (the sibling evidence that fixes which dot was lost)",
+        "source": "bug"
+      }
+    },
+    {
+      "classification": "must-pass",
+      "expected": {
+        "decoded": "",
+        "entity_key": "qwen@2.5#72b{instruct}"
+      },
+      "input": {
+        "id": "qwen2-5-72b-instruct",
+        "provider": "alibaba",
+        "token": ""
+      },
+      "mutation": {
+        "description": "the lost version dot is restored so qwen2-5-72b-instruct merges into the dotted sibling qwen@2.5#72b{instruct}"
+      },
+      "name": "dotlost_qwen2_5_72b_instruct",
+      "provenance": {
+        "ref": "dot-lost version spelling: \"qwen2-5-72b-instruct\" is the dotted-dot-dropped form of qwen@2.5#72b{instruct}; it MERGES into the heavily-attested dotted sibling entity \"qwen@2.5#72b{instruct}\", now attested by 11 instances (the sibling evidence that fixes which dot was lost)",
+        "source": "bug"
+      }
+    },
+    {
+      "classification": "must-pass",
+      "expected": {
+        "decoded": "",
+        "entity_key": "qwen@2.5#7b{instruct}"
+      },
+      "input": {
+        "id": "qwen2-5-7b-instruct",
+        "provider": "alibaba",
+        "token": ""
+      },
+      "mutation": {
+        "description": "the lost version dot is restored so qwen2-5-7b-instruct merges into the dotted sibling qwen@2.5#7b{instruct}"
+      },
+      "name": "dotlost_qwen2_5_7b_instruct",
+      "provenance": {
+        "ref": "dot-lost version spelling: \"qwen2-5-7b-instruct\" is the dotted-dot-dropped form of qwen@2.5#7b{instruct}; it MERGES into the heavily-attested dotted sibling entity \"qwen@2.5#7b{instruct}\", now attested by 8 instances (the sibling evidence that fixes which dot was lost)",
+        "source": "bug"
+      }
+    },
+    {
+      "classification": "must-pass",
+      "expected": {
+        "decoded": "",
+        "entity_key": "qwen/coder@2.5#32b{instruct}"
+      },
+      "input": {
+        "id": "qwen2-5-coder-32b-instruct",
+        "provider": "alibaba-cn",
+        "token": ""
+      },
+      "mutation": {
+        "description": "the lost version dot is restored so qwen2-5-coder-32b-instruct merges into the dotted sibling qwen/coder@2.5#32b{instruct}"
+      },
+      "name": "dotlost_qwen2_5_coder_32b_instruct",
+      "provenance": {
+        "ref": "dot-lost version spelling: \"qwen2-5-coder-32b-instruct\" is the dotted-dot-dropped form of qwen/coder@2.5#32b{instruct}; it MERGES into the heavily-attested dotted sibling entity \"qwen/coder@2.5#32b{instruct}\", now attested by 7 instances (the sibling evidence that fixes which dot was lost)",
+        "source": "bug"
+      }
+    },
+    {
+      "classification": "must-pass",
+      "expected": {
+        "decoded": "",
+        "entity_key": "qwen/coder@2.5#7b{instruct}"
+      },
+      "input": {
+        "id": "qwen2-5-coder-7b-instruct",
+        "provider": "alibaba-cn",
+        "token": ""
+      },
+      "mutation": {
+        "description": "the version dot is restored so qwen2-5-coder-7b-instruct keys as qwen/coder@2.5#7b{instruct} (a re-key onto a new dotted entity, not a merge)"
+      },
+      "name": "dotlost_qwen2_5_coder_7b_instruct",
+      "provenance": {
+        "ref": "dot-lost spelling of a documented model with NO same-key sibling: \"qwen2-5-coder-7b-instruct\" RE-KEYS to the new correct dotted entity \"qwen/coder@2.5#7b{instruct}\" (1 instance(s)); the dot is restored but there is no other provider spelling to merge with, so this is a rename rather than a merge",
+        "source": "bug"
+      }
+    },
+    {
+      "classification": "must-pass",
+      "expected": {
+        "decoded": "",
+        "entity_key": "qwen@2.5#72b{instruct}"
+      },
+      "input": {
+        "id": "qwen2-5-math-72b-instruct",
+        "provider": "alibaba-cn",
+        "token": ""
+      },
+      "mutation": {
+        "description": "the lost version dot is restored so qwen2-5-math-72b-instruct merges into the dotted sibling qwen@2.5#72b{instruct}"
+      },
+      "name": "dotlost_qwen2_5_math_72b_instruct",
+      "provenance": {
+        "ref": "dot-lost version spelling: \"qwen2-5-math-72b-instruct\" is the dotted-dot-dropped form of qwen@2.5#72b{instruct}; it MERGES into the heavily-attested dotted sibling entity \"qwen@2.5#72b{instruct}\", now attested by 11 instances (the sibling evidence that fixes which dot was lost)",
+        "source": "bug"
+      }
+    },
+    {
+      "classification": "must-pass",
+      "expected": {
+        "decoded": "",
+        "entity_key": "qwen@2.5#7b{instruct}"
+      },
+      "input": {
+        "id": "qwen2-5-math-7b-instruct",
+        "provider": "alibaba-cn",
+        "token": ""
+      },
+      "mutation": {
+        "description": "the lost version dot is restored so qwen2-5-math-7b-instruct merges into the dotted sibling qwen@2.5#7b{instruct}"
+      },
+      "name": "dotlost_qwen2_5_math_7b_instruct",
+      "provenance": {
+        "ref": "dot-lost version spelling: \"qwen2-5-math-7b-instruct\" is the dotted-dot-dropped form of qwen@2.5#7b{instruct}; it MERGES into the heavily-attested dotted sibling entity \"qwen@2.5#7b{instruct}\", now attested by 8 instances (the sibling evidence that fixes which dot was lost)",
+        "source": "bug"
+      }
+    },
+    {
+      "classification": "must-pass",
+      "expected": {
+        "decoded": "",
+        "entity_key": "qwen@2.5#7b{omni}"
+      },
+      "input": {
+        "id": "qwen2-5-omni-7b",
+        "provider": "alibaba",
+        "token": ""
+      },
+      "mutation": {
+        "description": "the version dot is restored so qwen2-5-omni-7b keys as qwen@2.5#7b{omni} (a re-key onto a new dotted entity, not a merge)"
+      },
+      "name": "dotlost_qwen2_5_omni_7b",
+      "provenance": {
+        "ref": "dot-lost spelling of a documented model with NO same-key sibling: \"qwen2-5-omni-7b\" RE-KEYS to the new correct dotted entity \"qwen@2.5#7b{omni}\" (2 instance(s)); the dot is restored but there is no other provider spelling to merge with, so this is a rename rather than a merge",
+        "source": "bug"
+      }
+    },
+    {
+      "classification": "must-pass",
+      "expected": {
+        "decoded": "",
+        "entity_key": "qwen/vl@2.5#32b{instruct}"
+      },
+      "input": {
+        "id": "qwen2-5-vl-32b-instruct",
+        "provider": "llmgateway",
+        "token": ""
+      },
+      "mutation": {
+        "description": "the lost version dot is restored so qwen2-5-vl-32b-instruct merges into the dotted sibling qwen/vl@2.5#32b{instruct}"
+      },
+      "name": "dotlost_qwen2_5_vl_32b_instruct",
+      "provenance": {
+        "ref": "dot-lost version spelling: \"qwen2-5-vl-32b-instruct\" is the dotted-dot-dropped form of qwen/vl@2.5#32b{instruct}; it MERGES into the heavily-attested dotted sibling entity \"qwen/vl@2.5#32b{instruct}\", now attested by 3 instances (the sibling evidence that fixes which dot was lost)",
+        "source": "bug"
+      }
+    },
+    {
+      "classification": "must-pass",
+      "expected": {
+        "decoded": "",
+        "entity_key": "qwen/vl@2.5#72b{instruct}"
+      },
+      "input": {
+        "id": "qwen2-5-vl-72b-instruct",
+        "provider": "alibaba",
+        "token": ""
+      },
+      "mutation": {
+        "description": "the lost version dot is restored so qwen2-5-vl-72b-instruct merges into the dotted sibling qwen/vl@2.5#72b{instruct}"
+      },
+      "name": "dotlost_qwen2_5_vl_72b_instruct",
+      "provenance": {
+        "ref": "dot-lost version spelling: \"qwen2-5-vl-72b-instruct\" is the dotted-dot-dropped form of qwen/vl@2.5#72b{instruct}; it MERGES into the heavily-attested dotted sibling entity \"qwen/vl@2.5#72b{instruct}\", now attested by 11 instances (the sibling evidence that fixes which dot was lost)",
+        "source": "bug"
+      }
+    },
+    {
+      "classification": "must-pass",
+      "expected": {
+        "decoded": "",
+        "entity_key": "qwen/vl@2.5#7b{instruct}"
+      },
+      "input": {
+        "id": "qwen2-5-vl-7b-instruct",
+        "provider": "alibaba",
+        "token": ""
+      },
+      "mutation": {
+        "description": "the lost version dot is restored so qwen2-5-vl-7b-instruct merges into the dotted sibling qwen/vl@2.5#7b{instruct}"
+      },
+      "name": "dotlost_qwen2_5_vl_7b_instruct",
+      "provenance": {
+        "ref": "dot-lost version spelling: \"qwen2-5-vl-7b-instruct\" is the dotted-dot-dropped form of qwen/vl@2.5#7b{instruct}; it MERGES into the heavily-attested dotted sibling entity \"qwen/vl@2.5#7b{instruct}\", now attested by 3 instances (the sibling evidence that fixes which dot was lost)",
+        "source": "bug"
+      }
+    },
+    {
+      "classification": "must-pass",
+      "expected": {
+        "decoded": "",
+        "entity_key": "qwen/vl@2.5#72b{instruct}"
+      },
+      "input": {
+        "id": "qwen25-vl-72b-instruct",
+        "provider": "nano-gpt",
+        "token": ""
+      },
+      "mutation": {
+        "description": "the lost version dot is restored so qwen25-vl-72b-instruct merges into the dotted sibling qwen/vl@2.5#72b{instruct}"
+      },
+      "name": "dotlost_qwen25_vl_72b_instruct",
+      "provenance": {
+        "ref": "dot-lost version spelling: \"qwen25-vl-72b-instruct\" is the dotted-dot-dropped form of qwen/vl@2.5#72b{instruct}; it MERGES into the heavily-attested dotted sibling entity \"qwen/vl@2.5#72b{instruct}\", now attested by 11 instances (the sibling evidence that fixes which dot was lost)",
+        "source": "bug"
+      }
+    },
+    {
+      "classification": "must-pass",
+      "expected": {
+        "decoded": "",
+        "entity_key": "qwen@3.5#122b-a10b"
+      },
+      "input": {
+        "id": "qwen3-5-122b-a10b",
+        "provider": "empiriolabs",
+        "token": ""
+      },
+      "mutation": {
+        "description": "the lost version dot is restored so qwen3-5-122b-a10b merges into the dotted sibling qwen@3.5#122b-a10b"
+      },
+      "name": "dotlost_qwen3_5_122b_a10b",
+      "provenance": {
+        "ref": "dot-lost version spelling: \"qwen3-5-122b-a10b\" is the dotted-dot-dropped form of qwen@3.5#122b-a10b; it MERGES into the heavily-attested dotted sibling entity \"qwen@3.5#122b-a10b\", now attested by 19 instances (the sibling evidence that fixes which dot was lost)",
+        "source": "bug"
+      }
+    },
+    {
+      "classification": "must-pass",
+      "expected": {
+        "decoded": "",
+        "entity_key": "qwen@3.5#27b"
+      },
+      "input": {
+        "id": "qwen3-5-27b",
+        "provider": "empiriolabs",
+        "token": ""
+      },
+      "mutation": {
+        "description": "the lost version dot is restored so qwen3-5-27b merges into the dotted sibling qwen@3.5#27b"
+      },
+      "name": "dotlost_qwen3_5_27b",
+      "provenance": {
+        "ref": "dot-lost version spelling: \"qwen3-5-27b\" is the dotted-dot-dropped form of qwen@3.5#27b; it MERGES into the heavily-attested dotted sibling entity \"qwen@3.5#27b\", now attested by 31 instances (the sibling evidence that fixes which dot was lost)",
+        "source": "bug"
+      }
+    },
+    {
+      "classification": "must-pass",
+      "expected": {
+        "decoded": "",
+        "entity_key": "qwen@3.5#35b-a3b"
+      },
+      "input": {
+        "id": "qwen3-5-35b-a3b",
+        "provider": "empiriolabs",
+        "token": ""
+      },
+      "mutation": {
+        "description": "the lost version dot is restored so qwen3-5-35b-a3b merges into the dotted sibling qwen@3.5#35b-a3b"
+      },
+      "name": "dotlost_qwen3_5_35b_a3b",
+      "provenance": {
+        "ref": "dot-lost version spelling: \"qwen3-5-35b-a3b\" is the dotted-dot-dropped form of qwen@3.5#35b-a3b; it MERGES into the heavily-attested dotted sibling entity \"qwen@3.5#35b-a3b\", now attested by 15 instances (the sibling evidence that fixes which dot was lost)",
+        "source": "bug"
+      }
+    },
+    {
+      "classification": "must-pass",
+      "expected": {
+        "decoded": "",
+        "entity_key": "qwen@3.5#397b-a17b"
+      },
+      "input": {
+        "id": "qwen3-5-397b-a17b",
+        "provider": "empiriolabs",
+        "token": ""
+      },
+      "mutation": {
+        "description": "the lost version dot is restored so qwen3-5-397b-a17b merges into the dotted sibling qwen@3.5#397b-a17b"
+      },
+      "name": "dotlost_qwen3_5_397b_a17b",
+      "provenance": {
+        "ref": "dot-lost version spelling: \"qwen3-5-397b-a17b\" is the dotted-dot-dropped form of qwen@3.5#397b-a17b; it MERGES into the heavily-attested dotted sibling entity \"qwen@3.5#397b-a17b\", now attested by 30 instances (the sibling evidence that fixes which dot was lost)",
+        "source": "bug"
+      }
+    },
+    {
+      "classification": "must-pass",
+      "expected": {
+        "decoded": "",
+        "entity_key": "qwen@3.5#4b"
+      },
+      "input": {
+        "id": "qwen3-5-4b",
+        "provider": "empiriolabs",
+        "token": ""
+      },
+      "mutation": {
+        "description": "the lost version dot is restored so qwen3-5-4b merges into the dotted sibling qwen@3.5#4b"
+      },
+      "name": "dotlost_qwen3_5_4b",
+      "provenance": {
+        "ref": "dot-lost version spelling: \"qwen3-5-4b\" is the dotted-dot-dropped form of qwen@3.5#4b; it MERGES into the heavily-attested dotted sibling entity \"qwen@3.5#4b\", now attested by 2 instances (the sibling evidence that fixes which dot was lost)",
+        "source": "bug"
+      }
+    },
+    {
+      "classification": "must-pass",
+      "expected": {
+        "decoded": "",
+        "entity_key": "qwen@3.5#9b"
+      },
+      "input": {
+        "id": "qwen3-5-9b",
+        "provider": "empiriolabs",
+        "token": ""
+      },
+      "mutation": {
+        "description": "the lost version dot is restored so qwen3-5-9b merges into the dotted sibling qwen@3.5#9b"
+      },
+      "name": "dotlost_qwen3_5_9b",
+      "provenance": {
+        "ref": "dot-lost version spelling: \"qwen3-5-9b\" is the dotted-dot-dropped form of qwen@3.5#9b; it MERGES into the heavily-attested dotted sibling entity \"qwen@3.5#9b\", now attested by 17 instances (the sibling evidence that fixes which dot was lost)",
+        "source": "bug"
+      }
+    },
+    {
+      "classification": "must-pass",
+      "expected": {
+        "decoded": "",
+        "entity_key": "qwen/plus@3.5"
+      },
+      "input": {
+        "id": "qwen3-5-plus",
+        "provider": "empiriolabs",
+        "token": ""
+      },
+      "mutation": {
+        "description": "the lost version dot is restored so qwen3-5-plus merges into the dotted sibling qwen/plus@3.5"
+      },
+      "name": "dotlost_qwen3_5_plus",
+      "provenance": {
+        "ref": "dot-lost version spelling: \"qwen3-5-plus\" is the dotted-dot-dropped form of qwen/plus@3.5; it MERGES into the heavily-attested dotted sibling entity \"qwen/plus@3.5\", now attested by 17 instances (the sibling evidence that fixes which dot was lost)",
+        "source": "bug"
+      }
+    },
+    {
+      "classification": "must-pass",
+      "expected": {
+        "decoded": "",
+        "entity_key": "qwen@3.6#27b"
+      },
+      "input": {
+        "id": "qwen3-6-27b",
+        "provider": "empiriolabs",
+        "token": ""
+      },
+      "mutation": {
+        "description": "the lost version dot is restored so qwen3-6-27b merges into the dotted sibling qwen@3.6#27b"
+      },
+      "name": "dotlost_qwen3_6_27b",
+      "provenance": {
+        "ref": "dot-lost version spelling: \"qwen3-6-27b\" is the dotted-dot-dropped form of qwen@3.6#27b; it MERGES into the heavily-attested dotted sibling entity \"qwen@3.6#27b\", now attested by 22 instances (the sibling evidence that fixes which dot was lost)",
+        "source": "bug"
+      }
+    },
+    {
+      "classification": "must-pass",
+      "expected": {
+        "decoded": "",
+        "entity_key": "qwen@3.6#35b"
+      },
+      "input": {
+        "id": "qwen3-6-35b",
+        "provider": "llmtr",
+        "token": ""
+      },
+      "mutation": {
+        "description": "the version dot is restored so qwen3-6-35b keys as qwen@3.6#35b (a re-key onto a new dotted entity, not a merge)"
+      },
+      "name": "dotlost_qwen3_6_35b",
+      "provenance": {
+        "ref": "dot-lost spelling of a documented model with NO same-key sibling: \"qwen3-6-35b\" RE-KEYS to the new correct dotted entity \"qwen@3.6#35b\" (1 instance(s)); the dot is restored but there is no other provider spelling to merge with, so this is a rename rather than a merge",
+        "source": "bug"
+      }
+    },
+    {
+      "classification": "must-pass",
+      "expected": {
+        "decoded": "",
+        "entity_key": "qwen/flash@3.6"
+      },
+      "input": {
+        "id": "qwen3-6-flash",
+        "provider": "empiriolabs",
+        "token": ""
+      },
+      "mutation": {
+        "description": "the lost version dot is restored so qwen3-6-flash merges into the dotted sibling qwen/flash@3.6"
+      },
+      "name": "dotlost_qwen3_6_flash",
+      "provenance": {
+        "ref": "dot-lost version spelling: \"qwen3-6-flash\" is the dotted-dot-dropped form of qwen/flash@3.6; it MERGES into the heavily-attested dotted sibling entity \"qwen/flash@3.6\", now attested by 14 instances (the sibling evidence that fixes which dot was lost)",
+        "source": "bug"
+      }
+    },
+    {
+      "classification": "must-pass",
+      "expected": {
+        "decoded": "",
+        "entity_key": "qwen/max@3.6"
+      },
+      "input": {
+        "id": "qwen3-6-max-preview",
+        "provider": "empiriolabs",
+        "token": ""
+      },
+      "mutation": {
+        "description": "the lost version dot is restored so qwen3-6-max-preview merges into the dotted sibling qwen/max@3.6"
+      },
+      "name": "dotlost_qwen3_6_max_preview",
+      "provenance": {
+        "ref": "dot-lost version spelling: \"qwen3-6-max-preview\" is the dotted-dot-dropped form of qwen/max@3.6; it MERGES into the heavily-attested dotted sibling entity \"qwen/max@3.6\", now attested by 10 instances (the sibling evidence that fixes which dot was lost)",
+        "source": "bug"
+      }
+    },
+    {
+      "classification": "must-pass",
+      "expected": {
+        "decoded": "",
+        "entity_key": "qwen/plus@3.6"
+      },
+      "input": {
+        "id": "qwen3-6-plus",
+        "provider": "empiriolabs",
+        "token": ""
+      },
+      "mutation": {
+        "description": "the lost version dot is restored so qwen3-6-plus merges into the dotted sibling qwen/plus@3.6"
+      },
+      "name": "dotlost_qwen3_6_plus",
+      "provenance": {
+        "ref": "dot-lost version spelling: \"qwen3-6-plus\" is the dotted-dot-dropped form of qwen/plus@3.6; it MERGES into the heavily-attested dotted sibling entity \"qwen/plus@3.6\", now attested by 25 instances (the sibling evidence that fixes which dot was lost)",
+        "source": "bug"
+      }
+    },
+    {
+      "classification": "must-pass",
+      "expected": {
+        "decoded": "",
+        "entity_key": "qwen/max@3.7"
+      },
+      "input": {
+        "id": "qwen3-7-max",
+        "provider": "empiriolabs",
+        "token": ""
+      },
+      "mutation": {
+        "description": "the lost version dot is restored so qwen3-7-max merges into the dotted sibling qwen/max@3.7"
+      },
+      "name": "dotlost_qwen3_7_max",
+      "provenance": {
+        "ref": "dot-lost version spelling: \"qwen3-7-max\" is the dotted-dot-dropped form of qwen/max@3.7; it MERGES into the heavily-attested dotted sibling entity \"qwen/max@3.7\", now attested by 23 instances (the sibling evidence that fixes which dot was lost)",
+        "source": "bug"
+      }
+    },
+    {
+      "classification": "must-pass",
+      "expected": {
+        "decoded": "",
+        "entity_key": "qwen/plus@3.7"
+      },
+      "input": {
+        "id": "qwen3-7-plus",
+        "provider": "empiriolabs",
+        "token": ""
+      },
+      "mutation": {
+        "description": "the lost version dot is restored so qwen3-7-plus merges into the dotted sibling qwen/plus@3.7"
+      },
+      "name": "dotlost_qwen3_7_plus",
+      "provenance": {
+        "ref": "dot-lost version spelling: \"qwen3-7-plus\" is the dotted-dot-dropped form of qwen/plus@3.7; it MERGES into the heavily-attested dotted sibling entity \"qwen/plus@3.7\", now attested by 19 instances (the sibling evidence that fixes which dot was lost)",
+        "source": "bug"
+      }
+    },
+    {
+      "classification": "must-pass",
+      "expected": {
+        "decoded": "",
+        "entity_key": "qwen@3.5#122b-a10b"
+      },
+      "input": {
+        "id": "qwen35-122b-a10b",
+        "provider": "neon",
+        "token": ""
+      },
+      "mutation": {
+        "description": "the lost version dot is restored so qwen35-122b-a10b merges into the dotted sibling qwen@3.5#122b-a10b"
+      },
+      "name": "dotlost_qwen35_122b_a10b",
+      "provenance": {
+        "ref": "dot-lost version spelling: \"qwen35-122b-a10b\" is the dotted-dot-dropped form of qwen@3.5#122b-a10b; it MERGES into the heavily-attested dotted sibling entity \"qwen@3.5#122b-a10b\", now attested by 19 instances (the sibling evidence that fixes which dot was lost)",
+        "source": "bug"
+      }
+    },
+    {
+      "classification": "must-pass",
+      "expected": {
+        "decoded": "",
+        "entity_key": "qwen@3.5#397b-a17b"
+      },
+      "input": {
+        "id": "qwen35-397b-a17b",
+        "provider": "llmgateway",
+        "token": ""
+      },
+      "mutation": {
+        "description": "the lost version dot is restored so qwen35-397b-a17b merges into the dotted sibling qwen@3.5#397b-a17b"
+      },
+      "name": "dotlost_qwen35_397b_a17b",
+      "provenance": {
+        "ref": "dot-lost version spelling: \"qwen35-397b-a17b\" is the dotted-dot-dropped form of qwen@3.5#397b-a17b; it MERGES into the heavily-attested dotted sibling entity \"qwen@3.5#397b-a17b\", now attested by 30 instances (the sibling evidence that fixes which dot was lost)",
+        "source": "bug"
+      }
+    }
+  ]
+}
