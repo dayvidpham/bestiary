@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 	"time"
 
@@ -19,7 +20,7 @@ import (
 // NOTE: this is the SQLite store migration version (models cache + BCNF
 // provenance tables). It is DISTINCT from BestiarySchemaVersion in version.go,
 // which versions the public JSON output schema; do not conflate the two.
-const currentSchemaVersion = 7
+const currentSchemaVersion = 8
 
 // schemaMetaSQL creates the schema_meta table used to track migration state.
 // Safe to run on any existing database (CREATE TABLE IF NOT EXISTS).
@@ -422,9 +423,86 @@ const nominaTableSQL = `CREATE TABLE IF NOT EXISTS nomina (
 // createNominaTable creates the v7 nomina table. It is CREATE TABLE IF NOT EXISTS, so
 // it is idempotent and safe on the fresh-DB v7 path and from migrateToV7 alike. It
 // references data_sources, so callers create it AFTER the provenance dimensions.
+//
+// The v7 shape (single fused source_url/source_id pair) is retained ONLY so the
+// v6→v7→v8 migration chain can build the v7 table before migrateToV8 recreates it
+// without those columns. Fresh v8 databases skip it and create the v8 shape directly.
 func createNominaTable(conn *sqlite.Conn) error {
 	if err := sqlitex.ExecuteTransient(conn, nominaTableSQL, nil); err != nil {
 		return fmt.Errorf("create nomina table: %w", err)
+	}
+	return nil
+}
+
+// nominaV8TableSQL is the v8 nomina PARENT table: the multi-attestation lift moves
+// provenance out of the fused source_url/source_id columns into the nomen_attestations
+// child table, so the parent keeps ONLY the naming identity (value, scheme, entity_key)
+// and bestiary's single editorial judgment (status). The primary key is UNCHANGED from
+// v7 — (value, scheme, entity_key) — so every pre-v8 nomen key is byte-identical. It no
+// longer references data_sources (the FK moves to the child); entity_key is still NOT an
+// FK (the entities table is a stub dimension a minted nomen may name without a row).
+const nominaV8TableSQL = `CREATE TABLE IF NOT EXISTS nomina (
+    value       TEXT NOT NULL,
+    scheme      TEXT NOT NULL,
+    entity_key  TEXT NOT NULL,
+    status      TEXT NOT NULL DEFAULT 'admitted',
+    PRIMARY KEY (value, scheme, entity_key)
+);`
+
+// nomenAttestationsTableSQL is the v8 nomen_attestations CHILD table: the evidence set
+// of a Nomen, one row per NomenAttestation (the entity_metadata→child-tables precedent,
+// a replaceable set delete-then-inserted by its parent's triple). It carries the
+// per-attestation provenance the fused v7 columns could not: source_url (WHO asserts),
+// source_id (WHICH ingest, the FK into data_sources that moved here from the parent),
+// authority (whose VOICE), method (HOW it entered), and ingested_at (committed snapshot).
+// It has NO primary key — the set is owned by (value, scheme, entity_key) and joined back
+// to nomina, so two sources asserting one name are two rows, never a collision.
+const nomenAttestationsTableSQL = `CREATE TABLE IF NOT EXISTS nomen_attestations (
+    value       TEXT NOT NULL,
+    scheme      TEXT NOT NULL,
+    entity_key  TEXT NOT NULL,
+    source_url  TEXT NOT NULL DEFAULT '',
+    source_id   TEXT NOT NULL REFERENCES data_sources(data_source_id),
+    authority   TEXT NOT NULL DEFAULT 'unknown',
+    method      TEXT NOT NULL DEFAULT 'unknown',
+    ingested_at TEXT NOT NULL DEFAULT ''
+);`
+
+// creatorsTableSQL is the v8 creators BCNF dimension: Family → Creator, keyed by family.
+// Because Creator is functionally dependent on Family (Family → Creator), storing it on
+// a models or entities row would replicate the same fact on every row (a transitive
+// dependency, a BCNF violation), so it lives in its own dimension keyed by family. It is
+// populated from the curated creators.json seed at sync (UpsertCreators), the data_sources
+// dimension precedent — the persisted record of what the syncing binary knew.
+const creatorsTableSQL = `CREATE TABLE IF NOT EXISTS creators (
+    family  TEXT PRIMARY KEY,
+    creator TEXT NOT NULL
+);`
+
+// createNominaTableV8 creates the v8 nomina parent table. CREATE TABLE IF NOT EXISTS, so
+// idempotent and safe on the fresh-DB v8 path.
+func createNominaTableV8(conn *sqlite.Conn) error {
+	if err := sqlitex.ExecuteTransient(conn, nominaV8TableSQL, nil); err != nil {
+		return fmt.Errorf("create v8 nomina table: %w", err)
+	}
+	return nil
+}
+
+// createNomenAttestationsTable creates the v8 nomen_attestations child table. It
+// references data_sources, so callers create it AFTER the provenance dimensions.
+// CREATE TABLE IF NOT EXISTS, so idempotent and shared by the fresh-DB path and migrateToV8.
+func createNomenAttestationsTable(conn *sqlite.Conn) error {
+	if err := sqlitex.ExecuteTransient(conn, nomenAttestationsTableSQL, nil); err != nil {
+		return fmt.Errorf("create nomen_attestations table: %w", err)
+	}
+	return nil
+}
+
+// createCreatorsTable creates the v8 creators dimension table. CREATE TABLE IF NOT
+// EXISTS, so idempotent and shared by the fresh-DB path and migrateToV8.
+func createCreatorsTable(conn *sqlite.Conn) error {
+	if err := sqlitex.ExecuteTransient(conn, creatorsTableSQL, nil); err != nil {
+		return fmt.Errorf("create creators table: %w", err)
 	}
 	return nil
 }
@@ -443,6 +521,176 @@ func migrateToV7(conn *sqlite.Conn) error {
 		return fmt.Errorf("v6→v7: create nomina table: %w", err)
 	}
 	return nil
+}
+
+// v7NominaAttestationKind derives the (Authority, Method) of a v7 nomina row from its
+// (scheme, source) per the §3.2 defaults table. It is the migration-local carrier of the
+// exact mapping the removed v7 transitional read-path used to reconstruct these on read:
+// the v7 nomina row has no authority/method columns, so its (source_url, source_id)
+// pair migrates into ONE nomen_attestations row whose authority/method are reconstructed
+// here where derivable, else left at their Unknown zero — never guessed. This is a
+// one-time best-effort backfill of pre-v8 rows; every nomen minted AFTER v8 persists its
+// real per-attestation Authority/Method losslessly through the child table.
+func v7NominaAttestationKind(scheme NomenScheme, source DataSourceID) (AttestationAuthority, IngestMethod) {
+	// A curated ingest is Method=Curated regardless of scheme (an alias or a
+	// huggingface-scheme name can both arrive through the curated layer).
+	if source == DataSourceCurated {
+		return AuthorityPrimary, IngestMethodCurated
+	}
+	switch scheme {
+	case NomenSchemeCanonical:
+		return AuthorityPrimary, IngestMethodSelfMinted
+	case NomenSchemeProviderID:
+		return AuthoritySecondary, IngestMethodHarvested
+	case NomenSchemeHuggingFace:
+		return AuthorityPrimary, IngestMethodHarvested
+	default:
+		return AuthorityUnknown, IngestMethodUnknown
+	}
+}
+
+// migrateToV8 upgrades a v7 database to v8 (migrateToV6 table-recreate precedent). It
+// lifts nomen provenance out of the fused nomina columns into the nomen_attestations
+// child table and adds the creators BCNF dimension, all inside one transaction so a
+// failure rolls back cleanly:
+//
+//  1. Create nomen_attestations + creators (CREATE TABLE IF NOT EXISTS — idempotent, so a
+//     re-run over a partially-migrated intermediate-v8 cache is safe).
+//  2. Copy each existing nomina row's (source_url, source_id) into ONE nomen_attestations
+//     row, reconstructing authority/method via v7NominaAttestationKind (the §3.2 defaults,
+//     the same mapping the deleted bridge used) and setting ingested_at ” — ZERO data
+//     loss on the provenance the v7 columns actually held.
+//  3. Recreate the nomina parent WITHOUT source_url/source_id (SQLite cannot DROP COLUMN
+//     under an old engine, and the recreate mirrors migrateToV6's dataset_ingested swap),
+//     copying value/scheme/entity_key/status — the primary key is unchanged, so keys stay
+//     byte-identical.
+//
+// Step 2 MUST precede step 3: it reads the source columns off the OLD nomina table before
+// the recreate drops them.
+func migrateToV8(conn *sqlite.Conn) error {
+	endFn := sqlitex.Transaction(conn)
+	var err error
+	defer endFn(&err)
+
+	// Step 1: additive new tables. nomen_attestations references data_sources, which a v7
+	// database already has; creators is a standalone dimension.
+	if err = createNomenAttestationsTable(conn); err != nil {
+		return err
+	}
+	if err = createCreatorsTable(conn); err != nil {
+		return err
+	}
+
+	// Step 2: backfill the child table from the old fused columns BEFORE the recreate
+	// drops them. Read every old row, derive its single attestation, insert it. INSERT is
+	// plain (not OR IGNORE): the child set is empty on a genuine v7→v8 upgrade, and a
+	// duplicate would signal a corrupt fixture worth surfacing rather than silently eating.
+	type v7Row struct {
+		value, scheme, entityKey, sourceURL, sourceID string
+	}
+	var rows []v7Row
+	err = sqlitex.Execute(conn,
+		`SELECT value, scheme, entity_key, source_url, source_id FROM nomina`,
+		&sqlitex.ExecOptions{
+			ResultFunc: func(stmt *sqlite.Stmt) error {
+				rows = append(rows, v7Row{
+					value:     stmt.GetText("value"),
+					scheme:    stmt.GetText("scheme"),
+					entityKey: stmt.GetText("entity_key"),
+					sourceURL: stmt.GetText("source_url"),
+					sourceID:  stmt.GetText("source_id"),
+				})
+				return nil
+			},
+		})
+	if err != nil {
+		return fmt.Errorf("v7→v8: read v7 nomina rows for attestation backfill: %w", err)
+	}
+	const insAttSQL = `INSERT INTO nomen_attestations (
+		value, scheme, entity_key, source_url, source_id, authority, method, ingested_at
+	) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, '')`
+	for i := range rows {
+		r := &rows[i]
+		var scheme NomenScheme
+		if e := scheme.UnmarshalText([]byte(r.scheme)); e != nil {
+			scheme = NomenSchemeOther
+		}
+		authority, method := v7NominaAttestationKind(scheme, DataSourceID(r.sourceID))
+		err = sqlitex.Execute(conn, insAttSQL, &sqlitex.ExecOptions{
+			Args: []any{
+				r.value, r.scheme, r.entityKey, r.sourceURL, r.sourceID,
+				authority.String(), method.String(),
+			},
+		})
+		if err != nil {
+			return fmt.Errorf("v7→v8: backfill attestation for nomen (value=%q, scheme=%q, entity=%q): %w",
+				r.value, r.scheme, r.entityKey, err)
+		}
+	}
+
+	// Step 3: recreate the nomina parent without the source columns (migrateToV6 swap
+	// precedent). The new table is created under a temporary name, populated with the four
+	// retained columns, then swapped in.
+	const createNominaNewSQL = `CREATE TABLE nomina_new (
+    value       TEXT NOT NULL,
+    scheme      TEXT NOT NULL,
+    entity_key  TEXT NOT NULL,
+    status      TEXT NOT NULL DEFAULT 'admitted',
+    PRIMARY KEY (value, scheme, entity_key)
+)`
+	if err = sqlitex.ExecuteTransient(conn, createNominaNewSQL, nil); err != nil {
+		return fmt.Errorf("v7→v8: create nomina_new: %w", err)
+	}
+	const copyNominaSQL = `INSERT INTO nomina_new (value, scheme, entity_key, status)
+        SELECT value, scheme, entity_key, status FROM nomina`
+	if err = sqlitex.ExecuteTransient(conn, copyNominaSQL, nil); err != nil {
+		return fmt.Errorf("v7→v8: copy nomina rows: %w", err)
+	}
+	if err = sqlitex.ExecuteTransient(conn, `DROP TABLE nomina`, nil); err != nil {
+		return fmt.Errorf("v7→v8: drop old nomina: %w", err)
+	}
+	if err = sqlitex.ExecuteTransient(conn, `ALTER TABLE nomina_new RENAME TO nomina`, nil); err != nil {
+		return fmt.Errorf("v7→v8: rename nomina_new to nomina: %w", err)
+	}
+	return nil
+}
+
+// ensureNominaV8 is the presence-guarded v8 self-heal for the nomina naming layer: it
+// makes an intermediate-v8 cache (schema_meta already reads 8, but built by a build that
+// predates part of the v8 shape) converge on the full v8 tables. It creates
+// nomen_attestations + creators if absent (CREATE TABLE IF NOT EXISTS) and, if the nomina
+// parent still carries the v7 source_url column, runs the migrateToV8 recreate+backfill.
+// Idempotent — a no-op for an already-complete v8 database.
+func ensureNominaV8(conn *sqlite.Conn) error {
+	hasNomina, err := tableExists(conn, "nomina")
+	if err != nil {
+		return fmt.Errorf("v8 self-heal: check nomina table: %w", err)
+	}
+	if !hasNomina {
+		// No nomina table at all (should not happen post-migration); create the full v8
+		// shape so a downstream read does not fail with "no such table".
+		if err := createNominaTableV8(conn); err != nil {
+			return err
+		}
+		if err := createNomenAttestationsTable(conn); err != nil {
+			return err
+		}
+		return createCreatorsTable(conn)
+	}
+	hasSourceURL, err := columnExists(conn, "nomina", "source_url")
+	if err != nil {
+		return fmt.Errorf("v8 self-heal: check nomina.source_url column: %w", err)
+	}
+	if hasSourceURL {
+		// A v7-shaped nomina under a schema_meta=8 cache: run the full recreate+backfill.
+		return migrateToV8(conn)
+	}
+	// nomina is already v8-shaped; ensure the two new tables exist (a partially-built
+	// intermediate-v8 cache may have recreated nomina but not yet the child/dimension).
+	if err := createNomenAttestationsTable(conn); err != nil {
+		return err
+	}
+	return createCreatorsTable(conn)
 }
 
 // createProvenanceTables creates the four v5 BCNF provenance tables in FK
@@ -623,19 +871,24 @@ func OpenStore(path string) (*Store, error) {
 		return nil, fmt.Errorf("bestiary: OpenStore: ensure v6 entity_metadata columns on %s: %w", path, err)
 	}
 
-	// Self-heal the v7 per-instance region columns and the nomina naming table for
-	// the same intermediate-cache reason: a database created by an intermediate v7
-	// build records schema_meta=7 but its models table may predate the region columns
-	// (or the nomina table may be absent), so the version-gated migration never runs.
-	// Both steps are presence-guarded and idempotent — a no-op for an already-complete
-	// v7 database.
+	// Self-heal the v7 per-instance region columns for the same intermediate-cache
+	// reason: a database created by an intermediate v7 build records schema_meta=7 but
+	// its models table may predate the region columns, so the version-gated migration
+	// never runs. Presence-guarded and idempotent — a no-op for an already-complete table.
 	if err := ensureModelColumnsV7(conn); err != nil {
 		_ = conn.Close()
 		return nil, fmt.Errorf("bestiary: OpenStore: ensure v7 region columns on %s: %w", path, err)
 	}
-	if err := createNominaTable(conn); err != nil {
+
+	// Self-heal the v8 naming layer: an intermediate-v8 cache records schema_meta=8 (so
+	// the version-gated migration above never runs) but may still carry a v7-shaped nomina
+	// (fused source columns) or lack the nomen_attestations / creators tables. ensureNominaV8
+	// is presence-guarded and idempotent: it recreates a v7-shaped nomina into the v8 child
+	// model and creates the two new tables if absent — a no-op for a complete v8 database.
+	// It supersedes the prior v7 nomina self-heal (it also handles an absent nomina table).
+	if err := ensureNominaV8(conn); err != nil {
 		_ = conn.Close()
-		return nil, fmt.Errorf("bestiary: OpenStore: ensure v7 nomina table on %s: %w", path, err)
+		return nil, fmt.Errorf("bestiary: OpenStore: ensure v8 naming tables on %s: %w", path, err)
 	}
 
 	return &Store{conn: conn, path: path}, nil
@@ -727,12 +980,20 @@ func migrateSchema(conn *sqlite.Conn, fromVersion int) error {
 		if err := createProvenanceTablesV6(conn); err != nil {
 			return fmt.Errorf("bestiary: migrateSchema: create provenance tables: %w", err)
 		}
-		// v7 naming table: created on the fresh path (the models table already carries
-		// the v7 region columns via schemaSQL) so a fresh v7 database is never left with
-		// schema_meta=7 but no nomina table — the same fresh-arm discipline the v5/v6
-		// tables follow.
-		if err := createNominaTable(conn); err != nil {
+		// v8 naming layer: created on the fresh path in the target v8 shape (the parent
+		// WITHOUT the fused source columns, plus the nomen_attestations child and the
+		// creators dimension) so a fresh v8 database is never left with schema_meta=8 but a
+		// v7-shaped nomina or missing child/dimension tables — the same fresh-arm discipline
+		// the v5/v6 tables follow. The models table already carries the v7 region columns
+		// via schemaSQL.
+		if err := createNominaTableV8(conn); err != nil {
 			return fmt.Errorf("bestiary: migrateSchema: create nomina table: %w", err)
+		}
+		if err := createNomenAttestationsTable(conn); err != nil {
+			return fmt.Errorf("bestiary: migrateSchema: create nomen_attestations table: %w", err)
+		}
+		if err := createCreatorsTable(conn); err != nil {
+			return fmt.Errorf("bestiary: migrateSchema: create creators table: %w", err)
 		}
 	} else {
 		if fromVersion < 2 {
@@ -786,6 +1047,15 @@ func migrateSchema(conn *sqlite.Conn, fromVersion int) error {
 		if fromVersion < 7 {
 			if err := migrateToV7(conn); err != nil {
 				return fmt.Errorf("bestiary: migrateSchema: v6→v7: %w", err)
+			}
+		}
+		// The v7→v8 step lifts nomen provenance into the nomen_attestations child table
+		// (recreating the nomina parent without the fused source columns) and adds the
+		// creators BCNF dimension. It applies to every existing database that predates v8,
+		// including one just brought to v7 by the arm above (chained …→v7→v8).
+		if fromVersion < 8 {
+			if err := migrateToV8(conn); err != nil {
+				return fmt.Errorf("bestiary: migrateSchema: v7→v8: %w", err)
 			}
 		}
 	}
@@ -1367,66 +1637,27 @@ func (s *Store) UpsertEntitySources(ctx context.Context, sources []EntitySource)
 	return nil
 }
 
-// primaryAttestation is the transitional single-attestation bridge accessor:
-// replaced by the v8 nomen_attestations child-table migration. It returns a nomen's
-// first (primary) attestation — the one the v7 nomina row can persist in its lone
-// source_url/source_id column pair — or a zero-value attestation when the set is
-// empty (defensive; a well-formed nomen always carries >=1).
-func primaryAttestation(n Nomen) NomenAttestation {
-	if len(n.Attestations) == 0 {
-		return NomenAttestation{}
-	}
-	return n.Attestations[0]
-}
-
-// bridgeAttestationKind is the transitional single-attestation bridge reconstructor:
-// replaced by the v8 nomen_attestations child-table migration. The v7 nomina row has
-// no authority/method columns, so on read it DERIVES them from (scheme, source) per
-// the §3.2 defaults table where the nomen kind is determinable, else leaves them at
-// the Unknown zero — never a guess. The v8 child table persists these losslessly and
-// makes this reconstruction unnecessary.
+// UpsertNomina writes the naming rows into the v8 nomina parent table and their
+// evidence sets into the nomen_attestations child table in a single transaction. Per
+// nomen:
 //
-// CONSTRAINT: because the v7 row carries no authority/method columns, this
-// derivation is NOT a best-effort fallback for the truly-unknown case only — it is
-// the ENTIRE read-back. An explicit curated Authority override (e.g. a claim
-// authored with Authority=Secondary to mark "an aggregator relaying" a
-// curated-sourced naming, see nomen_claims.go) is NOT round-tripped through the v7
-// bridge: UpsertNomina has nowhere to persist it, so QueryNomina always reads it back
-// as the scheme/source default (AuthorityPrimary for DataSourceCurated) regardless of
-// what was originally minted. This is latent today (no curated row exercises a
-// non-default Authority) but will silently discard the override the moment one does,
-// until the v8 child table lands.
-func bridgeAttestationKind(scheme NomenScheme, source DataSourceID) (AttestationAuthority, IngestMethod) {
-	// A curated ingest is Method=Curated regardless of scheme (an alias or a
-	// huggingface-scheme name can both arrive through the curated layer).
-	if source == DataSourceCurated {
-		return AuthorityPrimary, IngestMethodCurated
-	}
-	switch scheme {
-	case NomenSchemeCanonical:
-		return AuthorityPrimary, IngestMethodSelfMinted
-	case NomenSchemeProviderID:
-		return AuthoritySecondary, IngestMethodHarvested
-	case NomenSchemeHuggingFace:
-		return AuthorityPrimary, IngestMethodHarvested
-	default:
-		return AuthorityUnknown, IngestMethodUnknown
-	}
-}
-
-// UpsertNomina writes the naming rows into the v7 nomina table in a single
-// transaction. Each row is a per-triple IDEMPOTENT insert keyed by the primary key
-// (value, scheme, entity_key): INSERT OR IGNORE, so re-persisting the same triple is
-// a no-op that never MUTATES an existing row (unlike OR REPLACE). A same-triple
-// CONFLICT is NOT reconciled here by last-write-wins — the codegen guard
-// ValidateNomina rejects a conflicting mint before it ever reaches the store, and OR
-// IGNORE keeps the incumbent so a stray duplicate at sync cannot silently overwrite.
+//   - The parent row is a per-triple IDEMPOTENT insert keyed by the primary key
+//     (value, scheme, entity_key): INSERT OR IGNORE, so re-persisting the same triple
+//     is a no-op that never MUTATES an existing status (unlike OR REPLACE). A same-triple
+//     Status CONFLICT is not reconciled here by last-write-wins — the codegen guard
+//     ValidateNomina rejects a conflicting mint before it ever reaches the store, and OR
+//     IGNORE keeps the incumbent so a stray duplicate at sync cannot silently overwrite.
+//   - The attestation set is a REPLACEABLE SET owned by the triple (the entity_metadata
+//     child-table precedent): the prior nomen_attestations rows for the triple are DELETEd
+//     and the current Attestations re-inserted, so a re-sync with a changed evidence set
+//     converges by content and re-syncing an identical set is idempotent.
 //
-// The source_id foreign key into data_sources is NOT auto-satisfied: callers must
-// have populated data_sources first (via UpsertDataSources), so a nomen naming an
-// unknown source is rejected when foreign_keys is ON. entity_key is deliberately NOT
-// an FK (the entities table is a stub dimension; a minted canonical/provider-id nomen
-// may name an entity never written to it).
+// The nomen_attestations.source_id foreign key into data_sources is NOT auto-satisfied:
+// callers must have populated data_sources first (via UpsertDataSources), so an
+// attestation naming an unknown source is rejected when foreign_keys is ON and the whole
+// transaction rolls back (no partial write). entity_key is deliberately NOT an FK (the
+// entities table is a stub dimension; a minted canonical/provider-id nomen may name an
+// entity never written to it).
 //
 // ctx is accepted for API compatibility; zombiezen.com/go/sqlite does not support
 // per-operation context cancellation.
@@ -1436,34 +1667,59 @@ func (s *Store) UpsertNomina(ctx context.Context, nomina []Nomen) error {
 	var err error
 	defer endFn(&err)
 
-	const nomenSQL = `INSERT OR IGNORE INTO nomina (
-		value, scheme, entity_key, status, source_url, source_id
-	) VALUES (?1, ?2, ?3, ?4, ?5, ?6)`
+	const parentSQL = `INSERT OR IGNORE INTO nomina (
+		value, scheme, entity_key, status
+	) VALUES (?1, ?2, ?3, ?4)`
+	const delChildSQL = `DELETE FROM nomen_attestations WHERE value = ?1 AND scheme = ?2 AND entity_key = ?3`
+	const insChildSQL = `INSERT INTO nomen_attestations (
+		value, scheme, entity_key, source_url, source_id, authority, method, ingested_at
+	) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)`
+
 	for i := range nomina {
 		n := &nomina[i]
-		// transitional single-attestation bridge: replaced by the v8 nomen_attestations
-		// child-table migration. The v7 nomina row has only source_url/source_id
-		// columns, so it can persist a single attestation; the primary (first) one is
-		// written. Byte-correct while every nomen carries exactly one attestation; the
-		// v8 child table carries the full multi-attestation set.
-		at := primaryAttestation(*n)
-		err = sqlitex.Execute(s.conn, nomenSQL, &sqlitex.ExecOptions{
-			Args: []any{
-				n.Value,
-				n.Scheme.String(),
-				n.ResolvesTo.String(),
-				n.Status.String(),
-				at.SourceURL,
-				string(at.Source),
-			},
+		schemeStr := n.Scheme.String()
+		entityKey := n.ResolvesTo.String()
+
+		// (1) Parent row (identity + editorial status only).
+		err = sqlitex.Execute(s.conn, parentSQL, &sqlitex.ExecOptions{
+			Args: []any{n.Value, schemeStr, entityKey, n.Status.String()},
 		})
 		if err != nil {
 			return fmt.Errorf("bestiary: UpsertNomina: upsert nomen (value=%q, scheme=%q, entity=%q): %w\n"+
-				"  What: writing a naming row failed\n"+
-				"  Why: most likely the source_id foreign key has no matching data_sources row\n"+
+				"  What: writing a naming parent row failed\n"+
+				"  Why: an unexpected SQLite error on the nomina insert\n"+
 				"  Where: store.go UpsertNomina, nomina insert\n"+
-				"  How to fix: call UpsertDataSources with the DataSource for %q before persisting nomina attributed to it",
-				n.Value, n.Scheme.String(), n.ResolvesTo.String(), err, at.Source)
+				"  How to fix: verify the v8 nomina table exists (OpenStore migration)",
+				n.Value, schemeStr, entityKey, err)
+		}
+
+		// (2) Clear the replaceable attestation set for this triple.
+		if err = sqlitex.Execute(s.conn, delChildSQL, &sqlitex.ExecOptions{Args: []any{n.Value, schemeStr, entityKey}}); err != nil {
+			return fmt.Errorf("bestiary: UpsertNomina: clear attestations for nomen (value=%q, scheme=%q, entity=%q): %w\n"+
+				"  What: deleting the prior attestation rows failed\n"+
+				"  Why: an unexpected SQLite error during the replace-set refresh\n"+
+				"  Where: store.go UpsertNomina, nomen_attestations delete\n"+
+				"  How to fix: verify the v8 nomen_attestations table exists (OpenStore migration)",
+				n.Value, schemeStr, entityKey, err)
+		}
+
+		// (3) Insert the current attestations. source_id is the FK into data_sources.
+		for j := range n.Attestations {
+			at := &n.Attestations[j]
+			err = sqlitex.Execute(s.conn, insChildSQL, &sqlitex.ExecOptions{
+				Args: []any{
+					n.Value, schemeStr, entityKey,
+					at.SourceURL, string(at.Source), at.Authority.String(), at.Method.String(), at.IngestedAt,
+				},
+			})
+			if err != nil {
+				return fmt.Errorf("bestiary: UpsertNomina: insert attestation for nomen (value=%q, scheme=%q, entity=%q, source=%q): %w\n"+
+					"  What: writing an attestation child row failed\n"+
+					"  Why: most likely the source_id foreign key has no matching data_sources row\n"+
+					"  Where: store.go UpsertNomina, nomen_attestations insert\n"+
+					"  How to fix: call UpsertDataSources with the DataSource for %q before persisting nomina attributed to it",
+					n.Value, schemeStr, entityKey, at.Source, err, at.Source)
+			}
 		}
 	}
 
@@ -1471,49 +1727,69 @@ func (s *Store) UpsertNomina(ctx context.Context, nomina []Nomen) error {
 }
 
 // QueryNomina reads every persisted naming row back as []Nomen, sorted
-// deterministically (lessNomen) so a round-trip is order-stable. The ResolvesTo
-// EntityRef is reconstructed by PARSING the stored entity_key back into its tuple
-// (parseEntityKey) — the store persists the key string, and the parse recovers the
-// family/variant/version/param-size/modifier so a read yields a usable EntityRef,
-// not just an opaque key. scheme/status tokens decode via their permissive parsers.
+// deterministically (lessNomen) so a round-trip is order-stable. It LEFT-JOINs the
+// nomen_attestations child rows back into each Nomen's Attestations set (LEFT so a
+// parent with no attestations still yields a Nomen), grouping child rows by the parent
+// triple and sorting each set by the TOTAL lessAttestation key (sortAndDedupAttestations)
+// — so the full per-attestation provenance (SourceURL, Source, Authority, Method,
+// IngestedAt) round-trips losslessly, INCLUDING a curated-authored Authority that differs
+// from the scheme/source default (the case the deleted v7 single-attestation bridge could
+// not carry). The ResolvesTo EntityRef is reconstructed by PARSING the stored entity_key
+// back into its tuple (parseEntityKey); scheme/status/authority/method tokens decode via
+// their permissive parsers.
 //
 // ctx is accepted for API compatibility; zombiezen.com/go/sqlite does not support
 // per-operation context cancellation.
 func (s *Store) QueryNomina(ctx context.Context) ([]Nomen, error) {
-	var out []Nomen
-	const query = `SELECT value, scheme, entity_key, status, source_url, source_id FROM nomina`
+	type tripleKey struct{ value, scheme, entity string }
+	index := make(map[tripleKey]*Nomen)
+	var order []tripleKey
+
+	const query = `SELECT n.value, n.scheme, n.entity_key, n.status,
+		a.source_url, a.source_id, a.authority, a.method, a.ingested_at
+		FROM nomina n
+		LEFT JOIN nomen_attestations a
+		  ON n.value = a.value AND n.scheme = a.scheme AND n.entity_key = a.entity_key`
 	err := sqlitex.Execute(s.conn, query, &sqlitex.ExecOptions{
 		ResultFunc: func(stmt *sqlite.Stmt) error {
-			var scheme NomenScheme
-			if e := scheme.UnmarshalText([]byte(stmt.GetText("scheme"))); e != nil {
-				scheme = NomenSchemeOther
+			k := tripleKey{stmt.GetText("value"), stmt.GetText("scheme"), stmt.GetText("entity_key")}
+			n, ok := index[k]
+			if !ok {
+				var scheme NomenScheme
+				if e := scheme.UnmarshalText([]byte(k.scheme)); e != nil {
+					scheme = NomenSchemeOther
+				}
+				status, _ := parseRating(strings.ToLower(stmt.GetText("status")))
+				n = &Nomen{
+					Value:      k.value,
+					Scheme:     scheme,
+					Status:     status,
+					ResolvesTo: parseEntityKey(k.entity),
+				}
+				index[k] = n
+				order = append(order, k)
 			}
-			status, _ := parseRating(strings.ToLower(stmt.GetText("status")))
-			// transitional single-attestation bridge: replaced by the v8
-			// nomen_attestations child-table migration. The v7 nomina row carries
-			// only source_url/source_id, so a single attestation is reconstructed;
-			// Authority/Method are DERIVED from (scheme, source) per the §3.2 defaults
-			// where the kind is determinable, else left at their Unknown zero — never
-			// guessed. IngestedAt has no v7 column, so it is honestly "". The v8 child
-			// table carries these fields losslessly.
-			//
-			// CONSTRAINT (see bridgeAttestationKind): this derivation is the entire
-			// read-back, not a fallback — an explicit curated Authority override (e.g.
-			// Authority=Secondary) is NOT preserved by the v7 row and reads back here as
-			// the scheme/source default until the v8 child table lands.
-			sourceID := DataSourceID(stmt.GetText("source_id"))
-			authority, method := bridgeAttestationKind(scheme, sourceID)
-			out = append(out, Nomen{
-				Value:      stmt.GetText("value"),
-				Scheme:     scheme,
-				Status:     status,
-				ResolvesTo: parseEntityKey(stmt.GetText("entity_key")),
-				Attestations: []NomenAttestation{{
-					SourceURL: stmt.GetText("source_url"),
-					Source:    sourceID,
-					Authority: authority,
-					Method:    method,
-				}},
+			// A LEFT-JOIN row with no matching child has a NULL source_id (GetText → "").
+			// A real attestation always carries a non-empty source_id (NOT NULL + FK to
+			// data_sources), so an empty source_id marks "no attestation" — skip it.
+			sourceID := stmt.GetText("source_id")
+			if sourceID == "" {
+				return nil
+			}
+			var authority AttestationAuthority
+			if e := authority.UnmarshalText([]byte(stmt.GetText("authority"))); e != nil {
+				authority = AuthorityUnknown
+			}
+			var method IngestMethod
+			if e := method.UnmarshalText([]byte(stmt.GetText("method"))); e != nil {
+				method = IngestMethodUnknown
+			}
+			n.Attestations = append(n.Attestations, NomenAttestation{
+				SourceURL:  stmt.GetText("source_url"),
+				Source:     DataSourceID(sourceID),
+				Authority:  authority,
+				Method:     method,
+				IngestedAt: stmt.GetText("ingested_at"),
 			})
 			return nil
 		},
@@ -1521,7 +1797,89 @@ func (s *Store) QueryNomina(ctx context.Context) ([]Nomen, error) {
 	if err != nil {
 		return nil, fmt.Errorf("bestiary: QueryNomina: read nomina: %w", err)
 	}
+
+	out := make([]Nomen, 0, len(order))
+	for _, k := range order {
+		n := index[k]
+		n.Attestations = sortAndDedupAttestations(n.Attestations)
+		out = append(out, *n)
+	}
 	sortNomina(out)
+	return out, nil
+}
+
+// UpsertCreators populates the v8 creators BCNF dimension from the curated creators.json
+// seed (the data_sources dimension-persistence precedent). The seed is the single source
+// of truth for Family → Creator, so each row is an INSERT OR REPLACE keyed by family — a
+// full replace over the seed is correct and idempotent (re-syncing the same seed yields
+// identical rows). Rows are written in family-sorted order so the write is deterministic
+// (INV3). Only families whose creator is non-empty and whose family Family.IsKnown() are
+// written — the same FK-style consistency the datasource guard enforces; an unmapped
+// family is expressed by the ABSENCE of a row (Family.Creator returns CreatorNone), never
+// a row with an empty creator.
+//
+// The persisted table is the STORE's record of what the syncing binary knew; it is read
+// back by QueryCreators. It is deliberately distinct from the running binary's Family.Creator
+// projection (embedded seed) — see the scanModelInfo skew note.
+//
+// ctx is accepted for API compatibility; zombiezen.com/go/sqlite does not support
+// per-operation context cancellation.
+func (s *Store) UpsertCreators(ctx context.Context) error {
+	tbl := loadCreatorTableSafe()
+	families := make([]Family, 0, len(tbl.byFamily))
+	for f := range tbl.byFamily {
+		families = append(families, f)
+	}
+	sort.Slice(families, func(i, j int) bool { return families[i] < families[j] })
+
+	endFn := sqlitex.Transaction(s.conn)
+	var err error
+	defer endFn(&err)
+
+	const upsertSQL = `INSERT OR REPLACE INTO creators (family, creator) VALUES (?1, ?2)`
+	for _, f := range families {
+		creator := tbl.byFamily[f]
+		if creator == CreatorNone || !f.IsKnown() {
+			// Defensive: parseCreatorTable already rejects both at codegen, but a
+			// degraded runtime seed must never persist an empty or unrecognized mapping.
+			continue
+		}
+		err = sqlitex.Execute(s.conn, upsertSQL, &sqlitex.ExecOptions{
+			Args: []any{string(f), string(creator)},
+		})
+		if err != nil {
+			return fmt.Errorf("bestiary: UpsertCreators: upsert creator (family=%q, creator=%q): %w\n"+
+				"  What: writing a creator dimension row failed\n"+
+				"  Why: an unexpected SQLite error on the creators insert\n"+
+				"  Where: store.go UpsertCreators, creators insert\n"+
+				"  How to fix: verify the v8 creators table exists (OpenStore migration)",
+				f, creator, err)
+		}
+	}
+	return nil
+}
+
+// QueryCreators reads the persisted v8 creators dimension back as a Family → Creator map.
+// It is the JOIN-queryable, self-describing read of the store's own creator record (the
+// Entity.Sources projection precedent at the dimension level): an external SQL consumer or
+// a downstream read that wants the store's persisted mapping reads it here, distinct from
+// the running binary's Family.Creator projection over the embedded seed. Returns an empty
+// (non-nil) map when the dimension is unpopulated.
+//
+// ctx is accepted for API compatibility; zombiezen.com/go/sqlite does not support
+// per-operation context cancellation.
+func (s *Store) QueryCreators(ctx context.Context) (map[Family]Creator, error) {
+	out := make(map[Family]Creator)
+	const query = `SELECT family, creator FROM creators`
+	err := sqlitex.Execute(s.conn, query, &sqlitex.ExecOptions{
+		ResultFunc: func(stmt *sqlite.Stmt) error {
+			out[Family(stmt.GetText("family"))] = Creator(stmt.GetText("creator"))
+			return nil
+		},
+	})
+	if err != nil {
+		return nil, fmt.Errorf("bestiary: QueryCreators: read creators: %w", err)
+	}
 	return out, nil
 }
 
@@ -2067,6 +2425,21 @@ func scanModelInfo(stmt *sqlite.Stmt) ModelInfo {
 	// RegionNone rather than failing the scan. RegionRaw carries the RegionOther token.
 	m.Region = regionFromStore(stmt.GetText("region"))
 	m.RegionRaw = stmt.GetText("region_raw")
+
+	// Creator is the DERIVED join projection of Family → Creator (the Entity.Sources /
+	// registry.go precedent): it is NOT stored on the models row (Family → Creator is a
+	// functional dependency, so a models.creator column would be a transitive-dependency
+	// BCNF violation), so it is projected here from the row's own Family via the curated
+	// seed. CreatorNone when the family has no mapping.
+	//
+	// SKEW NOTE (the constraint a store user must know): this projection reads THIS
+	// binary's EMBEDDED seed, whereas the persisted creators dimension (QueryCreators)
+	// records what the SYNCING binary knew. They agree by construction when the reading
+	// and syncing binaries share a seed, but an OLD binary reading a NEWER cache can
+	// disagree until upgraded. Authority is role-split: the creators table is the STORE's
+	// persisted record (read it via QueryCreators); this projection is the RUNNING binary's
+	// current view. Neither is "wrong" — they answer different questions.
+	m.Creator = m.Family.Creator()
 
 	// Nullable REAL fields.
 	if !stmt.IsNull("cost_input") {

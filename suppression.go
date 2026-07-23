@@ -60,10 +60,10 @@ type suppressionRefJSON struct {
 //   - Reason is the curation rationale (WHY the capability is innate). Required: an
 //     unexplained naming policy is un-reviewable.
 //   - SourceURL is WHO documents the innate capability (the lab page). Optional, and
-//     deliberately distinct from the ingest provenance (Nomen.Source): a *who says so*
-//     and a *which catalog we read* are different provenance levels. When PRESENT it
-//     must be an archive.org snapshot, under the same curated-claims archive policy the
-//     nomen claims follow (see Nomen.SourceURL): a lab page is edited and deleted
+//     deliberately distinct from the ingest provenance (NomenAttestation.Source): a *who
+//     says so* and a *which catalog we read* are different provenance levels. When PRESENT
+//     it must be an archive.org snapshot, under the same curated-claims archive policy the
+//     nomen claims follow (see NomenAttestation.SourceURL): a lab page is edited and deleted
 //     without notice, and an entry citing a rotted page cannot be reviewed or reversed.
 type suppressionEntryJSON struct {
 	Entity    suppressionRefJSON `json:"entity"`

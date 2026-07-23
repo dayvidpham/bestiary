@@ -2691,6 +2691,14 @@ func runSyncClient(client *bestiary.Client, provider string, format bestiary.Out
 		return fmt.Errorf("sync: persist nomina: %w", err)
 	}
 
+	// Persist the creators BCNF dimension (v8) from the curated creators.json seed — the
+	// data_sources dimension-persistence precedent — so the cache is self-describing about
+	// Family → Creator without recompiling. It is derived from the same seed the baked
+	// static registry and the runtime Family.Creator projection use, so all three agree.
+	if err := store.UpsertCreators(ctx); err != nil {
+		return fmt.Errorf("sync: persist creators dimension: %w", err)
+	}
+
 	return bestiary.FormatModels(os.Stdout, fetched, format)
 }
 

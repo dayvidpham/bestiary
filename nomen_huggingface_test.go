@@ -65,9 +65,9 @@ func TestNomenLookup_HuggingFaceSeeds(t *testing.T) {
 			if n.Status != bestiary.AcceptabilityAdmitted {
 				t.Errorf("%q status = %v, want admitted", seed.repo, n.Status)
 			}
-			// v0.2.8: provenance is per-attestation; this curated HF seed carries one.
-			// (Reading HF provenance fully off the attestation is the store-v8/HF-bot
-			// slice's EXTEND; here it is the minimal single-attestation bridge re-pin.)
+			// v0.2.8: provenance is per-attestation; this curated HF seed carries one,
+			// read fully off the NomenAttestation (Source + SourceURL below). The store
+			// persists such attestations in the v8 nomen_attestations child table.
 			if len(n.Attestations) != 1 {
 				t.Fatalf("%q carries %d attestations, want 1", seed.repo, len(n.Attestations))
 			}
