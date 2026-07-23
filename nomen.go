@@ -305,6 +305,23 @@ func MintNominaFromModels(models []ModelInfo) []Nomen {
 		ids    []string
 		idSeen map[string]struct{}
 	}
+	// Raw key set for the MERGE-only N->N.0 fold (the SAME shared primitive the registry
+	// and codegen use, NormalizeEntityVersion), so the from-models nomina grouping folds a
+	// bare-N spelling onto its dotted sibling exactly as Entities() does — otherwise the
+	// from-models and from-entities canonical censuses would diverge by the merged pairs.
+	rawKeys := make(map[string]struct{}, len(models))
+	for i := range models {
+		m := models[i]
+		ref := EntityRef{
+			Family:    m.Family,
+			Variant:   m.Variant,
+			Version:   m.Version,
+			ParamSize: m.ParamSize,
+			Modifier:  EntityModifiers(m.Modifier, m.Family),
+		}
+		rawKeys[ref.String()] = struct{}{}
+	}
+
 	groups := make(map[string]*group)
 	var order []string
 	for i := range models {
@@ -315,6 +332,9 @@ func MintNominaFromModels(models []ModelInfo) []Nomen {
 			Version:   m.Version,
 			ParamSize: m.ParamSize,
 			Modifier:  EntityModifiers(m.Modifier, m.Family),
+		}
+		if dotted, merged := NormalizeEntityVersion(ref, rawKeys); merged {
+			ref = dotted
 		}
 		key := ref.String()
 		g := groups[key]

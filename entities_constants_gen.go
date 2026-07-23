@@ -72,7 +72,6 @@ const (
 	Entity__Claude__Haiku__Version_4_5                                    = "claude/haiku@4.5"
 	Entity__Claude__Opus                                                  = "claude/opus"
 	Entity__Claude__Opus__Version_3                                       = "claude/opus@3"
-	Entity__Claude__Opus__Version_4                                       = "claude/opus@4"
 	Entity__Claude__Opus__Version_4_0                                     = "claude/opus@4.0"
 	Entity__Claude__Opus__Version_4_1                                     = "claude/opus@4.1"
 	Entity__Claude__Opus__Version_4_5                                     = "claude/opus@4.5"
@@ -83,7 +82,6 @@ const (
 	Entity__Claude__Sonnet__Version_3                                     = "claude/sonnet@3"
 	Entity__Claude__Sonnet__Version_3_5                                   = "claude/sonnet@3.5"
 	Entity__Claude__Sonnet__Version_3_7                                   = "claude/sonnet@3.7"
-	Entity__Claude__Sonnet__Version_4                                     = "claude/sonnet@4"
 	Entity__Claude__Sonnet__Version_4_0                                   = "claude/sonnet@4.0"
 	Entity__Claude__Sonnet__Version_4_5                                   = "claude/sonnet@4.5"
 	Entity__Claude__Sonnet__Version_4_6                                   = "claude/sonnet@4.6"
@@ -222,7 +220,6 @@ const (
 	Entity__Gemini__Flash__Version_1_5                                    = "gemini/flash@1.5"
 	Entity__Gemini__Flash__Version_2_0                                    = "gemini/flash@2.0"
 	Entity__Gemini__Flash__Version_2_5                                    = "gemini/flash@2.5"
-	Entity__Gemini__Flash__Version_3                                      = "gemini/flash@3"
 	Entity__Gemini__Flash__Version_3_0                                    = "gemini/flash@3.0"
 	Entity__Gemini__Flash__Version_3_1                                    = "gemini/flash@3.1"
 	Entity__Gemini__Flash__Version_3_5                                    = "gemini/flash@3.5"
@@ -233,7 +230,6 @@ const (
 	Entity__Gemini__Pro                                                   = "gemini/pro"
 	Entity__Gemini__Pro__Version_2_0                                      = "gemini/pro@2.0"
 	Entity__Gemini__Pro__Version_2_5                                      = "gemini/pro@2.5"
-	Entity__Gemini__Pro__Version_3                                        = "gemini/pro@3"
 	Entity__Gemini__Pro__Version_3_0                                      = "gemini/pro@3.0"
 	Entity__Gemini__Pro__Version_3_1                                      = "gemini/pro@3.1"
 	Entity__Gemini_exp                                                    = "gemini-exp"
@@ -416,14 +412,11 @@ const (
 	Entity__Hy__Version_3                                                 = "hy@3"
 	Entity__Ideogram                                                      = "ideogram"
 	Entity__Ideogram__Turbo                                               = "ideogram{turbo}"
-	Entity__Imagen__Ultra__Version_4                                      = "imagen/ultra@4"
 	Entity__Imagen__Ultra__Version_4_0                                    = "imagen/ultra@4.0"
 	Entity__Imagen__Version_3                                             = "imagen@3"
 	Entity__Imagen__Version_3__Fast                                       = "imagen@3{fast}"
-	Entity__Imagen__Version_4                                             = "imagen@4"
 	Entity__Imagen__Version_4_0                                           = "imagen@4.0"
 	Entity__Imagen__Version_4_0__Fast                                     = "imagen@4.0{fast}"
-	Entity__Imagen__Version_4__Fast                                       = "imagen@4{fast}"
 	Entity__Indictrans__Size_1b                                           = "indictrans#1b"
 	Entity__Inflection__Version_3                                         = "inflection@3"
 	Entity__Intellect__Version_3                                          = "intellect@3"
@@ -929,7 +922,6 @@ const (
 	Entity__Venice__Version_1_2                                           = "venice@1.2"
 	Entity__Veo                                                           = "veo"
 	Entity__Veo__Version_2                                                = "veo@2"
-	Entity__Veo__Version_3                                                = "veo@3"
 	Entity__Veo__Version_3_0                                              = "veo@3.0"
 	Entity__Veo__Version_3_1                                              = "veo@3.1"
 	Entity__Veo__Version_3_1__Fast                                        = "veo@3.1{fast}"
@@ -1032,7 +1024,6 @@ var allEntityConstants = [...]string{
 	Entity__Claude__Haiku__Version_4_5,
 	Entity__Claude__Opus,
 	Entity__Claude__Opus__Version_3,
-	Entity__Claude__Opus__Version_4,
 	Entity__Claude__Opus__Version_4_0,
 	Entity__Claude__Opus__Version_4_1,
 	Entity__Claude__Opus__Version_4_5,
@@ -1043,7 +1034,6 @@ var allEntityConstants = [...]string{
 	Entity__Claude__Sonnet__Version_3,
 	Entity__Claude__Sonnet__Version_3_5,
 	Entity__Claude__Sonnet__Version_3_7,
-	Entity__Claude__Sonnet__Version_4,
 	Entity__Claude__Sonnet__Version_4_0,
 	Entity__Claude__Sonnet__Version_4_5,
 	Entity__Claude__Sonnet__Version_4_6,
@@ -1182,7 +1172,6 @@ var allEntityConstants = [...]string{
 	Entity__Gemini__Flash__Version_1_5,
 	Entity__Gemini__Flash__Version_2_0,
 	Entity__Gemini__Flash__Version_2_5,
-	Entity__Gemini__Flash__Version_3,
 	Entity__Gemini__Flash__Version_3_0,
 	Entity__Gemini__Flash__Version_3_1,
 	Entity__Gemini__Flash__Version_3_5,
@@ -1193,7 +1182,6 @@ var allEntityConstants = [...]string{
 	Entity__Gemini__Pro,
 	Entity__Gemini__Pro__Version_2_0,
 	Entity__Gemini__Pro__Version_2_5,
-	Entity__Gemini__Pro__Version_3,
 	Entity__Gemini__Pro__Version_3_0,
 	Entity__Gemini__Pro__Version_3_1,
 	Entity__Gemini_exp,
@@ -1376,14 +1364,11 @@ var allEntityConstants = [...]string{
 	Entity__Hy__Version_3,
 	Entity__Ideogram,
 	Entity__Ideogram__Turbo,
-	Entity__Imagen__Ultra__Version_4,
 	Entity__Imagen__Ultra__Version_4_0,
 	Entity__Imagen__Version_3,
 	Entity__Imagen__Version_3__Fast,
-	Entity__Imagen__Version_4,
 	Entity__Imagen__Version_4_0,
 	Entity__Imagen__Version_4_0__Fast,
-	Entity__Imagen__Version_4__Fast,
 	Entity__Indictrans__Size_1b,
 	Entity__Inflection__Version_3,
 	Entity__Intellect__Version_3,
@@ -1889,7 +1874,6 @@ var allEntityConstants = [...]string{
 	Entity__Venice__Version_1_2,
 	Entity__Veo,
 	Entity__Veo__Version_2,
-	Entity__Veo__Version_3,
 	Entity__Veo__Version_3_0,
 	Entity__Veo__Version_3_1,
 	Entity__Veo__Version_3_1__Fast,

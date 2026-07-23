@@ -75,9 +75,14 @@ func nominaCensus(ns []bestiary.Nomen) map[bestiary.NomenScheme]int {
 // UNCHANGED at 2791 AGAIN — every repair MOVES instances onto the corrected entity, it
 // removes none, so the dotless/dash/1t ID spellings all survive as Admitted provider-ID
 // nomina on the merged entities.
+//
+// canonical went 955 → 947 with the entity-level MERGE-only N→N.0 fold (C4): 8 bare-N
+// entities fold onto their N.0 siblings, retiring 8 Preferred canonical nomina. provider-ID
+// UNCHANGED at 2791 a THIRD time — the fold merges two entities, moving no instance, so the
+// bare-version ID spellings survive as Admitted provider-ID nomina on the merged entities.
 func TestNomina_CensusExact(t *testing.T) {
 	const (
-		wantCanonical   = 955
+		wantCanonical   = 947
 		wantProviderID  = 2791
 		wantAlias       = 1
 		wantHuggingFace = 4
@@ -119,7 +124,7 @@ func TestNomina_CensusExact(t *testing.T) {
 			fromModels, wantProviderID, wantAlias, wantHuggingFace)
 	}
 	if fromModels[bestiary.NomenSchemeCanonical] != wantFromModelsCanonical {
-		t.Errorf("MintNominaFromModels canonical = %d, want %d (the 955 entities minus the 4 metadata-only standalones)",
+		t.Errorf("MintNominaFromModels canonical = %d, want %d (the 947 entities minus the 4 metadata-only standalones)",
 			fromModels[bestiary.NomenSchemeCanonical], wantFromModelsCanonical)
 	}
 }

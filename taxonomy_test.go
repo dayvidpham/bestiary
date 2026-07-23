@@ -240,9 +240,14 @@ func TestTaxonomy_DefensiveCopies(t *testing.T) {
 	}
 }
 
-// TestSeries_GenerationNormalization_Gemini is the ratified gemini ruling: the raw
-// versions "3" and "3.0" are one generation, so both spellings map into the single
-// Series{gemini, "3.0"} — and the ENTITY KEYS ARE UNTOUCHED on both sides.
+// TestSeries_GenerationNormalization_Gemini is the ratified gemini ruling, now realized
+// at ENTITY IDENTITY level (the C4 MERGE-only N->N.0 fold): a family that spells both a
+// bare "3" and "3.0" for the same variant no longer carries two entities — gemini/flash@3
+// MERGES into gemini/flash@3.0. So the bare spelling is not a separate entity at all: the
+// bare EXPRESSION resolves through the merge to the single dotted entity, and the series
+// view sees one line, Series{gemini, "3.0"}. (The series-level generation fold in
+// taxonomy.go is retained as a safety net, but the entity merge now subsumes it — there
+// is no longer a bare-"3" entity for it to fold.)
 func TestSeries_GenerationNormalization_Gemini(t *testing.T) {
 	set := seriesSet(bestiary.SeriesAll())
 	normalized := bestiary.Series{Family: "gemini", Generation: "3.0"}
@@ -257,24 +262,28 @@ func TestSeries_GenerationNormalization_Gemini(t *testing.T) {
 		t.Errorf("ReleasesOf(gemini-3) = %v, want nil (the line folded into gemini-3.0)", got)
 	}
 
-	// Both spellings compute to the SAME Series...
+	// Both spellings resolve to the SAME single merged entity gemini/flash@3.0: the bare
+	// key is an alias, the dotted key is the entity itself.
+	dotted := "gemini/flash@3.0"
 	for _, key := range []string{"gemini/flash@3", "gemini/flash@3.0"} {
 		e, ok := bestiary.EntityByKey(key)
 		if !ok {
-			t.Fatalf("EntityByKey(%q) = false; the fixture entity is missing from the registry", key)
+			t.Fatalf("EntityByKey(%q) = false; the merged entity is missing from the registry", key)
+		}
+		// The resolved entity is the DOTTED one regardless of which spelling was asked for
+		// — the merge moved the bare spelling onto it.
+		if got := e.Ref.String(); got != dotted {
+			t.Errorf("EntityByKey(%q) resolved to %q, want the merged entity %q", key, got, dotted)
 		}
 		if got := bestiary.SeriesOf(e.Ref); got != normalized {
 			t.Errorf("SeriesOf(%q) = %+v, want %+v", key, got, normalized)
 		}
-		// ...and neither key moved: normalization is a SERIES-level view only.
-		if got := e.Ref.String(); got != key {
-			t.Errorf("entity key changed under normalization: %q != %q", got, key)
-		}
 	}
 
-	// The flash release of the normalized line holds BOTH spellings' entities.
+	// The flash release of the normalized line holds the ONE merged entity (the two
+	// spellings are no longer two entities).
 	flash := bestiary.Release{Series: normalized, Name: "flash"}
-	wantKeys := []string{"gemini/flash@3", "gemini/flash@3.0"}
+	wantKeys := []string{"gemini/flash@3.0"}
 	if got := entityKeysOf(bestiary.EntitiesOf(flash)); !equalStrings(got, wantKeys) {
 		t.Errorf("EntitiesOf(gemini-3.0/flash) = %v, want %v", got, wantKeys)
 	}

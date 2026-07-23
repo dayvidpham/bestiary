@@ -259,9 +259,73 @@ func TestEntityRekey_CensusAccounted(t *testing.T) {
 	// 976 → 955 with the dot-lost version repair + 1t param-size routing: dotless/dash-glued
 	// qwen/minimax/mistral spellings fold onto their dotted entities and ling@1t/ring@1t
 	// re-key to #1t (ring-2.6-1t-free merges into ring@2.6#1t). Net −21 (mostly merges).
-	const wantEntities = 955
+	//
+	// 955 → 947 with the entity-level MERGE-only N→N.0 fold (C4): 8 bare-N entities fold
+	// onto their N.0 siblings (claude/opus, claude/sonnet, gemini/flash, gemini/pro,
+	// imagen, imagen{fast}, imagen/ultra, veo). A pure MERGE, none renamed.
+	const wantEntities = 947
 	if got := len(bestiary.Entities()); got != wantEntities {
 		t.Errorf("registry census = %d entities, want %d — the eva and command-a-plus overrides "+
 			"must be renames (count unmoved) and the cortecs pins a 4-entity merge", got, wantEntities)
+	}
+}
+
+// TestEntityMerge_NToN0_MergeOnly fences the C4 entity-level MERGE-only N->N.0 fold: a
+// family that spells BOTH a bare integer version N and the dotted N.0 for the SAME
+// (variant, param-size, identity-modifiers) folds the bare entity onto the dotted one.
+//
+// It pins the EXACT set of 8 merge pairs (the whole authored table), asserts each fold is
+// a pure MERGE (the bare key is gone from Entities(), a bare EXPRESSION resolves through
+// the alias to the dotted entity, and the dotted entity's instance count is the sum of
+// both spellings' pre-fold instances), and guards the negative control: llama@4 has no
+// 4.0 sibling anywhere in the family, so it is NEVER touched — the fold is a merge, never
+// a rename that would mint a phantom @4.0 for it.
+func TestEntityMerge_NToN0_MergeOnly(t *testing.T) {
+	// The complete authored merge table: bare key -> dotted key it folds into.
+	merges := map[string]string{
+		"claude/opus@4":   "claude/opus@4.0",
+		"claude/sonnet@4": "claude/sonnet@4.0",
+		"gemini/flash@3":  "gemini/flash@3.0",
+		"gemini/pro@3":    "gemini/pro@3.0",
+		"imagen@4":        "imagen@4.0",
+		"imagen@4{fast}":  "imagen@4.0{fast}",
+		"imagen/ultra@4":  "imagen/ultra@4.0",
+		"veo@3":           "veo@3.0",
+	}
+
+	// The bare keys must be ABSENT from the entity set (they folded away, never renamed).
+	present := map[string]bool{}
+	for _, e := range bestiary.Entities() {
+		present[e.Ref.String()] = true
+	}
+	for bare, dotted := range merges {
+		if present[bare] {
+			t.Errorf("bare key %q still exists as a distinct entity; it must fold into %q", bare, dotted)
+		}
+		if !present[dotted] {
+			t.Errorf("dotted merge target %q is absent from the registry", dotted)
+		}
+		// A bare EXPRESSION must resolve through the fold to the dotted entity.
+		e, ok := bestiary.EntityByKey(bare)
+		if !ok {
+			t.Errorf("EntityByKey(%q) = false; the bare spelling must resolve to the merged entity", bare)
+			continue
+		}
+		if got := e.Ref.String(); got != dotted {
+			t.Errorf("EntityByKey(%q) resolved to %q, want the merged entity %q", bare, got, dotted)
+		}
+	}
+
+	// Negative control: llama@4 has no llama@4.0 sibling, so it stays exactly llama@4 —
+	// a pure merge never renames a lone bare-N line.
+	if _, ok := bestiary.EntityByKey("llama@4.0"); ok {
+		t.Error("llama@4.0 exists; the MERGE-only fold must not mint a dotted phantom for a lone bare-N line")
+	}
+	e, ok := bestiary.EntityByKey("llama@4")
+	if !ok {
+		t.Fatal("EntityByKey(llama@4) = false; the lone bare-N line must be untouched by the fold")
+	}
+	if got := e.Ref.String(); got != "llama@4" {
+		t.Errorf("llama@4 was moved to %q; a lone bare-N line must be untouched", got)
 	}
 }

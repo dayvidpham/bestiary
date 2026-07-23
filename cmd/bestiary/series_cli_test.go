@@ -183,10 +183,11 @@ func TestRun_Series_SelectorIsCaseFolded(t *testing.T) {
 }
 
 // TestRun_Series_GeminiNormalizationVisible is the end-to-end fence on the ruled
-// generation fold: the CLI shows ONE gemini-3.0 line holding both the "@3" and
-// "@3.0" spellings' entities, and gemini-3 is not a line of its own. It also draws
-// the distinction the version selectors introduce — "gemini-3" is not a LINE but is
-// a valid major SELECTOR, and those are different things.
+// generation fold, now realized at ENTITY IDENTITY level: the CLI shows ONE gemini-3.0
+// line whose flash release holds the SINGLE merged gemini/flash@3.0 entity (the "@3" and
+// "@3.0" spellings merged into it — they are no longer two entities), and gemini-3 is not
+// a line of its own. It also draws the distinction the version selectors introduce —
+// "gemini-3" is not a LINE but is a valid major SELECTOR, and those are different things.
 func TestRun_Series_GeminiNormalizationVisible(t *testing.T) {
 	var details []seriesDetail
 	runSeriesJSON(t, &details, "gemini-3.0")
@@ -199,8 +200,8 @@ func TestRun_Series_GeminiNormalizationVisible(t *testing.T) {
 			flash = r.Entities
 		}
 	}
-	if want := []string{"gemini/flash@3", "gemini/flash@3.0"}; !equalStringSlices(flash, want) {
-		t.Errorf("gemini-3.0/flash entities = %v, want %v (both spellings under one line)", flash, want)
+	if want := []string{"gemini/flash@3.0"}; !equalStringSlices(flash, want) {
+		t.Errorf("gemini-3.0/flash entities = %v, want %v (the two spellings merged into one entity)", flash, want)
 	}
 	// The un-normalized rendering is still not a LINE — the fold is structural and
 	// SeriesAll never lists "gemini-3"...
