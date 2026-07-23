@@ -1,17 +1,13 @@
 package main
 
 import (
-	"context"
 	"encoding/json"
-	"io"
-	"net/http"
 	"os"
 	"path/filepath"
 	"reflect"
 	"slices"
 	"strings"
 	"testing"
-	"time"
 
 	"github.com/dayvidpham/bestiary"
 )
@@ -38,83 +34,8 @@ var emptyCurated = map[string]bool{}
 // emptyExisting is the no-prior-file document.
 var emptyExisting = quantFileOut{SchemaVersion: quantVRAMSchemaVersion}
 
-// --------------------------------------------------------------------------
-// Polite-bot seam: User-Agent + >=1s rate limit
-// --------------------------------------------------------------------------
-
-type recordingDoer struct {
-	reqs []*http.Request
-	body string
-}
-
-func (d *recordingDoer) Do(req *http.Request) (*http.Response, error) {
-	d.reqs = append(d.reqs, req)
-	return &http.Response{
-		StatusCode: 200,
-		Body:       io.NopCloser(strings.NewReader(d.body)),
-		Header:     make(http.Header),
-	}, nil
-}
-
-type fakeClock struct {
-	t     time.Time
-	slept []time.Duration
-}
-
-func (c *fakeClock) now() time.Time { return c.t }
-func (c *fakeClock) doSleep(d time.Duration) {
-	c.slept = append(c.slept, d)
-	c.t = c.t.Add(d)
-}
-
-func newTestClient(body string) (*politeClient, *recordingDoer, *fakeClock) {
-	rd := &recordingDoer{body: body}
-	fc := &fakeClock{t: time.Unix(1_700_000_000, 0)}
-	c := &politeClient{
-		doer:        rd,
-		ua:          userAgent,
-		minInterval: minRequestInterval,
-		now:         fc.now,
-		sleep:       fc.doSleep,
-	}
-	return c, rd, fc
-}
-
-func TestPoliteClient_SetsUserAgent(t *testing.T) {
-	c, rd, _ := newTestClient(`{}`)
-	if _, err := c.get(context.Background(), "https://registry.ollama.ai/v2/library/x/manifests/y", manifestAccept); err != nil {
-		t.Fatalf("get: %v", err)
-	}
-	if len(rd.reqs) != 1 {
-		t.Fatalf("want 1 request, got %d", len(rd.reqs))
-	}
-	if got := rd.reqs[0].Header.Get("User-Agent"); got != userAgent {
-		t.Fatalf("User-Agent = %q, want %q (a descriptive UA is mandatory)", got, userAgent)
-	}
-	if got := rd.reqs[0].Header.Get("Accept"); got != manifestAccept {
-		t.Fatalf("Accept = %q, want %q", got, manifestAccept)
-	}
-}
-
-func TestPoliteClient_SleepsBetweenRequests(t *testing.T) {
-	c, _, fc := newTestClient(`{}`)
-	ctx := context.Background()
-	if _, err := c.get(ctx, "https://x/1", ""); err != nil {
-		t.Fatalf("get 1: %v", err)
-	}
-	if len(fc.slept) != 0 {
-		t.Fatalf("first request must not sleep, slept=%v", fc.slept)
-	}
-	if _, err := c.get(ctx, "https://x/2", ""); err != nil {
-		t.Fatalf("get 2: %v", err)
-	}
-	if len(fc.slept) != 1 {
-		t.Fatalf("second request must sleep exactly once, slept=%v", fc.slept)
-	}
-	if fc.slept[0] < minRequestInterval {
-		t.Fatalf("rate-limit sleep = %v, want >= %v (>= 1 second between requests)", fc.slept[0], minRequestInterval)
-	}
-}
+// The polite-bot request seam (User-Agent + >=1s rate limit) now lives in
+// internal/politebot; its offline tests moved there with the code.
 
 // --------------------------------------------------------------------------
 // Manifest + config-blob parsing (canned JSON captured from registry responses)
