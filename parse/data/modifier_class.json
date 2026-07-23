@@ -24,7 +24,8 @@
     "pro": "identity",
     "precision": "identity",
     "realtime": "attribute",
-    "livetranslate": "identity"
+    "livetranslate": "identity",
+    "hd": "identity"
   },
   "family_overrides": {
     "claude": {
@@ -46,5 +47,6 @@
       "turbo": "attribute"
     }
   },
+  "_comment_hd": "hd is IDENTITY-class: OpenAI documents tts-1-hd as a distinct, higher-quality text-to-speech model separate from tts-1 (https://platform.openai.com/docs/models/tts-1-hd), so the two are different artifacts and hd belongs in the entity key ({hd}), not as a per-instance runtime attribute. The token is also newly added to modifiers.json so extractModifiers peels it; the only catalog id carrying an 'hd' token today is openai/tts-1-hd (zero collateral).",
   "_comment_turbo_demotions": "Evidence for the kimi and minimax turbo->attribute demotions (the glm precedent). KIMI: moonshot serves kimi-k2-thinking and kimi-k2-thinking-turbo from the IDENTICAL Kimi-K2-Thinking HuggingFace repo — same weights, so turbo names a serving speed tier, not a different artifact; the lab's own turbo-preview announcement describes it as the same model at higher output speed (archived: https://web.archive.org/web/20251205134314/https://kimi-k2.org/blog/08-kimi-k2-turbo-preview). MINIMAX: graded LOWER CONFIDENCE — there is no repo-identity proof. The evidence is the rev-2 URL census, in which the M2.7 and M2.5-highspeed serving names resolve back to the plain M2.7 / M2.5 repos, plus the lab-practice inference that minimax markets turbo the way it markets highspeed (already an attribute). If a future census shows minimax shipping distinct turbo weights, this row is the one to revisit first."
 }

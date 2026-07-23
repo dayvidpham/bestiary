@@ -206855,7 +206855,7 @@ var staticModels = []ModelInfo{
 		Variant:               "",
 		Version:               "1",
 		Date:                  "2023-11-06",
-		Modifier:              nil,
+		Modifier:              []string{"hd"},
 		ContextWindow:         0,
 		MaxOutput:             0,
 		Reasoning:             false,

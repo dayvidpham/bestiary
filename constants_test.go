@@ -57,7 +57,11 @@ func TestEntityConstants_Unique(t *testing.T) {
 	// the real ones. Decoding the spelling merges those two rows into the existing
 	// glm@5.1 and glm@5.2, so two constants are REMOVED and none is renamed — again the
 	// surviving siblings' keys never changed.
-	const wantEntityCount = 977
+	//
+	// 977 → 978 with the tts-1-hd identity split: OpenAI documents tts-1-hd as a distinct
+	// higher-quality product, so "hd" is now peeled as an IDENTITY modifier and tts@1{hd}
+	// splits off from tts@1 (one constant ADDED, none renamed).
+	const wantEntityCount = 978
 	if len(keys) != wantEntityCount {
 		t.Errorf("EntityKeys() returned %d constants; expected exactly %d — "+
 			"re-run go generate ./... and update this census literal if the entity count changed intentionally",

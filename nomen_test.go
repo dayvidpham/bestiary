@@ -58,9 +58,14 @@ func nominaCensus(ns []bestiary.Nomen) map[bestiary.NomenScheme]int {
 // is the load-bearing part — the fireworks "5p1"/"5p2" ID spellings survive as Admitted
 // provider-ID nomina on the merged entities, so decoding a spelling for IDENTITY never
 // erases the spelling from the record.
+//
+// canonical went 977 → 978 with the tts-1-hd identity split: "hd" becomes an IDENTITY
+// modifier so tts@1{hd} splits off from tts@1, adding one Preferred canonical nomen.
+// provider-ID is UNCHANGED at 2791 — the split moves an existing instance to a new
+// entity, it adds no instance, so no provider-ID nomen is minted or lost.
 func TestNomina_CensusExact(t *testing.T) {
 	const (
-		wantCanonical   = 977
+		wantCanonical   = 978
 		wantProviderID  = 2791
 		wantAlias       = 1
 		wantHuggingFace = 4
@@ -102,7 +107,7 @@ func TestNomina_CensusExact(t *testing.T) {
 			fromModels, wantProviderID, wantAlias, wantHuggingFace)
 	}
 	if fromModels[bestiary.NomenSchemeCanonical] != wantFromModelsCanonical {
-		t.Errorf("MintNominaFromModels canonical = %d, want %d (the 977 entities minus the 4 metadata-only standalones)",
+		t.Errorf("MintNominaFromModels canonical = %d, want %d (the 978 entities minus the 4 metadata-only standalones)",
 			fromModels[bestiary.NomenSchemeCanonical], wantFromModelsCanonical)
 	}
 }

@@ -248,7 +248,10 @@ func TestEntityRekey_CensusAccounted(t *testing.T) {
 	// merge into the real glm@5.1 and glm@5.2. Like the cortecs pins this is a MERGE (two
 	// keys retired, none renamed), so the count moves by exactly the number of phantoms
 	// retired and no more.
-	const wantEntities = 977
+	//
+	// 977 → 978 with the tts-1-hd identity split: "hd" becomes an IDENTITY modifier so
+	// tts@1{hd} splits off from tts@1 (a SPLIT: one key added, none renamed).
+	const wantEntities = 978
 	if got := len(bestiary.Entities()); got != wantEntities {
 		t.Errorf("registry census = %d entities, want %d — the eva and command-a-plus overrides "+
 			"must be renames (count unmoved) and the cortecs pins a 4-entity merge", got, wantEntities)

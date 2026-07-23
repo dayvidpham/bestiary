@@ -936,6 +936,7 @@ const (
 	Entity__Trinity__Large                                                = "trinity/large"
 	Entity__Trinity__Mini                                                 = "trinity/mini"
 	Entity__Tts__Version_1                                                = "tts@1"
+	Entity__Tts__Version_1__Hd                                            = "tts@1{hd}"
 	Entity__Ui__Size_7b                                                   = "ui#7b"
 	Entity__Universal                                                     = "universal"
 	Entity__Unslopnemo_12b__V4_1__Size_12b                                = "unslopnemo-12b/v4.1#12b"
@@ -1918,6 +1919,7 @@ var allEntityConstants = [...]string{
 	Entity__Trinity__Large,
 	Entity__Trinity__Mini,
 	Entity__Tts__Version_1,
+	Entity__Tts__Version_1__Hd,
 	Entity__Ui__Size_7b,
 	Entity__Universal,
 	Entity__Unslopnemo_12b__V4_1__Size_12b,

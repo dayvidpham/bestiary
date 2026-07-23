@@ -200,15 +200,15 @@
         "family": "tts",
         "variant": "",
         "version": "1",
-        "mod": ""
+        "mod": "hd"
       },
       "classification": "must-pass",
       "provenance": {
         "source": "bug",
-        "ref": "vercel serves openai/tts-1-hd with upstream raw_family \"o\""
+        "ref": "vercel serves openai/tts-1-hd with upstream raw_family \"o\"; OpenAI documents tts-1-hd as a distinct higher-quality product (https://platform.openai.com/docs/models/tts-1-hd), so hd is an IDENTITY modifier and tts-1-hd is a different artifact from tts-1"
       },
       "mutation": {
-        "description": "the HD sibling lands on the same family via the same ledger entry; note it still shares tts@1 with tts-1, a pre-existing token-loss the family fix does not change"
+        "description": "the HD sibling lands on the same family via the same ledger entry, and its hd token is now peeled as an IDENTITY modifier so it keys as tts@1{hd}, distinct from tts@1 (tts-1) rather than wrongly sharing it"
       }
     },
     {
