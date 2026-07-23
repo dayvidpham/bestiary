@@ -1,5 +1,10 @@
 // Package bestiary provides a thin wrapper and CLI interface for the models.dev API.
 // It exposes types for AI model metadata and a local SQLite cache for offline use.
+// The single go:generate directive for the whole package lives here, in a
+// hand-owned file: generated files must not carry it, or `go generate ./...`
+// runs the generator once per generated file.
+//go:generate go run ./cmd/bestiary-gen --no-fetch
+
 package bestiary
 
 // ModelID is the canonical identifier for an AI model (e.g., "claude-3-5-sonnet-20241022").
