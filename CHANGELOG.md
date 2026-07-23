@@ -368,6 +368,12 @@ for its **Go module tags** (`vX.Y.Z`).
   is byte-identical to the key (census-fenced). Loud codegen validators reject
   malformed or colliding seed entries.
 
+### Added (tooling)
+- **Makefile**: `make build` / `test` / `vet` / `fmt` / `generate` / `gates` /
+  `install` encode the project's invocation discipline (`CGO_ENABLED=0
+  GOWORK=off`) once; `make gates` is the full pre-commit suite including the
+  regen-is-byte-clean check.
+
 ### Testing
 - Fixture-extraction completion: corpus census 65 → 102 (every remaining
   targeted inline table migrated 1:1 under the three-guard discipline);
