@@ -12,8 +12,8 @@ import (
 // The curated-claims ARCHIVE POLICY, enforced at load.
 //
 // Every source_url in nomen_claims.json must be an archive.org snapshot of the
-// claimant page, captured when the claim was created. See Nomen.SourceURL for the
-// rationale; the short form is that a claim is evidence of what a lab published, and
+// claimant page, captured when the claim was created. See NomenAttestation.SourceURL
+// for the rationale; the short form is that a claim is evidence of what a lab published, and
 // live model cards and docs pages are edited and deleted without notice.
 //
 // The failure disciplines here are deliberately split, matching the lineage.go
@@ -74,6 +74,11 @@ type nomenClaimJSON struct {
 	ResolveTo nomenClaimRefJSON `json:"resolves_to"`
 	SourceURL string            `json:"source_url"`
 	SourceID  string            `json:"source_id,omitempty"`
+	// Authority is whose VOICE the claimed evidence document is (primary/secondary).
+	// It defaults to "primary" when omitted: a curated alias is typically the lab or
+	// vendor declaring a naming for its own model (the grok-beta = xAI case). Any
+	// AttestationAuthority wire token is accepted.
+	Authority string `json:"authority,omitempty"`
 }
 
 // nomenClaimsFileJSON is the top-level shape of parse/data/nomen_claims.json.
@@ -238,13 +243,33 @@ func parseNomenClaims(raw []byte) (*nomenClaimsTable, error) {
 			source = DataSourceID(s)
 		}
 
+		// Authority defaults to Primary (a curated alias is typically the lab
+		// declaring a naming for its own model); any wire token overrides it.
+		authority := AuthorityPrimary
+		if s := strings.TrimSpace(c.Authority); s != "" {
+			if err := authority.UnmarshalText([]byte(s)); err != nil {
+				return nil, fmt.Errorf(
+					"bestiary nomen: invalid claim #%d (value=%q): %w\n"+
+						"  Where: parse/data/nomen_claims.json claims[%d].authority\n"+
+						"  How to fix: use a known authority token (primary, secondary)",
+					i, value, err, i,
+				)
+			}
+		}
+
+		// A curated claim is ONE attestation (§3.2): its evidence document is the
+		// claimant SourceURL, read through the curated ingest, Method=Curated.
 		tbl.claims = append(tbl.claims, Nomen{
 			Value:      value,
 			Scheme:     scheme,
 			Status:     status,
 			ResolvesTo: ref,
-			SourceURL:  strings.TrimSpace(c.SourceURL),
-			Source:     source,
+			Attestations: []NomenAttestation{{
+				SourceURL: strings.TrimSpace(c.SourceURL),
+				Source:    source,
+				Authority: authority,
+				Method:    IngestMethodCurated,
+			}},
 		})
 	}
 
@@ -277,40 +302,47 @@ func nomenLookupIndex() map[string][]Nomen {
 	return nomenIndex
 }
 
-// ValidateNomina is the LOUD codegen guard: it fails if two nomina share the same
-// primary-key triple (value, scheme, entity_key) but disagree on their other fields
-// (status, source_url, source). A same-triple CONFLICT is a curation error that must
-// never be resolved by last-write-wins — the store's PK would silently collapse the
-// rows, so the bake refuses. An exact-duplicate triple with identical fields is a
-// harmless no-op (idempotent) and is allowed. Codegen calls this over MintNomina's
-// output; the runtime never does (it degrades).
+// ValidateNomina is the LOUD codegen guard, with the v0.2.8 INVERTED semantics: a
+// same-triple (value, scheme, entity_key) disagreement is a conflict ONLY when the
+// records disagree on Status — bestiary's single editorial judgment per name. Two
+// records sharing the triple but carrying DIFFERENT attesters (SourceURL / Source /
+// Authority / Method) are LEGAL: they union into one Nomen's multi-attestation set
+// (the v0.2.8 lift; formerly this was a conflict). This is exactly coalesceNomina's
+// discipline, so the guard delegates the union-and-Status-check to it, then verifies
+// the structural invariants each coalesced Nomen must satisfy:
+//   - at least ONE attestation (a name with no evidence is a defect);
+//   - no BYTE-IDENTICAL duplicate attestation (coalesce dedups, so a survivor is a
+//     bug in the union path).
+//
+// Codegen calls this over MintNomina's output, aborting the bake on conflict; the
+// runtime never does (it degrades via coalesceNominaOrRaw).
 func ValidateNomina(nomina []Nomen) error {
-	type pk struct {
-		value  string
-		scheme NomenScheme
-		entity string
+	coalesced, err := coalesceNomina(nomina)
+	if err != nil {
+		return err
 	}
-	seen := make(map[pk]Nomen, len(nomina))
-	for _, n := range nomina {
-		key := pk{value: n.Value, scheme: n.Scheme, entity: n.ResolvesTo.String()}
-		prev, dup := seen[key]
-		if !dup {
-			seen[key] = n
-			continue
-		}
-		if prev.Status != n.Status || prev.SourceURL != n.SourceURL || prev.Source != n.Source {
+	for _, n := range coalesced {
+		if len(n.Attestations) == 0 {
 			return fmt.Errorf(
-				"bestiary nomen: same-triple claim conflict\n"+
-					"  What: two nomina share the PK triple (value=%q, scheme=%q, entity_key=%q) but disagree\n"+
-					"  First:  status=%q source_url=%q source=%q\n"+
-					"  Second: status=%q source_url=%q source=%q\n"+
-					"  Where: MintNomina output (nomen_claims.json curation and/or the minted provider-ID/canonical set)\n"+
-					"  Why: the store PK (value,scheme,entity_key) would silently collapse these rows (last-write-wins), losing a distinct assertion\n"+
-					"  How to fix: reconcile the conflicting claim in parse/data/nomen_claims.json, or split it onto a distinct entity",
-				key.value, key.scheme.String(), key.entity,
-				prev.Status.String(), prev.SourceURL, prev.Source,
-				n.Status.String(), n.SourceURL, n.Source,
+				"bestiary nomen: nomen carries no attestation\n"+
+					"  What: the nomen (value=%q, scheme=%q, entity_key=%q) has an empty Attestations set\n"+
+					"  Where: ValidateNomina over the minted nomen set\n"+
+					"  Why: every naming must carry >=1 piece of evidence (its provenance)\n"+
+					"  How to fix: ensure the mint site or curated claim attaches at least one NomenAttestation",
+				n.Value, n.Scheme.String(), n.ResolvesTo.String(),
 			)
+		}
+		for i := 1; i < len(n.Attestations); i++ {
+			if n.Attestations[i] == n.Attestations[i-1] {
+				return fmt.Errorf(
+					"bestiary nomen: duplicate attestation survived coalesce\n"+
+						"  What: the nomen (value=%q, scheme=%q, entity_key=%q) carries a byte-identical duplicate attestation\n"+
+						"  Where: ValidateNomina over the coalesced nomen set\n"+
+						"  Why: coalesceNomina dedups byte-identical attestations, so a survivor indicates a union-path defect\n"+
+						"  How to fix: investigate coalesceNomina/sortAndDedupAttestations",
+					n.Value, n.Scheme.String(), n.ResolvesTo.String(),
+				)
+			}
 		}
 	}
 	return nil

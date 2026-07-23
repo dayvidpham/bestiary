@@ -1367,6 +1367,42 @@ func (s *Store) UpsertEntitySources(ctx context.Context, sources []EntitySource)
 	return nil
 }
 
+// primaryAttestation is the transitional single-attestation bridge accessor:
+// replaced by the v8 nomen_attestations child-table migration. It returns a nomen's
+// first (primary) attestation — the one the v7 nomina row can persist in its lone
+// source_url/source_id column pair — or a zero-value attestation when the set is
+// empty (defensive; a well-formed nomen always carries >=1).
+func primaryAttestation(n Nomen) NomenAttestation {
+	if len(n.Attestations) == 0 {
+		return NomenAttestation{}
+	}
+	return n.Attestations[0]
+}
+
+// bridgeAttestationKind is the transitional single-attestation bridge reconstructor:
+// replaced by the v8 nomen_attestations child-table migration. The v7 nomina row has
+// no authority/method columns, so on read it DERIVES them from (scheme, source) per
+// the §3.2 defaults table where the nomen kind is determinable, else leaves them at
+// the Unknown zero — never a guess. The v8 child table persists these losslessly and
+// makes this reconstruction unnecessary.
+func bridgeAttestationKind(scheme NomenScheme, source DataSourceID) (AttestationAuthority, IngestMethod) {
+	// A curated ingest is Method=Curated regardless of scheme (an alias or a
+	// huggingface-scheme name can both arrive through the curated layer).
+	if source == DataSourceCurated {
+		return AuthorityPrimary, IngestMethodCurated
+	}
+	switch scheme {
+	case NomenSchemeCanonical:
+		return AuthorityPrimary, IngestMethodSelfMinted
+	case NomenSchemeProviderID:
+		return AuthoritySecondary, IngestMethodHarvested
+	case NomenSchemeHuggingFace:
+		return AuthorityPrimary, IngestMethodHarvested
+	default:
+		return AuthorityUnknown, IngestMethodUnknown
+	}
+}
+
 // UpsertNomina writes the naming rows into the v7 nomina table in a single
 // transaction. Each row is a per-triple IDEMPOTENT insert keyed by the primary key
 // (value, scheme, entity_key): INSERT OR IGNORE, so re-persisting the same triple is
@@ -1394,14 +1430,20 @@ func (s *Store) UpsertNomina(ctx context.Context, nomina []Nomen) error {
 	) VALUES (?1, ?2, ?3, ?4, ?5, ?6)`
 	for i := range nomina {
 		n := &nomina[i]
+		// transitional single-attestation bridge: replaced by the v8 nomen_attestations
+		// child-table migration. The v7 nomina row has only source_url/source_id
+		// columns, so it can persist a single attestation; the primary (first) one is
+		// written. Byte-correct while every nomen carries exactly one attestation; the
+		// v8 child table carries the full multi-attestation set.
+		at := primaryAttestation(*n)
 		err = sqlitex.Execute(s.conn, nomenSQL, &sqlitex.ExecOptions{
 			Args: []any{
 				n.Value,
 				n.Scheme.String(),
 				n.ResolvesTo.String(),
 				n.Status.String(),
-				n.SourceURL,
-				string(n.Source),
+				at.SourceURL,
+				string(at.Source),
 			},
 		})
 		if err != nil {
@@ -1410,7 +1452,7 @@ func (s *Store) UpsertNomina(ctx context.Context, nomina []Nomen) error {
 				"  Why: most likely the source_id foreign key has no matching data_sources row\n"+
 				"  Where: store.go UpsertNomina, nomina insert\n"+
 				"  How to fix: call UpsertDataSources with the DataSource for %q before persisting nomina attributed to it",
-				n.Value, n.Scheme.String(), n.ResolvesTo.String(), err, n.Source)
+				n.Value, n.Scheme.String(), n.ResolvesTo.String(), err, at.Source)
 		}
 	}
 
@@ -1436,13 +1478,26 @@ func (s *Store) QueryNomina(ctx context.Context) ([]Nomen, error) {
 				scheme = NomenSchemeOther
 			}
 			status, _ := parseRating(strings.ToLower(stmt.GetText("status")))
+			// transitional single-attestation bridge: replaced by the v8
+			// nomen_attestations child-table migration. The v7 nomina row carries
+			// only source_url/source_id, so a single attestation is reconstructed;
+			// Authority/Method are DERIVED from (scheme, source) per the §3.2 defaults
+			// where the kind is determinable, else left at their Unknown zero — never
+			// guessed. IngestedAt has no v7 column, so it is honestly "". The v8 child
+			// table carries these fields losslessly.
+			sourceID := DataSourceID(stmt.GetText("source_id"))
+			authority, method := bridgeAttestationKind(scheme, sourceID)
 			out = append(out, Nomen{
 				Value:      stmt.GetText("value"),
 				Scheme:     scheme,
 				Status:     status,
 				ResolvesTo: parseEntityKey(stmt.GetText("entity_key")),
-				SourceURL:  stmt.GetText("source_url"),
-				Source:     DataSourceID(stmt.GetText("source_id")),
+				Attestations: []NomenAttestation{{
+					SourceURL: stmt.GetText("source_url"),
+					Source:    sourceID,
+					Authority: authority,
+					Method:    method,
+				}},
 			})
 			return nil
 		},

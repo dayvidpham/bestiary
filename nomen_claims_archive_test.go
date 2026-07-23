@@ -88,20 +88,24 @@ func TestNomenClaims_SourceURLsAreArchiveSnapshots(t *testing.T) {
 func TestNomina_ClaimAttributionIsArchived(t *testing.T) {
 	attributed := 0
 	for _, n := range bestiary.Nomina() {
-		if n.SourceURL == "" {
-			// Bestiary-minted nomina (canonical keys, provider-ID spellings) assert
-			// themselves and carry no claimant.
-			continue
-		}
-		attributed++
-		if !archiveSnapshotRe.MatchString(n.SourceURL) {
-			t.Errorf("nomen %q (scheme %v) carries claimant SourceURL %q, want an archive.org snapshot; "+
-				"every curated claim must cite durable evidence", n.Value, n.Scheme, n.SourceURL)
+		// v0.2.8: claim attribution is per-attestation. Walk every attestation and
+		// hold each claimant SourceURL to the archive policy.
+		for _, at := range n.Attestations {
+			if at.SourceURL == "" {
+				// Bestiary-minted nomina (canonical keys, provider-ID spellings) assert
+				// themselves and carry no claimant.
+				continue
+			}
+			attributed++
+			if !archiveSnapshotRe.MatchString(at.SourceURL) {
+				t.Errorf("nomen %q (scheme %v) carries claimant SourceURL %q, want an archive.org snapshot; "+
+					"every curated claim must cite durable evidence", n.Value, n.Scheme, at.SourceURL)
+			}
 		}
 	}
 	if attributed == 0 {
 		t.Fatal("no minted nomen carries a claimant SourceURL; the curated claims did not load and this fence " +
 			"would pass vacuously")
 	}
-	t.Logf("archive policy verified on %d claim-attributed nomina", attributed)
+	t.Logf("archive policy verified on %d claim-attributed attestations", attributed)
 }

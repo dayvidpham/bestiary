@@ -65,23 +65,30 @@ func TestNomenLookup_HuggingFaceSeeds(t *testing.T) {
 			if n.Status != bestiary.AcceptabilityAdmitted {
 				t.Errorf("%q status = %v, want admitted", seed.repo, n.Status)
 			}
-			if n.Source != bestiary.DataSourceCurated {
-				t.Errorf("%q ingest source = %q, want the curated claim file", seed.repo, n.Source)
+			// v0.2.8: provenance is per-attestation; this curated HF seed carries one.
+			// (Reading HF provenance fully off the attestation is the store-v8/HF-bot
+			// slice's EXTEND; here it is the minimal single-attestation re-pin.)
+			if len(n.Attestations) != 1 {
+				t.Fatalf("%q carries %d attestations, want 1", seed.repo, len(n.Attestations))
 			}
-			if n.SourceURL != seed.sourceURL {
-				t.Errorf("%q claimant SourceURL = %q, want the pinned archive snapshot %q", seed.repo, n.SourceURL, seed.sourceURL)
+			at := n.Attestations[0]
+			if at.Source != bestiary.DataSourceCurated {
+				t.Errorf("%q ingest source = %q, want the curated claim file", seed.repo, at.Source)
+			}
+			if at.SourceURL != seed.sourceURL {
+				t.Errorf("%q claimant SourceURL = %q, want the pinned archive snapshot %q", seed.repo, at.SourceURL, seed.sourceURL)
 			}
 			// The policy's own justification, asserted rather than assumed: the
 			// snapshot is durable AND self-describing — the live Hub model card the
 			// claim was read from is recoverable verbatim from the snapshot's tail,
 			// which is why no separate archive_url field exists.
-			if !strings.HasPrefix(n.SourceURL, archiveSnapshotPrefix) {
+			if !strings.HasPrefix(at.SourceURL, archiveSnapshotPrefix) {
 				t.Errorf("%q claimant SourceURL = %q, want an %s snapshot: a curated claim must cite durable evidence, not a live page",
-					seed.repo, n.SourceURL, archiveSnapshotPrefix)
+					seed.repo, at.SourceURL, archiveSnapshotPrefix)
 			}
-			if live := "https://huggingface.co/" + seed.repo; !strings.HasSuffix(n.SourceURL, live) {
+			if live := "https://huggingface.co/" + seed.repo; !strings.HasSuffix(at.SourceURL, live) {
 				t.Errorf("%q snapshot %q does not end in the original claimant URL %q; the live address must stay recoverable from the value itself",
-					seed.repo, n.SourceURL, live)
+					seed.repo, at.SourceURL, live)
 			}
 		}
 		if !found {

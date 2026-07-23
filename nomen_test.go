@@ -88,6 +88,14 @@ func TestNomina_CensusExact(t *testing.T) {
 		wantHuggingFace = 4
 		wantTotal       = wantCanonical + wantProviderID + wantAlias + wantHuggingFace
 	)
+	// v0.2.8 multi-attestation lift is CENSUS-NEUTRAL: coalesceNomina groups by the
+	// (Value, Scheme, ResolvesTo) triple, and the shipped single-source set has NO
+	// duplicate triples (mintEntityNomina dedups provider-IDs within an entity; distinct
+	// entities never share an entity_key; the alias scheme collides with no minted
+	// scheme). So every input row survives as exactly one coalesced Nomen carrying one
+	// attestation — 958 + 2834 + 1 + 4 = 3797, unchanged from v0.2.7. The counts move
+	// only when a NEW attester (the HF bot / OCI mint, later slices) lands, not from the
+	// attestation refactor itself.
 	all := bestiary.MintNomina(bestiary.Entities())
 	if len(all) != wantTotal {
 		t.Errorf("MintNomina total = %d, want %d", len(all), wantTotal)
@@ -131,7 +139,13 @@ func TestNomina_CensusExact(t *testing.T) {
 
 // TestNomina_DeterministicSortedEmission verifies INV3 for the mint output: the
 // slice is sorted by (Value, Scheme, entity key) and two mint calls are byte-order
-// identical (no reliance on map iteration order).
+// identical (no reliance on map iteration order). It is EXTENDED for the v0.2.8
+// multi-attestation lift: the former top-level SourceURL/Source scalars are gone, so
+// the guard now walks each nomen's COALESCED Attestations slice and asserts the two
+// mint calls agree element-for-element on every attestation field — pinning the TOTAL
+// attestation sort order (Source, SourceURL, Authority, Method, IngestedAt), the B2
+// determinism fix's actual guard. Comparing only the top-level scalars (as this test
+// once did) would leave the new attestation ordering unpinned.
 func TestNomina_DeterministicSortedEmission(t *testing.T) {
 	a := bestiary.MintNomina(bestiary.Entities())
 	b := bestiary.MintNomina(bestiary.Entities())
@@ -141,8 +155,21 @@ func TestNomina_DeterministicSortedEmission(t *testing.T) {
 	for i := range a {
 		if a[i].Value != b[i].Value || a[i].Scheme != b[i].Scheme ||
 			a[i].ResolvesTo.String() != b[i].ResolvesTo.String() ||
-			a[i].Status != b[i].Status || a[i].SourceURL != b[i].SourceURL || a[i].Source != b[i].Source {
+			a[i].Status != b[i].Status {
 			t.Fatalf("mint output nondeterministic at %d: %+v vs %+v", i, a[i], b[i])
+		}
+		// EXTEND: the attestation set must be identical across the two mint calls,
+		// element-for-element on every field — the TOTAL sort key is what makes this
+		// deterministic (equal-key ⇒ byte-identical ⇒ deduped ⇒ stably ordered).
+		if len(a[i].Attestations) != len(b[i].Attestations) {
+			t.Fatalf("attestation count nondeterministic at %d (%q): %d vs %d",
+				i, a[i].Value, len(a[i].Attestations), len(b[i].Attestations))
+		}
+		for j := range a[i].Attestations {
+			if a[i].Attestations[j] != b[i].Attestations[j] {
+				t.Fatalf("attestation nondeterministic at nomen %d (%q) attestation %d: %+v vs %+v",
+					i, a[i].Value, j, a[i].Attestations[j], b[i].Attestations[j])
+			}
 		}
 		if i > 0 {
 			prev, cur := a[i-1], a[i]
@@ -150,6 +177,18 @@ func TestNomina_DeterministicSortedEmission(t *testing.T) {
 				t.Fatalf("not sorted by value at %d: %q > %q", i, prev.Value, cur.Value)
 			}
 		}
+	}
+	// The guard must not pass vacuously: at least one nomen must actually carry an
+	// attestation (every minted nomen does, exactly one on shipped single-source data).
+	sawAttestation := false
+	for i := range a {
+		if len(a[i].Attestations) > 0 {
+			sawAttestation = true
+			break
+		}
+	}
+	if !sawAttestation {
+		t.Fatal("no minted nomen carries an attestation; the extended guard would pass vacuously")
 	}
 }
 
@@ -161,22 +200,38 @@ func TestNomina_ValidateNoConflict(t *testing.T) {
 	}
 }
 
-// TestNomina_SameTripleConflict_Loud is the NEGATIVE CONTROL: two nomina sharing the
-// PK triple (value, scheme, entity_key) but disagreeing on status MUST fail the guard
-// loudly (never last-write-wins). A crafted duplicate is required so the guard is not
-// vacuously green.
+// TestNomina_SameTripleConflict_Loud is the NEGATIVE CONTROL with the v0.2.8 INVERTED
+// semantics: a same-triple (value, scheme, entity_key) disagreement is a LOUD conflict
+// ONLY on Status (bestiary's single editorial judgment). Two records sharing the triple
+// but carrying DIFFERENT attesters are now LEGAL — they union into one nomen's
+// multi-attestation set — where the v1 guard rejected them. A crafted duplicate keeps
+// the guard non-vacuous.
 func TestNomina_SameTripleConflict_Loud(t *testing.T) {
 	ref := bestiary.EntityRef{Family: "grok", Version: "4.20", Modifier: []string{"reasoning"}}
+	at := func(url string) []bestiary.NomenAttestation {
+		return []bestiary.NomenAttestation{{SourceURL: url, Source: bestiary.DataSourceModelsDev, Authority: bestiary.AuthorityPrimary, Method: bestiary.IngestMethodCurated}}
+	}
+	// Same triple, DIFFERING Status → LOUD (never last-write-wins).
 	conflict := []bestiary.Nomen{
-		{Value: "grok-beta", Scheme: bestiary.NomenSchemeAlias, Status: bestiary.AcceptabilityAdmitted, ResolvesTo: ref, SourceURL: "https://a", Source: bestiary.DataSourceModelsDev},
-		{Value: "grok-beta", Scheme: bestiary.NomenSchemeAlias, Status: bestiary.AcceptabilityPreferred, ResolvesTo: ref, SourceURL: "https://b", Source: bestiary.DataSourceModelsDev},
+		{Value: "grok-beta", Scheme: bestiary.NomenSchemeAlias, Status: bestiary.AcceptabilityAdmitted, ResolvesTo: ref, Attestations: at("https://a")},
+		{Value: "grok-beta", Scheme: bestiary.NomenSchemeAlias, Status: bestiary.AcceptabilityPreferred, ResolvesTo: ref, Attestations: at("https://b")},
 	}
 	err := bestiary.ValidateNomina(conflict)
 	if err == nil {
-		t.Fatal("ValidateNomina accepted a same-triple conflict; want a loud error")
+		t.Fatal("ValidateNomina accepted a same-triple Status conflict; want a loud error")
 	}
 	if !strings.Contains(err.Error(), "same-triple") {
 		t.Errorf("conflict error is not actionable about the triple: %v", err)
+	}
+
+	// Same triple, SAME Status, DIFFERENT attester → LEGAL append (the v0.2.8 invert:
+	// this pairing was a conflict in v1). ValidateNomina must accept it.
+	legal := []bestiary.Nomen{
+		{Value: "grok-beta", Scheme: bestiary.NomenSchemeAlias, Status: bestiary.AcceptabilityAdmitted, ResolvesTo: ref, Attestations: at("https://a")},
+		{Value: "grok-beta", Scheme: bestiary.NomenSchemeAlias, Status: bestiary.AcceptabilityAdmitted, ResolvesTo: ref, Attestations: at("https://b")},
+	}
+	if err := bestiary.ValidateNomina(legal); err != nil {
+		t.Errorf("ValidateNomina rejected a same-triple/same-Status differing-attester pairing (now legal): %v", err)
 	}
 
 	// An EXACT-duplicate triple (identical fields) is a harmless idempotent no-op and
@@ -188,9 +243,12 @@ func TestNomina_SameTripleConflict_Loud(t *testing.T) {
 }
 
 // TestNomenLookup_GrokBeta is the grok-beta worked example: the curated xAI alias
-// claim resolves to the real grok@4.20{reasoning} entity, is Admitted, and carries
-// claim attribution (SourceURL = the xAI page) DISTINCT from Source (the curated
-// ingest we read it from) — the SourceURL-vs-Source discipline demonstrated end-to-end.
+// claim resolves to the real grok@4.20{reasoning} entity, is Admitted, and carries a
+// single NomenAttestation whose claim attribution (SourceURL = the xAI page) is
+// DISTINCT from its Source (the curated ingest we read it from) — the
+// SourceURL-vs-Source discipline, now recorded per-attestation, demonstrated
+// end-to-end. len==1 is re-pinned CONSCIOUSLY: still ONE Nomen for grok-beta, now
+// carrying its one attestation.
 func TestNomenLookup_GrokBeta(t *testing.T) {
 	matches, ok := bestiary.NomenLookup("grok-beta")
 	if !ok || len(matches) != 1 {
@@ -206,22 +264,32 @@ func TestNomenLookup_GrokBeta(t *testing.T) {
 	if got := n.ResolvesTo.String(); got != "grok@4.20{reasoning}" {
 		t.Errorf("grok-beta resolves to %q, want grok@4.20{reasoning}", got)
 	}
+	// The curated claim mints exactly ONE attestation.
+	if len(n.Attestations) != 1 {
+		t.Fatalf("grok-beta carries %d attestations, want exactly 1 (the single curated claim)", len(n.Attestations))
+	}
+	at := n.Attestations[0]
 	// Claim attribution is pinned to the exact archive.org SNAPSHOT of the xAI docs
-	// page, per the curated-claims archive policy (see Nomen.SourceURL). This
-	// assertion previously matched the live URL loosely (strings.Contains "x.ai"),
-	// which the snapshot URL still satisfies — so it was re-pinned to the exact value
-	// when the policy landed, rather than left silently passing.
+	// page, per the curated-claims archive policy (see NomenAttestation.SourceURL).
 	const grokBetaClaimantSnapshot = "https://web.archive.org/web/20260204041847/https://docs.x.ai/docs/models"
-	if n.SourceURL != grokBetaClaimantSnapshot {
-		t.Errorf("grok-beta SourceURL = %q, want the archived xAI claimant page %q", n.SourceURL, grokBetaClaimantSnapshot)
+	if at.SourceURL != grokBetaClaimantSnapshot {
+		t.Errorf("grok-beta SourceURL = %q, want the archived xAI claimant page %q", at.SourceURL, grokBetaClaimantSnapshot)
 	}
 	// The original claimant address stays recoverable from the snapshot itself —
 	// which is why the policy adds no separate archive_url field.
-	if !strings.HasSuffix(n.SourceURL, "https://docs.x.ai/docs/models") {
-		t.Errorf("grok-beta SourceURL = %q does not end in the original xAI claimant URL", n.SourceURL)
+	if !strings.HasSuffix(at.SourceURL, "https://docs.x.ai/docs/models") {
+		t.Errorf("grok-beta SourceURL = %q does not end in the original xAI claimant URL", at.SourceURL)
 	}
-	if n.Source != bestiary.DataSourceCurated {
-		t.Errorf("grok-beta Source = %q, want curated (the honest ingest — read from bestiary's own claim file, distinct from the xAI claimant)", n.Source)
+	if at.Source != bestiary.DataSourceCurated {
+		t.Errorf("grok-beta Source = %q, want curated (the honest ingest — read from bestiary's own claim file, distinct from the xAI claimant)", at.Source)
+	}
+	// The curated alias defaults to Primary authority (xAI declaring its own model's
+	// naming), Curated method (read from bestiary's own claim file).
+	if at.Authority != bestiary.AuthorityPrimary {
+		t.Errorf("grok-beta attestation authority = %v, want primary (the lab declaring its own naming)", at.Authority)
+	}
+	if at.Method != bestiary.IngestMethodCurated {
+		t.Errorf("grok-beta attestation method = %v, want curated (from the committed claim seed)", at.Method)
 	}
 	// The alias target must be a real entity, so the CLI can show it end-to-end.
 	if _, exists := bestiary.EntityByTuple("grok", "", "4.20", "", "reasoning"); !exists {
