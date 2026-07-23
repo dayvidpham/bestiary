@@ -1,10 +1,10 @@
 {
   "total_records": 4979,
-  "changed_count": 1303,
+  "changed_count": 1307,
   "cat_a_divergence_fix_count": 326,
-  "cat_b_improvement_count": 944,
+  "cat_b_improvement_count": 945,
   "cat_c_unexpected_regression_count": 0,
-  "justified_exception_count": 33,
+  "justified_exception_count": 36,
   "id_tuple4_incl_modifier_divergence_frozen_before": 81,
   "id_tuple4_incl_modifier_divergence_current_after": 13,
   "divergence_metric": "4-tuple INCL Modifier (Family,Variant,Version,Modifier); before=frozen baseline, after=current snapshot. DISTINCT from the authoritative cross-provider divergenceExact gate (3-tuple, EXCL Modifier, current snapshot, =0).",
@@ -4749,6 +4749,15 @@
       "raw_family": "",
       "before": "(family=\"claude\",variant=\"sonnet\",version=\"4\",modifier=\"\")",
       "after": "(family=\"claude\",variant=\"sonnet\",version=\"4\",modifier=\"thinking\")",
+      "category": "b:improvement",
+      "reason": "strict enrichment — only previously-empty field(s) populated"
+    },
+    {
+      "provider": "cohere",
+      "id": "command-a-translate-08-2025",
+      "raw_family": "command-a",
+      "before": "(family=\"command\",variant=\"a\",version=\"\",modifier=\"\")",
+      "after": "(family=\"command\",variant=\"a\",version=\"\",modifier=\"translate\")",
       "category": "b:improvement",
       "reason": "strict enrichment — only previously-empty field(s) populated"
     },
@@ -11528,6 +11537,33 @@
       "after": "(family=\"claude\",variant=\"opus\",version=\"4.7\",modifier=\"\")",
       "category": "justified-exception",
       "reason": "JUSTIFIED: USER-RATIFIED cortecs glued-version correction: cortecs glues the major version onto the VARIANT token, so claude-opus4-7 is Opus 4.7 - not an Opus 7. Every other provider spells this model claude-opus-4-7, and cortecs' own release date for the row (2026-04-16) is the real 4.7 launch date, so the reading is evidence-backed rather than inferred. Left alone the mis-read minted a PHANTOM claude/opus@7 entity holding this single cortecs instance while stranding it away from the real claude/opus@4.7 entity that carries every other provider; the pin merges it back. Curated pins rather than a general glued-token rule: a catalog sweep found cortecs is the only emitter of the variant-glued shape (the other 30 \u003cletters\u003e\u003cdigit\u003e-\u003cdigit\u003e ids glue the digit onto the FAMILY, a different reading a variant-targeted rule must not touch)."
+    },
+    {
+      "provider": "togetherai",
+      "id": "deepseek-ai/DeepSeek-V3-1",
+      "raw_family": "deepseek",
+      "before": "(family=\"deepseek\",variant=\"\",version=\"1\",modifier=\"\")",
+      "after": "(family=\"deepseek\",variant=\"v3.1\",version=\"\",modifier=\"\")",
+      "category": "justified-exception",
+      "reason": "JUSTIFIED: EVIDENCE-BACKED dot-lost repair: the org-prefixed deepseek-ai/DeepSeek-V3-1 (togetherai) is the same DeepSeek-V3.1 model; the pin converges it onto deepseek/v3.1 alongside the dotted spellings instead of a phantom deepseek@1."
+    },
+    {
+      "provider": "alibaba-cn",
+      "id": "deepseek-v3-1",
+      "raw_family": "deepseek",
+      "before": "(family=\"deepseek\",variant=\"\",version=\"1\",modifier=\"\")",
+      "after": "(family=\"deepseek\",variant=\"v3.1\",version=\"\",modifier=\"\")",
+      "category": "justified-exception",
+      "reason": "JUSTIFIED: EVIDENCE-BACKED dot-lost repair: DeepSeek-V3.1 is a real release (https://api-docs.deepseek.com/news/news250929); the dash-glued deepseek-v3-1 lost the dot and minted a phantom deepseek@1. The pin converges it onto deepseek/v3.1 (10 serving instances), the same identity the dotted deepseek-v3.1 spelling resolves to."
+    },
+    {
+      "provider": "alibaba-cn",
+      "id": "deepseek-v3-2-exp",
+      "raw_family": "deepseek",
+      "before": "(family=\"deepseek\",variant=\"\",version=\"2\",modifier=\"\")",
+      "after": "(family=\"deepseek\",variant=\"v3.2-exp\",version=\"\",modifier=\"\")",
+      "category": "justified-exception",
+      "reason": "JUSTIFIED: EVIDENCE-BACKED dot-lost repair: DeepSeek-V3.2-Exp is a real release (https://api-docs.deepseek.com/news/news250929); the dash-glued deepseek-v3-2-exp lost the dot and minted a phantom deepseek@2. The pin converges it onto the served deepseek/v3.2-exp entity, the same identity the dotted deepseek-v3.2-exp spelling resolves to."
     },
     {
       "provider": "nano-gpt",
