@@ -276,21 +276,30 @@ func TestEntityRekey_CensusAccounted(t *testing.T) {
 //
 // It pins the EXACT set of 8 merge pairs (the whole authored table), asserts each fold is
 // a pure MERGE (the bare key is gone from Entities(), a bare EXPRESSION resolves through
-// the alias to the dotted entity, and the dotted entity's instance count is the sum of
-// both spellings' pre-fold instances), and guards the negative control: llama@4 has no
-// 4.0 sibling anywhere in the family, so it is NEVER touched — the fold is a merge, never
-// a rename that would mint a phantom @4.0 for it.
+// the alias to the dotted entity, and the dotted entity's instance count EQUALS THE SUM of
+// both spellings' pre-fold instances — so a merge that silently DROPPED an instance is
+// caught, not just a mis-key), and guards the negative control: llama@4 has no 4.0 sibling
+// anywhere in the family, so it is NEVER touched — the fold is a merge, never a rename that
+// would mint a phantom @4.0 for it.
 func TestEntityMerge_NToN0_MergeOnly(t *testing.T) {
-	// The complete authored merge table: bare key -> dotted key it folds into.
-	merges := map[string]string{
-		"claude/opus@4":   "claude/opus@4.0",
-		"claude/sonnet@4": "claude/sonnet@4.0",
-		"gemini/flash@3":  "gemini/flash@3.0",
-		"gemini/pro@3":    "gemini/pro@3.0",
-		"imagen@4":        "imagen@4.0",
-		"imagen@4{fast}":  "imagen@4.0{fast}",
-		"imagen/ultra@4":  "imagen/ultra@4.0",
-		"veo@3":           "veo@3.0",
+	// The complete authored merge table: bare key -> (dotted key it folds into, the SUM of
+	// both spellings' pre-fold instance counts). The wantInst figures are the pre-merge
+	// bare+dotted sums measured on the catalog immediately before the fold:
+	//   opus 21+1, sonnet 26+1, flash 28+1, pro 24+2, imagen 1+3, imagen{fast} 1+1,
+	//   ultra 1+1, veo 1+2.
+	type merge struct {
+		dotted   string
+		wantInst int
+	}
+	merges := map[string]merge{
+		"claude/opus@4":   {"claude/opus@4.0", 22},
+		"claude/sonnet@4": {"claude/sonnet@4.0", 27},
+		"gemini/flash@3":  {"gemini/flash@3.0", 29},
+		"gemini/pro@3":    {"gemini/pro@3.0", 26},
+		"imagen@4":        {"imagen@4.0", 4},
+		"imagen@4{fast}":  {"imagen@4.0{fast}", 2},
+		"imagen/ultra@4":  {"imagen/ultra@4.0", 2},
+		"veo@3":           {"veo@3.0", 3},
 	}
 
 	// The bare keys must be ABSENT from the entity set (they folded away, never renamed).
@@ -298,12 +307,12 @@ func TestEntityMerge_NToN0_MergeOnly(t *testing.T) {
 	for _, e := range bestiary.Entities() {
 		present[e.Ref.String()] = true
 	}
-	for bare, dotted := range merges {
+	for bare, m := range merges {
 		if present[bare] {
-			t.Errorf("bare key %q still exists as a distinct entity; it must fold into %q", bare, dotted)
+			t.Errorf("bare key %q still exists as a distinct entity; it must fold into %q", bare, m.dotted)
 		}
-		if !present[dotted] {
-			t.Errorf("dotted merge target %q is absent from the registry", dotted)
+		if !present[m.dotted] {
+			t.Errorf("dotted merge target %q is absent from the registry", m.dotted)
 		}
 		// A bare EXPRESSION must resolve through the fold to the dotted entity.
 		e, ok := bestiary.EntityByKey(bare)
@@ -311,8 +320,15 @@ func TestEntityMerge_NToN0_MergeOnly(t *testing.T) {
 			t.Errorf("EntityByKey(%q) = false; the bare spelling must resolve to the merged entity", bare)
 			continue
 		}
-		if got := e.Ref.String(); got != dotted {
-			t.Errorf("EntityByKey(%q) resolved to %q, want the merged entity %q", bare, got, dotted)
+		if got := e.Ref.String(); got != m.dotted {
+			t.Errorf("EntityByKey(%q) resolved to %q, want the merged entity %q", bare, got, m.dotted)
+		}
+		// PURE MERGE: the merged entity must carry EVERY instance of both spellings — the
+		// bare+dotted pre-fold sum. A regression that dropped a source row during re-keying
+		// would still land on the right key but fail here.
+		if got := len(e.Instances); got != m.wantInst {
+			t.Errorf("merged entity %q has %d instances, want %d (the bare+dotted pre-fold sum) — "+
+				"the fold must not drop or duplicate an instance", m.dotted, got, m.wantInst)
 		}
 	}
 
@@ -327,5 +343,44 @@ func TestEntityMerge_NToN0_MergeOnly(t *testing.T) {
 	}
 	if got := e.Ref.String(); got != "llama@4" {
 		t.Errorf("llama@4 was moved to %q; a lone bare-N line must be untouched", got)
+	}
+}
+
+// TestEntityMerge_NToN0_TupleInvariant is the general, catalog-guarding sweep of the
+// NormalizeEntityVersion invariant — distinct from the 8-pin integration table above and
+// from the coarser Series-level (Family, Generation) census. It asserts the full
+// entity-identity tuple property directly: NO published entity may carry a bare-integer
+// version N while ANOTHER entity exists with the IDENTICAL (family, variant, param-size,
+// identity-modifiers) tuple and version exactly "N.0". If both survived, the MERGE-only
+// fold failed to collapse them — the exact failure a future catalog change (a new variant
+// that spells both N and N.0) could introduce that the 8 fixed pins would not cover.
+func TestEntityMerge_NToN0_TupleInvariant(t *testing.T) {
+	ents := bestiary.Entities()
+	present := make(map[string]bool, len(ents))
+	for _, e := range ents {
+		present[e.Ref.String()] = true
+	}
+	for _, e := range ents {
+		v := e.Ref.Version
+		if v == "" {
+			continue
+		}
+		bareInt := true
+		for _, r := range v {
+			if r < '0' || r > '9' {
+				bareInt = false
+				break
+			}
+		}
+		if !bareInt {
+			continue
+		}
+		// Build the dotted-sibling key for the identical tuple.
+		dottedRef := e.Ref
+		dottedRef.Version = v + ".0"
+		if present[dottedRef.String()] {
+			t.Errorf("entity %q coexists with its dotted sibling %q — the MERGE-only N->N.0 fold "+
+				"must have collapsed them into one entity", e.Ref.String(), dottedRef.String())
+		}
 	}
 }
