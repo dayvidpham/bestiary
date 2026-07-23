@@ -435,7 +435,17 @@ func (e Entity) Nomina() []Nomen {
 			out = append(out, c)
 		}
 	}
-	sortNomina(out)
+	// Fold in any harvested HuggingFace nomen resolving to this entity (the same
+	// keep-never-drop fold as the curated claims; the harvested seed is a separate
+	// layer — see huggingface_nomina.go). coalesceNomina (applied by the callers
+	// building the full set) unions a curated + harvested same-triple HF name; at
+	// the single-entity projection level a duplicate triple simply coalesces.
+	for _, c := range hfNominaClaims() {
+		if c.ResolvesTo.String() == key {
+			out = append(out, c)
+		}
+	}
+	out = coalesceNominaOrRaw(out)
 	return out
 }
 
@@ -454,6 +464,7 @@ func MintNomina(entities []Entity) []Nomen {
 		out = append(out, mintEntityNomina(e)...)
 	}
 	out = append(out, loadNomenClaimsSafe().claims...)
+	out = append(out, hfNominaClaims()...)
 	return coalesceNominaOrRaw(out)
 }
 
@@ -555,6 +566,7 @@ func MintNominaFromModels(models []ModelInfo) []Nomen {
 		}
 	}
 	out = append(out, loadNomenClaimsSafe().claims...)
+	out = append(out, hfNominaClaims()...)
 	return coalesceNominaOrRaw(out)
 }
 

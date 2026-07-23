@@ -36,6 +36,15 @@ const (
 	// data source.
 	DataSourceOllama DataSourceID = "ollama"
 
+	// DataSourceHuggingFace identifies the HuggingFace Hub as the originating
+	// data source. It is the ingest a harvested HF org/repo naming was read from:
+	// the offline cmd/bestiary-hf bot fetches the Hub API and emits the harvested
+	// seed (parse/data/huggingface_nomina.json). An entity carrying an HF nomen
+	// DUAL-attests {models.dev, huggingface} — the ollama precedent (see the
+	// attestation rule below). The Hub is the PRIMARY authority for the huggingface
+	// naming scheme (a repo path is the lab's own published home for its weights).
+	DataSourceHuggingFace DataSourceID = "huggingface"
+
 	// DataSourceCurated identifies bestiary's own curated claim files (e.g.
 	// parse/data/nomen_claims.json) as the ingest a naming was read from. It is the
 	// honest Source for a curated third-party naming CLAIM: bestiary never read the

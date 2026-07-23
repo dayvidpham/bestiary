@@ -13,11 +13,13 @@ import (
 // present in the committed catalog.
 //
 // sourceURL is pinned as an archive.org SNAPSHOT of the Hub model card, per the curated
-// claims archive policy (see Nomen.SourceURL and the claim file's _comment): a claim is
-// evidence of what a lab published, and a Hub model card is edited and deleted without
-// notice, so a live URL silently stops attesting the claim. These assertions were
+// claims archive policy (see NomenAttestation.SourceURL and the claim file's _comment):
+// a claim is evidence of what a lab published, and a Hub model card is edited and deleted
+// without notice, so a live URL silently stops attesting the claim. These assertions were
 // previously "https://huggingface.co/" + repo — the live page — and were re-pinned when
-// the policy landed.
+// the policy landed. NOTE the archive-pin fence binds the CURATED layer (nomen_claims.json)
+// ONLY: the harvested HF layer (huggingface_nomina.json, cmd/bestiary-hf) cites the LIVE
+// repo URL and is Method=Harvested — see TestHuggingFaceNomina_* in huggingface_nomina_test.go.
 var hfSeedClaims = []struct {
 	repo      string
 	entityKey string
@@ -65,15 +67,25 @@ func TestNomenLookup_HuggingFaceSeeds(t *testing.T) {
 			if n.Status != bestiary.AcceptabilityAdmitted {
 				t.Errorf("%q status = %v, want admitted", seed.repo, n.Status)
 			}
-			// v0.2.8: provenance is per-attestation; this curated HF seed carries one.
-			// (Reading HF provenance fully off the attestation is the store-v8/HF-bot
-			// slice's EXTEND; here it is the minimal single-attestation bridge re-pin.)
+			// v0.2.8 EXTEND (HF-bot slice): provenance is per-attestation, and this test
+			// now reads HF provenance FULLY off the NomenAttestation — every provenance
+			// field (Source, SourceURL, Authority, Method), not merely the two the SLICE-1
+			// bridge pinned. These 4 seeds are CURATED (nomen_claims.json), so each carries
+			// exactly ONE curated attestation. A harvested HF attestation coalescing onto a
+			// curated same-triple name (the §11 case-3 union) is proven on constructed input
+			// in huggingface_nomina_test.go, independent of any live run.
 			if len(n.Attestations) != 1 {
-				t.Fatalf("%q carries %d attestations, want 1", seed.repo, len(n.Attestations))
+				t.Fatalf("%q carries %d attestations, want 1 (the curated seed)", seed.repo, len(n.Attestations))
 			}
 			at := n.Attestations[0]
 			if at.Source != bestiary.DataSourceCurated {
 				t.Errorf("%q ingest source = %q, want the curated claim file", seed.repo, at.Source)
+			}
+			if at.Method != bestiary.IngestMethodCurated {
+				t.Errorf("%q ingest method = %v, want curated (a nomen_claims.json seed is Method=Curated, NOT Harvested)", seed.repo, at.Method)
+			}
+			if at.Authority != bestiary.AuthorityPrimary {
+				t.Errorf("%q authority = %v, want primary (a lab naming its own model's Hub home)", seed.repo, at.Authority)
 			}
 			if at.SourceURL != seed.sourceURL {
 				t.Errorf("%q claimant SourceURL = %q, want the pinned archive snapshot %q", seed.repo, at.SourceURL, seed.sourceURL)
