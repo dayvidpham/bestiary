@@ -329,8 +329,12 @@ func TestEntityRef_NoMigrationDrift(t *testing.T) {
 
 	// (a) Census literals — pinned to the full-bulk re-key snapshot. A change here is
 	// an intentional re-key event, not incidental drift.
+	// 336 → 323 with the dot-lost version repair and the 1t param-size routing: the
+	// dot-lost merges fold sized qwen entities (qwen@2#Nb{instruct} → qwen@2.5#Nb{instruct},
+	// etc.) into their dotted siblings (net −N sized catalog entities), while 1t routing
+	// adds a handful of #1t entities (ling#1t, ring#1t) — the merges dominate, net −13.
 	const (
-		wantSizedCatalog    = 336
+		wantSizedCatalog    = 323
 		wantSizedStandalone = 4
 	)
 

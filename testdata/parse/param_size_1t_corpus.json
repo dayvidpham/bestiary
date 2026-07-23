@@ -1,0 +1,184 @@
+{
+  "cases": [
+    {
+      "name": "onet_inclusionai_ling_1t",
+      "input": {
+        "token": "",
+        "id": "inclusionai/ling-1t",
+        "provider": "zenmux"
+      },
+      "expected": {
+        "decoded": "",
+        "entity_key": "ling#1t"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "ref": "dot-lost/1t repair: inclusionai/ling-1t resolves to ling#1t",
+        "source": "bug"
+      },
+      "mutation": {
+        "description": "the corrected spelling for inclusionai/ling-1t now keys as ling#1t"
+      }
+    },
+    {
+      "name": "onet_inclusionai_ling_2_6_1t",
+      "input": {
+        "token": "",
+        "id": "inclusionai/ling-2.6-1t",
+        "provider": "kilo"
+      },
+      "expected": {
+        "decoded": "",
+        "entity_key": "ling@2.6#1t"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "ref": "dot-lost/1t repair: inclusionai/ling-2.6-1t resolves to ling@2.6#1t",
+        "source": "bug"
+      },
+      "mutation": {
+        "description": "the corrected spelling for inclusionai/ling-2.6-1t now keys as ling@2.6#1t"
+      }
+    },
+    {
+      "name": "onet_inclusionai_ring_1t",
+      "input": {
+        "token": "",
+        "id": "inclusionai/ring-1t",
+        "provider": "zenmux"
+      },
+      "expected": {
+        "decoded": "",
+        "entity_key": "ring#1t"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "ref": "dot-lost/1t repair: inclusionai/ring-1t resolves to ring#1t",
+        "source": "bug"
+      },
+      "mutation": {
+        "description": "the corrected spelling for inclusionai/ring-1t now keys as ring#1t"
+      }
+    },
+    {
+      "name": "onet_inclusionai_ring_2_6_1t",
+      "input": {
+        "token": "",
+        "id": "inclusionai/ring-2.6-1t",
+        "provider": "kilo"
+      },
+      "expected": {
+        "decoded": "",
+        "entity_key": "ring@2.6#1t"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "ref": "dot-lost/1t repair: inclusionai/ring-2.6-1t resolves to ring@2.6#1t",
+        "source": "bug"
+      },
+      "mutation": {
+        "description": "the corrected spelling for inclusionai/ring-2.6-1t now keys as ring@2.6#1t"
+      }
+    },
+    {
+      "name": "onet_Ling_1T_bailing",
+      "input": {
+        "token": "",
+        "id": "Ling-1T",
+        "provider": "bailing"
+      },
+      "expected": {
+        "decoded": "",
+        "entity_key": "ling#1t"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "ref": "dot-lost/1t repair: bailing Ling-1T resolves to ling#1t",
+        "source": "bug"
+      },
+      "mutation": {
+        "description": "the 1t size token for Ling-1T now keys as ling#1t"
+      }
+    },
+    {
+      "name": "onet_Ring_1T_bailing",
+      "input": {
+        "token": "",
+        "id": "Ring-1T",
+        "provider": "bailing"
+      },
+      "expected": {
+        "decoded": "",
+        "entity_key": "ring#1t"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "ref": "dot-lost/1t repair: bailing Ring-1T resolves to ring#1t",
+        "source": "bug"
+      },
+      "mutation": {
+        "description": "the 1t size token for Ring-1T now keys as ring#1t"
+      }
+    },
+    {
+      "name": "onet_ring_2_6_1t_free",
+      "input": {
+        "token": "",
+        "id": "ring-2.6-1t-free",
+        "provider": "opencode"
+      },
+      "expected": {
+        "decoded": "",
+        "entity_key": "ring@2.6#1t"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "ref": "dot-lost/1t repair: ring-2.6-1t-free resolves to ring@2.6#1t",
+        "source": "bug"
+      },
+      "mutation": {
+        "description": "the corrected spelling for ring-2.6-1t-free now keys as ring@2.6#1t"
+      }
+    },
+    {
+      "name": "onet_negctl_kimi_k2_1t",
+      "input": {
+        "token": "",
+        "id": "kimi-k2:1t",
+        "provider": "ollama-cloud"
+      },
+      "expected": {
+        "decoded": "",
+        "entity_key": "kimi/k@2"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "ref": "NEGATIVE CONTROL: kimi-k2:1t must remain kimi/k@2",
+        "source": "boundary"
+      },
+      "mutation": {
+        "description": "the repair must not disturb kimi-k2:1t"
+      }
+    },
+    {
+      "name": "onet_negctl_deepseek_tng_r1t2_chimera",
+      "input": {
+        "token": "",
+        "id": "deepseek-tng-r1t2-chimera",
+        "provider": "helicone"
+      },
+      "expected": {
+        "decoded": "",
+        "entity_key": "deepseek"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "ref": "NEGATIVE CONTROL: deepseek-tng-r1t2-chimera must remain deepseek",
+        "source": "boundary"
+      },
+      "mutation": {
+        "description": "the repair must not disturb deepseek-tng-r1t2-chimera"
+      }
+    }
+  ]
+}

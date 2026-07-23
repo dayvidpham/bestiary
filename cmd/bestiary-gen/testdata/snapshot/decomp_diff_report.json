@@ -1,10 +1,10 @@
 {
   "total_records": 4979,
-  "changed_count": 1290,
+  "changed_count": 1303,
   "cat_a_divergence_fix_count": 326,
-  "cat_b_improvement_count": 941,
+  "cat_b_improvement_count": 944,
   "cat_c_unexpected_regression_count": 0,
-  "justified_exception_count": 23,
+  "justified_exception_count": 33,
   "id_tuple4_incl_modifier_divergence_frozen_before": 81,
   "id_tuple4_incl_modifier_divergence_current_after": 13,
   "divergence_metric": "4-tuple INCL Modifier (Family,Variant,Version,Modifier); before=frozen baseline, after=current snapshot. DISTINCT from the authoritative cross-provider divergenceExact gate (3-tuple, EXCL Modifier, current snapshot, =0).",
@@ -7889,7 +7889,7 @@
       "id": "mistral-small-31-24b-instruct",
       "raw_family": "",
       "before": "(family=\"mistral\",variant=\"small\",version=\"\",modifier=\"\")",
-      "after": "(family=\"mistral\",variant=\"small\",version=\"31\",modifier=\"instruct\")",
+      "after": "(family=\"mistral\",variant=\"small\",version=\"3.1\",modifier=\"instruct\")",
       "category": "b:improvement",
       "reason": "strict enrichment — only previously-empty field(s) populated"
     },
@@ -9671,7 +9671,7 @@
       "id": "qwen2-5-14b-instruct",
       "raw_family": "qwen",
       "before": "(family=\"qwen\",variant=\"instruct\",version=\"2\",modifier=\"\")",
-      "after": "(family=\"qwen\",variant=\"\",version=\"2\",modifier=\"instruct\")",
+      "after": "(family=\"qwen\",variant=\"\",version=\"2.5\",modifier=\"instruct\")",
       "category": "b:improvement",
       "reason": "family-preserving de-noise/enrich: only phantom losses and/or enrichments, no ID-present field lost"
     },
@@ -9680,7 +9680,7 @@
       "id": "qwen2-5-14b-instruct",
       "raw_family": "qwen",
       "before": "(family=\"qwen\",variant=\"instruct\",version=\"2\",modifier=\"\")",
-      "after": "(family=\"qwen\",variant=\"\",version=\"2\",modifier=\"instruct\")",
+      "after": "(family=\"qwen\",variant=\"\",version=\"2.5\",modifier=\"instruct\")",
       "category": "b:improvement",
       "reason": "family-preserving de-noise/enrich: only phantom losses and/or enrichments, no ID-present field lost"
     },
@@ -9689,7 +9689,7 @@
       "id": "qwen2-5-32b-instruct",
       "raw_family": "qwen",
       "before": "(family=\"qwen\",variant=\"instruct\",version=\"2\",modifier=\"\")",
-      "after": "(family=\"qwen\",variant=\"\",version=\"2\",modifier=\"instruct\")",
+      "after": "(family=\"qwen\",variant=\"\",version=\"2.5\",modifier=\"instruct\")",
       "category": "b:improvement",
       "reason": "family-preserving de-noise/enrich: only phantom losses and/or enrichments, no ID-present field lost"
     },
@@ -9698,7 +9698,7 @@
       "id": "qwen2-5-32b-instruct",
       "raw_family": "qwen",
       "before": "(family=\"qwen\",variant=\"instruct\",version=\"2\",modifier=\"\")",
-      "after": "(family=\"qwen\",variant=\"\",version=\"2\",modifier=\"instruct\")",
+      "after": "(family=\"qwen\",variant=\"\",version=\"2.5\",modifier=\"instruct\")",
       "category": "b:improvement",
       "reason": "family-preserving de-noise/enrich: only phantom losses and/or enrichments, no ID-present field lost"
     },
@@ -9707,7 +9707,7 @@
       "id": "qwen2-5-72b-instruct",
       "raw_family": "qwen",
       "before": "(family=\"qwen\",variant=\"instruct\",version=\"2\",modifier=\"\")",
-      "after": "(family=\"qwen\",variant=\"\",version=\"2\",modifier=\"instruct\")",
+      "after": "(family=\"qwen\",variant=\"\",version=\"2.5\",modifier=\"instruct\")",
       "category": "b:improvement",
       "reason": "family-preserving de-noise/enrich: only phantom losses and/or enrichments, no ID-present field lost"
     },
@@ -9716,7 +9716,7 @@
       "id": "qwen2-5-72b-instruct",
       "raw_family": "qwen",
       "before": "(family=\"qwen\",variant=\"instruct\",version=\"2\",modifier=\"\")",
-      "after": "(family=\"qwen\",variant=\"\",version=\"2\",modifier=\"instruct\")",
+      "after": "(family=\"qwen\",variant=\"\",version=\"2.5\",modifier=\"instruct\")",
       "category": "b:improvement",
       "reason": "family-preserving de-noise/enrich: only phantom losses and/or enrichments, no ID-present field lost"
     },
@@ -9725,7 +9725,7 @@
       "id": "qwen2-5-7b-instruct",
       "raw_family": "qwen",
       "before": "(family=\"qwen\",variant=\"instruct\",version=\"2\",modifier=\"\")",
-      "after": "(family=\"qwen\",variant=\"\",version=\"2\",modifier=\"instruct\")",
+      "after": "(family=\"qwen\",variant=\"\",version=\"2.5\",modifier=\"instruct\")",
       "category": "b:improvement",
       "reason": "family-preserving de-noise/enrich: only phantom losses and/or enrichments, no ID-present field lost"
     },
@@ -9734,7 +9734,7 @@
       "id": "qwen2-5-7b-instruct",
       "raw_family": "qwen",
       "before": "(family=\"qwen\",variant=\"instruct\",version=\"2\",modifier=\"\")",
-      "after": "(family=\"qwen\",variant=\"\",version=\"2\",modifier=\"instruct\")",
+      "after": "(family=\"qwen\",variant=\"\",version=\"2.5\",modifier=\"instruct\")",
       "category": "b:improvement",
       "reason": "family-preserving de-noise/enrich: only phantom losses and/or enrichments, no ID-present field lost"
     },
@@ -9743,25 +9743,25 @@
       "id": "qwen2-5-coder-32b-instruct",
       "raw_family": "qwen",
       "before": "(family=\"qwen\",variant=\"coder\",version=\"2\",modifier=\"\")",
-      "after": "(family=\"qwen\",variant=\"coder\",version=\"2\",modifier=\"instruct\")",
+      "after": "(family=\"qwen\",variant=\"coder\",version=\"2.5\",modifier=\"instruct\")",
       "category": "b:improvement",
-      "reason": "strict enrichment — only previously-empty field(s) populated"
+      "reason": "family-preserving de-noise/enrich: only phantom losses and/or enrichments, no ID-present field lost"
     },
     {
       "provider": "alibaba-cn",
       "id": "qwen2-5-coder-7b-instruct",
       "raw_family": "qwen",
       "before": "(family=\"qwen\",variant=\"coder\",version=\"2\",modifier=\"\")",
-      "after": "(family=\"qwen\",variant=\"coder\",version=\"2\",modifier=\"instruct\")",
+      "after": "(family=\"qwen\",variant=\"coder\",version=\"2.5\",modifier=\"instruct\")",
       "category": "b:improvement",
-      "reason": "strict enrichment — only previously-empty field(s) populated"
+      "reason": "family-preserving de-noise/enrich: only phantom losses and/or enrichments, no ID-present field lost"
     },
     {
       "provider": "alibaba-cn",
       "id": "qwen2-5-math-72b-instruct",
       "raw_family": "qwen",
       "before": "(family=\"qwen\",variant=\"instruct\",version=\"2\",modifier=\"\")",
-      "after": "(family=\"qwen\",variant=\"\",version=\"2\",modifier=\"instruct\")",
+      "after": "(family=\"qwen\",variant=\"\",version=\"2.5\",modifier=\"instruct\")",
       "category": "b:improvement",
       "reason": "family-preserving de-noise/enrich: only phantom losses and/or enrichments, no ID-present field lost"
     },
@@ -9770,7 +9770,7 @@
       "id": "qwen2-5-math-7b-instruct",
       "raw_family": "qwen",
       "before": "(family=\"qwen\",variant=\"instruct\",version=\"2\",modifier=\"\")",
-      "after": "(family=\"qwen\",variant=\"\",version=\"2\",modifier=\"instruct\")",
+      "after": "(family=\"qwen\",variant=\"\",version=\"2.5\",modifier=\"instruct\")",
       "category": "b:improvement",
       "reason": "family-preserving de-noise/enrich: only phantom losses and/or enrichments, no ID-present field lost"
     },
@@ -9779,72 +9779,72 @@
       "id": "qwen2-5-omni-7b",
       "raw_family": "qwen",
       "before": "(family=\"qwen\",variant=\"\",version=\"2\",modifier=\"\")",
-      "after": "(family=\"qwen\",variant=\"\",version=\"2\",modifier=\"omni\")",
+      "after": "(family=\"qwen\",variant=\"\",version=\"2.5\",modifier=\"omni\")",
       "category": "b:improvement",
-      "reason": "strict enrichment — only previously-empty field(s) populated"
+      "reason": "family-preserving de-noise/enrich: only phantom losses and/or enrichments, no ID-present field lost"
     },
     {
       "provider": "alibaba-cn",
       "id": "qwen2-5-omni-7b",
       "raw_family": "qwen",
       "before": "(family=\"qwen\",variant=\"\",version=\"2\",modifier=\"\")",
-      "after": "(family=\"qwen\",variant=\"\",version=\"2\",modifier=\"omni\")",
+      "after": "(family=\"qwen\",variant=\"\",version=\"2.5\",modifier=\"omni\")",
       "category": "b:improvement",
-      "reason": "strict enrichment — only previously-empty field(s) populated"
+      "reason": "family-preserving de-noise/enrich: only phantom losses and/or enrichments, no ID-present field lost"
     },
     {
       "provider": "llmgateway",
       "id": "qwen2-5-vl-32b-instruct",
       "raw_family": "qwen",
       "before": "(family=\"qwen\",variant=\"vl\",version=\"2\",modifier=\"\")",
-      "after": "(family=\"qwen\",variant=\"vl\",version=\"2\",modifier=\"instruct\")",
+      "after": "(family=\"qwen\",variant=\"vl\",version=\"2.5\",modifier=\"instruct\")",
       "category": "b:improvement",
-      "reason": "strict enrichment — only previously-empty field(s) populated"
+      "reason": "family-preserving de-noise/enrich: only phantom losses and/or enrichments, no ID-present field lost"
     },
     {
       "provider": "alibaba",
       "id": "qwen2-5-vl-72b-instruct",
       "raw_family": "qwen",
       "before": "(family=\"qwen\",variant=\"vl\",version=\"2\",modifier=\"\")",
-      "after": "(family=\"qwen\",variant=\"vl\",version=\"2\",modifier=\"instruct\")",
+      "after": "(family=\"qwen\",variant=\"vl\",version=\"2.5\",modifier=\"instruct\")",
       "category": "b:improvement",
-      "reason": "strict enrichment — only previously-empty field(s) populated"
+      "reason": "family-preserving de-noise/enrich: only phantom losses and/or enrichments, no ID-present field lost"
     },
     {
       "provider": "alibaba-cn",
       "id": "qwen2-5-vl-72b-instruct",
       "raw_family": "qwen",
       "before": "(family=\"qwen\",variant=\"vl\",version=\"2\",modifier=\"\")",
-      "after": "(family=\"qwen\",variant=\"vl\",version=\"2\",modifier=\"instruct\")",
+      "after": "(family=\"qwen\",variant=\"vl\",version=\"2.5\",modifier=\"instruct\")",
       "category": "b:improvement",
-      "reason": "strict enrichment — only previously-empty field(s) populated"
+      "reason": "family-preserving de-noise/enrich: only phantom losses and/or enrichments, no ID-present field lost"
     },
     {
       "provider": "llmgateway",
       "id": "qwen2-5-vl-72b-instruct",
       "raw_family": "qwen",
       "before": "(family=\"qwen\",variant=\"vl\",version=\"2\",modifier=\"\")",
-      "after": "(family=\"qwen\",variant=\"vl\",version=\"2\",modifier=\"instruct\")",
+      "after": "(family=\"qwen\",variant=\"vl\",version=\"2.5\",modifier=\"instruct\")",
       "category": "b:improvement",
-      "reason": "strict enrichment — only previously-empty field(s) populated"
+      "reason": "family-preserving de-noise/enrich: only phantom losses and/or enrichments, no ID-present field lost"
     },
     {
       "provider": "alibaba",
       "id": "qwen2-5-vl-7b-instruct",
       "raw_family": "qwen",
       "before": "(family=\"qwen\",variant=\"vl\",version=\"2\",modifier=\"\")",
-      "after": "(family=\"qwen\",variant=\"vl\",version=\"2\",modifier=\"instruct\")",
+      "after": "(family=\"qwen\",variant=\"vl\",version=\"2.5\",modifier=\"instruct\")",
       "category": "b:improvement",
-      "reason": "strict enrichment — only previously-empty field(s) populated"
+      "reason": "family-preserving de-noise/enrich: only phantom losses and/or enrichments, no ID-present field lost"
     },
     {
       "provider": "alibaba-cn",
       "id": "qwen2-5-vl-7b-instruct",
       "raw_family": "qwen",
       "before": "(family=\"qwen\",variant=\"vl\",version=\"2\",modifier=\"\")",
-      "after": "(family=\"qwen\",variant=\"vl\",version=\"2\",modifier=\"instruct\")",
+      "after": "(family=\"qwen\",variant=\"vl\",version=\"2.5\",modifier=\"instruct\")",
       "category": "b:improvement",
-      "reason": "strict enrichment — only previously-empty field(s) populated"
+      "reason": "family-preserving de-noise/enrich: only phantom losses and/or enrichments, no ID-present field lost"
     },
     {
       "provider": "helicone",
@@ -9879,15 +9879,6 @@
       "raw_family": "",
       "before": "(family=\"qwen\",variant=\"vl\",version=\"2.5\",modifier=\"\")",
       "after": "(family=\"qwen\",variant=\"vl\",version=\"2.5\",modifier=\"instruct\")",
-      "category": "b:improvement",
-      "reason": "strict enrichment — only previously-empty field(s) populated"
-    },
-    {
-      "provider": "nano-gpt",
-      "id": "qwen25-vl-72b-instruct",
-      "raw_family": "",
-      "before": "(family=\"qwen\",variant=\"vl\",version=\"25\",modifier=\"\")",
-      "after": "(family=\"qwen\",variant=\"vl\",version=\"25\",modifier=\"instruct\")",
       "category": "b:improvement",
       "reason": "strict enrichment — only previously-empty field(s) populated"
     },
@@ -10034,6 +10025,42 @@
       "after": "(family=\"qwen\",variant=\"\",version=\"3\",modifier=\"thinking\")",
       "category": "b:improvement",
       "reason": "strict enrichment — only previously-empty field(s) populated"
+    },
+    {
+      "provider": "venice",
+      "id": "qwen3-5-35b-a3b",
+      "raw_family": "qwen",
+      "before": "(family=\"qwen\",variant=\"\",version=\"3\",modifier=\"\")",
+      "after": "(family=\"qwen\",variant=\"\",version=\"3.5\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "family-preserving de-noise/enrich: only phantom losses and/or enrichments, no ID-present field lost"
+    },
+    {
+      "provider": "venice",
+      "id": "qwen3-5-397b-a17b",
+      "raw_family": "qwen",
+      "before": "(family=\"qwen\",variant=\"\",version=\"3\",modifier=\"\")",
+      "after": "(family=\"qwen\",variant=\"\",version=\"3.5\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "family-preserving de-noise/enrich: only phantom losses and/or enrichments, no ID-present field lost"
+    },
+    {
+      "provider": "venice",
+      "id": "qwen3-5-9b",
+      "raw_family": "qwen",
+      "before": "(family=\"qwen\",variant=\"\",version=\"3\",modifier=\"\")",
+      "after": "(family=\"qwen\",variant=\"\",version=\"3.5\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "family-preserving de-noise/enrich: only phantom losses and/or enrichments, no ID-present field lost"
+    },
+    {
+      "provider": "venice",
+      "id": "qwen3-6-27b",
+      "raw_family": "qwen",
+      "before": "(family=\"qwen\",variant=\"\",version=\"3\",modifier=\"\")",
+      "after": "(family=\"qwen\",variant=\"\",version=\"3.6\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "family-preserving de-noise/enrich: only phantom losses and/or enrichments, no ID-present field lost"
     },
     {
       "provider": "alibaba",
@@ -11422,6 +11449,15 @@
       "reason": "JUSTIFIED: GH#11 lineage (VC14): nano-gpt served MythoMax-L2-13B with raw_family='llama', folding it to the llama base and splitting it from the mythomax entity served by every other provider (raw=''). idFamilyOverrides restores family=mythomax, converging all providers onto the one mythomax merge entity. Single-provider exact-ID override; no cross-provider divergence introduced."
     },
     {
+      "provider": "bailing",
+      "id": "Ling-1T",
+      "raw_family": "ling",
+      "before": "(family=\"ling\",variant=\"\",version=\"1t\",modifier=\"\")",
+      "after": "(family=\"ling\",variant=\"\",version=\"\",modifier=\"\")",
+      "category": "justified-exception",
+      "reason": "JUSTIFIED: USER-RATIFIED 1t routing: Ling-1T's '1t' is a 1-trillion param SIZE, not a version; re-keys to ling#1t."
+    },
+    {
       "provider": "nano-gpt",
       "id": "Qwen2.5-32B-EVA-v0.2",
       "raw_family": "",
@@ -11429,6 +11465,15 @@
       "after": "(family=\"eva\",variant=\"\",version=\"0.2\",modifier=\"\")",
       "category": "justified-exception",
       "reason": "JUSTIFIED: USER-RATIFIED, dracarys precedent: EVA-UNIT-01's roleplay finetune is named after the model it was trained FROM, so the leading-token pipeline swallowed the whole base name as a compound family ('qwen2.5-32b-eva') and read EVA's own release as a variant ('v0.2'). The curated exact-id override splits the two identities: family 'eva' with version '0.2' (EVA's release line), the 32B size still read off the id, and the base relationship carried as an explicit DerivationFinetune edge to qwen@2.5#32b in lineage.json — so the derivation is stated rather than smuggled into a family token. Single-provider (nano-gpt) exact id; no cross-provider divergence introduced, no token lost."
+    },
+    {
+      "provider": "bailing",
+      "id": "Ring-1T",
+      "raw_family": "ring",
+      "before": "(family=\"ring\",variant=\"\",version=\"1t\",modifier=\"\")",
+      "after": "(family=\"ring\",variant=\"\",version=\"\",modifier=\"\")",
+      "category": "justified-exception",
+      "reason": "JUSTIFIED: USER-RATIFIED 1t routing: Ring-1T's '1t' is a 1-trillion param SIZE, not a version; re-keys to ring#1t."
     },
     {
       "provider": "nano-gpt",
@@ -11548,6 +11593,24 @@
       "reason": "JUSTIFIED: New in the July snapshot (opencode/hy3-preview-free). opencode labels this Tencent model raw_family='hy3-free', gluing the generation digit to the family. The ID-driven path correctly splits 'hy3' into family='hy' + version='3', which CONVERGES it onto the canonical Tencent Hy family — every other provider serves the same model as raw_family='Hy' → hy/version=3 (e.g. crossmodel/zenmux 'tencent/hy3-preview'). The 'free' tier stays the variant. So the change folds an over-captured 'hy3' family root back to the real 'hy' family rather than fracturing it; single-provider (opencode) exact id, no cross-provider divergence introduced."
     },
     {
+      "provider": "zenmux",
+      "id": "inclusionai/ling-1t",
+      "raw_family": "",
+      "before": "(family=\"ling\",variant=\"\",version=\"1t\",modifier=\"\")",
+      "after": "(family=\"ling\",variant=\"\",version=\"\",modifier=\"\")",
+      "category": "justified-exception",
+      "reason": "JUSTIFIED: USER-RATIFIED 1t routing: inclusionai/ling-1t's '1t' is a 1-trillion param SIZE; re-keys to ling#1t."
+    },
+    {
+      "provider": "zenmux",
+      "id": "inclusionai/ring-1t",
+      "raw_family": "",
+      "before": "(family=\"ring\",variant=\"\",version=\"1t\",modifier=\"\")",
+      "after": "(family=\"ring\",variant=\"\",version=\"\",modifier=\"\")",
+      "category": "justified-exception",
+      "reason": "JUSTIFIED: USER-RATIFIED 1t routing: inclusionai/ring-1t's '1t' is a 1-trillion param SIZE; re-keys to ring#1t."
+    },
+    {
       "provider": "vercel",
       "id": "interfaze/interfaze-beta",
       "raw_family": "",
@@ -11555,6 +11618,24 @@
       "after": "(family=\"interfaze\",variant=\"\",version=\"\",modifier=\"\")",
       "category": "justified-exception",
       "reason": "JUSTIFIED: USER-RATIFIED beta-always-stage ruling: beta is a RELEASE STAGE and never part of an identity. vercel serves this row with an empty raw_family, so the leading-token pipeline promoted the trailing 'beta' into the VARIANT slot — while the same row already carried Stage=beta, asserting beta on both axes and splitting one artifact line into a beta and a (future) non-beta entity. The curated exact-id pin lands it on the bare interfaze family; Stage is unaffected because DetectStageFromID scans the id independently of the key (detect-without-strip, the grok precedent). This transition REVERSES an earlier documented exception that deliberately kept beta in this key while unifying only the grok line; the ruling collapsed that contrast, and ValidateNoBetaInIdentity now enforces the rule at bake time so no future decomposition can reintroduce it. Single-provider (vercel) exact id; a rename, not a merge — no entity is created or destroyed."
+    },
+    {
+      "provider": "venice",
+      "id": "minimax-m25",
+      "raw_family": "minimax",
+      "before": "(family=\"minimax\",variant=\"m\",version=\"25\",modifier=\"\")",
+      "after": "(family=\"minimax\",variant=\"m\",version=\"2.5\",modifier=\"\")",
+      "category": "justified-exception",
+      "reason": "JUSTIFIED: USER-RATIFIED dot-lost repair: minimax-m25 is MiniMax M2.5; merges into minimax/m@2.5."
+    },
+    {
+      "provider": "venice",
+      "id": "minimax-m27",
+      "raw_family": "minimax",
+      "before": "(family=\"minimax\",variant=\"m\",version=\"27\",modifier=\"\")",
+      "after": "(family=\"minimax\",variant=\"m\",version=\"2.7\",modifier=\"\")",
+      "category": "justified-exception",
+      "reason": "JUSTIFIED: USER-RATIFIED dot-lost repair: minimax-m27 is MiniMax M2.7; merges into minimax/m@2.7."
     },
     {
       "provider": "digitalocean",
@@ -11582,6 +11663,42 @@
       "after": "(family=\"gpt\",variant=\"o\",version=\"3\",modifier=\"mini\")",
       "category": "justified-exception",
       "reason": "JUSTIFIED: USER-RATIFIED: o-series dual-identity fix; digitalocean's hyphen-glued openai-o3-mini now converges on gpt/o@3{mini}, the same identity every provider's openai/o3-mini already resolves to."
+    },
+    {
+      "provider": "drun",
+      "id": "public/minimax-m25",
+      "raw_family": "minimax",
+      "before": "(family=\"minimax\",variant=\"m\",version=\"25\",modifier=\"\")",
+      "after": "(family=\"minimax\",variant=\"m\",version=\"2.5\",modifier=\"\")",
+      "category": "justified-exception",
+      "reason": "JUSTIFIED: USER-RATIFIED dot-lost repair: drun's namespaced minimax-m25 is MiniMax M2.5; merges into minimax/m@2.5."
+    },
+    {
+      "provider": "nano-gpt",
+      "id": "qwen25-vl-72b-instruct",
+      "raw_family": "",
+      "before": "(family=\"qwen\",variant=\"vl\",version=\"25\",modifier=\"\")",
+      "after": "(family=\"qwen\",variant=\"vl\",version=\"2.5\",modifier=\"instruct\")",
+      "category": "justified-exception",
+      "reason": "JUSTIFIED: USER-RATIFIED dot-lost repair: qwen25-vl-72b-instruct is Qwen2.5-VL-72B-Instruct; merges into qwen/vl@2.5#72b{instruct}."
+    },
+    {
+      "provider": "llmgateway",
+      "id": "qwen35-397b-a17b",
+      "raw_family": "qwen",
+      "before": "(family=\"qwen\",variant=\"\",version=\"35\",modifier=\"\")",
+      "after": "(family=\"qwen\",variant=\"\",version=\"3.5\",modifier=\"\")",
+      "category": "justified-exception",
+      "reason": "JUSTIFIED: USER-RATIFIED dot-lost repair: qwen35-397b-a17b is Qwen3.5-397B-A17B; merges into qwen@3.5#397b-a17b."
+    },
+    {
+      "provider": "opencode",
+      "id": "ring-2.6-1t-free",
+      "raw_family": "ring-1t-free",
+      "before": "(family=\"ring-1t\",variant=\"free\",version=\"2.6\",modifier=\"\")",
+      "after": "(family=\"ring\",variant=\"\",version=\"2.6\",modifier=\"\")",
+      "category": "justified-exception",
+      "reason": "JUSTIFIED: USER-RATIFIED 1t routing: ring-2.6-1t-free arrived with raw_family 'ring-1t-free'; pinned to family ring so #1t is recovered as a size and it joins ring@2.6#1t."
     },
     {
       "provider": "nvidia",

@@ -1,0 +1,664 @@
+{
+  "cases": [
+    {
+      "name": "dotlost_minimax_m25",
+      "input": {
+        "token": "",
+        "id": "minimax-m25",
+        "provider": "venice"
+      },
+      "expected": {
+        "decoded": "",
+        "entity_key": "minimax/m@2.5"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "ref": "dot-lost/1t repair: minimax-m25 resolves to minimax/m@2.5",
+        "source": "bug"
+      },
+      "mutation": {
+        "description": "the corrected spelling for minimax-m25 now keys as minimax/m@2.5"
+      }
+    },
+    {
+      "name": "dotlost_minimax_m27",
+      "input": {
+        "token": "",
+        "id": "minimax-m27",
+        "provider": "venice"
+      },
+      "expected": {
+        "decoded": "",
+        "entity_key": "minimax/m@2.7"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "ref": "dot-lost/1t repair: minimax-m27 resolves to minimax/m@2.7",
+        "source": "bug"
+      },
+      "mutation": {
+        "description": "the corrected spelling for minimax-m27 now keys as minimax/m@2.7"
+      }
+    },
+    {
+      "name": "dotlost_mistral_small_31_24b_instruct",
+      "input": {
+        "token": "",
+        "id": "mistral-small-31-24b-instruct",
+        "provider": "nano-gpt"
+      },
+      "expected": {
+        "decoded": "",
+        "entity_key": "mistral/small@3.1#24b{instruct}"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "ref": "dot-lost/1t repair: mistral-small-31-24b-instruct resolves to mistral/small@3.1#24b{instruct}",
+        "source": "bug"
+      },
+      "mutation": {
+        "description": "the corrected spelling for mistral-small-31-24b-instruct now keys as mistral/small@3.1#24b{instruct}"
+      }
+    },
+    {
+      "name": "dotlost_public_minimax_m25",
+      "input": {
+        "token": "",
+        "id": "public/minimax-m25",
+        "provider": "drun"
+      },
+      "expected": {
+        "decoded": "",
+        "entity_key": "minimax/m@2.5"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "ref": "dot-lost/1t repair: public/minimax-m25 resolves to minimax/m@2.5",
+        "source": "bug"
+      },
+      "mutation": {
+        "description": "the corrected spelling for public/minimax-m25 now keys as minimax/m@2.5"
+      }
+    },
+    {
+      "name": "dotlost_qwen2_5_14b_instruct",
+      "input": {
+        "token": "",
+        "id": "qwen2-5-14b-instruct",
+        "provider": "alibaba"
+      },
+      "expected": {
+        "decoded": "",
+        "entity_key": "qwen@2.5#14b{instruct}"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "ref": "dot-lost/1t repair: qwen2-5-14b-instruct resolves to qwen@2.5#14b{instruct}",
+        "source": "bug"
+      },
+      "mutation": {
+        "description": "the corrected spelling for qwen2-5-14b-instruct now keys as qwen@2.5#14b{instruct}"
+      }
+    },
+    {
+      "name": "dotlost_qwen2_5_32b_instruct",
+      "input": {
+        "token": "",
+        "id": "qwen2-5-32b-instruct",
+        "provider": "alibaba"
+      },
+      "expected": {
+        "decoded": "",
+        "entity_key": "qwen@2.5#32b{instruct}"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "ref": "dot-lost/1t repair: qwen2-5-32b-instruct resolves to qwen@2.5#32b{instruct}",
+        "source": "bug"
+      },
+      "mutation": {
+        "description": "the corrected spelling for qwen2-5-32b-instruct now keys as qwen@2.5#32b{instruct}"
+      }
+    },
+    {
+      "name": "dotlost_qwen2_5_72b_instruct",
+      "input": {
+        "token": "",
+        "id": "qwen2-5-72b-instruct",
+        "provider": "alibaba"
+      },
+      "expected": {
+        "decoded": "",
+        "entity_key": "qwen@2.5#72b{instruct}"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "ref": "dot-lost/1t repair: qwen2-5-72b-instruct resolves to qwen@2.5#72b{instruct}",
+        "source": "bug"
+      },
+      "mutation": {
+        "description": "the corrected spelling for qwen2-5-72b-instruct now keys as qwen@2.5#72b{instruct}"
+      }
+    },
+    {
+      "name": "dotlost_qwen2_5_7b_instruct",
+      "input": {
+        "token": "",
+        "id": "qwen2-5-7b-instruct",
+        "provider": "alibaba"
+      },
+      "expected": {
+        "decoded": "",
+        "entity_key": "qwen@2.5#7b{instruct}"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "ref": "dot-lost/1t repair: qwen2-5-7b-instruct resolves to qwen@2.5#7b{instruct}",
+        "source": "bug"
+      },
+      "mutation": {
+        "description": "the corrected spelling for qwen2-5-7b-instruct now keys as qwen@2.5#7b{instruct}"
+      }
+    },
+    {
+      "name": "dotlost_qwen2_5_coder_32b_instruct",
+      "input": {
+        "token": "",
+        "id": "qwen2-5-coder-32b-instruct",
+        "provider": "alibaba-cn"
+      },
+      "expected": {
+        "decoded": "",
+        "entity_key": "qwen/coder@2.5#32b{instruct}"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "ref": "dot-lost/1t repair: qwen2-5-coder-32b-instruct resolves to qwen/coder@2.5#32b{instruct}",
+        "source": "bug"
+      },
+      "mutation": {
+        "description": "the corrected spelling for qwen2-5-coder-32b-instruct now keys as qwen/coder@2.5#32b{instruct}"
+      }
+    },
+    {
+      "name": "dotlost_qwen2_5_coder_7b_instruct",
+      "input": {
+        "token": "",
+        "id": "qwen2-5-coder-7b-instruct",
+        "provider": "alibaba-cn"
+      },
+      "expected": {
+        "decoded": "",
+        "entity_key": "qwen/coder@2.5#7b{instruct}"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "ref": "dot-lost/1t repair: qwen2-5-coder-7b-instruct resolves to qwen/coder@2.5#7b{instruct}",
+        "source": "bug"
+      },
+      "mutation": {
+        "description": "the corrected spelling for qwen2-5-coder-7b-instruct now keys as qwen/coder@2.5#7b{instruct}"
+      }
+    },
+    {
+      "name": "dotlost_qwen2_5_math_72b_instruct",
+      "input": {
+        "token": "",
+        "id": "qwen2-5-math-72b-instruct",
+        "provider": "alibaba-cn"
+      },
+      "expected": {
+        "decoded": "",
+        "entity_key": "qwen@2.5#72b{instruct}"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "ref": "dot-lost/1t repair: qwen2-5-math-72b-instruct resolves to qwen@2.5#72b{instruct}",
+        "source": "bug"
+      },
+      "mutation": {
+        "description": "the corrected spelling for qwen2-5-math-72b-instruct now keys as qwen@2.5#72b{instruct}"
+      }
+    },
+    {
+      "name": "dotlost_qwen2_5_math_7b_instruct",
+      "input": {
+        "token": "",
+        "id": "qwen2-5-math-7b-instruct",
+        "provider": "alibaba-cn"
+      },
+      "expected": {
+        "decoded": "",
+        "entity_key": "qwen@2.5#7b{instruct}"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "ref": "dot-lost/1t repair: qwen2-5-math-7b-instruct resolves to qwen@2.5#7b{instruct}",
+        "source": "bug"
+      },
+      "mutation": {
+        "description": "the corrected spelling for qwen2-5-math-7b-instruct now keys as qwen@2.5#7b{instruct}"
+      }
+    },
+    {
+      "name": "dotlost_qwen2_5_omni_7b",
+      "input": {
+        "token": "",
+        "id": "qwen2-5-omni-7b",
+        "provider": "alibaba"
+      },
+      "expected": {
+        "decoded": "",
+        "entity_key": "qwen@2.5#7b{omni}"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "ref": "dot-lost/1t repair: qwen2-5-omni-7b resolves to qwen@2.5#7b{omni}",
+        "source": "bug"
+      },
+      "mutation": {
+        "description": "the corrected spelling for qwen2-5-omni-7b now keys as qwen@2.5#7b{omni}"
+      }
+    },
+    {
+      "name": "dotlost_qwen2_5_vl_32b_instruct",
+      "input": {
+        "token": "",
+        "id": "qwen2-5-vl-32b-instruct",
+        "provider": "llmgateway"
+      },
+      "expected": {
+        "decoded": "",
+        "entity_key": "qwen/vl@2.5#32b{instruct}"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "ref": "dot-lost/1t repair: qwen2-5-vl-32b-instruct resolves to qwen/vl@2.5#32b{instruct}",
+        "source": "bug"
+      },
+      "mutation": {
+        "description": "the corrected spelling for qwen2-5-vl-32b-instruct now keys as qwen/vl@2.5#32b{instruct}"
+      }
+    },
+    {
+      "name": "dotlost_qwen2_5_vl_72b_instruct",
+      "input": {
+        "token": "",
+        "id": "qwen2-5-vl-72b-instruct",
+        "provider": "alibaba"
+      },
+      "expected": {
+        "decoded": "",
+        "entity_key": "qwen/vl@2.5#72b{instruct}"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "ref": "dot-lost/1t repair: qwen2-5-vl-72b-instruct resolves to qwen/vl@2.5#72b{instruct}",
+        "source": "bug"
+      },
+      "mutation": {
+        "description": "the corrected spelling for qwen2-5-vl-72b-instruct now keys as qwen/vl@2.5#72b{instruct}"
+      }
+    },
+    {
+      "name": "dotlost_qwen2_5_vl_7b_instruct",
+      "input": {
+        "token": "",
+        "id": "qwen2-5-vl-7b-instruct",
+        "provider": "alibaba"
+      },
+      "expected": {
+        "decoded": "",
+        "entity_key": "qwen/vl@2.5#7b{instruct}"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "ref": "dot-lost/1t repair: qwen2-5-vl-7b-instruct resolves to qwen/vl@2.5#7b{instruct}",
+        "source": "bug"
+      },
+      "mutation": {
+        "description": "the corrected spelling for qwen2-5-vl-7b-instruct now keys as qwen/vl@2.5#7b{instruct}"
+      }
+    },
+    {
+      "name": "dotlost_qwen25_vl_72b_instruct",
+      "input": {
+        "token": "",
+        "id": "qwen25-vl-72b-instruct",
+        "provider": "nano-gpt"
+      },
+      "expected": {
+        "decoded": "",
+        "entity_key": "qwen/vl@2.5#72b{instruct}"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "ref": "dot-lost/1t repair: qwen25-vl-72b-instruct resolves to qwen/vl@2.5#72b{instruct}",
+        "source": "bug"
+      },
+      "mutation": {
+        "description": "the corrected spelling for qwen25-vl-72b-instruct now keys as qwen/vl@2.5#72b{instruct}"
+      }
+    },
+    {
+      "name": "dotlost_qwen3_5_122b_a10b",
+      "input": {
+        "token": "",
+        "id": "qwen3-5-122b-a10b",
+        "provider": "empiriolabs"
+      },
+      "expected": {
+        "decoded": "",
+        "entity_key": "qwen@3.5#122b-a10b"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "ref": "dot-lost/1t repair: qwen3-5-122b-a10b resolves to qwen@3.5#122b-a10b",
+        "source": "bug"
+      },
+      "mutation": {
+        "description": "the corrected spelling for qwen3-5-122b-a10b now keys as qwen@3.5#122b-a10b"
+      }
+    },
+    {
+      "name": "dotlost_qwen3_5_27b",
+      "input": {
+        "token": "",
+        "id": "qwen3-5-27b",
+        "provider": "empiriolabs"
+      },
+      "expected": {
+        "decoded": "",
+        "entity_key": "qwen@3.5#27b"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "ref": "dot-lost/1t repair: qwen3-5-27b resolves to qwen@3.5#27b",
+        "source": "bug"
+      },
+      "mutation": {
+        "description": "the corrected spelling for qwen3-5-27b now keys as qwen@3.5#27b"
+      }
+    },
+    {
+      "name": "dotlost_qwen3_5_35b_a3b",
+      "input": {
+        "token": "",
+        "id": "qwen3-5-35b-a3b",
+        "provider": "empiriolabs"
+      },
+      "expected": {
+        "decoded": "",
+        "entity_key": "qwen@3.5#35b-a3b"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "ref": "dot-lost/1t repair: qwen3-5-35b-a3b resolves to qwen@3.5#35b-a3b",
+        "source": "bug"
+      },
+      "mutation": {
+        "description": "the corrected spelling for qwen3-5-35b-a3b now keys as qwen@3.5#35b-a3b"
+      }
+    },
+    {
+      "name": "dotlost_qwen3_5_397b_a17b",
+      "input": {
+        "token": "",
+        "id": "qwen3-5-397b-a17b",
+        "provider": "empiriolabs"
+      },
+      "expected": {
+        "decoded": "",
+        "entity_key": "qwen@3.5#397b-a17b"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "ref": "dot-lost/1t repair: qwen3-5-397b-a17b resolves to qwen@3.5#397b-a17b",
+        "source": "bug"
+      },
+      "mutation": {
+        "description": "the corrected spelling for qwen3-5-397b-a17b now keys as qwen@3.5#397b-a17b"
+      }
+    },
+    {
+      "name": "dotlost_qwen3_5_4b",
+      "input": {
+        "token": "",
+        "id": "qwen3-5-4b",
+        "provider": "empiriolabs"
+      },
+      "expected": {
+        "decoded": "",
+        "entity_key": "qwen@3.5#4b"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "ref": "dot-lost/1t repair: qwen3-5-4b resolves to qwen@3.5#4b",
+        "source": "bug"
+      },
+      "mutation": {
+        "description": "the corrected spelling for qwen3-5-4b now keys as qwen@3.5#4b"
+      }
+    },
+    {
+      "name": "dotlost_qwen3_5_9b",
+      "input": {
+        "token": "",
+        "id": "qwen3-5-9b",
+        "provider": "empiriolabs"
+      },
+      "expected": {
+        "decoded": "",
+        "entity_key": "qwen@3.5#9b"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "ref": "dot-lost/1t repair: qwen3-5-9b resolves to qwen@3.5#9b",
+        "source": "bug"
+      },
+      "mutation": {
+        "description": "the corrected spelling for qwen3-5-9b now keys as qwen@3.5#9b"
+      }
+    },
+    {
+      "name": "dotlost_qwen3_5_plus",
+      "input": {
+        "token": "",
+        "id": "qwen3-5-plus",
+        "provider": "empiriolabs"
+      },
+      "expected": {
+        "decoded": "",
+        "entity_key": "qwen/plus@3.5"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "ref": "dot-lost/1t repair: qwen3-5-plus resolves to qwen/plus@3.5",
+        "source": "bug"
+      },
+      "mutation": {
+        "description": "the corrected spelling for qwen3-5-plus now keys as qwen/plus@3.5"
+      }
+    },
+    {
+      "name": "dotlost_qwen3_6_27b",
+      "input": {
+        "token": "",
+        "id": "qwen3-6-27b",
+        "provider": "empiriolabs"
+      },
+      "expected": {
+        "decoded": "",
+        "entity_key": "qwen@3.6#27b"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "ref": "dot-lost/1t repair: qwen3-6-27b resolves to qwen@3.6#27b",
+        "source": "bug"
+      },
+      "mutation": {
+        "description": "the corrected spelling for qwen3-6-27b now keys as qwen@3.6#27b"
+      }
+    },
+    {
+      "name": "dotlost_qwen3_6_35b",
+      "input": {
+        "token": "",
+        "id": "qwen3-6-35b",
+        "provider": "llmtr"
+      },
+      "expected": {
+        "decoded": "",
+        "entity_key": "qwen@3.6#35b"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "ref": "dot-lost/1t repair: qwen3-6-35b resolves to qwen@3.6#35b",
+        "source": "bug"
+      },
+      "mutation": {
+        "description": "the corrected spelling for qwen3-6-35b now keys as qwen@3.6#35b"
+      }
+    },
+    {
+      "name": "dotlost_qwen3_6_flash",
+      "input": {
+        "token": "",
+        "id": "qwen3-6-flash",
+        "provider": "empiriolabs"
+      },
+      "expected": {
+        "decoded": "",
+        "entity_key": "qwen/flash@3.6"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "ref": "dot-lost/1t repair: qwen3-6-flash resolves to qwen/flash@3.6",
+        "source": "bug"
+      },
+      "mutation": {
+        "description": "the corrected spelling for qwen3-6-flash now keys as qwen/flash@3.6"
+      }
+    },
+    {
+      "name": "dotlost_qwen3_6_max_preview",
+      "input": {
+        "token": "",
+        "id": "qwen3-6-max-preview",
+        "provider": "empiriolabs"
+      },
+      "expected": {
+        "decoded": "",
+        "entity_key": "qwen/max@3.6"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "ref": "dot-lost/1t repair: qwen3-6-max-preview resolves to qwen/max@3.6",
+        "source": "bug"
+      },
+      "mutation": {
+        "description": "the corrected spelling for qwen3-6-max-preview now keys as qwen/max@3.6"
+      }
+    },
+    {
+      "name": "dotlost_qwen3_6_plus",
+      "input": {
+        "token": "",
+        "id": "qwen3-6-plus",
+        "provider": "empiriolabs"
+      },
+      "expected": {
+        "decoded": "",
+        "entity_key": "qwen/plus@3.6"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "ref": "dot-lost/1t repair: qwen3-6-plus resolves to qwen/plus@3.6",
+        "source": "bug"
+      },
+      "mutation": {
+        "description": "the corrected spelling for qwen3-6-plus now keys as qwen/plus@3.6"
+      }
+    },
+    {
+      "name": "dotlost_qwen3_7_max",
+      "input": {
+        "token": "",
+        "id": "qwen3-7-max",
+        "provider": "empiriolabs"
+      },
+      "expected": {
+        "decoded": "",
+        "entity_key": "qwen/max@3.7"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "ref": "dot-lost/1t repair: qwen3-7-max resolves to qwen/max@3.7",
+        "source": "bug"
+      },
+      "mutation": {
+        "description": "the corrected spelling for qwen3-7-max now keys as qwen/max@3.7"
+      }
+    },
+    {
+      "name": "dotlost_qwen3_7_plus",
+      "input": {
+        "token": "",
+        "id": "qwen3-7-plus",
+        "provider": "empiriolabs"
+      },
+      "expected": {
+        "decoded": "",
+        "entity_key": "qwen/plus@3.7"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "ref": "dot-lost/1t repair: qwen3-7-plus resolves to qwen/plus@3.7",
+        "source": "bug"
+      },
+      "mutation": {
+        "description": "the corrected spelling for qwen3-7-plus now keys as qwen/plus@3.7"
+      }
+    },
+    {
+      "name": "dotlost_qwen35_122b_a10b",
+      "input": {
+        "token": "",
+        "id": "qwen35-122b-a10b",
+        "provider": "neon"
+      },
+      "expected": {
+        "decoded": "",
+        "entity_key": "qwen@3.5#122b-a10b"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "ref": "dot-lost/1t repair: qwen35-122b-a10b resolves to qwen@3.5#122b-a10b",
+        "source": "bug"
+      },
+      "mutation": {
+        "description": "the corrected spelling for qwen35-122b-a10b now keys as qwen@3.5#122b-a10b"
+      }
+    },
+    {
+      "name": "dotlost_qwen35_397b_a17b",
+      "input": {
+        "token": "",
+        "id": "qwen35-397b-a17b",
+        "provider": "llmgateway"
+      },
+      "expected": {
+        "decoded": "",
+        "entity_key": "qwen@3.5#397b-a17b"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "ref": "dot-lost/1t repair: qwen35-397b-a17b resolves to qwen@3.5#397b-a17b",
+        "source": "bug"
+      },
+      "mutation": {
+        "description": "the corrected spelling for qwen35-397b-a17b now keys as qwen@3.5#397b-a17b"
+      }
+    }
+  ]
+}

@@ -464,8 +464,8 @@ const (
 	Entity__Ling__Flash__Version_2_0                                      = "ling/flash@2.0"
 	Entity__Ling__Flash__Version_2_6                                      = "ling/flash@2.6"
 	Entity__Ling__Flash_free__Version_2_6                                 = "ling/flash-free@2.6"
-	Entity__Ling__Version_1t                                              = "ling@1t"
-	Entity__Ling__Version_2_6                                             = "ling@2.6"
+	Entity__Ling__Size_1t                                                 = "ling#1t"
+	Entity__Ling__Version_2_6__Size_1t                                    = "ling@2.6#1t"
 	Entity__Liquid__Size_24b_a2b                                          = "liquid#24b-a2b"
 	Entity__Llama__Embed__Size_300m                                       = "llama/embed#300m"
 	Entity__Llama__Large__Size_70b                                        = "llama/large#70b"
@@ -556,8 +556,6 @@ const (
 	Entity__Minimax__Free                                                 = "minimax/free"
 	Entity__Minimax__M__Version_1                                         = "minimax/m@1"
 	Entity__Minimax__M__Version_2                                         = "minimax/m@2"
-	Entity__Minimax__M__Version_25                                        = "minimax/m@25"
-	Entity__Minimax__M__Version_27                                        = "minimax/m@27"
 	Entity__Minimax__M__Version_2_1                                       = "minimax/m@2.1"
 	Entity__Minimax__M__Version_2_5                                       = "minimax/m@2.5"
 	Entity__Minimax__M__Version_2_7                                       = "minimax/m@2.7"
@@ -602,7 +600,6 @@ const (
 	Entity__Mistral__Small__Size_119b                                     = "mistral/small#119b"
 	Entity__Mistral__Small__Size_24b                                      = "mistral/small#24b"
 	Entity__Mistral__Small__Size_24b__Instruct                            = "mistral/small#24b{instruct}"
-	Entity__Mistral__Small__Version_31__Size_24b__Instruct                = "mistral/small@31#24b{instruct}"
 	Entity__Mistral__Small__Version_3_1__Size_24b__Instruct               = "mistral/small@3.1#24b{instruct}"
 	Entity__Mistral__Small__Version_3_2__Size_24b__Instruct               = "mistral/small@3.2#24b{instruct}"
 	Entity__Mistral__Small__Version_4__Size_119b                          = "mistral/small@4#119b"
@@ -713,8 +710,7 @@ const (
 	Entity__Qwen__Coder__Version_2_5__Size_32b                            = "qwen/coder@2.5#32b"
 	Entity__Qwen__Coder__Version_2_5__Size_32b__Instruct                  = "qwen/coder@2.5#32b{instruct}"
 	Entity__Qwen__Coder__Version_2_5__Size_7b__Fast                       = "qwen/coder@2.5#7b{fast}"
-	Entity__Qwen__Coder__Version_2__Size_32b__Instruct                    = "qwen/coder@2#32b{instruct}"
-	Entity__Qwen__Coder__Version_2__Size_7b__Instruct                     = "qwen/coder@2#7b{instruct}"
+	Entity__Qwen__Coder__Version_2_5__Size_7b__Instruct                   = "qwen/coder@2.5#7b{instruct}"
 	Entity__Qwen__Coder__Version_3                                        = "qwen/coder@3"
 	Entity__Qwen__Coder__Version_3__Size_30b                              = "qwen/coder@3#30b"
 	Entity__Qwen__Coder__Version_3__Size_30b_a3b                          = "qwen/coder@3#30b-a3b"
@@ -745,7 +741,6 @@ const (
 	Entity__Qwen__Next__Version_3__Size_80b_a3b__Fast                     = "qwen/next@3#80b-a3b{fast}"
 	Entity__Qwen__Next__Version_3__Size_80b_a3b__Instruct                 = "qwen/next@3#80b-a3b{instruct}"
 	Entity__Qwen__Plus                                                    = "qwen/plus"
-	Entity__Qwen__Plus__Version_3                                         = "qwen/plus@3"
 	Entity__Qwen__Plus__Version_3_5                                       = "qwen/plus@3.5"
 	Entity__Qwen__Plus__Version_3_5__Omni                                 = "qwen/plus@3.5{omni}"
 	Entity__Qwen__Plus__Version_3_6                                       = "qwen/plus@3.6"
@@ -768,14 +763,8 @@ const (
 	Entity__Qwen__Version_2_5__Size_72b__Instruct                         = "qwen@2.5#72b{instruct}"
 	Entity__Qwen__Version_2_5__Size_7b__Instruct                          = "qwen@2.5#7b{instruct}"
 	Entity__Qwen__Version_2_5__Size_7b__Instruct__Vision                  = "qwen@2.5#7b{vision,instruct}"
-	Entity__Qwen__Version_2__Size_14b__Instruct                           = "qwen@2#14b{instruct}"
-	Entity__Qwen__Version_2__Size_32b__Instruct                           = "qwen@2#32b{instruct}"
-	Entity__Qwen__Version_2__Size_72b__Instruct                           = "qwen@2#72b{instruct}"
-	Entity__Qwen__Version_2__Size_7b__Instruct                            = "qwen@2#7b{instruct}"
-	Entity__Qwen__Version_2__Size_7b__Omni                                = "qwen@2#7b{omni}"
+	Entity__Qwen__Version_2_5__Size_7b__Omni                              = "qwen@2.5#7b{omni}"
 	Entity__Qwen__Version_3                                               = "qwen@3"
-	Entity__Qwen__Version_35__Size_122b_a10b                              = "qwen@35#122b-a10b"
-	Entity__Qwen__Version_35__Size_397b_a17b                              = "qwen@35#397b-a17b"
 	Entity__Qwen__Version_3_5                                             = "qwen@3.5"
 	Entity__Qwen__Version_3_5__Size_122b                                  = "qwen@3.5#122b"
 	Entity__Qwen__Version_3_5__Size_122b_a10b                             = "qwen@3.5#122b-a10b"
@@ -787,11 +776,11 @@ const (
 	Entity__Qwen__Version_3_5__Size_4b                                    = "qwen@3.5#4b"
 	Entity__Qwen__Version_3_5__Size_9b                                    = "qwen@3.5#9b"
 	Entity__Qwen__Version_3_6__Size_27b                                   = "qwen@3.6#27b"
+	Entity__Qwen__Version_3_6__Size_35b                                   = "qwen@3.6#35b"
 	Entity__Qwen__Version_3_6__Size_35b__Fast                             = "qwen@3.6#35b{fast}"
 	Entity__Qwen__Version_3_6__Size_35b_a3b                               = "qwen@3.6#35b-a3b"
 	Entity__Qwen__Version_3_7                                             = "qwen@3.7"
 	Entity__Qwen__Version_3__Size_0_6b                                    = "qwen@3#0.6b"
-	Entity__Qwen__Version_3__Size_122b_a10b                               = "qwen@3#122b-a10b"
 	Entity__Qwen__Version_3__Size_14b                                     = "qwen@3#14b"
 	Entity__Qwen__Version_3__Size_14b__Instruct                           = "qwen@3#14b{instruct}"
 	Entity__Qwen__Version_3__Size_1_7b__Base                              = "qwen@3#1.7b{base}"
@@ -800,32 +789,23 @@ const (
 	Entity__Qwen__Version_3__Size_235b_a22b                               = "qwen@3#235b-a22b"
 	Entity__Qwen__Version_3__Size_235b_a22b__Fast                         = "qwen@3#235b-a22b{fast}"
 	Entity__Qwen__Version_3__Size_235b_a22b__Instruct                     = "qwen@3#235b-a22b{instruct}"
-	Entity__Qwen__Version_3__Size_27b                                     = "qwen@3#27b"
 	Entity__Qwen__Version_3__Size_30b                                     = "qwen@3#30b"
 	Entity__Qwen__Version_3__Size_30b_a3b                                 = "qwen@3#30b-a3b"
 	Entity__Qwen__Version_3__Size_30b_a3b__Instruct                       = "qwen@3#30b-a3b{instruct}"
 	Entity__Qwen__Version_3__Size_30b_a3b__Instruct__Omni                 = "qwen@3#30b-a3b{instruct,omni}"
 	Entity__Qwen__Version_3__Size_30b_a3b__Omni                           = "qwen@3#30b-a3b{omni}"
 	Entity__Qwen__Version_3__Size_32b                                     = "qwen@3#32b"
-	Entity__Qwen__Version_3__Size_35b                                     = "qwen@3#35b"
-	Entity__Qwen__Version_3__Size_35b_a3b                                 = "qwen@3#35b-a3b"
-	Entity__Qwen__Version_3__Size_397b_a17b                               = "qwen@3#397b-a17b"
 	Entity__Qwen__Version_3__Size_480b                                    = "qwen@3#480b"
 	Entity__Qwen__Version_3__Size_4b                                      = "qwen@3#4b"
 	Entity__Qwen__Version_3__Size_4b__Base                                = "qwen@3#4b{base}"
 	Entity__Qwen__Version_3__Size_4b__Instruct                            = "qwen@3#4b{instruct}"
 	Entity__Qwen__Version_3__Size_80b                                     = "qwen@3#80b"
 	Entity__Qwen__Version_3__Size_8b                                      = "qwen@3#8b"
-	Entity__Qwen__Version_3__Size_9b                                      = "qwen@3#9b"
 	Entity__Qwen__Vl                                                      = "qwen/vl"
 	Entity__Qwen__Vl__Size_235b_a22b                                      = "qwen/vl#235b-a22b"
-	Entity__Qwen__Vl__Version_25__Size_72b__Instruct                      = "qwen/vl@25#72b{instruct}"
 	Entity__Qwen__Vl__Version_2_5__Size_32b__Instruct                     = "qwen/vl@2.5#32b{instruct}"
 	Entity__Qwen__Vl__Version_2_5__Size_72b__Instruct                     = "qwen/vl@2.5#72b{instruct}"
 	Entity__Qwen__Vl__Version_2_5__Size_7b__Instruct                      = "qwen/vl@2.5#7b{instruct}"
-	Entity__Qwen__Vl__Version_2__Size_32b__Instruct                       = "qwen/vl@2#32b{instruct}"
-	Entity__Qwen__Vl__Version_2__Size_72b__Instruct                       = "qwen/vl@2#72b{instruct}"
-	Entity__Qwen__Vl__Version_2__Size_7b__Instruct                        = "qwen/vl@2#7b{instruct}"
 	Entity__Qwen__Vl__Version_3                                           = "qwen/vl@3"
 	Entity__Qwen__Vl__Version_3__Instruct                                 = "qwen/vl@3{instruct}"
 	Entity__Qwen__Vl__Version_3__Size_235b_a22b                           = "qwen/vl@3#235b-a22b"
@@ -855,9 +835,8 @@ const (
 	Entity__Rerank__Size_4b                                               = "rerank#4b"
 	Entity__Rerank__V3_5                                                  = "rerank/v3.5"
 	Entity__Rerank__Version_2_5                                           = "rerank@2.5"
-	Entity__Ring_1t__Free__Version_2_6                                    = "ring-1t/free@2.6"
-	Entity__Ring__Version_1t                                              = "ring@1t"
-	Entity__Ring__Version_2_6                                             = "ring@2.6"
+	Entity__Ring__Size_1t                                                 = "ring#1t"
+	Entity__Ring__Version_2_6__Size_1t                                    = "ring@2.6#1t"
 	Entity__Riva__Size_4b__Instruct                                       = "riva#4b{instruct}"
 	Entity__Rnj__Size_8b                                                  = "rnj#8b"
 	Entity__Rnj__Version_1__Instruct                                      = "rnj@1{instruct}"
@@ -1445,8 +1424,8 @@ var allEntityConstants = [...]string{
 	Entity__Ling__Flash__Version_2_0,
 	Entity__Ling__Flash__Version_2_6,
 	Entity__Ling__Flash_free__Version_2_6,
-	Entity__Ling__Version_1t,
-	Entity__Ling__Version_2_6,
+	Entity__Ling__Size_1t,
+	Entity__Ling__Version_2_6__Size_1t,
 	Entity__Liquid__Size_24b_a2b,
 	Entity__Llama__Embed__Size_300m,
 	Entity__Llama__Large__Size_70b,
@@ -1537,8 +1516,6 @@ var allEntityConstants = [...]string{
 	Entity__Minimax__Free,
 	Entity__Minimax__M__Version_1,
 	Entity__Minimax__M__Version_2,
-	Entity__Minimax__M__Version_25,
-	Entity__Minimax__M__Version_27,
 	Entity__Minimax__M__Version_2_1,
 	Entity__Minimax__M__Version_2_5,
 	Entity__Minimax__M__Version_2_7,
@@ -1583,7 +1560,6 @@ var allEntityConstants = [...]string{
 	Entity__Mistral__Small__Size_119b,
 	Entity__Mistral__Small__Size_24b,
 	Entity__Mistral__Small__Size_24b__Instruct,
-	Entity__Mistral__Small__Version_31__Size_24b__Instruct,
 	Entity__Mistral__Small__Version_3_1__Size_24b__Instruct,
 	Entity__Mistral__Small__Version_3_2__Size_24b__Instruct,
 	Entity__Mistral__Small__Version_4__Size_119b,
@@ -1694,8 +1670,7 @@ var allEntityConstants = [...]string{
 	Entity__Qwen__Coder__Version_2_5__Size_32b,
 	Entity__Qwen__Coder__Version_2_5__Size_32b__Instruct,
 	Entity__Qwen__Coder__Version_2_5__Size_7b__Fast,
-	Entity__Qwen__Coder__Version_2__Size_32b__Instruct,
-	Entity__Qwen__Coder__Version_2__Size_7b__Instruct,
+	Entity__Qwen__Coder__Version_2_5__Size_7b__Instruct,
 	Entity__Qwen__Coder__Version_3,
 	Entity__Qwen__Coder__Version_3__Size_30b,
 	Entity__Qwen__Coder__Version_3__Size_30b_a3b,
@@ -1726,7 +1701,6 @@ var allEntityConstants = [...]string{
 	Entity__Qwen__Next__Version_3__Size_80b_a3b__Fast,
 	Entity__Qwen__Next__Version_3__Size_80b_a3b__Instruct,
 	Entity__Qwen__Plus,
-	Entity__Qwen__Plus__Version_3,
 	Entity__Qwen__Plus__Version_3_5,
 	Entity__Qwen__Plus__Version_3_5__Omni,
 	Entity__Qwen__Plus__Version_3_6,
@@ -1749,14 +1723,8 @@ var allEntityConstants = [...]string{
 	Entity__Qwen__Version_2_5__Size_72b__Instruct,
 	Entity__Qwen__Version_2_5__Size_7b__Instruct,
 	Entity__Qwen__Version_2_5__Size_7b__Instruct__Vision,
-	Entity__Qwen__Version_2__Size_14b__Instruct,
-	Entity__Qwen__Version_2__Size_32b__Instruct,
-	Entity__Qwen__Version_2__Size_72b__Instruct,
-	Entity__Qwen__Version_2__Size_7b__Instruct,
-	Entity__Qwen__Version_2__Size_7b__Omni,
+	Entity__Qwen__Version_2_5__Size_7b__Omni,
 	Entity__Qwen__Version_3,
-	Entity__Qwen__Version_35__Size_122b_a10b,
-	Entity__Qwen__Version_35__Size_397b_a17b,
 	Entity__Qwen__Version_3_5,
 	Entity__Qwen__Version_3_5__Size_122b,
 	Entity__Qwen__Version_3_5__Size_122b_a10b,
@@ -1768,11 +1736,11 @@ var allEntityConstants = [...]string{
 	Entity__Qwen__Version_3_5__Size_4b,
 	Entity__Qwen__Version_3_5__Size_9b,
 	Entity__Qwen__Version_3_6__Size_27b,
+	Entity__Qwen__Version_3_6__Size_35b,
 	Entity__Qwen__Version_3_6__Size_35b__Fast,
 	Entity__Qwen__Version_3_6__Size_35b_a3b,
 	Entity__Qwen__Version_3_7,
 	Entity__Qwen__Version_3__Size_0_6b,
-	Entity__Qwen__Version_3__Size_122b_a10b,
 	Entity__Qwen__Version_3__Size_14b,
 	Entity__Qwen__Version_3__Size_14b__Instruct,
 	Entity__Qwen__Version_3__Size_1_7b__Base,
@@ -1781,32 +1749,23 @@ var allEntityConstants = [...]string{
 	Entity__Qwen__Version_3__Size_235b_a22b,
 	Entity__Qwen__Version_3__Size_235b_a22b__Fast,
 	Entity__Qwen__Version_3__Size_235b_a22b__Instruct,
-	Entity__Qwen__Version_3__Size_27b,
 	Entity__Qwen__Version_3__Size_30b,
 	Entity__Qwen__Version_3__Size_30b_a3b,
 	Entity__Qwen__Version_3__Size_30b_a3b__Instruct,
 	Entity__Qwen__Version_3__Size_30b_a3b__Instruct__Omni,
 	Entity__Qwen__Version_3__Size_30b_a3b__Omni,
 	Entity__Qwen__Version_3__Size_32b,
-	Entity__Qwen__Version_3__Size_35b,
-	Entity__Qwen__Version_3__Size_35b_a3b,
-	Entity__Qwen__Version_3__Size_397b_a17b,
 	Entity__Qwen__Version_3__Size_480b,
 	Entity__Qwen__Version_3__Size_4b,
 	Entity__Qwen__Version_3__Size_4b__Base,
 	Entity__Qwen__Version_3__Size_4b__Instruct,
 	Entity__Qwen__Version_3__Size_80b,
 	Entity__Qwen__Version_3__Size_8b,
-	Entity__Qwen__Version_3__Size_9b,
 	Entity__Qwen__Vl,
 	Entity__Qwen__Vl__Size_235b_a22b,
-	Entity__Qwen__Vl__Version_25__Size_72b__Instruct,
 	Entity__Qwen__Vl__Version_2_5__Size_32b__Instruct,
 	Entity__Qwen__Vl__Version_2_5__Size_72b__Instruct,
 	Entity__Qwen__Vl__Version_2_5__Size_7b__Instruct,
-	Entity__Qwen__Vl__Version_2__Size_32b__Instruct,
-	Entity__Qwen__Vl__Version_2__Size_72b__Instruct,
-	Entity__Qwen__Vl__Version_2__Size_7b__Instruct,
 	Entity__Qwen__Vl__Version_3,
 	Entity__Qwen__Vl__Version_3__Instruct,
 	Entity__Qwen__Vl__Version_3__Size_235b_a22b,
@@ -1836,9 +1795,8 @@ var allEntityConstants = [...]string{
 	Entity__Rerank__Size_4b,
 	Entity__Rerank__V3_5,
 	Entity__Rerank__Version_2_5,
-	Entity__Ring_1t__Free__Version_2_6,
-	Entity__Ring__Version_1t,
-	Entity__Ring__Version_2_6,
+	Entity__Ring__Size_1t,
+	Entity__Ring__Version_2_6__Size_1t,
 	Entity__Riva__Size_4b__Instruct,
 	Entity__Rnj__Size_8b,
 	Entity__Rnj__Version_1__Instruct,

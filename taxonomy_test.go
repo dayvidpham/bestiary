@@ -93,11 +93,17 @@ func equalStrings(a, b []string) bool {
 // digitalocean openai-o1 / openai-o3 / openai-o3-mini rows canonicalize to the EXISTING
 // gpt/o@1, gpt/o@3, gpt/o@3{mini} entities, which vacates the family-"o" bare line (its
 // only occupants). No versioned line is added (the gpt/o generations already existed).
+//
+// 418 → 411 with the dot-lost version repair + 1t param-size routing (-8 versioned / +1
+// bare): the dot-lost merges fold whole versioned qwen/minimax lines (e.g. the dotless
+// minimax/m@25, qwen@35 lines) into their dotted siblings, retiring 8 versioned lines;
+// 1t routing empties the ling@1t/ring@1t VERSIONS (1t is now a size), so ling and ring
+// become bare lines — ring already had a bare presence, ling adds one, net +1 bare.
 func TestSeriesAll_CensusExact(t *testing.T) {
 	const (
-		wantSeries        = 418
-		wantVersionLines  = 215 // lines with a non-empty generation
-		wantBareLines     = 203 // lines whose entities carry no identity version
+		wantSeries        = 411
+		wantVersionLines  = 207 // lines with a non-empty generation
+		wantBareLines     = 204 // lines whose entities carry no identity version
 		minExpectedSeries = 300 // the ratified floor
 	)
 	all := bestiary.SeriesAll()
@@ -139,8 +145,12 @@ func TestSeriesAll_CensusExact(t *testing.T) {
 // 672 → 670 with the o-series dual-identity fix: vacating the family-"o" line retires
 // its two releases (the bare "o" release and the "mini" release); the o1/o3 rows land on
 // releases that already existed under gpt/o, so none is added.
+//
+// 670 → 659 with the dot-lost version repair + 1t param-size routing: the dot-lost merges
+// retire the releases carried by the folded dotless/dash lines, and the 1t re-keys move
+// ling/ring onto releases that already existed; net −11.
 func TestReleases_CensusExact(t *testing.T) {
-	const wantReleases = 670
+	const wantReleases = 659
 
 	summed := 0
 	for _, s := range bestiary.SeriesAll() {

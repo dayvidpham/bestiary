@@ -66,7 +66,13 @@ func TestEntityConstants_Unique(t *testing.T) {
 	// / openai-o3-mini rows (hyphen-glued vendor spelling) now canonicalize onto the
 	// EXISTING gpt/o@1, gpt/o@3, gpt/o@3{mini} entities, vacating the two junk family-"o"
 	// keys (o and o/mini). Two constants REMOVED, none renamed.
-	const wantEntityCount = 976
+	//
+	// 976 → 955 with the dot-lost version repair + 1t param-size routing: the dot-lost
+	// exact-id overrides fold the dotless (minimax-m25, qwen35-…) and dash-glued
+	// (qwen2-5-…, qwen3-6-…) spellings onto their real dotted entities (mostly merges, a
+	// few re-keys), and 1t routing re-keys ling@1t/ring@1t to ling#1t/ring#1t and merges
+	// ring-2.6-1t-free into ring@2.6#1t. Net −21 (measured; merges dominate).
+	const wantEntityCount = 955
 	if len(keys) != wantEntityCount {
 		t.Errorf("EntityKeys() returned %d constants; expected exactly %d — "+
 			"re-run go generate ./... and update this census literal if the entity count changed intentionally",

@@ -321,8 +321,12 @@ func TestRealCatalog_AllowlistDisposition(t *testing.T) {
 		"llama3.1:8b":  {joined: true, modelsID: "llama-3.1-8b-instruct"},
 		"llama3.2:3b":  {joined: true, modelsID: "llama-3.2-3b-instruct"},
 		"llama3.2:1b":  {joined: true, modelsID: "meta/llama-3.2-1b-instruct"},
-		// Default-tag instruct FALLBACK (bare key misses, instruct hits).
-		"qwen2.5:7b": {joined: true, modelsID: "qwen/qwen2.5-7b-instruct"},
+		// Default-tag instruct FALLBACK (bare key misses, instruct hits). The join now
+		// returns the dot-lost spelling qwen2-5-7b-instruct because the dot-lost version
+		// repair merged it into the same qwen@2.5#7b{instruct} entity as
+		// qwen/qwen2.5-7b-instruct; the join returns the first catalog member of that
+		// entity, which is the earlier-sorting bare id. Same entity, same model.
+		"qwen2.5:7b": {joined: true, modelsID: "qwen2-5-7b-instruct"},
 		// Bare mechanical match to the canonical open-weights entity.
 		"mistral:7b": {joined: true, modelsID: "open-mistral-7b"},
 		// No joinable catalog entity at these sizes -> correctly KEPT (community).

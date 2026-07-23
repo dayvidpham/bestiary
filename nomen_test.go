@@ -69,9 +69,15 @@ func nominaCensus(ns []bestiary.Nomen) map[bestiary.NomenScheme]int {
 // keys and their two Preferred nomina. provider-ID is UNCHANGED at 2791 (the three
 // digitalocean ID spellings survive as Admitted provider-ID nomina on the merged
 // entities — folding a spelling for IDENTITY never erases it from the record).
+//
+// canonical went 976 → 955 with the dot-lost version repair + 1t param-size routing: the
+// dot-lost merges and the 1t re-keys retire 21 Preferred canonical nomina. provider-ID is
+// UNCHANGED at 2791 AGAIN — every repair MOVES instances onto the corrected entity, it
+// removes none, so the dotless/dash/1t ID spellings all survive as Admitted provider-ID
+// nomina on the merged entities.
 func TestNomina_CensusExact(t *testing.T) {
 	const (
-		wantCanonical   = 976
+		wantCanonical   = 955
 		wantProviderID  = 2791
 		wantAlias       = 1
 		wantHuggingFace = 4
@@ -113,7 +119,7 @@ func TestNomina_CensusExact(t *testing.T) {
 			fromModels, wantProviderID, wantAlias, wantHuggingFace)
 	}
 	if fromModels[bestiary.NomenSchemeCanonical] != wantFromModelsCanonical {
-		t.Errorf("MintNominaFromModels canonical = %d, want %d (the 976 entities minus the 4 metadata-only standalones)",
+		t.Errorf("MintNominaFromModels canonical = %d, want %d (the 955 entities minus the 4 metadata-only standalones)",
 			fromModels[bestiary.NomenSchemeCanonical], wantFromModelsCanonical)
 	}
 }

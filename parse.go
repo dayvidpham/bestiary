@@ -2434,6 +2434,7 @@ func ParseFamilyDetailed(raw Family, id ModelID, p Provider) (Family, string, st
 		if pd, pdErr := loadParseData(); pdErr == nil {
 			variant, modifier = promoteVariantModifier(pd, family, variant, modifier)
 		}
+		version = correctDotLostVersion(id, version)
 		return family, variant, version, modifier, nil
 	}
 
@@ -2449,6 +2450,7 @@ func ParseFamilyDetailed(raw Family, id ModelID, p Provider) (Family, string, st
 		if pd, pdErr := loadParseData(); pdErr == nil {
 			rv, rmod = promoteVariantModifier(pd, rf, rv, rmod)
 		}
+		rver = correctDotLostVersion(id, rver)
 		return rf, rv, rver, rmod, fail
 	}
 
@@ -3378,15 +3380,21 @@ func isDateShapedToken(tok string) bool {
 // Size/Quantization dimension) — explicitly NOT a version and NOT a cross-provider
 // divergence. Mirrors the YYMM/date guard pattern.
 //
-// Shapes covered (case-insensitive; the b/m unit suffix is the discriminator):
-//   - dense param count:  "120b", "20b", "7b", "1.5b", "560m", "7m"
+// Shapes covered (case-insensitive; the b/m/t unit suffix is the discriminator):
+//   - dense param count:  "120b", "20b", "7b", "1.5b", "560m", "7m", "1t" (trillion)
 //   - MoE "NxNNb":        "8x22b", "8x7b"
 //   - MoE active-params:  "30b-a3b", "300b-a47b", "235b-a22b", "480b-a35b"
 //   - MoE count-suffixed: "17b-16e", "17b-128e"  (Nb-Ke: active params + expert count)
 //
-// Genuine version tokens are NOT matched because they have no b/m unit suffix:
+// The trillion unit "t" (Ling-1T / Ring-1T are 1-trillion-parameter models) is a size,
+// not a version — so ling-1t → ling#1t (not ling@1t) and the "1t" in ling-2.6-1t rides
+// as the size beside version 2.6. Only a standalone hyphen/path-delimited "Nt" token is a
+// size; a token-internal "t" (deepseek r1t2) or an ollama ":1t" tag (kimi-k2:1t, stripped
+// before size extraction) is unaffected.
+//
+// Genuine version tokens are NOT matched because they have no b/m/t unit suffix:
 // "4o" (ends "o"), "4.5", "5", "3.1", "2603" (date, also guarded separately).
-var reParamSizeToken = regexp.MustCompile(`^(?i:\d+(?:\.\d+)?[bm]|\d+x\d+b|\d+b-a\d+b|\d+b-\d+e)$`)
+var reParamSizeToken = regexp.MustCompile(`^(?i:\d+(?:\.\d+)?[bmt]|\d+x\d+b|\d+b-a\d+b|\d+b-\d+e)$`)
 
 // isParamSizeToken reports whether tok is a parameter-count / model-size token
 // (e.g. "120b", "7m", "8x22b", "30b-a3b"). Such tokens are dropped from version
@@ -3445,10 +3453,10 @@ func ParseParamSize(raw string) (string, error) {
 // ParseParamShape tries them is significant only for readability — the four
 // shapes are mutually exclusive.
 var (
-	reShapeNxM       = regexp.MustCompile(`^(\d+)x(\d+b)$`)        // "8x22b": experts x per-expert
-	reShapeActiveMoE = regexp.MustCompile(`^(\d+b)-a(\d+b)$`)      // "30b-a3b": total - active
-	reShapeCountMoE  = regexp.MustCompile(`^(\d+b)-(\d+)e$`)       // "17b-16e": active - expert count
-	reShapeDense     = regexp.MustCompile(`^(\d+(?:\.\d+)?[bm])$`) // "30b", "560m", "10.7b"
+	reShapeNxM       = regexp.MustCompile(`^(\d+)x(\d+b)$`)         // "8x22b": experts x per-expert
+	reShapeActiveMoE = regexp.MustCompile(`^(\d+b)-a(\d+b)$`)       // "30b-a3b": total - active
+	reShapeCountMoE  = regexp.MustCompile(`^(\d+b)-(\d+)e$`)        // "17b-16e": active - expert count
+	reShapeDense     = regexp.MustCompile(`^(\d+(?:\.\d+)?[bmt])$`) // "30b", "560m", "10.7b", "1t"
 )
 
 // ParseParamShape decomposes a canonical parameter-size token into its flat
@@ -3586,12 +3594,14 @@ func paramTokenToInt64(tok string) (int64, error) {
 	unit := tok[len(tok)-1]
 	var unitExp int
 	switch unit {
+	case 't':
+		unitExp = 12
 	case 'b':
 		unitExp = 9
 	case 'm':
 		unitExp = 6
 	default:
-		return 0, fmt.Errorf("token %q has no recognized b/m unit suffix", tok)
+		return 0, fmt.Errorf("token %q has no recognized b/m/t unit suffix", tok)
 	}
 	num := tok[:len(tok)-1] // strip the unit
 	intPart, fracPart, hasDot := strings.Cut(num, ".")
@@ -4206,6 +4216,16 @@ var idFamilyOverrides = map[string]idFamilyOverrideEntry{
 	"claude-opus4-7": {family: "claude", variant: "opus", version: "4.7"},
 	"claude-opus4-8": {family: "claude", variant: "opus", version: "4.8"},
 
+	// ring-2.6-1t-free (opencode) arrives with the upstream raw_family "ring-1t-free" —
+	// the "1t" size and the "free" tier are both fused into the family label — so it
+	// decomposed to family "ring-1t", variant "free" and stranded on a phantom "ring-1t"
+	// line instead of joining the real Ring 2.6 (a 1-trillion-parameter model). Pinned to
+	// the bare ring family with its 2.6 version; the "1t" size is recovered mechanically
+	// (the trillion unit) as a #1t segment and the "free" pricing tier drops from identity,
+	// so this row converges on ring@2.6#1t alongside inclusionai/ring-2.6-1t. Sole provider
+	// of this exact id → zero collateral.
+	"ring-2.6-1t-free": {family: "ring", version: "2.6"},
+
 	// k2p7 (kimi-for-coding) is Kimi K2.7, the exact sibling of k2p5 → kimi/k@2.5 and
 	// k2p6 → kimi/k@2.6. The p-as-dot decode reaches k2p5/k2p6 because they arrive with
 	// the upstream raw_family "kimi-thinking"; k2p7 alone arrives with the COMPOUND
@@ -4337,6 +4357,83 @@ var idFamilyOverrides = map[string]idFamilyOverrideEntry{
 	"us.meta.llama4-maverick-17b-instruct-v1:0":   {family: "llama", variant: "maverick", version: "4", modifiers: []string{"instruct"}},
 	"cerebras-llama-4-maverick-17b-128e-instruct": {family: "llama", variant: "maverick", version: "4", modifiers: []string{"instruct"}},
 	"groq-llama-4-maverick-17b-128e-instruct":     {family: "llama", variant: "maverick", version: "4", modifiers: []string{"instruct"}},
+}
+
+// dotLostVersionOverrides is the curated, CLOSED, exact-model-ID map for the "dot-lost"
+// version-spelling defect: an upstream id spells a minor version WITHOUT its separating
+// dot — either dotless ("minimax-m25", "qwen35-122b-a10b", "mistral-small-31-…") or
+// dash-glued onto a digit-suffixed family token ("qwen2-5-7b-instruct", "qwen3-6-plus") —
+// so the decomposition captured only the leading integer (25 → "25", 2-5 → "2") and lost
+// the minor. Unlike idFamilyOverrides this corrects ONLY the Version field: the family,
+// variant, parameter size, modifier and release stage the pipeline already derived are
+// all correct and are LEFT UNTOUCHED, so a dot-lost repair can never disturb another
+// field. Each key is the EXACT (lowercase) model id and each value the corrected dotted
+// version; the map is consulted at the end of ParseFamilyDetailed on BOTH the empty-raw
+// and raw-populated paths.
+//
+// Every entry is EVIDENCE-BACKED: the target dotted version is a real, heavily-attested
+// Qwen/MiniMax/Mistral release, and the id's own spelling (the "2-5" / "25" is the minor
+// digit) fixes which dot was lost. The 23 whose corrected key already exists MERGE into
+// the dotted sibling; three (qwen2-5-coder-7b-instruct, qwen2-5-omni-7b, qwen3-6-35b) have
+// no same-key sibling and RE-KEY onto a new (correct) dotted key — they carry the same
+// unambiguous 2-5/3-6 spelling as their merging siblings (Qwen2.5-Coder-7B-Instruct,
+// Qwen2.5-Omni-7B and Qwen3.6-35B are documented models), so leaving them on the
+// known-false integer version would be incoherent. No general "NM → N.M" decode is used:
+// the catalog's other <letters><digit>-<digit> ids (llama3-3-, wan2-2-) glue the digit
+// onto the FAMILY with a different correct reading a general rule must not touch, so the
+// repair is pinned per exact id.
+var dotLostVersionOverrides = map[string]string{
+	// ── dotless (no separator): the minor digit is fused to the major ──
+	"minimax-m25":                   "2.5", // MiniMax M2.5 (sibling minimax/m@2.5, 56 inst)
+	"public/minimax-m25":            "2.5", // same model, drun's namespaced spelling
+	"minimax-m27":                   "2.7", // MiniMax M2.7 (sibling minimax/m@2.7, 52 inst)
+	"qwen25-vl-72b-instruct":        "2.5", // Qwen2.5-VL-72B-Instruct (sibling qwen/vl@2.5#72b{instruct}, 7 inst)
+	"qwen35-122b-a10b":              "3.5", // Qwen3.5-122B-A10B (sibling qwen@3.5#122b-a10b, 17 inst)
+	"qwen35-397b-a17b":              "3.5", // Qwen3.5-397B-A17B (sibling qwen@3.5#397b-a17b, 27 inst)
+	"mistral-small-31-24b-instruct": "3.1", // Mistral Small 3.1 24B (sibling mistral/small@3.1#24b{instruct}, 4 inst)
+
+	// ── dash-glued onto a digit-suffixed family token (qwen2-5-… / qwen3-N-…) ──
+	// qwen 2.5 line (all MERGE except the two noted RE-KEYs)
+	"qwen2-5-7b-instruct":        "2.5", // → qwen@2.5#7b{instruct} (merge, 5 inst)
+	"qwen2-5-math-7b-instruct":   "2.5", // → qwen@2.5#7b{instruct} (merge)
+	"qwen2-5-14b-instruct":       "2.5", // → qwen@2.5#14b{instruct} (merge, 1 inst)
+	"qwen2-5-32b-instruct":       "2.5", // → qwen@2.5#32b{instruct} (merge, 1 inst)
+	"qwen2-5-72b-instruct":       "2.5", // → qwen@2.5#72b{instruct} (merge, 8 inst)
+	"qwen2-5-math-72b-instruct":  "2.5", // → qwen@2.5#72b{instruct} (merge)
+	"qwen2-5-coder-32b-instruct": "2.5", // → qwen/coder@2.5#32b{instruct} (merge, 6 inst)
+	"qwen2-5-coder-7b-instruct":  "2.5", // → qwen/coder@2.5#7b{instruct} (RE-KEY: no same-key sibling; Qwen2.5-Coder-7B-Instruct is real)
+	"qwen2-5-omni-7b":            "2.5", // → qwen@2.5#7b{omni} (RE-KEY: no same-key sibling; Qwen2.5-Omni-7B is real)
+	"qwen2-5-vl-7b-instruct":     "2.5", // → qwen/vl@2.5#7b{instruct} (merge, 1 inst)
+	"qwen2-5-vl-32b-instruct":    "2.5", // → qwen/vl@2.5#32b{instruct} (merge, 2 inst)
+	"qwen2-5-vl-72b-instruct":    "2.5", // → qwen/vl@2.5#72b{instruct} (merge, 7 inst)
+	// qwen 3.5 line
+	"qwen3-5-4b":        "3.5", // → qwen@3.5#4b (merge, 1 inst)
+	"qwen3-5-9b":        "3.5", // → qwen@3.5#9b (merge, 15 inst)
+	"qwen3-5-27b":       "3.5", // → qwen@3.5#27b (merge, 30 inst)
+	"qwen3-5-35b-a3b":   "3.5", // → qwen@3.5#35b-a3b (merge, 13 inst)
+	"qwen3-5-122b-a10b": "3.5", // → qwen@3.5#122b-a10b (merge, 17 inst)
+	"qwen3-5-397b-a17b": "3.5", // → qwen@3.5#397b-a17b (merge, 27 inst)
+	"qwen3-5-plus":      "3.5", // → qwen/plus@3.5 (merge, 16 inst)
+	// qwen 3.6 line
+	"qwen3-6-27b":         "3.6", // → qwen@3.6#27b (merge, 20 inst)
+	"qwen3-6-35b":         "3.6", // → qwen@3.6#35b (RE-KEY: no same-key sibling; Qwen3.6-35B)
+	"qwen3-6-flash":       "3.6", // → qwen/flash@3.6 (merge, 13 inst)
+	"qwen3-6-max-preview": "3.6", // → qwen/max@3.6 (merge, 9 inst; "preview" stays a stage, detected off the id)
+	"qwen3-6-plus":        "3.6", // → qwen/plus@3.6 (merge, 24 inst)
+	// qwen 3.7 line
+	"qwen3-7-max":  "3.7", // → qwen/max@3.7 (merge, 22 inst)
+	"qwen3-7-plus": "3.7", // → qwen/plus@3.7 (merge, 17 inst)
+}
+
+// correctDotLostVersion returns the curated dotted version for a dot-lost model id, or
+// the pipeline-derived version unchanged when the id carries no dot-lost defect. It is
+// keyed on the EXACT lowercase id and touches only the version, so it is a no-op for
+// every id outside the enumerated dotLostVersionOverrides set.
+func correctDotLostVersion(id ModelID, version string) string {
+	if v, ok := dotLostVersionOverrides[strings.ToLower(string(id))]; ok {
+		return v
+	}
+	return version
 }
 
 func isSeriesTierToken(tok string) bool {
