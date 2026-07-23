@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 	"time"
@@ -151,22 +153,6 @@ func TestHFDoer_429_BackoffThenSuccess(t *testing.T) {
 	}
 	if !sawBackoff {
 		t.Fatalf("Retry-After=2s backoff not observed, slept=%v", fc.slept)
-	}
-}
-
-func TestParseLinkNext(t *testing.T) {
-	cases := []struct {
-		in, want string
-	}{
-		{`<https://huggingface.co/api/models?cursor=abc>; rel="next"`, "https://huggingface.co/api/models?cursor=abc"},
-		{`<https://x/1>; rel="prev", <https://x/2>; rel="next"`, "https://x/2"},
-		{`<https://x/1>; rel="prev"`, ""},
-		{"", ""},
-	}
-	for _, tc := range cases {
-		if got := parseLinkNext(tc.in); got != tc.want {
-			t.Errorf("parseLinkNext(%q) = %q, want %q", tc.in, got, tc.want)
-		}
 	}
 }
 
@@ -428,5 +414,80 @@ func TestStampHFIngestedAt_NoRowIsLoud(t *testing.T) {
 	raw := []byte(`{"schema_version":3,"sources":[],"ingested":[]}`)
 	if _, err := stampHFIngestedAt(raw, "2026-07-23T12:00:00Z"); err == nil {
 		t.Fatalf("want a loud error when no huggingface ingest row exists")
+	}
+}
+
+// --------------------------------------------------------------------------
+// hf_aliases.json case-fold collision guard
+// --------------------------------------------------------------------------
+
+func TestLoadAliasesFromDir_CaseFoldCollisionIsLoud(t *testing.T) {
+	dir := t.TempDir()
+	raw := `{
+  "schema_version": 1,
+  "aliases": {
+    "Org/Repo": {"family":"llama","variant":"","version":"","param_size":"","modifier":[]},
+    "org/repo": {"family":"qwen","variant":"","version":"","param_size":"","modifier":[]}
+  }
+}`
+	if err := os.WriteFile(filepath.Join(dir, "hf_aliases.json"), []byte(raw), 0o644); err != nil {
+		t.Fatalf("write hf_aliases.json: %v", err)
+	}
+	_, err := loadAliasesFromDir(dir)
+	if err == nil {
+		t.Fatalf("want a loud error when two alias keys case-fold to the same value")
+	}
+	msg := err.Error()
+	if !strings.Contains(msg, "Org/Repo") || !strings.Contains(msg, "org/repo") {
+		t.Errorf("error %q does not name both colliding keys", msg)
+	}
+}
+
+func TestLoadAliasesFromDir_NoCollisionOK(t *testing.T) {
+	dir := t.TempDir()
+	raw := `{
+  "schema_version": 1,
+  "aliases": {
+    "Org/Repo": {"family":"llama","variant":"","version":"","param_size":"","modifier":[]},
+    "Other/Repo": {"family":"qwen","variant":"","version":"","param_size":"","modifier":[]}
+  }
+}`
+	if err := os.WriteFile(filepath.Join(dir, "hf_aliases.json"), []byte(raw), 0o644); err != nil {
+		t.Fatalf("write hf_aliases.json: %v", err)
+	}
+	aliases, err := loadAliasesFromDir(dir)
+	if err != nil {
+		t.Fatalf("loadAliasesFromDir: %v", err)
+	}
+	if len(aliases) != 2 {
+		t.Errorf("len(aliases) = %d, want 2", len(aliases))
+	}
+}
+
+// --------------------------------------------------------------------------
+// huggingface_unlinked.json envelope shape (count field, modelsdev_unlinked.json precedent)
+// --------------------------------------------------------------------------
+
+func TestUnlinkedFileOut_CarriesCount(t *testing.T) {
+	out := unlinkedFileOut{
+		Comment:       unlinkedFileComment,
+		SchemaVersion: hfNominaSchemaVersion,
+		Count:         2,
+		Unlinked:      []string{"a/b", "c/d"},
+	}
+	b, err := marshalJSON(out)
+	if err != nil {
+		t.Fatalf("marshalJSON: %v", err)
+	}
+	var got map[string]any
+	if err := json.Unmarshal(b, &got); err != nil {
+		t.Fatalf("unmarshal: %v", err)
+	}
+	count, ok := got["count"].(float64)
+	if !ok {
+		t.Fatalf("emitted JSON has no numeric \"count\" field: %s", b)
+	}
+	if int(count) != len(out.Unlinked) {
+		t.Errorf("count = %v, want len(unlinked) = %d", count, len(out.Unlinked))
 	}
 }

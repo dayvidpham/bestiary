@@ -119,7 +119,6 @@ type hfDoer struct {
 
 	// Captured from the most recent response for the caller to read after Get.
 	lastStatus int
-	lastLink   string
 
 	// count429 is the cumulative number of 429 responses observed across the run
 	// (each triggers a Retry-After backoff), surfaced in the run summary.
@@ -157,7 +156,6 @@ func (d *hfDoer) Do(req *http.Request) (*http.Response, error) {
 			continue
 		}
 		d.lastStatus = resp.StatusCode
-		d.lastLink = resp.Header.Get("Link")
 		if et := resp.Header.Get("ETag"); et != "" {
 			d.etags[url] = et
 		}
@@ -172,23 +170,6 @@ func (d *hfDoer) notModified() bool { return d.lastStatus == http.StatusNotModif
 // notFound reports whether the last response was a 404 (the candidate is not a
 // real Hub repo).
 func (d *hfDoer) notFound() bool { return d.lastStatus == http.StatusNotFound }
-
-// reLinkNext extracts the URL of a `rel="next"` link from an RFC-5988 Link header
-// value: `<https://.../?cursor=...>; rel="next"`. Following the server-supplied
-// next URL (never computing a page offset) is the pagination contract.
-var reLinkNext = regexp.MustCompile(`<([^>]+)>\s*;\s*rel="?next"?`)
-
-// parseLinkNext returns the rel="next" URL from a Link header value, or "" when
-// there is no next page. A Link header may carry several comma-separated links;
-// only the one whose rel is "next" is followed.
-func parseLinkNext(link string) string {
-	for _, part := range strings.Split(link, ",") {
-		if m := reLinkNext.FindStringSubmatch(strings.TrimSpace(part)); m != nil {
-			return m[1]
-		}
-	}
-	return ""
-}
 
 // parseRetryAfter interprets a Retry-After header. It accepts the common
 // delta-seconds form (an integer) and falls back to defaultRetryAfter for an
@@ -537,10 +518,13 @@ func dedupSortedStrings(s *[]string) {
 	*s = out
 }
 
-// unlinkedFileOut mirrors parse/data/huggingface_unlinked.json.
+// unlinkedFileOut mirrors parse/data/huggingface_unlinked.json, matching the
+// modelsdev_unlinked.json envelope shape (schema_version, count, then the list)
+// so both join-disagreement reports carry the same at-a-glance count field.
 type unlinkedFileOut struct {
 	Comment       string   `json:"_comment,omitempty"`
 	SchemaVersion int      `json:"schema_version"`
+	Count         int      `json:"count"`
 	Unlinked      []string `json:"unlinked"`
 }
 
@@ -662,7 +646,39 @@ func loadAliasesFromDir(dir string) (map[string]hfAlias, error) {
 				"  Where: loadAliasesFromDir\n"+
 				"  How to fix: validate the alias-file JSON syntax", err)
 	}
+	if err := validateNoAliasCaseCollisions(f.Aliases); err != nil {
+		return nil, err
+	}
 	return f.Aliases, nil
+}
+
+// validateNoAliasCaseCollisions fails loud when two alias keys case-fold to the
+// same value. lookupAlias falls back to a lowercased-key match when the exact
+// (case-preserved) key misses, so two keys that fold together make that fallback
+// ambiguous — silently picking one via map iteration order would be
+// nondeterministic. Loud-at-load matches the existing malformed-JSON discipline
+// for this same file (both are curator-fixable input defects caught before the
+// aliases are ever used).
+func validateNoAliasCaseCollisions(aliases map[string]hfAlias) error {
+	seen := make(map[string]string, len(aliases))
+	keys := make([]string, 0, len(aliases))
+	for k := range aliases {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	for _, k := range keys {
+		fold := strings.ToLower(k)
+		if prev, ok := seen[fold]; ok {
+			return fmt.Errorf(
+				"bestiary-hf: hf_aliases.json has a case-folding collision: %q and %q both fold to %q\n"+
+					"  What: two alias keys are indistinguishable to the case-insensitive lookup fallback\n"+
+					"  Why: lookupAlias retries a lowercased-key match when the exact key misses, so two keys folding to the same value make the match ambiguous\n"+
+					"  Where: loadAliasesFromDir (parse/data/hf_aliases.json)\n"+
+					"  How to fix: rename one of the two keys so they no longer case-fold to the same value", prev, k, fold)
+		}
+		seen[fold] = k
+	}
+	return nil
 }
 
 // loadExistingHFNomina reads the current huggingface_nomina.json for
@@ -788,6 +804,11 @@ func run(args []string) error {
 	candidates := selectCandidates(gatherCandidates(catalog), aliases, limit)
 	keys := catalogKeySet(catalog)
 
+	// Fetch strategy: a targeted per-repo GET (verifyRepo) against each known
+	// org/repo candidate, never a listing/search endpoint. RFC-5988 Link-header
+	// pagination is therefore inapplicable by design — there is no result page to
+	// walk, only a bounded set of candidates already known from the local catalog,
+	// which is both bounded and politer than crawling a listing.
 	var joined []joinResult
 	verified, missing, unchanged := 0, 0, 0
 	for _, repo := range candidates {
@@ -821,6 +842,7 @@ func run(args []string) error {
 	unlinkedBytes, err := marshalJSON(unlinkedFileOut{
 		Comment:       unlinkedFileComment,
 		SchemaVersion: hfNominaSchemaVersion,
+		Count:         len(unlinked),
 		Unlinked:      unlinked,
 	})
 	if err != nil {

@@ -1,6 +1,7 @@
 {
   "_comment": "Verified HuggingFace repos KEPT but joining no models.dev entity (visibility list, never a drop path). Written sorted by the offline tool; each is a real Hub repo that decomposed to no catalog entity — a curator either adds an hf_aliases.json override to link it, or confirms it is genuinely absent from the catalog.",
   "schema_version": 1,
+  "count": 17,
   "unlinked": [
     "KBLab/kb-whisper-large",
     "LiquidAI/LFM2-24B-A2B",
