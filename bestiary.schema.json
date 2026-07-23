@@ -910,7 +910,7 @@
     },
     "Nomen": {
       "title": "Nomen",
-      "description": "One recorded NAMING of an entity: a value string classified by scheme, carrying its acceptability status, the entity it resolves to, and a provenance split into two DISTINCT levels — SourceURL (WHO asserts the naming, a claimant URL, empty for bestiary-minted nomina) and Source (WHICH ingest we read it from, a DataSourceID). These must never be conflated (the BenchmarkResult SourceURL-vs-Source discipline). An Entity HAS-MANY Nomina; the canonical key IS the entity's Preferred nomen. Added in schema 0.5.0.",
+      "description": "One recorded NAMING of an entity: a value string classified by scheme, carrying its acceptability status, the entity it resolves to, and its provenance recorded as an Attestations evidence set (the Wikidata per-claim-reference model — each attestation independently carries its own claimant URL and ingest source). The prior scalar SourceURL/Source fields were removed in favor of Attestations; they are intentionally absent from this $def. An Entity HAS-MANY Nomina; the canonical key IS the entity's Preferred nomen. Added in schema 0.5.0.",
       "type": "object",
       "properties": {
         "Value": {
@@ -929,21 +929,13 @@
           "description": "The entity this naming denotes. One spelling may resolve to several entities (homonymy).",
           "$ref": "#/$defs/EntityRef"
         },
-        "SourceURL": {
-          "description": "WHO asserts this naming (claim attribution). Empty for bestiary-minted nomina.",
-          "type": "string"
-        },
-        "Source": {
-          "description": "WHICH ingest we read this naming from (a DataSourceID; e.g. \"models.dev\").",
-          "type": "string"
-        },
         "Attestations": {
-          "description": "The evidence set for this naming (>=1): each element is one independent piece of evidence (the Wikidata per-claim-reference model). Two sources asserting the same name append two attestations rather than overwriting. Added in schema 0.6.0; optional for backward compatibility (a name predating the multi-attestation lift carries its provenance on the scalar SourceURL/Source fields).",
+          "description": "The evidence set for this naming (>=1): each element is one independent piece of evidence (the Wikidata per-claim-reference model). Two sources asserting the same name append two attestations rather than overwriting. Added in schema 0.6.0; optional (an empty/omitted set is a nomen with no recorded evidence yet).",
           "type": ["array", "null"],
           "items": { "$ref": "#/$defs/NomenAttestation" }
         }
       },
-      "required": ["Value", "Scheme", "Status", "ResolvesTo", "SourceURL", "Source"]
+      "required": ["Value", "Scheme", "Status", "ResolvesTo"]
     },
     "LinkType": {
       "title": "LinkType",

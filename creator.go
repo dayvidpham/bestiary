@@ -28,10 +28,13 @@ type Creator string
 const CreatorNone Creator = ""
 
 // Well-known Creator constants (the initial curated seed set, mirroring the Provider
-// constants in providers_gen.go). Values are lowercase machine tokens matching the
-// Provider token convention ("anthropic", "openai", …); a Creator token and the
-// same lab's Provider token deliberately coincide where a lab both creates and
-// distributes, but the two are separate axes and must not be conflated. The set is
+// constants in providers_gen.go). Values are the lab's own short machine token,
+// following the same lowercase convention as Provider ("anthropic", "openai", …).
+// A Creator token and the same lab's Provider token OFTEN coincide when a lab both
+// creates and distributes (e.g. "anthropic"/"anthropic"), but they are NOT
+// guaranteed to: CreatorZhipu ("zhipu") diverges from ProviderZhipuai ("zhipuai") —
+// the lab's short name and its provider-hosting token are independently curated and
+// may drift apart. The two are separate axes and must not be conflated. The set is
 // extended by the huggingface ingest (HF-org-derived creators) in a later slice.
 const (
 	CreatorMeta      Creator = "meta"
