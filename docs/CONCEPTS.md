@@ -146,6 +146,100 @@ with an **empty seed**; its collision guard rejects any entry whose
 is how the first attempted entries were correctly routed to attribute-class
 demotion (a merge) instead.
 
+## Attestation quality (v0.2.8 extension, beyond LRM)
+
+Multi-attestation (the shift from one `SourceURL`/`Source` pair per Nomen to a
+Nomen `HAS-MANY` `NomenAttestation`s) adds a second axis alongside `Status`:
+**attestation quality** — whose voice a piece of evidence is, and how it
+entered the system. This section documents that axis and the specs it was
+checked against; see the v0.2.8 registry-ingest/creator-dimension proposal §3.1
+for the shipping types
+(`AttestationAuthority`, `IngestMethod`).
+
+Where `Status` (`AcceptabilityRating`) is bestiary's **one** editorial judgment
+about a Nomen as a whole — the correction to the Grounding table above is
+important here: **LRM-E9 Nomen's own attribute list carries no dedicated
+"status" attribute at all.** IFLA LRM (2017-12), Table 4.3, lists Nomen's
+attributes as Category, Nomen string, Scheme, Intended audience, Context of
+use, Reference source, Language, and Script (+ Script conversion) — nine
+attributes, none named "status". LRM represents "preferred" through the
+general-purpose **Category** attribute, sub-typed per application (§4.6.3's
+worked example literally tags one clustered nomen `Category (preferred form of
+access point)` and its siblings as variants). `AcceptabilityRating`'s
+four-value scheme (`Preferred`/`Admitted`/`Deprecated`/`Obsolete`) is therefore,
+as this document's opening paragraph already states, grounded in **ISO 1087**
+— it is not a literal LRM field, and the Grounding table's shorthand ("nomen
+`status` attribute") should be read as an analogy to LRM's Category-as-preferred
+usage, not a citation of an attribute that exists in the spec.
+
+`AttestationAuthority` (`Primary`/`Secondary`, per-attestation — whose voice
+the evidence document is) and `IngestMethod` (`Curated`/`Harvested`/
+`SelfMinted`, per-attestation — how the record entered bestiary) go further
+than LRM does anywhere: LRM has no notion of grading the reliability or
+provenance-class of an attestation at all. The nearest **formal** cousins are
+in CIDOC CRM's extension family, not LRM proper:
+
+- **CIDOC CRM `E13 Attribute Assignment`** (CIDOC CRM 7.1.2) — "comprises
+  actions of making assertions about one property of an object" (via `P140
+  assigned attribute to`, `P141 assigned`, `P177 assigned property of type`).
+  A `NomenAttestation` is one instance of this shape: an ingest event
+  asserting a property (a naming) of a given type onto an entity.
+- **CRMinf** (v1.2, April 2025 — CIDOC CRM's argumentation extension) —
+  `I7 Belief Adoption`: *"the action of an E39 Actor adopting [...] propositions
+  taken from an interpretation of [...] an [E73] Information Object as being
+  true [...] The basis of I7 Belief Adoption is the justification of trust in
+  the source of the adopted propositions, rather than the application of
+  rules for inferring the respective propositions from logical premises."*
+  That is bestiary's ingest posture exactly: a harvested or curated nomen is
+  adopted on trust in its source, not derived by inference. `I2 Belief` ("the
+  [...] Proposition Set is to have a particular `I6 Belief Value` [...] held by
+  a particular Actor") and `I6 Belief Value` (the True/False/Unknown value
+  itself) are the surrounding machinery `I7 Belief Adoption` concludes into.
+  (Trained-knowledge correction made during this cite-verify pass: the belief
+  adoption class is **`I7`**, not `I2` — `I2` is `Belief` itself.)
+
+**Historiographic grounding for Primary/Secondary**: this is source
+criticism's standard split — a primary source speaks in its own voice for
+itself (a namespace owner's own docs; a Hub repo attesting its own name), a
+secondary source relays or aggregates another's claim (an aggregator's
+catalog row). **Wikidata's statement-rank model** is the closest production
+system to bestiary's shape, useful for calibration rather than as a literal
+precedent: each statement carries one rank — `Preferred` ("assigned to the
+[...] statement(s) that best represent consensus"), `Normal` (the default,
+"no judgement [...] of a value's accuracy"), `Deprecated` ("known to include
+errors [...] or [...] outdated knowledge") — attached to the *statement*,
+while references attach separately and severally: *"If there are many
+references, it means that each of them makes the claim (independently from
+the others)."* (Wikidata's data-model documentation, not the ranking page —
+see Sources below; the rank and the reference-independence rule are
+documented in two different places, which is itself the tell that they are
+two different mechanisms.) That split mirrors bestiary's: `Status` is the
+one-per-Nomen rank-like judgment (Wikidata-rank analogue); `AttestationAuthority` /
+`IngestMethod` / `SourceURL` / `Source` live on each independent attestation
+(Wikidata-reference analogue) — kept apart because a statement's standing and
+an individual reference's provenance answer different questions.
+
+None of `E13`, `I7 Belief Adoption`, or Wikidata ranks is a literal precedent
+for `AttestationAuthority` or `IngestMethod` as named types — both are
+bestiary-authored vocabulary, sized to its own ingest reality. What the specs
+establish is that the **shape** — one editorial judgment per naming fact, many
+independently-standing attestations under it, each stamped with whose voice
+it is — is a well-trodden pattern across library authority control,
+CIDOC-CRM's argumentation extension, and Wikidata, not an ad hoc invention.
+
+**Sources checked directly against their primary texts for this section**
+(not from trained recall — see the v0.2.8 ledger-deliverables §9 cite-verify
+flag):
+IFLA LRM (2017-12 consolidated edition, `ifla-lrm-august-2017_rev201712.pdf`),
+§4.2 Table 4.3 (Nomen attribute list) and §4.6.3 (Category-as-preferred
+example); CIDOC CRM 7.1.2, class `E13 Attribute Assignment` and properties
+`P140`/`P141`/`P177`; CRMinf v1.2 (April 2025), class declarations for `I2
+Belief`, `I6 Belief Value`, `I7 Belief Adoption`; Wikidata `Help:Ranking`
+(statement rank definitions) and, separately, the "Adding source information:
+claims and references" subsection of `Wikidata/Data model update` on
+Meta-Wiki (the reference-independence quote) — both current as of this
+writing.
+
 ## External identifiers
 
 | Identifier | Role | Scope |
@@ -165,7 +259,7 @@ registry (an empty purl beats a spec-invalid one).
 | Entity | concept | Res (any thing); WEMI levels collapse to Expression/Manifestation ≈ entity/instance | — |
 | Nomen | designation (recorded) | **Nomen**: "an association between an entity and a designation that refers to it" (reified, attribute-bearing) — LRMoo `F12 Nomen` | under `E41 Appellation` |
 | Appellation | designation (concept) | the `has appellation` relationship's object | `E41 Appellation` |
-| `AcceptabilityRating` | acceptability rating | nomen `status` attribute | — |
+| `AcceptabilityRating` | acceptability rating | *no dedicated attribute — LRM subsumes "preferred" under the `Category` attribute* (see [Attestation quality](#attestation-quality-v028-extension-beyond-lrm)) | — |
 | Preferred canonical nomen | preferred term | authorized access point | — |
 | `Scheme`/`SourceURL` | — | nomen `scheme` / `reference source` attributes | — |
 
@@ -182,3 +276,8 @@ multiple attestations; that is the named extension).
   research that derived this ontology.
 - [`../TESTING.md`](../TESTING.md) — the corpus standard that pins the
   vocabulary's behavior.
+- [`w3id-runbook.md`](w3id-runbook.md) — how an `EntityRef.IRI(base)` becomes a
+  resolvable public identifier (w3id.org registration, content negotiation).
+- [`poetools-claude-code.md`](poetools-claude-code.md) — a concrete
+  harness-vs-model conflation case in the ingested catalog, and the design
+  question it raises for `harness.go`.
