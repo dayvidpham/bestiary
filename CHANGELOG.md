@@ -22,7 +22,7 @@ for its **Go module tags** (`vX.Y.Z`).
   `NomenScheme` classifier (canonical / provider-id / huggingface / purl / alias)
   and ISO 1087 `AcceptabilityRating` statuses. Minted by one shared production
   function over the entity index plus the curated `parse/data/nomen_claims.json`
-  (3,743 nomina at release: 947 canonical Preferred, 2,791 provider-ID Admitted,
+  (3,797 nomina at release: 958 canonical Preferred, 2,834 provider-ID Admitted,
   4 huggingface, 1 curated
   alias claim — after the closing Impl-UAT batch below folded the entity census
   977 → 947). `Entity.Nomina()` and `NomenLookup()` (homonym-aware) are the
@@ -128,7 +128,7 @@ for its **Go module tags** (`vX.Y.Z`).
   claimant `SourceURL` pointing at the Hub page, and all surface through
   `Entity.Nomina()` / `NomenLookup()`. This is the durable, **entity-level** external
   identifier: the Hub name holds regardless of which provider is serving the entity.
-  Minted census at release: 3,743 (947 canonical, 2,791 provider-ID, 4 huggingface, 1 alias).
+  Minted census at release: 3,797 (958 canonical, 2,834 provider-ID, 4 huggingface, 1 alias).
 
 ### Changed
 - **Designation layer activated**: `ModelRef.Designations()` now rates the
@@ -136,7 +136,7 @@ for its **Go module tags** (`vX.Y.Z`).
   prerequisite for truthful `skos:prefLabel`/`altLabel` export (GH#24 ask 3).
 - **Constants surface is now entity-level** (BREAKING). The ~5,650
   provider-flavored `Model__<Provider>__…` constants are replaced by one
-  provider-agnostic `Entity__*` constant per model entity (947 after the closing
+  provider-agnostic `Entity__*` constant per model entity (958 after the closing
   Impl-UAT batch below), each valued by
   its canonical entity key (e.g.
   `Entity__Llama__Scout__Version_4__Size_17b_16e__Instruct = "llama/scout@4#17b-16e{instruct}"`).
@@ -458,6 +458,16 @@ for its **Go module tags** (`vX.Y.Z`).
   and the policy is fully reversible; with the empty seed every rendered name
   is byte-identical to the key (census-fenced). Loud codegen validators reject
   malformed or colliding seed entries.
+
+### Data
+- **models.dev snapshot refreshed (2026-07-23)**: 5,654 → 5,765 models,
+  162 → 170 providers, 247 → 263 metadata rows. Release-state censuses move
+  accordingly (entities 947 → 958, nomina 3,743 → 3,797, series 411 → 419,
+  releases 659 → 671, sized 323 → 319); the per-batch arithmetic in the entries
+  below is stated relative to each batch's own base and still holds. Upstream
+  retired the `kimi-for-coding` `k2p5/k2p6/k2p7` ids (their corpus rows and the
+  `k2p7` curated override retire with them) and the `ollama-cloud` `kimi-k2:1t`
+  row (that negative control retires; the r1t2 control remains).
 
 ### Added (tooling)
 - **Concept & architecture docs**: `docs/CONCEPTS.md` (the working vocabulary —
