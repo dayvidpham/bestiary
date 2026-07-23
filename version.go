@@ -57,7 +57,22 @@ package bestiary
 //     (Region defaults to "unspecified", RegionRaw to "", Nomina/Regions absent), so
 //     0.4.x records still validate. This is the SOLE schema bump for the naming +
 //     region work — do not add another this epoch.
-const BestiarySchemaVersion = "0.5.0"
+//   - 0.5.0 → 0.6.0: adds the v0.2.8 creator dimension, the multi-attestation naming
+//     model, and the OCI external-identifier scheme. The creator dimension: a new
+//     $defs Creator (open string type — the SPDX originator / training lab, distinct
+//     from Provider the supplier) and the DERIVED join projections ModelInfo.Creator
+//     and Entity.Creator (baked / projected from Family via the curated creators.json
+//     seed, never a stored column — Family → Creator is a function). The naming model:
+//     a new $defs NomenAttestation (the per-claim evidence record) plus the
+//     AttestationAuthority and IngestMethod element enums, and an optional
+//     Nomen.Attestations array (a name HAS-MANY attestations; provenance is no longer
+//     fused onto the name row). The external-identifier scheme: "oci" appended to the
+//     $defs.CanonicalScheme enum tail (a per-quant-digest scheme token; ModelRef.Format
+//     returns "" for it by design, as a bare ref carries no single OCI identity).
+//     Additive and backward-COMPATIBLE: every new property is optional/zero-value
+//     (Creator defaults to "", Attestations absent, "oci" a new enum member), and none
+//     is added to any required[] array, so 0.5.x records still validate.
+const BestiarySchemaVersion = "0.6.0"
 
 // UpstreamSchemaVersion identifies the exact snapshot of the models.dev schema
 // that this bestiary schema was derived from. Format: YYYY.MM.DD-sha256

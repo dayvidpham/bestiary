@@ -148,6 +148,16 @@ type ModelInfo struct {
 	// (zero value, empty string) on live-sync rows; populated at codegen time
 	// from curated ingest data.
 	Source DataSourceID
+	// Creator is the lab / organization that TRAINED this model (the SPDX
+	// originator), DERIVED from Family via the curated creators.json seed
+	// (Family.Creator). It is DISTINCT from Provider (the SPDX supplier). This is a
+	// DERIVED JOIN PROJECTION, not an independent stored fact: Family → Creator is a
+	// function (BCNF), so the value is baked at codegen from the family via the seed
+	// (loud-at-codegen) rather than hand-entered per row, keeping the compiled
+	// registry and the persisted store creators dimension in agreement by
+	// construction. CreatorNone (zero value, empty string) when the family has no
+	// curated mapping. Never entity-key material.
+	Creator Creator
 
 	// Instance-level facts from the api.json side of the models.dev catalog.
 

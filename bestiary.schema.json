@@ -3,7 +3,7 @@
   "$id": "https://github.com/dayvidpham/bestiary/bestiary.schema.json",
   "title": "ModelInfo",
   "description": "Metadata for a single AI model as produced by the bestiary CLI JSON formatter.",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "type": "object",
   "properties": {
     "ID": {
@@ -265,6 +265,10 @@
     "RegionRaw": {
       "description": "Verbatim region token, populated only when Region is \"other\" (a recognized-but-unmapped region token); empty for every named member and for \"unspecified\". Mirrors StatusRaw/StageRaw. Added in schema 0.5.0; optional for backward compatibility.",
       "type": "string"
+    },
+    "Creator": {
+      "description": "The lab / organization that TRAINED this model (the SPDX \"originator\"), DISTINCT from Provider (the SPDX \"supplier\"/distributor). A DERIVED join projection of Family → Creator baked at codegen from the curated creators.json seed, never a stored column. Empty string (CreatorNone) when the family has no curated mapping. Added in schema 0.6.0; optional for backward compatibility.",
+      "$ref": "#/$defs/Creator"
     }
   },
   "required": [
@@ -298,6 +302,62 @@
   ],
   "additionalProperties": false,
   "$defs": {
+    "Creator": {
+      "title": "Creator",
+      "description": "The lab / organization that TRAINED a model (the SPDX \"originator\"), DISTINCT from Provider (the SPDX \"supplier\"/distributor): one lab's models are hosted by many providers, and one provider hosts many labs' models. An OPEN lowercase-token string type mirroring Provider (the set of labs grows as the huggingface ingest surfaces new originators). \"\" (CreatorNone) is the honest zero value for a family with no curated mapping — bestiary emits nothing rather than a wrong-but-plausible guess. The initial well-known set is the nine UAT-confirmed labs; the mapping is Family → Creator, resolved via the curated creators.json seed. Added in schema 0.6.0.",
+      "type": "string"
+    },
+    "AttestationAuthority": {
+      "title": "AttestationAuthority",
+      "description": "Whose VOICE an attestation's evidence document is — a per-attestation fact (the links[] relay scenario ruled out per-DataSource placement). Serializes as a lowercase token via encoding.TextMarshaler. Element-enum convention: every attestation arrives with a value, so \"unknown\" sits AT the zero value as the fail-safe. Added in schema 0.6.0.",
+      "type": "string",
+      "enum": ["unknown", "primary", "secondary"],
+      "x-enum-descriptions": {
+        "unknown": "Fail-safe (the zero value): the authority is not yet recognized.",
+        "primary": "The namespace owner / creator speaking for itself (e.g. the Hub for a huggingface naming, the lab for its canonical scheme).",
+        "secondary": "An aggregator / relayer reporting the naming (e.g. a catalog spelling a provider ID)."
+      }
+    },
+    "IngestMethod": {
+      "title": "IngestMethod",
+      "description": "HOW a naming record entered the system — a per-attestation fact, symmetric with AttestationAuthority (a single source such as models.dev is simultaneously the source of self-minted canonical nomina AND of harvested provider-id nomina, so this cannot live on the DataSource dimension). Serializes as a lowercase token via encoding.TextMarshaler. Element-enum convention: \"unknown\" sits AT the zero value as the fail-safe. Added in schema 0.6.0.",
+      "type": "string",
+      "enum": ["unknown", "curated", "harvested", "self-minted"],
+      "x-enum-descriptions": {
+        "unknown": "Fail-safe (the zero value): the ingest method is not recognized.",
+        "curated": "From a committed curated seed (e.g. nomen_claims.json).",
+        "harvested": "Bot-fetched from an external registry (models.dev / HuggingFace / Ollama).",
+        "self-minted": "bestiary-authored (a canonical key or a purl derivation)."
+      }
+    },
+    "NomenAttestation": {
+      "title": "NomenAttestation",
+      "description": "One independent piece of evidence for a Nomen (the Wikidata per-claim-reference model): each attestation stands on its own, and two sources asserting the same name append two attestations rather than overwriting. A Nomen HAS-MANY attestations (>=1). The two provenance levels SourceURL (WHO asserts) and Source (WHICH ingest we read it from) must never be conflated (the BenchmarkResult discipline). Added in schema 0.6.0.",
+      "type": "object",
+      "properties": {
+        "SourceURL": {
+          "description": "WHO asserts this naming (the claimant URL); empty for a self-minted attestation.",
+          "type": "string"
+        },
+        "Source": {
+          "description": "WHICH ingest we read this attestation from (a DataSourceID; e.g. \"models.dev\").",
+          "type": "string"
+        },
+        "Authority": {
+          "description": "Whose voice the evidence document is (per-attestation).",
+          "$ref": "#/$defs/AttestationAuthority"
+        },
+        "Method": {
+          "description": "How this record entered the system (per-attestation).",
+          "$ref": "#/$defs/IngestMethod"
+        },
+        "IngestedAt": {
+          "description": "Committed snapshot RFC3339 timestamp; empty (honest) when unknown.",
+          "type": "string"
+        }
+      },
+      "required": ["SourceURL", "Source", "Authority", "Method", "IngestedAt"]
+    },
     "ModelRef": {
       "title": "ModelRef",
       "description": "The canonical identity of a model. The identity tuple (ID, Provider, RawFamily, Family, Variant, Version, ParamSize, Date) is the stable anchor for cross-provider queries, canonical formatting, and the normalization pipeline. ParamSize is part of identity, mirroring EntityRef.ParamSize: instances of one family at different sizes are distinct.",
@@ -410,12 +470,13 @@
       "title": "CanonicalScheme",
       "description": "Identifies the string serialization format for a ModelRef. Controls how model identity is expressed as a string (e.g. for CLI output, SBOM generation, or HuggingFace Hub lookups).",
       "type": "string",
-      "enum": ["canonical", "huggingface", "purl", "raw"],
+      "enum": ["canonical", "huggingface", "purl", "raw", "oci"],
       "x-enum-descriptions": {
         "canonical": "Slash-separated canonical form: <provider>/<family>/<variant>@<date>. Variant and date segments are omitted when empty. Falls back to <provider>/<raw-id> when Family is empty.",
         "huggingface": "HuggingFace Hub form: <provider>/<raw-id>. Matches the repo-id used by the HuggingFace Hub API.",
         "purl": "Package URL (purl-spec + ECMA-427) form: pkg:huggingface/<provider>/<raw-id>.",
-        "raw": "Original API model ID verbatim (ModelRef.ID as a string)."
+        "raw": "Original API model ID verbatim (ModelRef.ID as a string).",
+        "oci": "OCI package-URL scheme token (appended to the iota tail for wire stability). A per-quant-digest identity: ModelRef.Format(oci) returns \"\" BY DESIGN because a bare ref carries no single OCI identity — the digest lives at the quant/instance altitude. Added in schema 0.6.0."
       }
     },
     "AcceptabilityRating": {
@@ -722,6 +783,10 @@
             { "$ref": "#/$defs/EntityMetadata" },
             { "type": "null" }
           ]
+        },
+        "Creator": {
+          "description": "The lab / organization that TRAINED this entity's models (the SPDX \"originator\"), DISTINCT from the Providers that host it. A DERIVED join projection of Ref.Family → Creator via the curated creators.json seed (the Sources/Regions projection precedent), not a stored column; one value covers the whole entity (all instances share Family). Empty string (CreatorNone) when the family has no curated mapping. Added in schema 0.6.0; optional for backward compatibility.",
+          "$ref": "#/$defs/Creator"
         }
       },
       "required": ["Ref", "Instances", "Lineage", "Providers", "Hosts", "PriceInputRange", "PriceOutputRange", "ContextRange", "MaxOutputRange", "Capabilities"]
@@ -871,6 +936,11 @@
         "Source": {
           "description": "WHICH ingest we read this naming from (a DataSourceID; e.g. \"models.dev\").",
           "type": "string"
+        },
+        "Attestations": {
+          "description": "The evidence set for this naming (>=1): each element is one independent piece of evidence (the Wikidata per-claim-reference model). Two sources asserting the same name append two attestations rather than overwriting. Added in schema 0.6.0; optional for backward compatibility (a name predating the multi-attestation lift carries its provenance on the scalar SourceURL/Source fields).",
+          "type": ["array", "null"],
+          "items": { "$ref": "#/$defs/NomenAttestation" }
         }
       },
       "required": ["Value", "Scheme", "Status", "ResolvesTo", "SourceURL", "Source"]
