@@ -67,6 +67,11 @@ func (m ModelInfo) Ref() ModelRef {
 //   - SchemePURL: "pkg:huggingface/<raw-id>" — RESTRICTED to Provider ==
 //     ProviderHuggingFace; every other provider renders "" (see formatPURL).
 //   - SchemeRaw: string(r.ID) — the original API model identifier verbatim.
+//   - SchemeOCI: "" BY DESIGN. A `pkg:oci` purl is content-addressed by a manifest
+//     digest that lives on QuantVRAM.OCIDigest (per-quant), so a bare ModelRef — which
+//     carries no digest — has no single OCI identity to render. The OCI render lives at
+//     quant altitude ((QuantVRAM).OCIPurl / formatOCIPurl), mirroring how formatPURL
+//     drops the purl for a ref whose registry home is unknown.
 func (r ModelRef) Format(s CanonicalScheme) string {
 	switch s {
 	case SchemeCanonical:
@@ -77,6 +82,11 @@ func (r ModelRef) Format(s CanonicalScheme) string {
 		return r.formatPURL()
 	case SchemeRaw:
 		return string(r.ID)
+	case SchemeOCI:
+		// EXPLICIT empty render — never fall through to the default arm below, which
+		// returns string(r.ID) and would leak the raw ID as if it were an OCI purl.
+		// OCI identity is per-quant-digest and rendered at QuantVRAM altitude.
+		return ""
 	default:
 		// Unrecognized scheme: fall back to raw ID for safety.
 		return string(r.ID)

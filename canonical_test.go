@@ -20,7 +20,7 @@ func modJoin(mods []string) string {
 // plus the out-of-range fallback, loaded from
 // testdata/enum/canonical_scheme_string_corpus.json.
 func TestCanonicalScheme_String(t *testing.T) {
-	corpus := loadEnumIntCorpus(t, enumCanonicalSchemeStringCorpusJSON, 5)
+	corpus := loadEnumIntCorpus(t, enumCanonicalSchemeStringCorpusJSON, 6)
 	requireInputCoverage(t, corpus, map[int]string{
 		int(bestiary.SchemeCanonical): "canonical",
 		99:                            "CanonicalScheme(99)",
@@ -34,7 +34,7 @@ func TestCanonicalScheme_String(t *testing.T) {
 // result back, so the corpus asserts a full token round trip. Loaded from
 // testdata/enum/parse_scheme_valid_corpus.json.
 func TestParseScheme_Valid(t *testing.T) {
-	corpus := loadEnumStringCorpus(t, enumParseSchemeValidCorpusJSON, 4)
+	corpus := loadEnumStringCorpus(t, enumParseSchemeValidCorpusJSON, 5)
 	requireInputCoverage(t, corpus, map[string]string{
 		"canonical": "canonical",
 		"raw":       "raw",
@@ -64,6 +64,7 @@ func TestParseScheme_RoundTrip(t *testing.T) {
 		bestiary.SchemeHuggingFace,
 		bestiary.SchemePURL,
 		bestiary.SchemeRaw,
+		bestiary.SchemeOCI,
 	}
 	for _, s := range schemes {
 		parsed, err := bestiary.ParseScheme(s.String())
@@ -92,8 +93,8 @@ func TestParseScheme_ErrorIsActionable(t *testing.T) {
 		t.Errorf("error message does not contain the bad input %q:\n  %s", "badscheme", msg)
 	}
 
-	// The error must name all 4 valid scheme strings.
-	for _, scheme := range []string{"canonical", "huggingface", "purl", "raw"} {
+	// The error must name all 5 valid scheme strings.
+	for _, scheme := range []string{"canonical", "huggingface", "purl", "raw", "oci"} {
 		if !strings.Contains(msg, scheme) {
 			t.Errorf("error message does not mention valid scheme %q:\n  %s", scheme, msg)
 		}
@@ -108,7 +109,10 @@ func TestParseScheme_ErrorIsActionable(t *testing.T) {
 }
 
 func TestCanonicalScheme_IotaOrder(t *testing.T) {
-	// Verify iota ordering is stable: Canonical=0, HF=1, PURL=2, Raw=3.
+	// Verify iota ordering is stable: Canonical=0, HF=1, PURL=2, Raw=3, OCI=4.
+	// SchemeOCI is APPENDED after SchemeRaw (the iota tail, per canonical.go's
+	// wire-stability comment), so this pins it at position 4 — one past the
+	// pre-existing members' final position — rather than inserting mid-sequence.
 	if int(bestiary.SchemeCanonical) != 0 {
 		t.Errorf("SchemeCanonical = %d, want 0", int(bestiary.SchemeCanonical))
 	}
@@ -121,6 +125,9 @@ func TestCanonicalScheme_IotaOrder(t *testing.T) {
 	if int(bestiary.SchemeRaw) != 3 {
 		t.Errorf("SchemeRaw = %d, want 3", int(bestiary.SchemeRaw))
 	}
+	if int(bestiary.SchemeOCI) != 4 {
+		t.Errorf("SchemeOCI = %d, want 4", int(bestiary.SchemeOCI))
+	}
 }
 
 func TestCanonicalScheme_JSON_RoundTrip(t *testing.T) {
@@ -129,6 +136,7 @@ func TestCanonicalScheme_JSON_RoundTrip(t *testing.T) {
 		bestiary.SchemeHuggingFace,
 		bestiary.SchemePURL,
 		bestiary.SchemeRaw,
+		bestiary.SchemeOCI,
 	}
 	for _, s := range schemes {
 		b, err := json.Marshal(s)
@@ -151,7 +159,7 @@ func TestCanonicalScheme_JSON_RoundTrip(t *testing.T) {
 // case-folded spelling of each codec token, loaded from
 // testdata/enum/canonical_scheme_unmarshal_caseinsensitive_corpus.json.
 func TestCanonicalScheme_UnmarshalJSON_CaseInsensitive(t *testing.T) {
-	corpus := loadEnumStringCorpus(t, enumCanonicalSchemeUnmarshalCICorpusJSON, 8)
+	corpus := loadEnumStringCorpus(t, enumCanonicalSchemeUnmarshalCICorpusJSON, 9)
 	requireInputCoverage(t, corpus, map[string]string{
 		`"CANONICAL"`:   "canonical",
 		`"HuggingFace"`: "huggingface",

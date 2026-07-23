@@ -96,9 +96,12 @@ func loadQuantVRAMTableSafe() *quantVRAMTable {
 type quantVRAMRowJSON struct {
 	Quant        string `json:"quant"`
 	WeightsBytes int64  `json:"weights_bytes"`
-	Layers       int    `json:"layers,omitempty"`
-	KVHeads      int    `json:"kv_heads,omitempty"`
-	HeadDim      int    `json:"head_dim,omitempty"`
+	// Digest is the "sha256:<hex>" OCI manifest digest (fetch-owned; carried onto
+	// QuantVRAM.OCIDigest). Empty until an Ollama refresh harvests it.
+	Digest  string `json:"digest,omitempty"`
+	Layers  int    `json:"layers,omitempty"`
+	KVHeads int    `json:"kv_heads,omitempty"`
+	HeadDim int    `json:"head_dim,omitempty"`
 }
 
 // quantVRAMModelJSON is one model entry in the "models" array.
@@ -291,6 +294,7 @@ func parseQuantVRAMTable(raw []byte) (*quantVRAMTable, error) {
 				// consumers needing a canonical enum use Quant.
 				QuantRaw:     r.Quant,
 				WeightsBytes: r.WeightsBytes,
+				OCIDigest:    r.Digest,
 				Layers:       r.Layers,
 				KVHeads:      r.KVHeads,
 				HeadDim:      r.HeadDim,

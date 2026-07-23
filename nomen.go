@@ -44,6 +44,13 @@ const (
 	// claim attribution (a NomenAttestation whose SourceURL is who asserted it) and
 	// is ADMITTED.
 	NomenSchemeAlias
+	// NomenSchemeOCI is a `pkg:oci` purl naming minted per digest-bearing Ollama quant
+	// row (the content-addressed manifest digest is what makes each OCI purl unique).
+	// APPENDED to the iota tail (wire stability). It is ADMITTED and carries an Ollama
+	// Harvested/Secondary attestation. A digest rotates on any re-publish
+	// (requantization / template fixes), not only a new release, and the old-digest
+	// OCI nomen PERSISTS — names are never erased.
+	NomenSchemeOCI
 )
 
 // nomenSchemeNames is the single source of truth for String / MarshalText /
@@ -56,6 +63,7 @@ var nomenSchemeNames = []string{
 	NomenSchemeHuggingFace: "huggingface",
 	NomenSchemePURL:        "purl",
 	NomenSchemeAlias:       "alias",
+	NomenSchemeOCI:         "oci",
 }
 
 // String renders the NomenScheme as its canonical lowercase wire token. An
@@ -325,6 +333,20 @@ func providerIDAttestation(src DataSourceID) []NomenAttestation {
 	}}
 }
 
+// ociAttestation is the single attestation an OCI nomen carries (§3.2 defaults table):
+// the digest was bot-harvested from the Ollama registry (Source ollama, Method
+// Harvested), and Ollama is an aggregator/distributor relaying an upstream model — its
+// voice is Secondary, not the model creator's. sourceURL is the Ollama claimant page
+// for the naming (WHO asserts).
+func ociAttestation(sourceURL string) []NomenAttestation {
+	return []NomenAttestation{{
+		SourceURL: sourceURL,
+		Source:    DataSourceOllama,
+		Authority: AuthoritySecondary,
+		Method:    IngestMethodHarvested,
+	}}
+}
+
 // mintEntityNomina mints the nomina intrinsic to a single entity: one Canonical
 // nomen (the entity key, Preferred) plus one ProviderID nomen per DISTINCT instance
 // ID spelling (Admitted), deduplicated within the entity. It does NOT include alias
@@ -401,8 +423,55 @@ func mintEntityNominaWith(e Entity, suppression *suppressionTable) []Nomen {
 		})
 	}
 
+	// OCI nomina: one per DIGEST-BEARING quant row across this entity's instances. The
+	// content-addressed manifest digest is what makes a `pkg:oci` purl uniquely name an
+	// artifact, so a row with no OCIDigest yields NO nomen (OCIPurl returns "" and is
+	// skipped). Deduped by purl value within the entity (two instances of the same
+	// Ollama artifact share the same digest → one nomen). The tag qualifier is OMITTED
+	// at this altitude: the full Ollama tag is not reconstructable from a quant row
+	// alone, and the digest already makes the purl unique, so an omitted tag is honest
+	// rather than a partial-and-misleading one. Registry is the fixed Ollama library
+	// namespace. On shipped data ZERO rows carry a digest, so this emits nothing today;
+	// the set grows only with the next deliberate cmd/bestiary-ollama refresh.
+	ociSeen := make(map[string]struct{})
+	for _, inst := range e.Instances {
+		name := string(inst.ID)
+		for _, q := range inst.QuantVRAM {
+			purl := q.OCIPurl(name, "", ociOllamaRegistry)
+			if purl == "" {
+				continue
+			}
+			if _, dup := ociSeen[purl]; dup {
+				continue
+			}
+			ociSeen[purl] = struct{}{}
+			out = append(out, Nomen{
+				Value:        purl,
+				Scheme:       NomenSchemeOCI,
+				Status:       AcceptabilityAdmitted,
+				ResolvesTo:   e.Ref,
+				Attestations: ociAttestation(ociSourceURL(name)),
+			})
+		}
+	}
+
 	sortNomina(out)
 	return out
+}
+
+// ociSourceURL builds the Ollama claimant page URL for an OCI nomen's attestation
+// (WHO asserts the naming): the ollama.com library page for the repository. name is
+// reduced to its lowercased last path fragment to match the purl name and the Ollama
+// library slug (e.g. "ollama/llama3.1" → "llama3.1").
+func ociSourceURL(name string) string {
+	n := strings.ToLower(name)
+	if i := strings.LastIndexByte(n, '/'); i >= 0 {
+		n = n[i+1:]
+	}
+	if n == "" {
+		return ""
+	}
+	return "https://ollama.com/library/" + n
 }
 
 // entitySourceForNomen picks the ingest DataSourceID a minted nomen is attributed
@@ -468,9 +537,11 @@ func MintNomina(entities []Entity) []Nomen {
 // codegen/sync/cache stay in lockstep: they mint through equivalent joints.
 func MintNominaFromModels(models []ModelInfo) []Nomen {
 	type group struct {
-		ref    EntityRef
-		ids    []string
-		idSeen map[string]struct{}
+		ref     EntityRef
+		ids     []string
+		idSeen  map[string]struct{}
+		oci     []Nomen             // OCI nomina (one per digest-bearing quant row)
+		ociSeen map[string]struct{} // dedup by purl value within the entity
 	}
 	// Raw key set for the MERGE-only N->N.0 fold (the SAME shared primitive the registry
 	// and codegen use, NormalizeEntityVersion), so the from-models nomina grouping folds a
@@ -506,9 +577,31 @@ func MintNominaFromModels(models []ModelInfo) []Nomen {
 		key := ref.String()
 		g := groups[key]
 		if g == nil {
-			g = &group{ref: ref, idSeen: make(map[string]struct{})}
+			g = &group{ref: ref, idSeen: make(map[string]struct{}), ociSeen: make(map[string]struct{})}
 			groups[key] = g
 			order = append(order, key)
+		}
+		// OCI nomina from this model's digest-bearing quant rows (parity with
+		// mintEntityNominaWith: the digest is the fetch-owned field the entity-level
+		// mint also reads). Deduped by purl value within the entity; skipped when the
+		// row carries no digest. models.dev-sourced sync models never carry a digest,
+		// so this fires only over baked models that harvested one from an Ollama refresh.
+		for _, q := range m.QuantVRAM {
+			purl := q.OCIPurl(string(m.ID), "", ociOllamaRegistry)
+			if purl == "" {
+				continue
+			}
+			if _, dup := g.ociSeen[purl]; dup {
+				continue
+			}
+			g.ociSeen[purl] = struct{}{}
+			g.oci = append(g.oci, Nomen{
+				Value:        purl,
+				Scheme:       NomenSchemeOCI,
+				Status:       AcceptabilityAdmitted,
+				ResolvesTo:   g.ref,
+				Attestations: ociAttestation(ociSourceURL(string(m.ID))),
+			})
 		}
 		id := string(m.ID)
 		if id == "" {
@@ -553,6 +646,7 @@ func MintNominaFromModels(models []ModelInfo) []Nomen {
 				Attestations: providerIDAttestation(DataSourceModelsDev),
 			})
 		}
+		out = append(out, g.oci...)
 	}
 	out = append(out, loadNomenClaimsSafe().claims...)
 	return coalesceNominaOrRaw(out)

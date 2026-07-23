@@ -104,6 +104,19 @@
       "mutation": {
         "description": "title-cases the wire token"
       }
+    },
+    {
+      "name": "upper-oci",
+      "input": "\"OCI\"",
+      "expected": "oci",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "case-insensitive parse of the oci token"
+      },
+      "mutation": {
+        "description": "upper-cases every letter of the wire token"
+      }
     }
   ]
 }

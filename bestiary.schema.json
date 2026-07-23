@@ -560,6 +560,10 @@
         "VRAMEstimatePartial": {
           "description": "True when the KV-cache term was excluded from VRAMBytes because at least one of Layers, KVHeads, or HeadDim is zero. Callers must check this flag before treating VRAMBytes as a full estimate.",
           "type": "boolean"
+        },
+        "OCIDigest": {
+          "description": "The \"sha256:<hex>\" content-addressed OCI manifest digest of this quantization's Ollama-registry artifact — the value that makes a pkg:oci purl (via QuantVRAM.OCIPurl) uniquely identify the artifact. Empty when absent; a FETCH-OWNED field captured by the offline cmd/bestiary-ollama refresh (empty for every curated row until a refresh harvests it). Added in schema 0.6.0; optional (omitted from required) for backward compatibility.",
+          "type": "string"
         }
       },
       "required": ["Quant", "QuantRaw", "WeightsBytes", "VRAMBytes", "VRAMContextTokens", "Layers", "KVHeads", "HeadDim", "VRAMEstimatePartial"]

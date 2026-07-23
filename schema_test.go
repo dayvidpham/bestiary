@@ -877,8 +877,9 @@ func TestSchemaDefs_V024_DeepConformance(t *testing.T) {
 				KVHeads:             8,
 				HeadDim:             128,
 				VRAMEstimatePartial: false,
+				OCIDigest:           "sha256:abc123",
 			},
-			expectProps: []string{"Quant", "QuantRaw", "WeightsBytes", "VRAMBytes", "VRAMContextTokens", "Layers", "KVHeads", "HeadDim", "VRAMEstimatePartial"},
+			expectProps: []string{"Quant", "QuantRaw", "WeightsBytes", "VRAMBytes", "VRAMContextTokens", "Layers", "KVHeads", "HeadDim", "VRAMEstimatePartial", "OCIDigest"},
 			expectTypes: map[string]string{
 				"Quant":               "$ref",
 				"QuantRaw":            "string",
@@ -889,6 +890,7 @@ func TestSchemaDefs_V024_DeepConformance(t *testing.T) {
 				"KVHeads":             "integer",
 				"HeadDim":             "integer",
 				"VRAMEstimatePartial": "boolean",
+				"OCIDigest":           "string",
 			},
 		},
 		{

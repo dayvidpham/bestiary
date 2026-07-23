@@ -3260,6 +3260,63 @@ func TestCodegen_QuantVRAMLiteral_Deterministic(t *testing.T) {
 	}
 }
 
+// TestCodegen_QuantVRAMLiteral_OCIDigest exercises the conditional OCIDigest-emission
+// branch in quantVRAMLiteral directly, with a digest-bearing fixture. quantVRAMLiteral
+// emits the OCIDigest field only when r.OCIDigest != "" (the empty-digest majority stays
+// byte-identical to the pre-OCIDigest bake); this test is the fixture that actually
+// exercises the true arm of that condition, rather than relying on baked curated data
+// (which today never carries a digest).
+func TestCodegen_QuantVRAMLiteral_OCIDigest(t *testing.T) {
+	withDigest := []bestiary.QuantVRAM{
+		{
+			Quant:        bestiary.QuantQ4_K_M,
+			QuantRaw:     "Q4_K_M",
+			WeightsBytes: 4_000_000_000,
+			VRAMBytes:    4_500_000_000,
+			OCIDigest:    "sha256:abc123def456",
+		},
+	}
+	withoutDigest := []bestiary.QuantVRAM{
+		{
+			Quant:        bestiary.QuantQ4_K_M,
+			QuantRaw:     "Q4_K_M",
+			WeightsBytes: 4_000_000_000,
+			VRAMBytes:    4_500_000_000,
+			OCIDigest:    "",
+		},
+	}
+
+	// (a) a digest-bearing fixture renders the OCIDigest field, correctly quoted.
+	litWith := quantVRAMLiteral(withDigest)
+	if !strings.Contains(litWith, `OCIDigest: "sha256:abc123def456"`) {
+		t.Errorf("quantVRAMLiteral: digest-bearing fixture missing rendered OCIDigest field\n"+
+			"  what: expected literal to contain OCIDigest: %q\n"+
+			"  where: quantVRAMLiteral (cmd/bestiary-gen/main.go)\n"+
+			"  literal: %s", "sha256:abc123def456", litWith)
+	}
+
+	// (b) a digest-less fixture omits the OCIDigest field entirely.
+	litWithout := quantVRAMLiteral(withoutDigest)
+	if strings.Contains(litWithout, "OCIDigest") {
+		t.Errorf("quantVRAMLiteral: digest-less fixture unexpectedly emitted an OCIDigest field\n"+
+			"  what: OCIDigest must be omitted when r.OCIDigest == \"\"\n"+
+			"  where: quantVRAMLiteral (cmd/bestiary-gen/main.go)\n"+
+			"  literal: %s", litWithout)
+	}
+
+	// (c) emission is deterministic across two runs on the same digest-bearing input
+	// (INV3 — byte-identical regen).
+	litWithAgain := quantVRAMLiteral(withDigest)
+	if litWith != litWithAgain {
+		t.Errorf("quantVRAMLiteral: OCIDigest-bearing emission is non-deterministic across repeated calls\n"+
+			"  what: two calls with the identical digest-bearing input produced different output\n"+
+			"  why: violates INV3 (codegen output must be byte-identical across runs)\n"+
+			"  where: quantVRAMLiteral (cmd/bestiary-gen/main.go)\n"+
+			"  how to fix: ensure quantVRAMLiteral does not use map iteration or time.Now()\n"+
+			"  got:  %s\n  want: %s", litWithAgain, litWith)
+	}
+}
+
 // TestCodegen_UpToDate_RealInput is the real-input regen up-to-date guard. It
 // regenerates every codegen-owned source IN MEMORY from the COMMITTED vendored
 // snapshot (parse/data/modelsdev/catalog.json) via the exact generation sequence

@@ -1724,15 +1724,24 @@ func quantVRAMLiteral(rows []bestiary.QuantVRAM) string {
 	}
 	parts := make([]string, len(rows))
 	for i, r := range rows {
-		parts[i] = fmt.Sprintf(
-			"{Quant: %s, QuantRaw: %q, WeightsBytes: %d, VRAMBytes: %d,"+
+		fields := fmt.Sprintf(
+			"Quant: %s, QuantRaw: %q, WeightsBytes: %d, VRAMBytes: %d,"+
 				" VRAMContextTokens: %d, Layers: %d, KVHeads: %d, HeadDim: %d,"+
-				" VRAMEstimatePartial: %v}",
+				" VRAMEstimatePartial: %v",
 			quantExpr(r.Quant), r.QuantRaw,
 			r.WeightsBytes, r.VRAMBytes, r.VRAMContextTokens,
 			r.Layers, r.KVHeads, r.HeadDim,
 			r.VRAMEstimatePartial,
 		)
+		// OCIDigest is emitted only when present: the empty-digest majority (every
+		// curated row until an Ollama refresh harvests digests) stays byte-identical to
+		// its pre-OCIDigest bake, so this field adds no codegen diff today. The
+		// condition is on the deterministic baked data, so INV3 (byte-identical regen)
+		// holds. Row order is the curated file order (never map iteration).
+		if r.OCIDigest != "" {
+			fields += fmt.Sprintf(", OCIDigest: %q", r.OCIDigest)
+		}
+		parts[i] = "{" + fields + "}"
 	}
 	return "[]QuantVRAM{" + strings.Join(parts, ", ") + "}"
 }
