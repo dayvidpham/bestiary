@@ -265,10 +265,14 @@ func TestEntityRekey_CensusAccounted(t *testing.T) {
 	// imagen, imagen{fast}, imagen/ultra, veo). A pure MERGE, none renamed.
 	// 947 -> 958 with the 2026-07-23 snapshot refresh: +11 upstream additions on top of the
 	// closing-batch arithmetic below (which still holds relative to its own base).
-	const wantEntities = 958
+	// 958 -> 957 with the v0.2.8 curation slice: command/a{translate} splits out (+1, "translate"
+	// now a peeled identity modifier so Command A Translate stops collapsing onto base command/a)
+	// and the deepseek dash-glued dot-lost pins merge phantom deepseek@1 / deepseek@2 onto the
+	// dotted deepseek/v3.1 and deepseek/v3.2-exp entities (−2). Net −1.
+	const wantEntities = 957
 	if got := len(bestiary.Entities()); got != wantEntities {
-		t.Errorf("registry census = %d entities, want %d — the eva and command-a-plus overrides "+
-			"must be renames (count unmoved) and the cortecs pins a 4-entity merge", got, wantEntities)
+		t.Errorf("registry census = %d entities, want %d — command/a{translate} split (+1) and "+
+			"the deepseek dot-lost merges (−2) net −1 from the snapshot baseline", got, wantEntities)
 	}
 }
 

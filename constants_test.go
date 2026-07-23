@@ -79,7 +79,11 @@ func TestEntityConstants_Unique(t *testing.T) {
 	// gemini/pro@3, imagen@4, imagen@4{fast}, imagen/ultra@4, veo@3). A pure MERGE: 8 bare
 	// keys retired, none renamed; llama@4 (no 4.0 sibling) is untouched.
 	// 947 -> 958 with the 2026-07-23 snapshot refresh (upstream additions; no repair moved).
-	const wantEntityCount = 958
+	// 958 -> 957 with the v0.2.8 curation slice: command/a{translate} splits out of the coarse
+	// command/a key (+1, "translate" now a peeled identity modifier) and the two phantom
+	// deepseek dash-glued entities deepseek@1 / deepseek@2 merge onto deepseek/v3.1 and
+	// deepseek/v3.2-exp (−2). Net −1.
+	const wantEntityCount = 957
 	if len(keys) != wantEntityCount {
 		t.Errorf("EntityKeys() returned %d constants; expected exactly %d — "+
 			"re-run go generate ./... and update this census literal if the entity count changed intentionally",

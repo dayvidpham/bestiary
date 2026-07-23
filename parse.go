@@ -4350,6 +4350,24 @@ var idFamilyOverrides = map[string]idFamilyOverrideEntry{
 	"us.meta.llama4-maverick-17b-instruct-v1:0":   {family: "llama", variant: "maverick", version: "4", modifiers: []string{"instruct"}},
 	"cerebras-llama-4-maverick-17b-128e-instruct": {family: "llama", variant: "maverick", version: "4", modifiers: []string{"instruct"}},
 	"groq-llama-4-maverick-17b-128e-instruct":     {family: "llama", variant: "maverick", version: "4", modifiers: []string{"instruct"}},
+
+	// deepseek dash-glued dot-lost version repair (the cortecs claude-opus4-5 precedent,
+	// applied to the variant-encoded deepseek line). DeepSeek encodes its point releases
+	// as a VARIANT token, not the version field — the dotted spellings deepseek-v3.1 and
+	// deepseek-v3.2-exp decompose to deepseek/v3.1 and deepseek/v3.2-exp. The dash-glued
+	// spellings deepseek-v3-1 / deepseek-v3-2-exp lose the dot: the leading-token pipeline
+	// reads only the trailing integer as the VERSION (deepseek@1 / deepseek@2), minting
+	// phantom "DeepSeek v1"/"v2" entities that fragment single-instance rows away from the
+	// heavily-attested dotted lines (deepseek/v3.1 = 14 serving instances; deepseek/v3.2-exp
+	// served). A version-only dotLostVersionOverrides fix would NOT merge here (it targets
+	// the version field, while deepseek carries the point release in the variant), so the
+	// repair is variant-targeted and pinned per exact ID. Evidence: DeepSeek-V3.1 and
+	// DeepSeek-V3.2-Exp are real releases (https://api-docs.deepseek.com/news/news250929)
+	// and each dash-glued id's own "3-1"/"3-2" spelling fixes which dot was lost. Keyed to
+	// the exact (lowercase) ID — org-prefixed spelling is a distinct key.
+	"deepseek-v3-1":             {family: "deepseek", variant: "v3.1"},
+	"deepseek-ai/deepseek-v3-1": {family: "deepseek", variant: "v3.1"},
+	"deepseek-v3-2-exp":         {family: "deepseek", variant: "v3.2-exp"},
 }
 
 // dotLostVersionOverrides is the curated, CLOSED, exact-model-ID map for the "dot-lost"
