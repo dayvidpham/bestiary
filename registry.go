@@ -366,6 +366,12 @@ func loadEntityIndex() {
 			MaxOutputRange: [2]int{a.moMin, a.moMax},
 			Capabilities:   a.caps,
 			Sources:        rel.byEntity[key],
+			// Creator is the DERIVED join projection of Family → Creator (the
+			// Sources/Regions projection precedent): resolved from the entity's own
+			// Family through the curated creators.json seed, never stored on the row.
+			// All instances share Ref.Family, so one value covers the entity;
+			// CreatorNone when the family has no curated mapping.
+			Creator: a.ref.Family.Creator(),
 		}
 		if a.piFound {
 			lo, hi := a.piMin, a.piMax

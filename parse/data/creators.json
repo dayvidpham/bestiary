@@ -1,0 +1,32 @@
+{
+  "_comment": "Curated Family -> Creator (SPDX originator: the lab that TRAINED the weights) dimension. DISTINCT from Provider (the SPDX supplier/distributor). DATA-DRIVEN seed read by loadCreatorTable (parse/data glob); loud-at-codegen via ValidateCreatorTable, graceful-at-runtime via loadCreatorTableSafe (lineage.go / datasources.json precedent). Family -> Creator is a FUNCTION (BCNF): each family appears at most once; an unmapped family is expressed by OMITTING its row (Family.Creator returns CreatorNone), never a row with an empty creator. Every 'family' must satisfy Family.IsKnown. Initial seed = the 9 UAT-confirmed lab mappings 'as listed'; VARIANT families (glm-air, gpt-mini, gemini-flash, qwen3.5, deepseek-flash, mistral-large, ...) are intentionally NOT seeded here and are extended later by the huggingface ingest.",
+  "schema_version": 1,
+  "creators": [
+    { "family": "llama", "creator": "meta" },
+
+    { "family": "claude", "creator": "anthropic" },
+    { "family": "claude-haiku", "creator": "anthropic" },
+    { "family": "claude-opus", "creator": "anthropic" },
+    { "family": "claude-sonnet", "creator": "anthropic" },
+
+    { "family": "gemini", "creator": "google" },
+    { "family": "gemma", "creator": "google" },
+
+    { "family": "gpt", "creator": "openai" },
+    { "family": "o", "creator": "openai" },
+
+    { "family": "mistral", "creator": "mistral" },
+    { "family": "codestral", "creator": "mistral" },
+    { "family": "devstral", "creator": "mistral" },
+
+    { "family": "command", "creator": "cohere" },
+    { "family": "command-a", "creator": "cohere" },
+    { "family": "command-r", "creator": "cohere" },
+
+    { "family": "deepseek", "creator": "deepseek" },
+
+    { "family": "qwen", "creator": "alibaba" },
+
+    { "family": "glm", "creator": "zhipu" }
+  ]
+}

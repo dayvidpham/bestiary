@@ -532,6 +532,16 @@ func run(args []string) error {
 		return fmt.Errorf("validate curated data-source table: %w", err)
 	}
 
+	// Fail loudly on bad creator curation BEFORE generating anything: an unknown
+	// family, a duplicate family (Family → Creator must be a function), or an empty
+	// creator in creators.json is a curation bug that must abort codegen rather than
+	// silently baking a wrong or missing Creator projection. The runtime loader
+	// degrades gracefully to CreatorNone; this codegen-time check fences the seed so
+	// the baked ModelInfo.Creator and the persisted store creators dimension agree.
+	if err := bestiary.ValidateCreatorTable(); err != nil {
+		return fmt.Errorf("validate curated creator table: %w", err)
+	}
+
 	rawJSON, models, metadata, providerMeta, parseFailures, err := fetchModelsWithRaw(ctx, flags.noFetch)
 	if err != nil {
 		return err
@@ -1796,6 +1806,37 @@ func regionExpr(r bestiary.Region) string {
 	}
 }
 
+// creatorExpr renders a Creator as its exported constant name so the generated
+// source references the well-known set symbolically (e.g. CreatorAnthropic), mirroring
+// providerExpr. Creator is an OPEN string type, so an unmapped-but-present creator (a
+// future huggingface-ingest originator with no constant) falls back to a Creator("token")
+// conversion rather than a broken symbol. CreatorNone (the zero value) is never emitted —
+// the caller guards on it (the Region compact-omit precedent).
+func creatorExpr(c bestiary.Creator) string {
+	switch c {
+	case bestiary.CreatorMeta:
+		return "CreatorMeta"
+	case bestiary.CreatorOpenAI:
+		return "CreatorOpenAI"
+	case bestiary.CreatorAnthropic:
+		return "CreatorAnthropic"
+	case bestiary.CreatorGoogle:
+		return "CreatorGoogle"
+	case bestiary.CreatorMistral:
+		return "CreatorMistral"
+	case bestiary.CreatorCohere:
+		return "CreatorCohere"
+	case bestiary.CreatorDeepSeek:
+		return "CreatorDeepSeek"
+	case bestiary.CreatorAlibaba:
+		return "CreatorAlibaba"
+	case bestiary.CreatorZhipu:
+		return "CreatorZhipu"
+	default:
+		return fmt.Sprintf("Creator(%q)", string(c))
+	}
+}
+
 // reasoningOptionKindExpr renders a ReasoningOptionKind as its exported constant name.
 // ReasoningOptionOther (the zero value) is the default fail-safe.
 func reasoningOptionKindExpr(k bestiary.ReasoningOptionKind) string {
@@ -1944,6 +1985,16 @@ func generateSource(models []bestiary.ModelInfo, slugToConst map[string]string) 
 		// Source: always emit; DataSourceNone ("") is the correct zero value for
 		// live-sync rows and is emitted explicitly so the field is self-documenting.
 		fmt.Fprintf(&buf, "\t\tSource:                %q,\n", string(m.Source))
+		// Creator: the DERIVED Family→Creator projection, baked from the curated
+		// creators.json seed (validated loudly above via ValidateCreatorTable). Emitted
+		// CONDITIONALLY — only when the family maps to a creator — matching the
+		// Region/ParamSize compact-omit precedent; an unmapped family carries the
+		// CreatorNone ("") zero value and is omitted. Baking the family-derived value
+		// keeps the compiled registry and the store creators dimension in agreement by
+		// construction (the mapping is a codegen input, not a hand-entered per-row fact).
+		if c := m.Family.Creator(); c != bestiary.CreatorNone {
+			fmt.Fprintf(&buf, "\t\tCreator:               %s,\n", creatorExpr(c))
+		}
 		fmt.Fprintf(&buf, "\t\tQuantVRAM:             %s,\n", quantVRAMLiteral(m.QuantVRAM))
 		// Instance-level facts from the api.json side (description, status, reasoning
 		// options, audio/tier costs). Emitted CONDITIONALLY — only when non-zero —

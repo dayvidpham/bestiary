@@ -261,6 +261,18 @@ type Entity struct {
 	// EntityMetadata was joined to this identity. When present it is owned by the
 	// Entity value and is deep-copied on read alongside the other entity fields.
 	Metadata *EntityMetadata
+	// Creator is the lab / organization that TRAINED this entity's models (the SPDX
+	// originator), DISTINCT from the Providers that host it (the SPDX suppliers). It
+	// is a DERIVED JOIN PROJECTION — the Entity.Sources / Entity.Regions precedent —
+	// computed in loadEntityIndex from Ref.Family via the curated creators.json seed
+	// (Family.Creator), NOT a stored column (Family → Creator is a function, so a
+	// per-entity column would be a transitive dependency / BCNF violation). All
+	// instances of an entity share its Family, so one value covers the whole entity.
+	// CreatorNone (empty string) when the family has no curated mapping; it stays out
+	// of EntityRef (never re-keys the entity). It is nil-free (a value type), so a
+	// hand-constructed Entity that never went through the registry simply carries
+	// CreatorNone until projected.
+	Creator Creator
 }
 
 // Entities returns every model entity in the static registry, each with its
