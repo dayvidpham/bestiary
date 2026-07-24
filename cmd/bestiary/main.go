@@ -437,7 +437,60 @@ func filterModelsByStatus(models []bestiary.ModelInfo, want bestiary.ModelStatus
 //
 // inputFormatFlag: value of --format flag (peasant/huggingface/hf/purl/raw).
 // schemeFlag: value of deprecated --scheme flag; used only when inputFormatFlag is "peasant" (default).
+// wantsOCIScheme reports whether the show flags select the OCI external-identifier
+// scheme, honoring the same --format-over-legacy--scheme precedence runShow's
+// resolve path uses: an explicit non-default --format wins, else the deprecated
+// --scheme is consulted. A malformed flag value is left for the resolve path to
+// reject with its own actionable parse error, so this returns false (not OCI) on a
+// parse failure rather than swallowing the input.
+func wantsOCIScheme(inputFormatFlag, schemeFlag string) bool {
+	if inputFormatFlag != "" && inputFormatFlag != "peasant" {
+		f, err := bestiary.ParseInputFormat(inputFormatFlag)
+		return err == nil && f == bestiary.InputFormatOCI
+	}
+	if schemeFlag != "" {
+		s, err := bestiary.ParseScheme(schemeFlag)
+		return err == nil && s == bestiary.SchemeOCI
+	}
+	return false
+}
+
+// ociSchemeNotice is the actionable stderr message printed when `show` is asked for
+// the OCI scheme (--format=oci / --scheme=oci) on a model or entity ref. OCI
+// identity lives one altitude below a ref — at the per-quantization manifest digest
+// — so a ref has no single OCI render; this explains WHY the result is empty and
+// directs the user to the quant-level view that DOES carry OCI purls. It covers the
+// two situations that both surface as empty: a bare ref that structurally has no
+// digest, and an entity whose quant rows simply have no digest captured yet.
+func ociSchemeNotice(input string) string {
+	return fmt.Sprintf(
+		errPrefix+"the `oci` scheme has no render at the model/ref altitude, so %q produces no output.\n"+
+			errPrefix+"why: a pkg:oci identity is content-addressed by a per-quantization manifest digest\n"+
+			errPrefix+"  (QuantVRAM.OCIDigest); a bare ref carries no single digest, so ModelRef.Format(oci)\n"+
+			errPrefix+"  is \"\" by design. Two cases look the same here:\n"+
+			errPrefix+"  (1) a bare ref has no digest at all — OCI identity lives on the quantization row, not the ref;\n"+
+			errPrefix+"  (2) an entity's quant rows have no digest captured yet — digests land with the next\n"+
+			errPrefix+"      offline `bestiary-ollama` refresh.\n"+
+			errPrefix+"how to fix: use the quant-level view, e.g. `bestiary show --by-entity --output=json %s`,\n"+
+			errPrefix+"  and read each instance's QuantVRAM.OCIDigest and the entity's oci/huggingface Nomina\n"+
+			errPrefix+"  (with their attestations).\n",
+		input, input,
+	)
+}
+
 func runShow(input string, format bestiary.OutputFormat, dbPath string, inputFormatFlag string, schemeFlag string) error {
+	// The `oci` scheme has no rendering at the model/ref altitude: a pkg:oci identity
+	// is content-addressed by a per-quantization manifest digest, so ModelRef.Format(
+	// SchemeOCI) is "" BY DESIGN. Requesting it here would otherwise resolve to a
+	// confusing empty/"not found". Short-circuit with an actionable explanation on
+	// stderr and an empty stdout — this is an explained empty, not a failure, so it
+	// returns nil (exit 0), matching the embeddedFallbackNotice / drift-warning
+	// house convention for informational stderr notices.
+	if wantsOCIScheme(inputFormatFlag, schemeFlag) {
+		fmt.Fprint(os.Stderr, ociSchemeNotice(input))
+		return nil
+	}
+
 	// Build Resolve options from flags.
 	// --format takes precedence. If --format is explicitly non-peasant, use it.
 	// If --format is "peasant" (default) and --scheme is set, honour legacy --scheme.
@@ -2368,6 +2421,11 @@ func writeEntityView(w io.Writer, e bestiary.Entity) {
 	fmt.Fprintf(w, "  Variant:       %s\n", orDash(e.Ref.Variant))
 	fmt.Fprintf(w, "  Version:       %s\n", orDash(e.Ref.Version))
 	fmt.Fprintf(w, "  Identity-mods: %s\n", orDash(strings.Join(e.Ref.Modifier, ",")))
+	// Creator is the lab/org that TRAINED the weights (SPDX "originator"), a derived
+	// Family→Creator projection distinct from the Providers (SPDX suppliers) listed
+	// below. CreatorNone (unmapped family) renders "-" — an honest blank, never a
+	// guessed "unknown".
+	fmt.Fprintf(w, "  Creator:       %s\n", orDash(string(e.Creator)))
 
 	providers := make([]string, len(e.Providers))
 	for i, p := range e.Providers {
@@ -2399,6 +2457,38 @@ func writeEntityView(w io.Writer, e bestiary.Entity) {
 	}
 
 	writeInstanceTable(w, e.Instances)
+
+	writeNominaTable(w, e.Nomina())
+}
+
+// writeNominaTable renders the entity's derived naming layer: each Nomen (a
+// (Value, Scheme, Status) recorded naming) followed by its attestation set —
+// the per-name provenance a name HAS-MANY of. A same-triple name attested by two
+// distinct sources coalesces to ONE Nomen carrying BOTH attestations, so this view
+// is where a dually-attested name (e.g. a curated claim + an HF-bot harvest of the
+// same huggingface-scheme repo) shows its two legs (Source/Authority/Method) at
+// once — the CLI-observable form of MUST-PASS case 3. Nothing prints when the
+// entity has no nomina. Nomina and each nomen's Attestations arrive
+// deterministically sorted from the projection; this formatter does not re-sort.
+func writeNominaTable(w io.Writer, nomina []bestiary.Nomen) {
+	if len(nomina) == 0 {
+		return
+	}
+	fmt.Fprintf(w, "Nomina (%d):\n", len(nomina))
+	for _, n := range nomina {
+		fmt.Fprintf(w, "  %s  (%s, %s)\n", n.Value, n.Scheme.String(), n.Status.String())
+		// Each attestation is one independent piece of evidence for this naming:
+		// WHICH ingest we read it from (Source), whose VOICE the document is
+		// (Authority), HOW it entered (Method), and WHO asserts it (SourceURL, a
+		// dash when self-minted with no claimant URL).
+		fmt.Fprintf(w, "      %-12s %-10s %-12s %s\n",
+			"SOURCE", "AUTHORITY", "METHOD", "SOURCE-URL")
+		for _, at := range n.Attestations {
+			fmt.Fprintf(w, "      %-12s %-10s %-12s %s\n",
+				orDash(string(at.Source)), at.Authority.String(),
+				at.Method.String(), orDash(at.SourceURL))
+		}
+	}
 }
 
 // writeEntityMetadata renders the models.dev entity metadata (provider-agnostic
