@@ -79,11 +79,11 @@ func TestServer_Index(t *testing.T) {
 //
 // Checks (a)-(c) alone do NOT catch a whole-string-PathEscape regression: net/http
 // decodes %2F -> '/' in r.URL.Path before mux matching, so mint+route stay internally
-// consistent regardless of which separator escapeIRISegment chooses (bestiary-h8bz6,
-// oracle-verified: reverting the escaper to encode '/' did not redden this test before
-// the (d)/(e) checks were added). (d) and (e) pin the RENDERED-STRING form instead of
-// only the round-tripped behavior: the literal bytes minted and the literal bytes an
-// href carries must contain an unencoded '/' and never "%2F".
+// consistent regardless of which separator escapeIRISegment chooses — reverting the
+// escaper to re-encode '/' did not redden this test before the (d)/(e) checks were
+// added. (d) and (e) pin the RENDERED-STRING form instead of only the round-tripped
+// behavior: the literal bytes minted and the literal bytes an href carries must contain
+// an unencoded '/' and never "%2F".
 func TestServer_IRI_MatchesRoute(t *testing.T) {
 	entities := syntheticEntities()
 	s := newTestServer(t, entities)
