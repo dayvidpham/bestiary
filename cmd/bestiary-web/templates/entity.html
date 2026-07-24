@@ -28,6 +28,9 @@
   <span class="badge warn">partial</span> figure is a weights-only lower bound — the KV-cache
   term was omitted because architecture facts were absent, so its bar is drawn hollow.
 </p>
+{{/* This GET form intentionally carries only the ctx field. If the detail page ever gains a
+     second view-state query param, this form must forward it (e.g. a hidden input) or that
+     param will be silently dropped on submit. */}}
 <form method="get" action="{{$.Path}}" class="ctx-form mono">
   <label>recompute VRAM at context
     <input type="number" name="ctx" min="1" step="1024" value="{{if $ctx}}{{$ctx}}{{end}}"
