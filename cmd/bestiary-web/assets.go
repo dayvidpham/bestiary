@@ -2,18 +2,21 @@ package main
 
 import (
 	"embed"
+	"fmt"
 	"html/template"
+
+	"github.com/dayvidpham/bestiary"
 )
 
 // DatastarJSVersion is the pinned upstream version of the vendored Datastar browser
 // client (cmd/bestiary-web/assets/datastar.js). The client is VENDORED via go:embed and
-// served from the same origin at /assets/datastar.js — there is NO CDN for JavaScript
-// (proposal F1; the RQ1 ruling permits a CDN for FONTS ONLY). The server-side Go SDK,
+// served from the same origin at /assets/datastar.js — there is NO CDN for JavaScript.
+// A CDN is permitted for FONTS ONLY. The server-side Go SDK,
 // github.com/starfederation/datastar-go v1.2.2, speaks the v1.x SSE protocol that this
 // client implements, so the two are version-paired across a major.
 //
-// Provenance (recorded like the models.dev snapshot refresh, so a reviewer can re-derive
-// the vendored bytes exactly):
+// Provenance (recorded like the models.dev snapshot refresh, so the vendored bytes can be
+// re-derived exactly):
 //
 //	source:  https://cdn.jsdelivr.net/gh/starfederation/datastar@1.0.2/bundles/datastar.js
 //	version: 1.0.2  (upstream banner: "// Datastar v1.0.2")
@@ -54,6 +57,57 @@ var templateFuncs = template.FuncMap{
 		}
 		return m
 	},
+	// bytesGB renders a byte count as a "NN.N GB" figure (GiB, base-1024), or an
+	// em-dash when the value is unknown (<= 0). Used for weights/VRAM cells.
+	"bytesGB": func(b int64) string {
+		if b <= 0 {
+			return "—"
+		}
+		return fmt.Sprintf("%.1f GB", float64(b)/float64(1<<30))
+	},
+	// pct clamps n/d to an integer percentage in [0,100] for a mini-bar width. A
+	// zero or unknown denominator yields 0 (an empty bar), never a divide-by-zero.
+	"pct": func(n, d int64) int {
+		if d <= 0 || n <= 0 {
+			return 0
+		}
+		p := int(n * 100 / d)
+		if p > 100 {
+			p = 100
+		}
+		return p
+	},
+	// estVRAMGB recomputes a quant row's VRAM at a caller-chosen context and renders
+	// it as a "NN.N GB" figure. It returns "" when ctx is not a positive override or
+	// exceeds the row's baked maximum context (VRAMContextTokens) — the same clamp the
+	// CLI's TYP column applies: no figure is shown above the context the row supports.
+	// This is display-only recompute (the deferred v0.2.9 calculator is out of scope).
+	"estVRAMGB": func(q bestiary.QuantVRAM, ctx int) string {
+		if ctx <= 0 || q.VRAMContextTokens < ctx {
+			return ""
+		}
+		v := q.EstimateVRAM(ctx)
+		if v <= 0 {
+			return "—"
+		}
+		return fmt.Sprintf("%.1f GB", float64(v)/float64(1<<30))
+	},
+	// priceStr renders a per-MTok price pointer as "$N.NN", or an em-dash when the
+	// price is genuinely unknown (nil) — never a guessed zero.
+	"priceStr": func(p *float64) string {
+		if p == nil {
+			return "—"
+		}
+		return fmt.Sprintf("$%.2f", *p)
+	},
+	// orDash renders an empty string as an em-dash so a blank cell reads as "unknown"
+	// rather than a rendering gap (the CLI orDash convention).
+	"orDash": func(s string) string {
+		if s == "" {
+			return "—"
+		}
+		return s
+	},
 }
 
 // pageFiles maps each page name to the template files that compose it. Parsing per-page
@@ -64,6 +118,7 @@ var templateFuncs = template.FuncMap{
 var pageFiles = map[string][]string{
 	"index":  {"templates/layout.html", "templates/results.html", "templates/index.html"},
 	"entity": {"templates/layout.html", "templates/entity.html"},
+	"series": {"templates/layout.html", "templates/series.html"},
 }
 
 // parseTemplates builds one template set per page (see pageFiles).

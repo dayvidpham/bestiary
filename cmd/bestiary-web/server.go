@@ -8,6 +8,7 @@ import (
 	"html/template"
 	"net/http"
 	"sort"
+	"strconv"
 	"strings"
 
 	"github.com/dayvidpham/bestiary"
@@ -21,11 +22,6 @@ import (
 // both sides at once, which is the point — there is no second place to keep in sync.
 const entityRoutePrefix = "/entity/"
 
-// sampleLimit bounds how many entity links the index page and each SSE result set render.
-// The full, paginated entity browser builds on this foundation; this handler shows a
-// representative subset.
-const sampleLimit = 50
-
 // Server is the offline bestiary web server. It reads ONLY the in-process static registry
 // (bestiary.Entities()/StaticModels()) and an optional read-only SQLite cache — it never
 // touches the network at serve time. The vendored datastar.js client (same origin) and
@@ -37,29 +33,75 @@ type Server struct {
 
 	entities []bestiary.Entity
 	byKey    map[string]bestiary.Entity
-	links    []entityLink // precomputed, sorted by key — the index/SSE render source
+
+	// rows is the browser render source: one entityRow per entity, pre-sorted in the
+	// DEFAULT order (Family then canonical key). The default order is fixed here so
+	// every SSE re-render that does not choose an explicit sort returns the identical
+	// sequence; the alternate sorts operate on a copy and never disturb this slice.
+	rows   []entityRow
+	facets facetOptions
+	// maxVRAM is the largest per-entity VRAMBytes across the whole corpus; it is the
+	// denominator that normalizes every row's mini-bar to a common scale.
+	maxVRAM int64
 
 	modelCount      int
 	cacheModelCount int
 }
 
-// entityLink is the render view of one entity in a list: its canonical key, the
-// same-origin route path (== EntityRef.IRI(entityRoutePrefix)), and its creator.
-type entityLink struct {
-	Key     string
-	Path    string
-	Family  string
-	Creator string
+// entityRow is the dense-table render view of one entity in the browser: its canonical
+// key, the same-origin route path (== EntityRef.IRI(entityRoutePrefix)), and the aggregate
+// facets the table displays and the filter rail filters on. The display strings and the
+// mini-bar fraction are precomputed once at NewServer so the initial render and every SSE
+// re-render agree byte-for-byte.
+type entityRow struct {
+	Key           string
+	Path          string
+	Family        string
+	Creator       string
+	Providers     []string // distinct provider tokens, for the provider facet
+	ProviderCount int
+	Regions       []string // distinct region tokens, for the region facet
+	Modalities    []string // aggregated input modalities, for the modality facet
+	VRAMBytes     int64    // max VRAMBytes across this entity's quant rows; 0 unknown
+	VRAMPartial   bool     // the max-bearing quant row is a weights-only lower bound
+	VRAMFrac      int      // 0..100, VRAMBytes as a fraction of the corpus maximum
+	VRAMLabel     string   // "NN.N GB" or em-dash
+	PriceLabel    string   // "$N.NN" min input price per MTok, or em-dash
 }
 
-// indexView is the data model for the index page.
+// facetOptions holds the distinct, sorted values each filter-rail control offers. They are
+// computed once from the corpus so the rail always offers exactly the values present.
+type facetOptions struct {
+	Families   []string
+	Creators   []string
+	Providers  []string
+	Regions    []string
+	Modalities []string
+}
+
+// browseQuery is the view-state the browser SSE endpoint reads from the Datastar signals:
+// a free-text search over the key plus five exact-match facet filters and a sort key. Every
+// field is optional — an empty value imposes no constraint. This is NON-IDENTITY view-state
+// (RQ1): it selects which rows and in what order, never which entity a link denotes.
+type browseQuery struct {
+	Search   string `json:"search"`
+	Family   string `json:"family"`
+	Creator  string `json:"creator"`
+	Provider string `json:"provider"`
+	Region   string `json:"region"`
+	Modality string `json:"modality"`
+	Sort     string `json:"sort"`
+}
+
+// indexView is the data model for the browser (index) page.
 type indexView struct {
 	Title           string
 	DatastarVersion string
 	EntityCount     int
 	ModelCount      int
 	CacheModelCount int
-	Sample          []entityLink
+	Rows            []entityRow
+	Facets          facetOptions
 }
 
 // entityView is the data model for an entity detail page.
@@ -69,6 +111,18 @@ type entityView struct {
 	Entity          bestiary.Entity
 	Nomina          []bestiary.Nomen
 	Path            string
+	// MaxQuantVRAM is the largest VRAMBytes across THIS entity's quant rows; it
+	// normalizes the per-quant mini-bars on the detail page to a common scale.
+	MaxQuantVRAM int64
+	// CtxTokens is the optional ?ctx view-state override (0 when absent). When
+	// positive it drives the display-only VRAM recompute column; it NEVER changes
+	// which entity is shown (RQ1).
+	CtxTokens int
+	// SeriesDisplay / SeriesAnchor locate this entity's release in the series
+	// explorer: the human "Family-Gen / Release" breadcrumb and the same-page anchor
+	// its "series" section links to.
+	SeriesDisplay string
+	SeriesAnchor  string
 }
 
 // entityJSON is the public JSON shape for an entity: the marshaled Entity plus its derived
@@ -77,6 +131,38 @@ type entityView struct {
 type entityJSON struct {
 	bestiary.Entity
 	Nomina []bestiary.Nomen
+}
+
+// seriesView is the data model for the series/release explorer: the full Series → Release →
+// entity tree, walked from SeriesAll()/ReleasesOf()/EntitiesOf().
+type seriesView struct {
+	Title           string
+	DatastarVersion string
+	Series          []seriesNode
+	SeriesCount     int
+	EntityCount     int
+}
+
+// seriesNode is one Series in the explorer tree: its display name, a stable same-page
+// anchor, and its releases.
+type seriesNode struct {
+	Display     string
+	Anchor      string
+	Releases    []releaseNode
+	EntityCount int
+}
+
+// releaseNode is one Release within a Series: its display name (the bare line renders as
+// "(base)") and the entities that belong to it.
+type releaseNode struct {
+	Name     string
+	Entities []entityRef
+}
+
+// entityRef is a minimal entity link (key + route path) for the explorer leaves.
+type entityRef struct {
+	Key  string
+	Path string
 }
 
 // NewServer builds a server over the given entities and an optional read-only cache.
@@ -100,17 +186,7 @@ func NewServer(entities []bestiary.Entity, cache *bestiary.Store) (*Server, erro
 		byKey:      make(map[string]bestiary.Entity, len(entities)),
 		modelCount: len(bestiary.StaticModels()),
 	}
-	for _, e := range entities {
-		key := e.Ref.String()
-		s.byKey[key] = e
-		s.links = append(s.links, entityLink{
-			Key:     key,
-			Path:    e.Ref.IRI(entityRoutePrefix),
-			Family:  string(e.Ref.Family),
-			Creator: string(e.Creator),
-		})
-	}
-	sort.Slice(s.links, func(i, j int) bool { return s.links[i].Key < s.links[j].Key })
+	s.buildRows(entities)
 
 	if cache != nil {
 		// Read-only cache path: count cached model rows. QueryModels(ctx, "") returns
@@ -126,21 +202,200 @@ func NewServer(entities []bestiary.Entity, cache *bestiary.Store) (*Server, erro
 	return s, nil
 }
 
+// buildRows populates byKey, the browser rows, the facet option lists, and the corpus VRAM
+// maximum. It performs the (ID,Provider)→Modalities join against StaticModels() ONCE here,
+// so serve-time rendering never recomputes it and the aggregate never affects identity.
+func (s *Server) buildRows(entities []bestiary.Entity) {
+	modByInstance := modalityIndex()
+
+	famSet := map[string]struct{}{}
+	creatorSet := map[string]struct{}{}
+	provSet := map[string]struct{}{}
+	regionSet := map[string]struct{}{}
+	modSet := map[string]struct{}{}
+
+	s.rows = make([]entityRow, 0, len(entities))
+	for _, e := range entities {
+		key := e.Ref.String()
+		s.byKey[key] = e
+
+		providers := make([]string, 0, len(e.Providers))
+		for _, p := range e.Providers {
+			providers = append(providers, string(p))
+			provSet[string(p)] = struct{}{}
+		}
+		regions := make([]string, 0, len(e.Regions))
+		for _, r := range e.Regions {
+			regions = append(regions, r.String())
+			regionSet[r.String()] = struct{}{}
+		}
+
+		// Aggregate the distinct INPUT modalities across every instance of the entity
+		// (what the entity can accept), joined from the flat model catalog.
+		modAgg := map[bestiary.Modality]struct{}{}
+		var maxVRAM int64
+		var maxPartial bool
+		for _, inst := range e.Instances {
+			if mods, ok := modByInstance[instanceKey(inst.ID, inst.Provider)]; ok {
+				for _, m := range mods.Input {
+					modAgg[m] = struct{}{}
+				}
+			}
+			for _, q := range inst.QuantVRAM {
+				if q.VRAMBytes > maxVRAM {
+					maxVRAM = q.VRAMBytes
+					maxPartial = q.VRAMEstimatePartial
+				}
+			}
+		}
+		modalities := sortedModalities(modAgg)
+		for _, m := range modalities {
+			modSet[m] = struct{}{}
+		}
+
+		if maxVRAM > s.maxVRAM {
+			s.maxVRAM = maxVRAM
+		}
+		if e.Ref.Family != "" {
+			famSet[string(e.Ref.Family)] = struct{}{}
+		}
+		if e.Creator != "" {
+			creatorSet[string(e.Creator)] = struct{}{}
+		}
+
+		s.rows = append(s.rows, entityRow{
+			Key:           key,
+			Path:          e.Ref.IRI(entityRoutePrefix),
+			Family:        string(e.Ref.Family),
+			Creator:       string(e.Creator),
+			Providers:     providers,
+			ProviderCount: len(e.Providers),
+			Regions:       regions,
+			Modalities:    modalities,
+			VRAMBytes:     maxVRAM,
+			VRAMPartial:   maxPartial,
+			PriceLabel:    priceLabel(e.PriceInputRange[0]),
+		})
+	}
+
+	// Second pass: normalize every mini-bar against the corpus maximum, now known.
+	for i := range s.rows {
+		s.rows[i].VRAMLabel = vramLabel(s.rows[i].VRAMBytes)
+		s.rows[i].VRAMFrac = fracOf(s.rows[i].VRAMBytes, s.maxVRAM)
+	}
+
+	// DEFAULT ORDER: Family (ascending) then canonical key (ascending). Fixed here and
+	// documented so every default SSE re-render is byte-stable.
+	sort.SliceStable(s.rows, func(i, j int) bool { return lessDefaultRow(s.rows[i], s.rows[j]) })
+
+	s.facets = facetOptions{
+		Families:   sortedKeys(famSet),
+		Creators:   sortedKeys(creatorSet),
+		Providers:  sortedKeys(provSet),
+		Regions:    sortedKeys(regionSet),
+		Modalities: sortedKeys(modSet),
+	}
+}
+
+// lessDefaultRow is the browser's DEFAULT total order: ascending Family, then ascending
+// canonical key. It is the single ordering the un-sorted browse path uses, so an SSE
+// re-render with no explicit sort is deterministic.
+func lessDefaultRow(a, b entityRow) bool {
+	if a.Family != b.Family {
+		return a.Family < b.Family
+	}
+	return a.Key < b.Key
+}
+
+// modalityIndex builds the (ID,Provider) → Modalities join over the flat static catalog.
+// Modalities are a per-model fact on ModelInfo, not carried on the rolled-up Entity, so the
+// browser joins them back here at startup. Built once; never touched at serve time.
+func modalityIndex() map[string]bestiary.Modalities {
+	models := bestiary.StaticModels()
+	out := make(map[string]bestiary.Modalities, len(models))
+	for _, m := range models {
+		out[instanceKey(m.ID, m.Provider)] = m.Modalities
+	}
+	return out
+}
+
+// instanceKey is the join key for the modality index: the (ID, Provider) tuple that is the
+// composite identity of a catalog row, NUL-joined so no ID/provider token can collide.
+func instanceKey(id bestiary.ModelID, p bestiary.Provider) string {
+	return string(id) + "\x00" + string(p)
+}
+
+// sortedModalities renders a modality set as its stable lowercase tokens in Modality-value
+// order (text, image, pdf, audio, video), so the display and facet lists are deterministic.
+func sortedModalities(set map[bestiary.Modality]struct{}) []string {
+	ms := make([]bestiary.Modality, 0, len(set))
+	for m := range set {
+		ms = append(ms, m)
+	}
+	sort.Slice(ms, func(i, j int) bool { return ms[i] < ms[j] })
+	out := make([]string, len(ms))
+	for i, m := range ms {
+		out[i] = m.String()
+	}
+	return out
+}
+
+// sortedKeys returns the set's keys as an ascending, de-duplicated slice.
+func sortedKeys(set map[string]struct{}) []string {
+	out := make([]string, 0, len(set))
+	for k := range set {
+		out = append(out, k)
+	}
+	sort.Strings(out)
+	return out
+}
+
+// vramLabel renders a VRAM byte count as a "NN.N GB" figure, or an em-dash when unknown.
+func vramLabel(b int64) string {
+	if b <= 0 {
+		return "—"
+	}
+	return fmt.Sprintf("%.1f GB", float64(b)/float64(1<<30))
+}
+
+// priceLabel renders a per-MTok input price as "$N.NN", or an em-dash when unknown (nil).
+func priceLabel(p *float64) string {
+	if p == nil {
+		return "—"
+	}
+	return fmt.Sprintf("$%.2f", *p)
+}
+
+// fracOf clamps n/d to an integer percentage in [0,100]; a non-positive denominator or
+// numerator yields 0 (an empty bar), never a divide-by-zero.
+func fracOf(n, d int64) int {
+	if d <= 0 || n <= 0 {
+		return 0
+	}
+	p := int(n * 100 / d)
+	if p > 100 {
+		p = 100
+	}
+	return p
+}
+
 // routes registers the mux. Go 1.22 method+path patterns; the trailing-slash "/entity/"
-// pattern is a subtree match, so a multi-segment key (llama/scout%404…) lands here.
+// pattern is a subtree match, so a multi-segment key (llama/scout%404…) lands there.
 //
 // Route names deliberately diverge from the draft naming sketched in the early design
 // notes ("/entities", "/static/*"): this implementation ships "/sse/entities" and
 // "/assets/*" instead — "/sse/" names the transport (this is specifically the datastar
 // SSE wiring seam, not a general entities collection endpoint one might expect to
 // support other verbs/methods), and "/assets/" is the more conventional name for a
-// same-origin static-asset mount. Later work builds on these shipped names — changing
-// them now would be a breaking change to the route table, not a cosmetic rename.
+// same-origin static-asset mount. "/series" is the series/release explorer. Later work
+// builds on these shipped names — changing them now would be a breaking change to the
+// route table, not a cosmetic rename.
 func (s *Server) routes() {
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /{$}", s.handleIndex)
 	mux.HandleFunc("GET "+entityRoutePrefix, s.handleEntity)
 	mux.HandleFunc("GET /sse/entities", s.handleEntitiesSSE)
+	mux.HandleFunc("GET /series", s.handleSeries)
 	mux.Handle("GET /assets/", http.FileServerFS(assetsFS))
 	s.handler = mux
 }
@@ -148,19 +403,17 @@ func (s *Server) routes() {
 // ServeHTTP makes Server an http.Handler (so httptest can drive it with no port bind).
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) { s.handler.ServeHTTP(w, r) }
 
-// handleIndex renders the catalog landing page.
+// handleIndex renders the entity browser: the dense sortable table over every entity, the
+// filter rail, and the SSE-patched results container seeded with the default-ordered rows.
 func (s *Server) handleIndex(w http.ResponseWriter, r *http.Request) {
-	sample := s.links
-	if len(sample) > sampleLimit {
-		sample = sample[:sampleLimit]
-	}
 	s.render(w, "index", indexView{
 		Title:           "catalog",
 		DatastarVersion: DatastarJSVersion,
 		EntityCount:     len(s.entities),
 		ModelCount:      s.modelCount,
 		CacheModelCount: s.cacheModelCount,
-		Sample:          sample,
+		Rows:            s.rows,
+		Facets:          s.facets,
 	})
 }
 
@@ -170,7 +423,10 @@ func (s *Server) handleIndex(w http.ResponseWriter, r *http.Request) {
 // the same string EntityRef.String() produced and EntityRef.IRI(entityRoutePrefix) minted.
 //
 // Query parameters are IDENTITY-IRRELEVANT (RQ1: query = non-identity view-state only), so
-// they are ignored here entirely — ?quant/?ctx/?provider yield the same entity at defaults.
+// they never select a different entity. The one honored view-state param is ?ctx, which
+// only drives the display-only VRAM recompute COLUMN in the quants section — it never
+// changes which entity is shown, and an entity with no quant rows renders byte-identically
+// with or without it.
 func (s *Server) handleEntity(w http.ResponseWriter, r *http.Request) {
 	key := strings.TrimPrefix(r.URL.Path, entityRoutePrefix)
 	if key == "" {
@@ -193,30 +449,61 @@ func (s *Server) handleEntity(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	rel := bestiary.ReleaseOf(e.Ref)
 	s.render(w, "entity", entityView{
 		Title:           key,
 		DatastarVersion: DatastarJSVersion,
 		Entity:          e,
 		Nomina:          e.Nomina(),
 		Path:            entityRoutePrefix + key,
+		MaxQuantVRAM:    maxQuantVRAM(e),
+		CtxTokens:       parseCtx(r.URL.Query().Get("ctx")),
+		SeriesDisplay:   rel.String(),
+		SeriesAnchor:    seriesAnchor(rel.Series),
 	})
 }
 
-// handleEntitiesSSE is the datastar wiring seam: it reads the `filter` signal, filters the
-// entity links by a family/key substring, and PatchElements the results fragment into
-// #entity-results. This is the single end-to-end proof that the datastar-go SDK
-// (ReadSignals → NewSSE → PatchElements) and the vendored client agree; this same SSE seam
-// grows into the full browser/detail/series views. No network, no port assumptions.
-func (s *Server) handleEntitiesSSE(w http.ResponseWriter, r *http.Request) {
-	var sig struct {
-		Filter string `json:"filter"`
+// parseCtx reads the optional ?ctx view-state override. A missing, non-numeric, or
+// non-positive value yields 0 (meaning "no override; show baked figures"), never an error —
+// a malformed view-state param must degrade to the default view, not a 400.
+func parseCtx(s string) int {
+	if s == "" {
+		return 0
 	}
-	// Tolerant read: absent/empty signals are not an error (the initial load has none).
-	_ = datastar.ReadSignals(r, &sig)
+	n, err := strconv.Atoi(s)
+	if err != nil || n <= 0 {
+		return 0
+	}
+	return n
+}
 
-	results := s.filterLinks(sig.Filter)
+// maxQuantVRAM returns the largest VRAMBytes across all of an entity's quant rows; 0 when
+// the entity has no quant data. It is the per-entity denominator for the detail mini-bars.
+func maxQuantVRAM(e bestiary.Entity) int64 {
+	var max int64
+	for _, inst := range e.Instances {
+		for _, q := range inst.QuantVRAM {
+			if q.VRAMBytes > max {
+				max = q.VRAMBytes
+			}
+		}
+	}
+	return max
+}
+
+// handleEntitiesSSE is the datastar wiring seam for the browser: it reads the view-state
+// signals (search + five facets + sort), filters and sorts the entity rows, and
+// PatchElements the results table into #entity-results. This is the single end-to-end proof
+// that the datastar-go SDK (ReadSignals → NewSSE → PatchElements) and the vendored client
+// agree; no network, no port assumptions.
+func (s *Server) handleEntitiesSSE(w http.ResponseWriter, r *http.Request) {
+	var q browseQuery
+	// Tolerant read: absent/empty signals are not an error (the initial load has none).
+	_ = datastar.ReadSignals(r, &q)
+
+	rows := s.browse(q)
 	var buf bytes.Buffer
-	if err := s.fragments.ExecuteTemplate(&buf, "entity-results", results); err != nil {
+	if err := s.fragments.ExecuteTemplate(&buf, "entity-rows", rows); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -229,21 +516,143 @@ func (s *Server) handleEntitiesSSE(w http.ResponseWriter, r *http.Request) {
 	)
 }
 
-// filterLinks returns the entity links whose key contains filter (case-insensitive),
-// capped at sampleLimit. An empty filter returns the leading sample.
-func (s *Server) filterLinks(filter string) []entityLink {
-	filter = strings.ToLower(strings.TrimSpace(filter))
-	out := make([]entityLink, 0, sampleLimit)
-	for _, l := range s.links {
-		if filter != "" && !strings.Contains(strings.ToLower(l.Key), filter) {
+// browse applies the view-state to the corpus: a case-insensitive substring match of the
+// free-text search over the canonical key, exact-match filters on the five facets, and the
+// chosen sort. It returns a fresh slice (a copy), so the alternate sorts never disturb the
+// server's default-ordered rows. With no view-state it returns the rows in the DEFAULT order
+// (Family then key, established in buildRows).
+func (s *Server) browse(q browseQuery) []entityRow {
+	search := strings.ToLower(strings.TrimSpace(q.Search))
+	out := make([]entityRow, 0, len(s.rows))
+	for _, r := range s.rows {
+		if search != "" && !strings.Contains(strings.ToLower(r.Key), search) {
 			continue
 		}
-		out = append(out, l)
-		if len(out) >= sampleLimit {
-			break
+		if q.Family != "" && r.Family != q.Family {
+			continue
+		}
+		if q.Creator != "" && r.Creator != q.Creator {
+			continue
+		}
+		if q.Provider != "" && !containsStr(r.Providers, q.Provider) {
+			continue
+		}
+		if q.Region != "" && !containsStr(r.Regions, q.Region) {
+			continue
+		}
+		if q.Modality != "" && !containsStr(r.Modalities, q.Modality) {
+			continue
+		}
+		out = append(out, r)
+	}
+	sortRows(out, q.Sort)
+	return out
+}
+
+// sortRows applies the chosen sort key IN PLACE. The empty/"family" key is the default
+// (Family then key) — the slice already arrives in that order, so the stable sort is a
+// no-op reorder that keeps it. Every branch breaks ties on the canonical key so the order
+// is a total order (deterministic, never dependent on input position).
+func sortRows(rows []entityRow, key string) {
+	switch key {
+	case "key":
+		sort.SliceStable(rows, func(i, j int) bool { return rows[i].Key < rows[j].Key })
+	case "creator":
+		sort.SliceStable(rows, func(i, j int) bool {
+			if rows[i].Creator != rows[j].Creator {
+				return rows[i].Creator < rows[j].Creator
+			}
+			return rows[i].Key < rows[j].Key
+		})
+	case "vram":
+		sort.SliceStable(rows, func(i, j int) bool {
+			if rows[i].VRAMBytes != rows[j].VRAMBytes {
+				return rows[i].VRAMBytes > rows[j].VRAMBytes // largest first
+			}
+			return rows[i].Key < rows[j].Key
+		})
+	case "providers":
+		sort.SliceStable(rows, func(i, j int) bool {
+			if rows[i].ProviderCount != rows[j].ProviderCount {
+				return rows[i].ProviderCount > rows[j].ProviderCount // most-hosted first
+			}
+			return rows[i].Key < rows[j].Key
+		})
+	default: // "" or "family": the default Family-then-key order
+		sort.SliceStable(rows, func(i, j int) bool { return lessDefaultRow(rows[i], rows[j]) })
+	}
+}
+
+// containsStr reports whether xs contains x.
+func containsStr(xs []string, x string) bool {
+	for _, s := range xs {
+		if s == x {
+			return true
 		}
 	}
-	return out
+	return false
+}
+
+// handleSeries renders the series/release explorer: the full Series → Release → entity tree,
+// walked from SeriesAll()/ReleasesOf()/EntitiesOf(). It is a native <details> disclosure
+// tree (no client router, no chart — a hierarchy walk is a nested list). Entity leaves link
+// to their detail pages; each Series carries a stable anchor a detail page's "series"
+// section links back to.
+func (s *Server) handleSeries(w http.ResponseWriter, r *http.Request) {
+	series := bestiary.SeriesAll()
+	nodes := make([]seriesNode, 0, len(series))
+	total := 0
+	for _, ser := range series {
+		relNodes := make([]releaseNode, 0)
+		count := 0
+		for _, rel := range bestiary.ReleasesOf(ser) {
+			ents := bestiary.EntitiesOf(rel)
+			refs := make([]entityRef, 0, len(ents))
+			for _, e := range ents {
+				refs = append(refs, entityRef{
+					Key:  e.Ref.String(),
+					Path: e.Ref.IRI(entityRoutePrefix),
+				})
+			}
+			name := rel.Name
+			if name == "" {
+				name = "(base)"
+			}
+			relNodes = append(relNodes, releaseNode{Name: name, Entities: refs})
+			count += len(refs)
+		}
+		total += count
+		nodes = append(nodes, seriesNode{
+			Display:     ser.String(),
+			Anchor:      seriesAnchor(ser),
+			Releases:    relNodes,
+			EntityCount: count,
+		})
+	}
+	s.render(w, "series", seriesView{
+		Title:           "series",
+		DatastarVersion: DatastarJSVersion,
+		Series:          nodes,
+		SeriesCount:     len(nodes),
+		EntityCount:     total,
+	})
+}
+
+// seriesAnchor renders a stable, URL-fragment-safe same-page anchor for a Series. It is a
+// DISPLAY slug (not a lookup key), so it need only be reproducible: the same Series always
+// yields the same anchor on the explorer page and on any detail page that links to it. Every
+// non-[a-z0-9] byte of the Series' display string folds to '-'.
+func seriesAnchor(s bestiary.Series) string {
+	var b strings.Builder
+	b.WriteString("series-")
+	for _, r := range strings.ToLower(s.String()) {
+		if (r >= 'a' && r <= 'z') || (r >= '0' && r <= '9') {
+			b.WriteRune(r)
+		} else {
+			b.WriteByte('-')
+		}
+	}
+	return b.String()
 }
 
 // render executes a page template set's "layout" and writes it. On a template error it
