@@ -570,8 +570,15 @@ func TestFormatAmbiguous_GroupingAndTruncation(t *testing.T) {
 	}
 }
 
-// TestFormatAmbiguous_RemedHintUpdated verifies that the remediation hint in
-// FormatAmbiguous now references --format=raw instead of the deprecated --scheme=raw.
+// TestFormatAmbiguous_RemedHintUpdated verifies that FormatAmbiguous never
+// references the deprecated --scheme=raw flag.
+//
+// The --format=raw exact-ID tip itself moved out of FormatAmbiguous entirely
+// (bestiary-7nbuw): it now lives solely in the CLI's wrapped ErrAmbiguous
+// message (cmd/bestiary/main.go runShow), so it is no longer asserted here —
+// see TestShow_Ambiguous for that assertion, and
+// TestFormatAmbiguous_V4_FooterInstructions for the footer's remaining
+// "bestiary list" instruction.
 func TestFormatAmbiguous_RemedHintUpdated(t *testing.T) {
 	candidates := makeAmbiguousRefs(3, false)
 	e := &bestiary.ErrAmbiguous{
@@ -584,12 +591,9 @@ func TestFormatAmbiguous_RemedHintUpdated(t *testing.T) {
 	bestiary.FormatAmbiguous(&buf, e)
 	output := buf.String()
 
-	// The hint should reference --format=raw, not the deprecated --scheme=raw.
+	// The hint should never reference the deprecated --scheme=raw.
 	if strings.Contains(output, "--scheme=raw") {
 		t.Errorf("FormatAmbiguous: output should not reference deprecated --scheme=raw; got:\n%s", output)
-	}
-	if !strings.Contains(output, "--format") && !strings.Contains(output, "raw") {
-		t.Errorf("FormatAmbiguous: output should reference --format=raw or 'raw'; got:\n%s", output)
 	}
 }
 
@@ -1300,9 +1304,12 @@ func TestFormatAmbiguous_V4_RehostSection_OnePerLine(t *testing.T) {
 }
 
 // TestFormatAmbiguous_V4_FooterInstructions verifies that the footer contains
-// the two real instruction strings: "bestiary list" and "--format=raw".
+// the "bestiary list" instruction.
 //
-// This test FAILS before the new layout is implemented.
+// The footer's other former instruction, --format=raw, was removed
+// (bestiary-7nbuw): it duplicated the CLI's wrapped ErrAmbiguous narrowing-list
+// tip verbatim, so it now lives in exactly one place — the CLI message tested
+// by TestShow_Ambiguous — rather than repeated here too.
 func TestFormatAmbiguous_V4_FooterInstructions(t *testing.T) {
 	e := makeAmbiguousWithRehosts(2, []bestiary.Provider{"deepinfra"})
 
@@ -1313,8 +1320,8 @@ func TestFormatAmbiguous_V4_FooterInstructions(t *testing.T) {
 	if !strings.Contains(output, "bestiary list") {
 		t.Errorf("FormatAmbiguous footer: missing 'bestiary list' instruction;\nGot:\n%s", output)
 	}
-	if !strings.Contains(output, "--format=raw") {
-		t.Errorf("FormatAmbiguous footer: missing '--format=raw' instruction;\nGot:\n%s", output)
+	if strings.Contains(output, "--format=raw") {
+		t.Errorf("FormatAmbiguous footer: should no longer duplicate '--format=raw' (moved to the CLI's wrapped message); got:\n%s", output)
 	}
 }
 
@@ -1411,5 +1418,58 @@ func TestFormatAmbiguous_EmptyCanonical_NoBareHeader(t *testing.T) {
 	// Footer must still appear.
 	if !strings.Contains(output, "bestiary list") {
 		t.Errorf("FormatAmbiguous: footer 'bestiary list' must still appear;\nGot:\n%s", output)
+	}
+}
+
+// TestFormatAmbiguous_EmptyCanonical_ListsCandidateForms pins the F1' fix: when no
+// candidate has a canonical provider (e.g. "llama": a canonical CREATOR but no
+// canonical provider), FormatAmbiguous must still list actual candidate ENTITY forms
+// under a "Candidates:" section — not leave only the bare provider slugs of "Also
+// rehosted by:", which would make the wrapped error's "the matching candidates are
+// listed above" claim false (a slug is not a candidate).
+func TestFormatAmbiguous_EmptyCanonical_ListsCandidateForms(t *testing.T) {
+	candidates := makeAmbiguousRefs(3, false)
+	e := &bestiary.ErrAmbiguous{
+		Input:           "llama",
+		Scheme:          bestiary.SchemeCanonical,
+		Candidates:      candidates,
+		RehostProviders: []bestiary.Provider{"provider-0", "provider-1", "provider-2"},
+	}
+
+	var buf bytes.Buffer
+	bestiary.FormatAmbiguous(&buf, e)
+	output := buf.String()
+
+	if !strings.Contains(output, "Candidates:") {
+		t.Errorf("FormatAmbiguous: 'Candidates:' section must appear when no canonical rows exist;\nGot:\n%s", output)
+	}
+	// Each candidate's entity key must be listed (family[/variant]@version form).
+	for i := 0; i < 3; i++ {
+		want := fmt.Sprintf("family-%d/variant-%d@1.%d", i, i, i)
+		if !strings.Contains(output, want) {
+			t.Errorf("FormatAmbiguous: candidate entity form %q missing from 'Candidates:' section;\nGot:\n%s", want, output)
+		}
+	}
+}
+
+// TestFormatAmbiguous_NoBestiaryPrefixInBody pins the F1' merge: the advisory body
+// must NOT open with a second "bestiary: " line. The CLI returns one wrapped error
+// that carries the sole "bestiary: " preamble; a second one in this body reads as two
+// separate failures for one error (the reviewer's "two stacked bestiary:" complaint).
+func TestFormatAmbiguous_NoBestiaryPrefixInBody(t *testing.T) {
+	e := &bestiary.ErrAmbiguous{
+		Input:           "llama",
+		Scheme:          bestiary.SchemeCanonical,
+		Candidates:      makeAmbiguousRefs(3, false),
+		RehostProviders: []bestiary.Provider{"provider-0"},
+	}
+
+	var buf bytes.Buffer
+	bestiary.FormatAmbiguous(&buf, e)
+
+	for _, line := range strings.Split(buf.String(), "\n") {
+		if strings.HasPrefix(line, "bestiary:") {
+			t.Errorf("FormatAmbiguous body must carry no 'bestiary:' prefix (the CLI supplies the sole one on its wrapped error);\noffending line: %q\nFull output:\n%s", line, buf.String())
+		}
 	}
 }

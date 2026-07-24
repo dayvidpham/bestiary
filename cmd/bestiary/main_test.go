@@ -242,9 +242,15 @@ func TestShow_Ambiguous(t *testing.T) {
 	if !strings.Contains(errOut, "* = canonical provider") {
 		t.Errorf("stderr does not contain legend '* = canonical provider'; got %q", errOut)
 	}
-	// stderr must contain a remediation hint pointing toward --format=raw.
-	if !strings.Contains(errOut, "--format=raw") {
-		t.Errorf("stderr does not contain remediation hint '--format=raw'; got %q", errOut)
+	// The --format=raw remediation hint lives in exactly one place now
+	// (bestiary-7nbuw): the wrapped ErrAmbiguous message (runErr), not the
+	// FormatAmbiguous footer written to errOut. Assert it on runErr, and assert
+	// its absence from errOut so the two blocks stay non-duplicative.
+	if !strings.Contains(runErr.Error(), "--format=raw") {
+		t.Errorf("returned error does not contain remediation hint '--format=raw'; got %q", runErr.Error())
+	}
+	if strings.Contains(errOut, "--format=raw") {
+		t.Errorf("stderr (FormatAmbiguous output) should no longer duplicate '--format=raw'; got %q", errOut)
 	}
 	// stdout must be empty — the candidate table goes to stderr only.
 	if out != "" {
@@ -405,8 +411,10 @@ func TestShow_CanonicalPreference_Claude(t *testing.T) {
 		return
 	}
 
-	// Not clean: it MUST be the ambiguity path (a not-found is a hard failure).
-	if !strings.Contains(runErr.Error(), "ambiguous") {
+	// Not clean: it MUST be the ambiguity path (a not-found is a hard failure). The
+	// reworded ambiguity guidance no longer uses the word "ambiguous" — it names the
+	// under-specification and the distinct-model count — so pin on that wording.
+	if !strings.Contains(runErr.Error(), "under-specified") {
 		t.Fatalf("show %q must resolve to anthropic OR present an ambiguity marking anthropic canonical; got error: %v", query, runErr)
 	}
 	// The disambiguation (stderr) must mark anthropic as THE canonical provider.

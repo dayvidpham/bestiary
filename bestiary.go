@@ -144,9 +144,15 @@ type ModelInfo struct {
 	// time from curated data; live-sync rows carry nil (curated VRAM is not
 	// available from the live API).
 	QuantVRAM []QuantVRAM
-	// Source is the data source that provided this model row. DataSourceNone
-	// (zero value, empty string) on live-sync rows; populated at codegen time
-	// from curated ingest data.
+	// Source is the ORIGINATING ingest source that attests this model row. Every
+	// bestiary row originates from the models.dev pipeline, so the effective default
+	// is DataSourceModelsDev: the compiled-in registry fills an empty carrier in at
+	// the load layer (registry.go init) and the store read path resolves a
+	// not-persisted carrier the same way (store.go scanModelInfo), so a caller never
+	// sees an empty Source for a real row. A row ENRICHED by a further source carries
+	// that source instead (e.g. an ollama-curated row carries DataSourceOllama); the
+	// raw generated literal is still "" (DataSourceNone) for pure models.dev rows —
+	// the fill-in is a runtime normalization, not a re-bake of the generated data.
 	Source DataSourceID
 	// Creator is the lab / organization that TRAINED this model (the SPDX
 	// originator), DERIVED from Family via the curated creators.json seed

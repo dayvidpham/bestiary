@@ -2441,6 +2441,15 @@ func scanModelInfo(stmt *sqlite.Stmt) ModelInfo {
 	// current view. Neither is "wrong" — they answer different questions.
 	m.Creator = m.Family.Creator()
 
+	// Source is the ORIGINATING ingest source of the row. The models cache table has
+	// no source column: it is populated exclusively by `sync`, which reads the
+	// models.dev catalog, so every persisted row originates from models.dev. A row
+	// therefore reads back as DataSourceModelsDev (equivalently: a not-persisted /
+	// empty carrier defaults to models.dev), matching the load-layer fill-in the
+	// static registry applies (registry.go init) so the store and static paths agree
+	// on the implicit origin rather than surfacing an empty Source to the caller.
+	m.Source = DataSourceModelsDev
+
 	// Nullable REAL fields.
 	if !stmt.IsNull("cost_input") {
 		v := stmt.GetFloat("cost_input")
