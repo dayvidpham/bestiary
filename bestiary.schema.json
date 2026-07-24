@@ -204,7 +204,7 @@
       "items": { "$ref": "#/$defs/QuantVRAM" }
     },
     "Source": {
-      "description": "Data source that provided this model row (e.g. \"models.dev\", \"ollama\"). Empty string (DataSourceNone) on live-sync rows; populated at codegen time from curated ingest data.",
+      "description": "Originating ingest source that attests this model row (e.g. \"models.dev\", \"ollama\"). Defaults to \"models.dev\": every row originates from the models.dev pipeline, so an unset carrier is filled in to \"models.dev\" at the load layer; a row enriched by a further source carries that source instead. Added in schema 0.2.0.",
       "type": "string"
     },
     "Description": {
@@ -674,7 +674,7 @@
           "items": { "$ref": "#/$defs/QuantVRAM" }
         },
         "Source": {
-          "description": "Data source that provided this row (e.g. \"models.dev\", \"ollama\"). Empty string (DataSourceNone) when no source is recorded. Added in schema 0.2.0.",
+          "description": "Originating ingest source that attests this instance (e.g. \"models.dev\", \"ollama\"). Defaults to \"models.dev\": every instance originates from the models.dev pipeline, so an unset carrier is filled in to \"models.dev\" at the load layer; an instance enriched by a further source (e.g. an ollama-curated quantization row) carries that source instead. Added in schema 0.2.0.",
           "type": "string"
         }
       },

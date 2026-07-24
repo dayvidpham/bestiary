@@ -405,8 +405,10 @@ func TestShow_CanonicalPreference_Claude(t *testing.T) {
 		return
 	}
 
-	// Not clean: it MUST be the ambiguity path (a not-found is a hard failure).
-	if !strings.Contains(runErr.Error(), "ambiguous") {
+	// Not clean: it MUST be the ambiguity path (a not-found is a hard failure). The
+	// reworded ambiguity guidance no longer uses the word "ambiguous" — it names the
+	// under-specification and the distinct-model count — so pin on that wording.
+	if !strings.Contains(runErr.Error(), "under-specified") {
 		t.Fatalf("show %q must resolve to anthropic OR present an ambiguity marking anthropic canonical; got error: %v", query, runErr)
 	}
 	// The disambiguation (stderr) must mark anthropic as THE canonical provider.

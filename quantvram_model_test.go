@@ -203,8 +203,9 @@ func TestCloneEntity_SourcesRegistryPath(t *testing.T) {
 // per-row QuantVRAM and Source carriers onto each ProviderInstance, and that the
 // returned instances are clone-isolated from the registry. The only curated source
 // is ollama: a curated row carries its quant rows and Source ollama, while an
-// uncurated row carries no quant rows and the zero (empty) Source — both directions
-// are checked, registry-wide and on the curated llama-3.3-70b entity specifically.
+// uncurated row carries no quant rows and the DEFAULT models.dev Source (an empty
+// carrier is filled in to models.dev at the load layer) — both directions are
+// checked, registry-wide and on the curated llama-3.3-70b entity specifically.
 func TestCloneInstances_QuantVRAMRegistryPath(t *testing.T) {
 	entities := bestiary.Entities()
 	if len(entities) == 0 {
@@ -213,7 +214,9 @@ func TestCloneInstances_QuantVRAMRegistryPath(t *testing.T) {
 
 	// Registry-wide both-directions invariant: an instance carries QuantVRAM rows
 	// only if it is a curated row, and every curated row's Source is ollama; an
-	// uncurated instance carries no quant rows and the zero Source.
+	// uncurated instance carries no quant rows and the default models.dev Source
+	// (the load-layer fill-in resolves an empty carrier to the implicit models.dev
+	// origin, so a real instance never surfaces an empty Source).
 	var populated, uncurated int
 	for _, e := range entities {
 		for j, inst := range e.Instances {
@@ -223,7 +226,7 @@ func TestCloneInstances_QuantVRAMRegistryPath(t *testing.T) {
 					t.Errorf("entity %q instance[%d] (id %q) carries %d quant rows but Source = %q, want ollama",
 						e.Ref.String(), j, inst.ID, len(inst.QuantVRAM), inst.Source)
 				}
-			} else if inst.Source == bestiary.DataSourceNone {
+			} else if inst.Source == bestiary.DataSourceModelsDev {
 				uncurated++
 			}
 		}
@@ -232,7 +235,7 @@ func TestCloneInstances_QuantVRAMRegistryPath(t *testing.T) {
 		t.Fatal("no ProviderInstance carries QuantVRAM: the aggregate does not copy ModelInfo.QuantVRAM onto instances")
 	}
 	if uncurated == 0 {
-		t.Fatal("no uncurated (nil-quant, empty-source) instance found; expected the uncurated direction to exist")
+		t.Fatal("no uncurated (nil-quant, models.dev-source) instance found; expected the uncurated direction to exist")
 	}
 
 	// Targeted: the curated llama-3.3-70b entity's ollama instances carry exactly the

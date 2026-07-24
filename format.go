@@ -382,7 +382,7 @@ const ambiguousMaxRehosts = 5
 // this is advisory stderr output — a write failure should not mask the real
 // ErrAmbiguous that the caller surfaces to the user.
 func FormatAmbiguous(w io.Writer, e *ErrAmbiguous) {
-	fmt.Fprintf(w, "bestiary: input %q matched multiple canonicals\n", e.Input)
+	fmt.Fprintf(w, "bestiary: input %q matched several distinct models\n", e.Input)
 
 	// PURL missed-namespace note: keep at top, unchanged from Fix 2.
 	if e.PURLMissedNamespace != "" {

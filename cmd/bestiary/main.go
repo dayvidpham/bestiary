@@ -150,20 +150,35 @@ func run(args []string) error {
 		return err
 	}
 
+	// outputExplicit records whether the user actually passed --output, so the entity
+	// views can pick a human-readable default (table) while still honouring an explicit
+	// --output=json. The --output flag defaults to "json" for the model-oriented
+	// commands; the entity views (show --by-entity and the plain-show entity fallback)
+	// override that default to table only when the user left it unset. This mirrors the
+	// flagWasSet discipline the series command uses for --db-path/--version.
+	outputExplicit := flagWasSet(fs, "output")
+
 	switch cmd {
 	case "list":
 		return runList(*provider, bestiary.OutputFormat(*output), *dbPath, *status)
 	case "show":
 		if *byEntity {
 			if fs.NArg() < 1 {
-				return fmt.Errorf("usage: bestiary show --by-entity <model-id | family[/variant][/version|@version]{identity-mods}> [--output=<json|table>]")
+				return fmt.Errorf("usage: bestiary show --by-entity <model-id | family[/variant][/version|@version]{identity-mods}> [--output=<json|table>] (default: table)")
 			}
-			return runShowEntity(fs.Arg(0), bestiary.OutputFormat(*output), *quant, *dbPath)
+			// Human-readable default: the aggregate entity view renders as a table
+			// unless the user explicitly asked for --output=json.
+			entityFormat := bestiary.OutputFormat(*output)
+			if !outputExplicit {
+				entityFormat = bestiary.FormatTable
+			}
+			return runShowEntity(fs.Arg(0), entityFormat, *quant, *dbPath)
 		}
 		if fs.NArg() < 1 {
-			return fmt.Errorf("usage: bestiary show <model-id> [--format=<peasant|huggingface|hf|purl|raw>] [--output=<json|yaml|table>] [flags]")
+			return fmt.Errorf("usage: bestiary show <model-id | entity-key> [--format=<peasant|huggingface|hf|purl|raw>] [--output=<json|yaml|table>] [flags]\n" +
+				"  an entity-key input (e.g. llama@3.3#70b{instruct}) that is not a model id renders the entity view (default: table)")
 		}
-		return runShow(fs.Arg(0), bestiary.OutputFormat(*output), *dbPath, *inputFormat, *scheme)
+		return runShow(fs.Arg(0), bestiary.OutputFormat(*output), *dbPath, *inputFormat, *scheme, outputExplicit)
 	case "providers":
 		if fs.NArg() < 1 {
 			return fmt.Errorf("usage: bestiary providers <family>[/<variant>][/<version>|@<version>]{identity-mods} [--output=<json|table>]\n" +
@@ -478,7 +493,7 @@ func ociSchemeNotice(input string) string {
 	)
 }
 
-func runShow(input string, format bestiary.OutputFormat, dbPath string, inputFormatFlag string, schemeFlag string) error {
+func runShow(input string, format bestiary.OutputFormat, dbPath string, inputFormatFlag string, schemeFlag string, outputExplicit bool) error {
 	// The `oci` scheme has no rendering at the model/ref altitude: a pkg:oci identity
 	// is content-addressed by a per-quantization manifest digest, so ModelRef.Format(
 	// SchemeOCI) is "" BY DESIGN. Requesting it here would otherwise resolve to a
@@ -521,9 +536,38 @@ func runShow(input string, format bestiary.OutputFormat, dbPath string, inputFor
 		if errors.As(resolveErr, &ambig) {
 			// Print a candidate table to stderr; do not pollute stdout.
 			bestiary.FormatAmbiguous(os.Stderr, ambig)
-			return fmt.Errorf("ambiguous input %q matched %d canonicals — use --format=raw or refine to a more specific canonical form", input, len(ambig.Candidates))
+			// Derive a concrete, copy-pasteable refinement from the first candidate
+			// (its canonical form) and the family to browse, so the guidance names a
+			// REAL next command instead of the abstract "refine your input". Both fall
+			// back to the raw input if the candidate list is somehow empty (defensive:
+			// ErrAmbiguous always carries candidates).
+			example := input
+			family := input
+			if len(ambig.Candidates) > 0 {
+				if c := ambig.Candidates[0].Format(bestiary.SchemeCanonical); c != "" {
+					example = c
+				}
+				if f := string(ambig.Candidates[0].Family); f != "" {
+					family = f
+				}
+			}
+			return fmt.Errorf(
+				"%q is under-specified: it matched %d distinct models (they differ by variant, version, or size), so `show` cannot pick one.\n"+
+					"  The matching candidates are listed above. To narrow it:\n"+
+					"    - show one directly:   bestiary show %s\n"+
+					"    - browse the family:   bestiary series %s\n"+
+					"    - use an exact API id: bestiary show <raw-id> --format=raw",
+				input, len(ambig.Candidates), example, family,
+			)
 		}
-		// ErrNotFound or other errors pass through directly.
+		// The model resolver could not parse/resolve the input. Before surfacing the
+		// error, try the entity fallback: an entity-key input (a grammar the model
+		// resolver rejects — e.g. one carrying #size or {identity-mods}) resolves as an
+		// entity here. Model resolution stays FIRST, so this never shadows a real model.
+		if handled, ferr := showEntityFallback(input, format, dbPath, outputExplicit); handled {
+			return ferr
+		}
+		// Not a model and not an entity — surface the original resolver error.
 		return resolveErr
 	}
 
@@ -587,9 +631,52 @@ func runShow(input string, format bestiary.OutputFormat, dbPath string, inputFor
 	}
 
 	if !found {
+		// Resolve produced refs but no ModelInfo backs them (registry/cache miss).
+		// The same entity-key fallback applies: the input may be an entity identity
+		// rather than a concrete model row.
+		if handled, ferr := showEntityFallback(input, format, dbPath, outputExplicit); handled {
+			return ferr
+		}
 		return &bestiary.ErrNotFound{What: "model", Key: input}
 	}
 	return bestiary.FormatModel(os.Stdout, best, format)
+}
+
+// showEntityFallback renders the aggregate entity view for input when input is an
+// entity key rather than a concrete model id. It is the plain-`show` fallback F2
+// adds: `show` resolves a MODEL first, and only when that misses does this attempt
+// an entity-identity resolution over the store-overlaid entity set (the SAME path
+// `show --by-entity` uses, so synced metadata and standalones surface identically).
+//
+// handled reports whether the input resolved as an entity: false means "not an
+// entity either" and the caller should surface its original model-not-found error;
+// true means the entity view was rendered (err carries any render/validation error).
+//
+// Output format honours F5's human-readable default: when the user did not pass an
+// explicit --output (outputExplicit == false) the view renders as a table; an
+// explicit --output=json is respected. validateEntityOutput rejects a format the
+// entity view cannot render (e.g. yaml) with the same actionable error the
+// --by-entity path raises.
+func showEntityFallback(input string, format bestiary.OutputFormat, dbPath string, outputExplicit bool) (handled bool, err error) {
+	store := openViewStore(dbPath)
+	if store != nil {
+		defer store.Close()
+	}
+	ent, ok := findEntityInSet(overlayEntities(store), input)
+	if !ok {
+		return false, nil
+	}
+	if !outputExplicit {
+		format = bestiary.FormatTable
+	}
+	if verr := validateEntityOutput(format); verr != nil {
+		return true, verr
+	}
+	if format == bestiary.FormatJSON {
+		return true, writeJSON(os.Stdout, withNomina(ent))
+	}
+	writeEntityView(os.Stdout, ent)
+	return true, nil
 }
 
 // parseEntityTuple parses an entity identity tuple of the canonical form

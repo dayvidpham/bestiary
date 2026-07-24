@@ -30,6 +30,32 @@ var (
 	versionMergeAlias map[string]string
 )
 
+// init normalizes the per-row Source carrier of the compiled-in registry ONCE at
+// package load, defaulting an empty (DataSourceNone) Source to DataSourceModelsDev.
+//
+// Semantics: Source names the ORIGINATING ingest source of a model row, and every
+// compiled-in row originates from the models.dev pipeline — so an unset carrier is
+// implicitly models.dev, not "no source". The generated literals leave pure
+// models.dev rows with Source:"" (the codegen zero value) and only stamp a further
+// source (e.g. "ollama") on enriched rows; this fill-in makes that implicit origin
+// explicit at the LOAD layer, so every accessor (StaticModels/LookupModel/
+// ModelsBy*/LookupModelByProvider/Models) and the entity/instance aggregate built by
+// loadEntityIndex surface "models.dev" rather than an empty string.
+//
+// Non-empty carriers are left untouched, so an ollama-enriched row keeps "ollama".
+// This is a runtime normalization of the in-memory slice only: the generated file is
+// byte-unchanged, so codegen determinism (go generate zero-diff) is preserved. The
+// entity↔source join is unaffected — loadEntityIndex's attest() already treats
+// DataSourceNone and DataSourceModelsDev identically (both are the implicit models.dev
+// origin and neither triggers a further attestation).
+func init() {
+	for i := range staticModels {
+		if staticModels[i].Source == DataSourceNone {
+			staticModels[i].Source = DataSourceModelsDev
+		}
+	}
+}
+
 // NormalizeEntityVersion applies the MERGE-only N->N.0 version fold to a single entity
 // ref, given the set of ALL raw (pre-fold) entity keys. When ref carries a bare-integer
 // version N AND an entity with the IDENTICAL (family, variant, param-size, modifiers) but
@@ -245,13 +271,14 @@ func loadEntityIndex() {
 
 		// Attestation rule (BCNF entity↔source join). Every static row originates
 		// from the models.dev pipeline, so each row attests DataSourceModelsDev —
-		// including rows whose Source carrier is empty (DataSourceNone), which means
-		// "the models.dev origin is implicit". A row whose Source names a further,
+		// including rows whose Source carrier is the implicit models.dev origin
+		// (DataSourceModelsDev after the load-layer fill-in, or the raw DataSourceNone
+		// zero value on a row that predates it). A row whose Source names a further,
 		// distinct source (e.g. an ollama-enriched row carries Source=ollama) is a
 		// models.dev row ENRICHED with that source's data, so it DUAL-attests: it
 		// contributes BOTH DataSourceModelsDev and that source. Net effect:
-		//   - a pure models.dev row (Source=="")      → {models.dev}
-		//   - an ollama-enriched row (Source=="ollama") → {models.dev, ollama}
+		//   - a pure models.dev row (Source==models.dev) → {models.dev}
+		//   - an ollama-enriched row (Source=="ollama")   → {models.dev, ollama}
 		// so a multi-source entity (e.g. the curated llama-3.3-70b) carries
 		// [models.dev, ollama]. The per-source set is de-duplicated here in
 		// first-seen order; the deterministic output order is imposed by an explicit

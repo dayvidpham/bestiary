@@ -460,7 +460,7 @@ func TestRun_ShowByEntity_QuantFilter(t *testing.T) {
 	}
 	var runErr error
 	out := captureStdout(t, func() {
-		runErr = run([]string{"show", "--by-entity", "--quant=q4_k_m", sizedCuratedKey})
+		runErr = run([]string{"show", "--by-entity", "--output=json", "--quant=q4_k_m", sizedCuratedKey})
 	})
 	if runErr != nil {
 		t.Fatalf("run show --by-entity --quant returned error: %v", runErr)
