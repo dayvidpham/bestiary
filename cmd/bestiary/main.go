@@ -2461,6 +2461,16 @@ func writeEntityView(w io.Writer, e bestiary.Entity) {
 	writeNominaTable(w, e.Nomina())
 }
 
+// nominaTableLimit is the maximum number of nomina the TABLE view renders in full
+// (header line + attestation sub-table) before truncating with a "… and N more"
+// footer — the same truncation convention writeBenchmarkTable uses
+// (benchmarkTableLimit), for the same reason: a heavily-hosted entity's Nomina
+// section is otherwise uncapped and can run to ~50 lines (e.g. 14 nomina, one
+// attestation sub-table apiece, on llama@3.3#70b{instruct} — one of the catalog's
+// most-attested entities). The JSON output always carries every nomen; the table
+// is capped for readability.
+const nominaTableLimit = 5
+
 // writeNominaTable renders the entity's derived naming layer: each Nomen (a
 // (Value, Scheme, Status) recorded naming) followed by its attestation set —
 // the per-name provenance a name HAS-MANY of. A same-triple name attested by two
@@ -2469,13 +2479,30 @@ func writeEntityView(w io.Writer, e bestiary.Entity) {
 // same huggingface-scheme repo) shows its two legs (Source/Authority/Method) at
 // once — the CLI-observable form of MUST-PASS case 3. Nothing prints when the
 // entity has no nomina. Nomina and each nomen's Attestations arrive
-// deterministically sorted from the projection; this formatter does not re-sort.
+// deterministically sorted from the projection; this formatter does not re-sort
+// that incoming order, EXCEPT for the display-only truncation reorder below.
 func writeNominaTable(w io.Writer, nomina []bestiary.Nomen) {
 	if len(nomina) == 0 {
 		return
 	}
 	fmt.Fprintf(w, "Nomina (%d):\n", len(nomina))
-	for _, n := range nomina {
+	// Multiply-attested nomina (MUST-PASS case 3's dual curated+huggingface leg)
+	// must survive the cap below, so they sort FIRST via a stable sort on
+	// attestation count before truncating — otherwise a name that merely sorts
+	// earlier by Value (single attestation) could push a dually-attested name
+	// past nominaTableLimit and hide a leg. Ties preserve the incoming
+	// (Value, Scheme, entity key) order from the projection (sortNomina/
+	// lessNomen). This is a LOCAL COPY reorder for display only: it never
+	// touches the caller's `nomina` slice, so the JSON output (which reads
+	// the entity's untouched Nomina() projection) keeps its original order.
+	shown := append([]bestiary.Nomen(nil), nomina...)
+	sort.SliceStable(shown, func(i, j int) bool {
+		return len(shown[i].Attestations) > len(shown[j].Attestations)
+	})
+	if len(shown) > nominaTableLimit {
+		shown = shown[:nominaTableLimit]
+	}
+	for _, n := range shown {
 		fmt.Fprintf(w, "  %s  (%s, %s)\n", n.Value, n.Scheme.String(), n.Status.String())
 		// Each attestation is one independent piece of evidence for this naming:
 		// WHICH ingest we read it from (Source), whose VOICE the document is
@@ -2488,6 +2515,9 @@ func writeNominaTable(w io.Writer, nomina []bestiary.Nomen) {
 				orDash(string(at.Source)), at.Authority.String(),
 				at.Method.String(), orDash(at.SourceURL))
 		}
+	}
+	if len(nomina) > nominaTableLimit {
+		fmt.Fprintf(w, "  … and %d more (use --output json)\n", len(nomina)-nominaTableLimit)
 	}
 }
 

@@ -185,32 +185,61 @@ func TestRun_DualAttestation_BothLegsVisible(t *testing.T) {
 		// Isolate the block for the dually-attested huggingface-scheme name so the
 		// curated/huggingface assertions read THAT name's legs, not another nomen's.
 		// A nomen header line is 2-space indented ("  <value>  (scheme, status)");
-		// its attestation sub-rows are 6-space indented. Collect the header line plus
-		// the 6-space rows that follow it, stopping at the next 2-space header line.
+		// its attestation sub-rows are 6-space indented. Collect ONLY the 6-space
+		// rows that follow the header line, stopping at the next 2-space header
+		// line — the header itself is deliberately EXCLUDED from the rows slice.
+		// It must not feed the leg assertions below: the nomen's SCHEME is
+		// literally "huggingface" too (writeNominaTable's "(%s, %s)" prints
+		// n.Scheme.String()), so a substring check against a blockStr that still
+		// included the header line would read "huggingface" off the scheme name
+		// and coincidentally pass even when the huggingface attestation ROW was
+		// dropped — the exact miss a mutation probe caught (hiding the
+		// huggingface leg from writeNominaTable did not redden this subtest).
 		header := "  " + dualName + "  (huggingface,"
 		lines := strings.Split(out, "\n")
-		var block []string
+		var rows []string
 		for i := 0; i < len(lines); i++ {
 			if !strings.HasPrefix(lines[i], header) {
 				continue
 			}
-			block = append(block, lines[i])
 			for j := i + 1; j < len(lines) && strings.HasPrefix(lines[j], "      "); j++ {
-				block = append(block, lines[j])
+				rows = append(rows, lines[j])
 			}
 			break
 		}
-		if len(block) == 0 {
+		if len(rows) == 0 {
 			t.Fatalf("entity table missing the %q (huggingface) nomen block;\noutput:\n%s", dualName, out)
 		}
-		blockStr := strings.Join(block, "\n")
-		if !strings.Contains(blockStr, "curated") {
-			t.Errorf("%s nomen block missing the curated attestation leg;\nblock:\n%s", dualName, blockStr)
+		// rows[0] is the column header ("SOURCE  AUTHORITY  METHOD  SOURCE-URL");
+		// every row after it is one attestation. Assert the DATA ROW COUNT
+		// directly — a dropped leg must shrink this count, not just a substring.
+		dataRows := rows[1:]
+		if len(dataRows) != 2 {
+			t.Fatalf("%s has %d attestation rows, want 2 (curated + huggingface);\nrows:\n%s",
+				dualName, len(dataRows), strings.Join(rows, "\n"))
 		}
-		if !strings.Contains(blockStr, "huggingface") {
-			t.Errorf("%s nomen block missing the huggingface attestation leg;\nblock:\n%s", dualName, blockStr)
+		// Read the SOURCE token — the first whitespace-delimited field — off each
+		// data row rather than substring-matching the whole block: a curated leg's
+		// SOURCE-URL can itself contain "huggingface.co", which would let a
+		// substring check pass even with the huggingface SOURCE row missing.
+		gotSources := map[string]bool{}
+		for _, row := range dataRows {
+			fields := strings.Fields(row)
+			if len(fields) == 0 {
+				t.Fatalf("%s attestation row has no fields;\nrow: %q", dualName, row)
+			}
+			gotSources[fields[0]] = true
+		}
+		if !gotSources["curated"] {
+			t.Errorf("%s missing the curated attestation ROW (SOURCE column);\nrows:\n%s",
+				dualName, strings.Join(rows, "\n"))
+		}
+		if !gotSources["huggingface"] {
+			t.Errorf("%s missing the huggingface attestation ROW (SOURCE column);\nrows:\n%s",
+				dualName, strings.Join(rows, "\n"))
 		}
 		// The curated leg's claimant archive URL must be visible (a human sees WHO asserts).
+		blockStr := strings.Join(dataRows, "\n")
 		if !strings.Contains(blockStr, "web.archive.org") {
 			t.Errorf("%s curated leg missing its claimant SourceURL;\nblock:\n%s", dualName, blockStr)
 		}
