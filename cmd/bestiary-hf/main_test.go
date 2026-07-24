@@ -82,7 +82,7 @@ func hdr(kv ...string) http.Header {
 }
 
 // --------------------------------------------------------------------------
-// HTTP-conditional seam (ETag/304, Link pagination, 429/Retry-After)
+// HTTP-conditional seam (ETag/304, 429/Retry-After)
 // --------------------------------------------------------------------------
 
 // A first 200 that carries an ETag must cause the NEXT request to the same URL to

@@ -21,9 +21,8 @@
 //     (the project hard constraint, GH#12), owned by internal/politebot. Layered
 //     over that seam the tool adds the Hub-specific HTTP conditionals it needs:
 //     an If-None-Match/ETag conditional request (a 304 means "unchanged — keep
-//     the existing entry"), RFC-5988 Link-header pagination (follow rel="next",
-//     never compute a page URL), and 429 backoff honoring Retry-After. A 404
-//     means the candidate is not a real Hub repo and is skipped.
+//     the existing entry"), and 429 backoff honoring Retry-After. A 404 means
+//     the candidate is not a real Hub repo and is skipped.
 //  3. JOIN each verified repo onto a bestiary entity with the ALIAS-FIRST
 //     precedence engine (curated hf_aliases.json OVERRIDES the mechanical
 //     decomposition — the parse/ curated-overrides precedent — otherwise the repo
@@ -103,14 +102,14 @@ const (
 
 // hfDoer wraps an inner Doer to add the header-level HTTP behaviors that
 // politebot.Client.Get does not itself expose (it returns a body only): a
-// conditional If-None-Match request from a per-URL ETag cache, RFC-5988 Link
-// capture (for pagination), and 429/Retry-After backoff+retry. The division of
-// labor is deliberate: internal/politebot owns the ONE politeness policy (the ≥1s
-// cadence + descriptive UA, tested once), and hfDoer owns the Hub-specific
-// conditionals. politebot.Client.Get funnels through this Doer, so the cadence
-// guarantee is preserved while the bot reads the captured status/Link after each
-// Get. It is NOT safe for concurrent use — the tool fetches sequentially (as the
-// ≥1s cadence requires).
+// conditional If-None-Match request from a per-URL ETag cache and
+// 429/Retry-After backoff+retry. The division of labor is deliberate:
+// internal/politebot owns the ONE politeness policy (the ≥1s cadence +
+// descriptive UA, tested once), and hfDoer owns the Hub-specific conditionals
+// (conditional caching and backpressure). politebot.Client.Get funnels through
+// this Doer, so the cadence guarantee is preserved while the bot reads the
+// captured status and ETag after each Get. It is NOT safe for concurrent use —
+// the tool fetches sequentially (as the ≥1s cadence requires).
 type hfDoer struct {
 	inner    politebot.Doer
 	etags    map[string]string   // url -> last-seen ETag (conditional cache)
@@ -132,9 +131,9 @@ func newHFDoer(inner politebot.Doer, sleep func(time.Duration)) *hfDoer {
 // Do sends one request, adding the conditional If-None-Match header (when an ETag
 // is cached for this URL), retrying on 429 (sleeping the server-requested
 // Retry-After, honored as backpressure distinct from the baseline cadence), and
-// capturing the response status, Link header, and any new ETag. It returns the
-// final response (2xx, 304, 404, or a still-429 after the retry budget) to
-// politebot.Client.Get, which reads the body and applies its non-2xx reject.
+// capturing the response status and any new ETag. It returns the final response
+// (2xx, 304, 404, or a still-429 after the retry budget) to politebot.Client.Get,
+// which reads the body and applies its non-2xx reject.
 func (d *hfDoer) Do(req *http.Request) (*http.Response, error) {
 	url := req.URL.String()
 	if et, ok := d.etags[url]; ok && et != "" {
