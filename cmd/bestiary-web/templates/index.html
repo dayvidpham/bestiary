@@ -1,23 +1,67 @@
 {{define "content" -}}
-<h1 class="mono">catalog</h1>
-<p class="muted">
-  {{.EntityCount}} entities · {{.ModelCount}} static model rows{{if .CacheModelCount}} · {{.CacheModelCount}} cached rows{{end}}.
-  Offline, read-only. Full browser &amp; series views land in the next slice.
-</p>
+<div class="browse-head">
+  <h1 class="mono">catalog</h1>
+  <p class="muted">
+    {{.EntityCount}} entities · {{.ModelCount}} static model rows{{if .CacheModelCount}} · {{.CacheModelCount}} cached rows{{end}}.
+    Offline, read-only. <a href="/series">browse by series ›</a>
+  </p>
+</div>
 
-<!-- Datastar wiring demo (slice-10 foundation): a self-contained, same-origin search that
-     round-trips through the /sse/entities SSE endpoint and PatchElements the results below.
-     The full styled browser table is slice-11. The vendored datastar.js client (loaded in the
-     layout) drives this — no CDN JS. -->
-<div data-signals-filter="''">
-  <div class="section-head">find an entity</div>
-  <input type="search" class="mono" aria-label="filter entities by family"
-         placeholder="filter by family, e.g. llama"
-         data-bind-filter
-         data-on-input__debounce.250ms="@get('/sse/entities')"
-         style="width:100%;max-width:32rem;padding:4px 8px;background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:2px;">
-  <div id="entity-results">
-    {{template "entity-results" .Sample}}
+<!-- Browser view-state lives entirely in Datastar signals (search + five facets + sort).
+     Every control patches the results table through the /sse/entities seam; the vendored
+     datastar.js client (loaded in the layout) drives it — no CDN JS. Signals are
+     NON-IDENTITY view-state: they select which rows and in what order, never which entity
+     a link denotes. -->
+<div class="browse"
+     data-signals-search="''" data-signals-family="''" data-signals-creator="''"
+     data-signals-provider="''" data-signals-region="''" data-signals-modality="''"
+     data-signals-sort="''">
+  <div class="browse-layout">
+    <aside class="filter-rail">
+      <div class="section-head">filters</div>
+      <label class="filter">
+        <span class="filter-label">search</span>
+        <input type="search" class="mono" aria-label="search entities by key"
+               placeholder="e.g. llama"
+               data-bind-search
+               data-on-input__debounce.250ms="@get('/sse/entities')">
+      </label>
+      {{template "facet" dict "Label" "family" "Signal" "family" "Options" .Facets.Families}}
+      {{template "facet" dict "Label" "creator" "Signal" "creator" "Options" .Facets.Creators}}
+      {{template "facet" dict "Label" "provider" "Signal" "provider" "Options" .Facets.Providers}}
+      {{template "facet" dict "Label" "region" "Signal" "region" "Options" .Facets.Regions}}
+      {{template "facet" dict "Label" "modality" "Signal" "modality" "Options" .Facets.Modalities}}
+      <label class="filter">
+        <span class="filter-label">sort</span>
+        <select class="mono" aria-label="sort entities"
+                data-bind-sort data-on-change="@get('/sse/entities')">
+          <option value="">family (default)</option>
+          <option value="key">key</option>
+          <option value="creator">creator</option>
+          <option value="providers">most hosted</option>
+          <option value="vram">largest VRAM</option>
+        </select>
+      </label>
+    </aside>
+
+    <section class="browse-results">
+      <div id="entity-results">
+        {{template "entity-rows" .Rows}}
+      </div>
+    </section>
   </div>
 </div>
+{{- end}}
+
+{{/* facet renders one exact-match filter control: a labelled <select> bound to a signal,
+     re-querying the results on change. An empty first option means "all". */}}
+{{define "facet" -}}
+<label class="filter">
+  <span class="filter-label">{{.Label}}</span>
+  <select class="mono" aria-label="filter entities by {{.Label}}"
+          data-bind-{{.Signal}} data-on-change="@get('/sse/entities')">
+    <option value="">all</option>
+    {{range .Options}}<option value="{{.}}">{{.}}</option>{{end}}
+  </select>
+</label>
 {{- end}}

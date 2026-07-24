@@ -230,7 +230,7 @@ func TestServer_Assets_Datastar(t *testing.T) {
 func TestServer_SSE_Entities(t *testing.T) {
 	s := newTestServer(t, syntheticEntities())
 	q := url.Values{}
-	q.Set("datastar", `{"filter":"llama"}`)
+	q.Set("datastar", `{"search":"llama"}`)
 	rec := get(t, s, "/sse/entities?"+q.Encode(), "")
 	if rec.Code != http.StatusOK {
 		t.Fatalf("GET /sse/entities = %d, want 200", rec.Code)
@@ -288,7 +288,7 @@ func TestServer_RealRegistrySmoke(t *testing.T) {
 	}
 	s := newTestServer(t, entities)
 	n := 0
-	for _, l := range s.links {
+	for _, l := range s.rows {
 		rec := get(t, s, l.Path, "text/html")
 		if rec.Code != http.StatusOK {
 			t.Errorf("GET %q (key %q) = %d, want 200", l.Path, l.Key, rec.Code)
