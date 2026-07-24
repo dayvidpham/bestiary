@@ -22,7 +22,8 @@ import (
 const entityRoutePrefix = "/entity/"
 
 // sampleLimit bounds how many entity links the index page and each SSE result set render.
-// The full, paginated browser is slice-11; this foundation shows a representative slice.
+// The full, paginated entity browser builds on this foundation; this handler shows a
+// representative subset.
 const sampleLimit = 50
 
 // Server is the offline bestiary web server. It reads ONLY the in-process static registry
@@ -204,8 +205,8 @@ func (s *Server) handleEntity(w http.ResponseWriter, r *http.Request) {
 // handleEntitiesSSE is the datastar wiring seam: it reads the `filter` signal, filters the
 // entity links by a family/key substring, and PatchElements the results fragment into
 // #entity-results. This is the single end-to-end proof that the datastar-go SDK
-// (ReadSignals → NewSSE → PatchElements) and the vendored client agree; slice-11 grows the
-// full browser on top of it. No network, no port assumptions.
+// (ReadSignals → NewSSE → PatchElements) and the vendored client agree; this same SSE seam
+// grows into the full browser/detail/series views. No network, no port assumptions.
 func (s *Server) handleEntitiesSSE(w http.ResponseWriter, r *http.Request) {
 	var sig struct {
 		Filter string `json:"filter"`
