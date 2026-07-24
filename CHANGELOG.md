@@ -129,6 +129,18 @@ for its **Go module tags** (`vX.Y.Z`).
   `Entity.Nomina()` / `NomenLookup()`. This is the durable, **entity-level** external
   identifier: the Hub name holds regardless of which provider is serving the entity.
   Minted census at release: 3,797 (958 canonical, 2,834 provider-ID, 4 huggingface, 1 alias).
+- **`cmd/bestiary-web` — offline web catalog (foundation)**: a read-only HTTP server over
+  the in-process static registry (`Entities()`/`StaticModels()`) plus an optional read-only
+  SQLite cache; it makes NO network request at serve time. Entity pages are addressed by the
+  RQ1 multi-segment IRI grammar (`/entity/<key>`, `EntityRef.IRI(webRoot)` == route path) with
+  a content-negotiation seam (`Accept: text/html` → page, `application/json` → the entity's
+  public JSON shape) and query params treated as non-identity view-state (stripped for
+  identity). The base `html/template` layout ships the approved "Phosphor Terminal" CSS in both
+  color modes (`prefers-color-scheme` + an explicit `data-theme` toggle). The Datastar client
+  is VENDORED via `go:embed` and served same-origin (v1.0.2, no CDN for JS); the two webfonts
+  load from a CDN with a full offline fallback stack (fonts-only relaxation, RQ1). Server-side
+  interactivity uses the `github.com/starfederation/datastar-go` SDK (SSE `PatchElements`). The
+  richer browser/detail/series views land in the next slice.
 
 ### Changed
 - **Designation layer activated**: `ModelRef.Designations()` now rates the
@@ -170,6 +182,19 @@ for its **Go module tags** (`vX.Y.Z`).
   `us.meta.llama4-maverick-…`) and the aggregator provider-prefixed forms
   (`cerebras-…`, `groq-…`) — carry an exact-ID variant pin so all 23 rows stay in one
   artifact rather than fragmenting across two keys.
+
+- **IRI output: `/` is now LITERAL** (`EntityRef.IRI` / `ModelRef.IRI`, BREAKING for the
+  minted string). `escapeIRISegment` keeps the key grammar's `/` (family/variant) as a real
+  path separator and percent-encodes only the remaining structural delimiters (`@`→`%40`,
+  `#`→`%23`, `{`→`%7B`, `}`→`%7D`, and the ref-level `[`→`%5B`, `]`→`%5D`). An entity IRI is
+  therefore a multi-segment, walkable path — `…/entity/llama/scout%404%2317b-16e%7Binstruct%7D`
+  rather than the v0.2.7 single-segment `…/entity/llama%2Fscout%404%2317b-16e%7Binstruct%7D`.
+  This is the RQ1-ratified grammar the new `cmd/bestiary-web` `/entity/<key>` routes
+  dereference, so `EntityRef.IRI(webRoot)` equals the route path for the same entity (one
+  grammar, pinned by a route-equality test). The round trip is unchanged: a whole-string
+  `url.PathUnescape` still recovers the canonical key byte-identically (a literal `/` passes
+  through; every `%40`/`%23`/`%7B`/`%7D`/`%5B`/`%5D` decodes back), so every IRI round-trip
+  fence stays green — only the two golden-string assertions were re-pinned for the literal `/`.
 
 ### Removed
 - **`Model__*` constants + `ModelIDs()`** (BREAKING). Migration:

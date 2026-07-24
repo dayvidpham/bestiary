@@ -67,19 +67,28 @@ func TestEntityRef_IRI_RoundTrip(t *testing.T) {
 }
 
 // TestEntityRef_IRI_EncodesGrammarDelimiters pins the ESCAPING CONTRACT itself: every
-// character that is structurally significant in an IRI — '/', '@', '#', '{', '}' — must
-// be percent-encoded, so the whole key occupies exactly ONE path segment and can never be
-// read as a path boundary, a userinfo separator or (worst) a fragment start.
+// structurally-significant IRI character EXCEPT '/' — '@', '#', '{', '}' — must be
+// percent-encoded so it can never be read as a userinfo separator or (worst) a fragment
+// start. '/' is DELIBERATELY excluded from this set: the RQ1 amendment (v0.2.8) keeps it
+// LITERAL so the key renders as a multi-segment path the /entity/<key> route walks (see
+// TestEntityRef_IRI_MatchesRoute). Encoding '/' back to "%2F" — the v0.2.7 behavior — is
+// exactly the regression this test now guards against.
 func TestEntityRef_IRI_EncodesGrammarDelimiters(t *testing.T) {
 	ref := bestiary.EntityRef{Family: "llama", Variant: "scout", Version: "4", ParamSize: "17b-16e", Modifier: []string{"instruct"}}
 	iri := ref.IRI(iriBase)
 	tail := strings.TrimPrefix(iri, iriBase)
-	for _, bad := range []string{"/", "@", "#", "{", "}"} {
+	// '/' is intentionally NOT in this bad-list post-RQ1 — it stays literal.
+	for _, bad := range []string{"@", "#", "{", "}"} {
 		if strings.Contains(tail, bad) {
 			t.Errorf("minted IRI tail %q still contains the raw delimiter %q", tail, bad)
 		}
 	}
-	want := iriBase + "llama%2Fscout%404%2317b-16e%7Binstruct%7D"
+	// Re-pinned for RQ1 (v0.2.8): the single '/' between family and variant is now
+	// LITERAL, so the golden changes from the v0.2.7 "llama%2Fscout%40…" to
+	// "llama/scout%40…". Derivation: EntityRef.String() = "llama/scout@4#17b-16e{instruct}";
+	// escapeIRISegment splits on '/' → ["llama", "scout@4#17b-16e{instruct}"], PathEscape+
+	// @→%40 each ("llama", "scout%404%2317b-16e%7Binstruct%7D"), rejoin with literal '/'.
+	want := iriBase + "llama/scout%404%2317b-16e%7Binstruct%7D"
 	if iri != want {
 		t.Errorf("IRI = %q, want %q", iri, want)
 	}
@@ -114,7 +123,13 @@ func TestIRI_SpacePinsEscaperChoice(t *testing.T) {
 	if strings.Contains(tail, "+") {
 		t.Errorf("minted IRI tail %q encodes the space as '+' (a query-string convention that is a literal plus sign in a path segment)", tail)
 	}
-	if want := "synthetic%2Fspace%20case"; tail != want {
+	// Re-pinned for RQ1 (v0.2.8): the family/variant '/' is now LITERAL, so the tail
+	// changes from the v0.2.7 "synthetic%2Fspace%20case" to "synthetic/space%20case".
+	// The space still encodes as "%20" (PathEscape, the point of this fence) — only the
+	// separator '/' changed. Derivation: EntityRef.String() = "synthetic/space case";
+	// split on '/' → ["synthetic", "space case"], PathEscape each → "synthetic",
+	// "space%20case", rejoin with literal '/'.
+	if want := "synthetic/space%20case"; tail != want {
 		t.Errorf("minted IRI tail = %q, want %q", tail, want)
 	}
 

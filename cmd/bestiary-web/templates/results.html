@@ -1,0 +1,12 @@
+{{define "entity-results" -}}
+<ul id="entity-results-list" style="list-style:none;padding:0;margin:var(--space-2) 0;">
+  {{range .}}
+  <li style="padding:2px 0;">
+    <a href="{{.Path}}" class="mono">{{.Key}}</a>
+    {{if .Creator}}<span class="muted"> · {{.Creator}}</span>{{end}}
+  </li>
+  {{else}}
+  <li class="muted">no entities match.</li>
+  {{end}}
+</ul>
+{{- end}}

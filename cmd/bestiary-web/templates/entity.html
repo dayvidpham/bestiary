@@ -1,0 +1,67 @@
+{{define "content" -}}
+{{with .Entity -}}
+<p><a href="/" class="mono">&#8249; back</a></p>
+<h1 class="mono">{{.Ref.String}}</h1>
+<p class="muted">
+  {{with .Creator}}{{.}}{{else}}<span>creator unattributed</span>{{end}}
+  {{if .Sources}}·
+    {{range $i, $s := .Sources}}{{if $i}}, {{end}}<span class="badge live">{{$s}}</span>{{end}}
+  {{end}}
+</p>
+
+<div class="section-head">identity</div>
+<table>
+  <tr><th>family</th><td class="mono">{{.Ref.Family}}</td></tr>
+  {{if .Ref.Variant}}<tr><th>variant</th><td class="mono">{{.Ref.Variant}}</td></tr>{{end}}
+  {{if .Ref.Version}}<tr><th>version</th><td class="mono">{{.Ref.Version}}</td></tr>{{end}}
+  {{if .Ref.ParamSize}}<tr><th>param size</th><td class="mono">{{.Ref.ParamSize}}</td></tr>{{end}}
+  {{if .Ref.Modifier}}<tr><th>modifiers</th><td class="mono">{{range $i, $m := .Ref.Modifier}}{{if $i}}, {{end}}{{$m}}{{end}}</td></tr>{{end}}
+</table>
+
+{{if .Providers}}
+<div class="section-head">providers</div>
+<p class="mono">{{range $i, $p := .Providers}}{{if $i}} · {{end}}{{$p}}{{end}}</p>
+{{end}}
+
+{{if .Regions}}
+<div class="section-head">regions</div>
+<p class="mono">{{range $i, $r := .Regions}}{{if $i}} · {{end}}{{$r}}{{end}}</p>
+{{end}}
+
+{{if .Instances}}
+<div class="section-head">instances</div>
+<table>
+  <thead><tr><th>id</th><th>provider</th><th>host</th><th class="num">context</th></tr></thead>
+  <tbody>
+  {{range .Instances}}
+    <tr>
+      <td class="mono">{{.ID}}</td>
+      <td>{{.Provider}}</td>
+      <td>{{.Host}}</td>
+      <td class="num">{{if .ContextWindow}}{{.ContextWindow}}{{else}}—{{end}}</td>
+    </tr>
+  {{end}}
+  </tbody>
+</table>
+{{end}}
+
+{{if .Lineage}}
+<div class="section-head">lineage</div>
+<ul class="mono">
+  {{range .Lineage}}<li>&#8592; {{.Parent.String}} <span class="muted">({{.Kind}})</span></li>{{end}}
+</ul>
+{{end}}
+{{- end}}
+
+{{if .Nomina}}
+<div class="section-head">nomina &amp; attestations</div>
+<table>
+  <thead><tr><th>value</th><th>scheme</th><th>status</th></tr></thead>
+  <tbody>
+  {{range .Nomina}}
+    <tr><td class="mono">{{.Value}}</td><td>{{.Scheme}}</td><td class="muted">{{.Status}}</td></tr>
+  {{end}}
+  </tbody>
+</table>
+{{end}}
+{{- end}}
