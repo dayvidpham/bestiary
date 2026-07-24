@@ -570,8 +570,15 @@ func TestFormatAmbiguous_GroupingAndTruncation(t *testing.T) {
 	}
 }
 
-// TestFormatAmbiguous_RemedHintUpdated verifies that the remediation hint in
-// FormatAmbiguous now references --format=raw instead of the deprecated --scheme=raw.
+// TestFormatAmbiguous_RemedHintUpdated verifies that FormatAmbiguous never
+// references the deprecated --scheme=raw flag.
+//
+// The --format=raw exact-ID tip itself moved out of FormatAmbiguous entirely
+// (bestiary-7nbuw): it now lives solely in the CLI's wrapped ErrAmbiguous
+// message (cmd/bestiary/main.go runShow), so it is no longer asserted here —
+// see TestShow_Ambiguous for that assertion, and
+// TestFormatAmbiguous_V4_FooterInstructions for the footer's remaining
+// "bestiary list" instruction.
 func TestFormatAmbiguous_RemedHintUpdated(t *testing.T) {
 	candidates := makeAmbiguousRefs(3, false)
 	e := &bestiary.ErrAmbiguous{
@@ -584,12 +591,9 @@ func TestFormatAmbiguous_RemedHintUpdated(t *testing.T) {
 	bestiary.FormatAmbiguous(&buf, e)
 	output := buf.String()
 
-	// The hint should reference --format=raw, not the deprecated --scheme=raw.
+	// The hint should never reference the deprecated --scheme=raw.
 	if strings.Contains(output, "--scheme=raw") {
 		t.Errorf("FormatAmbiguous: output should not reference deprecated --scheme=raw; got:\n%s", output)
-	}
-	if !strings.Contains(output, "--format") && !strings.Contains(output, "raw") {
-		t.Errorf("FormatAmbiguous: output should reference --format=raw or 'raw'; got:\n%s", output)
 	}
 }
 
@@ -1300,9 +1304,12 @@ func TestFormatAmbiguous_V4_RehostSection_OnePerLine(t *testing.T) {
 }
 
 // TestFormatAmbiguous_V4_FooterInstructions verifies that the footer contains
-// the two real instruction strings: "bestiary list" and "--format=raw".
+// the "bestiary list" instruction.
 //
-// This test FAILS before the new layout is implemented.
+// The footer's other former instruction, --format=raw, was removed
+// (bestiary-7nbuw): it duplicated the CLI's wrapped ErrAmbiguous narrowing-list
+// tip verbatim, so it now lives in exactly one place — the CLI message tested
+// by TestShow_Ambiguous — rather than repeated here too.
 func TestFormatAmbiguous_V4_FooterInstructions(t *testing.T) {
 	e := makeAmbiguousWithRehosts(2, []bestiary.Provider{"deepinfra"})
 
@@ -1313,8 +1320,8 @@ func TestFormatAmbiguous_V4_FooterInstructions(t *testing.T) {
 	if !strings.Contains(output, "bestiary list") {
 		t.Errorf("FormatAmbiguous footer: missing 'bestiary list' instruction;\nGot:\n%s", output)
 	}
-	if !strings.Contains(output, "--format=raw") {
-		t.Errorf("FormatAmbiguous footer: missing '--format=raw' instruction;\nGot:\n%s", output)
+	if strings.Contains(output, "--format=raw") {
+		t.Errorf("FormatAmbiguous footer: should no longer duplicate '--format=raw' (moved to the CLI's wrapped message); got:\n%s", output)
 	}
 }
 

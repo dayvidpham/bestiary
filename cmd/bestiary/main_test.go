@@ -242,9 +242,15 @@ func TestShow_Ambiguous(t *testing.T) {
 	if !strings.Contains(errOut, "* = canonical provider") {
 		t.Errorf("stderr does not contain legend '* = canonical provider'; got %q", errOut)
 	}
-	// stderr must contain a remediation hint pointing toward --format=raw.
-	if !strings.Contains(errOut, "--format=raw") {
-		t.Errorf("stderr does not contain remediation hint '--format=raw'; got %q", errOut)
+	// The --format=raw remediation hint lives in exactly one place now
+	// (bestiary-7nbuw): the wrapped ErrAmbiguous message (runErr), not the
+	// FormatAmbiguous footer written to errOut. Assert it on runErr, and assert
+	// its absence from errOut so the two blocks stay non-duplicative.
+	if !strings.Contains(runErr.Error(), "--format=raw") {
+		t.Errorf("returned error does not contain remediation hint '--format=raw'; got %q", runErr.Error())
+	}
+	if strings.Contains(errOut, "--format=raw") {
+		t.Errorf("stderr (FormatAmbiguous output) should no longer duplicate '--format=raw'; got %q", errOut)
 	}
 	// stdout must be empty — the candidate table goes to stderr only.
 	if out != "" {

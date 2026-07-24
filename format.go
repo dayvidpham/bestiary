@@ -373,7 +373,12 @@ const ambiguousMaxRehosts = 5
 //	  ...
 //
 //	To see all providers/variants: bestiary list   (or: bestiary list --provider <slug>)
-//	To resolve an exact model ID:  bestiary show <raw-id> --format=raw
+//
+// The exact-ID escape hatch (--format=raw) is intentionally NOT repeated here:
+// the CLI's wrapped ErrAmbiguous message (runShow, cmd/bestiary/main.go) already
+// carries that instruction as part of its narrowing list, immediately below this
+// output on stderr — one tip, one place, so the two blocks complement rather than
+// restate each other.
 //
 // Section 1 (Canonical) shows up to 5 representatives from Candidates where
 // the Provider is the canonical/originating provider for the family. Each row
@@ -515,7 +520,8 @@ func FormatAmbiguous(w io.Writer, e *ErrAmbiguous) {
 		}
 	}
 
-	// Footer: verified real commands only.
+	// Footer: verified real commands only. The --format=raw exact-ID tip lives
+	// solely in the CLI's wrapped ErrAmbiguous message (runShow), not here — see
+	// the FormatAmbiguous doc comment for why.
 	fmt.Fprintf(w, "\nTo see all providers/variants: bestiary list   (or: bestiary list --provider <slug>)\n")
-	fmt.Fprintf(w, "To resolve an exact model ID:  bestiary show <raw-id> --format=raw\n")
 }
