@@ -263,14 +263,27 @@ func formatModelYAML(w io.Writer, model ModelInfo) error {
 // --- Table ---
 
 // tableHeader is the format string for the header and separator rows (all %s args).
-const tableHeader = "%-40s  %-12s  %-16s  %9s  %9s  %6s  %5s  %12s\n"
-const tableRow = "%-40s  %-12s  %-16s  %9d  %9d  %6s  %5s  %12s\n"
+// The Creator column (the lab/originator that TRAINED the weights, SPDX "originator")
+// sits between Family and Context: it is a per-model identity fact distinct from the
+// Provider (the SPDX supplier/distributor) already shown to its left.
+const tableHeader = "%-40s  %-12s  %-16s  %-12s  %9s  %9s  %6s  %5s  %12s\n"
+const tableRow = "%-40s  %-12s  %-16s  %-12s  %9d  %9d  %6s  %5s  %12s\n"
 
 func costStr(p *float64) string {
 	if p == nil {
 		return "—"
 	}
 	return fmt.Sprintf("$%.2f", *p)
+}
+
+// creatorCol renders a Creator for a table cell, mapping CreatorNone (the empty
+// zero value) to a dash so a family with no curated creator mapping reads as an
+// honest blank — never an invented "unknown" label.
+func creatorCol(c Creator) string {
+	if c == CreatorNone {
+		return "-"
+	}
+	return string(c)
 }
 
 func boolCol(b bool) string {
@@ -282,12 +295,13 @@ func boolCol(b bool) string {
 
 func printTableHeader(w io.Writer) {
 	fmt.Fprintf(w, tableHeader,
-		"ID", "Provider", "Family", "Context", "MaxOutput", "Reason", "Tools", "CostIn/MTok",
+		"ID", "Provider", "Family", "Creator", "Context", "MaxOutput", "Reason", "Tools", "CostIn/MTok",
 	)
 	fmt.Fprintf(w, tableHeader,
 		strings.Repeat("-", 40),
 		strings.Repeat("-", 12),
 		strings.Repeat("-", 16),
+		strings.Repeat("-", 12),
 		strings.Repeat("-", 9),
 		strings.Repeat("-", 9),
 		strings.Repeat("-", 6),
@@ -301,6 +315,7 @@ func printTableModelRow(w io.Writer, m ModelInfo) {
 		string(m.ID),
 		string(m.Provider),
 		m.Family,
+		creatorCol(m.Creator),
 		m.ContextWindow,
 		m.MaxOutput,
 		boolCol(m.Reasoning),
