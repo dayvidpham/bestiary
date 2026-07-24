@@ -542,6 +542,16 @@ func run(args []string) error {
 		return fmt.Errorf("validate curated creator table: %w", err)
 	}
 
+	// Fail loudly on a bad harvested HuggingFace seed BEFORE generating anything: an
+	// empty/non-org-repo value, a source_url that is not the live Hub URL for the
+	// value (the case-preservation cross-check), an unknown resolves_to family, or a
+	// duplicate in huggingface_nomina.json is a bot/curation bug that must abort
+	// codegen rather than baking a case-mangled or orphan HF naming. The runtime
+	// loader degrades gracefully to "no harvested nomina"; this fences the seed.
+	if err := bestiary.ValidateHFNomina(); err != nil {
+		return fmt.Errorf("validate harvested huggingface seed: %w", err)
+	}
+
 	rawJSON, models, metadata, providerMeta, parseFailures, err := fetchModelsWithRaw(ctx, flags.noFetch)
 	if err != nil {
 		return err

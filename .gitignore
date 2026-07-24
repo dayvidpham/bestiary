@@ -12,6 +12,7 @@
 /bestiary
 /bestiary-gen
 /bestiary-ollama
+/bestiary-hf
 .bestiary-gen-cache/
 *.exe
 *.exe~

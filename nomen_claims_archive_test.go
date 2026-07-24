@@ -82,30 +82,49 @@ func TestNomenClaims_SourceURLsAreArchiveSnapshots(t *testing.T) {
 }
 
 // TestNomina_ClaimAttributionIsArchived is the production-path twin: it walks the
-// nomina the library actually mints and hands to callers, and holds every claim
-// attribution to the same policy. The file test catches a bad edit to the curation;
-// this catches a claim that reaches a caller un-snapshotted by any route.
+// nomina the library actually mints and hands to callers, and holds every CURATED
+// claim attribution to the archive policy. The file test catches a bad edit to the
+// curation; this catches a curated claim that reaches a caller un-snapshotted by any
+// route.
+//
+// v0.2.8: the archive fence binds the CURATED layer ONLY (Method=Curated). A
+// HARVESTED attestation (Method=Harvested, Source=huggingface — the cmd/bestiary-hf
+// seed) legitimately carries the LIVE repo URL: it cites the live observation the bot
+// made, not durable third-party evidence a human recorded, so subjecting it to the
+// archive fence would be a category error. Harvested attestations are asserted (live
+// URL, correct shape) in nomen_huggingface_test.go / huggingface_nomina_test.go; here
+// they are correctly EXEMPT from the archive requirement.
 func TestNomina_ClaimAttributionIsArchived(t *testing.T) {
-	attributed := 0
+	curatedAttributed, harvestedAttributed := 0, 0
 	for _, n := range bestiary.Nomina() {
-		// v0.2.8: claim attribution is per-attestation. Walk every attestation and
-		// hold each claimant SourceURL to the archive policy.
+		// Claim attribution is per-attestation. Walk every attestation.
 		for _, at := range n.Attestations {
 			if at.SourceURL == "" {
 				// Bestiary-minted nomina (canonical keys, provider-ID spellings) assert
 				// themselves and carry no claimant.
 				continue
 			}
-			attributed++
+			if at.Method == bestiary.IngestMethodHarvested {
+				// Harvested layer: live URL by design, exempt from the archive fence but
+				// still held to its own shape (live Hub URL) in the HF fences.
+				harvestedAttributed++
+				if strings.HasPrefix(at.SourceURL, archiveSnapshotPrefix) {
+					t.Errorf("harvested nomen %q (scheme %v) carries an ARCHIVE SourceURL %q; a harvested observation "+
+						"must cite the LIVE URL, not an archive snapshot (that fence binds the curated layer)", n.Value, n.Scheme, at.SourceURL)
+				}
+				continue
+			}
+			curatedAttributed++
 			if !archiveSnapshotRe.MatchString(at.SourceURL) {
-				t.Errorf("nomen %q (scheme %v) carries claimant SourceURL %q, want an archive.org snapshot; "+
+				t.Errorf("nomen %q (scheme %v) carries curated claimant SourceURL %q, want an archive.org snapshot; "+
 					"every curated claim must cite durable evidence", n.Value, n.Scheme, at.SourceURL)
 			}
 		}
 	}
-	if attributed == 0 {
-		t.Fatal("no minted nomen carries a claimant SourceURL; the curated claims did not load and this fence " +
+	if curatedAttributed == 0 {
+		t.Fatal("no minted nomen carries a CURATED claimant SourceURL; the curated claims did not load and this fence " +
 			"would pass vacuously")
 	}
-	t.Logf("archive policy verified on %d claim-attributed attestations", attributed)
+	t.Logf("archive policy verified on %d curated claim attestations; %d harvested attestations exempt (live URL by design)",
+		curatedAttributed, harvestedAttributed)
 }

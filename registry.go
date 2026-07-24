@@ -352,6 +352,16 @@ func loadEntityIndex() {
 	}
 	rel := buildEntitySourceRelation(order, firstSeen)
 
+	// Fold in HuggingFace attestation: an entity a harvested HF nomen resolves to
+	// DUAL-attests {models.dev, huggingface} (the ollama-enrichment precedent — see
+	// datasource.go's attestation rule). This extends the relation IN LOCKSTEP with
+	// the derived Entity.Sources projection read below (rel.byEntity[key]), so the
+	// projection stays a faithful view of the relation. Only keys that are REAL
+	// entities in this index are attested; a harvested nomen whose target is absent
+	// from the catalog mints its nomen (keep-never-drop) but creates no orphan
+	// EntitySource row.
+	attestHarvestedHuggingFace(rel, order)
+
 	for _, key := range order {
 		a := aggs[key]
 
@@ -470,6 +480,53 @@ func attachBakedMetadataToIndex() {
 	if relExtended {
 		sort.Slice(entitySourceRel.rows, func(i, j int) bool {
 			return lessEntitySource(entitySourceRel.rows[i], entitySourceRel.rows[j])
+		})
+	}
+}
+
+// attestHarvestedHuggingFace extends the entity↔source relation with a
+// DataSourceHuggingFace row for every REAL entity (a key present in order) that a
+// harvested HF nomen resolves to. It mutates rel in place: it adds huggingface to
+// the per-entity Sources projection (re-sorting so the set stays ascending +
+// de-duplicated) and appends the join row, then re-imposes the canonical
+// (EntityKey, SourceID) row order so the relation stays byte-stable. It is the
+// registry twin of the ollama enrichment (which arrives via a row's Source field);
+// HF attestation arrives from the harvested seed instead of a baked ModelInfo
+// column, so it is applied here as a post-build fold. Keys not in the index are
+// skipped so no orphan EntitySource row (whose entity_key resolves to nothing) is
+// ever created.
+func attestHarvestedHuggingFace(rel *entitySourceRelation, order []string) {
+	hf := loadHFNominaSafe()
+	if len(hf.keys) == 0 {
+		return
+	}
+	inIndex := make(map[string]struct{}, len(order))
+	for _, key := range order {
+		inIndex[key] = struct{}{}
+	}
+	extended := false
+	for key := range hf.keys {
+		if _, ok := inIndex[key]; !ok {
+			continue
+		}
+		existing := rel.byEntity[key]
+		already := false
+		for _, s := range existing {
+			if s == DataSourceHuggingFace {
+				already = true
+				break
+			}
+		}
+		if already {
+			continue
+		}
+		rel.byEntity[key] = sortedSources(append(append([]DataSourceID(nil), existing...), DataSourceHuggingFace))
+		rel.rows = append(rel.rows, EntitySource{EntityKey: key, SourceID: DataSourceHuggingFace})
+		extended = true
+	}
+	if extended {
+		sort.Slice(rel.rows, func(i, j int) bool {
+			return lessEntitySource(rel.rows[i], rel.rows[j])
 		})
 	}
 }
