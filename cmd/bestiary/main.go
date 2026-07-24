@@ -2477,18 +2477,19 @@ const nominaTableLimit = 5
 // distinct sources coalesces to ONE Nomen carrying BOTH attestations, so this view
 // is where a dually-attested name (e.g. a curated claim + an HF-bot harvest of the
 // same huggingface-scheme repo) shows its two legs (Source/Authority/Method) at
-// once — the CLI-observable form of MUST-PASS case 3. Nothing prints when the
-// entity has no nomina. Nomina and each nomen's Attestations arrive
-// deterministically sorted from the projection; this formatter does not re-sort
+// once — the CLI-observable form of the dual-attestation visibility guarantee
+// (a name attested by multiple sources shows every attestation). Nothing
+// prints when the entity has no nomina. Nomina and each nomen's Attestations
+// arrive deterministically sorted from the projection; this formatter does not re-sort
 // that incoming order, EXCEPT for the display-only truncation reorder below.
 func writeNominaTable(w io.Writer, nomina []bestiary.Nomen) {
 	if len(nomina) == 0 {
 		return
 	}
 	fmt.Fprintf(w, "Nomina (%d):\n", len(nomina))
-	// Multiply-attested nomina (MUST-PASS case 3's dual curated+huggingface leg)
-	// must survive the cap below, so they sort FIRST via a stable sort on
-	// attestation count before truncating — otherwise a name that merely sorts
+	// Multiply-attested nomina (the dual-attestation visibility guarantee's dual
+	// curated+huggingface leg) must survive the cap below, so they sort FIRST
+	// via a stable sort on attestation count before truncating — otherwise a name that merely sorts
 	// earlier by Value (single attestation) could push a dually-attested name
 	// past nominaTableLimit and hide a leg. Ties preserve the incoming
 	// (Value, Scheme, entity key) order from the projection (sortNomina/

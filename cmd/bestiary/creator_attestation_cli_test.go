@@ -14,7 +14,7 @@ type creatorOut struct {
 	Creator string
 }
 
-// TestRun_Creator_Surfaced is the CLI-observable proof of MUST-PASS case 4
+// TestRun_Creator_Surfaced is the CLI-observable proof of creator queryability
 // (Entity.Creator / ModelInfo.Creator queryable): a mapped family renders its
 // curated Creator (llama→meta, claude→anthropic) while an unmapped family renders an
 // honest blank ("-" in the table, "" in JSON) — never an invented "unknown" label,
@@ -116,9 +116,10 @@ func TestRun_Creator_Surfaced(t *testing.T) {
 	}
 }
 
-// TestRun_DualAttestation_BothLegsVisible is the CLI-observable proof of MUST-PASS
-// case 3: a single (Value, Scheme, ResolvesTo) name attested by TWO distinct sources
-// coalesces to ONE Nomen carrying BOTH attestations, and the CLI shows both legs.
+// TestRun_DualAttestation_BothLegsVisible is the CLI-observable proof of the
+// dual-attestation visibility guarantee: a single (Value, Scheme, ResolvesTo)
+// name attested by TWO distinct sources coalesces to ONE Nomen carrying BOTH
+// attestations, and the CLI shows both legs.
 // The real-data instance is the huggingface-scheme name meta-llama/Llama-3.3-70B-Instruct
 // on the llama@3.3#70b{instruct} entity: a curated nomen_claims.json claim AND the
 // harvested huggingface_nomina.json seed both assert it, so it MUST surface with a
