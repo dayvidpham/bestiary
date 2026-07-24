@@ -127,6 +127,18 @@ func NewServer(entities []bestiary.Entity, cache *bestiary.Store) (*Server, erro
 
 // routes registers the mux. Go 1.22 method+path patterns; the trailing-slash "/entity/"
 // pattern is a subtree match, so a multi-segment key (llama/scout%404…) lands here.
+//
+// DELIBERATE SPELLING DEVIATION from docs/design/v0.2.8-web-direction.md §17.4: the
+// architect's illustrative text there uses "/entities" (the SSE filter endpoint) and
+// "/static/*" (the vendored-asset mount). This implementation ships "/sse/entities" and
+// "/assets/*" instead — "/sse/" names the transport (this is specifically the datastar
+// SSE wiring seam, not a general entities collection endpoint one might expect to
+// support other verbs/methods), and "/assets/" is the more conventional name for a
+// same-origin static-asset mount. §17.4's spelling was architect-illustrative, not a
+// user ruling, so the supervisor ruled: KEEP the shipped names, document the divergence
+// here. The follow-on browser slice builds on these shipped names — do not "fix" this to
+// match §17.4 without a fresh ruling, since that would be the actual breaking change at
+// this point.
 func (s *Server) routes() {
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /{$}", s.handleIndex)

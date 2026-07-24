@@ -76,6 +76,14 @@ func TestServer_Index(t *testing.T) {
 // with the web root as base is EXACTLY the route path that dereferences it, and GETting
 // that path resolves the same entity. If escapeIRISegment and the route ever diverged
 // (e.g. '/' re-encoded to %2F on one side only) this reddens.
+//
+// Checks (a)-(c) alone do NOT catch a whole-string-PathEscape regression: net/http
+// decodes %2F -> '/' in r.URL.Path before mux matching, so mint+route stay internally
+// consistent regardless of which separator escapeIRISegment chooses (bestiary-h8bz6,
+// oracle-verified: reverting the escaper to encode '/' did not redden this test before
+// the (d)/(e) checks were added). (d) and (e) pin the RENDERED-STRING form instead of
+// only the round-tripped behavior: the literal bytes minted and the literal bytes an
+// href carries must contain an unencoded '/' and never "%2F".
 func TestServer_IRI_MatchesRoute(t *testing.T) {
 	entities := syntheticEntities()
 	s := newTestServer(t, entities)
@@ -104,6 +112,33 @@ func TestServer_IRI_MatchesRoute(t *testing.T) {
 		if gotKey := strings.TrimPrefix(u.Path, entityRoutePrefix); gotKey != key {
 			t.Errorf("route tail for %q decoded to %q", key, gotKey)
 		}
+
+		// (d) for a multi-segment entity, the RENDERED mint string itself carries a
+		// literal '/' between family and variant and NEVER "%2F" — this is the pin
+		// that a whole-string url.PathEscape regression would fail (%2F present,
+		// literal '/' absent), independent of net/http's %2F-decoding behavior.
+		if e.Ref.Variant != "" {
+			wantSeg := string(e.Ref.Family) + "/" + e.Ref.Variant
+			if !strings.Contains(iri, wantSeg) {
+				t.Errorf("IRI %q does not contain literal-'/' segment %q", iri, wantSeg)
+			}
+			if strings.Contains(iri, "%2F") || strings.Contains(iri, "%2f") {
+				t.Errorf("IRI %q was re-encoded to %%2F; want a literal '/'", iri)
+			}
+		}
+	}
+
+	// (e) the entity link href emitted in the index page HTML carries the same
+	// literal-'/' form (not "%2F") for a multi-segment entity — pinning the rendered
+	// document, not just the Go-level IRI() return value.
+	multi := entities[1] // llama/scout@4#17b-16e{instruct}
+	wantHref := `href="` + multi.Ref.IRI(entityRoutePrefix) + `"`
+	indexBody := get(t, s, "/", "text/html").Body.String()
+	if !strings.Contains(indexBody, wantHref) {
+		t.Errorf("index HTML missing literal-'/' entity link href %q", wantHref)
+	}
+	if strings.Contains(indexBody, "llama%2Fscout") || strings.Contains(indexBody, "llama%2fscout") {
+		t.Errorf("index HTML entity link was %%2F-encoded; want literal '/'")
 	}
 }
 
