@@ -115,6 +115,37 @@ func TestUpsertQueryModels_RoundTrip(t *testing.T) {
 	}
 }
 
+// TestUpsertQueryModels_SourceDefaultsToModelsDev is the store-read-path analogue of
+// the registry-side always-populated Source guarantee. The models cache table has no
+// source column: it is written exclusively by `sync`, which reads the models.dev
+// catalog, so every persisted row originates from models.dev and scanModelInfo fills
+// Source=DataSourceModelsDev on read. A row inserted with a deliberately empty Source
+// (DataSourceNone) must read back as DataSourceModelsDev — never the empty sentinel
+// the user's F3 complaint was about ("Source": ""). Removing scanModelInfo's fill-in
+// reddens this, matching the registry-side positive control on the static path.
+func TestUpsertQueryModels_SourceDefaultsToModelsDev(t *testing.T) {
+	ctx := context.Background()
+	s := openMemStore(t)
+
+	in := bestiary.ModelInfo{
+		ID:       "claude-opus-4-1-20250805",
+		Provider: bestiary.ProviderAnthropic,
+		Source:   bestiary.DataSourceNone, // empty on write — must read back as models.dev
+	}
+	if err := s.UpsertModels(ctx, []bestiary.ModelInfo{in}); err != nil {
+		t.Fatalf("UpsertModels: %v", err)
+	}
+
+	got, err := s.QueryModel(ctx, in.ID)
+	if err != nil {
+		t.Fatalf("QueryModel: %v", err)
+	}
+	if got.Source != bestiary.DataSourceModelsDev {
+		t.Errorf("round-trip Source = %q, want %q (store read path must default a cached row to models.dev, never leave it empty)",
+			got.Source, bestiary.DataSourceModelsDev)
+	}
+}
+
 // TestUpsertQueryModels_ReEnrichesParamSizeFromID is the store round-trip guard for
 // the read-path enrichment joint. The models table has NO param_size column, so a
 // cached row's ParamSize + shape ints are RE-DERIVED from its ID by scanModelInfo on

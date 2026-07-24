@@ -232,7 +232,16 @@ func run(args []string) error {
 				"or drop the flag to list every line",
 				*seriesInput)
 		}
-		return runSeries(fs.Arg(0), bestiary.OutputFormat(*output), *provider, *quant, *status, *seriesVersion, *seriesInput)
+		// Human-readable default: like `show --by-entity`, `series` renders a table
+		// unless the user explicitly passed --output=json. `series` is the disambiguation
+		// path the ambiguity guidance recommends ("browse the family: bestiary series
+		// <family>"), so a raw-JSON default there would walk the user straight back into
+		// the non-human-readable wall that motivated the human-readable default.
+		seriesFormat := bestiary.OutputFormat(*output)
+		if !outputExplicit {
+			seriesFormat = bestiary.FormatTable
+		}
+		return runSeries(fs.Arg(0), seriesFormat, *provider, *quant, *status, *seriesVersion, *seriesInput)
 	case "sources":
 		// --history and --export are catalog-wide ingest-log views; they take no
 		// entity positional. The default sources view still requires an entity key.
@@ -536,16 +545,25 @@ func runShow(input string, format bestiary.OutputFormat, dbPath string, inputFor
 		if errors.As(resolveErr, &ambig) {
 			// Print a candidate table to stderr; do not pollute stdout.
 			bestiary.FormatAmbiguous(os.Stderr, ambig)
-			// Derive a concrete, copy-pasteable refinement from the first candidate
-			// (its canonical form) and the family to browse, so the guidance names a
-			// REAL next command instead of the abstract "refine your input". Both fall
-			// back to the raw input if the candidate list is somehow empty (defensive:
-			// ErrAmbiguous always carries candidates).
+			// Derive a concrete, copy-pasteable refinement from the FIRST candidate (the
+			// deterministic-order representative) and the family to browse, so the
+			// guidance names a REAL next command instead of the abstract "refine your
+			// input". Both fall back to the raw input if the candidate list is somehow
+			// empty (defensive: ErrAmbiguous always carries candidates).
+			//
+			// The example is the candidate's ENTITY KEY (EntityRef.String(), e.g.
+			// "llama@3.3#70b{instruct}") shown via `show --by-entity`. This resolves BY
+			// CONSTRUCTION: the entity view renders an entity key directly, without the
+			// model-first resolution that produced this very ambiguity, so a candidate's
+			// own key always renders. A plain `show <key>` would re-enter model
+			// resolution and could re-ambiguate for a high-fanout entity (e.g. gpt/4o,
+			// whose key names 20 date-differentiated model rows) — hence --by-entity,
+			// which is exactly the grammar that path accepts.
 			example := input
 			family := input
 			if len(ambig.Candidates) > 0 {
-				if c := ambig.Candidates[0].Format(bestiary.SchemeCanonical); c != "" {
-					example = c
+				if k := entityRefForRef(ambig.Candidates[0]).String(); k != "" {
+					example = k
 				}
 				if f := string(ambig.Candidates[0].Family); f != "" {
 					family = f
@@ -554,7 +572,7 @@ func runShow(input string, format bestiary.OutputFormat, dbPath string, inputFor
 			return fmt.Errorf(
 				"%q is under-specified: it matched %d distinct models (they differ by variant, version, or size), so `show` cannot pick one.\n"+
 					"  The matching candidates are listed above. To narrow it:\n"+
-					"    - show one directly:   bestiary show %s\n"+
+					"    - show one directly:   bestiary show --by-entity %s\n"+
 					"    - browse the family:   bestiary series %s\n"+
 					"    - use an exact API id: bestiary show <raw-id> --format=raw",
 				input, len(ambig.Candidates), example, family,
@@ -883,6 +901,22 @@ func entityRefForModel(m bestiary.ModelInfo) bestiary.EntityRef {
 		Version:   m.Version,
 		ParamSize: m.ParamSize,
 		Modifier:  bestiary.EntityModifiers(m.Modifier, m.Family),
+	}
+}
+
+// entityRefForRef is the ModelRef analogue of entityRefForModel: it projects a
+// resolver candidate (ErrAmbiguous.Candidates carries ModelRefs, not ModelInfos)
+// onto its identity EntityRef via the same identity-class modifier projection.
+// The derived key names the entity the candidate belongs to, so the ambiguity
+// guidance can point `show --by-entity` at a key guaranteed to be in the
+// registry's entity set.
+func entityRefForRef(r bestiary.ModelRef) bestiary.EntityRef {
+	return bestiary.EntityRef{
+		Family:    r.Family,
+		Variant:   r.Variant,
+		Version:   r.Version,
+		ParamSize: r.ParamSize,
+		Modifier:  bestiary.EntityModifiers(r.Modifier, r.Family),
 	}
 }
 
@@ -2387,8 +2421,9 @@ func writeInstanceTableWithStatus(w io.Writer, insts []bestiary.ProviderInstance
 	}
 
 	fmt.Fprintf(w, "Instances (%d):\n", len(insts))
-	header := fmt.Sprintf("  %-40s %-22s %-12s %12s %12s %10s %10s",
-		"ID", "PROVIDER", "HOST", "IN/MTok", "OUT/MTok", "CONTEXT", "MAXOUT")
+	header := fmt.Sprintf("  %-*s %-*s %-*s %12s %12s %10s %10s",
+		instanceIDColWidth, "ID", instanceProviderColWidth, "PROVIDER",
+		instanceHostColWidth, "HOST", "IN/MTok", "OUT/MTok", "CONTEXT", "MAXOUT")
 	if showStatus {
 		header += fmt.Sprintf(" %-12s", "STATUS")
 	}
@@ -2396,9 +2431,31 @@ func writeInstanceTableWithStatus(w io.Writer, insts []bestiary.ProviderInstance
 		header += fmt.Sprintf(" %-12s", "STAGE")
 	}
 	fmt.Fprintln(w, header)
-	for i, in := range insts {
-		row := fmt.Sprintf("  %-40s %-22s %-12s %12s %12s %10d %10d",
-			string(in.ID), string(in.Provider), fmtHost(in.Host),
+
+	// Cap the rendered rows: a heavily-multi-provider entity (dozens of rehosts,
+	// each possibly carrying an inline quant sub-table) would otherwise render a
+	// wall of output. The header still reports the true total; --output json is the
+	// escape hatch for the full set. Mirrors nominaTableLimit / benchmarkTableLimit,
+	// but sits higher because the instance table is the entity view's PRIMARY
+	// content, not a secondary sub-table.
+	shown := insts
+	overflow := 0
+	if len(insts) > instanceTableLimit {
+		overflow = len(insts) - instanceTableLimit
+		shown = insts[:instanceTableLimit]
+	}
+	for i, in := range shown {
+		// Truncate the free-text ID/PROVIDER/HOST cells to their column widths so a
+		// long value (e.g. the 24-char "azure-cognitive-services" provider slug) can
+		// no longer overrun its column and shove every numeric column out of vertical
+		// alignment. truncateCell keeps the cell exactly its width (ellipsis tail),
+		// matching the benchmark NAME column's existing convention.
+		idCell, _ := truncateCell(string(in.ID), instanceIDColWidth)
+		provCell, _ := truncateCell(string(in.Provider), instanceProviderColWidth)
+		hostCell, _ := truncateCell(fmtHost(in.Host), instanceHostColWidth)
+		row := fmt.Sprintf("  %-*s %-*s %-*s %12s %12s %10d %10d",
+			instanceIDColWidth, idCell, instanceProviderColWidth, provCell,
+			instanceHostColWidth, hostCell,
 			fmtPrice(in.CostInputPerMTok), fmtPrice(in.CostOutputPerMTok),
 			in.ContextWindow, in.MaxOutput)
 		if showStatus {
@@ -2417,6 +2474,9 @@ func writeInstanceTableWithStatus(w io.Writer, insts []bestiary.ProviderInstance
 		}
 		fmt.Fprintln(w, row)
 		writeQuantRows(w, in.QuantVRAM)
+	}
+	if overflow > 0 {
+		fmt.Fprintf(w, "  … and %d more (use --output json)\n", overflow)
 	}
 }
 
@@ -2547,6 +2607,26 @@ func writeEntityView(w io.Writer, e bestiary.Entity) {
 
 	writeNominaTable(w, e.Nomina())
 }
+
+// Instance-table column widths. The three free-text leading columns (ID,
+// PROVIDER, HOST) are truncated to these widths so a long value cannot overrun
+// its column and knock the numeric columns out of vertical alignment. The header
+// verbs use the SAME widths, so labels and cells line up exactly.
+const (
+	instanceIDColWidth       = 40
+	instanceProviderColWidth = 22
+	instanceHostColWidth     = 12
+)
+
+// instanceTableLimit is the maximum number of provider instances the TABLE view
+// renders before truncating with a "… and N more (use --output json)" footer —
+// the same convention as nominaTableLimit / benchmarkTableLimit. It sits higher
+// than those (which are secondary sub-tables) because the instance table is the
+// entity view's PRIMARY content: the cap only trims the most extreme
+// multi-provider walls (e.g. the 28-instance llama@3.3#70b{instruct}) while
+// leaving typical entities rendered in full. JSON output always carries every
+// instance.
+const instanceTableLimit = 20
 
 // nominaTableLimit is the maximum number of nomina the TABLE view renders in full
 // (header line + attestation sub-table) before truncating with a "… and N more"

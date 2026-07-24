@@ -1413,3 +1413,56 @@ func TestFormatAmbiguous_EmptyCanonical_NoBareHeader(t *testing.T) {
 		t.Errorf("FormatAmbiguous: footer 'bestiary list' must still appear;\nGot:\n%s", output)
 	}
 }
+
+// TestFormatAmbiguous_EmptyCanonical_ListsCandidateForms pins the F1' fix: when no
+// candidate has a canonical provider (e.g. "llama": a canonical CREATOR but no
+// canonical provider), FormatAmbiguous must still list actual candidate ENTITY forms
+// under a "Candidates:" section — not leave only the bare provider slugs of "Also
+// rehosted by:", which would make the wrapped error's "the matching candidates are
+// listed above" claim false (a slug is not a candidate).
+func TestFormatAmbiguous_EmptyCanonical_ListsCandidateForms(t *testing.T) {
+	candidates := makeAmbiguousRefs(3, false)
+	e := &bestiary.ErrAmbiguous{
+		Input:           "llama",
+		Scheme:          bestiary.SchemeCanonical,
+		Candidates:      candidates,
+		RehostProviders: []bestiary.Provider{"provider-0", "provider-1", "provider-2"},
+	}
+
+	var buf bytes.Buffer
+	bestiary.FormatAmbiguous(&buf, e)
+	output := buf.String()
+
+	if !strings.Contains(output, "Candidates:") {
+		t.Errorf("FormatAmbiguous: 'Candidates:' section must appear when no canonical rows exist;\nGot:\n%s", output)
+	}
+	// Each candidate's entity key must be listed (family[/variant]@version form).
+	for i := 0; i < 3; i++ {
+		want := fmt.Sprintf("family-%d/variant-%d@1.%d", i, i, i)
+		if !strings.Contains(output, want) {
+			t.Errorf("FormatAmbiguous: candidate entity form %q missing from 'Candidates:' section;\nGot:\n%s", want, output)
+		}
+	}
+}
+
+// TestFormatAmbiguous_NoBestiaryPrefixInBody pins the F1' merge: the advisory body
+// must NOT open with a second "bestiary: " line. The CLI returns one wrapped error
+// that carries the sole "bestiary: " preamble; a second one in this body reads as two
+// separate failures for one error (the reviewer's "two stacked bestiary:" complaint).
+func TestFormatAmbiguous_NoBestiaryPrefixInBody(t *testing.T) {
+	e := &bestiary.ErrAmbiguous{
+		Input:           "llama",
+		Scheme:          bestiary.SchemeCanonical,
+		Candidates:      makeAmbiguousRefs(3, false),
+		RehostProviders: []bestiary.Provider{"provider-0"},
+	}
+
+	var buf bytes.Buffer
+	bestiary.FormatAmbiguous(&buf, e)
+
+	for _, line := range strings.Split(buf.String(), "\n") {
+		if strings.HasPrefix(line, "bestiary:") {
+			t.Errorf("FormatAmbiguous body must carry no 'bestiary:' prefix (the CLI supplies the sole one on its wrapped error);\noffending line: %q\nFull output:\n%s", line, buf.String())
+		}
+	}
+}
