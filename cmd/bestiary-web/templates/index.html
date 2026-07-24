@@ -1,0 +1,23 @@
+{{define "content" -}}
+<h1 class="mono">catalog</h1>
+<p class="muted">
+  {{.EntityCount}} entities · {{.ModelCount}} static model rows{{if .CacheModelCount}} · {{.CacheModelCount}} cached rows{{end}}.
+  Offline, read-only. Full browser &amp; series views land in the next slice.
+</p>
+
+<!-- Datastar wiring demo (slice-10 foundation): a self-contained, same-origin search that
+     round-trips through the /sse/entities SSE endpoint and PatchElements the results below.
+     The full styled browser table is slice-11. The vendored datastar.js client (loaded in the
+     layout) drives this — no CDN JS. -->
+<div data-signals-filter="''">
+  <div class="section-head">find an entity</div>
+  <input type="search" class="mono" aria-label="filter entities by family"
+         placeholder="filter by family, e.g. llama"
+         data-bind-filter
+         data-on-input__debounce.250ms="@get('/sse/entities')"
+         style="width:100%;max-width:32rem;padding:4px 8px;background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:2px;">
+  <div id="entity-results">
+    {{template "entity-results" .Sample}}
+  </div>
+</div>
+{{- end}}

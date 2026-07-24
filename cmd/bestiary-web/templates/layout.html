@@ -1,0 +1,183 @@
+{{define "layout" -}}
+<!doctype html>
+<html lang="en" data-theme="">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{.Title}} · bestiary</title>
+  <meta name="description" content="bestiary — a browsable catalog of model entities, their nomina, provenance and VRAM.">
+  <!-- Fonts: CDN permitted for FONTS ONLY (RQ1). Full offline fallback stack declared in
+       CSS below and font-display:swap set upstream, so the page never blocks or shows
+       invisible text if the CDN is unreachable (captive network / air-gapped demo). -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Saira+Condensed:wght@600;700&family=Share+Tech+Mono&display=swap">
+  <style>
+    /* ===== Phosphor Terminal — approved direction (docs/design/v0.2.8-web-direction.md).
+       Palette tokens are the §2.1 table verbatim. Light is the default in :root (a
+       gruvbox-light / pipboy amber-brown-on-sepia register); dark is applied by
+       prefers-color-scheme and both are overridable by an explicit [data-theme]. ===== */
+    :root {
+      --bg: #fbf1c7;            /* gruvbox-light bg0, warm cream paper */
+      --surface: #f9f5d7;       /* gruvbox-light bg0_h */
+      --text: #3c3836;          /* gruvbox-light fg, near-black warm — table body, NOT amber */
+      --text-muted: #7c6f64;    /* gruvbox gray */
+      --accent: #96621b;        /* pipboy amber-brown chrome, darkened for contrast on cream */
+      --accent-dim: #d5c4a1;    /* gruvbox-light bg2, warm tan — hairlines */
+      --accent-bright: #427b58; /* faded green — "live/attested" badges */
+      --info: #458588;          /* faded aqua — modality/capability badges */
+      --warn: #af3a03;          /* orange — partial-estimate / deferred-data */
+      --danger: #9d0006;        /* faded red — parse-failure / unlinked (admin-facing) */
+      --border: #d5c4a1;
+
+      --font-display: "Saira Condensed", system-ui, sans-serif;
+      --font-mono: "Share Tech Mono", ui-monospace, Menlo, monospace;
+      --font-body: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+
+      --space-1: 4px; --space-2: 8px; --space-3: 16px; --space-4: 24px; --space-5: 32px;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0a0908; --surface: #141210; --text: #ece6d8; --text-muted: #9b9285;
+        --accent: #f0b32a; --accent-dim: #7a5a14; --accent-bright: #54ff8a;
+        --info: #39d6c8; --warn: #ff6a1f; --danger: #ff3b2f; --border: #3a2c0a;
+      }
+    }
+    /* Explicit toggle wins over the media query in BOTH directions. */
+    :root[data-theme="light"] {
+      --bg: #fbf1c7; --surface: #f9f5d7; --text: #3c3836; --text-muted: #7c6f64;
+      --accent: #96621b; --accent-dim: #d5c4a1; --accent-bright: #427b58;
+      --info: #458588; --warn: #af3a03; --danger: #9d0006; --border: #d5c4a1;
+    }
+    :root[data-theme="dark"] {
+      --bg: #0a0908; --surface: #141210; --text: #ece6d8; --text-muted: #9b9285;
+      --accent: #f0b32a; --accent-dim: #7a5a14; --accent-bright: #54ff8a;
+      --info: #39d6c8; --warn: #ff6a1f; --danger: #ff3b2f; --border: #3a2c0a;
+    }
+
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+    body {
+      background: var(--bg); color: var(--text);
+      font-family: var(--font-body); font-size: 15px; line-height: 1.5;
+      min-height: 100vh;
+    }
+    /* One scanline layer only (§2.3), on the page chrome, never over the data grid.
+       Static by default; the flicker only exists where motion is allowed. */
+    body::after {
+      content: ""; position: fixed; inset: 0; z-index: 9999; pointer-events: none;
+      mix-blend-mode: multiply; opacity: 0.08;
+      background: repeating-linear-gradient(
+        to bottom, rgba(0,0,0,0.55) 0, rgba(0,0,0,0.55) 1px, transparent 1px, transparent 3px);
+    }
+    @media (prefers-reduced-motion: no-preference) {
+      body::after { animation: scanflick 6s steps(60) infinite; }
+      @keyframes scanflick { 0%,100% { opacity: .08; } 50% { opacity: .05; } }
+    }
+
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    .chrome {
+      display: flex; align-items: center; gap: var(--space-3);
+      padding: var(--space-2) var(--space-3);
+      background: var(--surface); border-bottom: 1px solid var(--border);
+    }
+    .wordmark {
+      font-family: var(--font-display); font-weight: 700; letter-spacing: .06em;
+      text-transform: uppercase; color: var(--accent);
+      text-shadow: 0 0 6px color-mix(in srgb, var(--accent) 55%, transparent);
+    }
+    .chrome .search { flex: 1; max-width: 32rem; }
+    .chrome input[type="search"] {
+      width: 100%; padding: var(--space-1) var(--space-2);
+      background: var(--bg); color: var(--text);
+      border: 1px solid var(--border); border-radius: 2px;
+      font-family: var(--font-mono); font-size: 14px;
+    }
+    .theme-toggle {
+      font-family: var(--font-mono); cursor: pointer;
+      background: var(--bg); color: var(--accent);
+      border: 1px solid var(--border); border-radius: 2px;
+      padding: var(--space-1) var(--space-2);
+    }
+    .theme-toggle:hover { text-shadow: 0 0 6px color-mix(in srgb, var(--accent) 55%, transparent); }
+
+    main { padding: var(--space-4) var(--space-3); max-width: 72rem; margin: 0 auto; }
+
+    h1, h2, .section-head {
+      font-family: var(--font-display); font-weight: 600; letter-spacing: .03em;
+      color: var(--accent);
+    }
+    .section-head {
+      text-transform: uppercase; font-size: 13px; letter-spacing: .08em;
+      border-bottom: 1px solid var(--border); padding-bottom: var(--space-1);
+      margin: var(--space-4) 0 var(--space-2);
+    }
+    .muted { color: var(--text-muted); }
+    .mono { font-family: var(--font-mono); }
+    code, .key { font-family: var(--font-mono); }
+
+    /* Dense table: high-contrast, scannable — retro skin stays on the chrome (§17.7). */
+    table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    th {
+      text-align: left; font-family: var(--font-mono); color: var(--accent);
+      border-bottom: 1px solid var(--border); padding: var(--space-1) var(--space-2);
+      font-weight: 400;
+    }
+    td { padding: var(--space-1) var(--space-2); border-bottom: 1px solid var(--accent-dim); }
+    .num { font-variant-numeric: tabular-nums; text-align: right; }
+
+    .badge {
+      display: inline-block; font-family: var(--font-mono); font-size: 12px;
+      padding: 1px 8px; border-radius: 999px; border: 1px solid currentColor;
+    }
+    .badge.info { color: var(--info); }
+    .badge.live { color: var(--accent-bright); }
+    .badge.warn { color: var(--warn); }
+    .vram-bar {
+      display: inline-block; height: 8px; border-radius: 1px;
+      background: var(--accent); opacity: .85; vertical-align: middle;
+    }
+    .footer { color: var(--text-muted); font-size: 12px; padding: var(--space-4) var(--space-3); }
+  </style>
+</head>
+<body>
+  <header class="chrome">
+    <span class="wordmark">bestiary&#9646;</span>
+    <span class="search"><input type="search" placeholder="search entities…" aria-label="search entities" disabled></span>
+    <button type="button" class="theme-toggle" aria-label="toggle color theme" onclick="__toggleTheme()">&#9790;/&#9728;</button>
+  </header>
+  <main id="main">
+    {{template "content" .}}
+  </main>
+  <footer class="footer">
+    bestiary · offline catalog · datastar client v{{.DatastarVersion}} (vendored)
+  </footer>
+
+  <!-- Theme toggle: our own tiny script (not a framework); persists the explicit choice.
+       No network, no external dependency. -->
+  <script>
+    (function () {
+      try {
+        var saved = localStorage.getItem("bestiary-theme");
+        if (saved === "light" || saved === "dark") {
+          document.documentElement.setAttribute("data-theme", saved);
+        }
+      } catch (e) {}
+      window.__toggleTheme = function () {
+        var el = document.documentElement;
+        var cur = el.getAttribute("data-theme");
+        var next = cur === "dark" ? "light"
+          : cur === "light" ? "dark"
+          : (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "light" : "dark");
+        el.setAttribute("data-theme", next);
+        try { localStorage.setItem("bestiary-theme", next); } catch (e) {}
+      };
+    })();
+  </script>
+  <!-- Datastar client — VENDORED, same-origin, version-pinned (see assets.go). NO CDN for JS. -->
+  <script type="module" src="/assets/datastar.js"></script>
+</body>
+</html>
+{{- end}}
