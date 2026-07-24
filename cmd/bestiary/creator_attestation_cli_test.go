@@ -193,8 +193,7 @@ func TestRun_DualAttestation_BothLegsVisible(t *testing.T) {
 		// n.Scheme.String()), so a substring check against a blockStr that still
 		// included the header line would read "huggingface" off the scheme name
 		// and coincidentally pass even when the huggingface attestation ROW was
-		// dropped — the exact miss a mutation probe caught (hiding the
-		// huggingface leg from writeNominaTable did not redden this subtest).
+		// dropped, silently missing the loss of that leg.
 		header := "  " + dualName + "  (huggingface,"
 		lines := strings.Split(out, "\n")
 		var rows []string
