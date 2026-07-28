@@ -13,6 +13,7 @@ const (
 	HarnessOpenCode    Harness = "opencode"
 	HarnessCursor      Harness = "cursor"
 	HarnessAntigravity Harness = "antigravity"
+	HarnessStrike      Harness = "strike"
 )
 
 // knownHarnesses is the authoritative set of recognized Harness values.
@@ -23,6 +24,7 @@ var knownHarnesses = [...]Harness{
 	HarnessOpenCode,
 	HarnessCursor,
 	HarnessAntigravity,
+	HarnessStrike,
 }
 
 // Harnesses returns all known Harness values. The returned slice is a
@@ -33,7 +35,7 @@ func Harnesses() []Harness {
 	return out
 }
 
-// IsKnown reports whether h is one of the six declared Harness constants.
+// IsKnown reports whether h is one of the seven declared Harness constants.
 func (h Harness) IsKnown() bool {
 	for _, known := range knownHarnesses {
 		if h == known {
