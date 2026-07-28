@@ -1,0 +1,147 @@
+{{define "content" -}}
+{{$ctx := .CtxTokens}}
+{{$maxq := .MaxQuantVRAM}}
+{{with .Entity -}}
+<p><a href="/" class="mono">&#8249; catalog</a> · <a href="/series" class="mono">series</a></p>
+<h1 class="mono">{{.Ref.String}}</h1>
+<p class="muted">
+  {{with .Creator}}{{.}}{{else}}<span>creator unattributed</span>{{end}}
+  {{if .Sources}}·
+    {{range $i, $s := .Sources}}{{if $i}}, {{end}}<span class="badge live">{{$s}}</span>{{end}}
+  {{end}}
+</p>
+
+<div class="section-head">identity</div>
+<table>
+  <tr><th>family</th><td class="mono">{{.Ref.Family}}</td></tr>
+  {{if .Ref.Variant}}<tr><th>variant</th><td class="mono">{{.Ref.Variant}}</td></tr>{{end}}
+  {{if .Ref.Version}}<tr><th>version</th><td class="mono">{{.Ref.Version}}</td></tr>{{end}}
+  {{if .Ref.ParamSize}}<tr><th>param size</th><td class="mono">{{.Ref.ParamSize}}</td></tr>{{end}}
+  {{if .Ref.Modifier}}<tr><th>modifiers</th><td class="mono">{{range $i, $m := .Ref.Modifier}}{{if $i}}, {{end}}{{$m}}{{end}}</td></tr>{{end}}
+</table>
+
+{{/* ---- RQ2 section 1: quants + VRAM (VRAMEstimatePartial honesty carried through) ---- */}}
+{{if $maxq}}
+<div class="section-head">quants &amp; vram</div>
+<p class="muted">
+  VRAM is computed (weights + KV-cache at the model's max context), never ingested. A
+  <span class="badge warn">partial</span> figure is a weights-only lower bound — the KV-cache
+  term was omitted because architecture facts were absent, so its bar is drawn hollow.
+</p>
+{{/* This GET form intentionally carries only the ctx field. If the detail page ever gains a
+     second view-state query param, this form must forward it (e.g. a hidden input) or that
+     param will be silently dropped on submit. */}}
+<form method="get" action="{{$.Path}}" class="ctx-form mono">
+  <label>recompute VRAM at context
+    <input type="number" name="ctx" min="1" step="1024" value="{{if $ctx}}{{$ctx}}{{end}}"
+           placeholder="max" aria-label="recompute VRAM at context tokens">
+  </label>
+  <button type="submit">apply</button>
+  {{if $ctx}}<a href="{{$.Path}}" class="muted">reset</a>{{end}}
+</form>
+{{range .Instances}}
+{{if .QuantVRAM}}
+<div class="quant-inst mono muted">{{.ID}} · {{.Provider}}</div>
+<table class="quants">
+  <thead>
+    <tr>
+      <th>quant</th>
+      <th class="num">weights</th>
+      <th>vram (max ctx)</th>
+      <th class="num">ctx</th>
+      {{if $ctx}}<th class="num">vram @{{$ctx}}</th>{{end}}
+    </tr>
+  </thead>
+  <tbody>
+  {{range .QuantVRAM}}
+    <tr>
+      <td class="mono">{{if .QuantRaw}}{{.QuantRaw}}{{else}}{{.Quant}}{{end}}</td>
+      <td class="num">{{bytesGB .WeightsBytes}}</td>
+      <td>
+        <span class="vram-cell">
+          <span class="vram-bar{{if .VRAMEstimatePartial}} partial{{end}}" style="width:{{pct .VRAMBytes $maxq}}%"></span>
+          <span class="num">{{bytesGB .VRAMBytes}}</span>{{if .VRAMEstimatePartial}} <span class="badge warn" title="weights-only lower bound: KV-cache term omitted">partial</span>{{end}}
+        </span>
+      </td>
+      <td class="num">{{if .VRAMContextTokens}}{{.VRAMContextTokens}}{{else}}—{{end}}</td>
+      {{if $ctx}}<td class="num">{{$est := estVRAMGB . $ctx}}{{if $est}}{{$est}}{{else}}<span class="muted" title="model max context is below {{$ctx}}">—</span>{{end}}</td>{{end}}
+    </tr>
+  {{end}}
+  </tbody>
+</table>
+{{end}}
+{{end}}
+{{end}}
+
+{{/* ---- RQ2 section 2: pricing by provider (the (ID,Provider) instances) ---- */}}
+{{if .Instances}}
+<div class="section-head">pricing by provider</div>
+<table>
+  <thead><tr><th>id</th><th>provider</th><th>host</th><th>region</th><th class="num">context</th><th class="num">in /1M</th><th class="num">out /1M</th></tr></thead>
+  <tbody>
+  {{range .Instances}}
+    <tr>
+      <td class="mono">{{.ID}}</td>
+      <td>{{.Provider}}</td>
+      <td>{{if .Host}}{{.Host}}{{else}}<span class="muted">—</span>{{end}}</td>
+      <td class="mono">{{.Region}}</td>
+      <td class="num">{{if .ContextWindow}}{{.ContextWindow}}{{else}}—{{end}}</td>
+      <td class="num">{{priceStr .CostInputPerMTok}}</td>
+      <td class="num">{{priceStr .CostOutputPerMTok}}</td>
+    </tr>
+  {{end}}
+  </tbody>
+</table>
+{{end}}
+
+{{if .Providers}}
+<div class="section-head">providers</div>
+<p class="mono">{{range $i, $p := .Providers}}{{if $i}} · {{end}}{{$p}}{{end}}</p>
+{{end}}
+
+{{/* ---- RQ2 section 4a: lineage (parents navigate) ---- */}}
+{{if .Lineage}}
+<div class="section-head">lineage</div>
+<ul class="mono lineage">
+  {{range .Lineage}}<li>&#8592; <a href="{{.Parent.IRI "/entity/"}}">{{.Parent.String}}</a> <span class="muted">({{.Kind}})</span></li>{{end}}
+</ul>
+{{end}}
+{{- end}}
+
+{{/* ---- RQ2 section 4b: series membership (links navigate) ---- */}}
+{{if .SeriesDisplay}}
+<div class="section-head">series</div>
+<p class="mono"><a href="/series#{{.SeriesAnchor}}">{{.SeriesDisplay}}</a></p>
+{{end}}
+
+{{/* ---- RQ2 section 3: nomina + attestations (multi-attestation showcase) ---- */}}
+{{if .Nomina}}
+<div class="section-head">nomina &amp; attestations</div>
+<p class="muted">
+  Every naming of this entity, with each attestation's provenance shown in full: WHICH ingest
+  it was read from (source), whose voice the evidence is (authority), HOW it entered (method),
+  and WHO asserts it (source-url). A name attested by two sources shows both legs.
+</p>
+{{range .Nomina}}
+<div class="nomen">
+  <div class="nomen-head mono">
+    <span class="nomen-value">{{.Value}}</span>
+    <span class="muted">({{.Scheme}}, {{.Status}})</span>
+  </div>
+  <table class="attestations">
+    <thead><tr><th>source</th><th>authority</th><th>method</th><th>source-url</th></tr></thead>
+    <tbody>
+    {{range .Attestations}}
+      <tr>
+        <td class="mono">{{orDash (printf "%s" .Source)}}</td>
+        <td>{{.Authority}}</td>
+        <td>{{.Method}}</td>
+        <td class="mono break">{{orDash .SourceURL}}</td>
+      </tr>
+    {{end}}
+    </tbody>
+  </table>
+</div>
+{{end}}
+{{end}}
+{{- end}}

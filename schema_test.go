@@ -877,8 +877,9 @@ func TestSchemaDefs_V024_DeepConformance(t *testing.T) {
 				KVHeads:             8,
 				HeadDim:             128,
 				VRAMEstimatePartial: false,
+				OCIDigest:           "sha256:abc123",
 			},
-			expectProps: []string{"Quant", "QuantRaw", "WeightsBytes", "VRAMBytes", "VRAMContextTokens", "Layers", "KVHeads", "HeadDim", "VRAMEstimatePartial"},
+			expectProps: []string{"Quant", "QuantRaw", "WeightsBytes", "VRAMBytes", "VRAMContextTokens", "Layers", "KVHeads", "HeadDim", "VRAMEstimatePartial", "OCIDigest"},
 			expectTypes: map[string]string{
 				"Quant":               "$ref",
 				"QuantRaw":            "string",
@@ -889,6 +890,7 @@ func TestSchemaDefs_V024_DeepConformance(t *testing.T) {
 				"KVHeads":             "integer",
 				"HeadDim":             "integer",
 				"VRAMEstimatePartial": "boolean",
+				"OCIDigest":           "string",
 			},
 		},
 		{
@@ -992,7 +994,7 @@ func TestSchemaDefs_V024_DeepConformance(t *testing.T) {
 				Ref:     bestiary.EntityRef{Family: "llama", Version: "3.3", ParamSize: "70b", Modifier: []string{"instruct"}},
 				Sources: []bestiary.DataSourceID{bestiary.DataSourceModelsDev, bestiary.DataSourceOllama},
 			},
-			expectProps: []string{"Ref", "Instances", "Lineage", "Providers", "Hosts", "Regions", "Nomina", "PriceInputRange", "PriceOutputRange", "ContextRange", "MaxOutputRange", "Capabilities", "Sources", "Metadata"},
+			expectProps: []string{"Ref", "Instances", "Lineage", "Providers", "Hosts", "Regions", "Nomina", "PriceInputRange", "PriceOutputRange", "ContextRange", "MaxOutputRange", "Capabilities", "Sources", "Metadata", "Creator"},
 			expectTypes: map[string]string{
 				"Ref":              "$ref",
 				"Instances":        "array|null",
@@ -1006,6 +1008,10 @@ func TestSchemaDefs_V024_DeepConformance(t *testing.T) {
 				"MaxOutputRange":   "array",
 				"Capabilities":     "$ref",
 				"Sources":          "array|null",
+				// Creator is a DERIVED join projection surfaced as a plain struct
+				// field ($ref #/$defs/Creator; a hand-constructed Entity carries the
+				// CreatorNone zero value). Added in schema 0.6.0.
+				"Creator": "$ref",
 				// Metadata is oneOf{$ref EntityMetadata, null} — no plain "type"
 				// node and no direct "$ref" (it is inside the oneOf), so it is
 				// allowlisted from the type cross-check (added in schema 0.3.0).

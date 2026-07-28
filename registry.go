@@ -30,6 +30,32 @@ var (
 	versionMergeAlias map[string]string
 )
 
+// init normalizes the per-row Source carrier of the compiled-in registry ONCE at
+// package load, defaulting an empty (DataSourceNone) Source to DataSourceModelsDev.
+//
+// Semantics: Source names the ORIGINATING ingest source of a model row, and every
+// compiled-in row originates from the models.dev pipeline — so an unset carrier is
+// implicitly models.dev, not "no source". The generated literals leave pure
+// models.dev rows with Source:"" (the codegen zero value) and only stamp a further
+// source (e.g. "ollama") on enriched rows; this fill-in makes that implicit origin
+// explicit at the LOAD layer, so every accessor (StaticModels/LookupModel/
+// ModelsBy*/LookupModelByProvider/Models) and the entity/instance aggregate built by
+// loadEntityIndex surface "models.dev" rather than an empty string.
+//
+// Non-empty carriers are left untouched, so an ollama-enriched row keeps "ollama".
+// This is a runtime normalization of the in-memory slice only: the generated file is
+// byte-unchanged, so codegen determinism (go generate zero-diff) is preserved. The
+// entity↔source join is unaffected — loadEntityIndex's attest() already treats
+// DataSourceNone and DataSourceModelsDev identically (both are the implicit models.dev
+// origin and neither triggers a further attestation).
+func init() {
+	for i := range staticModels {
+		if staticModels[i].Source == DataSourceNone {
+			staticModels[i].Source = DataSourceModelsDev
+		}
+	}
+}
+
 // NormalizeEntityVersion applies the MERGE-only N->N.0 version fold to a single entity
 // ref, given the set of ALL raw (pre-fold) entity keys. When ref carries a bare-integer
 // version N AND an entity with the IDENTICAL (family, variant, param-size, modifiers) but
@@ -245,13 +271,14 @@ func loadEntityIndex() {
 
 		// Attestation rule (BCNF entity↔source join). Every static row originates
 		// from the models.dev pipeline, so each row attests DataSourceModelsDev —
-		// including rows whose Source carrier is empty (DataSourceNone), which means
-		// "the models.dev origin is implicit". A row whose Source names a further,
+		// including rows whose Source carrier is the implicit models.dev origin
+		// (DataSourceModelsDev after the load-layer fill-in, or the raw DataSourceNone
+		// zero value on a row that predates it). A row whose Source names a further,
 		// distinct source (e.g. an ollama-enriched row carries Source=ollama) is a
 		// models.dev row ENRICHED with that source's data, so it DUAL-attests: it
 		// contributes BOTH DataSourceModelsDev and that source. Net effect:
-		//   - a pure models.dev row (Source=="")      → {models.dev}
-		//   - an ollama-enriched row (Source=="ollama") → {models.dev, ollama}
+		//   - a pure models.dev row (Source==models.dev) → {models.dev}
+		//   - an ollama-enriched row (Source=="ollama")   → {models.dev, ollama}
 		// so a multi-source entity (e.g. the curated llama-3.3-70b) carries
 		// [models.dev, ollama]. The per-source set is de-duplicated here in
 		// first-seen order; the deterministic output order is imposed by an explicit
@@ -352,6 +379,16 @@ func loadEntityIndex() {
 	}
 	rel := buildEntitySourceRelation(order, firstSeen)
 
+	// Fold in HuggingFace attestation: an entity a harvested HF nomen resolves to
+	// DUAL-attests {models.dev, huggingface} (the ollama-enrichment precedent — see
+	// datasource.go's attestation rule). This extends the relation IN LOCKSTEP with
+	// the derived Entity.Sources projection read below (rel.byEntity[key]), so the
+	// projection stays a faithful view of the relation. Only keys that are REAL
+	// entities in this index are attested; a harvested nomen whose target is absent
+	// from the catalog mints its nomen (keep-never-drop) but creates no orphan
+	// EntitySource row.
+	attestHarvestedHuggingFace(rel, order)
+
 	for _, key := range order {
 		a := aggs[key]
 
@@ -366,6 +403,12 @@ func loadEntityIndex() {
 			MaxOutputRange: [2]int{a.moMin, a.moMax},
 			Capabilities:   a.caps,
 			Sources:        rel.byEntity[key],
+			// Creator is the DERIVED join projection of Family → Creator (the
+			// Sources/Regions projection precedent): resolved from the entity's own
+			// Family through the curated creators.json seed, never stored on the row.
+			// All instances share Ref.Family, so one value covers the entity;
+			// CreatorNone when the family has no curated mapping.
+			Creator: a.ref.Family.Creator(),
 		}
 		if a.piFound {
 			lo, hi := a.piMin, a.piMax
@@ -464,6 +507,53 @@ func attachBakedMetadataToIndex() {
 	if relExtended {
 		sort.Slice(entitySourceRel.rows, func(i, j int) bool {
 			return lessEntitySource(entitySourceRel.rows[i], entitySourceRel.rows[j])
+		})
+	}
+}
+
+// attestHarvestedHuggingFace extends the entity↔source relation with a
+// DataSourceHuggingFace row for every REAL entity (a key present in order) that a
+// harvested HF nomen resolves to. It mutates rel in place: it adds huggingface to
+// the per-entity Sources projection (re-sorting so the set stays ascending +
+// de-duplicated) and appends the join row, then re-imposes the canonical
+// (EntityKey, SourceID) row order so the relation stays byte-stable. It is the
+// registry twin of the ollama enrichment (which arrives via a row's Source field);
+// HF attestation arrives from the harvested seed instead of a baked ModelInfo
+// column, so it is applied here as a post-build fold. Keys not in the index are
+// skipped so no orphan EntitySource row (whose entity_key resolves to nothing) is
+// ever created.
+func attestHarvestedHuggingFace(rel *entitySourceRelation, order []string) {
+	hf := loadHFNominaSafe()
+	if len(hf.keys) == 0 {
+		return
+	}
+	inIndex := make(map[string]struct{}, len(order))
+	for _, key := range order {
+		inIndex[key] = struct{}{}
+	}
+	extended := false
+	for key := range hf.keys {
+		if _, ok := inIndex[key]; !ok {
+			continue
+		}
+		existing := rel.byEntity[key]
+		already := false
+		for _, s := range existing {
+			if s == DataSourceHuggingFace {
+				already = true
+				break
+			}
+		}
+		if already {
+			continue
+		}
+		rel.byEntity[key] = sortedSources(append(append([]DataSourceID(nil), existing...), DataSourceHuggingFace))
+		rel.rows = append(rel.rows, EntitySource{EntityKey: key, SourceID: DataSourceHuggingFace})
+		extended = true
+	}
+	if extended {
+		sort.Slice(rel.rows, func(i, j int) bool {
+			return lessEntitySource(rel.rows[i], rel.rows[j])
 		})
 	}
 }

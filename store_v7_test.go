@@ -140,18 +140,45 @@ func TestStore_RegionRoundTrip(t *testing.T) {
 	}
 }
 
-// TestStore_NominaRoundTrip persists a minted nomen set and reads it back. The
-// source_id FK requires the models.dev DataSource to be written first.
+// TestStore_NominaRoundTrip persists a minted nomen set and reads it back through the v8
+// schema. It is the SOLE falsifiability guard for §5a's "zero data loss" under the v8
+// nomen_attestations child table: it asserts the FULL per-attestation set
+// (SourceURL+Source+Authority+Method+IngestedAt) survives an UpsertNomina→QueryNomina
+// round-trip — INCLUDING (a) a curated-authored Authority that differs from the
+// scheme/source default (the case the removed v7 single-attestation bridge could NOT
+// carry — it always read the default back) and (b) a multi-attestation nomen (two
+// independent attesters on one triple, which the single fused v7 column pair could not
+// hold at all). The source_id FK requires both DataSources to be registered first.
 func TestStore_NominaRoundTrip(t *testing.T) {
 	store := openMemStoreInternal(t)
 	ctx := context.Background()
 	seedModelsDevSource(t, store)
+	seedCuratedSource(t, store)
 
 	ref := EntityRef{Family: "grok", Version: "4.20", Modifier: []string{"reasoning"}}
+
+	// The lossy-edge attestation: authored with Authority=Secondary, which is NOT the
+	// DataSourceCurated scheme/source default (Primary). The v7 bridge derived authority
+	// from (scheme, source) on read and would have discarded this override, reading back
+	// Primary; the v8 child table persists the exact authored value.
+	lossyEdge := NomenAttestation{
+		SourceURL:  "https://web.archive.org/web/2026/https://docs.x.ai/docs/models",
+		Source:     DataSourceCurated,
+		Authority:  AuthoritySecondary,
+		Method:     IngestMethodCurated,
+		IngestedAt: "2026-07-20T00:00:00Z",
+	}
+	// A genuinely multi-attested canonical nomen: two independent attesters on ONE triple
+	// (both from models.dev but differing in every other field, so neither dedups nor
+	// collapses). The v7 fused columns could hold only one; v8 round-trips both.
+	multi := []NomenAttestation{
+		{Source: DataSourceModelsDev, Authority: AuthorityPrimary, Method: IngestMethodSelfMinted},
+		{SourceURL: "https://docs.x.ai/docs/models", Source: DataSourceModelsDev, Authority: AuthoritySecondary, Method: IngestMethodHarvested, IngestedAt: "2026-07-19T00:00:00Z"},
+	}
 	in := []Nomen{
-		{Value: "grok@4.20{reasoning}", Scheme: NomenSchemeCanonical, Status: AcceptabilityPreferred, ResolvesTo: ref, Source: DataSourceModelsDev},
-		{Value: "grok-4.20-0309-reasoning", Scheme: NomenSchemeProviderID, Status: AcceptabilityAdmitted, ResolvesTo: ref, Source: DataSourceModelsDev},
-		{Value: "grok-beta", Scheme: NomenSchemeAlias, Status: AcceptabilityAdmitted, ResolvesTo: ref, SourceURL: "https://docs.x.ai/docs/models", Source: DataSourceModelsDev},
+		{Value: "grok@4.20{reasoning}", Scheme: NomenSchemeCanonical, Status: AcceptabilityPreferred, ResolvesTo: ref, Attestations: multi},
+		{Value: "grok-4.20-0309-reasoning", Scheme: NomenSchemeProviderID, Status: AcceptabilityAdmitted, ResolvesTo: ref, Attestations: []NomenAttestation{{Source: DataSourceModelsDev}}},
+		{Value: "grok-beta", Scheme: NomenSchemeAlias, Status: AcceptabilityAdmitted, ResolvesTo: ref, Attestations: []NomenAttestation{lossyEdge}},
 	}
 	if err := store.UpsertNomina(ctx, in); err != nil {
 		t.Fatalf("UpsertNomina: %v", err)
@@ -163,7 +190,8 @@ func TestStore_NominaRoundTrip(t *testing.T) {
 	if len(out) != len(in) {
 		t.Fatalf("QueryNomina returned %d rows, want %d", len(out), len(in))
 	}
-	// Re-persisting the same set is idempotent (INSERT OR IGNORE): no duplicate rows.
+	// Re-persisting the same set is idempotent (parent OR IGNORE + delete-then-insert
+	// children): no duplicate parent rows, no duplicate attestations.
 	if err := store.UpsertNomina(ctx, in); err != nil {
 		t.Fatalf("UpsertNomina (2nd): %v", err)
 	}
@@ -171,22 +199,46 @@ func TestStore_NominaRoundTrip(t *testing.T) {
 	if len(out2) != len(in) {
 		t.Errorf("after re-upsert QueryNomina = %d rows, want idempotent %d", len(out2), len(in))
 	}
-	// The grok-beta claim round-trips its claim attribution (SourceURL) distinct from
-	// its ingest Source.
-	var found bool
+
+	byValue := map[string]Nomen{}
 	for _, n := range out {
-		if n.Value == "grok-beta" {
-			found = true
-			if n.SourceURL != "https://docs.x.ai/docs/models" || n.Source != DataSourceModelsDev {
-				t.Errorf("grok-beta provenance lost: url=%q source=%q", n.SourceURL, n.Source)
-			}
-			if n.ResolvesTo.String() != "grok@4.20{reasoning}" {
-				t.Errorf("grok-beta ResolvesTo not reconstructed: %q", n.ResolvesTo.String())
-			}
-		}
+		byValue[n.Value] = n
 	}
-	if !found {
-		t.Error("grok-beta claim missing after round-trip")
+
+	// (a) The lossy-edge case: grok-beta's single curated attestation survives EXACTLY,
+	// including the non-default Authority=Secondary the v7 bridge could not carry.
+	gb, ok := byValue["grok-beta"]
+	if !ok {
+		t.Fatal("grok-beta claim missing after round-trip")
+	}
+	if len(gb.Attestations) != 1 {
+		t.Fatalf("grok-beta carries %d attestations, want 1", len(gb.Attestations))
+	}
+	if got := gb.Attestations[0]; got != lossyEdge {
+		t.Errorf("grok-beta attestation not round-tripped losslessly:\n got  %+v\n want %+v", got, lossyEdge)
+	}
+	if gb.ResolvesTo.String() != "grok@4.20{reasoning}" {
+		t.Errorf("grok-beta ResolvesTo not reconstructed: %q", gb.ResolvesTo.String())
+	}
+
+	// (b) The multi-attestation case: the canonical nomen round-trips BOTH attesters,
+	// sorted by the total key (sortAndDedupAttestations). Compare as sets.
+	can, ok := byValue["grok@4.20{reasoning}"]
+	if !ok {
+		t.Fatal("canonical nomen missing after round-trip")
+	}
+	if len(can.Attestations) != 2 {
+		t.Fatalf("canonical nomen carries %d attestations, want 2", len(can.Attestations))
+	}
+	wantSet := map[NomenAttestation]bool{multi[0]: true, multi[1]: true}
+	for _, at := range can.Attestations {
+		if !wantSet[at] {
+			t.Errorf("canonical nomen has an unexpected attestation after round-trip: %+v", at)
+		}
+		delete(wantSet, at)
+	}
+	if len(wantSet) != 0 {
+		t.Errorf("canonical nomen dropped attestation(s) on round-trip: %+v", wantSet)
 	}
 }
 
@@ -200,9 +252,9 @@ func TestStore_NominaHomonymyPositiveFence(t *testing.T) {
 
 	const value = "shared-spelling"
 	in := []Nomen{
-		{Value: value, Scheme: NomenSchemeProviderID, Status: AcceptabilityAdmitted, ResolvesTo: EntityRef{Family: "grok", Version: "1"}, Source: DataSourceModelsDev},
-		{Value: value, Scheme: NomenSchemeProviderID, Status: AcceptabilityAdmitted, ResolvesTo: EntityRef{Family: "grok", Version: "2"}, Source: DataSourceModelsDev},
-		{Value: value, Scheme: NomenSchemeProviderID, Status: AcceptabilityAdmitted, ResolvesTo: EntityRef{Family: "claude", Variant: "opus"}, Source: DataSourceModelsDev},
+		{Value: value, Scheme: NomenSchemeProviderID, Status: AcceptabilityAdmitted, ResolvesTo: EntityRef{Family: "grok", Version: "1"}, Attestations: []NomenAttestation{{Source: DataSourceModelsDev}}},
+		{Value: value, Scheme: NomenSchemeProviderID, Status: AcceptabilityAdmitted, ResolvesTo: EntityRef{Family: "grok", Version: "2"}, Attestations: []NomenAttestation{{Source: DataSourceModelsDev}}},
+		{Value: value, Scheme: NomenSchemeProviderID, Status: AcceptabilityAdmitted, ResolvesTo: EntityRef{Family: "claude", Variant: "opus"}, Attestations: []NomenAttestation{{Source: DataSourceModelsDev}}},
 	}
 	if err := store.UpsertNomina(ctx, in); err != nil {
 		t.Fatalf("UpsertNomina: %v", err)
@@ -252,7 +304,7 @@ func TestStoreV7_NominaForeignKeyEnforced(t *testing.T) {
 	// seed), so the source_id FK must reject the write.
 	orphan := []Nomen{{
 		Value: "grok-beta", Scheme: NomenSchemeAlias, Status: AcceptabilityAdmitted,
-		ResolvesTo: ref, SourceURL: "https://docs.x.ai/docs/models", Source: DataSourceID("no-such-source"),
+		ResolvesTo: ref, Attestations: []NomenAttestation{{SourceURL: "https://docs.x.ai/docs/models", Source: DataSourceID("no-such-source")}},
 	}}
 	err := store.UpsertNomina(ctx, orphan)
 	if err == nil {
@@ -276,7 +328,7 @@ func TestStoreV7_NominaForeignKeyEnforced(t *testing.T) {
 	seedModelsDevSource(t, store)
 	valid := []Nomen{{
 		Value: "grok-beta", Scheme: NomenSchemeAlias, Status: AcceptabilityAdmitted,
-		ResolvesTo: ref, SourceURL: "https://docs.x.ai/docs/models", Source: DataSourceModelsDev,
+		ResolvesTo: ref, Attestations: []NomenAttestation{{SourceURL: "https://docs.x.ai/docs/models", Source: DataSourceModelsDev}},
 	}}
 	if err := store.UpsertNomina(ctx, valid); err != nil {
 		t.Fatalf("valid nomina insert (registered source) was rejected: %v", err)

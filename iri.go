@@ -29,42 +29,65 @@ func mintIRI(base, canonical string) string {
 	return base + escapeIRISegment(canonical)
 }
 
-// escapeIRISegment percent-encodes a canonical identity string so it occupies exactly
-// ONE path segment of an IRI.
+// escapeIRISegment percent-encodes a canonical identity string for use as the path
+// TAIL of an IRI, keeping '/' LITERAL so the key renders as a MULTI-SEGMENT path.
 //
-// Escaping variant, and why: url.PathEscape is the PATH-SEGMENT escaper (the IRI's
-// actual context here) — it encodes '/', '#', '{', '}', '[', ']' and every other
-// character that is not legal inside a segment, and, crucially, it leaves a space as
-// "%20". url.QueryEscape is the wrong tool despite encoding more: it renders a space as
-// '+', which is a query-string convention that does NOT decode back through
-// url.PathUnescape, so it would silently break the round-trip fence in a path position.
+// RQ1 amendment (v0.2.8): this is a DELIBERATE output change from the v0.2.7 behavior,
+// which percent-encoded '/' as "%2F" and packed the whole key into one opaque segment.
+// The key grammar's '/' (family/variant) is now emitted as a real path boundary so an
+// entity IRI is a walkable path — e.g. base + "llama/scout%404" rather than base +
+// "llama%2Fscout%404". This is the SAME grammar the cmd/bestiary-web /entity/<key>
+// routes dereference: the mint and the route share one grammar, so EntityRef.IRI(root)
+// equals the route path for the same entity (pinned by TestEntityRef_IRI_MatchesRoute).
+// Every OTHER structural delimiter — '@', '#', '{', '}', and the ref-level '[', ']' —
+// is still percent-encoded so it can never be misread as IRI structure; '#' matters
+// most (left raw it would start a URI fragment and silently truncate the identifier).
 //
-// PathEscape alone is not sufficient, though: '@' is a legal pchar (it is the userinfo
-// delimiter only in an authority), so PathEscape leaves it raw — while the canonical
-// grammar uses '@' as the version/date delimiter. It is therefore encoded explicitly
-// afterwards. The replacement is safe and cannot double-encode: PathEscape has already
-// converted every '%' in the input to "%25", so the only literal '@' bytes remaining in
-// its output are the ones that came from the input.
+// Mechanism: split on '/', escape each segment with the per-segment escaper
+// (url.PathEscape + explicit '@'→"%40"), then rejoin with a LITERAL '/'. Within a
+// segment the output is byte-identical to the pre-amendment escaper; only the segment
+// separator changes from "%2F" to "/". Two facts make this correct:
 //
-// The result decodes back byte-identically through url.PathUnescape — the round-trip
-// fence (iri_test.go) asserts exactly that over a torture set and over the whole
-// committed registry. The space rationale above is not merely defensive prose: no key
-// the grammar produces today contains a space, so the torture set carries a SYNTHETIC
-// space-bearing case whose only job is to pin this escaper choice
-// (TestIRI_SpacePinsEscaperChoice reddens if this line becomes url.QueryEscape).
+//   - Escaping variant: url.PathEscape is the PATH-SEGMENT escaper — it encodes '#',
+//     '{', '}', '[', ']' and every other non-segment character and, crucially, leaves a
+//     space as "%20". url.QueryEscape is the wrong tool despite encoding more: it renders
+//     a space as '+', a query-string convention that does NOT decode back through
+//     url.PathUnescape, so it would silently break the round-trip fence. PathEscape alone
+//     is not sufficient, though: '@' is a legal pchar (userinfo delimiter only in an
+//     authority) so PathEscape leaves it raw, while the grammar uses '@' as the
+//     version/date delimiter — it is therefore encoded explicitly afterwards. That
+//     replacement cannot double-encode: PathEscape has already turned every '%' into
+//     "%25", so the only literal '@' bytes left are the ones from the input.
+//   - Round-trip: a whole-string url.PathUnescape still recovers the key byte-identically
+//     because a literal '/' passes through unchanged and every "%40"/"%23"/"%7B"/"%7D"/
+//     "%5B"/"%5D" decodes back. The round-trip fences (iri_test.go) assert exactly that
+//     over a torture set and the whole committed registry, and stay green under this
+//     change — only the two golden-string assertions were re-pinned for the literal '/'.
+//
+// The space rationale above is not merely defensive prose: no key the grammar produces
+// today contains a space, so the torture set carries a SYNTHETIC space-bearing case whose
+// only job is to pin this escaper choice (TestIRI_SpacePinsEscaperChoice reddens if this
+// line becomes url.QueryEscape).
 func escapeIRISegment(canonical string) string {
-	return strings.ReplaceAll(url.PathEscape(canonical), "@", "%40")
+	parts := strings.Split(canonical, "/")
+	for i, p := range parts {
+		parts[i] = strings.ReplaceAll(url.PathEscape(p), "@", "%40")
+	}
+	return strings.Join(parts, "/")
 }
 
 // IRI returns an IRI (RFC 3987) naming this ENTITY inside the caller-supplied base
 // namespace: base + the percent-encoded entity key.
 //
 // The entity key (EntityRef.String(), e.g. "llama/scout@4#17b-16e{instruct}") is the
-// identity; this method only renders it as a dereferenceable name. Every delimiter the
-// key grammar produces — '/', '@', '#', '{', '}' — is percent-encoded, so the key can
-// never be misread as IRI structure. '#' matters most: left raw it would start a URI
-// FRAGMENT, silently truncating the identifier at the parameter-size segment
-// ("…/llama#17b" would name the entity "llama" with a fragment).
+// identity; this method only renders it as a dereferenceable name. Every structural
+// delimiter the key grammar produces EXCEPT '/' — '@', '#', '{', '}' — is
+// percent-encoded, so it can never be misread as IRI structure. '#' matters most: left
+// raw it would start a URI FRAGMENT, silently truncating the identifier at the
+// parameter-size segment ("…/llama#17b" would name the entity "llama" with a fragment).
+// The '/' is kept LITERAL by design (RQ1 amendment, see escapeIRISegment) so the key
+// renders as a multi-segment path that the cmd/bestiary-web /entity/<key> routes
+// dereference under the same grammar.
 //
 // base is a parameter by design (see mintIRI) and is used verbatim: no separator is
 // inserted and no trailing slash is required, so a hash namespace
@@ -72,7 +95,7 @@ func escapeIRISegment(canonical string) string {
 //
 //	EntityRef{Family: "llama", Variant: "scout", Version: "4", ParamSize: "17b-16e",
 //	          Modifier: []string{"instruct"}}.IRI("https://w3id.org/bestiary/entity/")
-//	  → "https://w3id.org/bestiary/entity/llama%2Fscout%404%2317b-16e%7Binstruct%7D"
+//	  → "https://w3id.org/bestiary/entity/llama/scout%404%2317b-16e%7Binstruct%7D"
 func (r EntityRef) IRI(base string) string {
 	return mintIRI(base, r.String())
 }

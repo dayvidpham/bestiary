@@ -1,0 +1,39 @@
+{{define "entity-rows" -}}
+<table class="browse">
+  <thead>
+    <tr>
+      <th>entity</th>
+      <th>family</th>
+      <th>creator</th>
+      <th class="num">providers</th>
+      <th>region</th>
+      <th>modality</th>
+      <th>vram</th>
+      <th class="num">price /1M</th>
+    </tr>
+  </thead>
+  <tbody>
+    {{range .}}
+    <tr>
+      <td class="mono"><a href="{{.Path}}">{{.Key}}</a></td>
+      <td>{{if .Family}}{{.Family}}{{else}}<span class="muted">—</span>{{end}}</td>
+      <td>{{if .Creator}}{{.Creator}}{{else}}<span class="muted">—</span>{{end}}</td>
+      <td class="num">{{.ProviderCount}}</td>
+      <td class="mono">{{range $i, $r := .Regions}}{{if $i}}, {{end}}{{$r}}{{else}}<span class="muted">—</span>{{end}}</td>
+      <td>{{range .Modalities}}<span class="badge info">{{.}}</span> {{else}}<span class="muted">—</span>{{end}}</td>
+      <td>
+        {{if .VRAMBytes -}}
+        <span class="vram-cell">
+          <span class="vram-bar{{if .VRAMPartial}} partial{{end}}" style="width:{{.VRAMFrac}}%"></span>
+          <span class="num">{{.VRAMLabel}}</span>{{if .VRAMPartial}} <span class="badge warn" title="weights-only lower bound: KV-cache term omitted (architecture facts absent)">partial</span>{{end}}
+        </span>
+        {{- else}}<span class="muted">—</span>{{end}}
+      </td>
+      <td class="num">{{.PriceLabel}}</td>
+    </tr>
+    {{else}}
+    <tr><td colspan="8" class="muted">no entities match the current filters.</td></tr>
+    {{end}}
+  </tbody>
+</table>
+{{- end}}

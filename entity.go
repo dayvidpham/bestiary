@@ -58,6 +58,22 @@ type QuantVRAM struct {
 	// VRAMBytes because at least one of Layers, KVHeads, or HeadDim is zero.
 	// Callers must check this flag before treating VRAMBytes as a full estimate.
 	VRAMEstimatePartial bool
+	// OCIDigest is the "sha256:<hex>" content-addressed manifest digest of this
+	// quantization's Ollama-registry artifact — the value that makes a `pkg:oci`
+	// purl (OCIPurl) uniquely identify the artifact. "" when absent (the digest is a
+	// FETCH-OWNED field, captured by the offline cmd/bestiary-ollama refresh; it is
+	// empty for every curated row until the next deliberate refresh harvests it).
+	OCIDigest string
+}
+
+// OCIPurl renders this quantization's purl-spec `pkg:oci` package URL, passing the
+// row's own OCIDigest as the content-addressed version. It returns "" when OCIDigest
+// is empty — an OCI purl is never minted without a digest (the digest is what makes
+// it identify an artifact). name is the repository name (the last fragment is
+// lowercased per spec); tag and registry become the optional repository_url/tag
+// qualifiers when non-empty. See formatOCIPurl (oci.go) for the full render contract.
+func (q QuantVRAM) OCIPurl(name, tag, registry string) string {
+	return formatOCIPurl(name, q.OCIDigest, tag, registry)
 }
 
 // EntityRef is the canonical IDENTITY of a model entity — the tuple that
@@ -261,6 +277,18 @@ type Entity struct {
 	// EntityMetadata was joined to this identity. When present it is owned by the
 	// Entity value and is deep-copied on read alongside the other entity fields.
 	Metadata *EntityMetadata
+	// Creator is the lab / organization that TRAINED this entity's models (the SPDX
+	// originator), DISTINCT from the Providers that host it (the SPDX suppliers). It
+	// is a DERIVED JOIN PROJECTION — the Entity.Sources / Entity.Regions precedent —
+	// computed in loadEntityIndex from Ref.Family via the curated creators.json seed
+	// (Family.Creator), NOT a stored column (Family → Creator is a function, so a
+	// per-entity column would be a transitive dependency / BCNF violation). All
+	// instances of an entity share its Family, so one value covers the whole entity.
+	// CreatorNone (empty string) when the family has no curated mapping; it stays out
+	// of EntityRef (never re-keys the entity). It is nil-free (a value type), so a
+	// hand-constructed Entity that never went through the registry simply carries
+	// CreatorNone until projected.
+	Creator Creator
 }
 
 // Entities returns every model entity in the static registry, each with its

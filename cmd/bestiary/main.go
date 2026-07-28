@@ -150,20 +150,35 @@ func run(args []string) error {
 		return err
 	}
 
+	// outputExplicit records whether the user actually passed --output, so the entity
+	// views can pick a human-readable default (table) while still honouring an explicit
+	// --output=json. The --output flag defaults to "json" for the model-oriented
+	// commands; the entity views (show --by-entity and the plain-show entity fallback)
+	// override that default to table only when the user left it unset. This mirrors the
+	// flagWasSet discipline the series command uses for --db-path/--version.
+	outputExplicit := flagWasSet(fs, "output")
+
 	switch cmd {
 	case "list":
 		return runList(*provider, bestiary.OutputFormat(*output), *dbPath, *status)
 	case "show":
 		if *byEntity {
 			if fs.NArg() < 1 {
-				return fmt.Errorf("usage: bestiary show --by-entity <model-id | family[/variant][/version|@version]{identity-mods}> [--output=<json|table>]")
+				return fmt.Errorf("usage: bestiary show --by-entity <model-id | family[/variant][/version|@version]{identity-mods}> [--output=<json|table>] (default: table)")
 			}
-			return runShowEntity(fs.Arg(0), bestiary.OutputFormat(*output), *quant, *dbPath)
+			// Human-readable default: the aggregate entity view renders as a table
+			// unless the user explicitly asked for --output=json.
+			entityFormat := bestiary.OutputFormat(*output)
+			if !outputExplicit {
+				entityFormat = bestiary.FormatTable
+			}
+			return runShowEntity(fs.Arg(0), entityFormat, *quant, *dbPath)
 		}
 		if fs.NArg() < 1 {
-			return fmt.Errorf("usage: bestiary show <model-id> [--format=<peasant|huggingface|hf|purl|raw>] [--output=<json|yaml|table>] [flags]")
+			return fmt.Errorf("usage: bestiary show <model-id | entity-key> [--format=<peasant|huggingface|hf|purl|raw>] [--output=<json|yaml|table>] [flags]\n" +
+				"  an entity-key input (e.g. llama@3.3#70b{instruct}) that is not a model id renders the entity view (default: table)")
 		}
-		return runShow(fs.Arg(0), bestiary.OutputFormat(*output), *dbPath, *inputFormat, *scheme)
+		return runShow(fs.Arg(0), bestiary.OutputFormat(*output), *dbPath, *inputFormat, *scheme, outputExplicit)
 	case "providers":
 		if fs.NArg() < 1 {
 			return fmt.Errorf("usage: bestiary providers <family>[/<variant>][/<version>|@<version>]{identity-mods} [--output=<json|table>]\n" +
@@ -217,7 +232,16 @@ func run(args []string) error {
 				"or drop the flag to list every line",
 				*seriesInput)
 		}
-		return runSeries(fs.Arg(0), bestiary.OutputFormat(*output), *provider, *quant, *status, *seriesVersion, *seriesInput)
+		// Human-readable default: like `show --by-entity`, `series` renders a table
+		// unless the user explicitly passed --output=json. `series` is the disambiguation
+		// path the ambiguity guidance recommends ("browse the family: bestiary series
+		// <family>"), so a raw-JSON default there would walk the user straight back into
+		// the non-human-readable wall that motivated the human-readable default.
+		seriesFormat := bestiary.OutputFormat(*output)
+		if !outputExplicit {
+			seriesFormat = bestiary.FormatTable
+		}
+		return runSeries(fs.Arg(0), seriesFormat, *provider, *quant, *status, *seriesVersion, *seriesInput)
 	case "sources":
 		// --history and --export are catalog-wide ingest-log views; they take no
 		// entity positional. The default sources view still requires an entity key.
@@ -437,7 +461,60 @@ func filterModelsByStatus(models []bestiary.ModelInfo, want bestiary.ModelStatus
 //
 // inputFormatFlag: value of --format flag (peasant/huggingface/hf/purl/raw).
 // schemeFlag: value of deprecated --scheme flag; used only when inputFormatFlag is "peasant" (default).
-func runShow(input string, format bestiary.OutputFormat, dbPath string, inputFormatFlag string, schemeFlag string) error {
+// wantsOCIScheme reports whether the show flags select the OCI external-identifier
+// scheme, honoring the same --format-over-legacy--scheme precedence runShow's
+// resolve path uses: an explicit non-default --format wins, else the deprecated
+// --scheme is consulted. A malformed flag value is left for the resolve path to
+// reject with its own actionable parse error, so this returns false (not OCI) on a
+// parse failure rather than swallowing the input.
+func wantsOCIScheme(inputFormatFlag, schemeFlag string) bool {
+	if inputFormatFlag != "" && inputFormatFlag != "peasant" {
+		f, err := bestiary.ParseInputFormat(inputFormatFlag)
+		return err == nil && f == bestiary.InputFormatOCI
+	}
+	if schemeFlag != "" {
+		s, err := bestiary.ParseScheme(schemeFlag)
+		return err == nil && s == bestiary.SchemeOCI
+	}
+	return false
+}
+
+// ociSchemeNotice is the actionable stderr message printed when `show` is asked for
+// the OCI scheme (--format=oci / --scheme=oci) on a model or entity ref. OCI
+// identity lives one altitude below a ref — at the per-quantization manifest digest
+// — so a ref has no single OCI render; this explains WHY the result is empty and
+// directs the user to the quant-level view that DOES carry OCI purls. It covers the
+// two situations that both surface as empty: a bare ref that structurally has no
+// digest, and an entity whose quant rows simply have no digest captured yet.
+func ociSchemeNotice(input string) string {
+	return fmt.Sprintf(
+		errPrefix+"the `oci` scheme has no render at the model/ref altitude, so %q produces no output.\n"+
+			errPrefix+"why: a pkg:oci identity is content-addressed by a per-quantization manifest digest\n"+
+			errPrefix+"  (QuantVRAM.OCIDigest); a bare ref carries no single digest, so ModelRef.Format(oci)\n"+
+			errPrefix+"  is \"\" by design. Two cases look the same here:\n"+
+			errPrefix+"  (1) a bare ref has no digest at all — OCI identity lives on the quantization row, not the ref;\n"+
+			errPrefix+"  (2) an entity's quant rows have no digest captured yet — digests land with the next\n"+
+			errPrefix+"      offline `bestiary-ollama` refresh.\n"+
+			errPrefix+"how to fix: use the quant-level view, e.g. `bestiary show --by-entity --output=json %s`,\n"+
+			errPrefix+"  and read each instance's QuantVRAM.OCIDigest and the entity's oci/huggingface Nomina\n"+
+			errPrefix+"  (with their attestations).\n",
+		input, input,
+	)
+}
+
+func runShow(input string, format bestiary.OutputFormat, dbPath string, inputFormatFlag string, schemeFlag string, outputExplicit bool) error {
+	// The `oci` scheme has no rendering at the model/ref altitude: a pkg:oci identity
+	// is content-addressed by a per-quantization manifest digest, so ModelRef.Format(
+	// SchemeOCI) is "" BY DESIGN. Requesting it here would otherwise resolve to a
+	// confusing empty/"not found". Short-circuit with an actionable explanation on
+	// stderr and an empty stdout — this is an explained empty, not a failure, so it
+	// returns nil (exit 0), matching the embeddedFallbackNotice / drift-warning
+	// house convention for informational stderr notices.
+	if wantsOCIScheme(inputFormatFlag, schemeFlag) {
+		fmt.Fprint(os.Stderr, ociSchemeNotice(input))
+		return nil
+	}
+
 	// Build Resolve options from flags.
 	// --format takes precedence. If --format is explicitly non-peasant, use it.
 	// If --format is "peasant" (default) and --scheme is set, honour legacy --scheme.
@@ -468,9 +545,47 @@ func runShow(input string, format bestiary.OutputFormat, dbPath string, inputFor
 		if errors.As(resolveErr, &ambig) {
 			// Print a candidate table to stderr; do not pollute stdout.
 			bestiary.FormatAmbiguous(os.Stderr, ambig)
-			return fmt.Errorf("ambiguous input %q matched %d canonicals — use --format=raw or refine to a more specific canonical form", input, len(ambig.Candidates))
+			// Derive a concrete, copy-pasteable refinement from the FIRST candidate (the
+			// deterministic-order representative) and the family to browse, so the
+			// guidance names a REAL next command instead of the abstract "refine your
+			// input". Both fall back to the raw input if the candidate list is somehow
+			// empty (defensive: ErrAmbiguous always carries candidates).
+			//
+			// The example is the candidate's ENTITY KEY (EntityRef.String(), e.g.
+			// "llama@3.3#70b{instruct}") shown via `show --by-entity`. This resolves BY
+			// CONSTRUCTION: the entity view renders an entity key directly, without the
+			// model-first resolution that produced this very ambiguity, so a candidate's
+			// own key always renders. A plain `show <key>` would re-enter model
+			// resolution and could re-ambiguate for a high-fanout entity (e.g. gpt/4o,
+			// whose key names 20 date-differentiated model rows) — hence --by-entity,
+			// which is exactly the grammar that path accepts.
+			example := input
+			family := input
+			if len(ambig.Candidates) > 0 {
+				if k := entityRefForRef(ambig.Candidates[0]).String(); k != "" {
+					example = k
+				}
+				if f := string(ambig.Candidates[0].Family); f != "" {
+					family = f
+				}
+			}
+			return fmt.Errorf(
+				"%q is under-specified: it matched %d distinct models (they differ by variant, version, or size), so `show` cannot pick one.\n"+
+					"  The matching candidates are listed above. To narrow it:\n"+
+					"    - show one directly:   bestiary show --by-entity %s\n"+
+					"    - browse the family:   bestiary series %s\n"+
+					"    - use an exact API id: bestiary show <raw-id> --format=raw",
+				input, len(ambig.Candidates), example, family,
+			)
 		}
-		// ErrNotFound or other errors pass through directly.
+		// The model resolver could not parse/resolve the input. Before surfacing the
+		// error, try the entity fallback: an entity-key input (a grammar the model
+		// resolver rejects — e.g. one carrying #size or {identity-mods}) resolves as an
+		// entity here. Model resolution stays FIRST, so this never shadows a real model.
+		if handled, ferr := showEntityFallback(input, format, dbPath, outputExplicit); handled {
+			return ferr
+		}
+		// Not a model and not an entity — surface the original resolver error.
 		return resolveErr
 	}
 
@@ -534,9 +649,52 @@ func runShow(input string, format bestiary.OutputFormat, dbPath string, inputFor
 	}
 
 	if !found {
+		// Resolve produced refs but no ModelInfo backs them (registry/cache miss).
+		// The same entity-key fallback applies: the input may be an entity identity
+		// rather than a concrete model row.
+		if handled, ferr := showEntityFallback(input, format, dbPath, outputExplicit); handled {
+			return ferr
+		}
 		return &bestiary.ErrNotFound{What: "model", Key: input}
 	}
 	return bestiary.FormatModel(os.Stdout, best, format)
+}
+
+// showEntityFallback renders the aggregate entity view for input when input is an
+// entity key rather than a concrete model id. It is the plain-`show` fallback F2
+// adds: `show` resolves a MODEL first, and only when that misses does this attempt
+// an entity-identity resolution over the store-overlaid entity set (the SAME path
+// `show --by-entity` uses, so synced metadata and standalones surface identically).
+//
+// handled reports whether the input resolved as an entity: false means "not an
+// entity either" and the caller should surface its original model-not-found error;
+// true means the entity view was rendered (err carries any render/validation error).
+//
+// Output format honours F5's human-readable default: when the user did not pass an
+// explicit --output (outputExplicit == false) the view renders as a table; an
+// explicit --output=json is respected. validateEntityOutput rejects a format the
+// entity view cannot render (e.g. yaml) with the same actionable error the
+// --by-entity path raises.
+func showEntityFallback(input string, format bestiary.OutputFormat, dbPath string, outputExplicit bool) (handled bool, err error) {
+	store := openViewStore(dbPath)
+	if store != nil {
+		defer store.Close()
+	}
+	ent, ok := findEntityInSet(overlayEntities(store), input)
+	if !ok {
+		return false, nil
+	}
+	if !outputExplicit {
+		format = bestiary.FormatTable
+	}
+	if verr := validateEntityOutput(format); verr != nil {
+		return true, verr
+	}
+	if format == bestiary.FormatJSON {
+		return true, writeJSON(os.Stdout, withNomina(ent))
+	}
+	writeEntityView(os.Stdout, ent)
+	return true, nil
 }
 
 // parseEntityTuple parses an entity identity tuple of the canonical form
@@ -743,6 +901,22 @@ func entityRefForModel(m bestiary.ModelInfo) bestiary.EntityRef {
 		Version:   m.Version,
 		ParamSize: m.ParamSize,
 		Modifier:  bestiary.EntityModifiers(m.Modifier, m.Family),
+	}
+}
+
+// entityRefForRef is the ModelRef analogue of entityRefForModel: it projects a
+// resolver candidate (ErrAmbiguous.Candidates carries ModelRefs, not ModelInfos)
+// onto its identity EntityRef via the same identity-class modifier projection.
+// The derived key names the entity the candidate belongs to, so the ambiguity
+// guidance can point `show --by-entity` at a key guaranteed to be in the
+// registry's entity set.
+func entityRefForRef(r bestiary.ModelRef) bestiary.EntityRef {
+	return bestiary.EntityRef{
+		Family:    r.Family,
+		Variant:   r.Variant,
+		Version:   r.Version,
+		ParamSize: r.ParamSize,
+		Modifier:  bestiary.EntityModifiers(r.Modifier, r.Family),
 	}
 }
 
@@ -2247,8 +2421,9 @@ func writeInstanceTableWithStatus(w io.Writer, insts []bestiary.ProviderInstance
 	}
 
 	fmt.Fprintf(w, "Instances (%d):\n", len(insts))
-	header := fmt.Sprintf("  %-40s %-22s %-12s %12s %12s %10s %10s",
-		"ID", "PROVIDER", "HOST", "IN/MTok", "OUT/MTok", "CONTEXT", "MAXOUT")
+	header := fmt.Sprintf("  %-*s %-*s %-*s %12s %12s %10s %10s",
+		instanceIDColWidth, "ID", instanceProviderColWidth, "PROVIDER",
+		instanceHostColWidth, "HOST", "IN/MTok", "OUT/MTok", "CONTEXT", "MAXOUT")
 	if showStatus {
 		header += fmt.Sprintf(" %-12s", "STATUS")
 	}
@@ -2256,9 +2431,31 @@ func writeInstanceTableWithStatus(w io.Writer, insts []bestiary.ProviderInstance
 		header += fmt.Sprintf(" %-12s", "STAGE")
 	}
 	fmt.Fprintln(w, header)
-	for i, in := range insts {
-		row := fmt.Sprintf("  %-40s %-22s %-12s %12s %12s %10d %10d",
-			string(in.ID), string(in.Provider), fmtHost(in.Host),
+
+	// Cap the rendered rows: a heavily-multi-provider entity (dozens of rehosts,
+	// each possibly carrying an inline quant sub-table) would otherwise render a
+	// wall of output. The header still reports the true total; --output json is the
+	// escape hatch for the full set. Mirrors nominaTableLimit / benchmarkTableLimit,
+	// but sits higher because the instance table is the entity view's PRIMARY
+	// content, not a secondary sub-table.
+	shown := insts
+	overflow := 0
+	if len(insts) > instanceTableLimit {
+		overflow = len(insts) - instanceTableLimit
+		shown = insts[:instanceTableLimit]
+	}
+	for i, in := range shown {
+		// Truncate the free-text ID/PROVIDER/HOST cells to their column widths so a
+		// long value (e.g. the 24-char "azure-cognitive-services" provider slug) can
+		// no longer overrun its column and shove every numeric column out of vertical
+		// alignment. truncateCell keeps the cell exactly its width (ellipsis tail),
+		// matching the benchmark NAME column's existing convention.
+		idCell, _ := truncateCell(string(in.ID), instanceIDColWidth)
+		provCell, _ := truncateCell(string(in.Provider), instanceProviderColWidth)
+		hostCell, _ := truncateCell(fmtHost(in.Host), instanceHostColWidth)
+		row := fmt.Sprintf("  %-*s %-*s %-*s %12s %12s %10d %10d",
+			instanceIDColWidth, idCell, instanceProviderColWidth, provCell,
+			instanceHostColWidth, hostCell,
 			fmtPrice(in.CostInputPerMTok), fmtPrice(in.CostOutputPerMTok),
 			in.ContextWindow, in.MaxOutput)
 		if showStatus {
@@ -2277,6 +2474,9 @@ func writeInstanceTableWithStatus(w io.Writer, insts []bestiary.ProviderInstance
 		}
 		fmt.Fprintln(w, row)
 		writeQuantRows(w, in.QuantVRAM)
+	}
+	if overflow > 0 {
+		fmt.Fprintf(w, "  … and %d more (use --output json)\n", overflow)
 	}
 }
 
@@ -2368,6 +2568,11 @@ func writeEntityView(w io.Writer, e bestiary.Entity) {
 	fmt.Fprintf(w, "  Variant:       %s\n", orDash(e.Ref.Variant))
 	fmt.Fprintf(w, "  Version:       %s\n", orDash(e.Ref.Version))
 	fmt.Fprintf(w, "  Identity-mods: %s\n", orDash(strings.Join(e.Ref.Modifier, ",")))
+	// Creator is the lab/org that TRAINED the weights (SPDX "originator"), a derived
+	// Family→Creator projection distinct from the Providers (SPDX suppliers) listed
+	// below. CreatorNone (unmapped family) renders "-" — an honest blank, never a
+	// guessed "unknown".
+	fmt.Fprintf(w, "  Creator:       %s\n", orDash(string(e.Creator)))
 
 	providers := make([]string, len(e.Providers))
 	for i, p := range e.Providers {
@@ -2399,6 +2604,89 @@ func writeEntityView(w io.Writer, e bestiary.Entity) {
 	}
 
 	writeInstanceTable(w, e.Instances)
+
+	writeNominaTable(w, e.Nomina())
+}
+
+// Instance-table column widths. The three free-text leading columns (ID,
+// PROVIDER, HOST) are truncated to these widths so a long value cannot overrun
+// its column and knock the numeric columns out of vertical alignment. The header
+// verbs use the SAME widths, so labels and cells line up exactly.
+const (
+	instanceIDColWidth       = 40
+	instanceProviderColWidth = 22
+	instanceHostColWidth     = 12
+)
+
+// instanceTableLimit is the maximum number of provider instances the TABLE view
+// renders before truncating with a "… and N more (use --output json)" footer —
+// the same convention as nominaTableLimit / benchmarkTableLimit. It sits higher
+// than those (which are secondary sub-tables) because the instance table is the
+// entity view's PRIMARY content: the cap only trims the most extreme
+// multi-provider walls (e.g. the 28-instance llama@3.3#70b{instruct}) while
+// leaving typical entities rendered in full. JSON output always carries every
+// instance.
+const instanceTableLimit = 20
+
+// nominaTableLimit is the maximum number of nomina the TABLE view renders in full
+// (header line + attestation sub-table) before truncating with a "… and N more"
+// footer — the same truncation convention writeBenchmarkTable uses
+// (benchmarkTableLimit), for the same reason: a heavily-hosted entity's Nomina
+// section is otherwise uncapped and can run to ~50 lines (e.g. 14 nomina, one
+// attestation sub-table apiece, on llama@3.3#70b{instruct} — one of the catalog's
+// most-attested entities). The JSON output always carries every nomen; the table
+// is capped for readability.
+const nominaTableLimit = 5
+
+// writeNominaTable renders the entity's derived naming layer: each Nomen (a
+// (Value, Scheme, Status) recorded naming) followed by its attestation set —
+// the per-name provenance a name HAS-MANY of. A same-triple name attested by two
+// distinct sources coalesces to ONE Nomen carrying BOTH attestations, so this view
+// is where a dually-attested name (e.g. a curated claim + an HF-bot harvest of the
+// same huggingface-scheme repo) shows its two legs (Source/Authority/Method) at
+// once — the CLI-observable form of the dual-attestation visibility guarantee
+// (a name attested by multiple sources shows every attestation). Nothing
+// prints when the entity has no nomina. Nomina and each nomen's Attestations
+// arrive deterministically sorted from the projection; this formatter does not re-sort
+// that incoming order, EXCEPT for the display-only truncation reorder below.
+func writeNominaTable(w io.Writer, nomina []bestiary.Nomen) {
+	if len(nomina) == 0 {
+		return
+	}
+	fmt.Fprintf(w, "Nomina (%d):\n", len(nomina))
+	// Multiply-attested nomina (the dual-attestation visibility guarantee's dual
+	// curated+huggingface leg) must survive the cap below, so they sort FIRST
+	// via a stable sort on attestation count before truncating — otherwise a name that merely sorts
+	// earlier by Value (single attestation) could push a dually-attested name
+	// past nominaTableLimit and hide a leg. Ties preserve the incoming
+	// (Value, Scheme, entity key) order from the projection (sortNomina/
+	// lessNomen). This is a LOCAL COPY reorder for display only: it never
+	// touches the caller's `nomina` slice, so the JSON output (which reads
+	// the entity's untouched Nomina() projection) keeps its original order.
+	shown := append([]bestiary.Nomen(nil), nomina...)
+	sort.SliceStable(shown, func(i, j int) bool {
+		return len(shown[i].Attestations) > len(shown[j].Attestations)
+	})
+	if len(shown) > nominaTableLimit {
+		shown = shown[:nominaTableLimit]
+	}
+	for _, n := range shown {
+		fmt.Fprintf(w, "  %s  (%s, %s)\n", n.Value, n.Scheme.String(), n.Status.String())
+		// Each attestation is one independent piece of evidence for this naming:
+		// WHICH ingest we read it from (Source), whose VOICE the document is
+		// (Authority), HOW it entered (Method), and WHO asserts it (SourceURL, a
+		// dash when self-minted with no claimant URL).
+		fmt.Fprintf(w, "      %-12s %-10s %-12s %s\n",
+			"SOURCE", "AUTHORITY", "METHOD", "SOURCE-URL")
+		for _, at := range n.Attestations {
+			fmt.Fprintf(w, "      %-12s %-10s %-12s %s\n",
+				orDash(string(at.Source)), at.Authority.String(),
+				at.Method.String(), orDash(at.SourceURL))
+		}
+	}
+	if len(nomina) > nominaTableLimit {
+		fmt.Fprintf(w, "  … and %d more (use --output json)\n", len(nomina)-nominaTableLimit)
+	}
 }
 
 // writeEntityMetadata renders the models.dev entity metadata (provider-agnostic
@@ -2663,9 +2951,31 @@ func runSyncClient(client *bestiary.Client, provider string, format bestiary.Out
 			ParserSchema: modelsDevParserSchema,
 		}
 	}
+	// Also register the huggingface DataSource: the nomina persisted below include
+	// HARVESTED HuggingFace nomina (the embedded huggingface_nomina.json seed, folded
+	// by MintNominaFromModels) whose Source is DataSourceHuggingFace. The
+	// nomina.source_id foreign key references data_sources, so this dimension row MUST
+	// exist before UpsertNomina. Its committed ingest timestamp comes from the seed
+	// (the offline cmd/bestiary-hf run's snapshot, not this sync's wall-clock).
+	hfDS, ok := bestiary.DataSourceByID(bestiary.DataSourceHuggingFace)
+	if !ok {
+		hfDS = bestiary.DataSource{
+			ID:            bestiary.DataSourceHuggingFace,
+			URI:           "https://huggingface.co/api/models",
+			CanonicalName: "HuggingFace Hub",
+		}
+	}
+	hfIngest, ok := bestiary.DatasetIngestedFor(bestiary.DataSourceHuggingFace)
+	if !ok {
+		hfIngest = bestiary.DatasetIngested{
+			SourceID:     bestiary.DataSourceHuggingFace,
+			IngestedAt:   now,
+			ParserSchema: modelsDevParserSchema,
+		}
+	}
 	if err := store.UpsertDataSources(ctx,
-		[]bestiary.DataSource{ds, curatedDS},
-		[]bestiary.DatasetIngested{ingest, curatedIngest}); err != nil {
+		[]bestiary.DataSource{ds, curatedDS, hfDS},
+		[]bestiary.DatasetIngested{ingest, curatedIngest, hfIngest}); err != nil {
 		return fmt.Errorf("sync: persist data source + ingest row: %w", err)
 	}
 
@@ -2689,6 +2999,14 @@ func runSyncClient(client *bestiary.Client, provider string, format bestiary.Out
 	// models.dev DataSource written above.
 	if err := store.UpsertNomina(ctx, bestiary.MintNominaFromModels(fetched)); err != nil {
 		return fmt.Errorf("sync: persist nomina: %w", err)
+	}
+
+	// Persist the creators BCNF dimension (v8) from the curated creators.json seed — the
+	// data_sources dimension-persistence precedent — so the cache is self-describing about
+	// Family → Creator without recompiling. It is derived from the same seed the baked
+	// static registry and the runtime Family.Creator projection use, so all three agree.
+	if err := store.UpsertCreators(ctx); err != nil {
+		return fmt.Errorf("sync: persist creators dimension: %w", err)
 	}
 
 	return bestiary.FormatModels(os.Stdout, fetched, format)

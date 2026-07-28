@@ -44,6 +44,12 @@ const (
 	// InputFormatRaw is the raw API model ID (exact match):
 	//   <raw-model-id>
 	InputFormatRaw InputFormat = "raw"
+
+	// InputFormatOCI is the purl-spec `pkg:oci` external-identifier form. It maps to
+	// SchemeOCI. OCI identity is per-quant-digest (QuantVRAM.OCIDigest), so a bare
+	// ModelRef has no OCI render — the format is recognized for scheme selection and
+	// JSON round-trip symmetry, but its ModelRef render is "" by design.
+	InputFormatOCI InputFormat = "oci"
 )
 
 // FormatModels writes a list of models to w in the specified format.
@@ -257,14 +263,27 @@ func formatModelYAML(w io.Writer, model ModelInfo) error {
 // --- Table ---
 
 // tableHeader is the format string for the header and separator rows (all %s args).
-const tableHeader = "%-40s  %-12s  %-16s  %9s  %9s  %6s  %5s  %12s\n"
-const tableRow = "%-40s  %-12s  %-16s  %9d  %9d  %6s  %5s  %12s\n"
+// The Creator column (the lab/originator that TRAINED the weights, SPDX "originator")
+// sits between Family and Context: it is a per-model identity fact distinct from the
+// Provider (the SPDX supplier/distributor) already shown to its left.
+const tableHeader = "%-40s  %-12s  %-16s  %-12s  %9s  %9s  %6s  %5s  %12s\n"
+const tableRow = "%-40s  %-12s  %-16s  %-12s  %9d  %9d  %6s  %5s  %12s\n"
 
 func costStr(p *float64) string {
 	if p == nil {
 		return "—"
 	}
 	return fmt.Sprintf("$%.2f", *p)
+}
+
+// creatorCol renders a Creator for a table cell, mapping CreatorNone (the empty
+// zero value) to a dash so a family with no curated creator mapping reads as an
+// honest blank — never an invented "unknown" label.
+func creatorCol(c Creator) string {
+	if c == CreatorNone {
+		return "-"
+	}
+	return string(c)
 }
 
 func boolCol(b bool) string {
@@ -276,12 +295,13 @@ func boolCol(b bool) string {
 
 func printTableHeader(w io.Writer) {
 	fmt.Fprintf(w, tableHeader,
-		"ID", "Provider", "Family", "Context", "MaxOutput", "Reason", "Tools", "CostIn/MTok",
+		"ID", "Provider", "Family", "Creator", "Context", "MaxOutput", "Reason", "Tools", "CostIn/MTok",
 	)
 	fmt.Fprintf(w, tableHeader,
 		strings.Repeat("-", 40),
 		strings.Repeat("-", 12),
 		strings.Repeat("-", 16),
+		strings.Repeat("-", 12),
 		strings.Repeat("-", 9),
 		strings.Repeat("-", 9),
 		strings.Repeat("-", 6),
@@ -295,6 +315,7 @@ func printTableModelRow(w io.Writer, m ModelInfo) {
 		string(m.ID),
 		string(m.Provider),
 		m.Family,
+		creatorCol(m.Creator),
 		m.ContextWindow,
 		m.MaxOutput,
 		boolCol(m.Reasoning),
@@ -330,16 +351,21 @@ const ambiguousMaxRehosts = 5
 // FormatAmbiguous writes a human-readable two-section disambiguation message for
 // e to w (typically os.Stderr).
 //
-// Output format:
+// Output format (no leading "bestiary: " prefix — the caller supplies the sole
+// one on its wrapped error; see the header comment in the body):
 //
-//	bestiary: input "<input>" matched multiple canonicals
+//	"<input>" matched several distinct models — candidates below:
 //	[no matches in namespace "..." — ... (when PURLMissedNamespace is set)]
 //
-//	* = canonical provider
+//	* = canonical provider      (only when Section 1 renders)
 //
-//	Canonical:
+//	Canonical:                  (Section 1 — only when canonical rows exist)
 //	* <canonical-form>
 //	... (up to 5 rows; "+N more" when >5)
+//
+//	Candidates:                 (Section 1' — only when NO canonical rows exist)
+//	  <entity-key>
+//	... (up to 5 rows; "… and N more" when >5)
 //
 //	Also rehosted by:           (omitted when RehostProviders is empty)
 //	  <provider-name>           (one per line, up to 5; "+N more" when >5)
@@ -347,11 +373,19 @@ const ambiguousMaxRehosts = 5
 //	  ...
 //
 //	To see all providers/variants: bestiary list   (or: bestiary list --provider <slug>)
-//	To resolve an exact model ID:  bestiary show <raw-id> --format=raw
+//
+// The exact-ID escape hatch (--format=raw) is intentionally NOT repeated here:
+// the CLI's wrapped ErrAmbiguous message (runShow, cmd/bestiary/main.go) already
+// carries that instruction as part of its narrowing list, immediately below this
+// output on stderr — one tip, one place, so the two blocks complement rather than
+// restate each other.
 //
 // Section 1 (Canonical) shows up to 5 representatives from Candidates where
 // the Provider is the canonical/originating provider for the family. Each row
-// is prefixed with "* " to visually mark the canonical origin.
+// is prefixed with "* " to visually mark the canonical origin. When NO candidate
+// has a canonical provider, Section 1' (Candidates) lists up to 5 candidate
+// entity keys instead, so the guidance's "candidates ... listed above" holds for
+// every family class rather than pointing at bare provider slugs.
 //
 // Section 2 (Also rehosted by) lists up to 5 distinct provider names taken
 // directly from ErrAmbiguous.RehostProviders. The section is omitted entirely
@@ -361,7 +395,13 @@ const ambiguousMaxRehosts = 5
 // this is advisory stderr output — a write failure should not mask the real
 // ErrAmbiguous that the caller surfaces to the user.
 func FormatAmbiguous(w io.Writer, e *ErrAmbiguous) {
-	fmt.Fprintf(w, "bestiary: input %q matched multiple canonicals\n", e.Input)
+	// No "bestiary: " prefix here: the caller (runShow) returns a single wrapped
+	// error that the CLI prints with the sole "bestiary: " preamble, so this
+	// advisory body must NOT open with a second one — two stacked "bestiary: "
+	// lines read as two separate failures for one error. This header cues the
+	// listing below without restating the distinct-model count the wrapped error
+	// already carries.
+	fmt.Fprintf(w, "%q matched several distinct models — candidates below:\n", e.Input)
 
 	// PURL missed-namespace note: keep at top, unchanged from Fix 2.
 	if e.PURLMissedNamespace != "" {
@@ -417,6 +457,48 @@ func FormatAmbiguous(w io.Writer, e *ErrAmbiguous) {
 		if canonicalOverflow > 0 {
 			fmt.Fprintf(w, "+%d more\n", canonicalOverflow)
 		}
+	} else {
+		// No canonical-provider rows (unmapped family, e.g. "llama": there is a
+		// canonical CREATOR — Meta — but no canonical provider). Without this section
+		// the only thing rendered above the wrapped error's "the matching candidates
+		// are listed above" would be the bare provider slugs of "Also rehosted by:",
+		// making that claim FALSE — a slug is not a candidate. List the candidate
+		// ENTITY forms directly (deduped by identity key) so "candidates" names actual
+		// model identities for every family class, not just canonical-mapped ones.
+		seenKey := make(map[string]struct{})
+		var candKeys []string
+		for _, c := range e.Candidates {
+			key := EntityRef{
+				Family:    c.Family,
+				Variant:   c.Variant,
+				Version:   c.Version,
+				ParamSize: c.ParamSize,
+				Modifier:  EntityModifiers(c.Modifier, c.Family),
+			}.String()
+			if key == "" {
+				continue
+			}
+			if _, dup := seenKey[key]; dup {
+				continue
+			}
+			seenKey[key] = struct{}{}
+			candKeys = append(candKeys, key)
+		}
+		if len(candKeys) > 0 {
+			fmt.Fprintf(w, "\nCandidates:\n")
+			displayKeys := candKeys
+			keyOverflow := 0
+			if len(candKeys) > ambiguousMaxCanonical {
+				keyOverflow = len(candKeys) - ambiguousMaxCanonical
+				displayKeys = candKeys[:ambiguousMaxCanonical]
+			}
+			for _, k := range displayKeys {
+				fmt.Fprintf(w, "  %s\n", k)
+			}
+			if keyOverflow > 0 {
+				fmt.Fprintf(w, "  … and %d more\n", keyOverflow)
+			}
+		}
 	}
 
 	// Section 2: Rehost provider names — up to ambiguousMaxRehosts.
@@ -438,7 +520,8 @@ func FormatAmbiguous(w io.Writer, e *ErrAmbiguous) {
 		}
 	}
 
-	// Footer: verified real commands only.
+	// Footer: verified real commands only. The --format=raw exact-ID tip lives
+	// solely in the CLI's wrapped ErrAmbiguous message (runShow), not here — see
+	// the FormatAmbiguous doc comment for why.
 	fmt.Fprintf(w, "\nTo see all providers/variants: bestiary list   (or: bestiary list --provider <slug>)\n")
-	fmt.Fprintf(w, "To resolve an exact model ID:  bestiary show <raw-id> --format=raw\n")
 }

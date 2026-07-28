@@ -208,6 +208,14 @@ func generateEntitiesConstantsSource(models []bestiary.ModelInfo, metadata []bes
 		return nil, fmt.Errorf("validate the beta-always-stage rule against the catalog: %w", err)
 	}
 	nomina := bestiary.MintNomina(entities)
+	// Fail loudly on a same-triple Status conflict BEFORE emitting: ValidateNomina is
+	// the LOUD codegen guard over the minted nomen set (the runtime degrades instead).
+	// A same-triple disagreement on Status is a curation error that must abort the bake
+	// rather than be silently collapsed by the store PK / last-write-wins. Differing
+	// attesters are legal (they union into a nomen's multi-attestation set).
+	if err := bestiary.ValidateNomina(nomina); err != nil {
+		return nil, fmt.Errorf("validate minted nomina: %w", err)
+	}
 	entries, err := buildEntityConstEntries(nomina, keySet)
 	if err != nil {
 		return nil, err

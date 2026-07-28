@@ -52,6 +52,25 @@ func TestParamSize1T_Corpus(t *testing.T) {
 	runEntityKeyCorpus(t, corpus)
 }
 
+// TestCurationRepairV028_Corpus pins the SERVED-entity outcomes of the v0.2.8 curation
+// slice's parse-failure repairs: the three deepseek dash-glued dot-lost ids (variant-pinned
+// via idFamilyOverrides so they merge onto the dotted deepseek/v3.1 and deepseek/v3.2-exp
+// entities instead of phantom deepseek@1 / deepseek@2) and the Command A Translate split
+// (the "translate" identity-modifier peel that lifts it off the coarse command/a key). Each
+// row is a real catalog id whose entity resolution is the regression this slice fixed.
+func TestCurationRepairV028_Corpus(t *testing.T) {
+	corpus := loadInternalCorpus[pNotationInput, pNotationExpected](t, internalCurationRepairV028CorpusJSON, 4)
+
+	requireEntityKeyCoverage(t, corpus, map[string]string{
+		"deepseek-v3-1":               "deepseek/v3.1",
+		"deepseek-ai/DeepSeek-V3-1":   "deepseek/v3.1",
+		"deepseek-v3-2-exp":           "deepseek/v3.2-exp",
+		"command-a-translate-08-2025": "command/a{translate}",
+	})
+
+	runEntityKeyCorpus(t, corpus)
+}
+
 // requireEntityKeyCoverage asserts each probe id is present in the corpus by value (id +
 // expected key), independent of which provider row the corpus pinned — the guard the
 // exact-count control cannot provide.

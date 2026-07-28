@@ -1397,6 +1397,33 @@ var justifiedExceptions = map[exceptionKey]string{
 		Before: `(family="claude",variant="opus",version="7",modifier="")`,
 		After:  `(family="claude",variant="opus",version="4.7",modifier="")`,
 	}: "USER-RATIFIED cortecs glued-version correction: cortecs glues the major version onto the VARIANT token, so claude-opus4-7 is Opus 4.7 - not an Opus 7. Every other provider spells this model claude-opus-4-7, and cortecs' own release date for the row (2026-04-16) is the real 4.7 launch date, so the reading is evidence-backed rather than inferred. Left alone the mis-read minted a PHANTOM claude/opus@7 entity holding this single cortecs instance while stranding it away from the real claude/opus@4.7 entity that carries every other provider; the pin merges it back. Curated pins rather than a general glued-token rule: a catalog sweep found cortecs is the only emitter of the variant-glued shape (the other 30 <letters><digit>-<digit> ids glue the digit onto the FAMILY, a different reading a variant-targeted rule must not touch).",
+
+	// ── deepseek dash-glued dot-lost version (variant-encoded line) ──
+	// DeepSeek encodes its point release as a VARIANT token, not the version field: the
+	// dotted spellings decompose to deepseek/v3.1 and deepseek/v3.2-exp. The dash-glued
+	// spellings lose the dot, so the leading-token pipeline reads only the trailing integer
+	// as the VERSION (deepseek@1 / deepseek@2), minting phantom "v1"/"v2" entities. Corrected
+	// via an exact-id idFamilyOverride that pins the variant to the dotted form, converging
+	// each row onto the heavily-attested dotted entity (deepseek/v3.1 = 10 serving instances).
+	// The classifier flags a populated field changing value without a same-id target (cat c);
+	// it CONVERGES on the dotted sibling, invisible to the per-id classifier because the
+	// target spelling comes from other providers' rows — the same situation as the dot-lost
+	// and cortecs rows above.
+	{
+		ID:     "deepseek-v3-1",
+		Before: `(family="deepseek",variant="",version="1",modifier="")`,
+		After:  `(family="deepseek",variant="v3.1",version="",modifier="")`,
+	}: "EVIDENCE-BACKED dot-lost repair: DeepSeek-V3.1 is a real release (https://api-docs.deepseek.com/news/news250929); the dash-glued deepseek-v3-1 lost the dot and minted a phantom deepseek@1. The pin converges it onto deepseek/v3.1 (10 serving instances), the same identity the dotted deepseek-v3.1 spelling resolves to.",
+	{
+		ID:     "deepseek-ai/DeepSeek-V3-1",
+		Before: `(family="deepseek",variant="",version="1",modifier="")`,
+		After:  `(family="deepseek",variant="v3.1",version="",modifier="")`,
+	}: "EVIDENCE-BACKED dot-lost repair: the org-prefixed deepseek-ai/DeepSeek-V3-1 (togetherai) is the same DeepSeek-V3.1 model; the pin converges it onto deepseek/v3.1 alongside the dotted spellings instead of a phantom deepseek@1.",
+	{
+		ID:     "deepseek-v3-2-exp",
+		Before: `(family="deepseek",variant="",version="2",modifier="")`,
+		After:  `(family="deepseek",variant="v3.2-exp",version="",modifier="")`,
+	}: "EVIDENCE-BACKED dot-lost repair: DeepSeek-V3.2-Exp is a real release (https://api-docs.deepseek.com/news/news250929); the dash-glued deepseek-v3-2-exp lost the dot and minted a phantom deepseek@2. The pin converges it onto the served deepseek/v3.2-exp entity, the same identity the dotted deepseek-v3.2-exp spelling resolves to.",
 }
 
 func TestPathUnification_ZeroUnexpectedRegression(t *testing.T) {

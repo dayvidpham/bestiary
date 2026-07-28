@@ -16,6 +16,11 @@
       "id": "curated",
       "uri": "https://github.com/dayvidpham/bestiary/tree/main/parse/data",
       "canonical_name": "bestiary curated claim files"
+    },
+    {
+      "id": "huggingface",
+      "uri": "https://huggingface.co/api/models",
+      "canonical_name": "HuggingFace Hub"
     }
   ],
   "ingested": [
@@ -42,6 +47,11 @@
     {
       "source_id": "models.dev",
       "ingested_at": "2026-07-23T08:27:36Z",
+      "parser_schema": 3
+    },
+    {
+      "source_id": "huggingface",
+      "ingested_at": "2026-07-23T00:00:00Z",
       "parser_schema": 3
     }
   ]

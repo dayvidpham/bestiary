@@ -54,13 +54,26 @@
       }
     },
     {
+      "name": "oci",
+      "input": 4,
+      "expected": "oci",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "bestiary.SchemeOCI"
+      },
+      "mutation": {
+        "description": "renders the OCI codec token"
+      }
+    },
+    {
       "name": "out-of-range-99",
       "input": 99,
       "expected": "CanonicalScheme(99)",
       "classification": "must-pass",
       "provenance": {
         "source": "boundary",
-        "ref": "int value 99 is past the last member (raw=3)"
+        "ref": "int value 99 is past the last member (oci=4)"
       },
       "mutation": {
         "description": "pushes the value past the end of the enum"

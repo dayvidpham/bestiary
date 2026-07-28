@@ -41,8 +41,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io"
-	"net/http"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -51,6 +49,7 @@ import (
 	"time"
 
 	"github.com/dayvidpham/bestiary"
+	"github.com/dayvidpham/bestiary/internal/politebot"
 )
 
 // --------------------------------------------------------------------------
@@ -60,13 +59,10 @@ import (
 const (
 	// userAgent identifies this project on every outbound request so the Ollama
 	// operators can attribute (and contact about) the traffic. Dropping this is a
-	// politeness violation; TestPoliteClient_SetsUserAgent pins it.
+	// politeness violation. It is passed into politebot.New; the polite seam sets
+	// it on every request. The ≥1s inter-request cadence is owned by politebot
+	// (politebot.DefaultMinRequestInterval).
 	userAgent = "bestiary-ollama/0.2.4 (+https://github.com/dayvidpham/bestiary; polite ingest bot)"
-
-	// minRequestInterval is the minimum wall-clock gap the tool enforces between
-	// two outbound requests: at least one second, a user-stated hard constraint.
-	// TestPoliteClient_SleepsBetweenRequests pins it.
-	minRequestInterval = 1 * time.Second
 
 	// registryBase is the anonymous Docker-Distribution-v2 registry host.
 	registryBase = "https://registry.ollama.ai"
@@ -79,10 +75,6 @@ const (
 	// modelLayerMediaType marks the GGUF weights layer whose size is the on-disk
 	// weight footprint (the deterministic anchor for the VRAM weights term).
 	modelLayerMediaType = "application/vnd.ollama.image.model"
-
-	// maxResponseBytes caps any single response body (defensive; manifests and
-	// config blobs are tiny, tag pages are modest).
-	maxResponseBytes = 8 << 20 // 8 MiB
 )
 
 // defaultAllowlist is the curated, deterministically-ordered set of Ollama
@@ -110,100 +102,6 @@ var defaultAllowlist = []string{
 	"mistral",
 	"phi3.5",
 	"qwen2.5",
-}
-
-// --------------------------------------------------------------------------
-// Polite-bot request seam
-// --------------------------------------------------------------------------
-
-// doer is the minimal HTTP surface the polite client needs. *http.Client
-// satisfies it; tests inject a canned transport so no socket is opened.
-type doer interface {
-	Do(*http.Request) (*http.Response, error)
-}
-
-// politeClient is the SINGLE outbound-request seam. Every fetch funnels through
-// get(), which (a) enforces minRequestInterval since the previous request via an
-// injectable clock+sleeper, and (b) sets the descriptive User-Agent. Routing all
-// traffic through one seam is what makes the politeness guarantee structurally
-// enforceable (and unit-testable without real time or sockets).
-type politeClient struct {
-	doer        doer
-	ua          string
-	minInterval time.Duration
-	now         func() time.Time
-	sleep       func(time.Duration)
-
-	started bool
-	last    time.Time
-}
-
-// newPoliteClient builds a production polite client backed by a real
-// *http.Client, the real monotonic clock, and a real time.Sleep.
-func newPoliteClient() *politeClient {
-	return &politeClient{
-		doer:        &http.Client{Timeout: 30 * time.Second},
-		ua:          userAgent,
-		minInterval: minRequestInterval,
-		now:         time.Now,
-		sleep:       time.Sleep,
-	}
-}
-
-// get performs one polite GET. It sleeps to honor minInterval (skipped on the
-// very first request), sets the User-Agent (and optional Accept) headers, and
-// returns the response body (capped at maxResponseBytes) for a 2xx status.
-func (c *politeClient) get(ctx context.Context, url, accept string) ([]byte, error) {
-	if c.started {
-		elapsed := c.now().Sub(c.last)
-		if elapsed < c.minInterval {
-			c.sleep(c.minInterval - elapsed)
-		}
-	}
-	c.started = true
-	c.last = c.now()
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
-	if err != nil {
-		return nil, fmt.Errorf(
-			"bestiary-ollama: build request for %q failed: %w\n"+
-				"  What: net/http rejected the request URL\n"+
-				"  Where: politeClient.get\n"+
-				"  How to fix: verify the URL is well-formed", url, err)
-	}
-	req.Header.Set("User-Agent", c.ua)
-	if accept != "" {
-		req.Header.Set("Accept", accept)
-	}
-
-	resp, err := c.doer.Do(req)
-	if err != nil {
-		return nil, fmt.Errorf(
-			"bestiary-ollama: GET %q failed: %w\n"+
-				"  What: the HTTP request did not complete\n"+
-				"  Where: politeClient.get\n"+
-				"  When: during the live Ollama refresh fetch\n"+
-				"  How to fix: check network connectivity to %s", url, err, url)
-	}
-	defer resp.Body.Close()
-
-	body, err := io.ReadAll(io.LimitReader(resp.Body, maxResponseBytes))
-	if err != nil {
-		return nil, fmt.Errorf(
-			"bestiary-ollama: read body of %q failed: %w\n"+
-				"  Where: politeClient.get\n"+
-				"  How to fix: retry; the response stream was truncated or reset", url, err)
-	}
-	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		return nil, fmt.Errorf(
-			"bestiary-ollama: GET %q returned HTTP %d\n"+
-				"  What: a non-2xx status\n"+
-				"  Where: politeClient.get\n"+
-				"  Why: the model/tag may not exist or the registry rejected the request\n"+
-				"  How to fix: verify the model name/tag and the Accept header", url, resp.StatusCode)
-	}
-	c.last = c.now()
-	return body, nil
 }
 
 // --------------------------------------------------------------------------
@@ -633,15 +531,23 @@ func inferBase(
 type fetchedTag struct {
 	OllamaID     string // full tag ID, incl. quant (e.g. "llama3.3:70b-instruct-q4_K_M")
 	WeightsBytes int64
+	// Digest is the "sha256:<hex>" content-addressed manifest config digest for this
+	// tag (fetch-owned). It is what a `pkg:oci` purl uses as its unique version, so it
+	// is persisted into quant_vram.json rows; previously it was fetched to resolve the
+	// config blob and then discarded.
+	Digest string
 }
 
 // quantRowOut mirrors parse/data/quant_vram.json rows[].
 type quantRowOut struct {
 	Quant        string `json:"quant"`
 	WeightsBytes int64  `json:"weights_bytes"`
-	Layers       int    `json:"layers,omitempty"`
-	KVHeads      int    `json:"kv_heads,omitempty"`
-	HeadDim      int    `json:"head_dim,omitempty"`
+	// Digest is the "sha256:<hex>" OCI manifest config digest (fetch-owned; the OCI
+	// purl's unique version). Omitted when absent so pre-digest rows stay byte-identical.
+	Digest  string `json:"digest,omitempty"`
+	Layers  int    `json:"layers,omitempty"`
+	KVHeads int    `json:"kv_heads,omitempty"`
+	HeadDim int    `json:"head_dim,omitempty"`
 }
 
 // quantModelOut mirrors parse/data/quant_vram.json models[].
@@ -662,7 +568,7 @@ type quantFileOut struct {
 	Models        []quantModelOut `json:"models"`
 }
 
-const quantFileComment = "Per-model per-quant weights and architecture facts for VRAM estimation. FIELD OWNERSHIP: the offline Ollama tool (cmd/bestiary-ollama) owns weights_bytes, the quant set, param_size, and source — it refreshes these from the Ollama registry on each run. Curation owns layers/kv_heads/head_dim (absent from the Ollama registry), context_window, base_ref, and the per-entry _comment — the tool PRESERVES these across a refresh (merge-on-refresh), never clobbering them. model_id is the models.dev catalog ID for joined models, or an 'ollama/<id>' namespace form for community models with no models.dev presence. VRAMBytes/VRAMContextTokens are computed and baked by codegen. Sorted by model_id (rows by quant) — deterministic."
+const quantFileComment = "Per-model per-quant weights and architecture facts for VRAM estimation. FIELD OWNERSHIP: the offline Ollama tool (cmd/bestiary-ollama) owns weights_bytes, the per-row digest (the sha256 OCI manifest digest), the quant set, param_size, and source — it refreshes these from the Ollama registry on each run. Curation owns layers/kv_heads/head_dim (absent from the Ollama registry), context_window, base_ref, and the per-entry _comment — the tool PRESERVES these across a refresh (merge-on-refresh), never clobbering them. model_id is the models.dev catalog ID for joined models, or an 'ollama/<id>' namespace form for community models with no models.dev presence. VRAMBytes/VRAMContextTokens are computed and baked by codegen. Sorted by model_id (rows by quant) — deterministic."
 
 // quantVRAMSchemaVersion is the quant_vram.json schema the tool writes; it must
 // match a version the bestiary loader (knownQuantVRAMSchemaVersions) accepts.
@@ -710,6 +616,7 @@ func buildOutput(
 		g.rows = append(g.rows, quantRowOut{
 			Quant:        strings.ToLower(quantRaw),
 			WeightsBytes: ft.WeightsBytes,
+			Digest:       ft.Digest,
 		})
 	}
 
@@ -918,8 +825,8 @@ func writeFileAtomic(path string, data []byte) error {
 var reLibraryTag = regexp.MustCompile(`/library/([a-zA-Z0-9._-]+):([a-zA-Z0-9._-]+)`)
 
 // fetchLibraryTags scrapes the tag list for one library model.
-func fetchLibraryTags(ctx context.Context, c *politeClient, lib string) ([]string, error) {
-	body, err := c.get(ctx, libraryBase+"/library/"+lib+"/tags", "text/html")
+func fetchLibraryTags(ctx context.Context, c *politebot.Client, lib string) ([]string, error) {
+	body, err := c.Get(ctx, libraryBase+"/library/"+lib+"/tags", "text/html")
 	if err != nil {
 		return nil, err
 	}
@@ -942,9 +849,9 @@ func fetchLibraryTags(ctx context.Context, c *politeClient, lib string) ([]strin
 
 // fetchTag resolves one "<lib>:<tag>" to its weights footprint via the registry
 // manifest + config blob.
-func fetchTag(ctx context.Context, c *politeClient, lib, tag string) (fetchedTag, error) {
+func fetchTag(ctx context.Context, c *politebot.Client, lib, tag string) (fetchedTag, error) {
 	full := lib + ":" + tag
-	manRaw, err := c.get(ctx, registryBase+"/v2/library/"+lib+"/manifests/"+tag, manifestAccept)
+	manRaw, err := c.Get(ctx, registryBase+"/v2/library/"+lib+"/manifests/"+tag, manifestAccept)
 	if err != nil {
 		return fetchedTag{}, err
 	}
@@ -964,7 +871,7 @@ func fetchTag(ctx context.Context, c *politeClient, lib, tag string) (fetchedTag
 	// sees the real quant. Architecture facts are NOT in the blob, so VRAM stays
 	// weights-only until curation supplies them (merge-on-refresh preserves them).
 	if man.Config.Digest != "" {
-		blobRaw, err := c.get(ctx, registryBase+"/v2/library/"+lib+"/blobs/"+man.Config.Digest, "")
+		blobRaw, err := c.Get(ctx, registryBase+"/v2/library/"+lib+"/blobs/"+man.Config.Digest, "")
 		if err != nil {
 			return fetchedTag{}, err
 		}
@@ -976,7 +883,7 @@ func fetchTag(ctx context.Context, c *politeClient, lib, tag string) (fetchedTag
 			full = full + "-" + strings.ToLower(cfg.FileType)
 		}
 	}
-	return fetchedTag{OllamaID: full, WeightsBytes: weights}, nil
+	return fetchedTag{OllamaID: full, WeightsBytes: weights, Digest: man.Config.Digest}, nil
 }
 
 // --------------------------------------------------------------------------
@@ -1008,7 +915,7 @@ func run(args []string) error {
 	}
 
 	ctx := context.Background()
-	c := newPoliteClient()
+	c := politebot.New(userAgent)
 
 	aliases, err := loadAliasesFromDir(dataDir)
 	if err != nil {

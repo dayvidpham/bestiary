@@ -144,10 +144,26 @@ type ModelInfo struct {
 	// time from curated data; live-sync rows carry nil (curated VRAM is not
 	// available from the live API).
 	QuantVRAM []QuantVRAM
-	// Source is the data source that provided this model row. DataSourceNone
-	// (zero value, empty string) on live-sync rows; populated at codegen time
-	// from curated ingest data.
+	// Source is the ORIGINATING ingest source that attests this model row. Every
+	// bestiary row originates from the models.dev pipeline, so the effective default
+	// is DataSourceModelsDev: the compiled-in registry fills an empty carrier in at
+	// the load layer (registry.go init) and the store read path resolves a
+	// not-persisted carrier the same way (store.go scanModelInfo), so a caller never
+	// sees an empty Source for a real row. A row ENRICHED by a further source carries
+	// that source instead (e.g. an ollama-curated row carries DataSourceOllama); the
+	// raw generated literal is still "" (DataSourceNone) for pure models.dev rows —
+	// the fill-in is a runtime normalization, not a re-bake of the generated data.
 	Source DataSourceID
+	// Creator is the lab / organization that TRAINED this model (the SPDX
+	// originator), DERIVED from Family via the curated creators.json seed
+	// (Family.Creator). It is DISTINCT from Provider (the SPDX supplier). This is a
+	// DERIVED JOIN PROJECTION, not an independent stored fact: Family → Creator is a
+	// function (BCNF), so the value is baked at codegen from the family via the seed
+	// (loud-at-codegen) rather than hand-entered per row, keeping the compiled
+	// registry and the persisted store creators dimension in agreement by
+	// construction. CreatorNone (zero value, empty string) when the family has no
+	// curated mapping. Never entity-key material.
+	Creator Creator
 
 	// Instance-level facts from the api.json side of the models.dev catalog.
 

@@ -127,11 +127,11 @@ func Test<Name>(t *testing.T) {
 
 ## The corpus census, and what is deliberately still inline
 
-At the close of the naming-layer epoch the repository carries **111 corpora**:
+At the close of the naming-layer epoch the repository carries **112 corpora**:
 
 | Area | Corpora | What lives there |
 |---|---|---|
-| `testdata/parse/` | 46 | family/variant/version decomposition, modifier extraction, param-size tokens, serving-host capture, the `ReasonUnknownSuffixOverflow` reachability capture, the vercel family-`o` over-capture (with its o-series slash negative controls + the dashed openai-o convergence rows), the "p"-as-dot version decode (unit shapes + every digit-p-digit catalog id), the dot-lost version repair (dotless + dash-glued qwen/minimax/mistral spellings) and the `1t` trillion param-size routing (with the kimi-k2:1t / r1t2 negative controls) |
+| `testdata/parse/` | 47 | family/variant/version decomposition, modifier extraction, param-size tokens, serving-host capture, the `ReasonUnknownSuffixOverflow` reachability capture, the vercel family-`o` over-capture (with its o-series slash negative controls + the dashed openai-o convergence rows), the "p"-as-dot version decode (unit shapes + every digit-p-digit catalog id), the dot-lost version repair (dotless + dash-glued qwen/minimax/mistral spellings), the v0.2.8 curation repairs (the deepseek variant-encoded dash-glued dot-lost merges + the Command A Translate identity-modifier split) and the `1t` trillion param-size routing (with the kimi-k2:1t / r1t2 negative controls) |
 | `testdata/enum/` | 14 | closed-enum `String()`, `Parse*`, and JSON round-trip/reject tables (Modality, AcceptabilityRating, CanonicalScheme, Harness, Family, Provider) |
 | `testdata/quant/` | 14 | the Quantization enum surface plus the curated quant/VRAM lookups |
 | `testdata/entity/` | 8 | `EntityRef.String()` grammar, the llama-4 and laguna entity projections, Series/Release rendering, the suppression per-entry fence |

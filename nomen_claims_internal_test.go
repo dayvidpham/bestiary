@@ -10,9 +10,10 @@ import (
 // resolves_to tuple decomposes through the identity-class projection.
 //
 // The fixture's source_url is an archive.org snapshot because the loader now REQUIRES
-// one (see the archive policy on Nomen.SourceURL). It was a live URL until the policy
-// landed — a synthetic fixture, but one that has to satisfy the same rule the shipped
-// curation does, or the happy path would be testing a document the loader rejects.
+// one (see the archive policy on NomenAttestation.SourceURL). It was a live URL until
+// the policy landed — a synthetic fixture, but one that has to satisfy the same rule
+// the shipped curation does, or the happy path would be testing a document the loader
+// rejects.
 func TestParseNomenClaims_Valid(t *testing.T) {
 	raw := []byte(`{
       "schema_version": 1,
@@ -34,8 +35,11 @@ func TestParseNomenClaims_Valid(t *testing.T) {
 	if c.Status != AcceptabilityAdmitted {
 		t.Errorf("default status = %v, want admitted", c.Status)
 	}
-	if c.Source != DataSourceCurated {
-		t.Errorf("default source = %q, want curated", c.Source)
+	if len(c.Attestations) != 1 {
+		t.Fatalf("claim carries %d attestations, want exactly 1", len(c.Attestations))
+	}
+	if c.Attestations[0].Source != DataSourceCurated {
+		t.Errorf("default source = %q, want curated", c.Attestations[0].Source)
 	}
 	if c.ResolvesTo.String() != "grok@4.20{reasoning}" {
 		t.Errorf("resolves_to = %q, want grok@4.20{reasoning}", c.ResolvesTo.String())

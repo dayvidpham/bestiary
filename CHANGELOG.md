@@ -14,6 +14,242 @@ for its **Go module tags** (`vX.Y.Z`).
 
 ## [Unreleased]
 
+## [0.2.8] — 2026-07-24
+
+**Schema:** `0.5.0` → `0.6.0` (additive). SQLite store schema `7` → `8`.
+
+The **registry-ingest** epoch: names acquire real provenance, and a third source starts
+attesting them. A `Nomen` no longer fuses its evidence into scalar columns — it carries a
+set of `NomenAttestation`s, each with its own `Authority` (primary / secondary) and
+`Method` (curated / harvested / self-minted), persisted in a `nomen_attestations` child
+table. A new polite HuggingFace Hub bot (`cmd/bestiary-hf`) harvested 179 Hub repo names
+into that layer, making the Hub the third `DataSource` alongside models.dev and Ollama, so
+a name that curation already claimed and the Hub independently attests coalesces into one
+nomen with two legs rather than two rows. Alongside it: a `Creator` dimension separating
+who *trained* the weights from who *serves* them, a `pkg:oci` external-identifier scheme,
+an offline `cmd/bestiary-web` catalog front-end, and a curation pass that drained the
+models.dev unlinked report to zero.
+
+### Added
+
+- **Nomen multi-attestation** — `Nomen` **HAS-MANY** `NomenAttestation`
+  `{SourceURL, Source, Authority, Method, IngestedAt}` (≥1 per nomen). Provenance moves off
+  the nomen row, so the same name attested by two ingests is **one** nomen with two
+  attestation legs, not two rows. Two new element enums, `AttestationAuthority`
+  (unknown / primary / secondary) and `IngestMethod` (unknown / curated / harvested /
+  self-minted), follow the `NomenScheme` codec precedent (`String` / `MarshalText` /
+  `UnmarshalText`; an unknown token is an actionable error). `coalesceNomina` groups by the
+  `(Value, Scheme, ResolvesTo)` triple and **unions** same-triple attestation sets, sorting
+  by the total key `(Source, SourceURL, Authority, Method, IngestedAt)` so equal keys imply
+  byte-identical, deterministic emission. `ValidateNomina` is **inverted**: a same-triple
+  differing attester is now a legal append and only a differing `Status` is a loud conflict
+  — and it is wired into `cmd/bestiary-gen`, so the bake aborts on conflict rather than the
+  check being test-only. Runtime degrades to the raw sorted set on conflict, never panics.
+
+- **`Creator` dimension** — the lab that **trained** a model's weights (SPDX *originator*),
+  distinct from `Provider`, which serves it (SPDX *supplier*). `Creator` is an open string
+  type mirroring `Provider` (`CreatorNone` + 9 well-known constants, `String` /
+  `MarshalText` / `UnmarshalText` / `IsKnown` / `Creators`), and the Family→Creator mapping
+  is a **curated, data-driven seed** (`parse/data/creators.json`) read through the
+  graceful-degrade embed loader, never an in-code switch. `ModelInfo.Creator` and
+  `Entity.Creator` are **derived join projections**, not stored columns — Family→Creator is
+  a function, so a per-row column would be a transitive dependency. `ValidateCreatorTable()`
+  is a loud codegen guard.
+
+- **`pkg:oci` external-identifier scheme** — `SchemeOCI` appended to the `CanonicalScheme`
+  iota tail (wire-stable) with every recognition arm plus `InputFormatOCI`.
+  `formatOCIPurl` implements the purl-spec `oci` type: lowercased last path fragment as
+  name, `sha256:<digest>` version with `:` percent-encoded, `repository_url` / `tag`
+  qualifiers in canonical alphabetical order — and `""` when the digest is absent, because
+  an OCI purl is **never** minted without one. `ModelRef.Format(SchemeOCI)` returns `""` via
+  an **explicit** arm rather than falling through to a default that would leak the raw ID.
+  `cmd/bestiary-ollama` now persists the manifest config digest it previously fetched and
+  discarded, onto `QuantVRAM.OCIDigest`, emitted conditionally by codegen so the
+  empty-digest majority stays byte-identical. `NomenSchemeOCI` mints one OCI nomen per
+  digest-bearing quant row with an Ollama Harvested/Secondary attestation.
+
+- **`cmd/bestiary-hf` — polite HuggingFace Hub bot + harvested nomen layer**: a
+  network-gated tool on `internal/politebot` with its own versioned User-Agent, layering
+  HTTP conditionals beneath the shared cadence seam — `If-None-Match`/`ETag` (a 304 keeps
+  the existing row) and 429 backoff honoring `Retry-After`. A Hub id is `org/repo`, taken
+  **1:1 with case preserved** as the nomen value, with **no decomposition**. The entity join
+  is alias-first (`hf_aliases.json` override → mechanical decomposition through the
+  production parse pipeline → keep-unlinked and report), so a repo is never silently
+  dropped. `DataSourceHuggingFace` is the third source: an entity carrying an HF nomen
+  dual-attests `{models.dev, huggingface}`, and `llama@3.3#70b{instruct}` now
+  **triple**-attests `{huggingface, models.dev, ollama}`.
+
+- **`cmd/bestiary-web` — offline web catalog (foundation)**: a read-only HTTP server over
+  the in-process static registry (`Entities()`/`StaticModels()`) plus an optional read-only
+  SQLite cache; it makes NO network request at serve time. Entity pages are addressed by the
+  RQ1 multi-segment IRI grammar (`/entity/<key>`, `EntityRef.IRI(webRoot)` == route path) with
+  a content-negotiation seam (`Accept: text/html` → page, `application/json` → the entity's
+  public JSON shape) and query params treated as non-identity view-state (stripped for
+  identity). The base `html/template` layout ships the approved "Phosphor Terminal" CSS in both
+  color modes (`prefers-color-scheme` + an explicit `data-theme` toggle). The Datastar client
+  is VENDORED via `go:embed` and served same-origin (v1.0.2, no CDN for JS); the two webfonts
+  load from a CDN with a full offline fallback stack (fonts-only relaxation, RQ1). Server-side
+  interactivity uses the `github.com/starfederation/datastar-go` SDK (SSE `PatchElements`).
+
+- **`cmd/bestiary-web` views — entity browser, entity detail, series explorer**: the browser
+  (`/`) is a dense sortable table over every entity with a server-side filter rail —
+  family / creator / provider / region / modality exact-match facets plus free-text key
+  search and a sort key, all driven through the `/sse/entities` Datastar seam. Modality is
+  joined from `StaticModels()` at startup (an `(ID,Provider)→Modalities` map computed once,
+  never affecting identity). The default order is family-then-key, fixed and tested so every
+  SSE re-render is byte-stable; view-state signals select **which rows and in what order,
+  never which entity a link denotes**. Entity detail (`/entity/<key>`) renders four sections
+  — quants + VRAM (a `VRAMEstimatePartial` figure is labelled and its bar drawn hollow so it
+  never implies precision the data lacks), pricing by provider over the `(ID,Provider)`
+  instances, nomina + every attestation's source / authority / method / source-URL, and
+  lineage + series membership — with an optional `?ctx` **display-only** VRAM recompute
+  column via `(QuantVRAM).EstimateVRAM`. The series explorer (`/series`) is a native
+  `<details>` disclosure tree over `SeriesAll`/`ReleasesOf`/`EntitiesOf` with stable anchors.
+
+- **CLI naming/creator surface** — `show` and `list` gain a `Creator` column
+  (`CreatorNone` renders `-`, never an invented "unknown") and `show --by-entity` gains a
+  `Creator` line plus a **Nomina section**: each nomen's `(scheme, status)` with its
+  attestation set indented beneath (Source / Authority / Method / SourceURL), so a
+  dually-attested name shows **both** legs. `--scheme oci` / `--format oci` on a ref
+  short-circuits with an actionable stderr notice directing to the quant-level view (OCI
+  identity is per-quant-digest, so a ref has no render at that altitude) — an *explained
+  empty* with exit 0, not an error.
+
+- **Store schema `8`** — `nomen_attestations` child table + a `creators(family PK, creator)`
+  BCNF dimension. `migrateToV8` runs in one transaction: create both tables, backfill each
+  old `nomina` row's `(source_url, source_id)` into one attestation with authority/method
+  derived per the defaults table, then recreate the `nomina` parent without the source
+  columns (PK unchanged, so keys stay byte-identical). This removed all seven of the
+  transitional v7 single-attestation bridge sites; the child table carries the **full**
+  per-attestation set losslessly, including the curated-authored `Authority` the bridge
+  could not round-trip. `UpsertNomina` is parent `OR IGNORE` + delete-then-insert children
+  in one transaction (the `entity_metadata` replaceable-set precedent), with the child
+  `source_id` FK rejecting orphans on full rollback.
+
+### Changed
+
+- **IRI output: `/` is now LITERAL** (`EntityRef.IRI` / `ModelRef.IRI`, BREAKING for the
+  minted string). `escapeIRISegment` keeps the key grammar's `/` (family/variant) as a real
+  path separator and percent-encodes only the remaining structural delimiters (`@`→`%40`,
+  `#`→`%23`, `{`→`%7B`, `}`→`%7D`, and the ref-level `[`→`%5B`, `]`→`%5D`). An entity IRI is
+  therefore a multi-segment, walkable path — `…/entity/llama/scout%404%2317b-16e%7Binstruct%7D`
+  rather than the v0.2.7 single-segment `…/entity/llama%2Fscout%404%2317b-16e%7Binstruct%7D`.
+  This is the RQ1-ratified grammar the new `cmd/bestiary-web` `/entity/<key>` routes
+  dereference, so `EntityRef.IRI(webRoot)` equals the route path for the same entity (one
+  grammar, pinned by a route-equality test). The round trip is unchanged: a whole-string
+  `url.PathUnescape` still recovers the canonical key byte-identically (a literal `/` passes
+  through; every `%40`/`%23`/`%7B`/`%7D`/`%5B`/`%5D` decodes back), so every IRI round-trip
+  fence stays green — only the two golden-string assertions were re-pinned for the literal `/`.
+
+- **`internal/politebot`** — the polite-HTTP seam is extracted out of
+  `cmd/bestiary-ollama` into a compiler-private package: one `get()` request seam (≥1s
+  inter-request cadence, descriptive versioned User-Agent, optional `Accept`,
+  `io.LimitReader` body cap, non-2xx reject) with the injectable doer/clock/sleep
+  offline-test hinge preserved via functional options. Both bots now share it; the per-bot
+  User-Agent and call-site `Accept` stay bot-owned. Behavior-preserving — the root
+  `bestiary` package is untouched and `internal/` is unimportable outside the module, so
+  there is **zero public-API impact**.
+
+- **`ModelInfo.Source` defaults to `DataSourceModelsDev`** — the semantics shift from "a
+  further source beyond models.dev" to "the originating/attesting ingest source". Filled in
+  at the **load** layer (the registry normalizes in-memory static models once) and on the
+  store read path, so generated files stay byte-identical and `go generate` stays zero-diff.
+  Non-empty carriers (Ollama) are untouched and the `EntitySource` join is unchanged.
+
+- **Human-readable defaults on the entity views** — `show --by-entity`, the entity-key
+  fallback, and `series` default to `--output table` when `--output` is not set explicitly;
+  `--output=json` is still available by asking for it.
+
+### Fixed
+
+- **Ambiguity guidance is actionable and paste-back-resolvable** — the opaque "matched
+  multiple canonicals" jargon is replaced with plain language plus concrete next steps
+  derived from the actual candidates. The derived example is the first candidate's **entity
+  key** shown via `show --by-entity`, which renders an entity key directly without the
+  model-first resolution that produced the ambiguity, so it resolves for every family class
+  (including high-fanout keys like `gpt/4o` that would re-ambiguate under a plain
+  `show <key>`). `FormatAmbiguous` now lists candidate **entity forms**, not just provider
+  slugs, for families without a canonical provider; the duplicated `bestiary:` preamble is
+  dropped so only one wrapped error carries the prefix; and the `--format=raw` tip appears
+  in exactly one place instead of twice in slightly different wording.
+
+- **`show <input>` accepts an entity key without `--by-entity`** — model resolution stays
+  first, and only on a model **miss** does it fall back to the entity view over the
+  store-overlaid set. Ambiguous model input keeps the guidance path (no entity fallback on
+  ambiguity).
+
+- **Instance table alignment** — over-wide `ID` / `PROVIDER` / `HOST` cells truncate to
+  their column widths so long provider slugs no longer break alignment, and rendered rows
+  are capped with a `… and N more (use --output json)` footer, mirroring the
+  nomina/benchmark convention.
+
+- **HF bot hygiene** — dead RFC-5988 `Link` pagination is removed (the bot verifies known
+  `org/repo` candidates with targeted GETs, never a listing endpoint, so pagination is
+  inapplicable by design, now documented at the fetch loop); `hf_aliases.json` fails loud
+  when two keys case-fold to the same value, since the case-insensitive lookup fallback
+  would otherwise resolve by map iteration order; and `huggingface_unlinked.json` gains a
+  `count` field per the unlinked-envelope precedent.
+
+### Data
+
+- **`modelsdev_unlinked` drained to 0** — all 11 remaining ids were served-entity join-key
+  **disagreements** (the id-only ref mis-derives the family), not catalog-absent models, so
+  none synthesizes a standalone and the census stays at the pinned 4 `ornith` rows. Ten are
+  resolved by curated `modelsdev_aliases.json` rows mapping each metadata id onto its
+  distinct served entity key; `command-a-translate-08-2025` needed `translate` added to
+  `modifiers.json` as a peeled **identity** modifier so Command A Translate keys as
+  `command/a{translate}` instead of overwriting base `command/a`'s metadata (a collateral
+  scan found zero other tail-position `translate` tokens).
+
+- **Evidence-gated parse-failure repairs** — of 286 audit signals, 285 are benign residual
+  tokens (size/quant/serving leftovers with the version correct) and are **classified, not
+  "fixed"**. The one genuine wrong-entity class is repaired via exact-id family overrides:
+  `deepseek-v3-1` / `deepseek-ai/DeepSeek-V3-1` → `deepseek/v3.1` (14 dotted-sibling
+  instances) and `deepseek-v3-2-exp` → `deepseek/v3.2-exp`. DeepSeek encodes point releases
+  as a **variant** token, so a version-only fix would not merge — variant-pinned instead,
+  retiring the phantom `deepseek@1` / `deepseek@2` entities.
+
+- **Harvested HuggingFace seed** — one polite live `cmd/bestiary-hf` run over the
+  models.dev-known open-weight `org/repo` candidates: 500 candidates fetched plus 4 forced
+  aliases; **179 verified repos joined a catalog entity** and were seeded, 17 verified but
+  unlinked (reported), 251 skipped (gated/private/4xx), 0 rate-limited, 0 unchanged. The 4
+  pre-existing curated Hub repos are pinned by `hf_aliases.json` to their exact curated
+  triples so each harvested attestation **coalesces** onto its curated claim — one nomen,
+  two attestations with distinct Method and Source. The curated-layer archive fence is
+  scoped to `Method=Curated`; harvested attestations carry live URLs by design.
+
+- **Census re-pins (arithmetic, conscious)** — entities 958 → 957 (`command/a{translate}`
+  +1; the two DeepSeek phantom merges −2), series 419 → 417, releases 671 → 669. Nomina
+  3,797 → 3,796 from the entity merge, then → **3,971** with the HF harvest (the 4 curated
+  repos coalesce with their harvested twins for +0; 175 distinct-triple harvested repos for
+  +175). `huggingface`-scheme nomina go 4 → 179.
+
+### Documentation
+
+- **`docs/w3id-runbook.md`** — the user-executed w3id.org registration procedure
+  (GitHub PR + Apache `.htaccess`), the content-negotiated HTML/JSON-LD redirect-target
+  design, the default IRI base decision at the `EntityRef.IRI(base)` call site, and the RQ1
+  URL-scheme ruling (literal `/` inside the canonical key, `@#{}` percent-encoded, query
+  params as view-state only). **No registration performed.**
+
+- **`docs/CONCEPTS.md` — attestation quality** — a new section grounding
+  `AttestationAuthority` / `IngestMethod` in CIDOC CRM E13 *Attribute Assignment*, CRMinf
+  I7 *Belief Adoption*, and Wikidata statement ranks. It also **corrects** the Grounding
+  table's prior claim that `AcceptabilityRating` maps to an LRM-E9 "status" attribute — the
+  verified LRM spec's Nomen attribute list has no such attribute, and "preferred" is
+  expressed via the general *Category* attribute instead.
+
+- **`docs/poetools-claude-code.md`** — live research into the models.dev catalog row
+  `poetools/claude-code`, which decomposes as an ordinary Claude entity but is in fact Poe's
+  own agent product built on the Claude Agent SDK. Used as the concrete case for the
+  `harness.go` harness-vs-model classification question; three candidate relationships are
+  recorded and **none chosen**.
+
+- **Registry-ingest research report** and the `cmd/bestiary-web` visual-direction design
+  note (retrofuturism, with the ratified gate rulings applied).
+
+## [0.2.7] — 2026-07-23
+
 **Schema:** `0.4.0` → `0.5.0` (additive). SQLite store schema `6` → `7`.
 
 ### Added

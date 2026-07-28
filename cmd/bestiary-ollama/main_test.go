@@ -1,17 +1,13 @@
 package main
 
 import (
-	"context"
 	"encoding/json"
-	"io"
-	"net/http"
 	"os"
 	"path/filepath"
 	"reflect"
 	"slices"
 	"strings"
 	"testing"
-	"time"
 
 	"github.com/dayvidpham/bestiary"
 )
@@ -38,83 +34,8 @@ var emptyCurated = map[string]bool{}
 // emptyExisting is the no-prior-file document.
 var emptyExisting = quantFileOut{SchemaVersion: quantVRAMSchemaVersion}
 
-// --------------------------------------------------------------------------
-// Polite-bot seam: User-Agent + >=1s rate limit
-// --------------------------------------------------------------------------
-
-type recordingDoer struct {
-	reqs []*http.Request
-	body string
-}
-
-func (d *recordingDoer) Do(req *http.Request) (*http.Response, error) {
-	d.reqs = append(d.reqs, req)
-	return &http.Response{
-		StatusCode: 200,
-		Body:       io.NopCloser(strings.NewReader(d.body)),
-		Header:     make(http.Header),
-	}, nil
-}
-
-type fakeClock struct {
-	t     time.Time
-	slept []time.Duration
-}
-
-func (c *fakeClock) now() time.Time { return c.t }
-func (c *fakeClock) doSleep(d time.Duration) {
-	c.slept = append(c.slept, d)
-	c.t = c.t.Add(d)
-}
-
-func newTestClient(body string) (*politeClient, *recordingDoer, *fakeClock) {
-	rd := &recordingDoer{body: body}
-	fc := &fakeClock{t: time.Unix(1_700_000_000, 0)}
-	c := &politeClient{
-		doer:        rd,
-		ua:          userAgent,
-		minInterval: minRequestInterval,
-		now:         fc.now,
-		sleep:       fc.doSleep,
-	}
-	return c, rd, fc
-}
-
-func TestPoliteClient_SetsUserAgent(t *testing.T) {
-	c, rd, _ := newTestClient(`{}`)
-	if _, err := c.get(context.Background(), "https://registry.ollama.ai/v2/library/x/manifests/y", manifestAccept); err != nil {
-		t.Fatalf("get: %v", err)
-	}
-	if len(rd.reqs) != 1 {
-		t.Fatalf("want 1 request, got %d", len(rd.reqs))
-	}
-	if got := rd.reqs[0].Header.Get("User-Agent"); got != userAgent {
-		t.Fatalf("User-Agent = %q, want %q (a descriptive UA is mandatory)", got, userAgent)
-	}
-	if got := rd.reqs[0].Header.Get("Accept"); got != manifestAccept {
-		t.Fatalf("Accept = %q, want %q", got, manifestAccept)
-	}
-}
-
-func TestPoliteClient_SleepsBetweenRequests(t *testing.T) {
-	c, _, fc := newTestClient(`{}`)
-	ctx := context.Background()
-	if _, err := c.get(ctx, "https://x/1", ""); err != nil {
-		t.Fatalf("get 1: %v", err)
-	}
-	if len(fc.slept) != 0 {
-		t.Fatalf("first request must not sleep, slept=%v", fc.slept)
-	}
-	if _, err := c.get(ctx, "https://x/2", ""); err != nil {
-		t.Fatalf("get 2: %v", err)
-	}
-	if len(fc.slept) != 1 {
-		t.Fatalf("second request must sleep exactly once, slept=%v", fc.slept)
-	}
-	if fc.slept[0] < minRequestInterval {
-		t.Fatalf("rate-limit sleep = %v, want >= %v (>= 1 second between requests)", fc.slept[0], minRequestInterval)
-	}
-}
+// The polite-bot request seam (User-Agent + >=1s rate limit) now lives in
+// internal/politebot; its offline tests moved there with the code.
 
 // --------------------------------------------------------------------------
 // Manifest + config-blob parsing (canned JSON captured from registry responses)
@@ -228,6 +149,96 @@ func TestOllamaCommunity_FinetuneKept(t *testing.T) {
 	}
 	if !found {
 		t.Fatalf("base-unknown community model %q must appear in the unlinked list %v", kept.ModelID, unlinked)
+	}
+}
+
+// --------------------------------------------------------------------------
+// OCI manifest digest — fetch-owned persistence into quant_vram.json rows
+// --------------------------------------------------------------------------
+
+// TestParseManifest_ExposesConfigDigest pins the source of the persisted digest: the
+// manifest's config descriptor digest, which fetchTag reads (previously only to
+// resolve the config blob, then discarded) and now carries onto fetchedTag.Digest.
+func TestParseManifest_ExposesConfigDigest(t *testing.T) {
+	m, err := parseManifest([]byte(cannedManifest))
+	if err != nil {
+		t.Fatalf("parseManifest: %v", err)
+	}
+	if m.Config.Digest != "sha256:cfg" {
+		t.Fatalf("manifest Config.Digest = %q, want %q", m.Config.Digest, "sha256:cfg")
+	}
+}
+
+// TestBuildOutput_PersistsDigest proves the fetch→persist path: a fetchedTag carrying
+// a manifest digest lands that digest on its quant_vram.json row, so a later codegen
+// can bake QuantVRAM.OCIDigest and mint an OCI nomen.
+func TestBuildOutput_PersistsDigest(t *testing.T) {
+	tags := []fetchedTag{
+		{OllamaID: "wizardlm-uncensored:13b-q4_K_M", WeightsBytes: 7865000000, Digest: "sha256:deadbeef"},
+	}
+	out, _ := buildOutput(tags, cannedCatalog(), nil, nil, emptyCurated, emptyExisting)
+
+	var row *quantRowOut
+	for i := range out.Models {
+		if strings.HasPrefix(out.Models[i].ModelID, "ollama/wizardlm-uncensored") {
+			for j := range out.Models[i].Rows {
+				if out.Models[i].Rows[j].Quant == "q4_k_m" {
+					row = &out.Models[i].Rows[j]
+				}
+			}
+		}
+	}
+	if row == nil {
+		t.Fatalf("q4_k_m row not found; models=%+v", out.Models)
+	}
+	if row.Digest != "sha256:deadbeef" {
+		t.Errorf("row Digest = %q, want %q (fetched manifest digest must persist)", row.Digest, "sha256:deadbeef")
+	}
+}
+
+// TestBuildOutput_DigestIsFetchOwned proves the digest is a FETCH-OWNED field: a fresh
+// fetch OVERWRITES a stale digest in the existing quant_vram.json (unlike the
+// curation-owned arch facts, which are preserved). A rotated digest (requantization /
+// template fix) must win.
+func TestBuildOutput_DigestIsFetchOwned(t *testing.T) {
+	existing := quantFileOut{
+		SchemaVersion: quantVRAMSchemaVersion,
+		Models: []quantModelOut{{
+			ModelID: "ollama/wizardlm-uncensored:13b",
+			Source:  "ollama",
+			// Stale digest + curation-owned arch facts on the same row.
+			Rows: []quantRowOut{{Quant: "q4_k_m", WeightsBytes: 1, Digest: "sha256:stale", Layers: 40, KVHeads: 8, HeadDim: 128}},
+		}},
+	}
+	tags := []fetchedTag{
+		{OllamaID: "wizardlm-uncensored:13b-q4_K_M", WeightsBytes: 7865000000, Digest: "sha256:fresh"},
+	}
+	out, _ := buildOutput(tags, cannedCatalog(), nil, nil, emptyCurated, existing)
+
+	var row *quantRowOut
+	for i := range out.Models {
+		if out.Models[i].ModelID == "ollama/wizardlm-uncensored:13b" {
+			for j := range out.Models[i].Rows {
+				if out.Models[i].Rows[j].Quant == "q4_k_m" {
+					row = &out.Models[i].Rows[j]
+				}
+			}
+		}
+	}
+	if row == nil {
+		t.Fatalf("q4_k_m row not found; models=%+v", out.Models)
+	}
+	if row.Digest != "sha256:fresh" {
+		t.Errorf("row Digest = %q, want %q (fetch-owned digest must overwrite the stale one)", row.Digest, "sha256:fresh")
+	}
+	// Curation-owned arch facts on the same row are PRESERVED across the refresh.
+	if row.Layers != 40 || row.KVHeads != 8 || row.HeadDim != 128 {
+		t.Errorf("arch facts = (L=%d,KV=%d,HD=%d), want (40,8,128) preserved from curation",
+			row.Layers, row.KVHeads, row.HeadDim)
+	}
+	// Fetch-owned weights also refresh.
+	if row.WeightsBytes != 7865000000 {
+		t.Errorf("WeightsBytes = %d, want 7865000000 (fetch-owned)", row.WeightsBytes)
 	}
 }
 

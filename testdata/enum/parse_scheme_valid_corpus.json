@@ -52,6 +52,19 @@
       "mutation": {
         "description": "parses the raw wire token"
       }
+    },
+    {
+      "name": "oci",
+      "input": "oci",
+      "expected": "oci",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "wire token for bestiary.CanonicalScheme member oci"
+      },
+      "mutation": {
+        "description": "parses the oci wire token"
+      }
     }
   ]
 }
