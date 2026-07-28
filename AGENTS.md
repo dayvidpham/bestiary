@@ -369,6 +369,41 @@ loudly if the tag already exists** (it never force-moves a published tag — so 
 mistyped release is caught). Tags pushed by its `GITHUB_TOKEN` do **not** trigger downstream
 `on: push: tags` workflows — use a PAT or deploy key if a release-build job is later chained off the tag.
 
+### CHANGELOG must be rolled BEFORE the release PR is opened
+
+The tagger only creates a tag — it never edits files. Whatever the CHANGELOG says when the PR
+merges is what ships, and repairing it afterwards costs a follow-up commit on `main`. Roll it on
+the release branch, as part of the release PR:
+
+1. **Cut the stanza.** Rename `## [Unreleased]` to `## [X.Y.Z] — YYYY-MM-DD` and open a fresh,
+   empty `## [Unreleased]` above it. Entries are written *as slices land*, so at release time
+   this is a rename, not a write-up. **If the stanza is nearly empty at release time the epoch's
+   entries were never written — stop and reconstruct them from the slice merges
+   (`git log --merges <prev-tag>..HEAD`) before going further.**
+2. **State both version axes in the stanza header**, and check each against the code — they are
+   distinct numbers and neither is derivable from the other:
+   `**Schema:** \`A.B.C\` → \`X.Y.Z\` (additive). SQLite store schema \`N\` → \`M\`.`
+   must agree with `BestiarySchemaVersion` in `version.go` and `currentSchemaVersion` in `store.go`.
+3. **Update the link-ref block at the bottom of the file** — this is the step that gets forgotten,
+   because nothing renders differently when it is wrong:
+   - repoint `[Unreleased]` to `compare/vX.Y.Z...HEAD`
+   - add `[X.Y.Z]: https://github.com/dayvidpham/bestiary/compare/v<previous>...vX.Y.Z`
+4. **Verify parity before opening the PR.** Every stanza needs a ref, every version ref needs a
+   stanza, and each ref's left-hand side must be the next-older tag:
+   ```
+   grep -o '^## \[[^]]*\]' CHANGELOG.md | sed 's/^## //' | while read -r s; do
+     grep -qF "${s}: http" CHANGELOG.md || echo "MISSING ref for $s"; done
+   grep -o '^\[[0-9][^]]*\]:' CHANGELOG.md | sed 's/:$//' | while read -r r; do
+     grep -qF "## ${r}" CHANGELOG.md || echo "ORPHAN ref $r"; done
+   ```
+   Use `grep -F` for the lookups — an unescaped `[` is read as a character class and the check
+   silently reports every line as broken.
+
+**Failure modes this prevents, both observed.** v0.2.7 was tagged with its entire body still
+under `## [Unreleased]`, so released content stayed labelled unreleased and v0.2.8's entries
+accumulated on top of it; separately the link-ref block stopped at `[0.2.5]` while three
+further versions shipped. Both were repaired retroactively, after the tags were already public.
+
 ## File ownership
 
 | File | Owner | Notes |
@@ -379,6 +414,8 @@ mistyped release is caught). Tags pushed by its `GITHUB_TOKEN` do **not** trigge
 | `parse/data/modelsdev_unlinked.json` | `cmd/bestiary-gen` | Codegen-emitted join-disagreement report. Never edit by hand |
 | `bestiary.schema.json` | Manual | Must stay in sync with Go types. Verified by `TestJSONOutput_ConformsToSchema` |
 | `version.go` | Manual | Update on public type changes or upstream schema updates |
+| `CHANGELOG.md` | Manual | Entries written as slices land; stanza cut + link refs updated on the release branch — see "Releases" |
+| `AGENTS.md` (`CLAUDE.md` is a symlink to it) | Manual | One file, two names. Editing `AGENTS.md` updates both |
 | All other `.go` files | Developer | Normal development workflow |
 
 ## Codegen determinism invariants
