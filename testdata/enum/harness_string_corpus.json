@@ -78,6 +78,19 @@
       "mutation": {
         "description": "renders the antigravity harness constant"
       }
+    },
+    {
+      "name": "strike",
+      "input": "strike",
+      "expected": "strike",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "bestiary.Harness constant strike"
+      },
+      "mutation": {
+        "description": "renders the strike harness constant"
+      }
     }
   ]
 }

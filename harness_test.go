@@ -14,6 +14,7 @@ func TestHarness_IsKnown(t *testing.T) {
 		bestiary.HarnessOpenCode,
 		bestiary.HarnessCursor,
 		bestiary.HarnessAntigravity,
+		bestiary.HarnessStrike,
 	}
 	for _, h := range known {
 		if !h.IsKnown() {
@@ -37,10 +38,11 @@ func TestHarness_IsKnown(t *testing.T) {
 // from testdata/enum/harness_string_corpus.json. requireHarnessKnown additionally
 // pins that each corpus token is still a recognized Harness.
 func TestHarness_String(t *testing.T) {
-	corpus := loadEnumStringCorpus(t, enumHarnessStringCorpusJSON, 6)
+	corpus := loadEnumStringCorpus(t, enumHarnessStringCorpusJSON, 7)
 	requireInputCoverage(t, corpus, map[string]string{
 		string(bestiary.HarnessClaudeCode):  "claude-code",
 		string(bestiary.HarnessAntigravity): "antigravity",
+		string(bestiary.HarnessStrike):      "strike",
 	})
 	requireHarnessKnown(t, corpus)
 	runEnumStringCorpus(t, corpus, func(_ *testing.T, in string) string {
@@ -56,6 +58,7 @@ func TestHarness_MarshalUnmarshalText(t *testing.T) {
 		bestiary.HarnessOpenCode,
 		bestiary.HarnessCursor,
 		bestiary.HarnessAntigravity,
+		bestiary.HarnessStrike,
 	}
 	for _, h := range harnesses {
 		b, err := h.MarshalText()
@@ -101,8 +104,8 @@ func TestHarnesses_AllKnown(t *testing.T) {
 }
 
 func TestHarnesses_Count(t *testing.T) {
-	if got := len(bestiary.Harnesses()); got != 6 {
-		t.Errorf("len(Harnesses()) = %d, want 6", got)
+	if got := len(bestiary.Harnesses()); got != 7 {
+		t.Errorf("len(Harnesses()) = %d, want 7", got)
 	}
 }
 
