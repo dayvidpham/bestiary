@@ -83,7 +83,7 @@ func TestEntityConstants_Unique(t *testing.T) {
 	// command/a key (+1, "translate" now a peeled identity modifier) and the two phantom
 	// deepseek dash-glued entities deepseek@1 / deepseek@2 merge onto deepseek/v3.1 and
 	// deepseek/v3.2-exp (−2). Net −1.
-	const wantEntityCount = 939 // 957 -> 940: the global free demotion retires 17 keys (0 added); the demoted instances re-home onto their surviving siblings. 940 -> 939: the qwen3-coder-next-fp8-1m suppress-pin extended to the unprefixed spelling retires qwen/coder@3#1m (1 key, 0 added) — its '1m' was a 1M-context tier marker, not a parameter size, so the InferX instance rejoins qwen/coder@3
+	const wantEntityCount = 947 // 957 -> 940: the global free demotion retires 17 keys (0 added); the demoted instances re-home onto their surviving siblings. 940 -> 939: the qwen3-coder-next-fp8-1m suppress-pin extended to the unprefixed spelling retires qwen/coder@3#1m (1 key, 0 added) — its '1m' was a 1M-context tier marker, not a parameter size, so the InferX instance rejoins qwen/coder@3. 939 -> 947 with the ling/inkling/kling collision split: the upstream catalog labels all 14 Inkling + klingai rows raw_family "ling", so both product lines were folded onto inclusionAI's Ling family. Splitting them retires bare `ling` (it held only the 6 mislabelled Inkling instances, so it empties) and the phantom `kling-v2@6`, and adds `inkling`, `kling@2.6` and the 8 `kling/v*` video keys: -2 +10 = +8.
 	if len(keys) != wantEntityCount {
 		t.Errorf("EntityKeys() returned %d constants; expected exactly %d — "+
 			"re-run go generate ./... and update this census literal if the entity count changed intentionally",

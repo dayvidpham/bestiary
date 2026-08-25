@@ -1,10 +1,10 @@
 {
   "total_records": 5765,
-  "changed_count": 34,
+  "changed_count": 49,
   "cat_a_divergence_fix_count": 0,
-  "cat_b_improvement_count": 29,
+  "cat_b_improvement_count": 43,
   "cat_c_unexpected_regression_count": 0,
-  "justified_exception_count": 5,
+  "justified_exception_count": 6,
   "id_tuple4_incl_modifier_divergence_frozen_before": 17,
   "id_tuple4_incl_modifier_divergence_current_after": 17,
   "divergence_metric": "4-tuple INCL Modifier (Family,Variant,Version,Modifier); before=frozen baseline, after=current snapshot. DISTINCT from the authoritative cross-provider divergenceExact gate (3-tuple, EXCL Modifier, current snapshot, =4).",
@@ -91,6 +91,24 @@
       "reason": "family-preserving de-noise/enrich: only phantom losses and/or enrichments, no ID-present field lost"
     },
     {
+      "provider": "thinkingmachines",
+      "id": "inkling",
+      "raw_family": "ling",
+      "before": "(family=\"ling\",variant=\"\",version=\"\",modifier=\"\")",
+      "after": "(family=\"inkling\",variant=\"\",version=\"\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "canonical-winner enforce: ID-derived distinct family won over a parent/org mislabel (family_enforce.json ledger)"
+    },
+    {
+      "provider": "venice",
+      "id": "inkling",
+      "raw_family": "ling",
+      "before": "(family=\"ling\",variant=\"\",version=\"\",modifier=\"\")",
+      "after": "(family=\"inkling\",variant=\"\",version=\"\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "canonical-winner enforce: ID-derived distinct family won over a parent/org mislabel (family_enforce.json ledger)"
+    },
+    {
       "provider": "kilo",
       "id": "kilo-auto/free",
       "raw_family": "",
@@ -107,6 +125,78 @@
       "after": "(family=\"kimi\",variant=\"k\",version=\"2.5\",modifier=\"free\")",
       "category": "b:improvement",
       "reason": "family-preserving de-noise/enrich: only phantom losses and/or enrichments, no ID-present field lost"
+    },
+    {
+      "provider": "vercel",
+      "id": "klingai/kling-v2.5-turbo-i2v",
+      "raw_family": "ling",
+      "before": "(family=\"ling\",variant=\"\",version=\"\",modifier=\"\")",
+      "after": "(family=\"kling\",variant=\"v2.5-turbo-i2v\",version=\"\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "canonical-winner enforce: ID-derived distinct family won over a parent/org mislabel (family_enforce.json ledger)"
+    },
+    {
+      "provider": "vercel",
+      "id": "klingai/kling-v2.5-turbo-t2v",
+      "raw_family": "ling",
+      "before": "(family=\"ling\",variant=\"\",version=\"\",modifier=\"\")",
+      "after": "(family=\"kling\",variant=\"v2.5-turbo-t2v\",version=\"\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "canonical-winner enforce: ID-derived distinct family won over a parent/org mislabel (family_enforce.json ledger)"
+    },
+    {
+      "provider": "vercel",
+      "id": "klingai/kling-v2.6-i2v",
+      "raw_family": "ling",
+      "before": "(family=\"ling\",variant=\"\",version=\"\",modifier=\"\")",
+      "after": "(family=\"kling\",variant=\"v2.6-i2v\",version=\"\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "canonical-winner enforce: ID-derived distinct family won over a parent/org mislabel (family_enforce.json ledger)"
+    },
+    {
+      "provider": "vercel",
+      "id": "klingai/kling-v2.6-motion-control",
+      "raw_family": "ling",
+      "before": "(family=\"ling\",variant=\"\",version=\"\",modifier=\"\")",
+      "after": "(family=\"kling\",variant=\"v2.6-motion-control\",version=\"\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "canonical-winner enforce: ID-derived distinct family won over a parent/org mislabel (family_enforce.json ledger)"
+    },
+    {
+      "provider": "vercel",
+      "id": "klingai/kling-v2.6-t2v",
+      "raw_family": "ling",
+      "before": "(family=\"ling\",variant=\"\",version=\"\",modifier=\"\")",
+      "after": "(family=\"kling\",variant=\"v2.6-t2v\",version=\"\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "canonical-winner enforce: ID-derived distinct family won over a parent/org mislabel (family_enforce.json ledger)"
+    },
+    {
+      "provider": "vercel",
+      "id": "klingai/kling-v3.0-i2v",
+      "raw_family": "ling",
+      "before": "(family=\"ling\",variant=\"\",version=\"\",modifier=\"\")",
+      "after": "(family=\"kling\",variant=\"v3.0-i2v\",version=\"\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "canonical-winner enforce: ID-derived distinct family won over a parent/org mislabel (family_enforce.json ledger)"
+    },
+    {
+      "provider": "vercel",
+      "id": "klingai/kling-v3.0-motion-control",
+      "raw_family": "ling",
+      "before": "(family=\"ling\",variant=\"\",version=\"\",modifier=\"\")",
+      "after": "(family=\"kling\",variant=\"v3.0-motion-control\",version=\"\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "canonical-winner enforce: ID-derived distinct family won over a parent/org mislabel (family_enforce.json ledger)"
+    },
+    {
+      "provider": "vercel",
+      "id": "klingai/kling-v3.0-t2v",
+      "raw_family": "ling",
+      "before": "(family=\"ling\",variant=\"\",version=\"\",modifier=\"\")",
+      "after": "(family=\"kling\",variant=\"v3.0-t2v\",version=\"\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "canonical-winner enforce: ID-derived distinct family won over a parent/org mislabel (family_enforce.json ledger)"
     },
     {
       "provider": "opencode",
@@ -226,6 +316,42 @@
       "reason": "strict enrichment — only previously-empty field(s) populated"
     },
     {
+      "provider": "togetherai",
+      "id": "thinkingmachines/Inkling",
+      "raw_family": "ling",
+      "before": "(family=\"ling\",variant=\"\",version=\"\",modifier=\"\")",
+      "after": "(family=\"inkling\",variant=\"\",version=\"\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "canonical-winner enforce: ID-derived distinct family won over a parent/org mislabel (family_enforce.json ledger)"
+    },
+    {
+      "provider": "baseten",
+      "id": "thinkingmachines/inkling",
+      "raw_family": "ling",
+      "before": "(family=\"ling\",variant=\"\",version=\"\",modifier=\"\")",
+      "after": "(family=\"inkling\",variant=\"\",version=\"\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "canonical-winner enforce: ID-derived distinct family won over a parent/org mislabel (family_enforce.json ledger)"
+    },
+    {
+      "provider": "openrouter",
+      "id": "thinkingmachines/inkling",
+      "raw_family": "ling",
+      "before": "(family=\"ling\",variant=\"\",version=\"\",modifier=\"\")",
+      "after": "(family=\"inkling\",variant=\"\",version=\"\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "canonical-winner enforce: ID-derived distinct family won over a parent/org mislabel (family_enforce.json ledger)"
+    },
+    {
+      "provider": "vercel",
+      "id": "thinkingmachines/inkling",
+      "raw_family": "ling",
+      "before": "(family=\"ling\",variant=\"\",version=\"\",modifier=\"\")",
+      "after": "(family=\"inkling\",variant=\"\",version=\"\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "canonical-winner enforce: ID-derived distinct family won over a parent/org mislabel (family_enforce.json ledger)"
+    },
+    {
       "provider": "opencode",
       "id": "trinity-large-preview-free",
       "raw_family": "trinity",
@@ -269,6 +395,15 @@
       "after": "(family=\"glm\",variant=\"\",version=\"5.2\",modifier=\"free\")",
       "category": "b:improvement",
       "reason": "family-preserving de-noise/enrich: only phantom losses and/or enrichments, no ID-present field lost"
+    },
+    {
+      "provider": "qiniu-ai",
+      "id": "kling-v2-6",
+      "raw_family": "",
+      "before": "(family=\"kling-v2\",variant=\"\",version=\"6\",modifier=\"\")",
+      "after": "(family=\"kling\",variant=\"\",version=\"2.6\",modifier=\"\")",
+      "category": "justified-exception",
+      "reason": "JUSTIFIED: qiniu-ai ships this row with an EMPTY upstream family, so the whole BEFORE tuple is our own leading-token decomposition — and both of its populated fields are wrong. The id spells Kling 2.6 with the dot lost to a dash (kling-v2-6), so the pipeline glued the dash-spelled major onto the family token (\"kling-v2\") and read the orphaned minor as the entire version (\"6\"), stranding the record on a one-instance phantom family at a version the vendor never published. The exact-ID pin corrects both together: family kling, version 2.6. No field is emptied, the family becomes a real family that eight other rows already serve, and the record joins them under kling@2.6 instead of kling-v2@6. A version-only dot-lost repair would have fixed the 6 -\u003e 2.6 half and left the phantom family standing, which is why the family override is the lever."
     },
     {
       "provider": "opencode",

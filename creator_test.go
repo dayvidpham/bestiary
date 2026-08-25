@@ -100,27 +100,36 @@ func TestCreator_TextCodecRoundTrips(t *testing.T) {
 //
 //	  9  hand-curated seed labs (meta, openai, anthropic, google, mistral, cohere,
 //	     deepseek, alibaba, zhipu)
-//	+ 14  tokens from the models.dev lab-prefix derivation. The catalog carries 24
+//	+ 15  tokens from the models.dev lab-prefix derivation. The catalog carries 24
 //	     distinct lab prefixes; 8 of them (alibaba, anthropic, cohere, deepseek,
-//	     google, meta, mistral, openai) are already seed labs, "zhipuai" is a
-//	     spelling variant of the seeded "zhipu" and is deliberately NOT applied, and
-//	     "thinkingmachines" is withheld with the "ling" family it would attribute —
-//	     24 − 8 − 1 − 1 = 14
-//	+ 18  tokens hand-curated for families the metadata join never reaches
+//	     google, meta, mistral, openai) are already seed labs and "zhipuai" is a
+//	     spelling variant of the seeded "zhipu" and is deliberately NOT applied —
+//	     24 − 8 − 1 = 15. "thinkingmachines" was the 16th prefix and the deferral
+//	     that made this 14: it was withheld only because a curated alias pointed
+//	     Inkling at the "ling" family, so applying it would have credited Thinking
+//	     Machines with inclusionAI's Ling line. The collision split ends that — the
+//	     alias now points at "inkling", the lab evidence reaches its own family
+//	     unambiguously, and the withhold list is empty.
+//	+ 19  tokens hand-curated for families the metadata join never reaches
 //	     (01ai, ai21, amazon, baai, baichuan, baidu, blackforestlabs, bytedance,
-//	     elevenlabs, ibm, ideogram, nousresearch, recraft, reka, runway,
-//	     stabilityai, upstage, voyageai)
-//	= 41
+//	     elevenlabs, ibm, ideogram, inclusionai, nousresearch, recraft, reka,
+//	     runway, stabilityai, upstage, voyageai)
+//	= 43
 //
-// A later curation slice splits the inkling/ling/kling collision and adds the
-// withheld originator, which moves this pin again; re-derive it there rather than
-// adjusting the literal.
+// 41 → 43 with the ling/inkling/kling collision split, one token in each derived
+// group and for a different reason each time. "thinkingmachines" joins group 2
+// because the split frees the lab derivation to attribute Inkling to the lab that
+// trained it. "inclusionai" joins group 3 because the same split leaves "ling"
+// with NO lab-scoped metadata row at all — the one row that ever reached it was
+// the mislabelled Inkling — so its originator can no longer be derived and has to
+// be authored by hand. "kling" is deliberately left unattributed: naming its lab
+// is a separate curation decision, not part of splitting the collision.
 func TestCreator_IsKnownAndCreators(t *testing.T) {
 	const (
 		seedLabs        = 9
-		labDerived      = 14
-		curatedUnreach  = 18
-		wantCreatorsLen = seedLabs + labDerived + curatedUnreach // 41
+		labDerived      = 15
+		curatedUnreach  = 19
+		wantCreatorsLen = seedLabs + labDerived + curatedUnreach // 43
 	)
 	all := bestiary.Creators()
 	if len(all) != wantCreatorsLen {

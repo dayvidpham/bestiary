@@ -413,6 +413,7 @@ const (
 	Entity__Imagen__Version_4_0__Fast                                     = "imagen@4.0{fast}"
 	Entity__Indictrans__Size_1b                                           = "indictrans#1b"
 	Entity__Inflection__Version_3                                         = "inflection@3"
+	Entity__Inkling                                                       = "inkling"
 	Entity__Intellect__Version_3                                          = "intellect@3"
 	Entity__Interfaze                                                     = "interfaze"
 	Entity__Jais__Size_30b__Chat                                          = "jais#30b{chat}"
@@ -439,7 +440,15 @@ const (
 	Entity__Kimi_k2__Code                                                 = "kimi-k2{code}"
 	Entity__Kimi_k2__Instruct                                             = "kimi-k2{instruct}"
 	Entity__Kimi_k3                                                       = "kimi-k3"
-	Entity__Kling_v2__Version_6                                           = "kling-v2@6"
+	Entity__Kling__V2_5_turbo_i2v                                         = "kling/v2.5-turbo-i2v"
+	Entity__Kling__V2_5_turbo_t2v                                         = "kling/v2.5-turbo-t2v"
+	Entity__Kling__V2_6_i2v                                               = "kling/v2.6-i2v"
+	Entity__Kling__V2_6_motion_control                                    = "kling/v2.6-motion-control"
+	Entity__Kling__V2_6_t2v                                               = "kling/v2.6-t2v"
+	Entity__Kling__V3_0_i2v                                               = "kling/v3.0-i2v"
+	Entity__Kling__V3_0_motion_control                                    = "kling/v3.0-motion-control"
+	Entity__Kling__V3_0_t2v                                               = "kling/v3.0-t2v"
+	Entity__Kling__Version_2_6                                            = "kling@2.6"
 	Entity__L31_70b_euryale__V2_2__Size_70b                               = "l31-70b-euryale/v2.2#70b"
 	Entity__L3_70b_euryale__V2_1__Size_70b                                = "l3-70b-euryale/v2.1#70b"
 	Entity__Laguna                                                        = "laguna"
@@ -450,7 +459,6 @@ const (
 	Entity__Laguna_s__Version_2_1                                         = "laguna-s@2.1"
 	Entity__Learnlm__Pro__Version_1_5                                     = "learnlm/pro@1.5"
 	Entity__Lfm__Version_2__Size_24b_a2b                                  = "lfm@2#24b-a2b"
-	Entity__Ling                                                          = "ling"
 	Entity__Ling__Flash__Version_2_0                                      = "ling/flash@2.0"
 	Entity__Ling__Flash__Version_2_6                                      = "ling/flash@2.6"
 	Entity__Ling__Flash_free__Version_2_6                                 = "ling/flash-free@2.6"
@@ -1357,6 +1365,7 @@ var allEntityConstants = [...]string{
 	Entity__Imagen__Version_4_0__Fast,
 	Entity__Indictrans__Size_1b,
 	Entity__Inflection__Version_3,
+	Entity__Inkling,
 	Entity__Intellect__Version_3,
 	Entity__Interfaze,
 	Entity__Jais__Size_30b__Chat,
@@ -1383,7 +1392,15 @@ var allEntityConstants = [...]string{
 	Entity__Kimi_k2__Code,
 	Entity__Kimi_k2__Instruct,
 	Entity__Kimi_k3,
-	Entity__Kling_v2__Version_6,
+	Entity__Kling__V2_5_turbo_i2v,
+	Entity__Kling__V2_5_turbo_t2v,
+	Entity__Kling__V2_6_i2v,
+	Entity__Kling__V2_6_motion_control,
+	Entity__Kling__V2_6_t2v,
+	Entity__Kling__V3_0_i2v,
+	Entity__Kling__V3_0_motion_control,
+	Entity__Kling__V3_0_t2v,
+	Entity__Kling__Version_2_6,
 	Entity__L31_70b_euryale__V2_2__Size_70b,
 	Entity__L3_70b_euryale__V2_1__Size_70b,
 	Entity__Laguna,
@@ -1394,7 +1411,6 @@ var allEntityConstants = [...]string{
 	Entity__Laguna_s__Version_2_1,
 	Entity__Learnlm__Pro__Version_1_5,
 	Entity__Lfm__Version_2__Size_24b_a2b,
-	Entity__Ling,
 	Entity__Ling__Flash__Version_2_0,
 	Entity__Ling__Flash__Version_2_6,
 	Entity__Ling__Flash_free__Version_2_6,

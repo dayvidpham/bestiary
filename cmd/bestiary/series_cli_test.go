@@ -40,7 +40,7 @@ func TestRun_Series_ListTable(t *testing.T) {
 	// which moved 419 → 418 (o-series dual-identity) then 418 → 411 (dot-lost version
 	// repair + 1t param-size routing folding dotless/dash qwen lines and re-keying
 	// ling@1t/ring@1t to size-only #1t entities).
-	if want := "Series (415):"; /* 411 -> 419: 2026-07-23 refresh; 419 -> 417: v0.2.8 slice, deepseek gen-1/gen-2 lines retire via the dot-lost merges; 417 -> 415, the global free demotion empties the deepseek-flash and minimax-m3 bare lines */ !strings.Contains(out, want) {
+	if want := "Series (417):"; /* 411 -> 419: 2026-07-23 refresh; 419 -> 417: v0.2.8 slice, deepseek gen-1/gen-2 lines retire via the dot-lost merges; 417 -> 415, the global free demotion empties the deepseek-flash and minimax-m3 bare lines; 415 -> 417, the ling/inkling/kling collision split adds the bare inkling and kling lines while kling@2.6 replaces the phantom kling-v2@6 versioned line one-for-one */ !strings.Contains(out, want) {
 		t.Errorf("listing missing the census header %q; got first line:\n%s", want, firstLine(out))
 	}
 	for _, want := range []string{"SERIES", "FAMILY", "GENERATION", "RELEASES", "ENTITIES"} {

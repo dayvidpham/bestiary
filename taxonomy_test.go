@@ -105,11 +105,17 @@ func equalStrings(a, b []string) bool {
 // (deepseek-flash/free) and minimax-m3 (minimax-m3/free) — and their bare lines empty out
 // with them. Every versioned line touched (glm@4.7 / @5 / @5.2, hy@3, laguna-s@2.1,
 // nemotron@3) keeps other entities, so no versioned line retires.
+// 415 → 417 with the ling/inkling/kling collision split (+2 bare / versioned UNCHANGED):
+// two new bare lines appear — `inkling` (Thinking Machines' 6 instances, no identity
+// version) and `kling` (the 8 klingai video keys, whose shape token lives in the VARIANT
+// slot, not the version) — while `ling` keeps its bare line through the surviving ling#1t.
+// The versioned side nets to zero: the phantom kling-v2@6 line retires and the kling@2.6
+// line replaces it one-for-one.
 func TestSeriesAll_CensusExact(t *testing.T) {
 	const (
-		wantSeries        = 415 // 411 -> 419: 2026-07-23 refresh (+4 versioned incl. gemini-3.6, +4 bare); 419 -> 417: v0.2.8 slice — the deepseek dot-lost merges retire the two phantom versioned lines deepseek gen-1 / gen-2 (command/a{translate} joins the existing command/a line, adding none); 417 -> 415: the global free demotion empties the deepseek-flash and minimax-m3 bare lines
+		wantSeries        = 417 // 411 -> 419: 2026-07-23 refresh (+4 versioned incl. gemini-3.6, +4 bare); 419 -> 417: v0.2.8 slice — the deepseek dot-lost merges retire the two phantom versioned lines deepseek gen-1 / gen-2 (command/a{translate} joins the existing command/a line, adding none); 417 -> 415: the global free demotion empties the deepseek-flash and minimax-m3 bare lines; 415 -> 417: the ling/inkling/kling split adds the bare `inkling` and `kling` lines (the kling-v2 versioned line is replaced one-for-one by kling@2.6)
 		wantVersionLines  = 209 // lines with a non-empty generation (207 -> 211 at the 2026-07-23 refresh; 211 -> 209 as deepseek gen-1 / gen-2 retire in the v0.2.8 slice; UNCHANGED by the free demotion — every versioned line it touches keeps other entities)
-		wantBareLines     = 206 // lines whose entities carry no identity version (204 -> 208 at the 2026-07-23 refresh; UNCHANGED by the v0.2.8 slice; 208 -> 206 as the free demotion empties the deepseek-flash and minimax-m3 lines). 209 + 206 = 415.
+		wantBareLines     = 208 // lines whose entities carry no identity version (204 -> 208 at the 2026-07-23 refresh; UNCHANGED by the v0.2.8 slice; 208 -> 206 as the free demotion empties the deepseek-flash and minimax-m3 lines; 206 -> 208 as the ling/inkling/kling split adds the bare inkling and kling lines). 209 + 208 = 417.
 		minExpectedSeries = 300 // the ratified floor
 	)
 	all := bestiary.SeriesAll()
@@ -159,8 +165,14 @@ func TestSeriesAll_CensusExact(t *testing.T) {
 // free-tier release name of its own on its line (free, flash-free, omni-free, pro-free,
 // v2.5, v2.5-free, v2.5-pro), none of which any surviving entity shares, so the release
 // count falls by exactly the 17 retired keys.
+// 652 → 661 with the ling/inkling/kling collision split (+9): the 8 klingai keys each carry
+// a distinct shape token in the variant slot (v2.5-turbo-i2v … v3.0-t2v), so each is its own
+// named release on the new bare kling line (+8); `inkling` and `kling@2.6` open a bare
+// release on each of their new lines (+2); the phantom kling-v2@6 line takes its sole bare
+// release with it (−1); and retiring bare `ling` costs NOTHING, because ling#1t already
+// shares that line's un-named release. 8 + 2 − 1 = +9.
 func TestReleases_CensusExact(t *testing.T) {
-	const wantReleases = 652 // 659 -> 671: 2026-07-23 refresh (+12 releases on the new lines); 671 -> 669: v0.2.8 slice — the two phantom deepseek gen-1 / gen-2 lines retire their bare releases (command/a{translate} shares command/a's existing release; a modifier is not a distinct release name); 669 -> 652: the global free demotion retires 17 keys, each the sole occupant of its release name (−17)
+	const wantReleases = 661 // 659 -> 671: 2026-07-23 refresh (+12 releases on the new lines); 671 -> 669: v0.2.8 slice — the two phantom deepseek gen-1 / gen-2 lines retire their bare releases (command/a{translate} shares command/a's existing release; a modifier is not a distinct release name); 669 -> 652: the global free demotion retires 17 keys, each the sole occupant of its release name (−17); 652 -> 661: the ling/inkling/kling split adds 8 named kling shape releases plus the bare inkling and kling@2.6 releases and retires the sole kling-v2@6 release (+9)
 
 	summed := 0
 	for _, s := range bestiary.SeriesAll() {

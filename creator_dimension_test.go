@@ -189,10 +189,18 @@ func TestCreatorsJSON_WithheldIsDisjointAndReported(t *testing.T) {
 //   - llama / mistral: NVIDIA re-publishes both labs' weights under its own "nvidia/"
 //     prefix, so the catalog carries two originators for one family and applying
 //     either would silently pick a winner.
-//   - ling: withheld — see the creators.json withhold reason.
 //
-// Three of the four are mechanical disagreements, and auto-applying any of the three
-// would have produced a WRONG creator. That is the measured justification for the
+// The set was FOUR rows until the ling/inkling/kling collision split. The fourth was
+// "ling", withheld: its only lab-scoped row was thinkingmachines/inkling, reaching it
+// through a curated alias, so applying the evidence would have credited Thinking
+// Machines with inclusionAI's Ling line. The split retargets that alias onto the new
+// "inkling" family, where the same evidence is unambiguous and agrees with curation —
+// so it produces no row at all — and leaves "ling" with no lab-scoped row to disagree
+// about. The withhold list is now empty and the class is unexercised here by design;
+// TestCreatorsJSON_WithheldIsDisjointAndReported covers the mechanism itself.
+//
+// All three surviving rows are mechanical disagreements, and auto-applying any of the
+// three would have produced a WRONG creator. That is the measured justification for the
 // derivation being report-only rather than self-applying.
 func TestCreatorLabDisagreements_Pinned(t *testing.T) {
 	type want struct {
@@ -202,7 +210,6 @@ func TestCreatorLabDisagreements_Pinned(t *testing.T) {
 	}
 	wanted := map[bestiary.Family]want{
 		"glm":     {labs: []string{"zhipuai"}, class: bestiary.CreatorLabClassSpellingVariant, count: 14},
-		"ling":    {labs: []string{"thinkingmachines"}, class: bestiary.CreatorLabClassWithheld, count: 1},
 		"llama":   {labs: []string{"meta", "nvidia"}, class: bestiary.CreatorLabClassMultiOrg, count: 5},
 		"mistral": {labs: []string{"mistral", "nvidia"}, class: bestiary.CreatorLabClassMultiOrg, count: 11},
 	}
@@ -248,6 +255,10 @@ func TestCreatorLabDisagreements_Pinned(t *testing.T) {
 	}
 	if mechanical != 3 {
 		t.Errorf("mechanical disagreements = %d, want 3 (glm spelling + llama/mistral multi-org)", mechanical)
+	}
+	if mechanical != len(got) {
+		t.Errorf("%d of %d rows are withheld deferrals; the withhold list is empty, so every "+
+			"reported row must be a mechanical disagreement", len(got)-mechanical, len(got))
 	}
 }
 

@@ -279,7 +279,16 @@ func TestEntityRekey_CensusAccounted(t *testing.T) {
 	// qwen/coder@3#1m retires (1 key, 0 added, also a pure MERGE) because its '1m' is a
 	// 1M-context tier marker rather than a parameter size; the InferX instance rejoins
 	// qwen/coder@3.
-	const wantEntities = 939
+	//
+	// 939 -> 947 with the ling/inkling/kling collision split. This one is NOT a pure merge:
+	// the upstream catalog stamps raw_family "ling" on all 14 rows of two unrelated product
+	// lines — Thinking Machines' 6 Inkling instances and vercel's 8 klingai video rows — so
+	// both were folded onto inclusionAI's Ling family. Splitting them RETIRES 2 keys and ADDS
+	// 10: bare `ling` empties (its only occupants were the 6 mislabelled Inkling instances,
+	// which leave for the new `inkling` key) and the phantom `kling-v2@6` is re-keyed to
+	// `kling@2.6`, while the 8 klingai rows split off into 8 `kling/v*` keys of their own.
+	// -2 + 10 = +8. inclusionAI's five surviving ling keys are untouched.
+	const wantEntities = 947
 	if got := len(bestiary.Entities()); got != wantEntities {
 		t.Errorf("registry census = %d entities, want %d — this literal is the running total of "+
 			"every curated key retirement (see the arithmetic above it); update it in the same "+
