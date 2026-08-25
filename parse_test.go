@@ -3610,8 +3610,14 @@ func TestWhisperTrailingVersionRecovery_FamilyGated(t *testing.T) {
 
 		// (2) MUTATION-PROOF — non-whisper "-vN" tags MUST NOT be promoted.
 		// claude-opus-4-6-v1's "-v1" is a Bedrock packaging revision; the real version is 4.6,
-		// extracted by the normal path. The recovery must NOT overwrite it with "1".
-		{"", "anthropic.claude-opus-4-6-v1", "anthropic.claude", "4.6"},
+		// extracted by the normal path. The recovery must NOT overwrite it with "1" — that is
+		// what this row fences, and it still holds. The FAMILY moved from "anthropic.claude" to
+		// "claude" when the redundant leading-token strip landed: the id is Bedrock's
+		// region-less profile form "<vendor>.<model>", and the vendor segment names the lab the
+		// Creator axis already attributes claude to, so it is dropped from the decomposition
+		// input. "anthropic.claude" was never a family — it was the dotted namespace glued onto
+		// the real one.
+		{"", "anthropic.claude-opus-4-6-v1", "claude", "4.6"},
 		// elevenlabs/nova/morph/deepseek/recraft trailing -vN must stay Version="" (untouched).
 		{"", "elevenlabs/elevenlabs-v2.5-turbo", "elevenlabs", ""},
 		{"", "amazon/nova-lite-v1", "nova", ""},

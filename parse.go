@@ -1504,6 +1504,15 @@ func inferFamilyFromIDWithVariantBase(id ModelID, p Provider) (Family, string, s
 		return "", "", ""
 	}
 
+	// ── Redundant leading-token strip ────────────────────────────────────
+	// Same rule and same reason as the call in ParseFamilyDetailed: drop a leading
+	// token only when another axis already carries the fact it names. Applied here
+	// too so the empty-raw_family path and the raw-populated path see the SAME id,
+	// which is the symmetry the vendor-strip head below was introduced for.
+	if class, stripped := ClassifyIDPrefix(id, p); class != IDPrefixNone {
+		id = stripped
+	}
+
 	// ── Vendor/namespace strip (shared head) ─────────────────────────────
 	// stripVendorNamespace strips the "<org>/" path segment then any residual
 	// "<vendor_alias>-" / "<vendor_alias>/" prefix (e.g. "minimaxai-minimax-m1" →
@@ -2409,6 +2418,22 @@ func ParseFamilyDetailed(raw Family, id ModelID, p Provider) (Family, string, st
 		return ov.family, ov.variant, ov.version, CanonicalizeModifiers(ov.modifiers), nil
 	}
 
+	// Redundant leading-token strip. A model id may repeat, as its first token, a
+	// fact the record already carries on another axis — the serving provider's own
+	// name, or the lab the Creator axis already attributes the family to. Repeating
+	// it costs identity: the version scan then starts one token late and the artifact
+	// keys an undated sibling of the entity it belongs to. ClassifyIDPrefix removes
+	// such a token ONLY when a different carrier holds the same fact, and leaves the
+	// id byte-identical otherwise, so a backend-host label or a product namespace —
+	// the tokens nothing else records — survive. See id_prefix.go for the rules and
+	// the measured cases each one is derived from.
+	//
+	// Placed AFTER the exact-ID override lookup on purpose: curated pins are keyed to
+	// the catalog's own spelling, so they must see the id the catalog published.
+	if class, stripped := ClassifyIDPrefix(id, p); class != IDPrefixNone {
+		id = stripped
+	}
+
 	// (uniform thinking/vision-as-modifier migration): a trailing
 	// {thinking,vision,…} token embedded in the RAW family is ALWAYS a modifier,
 	// never a variant. models.dev encodes the modifier in the family field for some
@@ -3001,9 +3026,21 @@ func bedrockProfile(id string) (regionTok, model string, ok bool) {
 	// Strip the Bedrock inference-profile routing suffix, scoped to this branch so
 	// there is zero collateral on non-Bedrock ids: tier tag first (":0"/"@default"),
 	// then the "-v<N>" version token it sat behind.
-	model = reBedrockTierTag.ReplaceAllString(model, "")
-	model = reBedrockVersionTag.ReplaceAllString(model, "")
+	model = stripBedrockRoutingTail(model)
 	return regionTok, model, true
+}
+
+// stripBedrockRoutingTail removes the Bedrock inference-profile routing suffix from
+// a model id: the tier tag first (":0" / "@default"), then the "-v<N>" profile
+// version token it sat behind. It is the shared implementation used by both arms of
+// the Bedrock grammar "[<region>.]<vendor>.<model>[-v<N>:<M>]" — bedrockProfile
+// handles the region-ful arm, and the leading-token classifier the region-less one.
+// Both arms must remove the tail: it is ROUTING metadata, and left in place it
+// swallows the release date behind it, so a dated id reads its date as part of the
+// version.
+func stripBedrockRoutingTail(model string) string {
+	model = reBedrockTierTag.ReplaceAllString(model, "")
+	return reBedrockVersionTag.ReplaceAllString(model, "")
 }
 
 // stripBedrockProfile returns the plain model id for an AWS Bedrock cross-region
@@ -4481,6 +4518,28 @@ var idFamilyOverrides = map[string]idFamilyOverrideEntry{
 	"openai-gpt-56-luna":       {family: "gpt", variant: "luna", version: "5.6"},
 	"openai-gpt-56-sol":        {family: "gpt", variant: "sol", version: "5.6"},
 	"openai-gpt-56-terra":      {family: "gpt", variant: "terra", version: "5.6"},
+
+	// The rest of venice's squashed-version gpt line, pinned on exactly the same
+	// curated reading as the six rows above: venice spells every OpenAI version
+	// without its dot, so "openai-gpt-52" is GPT 5.2 and "openai-gpt-55-pro" is GPT
+	// 5.5 Pro. Measured, venice ships fourteen such ids and the six 5.6 tier rows are
+	// only its newest six; leaving the other eight unpinned is what a partial fix
+	// looks like, and it is worse than either extreme — the leading-token classifier
+	// makes the version scan reach the squashed token and read "52" as a version
+	// literal, minting phantom gpt@52 / gpt@54 / gpt@55 / gpt/codex@52 lines beside
+	// the real ones. Pinned here rather than in dotLostVersionOverrides because that
+	// map is consulted AFTER the leading-token strip and would need the stripped
+	// spelling as its key, which is a bare "gpt-52" that no vendor actually publishes;
+	// these keys are the ids venice really serves. Each merges onto the sibling key
+	// its dotted spellings already hold.
+	"openai-gpt-52":       {family: "gpt", version: "5.2"},
+	"openai-gpt-52-codex": {family: "gpt", variant: "codex", version: "5.2"},
+	"openai-gpt-53-codex": {family: "gpt", variant: "codex", version: "5.3"},
+	"openai-gpt-54":       {family: "gpt", version: "5.4"},
+	"openai-gpt-54-mini":  {family: "gpt", variant: "mini", version: "5.4"},
+	"openai-gpt-54-pro":   {family: "gpt", variant: "pro", version: "5.4"},
+	"openai-gpt-55":       {family: "gpt", version: "5.5"},
+	"openai-gpt-55-pro":   {family: "gpt", variant: "pro", version: "5.5"},
 }
 
 // dotLostVersionOverrides is the curated, CLOSED, exact-model-ID map for the "dot-lost"

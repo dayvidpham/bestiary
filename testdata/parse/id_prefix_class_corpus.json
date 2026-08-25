@@ -1,0 +1,328 @@
+{
+  "_comment": "Leading-token classification for model ids: what the id's first token NAMES, and therefore whether dropping it repeats a fact another axis already carries or DELETES one. Driven through the exported bestiary.ClassifyIDPrefix, the same function both decomposition entrypoints call. Each case pins BOTH the class and the id the decomposition will read, so a rule that fires on the right case for the wrong reason — or strips more than the token — is visible. The negative rows are the point of the corpus, not filler: a backend-host label, a product-surface namespace, a family token that happens to be constant across its provider's catalog, and a provider slug whose remainder names nothing must ALL come back untouched. See TESTING.md.",
+  "cases": [
+    {
+      "name": "self_provider_databricks",
+      "input": {
+        "id": "databricks-gpt-5-6-luna",
+        "provider": "databricks"
+      },
+      "expected": {
+        "class": "self-provider",
+        "stripped": "gpt-5-6-luna"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "measured over the vendored models.dev catalog at this slice's baseline"
+      },
+      "mutation": {
+        "description": "databricks prefixes all 30 of its own ids with its own provider slug. The Provider field already says databricks, so the token repeats a fact and costs the version scan its first token."
+      }
+    },
+    {
+      "name": "self_provider_databricks_compound_family",
+      "input": {
+        "id": "databricks-kimi-k2-7-code",
+        "provider": "databricks"
+      },
+      "expected": {
+        "class": "self-provider",
+        "stripped": "kimi-k2-7-code"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "measured over the vendored models.dev catalog at this slice's baseline"
+      },
+      "mutation": {
+        "description": "the same rule on the row whose upstream raw_family fuses the series token (kimi-k2). Stripping the redundant slug is what lets the compound-family recovery reach it; the strip itself claims nothing about the family."
+      }
+    },
+    {
+      "name": "creator_dash_openai_on_snowflake",
+      "input": {
+        "id": "openai-gpt-5.6-luna",
+        "provider": "snowflake-cortex"
+      },
+      "expected": {
+        "class": "creator",
+        "stripped": "gpt-5.6-luna"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "measured over the vendored models.dev catalog at this slice's baseline"
+      },
+      "mutation": {
+        "description": "THE CONTROL CASE for the whole class. snowflake-cortex serves an OpenAI model and spells the lab in front of the name; family gpt declares creator openai, so the Creator axis holds the fact and the token may go. Before the strip this id could not reach its version DESPITE perfect version notation, which is what proved the defect was not about dash-versus-dot spelling."
+      }
+    },
+    {
+      "name": "creator_dot_openai_on_bedrock",
+      "input": {
+        "id": "openai.gpt-5.6-luna",
+        "provider": "amazon-bedrock"
+      },
+      "expected": {
+        "class": "creator",
+        "stripped": "gpt-5.6-luna"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "measured over the vendored models.dev catalog at this slice's baseline"
+      },
+      "mutation": {
+        "description": "the same lab token in Bedrock's region-LESS inference-profile form. The Bedrock grammar is [<region>.]<vendor>.<model>: the region-ful arm was already normalized, and this is the arm that was not."
+      }
+    },
+    {
+      "name": "creator_dot_bedrock_routing_tail",
+      "input": {
+        "id": "anthropic.claude-haiku-4-5-20251001-v1:0",
+        "provider": "amazon-bedrock"
+      },
+      "expected": {
+        "class": "creator",
+        "stripped": "claude-haiku-4-5-20251001"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "measured over the vendored models.dev catalog at this slice's baseline"
+      },
+      "mutation": {
+        "description": "a dotted strip must take the Bedrock ROUTING tail with it. Left in place the -v1:0 swallows the release date behind it and the id reads its DATE as part of the version (4.5.20251001). The region-ful arm has always stripped this tail; the region-less arm now shares one implementation with it."
+      }
+    },
+    {
+      "name": "creator_token_equals_family_token",
+      "input": {
+        "id": "mistral.mistral-large-3-675b-instruct",
+        "provider": "amazon-bedrock"
+      },
+      "expected": {
+        "class": "creator",
+        "stripped": "mistral-large-3-675b-instruct"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "measured over the vendored models.dev catalog at this slice's baseline"
+      },
+      "mutation": {
+        "description": "the creator token and the family token are the same word. The carrier check licenses the strip anyway, because it asks whether family mistral DECLARES creator mistral — which it does — rather than whether the two strings differ."
+      }
+    },
+    {
+      "name": "creator_dot_family_repair",
+      "input": {
+        "id": "mistral.voxtral-mini-3b-2507",
+        "provider": "amazon-bedrock"
+      },
+      "expected": {
+        "class": "creator",
+        "stripped": "voxtral-mini-3b-2507"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "measured over the vendored models.dev catalog at this slice's baseline"
+      },
+      "mutation": {
+        "description": "the row where the dotted lab segment was being read as the FAMILY, so Mistral's Voxtral Mini keyed a mistral/mini line. Dropping the lab token is a family repair here, not just a version recovery."
+      }
+    },
+    {
+      "name": "host_label_is_never_stripped",
+      "input": {
+        "id": "azure-gpt-4o",
+        "provider": "nano-gpt"
+      },
+      "expected": {
+        "class": "none",
+        "stripped": "azure-gpt-4o"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "measured over the vendored models.dev catalog at this slice's baseline"
+      },
+      "mutation": {
+        "description": "THE NEGATIVE CONTROL THIS RULE EXISTS FOR. nano-gpt serves this model through an Azure backend; azure is neither the serving provider nor gpt's creating lab, so no axis holds the fact and the token is the only place it appears. A blanket provider-name strip deleted exactly this label once. Nothing about that case is remembered as an exception — it simply fails both carrier checks."
+      }
+    },
+    {
+      "name": "product_namespace_is_never_stripped",
+      "input": {
+        "id": "duo-chat-gpt-5-6-luna",
+        "provider": "gitlab"
+      },
+      "expected": {
+        "class": "none",
+        "stripped": "duo-chat-gpt-5-6-luna"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "measured over the vendored models.dev catalog at this slice's baseline"
+      },
+      "mutation": {
+        "description": "gitlab prefixes all 22 of its ids with duo-chat, its product surface. duo is not the provider slug (gitlab) and names no lab, and the entity model records no product-surface axis, so stripping it would delete a fact rather than repeat one. The measured cost is that gitlab's rows stay on the undated tier keys; the honest fix is a surface axis, not a wider strip."
+      }
+    },
+    {
+      "name": "self_provider_rejected_when_remainder_is_not_a_family",
+      "input": {
+        "id": "minimax-m2",
+        "provider": "minimax"
+      },
+      "expected": {
+        "class": "none",
+        "stripped": "minimax-m2"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "measured over the vendored models.dev catalog at this slice's baseline"
+      },
+      "mutation": {
+        "description": "provider minimax serves ids that BEGIN with its own slug, so the self-provider rule matches on the token alone. The remainder m2 names no family, so stripping would destroy the identity rather than de-duplicate it, and the non-destruction guard rejects it. Without this guard the rule would delete the family of every model whose vendor shares its name."
+      }
+    },
+    {
+      "name": "self_provider_rejected_deepseek",
+      "input": {
+        "id": "deepseek-v3",
+        "provider": "deepseek"
+      },
+      "expected": {
+        "class": "none",
+        "stripped": "deepseek-v3"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "measured over the vendored models.dev catalog at this slice's baseline"
+      },
+      "mutation": {
+        "description": "the second measured instance of the same trap, kept because one example reads as a coincidence."
+      }
+    },
+    {
+      "name": "family_prefix_is_not_a_carrier",
+      "input": {
+        "id": "claude-sonnet-4-5",
+        "provider": "anthropic"
+      },
+      "expected": {
+        "class": "none",
+        "stripped": "claude-sonnet-4-5"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "measured over the vendored models.dev catalog at this slice's baseline"
+      },
+      "mutation": {
+        "description": "anthropic prefixes all 14 of its ids with claude, which is CONSTANT across its catalog exactly as databricks- is. Constancy is therefore NOT a carrier test: claude is the family. This row is why the rule asks what a token NAMES rather than how often it appears."
+      }
+    },
+    {
+      "name": "creator_rejected_when_axis_spells_it_differently",
+      "input": {
+        "id": "zai.glm-5",
+        "provider": "amazon-bedrock"
+      },
+      "expected": {
+        "class": "none",
+        "stripped": "zai.glm-5"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "measured over the vendored models.dev catalog at this slice's baseline"
+      },
+      "mutation": {
+        "description": "Bedrock's vendor segment says zai; the curated creator of family glm is zhipu. The carrier does not hold the value the id spells, so the rule declines rather than guessing they are the same lab. A creator-alias vocabulary is the honest fix and is deliberately not in this rule."
+      }
+    },
+    {
+      "name": "namespaced_id_is_never_split",
+      "input": {
+        "id": "openai/gpt-5.6-luna-pro",
+        "provider": "openrouter"
+      },
+      "expected": {
+        "class": "none",
+        "stripped": "openai/gpt-5.6-luna-pro"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "measured over the vendored models.dev catalog at this slice's baseline"
+      },
+      "mutation": {
+        "description": "an id carrying an org path segment is the vendor/namespace strip's business, not this rule's. Splitting here would let a token that merely begins with a vendor word inside an org segment be read as a prefix."
+      }
+    },
+    {
+      "name": "bare_token_is_a_model_not_a_namespace",
+      "input": {
+        "id": "databricks",
+        "provider": "databricks"
+      },
+      "expected": {
+        "class": "none",
+        "stripped": "databricks"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "measured over the vendored models.dev catalog at this slice's baseline"
+      },
+      "mutation": {
+        "description": "a token with nothing behind it is a model name. Requiring a non-empty remainder is what keeps a bare provider-shaped id from being stripped to nothing."
+      }
+    },
+    {
+      "name": "idempotent_on_an_already_stripped_id",
+      "input": {
+        "id": "gpt-5-6-luna",
+        "provider": "databricks"
+      },
+      "expected": {
+        "class": "none",
+        "stripped": "gpt-5-6-luna"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "measured over the vendored models.dev catalog at this slice's baseline"
+      },
+      "mutation": {
+        "description": "the output of a strip must be a fixed point, because both decomposition entrypoints apply the rule and one calls the other. gpt is neither databricks nor a creator token, so a second pass is a no-op."
+      }
+    },
+    {
+      "name": "unprefixed_control_recovers_unchanged",
+      "input": {
+        "id": "gpt-5-6-luna",
+        "provider": "kenari"
+      },
+      "expected": {
+        "class": "none",
+        "stripped": "gpt-5-6-luna"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "measured over the vendored models.dev catalog at this slice's baseline"
+      },
+      "mutation": {
+        "description": "the control the deferral record named: kenari publishes the same artifact with no vendor prefix at all and always recovered its version. It must come back byte-identical, or the rule is reaching past the prefix."
+      }
+    }
+  ]
+}
