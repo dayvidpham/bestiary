@@ -79,14 +79,14 @@ func TestSchemaFile_VersionAndModifierType(t *testing.T) {
 }
 
 // TestBestiarySchemaVersion_Exact asserts that BestiarySchemaVersion equals
-// exactly "0.6.0" — bumped ONCE for the additive v0.2.8 creator dimension
-// (ModelInfo.Creator / Entity.Creator + the Creator $def), the multi-attestation
-// naming model ($defs NomenAttestation/AttestationAuthority/IngestMethod +
-// Nomen.Attestations), and the "oci" CanonicalScheme token. Every addition is
-// optional/zero-value, so the bump is backward-compatible.
+// exactly "0.7.0" — bumped ONCE for v0.2.10, covering BOTH additive changes of that
+// epoch: NomenAttestation.ArchivedURL (the harvested layer's archive.org snapshot of
+// its live SourceURL) and Entity.MetadataAll (the multi-metadata read projection).
+// One epoch, one bump, one paragraph in version.go; a second bump for the second
+// addition would be the defect this pin exists to catch.
 // Update this test when a new schema version is released.
 func TestBestiarySchemaVersion_Exact(t *testing.T) {
-	const want = "0.6.0"
+	const want = "0.7.0"
 	if bestiary.BestiarySchemaVersion != want {
 		t.Errorf(
 			"BestiarySchemaVersion = %q, want %q;\n"+

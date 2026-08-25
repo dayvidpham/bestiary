@@ -72,7 +72,23 @@ package bestiary
 //     Additive and backward-COMPATIBLE: every new property is optional/zero-value
 //     (Creator defaults to "", Attestations absent, "oci" a new enum member), and none
 //     is added to any required[] array, so 0.5.x records still validate.
-const BestiarySchemaVersion = "0.6.0"
+//   - 0.6.0 → 0.7.0: adds the v0.2.10 harvest-durability and multi-metadata fields.
+//     (1) NomenAttestation.ArchivedURL — an archive.org snapshot OF the attestation's
+//     SourceURL, recorded for the HARVESTED layer (whose SourceURL is a live page that
+//     can rot) by the offline HuggingFace bot via the Wayback Availability API, and
+//     empty whenever no snapshot is recorded. It is ADDITIVE — SourceURL stays primary
+//     and unchanged — and it does NOT touch the curated archive-only fence, whose
+//     source_url already IS the snapshot. Because a NomenAttestation always serializes
+//     every field, ArchivedURL joins the $defs.NomenAttestation required[] list (all
+//     six); that is not a compatibility break, since a 0.6.x-shaped attestation
+//     document was itself always emitted with all of its fields present.
+//     (2) Entity.MetadataAll — the multi-metadata read projection alongside the
+//     existing single Entity.Metadata slot, optional and absent when unpopulated.
+//     Both additions are additive and backward-COMPATIBLE at the record level: no
+//     existing property changes type or meaning, and no top-level required[] array
+//     grows. This is the SOLE schema bump for v0.2.10 — one paragraph, one document,
+//     covering BOTH additions; do not add another this epoch.
+const BestiarySchemaVersion = "0.7.0"
 
 // UpstreamSchemaVersion identifies the exact snapshot of the models.dev schema
 // that this bestiary schema was derived from. Format: YYYY.MM.DD-sha256

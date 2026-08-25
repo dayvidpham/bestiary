@@ -16,6 +16,11 @@ import (
 // for the rationale; the short form is that a claim is evidence of what a lab published, and
 // live model cards and docs pages are edited and deleted without notice.
 //
+// The fence binds THIS curated layer only. It is not a rule about the type: a
+// harvested attestation's source_url is deliberately a live observation, and its
+// snapshot (when the bot finds one) is recorded on ArchivedURL — see
+// huggingface_nomina.go. Nothing below is relaxed, moved or duplicated by that.
+//
 // The failure disciplines here are deliberately split, matching the lineage.go
 // precedent this file already follows: a MISSING or CORRUPT file degrades gracefully
 // to an empty table (loadNomenClaimsSafe), because a build without curated claims is
@@ -26,9 +31,28 @@ import (
 const archiveSnapshotURLPrefix = "https://web.archive.org/web/"
 
 // archiveSnapshotURL is the snapshot shape: the prefix, a 14-digit capture
-// timestamp, then the original claimant URL retained verbatim (which is why the
-// policy needs no second archive_url field).
+// timestamp, then the original claimant URL retained verbatim — which is why the
+// CURATED layer needs no second archive_url field: its source_url already IS the
+// snapshot, and the live address is recoverable from the snapshot's own tail. That
+// is a statement about the curated layer alone. The HARVESTED layer cites a live
+// observation (huggingface_nomina.go), so its snapshot cannot live in source_url
+// and rides alongside on NomenAttestation.ArchivedURL instead.
 var archiveSnapshotURL = regexp.MustCompile(`^https://web\.archive\.org/web/\d{14}/https?://.+$`)
+
+// IsArchiveSnapshotURL reports whether url has the archive.org snapshot shape the
+// curated archive policy requires: the web.archive.org prefix, a 14-digit capture
+// timestamp, then the original URL retained verbatim.
+//
+// It is the ONE shared format check — the curated nomen-claim fence, the curated
+// suppression-seed fence and the harvested layer's ArchivedURL all match against
+// this single regexp rather than each copying the pattern, so the accepted shape
+// can never drift between them. It is exported because the offline cmd/bestiary-hf
+// bot (a separate package) validates the Wayback Availability API's answer with it
+// before recording an ArchivedURL.
+//
+// It is a SHAPE check only: it does not fetch the URL and makes no claim that the
+// snapshot exists or resolves.
+func IsArchiveSnapshotURL(url string) bool { return archiveSnapshotURL.MatchString(url) }
 
 // This file loads the curated third-party naming claims (parse/data/nomen_claims.json)
 // and turns them into Alias/HuggingFace/PURL Nomina. It follows the lineage.go
@@ -186,7 +210,9 @@ func parseNomenClaims(raw []byte) (*nomenClaimsTable, error) {
 					"  Why: a claim is evidence of what a lab published, and model cards and docs pages are\n"+
 					"       edited and deleted without notice — a live URL silently stops attesting the claim\n"+
 					"       it was cited for. The snapshot embeds the original URL in its tail, so the live\n"+
-					"       address stays recoverable and no separate archive_url field is needed\n"+
+					"       address stays recoverable and this CURATED layer needs no second archive_url\n"+
+					"       field (the harvested layer, which cites a live observation, carries its snapshot\n"+
+					"       alongside on ArchivedURL instead)\n"+
 					"  What it means for the caller: the claim is REJECTED; no nomen is minted from this file\n"+
 					"  How to fix: capture the claimant page at web.archive.org, verify the snapshot loads,\n"+
 					"       then use that URL — the form is %ssnapshot-timestamp/<original-url>",
