@@ -4453,6 +4453,34 @@ var idFamilyOverrides = map[string]idFamilyOverrideEntry{
 	// ("Cogito v2.1 671B"), the same 671b size and the same 1.25/1.25 price, and the id's own
 	// "v2-1" spelling names which dot was lost.
 	"deepcogito/cogito-v2-1-671b": {family: "cogito", variant: "v", version: "2.1"},
+
+	// gpt 5.6 tier pins. The curated family_overrides rows map upstream family
+	// gpt-<tier> to (family gpt, variant <tier>), which puts the tier token in the
+	// VARIANT slot and leaves the trailing "-pro" token with nowhere mechanical to go:
+	// "pro" is not in modifiers.json, so extractModifiers can never peel it, and the
+	// six -pro rows would silently CONFLATE into their non-pro sibling entity. Adding
+	// "pro" to modifiers.json globally was measured and rejected — it re-keys ~30
+	// unrelated families and still does not fix these rows, because "pro" is a curated
+	// gpt member and the member guard holds. Exact-ID pins are the honest mechanism
+	// (the cohere/rerank-v4-pro precedent above), and they are bounded by construction.
+	// "pro" is already globally IDENTITY-class in modifier_class.json, so {pro} needs
+	// no new classification — only the peel these pins supply.
+	//
+	// venice spells the same 5.6 release with the dot squashed out of the version
+	// ("openai-gpt-56-<tier>"), which no version scan recovers, so all six venice rows
+	// (three base + three pro) carry the version pin too. This is a CURATED reading of
+	// six ids, not a parser change: openai-gpt-56-luna IS GPT 5.6 Luna, merely spelled
+	// without the dot, and leaving them unpinned would scatter one aggregator's own six
+	// rows across a dated and an undated key.
+	"openai/gpt-5.6-luna-pro":  {family: "gpt", variant: "luna", version: "5.6", modifiers: []string{"pro"}},
+	"openai/gpt-5.6-sol-pro":   {family: "gpt", variant: "sol", version: "5.6", modifiers: []string{"pro"}},
+	"openai/gpt-5.6-terra-pro": {family: "gpt", variant: "terra", version: "5.6", modifiers: []string{"pro"}},
+	"openai-gpt-56-luna-pro":   {family: "gpt", variant: "luna", version: "5.6", modifiers: []string{"pro"}},
+	"openai-gpt-56-sol-pro":    {family: "gpt", variant: "sol", version: "5.6", modifiers: []string{"pro"}},
+	"openai-gpt-56-terra-pro":  {family: "gpt", variant: "terra", version: "5.6", modifiers: []string{"pro"}},
+	"openai-gpt-56-luna":       {family: "gpt", variant: "luna", version: "5.6"},
+	"openai-gpt-56-sol":        {family: "gpt", variant: "sol", version: "5.6"},
+	"openai-gpt-56-terra":      {family: "gpt", variant: "terra", version: "5.6"},
 }
 
 // dotLostVersionOverrides is the curated, CLOSED, exact-model-ID map for the "dot-lost"
