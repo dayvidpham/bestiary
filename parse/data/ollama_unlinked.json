@@ -1,0 +1,32 @@
+{
+  "_comment": "Community Ollama models KEPT but with no determinable base (visibility list, never a drop path). Written sorted by the offline tool; each entry is also a standalone quant_vram.json entry.",
+  "schema_version": 1,
+  "unlinked": [
+    "ollama/gemma2:27b-instruct",
+    "ollama/gemma2:2b-instruct",
+    "ollama/gemma2:9b",
+    "ollama/gemma2:9b-instruct",
+    "ollama/gemma2:9b-text",
+    "ollama/gemma2:latest",
+    "ollama/llama3.1:latest",
+    "ollama/llama3.2:latest",
+    "ollama/llama3.3:latest",
+    "ollama/mistral:7b-instruct-v0.2",
+    "ollama/mistral:7b-text-v0.2",
+    "ollama/mistral:instruct",
+    "ollama/mistral:v0.1",
+    "ollama/mistral:v0.2",
+    "ollama/mistral:v0.3",
+    "ollama/phi3.5:3.8b",
+    "ollama/phi3.5:3.8b-mini-instruct",
+    "ollama/phi3.5:latest",
+    "ollama/qwen2.5:0.5b",
+    "ollama/qwen2.5:0.5b-base",
+    "ollama/qwen2.5:0.5b-instruct",
+    "ollama/qwen2.5:1.5b",
+    "ollama/qwen2.5:1.5b-instruct",
+    "ollama/qwen2.5:3b",
+    "ollama/qwen2.5:3b-instruct",
+    "ollama/qwen2.5:latest"
+  ]
+}
