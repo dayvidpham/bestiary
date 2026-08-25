@@ -14,6 +14,20 @@ for its **Go module tags** (`vX.Y.Z`).
 
 ## [Unreleased]
 
+### Changed
+
+- **Web: a readability type scale governs every text size.** The `bestiary-web` stylesheet
+  gained a six-step, rem-based type scale (`--fs-xs` … `--fs-xl`) and every `font-size` in
+  the layout now resolves through it — there is no literal font-size value left in the
+  stylesheet, and a test guard keeps it that way. Because the steps are rem-based, a reader
+  who raises their browser's base font size now scales the whole page with it; the previous
+  px literals ignored that preference outright. Each former size moves up exactly one step
+  (12→13, 13→14, 14→15, 15→16 px at the browser default), so the dense entity grid keeps its
+  density while the smallest text on the page stops being 12px. Headings, which previously
+  carried no explicit size at all, are on the scale too. The steps are named `--fs-*` rather
+  than `--text-*` because `--text` and `--text-muted` are already colour tokens. No selector
+  was renamed.
+
 ## [0.2.9] - 2026-07-28
 
 **Schema:** unchanged at `0.6.0`.
