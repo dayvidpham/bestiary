@@ -443,6 +443,10 @@ func fracOf(n, d int64) int {
 // hierarchy to walk, not a nine-hundred-row table, while a reader who knows what they
 // want still has the table one click away.
 //
+// "/calculator" is the budget-first fit page and "/sse/calculator" its patch seam, named
+// on the same two conventions as the pair above: "/sse/" names the transport, and the page
+// route names the question the page answers rather than the data it reads.
+//
 // "/series" is GONE, not redirected. Its content was absorbed by "/families", which
 // emits the SAME series anchors, so the detail-page links that pointed into the old
 // explorer resolve at the new path. A retired route returns a hard 404: an alias would
@@ -454,7 +458,9 @@ func (s *Server) routes() {
 	mux.HandleFunc("GET /entities", s.handleEntities)
 	mux.HandleFunc("GET /families", s.handleFamilies)
 	mux.HandleFunc("GET "+entityRoutePrefix, s.handleEntity)
+	mux.HandleFunc("GET /calculator", s.handleCalculator)
 	mux.HandleFunc("GET /sse/entities", s.handleEntitiesSSE)
+	mux.HandleFunc("GET /sse/calculator", s.handleCalculatorSSE)
 	mux.Handle("GET /assets/", http.FileServerFS(assetsFS))
 	s.handler = mux
 }
@@ -811,4 +817,263 @@ func (s *Server) render(w http.ResponseWriter, page string, data any) {
 func negotiateJSON(accept string) bool {
 	accept = strings.ToLower(accept)
 	return strings.Contains(accept, "application/json") && !strings.Contains(accept, "text/html")
+}
+
+// ---- The budget-first fit calculator ----------------------------------------
+
+// The calculator's presets. A budget the reader has not yet touched must still produce a
+// page that answers something, and the headroom preset is deliberately NON-ZERO: the
+// shipped VRAM formula carries no runtime-overhead term, so a fit verdict computed from
+// a raw lower bound would say "yes" for models that run out of memory in practice. The
+// slack is surfaced as a control the reader owns rather than smuggled into the datum.
+const (
+	calcDefaultBudgetGiB   = 24
+	calcDefaultHeadroomGiB = 2
+	// calcMaxRows caps what the page RENDERS, never what FitOver computes. The cap is
+	// stated on the page whenever it bites (see calcView.Truncated) — a silently
+	// truncated table reads as "this is everything", which is the one thing a coverage
+	// statement exists to prevent.
+	calcMaxRows = 200
+	bytesPerGiB = int64(1) << 30
+)
+
+// calcQuery is the view-state the calculator SSE endpoint reads from the Datastar
+// signals. Every field arrives as a string because that is what a bound form control
+// produces; each is parsed tolerantly, so a malformed value degrades to the default view
+// rather than to a 400 (the parseCtx precedent). This is NON-IDENTITY view-state: it
+// selects which rows are listed, never which entity a link denotes.
+type calcQuery struct {
+	Budget     string `json:"budget"`
+	Headroom   string `json:"headroom"`
+	MinContext string `json:"minContext"`
+}
+
+// filter turns the raw signals into the library's FitFilter. Budget and headroom are read
+// in GiB because that is the unit a reader knows their card in; the library works in
+// bytes throughout and never sees the GiB figure.
+func (q calcQuery) filter() bestiary.FitFilter {
+	budget := parseGiB(q.Budget, calcDefaultBudgetGiB)
+	headroom := parseGiB(q.Headroom, calcDefaultHeadroomGiB)
+	return bestiary.FitFilter{
+		Budget: bestiary.FitBudget{
+			TotalBytes:    int64(budget * float64(bytesPerGiB)),
+			HeadroomBytes: int64(headroom * float64(bytesPerGiB)),
+		},
+		MinContext: parseNonNegativeInt(q.MinContext),
+	}
+}
+
+// parseGiB reads a GiB figure from a bound form control. A missing, non-numeric or
+// negative value yields the preset; zero is honored, because a reader who deliberately
+// sets the headroom to nothing has said something and must be believed.
+func parseGiB(s string, preset float64) float64 {
+	s = strings.TrimSpace(s)
+	if s == "" {
+		return preset
+	}
+	v, err := strconv.ParseFloat(s, 64)
+	if err != nil || v < 0 {
+		return preset
+	}
+	return v
+}
+
+// parseNonNegativeInt reads an optional token count. Anything unreadable is no
+// constraint, never an error.
+func parseNonNegativeInt(s string) int {
+	n, err := strconv.Atoi(strings.TrimSpace(s))
+	if err != nil || n < 0 {
+		return 0
+	}
+	return n
+}
+
+// calcRow is the render view of one fit row: every cell precomputed, so the template
+// makes no decisions and the same strings are asserted by the tests the reader sees.
+type calcRow struct {
+	Key      string
+	Path     string
+	Provider string
+	Quant    string
+	// Weights is the weights figure, e.g. "17.1 GB".
+	Weights string
+	// Context is the max-affordable-context cell. It is a token count, the literal
+	// "unknown", or "no context budget remaining" -- never an unbounded figure.
+	Context string
+	// Bound names which limit produced Context; empty when Context carries no figure.
+	Bound string
+	// Badge is the honesty label, naming every qualification that applies. It is empty
+	// only for a fully-measured row with a computable KV term.
+	Badge string
+	// BadgeTitle is the badge's long-form explanation.
+	BadgeTitle string
+	// Derived is true when the weights figure is an estimate rather than a file size.
+	Derived bool
+}
+
+// fitCoverage carries the four denominators the coverage statement is rendered from. The
+// sentence on the page interpolates these fields; it never contains a literal count,
+// because a literal goes stale the first time the corpus moves.
+type fitCoverage struct {
+	Considered int
+	Measured   int
+	Derived    int
+	Excluded   int
+}
+
+// calcView is the data model for the calculator page.
+type calcView struct {
+	Title           string
+	DatastarVersion string
+	// BudgetGiB / HeadroomGiB / MinContext seed the form controls with the values the
+	// current render used, so the page and its signals never disagree on first paint.
+	BudgetGiB   string
+	HeadroomGiB string
+	MinContext  string
+	// Available is the budget actually spendable on weights, "NN.N GB".
+	Available string
+	Rows      []calcRow
+	Coverage  fitCoverage
+	// RowsTotal is how many rows fit the budget; RowsShown is how many are rendered.
+	// They differ only when the render cap bites, which Truncated reports in words.
+	RowsTotal int
+	RowsShown int
+	Truncated bool
+}
+
+// handleCalculator renders the budget-first calculator: the reader states a VRAM budget
+// and an adjustable headroom, and the page lists what fits, largest first. It is the
+// direction-reversal of the detail page's context recompute -- there you pick a model and
+// ask how much VRAM; here you state the VRAM and ask what runs.
+func (s *Server) handleCalculator(w http.ResponseWriter, r *http.Request) {
+	q := calcQuery{
+		Budget:     r.URL.Query().Get("budget"),
+		Headroom:   r.URL.Query().Get("headroom"),
+		MinContext: r.URL.Query().Get("minContext"),
+	}
+	s.render(w, "calculator", s.calcView(q))
+}
+
+// handleCalculatorSSE is the datastar wiring seam for the calculator: it reads the budget
+// signals, re-runs the fit, and PatchElements the ranked table into #calc-results. The
+// coverage statement is patched with it, because the denominators are part of the answer
+// and must never lag the table they describe.
+func (s *Server) handleCalculatorSSE(w http.ResponseWriter, r *http.Request) {
+	var q calcQuery
+	// Tolerant read: absent signals are not an error (the initial load has none).
+	_ = datastar.ReadSignals(r, &q)
+
+	var buf bytes.Buffer
+	if err := s.fragments.ExecuteTemplate(&buf, "calc-results", s.calcView(q)); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	sse := datastar.NewSSE(w, r)
+	_ = sse.PatchElements(
+		buf.String(),
+		datastar.WithSelector("#calc-results"),
+		datastar.WithMode(datastar.ElementPatchModeInner),
+	)
+}
+
+// calcView runs the fit and projects it for rendering. It is the ONE place the page's
+// numbers come from, so the initial render and every SSE patch agree by construction.
+func (s *Server) calcView(q calcQuery) calcView {
+	f := q.filter()
+	res := bestiary.FitOver(s.entities, f)
+
+	shown := res.Rows
+	if len(shown) > calcMaxRows {
+		shown = shown[:calcMaxRows]
+	}
+	rows := make([]calcRow, 0, len(shown))
+	for _, r := range shown {
+		rows = append(rows, newCalcRow(r))
+	}
+	return calcView{
+		Title:           "calculator",
+		DatastarVersion: DatastarJSVersion,
+		BudgetGiB:       trimFloat(float64(f.Budget.TotalBytes) / float64(bytesPerGiB)),
+		HeadroomGiB:     trimFloat(float64(f.Budget.HeadroomBytes) / float64(bytesPerGiB)),
+		MinContext:      strconv.Itoa(f.MinContext),
+		Available:       vramLabel(f.Budget.Available()),
+		Rows:            rows,
+		Coverage: fitCoverage{
+			Considered: res.EntitiesConsidered,
+			Measured:   res.EntitiesMeasured,
+			Derived:    res.EntitiesDerived,
+			Excluded:   res.EntitiesExcluded,
+		},
+		RowsTotal: len(res.Rows),
+		RowsShown: len(rows),
+		Truncated: len(res.Rows) > len(rows),
+	}
+}
+
+// newCalcRow projects one library row into display strings. Every honesty qualification
+// the library typed is spelled out here in words: a derived figure says so, a weights-only
+// bound says so, and the two say so TOGETHER when both apply, because a reader who sees
+// only one of them has been told half the truth.
+func newCalcRow(r bestiary.FitRow) calcRow {
+	key := r.Ref.String()
+	out := calcRow{
+		Key:      key,
+		Path:     r.Ref.IRI(entityRoutePrefix),
+		Provider: string(r.Provider),
+		Quant:    r.Quant.String(),
+		Weights:  vramLabel(r.WeightsBytes),
+		Derived:  r.WeightsBasis == bestiary.BasisDerived,
+	}
+	if r.QuantRaw != "" {
+		out.Quant = r.QuantRaw
+	}
+	switch {
+	case r.Bound == bestiary.ContextBoundUnknown:
+		out.Context = "unknown"
+	case r.NoContextBudget():
+		out.Context = "no context budget remaining"
+	default:
+		out.Context = commaInt(int64(r.MaxContext)) + " tokens"
+		out.Bound = r.Bound.String() + "-bound"
+	}
+	switch {
+	case out.Derived:
+		out.Badge = "derived · weights-only"
+		out.BadgeTitle = "derived: weights estimated from the attested total parameter count " +
+			"times bits-per-weight, not a measured file size. weights-only: the KV-cache term " +
+			"is omitted because no architecture facts are published for this entity, so real " +
+			"VRAM will be higher."
+	case r.Partial:
+		out.Badge = "weights-only"
+		out.BadgeTitle = "weights-only lower bound: the KV-cache term is omitted because at " +
+			"least one architecture fact is absent, so real VRAM will be higher."
+	}
+	return out
+}
+
+// trimFloat renders a GiB figure without a trailing ".0", so a whole-number budget seeds
+// its form control as "24" rather than "24.0".
+func trimFloat(v float64) string {
+	return strconv.FormatFloat(v, 'f', -1, 64)
+}
+
+// commaInt groups an integer with thousands separators. A six-figure token count is the
+// kind of number a reader compares at a glance, and an ungrouped one defeats that.
+func commaInt(n int64) string {
+	s := strconv.FormatInt(n, 10)
+	neg := strings.HasPrefix(s, "-")
+	if neg {
+		s = s[1:]
+	}
+	var b strings.Builder
+	for i, r := range s {
+		if i > 0 && (len(s)-i)%3 == 0 {
+			b.WriteByte(',')
+		}
+		b.WriteRune(r)
+	}
+	if neg {
+		return "-" + b.String()
+	}
+	return b.String()
 }

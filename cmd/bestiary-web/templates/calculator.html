@@ -1,0 +1,54 @@
+{{define "content" -}}
+<div class="browse-head">
+  <h1 class="mono">calculator</h1>
+  <p class="muted">
+    State a VRAM budget; see what fits and how much context each row can afford.
+    <a href="/">&#8249; creator tree</a> · <a href="/entities">catalog ›</a>
+  </p>
+</div>
+
+<!-- Budget view-state lives entirely in Datastar signals; every control patches the
+     results through /sse/calculator. Headroom is PRESENTATION-LAYER slack: it is never
+     persisted, never baked, and never reaches any stored VRAM figure. Nothing here can
+     change a displayed weights figure -- context selects rows, it does not re-price them. -->
+<div class="calc-page"
+     data-signals-budget="'{{.BudgetGiB}}'"
+     data-signals-headroom="'{{.HeadroomGiB}}'"
+     data-signals-minContext="'{{.MinContext}}'">
+  <div class="browse-layout">
+    <aside class="filter-rail">
+      <div class="section-head">budget</div>
+      <label class="filter">
+        <span class="filter-label">vram (GiB)</span>
+        <input type="number" class="mono" min="0" step="1" aria-label="total VRAM budget in GiB"
+               data-bind-budget data-on-input__debounce.250ms="@get('/sse/calculator')">
+      </label>
+      <label class="filter">
+        <span class="filter-label">headroom (GiB)</span>
+        <input type="number" class="mono" min="0" step="0.5" aria-label="VRAM headroom to leave unspent, in GiB"
+               data-bind-headroom data-on-input__debounce.250ms="@get('/sse/calculator')">
+        <span class="filter-note muted">
+          Left unspent. The stored VRAM figures carry no runtime-overhead term, so a fit
+          verdict computed from them alone over-promises; this slack is yours to set and is
+          never written into any stored figure.
+        </span>
+      </label>
+      <label class="filter">
+        <span class="filter-label">min context (tokens)</span>
+        <input type="number" class="mono" min="0" step="1024" aria-label="minimum usable context in tokens"
+               data-bind-minContext data-on-input__debounce.250ms="@get('/sse/calculator')">
+        <span class="filter-note muted">
+          A positive floor also drops rows whose context is unknown or exhausted: neither
+          can promise you a token.
+        </span>
+      </label>
+    </aside>
+
+    <section class="browse-results">
+      <div id="calc-results">
+        {{template "calc-results" .}}
+      </div>
+    </section>
+  </div>
+</div>
+{{- end}}

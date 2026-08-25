@@ -181,9 +181,10 @@ func TestDetail_AllFourSections(t *testing.T) {
 	}
 }
 
-// TestDetail_CtxRecompute pins the ?ctx display-only VRAM recompute (in-scope §17.5 display,
-// NOT the deferred v0.2.9 calculator): the param adds a recomputed column but never changes
-// which entity is shown.
+// TestDetail_CtxRecompute pins the ?ctx display-only VRAM recompute on the DETAIL page:
+// the param adds a recomputed column but never changes which entity is shown. This is the
+// model-first direction (you have an entity, you ask what a context costs); the
+// budget-first direction lives on /calculator and is covered by its own tests.
 func TestDetail_CtxRecompute(t *testing.T) {
 	e := detailFixture()
 	s := newTestServer(t, []bestiary.Entity{e})

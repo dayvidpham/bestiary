@@ -16,6 +16,55 @@ for its **Go module tags** (`vX.Y.Z`).
 
 ### Added
 
+- **A budget-first VRAM fit calculator at `/calculator`, with a typed weights basis.**
+  The detail page answers "I have this model, what does it cost?"; the calculator
+  reverses the direction and answers "I have this much VRAM, what runs?". State a budget
+  and an adjustable headroom, and the page lists only rows whose weights clear
+  `budget − headroom`, largest first, each with the greatest context it can afford and
+  **which limit produced that figure** — the budget or the model's own window. The
+  arithmetic lives in the root package (`fit.go`: `FitOver`/`Fit`, `FitBudget`,
+  `FitFilter`, `FitRow`, `FitResult`, `DerivedWeightsBytes`), so it is unit-testable
+  without an HTTP server and reusable by the CLI later; `cmd/bestiary-web` only renders
+  it. `FitOver` is pure over the entities it is given.
+  - **Headroom is presentation-layer view state, and its preset is deliberately
+    non-zero.** The shipped formula carries no runtime-overhead term
+    (`VRAMFormulaVersion` stays **2**), which is correct for a stored datum but means a
+    fit verdict computed from it alone over-promises. The slack is a control the reader
+    owns and can see, never a constant smuggled back into the data: nothing on this path
+    writes to `QuantVRAM`, `WeightsBytes` or `VRAMBytes`, and no context setting changes
+    any displayed VRAM figure.
+  - **Two non-fits are named rather than rounded off.** A row whose KV-cache term is not
+    computable reads **unknown** — never an unbounded context, because an absent
+    architecture fact is not an infinite budget — and a row whose computable KV budget is
+    spent reads **no context budget remaining**. A positive minimum-context filter
+    excludes both, since neither can promise the reader a token.
+  - **`WeightsBasis` types where a weights figure came from**, with `BasisMeasured` at
+    enum zero so any value that never saw the type reads as the ingested file size it is.
+    A **derived** row — an entity with an attested `TotalParams`, at least one instance,
+    and no ingested quant row anywhere — estimates weights as parameter count ×
+    bits-per-weight and is badged `derived · weights-only`, naming **both**
+    qualifications: the figure is an estimate, and its KV term is missing. No unmeasured
+    entity in the catalog publishes layers / KV heads / head dim, so every derived figure
+    is a lower bound and the page says so.
+  - **The exclusions are structural, not a runtime policy.** An entity whose parameter
+    shape returns the `ParamShapeNull` sentinel — the `NxM` tokens, whose product
+    `parse.go` deliberately refuses to compute, and the `Nb-Ke` tokens, which publish only
+    an active count — produces **no** derived row and is counted excluded. Deriving from
+    `ActiveParams` instead would understate residency by up to 26.7× and would render
+    Llama 4 Scout and Maverick identically. The six quantization members whose
+    `BitsPerWeight()` is 0 (`none`, `awq`, `gptq`, `int8`, `int4`, `other`) produce **no**
+    row rather than a zero-byte one, which would read as fitting any budget. An entity no
+    provider serves gets no row at all.
+  - **The coverage statement is computed, never written.** The sentence heading the
+    table interpolates `FitResult.EntitiesConsidered` / `EntitiesMeasured` /
+    `EntitiesDerived` / `EntitiesExcluded` at request time; the tests assert the
+    **identity** between the rendered numbers and those fields, and recompute each field
+    from its own predicate over the same entity slice. No count is a literal anywhere on
+    the page or in its tests. The render cap is stated in words whenever it bites, so a
+    truncated table never reads as everything that fits.
+  - Patches arrive over `GET /sse/calculator` into `#calc-results` through the vendored
+    Datastar client; the entity browser's `#entity-results` seam is untouched.
+
 - **Creator-first resolution, layered above `CanonicalProvider` rather than replacing
   it.** A new curated `Creator → [Provider]` distribution relation
   (`parse/data/creator_providers.json`, 24 rows / 52 pairs) records the hosting
@@ -72,6 +121,14 @@ for its **Go module tags** (`vX.Y.Z`).
 
 ### Changed
 
+- **The v0.2.4 weights invariant is amended in the open, not quietly widened.** Three
+  shipped doc comments said, in effect, that a weights figure is never derived from
+  bits-per-weight: `QuantVRAM.WeightsBytes` (`entity.go`), the weights-term paragraph in
+  `vram.go`, and `Quantization.BitsPerWeight` (`quantization.go`). Each is rescoped in
+  the same commit as the enum that makes a derived figure possible: the invariant governs
+  what is **stored**, and the separately-typed display-time projection that now exists is
+  never written back. `VRAMFormulaVersion` stays **2**.
+
 - **The curated `Family → Creator` seed grows from 18 rows to 75, and `Creators()` from
   9 to 41.** Rows are grouped by provenance in the data file: the 18 original
   UAT-confirmed rows, 27 rows applied from the lab derivation, and 30 hand-curated rows
@@ -118,6 +175,18 @@ for its **Go module tags** (`vX.Y.Z`).
   rather than curated away.
 
 ### Fixed
+
+- **The 1M-context marker is suppressed on both spellings of `qwen3-coder-next-fp8-1m`.**
+  `param_size_overrides.json` pinned the provider-prefixed `qwen/qwen3-coder-next-fp8-1m`
+  to an empty size because its trailing `1m` is a **context** tier marker, not a parameter
+  count. Pins are keyed on the exact model ID, so that entry never reached the unprefixed
+  spelling served by InferX, which kept extracting `1m` as a size and keyed the artifact
+  off onto its own entity carrying a **1,000,000-parameter** total — five orders of
+  magnitude below the real size, and exactly the input a derived weights figure would be
+  computed from. Both spellings are now pinned, so the suppression covers the artifact
+  rather than one of its names. Measured effect on regeneration: **one entity key
+  retired, none renamed and none added** (`qwen/coder@3#1m`), whose sole instance rejoins
+  the pre-existing `qwen/coder@3`.
 
 - `synthesizeStandaloneEntity` never projected `Entity.Creator`, so a metadata-only
   standalone reported an empty creator even when its family was mapped. The invariant
