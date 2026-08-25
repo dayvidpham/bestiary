@@ -548,16 +548,21 @@ func TestVC12_BackwardCompat(t *testing.T) {
 //
 // Turbo is IDENTITY by global default, and rightly so: gpt-4-turbo is a different
 // artifact from gpt-4. It is demoted per-family only where curation established the
-// token names a serving speed tier over the SAME artifact. Evidence differs in
-// strength between the two families and the corpus records that honestly:
+// token names a serving speed tier over the SAME artifact. Both families now rest on
+// repo-identity evidence, and the curated entry carries the sources and dates:
 //
 //   - kimi: moonshot serves kimi-k2-thinking and kimi-k2-thinking-turbo from the
 //     IDENTICAL Kimi-K2-Thinking HuggingFace repo — same weights, so the turbo
 //     spelling cannot denote a different artifact. Repo-identity evidence.
-//   - minimax: no repo-identity proof. The rev-2 URL census resolves the M2.7 and
-//     M2.5-highspeed serving names back to the plain repos, and minimax markets
-//     turbo the way it markets highspeed (already an attribute). Inference, graded
-//     lower — flagged in the curated entry so it is the first row to revisit.
+//   - minimax: re-verified 2026-08-25 and upgraded from its earlier lower-confidence
+//     grade, which had rested on inference alone. MiniMaxAI publishes a SINGLE M2.7
+//     weights repo — no -Turbo and no -highspeed repo — so every fast-serving name for
+//     the version resolves back to one artifact, and the lab's own docs describe the
+//     highspeed tier as the same performance at roughly 100 tps against 60, i.e. an
+//     inference-layer tier priced at 2x. Turbo rides on exactly ONE instance, nanogpt's
+//     minimax-m2.7-turbo, whose row is spec-identical to the -highspeed rows at the same
+//     doubled price; the lab's own first-party endpoints call that tier highspeed, never
+//     turbo, and no provider ships both spellings for one version. Repo-identity evidence.
 //
 // The three entities that merged are asserted by key, because a demotion that
 // silently failed to merge them would leave the classification "correct" while the
