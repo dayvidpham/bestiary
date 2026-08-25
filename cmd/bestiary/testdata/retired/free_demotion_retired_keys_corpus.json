@@ -1,0 +1,277 @@
+{
+  "_comment": "Every entity key retired by the global free-tier demotion, pinned against the MEASURED retired-key split: ErrNotFound on the exact-key --by-entity seam for all of them, and ErrNotFound on the looser `show` seam too. The split's two ErrAmbiguous rows (bare `ling` and bare `mimo`) are NOT in this set: neither is a key this lever retires, and both remain live family tokens with live children \u2014 turning either into a 404 would break three unrelated live-family lookups. `ling/flash-free@2.6` is likewise absent: it SURVIVES the demotion under an exact-ID pin and is asserted live by the companion test. Each mutation line names where the retired key's instances re-homed; that is the migration record, and it is duplicated in the CHANGELOG table. See TESTING.md.",
+  "cases": [
+    {
+      "name": "retired_deepseek_flash_free",
+      "input": "deepseek-flash/free",
+      "expected": {
+        "by_entity": "not-found",
+        "show": "not-found"
+      },
+      "classification": "must-fail",
+      "provenance": {
+        "source": "requirement",
+        "ref": "the epoch-wide retired-key policy: a retired entity key is a uniform hard 404 on both seams \u2014 no alias, no redirect, no successor listing. The CHANGELOG old->new table is the only pointer a user gets."
+      },
+      "mutation": {
+        "description": "deepseek-flash was a phantom family that existed ONLY through its free key; its instance re-homes onto deepseek/flash"
+      }
+    },
+    {
+      "name": "retired_glm_free",
+      "input": "glm/free",
+      "expected": {
+        "by_entity": "not-found",
+        "show": "not-found"
+      },
+      "classification": "must-fail",
+      "provenance": {
+        "source": "requirement",
+        "ref": "the epoch-wide retired-key policy: a retired entity key is a uniform hard 404 on both seams \u2014 no alias, no redirect, no successor listing. The CHANGELOG old->new table is the only pointer a user gets."
+      },
+      "mutation": {
+        "description": "folds onto the bare glm line"
+      }
+    },
+    {
+      "name": "retired_glm_free_at_4_7",
+      "input": "glm/free@4.7",
+      "expected": {
+        "by_entity": "not-found",
+        "show": "not-found"
+      },
+      "classification": "must-fail",
+      "provenance": {
+        "source": "requirement",
+        "ref": "the epoch-wide retired-key policy: a retired entity key is a uniform hard 404 on both seams \u2014 no alias, no redirect, no successor listing. The CHANGELOG old->new table is the only pointer a user gets."
+      },
+      "mutation": {
+        "description": "folds onto glm@4.7"
+      }
+    },
+    {
+      "name": "retired_glm_free_at_5",
+      "input": "glm/free@5",
+      "expected": {
+        "by_entity": "not-found",
+        "show": "not-found"
+      },
+      "classification": "must-fail",
+      "provenance": {
+        "source": "requirement",
+        "ref": "the epoch-wide retired-key policy: a retired entity key is a uniform hard 404 on both seams \u2014 no alias, no redirect, no successor listing. The CHANGELOG old->new table is the only pointer a user gets."
+      },
+      "mutation": {
+        "description": "folds onto glm@5"
+      }
+    },
+    {
+      "name": "retired_glm_free_at_5_2",
+      "input": "glm/free@5.2",
+      "expected": {
+        "by_entity": "not-found",
+        "show": "not-found"
+      },
+      "classification": "must-fail",
+      "provenance": {
+        "source": "requirement",
+        "ref": "the epoch-wide retired-key policy: a retired entity key is a uniform hard 404 on both seams \u2014 no alias, no redirect, no successor listing. The CHANGELOG old->new table is the only pointer a user gets."
+      },
+      "mutation": {
+        "description": "folds onto glm@5.2"
+      }
+    },
+    {
+      "name": "retired_hy_free_at_3",
+      "input": "hy/free@3",
+      "expected": {
+        "by_entity": "not-found",
+        "show": "not-found"
+      },
+      "classification": "must-fail",
+      "provenance": {
+        "source": "requirement",
+        "ref": "the epoch-wide retired-key policy: a retired entity key is a uniform hard 404 on both seams \u2014 no alias, no redirect, no successor listing. The CHANGELOG old->new table is the only pointer a user gets."
+      },
+      "mutation": {
+        "description": "folds onto hy@3"
+      }
+    },
+    {
+      "name": "retired_kimi_free",
+      "input": "kimi/free",
+      "expected": {
+        "by_entity": "not-found",
+        "show": "not-found"
+      },
+      "classification": "must-fail",
+      "provenance": {
+        "source": "requirement",
+        "ref": "the epoch-wide retired-key policy: a retired entity key is a uniform hard 404 on both seams \u2014 no alias, no redirect, no successor listing. The CHANGELOG old->new table is the only pointer a user gets."
+      },
+      "mutation": {
+        "description": "folds onto the bare kimi line"
+      }
+    },
+    {
+      "name": "retired_laguna_s_free_at_2_1",
+      "input": "laguna-s/free@2.1",
+      "expected": {
+        "by_entity": "not-found",
+        "show": "not-found"
+      },
+      "classification": "must-fail",
+      "provenance": {
+        "source": "requirement",
+        "ref": "the epoch-wide retired-key policy: a retired entity key is a uniform hard 404 on both seams \u2014 no alias, no redirect, no successor listing. The CHANGELOG old->new table is the only pointer a user gets."
+      },
+      "mutation": {
+        "description": "folds onto laguna-s@2.1"
+      }
+    },
+    {
+      "name": "retired_mimo_flash_free",
+      "input": "mimo/flash-free",
+      "expected": {
+        "by_entity": "not-found",
+        "show": "not-found"
+      },
+      "classification": "must-fail",
+      "provenance": {
+        "source": "requirement",
+        "ref": "the epoch-wide retired-key policy: a retired entity key is a uniform hard 404 on both seams \u2014 no alias, no redirect, no successor listing. The CHANGELOG old->new table is the only pointer a user gets."
+      },
+      "mutation": {
+        "description": "folds onto mimo/flash"
+      }
+    },
+    {
+      "name": "retired_mimo_omni_free",
+      "input": "mimo/omni-free",
+      "expected": {
+        "by_entity": "not-found",
+        "show": "not-found"
+      },
+      "classification": "must-fail",
+      "provenance": {
+        "source": "requirement",
+        "ref": "the epoch-wide retired-key policy: a retired entity key is a uniform hard 404 on both seams \u2014 no alias, no redirect, no successor listing. The CHANGELOG old->new table is the only pointer a user gets."
+      },
+      "mutation": {
+        "description": "the free peel exposes the hidden version; re-keys under mimo/v@2"
+      }
+    },
+    {
+      "name": "retired_mimo_pro_free",
+      "input": "mimo/pro-free",
+      "expected": {
+        "by_entity": "not-found",
+        "show": "not-found"
+      },
+      "classification": "must-fail",
+      "provenance": {
+        "source": "requirement",
+        "ref": "the epoch-wide retired-key policy: a retired entity key is a uniform hard 404 on both seams \u2014 no alias, no redirect, no successor listing. The CHANGELOG old->new table is the only pointer a user gets."
+      },
+      "mutation": {
+        "description": "the free peel exposes the hidden version; re-keys under mimo/v@2"
+      }
+    },
+    {
+      "name": "retired_mimo_v2_5",
+      "input": "mimo/v2.5",
+      "expected": {
+        "by_entity": "not-found",
+        "show": "not-found"
+      },
+      "classification": "must-fail",
+      "provenance": {
+        "source": "requirement",
+        "ref": "the epoch-wide retired-key policy: a retired entity key is a uniform hard 404 on both seams \u2014 no alias, no redirect, no successor listing. The CHANGELOG old->new table is the only pointer a user gets."
+      },
+      "mutation": {
+        "description": "the free peel un-fuses the version; re-keys to mimo/v@2.5"
+      }
+    },
+    {
+      "name": "retired_mimo_v2_5_free",
+      "input": "mimo/v2.5-free",
+      "expected": {
+        "by_entity": "not-found",
+        "show": "not-found"
+      },
+      "classification": "must-fail",
+      "provenance": {
+        "source": "requirement",
+        "ref": "the epoch-wide retired-key policy: a retired entity key is a uniform hard 404 on both seams \u2014 no alias, no redirect, no successor listing. The CHANGELOG old->new table is the only pointer a user gets."
+      },
+      "mutation": {
+        "description": "the free peel un-fuses the version; re-keys to mimo/v@2.5"
+      }
+    },
+    {
+      "name": "retired_mimo_v2_5_pro",
+      "input": "mimo/v2.5-pro",
+      "expected": {
+        "by_entity": "not-found",
+        "show": "not-found"
+      },
+      "classification": "must-fail",
+      "provenance": {
+        "source": "requirement",
+        "ref": "the epoch-wide retired-key policy: a retired entity key is a uniform hard 404 on both seams \u2014 no alias, no redirect, no successor listing. The CHANGELOG old->new table is the only pointer a user gets."
+      },
+      "mutation": {
+        "description": "the free peel un-fuses the version; re-keys to mimo/v@2.5{pro}"
+      }
+    },
+    {
+      "name": "retired_minimax_free",
+      "input": "minimax/free",
+      "expected": {
+        "by_entity": "not-found",
+        "show": "not-found"
+      },
+      "classification": "must-fail",
+      "provenance": {
+        "source": "requirement",
+        "ref": "the epoch-wide retired-key policy: a retired entity key is a uniform hard 404 on both seams \u2014 no alias, no redirect, no successor listing. The CHANGELOG old->new table is the only pointer a user gets."
+      },
+      "mutation": {
+        "description": "folds onto the bare minimax line"
+      }
+    },
+    {
+      "name": "retired_minimax_m3_free",
+      "input": "minimax-m3/free",
+      "expected": {
+        "by_entity": "not-found",
+        "show": "not-found"
+      },
+      "classification": "must-fail",
+      "provenance": {
+        "source": "requirement",
+        "ref": "the epoch-wide retired-key policy: a retired entity key is a uniform hard 404 on both seams \u2014 no alias, no redirect, no successor listing. The CHANGELOG old->new table is the only pointer a user gets."
+      },
+      "mutation": {
+        "description": "minimax-m3 was a phantom family that existed ONLY through its free key; re-keys to minimax/m@3"
+      }
+    },
+    {
+      "name": "retired_nemotron_free_at_3",
+      "input": "nemotron/free@3",
+      "expected": {
+        "by_entity": "not-found",
+        "show": "not-found"
+      },
+      "classification": "must-fail",
+      "provenance": {
+        "source": "requirement",
+        "ref": "the epoch-wide retired-key policy: a retired entity key is a uniform hard 404 on both seams \u2014 no alias, no redirect, no successor listing. The CHANGELOG old->new table is the only pointer a user gets."
+      },
+      "mutation": {
+        "description": "folds onto nemotron@3"
+      }
+    }
+  ]
+}

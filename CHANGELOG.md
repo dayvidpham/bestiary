@@ -358,6 +358,87 @@ for its **Go module tags** (`vX.Y.Z`).
   than `--text-*` because `--text` and `--text-muted` are already colour tokens. No selector
   was renamed.
 
+### Changed
+
+- **The `free` tier leaves entity identity: 957 → 940 entity keys, 17 retired and 0 added.**
+  A `-free` suffix names a pricing/serving tier a provider offers for an existing model, not
+  a different weights artifact, so it now classifies as an ATTRIBUTE modifier and renders in
+  the `[…]` segment instead of the key. Three curated sites carry the change —
+  `parse/data/modifier_class.json` gains `global.free = "attribute"` (it was absent, so the
+  unknown→IDENTITY fail-safe had been promoting it), `parse/data/modifiers.json` gains `free`
+  so the tail scan peels it, and `parse/data/families.json` drops the `free` member from
+  `glm`, `kimi`, `minimax` and `nemotron` so the per-family member-guard stops re-promoting
+  the already-resolved variant. `qwen` keeps its `free` member and is unaffected. No instance
+  is lost: the instance total is conserved and every retired key's rows re-home onto a
+  surviving sibling. `claude/haiku`, `claude/sonnet` and `north/mini` gain and lose no key —
+  their instances merely re-home, because `-free` had been blocking version extraction.
+
+  **`ling/flash-free@2.6` is deliberately exempt and SURVIVES**, with `ling/flash@2.6`
+  unchanged at 4 instances. It is preserved by a new exact-ID row in `parse.go`'s
+  `idFamilyOverrides` (`ling-2.6-flash-free`), which is the only seam that can reach it: once
+  `free` is a peelable modifier the trailing-modifier trim rewrites the raw family
+  `ling-flash-free` → `ling-flash` *before* the `family_overrides.json` lookup runs, so a
+  curated override row there is already dead. It is the one `*free*`-bearing key besides the
+  standalone `free` and `cobuddy:free` entities to survive.
+
+  **Migration table (old → new).** Each retired key is a hard 404 on both lookup seams —
+  `bestiary show <old>` and `bestiary show <old> --by-entity` both return `ErrNotFound`, for
+  17 of 17, verified and pinned as a committed test. No alias is minted, no redirect is
+  added, and no successor is listed by the tool; this table is the pointer.
+
+  | retired key | instances re-home to |
+  |---|---|
+  | `deepseek-flash/free` | `deepseek/flash` |
+  | `glm/free` | `glm` |
+  | `glm/free@4.7` | `glm@4.7` |
+  | `glm/free@5` | `glm@5` |
+  | `glm/free@5.2` | `glm@5.2` |
+  | `hy/free@3` | `hy@3` |
+  | `kimi/free` | `kimi` |
+  | `laguna-s/free@2.1` | `laguna-s@2.1` |
+  | `mimo/flash-free` | `mimo/flash` |
+  | `mimo/omni-free` | `mimo/v@2{omni}` |
+  | `mimo/pro-free` | `mimo/v@2{pro}` |
+  | `mimo/v2.5` | `mimo/v@2.5` |
+  | `mimo/v2.5-free` | `mimo/v@2.5` |
+  | `mimo/v2.5-pro` | `mimo/v@2.5{pro}` |
+  | `minimax/free` | `minimax` |
+  | `minimax-m3/free` | `minimax/m@3` |
+  | `nemotron/free@3` | `nemotron@3` |
+
+  Two of these were the *only* key their family had, so the `deepseek-flash` and
+  `minimax-m3` families disappear entirely — which is what they always were, phantom
+  families minted by a fused pricing suffix. The five `mimo/*` and `minimax-m3` rows re-home
+  to a *re-keyed* target rather than a plain parent: peeling `free` exposes a version that
+  the fused suffix had been hiding, so `variant="v2.5-free", version=""` resolves as
+  `variant="v", version="2.5"`.
+
+  **Compile break for library consumers — 17 `Entity__` constants removed, 0 added**, counted
+  from `entities_constants_gen.go`: `Entity__Deepseek_flash__Free`, `Entity__Glm__Free`,
+  `Entity__Glm__Free__Version_4_7`, `Entity__Glm__Free__Version_5`,
+  `Entity__Glm__Free__Version_5_2`, `Entity__Hy__Free__Version_3`, `Entity__Kimi__Free`,
+  `Entity__Laguna_s__Free__Version_2_1`, `Entity__Mimo__Flash_free`,
+  `Entity__Mimo__Omni_free`, `Entity__Mimo__Pro_free`, `Entity__Mimo__V2_5`,
+  `Entity__Mimo__V2_5_free`, `Entity__Mimo__V2_5_pro`, `Entity__Minimax__Free`,
+  `Entity__Minimax_m3__Free`, `Entity__Nemotron__Free__Version_3`. The generated file holds
+  957 → 940 constant declarations over 957 → 940 distinct key values — a bijection, one
+  declaration per key, so the constant break and the key diff are the same 17 either way.
+
+  Downstream census, all re-measured from this regeneration: canonical nomina 957 → 940
+  (provider-ID 2834, alias 1 and huggingface 179 all unchanged, so the nomen total moves
+  3971 → 3954); series lines 417 → 415, entirely from the two vanished families (versioned
+  lines stay at 209, bare lines 208 → 206); releases 669 → 652, one per retired key, each
+  having been the sole occupant of its release name.
+
+- **The modifier-class inventory guard derives its token set from the curated file.**
+  `TestVC6_InventoryTokensPinned` previously restated the inventory as a hand-maintained
+  token list with a `total != 21` assert, and had silently gone stale by four — the curated
+  file held 25 global tokens while the test pinned 21, gated by nothing. It now reads
+  `parse/data/modifier_class.json` and checks set equality in both directions, so adding,
+  removing or reclassifying a global token needs no edit there and the guard cannot drift. A
+  small explicitly-scoped floor of load-bearing tokens stays in code so that silently
+  deleting a curated row is still caught.
+
 ## [0.2.9] - 2026-07-28
 
 **Schema:** unchanged at `0.6.0`.
