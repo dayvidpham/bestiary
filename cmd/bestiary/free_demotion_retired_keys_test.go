@@ -19,7 +19,10 @@ type retiredKeyInput = string
 
 // retiredKeySeams is the expected outcome on each of the two user-facing lookup seams.
 // The values are the measured split, not an aspiration: "not-found" means the seam
-// returns *bestiary.ErrNotFound, "ambiguous" means *bestiary.ErrAmbiguous.
+// returns *bestiary.ErrNotFound, "ambiguous" means the under-specified error the CLI
+// returns when the key retires but its family stays live, and "resolved" means the
+// retired spelling remains a valid under-specified reference to exactly one live entity
+// and still answers. assertRunSeam rejects anything else by name.
 type retiredKeySeams struct {
 	ByEntity string `json:"by_entity"`
 	Show     string `json:"show"`
@@ -194,7 +197,13 @@ func assertRunSeam(t *testing.T, want, key string, args []string) {
 				"resolver", args, runErr, key)
 		}
 	default:
-		t.Fatalf("corpus case for %q declares seam expectation %q, want \"not-found\" or \"ambiguous\"", key, want)
+		t.Fatalf("corpus case for %q declares seam expectation %q, which is not one of the three "+
+			"measured seam outcomes: \"not-found\" (the seam returns *bestiary.ErrNotFound), "+
+			"\"ambiguous\" (the key retires while its family stays live, so the CLI prints the "+
+			"candidate listing and returns the under-specified error), or \"resolved\" (the "+
+			"retired spelling is still a valid under-specified reference to exactly one live "+
+			"entity). Fix the by_entity/show value in the corpus row, or — if a genuinely new "+
+			"outcome has been measured — add a case above and record why here", key, want)
 	}
 }
 

@@ -68,6 +68,47 @@ Three orthogonal instance-level axes:
 
 None of the three is identity.
 
+#### When a leading ID token may be dropped
+
+Vendors habitually spell one of these axes into the ID itself. Whether that
+leading token may be **removed** before the ID is decomposed is decided by one
+rule, not by a per-vendor list (`ClassifyIDPrefix`, `id_prefix.go`): a leading
+token may be dropped **only when a different axis already carries the fact it
+names**, because then the identity tuple loses nothing. Every other token stays,
+because removing it would *delete* information rather than repeat it.
+
+| Leading token names | Carrier that already holds it | Example | Outcome |
+|---|---|---|---|
+| the **serving provider** itself | `Provider` | `databricks-…` served by `databricks` | stripped |
+| the **creating lab**, and the remainder's family declares that same lab | `Creator` | `openai.gpt-…` (family `gpt`, creator `openai`) | stripped |
+| a **Bedrock routing prefix** | `Region` (`DetectRegion`) | `eu.anthropic.claude-…` | stripped |
+| a **backend host**, *and* it is curated | `Host` (`DetectHost`) | NanoGPT's `azure-*` | stripped — by the `Host` path, which records the fact before dropping the token |
+| a **backend host** that nothing curates | *none* | `azure-gpt-4o` reaching the ID-prefix rule | kept |
+| a **product surface** | *none* | GitLab's `duo-chat-…` | kept |
+| the **family** itself | *none* — it *is* identity | `claude-sonnet-4-5` | kept |
+
+The `Region` and `Host` rows are the same rule applied earlier by machinery that
+predates the classifier: `DetectRegion` and `DetectHost` move the fact onto its
+axis and *then* remove the token. `ClassifyIDPrefix` itself knows nothing about
+hosts, so a host label that reaches it — uncurated, or on a provider the host
+table does not cover — is a token no axis holds, and it stays.
+
+Two guards keep the two strip rules honest. The remainder must still name a
+**known family**, so `minimax-m2` on provider `minimax` is left alone (`m2` names
+nothing, and stripping would destroy the identity rather than de-duplicate it).
+And the creator rule checks the **carrier agrees**, not merely that the token is
+a lab name: Bedrock's `zai.glm-…` keeps its token because family `glm`'s curated
+creator is `zhipu`, and a lab token the Creator axis spells differently is not a
+carrier.
+
+That last distinction is where the rule comes from. A blanket provider-name strip once
+erased NanoGPT's `azure-` label, and the fact it named — which upstream backend
+served the request — existed nowhere else, so it was simply lost. The lesson is
+not "except azure": it is that constancy across a provider's catalog is **not**
+evidence of redundancy. Measured, 28 providers prefix every one of their IDs with
+a single token, and for most of them (`claude-`, `grok-`, `glm-`, `kimi-`) that
+token is the family. Ask what the token *names*, and which axis already holds it.
+
 ### Creator
 
 A fourth axis, **entity-level** rather than instance-level: who *trained* the

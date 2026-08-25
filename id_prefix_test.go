@@ -31,7 +31,7 @@ type idPrefixExpected struct {
 
 // idPrefixClassCaseCount is the exact-count control. A floor would let a silent case
 // drop pass, and the negative rows are the ones a careless edit removes first.
-const idPrefixClassCaseCount = 17
+const idPrefixClassCaseCount = 19
 
 // TestClassifyIDPrefix_Corpus drives the production classifier — the same exported
 // function both decomposition entrypoints call — over the measured corpus.
@@ -49,7 +49,11 @@ func TestClassifyIDPrefix_Corpus(t *testing.T) {
 	// Value-based coverage: a count-preserving swap must not be able to drop the
 	// negative controls, which are what separate this rule from the blanket
 	// provider-name strip it replaces, nor the two carrier-positive controls the
-	// deferral record named by id.
+	// deferral record named by id. The two glm rows are a MINIMAL PAIR over one family
+	// (glm, whose curated creator is zhipu): both leading tokens are in the Creator
+	// vocabulary, and only the one the family actually declares licenses a strip. Vocabulary
+	// membership alone is therefore not enough, and dropping the carrier conjunct turns this
+	// corpus red on its own rather than only through a downstream curated fixture.
 	requireInputCoverage(t, corpus, map[idPrefixInput]idPrefixExpected{
 		{ID: "azure-gpt-4o", Provider: "nano-gpt"}:                {Class: "none", Stripped: "azure-gpt-4o"},
 		{ID: "duo-chat-gpt-5-6-luna", Provider: "gitlab"}:         {Class: "none", Stripped: "duo-chat-gpt-5-6-luna"},
@@ -58,6 +62,8 @@ func TestClassifyIDPrefix_Corpus(t *testing.T) {
 		{ID: "openai-gpt-5.6-luna", Provider: "snowflake-cortex"}: {Class: "creator", Stripped: "gpt-5.6-luna"},
 		{ID: "gpt-5-6-luna", Provider: "kenari"}:                  {Class: "none", Stripped: "gpt-5-6-luna"},
 		{ID: "databricks-gpt-5-6-luna", Provider: "databricks"}:   {Class: "self-provider", Stripped: "gpt-5-6-luna"},
+		{ID: "zhipu-glm-5", Provider: "nano-gpt"}:                 {Class: "creator", Stripped: "glm-5"},
+		{ID: "microsoft-glm-5", Provider: "nano-gpt"}:             {Class: "none", Stripped: "microsoft-glm-5"},
 	})
 
 	for _, c := range corpus.Cases {

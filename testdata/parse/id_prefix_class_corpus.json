@@ -1,5 +1,5 @@
 {
-  "_comment": "Leading-token classification for model ids: what the id's first token NAMES, and therefore whether dropping it repeats a fact another axis already carries or DELETES one. Driven through the exported bestiary.ClassifyIDPrefix, the same function both decomposition entrypoints call. Each case pins BOTH the class and the id the decomposition will read, so a rule that fires on the right case for the wrong reason — or strips more than the token — is visible. The negative rows are the point of the corpus, not filler: a backend-host label, a product-surface namespace, a family token that happens to be constant across its provider's catalog, and a provider slug whose remainder names nothing must ALL come back untouched. See TESTING.md.",
+  "_comment": "Leading-token classification for model ids: what the id's first token NAMES, and therefore whether dropping it repeats a fact another axis already carries or DELETES one. Driven through the exported bestiary.ClassifyIDPrefix, the same function both decomposition entrypoints call. Each case pins BOTH the class and the id the decomposition will read, so a rule that fires on the right case for the wrong reason — or strips more than the token — is visible. The negative rows are the point of the corpus, not filler: a backend-host label, a product-surface namespace, a family token that happens to be constant across its provider's catalog, and a provider slug whose remainder names nothing must ALL come back untouched. The creator rule is pinned as a MINIMAL PAIR over one family, so its carrier check — that the remainder's family declares the very lab the token names — is falsifiable on its own rather than only through a downstream fixture. See TESTING.md.",
   "cases": [
     {
       "name": "self_provider_databricks",
@@ -246,6 +246,44 @@
       },
       "mutation": {
         "description": "Bedrock's vendor segment says zai; the curated creator of family glm is zhipu. The carrier does not hold the value the id spells, so the rule declines rather than guessing they are the same lab. A creator-alias vocabulary is the honest fix and is deliberately not in this rule."
+      }
+    },
+    {
+      "name": "creator_carrier_matches_and_licenses_the_strip",
+      "input": {
+        "id": "zhipu-glm-5",
+        "provider": "nano-gpt"
+      },
+      "expected": {
+        "class": "creator",
+        "stripped": "glm-5"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "bug",
+        "ref": "coverage-gap audit of the creator rule's second conjunct; constructed because the vendored catalog attests no mismatch (of its 143 lab-token-prefixed rows, every one agrees with its family's curated creator)"
+      },
+      "mutation": {
+        "description": "the POSITIVE half of the minimal pair that isolates the carrier check. The token is in the Creator vocabulary AND family glm declares creator zhipu, so the Creator axis holds the fact and the token may go. Read alone this row proves nothing the openai/gpt control does not; it earns its place only next to the row after it, which differs from it in exactly one respect — whether the carrier agrees."
+      }
+    },
+    {
+      "name": "creator_carrier_mismatch_declines_the_strip",
+      "input": {
+        "id": "microsoft-glm-5",
+        "provider": "nano-gpt"
+      },
+      "expected": {
+        "class": "none",
+        "stripped": "microsoft-glm-5"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "bug",
+        "ref": "coverage-gap audit of the creator rule's second conjunct; constructed because the vendored catalog attests no mismatch (of its 143 lab-token-prefixed rows, every one agrees with its family's curated creator)"
+      },
+      "mutation": {
+        "description": "THE NEGATIVE half of that pair, and the row that makes the carrier check falsifiable. microsoft IS in the Creator vocabulary, so vocabulary membership alone licenses the strip; family glm's curated creator is zhipu, so the carrier does NOT hold what the id spells and the token must stay. This differs from the zai row above: there the token fails the vocabulary test first and the carrier check is never reached. Drop the carrier conjunct and this id strips to glm-5 as class creator, attributing a Zhipu model to Microsoft."
       }
     },
     {
