@@ -384,7 +384,11 @@ for its **Go module tags** (`vX.Y.Z`).
   **Migration table (old → new).** Each retired key is a hard 404 on both lookup seams —
   `bestiary show <old>` and `bestiary show <old> --by-entity` both return `ErrNotFound`, for
   17 of 17, verified and pinned as a committed test. No alias is minted, no redirect is
-  added, and no successor is listed by the tool; this table is the pointer.
+  added, and no successor is listed by the tool; this table is the pointer. Each row is
+  DERIVED, not assumed: every retired key's pre-demotion instances are pinned in the
+  companion corpus, the successor set is re-derived from them against the live registry on
+  every test run, and this table is compared against that derivation — so a row cannot
+  quietly name a key its rows never landed on.
 
   | retired key | instances re-home to |
   |---|---|
@@ -394,7 +398,7 @@ for its **Go module tags** (`vX.Y.Z`).
   | `glm/free@5` | `glm@5` |
   | `glm/free@5.2` | `glm@5.2` |
   | `hy/free@3` | `hy@3` |
-  | `kimi/free` | `kimi` |
+  | `kimi/free` | `kimi/k@2.5`, `kimi/k@2.7{code}`, `kimi/k@3` |
   | `laguna-s/free@2.1` | `laguna-s@2.1` |
   | `mimo/flash-free` | `mimo/flash` |
   | `mimo/omni-free` | `mimo/v@2{omni}` |
@@ -402,7 +406,7 @@ for its **Go module tags** (`vX.Y.Z`).
   | `mimo/v2.5` | `mimo/v@2.5` |
   | `mimo/v2.5-free` | `mimo/v@2.5` |
   | `mimo/v2.5-pro` | `mimo/v@2.5{pro}` |
-  | `minimax/free` | `minimax` |
+  | `minimax/free` | `minimax/m@2.1`, `minimax/m@2.5`, `minimax/m@2.7` |
   | `minimax-m3/free` | `minimax/m@3` |
   | `nemotron/free@3` | `nemotron@3` |
 
@@ -412,6 +416,15 @@ for its **Go module tags** (`vX.Y.Z`).
   to a *re-keyed* target rather than a plain parent: peeling `free` exposes a version that
   the fused suffix had been hiding, so `variant="v2.5-free", version=""` resolves as
   `variant="v", version="2.5"`.
+
+  **Two rows SPLIT rather than fold.** `kimi/free` and `minimax/free` were each a single
+  key holding rows from three *different* model versions, because a fused `-free` suffix had
+  been blocking version extraction on all of them: `kimi/free` held `kimi-k2.5-free`,
+  `moonshotai/kimi-k2.7-code-free` and `moonshotai/kimi-k3-free`, and `minimax/free` held
+  `coding-minimax-m2.7-free`, `minimax-m2.1-free` and `minimax-m2.5-free`. Peeling `free`
+  separates them, so each key has three successors and **neither folds onto its bare family
+  line** — bare `kimi` and bare `minimax` are live tokens with unrelated children, and
+  looking there will not find these models.
 
   **Compile break for library consumers — 17 `Entity__` constants removed, 0 added**, counted
   from `entities_constants_gen.go`: `Entity__Deepseek_flash__Free`, `Entity__Glm__Free`,

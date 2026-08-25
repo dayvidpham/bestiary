@@ -246,10 +246,10 @@ func TestShow_Ambiguous(t *testing.T) {
 	if !strings.Contains(errOut, "+ = served by the creating lab") {
 		t.Errorf("stderr does not contain legend '+ = served by the creating lab'; got %q", errOut)
 	}
-	// The --format=raw remediation hint lives in exactly one place now
-	// (bestiary-7nbuw): the wrapped ErrAmbiguous message (runErr), not the
-	// FormatAmbiguous footer written to errOut. Assert it on runErr, and assert
-	// its absence from errOut so the two blocks stay non-duplicative.
+	// The --format=raw remediation hint lives in exactly one place: the wrapped
+	// ErrAmbiguous message (runErr), not the FormatAmbiguous footer written to
+	// errOut. Assert it on runErr, and assert its absence from errOut so the two
+	// blocks stay non-duplicative.
 	if !strings.Contains(runErr.Error(), "--format=raw") {
 		t.Errorf("returned error does not contain remediation hint '--format=raw'; got %q", runErr.Error())
 	}

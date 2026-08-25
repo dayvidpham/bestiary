@@ -577,9 +577,9 @@ func TestFormatAmbiguous_GroupingAndTruncation(t *testing.T) {
 // TestFormatAmbiguous_RemedHintUpdated verifies that FormatAmbiguous never
 // references the deprecated --scheme=raw flag.
 //
-// The --format=raw exact-ID tip itself moved out of FormatAmbiguous entirely
-// (bestiary-7nbuw): it now lives solely in the CLI's wrapped ErrAmbiguous
-// message (cmd/bestiary/main.go runShow), so it is no longer asserted here —
+// The --format=raw exact-ID tip itself moved out of FormatAmbiguous entirely:
+// it now lives solely in the CLI's wrapped ErrAmbiguous message
+// (cmd/bestiary/main.go runShow), so it is no longer asserted here —
 // see TestShow_Ambiguous for that assertion, and
 // TestFormatAmbiguous_V4_FooterInstructions for the footer's remaining
 // "bestiary list" instruction.
@@ -1316,10 +1316,10 @@ func TestFormatAmbiguous_V4_RehostSection_OnePerLine(t *testing.T) {
 // TestFormatAmbiguous_V4_FooterInstructions verifies that the footer contains
 // the "bestiary list" instruction.
 //
-// The footer's other former instruction, --format=raw, was removed
-// (bestiary-7nbuw): it duplicated the CLI's wrapped ErrAmbiguous narrowing-list
-// tip verbatim, so it now lives in exactly one place — the CLI message tested
-// by TestShow_Ambiguous — rather than repeated here too.
+// The footer's other former instruction, --format=raw, was removed because it
+// duplicated the CLI's wrapped ErrAmbiguous narrowing-list tip verbatim, so it
+// now lives in exactly one place — the CLI message tested by TestShow_Ambiguous
+// — rather than repeated here too.
 func TestFormatAmbiguous_V4_FooterInstructions(t *testing.T) {
 	e := makeAmbiguousWithRehosts(2, []bestiary.Provider{"deepinfra"})
 

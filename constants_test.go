@@ -239,3 +239,59 @@ func TestEntityKeys_DefensiveCopy(t *testing.T) {
 		t.Errorf("EntityKeys(): not a defensive copy; second call returned %q, want %q", k2[0], original)
 	}
 }
+
+// TestEntityConstants_NoFreeIdentityModifier is the standing guard for the free-tier
+// demotion: `free` names a pricing/serving tier a provider offers for an existing model,
+// not a different weights artifact, so it is an ATTRIBUTE and must never appear as an
+// identity modifier — the `{...}` segment of an entity key.
+//
+// It is derived from the generated key set rather than a literal list, so it keeps
+// holding as the catalog grows. Without it the invariant was only ever a one-time manual
+// grep, and any of three later changes could reintroduce a `{…free…}` key silently: a new
+// upstream ID whose free tier is fused into a compound token, a `modifier_class.json` row
+// that loses `global.free = "attribute"` and falls back through the unknown→IDENTITY
+// fail-safe, or a regression in the tail scan that stops peeling the token.
+//
+// Three key values legitimately carry the token OUTSIDE the identity-modifier segment and
+// are deliberately untouched by this guard: the standalone `free` and `cobuddy:free`
+// entities (where it is the family token itself, not a modifier) and `ling/flash-free@2.6`
+// (carved out of the demotion by an exact-ID pin). Matching on the raw key string would
+// wrongly condemn all three, which is why the check parses the segment.
+func TestEntityConstants_NoFreeIdentityModifier(t *testing.T) {
+	keys := bestiary.EntityKeys()
+	if len(keys) == 0 {
+		t.Fatal("EntityKeys() returned an empty slice; the guard would be vacuous")
+	}
+
+	for _, key := range keys {
+		for _, mod := range identityModifiersOf(key) {
+			if !strings.Contains(mod, "free") {
+				continue
+			}
+			t.Errorf("entity key %q carries the identity modifier %q; `free` is a pricing/serving "+
+				"tier, not a distinct weights artifact, so it must render in the [attributes] "+
+				"segment and never inside the key's {identity} segment. Check that "+
+				"parse/data/modifier_class.json still classifies `free` as an attribute (an absent "+
+				"row falls through the unknown->IDENTITY fail-safe) and that parse/data/modifiers.json "+
+				"still lists it so the tail scan peels it.", key, mod)
+		}
+	}
+}
+
+// identityModifiersOf returns the comma-separated tokens of an entity key's trailing
+// {identity-mods} segment, or nil when the key has none. The segment is always last in
+// EntityRef.String(), so it is read off the end of the key.
+func identityModifiersOf(key string) []string {
+	if !strings.HasSuffix(key, "}") {
+		return nil
+	}
+	open := strings.LastIndex(key, "{")
+	if open < 0 {
+		return nil
+	}
+	inner := key[open+1 : len(key)-1]
+	if inner == "" {
+		return nil
+	}
+	return strings.Split(inner, ",")
+}

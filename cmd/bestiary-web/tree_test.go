@@ -100,7 +100,7 @@ func TestTree_FrontPage_WalksCreatorHierarchy(t *testing.T) {
 	}
 }
 
-// TestTree_RenderedReachabilityIdentity is the AC-level identity, asserted on the RENDERED
+// TestTree_RenderedReachabilityIdentity asserts the reachability identity on the RENDERED
 // DOCUMENT rather than on the projection: every entity in Entities() is linked from the
 // front-page tree exactly once, and the tree links nothing that is not an entity.
 //

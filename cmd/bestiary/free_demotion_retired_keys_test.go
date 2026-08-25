@@ -3,6 +3,9 @@ package main
 import (
 	_ "embed"
 	"errors"
+	"os"
+	"slices"
+	"sort"
 	"strings"
 	"testing"
 
@@ -20,6 +23,19 @@ type retiredKeyInput = string
 type retiredKeySeams struct {
 	ByEntity string `json:"by_entity"`
 	Show     string `json:"show"`
+	// RetiredInstances is the MEASURED set of provider instances this key held
+	// immediately BEFORE the demotion, each spelled "<provider>|<model id>". It was
+	// read off the pre-lever generated catalog, not assumed, and it is the evidence
+	// the successor set is re-derived from: an instance is the only thing that
+	// actually survives a key retirement, so "where did this key's rows go" is a
+	// question only its instances can answer.
+	RetiredInstances []string `json:"retired_instances"`
+	// Successors is the set of LIVE entity keys those instances now belong to,
+	// sorted and de-duplicated. It is NOT "the key's bare parent": two keys in this
+	// corpus split across three successors each, because peeling `free` exposed a
+	// version the fused suffix had been hiding. Recorded here so the migration
+	// record is machine-checkable rather than a prose claim.
+	Successors []string `json:"successors"`
 }
 
 //go:embed testdata/retired/free_demotion_retired_keys_corpus.json
@@ -177,4 +193,205 @@ func corpusHasInput(c testcase.Corpus[retiredKeyInput, retiredKeySeams], key str
 		}
 	}
 	return false
+}
+
+// TestRetiredKeys_FreeDemotion_SuccessorSetsMatchMeasuredRehoming is the falsifier for
+// the migration record itself. The corpus's prose used to CLAIM where a retired key's
+// rows went, and two of the seventeen claims were simply wrong: `kimi/free` and
+// `minimax/free` were recorded as folding onto their bare family line, when peeling
+// `free` actually exposed three different versions apiece and split each key across
+// three successors. Nothing could catch that, because nothing checked it.
+//
+// This test closes that hole. Each case pins the instances the key held before the
+// demotion; the successor set is then RE-DERIVED from those instances against the live
+// registry and compared against the recorded one. A row that names the wrong successor
+// — a bare parent that none of its instances actually landed on, a stale key, or a set
+// that is missing one of a split's branches — fails here rather than misdirecting a user
+// who is hunting for the model their key used to name.
+//
+// The pinned instances are the evidence, not an assumption: an instance is the only
+// thing that survives a key retirement, so "where did this key's rows go" is a question
+// only its instances can answer. They were read off the pre-lever generated catalog.
+func TestRetiredKeys_FreeDemotion_SuccessorSetsMatchMeasuredRehoming(t *testing.T) {
+	corpus := loadRetiredKeyCorpus(t, freeDemotionRetiredKeysCorpusJSON, 17)
+	home := instanceHomes(t)
+
+	for _, c := range corpus.Cases {
+		key, exp := c.Input, c.Expected
+		t.Run(c.Name, func(t *testing.T) {
+			if len(exp.RetiredInstances) == 0 {
+				t.Fatalf("retired key %q records no instances; the migration record for a key that "+
+					"held no rows is unfalsifiable — pin the instances it held before the demotion", key)
+			}
+			if len(exp.Successors) == 0 {
+				t.Fatalf("retired key %q records no successors; every retired key's rows re-home "+
+					"somewhere (the instance total is conserved by this lever)", key)
+			}
+
+			seen := map[string]bool{}
+			for _, inst := range exp.RetiredInstances {
+				dest, ok := home[inst]
+				if !ok {
+					t.Errorf("instance %q (recorded as a pre-demotion row of retired key %q) is in no "+
+						"live entity; either the instance was dropped — this lever conserves the "+
+						"instance total, so that is a defect — or the pinned spelling is stale",
+						inst, key)
+					continue
+				}
+				seen[dest] = true
+			}
+			got := sortedKeys(seen)
+
+			want := append([]string(nil), exp.Successors...)
+			sort.Strings(want)
+			if !slices.Equal(got, want) {
+				t.Errorf("retired key %q re-homes onto %v, but the migration record says %v.\n"+
+					"The record is what a user gets instead of an alias or redirect, so a wrong "+
+					"successor set sends them to a key that does not hold their model. Re-derive the "+
+					"row from the measured re-homing above (a key may SPLIT across several successors "+
+					"— do not assume it folds onto its bare parent) and correct it here, in the "+
+					"CHANGELOG migration table, and in the case's mutation description together.",
+					key, got, want)
+			}
+
+			for _, s := range exp.Successors {
+				if _, ok := bestiary.EntityByKey(s); !ok {
+					t.Errorf("retired key %q names successor %q, which does not resolve; a migration "+
+						"record may only point at a live key", key, s)
+				}
+			}
+		})
+	}
+}
+
+// TestRetiredKeys_FreeDemotion_ChangelogTableMatchesCorpus keeps the two copies of the
+// migration record honest with each other. The CHANGELOG table is the copy a human
+// reads and the corpus is the copy the tests re-derive, so a correction applied to one
+// and forgotten in the other would leave the user-facing half wrong while every test
+// stayed green — which is exactly how the kimi/minimax rows survived.
+func TestRetiredKeys_FreeDemotion_ChangelogTableMatchesCorpus(t *testing.T) {
+	corpus := loadRetiredKeyCorpus(t, freeDemotionRetiredKeysCorpusJSON, 17)
+
+	const changelogPath = "../../CHANGELOG.md"
+	raw, err := os.ReadFile(changelogPath)
+	if err != nil {
+		t.Fatalf("read %s: %v", changelogPath, err)
+	}
+	table := parseMigrationTable(t, string(raw))
+
+	if len(table) != len(corpus.Cases) {
+		t.Errorf("CHANGELOG migration table has %d row(s), corpus has %d case(s); the two are the "+
+			"same record and must be edited together", len(table), len(corpus.Cases))
+	}
+	for _, c := range corpus.Cases {
+		got, ok := table[c.Input]
+		if !ok {
+			t.Errorf("CHANGELOG migration table has no row for retired key %q; every retired key "+
+				"needs one, because the table is the only pointer the tool gives a user", c.Input)
+			continue
+		}
+		want := append([]string(nil), c.Expected.Successors...)
+		sort.Strings(want)
+		sort.Strings(got)
+		if !slices.Equal(got, want) {
+			t.Errorf("CHANGELOG migration table sends %q to %v, the corpus records %v", c.Input, got, want)
+		}
+	}
+	for old := range table {
+		if !corpusHasInput(corpus, old) {
+			t.Errorf("CHANGELOG migration table carries a row for %q, which the retired-key corpus "+
+				"does not cover", old)
+		}
+	}
+}
+
+// parseMigrationTable reads the free-demotion "old -> new" markdown table out of the
+// CHANGELOG, returning retired key -> successor keys. Every cell value is a backtick-
+// quoted key, so the successor column parses by extracting its quoted tokens, which
+// keeps a multi-successor row (a key that SPLITS) readable as a plain comma list.
+func parseMigrationTable(t *testing.T, changelog string) map[string][]string {
+	t.Helper()
+	const header = "| retired key | instances re-home to |"
+
+	lines := strings.Split(changelog, "\n")
+	start := -1
+	for i, ln := range lines {
+		if strings.TrimSpace(ln) == header {
+			start = i + 2 // skip the header and its |---|---| separator
+			break
+		}
+	}
+	if start < 0 {
+		t.Fatalf("CHANGELOG has no migration table: expected a row spelled %q. It is the record "+
+			"of record for the free demotion; if it moved or was renamed, update this reader in "+
+			"the same commit so the record stays checked.", header)
+	}
+
+	out := map[string][]string{}
+	for _, ln := range lines[start:] {
+		ln = strings.TrimSpace(ln)
+		if !strings.HasPrefix(ln, "|") {
+			break
+		}
+		cells := strings.Split(strings.Trim(ln, "|"), "|")
+		if len(cells) != 2 {
+			t.Fatalf("migration table row %q has %d cell(s), want 2", ln, len(cells))
+		}
+		old := backtickedTokens(cells[0])
+		if len(old) != 1 {
+			t.Fatalf("migration table row %q names %d retired key(s) in its first cell, want exactly 1", ln, len(old))
+		}
+		news := backtickedTokens(cells[1])
+		if len(news) == 0 {
+			t.Fatalf("migration table row %q names no successor key", ln)
+		}
+		out[old[0]] = news
+	}
+	return out
+}
+
+// backtickedTokens returns every `quoted` token in a markdown table cell, in order.
+func backtickedTokens(cell string) []string {
+	var out []string
+	for {
+		i := strings.Index(cell, "`")
+		if i < 0 {
+			return out
+		}
+		rest := cell[i+1:]
+		j := strings.Index(rest, "`")
+		if j < 0 {
+			return out
+		}
+		out = append(out, rest[:j])
+		cell = rest[j+1:]
+	}
+}
+
+// instanceHomes maps every live provider instance, spelled "<provider>|<model id>", to
+// the entity key that holds it. It is the measurement seam the successor sets are
+// re-derived through.
+func instanceHomes(t *testing.T) map[string]string {
+	t.Helper()
+	out := map[string]string{}
+	for _, e := range bestiary.Entities() {
+		key := e.Ref.String()
+		for _, in := range e.Instances {
+			out[string(in.Provider)+"|"+string(in.ID)] = key
+		}
+	}
+	if len(out) == 0 {
+		t.Fatal("no live instances; the registry is empty, so no re-homing can be measured")
+	}
+	return out
+}
+
+// sortedKeys returns the set's members in ascending order.
+func sortedKeys(set map[string]bool) []string {
+	out := make([]string, 0, len(set))
+	for k := range set {
+		out = append(out, k)
+	}
+	sort.Strings(out)
+	return out
 }
