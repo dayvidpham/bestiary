@@ -38,10 +38,10 @@ type segmentBindingInput struct {
 // The closed set of corpus roles. A row carrying anything else is a corpus
 // authoring error and fails loudly rather than skipping its precondition.
 const (
-	roleRepair          = "repair"
-	roleMustNotWiden    = "must-not-widen"
-	roleEntityViewGuard = "entity-view-guard"
-	roleDeferredWitness = "deferred-witness"
+	roleRepair             = "repair"
+	roleMustNotWiden       = "must-not-widen"
+	roleEntityViewGuard    = "entity-view-guard"
+	roleCompositionWitness = "composition-witness"
 )
 
 // segmentBindingExpected pins the row's CANDIDATE SET, not merely its outcome
@@ -169,6 +169,13 @@ func TestResolve_SegmentBinding_Corpus(t *testing.T) {
 		// one entity-view guard: this key must stay model-not-found so `show` reaches
 		// its aggregate entity view
 		{Ref: "llama@3.3#70b", Role: roleEntityViewGuard}: {Outcome: outcomeNotFound},
+		// the composition witness: green only when the tier re-key AND the binding
+		// repair have both landed, pinned by value so neither can regress silently
+		{Ref: "openai/gpt/5.6", Role: roleCompositionWitness}: {
+			Outcome:  outcomeAmbiguous,
+			Entities: "gpt/luna@5.6,gpt/luna@5.6{pro},gpt/sol@5.6,gpt/sol@5.6{pro},gpt/terra@5.6,gpt/terra@5.6{pro}",
+			Refs:     "openai|gpt-5.6,openai|gpt-5.6-luna,openai|gpt-5.6-terra,openrouter|openai/gpt-5.6-luna-pro,openrouter|openai/gpt-5.6-sol-pro,openrouter|openai/gpt-5.6-terra-pro",
+		},
 	})
 
 	for _, c := range corpus.Cases {
@@ -208,14 +215,25 @@ func TestResolve_SegmentBinding_Corpus(t *testing.T) {
 						"model-not-found no longer protects an entity view; re-pick against the current catalog",
 						c.Input.Ref)
 				}
-			case roleDeferredWitness:
-				// Domain precondition: the composition witness is held open precisely
-				// because no variant-empty artifact at this version exists. If one ever
-				// appears, the deferral reasoning has changed and must be revisited.
+			case roleCompositionWitness:
+				// Domain precondition 1: the composition witness must never be read as a
+				// claim that a variant-empty artifact exists at this version. It is
+				// measured that none does and that no upstream row would produce one; if
+				// one ever appears, the row's reasoning has changed and must be revisited
+				// rather than left to pass on a different fact.
 				if entityKeyIsLive("gpt@5.6") {
-					t.Fatalf("a base `gpt@5.6` entity now exists; the deferred witness was recorded on the " +
-						"measured fact that none does and that no upstream row would produce one — revisit " +
-						"the row rather than letting it pass")
+					t.Fatalf("a base `gpt@5.6` entity now exists; this witness was authored on the " +
+						"measured fact that none does and that no upstream row would produce one — " +
+						"revisit the row rather than letting it pass")
+				}
+				// Domain precondition 2: the witness is a COMPOSITION of the tier re-key
+				// and the binding repair, so it is only meaningful while the ref it probes
+				// spans more than one identity. A single-identity span would mean the ref
+				// had nowhere to mis-bind and the ambiguity pin would be vacuous.
+				if len(obs.refs) < 2 {
+					t.Fatalf("composition witness %q resolved to %d candidate(s) at the peasant seam; the "+
+						"row pins a SCOPED AMBIGUITY, so fewer than two candidates means either the tier "+
+						"re-key or the binding repair is absent", c.Input.Ref, len(obs.refs))
 				}
 			default:
 				t.Fatalf("corpus authoring error: row %q carries unknown role %q", c.Name, c.Input.Role)

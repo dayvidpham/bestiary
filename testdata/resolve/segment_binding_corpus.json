@@ -1,5 +1,5 @@
 {
-  "_comment": "Segment binding at the peasant seam — bestiary.Resolve(ref, WithInputFormat(InputFormatPeasant)), which is exactly what `bestiary show <ref>` passes. The corpus is driven HERE and not at a bare Resolve() on purpose: five of the six must-not-widen refs below are NOTFOUND at a bare Resolve() (auto-detect routes them to SchemeHuggingFace/SchemeRaw), so pinning them there would pin NOTFOUND->NOTFOUND and be vacuous. Each row pins its CANDIDATE SET, not merely its outcome class: `entities` is the sorted set of entity keys the candidate set spans (the identity-level candidate set, the granularity the acceptance criterion is written in), and `refs` is the sorted provider|id set, pinned for the must-not-widen rows where provider-level widening is the risk and deliberately left empty elsewhere. Roles: `repair` = a ref the fallback pass newly answers (was model-not-found before the segment-binding repair); `must-not-widen` = a ref that already resolved in the strict pass and must come back byte-identical, since a widened binding here is how a positional-parser repair silently breaks working lookups; `entity-view-guard` = a live entity key that must stay model-not-found at this seam, because `show` only reaches its aggregate entity view when model resolution misses — letting the fallback pass claim these keys is how a resolver-only sweep can hide a large CLI regression; `deferred-witness` = a documented slot, see its own mutation note.",
+  "_comment": "Segment binding at the peasant seam — bestiary.Resolve(ref, WithInputFormat(InputFormatPeasant)), which is exactly what `bestiary show <ref>` passes. The corpus is driven HERE and not at a bare Resolve() on purpose: five of the six must-not-widen refs below are NOTFOUND at a bare Resolve() (auto-detect routes them to SchemeHuggingFace/SchemeRaw), so pinning them there would pin NOTFOUND->NOTFOUND and be vacuous. Each row pins its CANDIDATE SET, not merely its outcome class: `entities` is the sorted set of entity keys the candidate set spans (the identity-level candidate set, the granularity the acceptance criterion is written in), and `refs` is the sorted provider|id set, pinned for the must-not-widen rows where provider-level widening is the risk and deliberately left empty elsewhere. Roles: `repair` = a ref the fallback pass newly answers (was model-not-found before the segment-binding repair); `must-not-widen` = a ref that already resolved in the strict pass and must come back byte-identical, since a widened binding here is how a positional-parser repair silently breaks working lookups; `entity-view-guard` = a live entity key that must stay model-not-found at this seam, because `show` only reaches its aggregate entity view when model resolution misses — letting the fallback pass claim these keys is how a resolver-only sweep can hide a large CLI regression; `composition-witness` = a ref that is answerable only when TWO independent levers have both landed (the segment-binding repair and the gpt tier re-key), so it is red if either is absent; its preconditions additionally assert that no variant-empty artifact exists at the probed version and that the candidate set genuinely spans more than one identity.",
   "cases": [
     {
       "name": "ling-2.6-bare-family-version",
@@ -247,16 +247,20 @@
       }
     },
     {
-      "name": "deferred-composition-witness-gpt-5.6",
-      "input": { "ref": "openai/gpt/5.6", "role": "deferred-witness" },
-      "expected": { "outcome": "not-found", "entities": "", "refs": "" },
-      "classification": "must-fail",
+      "name": "composition-witness-gpt-5.6",
+      "input": { "ref": "openai/gpt/5.6", "role": "composition-witness" },
+      "expected": {
+        "outcome": "ambiguous",
+        "entities": "gpt/luna@5.6,gpt/luna@5.6{pro},gpt/sol@5.6,gpt/sol@5.6{pro},gpt/terra@5.6,gpt/terra@5.6{pro}",
+        "refs": "openai|gpt-5.6,openai|gpt-5.6-luna,openai|gpt-5.6-terra,openrouter|openai/gpt-5.6-luna-pro,openrouter|openai/gpt-5.6-sol-pro,openrouter|openai/gpt-5.6-terra-pro"
+      },
+      "classification": "must-pass",
       "provenance": {
         "source": "requirement",
-        "ref": "the composition witness of the segment-binding criterion, held open here: it passes only once the gpt tier re-key has ALSO landed, and this row records the state before that lever"
+        "ref": "the composition witness of the segment-binding criterion: it is green only when the gpt tier re-key AND the binding repair have both landed, and red if either is absent"
       },
       "mutation": {
-        "description": "DOCUMENTED SLOT — do not read this row as a claim that a base `gpt@5.6` artifact exists; it is measured that none does and that no upstream row would produce one. Until the tier re-key lands, the 5.6 tiers are not variants of family `gpt`, so this ref names nothing. The slice that re-keys them REPLACES this row with a must-pass ambiguity over the three resulting tier keys; the `claude/4.6` row above is its structural twin and already proves the binding half of the composition."
+        "description": "REPLACES the deferred slot this row was authored as. The 5.6 tiers are now variants of family `gpt`, so this ref names a real (family, version) pair with several identities under it and comes back as a correctly-scoped ambiguity instead of model-not-found. Two measured facts are pinned that a summary would lose. (1) The scope is SIX entities, not three: the criterion's listing predates the -pro pins, and each tier at 5.6 carries a base key and a {pro} key, both honest candidates for a ref that names neither. (2) The candidate ref set is ONE row per entity identity, which is why openai's `gpt-5.6` stands for gpt/sol@5.6 while its sibling spelling `gpt-5.6-sol` does not also appear \u2014 pinning the ref set is what makes a widening of WHICH rows come back visible here. No base `gpt@5.6` artifact exists and no upstream row would produce one; the role precondition asserts that, so this row can never be read as a claim that one does. It required NO resolver change: the binding repair alone carries it once the keys exist."
       }
     }
   ]

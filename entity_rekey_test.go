@@ -297,7 +297,16 @@ func TestEntityRekey_CensusAccounted(t *testing.T) {
 	// "ultraspeed" is curated as an attribute-class tier that instance rejoins
 	// mimo@2.5{pro}, which is the only key count actually lost. -10 + 9 = -1, with all
 	// 93 mimo instances conserved.
-	const wantEntities = 945
+	//
+	// 945 -> 942 with the gpt tier re-key. luna/sol/terra move from being FAMILIES of
+	// their own (gpt-luna, gpt-sol, gpt-terra) to being VARIANTS of family gpt, so all
+	// twelve tier keys are rewritten: gpt-<tier> -> gpt/<tier>, gpt-<tier>@5.6 ->
+	// gpt/<tier>@5.6, gpt-<tier>/pro@5.6 -> gpt/<tier>@5.6{pro}. That is nine renames.
+	// The remaining three, gpt-<tier>/pro, have no successor spelling with an occupant:
+	// their only instances were venice's squashed-version ids (openai-gpt-56-<tier>-pro),
+	// and those are pinned to 5.6 here, so every -pro instance is dated and the undated
+	// {pro} key empties. -12 + 9 = -3, with all 76 tier instances conserved.
+	const wantEntities = 942
 	if got := len(bestiary.Entities()); got != wantEntities {
 		t.Errorf("registry census = %d entities, want %d — this literal is the running total of "+
 			"every curated key retirement (see the arithmetic above it); update it in the same "+

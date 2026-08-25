@@ -304,6 +304,9 @@ const (
 	Entity__Gpt__Image__Version_2                                         = "gpt/image@2"
 	Entity__Gpt__Image__Version_5                                         = "gpt/image@5"
 	Entity__Gpt__Image__Version_5_4                                       = "gpt/image@5.4"
+	Entity__Gpt__Luna                                                     = "gpt/luna"
+	Entity__Gpt__Luna__Version_5_6                                        = "gpt/luna@5.6"
+	Entity__Gpt__Luna__Version_5_6__Pro                                   = "gpt/luna@5.6{pro}"
 	Entity__Gpt__Mini                                                     = "gpt/mini"
 	Entity__Gpt__Mini__Version_4_1                                        = "gpt/mini@4.1"
 	Entity__Gpt__Mini__Version_5                                          = "gpt/mini@5"
@@ -328,6 +331,12 @@ const (
 	Entity__Gpt__Pro__Version_5_2                                         = "gpt/pro@5.2"
 	Entity__Gpt__Pro__Version_5_4                                         = "gpt/pro@5.4"
 	Entity__Gpt__Pro__Version_5_5                                         = "gpt/pro@5.5"
+	Entity__Gpt__Sol                                                      = "gpt/sol"
+	Entity__Gpt__Sol__Version_5_6                                         = "gpt/sol@5.6"
+	Entity__Gpt__Sol__Version_5_6__Pro                                    = "gpt/sol@5.6{pro}"
+	Entity__Gpt__Terra                                                    = "gpt/terra"
+	Entity__Gpt__Terra__Version_5_6                                       = "gpt/terra@5.6"
+	Entity__Gpt__Terra__Version_5_6__Pro                                  = "gpt/terra@5.6{pro}"
 	Entity__Gpt__Version_1_5                                              = "gpt@1.5"
 	Entity__Gpt__Version_2                                                = "gpt@2"
 	Entity__Gpt__Version_2_1                                              = "gpt@2.1"
@@ -347,18 +356,6 @@ const (
 	Entity__Gpt__Version_5_4                                              = "gpt@5.4"
 	Entity__Gpt__Version_5_5                                              = "gpt@5.5"
 	Entity__Gpt__Version_5__Chat                                          = "gpt@5{chat}"
-	Entity__Gpt_luna                                                      = "gpt-luna"
-	Entity__Gpt_luna__Pro                                                 = "gpt-luna/pro"
-	Entity__Gpt_luna__Pro__Version_5_6                                    = "gpt-luna/pro@5.6"
-	Entity__Gpt_luna__Version_5_6                                         = "gpt-luna@5.6"
-	Entity__Gpt_sol                                                       = "gpt-sol"
-	Entity__Gpt_sol__Pro                                                  = "gpt-sol/pro"
-	Entity__Gpt_sol__Pro__Version_5_6                                     = "gpt-sol/pro@5.6"
-	Entity__Gpt_sol__Version_5_6                                          = "gpt-sol@5.6"
-	Entity__Gpt_terra                                                     = "gpt-terra"
-	Entity__Gpt_terra__Pro                                                = "gpt-terra/pro"
-	Entity__Gpt_terra__Pro__Version_5_6                                   = "gpt-terra/pro@5.6"
-	Entity__Gpt_terra__Version_5_6                                        = "gpt-terra@5.6"
 	Entity__Granite__Version_4_0                                          = "granite@4.0"
 	Entity__Granite__Version_4_1__Size_8b                                 = "granite@4.1#8b"
 	Entity__Greg                                                          = "greg"
@@ -1254,6 +1251,9 @@ var allEntityConstants = [...]string{
 	Entity__Gpt__Image__Version_2,
 	Entity__Gpt__Image__Version_5,
 	Entity__Gpt__Image__Version_5_4,
+	Entity__Gpt__Luna,
+	Entity__Gpt__Luna__Version_5_6,
+	Entity__Gpt__Luna__Version_5_6__Pro,
 	Entity__Gpt__Mini,
 	Entity__Gpt__Mini__Version_4_1,
 	Entity__Gpt__Mini__Version_5,
@@ -1278,6 +1278,12 @@ var allEntityConstants = [...]string{
 	Entity__Gpt__Pro__Version_5_2,
 	Entity__Gpt__Pro__Version_5_4,
 	Entity__Gpt__Pro__Version_5_5,
+	Entity__Gpt__Sol,
+	Entity__Gpt__Sol__Version_5_6,
+	Entity__Gpt__Sol__Version_5_6__Pro,
+	Entity__Gpt__Terra,
+	Entity__Gpt__Terra__Version_5_6,
+	Entity__Gpt__Terra__Version_5_6__Pro,
 	Entity__Gpt__Version_1_5,
 	Entity__Gpt__Version_2,
 	Entity__Gpt__Version_2_1,
@@ -1297,18 +1303,6 @@ var allEntityConstants = [...]string{
 	Entity__Gpt__Version_5_4,
 	Entity__Gpt__Version_5_5,
 	Entity__Gpt__Version_5__Chat,
-	Entity__Gpt_luna,
-	Entity__Gpt_luna__Pro,
-	Entity__Gpt_luna__Pro__Version_5_6,
-	Entity__Gpt_luna__Version_5_6,
-	Entity__Gpt_sol,
-	Entity__Gpt_sol__Pro,
-	Entity__Gpt_sol__Pro__Version_5_6,
-	Entity__Gpt_sol__Version_5_6,
-	Entity__Gpt_terra,
-	Entity__Gpt_terra__Pro,
-	Entity__Gpt_terra__Pro__Version_5_6,
-	Entity__Gpt_terra__Version_5_6,
 	Entity__Granite__Version_4_0,
 	Entity__Granite__Version_4_1__Size_8b,
 	Entity__Greg,

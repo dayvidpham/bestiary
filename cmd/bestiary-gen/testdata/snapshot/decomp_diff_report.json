@@ -1,8 +1,8 @@
 {
   "total_records": 5765,
-  "changed_count": 140,
+  "changed_count": 216,
   "cat_a_divergence_fix_count": 0,
-  "cat_b_improvement_count": 60,
+  "cat_b_improvement_count": 136,
   "cat_c_unexpected_regression_count": 0,
   "justified_exception_count": 80,
   "id_tuple4_incl_modifier_divergence_frozen_before": 17,
@@ -64,11 +64,65 @@
       "reason": "family-preserving de-noise/enrich: only phantom losses and/or enrichments, no ID-present field lost"
     },
     {
+      "provider": "databricks",
+      "id": "databricks-gpt-5-6-luna",
+      "raw_family": "gpt-luna",
+      "before": "(family=\"gpt-luna\",variant=\"\",version=\"\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"luna\",version=\"\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "family over-capture reduced to short base — exact family-suffix→variant move (override semantics), OR before ∉ registry \u0026 after ∈ registry; no ID-present non-family field lost (hardened)"
+    },
+    {
+      "provider": "databricks",
+      "id": "databricks-gpt-5-6-sol",
+      "raw_family": "gpt-sol",
+      "before": "(family=\"gpt-sol\",variant=\"\",version=\"\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"sol\",version=\"\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "family over-capture reduced to short base — exact family-suffix→variant move (override semantics), OR before ∉ registry \u0026 after ∈ registry; no ID-present non-family field lost (hardened)"
+    },
+    {
+      "provider": "databricks",
+      "id": "databricks-gpt-5-6-terra",
+      "raw_family": "gpt-terra",
+      "before": "(family=\"gpt-terra\",variant=\"\",version=\"\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"terra\",version=\"\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "family over-capture reduced to short base — exact family-suffix→variant move (override semantics), OR before ∉ registry \u0026 after ∈ registry; no ID-present non-family field lost (hardened)"
+    },
+    {
       "provider": "opencode",
       "id": "deepseek-v4-flash-free",
       "raw_family": "deepseek-flash-free",
       "before": "(family=\"deepseek-flash\",variant=\"free\",version=\"\",modifier=\"\")",
       "after": "(family=\"deepseek\",variant=\"flash\",version=\"\",modifier=\"free\")",
+      "category": "b:improvement",
+      "reason": "family over-capture reduced to short base — exact family-suffix→variant move (override semantics), OR before ∉ registry \u0026 after ∈ registry; no ID-present non-family field lost (hardened)"
+    },
+    {
+      "provider": "gitlab",
+      "id": "duo-chat-gpt-5-6-luna",
+      "raw_family": "gpt-luna",
+      "before": "(family=\"gpt-luna\",variant=\"\",version=\"\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"luna\",version=\"\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "family over-capture reduced to short base — exact family-suffix→variant move (override semantics), OR before ∉ registry \u0026 after ∈ registry; no ID-present non-family field lost (hardened)"
+    },
+    {
+      "provider": "gitlab",
+      "id": "duo-chat-gpt-5-6-sol",
+      "raw_family": "gpt-sol",
+      "before": "(family=\"gpt-sol\",variant=\"\",version=\"\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"sol\",version=\"\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "family over-capture reduced to short base — exact family-suffix→variant move (override semantics), OR before ∉ registry \u0026 after ∈ registry; no ID-present non-family field lost (hardened)"
+    },
+    {
+      "provider": "gitlab",
+      "id": "duo-chat-gpt-5-6-terra",
+      "raw_family": "gpt-terra",
+      "before": "(family=\"gpt-terra\",variant=\"\",version=\"\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"terra\",version=\"\",modifier=\"\")",
       "category": "b:improvement",
       "reason": "family over-capture reduced to short base — exact family-suffix→variant move (override semantics), OR before ∉ registry \u0026 after ∈ registry; no ID-present non-family field lost (hardened)"
     },
@@ -89,6 +143,339 @@
       "after": "(family=\"glm\",variant=\"\",version=\"5\",modifier=\"free\")",
       "category": "b:improvement",
       "reason": "family-preserving de-noise/enrich: only phantom losses and/or enrichments, no ID-present field lost"
+    },
+    {
+      "provider": "kenari",
+      "id": "gpt-5-6-luna",
+      "raw_family": "gpt-luna",
+      "before": "(family=\"gpt-luna\",variant=\"\",version=\"5.6\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"luna\",version=\"5.6\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "family over-capture reduced to short base — exact family-suffix→variant move (override semantics), OR before ∉ registry \u0026 after ∈ registry; no ID-present non-family field lost (hardened)"
+    },
+    {
+      "provider": "kenari",
+      "id": "gpt-5-6-sol",
+      "raw_family": "gpt-sol",
+      "before": "(family=\"gpt-sol\",variant=\"\",version=\"5.6\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"sol\",version=\"5.6\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "family over-capture reduced to short base — exact family-suffix→variant move (override semantics), OR before ∉ registry \u0026 after ∈ registry; no ID-present non-family field lost (hardened)"
+    },
+    {
+      "provider": "kenari",
+      "id": "gpt-5-6-terra",
+      "raw_family": "gpt-terra",
+      "before": "(family=\"gpt-terra\",variant=\"\",version=\"5.6\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"terra\",version=\"5.6\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "family over-capture reduced to short base — exact family-suffix→variant move (override semantics), OR before ∉ registry \u0026 after ∈ registry; no ID-present non-family field lost (hardened)"
+    },
+    {
+      "provider": "openai",
+      "id": "gpt-5.6",
+      "raw_family": "gpt-sol",
+      "before": "(family=\"gpt-sol\",variant=\"\",version=\"5.6\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"sol\",version=\"5.6\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "family over-capture reduced to short base — exact family-suffix→variant move (override semantics), OR before ∉ registry \u0026 after ∈ registry; no ID-present non-family field lost (hardened)"
+    },
+    {
+      "provider": "abacus",
+      "id": "gpt-5.6-luna",
+      "raw_family": "gpt-luna",
+      "before": "(family=\"gpt-luna\",variant=\"\",version=\"5.6\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"luna\",version=\"5.6\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "family over-capture reduced to short base — exact family-suffix→variant move (override semantics), OR before ∉ registry \u0026 after ∈ registry; no ID-present non-family field lost (hardened)"
+    },
+    {
+      "provider": "ai-router",
+      "id": "gpt-5.6-luna",
+      "raw_family": "gpt-luna",
+      "before": "(family=\"gpt-luna\",variant=\"\",version=\"5.6\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"luna\",version=\"5.6\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "family over-capture reduced to short base — exact family-suffix→variant move (override semantics), OR before ∉ registry \u0026 after ∈ registry; no ID-present non-family field lost (hardened)"
+    },
+    {
+      "provider": "aihubmix",
+      "id": "gpt-5.6-luna",
+      "raw_family": "gpt-luna",
+      "before": "(family=\"gpt-luna\",variant=\"\",version=\"5.6\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"luna\",version=\"5.6\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "family over-capture reduced to short base — exact family-suffix→variant move (override semantics), OR before ∉ registry \u0026 after ∈ registry; no ID-present non-family field lost (hardened)"
+    },
+    {
+      "provider": "azure",
+      "id": "gpt-5.6-luna",
+      "raw_family": "gpt-luna",
+      "before": "(family=\"gpt-luna\",variant=\"\",version=\"5.6\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"luna\",version=\"5.6\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "family over-capture reduced to short base — exact family-suffix→variant move (override semantics), OR before ∉ registry \u0026 after ∈ registry; no ID-present non-family field lost (hardened)"
+    },
+    {
+      "provider": "azure-cognitive-services",
+      "id": "gpt-5.6-luna",
+      "raw_family": "gpt-luna",
+      "before": "(family=\"gpt-luna\",variant=\"\",version=\"5.6\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"luna\",version=\"5.6\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "family over-capture reduced to short base — exact family-suffix→variant move (override semantics), OR before ∉ registry \u0026 after ∈ registry; no ID-present non-family field lost (hardened)"
+    },
+    {
+      "provider": "github-copilot",
+      "id": "gpt-5.6-luna",
+      "raw_family": "gpt-luna",
+      "before": "(family=\"gpt-luna\",variant=\"\",version=\"5.6\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"luna\",version=\"5.6\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "family over-capture reduced to short base — exact family-suffix→variant move (override semantics), OR before ∉ registry \u0026 after ∈ registry; no ID-present non-family field lost (hardened)"
+    },
+    {
+      "provider": "llmgateway",
+      "id": "gpt-5.6-luna",
+      "raw_family": "gpt-luna",
+      "before": "(family=\"gpt-luna\",variant=\"\",version=\"5.6\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"luna\",version=\"5.6\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "family over-capture reduced to short base — exact family-suffix→variant move (override semantics), OR before ∉ registry \u0026 after ∈ registry; no ID-present non-family field lost (hardened)"
+    },
+    {
+      "provider": "openai",
+      "id": "gpt-5.6-luna",
+      "raw_family": "gpt-luna",
+      "before": "(family=\"gpt-luna\",variant=\"\",version=\"5.6\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"luna\",version=\"5.6\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "family over-capture reduced to short base — exact family-suffix→variant move (override semantics), OR before ∉ registry \u0026 after ∈ registry; no ID-present non-family field lost (hardened)"
+    },
+    {
+      "provider": "opencode",
+      "id": "gpt-5.6-luna",
+      "raw_family": "gpt-luna",
+      "before": "(family=\"gpt-luna\",variant=\"\",version=\"5.6\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"luna\",version=\"5.6\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "family over-capture reduced to short base — exact family-suffix→variant move (override semantics), OR before ∉ registry \u0026 after ∈ registry; no ID-present non-family field lost (hardened)"
+    },
+    {
+      "provider": "routing-run",
+      "id": "gpt-5.6-luna",
+      "raw_family": "gpt-luna",
+      "before": "(family=\"gpt-luna\",variant=\"\",version=\"5.6\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"luna\",version=\"5.6\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "family over-capture reduced to short base — exact family-suffix→variant move (override semantics), OR before ∉ registry \u0026 after ∈ registry; no ID-present non-family field lost (hardened)"
+    },
+    {
+      "provider": "vivgrid",
+      "id": "gpt-5.6-luna",
+      "raw_family": "gpt-luna",
+      "before": "(family=\"gpt-luna\",variant=\"\",version=\"5.6\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"luna\",version=\"5.6\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "family over-capture reduced to short base — exact family-suffix→variant move (override semantics), OR before ∉ registry \u0026 after ∈ registry; no ID-present non-family field lost (hardened)"
+    },
+    {
+      "provider": "abacus",
+      "id": "gpt-5.6-sol",
+      "raw_family": "gpt-sol",
+      "before": "(family=\"gpt-sol\",variant=\"\",version=\"5.6\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"sol\",version=\"5.6\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "family over-capture reduced to short base — exact family-suffix→variant move (override semantics), OR before ∉ registry \u0026 after ∈ registry; no ID-present non-family field lost (hardened)"
+    },
+    {
+      "provider": "ai-router",
+      "id": "gpt-5.6-sol",
+      "raw_family": "gpt-sol",
+      "before": "(family=\"gpt-sol\",variant=\"\",version=\"5.6\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"sol\",version=\"5.6\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "family over-capture reduced to short base — exact family-suffix→variant move (override semantics), OR before ∉ registry \u0026 after ∈ registry; no ID-present non-family field lost (hardened)"
+    },
+    {
+      "provider": "aihubmix",
+      "id": "gpt-5.6-sol",
+      "raw_family": "gpt-sol",
+      "before": "(family=\"gpt-sol\",variant=\"\",version=\"5.6\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"sol\",version=\"5.6\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "family over-capture reduced to short base — exact family-suffix→variant move (override semantics), OR before ∉ registry \u0026 after ∈ registry; no ID-present non-family field lost (hardened)"
+    },
+    {
+      "provider": "azure",
+      "id": "gpt-5.6-sol",
+      "raw_family": "gpt-sol",
+      "before": "(family=\"gpt-sol\",variant=\"\",version=\"5.6\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"sol\",version=\"5.6\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "family over-capture reduced to short base — exact family-suffix→variant move (override semantics), OR before ∉ registry \u0026 after ∈ registry; no ID-present non-family field lost (hardened)"
+    },
+    {
+      "provider": "azure-cognitive-services",
+      "id": "gpt-5.6-sol",
+      "raw_family": "gpt-sol",
+      "before": "(family=\"gpt-sol\",variant=\"\",version=\"5.6\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"sol\",version=\"5.6\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "family over-capture reduced to short base — exact family-suffix→variant move (override semantics), OR before ∉ registry \u0026 after ∈ registry; no ID-present non-family field lost (hardened)"
+    },
+    {
+      "provider": "github-copilot",
+      "id": "gpt-5.6-sol",
+      "raw_family": "gpt-sol",
+      "before": "(family=\"gpt-sol\",variant=\"\",version=\"5.6\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"sol\",version=\"5.6\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "family over-capture reduced to short base — exact family-suffix→variant move (override semantics), OR before ∉ registry \u0026 after ∈ registry; no ID-present non-family field lost (hardened)"
+    },
+    {
+      "provider": "llmgateway",
+      "id": "gpt-5.6-sol",
+      "raw_family": "gpt-sol",
+      "before": "(family=\"gpt-sol\",variant=\"\",version=\"5.6\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"sol\",version=\"5.6\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "family over-capture reduced to short base — exact family-suffix→variant move (override semantics), OR before ∉ registry \u0026 after ∈ registry; no ID-present non-family field lost (hardened)"
+    },
+    {
+      "provider": "openai",
+      "id": "gpt-5.6-sol",
+      "raw_family": "gpt-sol",
+      "before": "(family=\"gpt-sol\",variant=\"\",version=\"5.6\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"sol\",version=\"5.6\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "family over-capture reduced to short base — exact family-suffix→variant move (override semantics), OR before ∉ registry \u0026 after ∈ registry; no ID-present non-family field lost (hardened)"
+    },
+    {
+      "provider": "opencode",
+      "id": "gpt-5.6-sol",
+      "raw_family": "gpt-sol",
+      "before": "(family=\"gpt-sol\",variant=\"\",version=\"5.6\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"sol\",version=\"5.6\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "family over-capture reduced to short base — exact family-suffix→variant move (override semantics), OR before ∉ registry \u0026 after ∈ registry; no ID-present non-family field lost (hardened)"
+    },
+    {
+      "provider": "routing-run",
+      "id": "gpt-5.6-sol",
+      "raw_family": "gpt-sol",
+      "before": "(family=\"gpt-sol\",variant=\"\",version=\"5.6\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"sol\",version=\"5.6\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "family over-capture reduced to short base — exact family-suffix→variant move (override semantics), OR before ∉ registry \u0026 after ∈ registry; no ID-present non-family field lost (hardened)"
+    },
+    {
+      "provider": "vivgrid",
+      "id": "gpt-5.6-sol",
+      "raw_family": "gpt-sol",
+      "before": "(family=\"gpt-sol\",variant=\"\",version=\"5.6\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"sol\",version=\"5.6\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "family over-capture reduced to short base — exact family-suffix→variant move (override semantics), OR before ∉ registry \u0026 after ∈ registry; no ID-present non-family field lost (hardened)"
+    },
+    {
+      "provider": "abacus",
+      "id": "gpt-5.6-terra",
+      "raw_family": "gpt-terra",
+      "before": "(family=\"gpt-terra\",variant=\"\",version=\"5.6\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"terra\",version=\"5.6\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "family over-capture reduced to short base — exact family-suffix→variant move (override semantics), OR before ∉ registry \u0026 after ∈ registry; no ID-present non-family field lost (hardened)"
+    },
+    {
+      "provider": "ai-router",
+      "id": "gpt-5.6-terra",
+      "raw_family": "gpt-terra",
+      "before": "(family=\"gpt-terra\",variant=\"\",version=\"5.6\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"terra\",version=\"5.6\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "family over-capture reduced to short base — exact family-suffix→variant move (override semantics), OR before ∉ registry \u0026 after ∈ registry; no ID-present non-family field lost (hardened)"
+    },
+    {
+      "provider": "aihubmix",
+      "id": "gpt-5.6-terra",
+      "raw_family": "gpt-terra",
+      "before": "(family=\"gpt-terra\",variant=\"\",version=\"5.6\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"terra\",version=\"5.6\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "family over-capture reduced to short base — exact family-suffix→variant move (override semantics), OR before ∉ registry \u0026 after ∈ registry; no ID-present non-family field lost (hardened)"
+    },
+    {
+      "provider": "azure",
+      "id": "gpt-5.6-terra",
+      "raw_family": "gpt-terra",
+      "before": "(family=\"gpt-terra\",variant=\"\",version=\"5.6\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"terra\",version=\"5.6\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "family over-capture reduced to short base — exact family-suffix→variant move (override semantics), OR before ∉ registry \u0026 after ∈ registry; no ID-present non-family field lost (hardened)"
+    },
+    {
+      "provider": "azure-cognitive-services",
+      "id": "gpt-5.6-terra",
+      "raw_family": "gpt-terra",
+      "before": "(family=\"gpt-terra\",variant=\"\",version=\"5.6\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"terra\",version=\"5.6\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "family over-capture reduced to short base — exact family-suffix→variant move (override semantics), OR before ∉ registry \u0026 after ∈ registry; no ID-present non-family field lost (hardened)"
+    },
+    {
+      "provider": "github-copilot",
+      "id": "gpt-5.6-terra",
+      "raw_family": "gpt-terra",
+      "before": "(family=\"gpt-terra\",variant=\"\",version=\"5.6\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"terra\",version=\"5.6\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "family over-capture reduced to short base — exact family-suffix→variant move (override semantics), OR before ∉ registry \u0026 after ∈ registry; no ID-present non-family field lost (hardened)"
+    },
+    {
+      "provider": "llmgateway",
+      "id": "gpt-5.6-terra",
+      "raw_family": "gpt-terra",
+      "before": "(family=\"gpt-terra\",variant=\"\",version=\"5.6\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"terra\",version=\"5.6\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "family over-capture reduced to short base — exact family-suffix→variant move (override semantics), OR before ∉ registry \u0026 after ∈ registry; no ID-present non-family field lost (hardened)"
+    },
+    {
+      "provider": "openai",
+      "id": "gpt-5.6-terra",
+      "raw_family": "gpt-terra",
+      "before": "(family=\"gpt-terra\",variant=\"\",version=\"5.6\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"terra\",version=\"5.6\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "family over-capture reduced to short base — exact family-suffix→variant move (override semantics), OR before ∉ registry \u0026 after ∈ registry; no ID-present non-family field lost (hardened)"
+    },
+    {
+      "provider": "opencode",
+      "id": "gpt-5.6-terra",
+      "raw_family": "gpt-terra",
+      "before": "(family=\"gpt-terra\",variant=\"\",version=\"5.6\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"terra\",version=\"5.6\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "family over-capture reduced to short base — exact family-suffix→variant move (override semantics), OR before ∉ registry \u0026 after ∈ registry; no ID-present non-family field lost (hardened)"
+    },
+    {
+      "provider": "routing-run",
+      "id": "gpt-5.6-terra",
+      "raw_family": "gpt-terra",
+      "before": "(family=\"gpt-terra\",variant=\"\",version=\"5.6\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"terra\",version=\"5.6\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "family over-capture reduced to short base — exact family-suffix→variant move (override semantics), OR before ∉ registry \u0026 after ∈ registry; no ID-present non-family field lost (hardened)"
+    },
+    {
+      "provider": "vivgrid",
+      "id": "gpt-5.6-terra",
+      "raw_family": "gpt-terra",
+      "before": "(family=\"gpt-terra\",variant=\"\",version=\"5.6\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"terra\",version=\"5.6\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "family over-capture reduced to short base — exact family-suffix→variant move (override semantics), OR before ∉ registry \u0026 after ∈ registry; no ID-present non-family field lost (hardened)"
     },
     {
       "provider": "opencode",
@@ -350,6 +737,303 @@
       "after": "(family=\"nemotron\",variant=\"v1.5\",version=\"3.3\",modifier=\"\")",
       "category": "b:improvement",
       "reason": "strict enrichment — only previously-empty field(s) populated"
+    },
+    {
+      "provider": "snowflake-cortex",
+      "id": "openai-gpt-5.6-luna",
+      "raw_family": "gpt-luna",
+      "before": "(family=\"gpt-luna\",variant=\"\",version=\"\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"luna\",version=\"\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "family over-capture reduced to short base — exact family-suffix→variant move (override semantics), OR before ∉ registry \u0026 after ∈ registry; no ID-present non-family field lost (hardened)"
+    },
+    {
+      "provider": "snowflake-cortex",
+      "id": "openai-gpt-5.6-sol",
+      "raw_family": "gpt-sol",
+      "before": "(family=\"gpt-sol\",variant=\"\",version=\"\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"sol\",version=\"\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "family over-capture reduced to short base — exact family-suffix→variant move (override semantics), OR before ∉ registry \u0026 after ∈ registry; no ID-present non-family field lost (hardened)"
+    },
+    {
+      "provider": "snowflake-cortex",
+      "id": "openai-gpt-5.6-terra",
+      "raw_family": "gpt-terra",
+      "before": "(family=\"gpt-terra\",variant=\"\",version=\"\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"terra\",version=\"\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "family over-capture reduced to short base — exact family-suffix→variant move (override semantics), OR before ∉ registry \u0026 after ∈ registry; no ID-present non-family field lost (hardened)"
+    },
+    {
+      "provider": "venice",
+      "id": "openai-gpt-56-luna",
+      "raw_family": "gpt-luna",
+      "before": "(family=\"gpt-luna\",variant=\"\",version=\"\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"luna\",version=\"5.6\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "family over-capture reduced to short base — exact family-suffix→variant move (override semantics), OR before ∉ registry \u0026 after ∈ registry; no ID-present non-family field lost (hardened)"
+    },
+    {
+      "provider": "venice",
+      "id": "openai-gpt-56-luna-pro",
+      "raw_family": "gpt-luna",
+      "before": "(family=\"gpt-luna\",variant=\"pro\",version=\"\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"luna\",version=\"5.6\",modifier=\"pro\")",
+      "category": "b:improvement",
+      "reason": "family over-capture reduced to short base — exact family-suffix→variant move (override semantics), OR before ∉ registry \u0026 after ∈ registry; no ID-present non-family field lost (hardened)"
+    },
+    {
+      "provider": "venice",
+      "id": "openai-gpt-56-sol",
+      "raw_family": "gpt-sol",
+      "before": "(family=\"gpt-sol\",variant=\"\",version=\"\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"sol\",version=\"5.6\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "family over-capture reduced to short base — exact family-suffix→variant move (override semantics), OR before ∉ registry \u0026 after ∈ registry; no ID-present non-family field lost (hardened)"
+    },
+    {
+      "provider": "venice",
+      "id": "openai-gpt-56-sol-pro",
+      "raw_family": "gpt-sol",
+      "before": "(family=\"gpt-sol\",variant=\"pro\",version=\"\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"sol\",version=\"5.6\",modifier=\"pro\")",
+      "category": "b:improvement",
+      "reason": "family over-capture reduced to short base — exact family-suffix→variant move (override semantics), OR before ∉ registry \u0026 after ∈ registry; no ID-present non-family field lost (hardened)"
+    },
+    {
+      "provider": "venice",
+      "id": "openai-gpt-56-terra",
+      "raw_family": "gpt-terra",
+      "before": "(family=\"gpt-terra\",variant=\"\",version=\"\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"terra\",version=\"5.6\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "family over-capture reduced to short base — exact family-suffix→variant move (override semantics), OR before ∉ registry \u0026 after ∈ registry; no ID-present non-family field lost (hardened)"
+    },
+    {
+      "provider": "venice",
+      "id": "openai-gpt-56-terra-pro",
+      "raw_family": "gpt-terra",
+      "before": "(family=\"gpt-terra\",variant=\"pro\",version=\"\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"terra\",version=\"5.6\",modifier=\"pro\")",
+      "category": "b:improvement",
+      "reason": "family over-capture reduced to short base — exact family-suffix→variant move (override semantics), OR before ∉ registry \u0026 after ∈ registry; no ID-present non-family field lost (hardened)"
+    },
+    {
+      "provider": "amazon-bedrock",
+      "id": "openai.gpt-5.6-luna",
+      "raw_family": "gpt-luna",
+      "before": "(family=\"gpt-luna\",variant=\"\",version=\"\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"luna\",version=\"\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "family over-capture reduced to short base — exact family-suffix→variant move (override semantics), OR before ∉ registry \u0026 after ∈ registry; no ID-present non-family field lost (hardened)"
+    },
+    {
+      "provider": "amazon-bedrock",
+      "id": "openai.gpt-5.6-sol",
+      "raw_family": "gpt-sol",
+      "before": "(family=\"gpt-sol\",variant=\"\",version=\"\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"sol\",version=\"\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "family over-capture reduced to short base — exact family-suffix→variant move (override semantics), OR before ∉ registry \u0026 after ∈ registry; no ID-present non-family field lost (hardened)"
+    },
+    {
+      "provider": "amazon-bedrock",
+      "id": "openai.gpt-5.6-terra",
+      "raw_family": "gpt-terra",
+      "before": "(family=\"gpt-terra\",variant=\"\",version=\"\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"terra\",version=\"\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "family over-capture reduced to short base — exact family-suffix→variant move (override semantics), OR before ∉ registry \u0026 after ∈ registry; no ID-present non-family field lost (hardened)"
+    },
+    {
+      "provider": "cloudflare-ai-gateway",
+      "id": "openai/gpt-5.6-luna",
+      "raw_family": "gpt-luna",
+      "before": "(family=\"gpt-luna\",variant=\"\",version=\"5.6\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"luna\",version=\"5.6\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "family over-capture reduced to short base — exact family-suffix→variant move (override semantics), OR before ∉ registry \u0026 after ∈ registry; no ID-present non-family field lost (hardened)"
+    },
+    {
+      "provider": "crossmodel",
+      "id": "openai/gpt-5.6-luna",
+      "raw_family": "gpt-luna",
+      "before": "(family=\"gpt-luna\",variant=\"\",version=\"5.6\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"luna\",version=\"5.6\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "family over-capture reduced to short base — exact family-suffix→variant move (override semantics), OR before ∉ registry \u0026 after ∈ registry; no ID-present non-family field lost (hardened)"
+    },
+    {
+      "provider": "ofox",
+      "id": "openai/gpt-5.6-luna",
+      "raw_family": "gpt-luna",
+      "before": "(family=\"gpt-luna\",variant=\"\",version=\"5.6\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"luna\",version=\"5.6\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "family over-capture reduced to short base — exact family-suffix→variant move (override semantics), OR before ∉ registry \u0026 after ∈ registry; no ID-present non-family field lost (hardened)"
+    },
+    {
+      "provider": "openrouter",
+      "id": "openai/gpt-5.6-luna",
+      "raw_family": "gpt-luna",
+      "before": "(family=\"gpt-luna\",variant=\"\",version=\"5.6\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"luna\",version=\"5.6\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "family over-capture reduced to short base — exact family-suffix→variant move (override semantics), OR before ∉ registry \u0026 after ∈ registry; no ID-present non-family field lost (hardened)"
+    },
+    {
+      "provider": "vercel",
+      "id": "openai/gpt-5.6-luna",
+      "raw_family": "gpt-luna",
+      "before": "(family=\"gpt-luna\",variant=\"\",version=\"5.6\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"luna\",version=\"5.6\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "family over-capture reduced to short base — exact family-suffix→variant move (override semantics), OR before ∉ registry \u0026 after ∈ registry; no ID-present non-family field lost (hardened)"
+    },
+    {
+      "provider": "zenmux",
+      "id": "openai/gpt-5.6-luna",
+      "raw_family": "gpt-luna",
+      "before": "(family=\"gpt-luna\",variant=\"\",version=\"5.6\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"luna\",version=\"5.6\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "family over-capture reduced to short base — exact family-suffix→variant move (override semantics), OR before ∉ registry \u0026 after ∈ registry; no ID-present non-family field lost (hardened)"
+    },
+    {
+      "provider": "openrouter",
+      "id": "openai/gpt-5.6-luna-pro",
+      "raw_family": "gpt-luna",
+      "before": "(family=\"gpt-luna\",variant=\"pro\",version=\"5.6\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"luna\",version=\"5.6\",modifier=\"pro\")",
+      "category": "b:improvement",
+      "reason": "family over-capture reduced to short base — exact family-suffix→variant move (override semantics), OR before ∉ registry \u0026 after ∈ registry; no ID-present non-family field lost (hardened)"
+    },
+    {
+      "provider": "cloudflare-ai-gateway",
+      "id": "openai/gpt-5.6-sol",
+      "raw_family": "gpt-sol",
+      "before": "(family=\"gpt-sol\",variant=\"\",version=\"5.6\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"sol\",version=\"5.6\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "family over-capture reduced to short base — exact family-suffix→variant move (override semantics), OR before ∉ registry \u0026 after ∈ registry; no ID-present non-family field lost (hardened)"
+    },
+    {
+      "provider": "crossmodel",
+      "id": "openai/gpt-5.6-sol",
+      "raw_family": "gpt-sol",
+      "before": "(family=\"gpt-sol\",variant=\"\",version=\"5.6\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"sol\",version=\"5.6\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "family over-capture reduced to short base — exact family-suffix→variant move (override semantics), OR before ∉ registry \u0026 after ∈ registry; no ID-present non-family field lost (hardened)"
+    },
+    {
+      "provider": "ofox",
+      "id": "openai/gpt-5.6-sol",
+      "raw_family": "gpt-sol",
+      "before": "(family=\"gpt-sol\",variant=\"\",version=\"5.6\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"sol\",version=\"5.6\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "family over-capture reduced to short base — exact family-suffix→variant move (override semantics), OR before ∉ registry \u0026 after ∈ registry; no ID-present non-family field lost (hardened)"
+    },
+    {
+      "provider": "openrouter",
+      "id": "openai/gpt-5.6-sol",
+      "raw_family": "gpt-sol",
+      "before": "(family=\"gpt-sol\",variant=\"\",version=\"5.6\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"sol\",version=\"5.6\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "family over-capture reduced to short base — exact family-suffix→variant move (override semantics), OR before ∉ registry \u0026 after ∈ registry; no ID-present non-family field lost (hardened)"
+    },
+    {
+      "provider": "vercel",
+      "id": "openai/gpt-5.6-sol",
+      "raw_family": "gpt-sol",
+      "before": "(family=\"gpt-sol\",variant=\"\",version=\"5.6\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"sol\",version=\"5.6\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "family over-capture reduced to short base — exact family-suffix→variant move (override semantics), OR before ∉ registry \u0026 after ∈ registry; no ID-present non-family field lost (hardened)"
+    },
+    {
+      "provider": "zenmux",
+      "id": "openai/gpt-5.6-sol",
+      "raw_family": "gpt-sol",
+      "before": "(family=\"gpt-sol\",variant=\"\",version=\"5.6\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"sol\",version=\"5.6\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "family over-capture reduced to short base — exact family-suffix→variant move (override semantics), OR before ∉ registry \u0026 after ∈ registry; no ID-present non-family field lost (hardened)"
+    },
+    {
+      "provider": "openrouter",
+      "id": "openai/gpt-5.6-sol-pro",
+      "raw_family": "gpt-sol",
+      "before": "(family=\"gpt-sol\",variant=\"pro\",version=\"5.6\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"sol\",version=\"5.6\",modifier=\"pro\")",
+      "category": "b:improvement",
+      "reason": "family over-capture reduced to short base — exact family-suffix→variant move (override semantics), OR before ∉ registry \u0026 after ∈ registry; no ID-present non-family field lost (hardened)"
+    },
+    {
+      "provider": "cloudflare-ai-gateway",
+      "id": "openai/gpt-5.6-terra",
+      "raw_family": "gpt-terra",
+      "before": "(family=\"gpt-terra\",variant=\"\",version=\"5.6\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"terra\",version=\"5.6\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "family over-capture reduced to short base — exact family-suffix→variant move (override semantics), OR before ∉ registry \u0026 after ∈ registry; no ID-present non-family field lost (hardened)"
+    },
+    {
+      "provider": "crossmodel",
+      "id": "openai/gpt-5.6-terra",
+      "raw_family": "gpt-terra",
+      "before": "(family=\"gpt-terra\",variant=\"\",version=\"5.6\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"terra\",version=\"5.6\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "family over-capture reduced to short base — exact family-suffix→variant move (override semantics), OR before ∉ registry \u0026 after ∈ registry; no ID-present non-family field lost (hardened)"
+    },
+    {
+      "provider": "ofox",
+      "id": "openai/gpt-5.6-terra",
+      "raw_family": "gpt-terra",
+      "before": "(family=\"gpt-terra\",variant=\"\",version=\"5.6\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"terra\",version=\"5.6\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "family over-capture reduced to short base — exact family-suffix→variant move (override semantics), OR before ∉ registry \u0026 after ∈ registry; no ID-present non-family field lost (hardened)"
+    },
+    {
+      "provider": "openrouter",
+      "id": "openai/gpt-5.6-terra",
+      "raw_family": "gpt-terra",
+      "before": "(family=\"gpt-terra\",variant=\"\",version=\"5.6\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"terra\",version=\"5.6\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "family over-capture reduced to short base — exact family-suffix→variant move (override semantics), OR before ∉ registry \u0026 after ∈ registry; no ID-present non-family field lost (hardened)"
+    },
+    {
+      "provider": "vercel",
+      "id": "openai/gpt-5.6-terra",
+      "raw_family": "gpt-terra",
+      "before": "(family=\"gpt-terra\",variant=\"\",version=\"5.6\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"terra\",version=\"5.6\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "family over-capture reduced to short base — exact family-suffix→variant move (override semantics), OR before ∉ registry \u0026 after ∈ registry; no ID-present non-family field lost (hardened)"
+    },
+    {
+      "provider": "zenmux",
+      "id": "openai/gpt-5.6-terra",
+      "raw_family": "gpt-terra",
+      "before": "(family=\"gpt-terra\",variant=\"\",version=\"5.6\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"terra\",version=\"5.6\",modifier=\"\")",
+      "category": "b:improvement",
+      "reason": "family over-capture reduced to short base — exact family-suffix→variant move (override semantics), OR before ∉ registry \u0026 after ∈ registry; no ID-present non-family field lost (hardened)"
+    },
+    {
+      "provider": "openrouter",
+      "id": "openai/gpt-5.6-terra-pro",
+      "raw_family": "gpt-terra",
+      "before": "(family=\"gpt-terra\",variant=\"pro\",version=\"5.6\",modifier=\"\")",
+      "after": "(family=\"gpt\",variant=\"terra\",version=\"5.6\",modifier=\"pro\")",
+      "category": "b:improvement",
+      "reason": "family over-capture reduced to short base — exact family-suffix→variant move (override semantics), OR before ∉ registry \u0026 after ∈ registry; no ID-present non-family field lost (hardened)"
     },
     {
       "provider": "kilo",
