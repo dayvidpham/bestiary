@@ -1,7 +1,9 @@
 package bestiary_test
 
 import (
+	"encoding/json"
 	"fmt"
+	"os"
 	"sort"
 	"strings"
 	"testing"
@@ -316,6 +318,49 @@ func TestCreatorGroups_DerivedFromCuratedSeed_NotHardCoded(t *testing.T) {
 		len(emitted), len(bestiary.Creators()))
 }
 
+// curatedStrayRowJSON is the minimal shape of one parse/data/series.json row this
+// test needs: the family token the curation re-homes, and the line it re-homes it
+// onto. The production loader reads the same file (taxonomy.go), but its table is
+// unexported and, more to the point, deriving the expectation from the FILE rather
+// than from the loader keeps the test an independent statement about the curation
+// instead of a restatement of the code under test.
+type curatedStrayRowJSON struct {
+	Family string `json:"family"`
+	Series struct {
+		Family string `json:"family"`
+	} `json:"series"`
+}
+
+// loadCuratedStrayLines reads parse/data/series.json and returns each re-homed
+// family token mapped to the family of the line it is re-homed onto, both
+// case-folded to match the production loader's case-insensitive keying.
+func loadCuratedStrayLines(t *testing.T) map[bestiary.Family]bestiary.Family {
+	t.Helper()
+	const path = "parse/data/series.json"
+	raw, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatalf("cannot read the curated strays table %s: %v\n"+
+			"  What it means: this test derives its expectation from that file and cannot run without it.\n"+
+			"  How to fix: run the test from the module root, or restore the file.", path, err)
+	}
+	var file struct {
+		Strays []curatedStrayRowJSON `json:"strays"`
+	}
+	if err := json.Unmarshal(raw, &file); err != nil {
+		t.Fatalf("cannot parse the curated strays table %s: %v\n"+
+			"  How to fix: correct the JSON; the production loader degrades to no strays on a malformed file, "+
+			"which would silently empty this test's expectation.", path, err)
+	}
+	out := make(map[bestiary.Family]bestiary.Family, len(file.Strays))
+	for _, row := range file.Strays {
+		if row.Family == "" || row.Series.Family == "" {
+			continue
+		}
+		out[bestiary.Family(strings.ToLower(row.Family))] = bestiary.Family(strings.ToLower(row.Series.Family))
+	}
+	return out
+}
+
 // TestCreatorGroups_CreatorDivergenceIsOnlyStrays pins the ONE way an entity can
 // appear under a creator its own Entity.Creator projection does not name.
 //
@@ -325,12 +370,54 @@ func TestCreatorGroups_DerivedFromCuratedSeed_NotHardCoded(t *testing.T) {
 // nothing of that re-homing — so a stray's own creator can be CreatorNone while
 // the line it was re-homed onto is attributed.
 //
-// That divergence is intended, but it must stay CONFINED to strays. If a
-// non-stray entity (one whose own family IS its series' family) ever landed under
-// a creator other than its own, the tree would be misattributing authorship — a
-// much more serious claim than a re-homing — and this test says so by name.
+// That divergence is intended, but it must stay CONFINED to strays, and to
+// EXACTLY the strays the curation actually re-homes across a creator boundary.
+// So the expectation is DERIVED from parse/data/series.json: a row whose own
+// family token maps to a different (or missing) creator than the line it is
+// re-homed onto MUST show up as a divergence, and nothing else may. The
+// derivation is the pin — no literal count or token is written down here, so a
+// curation change moves the expectation and the corpus together, while a change
+// in the GROUPING silently ceases to match and reddens.
+//
+// Two failures are called out by name rather than folded into the set diff,
+// because both are misattributed authorship — a much more serious claim than a
+// re-homing: an entity whose own family IS its series' family landing under a
+// foreign creator, and an entity whose family appears in no curated row at all.
 func TestCreatorGroups_CreatorDivergenceIsOnlyStrays(t *testing.T) {
-	var strays []string
+	entities := bestiary.Entities()
+	if len(entities) == 0 {
+		t.Skip("no registry entities")
+	}
+	rehomed := loadCuratedStrayLines(t)
+
+	present := make(map[bestiary.Family]bool, len(entities))
+	for _, e := range entities {
+		present[e.Ref.Family] = true
+	}
+
+	// EXPECTED, derived: a curated row diverges exactly when the creator of the
+	// line it re-homes onto differs from the creator of its own family token. A
+	// row for a family the corpus does not carry is correctly invisible here.
+	want := map[bestiary.Family]bool{}
+	for own, line := range rehomed {
+		if !present[own] {
+			continue
+		}
+		if own.Creator() != line.Creator() {
+			want[own] = true
+		}
+	}
+	// Non-vacuity: if the derivation ever yields nothing, the set equality below
+	// would pass against an empty tree walk and assert nothing at all.
+	if len(want) == 0 {
+		t.Fatalf("derived expectation is empty: no curated stray in %s re-homes a corpus family across a creator boundary\n"+
+			"  What it means: the set equality below would be vacuous.\n"+
+			"  How to fix: if the curation genuinely no longer crosses a creator boundary, this test has nothing left to pin "+
+			"and should be reconsidered rather than left green.", "parse/data/series.json")
+	}
+
+	got := map[bestiary.Family]bool{}
+	var divergences []string
 	for _, cg := range bestiary.CreatorGroups() {
 		for _, fg := range cg.Families {
 			for _, sg := range fg.Series {
@@ -349,15 +436,49 @@ func TestCreatorGroups_CreatorDivergenceIsOnlyStrays(t *testing.T) {
 							e.Ref.String(), e.Ref.Family, e.Creator, cg.Creator)
 						continue
 					}
-					strays = append(strays, fmt.Sprintf("%s (family %s -> series %s, own creator %q, shown under %q)",
+					if _, curated := rehomed[e.Ref.Family]; !curated {
+						t.Errorf("entity %q (own family %q, own creator %q) is grouped under creator %q "+
+							"but family %q appears in no row of parse/data/series.json: the tree is misattributing "+
+							"authorship through a re-homing nobody curated",
+							e.Ref.String(), e.Ref.Family, e.Creator, cg.Creator, e.Ref.Family)
+						continue
+					}
+					got[e.Ref.Family] = true
+					divergences = append(divergences, fmt.Sprintf("%s (family %s -> series %s, own creator %q, shown under %q)",
 						e.Ref.String(), e.Ref.Family, sg.Series.String(), e.Creator, cg.Creator))
 				}
 			}
 		}
 	}
-	sort.Strings(strays)
-	t.Logf("curated-stray creator divergences (unit: entities; axis: own family vs series family; configuration: static registry + series.json): %d\n  %s",
-		len(strays), strings.Join(strays, "\n  "))
+
+	// Set equality against the derivation, in both directions.
+	var unexpected, absent []string
+	for fam := range got {
+		if !want[fam] {
+			unexpected = append(unexpected, string(fam))
+		}
+	}
+	for fam := range want {
+		if !got[fam] {
+			absent = append(absent, string(fam))
+		}
+	}
+	sort.Strings(unexpected)
+	sort.Strings(absent)
+	if len(unexpected) > 0 {
+		t.Errorf("families shown under a foreign creator that the curation does not re-home across a creator boundary: %v\n"+
+			"  How to fix: either the grouping changed, or parse/data/series.json changed and the divergence is now expected.",
+			unexpected)
+	}
+	if len(absent) > 0 {
+		t.Errorf("curated cross-creator re-homings that produced NO divergence in the tree: %v\n"+
+			"  What it means: the tree is no longer grouping those entities by their re-homed line, so the curation is not being honoured.",
+			absent)
+	}
+
+	sort.Strings(divergences)
+	t.Logf("curated-stray creator divergences (unit: entities; axis: own family vs series family; configuration: static registry + series.json): %d entities over %d curated families\n  %s",
+		len(divergences), len(got), strings.Join(divergences, "\n  "))
 }
 
 // TestCreatorGroups_Ordering pins the two orderings a reader depends on: groups

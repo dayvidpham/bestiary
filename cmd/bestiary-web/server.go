@@ -687,7 +687,10 @@ func (s *Server) handleTree(w http.ResponseWriter, r *http.Request) {
 		name := string(cg.Creator)
 		attributed := cg.Creator != bestiary.CreatorNone
 		if !attributed {
-			name = "creator unattributed"
+			// The label reads under a text-transform:uppercase rule, where the
+			// noun-first "creator unattributed" scans backwards; the bare
+			// adjective is what a reader glancing at the collapsed group needs.
+			name = "unattributed"
 		}
 		nodes = append(nodes, creatorNode{
 			Name:        name,

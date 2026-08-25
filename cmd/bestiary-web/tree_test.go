@@ -87,11 +87,11 @@ func TestTree_FrontPage_WalksCreatorHierarchy(t *testing.T) {
 	if !strings.Contains(body, `<details class="creator-node" open>`) {
 		t.Error("no creator group is expanded on arrival: the page reads as a row of closed boxes")
 	}
-	if !strings.Contains(body, "creator unattributed") {
+	if !strings.Contains(body, ">unattributed<") {
 		t.Error("front page does not surface the unattributed remainder group")
 	}
 	openIdx := strings.Index(body, `<details class="creator-node" open>`)
-	remIdx := strings.Index(body, `creator unattributed`)
+	remIdx := strings.Index(body, ">unattributed<")
 	if openIdx >= 0 && remIdx >= 0 && remIdx < openIdx {
 		t.Error("the unattributed remainder renders before an attributed creator; it belongs last")
 	}
