@@ -274,11 +274,16 @@ func TestEntityRekey_CensusAccounted(t *testing.T) {
 	// 17 free-tier keys retire (a pure MERGE — 0 added, instance total conserved) as their
 	// instances re-home onto the surviving sibling. ling/flash-free@2.6 is carved out by an
 	// exact-ID pin and is NOT among them.
-	const wantEntities = 940
+	//
+	// 940 -> 939 with the qwen3-coder-next suppress-pin extended to the unprefixed spelling:
+	// qwen/coder@3#1m retires (1 key, 0 added, also a pure MERGE) because its '1m' is a
+	// 1M-context tier marker rather than a parameter size; the InferX instance rejoins
+	// qwen/coder@3.
+	const wantEntities = 939
 	if got := len(bestiary.Entities()); got != wantEntities {
-		t.Errorf("registry census = %d entities, want %d — the global free demotion retires 17 "+
-			"free-tier keys and adds none; update this literal in the same commit if the "+
-			"entity count changed intentionally", got, wantEntities)
+		t.Errorf("registry census = %d entities, want %d — this literal is the running total of "+
+			"every curated key retirement (see the arithmetic above it); update it in the same "+
+			"commit if the entity count changed intentionally", got, wantEntities)
 	}
 }
 

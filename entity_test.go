@@ -334,7 +334,7 @@ func TestEntityRef_NoMigrationDrift(t *testing.T) {
 	// etc.) into their dotted siblings (net −N sized catalog entities), while 1t routing
 	// adds a handful of #1t entities (ling#1t, ring#1t) — the merges dominate, net −13.
 	const (
-		wantSizedCatalog    = 319 // 323 -> 319: 2026-07-23 refresh, four sized rows left upstream
+		wantSizedCatalog    = 318 // 323 -> 319: 2026-07-23 refresh, four sized rows left upstream. 319 -> 318: the qwen3-coder-next suppress-pin, extended to the unprefixed spelling, drops the phantom '#1m' size segment, so qwen/coder@3#1m stops being a sized catalog entity and its instance rejoins the unsized qwen/coder@3
 		wantSizedStandalone = 4
 	)
 

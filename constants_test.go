@@ -83,7 +83,7 @@ func TestEntityConstants_Unique(t *testing.T) {
 	// command/a key (+1, "translate" now a peeled identity modifier) and the two phantom
 	// deepseek dash-glued entities deepseek@1 / deepseek@2 merge onto deepseek/v3.1 and
 	// deepseek/v3.2-exp (−2). Net −1.
-	const wantEntityCount = 940 // 957 -> 940: the global free demotion retires 17 keys (0 added); the demoted instances re-home onto their surviving siblings
+	const wantEntityCount = 939 // 957 -> 940: the global free demotion retires 17 keys (0 added); the demoted instances re-home onto their surviving siblings. 940 -> 939: the qwen3-coder-next-fp8-1m suppress-pin extended to the unprefixed spelling retires qwen/coder@3#1m (1 key, 0 added) — its '1m' was a 1M-context tier marker, not a parameter size, so the InferX instance rejoins qwen/coder@3
 	if len(keys) != wantEntityCount {
 		t.Errorf("EntityKeys() returned %d constants; expected exactly %d — "+
 			"re-run go generate ./... and update this census literal if the entity count changed intentionally",
