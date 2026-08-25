@@ -1,0 +1,263 @@
+{
+  "_comment": "Segment binding at the peasant seam — bestiary.Resolve(ref, WithInputFormat(InputFormatPeasant)), which is exactly what `bestiary show <ref>` passes. The corpus is driven HERE and not at a bare Resolve() on purpose: five of the six must-not-widen refs below are NOTFOUND at a bare Resolve() (auto-detect routes them to SchemeHuggingFace/SchemeRaw), so pinning them there would pin NOTFOUND->NOTFOUND and be vacuous. Each row pins its CANDIDATE SET, not merely its outcome class: `entities` is the sorted set of entity keys the candidate set spans (the identity-level candidate set, the granularity the acceptance criterion is written in), and `refs` is the sorted provider|id set, pinned for the must-not-widen rows where provider-level widening is the risk and deliberately left empty elsewhere. Roles: `repair` = a ref the fallback pass newly answers (was model-not-found before the segment-binding repair); `must-not-widen` = a ref that already resolved in the strict pass and must come back byte-identical, since a widened binding here is how a positional-parser repair silently breaks working lookups; `entity-view-guard` = a live entity key that must stay model-not-found at this seam, because `show` only reaches its aggregate entity view when model resolution misses — letting the fallback pass claim these keys is how a resolver-only sweep can hide a large CLI regression; `deferred-witness` = a documented slot, see its own mutation note.",
+  "cases": [
+    {
+      "name": "ling-2.6-bare-family-version",
+      "input": { "ref": "ling/2.6", "role": "repair" },
+      "expected": { "outcome": "resolved", "entities": "ling@2.6#1t", "refs": "" },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "the amended unique-resolution arm of the segment-binding criterion: `ling/2.6` resolves uniquely to `ling@2.6#1t`"
+      },
+      "mutation": {
+        "description": "two segments, no provider prefix: the trailing version token lands in the VARIANT slot under positional binding and can never match a variant-empty entity, so the ref was unresolvable before the repair"
+      }
+    },
+    {
+      "name": "ling-2.6-provider-qualified",
+      "input": { "ref": "ant/ling/2.6", "role": "repair" },
+      "expected": { "outcome": "resolved", "entities": "ling@2.6#1t", "refs": "" },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "the same criterion's provider-qualified spelling: `ant/ling/2.6` resolves uniquely to `ling@2.6#1t`"
+      },
+      "mutation": {
+        "description": "the provider prefix is consumed by the pre-existing three-segment strip arm, leaving the same two-segment residue as the bare spelling — so both spellings must land on the same single identity, and the variant-carrying siblings at that same version must NOT be pulled in"
+      }
+    },
+    {
+      "name": "gpt-5.1-provider-qualified-at-suffix",
+      "input": { "ref": "openai/gpt@5.1", "role": "repair" },
+      "expected": {
+        "outcome": "ambiguous",
+        "entities": "gpt@5.1,gpt@5.1{chat}",
+        "refs": "openai|gpt-5.1,openai|gpt-5.1-chat-latest"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "the criterion's scoped-ambiguity arm: `openai/gpt@5.1` returns ErrAmbiguous over exactly its openai-served candidates"
+      },
+      "mutation": {
+        "description": "the two-segment provider strip is guarded on the candidate's OWN Provider field, so the ambiguity is scoped to the named provider instead of every host of the family; an is-a-known-provider test would not do, since mistral/minimax/meta/google/openai are all known providers AND family-shaped tokens"
+      }
+    },
+    {
+      "name": "gpt-5.1-bare-slash-version",
+      "input": { "ref": "gpt/5.1", "role": "repair" },
+      "expected": { "outcome": "ambiguous", "entities": "gpt@5.1,gpt@5.1{chat}", "refs": "" },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "the criterion's `gpt/5.1` arm: an improvement from not-found to a correctly-scoped ambiguity over its groups, NOT a unique resolution"
+      },
+      "mutation": {
+        "description": "no provider segment, so no strip fires and the ambiguity spans every host of the family — the row exists to pin that the repair does not silently narrow an honestly-ambiguous ref to one provider"
+      }
+    },
+    {
+      "name": "gpt-5.1-provider-qualified-slash-version",
+      "input": { "ref": "openai/gpt/5.1", "role": "repair" },
+      "expected": { "outcome": "ambiguous", "entities": "gpt@5.1,gpt@5.1{chat}", "refs": "" },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "the criterion's `openai/gpt/5.1` arm, over its groups"
+      },
+      "mutation": {
+        "description": "the three-segment strip arm carries no provider-equality guard (unchanged by this repair), so this spelling stays as wide as the bare one — pinned so a later tightening of that arm cannot land unnoticed"
+      }
+    },
+    {
+      "name": "claude-haiku-4.5-date-slot-carries-a-version",
+      "input": { "ref": "302ai/claude/haiku@4.5", "role": "repair" },
+      "expected": { "outcome": "ambiguous", "entities": "claude/haiku@4.5", "refs": "" },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "the worked example behind the if/else form of the variant-empty version binding: an abort form loses thousands of resolvable refs of this shape"
+      },
+      "mutation": {
+        "description": "an explicitly named variant plus an @-suffix that is a VERSION rather than a date: the variant slot is already pinned, so the date-to-version rebind applies unconditionally here — a rebind rule that refused variant-carrying candidates outright would drop this ref"
+      }
+    },
+    {
+      "name": "claude-4.6-no-variant-empty-artifact-at-this-version",
+      "input": { "ref": "anthropic/claude/4.6", "role": "repair" },
+      "expected": { "outcome": "ambiguous", "entities": "claude/opus@4.6,claude/sonnet@4.6", "refs": "" },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "the structural twin, verifiable today, of the deferred composition witness: a family+version whose artifacts are ALL variant-carrying resolves to a correctly-scoped ambiguity over those tier keys, not to not-found"
+      },
+      "mutation": {
+        "description": "the catalog holds no variant-empty `claude@4.6`, so the base-first preference finds nothing and the last-resort pass lets the rebound version segment reach the variant-carrying tiers; the ling rows above are the control that this pass never fires when a variant-empty artifact DOES exist"
+      }
+    },
+    {
+      "name": "must-not-widen-codestral",
+      "input": { "ref": "mistral/codestral", "role": "must-not-widen" },
+      "expected": { "outcome": "resolved", "entities": "codestral", "refs": "vercel|mistral/codestral" },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "bug",
+        "ref": "known falsifier: a catalog id that IS literally `<vendor>/<family>`, the exact shape the two-segment provider strip could mis-read"
+      },
+      "mutation": {
+        "description": "resolves in the strict pass as an exact model id, so no repair rule may run at all — a rule that fired per-model rather than on a globally empty match set would widen this to every codestral host"
+      }
+    },
+    {
+      "name": "must-not-widen-perplexity-sonar",
+      "input": { "ref": "perplexity/sonar", "role": "must-not-widen" },
+      "expected": {
+        "outcome": "resolved",
+        "entities": "sonar",
+        "refs": "kilo|perplexity/sonar,openrouter|perplexity/sonar,perplexity-agent|perplexity/sonar,vercel|perplexity/sonar"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "bug",
+        "ref": "known falsifier: a vendor-prefixed catalog id served by four providers, where a widened binding would add rows from the bare-`sonar` family"
+      },
+      "mutation": {
+        "description": "the multi-provider case of the same shape: the pinned ref set is the whole point, since a widening here changes WHICH rows come back without changing the entity key"
+      }
+    },
+    {
+      "name": "must-not-widen-bge-small",
+      "input": { "ref": "bge/small", "role": "must-not-widen" },
+      "expected": {
+        "outcome": "resolved",
+        "entities": "bge/small",
+        "refs": "cloudflare-ai-gateway|workers-ai/@cf/baai/bge-small-en-v1.5"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "bug",
+        "ref": "known falsifier: a family/variant ref that is ALSO a live entity key, so a widening would cost the key its `show` entity view as well as its model view"
+      },
+      "mutation": {
+        "description": "family plus a real variant, no version anywhere: the variant-empty rebind must not fire because the strict pass already answered"
+      }
+    },
+    {
+      "name": "must-not-widen-mercury-coder",
+      "input": { "ref": "mercury/coder", "role": "must-not-widen" },
+      "expected": {
+        "outcome": "resolved",
+        "entities": "mercury/coder",
+        "refs": "vercel|inception/mercury-coder-small"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "bug",
+        "ref": "known falsifier: a family/variant ref whose single row carries a vendor-prefixed id unrelated to the ref's own segments"
+      },
+      "mutation": {
+        "description": "the ref's segments and the resolved id share no prefix, so a binding change shows up as a different id rather than a different provider"
+      }
+    },
+    {
+      "name": "must-not-widen-text-embedding-3-small",
+      "input": { "ref": "text-embedding-3/small", "role": "must-not-widen" },
+      "expected": {
+        "outcome": "resolved",
+        "entities": "text-embedding-3/small@3",
+        "refs": "sap-ai-core|text-embedding-3-small"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "bug",
+        "ref": "known falsifier: a family whose own name ENDS in a version-shaped token, the hardest case for any rule that re-reads a segment as a version"
+      },
+      "mutation": {
+        "description": "the digit `3` sits inside the family segment rather than in a slot of its own — a rebind rule that scanned for version-shaped tokens instead of using slot position would mangle this ref"
+      }
+    },
+    {
+      "name": "must-not-widen-xpersona-frieren-coder",
+      "input": { "ref": "xpersona-frieren/coder", "role": "must-not-widen" },
+      "expected": {
+        "outcome": "resolved",
+        "entities": "xpersona-frieren/coder",
+        "refs": "xpersona|xpersona-frieren-coder"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "bug",
+        "ref": "known falsifier: a hyphenated family whose LEADING token is also a live provider name (`xpersona`), the trap the two-segment provider strip is guarded against"
+      },
+      "mutation": {
+        "description": "the family segment begins with a provider name but is not equal to one, so the provider-equality guard must leave it alone; a prefix-based strip would delete `xpersona-` and lose the ref"
+      }
+    },
+    {
+      "name": "entity-view-guard-llama-3.3-70b",
+      "input": { "ref": "llama@3.3#70b", "role": "entity-view-guard" },
+      "expected": { "outcome": "not-found", "entities": "", "refs": "" },
+      "classification": "must-fail",
+      "provenance": {
+        "source": "requirement",
+        "ref": "a pinned member of the entity-view set the criterion protects: `show llama@3.3#70b` must keep rendering its aggregate entity view"
+      },
+      "mutation": {
+        "description": "a bare, sized entity key with an @-suffix that is a version, not a date: this is exactly the shape an ungated date-to-version rebind swallows into model resolution, which silently costs the key its entity view — the rebind is gated on a provider segment having been stripped, and this key has none"
+      }
+    },
+    {
+      "name": "entity-view-guard-glm-4.6",
+      "input": { "ref": "glm@4.6", "role": "entity-view-guard" },
+      "expected": { "outcome": "not-found", "entities": "", "refs": "" },
+      "classification": "must-fail",
+      "provenance": {
+        "source": "requirement",
+        "ref": "a pinned member of the protected entity-view set"
+      },
+      "mutation": {
+        "description": "the unsized, variant-empty spelling of the same trap: family plus an @-version and nothing else"
+      }
+    },
+    {
+      "name": "entity-view-guard-claude-opus-4.0",
+      "input": { "ref": "claude/opus@4.0", "role": "entity-view-guard" },
+      "expected": { "outcome": "not-found", "entities": "", "refs": "" },
+      "classification": "must-fail",
+      "provenance": {
+        "source": "requirement",
+        "ref": "a pinned member of the protected entity-view set"
+      },
+      "mutation": {
+        "description": "the variant-carrying spelling: two segments plus an @-version, so both the variant-empty rebind and the date-to-version rebind must decline it"
+      }
+    },
+    {
+      "name": "entity-view-guard-doubao-1.6-vision",
+      "input": { "ref": "doubao@1.6{vision}", "role": "entity-view-guard" },
+      "expected": { "outcome": "not-found", "entities": "", "refs": "" },
+      "classification": "must-fail",
+      "provenance": {
+        "source": "requirement",
+        "ref": "a pinned member of the protected entity-view set"
+      },
+      "mutation": {
+        "description": "the identity-modifier spelling: the `{...}` segment is stripped before slot binding, so this key exercises the same trap with a modifier attached"
+      }
+    },
+    {
+      "name": "deferred-composition-witness-gpt-5.6",
+      "input": { "ref": "openai/gpt/5.6", "role": "deferred-witness" },
+      "expected": { "outcome": "not-found", "entities": "", "refs": "" },
+      "classification": "must-fail",
+      "provenance": {
+        "source": "requirement",
+        "ref": "the composition witness of the segment-binding criterion, held open here: it passes only once the gpt tier re-key has ALSO landed, and this row records the state before that lever"
+      },
+      "mutation": {
+        "description": "DOCUMENTED SLOT — do not read this row as a claim that a base `gpt@5.6` artifact exists; it is measured that none does and that no upstream row would produce one. Until the tier re-key lands, the 5.6 tiers are not variants of family `gpt`, so this ref names nothing. The slice that re-keys them REPLACES this row with a must-pass ambiguity over the three resulting tier keys; the `claude/4.6` row above is its structural twin and already proves the binding half of the composition."
+      }
+    }
+  ]
+}
