@@ -31,7 +31,7 @@ var scaleTokenDef = regexp.MustCompile(`--fs-([a-z0-9-]+)\s*:\s*([^;]+);`)
 // scaleTokenRef matches a type-scale token REFERENCE (`var(--text-foo)`).
 var scaleTokenRef = regexp.MustCompile(`var\(\s*(--fs-[a-z0-9-]+)\s*\)`)
 
-// TestTypeScale_NoHardCodedFontSize is the AC-16 grep guard: EVERY font-size declaration
+// TestTypeScale_NoHardCodedFontSize is the grep guard: EVERY font-size declaration
 // in the shipped stylesheet must resolve through a type-scale token, so the page has one
 // authority for text size and a reader who changes their browser's base size scales the
 // whole document with it.

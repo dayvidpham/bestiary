@@ -271,7 +271,7 @@ func TestHoist_PerShapeRendering(t *testing.T) {
 	}
 }
 
-// TestFamilies_SeriesAnchorParity is the AC-34 anchor contract: /families emits the SAME
+// TestFamilies_SeriesAnchorParity is the anchor contract: /families emits the SAME
 // anchor for every series that the retired explorer did, because seriesAnchor is unchanged.
 // This is what lets the detail-page links be a pure path retarget rather than a re-linking.
 func TestFamilies_SeriesAnchorParity(t *testing.T) {
