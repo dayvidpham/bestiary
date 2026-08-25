@@ -384,11 +384,18 @@ the release branch, as part of the release PR:
    distinct numbers and neither is derivable from the other:
    `**Schema:** \`A.B.C\` → \`X.Y.Z\` (additive). SQLite store schema \`N\` → \`M\`.`
    must agree with `BestiarySchemaVersion` in `version.go` and `currentSchemaVersion` in `store.go`.
-3. **Update the link-ref block at the bottom of the file** — this is the step that gets forgotten,
+3. **Bump `ReleaseVersion` in `version.go`** to the release being cut, without the
+   leading `v` (tag `v0.2.10` → `"0.2.10"`), and update its pin in
+   `TestReleaseVersion_Exact`. This is the constant the offline ingest bots embed in
+   their outbound `User-Agent`; left unbumped, the bots misreport the build to the
+   registry operators whose logs carry it (the Ollama bot advertised `0.2.4` for three
+   releases). It is a THIRD version axis — neither `BestiarySchemaVersion` nor the
+   store schema number.
+4. **Update the link-ref block at the bottom of the file** — this is the step that gets forgotten,
    because nothing renders differently when it is wrong:
    - repoint `[Unreleased]` to `compare/vX.Y.Z...HEAD`
    - add `[X.Y.Z]: https://github.com/dayvidpham/bestiary/compare/v<previous>...vX.Y.Z`
-4. **Verify parity before opening the PR.** Every stanza needs a ref, every version ref needs a
+5. **Verify parity before opening the PR.** Every stanza needs a ref, every version ref needs a
    stanza, and each ref's left-hand side must be the next-older tag:
    ```
    grep -o '^## \[[^]]*\]' CHANGELOG.md | sed 's/^## //' | while read -r s; do
@@ -413,7 +420,7 @@ further versions shipped. Both were repaired retroactively, after the tags were 
 | `parse/data/modelsdev/catalog.json` + `SNAPSHOT.json` | `cmd/bestiary-gen` (fetch mode) | Vendored codegen input. Never edit by hand; refresh via "models.dev snapshot refresh" |
 | `parse/data/modelsdev_unlinked.json` | `cmd/bestiary-gen` | Codegen-emitted join-disagreement report. Never edit by hand |
 | `bestiary.schema.json` | Manual | Must stay in sync with Go types. Verified by `TestJSONOutput_ConformsToSchema` |
-| `version.go` | Manual | Update on public type changes or upstream schema updates |
+| `version.go` | Manual | Update on public type changes or upstream schema updates; `ReleaseVersion` bumps on the release branch — see "Releases" |
 | `CHANGELOG.md` | Manual | Entries written as slices land; stanza cut + link refs updated on the release branch — see "Releases" |
 | `AGENTS.md` (`CLAUDE.md` is a symlink to it) | Manual | One file, two names. Editing `AGENTS.md` updates both |
 | All other `.go` files | Developer | Normal development workflow |

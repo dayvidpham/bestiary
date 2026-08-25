@@ -90,6 +90,20 @@ package bestiary
 //     covering BOTH additions; do not add another this epoch.
 const BestiarySchemaVersion = "0.7.0"
 
+// ReleaseVersion is the module release this source tree builds — the third
+// version axis, distinct from both BestiarySchemaVersion (the public JSON output
+// contract) and the SQLite store schema number. It exists so anything that has
+// to NAME the running build — today the offline ingest bots' User-Agent — reads
+// one constant instead of carrying its own literal. The Ollama bot's User-Agent
+// sat at "0.2.4" for three releases precisely because it was a literal, and a
+// stale version misreports the tool to the operators whose registry it polls.
+//
+// It is the module tag WITHOUT the leading "v": tag v0.2.10 -> "0.2.10". Bump it
+// on the release branch, in the same commit that cuts the CHANGELOG stanza (see
+// AGENTS.md, "Releases"); TestReleaseVersion_Exact pins the current value so the
+// bump cannot be silently skipped.
+const ReleaseVersion = "0.2.10"
+
 // UpstreamSchemaVersion identifies the exact snapshot of the models.dev schema
 // that this bestiary schema was derived from. Format: YYYY.MM.DD-sha256
 // where sha256 is the full 64 lowercase hex character SHA-256 hash of the

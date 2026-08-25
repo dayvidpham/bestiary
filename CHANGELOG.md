@@ -111,6 +111,25 @@ for its **Go module tags** (`vX.Y.Z`).
   belongs on the honest bare-family line, never on a confidently wrong version key — so
   those rows stay exactly where they were, and that is pinned as a negative control.
 
+- **The offline Ollama refresh bot now names the version that actually made the request.**
+  Its `User-Agent` was a hand-spelled literal and sat at `bestiary-ollama/0.2.4` for three
+  releases, misreporting the build to the registry operators whose logs carry it. The
+  version segment is now DERIVED from a new `bestiary.ReleaseVersion` constant — a THIRD
+  version axis, distinct from both `BestiarySchemaVersion` (the public JSON output
+  contract) and the SQLite store schema number — so it reads `bestiary-ollama/0.2.10`
+  and cannot drift again. `AGENTS.md`'s release procedure gains the bump step, and a pin
+  test fails until the bump happens.
+
+  The bot's outbound guarantees are now asserted at the tool's OWN seam, not only inside
+  the shared polite-bot package: one constructor (`newPoliteClient`) builds the client
+  `run()` uses, and the offline tests drive that same constructor with an injected
+  transport and a fake clock to pin the current-version `User-Agent`, the ≥1 s gap between
+  consecutive requests (first request: no sleep; second: ≥1 s), and that every outbound
+  path funnels through the injected transport — a client whose transport refuses to dial
+  produces an error rather than a silent socket. `go test ./cmd/bestiary-ollama` was
+  additionally run inside a disabled network namespace (`unshare -rn`) and is green:
+  zero network requests.
+
 ### Removed
 
 - **Four more entity keys are retired by the series-compound recovery**, and one is

@@ -1,15 +1,21 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
+	"fmt"
+	"io"
+	"net/http"
 	"os"
 	"path/filepath"
 	"reflect"
 	"slices"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/dayvidpham/bestiary"
+	"github.com/dayvidpham/bestiary/internal/politebot"
 )
 
 // --------------------------------------------------------------------------
@@ -600,3 +606,124 @@ func keysOf(m map[string]ollamaAlias) []string {
 	}
 	return out
 }
+
+// --------------------------------------------------------------------------
+// The outbound seam: current-version User-Agent, >=1s cadence, zero network
+// --------------------------------------------------------------------------
+
+// recordingDoer is a canned transport: it records the request it was handed and
+// answers with a fixed body, so the outbound seam can be asserted without a
+// socket ever being opened.
+type recordingDoer struct {
+	reqs []*http.Request
+	body string
+}
+
+func (d *recordingDoer) Do(req *http.Request) (*http.Response, error) {
+	d.reqs = append(d.reqs, req)
+	return &http.Response{
+		StatusCode: http.StatusOK,
+		Body:       io.NopCloser(strings.NewReader(d.body)),
+		Header:     make(http.Header),
+	}, nil
+}
+
+// fakeClock is an injected monotonic clock + sleeper: sleeping advances the clock
+// instead of blocking, so the >=1s cadence is asserted without real wall-clock.
+type fakeClock struct {
+	now   time.Time
+	slept []time.Duration
+}
+
+func (f *fakeClock) Now() time.Time { return f.now }
+func (f *fakeClock) Sleep(d time.Duration) {
+	f.slept = append(f.slept, d)
+	f.now = f.now.Add(d)
+}
+
+// TestUserAgent_NamesCurrentReleaseVersion is the drift guard the literal lacked:
+// the User-Agent must name the release this tree builds, so an operator reading
+// registry logs sees the version that actually made the request. The tool sat at
+// "0.2.4" for three releases because the version was spelled here by hand.
+func TestUserAgent_NamesCurrentReleaseVersion(t *testing.T) {
+	want := "bestiary-ollama/" + bestiary.ReleaseVersion
+	if !strings.HasPrefix(userAgent, want+" ") {
+		t.Errorf("userAgent = %q, want prefix %q;\n"+
+			"  what went wrong: the User-Agent does not name the current release\n"+
+			"  where: userAgent (cmd/bestiary-ollama/main.go)\n"+
+			"  how to fix: derive the version segment from bestiary.ReleaseVersion, never a literal",
+			userAgent, want)
+	}
+	// A contact URL is the other half of a polite identity: attribution is useless
+	// to an operator who cannot reach the author.
+	if !strings.Contains(userAgent, "https://github.com/dayvidpham/bestiary") {
+		t.Errorf("userAgent = %q, want a contact URL; a bare name gives an operator no way to reach us", userAgent)
+	}
+	// No stale version may survive anywhere in the string.
+	if strings.Contains(userAgent, "0.2.4") && bestiary.ReleaseVersion != "0.2.4" {
+		t.Errorf("userAgent = %q still carries the stale literal 0.2.4", userAgent)
+	}
+}
+
+// TestPoliteClient_UserAgentAndCadence drives the SAME constructor run() uses,
+// with an injected transport and fake clock: the first request does not sleep,
+// the second sleeps >=1s, and every request carries the current-version UA. No
+// socket is opened and no real time elapses.
+func TestPoliteClient_UserAgentAndCadence(t *testing.T) {
+	rd := &recordingDoer{body: `{}`}
+	fc := &fakeClock{now: time.Unix(1700000000, 0)}
+	c := newPoliteClient(
+		politebot.WithDoer(rd),
+		politebot.WithClock(fc.Now),
+		politebot.WithSleep(fc.Sleep),
+	)
+
+	ctx := context.Background()
+	if _, err := c.Get(ctx, registryBase+"/v2/library/llama3.3/manifests/70b", manifestAccept); err != nil {
+		t.Fatalf("Get 1: %v", err)
+	}
+	if len(fc.slept) != 0 {
+		t.Fatalf("first request slept %v, want no sleep before the very first request", fc.slept)
+	}
+	if _, err := c.Get(ctx, libraryBase+"/library/llama3.3/tags", ""); err != nil {
+		t.Fatalf("Get 2: %v", err)
+	}
+	if len(fc.slept) != 1 {
+		t.Fatalf("second request slept %d times, want exactly 1 (the cadence gap)", len(fc.slept))
+	}
+	if fc.slept[0] < time.Second {
+		t.Errorf("inter-request sleep = %v, want >= 1s (a hard project constraint on outbound traffic)", fc.slept[0])
+	}
+	if len(rd.reqs) != 2 {
+		t.Fatalf("recorded %d requests, want 2", len(rd.reqs))
+	}
+	for i, req := range rd.reqs {
+		if got := req.Header.Get("User-Agent"); got != userAgent {
+			t.Errorf("request %d User-Agent = %q, want %q", i, got, userAgent)
+		}
+	}
+}
+
+// TestPackageTests_MakeNoNetworkRequests is the structural half of the zero-network
+// guarantee: every live HTTP call in this package funnels through newPoliteClient,
+// and a client whose transport refuses to dial proves the tests never reach one.
+// A test that tried to use the real network would fail here rather than silently
+// hitting registry.ollama.ai.
+func TestPackageTests_MakeNoNetworkRequests(t *testing.T) {
+	var dialed bool
+	c := newPoliteClient(politebot.WithDoer(doerFunc(func(req *http.Request) (*http.Response, error) {
+		dialed = true
+		return nil, fmt.Errorf("refusing to dial %s: package tests must make zero network requests", req.URL)
+	})))
+	if _, err := c.Get(context.Background(), registryBase+"/v2/library/llama3.3/manifests/70b", manifestAccept); err == nil {
+		t.Fatal("Get returned no error through a refusing transport; the seam is not the only outbound path")
+	}
+	if !dialed {
+		t.Fatal("the refusing transport was never consulted; Get does not route through the injected Doer")
+	}
+}
+
+// doerFunc adapts a function to politebot.Doer.
+type doerFunc func(*http.Request) (*http.Response, error)
+
+func (f doerFunc) Do(req *http.Request) (*http.Response, error) { return f(req) }

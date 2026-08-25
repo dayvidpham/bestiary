@@ -62,7 +62,13 @@ const (
 	// politeness violation. It is passed into politebot.New; the polite seam sets
 	// it on every request. The ≥1s inter-request cadence is owned by politebot
 	// (politebot.DefaultMinRequestInterval).
-	userAgent = "bestiary-ollama/0.2.4 (+https://github.com/dayvidpham/bestiary; polite ingest bot)"
+	//
+	// The version segment is DERIVED from bestiary.ReleaseVersion, never spelled
+	// here: as a literal it sat at "0.2.4" for three releases and misreported the
+	// build to the operators reading their own server logs. TestUserAgent_* pins
+	// both the shape and the currency of the derived string.
+	userAgent = "bestiary-ollama/" + bestiary.ReleaseVersion +
+		" (+https://github.com/dayvidpham/bestiary; polite ingest bot)"
 
 	// registryBase is the anonymous Docker-Distribution-v2 registry host.
 	registryBase = "https://registry.ollama.ai"
@@ -890,6 +896,16 @@ func fetchTag(ctx context.Context, c *politebot.Client, lib, tag string) (fetche
 // run / main
 // --------------------------------------------------------------------------
 
+// newPoliteClient builds the ONE outbound seam this tool uses: a polite client
+// carrying the derived, current-version User-Agent and politebot's default
+// ≥1s inter-request cadence. run() calls it with no options (a real transport,
+// the real clock); the offline tests call it with an injected transport and a
+// fake clock, so the cadence and the User-Agent are asserted on the SAME
+// constructor production runs — no test-only client, no second code path.
+func newPoliteClient(opts ...politebot.Option) *politebot.Client {
+	return politebot.New(userAgent, opts...)
+}
+
 func run(args []string) error {
 	dataDir := "parse/data"
 	snapshot := time.Now().UTC().Format(time.RFC3339)
@@ -915,7 +931,7 @@ func run(args []string) error {
 	}
 
 	ctx := context.Background()
-	c := politebot.New(userAgent)
+	c := newPoliteClient()
 
 	aliases, err := loadAliasesFromDir(dataDir)
 	if err != nil {
