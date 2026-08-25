@@ -319,7 +319,7 @@ func TestEntityRekey_CensusAccounted(t *testing.T) {
 	// Two of the fourteen also change family (mistral/mini#3b and mistral/small#24b
 	// become voxtral, the line Mistral actually published them under) and one,
 	// gpt/pro, SPLITS across gpt/pro@5.4 and gpt/pro@5.5.
-	const wantEntities = 933
+	const wantEntities = 930
 	if got := len(bestiary.Entities()); got != wantEntities {
 		t.Errorf("registry census = %d entities, want %d — this literal is the running total of "+
 			"every curated key retirement (see the arithmetic above it); update it in the same "+

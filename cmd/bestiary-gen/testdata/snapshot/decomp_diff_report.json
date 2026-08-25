@@ -1,10 +1,10 @@
 {
   "total_records": 5765,
-  "changed_count": 327,
+  "changed_count": 334,
   "cat_a_divergence_fix_count": 0,
-  "cat_b_improvement_count": 246,
+  "cat_b_improvement_count": 247,
   "cat_c_unexpected_regression_count": 0,
-  "justified_exception_count": 81,
+  "justified_exception_count": 87,
   "id_tuple4_incl_modifier_divergence_frozen_before": 17,
   "id_tuple4_incl_modifier_divergence_current_after": 17,
   "divergence_metric": "4-tuple INCL Modifier (Family,Variant,Version,Modifier); before=frozen baseline, after=current snapshot. DISTINCT from the authoritative cross-provider divergenceExact gate (3-tuple, EXCL Modifier, current snapshot, =4).",
@@ -276,6 +276,15 @@
       "raw_family": "claude-sonnet",
       "before": "(family=\"claude\",variant=\"sonnet\",version=\"\",modifier=\"\")",
       "after": "(family=\"claude\",variant=\"sonnet\",version=\"5\",modifier=\"free\")",
+      "category": "b:improvement",
+      "reason": "strict enrichment — only previously-empty field(s) populated"
+    },
+    {
+      "provider": "nano-gpt",
+      "id": "baseten/Kimi-K2-Instruct-FP4",
+      "raw_family": "kimi-k2",
+      "before": "(family=\"kimi\",variant=\"\",version=\"\",modifier=\"instruct\")",
+      "after": "(family=\"kimi\",variant=\"k\",version=\"2\",modifier=\"instruct\")",
       "category": "b:improvement",
       "reason": "strict enrichment — only previously-empty field(s) populated"
     },
@@ -2359,6 +2368,15 @@
       "reason": "JUSTIFIED: the cogito size-doubling repair splits a fused variant into its parts. BEFORE, the whole id remainder \"v2.1-671b\" sat in the variant slot with the version EMPTY, so the 671b parameter size was stated twice — once as an identity token inside the variant and once again as the mechanically recovered #size segment (key cogito/v2.1-671b#671b). AFTER, the glued release letter is the variant \"v\" and the dotted point release is the version \"2.1\", the glm-v shape (canonicalizeGlmV) this line has always matched, so the key renders cogito/v@2.1#671b and carries the size exactly once. The classifier flags a populated variant changing value, but the transition POPULATES the empty version field and drops no fact: every token of the before-variant is accounted for after (v -\u003e variant, 2.1 -\u003e version, 671b -\u003e the #size segment it already occupied), and the spelling survives verbatim in the provider ids and therefore in this model's nomina. Evidence: Deep Cogito publishes the release as Cogito v2.1 671B (deepcogito.com), and both serving rows spell the id identically. 2 record(s) on kilo (raw=\"\") and openrouter (raw=\"cogito\") carry this exact transition."
     },
     {
+      "provider": "kimi-for-coding",
+      "id": "k3",
+      "raw_family": "kimi-k3",
+      "before": "(family=\"kimi-k3\",variant=\"\",version=\"\",modifier=\"\")",
+      "after": "(family=\"kimi\",variant=\"k\",version=\"3\",modifier=\"\")",
+      "category": "justified-exception",
+      "reason": "JUSTIFIED: kimi-for-coding publishes this model under the bare id \"k3\" and tags it with the raw family \"kimi-k3\", so the series token lived ONLY in the family field and nothing in the id could confirm it. BEFORE, the record stranded on a one-instance compound-family line \"kimi-k3\" with no variant and no version, invisible to the kimi series entirely. AFTER, the family recovers to kimi, which makes the id visible to the letter-prefix seam, and the seam reads k3 out of it: variant \"k\", version \"3\". Two empty fields become populated, nothing is emptied, and the record joins kimi/k@3 alongside moonshotai's own Kimi K3 rows instead of sitting on a line of its own. Evidence: the upstream row names the model \"Kimi K3\" with release_date 2026-07-16, the same release moonshotai/kimi-k3 carries. 1 record(s) on kimi-for-coding carries this exact transition."
+    },
+    {
       "provider": "qiniu-ai",
       "id": "kling-v2-6",
       "raw_family": "",
@@ -2726,6 +2744,51 @@
       "after": "(family=\"minimax\",variant=\"m\",version=\"3\",modifier=\"free\")",
       "category": "justified-exception",
       "reason": "JUSTIFIED: the free demotion un-fuses the upstream raw family \"minimax-m3\": before, \"m3\" was glued into the family token and the pricing tier occupied the variant slot, so the record stranded on a phantom minimax-m3 family with no version; after, it decomposes to the real minimax family on the m series at version 3, with free carried as an attribute modifier. Family, variant and version all become MORE correct and the record joins minimax/m@3 instead of a one-instance junk line."
+    },
+    {
+      "provider": "alibaba-cn",
+      "id": "moonshot-kimi-k2-instruct",
+      "raw_family": "kimi-k2",
+      "before": "(family=\"kimi-k2\",variant=\"\",version=\"\",modifier=\"instruct\")",
+      "after": "(family=\"kimi\",variant=\"k\",version=\"2\",modifier=\"instruct\")",
+      "category": "justified-exception",
+      "reason": "JUSTIFIED: alibaba-cn tags this row with the raw family \"kimi-k2\" and prefixes the id with the LAB name \"moonshot\", which is not a registered family, so the id-vs-raw reconcile could not confirm the reduction and kept the compound. BEFORE, the record sat on kimi-k2{instruct} with no version. AFTER, the family recovers to kimi and the seam reads k2 out of the id: variant \"k\", version \"2\", with the instruct modifier carried across byte-identical. The record joins the pre-existing kimi/k@2{instruct} key rather than duplicating it under a compound-family spelling. 1 record(s) on alibaba-cn carries this exact transition."
+    },
+    {
+      "provider": "umans-ai",
+      "id": "umans-coder",
+      "raw_family": "kimi-k2",
+      "before": "(family=\"kimi-k2\",variant=\"\",version=\"\",modifier=\"\")",
+      "after": "(family=\"kimi\",variant=\"coder\",version=\"\",modifier=\"\")",
+      "category": "justified-exception",
+      "reason": "JUSTIFIED: umans serves a Kimi-derived coding model under an id that names no series token at all, tagged with the raw family \"kimi-k2\". BEFORE, the record sat on the compound-family line kimi-k2. AFTER, the family recovers to kimi; the letter-prefix seam finds no series token in the id and correctly DECLINES, so the residual token \"coder\" is promoted to the variant and the record lands on kimi/coder — the one key this lever adds. The version stays empty, which is the honest state: the id states no version and the recovery deliberately refuses to assert the coarse k2 the raw family spells. The variant slot goes from empty to populated and nothing is emptied. 2 record(s) on umans-ai, umans-ai-coding-plan carry this exact transition."
+    },
+    {
+      "provider": "umans-ai-coding-plan",
+      "id": "umans-coder",
+      "raw_family": "kimi-k2",
+      "before": "(family=\"kimi-k2\",variant=\"\",version=\"\",modifier=\"\")",
+      "after": "(family=\"kimi\",variant=\"coder\",version=\"\",modifier=\"\")",
+      "category": "justified-exception",
+      "reason": "JUSTIFIED: umans serves a Kimi-derived coding model under an id that names no series token at all, tagged with the raw family \"kimi-k2\". BEFORE, the record sat on the compound-family line kimi-k2. AFTER, the family recovers to kimi; the letter-prefix seam finds no series token in the id and correctly DECLINES, so the residual token \"coder\" is promoted to the variant and the record lands on kimi/coder — the one key this lever adds. The version stays empty, which is the honest state: the id states no version and the recovery deliberately refuses to assert the coarse k2 the raw family spells. The variant slot goes from empty to populated and nothing is emptied. 2 record(s) on umans-ai, umans-ai-coding-plan carry this exact transition."
+    },
+    {
+      "provider": "umans-ai",
+      "id": "umans-kimi-k2.7",
+      "raw_family": "kimi-k2",
+      "before": "(family=\"kimi-k2\",variant=\"\",version=\"\",modifier=\"\")",
+      "after": "(family=\"kimi\",variant=\"k\",version=\"2.7\",modifier=\"\")",
+      "category": "justified-exception",
+      "reason": "JUSTIFIED: umans tags its Kimi K2.7 Code rows with the coarser raw family \"kimi-k2\" and prefixes the id with its own vendor name. BEFORE, the compound family stranded the record on kimi-k2 with no version. AFTER, the family recovers to kimi and the seam reads the DOTTED 2.7 out of the id — not the coarser 2 the raw family token spells — so the record joins the pre-existing kimi/k@2.7 key. This is the row that shows the recovery is family-only by design: had it seeded the version from the consumed family token it would have asserted 2 over the id's own 2.7. 2 record(s) on umans-ai, umans-ai-coding-plan carry this exact transition."
+    },
+    {
+      "provider": "umans-ai-coding-plan",
+      "id": "umans-kimi-k2.7",
+      "raw_family": "kimi-k2",
+      "before": "(family=\"kimi-k2\",variant=\"\",version=\"\",modifier=\"\")",
+      "after": "(family=\"kimi\",variant=\"k\",version=\"2.7\",modifier=\"\")",
+      "category": "justified-exception",
+      "reason": "JUSTIFIED: umans tags its Kimi K2.7 Code rows with the coarser raw family \"kimi-k2\" and prefixes the id with its own vendor name. BEFORE, the compound family stranded the record on kimi-k2 with no version. AFTER, the family recovers to kimi and the seam reads the DOTTED 2.7 out of the id — not the coarser 2 the raw family token spells — so the record joins the pre-existing kimi/k@2.7 key. This is the row that shows the recovery is family-only by design: had it seeded the version from the consumed family token it would have asserted 2 over the id's own 2.7. 2 record(s) on umans-ai, umans-ai-coding-plan carry this exact transition."
     },
     {
       "provider": "venice",

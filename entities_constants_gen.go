@@ -419,7 +419,7 @@ const (
 	Entity__Kat__Coder                                                    = "kat/coder"
 	Entity__Kat__Size_72b                                                 = "kat#72b"
 	Entity__Kimi                                                          = "kimi"
-	Entity__Kimi__Instruct                                                = "kimi{instruct}"
+	Entity__Kimi__Coder                                                   = "kimi/coder"
 	Entity__Kimi__K__Version_2                                            = "kimi/k@2"
 	Entity__Kimi__K__Version_2_5                                          = "kimi/k@2.5"
 	Entity__Kimi__K__Version_2_6                                          = "kimi/k@2.6"
@@ -428,9 +428,6 @@ const (
 	Entity__Kimi__K__Version_2_7__Size_1100b__Code                        = "kimi/k@2.7#1100b{code}"
 	Entity__Kimi__K__Version_2__Instruct                                  = "kimi/k@2{instruct}"
 	Entity__Kimi__K__Version_3                                            = "kimi/k@3"
-	Entity__Kimi_k2                                                       = "kimi-k2"
-	Entity__Kimi_k2__Instruct                                             = "kimi-k2{instruct}"
-	Entity__Kimi_k3                                                       = "kimi-k3"
 	Entity__Kling__V2_5_turbo_i2v                                         = "kling/v2.5-turbo-i2v"
 	Entity__Kling__V2_5_turbo_t2v                                         = "kling/v2.5-turbo-t2v"
 	Entity__Kling__V2_6_i2v                                               = "kling/v2.6-i2v"
@@ -1357,7 +1354,7 @@ var allEntityConstants = [...]string{
 	Entity__Kat__Coder,
 	Entity__Kat__Size_72b,
 	Entity__Kimi,
-	Entity__Kimi__Instruct,
+	Entity__Kimi__Coder,
 	Entity__Kimi__K__Version_2,
 	Entity__Kimi__K__Version_2_5,
 	Entity__Kimi__K__Version_2_6,
@@ -1366,9 +1363,6 @@ var allEntityConstants = [...]string{
 	Entity__Kimi__K__Version_2_7__Size_1100b__Code,
 	Entity__Kimi__K__Version_2__Instruct,
 	Entity__Kimi__K__Version_3,
-	Entity__Kimi_k2,
-	Entity__Kimi_k2__Instruct,
-	Entity__Kimi_k3,
 	Entity__Kling__V2_5_turbo_i2v,
 	Entity__Kling__V2_5_turbo_t2v,
 	Entity__Kling__V2_6_i2v,
