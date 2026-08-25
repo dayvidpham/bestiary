@@ -647,13 +647,16 @@ for its **Go module tags** (`vX.Y.Z`).
     minimax, and the blast radius was six times the intended one. None of them may go in
     `modifiers.json` either: `tts` is already a family key, so a global promotion would
     collide with it.
-  - the trailing-tier promotion now returns a **list** and the two restrictions that used
-    to discard tiers are gone. Previously a tier was promoted only when there was exactly
-    one of them and no capability modifier alongside it, so `mimo-v2.5-tts-voiceclone`
-    lost its second tier and `xiaomi/mimo-v2-flash-thinking` lost `flash` outright. As a
-    side effect **8 kimi records recover a `highspeed` tier** that a co-occurring `code`
-    modifier had been suppressing; `highspeed` is attribute-class, so that recovery
-    changes no entity key.
+  - the trailing-tier promotion now returns a **list**, and for a family whose series
+    letter is NOT in the key the two restrictions that used to discard tiers are gone.
+    Previously a tier was promoted only when there was exactly one of them and no
+    capability modifier alongside it, so `mimo-v2.5-tts-voiceclone` lost its second tier
+    and `xiaomi/mimo-v2-flash-thinking` lost `flash` outright. The widening is **scoped to
+    mimo**, exactly like the token set above: `kimi` and `minimax` keep the letter in
+    their keys and keep the original one-tier, no-co-occurring-modifier rule, so no kimi
+    or minimax record changes its decomposition. The same predicate also orders the
+    classification, because a token that is both a curated tier and a global modifier is
+    bucketed differently depending on which test runs first.
 
   The seven mimo rows in `parse/data/family_overrides.json` are **retained and rewritten
   to an empty variant** rather than deleted — deleting them was measured to mint four
