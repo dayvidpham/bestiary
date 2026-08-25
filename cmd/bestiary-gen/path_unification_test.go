@@ -1161,7 +1161,32 @@ type exceptionKey struct {
 // their rationale is preserved in the commit that landed them. A future pipeline change
 // that moves a decomposition re-populates this ledger the same way it was populated
 // before: one reviewed row per intended change, with its justification.
-var justifiedExceptions = map[exceptionKey]string{}
+//
+// REPOPULATED by the global free-tier demotion. That lever moves "free" out of entity
+// identity, and on five records it also re-reads the tuple around it: with "free" a
+// peelable modifier token, the trailing-modifier scan reaches PAST it and exposes the
+// version that the fused "free" suffix had been hiding. The mechanical classifier flags
+// all five as category-(c) because a populated Variant changed value without converging a
+// divergent ID — but in every case the BEFORE tuple carried the version fused into the
+// variant slot (variant="v2.5-free", version="") and the AFTER tuple separates them
+// (variant="v", version="2.5"), which is the taxonomy invariant, not a downgrade. Nothing
+// is emptied: every field the BEFORE tuple populated is still populated after, and the
+// tokens dropped from the variant reappear in the modifier list.
+//
+// Each key is the exact (ID, before-tuple, after-tuple) triple, so these rows justify ONLY
+// these transitions. The keyspace-wide mimo normalization that follows rewrites four of
+// these AFTER tuples, at which point these entries go dead and that change authors its own.
+var justifiedExceptions = map[exceptionKey]string{
+	{ID: "minimax-m3-free", Before: `(family="minimax-m3",variant="free",version="",modifier="")`, After: `(family="minimax",variant="m",version="3",modifier="free")`}: "the free demotion un-fuses the upstream raw family \"minimax-m3\": before, \"m3\" was glued into the family token and the pricing tier occupied the variant slot, so the record stranded on a phantom minimax-m3 family with no version; after, it decomposes to the real minimax family on the m series at version 3, with free carried as an attribute modifier. Family, variant and version all become MORE correct and the record joins minimax/m@3 instead of a one-instance junk line.",
+
+	{ID: "mimo-v2.5-free", Before: `(family="mimo",variant="v2.5-free",version="",modifier="")`, After: `(family="mimo",variant="v",version="2.5",modifier="free")`}: "the free demotion exposes the version the fused suffix was hiding: variant \"v2.5-free\" (version empty) becomes variant \"v\" at version 2.5 with free as an attribute modifier. Family is preserved and no populated field is emptied — the version slot goes from empty to populated, which is the taxonomy invariant this gate exists to protect.",
+
+	{ID: "mimo-v2-omni-free", Before: `(family="mimo",variant="omni-free",version="",modifier="")`, After: `(family="mimo",variant="v",version="2",modifier="omni,free")`}: "same un-fusing as the row above, with a capability token in the compound variant: once free is peelable the trailing scan reaches omni too, so variant \"omni-free\" (version empty) becomes variant \"v\" at version 2 with modifiers omni,free. omni stays IDENTITY-class, so it remains in the entity key; only the pricing tier leaves it. Version goes empty -> 2 and family is preserved.",
+
+	{ID: "mimo-v2-pro-free", Before: `(family="mimo",variant="pro-free",version="",modifier="")`, After: `(family="mimo",variant="v",version="2",modifier="pro,free")`}: "same un-fusing as the omni row, with the pro tier token: variant \"pro-free\" (version empty) becomes variant \"v\" at version 2 with modifiers pro,free. pro is globally IDENTITY-class (the safe over-split for an AMBIGUOUS token) and stays in the key; only free leaves it.",
+
+	{ID: "xiaomi-mimo-v2.5-pro-free", Before: `(family="mimo",variant="v2.5-pro",version="",modifier="")`, After: `(family="mimo",variant="v",version="2.5",modifier="pro,free")`}: "the aihubmix spelling of the mimo 2.5 Pro free tier. Its upstream raw family is \"mimo-v2.5-pro\" (the free suffix appears only in the model id), so the BEFORE tuple fused the whole version+tier into the variant slot with no version at all. After the demotion it decomposes to variant \"v\" at version 2.5 with modifiers pro,free — and, being the same tuple the opencode mimo-v2.5-pro-free row now reaches, it CONVERGES two providers' spellings of one model rather than worsening either.",
+}
 
 func TestPathUnification_ZeroUnexpectedRegression(t *testing.T) {
 	changes, divBefore, divAfter, total := computeDiff(t)

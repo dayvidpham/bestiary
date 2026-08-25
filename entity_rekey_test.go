@@ -269,10 +269,16 @@ func TestEntityRekey_CensusAccounted(t *testing.T) {
 	// now a peeled identity modifier so Command A Translate stops collapsing onto base command/a)
 	// and the deepseek dash-glued dot-lost pins merge phantom deepseek@1 / deepseek@2 onto the
 	// dotted deepseek/v3.1 and deepseek/v3.2-exp entities (−2). Net −1.
-	const wantEntities = 957
+	//
+	// 957 -> 940 with the global free demotion: "free" leaves the entity key entirely, so
+	// 17 free-tier keys retire (a pure MERGE — 0 added, instance total conserved) as their
+	// instances re-home onto the surviving sibling. ling/flash-free@2.6 is carved out by an
+	// exact-ID pin and is NOT among them.
+	const wantEntities = 940
 	if got := len(bestiary.Entities()); got != wantEntities {
-		t.Errorf("registry census = %d entities, want %d — command/a{translate} split (+1) and "+
-			"the deepseek dot-lost merges (−2) net −1 from the snapshot baseline", got, wantEntities)
+		t.Errorf("registry census = %d entities, want %d — the global free demotion retires 17 "+
+			"free-tier keys and adds none; update this literal in the same commit if the "+
+			"entity count changed intentionally", got, wantEntities)
 	}
 }
 

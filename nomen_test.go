@@ -19,7 +19,7 @@ func nominaCensus(ns []bestiary.Nomen) map[bestiary.NomenScheme]int {
 
 // TestNomina_CensusExact pins the EXACT per-scheme census of the minted nomen set
 // over the static registry (the "census literal pinned at bake"). The counts are
-// derived from the committed models_static_gen.go: 957 canonical (one Preferred nomen
+// derived from the committed models_static_gen.go: 940 canonical (one Preferred nomen
 // per distinct entity key), 2834 provider-ID (one Admitted nomen per distinct instance
 // ID spelling, deduped within an entity), 1 alias (the grok-beta seed claim) and 179
 // huggingface (4 curated Hub seeds + 175 distinct-triple repos harvested by the
@@ -82,9 +82,14 @@ func nominaCensus(ns []bestiary.Nomen) map[bestiary.NomenScheme]int {
 // entities fold onto their N.0 siblings, retiring 8 Preferred canonical nomina. provider-ID
 // UNCHANGED at 2791 a THIRD time — the fold merges two entities, moving no instance, so the
 // bare-version ID spellings survive as Admitted provider-ID nomina on the merged entities.
+//
+// canonical went 957 → 940 with the global free demotion: 17 free-tier entity keys retire
+// (0 added), so 17 Preferred canonical nomina go with them. provider-ID UNCHANGED at 2834 a
+// FOURTH time, same reason as every merge before it — the demoted instances re-home onto a
+// surviving sibling and carry their ID spellings across as Admitted provider-ID nomina.
 func TestNomina_CensusExact(t *testing.T) {
 	const (
-		wantCanonical   = 957  // 947 -> 958: 2026-07-23 snapshot refresh (upstream additions); 958 -> 957: v0.2.8 curation slice — command/a{translate} split (+1) minus deepseek@1/@2 dot-lost merges (−2), one canonical nomen per entity
+		wantCanonical   = 940  // 947 -> 958: 2026-07-23 snapshot refresh (upstream additions); 958 -> 957: v0.2.8 curation slice — command/a{translate} split (+1) minus deepseek@1/@2 dot-lost merges (−2); 957 -> 940: the global free demotion retires 17 entity keys (0 added), and there is exactly one canonical nomen per entity, so the canonical count tracks the entity census exactly
 		wantProviderID  = 2834 // 2791 -> 2834: 2026-07-23 refresh, +43 new upstream instance spellings; UNCHANGED by the v0.2.8 slice — the re-keyed instances keep their provider-ID spellings as Admitted nomina on the merged/split entities (the C4-fold precedent)
 		wantAlias       = 1
 		wantHuggingFace = 179 // 4 -> 179: v0.2.8 HF-bot slice. The cmd/bestiary-hf live run harvested 179 open-weight Hub repos that JOIN a catalog entity. Of those, 4 are the pre-existing curated Hub claims (nomen_claims.json), aliased to their EXACT curated (Value, huggingface-scheme, ResolvesTo) triples, so each harvested attestation COALESCES onto its curated claim — one nomen carrying TWO attestations (curated + huggingface), adding 0 to the nomen count (validation case 3). The other 175 harvested repos are distinct triples: +175. 4 + 175 = 179.
@@ -97,7 +102,7 @@ func TestNomina_CensusExact(t *testing.T) {
 	// fires where a harvested repo shares a curated claim's triple: the 4 curated Hub
 	// claims each coalesce with their aliased harvested twin into ONE nomen carrying TWO
 	// attestations (curated + huggingface), so those 4 add 0 — the count grows only by
-	// the 175 distinct-triple harvested repos. Total 957 + 2834 + 1 + 179 = 3971.
+	// the 175 distinct-triple harvested repos. Total 940 + 2834 + 1 + 179 = 3954.
 	all := bestiary.MintNomina(bestiary.Entities())
 	if len(all) != wantTotal {
 		t.Errorf("MintNomina total = %d, want %d", len(all), wantTotal)

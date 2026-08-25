@@ -99,11 +99,17 @@ func equalStrings(a, b []string) bool {
 // minimax/m@25, qwen@35 lines) into their dotted siblings, retiring 8 versioned lines;
 // 1t routing empties the ling@1t/ring@1t VERSIONS (1t is now a size), so ling and ring
 // become bare lines — ring already had a bare presence, ling adds one, net +1 bare.
+// 417 → 415 with the global free demotion (−2 bare / versioned UNCHANGED): of the 17
+// retired free-tier keys, 15 shared a family with a surviving sibling, so their lines
+// stayed populated. Two families existed ONLY through their free key — deepseek-flash
+// (deepseek-flash/free) and minimax-m3 (minimax-m3/free) — and their bare lines empty out
+// with them. Every versioned line touched (glm@4.7 / @5 / @5.2, hy@3, laguna-s@2.1,
+// nemotron@3) keeps other entities, so no versioned line retires.
 func TestSeriesAll_CensusExact(t *testing.T) {
 	const (
-		wantSeries        = 417 // 411 -> 419: 2026-07-23 refresh (+4 versioned incl. gemini-3.6, +4 bare); 419 -> 417: v0.2.8 slice — the deepseek dot-lost merges retire the two phantom versioned lines deepseek gen-1 / gen-2 (command/a{translate} joins the existing command/a line, adding none)
-		wantVersionLines  = 209 // lines with a non-empty generation (207 -> 211 at the 2026-07-23 refresh; 211 -> 209 as deepseek gen-1 / gen-2 retire in the v0.2.8 slice)
-		wantBareLines     = 208 // lines whose entities carry no identity version (204 -> 208 at the 2026-07-23 refresh; UNCHANGED by the v0.2.8 slice)
+		wantSeries        = 415 // 411 -> 419: 2026-07-23 refresh (+4 versioned incl. gemini-3.6, +4 bare); 419 -> 417: v0.2.8 slice — the deepseek dot-lost merges retire the two phantom versioned lines deepseek gen-1 / gen-2 (command/a{translate} joins the existing command/a line, adding none); 417 -> 415: the global free demotion empties the deepseek-flash and minimax-m3 bare lines
+		wantVersionLines  = 209 // lines with a non-empty generation (207 -> 211 at the 2026-07-23 refresh; 211 -> 209 as deepseek gen-1 / gen-2 retire in the v0.2.8 slice; UNCHANGED by the free demotion — every versioned line it touches keeps other entities)
+		wantBareLines     = 206 // lines whose entities carry no identity version (204 -> 208 at the 2026-07-23 refresh; UNCHANGED by the v0.2.8 slice; 208 -> 206 as the free demotion empties the deepseek-flash and minimax-m3 lines). 209 + 206 = 415.
 		minExpectedSeries = 300 // the ratified floor
 	)
 	all := bestiary.SeriesAll()
@@ -149,8 +155,12 @@ func TestSeriesAll_CensusExact(t *testing.T) {
 // 670 → 659 with the dot-lost version repair + 1t param-size routing: the dot-lost merges
 // retire the releases carried by the folded dotless/dash lines, and the 1t re-keys move
 // ling/ring onto releases that already existed; net −11.
+// 669 → 652 with the global free demotion: each of the 17 retired keys carried a
+// free-tier release name of its own on its line (free, flash-free, omni-free, pro-free,
+// v2.5, v2.5-free, v2.5-pro), none of which any surviving entity shares, so the release
+// count falls by exactly the 17 retired keys.
 func TestReleases_CensusExact(t *testing.T) {
-	const wantReleases = 669 // 659 -> 671: 2026-07-23 refresh (+12 releases on the new lines); 671 -> 669: v0.2.8 slice — the two phantom deepseek gen-1 / gen-2 lines retire their bare releases (command/a{translate} shares command/a's existing release; a modifier is not a distinct release name)
+	const wantReleases = 652 // 659 -> 671: 2026-07-23 refresh (+12 releases on the new lines); 671 -> 669: v0.2.8 slice — the two phantom deepseek gen-1 / gen-2 lines retire their bare releases (command/a{translate} shares command/a's existing release; a modifier is not a distinct release name); 669 -> 652: the global free demotion retires 17 keys, each the sole occupant of its release name (−17)
 
 	summed := 0
 	for _, s := range bestiary.SeriesAll() {

@@ -83,7 +83,7 @@ func TestEntityConstants_Unique(t *testing.T) {
 	// command/a key (+1, "translate" now a peeled identity modifier) and the two phantom
 	// deepseek dash-glued entities deepseek@1 / deepseek@2 merge onto deepseek/v3.1 and
 	// deepseek/v3.2-exp (−2). Net −1.
-	const wantEntityCount = 957
+	const wantEntityCount = 940 // 957 -> 940: the global free demotion retires 17 keys (0 added); the demoted instances re-home onto their surviving siblings
 	if len(keys) != wantEntityCount {
 		t.Errorf("EntityKeys() returned %d constants; expected exactly %d — "+
 			"re-run go generate ./... and update this census literal if the entity count changed intentionally",
