@@ -433,7 +433,8 @@ func loadEntityIndex() {
 
 // attachBakedMetadataToIndex runs the metadata<->entity join over the just-built
 // entity index using the compiled-in baked metadata (staticEntityMetadata): it writes
-// each matched entity's Metadata back into the index and appends any synthesized
+// each matched entity's MetadataAll record (and its derived Metadata primary) back
+// into the index and appends any synthesized
 // metadata-only standalone entity to the index in a deterministic position.
 //
 // It returns immediately when no metadata is baked in (the current state: the
@@ -466,12 +467,17 @@ func attachBakedMetadataToIndex() {
 	attached, _, standalone := JoinEntityMetadata(ents, meta)
 
 	// Write attached metadata back into the index (attached[i] <-> entityKeys[i]).
+	// The whole MetadataAll record is written, not just the primary pointer: an entity
+	// that several lab ids decompose to carries every one of their rows, and its
+	// Metadata primary is re-derived from the written slice so the index's pointer
+	// always aliases into the index's own slice rather than the join's copy.
 	for i, key := range entityKeys {
-		if attached[i].Metadata == nil {
+		if len(attached[i].MetadataAll) == 0 {
 			continue
 		}
 		e := entityIndex[key]
-		e.Metadata = attached[i].Metadata
+		e.MetadataAll = attached[i].MetadataAll
+		e.Metadata = primaryEntityMetadata(e.MetadataAll)
 		entityIndex[key] = e
 	}
 

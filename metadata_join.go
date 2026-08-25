@@ -250,9 +250,11 @@ func MergeEntityMetadata(static, cached []EntityMetadata) []EntityMetadata {
 // JoinEntityMetadata runs the metadata<->entity join over ents with meta and returns
 // three results:
 //
-//   - attached: every provided entity (deep-copied), with a matching metadata row
-//     re-attached over its Metadata field (replace, not merge). Entities with no
-//     matching metadata carry their original Metadata unchanged.
+//   - attached: every provided entity (deep-copied), carrying EVERY metadata row that
+//     matched its identity on MetadataAll (sorted ascending by MetadataID) with
+//     Metadata set to the derived primary (shortest MetadataID, ties lexicographic
+//     ascending). Entities with no matching metadata carry their original Metadata
+//     and MetadataAll unchanged.
 //   - unlinked: the MetadataIDs whose decomposed family IS present among the provided
 //     entities but whose full tuple matched no entity — disagreements a curator
 //     resolves with an alias (the codegen slice emits them as a sorted report).
@@ -267,12 +269,25 @@ func MergeEntityMetadata(static, cached []EntityMetadata) []EntityMetadata {
 // provided entity — including a standalone synthesized on an earlier pass and fed
 // back in — is RE-ATTACHED onto that entity rather than duplicated, so repeated joins
 // over the same metadata set are idempotent (no growing standalone set).
+//
+// Accumulation is CLEAR-THEN-ACCUMULATE: the first row to land on an entity in THIS
+// call clears whatever MetadataAll that entity arrived with (tracked by the touched
+// set) before appending, so re-joining an already-joined set REPLACES the record
+// rather than doubling it. An entity no row lands on is never cleared, so a
+// hand-attached or previously-joined record on an unmatched entity survives.
 func JoinEntityMetadata(ents []Entity, meta []EntityMetadata) (attached []Entity, unlinked []MetadataID, standalone []Entity) {
 	// Deep-copy every input entity up front so the join is pure and so re-attachment
 	// mutates only the copies. Index the copies by their identity key, and record the
 	// set of families present for the two-tier miss policy.
 	attached = make([]Entity, len(ents))
 	byKey := make(map[string]int, len(ents))
+	// touched records which attached entities have received a row in THIS call, so the
+	// first landing row clears any pre-existing MetadataAll exactly once (idempotence)
+	// and an untouched entity is left byte-identical to its input.
+	touched := make(map[int]struct{}, len(ents))
+	// standaloneByKey indexes synthesized standalones by entity key so two metadata
+	// rows sharing one absent-family key accumulate onto a single standalone entity.
+	standaloneByKey := make(map[string]int)
 	keySet := make(map[string]struct{}, len(ents))
 	familyPresent := make(map[Family]struct{}, len(ents))
 	for i := range ents {
@@ -310,7 +325,11 @@ func JoinEntityMetadata(ents []Entity, meta []EntityMetadata) (attached []Entity
 		}
 
 		if idx, ok := byKey[identity.String()]; ok {
-			attached[idx].Metadata = cloneEntityMetadata(&m)
+			if _, seen := touched[idx]; !seen {
+				touched[idx] = struct{}{}
+				attached[idx].MetadataAll = nil // clear-then-accumulate (see doc above)
+			}
+			attached[idx].MetadataAll = append(attached[idx].MetadataAll, *cloneEntityMetadata(&m))
 			continue
 		}
 
@@ -336,9 +355,41 @@ func JoinEntityMetadata(ents []Entity, meta []EntityMetadata) (attached []Entity
 			unlinked = append(unlinked, m.MetadataID)
 			continue
 		}
+		// Two metadata rows can decompose to the SAME absent-family key; they are one
+		// entity with two rows, not two entities. Index the standalones by key so the
+		// second row accumulates onto the first rather than synthesizing a duplicate —
+		// the same "one entity, many rows" rule the matched path above follows.
+		key := identity.String()
+		if si, ok := standaloneByKey[key]; ok {
+			standalone[si].MetadataAll = append(standalone[si].MetadataAll, *cloneEntityMetadata(&m))
+			continue
+		}
+		standaloneByKey[key] = len(standalone)
 		standalone = append(standalone, synthesizeStandaloneEntity(identity, m))
 	}
+
+	// Impose the MetadataAll contract on every entity a row landed on: sort ascending
+	// by MetadataID with an EXPLICIT sort.Slice (never an incidental insertion order),
+	// then derive the primary pointer from the sorted slice.
+	for idx := range touched {
+		sortMetadataAll(attached[idx].MetadataAll)
+		attached[idx].Metadata = primaryEntityMetadata(attached[idx].MetadataAll)
+	}
+	for i := range standalone {
+		sortMetadataAll(standalone[i].MetadataAll)
+		standalone[i].Metadata = primaryEntityMetadata(standalone[i].MetadataAll)
+	}
 	return attached, unlinked, standalone
+}
+
+// sortMetadataAll imposes the MetadataAll ordering contract in place: ascending by
+// MetadataID via an explicit sort.Slice. MetadataIDs are distinct within one entity
+// (they key the upstream rows), so the order is total and the sort is deterministic
+// regardless of the order rows arrived in.
+func sortMetadataAll(all []EntityMetadata) {
+	sort.Slice(all, func(i, j int) bool {
+		return all[i].MetadataID < all[j].MetadataID
+	})
 }
 
 // AttachEntityMetadata runs the same join over the provided entities and metadata set
@@ -361,15 +412,18 @@ func AttachEntityMetadata(ents []Entity, meta []EntityMetadata) []Entity {
 // synthesizeStandaloneEntity builds a metadata-only standalone entity for a metadata
 // row whose family is absent from the catalog: identity from the decomposition (or
 // curated alias), empty (non-nil) Instances, Sources attested to models.dev, and a
-// fresh clone of the metadata attached. The Ref and Metadata are cloned so the
+// fresh clone of the metadata attached as the standalone's sole MetadataAll row (its
+// Metadata primary derives from that slice). The Ref and metadata are cloned so the
 // standalone shares no storage with the join's inputs.
 func synthesizeStandaloneEntity(ref EntityRef, m EntityMetadata) Entity {
-	return Entity{
-		Ref:       cloneRef(ref),
-		Instances: []ProviderInstance{},
-		Sources:   []DataSourceID{DataSourceModelsDev},
-		Metadata:  cloneEntityMetadata(&m),
+	e := Entity{
+		Ref:         cloneRef(ref),
+		Instances:   []ProviderInstance{},
+		Sources:     []DataSourceID{DataSourceModelsDev},
+		MetadataAll: []EntityMetadata{*cloneEntityMetadata(&m)},
 	}
+	e.Metadata = primaryEntityMetadata(e.MetadataAll)
+	return e
 }
 
 // --------------------------------------------------------------------------
