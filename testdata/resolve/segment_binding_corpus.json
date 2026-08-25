@@ -115,7 +115,7 @@
       "expected": {
         "outcome": "resolved",
         "entities": "sonar",
-        "refs": "kilo|perplexity/sonar,openrouter|perplexity/sonar,perplexity-agent|perplexity/sonar,vercel|perplexity/sonar"
+        "refs": "perplexity-agent|perplexity/sonar"
       },
       "classification": "must-pass",
       "provenance": {
@@ -123,7 +123,7 @@
         "ref": "known falsifier: a vendor-prefixed catalog id served by four providers, where a widened binding would add rows from the bare-`sonar` family"
       },
       "mutation": {
-        "description": "the multi-provider case of the same shape: the pinned ref set is the whole point, since a widening here changes WHICH rows come back without changing the entity key"
+        "description": "the multi-provider case of the same shape: the pinned ref set is the whole point, since a widening here changes WHICH rows come back without changing the entity key. The pinned set is POST-CREATOR-FIRST: `sonar` is created by perplexity, whose earliest curated distribution surface present in the match set is `perplexity-agent`, so the single-group cross-provider branch narrows the four co-hosting rows (kilo, openrouter, perplexity-agent, vercel) to the creator-hosted one before returning. The outcome is still `resolved` on the same entity key, and no ambiguity listing is involved; the narrowing is the creator preference deciding WHICH single host `bestiary show` renders. This row therefore still fences widening — any extra row here, or any row from the bare-`sonar` family, is a real widening"
       }
     },
     {
