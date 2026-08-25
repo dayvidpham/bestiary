@@ -148,13 +148,18 @@ var templateFuncs = template.FuncMap{
 // than duplicating the markup is what keeps a retired "(base)" node from reappearing on one
 // page and not the other.
 //
+// Every page also pulls in palette.html: the command palette lives in the shared layout, so
+// its "palette-prompt" opening state must be defined in every page's set. The SAME file is
+// parsed into the fragment set, which is what makes the dialog's initial contents and the
+// server's patched contents one rendering rather than two that could drift.
+//
 // There is deliberately no "series" entry: that page was retired, its content absorbed by
 // "families", and /series now 404s.
 var pageFiles = map[string][]string{
-	"tree":     {"templates/layout.html", "templates/seriestree.html", "templates/tree.html"},
-	"entities": {"templates/layout.html", "templates/results.html", "templates/entities.html"},
-	"entity":   {"templates/layout.html", "templates/entity.html"},
-	"families": {"templates/layout.html", "templates/seriestree.html", "templates/families.html"},
+	"tree":     {"templates/layout.html", "templates/palette.html", "templates/seriestree.html", "templates/tree.html"},
+	"entities": {"templates/layout.html", "templates/palette.html", "templates/results.html", "templates/entities.html"},
+	"entity":   {"templates/layout.html", "templates/palette.html", "templates/entity.html"},
+	"families": {"templates/layout.html", "templates/palette.html", "templates/seriestree.html", "templates/families.html"},
 }
 
 // parseTemplates builds one template set per page (see pageFiles).
@@ -170,8 +175,10 @@ func parseTemplates() (map[string]*template.Template, error) {
 	return out, nil
 }
 
-// parseFragments builds the standalone template set used to render SSE fragments (the
-// "entity-results" list PatchElements-ed into #entity-results). It carries no layout.
+// parseFragments builds the standalone template set used to render SSE fragments: the
+// "entity-rows" table PatchElements-ed into #entity-results, and the "palette-options" list
+// PatchElements-ed into #palette-results. It carries no layout.
 func parseFragments() (*template.Template, error) {
-	return template.New("fragments").Funcs(templateFuncs).ParseFS(templatesFS, "templates/results.html")
+	return template.New("fragments").Funcs(templateFuncs).ParseFS(templatesFS,
+		"templates/results.html", "templates/palette.html")
 }

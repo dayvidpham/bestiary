@@ -109,13 +109,6 @@
       text-transform: uppercase; color: var(--accent);
       text-shadow: 0 0 6px color-mix(in srgb, var(--accent) 55%, transparent);
     }
-    .chrome .search { flex: 1; max-width: 32rem; }
-    .chrome input[type="search"] {
-      width: 100%; padding: var(--space-1) var(--space-2);
-      background: var(--bg); color: var(--text);
-      border: 1px solid var(--border); border-radius: 2px;
-      font-family: var(--font-mono); font-size: var(--fs-base);
-    }
     .theme-toggle {
       font-family: var(--font-mono); cursor: pointer;
       background: var(--bg); color: var(--accent);
@@ -273,6 +266,64 @@
       padding: var(--space-1) 0 0 var(--space-4);
     }
 
+    /* ===== BEGIN command palette =========================================================
+       A native <dialog> holding an ARIA combobox. The dialog is what gives the modal scrim,
+       the focus trap and Esc-to-dismiss for free — all three are behaviours you otherwise
+       hand-write and get subtly wrong. Nothing here is a framework: the only script is the
+       small keyboard handler at the foot of this file, and the option list is server-rendered
+       through the existing SSE fragment seam. */
+    .chrome .palette-trigger {
+      flex: 1; max-width: 32rem; text-align: left; cursor: pointer;
+      display: flex; align-items: center; justify-content: space-between; gap: var(--space-2);
+      padding: var(--space-1) var(--space-2);
+      background: var(--bg); color: var(--text-muted);
+      border: 1px solid var(--border); border-radius: 2px;
+      font-family: var(--font-mono); font-size: var(--fs-base);
+    }
+    .chrome .palette-trigger:hover { color: var(--text); border-color: var(--accent); }
+    .palette-kbd {
+      font-family: var(--font-mono); font-size: var(--fs-xs); color: var(--accent);
+      border: 1px solid var(--border); border-radius: 2px; padding: 0 var(--space-1);
+    }
+    dialog.palette {
+      width: min(40rem, 92vw); padding: 0; margin-top: 12vh;
+      background: var(--surface); color: var(--text);
+      border: 1px solid var(--accent); border-radius: 2px;
+    }
+    dialog.palette::backdrop { background: rgba(0, 0, 0, .55); }
+    .palette-input {
+      width: 100%; padding: var(--space-3);
+      background: transparent; color: var(--text);
+      border: 0; border-bottom: 1px solid var(--border); border-radius: 0;
+      font-family: var(--font-mono); font-size: var(--fs-body);
+    }
+    .palette-input:focus { outline: none; }
+    ul.palette-results {
+      list-style: none; margin: 0; padding: var(--space-1) 0;
+      max-height: 50vh; overflow-y: auto;
+    }
+    .palette-opt {
+      display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-3);
+      padding: var(--space-1) var(--space-3); cursor: pointer;
+      font-size: var(--fs-base);
+    }
+    /* The HIGHLIGHT is drawn on aria-selected, not on :focus, because DOM focus never leaves
+       the input — the arrow keys move aria-activedescendant. Styling the state the ARIA
+       attribute already carries is what keeps the visible highlight and the announced one
+       from ever disagreeing. */
+    .palette-opt[aria-selected="true"] {
+      background: color-mix(in srgb, var(--accent) 22%, transparent);
+      color: var(--text);
+    }
+    .palette-opt:hover { background: color-mix(in srgb, var(--accent) 12%, transparent); }
+    .palette-attr { font-size: var(--fs-xs); white-space: nowrap; }
+    .palette-note { padding: var(--space-2) var(--space-3); font-size: var(--fs-sm); }
+    .palette-hint {
+      margin: 0; padding: var(--space-2) var(--space-3); font-size: var(--fs-xs);
+      border-top: 1px solid var(--border);
+    }
+    /* ===== END command palette =========================================================== */
+
     @media (max-width: 768px) {
       .browse-layout { grid-template-columns: 1fr; }
     }
@@ -282,7 +333,12 @@
 <body>
   <header class="chrome">
     <span class="wordmark">bestiary&#9646;</span>
-    <span class="search"><input type="search" placeholder="search entities…" aria-label="search entities" disabled></span>
+    <!-- ===== BEGIN command palette (trigger) ===== -->
+    <button type="button" class="palette-trigger" aria-haspopup="dialog" aria-label="search entities"
+            onclick="__paletteOpen()">
+      <span>search entities…</span><span class="palette-kbd">&#8984;K</span>
+    </button>
+    <!-- ===== END command palette (trigger) ===== -->
     <button type="button" class="theme-toggle" aria-label="toggle color theme" onclick="__toggleTheme()">&#9790;/&#9728;</button>
   </header>
   <main id="main">
@@ -291,6 +347,136 @@
   <footer class="footer">
     bestiary · offline catalog · datastar client v{{.DatastarVersion}} (vendored)
   </footer>
+
+  <!-- ===== BEGIN command palette (dialog) =================================================
+       Entity SEARCH AND NAVIGATE, and nothing else. There are deliberately no page-nav or
+       view-action rows: every option resolves to one entity URL, so Enter always means the
+       same thing no matter what is highlighted.
+
+       Structure is the canonical ARIA combobox: the INPUT keeps DOM focus and owns
+       aria-activedescendant, the popup is a listbox of options, and the arrow keys move that
+       pointer rather than focus — which is what lets a reader keep typing while arrowing.
+       The whole thing sits in a native <dialog>, so the scrim, the focus trap and
+       Esc-to-dismiss are the platform's, not ours.
+
+       The hotkey element carries Datastar's own __window keydown binding — the global hook
+       ships with the vendored client, so ⌘K costs no new dependency. -->
+  <div id="palette-hotkey" aria-hidden="true"
+       data-on-keydown__window="(evt.key === 'k' || evt.key === 'K') &amp;&amp; (evt.metaKey || evt.ctrlKey) &amp;&amp; !evt.altKey &amp;&amp; (evt.preventDefault(), __paletteOpen())"></div>
+  <dialog id="palette" class="palette" aria-label="entity search">
+    <!-- The signal is declared HYPHENATED (data-signals-palette-query) and NOT camelCase:
+         the HTML parser lowercases attribute NAMES, so a camelCase attribute would reach the
+         client as "palettequery" and silently never match the paletteQuery signal the server
+         reads. Datastar folds the kebab name back to camelCase, so the hyphenated attribute
+         is the only spelling that survives the round trip. -->
+    <div data-signals-palette-query="''">
+      <input id="palette-input" type="text" class="palette-input"
+             role="combobox" aria-expanded="true" aria-controls="palette-results"
+             aria-autocomplete="list" aria-label="search entities"
+             autocomplete="off" spellcheck="false" placeholder="search entities…"
+             data-bind-palette-query
+             data-on-input__debounce.150ms="@get('/sse/palette')"
+             onkeydown="__paletteKey(event)">
+      <ul id="palette-results" class="palette-results" role="listbox" aria-label="matching entities"
+          onclick="__paletteClick(event)">
+        {{template "palette-prompt"}}
+      </ul>
+      <p class="palette-hint muted">&#8593;&#8595; move · enter opens · esc closes</p>
+    </div>
+  </dialog>
+
+  <!-- Palette keyboard handler: our own small script (not a framework), same footing as the
+       theme toggle above. No network, no external dependency — the option rows themselves are
+       server-rendered through the SSE seam. -->
+  <script>
+    (function () {
+      function el(id) { return document.getElementById(id); }
+      function input() { return el("palette-input"); }
+      function options() {
+        var list = el("palette-results");
+        return list ? list.querySelectorAll('li[role="option"]') : [];
+      }
+      // activeIndex reads the pointer back OUT of the DOM rather than caching it in a
+      // variable, so a server patch that replaced the list can never leave the handler
+      // pointing at a row that is no longer on screen.
+      function activeIndex() {
+        var inp = input(), opts = options();
+        if (!inp) { return -1; }
+        var id = inp.getAttribute("aria-activedescendant");
+        for (var i = 0; i < opts.length; i++) { if (opts[i].id === id) { return i; } }
+        return -1;
+      }
+      function setActive(i) {
+        var inp = input(), opts = options();
+        if (!inp) { return; }
+        for (var j = 0; j < opts.length; j++) {
+          opts[j].setAttribute("aria-selected", j === i ? "true" : "false");
+        }
+        if (i < 0 || i >= opts.length) { inp.removeAttribute("aria-activedescendant"); return; }
+        inp.setAttribute("aria-activedescendant", opts[i].id);
+        if (opts[i].scrollIntoView) { opts[i].scrollIntoView({ block: "nearest" }); }
+      }
+      function navigate(li) {
+        var path = li && li.getAttribute("data-path");
+        if (path) { window.location.assign(path); }
+      }
+
+      window.__paletteOpen = function () {
+        var d = el("palette");
+        if (!d || !d.showModal) { return; }
+        if (!d.open) { d.showModal(); }
+        var inp = input();
+        if (inp) { inp.focus(); if (inp.select) { inp.select(); } }
+      };
+      window.__paletteClose = function () {
+        var d = el("palette");
+        if (d && d.open) { d.close(); }
+      };
+      // __paletteKey never moves focus: ArrowUp/ArrowDown only rewrite
+      // aria-activedescendant, and the default (caret-to-end-of-field) is suppressed so the
+      // text cursor does not jump while the reader is arrowing through results.
+      window.__paletteKey = function (evt) {
+        if (evt.key === "ArrowDown") {
+          evt.preventDefault();
+          var n = options().length;
+          if (n) { setActive((activeIndex() + 1 + n) % n); }
+        } else if (evt.key === "ArrowUp") {
+          evt.preventDefault();
+          var m = options().length;
+          if (m) { var i = activeIndex(); setActive(i < 0 ? m - 1 : (i - 1 + m) % m); }
+        } else if (evt.key === "Enter") {
+          evt.preventDefault();
+          var opts = options();
+          if (!opts.length) { return; }
+          var k = activeIndex();
+          navigate(opts[k < 0 ? 0 : k]);
+        }
+        // Escape is deliberately absent: the native <dialog> already closes on it.
+      };
+      window.__paletteClick = function (evt) {
+        var li = evt.target && evt.target.closest ? evt.target.closest('li[role="option"]') : null;
+        if (li) { evt.preventDefault(); navigate(li); }
+      };
+
+      // The server replaces the option list wholesale on every keystroke, so the pointer is
+      // re-anchored to the first row after each patch. Without this the input would keep
+      // citing an id that the patch removed, and a screen reader would announce a row that
+      // is no longer there.
+      function watch() {
+        var list = el("palette-results");
+        if (!list || !window.MutationObserver) { return; }
+        new MutationObserver(function () {
+          setActive(options().length ? 0 : -1);
+        }).observe(list, { childList: true });
+      }
+      if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", watch);
+      } else {
+        watch();
+      }
+    })();
+  </script>
+  <!-- ===== END command palette (dialog) =================================================== -->
 
   <!-- Theme toggle: our own tiny script (not a framework); persists the explicit choice.
        No network, no external dependency. -->

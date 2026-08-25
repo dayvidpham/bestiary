@@ -69,6 +69,24 @@ for its **Go module tags** (`vX.Y.Z`).
   struct so `TestCodegen_Reproducible_ByteIdentical` (N=100) compares them alongside the
   three generated `.go` sources. Neither `.go`-only codegen guard could reach a JSON
   report before, so an emission built from a map range was previously unguarded.
+- **A ⌘K command palette on every page — an ARIA combobox in a native `<dialog>`, with
+  zero new dependencies.** `⌘K` / `Ctrl-K` (and a chrome button, replacing the disabled
+  placeholder search box) opens a modal palette; type-ahead patches `#palette-results`
+  through a new `GET /sse/palette`, `↑`/`↓` move `aria-activedescendant` while DOM focus
+  stays in the input, and `Enter` navigates to `/entity/<key>`. The scope is entity
+  **search and navigate ONLY**: there are deliberately no page-navigation or view-action
+  rows, so `Enter` means the same thing whatever is highlighted. Nothing was added to
+  `go.mod` and the vendored `assets/datastar.js` is untouched — the global hotkey is the
+  client's own `data-on-keydown__window` binding, the modal scrim / focus trap /
+  Esc-to-dismiss are the platform's `<dialog>`, and the option rows are server-rendered
+  through the SAME SSE fragment seam the entity browser already used (`ReadSignals` →
+  `NewSSE` → `PatchElements`), differing only in target element. Matching is ranked —
+  canonical-key prefix, then key substring, then an attribution (family/creator) match —
+  capped at 10 options, and the cap is **stated in the popup** (`showing 10 of N`) rather
+  than silently swallowing matches. An empty query offers nothing at all, so a reader who
+  has typed nothing cannot press `Enter` onto a row they never chose. `templates/palette.html`
+  is parsed into BOTH the page sets and the SSE fragment set, so the dialog's opening state
+  and the server's patched state are one rendering rather than two that could drift.
 
 ### Changed
 
