@@ -127,7 +127,7 @@ func Test<Name>(t *testing.T) {
 
 ## The corpus census, and what is deliberately still inline
 
-At the close of the naming-layer epoch the repository carries **119 corpora**:
+At the close of the naming-layer epoch the repository carries **120 corpora**:
 
 | Area | Corpora | What lives there |
 |---|---|---|
@@ -141,7 +141,7 @@ At the close of the naming-layer epoch the repository carries **119 corpora**:
 | `testdata/resolve/` | 4 | the internal group-key helpers, the canonical-provider preference on provider-unqualified exact-ID lookups, and canonical segment binding at the peasant seam (the repaired variant-empty and provider-prefixed refs, the six must-not-widen falsifiers, the pinned entity-view guards, and the held-open composition witness) |
 | `testdata/vram/` | 5 | the VRAM arithmetic anchors, plus the budget-first fit calculator: the context-boundary and bound-selection table, the derived-weights estimates with the six zero-bits-per-weight refusals, and the parameter-shape exclusion table (the NxM and Nb-Ke tokens that attest no total) |
 | `cmd/bestiary/testdata/series/` | 4 | the `series` selector surface: end-to-end selector resolution (specificity ladder, canonical grammar, `--version`, `--input-format`, disagreement errors), the strict major-union membership rule, `--version` composition, and the `selectSeries` readings over a synthetic universe |
-| `cmd/bestiary/testdata/retired/` | 3 | the retired-key migration records — one corpus per curation lever that retires entity keys (the global free-tier demotion, the ling/inkling/kling collision split, the mimo keyspace normalization). Each case pins the two lookup seams for a retired key plus the instances it held and the live keys those instances re-homed onto, so the successor set is re-derived rather than claimed |
+| `cmd/bestiary/testdata/retired/` | 4 | the retired-key migration records — one corpus per curation lever that retires entity keys (the global free-tier demotion, the ling/inkling/kling collision split, the mimo keyspace normalization, the cogito decomposition + variant pin). Each case pins the two lookup seams for a retired key plus the instances it held and the live keys those instances re-homed onto, so the successor set is re-derived rather than claimed |
 | `cmd/bestiary-gen/testdata/gen/` | 9 | the identifier builders (`slugToIdentifier`, `providerConstName`, `styleSegment`, `entityConstName`, `splitComma`) |
 | `cmd/bestiary-ollama/testdata/ollama/` | 1 | Ollama tag normalization |
 

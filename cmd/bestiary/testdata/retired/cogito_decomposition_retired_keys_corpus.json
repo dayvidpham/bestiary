@@ -1,0 +1,50 @@
+{
+  "_comment": "Every entity key retired by the cogito decomposition repair and the variant pin that follows it, pinned against the MEASURED outcome rather than a uniform expectation. Both keys named one artifact — Deep Cogito's Cogito v2.1 671B — and both were wrong in a different way: `cogito/v2.1-671b#671b` fused the whole id remainder into the variant, so the 671b parameter size was stated twice (once inside the variant, once as the #size segment), and `cogito@1#671b` was a phantom line minted from the orphaned trailing integer of a dash-glued spelling whose dot had been lost. Neither is a bare family token, so — measured — both are a hard 404 on BOTH seams; there is no ambiguous row in this set. Each case carries the MEASURED migration record: `retired_instances` is the exact set of provider instances the key held immediately before the lever (spelled `<provider>|<model id>`, read off the pre-lever generated catalog), and `successors` is the set of entity keys those instances now belong to. The successor set is re-derived from `retired_instances` against the live registry on every run and compared against this record, and the CHANGELOG migration table is compared against it too, so the three cannot drift apart silently. See TESTING.md.",
+  "cases": [
+    {
+      "name": "retired_cogito_fused_variant",
+      "input": "cogito/v2.1-671b#671b",
+      "expected": {
+        "by_entity": "not-found",
+        "show": "not-found",
+        "retired_instances": [
+          "kilo|deepcogito/cogito-v2.1-671b",
+          "openrouter|deepcogito/cogito-v2.1-671b"
+        ],
+        "successors": [
+          "cogito/v@2.1#671b"
+        ]
+      },
+      "classification": "must-fail",
+      "provenance": {
+        "source": "requirement",
+        "ref": "the epoch-wide retired-key policy: a retired entity key is a uniform hard 404 on both seams — no alias, no redirect, no successor listing. The CHANGELOG old->new table is the only pointer a user gets. The bare-family exception does not apply to either key here: neither is a bare family token."
+      },
+      "mutation": {
+        "description": "the size-doubling key: the whole id remainder \"v2.1-671b\" sat in the variant slot with the version empty, so 671b appeared both as an identity token and as the mechanically recovered #size segment. Un-fusing it into variant \"v\" + version \"2.1\" — the shape this line always matched — renames the key to cogito/v@2.1#671b and carries the size exactly once. A pure rename: both serving instances move together and no instance is created or destroyed"
+      }
+    },
+    {
+      "name": "retired_cogito_phantom_v1",
+      "input": "cogito@1#671b",
+      "expected": {
+        "by_entity": "not-found",
+        "show": "not-found",
+        "retired_instances": [
+          "togetherai|deepcogito/cogito-v2-1-671b"
+        ],
+        "successors": [
+          "cogito/v@2.1#671b"
+        ]
+      },
+      "classification": "must-fail",
+      "provenance": {
+        "source": "requirement",
+        "ref": "the epoch-wide retired-key policy: a retired entity key is a uniform hard 404 on both seams — no alias, no redirect, no successor listing. The CHANGELOG old->new table is the only pointer a user gets. The bare-family exception does not apply to either key here: neither is a bare family token."
+      },
+      "mutation": {
+        "description": "the phantom line: togetherai spells the same artifact with the dot lost to a dash (deepcogito/cogito-v2-1-671b), so only the orphaned trailing integer was read as the version and the row minted a one-instance \"Cogito v1\" entity for a release Deep Cogito never published. Pinned to the same (variant \"v\", version \"2.1\") pair its dotted siblings carry, it MERGES onto cogito/v@2.1#671b — the one retirement in this set that removes a key from the census rather than renaming it"
+      }
+    }
+  ]
+}

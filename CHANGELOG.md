@@ -737,6 +737,60 @@ for its **Go module tags** (`vX.Y.Z`).
   lines 417 → 416 (bare 208 → 207, versioned unchanged), releases 661 → 655, canonical
   nomina 947 → 946 (total 3,961 → 3,960).
 
+- **Two cogito entity keys are retired, and each is a hard 404.** Deep Cogito publishes one
+  artifact — Cogito v2.1 671B — and the catalog was carrying it under two keys, neither of
+  them right. The dotted spelling `deepcogito/cogito-v2.1-671b` decomposed with the whole id
+  remainder `v2.1-671b` in the variant slot and an empty version, so the 671b parameter size
+  was stated **twice**: once as an identity token inside the variant and once again as the
+  mechanically recovered `#size` segment. The dash-glued togetherai spelling
+  `deepcogito/cogito-v2-1-671b` lost its dot, so only the orphaned trailing integer was read
+  as the version, minting a phantom "Cogito v1" line for a release that does not exist.
+
+  Both are repaired to the shape this line always matched — the glued release letter is the
+  variant, the dotted point release is the version — so all three serving instances (kilo,
+  openrouter, togetherai) now key `cogito/v@2.1#671b`, the only live cogito key. It lands in
+  **two** steps, in that order: the decomposition first, then the merge. Merging into the
+  malformed key first would have moved the togetherai instance onto a key that then had to be
+  renamed underneath it.
+
+  No alias is minted, no redirect is added and no successor is listed at the tool: this table
+  is the migration record, and the pointer a user gets.
+
+  | retired cogito key | instances re-home to |
+  |---|---|
+  | `cogito/v2.1-671b#671b` | `cogito/v@2.1#671b` |
+  | `cogito@1#671b` | `cogito/v@2.1#671b` |
+
+  Every row is re-derived from the instances the retired key actually held, checked against
+  the live registry on each run, and cross-checked against this table
+  (`cmd/bestiary/testdata/retired/cogito_decomposition_retired_keys_corpus.json`), so the
+  three copies of the record cannot drift apart.
+
+  **Both keys 404 on both seams**, measured: `bestiary show <key> --by-entity` and plain
+  `bestiary show <key>` each return not-found for `cogito/v2.1-671b#671b` and for
+  `cogito@1#671b`. Neither is a bare family token, so neither reaches the under-specified
+  branch that bare `mimo` and bare `ling` reach.
+
+  **Library consumers get a compile break, which is louder than a 404.**
+  `entities_constants_gen.go` loses **2** `Entity__` declarations and gains **1**, counted
+  from the file:
+
+  removed — `Entity__Cogito__V2_1_671b__Size_671b`, `Entity__Cogito__Version_1__Size_671b`;
+
+  added — `Entity__Cogito__V__Version_2_1__Size_671b`.
+
+  Census effect, measured per commit on its own run (unit: entity keys; axis: the constant
+  set in `entities_constants_gen.go`; configuration: each lever alone, chained on the
+  in-tree baseline). The decomposition is a pure **rename**: entities 946 → 946, series lines
+  416 → 416 (versioned 209 → 210, bare 207 → 206 — the artifact leaves the bare cogito line
+  it was the sole occupant of and mints a cogito gen-2.1 line), releases unchanged at 655,
+  canonical nomina unchanged at 946. The variant pin is a genuine **merge**: entities
+  946 → 945, series lines 416 → 415 (versioned 210 → 209 as the phantom gen-1 line empties,
+  bare unchanged at 206), releases 655 → 654, canonical nomina 946 → 945 (total 3,960 →
+  3,959), sized catalog entities 318 → 317. Across both, the provider-ID nomen count is
+  unchanged at 2,834 — every re-keyed instance carries its own id spelling across as an
+  admitted nomen.
+
 
 ## [0.2.9] - 2026-07-28
 
