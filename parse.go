@@ -2463,6 +2463,42 @@ func ParseFamilyDetailed(raw Family, id ModelID, p Provider) (Family, string, st
 		family = remapFamilyAlias(pd, family)
 	}
 
+	// Raw-populated half of the (d) family-side series normalization. The empty-raw
+	// inference already recovers a COMPOUND series family token ("kimi-k2" -> kimi)
+	// through seriesBaseFamily; the raw-populated path did not, so a provider that
+	// reports the compound AS its family kept it verbatim whenever the version-pattern
+	// table missed it. That table matches only a DOTTED series number ("kimi-k2.7" ->
+	// kimi + "k2.7"), so every BARE-INTEGER series compound ("kimi-k2", "kimi-k3")
+	// fell through to passthrough and stranded its models on a compound-family key of
+	// their own, split off from the short-family siblings that carry the same series.
+	//
+	// The recovery is the SAME closed predicate the empty-raw path uses: it fires only
+	// when the family is exactly "<base>-<letter><number>" and <base> carries that
+	// series letter in families.json. It is therefore general over series families and
+	// over series numbers -- a new series number needs no curated per-spelling row --
+	// and it declines every other family shape rather than guessing.
+	//
+	// A family SELF-MAPPED in family_overrides.json is a CURATED genuine compound (the
+	// compound IS the product name), so it is declined here exactly as the over-capture
+	// reducer declines it. Nothing is reduced on an unrecognised token.
+	//
+	// ONLY the family is reduced here. The (variant, version) split stays the
+	// letter-prefix seam's job further down, run against the model ID -- the family
+	// reduction merely makes the ID visible to it, because that seam returns early
+	// for a family that carries no series_letter and the compound "kimi-k3" carries
+	// none. Seeding (variant, version) from the CONSUMED family token instead was
+	// measured and rejected: a provider that tags a K2.5 model with the coarser raw
+	// family "kimi-k2" (moonshotai/Kimi-K2.5-TEE and 7 siblings) would then be
+	// asserted onto the k@2 key and silently merged with genuine K2 models. An
+	// under-specified model belongs on the honest bare-family line, never on a
+	// confidently WRONG version key -- the same rule that makes the over-capture
+	// reducer decline an unrecognised token rather than treat it as noise.
+	if pd, pdErr := loadParseData(); pdErr == nil {
+		if base, ok := seriesBaseFamily(pd, family); ok && !isCuratedGenuineCompound(pd, family) {
+			family = base
+		}
+	}
+
 	// No failure annotation when the input is empty: delegate to
 	// InferFamilyFromIDWithVariant so that passthrough-guard cases (e.g.
 	// kimi-k2-thinking) are handled correctly. The modifier is then extracted from
@@ -3967,6 +4003,22 @@ func seriesBaseFamily(pd *parseData, family Family) (Family, bool) {
 // --------------------------------------------------------------------------
 // family OVER-CAPTURE reduction (Option B)
 // --------------------------------------------------------------------------
+
+// isCuratedGenuineCompound reports whether family is CURATED as a genuine compound:
+// a family_overrides.json row that maps the family to ITSELF. A self-map is the
+// curator's explicit statement that the compound IS the product name (text-embedding,
+// stable-diffusion, nano-banana, model-router, dall-e, …), so no automatic reduction
+// may collapse it. reduceOverCapturedFamily enforces the same rule inline; this
+// predicate exposes it to the other reduction sites so a single curated row DECLINES
+// every automatic path at once, and a new self-map never has to be repeated per site.
+func isCuratedGenuineCompound(pd *parseData, family Family) bool {
+	if pd == nil {
+		return false
+	}
+	key := Family(strings.ToLower(string(family)))
+	ov, ok := pd.overrides[key]
+	return ok && Family(strings.ToLower(string(ov.Family))) == key
+}
 
 // isFamilyResidueToken reports whether tok (a single lowercase token TRAILING the
 // short base of a COMPOUND, over-captured family string) is decomposition RESIDUE —

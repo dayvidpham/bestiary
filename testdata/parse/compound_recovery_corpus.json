@@ -1,0 +1,312 @@
+{
+  "cases": [
+    {
+      "name": "unit_kimi_k3_bare_integer_series_compound_reduces",
+      "input": {
+        "raw": "kimi-k3",
+        "id": "",
+        "provider": ""
+      },
+      "expected": {
+        "family": "kimi",
+        "variant": "",
+        "version": "",
+        "entity_key": ""
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "Unit half of the kimi-k3 recovery, asserted straight against the raw family so it is falsifiable WITHOUT a regen: the catalog rows in this corpus read the generated static catalog and only turn red after go generate, this row turns red the moment the recovery is removed."
+      },
+      "mutation": {
+        "description": "bare-integer series compound kimi-k3 reduces to the base family kimi"
+      }
+    },
+    {
+      "name": "unit_kimi_k2_bare_integer_series_compound_reduces",
+      "input": {
+        "raw": "kimi-k2",
+        "id": "",
+        "provider": ""
+      },
+      "expected": {
+        "family": "kimi",
+        "variant": "",
+        "version": "",
+        "entity_key": ""
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "The second attested bare-integer series compound. Two series numbers are pinned so the recovery is demonstrably general over the number rather than a single curated spelling."
+      },
+      "mutation": {
+        "description": "bare-integer series compound kimi-k2 reduces to the base family kimi"
+      }
+    },
+    {
+      "name": "kimi_k3_series_letter_absent_from_id",
+      "input": {
+        "raw": "kimi-k3",
+        "id": "k3",
+        "provider": "kimi-for-coding"
+      },
+      "expected": {
+        "family": "kimi",
+        "variant": "k",
+        "version": "3",
+        "entity_key": "kimi/k@3"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "bug",
+        "ref": "kimi-for-coding tags its bare id \"k3\" with raw family \"kimi-k3\". The version-pattern table matches only a DOTTED series number (kimi-k2.7), so the bare-integer compound fell through to passthrough and the model was stranded on a compound-family key \"kimi-k3\" of its own, invisible to the kimi series. Recovering the base family generally makes the letter-prefix seam see the id and decompose it to k@3."
+      },
+      "mutation": {
+        "description": "the general series-compound family recovery fires on raw kimi-k3, so the model joins the existing kimi/k@3 entity instead of minting a compound-family key"
+      }
+    },
+    {
+      "name": "kimi_k2_instruct_series_letter_in_id",
+      "input": {
+        "raw": "kimi-k2",
+        "id": "moonshot-kimi-k2-instruct",
+        "provider": "alibaba-cn"
+      },
+      "expected": {
+        "family": "kimi",
+        "variant": "k",
+        "version": "2",
+        "entity_key": "kimi/k@2{instruct}"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "bug",
+        "ref": "alibaba-cn reports raw family \"kimi-k2\" for a vendor-prefixed id whose own leading token (\"moonshot\") is not a registered family, so the id-vs-raw reconcile could not confirm the reduction and kept the compound key kimi-k2{instruct}."
+      },
+      "mutation": {
+        "description": "family recovery lets the letter-prefix seam read k2 out of the id, merging the row onto the pre-existing kimi/k@2{instruct} entity"
+      }
+    },
+    {
+      "name": "kimi_k2_raw_understates_dotted_id_version",
+      "input": {
+        "raw": "kimi-k2",
+        "id": "umans-kimi-k2.7",
+        "provider": "umans-ai"
+      },
+      "expected": {
+        "family": "kimi",
+        "variant": "k",
+        "version": "2.7",
+        "entity_key": "kimi/k@2.7"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "The id is authoritative for the (variant, version) split: raw family \"kimi-k2\" understates a K2.7 model, and the recovery must not overwrite the id-derived 2.7 with the coarser 2 the raw family token carries."
+      },
+      "mutation": {
+        "description": "only the FAMILY is recovered; the letter-prefix seam still owns variant/version, so the dotted id version 2.7 wins over the raw family's k2"
+      }
+    },
+    {
+      "name": "kimi_k2_id_carries_no_series_token",
+      "input": {
+        "raw": "kimi-k2",
+        "id": "umans-coder",
+        "provider": "umans-ai"
+      },
+      "expected": {
+        "family": "kimi",
+        "variant": "coder",
+        "version": "",
+        "entity_key": "kimi/coder"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "Boundary: the id names no series token at all, so the letter-prefix seam declines and the residual token \"coder\" is promoted to the variant. The row leaves the compound key kimi-k2 for the honest kimi/coder line rather than being asserted onto a version the id never states."
+      },
+      "mutation": {
+        "description": "family recovery with a seam decline: the row lands on kimi/coder, the only key added by this lever"
+      }
+    },
+    {
+      "name": "kimi_k2_instruct_unknown_trailing_token",
+      "input": {
+        "raw": "kimi-k2",
+        "id": "baseten/Kimi-K2-Instruct-FP4",
+        "provider": "nano-gpt"
+      },
+      "expected": {
+        "family": "kimi",
+        "variant": "k",
+        "version": "2",
+        "entity_key": "kimi/k@2{instruct}"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "bug",
+        "ref": "This row already carried the short family kimi but an EMPTY variant/version, so it sat on the bare kimi line and its instruct modifier minted the coarse key kimi{instruct}. With the family recovered before the reconcile, the seam reads K2 out of the id and the row joins kimi/k@2{instruct}."
+      },
+      "mutation": {
+        "description": "the coarse kimi{instruct} key retires: its only occupant is re-homed onto kimi/k@2{instruct}"
+      }
+    },
+    {
+      "name": "negative_control_raw_understates_version_no_id_series_split",
+      "input": {
+        "raw": "kimi-k2",
+        "id": "moonshotai/Kimi-K2.5-TEE",
+        "provider": "chutes"
+      },
+      "expected": {
+        "family": "kimi",
+        "variant": "",
+        "version": "",
+        "entity_key": "kimi"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "NEGATIVE CONTROL for the rejected design. Seeding (variant, version) from the CONSUMED raw family token would put this K2.5 model on the k@2 key and silently merge it with genuine K2 models. An under-specified model belongs on the honest bare-family line, never on a confidently wrong version key; the trailing \"tee\" is an unrecognised token and the seam declines rather than guessing."
+      },
+      "mutation": {
+        "description": "the recovery must leave this row EXACTLY where it was (bare kimi) — a change here means the rejected seed-from-raw-token variant was reintroduced"
+      }
+    },
+    {
+      "name": "negative_control_self_mapped_compound_text_embedding",
+      "input": {
+        "raw": "text-embedding",
+        "id": "",
+        "provider": ""
+      },
+      "expected": {
+        "family": "text-embedding",
+        "variant": "",
+        "version": "",
+        "entity_key": ""
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "family_overrides.json self-maps text-embedding to itself: the curator's explicit statement that the compound IS the product name. No automatic reduction may collapse a curated genuine compound."
+      },
+      "mutation": {
+        "description": "self-mapped genuine compound must DECLINE the recovery and stay whole"
+      }
+    },
+    {
+      "name": "negative_control_self_mapped_compound_stable_diffusion",
+      "input": {
+        "raw": "stable-diffusion",
+        "id": "",
+        "provider": ""
+      },
+      "expected": {
+        "family": "stable-diffusion",
+        "variant": "",
+        "version": "",
+        "entity_key": ""
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "Second family_overrides.json self-map, pinned so the decline is not a single-row accident."
+      },
+      "mutation": {
+        "description": "self-mapped genuine compound must DECLINE the recovery and stay whole"
+      }
+    },
+    {
+      "name": "negative_control_wrong_series_letter_for_base",
+      "input": {
+        "raw": "kimi-v2",
+        "id": "",
+        "provider": ""
+      },
+      "expected": {
+        "family": "kimi-v2",
+        "variant": "",
+        "version": "",
+        "entity_key": ""
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "kimi's curated series_letter is \"k\", not \"v\". A trailing token that looks series-shaped but carries the WRONG letter for the base is not this base's series token and must not be consumed."
+      },
+      "mutation": {
+        "description": "series letter mismatch: the compound is left intact as an honest residual"
+      }
+    },
+    {
+      "name": "negative_control_base_has_no_series_letter",
+      "input": {
+        "raw": "mistral-nemo",
+        "id": "",
+        "provider": ""
+      },
+      "expected": {
+        "family": "mistral",
+        "variant": "nemo",
+        "version": "",
+        "entity_key": ""
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "mistral carries no series_letter in families.json, so the series recovery declines it outright; the pre-existing suffix-stripping decomposition (mistral + variant nemo) is what must survive unchanged."
+      },
+      "mutation": {
+        "description": "a base with no curated series letter is never touched by the series recovery"
+      }
+    },
+    {
+      "name": "negative_control_series_letter_without_number",
+      "input": {
+        "raw": "kimi-k",
+        "id": "",
+        "provider": ""
+      },
+      "expected": {
+        "family": "kimi-k",
+        "variant": "",
+        "version": "",
+        "entity_key": ""
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "Boundary: the trailing token must be exactly <letter><number>. A bare series letter with no number is not a series token and the compound stays whole."
+      },
+      "mutation": {
+        "description": "bare series letter with no number: recovery declines"
+      }
+    },
+    {
+      "name": "negative_control_unrecognised_trailing_token_blocks",
+      "input": {
+        "raw": "kimi-k2-nitro",
+        "id": "",
+        "provider": ""
+      },
+      "expected": {
+        "family": "kimi-k2-nitro",
+        "variant": "",
+        "version": "",
+        "entity_key": ""
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "Boundary: the recovery accepts only <base>-<letter><number> with NO further hyphen. A compound carrying an extra unrecognised token is an honest residual, never guessed to be noise."
+      },
+      "mutation": {
+        "description": "an extra trailing token blocks the recovery entirely"
+      }
+    }
+  ]
+}
