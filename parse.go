@@ -4430,6 +4430,20 @@ var idFamilyOverrides = map[string]idFamilyOverrideEntry{
 	// this dotted spelling (kilo raw="", openrouter raw="cogito") converge on the one
 	// tuple because the map is consulted provider-agnostically.
 	"deepcogito/cogito-v2.1-671b": {family: "cogito", variant: "v", version: "2.1"},
+
+	// togetherai serves the SAME Cogito v2.1 671B artifact with the dot lost to a dash
+	// (deepcogito/cogito-v2-1-671b), so the leading-token pipeline read only the trailing
+	// integer as the version and produced (cogito, "", "1") — a phantom "Cogito v1" line
+	// holding one instance while the two dotted rows sit on the repaired key. The repair is
+	// variant-targeted for the same reason the deepseek dash-glued rows above are: MEASURED,
+	// a version-only dotLostVersionOverrides entry yields (cogito, "", "2.1") and keys
+	// cogito@2.1#671b, which is a THIRD key rather than a merge — the dotted rows carry the
+	// release letter in the variant slot, so the dash-glued row must be pinned to the same
+	// (variant, version) pair to join them. Pinned here, it lands on cogito/v@2.1#671b
+	// alongside its siblings. Evidence: both spellings render the same DisplayName
+	// ("Cogito v2.1 671B"), the same 671b size and the same 1.25/1.25 price, and the id's own
+	// "v2-1" spelling names which dot was lost.
+	"deepcogito/cogito-v2-1-671b": {family: "cogito", variant: "v", version: "2.1"},
 }
 
 // dotLostVersionOverrides is the curated, CLOSED, exact-model-ID map for the "dot-lost"
