@@ -29,10 +29,31 @@ var epochRetiredKeysCorpusJSON []byte
 // forecast.
 const epochRetiredKeyCount = 62
 
+// epochRetiredKeyLibraryShowDisagreements and epochRetiredKeyAnySeamDisagreements pin
+// the two seam-disagreement figures the doc comments above publish, in KEYS out of the
+// 62-key cumulative retired set. They are asserted against the committed corpus by
+// TestEpochRetiredKeys_MeasuredPolicySplit rather than transcribed into prose alone, so
+// a corpus row changing its seam columns fails here instead of silently invalidating the
+// documentation.
+//
+// 14 = 3 (`gpt-luna`, `gpt-sol`, `gpt-terra`: AMBIGUOUS at the bare library call,
+// NOT-FOUND at `bestiary show`) + 8 (NOT-FOUND bare, AMBIGUOUS at `show`) + 3
+// (NOT-FOUND bare, RESOLVED at `show`: `ministral#3b{instruct}`,
+// `mistral/large#675b{instruct}`, `nemotron#120b`).
+//
+// 18 = those same 14 + 4 keys that agree at library and `show` but diverge at
+// `show --by-entity` (`agi`, `ling`, `mimo`, `kimi{instruct}`: AMBIGUOUS at both
+// exact-key seams, NOT-FOUND by entity).
+const (
+	epochRetiredKeyLibraryShowDisagreements = 14
+	epochRetiredKeyAnySeamDisagreements     = 18
+)
+
 // epochRetiredKeySeams is the expected outcome for one cumulatively-retired key at each
 // of the three seams it is reachable through. They are pinned SEPARATELY because they
 // measurably disagree, in BOTH directions, and collapsing them into one "the retired key
-// does X" claim is false for 17 of the 62 keys.
+// does X" claim is false for 18 of the 62 keys (epochRetiredKeyAnySeamDisagreements,
+// asserted below against the corpus rather than transcribed).
 //
 // Library is the outcome of a BARE bestiary.Resolve(key) — zero ResolveOptions, so the
 // resolver auto-detects the input scheme. This is a library-API reading only: NO shipped
@@ -45,7 +66,8 @@ const epochRetiredKeyCount = 62
 // the one a user actually reaches. cmd/bestiary/main.go passes
 // WithInputFormat(InputFormatPeasant) whenever --format/--scheme are unset (i.e. almost
 // always), which parses the input as a canonical tuple instead of auto-detecting it.
-// That reading differs from the bare Library call for 11 keys, in both directions:
+// That reading differs from the bare Library call for 14 keys
+// (epochRetiredKeyLibraryShowDisagreements), in both directions:
 //
 //   - `gpt-luna`, `gpt-sol`, `gpt-terra` are AMBIGUOUS bare and NOT-FOUND here. Bare
 //     Resolve takes the variant-aware bare-family fallback (`gpt` is a live Family,
@@ -100,7 +122,7 @@ var epochOnlyRetiredKeys = map[string]string{
 // The looser seams are pinned PER KEY against the MEASURED split, not against a blanket
 // rule, because a blanket rule is false here in several directions at once. Each bullet
 // below is a measured class, and the seam a claim is about is always named, because the
-// bare library call and the shipped `bestiary show` DISAGREE for 11 keys (see the
+// bare library call and the shipped `bestiary show` DISAGREE for 14 keys (see the
 // epochRetiredKeySeams doc for the two mechanisms).
 //
 // At the seam a user actually reaches — `bestiary show <key>`, which defaults to
@@ -158,6 +180,31 @@ func TestEpochRetiredKeys_MeasuredPolicySplit(t *testing.T) {
 		}
 	}
 
+	// The published seam-disagreement figures, DERIVED from the corpus. The doc comments
+	// above quote both; this is what keeps the prose from drifting away from the data.
+	libShow, anySeam := 0, 0
+	for _, c := range corpus.Cases {
+		e := c.Expected
+		if e.Library != e.CLIShow {
+			libShow++
+		}
+		if e.Library != e.CLIShow || e.CLIShow != e.CLIByEntity {
+			anySeam++
+		}
+	}
+	if libShow != epochRetiredKeyLibraryShowDisagreements {
+		t.Errorf("the bare library call and `bestiary show` disagree for %d of the %d retired keys, "+
+			"but the doc comments above publish %d. Re-derive the figure from this corpus and "+
+			"correct BOTH the constant and the prose that quotes it.",
+			libShow, len(corpus.Cases), epochRetiredKeyLibraryShowDisagreements)
+	}
+	if anySeam != epochRetiredKeyAnySeamDisagreements {
+		t.Errorf("%d of the %d retired keys have at least two of the three seams disagreeing, but "+
+			"the doc comments above publish %d. Re-derive the figure from this corpus and correct "+
+			"BOTH the constant and the prose that quotes it.",
+			anySeam, len(corpus.Cases), epochRetiredKeyAnySeamDisagreements)
+	}
+
 	tmpDB := t.TempDir() + "/cache.db"
 	for _, c := range corpus.Cases {
 		key, exp := c.Input, c.Expected
@@ -172,7 +219,7 @@ func TestEpochRetiredKeys_MeasuredPolicySplit(t *testing.T) {
 
 			// The LIBRARY seam, where the error TYPE survives. This is a bare
 			// bestiary.Resolve — auto-detect, zero options — which is a library-API
-			// reading only; the seam a user reaches is CLIShow below, and for 11 keys
+			// reading only; the seam a user reaches is CLIShow below, and for 14 keys
 			// the two disagree. Read a failure here as "the library contract moved",
 			// never as "the CLI moved".
 			_, err := bestiary.Resolve(key)
