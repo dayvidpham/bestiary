@@ -4226,6 +4226,18 @@ var idFamilyOverrides = map[string]idFamilyOverrideEntry{
 	// of this exact id → zero collateral.
 	"ring-2.6-1t-free": {family: "ring", version: "2.6"},
 
+	// ling-2.6-flash-free (opencode) is the one row the global "free" demotion must NOT
+	// sweep up. With "free" registered as a global modifier token, trimOneTrailingModifier
+	// strips it from the RAW family "ling-flash-free" -> "ling-flash" BEFORE the curated
+	// family_overrides lookup runs, so the curated free-row for this id is already dead and
+	// a carve-out there cannot fire. The demotion would then fold this id onto ling/flash@2.6
+	// (4 -> 5 instances), collapsing a distinct served artifact into its sibling. The exact-ID
+	// path is consulted EARLIER — it returns the full tuple before the trailing-modifier trim
+	// runs — so it is the one lever that survives the demotion. Pinned to the tuple the
+	// pipeline derived before the demotion, keeping the ling/flash-free@2.6 key byte-identical
+	// and leaving ling/flash@2.6 unchanged. Sole provider of this exact id -> zero collateral.
+	"ling-2.6-flash-free": {family: "ling", variant: "flash-free", version: "2.6"},
+
 	// NOTE (retired override): the bare "k2p7" id (kimi-for-coding) previously needed a
 	// narrow exact-id override to kimi/k@2.7 — its upstream compound raw_family "kimi-k2"
 	// defeated the shared family-recovery (the general compound-family recovery fix stays
