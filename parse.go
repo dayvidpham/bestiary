@@ -4527,16 +4527,20 @@ func isSeriesTierToken(tok string) bool {
 // otherwise consume them and suppress the promotion the family-scoped curation
 // asked for.
 //
-// ARM-ORDER CAVEAT, measured not assumed: that reorder is currently NOT
-// load-bearing for any id in the catalog. idDrivenDecompose calls
-// extractModifiers on the same id independently and it already peels every
-// globally-known modifier token, so for a token in BOTH sets the final Modifier
-// list is the same either way after CanonicalizeModifiers dedups. Swapping the
-// two arms leaves the whole suite green. The order is kept because the ratified
-// plan mandates it and because it is the correct expression of "a token curated
-// as a tier for THIS family is a tier here"; do not cite it as the mechanism that
-// produces any current key. The joint behaviour the two arms produce IS pinned
-// (series_tier_modifier_corpus.json).
+// ARM ORDER, measured not assumed. The order is load-bearing, but NOT for the
+// reason it is tempting to give. idDrivenDecompose independently calls
+// extractModifiers on the same id, and that scan already peels every globally
+// known modifier token, so for MOST ids a dual-membership token is captured
+// either way and the arms could be swapped with no visible effect. The gap is
+// that extractModifiers scans the trailing run and STOPS at the first token that
+// is not a known modifier: a tier-only token (flash, tts, highspeed, …) is such a
+// boundary, so any dual-membership token sitting BEHIND one is unreachable to it
+// and only this switch can capture it. mimo-v2.5-fast-flash is the witness —
+// "fast" is both a curated mimo tier and a global modifier, "flash" blocks
+// extractModifiers, and the id decomposes to [fast flash] with the arms in this
+// order and to [flash] with them swapped, which is a different ENTITY KEY because
+// both tokens are identity-class. That case and its empty-raw twin are pinned in
+// series_tier_modifier_corpus.json and are the regression guard for this order.
 func splitSeriesVariant(pd *parseData, family Family, idStr string) (variant, version string, tierMods []string, ok bool) {
 	if pd == nil {
 		return "", "", nil, false

@@ -335,6 +335,468 @@
       "mutation": {
         "description": "series tier token classified as Modifier; variant stays the pure series-letter"
       }
+    },
+    {
+      "name": "mimo-v2-tts (per-family tier)",
+      "input": {
+        "raw": "mimo",
+        "id": "mimo-v2-tts"
+      },
+      "expected": {
+        "family": "mimo",
+        "variant": "",
+        "version": "2",
+        "mod": "tts"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "ParseFamilyDetailed(raw=mimo, id=mimo-v2-tts) -> (family 'mimo', variant '', version '2', mod 'tts')"
+      },
+      "mutation": {
+        "description": "per-family series_tiers extension: the token is promoted to a Modifier for mimo because mimo declares it in series_tiers, and the series letter leaves the key"
+      }
+    },
+    {
+      "name": "mimo-v2.5-voiceclone (per-family tier)",
+      "input": {
+        "raw": "mimo",
+        "id": "mimo-v2.5-voiceclone"
+      },
+      "expected": {
+        "family": "mimo",
+        "variant": "",
+        "version": "2.5",
+        "mod": "voiceclone"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "ParseFamilyDetailed(raw=mimo, id=mimo-v2.5-voiceclone) -> (family 'mimo', variant '', version '2.5', mod 'voiceclone')"
+      },
+      "mutation": {
+        "description": "per-family series_tiers extension: the token is promoted to a Modifier for mimo because mimo declares it in series_tiers, and the series letter leaves the key"
+      }
+    },
+    {
+      "name": "mimo-v2.5-voicedesign (per-family tier)",
+      "input": {
+        "raw": "mimo",
+        "id": "mimo-v2.5-voicedesign"
+      },
+      "expected": {
+        "family": "mimo",
+        "variant": "",
+        "version": "2.5",
+        "mod": "voicedesign"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "ParseFamilyDetailed(raw=mimo, id=mimo-v2.5-voicedesign) -> (family 'mimo', variant '', version '2.5', mod 'voicedesign')"
+      },
+      "mutation": {
+        "description": "per-family series_tiers extension: the token is promoted to a Modifier for mimo because mimo declares it in series_tiers, and the series letter leaves the key"
+      }
+    },
+    {
+      "name": "mimo-v2.5-ultraspeed (per-family tier)",
+      "input": {
+        "raw": "mimo",
+        "id": "mimo-v2.5-ultraspeed"
+      },
+      "expected": {
+        "family": "mimo",
+        "variant": "",
+        "version": "2.5",
+        "mod": "ultraspeed"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "ParseFamilyDetailed(raw=mimo, id=mimo-v2.5-ultraspeed) -> (family 'mimo', variant '', version '2.5', mod 'ultraspeed')"
+      },
+      "mutation": {
+        "description": "per-family series_tiers extension: the token is promoted to a Modifier for mimo because mimo declares it in series_tiers, and the series letter leaves the key"
+      }
+    },
+    {
+      "name": "mimo-v2.5-tts-voiceclone (two tiers)",
+      "input": {
+        "raw": "mimo",
+        "id": "mimo-v2.5-tts-voiceclone"
+      },
+      "expected": {
+        "family": "mimo",
+        "variant": "",
+        "version": "2.5",
+        "mod": "tts,voiceclone"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "ParseFamilyDetailed(raw=mimo, id=mimo-v2.5-tts-voiceclone) -> (family 'mimo', variant '', version '2.5', mod 'tts,voiceclone')"
+      },
+      "mutation": {
+        "description": "multi-tier promotion: mimo is a letter-not-in-key family, so EVERY trailing curated tier is promoted; a single-valued return would drop the second token and collapse this id onto its single-tier sibling's key"
+      }
+    },
+    {
+      "name": "mimo-v2.5-tts-voicedesign (two tiers)",
+      "input": {
+        "raw": "mimo",
+        "id": "mimo-v2.5-tts-voicedesign"
+      },
+      "expected": {
+        "family": "mimo",
+        "variant": "",
+        "version": "2.5",
+        "mod": "tts,voicedesign"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "ParseFamilyDetailed(raw=mimo, id=mimo-v2.5-tts-voicedesign) -> (family 'mimo', variant '', version '2.5', mod 'tts,voicedesign')"
+      },
+      "mutation": {
+        "description": "multi-tier promotion: mimo is a letter-not-in-key family, so EVERY trailing curated tier is promoted; a single-valued return would drop the second token and collapse this id onto its single-tier sibling's key"
+      }
+    },
+    {
+      "name": "mimo-v2.5-pro-ultraspeed (global tier + per-family tier)",
+      "input": {
+        "raw": "mimo",
+        "id": "mimo-v2.5-pro-ultraspeed"
+      },
+      "expected": {
+        "family": "mimo",
+        "variant": "",
+        "version": "2.5",
+        "mod": "pro,ultraspeed"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "ParseFamilyDetailed(raw=mimo, id=mimo-v2.5-pro-ultraspeed) -> (family 'mimo', variant '', version '2.5', mod 'pro,ultraspeed')"
+      },
+      "mutation": {
+        "description": "multi-tier promotion: mimo is a letter-not-in-key family, so EVERY trailing curated tier is promoted; a single-valued return would drop the second token and collapse this id onto its single-tier sibling's key"
+      }
+    },
+    {
+      "name": "mimo-v2.5-free-tts (dual-membership token + per-family tier)",
+      "input": {
+        "raw": "mimo",
+        "id": "mimo-v2.5-free-tts"
+      },
+      "expected": {
+        "family": "mimo",
+        "variant": "",
+        "version": "2.5",
+        "mod": "free,tts"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "ParseFamilyDetailed(raw=mimo, id=mimo-v2.5-free-tts) -> (family 'mimo', variant '', version '2.5', mod 'free,tts')"
+      },
+      "mutation": {
+        "description": "'free' is in BOTH mimo's series_tiers and the global modifier set; it is promoted as a tier alongside the identity-class 'tts' rather than suppressing it"
+      }
+    },
+    {
+      "name": "kimi-k2-tts is NOT a kimi tier (negative control)",
+      "input": {
+        "raw": "kimi",
+        "id": "kimi-k2-tts"
+      },
+      "expected": {
+        "family": "kimi",
+        "variant": "",
+        "version": "",
+        "mod": ""
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "ParseFamilyDetailed(raw=kimi, id=kimi-k2-tts) -> (family 'kimi', variant '', version '', mod '')"
+      },
+      "mutation": {
+        "description": "negative control: the token is curated for mimo ONLY. A sibling letter-series family that does not declare it in series_tiers must not promote it — the token stays unknown there, so the series split DECLINES and the pre-existing behaviour is kept"
+      }
+    },
+    {
+      "name": "kimi-k2.5-voiceclone is NOT a kimi tier (negative control)",
+      "input": {
+        "raw": "kimi",
+        "id": "kimi-k2.5-voiceclone"
+      },
+      "expected": {
+        "family": "kimi",
+        "variant": "",
+        "version": "",
+        "mod": ""
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "ParseFamilyDetailed(raw=kimi, id=kimi-k2.5-voiceclone) -> (family 'kimi', variant '', version '', mod '')"
+      },
+      "mutation": {
+        "description": "negative control: the token is curated for mimo ONLY. A sibling letter-series family that does not declare it in series_tiers must not promote it — the token stays unknown there, so the series split DECLINES and the pre-existing behaviour is kept"
+      }
+    },
+    {
+      "name": "kimi-k2.5-ultraspeed is NOT a kimi tier (negative control)",
+      "input": {
+        "raw": "kimi",
+        "id": "kimi-k2.5-ultraspeed"
+      },
+      "expected": {
+        "family": "kimi",
+        "variant": "",
+        "version": "",
+        "mod": ""
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "ParseFamilyDetailed(raw=kimi, id=kimi-k2.5-ultraspeed) -> (family 'kimi', variant '', version '', mod '')"
+      },
+      "mutation": {
+        "description": "negative control: the token is curated for mimo ONLY. A sibling letter-series family that does not declare it in series_tiers must not promote it — the token stays unknown there, so the series split DECLINES and the pre-existing behaviour is kept"
+      }
+    },
+    {
+      "name": "minimax-m2-voiceclone is NOT a minimax tier (negative control)",
+      "input": {
+        "raw": "minimax",
+        "id": "minimax-m2-voiceclone"
+      },
+      "expected": {
+        "family": "minimax",
+        "variant": "",
+        "version": "",
+        "mod": ""
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "ParseFamilyDetailed(raw=minimax, id=minimax-m2-voiceclone) -> (family 'minimax', variant '', version '', mod '')"
+      },
+      "mutation": {
+        "description": "negative control: the token is curated for mimo ONLY. A sibling letter-series family that does not declare it in series_tiers must not promote it — the token stays unknown there, so the series split DECLINES and the pre-existing behaviour is kept"
+      }
+    },
+    {
+      "name": "minimax-m2.5-tts is NOT a minimax tier (negative control)",
+      "input": {
+        "raw": "minimax",
+        "id": "minimax-m2.5-tts"
+      },
+      "expected": {
+        "family": "minimax",
+        "variant": "m2.5",
+        "version": "",
+        "mod": ""
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "ParseFamilyDetailed(raw=minimax, id=minimax-m2.5-tts) -> (family 'minimax', variant 'm2.5', version '', mod '')"
+      },
+      "mutation": {
+        "description": "negative control: the token is curated for mimo ONLY. A sibling letter-series family that does not declare it in series_tiers must not promote it — the token stays unknown there, so the series split DECLINES and the pre-existing behaviour is kept"
+      }
+    },
+    {
+      "name": "glm-4.6-tts: family with no series_tiers row is unchanged",
+      "input": {
+        "raw": "glm",
+        "id": "glm-4.6-tts"
+      },
+      "expected": {
+        "family": "glm",
+        "variant": "",
+        "version": "4.6",
+        "mod": ""
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "ParseFamilyDetailed(raw=glm, id=glm-4.6-tts) -> (family 'glm', variant '', version '4.6', mod '')"
+      },
+      "mutation": {
+        "description": "a family with no series_tiers entry (and no series_letter) behaves exactly as before the per-family extension existed"
+      }
+    },
+    {
+      "name": "mimo-v2.5-fast-flash (switch-arm order falsifier)",
+      "input": {
+        "raw": "mimo",
+        "id": "mimo-v2.5-fast-flash"
+      },
+      "expected": {
+        "family": "mimo",
+        "variant": "",
+        "version": "2.5",
+        "mod": "fast,flash"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "ParseFamilyDetailed(raw=mimo, id=mimo-v2.5-fast-flash) -> (family 'mimo', variant '', version '2.5', mod 'fast,flash')"
+      },
+      "mutation": {
+        "description": "arm-order falsifier: 'fast' is in BOTH mimo's series_tiers and the global modifier set, and extractModifiers cannot reach it (its trailing scan stops at the tier-only token 'flash', which is not a known modifier). Only the tier arm running FIRST captures it. Swap the two switch arms in splitSeriesVariant and this case goes RED"
+      }
+    },
+    {
+      "name": "mimo-v2.5-fast-flash (empty raw, switch-arm order falsifier)",
+      "input": {
+        "raw": "",
+        "id": "mimo-v2.5-fast-flash"
+      },
+      "expected": {
+        "family": "mimo",
+        "variant": "",
+        "version": "2.5",
+        "mod": "fast,flash"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "ParseFamilyDetailed(raw=, id=mimo-v2.5-fast-flash) -> (family 'mimo', variant '', version '2.5', mod 'fast,flash')"
+      },
+      "mutation": {
+        "description": "arm-order falsifier: 'fast' is in BOTH mimo's series_tiers and the global modifier set, and extractModifiers cannot reach it (its trailing scan stops at the tier-only token 'flash', which is not a known modifier). Only the tier arm running FIRST captures it. Swap the two switch arms in splitSeriesVariant and this case goes RED"
+      }
+    },
+    {
+      "name": "kimi-k2.7-code-highspeed: capability modifier suppresses the tier",
+      "input": {
+        "raw": "kimi-k2",
+        "id": "kimi-k2.7-code-highspeed"
+      },
+      "expected": {
+        "family": "kimi",
+        "variant": "k",
+        "version": "2.7",
+        "mod": ""
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "ParseFamilyDetailed(raw=kimi-k2, id=kimi-k2.7-code-highspeed) -> (family 'kimi', variant 'k', version '2.7', mod '')"
+      },
+      "mutation": {
+        "description": "single-tier gate: a letter-IN-key family promotes a tier only when exactly one tier trails the series token AND no capability modifier co-occurs. Removing the multiTier gate turns this case RED"
+      }
+    },
+    {
+      "name": "kimi-k2.5-code-highspeed: capability modifier suppresses the tier",
+      "input": {
+        "raw": "kimi",
+        "id": "kimi-k2.5-code-highspeed"
+      },
+      "expected": {
+        "family": "kimi",
+        "variant": "k",
+        "version": "2.5",
+        "mod": ""
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "ParseFamilyDetailed(raw=kimi, id=kimi-k2.5-code-highspeed) -> (family 'kimi', variant 'k', version '2.5', mod '')"
+      },
+      "mutation": {
+        "description": "single-tier gate: a letter-IN-key family promotes a tier only when exactly one tier trails the series token AND no capability modifier co-occurs. Removing the multiTier gate turns this case RED"
+      }
+    },
+    {
+      "name": "kimi-k2.5-precision-lightning: two tiers suppress the promotion",
+      "input": {
+        "raw": "kimi",
+        "id": "kimi-k2.5-precision-lightning"
+      },
+      "expected": {
+        "family": "kimi",
+        "variant": "k",
+        "version": "2.5",
+        "mod": ""
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "ParseFamilyDetailed(raw=kimi, id=kimi-k2.5-precision-lightning) -> (family 'kimi', variant 'k', version '2.5', mod '')"
+      },
+      "mutation": {
+        "description": "single-tier gate: a letter-IN-key family promotes a tier only when exactly one tier trails the series token AND no capability modifier co-occurs. Removing the multiTier gate turns this case RED"
+      }
+    },
+    {
+      "name": "minimax-m2.5-precision-lightning: two tiers suppress the promotion",
+      "input": {
+        "raw": "minimax",
+        "id": "minimax-m2.5-precision-lightning"
+      },
+      "expected": {
+        "family": "minimax",
+        "variant": "m",
+        "version": "2.5",
+        "mod": ""
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "ParseFamilyDetailed(raw=minimax, id=minimax-m2.5-precision-lightning) -> (family 'minimax', variant 'm', version '2.5', mod '')"
+      },
+      "mutation": {
+        "description": "single-tier gate: a letter-IN-key family promotes a tier only when exactly one tier trails the series token AND no capability modifier co-occurs. Removing the multiTier gate turns this case RED"
+      }
+    },
+    {
+      "name": "mimo-v2.5-code-highspeed: multi-tier family promotes anyway",
+      "input": {
+        "raw": "mimo",
+        "id": "mimo-v2.5-code-highspeed"
+      },
+      "expected": {
+        "family": "mimo",
+        "variant": "",
+        "version": "2.5",
+        "mod": "highspeed"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "ParseFamilyDetailed(raw=mimo, id=mimo-v2.5-code-highspeed) -> (family 'mimo', variant '', version '2.5', mod 'highspeed')"
+      },
+      "mutation": {
+        "description": "multi-tier contrast to the letter-in-key case with the same trailing tokens: mimo promotes where kimi/minimax must not"
+      }
+    },
+    {
+      "name": "mimo-v2.5-precision-lightning: multi-tier family promotes both",
+      "input": {
+        "raw": "mimo",
+        "id": "mimo-v2.5-precision-lightning"
+      },
+      "expected": {
+        "family": "mimo",
+        "variant": "",
+        "version": "2.5",
+        "mod": "lightning,precision"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "ParseFamilyDetailed(raw=mimo, id=mimo-v2.5-precision-lightning) -> (family 'mimo', variant '', version '2.5', mod 'lightning,precision')"
+      },
+      "mutation": {
+        "description": "multi-tier contrast to the letter-in-key case with the same trailing tokens: mimo promotes where kimi/minimax must not"
+      }
     }
   ]
 }
