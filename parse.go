@@ -4508,18 +4508,35 @@ func isSeriesTierToken(tok string) bool {
 // modifier, nor a curated tier is an UNKNOWN finetune token → DECLINE (ok=false),
 // leaving current behavior intact.
 //
-// Promotion rules, which differ by whether the series letter is part of the key:
-//   - letter-in-key families (the default): promote EXACTLY ONE tier, and only
-//     when no thinking/vision modifier also trails the series token. Unchanged.
-//   - letter-not-in-key families: promote EVERY trailing tier when no other known
-//     modifier trails it. Without this the second tier is dropped and the two-tier
+// Promotion rules, which differ by whether the series letter is part of the key.
+// The single predicate that selects between them is multiTier == !letterInKey:
+//   - letter-in-key families (the default: kimi, minimax): promote EXACTLY ONE
+//     tier, and only when no thinking/vision modifier also trails it. The
+//     known-modifier arm is tested FIRST for them, so a token in both sets counts
+//     as a modifier and suppresses the promotion. This is byte-for-byte the
+//     pre-existing behaviour and MUST stay that way: widening it silently changed
+//     8 kimi rows (kimi-k2.7-code-highspeed and siblings) in an earlier pass.
+//   - letter-not-in-key families (mimo): promote EVERY trailing tier, whatever
+//     else trails it. Without this the second tier is dropped and the two-tier
 //     ids collapse onto their single-tier sibling's key.
 //
 // The tier test is FAMILY-SCOPED (isSeriesTierTokenFor): the curated global set
-// plus the per-family extension from modifier_class.json. It runs BEFORE the
-// known-modifier test, because tokens like "free"/"turbo" appear in BOTH sets and
-// the known-modifier arm would otherwise consume them as multi-modifier signals
-// and suppress the promotion the family-scoped curation asked for.
+// plus the per-family extension from modifier_class.json. For the multi-tier
+// (letter-not-in-key) families it runs BEFORE the known-modifier test, because
+// tokens like "free"/"turbo" appear in BOTH sets and the known-modifier arm would
+// otherwise consume them and suppress the promotion the family-scoped curation
+// asked for.
+//
+// ARM-ORDER CAVEAT, measured not assumed: that reorder is currently NOT
+// load-bearing for any id in the catalog. idDrivenDecompose calls
+// extractModifiers on the same id independently and it already peels every
+// globally-known modifier token, so for a token in BOTH sets the final Modifier
+// list is the same either way after CanonicalizeModifiers dedups. Swapping the
+// two arms leaves the whole suite green. The order is kept because the ratified
+// plan mandates it and because it is the correct expression of "a token curated
+// as a tier for THIS family is a tier here"; do not cite it as the mechanism that
+// produces any current key. The joint behaviour the two arms produce IS pinned
+// (series_tier_modifier_corpus.json).
 func splitSeriesVariant(pd *parseData, family Family, idStr string) (variant, version string, tierMods []string, ok bool) {
 	if pd == nil {
 		return "", "", nil, false
@@ -4530,6 +4547,10 @@ func splitSeriesVariant(pd *parseData, family Family, idStr string) (variant, ve
 	}
 	letter := info.SeriesLetter[0]
 	letterInKey := info.seriesLetterInKey()
+	// multiTier selects the promotion policy AND the switch-arm order below. The two
+	// must move together: the arm order decides which bucket a dual-membership token
+	// lands in, and the policy decides whether that bucket promotes.
+	multiTier := !letterInKey
 
 	toks := strings.Split(strings.ToLower(stripVendorNamespace(idStr)), "-")
 
@@ -4582,6 +4603,7 @@ func splitSeriesVariant(pd *parseData, family Family, idStr string) (variant, ve
 	//   - curated series-tier (instruct/turbo/…)   → tier candidate
 	//   - anything else                            → UNKNOWN → DECLINE the series split
 	var tiers []string
+	knownMods := 0
 	for _, t := range rest[idx:] {
 		tt := t
 		if j := strings.IndexByte(tt, ':'); j >= 0 {
@@ -4590,14 +4612,22 @@ func splitSeriesVariant(pd *parseData, family Family, idStr string) (variant, ve
 		switch {
 		case tt == "" || isDateShapedToken(tt) || reContextWindow.MatchString(tt) || isParamSizeToken(tt):
 			// not a tier, not a modifier — ignored residual (context/size/date).
-		case isSeriesTierTokenFor(family, tt):
-			// FIRST, ahead of the known-modifier arm: a token curated as a tier for
-			// THIS family is a tier here even when it is also a global modifier.
+		case multiTier && isSeriesTierTokenFor(family, tt):
+			// Multi-tier families ONLY, and ahead of the known-modifier arm: a token
+			// curated as a tier for THIS family is a tier here even when it is also a
+			// global modifier. Gated so the letter-in-key families keep the ordering
+			// (and therefore the classification) they had before the tier widening.
 			tiers = append(tiers, tt)
 		case isKnownModifierToken(pd, tt):
 			// A capability modifier (thinking/vision/…). It is peeled elsewhere by
-			// extractModifiers, so nothing is captured here; it is merely accounted
-			// for so it does not fall through to the DECLINE arm.
+			// extractModifiers, so nothing is captured here; for the single-tier
+			// families it is COUNTED, because one co-occurring capability modifier
+			// suppresses their promotion.
+			knownMods++
+		case isSeriesTierTokenFor(family, tt):
+			// Single-tier families reach the family-scoped tier test only after the
+			// known-modifier arm has declined the token.
+			tiers = append(tiers, tt)
 		default:
 			// Unknown finetune/provider token (maas/original/fp4/…): DECLINE the
 			// series split entirely (leave current behavior; surfaced as residual).
@@ -4605,15 +4635,26 @@ func splitSeriesVariant(pd *parseData, family Family, idStr string) (variant, ve
 		}
 	}
 
-	// Promote EVERY trailing tier into the Modifier LIST. The Modifier field is a
-	// list and the multiplicity ruling is live, so neither a second tier nor a
-	// co-occurring capability modifier is a reason to drop a tier any more. The two
-	// restrictions this replaces (exactly one tier, and no co-occurring known
-	// modifier) each silently discarded a curated token: the second restriction lost
-	// the speed tier on ids that also carry a capability token, and the first lost
-	// the second half of a two-tier speech id. Attribute-class tiers stay out of the
+	// Promotion, gated by the same multiTier predicate that ordered the arms above.
+	//
+	// Multi-tier (letter-not-in-key) families promote EVERY trailing tier into the
+	// Modifier LIST: the Modifier field is a list and the multiplicity ruling is
+	// live, so neither a second tier nor a co-occurring capability modifier is a
+	// reason to drop a tier. The two restrictions this lifts each silently
+	// discarded a curated token — the co-occurrence restriction lost the speed tier
+	// on ids that also carry a capability token, and the count restriction lost the
+	// second half of a two-tier speech id. Attribute-class tiers stay out of the
 	// entity key by their class, not by being dropped here.
-	tierMods = append(tierMods, tiers...)
+	//
+	// Letter-in-key families keep the ORIGINAL restriction: exactly one tier and no
+	// co-occurring capability modifier. Their keyspace was normalized under that
+	// rule and widening it is a silent re-decomposition of ids this lever never
+	// asked to touch.
+	if multiTier {
+		tierMods = append(tierMods, tiers...)
+	} else if len(tiers) == 1 && knownMods == 0 {
+		tierMods = append(tierMods, tiers[0])
+	}
 
 	if !letterInKey {
 		// The letter and its number were consumed for the VERSION above; the variant
