@@ -820,3 +820,96 @@ func TestBuildOutput_CoalescePrefersTheStrongerJoin(t *testing.T) {
 		t.Errorf("q2_k weights_bytes = %d, want 333 (a quant only the loser measured is still kept)", got)
 	}
 }
+
+// --------------------------------------------------------------------------
+// The quant token written to the corpus is the CANONICAL enum name
+// --------------------------------------------------------------------------
+
+// TestBuildOutput_CanonicalQuantToken pins that a row's `quant` is the canonical
+// Quantization wire name, not the raw Ollama tag token. Ollama publishes 16-bit
+// float as `fp16`; the canonical name is `f16` and `fp16` is deliberately NOT in
+// the enum's name table, so the loader (ValidateQuantVRAMTable) REJECTS a corpus
+// carrying it — writing the raw token would produce a file codegen cannot read.
+// Normalising here is the documented obligation of an ingest layer.
+//
+// It also keeps the merge honest: curation is keyed by quant, so a curated `f16`
+// row's architecture facts survive a refresh that reports the same quant as
+// `fp16`, instead of vanishing with a row that appears to have been retired.
+func TestBuildOutput_CanonicalQuantToken(t *testing.T) {
+	existing := quantFileOut{
+		SchemaVersion: quantVRAMSchemaVersion,
+		Models: []quantModelOut{{
+			ModelID: "llama-3.3-70b-instruct",
+			Rows: []quantRowOut{
+				{Quant: "f16", WeightsBytes: 1, Layers: 80, KVHeads: 8, HeadDim: 128},
+			},
+		}},
+	}
+	tags := []fetchedTag{
+		{OllamaID: "llama3.3:70b-instruct-fp16", WeightsBytes: 141117917888, Digest: "sha256:fp16"},
+	}
+	out, _ := buildOutput(tags, cannedCatalog(), nil, nil, emptyCurated, existing)
+
+	var llama *quantModelOut
+	for i := range out.Models {
+		if out.Models[i].ModelID == "llama-3.3-70b-instruct" {
+			llama = &out.Models[i]
+		}
+	}
+	if llama == nil {
+		t.Fatalf("expected the joined llama entry, got %+v", out.Models)
+	}
+	if len(llama.Rows) != 1 {
+		t.Fatalf("want exactly 1 row (fp16 IS the curated f16 quant, not a second one): %+v", llama.Rows)
+	}
+	r := llama.Rows[0]
+	if r.Quant != "f16" {
+		t.Errorf("row quant = %q, want %q;\n"+
+			"  what went wrong: the raw Ollama tag token was written instead of the canonical enum name\n"+
+			"  why: parse/data/quant_vram.json is validated against the Quantization name table, which has no \"fp16\"\n"+
+			"  where: buildOutput (cmd/bestiary-ollama/main.go)\n"+
+			"  how to fix: write the canonical name of the detected Quantization", r.Quant, "f16")
+	}
+	if r.WeightsBytes != 141117917888 {
+		t.Errorf("weights_bytes = %d, want the refreshed figure (weights are fetch-owned)", r.WeightsBytes)
+	}
+	if r.Layers != 80 || r.KVHeads != 8 || r.HeadDim != 128 {
+		t.Errorf("curated arch facts lost across the fp16/f16 spelling: layers=%d kv_heads=%d head_dim=%d, want 80/8/128",
+			r.Layers, r.KVHeads, r.HeadDim)
+	}
+}
+
+// TestBuildOutput_DropsUnnameableQuant pins the refusal: a quant-looking token
+// with no canonical name (Ollama could publish a scheme this build predates)
+// resolves to the QuantizationOther escape, which curated data may not use. The
+// row is DROPPED rather than written, because writing it produces a corpus the
+// loader rejects outright — one unreadable row would take the whole catalog down.
+// The tag's siblings are unaffected.
+func TestBuildOutput_DropsUnnameableQuant(t *testing.T) {
+	tags := []fetchedTag{
+		{OllamaID: "llama3.3:70b-instruct-q4_K_M", WeightsBytes: 43033509888},
+		{OllamaID: "llama3.3:70b-instruct-iq9_zz", WeightsBytes: 999},
+	}
+	out, _ := buildOutput(tags, cannedCatalog(), nil, nil, emptyCurated, emptyExisting)
+
+	for _, m := range out.Models {
+		for _, r := range m.Rows {
+			var q bestiary.Quantization
+			if err := q.UnmarshalText([]byte(r.Quant)); err != nil {
+				t.Errorf("row quant %q on %q is not a canonical Quantization name: %v", r.Quant, m.ModelID, err)
+			}
+			if q == bestiary.QuantizationOther {
+				t.Errorf("row quant %q on %q resolved to the Other escape; curated rows may not use it", r.Quant, m.ModelID)
+			}
+		}
+	}
+	var llama *quantModelOut
+	for i := range out.Models {
+		if out.Models[i].ModelID == "llama-3.3-70b-instruct" {
+			llama = &out.Models[i]
+		}
+	}
+	if llama == nil || len(llama.Rows) != 1 || llama.Rows[0].Quant != "q4_k_m" {
+		t.Fatalf("the nameable sibling must survive alone: %+v", llama)
+	}
+}

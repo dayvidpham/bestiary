@@ -641,7 +641,19 @@ func buildOutput(
 	var groupOrder []string
 
 	for _, ft := range tags {
-		_, quantRaw, stripped := bestiary.DetectQuantization(bestiary.ModelID(ft.OllamaID))
+		q, quantRaw, stripped := bestiary.DetectQuantization(bestiary.ModelID(ft.OllamaID))
+		quant, ok := canonicalQuantName(q, quantRaw)
+		if !ok {
+			// Writing this row would produce a corpus the loader rejects outright,
+			// taking the whole catalog down for one unreadable row.
+			fmt.Fprintf(os.Stderr,
+				"bestiary-ollama: skip %q: quant token %q has no canonical Quantization name\n"+
+					"  What: the token is not in the Quantization name table, so curated data cannot carry it\n"+
+					"  Where: buildOutput\n"+
+					"  How to fix: add the scheme to the Quantization enum, then re-run the refresh\n",
+				ft.OllamaID, quantRaw)
+			continue
+		}
 		strippedID := string(stripped)
 		g := groups[strippedID]
 		if g == nil {
@@ -650,7 +662,7 @@ func buildOutput(
 			groupOrder = append(groupOrder, strippedID)
 		}
 		g.rows = append(g.rows, quantRowOut{
-			Quant:        strings.ToLower(quantRaw),
+			Quant:        quant,
 			WeightsBytes: ft.WeightsBytes,
 			Digest:       ft.Digest,
 		})
@@ -733,6 +745,40 @@ func buildOutput(
 	sort.Slice(out.Models, func(i, j int) bool { return out.Models[i].ModelID < out.Models[j].ModelID })
 	sort.Strings(unlinked)
 	return out, unlinked
+}
+
+// quantAliases maps the spellings Ollama publishes onto the canonical
+// Quantization wire names. The enum deliberately does not accept these aliases
+// (Quantization.UnmarshalText rejects "fp16"), and normalising them is the
+// documented obligation of an ingest layer rather than of the enum.
+var quantAliases = map[string]string{
+	"fp16": "f16",
+	"fp32": "f32",
+}
+
+// canonicalQuantName renders the quant token a corpus row carries: ALWAYS the
+// canonical name of a named Quantization, never the raw Ollama tag. The corpus
+// is validated against the enum's name table, so a raw token that is not a
+// canonical name makes the whole file unreadable; and because curation is keyed
+// by quant, a raw spelling would also orphan the curated architecture facts of
+// the very same quant (Ollama's "fp16" against a curated "f16").
+//
+// It reports false when the token cannot be named — an unrecognised scheme
+// resolves to the QuantizationOther escape, which curated data may not use. The
+// caller drops that row rather than writing one the loader will reject.
+func canonicalQuantName(q bestiary.Quantization, raw string) (string, bool) {
+	if q != bestiary.QuantizationNone && q != bestiary.QuantizationOther {
+		return q.String(), true
+	}
+	lower := strings.ToLower(raw)
+	if alias, ok := quantAliases[lower]; ok {
+		lower = alias
+	}
+	parsed, err := bestiary.ParseQuantization(lower)
+	if err != nil || parsed == bestiary.QuantizationNone || parsed == bestiary.QuantizationOther {
+		return "", false
+	}
+	return parsed.String(), true
 }
 
 // mergeEntry assembles one output entry: fetch-owned fields from the fresh rows,
