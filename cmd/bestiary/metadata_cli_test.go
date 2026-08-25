@@ -698,9 +698,9 @@ func TestSourcesExport_Union_DedupExactKey(t *testing.T) {
 	}
 }
 
-// TestSourcesExport_BestiarySelfReferentialRow is the AC-17 export oracle: the
-// self-referential bestiary source is a first-class dimension row, so `sources
-// --export` emits it with the id/uri/canonical-name reached by the FK join, and the
+// TestSourcesExport_BestiarySelfReferentialRow is the export oracle for the
+// self-referential bestiary source row: that source is a first-class dimension
+// row, so `sources --export` emits it with the id/uri/canonical-name reached by the FK join, and the
 // emitted document round-trips — re-decoding the export and re-exporting from it
 // yields the same bestiary row, which is what makes the export promotable straight
 // back into parse/data/datasources.json.

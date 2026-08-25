@@ -84,9 +84,9 @@ func assertSelfMintedCanonical(t *testing.T, path string, nomina []bestiary.Nome
 	}
 }
 
-// TestCanonicalAttestation_SelfReferentialSource_BothMintPaths is the AC-17 oracle:
-// BOTH shared mint joints attribute their self-minted canonical nomina to the
-// self-referential bestiary source. The from-entities joint (MintNomina) and the
+// TestCanonicalAttestation_SelfReferentialSource_BothMintPaths is the oracle for the
+// shared mint joints: BOTH of them attribute their self-minted canonical nomina to
+// the self-referential bestiary source. The from-entities joint (MintNomina) and the
 // from-models joint (MintNominaFromModels, the sync path) are separate call sites
 // that previously hard-coded different sources, so each is asserted independently —
 // a flip applied to only one of them fails here.
