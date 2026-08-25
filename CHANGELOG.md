@@ -14,6 +14,33 @@ for its **Go module tags** (`vX.Y.Z`).
 
 ## [Unreleased]
 
+### Added
+
+- **`CreatorGroups()` / `SeriesGroups()` — a browsable Creator > Family > Series > entities
+  projection.** A read-only view over relations that already exist (the curated
+  `Family`→`Creator` seed and the computed Series/Release taxonomy); like the taxonomy it is
+  computed on read and can never rename an entity. It exists because `SeriesAll()` alone is
+  flat — several hundred lines with no organizing level above them — so the projection puts
+  the two questions a reader actually arrives with, "whose models?" then "which line?", above
+  the generation-level detail. The creator set is derived from the curated seed, so growing
+  `creators.json` grows the tree with no code change.
+- **The base hoist: no `(base)` node anywhere.** A series' un-named release is not a member
+  of the line alongside the named ones — it *is* the line, un-named. Rendering it as a
+  sibling node called `(base)` invented a level that does not exist and buried the entities
+  of a line with no named releases one click deeper than the entities of a line that has
+  them. Those entities are now hoisted onto the series itself (`SeriesGroup.Hoisted`), and
+  only genuinely named releases remain as releases. `SeriesGroup.Shape()` reports which of
+  `base-only` / `mixed` / `named-only` a line is, so a renderer can lay out the two levels
+  correctly (a mixed line shows its hoisted entities above, and visually distinct from, its
+  release disclosures). The hoist is a re-parenting, never a filter: a test asserts the
+  projection is an exact partition of `Entities()`, so an implementation that dropped the
+  un-named entities instead of lifting them fails loudly rather than rendering a plausible
+  but smaller tree.
+- Entities re-homed by the curated strays table (`series.json`) are shown under the line
+  they were re-homed onto, which is the point of the table — so a stray can appear under a
+  creator its own family token does not name. A test pins that this divergence is confined
+  to strays and can never become a silent misattribution of a normal entity.
+
 ### Changed
 
 - **Web: a readability type scale governs every text size.** The `bestiary-web` stylesheet
