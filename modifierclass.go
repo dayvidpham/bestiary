@@ -95,6 +95,15 @@ func (t *modifierClassTable) classify(token string, fam Family) ModifierClass {
 type modifierClassTable struct {
 	global    map[string]ModifierClass
 	perFamily map[Family]map[string]ModifierClass
+	// seriesTiers is the PER-FAMILY extension of the curated series-tier token set
+	// (parse.go's seriesTierModifiers). It maps a lowercase family to the extra
+	// tokens that, for THAT family only, count as a tier trailing the series token
+	// inside splitSeriesVariant. Scoping the extension per family is what keeps a
+	// tier token added for one letter-series family (mimo) from reclassifying the
+	// same token for the other letter-series families (kimi, minimax) — the global
+	// set is shared by all three and must never grow for a single family's sake.
+	// A family with no entry (the common case) behaves exactly as before.
+	seriesTiers map[Family]map[string]struct{}
 }
 
 var (
@@ -119,8 +128,9 @@ func loadModifierClassTable() *modifierClassTable {
 // class strings within the file are skipped rather than aborting the whole load.
 func initModifierClassTable() *modifierClassTable {
 	tbl := &modifierClassTable{
-		global:    map[string]ModifierClass{},
-		perFamily: map[Family]map[string]ModifierClass{},
+		global:      map[string]ModifierClass{},
+		perFamily:   map[Family]map[string]ModifierClass{},
+		seriesTiers: map[Family]map[string]struct{}{},
 	}
 
 	raw, err := parseDataFS.ReadFile("parse/data/modifier_class.json")
@@ -135,6 +145,11 @@ func initModifierClassTable() *modifierClassTable {
 		SchemaVer      int                          `json:"schema_version"`
 		Global         map[string]string            `json:"global"`
 		FamilyOverride map[string]map[string]string `json:"family_overrides"`
+		// SeriesTiers MUST be decoded here: encoding/json silently DROPS any key of
+		// the data file that has no matching struct field, so a series_tiers block
+		// added to modifier_class.json without this field would load as an empty
+		// extension and the lever would fail with no error at all.
+		SeriesTiers map[string][]string `json:"series_tiers"`
 	}
 	if err := json.Unmarshal(raw, &file); err != nil {
 		return tbl
@@ -158,7 +173,47 @@ func initModifierClassTable() *modifierClassTable {
 			tbl.perFamily[fkey][strings.ToLower(token)] = c
 		}
 	}
+	for fam, toks := range file.SeriesTiers {
+		fkey := Family(strings.ToLower(fam))
+		for _, tok := range toks {
+			tok = strings.ToLower(strings.TrimSpace(tok))
+			if tok == "" {
+				continue
+			}
+			if tbl.seriesTiers[fkey] == nil {
+				tbl.seriesTiers[fkey] = map[string]struct{}{}
+			}
+			tbl.seriesTiers[fkey][tok] = struct{}{}
+		}
+	}
 	return tbl
+}
+
+// seriesTierTokensFor returns the curated per-family series-tier extension for fam
+// (nil when the family has none, which is the common case). A nil receiver or a
+// degraded (load-failed) table returns nil, so the caller falls back to the global
+// series-tier set alone — the same graceful-degrade contract classify() carries.
+func (t *modifierClassTable) seriesTierTokensFor(fam Family) map[string]struct{} {
+	if t == nil || fam == "" {
+		return nil
+	}
+	return t.seriesTiers[Family(strings.ToLower(string(fam)))]
+}
+
+// isSeriesTierTokenFor reports whether tok counts as a series-tier token for fam:
+// the curated GLOBAL set (seriesTierModifiers, shared by every letter-series
+// family) UNION the per-family extension declared in modifier_class.json. It is
+// the family-scoped replacement for the bare global membership test and is
+// consulted only inside splitSeriesVariant.
+func isSeriesTierTokenFor(fam Family, tok string) bool {
+	if isSeriesTierToken(tok) {
+		return true
+	}
+	if over := loadModifierClassTable().seriesTierTokensFor(fam); over != nil {
+		_, ok := over[strings.ToLower(tok)]
+		return ok
+	}
+	return false
 }
 
 // parseModifierClass maps a curated class string ("identity"/"attribute") to a

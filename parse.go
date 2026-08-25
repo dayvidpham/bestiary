@@ -39,10 +39,29 @@ type familyOverride struct {
 // such that an ID token of the form "<letter><number>" (kimi-k2, minimax-m1,
 // mimo-v2.5) decomposes to variant=<letter> + version=<number>, instead of the
 // whole token becoming the variant. Empty when the family has no letter series.
+//
+// SeriesLetterInKey says whether that series letter also lands in the VARIANT
+// slot — i.e. whether it is part of the entity key. It is a POINTER on purpose:
+// absent means true, so every family curated before this field existed keeps the
+// letter in its key BY CONSTRUCTION and no existing key can move by omission. Set
+// it to false for a family whose letter is a NAMING convention rather than a
+// product line (the ids carry it, the vendor's own naming does not distinguish a
+// separate line by it): the letter and its number are still consumed for VERSION
+// extraction, but the variant slot is left empty so the version carries the whole
+// generation. Dropping the series letter entirely is NOT the same change and is
+// measurably destructive — it breaks version extraction and residue detection.
 type familyInfo struct {
-	Members      []string `json:"members"`
-	BareGenSplit bool     `json:"bare_gen_split"`
-	SeriesLetter string   `json:"series_letter,omitempty"`
+	Members           []string `json:"members"`
+	BareGenSplit      bool     `json:"bare_gen_split"`
+	SeriesLetter      string   `json:"series_letter,omitempty"`
+	SeriesLetterInKey *bool    `json:"series_letter_in_key,omitempty"`
+}
+
+// seriesLetterInKey reports whether this family's series letter belongs in the
+// variant slot. The absent (nil) case is TRUE — the pre-existing behaviour for
+// every family that never declares the field.
+func (i familyInfo) seriesLetterInKey() bool {
+	return i.SeriesLetterInKey == nil || *i.SeriesLetterInKey
 }
 
 // versionPattern holds a named regex pattern for versioned-variant decomposition.
@@ -1468,7 +1487,7 @@ func InferFamilyFromIDWithVariant(id ModelID, p Provider) (Family, string, strin
 		if base, ok := seriesBaseFamily(pd, family); ok {
 			family = base
 		}
-		// tierMod is ignored here: InferFamilyFromIDWithVariant has no Modifier slot;
+		// tierMods is ignored here: InferFamilyFromIDWithVariant has no Modifier slot;
 		// the tier→Modifier promotion is applied by ParseFamilyDetailed.
 		if sv, svv, _, ok := splitSeriesVariant(pd, family, string(id)); ok {
 			variant, version = sv, svv
@@ -1938,8 +1957,8 @@ func idDrivenDecompose(id ModelID, p Provider) (Family, string, string, []string
 	// promotion still applies; with the Modifier LIST it composes atop any capability
 	// modifier (CanonicalizeModifiers dedups against tiers already peeled above).
 	if pd, pdErr := loadParseData(); pdErr == nil {
-		if _, _, tierMod, ok := splitSeriesVariant(pd, family, string(id)); ok && tierMod != "" {
-			modifiers = append(modifiers, tierMod)
+		if _, _, tierMods, ok := splitSeriesVariant(pd, family, string(id)); ok && len(tierMods) > 0 {
+			modifiers = append(modifiers, tierMods...)
 		}
 		// a global modifier left in the variant slot by the empty-family
 		// inference (e.g. "instruct") is moved to the modifier list here, BEFORE the
@@ -2550,12 +2569,12 @@ func ParseFamilyDetailed(raw Family, id ModelID, p Provider) (Family, string, st
 	// no other modifier (thinking/vision from the ID or raw family) is already present;
 	// multi-modifier cases keep the existing modifier and drop the tier (surfaced).
 	if pd, pdErr := loadParseData(); pdErr == nil {
-		if sv, svv, tierMod, ok := splitSeriesVariant(pd, family, string(cleanedID)); ok {
+		if sv, svv, tierMods, ok := splitSeriesVariant(pd, family, string(cleanedID)); ok {
 			variant, version = sv, svv
-			// the tier COMPOSES into the modifier LIST (CanonicalizeModifiers
+			// the tiers COMPOSE into the modifier LIST (CanonicalizeModifiers
 			// dedups against any already-peeled tier/capability), no longer dropped.
-			if tierMod != "" {
-				modifier = CanonicalizeModifiers(append(append([]string{}, modifier...), tierMod))
+			if len(tierMods) > 0 {
+				modifier = CanonicalizeModifiers(append(append([]string{}, modifier...), tierMods...))
 			}
 		}
 	}
@@ -4481,22 +4500,36 @@ func isSeriesTierToken(tok string) bool {
 }
 
 // splitSeriesVariant implements the (d) series split. It returns
-// (variant=series-letter, version, tierMod, ok). tierMod is the curated series-tier
-// token promoted to a Modifier when EXACTLY ONE tier trails the
-// series token AND no thinking/vision modifier also trails it; otherwise tierMod is
-// "" (multi-modifier cases keep the series split but leave the tier uncaptured,
-// pending the Modifier-multiplicity ruling). A trailing
-// token that is neither date/context/size, a known modifier, nor a curated tier is
-// an UNKNOWN finetune token → DECLINE (ok=false), leaving current behavior intact.
-func splitSeriesVariant(pd *parseData, family Family, idStr string) (variant, version, tierMod string, ok bool) {
+// (variant=series-letter, version, tierMods, ok). tierMods holds the curated
+// series-tier tokens promoted to Modifiers. The return is a LIST, not a single
+// token: an id can trail two tiers (mimo-v2.5-tts-voiceclone) and a single-valued
+// return silently drops the second one, which loses the entity distinction the
+// second tier carries. A trailing token that is neither date/context/size, a known
+// modifier, nor a curated tier is an UNKNOWN finetune token → DECLINE (ok=false),
+// leaving current behavior intact.
+//
+// Promotion rules, which differ by whether the series letter is part of the key:
+//   - letter-in-key families (the default): promote EXACTLY ONE tier, and only
+//     when no thinking/vision modifier also trails the series token. Unchanged.
+//   - letter-not-in-key families: promote EVERY trailing tier when no other known
+//     modifier trails it. Without this the second tier is dropped and the two-tier
+//     ids collapse onto their single-tier sibling's key.
+//
+// The tier test is FAMILY-SCOPED (isSeriesTierTokenFor): the curated global set
+// plus the per-family extension from modifier_class.json. It runs BEFORE the
+// known-modifier test, because tokens like "free"/"turbo" appear in BOTH sets and
+// the known-modifier arm would otherwise consume them as multi-modifier signals
+// and suppress the promotion the family-scoped curation asked for.
+func splitSeriesVariant(pd *parseData, family Family, idStr string) (variant, version string, tierMods []string, ok bool) {
 	if pd == nil {
-		return "", "", "", false
+		return "", "", nil, false
 	}
 	info, has := pd.families[Family(strings.ToLower(string(family)))]
 	if !has || info.SeriesLetter == "" {
-		return "", "", "", false
+		return "", "", nil, false
 	}
 	letter := info.SeriesLetter[0]
+	letterInKey := info.seriesLetterInKey()
 
 	toks := strings.Split(strings.ToLower(stripVendorNamespace(idStr)), "-")
 
@@ -4517,7 +4550,7 @@ func splitSeriesVariant(pd *parseData, family Family, idStr string) (variant, ve
 		}
 	}
 	if si < 0 {
-		return "", "", "", false
+		return "", "", nil, false
 	}
 
 	rest := toks[si+1:]
@@ -4549,7 +4582,6 @@ func splitSeriesVariant(pd *parseData, family Family, idStr string) (variant, ve
 	//   - curated series-tier (instruct/turbo/…)   → tier candidate
 	//   - anything else                            → UNKNOWN → DECLINE the series split
 	var tiers []string
-	knownMods := 0
 	for _, t := range rest[idx:] {
 		tt := t
 		if j := strings.IndexByte(tt, ':'); j >= 0 {
@@ -4558,27 +4590,37 @@ func splitSeriesVariant(pd *parseData, family Family, idStr string) (variant, ve
 		switch {
 		case tt == "" || isDateShapedToken(tt) || reContextWindow.MatchString(tt) || isParamSizeToken(tt):
 			// not a tier, not a modifier — ignored residual (context/size/date).
-		case isKnownModifierToken(pd, tt):
-			knownMods++
-		case isSeriesTierToken(tt):
+		case isSeriesTierTokenFor(family, tt):
+			// FIRST, ahead of the known-modifier arm: a token curated as a tier for
+			// THIS family is a tier here even when it is also a global modifier.
 			tiers = append(tiers, tt)
+		case isKnownModifierToken(pd, tt):
+			// A capability modifier (thinking/vision/…). It is peeled elsewhere by
+			// extractModifiers, so nothing is captured here; it is merely accounted
+			// for so it does not fall through to the DECLINE arm.
 		default:
-			// Unknown finetune/provider token (omni/maas/original/fp4/tts/…): DECLINE
-			// the series split entirely (leave current behavior; surfaced as residual).
-			return "", "", "", false
+			// Unknown finetune/provider token (maas/original/fp4/…): DECLINE the
+			// series split entirely (leave current behavior; surfaced as residual).
+			return "", "", nil, false
 		}
 	}
 
-	// promote a single trailing tier to the Modifier ONLY when there
-	// is exactly one tier and NO co-occurring thinking/vision modifier. Multi-modifier
-	// cases (tier + thinking/vision, or 2+ tiers) keep the series split but leave the
-	// tier uncaptured — the Modifier field is single-valued and the multiplicity rule
-	// is pending a ruling; never picked here unilaterally.
-	if len(tiers) == 1 && knownMods == 0 {
-		tierMod = tiers[0]
-	}
+	// Promote EVERY trailing tier into the Modifier LIST. The Modifier field is a
+	// list and the multiplicity ruling is live, so neither a second tier nor a
+	// co-occurring capability modifier is a reason to drop a tier any more. The two
+	// restrictions this replaces (exactly one tier, and no co-occurring known
+	// modifier) each silently discarded a curated token: the second restriction lost
+	// the speed tier on ids that also carry a capability token, and the first lost
+	// the second half of a two-tier speech id. Attribute-class tiers stay out of the
+	// entity key by their class, not by being dropped here.
+	tierMods = append(tierMods, tiers...)
 
-	return string(letter), ver, tierMod, true
+	if !letterInKey {
+		// The letter and its number were consumed for the VERSION above; the variant
+		// slot stays empty so the key renders as <family>@<version>{...}.
+		return "", ver, tierMods, true
+	}
+	return string(letter), ver, tierMods, true
 }
 
 // idDrivenVersion is the consolidated ID-driven version extractor.
