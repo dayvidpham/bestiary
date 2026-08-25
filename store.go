@@ -20,7 +20,7 @@ import (
 // NOTE: this is the SQLite store migration version (models cache + BCNF
 // provenance tables). It is DISTINCT from BestiarySchemaVersion in version.go,
 // which versions the public JSON output schema; do not conflate the two.
-const currentSchemaVersion = 8
+const currentSchemaVersion = 9
 
 // schemaMetaSQL creates the schema_meta table used to track migration state.
 // Safe to run on any existing database (CREATE TABLE IF NOT EXISTS).
@@ -457,16 +457,78 @@ const nominaV8TableSQL = `CREATE TABLE IF NOT EXISTS nomina (
 // authority (whose VOICE), method (HOW it entered), and ingested_at (committed snapshot).
 // It has NO primary key — the set is owned by (value, scheme, entity_key) and joined back
 // to nomina, so two sources asserting one name are two rows, never a collision.
+//
+// archived_url (v9) is LAST in the declaration order deliberately: SQLite ALTER TABLE
+// ADD COLUMN appends, so a fresh v9 table and a migrated v8 one are column-order
+// identical (the schemaSQL/modelV6Columns discipline). It is a durability aid for
+// source_url, not a provenance level of its own — see NomenAttestation.ArchivedURL.
 const nomenAttestationsTableSQL = `CREATE TABLE IF NOT EXISTS nomen_attestations (
-    value       TEXT NOT NULL,
-    scheme      TEXT NOT NULL,
-    entity_key  TEXT NOT NULL,
-    source_url  TEXT NOT NULL DEFAULT '',
-    source_id   TEXT NOT NULL REFERENCES data_sources(data_source_id),
-    authority   TEXT NOT NULL DEFAULT 'unknown',
-    method      TEXT NOT NULL DEFAULT 'unknown',
-    ingested_at TEXT NOT NULL DEFAULT ''
+    value        TEXT NOT NULL,
+    scheme       TEXT NOT NULL,
+    entity_key   TEXT NOT NULL,
+    source_url   TEXT NOT NULL DEFAULT '',
+    source_id    TEXT NOT NULL REFERENCES data_sources(data_source_id),
+    authority    TEXT NOT NULL DEFAULT 'unknown',
+    method       TEXT NOT NULL DEFAULT 'unknown',
+    ingested_at  TEXT NOT NULL DEFAULT '',
+    archived_url TEXT NOT NULL DEFAULT ''
 );`
+
+// nomenAttestationV9Columns is the ordered list of the one column v9 adds to the
+// nomen_attestations table: archived_url, the archive.org snapshot of a harvested
+// attestation's live source_url. It is NOT NULL TEXT with an empty-string default,
+// which SQLite ADD COLUMN accepts on a populated table — so every pre-existing row
+// keeps its values and gains an empty snapshot, an honest "none recorded".
+var nomenAttestationV9Columns = []modelV6Column{
+	{"archived_url", `ALTER TABLE nomen_attestations ADD COLUMN archived_url TEXT NOT NULL DEFAULT ''`},
+}
+
+// ensureNomenAttestationColumnsV9 adds any of the v9 columns the nomen_attestations
+// table is missing, ALTERing only the absent ones (presence read from
+// pragma_table_info). It is the v9 sibling of ensureModelColumnsV6/V7: idempotent and
+// self-healing, so it is a no-op when the column already exists (a fresh v9 table, or
+// a re-run — an unguarded second ADD COLUMN is a hard SQLite error, which is exactly
+// why the guard is not optional), backfills it on a v8→v9 upgrade, and heals an
+// intermediate-v9 cache whose schema_meta reads 9 but whose child table predates the
+// column. It does nothing when the table is absent, leaving creation to the
+// fresh/migration paths, and manages no transaction of its own so it composes inside
+// migrateToV9's flow and standalone from OpenStore.
+func ensureNomenAttestationColumnsV9(conn *sqlite.Conn) error {
+	existing, err := tableColumnSet(conn, "nomen_attestations")
+	if err != nil {
+		return fmt.Errorf("read nomen_attestations columns: %w", err)
+	}
+	if len(existing) == 0 {
+		// No nomen_attestations table yet — nothing to heal.
+		return nil
+	}
+	for _, col := range nomenAttestationV9Columns {
+		if existing[col.name] {
+			continue
+		}
+		if err := sqlitex.ExecuteTransient(conn, col.sql, nil); err != nil {
+			return fmt.Errorf("add missing nomen_attestations column %q: %w\n"+
+				"  What: adding the archive-snapshot column failed\n"+
+				"  Why: ALTER TABLE ADD COLUMN was rejected on a nomen_attestations table missing the column\n"+
+				"  Where: store.go ensureNomenAttestationColumnsV9\n"+
+				"  How to fix: inspect the nomen_attestations table schema; delete the cache to rebuild it if corrupt",
+				col.name, err)
+		}
+	}
+	return nil
+}
+
+// migrateToV9 upgrades a v8 database to v9. It is PURELY ADDITIVE — one presence-
+// guarded ALTER TABLE ADD COLUMN on nomen_attestations, no table dropped, recreated or
+// reordered (the migrateToV7 additive precedent, not the migrateToV6/V8 recreate one),
+// so it is zero-data-loss by construction: every pre-existing row keeps every value and
+// gains an empty archived_url.
+func migrateToV9(conn *sqlite.Conn) error {
+	if err := ensureNomenAttestationColumnsV9(conn); err != nil {
+		return fmt.Errorf("v8→v9: add nomen_attestations archive column: %w", err)
+	}
+	return nil
+}
 
 // creatorsTableSQL is the v8 creators BCNF dimension: Family → Creator, keyed by family.
 // Because Creator is functionally dependent on Family (Family → Creator), storing it on
@@ -891,6 +953,17 @@ func OpenStore(path string) (*Store, error) {
 		return nil, fmt.Errorf("bestiary: OpenStore: ensure v8 naming tables on %s: %w", path, err)
 	}
 
+	// Self-heal the v9 archive-snapshot column for the same intermediate-cache reason:
+	// a database built by an intermediate v9 build records schema_meta=9 (so the
+	// version-gated migration above never runs) but its nomen_attestations table may
+	// predate archived_url, and a read would then fail with "no such column". Presence-
+	// guarded and idempotent — a no-op for an already-complete v9 table. It runs AFTER
+	// ensureNominaV8, which may itself have just created the table.
+	if err := ensureNomenAttestationColumnsV9(conn); err != nil {
+		_ = conn.Close()
+		return nil, fmt.Errorf("bestiary: OpenStore: ensure v9 attestation columns on %s: %w", path, err)
+	}
+
 	return &Store{conn: conn, path: path}, nil
 }
 
@@ -1056,6 +1129,15 @@ func migrateSchema(conn *sqlite.Conn, fromVersion int) error {
 		if fromVersion < 8 {
 			if err := migrateToV8(conn); err != nil {
 				return fmt.Errorf("bestiary: migrateSchema: v7→v8: %w", err)
+			}
+		}
+		// The v8→v9 step adds the archive-snapshot column to nomen_attestations. It is
+		// additive (ALTER TABLE ADD COLUMN — no recreation), so it applies to every
+		// existing database that predates v9, including one just brought to v8 by the arm
+		// above (chained …→v8→v9).
+		if fromVersion < 9 {
+			if err := migrateToV9(conn); err != nil {
+				return fmt.Errorf("bestiary: migrateSchema: v8→v9: %w", err)
 			}
 		}
 	}
@@ -1672,8 +1754,8 @@ func (s *Store) UpsertNomina(ctx context.Context, nomina []Nomen) error {
 	) VALUES (?1, ?2, ?3, ?4)`
 	const delChildSQL = `DELETE FROM nomen_attestations WHERE value = ?1 AND scheme = ?2 AND entity_key = ?3`
 	const insChildSQL = `INSERT INTO nomen_attestations (
-		value, scheme, entity_key, source_url, source_id, authority, method, ingested_at
-	) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)`
+		value, scheme, entity_key, source_url, source_id, authority, method, ingested_at, archived_url
+	) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9)`
 
 	for i := range nomina {
 		n := &nomina[i]
@@ -1710,6 +1792,7 @@ func (s *Store) UpsertNomina(ctx context.Context, nomina []Nomen) error {
 				Args: []any{
 					n.Value, schemeStr, entityKey,
 					at.SourceURL, string(at.Source), at.Authority.String(), at.Method.String(), at.IngestedAt,
+					at.ArchivedURL,
 				},
 			})
 			if err != nil {
@@ -1731,8 +1814,8 @@ func (s *Store) UpsertNomina(ctx context.Context, nomina []Nomen) error {
 // nomen_attestations child rows back into each Nomen's Attestations set (LEFT so a
 // parent with no attestations still yields a Nomen), grouping child rows by the parent
 // triple and sorting each set by the TOTAL lessAttestation key (sortAndDedupAttestations)
-// — so the full per-attestation provenance (SourceURL, Source, Authority, Method,
-// IngestedAt) round-trips losslessly, INCLUDING a curated-authored Authority that differs
+// — so the full per-attestation provenance (SourceURL, ArchivedURL, Source, Authority,
+// Method, IngestedAt) round-trips losslessly, INCLUDING a curated-authored Authority that differs
 // from the scheme/source default (the case the deleted v7 single-attestation bridge could
 // not carry). The ResolvesTo EntityRef is reconstructed by PARSING the stored entity_key
 // back into its tuple (parseEntityKey); scheme/status/authority/method tokens decode via
@@ -1746,7 +1829,7 @@ func (s *Store) QueryNomina(ctx context.Context) ([]Nomen, error) {
 	var order []tripleKey
 
 	const query = `SELECT n.value, n.scheme, n.entity_key, n.status,
-		a.source_url, a.source_id, a.authority, a.method, a.ingested_at
+		a.source_url, a.source_id, a.authority, a.method, a.ingested_at, a.archived_url
 		FROM nomina n
 		LEFT JOIN nomen_attestations a
 		  ON n.value = a.value AND n.scheme = a.scheme AND n.entity_key = a.entity_key`
@@ -1785,11 +1868,12 @@ func (s *Store) QueryNomina(ctx context.Context) ([]Nomen, error) {
 				method = IngestMethodUnknown
 			}
 			n.Attestations = append(n.Attestations, NomenAttestation{
-				SourceURL:  stmt.GetText("source_url"),
-				Source:     DataSourceID(sourceID),
-				Authority:  authority,
-				Method:     method,
-				IngestedAt: stmt.GetText("ingested_at"),
+				SourceURL:   stmt.GetText("source_url"),
+				ArchivedURL: stmt.GetText("archived_url"),
+				Source:      DataSourceID(sourceID),
+				Authority:   authority,
+				Method:      method,
+				IngestedAt:  stmt.GetText("ingested_at"),
 			})
 			return nil
 		},
