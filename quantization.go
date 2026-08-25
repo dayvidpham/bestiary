@@ -258,6 +258,14 @@ func (q *Quantization) UnmarshalText(text []byte) error {
 // Returns 0 for QuantizationNone, QuantizationOther, and the reserved
 // HF-ecosystem constants (QuantAWQ, QuantGPTQ, QuantInt8, QuantInt4) whose
 // effective bpw is configuration-dependent and not yet ingested.
+//
+// This value never feeds a BAKED figure: QuantVRAM.WeightsBytes and VRAMBytes are
+// always ingested measurements. It DOES feed the display-time derived weights
+// projection (DerivedWeightsBytes in fit.go), which is why the zero return is
+// load-bearing rather than merely informational: all six zero-valued members are
+// refused a derived figure outright, because a zero-byte estimate would read as
+// fitting any budget. The amendment is stated here rather than left implicit, since
+// this doc comment previously described the value as a sanity check alone.
 func (q Quantization) BitsPerWeight() float64 {
 	if int(q) < 0 || int(q) >= len(quantBitsPerWeight) {
 		return 0

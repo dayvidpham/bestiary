@@ -1,0 +1,269 @@
+{
+  "cases": [
+    {
+      "name": "mixtral#8x7b",
+      "input": {
+        "family": "mixtral",
+        "variant": "",
+        "version": "",
+        "param_size": "8x7b",
+        "modifier": []
+      },
+      "expected": {
+        "rows": 0,
+        "excluded": 1,
+        "derived": 0
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "manual",
+        "ref": "shipped entity key mixtral#8x7b (NxM shape); parse.go ParseParamShape records ExpertCount and PerExpertParams for an NxM token and leaves TotalParams at ParamShapeNull; parse.go:3471-3473 deliberately refuses the product because it would misstate the footprint"
+      },
+      "mutation": {
+        "description": "an NxM mixture-of-experts token: no total is attested, so no derived row is produced and the entity is counted excluded"
+      }
+    },
+    {
+      "name": "mixtral#8x7b{instruct}",
+      "input": {
+        "family": "mixtral",
+        "variant": "",
+        "version": "",
+        "param_size": "8x7b",
+        "modifier": [
+          "instruct"
+        ]
+      },
+      "expected": {
+        "rows": 0,
+        "excluded": 1,
+        "derived": 0
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "manual",
+        "ref": "shipped entity key mixtral#8x7b{instruct} (NxM shape); parse.go ParseParamShape records ExpertCount and PerExpertParams for an NxM token and leaves TotalParams at ParamShapeNull; parse.go:3471-3473 deliberately refuses the product because it would misstate the footprint"
+      },
+      "mutation": {
+        "description": "an NxM mixture-of-experts token: no total is attested, so no derived row is produced and the entity is counted excluded"
+      }
+    },
+    {
+      "name": "mixtral@0.1#8x7b{instruct}",
+      "input": {
+        "family": "mixtral",
+        "variant": "",
+        "version": "0.1",
+        "param_size": "8x7b",
+        "modifier": [
+          "instruct"
+        ]
+      },
+      "expected": {
+        "rows": 0,
+        "excluded": 1,
+        "derived": 0
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "manual",
+        "ref": "shipped entity key mixtral@0.1#8x7b{instruct} (NxM shape); parse.go ParseParamShape records ExpertCount and PerExpertParams for an NxM token and leaves TotalParams at ParamShapeNull; parse.go:3471-3473 deliberately refuses the product because it would misstate the footprint"
+      },
+      "mutation": {
+        "description": "an NxM mixture-of-experts token: no total is attested, so no derived row is produced and the entity is counted excluded"
+      }
+    },
+    {
+      "name": "mixtral#8x22b",
+      "input": {
+        "family": "mixtral",
+        "variant": "",
+        "version": "",
+        "param_size": "8x22b",
+        "modifier": []
+      },
+      "expected": {
+        "rows": 0,
+        "excluded": 1,
+        "derived": 0
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "manual",
+        "ref": "shipped entity key mixtral#8x22b (NxM shape); parse.go ParseParamShape records ExpertCount and PerExpertParams for an NxM token and leaves TotalParams at ParamShapeNull; parse.go:3471-3473 deliberately refuses the product because it would misstate the footprint"
+      },
+      "mutation": {
+        "description": "an NxM mixture-of-experts token: no total is attested, so no derived row is produced and the entity is counted excluded"
+      }
+    },
+    {
+      "name": "mixtral#8x22b{instruct}",
+      "input": {
+        "family": "mixtral",
+        "variant": "",
+        "version": "",
+        "param_size": "8x22b",
+        "modifier": [
+          "instruct"
+        ]
+      },
+      "expected": {
+        "rows": 0,
+        "excluded": 1,
+        "derived": 0
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "manual",
+        "ref": "shipped entity key mixtral#8x22b{instruct} (NxM shape); parse.go ParseParamShape records ExpertCount and PerExpertParams for an NxM token and leaves TotalParams at ParamShapeNull; parse.go:3471-3473 deliberately refuses the product because it would misstate the footprint"
+      },
+      "mutation": {
+        "description": "an NxM mixture-of-experts token: no total is attested, so no derived row is produced and the entity is counted excluded"
+      }
+    },
+    {
+      "name": "mixtral@0.1#8x22b{instruct}",
+      "input": {
+        "family": "mixtral",
+        "variant": "",
+        "version": "0.1",
+        "param_size": "8x22b",
+        "modifier": [
+          "instruct"
+        ]
+      },
+      "expected": {
+        "rows": 0,
+        "excluded": 1,
+        "derived": 0
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "manual",
+        "ref": "shipped entity key mixtral@0.1#8x22b{instruct} (NxM shape); parse.go ParseParamShape records ExpertCount and PerExpertParams for an NxM token and leaves TotalParams at ParamShapeNull; parse.go:3471-3473 deliberately refuses the product because it would misstate the footprint"
+      },
+      "mutation": {
+        "description": "an NxM mixture-of-experts token: no total is attested, so no derived row is produced and the entity is counted excluded"
+      }
+    },
+    {
+      "name": "wizardlm@2#8x22b",
+      "input": {
+        "family": "wizardlm",
+        "variant": "",
+        "version": "2",
+        "param_size": "8x22b",
+        "modifier": []
+      },
+      "expected": {
+        "rows": 0,
+        "excluded": 1,
+        "derived": 0
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "manual",
+        "ref": "shipped entity key wizardlm@2#8x22b (NxM shape); parse.go ParseParamShape records ExpertCount and PerExpertParams for an NxM token and leaves TotalParams at ParamShapeNull; parse.go:3471-3473 deliberately refuses the product because it would misstate the footprint"
+      },
+      "mutation": {
+        "description": "an NxM mixture-of-experts token: no total is attested, so no derived row is produced and the entity is counted excluded"
+      }
+    },
+    {
+      "name": "llama/scout@4#17b-16e",
+      "input": {
+        "family": "llama",
+        "variant": "scout",
+        "version": "4",
+        "param_size": "17b-16e",
+        "modifier": []
+      },
+      "expected": {
+        "rows": 0,
+        "excluded": 1,
+        "derived": 0
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "manual",
+        "ref": "shipped entity key llama/scout@4#17b-16e (Nb-Ke shape); parse.go ParseParamShape records ActiveParams and ExpertCount for an Nb-Ke token and leaves TotalParams at ParamShapeNull; deriving from ActiveParams understates residency by up to 26.7x and would render the 16-expert and 128-expert artifacts identically"
+      },
+      "mutation": {
+        "description": "an Nb-Ke active-mixture token: only an active count is attested, so no derived row is produced and the entity is counted excluded"
+      }
+    },
+    {
+      "name": "llama/scout@4#17b-16e{instruct}",
+      "input": {
+        "family": "llama",
+        "variant": "scout",
+        "version": "4",
+        "param_size": "17b-16e",
+        "modifier": [
+          "instruct"
+        ]
+      },
+      "expected": {
+        "rows": 0,
+        "excluded": 1,
+        "derived": 0
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "manual",
+        "ref": "shipped entity key llama/scout@4#17b-16e{instruct} (Nb-Ke shape); parse.go ParseParamShape records ActiveParams and ExpertCount for an Nb-Ke token and leaves TotalParams at ParamShapeNull; deriving from ActiveParams understates residency by up to 26.7x and would render the 16-expert and 128-expert artifacts identically"
+      },
+      "mutation": {
+        "description": "an Nb-Ke active-mixture token: only an active count is attested, so no derived row is produced and the entity is counted excluded"
+      }
+    },
+    {
+      "name": "llama/maverick@4#17b-128e",
+      "input": {
+        "family": "llama",
+        "variant": "maverick",
+        "version": "4",
+        "param_size": "17b-128e",
+        "modifier": []
+      },
+      "expected": {
+        "rows": 0,
+        "excluded": 1,
+        "derived": 0
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "manual",
+        "ref": "shipped entity key llama/maverick@4#17b-128e (Nb-Ke shape); parse.go ParseParamShape records ActiveParams and ExpertCount for an Nb-Ke token and leaves TotalParams at ParamShapeNull; deriving from ActiveParams understates residency by up to 26.7x and would render the 16-expert and 128-expert artifacts identically"
+      },
+      "mutation": {
+        "description": "an Nb-Ke active-mixture token: only an active count is attested, so no derived row is produced and the entity is counted excluded"
+      }
+    },
+    {
+      "name": "llama/maverick@4#17b-128e{instruct}",
+      "input": {
+        "family": "llama",
+        "variant": "maverick",
+        "version": "4",
+        "param_size": "17b-128e",
+        "modifier": [
+          "instruct"
+        ]
+      },
+      "expected": {
+        "rows": 0,
+        "excluded": 1,
+        "derived": 0
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "manual",
+        "ref": "shipped entity key llama/maverick@4#17b-128e{instruct} (Nb-Ke shape); parse.go ParseParamShape records ActiveParams and ExpertCount for an Nb-Ke token and leaves TotalParams at ParamShapeNull; deriving from ActiveParams understates residency by up to 26.7x and would render the 16-expert and 128-expert artifacts identically"
+      },
+      "mutation": {
+        "description": "an Nb-Ke active-mixture token: only an active count is attested, so no derived row is produced and the entity is counted excluded"
+      }
+    }
+  ]
+}
