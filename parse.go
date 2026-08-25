@@ -4147,6 +4147,14 @@ type idFamilyOverrideEntry struct {
 //   - nvidia/llama-3.3-nemotron-super-49b-v1.5 (kilo raw="" over-captures family
 //     "llama-3.3-nemotron-super-49b"; openrouter raw="nemotron" gives "nemotron") →
 //     both converge on (nemotron, v1.5, 3.3). nemotron ∈ allFamilies + family_enforce.json.
+//   - nvidia/llama-3_3-nemotron-super-49b-v1_5 is nano-gpt's UNDERSCORE spelling of that
+//     same artifact. Underscores are not a separator the decomposition splits on, so
+//     neither "3_3" nor "v1_5" is reachable as a version token: the row arrived with
+//     raw="nemotron" and an EMPTY variant and version, and keyed the bare nemotron#49b
+//     line — which already holds the genuinely different Super-49B **v1**. Pinned to the
+//     same tuple as the dotted spellings so the v1.5 artifact is served from one key.
+//     Both keys already exist, so this pin moves ONE instance and retires NO key: it is
+//     a re-home, not a split. nemotron#49b survives, holding v1 alone.
 //
 // The two derivative entries below address a different failure: a provider tags a
 // FINETUNE/MERGE with the raw_family of its BASE ("llama"), which folds the
@@ -4166,6 +4174,7 @@ type idFamilyOverrideEntry struct {
 //     the raw="" providers' tuple exactly.
 var idFamilyOverrides = map[string]idFamilyOverrideEntry{
 	"nvidia/llama-3.3-nemotron-super-49b-v1.5": {family: "nemotron", variant: "v1.5", version: "3.3"},
+	"nvidia/llama-3_3-nemotron-super-49b-v1_5": {family: "nemotron", variant: "v1.5", version: "3.3"},
 	"abacusai/dracarys-72b-instruct":           {family: "dracarys"},
 	"gryphe/mythomax-l2-13b":                   {family: "mythomax"},
 
