@@ -101,7 +101,7 @@ func nominaCensus(ns []bestiary.Nomen) map[bestiary.NomenScheme]int {
 // their existing ID spellings across to the new keys as Admitted provider-ID nomina.
 func TestNomina_CensusExact(t *testing.T) {
 	const (
-		wantCanonical   = 947  // 947 -> 958: 2026-07-23 snapshot refresh (upstream additions); 958 -> 957: v0.2.8 curation slice — command/a{translate} split (+1) minus deepseek@1/@2 dot-lost merges (−2); 957 -> 940: the global free demotion retires 17 entity keys (0 added); 940 -> 939: the qwen3-coder-next suppress-pin extended to the unprefixed spelling retires qwen/coder@3#1m (1 key, 0 added); 939 -> 947: the ling/inkling/kling collision split retires bare `ling` and the phantom `kling-v2@6` (−2) and adds `inkling`, `kling@2.6` and the 8 `kling/v*` video keys (+10). There is exactly one canonical nomen per entity, so the canonical count tracks the entity census exactly
+		wantCanonical   = 946  // 947 -> 958: 2026-07-23 snapshot refresh (upstream additions); 958 -> 957: v0.2.8 curation slice — command/a{translate} split (+1) minus deepseek@1/@2 dot-lost merges (−2); 957 -> 940: the global free demotion retires 17 entity keys (0 added); 940 -> 939: the qwen3-coder-next suppress-pin extended to the unprefixed spelling retires qwen/coder@3#1m (1 key, 0 added); 939 -> 947: the ling/inkling/kling collision split retires bare `ling` and the phantom `kling-v2@6` (−2) and adds `inkling`, `kling@2.6` and the 8 `kling/v*` video keys (+10). There is exactly one canonical nomen per entity, so the canonical count tracks the entity census exactly; 947 -> 946: the keyspace-wide mimo normalization rewrites all ten mimo keys and merges one of them (mimo/pro) into mimo@2.5{pro}, so exactly one canonical nomen is lost. ONLY the canonical leg moves: the provider-ID, alias and huggingface counts below are re-measured UNCHANGED, because every re-keyed instance carries its own ID spelling across as an Admitted nomen and the three re-keyed HuggingFace repos keep their values while their ResolvesTo is re-pointed
 		wantProviderID  = 2834 // 2791 -> 2834: 2026-07-23 refresh, +43 new upstream instance spellings; UNCHANGED by the v0.2.8 slice — the re-keyed instances keep their provider-ID spellings as Admitted nomina on the merged/split entities (the C4-fold precedent)
 		wantAlias       = 1
 		wantHuggingFace = 179 // 4 -> 179: v0.2.8 HF-bot slice. The cmd/bestiary-hf live run harvested 179 open-weight Hub repos that JOIN a catalog entity. Of those, 4 are the pre-existing curated Hub claims (nomen_claims.json), aliased to their EXACT curated (Value, huggingface-scheme, ResolvesTo) triples, so each harvested attestation COALESCES onto its curated claim — one nomen carrying TWO attestations (curated + huggingface), adding 0 to the nomen count (validation case 3). The other 175 harvested repos are distinct triples: +175. 4 + 175 = 179.
@@ -114,7 +114,7 @@ func TestNomina_CensusExact(t *testing.T) {
 	// fires where a harvested repo shares a curated claim's triple: the 4 curated Hub
 	// claims each coalesce with their aliased harvested twin into ONE nomen carrying TWO
 	// attestations (curated + huggingface), so those 4 add 0 — the count grows only by
-	// the 175 distinct-triple harvested repos. Total 947 + 2834 + 1 + 179 = 3961.
+	// the 175 distinct-triple harvested repos. Total 946 + 2834 + 1 + 179 = 3960.
 	all := bestiary.MintNomina(bestiary.Entities())
 	if len(all) != wantTotal {
 		t.Errorf("MintNomina total = %d, want %d", len(all), wantTotal)

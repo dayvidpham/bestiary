@@ -530,16 +530,15 @@ const (
 	Entity__Mercury__Coder                                                = "mercury/coder"
 	Entity__Mercury__Version_2                                            = "mercury@2"
 	Entity__Mercury_edit__Version_2                                       = "mercury-edit@2"
-	Entity__Mimo                                                          = "mimo"
-	Entity__Mimo__Flash                                                   = "mimo/flash"
-	Entity__Mimo__Pro                                                     = "mimo/pro"
-	Entity__Mimo__V2_5_tts                                                = "mimo/v2.5-tts"
-	Entity__Mimo__V2_5_tts_voiceclone                                     = "mimo/v2.5-tts-voiceclone"
-	Entity__Mimo__V2_5_tts_voicedesign                                    = "mimo/v2.5-tts-voicedesign"
-	Entity__Mimo__V__Version_2_5                                          = "mimo/v@2.5"
-	Entity__Mimo__V__Version_2_5__Pro                                     = "mimo/v@2.5{pro}"
-	Entity__Mimo__V__Version_2__Omni                                      = "mimo/v@2{omni}"
-	Entity__Mimo__V__Version_2__Pro                                       = "mimo/v@2{pro}"
+	Entity__Mimo__Version_2_5                                             = "mimo@2.5"
+	Entity__Mimo__Version_2_5__Pro                                        = "mimo@2.5{pro}"
+	Entity__Mimo__Version_2_5__Tts                                        = "mimo@2.5{tts}"
+	Entity__Mimo__Version_2_5__Tts__Voiceclone                            = "mimo@2.5{tts,voiceclone}"
+	Entity__Mimo__Version_2_5__Tts__Voicedesign                           = "mimo@2.5{tts,voicedesign}"
+	Entity__Mimo__Version_2__Flash                                        = "mimo@2{flash}"
+	Entity__Mimo__Version_2__Omni                                         = "mimo@2{omni}"
+	Entity__Mimo__Version_2__Pro                                          = "mimo@2{pro}"
+	Entity__Mimo__Version_2__Tts                                          = "mimo@2{tts}"
 	Entity__Minimax                                                       = "minimax"
 	Entity__Minimax__M__Version_1                                         = "minimax/m@1"
 	Entity__Minimax__M__Version_2                                         = "minimax/m@2"
@@ -1482,16 +1481,15 @@ var allEntityConstants = [...]string{
 	Entity__Mercury__Coder,
 	Entity__Mercury__Version_2,
 	Entity__Mercury_edit__Version_2,
-	Entity__Mimo,
-	Entity__Mimo__Flash,
-	Entity__Mimo__Pro,
-	Entity__Mimo__V2_5_tts,
-	Entity__Mimo__V2_5_tts_voiceclone,
-	Entity__Mimo__V2_5_tts_voicedesign,
-	Entity__Mimo__V__Version_2_5,
-	Entity__Mimo__V__Version_2_5__Pro,
-	Entity__Mimo__V__Version_2__Omni,
-	Entity__Mimo__V__Version_2__Pro,
+	Entity__Mimo__Version_2_5,
+	Entity__Mimo__Version_2_5__Pro,
+	Entity__Mimo__Version_2_5__Tts,
+	Entity__Mimo__Version_2_5__Tts__Voiceclone,
+	Entity__Mimo__Version_2_5__Tts__Voicedesign,
+	Entity__Mimo__Version_2__Flash,
+	Entity__Mimo__Version_2__Omni,
+	Entity__Mimo__Version_2__Pro,
+	Entity__Mimo__Version_2__Tts,
 	Entity__Minimax,
 	Entity__Minimax__M__Version_1,
 	Entity__Minimax__M__Version_2,

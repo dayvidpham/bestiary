@@ -288,7 +288,16 @@ func TestEntityRekey_CensusAccounted(t *testing.T) {
 	// which leave for the new `inkling` key) and the phantom `kling-v2@6` is re-keyed to
 	// `kling@2.6`, while the 8 klingai rows split off into 8 `kling/v*` keys of their own.
 	// -2 + 10 = +8. inclusionAI's five surviving ling keys are untouched.
-	const wantEntities = 947
+	//
+	// 947 -> 946 with the keyspace-wide mimo normalization. This one is a rename block
+	// with a single merge inside it: the mimo series letter stops keying the entity, so
+	// all ten mimo keys are rewritten and nine of them map one-to-one onto their new
+	// spelling (mimo/v@2.5 -> mimo@2.5, mimo/v2.5-tts -> mimo@2.5{tts}, and so on). The
+	// tenth, mimo/pro, held the single xiaomi/mimo-v2.5-pro-ultraspeed instance: once
+	// "ultraspeed" is curated as an attribute-class tier that instance rejoins
+	// mimo@2.5{pro}, which is the only key count actually lost. -10 + 9 = -1, with all
+	// 93 mimo instances conserved.
+	const wantEntities = 946
 	if got := len(bestiary.Entities()); got != wantEntities {
 		t.Errorf("registry census = %d entities, want %d — this literal is the running total of "+
 			"every curated key retirement (see the arithmetic above it); update it in the same "+

@@ -111,11 +111,18 @@ func equalStrings(a, b []string) bool {
 // slot, not the version) — while `ling` keeps its bare line through the surviving ling#1t.
 // The versioned side nets to zero: the phantom kling-v2@6 line retires and the kling@2.6
 // line replaces it one-for-one.
+// 417 -> 416 with the keyspace-wide mimo normalization (-1 bare / versioned UNCHANGED):
+// the release name is the variant, and mimo's variant is now empty on every key, so the
+// six bare mimo keys that each carried their own name (mimo, mimo/flash, mimo/pro and the
+// three v2.5-tts* speech keys) all move onto a versioned line — their version came out of
+// the variant slot the letter had been sharing. The bare `mimo` line therefore empties.
+// The two versioned mimo lines (gen 2 and gen 2.5) both already existed and simply absorb
+// the arrivals, so no versioned line is added or retired.
 func TestSeriesAll_CensusExact(t *testing.T) {
 	const (
-		wantSeries        = 417 // 411 -> 419: 2026-07-23 refresh (+4 versioned incl. gemini-3.6, +4 bare); 419 -> 417: v0.2.8 slice — the deepseek dot-lost merges retire the two phantom versioned lines deepseek gen-1 / gen-2 (command/a{translate} joins the existing command/a line, adding none); 417 -> 415: the global free demotion empties the deepseek-flash and minimax-m3 bare lines; 415 -> 417: the ling/inkling/kling split adds the bare `inkling` and `kling` lines (the kling-v2 versioned line is replaced one-for-one by kling@2.6)
+		wantSeries        = 416 // 411 -> 419: 2026-07-23 refresh (+4 versioned incl. gemini-3.6, +4 bare); 419 -> 417: v0.2.8 slice — the deepseek dot-lost merges retire the two phantom versioned lines deepseek gen-1 / gen-2 (command/a{translate} joins the existing command/a line, adding none); 417 -> 415: the global free demotion empties the deepseek-flash and minimax-m3 bare lines; 415 -> 417: the ling/inkling/kling split adds the bare `inkling` and `kling` lines (the kling-v2 versioned line is replaced one-for-one by kling@2.6); 417 -> 416: the keyspace-wide mimo normalization empties the bare `mimo` line (all six of its keys move onto the two existing versioned mimo lines)
 		wantVersionLines  = 209 // lines with a non-empty generation (207 -> 211 at the 2026-07-23 refresh; 211 -> 209 as deepseek gen-1 / gen-2 retire in the v0.2.8 slice; UNCHANGED by the free demotion — every versioned line it touches keeps other entities)
-		wantBareLines     = 208 // lines whose entities carry no identity version (204 -> 208 at the 2026-07-23 refresh; UNCHANGED by the v0.2.8 slice; 208 -> 206 as the free demotion empties the deepseek-flash and minimax-m3 lines; 206 -> 208 as the ling/inkling/kling split adds the bare inkling and kling lines). 209 + 208 = 417.
+		wantBareLines     = 207 // lines whose entities carry no identity version (204 -> 208 at the 2026-07-23 refresh; UNCHANGED by the v0.2.8 slice; 208 -> 206 as the free demotion empties the deepseek-flash and minimax-m3 lines; 206 -> 208 as the ling/inkling/kling split adds the bare inkling and kling lines). 208 -> 207 as the mimo normalization empties the bare mimo line. 209 + 207 = 416.
 		minExpectedSeries = 300 // the ratified floor
 	)
 	all := bestiary.SeriesAll()
@@ -171,8 +178,15 @@ func TestSeriesAll_CensusExact(t *testing.T) {
 // release on each of their new lines (+2); the phantom kling-v2@6 line takes its sole bare
 // release with it (−1); and retiring bare `ling` costs NOTHING, because ling#1t already
 // shares that line's un-named release. 8 + 2 − 1 = +9.
+// 661 -> 655 with the keyspace-wide mimo normalization (-6): a release is named by the
+// VARIANT, and after the normalization no mimo key has one. Before, mimo carried EIGHT
+// releases — six on the bare line (the un-named bare `mimo`, plus flash, pro, v2.5-tts,
+// v2.5-tts-voiceclone, v2.5-tts-voicedesign) and one named "v" on each of the two
+// versioned lines. After, it carries TWO: one un-named release on gen 2 and one on gen
+// 2.5. The six speech/tier distinctions are not lost; they moved out of the release name
+// and into the identity-modifier segment of the key. 8 - 2 = -6.
 func TestReleases_CensusExact(t *testing.T) {
-	const wantReleases = 661 // 659 -> 671: 2026-07-23 refresh (+12 releases on the new lines); 671 -> 669: v0.2.8 slice — the two phantom deepseek gen-1 / gen-2 lines retire their bare releases (command/a{translate} shares command/a's existing release; a modifier is not a distinct release name); 669 -> 652: the global free demotion retires 17 keys, each the sole occupant of its release name (−17); 652 -> 661: the ling/inkling/kling split adds 8 named kling shape releases plus the bare inkling and kling@2.6 releases and retires the sole kling-v2@6 release (+9)
+	const wantReleases = 655 // 659 -> 671: 2026-07-23 refresh (+12 releases on the new lines); 671 -> 669: v0.2.8 slice — the two phantom deepseek gen-1 / gen-2 lines retire their bare releases (command/a{translate} shares command/a's existing release; a modifier is not a distinct release name); 669 -> 652: the global free demotion retires 17 keys, each the sole occupant of its release name (−17); 652 -> 661: the ling/inkling/kling split adds 8 named kling shape releases plus the bare inkling and kling@2.6 releases and retires the sole kling-v2@6 release (+9); 661 -> 655: the mimo normalization empties the variant slot on every mimo key, collapsing mimo's eight named releases to the two un-named ones on gen 2 and gen 2.5
 
 	summed := 0
 	for _, s := range bestiary.SeriesAll() {
