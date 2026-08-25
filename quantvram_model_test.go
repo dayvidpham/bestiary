@@ -238,27 +238,44 @@ func TestCloneInstances_QuantVRAMRegistryPath(t *testing.T) {
 		t.Fatal("no uncurated (nil-quant, models.dev-source) instance found; expected the uncurated direction to exist")
 	}
 
-	// Targeted: the curated llama-3.3-70b entity's ollama instances carry exactly the
-	// 3 curated quant rows (q4_k_m, q8_0, f16), in curated order.
+	// Targeted: the curated llama-3.3-70b entity's ollama instances carry the measured
+	// quant set the corpus holds for that model, in corpus order (sorted by quant), and
+	// the three arch-curated quants are among them. The SET is fetch-owned — the offline
+	// refresh writes every quant the registry publishes — so this pins the copy path and
+	// the ordering, not a frozen row count.
 	e, ok := bestiary.EntityByTuple("llama", "", "3.3", "70b", "instruct")
 	if !ok {
 		t.Fatal("curated entity llama@3.3#70b{instruct} not found in registry")
 	}
-	wantQuants := []bestiary.Quantization{bestiary.QuantQ4_K_M, bestiary.QuantQ8_0, bestiary.QuantF16}
+	const wantRows = 12
+	wantPresent := []bestiary.Quantization{bestiary.QuantQ4_K_M, bestiary.QuantQ8_0, bestiary.QuantF16}
 	var sawOllama70b bool
 	for j, inst := range e.Instances {
 		if inst.Source != bestiary.DataSourceOllama {
 			continue
 		}
 		sawOllama70b = true
-		if len(inst.QuantVRAM) != len(wantQuants) {
+		if len(inst.QuantVRAM) != wantRows {
 			t.Errorf("70b instance[%d] (id %q): QuantVRAM has %d rows, want %d",
-				j, inst.ID, len(inst.QuantVRAM), len(wantQuants))
+				j, inst.ID, len(inst.QuantVRAM), wantRows)
 			continue
 		}
-		for k, want := range wantQuants {
-			if inst.QuantVRAM[k].Quant != want {
-				t.Errorf("70b instance[%d].QuantVRAM[%d].Quant = %v, want %v", j, k, inst.QuantVRAM[k].Quant, want)
+		for k := 1; k < len(inst.QuantVRAM); k++ {
+			if inst.QuantVRAM[k-1].Quant.String() > inst.QuantVRAM[k].Quant.String() {
+				t.Errorf("70b instance[%d].QuantVRAM is not in corpus (quant-sorted) order at %d: %v then %v",
+					j, k, inst.QuantVRAM[k-1].Quant, inst.QuantVRAM[k].Quant)
+			}
+		}
+		for _, want := range wantPresent {
+			found := false
+			for _, row := range inst.QuantVRAM {
+				if row.Quant == want {
+					found = true
+					break
+				}
+			}
+			if !found {
+				t.Errorf("70b instance[%d]: arch-curated quant %v missing from the copied rows", j, want)
 			}
 		}
 	}

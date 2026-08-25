@@ -111,6 +111,23 @@ for its **Go module tags** (`vX.Y.Z`).
   belongs on the honest bare-family line, never on a confidently wrong version key — so
   those rows stay exactly where they were, and that is pinned as a negative control.
 
+- **Two defects in the offline Ollama bot, both invisible until it was run against the
+  real registry.** (1) `model_id` is the corpus's join key — codegen matches rows onto the
+  catalog by exact model id — but two distinct Ollama identities routinely resolve to one
+  catalog id (the bare size tag `llama3.1:405b` and the explicit `llama3.1:405b-instruct`
+  are the same model), and the bot emitted an entry per identity: a real refresh wrote the
+  same `model_id` **two and three times**, each with a different subset of the quants, and
+  codegen would have kept whichever it read last. Identities are now coalesced by output
+  model id — the strongest join arm owns the entry and any quant they disagree on, while
+  every other identity still contributes the quants it alone measured, so coalescing never
+  costs a measurement. (2) The bot wrote the RAW Ollama quant token, and Ollama spells
+  16-bit float `fp16` — a spelling the `Quantization` enum deliberately rejects, leaving
+  normalisation to the ingest layer. That produced a corpus the loader refuses outright,
+  and it orphaned curation: a curated `f16` row's architecture facts vanished when the
+  refresh reported the same quant as `fp16`. Rows now carry the canonical enum name, so
+  the refreshed row IS the curated row; a token with no canonical name is dropped with an
+  actionable message rather than written.
+
 - **The offline Ollama refresh bot now names the version that actually made the request.**
   Its `User-Agent` was a hand-spelled literal and sat at `bestiary-ollama/0.2.4` for three
   releases, misreporting the build to the registry operators whose logs carry it. The
@@ -129,6 +146,63 @@ for its **Go module tags** (`vX.Y.Z`).
   produces an error rather than a silent socket. `go test ./cmd/bestiary-ollama` was
   additionally run inside a disabled network namespace (`unshare -rn`) and is green:
   zero network requests.
+
+- **The measured-weights corpus is refreshed from the live Ollama registry, and the
+  calculator's measured coverage grows from 2 entities to 19.** One network-gated run of
+  the offline bot over its seven-model allowlist takes `parse/data/quant_vram.json` from
+  **4 hand-written entries to 47** (43 new, none removed).
+
+  **What you gain as a reader.** Measured over the shipped catalog with
+  `FitOver(Entities(), FitFilter{})` — UNIT: entities; AXIS: the `FitResult`
+  denominators; CONFIGURATION: this tree's own regenerated bake:
+
+  | denominator | before | after |
+  |---|---|---|
+  | `EntitiesConsidered` | 930 | 930 |
+  | `EntitiesMeasured` | 2 | **19** |
+  | `EntitiesDerived` | 297 | 281 |
+  | `EntitiesExcluded` | 11 | 11 |
+
+  Seventeen entities become measured. **Sixteen were previously DERIVED** — they had an
+  estimate inferred from an attested parameter count, and now carry real per-quant
+  footprints instead: `gemma@2#2b`, `gemma@2#27b`, `llama@3.1#8b`, `llama@3.1#8b{instruct}`,
+  `llama@3.1#70b`, `llama@3.1#70b{instruct}`, `llama@3.1#405b{instruct}`,
+  `llama@3.2#1b{instruct}`, `llama@3.2#3b`, `mistral#7b`, `mistral#7b{instruct}`,
+  `mistral@0.3#7b{instruct}`, `qwen@2.5#7b{instruct}`, `qwen@2.5#14b{instruct}`,
+  `qwen@2.5#32b{instruct}`, `qwen@2.5#72b{instruct}`. **One is newly covered outright**:
+  the bare `mistral` key had no attested total, so before this refresh the calculator
+  could say nothing about it at all. **No new architecture facts**: `layers`/`kv_heads`/
+  `head_dim` are curation-owned and the registry's config blob does not publish them, so
+  the newly measured rows are weights-only (`VRAMEstimatePartial: true`) until a curator
+  supplies them.
+
+  **The entity keyspace does not move: 930 keys before, 930 after — zero renames, zero
+  fissions, zero retirements, and no `param_size` introduced.** The refresh writes
+  `Source` and `QuantVRAM` onto 63 catalog rows and touches no other generated field.
+
+  **Every curation-owned field is byte-identical afterwards**, verified by diffing the
+  four pre-existing entries field by field: per-entry `_comment`, `context_window`,
+  `base_ref`, and the per-quant `layers`/`kv_heads`/`head_dim` on all three arch-curated
+  quants of the 70B anchor. The fetch-owned fields move as designed — the quant set
+  widens to what the registry publishes (the 70B model goes from 3 curated quants to 12),
+  and the weights update to the current manifests, which corrects the seed's 70B `q4_k_m`
+  estimate from 43,033,509,888 down to the measured 42,520,398,528 bytes.
+
+  **`ollama_unlinked.json` did not exist before this run; it now lists 26 entries** — the
+  base-unknown community models the bot keeps rather than drops (`gemma2`, `phi3.5` and
+  `qwen2.5` tags with no joinable models.dev row, plus the `:latest` and version-only
+  Mistral tags). They ship as standalone entries, so nothing measured is discarded.
+
+  **The OCI naming scheme now carries data.** The refresh is the first run to capture the
+  per-quant OCI manifest digest, so the shipped registry mints **267 OCI nomina** where it
+  minted 0 — 262 distinct digests across 19 entities, counted as 267 (digest, entity)
+  pairs because three digests are published under more than one catalog ID. The total
+  nomen census moves 3,944 → 4,211; the canonical (930), provider-id (2,834), alias (1)
+  and huggingface (179) legs are re-measured **unchanged**, since the refresh adds no
+  entity, no instance and no ID spelling.
+
+  One tag was skipped: `llama3.1:70b-instruct-q3_K_S` answered HTTP 503. The bot reports
+  and continues rather than abandoning a whole refresh for one tag.
 
 ### Removed
 

@@ -156,12 +156,20 @@ func TestMintNomina_OCI_PerDigestRow(t *testing.T) {
 	}
 }
 
-// TestMintNomina_OCI_CensusNeutralOnShippedData asserts EXPLICITLY that the shipped
-// registry mints ZERO OCI nomina (no quant row carries a digest yet — capture lands
-// with the next deliberate cmd/bestiary-ollama refresh). This is why TestNomina_Census
-// counts are unchanged by this slice; the OCI census delta is future work, not a
-// regression when it stays 0 here.
-func TestMintNomina_OCI_CensusNeutralOnShippedData(t *testing.T) {
+// TestMintNomina_OCI_ShippedDigestCensus pins the OCI leg over the SHIPPED registry.
+// It was written when no quant row carried a digest and asserted zero; the deliberate
+// offline Ollama refresh that it named as the arrival point has now landed, so the
+// scheme carries real data and this is the guard on its size.
+//
+// The arithmetic, measured over the shipped bake: 19 entities carry at least one
+// digest-bearing quant row, holding 262 DISTINCT digests. A nomen is minted per
+// (Value, Scheme, ResolvesTo) triple, and 3 digests are published under more than one
+// catalog ID, so the count is the 267 (digest, entity) PAIRS rather than the 262
+// digests — the two are different numbers on different axes, and neither is a typo
+// for the other. Both mint joints must agree: a digest lives on a ModelInfo's quant
+// rows, which both the entity and the from-models path read.
+func TestMintNomina_OCI_ShippedDigestCensus(t *testing.T) {
+	const wantOCI = 267
 	countOCI := func(ns []bestiary.Nomen) int {
 		n := 0
 		for _, x := range ns {
@@ -171,10 +179,16 @@ func TestMintNomina_OCI_CensusNeutralOnShippedData(t *testing.T) {
 		}
 		return n
 	}
-	if got := countOCI(bestiary.MintNomina(bestiary.Entities())); got != 0 {
-		t.Errorf("MintNomina(Entities()) OCI nomina = %d, want 0 (zero shipped digests)", got)
+	if got := countOCI(bestiary.MintNomina(bestiary.Entities())); got != wantOCI {
+		t.Errorf("MintNomina(Entities()) OCI nomina = %d, want %d;\n"+
+			"  what went wrong: the shipped OCI census moved\n"+
+			"  why: parse/data/quant_vram.json's digest inventory changed (an Ollama refresh), or minting regressed\n"+
+			"  where: MintNomina / the OCI leg (oci.go)\n"+
+			"  how to fix: re-measure from this tree's corpus and re-pin here and in TestNomina_CensusExact together",
+			got, wantOCI)
 	}
-	if got := countOCI(bestiary.MintNominaFromModels(bestiary.StaticModels())); got != 0 {
-		t.Errorf("MintNominaFromModels(StaticModels()) OCI nomina = %d, want 0 (zero shipped digests)", got)
+	if got := countOCI(bestiary.MintNominaFromModels(bestiary.StaticModels())); got != wantOCI {
+		t.Errorf("MintNominaFromModels(StaticModels()) OCI nomina = %d, want %d (the two joints must agree — a digest lives on the model's quant rows)",
+			got, wantOCI)
 	}
 }
