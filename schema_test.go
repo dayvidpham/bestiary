@@ -994,7 +994,7 @@ func TestSchemaDefs_V024_DeepConformance(t *testing.T) {
 				Ref:     bestiary.EntityRef{Family: "llama", Version: "3.3", ParamSize: "70b", Modifier: []string{"instruct"}},
 				Sources: []bestiary.DataSourceID{bestiary.DataSourceModelsDev, bestiary.DataSourceOllama},
 			},
-			expectProps: []string{"Ref", "Instances", "Lineage", "Providers", "Hosts", "Regions", "Nomina", "PriceInputRange", "PriceOutputRange", "ContextRange", "MaxOutputRange", "Capabilities", "Sources", "Metadata", "Creator"},
+			expectProps: []string{"Ref", "Instances", "Lineage", "Providers", "Hosts", "Regions", "Nomina", "PriceInputRange", "PriceOutputRange", "ContextRange", "MaxOutputRange", "Capabilities", "Sources", "Metadata", "MetadataAll", "Creator"},
 			expectTypes: map[string]string{
 				"Ref":              "$ref",
 				"Instances":        "array|null",
@@ -1008,6 +1008,13 @@ func TestSchemaDefs_V024_DeepConformance(t *testing.T) {
 				"MaxOutputRange":   "array",
 				"Capabilities":     "$ref",
 				"Sources":          "array|null",
+				// MetadataAll is the COMPLETE multi-row metadata record (array of
+				// EntityMetadata, sorted ascending by MetadataID); Metadata is its
+				// derived primary. It is a plain array|null struct field, so unlike
+				// Metadata it is NOT allowlisted from the type cross-check.
+				// This case asserts it is present in the plain-Entity marshal
+				// and carries the array|null type node.
+				"MetadataAll": "array|null",
 				// Creator is a DERIVED join projection surfaced as a plain struct
 				// field ($ref #/$defs/Creator; a hand-constructed Entity carries the
 				// CreatorNone zero value). Added in schema 0.6.0.

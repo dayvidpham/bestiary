@@ -20,6 +20,59 @@
   {{if .Ref.Modifier}}<tr><th>modifiers</th><td class="mono">{{range $i, $m := .Ref.Modifier}}{{if $i}}, {{end}}{{$m}}{{end}}</td></tr>{{end}}
 </table>
 
+{{/* ---- provider-agnostic metadata: EVERY joined row, claims attributed per MetadataID ---- */}}
+{{if .MetadataAll}}
+{{$primary := .Metadata}}
+<div class="section-head">model facts &amp; reported claims</div>
+<p class="muted">
+  Several lab identifiers can name one model identity — a dated alias and its floating
+  alias, or a serving tier that is not a distinct artifact. Every metadata row that
+  resolved to this entity is shown, and each benchmark score stays attributed to the
+  identifier the lab published it under. These are <strong>lab-reported claims</strong>
+  (a blog post or model card), not independent measurements, and claims from different
+  identifiers are never merged into one table.
+</p>
+{{with $primary}}
+<table>
+  <tr><th>description</th><td>{{orDash .Description}}</td></tr>
+  <tr><th>license</th><td class="mono">{{orDash .License}}</td></tr>
+</table>
+{{end}}
+{{range .MetadataAll}}
+<div class="metadata-row">
+  <div class="metadata-head mono">
+    <span class="metadata-id">{{.MetadataID}}</span>
+    {{if isPrimaryMetadata . $primary}}<span class="badge live">primary</span>{{end}}
+  </div>
+  {{if .Links}}
+  <p class="mono break">
+    {{range $i, $l := .Links}}{{if $i}} · {{end}}<a href="{{$l.URL}}">{{if $l.Label}}{{$l.Label}}{{else}}{{$l.Type}}{{end}}</a> <span class="muted">({{$l.Type}})</span>{{end}}
+  </p>
+  {{end}}
+  {{if .Benchmarks}}
+  <table class="benchmarks">
+    <caption class="muted">{{len .Benchmarks}} claim(s) reported under <span class="mono">{{.MetadataID}}</span></caption>
+    <thead><tr><th>name</th><th class="num">score</th><th>metric</th><th>harness</th><th>date</th><th>source</th></tr></thead>
+    <tbody>
+    {{range .Benchmarks}}
+      <tr>
+        <td>{{orDash .Name}}</td>
+        <td class="num">{{benchScore .}}</td>
+        <td>{{orDash .Metric}}</td>
+        <td>{{orDash .Harness}}</td>
+        <td class="mono">{{orDash .Date}}</td>
+        <td class="mono break">{{if .SourceURL}}<a href="{{.SourceURL}}">{{.SourceURL}}</a>{{else}}&mdash;{{end}}</td>
+      </tr>
+    {{end}}
+    </tbody>
+  </table>
+  {{else}}
+  <p class="muted">no benchmark claims reported under this identifier</p>
+  {{end}}
+</div>
+{{end}}
+{{end}}
+
 {{/* ---- RQ2 section 1: quants + VRAM (VRAMEstimatePartial honesty carried through) ---- */}}
 {{if $maxq}}
 <div class="section-head">quants &amp; vram</div>

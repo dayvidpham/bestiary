@@ -786,11 +786,21 @@
           "items": { "type": "string" }
         },
         "Metadata": {
-          "description": "Provider-agnostic model facts (description, license, links, benchmark claims) joined to this entity from the models.dev models.json side, or null when none was joined. A pointer field: genuinely optional. Added in schema 0.3.0.",
+          "description": "The PRIMARY provider-agnostic metadata row for this entity (description, license, links, benchmark claims) joined from the models.dev models.json side, or null when none was joined. A DERIVED projection of MetadataAll: the row with the SHORTEST MetadataID, ties broken lexicographic ascending (a lab's canonical id is its shortest one, so the choice is stable under re-ingest and independent of payload size or incoming order). A pointer field: genuinely optional. Added in schema 0.3.0.",
           "oneOf": [
             { "$ref": "#/$defs/EntityMetadata" },
             { "type": "null" }
           ]
+        },
+        "MetadataAll": {
+          "description": "EVERY provider-agnostic metadata row that joined to this entity's identity, sorted ascending by MetadataID; null when none joined. Distinct lab ids routinely decompose to one entity key (a dated alias and its floating alias; a base model and a serving tier that is not a distinct artifact), and each row carries its OWN benchmark claims attributable to its OWN MetadataID. Metadata is the derived primary of this array (the row with the shortest MetadataID). An optional field: a document produced before this array existed carries only Metadata.",
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "$ref": "#/$defs/EntityMetadata"
+          }
         },
         "Creator": {
           "description": "The lab / organization that TRAINED this entity's models (the SPDX \"originator\"), DISTINCT from the Providers that host it. A DERIVED join projection of Ref.Family → Creator via the curated creators.json seed (the Sources/Regions projection precedent), not a stored column; one value covers the whole entity (all instances share Family). Empty string (CreatorNone) when the family has no curated mapping. Added in schema 0.6.0; optional for backward compatibility.",

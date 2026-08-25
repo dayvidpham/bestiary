@@ -271,12 +271,33 @@ type Entity struct {
 	// at least the models.dev origin); it is nil only on a hand-constructed Entity
 	// value that never went through the registry aggregate.
 	Sources []DataSourceID
-	// Metadata is the provider-agnostic model facts (description, license, links,
-	// benchmark claims) joined to this entity from the models.dev models.json
-	// side. It is a pointer because metadata is genuinely optional: nil when no
-	// EntityMetadata was joined to this identity. When present it is owned by the
-	// Entity value and is deep-copied on read alongside the other entity fields.
+	// Metadata is the PRIMARY provider-agnostic metadata row for this entity — a
+	// DERIVED convenience projection of MetadataAll, not an independent slot. It is
+	// a pointer because metadata is genuinely optional: nil when no EntityMetadata
+	// was joined to this identity. When present it is owned by the Entity value and
+	// is deep-copied on read alongside the other entity fields.
+	//
+	// The primary is the row with the SHORTEST MetadataID, ties broken lexicographic
+	// ascending. Shortest-id is a naming rule, not a payload rule: a lab's canonical
+	// id is its shortest one ("openai/gpt-5.5" over "openai/gpt-5.5-instant"), so the
+	// primary is stable under re-ingest and independent of how many benchmark claims
+	// or links a row happens to carry. Choosing by payload size would let a row's
+	// claim count silently re-designate the entity's canonical naming, and inheriting
+	// the incoming join order would make the choice depend on upstream iteration.
 	Metadata *EntityMetadata
+	// MetadataAll is EVERY provider-agnostic metadata row that joined to this
+	// entity's identity, sorted ascending by MetadataID. Distinct lab ids routinely
+	// decompose to one entity key (a dated alias and its floating alias; a base model
+	// and a serving tier that is not a distinct artifact), and each such row carries
+	// its OWN benchmark claims attributable to its OWN MetadataID.
+	//
+	// Metadata (the primary) is derived from this slice; MetadataAll is the complete
+	// record. Benchmark claims from different rows are NEVER fused into one table:
+	// a claim is attributable to the MetadataID under which the lab reported it, and
+	// merging two rows' tables would fabricate an assessment record no lab published.
+	// nil (never empty-non-nil) when no metadata joined to this identity, so the
+	// nil-means-unjoined convention holds on both fields together.
+	MetadataAll []EntityMetadata
 	// Creator is the lab / organization that TRAINED this entity's models (the SPDX
 	// originator), DISTINCT from the Providers that host it (the SPDX suppliers). It
 	// is a DERIVED JOIN PROJECTION — the Entity.Sources / Entity.Regions precedent —
@@ -358,7 +379,14 @@ func cloneEntity(e Entity) Entity {
 	if e.Sources != nil {
 		c.Sources = append([]DataSourceID(nil), e.Sources...)
 	}
-	c.Metadata = cloneEntityMetadata(e.Metadata)
+	c.MetadataAll = cloneEntityMetadataAll(e.MetadataAll)
+	c.Metadata = primaryEntityMetadata(c.MetadataAll)
+	if c.MetadataAll == nil {
+		// No multi-row record to derive from: carry the pointer through on its own.
+		// This keeps a hand-constructed Entity (one that never went through the join)
+		// byte-identical across a clone instead of silently dropping its metadata.
+		c.Metadata = cloneEntityMetadata(e.Metadata)
+	}
 	c.PriceInputRange = cloneFloatPair(e.PriceInputRange)
 	c.PriceOutputRange = cloneFloatPair(e.PriceOutputRange)
 	return c
@@ -382,6 +410,54 @@ func cloneEntityMetadata(m *EntityMetadata) *EntityMetadata {
 		c.Benchmarks = append([]BenchmarkResult(nil), m.Benchmarks...)
 	}
 	return &c
+}
+
+// cloneEntityMetadataAll deep-copies a MetadataAll slice ELEMENT-WISE: every row is
+// cloned through cloneEntityMetadata so its Links and Benchmarks get fresh backing
+// arrays. A bare append([]EntityMetadata(nil), in...) would copy the row structs but
+// leave every row's Links/Benchmarks slice header aliasing the source, so a caller
+// mutating a returned entity's benchmark table would reach back into registry-owned
+// storage. Returns nil for a nil input (the nil-means-unjoined convention).
+func cloneEntityMetadataAll(in []EntityMetadata) []EntityMetadata {
+	if in == nil {
+		return nil
+	}
+	out := make([]EntityMetadata, len(in))
+	for i := range in {
+		out[i] = *cloneEntityMetadata(&in[i])
+	}
+	return out
+}
+
+// primaryEntityMetadata returns a pointer to the PRIMARY row of a MetadataAll slice
+// — the row with the shortest MetadataID, ties broken lexicographic ascending — or
+// nil when the slice is empty. The returned pointer aliases INTO the supplied slice,
+// so callers pass the already-cloned slice (cloneEntity does) and the entity's
+// Metadata and MetadataAll[i] stay the same value rather than diverging copies.
+//
+// See Entity.Metadata for why identity length, not payload size or incoming order,
+// selects the primary.
+func primaryEntityMetadata(all []EntityMetadata) *EntityMetadata {
+	if len(all) == 0 {
+		return nil
+	}
+	best := 0
+	for i := 1; i < len(all); i++ {
+		if lessMetadataPrimary(all[i].MetadataID, all[best].MetadataID) {
+			best = i
+		}
+	}
+	return &all[best]
+}
+
+// lessMetadataPrimary reports whether a outranks b as the primary MetadataID:
+// shorter id first, ties broken lexicographic ascending. It is a total order over
+// distinct ids, so the primary is unique and deterministic.
+func lessMetadataPrimary(a, b MetadataID) bool {
+	if len(a) != len(b) {
+		return len(a) < len(b)
+	}
+	return a < b
 }
 
 // cloneRef deep-copies an EntityRef, duplicating its Modifier slice.

@@ -100,6 +100,23 @@ var templateFuncs = template.FuncMap{
 		}
 		return fmt.Sprintf("$%.2f", *p)
 	},
+	// benchScore renders a benchmark claim's SCORE cell: the verbatim upstream value
+	// (ScoreRaw) when the score was non-numeric, otherwise the numeric Score. This
+	// mirrors the CLI's benchScoreCell so the cell is never blank — a string score
+	// ("pass", an em-dash) rides through on ScoreRaw rather than collapsing to a bare 0.
+	"benchScore": func(b bestiary.BenchmarkResult) string {
+		if b.ScoreRaw != "" {
+			return b.ScoreRaw
+		}
+		return fmt.Sprintf("%g", b.Score)
+	},
+	// isPrimaryMetadata reports whether a metadata row is the entity's DERIVED primary
+	// (the row Entity.Metadata points at). The entity view marks the primary in the
+	// per-row attribution rather than hiding the other rows, so a reader can see both
+	// which naming is canonical and that the other rows exist.
+	"isPrimaryMetadata": func(m bestiary.EntityMetadata, primary *bestiary.EntityMetadata) bool {
+		return primary != nil && m.MetadataID == primary.MetadataID
+	},
 	// orDash renders an empty string as an em-dash so a blank cell reads as "unknown"
 	// rather than a rendering gap (the CLI orDash convention).
 	"orDash": func(s string) string {
