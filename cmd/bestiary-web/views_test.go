@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"net/url"
+	"sort"
 	"strings"
 	"testing"
 
@@ -95,32 +96,51 @@ func TestBrowser_FacetFilter(t *testing.T) {
 	entities := bestiary.Entities()
 	s := newTestServer(t, entities)
 
-	// Pick two distinct families with a representative key each.
-	byFam := map[string]string{}
+	// Pick two distinct families DETERMINISTICALLY. Ranging a map picked a different
+	// pair on every run, so the assertions below were only ever exercised against an
+	// arbitrary sample and the test failed roughly one run in twenty on whichever
+	// pair happened to defeat the leak check.
+	byFam := map[string][]string{}
 	for _, r := range s.rows {
 		if r.Family != "" {
-			byFam[r.Family] = r.Key
+			byFam[r.Family] = append(byFam[r.Family], r.Key)
 		}
 	}
 	if len(byFam) < 2 {
 		t.Skip("need >= 2 families")
 	}
-	var famA, keyA, famB, keyB string
-	for f, k := range byFam {
-		if famA == "" {
-			famA, keyA = f, k
-			continue
-		}
-		famB, keyB = f, k
-		break
+	fams := make([]string, 0, len(byFam))
+	for f := range byFam {
+		fams = append(fams, f)
 	}
+	sort.Strings(fams)
+	famA, famB := fams[0], fams[1]
+	keysA, keysB := append([]string(nil), byFam[famA]...), append([]string(nil), byFam[famB]...)
+	sort.Strings(keysA)
+	sort.Strings(keysB)
+	keyA, keyB := keysA[0], keysB[0]
 
 	body := sseGet(t, s, fmt.Sprintf(`{"family":%q}`, famA))
-	if !strings.Contains(body, keyA) {
-		t.Errorf("family=%q filter dropped its own entity %q", famA, keyA)
+
+	// Assert on the exact rendered ROW ANCHOR (results.html renders each entity as
+	// <a href="…">KEY</a>), not on a bare substring. The old check looked for
+	// ">"+key+"<", which a one-word key like "text" matches anywhere in the body —
+	// a family cell, a modality badge — so it reported a leak that had not happened.
+	anchorA, anchorB := ">"+keyA+"</a>", ">"+keyB+"</a>"
+	if !strings.Contains(body, anchorA) {
+		t.Errorf("family=%q filter dropped its own entity %q (no %q in the rendered rows)", famA, keyA, anchorA)
 	}
-	if strings.Contains(body, ">"+keyB+"<") {
-		t.Errorf("family=%q filter leaked a %q-family entity %q", famA, famB, keyB)
+	if strings.Contains(body, anchorB) {
+		t.Errorf("family=%q filter leaked the %q-family entity %q (found %q in the rendered rows)",
+			famA, famB, keyB, anchorB)
+	}
+
+	// Exact count control: the filtered render must hold every row of famA and
+	// nothing else, which a per-key spot check cannot say.
+	const rowAnchor = `<td class="mono"><a href=`
+	if got, want := strings.Count(body, rowAnchor), len(keysA); got != want {
+		t.Errorf("family=%q filter rendered %d entity rows, want exactly %d (every %s entity and no other)",
+			famA, got, want, famA)
 	}
 
 	// A non-existent facet value yields the empty-state row, not a leak of everything.
