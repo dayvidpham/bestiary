@@ -1,6 +1,7 @@
 package bestiary_test
 
 import (
+	"reflect"
 	"testing"
 
 	"github.com/dayvidpham/bestiary"
@@ -213,5 +214,59 @@ func TestAttachEntityMetadata_Purity(t *testing.T) {
 	out[0].Metadata.Links[0].Label = "changed"
 	if meta[0].Name != "Original" || meta[0].Links[0].Label != "card" {
 		t.Errorf("returned metadata aliased the input slice: input now %+v", meta[0])
+	}
+}
+
+// TestJoinEntityMetadata_FamilyAbsentStandalone_AccumulatesRows pins the standalone
+// arm of the "one entity, many rows" rule: TWO metadata rows whose absent-family ids
+// decompose to the SAME entity key produce exactly ONE synthesized standalone that
+// carries BOTH rows on MetadataAll (sorted ascending by MetadataID, each row keeping
+// its own claims), with Metadata derived as the shortest id — never two duplicate
+// entities and never a silent overwrite of the first row.
+//
+// Mutation guard: dropping the standaloneByKey index (synthesizing per row) fails the
+// len(standalone) == 1 arm; keeping the index but replacing the entity instead of
+// appending fails the MetadataAll length/ordering arm.
+func TestJoinEntityMetadata_FamilyAbsentStandalone_AccumulatesRows(t *testing.T) {
+	e := entityWithRef("llama", "", "3.3", "70b", "instruct")
+	meta := []bestiary.EntityMetadata{
+		multiRowMeta("somelabxyz/frobnik-9-42b-instant", "Instant"), // supplied SECOND-sorting first
+		multiRowMeta("somelabxyz/frobnik-9-42b", "Base"),
+	}
+
+	attached, unlinked, standalone := bestiary.JoinEntityMetadata([]bestiary.Entity{e}, meta)
+	if len(unlinked) != 0 {
+		t.Errorf("family-absent ids must NOT be unlinked; got %v", unlinked)
+	}
+	if attached[0].Metadata != nil || len(attached[0].MetadataAll) != 0 {
+		t.Errorf("unrelated entity wrongly received metadata: %+v", attached[0].MetadataAll)
+	}
+	if len(standalone) != 1 {
+		t.Fatalf("two rows sharing one absent-family key must synthesize exactly ONE standalone; got %d", len(standalone))
+	}
+	s := standalone[0]
+	if s.Ref.String() != "frobnik@9#42b" {
+		t.Fatalf("standalone key = %q, want %q", s.Ref.String(), "frobnik@9#42b")
+	}
+	gotIDs := metadataIDsOf(s)
+	wantIDs := []string{"somelabxyz/frobnik-9-42b", "somelabxyz/frobnik-9-42b-instant"}
+	if !reflect.DeepEqual(gotIDs, wantIDs) {
+		t.Errorf("standalone MetadataAll ids = %v, want %v (both rows kept, ascending by MetadataID)", gotIDs, wantIDs)
+	}
+	if s.Metadata == nil || s.Metadata.MetadataID != "somelabxyz/frobnik-9-42b" {
+		t.Errorf("standalone primary = %+v, want the shortest id %q", s.Metadata, "somelabxyz/frobnik-9-42b")
+	}
+	// Per-row payload attribution: each row keeps ITS OWN claims, never fused.
+	for _, m := range s.MetadataAll {
+		if len(m.Benchmarks) != 1 {
+			t.Fatalf("row %s = %d benchmarks, want 1 (claims must not be fused across rows)", m.MetadataID, len(m.Benchmarks))
+		}
+		wantBench := map[bestiary.MetadataID]string{
+			"somelabxyz/frobnik-9-42b":         "Base-bench",
+			"somelabxyz/frobnik-9-42b-instant": "Instant-bench",
+		}[m.MetadataID]
+		if m.Benchmarks[0].Name != wantBench {
+			t.Errorf("row %s benchmark = %q, want %q", m.MetadataID, m.Benchmarks[0].Name, wantBench)
+		}
 	}
 }

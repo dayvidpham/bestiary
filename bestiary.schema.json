@@ -789,7 +789,7 @@
           ]
         },
         "MetadataAll": {
-          "description": "EVERY provider-agnostic metadata row that joined to this entity's identity, sorted ascending by MetadataID; null when none joined. Distinct lab ids routinely decompose to one entity key (a dated alias and its floating alias; a base model and a serving tier that is not a distinct artifact), and each row carries its OWN benchmark claims attributable to its OWN MetadataID. Metadata is the derived primary of this array; benchmark claims from different rows are never fused into one table. Added in schema 0.7.0; optional for backward compatibility.",
+          "description": "EVERY provider-agnostic metadata row that joined to this entity's identity, sorted ascending by MetadataID; null when none joined. Distinct lab ids routinely decompose to one entity key (a dated alias and its floating alias; a base model and a serving tier that is not a distinct artifact), and each row carries its OWN benchmark claims attributable to its OWN MetadataID. Metadata is the derived primary of this array (the row with the shortest MetadataID). An optional field: a document produced before this array existed carries only Metadata.",
           "type": [
             "array",
             "null"
