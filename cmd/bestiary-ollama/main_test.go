@@ -727,3 +727,96 @@ func TestPackageTests_MakeNoNetworkRequests(t *testing.T) {
 type doerFunc func(*http.Request) (*http.Response, error)
 
 func (f doerFunc) Do(req *http.Request) (*http.Response, error) { return f(req) }
+
+// --------------------------------------------------------------------------
+// One entry per model_id (the file's keying contract)
+// --------------------------------------------------------------------------
+
+// TestBuildOutput_OneEntryPerModelID pins the file's KEYING CONTRACT: model_id is
+// the join key codegen matches on, so a model_id may appear at most once. Two
+// DISTINCT Ollama identities routinely resolve to ONE catalog ID — Ollama's bare
+// size tag `llama3.1:405b` and its explicit `llama3.1:405b-instruct` are the same
+// model, and the bare tag reaches the same entity through the instruct fallback.
+// Grouping by the Ollama identity alone emitted one entry per tag, so a real
+// refresh wrote the same model_id two and three times, each carrying a DIFFERENT
+// subset of the quants; codegen would join whichever it saw last and the rest of
+// the measured weights would silently vanish.
+//
+// The contract: one entry, the union of the quants, and no measured row lost.
+func TestBuildOutput_OneEntryPerModelID(t *testing.T) {
+	tags := []fetchedTag{
+		// Explicit-instruct identity: an exact mechanical join.
+		{OllamaID: "llama3.3:70b-instruct-q4_K_M", WeightsBytes: 43033509888, Digest: "sha256:a"},
+		// Bare size identity: reaches the SAME catalog ID via the instruct fallback,
+		// and carries a quant the explicit identity does not.
+		{OllamaID: "llama3.3:70b-q8_0", WeightsBytes: 75176521728, Digest: "sha256:b"},
+	}
+	out, _ := buildOutput(tags, cannedCatalog(), nil, nil, emptyCurated, emptyExisting)
+
+	seen := map[string]int{}
+	for _, m := range out.Models {
+		seen[strings.ToLower(m.ModelID)]++
+	}
+	for id, n := range seen {
+		if n > 1 {
+			t.Errorf("model_id %q appears %d times;\n"+
+				"  what went wrong: the output violates the file's keying contract (one entry per model_id)\n"+
+				"  why: two Ollama identities resolved to one catalog ID and were emitted separately\n"+
+				"  where: buildOutput (cmd/bestiary-ollama/main.go)\n"+
+				"  how to fix: coalesce groups by their OUTPUT model id and union their quant rows", id, n)
+		}
+	}
+
+	var llama *quantModelOut
+	for i := range out.Models {
+		if out.Models[i].ModelID == "llama-3.3-70b-instruct" {
+			llama = &out.Models[i]
+		}
+	}
+	if llama == nil {
+		t.Fatalf("expected the joined llama entry, got %+v", out.Models)
+	}
+	if len(llama.Rows) != 2 || llama.Rows[0].Quant != "q4_k_m" || llama.Rows[1].Quant != "q8_0" {
+		t.Fatalf("coalesced entry must carry the UNION of both identities' quants, sorted: %+v", llama.Rows)
+	}
+}
+
+// TestBuildOutput_CoalescePrefersTheStrongerJoin pins WHICH measurement survives
+// when two Ollama identities that resolve to one catalog ID publish the same
+// quant with different weights (they are separately-built manifests of the same
+// model and differ by a few KB). The identity that joined on its own decomposition
+// outranks one that needed the bare-size instruct fallback: it names the entity
+// exactly rather than by Ollama's default-tag convention. The loser still
+// contributes every quant the winner lacks — a disagreement resolves a row, it
+// never drops a measurement.
+func TestBuildOutput_CoalescePrefersTheStrongerJoin(t *testing.T) {
+	tags := []fetchedTag{
+		{OllamaID: "llama3.3:70b-q4_K_M", WeightsBytes: 111, Digest: "sha256:fallback"},
+		{OllamaID: "llama3.3:70b-instruct-q4_K_M", WeightsBytes: 222, Digest: "sha256:exact"},
+		{OllamaID: "llama3.3:70b-q2_K", WeightsBytes: 333, Digest: "sha256:only-on-fallback"},
+	}
+	out, _ := buildOutput(tags, cannedCatalog(), nil, nil, emptyCurated, emptyExisting)
+
+	var llama *quantModelOut
+	for i := range out.Models {
+		if out.Models[i].ModelID == "llama-3.3-70b-instruct" {
+			llama = &out.Models[i]
+		}
+	}
+	if llama == nil {
+		t.Fatalf("expected the joined llama entry, got %+v", out.Models)
+	}
+	byQuant := map[string]quantRowOut{}
+	for _, r := range llama.Rows {
+		byQuant[r.Quant] = r
+	}
+	if got := byQuant["q4_k_m"].WeightsBytes; got != 222 {
+		t.Errorf("q4_k_m weights_bytes = %d, want 222 (the exact-join identity wins the conflict)", got)
+	}
+	if got := byQuant["q4_k_m"].Digest; got != "sha256:exact" {
+		t.Errorf("q4_k_m digest = %q, want the exact-join identity's digest", got)
+	}
+	if got := byQuant["q2_k"].WeightsBytes; got != 333 {
+		t.Errorf("q2_k weights_bytes = %d, want 333 (a quant only the loser measured is still kept)", got)
+	}
+}

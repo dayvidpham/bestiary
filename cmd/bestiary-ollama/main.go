@@ -29,7 +29,11 @@
 //     inferred (Ollama exposes no base_model marker) via decomposition + a curated
 //     base table; a base-known finetune carries a base_ref, a base-unknown one
 //     becomes a standalone entry AND is appended to a sorted ollama_unlinked.json.
-//  4. The result is MERGED into parse/data/quant_vram.json: fetch-owned fields
+//  4. Identities that resolve to the SAME catalog ID are COALESCED into one
+//     entry (model_id is the file's join key, so it may appear at most once):
+//     the strongest join arm owns the entry and any quant they disagree on, and
+//     every other identity contributes the quants it alone measured.
+//  5. The result is MERGED into parse/data/quant_vram.json: fetch-owned fields
 //     (weights_bytes, the quant set, param_size from tags) refresh, while
 //     curation-owned fields (architecture facts, context_window, base_ref,
 //     provenance _comments) are preserved from the existing file. The ollama row
@@ -407,7 +411,29 @@ type joinResult struct {
 	ModelsDevID bestiary.ModelID    // set when Joined
 	BaseRef     string              // set for a base-known community finetune
 	Unlinked    bool                // base-unknown community model (-> ollama_unlinked.json)
+	Arm         joinArm             // WHICH precedence arm produced this result
 }
+
+// joinArm names the precedence arm that produced a join. It is recorded because
+// two DISTINCT Ollama identities can resolve to ONE catalog ID (Ollama's bare
+// size tag and its explicit -instruct tag are the same model), and the arm is
+// what decides which of them owns a per-quant measurement they disagree on. The
+// ordering is the precedence itself: a smaller value is the stronger claim.
+type joinArm int
+
+const (
+	// joinArmAlias: a curated alias entry named the catalog row outright.
+	joinArmAlias joinArm = iota
+	// joinArmMechanical: the identity's own decomposition matched the catalog.
+	joinArmMechanical
+	// joinArmInstructFallback: a bare size-only tag matched only after retrying
+	// with an "instruct" modifier — the entity is named by Ollama's default-tag
+	// convention rather than by the identity itself.
+	joinArmInstructFallback
+	// joinArmCommunity: no catalog row; the model is kept under its Ollama-native
+	// namespace ID, with an inferred base or as unlinked.
+	joinArmCommunity
+)
 
 // joinOllama joins a single quant-stripped Ollama identity onto the catalog.
 // Precedence (curated > mechanical):
@@ -436,6 +462,7 @@ func joinOllama(
 			res.Decomp = ad
 			res.Joined = true
 			res.ModelsDevID = id
+			res.Arm = joinArmAlias
 			return res
 		}
 	}
@@ -444,6 +471,7 @@ func joinOllama(
 	if id, ok := matchCatalog(decomp.joinKey(), catalog, curated); ok {
 		res.Joined = true
 		res.ModelsDevID = id
+		res.Arm = joinArmMechanical
 		return res
 	}
 
@@ -454,11 +482,13 @@ func joinOllama(
 			res.Decomp = instr
 			res.Joined = true
 			res.ModelsDevID = id
+			res.Arm = joinArmInstructFallback
 			return res
 		}
 	}
 
 	// 4. Community model: KEPT, never dropped. Infer the base.
+	res.Arm = joinArmCommunity
 	if base := inferBase(ollamaIDStripped, decomp, catalog, bases, curated); base != "" {
 		res.BaseRef = base
 	} else {
@@ -626,16 +656,64 @@ func buildOutput(
 		})
 	}
 
+	// COALESCE by output model id. model_id is the file's join key (codegen matches
+	// on it), so it may appear at most once — but two distinct Ollama identities
+	// routinely resolve to ONE catalog id: the bare size tag `llama3.1:405b` and the
+	// explicit `llama3.1:405b-instruct` are the same model, the bare one arriving
+	// through the instruct fallback. Emitting a group per identity wrote the same
+	// model_id two and three times, each with a different subset of the quants.
+	//
+	// The strongest join arm owns the entry (and any quant the identities disagree
+	// on, since they are separately-built manifests of one model); every other
+	// identity still contributes the quants the winner did not measure, so
+	// coalescing never costs a measurement. Ties break on the stripped Ollama id, so
+	// the result does not depend on fetch order.
+	ordered := append([]string(nil), groupOrder...)
+	sort.Slice(ordered, func(i, j int) bool {
+		gi, gj := groups[ordered[i]], groups[ordered[j]]
+		if gi.join.Arm != gj.join.Arm {
+			return gi.join.Arm < gj.join.Arm
+		}
+		return gi.strippedID < gj.strippedID
+	})
+
+	type coalesced struct {
+		modelID string
+		join    joinResult
+		rows    []quantRowOut
+		byQuant map[string]bool
+	}
+	byModelID := map[string]*coalesced{}
+	var coalescedOrder []string
+	for _, sid := range ordered {
+		g := groups[sid]
+		modelID := outputModelID(g.join, g.strippedID)
+		key := strings.ToLower(modelID)
+		c := byModelID[key]
+		if c == nil {
+			c = &coalesced{modelID: modelID, join: g.join, byQuant: map[string]bool{}}
+			byModelID[key] = c
+			coalescedOrder = append(coalescedOrder, key)
+		}
+		for _, r := range g.rows {
+			q := strings.ToLower(r.Quant)
+			if c.byQuant[q] {
+				continue // the stronger identity already measured this quant
+			}
+			c.byQuant[q] = true
+			c.rows = append(c.rows, r)
+		}
+	}
+
 	// Start the output from a copy of every existing entry so curation that was
 	// not re-fetched this run is never dropped.
 	out := quantFileOut{Comment: quantFileComment, SchemaVersion: quantVRAMSchemaVersion}
 	refreshed := map[string]bool{}
-	for _, sid := range groupOrder {
-		g := groups[sid]
-		modelID := outputModelID(g.join, g.strippedID)
-		prev, hasPrev := existingByID[strings.ToLower(modelID)]
-		refreshed[strings.ToLower(modelID)] = true
-		out.Models = append(out.Models, mergeEntry(modelID, g.join, g.rows, prev, hasPrev))
+	for _, key := range coalescedOrder {
+		c := byModelID[key]
+		prev, hasPrev := existingByID[key]
+		refreshed[key] = true
+		out.Models = append(out.Models, mergeEntry(c.modelID, c.join, c.rows, prev, hasPrev))
 	}
 	for _, m := range existing.Models {
 		if !refreshed[strings.ToLower(m.ModelID)] {
@@ -644,9 +722,10 @@ func buildOutput(
 	}
 
 	var unlinked []string
-	for _, sid := range groupOrder {
-		if groups[sid].join.Unlinked {
-			unlinked = append(unlinked, outputModelID(groups[sid].join, sid))
+	for _, key := range coalescedOrder {
+		c := byModelID[key]
+		if c.join.Unlinked {
+			unlinked = append(unlinked, c.modelID)
 		}
 	}
 
