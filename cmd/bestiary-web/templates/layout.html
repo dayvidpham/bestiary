@@ -208,6 +208,30 @@
     }
     .quant-inst { margin: var(--space-3) 0 var(--space-1); font-size: var(--fs-sm); }
     table.quants { margin-bottom: var(--space-2); }
+    /* Per-identifier metadata rows. The separation between rows is SEMANTIC, not
+       decoration: a benchmark score is a lab-reported claim attributable to the
+       identifier it was published under, so two identifiers' claims must never read as
+       one merged table. The left rule and the per-table caption are what keep the
+       attribution visible when several rows stack. Mirrors the .nomen block below,
+       which groups a name's attestations the same way and for the same reason. */
+    .metadata-row {
+      margin: var(--space-3) 0; padding-left: var(--space-3);
+      border-left: 2px solid var(--accent-dim);
+    }
+    .metadata-head {
+      display: flex; align-items: center; gap: var(--space-2);
+      margin-bottom: var(--space-1);
+    }
+    .metadata-id { color: var(--text); }
+    table.benchmarks { width: auto; min-width: 32rem; }
+    table.benchmarks th, table.benchmarks td { font-size: var(--fs-sm); }
+    /* Browsers centre a <caption> by default, which reads as a title floating above an
+       unrelated table; left-aligning it ties the claim count to the row it belongs to. */
+    table.benchmarks caption {
+      caption-side: top; text-align: left; font-size: var(--fs-xs);
+      padding-bottom: var(--space-1);
+    }
+
     .nomen { margin: var(--space-3) 0; }
     .nomen-head { margin-bottom: var(--space-1); }
     .nomen-value { color: var(--text); }

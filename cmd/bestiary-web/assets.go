@@ -100,6 +100,14 @@ var templateFuncs = template.FuncMap{
 		}
 		return fmt.Sprintf("$%.2f", *p)
 	},
+	// orDash renders an empty string as an em-dash so a blank cell reads as "unknown"
+	// rather than a rendering gap (the CLI orDash convention).
+	"orDash": func(s string) string {
+		if s == "" {
+			return "—"
+		}
+		return s
+	},
 	// plural renders a count with its noun, choosing the singular form at exactly one:
 	// plural 1 "entity" "entities" -> "1 entity". The tree labels every node with a count,
 	// and "1 families" on a single-family creator reads as a rendering bug to anyone who
@@ -109,14 +117,6 @@ var templateFuncs = template.FuncMap{
 			return fmt.Sprintf("%d %s", n, one)
 		}
 		return fmt.Sprintf("%d %s", n, many)
-	},
-	// orDash renders an empty string as an em-dash so a blank cell reads as "unknown"
-	// rather than a rendering gap (the CLI orDash convention).
-	"orDash": func(s string) string {
-		if s == "" {
-			return "—"
-		}
-		return s
 	},
 }
 
