@@ -1,6 +1,7 @@
 package bestiary_test
 
 import (
+	"context"
 	"encoding/json"
 	"os"
 	"path/filepath"
@@ -429,4 +430,76 @@ func bakedMetadataRowCount(t *testing.T) int {
 			" the corpus identity guard would be vacuous", path)
 	}
 	return len(catalog.Models)
+}
+
+// --------------------------------------------------------------------------
+// Store round-trip — no migration required
+// --------------------------------------------------------------------------
+
+// TestStore_RoundTripsEveryMetadataRow_NoMigration asserts the whole baked metadata
+// record survives a SQLite round-trip and rejoins into the same MetadataAll shape.
+//
+// No store migration is needed for the multi-row repair, and this test is what proves
+// it: entity_metadata is keyed by the stable metadata_id, one row per lab identifier,
+// with no notion of "the entity's metadata". MetadataAll is rebuilt by the join at
+// read time, so the multi-row record is a JOIN-layer property the existing v8 schema
+// already carries. A schema that had stored one row per entity would fail here by
+// losing the non-primary rows.
+//
+// UNIT: metadata rows. AXIS: the full baked catalog through Upsert then Query.
+// CONFIGURATION: in-memory SQLite at the current store schema, offline.
+func TestStore_RoundTripsEveryMetadataRow_NoMigration(t *testing.T) {
+	ents := bestiary.Entities()
+	var baked []bestiary.EntityMetadata
+	for _, e := range ents {
+		baked = append(baked, e.MetadataAll...)
+	}
+	if want := bakedMetadataRowCount(t); len(baked) != want {
+		t.Fatalf("baked record = %d rows, want %d before the round-trip", len(baked), want)
+	}
+
+	store := openMemStore(t)
+	ctx := context.Background()
+	// entity_metadata.source_id is a real foreign key into data_sources, so the
+	// dimension row must exist before the facts are written (the store's documented
+	// ordering). Seed every source the baked record attributes rows to.
+	var sources []bestiary.DataSource
+	seenSource := map[bestiary.DataSourceID]struct{}{}
+	for _, m := range baked {
+		if _, dup := seenSource[m.Source]; dup || m.Source == "" {
+			continue
+		}
+		seenSource[m.Source] = struct{}{}
+		sources = append(sources, bestiary.DataSource{
+			ID: m.Source, URI: "https://" + string(m.Source) + "/", CanonicalName: string(m.Source),
+		})
+	}
+	if err := store.UpsertDataSources(ctx, sources, nil); err != nil {
+		t.Fatalf("UpsertDataSources (FK parents for entity_metadata): %v", err)
+	}
+	if err := store.UpsertEntityMetadata(ctx, baked); err != nil {
+		t.Fatalf("UpsertEntityMetadata over the full baked record: %v", err)
+	}
+	got, err := store.QueryEntityMetadata(ctx)
+	if err != nil {
+		t.Fatalf("QueryEntityMetadata: %v", err)
+	}
+	if len(got) != len(baked) {
+		t.Errorf("store round-trip returned %d metadata rows, want %d (every row persists; none collapse per entity)", len(got), len(baked))
+	}
+
+	// Re-joining the round-tripped rows onto a metadata-free entity set must rebuild
+	// the SAME MetadataAll record, so a cached read and a baked read agree.
+	bare := make([]bestiary.Entity, len(ents))
+	for i, e := range ents {
+		e.Metadata, e.MetadataAll = nil, nil
+		bare[i] = e
+	}
+	rejoined, _, _ := bestiary.JoinEntityMetadata(bare, got)
+	for i := range rejoined {
+		if len(rejoined[i].MetadataAll) != len(ents[i].MetadataAll) {
+			t.Errorf("%s: rejoined from the store carries %d rows, baked carries %d",
+				ents[i].Ref.String(), len(rejoined[i].MetadataAll), len(ents[i].MetadataAll))
+		}
+	}
 }

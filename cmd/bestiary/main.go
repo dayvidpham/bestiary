@@ -874,16 +874,20 @@ func overlayEntities(store *bestiary.Store) []bestiary.Entity {
 // bakedEntityMetadataFromEntities gathers the baked metadata rows currently
 // attached to the static entity set. The registry attaches baked models.dev
 // metadata to entities (and synthesizes baked standalone entities) at load, so the
-// set of non-nil Entity.Metadata over Entities() IS the baked metadata surfaced in
+// union of Entity.MetadataAll over Entities() IS the baked metadata surfaced in
 // views. It is the base layer MergeEntityMetadata overlays synced metadata onto;
 // there is no exported baked-slice accessor and this reconstruction needs none
 // (unlinked baked rows are intentionally never surfaced in views anyway).
+//
+// It walks MetadataAll, never the derived Metadata primary: several lab ids can
+// decompose to one entity key, and reading only the primary would rebuild the base
+// layer from one row per entity — silently dropping every non-primary row from the
+// overlay, so a sync could not preserve (or update) rows the base layer never
+// mentioned. The union is therefore the full baked row set, not the entity count.
 func bakedEntityMetadataFromEntities(ents []bestiary.Entity) []bestiary.EntityMetadata {
 	var out []bestiary.EntityMetadata
 	for i := range ents {
-		if ents[i].Metadata != nil {
-			out = append(out, *ents[i].Metadata)
-		}
+		out = append(out, ents[i].MetadataAll...)
 	}
 	return out
 }
@@ -1026,18 +1030,23 @@ func runEntities(format bestiary.OutputFormat, dbPath string) error {
 
 // writeEntitiesTable renders the registry-wide entity summary: one row per entity
 // with its key, provider/host instance count, whether provider-agnostic metadata is
-// attached, and how many benchmark claims that metadata carries. An entity with no
-// metadata shows "-" for METADATA and 0 for BENCHMARKS. Rows are emitted in the
-// caller's order (sorted by key).
+// attached, and how many benchmark claims that metadata carries SUMMED over every
+// joined metadata row. An entity with no metadata shows "-" for METADATA and 0 for
+// BENCHMARKS. Rows are emitted in the caller's order (sorted by key).
 func writeEntitiesTable(w io.Writer, ents []bestiary.Entity) {
 	fmt.Fprintf(w, "Entities (%d):\n", len(ents))
 	fmt.Fprintf(w, "  %-48s %9s %8s %10s\n", "ENTITY KEY", "PROVIDERS", "METADATA", "BENCHMARKS")
 	for _, e := range ents {
 		metadata := "-"
 		benchmarks := 0
-		if e.Metadata != nil {
+		if len(e.MetadataAll) > 0 {
 			metadata = "yes"
-			benchmarks = len(e.Metadata.Benchmarks)
+			// Sum across EVERY joined row: when several lab ids decompose to this
+			// entity, each contributes its own claims and the honest total is their
+			// sum. Counting only the primary row would under-report the entity.
+			for _, m := range e.MetadataAll {
+				benchmarks += len(m.Benchmarks)
+			}
 		}
 		fmt.Fprintf(w, "  %-48s %9d %8s %10d\n", e.PreferredName(), len(e.Providers), metadata, benchmarks)
 	}
@@ -2596,7 +2605,7 @@ func writeEntityView(w io.Writer, e bestiary.Entity) {
 	fmt.Fprintf(w, "Max output:         %s\n", fmtRangeInt(e.MaxOutputRange))
 	fmt.Fprintf(w, "Capabilities: %s\n", orDash(strings.Join(capList(e.Capabilities), ", ")))
 
-	writeEntityMetadata(w, e.Metadata)
+	writeEntityMetadata(w, e.Metadata, e.MetadataAll)
 
 	fmt.Fprintf(w, "Lineage (%d):\n", len(e.Lineage))
 	for _, edge := range e.Lineage {
@@ -2690,18 +2699,50 @@ func writeNominaTable(w io.Writer, nomina []bestiary.Nomen) {
 }
 
 // writeEntityMetadata renders the models.dev entity metadata (provider-agnostic
-// facts) attached to an entity: its description, license, and a benchmark table.
-// It is a no-op when no metadata is joined (m == nil), so an entity with no
-// metadata renders exactly as before. Description and license are entity-level
-// facts (models.json side); status is deliberately absent here — it is
-// instance-level and renders only on the instance table.
-func writeEntityMetadata(w io.Writer, m *bestiary.EntityMetadata) {
-	if m == nil {
-		return
+// facts) attached to an entity: the primary row's description and license, the ids
+// of every joined row, and one benchmark table PER ROW. It is a no-op when no
+// metadata is joined (empty all), so an entity with no metadata renders exactly as
+// before. Description and license are entity-level facts (models.json side); status
+// is deliberately absent here — it is instance-level and renders only on the
+// instance table.
+//
+// primary is the derived Entity.Metadata pointer (the shortest MetadataID) and
+// supplies the single description/license shown; all is the complete record. Each
+// benchmark table is headed by the MetadataID that reported its claims and the
+// tables are NEVER merged: a benchmark score is a lab-reported CLAIM attributable to
+// the id it was published under, so fusing two rows' tables would present an
+// assessment record no lab actually published. When only one row joined, the
+// attribution line names it once and the output is otherwise unchanged.
+func writeEntityMetadata(w io.Writer, primary *bestiary.EntityMetadata, all []bestiary.EntityMetadata) {
+	if len(all) == 0 {
+		if primary == nil {
+			return
+		}
+		// A hand-constructed entity may carry a primary with no record behind it.
+		all = []bestiary.EntityMetadata{*primary}
 	}
-	fmt.Fprintf(w, "Description: %s\n", orDash(m.Description))
-	fmt.Fprintf(w, "License:     %s\n", orDash(m.License))
-	writeBenchmarkTable(w, m.Benchmarks)
+	if primary == nil {
+		primary = &all[0]
+	}
+	fmt.Fprintf(w, "Description: %s\n", orDash(primary.Description))
+	fmt.Fprintf(w, "License:     %s\n", orDash(primary.License))
+
+	ids := make([]string, len(all))
+	for i, m := range all {
+		ids[i] = string(m.MetadataID)
+		if m.MetadataID == primary.MetadataID {
+			ids[i] += " (primary)"
+		}
+	}
+	fmt.Fprintf(w, "Metadata rows (%d): %s\n", len(all), orDash(strings.Join(ids, ", ")))
+
+	for _, m := range all {
+		if len(m.Benchmarks) == 0 {
+			continue
+		}
+		fmt.Fprintf(w, "Claims reported under %s:\n", m.MetadataID)
+		writeBenchmarkTable(w, m.Benchmarks)
+	}
 }
 
 // benchmarkTableLimit is the maximum number of benchmark rows the TABLE view
