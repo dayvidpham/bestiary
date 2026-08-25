@@ -1,0 +1,54 @@
+{{define "calc-results" -}}
+<!-- The coverage statement. Every number in it is interpolated from a FitResult field;
+     none is written into the markup, because a literal count goes stale the first time
+     the corpus moves and would then quietly misdescribe the very table it heads. -->
+<p class="calc-coverage">
+  Measured weights are available for <strong>{{.Coverage.Measured}} of {{.Coverage.Considered}} entities</strong>,
+  from the Ollama registry. A further <strong>{{.Coverage.Derived}} entities</strong> carry an attested total
+  parameter count from which weights can be <strong>derived</strong>; derived figures are estimates from
+  parameter count &times; bits-per-weight, not measured file sizes.
+  <strong>No entity outside the measured ones has the architecture facts needed for a KV-cache term, so every
+  derived figure is a weights-only lower bound and real VRAM will be higher.</strong>
+  <strong>{{.Coverage.Excluded}} mixture-of-experts entities are excluded</strong> because upstream publishes no
+  total parameter count &mdash; only an active count, which would understate residency by up to 26&times;.
+</p>
+
+<p class="calc-summary muted">
+  {{.Available}} available after headroom.
+  {{if .Truncated}}Showing the largest {{.RowsShown}} of {{.RowsTotal}} rows that fit; narrow the budget or raise
+  the context floor to see the rest.{{else}}{{plural .RowsTotal "row" "rows"}} fit.{{end}}
+</p>
+
+<table class="browse calc">
+  <thead>
+    <tr>
+      <th>entity</th>
+      <th>provider</th>
+      <th>quant</th>
+      <th class="num">weights</th>
+      <th>max context</th>
+      <th>basis</th>
+    </tr>
+  </thead>
+  <tbody>
+    {{range .Rows}}
+    <tr>
+      <td class="mono"><a href="{{.Path}}">{{.Key}}</a></td>
+      <td>{{orDash .Provider}}</td>
+      <td class="mono">{{orDash .Quant}}</td>
+      <td class="num">{{.Weights}}</td>
+      <td>
+        {{.Context}}
+        {{- if .Bound}} <span class="muted calc-bound">({{.Bound}})</span>{{end}}
+      </td>
+      <td>
+        {{if .Badge}}<span class="badge warn" title="{{.BadgeTitle}}">{{.Badge}}</span>
+        {{- else}}<span class="badge live" title="ingested GGUF file size with a computable KV-cache term">measured</span>{{end}}
+      </td>
+    </tr>
+    {{else}}
+    <tr><td colspan="6" class="muted">nothing fits this budget. Lower the headroom, raise the budget, or drop the context floor.</td></tr>
+    {{end}}
+  </tbody>
+</table>
+{{- end}}

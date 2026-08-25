@@ -41,7 +41,17 @@ type QuantVRAM struct {
 	// a separate round-trip through Quant.String().
 	QuantRaw string
 	// WeightsBytes is the ingested GGUF file size in bytes — the ground-truth
-	// weights footprint for this quantization variant.
+	// weights footprint for this quantization variant. It is ALWAYS a measurement
+	// and is NEVER derived from bits-per-weight arithmetic; nothing writes a
+	// computed estimate here.
+	//
+	// A separately-typed DERIVED projection does exist for entities that carry an
+	// attested total parameter count but no ingested file size: see WeightsBasis and
+	// DerivedWeightsBytes in fit.go. That projection is computed at display time,
+	// carries BasisDerived, is qualified as a weights-only lower bound, and is never
+	// written into this field or into VRAMBytes. This paragraph is the amendment
+	// that keeps the sentence above true: the invariant is about what is STORED, not
+	// about what may ever be computed from a parameter count.
 	WeightsBytes int64
 	// VRAMBytes is weights + KV-cache at VRAMContextTokens; equals WeightsBytes
 	// when VRAMEstimatePartial is true.

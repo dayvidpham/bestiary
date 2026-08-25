@@ -273,6 +273,29 @@
       padding: var(--space-1) 0 0 var(--space-4);
     }
 
+    /* ===== BEGIN calculator block — the budget-first fit page. Kept contiguous and
+       delimited so it merges as one hunk. It adds no token and no rule outside these
+       selectors: every size resolves through the --fs-* scale and every colour through
+       the palette tokens above. ===== */
+    .calc-coverage {
+      max-width: 60rem; font-size: var(--fs-sm); line-height: 1.6;
+      border-left: 2px solid var(--accent-dim); padding-left: var(--space-3);
+      margin: 0 0 var(--space-3);
+    }
+    /* The coverage statement is prose a reader must actually read before trusting a
+       figure, so it is set at body measure and not shrunk into chrome. Its emphasised
+       runs carry the denominators and the two qualifications. */
+    .calc-coverage strong { color: var(--text); font-weight: 600; }
+    .calc-summary { font-size: var(--fs-sm); margin: 0 0 var(--space-2); }
+    .calc-bound { font-size: var(--fs-xs); }
+    table.calc { min-width: 52rem; }
+    table.calc .badge { white-space: nowrap; }
+    /* A per-control note explaining what a knob does to the answer. Headroom and the
+       context floor both change the verdict in ways a bare label cannot convey, and an
+       unexplained knob gets left at its preset. */
+    .filter-note { font-size: var(--fs-xs); line-height: 1.4; }
+    /* ===== END calculator block ===== */
+
     @media (max-width: 768px) {
       .browse-layout { grid-template-columns: 1fr; }
     }

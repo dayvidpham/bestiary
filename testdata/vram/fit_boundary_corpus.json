@@ -1,0 +1,172 @@
+{
+  "cases": [
+    {
+      "name": "budget bound, exact division",
+      "input": {
+        "weights_bytes": 4294967296,
+        "layers": 32,
+        "kv_heads": 8,
+        "head_dim": 128,
+        "model_context": 131072,
+        "total_bytes": 8589934592,
+        "headroom_bytes": 0
+      },
+      "expected": {
+        "max_context": 32768,
+        "bound": "budget"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "manual",
+        "ref": "vram.go EstimateVRAMBytes KV term 2 * layers * kvHeads * headDim * ctx * VRAMKVElemBytes; at layers=32, kvHeads=8, headDim=128, fp16 that is 2*32*8*128*2 = 131,072 bytes per token; available - weights = 32,768 x 131,072 exactly, and the model window (131,072) is larger, so the budget binds"
+      },
+      "mutation": {
+        "description": "the budget runs out before the model window: the bound names the budget"
+      }
+    },
+    {
+      "name": "model bound",
+      "input": {
+        "weights_bytes": 4294967296,
+        "layers": 32,
+        "kv_heads": 8,
+        "head_dim": 128,
+        "model_context": 131072,
+        "total_bytes": 25769803776,
+        "headroom_bytes": 0
+      },
+      "expected": {
+        "max_context": 131072,
+        "bound": "model"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "manual",
+        "ref": "vram.go EstimateVRAMBytes KV term 2 * layers * kvHeads * headDim * ctx * VRAMKVElemBytes; at layers=32, kvHeads=8, headDim=128, fp16 that is 2*32*8*128*2 = 131,072 bytes per token; available - weights = 21,474,836,480 bytes = 163,840 tokens of KV, which exceeds the model window of 131,072, so the window binds"
+      },
+      "mutation": {
+        "description": "the model window runs out before the budget: the bound names the model, and buying VRAM would not raise the figure"
+      }
+    },
+    {
+      "name": "no context budget remaining",
+      "input": {
+        "weights_bytes": 4294967296,
+        "layers": 32,
+        "kv_heads": 8,
+        "head_dim": 128,
+        "model_context": 131072,
+        "total_bytes": 4294967296,
+        "headroom_bytes": 0
+      },
+      "expected": {
+        "max_context": 0,
+        "bound": "budget"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "vram.go EstimateVRAMBytes KV term 2 * layers * kvHeads * headDim * ctx * VRAMKVElemBytes; at layers=32, kvHeads=8, headDim=128, fp16 that is 2*32*8*128*2 = 131,072 bytes per token; available equals weights exactly, so zero bytes remain for KV"
+      },
+      "mutation": {
+        "description": "weights fit with nothing left over: a real, computable answer of zero tokens, distinct from a non-computable one"
+      }
+    },
+    {
+      "name": "budget bound floors a partial token",
+      "input": {
+        "weights_bytes": 4294967296,
+        "layers": 32,
+        "kv_heads": 8,
+        "head_dim": 128,
+        "model_context": 131072,
+        "total_bytes": 4426044296,
+        "headroom_bytes": 0
+      },
+      "expected": {
+        "max_context": 1000,
+        "bound": "budget"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "vram.go EstimateVRAMBytes KV term 2 * layers * kvHeads * headDim * ctx * VRAMKVElemBytes; at layers=32, kvHeads=8, headDim=128, fp16 that is 2*32*8*128*2 = 131,072 bytes per token; available - weights = 1,000 x 131,072 + 5,000 bytes, and 5,000 bytes buys no whole token"
+      },
+      "mutation": {
+        "description": "a remainder smaller than one token's KV cost: the figure floors rather than rounding up into a token the budget cannot pay for"
+      }
+    },
+    {
+      "name": "headroom reduces the available budget",
+      "input": {
+        "weights_bytes": 4294967296,
+        "layers": 32,
+        "kv_heads": 8,
+        "head_dim": 128,
+        "model_context": 131072,
+        "total_bytes": 8589934592,
+        "headroom_bytes": 2147483648
+      },
+      "expected": {
+        "max_context": 16384,
+        "bound": "budget"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "manual",
+        "ref": "vram.go EstimateVRAMBytes KV term 2 * layers * kvHeads * headDim * ctx * VRAMKVElemBytes; at layers=32, kvHeads=8, headDim=128, fp16 that is 2*32*8*128*2 = 131,072 bytes per token; 8 GiB total minus 2 GiB headroom leaves 6 GiB available, of which 2 GiB remains after the 4 GiB weights = 16,384 tokens"
+      },
+      "mutation": {
+        "description": "headroom is spent before weights are: the same model and budget yield fewer tokens once headroom is set"
+      }
+    },
+    {
+      "name": "model window exactly equals the budget tokens",
+      "input": {
+        "weights_bytes": 4294967296,
+        "layers": 32,
+        "kv_heads": 8,
+        "head_dim": 128,
+        "model_context": 8192,
+        "total_bytes": 5368709120,
+        "headroom_bytes": 0
+      },
+      "expected": {
+        "max_context": 8192,
+        "bound": "model"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "vram.go EstimateVRAMBytes KV term 2 * layers * kvHeads * headDim * ctx * VRAMKVElemBytes; at layers=32, kvHeads=8, headDim=128, fp16 that is 2*32*8*128*2 = 131,072 bytes per token; available - weights = 8,192 x 131,072, and the model window is also 8,192, so the two terms tie"
+      },
+      "mutation": {
+        "description": "the tie between the two terms resolves to the model bound: at equality the reader cannot buy more context with more VRAM"
+      }
+    },
+    {
+      "name": "architecture facts absent yields unknown, never unbounded",
+      "input": {
+        "weights_bytes": 4294967296,
+        "layers": 0,
+        "kv_heads": 8,
+        "head_dim": 128,
+        "model_context": 131072,
+        "total_bytes": 25769803776,
+        "headroom_bytes": 0
+      },
+      "expected": {
+        "max_context": 0,
+        "bound": "unknown"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "vram.go EstimateVRAMBytes returns weights alone when any of layers, kvHeads or headDim is non-positive; fit.go reports that as ContextBoundUnknown with no figure"
+      },
+      "mutation": {
+        "description": "the layer count is absent: the row reports unknown rather than an unbounded context, because an absent fact is not an infinite budget"
+      }
+    }
+  ]
+}

@@ -81,7 +81,11 @@ var templateFuncs = template.FuncMap{
 	// it as a "NN.N GB" figure. It returns "" when ctx is not a positive override or
 	// exceeds the row's baked maximum context (VRAMContextTokens) — the same clamp the
 	// CLI's TYP column applies: no figure is shown above the context the row supports.
-	// This is display-only recompute (the deferred v0.2.9 calculator is out of scope).
+	//
+	// This is display-only recompute in the MODEL-FIRST direction: you already have an
+	// entity and you ask what it costs at a context. The budget-first direction — you
+	// state a budget and ask what fits — is the /calculator page, which reads the same
+	// arithmetic through the root package's FitOver. Neither writes anything baked.
 	"estVRAMGB": func(q bestiary.QuantVRAM, ctx int) string {
 		if ctx <= 0 || q.VRAMContextTokens < ctx {
 			return ""
@@ -155,6 +159,11 @@ var pageFiles = map[string][]string{
 	"entities": {"templates/layout.html", "templates/results.html", "templates/entities.html"},
 	"entity":   {"templates/layout.html", "templates/entity.html"},
 	"families": {"templates/layout.html", "templates/seriestree.html", "templates/families.html"},
+	// The calculator pulls in calcresults.html, whose "calc-results" fragment it renders
+	// inline on first paint and the SSE seam patches on every budget change -- the
+	// entities/results.html arrangement, and for the same reason: one rendering of the
+	// table means the initial page and every patch cannot disagree.
+	"calculator": {"templates/layout.html", "templates/calcresults.html", "templates/calculator.html"},
 }
 
 // parseTemplates builds one template set per page (see pageFiles).
@@ -171,7 +180,9 @@ func parseTemplates() (map[string]*template.Template, error) {
 }
 
 // parseFragments builds the standalone template set used to render SSE fragments (the
-// "entity-results" list PatchElements-ed into #entity-results). It carries no layout.
+// "entity-rows" table PatchElements-ed into #entity-results, and the "calc-results"
+// block patched into #calc-results). It carries no layout.
 func parseFragments() (*template.Template, error) {
-	return template.New("fragments").Funcs(templateFuncs).ParseFS(templatesFS, "templates/results.html")
+	return template.New("fragments").Funcs(templateFuncs).ParseFS(templatesFS,
+		"templates/results.html", "templates/calcresults.html")
 }
