@@ -14,6 +14,19 @@ for its **Go module tags** (`vX.Y.Z`).
 
 ## [Unreleased]
 
+### Removed
+
+- **Entity key retired: `qwen/coder@3#1m`.** The unprefixed spelling `qwen3-coder-next-fp8-1m` (provider InferX)
+  escaped the 1M-context suppress-pin that already covered the `qwen/`-prefixed spelling, so its `1m` context marker
+  was keying off a phantom `#1m` size entity holding a `TotalParams` of 1,000,000. Both spellings are now pinned;
+  the instance rejoins `qwen/coder@3`. Measured at this commit (unit: entity keys; axis: the full constant set in
+  `entities_constants_gen.go`; configuration: this pin alone on the refreshed corpus): 957 → 956, one key retired,
+  none renamed, none added. Retired-key policy: hard 404 on `bestiary show` and `GET /entity/`, no alias.
+
+  | old key | new home | removed constants |
+  |---|---|---|
+  | `qwen/coder@3#1m` | instance rejoins `qwen/coder@3` | `Entity__Qwen__Coder__Version_3__Size_1m` (1 declaration) |
+
 ### Added
 
 - **Creator-first resolution, layered above `CanonicalProvider` rather than replacing
