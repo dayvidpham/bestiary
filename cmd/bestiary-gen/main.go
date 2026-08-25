@@ -239,7 +239,7 @@ const codegenUserAgent = "bestiary-gen/0.2.5 (+https://github.com/dayvidpham/bes
 // alias table it feeds.
 const modelsdevUnlinkedFile = "parse/data/modelsdev_unlinked.json"
 
-// creatorProvidersUnservedFile is the committed AC-scoped report of curated
+// creatorProvidersUnservedFile is the committed coverage report of curated
 // Creator→Provider pairs that serve no instance of any of that creator's families.
 const creatorProvidersUnservedFile = "parse/data/creator_providers_unserved.json"
 

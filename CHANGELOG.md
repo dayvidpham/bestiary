@@ -116,6 +116,17 @@ for its **Go module tags** (`vX.Y.Z`).
   hidden (`text-embedding-3-small`, `text-embedding-3-large`, `poolside/laguna-s-2.1`,
   `sakana/fugu-ultra`); they are carried as enumerated, individually justified residuals
   rather than curated away.
+- **Plan amendment — `Creator.Providers()` is deterministic, not alphabetical.** The
+  implementation plan specified the accessor return a "sorted, deterministic" slice;
+  it returns **curation order** instead, and that is a deliberate amendment rather
+  than an oversight. Determinism is satisfied by the committed
+  `parse/data/creator_providers.json` (same file → same slice on every call and every
+  build); alphabetising it would not be a cleanup but a behaviour change, because
+  creator-first selection uses the slice INDEX as its primacy tie-break, so a sort
+  would silently change which of a lab's surfaces a model resolves to. Emissions a
+  reader would expect sorted keep their own explicit sorts:
+  `parse/data/creator_providers_unserved.json` sorts on `(creator, provider)` and
+  `parse/data/creators_lab_disagreements.json` sorts on `family`.
 
 ### Fixed
 

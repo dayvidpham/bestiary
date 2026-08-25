@@ -218,31 +218,44 @@ $ bestiary show 'anthropic/claude/opus/4.6@2026-02-05'
 ```
 
 **Bare or partial inputs are ambiguous** — many providers host the same model, so bestiary
-lists the canonical provider (marked `*`) separately from the rehosts:
+lists the lab's own surfaces (the **creator** axis, marked `+`) and the family's canonical
+provider (marked `*`) separately from the rehosts. Each row is assigned to at most one
+section, so a provider that both creates and hosts a model — Anthropic for Claude — appears
+once, under `Creator:`:
 
 ```sh
 $ bestiary show claude
-* = canonical provider
+"claude" matched several distinct models — candidates below:
 
-Canonical:
-* anthropic/claude/opus/4.6@2026-02-05
-* anthropic/claude/sonnet/4.6@2026-02-17
-* anthropic/claude/haiku/4.5@2025-10-15
-* anthropic/claude/opus/4.5@2025-11-24
-* anthropic/claude/sonnet/4.5@2025-09-29
-+9 more
++ = served by the creating lab
+
+Creator:
++ google-vertex-anthropic/claude/haiku/3.5@2024-10-22
++ anthropic/claude/haiku/4.5@2025-10-01
++ anthropic/claude/opus/4.1@2025-08-05
++ google-vertex-anthropic/claude/opus/4@2025-05-14
++ anthropic/claude/opus/4.5@2025-11-01
+… and 7 more
 
 Also rehosted by:
-  deepinfra
-  perplexity-agent
-  azure-cognitive-services
-  fastrouter
-  nano-gpt
-+24 more
+  302ai
+  abacus
+  aihubmix
+  amazon-bedrock
+  anyapi
++44 more
 
 To see all providers/variants: bestiary list   (or: bestiary list --provider <slug>)
-To resolve an exact model ID:  bestiary show <raw-id> --format=raw
+bestiary: "claude" is under-specified: it matched 127 distinct models (they differ by variant, version, or size), so `show` cannot pick one.
+  The matching candidates are listed above. To narrow it:
+    - show one directly:   bestiary show --by-entity claude/haiku@3.5
+    - browse the family:   bestiary series claude
+    - use an exact API id: bestiary show <raw-id> --format=raw
 ```
+
+A `Canonical:` section (rows marked `*`) appears alongside `Creator:` for a family whose
+`Family.CanonicalProvider()` is present in the match set but is not one of the creator's own
+distribution surfaces; either section is suppressed when it would be empty.
 
 **Other input formats** are opt-in via `--format`. A Package-URL with a provider namespace
 filters to that provider, falling back to a loose cross-provider match when the namespace
@@ -864,6 +877,11 @@ func main() {
 	// The canonical provider for a family (e.g. claude -> anthropic).
 	fmt.Println(bestiary.Family("claude").CanonicalProvider())
 
+	// The creator axis: who trained the weights, and the hosting surfaces that
+	// lab operates for its OWN models (curation order, not alphabetical).
+	fmt.Println(bestiary.Family("llama").Creator())    // meta
+	fmt.Println(bestiary.Creator("meta").Providers())  // [meta llama]
+
 	// Lookup / filter the static registry.
 	if m, ok := bestiary.LookupModelByProvider(bestiary.ProviderAnthropic, "claude-opus-4-6"); ok {
 		ref := m.Ref() // 8-field ModelRef
@@ -914,6 +932,7 @@ enumerate-then-lookup is `EntityKeys()` + `EntityByKey`.)
 | `InputFormat` | Parsed `--format` value: `InputFormatPeasant`, `InputFormatHuggingFace`, `InputFormatPURL`, `InputFormatRaw`. |
 | `Designation` | A serialized identifier `(Value, Scheme, Provider, Rating)` — one model has many designations. |
 | `AcceptabilityRating` | ISO-1087 rating: `AcceptabilityAdmitted` (default), `AcceptabilityPreferred`, `AcceptabilityDeprecated`. |
+| `Creator` | String type for the lab that trained the weights — the originator axis, distinct from `Provider`. `Family.Creator()` maps a family to it; `Creator.Providers()` returns that lab's own hosting surfaces in curation (preference) order, ranked above `Family.CanonicalProvider()` above a rehost. |
 | `ErrAmbiguous` | Struct error (use `errors.As`) carrying the candidate `[]ModelRef`; returned by `Resolve` when an input matches multiple models. |
 | `Modality` / `Modalities` | Int enum + `Input`/`Output` modality lists. |
 | `Capability` | `Supported bool` + `Config map[string]string` for polymorphic fields (e.g. `Interleaved`). |

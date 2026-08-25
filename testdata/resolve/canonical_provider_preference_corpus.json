@@ -154,7 +154,7 @@
         "ref": "catalog ID llama-3.3-70b-instruct, hosted by 8 providers (azure, azure-cognitive-services, cortecs, helicone, llama, llmgateway, regolo-ai, scaleway); the llama canonical is the synthetic `local` provider, which serves nothing in the built catalog, but `llama` is one of the Meta creator's curated distribution surfaces and IS present"
       },
       "mutation": {
-        "description": "the creator axis carrying a family the canonical axis cannot: Family(llama).CanonicalProvider() is `local` and never present, so before creator-first this fell through to all 8 hosts and `bestiary show` reported the alphabetically-first one (azure, a rehost) as the model's provider. Meta's own llama.com surface now wins instead. This is the flip AC-2 exists for; it is measured, not incidental."
+        "description": "the creator axis carrying a family the canonical axis cannot: Family(llama).CanonicalProvider() is `local` and never present, so before creator-first this fell through to all 8 hosts and `bestiary show` reported the alphabetically-first one (azure, a rehost) as the model's provider. Meta's own llama.com surface now wins instead. This is the creator-first-over-canonical flip the change exists for; it is measured, not incidental."
       }
     },
     {

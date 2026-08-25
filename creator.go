@@ -556,7 +556,8 @@ func safeCreatorProviderTable(t *creatorProviderTable, err error) *creatorProvid
 // the testable seam behind loadCreatorProviderTable and rejects, each with an
 // actionable error: a row whose creator is not a well-known Creator, a duplicate
 // creator row, an empty provider list, a provider that is not a recognized Provider
-// (Provider.IsKnown — the LOUD codegen guard AC-3 asks for), and a provider repeated
+// (Provider.IsKnown — the LOUD codegen guard against an unrecognized provider slug),
+// and a provider repeated
 // within one row. On success it returns a table whose provider slices are sorted.
 func parseCreatorProviderTable(raw []byte) (*creatorProviderTable, error) {
 	var file creatorProviderFileJSON
@@ -651,11 +652,19 @@ func ValidateCreatorProviderTable() error {
 // defensive copy in CURATION ORDER. Modifying the returned slice does not affect
 // package state.
 //
-// The order is the lab's PRIMACY order, not an alphabetical one: the first entry is
-// the surface a caller should prefer when several are available, and resolution
-// relies on exactly that (Zhipu leads with its own "zhipuai" API ahead of the
-// international "zai" brand). Callers that need a stable display order should sort a
-// copy rather than assume one.
+// The order is CURATION order — the lab's PRIMACY order as parse/data/creator_providers.json
+// lists it — and it is DETERMINISTIC but explicitly NOT alphabetical. Determinism comes
+// from the committed JSON: the same file yields the same slice on every call and every
+// build, so callers get a stable, reproducible order without a sort.
+//
+// The order is NOT sorted on purpose, and re-introducing a sort would be a behaviour
+// change, not a cleanup: creator-first selection uses the slice INDEX as its primacy
+// tie-break (providerPreferenceScore in family.go), so the earliest curated surface wins
+// when a lab operates several. Alphabetising would silently change which surface a model
+// resolves to (Zhipu leads with its own "zhipuai" API ahead of the international "zai"
+// brand; sorting would flip that). Callers that need a stable DISPLAY order — as opposed
+// to this preference order — should sort a copy on their own key, which is what the
+// codegen-emitted coverage and disagreement reports do.
 //
 // It returns an EMPTY (non-nil) slice for a creator with no first-party surface in
 // this catalog, which is the honest answer for a weights-only lab whose models reach

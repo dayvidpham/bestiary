@@ -66,9 +66,28 @@ Three orthogonal instance-level axes:
 | `Host` | which upstream backend a reseller routes to | NanoGPT's `azure-*` IDs → `Host: azure` |
 | `Region` | which geographic/jurisdictional boundary serves the request | Bedrock's `eu.` profiles → `Region: eu` |
 
-None of the three is identity. A **creator** axis (who trained the weights)
-does not yet exist as a typed dimension — it is implicit in the family and the
-lab-scoped metadata ID; making it first-class is tracked upstream (GH#26).
+None of the three is identity.
+
+### Creator
+
+A fourth axis, **entity-level** rather than instance-level: who *trained* the
+weights, as opposed to who makes them available. `Family.Creator()` maps a
+family to its lab (`llama` → `meta`), and `Creator.Providers()` lists the
+hosting surfaces that lab operates or brands for its OWN models.
+
+`Creator` layers ABOVE `Family.CanonicalProvider()` rather than replacing it.
+When one expression matches models from several providers, resolution ranks a
+creator-operated surface first, the family's canonical provider next, and a
+rehost last — so `llama-3.3-70b-instruct` reports Meta's `llama` surface rather
+than the alphabetically-first rehost. A family with no creator, no curated
+distribution row, or no creator-hosted candidate resolves exactly as it did
+before the axis existed.
+
+`Creator.Providers()` returns **curation order** — the lab's primacy order as
+`parse/data/creator_providers.json` lists it. It is deterministic (the same
+committed file yields the same slice every time) but deliberately NOT
+alphabetical: the slice index IS the tie-break that decides which of a lab's
+several surfaces wins.
 
 ### Series and Release
 

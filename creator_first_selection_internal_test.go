@@ -27,7 +27,8 @@ import (
 //
 //   - "llama" is the family that separates the two axes: its curated canonical
 //     provider is "local" (which serves nothing in the catalog) while "llama" and
-//     "meta" are Meta's curated distribution surfaces. It is the family AC-2 is about.
+//     "meta" are Meta's curated distribution surfaces. It is the family that separates
+//     the creator axis from the canonical-provider axis.
 //   - "flux" has a creator (blackforestlabs) but NO curated distribution row and no
 //     canonical provider — the "creator known, nothing to prefer" fall-through.
 //   - "definitely-not-a-family" has neither axis — the untouched-baseline case.
