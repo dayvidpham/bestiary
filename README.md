@@ -673,6 +673,14 @@ catalog). Refreshing that snapshot from a newer upstream deploy is a deliberate,
 occasional manual step — see the **"models.dev snapshot refresh"** workflow in
 [`AGENTS.md`](AGENTS.md).
 
+## Web UI (`cmd/bestiary-web`)
+
+`cmd/bestiary-web` serves the browser front-end over the same offline catalog the CLI
+uses. Press **⌘K** (**Ctrl-K** on Linux/Windows) anywhere in the app to open the command
+palette: type to search entities by name and hit Enter to navigate to the matching entity
+page. The palette is server-rendered and driven by the already-vendored, same-origin
+client script — it adds no new Go or browser dependency.
+
 ## CLI
 
 ```

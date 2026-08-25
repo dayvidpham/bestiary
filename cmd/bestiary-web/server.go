@@ -461,6 +461,7 @@ func (s *Server) routes() {
 	mux.HandleFunc("GET /calculator", s.handleCalculator)
 	mux.HandleFunc("GET /sse/entities", s.handleEntitiesSSE)
 	mux.HandleFunc("GET /sse/calculator", s.handleCalculatorSSE)
+	mux.HandleFunc("GET /sse/palette", s.handlePaletteSSE)
 	mux.Handle("GET /assets/", http.FileServerFS(assetsFS))
 	s.handler = mux
 }
@@ -661,6 +662,153 @@ func containsStr(xs []string, x string) bool {
 	}
 	return false
 }
+
+// ===== Command palette =====================================================================
+//
+// The palette is entity SEARCH AND NAVIGATE, and nothing else. It deliberately carries no
+// page-navigation or view-action commands: a palette that also runs actions has to explain
+// which of its rows change the page and which change the app, and the moment it does, a
+// keystroke that used to open an entity can start doing something else. Every row here
+// resolves to one entity URL, so Enter always means the same thing.
+//
+// It reuses the SSE fragment seam the browser already uses (ReadSignals -> NewSSE ->
+// PatchElements); only the target element differs (#palette-results, not #entity-results).
+
+// paletteMaxResults caps how many options one patch renders. A combobox popup is scanned,
+// not paged, so a hundred rows would be noise; the cap is surfaced to the reader (the
+// fragment states the total when it truncates) rather than silently swallowing matches.
+const paletteMaxResults = 10
+
+// paletteQuery is the view-state the palette SSE endpoint reads from the Datastar signals:
+// the one free-text term the combobox input is bound to. Like the browser's signals this is
+// NON-IDENTITY view-state — it selects which options are offered, never which entity a
+// chosen option denotes.
+type paletteQuery struct {
+	PaletteQuery string `json:"paletteQuery"`
+}
+
+// paletteOption is one rendered combobox option: the canonical key the reader recognizes,
+// the same-origin route Enter navigates to (== EntityRef.IRI(entityRoutePrefix), the exact
+// path /entity/ dereferences), and the two attribution facets that disambiguate keys that
+// read alike. OptionID is the DOM id the input's aria-activedescendant points at; it is
+// minted server-side so the pointer target and the rendered row can never disagree.
+type paletteOption struct {
+	OptionID string
+	Key      string
+	Path     string
+	Family   string
+	Creator  string
+}
+
+// paletteView is the fragment's data model. Total is the match count BEFORE the cap, so a
+// truncated list can say so; Query is echoed to distinguish "nothing typed yet" (the
+// opening state of the dialog) from "nothing matches what you typed".
+type paletteView struct {
+	Query   string
+	Options []paletteOption
+	Total   int
+}
+
+// Truncated reports whether the cap hid matches, i.e. whether the fragment must tell the
+// reader that Total is larger than what it listed.
+func (v paletteView) Truncated() bool { return v.Total > len(v.Options) }
+
+// handlePaletteSSE is the palette's wiring seam: read the one search signal, rank the
+// matching entities, and PatchElements the option list into #palette-results. It is the
+// same SDK path as handleEntitiesSSE against a different target, which is why the palette
+// needed no new route KIND, no client router and no new dependency.
+func (s *Server) handlePaletteSSE(w http.ResponseWriter, r *http.Request) {
+	var q paletteQuery
+	// Tolerant read: an absent/empty signal is the dialog's opening state, not an error.
+	_ = datastar.ReadSignals(r, &q)
+
+	var buf bytes.Buffer
+	if err := s.fragments.ExecuteTemplate(&buf, "palette-options", s.palette(q)); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	sse := datastar.NewSSE(w, r)
+	_ = sse.PatchElements(
+		buf.String(),
+		datastar.WithSelector("#palette-results"),
+		datastar.WithMode(datastar.ElementPatchModeInner),
+	)
+}
+
+// palette ranks the corpus against the search term and returns at most paletteMaxResults
+// options, plus the uncapped match total.
+//
+// The rank is a relevance order, not a new identity: a term that PREFIXES a canonical key
+// is what the reader almost always meant, so those come first; a term found anywhere else
+// in the key comes next; a term that only matched the attribution (family or creator) comes
+// last, because that reader typed a lab, not a model. Within a rank the corpus DEFAULT
+// order (Family then key, established in buildRows) breaks the tie, so the same term always
+// yields the same list.
+//
+// An empty term matches NOTHING: an opening palette that pre-loads ten arbitrary entities
+// invites a reader to press Enter on a row they did not choose.
+func (s *Server) palette(q paletteQuery) paletteView {
+	term := strings.ToLower(strings.TrimSpace(q.PaletteQuery))
+	v := paletteView{Query: strings.TrimSpace(q.PaletteQuery)}
+	if term == "" {
+		return v
+	}
+
+	type ranked struct {
+		row  entityRow
+		rank int
+	}
+	hits := make([]ranked, 0, paletteMaxResults)
+	for _, r := range s.rows {
+		rk, ok := paletteRank(r, term)
+		if !ok {
+			continue
+		}
+		v.Total++
+		hits = append(hits, ranked{row: r, rank: rk})
+	}
+	// Stable: s.rows is already in the default order, so equal ranks keep it.
+	sort.SliceStable(hits, func(i, j int) bool { return hits[i].rank < hits[j].rank })
+	if len(hits) > paletteMaxResults {
+		hits = hits[:paletteMaxResults]
+	}
+
+	v.Options = make([]paletteOption, 0, len(hits))
+	for i, h := range hits {
+		v.Options = append(v.Options, paletteOption{
+			OptionID: paletteOptionID(i),
+			Key:      h.row.Key,
+			Path:     h.row.Path,
+			Family:   h.row.Family,
+			Creator:  h.row.Creator,
+		})
+	}
+	return v
+}
+
+// paletteRank scores one row against an already-lowercased, non-empty term: 0 for a key
+// prefix, 1 for a key substring, 2 for an attribution (family/creator) substring. ok is
+// false when the row does not match at all.
+func paletteRank(r entityRow, term string) (int, bool) {
+	key := strings.ToLower(r.Key)
+	switch {
+	case strings.HasPrefix(key, term):
+		return 0, true
+	case strings.Contains(key, term):
+		return 1, true
+	case strings.Contains(strings.ToLower(r.Family), term),
+		strings.Contains(strings.ToLower(r.Creator), term):
+		return 2, true
+	}
+	return 0, false
+}
+
+// paletteOptionID mints the DOM id of the i-th option. The ids are positional and dense
+// (0..n-1) because the combobox pointer moves by POSITION: the browser-side handler walks
+// the rendered options and writes the chosen one's id into aria-activedescendant, so an id
+// that encoded the entity key instead would buy nothing and would have to be escaped.
+func paletteOptionID(i int) string { return fmt.Sprintf("palette-opt-%d", i) }
 
 // handleTree renders the FRONT PAGE: the Creator > Family > Series > entities tree,
 // walked from the root package's CreatorGroups() projection. It is a native <details>
