@@ -306,7 +306,20 @@ func TestEntityRekey_CensusAccounted(t *testing.T) {
 	// their only instances were venice's squashed-version ids (openai-gpt-56-<tier>-pro),
 	// and those are pinned to 5.6 here, so every -pro instance is dated and the undated
 	// {pro} key empties. -12 + 9 = -3, with all 76 tier instances conserved.
-	const wantEntities = 942
+	//
+	// 942 -> 933 with the redundant leading-token strip. Fourteen undated keys retire
+	// because the artifacts on them turn out to be dated: agi, devstral#123b,
+	// gemma#4b, gemma#12b, gemma#26b-a4b, gpt/pro, kimi-k2{code},
+	// ministral#3b{instruct}, ministral#8b{instruct}, mistral/large#675b{instruct},
+	// mistral/mini#3b, mistral/small#24b, nemotron#120b and nemotron#30b-a3b. Five
+	// dated keys are minted for the ones with no existing dated sibling (agi@01,
+	// devstral@2#123b, ministral@3#3b{instruct}, ministral@3#14b{instruct},
+	// nemotron@3#120b); the other nine MERGE onto dated keys that already existed,
+	// which is why the arithmetic is -14 + 5 = -9 rather than a pure rename block.
+	// Two of the fourteen also change family (mistral/mini#3b and mistral/small#24b
+	// become voxtral, the line Mistral actually published them under) and one,
+	// gpt/pro, SPLITS across gpt/pro@5.4 and gpt/pro@5.5.
+	const wantEntities = 933
 	if got := len(bestiary.Entities()); got != wantEntities {
 		t.Errorf("registry census = %d entities, want %d — this literal is the running total of "+
 			"every curated key retirement (see the arithmetic above it); update it in the same "+
@@ -331,16 +344,24 @@ func TestEntityMerge_NToN0_MergeOnly(t *testing.T) {
 	// bare+dotted sums measured on the catalog immediately before the fold:
 	//   opus 21+1, sonnet 26+1, flash 28+1, pro 24+2, imagen 1+3, imagen{fast} 1+1,
 	//   ultra 1+1, veo 1+2.
+	// Four sums then moved with the redundant leading-token strip, which recovers a
+	// version for ids that repeated their provider's or their lab's name in front of the
+	// model name, so those instances now reach the BARE key and fold with it:
+	// opus 22 -> 23 (digitalocean anthropic-claude-opus-4), sonnet 27 -> 29 (databricks
+	// databricks-claude-sonnet-4 and digitalocean anthropic-claude-sonnet-4),
+	// flash 28 -> 29 and pro 26 -> 27 (databricks databricks-gemini-3-flash and
+	// databricks-gemini-3-pro). No instance is created: each was previously stranded on
+	// an undated key of the same family.
 	type merge struct {
 		dotted   string
 		wantInst int
 	}
 	merges := map[string]merge{
-		"claude/opus@4":   {"claude/opus@4.0", 22},
-		"claude/sonnet@4": {"claude/sonnet@4.0", 27},
+		"claude/opus@4":   {"claude/opus@4.0", 23},
+		"claude/sonnet@4": {"claude/sonnet@4.0", 29},
 		// 29 -> 28: an upstream rehost row left at the 2026-07-23 refresh.
-		"gemini/flash@3": {"gemini/flash@3.0", 28},
-		"gemini/pro@3":   {"gemini/pro@3.0", 26},
+		"gemini/flash@3": {"gemini/flash@3.0", 29},
+		"gemini/pro@3":   {"gemini/pro@3.0", 27},
 		"imagen@4":       {"imagen@4.0", 4},
 		"imagen@4{fast}": {"imagen@4.0{fast}", 2},
 		"imagen/ultra@4": {"imagen/ultra@4.0", 2},

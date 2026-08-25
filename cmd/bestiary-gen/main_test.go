@@ -731,16 +731,30 @@ var crossProviderJustifiedResidual = map[string]string{
 // pipeline regression: the diff gate reads changed=0, so no record's decomposition moved).
 // Assert ≤ ceiling (tighten-only; a legitimate reduction passes, a regression that
 // re-drops sole-residual/member coverage trips it).
-const crossProviderResidualUnaccountedCeiling = 282
+//
+// 282 -> 303 with the redundant leading-token strip. This ceiling counts tokens the
+// decomposition did not ACCOUNT FOR, and a stripped prefix is by construction one of
+// them: the whole point of the strip is that the token's fact lives on a DIFFERENT axis
+// (Provider, or the Creator the family declares), so the (family, variant, version,
+// modifier) tuple does not and should not absorb it. The +21 is therefore a measurement
+// of the strip's reach, not a loss of coverage — and the companion floor below moves the
+// other way in the same run, from 4,064 to 4,229 populated versions, which is the fact
+// the strip was made for. A residual regression of the kind this ceiling exists to catch
+// would raise the residual WITHOUT raising the version floor.
+const crossProviderResidualUnaccountedCeiling = 303
 
 // crossProviderPopulatedVersionFloor pins the at-scale count of snapshot records whose
 // production decomposition yields a NON-EMPTY Version (landing pin; supersedes the
-// stale 1681/293 figures). Measured = 4,064 records with a populated Version over the
-// 5,765-record refreshed snapshot (was 3,401 over 4,979). Assert ≥ floor
+// stale 1681/293 figures). Measured = 4,229 records with a populated Version over the
+// 5,765-record refreshed snapshot (was 4,064 before the redundant leading-token strip,
+// and 3,401 over the older 4,979-record fixture). The +165 is the strip's yield: an id
+// that repeats its provider's or its lab's name in front of the model name pushed the
+// version scan one token late, so the artifact keyed an UNDATED sibling of the entity it
+// belongs to; with the prefix gone the scan lands on the version the vendor published. Assert ≥ floor
 // (loosen-only: more version coverage passes; a regression that drops version-presence
 // — the inverse of the residual-ceiling guard — trips it). Pinned alongside the residual
 // ceiling so both the "version populated" and "tokens unaccounted" at-scale counts are gated.
-const crossProviderPopulatedVersionFloor = 4064
+const crossProviderPopulatedVersionFloor = 4229
 
 // TestStaticDataset_CrossProviderConsistency is the HARDENED cross-provider
 // consistency GATE. It REPLACES the earlier heuristic gate that carried 5 escape

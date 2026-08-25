@@ -16,9 +16,9 @@ const (
 	Entity__Abliterated                                                   = "abliterated"
 	Entity__Active                                                        = "active"
 	Entity__Agent                                                         = "agent"
-	Entity__Agi                                                           = "agi"
 	Entity__Agi__Mini                                                     = "agi/mini"
 	Entity__Agi__Pro                                                      = "agi/pro"
+	Entity__Agi__Version_01                                               = "agi@01"
 	Entity__Agnes__Lite__Version_1_5                                      = "agnes/lite@1.5"
 	Entity__Agnes__Pro__Version_1_5                                       = "agnes/pro@1.5"
 	Entity__Aion__Mini__Version_1_0                                       = "aion/mini@1.0"
@@ -142,10 +142,10 @@ const (
 	Entity__Deepseek_ocr__Version_2                                       = "deepseek-ocr@2"
 	Entity__Devstral                                                      = "devstral"
 	Entity__Devstral__Medium                                              = "devstral/medium"
-	Entity__Devstral__Size_123b                                           = "devstral#123b"
 	Entity__Devstral__Small                                               = "devstral/small"
 	Entity__Devstral__Small__Version_2                                    = "devstral/small@2"
 	Entity__Devstral__Version_2                                           = "devstral@2"
+	Entity__Devstral__Version_2__Size_123b                                = "devstral@2#123b"
 	Entity__Devstral__Version_2__Size_123b__Instruct                      = "devstral@2#123b{instruct}"
 	Entity__Diffusiongemma__Size_26b_a4b                                  = "diffusiongemma#26b-a4b"
 	Entity__Distilbert__Version_2                                         = "distilbert@2"
@@ -232,12 +232,9 @@ const (
 	Entity__Gemma                                                         = "gemma"
 	Entity__Gemma4__Size_31b                                              = "gemma4#31b"
 	Entity__Gemma_4_31b_larkspur__V0_5__Version_4__Size_31b               = "gemma-4-31b-larkspur/v0.5@4#31b"
-	Entity__Gemma__Size_12b                                               = "gemma#12b"
 	Entity__Gemma__Size_26b                                               = "gemma#26b"
-	Entity__Gemma__Size_26b_a4b                                           = "gemma#26b-a4b"
 	Entity__Gemma__Size_27b                                               = "gemma#27b"
 	Entity__Gemma__Size_31b                                               = "gemma#31b"
-	Entity__Gemma__Size_4b                                                = "gemma#4b"
 	Entity__Gemma__Size_9b                                                = "gemma#9b"
 	Entity__Gemma__Version_2__Size_27b                                    = "gemma@2#27b"
 	Entity__Gemma__Version_2__Size_2b                                     = "gemma@2#2b"
@@ -326,7 +323,6 @@ const (
 	Entity__Gpt__Oss__Size_120b                                           = "gpt/oss#120b"
 	Entity__Gpt__Oss__Size_120b__Fast                                     = "gpt/oss#120b{fast}"
 	Entity__Gpt__Oss__Size_20b                                            = "gpt/oss#20b"
-	Entity__Gpt__Pro                                                      = "gpt/pro"
 	Entity__Gpt__Pro__Version_5                                           = "gpt/pro@5"
 	Entity__Gpt__Pro__Version_5_2                                         = "gpt/pro@5.2"
 	Entity__Gpt__Pro__Version_5_4                                         = "gpt/pro@5.4"
@@ -433,7 +429,6 @@ const (
 	Entity__Kimi__K__Version_2__Instruct                                  = "kimi/k@2{instruct}"
 	Entity__Kimi__K__Version_3                                            = "kimi/k@3"
 	Entity__Kimi_k2                                                       = "kimi-k2"
-	Entity__Kimi_k2__Code                                                 = "kimi-k2{code}"
 	Entity__Kimi_k2__Instruct                                             = "kimi-k2{instruct}"
 	Entity__Kimi_k3                                                       = "kimi-k3"
 	Entity__Kling__V2_5_turbo_i2v                                         = "kling/v2.5-turbo-i2v"
@@ -547,10 +542,10 @@ const (
 	Entity__Ministral__Size_14b                                           = "ministral#14b"
 	Entity__Ministral__Size_14b__Instruct                                 = "ministral#14b{instruct}"
 	Entity__Ministral__Size_3b                                            = "ministral#3b"
-	Entity__Ministral__Size_3b__Instruct                                  = "ministral#3b{instruct}"
 	Entity__Ministral__Size_8b                                            = "ministral#8b"
-	Entity__Ministral__Size_8b__Instruct                                  = "ministral#8b{instruct}"
+	Entity__Ministral__Version_3__Size_14b__Instruct                      = "ministral@3#14b{instruct}"
 	Entity__Ministral__Version_3__Size_14b__Reasoning                     = "ministral@3#14b{reasoning}"
+	Entity__Ministral__Version_3__Size_3b__Instruct                       = "ministral@3#3b{instruct}"
 	Entity__Ministral__Version_3__Size_3b__Reasoning                      = "ministral@3#3b{reasoning}"
 	Entity__Ministral__Version_3__Size_8b__Instruct                       = "ministral@3#8b{instruct}"
 	Entity__Mirothinker_1_7_deepresearch__Mini__Version_1_7               = "mirothinker-1-7-deepresearch/mini@1.7"
@@ -561,7 +556,6 @@ const (
 	Entity__Mistral__Large                                                = "mistral/large"
 	Entity__Mistral__Large__Instruct                                      = "mistral/large{instruct}"
 	Entity__Mistral__Large__Size_675b                                     = "mistral/large#675b"
-	Entity__Mistral__Large__Size_675b__Instruct                           = "mistral/large#675b{instruct}"
 	Entity__Mistral__Large__Version_3                                     = "mistral/large@3"
 	Entity__Mistral__Large__Version_3__Size_675b__Instruct                = "mistral/large@3#675b{instruct}"
 	Entity__Mistral__Medium                                               = "mistral/medium"
@@ -571,7 +565,6 @@ const (
 	Entity__Mistral__Medium__Version_3_5                                  = "mistral/medium@3.5"
 	Entity__Mistral__Medium__Version_3_5__Size_128b                       = "mistral/medium@3.5#128b"
 	Entity__Mistral__Medium__Version_3__Instruct                          = "mistral/medium@3{instruct}"
-	Entity__Mistral__Mini__Size_3b                                        = "mistral/mini#3b"
 	Entity__Mistral__Nemo                                                 = "mistral/nemo"
 	Entity__Mistral__Nemo__Instruct                                       = "mistral/nemo{instruct}"
 	Entity__Mistral__Nemo__Size_12b                                       = "mistral/nemo#12b"
@@ -581,7 +574,6 @@ const (
 	Entity__Mistral__Size_7b__Instruct                                    = "mistral#7b{instruct}"
 	Entity__Mistral__Small                                                = "mistral/small"
 	Entity__Mistral__Small__Size_119b                                     = "mistral/small#119b"
-	Entity__Mistral__Small__Size_24b                                      = "mistral/small#24b"
 	Entity__Mistral__Small__Size_24b__Instruct                            = "mistral/small#24b{instruct}"
 	Entity__Mistral__Small__Version_3_1__Size_24b__Instruct               = "mistral/small@3.1#24b{instruct}"
 	Entity__Mistral__Small__Version_3_2__Size_24b__Instruct               = "mistral/small@3.2#24b{instruct}"
@@ -614,10 +606,8 @@ const (
 	Entity__Nemotron__Nano__Version_3__Size_30b                           = "nemotron/nano@3#30b"
 	Entity__Nemotron__Nano__Version_3__Size_30b_a3b                       = "nemotron/nano@3#30b-a3b"
 	Entity__Nemotron__Nano__Version_3__Size_30b_a3b__Omni__Reasoning      = "nemotron/nano@3#30b-a3b{reasoning,omni}"
-	Entity__Nemotron__Size_120b                                           = "nemotron#120b"
 	Entity__Nemotron__Size_120b_a12b                                      = "nemotron#120b-a12b"
 	Entity__Nemotron__Size_1b                                             = "nemotron#1b"
-	Entity__Nemotron__Size_30b_a3b                                        = "nemotron#30b-a3b"
 	Entity__Nemotron__Size_32b                                            = "nemotron#32b"
 	Entity__Nemotron__Size_49b                                            = "nemotron#49b"
 	Entity__Nemotron__Size_4b__Reasoning                                  = "nemotron#4b{reasoning}"
@@ -633,6 +623,7 @@ const (
 	Entity__Nemotron__Version_2__Size_30b_a3b                             = "nemotron@2#30b-a3b"
 	Entity__Nemotron__Version_3                                           = "nemotron@3"
 	Entity__Nemotron__Version_3_5                                         = "nemotron@3.5"
+	Entity__Nemotron__Version_3__Size_120b                                = "nemotron@3#120b"
 	Entity__Nemotron__Version_3__Size_120b_a12b                           = "nemotron@3#120b-a12b"
 	Entity__Nemotron__Version_3__Size_30b                                 = "nemotron@3#30b"
 	Entity__Nomic                                                         = "nomic"
@@ -963,9 +954,9 @@ var allEntityConstants = [...]string{
 	Entity__Abliterated,
 	Entity__Active,
 	Entity__Agent,
-	Entity__Agi,
 	Entity__Agi__Mini,
 	Entity__Agi__Pro,
+	Entity__Agi__Version_01,
 	Entity__Agnes__Lite__Version_1_5,
 	Entity__Agnes__Pro__Version_1_5,
 	Entity__Aion__Mini__Version_1_0,
@@ -1089,10 +1080,10 @@ var allEntityConstants = [...]string{
 	Entity__Deepseek_ocr__Version_2,
 	Entity__Devstral,
 	Entity__Devstral__Medium,
-	Entity__Devstral__Size_123b,
 	Entity__Devstral__Small,
 	Entity__Devstral__Small__Version_2,
 	Entity__Devstral__Version_2,
+	Entity__Devstral__Version_2__Size_123b,
 	Entity__Devstral__Version_2__Size_123b__Instruct,
 	Entity__Diffusiongemma__Size_26b_a4b,
 	Entity__Distilbert__Version_2,
@@ -1179,12 +1170,9 @@ var allEntityConstants = [...]string{
 	Entity__Gemma,
 	Entity__Gemma4__Size_31b,
 	Entity__Gemma_4_31b_larkspur__V0_5__Version_4__Size_31b,
-	Entity__Gemma__Size_12b,
 	Entity__Gemma__Size_26b,
-	Entity__Gemma__Size_26b_a4b,
 	Entity__Gemma__Size_27b,
 	Entity__Gemma__Size_31b,
-	Entity__Gemma__Size_4b,
 	Entity__Gemma__Size_9b,
 	Entity__Gemma__Version_2__Size_27b,
 	Entity__Gemma__Version_2__Size_2b,
@@ -1273,7 +1261,6 @@ var allEntityConstants = [...]string{
 	Entity__Gpt__Oss__Size_120b,
 	Entity__Gpt__Oss__Size_120b__Fast,
 	Entity__Gpt__Oss__Size_20b,
-	Entity__Gpt__Pro,
 	Entity__Gpt__Pro__Version_5,
 	Entity__Gpt__Pro__Version_5_2,
 	Entity__Gpt__Pro__Version_5_4,
@@ -1380,7 +1367,6 @@ var allEntityConstants = [...]string{
 	Entity__Kimi__K__Version_2__Instruct,
 	Entity__Kimi__K__Version_3,
 	Entity__Kimi_k2,
-	Entity__Kimi_k2__Code,
 	Entity__Kimi_k2__Instruct,
 	Entity__Kimi_k3,
 	Entity__Kling__V2_5_turbo_i2v,
@@ -1494,10 +1480,10 @@ var allEntityConstants = [...]string{
 	Entity__Ministral__Size_14b,
 	Entity__Ministral__Size_14b__Instruct,
 	Entity__Ministral__Size_3b,
-	Entity__Ministral__Size_3b__Instruct,
 	Entity__Ministral__Size_8b,
-	Entity__Ministral__Size_8b__Instruct,
+	Entity__Ministral__Version_3__Size_14b__Instruct,
 	Entity__Ministral__Version_3__Size_14b__Reasoning,
+	Entity__Ministral__Version_3__Size_3b__Instruct,
 	Entity__Ministral__Version_3__Size_3b__Reasoning,
 	Entity__Ministral__Version_3__Size_8b__Instruct,
 	Entity__Mirothinker_1_7_deepresearch__Mini__Version_1_7,
@@ -1508,7 +1494,6 @@ var allEntityConstants = [...]string{
 	Entity__Mistral__Large,
 	Entity__Mistral__Large__Instruct,
 	Entity__Mistral__Large__Size_675b,
-	Entity__Mistral__Large__Size_675b__Instruct,
 	Entity__Mistral__Large__Version_3,
 	Entity__Mistral__Large__Version_3__Size_675b__Instruct,
 	Entity__Mistral__Medium,
@@ -1518,7 +1503,6 @@ var allEntityConstants = [...]string{
 	Entity__Mistral__Medium__Version_3_5,
 	Entity__Mistral__Medium__Version_3_5__Size_128b,
 	Entity__Mistral__Medium__Version_3__Instruct,
-	Entity__Mistral__Mini__Size_3b,
 	Entity__Mistral__Nemo,
 	Entity__Mistral__Nemo__Instruct,
 	Entity__Mistral__Nemo__Size_12b,
@@ -1528,7 +1512,6 @@ var allEntityConstants = [...]string{
 	Entity__Mistral__Size_7b__Instruct,
 	Entity__Mistral__Small,
 	Entity__Mistral__Small__Size_119b,
-	Entity__Mistral__Small__Size_24b,
 	Entity__Mistral__Small__Size_24b__Instruct,
 	Entity__Mistral__Small__Version_3_1__Size_24b__Instruct,
 	Entity__Mistral__Small__Version_3_2__Size_24b__Instruct,
@@ -1561,10 +1544,8 @@ var allEntityConstants = [...]string{
 	Entity__Nemotron__Nano__Version_3__Size_30b,
 	Entity__Nemotron__Nano__Version_3__Size_30b_a3b,
 	Entity__Nemotron__Nano__Version_3__Size_30b_a3b__Omni__Reasoning,
-	Entity__Nemotron__Size_120b,
 	Entity__Nemotron__Size_120b_a12b,
 	Entity__Nemotron__Size_1b,
-	Entity__Nemotron__Size_30b_a3b,
 	Entity__Nemotron__Size_32b,
 	Entity__Nemotron__Size_49b,
 	Entity__Nemotron__Size_4b__Reasoning,
@@ -1580,6 +1561,7 @@ var allEntityConstants = [...]string{
 	Entity__Nemotron__Version_2__Size_30b_a3b,
 	Entity__Nemotron__Version_3,
 	Entity__Nemotron__Version_3_5,
+	Entity__Nemotron__Version_3__Size_120b,
 	Entity__Nemotron__Version_3__Size_120b_a12b,
 	Entity__Nemotron__Version_3__Size_30b,
 	Entity__Nomic,
