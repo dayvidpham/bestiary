@@ -1696,7 +1696,36 @@ func deterministicFixtureJSON(t *testing.T) []byte {
 // Each call re-randomizes the Go map iteration order (both the providers models and the
 // metadata map), which is the nondeterminism source the codegen ordering guarantees
 // defend against.
+// codegenArtifacts is EVERY output one fixture codegen run produces — the three
+// generated .go sources AND the committed non-.go emissions. It exists because the
+// reproducibility guards below could previously only see the .go sources, so a
+// committed JSON report emitted from a map range (or stamped with a wall clock) would
+// have gone unguarded no matter how many iterations they ran.
+//
+// A slice that adds a new committed emission extends this struct and the byte-identity
+// loop that consumes it; the emission itself must therefore be reachable as a PURE
+// build* function returning bytes, never only as a file writer.
+type codegenArtifacts struct {
+	// staticSrc, constantsSrc and metadataSrc are the generated .go sources.
+	staticSrc    []byte
+	constantsSrc []byte
+	metadataSrc  []byte
+	// creatorProvidersUnserved and creatorsLabDisagreements are the committed
+	// creator-dimension JSON reports (parse/data/creator_providers_unserved.json and
+	// parse/data/creators_lab_disagreements.json).
+	creatorProvidersUnserved []byte
+	creatorsLabDisagreements []byte
+}
+
+// runFixtureCodegen returns just the three generated .go sources, for the many callers
+// that only assert on those. It is a thin shim over runFixtureCodegenArtifacts.
 func runFixtureCodegen(t *testing.T, fixtureJSON []byte, lastSynced string) (staticSrc, constantsSrc, metadataSrc []byte) {
+	t.Helper()
+	a := runFixtureCodegenArtifacts(t, fixtureJSON, lastSynced)
+	return a.staticSrc, a.constantsSrc, a.metadataSrc
+}
+
+func runFixtureCodegenArtifacts(t *testing.T, fixtureJSON []byte, lastSynced string) codegenArtifacts {
 	t.Helper()
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
@@ -1732,19 +1761,31 @@ func runFixtureCodegen(t *testing.T, fixtureJSON []byte, lastSynced string) (sta
 		slugToConst[slug] = providerConstName(slug, meta.Name)
 	}
 
-	staticSrc, err = generateSource(models, slugToConst)
+	var out codegenArtifacts
+	out.staticSrc, err = generateSource(models, slugToConst)
 	if err != nil {
-		t.Fatalf("runFixtureCodegen: generateSource: %v", err)
+		t.Fatalf("runFixtureCodegenArtifacts: generateSource: %v", err)
 	}
-	constantsSrc, err = generateEntitiesConstantsSource(models, metadata)
+	out.constantsSrc, err = generateEntitiesConstantsSource(models, metadata)
 	if err != nil {
-		t.Fatalf("runFixtureCodegen: generateEntitiesConstantsSource: %v", err)
+		t.Fatalf("runFixtureCodegenArtifacts: generateEntitiesConstantsSource: %v", err)
 	}
-	metadataSrc, err = generateMetadataSource(metadata)
+	out.metadataSrc, err = generateMetadataSource(metadata)
 	if err != nil {
-		t.Fatalf("runFixtureCodegen: generateMetadataSource: %v", err)
+		t.Fatalf("runFixtureCodegenArtifacts: generateMetadataSource: %v", err)
 	}
-	return staticSrc, constantsSrc, metadataSrc
+	// The committed non-.go emissions, built through the SAME pure functions the
+	// writers call, so what this harness proves byte-identical is exactly what lands
+	// on disk.
+	out.creatorProvidersUnserved, err = buildCreatorProvidersUnserved(models)
+	if err != nil {
+		t.Fatalf("runFixtureCodegenArtifacts: buildCreatorProvidersUnserved: %v", err)
+	}
+	out.creatorsLabDisagreements, err = buildCreatorsLabDisagreements(metadata)
+	if err != nil {
+		t.Fatalf("runFixtureCodegenArtifacts: buildCreatorsLabDisagreements: %v", err)
+	}
+	return out
 }
 
 // TestCodegen_Reproducible_ByteIdentical verifies that N=100 successive codegen runs
@@ -1799,7 +1840,8 @@ func TestCodegen_Reproducible_ByteIdentical(t *testing.T) {
 	fixtureJSON := deterministicFixtureJSON(t)
 
 	// Reference run (iteration 0). Every run uses the SAME deterministic stamp `ts`.
-	refStatic, refConstants, refMetadata := runFixtureCodegen(t, fixtureJSON, ts)
+	refArtifacts := runFixtureCodegenArtifacts(t, fixtureJSON, ts)
+	refStatic, refConstants, refMetadata := refArtifacts.staticSrc, refArtifacts.constantsSrc, refArtifacts.metadataSrc
 
 	// The metadata bake must emit rows in ascending MetadataID order regardless of the
 	// map-iteration order the fixture's models.json view arrived in. Assert the sorted
@@ -1902,7 +1944,8 @@ func TestCodegen_Reproducible_ByteIdentical(t *testing.T) {
 	// map-order leakage, or an unstable collision ordinal). run()'s stamp SOURCE is outside
 	// this test's reach (see the fencing-boundary note above).
 	for i := 1; i < N; i++ {
-		staticSrc, constantsSrc, metadataSrc := runFixtureCodegen(t, fixtureJSON, ts)
+		iterArtifacts := runFixtureCodegenArtifacts(t, fixtureJSON, ts)
+		staticSrc, constantsSrc, metadataSrc := iterArtifacts.staticSrc, iterArtifacts.constantsSrc, iterArtifacts.metadataSrc
 
 		if !bytes.Equal(refStatic, staticSrc) {
 			t.Fatalf("iteration %d: generateSource output is not byte-identical to the reference\n"+
@@ -1931,6 +1974,28 @@ func TestCodegen_Reproducible_ByteIdentical(t *testing.T) {
 				"  Why: the metadata bake did not impose a deterministic MetadataID order\n"+
 				"  Where: generateMetadataSource sort.Slice(baked, ...) on MetadataID\n"+
 				"  How to fix: ensure generateMetadataSource sorts by MetadataID before emitting",
+				i+1)
+		}
+
+		// The committed non-.go emissions. Both are built from map ranges (the
+		// creator→provider served set; the family→lab evidence accumulation), so an
+		// omitted sort in output position shows up here and NOWHERE else: neither
+		// TestCodegen_Reproducible_ByteIdentical's .go comparisons nor
+		// TestCodegen_UpToDate's golden excerpts can reach a JSON report.
+		if !bytes.Equal(refArtifacts.creatorProvidersUnserved, iterArtifacts.creatorProvidersUnserved) {
+			t.Fatalf("iteration %d: buildCreatorProvidersUnserved output is not byte-identical to the reference\n"+
+				"  What: the curated creator→provider coverage report changed between runs\n"+
+				"  Why: the report consulted a wall clock, or emitted rows in map-iteration order\n"+
+				"  Where: buildCreatorProvidersUnserved\n"+
+				"  How to fix: keep the explicit sort.Slice on (creator, provider) and emit no timestamp",
+				i+1)
+		}
+		if !bytes.Equal(refArtifacts.creatorsLabDisagreements, iterArtifacts.creatorsLabDisagreements) {
+			t.Fatalf("iteration %d: buildCreatorsLabDisagreements output is not byte-identical to the reference\n"+
+				"  What: the models.dev lab-derivation disagreement report changed between runs\n"+
+				"  Why: the derivation emitted families in map-iteration order, or a row's labs list was left unsorted\n"+
+				"  Where: bestiary.DeriveCreatorLabDisagreements / buildCreatorsLabDisagreements\n"+
+				"  How to fix: keep the sort.Slice on family and the sort.Strings on each row's labs",
 				i+1)
 		}
 

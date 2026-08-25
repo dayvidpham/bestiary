@@ -239,6 +239,14 @@ const codegenUserAgent = "bestiary-gen/0.2.5 (+https://github.com/dayvidpham/bes
 // alias table it feeds.
 const modelsdevUnlinkedFile = "parse/data/modelsdev_unlinked.json"
 
+// creatorProvidersUnservedFile is the committed AC-scoped report of curated
+// Creator→Provider pairs that serve no instance of any of that creator's families.
+const creatorProvidersUnservedFile = "parse/data/creator_providers_unserved.json"
+
+// creatorsLabDisagreementsFile is the committed report of families whose models.dev
+// lab evidence was NOT auto-applied to the Family→Creator dimension.
+const creatorsLabDisagreementsFile = "parse/data/creators_lab_disagreements.json"
+
 // VersionDuplicateKey identifies a group of models that share (provider, family,
 // variant, version) but differ in date or other attributes. Written to
 // version_duplicates.json as a work-list for the future duplicate collapse.
@@ -542,6 +550,16 @@ func run(args []string) error {
 		return fmt.Errorf("validate curated creator table: %w", err)
 	}
 
+	// Same discipline for the Creator→[]Provider distribution relation: an unknown
+	// creator, an unknown provider slug, a duplicate creator row, an empty provider
+	// list, or a provider repeated within a row is curation that can never match a
+	// served instance, so creator-first selection would silently never fire for it.
+	// Fail here rather than emitting a report that quietly lists the whole row as
+	// serving nothing.
+	if err := bestiary.ValidateCreatorProviderTable(); err != nil {
+		return fmt.Errorf("validate curated creator-provider table: %w", err)
+	}
+
 	// Fail loudly on a bad harvested HuggingFace seed BEFORE generating anything: an
 	// empty/non-org-repo value, a source_url that is not the live Hub URL for the
 	// value (the case-preservation cross-check), an unknown resolves_to family, or a
@@ -686,6 +704,18 @@ func run(args []string) error {
 	// precedent); it never blocks the generated .go files.
 	if err := writeModelsdevUnlinked(models, metadata); err != nil {
 		fmt.Fprintf(os.Stderr, "bestiary-gen: warning: could not write %s: %v\n", modelsdevUnlinkedFile, err)
+	}
+
+	// Emit the two creator-dimension reports. Both are diagnostic aids on the same
+	// non-fatal footing as the unlinked report: a write failure never blocks the
+	// generated .go files. The curation they describe was already fenced loudly above
+	// by ValidateCreatorTable / ValidateCreatorProviderTable, so a failure here can
+	// only be a filesystem problem, never bad data slipping through.
+	if err := writeCreatorProvidersUnserved(models); err != nil {
+		fmt.Fprintf(os.Stderr, "bestiary-gen: warning: could not write %s: %v\n", creatorProvidersUnservedFile, err)
+	}
+	if err := writeCreatorsLabDisagreements(metadata); err != nil {
+		fmt.Fprintf(os.Stderr, "bestiary-gen: warning: could not write %s: %v\n", creatorsLabDisagreementsFile, err)
 	}
 
 	// Write parse_failures.json to the cache directory.
@@ -1851,6 +1881,70 @@ func creatorExpr(c bestiary.Creator) string {
 		return "CreatorAlibaba"
 	case bestiary.CreatorZhipu:
 		return "CreatorZhipu"
+	case bestiary.CreatorDeepReinforce:
+		return "CreatorDeepReinforce"
+	case bestiary.CreatorMeituan:
+		return "CreatorMeituan"
+	case bestiary.CreatorMicrosoft:
+		return "CreatorMicrosoft"
+	case bestiary.CreatorMiniMax:
+		return "CreatorMiniMax"
+	case bestiary.CreatorMoonshotAI:
+		return "CreatorMoonshotAI"
+	case bestiary.CreatorNvidia:
+		return "CreatorNvidia"
+	case bestiary.CreatorPerplexity:
+		return "CreatorPerplexity"
+	case bestiary.CreatorPoolside:
+		return "CreatorPoolside"
+	case bestiary.CreatorSakana:
+		return "CreatorSakana"
+	case bestiary.CreatorSarvam:
+		return "CreatorSarvam"
+	case bestiary.CreatorStepFun:
+		return "CreatorStepFun"
+	case bestiary.CreatorTencent:
+		return "CreatorTencent"
+	case bestiary.CreatorXAI:
+		return "CreatorXAI"
+	case bestiary.CreatorXiaomi:
+		return "CreatorXiaomi"
+	case bestiary.Creator01AI:
+		return "Creator01AI"
+	case bestiary.CreatorAI21:
+		return "CreatorAI21"
+	case bestiary.CreatorAmazon:
+		return "CreatorAmazon"
+	case bestiary.CreatorBAAI:
+		return "CreatorBAAI"
+	case bestiary.CreatorBaichuan:
+		return "CreatorBaichuan"
+	case bestiary.CreatorBaidu:
+		return "CreatorBaidu"
+	case bestiary.CreatorBlackForestLabs:
+		return "CreatorBlackForestLabs"
+	case bestiary.CreatorByteDance:
+		return "CreatorByteDance"
+	case bestiary.CreatorElevenLabs:
+		return "CreatorElevenLabs"
+	case bestiary.CreatorIBM:
+		return "CreatorIBM"
+	case bestiary.CreatorIdeogram:
+		return "CreatorIdeogram"
+	case bestiary.CreatorNousResearch:
+		return "CreatorNousResearch"
+	case bestiary.CreatorRecraft:
+		return "CreatorRecraft"
+	case bestiary.CreatorReka:
+		return "CreatorReka"
+	case bestiary.CreatorRunway:
+		return "CreatorRunway"
+	case bestiary.CreatorStabilityAI:
+		return "CreatorStabilityAI"
+	case bestiary.CreatorUpstage:
+		return "CreatorUpstage"
+	case bestiary.CreatorVoyageAI:
+		return "CreatorVoyageAI"
 	default:
 		return fmt.Sprintf("Creator(%q)", string(c))
 	}
@@ -2555,6 +2649,172 @@ func writeModelsdevUnlinked(models []bestiary.ModelInfo, meta []bestiary.EntityM
 			"writeModelsdevUnlinked: write %s: %w\n"+
 				"  How to fix: ensure %s is writable",
 			modelsdevUnlinkedFile, err, filepath.Dir(modelsdevUnlinkedFile),
+		)
+	}
+	return nil
+}
+
+// --------------------------------------------------------------------------
+// Creator-dimension committed emissions.
+//
+// Both reports follow the writeModelsdevUnlinked contract (INV3, AGENTS.md:138):
+// NO wall-clock timestamp, an EXPLICIT sort in output position, and a non-nil empty
+// slice rather than a JSON null, so a clean regen never churns the committed bytes.
+// Each is split into a PURE build* function returning the exact bytes and a thin
+// write* wrapper, so the codegen reproducibility harness can exercise the emission
+// itself — the two .go-only codegen guards cannot reach a file writer.
+// --------------------------------------------------------------------------
+
+// CreatorProviderUnservedRow is one curated Creator→Provider distribution pair that
+// matched no served instance in this run's catalog.
+type CreatorProviderUnservedRow struct {
+	Creator  string `json:"creator"`
+	Provider string `json:"provider"`
+}
+
+// CreatorProvidersUnservedEnvelope is the committed shape of
+// parse/data/creator_providers_unserved.json.
+type CreatorProvidersUnservedEnvelope struct {
+	Comment       string                       `json:"_comment"`
+	SchemaVersion int                          `json:"schema_version"`
+	Count         int                          `json:"count"`
+	Unserved      []CreatorProviderUnservedRow `json:"unserved"`
+}
+
+// buildCreatorProvidersUnserved is the pure emission: it joins the curated
+// Creator→[]Provider relation against THIS run's models and returns the report bytes
+// for every curated pair that serves no instance of any family belonging to that
+// creator.
+//
+// It sweeps the MODELS, not buildEntitySet's entities: a codegen-side entity carries
+// only its Ref (the constants emitter needs nothing else), so its Providers slice is
+// always empty and joining against it would report every curated pair as unserved.
+// A ModelInfo is the provider-scoped row, so (m.Family, m.Provider) is exactly the
+// served pair this report is about.
+//
+// A listed pair is not automatically wrong — a lab may have a real hosting surface
+// this catalog snapshot happens not to cover — but it IS curation that can have no
+// effect on resolution, so it must be visible rather than silent.
+func buildCreatorProvidersUnserved(models []bestiary.ModelInfo) ([]byte, error) {
+	served := make(map[bestiary.Creator]map[bestiary.Provider]struct{})
+	for _, m := range models {
+		c := m.Family.Creator()
+		if c == bestiary.CreatorNone || m.Provider == "" {
+			continue
+		}
+		if served[c] == nil {
+			served[c] = make(map[bestiary.Provider]struct{})
+		}
+		served[c][m.Provider] = struct{}{}
+	}
+
+	rows := make([]CreatorProviderUnservedRow, 0)
+	for _, c := range bestiary.Creators() {
+		for _, p := range c.Providers() {
+			if _, ok := served[c][p]; ok {
+				continue
+			}
+			rows = append(rows, CreatorProviderUnservedRow{Creator: string(c), Provider: string(p)})
+		}
+	}
+	sort.Slice(rows, func(i, j int) bool {
+		if rows[i].Creator != rows[j].Creator {
+			return rows[i].Creator < rows[j].Creator
+		}
+		return rows[i].Provider < rows[j].Provider
+	})
+
+	envelope := CreatorProvidersUnservedEnvelope{
+		Comment: "Codegen-emitted creator-distribution coverage report (DO NOT EDIT). Each row is a " +
+			"curated parse/data/creator_providers.json pair whose provider serves NO instance of any " +
+			"family this creator is mapped to, so the pair cannot influence creator-first resolution. " +
+			"A row is a prompt to check the curation, not proof it is wrong: a lab may operate a real " +
+			"surface this catalog snapshot does not cover. Regenerated by `go generate ./...`; sorted " +
+			"and timestamp-free for byte-stability. An EMPTY list is the healthy steady state.",
+		SchemaVersion: 1,
+		Count:         len(rows),
+		Unserved:      rows,
+	}
+	data, err := json.MarshalIndent(envelope, "", "  ")
+	if err != nil {
+		return nil, fmt.Errorf("buildCreatorProvidersUnserved: marshal JSON: %w", err)
+	}
+	return append(data, '\n'), nil
+}
+
+// writeCreatorProvidersUnserved writes buildCreatorProvidersUnserved's bytes to
+// creatorProvidersUnservedFile.
+func writeCreatorProvidersUnserved(models []bestiary.ModelInfo) error {
+	data, err := buildCreatorProvidersUnserved(models)
+	if err != nil {
+		return err
+	}
+	if err := os.WriteFile(creatorProvidersUnservedFile, data, 0o644); err != nil {
+		return fmt.Errorf(
+			"writeCreatorProvidersUnserved: write %s: %w\n"+
+				"  How to fix: ensure %s is writable",
+			creatorProvidersUnservedFile, err, filepath.Dir(creatorProvidersUnservedFile),
+		)
+	}
+	return nil
+}
+
+// CreatorsLabDisagreementsEnvelope is the committed shape of
+// parse/data/creators_lab_disagreements.json.
+type CreatorsLabDisagreementsEnvelope struct {
+	Comment       string                            `json:"_comment"`
+	SchemaVersion int                               `json:"schema_version"`
+	Count         int                               `json:"count"`
+	Disagreements []bestiary.CreatorLabDisagreement `json:"disagreements"`
+}
+
+// buildCreatorsLabDisagreements is the pure emission for the models.dev lab-prefix
+// derivation: it returns the report bytes listing every family whose lab evidence was
+// NOT auto-applied to the Family→Creator dimension, with the conflict class and the
+// reason.
+//
+// It is deliberately NON-FATAL. A disagreement is the normal, expected output of
+// running a mechanical derivation over a catalog that genuinely disagrees with
+// itself; aborting codegen on one would make an ordinary upstream re-publication
+// (say, a lab's weights appearing under a second lab's prefix) break the build.
+// DeriveCreatorLabDisagreements does the sorting, so no ordering pass is needed here.
+func buildCreatorsLabDisagreements(meta []bestiary.EntityMetadata) ([]byte, error) {
+	rows := bestiary.DeriveCreatorLabDisagreements(meta)
+	if rows == nil {
+		rows = []bestiary.CreatorLabDisagreement{}
+	}
+	envelope := CreatorsLabDisagreementsEnvelope{
+		Comment: "Codegen-emitted models.dev lab-derivation disagreement report (DO NOT EDIT). Each row " +
+			"is a family whose lab evidence was NOT applied to parse/data/creators.json, with the class " +
+			"of conflict: 'multi-org' (more than one lab prefix reaches the family), 'spelling-variant' " +
+			"(the lab prefix and the curated creator are prefix-related spellings of one organization), " +
+			"'divergent' (they name materially different organizations) or 'withheld' (a deliberate, " +
+			"explained deferral listed in the creators.json 'withheld' array). Rows are a triage queue " +
+			"for a curator, NOT a build failure: a catalog that disagrees with itself is the normal case. " +
+			"Regenerated by `go generate ./...`; sorted by family and timestamp-free for byte-stability.",
+		SchemaVersion: 1,
+		Count:         len(rows),
+		Disagreements: rows,
+	}
+	data, err := json.MarshalIndent(envelope, "", "  ")
+	if err != nil {
+		return nil, fmt.Errorf("buildCreatorsLabDisagreements: marshal JSON: %w", err)
+	}
+	return append(data, '\n'), nil
+}
+
+// writeCreatorsLabDisagreements writes buildCreatorsLabDisagreements's bytes to
+// creatorsLabDisagreementsFile.
+func writeCreatorsLabDisagreements(meta []bestiary.EntityMetadata) error {
+	data, err := buildCreatorsLabDisagreements(meta)
+	if err != nil {
+		return err
+	}
+	if err := os.WriteFile(creatorsLabDisagreementsFile, data, 0o644); err != nil {
+		return fmt.Errorf(
+			"writeCreatorsLabDisagreements: write %s: %w\n"+
+				"  How to fix: ensure %s is writable",
+			creatorsLabDisagreementsFile, err, filepath.Dir(creatorsLabDisagreementsFile),
 		)
 	}
 	return nil
