@@ -14,6 +14,171 @@ for its **Go module tags** (`vX.Y.Z`).
 
 ## [Unreleased]
 
+### Changed
+
+- **The GPT 5.6 tiers are variants of `gpt`, not families of their own.** Luna, Sol and
+  Terra are tiers of one release, exactly as Claude's Haiku, Opus and Sonnet are, and the
+  curated `parse/data/family_overrides.json` table already holds that precedent. Three
+  rows map upstream family `gpt-<tier>` onto `(family gpt, variant <tier>)` and cover all
+  **76** catalog rows carrying such a family — a different population from the **75** ids
+  matching the `gpt-*{luna,sol,terra}` id pattern, and neither is a typo for the other.
+  The keys now read `gpt/luna@5.6`, `gpt/luna@5.6{pro}` and the same for `sol` and `terra`.
+  - The `parse/data/modelsdev_aliases.json` rows are retargeted in the same change.
+    Omitting that step was measured to synthesize three phantom zero-instance standalone
+    entities.
+  - Six exact-ID pins carry the `-pro` rows. With the tier in the variant slot, `pro` has
+    nowhere mechanical to go — it is not in `modifiers.json`, so nothing can peel it — and
+    the six `-pro` rows were measured to CONFLATE into their non-pro siblings, a silent
+    data conflation. Teaching `pro` globally was priced and rejected: it re-keys ~30
+    unrelated families **and still does not fix these rows**, because `pro` is a curated
+    `gpt` member and the member guard holds.
+
+- **Venice's dot-less version spelling is read as the version it means, for all fourteen
+  of its GPT ids.** Venice publishes `openai-gpt-56-luna` and `openai-gpt-55-pro` — GPT
+  5.6 Luna and GPT 5.5 Pro with the dot squashed out. This is a **curated reading of
+  fourteen specific ids, not a parser change**, and it is deliberately all-or-nothing:
+  a partial pin would scatter one aggregator's own rows across dated and undated keys.
+
+  **What this means for you as a reader.** Venice's rows now sit **under the dated keys**
+  — `gpt/luna@5.6`, `gpt/luna@5.6{pro}` and so on — where before they would have attached
+  to the undated `gpt/<tier>` and `gpt/<tier>{pro}` and been invisible to anyone filtering
+  on the dated key. The consequence of pinning is that the undated `{pro}` key per tier
+  now has **no occupant at all** and is retired: every `-pro` instance is dated. The bare
+  `gpt/<tier>` keys DO survive, holding one row each — gitlab's, for the reason in the
+  next entry.
+
+- **A model id no longer loses its version to a leading token that repeats what another
+  axis already records.** An id whose first token is the serving provider's own slug
+  (`databricks-gpt-5-6-luna`) or the lab that trained the model
+  (`openai-gpt-5.6-luna`, `openai.gpt-5.6-luna`) pushed the version scan one token late,
+  so the artifact keyed an **undated sibling** of the entity it belongs to. Measured, 165
+  records were affected and 120 changed their decomposition.
+
+  The rule is a classification, not a prefix list (`ClassifyIDPrefix`, `id_prefix.go`): a
+  leading token may be dropped **only when a DIFFERENT carrier already holds the fact it
+  names**, and the strip is additionally refused unless the remainder still names a known
+  family. Two carriers license it — the `Provider` field, and the `Creator` axis when the
+  remainder's family declares that exact lab — and everything else is left byte-identical.
+
+  **What is deliberately NOT stripped, and why the distinction is the whole point:**
+  - A **backend-host label**. nano-gpt's `azure-gpt-4o` is served by nano-gpt, not Azure,
+    so `azure` is the only place that routing fact appears. A blanket provider-name strip
+    deleted exactly this label once; here it simply fails both carrier tests.
+  - A **product-surface namespace**. gitlab prefixes all 22 of its ids with `duo-chat-`,
+    which is neither its provider slug nor a lab, and no axis records which of a
+    provider's surfaces served a model. Stripping it would delete a fact rather than
+    repeat one — so gitlab's three tier rows stay on the undated `gpt/<tier>` keys, and
+    that is the measured cost of the rule being honest rather than tidy.
+  - A **family token that happens to be constant across a provider's catalog**. Measured,
+    28 providers prefix every one of their ids with a single token, and for most of them
+    (`claude-`, `grok-`, `glm-`, `kimi-`, `mimo-`, `solar-`) that token IS the family.
+    Constancy is not a carrier test.
+  - A **lab token the Creator axis spells differently**. Bedrock's `zai.glm-…` and
+    `moonshot.kimi-…` are declined, because the curated creators are `zhipu` and
+    `moonshotai`; the carrier does not hold the value the id spells.
+
+  Two smaller consequences are worth naming. The Bedrock grammar
+  `[<region>.]<vendor>.<model>[-v<N>:<M>]` now has BOTH arms normalized: the routing tail
+  goes with a dotted strip, because leaving it swallows the release date behind it. And
+  two Bedrock rows whose dotted lab segment was being read as the FAMILY — Mistral's
+  Voxtral Mini and Small, keyed as `mistral/mini` and `mistral/small` — land on `voxtral`,
+  the line Mistral actually published them under.
+
+### Removed
+
+- **Twenty-six entity keys are retired by the two changes above.** Twelve come from the
+  tier re-key and fourteen from the leading-token strip. No alias is minted, no redirect
+  is added and no successor is listed at the tool: this table is the migration record, and
+  the only pointer a user gets.
+
+  | retired key (tier re-key + prefix strip) | instances re-home to |
+  |---|---|
+  | `agi` | `agi@01` |
+  | `devstral#123b` | `devstral@2#123b` |
+  | `gemma#12b` | `gemma@3#12b` |
+  | `gemma#26b-a4b` | `gemma@4#26b-a4b` |
+  | `gemma#4b` | `gemma@3#4b` |
+  | `gpt-luna` | `gpt/luna`, `gpt/luna@5.6` |
+  | `gpt-luna/pro` | `gpt/luna@5.6{pro}` |
+  | `gpt-luna/pro@5.6` | `gpt/luna@5.6{pro}` |
+  | `gpt-luna@5.6` | `gpt/luna@5.6` |
+  | `gpt-sol` | `gpt/sol`, `gpt/sol@5.6` |
+  | `gpt-sol/pro` | `gpt/sol@5.6{pro}` |
+  | `gpt-sol/pro@5.6` | `gpt/sol@5.6{pro}` |
+  | `gpt-sol@5.6` | `gpt/sol@5.6` |
+  | `gpt-terra` | `gpt/terra`, `gpt/terra@5.6` |
+  | `gpt-terra/pro` | `gpt/terra@5.6{pro}` |
+  | `gpt-terra/pro@5.6` | `gpt/terra@5.6{pro}` |
+  | `gpt-terra@5.6` | `gpt/terra@5.6` |
+  | `gpt/pro` | `gpt/pro@5.2`, `gpt/pro@5.4`, `gpt/pro@5.5` |
+  | `kimi-k2{code}` | `kimi/k@2.7{code}` |
+  | `ministral#3b{instruct}` | `ministral@3#3b{instruct}` |
+  | `ministral#8b{instruct}` | `ministral@3#8b{instruct}` |
+  | `mistral/large#675b{instruct}` | `mistral/large@3#675b{instruct}` |
+  | `mistral/mini#3b` | `voxtral/mini#3b` |
+  | `mistral/small#24b` | `voxtral/small#24b` |
+  | `nemotron#120b` | `nemotron@3#120b` |
+  | `nemotron#30b-a3b` | `nemotron@2#30b-a3b` |
+
+  Every row is re-derived from the instances the retired key actually held, checked against
+  the live registry on each run, and cross-checked against this table
+  (`cmd/bestiary/testdata/retired/gpt_tier_rekey_retired_keys_corpus.json`), so the three
+  copies of the record cannot drift apart. Two rows are why the record cannot be written
+  from assumption: `gpt-luna` (and its `sol`/`terra` twins) SPLITS, because gitlab's row is
+  deliberately not stripped, and `gpt/pro` splits three ways because its rows are dated by
+  two different mechanisms.
+
+  **Three keys deviate from the epoch-wide `show`-seam expectation, and the deviation is
+  recorded rather than repaired.** `ministral#3b{instruct}`, `mistral/large#675b{instruct}`
+  and `nemotron#120b` still RESOLVE at plain `bestiary show`, because each remains a valid
+  **under-specified reference** to exactly one live entity: the successor carries a version
+  the retired key did not, so a ref omitting the version still names one model. Nothing was
+  added to let a retired key resolve — the exact-key seam `show --by-entity` is a hard 404
+  for all **26** — and making these fail would mean breaking ordinary under-specified
+  lookups whenever they happen to match a retired spelling. Nine further keys report the
+  under-specified error because their FAMILY survives them, exactly as `show gpt` and
+  `show claude` always have; the remaining fourteen are 404 on both seams.
+
+  **Library consumers get a compile break, which is louder than a 404.**
+  `entities_constants_gen.go` loses **26** `Entity__` declarations and gains **14**,
+  counted from the file:
+
+  removed — `Entity__Agi`, `Entity__Devstral__Size_123b`, `Entity__Gemma__Size_12b`,
+  `Entity__Gemma__Size_26b_a4b`, `Entity__Gemma__Size_4b`, `Entity__Gpt__Pro`,
+  `Entity__Gpt_luna`, `Entity__Gpt_luna__Pro`, `Entity__Gpt_luna__Pro__Version_5_6`,
+  `Entity__Gpt_luna__Version_5_6`, `Entity__Gpt_sol`, `Entity__Gpt_sol__Pro`,
+  `Entity__Gpt_sol__Pro__Version_5_6`, `Entity__Gpt_sol__Version_5_6`,
+  `Entity__Gpt_terra`, `Entity__Gpt_terra__Pro`, `Entity__Gpt_terra__Pro__Version_5_6`,
+  `Entity__Gpt_terra__Version_5_6`, `Entity__Kimi_k2__Code`,
+  `Entity__Ministral__Size_3b__Instruct`, `Entity__Ministral__Size_8b__Instruct`,
+  `Entity__Mistral__Large__Size_675b__Instruct`, `Entity__Mistral__Mini__Size_3b`,
+  `Entity__Mistral__Small__Size_24b`, `Entity__Nemotron__Size_120b`,
+  `Entity__Nemotron__Size_30b_a3b`;
+
+  added — `Entity__Agi__Version_01`, `Entity__Devstral__Version_2__Size_123b`,
+  `Entity__Gpt__Luna`, `Entity__Gpt__Luna__Version_5_6`,
+  `Entity__Gpt__Luna__Version_5_6__Pro`, `Entity__Gpt__Sol`,
+  `Entity__Gpt__Sol__Version_5_6`, `Entity__Gpt__Sol__Version_5_6__Pro`,
+  `Entity__Gpt__Terra`, `Entity__Gpt__Terra__Version_5_6`,
+  `Entity__Gpt__Terra__Version_5_6__Pro`,
+  `Entity__Ministral__Version_3__Size_14b__Instruct`,
+  `Entity__Ministral__Version_3__Size_3b__Instruct`,
+  `Entity__Nemotron__Version_3__Size_120b`.
+
+  The name shape also flips for the tier keys, `__Pro__Version_5_6` becoming
+  `__Version_5_6__Pro`, because `pro` moves from a path segment to an identity modifier.
+
+  Census effect, measured over this slice's own two runs: the tier re-key alone takes
+  entities **945 → 942** (12 out, 9 in), series lines 415 → 410, versioned lines 209 → 207,
+  bare lines 206 → 203, releases 654 → 648, canonical nomina 945 → 942 (total 3,959 →
+  3,956). The leading-token strip then takes entities **942 → 933** (14 out, 5 in), series
+  lines 410 → 411 (the one new `agi` gen-01 line; bare lines unchanged), releases 648 →
+  646, canonical nomina 942 → 933 (total 3,956 → 3,947), sized catalog entities 317 → 310.
+  Provider-id (**2,834**), alias (**1**) and HuggingFace (**179**) nomina are re-measured
+  UNCHANGED across both: a re-keyed instance carries its own id spelling across as an
+  Admitted nomen, and the one harvested Hub repo whose entity moved keeps its value while
+  its `ResolvesTo` is re-pointed.
+
 ### Added
 
 - **A budget-first VRAM fit calculator at `/calculator`, with a typed weights basis.**

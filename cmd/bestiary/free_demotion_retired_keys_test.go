@@ -179,6 +179,20 @@ func assertRunSeam(t *testing.T, want, key string, args []string) {
 			t.Errorf("run %v returned %v, want the under-specified error naming the candidates", args, runErr)
 		}
 		_ = ambiguous
+	case "resolved":
+		// A retired KEY whose string is still a valid UNDER-SPECIFIED reference to
+		// exactly one live entity. The successor carries a field the retired key did
+		// not (a version, typically), so a ref omitting that field still names one
+		// model and the ordinary resolver answers it. No alias, redirect or
+		// successor-listing instrument is involved, and the exact-key seam is still a
+		// hard 404 — see the corpus rows that declare this outcome for why making it
+		// fail instead would break working lookups.
+		if runErr != nil {
+			t.Errorf("run %v returned %v, want a successful resolution — %q is recorded as a "+
+				"retired key whose string remains a valid under-specified reference to one live "+
+				"entity; if that is no longer true, re-measure the row rather than changing the "+
+				"resolver", args, runErr, key)
+		}
 	default:
 		t.Fatalf("corpus case for %q declares seam expectation %q, want \"not-found\" or \"ambiguous\"", key, want)
 	}

@@ -1,0 +1,651 @@
+{
+  "_comment": "Every entity key retired by the gpt 5.6 tier re-key and by the redundant leading-token strip that follows it, pinned against the MEASURED outcome rather than a uniform expectation. Two levers, one retired set: the tier re-key moves luna/sol/terra from being families of their own to being variants of family `gpt`, and the leading-token strip drops an id's first token when — and only when — another axis already carries the fact it names, which lets the version scan reach versions it had been starting one token late for. Each case carries the MEASURED migration record: `retired_instances` is the exact set of provider instances the key held immediately before the levers (spelled `<provider>|<model id>`, read off the pre-lever generated catalog), and `successors` is the set of entity keys those instances now belong to, RE-DERIVED from the instances on every run rather than claimed in prose. The CHANGELOG migration table is compared against this record too, so the three copies cannot drift apart silently. THREE rows record a MEASURED DEVIATION from the epoch-wide `show`-seam expectation: `ministral#3b{instruct}`, `mistral/large#675b{instruct}` and `nemotron#120b` still RESOLVE there, because each remains a valid under-specified reference to exactly one live entity. Nothing was added to make a retired key resolve — the exact-key seam (`--by-entity`) is a hard 404 for all 26 — and 'fixing' these into 404s would break ordinary under-specified lookups, which is the same hazard the bare-family ambiguity carve-out exists to protect. See TESTING.md.",
+  "cases": [
+    {
+      "name": "retired_agi",
+      "input": "agi",
+      "expected": {
+        "by_entity": "not-found",
+        "show": "ambiguous",
+        "retired_instances": [
+          "lucidquery|lucidquery-agi-01-frontier",
+          "lucidquery|lucidquery-agi-01-swift"
+        ],
+        "successors": [
+          "agi@01"
+        ]
+      },
+      "classification": "must-fail",
+      "provenance": {
+        "source": "requirement",
+        "ref": "the epoch-wide retired-key policy: a retired entity key is a uniform hard 404 on the exact-key seam — no alias, no redirect, no successor listing. The CHANGELOG old->new table is the only pointer a user gets."
+      },
+      "mutation": {
+        "description": "LucidQuery serves both of its AGI rows as `lucidquery-agi-01-…`, repeating its own provider slug in front of the model name. With the redundant leading token gone the remainder names the release the vendor published — AGI-01 — so the bare `agi` key was never the artifact's identity, only the residue of a version the scan could not reach. A pure rename: both instances move together and the bare `agi` FAMILY stays live, which is why the `show` seam reports an ambiguity rather than a 404."
+      }
+    },
+    {
+      "name": "retired_devstral_123b",
+      "input": "devstral#123b",
+      "expected": {
+        "by_entity": "not-found",
+        "show": "ambiguous",
+        "retired_instances": [
+          "amazon-bedrock|mistral.devstral-2-123b"
+        ],
+        "successors": [
+          "devstral@2#123b"
+        ]
+      },
+      "classification": "must-fail",
+      "provenance": {
+        "source": "requirement",
+        "ref": "the epoch-wide retired-key policy: a retired entity key is a uniform hard 404 on the exact-key seam — no alias, no redirect, no successor listing. The CHANGELOG old->new table is the only pointer a user gets."
+      },
+      "mutation": {
+        "description": "amazon-bedrock spells this `mistral.devstral-2-123b` in the region-less inference-profile form. The `mistral.` segment names the lab the Creator axis already attributes devstral to, so dropping it lets the version scan reach the `2`. The size segment is unchanged; only the generation is recovered."
+      }
+    },
+    {
+      "name": "retired_gemma_12b",
+      "input": "gemma#12b",
+      "expected": {
+        "by_entity": "not-found",
+        "show": "ambiguous",
+        "retired_instances": [
+          "amazon-bedrock|google.gemma-3-12b-it"
+        ],
+        "successors": [
+          "gemma@3#12b"
+        ]
+      },
+      "classification": "must-fail",
+      "provenance": {
+        "source": "requirement",
+        "ref": "the epoch-wide retired-key policy: a retired entity key is a uniform hard 404 on the exact-key seam — no alias, no redirect, no successor listing. The CHANGELOG old->new table is the only pointer a user gets."
+      },
+      "mutation": {
+        "description": "amazon-bedrock's `google.gemma-3-12b-it`: the `google.` segment is the creating lab the Creator axis already records for gemma, so the `3` behind it becomes reachable. A pure rename onto the gemma gen-3 line, which already existed."
+      }
+    },
+    {
+      "name": "retired_gemma_26b_a4b",
+      "input": "gemma#26b-a4b",
+      "expected": {
+        "by_entity": "not-found",
+        "show": "ambiguous",
+        "retired_instances": [
+          "venice|google-gemma-4-26b-a4b-it"
+        ],
+        "successors": [
+          "gemma@4#26b-a4b"
+        ]
+      },
+      "classification": "must-fail",
+      "provenance": {
+        "source": "requirement",
+        "ref": "the epoch-wide retired-key policy: a retired entity key is a uniform hard 404 on the exact-key seam — no alias, no redirect, no successor listing. The CHANGELOG old->new table is the only pointer a user gets."
+      },
+      "mutation": {
+        "description": "venice's `google-gemma-4-26b-a4b-it`, the dash-separated form of the same creator prefix. The MoE shape is untouched; only the generation is recovered."
+      }
+    },
+    {
+      "name": "retired_gemma_4b",
+      "input": "gemma#4b",
+      "expected": {
+        "by_entity": "not-found",
+        "show": "ambiguous",
+        "retired_instances": [
+          "amazon-bedrock|google.gemma-3-4b-it"
+        ],
+        "successors": [
+          "gemma@3#4b"
+        ]
+      },
+      "classification": "must-fail",
+      "provenance": {
+        "source": "requirement",
+        "ref": "the epoch-wide retired-key policy: a retired entity key is a uniform hard 404 on the exact-key seam — no alias, no redirect, no successor listing. The CHANGELOG old->new table is the only pointer a user gets."
+      },
+      "mutation": {
+        "description": "amazon-bedrock's `google.gemma-3-4b-it`. Same rule and same shape as the 12b row."
+      }
+    },
+    {
+      "name": "retired_gpt_luna",
+      "input": "gpt-luna",
+      "expected": {
+        "by_entity": "not-found",
+        "show": "not-found",
+        "retired_instances": [
+          "amazon-bedrock|openai.gpt-5.6-luna",
+          "databricks|databricks-gpt-5-6-luna",
+          "gitlab|duo-chat-gpt-5-6-luna",
+          "snowflake-cortex|openai-gpt-5.6-luna",
+          "venice|openai-gpt-56-luna"
+        ],
+        "successors": [
+          "gpt/luna",
+          "gpt/luna@5.6"
+        ]
+      },
+      "classification": "must-fail",
+      "provenance": {
+        "source": "requirement",
+        "ref": "the epoch-wide retired-key policy: a retired entity key is a uniform hard 404 on the exact-key seam — no alias, no redirect, no successor listing. The CHANGELOG old->new table is the only pointer a user gets."
+      },
+      "mutation": {
+        "description": "the undated luna key under the OLD family spelling. Five instances sat here because their version was unreachable; four of them reach 5.6 once the leading vendor token is gone or the venice pin fires, and one — gitlab's `duo-chat-gpt-5-6-luna` — does NOT, because `duo-chat` names a product surface that no axis in the entity model carries, so stripping it would delete a fact rather than repeat one. This key therefore SPLITS: the gitlab row lands on the undated `gpt/luna` and the other four on `gpt/luna@5.6`."
+      }
+    },
+    {
+      "name": "retired_gpt_luna_pro",
+      "input": "gpt-luna/pro",
+      "expected": {
+        "by_entity": "not-found",
+        "show": "not-found",
+        "retired_instances": [
+          "venice|openai-gpt-56-luna-pro"
+        ],
+        "successors": [
+          "gpt/luna@5.6{pro}"
+        ]
+      },
+      "classification": "must-fail",
+      "provenance": {
+        "source": "requirement",
+        "ref": "the epoch-wide retired-key policy: a retired entity key is a uniform hard 404 on the exact-key seam — no alias, no redirect, no successor listing. The CHANGELOG old->new table is the only pointer a user gets."
+      },
+      "mutation": {
+        "description": "the undated pro key under the old family spelling, held solely by venice's squashed-version `openai-gpt-56-luna-pro`. The curated venice pin dates it, so this key has no occupant left at all — it is a retirement, not a rename."
+      }
+    },
+    {
+      "name": "retired_gpt_luna_pro_5_6",
+      "input": "gpt-luna/pro@5.6",
+      "expected": {
+        "by_entity": "not-found",
+        "show": "not-found",
+        "retired_instances": [
+          "openrouter|openai/gpt-5.6-luna-pro"
+        ],
+        "successors": [
+          "gpt/luna@5.6{pro}"
+        ]
+      },
+      "classification": "must-fail",
+      "provenance": {
+        "source": "requirement",
+        "ref": "the epoch-wide retired-key policy: a retired entity key is a uniform hard 404 on the exact-key seam — no alias, no redirect, no successor listing. The CHANGELOG old->new table is the only pointer a user gets."
+      },
+      "mutation": {
+        "description": "the dated pro key under the old family spelling. `pro` sat in the VARIANT slot because the tier was the family; with luna in the variant slot `pro` becomes an identity MODIFIER, so the successor is `gpt/luna@5.6{pro}` rather than a `/pro` path segment."
+      }
+    },
+    {
+      "name": "retired_gpt_luna_5_6",
+      "input": "gpt-luna@5.6",
+      "expected": {
+        "by_entity": "not-found",
+        "show": "not-found",
+        "retired_instances": [
+          "abacus|gpt-5.6-luna",
+          "ai-router|gpt-5.6-luna",
+          "aihubmix|gpt-5.6-luna",
+          "azure-cognitive-services|gpt-5.6-luna",
+          "azure|gpt-5.6-luna",
+          "cloudflare-ai-gateway|openai/gpt-5.6-luna",
+          "crossmodel|openai/gpt-5.6-luna",
+          "github-copilot|gpt-5.6-luna",
+          "kenari|gpt-5-6-luna",
+          "llmgateway|gpt-5.6-luna",
+          "ofox|openai/gpt-5.6-luna",
+          "openai|gpt-5.6-luna",
+          "opencode|gpt-5.6-luna",
+          "openrouter|openai/gpt-5.6-luna",
+          "routing-run|gpt-5.6-luna",
+          "vercel|openai/gpt-5.6-luna",
+          "vivgrid|gpt-5.6-luna",
+          "zenmux|openai/gpt-5.6-luna"
+        ],
+        "successors": [
+          "gpt/luna@5.6"
+        ]
+      },
+      "classification": "must-fail",
+      "provenance": {
+        "source": "requirement",
+        "ref": "the epoch-wide retired-key policy: a retired entity key is a uniform hard 404 on the exact-key seam — no alias, no redirect, no successor listing. The CHANGELOG old->new table is the only pointer a user gets."
+      },
+      "mutation": {
+        "description": "the dated luna key under the old family spelling — the bulk of the tier, 18 instances, a pure rename onto `gpt/luna@5.6`."
+      }
+    },
+    {
+      "name": "retired_gpt_sol",
+      "input": "gpt-sol",
+      "expected": {
+        "by_entity": "not-found",
+        "show": "not-found",
+        "retired_instances": [
+          "amazon-bedrock|openai.gpt-5.6-sol",
+          "databricks|databricks-gpt-5-6-sol",
+          "gitlab|duo-chat-gpt-5-6-sol",
+          "snowflake-cortex|openai-gpt-5.6-sol",
+          "venice|openai-gpt-56-sol"
+        ],
+        "successors": [
+          "gpt/sol",
+          "gpt/sol@5.6"
+        ]
+      },
+      "classification": "must-fail",
+      "provenance": {
+        "source": "requirement",
+        "ref": "the epoch-wide retired-key policy: a retired entity key is a uniform hard 404 on the exact-key seam — no alias, no redirect, no successor listing. The CHANGELOG old->new table is the only pointer a user gets."
+      },
+      "mutation": {
+        "description": "the undated sol key under the old family spelling; splits exactly as its luna sibling does, with gitlab's `duo-chat-gpt-5-6-sol` the sole row that stays undated."
+      }
+    },
+    {
+      "name": "retired_gpt_sol_pro",
+      "input": "gpt-sol/pro",
+      "expected": {
+        "by_entity": "not-found",
+        "show": "not-found",
+        "retired_instances": [
+          "venice|openai-gpt-56-sol-pro"
+        ],
+        "successors": [
+          "gpt/sol@5.6{pro}"
+        ]
+      },
+      "classification": "must-fail",
+      "provenance": {
+        "source": "requirement",
+        "ref": "the epoch-wide retired-key policy: a retired entity key is a uniform hard 404 on the exact-key seam — no alias, no redirect, no successor listing. The CHANGELOG old->new table is the only pointer a user gets."
+      },
+      "mutation": {
+        "description": "the undated sol pro key, held solely by venice's squashed-version row, which the curated pin dates."
+      }
+    },
+    {
+      "name": "retired_gpt_sol_pro_5_6",
+      "input": "gpt-sol/pro@5.6",
+      "expected": {
+        "by_entity": "not-found",
+        "show": "not-found",
+        "retired_instances": [
+          "openrouter|openai/gpt-5.6-sol-pro"
+        ],
+        "successors": [
+          "gpt/sol@5.6{pro}"
+        ]
+      },
+      "classification": "must-fail",
+      "provenance": {
+        "source": "requirement",
+        "ref": "the epoch-wide retired-key policy: a retired entity key is a uniform hard 404 on the exact-key seam — no alias, no redirect, no successor listing. The CHANGELOG old->new table is the only pointer a user gets."
+      },
+      "mutation": {
+        "description": "the dated sol pro key; `pro` moves from the variant slot to an identity modifier."
+      }
+    },
+    {
+      "name": "retired_gpt_sol_5_6",
+      "input": "gpt-sol@5.6",
+      "expected": {
+        "by_entity": "not-found",
+        "show": "not-found",
+        "retired_instances": [
+          "abacus|gpt-5.6-sol",
+          "ai-router|gpt-5.6-sol",
+          "aihubmix|gpt-5.6-sol",
+          "azure-cognitive-services|gpt-5.6-sol",
+          "azure|gpt-5.6-sol",
+          "cloudflare-ai-gateway|openai/gpt-5.6-sol",
+          "crossmodel|openai/gpt-5.6-sol",
+          "github-copilot|gpt-5.6-sol",
+          "kenari|gpt-5-6-sol",
+          "llmgateway|gpt-5.6-sol",
+          "ofox|openai/gpt-5.6-sol",
+          "openai|gpt-5.6",
+          "openai|gpt-5.6-sol",
+          "opencode|gpt-5.6-sol",
+          "openrouter|openai/gpt-5.6-sol",
+          "routing-run|gpt-5.6-sol",
+          "vercel|openai/gpt-5.6-sol",
+          "vivgrid|gpt-5.6-sol",
+          "zenmux|openai/gpt-5.6-sol"
+        ],
+        "successors": [
+          "gpt/sol@5.6"
+        ]
+      },
+      "classification": "must-fail",
+      "provenance": {
+        "source": "requirement",
+        "ref": "the epoch-wide retired-key policy: a retired entity key is a uniform hard 404 on the exact-key seam — no alias, no redirect, no successor listing. The CHANGELOG old->new table is the only pointer a user gets."
+      },
+      "mutation": {
+        "description": "the dated sol key — 19 instances, a pure rename. This line also absorbs openai's bare `gpt-5.6` id, whose upstream family is `gpt-sol`."
+      }
+    },
+    {
+      "name": "retired_gpt_terra",
+      "input": "gpt-terra",
+      "expected": {
+        "by_entity": "not-found",
+        "show": "not-found",
+        "retired_instances": [
+          "amazon-bedrock|openai.gpt-5.6-terra",
+          "databricks|databricks-gpt-5-6-terra",
+          "gitlab|duo-chat-gpt-5-6-terra",
+          "snowflake-cortex|openai-gpt-5.6-terra",
+          "venice|openai-gpt-56-terra"
+        ],
+        "successors": [
+          "gpt/terra",
+          "gpt/terra@5.6"
+        ]
+      },
+      "classification": "must-fail",
+      "provenance": {
+        "source": "requirement",
+        "ref": "the epoch-wide retired-key policy: a retired entity key is a uniform hard 404 on the exact-key seam — no alias, no redirect, no successor listing. The CHANGELOG old->new table is the only pointer a user gets."
+      },
+      "mutation": {
+        "description": "the undated terra key under the old family spelling; splits exactly as its luna and sol siblings do."
+      }
+    },
+    {
+      "name": "retired_gpt_terra_pro",
+      "input": "gpt-terra/pro",
+      "expected": {
+        "by_entity": "not-found",
+        "show": "not-found",
+        "retired_instances": [
+          "venice|openai-gpt-56-terra-pro"
+        ],
+        "successors": [
+          "gpt/terra@5.6{pro}"
+        ]
+      },
+      "classification": "must-fail",
+      "provenance": {
+        "source": "requirement",
+        "ref": "the epoch-wide retired-key policy: a retired entity key is a uniform hard 404 on the exact-key seam — no alias, no redirect, no successor listing. The CHANGELOG old->new table is the only pointer a user gets."
+      },
+      "mutation": {
+        "description": "the undated terra pro key, held solely by venice's squashed-version row, which the curated pin dates."
+      }
+    },
+    {
+      "name": "retired_gpt_terra_pro_5_6",
+      "input": "gpt-terra/pro@5.6",
+      "expected": {
+        "by_entity": "not-found",
+        "show": "not-found",
+        "retired_instances": [
+          "openrouter|openai/gpt-5.6-terra-pro"
+        ],
+        "successors": [
+          "gpt/terra@5.6{pro}"
+        ]
+      },
+      "classification": "must-fail",
+      "provenance": {
+        "source": "requirement",
+        "ref": "the epoch-wide retired-key policy: a retired entity key is a uniform hard 404 on the exact-key seam — no alias, no redirect, no successor listing. The CHANGELOG old->new table is the only pointer a user gets."
+      },
+      "mutation": {
+        "description": "the dated terra pro key; `pro` moves from the variant slot to an identity modifier."
+      }
+    },
+    {
+      "name": "retired_gpt_terra_5_6",
+      "input": "gpt-terra@5.6",
+      "expected": {
+        "by_entity": "not-found",
+        "show": "not-found",
+        "retired_instances": [
+          "abacus|gpt-5.6-terra",
+          "ai-router|gpt-5.6-terra",
+          "aihubmix|gpt-5.6-terra",
+          "azure-cognitive-services|gpt-5.6-terra",
+          "azure|gpt-5.6-terra",
+          "cloudflare-ai-gateway|openai/gpt-5.6-terra",
+          "crossmodel|openai/gpt-5.6-terra",
+          "github-copilot|gpt-5.6-terra",
+          "kenari|gpt-5-6-terra",
+          "llmgateway|gpt-5.6-terra",
+          "ofox|openai/gpt-5.6-terra",
+          "openai|gpt-5.6-terra",
+          "opencode|gpt-5.6-terra",
+          "openrouter|openai/gpt-5.6-terra",
+          "routing-run|gpt-5.6-terra",
+          "vercel|openai/gpt-5.6-terra",
+          "vivgrid|gpt-5.6-terra",
+          "zenmux|openai/gpt-5.6-terra"
+        ],
+        "successors": [
+          "gpt/terra@5.6"
+        ]
+      },
+      "classification": "must-fail",
+      "provenance": {
+        "source": "requirement",
+        "ref": "the epoch-wide retired-key policy: a retired entity key is a uniform hard 404 on the exact-key seam — no alias, no redirect, no successor listing. The CHANGELOG old->new table is the only pointer a user gets."
+      },
+      "mutation": {
+        "description": "the dated terra key — 18 instances, a pure rename."
+      }
+    },
+    {
+      "name": "retired_gpt_pro",
+      "input": "gpt/pro",
+      "expected": {
+        "by_entity": "not-found",
+        "show": "ambiguous",
+        "retired_instances": [
+          "digitalocean|openai-gpt-5.2-pro",
+          "digitalocean|openai-gpt-5.4-pro",
+          "venice|openai-gpt-54-pro",
+          "venice|openai-gpt-55-pro"
+        ],
+        "successors": [
+          "gpt/pro@5.2",
+          "gpt/pro@5.4",
+          "gpt/pro@5.5"
+        ]
+      },
+      "classification": "must-fail",
+      "provenance": {
+        "source": "requirement",
+        "ref": "the epoch-wide retired-key policy: a retired entity key is a uniform hard 404 on the exact-key seam — no alias, no redirect, no successor listing. The CHANGELOG old->new table is the only pointer a user gets."
+      },
+      "mutation": {
+        "description": "the undated gpt Pro key, held entirely by venice's squashed-version ids (`openai-gpt-54-pro`, `openai-gpt-55-pro`) and digitalocean's `openai-gpt-5.2-pro`. Each is dated by a different mechanism — a curated venice pin for the squashed spellings, the creator-prefix strip for the dotted one — so this key SPLITS across three successors rather than folding onto one. The gpt family stays live, hence the ambiguity on the `show` seam."
+      }
+    },
+    {
+      "name": "retired_kimi_k2_code",
+      "input": "kimi-k2{code}",
+      "expected": {
+        "by_entity": "not-found",
+        "show": "not-found",
+        "retired_instances": [
+          "databricks|databricks-kimi-k2-7-code"
+        ],
+        "successors": [
+          "kimi/k@2.7{code}"
+        ]
+      },
+      "classification": "must-fail",
+      "provenance": {
+        "source": "requirement",
+        "ref": "the epoch-wide retired-key policy: a retired entity key is a uniform hard 404 on the exact-key seam — no alias, no redirect, no successor listing. The CHANGELOG old->new table is the only pointer a user gets."
+      },
+      "mutation": {
+        "description": "databricks repeats its own provider slug in front of `kimi-k2-7-code`. `kimi-k2` was never a family: it is the upstream raw_family with the series token fused into it, and it stranded this row on a one-instance phantom line with no version while the real artifact sits on `kimi/k@2.7{code}`. Dropping the redundant slug lets the compound-family recovery reach it."
+      }
+    },
+    {
+      "name": "retired_ministral_3b_instruct",
+      "input": "ministral#3b{instruct}",
+      "expected": {
+        "by_entity": "not-found",
+        "show": "resolved",
+        "retired_instances": [
+          "amazon-bedrock|mistral.ministral-3-3b-instruct"
+        ],
+        "successors": [
+          "ministral@3#3b{instruct}"
+        ]
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "the epoch-wide retired-key policy: a retired entity key is a uniform hard 404 on the exact-key seam — no alias, no redirect, no successor listing. The CHANGELOG old->new table is the only pointer a user gets."
+      },
+      "mutation": {
+        "description": "amazon-bedrock's `mistral.ministral-3-3b-instruct`. The `mistral.` segment names the creating lab; behind it sits the generation `3`. MEASURED DEVIATION from the epoch policy's `show` arm: this string still RESOLVES on the looser `show` seam, because it remains a valid UNDER-SPECIFIED reference to the single live `ministral@3#3b{instruct}` entity. It is not an alias and not a redirect — no instrument was added to make a retired key resolve; the ordinary resolver simply finds one match for a ref that names fewer fields than the key does. The exact-key seam (`--by-entity`) is a hard 404, which is the arm the policy is about."
+      }
+    },
+    {
+      "name": "retired_ministral_8b_instruct",
+      "input": "ministral#8b{instruct}",
+      "expected": {
+        "by_entity": "not-found",
+        "show": "ambiguous",
+        "retired_instances": [
+          "amazon-bedrock|mistral.ministral-3-8b-instruct"
+        ],
+        "successors": [
+          "ministral@3#8b{instruct}"
+        ]
+      },
+      "classification": "must-fail",
+      "provenance": {
+        "source": "requirement",
+        "ref": "the epoch-wide retired-key policy: a retired entity key is a uniform hard 404 on the exact-key seam — no alias, no redirect, no successor listing. The CHANGELOG old->new table is the only pointer a user gets."
+      },
+      "mutation": {
+        "description": "amazon-bedrock's `mistral.ministral-3-8b-instruct`, same rule, merging onto a gen-3 sibling that already existed."
+      }
+    },
+    {
+      "name": "retired_mistral_large_675b_instruct",
+      "input": "mistral/large#675b{instruct}",
+      "expected": {
+        "by_entity": "not-found",
+        "show": "resolved",
+        "retired_instances": [
+          "amazon-bedrock|mistral.mistral-large-3-675b-instruct"
+        ],
+        "successors": [
+          "mistral/large@3#675b{instruct}"
+        ]
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "the epoch-wide retired-key policy: a retired entity key is a uniform hard 404 on the exact-key seam — no alias, no redirect, no successor listing. The CHANGELOG old->new table is the only pointer a user gets."
+      },
+      "mutation": {
+        "description": "amazon-bedrock's `mistral.mistral-large-3-675b-instruct` — here the creator token and the family token are the same word, and the carrier check licenses the strip because family `mistral` genuinely declares creator `mistral`. The generation `3` behind it becomes reachable. The harvested HuggingFace repo `mistralai/Mistral-Large-3-675B-Instruct-2512` pointed at this key and is re-pointed at the successor in the same change. MEASURED DEVIATION on the `show` seam, same shape as the ministral 3b row: the string stays a valid under-specified reference to one live entity."
+      }
+    },
+    {
+      "name": "retired_mistral_mini_3b",
+      "input": "mistral/mini#3b",
+      "expected": {
+        "by_entity": "not-found",
+        "show": "not-found",
+        "retired_instances": [
+          "amazon-bedrock|mistral.voxtral-mini-3b-2507"
+        ],
+        "successors": [
+          "voxtral/mini#3b"
+        ]
+      },
+      "classification": "must-fail",
+      "provenance": {
+        "source": "requirement",
+        "ref": "the epoch-wide retired-key policy: a retired entity key is a uniform hard 404 on the exact-key seam — no alias, no redirect, no successor listing. The CHANGELOG old->new table is the only pointer a user gets."
+      },
+      "mutation": {
+        "description": "amazon-bedrock's `mistral.voxtral-mini-3b-2507`. This row is the only one in the set whose FAMILY was wrong rather than its version: the dotted lab segment was being read as the family, so Mistral's Voxtral Mini keyed a `mistral/mini` line. With the lab token dropped the id names `voxtral` directly."
+      }
+    },
+    {
+      "name": "retired_mistral_small_24b",
+      "input": "mistral/small#24b",
+      "expected": {
+        "by_entity": "not-found",
+        "show": "ambiguous",
+        "retired_instances": [
+          "amazon-bedrock|mistral.voxtral-small-24b-2507"
+        ],
+        "successors": [
+          "voxtral/small#24b"
+        ]
+      },
+      "classification": "must-fail",
+      "provenance": {
+        "source": "requirement",
+        "ref": "the epoch-wide retired-key policy: a retired entity key is a uniform hard 404 on the exact-key seam — no alias, no redirect, no successor listing. The CHANGELOG old->new table is the only pointer a user gets."
+      },
+      "mutation": {
+        "description": "amazon-bedrock's `mistral.voxtral-small-24b-2507`, the sibling of the row above and the same family repair."
+      }
+    },
+    {
+      "name": "retired_nemotron_120b",
+      "input": "nemotron#120b",
+      "expected": {
+        "by_entity": "not-found",
+        "show": "resolved",
+        "retired_instances": [
+          "amazon-bedrock|nvidia.nemotron-super-3-120b",
+          "digitalocean|nvidia-nemotron-3-super-120b"
+        ],
+        "successors": [
+          "nemotron@3#120b"
+        ]
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "requirement",
+        "ref": "the epoch-wide retired-key policy: a retired entity key is a uniform hard 404 on the exact-key seam — no alias, no redirect, no successor listing. The CHANGELOG old->new table is the only pointer a user gets."
+      },
+      "mutation": {
+        "description": "digitalocean's `nvidia-nemotron-3-super-120b` and amazon-bedrock's `nvidia.nemotron-super-3-120b` — the same artifact under both separator spellings of the same creator prefix, converging on one dated key. MEASURED DEVIATION on the `show` seam: the string stays a valid under-specified reference to the single live successor."
+      }
+    },
+    {
+      "name": "retired_nemotron_30b_a3b",
+      "input": "nemotron#30b-a3b",
+      "expected": {
+        "by_entity": "not-found",
+        "show": "ambiguous",
+        "retired_instances": [
+          "venice|nvidia-nemotron-cascade-2-30b-a3b"
+        ],
+        "successors": [
+          "nemotron@2#30b-a3b"
+        ]
+      },
+      "classification": "must-fail",
+      "provenance": {
+        "source": "requirement",
+        "ref": "the epoch-wide retired-key policy: a retired entity key is a uniform hard 404 on the exact-key seam — no alias, no redirect, no successor listing. The CHANGELOG old->new table is the only pointer a user gets."
+      },
+      "mutation": {
+        "description": "venice's `nvidia-nemotron-cascade-2-30b-a3b`; the creator token is dropped and the generation `2` behind it is recovered."
+      }
+    }
+  ]
+}
