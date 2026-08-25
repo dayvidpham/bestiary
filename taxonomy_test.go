@@ -118,11 +118,16 @@ func equalStrings(a, b []string) bool {
 // the variant slot the letter had been sharing. The bare `mimo` line therefore empties.
 // The two versioned mimo lines (gen 2 and gen 2.5) both already existed and simply absorb
 // the arrivals, so no versioned line is added or retired.
+// 416 -> 416 with the cogito decomposition repair (+1 versioned / -1 bare): the fused
+// variant "v2.1-671b" carried no version, so the artifact sat on a BARE cogito line that
+// it was the sole occupant of; un-fusing it into variant "v" + version "2.1" moves it to
+// a cogito gen-2.1 line that did not exist before. One bare line empties, one versioned
+// line appears, and the total is unchanged.
 func TestSeriesAll_CensusExact(t *testing.T) {
 	const (
 		wantSeries        = 416 // 411 -> 419: 2026-07-23 refresh (+4 versioned incl. gemini-3.6, +4 bare); 419 -> 417: v0.2.8 slice — the deepseek dot-lost merges retire the two phantom versioned lines deepseek gen-1 / gen-2 (command/a{translate} joins the existing command/a line, adding none); 417 -> 415: the global free demotion empties the deepseek-flash and minimax-m3 bare lines; 415 -> 417: the ling/inkling/kling split adds the bare `inkling` and `kling` lines (the kling-v2 versioned line is replaced one-for-one by kling@2.6); 417 -> 416: the keyspace-wide mimo normalization empties the bare `mimo` line (all six of its keys move onto the two existing versioned mimo lines)
-		wantVersionLines  = 209 // lines with a non-empty generation (207 -> 211 at the 2026-07-23 refresh; 211 -> 209 as deepseek gen-1 / gen-2 retire in the v0.2.8 slice; UNCHANGED by the free demotion — every versioned line it touches keeps other entities)
-		wantBareLines     = 207 // lines whose entities carry no identity version (204 -> 208 at the 2026-07-23 refresh; UNCHANGED by the v0.2.8 slice; 208 -> 206 as the free demotion empties the deepseek-flash and minimax-m3 lines; 206 -> 208 as the ling/inkling/kling split adds the bare inkling and kling lines). 208 -> 207 as the mimo normalization empties the bare mimo line. 209 + 207 = 416.
+		wantVersionLines  = 210 // lines with a non-empty generation (207 -> 211 at the 2026-07-23 refresh; 211 -> 209 as deepseek gen-1 / gen-2 retire in the v0.2.8 slice; UNCHANGED by the free demotion — every versioned line it touches keeps other entities; 209 -> 210 as the cogito decomposition mints the cogito gen-2.1 line)
+		wantBareLines     = 206 // lines whose entities carry no identity version (204 -> 208 at the 2026-07-23 refresh; UNCHANGED by the v0.2.8 slice; 208 -> 206 as the free demotion empties the deepseek-flash and minimax-m3 lines; 206 -> 208 as the ling/inkling/kling split adds the bare inkling and kling lines). 208 -> 207 as the mimo normalization empties the bare mimo line; 207 -> 206 as the cogito decomposition moves its sole bare occupant onto the new gen-2.1 line. 210 + 206 = 416.
 		minExpectedSeries = 300 // the ratified floor
 	)
 	all := bestiary.SeriesAll()
