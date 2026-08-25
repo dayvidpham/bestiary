@@ -45,6 +45,19 @@ const (
 	// naming scheme (a repo path is the lab's own published home for its weights).
 	DataSourceHuggingFace DataSourceID = "huggingface"
 
+	// DataSourceBestiary identifies bestiary ITSELF as the originating source of a
+	// claim. It is the self-referential row of the data-source dimension: the honest
+	// Source for anything bestiary AUTHORS rather than reads from an upstream — above
+	// all the canonical nomina, whose keys are minted by this package's own parse +
+	// key-rendering pipeline (IngestMethodSelfMinted, AuthorityPrimary).
+	//
+	// It is DISTINCT from DataSourceCurated: curated is the ingest a THIRD-PARTY claim
+	// was READ FROM (a committed claim file transcribing someone else's naming), while
+	// bestiary is the AUTHOR of a claim that has no third party at all. Recording a
+	// self-minted key as models.dev would attribute a bestiary-authored naming to an
+	// upstream that never asserted it.
+	DataSourceBestiary DataSourceID = "bestiary"
+
 	// DataSourceCurated identifies bestiary's own curated claim files (e.g.
 	// parse/data/nomen_claims.json) as the ingest a naming was read from. It is the
 	// honest Source for a curated third-party naming CLAIM: bestiary never read the

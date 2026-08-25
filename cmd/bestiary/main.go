@@ -2857,6 +2857,9 @@ func runSync(provider string, format bestiary.OutputFormat, dbPath string) error
 //     APPENDS one dataset_ingested row stamped with the sync wall-clock (a runtime
 //     ingest is a genuine event, so a wall-clock RFC3339 timestamp is correct here
 //     — this is NOT the committed-snapshot kind that must stay byte-deterministic).
+//     It also registers the curated, huggingface and self-referential bestiary
+//     dimension rows, whose committed ingest timestamps come from the seed: the
+//     nomina persisted below carry those source_id FKs.
 //   - UpsertEntityMetadata: the fetched metadata, attributed to models.dev and
 //     stamped with the same sync timestamp (its parent row's source_id is an FK, so
 //     the DataSource must be registered first — hence the ordering above).
@@ -2973,9 +2976,30 @@ func runSyncClient(client *bestiary.Client, provider string, format bestiary.Out
 			ParserSchema: modelsDevParserSchema,
 		}
 	}
+	// Also register the self-referential bestiary DataSource: every SELF-MINTED
+	// canonical nomen persisted below is attributed to DataSourceBestiary — bestiary
+	// authored the key, so no upstream is the honest Source. The nomina.source_id
+	// foreign key references data_sources, so this dimension row MUST exist before
+	// UpsertNomina. Its committed ingest timestamp comes from the seed.
+	selfDS, ok := bestiary.DataSourceByID(bestiary.DataSourceBestiary)
+	if !ok {
+		selfDS = bestiary.DataSource{
+			ID:            bestiary.DataSourceBestiary,
+			URI:           "https://github.com/dayvidpham/bestiary",
+			CanonicalName: "bestiary (self-minted)",
+		}
+	}
+	selfIngest, ok := bestiary.DatasetIngestedFor(bestiary.DataSourceBestiary)
+	if !ok {
+		selfIngest = bestiary.DatasetIngested{
+			SourceID:     bestiary.DataSourceBestiary,
+			IngestedAt:   now,
+			ParserSchema: modelsDevParserSchema,
+		}
+	}
 	if err := store.UpsertDataSources(ctx,
-		[]bestiary.DataSource{ds, curatedDS, hfDS},
-		[]bestiary.DatasetIngested{ingest, curatedIngest, hfIngest}); err != nil {
+		[]bestiary.DataSource{ds, curatedDS, hfDS, selfDS},
+		[]bestiary.DatasetIngested{ingest, curatedIngest, hfIngest, selfIngest}); err != nil {
 		return fmt.Errorf("sync: persist data source + ingest row: %w", err)
 	}
 

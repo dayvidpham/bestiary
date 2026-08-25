@@ -14,6 +14,41 @@ for its **Go module tags** (`vX.Y.Z`).
 
 ## [Unreleased]
 
+### Added
+
+- **Self-referential `bestiary` data source.** `DataSourceBestiary` (`"bestiary"`) joins the
+  BCNF data-source dimension as a fifth curated row
+  (`parse/data/datasources.json`, uri `https://github.com/dayvidpham/bestiary`). It is the
+  honest `Source` for anything bestiary **authors** rather than reads from an upstream, and it
+  is deliberately distinct from `curated` — `curated` is the ingest a *third-party* claim was
+  transcribed from, `bestiary` is a claim with no third party at all. `sources --export`
+  carries the new row and round-trips it, so the export stays promotable straight back into the
+  curated seed.
+
+### Changed
+
+- **Self-minted canonical nomina are attributed to `bestiary`, not `models.dev`.** Both shared
+  mint joints — `MintNomina` (from entities) and `MintNominaFromModels` (the sync path), which
+  previously hard-coded `DataSourceModelsDev` at their canonical call sites — now emit
+  `Source = bestiary` on every canonical attestation. A canonical key is rendered by bestiary's
+  own parse + key pipeline, so naming an upstream credited it with a claim it never made.
+  `canonicalAttestation` takes no source argument any more, which makes the FK
+  impossible to get wrong at a call site. `Authority` (`primary`) and `Method` (`self-minted`)
+  are **unchanged**, and no nomen **count** changes (957 canonical / 2834 provider-id / 1 alias
+  / 179 huggingface, unchanged; the from-models joint stays at canonical − 4).
+- `sync` now registers the `bestiary` dimension row alongside `models.dev`, `curated` and
+  `huggingface` before persisting nomina, since `nomen_attestations.source_id` is a real
+  foreign key.
+
+### Notes
+
+- **A SQLite cache written by a pre-v0.2.10 build keeps its old `models.dev` FK** on
+  canonical-nomen attestations until it is re-synced. This is deliberate, not merely tolerated:
+  the FK records *which ingest we read a naming from*, and for a cached row that ingest genuinely
+  was the pre-v0.2.10 pipeline — rewriting it would back-date a claim the old build never made,
+  which is exactly the provenance dishonesty this row exists to fix. Run `bestiary sync` to
+  re-mint the attestations; the value corrects itself.
+
 ## [0.2.9] - 2026-07-28
 
 **Schema:** unchanged at `0.6.0`.

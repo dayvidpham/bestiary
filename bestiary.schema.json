@@ -320,7 +320,7 @@
     },
     "IngestMethod": {
       "title": "IngestMethod",
-      "description": "HOW a naming record entered the system — a per-attestation fact, symmetric with AttestationAuthority (a single source such as models.dev is simultaneously the source of self-minted canonical nomina AND of harvested provider-id nomina, so this cannot live on the DataSource dimension). Serializes as a lowercase token via encoding.TextMarshaler. Element-enum convention: \"unknown\" sits AT the zero value as the fail-safe. Added in schema 0.6.0.",
+      "description": "HOW a naming record entered the system — a per-attestation fact, symmetric with AttestationAuthority (a single source such as curated is simultaneously the source of curated third-party alias claims AND, via the huggingface seed, of harvested nomina, so this cannot live on the DataSource dimension). Serializes as a lowercase token via encoding.TextMarshaler. Element-enum convention: \"unknown\" sits AT the zero value as the fail-safe. Added in schema 0.6.0.",
       "type": "string",
       "enum": ["unknown", "curated", "harvested", "self-minted"],
       "x-enum-descriptions": {
