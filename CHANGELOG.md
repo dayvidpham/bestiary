@@ -1033,6 +1033,41 @@ for its **Go module tags** (`vX.Y.Z`).
   admitted nomen.
 
 
+### Changed
+
+- **The MiniMax `turbo` demotion is re-verified against the lab's own sources, and its
+  evidence grade is upgraded.** `turbo` is IDENTITY by global default and is demoted to an
+  ATTRIBUTE for only a few curated families. For MiniMax that demotion had rested on
+  inference alone — it was recorded as the lower-confidence row, the first one to revisit —
+  and it rides on **exactly one** catalog instance, nanogpt's `minimax/minimax-m2.7-turbo`.
+  It was re-checked on **2026-08-25** against
+  [the MiniMax M2.7 weights repo](https://huggingface.co/MiniMaxAI/MiniMax-M2.7) and
+  [MiniMax's own text-generation docs](https://platform.minimax.io/docs/guides/text-generation).
+
+  **Outcome: the demotion stands, now on repo-identity evidence.** MiniMaxAI publishes a
+  **single** M2.7 weights repo — there is no `MiniMax-M2.7-Turbo` and no
+  `MiniMax-M2.7-highspeed` repo — so every fast-serving spelling of the version resolves
+  back to one artifact. The lab documents its speed tier in its own words as *"M2.7
+  Highspeed: Same performance, faster and more agile (output speed approximately 100 tps)"*
+  against roughly 60 tps for the standard tier: an inference-layer tier of the same model,
+  priced at 2x. The catalog census agrees, and it agrees *inside the
+  entity*: `minimax/m@2.7` carries **54 instances**, **15** of which are M2.7 `-highspeed`
+  spellings (**25** `-highspeed` ids across the family's M2.5 and M2.7 lines together), and
+  the single `turbo` row sits right beside them — matching the seven canonical M2.7
+  `-highspeed` rows (fastrouter, llmgateway, merge-gateway, minimax, minimax-cn, novita-ai,
+  orcarouter) **exactly** on every axis: **0.6 / 2.4** per MTok, **204,800** context,
+  **131,072** max output, against the plain M2.7's **0.3 / 1.2** — the same doubling the
+  lab charges for its own speed tier. MiniMax's own first-party endpoints name that tier
+  `highspeed`, never `turbo`, and **no** provider ships both spellings for one version — the
+  aggregators that carry the tier all copy the lab's word. So `turbo` cannot be a
+  distinct artifact standing beside `highspeed`; it is nanogpt's own label for it. `highspeed`
+  is already attribute-class globally, so this is the consistent reading.
+
+  **Nothing you depend on moves.** This is a documentation and evidence change only:
+  `minimax/m@2.7` keeps its instances, no `minimax/m@2.7{turbo}` key is minted, and
+  regeneration was measured **byte-identical** — not one generated file changed. No key is
+  retired, so there is no migration to make.
+
 ## [0.2.9] - 2026-07-28
 
 **Schema:** unchanged at `0.6.0`.
