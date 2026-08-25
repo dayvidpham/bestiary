@@ -445,6 +445,87 @@ for its **Go module tags** (`vX.Y.Z`).
   |---|---|---|
   | `qwen/coder@3#1m` | instance rejoins `qwen/coder@3` | `Entity__Qwen__Coder__Version_3__Size_1m` (1 declaration) |
 
+- **Three entity keys were one: the `ling` / `inkling` / `kling` collision is split — 939 → 947 keys,
+  2 retired and 10 added.** The vendored models.dev catalog stamps `"family": "ling"` on **all 14**
+  rows of two product lines that have nothing to do with inclusionAI's Ling: Thinking Machines'
+  6 Inkling instances and vercel's 8 `klingai/kling-v*` video models. Bare `ling` was therefore not an
+  inclusionAI entity at all — it held those 14 mislabelled rows and none of inclusionAI's own. Two
+  curated `family_enforce.json` ledger rows (`inkling`, `kling`) now let the ID-driven decomposition
+  win over the upstream label, splitting all 14 with **no exact-ID pins**, and the
+  `parse/data/modelsdev_aliases.json` row for `thinkingmachines/inkling` is retargeted from `ling` to
+  `inkling` so its metadata follows the entity.
+
+  **The root cause is upstream's label, not our parser.** The earlier reading — "vercel drops the
+  leading `k`" — is **false**: vercel spells its rows `klingai/kling-v2.5-turbo-i2v`, leading `k`
+  intact, and every other provider's id is equally correct. Our decomposition was right all along and
+  was simply being overruled by a wrong `raw_family`. That is why the fix is a ledger entry rather
+  than 14 pins.
+
+  A fifteenth row needed a different lever. qiniu-ai's `kling-v2-6` carries **no** upstream family, so
+  the key was entirely our own: the leading-token pipeline glued the dash-spelled major onto the family
+  token and read the orphan as the whole version, producing `kling-v2@6` — a phantom family at a version
+  the vendor never published. An exact-ID `idFamilyOverrides` row corrects family *and* version together
+  to `kling@2.6`. A `dotLostVersionOverrides` entry would **not** have worked: by construction it
+  corrects `Version` only, leaving `kling-v2@2.6` with the corrupted family standing.
+
+  **inclusionAI's ling keyspace is untouched.** `ling#1t`, `ling@2.6#1t`, `ling/flash@2.0`,
+  `ling/flash@2.6` and `ling/flash-free@2.6` are byte-identical before and after, each holding exactly
+  the instances it held before (2, 4, 2, 4 and 1), asserted by value in a committed test. The `ling`
+  **family** survives with those five children; only the bare `ling` **key** retires.
+
+  The 8 klingai shape tokens (`v2.5-turbo-i2v` … `v3.0-t2v`) are **deliberately left unnormalized** in
+  the variant slot: they are `i2v`/`t2v`/`motion-control` pipeline modes, and normalizing them is a
+  separate, priced piece of work.
+
+  **Migration table (old → new).** Each row is DERIVED, not assumed: every retired key's pre-split
+  instances are pinned in a companion corpus, the successor set is re-derived from them against the
+  live registry on every test run, and this table is compared against that derivation.
+
+  | retired collision key | instances re-home to |
+  |---|---|
+  | `kling-v2@6` | `kling@2.6` |
+  | `ling` | `inkling`, `kling/v2.5-turbo-i2v`, `kling/v2.5-turbo-t2v`, `kling/v2.6-i2v`, `kling/v2.6-motion-control`, `kling/v2.6-t2v`, `kling/v3.0-i2v`, `kling/v3.0-motion-control`, `kling/v3.0-t2v` |
+
+  **`ling` is this epoch's widest split — nine successors, and it does NOT fold onto its family line.**
+  Looking for your model under bare `ling` will not find it: six of its rows are Inkling and eight are
+  Kling video models, and the surviving `ling` children are unrelated inclusionAI weights.
+
+  **Retired-key behaviour, measured — the two keys differ, and that is correct.** `kling-v2@6` is a
+  uniform hard 404: `ErrNotFound` on both `bestiary show kling-v2@6` and
+  `bestiary show kling-v2@6 --by-entity`. Bare `ling` returns `ErrNotFound` on the exact-key
+  `--by-entity` seam but **`ErrAmbiguous`** on the looser `show` seam — not because it split, but
+  because its **family outlives the key** and the bare family token still has five live children,
+  exactly as `show gpt`, `show claude` and `show mimo` behave. That reading is pinned as measured and
+  must not be "corrected" into a 404. No alias is minted and no successor is listed by the tool on
+  either seam; this table is the pointer.
+
+  **Compile break for library consumers — 2 `Entity__` constants removed, 10 added**, counted from
+  `entities_constants_gen.go`. Removed: `Entity__Ling`, `Entity__Kling_v2__Version_6`. Added:
+  `Entity__Inkling`, `Entity__Kling__V2_5_turbo_i2v`, `Entity__Kling__V2_5_turbo_t2v`, `Entity__Kling__V2_6_i2v`, `Entity__Kling__V2_6_motion_control`, `Entity__Kling__V2_6_t2v`, `Entity__Kling__V3_0_i2v`, `Entity__Kling__V3_0_motion_control`, `Entity__Kling__V3_0_t2v`, `Entity__Kling__Version_2_6`. The generated file holds
+  939 → 947 constant declarations over 939 → 947 distinct key values — a bijection, one declaration
+  per key, so the constant break and the key diff are the same either way.
+
+  **Creator attribution follows the split.** The `ling` withhold — deferred precisely because a curated
+  alias pointed Inkling at the wrong family — is discharged and the withhold list is now empty. The lab
+  derivation reaches `inkling` unambiguously, so `thinkingmachines` is applied; `ling` is left with no
+  lab-scoped metadata row at all, so `inclusionai` is authored by hand. The well-known `Creator` set
+  moves **41 → 43** and the codegen lab-disagreement report **4 → 3 rows**. `kling` is deliberately left
+  unattributed: naming its lab is a separate curation decision.
+
+  Downstream census, all re-measured from this regeneration: canonical nomina 939 → 947 (provider-ID
+  2834, alias 1 and huggingface 179 all unchanged, so the nomen total moves 3953 → 3961 — no instance is
+  created or destroyed, all 15 that move carry their id spellings across as Admitted nomina); series
+  lines 415 → 417 (bare 206 → 208 for the new `inkling` and `kling` lines; versioned unchanged at 209,
+  since `kling@2.6` replaces the `kling-v2@6` line one-for-one); releases 652 → 661 (+8 named kling
+  shapes, +2 bare on the new lines, −1 for the retired `kling-v2@6` line; retiring bare `ling` costs
+  nothing, because `ling#1t` already shares that line's un-named release).
+
+  The codegen-emitted `parse/data/modelsdev_unlinked.json` join-disagreement report gains a
+  **`count == 0` guard**, which it never had. It is added here because this is the first curation slice
+  that can break it: measured, leaving the `thinkingmachines/inkling` alias pointed at `ling` while the
+  entity moves to `inkling` drives the report 0 → 1 and silently orphans that row's description,
+  license and benchmarks.
+
 ### Changed
 
 - **The `free` tier leaves entity identity: 957 → 940 entity keys, 17 retired and 0 added.**

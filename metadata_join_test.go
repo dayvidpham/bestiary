@@ -1,6 +1,8 @@
 package bestiary_test
 
 import (
+	"encoding/json"
+	"os"
 	"reflect"
 	"testing"
 
@@ -268,5 +270,61 @@ func TestJoinEntityMetadata_FamilyAbsentStandalone_AccumulatesRows(t *testing.T)
 		if m.Benchmarks[0].Name != wantBench {
 			t.Errorf("row %s benchmark = %q, want %q", m.MetadataID, m.Benchmarks[0].Name, wantBench)
 		}
+	}
+}
+
+// modelsdevUnlinkedFileJSON is the read-only view of the codegen-emitted
+// parse/data/modelsdev_unlinked.json report. It mirrors loadCreatorsFile's discipline:
+// read the committed FILE, because the file IS the artifact under guard.
+type modelsdevUnlinkedFileJSON struct {
+	Count    int      `json:"count"`
+	Unlinked []string `json:"unlinked"`
+}
+
+// TestModelsdevUnlinked_IsDrained is the drained-report gate: the committed
+// join-disagreement report must stay at zero rows.
+//
+// A row in that file is a models.dev metadata id whose decomposed family IS present in
+// the catalog but whose full identity tuple matched no entity — so the row's
+// description, license, benchmarks and links attach to NOTHING and silently vanish from
+// `bestiary show`. The report was drained to 0 and every remaining row was resolved with
+// a curated parse/data/modelsdev_aliases.json entry, but until now nothing HELD it
+// there: the file is codegen-emitted, so a curation change that re-orphans a row
+// regenerates a bigger report and the tree stays green.
+//
+// A curation slice that re-keys an entity is exactly what breaks it, and it breaks it
+// silently in BOTH directions: re-keying an entity out from under an alias orphans that
+// alias's row, and splitting a family without retargeting its alias orphans the alias
+// itself. The collision split that added this guard is a live instance of the second —
+// measured, leaving the thinkingmachines/inkling alias pointed at "ling" while the
+// entity moves to "inkling" drives this file 0 -> 1.
+//
+// Reading the count field AND the array length independently is deliberate: the count is
+// what a human skims and the array is what is true, and a hand-edit that disagrees with
+// itself is its own defect (the file is marked DO NOT EDIT for that reason).
+func TestModelsdevUnlinked_IsDrained(t *testing.T) {
+	raw, err := os.ReadFile("parse/data/modelsdev_unlinked.json")
+	if err != nil {
+		t.Fatalf("read parse/data/modelsdev_unlinked.json: %v", err)
+	}
+	var f modelsdevUnlinkedFileJSON
+	if err := json.Unmarshal(raw, &f); err != nil {
+		t.Fatalf("parse parse/data/modelsdev_unlinked.json: %v", err)
+	}
+	if len(f.Unlinked) != 0 {
+		t.Errorf("parse/data/modelsdev_unlinked.json carries %d unlinked metadata id(s): %v\n"+
+			"  What: those models.dev rows decomposed to a family the catalog serves, but matched no entity,\n"+
+			"        so their description/license/benchmarks/links attach to nothing and disappear from `show`.\n"+
+			"  Why now: a curation re-key almost certainly moved an entity out from under a curated alias, or\n"+
+			"        split a family without retargeting the alias that pointed into it.\n"+
+			"  How to fix: retarget or add the parse/data/modelsdev_aliases.json entry for each id above and\n"+
+			"        re-run `go generate ./...` — verify the alias target is a DISTINCT entity first, per that\n"+
+			"        file's collision-hazard rule; do NOT hand-edit this report, it is codegen-emitted.",
+			len(f.Unlinked), f.Unlinked)
+	}
+	if f.Count != len(f.Unlinked) {
+		t.Errorf("parse/data/modelsdev_unlinked.json count field = %d but the unlinked array holds %d entries; "+
+			"the file disagrees with itself — re-run `go generate ./...` rather than hand-editing it",
+			f.Count, len(f.Unlinked))
 	}
 }

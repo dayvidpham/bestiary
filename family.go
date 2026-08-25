@@ -135,6 +135,15 @@ var curatedBaseFamilies = [...]Family{
 	// one known. Registering the lowercase spelling attributes the served entities;
 	// reconciling the two spellings is a family-set repair, not a creator one.
 	Family("hy"),
+	// The inkling / kling halves of the three-way ling collision, registered as
+	// LITERALS rather than constants because no FamilyInkling / FamilyKling constant
+	// exists: the upstream catalog ships raw_family "ling" on every one of those rows,
+	// so neither token ever reached allFamilies (families_gen.go) and the generated set
+	// cannot name them. They become first-class known families here so the curated
+	// family-token guards (creator, lineage, nomen-claim, suppression) accept them the
+	// moment the split lands, in the same regen pass that creates their entities.
+	Family("inkling"), // Thinking Machines' Inkling, 6 instances
+	Family("kling"),   // Kuaishou's KlingAI video line, 8 klingai/kling-v* rows + qiniu's kling-v2-6
 }
 
 // String returns the string representation of the family.

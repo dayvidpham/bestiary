@@ -66,20 +66,21 @@ const (
 	// match a Provider slug, because Creator and Provider are independent axes
 	// (CreatorMoonshotAI and ProviderMoonshotAI coincide; CreatorDeepReinforce has
 	// no provider counterpart at all).
-	CreatorDeepReinforce Creator = "deepreinforce"
-	CreatorMeituan       Creator = "meituan"
-	CreatorMicrosoft     Creator = "microsoft"
-	CreatorMiniMax       Creator = "minimax"
-	CreatorMoonshotAI    Creator = "moonshotai"
-	CreatorNvidia        Creator = "nvidia"
-	CreatorPerplexity    Creator = "perplexity"
-	CreatorPoolside      Creator = "poolside"
-	CreatorSakana        Creator = "sakana"
-	CreatorSarvam        Creator = "sarvam"
-	CreatorStepFun       Creator = "stepfun"
-	CreatorTencent       Creator = "tencent"
-	CreatorXAI           Creator = "xai"
-	CreatorXiaomi        Creator = "xiaomi"
+	CreatorDeepReinforce    Creator = "deepreinforce"
+	CreatorMeituan          Creator = "meituan"
+	CreatorMicrosoft        Creator = "microsoft"
+	CreatorMiniMax          Creator = "minimax"
+	CreatorMoonshotAI       Creator = "moonshotai"
+	CreatorNvidia           Creator = "nvidia"
+	CreatorPerplexity       Creator = "perplexity"
+	CreatorPoolside         Creator = "poolside"
+	CreatorSakana           Creator = "sakana"
+	CreatorSarvam           Creator = "sarvam"
+	CreatorStepFun          Creator = "stepfun"
+	CreatorTencent          Creator = "tencent"
+	CreatorThinkingMachines Creator = "thinkingmachines"
+	CreatorXAI              Creator = "xai"
+	CreatorXiaomi           Creator = "xiaomi"
 
 	// Tokens introduced by HAND-CURATED rows for families the models.dev metadata
 	// join does not reach (a family with catalog entities but no models.json row
@@ -97,6 +98,7 @@ const (
 	CreatorElevenLabs      Creator = "elevenlabs"
 	CreatorIBM             Creator = "ibm"
 	CreatorIdeogram        Creator = "ideogram"
+	CreatorInclusionAI     Creator = "inclusionai"
 	CreatorNousResearch    Creator = "nousresearch"
 	CreatorRecraft         Creator = "recraft"
 	CreatorReka            Creator = "reka"
@@ -134,6 +136,7 @@ var knownCreators = [...]Creator{
 	CreatorSarvam,
 	CreatorStepFun,
 	CreatorTencent,
+	CreatorThinkingMachines,
 	CreatorXAI,
 	CreatorXiaomi,
 	// Hand-curated tokens for families the metadata join does not reach.
@@ -148,6 +151,7 @@ var knownCreators = [...]Creator{
 	CreatorElevenLabs,
 	CreatorIBM,
 	CreatorIdeogram,
+	CreatorInclusionAI,
 	CreatorNousResearch,
 	CreatorRecraft,
 	CreatorReka,

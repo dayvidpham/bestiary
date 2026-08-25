@@ -156,10 +156,29 @@ func assertRunSeam(t *testing.T, want, key string, args []string) {
 				"on this seam; no alias, redirect or successor listing may resolve %q", args, runErr, key)
 		}
 	case "ambiguous":
-		if !errors.As(runErr, &ambiguous) {
-			t.Errorf("run %v returned %v, want *bestiary.ErrAmbiguous — this key retires while its "+
-				"FAMILY stays live, so the bare family token still has live children", args, runErr)
+		// The CLI does NOT propagate *bestiary.ErrAmbiguous: on the ambiguous branch it
+		// prints the candidate listing and returns a fresh, unwrapped fmt.Errorf carrying
+		// the "narrow it" guidance (cmd/bestiary/main.go). That is deliberate production
+		// behaviour — the user-facing text is the point of that branch — so this seam is
+		// asserted on what it actually returns: a non-nil error that is specifically NOT a
+		// not-found. The typed *bestiary.ErrAmbiguous is asserted at the LIBRARY seam
+		// (bestiary.Resolve) by the caller, which is where the type survives.
+		if runErr == nil {
+			t.Errorf("run %v returned nil, want the under-specified error — this key retires while "+
+				"its FAMILY stays live, so the bare family token still has live children", args)
+			break
 		}
+		if errors.As(runErr, &notFound) {
+			t.Errorf("run %v returned %v (a not-found), want the under-specified/ambiguous error — "+
+				"%q retires as a KEY while its family stays live; turning it into a 404 breaks the "+
+				"bare-family lookup that `show gpt`, `show claude` and `show mimo` also rely on",
+				args, runErr, key)
+			break
+		}
+		if !strings.Contains(runErr.Error(), "under-specified") {
+			t.Errorf("run %v returned %v, want the under-specified error naming the candidates", args, runErr)
+		}
+		_ = ambiguous
 	default:
 		t.Fatalf("corpus case for %q declares seam expectation %q, want \"not-found\" or \"ambiguous\"", key, want)
 	}
@@ -277,7 +296,7 @@ func TestRetiredKeys_FreeDemotion_ChangelogTableMatchesCorpus(t *testing.T) {
 	if err != nil {
 		t.Fatalf("read %s: %v", changelogPath, err)
 	}
-	table := parseMigrationTable(t, string(raw))
+	table := parseMigrationTable(t, string(raw), "| retired key | instances re-home to |")
 
 	if len(table) != len(corpus.Cases) {
 		t.Errorf("CHANGELOG migration table has %d row(s), corpus has %d case(s); the two are the "+
@@ -305,13 +324,17 @@ func TestRetiredKeys_FreeDemotion_ChangelogTableMatchesCorpus(t *testing.T) {
 	}
 }
 
-// parseMigrationTable reads the free-demotion "old -> new" markdown table out of the
+// parseMigrationTable reads one "old -> new" markdown migration table out of the
 // CHANGELOG, returning retired key -> successor keys. Every cell value is a backtick-
 // quoted key, so the successor column parses by extracting its quoted tokens, which
 // keeps a multi-successor row (a key that SPLITS) readable as a plain comma list.
-func parseMigrationTable(t *testing.T, changelog string) map[string][]string {
+//
+// The table is addressed by its exact header row, because each curation lever writes its
+// OWN table and the CHANGELOG accumulates several under one release. Matching on a shared
+// prefix would silently bind every lever's test to whichever table happened to come
+// first, so each header is required to be distinct and is passed in by the caller.
+func parseMigrationTable(t *testing.T, changelog, header string) map[string][]string {
 	t.Helper()
-	const header = "| retired key | instances re-home to |"
 
 	lines := strings.Split(changelog, "\n")
 	start := -1
@@ -322,9 +345,9 @@ func parseMigrationTable(t *testing.T, changelog string) map[string][]string {
 		}
 	}
 	if start < 0 {
-		t.Fatalf("CHANGELOG has no migration table: expected a row spelled %q. It is the record "+
-			"of record for the free demotion; if it moved or was renamed, update this reader in "+
-			"the same commit so the record stays checked.", header)
+		t.Fatalf("CHANGELOG has no migration table headed %q. That table is the record of record "+
+			"for the lever that names it; if it moved or was renamed, update the caller in the "+
+			"same commit so the record stays checked.", header)
 	}
 
 	out := map[string][]string{}

@@ -16,7 +16,7 @@
     "poolside/laguna-m.1": {"family": "laguna", "variant": "m", "version": "1"},
     "poolside/laguna-xs-2.1": {"family": "laguna", "variant": "xs", "version": "2.1"},
     "poolside/laguna-xs.2": {"family": "laguna", "variant": "xs", "version": "2"},
-    "thinkingmachines/inkling": {"family": "ling"},
+    "thinkingmachines/inkling": {"family": "inkling"},
     "xiaomi/mimo-v2.5-pro-ultraspeed": {"family": "mimo", "variant": "pro"}
   }
 }

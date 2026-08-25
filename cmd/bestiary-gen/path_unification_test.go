@@ -1176,6 +1176,16 @@ type exceptionKey struct {
 // Each key is the exact (ID, before-tuple, after-tuple) triple, so these rows justify ONLY
 // these transitions. The keyspace-wide mimo normalization that follows rewrites four of
 // these AFTER tuples, at which point these entries go dead and that change authors its own.
+//
+// EXTENDED by the ling/inkling/kling collision split, which contributes exactly ONE row.
+// The split itself moves 14 records off the wrong family, and every one of those 14 is a
+// mechanical category-(b): their upstream raw_family is the string "ling" while the ID
+// itself names the real family, so the canonical-winner ledger adopts the ID-driven
+// decomposition and the classifier sees a convergence, not a downgrade. The 15th record
+// is the odd one out and needs a human justification, because it carries NO upstream
+// family at all — the pipeline built its BEFORE tuple itself, so both fields the fix
+// rewrites were populated by us and the mechanical test cannot tell a repair from a
+// regression. Its entry is below.
 var justifiedExceptions = map[exceptionKey]string{
 	{ID: "minimax-m3-free", Before: `(family="minimax-m3",variant="free",version="",modifier="")`, After: `(family="minimax",variant="m",version="3",modifier="free")`}: "the free demotion un-fuses the upstream raw family \"minimax-m3\": before, \"m3\" was glued into the family token and the pricing tier occupied the variant slot, so the record stranded on a phantom minimax-m3 family with no version; after, it decomposes to the real minimax family on the m series at version 3, with free carried as an attribute modifier. Family, variant and version all become MORE correct and the record joins minimax/m@3 instead of a one-instance junk line.",
 
@@ -1186,6 +1196,8 @@ var justifiedExceptions = map[exceptionKey]string{
 	{ID: "mimo-v2-pro-free", Before: `(family="mimo",variant="pro-free",version="",modifier="")`, After: `(family="mimo",variant="v",version="2",modifier="pro,free")`}: "same un-fusing as the omni row, with the pro tier token: variant \"pro-free\" (version empty) becomes variant \"v\" at version 2 with modifiers pro,free. pro is globally IDENTITY-class (the safe over-split for an AMBIGUOUS token) and stays in the key; only free leaves it.",
 
 	{ID: "xiaomi-mimo-v2.5-pro-free", Before: `(family="mimo",variant="v2.5-pro",version="",modifier="")`, After: `(family="mimo",variant="v",version="2.5",modifier="pro,free")`}: "the aihubmix spelling of the mimo 2.5 Pro free tier. Its upstream raw family is \"mimo-v2.5-pro\" (the free suffix appears only in the model id), so the BEFORE tuple fused the whole version+tier into the variant slot with no version at all. After the demotion it decomposes to variant \"v\" at version 2.5 with modifiers pro,free — and, being the same tuple the opencode mimo-v2.5-pro-free row now reaches, it CONVERGES two providers' spellings of one model rather than worsening either.",
+
+	{ID: "kling-v2-6", Before: `(family="kling-v2",variant="",version="6",modifier="")`, After: `(family="kling",variant="",version="2.6",modifier="")`}: "qiniu-ai ships this row with an EMPTY upstream family, so the whole BEFORE tuple is our own leading-token decomposition — and both of its populated fields are wrong. The id spells Kling 2.6 with the dot lost to a dash (kling-v2-6), so the pipeline glued the dash-spelled major onto the family token (\"kling-v2\") and read the orphaned minor as the entire version (\"6\"), stranding the record on a one-instance phantom family at a version the vendor never published. The exact-ID pin corrects both together: family kling, version 2.6. No field is emptied, the family becomes a real family that eight other rows already serve, and the record joins them under kling@2.6 instead of kling-v2@6. A version-only dot-lost repair would have fixed the 6 -> 2.6 half and left the phantom family standing, which is why the family override is the lever.",
 }
 
 func TestPathUnification_ZeroUnexpectedRegression(t *testing.T) {

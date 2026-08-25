@@ -1905,6 +1905,8 @@ func creatorExpr(c bestiary.Creator) string {
 		return "CreatorStepFun"
 	case bestiary.CreatorTencent:
 		return "CreatorTencent"
+	case bestiary.CreatorThinkingMachines:
+		return "CreatorThinkingMachines"
 	case bestiary.CreatorXAI:
 		return "CreatorXAI"
 	case bestiary.CreatorXiaomi:
@@ -1931,6 +1933,8 @@ func creatorExpr(c bestiary.Creator) string {
 		return "CreatorIBM"
 	case bestiary.CreatorIdeogram:
 		return "CreatorIdeogram"
+	case bestiary.CreatorInclusionAI:
+		return "CreatorInclusionAI"
 	case bestiary.CreatorNousResearch:
 		return "CreatorNousResearch"
 	case bestiary.CreatorRecraft:

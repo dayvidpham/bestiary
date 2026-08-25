@@ -4238,6 +4238,22 @@ var idFamilyOverrides = map[string]idFamilyOverrideEntry{
 	// and leaving ling/flash@2.6 unchanged. Sole provider of this exact id -> zero collateral.
 	"ling-2.6-flash-free": {family: "ling", variant: "flash-free", version: "2.6"},
 
+	// kling-v2-6 (qiniu-ai) is the ONE row of the ling/inkling/kling collision that the
+	// family_enforce ledger cannot reach, and it is a DIFFERENT defect from the other 14.
+	// Those 14 carry an upstream raw_family the ID contradicts; this row carries NO upstream
+	// family at all, so the leading-token pipeline owns the whole decomposition and glues the
+	// dash-spelled major onto the family token itself: "kling-v2" + version "6", keying
+	// kling-v2@6. The ledger fires only when the ID-DERIVED family equals one of its members,
+	// and "kling-v2" is not "kling", so it never triggers (the cohere/rerank-v4-pro precedent
+	// above, same shape).
+	//
+	// Pinned to the family AND the version, because both fields are wrong: the id spells
+	// Kling 2.6 with the dot lost to a dash. A dotLostVersionOverrides entry is NOT the lever
+	// here — by construction it corrects Version only, which would leave the corrupted family
+	// standing as kling-v2@2.6. Sole provider of this exact id -> zero collateral; the row
+	// joins the 8 klingai rows under family kling.
+	"kling-v2-6": {family: "kling", version: "2.6"},
+
 	// NOTE (retired override): the bare "k2p7" id (kimi-for-coding) previously needed a
 	// narrow exact-id override to kimi/k@2.7 — its upstream compound raw_family "kimi-k2"
 	// defeated the shared family-recovery (the general compound-family recovery fix stays
