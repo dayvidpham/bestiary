@@ -4,6 +4,9 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"reflect"
+	"regexp"
+	"sort"
 	"strconv"
 	"strings"
 	"testing"
@@ -72,7 +75,7 @@ func TestCalculator_Page(t *testing.T) {
 		`id="calc-results"`,
 		"data-bind-budget",
 		"data-bind-headroom",
-		"data-bind-minContext",
+		"data-bind-min-context",
 		"@get('/sse/calculator')",
 		`src="/assets/datastar.js"`,
 		"available after headroom",
@@ -452,5 +455,109 @@ func TestCommaInt(t *testing.T) {
 		if got := commaInt(in); got != want {
 			t.Errorf("commaInt(%d) = %q, want %q", in, got, want)
 		}
+	}
+}
+
+// calcTemplateSource returns the shipped bytes of the calculator page template, read out
+// of the SAME embedded FS the server renders from. Reading the template rather than a
+// rendered page is deliberate: the signal DECLARATIONS are what this guard is about, and a
+// rendered page would let a value substitution hide a bad attribute name.
+func calcTemplateSource(t *testing.T) string {
+	t.Helper()
+	b, err := templatesFS.ReadFile("templates/calculator.html")
+	if err != nil {
+		t.Fatalf("read calculator template: %v", err)
+	}
+	return string(b)
+}
+
+// htmlCommentRE matches an HTML comment, including a multi-line one.
+var htmlCommentRE = regexp.MustCompile(`(?s)<!--.*?-->`)
+
+// signalNameAfterRoundTrip reproduces what actually happens to a signal attribute name
+// between the server and the client: the HTML parser LOWERCASES the attribute name, and
+// the Datastar client then folds kebab-case back to camelCase. Whatever comes out is the
+// signal the browser really binds.
+func signalNameAfterRoundTrip(attrSuffix string) string {
+	parts := strings.Split(strings.ToLower(attrSuffix), "-")
+	for i := 1; i < len(parts); i++ {
+		if parts[i] != "" {
+			parts[i] = strings.ToUpper(parts[i][:1]) + parts[i][1:]
+		}
+	}
+	return strings.Join(parts, "")
+}
+
+// sortedSignalNames renders the handler's signal set for an error message in a stable
+// order, so a failure reads the same way every run.
+func sortedSignalNames(set map[string]bool) []string {
+	out := make([]string, 0, len(set))
+	for k := range set {
+		out = append(out, k)
+	}
+	sort.Strings(out)
+	return out
+}
+
+// TestCalculator_SignalNamesSurviveTheParser closes a silent-failure gap that costs
+// nothing to introduce and shows no error once introduced: a camelCase signal attribute
+// (data-signals-minContext) reaches the client LOWERCASED as data-signals-mincontext and
+// binds a signal the handler never decodes. The control would simply do nothing -- no
+// console error, no failing handler, no red test -- and the page would quietly ignore its
+// context floor. The hyphenated spelling is the only one that survives the round trip,
+// because the client folds kebab back to camelCase.
+//
+// The guard walks the SHIPPED template bytes exactly that way and requires every signal
+// name it finds to be one the handler actually reads, taken from the struct tags rather
+// than from a second hand-written list that could drift.
+func TestCalculator_SignalNamesSurviveTheParser(t *testing.T) {
+	want := map[string]bool{}
+	rt := reflect.TypeOf(calcQuery{})
+	for i := 0; i < rt.NumField(); i++ {
+		tag := rt.Field(i).Tag.Get("json")
+		if tag == "" || tag == "-" {
+			t.Fatalf("calcQuery.%s has no json tag; the guard has nothing to pin against", rt.Field(i).Name)
+		}
+		want[tag] = true
+	}
+	if len(want) == 0 {
+		t.Fatal("calcQuery declares no signals; the guard is vacuous")
+	}
+
+	// HTML comments are stripped first: this very file explains the hazard by SPELLING
+	// the bad attribute name in prose, and a comment is not an attribute. Scanning the raw
+	// bytes would make the explanation of the rule violate the rule.
+	src := htmlCommentRE.ReplaceAllString(calcTemplateSource(t), "")
+	decl := regexp.MustCompile(`data-(?:signals|bind)-([a-zA-Z][a-zA-Z-]*)`).FindAllStringSubmatch(src, -1)
+	if len(decl) == 0 {
+		t.Fatal("no signal declaration found in the calculator template")
+	}
+	seen := map[string]bool{}
+	for _, m := range decl {
+		got := signalNameAfterRoundTrip(m[1])
+		if !want[got] {
+			t.Errorf("attribute %q binds signal %q after HTML lowercasing + kebab->camel; "+
+				"calcQuery reads %v -- declare it kebab-case, never camelCase",
+				m[0], got, sortedSignalNames(want))
+		}
+		seen[got] = true
+	}
+	// Every signal the handler reads must actually be declared, or its control is missing
+	// and the field is dead.
+	for name := range want {
+		if !seen[name] {
+			t.Errorf("calcQuery reads signal %q, which no control in the template declares", name)
+		}
+	}
+	// Non-vacuity: at least one signal name must be MULTI-WORD, since a single all-lowercase
+	// word survives the round trip however it is spelled and would prove nothing.
+	multiword := false
+	for name := range want {
+		if strings.ToLower(name) != name {
+			multiword = true
+		}
+	}
+	if !multiword {
+		t.Error("no camelCase signal name remains; the guard no longer proves anything")
 	}
 }
