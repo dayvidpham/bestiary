@@ -4415,6 +4415,21 @@ var idFamilyOverrides = map[string]idFamilyOverrideEntry{
 	"deepseek-v3-1":             {family: "deepseek", variant: "v3.1"},
 	"deepseek-ai/deepseek-v3-1": {family: "deepseek", variant: "v3.1"},
 	"deepseek-v3-2-exp":         {family: "deepseek", variant: "v3.2-exp"},
+
+	// Cogito v2.1 671B — the size-doubling decomposition repair. Deep Cogito spells the
+	// release as "cogito-v2.1-671b", so the leading-token pipeline reads the WHOLE
+	// remainder "v2.1-671b" as one variant token and leaves the version empty. The 671b
+	// parameter size is ALSO recovered mechanically into the #size segment, so the
+	// artifact keyed cogito/v2.1-671b#671b — the same 671b stated twice, once as an
+	// identity token and once as the size. Pinned to the glm-v shape
+	// (canonicalizeGlmV above): the glued release letter is the VARIANT "v" and the
+	// dotted point release is the VERSION "2.1", so the key renders cogito/v@2.1#671b
+	// and the size is carried exactly once. Family is already "cogito"
+	// (FamilyCogito ∈ allFamilies) on every serving row, so this entry corrects only the
+	// variant/version pair. Keyed to the exact (lowercase) ID; both providers that serve
+	// this dotted spelling (kilo raw="", openrouter raw="cogito") converge on the one
+	// tuple because the map is consulted provider-agnostically.
+	"deepcogito/cogito-v2.1-671b": {family: "cogito", variant: "v", version: "2.1"},
 }
 
 // dotLostVersionOverrides is the curated, CLOSED, exact-model-ID map for the "dot-lost"

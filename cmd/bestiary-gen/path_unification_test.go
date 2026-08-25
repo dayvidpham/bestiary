@@ -1209,6 +1209,13 @@ type exceptionKey struct {
 // No row in this block changes a family, and none drops a token on the floor. The 93
 // instances on the ten retired mimo keys land on the nine surviving ones with the count
 // conserved exactly.
+//
+// EXTENDED AGAIN by the cogito decomposition repair, which contributes exactly ONE row
+// covering the 2 records that serve the dotted cogito-v2.1-671b spelling. It is the
+// un-fusing shape again, not the letter-dropping one: the version slot was EMPTY before
+// and is populated after, and the token that leaves the variant is a parameter size the
+// key was already carrying in its #size segment. Nothing is emptied and no token is
+// dropped on the floor.
 var justifiedExceptions = map[exceptionKey]string{
 	{ID: "minimax-m3-free", Before: `(family="minimax-m3",variant="free",version="",modifier="")`, After: `(family="minimax",variant="m",version="3",modifier="free")`}: "the free demotion un-fuses the upstream raw family \"minimax-m3\": before, \"m3\" was glued into the family token and the pricing tier occupied the variant slot, so the record stranded on a phantom minimax-m3 family with no version; after, it decomposes to the real minimax family on the m series at version 3, with free carried as an attribute modifier. Family, variant and version all become MORE correct and the record joins minimax/m@3 instead of a one-instance junk line.",
 
@@ -1273,6 +1280,8 @@ var justifiedExceptions = map[exceptionKey]string{
 	{ID: "xiaomimimo/mimo-v2-pro", Before: `(family="mimo",variant="v",version="2",modifier="pro")`, After: `(family="mimo",variant="",version="2",modifier="pro")`}: "the mimo series letter leaves the entity key: variant \"v\" becomes empty while version \"2\" and modifier \"pro\" are carried across byte-identical. \"v\" was never a product line — every mimo id spells it, so it partitioned nothing and merely prefixed the key. The classifier flags an emptied populated field, but no FACT is lost: the letter is still consumed to extract the version (which is why it is not simply deleted from the family record), it survives in the provider ids and therefore in this model's nomina, and the key it leaves behind names the same artifact. 1 record(s) on novita-ai carry this exact transition.",
 
 	{ID: "xiaomimimo/mimo-v2.5-pro", Before: `(family="mimo",variant="v",version="2.5",modifier="pro")`, After: `(family="mimo",variant="",version="2.5",modifier="pro")`}: "the mimo series letter leaves the entity key: variant \"v\" becomes empty while version \"2.5\" and modifier \"pro\" are carried across byte-identical. \"v\" was never a product line — every mimo id spells it, so it partitioned nothing and merely prefixed the key. The classifier flags an emptied populated field, but no FACT is lost: the letter is still consumed to extract the version (which is why it is not simply deleted from the family record), it survives in the provider ids and therefore in this model's nomina, and the key it leaves behind names the same artifact. 1 record(s) on novita-ai carry this exact transition.",
+
+	{ID: "deepcogito/cogito-v2.1-671b", Before: `(family="cogito",variant="v2.1-671b",version="",modifier="")`, After: `(family="cogito",variant="v",version="2.1",modifier="")`}: "the cogito size-doubling repair splits a fused variant into its parts. BEFORE, the whole id remainder \"v2.1-671b\" sat in the variant slot with the version EMPTY, so the 671b parameter size was stated twice — once as an identity token inside the variant and once again as the mechanically recovered #size segment (key cogito/v2.1-671b#671b). AFTER, the glued release letter is the variant \"v\" and the dotted point release is the version \"2.1\", the glm-v shape (canonicalizeGlmV) this line has always matched, so the key renders cogito/v@2.1#671b and carries the size exactly once. The classifier flags a populated variant changing value, but the transition POPULATES the empty version field and drops no fact: every token of the before-variant is accounted for after (v -> variant, 2.1 -> version, 671b -> the #size segment it already occupied), and the spelling survives verbatim in the provider ids and therefore in this model's nomina. Evidence: Deep Cogito publishes the release as Cogito v2.1 671B (deepcogito.com), and both serving rows spell the id identically. 2 record(s) on kilo (raw=\"\") and openrouter (raw=\"cogito\") carry this exact transition.",
 }
 
 func TestPathUnification_ZeroUnexpectedRegression(t *testing.T) {
