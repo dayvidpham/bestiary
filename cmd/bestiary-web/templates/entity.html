@@ -5,7 +5,7 @@
 <p><a href="/entities" class="mono">&#8249; catalog</a> · <a href="/families" class="mono">series</a></p>
 <h1 class="mono">{{.Ref.String}}</h1>
 <p class="muted">
-  {{with .Creator}}{{.}}{{else}}<span>creator unattributed</span>{{end}}
+  {{with .Creator}}{{.}}{{else}}<span>unattributed</span>{{end}}
   {{if .Sources}}·
     {{range $i, $s := .Sources}}{{if $i}}, {{end}}<span class="badge live">{{$s}}</span>{{end}}
   {{end}}
