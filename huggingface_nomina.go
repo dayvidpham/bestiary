@@ -15,15 +15,24 @@ import (
 // discipline (the lineage.go precedent) — with two deliberate differences that
 // follow from §3.2/§6 of the naming design:
 //
-//   - NO archive-snapshot fence. A curated claim (nomen_claims.json) cites an
-//     archive.org snapshot because it is durable third-party EVIDENCE a human
-//     recorded, and a live page rots. A harvested HF nomen is a LIVE observation
-//     the offline cmd/bestiary-hf bot made of the Hub itself: its SourceURL is the
-//     live repo URL (https://huggingface.co/<org>/<repo>), Method=Harvested,
-//     Authority=Primary (the Hub is authoritative for the huggingface scheme),
-//     Source=huggingface. The archive-pin policy (nomen_claims.go) binds the
-//     CURATED layer only, never this one — subjecting a harvested observation to
-//     the curated fence would be a category error.
+//   - NO archive-snapshot fence ON source_url. A curated claim (nomen_claims.json)
+//     cites an archive.org snapshot because it is durable third-party EVIDENCE a
+//     human recorded, and a live page rots. A harvested HF nomen is a LIVE
+//     observation the offline cmd/bestiary-hf bot made of the Hub itself: its
+//     SourceURL is the live repo URL (https://huggingface.co/<org>/<repo>),
+//     Method=Harvested, Authority=Primary (the Hub is authoritative for the
+//     huggingface scheme), Source=huggingface. The archive-pin policy
+//     (nomen_claims.go) binds the CURATED layer only, never this one — subjecting a
+//     harvested observation to the curated fence would be a category error.
+//
+//     A harvested nomen's live page can still rot, so the snapshot is recorded
+//     BESIDE the observation rather than in place of it: the optional archived_url
+//     field carries an archive.org snapshot OF source_url onto
+//     NomenAttestation.ArchivedURL. It is OPTIONAL (absent means "none recorded",
+//     which is the normal case — the Wayback lookup is best-effort) but, when
+//     present, must satisfy the SAME shared shape check the curated fence uses
+//     (IsArchiveSnapshotURL), so the two layers can never disagree about what an
+//     archive URL looks like.
 //   - CASE IS PRESERVED. An HF id is org/repo, 1:1, and case-significant
 //     (meta-llama/Llama-3.3-70B-Instruct is NOT .../llama-3.3-70b-instruct). The
 //     value is stored and rendered VERBATIM; lowercasing it is a defect the loader
@@ -63,10 +72,14 @@ type hfNomenRefJSON struct {
 //   - SourceURL is the LIVE Hub repo URL (https://huggingface.co/<value>) the bot
 //     observed. It is a harvested attestation's SourceURL, NOT a curated archive
 //     snapshot (the fence in nomen_claims.go does not apply here).
+//   - ArchivedURL is an archive.org snapshot OF SourceURL, when the bot's Wayback
+//     lookup found one. OMITTED (the omitempty spelling) when none is recorded —
+//     the overwhelmingly common case on a first harvest, and never an error.
 type hfNomenJSON struct {
-	Value     string         `json:"value"`
-	ResolveTo hfNomenRefJSON `json:"resolves_to"`
-	SourceURL string         `json:"source_url"`
+	Value       string         `json:"value"`
+	ResolveTo   hfNomenRefJSON `json:"resolves_to"`
+	SourceURL   string         `json:"source_url"`
+	ArchivedURL string         `json:"archived_url,omitempty"`
 }
 
 // hfNominaFileJSON is the top-level shape of parse/data/huggingface_nomina.json.
@@ -200,6 +213,30 @@ func parseHFNomina(raw []byte) (*hfNominaTable, error) {
 			)
 		}
 
+		// archived_url is OPTIONAL — a harvest with no snapshot is the normal case, and
+		// treating its absence as an error would make the best-effort lookup load-bearing.
+		// But a PRESENT value must be a real archive.org snapshot: it is recorded as durable
+		// evidence, so a malformed one is a bot/curation defect that would quietly ship an
+		// unusable citation. The check reuses the SAME IsArchiveSnapshotURL shape the curated
+		// fence applies — one shared validator, so the accepted shape cannot drift between the
+		// two layers.
+		archivedURL := strings.TrimSpace(n.ArchivedURL)
+		if archivedURL != "" && !IsArchiveSnapshotURL(archivedURL) {
+			return nil, fmt.Errorf(
+				"bestiary nomen: invalid huggingface nomen #%d (value=%q): archived_url %q is not an archive.org snapshot\n"+
+					"  What: a harvested nomen records a snapshot URL that is not in the archive.org snapshot shape\n"+
+					"  Where: parse/data/huggingface_nomina.json nomina[%d].archived_url\n"+
+					"  When: loading the harvested seed, before any nomen is minted\n"+
+					"  Why: archived_url exists so a harvested citation survives its live page rotting; a value\n"+
+					"       that is not a snapshot cannot serve that purpose, and shipping it would present an\n"+
+					"       unusable citation as durable evidence. The field is OPTIONAL — omitting it is valid\n"+
+					"  What it means for the caller: the whole seed is REJECTED; no harvested nomen is minted\n"+
+					"  How to fix: omit archived_url, or set it to a %ssnapshot-timestamp/<original-url> URL\n"+
+					"       (cmd/bestiary-hf writes this field; a hand-edit is the likely source of a bad value)",
+				i, value, archivedURL, i, archiveSnapshotURLPrefix,
+			)
+		}
+
 		// The harvested layer resolves to WHATEVER catalog entity the repo joins to —
 		// not necessarily a curated BASE family (unlike nomen_claims.json). A community
 		// finetune's repo legitimately names an entity whose family is real in the
@@ -230,18 +267,20 @@ func parseHFNomina(raw []byte) (*hfNominaTable, error) {
 		// A harvested HF observation is ONE attestation (§3.2 defaults table): the
 		// Hub is the Primary authority for the huggingface scheme, the SourceURL is
 		// the live repo the bot observed, read through the huggingface ingest,
-		// Method=Harvested. IngestedAt is left "" (honest): the committed ingest
-		// instant lives on the datasources.json ingest row, not per-nomen.
+		// Method=Harvested. ArchivedURL carries the archive.org snapshot of that live
+		// page when one was recorded, "" otherwise. IngestedAt is left "" (honest): the
+		// committed ingest instant lives on the datasources.json ingest row, not per-nomen.
 		tbl.nomina = append(tbl.nomina, Nomen{
 			Value:      value,
 			Scheme:     NomenSchemeHuggingFace,
 			Status:     AcceptabilityAdmitted,
 			ResolvesTo: ref,
 			Attestations: []NomenAttestation{{
-				SourceURL: sourceURL,
-				Source:    DataSourceHuggingFace,
-				Authority: AuthorityPrimary,
-				Method:    IngestMethodHarvested,
+				SourceURL:   sourceURL,
+				ArchivedURL: archivedURL,
+				Source:      DataSourceHuggingFace,
+				Authority:   AuthorityPrimary,
+				Method:      IngestMethodHarvested,
 			}},
 		})
 		tbl.keys[ref.String()] = struct{}{}
@@ -264,7 +303,8 @@ func hfNominaClaims() []Nomen {
 
 // ValidateHFNomina is the LOUD codegen guard over the harvested HF seed: it
 // surfaces any load/parse error (empty value, non-org/repo value, source_url that
-// is not the live Hub URL for the value, empty family, duplicate), AND checks the
+// is not the live Hub URL for the value, a PRESENT archived_url that is not an
+// archive.org snapshot, empty family, duplicate), AND checks the
 // entity FK — every harvested nomen must resolve to a REAL registry entity (the
 // meaningful integrity guard for the harvested layer, the datasource.go FK-guard
 // precedent). Codegen (cmd/bestiary-gen run()) calls it alongside the other

@@ -216,3 +216,101 @@ func TestLoadHFNomina_EmbeddedSeedLoads(t *testing.T) {
 		}
 	}
 }
+
+// hfSeedBytesArchived builds a harvested-seed document carrying an archived_url.
+func hfSeedBytesArchived(value, family, sourceURL, archivedURL string) []byte {
+	return []byte(`{
+  "schema_version": 1,
+  "nomina": [
+    {"value": "` + value + `", "resolves_to": {"family": "` + family + `"}, "source_url": "` + sourceURL + `", "archived_url": "` + archivedURL + `"}
+  ]
+}`)
+}
+
+// The carrier chain's middle link: a seed archived_url reaches
+// NomenAttestation.ArchivedURL, and it sits BESIDE the live source_url rather than
+// replacing it. Without this the bot could write the field and nothing would read it.
+func TestParseHFNomina_ArchivedURL_CarriedOntoAttestation(t *testing.T) {
+	const repo = "meta-llama/Llama-3.3-70B-Instruct"
+	live := hfLiveURLPrefix + repo
+	snap := "https://web.archive.org/web/20260715030540/" + live
+	tbl, err := parseHFNomina(hfSeedBytesArchived(repo, "llama", live, snap))
+	if err != nil {
+		t.Fatalf("parseHFNomina: %v", err)
+	}
+	if len(tbl.nomina) != 1 || len(tbl.nomina[0].Attestations) != 1 {
+		t.Fatalf("got %+v, want 1 nomen with 1 attestation", tbl.nomina)
+	}
+	at := tbl.nomina[0].Attestations[0]
+	if at.ArchivedURL != snap {
+		t.Errorf("attestation ArchivedURL = %q, want %q (the seed's archived_url must reach the attestation)", at.ArchivedURL, snap)
+	}
+	if at.SourceURL != live {
+		t.Errorf("attestation SourceURL = %q, want the UNCHANGED live repo URL %q — ArchivedURL is additive, never a replacement", at.SourceURL, live)
+	}
+}
+
+// archived_url is OPTIONAL: the overwhelmingly common harvested row has no snapshot,
+// and its absence must load cleanly as an empty ArchivedURL, never an error.
+func TestParseHFNomina_ArchivedURL_AbsentIsValid(t *testing.T) {
+	const repo = "BAAI/bge-m3"
+	tbl, err := parseHFNomina(hfSeedBytes(repo, "bge", "", hfLiveURLPrefix+repo))
+	if err != nil {
+		t.Fatalf("parseHFNomina with no archived_url: %v", err)
+	}
+	if got := tbl.nomina[0].Attestations[0].ArchivedURL; got != "" {
+		t.Errorf("ArchivedURL = %q, want \"\" when archived_url is absent", got)
+	}
+}
+
+// A PRESENT archived_url that is not an archive.org snapshot is LOUD: the field
+// exists to be durable evidence, so shipping a malformed one would present an
+// unusable citation as a durable one. The check must be the SHARED shape validator,
+// which is what keeps the harvested and curated layers from drifting apart.
+func TestParseHFNomina_ArchivedURL_MalformedIsLoud(t *testing.T) {
+	const repo = "meta-llama/Llama-3.3-70B-Instruct"
+	live := hfLiveURLPrefix + repo
+	for name, bad := range map[string]string{
+		"live page, not a snapshot": live,
+		"no capture timestamp":      "https://web.archive.org/web/" + live,
+		"short timestamp":           "https://web.archive.org/web/2026/" + live,
+		"http scheme on the prefix": "http://web.archive.org/web/20260715030540/" + live,
+		"wrong host":                "https://archive.ph/20260715030540/" + live,
+	} {
+		t.Run(name, func(t *testing.T) {
+			if IsArchiveSnapshotURL(bad) {
+				t.Fatalf("test premise broken: %q is accepted by the shared shape validator", bad)
+			}
+			_, err := parseHFNomina(hfSeedBytesArchived(repo, "llama", live, bad))
+			if err == nil {
+				t.Fatalf("want rejection for archived_url %q", bad)
+			}
+			if !strings.Contains(err.Error(), "archived_url") {
+				t.Errorf("rejection message does not name the offending field: %v", err)
+			}
+		})
+	}
+}
+
+// The shared-validator contract itself: the curated fence and the harvested
+// archived_url check accept EXACTLY the same shape, because they are the same
+// function. A copy of the regex in either place would let the two drift.
+func TestIsArchiveSnapshotURL_SharedShape(t *testing.T) {
+	const orig = "https://huggingface.co/meta-llama/Llama-3.3-70B-Instruct"
+	if !IsArchiveSnapshotURL("https://web.archive.org/web/20260715030540/" + orig) {
+		t.Error("a well-formed archive.org snapshot was rejected")
+	}
+	if !IsArchiveSnapshotURL("https://web.archive.org/web/20260715030540/http://docs.x.ai/models") {
+		t.Error("a snapshot of an http:// original was rejected")
+	}
+	if IsArchiveSnapshotURL("") {
+		t.Error("the empty string must not be an archive snapshot")
+	}
+	if IsArchiveSnapshotURL(orig) {
+		t.Error("a live URL must not be an archive snapshot")
+	}
+	// It is the same function the curated fence applies.
+	if IsArchiveSnapshotURL(orig) != archiveSnapshotURL.MatchString(orig) {
+		t.Error("IsArchiveSnapshotURL disagrees with the curated fence's regexp; they must be one implementation")
+	}
+}

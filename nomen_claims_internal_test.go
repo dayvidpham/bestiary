@@ -129,3 +129,66 @@ func TestParseEntityKey_RoundTrip(t *testing.T) {
 		}
 	}
 }
+
+// TestParseNomenClaims_NeverSetsArchivedURL is the curated-layer fence for the
+// harvested-only ArchivedURL field: a curated claim's attestation must leave it
+// EMPTY. The curated fence already requires source_url to BE the snapshot, so a
+// second copy of it on ArchivedURL would be a redundant, silently-divergible
+// duplicate of the same fact — and the field's whole meaning is "the snapshot of a
+// live page", which a curated claim by construction does not have.
+//
+// It is structurally impossible today (nomenClaimJSON declares no such field, so an
+// archived_url key in the file is ignored by encoding/json), and this test pins that:
+// adding the field to the curated wire type would break it, which is the point.
+func TestParseNomenClaims_NeverSetsArchivedURL(t *testing.T) {
+	const snap = "https://web.archive.org/web/20260204041847/https://docs.x.ai/docs/models"
+	// The fixture deliberately TRIES to set archived_url on a curated claim.
+	raw := []byte(`{
+      "schema_version": 1,
+      "claims": [
+        {"value": "grok-beta", "resolves_to": {"family": "grok", "version": "4.20"},
+         "source_url": "` + snap + `",
+         "archived_url": "` + snap + `"}
+      ]
+    }`)
+	tbl, err := parseNomenClaims(raw)
+	if err != nil {
+		t.Fatalf("parseNomenClaims: %v", err)
+	}
+	if len(tbl.claims) != 1 || len(tbl.claims[0].Attestations) != 1 {
+		t.Fatalf("got %+v, want 1 claim with 1 attestation", tbl.claims)
+	}
+	at := tbl.claims[0].Attestations[0]
+	if at.ArchivedURL != "" {
+		t.Errorf("curated claim attestation ArchivedURL = %q, want \"\" — the field is the HARVESTED layer's; "+
+			"a curated claim's SourceURL already IS the snapshot", at.ArchivedURL)
+	}
+	if at.SourceURL != snap {
+		t.Errorf("curated claim SourceURL = %q, want the snapshot %q (the curated fence is unchanged)", at.SourceURL, snap)
+	}
+}
+
+// The curated fence itself is untouched by the harvested addition: a curated claim
+// citing a LIVE page is still rejected, and the rejection still explains itself.
+// This re-pins it here because the rationale text around it was rescoped this epoch.
+func TestParseNomenClaims_CuratedFenceStillRejectsLiveURL(t *testing.T) {
+	raw := []byte(`{
+      "schema_version": 1,
+      "claims": [
+        {"value": "grok-beta", "resolves_to": {"family": "grok", "version": "4.20"},
+         "source_url": "https://docs.x.ai/docs/models"}
+      ]
+    }`)
+	_, err := parseNomenClaims(raw)
+	if err == nil {
+		t.Fatal("want rejection: a curated claim must cite an archive.org snapshot, not a live page")
+	}
+	if !strings.Contains(err.Error(), "not an archive.org snapshot") {
+		t.Errorf("rejection message changed shape: %v", err)
+	}
+	// The rescoped rationale must still say WHY, and must now scope the claim to the
+	// curated layer rather than asserting it of the type as a whole.
+	if !strings.Contains(err.Error(), "CURATED layer needs no second archive_url") {
+		t.Errorf("the rejection rationale no longer scopes the no-second-field claim to the curated layer: %v", err)
+	}
+}

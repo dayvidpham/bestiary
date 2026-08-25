@@ -116,6 +116,16 @@ claimant — xAI's docs, a HuggingFace repo page), `Source` is *where we read
 it* (the ingest). Curated claims cite archive.org snapshots so the evidence
 cannot rot.
 
+A harvested naming cannot do that: it cites a **live observation** the bot
+made, and a live page is exactly what rots. So the snapshot rides *beside* the
+citation instead of replacing it — `ArchivedURL` records an archive.org
+snapshot **of** `SourceURL`, looked up best-effort when the naming is
+harvested. It is a third thing, not a third provenance level: `SourceURL` and
+`Source` say who claimed and where we read it, while `ArchivedURL` only makes
+the first of those two checkable later. It is empty whenever no snapshot was
+recorded — an honest "none", never an error — and always empty on a curated
+claim, whose `SourceURL` already *is* the snapshot.
+
 The load-bearing consequence: **repairs to identity never erase the record**.
 When two entities merge, or a spelling is re-keyed, the old spellings survive
 as Admitted nomina pointing at the surviving entity — the count of provider-ID

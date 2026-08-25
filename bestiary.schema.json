@@ -3,7 +3,7 @@
   "$id": "https://github.com/dayvidpham/bestiary/bestiary.schema.json",
   "title": "ModelInfo",
   "description": "Metadata for a single AI model as produced by the bestiary CLI JSON formatter.",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "type": "object",
   "properties": {
     "ID": {
@@ -332,11 +332,15 @@
     },
     "NomenAttestation": {
       "title": "NomenAttestation",
-      "description": "One independent piece of evidence for a Nomen (the Wikidata per-claim-reference model): each attestation stands on its own, and two sources asserting the same name append two attestations rather than overwriting. A Nomen HAS-MANY attestations (>=1). The two provenance levels SourceURL (WHO asserts) and Source (WHICH ingest we read it from) must never be conflated (the BenchmarkResult discipline). Added in schema 0.6.0.",
+      "description": "One independent piece of evidence for a Nomen (the Wikidata per-claim-reference model): each attestation stands on its own, and two sources asserting the same name append two attestations rather than overwriting. A Nomen HAS-MANY attestations (>=1). The two provenance levels SourceURL (WHO asserts) and Source (WHICH ingest we read it from) must never be conflated (the BenchmarkResult discipline). ArchivedURL is a third, distinct thing: not a provenance level but a durability aid for SourceURL. Added in schema 0.6.0; ArchivedURL added in 0.7.0.",
       "type": "object",
       "properties": {
         "SourceURL": {
           "description": "WHO asserts this naming (the claimant URL); empty for a self-minted attestation.",
+          "type": "string"
+        },
+        "ArchivedURL": {
+          "description": "An archive.org snapshot OF SourceURL (https://web.archive.org/web/<14-digit-timestamp>/<original-url>); a best-effort durability aid for the HARVESTED layer, whose SourceURL is a live page. Empty when no snapshot is recorded, and empty on a curated claim (whose SourceURL already IS the snapshot). Additive: SourceURL stays primary and unchanged. Added in schema 0.7.0.",
           "type": "string"
         },
         "Source": {
@@ -356,7 +360,7 @@
           "type": "string"
         }
       },
-      "required": ["SourceURL", "Source", "Authority", "Method", "IngestedAt"]
+      "required": ["SourceURL", "ArchivedURL", "Source", "Authority", "Method", "IngestedAt"]
     },
     "ModelRef": {
       "title": "ModelRef",
