@@ -83,7 +83,10 @@ func TestEntityConstants_Unique(t *testing.T) {
 	// command/a key (+1, "translate" now a peeled identity modifier) and the two phantom
 	// deepseek dash-glued entities deepseek@1 / deepseek@2 merge onto deepseek/v3.1 and
 	// deepseek/v3.2-exp (−2). Net −1.
-	const wantEntityCount = 957
+	// 957 -> 956: the unprefixed qwen3-coder-next-fp8-1m spelling joins its provider-prefixed
+	// twin under the 1M-context suppress-pin, so its instance stops keying off onto
+	// qwen/coder@3#1m and rejoins qwen/coder@3. One key retired, none renamed (-1).
+	const wantEntityCount = 956
 	if len(keys) != wantEntityCount {
 		t.Errorf("EntityKeys() returned %d constants; expected exactly %d — "+
 			"re-run go generate ./... and update this census literal if the entity count changed intentionally",

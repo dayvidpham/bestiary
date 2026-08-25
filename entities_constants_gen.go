@@ -710,7 +710,6 @@ const (
 	Entity__Qwen__Coder__Version_2_5__Size_7b__Fast                       = "qwen/coder@2.5#7b{fast}"
 	Entity__Qwen__Coder__Version_2_5__Size_7b__Instruct                   = "qwen/coder@2.5#7b{instruct}"
 	Entity__Qwen__Coder__Version_3                                        = "qwen/coder@3"
-	Entity__Qwen__Coder__Version_3__Size_1m                               = "qwen/coder@3#1m"
 	Entity__Qwen__Coder__Version_3__Size_30b                              = "qwen/coder@3#30b"
 	Entity__Qwen__Coder__Version_3__Size_30b_a3b                          = "qwen/coder@3#30b-a3b"
 	Entity__Qwen__Coder__Version_3__Size_30b_a3b__Instruct                = "qwen/coder@3#30b-a3b{instruct}"
@@ -1672,7 +1671,6 @@ var allEntityConstants = [...]string{
 	Entity__Qwen__Coder__Version_2_5__Size_7b__Fast,
 	Entity__Qwen__Coder__Version_2_5__Size_7b__Instruct,
 	Entity__Qwen__Coder__Version_3,
-	Entity__Qwen__Coder__Version_3__Size_1m,
 	Entity__Qwen__Coder__Version_3__Size_30b,
 	Entity__Qwen__Coder__Version_3__Size_30b_a3b,
 	Entity__Qwen__Coder__Version_3__Size_30b_a3b__Instruct,

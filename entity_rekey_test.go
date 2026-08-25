@@ -269,10 +269,12 @@ func TestEntityRekey_CensusAccounted(t *testing.T) {
 	// now a peeled identity modifier so Command A Translate stops collapsing onto base command/a)
 	// and the deepseek dash-glued dot-lost pins merge phantom deepseek@1 / deepseek@2 onto the
 	// dotted deepseek/v3.1 and deepseek/v3.2-exp entities (−2). Net −1.
-	const wantEntities = 957
+	// 957 -> 956: the unprefixed qwen3-coder-next-fp8-1m spelling joins its provider-prefixed
+	// twin under the 1M-context suppress-pin, retiring qwen/coder@3#1m onto qwen/coder@3 (-1).
+	const wantEntities = 956
 	if got := len(bestiary.Entities()); got != wantEntities {
-		t.Errorf("registry census = %d entities, want %d — command/a{translate} split (+1) and "+
-			"the deepseek dot-lost merges (−2) net −1 from the snapshot baseline", got, wantEntities)
+		t.Errorf("registry census = %d entities, want %d — command/a{translate} split (+1), the "+
+			"deepseek dot-lost merges (−2) and the qwen3-coder-next 1M-context suppress-pin (−1)", got, wantEntities)
 	}
 }
 

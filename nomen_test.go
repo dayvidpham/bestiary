@@ -84,7 +84,7 @@ func nominaCensus(ns []bestiary.Nomen) map[bestiary.NomenScheme]int {
 // bare-version ID spellings survive as Admitted provider-ID nomina on the merged entities.
 func TestNomina_CensusExact(t *testing.T) {
 	const (
-		wantCanonical   = 957  // 947 -> 958: 2026-07-23 snapshot refresh (upstream additions); 958 -> 957: v0.2.8 curation slice — command/a{translate} split (+1) minus deepseek@1/@2 dot-lost merges (−2), one canonical nomen per entity
+		wantCanonical   = 956  // 947 -> 958: 2026-07-23 snapshot refresh (upstream additions); 958 -> 957: v0.2.8 curation slice — command/a{translate} split (+1) minus deepseek@1/@2 dot-lost merges (−2); 957 -> 956: the unprefixed qwen3-coder-next-fp8-1m spelling joins the 1M-context suppress-pin, retiring qwen/coder@3#1m onto qwen/coder@3 (−1). One canonical nomen per entity
 		wantProviderID  = 2834 // 2791 -> 2834: 2026-07-23 refresh, +43 new upstream instance spellings; UNCHANGED by the v0.2.8 slice — the re-keyed instances keep their provider-ID spellings as Admitted nomina on the merged/split entities (the C4-fold precedent)
 		wantAlias       = 1
 		wantHuggingFace = 179 // 4 -> 179: v0.2.8 HF-bot slice. The cmd/bestiary-hf live run harvested 179 open-weight Hub repos that JOIN a catalog entity. Of those, 4 are the pre-existing curated Hub claims (nomen_claims.json), aliased to their EXACT curated (Value, huggingface-scheme, ResolvesTo) triples, so each harvested attestation COALESCES onto its curated claim — one nomen carrying TWO attestations (curated + huggingface), adding 0 to the nomen count (validation case 3). The other 175 harvested repos are distinct triples: +175. 4 + 175 = 179.
@@ -97,7 +97,7 @@ func TestNomina_CensusExact(t *testing.T) {
 	// fires where a harvested repo shares a curated claim's triple: the 4 curated Hub
 	// claims each coalesce with their aliased harvested twin into ONE nomen carrying TWO
 	// attestations (curated + huggingface), so those 4 add 0 — the count grows only by
-	// the 175 distinct-triple harvested repos. Total 957 + 2834 + 1 + 179 = 3971.
+	// the 175 distinct-triple harvested repos. Total 956 + 2834 + 1 + 179 = 3970.
 	all := bestiary.MintNomina(bestiary.Entities())
 	if len(all) != wantTotal {
 		t.Errorf("MintNomina total = %d, want %d", len(all), wantTotal)
