@@ -79,6 +79,35 @@ them: `Series{Family, Generation}` is the versioned line (`llama-4`,
 "the llama-4 series → scout/maverick releases". Because the relations are
 computed, the hierarchy can be reshaped without re-keying anything.
 
+### Entity metadata · lab-reported claims
+
+**Provider-agnostic facts about the model itself** — description, license,
+typed links, benchmark scores — as opposed to `ProviderInstance`, which
+records how one provider *serves* it. Metadata is keyed by the lab-scoped
+`MetadataID` (`zhipuai/glm-4.6`), a stable identifier immune to entity
+re-keying.
+
+A benchmark score in this layer is a **lab-reported claim**, not an
+independent measurement: it is what a lab published in its own blog post or
+model card. Two provenance levels are therefore kept distinct and must not be
+conflated — `SourceURL` records *who asserted the claim* (the claimant), while
+the `Source` (`DataSourceID`) records *which ingest we read it from*. For the
+same reason a claim's parts (criterion, harness, metric and value,
+attribution) are separate fields and never concatenated: a claim is only
+interpretable alongside the conditions it was produced under.
+
+One entity can be named by **several** lab identifiers — a dated alias and its
+floating alias (`anthropic/claude-opus-4-5` and `anthropic/claude-opus-4-5-20251101`),
+or a serving tier that is not a distinct artifact (`openai/gpt-5.5-instant`).
+All such rows attach to the one entity (`Entity.MetadataAll`, sorted by
+`MetadataID`), and each row keeps **its own** claims. Claims from different
+identifiers are never fused into a single table: that would present an
+assessment record no lab actually published. `Entity.Metadata` is a derived
+convenience pointer at the **primary** row — the shortest `MetadataID`, ties
+lexicographic ascending, since a lab's canonical identifier is its shortest
+one. The primary is a *naming* choice, deliberately independent of how much
+payload a row carries, so it stays stable across re-ingest.
+
 ## The naming layer
 
 ### Appellation

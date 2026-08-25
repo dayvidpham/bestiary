@@ -14,6 +14,52 @@ for its **Go module tags** (`vX.Y.Z`).
 
 ## [Unreleased]
 
+### Added
+
+- **`Entity.MetadataAll` — every metadata row an entity is named by.** Distinct
+  models.dev identifiers routinely decompose to one entity key (a dated alias and its
+  floating alias; a serving tier that is not a distinct artifact), and `Entity.Metadata`
+  was a single pointer, so the join kept only the row it visited last. Measured over the
+  baked corpus at this change's baseline (unit: metadata rows / benchmark claims / links;
+  axis: the whole registry; configuration: the committed
+  `parse/data/modelsdev/catalog.json` snapshot, offline, no store overlay): **39 of 263
+  rows were unreachable, taking 103 benchmark claims and 15 links with them** — 224
+  distinct entities carried metadata. All 263 rows (508 claims, 105 links) are now
+  reachable. The witness is `gpt@5.5`, named by both `openai/gpt-5.5` and
+  `openai/gpt-5.5-instant`: the **31 claims** reported under `openai/gpt-5.5` previously
+  rendered nowhere, because the instant row won the single pointer.
+  `MetadataAll` is sorted ascending by `MetadataID`; `Entity.Metadata` becomes a derived
+  projection of it — the shortest `MetadataID`, ties lexicographic ascending. That is a
+  naming rule, not a payload rule: a lab's canonical identifier is its shortest one, so
+  the primary is stable across re-ingest and independent of how many claims a row carries
+  or the order rows arrive in.
+- **Per-identifier claim attribution** in `show --by-entity` and on the web entity page:
+  every joined row is listed (the primary marked) and each benchmark table is headed by
+  the `MetadataID` the claims were reported under. Claims from different identifiers are
+  never merged into one table — a score is a **lab-reported claim** attributable to the
+  identifier the lab published it under, and fusing two rows would present an assessment
+  record no lab actually published. `docs/CONCEPTS.md` gains this framing.
+
+### Changed
+
+- `JoinEntityMetadata` is now **idempotent** as well as pure: `MetadataAll` is
+  cleared-then-accumulated per entity touched in the call, so re-joining an
+  already-joined set replaces the record instead of doubling it, while an entity no row
+  lands on keeps the record it arrived with. Entity clones copy `MetadataAll`
+  **element-wise**, so a returned row's benchmark table never aliases registry-owned
+  storage. Two metadata rows sharing one absent-family key now accumulate onto a single
+  synthesized standalone rather than producing a duplicate entity.
+- The sync overlay's baked base layer is rebuilt from every metadata row rather than one
+  row per entity. `MergeEntityMetadata` unions the base against synced rows per
+  `MetadataID`, so a row missing from the base could not survive as a baked-only row
+  after a sync. The `entities` table's `BENCHMARKS` column likewise sums claims across
+  every joined row.
+- **Schema:** `bestiary.schema.json` `$defs.Entity` gains `MetadataAll` (an array of
+  `EntityMetadata`, additive and **not** required). No SQLite store migration: the
+  `entity_metadata` table is already keyed by the stable `metadata_id`, one row per lab
+  identifier, so the multi-row record is a join-layer property the existing schema
+  already carries — proven by a full-corpus store round-trip test.
+
 ## [0.2.9] - 2026-07-28
 
 **Schema:** unchanged at `0.6.0`.
