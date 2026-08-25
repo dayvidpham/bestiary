@@ -556,7 +556,7 @@ func safeCreatorProviderTable(t *creatorProviderTable, err error) *creatorProvid
 // the testable seam behind loadCreatorProviderTable and rejects, each with an
 // actionable error: a row whose creator is not a well-known Creator, a duplicate
 // creator row, an empty provider list, a provider that is not a recognized Provider
-// (Provider.IsKnown — the LOUD codegen guard AC-3 asks for), and a provider repeated
+// (Provider.IsKnown — the LOUD codegen guard), and a provider repeated
 // within one row. On success it returns a table whose provider slices are sorted.
 func parseCreatorProviderTable(raw []byte) (*creatorProviderTable, error) {
 	var file creatorProviderFileJSON

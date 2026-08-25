@@ -57,9 +57,9 @@ func sizedEntity(ref bestiary.EntityRef, contextWindow int) bestiary.Entity {
 	}
 }
 
-// ---- AC-5: the calculator agrees with the shipped formula --------------------
+// ---- The calculator agrees with the shipped formula -------------------------
 
-// TestFitOver_ContextBoundary_Corpus is the AC-5 boundary assertion, driven through
+// TestFitOver_ContextBoundary_Corpus is the context-boundary assertion, driven through
 // FitOver over an INJECTED corpus.
 //
 // For every row with a computable KV term it asserts the defining property of "max
@@ -129,7 +129,7 @@ func TestFitOver_ContextBoundary_Corpus(t *testing.T) {
 				return
 			}
 
-			// The AC-5 property, both sides computed by the SHIPPED formula.
+			// The defining property, both sides computed by the SHIPPED formula.
 			q := e.Instances[0].QuantVRAM[0]
 			avail := budget.Available()
 			m := row.MaxContext
@@ -149,9 +149,9 @@ func TestFitOver_ContextBoundary_Corpus(t *testing.T) {
 	}
 }
 
-// ---- AC-33: the derived-weights class and its exclusions ---------------------
+// ---- The derived-weights class and its exclusions ---------------------------
 
-// TestDerivedWeightsBytes_Corpus is the zero-bits-per-weight half of the AC-33 exclusion
+// TestDerivedWeightsBytes_Corpus is the zero-bits-per-weight half of the exclusion
 // table: all six members whose BitsPerWeight is 0 refuse a figure rather than returning
 // a zero-byte one, and the derivable members return the hand-computed estimate.
 func TestDerivedWeightsBytes_Corpus(t *testing.T) {
@@ -166,8 +166,8 @@ func TestDerivedWeightsBytes_Corpus(t *testing.T) {
 		t.Fatalf("derived-weights corpus is under-populated: %v", err)
 	}
 	// Value-based coverage: every zero-bits-per-weight member must still be refused by
-	// name. This is the list AC-33 enumerates, and it is the list a reader would be
-	// misled by if any member silently started producing rows.
+	// name. This is the list the exclusion table enumerates, and it is the list a reader
+	// would be misled by if any member silently started producing rows.
 	wantRefused := []string{"none", "awq", "gptq", "int8", "int4", "other"}
 	refused := map[string]bool{}
 	for _, c := range corpus.Cases {
@@ -197,7 +197,7 @@ func TestDerivedWeightsBytes_Corpus(t *testing.T) {
 	}
 }
 
-// TestFitOver_NullShapes_ProduceNoDerivedRow is the parameter-shape half of the AC-33
+// TestFitOver_NullShapes_ProduceNoDerivedRow is the parameter-shape half of the
 // exclusion table: each shipped entity key whose size token carries no attested total
 // produces NO row and is counted excluded, never derived.
 func TestFitOver_NullShapes_ProduceNoDerivedRow(t *testing.T) {
@@ -334,7 +334,7 @@ func TestFitOver_MeasuredEntity_NeverAlsoDerives(t *testing.T) {
 	}
 }
 
-// ---- AC-4: budget, headroom, and the two non-fit readings --------------------
+// ---- Budget, headroom, and the two non-fit readings -------------------------
 
 // TestFitBudget_Available pins the headroom arithmetic, including the floor that keeps a
 // headroom larger than the budget from inverting every comparison.
@@ -375,7 +375,7 @@ func TestFitOver_WeightsOverBudget_AreNotListed(t *testing.T) {
 	}
 }
 
-// TestFitOver_MinContext_ExcludesUnknownAndExhausted is the AC-4 filter clause: a
+// TestFitOver_MinContext_ExcludesUnknownAndExhausted pins the context floor: a
 // reader who asked for at least N tokens is not served by a row that cannot promise one,
 // whether because the KV term is not computable or because the budget is spent. Both are
 // excluded by the SAME filter, and neither is presented as an unqualified fit.
@@ -433,7 +433,7 @@ func TestFitOver_MinContext_ExcludesUnknownAndExhausted(t *testing.T) {
 	}
 }
 
-// TestFitOver_ContextNeverChangesAWeightsFigure is the AC-4 must-not: the weights figure
+// TestFitOver_ContextNeverChangesAWeightsFigure pins the no-writeback rule: the weights figure
 // a row is ranked on is the same number at every context floor, and no baked field is
 // touched by ranking.
 func TestFitOver_ContextNeverChangesAWeightsFigure(t *testing.T) {
@@ -540,7 +540,7 @@ func TestContextBound_Strings(t *testing.T) {
 
 // ---- The coverage identity ----------------------------------------------------
 
-// TestFitOver_CoverageIdentity asserts the AC-33 identity over an injected corpus whose
+// TestFitOver_CoverageIdentity asserts the coverage identity over an injected corpus whose
 // composition the test owns: each denominator equals the count of entities satisfying
 // its own predicate, and the four classes partition the corpus with the unsized and
 // unserved remainder accounted for. No count in this test is a literal read off the

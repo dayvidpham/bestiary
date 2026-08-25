@@ -376,6 +376,36 @@ Instances (1):
       q8_0            3419799040      3419799040      3419799040     131072     true
 ```
 
+### Sizing a budget instead of a model (`/calculator`)
+
+The tables above answer "I have this model, what does it cost?". The web UI's
+`/calculator` page (served by `cmd/bestiary-web`, alongside `/entities` and `/families`)
+reverses the direction: state a **VRAM budget** and an adjustable **headroom**, and it lists
+only the entities whose weights clear `budget − headroom`, largest first, each with the
+greatest context it can afford and which limit produced that figure — the budget, or the
+model's own window. The headroom is view state the reader owns, not a constant folded back
+into the data: nothing on that path writes to `QuantVRAM`, `WeightsBytes` or `VRAMBytes`,
+and `VRAMFormulaVersion` stays **2**. The arithmetic itself lives in the root package
+(`fit.go`: `FitOver`/`Fit`, `FitBudget`, `FitFilter`, `FitRow`, `FitResult`), so it is
+usable without an HTTP server.
+
+Rows carry a **weights basis** (`WeightsBasis` in `fit.go`), which records where the weights
+number came from:
+
+- **measured** — the ingested GGUF file size described above, the default reading.
+- **`derived · weights-only`** — an *estimate*, for an entity with an attested total
+  parameter count but no ingested quantization row anywhere: weights are computed as
+  parameter count × bits-per-weight. The badge names **both** qualifications at once — the
+  figure is an estimate, *and* its KV-cache term is missing, because no such entity in the
+  catalog publishes layers / KV-heads / head-dim. Every derived figure is therefore a lower
+  bound, on the same honest-underestimate principle as a `PARTIAL` row.
+
+Entities whose parameter shape carries no attested total (the `NxM` mixture-of-experts and
+`Nb-Ke` active-count tokens) produce **no** derived row and are counted as excluded rather
+than guessed at, and the quantizations with no defined bits-per-weight produce no row rather
+than a zero-byte one that would appear to fit any budget. The page states those counts
+itself, computed at request time.
+
 ### Filtering by quantization
 
 `--quant` keeps only the instances that carry a matching quantization row (it applies to

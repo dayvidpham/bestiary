@@ -176,18 +176,6 @@ for its **Go module tags** (`vX.Y.Z`).
 
 ### Fixed
 
-- **The 1M-context marker is suppressed on both spellings of `qwen3-coder-next-fp8-1m`.**
-  `param_size_overrides.json` pinned the provider-prefixed `qwen/qwen3-coder-next-fp8-1m`
-  to an empty size because its trailing `1m` is a **context** tier marker, not a parameter
-  count. Pins are keyed on the exact model ID, so that entry never reached the unprefixed
-  spelling served by InferX, which kept extracting `1m` as a size and keyed the artifact
-  off onto its own entity carrying a **1,000,000-parameter** total — five orders of
-  magnitude below the real size, and exactly the input a derived weights figure would be
-  computed from. Both spellings are now pinned, so the suppression covers the artifact
-  rather than one of its names. Measured effect on regeneration: **one entity key
-  retired, none renamed and none added** (`qwen/coder@3#1m`), whose sole instance rejoins
-  the pre-existing `qwen/coder@3`.
-
 - `synthesizeStandaloneEntity` never projected `Entity.Creator`, so a metadata-only
   standalone reported an empty creator even when its family was mapped. The invariant
   "`Entity.Creator == Ref.Family.Creator()` for every entity" held only by accident —

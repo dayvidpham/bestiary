@@ -120,7 +120,7 @@ func TestCalculator_SSE(t *testing.T) {
 	}
 }
 
-// TestCalculator_BudgetFilters is the AC-4 core: only rows whose weights clear
+// TestCalculator_BudgetFilters pins the budget filter: only rows whose weights clear
 // budget minus headroom are listed, and the headroom is load-bearing rather than
 // decorative.
 func TestCalculator_BudgetFilters(t *testing.T) {
@@ -208,7 +208,7 @@ func TestCalculator_ContextCells_NeverUnbounded(t *testing.T) {
 	}
 }
 
-// TestCalculator_MinContext_ExcludesUnknownAndExhausted pins the AC-4 filter clause at the
+// TestCalculator_MinContext_ExcludesUnknownAndExhausted pins the context floor at the
 // page level: a positive context floor drops BOTH the not-computable and the exhausted
 // rows, because neither can promise the reader a token.
 func TestCalculator_MinContext_ExcludesUnknownAndExhausted(t *testing.T) {
@@ -242,7 +242,7 @@ func TestCalculator_MinContext_ExcludesUnknownAndExhausted(t *testing.T) {
 	}
 }
 
-// TestCalculator_DerivedBadge_NamesBothQualifications pins the AC-33 badge: a derived row
+// TestCalculator_DerivedBadge_NamesBothQualifications pins the derived badge: a derived row
 // says BOTH that its weights are derived and that the figure is weights-only, because a
 // reader told only one of the two has been told half the truth.
 func TestCalculator_DerivedBadge_NamesBothQualifications(t *testing.T) {
@@ -288,7 +288,7 @@ func TestCalculator_DerivedBadge_NamesBothQualifications(t *testing.T) {
 	}
 }
 
-// TestCalculator_CoverageStatement_IsComputed is the AC-33 identity at the page: every
+// TestCalculator_CoverageStatement_IsComputed pins the coverage identity at the page: every
 // number in the rendered sentence equals the corresponding FitResult field, and none is a
 // literal in the template. The test recomputes the fields from the SAME injected corpus,
 // so it stays true at any corpus size.
@@ -366,7 +366,7 @@ func TestCalculator_MalformedSignals_DegradeToDefaults(t *testing.T) {
 	}
 }
 
-// TestCalculator_NeverWritesBaked is the AC-4 must-not, at the page: rendering the
+// TestCalculator_NeverWritesBaked pins the no-writeback rule at the page: rendering the
 // calculator at any budget leaves every QuantVRAM row byte-identical and does not touch
 // the shipped formula version.
 func TestCalculator_NeverWritesBaked(t *testing.T) {

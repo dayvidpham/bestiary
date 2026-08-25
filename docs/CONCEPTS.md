@@ -279,6 +279,19 @@ claims and references" subsection of `Wikidata/Data model update` on
 Meta-Wiki (the reference-independence quote) — both current as of this
 writing.
 
+### Measured vs. derived figures
+
+The same "whose voice, and how did it get here" question applies to quantitative
+facts, not just to namings. A weights figure is either **measured** — the ingested
+artifact size a registry published — or **derived**: computed by bestiary from an
+attested parameter count and a quantization's bits-per-weight, for an entity no
+registry has measured. `WeightsBasis` (`fit.go`) types the distinction so it cannot
+be lost in transit, and every surface that shows a derived figure says so: the web
+UI's `/calculator` badges such a row `derived · weights-only`, naming both that the
+weights are an estimate and that its KV-cache term is absent. A derived figure is a
+**lower bound**, the same posture as a `PARTIAL` VRAM row — an entity whose parameter
+shape publishes no attested total gets no derived row at all rather than a guess.
+
 ## External identifiers
 
 | Identifier | Role | Scope |
