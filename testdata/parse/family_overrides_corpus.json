@@ -501,15 +501,15 @@
       "input": "mimo-flash-free",
       "expected": {
         "family": "mimo",
-        "variant": "flash-free"
+        "variant": ""
       },
       "classification": "must-pass",
       "provenance": {
         "source": "enum",
-        "ref": "family_overrides.json: mimo-flash-free decomposes to family 'mimo', variant 'flash-free'"
+        "ref": "family_overrides.json: mimo-flash-free reduces to family 'mimo' with an EMPTY variant"
       },
       "mutation": {
-        "description": "curated compound-family override for mimo-flash-free"
+        "description": "curated compound-family reduction (empty variant) for mimo-flash-free"
       }
     },
     {
@@ -517,15 +517,15 @@
       "input": "mimo-omni-free",
       "expected": {
         "family": "mimo",
-        "variant": "omni-free"
+        "variant": ""
       },
       "classification": "must-pass",
       "provenance": {
         "source": "enum",
-        "ref": "family_overrides.json: mimo-omni-free decomposes to family 'mimo', variant 'omni-free'"
+        "ref": "family_overrides.json: mimo-omni-free reduces to family 'mimo' with an EMPTY variant"
       },
       "mutation": {
-        "description": "curated compound-family override for mimo-omni-free"
+        "description": "curated compound-family reduction (empty variant) for mimo-omni-free"
       }
     },
     {
@@ -533,15 +533,15 @@
       "input": "mimo-pro-free",
       "expected": {
         "family": "mimo",
-        "variant": "pro-free"
+        "variant": ""
       },
       "classification": "must-pass",
       "provenance": {
         "source": "enum",
-        "ref": "family_overrides.json: mimo-pro-free decomposes to family 'mimo', variant 'pro-free'"
+        "ref": "family_overrides.json: mimo-pro-free reduces to family 'mimo' with an EMPTY variant"
       },
       "mutation": {
-        "description": "curated compound-family override for mimo-pro-free"
+        "description": "curated compound-family reduction (empty variant) for mimo-pro-free"
       }
     },
     {
@@ -549,15 +549,15 @@
       "input": "mimo-v2-omni",
       "expected": {
         "family": "mimo",
-        "variant": "v2-omni"
+        "variant": ""
       },
       "classification": "must-pass",
       "provenance": {
         "source": "enum",
-        "ref": "family_overrides.json: mimo-v2-omni decomposes to family 'mimo', variant 'v2-omni'"
+        "ref": "family_overrides.json: mimo-v2-omni reduces to family 'mimo' with an EMPTY variant"
       },
       "mutation": {
-        "description": "curated compound-family override for mimo-v2-omni"
+        "description": "curated compound-family reduction (empty variant) for mimo-v2-omni"
       }
     },
     {
@@ -565,15 +565,15 @@
       "input": "mimo-v2-pro",
       "expected": {
         "family": "mimo",
-        "variant": "v2-pro"
+        "variant": ""
       },
       "classification": "must-pass",
       "provenance": {
         "source": "enum",
-        "ref": "family_overrides.json: mimo-v2-pro decomposes to family 'mimo', variant 'v2-pro'"
+        "ref": "family_overrides.json: mimo-v2-pro reduces to family 'mimo' with an EMPTY variant"
       },
       "mutation": {
-        "description": "curated compound-family override for mimo-v2-pro"
+        "description": "curated compound-family reduction (empty variant) for mimo-v2-pro"
       }
     },
     {
@@ -581,15 +581,15 @@
       "input": "mimo-v2.5",
       "expected": {
         "family": "mimo",
-        "variant": "v2.5"
+        "variant": ""
       },
       "classification": "must-pass",
       "provenance": {
         "source": "enum",
-        "ref": "family_overrides.json: mimo-v2.5 decomposes to family 'mimo', variant 'v2.5'"
+        "ref": "family_overrides.json: mimo-v2.5 reduces to family 'mimo' with an EMPTY variant"
       },
       "mutation": {
-        "description": "curated compound-family override for mimo-v2.5"
+        "description": "curated compound-family reduction (empty variant) for mimo-v2.5"
       }
     },
     {
@@ -597,15 +597,15 @@
       "input": "mimo-v2.5-pro",
       "expected": {
         "family": "mimo",
-        "variant": "v2.5-pro"
+        "variant": ""
       },
       "classification": "must-pass",
       "provenance": {
         "source": "enum",
-        "ref": "family_overrides.json: mimo-v2.5-pro decomposes to family 'mimo', variant 'v2.5-pro'"
+        "ref": "family_overrides.json: mimo-v2.5-pro reduces to family 'mimo' with an EMPTY variant"
       },
       "mutation": {
-        "description": "curated compound-family override for mimo-v2.5-pro"
+        "description": "curated compound-family reduction (empty variant) for mimo-v2.5-pro"
       }
     },
     {

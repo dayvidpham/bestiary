@@ -381,13 +381,16 @@ func TestSnapshotAnalysis_CrossProviderDivergences(t *testing.T) {
 	// it was the only remaining UNKNOWN-tier token still causing a series divergence
 	// after the initial tier wiring (mimo-v2-omni → (mimo,'v','2',mod=omni)): 155 → 154
 	// (CatC 108 → 107).
-	// RESIDUAL (honest, surfaced — NOT masked): the only SERIES (kimi/minimax/mimo)
-	// IDs still divergent are the MULTI-MODIFIER cases — a tier AND thinking/vision (or
-	// 2+ tiers) in the single-valued Modifier field: kimi-k2-thinking-turbo (×2 paths).
-	// The user ruled Option 1 (Modifier → LIST, lossless), but that is a PUBLIC SCHEMA
-	// change deferred to the later Modifier-LIST slice (grep "multi-modifier"
-	// / "Modifier-LIST"). For now these keep the series split + the capability modifier
-	// (thinking) and DROP the tier.
+	// The multi-modifier residual named here is CLOSED. The Modifier field is a list
+	// and the multiplicity ruling is live, so the two restrictions that used to drop a
+	// tier — "exactly one tier" and "no co-occurring capability modifier" — are both
+	// gone: every trailing curated tier is promoted. kimi-k2-thinking-turbo keeps both
+	// tokens, and 8 kimi records recover the highspeed tier that the code modifier had
+	// been suppressing. That recovery is keyspace-NEUTRAL (highspeed is attribute-class,
+	// so it renders in "[...]" and never enters the key) and changed no divergence count.
+	// The mimo series letter also left the variant slot in the same change (its family
+	// record declares series_letter_in_key false), so the mimo ids listed above now
+	// converge on (family, "", version, tiers) rather than (family, letter, version).
 	// (The other ~150 residual divergences are NON-series family/version mislabels —
 	// deepseek-v3.x, magnum, morph, mistral-7b-v0.x, the CatD ledger, qwen3-vl/param —
 	// out of this version-path scope.)

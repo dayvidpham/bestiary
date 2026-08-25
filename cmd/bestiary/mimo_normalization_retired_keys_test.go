@@ -1,0 +1,279 @@
+package main
+
+import (
+	_ "embed"
+	"os"
+	"slices"
+	"sort"
+	"testing"
+
+	"github.com/dayvidpham/bestiary"
+)
+
+//go:embed testdata/retired/mimo_normalization_retired_keys_corpus.json
+var mimoNormalizationRetiredKeysCorpusJSON []byte
+
+// mimoRetiredKeyCount is the size of the retired set this lever produces. It is the key
+// diff itself, so it moves only alongside a re-measured diff.
+const mimoRetiredKeyCount = 10
+
+// TestRetiredKeys_MimoNormalization_MeasuredSplit pins the retired-key policy for every
+// key the keyspace-wide mimo normalization retires, at the two seams a user reaches:
+// `bestiary show <key> --by-entity` (the exact-key entity lookup) and `bestiary show
+// <key>` (the looser model resolver with its entity fallback).
+//
+// The policy is a uniform hard 404 — no alias is minted, no redirect is added, no
+// successor is listed. The corpus pins the MEASURED split rather than that blanket rule,
+// because one key in this set does not 404 on the looser seam: bare `mimo`. That is not
+// an exception to the policy but a different question being asked. `mimo` retires as a
+// KEY (the three tts rows that occupied it move to `mimo@2{tts}`) while the FAMILY stays
+// live with nine children, so the looser seam is resolving a bare family token with live
+// children — exactly what `show gpt` and `show claude` do. Turning it into a 404 would
+// break those three live-family lookups, so the corpus records what it measurably does.
+//
+// This is a VERIFICATION pin: nothing was written to make it hold. Its value is that it
+// fails loudly if a later change quietly resurrects a retired mimo key through an alias
+// seed, a nomen claim, or a family-override row that re-mints the old tuple.
+func TestRetiredKeys_MimoNormalization_MeasuredSplit(t *testing.T) {
+	corpus := loadRetiredKeyCorpus(t, mimoNormalizationRetiredKeysCorpusJSON, mimoRetiredKeyCount)
+
+	// Value-based coverage: a count-preserving swap must not be able to drop the readings
+	// a regression reaches first — the keys that had to collapse onto one, the
+	// bare junk key with its ambiguous seam, and the two-tier speech key whose second tier
+	// only survives because the tier promotion returns a list.
+	for _, want := range []string{
+		"mimo/v@2.5{pro}", "mimo/pro",
+		"mimo", "mimo/v2.5-tts-voiceclone", "mimo/flash",
+	} {
+		if !corpusHasInput(corpus, want) {
+			t.Errorf("corpus lost coverage of retired key %q", want)
+		}
+	}
+
+	// The three spellings of the 2.5 Pro model must all be gone AND all point at the same
+	// successor: that is the whole requirement, and asserting it here means a corpus edit
+	// cannot quietly re-target one of them. Two of the three are retired by THIS lever;
+	// the third, `mimo/v2.5-pro`, was already retired by the earlier free-tier demotion,
+	// so its row lives in that lever's corpus — where this lever re-pointed it at the same
+	// target and the cross-check test holds it there.
+	const target = "mimo@2.5{pro}"
+	for _, old := range []string{"mimo/v@2.5{pro}", "mimo/pro"} {
+		for i := range corpus.Cases {
+			if corpus.Cases[i].Input != old {
+				continue
+			}
+			if got := corpus.Cases[i].Expected.Successors; !slices.Equal(got, []string{target}) {
+				t.Errorf("retired key %q records successors %v, want exactly [%s] — the three "+
+					"spellings of the 2.5 Pro model must collapse onto ONE key", old, got, target)
+			}
+		}
+	}
+
+	tmpDB := t.TempDir() + "/cache.db"
+	for _, c := range corpus.Cases {
+		key := c.Input
+		t.Run(c.Name, func(t *testing.T) {
+			// Seam 1 — the exact-key entity lookup behind `show --by-entity`. This one has
+			// no ambiguity path at all, so every retired key 404s here, bare `mimo` included.
+			if _, ok := bestiary.EntityByKey(key); ok {
+				t.Errorf("EntityByKey(%q) still resolves; the key was retired and must be a hard 404", key)
+			}
+			assertRunSeam(t, c.Expected.ByEntity, key,
+				[]string{"show", key, "--by-entity", "--db-path", tmpDB, "--output=table"})
+
+			// Seam 2 — the looser model resolver + entity fallback behind bare `show`.
+			assertRunSeam(t, c.Expected.Show, key,
+				[]string{"show", key, "--db-path", tmpDB, "--output=table"})
+		})
+	}
+}
+
+// TestRetiredKeys_MimoNormalization_SuccessorSetsMatchMeasuredRehoming re-derives every
+// recorded successor set from the instances the retired key actually held, and compares
+// it against the record. The pinned instances are the evidence, not an assumption: an
+// instance is the only thing that survives a key retirement, so "where did this key's
+// rows go" is a question only its instances can answer.
+//
+// It also asserts instance CONSERVATION for the whole lever. Nine of these ten keys are
+// pure renames and the tenth is a merge, so nothing may be created or destroyed: the
+// instances pinned across the ten retired keys and the instances living on the nine
+// surviving mimo keys must be the same set, not merely the same count.
+func TestRetiredKeys_MimoNormalization_SuccessorSetsMatchMeasuredRehoming(t *testing.T) {
+	corpus := loadRetiredKeyCorpus(t, mimoNormalizationRetiredKeysCorpusJSON, mimoRetiredKeyCount)
+	home := instanceHomes(t)
+
+	retired := map[string]bool{}
+	for _, c := range corpus.Cases {
+		key, exp := c.Input, c.Expected
+		t.Run(c.Name, func(t *testing.T) {
+			if len(exp.RetiredInstances) == 0 {
+				t.Fatalf("retired key %q records no instances; the migration record for a key that "+
+					"held no rows is unfalsifiable — pin the instances it held before the lever", key)
+			}
+			if len(exp.Successors) == 0 {
+				t.Fatalf("retired key %q records no successors; every retired key's rows re-home "+
+					"somewhere (this lever conserves the instance total exactly)", key)
+			}
+
+			seen := map[string]bool{}
+			for _, inst := range exp.RetiredInstances {
+				dest, ok := home[inst]
+				if !ok {
+					t.Errorf("instance %q (recorded as a pre-lever row of retired key %q) is in no "+
+						"live entity; either the instance was dropped — this lever conserves the "+
+						"instance total, so that is a defect — or the pinned spelling is stale",
+						inst, key)
+					continue
+				}
+				seen[dest] = true
+			}
+			got := sortedKeys(seen)
+
+			want := append([]string(nil), exp.Successors...)
+			sort.Strings(want)
+			if !slices.Equal(got, want) {
+				t.Errorf("retired key %q re-homes onto %v, but the migration record says %v.\n"+
+					"The record is what a user gets instead of an alias or redirect, so a wrong "+
+					"successor set sends them to a key that does not hold their model. Re-derive "+
+					"the row from the measured re-homing above and correct it here, in the "+
+					"CHANGELOG migration table, and in the case's mutation description together.",
+					key, got, want)
+			}
+
+			for _, s := range exp.Successors {
+				if _, ok := bestiary.EntityByKey(s); !ok {
+					t.Errorf("retired key %q names successor %q, which does not resolve; a migration "+
+						"record may only point at a live key", key, s)
+				}
+			}
+		})
+	}
+
+	for _, c := range corpus.Cases {
+		for _, inst := range c.Expected.RetiredInstances {
+			retired[inst] = true
+		}
+	}
+	live := map[string]bool{}
+	for _, e := range bestiary.Entities() {
+		if !isMimoKey(e.Ref.String()) {
+			continue
+		}
+		for _, in := range e.Instances {
+			live[string(in.Provider)+"|"+string(in.ID)] = true
+		}
+	}
+	if !slices.Equal(sortedKeys(retired), sortedKeys(live)) {
+		t.Errorf("mimo instance conservation FAILED: %d instance(s) pinned across the retired keys, "+
+			"%d live on the surviving mimo keys, and the two sets are not identical. This lever is "+
+			"nine renames and one merge; it may not create or destroy an instance.",
+			len(retired), len(live))
+	}
+}
+
+// TestRetiredKeys_MimoNormalization_ChangelogTableMatchesCorpus keeps the two copies of
+// the migration record honest with each other. The CHANGELOG table is the copy a human
+// reads and the corpus is the copy the tests re-derive, so a correction applied to one
+// and forgotten in the other would leave the user-facing half wrong while every test
+// stayed green.
+func TestRetiredKeys_MimoNormalization_ChangelogTableMatchesCorpus(t *testing.T) {
+	corpus := loadRetiredKeyCorpus(t, mimoNormalizationRetiredKeysCorpusJSON, mimoRetiredKeyCount)
+
+	const changelogPath = "../../CHANGELOG.md"
+	raw, err := os.ReadFile(changelogPath)
+	if err != nil {
+		t.Fatalf("read %s: %v", changelogPath, err)
+	}
+	table := parseMigrationTable(t, string(raw), "| retired mimo key | instances re-home to |")
+
+	if len(table) != len(corpus.Cases) {
+		t.Errorf("CHANGELOG migration table has %d row(s), corpus has %d case(s); the two are the "+
+			"same record and must be edited together", len(table), len(corpus.Cases))
+	}
+	for _, c := range corpus.Cases {
+		got, ok := table[c.Input]
+		if !ok {
+			t.Errorf("CHANGELOG migration table has no row for retired key %q; every retired key "+
+				"needs one, because the table is the only pointer the tool gives a user", c.Input)
+			continue
+		}
+		want := append([]string(nil), c.Expected.Successors...)
+		sort.Strings(want)
+		sort.Strings(got)
+		if !slices.Equal(got, want) {
+			t.Errorf("CHANGELOG migration table sends %q to %v, the corpus records %v", c.Input, got, want)
+		}
+	}
+	for old := range table {
+		if !corpusHasInput(corpus, old) {
+			t.Errorf("CHANGELOG migration table carries a row for %q, which the retired-key corpus "+
+				"does not cover", old)
+		}
+	}
+}
+
+// TestMimoKeyspace_IsExactlyTheSurvivingNine pins the whole surviving mimo keyspace, not
+// just the retirements. A retired-key test alone cannot catch a key that was ADDED by
+// accident, and the failure mode this lever risks most is minting a residue key (an id
+// that declines the series split and lands on a variant spelling of its own).
+func TestMimoKeyspace_IsExactlyTheSurvivingNine(t *testing.T) {
+	want := []string{
+		"mimo@2.5",
+		"mimo@2.5{pro}",
+		"mimo@2.5{tts,voiceclone}",
+		"mimo@2.5{tts,voicedesign}",
+		"mimo@2.5{tts}",
+		"mimo@2{flash}",
+		"mimo@2{omni}",
+		"mimo@2{pro}",
+		"mimo@2{tts}",
+	}
+
+	var got []string
+	instances := 0
+	for _, e := range bestiary.Entities() {
+		k := e.Ref.String()
+		if !isMimoKey(k) {
+			continue
+		}
+		got = append(got, k)
+		instances += len(e.Instances)
+	}
+	sort.Strings(got)
+
+	if !slices.Equal(got, want) {
+		t.Errorf("mimo keyspace = %v,\nwant %v — the surviving set is the lever's published key diff; "+
+			"an extra key means an id declined the series split and minted a residue spelling, a "+
+			"missing one means a distinction was collapsed", got, want)
+	}
+	if instances != 93 {
+		t.Errorf("mimo holds %d instances, want 93 — the lever is nine renames and one merge, so the "+
+			"instance total is conserved exactly", instances)
+	}
+
+	// No `mimo/v*` key may survive anywhere: the series letter is consumed for the version
+	// and must never reappear in a variant slot.
+	for _, k := range got {
+		if len(k) >= 7 && k[:7] == "mimo/v@" || len(k) >= 6 && k[:6] == "mimo/v" {
+			t.Errorf("key %q still carries the series letter in its variant slot", k)
+		}
+	}
+}
+
+// isMimoKey reports whether an entity key belongs to the mimo family. It matches on the
+// family segment rather than a raw prefix so a hypothetical `mimolike` family could never
+// be swept into these assertions.
+func isMimoKey(key string) bool {
+	if len(key) < 4 || key[:4] != "mimo" {
+		return false
+	}
+	if len(key) == 4 {
+		return true
+	}
+	switch key[4] {
+	case '/', '@', '#', '{', '[':
+		return true
+	default:
+		return false
+	}
+}

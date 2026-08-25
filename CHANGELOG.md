@@ -568,12 +568,12 @@ for its **Go module tags** (`vX.Y.Z`).
   | `hy/free@3` | `hy@3` |
   | `kimi/free` | `kimi/k@2.5`, `kimi/k@2.7{code}`, `kimi/k@3` |
   | `laguna-s/free@2.1` | `laguna-s@2.1` |
-  | `mimo/flash-free` | `mimo/flash` |
-  | `mimo/omni-free` | `mimo/v@2{omni}` |
-  | `mimo/pro-free` | `mimo/v@2{pro}` |
-  | `mimo/v2.5` | `mimo/v@2.5` |
-  | `mimo/v2.5-free` | `mimo/v@2.5` |
-  | `mimo/v2.5-pro` | `mimo/v@2.5{pro}` |
+  | `mimo/flash-free` | `mimo@2{flash}` |
+  | `mimo/omni-free` | `mimo@2{omni}` |
+  | `mimo/pro-free` | `mimo@2{pro}` |
+  | `mimo/v2.5` | `mimo@2.5` |
+  | `mimo/v2.5-free` | `mimo@2.5` |
+  | `mimo/v2.5-pro` | `mimo@2.5{pro}` |
   | `minimax/free` | `minimax/m@2.1`, `minimax/m@2.5`, `minimax/m@2.7` |
   | `minimax-m3/free` | `minimax/m@3` |
   | `nemotron/free@3` | `nemotron@3` |
@@ -583,7 +583,10 @@ for its **Go module tags** (`vX.Y.Z`).
   families minted by a fused pricing suffix. The five `mimo/*` and `minimax-m3` rows re-home
   to a *re-keyed* target rather than a plain parent: peeling `free` exposes a version that
   the fused suffix had been hiding, so `variant="v2.5-free", version=""` resolves as
-  `variant="v", version="2.5"`.
+  `variant="", version="2.5"`. Those six `mimo/*` targets are stated at their FINAL spelling:
+  the keyspace-wide mimo normalization below landed in the same release and re-keyed every
+  mimo entity, and a migration table may only point at a key that is live when the release
+  ships.
 
   **Two rows SPLIT rather than fold.** `kimi/free` and `minimax/free` were each a single
   key holding rows from three *different* model versions, because a fused `-free` suffix had
@@ -619,6 +622,118 @@ for its **Go module tags** (`vX.Y.Z`).
   removing or reclassifying a global token needs no edit there and the guard cannot drift. A
   small explicitly-scoped floor of load-bearing tokens stays in code so that silently
   deleting a curated row is still caught.
+
+### Changed
+
+- **The mimo keyspace is normalized to `mimo@<version>{modifiers}` — the series letter
+  leaves the entity key, and the ten mimo keys become nine.** `mimo/v2.5-pro`,
+  `mimo/v@2.5{pro}` and `mimo/pro` were three spellings of one model, Xiaomi's MiMo 2.5
+  Pro, and they now all render **`mimo@2.5{pro}`**. No `mimo/v*` key survives anywhere.
+
+  The lever is not "delete the series letter" — that was measured and it destroys the
+  keyspace, because the letter is load-bearing for version extraction and residue
+  detection (dropping it reaches `mimo@2.5` zero times and mints `mimo@5`, `mimo/pro@5`
+  and worse). Instead a family record can now declare **`series_letter_in_key: false`**
+  (`parse/data/families.json`): the letter is still consumed to extract the version, but
+  it no longer occupies the variant slot. The field is a pointer, so absent means true and
+  every other letter-series family — `kimi` (`k`), `minimax` (`m`) — is unchanged by
+  construction.
+
+  Two supporting changes were each measured to be **required**, not cosmetic:
+  - `parse/data/modifier_class.json` gains a **`series_tiers`** block: a per-family
+    extension of the curated series-tier token set, giving mimo `flash`, `tts`,
+    `voiceclone`, `voicedesign`, `free` and `ultraspeed`. The scoping is the point — an
+    earlier attempt added these to the *global* set, which is shared with kimi and
+    minimax, and the blast radius was six times the intended one. None of them may go in
+    `modifiers.json` either: `tts` is already a family key, so a global promotion would
+    collide with it.
+  - the trailing-tier promotion now returns a **list** and the two restrictions that used
+    to discard tiers are gone. Previously a tier was promoted only when there was exactly
+    one of them and no capability modifier alongside it, so `mimo-v2.5-tts-voiceclone`
+    lost its second tier and `xiaomi/mimo-v2-flash-thinking` lost `flash` outright. As a
+    side effect **8 kimi records recover a `highspeed` tier** that a co-occurring `code`
+    modifier had been suppressing; `highspeed` is attribute-class, so that recovery
+    changes no entity key.
+
+  The seven mimo rows in `parse/data/family_overrides.json` are **retained and rewritten
+  to an empty variant** rather than deleted — deleting them was measured to mint four
+  malformed keys (`mimo-flash/free`, `mimo-omni-free{omni}`, `mimo-pro/free`,
+  `mimo-v2/pro`). The three `parse/data/huggingface_nomina.json` mimo rows are re-keyed;
+  the now-redundant `xiaomi/mimo-v2.5-pro-ultraspeed` row is dropped from
+  `parse/data/modelsdev_aliases.json`, since `ultraspeed` no longer declines.
+
+  **The "V" survives where it belongs — in the name.** It leaves the key, not the model's
+  identity: `bestiary show mimo-v2.5-pro` still resolves, and `XiaomiMiMo/MiMo-V2.5-Pro`
+  is still a nomen of `mimo@2.5{pro}` on both the huggingface and provider-id legs. That
+  needed no mechanism, because nomina are minted from the provider ids and the ids spell
+  the V. Measured over the mimo family, **only the canonical leg moved**: canonical
+  10 → 9, provider-id 40 → 40, huggingface 3 → 3, alias 0 → 0. No `NomenSchemeAlias` claim
+  and no `nomen_claims.json` row was authored.
+
+  **Surviving keyspace (9 keys, 93 instances — the instance total is conserved exactly):**
+  `mimo@2.5`, `mimo@2.5{pro}`, `mimo@2.5{tts}`, `mimo@2.5{tts,voiceclone}`,
+  `mimo@2.5{tts,voicedesign}`, `mimo@2{flash}`, `mimo@2{omni}`, `mimo@2{pro}`,
+  `mimo@2{tts}`.
+
+- **The merged `mimo@2.5{pro}` keeps BOTH of its models.dev rows.** Two metadata rows
+  decompose to that one key — the canonical `xiaomi/mimo-v2.5-pro` and the
+  `xiaomi/mimo-v2.5-pro-ultraspeed` speed tier the merge folds in — and the multi-metadata
+  slot carries both, with the canonical row as the derived primary. Its description, its
+  link and its three benchmark claims (SWE-Bench Verified 78.9, SWE-Bench Pro 57.2, GPQA
+  Diamond 86.6) survive the merge intact, asserted by value in a committed test.
+
+### Removed
+
+- **Ten mimo entity keys are retired by the normalization above, and each is a hard 404.**
+  Nine are pure renames and one (`mimo/pro`) is a genuine merge. No alias is minted, no
+  redirect is added and no successor is listed at the tool: this table is the migration
+  record, and the pointer a user gets.
+
+  | retired mimo key | instances re-home to |
+  |---|---|
+  | `mimo` | `mimo@2{tts}` |
+  | `mimo/flash` | `mimo@2{flash}` |
+  | `mimo/pro` | `mimo@2.5{pro}` |
+  | `mimo/v2.5-tts` | `mimo@2.5{tts}` |
+  | `mimo/v2.5-tts-voiceclone` | `mimo@2.5{tts,voiceclone}` |
+  | `mimo/v2.5-tts-voicedesign` | `mimo@2.5{tts,voicedesign}` |
+  | `mimo/v@2.5` | `mimo@2.5` |
+  | `mimo/v@2.5{pro}` | `mimo@2.5{pro}` |
+  | `mimo/v@2{omni}` | `mimo@2{omni}` |
+  | `mimo/v@2{pro}` | `mimo@2{pro}` |
+
+  Every row is re-derived from the instances the retired key actually held, checked against
+  the live registry on each run, and cross-checked against this table
+  (`cmd/bestiary/testdata/retired/mimo_normalization_retired_keys_corpus.json`), so the
+  three copies of the record cannot drift apart.
+
+  **Bare `mimo` is the one row whose two seams differ, and that is correct.**
+  `bestiary show mimo --by-entity` returns not-found like every other retired key, but
+  plain `bestiary show mimo` still reports the lookup as under-specified — not because the
+  key split, but because the FAMILY survives the retirement of its bare key and still has
+  nine live children, exactly as `show gpt` and `show claude` behave. It must not be
+  "fixed" into a 404.
+
+  **Library consumers get a compile break, which is louder than a 404.**
+  `entities_constants_gen.go` loses **10** `Entity__` declarations and gains **9**, counted
+  from the file:
+
+  removed — `Entity__Mimo`, `Entity__Mimo__Flash`, `Entity__Mimo__Pro`,
+  `Entity__Mimo__V2_5_tts`, `Entity__Mimo__V2_5_tts_voiceclone`,
+  `Entity__Mimo__V2_5_tts_voicedesign`, `Entity__Mimo__V__Version_2_5`,
+  `Entity__Mimo__V__Version_2_5__Pro`, `Entity__Mimo__V__Version_2__Omni`,
+  `Entity__Mimo__V__Version_2__Pro`;
+
+  added — `Entity__Mimo__Version_2_5`, `Entity__Mimo__Version_2_5__Pro`,
+  `Entity__Mimo__Version_2_5__Tts`, `Entity__Mimo__Version_2_5__Tts__Voiceclone`,
+  `Entity__Mimo__Version_2_5__Tts__Voicedesign`, `Entity__Mimo__Version_2__Flash`,
+  `Entity__Mimo__Version_2__Omni`, `Entity__Mimo__Version_2__Pro`,
+  `Entity__Mimo__Version_2__Tts`.
+
+  Census effect of this lever alone, measured on its own run: entities 947 → 946, series
+  lines 417 → 416 (bare 208 → 207, versioned unchanged), releases 661 → 655, canonical
+  nomina 947 → 946 (total 3,961 → 3,960).
+
 
 ## [0.2.9] - 2026-07-28
 

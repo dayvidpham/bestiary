@@ -71,17 +71,17 @@
       },
       "expected": {
         "family": "mimo",
-        "variant": "v",
+        "variant": "",
         "version": "2.5",
         "mod": "pro"
       },
       "classification": "must-pass",
       "provenance": {
         "source": "requirement",
-        "ref": "ParseFamilyDetailed(raw=mimo, id=mimo-v2.5-pro) -> (family 'mimo', variant 'v', version '2.5', mod 'pro')"
+        "ref": "ParseFamilyDetailed(raw=mimo, id=mimo-v2.5-pro) -> (family 'mimo', variant '', version '2.5', mod 'pro')"
       },
       "mutation": {
-        "description": "series tier token classified as Modifier; variant stays the pure series-letter"
+        "description": "letter-prefix series consumes the letter for the VERSION but leaves the variant EMPTY: this family declares series_letter_in_key false, so the letter is not part of the key"
       }
     },
     {
@@ -92,17 +92,17 @@
       },
       "expected": {
         "family": "mimo",
-        "variant": "v",
+        "variant": "",
         "version": "2.5",
         "mod": "pro"
       },
       "classification": "must-pass",
       "provenance": {
         "source": "requirement",
-        "ref": "ParseFamilyDetailed(raw=, id=xiaomi/mimo-v2.5-pro) -> (family 'mimo', variant 'v', version '2.5', mod 'pro')"
+        "ref": "ParseFamilyDetailed(raw=, id=xiaomi/mimo-v2.5-pro) -> (family 'mimo', variant '', version '2.5', mod 'pro')"
       },
       "mutation": {
-        "description": "series tier token classified as Modifier; variant stays the pure series-letter"
+        "description": "letter-prefix series consumes the letter for the VERSION but leaves the variant EMPTY: this family declares series_letter_in_key false, so the letter is not part of the key"
       }
     },
     {
@@ -197,17 +197,17 @@
       },
       "expected": {
         "family": "mimo",
-        "variant": "v",
+        "variant": "",
         "version": "2",
         "mod": "omni"
       },
       "classification": "must-pass",
       "provenance": {
         "source": "requirement",
-        "ref": "ParseFamilyDetailed(raw=mimo, id=mimo-v2-omni) -> (family 'mimo', variant 'v', version '2', mod 'omni')"
+        "ref": "ParseFamilyDetailed(raw=mimo, id=mimo-v2-omni) -> (family 'mimo', variant '', version '2', mod 'omni')"
       },
       "mutation": {
-        "description": "series tier token classified as Modifier; variant stays the pure series-letter"
+        "description": "letter-prefix series consumes the letter for the VERSION but leaves the variant EMPTY: this family declares series_letter_in_key false, so the letter is not part of the key"
       }
     },
     {

@@ -1,14 +1,32 @@
 {
   "total_records": 5765,
-  "changed_count": 49,
+  "changed_count": 144,
   "cat_a_divergence_fix_count": 0,
-  "cat_b_improvement_count": 43,
+  "cat_b_improvement_count": 67,
   "cat_c_unexpected_regression_count": 0,
-  "justified_exception_count": 6,
+  "justified_exception_count": 77,
   "id_tuple4_incl_modifier_divergence_frozen_before": 17,
   "id_tuple4_incl_modifier_divergence_current_after": 17,
   "divergence_metric": "4-tuple INCL Modifier (Family,Variant,Version,Modifier); before=frozen baseline, after=current snapshot. DISTINCT from the authoritative cross-provider divergenceExact gate (3-tuple, EXCL Modifier, current snapshot, =4).",
   "changes": [
+    {
+      "provider": "huggingface",
+      "id": "XiaomiMiMo/MiMo-V2-Flash",
+      "raw_family": "mimo",
+      "before": "(family=\"mimo\",variant=\"flash\",version=\"\",modifier=\"\")",
+      "after": "(family=\"mimo\",variant=\"\",version=\"2\",modifier=\"flash\")",
+      "category": "b:improvement",
+      "reason": "family-preserving de-noise/enrich: only phantom losses and/or enrichments, no ID-present field lost"
+    },
+    {
+      "provider": "meganova",
+      "id": "XiaomiMiMo/MiMo-V2-Flash",
+      "raw_family": "mimo",
+      "before": "(family=\"mimo\",variant=\"flash\",version=\"\",modifier=\"\")",
+      "after": "(family=\"mimo\",variant=\"\",version=\"2\",modifier=\"flash\")",
+      "category": "b:improvement",
+      "reason": "family-preserving de-noise/enrich: only phantom losses and/or enrichments, no ID-present field lost"
+    },
     {
       "provider": "zenmux",
       "id": "anthropic/claude-sonnet-5-free",
@@ -118,6 +136,15 @@
       "reason": "strict enrichment — only previously-empty field(s) populated"
     },
     {
+      "provider": "empiriolabs",
+      "id": "kimi-k2-7-code-highspeed",
+      "raw_family": "kimi-k2",
+      "before": "(family=\"kimi\",variant=\"k\",version=\"2.7\",modifier=\"\")",
+      "after": "(family=\"kimi\",variant=\"k\",version=\"2.7\",modifier=\"highspeed\")",
+      "category": "b:improvement",
+      "reason": "strict enrichment — only previously-empty field(s) populated"
+    },
+    {
       "provider": "opencode",
       "id": "kimi-k2.5-free",
       "raw_family": "kimi-free",
@@ -125,6 +152,42 @@
       "after": "(family=\"kimi\",variant=\"k\",version=\"2.5\",modifier=\"free\")",
       "category": "b:improvement",
       "reason": "family-preserving de-noise/enrich: only phantom losses and/or enrichments, no ID-present field lost"
+    },
+    {
+      "provider": "aihubmix",
+      "id": "kimi-k2.7-code-highspeed",
+      "raw_family": "kimi-k2",
+      "before": "(family=\"kimi\",variant=\"k\",version=\"2.7\",modifier=\"\")",
+      "after": "(family=\"kimi\",variant=\"k\",version=\"2.7\",modifier=\"highspeed\")",
+      "category": "b:improvement",
+      "reason": "strict enrichment — only previously-empty field(s) populated"
+    },
+    {
+      "provider": "llmgateway",
+      "id": "kimi-k2.7-code-highspeed",
+      "raw_family": "kimi-k2",
+      "before": "(family=\"kimi\",variant=\"k\",version=\"2.7\",modifier=\"\")",
+      "after": "(family=\"kimi\",variant=\"k\",version=\"2.7\",modifier=\"highspeed\")",
+      "category": "b:improvement",
+      "reason": "strict enrichment — only previously-empty field(s) populated"
+    },
+    {
+      "provider": "moonshotai",
+      "id": "kimi-k2.7-code-highspeed",
+      "raw_family": "kimi-k2",
+      "before": "(family=\"kimi\",variant=\"k\",version=\"2.7\",modifier=\"\")",
+      "after": "(family=\"kimi\",variant=\"k\",version=\"2.7\",modifier=\"highspeed\")",
+      "category": "b:improvement",
+      "reason": "strict enrichment — only previously-empty field(s) populated"
+    },
+    {
+      "provider": "moonshotai-cn",
+      "id": "kimi-k2.7-code-highspeed",
+      "raw_family": "kimi-k2",
+      "before": "(family=\"kimi\",variant=\"k\",version=\"2.7\",modifier=\"\")",
+      "after": "(family=\"kimi\",variant=\"k\",version=\"2.7\",modifier=\"highspeed\")",
+      "category": "b:improvement",
+      "reason": "strict enrichment — only previously-empty field(s) populated"
     },
     {
       "provider": "vercel",
@@ -208,11 +271,56 @@
       "reason": "strict enrichment — only previously-empty field(s) populated"
     },
     {
-      "provider": "opencode",
-      "id": "mimo-v2-flash-free",
-      "raw_family": "mimo-flash-free",
-      "before": "(family=\"mimo\",variant=\"flash-free\",version=\"\",modifier=\"\")",
-      "after": "(family=\"mimo\",variant=\"flash\",version=\"\",modifier=\"free\")",
+      "provider": "qiniu-ai",
+      "id": "mimo-v2-flash",
+      "raw_family": "mimo",
+      "before": "(family=\"mimo\",variant=\"flash\",version=\"\",modifier=\"\")",
+      "after": "(family=\"mimo\",variant=\"\",version=\"2\",modifier=\"flash\")",
+      "category": "b:improvement",
+      "reason": "family-preserving de-noise/enrich: only phantom losses and/or enrichments, no ID-present field lost"
+    },
+    {
+      "provider": "xiaomi",
+      "id": "mimo-v2-flash",
+      "raw_family": "mimo",
+      "before": "(family=\"mimo\",variant=\"flash\",version=\"\",modifier=\"\")",
+      "after": "(family=\"mimo\",variant=\"\",version=\"2\",modifier=\"flash\")",
+      "category": "b:improvement",
+      "reason": "family-preserving de-noise/enrich: only phantom losses and/or enrichments, no ID-present field lost"
+    },
+    {
+      "provider": "xiaomi-token-plan-ams",
+      "id": "mimo-v2-tts",
+      "raw_family": "mimo",
+      "before": "(family=\"mimo\",variant=\"\",version=\"\",modifier=\"\")",
+      "after": "(family=\"mimo\",variant=\"\",version=\"2\",modifier=\"tts\")",
+      "category": "b:improvement",
+      "reason": "strict enrichment — only previously-empty field(s) populated"
+    },
+    {
+      "provider": "xiaomi-token-plan-cn",
+      "id": "mimo-v2-tts",
+      "raw_family": "mimo",
+      "before": "(family=\"mimo\",variant=\"\",version=\"\",modifier=\"\")",
+      "after": "(family=\"mimo\",variant=\"\",version=\"2\",modifier=\"tts\")",
+      "category": "b:improvement",
+      "reason": "strict enrichment — only previously-empty field(s) populated"
+    },
+    {
+      "provider": "xiaomi-token-plan-sgp",
+      "id": "mimo-v2-tts",
+      "raw_family": "mimo",
+      "before": "(family=\"mimo\",variant=\"\",version=\"\",modifier=\"\")",
+      "after": "(family=\"mimo\",variant=\"\",version=\"2\",modifier=\"tts\")",
+      "category": "b:improvement",
+      "reason": "strict enrichment — only previously-empty field(s) populated"
+    },
+    {
+      "provider": "xiaomi",
+      "id": "mimo-v2.5-pro-ultraspeed",
+      "raw_family": "mimo",
+      "before": "(family=\"mimo\",variant=\"pro\",version=\"\",modifier=\"\")",
+      "after": "(family=\"mimo\",variant=\"\",version=\"2.5\",modifier=\"pro,ultraspeed\")",
       "category": "b:improvement",
       "reason": "family-preserving de-noise/enrich: only phantom losses and/or enrichments, no ID-present field lost"
     },
@@ -242,6 +350,33 @@
       "after": "(family=\"kimi\",variant=\"k\",version=\"2.7\",modifier=\"code,free\")",
       "category": "b:improvement",
       "reason": "family-preserving de-noise/enrich: only phantom losses and/or enrichments, no ID-present field lost"
+    },
+    {
+      "provider": "gmicloud",
+      "id": "moonshotai/kimi-k2.7-code-highspeed",
+      "raw_family": "kimi-k2",
+      "before": "(family=\"kimi\",variant=\"k\",version=\"2.7\",modifier=\"\")",
+      "after": "(family=\"kimi\",variant=\"k\",version=\"2.7\",modifier=\"highspeed\")",
+      "category": "b:improvement",
+      "reason": "strict enrichment — only previously-empty field(s) populated"
+    },
+    {
+      "provider": "merge-gateway",
+      "id": "moonshotai/kimi-k2.7-code-highspeed",
+      "raw_family": "kimi-k2",
+      "before": "(family=\"kimi\",variant=\"k\",version=\"2.7\",modifier=\"\")",
+      "after": "(family=\"kimi\",variant=\"k\",version=\"2.7\",modifier=\"highspeed\")",
+      "category": "b:improvement",
+      "reason": "strict enrichment — only previously-empty field(s) populated"
+    },
+    {
+      "provider": "vercel",
+      "id": "moonshotai/kimi-k2.7-code-highspeed",
+      "raw_family": "kimi-k2",
+      "before": "(family=\"kimi\",variant=\"k\",version=\"2.7\",modifier=\"\")",
+      "after": "(family=\"kimi\",variant=\"k\",version=\"2.7\",modifier=\"highspeed\")",
+      "category": "b:improvement",
+      "reason": "strict enrichment — only previously-empty field(s) populated"
     },
     {
       "provider": "zenmux",
@@ -365,7 +500,88 @@
       "id": "xiaomi-mimo-v2.5-free",
       "raw_family": "mimo-v2.5",
       "before": "(family=\"mimo\",variant=\"v2.5\",version=\"\",modifier=\"\")",
-      "after": "(family=\"mimo\",variant=\"v\",version=\"2.5\",modifier=\"free\")",
+      "after": "(family=\"mimo\",variant=\"\",version=\"2.5\",modifier=\"free\")",
+      "category": "b:improvement",
+      "reason": "family-preserving de-noise/enrich: only phantom losses and/or enrichments, no ID-present field lost"
+    },
+    {
+      "provider": "kilo",
+      "id": "xiaomi/mimo-v2-flash",
+      "raw_family": "mimo",
+      "before": "(family=\"mimo\",variant=\"flash\",version=\"\",modifier=\"\")",
+      "after": "(family=\"mimo\",variant=\"\",version=\"2\",modifier=\"flash\")",
+      "category": "b:improvement",
+      "reason": "family-preserving de-noise/enrich: only phantom losses and/or enrichments, no ID-present field lost"
+    },
+    {
+      "provider": "nano-gpt",
+      "id": "xiaomi/mimo-v2-flash",
+      "raw_family": "mimo",
+      "before": "(family=\"mimo\",variant=\"flash\",version=\"\",modifier=\"\")",
+      "after": "(family=\"mimo\",variant=\"\",version=\"2\",modifier=\"flash\")",
+      "category": "b:improvement",
+      "reason": "family-preserving de-noise/enrich: only phantom losses and/or enrichments, no ID-present field lost"
+    },
+    {
+      "provider": "qiniu-ai",
+      "id": "xiaomi/mimo-v2-flash",
+      "raw_family": "mimo",
+      "before": "(family=\"mimo\",variant=\"flash\",version=\"\",modifier=\"\")",
+      "after": "(family=\"mimo\",variant=\"\",version=\"2\",modifier=\"flash\")",
+      "category": "b:improvement",
+      "reason": "family-preserving de-noise/enrich: only phantom losses and/or enrichments, no ID-present field lost"
+    },
+    {
+      "provider": "zenmux",
+      "id": "xiaomi/mimo-v2-flash",
+      "raw_family": "mimo",
+      "before": "(family=\"mimo\",variant=\"flash\",version=\"\",modifier=\"\")",
+      "after": "(family=\"mimo\",variant=\"\",version=\"2\",modifier=\"flash\")",
+      "category": "b:improvement",
+      "reason": "family-preserving de-noise/enrich: only phantom losses and/or enrichments, no ID-present field lost"
+    },
+    {
+      "provider": "nano-gpt",
+      "id": "xiaomi/mimo-v2-flash-original",
+      "raw_family": "mimo",
+      "before": "(family=\"mimo\",variant=\"flash\",version=\"\",modifier=\"original\")",
+      "after": "(family=\"mimo\",variant=\"\",version=\"2\",modifier=\"original,flash\")",
+      "category": "b:improvement",
+      "reason": "family-preserving de-noise/enrich: only phantom losses and/or enrichments, no ID-present field lost"
+    },
+    {
+      "provider": "nano-gpt",
+      "id": "xiaomi/mimo-v2-flash-thinking",
+      "raw_family": "mimo",
+      "before": "(family=\"mimo\",variant=\"flash\",version=\"\",modifier=\"thinking\")",
+      "after": "(family=\"mimo\",variant=\"\",version=\"2\",modifier=\"thinking,flash\")",
+      "category": "b:improvement",
+      "reason": "family-preserving de-noise/enrich: only phantom losses and/or enrichments, no ID-present field lost"
+    },
+    {
+      "provider": "nano-gpt",
+      "id": "xiaomi/mimo-v2-flash-thinking-original",
+      "raw_family": "mimo",
+      "before": "(family=\"mimo\",variant=\"flash\",version=\"\",modifier=\"thinking,original\")",
+      "after": "(family=\"mimo\",variant=\"\",version=\"2\",modifier=\"thinking,original,flash\")",
+      "category": "b:improvement",
+      "reason": "family-preserving de-noise/enrich: only phantom losses and/or enrichments, no ID-present field lost"
+    },
+    {
+      "provider": "jiekou",
+      "id": "xiaomimimo/mimo-v2-flash",
+      "raw_family": "mimo",
+      "before": "(family=\"mimo\",variant=\"flash\",version=\"\",modifier=\"\")",
+      "after": "(family=\"mimo\",variant=\"\",version=\"2\",modifier=\"flash\")",
+      "category": "b:improvement",
+      "reason": "family-preserving de-noise/enrich: only phantom losses and/or enrichments, no ID-present field lost"
+    },
+    {
+      "provider": "novita-ai",
+      "id": "xiaomimimo/mimo-v2-flash",
+      "raw_family": "mimo",
+      "before": "(family=\"mimo\",variant=\"flash\",version=\"\",modifier=\"\")",
+      "after": "(family=\"mimo\",variant=\"\",version=\"2\",modifier=\"flash\")",
       "category": "b:improvement",
       "reason": "family-preserving de-noise/enrich: only phantom losses and/or enrichments, no ID-present field lost"
     },
@@ -397,6 +613,105 @@
       "reason": "family-preserving de-noise/enrich: only phantom losses and/or enrichments, no ID-present field lost"
     },
     {
+      "provider": "deepinfra",
+      "id": "XiaomiMiMo/MiMo-V2.5",
+      "raw_family": "mimo",
+      "before": "(family=\"mimo\",variant=\"v\",version=\"2.5\",modifier=\"\")",
+      "after": "(family=\"mimo\",variant=\"\",version=\"2.5\",modifier=\"\")",
+      "category": "justified-exception",
+      "reason": "JUSTIFIED: the mimo series letter leaves the entity key: variant \"v\" becomes empty while version \"2.5\" and modifier \"\" are carried across byte-identical. \"v\" was never a product line — every mimo id spells it, so it partitioned nothing and merely prefixed the key. The classifier flags an emptied populated field, but no FACT is lost: the letter is still consumed to extract the version (which is why it is not simply deleted from the family record), it survives in the provider ids and therefore in this model's nomina, and the key it leaves behind names the same artifact. 3 record(s) on deepinfra, huggingface, pioneer carry this exact transition."
+    },
+    {
+      "provider": "huggingface",
+      "id": "XiaomiMiMo/MiMo-V2.5",
+      "raw_family": "mimo",
+      "before": "(family=\"mimo\",variant=\"v\",version=\"2.5\",modifier=\"\")",
+      "after": "(family=\"mimo\",variant=\"\",version=\"2.5\",modifier=\"\")",
+      "category": "justified-exception",
+      "reason": "JUSTIFIED: the mimo series letter leaves the entity key: variant \"v\" becomes empty while version \"2.5\" and modifier \"\" are carried across byte-identical. \"v\" was never a product line — every mimo id spells it, so it partitioned nothing and merely prefixed the key. The classifier flags an emptied populated field, but no FACT is lost: the letter is still consumed to extract the version (which is why it is not simply deleted from the family record), it survives in the provider ids and therefore in this model's nomina, and the key it leaves behind names the same artifact. 3 record(s) on deepinfra, huggingface, pioneer carry this exact transition."
+    },
+    {
+      "provider": "pioneer",
+      "id": "XiaomiMiMo/MiMo-V2.5",
+      "raw_family": "mimo",
+      "before": "(family=\"mimo\",variant=\"v\",version=\"2.5\",modifier=\"\")",
+      "after": "(family=\"mimo\",variant=\"\",version=\"2.5\",modifier=\"\")",
+      "category": "justified-exception",
+      "reason": "JUSTIFIED: the mimo series letter leaves the entity key: variant \"v\" becomes empty while version \"2.5\" and modifier \"\" are carried across byte-identical. \"v\" was never a product line — every mimo id spells it, so it partitioned nothing and merely prefixed the key. The classifier flags an emptied populated field, but no FACT is lost: the letter is still consumed to extract the version (which is why it is not simply deleted from the family record), it survives in the provider ids and therefore in this model's nomina, and the key it leaves behind names the same artifact. 3 record(s) on deepinfra, huggingface, pioneer carry this exact transition."
+    },
+    {
+      "provider": "deepinfra",
+      "id": "XiaomiMiMo/MiMo-V2.5-Pro",
+      "raw_family": "mimo",
+      "before": "(family=\"mimo\",variant=\"v\",version=\"2.5\",modifier=\"pro\")",
+      "after": "(family=\"mimo\",variant=\"\",version=\"2.5\",modifier=\"pro\")",
+      "category": "justified-exception",
+      "reason": "JUSTIFIED: the mimo series letter leaves the entity key: variant \"v\" becomes empty while version \"2.5\" and modifier \"pro\" are carried across byte-identical. \"v\" was never a product line — every mimo id spells it, so it partitioned nothing and merely prefixed the key. The classifier flags an emptied populated field, but no FACT is lost: the letter is still consumed to extract the version (which is why it is not simply deleted from the family record), it survives in the provider ids and therefore in this model's nomina, and the key it leaves behind names the same artifact. 4 record(s) on deepinfra, huggingface, pioneer, vultr carry this exact transition."
+    },
+    {
+      "provider": "huggingface",
+      "id": "XiaomiMiMo/MiMo-V2.5-Pro",
+      "raw_family": "mimo",
+      "before": "(family=\"mimo\",variant=\"v\",version=\"2.5\",modifier=\"pro\")",
+      "after": "(family=\"mimo\",variant=\"\",version=\"2.5\",modifier=\"pro\")",
+      "category": "justified-exception",
+      "reason": "JUSTIFIED: the mimo series letter leaves the entity key: variant \"v\" becomes empty while version \"2.5\" and modifier \"pro\" are carried across byte-identical. \"v\" was never a product line — every mimo id spells it, so it partitioned nothing and merely prefixed the key. The classifier flags an emptied populated field, but no FACT is lost: the letter is still consumed to extract the version (which is why it is not simply deleted from the family record), it survives in the provider ids and therefore in this model's nomina, and the key it leaves behind names the same artifact. 4 record(s) on deepinfra, huggingface, pioneer, vultr carry this exact transition."
+    },
+    {
+      "provider": "pioneer",
+      "id": "XiaomiMiMo/MiMo-V2.5-Pro",
+      "raw_family": "mimo",
+      "before": "(family=\"mimo\",variant=\"v\",version=\"2.5\",modifier=\"pro\")",
+      "after": "(family=\"mimo\",variant=\"\",version=\"2.5\",modifier=\"pro\")",
+      "category": "justified-exception",
+      "reason": "JUSTIFIED: the mimo series letter leaves the entity key: variant \"v\" becomes empty while version \"2.5\" and modifier \"pro\" are carried across byte-identical. \"v\" was never a product line — every mimo id spells it, so it partitioned nothing and merely prefixed the key. The classifier flags an emptied populated field, but no FACT is lost: the letter is still consumed to extract the version (which is why it is not simply deleted from the family record), it survives in the provider ids and therefore in this model's nomina, and the key it leaves behind names the same artifact. 4 record(s) on deepinfra, huggingface, pioneer, vultr carry this exact transition."
+    },
+    {
+      "provider": "vultr",
+      "id": "XiaomiMiMo/MiMo-V2.5-Pro",
+      "raw_family": "mimo",
+      "before": "(family=\"mimo\",variant=\"v\",version=\"2.5\",modifier=\"pro\")",
+      "after": "(family=\"mimo\",variant=\"\",version=\"2.5\",modifier=\"pro\")",
+      "category": "justified-exception",
+      "reason": "JUSTIFIED: the mimo series letter leaves the entity key: variant \"v\" becomes empty while version \"2.5\" and modifier \"pro\" are carried across byte-identical. \"v\" was never a product line — every mimo id spells it, so it partitioned nothing and merely prefixed the key. The classifier flags an emptied populated field, but no FACT is lost: the letter is still consumed to extract the version (which is why it is not simply deleted from the family record), it survives in the provider ids and therefore in this model's nomina, and the key it leaves behind names the same artifact. 4 record(s) on deepinfra, huggingface, pioneer, vultr carry this exact transition."
+    },
+    {
+      "provider": "cline-pass",
+      "id": "cline-pass/mimo-v2.5",
+      "raw_family": "mimo",
+      "before": "(family=\"mimo\",variant=\"v\",version=\"2.5\",modifier=\"\")",
+      "after": "(family=\"mimo\",variant=\"\",version=\"2.5\",modifier=\"\")",
+      "category": "justified-exception",
+      "reason": "JUSTIFIED: the mimo series letter leaves the entity key: variant \"v\" becomes empty while version \"2.5\" and modifier \"\" are carried across byte-identical. \"v\" was never a product line — every mimo id spells it, so it partitioned nothing and merely prefixed the key. The classifier flags an emptied populated field, but no FACT is lost: the letter is still consumed to extract the version (which is why it is not simply deleted from the family record), it survives in the provider ids and therefore in this model's nomina, and the key it leaves behind names the same artifact. 1 record(s) on cline-pass carry this exact transition."
+    },
+    {
+      "provider": "cline-pass",
+      "id": "cline-pass/mimo-v2.5-pro",
+      "raw_family": "mimo",
+      "before": "(family=\"mimo\",variant=\"v\",version=\"2.5\",modifier=\"pro\")",
+      "after": "(family=\"mimo\",variant=\"\",version=\"2.5\",modifier=\"pro\")",
+      "category": "justified-exception",
+      "reason": "JUSTIFIED: the mimo series letter leaves the entity key: variant \"v\" becomes empty while version \"2.5\" and modifier \"pro\" are carried across byte-identical. \"v\" was never a product line — every mimo id spells it, so it partitioned nothing and merely prefixed the key. The classifier flags an emptied populated field, but no FACT is lost: the letter is still consumed to extract the version (which is why it is not simply deleted from the family record), it survives in the provider ids and therefore in this model's nomina, and the key it leaves behind names the same artifact. 1 record(s) on cline-pass carry this exact transition."
+    },
+    {
+      "provider": "aihubmix",
+      "id": "coding-xiaomi-mimo-v2.5",
+      "raw_family": "mimo-v2.5",
+      "before": "(family=\"mimo\",variant=\"v\",version=\"2.5\",modifier=\"\")",
+      "after": "(family=\"mimo\",variant=\"\",version=\"2.5\",modifier=\"\")",
+      "category": "justified-exception",
+      "reason": "JUSTIFIED: the mimo series letter leaves the entity key: variant \"v\" becomes empty while version \"2.5\" and modifier \"\" are carried across byte-identical. \"v\" was never a product line — every mimo id spells it, so it partitioned nothing and merely prefixed the key. The classifier flags an emptied populated field, but no FACT is lost: the letter is still consumed to extract the version (which is why it is not simply deleted from the family record), it survives in the provider ids and therefore in this model's nomina, and the key it leaves behind names the same artifact. 1 record(s) on aihubmix carry this exact transition."
+    },
+    {
+      "provider": "aihubmix",
+      "id": "coding-xiaomi-mimo-v2.5-pro",
+      "raw_family": "mimo-v2.5-pro",
+      "before": "(family=\"mimo\",variant=\"v\",version=\"2.5\",modifier=\"pro\")",
+      "after": "(family=\"mimo\",variant=\"\",version=\"2.5\",modifier=\"pro\")",
+      "category": "justified-exception",
+      "reason": "JUSTIFIED: the mimo series letter leaves the entity key: variant \"v\" becomes empty while version \"2.5\" and modifier \"pro\" are carried across byte-identical. \"v\" was never a product line — every mimo id spells it, so it partitioned nothing and merely prefixed the key. The classifier flags an emptied populated field, but no FACT is lost: the letter is still consumed to extract the version (which is why it is not simply deleted from the family record), it survives in the provider ids and therefore in this model's nomina, and the key it leaves behind names the same artifact. 1 record(s) on aihubmix carry this exact transition."
+    },
+    {
       "provider": "qiniu-ai",
       "id": "kling-v2-6",
       "raw_family": "",
@@ -406,31 +721,355 @@
       "reason": "JUSTIFIED: qiniu-ai ships this row with an EMPTY upstream family, so the whole BEFORE tuple is our own leading-token decomposition — and both of its populated fields are wrong. The id spells Kling 2.6 with the dot lost to a dash (kling-v2-6), so the pipeline glued the dash-spelled major onto the family token (\"kling-v2\") and read the orphaned minor as the entire version (\"6\"), stranding the record on a one-instance phantom family at a version the vendor never published. The exact-ID pin corrects both together: family kling, version 2.6. No field is emptied, the family becomes a real family that eight other rows already serve, and the record joins them under kling@2.6 instead of kling-v2@6. A version-only dot-lost repair would have fixed the 6 -\u003e 2.6 half and left the phantom family standing, which is why the family override is the lever."
     },
     {
+      "provider": "empiriolabs",
+      "id": "mimo-v2-5",
+      "raw_family": "mimo",
+      "before": "(family=\"mimo\",variant=\"v\",version=\"2.5\",modifier=\"\")",
+      "after": "(family=\"mimo\",variant=\"\",version=\"2.5\",modifier=\"\")",
+      "category": "justified-exception",
+      "reason": "JUSTIFIED: the mimo series letter leaves the entity key: variant \"v\" becomes empty while version \"2.5\" and modifier \"\" are carried across byte-identical. \"v\" was never a product line — every mimo id spells it, so it partitioned nothing and merely prefixed the key. The classifier flags an emptied populated field, but no FACT is lost: the letter is still consumed to extract the version (which is why it is not simply deleted from the family record), it survives in the provider ids and therefore in this model's nomina, and the key it leaves behind names the same artifact. 2 record(s) on empiriolabs, kenari carry this exact transition."
+    },
+    {
+      "provider": "kenari",
+      "id": "mimo-v2-5",
+      "raw_family": "mimo",
+      "before": "(family=\"mimo\",variant=\"v\",version=\"2.5\",modifier=\"\")",
+      "after": "(family=\"mimo\",variant=\"\",version=\"2.5\",modifier=\"\")",
+      "category": "justified-exception",
+      "reason": "JUSTIFIED: the mimo series letter leaves the entity key: variant \"v\" becomes empty while version \"2.5\" and modifier \"\" are carried across byte-identical. \"v\" was never a product line — every mimo id spells it, so it partitioned nothing and merely prefixed the key. The classifier flags an emptied populated field, but no FACT is lost: the letter is still consumed to extract the version (which is why it is not simply deleted from the family record), it survives in the provider ids and therefore in this model's nomina, and the key it leaves behind names the same artifact. 2 record(s) on empiriolabs, kenari carry this exact transition."
+    },
+    {
+      "provider": "empiriolabs",
+      "id": "mimo-v2-5-pro",
+      "raw_family": "mimo",
+      "before": "(family=\"mimo\",variant=\"v\",version=\"2.5\",modifier=\"pro\")",
+      "after": "(family=\"mimo\",variant=\"\",version=\"2.5\",modifier=\"pro\")",
+      "category": "justified-exception",
+      "reason": "JUSTIFIED: the mimo series letter leaves the entity key: variant \"v\" becomes empty while version \"2.5\" and modifier \"pro\" are carried across byte-identical. \"v\" was never a product line — every mimo id spells it, so it partitioned nothing and merely prefixed the key. The classifier flags an emptied populated field, but no FACT is lost: the letter is still consumed to extract the version (which is why it is not simply deleted from the family record), it survives in the provider ids and therefore in this model's nomina, and the key it leaves behind names the same artifact. 2 record(s) on empiriolabs, kenari carry this exact transition."
+    },
+    {
+      "provider": "kenari",
+      "id": "mimo-v2-5-pro",
+      "raw_family": "mimo",
+      "before": "(family=\"mimo\",variant=\"v\",version=\"2.5\",modifier=\"pro\")",
+      "after": "(family=\"mimo\",variant=\"\",version=\"2.5\",modifier=\"pro\")",
+      "category": "justified-exception",
+      "reason": "JUSTIFIED: the mimo series letter leaves the entity key: variant \"v\" becomes empty while version \"2.5\" and modifier \"pro\" are carried across byte-identical. \"v\" was never a product line — every mimo id spells it, so it partitioned nothing and merely prefixed the key. The classifier flags an emptied populated field, but no FACT is lost: the letter is still consumed to extract the version (which is why it is not simply deleted from the family record), it survives in the provider ids and therefore in this model's nomina, and the key it leaves behind names the same artifact. 2 record(s) on empiriolabs, kenari carry this exact transition."
+    },
+    {
+      "provider": "kenari",
+      "id": "mimo-v2-5:free",
+      "raw_family": "mimo",
+      "before": "(family=\"mimo\",variant=\"v\",version=\"2.5\",modifier=\"\")",
+      "after": "(family=\"mimo\",variant=\"\",version=\"2.5\",modifier=\"\")",
+      "category": "justified-exception",
+      "reason": "JUSTIFIED: the mimo series letter leaves the entity key: variant \"v\" becomes empty while version \"2.5\" and modifier \"\" are carried across byte-identical. \"v\" was never a product line — every mimo id spells it, so it partitioned nothing and merely prefixed the key. The classifier flags an emptied populated field, but no FACT is lost: the letter is still consumed to extract the version (which is why it is not simply deleted from the family record), it survives in the provider ids and therefore in this model's nomina, and the key it leaves behind names the same artifact. 1 record(s) on kenari carry this exact transition."
+    },
+    {
+      "provider": "opencode",
+      "id": "mimo-v2-flash-free",
+      "raw_family": "mimo-flash-free",
+      "before": "(family=\"mimo\",variant=\"flash-free\",version=\"\",modifier=\"\")",
+      "after": "(family=\"mimo\",variant=\"\",version=\"2\",modifier=\"flash,free\")",
+      "category": "justified-exception",
+      "reason": "JUSTIFIED: the fused variant \"flash-free\" is decomposed into its parts: version \"2\" comes out of the variant slot it had been hiding in (it was EMPTY before, so this populates a field rather than emptying one) and the trailing tokens become the modifier list \"flash,free\". The variant slot ends empty because the mimo series letter no longer keys the entity. Every token of the before-variant is accounted for after: the numeric part is the version and the tokens are \"flash\" and \"free\" in the modifier list, classified by curation rather than by position. 1 record(s) on opencode carry this exact transition."
+    },
+    {
+      "provider": "opencode-go",
+      "id": "mimo-v2-omni",
+      "raw_family": "mimo-v2-omni",
+      "before": "(family=\"mimo\",variant=\"v\",version=\"2\",modifier=\"omni\")",
+      "after": "(family=\"mimo\",variant=\"\",version=\"2\",modifier=\"omni\")",
+      "category": "justified-exception",
+      "reason": "JUSTIFIED: the mimo series letter leaves the entity key: variant \"v\" becomes empty while version \"2\" and modifier \"omni\" are carried across byte-identical. \"v\" was never a product line — every mimo id spells it, so it partitioned nothing and merely prefixed the key. The classifier flags an emptied populated field, but no FACT is lost: the letter is still consumed to extract the version (which is why it is not simply deleted from the family record), it survives in the provider ids and therefore in this model's nomina, and the key it leaves behind names the same artifact. 2 record(s) on opencode-go, xiaomi carry this exact transition."
+    },
+    {
+      "provider": "xiaomi",
+      "id": "mimo-v2-omni",
+      "raw_family": "mimo",
+      "before": "(family=\"mimo\",variant=\"v\",version=\"2\",modifier=\"omni\")",
+      "after": "(family=\"mimo\",variant=\"\",version=\"2\",modifier=\"omni\")",
+      "category": "justified-exception",
+      "reason": "JUSTIFIED: the mimo series letter leaves the entity key: variant \"v\" becomes empty while version \"2\" and modifier \"omni\" are carried across byte-identical. \"v\" was never a product line — every mimo id spells it, so it partitioned nothing and merely prefixed the key. The classifier flags an emptied populated field, but no FACT is lost: the letter is still consumed to extract the version (which is why it is not simply deleted from the family record), it survives in the provider ids and therefore in this model's nomina, and the key it leaves behind names the same artifact. 2 record(s) on opencode-go, xiaomi carry this exact transition."
+    },
+    {
       "provider": "opencode",
       "id": "mimo-v2-omni-free",
       "raw_family": "mimo-omni-free",
       "before": "(family=\"mimo\",variant=\"omni-free\",version=\"\",modifier=\"\")",
-      "after": "(family=\"mimo\",variant=\"v\",version=\"2\",modifier=\"omni,free\")",
+      "after": "(family=\"mimo\",variant=\"\",version=\"2\",modifier=\"omni,free\")",
       "category": "justified-exception",
-      "reason": "JUSTIFIED: same un-fusing as the row above, with a capability token in the compound variant: once free is peelable the trailing scan reaches omni too, so variant \"omni-free\" (version empty) becomes variant \"v\" at version 2 with modifiers omni,free. omni stays IDENTITY-class, so it remains in the entity key; only the pricing tier leaves it. Version goes empty -\u003e 2 and family is preserved."
+      "reason": "JUSTIFIED: the fused variant \"omni-free\" is decomposed into its parts: version \"2\" comes out of the variant slot it had been hiding in (it was EMPTY before, so this populates a field rather than emptying one) and the trailing tokens become the modifier list \"omni,free\". The variant slot ends empty because the mimo series letter no longer keys the entity. Every token of the before-variant is accounted for after: the numeric part is the version and the tokens are \"omni\" and \"free\" in the modifier list, classified by curation rather than by position. 1 record(s) on opencode carry this exact transition."
+    },
+    {
+      "provider": "abacus",
+      "id": "mimo-v2-pro",
+      "raw_family": "mimo",
+      "before": "(family=\"mimo\",variant=\"v\",version=\"2\",modifier=\"pro\")",
+      "after": "(family=\"mimo\",variant=\"\",version=\"2\",modifier=\"pro\")",
+      "category": "justified-exception",
+      "reason": "JUSTIFIED: the mimo series letter leaves the entity key: variant \"v\" becomes empty while version \"2\" and modifier \"pro\" are carried across byte-identical. \"v\" was never a product line — every mimo id spells it, so it partitioned nothing and merely prefixed the key. The classifier flags an emptied populated field, but no FACT is lost: the letter is still consumed to extract the version (which is why it is not simply deleted from the family record), it survives in the provider ids and therefore in this model's nomina, and the key it leaves behind names the same artifact. 6 record(s) on abacus, opencode-go, xiaomi, xiaomi-token-plan-ams, xiaomi-token-plan-cn, xiaomi-token-plan-sgp carry this exact transition."
+    },
+    {
+      "provider": "opencode-go",
+      "id": "mimo-v2-pro",
+      "raw_family": "mimo-v2-pro",
+      "before": "(family=\"mimo\",variant=\"v\",version=\"2\",modifier=\"pro\")",
+      "after": "(family=\"mimo\",variant=\"\",version=\"2\",modifier=\"pro\")",
+      "category": "justified-exception",
+      "reason": "JUSTIFIED: the mimo series letter leaves the entity key: variant \"v\" becomes empty while version \"2\" and modifier \"pro\" are carried across byte-identical. \"v\" was never a product line — every mimo id spells it, so it partitioned nothing and merely prefixed the key. The classifier flags an emptied populated field, but no FACT is lost: the letter is still consumed to extract the version (which is why it is not simply deleted from the family record), it survives in the provider ids and therefore in this model's nomina, and the key it leaves behind names the same artifact. 6 record(s) on abacus, opencode-go, xiaomi, xiaomi-token-plan-ams, xiaomi-token-plan-cn, xiaomi-token-plan-sgp carry this exact transition."
+    },
+    {
+      "provider": "xiaomi",
+      "id": "mimo-v2-pro",
+      "raw_family": "mimo",
+      "before": "(family=\"mimo\",variant=\"v\",version=\"2\",modifier=\"pro\")",
+      "after": "(family=\"mimo\",variant=\"\",version=\"2\",modifier=\"pro\")",
+      "category": "justified-exception",
+      "reason": "JUSTIFIED: the mimo series letter leaves the entity key: variant \"v\" becomes empty while version \"2\" and modifier \"pro\" are carried across byte-identical. \"v\" was never a product line — every mimo id spells it, so it partitioned nothing and merely prefixed the key. The classifier flags an emptied populated field, but no FACT is lost: the letter is still consumed to extract the version (which is why it is not simply deleted from the family record), it survives in the provider ids and therefore in this model's nomina, and the key it leaves behind names the same artifact. 6 record(s) on abacus, opencode-go, xiaomi, xiaomi-token-plan-ams, xiaomi-token-plan-cn, xiaomi-token-plan-sgp carry this exact transition."
+    },
+    {
+      "provider": "xiaomi-token-plan-ams",
+      "id": "mimo-v2-pro",
+      "raw_family": "mimo",
+      "before": "(family=\"mimo\",variant=\"v\",version=\"2\",modifier=\"pro\")",
+      "after": "(family=\"mimo\",variant=\"\",version=\"2\",modifier=\"pro\")",
+      "category": "justified-exception",
+      "reason": "JUSTIFIED: the mimo series letter leaves the entity key: variant \"v\" becomes empty while version \"2\" and modifier \"pro\" are carried across byte-identical. \"v\" was never a product line — every mimo id spells it, so it partitioned nothing and merely prefixed the key. The classifier flags an emptied populated field, but no FACT is lost: the letter is still consumed to extract the version (which is why it is not simply deleted from the family record), it survives in the provider ids and therefore in this model's nomina, and the key it leaves behind names the same artifact. 6 record(s) on abacus, opencode-go, xiaomi, xiaomi-token-plan-ams, xiaomi-token-plan-cn, xiaomi-token-plan-sgp carry this exact transition."
+    },
+    {
+      "provider": "xiaomi-token-plan-cn",
+      "id": "mimo-v2-pro",
+      "raw_family": "mimo",
+      "before": "(family=\"mimo\",variant=\"v\",version=\"2\",modifier=\"pro\")",
+      "after": "(family=\"mimo\",variant=\"\",version=\"2\",modifier=\"pro\")",
+      "category": "justified-exception",
+      "reason": "JUSTIFIED: the mimo series letter leaves the entity key: variant \"v\" becomes empty while version \"2\" and modifier \"pro\" are carried across byte-identical. \"v\" was never a product line — every mimo id spells it, so it partitioned nothing and merely prefixed the key. The classifier flags an emptied populated field, but no FACT is lost: the letter is still consumed to extract the version (which is why it is not simply deleted from the family record), it survives in the provider ids and therefore in this model's nomina, and the key it leaves behind names the same artifact. 6 record(s) on abacus, opencode-go, xiaomi, xiaomi-token-plan-ams, xiaomi-token-plan-cn, xiaomi-token-plan-sgp carry this exact transition."
+    },
+    {
+      "provider": "xiaomi-token-plan-sgp",
+      "id": "mimo-v2-pro",
+      "raw_family": "mimo",
+      "before": "(family=\"mimo\",variant=\"v\",version=\"2\",modifier=\"pro\")",
+      "after": "(family=\"mimo\",variant=\"\",version=\"2\",modifier=\"pro\")",
+      "category": "justified-exception",
+      "reason": "JUSTIFIED: the mimo series letter leaves the entity key: variant \"v\" becomes empty while version \"2\" and modifier \"pro\" are carried across byte-identical. \"v\" was never a product line — every mimo id spells it, so it partitioned nothing and merely prefixed the key. The classifier flags an emptied populated field, but no FACT is lost: the letter is still consumed to extract the version (which is why it is not simply deleted from the family record), it survives in the provider ids and therefore in this model's nomina, and the key it leaves behind names the same artifact. 6 record(s) on abacus, opencode-go, xiaomi, xiaomi-token-plan-ams, xiaomi-token-plan-cn, xiaomi-token-plan-sgp carry this exact transition."
     },
     {
       "provider": "opencode",
       "id": "mimo-v2-pro-free",
       "raw_family": "mimo-pro-free",
       "before": "(family=\"mimo\",variant=\"pro-free\",version=\"\",modifier=\"\")",
-      "after": "(family=\"mimo\",variant=\"v\",version=\"2\",modifier=\"pro,free\")",
+      "after": "(family=\"mimo\",variant=\"\",version=\"2\",modifier=\"pro,free\")",
       "category": "justified-exception",
-      "reason": "JUSTIFIED: same un-fusing as the omni row, with the pro tier token: variant \"pro-free\" (version empty) becomes variant \"v\" at version 2 with modifiers pro,free. pro is globally IDENTITY-class (the safe over-split for an AMBIGUOUS token) and stays in the key; only free leaves it."
+      "reason": "JUSTIFIED: the fused variant \"pro-free\" is decomposed into its parts: version \"2\" comes out of the variant slot it had been hiding in (it was EMPTY before, so this populates a field rather than emptying one) and the trailing tokens become the modifier list \"pro,free\". The variant slot ends empty because the mimo series letter no longer keys the entity. Every token of the before-variant is accounted for after: the numeric part is the version and the tokens are \"pro\" and \"free\" in the modifier list, classified by curation rather than by position. 1 record(s) on opencode carry this exact transition."
+    },
+    {
+      "provider": "llmgateway",
+      "id": "mimo-v2.5",
+      "raw_family": "mimo",
+      "before": "(family=\"mimo\",variant=\"v\",version=\"2.5\",modifier=\"\")",
+      "after": "(family=\"mimo\",variant=\"\",version=\"2.5\",modifier=\"\")",
+      "category": "justified-exception",
+      "reason": "JUSTIFIED: the mimo series letter leaves the entity key: variant \"v\" becomes empty while version \"2.5\" and modifier \"\" are carried across byte-identical. \"v\" was never a product line — every mimo id spells it, so it partitioned nothing and merely prefixed the key. The classifier flags an emptied populated field, but no FACT is lost: the letter is still consumed to extract the version (which is why it is not simply deleted from the family record), it survives in the provider ids and therefore in this model's nomina, and the key it leaves behind names the same artifact. 6 record(s) on llmgateway, opencode-go, xiaomi, xiaomi-token-plan-ams, xiaomi-token-plan-cn, xiaomi-token-plan-sgp carry this exact transition."
+    },
+    {
+      "provider": "opencode-go",
+      "id": "mimo-v2.5",
+      "raw_family": "mimo-v2.5",
+      "before": "(family=\"mimo\",variant=\"v\",version=\"2.5\",modifier=\"\")",
+      "after": "(family=\"mimo\",variant=\"\",version=\"2.5\",modifier=\"\")",
+      "category": "justified-exception",
+      "reason": "JUSTIFIED: the mimo series letter leaves the entity key: variant \"v\" becomes empty while version \"2.5\" and modifier \"\" are carried across byte-identical. \"v\" was never a product line — every mimo id spells it, so it partitioned nothing and merely prefixed the key. The classifier flags an emptied populated field, but no FACT is lost: the letter is still consumed to extract the version (which is why it is not simply deleted from the family record), it survives in the provider ids and therefore in this model's nomina, and the key it leaves behind names the same artifact. 6 record(s) on llmgateway, opencode-go, xiaomi, xiaomi-token-plan-ams, xiaomi-token-plan-cn, xiaomi-token-plan-sgp carry this exact transition."
+    },
+    {
+      "provider": "xiaomi",
+      "id": "mimo-v2.5",
+      "raw_family": "mimo",
+      "before": "(family=\"mimo\",variant=\"v\",version=\"2.5\",modifier=\"\")",
+      "after": "(family=\"mimo\",variant=\"\",version=\"2.5\",modifier=\"\")",
+      "category": "justified-exception",
+      "reason": "JUSTIFIED: the mimo series letter leaves the entity key: variant \"v\" becomes empty while version \"2.5\" and modifier \"\" are carried across byte-identical. \"v\" was never a product line — every mimo id spells it, so it partitioned nothing and merely prefixed the key. The classifier flags an emptied populated field, but no FACT is lost: the letter is still consumed to extract the version (which is why it is not simply deleted from the family record), it survives in the provider ids and therefore in this model's nomina, and the key it leaves behind names the same artifact. 6 record(s) on llmgateway, opencode-go, xiaomi, xiaomi-token-plan-ams, xiaomi-token-plan-cn, xiaomi-token-plan-sgp carry this exact transition."
+    },
+    {
+      "provider": "xiaomi-token-plan-ams",
+      "id": "mimo-v2.5",
+      "raw_family": "mimo",
+      "before": "(family=\"mimo\",variant=\"v\",version=\"2.5\",modifier=\"\")",
+      "after": "(family=\"mimo\",variant=\"\",version=\"2.5\",modifier=\"\")",
+      "category": "justified-exception",
+      "reason": "JUSTIFIED: the mimo series letter leaves the entity key: variant \"v\" becomes empty while version \"2.5\" and modifier \"\" are carried across byte-identical. \"v\" was never a product line — every mimo id spells it, so it partitioned nothing and merely prefixed the key. The classifier flags an emptied populated field, but no FACT is lost: the letter is still consumed to extract the version (which is why it is not simply deleted from the family record), it survives in the provider ids and therefore in this model's nomina, and the key it leaves behind names the same artifact. 6 record(s) on llmgateway, opencode-go, xiaomi, xiaomi-token-plan-ams, xiaomi-token-plan-cn, xiaomi-token-plan-sgp carry this exact transition."
+    },
+    {
+      "provider": "xiaomi-token-plan-cn",
+      "id": "mimo-v2.5",
+      "raw_family": "mimo",
+      "before": "(family=\"mimo\",variant=\"v\",version=\"2.5\",modifier=\"\")",
+      "after": "(family=\"mimo\",variant=\"\",version=\"2.5\",modifier=\"\")",
+      "category": "justified-exception",
+      "reason": "JUSTIFIED: the mimo series letter leaves the entity key: variant \"v\" becomes empty while version \"2.5\" and modifier \"\" are carried across byte-identical. \"v\" was never a product line — every mimo id spells it, so it partitioned nothing and merely prefixed the key. The classifier flags an emptied populated field, but no FACT is lost: the letter is still consumed to extract the version (which is why it is not simply deleted from the family record), it survives in the provider ids and therefore in this model's nomina, and the key it leaves behind names the same artifact. 6 record(s) on llmgateway, opencode-go, xiaomi, xiaomi-token-plan-ams, xiaomi-token-plan-cn, xiaomi-token-plan-sgp carry this exact transition."
+    },
+    {
+      "provider": "xiaomi-token-plan-sgp",
+      "id": "mimo-v2.5",
+      "raw_family": "mimo",
+      "before": "(family=\"mimo\",variant=\"v\",version=\"2.5\",modifier=\"\")",
+      "after": "(family=\"mimo\",variant=\"\",version=\"2.5\",modifier=\"\")",
+      "category": "justified-exception",
+      "reason": "JUSTIFIED: the mimo series letter leaves the entity key: variant \"v\" becomes empty while version \"2.5\" and modifier \"\" are carried across byte-identical. \"v\" was never a product line — every mimo id spells it, so it partitioned nothing and merely prefixed the key. The classifier flags an emptied populated field, but no FACT is lost: the letter is still consumed to extract the version (which is why it is not simply deleted from the family record), it survives in the provider ids and therefore in this model's nomina, and the key it leaves behind names the same artifact. 6 record(s) on llmgateway, opencode-go, xiaomi, xiaomi-token-plan-ams, xiaomi-token-plan-cn, xiaomi-token-plan-sgp carry this exact transition."
     },
     {
       "provider": "opencode",
       "id": "mimo-v2.5-free",
       "raw_family": "mimo-v2.5-free",
       "before": "(family=\"mimo\",variant=\"v2.5-free\",version=\"\",modifier=\"\")",
-      "after": "(family=\"mimo\",variant=\"v\",version=\"2.5\",modifier=\"free\")",
+      "after": "(family=\"mimo\",variant=\"\",version=\"2.5\",modifier=\"free\")",
       "category": "justified-exception",
-      "reason": "JUSTIFIED: the free demotion exposes the version the fused suffix was hiding: variant \"v2.5-free\" (version empty) becomes variant \"v\" at version 2.5 with free as an attribute modifier. Family is preserved and no populated field is emptied — the version slot goes from empty to populated, which is the taxonomy invariant this gate exists to protect."
+      "reason": "JUSTIFIED: the fused variant \"v2.5-free\" is decomposed into its parts: version \"2.5\" comes out of the variant slot it had been hiding in (it was EMPTY before, so this populates a field rather than emptying one) and the trailing tokens become the modifier list \"free\". The variant slot ends empty because the mimo series letter no longer keys the entity. Every token of the before-variant is accounted for after: the numeric part is the version and the token is \"free\" in the modifier list, classified by curation rather than by position. 1 record(s) on opencode carry this exact transition."
+    },
+    {
+      "provider": "crof",
+      "id": "mimo-v2.5-pro",
+      "raw_family": "mimo",
+      "before": "(family=\"mimo\",variant=\"v\",version=\"2.5\",modifier=\"pro\")",
+      "after": "(family=\"mimo\",variant=\"\",version=\"2.5\",modifier=\"pro\")",
+      "category": "justified-exception",
+      "reason": "JUSTIFIED: the mimo series letter leaves the entity key: variant \"v\" becomes empty while version \"2.5\" and modifier \"pro\" are carried across byte-identical. \"v\" was never a product line — every mimo id spells it, so it partitioned nothing and merely prefixed the key. The classifier flags an emptied populated field, but no FACT is lost: the letter is still consumed to extract the version (which is why it is not simply deleted from the family record), it survives in the provider ids and therefore in this model's nomina, and the key it leaves behind names the same artifact. 7 record(s) on crof, llmgateway, opencode-go, xiaomi, xiaomi-token-plan-ams, xiaomi-token-plan-cn, xiaomi-token-plan-sgp carry this exact transition."
+    },
+    {
+      "provider": "llmgateway",
+      "id": "mimo-v2.5-pro",
+      "raw_family": "mimo",
+      "before": "(family=\"mimo\",variant=\"v\",version=\"2.5\",modifier=\"pro\")",
+      "after": "(family=\"mimo\",variant=\"\",version=\"2.5\",modifier=\"pro\")",
+      "category": "justified-exception",
+      "reason": "JUSTIFIED: the mimo series letter leaves the entity key: variant \"v\" becomes empty while version \"2.5\" and modifier \"pro\" are carried across byte-identical. \"v\" was never a product line — every mimo id spells it, so it partitioned nothing and merely prefixed the key. The classifier flags an emptied populated field, but no FACT is lost: the letter is still consumed to extract the version (which is why it is not simply deleted from the family record), it survives in the provider ids and therefore in this model's nomina, and the key it leaves behind names the same artifact. 7 record(s) on crof, llmgateway, opencode-go, xiaomi, xiaomi-token-plan-ams, xiaomi-token-plan-cn, xiaomi-token-plan-sgp carry this exact transition."
+    },
+    {
+      "provider": "opencode-go",
+      "id": "mimo-v2.5-pro",
+      "raw_family": "mimo-v2.5-pro",
+      "before": "(family=\"mimo\",variant=\"v\",version=\"2.5\",modifier=\"pro\")",
+      "after": "(family=\"mimo\",variant=\"\",version=\"2.5\",modifier=\"pro\")",
+      "category": "justified-exception",
+      "reason": "JUSTIFIED: the mimo series letter leaves the entity key: variant \"v\" becomes empty while version \"2.5\" and modifier \"pro\" are carried across byte-identical. \"v\" was never a product line — every mimo id spells it, so it partitioned nothing and merely prefixed the key. The classifier flags an emptied populated field, but no FACT is lost: the letter is still consumed to extract the version (which is why it is not simply deleted from the family record), it survives in the provider ids and therefore in this model's nomina, and the key it leaves behind names the same artifact. 7 record(s) on crof, llmgateway, opencode-go, xiaomi, xiaomi-token-plan-ams, xiaomi-token-plan-cn, xiaomi-token-plan-sgp carry this exact transition."
+    },
+    {
+      "provider": "xiaomi",
+      "id": "mimo-v2.5-pro",
+      "raw_family": "mimo",
+      "before": "(family=\"mimo\",variant=\"v\",version=\"2.5\",modifier=\"pro\")",
+      "after": "(family=\"mimo\",variant=\"\",version=\"2.5\",modifier=\"pro\")",
+      "category": "justified-exception",
+      "reason": "JUSTIFIED: the mimo series letter leaves the entity key: variant \"v\" becomes empty while version \"2.5\" and modifier \"pro\" are carried across byte-identical. \"v\" was never a product line — every mimo id spells it, so it partitioned nothing and merely prefixed the key. The classifier flags an emptied populated field, but no FACT is lost: the letter is still consumed to extract the version (which is why it is not simply deleted from the family record), it survives in the provider ids and therefore in this model's nomina, and the key it leaves behind names the same artifact. 7 record(s) on crof, llmgateway, opencode-go, xiaomi, xiaomi-token-plan-ams, xiaomi-token-plan-cn, xiaomi-token-plan-sgp carry this exact transition."
+    },
+    {
+      "provider": "xiaomi-token-plan-ams",
+      "id": "mimo-v2.5-pro",
+      "raw_family": "mimo",
+      "before": "(family=\"mimo\",variant=\"v\",version=\"2.5\",modifier=\"pro\")",
+      "after": "(family=\"mimo\",variant=\"\",version=\"2.5\",modifier=\"pro\")",
+      "category": "justified-exception",
+      "reason": "JUSTIFIED: the mimo series letter leaves the entity key: variant \"v\" becomes empty while version \"2.5\" and modifier \"pro\" are carried across byte-identical. \"v\" was never a product line — every mimo id spells it, so it partitioned nothing and merely prefixed the key. The classifier flags an emptied populated field, but no FACT is lost: the letter is still consumed to extract the version (which is why it is not simply deleted from the family record), it survives in the provider ids and therefore in this model's nomina, and the key it leaves behind names the same artifact. 7 record(s) on crof, llmgateway, opencode-go, xiaomi, xiaomi-token-plan-ams, xiaomi-token-plan-cn, xiaomi-token-plan-sgp carry this exact transition."
+    },
+    {
+      "provider": "xiaomi-token-plan-cn",
+      "id": "mimo-v2.5-pro",
+      "raw_family": "mimo",
+      "before": "(family=\"mimo\",variant=\"v\",version=\"2.5\",modifier=\"pro\")",
+      "after": "(family=\"mimo\",variant=\"\",version=\"2.5\",modifier=\"pro\")",
+      "category": "justified-exception",
+      "reason": "JUSTIFIED: the mimo series letter leaves the entity key: variant \"v\" becomes empty while version \"2.5\" and modifier \"pro\" are carried across byte-identical. \"v\" was never a product line — every mimo id spells it, so it partitioned nothing and merely prefixed the key. The classifier flags an emptied populated field, but no FACT is lost: the letter is still consumed to extract the version (which is why it is not simply deleted from the family record), it survives in the provider ids and therefore in this model's nomina, and the key it leaves behind names the same artifact. 7 record(s) on crof, llmgateway, opencode-go, xiaomi, xiaomi-token-plan-ams, xiaomi-token-plan-cn, xiaomi-token-plan-sgp carry this exact transition."
+    },
+    {
+      "provider": "xiaomi-token-plan-sgp",
+      "id": "mimo-v2.5-pro",
+      "raw_family": "mimo",
+      "before": "(family=\"mimo\",variant=\"v\",version=\"2.5\",modifier=\"pro\")",
+      "after": "(family=\"mimo\",variant=\"\",version=\"2.5\",modifier=\"pro\")",
+      "category": "justified-exception",
+      "reason": "JUSTIFIED: the mimo series letter leaves the entity key: variant \"v\" becomes empty while version \"2.5\" and modifier \"pro\" are carried across byte-identical. \"v\" was never a product line — every mimo id spells it, so it partitioned nothing and merely prefixed the key. The classifier flags an emptied populated field, but no FACT is lost: the letter is still consumed to extract the version (which is why it is not simply deleted from the family record), it survives in the provider ids and therefore in this model's nomina, and the key it leaves behind names the same artifact. 7 record(s) on crof, llmgateway, opencode-go, xiaomi, xiaomi-token-plan-ams, xiaomi-token-plan-cn, xiaomi-token-plan-sgp carry this exact transition."
+    },
+    {
+      "provider": "xiaomi-token-plan-ams",
+      "id": "mimo-v2.5-tts",
+      "raw_family": "mimo",
+      "before": "(family=\"mimo\",variant=\"v2.5-tts\",version=\"\",modifier=\"\")",
+      "after": "(family=\"mimo\",variant=\"\",version=\"2.5\",modifier=\"tts\")",
+      "category": "justified-exception",
+      "reason": "JUSTIFIED: the fused variant \"v2.5-tts\" is decomposed into its parts: version \"2.5\" comes out of the variant slot it had been hiding in (it was EMPTY before, so this populates a field rather than emptying one) and the trailing tokens become the modifier list \"tts\". The variant slot ends empty because the mimo series letter no longer keys the entity. Every token of the before-variant is accounted for after: the numeric part is the version and the token is \"tts\" in the modifier list, classified by curation rather than by position. 3 record(s) on xiaomi-token-plan-ams, xiaomi-token-plan-cn, xiaomi-token-plan-sgp carry this exact transition."
+    },
+    {
+      "provider": "xiaomi-token-plan-cn",
+      "id": "mimo-v2.5-tts",
+      "raw_family": "mimo",
+      "before": "(family=\"mimo\",variant=\"v2.5-tts\",version=\"\",modifier=\"\")",
+      "after": "(family=\"mimo\",variant=\"\",version=\"2.5\",modifier=\"tts\")",
+      "category": "justified-exception",
+      "reason": "JUSTIFIED: the fused variant \"v2.5-tts\" is decomposed into its parts: version \"2.5\" comes out of the variant slot it had been hiding in (it was EMPTY before, so this populates a field rather than emptying one) and the trailing tokens become the modifier list \"tts\". The variant slot ends empty because the mimo series letter no longer keys the entity. Every token of the before-variant is accounted for after: the numeric part is the version and the token is \"tts\" in the modifier list, classified by curation rather than by position. 3 record(s) on xiaomi-token-plan-ams, xiaomi-token-plan-cn, xiaomi-token-plan-sgp carry this exact transition."
+    },
+    {
+      "provider": "xiaomi-token-plan-sgp",
+      "id": "mimo-v2.5-tts",
+      "raw_family": "mimo",
+      "before": "(family=\"mimo\",variant=\"v2.5-tts\",version=\"\",modifier=\"\")",
+      "after": "(family=\"mimo\",variant=\"\",version=\"2.5\",modifier=\"tts\")",
+      "category": "justified-exception",
+      "reason": "JUSTIFIED: the fused variant \"v2.5-tts\" is decomposed into its parts: version \"2.5\" comes out of the variant slot it had been hiding in (it was EMPTY before, so this populates a field rather than emptying one) and the trailing tokens become the modifier list \"tts\". The variant slot ends empty because the mimo series letter no longer keys the entity. Every token of the before-variant is accounted for after: the numeric part is the version and the token is \"tts\" in the modifier list, classified by curation rather than by position. 3 record(s) on xiaomi-token-plan-ams, xiaomi-token-plan-cn, xiaomi-token-plan-sgp carry this exact transition."
+    },
+    {
+      "provider": "xiaomi-token-plan-ams",
+      "id": "mimo-v2.5-tts-voiceclone",
+      "raw_family": "mimo",
+      "before": "(family=\"mimo\",variant=\"v2.5-tts-voiceclone\",version=\"\",modifier=\"\")",
+      "after": "(family=\"mimo\",variant=\"\",version=\"2.5\",modifier=\"tts,voiceclone\")",
+      "category": "justified-exception",
+      "reason": "JUSTIFIED: the fused variant \"v2.5-tts-voiceclone\" is decomposed into its parts: version \"2.5\" comes out of the variant slot it had been hiding in (it was EMPTY before, so this populates a field rather than emptying one) and the trailing tokens become the modifier list \"tts,voiceclone\". The variant slot ends empty because the mimo series letter no longer keys the entity. Every token of the before-variant is accounted for after: the numeric part is the version and the tokens are \"tts\" and \"voiceclone\" in the modifier list, classified by curation rather than by position. 3 record(s) on xiaomi-token-plan-ams, xiaomi-token-plan-cn, xiaomi-token-plan-sgp carry this exact transition."
+    },
+    {
+      "provider": "xiaomi-token-plan-cn",
+      "id": "mimo-v2.5-tts-voiceclone",
+      "raw_family": "mimo",
+      "before": "(family=\"mimo\",variant=\"v2.5-tts-voiceclone\",version=\"\",modifier=\"\")",
+      "after": "(family=\"mimo\",variant=\"\",version=\"2.5\",modifier=\"tts,voiceclone\")",
+      "category": "justified-exception",
+      "reason": "JUSTIFIED: the fused variant \"v2.5-tts-voiceclone\" is decomposed into its parts: version \"2.5\" comes out of the variant slot it had been hiding in (it was EMPTY before, so this populates a field rather than emptying one) and the trailing tokens become the modifier list \"tts,voiceclone\". The variant slot ends empty because the mimo series letter no longer keys the entity. Every token of the before-variant is accounted for after: the numeric part is the version and the tokens are \"tts\" and \"voiceclone\" in the modifier list, classified by curation rather than by position. 3 record(s) on xiaomi-token-plan-ams, xiaomi-token-plan-cn, xiaomi-token-plan-sgp carry this exact transition."
+    },
+    {
+      "provider": "xiaomi-token-plan-sgp",
+      "id": "mimo-v2.5-tts-voiceclone",
+      "raw_family": "mimo",
+      "before": "(family=\"mimo\",variant=\"v2.5-tts-voiceclone\",version=\"\",modifier=\"\")",
+      "after": "(family=\"mimo\",variant=\"\",version=\"2.5\",modifier=\"tts,voiceclone\")",
+      "category": "justified-exception",
+      "reason": "JUSTIFIED: the fused variant \"v2.5-tts-voiceclone\" is decomposed into its parts: version \"2.5\" comes out of the variant slot it had been hiding in (it was EMPTY before, so this populates a field rather than emptying one) and the trailing tokens become the modifier list \"tts,voiceclone\". The variant slot ends empty because the mimo series letter no longer keys the entity. Every token of the before-variant is accounted for after: the numeric part is the version and the tokens are \"tts\" and \"voiceclone\" in the modifier list, classified by curation rather than by position. 3 record(s) on xiaomi-token-plan-ams, xiaomi-token-plan-cn, xiaomi-token-plan-sgp carry this exact transition."
+    },
+    {
+      "provider": "xiaomi-token-plan-ams",
+      "id": "mimo-v2.5-tts-voicedesign",
+      "raw_family": "mimo",
+      "before": "(family=\"mimo\",variant=\"v2.5-tts-voicedesign\",version=\"\",modifier=\"\")",
+      "after": "(family=\"mimo\",variant=\"\",version=\"2.5\",modifier=\"tts,voicedesign\")",
+      "category": "justified-exception",
+      "reason": "JUSTIFIED: the fused variant \"v2.5-tts-voicedesign\" is decomposed into its parts: version \"2.5\" comes out of the variant slot it had been hiding in (it was EMPTY before, so this populates a field rather than emptying one) and the trailing tokens become the modifier list \"tts,voicedesign\". The variant slot ends empty because the mimo series letter no longer keys the entity. Every token of the before-variant is accounted for after: the numeric part is the version and the tokens are \"tts\" and \"voicedesign\" in the modifier list, classified by curation rather than by position. 3 record(s) on xiaomi-token-plan-ams, xiaomi-token-plan-cn, xiaomi-token-plan-sgp carry this exact transition."
+    },
+    {
+      "provider": "xiaomi-token-plan-cn",
+      "id": "mimo-v2.5-tts-voicedesign",
+      "raw_family": "mimo",
+      "before": "(family=\"mimo\",variant=\"v2.5-tts-voicedesign\",version=\"\",modifier=\"\")",
+      "after": "(family=\"mimo\",variant=\"\",version=\"2.5\",modifier=\"tts,voicedesign\")",
+      "category": "justified-exception",
+      "reason": "JUSTIFIED: the fused variant \"v2.5-tts-voicedesign\" is decomposed into its parts: version \"2.5\" comes out of the variant slot it had been hiding in (it was EMPTY before, so this populates a field rather than emptying one) and the trailing tokens become the modifier list \"tts,voicedesign\". The variant slot ends empty because the mimo series letter no longer keys the entity. Every token of the before-variant is accounted for after: the numeric part is the version and the tokens are \"tts\" and \"voicedesign\" in the modifier list, classified by curation rather than by position. 3 record(s) on xiaomi-token-plan-ams, xiaomi-token-plan-cn, xiaomi-token-plan-sgp carry this exact transition."
+    },
+    {
+      "provider": "xiaomi-token-plan-sgp",
+      "id": "mimo-v2.5-tts-voicedesign",
+      "raw_family": "mimo",
+      "before": "(family=\"mimo\",variant=\"v2.5-tts-voicedesign\",version=\"\",modifier=\"\")",
+      "after": "(family=\"mimo\",variant=\"\",version=\"2.5\",modifier=\"tts,voicedesign\")",
+      "category": "justified-exception",
+      "reason": "JUSTIFIED: the fused variant \"v2.5-tts-voicedesign\" is decomposed into its parts: version \"2.5\" comes out of the variant slot it had been hiding in (it was EMPTY before, so this populates a field rather than emptying one) and the trailing tokens become the modifier list \"tts,voicedesign\". The variant slot ends empty because the mimo series letter no longer keys the entity. Every token of the before-variant is accounted for after: the numeric part is the version and the tokens are \"tts\" and \"voicedesign\" in the modifier list, classified by curation rather than by position. 3 record(s) on xiaomi-token-plan-ams, xiaomi-token-plan-cn, xiaomi-token-plan-sgp carry this exact transition."
     },
     {
       "provider": "opencode",
@@ -442,13 +1081,229 @@
       "reason": "JUSTIFIED: the free demotion un-fuses the upstream raw family \"minimax-m3\": before, \"m3\" was glued into the family token and the pricing tier occupied the variant slot, so the record stranded on a phantom minimax-m3 family with no version; after, it decomposes to the real minimax family on the m series at version 3, with free carried as an attribute modifier. Family, variant and version all become MORE correct and the record joins minimax/m@3 instead of a one-instance junk line."
     },
     {
+      "provider": "venice",
+      "id": "xiaomi-mimo-v2-5",
+      "raw_family": "mimo",
+      "before": "(family=\"mimo\",variant=\"v\",version=\"2.5\",modifier=\"\")",
+      "after": "(family=\"mimo\",variant=\"\",version=\"2.5\",modifier=\"\")",
+      "category": "justified-exception",
+      "reason": "JUSTIFIED: the mimo series letter leaves the entity key: variant \"v\" becomes empty while version \"2.5\" and modifier \"\" are carried across byte-identical. \"v\" was never a product line — every mimo id spells it, so it partitioned nothing and merely prefixed the key. The classifier flags an emptied populated field, but no FACT is lost: the letter is still consumed to extract the version (which is why it is not simply deleted from the family record), it survives in the provider ids and therefore in this model's nomina, and the key it leaves behind names the same artifact. 1 record(s) on venice carry this exact transition."
+    },
+    {
+      "provider": "aihubmix",
+      "id": "xiaomi-mimo-v2.5",
+      "raw_family": "mimo-v2.5",
+      "before": "(family=\"mimo\",variant=\"v\",version=\"2.5\",modifier=\"\")",
+      "after": "(family=\"mimo\",variant=\"\",version=\"2.5\",modifier=\"\")",
+      "category": "justified-exception",
+      "reason": "JUSTIFIED: the mimo series letter leaves the entity key: variant \"v\" becomes empty while version \"2.5\" and modifier \"\" are carried across byte-identical. \"v\" was never a product line — every mimo id spells it, so it partitioned nothing and merely prefixed the key. The classifier flags an emptied populated field, but no FACT is lost: the letter is still consumed to extract the version (which is why it is not simply deleted from the family record), it survives in the provider ids and therefore in this model's nomina, and the key it leaves behind names the same artifact. 1 record(s) on aihubmix carry this exact transition."
+    },
+    {
+      "provider": "aihubmix",
+      "id": "xiaomi-mimo-v2.5-pro",
+      "raw_family": "mimo-v2.5-pro",
+      "before": "(family=\"mimo\",variant=\"v\",version=\"2.5\",modifier=\"pro\")",
+      "after": "(family=\"mimo\",variant=\"\",version=\"2.5\",modifier=\"pro\")",
+      "category": "justified-exception",
+      "reason": "JUSTIFIED: the mimo series letter leaves the entity key: variant \"v\" becomes empty while version \"2.5\" and modifier \"pro\" are carried across byte-identical. \"v\" was never a product line — every mimo id spells it, so it partitioned nothing and merely prefixed the key. The classifier flags an emptied populated field, but no FACT is lost: the letter is still consumed to extract the version (which is why it is not simply deleted from the family record), it survives in the provider ids and therefore in this model's nomina, and the key it leaves behind names the same artifact. 1 record(s) on aihubmix carry this exact transition."
+    },
+    {
       "provider": "aihubmix",
       "id": "xiaomi-mimo-v2.5-pro-free",
       "raw_family": "mimo-v2.5-pro",
       "before": "(family=\"mimo\",variant=\"v2.5-pro\",version=\"\",modifier=\"\")",
-      "after": "(family=\"mimo\",variant=\"v\",version=\"2.5\",modifier=\"pro,free\")",
+      "after": "(family=\"mimo\",variant=\"\",version=\"2.5\",modifier=\"pro,free\")",
       "category": "justified-exception",
-      "reason": "JUSTIFIED: the aihubmix spelling of the mimo 2.5 Pro free tier. Its upstream raw family is \"mimo-v2.5-pro\" (the free suffix appears only in the model id), so the BEFORE tuple fused the whole version+tier into the variant slot with no version at all. After the demotion it decomposes to variant \"v\" at version 2.5 with modifiers pro,free — and, being the same tuple the opencode mimo-v2.5-pro-free row now reaches, it CONVERGES two providers' spellings of one model rather than worsening either."
+      "reason": "JUSTIFIED: the fused variant \"v2.5-pro\" is decomposed into its parts: version \"2.5\" comes out of the variant slot it had been hiding in (it was EMPTY before, so this populates a field rather than emptying one) and the trailing tokens become the modifier list \"pro,free\". The variant slot ends empty because the mimo series letter no longer keys the entity. Every token of the before-variant is accounted for after: the numeric part is the version and the tokens are \"pro\" and \"free\" in the modifier list, classified by curation rather than by position. 1 record(s) on aihubmix carry this exact transition."
+    },
+    {
+      "provider": "kilo",
+      "id": "xiaomi/mimo-v2-omni",
+      "raw_family": "mimo",
+      "before": "(family=\"mimo\",variant=\"v\",version=\"2\",modifier=\"omni\")",
+      "after": "(family=\"mimo\",variant=\"\",version=\"2\",modifier=\"omni\")",
+      "category": "justified-exception",
+      "reason": "JUSTIFIED: the mimo series letter leaves the entity key: variant \"v\" becomes empty while version \"2\" and modifier \"omni\" are carried across byte-identical. \"v\" was never a product line — every mimo id spells it, so it partitioned nothing and merely prefixed the key. The classifier flags an emptied populated field, but no FACT is lost: the letter is still consumed to extract the version (which is why it is not simply deleted from the family record), it survives in the provider ids and therefore in this model's nomina, and the key it leaves behind names the same artifact. 3 record(s) on kilo, nano-gpt, zenmux carry this exact transition."
+    },
+    {
+      "provider": "nano-gpt",
+      "id": "xiaomi/mimo-v2-omni",
+      "raw_family": "",
+      "before": "(family=\"mimo\",variant=\"v\",version=\"2\",modifier=\"omni\")",
+      "after": "(family=\"mimo\",variant=\"\",version=\"2\",modifier=\"omni\")",
+      "category": "justified-exception",
+      "reason": "JUSTIFIED: the mimo series letter leaves the entity key: variant \"v\" becomes empty while version \"2\" and modifier \"omni\" are carried across byte-identical. \"v\" was never a product line — every mimo id spells it, so it partitioned nothing and merely prefixed the key. The classifier flags an emptied populated field, but no FACT is lost: the letter is still consumed to extract the version (which is why it is not simply deleted from the family record), it survives in the provider ids and therefore in this model's nomina, and the key it leaves behind names the same artifact. 3 record(s) on kilo, nano-gpt, zenmux carry this exact transition."
+    },
+    {
+      "provider": "zenmux",
+      "id": "xiaomi/mimo-v2-omni",
+      "raw_family": "mimo",
+      "before": "(family=\"mimo\",variant=\"v\",version=\"2\",modifier=\"omni\")",
+      "after": "(family=\"mimo\",variant=\"\",version=\"2\",modifier=\"omni\")",
+      "category": "justified-exception",
+      "reason": "JUSTIFIED: the mimo series letter leaves the entity key: variant \"v\" becomes empty while version \"2\" and modifier \"omni\" are carried across byte-identical. \"v\" was never a product line — every mimo id spells it, so it partitioned nothing and merely prefixed the key. The classifier flags an emptied populated field, but no FACT is lost: the letter is still consumed to extract the version (which is why it is not simply deleted from the family record), it survives in the provider ids and therefore in this model's nomina, and the key it leaves behind names the same artifact. 3 record(s) on kilo, nano-gpt, zenmux carry this exact transition."
+    },
+    {
+      "provider": "kilo",
+      "id": "xiaomi/mimo-v2-pro",
+      "raw_family": "mimo",
+      "before": "(family=\"mimo\",variant=\"v\",version=\"2\",modifier=\"pro\")",
+      "after": "(family=\"mimo\",variant=\"\",version=\"2\",modifier=\"pro\")",
+      "category": "justified-exception",
+      "reason": "JUSTIFIED: the mimo series letter leaves the entity key: variant \"v\" becomes empty while version \"2\" and modifier \"pro\" are carried across byte-identical. \"v\" was never a product line — every mimo id spells it, so it partitioned nothing and merely prefixed the key. The classifier flags an emptied populated field, but no FACT is lost: the letter is still consumed to extract the version (which is why it is not simply deleted from the family record), it survives in the provider ids and therefore in this model's nomina, and the key it leaves behind names the same artifact. 3 record(s) on kilo, nano-gpt, zenmux carry this exact transition."
+    },
+    {
+      "provider": "nano-gpt",
+      "id": "xiaomi/mimo-v2-pro",
+      "raw_family": "",
+      "before": "(family=\"mimo\",variant=\"v\",version=\"2\",modifier=\"pro\")",
+      "after": "(family=\"mimo\",variant=\"\",version=\"2\",modifier=\"pro\")",
+      "category": "justified-exception",
+      "reason": "JUSTIFIED: the mimo series letter leaves the entity key: variant \"v\" becomes empty while version \"2\" and modifier \"pro\" are carried across byte-identical. \"v\" was never a product line — every mimo id spells it, so it partitioned nothing and merely prefixed the key. The classifier flags an emptied populated field, but no FACT is lost: the letter is still consumed to extract the version (which is why it is not simply deleted from the family record), it survives in the provider ids and therefore in this model's nomina, and the key it leaves behind names the same artifact. 3 record(s) on kilo, nano-gpt, zenmux carry this exact transition."
+    },
+    {
+      "provider": "zenmux",
+      "id": "xiaomi/mimo-v2-pro",
+      "raw_family": "mimo",
+      "before": "(family=\"mimo\",variant=\"v\",version=\"2\",modifier=\"pro\")",
+      "after": "(family=\"mimo\",variant=\"\",version=\"2\",modifier=\"pro\")",
+      "category": "justified-exception",
+      "reason": "JUSTIFIED: the mimo series letter leaves the entity key: variant \"v\" becomes empty while version \"2\" and modifier \"pro\" are carried across byte-identical. \"v\" was never a product line — every mimo id spells it, so it partitioned nothing and merely prefixed the key. The classifier flags an emptied populated field, but no FACT is lost: the letter is still consumed to extract the version (which is why it is not simply deleted from the family record), it survives in the provider ids and therefore in this model's nomina, and the key it leaves behind names the same artifact. 3 record(s) on kilo, nano-gpt, zenmux carry this exact transition."
+    },
+    {
+      "provider": "ambient",
+      "id": "xiaomi/mimo-v2.5",
+      "raw_family": "mimo",
+      "before": "(family=\"mimo\",variant=\"v\",version=\"2.5\",modifier=\"\")",
+      "after": "(family=\"mimo\",variant=\"\",version=\"2.5\",modifier=\"\")",
+      "category": "justified-exception",
+      "reason": "JUSTIFIED: the mimo series letter leaves the entity key: variant \"v\" becomes empty while version \"2.5\" and modifier \"\" are carried across byte-identical. \"v\" was never a product line — every mimo id spells it, so it partitioned nothing and merely prefixed the key. The classifier flags an emptied populated field, but no FACT is lost: the letter is still consumed to extract the version (which is why it is not simply deleted from the family record), it survives in the provider ids and therefore in this model's nomina, and the key it leaves behind names the same artifact. 7 record(s) on ambient, crossmodel, kilo, nano-gpt, openrouter, vercel, zenmux carry this exact transition."
+    },
+    {
+      "provider": "crossmodel",
+      "id": "xiaomi/mimo-v2.5",
+      "raw_family": "mimo",
+      "before": "(family=\"mimo\",variant=\"v\",version=\"2.5\",modifier=\"\")",
+      "after": "(family=\"mimo\",variant=\"\",version=\"2.5\",modifier=\"\")",
+      "category": "justified-exception",
+      "reason": "JUSTIFIED: the mimo series letter leaves the entity key: variant \"v\" becomes empty while version \"2.5\" and modifier \"\" are carried across byte-identical. \"v\" was never a product line — every mimo id spells it, so it partitioned nothing and merely prefixed the key. The classifier flags an emptied populated field, but no FACT is lost: the letter is still consumed to extract the version (which is why it is not simply deleted from the family record), it survives in the provider ids and therefore in this model's nomina, and the key it leaves behind names the same artifact. 7 record(s) on ambient, crossmodel, kilo, nano-gpt, openrouter, vercel, zenmux carry this exact transition."
+    },
+    {
+      "provider": "kilo",
+      "id": "xiaomi/mimo-v2.5",
+      "raw_family": "mimo",
+      "before": "(family=\"mimo\",variant=\"v\",version=\"2.5\",modifier=\"\")",
+      "after": "(family=\"mimo\",variant=\"\",version=\"2.5\",modifier=\"\")",
+      "category": "justified-exception",
+      "reason": "JUSTIFIED: the mimo series letter leaves the entity key: variant \"v\" becomes empty while version \"2.5\" and modifier \"\" are carried across byte-identical. \"v\" was never a product line — every mimo id spells it, so it partitioned nothing and merely prefixed the key. The classifier flags an emptied populated field, but no FACT is lost: the letter is still consumed to extract the version (which is why it is not simply deleted from the family record), it survives in the provider ids and therefore in this model's nomina, and the key it leaves behind names the same artifact. 7 record(s) on ambient, crossmodel, kilo, nano-gpt, openrouter, vercel, zenmux carry this exact transition."
+    },
+    {
+      "provider": "nano-gpt",
+      "id": "xiaomi/mimo-v2.5",
+      "raw_family": "",
+      "before": "(family=\"mimo\",variant=\"v\",version=\"2.5\",modifier=\"\")",
+      "after": "(family=\"mimo\",variant=\"\",version=\"2.5\",modifier=\"\")",
+      "category": "justified-exception",
+      "reason": "JUSTIFIED: the mimo series letter leaves the entity key: variant \"v\" becomes empty while version \"2.5\" and modifier \"\" are carried across byte-identical. \"v\" was never a product line — every mimo id spells it, so it partitioned nothing and merely prefixed the key. The classifier flags an emptied populated field, but no FACT is lost: the letter is still consumed to extract the version (which is why it is not simply deleted from the family record), it survives in the provider ids and therefore in this model's nomina, and the key it leaves behind names the same artifact. 7 record(s) on ambient, crossmodel, kilo, nano-gpt, openrouter, vercel, zenmux carry this exact transition."
+    },
+    {
+      "provider": "openrouter",
+      "id": "xiaomi/mimo-v2.5",
+      "raw_family": "mimo",
+      "before": "(family=\"mimo\",variant=\"v\",version=\"2.5\",modifier=\"\")",
+      "after": "(family=\"mimo\",variant=\"\",version=\"2.5\",modifier=\"\")",
+      "category": "justified-exception",
+      "reason": "JUSTIFIED: the mimo series letter leaves the entity key: variant \"v\" becomes empty while version \"2.5\" and modifier \"\" are carried across byte-identical. \"v\" was never a product line — every mimo id spells it, so it partitioned nothing and merely prefixed the key. The classifier flags an emptied populated field, but no FACT is lost: the letter is still consumed to extract the version (which is why it is not simply deleted from the family record), it survives in the provider ids and therefore in this model's nomina, and the key it leaves behind names the same artifact. 7 record(s) on ambient, crossmodel, kilo, nano-gpt, openrouter, vercel, zenmux carry this exact transition."
+    },
+    {
+      "provider": "vercel",
+      "id": "xiaomi/mimo-v2.5",
+      "raw_family": "mimo-v2.5",
+      "before": "(family=\"mimo\",variant=\"v\",version=\"2.5\",modifier=\"\")",
+      "after": "(family=\"mimo\",variant=\"\",version=\"2.5\",modifier=\"\")",
+      "category": "justified-exception",
+      "reason": "JUSTIFIED: the mimo series letter leaves the entity key: variant \"v\" becomes empty while version \"2.5\" and modifier \"\" are carried across byte-identical. \"v\" was never a product line — every mimo id spells it, so it partitioned nothing and merely prefixed the key. The classifier flags an emptied populated field, but no FACT is lost: the letter is still consumed to extract the version (which is why it is not simply deleted from the family record), it survives in the provider ids and therefore in this model's nomina, and the key it leaves behind names the same artifact. 7 record(s) on ambient, crossmodel, kilo, nano-gpt, openrouter, vercel, zenmux carry this exact transition."
+    },
+    {
+      "provider": "zenmux",
+      "id": "xiaomi/mimo-v2.5",
+      "raw_family": "mimo",
+      "before": "(family=\"mimo\",variant=\"v\",version=\"2.5\",modifier=\"\")",
+      "after": "(family=\"mimo\",variant=\"\",version=\"2.5\",modifier=\"\")",
+      "category": "justified-exception",
+      "reason": "JUSTIFIED: the mimo series letter leaves the entity key: variant \"v\" becomes empty while version \"2.5\" and modifier \"\" are carried across byte-identical. \"v\" was never a product line — every mimo id spells it, so it partitioned nothing and merely prefixed the key. The classifier flags an emptied populated field, but no FACT is lost: the letter is still consumed to extract the version (which is why it is not simply deleted from the family record), it survives in the provider ids and therefore in this model's nomina, and the key it leaves behind names the same artifact. 7 record(s) on ambient, crossmodel, kilo, nano-gpt, openrouter, vercel, zenmux carry this exact transition."
+    },
+    {
+      "provider": "crossmodel",
+      "id": "xiaomi/mimo-v2.5-pro",
+      "raw_family": "mimo",
+      "before": "(family=\"mimo\",variant=\"v\",version=\"2.5\",modifier=\"pro\")",
+      "after": "(family=\"mimo\",variant=\"\",version=\"2.5\",modifier=\"pro\")",
+      "category": "justified-exception",
+      "reason": "JUSTIFIED: the mimo series letter leaves the entity key: variant \"v\" becomes empty while version \"2.5\" and modifier \"pro\" are carried across byte-identical. \"v\" was never a product line — every mimo id spells it, so it partitioned nothing and merely prefixed the key. The classifier flags an emptied populated field, but no FACT is lost: the letter is still consumed to extract the version (which is why it is not simply deleted from the family record), it survives in the provider ids and therefore in this model's nomina, and the key it leaves behind names the same artifact. 6 record(s) on crossmodel, kilo, nano-gpt, openrouter, vercel, zenmux carry this exact transition."
+    },
+    {
+      "provider": "kilo",
+      "id": "xiaomi/mimo-v2.5-pro",
+      "raw_family": "mimo",
+      "before": "(family=\"mimo\",variant=\"v\",version=\"2.5\",modifier=\"pro\")",
+      "after": "(family=\"mimo\",variant=\"\",version=\"2.5\",modifier=\"pro\")",
+      "category": "justified-exception",
+      "reason": "JUSTIFIED: the mimo series letter leaves the entity key: variant \"v\" becomes empty while version \"2.5\" and modifier \"pro\" are carried across byte-identical. \"v\" was never a product line — every mimo id spells it, so it partitioned nothing and merely prefixed the key. The classifier flags an emptied populated field, but no FACT is lost: the letter is still consumed to extract the version (which is why it is not simply deleted from the family record), it survives in the provider ids and therefore in this model's nomina, and the key it leaves behind names the same artifact. 6 record(s) on crossmodel, kilo, nano-gpt, openrouter, vercel, zenmux carry this exact transition."
+    },
+    {
+      "provider": "nano-gpt",
+      "id": "xiaomi/mimo-v2.5-pro",
+      "raw_family": "",
+      "before": "(family=\"mimo\",variant=\"v\",version=\"2.5\",modifier=\"pro\")",
+      "after": "(family=\"mimo\",variant=\"\",version=\"2.5\",modifier=\"pro\")",
+      "category": "justified-exception",
+      "reason": "JUSTIFIED: the mimo series letter leaves the entity key: variant \"v\" becomes empty while version \"2.5\" and modifier \"pro\" are carried across byte-identical. \"v\" was never a product line — every mimo id spells it, so it partitioned nothing and merely prefixed the key. The classifier flags an emptied populated field, but no FACT is lost: the letter is still consumed to extract the version (which is why it is not simply deleted from the family record), it survives in the provider ids and therefore in this model's nomina, and the key it leaves behind names the same artifact. 6 record(s) on crossmodel, kilo, nano-gpt, openrouter, vercel, zenmux carry this exact transition."
+    },
+    {
+      "provider": "openrouter",
+      "id": "xiaomi/mimo-v2.5-pro",
+      "raw_family": "mimo",
+      "before": "(family=\"mimo\",variant=\"v\",version=\"2.5\",modifier=\"pro\")",
+      "after": "(family=\"mimo\",variant=\"\",version=\"2.5\",modifier=\"pro\")",
+      "category": "justified-exception",
+      "reason": "JUSTIFIED: the mimo series letter leaves the entity key: variant \"v\" becomes empty while version \"2.5\" and modifier \"pro\" are carried across byte-identical. \"v\" was never a product line — every mimo id spells it, so it partitioned nothing and merely prefixed the key. The classifier flags an emptied populated field, but no FACT is lost: the letter is still consumed to extract the version (which is why it is not simply deleted from the family record), it survives in the provider ids and therefore in this model's nomina, and the key it leaves behind names the same artifact. 6 record(s) on crossmodel, kilo, nano-gpt, openrouter, vercel, zenmux carry this exact transition."
+    },
+    {
+      "provider": "vercel",
+      "id": "xiaomi/mimo-v2.5-pro",
+      "raw_family": "mimo-v2.5-pro",
+      "before": "(family=\"mimo\",variant=\"v\",version=\"2.5\",modifier=\"pro\")",
+      "after": "(family=\"mimo\",variant=\"\",version=\"2.5\",modifier=\"pro\")",
+      "category": "justified-exception",
+      "reason": "JUSTIFIED: the mimo series letter leaves the entity key: variant \"v\" becomes empty while version \"2.5\" and modifier \"pro\" are carried across byte-identical. \"v\" was never a product line — every mimo id spells it, so it partitioned nothing and merely prefixed the key. The classifier flags an emptied populated field, but no FACT is lost: the letter is still consumed to extract the version (which is why it is not simply deleted from the family record), it survives in the provider ids and therefore in this model's nomina, and the key it leaves behind names the same artifact. 6 record(s) on crossmodel, kilo, nano-gpt, openrouter, vercel, zenmux carry this exact transition."
+    },
+    {
+      "provider": "zenmux",
+      "id": "xiaomi/mimo-v2.5-pro",
+      "raw_family": "mimo",
+      "before": "(family=\"mimo\",variant=\"v\",version=\"2.5\",modifier=\"pro\")",
+      "after": "(family=\"mimo\",variant=\"\",version=\"2.5\",modifier=\"pro\")",
+      "category": "justified-exception",
+      "reason": "JUSTIFIED: the mimo series letter leaves the entity key: variant \"v\" becomes empty while version \"2.5\" and modifier \"pro\" are carried across byte-identical. \"v\" was never a product line — every mimo id spells it, so it partitioned nothing and merely prefixed the key. The classifier flags an emptied populated field, but no FACT is lost: the letter is still consumed to extract the version (which is why it is not simply deleted from the family record), it survives in the provider ids and therefore in this model's nomina, and the key it leaves behind names the same artifact. 6 record(s) on crossmodel, kilo, nano-gpt, openrouter, vercel, zenmux carry this exact transition."
+    },
+    {
+      "provider": "novita-ai",
+      "id": "xiaomimimo/mimo-v2-pro",
+      "raw_family": "mimo",
+      "before": "(family=\"mimo\",variant=\"v\",version=\"2\",modifier=\"pro\")",
+      "after": "(family=\"mimo\",variant=\"\",version=\"2\",modifier=\"pro\")",
+      "category": "justified-exception",
+      "reason": "JUSTIFIED: the mimo series letter leaves the entity key: variant \"v\" becomes empty while version \"2\" and modifier \"pro\" are carried across byte-identical. \"v\" was never a product line — every mimo id spells it, so it partitioned nothing and merely prefixed the key. The classifier flags an emptied populated field, but no FACT is lost: the letter is still consumed to extract the version (which is why it is not simply deleted from the family record), it survives in the provider ids and therefore in this model's nomina, and the key it leaves behind names the same artifact. 1 record(s) on novita-ai carry this exact transition."
+    },
+    {
+      "provider": "novita-ai",
+      "id": "xiaomimimo/mimo-v2.5-pro",
+      "raw_family": "mimo",
+      "before": "(family=\"mimo\",variant=\"v\",version=\"2.5\",modifier=\"pro\")",
+      "after": "(family=\"mimo\",variant=\"\",version=\"2.5\",modifier=\"pro\")",
+      "category": "justified-exception",
+      "reason": "JUSTIFIED: the mimo series letter leaves the entity key: variant \"v\" becomes empty while version \"2.5\" and modifier \"pro\" are carried across byte-identical. \"v\" was never a product line — every mimo id spells it, so it partitioned nothing and merely prefixed the key. The classifier flags an emptied populated field, but no FACT is lost: the letter is still consumed to extract the version (which is why it is not simply deleted from the family record), it survives in the provider ids and therefore in this model's nomina, and the key it leaves behind names the same artifact. 1 record(s) on novita-ai carry this exact transition."
     }
   ]
 }

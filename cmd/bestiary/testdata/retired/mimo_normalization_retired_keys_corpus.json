@@ -1,0 +1,308 @@
+{
+  "_comment": "Every entity key retired by the keyspace-wide mimo normalization, pinned against the MEASURED retired-key split. All ten 404 on the exact-key `--by-entity` seam. Nine of them 404 on the looser `show` seam too; the tenth, bare `mimo`, comes back AMBIGUOUS — not because it split, but because the FAMILY survives the retirement of its bare key and still has live children, so the bare family token resolves to several models. That row must never be \"fixed\" into a 404: doing so would break the live-family lookup that `show gpt` and `show claude` also rely on. Each case carries the MEASURED migration record: `retired_instances` is the exact set of provider instances the key held immediately before the lever (spelled `<provider>|<model id>`, read off the pre-lever generated catalog) and `successors` is the set of live entity keys those instances now belong to. Nine of the ten are pure RENAMES with a single successor; `mimo/pro` is the one real merge, its sole ultraspeed instance rejoining `mimo@2.5{pro}`. The successor set is re-derived from `retired_instances` against the live registry on every run and compared against this record, and the CHANGELOG migration table is compared against it too, so the three cannot drift apart silently. See TESTING.md.",
+  "cases": [
+    {
+      "name": "retired_mimo",
+      "input": "mimo",
+      "expected": {
+        "by_entity": "not-found",
+        "show": "ambiguous",
+        "retired_instances": [
+          "xiaomi-token-plan-ams|mimo-v2-tts",
+          "xiaomi-token-plan-cn|mimo-v2-tts",
+          "xiaomi-token-plan-sgp|mimo-v2-tts"
+        ],
+        "successors": [
+          "mimo@2{tts}"
+        ]
+      },
+      "classification": "must-fail",
+      "provenance": {
+        "source": "requirement",
+        "ref": "the epoch-wide retired-key policy: a retired entity key is a uniform hard 404 on both seams — no alias, no redirect, no successor listing. The CHANGELOG old->new table is the only pointer a user gets. The single exception in this set is the bare family token, which stays ambiguous because the family survives with live children."
+      },
+      "mutation": {
+        "description": "the bare junk key: the three mimo-v2-tts rows had no version and no recognised variant, so they landed on the family token itself. Once tts is curated as a per-family series tier they decompose to version 2 with tts as an identity modifier and re-home onto mimo@2{tts}. The FAMILY survives this retirement with live children, which is why the show seam still answers ambiguous rather than 404 here"
+      }
+    },
+    {
+      "name": "retired_mimo_flash",
+      "input": "mimo/flash",
+      "expected": {
+        "by_entity": "not-found",
+        "show": "not-found",
+        "retired_instances": [
+          "huggingface|XiaomiMiMo/MiMo-V2-Flash",
+          "jiekou|xiaomimimo/mimo-v2-flash",
+          "kilo|xiaomi/mimo-v2-flash",
+          "meganova|XiaomiMiMo/MiMo-V2-Flash",
+          "nano-gpt|xiaomi/mimo-v2-flash",
+          "nano-gpt|xiaomi/mimo-v2-flash-original",
+          "nano-gpt|xiaomi/mimo-v2-flash-thinking",
+          "nano-gpt|xiaomi/mimo-v2-flash-thinking-original",
+          "novita-ai|xiaomimimo/mimo-v2-flash",
+          "opencode|mimo-v2-flash-free",
+          "qiniu-ai|mimo-v2-flash",
+          "qiniu-ai|xiaomi/mimo-v2-flash",
+          "xiaomi|mimo-v2-flash",
+          "zenmux|xiaomi/mimo-v2-flash"
+        ],
+        "successors": [
+          "mimo@2{flash}"
+        ]
+      },
+      "classification": "must-fail",
+      "provenance": {
+        "source": "requirement",
+        "ref": "the epoch-wide retired-key policy: a retired entity key is a uniform hard 404 on both seams — no alias, no redirect, no successor listing. The CHANGELOG old->new table is the only pointer a user gets. The single exception in this set is the bare family token, which stays ambiguous because the family survives with live children."
+      },
+      "mutation": {
+        "description": "pure rename: flash becomes a per-family series tier, so the version the series token carried comes through and the key gains its generation"
+      }
+    },
+    {
+      "name": "retired_mimo_pro",
+      "input": "mimo/pro",
+      "expected": {
+        "by_entity": "not-found",
+        "show": "not-found",
+        "retired_instances": [
+          "xiaomi|mimo-v2.5-pro-ultraspeed"
+        ],
+        "successors": [
+          "mimo@2.5{pro}"
+        ]
+      },
+      "classification": "must-fail",
+      "provenance": {
+        "source": "requirement",
+        "ref": "the epoch-wide retired-key policy: a retired entity key is a uniform hard 404 on both seams — no alias, no redirect, no successor listing. The CHANGELOG old->new table is the only pointer a user gets. The single exception in this set is the bare family token, which stays ambiguous because the family survives with live children."
+      },
+      "mutation": {
+        "description": "the ONLY genuine merge in this set: its single instance is xiaomi/mimo-v2.5-pro-ultraspeed, and once ultraspeed is curated as an attribute-class tier that row is the 2.5 Pro model served at a speed tier, so it rejoins mimo@2.5{pro} rather than keeping a key of its own"
+      }
+    },
+    {
+      "name": "retired_mimo_v2_5-tts",
+      "input": "mimo/v2.5-tts",
+      "expected": {
+        "by_entity": "not-found",
+        "show": "not-found",
+        "retired_instances": [
+          "xiaomi-token-plan-ams|mimo-v2.5-tts",
+          "xiaomi-token-plan-cn|mimo-v2.5-tts",
+          "xiaomi-token-plan-sgp|mimo-v2.5-tts"
+        ],
+        "successors": [
+          "mimo@2.5{tts}"
+        ]
+      },
+      "classification": "must-fail",
+      "provenance": {
+        "source": "requirement",
+        "ref": "the epoch-wide retired-key policy: a retired entity key is a uniform hard 404 on both seams — no alias, no redirect, no successor listing. The CHANGELOG old->new table is the only pointer a user gets. The single exception in this set is the bare family token, which stays ambiguous because the family survives with live children."
+      },
+      "mutation": {
+        "description": "pure rename: the fused variant is un-fused into version 2.5 plus the identity modifier tts"
+      }
+    },
+    {
+      "name": "retired_mimo_v2_5-tts-voiceclone",
+      "input": "mimo/v2.5-tts-voiceclone",
+      "expected": {
+        "by_entity": "not-found",
+        "show": "not-found",
+        "retired_instances": [
+          "xiaomi-token-plan-ams|mimo-v2.5-tts-voiceclone",
+          "xiaomi-token-plan-cn|mimo-v2.5-tts-voiceclone",
+          "xiaomi-token-plan-sgp|mimo-v2.5-tts-voiceclone"
+        ],
+        "successors": [
+          "mimo@2.5{tts,voiceclone}"
+        ]
+      },
+      "classification": "must-fail",
+      "provenance": {
+        "source": "requirement",
+        "ref": "the epoch-wide retired-key policy: a retired entity key is a uniform hard 404 on both seams — no alias, no redirect, no successor listing. The CHANGELOG old->new table is the only pointer a user gets. The single exception in this set is the bare family token, which stays ambiguous because the family survives with live children."
+      },
+      "mutation": {
+        "description": "pure rename: the fused variant is un-fused into version 2.5 plus the identity modifiers tts and voiceclone — the second tier survives only because the promotion returns a LIST"
+      }
+    },
+    {
+      "name": "retired_mimo_v2_5-tts-voicedesign",
+      "input": "mimo/v2.5-tts-voicedesign",
+      "expected": {
+        "by_entity": "not-found",
+        "show": "not-found",
+        "retired_instances": [
+          "xiaomi-token-plan-ams|mimo-v2.5-tts-voicedesign",
+          "xiaomi-token-plan-cn|mimo-v2.5-tts-voicedesign",
+          "xiaomi-token-plan-sgp|mimo-v2.5-tts-voicedesign"
+        ],
+        "successors": [
+          "mimo@2.5{tts,voicedesign}"
+        ]
+      },
+      "classification": "must-fail",
+      "provenance": {
+        "source": "requirement",
+        "ref": "the epoch-wide retired-key policy: a retired entity key is a uniform hard 404 on both seams — no alias, no redirect, no successor listing. The CHANGELOG old->new table is the only pointer a user gets. The single exception in this set is the bare family token, which stays ambiguous because the family survives with live children."
+      },
+      "mutation": {
+        "description": "pure rename: the fused variant is un-fused into version 2.5 plus the identity modifiers tts and voicedesign"
+      }
+    },
+    {
+      "name": "retired_mimo_vat2_5",
+      "input": "mimo/v@2.5",
+      "expected": {
+        "by_entity": "not-found",
+        "show": "not-found",
+        "retired_instances": [
+          "aihubmix|coding-xiaomi-mimo-v2.5",
+          "aihubmix|xiaomi-mimo-v2.5",
+          "aihubmix|xiaomi-mimo-v2.5-free",
+          "ambient|xiaomi/mimo-v2.5",
+          "cline-pass|cline-pass/mimo-v2.5",
+          "crossmodel|xiaomi/mimo-v2.5",
+          "deepinfra|XiaomiMiMo/MiMo-V2.5",
+          "empiriolabs|mimo-v2-5",
+          "huggingface|XiaomiMiMo/MiMo-V2.5",
+          "kenari|mimo-v2-5",
+          "kenari|mimo-v2-5:free",
+          "kilo|xiaomi/mimo-v2.5",
+          "llmgateway|mimo-v2.5",
+          "nano-gpt|xiaomi/mimo-v2.5",
+          "opencode-go|mimo-v2.5",
+          "opencode|mimo-v2.5-free",
+          "openrouter|xiaomi/mimo-v2.5",
+          "pioneer|XiaomiMiMo/MiMo-V2.5",
+          "venice|xiaomi-mimo-v2-5",
+          "vercel|xiaomi/mimo-v2.5",
+          "xiaomi-token-plan-ams|mimo-v2.5",
+          "xiaomi-token-plan-cn|mimo-v2.5",
+          "xiaomi-token-plan-sgp|mimo-v2.5",
+          "xiaomi|mimo-v2.5",
+          "zenmux|xiaomi/mimo-v2.5"
+        ],
+        "successors": [
+          "mimo@2.5"
+        ]
+      },
+      "classification": "must-fail",
+      "provenance": {
+        "source": "requirement",
+        "ref": "the epoch-wide retired-key policy: a retired entity key is a uniform hard 404 on both seams — no alias, no redirect, no successor listing. The CHANGELOG old->new table is the only pointer a user gets. The single exception in this set is the bare family token, which stays ambiguous because the family survives with live children."
+      },
+      "mutation": {
+        "description": "pure rename: the series letter leaves the variant slot, the version is unchanged"
+      }
+    },
+    {
+      "name": "retired_mimo_vat2_5_pro",
+      "input": "mimo/v@2.5{pro}",
+      "expected": {
+        "by_entity": "not-found",
+        "show": "not-found",
+        "retired_instances": [
+          "aihubmix|coding-xiaomi-mimo-v2.5-pro",
+          "aihubmix|xiaomi-mimo-v2.5-pro",
+          "aihubmix|xiaomi-mimo-v2.5-pro-free",
+          "cline-pass|cline-pass/mimo-v2.5-pro",
+          "crof|mimo-v2.5-pro",
+          "crossmodel|xiaomi/mimo-v2.5-pro",
+          "deepinfra|XiaomiMiMo/MiMo-V2.5-Pro",
+          "empiriolabs|mimo-v2-5-pro",
+          "huggingface|XiaomiMiMo/MiMo-V2.5-Pro",
+          "kenari|mimo-v2-5-pro",
+          "kilo|xiaomi/mimo-v2.5-pro",
+          "llmgateway|mimo-v2.5-pro",
+          "nano-gpt|xiaomi/mimo-v2.5-pro",
+          "novita-ai|xiaomimimo/mimo-v2.5-pro",
+          "opencode-go|mimo-v2.5-pro",
+          "openrouter|xiaomi/mimo-v2.5-pro",
+          "pioneer|XiaomiMiMo/MiMo-V2.5-Pro",
+          "vercel|xiaomi/mimo-v2.5-pro",
+          "vultr|XiaomiMiMo/MiMo-V2.5-Pro",
+          "xiaomi-token-plan-ams|mimo-v2.5-pro",
+          "xiaomi-token-plan-cn|mimo-v2.5-pro",
+          "xiaomi-token-plan-sgp|mimo-v2.5-pro",
+          "xiaomi|mimo-v2.5-pro",
+          "zenmux|xiaomi/mimo-v2.5-pro"
+        ],
+        "successors": [
+          "mimo@2.5{pro}"
+        ]
+      },
+      "classification": "must-fail",
+      "provenance": {
+        "source": "requirement",
+        "ref": "the epoch-wide retired-key policy: a retired entity key is a uniform hard 404 on both seams — no alias, no redirect, no successor listing. The CHANGELOG old->new table is the only pointer a user gets. The single exception in this set is the bare family token, which stays ambiguous because the family survives with live children."
+      },
+      "mutation": {
+        "description": "pure rename: the series letter leaves the variant slot; the pro identity modifier and the version are unchanged. This is the target key the three 2.5 Pro spellings collapse onto"
+      }
+    },
+    {
+      "name": "retired_mimo_vat2_omni",
+      "input": "mimo/v@2{omni}",
+      "expected": {
+        "by_entity": "not-found",
+        "show": "not-found",
+        "retired_instances": [
+          "kilo|xiaomi/mimo-v2-omni",
+          "nano-gpt|xiaomi/mimo-v2-omni",
+          "opencode-go|mimo-v2-omni",
+          "opencode|mimo-v2-omni-free",
+          "xiaomi|mimo-v2-omni",
+          "zenmux|xiaomi/mimo-v2-omni"
+        ],
+        "successors": [
+          "mimo@2{omni}"
+        ]
+      },
+      "classification": "must-fail",
+      "provenance": {
+        "source": "requirement",
+        "ref": "the epoch-wide retired-key policy: a retired entity key is a uniform hard 404 on both seams — no alias, no redirect, no successor listing. The CHANGELOG old->new table is the only pointer a user gets. The single exception in this set is the bare family token, which stays ambiguous because the family survives with live children."
+      },
+      "mutation": {
+        "description": "pure rename: the series letter leaves the variant slot; omni stays an identity modifier"
+      }
+    },
+    {
+      "name": "retired_mimo_vat2_pro",
+      "input": "mimo/v@2{pro}",
+      "expected": {
+        "by_entity": "not-found",
+        "show": "not-found",
+        "retired_instances": [
+          "abacus|mimo-v2-pro",
+          "kilo|xiaomi/mimo-v2-pro",
+          "nano-gpt|xiaomi/mimo-v2-pro",
+          "novita-ai|xiaomimimo/mimo-v2-pro",
+          "opencode-go|mimo-v2-pro",
+          "opencode|mimo-v2-pro-free",
+          "xiaomi-token-plan-ams|mimo-v2-pro",
+          "xiaomi-token-plan-cn|mimo-v2-pro",
+          "xiaomi-token-plan-sgp|mimo-v2-pro",
+          "xiaomi|mimo-v2-pro",
+          "zenmux|xiaomi/mimo-v2-pro"
+        ],
+        "successors": [
+          "mimo@2{pro}"
+        ]
+      },
+      "classification": "must-fail",
+      "provenance": {
+        "source": "requirement",
+        "ref": "the epoch-wide retired-key policy: a retired entity key is a uniform hard 404 on both seams — no alias, no redirect, no successor listing. The CHANGELOG old->new table is the only pointer a user gets. The single exception in this set is the bare family token, which stays ambiguous because the family survives with live children."
+      },
+      "mutation": {
+        "description": "pure rename: the series letter leaves the variant slot; pro stays an identity modifier"
+      }
+    }
+  ]
+}
