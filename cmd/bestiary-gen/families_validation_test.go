@@ -93,6 +93,15 @@ func TestFamiliesJSON_MembersReachableInSnapshot(t *testing.T) {
 			"mini": "o-series folded into gpt; 'mini' now surfaces as the Modifier under family=gpt, recovered only transiently under 'o'",
 			"pro":  "o-series folded into gpt; 'pro' now surfaces as the Modifier under family=gpt, recovered only transiently under 'o'",
 		},
+		// The corpus refresh reground this fixture on the vendored codegen catalog, and
+		// the bare "grok-<n>-beta" spellings that used to ground this member are no longer
+		// published: every remaining beta id in the corpus carries the token MID-ID beside a
+		// dated version (grok-4.20-beta-0309-reasoning, xai/grok-4.20-multi-agent-beta, …),
+		// where the tail-inward modifier scan reads it as a release-stage attribute rather
+		// than the variant. The member is RETAINED, not deleted: nothing about grok's
+		// naming changed, only which ids xAI currently serves, and a future bare beta tier
+		// would re-ground it immediately.
+		"grok": {"beta": "bare grok-<n>-beta ids are absent from the refreshed corpus; the surviving beta ids carry the token mid-id beside a dated version, so it reads as an attribute, never the variant"},
 	}
 
 	members := loadFamiliesJSONMembers(t)

@@ -14,6 +14,18 @@ for its **Go module tags** (`vX.Y.Z`).
 
 ## [Unreleased]
 
+### Changed
+
+- Reground the `cmd/bestiary-gen` decomposition test corpus on the vendored codegen
+  catalog (`parse/data/modelsdev/catalog.json`), replacing a fixture that had fallen
+  786 records behind it: 4,979 → 5,765 records over 170 providers. The frozen
+  decomposition baseline was re-captured in the same commit, so the path-unification
+  diff reads `records=5765 changed=0` — no entity key moves and no census pin changes.
+  The refresh surfaced four **real** cross-provider divergences the stale fixture had
+  hidden (`text-embedding-3-small`, `text-embedding-3-large`, `poolside/laguna-s-2.1`,
+  `sakana/fugu-ultra`); they are carried as enumerated, individually justified residuals
+  rather than curated away.
+
 ## [0.2.9] - 2026-07-28
 
 **Schema:** unchanged at `0.6.0`.

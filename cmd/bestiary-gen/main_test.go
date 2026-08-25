@@ -698,33 +698,49 @@ func TestNoFetch_MissingVendoredCatalog_ActionableError(t *testing.T) {
 // ledger for cross-provider (Family,Variant,Version) divergences over the COMMITTED
 // snapshot. The hardened gate asserts SET-EQUALITY: the divergent-ID set produced by the
 // production pipeline must equal EXACTLY this set. Each row carries a one-line
-// justification. The only justified residual is the embedded-family nemotron
-// (the ID leads with "llama" but the canonical family is "nemotron"; GH-followup).
-// SET-equality (not count) catches a DIFFERENT id going divergent while nemotron converges
-// — count would stay 1, the set would change. Do NOT pad this map to force green: every
+// justification.
+// SET-equality (not count) catches a DIFFERENT id going divergent while another converges
+// — the count could stay put while the set changes. Do NOT pad this map to force green: every
 // row must be independently justified; an unexpected divergence is a STOP-and-surface.
-// Now EMPTY. The sole prior residual
-// (nvidia/llama-3.3-nemotron-super-49b-v1.5) was FOLDED to family nemotron via the curated
-// idFamilyOverrides entry — both providers converge on (nemotron,v1.5,3.3). Cross-provider
-// (Family,Variant,Version) divergence is now ZERO, so the divergent-ID SET is empty and this
-// justified-residual ledger is empty too (SET-equality holds at the empty set).
-var crossProviderJustifiedResidual = map[string]string{}
+//
+// The prior residual (nvidia/llama-3.3-nemotron-super-49b-v1.5) was FOLDED to family
+// nemotron via the curated idFamilyOverrides entry — both providers converge on
+// (nemotron,v1.5,3.3) — so it is gone from the set.
+//
+// The ledger now carries FOUR rows, all of them surfaced by the corpus refresh that
+// reground the committed snapshot on the vendored codegen catalog (5,765 records, up from
+// the 4,979-record stale fixture). Every one is a REAL upstream disagreement about the
+// raw family a provider publishes for a shared model ID — the stale fixture predated the
+// providers that disagree, so it hid them. None is a pipeline regression: each row's
+// tuples are exactly what the two upstream raw-family spellings decompose to, and they
+// are carried as honest residuals rather than papered over with curation (curating them
+// would move entity keys, which this corpus refresh must not do).
+var crossProviderJustifiedResidual = map[string]string{
+	"text-embedding-3-small": "REAL UPSTREAM DIVERGENCE (hidden by the stale fixture): openai/azure/azure-cognitive-services publish raw family \"text-embedding\" → (text-embedding,small,3), while sap-ai-core publishes NO raw family, so the ID-driven path reads the family token as \"text-embedding-3\" → (text-embedding-3,small,3). Two spellings of one model, not a decomposition regression.",
+	"text-embedding-3-large": "REAL UPSTREAM DIVERGENCE (hidden by the stale fixture): same empty-raw-vs-populated-raw split as text-embedding-3-small — openai/azure/azure-cognitive-services say \"text-embedding\", sap-ai-core says nothing and the ID yields \"text-embedding-3\".",
+	"poolside/laguna-s-2.1":  "REAL UPSTREAM DIVERGENCE: poolside labels its own model raw family \"laguna\" → (laguna,\"\",\"\"), while openrouter and vercel label it \"laguna-s\" → (laguna-s,\"\",2.1). The lab and its resellers disagree on where the line designator ends.",
+	"sakana/fugu-ultra":      "REAL UPSTREAM MISLABEL: pioneer and openrouter publish raw family \"fugu\" → (fugu,ultra,\"\"); vercel publishes \"aura\" → (aura,\"\",\"\") for the same Fugu Ultra id. This is the one genuine family mislabel in the refreshed corpus (the aura↔fugu pair in the divergence report).",
+}
 
 // crossProviderResidualUnaccountedCeiling pins the at-scale count of
 // ReasonResidualUnaccountedTokens over the committed snapshot.
 // Today only the non-gating stdout smoke (main.go) sees this; pinning it catches a
 // non-fixture-family residual regression (the seed-flash class) that would otherwise slip
-// every gate. Currently measured = 243; assert ≤ ceiling (tighten-only; a legitimate
-// reduction passes, a regression that re-drops sole-residual/member coverage trips it).
-const crossProviderResidualUnaccountedCeiling = 243
+// every gate. Measured = 282 parse failures over the 5,765-record refreshed snapshot
+// (was 243 over the 4,979-record stale fixture — the +39 are new upstream ids, not a
+// pipeline regression: the diff gate reads changed=0, so no record's decomposition moved).
+// Assert ≤ ceiling (tighten-only; a legitimate reduction passes, a regression that
+// re-drops sole-residual/member coverage trips it).
+const crossProviderResidualUnaccountedCeiling = 282
 
 // crossProviderPopulatedVersionFloor pins the at-scale count of snapshot records whose
 // production decomposition yields a NON-EMPTY Version (landing pin; supersedes the
-// stale 1681/293 figures). Currently measured = 3401 over 4979 records. Assert ≥ floor
+// stale 1681/293 figures). Measured = 4,064 records with a populated Version over the
+// 5,765-record refreshed snapshot (was 3,401 over 4,979). Assert ≥ floor
 // (loosen-only: more version coverage passes; a regression that drops version-presence
 // — the inverse of the residual-ceiling guard — trips it). Pinned alongside the residual
 // ceiling so both the "version populated" and "tokens unaccounted" at-scale counts are gated.
-const crossProviderPopulatedVersionFloor = 3401
+const crossProviderPopulatedVersionFloor = 4064
 
 // TestStaticDataset_CrossProviderConsistency is the HARDENED cross-provider
 // consistency GATE. It REPLACES the earlier heuristic gate that carried 5 escape
@@ -814,7 +830,7 @@ func TestStaticDataset_CrossProviderConsistency(t *testing.T) {
 
 	// GATE-AGREEMENT cross-check: this hardened gate and TestSnapshotAnalysis decompose
 	// identical data via the identical pipeline, so the divergent count must match the
-	// pinned divergenceExact (0). A mismatch means the two gates DISAGREE — a gate-logic bug.
+	// pinned divergenceExact (4). A mismatch means the two gates DISAGREE — a gate-logic bug.
 	if len(divergent) != len(crossProviderJustifiedResidual) {
 		t.Errorf("divergent-ID count = %d, justified-residual ledger size = %d — SET-equality broken (see per-ID errors above)",
 			len(divergent), len(crossProviderJustifiedResidual))
@@ -827,6 +843,12 @@ func TestStaticDataset_CrossProviderConsistency(t *testing.T) {
 			"  Investigate ParseFamilyDetailed; if the increase is intentional, bump the ceiling with justification.",
 			residualUnaccounted, crossProviderResidualUnaccountedCeiling)
 	}
+
+	// At-scale census log: the three figures this gate pins, each with its unit and
+	// corpus size, so a refresh can re-pin them from the run rather than by guesswork.
+	t.Logf("at-scale census over %d snapshot records: residual-unaccounted=%d (ceiling %d), populated-version=%d (floor %d)",
+		len(records), residualUnaccounted, crossProviderResidualUnaccountedCeiling,
+		populatedVersion, crossProviderPopulatedVersionFloor)
 
 	// POPULATED-VERSION FLOOR PIN: catch a version-presence regression.
 	if populatedVersion < crossProviderPopulatedVersionFloor {
