@@ -1,10 +1,10 @@
 {
   "total_records": 5765,
-  "changed_count": 138,
+  "changed_count": 139,
   "cat_a_divergence_fix_count": 0,
   "cat_b_improvement_count": 59,
   "cat_c_unexpected_regression_count": 0,
-  "justified_exception_count": 79,
+  "justified_exception_count": 80,
   "id_tuple4_incl_modifier_divergence_frozen_before": 17,
   "id_tuple4_incl_modifier_divergence_current_after": 17,
   "divergence_metric": "4-tuple INCL Modifier (Family,Variant,Version,Modifier); before=frozen baseline, after=current snapshot. DISTINCT from the authoritative cross-provider divergenceExact gate (3-tuple, EXCL Modifier, current snapshot, =4).",
@@ -638,6 +638,15 @@
       "after": "(family=\"mimo\",variant=\"\",version=\"2.5\",modifier=\"pro\")",
       "category": "justified-exception",
       "reason": "JUSTIFIED: the mimo series letter leaves the entity key: variant \"v\" becomes empty while version \"2.5\" and modifier \"pro\" are carried across byte-identical. \"v\" was never a product line — every mimo id spells it, so it partitioned nothing and merely prefixed the key. The classifier flags an emptied populated field, but no FACT is lost: the letter is still consumed to extract the version (which is why it is not simply deleted from the family record), it survives in the provider ids and therefore in this model's nomina, and the key it leaves behind names the same artifact. 1 record(s) on aihubmix carry this exact transition."
+    },
+    {
+      "provider": "togetherai",
+      "id": "deepcogito/cogito-v2-1-671b",
+      "raw_family": "cogito",
+      "before": "(family=\"cogito\",variant=\"\",version=\"1\",modifier=\"\")",
+      "after": "(family=\"cogito\",variant=\"v\",version=\"2.1\",modifier=\"\")",
+      "category": "justified-exception",
+      "reason": "JUSTIFIED: togetherai serves the SAME Cogito v2.1 671B artifact with the dot lost to a dash (cogito-v2-1-671b), so the leading-token pipeline read only the trailing integer as the version and minted a phantom \"Cogito v1\" line (cogito@1#671b) holding this one instance. AFTER, the row carries the pair its dotted siblings carry — variant \"v\", version \"2.1\" — and merges onto cogito/v@2.1#671b. The classifier flags version \"1\" -\u003e \"2.1\" as a populated field changing value, but \"1\" was never a version Deep Cogito published: it is the orphaned minor left behind when the dot was lost, and the id's own \"v2-1\" spelling names which dot that was. The variant slot goes from empty to populated, so the transition populates more than it rewrites, and the merge is the point: one artifact stops being split across two keys. MEASURED: a version-only dotLostVersionOverrides entry does NOT merge here — it yields (cogito,\"\",\"2.1\") and keys cogito@2.1#671b, a third key — which is why the repair is the variant-targeted exact-ID pin, exactly as the deepseek dash-glued rows are. 1 record(s) on togetherai (raw=\"cogito\") carries this exact transition."
     },
     {
       "provider": "kilo",

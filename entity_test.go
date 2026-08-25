@@ -334,7 +334,7 @@ func TestEntityRef_NoMigrationDrift(t *testing.T) {
 	// etc.) into their dotted siblings (net −N sized catalog entities), while 1t routing
 	// adds a handful of #1t entities (ling#1t, ring#1t) — the merges dominate, net −13.
 	const (
-		wantSizedCatalog    = 318 // 323 -> 319: 2026-07-23 refresh, four sized rows left upstream. 319 -> 318: the qwen3-coder-next suppress-pin, extended to the unprefixed spelling, drops the phantom '#1m' size segment, so qwen/coder@3#1m stops being a sized catalog entity and its instance rejoins the unsized qwen/coder@3
+		wantSizedCatalog    = 317 // 323 -> 319: 2026-07-23 refresh, four sized rows left upstream. 319 -> 318: the qwen3-coder-next suppress-pin, extended to the unprefixed spelling, drops the phantom '#1m' size segment, so qwen/coder@3#1m stops being a sized catalog entity and its instance rejoins the unsized qwen/coder@3. 318 -> 317: the cogito variant pin merges cogito@1#671b into cogito/v@2.1#671b — both are sized catalog entities, so the merge removes one from this count while the artifact keeps its '#671b' segment
 		wantSizedStandalone = 4
 	)
 

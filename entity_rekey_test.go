@@ -297,7 +297,7 @@ func TestEntityRekey_CensusAccounted(t *testing.T) {
 	// "ultraspeed" is curated as an attribute-class tier that instance rejoins
 	// mimo@2.5{pro}, which is the only key count actually lost. -10 + 9 = -1, with all
 	// 93 mimo instances conserved.
-	const wantEntities = 946
+	const wantEntities = 945
 	if got := len(bestiary.Entities()); got != wantEntities {
 		t.Errorf("registry census = %d entities, want %d — this literal is the running total of "+
 			"every curated key retirement (see the arithmetic above it); update it in the same "+

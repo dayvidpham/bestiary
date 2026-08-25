@@ -118,6 +118,11 @@ func equalStrings(a, b []string) bool {
 // the variant slot the letter had been sharing. The bare `mimo` line therefore empties.
 // The two versioned mimo lines (gen 2 and gen 2.5) both already existed and simply absorb
 // the arrivals, so no versioned line is added or retired.
+// 416 -> 415 with the cogito variant pin that follows the decomposition (-1 versioned /
+// bare UNCHANGED): the dash-glued togetherai spelling was the sole occupant of a phantom
+// cogito gen-1 line, and merging it onto the repaired gen-2.1 key empties that line. The
+// gen-2.1 line the decomposition minted keeps both of its dotted rows plus this arrival.
+//
 // 416 -> 416 with the cogito decomposition repair (+1 versioned / -1 bare): the fused
 // variant "v2.1-671b" carried no version, so the artifact sat on a BARE cogito line that
 // it was the sole occupant of; un-fusing it into variant "v" + version "2.1" moves it to
@@ -125,9 +130,9 @@ func equalStrings(a, b []string) bool {
 // line appears, and the total is unchanged.
 func TestSeriesAll_CensusExact(t *testing.T) {
 	const (
-		wantSeries        = 416 // 411 -> 419: 2026-07-23 refresh (+4 versioned incl. gemini-3.6, +4 bare); 419 -> 417: v0.2.8 slice — the deepseek dot-lost merges retire the two phantom versioned lines deepseek gen-1 / gen-2 (command/a{translate} joins the existing command/a line, adding none); 417 -> 415: the global free demotion empties the deepseek-flash and minimax-m3 bare lines; 415 -> 417: the ling/inkling/kling split adds the bare `inkling` and `kling` lines (the kling-v2 versioned line is replaced one-for-one by kling@2.6); 417 -> 416: the keyspace-wide mimo normalization empties the bare `mimo` line (all six of its keys move onto the two existing versioned mimo lines)
-		wantVersionLines  = 210 // lines with a non-empty generation (207 -> 211 at the 2026-07-23 refresh; 211 -> 209 as deepseek gen-1 / gen-2 retire in the v0.2.8 slice; UNCHANGED by the free demotion — every versioned line it touches keeps other entities; 209 -> 210 as the cogito decomposition mints the cogito gen-2.1 line)
-		wantBareLines     = 206 // lines whose entities carry no identity version (204 -> 208 at the 2026-07-23 refresh; UNCHANGED by the v0.2.8 slice; 208 -> 206 as the free demotion empties the deepseek-flash and minimax-m3 lines; 206 -> 208 as the ling/inkling/kling split adds the bare inkling and kling lines). 208 -> 207 as the mimo normalization empties the bare mimo line; 207 -> 206 as the cogito decomposition moves its sole bare occupant onto the new gen-2.1 line. 210 + 206 = 416.
+		wantSeries        = 415 // 411 -> 419: 2026-07-23 refresh (+4 versioned incl. gemini-3.6, +4 bare); 419 -> 417: v0.2.8 slice — the deepseek dot-lost merges retire the two phantom versioned lines deepseek gen-1 / gen-2 (command/a{translate} joins the existing command/a line, adding none); 417 -> 415: the global free demotion empties the deepseek-flash and minimax-m3 bare lines; 415 -> 417: the ling/inkling/kling split adds the bare `inkling` and `kling` lines (the kling-v2 versioned line is replaced one-for-one by kling@2.6); 417 -> 416: the keyspace-wide mimo normalization empties the bare `mimo` line (all six of its keys move onto the two existing versioned mimo lines); 416 -> 415: the cogito variant pin retires the phantom cogito gen-1 line by merging its sole occupant onto the repaired gen-2.1 line
+		wantVersionLines  = 209 // lines with a non-empty generation (207 -> 211 at the 2026-07-23 refresh; 211 -> 209 as deepseek gen-1 / gen-2 retire in the v0.2.8 slice; UNCHANGED by the free demotion — every versioned line it touches keeps other entities; 209 -> 210 as the cogito decomposition mints the cogito gen-2.1 line; 210 -> 209 as the cogito variant pin then empties the phantom cogito gen-1 line by merging it onto that new line)
+		wantBareLines     = 206 // lines whose entities carry no identity version (204 -> 208 at the 2026-07-23 refresh; UNCHANGED by the v0.2.8 slice; 208 -> 206 as the free demotion empties the deepseek-flash and minimax-m3 lines; 206 -> 208 as the ling/inkling/kling split adds the bare inkling and kling lines). 208 -> 207 as the mimo normalization empties the bare mimo line; 207 -> 206 as the cogito decomposition moves its sole bare occupant onto the new gen-2.1 line; UNCHANGED by the cogito variant pin, which moves only versioned lines. 209 + 206 = 415.
 		minExpectedSeries = 300 // the ratified floor
 	)
 	all := bestiary.SeriesAll()
@@ -191,7 +196,7 @@ func TestSeriesAll_CensusExact(t *testing.T) {
 // 2.5. The six speech/tier distinctions are not lost; they moved out of the release name
 // and into the identity-modifier segment of the key. 8 - 2 = -6.
 func TestReleases_CensusExact(t *testing.T) {
-	const wantReleases = 655 // 659 -> 671: 2026-07-23 refresh (+12 releases on the new lines); 671 -> 669: v0.2.8 slice — the two phantom deepseek gen-1 / gen-2 lines retire their bare releases (command/a{translate} shares command/a's existing release; a modifier is not a distinct release name); 669 -> 652: the global free demotion retires 17 keys, each the sole occupant of its release name (−17); 652 -> 661: the ling/inkling/kling split adds 8 named kling shape releases plus the bare inkling and kling@2.6 releases and retires the sole kling-v2@6 release (+9); 661 -> 655: the mimo normalization empties the variant slot on every mimo key, collapsing mimo's eight named releases to the two un-named ones on gen 2 and gen 2.5
+	const wantReleases = 654 // 659 -> 671: 2026-07-23 refresh (+12 releases on the new lines); 671 -> 669: v0.2.8 slice — the two phantom deepseek gen-1 / gen-2 lines retire their bare releases (command/a{translate} shares command/a's existing release; a modifier is not a distinct release name); 669 -> 652: the global free demotion retires 17 keys, each the sole occupant of its release name (−17); 652 -> 661: the ling/inkling/kling split adds 8 named kling shape releases plus the bare inkling and kling@2.6 releases and retires the sole kling-v2@6 release (+9); 661 -> 655: the mimo normalization empties the variant slot on every mimo key, collapsing mimo's eight named releases to the two un-named ones on gen 2 and gen 2.5; 655 -> 654: the cogito variant pin retires the phantom cogito gen-1 line, whose sole un-named release goes with it (the decomposition commit before it moves no release count — it replaces one bare-line release with one gen-2.1 release)
 
 	summed := 0
 	for _, s := range bestiary.SeriesAll() {
