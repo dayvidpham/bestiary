@@ -1012,7 +1012,8 @@ func TestSchemaDefs_V024_DeepConformance(t *testing.T) {
 				// EntityMetadata, sorted ascending by MetadataID); Metadata is its
 				// derived primary. It is a plain array|null struct field, so unlike
 				// Metadata it is NOT allowlisted from the type cross-check.
-				// Added in schema 0.7.0.
+				// This case asserts it is present in the plain-Entity marshal
+				// and carries the array|null type node.
 				"MetadataAll": "array|null",
 				// Creator is a DERIVED join projection surfaced as a plain struct
 				// field ($ref #/$defs/Creator; a hand-constructed Entity carries the
