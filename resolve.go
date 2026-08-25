@@ -174,12 +174,14 @@ func Resolve(input string, opts ...ResolveOption) ([]ModelRef, error) {
 	// and a diagnostic message that names the missed namespace.
 	if purlLooseFallback {
 		// Build a deduplicated candidate list from all matches (group by ID).
-		// Fix: prefer the canonical provider as the
-		// per-ID representative. When iterating matches, if the current match is the
-		// canonical provider for its family, upgrade the stored representative (even
-		// if we've already seen this ID). This mirrors the multi-group logic at
-		// resolve.go:267-276 so FormatAmbiguous Section 1 is never empty for a model
-		// that IS hosted by its canonical provider.
+		// Prefer the most-preferred provider as the per-ID representative: when the
+		// current match ranks strictly better than the stored representative it
+		// replaces it. The ranking is creator-distribution first, then canonical
+		// provider, then rehost (providerPreferenceFor), so a first-party row wins
+		// over a rehost and the canonical-provider preference this site already had
+		// still applies beneath it. This mirrors the multi-group logic in
+		// selectRepresentative so FormatAmbiguous's Creator and Canonical sections are
+		// never empty for a model that IS hosted first-party.
 		candidateMap := make(map[ModelID]ModelRef)
 		var candidateOrder []ModelID
 		for _, m := range matches {
@@ -187,13 +189,10 @@ func Resolve(input string, opts ...ResolveOption) ([]ModelRef, error) {
 			if !seen {
 				candidateOrder = append(candidateOrder, m.ID)
 				candidateMap[m.ID] = m
-			} else {
-				// Upgrade to the canonical provider when the stored rep is not canonical
-				// and the current match is the canonical provider for this family.
-				canonProv := m.Family.CanonicalProvider()
-				if canonProv != "" && m.Provider == canonProv && existing.Provider != canonProv {
-					candidateMap[m.ID] = m
-				}
+				continue
+			}
+			if providerPreferenceScore(m.Family, m.Provider) < providerPreferenceScore(existing.Family, existing.Provider) {
+				candidateMap[m.ID] = m
 			}
 		}
 		candidates := make([]ModelRef, 0, len(candidateOrder))
@@ -320,7 +319,27 @@ func Resolve(input string, opts ...ResolveOption) ([]ModelRef, error) {
 		// rather than filtered — long-standing behavior this change does not touch —
 		// so those inputs land on SchemeHuggingFace and likewise skip the preference.)
 		if scheme == SchemeCanonical && len(matches) > 0 {
-			canonicalProv := matches[0].Family.CanonicalProvider()
+			fam := matches[0].Family
+			// Creator axis FIRST: when the family's creator operates a curated
+			// distribution surface that is present in the match set, narrow to the
+			// most-preferred such surface — the earliest entry in the creator's
+			// curated list, so the winner is a curation decision. Narrowing to ONE
+			// provider (rather than to the creator's whole surface set) is what keeps
+			// this layer shape-compatible with the canonical-provider preference
+			// beneath it: both answer "which single host does `bestiary show` render".
+			matchProviders := make([]Provider, 0, len(matches))
+			for _, m := range matches {
+				matchProviders = append(matchProviders, m.Provider)
+			}
+			if creatorProv, ok := preferredCreatorProvider(fam, matchProviders); ok {
+				if filtered := filterByProvider(matches, creatorProv); len(filtered) > 0 {
+					return filtered, nil
+				}
+			}
+			// Canonical-provider preference, UNCHANGED, as the layer beneath: it still
+			// runs in full for a family with no creator, no curated distribution row,
+			// or no creator-hosted row in this match set.
+			canonicalProv := fam.CanonicalProvider()
 			if canonicalProv != "" {
 				filtered := filterByProvider(matches, canonicalProv)
 				if len(filtered) > 0 {
@@ -352,14 +371,17 @@ func Resolve(input string, opts ...ResolveOption) ([]ModelRef, error) {
 	}
 }
 
-// collectRehostProviders returns the distinct providers from refs that are NOT
-// the canonical/originating provider for their family. Providers are deduplicated
-// in stable first-seen order. This is used to populate ErrAmbiguous.RehostProviders.
+// collectRehostProviders returns the distinct providers from refs that host a model
+// FIRST-PARTY for neither of the two originating axes: they are neither one of the
+// family creator's curated distribution surfaces nor the family's canonical provider.
+// Providers are deduplicated in stable first-seen order. This is used to populate
+// ErrAmbiguous.RehostProviders, whose "Also rehosted by" listing would otherwise name
+// a lab's own hosting surface as a rehost of its own weights.
 func collectRehostProviders(refs []ModelRef) []Provider {
 	seen := make(map[Provider]struct{})
 	var out []Provider
 	for _, m := range refs {
-		if m.Provider == m.Family.CanonicalProvider() {
+		if !isRehostProvider(m.Family, m.Provider) {
 			continue
 		}
 		if _, dup := seen[m.Provider]; dup {
@@ -557,13 +579,19 @@ func parseContextN(id ModelID) string {
 // cross-provider-hosted models (all sharing the same canonical identity).
 //
 // Tiebreak order:
-//  1. Prefer the row whose Provider equals Family.CanonicalProvider() for the
-//     family (as defined in family.go). This ensures the originating publisher
-//     appears as the representative rather than an arbitrary rehost.
-//  2. When no canonical provider is present in the group (or CanonicalProvider
-//     returns ""), fall back to the lexicographically-smallest Provider string.
-//     This guarantees a deterministic result regardless of slice order or map
-//     iteration order.
+//  1. Prefer the row whose Provider is one of the family CREATOR's curated
+//     distribution surfaces (Creator.Providers). The originator answering for its own
+//     weights is the most representative row there is.
+//  2. Otherwise prefer the row whose Provider equals Family.CanonicalProvider() for
+//     the family (as defined in family.go). This axis is unchanged and still applies
+//     in full; it simply sits beneath the creator axis.
+//  3. When neither is present in the group, fall back to the
+//     lexicographically-smallest Provider string. This guarantees a deterministic
+//     result regardless of slice order or map iteration order.
+//
+// Steps 1 and 2 scan in group order and take the FIRST row at the best rank present,
+// which is deterministic because the group itself is built in a deterministic order;
+// step 3 is order-independent by construction.
 //
 // Panics on an empty group (caller invariant: groups always contain ≥1 ref).
 func selectRepresentative(group []ModelRef) ModelRef {
@@ -573,20 +601,17 @@ func selectRepresentative(group []ModelRef) ModelRef {
 	if len(group) == 1 {
 		return group[0]
 	}
-	// Prefer canonical provider row.
-	canonProv := group[0].Family.CanonicalProvider()
-	if canonProv != "" {
-		for _, r := range group {
-			if r.Provider == canonProv {
-				return r
-			}
-		}
-	}
-	// Lexicographic tiebreak: smallest Provider string for determinism.
+	// Single pass over the shared preference score: the best-scoring row wins, and
+	// equal scores fall back to the lexicographically-smallest Provider string. The
+	// score already encodes creator-distribution (by curated primacy index) above
+	// canonical-provider above rehost, so a tie can only be two rehosts — exactly the
+	// case the lexicographic rule was written for.
 	rep := group[0]
+	repScore := providerPreferenceScore(rep.Family, rep.Provider)
 	for _, r := range group[1:] {
-		if r.Provider < rep.Provider {
-			rep = r
+		score := providerPreferenceScore(r.Family, r.Provider)
+		if score < repScore || (score == repScore && r.Provider < rep.Provider) {
+			rep, repScore = r, score
 		}
 	}
 	return rep

@@ -363,11 +363,20 @@ func AttachEntityMetadata(ents []Entity, meta []EntityMetadata) []Entity {
 // curated alias), empty (non-nil) Instances, Sources attested to models.dev, and a
 // fresh clone of the metadata attached. The Ref and Metadata are cloned so the
 // standalone shares no storage with the join's inputs.
+//
+// Creator is projected here for the same reason the registry aggregate projects it
+// (registry.go): Entity.Creator is a DERIVED field that must equal
+// Ref.Family.Creator() for EVERY entity, and a standalone is a first-class entity.
+// Leaving it unset made the invariant hold only by accident — it was invisible while
+// no synthesized family happened to carry a curated creator, and became a wrong
+// (empty) answer the moment one did.
 func synthesizeStandaloneEntity(ref EntityRef, m EntityMetadata) Entity {
+	cloned := cloneRef(ref)
 	return Entity{
-		Ref:       cloneRef(ref),
+		Ref:       cloned,
 		Instances: []ProviderInstance{},
 		Sources:   []DataSourceID{DataSourceModelsDev},
+		Creator:   cloned.Family.Creator(),
 		Metadata:  cloneEntityMetadata(&m),
 	}
 }

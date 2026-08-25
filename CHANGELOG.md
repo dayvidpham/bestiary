@@ -14,8 +14,99 @@ for its **Go module tags** (`vX.Y.Z`).
 
 ## [Unreleased]
 
+### Added
+
+- **Creator-first resolution, layered above `CanonicalProvider` rather than replacing
+  it.** A new curated `Creator → [Provider]` distribution relation
+  (`parse/data/creator_providers.json`, 24 rows / 52 pairs) records the hosting
+  surfaces each lab operates for its OWN models, and `Creator.Providers()` exposes them
+  in **curation order** — the lab's primacy order, which is load-bearing: Zhipu leads
+  with its own `zhipuai` API ahead of the international `zai` brand. All five
+  provider-preference sites (`resolve.go` ×4, `format.go` ×1) now consult one shared
+  authority that ranks a creator surface above the canonical provider above a rehost.
+  `Family.CanonicalProvider` is unchanged and still consulted in full; it is the layer
+  beneath, and a family with no creator, no curated distribution row, or no
+  creator-hosted candidate resolves exactly as before. **77 distinct exact model IDs
+  change their rendered provider**, every one of them from a rehost or router to the
+  lab's own surface — `llama-3.3-70b-instruct` reports `llama` instead of `azure`,
+  `glm-4.6` reports `zhipuai` instead of `302ai`, and the `claude-*` line reports
+  `google-vertex-anthropic` instead of the generic `google-vertex`. Multi-lab hubs
+  (`modelscope`, `huggingface`) are deliberately NOT distribution surfaces: they host
+  many labs on the same footing, so listing one would rank a hub above a genuine rehost
+  while saying nothing about first-party hosting.
+- **The ambiguity listing names both axes separately.** `FormatAmbiguous` renders a
+  `Creator:` section (rows marked `+`) before the existing `Canonical:` section (rows
+  marked `*`), each suppressed independently when empty, with each row assigned to at
+  most one section so a provider that satisfies both — Anthropic creates AND hosts
+  Claude — is listed once. This closes the v0.2.8 Impl-UAT finding that the user-facing
+  message conflated "there is one canonical creator (Meta)" with "there is no canonical
+  provider". `Also rehosted by:` now excludes BOTH axes, so a lab's own surface is no
+  longer listed as a rehost of the lab's own weights.
+- **Lab-prefix derivation for the creator dimension.** Every models.dev metadata id is
+  lab-scoped, so `DeriveCreatorLabDisagreements` projects that assertion onto the family
+  the JOIN'S OWN decomposition maps the row to (a curated `modelsdev_aliases.json` entry
+  is the sole identity; otherwise `stripMetadataLab` + `ParseFamilyDetailed`). The
+  catalog carries **24 distinct lab prefixes** across 263 metadata rows — 20 of the 24
+  are also Provider tokens, 4 are not — reaching **40 families**, 38 by exactly one lab.
+  The derivation is **report-only, never self-applying**: a new committed emission
+  `parse/data/creators_lab_disagreements.json` lists every family whose evidence
+  conflicts, classified `multi-org` / `spelling-variant` / `divergent` / `withheld`.
+  It currently carries **4 rows**, and auto-applying any of the 3 mechanical ones would
+  have recorded a WRONG creator: `llama` and `mistral` are claimed by both their own lab
+  and NVIDIA's re-publications, and `glm`'s lab spells itself `zhipuai` against the
+  curated `zhipu`. The fourth, `ling`, is **withheld** through a new `withheld` array in
+  `creators.json` — its only lab-scoped row reaches it through an alias retargeting
+  `thinkingmachines/inkling`, so seeding it would attribute InclusionAI's line to the
+  wrong lab; the withholding carries its reason and is re-reported on every regen so it
+  cannot decay into an unexplained gap.
+- **Curated `Creator → [Provider]` coverage report.** A second committed emission
+  `parse/data/creator_providers_unserved.json` lists every curated pair whose provider
+  serves no instance of any of that creator's families, so aspirational or stale
+  curation is visible rather than silent. It is **empty** at this commit — the healthy
+  steady state. Both new emissions follow the INV3 contract (explicit `sort.Slice`, no
+  wall clock, empty list rather than null) and are now covered by the codegen
+  reproducibility harness: `runFixtureCodegen` was widened to a `codegenArtifacts`
+  struct so `TestCodegen_Reproducible_ByteIdentical` (N=100) compares them alongside the
+  three generated `.go` sources. Neither `.go`-only codegen guard could reach a JSON
+  report before, so an emission built from a map range was previously unguarded.
+
 ### Changed
 
+- **The curated `Family → Creator` seed grows from 18 rows to 75, and `Creators()` from
+  9 to 41.** Rows are grouped by provenance in the data file: the 18 original
+  UAT-confirmed rows, 27 rows applied from the lab derivation, and 30 hand-curated rows
+  for families the metadata join never reaches (a family with catalog entities but no
+  `models.json` row has no lab prefix to derive from). Curated rows WIN over lab-derived
+  values. The 41 tokens are `9 seed + 14 lab-derived + 18 curated-unreached`, where the
+  14 is `24 lab prefixes − 8 already-seeded labs − 1 spelling variant (zhipuai) − 1
+  withheld (thinkingmachines)`. This collapses the front-page creator grouping from
+  **251 top-level groups to 226** (unit: distinct non-empty `Creator` values plus
+  families that remain unattributed, over the 254 distinct families of the 957-entity
+  catalog). The long tail is deliberately left unattributed rather than guessed at: 152
+  of the 254 families carry exactly one entity and many of those tokens are decomposition
+  artifacts (`free`, `cheap`, `coder`).
+- Adding a NEW creator token is documented on `Creators()` as costing **five** authoring
+  parts that must move together — the `creators.json` row, the `Creator` constant, the
+  `knownCreators` entry, the `Creators()` length pin, and the `creatorExpr` case in
+  `cmd/bestiary-gen` (omit the last and codegen silently bakes the untyped fallback
+  `Creator("token")` instead of the constant). Two new consistency guards enforce both
+  directions: every creator in `creators.json` satisfies `Creator.IsKnown()`, and every
+  well-known `Creator` is referenced by at least one row, so the set cannot accumulate
+  dead tokens.
+- Six creator rows map families no catalog entity currently carries (`claude-haiku`,
+  `claude-opus`, `claude-sonnet`, `command-a`, `command-r`, `o`). Their disposition is
+  **RETAIN**, on the rationale `family.go` already gives for keeping `FamilyO` in
+  `CanonicalProvider`: each is still a real `raw_family` value the upstream catalog
+  emits, so a residual row resolves to its lab rather than falling through. A test pins
+  both halves — that the rows still resolve, and that they are still at zero entities —
+  so "dead" stays measured rather than assumed.
+- `curatedBaseFamilies` gains `c4ai`, `ornith`, `qwq` and the lowercase `hy`. All four
+  carry real catalog entities but are absent from the generated family set, and the
+  creator table's FK gate requires `Family.IsKnown`. `hy` is registered as a literal
+  because the generated set already binds the identifier `FamilyHy` to a DIFFERENT
+  Family VALUE — the upstream mixed-case `"Hy"` — while every entity the decomposition
+  produces carries lowercase `"hy"`; family comparison is byte-exact, so the two are
+  distinct families and reconciling them is a family-set repair, not a creator one.
 - Reground the `cmd/bestiary-gen` decomposition test corpus on the vendored codegen
   catalog (`parse/data/modelsdev/catalog.json`), replacing a fixture that had fallen
   786 records behind it: 4,979 → 5,765 records over 170 providers. The frozen
@@ -25,6 +116,13 @@ for its **Go module tags** (`vX.Y.Z`).
   hidden (`text-embedding-3-small`, `text-embedding-3-large`, `poolside/laguna-s-2.1`,
   `sakana/fugu-ultra`); they are carried as enumerated, individually justified residuals
   rather than curated away.
+
+### Fixed
+
+- `synthesizeStandaloneEntity` never projected `Entity.Creator`, so a metadata-only
+  standalone reported an empty creator even when its family was mapped. The invariant
+  "`Entity.Creator == Ref.Family.Creator()` for every entity" held only by accident —
+  no synthesized family had a curated creator until the `ornith` rows gained one.
 
 ## [0.2.9] - 2026-07-28
 

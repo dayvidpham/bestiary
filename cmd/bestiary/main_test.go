@@ -235,12 +235,16 @@ func TestShow_Ambiguous(t *testing.T) {
 	if !strings.Contains(errOut, "claude") {
 		t.Errorf("stderr does not contain input %q; got %q", "claude", errOut)
 	}
-	// stderr must contain the Canonical section header and the legend line.
-	if !strings.Contains(errOut, "Canonical:") {
-		t.Errorf("stderr does not contain 'Canonical:' section header; got %q", errOut)
+	// stderr must contain an ORIGINATING section header and its legend line. For
+	// "claude" that section is Creator, not Canonical: anthropic both creates and
+	// hosts Claude, so its rows are creator rows and a row is assigned to at most one
+	// section with Creator winning. The listing renders Creator first, then Canonical,
+	// each suppressed independently when empty.
+	if !strings.Contains(errOut, "Creator:") {
+		t.Errorf("stderr does not contain 'Creator:' section header; got %q", errOut)
 	}
-	if !strings.Contains(errOut, "* = canonical provider") {
-		t.Errorf("stderr does not contain legend '* = canonical provider'; got %q", errOut)
+	if !strings.Contains(errOut, "+ = served by the creating lab") {
+		t.Errorf("stderr does not contain legend '+ = served by the creating lab'; got %q", errOut)
 	}
 	// The --format=raw remediation hint lives in exactly one place now
 	// (bestiary-7nbuw): the wrapped ErrAmbiguous message (runErr), not the
@@ -417,9 +421,14 @@ func TestShow_CanonicalPreference_Claude(t *testing.T) {
 	if !strings.Contains(runErr.Error(), "under-specified") {
 		t.Fatalf("show %q must resolve to anthropic OR present an ambiguity marking anthropic canonical; got error: %v", query, runErr)
 	}
-	// The disambiguation (stderr) must mark anthropic as THE canonical provider.
-	if !strings.Contains(stderr, "* anthropic/") {
-		t.Errorf("ambiguity did not mark anthropic as the canonical provider; stderr:\n%s", stderr)
+	// The disambiguation (stderr) must mark anthropic as a FIRST-PARTY row rather
+	// than leaving it among the rehosts. Anthropic is both the creating lab and the
+	// curated canonical provider for claude, and a row is assigned to at most one
+	// originating section with Creator winning — so the marker is the creator "+ ".
+	// Accept either marker: what this fence is about is that anthropic is marked at
+	// all, not which of the two axes claimed it.
+	if !strings.Contains(stderr, "+ anthropic/") && !strings.Contains(stderr, "* anthropic/") {
+		t.Errorf("ambiguity did not mark anthropic as a first-party provider; stderr:\n%s", stderr)
 	}
 }
 

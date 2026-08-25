@@ -8,6 +8,13 @@ import (
 	"github.com/dayvidpham/bestiary"
 )
 
+const (
+	// unmappedFamily / unmappedEntityKey name a family that is deliberately NOT in
+	// parse/data/creators.json, used by the unmapped-render cases below.
+	unmappedFamily    = "unsloth"
+	unmappedEntityKey = "unsloth#27b"
+)
+
 // creatorOut is a partial view of the `show --by-entity --output=json` document,
 // projecting only the Creator field this slice surfaces. Extra fields are ignored.
 type creatorOut struct {
@@ -23,6 +30,15 @@ type creatorOut struct {
 // and the per-model table (which share no rendering path: writeEntityView vs
 // format.go printTableModelRow).
 func TestRun_Creator_Surfaced(t *testing.T) {
+	// Non-vacuity: the unmapped case is only a test of the empty-render path while its
+	// family genuinely carries no curated creator. Assert that here rather than
+	// trusting the comment, so a later curation slice that maps this family turns the
+	// case into a loud failure instead of a silently tautological one.
+	if got := bestiary.Family(unmappedFamily).Creator(); got != bestiary.CreatorNone {
+		t.Fatalf("family %q now maps to creator %q; the unmapped-render cases below need a "+
+			"different family (one that is deliberately unattributed)", unmappedFamily, got)
+	}
+
 	// Entity-view (table) sweep: mapped families show their Creator, unmapped shows "-".
 	entityCases := []struct {
 		name     string
@@ -40,10 +56,13 @@ func TestRun_Creator_Surfaced(t *testing.T) {
 			wantLine: "Creator:       anthropic",
 		},
 		{
-			// grok (xAI) is deliberately absent from creators.json: an unmapped family
-			// renders the honest empty, never a guessed value.
+			// unsloth is deliberately absent from creators.json and stays that way:
+			// the token is a decomposition artifact of "unsloth/<repo>" ids, and
+			// Unsloth is a fine-tuning/quantization toolkit, not a model ORIGINATOR —
+			// so there is no honest creator to record. An unmapped family renders the
+			// honest empty, never a guessed value.
 			name:     "unmapped family creator is a dash, not 'unknown'",
-			argv:     []string{"show", "--by-entity", "--output=table", "grok@4.20{reasoning}"},
+			argv:     []string{"show", "--by-entity", "--output=table", unmappedEntityKey},
 			wantLine: "Creator:       -",
 		},
 	}
@@ -94,7 +113,7 @@ func TestRun_Creator_Surfaced(t *testing.T) {
 		},
 		{
 			name:        "unmapped family JSON creator is empty",
-			argv:        []string{"show", "--by-entity", "--output=json", "grok@4.20{reasoning}"},
+			argv:        []string{"show", "--by-entity", "--output=json", unmappedEntityKey},
 			wantCreator: "",
 		},
 	}

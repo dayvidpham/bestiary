@@ -1087,10 +1087,16 @@ func TestResolve_PURL_LooseFallback_CanonicalProviderInCandidates(t *testing.T) 
 // that verifies the FormatAmbiguous output for the PURL wrong-namespace case has a
 // non-empty Canonical section (Section 1) with the "* anthropic/..." row.
 //
-// Before the fix, Section 1 was EMPTY (no canonical rows in Candidates) so anthropic
-// was invisible — neither in Section 1 nor in Section 2 (collectRehostProviders
-// correctly excludes canonical providers from Section 2). After the fix, Section 1
-// shows the "* anthropic/claude/opus/..." canonical row.
+// Before the fix, the originating section was EMPTY (no first-party rows in
+// Candidates) so anthropic was invisible — neither there nor in "Also rehosted by"
+// (collectRehostProviders correctly excludes first-party providers from it). After
+// the fix, the originating section shows the anthropic/claude/opus row.
+//
+// That section is the CREATOR one, not the Canonical one: anthropic is one of the
+// Anthropic creator's curated distribution surfaces, and a row is assigned to at most
+// one section with Creator winning. The regression this test guards — a first-party
+// row that appears in NO section — is section-independent, so it is asserted against
+// whichever originating section the row belongs to.
 //
 // Regression: (BLOCKER).
 func TestResolve_PURL_LooseFallback_FormatAmbiguous_Section1NonEmpty(t *testing.T) {
@@ -1107,15 +1113,15 @@ func TestResolve_PURL_LooseFallback_FormatAmbiguous_Section1NonEmpty(t *testing.
 	bestiary.FormatAmbiguous(&buf, ambig)
 	output := buf.String()
 
-	// Section 1 must be present and non-empty.
-	canonicalPos := strings.Index(output, "Canonical:")
-	if canonicalPos < 0 {
-		t.Fatalf("FormatAmbiguous Section 1 'Canonical:' header not found for PURL loose-fallback;\nGot:\n%s", output)
+	// An originating section must be present and non-empty.
+	if !strings.Contains(output, "Creator:") && !strings.Contains(output, "Canonical:") {
+		t.Fatalf("FormatAmbiguous: neither 'Creator:' nor 'Canonical:' header found for PURL loose-fallback;\nGot:\n%s", output)
 	}
 
-	// The "* anthropic/..." row must be present (canonical provider is visible).
-	if !strings.Contains(output, "* "+string(bestiary.ProviderAnthropic)) {
-		t.Errorf("FormatAmbiguous Section 1 must contain '* anthropic/...' row for PURL loose-fallback;\nGot:\n%s", output)
+	// The anthropic row must be present and marked as first-party. anthropic is a
+	// creator distribution surface for claude, so the marker is the creator "+ ".
+	if !strings.Contains(output, "+ "+string(bestiary.ProviderAnthropic)) {
+		t.Errorf("FormatAmbiguous must contain a '+ anthropic/...' creator row for PURL loose-fallback;\nGot:\n%s", output)
 	}
 }
 
