@@ -2886,14 +2886,21 @@ func TestFixturePerReasonCounts(t *testing.T) {
 // --------------------------------------------------------------------------
 
 // TestQuantVRAM_Llama33_70b is the 70B anchor: llama-3.3-70b-instruct bakes
-// VRAMBytes = weights + KV at context 131072 with partial=false for all three quants.
+// VRAMBytes = weights + KV at context 131072 with partial=false on each quant
+// that carries the curated architecture facts.
+//
+// The quant SET is fetch-owned — the offline refresh writes every quant the
+// registry publishes — while the architecture facts are curation-owned and exist
+// for three of them. So the anchor asserts by quant, not by position: the three
+// arch-curated quants carry hand-computable VRAM, and every other row is a
+// measured weight with no arch facts and therefore a partial estimate.
 //
 // Expected values (hand-computed):
 //
 //	KV = 2 * 80 * 8 * 128 * 131072 * 2 = 42,949,672,960 bytes
-//	q4_k_m: VRAMBytes = 43,033,509,888 + 42,949,672,960 = 85,983,182,848
-//	q8_0:   VRAMBytes = 75,176,521,728 + 42,949,672,960 = 118,126,194,688
-//	f16:    VRAMBytes = 141,166,166,016 + 42,949,672,960 = 184,115,838,976
+//	q4_k_m: VRAMBytes = 42,520,398,528 + 42,949,672,960 = 85,470,071,488
+//	q8_0:   VRAMBytes = 74,975,054,528 + 42,949,672,960 = 117,924,727,488
+//	f16:    VRAMBytes = 141,117,917,888 + 42,949,672,960 = 184,067,590,848
 func TestQuantVRAM_Llama33_70b(t *testing.T) {
 	const modelID = bestiary.ModelID("llama-3.3-70b-instruct")
 	const bakeCtx = 131072 // curated context_window from quant_vram.json
@@ -2906,25 +2913,25 @@ func TestQuantVRAM_Llama33_70b(t *testing.T) {
 		partial       bool
 	}
 
-	want := []wantRow{
-		{
+	want := map[bestiary.Quantization]wantRow{
+		bestiary.QuantQ4_K_M: {
 			quant:         bestiary.QuantQ4_K_M,
-			weightsBytes:  43_033_509_888,
-			vramBytes:     85_983_182_848,
+			weightsBytes:  42_520_398_528,
+			vramBytes:     85_470_071_488,
 			vramCtxTokens: bakeCtx,
 			partial:       false,
 		},
-		{
+		bestiary.QuantQ8_0: {
 			quant:         bestiary.QuantQ8_0,
-			weightsBytes:  75_176_521_728,
-			vramBytes:     118_126_194_688,
+			weightsBytes:  74_975_054_528,
+			vramBytes:     117_924_727_488,
 			vramCtxTokens: bakeCtx,
 			partial:       false,
 		},
-		{
+		bestiary.QuantF16: {
 			quant:         bestiary.QuantF16,
-			weightsBytes:  141_166_166_016,
-			vramBytes:     184_115_838_976,
+			weightsBytes:  141_117_917_888,
+			vramBytes:     184_067_590_848,
 			vramCtxTokens: bakeCtx,
 			partial:       false,
 		},
@@ -2935,21 +2942,29 @@ func TestQuantVRAM_Llama33_70b(t *testing.T) {
 	if rawRows == nil {
 		t.Fatalf("QuantVRAMFor(%q) returned nil; expected curated rows from quant_vram.json", modelID)
 	}
-	if len(rawRows) != len(want) {
-		t.Fatalf("QuantVRAMFor(%q): got %d rows, want %d", modelID, len(rawRows), len(want))
+	const wantRows = 12 // the registry's published quant set for this model
+	if len(rawRows) != wantRows {
+		t.Fatalf("QuantVRAMFor(%q): got %d rows, want %d", modelID, len(rawRows), wantRows)
 	}
 
 	// Bake each row using EstimateVRAMBytes at the curated bake context.
+	seen := 0
 	for i, row := range rawRows {
 		baked := row
 		baked.VRAMBytes = bestiary.EstimateVRAMBytes(row.WeightsBytes, bakeCtx, row.Layers, row.KVHeads, row.HeadDim)
 		baked.VRAMContextTokens = bakeCtx
 		baked.VRAMEstimatePartial = bestiary.VRAMEstimateIsPartial(row.Layers, row.KVHeads, row.HeadDim)
 
-		w := want[i]
-		if baked.Quant != w.quant {
-			t.Errorf("row %d: Quant = %v, want %v", i, baked.Quant, w.quant)
+		w, curated := want[baked.Quant]
+		if !curated {
+			// A measured quant with no curated arch facts: weights-only, partial.
+			if baked.VRAMBytes != baked.WeightsBytes || !baked.VRAMEstimatePartial {
+				t.Errorf("row %d (%v): arch-absent row baked VRAMBytes=%d partial=%v, want %d and true",
+					i, baked.Quant, baked.VRAMBytes, baked.VRAMEstimatePartial, baked.WeightsBytes)
+			}
+			continue
 		}
+		seen++
 		if baked.WeightsBytes != w.weightsBytes {
 			t.Errorf("row %d (%v): WeightsBytes = %d, want %d", i, baked.Quant, baked.WeightsBytes, w.weightsBytes)
 		}
@@ -2972,6 +2987,9 @@ func TestQuantVRAM_Llama33_70b(t *testing.T) {
 				row.Layers, row.KVHeads, row.HeadDim)
 		}
 	}
+	if seen != len(want) {
+		t.Errorf("matched %d arch-curated quants, want %d; the curated arch facts must survive every refresh", seen, len(want))
+	}
 
 	// ParamSize check.
 	if ps := bestiary.ParamSizeFor(modelID); ps != "70b" {
@@ -2986,7 +3004,8 @@ func TestQuantVRAM_Llama33_70b(t *testing.T) {
 // TestQuantVRAM_SmallModel covers small models where arch facts are absent
 // (exercises partial path) and ParamSize is populated.
 //
-// llama-3.2-3b-instruct: two quant rows, arch facts absent.
+// llama-3.2-3b-instruct: every quant the registry publishes, arch facts absent
+// on all of them (the quant set is fetch-owned, the arch facts curation-owned).
 // llama-3.3-8b-instruct: param-size-only entry (empty rows array); QuantVRAMFor
 // returns nil but ParamSizeFor returns "8b" — demonstrates the (Family,Version,
 // Modifier) wrong-merge split without fabricated GGUF weights.
@@ -2997,8 +3016,8 @@ func TestQuantVRAM_SmallModel(t *testing.T) {
 		if rows == nil {
 			t.Fatalf("QuantVRAMFor(%q) returned nil; expected curated rows", modelID)
 		}
-		if len(rows) != 2 {
-			t.Fatalf("QuantVRAMFor(%q): got %d rows, want 2", modelID, len(rows))
+		if len(rows) != 15 {
+			t.Fatalf("QuantVRAMFor(%q): got %d rows, want 15", modelID, len(rows))
 		}
 
 		// Arch facts should be absent (all zero) for this model.
@@ -3071,17 +3090,37 @@ func TestQuantVRAM_PartialWhenArchAbsent(t *testing.T) {
 	})
 
 	t.Run("arch_present_yields_not_partial", func(t *testing.T) {
-		// llama-3.3-70b-instruct has full arch facts.
+		// llama-3.3-70b-instruct carries curated arch facts on the three quants that
+		// were curated by hand; the refresh added measured weights for the rest of the
+		// registry's quant set, which have none. Both classes must be present, and each
+		// must land on its own side of the predicate — a corpus where one class vanished
+		// would pass a one-sided assertion vacuously.
 		rows := bestiary.QuantVRAMFor("llama-3.3-70b-instruct")
 		if rows == nil {
 			t.Fatal("QuantVRAMFor(llama-3.3-70b-instruct) returned nil; need curated rows")
 		}
+		archComplete, archAbsent := 0, 0
 		for i, row := range rows {
 			partial := bestiary.VRAMEstimateIsPartial(row.Layers, row.KVHeads, row.HeadDim)
-			if partial {
-				t.Errorf("row %d: VRAMEstimatePartial=true with arch facts present (layers=%d kvHeads=%d headDim=%d); want false",
+			if row.Layers != 0 && row.KVHeads != 0 && row.HeadDim != 0 {
+				archComplete++
+				if partial {
+					t.Errorf("row %d: VRAMEstimatePartial=true with arch facts present (layers=%d kvHeads=%d headDim=%d); want false",
+						i, row.Layers, row.KVHeads, row.HeadDim)
+				}
+				continue
+			}
+			archAbsent++
+			if !partial {
+				t.Errorf("row %d: VRAMEstimatePartial=false with arch facts absent (layers=%d kvHeads=%d headDim=%d); want true",
 					i, row.Layers, row.KVHeads, row.HeadDim)
 			}
+		}
+		if archComplete != 3 {
+			t.Errorf("arch-complete rows = %d, want 3 (the curated q4_k_m/q8_0/f16 facts)", archComplete)
+		}
+		if archAbsent != 9 {
+			t.Errorf("arch-absent rows = %d, want 9 (the refresh's measured quants)", archAbsent)
 		}
 	})
 }
@@ -3355,9 +3394,15 @@ func TestCodegen_QuantVRAMLiteral_Deterministic(t *testing.T) {
 	if !strings.Contains(lit1, "QuantF16") {
 		t.Errorf("quantVRAMLiteral: missing QuantF16 in output\nliteral: %s", lit1)
 	}
-	// VRAMEstimatePartial must be false for these arch-complete rows.
-	if strings.Contains(lit1, "VRAMEstimatePartial: true") {
-		t.Errorf("quantVRAMLiteral: unexpected VRAMEstimatePartial: true for arch-complete rows\nliteral: %s", lit1)
+	// The partial flag must render both ways, tracking each row's arch facts: the
+	// three curated quants are complete (false), the refresh's measured quants have
+	// no curated arch facts (true). A literal carrying only one of the two would mean
+	// the flag stopped tracking the row it describes.
+	if !strings.Contains(lit1, "VRAMEstimatePartial: false") {
+		t.Errorf("quantVRAMLiteral: no VRAMEstimatePartial: false row; the arch-curated quants must bake complete\nliteral: %s", lit1)
+	}
+	if !strings.Contains(lit1, "VRAMEstimatePartial: true") {
+		t.Errorf("quantVRAMLiteral: no VRAMEstimatePartial: true row; the arch-absent measured quants must bake partial\nliteral: %s", lit1)
 	}
 }
 
