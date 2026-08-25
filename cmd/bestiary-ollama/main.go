@@ -435,6 +435,26 @@ const (
 	joinArmCommunity
 )
 
+// joinArmNames is the canonical text name of each precedence arm, indexed by the
+// enum value. It is the single source of truth for String.
+var joinArmNames = [...]string{
+	joinArmAlias:            "alias",
+	joinArmMechanical:       "mechanical",
+	joinArmInstructFallback: "instruct-fallback",
+	joinArmCommunity:        "community",
+}
+
+// String returns the lowercase name of the precedence arm, so a joinResult
+// printed in a log line or a test failure names the arm rather than a bare int.
+// An out-of-range value renders as "joinarm(<n>)" so an unexpected value is
+// diagnosable instead of silently dropped.
+func (a joinArm) String() string {
+	if int(a) < 0 || int(a) >= len(joinArmNames) {
+		return fmt.Sprintf("joinarm(%d)", int(a))
+	}
+	return joinArmNames[a]
+}
+
 // joinOllama joins a single quant-stripped Ollama identity onto the catalog.
 // Precedence (curated > mechanical):
 //  1. a curated alias OVERRIDES the mechanical decomposition (an alias is needed

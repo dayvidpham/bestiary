@@ -111,6 +111,25 @@ func TestNormalizeOllamaName(t *testing.T) {
 // THE JOIN — fixture-level behaviors
 // --------------------------------------------------------------------------
 
+// TestJoinArmString drives joinArm.String() over every member of the closed
+// precedence enum and over the out-of-range fallback, loaded from
+// testdata/enum/join_arm_string_corpus.json.
+func TestJoinArmString(t *testing.T) {
+	corpus := loadOllamaCorpus[int, string](t, ollamaJoinArmStringCorpusJSON, 6)
+	ollamaRequireInputCoverage(t, corpus, map[int]string{
+		int(joinArmAlias):     "alias",
+		int(joinArmCommunity): "community",
+		-1:                    "joinarm(-1)",
+	})
+	for _, c := range corpus.Cases {
+		t.Run(c.Name, func(t *testing.T) {
+			if got := joinArm(c.Input).String(); got != c.Expected {
+				t.Errorf("joinArm(%d).String() = %q, want %q", c.Input, got, c.Expected)
+			}
+		})
+	}
+}
+
 func TestJoin_PlainDecompositionJoins(t *testing.T) {
 	r := joinOllama("llama3.3:70b-instruct", cannedCatalog(), nil, nil, emptyCurated)
 	if !r.Joined {

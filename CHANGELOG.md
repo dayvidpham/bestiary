@@ -188,6 +188,15 @@ for its **Go module tags** (`vX.Y.Z`).
   and the weights update to the current manifests, which corrects the seed's 70B `q4_k_m`
   estimate from 43,033,509,888 down to the measured 42,520,398,528 bytes.
 
+  **One text field DID change, and it is the file's own header, not curation.** The
+  top-level `_comment` of `parse/data/quant_vram.json` — distinct from the per-entry
+  `_comment`s above, which are byte-identical — is the tool's own constant and is
+  rewritten unconditionally on every run. It goes from the old `KEYING CONTRACT`
+  paragraph to a `FIELD OWNERSHIP` paragraph naming which fields the bot owns
+  (`weights_bytes`, digest, quant set, `param_size`, `source`) and which curation owns
+  and the bot preserves. This is a documentation rewrite of the file header only; no
+  entry data moves with it.
+
   **`ollama_unlinked.json` did not exist before this run; it now lists 26 entries** — the
   base-unknown community models the bot keeps rather than drops (`gemma2`, `phi3.5` and
   `qwen2.5` tags with no joinable models.dev row, plus the `:latest` and version-only

@@ -1,0 +1,83 @@
+{
+  "_comment": "joinArm.String() over every member of the closed precedence enum, plus the out-of-range fallback. The ORDER of the members is the precedence itself (a smaller value is the stronger claim), so a row that renders the wrong name here means the coalescing tie-break is being reported against the wrong arm.",
+  "cases": [
+    {
+      "name": "alias",
+      "input": 0,
+      "expected": "alias",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "joinArmAlias, the strongest arm: a curated alias named the catalog row outright"
+      },
+      "mutation": {
+        "description": "renders the curated-alias arm"
+      }
+    },
+    {
+      "name": "mechanical",
+      "input": 1,
+      "expected": "mechanical",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "joinArmMechanical: the identity's own decomposition matched the catalog"
+      },
+      "mutation": {
+        "description": "renders the mechanical-decomposition arm"
+      }
+    },
+    {
+      "name": "instruct-fallback",
+      "input": 2,
+      "expected": "instruct-fallback",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "joinArmInstructFallback: a bare size-only tag matched only after retrying with an instruct modifier"
+      },
+      "mutation": {
+        "description": "renders the instruct-retry arm"
+      }
+    },
+    {
+      "name": "community",
+      "input": 3,
+      "expected": "community",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "joinArmCommunity, the weakest arm: no catalog row, kept under the Ollama-native namespace ID"
+      },
+      "mutation": {
+        "description": "renders the community arm"
+      }
+    },
+    {
+      "name": "above-range-99",
+      "input": 99,
+      "expected": "joinarm(99)",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "int value 99 is past the last member (community=3)"
+      },
+      "mutation": {
+        "description": "pushes the value past the end of the name table"
+      }
+    },
+    {
+      "name": "negative-minus-one",
+      "input": -1,
+      "expected": "joinarm(-1)",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "int value -1 is below the first member (alias=0)"
+      },
+      "mutation": {
+        "description": "pushes the value below the start of the name table"
+      }
+    }
+  ]
+}

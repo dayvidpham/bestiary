@@ -163,17 +163,24 @@ handoff `bestiary-84su7` (the full ratified surface + implementation notes) and 
 - **The Ollama ingest is an offline, polite-bot tool** (`cmd/bestiary-ollama`). The hard
   models.dev↔Ollama ID-join lives in this network-gated binary, never in `go test`. It is
   **alias-first**: a curated `ollama_aliases.json` entry overrides the mechanical decomposition
-  (curated > mechanical, matching the `parse/` override precedent); otherwise it strips the
-  quant tag and decomposes the remainder through the production parse pipeline into an
-  `EntityRef` key, matched against `StaticModels()` (retrying with an `instruct` modifier for
-  bare size-only tags). Community finetunes are **kept, never dropped**: Ollama exposes no
-  base-model marker, so lineage is **inferred** (decomposition + curated tables) — base-known
-  finetunes carry a `base_ref` (→ a `DerivationFinetune` lineage edge), base-unknown ones become
-  standalone entities and are appended to a sorted `ollama_unlinked.json` for visibility. On
-  refresh, **field ownership** is explicit: fetch-owned fields (`weights_bytes`, the quant set,
+  (curated > mechanical, matching the `parse/` override precedent); otherwise it strips the quant
+  tag and decomposes the remainder through the production parse pipeline into an `EntityRef` key,
+  matched against `StaticModels()` (retrying with an `instruct` modifier for bare size-only
+  tags). Two DISTINCT Ollama identities can resolve to ONE catalog `model_id` (a bare size tag
+  and its explicit `-instruct` tag name the same model), so entries are **coalesced** by
+  `model_id` and the **stronger join arm wins** any field they disagree on — the typed `joinArm`
+  precedence is `alias` > `mechanical` > `instruct-fallback` > `community`, and its order IS the
+  enum's order. Community finetunes are **kept, never dropped**: Ollama exposes no base-model
+  marker, so lineage is **inferred** (decomposition + curated tables) — base-known finetunes
+  carry a `base_ref` (→ a `DerivationFinetune` lineage edge), base-unknown ones become standalone
+  entities and are appended to a sorted `ollama_unlinked.json` for visibility. On refresh,
+  **field ownership** is explicit: fetch-owned fields (`weights_bytes`, the quant set,
   `param_size`) are overwritten while curation-owned fields (architecture facts,
-  `context_window`, `base_ref`, `_comment`s) are preserved. The bot uses a descriptive
-  User-Agent and waits **≥1 second** between requests (a hard project constraint).
+  `context_window`, `base_ref`, `_comment`s) are preserved. Quant names are **normalized to the
+  `Quantization` enum's canonical token at the ingest boundary** (Ollama's raw `fp16` becomes
+  `f16`), so the curated quant tables are keyed by one spelling only; a token the enum cannot
+  name is dropped with an actionable message rather than written through. The bot uses a
+  descriptive User-Agent and waits **≥1 second** between requests (a hard project constraint).
 
 - **Two version axes, both bump for v0.2.4.** `BestiarySchemaVersion` (the public JSON output
   contract in `bestiary.schema.json`) goes `0.1.0` → `0.2.0` — additive only; all new props
