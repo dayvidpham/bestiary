@@ -1,8 +1,8 @@
 {
   "total_records": 5765,
-  "changed_count": 139,
+  "changed_count": 140,
   "cat_a_divergence_fix_count": 0,
-  "cat_b_improvement_count": 59,
+  "cat_b_improvement_count": 60,
   "cat_c_unexpected_regression_count": 0,
   "justified_exception_count": 80,
   "id_tuple4_incl_modifier_divergence_frozen_before": 17,
@@ -339,6 +339,15 @@
       "raw_family": "north-free",
       "before": "(family=\"north\",variant=\"mini\",version=\"\",modifier=\"\")",
       "after": "(family=\"north\",variant=\"mini\",version=\"\",modifier=\"code,free\")",
+      "category": "b:improvement",
+      "reason": "strict enrichment — only previously-empty field(s) populated"
+    },
+    {
+      "provider": "nano-gpt",
+      "id": "nvidia/Llama-3_3-Nemotron-Super-49B-v1_5",
+      "raw_family": "nemotron",
+      "before": "(family=\"nemotron\",variant=\"\",version=\"\",modifier=\"\")",
+      "after": "(family=\"nemotron\",variant=\"v1.5\",version=\"3.3\",modifier=\"\")",
       "category": "b:improvement",
       "reason": "strict enrichment — only previously-empty field(s) populated"
     },
