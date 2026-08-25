@@ -13,6 +13,11 @@
 /bestiary-gen
 /bestiary-ollama
 /bestiary-hf
+/bestiary-web
+# ...and where `go build ./...` leaves it when run from inside the command's own
+# directory. This one needs the explicit path because the unanchored spelling
+# "bestiary-web" would match the cmd/bestiary-web/ SOURCE directory too.
+/cmd/bestiary-web/bestiary-web
 .bestiary-gen-cache/
 *.exe
 *.exe~

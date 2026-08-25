@@ -1,0 +1,35 @@
+{{/* series-subtree renders ONE versioned line with the BASE HOIST applied. It is shared by
+     the front-page tree and the /families walk so the hierarchy has a single rendering:
+     there is one place a "(base)" node could ever reappear, and it is this one.
+
+     The un-named release is NOT drawn as a release. It is not a member of the line
+     alongside scout and maverick — it IS the line, un-named — so its entities hang
+     directly off the series. On a MIXED line those hoisted entities sit above the release
+     disclosures while belonging to a different level of the hierarchy, so they are marked
+     with a legend and a rule; a base-only line has nothing to distinguish them from and is
+     left plain. The legend is a label on a list, never a node in the tree — that
+     distinction is the whole point of the hoist. */}}
+{{define "series-subtree" -}}
+<details class="series-node"{{if .Anchor}} id="{{.Anchor}}"{{end}}>
+  <summary class="mono">
+    <span class="series-name">{{.Display}}</span>
+    <span class="muted">· {{plural .EntityCount "entity" "entities"}}</span>
+  </summary>
+  {{if .Hoisted}}
+  <div class="hoisted{{if .Mixed}} mixed{{end}}">
+    {{if .Mixed}}<div class="hoisted-legend mono muted">the line itself — entities with no named release</div>{{end}}
+    <ul class="release-entities mono">
+      {{range .Hoisted}}<li><a href="{{.Path}}">{{.Key}}</a></li>{{end}}
+    </ul>
+  </div>
+  {{end}}
+  {{range .Releases}}
+  <details class="release-node">
+    <summary class="mono">{{.Name}} <span class="muted">· {{len .Entities}}</span></summary>
+    <ul class="release-entities mono">
+      {{range .Entities}}<li><a href="{{.Path}}">{{.Key}}</a></li>{{end}}
+    </ul>
+  </details>
+  {{end}}
+</details>
+{{- end}}

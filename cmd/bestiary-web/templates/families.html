@@ -1,0 +1,15 @@
+{{define "content" -}}
+<p><a href="/" class="mono">&#8249; home</a> · <a href="/entities" class="mono">catalog</a></p>
+<h1 class="mono">families</h1>
+<p class="muted">
+  {{plural .SeriesCount "series" "series"}} · {{plural .EntityCount "entity" "entities"}}. Every versioned line in the
+  catalog, flat: a series is a family at one generation, its releases are the named members,
+  and each release lists its entities. Entities with no named release belong to the line
+  itself and are listed directly under it. Start from
+  <a href="/">the creator tree</a> if you would rather narrow by lab first.
+</p>
+
+<div class="tree">
+  {{range .Series}}{{template "series-subtree" .}}{{end}}
+</div>
+{{- end}}

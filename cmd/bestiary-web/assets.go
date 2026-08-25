@@ -125,17 +125,36 @@ var templateFuncs = template.FuncMap{
 		}
 		return s
 	},
+	// plural renders a count with its noun, choosing the singular form at exactly one:
+	// plural 1 "entity" "entities" -> "1 entity". The tree labels every node with a count,
+	// and "1 families" on a single-family creator reads as a rendering bug to anyone who
+	// notices it, which undermines the figures that are correct.
+	"plural": func(n int, one, many string) string {
+		if n == 1 {
+			return fmt.Sprintf("%d %s", n, one)
+		}
+		return fmt.Sprintf("%d %s", n, many)
+	},
 }
 
 // pageFiles maps each page name to the template files that compose it. Parsing per-page
 // (rather than one big set) keeps each page's "content" block unambiguous — the layout is
 // re-parsed into every set, and the last "content" parsed into a set wins, so a set never
-// sees two content blocks. The index page also pulls in results.html, whose
+// sees two content blocks. The entities page also pulls in results.html, whose
 // "entity-results" fragment it renders inline.
+//
+// "tree" (the front page) and "families" both pull in seriestree.html, which defines the
+// ONE "series-subtree" rendering of a hoisted versioned line. Sharing the partial rather
+// than duplicating the markup is what keeps a retired "(base)" node from reappearing on one
+// page and not the other.
+//
+// There is deliberately no "series" entry: that page was retired, its content absorbed by
+// "families", and /series now 404s.
 var pageFiles = map[string][]string{
-	"index":  {"templates/layout.html", "templates/results.html", "templates/index.html"},
-	"entity": {"templates/layout.html", "templates/entity.html"},
-	"series": {"templates/layout.html", "templates/series.html"},
+	"tree":     {"templates/layout.html", "templates/seriestree.html", "templates/tree.html"},
+	"entities": {"templates/layout.html", "templates/results.html", "templates/entities.html"},
+	"entity":   {"templates/layout.html", "templates/entity.html"},
+	"families": {"templates/layout.html", "templates/seriestree.html", "templates/families.html"},
 }
 
 // parseTemplates builds one template set per page (see pageFiles).

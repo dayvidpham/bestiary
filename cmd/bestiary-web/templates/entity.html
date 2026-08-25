@@ -2,10 +2,10 @@
 {{$ctx := .CtxTokens}}
 {{$maxq := .MaxQuantVRAM}}
 {{with .Entity -}}
-<p><a href="/" class="mono">&#8249; catalog</a> · <a href="/series" class="mono">series</a></p>
+<p><a href="/entities" class="mono">&#8249; catalog</a> · <a href="/families" class="mono">series</a></p>
 <h1 class="mono">{{.Ref.String}}</h1>
 <p class="muted">
-  {{with .Creator}}{{.}}{{else}}<span>creator unattributed</span>{{end}}
+  {{with .Creator}}{{.}}{{else}}<span>unattributed</span>{{end}}
   {{if .Sources}}·
     {{range $i, $s := .Sources}}{{if $i}}, {{end}}<span class="badge live">{{$s}}</span>{{end}}
   {{end}}
@@ -164,7 +164,7 @@
 {{/* ---- RQ2 section 4b: series membership (links navigate) ---- */}}
 {{if .SeriesDisplay}}
 <div class="section-head">series</div>
-<p class="mono"><a href="/series#{{.SeriesAnchor}}">{{.SeriesDisplay}}</a></p>
+<p class="mono"><a href="/families#{{.SeriesAnchor}}">{{.SeriesDisplay}}</a></p>
 {{end}}
 
 {{/* ---- RQ2 section 3: nomina + attestations (multi-attestation showcase) ---- */}}

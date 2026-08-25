@@ -277,6 +277,76 @@ for its **Go module tags** (`vX.Y.Z`).
   identifier, so the multi-row record is a join-layer property the existing schema
   already carries — proven by a full-corpus store round-trip test.
 
+### Added
+
+- **`CreatorGroups()` / `SeriesGroups()` — a browsable Creator > Family > Series > entities
+  projection.** A read-only view over relations that already exist (the curated
+  `Family`→`Creator` seed and the computed Series/Release taxonomy); like the taxonomy it is
+  computed on read and can never rename an entity. It exists because `SeriesAll()` alone is
+  flat — several hundred lines with no organizing level above them — so the projection puts
+  the two questions a reader actually arrives with, "whose models?" then "which line?", above
+  the generation-level detail. The creator set is derived from the curated seed, so growing
+  `creators.json` grows the tree with no code change.
+- **The base hoist: no `(base)` node anywhere.** A series' un-named release is not a member
+  of the line alongside the named ones — it *is* the line, un-named. Rendering it as a
+  sibling node called `(base)` invented a level that does not exist and buried the entities
+  of a line with no named releases one click deeper than the entities of a line that has
+  them. Those entities are now hoisted onto the series itself (`SeriesGroup.Hoisted`), and
+  only genuinely named releases remain as releases. `SeriesGroup.Shape()` reports which of
+  `base-only` / `mixed` / `named-only` a line is, so a renderer can lay out the two levels
+  correctly (a mixed line shows its hoisted entities above, and visually distinct from, its
+  release disclosures). The hoist is a re-parenting, never a filter: a test asserts the
+  projection is an exact partition of `Entities()`, so an implementation that dropped the
+  un-named entities instead of lifting them fails loudly rather than rendering a plausible
+  but smaller tree.
+- Entities re-homed by the curated strays table (`series.json`) are shown under the line
+  they were re-homed onto, which is the point of the table — so a stray can appear under a
+  creator its own family token does not name. A test pins that this divergence is confined
+  to strays and can never become a silent misattribution of a normal entity.
+
+### Changed
+
+- **Web: the front page is now a Creator > Family > Series > entities tree (`GET /`).** A
+  reader arriving with no query in mind was previously handed a nine-hundred-row table; they
+  now get a hierarchy to walk, starting from the lab that trained the weights. Attributed
+  creators arrive expanded; families with no curated creator collect in a single collapsed
+  group at the bottom. The tree renders whatever creators the curated seed carries, so it
+  grows with `creators.json` and hard-codes no lab.
+- **Web: the dense entity browser moved from `/` to `GET /entities`, unchanged.** Same seven
+  signals, same `#entity-results` SSE patch target, same facets — only its address changed,
+  and it is one click from the tree.
+- **Web: `GET /families` absorbs the series/release explorer**, emitting the SAME per-series
+  anchors, so every detail-page series link still resolves.
+- **Web: no `(base)` node on any page.** Both hierarchy pages render one shared partial over
+  the new hoisted projection, so the un-named release's entities attach directly to their
+  line. On a line that has both, the hoisted entities render above the release disclosures
+  with a legend and a rule marking them as a different level of the hierarchy — adjacency on
+  screen must not be read as sameness of level. Tests assert the identity on the RENDERED
+  document as well as on the projection: a template can drop a branch it never ranges over,
+  entirely downstream of a correct projection.
+- Four cross-page links were retargeted accordingly: the browser's "browse by series" and
+  the entity detail page's "‹ catalog", "series" and series-section anchor links.
+
+### Removed
+
+- **`GET /series` is retired and now returns a hard 404** — the route, its handler and its
+  template are deleted, not repointed. It is deliberately not a 301: an alias keeps a dead
+  name alive in links, bookmarks and search results indefinitely, which is what retiring the
+  name was meant to stop. No content was lost — `/families` absorbed it and emits the same
+  anchors.
+
+- **Web: a readability type scale governs every text size.** The `bestiary-web` stylesheet
+  gained a six-step, rem-based type scale (`--fs-xs` … `--fs-xl`) and every `font-size` in
+  the layout now resolves through it — there is no literal font-size value left in the
+  stylesheet, and a test guard keeps it that way. Because the steps are rem-based, a reader
+  who raises their browser's base font size now scales the whole page with it; the previous
+  px literals ignored that preference outright. Each former size moves up exactly one step
+  (12→13, 13→14, 14→15, 15→16 px at the browser default), so the dense entity grid keeps its
+  density while the smallest text on the page stops being 12px. Headings, which previously
+  carried no explicit size at all, are on the scale too. The steps are named `--fs-*` rather
+  than `--text-*` because `--text` and `--text-muted` are already colour tokens. No selector
+  was renamed.
+
 ## [0.2.9] - 2026-07-28
 
 **Schema:** unchanged at `0.6.0`.
