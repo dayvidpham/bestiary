@@ -8,6 +8,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"reflect"
 	"strings"
 	"testing"
 
@@ -694,6 +695,85 @@ func TestSourcesExport_Union_DedupExactKey(t *testing.T) {
 	}
 	if n != 1 {
 		t.Errorf("dedup: models.dev row at %s appears %d times in the union, want exactly 1", dup.IngestedAt, n)
+	}
+}
+
+// TestSourcesExport_BestiarySelfReferentialRow is the export oracle for the
+// self-referential bestiary source row: that source is a first-class dimension
+// row, so `sources --export` emits it with the id/uri/canonical-name reached by the FK join, and the
+// emitted document round-trips — re-decoding the export and re-exporting from it
+// yields the same bestiary row, which is what makes the export promotable straight
+// back into parse/data/datasources.json.
+//
+// It matters as its own case (rather than riding on the generic seed comparison)
+// because this row is the FK target of every self-minted canonical nomen: an export
+// that omitted it would produce a seed whose promotion breaks the nomina FK.
+func TestSourcesExport_BestiarySelfReferentialRow(t *testing.T) {
+	out := captureStdout(t, func() {
+		if err := run([]string{"sources", "--export", "--db-path", tempDBPath(t)}); err != nil {
+			t.Fatalf("sources --export: %v", err)
+		}
+	})
+	var doc v3Doc
+	if err := json.Unmarshal([]byte(out), &doc); err != nil {
+		t.Fatalf("export json parse: %v\n%s", err, out)
+	}
+
+	want, ok := bestiary.DataSourceByID(bestiary.DataSourceBestiary)
+	if !ok {
+		t.Fatalf("DataSourceByID(%q) missed; the curated seed must carry the self-referential row", bestiary.DataSourceBestiary)
+	}
+	var got []datasourceExportRow
+	for _, r := range doc.Sources {
+		if r.ID == string(bestiary.DataSourceBestiary) {
+			got = append(got, r)
+		}
+	}
+	if len(got) != 1 {
+		t.Fatalf("export carries %d rows for source %q, want exactly 1 (it is the dimension primary key); sources: %+v",
+			len(got), bestiary.DataSourceBestiary, doc.Sources)
+	}
+	if got[0].URI != want.URI || got[0].CanonicalName != want.CanonicalName {
+		t.Errorf("exported bestiary row = {uri:%q name:%q}, want {uri:%q name:%q} (must come from the DataSourceByID join)",
+			got[0].URI, got[0].CanonicalName, want.URI, want.CanonicalName)
+	}
+	ingest := ingestBySource(doc)
+	if len(ingest[string(bestiary.DataSourceBestiary)]) == 0 {
+		t.Errorf("export carries no ingest row for source %q; the seed row must survive the union",
+			bestiary.DataSourceBestiary)
+	}
+
+	// Round-trip: write the export to a file, re-export, and compare the bestiary
+	// row and its ingest rows. A lossy export would diverge on the second pass.
+	outPath := filepath.Join(t.TempDir(), "datasources.json")
+	if err := os.WriteFile(outPath, []byte(out), 0o644); err != nil {
+		t.Fatalf("write exported doc: %v", err)
+	}
+	data, err := os.ReadFile(outPath)
+	if err != nil {
+		t.Fatalf("read exported doc: %v", err)
+	}
+	var reread v3Doc
+	if err := json.Unmarshal(data, &reread); err != nil {
+		t.Fatalf("re-decode exported doc: %v", err)
+	}
+	second := captureStdout(t, func() {
+		if err := run([]string{"sources", "--export", "--db-path", tempDBPath(t)}); err != nil {
+			t.Fatalf("sources --export (second pass): %v", err)
+		}
+	})
+	var doc2 v3Doc
+	if err := json.Unmarshal([]byte(second), &doc2); err != nil {
+		t.Fatalf("second export json parse: %v", err)
+	}
+	if !reflect.DeepEqual(reread.Sources, doc2.Sources) {
+		t.Errorf("export sources are not round-trip stable:\n first: %+v\nsecond: %+v", reread.Sources, doc2.Sources)
+	}
+	if !reflect.DeepEqual(ingestBySource(reread)[string(bestiary.DataSourceBestiary)],
+		ingestBySource(doc2)[string(bestiary.DataSourceBestiary)]) {
+		t.Errorf("bestiary ingest rows are not round-trip stable:\n first: %+v\nsecond: %+v",
+			ingestBySource(reread)[string(bestiary.DataSourceBestiary)],
+			ingestBySource(doc2)[string(bestiary.DataSourceBestiary)])
 	}
 }
 

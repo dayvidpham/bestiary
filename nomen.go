@@ -312,11 +312,19 @@ type Nomen struct {
 // canonicalAttestation is the single self-minted attestation a canonical nomen
 // carries (§3.2 defaults table): bestiary is the Primary authority for its own
 // canonical scheme, and the key is bestiary-authored, so Method is SelfMinted. The
-// SourceURL is empty (a self-minted key asserts itself); Source is the ingest that
-// attests the entity.
-func canonicalAttestation(src DataSourceID) []NomenAttestation {
+// SourceURL is empty (a self-minted key asserts itself), and the Source is
+// DataSourceBestiary — NOT the upstream ingest the entity came from. A canonical key
+// is rendered by this package's own parse + key pipeline, so no upstream ever
+// asserted it; naming models.dev here would credit an upstream with a claim it never
+// made. The two provenance levels stay distinct: SourceURL is WHO asserts the naming
+// (nobody but bestiary, hence empty), Source is WHICH ingest it was read from (this
+// package itself).
+//
+// It deliberately takes no source parameter: the answer is the same on every mint
+// path, so the FK cannot be got wrong at a call site.
+func canonicalAttestation() []NomenAttestation {
 	return []NomenAttestation{{
-		Source:    src,
+		Source:    DataSourceBestiary,
 		Authority: AuthorityPrimary,
 		Method:    IngestMethodSelfMinted,
 	}}
@@ -352,8 +360,11 @@ func ociAttestation(sourceURL string) []NomenAttestation {
 // ID spelling (Admitted), deduplicated within the entity. It does NOT include alias
 // claims — those are folded in by the callers that have the claim table. The result
 // is deterministically sorted (lessNomen). The entity's own Sources drive the
-// per-nomen Source: a nomen's Source is the ingest that attests the entity
-// (DataSourceModelsDev for every registry entity).
+// per-nomen Source for the HARVESTED schemes only: a provider-ID nomen's Source is
+// the ingest that attests the entity (DataSourceModelsDev for every registry
+// entity). The Canonical nomen is bestiary-authored, so its Source is
+// DataSourceBestiary regardless of where the entity was ingested from — see
+// canonicalAttestation.
 //
 // It reads the curated redundant-modifier suppression seed through the shared
 // mintEntityNominaWith seam so the production path and the fences exercise ONE
@@ -388,7 +399,7 @@ func mintEntityNominaWith(e Entity, suppression *suppressionTable) []Nomen {
 		Scheme:       NomenSchemeCanonical,
 		Status:       AcceptabilityPreferred,
 		ResolvesTo:   e.Ref,
-		Attestations: canonicalAttestation(src),
+		Attestations: canonicalAttestation(),
 	})
 	if preferred != key {
 		out = append(out, Nomen{
@@ -396,7 +407,7 @@ func mintEntityNominaWith(e Entity, suppression *suppressionTable) []Nomen {
 			Scheme:       NomenSchemeCanonical,
 			Status:       AcceptabilityAdmitted,
 			ResolvesTo:   e.Ref,
-			Attestations: canonicalAttestation(src),
+			Attestations: canonicalAttestation(),
 		})
 	}
 
@@ -474,11 +485,15 @@ func ociSourceURL(name string) string {
 	return "https://ollama.com/library/" + n
 }
 
-// entitySourceForNomen picks the ingest DataSourceID a minted nomen is attributed
+// entitySourceForNomen picks the ingest DataSourceID a HARVESTED nomen is attributed
 // to: the models.dev origin every registry entity attests. It reads the entity's
 // derived Sources projection and prefers DataSourceModelsDev (always present for a
 // registry entity); it falls back to the first source, or DataSourceModelsDev when
 // the entity carries none (a hand-built value).
+//
+// It is deliberately NOT consulted for canonical nomina: a canonical key is authored
+// by bestiary, not read from the entity's ingest, so canonicalAttestation pins
+// DataSourceBestiary and takes no source argument at all.
 func entitySourceForNomen(e Entity) DataSourceID {
 	for _, s := range e.Sources {
 		if s == DataSourceModelsDev {
@@ -637,7 +652,7 @@ func MintNominaFromModels(models []ModelInfo) []Nomen {
 			Scheme:       NomenSchemeCanonical,
 			Status:       AcceptabilityPreferred,
 			ResolvesTo:   g.ref,
-			Attestations: canonicalAttestation(DataSourceModelsDev),
+			Attestations: canonicalAttestation(),
 		})
 		if preferred != key {
 			out = append(out, Nomen{
@@ -645,7 +660,7 @@ func MintNominaFromModels(models []ModelInfo) []Nomen {
 				Scheme:       NomenSchemeCanonical,
 				Status:       AcceptabilityAdmitted,
 				ResolvesTo:   g.ref,
-				Attestations: canonicalAttestation(DataSourceModelsDev),
+				Attestations: canonicalAttestation(),
 			})
 		}
 		for _, id := range g.ids {

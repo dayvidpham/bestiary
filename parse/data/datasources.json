@@ -21,6 +21,11 @@
       "id": "huggingface",
       "uri": "https://huggingface.co/api/models",
       "canonical_name": "HuggingFace Hub"
+    },
+    {
+      "id": "bestiary",
+      "uri": "https://github.com/dayvidpham/bestiary",
+      "canonical_name": "bestiary (self-minted)"
     }
   ],
   "ingested": [
@@ -52,6 +57,11 @@
     {
       "source_id": "huggingface",
       "ingested_at": "2026-07-23T00:00:00Z",
+      "parser_schema": 3
+    },
+    {
+      "source_id": "bestiary",
+      "ingested_at": "2026-08-25T00:00:00Z",
       "parser_schema": 3
     }
   ]
