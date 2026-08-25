@@ -2,6 +2,7 @@ package bestiary
 
 import (
 	"encoding/json"
+	"fmt"
 	"strings"
 	"sync"
 )
@@ -308,4 +309,146 @@ func EntityModifiers(mods []string, fam Family) []string {
 		return nil
 	}
 	return out
+}
+
+// ─── series_tiers data-integrity gate ────────────────────────────────────────
+
+// validateSeriesTiersData is the LOUD half of the series_tiers lever. The loader
+// above is deliberately silent — initModifierClassTable degrades to an empty table
+// rather than panicking, because a library consumer must not be taken down by a
+// corrupt embedded file — and that silence is exactly the failure mode the Go
+// decoder field was added to prevent in the first place: encoding/json drops an
+// unmatched key without a word, so a struct-tag typo, a family name that no longer
+// exists, or a value that is a string where a list belongs all "work" and simply
+// switch the lever off.
+//
+// So the data contract is enforced HERE instead, at build/test time, over the same
+// embedded bytes the loader reads. Every defect is reported with the family, the
+// token, what the file actually says, what it means for decomposition, and what to
+// change; the caller reports them all rather than stopping at the first, so one run
+// lists every problem in the file.
+//
+// The four invariants, and why each one exists:
+//  1. series_tiers must be a JSON object of family -> list of strings. A scalar or
+//     an object in the value position means the whole family entry is dropped.
+//  2. every family named must exist in families.json AND declare a series_letter.
+//     splitSeriesVariant is the only consumer, and it returns early for a family
+//     with no series letter, so an entry for any other family is dead curation that
+//     reads as if it were live.
+//  3. every token must carry a curated modifier class (global or a family override).
+//     A tier's class is what decides whether it lands INSIDE the entity key or
+//     beside it; an unclassified token falls through to the unknown->identity
+//     fail-safe and silently splits the keyspace.
+//  4. a non-empty series_tiers block in the file must produce a non-empty decoded
+//     table. This is the struct-tag guard: rename the json tag and invariants 1-3
+//     still pass over the raw bytes while the lever is completely inert.
+func validateSeriesTiersData() []error {
+	const path = "parse/data/modifier_class.json"
+
+	raw, err := parseDataFS.ReadFile(path)
+	if err != nil {
+		return []error{fmt.Errorf("series_tiers validation: cannot read the embedded curated file %s: %w. "+
+			"The file is embedded through parseDataFS at build time, so this means it was removed or renamed "+
+			"in the source tree; restore it (the per-family series-tier extension and the whole modifier-class "+
+			"table are both inert without it)", path, err)}
+	}
+
+	// Deliberately tag-free: the whole point of this gate is that a struct tag can
+	// silently stop matching, so the validator indexes the raw object by NAME and
+	// shares no decoding path with the loader it is checking.
+	var file map[string]json.RawMessage
+	if err := json.Unmarshal(raw, &file); err != nil {
+		return []error{fmt.Errorf("series_tiers validation: %s does not parse as a JSON object: %w. "+
+			"Every family's tier extension is dropped while this stands, so splitSeriesVariant sees only "+
+			"the global tier set; fix the JSON syntax", path, err)}
+	}
+	seriesTiers := map[string]json.RawMessage{}
+	if rawBlock, ok := file["series_tiers"]; ok {
+		if err := json.Unmarshal(rawBlock, &seriesTiers); err != nil {
+			return []error{fmt.Errorf("series_tiers validation: the \"series_tiers\" key of %s is %s, not an "+
+				"object mapping a family to its list of tier tokens: %w. The loader unmarshals the same bytes "+
+				"into map[string][]string and fails the WHOLE file on this, so every family's tier extension "+
+				"is lost; write it as {\"<family>\": [\"<token>\", …]}", path, string(rawBlock), err)}
+		}
+	}
+
+	pd, perr := loadParseData()
+	if perr != nil || pd == nil {
+		return []error{fmt.Errorf("series_tiers validation: cannot load parse data to check the family "+
+			"names in %s's series_tiers block: %v. The family/series-letter invariant cannot be evaluated "+
+			"without families.json; fix that load failure first", path, perr)}
+	}
+	tbl := loadModifierClassTable()
+
+	var errs []error
+	decodedTokens := 0
+	for fam, rawToks := range seriesTiers {
+		fkey := Family(strings.ToLower(strings.TrimSpace(fam)))
+
+		// (1) shape
+		var toks []string
+		if err := json.Unmarshal(rawToks, &toks); err != nil {
+			errs = append(errs, fmt.Errorf("series_tiers[%q] in %s is %s, not a JSON list of tier tokens: %w. "+
+				"encoding/json fails the whole file on this, so EVERY family's tier extension is lost, not just "+
+				"this one; write it as a list, e.g. \"%s\": [\"flash\"]", fam, path, string(rawToks), err, fam))
+			continue
+		}
+
+		// (2) the family must be a real letter-series family
+		info, known := pd.families[fkey]
+		switch {
+		case !known:
+			errs = append(errs, fmt.Errorf("series_tiers[%q] in %s names a family that does not exist in "+
+				"parse/data/families.json. splitSeriesVariant looks the family up there and returns early when "+
+				"it is absent, so these %d token(s) are never consulted and the entry reads as live curation "+
+				"while doing nothing; either add the family to families.json with a series_letter, or delete "+
+				"this entry", fam, path, len(toks)))
+		case info.SeriesLetter == "":
+			errs = append(errs, fmt.Errorf("series_tiers[%q] in %s names a family that declares no "+
+				"\"series_letter\" in parse/data/families.json. The per-family tier extension is consulted "+
+				"ONLY inside the letter-prefix series decomposition, which returns early for such a family, so "+
+				"these %d token(s) are dead curation; give %q a series_letter or move the tokens to the "+
+				"family's \"family_overrides\" modifier-class entry instead", fam, path, len(toks), fam))
+		}
+
+		// (3) every token must carry a curated class
+		for _, tok := range toks {
+			t := strings.ToLower(strings.TrimSpace(tok))
+			if t == "" {
+				errs = append(errs, fmt.Errorf("series_tiers[%q] in %s contains an empty tier token. An empty "+
+					"token can never match an id segment, so it is silently skipped by the loader; remove it "+
+					"from the list", fam, path))
+				continue
+			}
+			decodedTokens++
+			_, hasGlobal := tbl.global[t]
+			_, hasOverride := tbl.perFamily[fkey][t]
+			if !hasGlobal && !hasOverride {
+				errs = append(errs, fmt.Errorf("series_tiers[%q] in %s promotes the token %q, but %q has no "+
+					"curated modifier class — it is absent from both the \"global\" block and the "+
+					"\"family_overrides\".%q block of the same file. A promoted tier's CLASS is what decides "+
+					"whether it lands inside the entity key ({identity}) or beside it, and an unclassified "+
+					"token falls through to the unknown->identity fail-safe, so this silently splits the "+
+					"%s keyspace on a token nobody classified; add %q to \"global\" or to "+
+					"\"family_overrides\".%q with \"identity\" or \"attribute\"",
+					fam, path, t, t, fam, fam, t, fam))
+			}
+		}
+	}
+
+	// (4) struct-tag guard: the raw file declares tokens but the decoded table has none.
+	if decodedTokens > 0 {
+		loaded := 0
+		for _, toks := range tbl.seriesTiers {
+			loaded += len(toks)
+		}
+		if loaded == 0 {
+			errs = append(errs, fmt.Errorf("series_tiers in %s declares %d tier token(s) but the decoded "+
+				"table holds NONE. encoding/json drops a data-file key with no matching struct field without "+
+				"reporting anything, so the whole per-family tier extension is inert: check the `json:\"series_tiers\"` "+
+				"tag on the SeriesTiers field of the anonymous struct in initModifierClassTable (modifierclass.go)",
+				path, decodedTokens))
+		}
+	}
+	return errs
 }
