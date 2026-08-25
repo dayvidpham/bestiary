@@ -358,6 +358,18 @@ for its **Go module tags** (`vX.Y.Z`).
   than `--text-*` because `--text` and `--text-muted` are already colour tokens. No selector
   was renamed.
 
+- **Entity key retired: `qwen/coder@3#1m`.** The unprefixed spelling `qwen3-coder-next-fp8-1m` (provider InferX)
+  escaped the 1M-context suppress-pin that already covered the `qwen/`-prefixed spelling, so its `1m` context marker
+  was keying off a phantom `#1m` size entity holding a `TotalParams` of 1,000,000. Both spellings are now pinned;
+  the instance rejoins `qwen/coder@3`. Measured at this commit (unit: entity keys; axis: the full constant set in
+  `entities_constants_gen.go`; configuration: this pin alone, applied on top of the free-demotion baseline in the
+  section below): 940 → 939, one key retired, none renamed, none added. Retired-key policy: hard 404 on
+  `bestiary show` and `GET /entity/`, no alias.
+
+  | old key | new home | removed constants |
+  |---|---|---|
+  | `qwen/coder@3#1m` | instance rejoins `qwen/coder@3` | `Entity__Qwen__Coder__Version_3__Size_1m` (1 declaration) |
+
 ### Changed
 
 - **The `free` tier leaves entity identity: 957 → 940 entity keys, 17 retired and 0 added.**
