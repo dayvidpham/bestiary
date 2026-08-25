@@ -14,6 +14,47 @@ for its **Go module tags** (`vX.Y.Z`).
 
 ## [Unreleased]
 
+### Added
+
+- **`NomenAttestation.ArchivedURL` — an archive.org snapshot for harvested namings.**
+  A curated naming claim already had to cite a snapshot, because a lab's model card is
+  edited and deleted without notice. A *harvested* naming could not: it cites the LIVE
+  page the bot observed, which is precisely the thing that rots. The snapshot now rides
+  **beside** that citation instead of replacing it — `SourceURL` stays primary and
+  unchanged, and `ArchivedURL` carries the archive.org capture of it. Empty means "no
+  snapshot recorded", an honest unknown rather than an error, and it is always empty on a
+  curated claim (whose `SourceURL` already *is* the snapshot). The curated archive-only
+  fence is untouched — not relaxed, moved or duplicated.
+  - `cmd/bestiary-hf` looks the snapshot up from the Internet Archive **Availability
+    API** (read-only; never Save Page Now) through the **same** `politebot.Client` as the
+    Hub crawl, so the ≥1 s cadence is enforced across both hosts by one seam and no new
+    backoff is added — the existing `Retry-After` handling is inherited as-is. Every
+    not-a-snapshot outcome is a **miss, never an error**: the documented
+    `{"archived_snapshots":{}}` shape, any final non-2xx (a post-retry 429 included), an
+    unparseable answer, or a URL that fails the shared archive-snapshot shape check. A
+    miss also never **erases** a snapshot an earlier run recorded — the archive does not
+    un-capture a page, so a throttled refresh must not destroy durable evidence.
+  - The seed's `archived_url` field is optional and omitted when absent, so a repo the
+    archive has never captured leaves the committed file byte-identical.
+  - `IsArchiveSnapshotURL` is exported as the ONE shared shape check, so the curated
+    fence, the suppression fence and the harvested layer cannot drift apart on what an
+    archive URL looks like.
+
+**Schema:** `0.6.0` → `0.7.0` (additive). SQLite store schema `8` → `9`.
+
+- `bestiary.schema.json`: `ArchivedURL` joins `$defs.NomenAttestation` `properties` **and**
+  `required` (all six — a `NomenAttestation` carries no json tags, so every field always
+  serializes). `BestiarySchemaVersion` is `0.7.0`, the single bump of this epoch.
+- SQLite store `8` → `9`: `nomen_attestations` gains `archived_url TEXT NOT NULL DEFAULT ''`
+  via a presence-guarded `ALTER TABLE ADD COLUMN` self-heal read from `pragma_table_info`.
+  The migration is purely additive — no table is dropped, recreated or reordered — so every
+  pre-existing row survives byte-identical with an empty `ArchivedURL`, and re-running it is
+  a no-op.
+
+| store schema | table | change |
+|---|---|---|
+| `8` → `9` | `nomen_attestations` | `+ archived_url TEXT NOT NULL DEFAULT ''` (appended; presence-guarded self-heal) |
+
 ## [0.2.9] - 2026-07-28
 
 **Schema:** unchanged at `0.6.0`.

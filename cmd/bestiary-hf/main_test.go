@@ -491,3 +491,257 @@ func TestUnlinkedFileOut_CarriesCount(t *testing.T) {
 		t.Errorf("count = %v, want len(unlinked) = %d", count, len(out.Unlinked))
 	}
 }
+
+// --------------------------------------------------------------------------
+// Wayback archive-snapshot enrichment — every case socket-free
+// --------------------------------------------------------------------------
+
+const (
+	// hfLive is a stand-in live Hub repo page: the SourceURL a harvested nomen cites.
+	hfLive = "https://huggingface.co/meta-llama/Llama-3.3-70B-Instruct"
+	// waybackHitBody is the documented HIT shape. Note the http:// scheme on the
+	// archive host — the API answers with http, while the shape the codebase stores
+	// (and bestiary.IsArchiveSnapshotURL accepts) is https, so the lookup must
+	// normalize it. A test that hard-coded https here would not exercise that.
+	waybackHitBody = `{"archived_snapshots":{"closest":{"available":true,` +
+		`"url":"http://web.archive.org/web/20260715030540/https://huggingface.co/meta-llama/Llama-3.3-70B-Instruct",` +
+		`"timestamp":"20260715030540","status":"200"}}}`
+	// waybackMissBody is the documented MISS shape: an empty object, with HTTP 200
+	// and no error and no 404. This is the detail the API is easiest to get wrong on.
+	waybackMissBody = `{"archived_snapshots":{}}`
+	// wantSnapshot is the https-normalized snapshot the hit must yield.
+	wantSnapshot = "https://web.archive.org/web/20260715030540/https://huggingface.co/meta-llama/Llama-3.3-70B-Instruct"
+)
+
+// A HIT yields the snapshot, https-normalized, and in the shape the SHARED curated
+// validator accepts — so what the bot writes is exactly what the loader will admit.
+func TestLookupArchivedURL_Hit(t *testing.T) {
+	c, _, sd, _ := newTestClient([]cannedResp{{status: 200, body: waybackHitBody}})
+	got := lookupArchivedURL(context.Background(), c, hfLive)
+	if got != wantSnapshot {
+		t.Fatalf("lookupArchivedURL = %q, want %q (the http:// answer must be normalized to https://)", got, wantSnapshot)
+	}
+	if !bestiary.IsArchiveSnapshotURL(got) {
+		t.Errorf("recorded snapshot %q is not accepted by the shared archive-snapshot shape check; the loader would reject it", got)
+	}
+	// The lookup went to the Availability API with the live URL query-escaped, and it
+	// is a READ: never Save Page Now.
+	if len(sd.reqs) != 1 {
+		t.Fatalf("want exactly 1 request, got %d", len(sd.reqs))
+	}
+	req := sd.reqs[0]
+	if req.Method != http.MethodGet {
+		t.Errorf("method = %s, want GET (the archive is read-only for this project)", req.Method)
+	}
+	if got := req.URL.Query().Get("url"); got != hfLive {
+		t.Errorf("query url = %q, want the live page %q", got, hfLive)
+	}
+	if !strings.HasPrefix(req.URL.String(), waybackAvailableBase) {
+		t.Errorf("request URL %q does not target the Availability API", req.URL)
+	}
+	if strings.Contains(req.URL.String(), "save") {
+		t.Error("the lookup must never touch Save Page Now")
+	}
+}
+
+// The documented MISS shape — HTTP 200 with an empty archived_snapshots object — is
+// a normal outcome: empty result, no error. Modelling it as an error (or reading a
+// zero-value closest as a hit) is the single easiest way to get this API wrong.
+func TestLookupArchivedURL_MissShapeIsNotAnError(t *testing.T) {
+	c, _, _, _ := newTestClient([]cannedResp{{status: 200, body: waybackMissBody}})
+	if got := lookupArchivedURL(context.Background(), c, hfLive); got != "" {
+		t.Fatalf("lookupArchivedURL on the documented miss shape = %q, want \"\"", got)
+	}
+}
+
+// Every not-a-usable-snapshot answer collapses to "" and never to an error or a
+// fabricated URL: a non-2xx, a 5xx, available:false, an empty url, a malformed body,
+// and a snapshot URL that fails the shared shape check.
+func TestLookupArchivedURL_AllMissPaths(t *testing.T) {
+	cases := map[string]cannedResp{
+		"404 not found":       {status: 404, body: ""},
+		"500 server error":    {status: 500, body: ""},
+		"503 unavailable":     {status: 503, body: ""},
+		"available false":     {status: 200, body: `{"archived_snapshots":{"closest":{"available":false,"url":"http://web.archive.org/web/20260715030540/` + hfLive + `"}}}`},
+		"empty snapshot url":  {status: 200, body: `{"archived_snapshots":{"closest":{"available":true,"url":""}}}`},
+		"unparseable body":    {status: 200, body: `not json at all`},
+		"empty body":          {status: 200, body: ``},
+		"non-snapshot url":    {status: 200, body: `{"archived_snapshots":{"closest":{"available":true,"url":"https://huggingface.co/meta-llama/Llama-3.3-70B-Instruct"}}}`},
+		"snapshot without ts": {status: 200, body: `{"archived_snapshots":{"closest":{"available":true,"url":"http://web.archive.org/web/https://huggingface.co/x"}}}`},
+	}
+	for name, resp := range cases {
+		t.Run(name, func(t *testing.T) {
+			c, _, _, _ := newTestClient([]cannedResp{resp})
+			if got := lookupArchivedURL(context.Background(), c, hfLive); got != "" {
+				t.Fatalf("lookupArchivedURL = %q, want \"\" (every non-usable answer is a MISS, never an error and never a fabricated URL)", got)
+			}
+		})
+	}
+}
+
+// A 429 that survives hfDoer's Retry-After retry budget is a MISS, not a failure.
+// The inherited backoff is exercised (the retries happen, honoring the header), and
+// NO new backoff is added by the lookup: the only sleeps are the ones hfDoer and the
+// politebot cadence already perform.
+func TestLookupArchivedURL_PostRetry429IsAMiss(t *testing.T) {
+	// hfDoer's budget is 3 retries; 5 consecutive 429s exhaust it (scriptedDoer
+	// repeats its last entry, so the response stays 429 for every attempt).
+	c, hd, sd, fc := newTestClient([]cannedResp{
+		{status: 429, body: "", header: hdr("Retry-After", "2")},
+	})
+	got := lookupArchivedURL(context.Background(), c, hfLive)
+	if got != "" {
+		t.Fatalf("lookupArchivedURL on a post-retry 429 = %q, want \"\" (a rate-limited run records no snapshot and retries next refresh)", got)
+	}
+	if hd.lastStatus != http.StatusTooManyRequests {
+		t.Errorf("lastStatus = %d, want 429 (the final response after the retry budget)", hd.lastStatus)
+	}
+	// The INHERITED Retry-After handling ran: hfDoer retried up to its budget and
+	// slept the server-requested interval each time.
+	if len(sd.reqs) != hd.maxRetry+1 {
+		t.Errorf("transport calls = %d, want %d (hfDoer's existing retry budget, unchanged)", len(sd.reqs), hd.maxRetry+1)
+	}
+	if hd.count429 != hd.maxRetry {
+		t.Errorf("count429 = %d, want %d", hd.count429, hd.maxRetry)
+	}
+	// No backoff beyond the inherited one: every sleep is either the 2s Retry-After
+	// hfDoer performed or the politebot cadence. Nothing else sleeps.
+	for _, slept := range fc.slept {
+		if slept != 2*time.Second && slept > politebot.DefaultMinRequestInterval {
+			t.Errorf("unexpected sleep of %v — the lookup must add NO backoff of its own; slept=%v", slept, fc.slept)
+		}
+	}
+}
+
+// AC-22's structural claim: the Wayback lookup and the Hub crawl share ONE
+// politebot.Client, so the >=1s cadence is enforced ACROSS BOTH HOSTS. A second
+// client would double the effective outbound rate against the archive — and the
+// only way to see that is to interleave the two hosts through one client and check
+// the gap between consecutive requests, which is what this does on a fake clock.
+func TestWaybackAndHub_ShareOneClient_CadenceAcrossHosts(t *testing.T) {
+	c, hd, sd, fc := newTestClient([]cannedResp{
+		{status: 200, body: `{"id":"meta-llama/Llama-3.3-70B-Instruct"}`},
+		{status: 200, body: waybackHitBody},
+		{status: 200, body: `{"id":"BAAI/bge-m3"}`},
+	})
+	ctx := context.Background()
+	start := fc.t
+
+	// hd is the client's OWN hfDoer — the same instance the production run passes to
+	// verifyRepo, so this exercises one seam end to end rather than a stand-in.
+	if _, _, _, err := verifyRepo(ctx, c, hd, "meta-llama/Llama-3.3-70B-Instruct"); err != nil {
+		t.Fatalf("verifyRepo: %v", err)
+	}
+	if got := lookupArchivedURL(ctx, c, hfLive); got != wantSnapshot {
+		t.Fatalf("lookupArchivedURL = %q, want %q", got, wantSnapshot)
+	}
+	if _, _, _, err := verifyRepo(ctx, c, hd, "BAAI/bge-m3"); err != nil {
+		t.Fatalf("second verifyRepo: %v", err)
+	}
+
+	if len(sd.reqs) != 3 {
+		t.Fatalf("want 3 requests (hub, archive, hub) through the ONE client, got %d", len(sd.reqs))
+	}
+	// Two hosts appear, so the interleave is real and not an artifact.
+	if !strings.Contains(sd.reqs[0].URL.Host, "huggingface.co") ||
+		!strings.Contains(sd.reqs[1].URL.Host, "archive.org") ||
+		!strings.Contains(sd.reqs[2].URL.Host, "huggingface.co") {
+		t.Fatalf("hosts = %q/%q/%q, want hub/archive/hub interleaved",
+			sd.reqs[0].URL.Host, sd.reqs[1].URL.Host, sd.reqs[2].URL.Host)
+	}
+	// Three requests through one cadence seam: the first is free, the two that follow
+	// each wait the minimum interval — INCLUDING the hub request that follows the
+	// archive one, which is only true because a single client tracks both.
+	if want := 2 * politebot.DefaultMinRequestInterval; fc.t.Sub(start) < want {
+		t.Errorf("elapsed fake time = %v across 3 requests on 2 hosts, want >= %v "+
+			"(the cadence must be enforced across BOTH hosts by the one shared client)", fc.t.Sub(start), want)
+	}
+	// Every request carries the descriptive UA — the politeness identity is not lost
+	// by routing a second host through the same seam.
+	for i, r := range sd.reqs {
+		if got := r.Header.Get("User-Agent"); got != testUA {
+			t.Errorf("request %d User-Agent = %q, want %q", i, got, testUA)
+		}
+	}
+}
+
+// The seed carries the snapshot: a linked repo whose lookup hit writes archived_url,
+// while one with no snapshot writes NO key at all (omitempty), so a seed of
+// never-captured repos stays byte-identical to its pre-enrichment form.
+func TestBuildHFOutput_ArchivedURL_EmittedAndOmitted(t *testing.T) {
+	joined := []joinResult{
+		{Repo: "meta-llama/Llama-3.3-70B-Instruct", Linked: true, ArchivedURL: wantSnapshot,
+			Ref: hfRef{Family: "llama", Version: "3.3", ParamSize: "70b", Modifier: []string{"instruct"}}},
+		{Repo: "BAAI/bge-m3", Linked: true, Ref: hfRef{Family: "bge"}},
+	}
+	out, _ := buildHFOutput(joined, hfFileOut{})
+	byValue := map[string]hfNomenOut{}
+	for _, n := range out.Nomina {
+		byValue[n.Value] = n
+	}
+	if got := byValue["meta-llama/Llama-3.3-70B-Instruct"].ArchivedURL; got != wantSnapshot {
+		t.Errorf("archived_url = %q, want %q", got, wantSnapshot)
+	}
+	if got := byValue["BAAI/bge-m3"].ArchivedURL; got != "" {
+		t.Errorf("archived_url for the un-captured repo = %q, want \"\"", got)
+	}
+	raw, err := json.Marshal(out)
+	if err != nil {
+		t.Fatalf("marshal: %v", err)
+	}
+	if !strings.Contains(string(raw), `"archived_url":"`+wantSnapshot+`"`) {
+		t.Errorf("emitted seed does not carry the snapshot: %s", raw)
+	}
+	if strings.Contains(string(raw), `"archived_url":""`) {
+		t.Error("an absent snapshot must emit NO archived_url key (omitempty), not an empty one")
+	}
+	// The live source_url is unchanged and still primary.
+	if got := byValue["meta-llama/Llama-3.3-70B-Instruct"].SourceURL; got != hubRepoBase+"meta-llama/Llama-3.3-70B-Instruct" {
+		t.Errorf("source_url = %q, want the unchanged live repo URL", got)
+	}
+}
+
+// A MISS must not DELETE a snapshot an earlier run recorded. The archive does not
+// un-capture a page, so "" from this run means "nothing recorded this run" (a rate
+// limit, an outage) — overwriting durable evidence with it would silently destroy
+// the citation on any throttled refresh. A NEW snapshot does replace an older one.
+func TestBuildHFOutput_ArchivedURL_MissPreservesExisting(t *testing.T) {
+	const older = "https://web.archive.org/web/20260101000000/https://huggingface.co/BAAI/bge-m3"
+	const newer = "https://web.archive.org/web/20260801000000/https://huggingface.co/BAAI/bge-m3"
+	existing := hfFileOut{SchemaVersion: 1, Nomina: []hfNomenOut{
+		{Value: "BAAI/bge-m3", ResolveTo: hfRefOut{Family: "bge"}, SourceURL: hubRepoBase + "BAAI/bge-m3", ArchivedURL: older},
+	}}
+
+	// This run's lookup missed.
+	out, _ := buildHFOutput([]joinResult{{Repo: "BAAI/bge-m3", Linked: true, Ref: hfRef{Family: "bge"}}}, existing)
+	if len(out.Nomina) != 1 {
+		t.Fatalf("got %d nomina, want 1", len(out.Nomina))
+	}
+	if got := out.Nomina[0].ArchivedURL; got != older {
+		t.Errorf("archived_url after a MISS = %q, want the preserved %q — a miss is not a deletion", got, older)
+	}
+
+	// This run found a fresher snapshot: it wins.
+	out2, _ := buildHFOutput([]joinResult{{Repo: "BAAI/bge-m3", Linked: true, ArchivedURL: newer, Ref: hfRef{Family: "bge"}}}, existing)
+	if got := out2.Nomina[0].ArchivedURL; got != newer {
+		t.Errorf("archived_url after a fresh HIT = %q, want the newer %q", got, newer)
+	}
+}
+
+// normalizeArchiveScheme upgrades ONLY the leading archive-host scheme. The original
+// URL embedded in the snapshot's tail keeps whatever scheme it was captured under —
+// rewriting that would be falsifying what the archive recorded.
+func TestNormalizeArchiveScheme(t *testing.T) {
+	cases := map[string]string{
+		"http://web.archive.org/web/20260715030540/http://docs.x.ai/models":  "https://web.archive.org/web/20260715030540/http://docs.x.ai/models",
+		"https://web.archive.org/web/20260715030540/http://docs.x.ai/models": "https://web.archive.org/web/20260715030540/http://docs.x.ai/models",
+		"http://web.archive.org/web/20260715030540/https://docs.x.ai/models": "https://web.archive.org/web/20260715030540/https://docs.x.ai/models",
+		"https://huggingface.co/meta-llama/Llama-3.3-70B-Instruct":           "https://huggingface.co/meta-llama/Llama-3.3-70B-Instruct",
+		"http://archive.ph/20260715030540/https://huggingface.co/x":          "http://archive.ph/20260715030540/https://huggingface.co/x",
+	}
+	for in, want := range cases {
+		if got := normalizeArchiveScheme(in); got != want {
+			t.Errorf("normalizeArchiveScheme(%q) = %q, want %q", in, got, want)
+		}
+	}
+}
