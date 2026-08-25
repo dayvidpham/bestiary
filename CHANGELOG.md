@@ -205,6 +205,27 @@ for its **Go module tags** (`vX.Y.Z`).
 
 ### Fixed
 
+- **NVIDIA's Nemotron Super 49B v1.5 is served from one key, and the bare 49B key stops
+  holding two different models.** nano-gpt spells that artifact with underscores
+  (`nvidia/Llama-3_3-Nemotron-Super-49B-v1_5`) where every other provider uses dots.
+  Underscores are not a separator the decomposition splits on, so neither `3_3` nor `v1_5`
+  was reachable as a token: the row arrived with an empty variant and version and keyed the
+  bare `nemotron#49b` line — which already held the genuinely different Super-49B **v1**.
+  An exact-id pin puts it on the `(nemotron, v1.5, 3.3)` tuple its dotted siblings already
+  converge on.
+
+  **This moves one instance and retires no entity key, so it carries no migration table and
+  falls outside the retired-key policy entirely.** Both keys already existed at the baseline
+  and both survive; measured, the entity key set is byte-identical before and after
+  (`entities_constants_gen.go` does not change), and the whole effect is an instance diff:
+  `nemotron#49b` goes 2 → 1 instance (keeping the v1 row alone) and
+  `nemotron/v1.5@3.3#49b` goes 2 → 3. It is **not** a split — `nemotron#49b` stays live —
+  and nothing is orphaned: the instance total across the pair is conserved at 4. A committed
+  test pins the exact instance membership of BOTH keys, because asserting only the arrival
+  would leave a retirement of the bare key indistinguishable from a re-home
+  (`cmd/bestiary/testdata/rehome/nemotron_rehome_corpus.json`). Census unchanged: entities
+  945, series 415, releases 654, canonical nomina 945.
+
 - `synthesizeStandaloneEntity` never projected `Entity.Creator`, so a metadata-only
   standalone reported an empty creator even when its family was mapped. The invariant
   "`Entity.Creator == Ref.Family.Creator()` for every entity" held only by accident —

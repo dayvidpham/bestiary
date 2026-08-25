@@ -127,7 +127,7 @@ func Test<Name>(t *testing.T) {
 
 ## The corpus census, and what is deliberately still inline
 
-At the close of the naming-layer epoch the repository carries **120 corpora**:
+At the close of the naming-layer epoch the repository carries **121 corpora**:
 
 | Area | Corpora | What lives there |
 |---|---|---|
@@ -142,6 +142,7 @@ At the close of the naming-layer epoch the repository carries **120 corpora**:
 | `testdata/vram/` | 5 | the VRAM arithmetic anchors, plus the budget-first fit calculator: the context-boundary and bound-selection table, the derived-weights estimates with the six zero-bits-per-weight refusals, and the parameter-shape exclusion table (the NxM and Nb-Ke tokens that attest no total) |
 | `cmd/bestiary/testdata/series/` | 4 | the `series` selector surface: end-to-end selector resolution (specificity ladder, canonical grammar, `--version`, `--input-format`, disagreement errors), the strict major-union membership rule, `--version` composition, and the `selectSeries` readings over a synthetic universe |
 | `cmd/bestiary/testdata/retired/` | 4 | the retired-key migration records — one corpus per curation lever that retires entity keys (the global free-tier demotion, the ling/inkling/kling collision split, the mimo keyspace normalization, the cogito decomposition + variant pin). Each case pins the two lookup seams for a retired key plus the instances it held and the live keys those instances re-homed onto, so the successor set is re-derived rather than claimed |
+| `cmd/bestiary/testdata/rehome/` | 1 | the instance-membership records for a curation lever that re-homes instances between keys that ALREADY EXIST, so no key is retired and no migration table applies. Each case names a live key and the exact set of provider instances it must hold, so a re-home stays distinguishable from a split and the instance total is checked as conserved |
 | `cmd/bestiary-gen/testdata/gen/` | 9 | the identifier builders (`slugToIdentifier`, `providerConstName`, `styleSegment`, `entityConstName`, `splitComma`) |
 | `cmd/bestiary-ollama/testdata/ollama/` | 1 | Ollama tag normalization |
 
