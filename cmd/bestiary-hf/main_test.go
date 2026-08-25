@@ -613,7 +613,7 @@ func TestLookupArchivedURL_PostRetry429IsAMiss(t *testing.T) {
 	}
 }
 
-// AC-22's structural claim: the Wayback lookup and the Hub crawl share ONE
+// The structural claim: the Wayback lookup and the Hub crawl share ONE
 // politebot.Client, so the >=1s cadence is enforced ACROSS BOTH HOSTS. A second
 // client would double the effective outbound rate against the archive — and the
 // only way to see that is to interleave the two hosts through one client and check
