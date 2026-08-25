@@ -14,6 +14,47 @@ for its **Go module tags** (`vX.Y.Z`).
 
 ## [Unreleased]
 
+### Fixed
+
+- **Canonical segment binding no longer mis-reads a version token as a variant.** A
+  canonical ref is bound to `(family, variant, version)` by slot position, and a provider
+  prefix was consumed by shifting the segment slice left — but the residue was then re-read
+  positionally with no memory of which slot the un-stripped form implied. A trailing
+  version token therefore landed in the *variant* slot and could never match a
+  variant-empty entity, so `ling/2.6` and `ant/ling/2.6` were both `model not found`, and a
+  variant-empty ref could not be addressed with a provider prefix at all. The repair adds
+  three rules — a two-segment provider strip guarded on the candidate's own `Provider`
+  field, a variant-empty version rebind written as an if/else (never an abort, which would
+  drop thousands of resolvable refs such as `302ai/claude/haiku@4.5`), and a
+  date-to-version rebind gated on a provider segment having actually been stripped.
+  `ling/2.6` and `ant/ling/2.6` now resolve uniquely to `ling@2.6#1t`; `openai/gpt@5.1`
+  returns a scoped `ErrAmbiguous` over exactly its two openai-served candidates, and
+  `gpt/5.1` / `openai/gpt/5.1` over their groups.
+
+  Every new rule lives in a **second pass that runs only when the first pass matched
+  nothing anywhere in the registry**, so "nothing matched" is a property of the match
+  *set*, never of one model: a ref that already resolved is untouched by construction. A
+  further **base-first preference** keeps a rebound version segment on the variant-empty
+  artifact whenever one exists, and only lets it reach variant-carrying siblings when the
+  catalog holds no variant-empty artifact at that version.
+
+  The `providerStripped` gate on the date-to-version rebind is load-bearing and was found
+  by measurement, not by reasoning: without it, **486 of 957 entity keys** silently lose
+  their `bestiary show` aggregate entity view, because `show` reaches that view only when
+  model resolution *misses* — a resolver-only sweep stays green while the CLI regresses.
+  Guards now run at **both seams**: an invariant sweep over every entity key at the
+  resolver, and a full-census sweep at the `show` seam.
+
+### Added
+
+- `testdata/resolve/segment_binding_corpus.json`, driven at the peasant seam
+  (`Resolve(ref, WithInputFormat(InputFormatPeasant))` — what `bestiary show` passes, and
+  where the must-not-widen refs are actually reachable). Each row pins its **candidate
+  set** rather than its outcome class: the entity keys the candidates span, plus the
+  provider-level ref set wherever a widening would be invisible at the identity level. It
+  carries the repaired refs, the six known falsifiers, the pinned entity-view guards, and
+  one held-open composition-witness slot.
+
 ## [0.2.9] - 2026-07-28
 
 **Schema:** unchanged at `0.6.0`.

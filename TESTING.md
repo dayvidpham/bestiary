@@ -127,7 +127,7 @@ func Test<Name>(t *testing.T) {
 
 ## The corpus census, and what is deliberately still inline
 
-At the close of the naming-layer epoch the repository carries **112 corpora**:
+At the close of the naming-layer epoch the repository carries **113 corpora**:
 
 | Area | Corpora | What lives there |
 |---|---|---|
@@ -138,7 +138,7 @@ At the close of the naming-layer epoch the repository carries **112 corpora**:
 | `testdata/stage/` | 4 | the ReleaseStage axis |
 | `testdata/midid/` | 3 | the internal mid-ID token engine |
 | `testdata/metadata/` | 3 | the models.dev ingest detectors (status / link type / reasoning-option kind) |
-| `testdata/resolve/` | 3 | the internal group-key helpers, and the canonical-provider preference on provider-unqualified exact-ID lookups |
+| `testdata/resolve/` | 4 | the internal group-key helpers, the canonical-provider preference on provider-unqualified exact-ID lookups, and canonical segment binding at the peasant seam (the repaired variant-empty and provider-prefixed refs, the six must-not-widen falsifiers, the pinned entity-view guards, and the held-open composition witness) |
 | `testdata/vram/` | 2 | the VRAM arithmetic anchors |
 | `cmd/bestiary/testdata/series/` | 4 | the `series` selector surface: end-to-end selector resolution (specificity ladder, canonical grammar, `--version`, `--input-format`, disagreement errors), the strict major-union membership rule, `--version` composition, and the `selectSeries` readings over a synthetic universe |
 | `cmd/bestiary-gen/testdata/gen/` | 9 | the identifier builders (`slugToIdentifier`, `providerConstName`, `styleSegment`, `entityConstName`, `splitComma`) |
