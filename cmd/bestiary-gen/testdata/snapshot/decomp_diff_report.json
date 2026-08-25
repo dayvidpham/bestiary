@@ -1,8 +1,8 @@
 {
   "total_records": 5765,
-  "changed_count": 144,
+  "changed_count": 136,
   "cat_a_divergence_fix_count": 0,
-  "cat_b_improvement_count": 67,
+  "cat_b_improvement_count": 59,
   "cat_c_unexpected_regression_count": 0,
   "justified_exception_count": 77,
   "id_tuple4_incl_modifier_divergence_frozen_before": 17,
@@ -136,15 +136,6 @@
       "reason": "strict enrichment — only previously-empty field(s) populated"
     },
     {
-      "provider": "empiriolabs",
-      "id": "kimi-k2-7-code-highspeed",
-      "raw_family": "kimi-k2",
-      "before": "(family=\"kimi\",variant=\"k\",version=\"2.7\",modifier=\"\")",
-      "after": "(family=\"kimi\",variant=\"k\",version=\"2.7\",modifier=\"highspeed\")",
-      "category": "b:improvement",
-      "reason": "strict enrichment — only previously-empty field(s) populated"
-    },
-    {
       "provider": "opencode",
       "id": "kimi-k2.5-free",
       "raw_family": "kimi-free",
@@ -152,42 +143,6 @@
       "after": "(family=\"kimi\",variant=\"k\",version=\"2.5\",modifier=\"free\")",
       "category": "b:improvement",
       "reason": "family-preserving de-noise/enrich: only phantom losses and/or enrichments, no ID-present field lost"
-    },
-    {
-      "provider": "aihubmix",
-      "id": "kimi-k2.7-code-highspeed",
-      "raw_family": "kimi-k2",
-      "before": "(family=\"kimi\",variant=\"k\",version=\"2.7\",modifier=\"\")",
-      "after": "(family=\"kimi\",variant=\"k\",version=\"2.7\",modifier=\"highspeed\")",
-      "category": "b:improvement",
-      "reason": "strict enrichment — only previously-empty field(s) populated"
-    },
-    {
-      "provider": "llmgateway",
-      "id": "kimi-k2.7-code-highspeed",
-      "raw_family": "kimi-k2",
-      "before": "(family=\"kimi\",variant=\"k\",version=\"2.7\",modifier=\"\")",
-      "after": "(family=\"kimi\",variant=\"k\",version=\"2.7\",modifier=\"highspeed\")",
-      "category": "b:improvement",
-      "reason": "strict enrichment — only previously-empty field(s) populated"
-    },
-    {
-      "provider": "moonshotai",
-      "id": "kimi-k2.7-code-highspeed",
-      "raw_family": "kimi-k2",
-      "before": "(family=\"kimi\",variant=\"k\",version=\"2.7\",modifier=\"\")",
-      "after": "(family=\"kimi\",variant=\"k\",version=\"2.7\",modifier=\"highspeed\")",
-      "category": "b:improvement",
-      "reason": "strict enrichment — only previously-empty field(s) populated"
-    },
-    {
-      "provider": "moonshotai-cn",
-      "id": "kimi-k2.7-code-highspeed",
-      "raw_family": "kimi-k2",
-      "before": "(family=\"kimi\",variant=\"k\",version=\"2.7\",modifier=\"\")",
-      "after": "(family=\"kimi\",variant=\"k\",version=\"2.7\",modifier=\"highspeed\")",
-      "category": "b:improvement",
-      "reason": "strict enrichment — only previously-empty field(s) populated"
     },
     {
       "provider": "vercel",
@@ -350,33 +305,6 @@
       "after": "(family=\"kimi\",variant=\"k\",version=\"2.7\",modifier=\"code,free\")",
       "category": "b:improvement",
       "reason": "family-preserving de-noise/enrich: only phantom losses and/or enrichments, no ID-present field lost"
-    },
-    {
-      "provider": "gmicloud",
-      "id": "moonshotai/kimi-k2.7-code-highspeed",
-      "raw_family": "kimi-k2",
-      "before": "(family=\"kimi\",variant=\"k\",version=\"2.7\",modifier=\"\")",
-      "after": "(family=\"kimi\",variant=\"k\",version=\"2.7\",modifier=\"highspeed\")",
-      "category": "b:improvement",
-      "reason": "strict enrichment — only previously-empty field(s) populated"
-    },
-    {
-      "provider": "merge-gateway",
-      "id": "moonshotai/kimi-k2.7-code-highspeed",
-      "raw_family": "kimi-k2",
-      "before": "(family=\"kimi\",variant=\"k\",version=\"2.7\",modifier=\"\")",
-      "after": "(family=\"kimi\",variant=\"k\",version=\"2.7\",modifier=\"highspeed\")",
-      "category": "b:improvement",
-      "reason": "strict enrichment — only previously-empty field(s) populated"
-    },
-    {
-      "provider": "vercel",
-      "id": "moonshotai/kimi-k2.7-code-highspeed",
-      "raw_family": "kimi-k2",
-      "before": "(family=\"kimi\",variant=\"k\",version=\"2.7\",modifier=\"\")",
-      "after": "(family=\"kimi\",variant=\"k\",version=\"2.7\",modifier=\"highspeed\")",
-      "category": "b:improvement",
-      "reason": "strict enrichment — only previously-empty field(s) populated"
     },
     {
       "provider": "zenmux",
