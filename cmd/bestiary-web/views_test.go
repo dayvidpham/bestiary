@@ -23,8 +23,8 @@ func sseGet(t *testing.T, s *Server, signals string) string {
 	return rec.Body.String()
 }
 
-// TestBrowser_ListsRealCorpus is the R9 "browser lists the 958" case: over the actual
-// committed registry the index renders the dense table with every entity's row and the
+// TestBrowser_ListsRealCorpus is the "browser lists the whole corpus" case: over the actual
+// committed registry /entities renders the dense table with every entity's row and the
 // filter rail with real facet options. Offline; no network.
 func TestBrowser_ListsRealCorpus(t *testing.T) {
 	entities := bestiary.Entities()
@@ -38,9 +38,9 @@ func TestBrowser_ListsRealCorpus(t *testing.T) {
 		t.Fatalf("rows = %d, want one per entity (%d)", len(s.rows), len(entities))
 	}
 
-	body := get(t, s, "/", "text/html").Body.String()
+	body := get(t, s, "/entities", "text/html").Body.String()
 	if want := fmt.Sprintf("%d entities", len(entities)); !strings.Contains(body, want) {
-		t.Errorf("index missing entity count %q", want)
+		t.Errorf("entity browser missing entity count %q", want)
 	}
 	// The filter rail ships real facet controls.
 	for _, want := range []string{
@@ -52,7 +52,7 @@ func TestBrowser_ListsRealCorpus(t *testing.T) {
 		`aria-label="sort entities"`,
 	} {
 		if !strings.Contains(body, want) {
-			t.Errorf("index filter rail missing %q", want)
+			t.Errorf("entity-browser filter rail missing %q", want)
 		}
 	}
 	// The (ID,Provider)->Modalities startup join surfaced real modality facets and the
@@ -217,18 +217,20 @@ func TestDetail_StripParams_NoQuant(t *testing.T) {
 	}
 }
 
-// TestSeriesExplorer_WalksTree is the R9 "explorer walks series→releases→entities" case: the
-// /series page renders the disclosure tree over SeriesAll()/ReleasesOf()/EntitiesOf(), and a
-// concrete series→release→entity path is present with a navigable entity link. Offline.
+// TestSeriesExplorer_WalksTree is the "explorer walks series→releases→entities" case. The
+// explorer MOVED from the retired /series to /families, which absorbed its content; the
+// assertions below are the ones it already made — every series' anchor is present, and a
+// concrete series→release→entity path renders with a navigable entity link — so a green run
+// here is evidence the page was REFACTORED rather than rewritten. Offline.
 func TestSeriesExplorer_WalksTree(t *testing.T) {
 	entities := bestiary.Entities()
 	if len(entities) == 0 {
 		t.Skip("no registry entities")
 	}
 	s := newTestServer(t, entities)
-	rec := get(t, s, "/series", "text/html")
+	rec := get(t, s, "/families", "text/html")
 	if rec.Code != 200 {
-		t.Fatalf("GET /series = %d, want 200", rec.Code)
+		t.Fatalf("GET /families = %d, want 200", rec.Code)
 	}
 	body := rec.Body.String()
 
@@ -269,8 +271,9 @@ func TestSeriesExplorer_WalksTree(t *testing.T) {
 }
 
 // TestSeriesLink_DetailToExplorer pins the cross-view link integrity: the anchor a detail
-// page links to (/series#<anchor>) is exactly an anchor the explorer emits, so the "series"
-// section on a detail page always resolves to a real spot in the tree.
+// page links to (/families#<anchor>) is exactly an anchor the explorer emits, so the
+// "series" section on a detail page always resolves to a real spot in the tree. seriesAnchor
+// is UNCHANGED across the move, which is what makes the retarget a pure change of path.
 func TestSeriesLink_DetailToExplorer(t *testing.T) {
 	entities := bestiary.Entities()
 	if len(entities) == 0 {
@@ -281,11 +284,11 @@ func TestSeriesLink_DetailToExplorer(t *testing.T) {
 	e := entities[0]
 	detail := get(t, s, e.Ref.IRI(entityRoutePrefix), "text/html").Body.String()
 	anchor := seriesAnchor(bestiary.SeriesOf(e.Ref))
-	wantLink := `href="/series#` + anchor + `"`
+	wantLink := `href="/families#` + anchor + `"`
 	if !strings.Contains(detail, wantLink) {
 		t.Errorf("detail page missing series link %q", wantLink)
 	}
-	explorer := get(t, s, "/series", "text/html").Body.String()
+	explorer := get(t, s, "/families", "text/html").Body.String()
 	if !strings.Contains(explorer, `id="`+anchor+`"`) {
 		t.Errorf("explorer missing the anchor %q the detail page links to", anchor)
 	}

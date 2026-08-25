@@ -133,9 +133,43 @@ type entityJSON struct {
 	Nomina []bestiary.Nomen
 }
 
-// seriesView is the data model for the series/release explorer: the full Series → Release →
-// entity tree, walked from SeriesAll()/ReleasesOf()/EntitiesOf().
-type seriesView struct {
+// treeView is the data model for the FRONT PAGE: the Creator > Family > Series >
+// entities tree. It is the browsable entry point — a reader who has not yet
+// decided what they are looking for starts from the lab that trained the weights,
+// not from a nine-hundred-row table.
+type treeView struct {
+	Title           string
+	DatastarVersion string
+	Creators        []creatorNode
+	CreatorCount    int
+	FamilyCount     int
+	SeriesCount     int
+	EntityCount     int
+}
+
+// creatorNode is one lab at the root of the tree. Attributed is false for the
+// single remainder group of families with no curated creator: it renders last and
+// COLLAPSED, because "we do not know who trained these" is a footnote to the page,
+// not its opening statement.
+type creatorNode struct {
+	Name        string
+	Attributed  bool
+	Families    []familyNode
+	EntityCount int
+}
+
+// familyNode is one family beneath a creator, holding its versioned lines.
+type familyNode struct {
+	Name        string
+	Series      []seriesNode
+	EntityCount int
+}
+
+// familiesView is the data model for /families: the flat, creator-agnostic
+// Series -> Release -> entities walk. It is the same substrate the front-page tree
+// nests, rendered one level shallower for a reader who already knows the family
+// and wants the whole line at once.
+type familiesView struct {
 	Title           string
 	DatastarVersion string
 	Series          []seriesNode
@@ -143,23 +177,37 @@ type seriesView struct {
 	EntityCount     int
 }
 
-// seriesNode is one Series in the explorer tree: its display name, a stable same-page
-// anchor, and its releases.
+// seriesNode is ONE versioned line with the base hoist applied, and it is shared
+// by both pages so there is a single rendering of the hierarchy rather than two
+// that could drift.
+//
+// Hoisted carries the un-named release's entities directly; Releases carries only
+// NAMED releases. There is deliberately no "(base)" release here: the un-named
+// release is not a member of the line alongside the named ones, it is the line
+// itself, and giving it a node invented a level that does not exist.
+//
+// Anchor is emitted only where the page owns the anchor namespace (/families), so
+// a detail page's series link always resolves to exactly one place.
 type seriesNode struct {
 	Display     string
 	Anchor      string
+	Hoisted     []entityRef
 	Releases    []releaseNode
 	EntityCount int
+	// Mixed is true when the line has BOTH hoisted entities and named releases.
+	// The two sit at different levels of the hierarchy while rendering adjacent
+	// on screen, so the template must mark the hoisted group visually; a
+	// base-only line has nothing to distinguish it from and is left plain.
+	Mixed bool
 }
 
-// releaseNode is one Release within a Series: its display name (the bare line renders as
-// "(base)") and the entities that belong to it.
+// releaseNode is one NAMED release within a Series: its name and its entities.
 type releaseNode struct {
 	Name     string
 	Entities []entityRef
 }
 
-// entityRef is a minimal entity link (key + route path) for the explorer leaves.
+// entityRef is a minimal entity link (key + route path) for the tree leaves.
 type entityRef struct {
 	Key  string
 	Path string
@@ -387,15 +435,26 @@ func fracOf(n, d int64) int {
 // "/assets/*" instead — "/sse/" names the transport (this is specifically the datastar
 // SSE wiring seam, not a general entities collection endpoint one might expect to
 // support other verbs/methods), and "/assets/" is the more conventional name for a
-// same-origin static-asset mount. "/series" is the series/release explorer. Later work
-// builds on these shipped names — changing them now would be a breaking change to the
-// route table, not a cosmetic rename.
+// same-origin static-asset mount. Later work builds on these shipped names — changing
+// them now would be a breaking change to the route table, not a cosmetic rename.
+//
+// "/" is the Creator > Family > Series > entities tree and "/entities" is the dense
+// browser that used to live at "/": a reader arriving with no query in mind needs a
+// hierarchy to walk, not a nine-hundred-row table, while a reader who knows what they
+// want still has the table one click away.
+//
+// "/series" is GONE, not redirected. Its content was absorbed by "/families", which
+// emits the SAME series anchors, so the detail-page links that pointed into the old
+// explorer resolve at the new path. A retired route returns a hard 404: an alias would
+// keep a dead name alive in links and bookmarks indefinitely, which is the thing
+// retiring it was meant to stop.
 func (s *Server) routes() {
 	mux := http.NewServeMux()
-	mux.HandleFunc("GET /{$}", s.handleIndex)
+	mux.HandleFunc("GET /{$}", s.handleTree)
+	mux.HandleFunc("GET /entities", s.handleEntities)
+	mux.HandleFunc("GET /families", s.handleFamilies)
 	mux.HandleFunc("GET "+entityRoutePrefix, s.handleEntity)
 	mux.HandleFunc("GET /sse/entities", s.handleEntitiesSSE)
-	mux.HandleFunc("GET /series", s.handleSeries)
 	mux.Handle("GET /assets/", http.FileServerFS(assetsFS))
 	s.handler = mux
 }
@@ -403,10 +462,12 @@ func (s *Server) routes() {
 // ServeHTTP makes Server an http.Handler (so httptest can drive it with no port bind).
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) { s.handler.ServeHTTP(w, r) }
 
-// handleIndex renders the entity browser: the dense sortable table over every entity, the
-// filter rail, and the SSE-patched results container seeded with the default-ordered rows.
-func (s *Server) handleIndex(w http.ResponseWriter, r *http.Request) {
-	s.render(w, "index", indexView{
+// handleEntities renders the entity browser: the dense sortable table over every entity,
+// the filter rail, and the SSE-patched results container seeded with the default-ordered
+// rows. It served "/" until the front page became the tree; the browser itself is
+// unchanged, only its address.
+func (s *Server) handleEntities(w http.ResponseWriter, r *http.Request) {
+	s.render(w, "entities", indexView{
 		Title:           "catalog",
 		DatastarVersion: DatastarJSVersion,
 		EntityCount:     len(s.entities),
@@ -430,7 +491,9 @@ func (s *Server) handleIndex(w http.ResponseWriter, r *http.Request) {
 func (s *Server) handleEntity(w http.ResponseWriter, r *http.Request) {
 	key := strings.TrimPrefix(r.URL.Path, entityRoutePrefix)
 	if key == "" {
-		http.Redirect(w, r, "/", http.StatusSeeOther)
+		// A bare /entity/ names no entity; send the caller to the browser, which is
+		// the page that lists them, rather than to the tree.
+		http.Redirect(w, r, "/entities", http.StatusSeeOther)
 		return
 	}
 	e, ok := s.byKey[key]
@@ -593,49 +656,113 @@ func containsStr(xs []string, x string) bool {
 	return false
 }
 
-// handleSeries renders the series/release explorer: the full Series → Release → entity tree,
-// walked from SeriesAll()/ReleasesOf()/EntitiesOf(). It is a native <details> disclosure
-// tree (no client router, no chart — a hierarchy walk is a nested list). Entity leaves link
-// to their detail pages; each Series carries a stable anchor a detail page's "series"
-// section links back to.
-func (s *Server) handleSeries(w http.ResponseWriter, r *http.Request) {
-	series := bestiary.SeriesAll()
-	nodes := make([]seriesNode, 0, len(series))
-	total := 0
-	for _, ser := range series {
-		relNodes := make([]releaseNode, 0)
-		count := 0
-		for _, rel := range bestiary.ReleasesOf(ser) {
-			ents := bestiary.EntitiesOf(rel)
-			refs := make([]entityRef, 0, len(ents))
-			for _, e := range ents {
-				refs = append(refs, entityRef{
-					Key:  e.Ref.String(),
-					Path: e.Ref.IRI(entityRoutePrefix),
-				})
+// handleTree renders the FRONT PAGE: the Creator > Family > Series > entities tree,
+// walked from the root package's CreatorGroups() projection. It is a native <details>
+// disclosure tree (no client router — a hierarchy walk is a nested list). Attributed
+// creators render expanded; the single unattributed remainder renders collapsed at the
+// bottom.
+//
+// The tree emits NO series anchors: /families owns that namespace, so a detail page's
+// series link resolves to exactly one page rather than two that both claim the id.
+func (s *Server) handleTree(w http.ResponseWriter, r *http.Request) {
+	groups := bestiary.CreatorGroups()
+	nodes := make([]creatorNode, 0, len(groups))
+	var families, series, total int
+	for _, cg := range groups {
+		famNodes := make([]familyNode, 0, len(cg.Families))
+		for _, fg := range cg.Families {
+			serNodes := make([]seriesNode, 0, len(fg.Series))
+			for _, sg := range fg.Series {
+				serNodes = append(serNodes, newSeriesNode(sg, ""))
 			}
-			name := rel.Name
-			if name == "" {
-				name = "(base)"
-			}
-			relNodes = append(relNodes, releaseNode{Name: name, Entities: refs})
-			count += len(refs)
+			series += len(serNodes)
+			famNodes = append(famNodes, familyNode{
+				Name:        string(fg.Family),
+				Series:      serNodes,
+				EntityCount: fg.EntityCount,
+			})
 		}
-		total += count
-		nodes = append(nodes, seriesNode{
-			Display:     ser.String(),
-			Anchor:      seriesAnchor(ser),
-			Releases:    relNodes,
-			EntityCount: count,
+		families += len(famNodes)
+		total += cg.EntityCount
+		name := string(cg.Creator)
+		attributed := cg.Creator != bestiary.CreatorNone
+		if !attributed {
+			name = "creator unattributed"
+		}
+		nodes = append(nodes, creatorNode{
+			Name:        name,
+			Attributed:  attributed,
+			Families:    famNodes,
+			EntityCount: cg.EntityCount,
 		})
 	}
-	s.render(w, "series", seriesView{
-		Title:           "series",
+	s.render(w, "tree", treeView{
+		Title:           "bestiary",
+		DatastarVersion: DatastarJSVersion,
+		Creators:        nodes,
+		CreatorCount:    len(nodes),
+		FamilyCount:     families,
+		SeriesCount:     series,
+		EntityCount:     total,
+	})
+}
+
+// handleFamilies renders the flat Series -> Release -> entities walk, absorbing what the
+// retired /series explorer showed. It emits the same per-series anchors that explorer did,
+// so every detail page's series link still resolves.
+func (s *Server) handleFamilies(w http.ResponseWriter, r *http.Request) {
+	groups := bestiary.SeriesGroups()
+	nodes := make([]seriesNode, 0, len(groups))
+	total := 0
+	for _, sg := range groups {
+		nodes = append(nodes, newSeriesNode(sg, seriesAnchor(sg.Series)))
+		total += sg.EntityCount
+	}
+	s.render(w, "families", familiesView{
+		Title:           "families",
 		DatastarVersion: DatastarJSVersion,
 		Series:          nodes,
 		SeriesCount:     len(nodes),
 		EntityCount:     total,
 	})
+}
+
+// newSeriesNode converts one hoisted SeriesGroup into its render node. It is the SINGLE
+// conversion both pages use, which is what keeps them from drifting: the base hoist has one
+// implementation in the projection and one rendering here, so a "(base)" node cannot
+// reappear on one page only.
+//
+// anchor is empty for a page that does not own the anchor namespace.
+func newSeriesNode(sg bestiary.SeriesGroup, anchor string) seriesNode {
+	n := seriesNode{
+		Display:     sg.Series.String(),
+		Anchor:      anchor,
+		Hoisted:     entityRefs(sg.Hoisted),
+		EntityCount: sg.EntityCount,
+		Mixed:       sg.Shape() == bestiary.SeriesShapeMixed,
+	}
+	n.Releases = make([]releaseNode, 0, len(sg.Releases))
+	for _, rg := range sg.Releases {
+		n.Releases = append(n.Releases, releaseNode{
+			Name:     rg.Release.Name,
+			Entities: entityRefs(rg.Entities),
+		})
+	}
+	return n
+}
+
+// entityRefs projects entities onto their (key, route path) link pairs. The path is minted
+// with the same EntityRef.IRI(entityRoutePrefix) grammar the route dereferences, so a tree
+// leaf and the page it opens can never disagree.
+func entityRefs(ents []bestiary.Entity) []entityRef {
+	out := make([]entityRef, 0, len(ents))
+	for _, e := range ents {
+		out = append(out, entityRef{
+			Key:  e.Ref.String(),
+			Path: e.Ref.IRI(entityRoutePrefix),
+		})
+	}
+	return out
 }
 
 // seriesAnchor renders a stable, URL-fragment-safe same-page anchor for a Series. It is a

@@ -43,6 +43,35 @@ for its **Go module tags** (`vX.Y.Z`).
 
 ### Changed
 
+- **Web: the front page is now a Creator > Family > Series > entities tree (`GET /`).** A
+  reader arriving with no query in mind was previously handed a nine-hundred-row table; they
+  now get a hierarchy to walk, starting from the lab that trained the weights. Attributed
+  creators arrive expanded; families with no curated creator collect in a single collapsed
+  group at the bottom. The tree renders whatever creators the curated seed carries, so it
+  grows with `creators.json` and hard-codes no lab.
+- **Web: the dense entity browser moved from `/` to `GET /entities`, unchanged.** Same seven
+  signals, same `#entity-results` SSE patch target, same facets — only its address changed,
+  and it is one click from the tree.
+- **Web: `GET /families` absorbs the series/release explorer**, emitting the SAME per-series
+  anchors, so every detail-page series link still resolves.
+- **Web: no `(base)` node on any page.** Both hierarchy pages render one shared partial over
+  the new hoisted projection, so the un-named release's entities attach directly to their
+  line. On a line that has both, the hoisted entities render above the release disclosures
+  with a legend and a rule marking them as a different level of the hierarchy — adjacency on
+  screen must not be read as sameness of level. Tests assert the identity on the RENDERED
+  document as well as on the projection: a template can drop a branch it never ranges over,
+  entirely downstream of a correct projection.
+- Four cross-page links were retargeted accordingly: the browser's "browse by series" and
+  the entity detail page's "‹ catalog", "series" and series-section anchor links.
+
+### Removed
+
+- **`GET /series` is retired and now returns a hard 404** — the route, its handler and its
+  template are deleted, not repointed. It is deliberately not a 301: an alias keeps a dead
+  name alive in links, bookmarks and search results indefinitely, which is what retiring the
+  name was meant to stop. No content was lost — `/families` absorbed it and emits the same
+  anchors.
+
 - **Web: a readability type scale governs every text size.** The `bestiary-web` stylesheet
   gained a six-step, rem-based type scale (`--fs-xs` … `--fs-xl`) and every `font-size` in
   the layout now resolves through it — there is no literal font-size value left in the

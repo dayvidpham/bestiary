@@ -216,16 +216,38 @@
     .break { word-break: break-all; }
     ul.lineage { list-style: none; padding: 0; }
 
-    /* Series explorer: native <details> disclosure tree. */
-    .series-tree details { border-bottom: 1px solid var(--accent-dim); }
+    /* Disclosure tree — shared by the front-page Creator > Family > Series walk and the
+       flat /families walk, because both render the same "series-subtree" partial. Each
+       level indents from its parent so the hierarchy is legible at a glance; only the
+       depth of the indent distinguishes them, since a level is a level. */
+    .tree details { border-bottom: 1px solid var(--accent-dim); }
+    .tree summary { cursor: pointer; }
+    .creator-node > summary { padding: var(--space-2) 0; font-size: var(--fs-lg); color: var(--accent); }
+    .creator-name { font-family: var(--font-display); letter-spacing: .04em; text-transform: uppercase; }
+    .family-node { margin-left: var(--space-3); }
+    .family-node > summary { padding: var(--space-2) 0; font-size: var(--fs-body); color: var(--accent); }
+    .family-name { font-family: var(--font-display); letter-spacing: .03em; }
+    .series-node { margin-left: var(--space-3); }
     .series-node > summary {
-      cursor: pointer; padding: var(--space-2) 0; font-size: var(--fs-body); color: var(--accent);
+      padding: var(--space-2) 0; font-size: var(--fs-body); color: var(--accent);
     }
     .series-name { font-family: var(--font-display); letter-spacing: .03em; }
     .release-node { margin-left: var(--space-4); }
-    .release-node > summary { cursor: pointer; padding: var(--space-1) 0; }
+    .release-node > summary { padding: var(--space-1) 0; }
     ul.release-entities { list-style: none; padding: 0 0 var(--space-2) var(--space-4); margin: 0; }
     ul.release-entities li { padding: 1px 0; }
+
+    /* THE BASE HOIST, visually. A line's un-named entities hang directly off the series
+       rather than under a "(base)" node. On a MIXED line they render above the release
+       disclosures while belonging to a DIFFERENT level of the hierarchy, so they get a
+       legend and a left rule to say so — adjacency on screen must not be mistaken for
+       sameness of level. A base-only line has no releases to be confused with, so it is
+       left plain and the entities simply are the line. */
+    .hoisted.mixed { border-left: 2px solid var(--accent-dim); margin-left: var(--space-3); }
+    .hoisted-legend {
+      font-size: var(--fs-xs); text-transform: uppercase; letter-spacing: .06em;
+      padding: var(--space-1) 0 0 var(--space-4);
+    }
 
     @media (max-width: 768px) {
       .browse-layout { grid-template-columns: 1fr; }

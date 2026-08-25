@@ -52,11 +52,15 @@ func get(t *testing.T, s *Server, target string, accept string) *httptest.Respon
 	return rec
 }
 
-func TestServer_Index(t *testing.T) {
+// TestServer_Entities exercises the dense entity browser. It asserts on /entities: the
+// browser moved off "/" when the front page became the creator tree, and the browser's own
+// contract — counts, vendored client, datastar wiring, approved chrome — is unchanged by
+// the move.
+func TestServer_Entities(t *testing.T) {
 	s := newTestServer(t, syntheticEntities())
-	rec := get(t, s, "/", "text/html")
+	rec := get(t, s, "/entities", "text/html")
 	if rec.Code != http.StatusOK {
-		t.Fatalf("GET / = %d, want 200", rec.Code)
+		t.Fatalf("GET /entities = %d, want 200", rec.Code)
 	}
 	body := rec.Body.String()
 	for _, want := range []string{
@@ -67,7 +71,7 @@ func TestServer_Index(t *testing.T) {
 		"datastar client v" + DatastarJSVersion, // pinned version surfaced in footer
 	} {
 		if !strings.Contains(body, want) {
-			t.Errorf("index body missing %q", want)
+			t.Errorf("entity-browser body missing %q", want)
 		}
 	}
 }
@@ -128,17 +132,17 @@ func TestServer_IRI_MatchesRoute(t *testing.T) {
 		}
 	}
 
-	// (e) the entity link href emitted in the index page HTML carries the same
+	// (e) the entity link href emitted in the browser page HTML carries the same
 	// literal-'/' form (not "%2F") for a multi-segment entity — pinning the rendered
 	// document, not just the Go-level IRI() return value.
 	multi := entities[1] // llama/scout@4#17b-16e{instruct}
 	wantHref := `href="` + multi.Ref.IRI(entityRoutePrefix) + `"`
-	indexBody := get(t, s, "/", "text/html").Body.String()
-	if !strings.Contains(indexBody, wantHref) {
-		t.Errorf("index HTML missing literal-'/' entity link href %q", wantHref)
+	browserBody := get(t, s, "/entities", "text/html").Body.String()
+	if !strings.Contains(browserBody, wantHref) {
+		t.Errorf("browser HTML missing literal-'/' entity link href %q", wantHref)
 	}
-	if strings.Contains(indexBody, "llama%2Fscout") || strings.Contains(indexBody, "llama%2fscout") {
-		t.Errorf("index HTML entity link was %%2F-encoded; want literal '/'")
+	if strings.Contains(browserBody, "llama%2Fscout") || strings.Contains(browserBody, "llama%2fscout") {
+		t.Errorf("browser HTML entity link was %%2F-encoded; want literal '/'")
 	}
 }
 
@@ -271,9 +275,9 @@ func TestServer_CacheReadPath(t *testing.T) {
 	if s.cacheModelCount != 1 {
 		t.Errorf("cacheModelCount = %d, want 1 (read path not exercised)", s.cacheModelCount)
 	}
-	rec := get(t, s, "/", "text/html")
+	rec := get(t, s, "/entities", "text/html")
 	if !strings.Contains(rec.Body.String(), "1 cached rows") {
-		t.Errorf("index did not surface the cached row count")
+		t.Errorf("entity browser did not surface the cached row count")
 	}
 	_ = st.Close()
 }
