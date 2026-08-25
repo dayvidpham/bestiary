@@ -60,7 +60,7 @@
       }
     },
     {
-      "name": "retired_bare_family_kimi_instruct",
+      "name": "retired_date_fragmented_kimi_instruct",
       "input": "kimi{instruct}",
       "expected": {
         "by_entity": "not-found",
@@ -71,7 +71,7 @@
       "classification": "must-fail",
       "provenance": {
         "source": "requirement",
-        "ref": "the epoch-wide retired-key policy with the BARE-FAMILY exception: the exact-key seam is a hard 404, but the looser `show` seam returns the under-specified error because the family `kimi` stays live and \"kimi{instruct}\" still has live children (9 distinct models). That is the same reading `show gpt`, `show claude` and `show mimo` have always produced; turning it into a 404 would break the bare-family lookup, so it is NOT repaired."
+        "ref": "the epoch-wide retired-key policy with a SINGLE-ENTITY DATE-FRAGMENTATION exception — NOT a bare-family one. The exact-key seam is a hard 404, but the looser `show` seam returns the under-specified error over 9 candidates that share ONE identical tuple (family=kimi, variant=k, version=2, modifier=[instruct]) and differ ONLY by `date`: the resolver's grouping key includes `date`, so one entity's differently-dated instances form separate candidate groups, exactly as they do for any ordinary multi-instance entity. The surviving bare family here is `kimi`; \"kimi{instruct}\" is a variant+modifier compound and never named a family. Turning this into a 404 would break ordinary under-specified lookups, so it is NOT repaired."
       },
       "mutation": {
         "description": "this key's sole occupant sat on the BARE kimi line with no version at all because its raw family was the compound kimi-k2; with the family recovered the seam reads K2 out of the id and it re-homes onto kimi/k@2{instruct}, emptying the coarse key."

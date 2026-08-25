@@ -40,9 +40,14 @@ const compoundRecoveryRetiredKeyCount = 4
 // model. Making them fail would mean breaking an under-specified reference for the sake
 // of a slogan, and it would break it for every user who types the upstream spelling.
 //
-// `kimi{instruct}` takes the third outcome, the bare-family exception: the family
-// `kimi` stays live, so the looser seam returns the under-specified error exactly as
-// `show gpt`, `show claude` and `show mimo` always have.
+// `kimi{instruct}` takes the third outcome, the under-specified error at the looser
+// seam — but NOT for the bare-family reason `show gpt` and `show claude` illustrate, and
+// the distinction is worth keeping: `kimi{instruct}` never named a family. It is a
+// variant+modifier compound (the surviving bare family is `kimi`), and its 9 candidates
+// share ONE identical tuple (family=kimi, variant=k, version=2, modifier=[instruct]),
+// differing only by `date`. The ambiguity is therefore the ordinary single-entity
+// date-fragmentation any multi-instance entity produces once the resolver's grouping key
+// takes `date` into account, not a family surviving its bare key.
 func TestRetiredKeys_CompoundRecovery_PolicySplit(t *testing.T) {
 	corpus := loadRetiredKeyCorpus(t, compoundRecoveryRetiredKeysCorpusJSON, compoundRecoveryRetiredKeyCount)
 
