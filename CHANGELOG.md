@@ -84,7 +84,62 @@ for its **Go module tags** (`vX.Y.Z`).
   Voxtral Mini and Small, keyed as `mistral/mini` and `mistral/small` — land on `voxtral`,
   the line Mistral actually published them under.
 
+- **A compound series family is recovered generally, not one spelling at a time.** A
+  provider that reports a COMPOUND series family as its raw family (`kimi-k2`, `kimi-k3`)
+  kept that compound verbatim whenever the version-pattern table missed it. That table
+  matches only a DOTTED series number (`kimi-k2.7` → `kimi` + `k2.7`), so every
+  BARE-INTEGER series compound fell through to passthrough and stranded its models on a
+  compound-family key of their own, split off from the short-family siblings carrying the
+  same series. `kimi-for-coding`'s bare id `k3` — tagged with raw family `kimi-k3`, with
+  the series token living ONLY in the family field — was invisible to the `kimi` series
+  entirely, sitting alone on a `kimi-k3` key.
+
+  The empty-raw inference already recovered this shape; the raw-populated path did not.
+  Wiring the SAME closed predicate into the raw-populated path is a general reduction over
+  series families and series numbers: it accepts a family only when it is exactly
+  `<base>-<letter><number>` and `<base>` carries that series letter, so a future series
+  number recovers automatically and **no exact-id entry is added for `k3`**. A family
+  self-mapped in `family_overrides.json` is a curated genuine compound and is declined,
+  as are a wrong series letter, a series letter with no number, and any compound carrying
+  an extra unrecognised token.
+
+  ONLY the family is reduced. The `(variant, version)` split stays the letter-prefix
+  seam's job, run against the model ID. Seeding it from the consumed family token instead
+  was measured and rejected: a provider that tags a K2.5 model with the coarser raw family
+  `kimi-k2` (`moonshotai/Kimi-K2.5-TEE` and siblings) would then be asserted onto the
+  `kimi/k@2` key and silently merged with genuine K2 models. An under-specified model
+  belongs on the honest bare-family line, never on a confidently wrong version key — so
+  those rows stay exactly where they were, and that is pinned as a negative control.
+
 ### Removed
+
+- **Four more entity keys are retired by the series-compound recovery**, and one is
+  added (`kimi/coder`, for the two `umans-coder` rows whose id names no series token at
+  all, so the letter-prefix seam correctly declines and the residual token becomes the
+  variant). No alias is minted, no redirect is added and no successor is listed at the
+  tool: this table is the migration record, and the only pointer a user gets.
+
+  | retired key (series-compound recovery) | instances re-home to |
+  |---|---|
+  | `kimi-k2` | `kimi/coder`, `kimi/k@2.7` |
+  | `kimi-k2{instruct}` | `kimi/k@2{instruct}` |
+  | `kimi-k3` | `kimi/k@3` |
+  | `kimi{instruct}` | `kimi/k@2{instruct}` |
+
+  `kimi-k2` SPLITS — it is not a fold onto one successor — because two of its four rows
+  name no series token and two carry a dotted `2.7`. Every row is re-derived from the
+  instances the retired key actually held, checked against the live registry on each run,
+  and cross-checked against this table in BOTH directions
+  (`cmd/bestiary/testdata/retired/compound_recovery_retired_keys_corpus.json`).
+
+  Two of these four are a MEASURED DEVIATION from the epoch's uniform-404 reading, and
+  they are recorded rather than repaired. `kimi-k2` and `kimi-k3` are the upstream
+  raw_family spellings; once reduced they remain valid UNDER-SPECIFIED references that the
+  ordinary resolver matches to exactly one live entity each, so they still answer on both
+  `bestiary show` and `bestiary show --by-entity`. The hard 404 that admits no exception is
+  at the EXACT-key seam (`bestiary.EntityByKey`), and it holds for all four — and for all
+  62 keys this release retires. Making the two CLI seams fail would mean breaking an
+  under-specified reference because it happens to match a retired spelling.
 
 - **Twenty-six entity keys are retired by the two changes above.** Twelve come from the
   tier re-key and fourteen from the leading-token strip. No alias is minted, no redirect
