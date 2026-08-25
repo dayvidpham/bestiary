@@ -285,8 +285,8 @@ func TestLayout_PaletteQueriesItsOwnSSERoute(t *testing.T) {
 	}
 }
 
-// TestLayout_PaletteAddsNoBrowserDependency is AC-6's zero-new-dependency guard at the one
-// place a web feature usually breaks it: the shipped layout must load exactly one external
+// TestLayout_PaletteAddsNoBrowserDependency pins the palette's zero-new-dependency promise
+// at the one place a web feature usually breaks it: the shipped layout must load exactly one external
 // script, the vendored same-origin datastar client. A CDN <script> or a new module import
 // would redden here even though go.mod stayed clean.
 func TestLayout_PaletteAddsNoBrowserDependency(t *testing.T) {
