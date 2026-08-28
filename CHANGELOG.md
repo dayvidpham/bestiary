@@ -16,6 +16,25 @@ for its **Go module tags** (`vX.Y.Z`).
 
 ### Changed
 
+- **The entity view lists the lab's own providers first.** `bestiary show <ref>
+  --by-entity` rendered `Providers (N):` as one flat, effectively alphabetical run, so
+  the organisation that TRAINED the model sat wherever its name happened to fall —
+  Zhipu's own `zhipuai` was 41st of 42 on `glm@5`, one line below a `Creator: zhipu`
+  field. The line now reads in three groups: the creator's own hosted surfaces in the
+  curated order (which encodes primacy — `zhipuai` ahead of the international `zai`
+  brand), then the family's `CanonicalProvider` when it is not already among them, then
+  every remaining provider alphabetically. A ` | ` separates the preferred group from
+  the rest, so the boundary is visible without knowing the creator table by heart; the
+  bar is omitted when either side is empty.
+
+  The **`Instances` table follows the same order**. That is the half with teeth: the
+  table truncates at 20 rows, so on a heavily-rehosted entity the lab's own offering
+  could be cut from the view entirely while twenty rehosts were shown.
+
+  Presentation only. No key moves, no entity or instance is added or dropped, the
+  printed provider count is unchanged (the list is a permutation), and `--output json`
+  is untouched — it still carries the registry's own `Providers` and `Instances` order.
+
 - **The GPT 5.6 tiers are variants of `gpt`, not families of their own.** Luna, Sol and
   Terra are tiers of one release, exactly as Claude's Haiku, Opus and Sonnet are, and the
   curated `parse/data/family_overrides.json` table already holds that precedent. Three
