@@ -14,6 +14,55 @@ for its **Go module tags** (`vX.Y.Z`).
 
 ## [Unreleased]
 
+### Changed
+
+- **First Wayback snapshot capture for the harvested HuggingFace nomina.** One live
+  `cmd/bestiary-hf --data-dir parse/data` run against the Internet Archive **Availability
+  API**, exercising the read-only Wayback arm shipped in 0.2.10 for the first time.
+  `parse/data/huggingface_nomina.json` goes from **0 to 159 entries carrying
+  `archived_url`**; **25** of the 184 seed entries still have none, an honest "no snapshot
+  recorded" rather than an error. **Zero** `429`/`Retry-After` backoff events fired. The
+  documented guarantees held as written and were verified entry-by-entry against the
+  released tip: **no** entry was removed, **no** entry lost a snapshot, and **no**
+  pre-existing entry changed in any field other than gaining `archived_url`. The capture is
+  visible end-to-end in the public output, not only in the seed: nomina carrying
+  `Attestations[].ArchivedURL` go **0 to 159**.
+  - Of 500 candidates, 250 verified and **250 returned HTTP 401** (gated Hub repos). Those
+    401s are reported here separately because they are *not* counted anywhere in the tool's
+    own summary line — see the known defect below.
+  - The run also stamps `parse/data/datasources.json` (`huggingface` `ingested_at`) and
+    rewrites `parse/data/huggingface_unlinked.json` (17 to 14). Both are documented outputs
+    of the single documented invocation; the fresh ingest stamp is honest provenance for a
+    genuinely new live ingest.
+
+- **Harvested nomen census re-pinned 179 to 184** (`TestNomina_CensusExact`), with the cause
+  proven rather than assumed. The documented invocation has **no Wayback-only mode** — the
+  snapshot lookup rides inside the full harvest — so the capture run necessarily also
+  refreshed the fetch-owned repo set, and that refresh is the entire cause of the +5: four
+  nvidia repos moved unlinked to linked (`NVIDIA-Nemotron-3-Nano-30B-A3B-BF16`,
+  `NVIDIA-Nemotron-3-Super-120B-A12B-FP8`, `NVIDIA-Nemotron-3-Ultra-550B-A55B-BF16`,
+  `NVIDIA-Nemotron-Nano-9B-v2`) and `moonshotai/Kimi-K3` is newly present. Total nomina
+  4211 to 4216. **Only the harvested leg moves**: the entity census is unmoved at **930**
+  with **0** keys added or removed, `go generate ./...` leaves every generated file
+  **byte-identical**, and canonical/provider-id/alias/oci re-measure UNCHANGED at
+  930/2834/1/267. `archived_url` is attestation *data*, not identity, so the 159 snapshots
+  add no nomina on their own.
+
+### Known defects (observed during the capture; not fixed here)
+
+- **`cmd/bestiary-hf`'s summary line under-reports gated repos.** It prints a counter
+  labelled `absent(404/401)`, but `verifyRepo` maps only `d.notFound()` to absent; an HTTP
+  `401` falls through to the default error branch and is logged as a `skip ...` line on
+  stderr **without incrementing any counter**. In this run that hid 250 of 500 candidates
+  behind a printed `0 absent(404/401)`. Reporting defect only — no harvested data is wrong.
+- **`mistralai/Mistral-Large-3-675B-Instruct-2512` appears in BOTH the seed and the unlinked
+  report.** Its seed entry is a curation-owned hand-repair pointing at
+  `mistral/large@3#675b{instruct}` (an entity that does exist), but the *mechanical* join no
+  longer reproduces that target, so this run's join dropped it to the unlinked report while
+  merge-on-refresh correctly preserved the curated entry. Consequence: it can never gain an
+  `archived_url`, because the snapshot lookup enriches mechanically-linked repos only.
+
+
 ## [0.2.10] — 2026-08-28
 
 **Schema:** `0.6.0` → `0.7.0` (additive). SQLite store schema `8` → `9`.
