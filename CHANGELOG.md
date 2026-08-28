@@ -324,13 +324,14 @@ for its **Go module tags** (`vX.Y.Z`).
 
   Two of these four are a MEASURED DEVIATION from the epoch's uniform-404 reading, and
   they are recorded rather than repaired. `kimi-k2` and `kimi-k3` are the upstream
-  raw_family spellings, and both are still LIVE concrete model ids, so both CLI seams
-  still answer them: `bestiary show` finds the model directly, and `bestiary show
-  --by-entity` finds it through its concrete-model-id arm and renders the owning entity
-  (`kimi/k@2`, `kimi/k@3`). The hard 404 that admits no exception is
-  at the EXACT-key seam (`bestiary.EntityByKey`), and it holds for all four — and for all
-  62 keys this release retires. Making the two CLI seams fail would mean breaking an
-  under-specified reference because it happens to match a retired spelling.
+  raw_family spellings, and both are still LIVE concrete model ids, so both CLI seams still
+  answer them: `bestiary show` finds the model directly, and `bestiary show --by-entity`
+  finds it through its concrete-model-id arm and renders the owning entity (`kimi/k@2`,
+  `kimi/k@3`). The hard 404 that admits no exception is at the EXACT-key seam
+  (`bestiary.EntityByKey`), and it holds for all four — and for all 62 keys this release
+  retires. Making either CLI seam fail would mean breaking a live lookup because the
+  spelling happens to match a retired key — an under-specified reference at `bestiary show`,
+  an exact concrete-model-id hit at `show --by-entity`.
 
 - **The retired-key rule, stated per seam.** This is the release's single normative
   statement of what a retired key does, and it governs every per-key stanza below. An
@@ -412,9 +413,8 @@ for its **Go module tags** (`vX.Y.Z`).
   spelling. `show --by-entity` is a different lookup again — an exact match over the
   store-overlaid entity index (entity key, entity preferred name or concrete model id),
   with no short-reference path — and it reports not-found for all 26. Nine further keys
-  report the under-specified error because
-  their FAMILY survives them, exactly as `show gpt` and `show claude` always have; the
-  remaining fourteen are 404 on both seams.
+  report the under-specified error because their FAMILY survives them, exactly as `show gpt`
+  and `show claude` always have; the remaining fourteen are 404 on both seams.
 
   **Library consumers get a compile break, which is louder than a 404.**
   `entities_constants_gen.go` loses **26** `Entity__` declarations and gains **14**,
@@ -963,9 +963,9 @@ for its **Go module tags** (`vX.Y.Z`).
   store-overlaid entity index (entity key, entity preferred name or concrete model id)
   with no short-reference path, so it cannot come back ambiguous, while plain `show` runs
   the input through the model resolver, which keeps that fallback. The exact-key seams are
-  `bestiary.EntityByKey` and `GET /entity/<key>`. That reading is
-  pinned as measured and must not be "corrected" into a 404. No alias is minted and no
-  successor is listed by the tool on either seam; this table is the pointer.
+  `bestiary.EntityByKey` and `GET /entity/<key>`. That reading is pinned as measured and
+  must not be "corrected" into a 404. No alias is minted and no successor is listed by the
+  tool on either seam; this table is the pointer.
 
   **Compile break for library consumers — 2 `Entity__` constants removed, 10 added**, counted from
   `entities_constants_gen.go`. Removed: `Entity__Ling`, `Entity__Kling_v2__Version_6`. Added:
