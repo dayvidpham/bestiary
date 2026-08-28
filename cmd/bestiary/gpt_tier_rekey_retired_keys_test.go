@@ -202,28 +202,19 @@ func TestRetiredKeys_GptTierRekey_ChangelogTableMatchesCorpus(t *testing.T) {
 	// under one release, so the header must be distinct from every other lever's.
 	table := parseMigrationTable(t, string(raw), "| retired key (tier re-key + prefix strip) | instances re-home to |")
 
-	if len(table) != len(corpus.Cases) {
-		t.Errorf("CHANGELOG migration table has %d row(s), corpus has %d case(s); the two are the "+
-			"same record and must be edited together", len(table), len(corpus.Cases))
-	}
-	for _, c := range corpus.Cases {
-		got, ok := table[c.Input]
-		if !ok {
-			t.Errorf("CHANGELOG migration table has no row for retired key %q; every retired key "+
-				"needs one, because the table is the only pointer the tool gives a user", c.Input)
-			continue
-		}
-		want := append([]string(nil), c.Expected.Successors...)
-		sort.Strings(want)
-		sort.Strings(got)
-		if !slices.Equal(got, want) {
-			t.Errorf("CHANGELOG migration table sends %q to %v, the corpus records %v", c.Input, got, want)
-		}
-	}
-	for old := range table {
-		if !corpusHasInput(corpus, old) {
-			t.Errorf("CHANGELOG migration table carries a row for %q, which the retired-key corpus "+
-				"does not cover", old)
-		}
-	}
+	assertChangelogTableMatchesCorpus(t, string(raw), table, corpus, map[string]releasedTableCorrection{
+		"gpt/pro": {
+			Why: "UN-RETIRED by the 2026-08-28 catalog refresh: edenai now serves " +
+				"openai/gpt-pro-latest, a rolling alias carrying no version at all, so the undated " +
+				"tier key has a real occupant again. On v0.2.10 the row was correct and a user on " +
+				"that build still needs it; on this tree following it would send them away from a " +
+				"live key",
+		},
+		"ministral#8b{instruct}": {
+			Why: "UN-RETIRED by the 2026-08-28 catalog refresh: pioneer now serves " +
+				"mistralai/Ministral-8B-Instruct-2410, the ORIGINAL Ministral 8B Instruct, whose " +
+				"2410 is a date rather than a version, so it belongs on the undated key rather than " +
+				"on the ministral@3 line. Same reasoning as gpt/pro",
+		},
+	})
 }
