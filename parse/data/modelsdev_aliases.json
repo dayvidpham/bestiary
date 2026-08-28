@@ -3,8 +3,12 @@
   "schema_version": 1,
   "aliases": {
     "alibaba/qwq-plus": {"family": "qwq", "variant": "plus"},
+    "bytedance-seed/seed-1-6-vision": {"family": "seed", "modifier": ["vision"]},
     "cohere/command-a-translate-08-2025": {"family": "command", "variant": "a", "modifier": ["translate"]},
     "cohere/command-a-vision-07-2025": {"family": "command", "variant": "a", "modifier": ["vision"]},
+    "google/deep-research-preview-04-2026": {"family": "gemini", "variant": "deep-research"},
+    "google/gemini-3.5-live-translate-preview": {"family": "gemini", "variant": "pro", "version": "3.5", "modifier": ["translate"]},
+    "ibm/granite-4-h-small": {"family": "granite", "variant": "small", "version": "4"},
     "nvidia/llama-3.1-nemotron-ultra-253b": {"family": "nemotron", "variant": "ultra", "param_size": "253b"},
     "nvidia/llama-3.3-nemotron-super-49b-v1": {"family": "nemotron", "param_size": "49b"},
     "nvidia/llama-3.3-nemotron-super-49b-v1.5": {"family": "nemotron", "variant": "v1.5", "version": "3.3", "param_size": "49b"},
@@ -16,6 +20,7 @@
     "poolside/laguna-m.1": {"family": "laguna", "variant": "m", "version": "1"},
     "poolside/laguna-xs-2.1": {"family": "laguna", "variant": "xs", "version": "2.1"},
     "poolside/laguna-xs.2": {"family": "laguna", "variant": "xs", "version": "2"},
+    "sakana/sakana-namazu": {"family": "sakana-namazu"},
     "thinkingmachines/inkling": {"family": "inkling"}
   }
 }

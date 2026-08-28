@@ -4276,7 +4276,108 @@ var idFamilyOverrides = map[string]idFamilyOverrideEntry{
 	// mechanically from the ID, and the base relationship carried as a curated
 	// DerivationFinetune edge in lineage.json rather than smuggled into the family
 	// token. Same shape as dracarys/mythomax: an exact-ID key, zero collateral.
-	"qwen2.5-32b-eva-v0.2": {family: "eva", version: "0.2"},
+	// RE-KEYED by the 2026-08-28 catalog refresh. nano-gpt used to serve this artifact
+	// as the bare, base-leading "Qwen2.5-32B-EVA-v0.2" (raw_family empty); upstream
+	// dropped that spelling and now serves ONLY the org-prefixed
+	// "EVA-UNIT-01/EVA-Qwen2.5-32B-v0.2" with raw_family "qwen". Unpinned, the surviving
+	// spelling decomposes to the BARE "qwen" bucket — no version, no size — which is
+	// strictly worse than the compound family the original pin corrected. The curated
+	// reading is unchanged (family "eva", version "0.2", 32B read mechanically off the
+	// id); only upstream's spelling of the same artifact moved.
+	"eva-unit-01/eva-qwen2.5-32b-v0.2": {family: "eva", version: "0.2"},
+
+	// kilo's "openai/gpt-5.6-sol-discounted" is the ONLY "-discounted" id in the catalog.
+	// The unrecognised trailing token defeats the tier scan, the `sol` tier is lost, and the
+	// row mints a bare gpt@5.6 entity holding that one instance. That phantom then HIJACKS
+	// resolution: at the peasant seam both `gpt/5.6` and `openai/gpt/5.6` used to span the
+	// six GPT-5.6 tier entities and return a scoped ambiguity, and with the phantom present
+	// they resolve to this single discounted kilo rehost instead — so `bestiary show gpt/5.6`
+	// silently answers with one reseller's discounted listing rather than the real tiers.
+	// "discounted" is a PRICING label, an attribute of one provider's offer, never identity:
+	// pinned to the tier the id names, on the same rule as the crof backend label and the
+	// free access tier. gpt@5.6 retires with it — it never held a distinct artifact.
+	"openai/gpt-5.6-sol-discounted": {family: "gpt", variant: "sol", version: "5.6"},
+
+	// inferx's "mimo-v25" is a dot-lost spelling of MiMo v2.5 that the curated dot-lost
+	// repairs do not reach: those are keyed to the exact ids that carried the defect when
+	// they were written, and this spelling is new. Unpinned it mints the phantom mimo@25 —
+	// a version the vendor never published — holding that single instance instead of joining
+	// the ~40 rows on mimo@2.5.
+	"mimo-v25": {family: "mimo", version: "2.5"},
+
+	// Fish Audio's speech line, published by vercel under raw_family "o" — the OpenAI
+	// o-series bucket. This is the SAME upstream defect the family_enforce ledger already
+	// corrects for vercel's wan / tts / arrow rows, but these eight ids carry no family
+	// token of their own to enforce against: after the vendor namespace is stripped the id
+	// is just "s1" / "s2-pro" / "transcribe-1", so the ID-driven path cannot reach the
+	// lab and the rows landed on the junk keys `o` and `o/pro`. Those two keys held the
+	// eight Fish Audio rows and NOTHING else, and creators.json maps family "o" to OpenAI,
+	// so the catalog was crediting OpenAI with Fish Audio's speech models.
+	//
+	// Pinned exactly, which is the right tool here precisely because the identity is
+	// carried ONLY by the vendor namespace — a general rule would have to promote vendor
+	// namespaces to families everywhere, which this decomposition deliberately does not do.
+	// The "-free" spellings share their paid sibling's tuple: free is an access tier, not
+	// an identity (the global free-demotion ruling).
+	"fish-audio/s1":                {family: "fish-audio", variant: "s", version: "1"},
+	"fish-audio/s1-free":           {family: "fish-audio", variant: "s", version: "1"},
+	"fish-audio/s2-pro":            {family: "fish-audio", variant: "s", version: "2", modifiers: []string{"pro"}},
+	"fish-audio/s2-pro-free":       {family: "fish-audio", variant: "s", version: "2", modifiers: []string{"pro"}},
+	"fish-audio/s2.1-pro":          {family: "fish-audio", variant: "s", version: "2.1", modifiers: []string{"pro"}},
+	"fish-audio/s2.1-pro-free":     {family: "fish-audio", variant: "s", version: "2.1", modifiers: []string{"pro"}},
+	"fish-audio/transcribe-1":      {family: "fish-audio", variant: "transcribe", version: "1"},
+	"fish-audio/transcribe-1-free": {family: "fish-audio", variant: "transcribe", version: "1"},
+
+	// NVIDIA Nemotron 3.5 Lightning: four spellings put the tier token BEFORE the version
+	// ("nemotron-lightning-3.5-…", fireworks' p-notation "…-3p5-…") or wrap it in the
+	// upstream mixed-case BF16 form, and in each the version scan halts on "lightning"
+	// and the row keys the UNDATED nemotron#30b-a3b — a key a prior lever had retired,
+	// resurrected here by version LOSS rather than by any new artifact.
+	//
+	// The pinned reading is the one the pipeline already produces for the dozen sibling
+	// spellings that order the tokens the other way (nvidia/nemotron-3.5-lightning ->
+	// version 3.5, "lightning" dropped): these are the same artifact carrying its size,
+	// so they key nemotron@3.5#30b-a3b. This aligns the stragglers with the majority
+	// reading rather than introducing a "lightning" variant, which no sibling carries.
+	"accounts/fireworks/models/nemotron-lightning-3p5-30b-a3b": {family: "nemotron", version: "3.5"},
+	"nemotron-lightning-3.5-30b-a3b":                           {family: "nemotron", version: "3.5"},
+	"nvidia/nvidia-nemotron-3.5-lightning-30b-a3b-bf16":        {family: "nemotron", version: "3.5"},
+	"nvidia/nvidia-nemotron-3.5-lightning-30b-a3b":             {family: "nemotron", version: "3.5"},
+
+	// nano-gpt routes MiMo v2.5 Pro through the `crof` BACKEND (crof is itself a provider
+	// in this catalog, serving the same mimo-v2.5-pro) and spells that routing into the
+	// model id. The trailing "-crof" defeats the version scan, so both rows lost their
+	// 2.5 and re-minted the undated mimo/pro key the mimo normalization had retired.
+	// A backend label is a serving fact, never identity: pinned to the mimo@2.5{pro} key
+	// their 40-odd siblings occupy, which is the spelling that lever established (the
+	// series letter leaves the key and the pro tier is a curated series-tier modifier).
+	"xiaomi/mimo-v2.5-pro-crof":          {family: "mimo", version: "2.5", modifiers: []string{"pro"}},
+	"xiaomi/mimo-v2.5-pro-crof:thinking": {family: "mimo", version: "2.5", modifiers: []string{"pro"}},
+
+	// Inkling ':'-suffixed serving spellings. The three-way ling/inkling/kling collision
+	// split reads the family off the ID because upstream ships raw_family "ling" on every
+	// Thinking Machines row. The 2026-08-28 refresh grew that line from 6 rows to 40 and
+	// introduced ':'-suffixed forms — ':free', ':thinking', and a ':peft:<ctx>' serving
+	// config — whose trailing segment defeats the ID-driven read, so these four rows fell
+	// back onto the raw label and re-minted the bare `ling` entity the split had retired.
+	// That is the ORIGINAL defect returning: `ling` is inclusionAI's family, and these are
+	// Thinking Machines models. The suffix carries no identity (free tier, thinking mode,
+	// PEFT context length are all serving facts), so each pins to the bare inkling entity
+	// its 24 unsuffixed siblings already occupy.
+	"thinkingmachines/inkling:free":        {family: "inkling"},
+	"thinkingmachines/inkling:thinking":    {family: "inkling"},
+	"thinkingmachines/inkling:peft:262144": {family: "inkling"},
+
+	// llmtr serves Trendyol's Asure 12B as "trendyol-asure-12b" with raw_family "gemma",
+	// which keyed a Turkish lab's own model onto Google's Gemma line — gemma#12b held
+	// that single row alone, so the whole entity was a misattribution. The id names the
+	// family, but the leading "trendyol" token is the LAB rather than a redundant
+	// carrier the prefix classifier strips (nothing else on the record names Trendyol),
+	// so the id-driven read cannot reach "asure" on its own and family_enforce has
+	// nothing to enforce against. Pinned exactly: the serving row keys asure#12b, and
+	// the models-view row trendyol/asure-12b then joins it mechanically instead of being
+	// reported unlinked. gemma#12b retires with it — it never held a Gemma model.
+	"trendyol-asure-12b": {family: "asure"},
 
 	// interfaze-beta is the last row that put "beta" into an identity. vercel serves
 	// interfaze/interfaze-beta with an empty raw_family, so the leading-token pipeline
@@ -4445,6 +4546,34 @@ var idFamilyOverrides = map[string]idFamilyOverrideEntry{
 	"xai/grok-4.20-multi-agent-beta":    {family: "grok", version: "4.20"},
 	"xai/grok-4.20-non-reasoning-beta":  {family: "grok", version: "4.20", modifiers: []string{"non-reasoning"}},
 	"xai/grok-4.20-reasoning-beta":      {family: "grok", version: "4.20", modifiers: []string{"reasoning"}},
+
+	// The 2026-08-28 catalog refresh RE-NAMESPACED vercel's three beta aliases from
+	// "xai/…" to "spacexai/…". The pins above are keyed to the catalog's own spelling,
+	// so the rename made all three MISS and the aliases split back out into
+	// grok/beta@4.20{…} — caught by ValidateNoBetaInIdentity, which aborted the bake.
+	// Both spellings are pinned: the "xai/" keys are retained because a vendor
+	// namespace that moved once can move back, and an override that matches no row is
+	// inert (the map is consulted by exact id, never enumerated), whereas a missing one
+	// is a bake abort.
+	"spacexai/grok-4.20-multi-agent-beta":   {family: "grok", version: "4.20"},
+	"spacexai/grok-4.20-non-reasoning-beta": {family: "grok", version: "4.20", modifiers: []string{"non-reasoning"}},
+	"spacexai/grok-4.20-reasoning-beta":     {family: "grok", version: "4.20", modifiers: []string{"reasoning"}},
+
+	// llmgateway-providers is a NEW provider in the same refresh and namespaces its rows
+	// by BACKEND HOST ("xai/…", "vertex-openai/…"). That prefix is part of the catalog's
+	// own id spelling, so the two bare "grok-4-20-beta-0309-…" pins above do not reach
+	// these rows and they split out into grok/beta@4.20{…}. Pinned under the prefixed
+	// spelling; the bare pins stay for llmgateway, which ships the same ids unprefixed.
+	"xai/grok-4-20-beta-0309-non-reasoning": {family: "grok", version: "4.20", modifiers: []string{"non-reasoning"}},
+	"xai/grok-4-20-beta-0309-reasoning":     {family: "grok", version: "4.20", modifiers: []string{"reasoning"}},
+
+	// requesty's grok-4.2-beta is a NEW row in the same refresh and the same alias
+	// shape one minor line down: a trailing standalone "beta" that the tail-inward scan
+	// captures as the VARIANT, giving grok/beta@4.2. Pinned to the bare 4.2 identity on
+	// the rule above. Note 4.2 and 4.20 are DISTINCT versions in this catalog (grok@4.2
+	// already carries {fast} and {non-reasoning} siblings), so this pins 4.2 and must not
+	// be folded onto the 4.20 line.
+	"grok-4.2-beta": {family: "grok", version: "4.2"},
 
 	// Cohere Command R7B. Cohere markets "Command R7B" as its own model, distinct from
 	// Command R and Command R+ (see docs.cohere.com/docs/command-r7b): R, R+, and R7B

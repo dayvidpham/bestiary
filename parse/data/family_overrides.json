@@ -1,6 +1,7 @@
 {
   "_comment": "Explicit (raw_family → {family, variant}) overrides for known compound families. Entries here take priority over all pattern-based decomposition. Keys are raw API family strings. Values are objects with 'family' (normalized base family) and 'variant' (model variant/tier) fields. Sorted alphabetically by key.",
   "big-pickle": { "family": "big-pickle", "variant": "" },
+  "claude-fable": { "family": "claude", "variant": "fable" },
   "claude-haiku": { "family": "claude", "variant": "haiku" },
   "claude-opus": { "family": "claude", "variant": "opus" },
   "claude-sonnet": { "family": "claude", "variant": "sonnet" },
