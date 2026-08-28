@@ -190,16 +190,17 @@ func TestShow_SchemeHuggingFace(t *testing.T) {
 // with --format purl resolves the model by stripping both the "pkg:huggingface/"
 // prefix and the provider segment.
 //
-// "pkg:huggingface/anthropic/claude-opus-4-5-20251101" with --format purl should resolve
+// "pkg:huggingface/anthropic/claude-opus-4-5-20251101" with --format purl should
+// resolve to "claude-opus-4-5-20251101".
 //
 // The witness was "…/claude-opus-4-1" until the 2026-08-28 catalog refresh, when
-// anthropic aged that id out of its OWN listing (seven rehosts still carry it). This
-// case needs a purl whose NAMESPACE serves the id, because the namespace is exactly what
-// it exercises: with anthropic no longer serving 4-1 the provider hint missed, the
+// anthropic aged that id out of its OWN listing (seven providers still carry the exact
+// bare id: azure, azure-cognitive-services, helicone, neon, opencode, pioneer, requesty).
+// This case needs a purl whose NAMESPACE serves the id, because the namespace is exactly
+// what it exercises: with anthropic no longer serving 4-1 the provider hint missed, the
 // loose-match fallback fired, and the case was testing the missed-namespace diagnostic
 // instead of the resolving path. Re-pointed at an id anthropic does serve; every
 // assertion arm is unchanged.
-// to "claude-opus-4-1".
 func TestShow_SchemePURL(t *testing.T) {
 	tmpDB := t.TempDir() + "/test.db"
 
@@ -389,7 +390,13 @@ func TestShow_OutputFlagTable(t *testing.T) {
 // refresh, and the re-target is a repair of a dead PREMISE, not a relaxation. The doc
 // below says "which anthropic lists first-party in every shipped catalog", and at that
 // refresh that stopped being true of 4.1: the `anthropic` provider aged the model out of
-// its own listing (it now stops at opus 4.5) while 33 rehosts kept carrying it. The query
+// its own listing (it now stops at opus 4.5) while six OTHER providers kept carrying the
+// dated id this case was pinned to, claude-opus-4-1-20250805 — 302ai, abacus, helicone,
+// jiekou, llmgateway, nano-gpt. (Measured over the vendored catalog by PROVIDER on that
+// EXACT id. Two other measures of the same fact appear nearby and are different numbers
+// for different questions: seven providers serve the bare id claude-opus-4-1, and 26 rows
+// across all providers carry some claude-opus-4-1* spelling. `anthropic` is absent from
+// every one of them.) The query
 // therefore had no first-party row left to mark, and the fence was asserting something the
 // data could no longer supply — it was reporting the catalog's shape, not the preference
 // logic. Re-pointing it at a model anthropic DOES serve restores the claim verbatim, with
