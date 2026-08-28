@@ -6,8 +6,12 @@ const (
 	Provider302AI                  Provider = "302ai"
 	ProviderAbacus                 Provider = "abacus"
 	ProviderAbliterationAI         Provider = "abliteration-ai"
+	ProviderAgentRouter            Provider = "agentrouter"
+	ProviderAgnes                  Provider = "agnes"
 	ProviderAIRouter               Provider = "ai-router"
+	ProviderAiand                  Provider = "aiand"
 	ProviderAIHubMix               Provider = "aihubmix"
+	ProviderAixy                   Provider = "aixy"
 	ProviderAkiIO                  Provider = "aki-io"
 	ProviderAlibaba                Provider = "alibaba"
 	ProviderAlibabaCN              Provider = "alibaba-cn"
@@ -17,8 +21,10 @@ const (
 	ProviderAlibabaTokenPlanCN     Provider = "alibaba-token-plan-cn"
 	ProviderAmazonBedrock          Provider = "amazon-bedrock"
 	ProviderAmbient                Provider = "ambient"
+	ProviderAMD                    Provider = "amd"
 	ProviderAnthropic              Provider = "anthropic"
 	ProviderAnyAPI                 Provider = "anyapi"
+	ProviderArcee                  Provider = "arcee"
 	ProviderAtomicChat             Provider = "atomic-chat"
 	ProviderAuriko                 Provider = "auriko"
 	ProviderAzure                  Provider = "azure"
@@ -36,9 +42,11 @@ const (
 	ProviderCloudflareAIGateway    Provider = "cloudflare-ai-gateway"
 	ProviderCloudflareWorkersAI    Provider = "cloudflare-workers-ai"
 	ProviderCohere                 Provider = "cohere"
+	ProviderCoralBricks            Provider = "coralbricks"
 	ProviderCortecs                Provider = "cortecs"
 	ProviderCrof                   Provider = "crof"
 	ProviderCrossModel             Provider = "crossmodel"
+	ProviderCrusoe                 Provider = "crusoe"
 	ProviderDaoXE                  Provider = "daoxe"
 	ProviderDatabricks             Provider = "databricks"
 	ProviderDeepInfra              Provider = "deepinfra"
@@ -47,6 +55,8 @@ const (
 	ProviderDInference             Provider = "dinference"
 	ProviderDrun                   Provider = "drun"
 	ProviderEBCloud                Provider = "ebcloud"
+	ProviderEcho                   Provider = "echo"
+	ProviderEdenai                 Provider = "edenai"
 	ProviderEmpirioLabs            Provider = "empiriolabs"
 	ProviderEvroc                  Provider = "evroc"
 	ProviderFastRouter             Provider = "fastrouter"
@@ -55,30 +65,39 @@ const (
 	ProviderFriendli               Provider = "friendli"
 	ProviderFrogBot                Provider = "frogbot"
 	ProviderGitHubCopilot          Provider = "github-copilot"
-	ProviderGitHubModels           Provider = "github-models"
 	ProviderGitLab                 Provider = "gitlab"
 	ProviderGMICloud               Provider = "gmicloud"
 	ProviderGoogle                 Provider = "google"
 	ProviderGoogleVertex           Provider = "google-vertex"
 	ProviderGoogleVertexAnthropic  Provider = "google-vertex-anthropic"
+	ProviderGreenPT                Provider = "greenpt"
 	ProviderGroq                   Provider = "groq"
 	ProviderHelicone               Provider = "helicone"
+	ProviderHetzner                Provider = "hetzner"
 	ProviderHpcAI                  Provider = "hpc-ai"
 	ProviderHuggingFace            Provider = "huggingface"
+	ProviderHyper                  Provider = "hyper"
 	ProvideriFlowCN                Provider = "iflowcn"
+	ProviderImpossibl              Provider = "impossibl"
 	ProviderInception              Provider = "inception"
 	ProviderInceptron              Provider = "inceptron"
 	ProviderInference              Provider = "inference"
 	ProviderInferX                 Provider = "inferx"
+	ProviderInfomaniak             Provider = "infomaniak"
 	ProviderIONet                  Provider = "io-net"
+	ProviderIteraCompute           Provider = "iteracompute"
+	ProviderJalapeno               Provider = "jalapeno"
 	ProviderJiekou                 Provider = "jiekou"
 	ProviderKenari                 Provider = "kenari"
 	ProviderKilo                   Provider = "kilo"
 	ProviderKimiForCoding          Provider = "kimi-for-coding"
+	ProviderKosmik                 Provider = "kosmik"
 	ProviderKUAECloudCodingPlan    Provider = "kuae-cloud-coding-plan"
 	ProviderLilac                  Provider = "lilac"
 	ProviderLlama                  Provider = "llama"
 	ProviderLlmGateway             Provider = "llmgateway"
+	ProviderLlmGatewayProviders    Provider = "llmgateway-providers"
+	ProviderLlmtech                Provider = "llmtech"
 	ProviderLLMTR                  Provider = "llmtr"
 	ProviderLMStudio               Provider = "lmstudio"
 	ProviderLongCat                Provider = "longcat"
@@ -94,7 +113,9 @@ const (
 	ProviderMistral                Provider = "mistral"
 	ProviderMixlayer               Provider = "mixlayer"
 	ProviderMoark                  Provider = "moark"
+	ProviderModal                  Provider = "modal"
 	ProviderModelOracleAI          Provider = "model-oracle-ai"
+	ProviderModelis                Provider = "modelis"
 	ProviderModelScope             Provider = "modelscope"
 	ProviderMoonshotAI             Provider = "moonshotai"
 	ProviderMoonshotAICN           Provider = "moonshotai-cn"
@@ -103,6 +124,7 @@ const (
 	ProviderNearAI                 Provider = "nearai"
 	ProviderNebius                 Provider = "nebius"
 	ProviderNeon                   Provider = "neon"
+	ProviderNeoSmith               Provider = "neosmith"
 	ProviderNeuralwatt             Provider = "neuralwatt"
 	ProviderNova                   Provider = "nova"
 	ProviderNovitaAI               Provider = "novita-ai"
@@ -113,8 +135,10 @@ const (
 	ProviderOpenCode               Provider = "opencode"
 	ProviderOpenCodeGo             Provider = "opencode-go"
 	ProviderOpenRouter             Provider = "openrouter"
+	ProviderOpper                  Provider = "opper"
 	ProviderOrcaRouter             Provider = "orcarouter"
 	ProviderOVHcloud               Provider = "ovhcloud"
+	ProviderPendra                 Provider = "pendra"
 	ProviderPerplexity             Provider = "perplexity"
 	ProviderPerplexityAgent        Provider = "perplexity-agent"
 	ProviderPioneer                Provider = "pioneer"
@@ -123,17 +147,23 @@ const (
 	ProviderPrivatemodeAI          Provider = "privatemode-ai"
 	ProviderQiHangAI               Provider = "qihang-ai"
 	ProviderQiniuAI                Provider = "qiniu-ai"
+	ProviderQVAC                   Provider = "qvac"
 	ProviderRegoloAI               Provider = "regolo-ai"
 	ProviderRequesty               Provider = "requesty"
 	ProviderRoutingRun             Provider = "routing-run"
+	ProviderRunInfra               Provider = "runinfra"
 	ProviderSakana                 Provider = "sakana"
+	ProviderSaladCloud             Provider = "salad-cloud"
 	ProviderSAPAICore              Provider = "sap-ai-core"
 	ProviderSarvam                 Provider = "sarvam"
 	ProviderScaleway               Provider = "scaleway"
+	ProviderSCNetTokenPlan         Provider = "scnet-token-plan"
+	ProviderScxAI                  Provider = "scx-ai"
 	ProviderSiliconFlow            Provider = "siliconflow"
 	ProviderSiliconFlowCN          Provider = "siliconflow-cn"
 	ProviderSnowflakeCortex        Provider = "snowflake-cortex"
 	ProviderSTACKIT                Provider = "stackit"
+	ProviderStandardcompute        Provider = "standardcompute"
 	ProviderStepFun                Provider = "stepfun"
 	ProviderStepFunAI              Provider = "stepfun-ai"
 	ProviderStepFunAIStepPlan      Provider = "stepfun-ai-step-plan"
@@ -144,10 +174,12 @@ const (
 	ProviderTencentCodingPlan      Provider = "tencent-coding-plan"
 	ProviderTencentTokenPlan       Provider = "tencent-token-plan"
 	ProviderTencentTokenHub        Provider = "tencent-tokenhub"
+	ProviderTensorX                Provider = "tensorx"
 	ProviderTheGridAI              Provider = "the-grid-ai"
 	ProviderThinkingmachines       Provider = "thinkingmachines"
 	ProviderTinfoil                Provider = "tinfoil"
 	ProviderTogetherAI             Provider = "togetherai"
+	ProviderTokenGo                Provider = "tokengo"
 	ProviderTrustedRouter          Provider = "trustedrouter"
 	ProviderUmansAI                Provider = "umans-ai"
 	ProviderUmansAICodingPlan      Provider = "umans-ai-coding-plan"
@@ -157,9 +189,11 @@ const (
 	ProviderVenice                 Provider = "venice"
 	ProviderVercel                 Provider = "vercel"
 	ProviderVivgrid                Provider = "vivgrid"
+	ProviderVolcengine             Provider = "volcengine"
 	ProviderVultr                  Provider = "vultr"
 	ProviderWaferAI                Provider = "wafer.ai"
 	ProviderWandb                  Provider = "wandb"
+	ProviderWatsonx                Provider = "watsonx"
 	ProviderxAI                    Provider = "xai"
 	ProviderXiaomi                 Provider = "xiaomi"
 	ProviderXiaomiTokenPlanAMS     Provider = "xiaomi-token-plan-ams"
@@ -181,8 +215,12 @@ var knownProviders = [...]Provider{
 	Provider302AI,
 	ProviderAbacus,
 	ProviderAbliterationAI,
+	ProviderAgentRouter,
+	ProviderAgnes,
 	ProviderAIRouter,
+	ProviderAiand,
 	ProviderAIHubMix,
+	ProviderAixy,
 	ProviderAkiIO,
 	ProviderAlibaba,
 	ProviderAlibabaCN,
@@ -192,8 +230,10 @@ var knownProviders = [...]Provider{
 	ProviderAlibabaTokenPlanCN,
 	ProviderAmazonBedrock,
 	ProviderAmbient,
+	ProviderAMD,
 	ProviderAnthropic,
 	ProviderAnyAPI,
+	ProviderArcee,
 	ProviderAtomicChat,
 	ProviderAuriko,
 	ProviderAzure,
@@ -211,9 +251,11 @@ var knownProviders = [...]Provider{
 	ProviderCloudflareAIGateway,
 	ProviderCloudflareWorkersAI,
 	ProviderCohere,
+	ProviderCoralBricks,
 	ProviderCortecs,
 	ProviderCrof,
 	ProviderCrossModel,
+	ProviderCrusoe,
 	ProviderDaoXE,
 	ProviderDatabricks,
 	ProviderDeepInfra,
@@ -222,6 +264,8 @@ var knownProviders = [...]Provider{
 	ProviderDInference,
 	ProviderDrun,
 	ProviderEBCloud,
+	ProviderEcho,
+	ProviderEdenai,
 	ProviderEmpirioLabs,
 	ProviderEvroc,
 	ProviderFastRouter,
@@ -230,30 +274,39 @@ var knownProviders = [...]Provider{
 	ProviderFriendli,
 	ProviderFrogBot,
 	ProviderGitHubCopilot,
-	ProviderGitHubModels,
 	ProviderGitLab,
 	ProviderGMICloud,
 	ProviderGoogle,
 	ProviderGoogleVertex,
 	ProviderGoogleVertexAnthropic,
+	ProviderGreenPT,
 	ProviderGroq,
 	ProviderHelicone,
+	ProviderHetzner,
 	ProviderHpcAI,
 	ProviderHuggingFace,
+	ProviderHyper,
 	ProvideriFlowCN,
+	ProviderImpossibl,
 	ProviderInception,
 	ProviderInceptron,
 	ProviderInference,
 	ProviderInferX,
+	ProviderInfomaniak,
 	ProviderIONet,
+	ProviderIteraCompute,
+	ProviderJalapeno,
 	ProviderJiekou,
 	ProviderKenari,
 	ProviderKilo,
 	ProviderKimiForCoding,
+	ProviderKosmik,
 	ProviderKUAECloudCodingPlan,
 	ProviderLilac,
 	ProviderLlama,
 	ProviderLlmGateway,
+	ProviderLlmGatewayProviders,
+	ProviderLlmtech,
 	ProviderLLMTR,
 	ProviderLMStudio,
 	ProviderLongCat,
@@ -269,7 +322,9 @@ var knownProviders = [...]Provider{
 	ProviderMistral,
 	ProviderMixlayer,
 	ProviderMoark,
+	ProviderModal,
 	ProviderModelOracleAI,
+	ProviderModelis,
 	ProviderModelScope,
 	ProviderMoonshotAI,
 	ProviderMoonshotAICN,
@@ -278,6 +333,7 @@ var knownProviders = [...]Provider{
 	ProviderNearAI,
 	ProviderNebius,
 	ProviderNeon,
+	ProviderNeoSmith,
 	ProviderNeuralwatt,
 	ProviderNova,
 	ProviderNovitaAI,
@@ -288,8 +344,10 @@ var knownProviders = [...]Provider{
 	ProviderOpenCode,
 	ProviderOpenCodeGo,
 	ProviderOpenRouter,
+	ProviderOpper,
 	ProviderOrcaRouter,
 	ProviderOVHcloud,
+	ProviderPendra,
 	ProviderPerplexity,
 	ProviderPerplexityAgent,
 	ProviderPioneer,
@@ -298,17 +356,23 @@ var knownProviders = [...]Provider{
 	ProviderPrivatemodeAI,
 	ProviderQiHangAI,
 	ProviderQiniuAI,
+	ProviderQVAC,
 	ProviderRegoloAI,
 	ProviderRequesty,
 	ProviderRoutingRun,
+	ProviderRunInfra,
 	ProviderSakana,
+	ProviderSaladCloud,
 	ProviderSAPAICore,
 	ProviderSarvam,
 	ProviderScaleway,
+	ProviderSCNetTokenPlan,
+	ProviderScxAI,
 	ProviderSiliconFlow,
 	ProviderSiliconFlowCN,
 	ProviderSnowflakeCortex,
 	ProviderSTACKIT,
+	ProviderStandardcompute,
 	ProviderStepFun,
 	ProviderStepFunAI,
 	ProviderStepFunAIStepPlan,
@@ -319,10 +383,12 @@ var knownProviders = [...]Provider{
 	ProviderTencentCodingPlan,
 	ProviderTencentTokenPlan,
 	ProviderTencentTokenHub,
+	ProviderTensorX,
 	ProviderTheGridAI,
 	ProviderThinkingmachines,
 	ProviderTinfoil,
 	ProviderTogetherAI,
+	ProviderTokenGo,
 	ProviderTrustedRouter,
 	ProviderUmansAI,
 	ProviderUmansAICodingPlan,
@@ -332,9 +398,11 @@ var knownProviders = [...]Provider{
 	ProviderVenice,
 	ProviderVercel,
 	ProviderVivgrid,
+	ProviderVolcengine,
 	ProviderVultr,
 	ProviderWaferAI,
 	ProviderWandb,
+	ProviderWatsonx,
 	ProviderxAI,
 	ProviderXiaomi,
 	ProviderXiaomiTokenPlanAMS,

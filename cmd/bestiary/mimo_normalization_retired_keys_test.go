@@ -5,6 +5,7 @@ import (
 	"os"
 	"slices"
 	"sort"
+	"strings"
 	"testing"
 
 	"github.com/dayvidpham/bestiary"
@@ -167,11 +168,42 @@ func TestRetiredKeys_MimoNormalization_SuccessorSetsMatchMeasuredRehoming(t *tes
 			live[string(in.Provider)+"|"+string(in.ID)] = true
 		}
 	}
-	if !slices.Equal(sortedKeys(retired), sortedKeys(live)) {
-		t.Errorf("mimo instance conservation FAILED: %d instance(s) pinned across the retired keys, "+
-			"%d live on the surviving mimo keys, and the two sets are not identical. This lever is "+
-			"nine renames and one merge; it may not create or destroy an instance.",
-			len(retired), len(live))
+	// Instance conservation, re-stated after the 2026-08-28 models.dev catalog refresh.
+	//
+	// This was SET EQUALITY between the rows pinned across the retired keys and the rows
+	// living on the surviving mimo keys, and equality had a premise: that the lever's own
+	// population IS the whole mimo keyspace. The refresh made that premise false. Eighteen
+	// mimo rows arrived that no retired key ever held (llmgateway-providers' six backend-
+	// labelled v2.5 rows, llmtr's two, nano-gpt's four `:thinking` and `-crof` spellings,
+	// requesty's two, and digitalocean, impossibl, scnet-token-plan and inferx one apiece),
+	// so equality can no longer hold no matter what the lever did, and re-pinning it by
+	// adding those rows to the corpus would be inventing a population the retired keys never
+	// had.
+	//
+	// The conservation CLAIM is kept and split into the two halves that are still
+	// falsifiable:
+	//
+	//   - nothing was destroyed: every pinned row must still be live on a mimo key. This is
+	//     the half the lever could break, and it is asserted exactly as before.
+	//   - nothing foreign was created: every live mimo row the lever did not place must still
+	//     be a genuine MiMo id. A mislabelled row swept onto this keyspace — the defect class
+	//     the whole normalization exists to prevent — fails here.
+	for _, inst := range sortedKeys(retired) {
+		if !live[inst] {
+			t.Errorf("mimo instance conservation FAILED: pinned row %q is on no surviving mimo key. "+
+				"This lever is nine renames and one merge; it may not destroy an instance. If "+
+				"upstream deleted the row, re-measure the corpus case and say so there.", inst)
+		}
+	}
+	for _, inst := range sortedKeys(live) {
+		if retired[inst] {
+			continue
+		}
+		if !strings.Contains(strings.ToLower(inst), "mimo") {
+			t.Errorf("live mimo-keyspace row %q was not placed by this lever and is not a MiMo id; "+
+				"a foreign row on this keyspace is the mislabelling the normalization exists to "+
+				"prevent", inst)
+		}
 	}
 }
 
@@ -220,6 +252,15 @@ func TestRetiredKeys_MimoNormalization_ChangelogTableMatchesCorpus(t *testing.T)
 // just the retirements. A retired-key test alone cannot catch a key that was ADDED by
 // accident, and the failure mode this lever risks most is minting a residue key (an id
 // that declines the series split and lands on a variant spelling of its own).
+//
+// STILL NINE after the 2026-08-28 models.dev catalog refresh, and that is worth recording
+// because the refresh briefly made it ten. A new upstream id, `inferx|mimo-v25`, spells
+// MiMo v2.5 with the dot dropped; with no dot to split on, the mechanical path read the
+// orphaned digits as the whole version and minted a residue key `mimo@25` — a "MiMo 25"
+// line Xiaomi never published, the same defect shape as the cogito `@1` phantom. It was
+// repaired with a curated pin in the generated data (the layer this test observes but does
+// not own), and the row now sits on `mimo@2.5` with its siblings. The list below is
+// therefore unchanged, and it is what caught the residue.
 func TestMimoKeyspace_IsExactlyTheSurvivingNine(t *testing.T) {
 	want := []string{
 		"mimo@2.5",
@@ -250,9 +291,15 @@ func TestMimoKeyspace_IsExactlyTheSurvivingNine(t *testing.T) {
 			"an extra key means an id declined the series split and minted a residue spelling, a "+
 			"missing one means a distinction was collapsed", got, want)
 	}
-	if instances != 93 {
-		t.Errorf("mimo holds %d instances, want 93 — the lever is nine renames and one merge, so the "+
-			"instance total is conserved exactly", instances)
+	// 93 -> 102 with the 2026-08-28 models.dev catalog refresh. This is a CENSUS of a live
+	// keyspace, not the lever's conservation figure: nine of the lever's rows were deleted
+	// upstream (kilo's and nano-gpt's `mimo-v2-*` ids, both providers having moved to the
+	// v2.5 line only) and eighteen rows arrived that the lever never placed. The conservation
+	// claim itself is asserted by SET, in two directions, in
+	// TestRetiredKeys_MimoNormalization_SuccessorSetsMatchMeasuredRehoming.
+	if instances != 102 {
+		t.Errorf("mimo holds %d instances, want 102 — a census of the live mimo keyspace at the "+
+			"2026-08-28 refresh, re-measured rather than derived from the lever", instances)
 	}
 
 	// No `mimo/v*` key may survive anywhere: the series letter is consumed for the version

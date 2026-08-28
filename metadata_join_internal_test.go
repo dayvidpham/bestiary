@@ -309,20 +309,31 @@ func TestRegistry_StandaloneOrderingAscending(t *testing.T) {
 // decomposition or presence-gate regression that invents a standalone for a family the
 // catalog actually serves fails here loudly.
 //
-// Today the only legitimate synthesized standalones are the 4 deepreinforce/ornith rows:
-// ornith has ZERO serving entries in the vendored catalog, so its metadata is a genuine
-// catalog-absent entity. The four join-failures this fix addressed
+// At the 2026-08-28 catalog refresh there are NO legitimate synthesized standalones: the
+// four deepreinforce/ornith rows that used to qualify no longer do, because ornith is now
+// served in the catalog (see the note on the expected set). The four join-failures this fix addressed
 // (gemini-omni-flash-preview, gpt-realtime-2.1, laguna-xs-2.1, nemotron-super-49b-v1.5)
 // must NOT appear: three route to the unlinked report and one attaches via a curated
 // alias.
 func TestMetadataCensus_SynthesizedStandalonesPinned(t *testing.T) {
 	// CURATED expected set. Update this ONLY with a deliberate curation decision.
-	want := map[string]bool{
-		"ornith@1.0#9b":   true,
-		"ornith@1.0#31b":  true,
-		"ornith@1.0#35b":  true,
-		"ornith@1.0#397b": true,
-	}
+	//
+	// 4 -> 0 with the 2026-08-28 models.dev catalog refresh. The four ornith@1.0#*
+	// standalones are gone because their PREMISE is gone, not because the check was
+	// relaxed: ornith had zero serving entries, and now it has eight (inferx
+	// "Ornith-1.0-35B-FP8", six nano-gpt "ornith-ai/ornith-1.5-*" rows and runinfra
+	// "ornith-ai/Ornith-1.5-35B-A3B"). With the family present in the catalog the
+	// presence gate correctly declines to synthesize: deepreinforce/ornith-1.0-35b links
+	// to the real catalog-backed entity, and the other three ornith-1.0 rows are
+	// join-disagreement rows in parse/data/modelsdev_unlinked.json (3 of the 12 justified
+	// entries there) — which is the correct disposition for a row whose family IS served
+	// but whose exact tuple is not.
+	//
+	// The set is empty at this tip and the guard is deliberately KEPT: its load-bearing
+	// half is the UNEXPECTED branch below, which fails if the join ever invents a
+	// standalone for a family the catalog serves. Re-populate this literal the next time
+	// the metadata view carries a genuinely catalog-absent lab.
+	want := map[string]bool{}
 
 	// Reconstruct the served entity set (the join's left input before standalone append)
 	// by excluding the metadata-only standalones the registry already folded in, then run

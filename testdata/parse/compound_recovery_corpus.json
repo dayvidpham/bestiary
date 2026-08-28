@@ -158,7 +158,7 @@
       "name": "negative_control_raw_understates_version_no_id_series_split",
       "input": {
         "raw": "kimi-k2",
-        "id": "moonshotai/Kimi-K2.5-TEE",
+        "id": "moonshotai/Kimi-K2.6-TEE",
         "provider": "chutes"
       },
       "expected": {
@@ -170,10 +170,10 @@
       "classification": "must-pass",
       "provenance": {
         "source": "requirement",
-        "ref": "NEGATIVE CONTROL for the rejected design. Seeding (variant, version) from the CONSUMED raw family token would put this K2.5 model on the k@2 key and silently merge it with genuine K2 models. An under-specified model belongs on the honest bare-family line, never on a confidently wrong version key; the trailing \"tee\" is an unrecognised token and the seam declines rather than guessing."
+        "ref": "NEGATIVE CONTROL for the rejected design. Seeding (variant, version) from the CONSUMED raw family token would put this K2.5 model on the k@2 key and silently merge it with genuine K2 models. An under-specified model belongs on the honest bare-family line, never on a confidently wrong version key; the trailing \"tee\" is an unrecognised token and the seam declines rather than guessing. | 2026-08-28 models.dev catalog refresh: chutes retired moonshotai/Kimi-K2.5-TEE and now serves moonshotai/Kimi-K2.6-TEE, which carries the SAME raw family \"kimi-k2\" understating the same way and decomposes identically (family kimi, no variant, no version, entity \"kimi\"); the row is re-pointed rather than dropped because the artifact class it controls is unchanged."
       },
       "mutation": {
-        "description": "the recovery must leave this row EXACTLY where it was (bare kimi) — a change here means the rejected seed-from-raw-token variant was reintroduced"
+        "description": "the recovery must leave this row EXACTLY where it was (bare kimi) \u2014 a change here means the rejected seed-from-raw-token variant was reintroduced"
       }
     },
     {

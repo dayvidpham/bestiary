@@ -48,7 +48,317 @@ for its **Go module tags** (`vX.Y.Z`).
   930/2834/1/267. `archived_url` is attestation *data*, not identity, so the 159 snapshots
   add no nomina on their own.
 
-### Known defects (observed during the capture; not fixed here)
+- **models.dev catalog re-vendored (2026-08-28) — the largest upstream jump this project
+  has ingested.** One polite `go run ./cmd/bestiary-gen` fetch of
+  `https://models.dev/catalog.json` (`fetched_at` `2026-08-28T07:54:37Z`, etag
+  `W/"cd4c3f129e5221534bd799eff950aad0"`), replacing the 2026-07-23 snapshot. UNIT:
+  vendored catalog records; AXIS: the three views the artifact carries; CONFIGURATION:
+  `parse/data/modelsdev/catalog.json` at this tree.
+
+  | view | before | after |
+  |---|---|---|
+  | providers | 170 | **204** |
+  | provider model rows | 5,765 | **7,430** |
+  | models view (lab rows) | 263 | **361** |
+
+  `github-models` was **removed** upstream; its row was dropped from
+  `parse/data/creator_providers.json` (the FK gate is loud at codegen, so a retired
+  provider slug aborts the bake rather than degrading).
+
+- **Upstream field shape did not move, and that is now a machine-checked fact rather than
+  an assertion.** The new census (below) measures **71 field paths** across the provider,
+  model and models-view scopes before and after: **0 added, 0 removed**. The whole jump is
+  more rows, not new shape.
+
+- **Entity keyspace 930 to 989** (`TestEntityConstants_ExactCensus`, `EntityKeys()`).
+  UNIT: canonical entity keys; AXIS: the generated `Entity__*` constant set;
+  CONFIGURATION: this tree's regenerated bake. **87 retired, 146 minted, net +59**
+  (930 - 87 + 146 = 989). The add set concentrates where upstream grew — gpt (21),
+  qwen (16), seed (6), hy (6), glm (6), gemini (5), nemotron (4), claude (4) — and the
+  retire set is dominated by product lines upstream dropped outright: **phi (6:
+  Microsoft retired the entire Phi-3/3.5 line, leaving only Phi-4)**, doubao (6),
+  ernie (3), bge (3), aion (3), and `codellama` in full. The complete removed and added
+  lists are in the PR description.
+
+- **Nomina census 4,216 to 4,993** (`TestNomina_CensusExact`). UNIT: minted nomina;
+  AXIS: per scheme; CONFIGURATION: this tree's bake.
+
+  | scheme | before | after | why |
+  |---|---|---|---|
+  | canonical | 930 | **989** | exactly one per entity, so it tracks the keyspace |
+  | provider-id | 2,834 | **3,562** | 1,665 new upstream rows carry new ID spellings |
+  | alias | 1 | 1 | unchanged |
+  | huggingface | 184 | **174** | see below |
+  | OCI | 267 | 267 | unchanged (no Ollama refresh in this slice) |
+  | **total** | **4,216** | **4,993** | |
+
+  The canonical and total cells are refresh figures and are corrected further down by the two
+  round-2 review pins, exactly as the keyspace bullet above is: canonical **989 to 987** and
+  the total **4,993 to 4,991**.
+
+- **Ten harvested HuggingFace nomina removed, because upstream retired the entities they
+  named.** The catalog now carries **zero** phi-3 rows and **zero** codellama rows, so
+  `AlfredPros/CodeLlama-7b-Instruct-Solidity` and nine `microsoft/Phi-3*` repos resolved to
+  entity keys that no longer exist and failed the loud codegen FK gate. There is no honest
+  alias target — the surviving Phi family is Phi-4, a different generation — so the entries
+  were removed, which is exactly what `cmd/bestiary-hf` would itself emit on its next run
+  under that file's fetch-owned field-ownership rule. **Every surviving snapshot was
+  preserved**: of the 159 `archived_url` values captured in 0.2.10, the 153 belonging to
+  surviving repos are byte-identical before and after, and all 174 surviving records are
+  unchanged in every field. The 6 lost snapshots belong to the retired repos alone.
+
+  This deviates from the slice brief, which asked for `159+` `archived_url` values before
+  and after; the deviation was ACCEPTED at the 2026-08-28 merge-gate ruling, which is
+  recorded in the PR. The reasoning offered for it, now the accepted rationale, is that a
+  literal floor over a corpus upstream has legitimately shrunk is the wrong rule. The
+  invariant asserted in its place — ZERO ERASURES AMONG SURVIVORS — is no longer prose: it
+  is enforced by `TestHFArchivedURL_CensusExact` (both counts with their arithmetic,
+  184→174 records and 159→153 snapshots), `TestHFArchivedURL_NoErasureAmongSurvivors`
+  (the survivor SET is pinned in `testdata/hf_archived_url_survivors.txt`, so a repo that
+  loses its snapshot fails BY NAME rather than hiding behind an addition), and
+  `TestHFArchivedURL_EveryArchivedRecordIsWellFormed` (a present-but-empty value is an
+  erasure wearing the shape of a live field, invisible to both a count and a set check).
+
+- **Four codegen gates fired on this refresh and each was resolved by curation, not by
+  loosening the gate.**
+  - `solar` and `ornith` are now emitted by upstream as bare families, colliding with the
+    hand-curated `FamilySolar` / `FamilyOrnith` supplements — the tree did not compile.
+    Both curated declarations retire; the generated constants take over unchanged.
+  - `ValidateNoBetaInIdentity` aborted the bake on four `grok/beta@4.20*` entities. Vercel
+    re-namespaced its beta aliases `xai/` to `spacexai/`, breaking three exact-ID pins;
+    requesty added `grok-4.2-beta`; and the new `llmgateway-providers` prefixes its rows by
+    backend host. Seven pins added; **beta stays a release stage and never an identity**.
+  - The `github-models` FK break above.
+  - The HuggingFace seed FK break above.
+
+- **Curation repairs the refresh exposed.** Each is a real defect, measured rather than
+  assumed:
+  - **Claude Fable was decomposing as a compound family** — `claude-fable` and
+    `claude-fable@5`, sitting outside the `claude` family entirely. Anthropic publishes it
+    with raw family `claude-fable` exactly as it publishes `claude-opus` / `claude-sonnet`
+    / `claude-haiku`, but `fable` was missing from both `families.json` members and
+    `family_overrides.json`. It now keys `claude/fable` / `claude/fable@5` like every
+    sibling tier. This wart pre-dates the refresh: both compound keys were live at the
+    v0.2.10 baseline.
+  - **Inkling was folded back onto inclusionAI's Ling family.** The Thinking Machines line
+    grew from 6 upstream rows to about 40 and gained `:free` / `:thinking` /
+    `:peft:262144` spellings whose suffix defeats the ID-driven read, re-minting the bare
+    `ling` key a prior epoch had retired. Three pins; `ling` is retired again.
+  - **`trendyol-asure-12b` was keyed as Google Gemma.** llmtr publishes it with raw family
+    `gemma`, and `gemma#12b` held that one row alone — an entire entity that was a
+    misattribution. It now keys `asure#12b`, and the lab's own models-view row joins it.
+  - **MiMo v2.5 Pro lost its version** through nano-gpt's `-crof` backend label (`crof` is
+    itself a provider in this catalog), re-minting the undated `mimo/pro`.
+  - **NVIDIA Nemotron 3.5 Lightning lost its version** in four spellings that put the tier
+    before the version, re-minting the undated `nemotron#30b-a3b`. Pinned to the reading
+    the dozen sibling spellings already produce.
+  - **Llama-4 Scout/Maverick lost their MoE shapes** on five new `llmgateway-providers`
+    backend-host spellings, keying `17b` instead of `17b-16e` / `17b-128e`.
+  - **The family-`o` junk bucket was crediting OpenAI with Fish Audio's speech models.**
+    Vercel publishes eight `fish-audio/*` rows under raw family `o` — the OpenAI o-series
+    bucket — and the keys `o` and `o/pro` held those eight rows and **nothing else**, while
+    `creators.json` maps family `o` to OpenAI. This is the same upstream defect the
+    `family_enforce` ledger already corrects for vercel's wan / tts / arrow rows, but after
+    the vendor namespace is stripped these ids are just `s1` / `s2-pro` / `transcribe-1`,
+    carrying no family token to enforce against — so they are pinned exactly. `o` and
+    `o/pro` are gone; `fish-audio/s@1`, `fish-audio/s@2{pro}`, `fish-audio/s@2.1{pro}` and
+    `fish-audio/transcribe@1` replace them. The `-free` spellings share their paid
+    sibling's tuple, per the free-demotion ruling.
+  - **A phantom `gpt@5.6` was hijacking resolution.** kilo published
+    `openai/gpt-5.6-sol-discounted`, the only `-discounted` id in the catalog; the
+    unrecognised token defeated the tier scan, lost the `sol` tier, and minted a bare
+    `gpt@5.6` holding that one instance. `bestiary show gpt/5.6` then answered with that
+    single discounted reseller listing instead of spanning the six real GPT-5.6 tier
+    entities. Pinned to `(gpt, sol, 5.6)` — a pricing label is an attribute of one
+    provider's offer, never identity — and `gpt@5.6` retires.
+  - **A dot-lost `mimo@25`.** inferx's new `mimo-v25` spelling names a version Xiaomi never
+    published; the row sat alone on a phantom line while ~40 siblings serve `mimo@2.5`.
+  - **The Dracarys 70B finetune edge was silently dropped.** Upstream re-spelled
+    `abacusai/dracarys-llama-3_1-70b-instruct` with a dot; `lineage.json` still keyed the
+    underscore form, so neither the full-id nor the post-`/` lookup matched and the baked
+    `Lineage` went empty. Re-keyed to the dotted spelling; the `DerivationFinetune` edge to
+    `llama@3.1` is baked again.
+  - The `eva@0.2#32b` override was **re-keyed**: upstream dropped the base-leading
+    `Qwen2.5-32B-EVA-v0.2` spelling and now serves only `EVA-UNIT-01/EVA-Qwen2.5-32B-v0.2`,
+    which unpinned decomposed to the bare `qwen` bucket.
+
+- **Corrections to the v0.2.10 migration record. The published `[0.2.10]` stanza is left
+  BYTE-VERBATIM; every correction lives here.** Retirement and seam class are measured
+  against a BASELINE keyspace, so both move when upstream moves, and a released stanza
+  states what that release shipped rather than what is true today. A reader on v0.2.10
+  needs its own figures to still be there; a reader on this tree needs the corrections.
+  Both are now true. Four things changed:
+
+  - **Two previously-retired keys are legitimately live again, and the retired-key corpora
+    say so.** `gpt/pro` (edenai's rolling `openai/gpt-pro-latest`) and
+    `ministral#8b{instruct}` (pioneer's original `mistralai/Ministral-8B-Instruct-2410`,
+    whose 2410 is a date rather than a version) each gained a genuinely undated occupant.
+    Their rows were deleted from the epoch corpus (**62 to 60**) and the gpt-tier corpus
+    (**26 to 24**) in the same commit as the refresh that un-retired them — a corpus row
+    asserting a hard 404 for a key upstream has re-occupied would be asserting a falsehood.
+    Four other keys that came back did so through version LOSS on new spellings and were
+    repaired with the pins above instead, so they stay retired.
+  - **Two rows of the v0.2.10 gpt-tier migration table no longer apply on this tree**, and
+    they are exactly the two above: `gpt/pro` (was → `gpt/pro@5.2`, `gpt/pro@5.4`,
+    `gpt/pro@5.5`) and `ministral#8b{instruct}` (was → `ministral@3#8b{instruct}`). On
+    v0.2.10 those rows were correct and a user on that build still needs them, which is why
+    they remain in the released table. On this tree both keys resolve on their own, so
+    following the migration would send a user AWAY from a live key. The other twenty-four
+    rows are unchanged, and neither lever was reverted.
+  - **`mistral/large#675b{instruct}` moved seam class**, from RESOLVED to under-specified.
+    Its successor `mistral/large@3#675b{instruct}` is still ONE live entity and still the
+    right successor, but it went from one provider row to three (nano-gpt and nvidia joined
+    amazon-bedrock) which group into two date-differentiated candidates, so the retired
+    spelling no longer names exactly one of them. On this tree the v0.2.10 `show`-seam split
+    reads **45 not-found / 11 under-specified / 4 resolved** over the 60 surviving retirees,
+    where the release shipped 45 / 12 / 5 over 62.
+  - **One row of the v0.2.10 free-demotion migration table moved its successor.**
+    `laguna-s/free@2.1` re-homes to `laguna` on this tree, not to `laguna-s@2.1` as it did
+    when the lever landed. Its single pinned row, `vercel|poolside/laguna-s-2.1-free`, is
+    still live and still spelled the same way; upstream changed what it stamps on that row,
+    so it now decomposes onto the bare `laguna` key. `laguna-s@2.1` is still a live key — it
+    simply no longer holds this instance. That relabel also cost the row its version, which
+    is recorded with its reasoning in the bake-identity ledger below.
+
+- **`modelsdev_unlinked.json` is 12, not 0, and the drained-to-zero gate is now a justified
+  ledger.** This deviates from the slice brief, which asked for a drained-to-zero report,
+  and the deviation was ACCEPTED at the 2026-08-28 merge-gate ruling, which is recorded in
+  the PR. The reasoning offered for it is now the accepted rationale.
+  `TestModelsdevUnlinked_MatchesJustifiedLedger`
+  replaces `TestModelsdevUnlinked_IsDrained` and asserts SET EQUALITY against
+  `unlinkedJustifiedExceptions`. Set equality is not strictly stronger than the zero gate it
+  replaces — a zero gate rejects all twelve rows this ledger admits, so on the admit-an-orphan
+  axis the old gate was stricter and the two are otherwise incomparable. What is true, and is
+  the reason for the change: given that a non-empty justified set is accepted, set equality is
+  the strongest gate available over it, and it adds a direction a count never had — a NEW
+  orphan fails because it is not listed, and a listed row that starts joining again also fails
+  as dead curation. Six rows were drained with honest aliases
+  (`seed{vision}`, `gemini/deep-research`, `gemini/pro@3.5{translate}`, `granite/small@4`,
+  `sakana-namazu`, plus `asure#12b` via the pin above). The remaining 12 are lab models no
+  provider serves at that exact tier — models.dev's models view is a LAB catalogue while
+  the provider rows are a SERVING catalogue — or models served only under a coarse key that
+  already holds other lab models. Each carries its reason in the ledger; aliasing them
+  anyway would point one lab's card at a different artifact, which is precisely the
+  collision hazard `modelsdev_aliases.json` documents.
+
+- **Declared path-unification corpus refresh.** `models_api.json` re-vendored through the
+  documented `jq .providers` form (5,765 to **7,430** records, 170 to **204** providers),
+  `decomp_baseline.tsv` re-captured in the same commit, and `snapshot_meta.json` restamped
+  to the 2026-08-28 capture. The cross-provider justified-residual ledger goes **4 rows to
+  12**, with a per-row citation each: one row LEFT (vercel corrected its `aura` mislabel on
+  `sakana/fugu-ultra`) and nine joined, being three disagreements rather than nine — the
+  ByteDance Seed line published under three raw-family spellings (5 ids, deferred to a
+  curation slice because converging it moves entity keys and `family_aliases.json` requires
+  sign-off for a fold of that shape), two glued-tier member-variant reads, and two genuine
+  mislabels. At-scale pins re-measured: residual-unaccounted ceiling **303 to 353** (the
+  RATE improved, 5.26% to 4.75%) and populated-version floor **4,229 to 5,433**.
+  `upstream_git_commit` and `upstream_schema_version` are deliberately unchanged — the
+  artifact does not carry the repo HEAD, and the field census proves the schema did not
+  move.
+
+- **Two further identity defects the refresh introduced, found in review and pinned.** Both
+  are the same class the refresh already fixes twice, so the same lever applies. Keyspace
+  **989 to 987**; both keys were minted BY the refresh and neither existed at the 930-key
+  release baseline, so the refresh link restates as 930 − 87 + 144 = 987 and no key retires
+  that did not already retire. The canonical nomina leg tracks the keyspace exactly — one
+  canonical nomen per entity — so it moves 989 to 987 with it, and the nomina total moves
+  **4,993 to 4,991** (987 + 3,562 + 1 + 174 + 267 = 4,991). The other four legs are
+  re-measured UNCHANGED: neither pinned id is a harvested HuggingFace repo, and a re-keyed
+  instance carries its own id spelling across as an Admitted nomen. These are the figures
+  `TestNomina_CensusExact` and `TestEntityConstants_ExactCensus` pin at this tip.
+  - `claude/opus#31b` **retires.** nano-gpt's `Gemma-4-31B-Claude-4.6-Opus-Reasoning-Distilled`
+    is a Google Gemma 4 31B model DISTILLED FROM Claude Opus 4.6, and the new catalog stamps
+    `raw_family: "claude"` on it where v0.2.10 carried `null`. The row keyed the flagship Opus
+    line and reported **Creator anthropic** — a Google open-weights model credited to
+    Anthropic at a 31B size Anthropic has never published, shown as a sibling of Opus
+    4.5/4.6/4.7 by `show claude/opus`. The distillation TEACHER is not the artifact's family.
+    Pinned to `(gemma, 4)`: the row rejoins `gemma@4#31b`, the 31B size is read mechanically
+    off the id, and the `4` the label had hidden is recovered.
+  - `inkling@256k` **retires.** requesty spells the SERVED CONTEXT LENGTH into the id, and
+    `256k` landed in the version slot — a release Thinking Machines never published, and the
+    only context-length-shaped version anywhere in the keyspace. The requesty row and llmtr's
+    bare `thinkingmachines/inkling` carry an identical 262144 window at an identical
+    1.8700 / 4.6800 price. This is the rule the `:peft:262144` pin in the same lever already
+    applies. Pinned to the bare family.
+
+- **Nine surviving rows lost a populated Version in this refresh, and the cost is now
+  written down rather than implied.** All nine are upstream FAMILY RELABELS: six ByteDance
+  `doubao-seed`→`seed` rows, `learnlm`→`gemini`, and the two poolside `laguna-s`→`laguna`
+  rows. The ByteDance fold stays DEFERRED to its own curation slice because it moves entity
+  keys across three families — but the deferral note described the cost as coexisting
+  sibling keys, and the measured cost is larger. Each row now carries its own reason in the
+  bake-identity ledger, including which are correct readings of a relabel (`learnlm`, whose
+  1.5 was LearnLM's release line and not Gemini's) and which are OPEN (`laguna`, which needs
+  the series-letter reading the mimo lever established but has no sibling evidence).
+
+### Added
+
+- **`parse/data/modelsdev_field_census.json` — a committed census of the UPSTREAM field
+  shape, with a loud drift guard.** Every field path the vendored catalog publishes, with
+  the number of records filling it: provider level, per-provider model rows, the models
+  view, and one level of object nesting in each. **71 paths** on this snapshot. UNIT: field
+  paths; AXIS: fill count per path; CONFIGURATION: the committed
+  `parse/data/modelsdev/catalog.json`.
+
+  A snapshot refresh was previously reviewable only on counts. Row and provider totals are
+  obvious in a diff; a field **added** upstream (nothing consumes it yet, so nothing fails)
+  or **removed** upstream (something downstream silently reads a zero value forever) was
+  invisible. `TestModelsdevFieldCensus_NoDrift` recomputes the census from the vendored
+  catalog and fails **naming the added and removed paths**, with a fix procedure per
+  direction; `_UpToDate` catches a fill count that moved while the path set held; and
+  `_EnvelopeContract` pins the committed-emission invariants (count agrees with the list,
+  explicit sort, empty-not-null, no wall clock, all three scopes non-vacuous).
+
+  The emission follows the established committed-report pattern: a pure
+  `buildModelsdevFieldCensus` returning bytes, wired into `runFixtureCodegenArtifacts` and
+  the **N=100** `TestCodegen_Reproducible_ByteIdentical` byte-identity loop — which is the
+  only place an omitted sort could surface, since the census walks JSON objects whose key
+  order Go randomizes on every decode. `TestBuildModelsdevFieldCensus_DetectsAnAddedField`
+  is the falsifier: it injects a synthetic field into an in-memory copy of the catalog and
+  asserts the census reports exactly that path and its nested subkey, so an emitter that
+  returned a constant path set cannot pass.
+
+- **Behavioural regression tests for the 29 curated exact-id pins, the archived_url survivor
+  invariant, the previous-release bake identity, and the re-keyed retirees.** Four guards,
+  each closing a gap where a claim was made in prose or defended only by a determinism
+  check.
+
+  - `curated_id_pins_internal_test.go` pins all **29** exact-id overrides to the behaviour
+    each defends: the BEFORE tuple the unpinned pipeline produces, the AFTER tuple, the
+    entity key, the Creator attribution at stake, and the user-visible defect that returns.
+    The load-bearing arm re-runs each id through `ParseFamilyDetailed`, so it goes RED THE
+    MOMENT A PIN LEAVES `parse.go` — before any regeneration. The only previous guard was
+    the stale-bake check, whose printed remedy after a pin loss is "regenerate and commit",
+    which produces a green tree with the defect restored. Twelve phantom and junk-bucket
+    keys are pinned ABSENT, and `show gpt/5.6` is asserted to stay under-specified over the
+    six real tiers rather than resolving to one reseller's discounted rehost.
+  - `nomen_archived_url_test.go` enforces the survivor invariant described above.
+  - `bake_identity_test.go` compares the PREVIOUS RELEASE's baked
+    `(ID, Provider) → (Family, Variant, Version)` tuples against the current bake. This is
+    the one measurement the declared baseline re-capture structurally removes: the
+    path-unification baseline is re-captured on every refresh, so a decomposition change
+    introduced BY the refresh is frozen into it before the gate measures anything, and
+    `(c)REGRESSION=0` cannot mean what it appears to. `testdata/bake_identity_baseline.tsv`
+    is deliberately NOT re-captured on a refresh — it moves only when a release is tagged.
+  - `refresh_2026_08_28_rekey_retired_keys_corpus.json` records the migration for the **19**
+    retired keys whose ARTIFACTS SURVIVED under a different key, discriminated by measuring
+    each retired key's v0.2.10 instance ids against the refreshed catalog's id set (19
+    re-keys, 68 genuine deletions, which are owed no record). `claude-fable@5` held 24
+    instances and RESOLVED at the release; its successor `claude/fable@5` was named nowhere.
+    Every successor set is re-derived from the key's own instances and asserted LIVE.
+
+- **The field-shape census is now a LOUD codegen failure.** Both arms of the emission were
+  warnings, so a build or write failure left the previous, stale census committed and the
+  drift gate then failed far from the cause. `modelsdev_unlinked.json` and
+  `parse_failures.json` are diagnostic AIDS; the census is a committed ARTIFACT a gate
+  reads, which puts it on the vendored-catalog footing.
+
+- **The path-unification diff report no longer re-emits itself.** It used to rewrite on any
+  passing run, so a dropped pin that left `(c)` at zero silently updated the committed
+  evidence in the working tree beside a red test elsewhere. Refreshing it is now the same
+  declared, env-gated act as re-capturing the baseline, and an ordinary run COMPARES.
+
+### Known defects (observed during the HuggingFace Wayback capture; not fixed here)
 
 - **`cmd/bestiary-hf`'s summary line under-reports gated repos.** It prints a counter
   labelled `absent(404/401)`, but `verifyRepo` maps only `d.notFound()` to absent; an HTTP
@@ -61,7 +371,6 @@ for its **Go module tags** (`vX.Y.Z`).
   longer reproduces that target, so this run's join dropped it to the unlinked report while
   merge-on-refresh correctly preserved the curated entry. Consequence: it can never gain an
   `archived_url`, because the snapshot lookup enriches mechanically-linked repos only.
-
 
 ## [0.2.10] — 2026-08-28
 

@@ -172,6 +172,20 @@ func Resolve(input string, opts ...ResolveOption) ([]ModelRef, error) {
 	// Fix #1 (PURL loose fallback): when the PURL namespace yielded zero matches
 	// but other providers host the model, emit ErrAmbiguous with all candidates
 	// and a diagnostic message that names the missed namespace.
+	//
+	// CONSIDERED AND NOT CHANGED — an open message-quality question, recorded here rather
+	// than re-discovered. This arm returns ErrAmbiguous even when the loose match yields
+	// exactly ONE candidate, which reads as a defect: nothing is ambiguous about one
+	// result. It is DELIBERATE. The error is not reporting ambiguity between candidates,
+	// it is reporting that the NAMESPACE the caller supplied served nothing, and it hands
+	// back what the id does match so the caller can re-issue with a namespace that works.
+	// PURLMissedNamespace carries exactly that fact, and FormatAmbiguous renders it.
+	//
+	// The behaviour is pinned by five tests, so it cannot be changed casually: it was
+	// changed once during review and the revert was the right call. The open question is
+	// only about the TYPE and the wording — is ErrAmbiguous the right error when the
+	// namespace, not the model, is what missed? — and answering it means re-cutting those
+	// five pins and the user-facing text together, which is its own slice.
 	if purlLooseFallback {
 		// Build a deduplicated candidate list from all matches (group by ID).
 		// Prefer the most-preferred provider as the per-ID representative: when the

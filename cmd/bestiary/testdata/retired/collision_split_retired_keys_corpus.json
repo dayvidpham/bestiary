@@ -10,7 +10,7 @@
         "retired_instances": [
           "baseten|thinkingmachines/inkling",
           "openrouter|thinkingmachines/inkling",
-          "thinkingmachines|inkling",
+          "thinkingmachines|thinkingmachines/Inkling",
           "togetherai|thinkingmachines/Inkling",
           "venice|inkling",
           "vercel|klingai/kling-v2.5-turbo-i2v",
@@ -41,7 +41,7 @@
         "ref": "the epoch-wide retired-key policy: a retired entity key is a uniform hard 404 on both seams — no alias, no redirect, no successor listing. The CHANGELOG old->new table is the only pointer a user gets. The one MEASURED deviation the policy anticipates is a key whose FAMILY outlives it: the bare family token still has live children, so the looser `show` seam answers ErrAmbiguous instead. That is recorded here as measured, never \"fixed\" into a 404."
       },
       "mutation": {
-        "description": "SPLITS across nine successors, the widest fan-out in this epoch. Bare `ling` never held an inclusionAI model: all 14 of its instances were rows the upstream catalog had stamped with raw_family \"ling\" while their own ids named a different product line. Six are Thinking Machines' Inkling and re-home to `inkling`; eight are vercel's klingai video models and re-home to one `kling/<shape>` key each. The key empties and retires, but the FAMILY does not: inclusionAI's five sized/variant ling keys are untouched, which is exactly why the `show` seam answers ambiguous rather than not-found here"
+        "description": "SPLITS across nine successors, the widest fan-out in this epoch. Bare `ling` never held an inclusionAI model: all 14 of its instances were rows the upstream catalog had stamped with raw_family \"ling\" while their own ids named a different product line. Six are Thinking Machines' Inkling and re-home to `inkling`; eight are vercel's klingai video models and re-home to one `kling/<shape>` key each. The key empties and retires, but the FAMILY does not: inclusionAI's five sized/variant ling keys are untouched, which is exactly why the `show` seam answers ambiguous rather than not-found here. RE-MEASURED at the 2026-08-28 models.dev catalog refresh (providers 170 -> 204, provider model rows 5,765 -> 7,430): one pinned row was RENAMED upstream, not deleted — Thinking Machines' own endpoint now spells its id with the org prefix, `thinkingmachines|inkling` -> `thinkingmachines|thinkingmachines/Inkling`. The row is the same artifact on the same provider and still re-homes to `inkling`, so the successor set is unchanged at nine"
       }
     },
     {

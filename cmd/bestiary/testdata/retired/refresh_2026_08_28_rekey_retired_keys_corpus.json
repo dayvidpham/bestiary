@@ -1,0 +1,456 @@
+{
+  "_comment": "The RE-KEYED retirees of the 2026-08-28 models.dev catalog refresh. The refresh retires 87 entity keys measured against the v0.2.10 release bake (tag v0.2.10 @ 490814e). SIXTY-EIGHT of those are genuine upstream DELETIONS — the phi-3 and phi-3.5 lines, codellama, the ernie, bge and aion rows and the rest — whose artifacts left the catalog entirely. A 404 is the whole truth for them and they need no migration record. The NINETEEN rows below are the other kind: their instance ids STILL EXIST upstream, so the artifact lives on under a different key and the retired key's 404 is honest but not the whole story. Without a record, a v0.2.10 user who looks up claude-fable@5 — which held 24 instances and RESOLVED at the release — gets `entity not found` and no route to claude/fable@5, and a future change can flip any of these silently. DISCRIMINATOR, and it is measured, not asserted: for each retired key, intersect the instance ids it held at the v0.2.10 bake with the id set of the refreshed catalog. A non-empty intersection is a RE-KEY; an empty one is a deletion. BASELINE. Unlike the six curation-lever corpora beside it, this record's baseline is the PREVIOUS RELEASE, not an epoch baseline, so its keys are deliberately NOT expected in epoch_retired_keys_corpus.json and it is declared out of that reconciliation by name in epoch_retired_keys_test.go, with the reason. Each case carries the MEASURED migration record: `retired_instances` is the exact set of provider instances the key held at the v0.2.10 bake (spelled `<provider>|<model id>`), `successors` is the set of live entity keys those instances now belong to, and the optional `departed_instances` names the rows upstream removed outright. The successor set is re-derived from `retired_instances` against the live registry on every run and compared against this record, so the two cannot drift apart. Only imagen@4.0 has departed instances: three vercel imagen-4.0-*-generate-001 ids left the catalog while poe's google/imagen-4 carried the migration. See TESTING.md.",
+  "cases": [
+    {
+      "name": "rekeyed_aura",
+      "input": "aura",
+      "expected": {
+        "by_entity": "not-found",
+        "show": "not-found",
+        "retired_instances": [
+          "vercel|sakana/fugu-ultra"
+        ],
+        "successors": [
+          "fugu/ultra"
+        ]
+      },
+      "classification": "must-fail",
+      "provenance": {
+        "source": "requirement",
+        "ref": "the epoch-wide retired-key policy: a retired entity key is a uniform hard 404 on both seams — no alias, no redirect, no successor listing at the tool. The migration record IS the pointer, and for a RE-KEYED artifact (the id survives upstream under a different key) it is the only pointer a v0.2.10 user gets, which is why every row here names its successor."
+      },
+      "mutation": {
+        "description": "vercel served Sakana's Fugu Ultra under raw_family \"aura\", and with no other carrier the row keyed the bare label. The refreshed catalog drops that label, so the id `sakana/fugu-ultra` is read on its own terms and the artifact keys fugu/ultra. Same row, same provider, correct lab."
+      }
+    },
+    {
+      "name": "rekeyed_baichuan4",
+      "input": "baichuan4",
+      "expected": {
+        "by_entity": "not-found",
+        "show": "not-found",
+        "retired_instances": [
+          "nano-gpt|Baichuan4-Air"
+        ],
+        "successors": [
+          "baichuan"
+        ]
+      },
+      "classification": "must-fail",
+      "provenance": {
+        "source": "requirement",
+        "ref": "the epoch-wide retired-key policy: a retired entity key is a uniform hard 404 on both seams — no alias, no redirect, no successor listing at the tool. The migration record IS the pointer, and for a RE-KEYED artifact (the id survives upstream under a different key) it is the only pointer a v0.2.10 user gets, which is why every row here names its successor."
+      },
+      "mutation": {
+        "description": "the compound family \"baichuan4\" fused the series integer into the family token. The base-family recovery reads Baichuan4-Air on the short family, so the row rejoins `baichuan`. NOTE the generation is not carried onto the successor: 4 is fused into the id's leading token rather than spelled as a version, so the successor is undated."
+      }
+    },
+    {
+      "name": "rekeyed_baichuan4_turbo",
+      "input": "baichuan4{turbo}",
+      "expected": {
+        "by_entity": "not-found",
+        "show": "not-found",
+        "retired_instances": [
+          "nano-gpt|Baichuan4-Turbo"
+        ],
+        "successors": [
+          "baichuan{turbo}"
+        ]
+      },
+      "classification": "must-fail",
+      "provenance": {
+        "source": "requirement",
+        "ref": "the epoch-wide retired-key policy: a retired entity key is a uniform hard 404 on both seams — no alias, no redirect, no successor listing at the tool. The migration record IS the pointer, and for a RE-KEYED artifact (the id survives upstream under a different key) it is the only pointer a v0.2.10 user gets, which is why every row here names its successor."
+      },
+      "mutation": {
+        "description": "as `baichuan4`, on the turbo tier: Baichuan4-Turbo rejoins `baichuan{turbo}`, keeping its identity modifier and losing only the compound family spelling."
+      }
+    },
+    {
+      "name": "rekeyed_balanced",
+      "input": "balanced",
+      "expected": {
+        "by_entity": "not-found",
+        "show": "not-found",
+        "retired_instances": [
+          "kilo|kilo-auto/balanced"
+        ],
+        "successors": [
+          "auto"
+        ]
+      },
+      "classification": "must-fail",
+      "provenance": {
+        "source": "requirement",
+        "ref": "the epoch-wide retired-key policy: a retired entity key is a uniform hard 404 on both seams — no alias, no redirect, no successor listing at the tool. The migration record IS the pointer, and for a RE-KEYED artifact (the id survives upstream under a different key) it is the only pointer a v0.2.10 user gets, which is why every row here names its successor."
+      },
+      "mutation": {
+        "description": "kilo's router publishes its selection MODES as models (`kilo-auto/balanced`). \"balanced\" is a routing policy, not an artifact, and with the `kilo-auto` prefix now read as the product namespace the row keys the router itself, `auto`. The mode survives as a nomen on the id."
+      }
+    },
+    {
+      "name": "rekeyed_claude_fable",
+      "input": "claude-fable",
+      "expected": {
+        "by_entity": "not-found",
+        "show": "not-found",
+        "retired_instances": [
+          "gitlab|duo-chat-fable-5",
+          "openrouter|~anthropic/claude-fable-latest"
+        ],
+        "successors": [
+          "claude/fable"
+        ]
+      },
+      "classification": "must-fail",
+      "provenance": {
+        "source": "requirement",
+        "ref": "the epoch-wide retired-key policy: a retired entity key is a uniform hard 404 on both seams — no alias, no redirect, no successor listing at the tool. The migration record IS the pointer, and for a RE-KEYED artifact (the id survives upstream under a different key) it is the only pointer a v0.2.10 user gets, which is why every row here names its successor."
+      },
+      "mutation": {
+        "description": "Fable is an Anthropic TIER, the peer of opus, sonnet and haiku, and the compound family \"claude-fable\" had split it off the Claude line entirely. Reading the tier as a VARIANT puts it back: the undated spellings (gitlab's duo-chat alias and openrouter's `~anthropic/claude-fable-latest`) key claude/fable. This is the worst case in this set for a v0.2.10 user, because the retired key resolved at the release."
+      }
+    },
+    {
+      "name": "rekeyed_claude_fable_v5",
+      "input": "claude-fable@5",
+      "expected": {
+        "by_entity": "not-found",
+        "show": "not-found",
+        "retired_instances": [
+          "abacus|claude-fable-5",
+          "aihubmix|claude-fable-5",
+          "amazon-bedrock|anthropic.claude-fable-5",
+          "amazon-bedrock|eu.anthropic.claude-fable-5",
+          "amazon-bedrock|global.anthropic.claude-fable-5",
+          "amazon-bedrock|us.anthropic.claude-fable-5",
+          "anthropic|claude-fable-5",
+          "azure|claude-fable-5",
+          "cloudflare-ai-gateway|anthropic/claude-fable-5",
+          "crossmodel|anthropic/claude-fable-5",
+          "digitalocean|anthropic-claude-fable-5",
+          "freemodel|claude-fable-5",
+          "github-copilot|claude-fable-5",
+          "kenari|claude-fable-5",
+          "llmgateway|claude-fable-5",
+          "model-oracle-ai|claude-fable-5",
+          "ofox|anthropic/claude-fable-5",
+          "opencode|claude-fable-5",
+          "openrouter|anthropic/claude-fable-5",
+          "snowflake-cortex|claude-fable-5",
+          "venice|claude-fable-5",
+          "vercel|anthropic/claude-fable-5",
+          "xpersona|claude-fable-5",
+          "zenmux|anthropic/claude-fable-5"
+        ],
+        "successors": [
+          "claude/fable@5"
+        ]
+      },
+      "classification": "must-fail",
+      "provenance": {
+        "source": "requirement",
+        "ref": "the epoch-wide retired-key policy: a retired entity key is a uniform hard 404 on both seams — no alias, no redirect, no successor listing at the tool. The migration record IS the pointer, and for a RE-KEYED artifact (the id survives upstream under a different key) it is the only pointer a v0.2.10 user gets, which is why every row here names its successor."
+      },
+      "mutation": {
+        "description": "as `claude-fable`, on the dated line, and the LARGEST re-key in this refresh: all 24 instances — anthropic's own listing, four Bedrock regions, azure, openrouter, vercel and the rest — move together onto claude/fable@5. Nothing is lost and nothing splits; the successor holds every row the retired key held, alongside the rows the undated spellings bring."
+      }
+    },
+    {
+      "name": "rekeyed_doubao_mini_v2_0",
+      "input": "doubao/mini@2.0",
+      "expected": {
+        "by_entity": "not-found",
+        "show": "not-found",
+        "retired_instances": [
+          "nano-gpt|doubao-seed-2-0-mini-260215"
+        ],
+        "successors": [
+          "seed/mini"
+        ]
+      },
+      "classification": "must-fail",
+      "provenance": {
+        "source": "requirement",
+        "ref": "the epoch-wide retired-key policy: a retired entity key is a uniform hard 404 on both seams — no alias, no redirect, no successor listing at the tool. The migration record IS the pointer, and for a RE-KEYED artifact (the id survives upstream under a different key) it is the only pointer a v0.2.10 user gets, which is why every row here names its successor."
+      },
+      "mutation": {
+        "description": "as `doubao@2.0`, on the mini tier: the row keys seed/mini."
+      }
+    },
+    {
+      "name": "rekeyed_doubao_pro_v2_0",
+      "input": "doubao/pro@2.0",
+      "expected": {
+        "by_entity": "not-found",
+        "show": "not-found",
+        "retired_instances": [
+          "nano-gpt|doubao-seed-2-0-pro-260215"
+        ],
+        "successors": [
+          "seed/pro"
+        ]
+      },
+      "classification": "must-fail",
+      "provenance": {
+        "source": "requirement",
+        "ref": "the epoch-wide retired-key policy: a retired entity key is a uniform hard 404 on both seams — no alias, no redirect, no successor listing at the tool. The migration record IS the pointer, and for a RE-KEYED artifact (the id survives upstream under a different key) it is the only pointer a v0.2.10 user gets, which is why every row here names its successor."
+      },
+      "mutation": {
+        "description": "as `doubao@2.0`, on the pro tier: the row keys seed/pro."
+      }
+    },
+    {
+      "name": "rekeyed_doubao_v2_0",
+      "input": "doubao@2.0",
+      "expected": {
+        "by_entity": "not-found",
+        "show": "not-found",
+        "retired_instances": [
+          "nano-gpt|doubao-seed-2-0-lite-260215"
+        ],
+        "successors": [
+          "seed/lite"
+        ]
+      },
+      "classification": "must-fail",
+      "provenance": {
+        "source": "requirement",
+        "ref": "the epoch-wide retired-key policy: a retired entity key is a uniform hard 404 on both seams — no alias, no redirect, no successor listing at the tool. The migration record IS the pointer, and for a RE-KEYED artifact (the id survives upstream under a different key) it is the only pointer a v0.2.10 user gets, which is why every row here names its successor."
+      },
+      "mutation": {
+        "description": "upstream re-labelled ByteDance's Doubao rows to the short family \"seed\", and the lite tier is spelled in the id rather than in the family, so the row keys seed/lite. The version does NOT come across: \"2-0\" is a dash-spelled version inside a date suffix the short family no longer exposes. That version loss is recorded, with its cost, in the bake-identity ledger; the seed/doubao-seed/doubao fold is deferred to its own curation slice."
+      }
+    },
+    {
+      "name": "rekeyed_doubao_v2_0_code",
+      "input": "doubao@2.0{code}",
+      "expected": {
+        "by_entity": "not-found",
+        "show": "not-found",
+        "retired_instances": [
+          "nano-gpt|doubao-seed-2-0-code-preview-260215"
+        ],
+        "successors": [
+          "seed{code}"
+        ]
+      },
+      "classification": "must-fail",
+      "provenance": {
+        "source": "requirement",
+        "ref": "the epoch-wide retired-key policy: a retired entity key is a uniform hard 404 on both seams — no alias, no redirect, no successor listing at the tool. The migration record IS the pointer, and for a RE-KEYED artifact (the id survives upstream under a different key) it is the only pointer a v0.2.10 user gets, which is why every row here names its successor."
+      },
+      "mutation": {
+        "description": "as `doubao@2.0`, on the code-preview row: it keys seed{code}, keeping its identity modifier and losing the dash-spelled version with the family relabel."
+      }
+    },
+    {
+      "name": "rekeyed_frontier",
+      "input": "frontier",
+      "expected": {
+        "by_entity": "not-found",
+        "show": "not-found",
+        "retired_instances": [
+          "kilo|kilo-auto/frontier"
+        ],
+        "successors": [
+          "auto"
+        ]
+      },
+      "classification": "must-fail",
+      "provenance": {
+        "source": "requirement",
+        "ref": "the epoch-wide retired-key policy: a retired entity key is a uniform hard 404 on both seams — no alias, no redirect, no successor listing at the tool. The migration record IS the pointer, and for a RE-KEYED artifact (the id survives upstream under a different key) it is the only pointer a v0.2.10 user gets, which is why every row here names its successor."
+      },
+      "mutation": {
+        "description": "as `balanced`: kilo's `kilo-auto/frontier` is a routing POLICY published as a model. It keys the router entity `auto`, which is where its sibling modes land too — three retired mode keys, one successor."
+      }
+    },
+    {
+      "name": "rekeyed_gemini_exp",
+      "input": "gemini-exp",
+      "expected": {
+        "by_entity": "not-found",
+        "show": "not-found",
+        "retired_instances": [
+          "nano-gpt|gemini-exp-1206"
+        ],
+        "successors": [
+          "gemini"
+        ]
+      },
+      "classification": "must-fail",
+      "provenance": {
+        "source": "requirement",
+        "ref": "the epoch-wide retired-key policy: a retired entity key is a uniform hard 404 on both seams — no alias, no redirect, no successor listing at the tool. The migration record IS the pointer, and for a RE-KEYED artifact (the id survives upstream under a different key) it is the only pointer a v0.2.10 user gets, which is why every row here names its successor."
+      },
+      "mutation": {
+        "description": "\"gemini-exp\" fused Google's experimental-release marker into the family token. The refreshed read takes `gemini-exp-1206` on the bare gemini family, with 1206 read as the date it is, so the row rejoins `gemini`."
+      }
+    },
+    {
+      "name": "rekeyed_gemma4_size_31b",
+      "input": "gemma4#31b",
+      "expected": {
+        "by_entity": "not-found",
+        "show": "not-found",
+        "retired_instances": [
+          "nano-gpt|TEE/gemma4-31b",
+          "nano-gpt|TEE/gemma4-31b:thinking"
+        ],
+        "successors": [
+          "gemma#31b"
+        ]
+      },
+      "classification": "must-fail",
+      "provenance": {
+        "source": "requirement",
+        "ref": "the epoch-wide retired-key policy: a retired entity key is a uniform hard 404 on both seams — no alias, no redirect, no successor listing at the tool. The migration record IS the pointer, and for a RE-KEYED artifact (the id survives upstream under a different key) it is the only pointer a v0.2.10 user gets, which is why every row here names its successor."
+      },
+      "mutation": {
+        "description": "the compound family \"gemma4\" fused the generation into the family token, the same shape as `baichuan4`. Both nano-gpt TEE rows (the base and its :thinking spelling) rejoin `gemma#31b`, keeping the 31B size read off the id. As with baichuan4 the fused generation does not survive as a version."
+      }
+    },
+    {
+      "name": "rekeyed_glm_4_1v_thinking_flash",
+      "input": "glm-4.1v-thinking/flash",
+      "expected": {
+        "by_entity": "not-found",
+        "show": "not-found",
+        "retired_instances": [
+          "nano-gpt|glm-4.1v-thinking-flash"
+        ],
+        "successors": [
+          "glm/v@4.1{flash}"
+        ]
+      },
+      "classification": "must-fail",
+      "provenance": {
+        "source": "requirement",
+        "ref": "the epoch-wide retired-key policy: a retired entity key is a uniform hard 404 on both seams — no alias, no redirect, no successor listing at the tool. The migration record IS the pointer, and for a RE-KEYED artifact (the id survives upstream under a different key) it is the only pointer a v0.2.10 user gets, which is why every row here names its successor."
+      },
+      "mutation": {
+        "description": "the whole compound \"glm-4.1v-thinking\" had been taken as the family, stranding the row on a family of its own with `flash` as a variant. Decomposed properly it is family glm, series letter v, version 4.1, flash as an identity modifier: glm/v@4.1{flash}. Every token is accounted for and none is dropped."
+      }
+    },
+    {
+      "name": "rekeyed_glm_v",
+      "input": "glm/v",
+      "expected": {
+        "by_entity": "not-found",
+        "show": "ambiguous",
+        "retired_instances": [
+          "nano-gpt|z-ai/glm-4.5v:thinking"
+        ],
+        "successors": [
+          "glm"
+        ]
+      },
+      "classification": "must-fail",
+      "provenance": {
+        "source": "requirement",
+        "ref": "the epoch-wide retired-key policy: a retired entity key is a uniform hard 404 on both seams — no alias, no redirect, no successor listing at the tool. The migration record IS the pointer, and for a RE-KEYED artifact (the id survives upstream under a different key) it is the only pointer a v0.2.10 user gets, which is why every row here names its successor."
+      },
+      "mutation": {
+        "description": "the bare `glm/v` key held one row, z-ai's `glm-4.5v:thinking`, which the refreshed catalog now reads with its version, so the row moves to the dated glm line and the undated variant key empties. This is the ONE key in this set whose looser `show` seam is not a 404: the glm FAMILY stays live with many children, so `show glm/v` answers the under-specified error rather than not-found — the same behaviour `show gpt` and `show claude` rely on, and it must never be \"fixed\" into a 404."
+      }
+    },
+    {
+      "name": "rekeyed_imagen_v4_0",
+      "input": "imagen@4.0",
+      "expected": {
+        "by_entity": "not-found",
+        "show": "not-found",
+        "retired_instances": [
+          "poe|google/imagen-4",
+          "vercel|google/imagen-4.0-fast-generate-001",
+          "vercel|google/imagen-4.0-generate-001",
+          "vercel|google/imagen-4.0-ultra-generate-001"
+        ],
+        "successors": [
+          "imagen@4"
+        ],
+        "departed_instances": [
+          "vercel|google/imagen-4.0-fast-generate-001",
+          "vercel|google/imagen-4.0-generate-001",
+          "vercel|google/imagen-4.0-ultra-generate-001"
+        ]
+      },
+      "classification": "must-fail",
+      "provenance": {
+        "source": "requirement",
+        "ref": "the epoch-wide retired-key policy: a retired entity key is a uniform hard 404 on both seams — no alias, no redirect, no successor listing at the tool. The migration record IS the pointer, and for a RE-KEYED artifact (the id survives upstream under a different key) it is the only pointer a v0.2.10 user gets, which is why every row here names its successor."
+      },
+      "mutation": {
+        "description": "the N -> N.0 fold: `imagen@4.0` and `imagen@4` name one generation, and the dotted spelling folds onto the bare one. This is the only row in this set whose instances do NOT all survive — upstream removed the three vercel `imagen-4.0-*-generate-001` ids entirely, so one instance (poe's google/imagen-4) carries the migration and the other three departed with the catalog. Both facts are recorded, so a future reader can tell a re-key from a deletion."
+      }
+    },
+    {
+      "name": "rekeyed_learnlm_pro_v1_5",
+      "input": "learnlm/pro@1.5",
+      "expected": {
+        "by_entity": "not-found",
+        "show": "not-found",
+        "retired_instances": [
+          "nano-gpt|learnlm-1.5-pro-experimental"
+        ],
+        "successors": [
+          "gemini/pro"
+        ]
+      },
+      "classification": "must-fail",
+      "provenance": {
+        "source": "requirement",
+        "ref": "the epoch-wide retired-key policy: a retired entity key is a uniform hard 404 on both seams — no alias, no redirect, no successor listing at the tool. The migration record IS the pointer, and for a RE-KEYED artifact (the id survives upstream under a different key) it is the only pointer a v0.2.10 user gets, which is why every row here names its successor."
+      },
+      "mutation": {
+        "description": "upstream absorbed LearnLM into Gemini and re-labelled the row family \"gemini\", so `learnlm-1.5-pro-experimental` keys gemini/pro. The version does not come across, and that is the CORRECT reading rather than a defect: \"1.5\" was LearnLM's own release line, not Gemini's, so carrying it would assert a Gemini 1.5 Pro this row is not. Recorded with that reasoning in the bake-identity ledger."
+      }
+    },
+    {
+      "name": "rekeyed_small",
+      "input": "small",
+      "expected": {
+        "by_entity": "not-found",
+        "show": "not-found",
+        "retired_instances": [
+          "kilo|kilo-auto/small"
+        ],
+        "successors": [
+          "auto/small"
+        ]
+      },
+      "classification": "must-fail",
+      "provenance": {
+        "source": "requirement",
+        "ref": "the epoch-wide retired-key policy: a retired entity key is a uniform hard 404 on both seams — no alias, no redirect, no successor listing at the tool. The migration record IS the pointer, and for a RE-KEYED artifact (the id survives upstream under a different key) it is the only pointer a v0.2.10 user gets, which is why every row here names its successor."
+      },
+      "mutation": {
+        "description": "as `balanced` and `frontier`: kilo's `kilo-auto/small` is a routing size policy, and it keys auto/small — the router with its size tier as a variant."
+      }
+    },
+    {
+      "name": "rekeyed_step_r1_v_mini",
+      "input": "step-r1-v/mini",
+      "expected": {
+        "by_entity": "not-found",
+        "show": "not-found",
+        "retired_instances": [
+          "nano-gpt|step-r1-v-mini"
+        ],
+        "successors": [
+          "step/mini"
+        ]
+      },
+      "classification": "must-fail",
+      "provenance": {
+        "source": "requirement",
+        "ref": "the epoch-wide retired-key policy: a retired entity key is a uniform hard 404 on both seams — no alias, no redirect, no successor listing at the tool. The migration record IS the pointer, and for a RE-KEYED artifact (the id survives upstream under a different key) it is the only pointer a v0.2.10 user gets, which is why every row here names its successor."
+      },
+      "mutation": {
+        "description": "the compound family \"step-r1-v\" fused StepFun's series and modality markers into the family token. Read on the short family the row is step, mini tier, so it keys step/mini."
+      }
+    }
+  ]
+}

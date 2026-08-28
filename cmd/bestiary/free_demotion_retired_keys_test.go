@@ -41,6 +41,14 @@ type retiredKeySeams struct {
 	// version the fused suffix had been hiding. Recorded here so the migration
 	// record is machine-checkable rather than a prose claim.
 	Successors []string `json:"successors"`
+	// DepartedInstances is the subset of RetiredInstances whose ids upstream removed
+	// from the catalog outright, so they re-home nowhere. It is OPTIONAL and empty for
+	// every conservation lever in this directory — a lever moves rows, it never deletes
+	// them. It is populated only by the refresh corpus, where a key can retire with SOME
+	// of its rows re-keyed and others genuinely gone, and recording the split is what
+	// lets a reader tell a migration from a deletion instead of inferring it from a
+	// successor set that does not add up.
+	DepartedInstances []string `json:"departed_instances,omitempty"`
 }
 
 //go:embed testdata/retired/free_demotion_retired_keys_corpus.json
@@ -128,8 +136,13 @@ func TestRetiredKeys_FreeDemotion_PinnedSurvivorStaysLive(t *testing.T) {
 	if !ok {
 		t.Fatalf("EntityByKey(%q) does not resolve", sibling)
 	}
-	if got := len(sib.Instances); got != 4 {
-		t.Errorf("%s has %d instance(s), want 4 — the carved-out row must NOT have folded into it",
+	// 4 -> 2 with the 2026-08-28 models.dev catalog refresh: upstream deleted two of this
+	// key's four provider rows as inclusionAI published its Ling 3.0 line (they were removed,
+	// not re-keyed — the 3.0 rows all carry 3.0-spelled ids). The control this literal serves
+	// is unchanged and is what the message states: whatever the sibling's census is, the
+	// carved-out opencode row must not be one of its members.
+	if got := len(sib.Instances); got != 2 {
+		t.Errorf("%s has %d instance(s), want 2 — the carved-out row must NOT have folded into it",
 			sibling, got)
 	}
 
@@ -329,10 +342,88 @@ func TestRetiredKeys_FreeDemotion_ChangelogTableMatchesCorpus(t *testing.T) {
 	}
 	table := parseMigrationTable(t, string(raw), "| retired key | instances re-home to |")
 
-	if len(table) != len(corpus.Cases) {
-		t.Errorf("CHANGELOG migration table has %d row(s), corpus has %d case(s); the two are the "+
-			"same record and must be edited together", len(table), len(corpus.Cases))
+	assertChangelogTableMatchesCorpus(t, string(raw), table, corpus, map[string]releasedTableCorrection{
+		"laguna-s/free@2.1": {
+			Successors: []string{"laguna"},
+			Why: "the 2026-08-28 catalog refresh changed what upstream stamps on this row's single " +
+				"instance (vercel|poolside/laguna-s-2.1-free), so it now decomposes onto the bare " +
+				"`laguna` key instead of `laguna-s@2.1`. Both keys are live; the instance moved",
+		},
+	})
+}
+
+// releasedTableCorrection declares ONE row where a RELEASED CHANGELOG migration table and
+// the live corpus legitimately disagree.
+//
+// A released stanza is the historical record of what that release shipped, and it is
+// immutable: a reader on v0.2.10 looking up a retired key must still find the successor
+// that was correct on their build. Retirement and successor are both measured against a
+// BASELINE keyspace, so both can move afterwards — which means the released table and the
+// live corpus WILL diverge, and pretending otherwise forces one of the two to lie.
+//
+// This type is how the divergence stays reviewed instead of silent. Each entry names the
+// row, what the corpus now records, and why it moved; anything NOT declared here still
+// fails, so the cross-check keeps all of its original power. The corrections themselves
+// are published in the `[Unreleased]` stanza, and that is asserted, not assumed — a
+// correction nobody can read is not a correction.
+type releasedTableCorrection struct {
+	// Successors is what the corpus records now. NIL means the key is no longer retired at
+	// all, so the released row has no counterpart in the corpus.
+	Successors []string
+	// Why states what moved and why the released row is nonetheless still correct for the
+	// release it documents.
+	Why string
+}
+
+// assertChangelogTableMatchesCorpus keeps the two copies of a migration record honest with
+// each other: the CHANGELOG table a human reads, and the corpus the tests re-derive. A
+// correction applied to one and forgotten in the other would leave the user-facing half
+// wrong while every test stayed green.
+//
+// Divergences declared in `corrections` are permitted, and each is checked in BOTH
+// directions — the declared successors must be what the corpus actually records, and the
+// declaration must not outlive the divergence it describes.
+func assertChangelogTableMatchesCorpus(
+	t *testing.T,
+	changelog string,
+	table map[string][]string,
+	corpus testcase.Corpus[retiredKeyInput, retiredKeySeams],
+	corrections map[string]releasedTableCorrection,
+) {
+	t.Helper()
+
+	unreleased := unreleasedStanza(t, changelog)
+	for key, c := range corrections {
+		if !strings.Contains(unreleased, key) {
+			t.Errorf("the released migration table's row for %q is declared corrected, but %q is not "+
+				"mentioned anywhere in the [Unreleased] stanza\n"+
+				"  What: the correction exists in the test and nowhere a reader can see it\n"+
+				"  Why it matters: the released stanza is immutable BECAUSE the correction is carried\n"+
+				"    in [Unreleased]. Without the published half, the immutability is just a stale table\n"+
+				"  How to fix: state the correction in [Unreleased] — what moved, and why the released\n"+
+				"    row is still correct for the release it documents (%s)", key, key, c.Why)
+		}
 	}
+
+	if got, want := len(table), len(corpus.Cases); got != want {
+		// Only a correction with nil Successors changes the row count: the released table
+		// keeps a row the corpus no longer has. A correction with non-nil Successors names a
+		// row present in BOTH records that merely re-homed, so it contributes zero. Counting
+		// both kinds makes a MIXED map demand a size difference it cannot have.
+		diff := 0
+		for _, c := range corrections {
+			if c.Successors == nil {
+				diff++
+			}
+		}
+		if got-want != diff {
+			t.Errorf("CHANGELOG migration table has %d row(s), corpus has %d case(s), and %d "+
+				"correction(s) are declared, %d of which drop a corpus case; the two are the "+
+				"same record and must be edited together",
+				got, want, len(corrections), diff)
+		}
+	}
+
 	for _, c := range corpus.Cases {
 		got, ok := table[c.Input]
 		if !ok {
@@ -343,16 +434,60 @@ func TestRetiredKeys_FreeDemotion_ChangelogTableMatchesCorpus(t *testing.T) {
 		want := append([]string(nil), c.Expected.Successors...)
 		sort.Strings(want)
 		sort.Strings(got)
-		if !slices.Equal(got, want) {
+		if slices.Equal(got, want) {
+			if corr, declared := corrections[c.Input]; declared && corr.Successors != nil {
+				t.Errorf("%q is declared as a corrected row, but the released table and the corpus "+
+					"AGREE (%v); drop the stale declaration rather than leaving a false record",
+					c.Input, got)
+			}
+			continue
+		}
+		corr, declared := corrections[c.Input]
+		if !declared {
 			t.Errorf("CHANGELOG migration table sends %q to %v, the corpus records %v", c.Input, got, want)
+			continue
+		}
+		declaredWant := append([]string(nil), corr.Successors...)
+		sort.Strings(declaredWant)
+		if !slices.Equal(declaredWant, want) {
+			t.Errorf("%q is declared corrected to %v, but the corpus records %v — re-derive the "+
+				"declaration from the corpus rather than editing the corpus to match",
+				c.Input, declaredWant, want)
 		}
 	}
+
 	for old := range table {
-		if !corpusHasInput(corpus, old) {
+		if corpusHasInput(corpus, old) {
+			continue
+		}
+		corr, declared := corrections[old]
+		if !declared {
 			t.Errorf("CHANGELOG migration table carries a row for %q, which the retired-key corpus "+
 				"does not cover", old)
+			continue
+		}
+		if corr.Successors != nil {
+			t.Errorf("%q is declared corrected to %v, but the corpus has no case for it at all — a "+
+				"key that is no longer retired must be declared with a nil Successors instead",
+				old, corr.Successors)
 		}
 	}
+}
+
+// unreleasedStanza returns the text of the [Unreleased] stanza, which is where every
+// correction to a released migration record must be published.
+func unreleasedStanza(t *testing.T, changelog string) string {
+	t.Helper()
+	const head = "## [Unreleased]"
+	i := strings.Index(changelog, head)
+	if i < 0 {
+		t.Fatalf("CHANGELOG.md has no %q stanza", head)
+	}
+	rest := changelog[i+len(head):]
+	if j := strings.Index(rest, "\n## ["); j >= 0 {
+		rest = rest[:j]
+	}
+	return rest
 }
 
 // parseMigrationTable reads one "old -> new" markdown migration table out of the

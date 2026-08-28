@@ -59,7 +59,7 @@ func (f Family) CanonicalProvider() Provider {
 // The known set is generated from the models.dev API at codegen time
 // (allFamilies, families_gen.go) plus the hand-curated curatedBaseFamilies
 // supplement (base families the API omits but that lineage / canonical
-// references depend on, e.g. "solar").
+// references depend on, e.g. the MythoMax merge parents "mythologic" / "huginn").
 func (f Family) IsKnown() bool {
 	for _, known := range allFamilies {
 		if f == known {
@@ -74,13 +74,14 @@ func (f Family) IsKnown() bool {
 	return false
 }
 
-// FamilySolar is the curated base family for Upstage's SOLAR models. The
-// models.dev API never emits a bare "solar" family value — only the
-// variant-qualified solar-mini / solar-pro reach allFamilies (families_gen.go) —
-// yet the base family is needed as a valid lineage derivation PARENT (a SOLAR
-// finetune names "solar" as its base). It is registered here as a hand-curated
-// supplement to the generated set; see curatedBaseFamilies.
-const FamilySolar Family = "solar"
+// FamilySolar was a hand-curated supplement here until the 2026-08-28 catalog
+// refresh: the models.dev API used to emit only the variant-qualified solar-mini
+// and solar-pro, so the bare base family Upstage's SOLAR finetunes name as their
+// lineage PARENT had to be registered by hand. Upstream now publishes the bare
+// "solar" family, so the constant is EMITTED by codegen (families_gen.go) and the
+// curated declaration retired — leaving both would be a redeclaration and would
+// not compile. The identifier and its value are unchanged, so every reference
+// (lineage parent validation, lineage_test.go) still resolves.
 
 // FamilyMythologic and FamilyHuginn are the two parent base families of the
 // MythoMax-L2-13B merge. MythoMax is a weight merge of MythoLogic-L2 and Huginn,
@@ -94,22 +95,25 @@ const (
 	FamilyHuginn     Family = "huginn"
 )
 
-// FamilyC4AI, FamilyOrnith and FamilyQwQ (with the lowercase "hy" registered as a
-// literal below) are the four families that the
-// catalog decomposition DOES route real entities to but that the models.dev API
-// never emits as a bare family value, so they are absent from the generated
-// allFamilies set. Each one is the decomposed head of a lab-scoped id line —
-// Cohere's c4ai-command-r, Tencent's hy-*, DeepReinforce's ornith-*, Alibaba's QwQ
-// — and each is reached by exactly one models.dev lab prefix, so each has a
+// FamilyC4AI and FamilyQwQ (with the lowercase "hy" registered as a literal below)
+// are the families that the catalog decomposition DOES route real entities to but
+// that the models.dev API never emits as a bare family value, so they are absent
+// from the generated allFamilies set. Each one is the decomposed head of a
+// lab-scoped id line — Cohere's c4ai-command-r, Tencent's hy-*, Alibaba's QwQ —
+// and each is reached by exactly one models.dev lab prefix, so each has a
 // well-determined Creator. They are registered here because the curated
-// Family→Creator table's FK gate requires Family.IsKnown: without registration the
-// four would have to be dropped from the creator dimension entirely, leaving their
+// Family→Creator table's FK gate requires Family.IsKnown: without registration
+// they would have to be dropped from the creator dimension entirely, leaving their
 // catalog entities unattributed for a reason that is about the family SET rather
 // than about the originator.
+//
+// FamilyOrnith (DeepReinforce's ornith-*) belonged to this group until the
+// 2026-08-28 catalog refresh, when upstream began publishing the bare "ornith"
+// family. It is now EMITTED by codegen (families_gen.go); the curated declaration
+// is retired here because keeping both is a redeclaration and does not compile.
 const (
-	FamilyC4AI   Family = "c4ai"
-	FamilyOrnith Family = "ornith"
-	FamilyQwQ    Family = "qwq"
+	FamilyC4AI Family = "c4ai"
+	FamilyQwQ  Family = "qwq"
 )
 
 // curatedBaseFamilies are hand-maintained base families that the models.dev API
@@ -119,12 +123,13 @@ const (
 // allFamilies, so a curated family is a first-class known Family. Keep this list
 // minimal: add a base family only when a real reference needs it. The yi base
 // family (01.AI) is already present in allFamilies and so is NOT repeated here.
+// solar and ornith were both dropped from this list by the 2026-08-28 catalog
+// refresh: upstream now emits each as a bare family value, so allFamilies carries
+// them and a curated entry would be a redundant duplicate of the generated set.
 var curatedBaseFamilies = [...]Family{
-	FamilySolar,      // base for upstage SOLAR (allFamilies has only solar-mini/solar-pro)
 	FamilyMythologic, // MythoMax merge parent
 	FamilyHuginn,     // MythoMax merge parent
 	FamilyC4AI,       // creator row: cohere (entities present, absent from allFamilies)
-	FamilyOrnith,     // creator row: deepreinforce (entities present, absent from allFamilies)
 	FamilyQwQ,        // creator row: alibaba (entities present, absent from allFamilies)
 	// Tencent's hy-* line, registered as a LITERAL rather than through a constant
 	// because the generated set already binds the identifier FamilyHy to a

@@ -7,10 +7,7 @@
       "expected": {
         "by_entity": "not-found",
         "show": "not-found",
-        "retired_instances": [
-          "kilo|deepcogito/cogito-v2.1-671b",
-          "openrouter|deepcogito/cogito-v2.1-671b"
-        ],
+        "retired_instances": [],
         "successors": [
           "cogito@2.1#671b"
         ]
@@ -21,7 +18,7 @@
         "ref": "the epoch-wide retired-key policy: a retired entity key is a uniform hard 404 on both seams — no alias, no redirect, no successor listing. The CHANGELOG old->new table is the only pointer a user gets. The bare-family exception does not apply to either key here: neither is a bare family token."
       },
       "mutation": {
-        "description": "the size-doubling key: the whole id remainder \"v2.1-671b\" sat in the variant slot with the version empty, so 671b appeared both as an identity token and as the mechanically recovered #size segment. Un-fusing it into an EMPTY variant + version \"2.1\" — the \"v\" is the prefix of the version it introduces, not a variant naming a sibling line — renames the key to cogito@2.1#671b and carries the size exactly once. A pure rename: both serving instances move together and no instance is created or destroyed"
+        "description": "the size-doubling key: the whole id remainder \"v2.1-671b\" sat in the variant slot with the version empty, so 671b appeared both as an identity token and as the mechanically recovered #size segment. Un-fusing it into an EMPTY variant + version \"2.1\" — the \"v\" is the prefix of the version it introduces, not a variant naming a sibling line — renames the key to cogito@2.1#671b and carries the size exactly once. A pure rename: both serving instances move together and no instance is created or destroyed. RE-MEASURED at the 2026-08-28 models.dev catalog refresh (providers 170 -> 204, provider model rows 5,765 -> 7,430): both pinned rows were DELETED upstream — kilo and openrouter are both still in the catalog but neither serves any deepcogito model any more, and no provider publishes the dotted spelling `deepcogito/cogito-v2.1-671b` at all. The pre-lever population of this key is therefore EMPTY, not re-spelled: nothing was renamed and nothing re-homed. The rows are removed rather than replaced, because substituting some other provider's row would invent a continuity the catalog does not record. The key stays retired and its seam pins stay live; only the re-derivation of its successor set is now unfalsifiable, which cogitoUpstreamEmptiedKeys records"
       }
     },
     {

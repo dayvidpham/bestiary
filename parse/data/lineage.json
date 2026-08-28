@@ -3,7 +3,7 @@
   "schema_version": 2,
   "edges": [
     {
-      "child_id": "dracarys-llama-3_1-70b-instruct",
+      "child_id": "dracarys-llama-3.1-70b-instruct",
       "child_ref": { "family": "dracarys", "variant": "", "version": "", "modifier": ["instruct"] },
       "real": true,
       "parents": [
@@ -44,8 +44,8 @@
       ]
     },
     {
-      "_comment": "EVA-Qwen2.5-32B-v0.2 is EVA-UNIT-01's roleplay finetune OF Qwen2.5-32B. The curated exact-id family override splits the two identities apart (family 'eva', version '0.2' — EVA's own release line — with the 32B size read off the id), so the base relationship is carried HERE as a derivation edge instead of being smuggled into a compound family token. param_size is pinned on BOTH ends deliberately: the child key really is eva@0.2#32b, and the base is specifically the 32B Qwen2.5 — a size-agnostic edge would claim every Qwen2.5 size as a parent.",
-      "child_id": "qwen2.5-32b-eva-v0.2",
+      "_comment": "EVA-Qwen2.5-32B-v0.2 is EVA-UNIT-01's roleplay finetune OF Qwen2.5-32B. Upstream re-spelled the row from the base-leading 'Qwen2.5-32B-EVA-v0.2' to the org-prefixed 'EVA-UNIT-01/EVA-Qwen2.5-32B-v0.2' in the 2026-08-28 refresh; child_id follows the catalog spelling. The curated exact-id family override splits the two identities apart (family 'eva', version '0.2' — EVA's own release line — with the 32B size read off the id), so the base relationship is carried HERE as a derivation edge instead of being smuggled into a compound family token. param_size is pinned on BOTH ends deliberately: the child key really is eva@0.2#32b, and the base is specifically the 32B Qwen2.5 — a size-agnostic edge would claim every Qwen2.5 size as a parent.",
+      "child_id": "eva-unit-01/eva-qwen2.5-32b-v0.2",
       "child_ref": { "family": "eva", "variant": "", "version": "0.2", "param_size": "32b" },
       "real": true,
       "parents": [

@@ -264,19 +264,19 @@
       "classification": "must-pass",
       "expected": {
         "decoded": "",
-        "entity_key": "qwen/vl@2.5#32b{instruct}"
+        "entity_key": "qwen/vl@2.5#72b{instruct}"
       },
       "input": {
-        "id": "qwen2-5-vl-32b-instruct",
+        "id": "qwen2-5-vl-72b-instruct",
         "provider": "llmgateway",
         "token": ""
       },
       "mutation": {
         "description": "the lost version dot is restored so qwen2-5-vl-32b-instruct merges into the dotted sibling qwen/vl@2.5#32b{instruct}"
       },
-      "name": "dotlost_qwen2_5_vl_32b_instruct",
+      "name": "dotlost_qwen2_5_vl_72b_instruct_llmgateway",
       "provenance": {
-        "ref": "dot-lost version spelling: \"qwen2-5-vl-32b-instruct\" is the dotted-dot-dropped form of qwen/vl@2.5#32b{instruct}; it MERGES into the heavily-attested dotted sibling entity \"qwen/vl@2.5#32b{instruct}\", now attested by 3 instances (the sibling evidence that fixes which dot was lost)",
+        "ref": "dot-lost version spelling: \"qwen2-5-vl-32b-instruct\" is the dotted-dot-dropped form of qwen/vl@2.5#32b{instruct}; it MERGES into the heavily-attested dotted sibling entity \"qwen/vl@2.5#32b{instruct}\", now attested by 3 instances (the sibling evidence that fixes which dot was lost) | 2026-08-28 models.dev catalog refresh: llmgateway retired qwen2-5-vl-32b-instruct and NO provider publishes a dash-glued 32B VL spelling any more (the 32B artifact survives only in the already-dotted Qwen/Qwen2.5-VL-32B-Instruct at io-net and meganova, which does not exercise this rule). The pin is re-pointed to llmgateway's surviving dash-glued VL row so the provider and the rule stay covered; it is a distinct (provider, id) pair from the alibaba 72B row.",
         "source": "bug"
       }
     },

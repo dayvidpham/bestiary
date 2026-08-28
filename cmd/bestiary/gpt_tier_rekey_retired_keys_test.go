@@ -17,7 +17,16 @@ var gptTierRekeyRetiredKeysCorpusJSON []byte
 // together: 12 keys from the gpt 5.6 tier re-key and 14 from the redundant
 // leading-token strip. It is the exact-count control for the corpus, and it is the
 // retired-key set itself, so it moves only in the same commit as a measured key diff.
-const gptTierRekeyRetiredKeyCount = 26
+//
+// 26 -> 24 with the 2026-08-28 models.dev catalog refresh, which UN-retired two of these
+// keys by giving each a genuinely undated occupant: gpt/pro (edenai's rolling
+// openai/gpt-pro-latest) and ministral#8b{instruct} (pioneer's original
+// mistralai/Ministral-8B-Instruct-2410, whose 2410 is a date rather than a version).
+// Retirement is baseline-relative, so a key whose tuple upstream serves again is no
+// longer retired; both rows were deleted here and from the epoch corpus in the same
+// commit. The lever itself is unchanged — nothing about the gpt tier re-key or the
+// redundant leading-token strip was reverted.
+const gptTierRekeyRetiredKeyCount = 24
 
 // TestRetiredKeys_GptTierRekey_PolicySplit pins the retired-key policy for every key
 // the gpt tier re-key and the redundant leading-token strip retire, at the exact-key
@@ -30,26 +39,41 @@ const gptTierRekeyRetiredKeyCount = 26
 // resolver, which keeps that fallback.
 //
 // The policy is a uniform hard 404 on the exact-key seam: no alias is minted, no
-// redirect is added and no successor is listed. That arm holds for all 26. The
-// `--by-entity` seam also reports not-found for all 26 here, recorded per key from the
+// redirect is added and no successor is listed. That arm holds for all 24. The
+// `--by-entity` seam also reports not-found for all 24 here, recorded per key from the
 // corpus: none of the three spellings it accepts names a live entity for any of them.
 //
 // The looser `show` seam is pinned PER KEY against what it measurably does, not
-// against one blanket rule, and this set contains all three outcomes:
+// against one blanket rule, and this set contains all three outcomes. The split is
+// 14 / 8 / 2, re-measured at the 2026-08-28 models.dev catalog refresh (it read
+// 14 / 9 / 3 over 26 keys before it):
 //
 //   - not-found, for the 14 keys whose string names nothing live any more;
-//   - the under-specified error, for the 9 whose FAMILY survives them, so the string
-//     still has live children — the same reason bare `gpt`, `claude` and `mimo` have
-//     always come back that way;
-//   - RESOLVED, for 3 — and that is a measured DEVIATION from the epoch-wide
-//     expectation, recorded rather than repaired. `ministral#3b{instruct}`,
-//     `mistral/large#675b{instruct}` and `nemotron#120b` each remain a valid
-//     UNDER-SPECIFIED reference to exactly one live entity: the successor key carries
-//     a version the retired key did not, so a ref that omits the version still names
-//     one model. No alias, redirect or successor-listing instrument exists — the
-//     ordinary resolver is simply doing its ordinary job. Turning these into 404s
-//     would mean making an under-specified ref fail whenever it happens to match a
-//     retired spelling, which breaks working lookups for the sake of a slogan.
+//   - the under-specified error, for 8. Seven have a FAMILY that survives them, so the
+//     string still has live children — the same reason bare `gpt`, `claude` and `mimo`
+//     have always come back that way. `mistral/large#675b{instruct}` is the eighth and
+//     is here for a DIFFERENT reason: see below.
+//   - RESOLVED, for 2 — and that is a measured DEVIATION from the epoch-wide
+//     expectation, recorded rather than repaired. `ministral#3b{instruct}` and
+//     `nemotron#120b` each remain a valid UNDER-SPECIFIED reference to exactly one live
+//     entity: the successor key carries a version the retired key did not, so a ref
+//     that omits the version still names one model. No alias, redirect or
+//     successor-listing instrument exists — the ordinary resolver is simply doing its
+//     ordinary job. Turning these into 404s would mean making an under-specified ref
+//     fail whenever it happens to match a retired spelling, which breaks working
+//     lookups for the sake of a slogan.
+//
+// Two rows moved at the 2026-08-28 refresh, both re-measured rather than repaired:
+//
+//   - `gpt/pro` and `ministral#8b{instruct}` left this corpus entirely. Each was UN-retired
+//     by the refresh, because upstream began serving a genuinely undated occupant for the
+//     tuple the lever had emptied. See gptTierRekeyRetiredKeyCount for the evidence.
+//   - `mistral/large#675b{instruct}` moved from RESOLVED to under-specified. Its successor
+//     `mistral/large@3#675b{instruct}` is still the right key and is still ONE entity; it
+//     simply gained two more provider rows, which group into two date-differentiated
+//     candidates, so the short reference no longer names exactly one of them. That is the
+//     ordinary single-entity date-fragmentation the epoch corpus files `kimi{instruct}`
+//     under, not a surviving bare family, and not a change in what the lever did.
 func TestRetiredKeys_GptTierRekey_PolicySplit(t *testing.T) {
 	corpus := loadRetiredKeyCorpus(t, gptTierRekeyRetiredKeysCorpusJSON, gptTierRekeyRetiredKeyCount)
 
@@ -57,9 +81,16 @@ func TestRetiredKeys_GptTierRekey_PolicySplit(t *testing.T) {
 	// readings a regression reaches first — the three seam outcomes, the key that
 	// SPLITS because one of its rows is deliberately NOT stripped, the pro key whose
 	// path segment becomes an identity modifier, and the two whose FAMILY was wrong.
+	//
+	// `gpt/pro` was one of these entries and is deliberately removed, not lost: the
+	// 2026-08-28 models.dev catalog refresh UN-retired it (edenai serves the rolling,
+	// version-less openai/gpt-pro-latest, so the undated tier key has an occupant again),
+	// and a coverage entry demanding a corpus row for a LIVE key would demand a row
+	// asserting a falsehood. The three-way split it used to demonstrate is still covered
+	// by `gpt-luna`, whose gitlab row splits for the same reason.
 	for _, want := range []string{
 		"gpt-luna", "gpt-luna/pro", "gpt-luna/pro@5.6", "gpt-luna@5.6",
-		"gpt/pro", "kimi-k2{code}", "agi",
+		"kimi-k2{code}", "agi",
 		"mistral/mini#3b", "mistral/small#24b",
 		"ministral#3b{instruct}", "mistral/large#675b{instruct}", "nemotron#120b",
 	} {
@@ -77,7 +108,7 @@ func TestRetiredKeys_GptTierRekey_PolicySplit(t *testing.T) {
 			// (entity key, entity preferred name or concrete model id) with no
 			// short-reference path. The uniform-404 policy is about the exact-key arm,
 			// which admits no per-key exception in this set; the --by-entity not-found
-			// for all 26 is recorded per key from the corpus.
+			// for all 24 is recorded per key from the corpus.
 			if _, ok := bestiary.EntityByKey(key); ok {
 				t.Errorf("EntityByKey(%q) still resolves; the key was retired and must be a hard 404", key)
 			}
@@ -100,8 +131,10 @@ func TestRetiredKeys_GptTierRekey_PolicySplit(t *testing.T) {
 // Two rows in this set are exactly why the record cannot be written from assumption.
 // `gpt-luna` looks like a pure rename onto `gpt/luna@5.6` and is not: gitlab's
 // `duo-chat-` prefix is deliberately NOT stripped, so one of its five rows stays on
-// the undated key and the row SPLITS. `gpt/pro` splits three ways, onto 5.2, 5.4 and
-// 5.5, because its rows were dated by two different mechanisms.
+// the undated key and the row SPLITS. `gpt/pro` split three ways, onto 5.2, 5.4 and
+// 5.5, because its rows were dated by two different mechanisms — it left this corpus at
+// the 2026-08-28 refresh, which un-retired it, and `gpt-sol`/`gpt-terra` carry the same
+// split shape as `gpt-luna`.
 func TestRetiredKeys_GptTierRekey_SuccessorSetsMatchMeasuredRehoming(t *testing.T) {
 	corpus := loadRetiredKeyCorpus(t, gptTierRekeyRetiredKeysCorpusJSON, gptTierRekeyRetiredKeyCount)
 	home := instanceHomes(t)
@@ -169,28 +202,19 @@ func TestRetiredKeys_GptTierRekey_ChangelogTableMatchesCorpus(t *testing.T) {
 	// under one release, so the header must be distinct from every other lever's.
 	table := parseMigrationTable(t, string(raw), "| retired key (tier re-key + prefix strip) | instances re-home to |")
 
-	if len(table) != len(corpus.Cases) {
-		t.Errorf("CHANGELOG migration table has %d row(s), corpus has %d case(s); the two are the "+
-			"same record and must be edited together", len(table), len(corpus.Cases))
-	}
-	for _, c := range corpus.Cases {
-		got, ok := table[c.Input]
-		if !ok {
-			t.Errorf("CHANGELOG migration table has no row for retired key %q; every retired key "+
-				"needs one, because the table is the only pointer the tool gives a user", c.Input)
-			continue
-		}
-		want := append([]string(nil), c.Expected.Successors...)
-		sort.Strings(want)
-		sort.Strings(got)
-		if !slices.Equal(got, want) {
-			t.Errorf("CHANGELOG migration table sends %q to %v, the corpus records %v", c.Input, got, want)
-		}
-	}
-	for old := range table {
-		if !corpusHasInput(corpus, old) {
-			t.Errorf("CHANGELOG migration table carries a row for %q, which the retired-key corpus "+
-				"does not cover", old)
-		}
-	}
+	assertChangelogTableMatchesCorpus(t, string(raw), table, corpus, map[string]releasedTableCorrection{
+		"gpt/pro": {
+			Why: "UN-RETIRED by the 2026-08-28 catalog refresh: edenai now serves " +
+				"openai/gpt-pro-latest, a rolling alias carrying no version at all, so the undated " +
+				"tier key has a real occupant again. On v0.2.10 the row was correct and a user on " +
+				"that build still needs it; on this tree following it would send them away from a " +
+				"live key",
+		},
+		"ministral#8b{instruct}": {
+			Why: "UN-RETIRED by the 2026-08-28 catalog refresh: pioneer now serves " +
+				"mistralai/Ministral-8B-Instruct-2410, the ORIGINAL Ministral 8B Instruct, whose " +
+				"2410 is a date rather than a version, so it belongs on the undated key rather than " +
+				"on the ministral@3 line. Same reasoning as gpt/pro",
+		},
+	})
 }

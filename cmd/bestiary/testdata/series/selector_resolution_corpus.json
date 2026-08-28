@@ -3,246 +3,630 @@
   "cases": [
     {
       "name": "ladder_rung1_family_returns_every_generation",
-      "input": { "selector": "claude" },
+      "input": {
+        "selector": "claude"
+      },
       "expected": {
-        "series": ["claude", "claude-3", "claude-3.5", "claude-3.7", "claude-4.0", "claude-4.1", "claude-4.5", "claude-4.6", "claude-4.7", "claude-4.8", "claude-5"]
+        "series": [
+          "claude",
+          "claude-3",
+          "claude-3.5",
+          "claude-3.7",
+          "claude-4.0",
+          "claude-4.1",
+          "claude-4.5",
+          "claude-4.6",
+          "claude-4.7",
+          "claude-4.8",
+          "claude-5"
+        ]
       },
       "classification": "must-pass",
-      "provenance": { "source": "requirement", "ref": "specificity ladder rung 1: a family selector returns every generation of that family, including the un-versioned bare line" },
-      "mutation": { "description": "selector carries a family name and no version, so nothing narrows the generation" }
+      "provenance": {
+        "source": "requirement",
+        "ref": "specificity ladder rung 1: a family selector returns every generation of that family, including the un-versioned bare line"
+      },
+      "mutation": {
+        "description": "selector carries a family name and no version, so nothing narrows the generation"
+      }
     },
     {
       "name": "ladder_rung2_major_returns_all_4x",
-      "input": { "selector": "claude-4" },
+      "input": {
+        "selector": "claude-4"
+      },
       "expected": {
-        "series": ["claude-4.0", "claude-4.1", "claude-4.5", "claude-4.6", "claude-4.7", "claude-4.8"]
+        "series": [
+          "claude-4.0",
+          "claude-4.1",
+          "claude-4.5",
+          "claude-4.6",
+          "claude-4.7",
+          "claude-4.8"
+        ]
       },
       "classification": "must-pass",
-      "provenance": { "source": "requirement", "ref": "user ruling verbatim: 'bestiary series claude-4 ... will return all in the 4.x series'" },
-      "mutation": { "description": "selector gains a bare-integer generation, narrowing the family rung to one major union" }
+      "provenance": {
+        "source": "requirement",
+        "ref": "user ruling verbatim: 'bestiary series claude-4 ... will return all in the 4.x series'"
+      },
+      "mutation": {
+        "description": "selector gains a bare-integer generation, narrowing the family rung to one major union"
+      }
     },
     {
       "name": "ladder_rung2_version_flag_is_equivalent",
-      "input": { "selector": "claude", "version": "4" },
+      "input": {
+        "selector": "claude",
+        "version": "4"
+      },
       "expected": {
-        "series": ["claude-4.0", "claude-4.1", "claude-4.5", "claude-4.6", "claude-4.7", "claude-4.8"]
+        "series": [
+          "claude-4.0",
+          "claude-4.1",
+          "claude-4.5",
+          "claude-4.6",
+          "claude-4.7",
+          "claude-4.8"
+        ]
       },
       "classification": "must-pass",
-      "provenance": { "source": "requirement", "ref": "user ruling verbatim: 'or bestiary series claude --version 4' — the same selection by another spelling" },
-      "mutation": { "description": "the generation moves from the selector string into --version; the result must not change" }
+      "provenance": {
+        "source": "requirement",
+        "ref": "user ruling verbatim: 'or bestiary series claude --version 4' — the same selection by another spelling"
+      },
+      "mutation": {
+        "description": "the generation moves from the selector string into --version; the result must not change"
+      }
     },
     {
       "name": "ladder_rung3_minor_narrows_to_one_line",
-      "input": { "selector": "claude-4.0" },
-      "expected": { "series": ["claude-4.0"] },
+      "input": {
+        "selector": "claude-4.0"
+      },
+      "expected": {
+        "series": [
+          "claude-4.0"
+        ]
+      },
       "classification": "must-pass",
-      "provenance": { "source": "requirement", "ref": "user ruling verbatim: 'But more specific 4.8 or 4.0 will return the narrower specification'" },
-      "mutation": { "description": "the selector's generation gains a minor part, narrowing the union to the single line" }
+      "provenance": {
+        "source": "requirement",
+        "ref": "user ruling verbatim: 'But more specific 4.8 or 4.0 will return the narrower specification'"
+      },
+      "mutation": {
+        "description": "the selector's generation gains a minor part, narrowing the union to the single line"
+      }
     },
     {
       "name": "ladder_rung3_minor_4_8",
-      "input": { "selector": "claude-4.8" },
-      "expected": { "series": ["claude-4.8"] },
+      "input": {
+        "selector": "claude-4.8"
+      },
+      "expected": {
+        "series": [
+          "claude-4.8"
+        ]
+      },
       "classification": "must-pass",
-      "provenance": { "source": "requirement", "ref": "the second narrow example the user named alongside 4.0" },
-      "mutation": { "description": "a different minor of the same major must select only itself, proving the narrow rung is not aliased to the union" }
+      "provenance": {
+        "source": "requirement",
+        "ref": "the second narrow example the user named alongside 4.0"
+      },
+      "mutation": {
+        "description": "a different minor of the same major must select only itself, proving the narrow rung is not aliased to the union"
+      }
     },
     {
       "name": "ladder_rung3_version_flag_minor",
-      "input": { "selector": "claude", "version": "4.8" },
-      "expected": { "series": ["claude-4.8"] },
+      "input": {
+        "selector": "claude",
+        "version": "4.8"
+      },
+      "expected": {
+        "series": [
+          "claude-4.8"
+        ]
+      },
       "classification": "must-pass",
-      "provenance": { "source": "requirement", "ref": "--version must reach the narrow rung too, not only the major union" },
-      "mutation": { "description": "--version carries a dotted version, which must narrow rather than union" }
+      "provenance": {
+        "source": "requirement",
+        "ref": "--version must reach the narrow rung too, not only the major union"
+      },
+      "mutation": {
+        "description": "--version carries a dotted version, which must narrow rather than union"
+      }
     },
     {
       "name": "family_selector_regression_gemma",
-      "input": { "selector": "gemma" },
-      "expected": { "series": ["gemma", "gemma-2", "gemma-3", "gemma-4"] },
+      "input": {
+        "selector": "gemma"
+      },
+      "expected": {
+        "series": [
+          "gemma",
+          "gemma-2",
+          "gemma-3",
+          "gemma-4"
+        ]
+      },
       "classification": "must-pass",
-      "provenance": { "source": "bug", "ref": "regression guard: the family reading predates the version selectors and must be unchanged by them, including the bare gemma line whose rendering equals the family name" },
-      "mutation": { "description": "no version anywhere in the query, so only the pre-existing family reading may fire" }
+      "provenance": {
+        "source": "bug",
+        "ref": "regression guard: the family reading predates the version selectors and must be unchanged by them, including the bare gemma line whose rendering equals the family name"
+      },
+      "mutation": {
+        "description": "no version anywhere in the query, so only the pre-existing family reading may fire"
+      }
     },
     {
       "name": "strict_membership_excludes_p_notation_from_glm5",
-      "input": { "selector": "glm-5" },
-      "expected": { "series": ["glm-5", "glm-5.1", "glm-5.2"] },
+      "input": {
+        "selector": "glm-5"
+      },
+      "expected": {
+        "series": [
+          "glm-5",
+          "glm-5.1",
+          "glm-5.2",
+          "glm-5.3"
+        ]
+      },
       "classification": "must-pass",
-      "provenance": { "source": "requirement", "ref": "strict rule: a generation joins version 5 iff it IS 5 or begins '5.'; glm's 5p1/5p2 spellings are decoded at PARSE into 5.1/5.2 and join as ordinary dotted members, never by a p-aware selector" },
-      "mutation": { "description": "the union is taken over a family that also ships p-notation ids upstream; no 5pX generation may appear as a line" }
+      "provenance": {
+        "source": "requirement",
+        "ref": "strict rule: a generation joins version 5 iff it IS 5 or begins '5.'; glm's 5p1/5p2 spellings are decoded at PARSE into 5.1/5.2 and join as ordinary dotted members, never by a p-aware selector"
+      },
+      "mutation": {
+        "description": "the union is taken over a family that also ships p-notation ids upstream; no 5pX generation may appear as a line. RE-MEASURED at the 2026-08-28 models.dev catalog refresh: the union gains `glm-5.3`, a NEW upstream GLM 5.3 line (entities glm@5.3 and glm/flash@5.3) spelled with an ordinary dot. It is not a p-notation row and it does not weaken the claim — the claim is that no `5pX` GENERATION may appear as a line, and none does"
+      }
     },
     {
       "name": "strict_membership_excludes_leading_zero_spelling",
-      "input": { "selector": "gemini-1" },
-      "expected": { "series": ["gemini-1.5"] },
-      "classification": "must-pass",
-      "provenance": { "source": "manual", "ref": "gemini@001 is a real catalog generation spelling; '001' is not '1' and does not begin '1.', so the strict rule excludes it" },
-      "mutation": { "description": "the union is taken over a family carrying a leading-zero generation, which must not be numerically normalized into the union" }
+      "input": {
+        "selector": "gemini-1"
+      },
+      "expected": {
+        "error_contains": [
+          "series not found",
+          "gemini-1"
+        ]
+      },
+      "classification": "must-fail",
+      "provenance": {
+        "source": "manual",
+        "ref": "gemini@001 is a real catalog generation spelling; '001' is not '1' and does not begin '1.', so the strict rule excludes it. RE-MEASURED at the 2026-08-28 models.dev catalog refresh: upstream retired the last Gemini 1.5 rows, so gemini has NO 1.x line left while `gemini-001` is still a live line. The case therefore flips from must-pass to must-fail, and the claim it makes gets STRONGER rather than weaker: `gemini-1` now finds nothing at all, which is only possible if the leading-zero generation `001` is excluded from the version-1 union. Under a numeric reading it would have been folded in and the selector would have answered. The expectation is not relaxed to a not-found to go green — a not-found IS the sharper proof of the exclusion, and the case fails loudly again the moment `gemini-001` starts answering to `gemini-1`"
+      },
+      "mutation": {
+        "description": "the union is taken over a family carrying a leading-zero generation and NO ordinary version-1 line, so the leading-zero spelling is the only thing a numeric normalization could return; it must not be normalized in, which makes the selector a not-found"
+      }
     },
     {
       "name": "strict_membership_excludes_dot_lost_spellings",
-      "input": { "selector": "minimax-2" },
-      "expected": { "series": ["minimax-2", "minimax-2.1", "minimax-2.5", "minimax-2.7"] },
+      "input": {
+        "selector": "minimax-2"
+      },
+      "expected": {
+        "series": [
+          "minimax-2",
+          "minimax-2.1",
+          "minimax-2.5",
+          "minimax-2.7"
+        ]
+      },
       "classification": "must-pass",
-      "provenance": { "source": "manual", "ref": "minimax@25 and minimax@27 are dot-lost upstream spellings; a bare-prefix rule would wrongly swallow them into version 2" },
-      "mutation": { "description": "the union is taken over a family carrying dot-lost generations, which the mandatory dot must exclude" }
+      "provenance": {
+        "source": "manual",
+        "ref": "minimax@25 and minimax@27 are dot-lost upstream spellings; a bare-prefix rule would wrongly swallow them into version 2"
+      },
+      "mutation": {
+        "description": "the union is taken over a family carrying dot-lost generations, which the mandatory dot must exclude"
+      }
     },
     {
       "name": "strict_membership_bare_line_included_with_dotted_siblings",
-      "input": { "selector": "claude-3" },
-      "expected": { "series": ["claude-3", "claude-3.5", "claude-3.7"] },
+      "input": {
+        "selector": "claude-3"
+      },
+      "expected": {
+        "series": [
+          "claude-3",
+          "claude-3.5",
+          "claude-3.7"
+        ]
+      },
       "classification": "must-pass",
-      "provenance": { "source": "requirement", "ref": "ruled: where a family spells BOTH a bare N line and N.x siblings, the union includes the bare line (21 such families in the catalog)" },
-      "mutation": { "description": "the union is taken over a family whose bare-N line survived the N->N.0 fold, so the bare line must be a member" }
+      "provenance": {
+        "source": "requirement",
+        "ref": "ruled: where a family spells BOTH a bare N line and N.x siblings, the union includes the bare line (21 such families in the catalog)"
+      },
+      "mutation": {
+        "description": "the union is taken over a family whose bare-N line survived the N->N.0 fold, so the bare line must be a member"
+      }
     },
     {
       "name": "strict_membership_sub_one_unions_under_zero",
-      "input": { "selector": "mistral-0" },
-      "expected": { "series": ["mistral-0.1", "mistral-0.3"] },
+      "input": {
+        "selector": "mistral-0"
+      },
+      "expected": {
+        "series": [
+          "mistral-0.2",
+          "mistral-0.3"
+        ]
+      },
       "classification": "must-pass",
-      "provenance": { "source": "requirement", "ref": "ruled: sub-1.0 lines union under version 0 verbatim; no exemption is needed because nothing folds" },
-      "mutation": { "description": "the version is 0, the one value whose union would need a special case if the rule were numeric rather than string-based" }
+      "provenance": {
+        "source": "requirement",
+        "ref": "ruled: sub-1.0 lines union under version 0 verbatim; no exemption is needed because nothing folds"
+      },
+      "mutation": {
+        "description": "the version is 0, the one value whose union would need a special case if the rule were numeric rather than string-based. RE-MEASURED at the 2026-08-28 models.dev catalog refresh: upstream retired the mistral 0.1 rows and published a 0.2 line (mistral@0.2#7b{instruct}), so the members change while the RULE under test does not — two sub-1.0 lines still union verbatim under version 0"
+      }
     },
     {
       "name": "major_union_of_one_when_no_dotted_siblings",
-      "input": { "selector": "llama-4" },
-      "expected": { "series": ["llama-4"] },
+      "input": {
+        "selector": "llama-4"
+      },
+      "expected": {
+        "series": [
+          "llama-4"
+        ]
+      },
       "classification": "must-pass",
-      "provenance": { "source": "requirement", "ref": "ruled: a bare-integer selector that IS its own line returns that line, as before the version selectors existed" },
-      "mutation": { "description": "the union is taken over a family with no dotted siblings, so it must collapse to the single pre-existing line" }
+      "provenance": {
+        "source": "requirement",
+        "ref": "ruled: a bare-integer selector that IS its own line returns that line, as before the version selectors existed"
+      },
+      "mutation": {
+        "description": "the union is taken over a family with no dotted siblings, so it must collapse to the single pre-existing line"
+      }
     },
     {
       "name": "canonical_at_version_is_the_major_union",
-      "input": { "selector": "claude@4" },
+      "input": {
+        "selector": "claude@4"
+      },
       "expected": {
-        "series": ["claude-4.0", "claude-4.1", "claude-4.5", "claude-4.6", "claude-4.7", "claude-4.8"]
+        "series": [
+          "claude-4.0",
+          "claude-4.1",
+          "claude-4.5",
+          "claude-4.6",
+          "claude-4.7",
+          "claude-4.8"
+        ]
       },
       "classification": "must-pass",
-      "provenance": { "source": "requirement", "ref": "canonical grammar mapped to series meaning: '@' is the entity VERSION (as in an entity key), so claude@4 is the major-4 union" },
-      "mutation": { "description": "the generation is spelled with the canonical '@' instead of the ladder's '-'; the selection must be identical" }
+      "provenance": {
+        "source": "requirement",
+        "ref": "canonical grammar mapped to series meaning: '@' is the entity VERSION (as in an entity key), so claude@4 is the major-4 union"
+      },
+      "mutation": {
+        "description": "the generation is spelled with the canonical '@' instead of the ladder's '-'; the selection must be identical"
+      }
     },
     {
       "name": "canonical_at_minor_version_narrows",
-      "input": { "selector": "claude@4.5" },
-      "expected": { "series": ["claude-4.5"] },
+      "input": {
+        "selector": "claude@4.5"
+      },
+      "expected": {
+        "series": [
+          "claude-4.5"
+        ]
+      },
       "classification": "must-pass",
-      "provenance": { "source": "requirement", "ref": "canonical grammar: a fully specified @version narrows exactly as the ladder's minor rung does" },
-      "mutation": { "description": "the canonical version gains a minor part, which must narrow rather than union" }
+      "provenance": {
+        "source": "requirement",
+        "ref": "canonical grammar: a fully specified @version narrows exactly as the ladder's minor rung does"
+      },
+      "mutation": {
+        "description": "the canonical version gains a minor part, which must narrow rather than union"
+      }
     },
     {
       "name": "canonical_variant_is_a_release_level_cut",
-      "input": { "selector": "claude/opus" },
+      "input": {
+        "selector": "claude/opus"
+      },
       "expected": {
-        "series": ["claude", "claude-3", "claude-4.0", "claude-4.1", "claude-4.5", "claude-4.6", "claude-4.7", "claude-4.8"],
-        "releases": ["opus"]
+        "series": [
+          "claude",
+          "claude-3",
+          "claude-4.0",
+          "claude-4.1",
+          "claude-4.5",
+          "claude-4.6",
+          "claude-4.7",
+          "claude-4.8",
+          "claude-5"
+        ],
+        "releases": [
+          "opus"
+        ]
       },
       "classification": "must-pass",
-      "provenance": { "source": "requirement", "ref": "new release-level cut: the opus release across ALL claude generations, each series showing only its opus release" },
-      "mutation": { "description": "a variant segment is added with no version, cutting every generation down to one release and dropping the lines that have no opus release" }
+      "provenance": {
+        "source": "requirement",
+        "ref": "new release-level cut: the opus release across ALL claude generations, each series showing only its opus release"
+      },
+      "mutation": {
+        "description": "a variant segment is added with no version, cutting every generation down to one release and dropping the lines that have no opus release. RE-MEASURED at the 2026-08-28 models.dev catalog refresh: the cut gains `claude-5`, Anthropic's new Claude 5 generation, which has an opus release (claude/opus@5). Lines without an opus release still drop out, which is what the cut asserts"
+      }
     },
     {
       "name": "canonical_variant_and_version_compose",
-      "input": { "selector": "claude/opus@4" },
+      "input": {
+        "selector": "claude/opus@4"
+      },
       "expected": {
-        "series": ["claude-4.0", "claude-4.1", "claude-4.5", "claude-4.6", "claude-4.7", "claude-4.8"],
-        "releases": ["opus"]
+        "series": [
+          "claude-4.0",
+          "claude-4.1",
+          "claude-4.5",
+          "claude-4.6",
+          "claude-4.7",
+          "claude-4.8"
+        ],
+        "releases": [
+          "opus"
+        ]
       },
       "classification": "must-pass",
-      "provenance": { "source": "requirement", "ref": "the release cut composed with the major union: the opus release WITHIN the 4.x lines" },
-      "mutation": { "description": "a version is added to the release cut, so the generation narrowing and the release narrowing must both apply" }
+      "provenance": {
+        "source": "requirement",
+        "ref": "the release cut composed with the major union: the opus release WITHIN the 4.x lines"
+      },
+      "mutation": {
+        "description": "a version is added to the release cut, so the generation narrowing and the release narrowing must both apply"
+      }
     },
     {
       "name": "canonical_provider_qualified_narrows_entities",
-      "input": { "selector": "anthropic/claude@4" },
+      "input": {
+        "selector": "anthropic/claude@4"
+      },
       "expected": {
-        "series": ["claude-4.1", "claude-4.5", "claude-4.6", "claude-4.7", "claude-4.8"]
+        "series": [
+          "claude-4.5",
+          "claude-4.6",
+          "claude-4.7",
+          "claude-4.8"
+        ]
       },
       "classification": "must-pass",
-      "provenance": { "source": "requirement", "ref": "provider-qualified selector feeds the ordinary --provider machinery; claude-4.0 drops out because anthropic serves none of its entities, proving the qualification really filters" },
-      "mutation": { "description": "a known-provider prefix is added, which must narrow the entities and cascade lines away, not be read as the family" }
+      "provenance": {
+        "source": "requirement",
+        "ref": "provider-qualified selector feeds the ordinary --provider machinery; claude-4.0 drops out because anthropic serves none of its entities, proving the qualification really filters. RE-MEASURED at the 2026-08-28 models.dev catalog refresh: `claude-4.1` now drops out TOO, for exactly the same reason claude-4.0 does — the anthropic provider stopped listing claude-opus-4-1, so it serves none of that line's entities even though 33 other providers still rehost them. The case gets stronger: two lines are now cascaded away by the qualification rather than one"
+      },
+      "mutation": {
+        "description": "a known-provider prefix is added, which must narrow the entities and cascade lines away, not be read as the family. Re-measured at the 2026-08-28 refresh: claude-4.1 joins claude-4.0 among the lines the qualification removes"
+      }
     },
     {
       "name": "version_flag_supplements_canonical_selector",
-      "input": { "selector": "claude/opus", "version": "4" },
+      "input": {
+        "selector": "claude/opus",
+        "version": "4"
+      },
       "expected": {
-        "series": ["claude-4.0", "claude-4.1", "claude-4.5", "claude-4.6", "claude-4.7", "claude-4.8"],
-        "releases": ["opus"]
+        "series": [
+          "claude-4.0",
+          "claude-4.1",
+          "claude-4.5",
+          "claude-4.6",
+          "claude-4.7",
+          "claude-4.8"
+        ],
+        "releases": [
+          "opus"
+        ]
       },
       "classification": "must-pass",
-      "provenance": { "source": "requirement", "ref": "--version supplements a version-less selector on the canonical grammar too, so it is not a ladder-only flag" },
-      "mutation": { "description": "the version moves out of the canonical selector into --version; the result must equal claude/opus@4" }
+      "provenance": {
+        "source": "requirement",
+        "ref": "--version supplements a version-less selector on the canonical grammar too, so it is not a ladder-only flag"
+      },
+      "mutation": {
+        "description": "the version moves out of the canonical selector into --version; the result must equal claude/opus@4"
+      }
     },
     {
       "name": "input_format_canonical_accepts_canonical",
-      "input": { "selector": "claude/opus@4.5", "input_format": "canonical" },
-      "expected": { "series": ["claude-4.5"], "releases": ["opus"] },
+      "input": {
+        "selector": "claude/opus@4.5",
+        "input_format": "canonical"
+      },
+      "expected": {
+        "series": [
+          "claude-4.5"
+        ],
+        "releases": [
+          "opus"
+        ]
+      },
       "classification": "must-pass",
-      "provenance": { "source": "requirement", "ref": "--input-format=canonical pins the grammar for scripting; a well-formed canonical selector resolves normally" },
-      "mutation": { "description": "the strict canonical format is requested for a selector that does parse as canonical" }
+      "provenance": {
+        "source": "requirement",
+        "ref": "--input-format=canonical pins the grammar for scripting; a well-formed canonical selector resolves normally"
+      },
+      "mutation": {
+        "description": "the strict canonical format is requested for a selector that does parse as canonical"
+      }
     },
     {
       "name": "input_format_models_dev_resolves_raw_id",
-      "input": { "selector": "claude-sonnet-4-5-20250929", "input_format": "models.dev" },
-      "expected": { "series": ["claude-4.5"] },
+      "input": {
+        "selector": "claude-sonnet-4-5-20250929",
+        "input_format": "models.dev"
+      },
+      "expected": {
+        "series": [
+          "claude-4.5"
+        ]
+      },
       "classification": "must-pass",
-      "provenance": { "source": "manual", "ref": "a real models.dev catalog id; --input-format=models.dev resolves it through the ordinary lookup to its entity's line" },
-      "mutation": { "description": "the selector is a raw catalog id and the format says so, so only the id reading may fire" }
+      "provenance": {
+        "source": "manual",
+        "ref": "a real models.dev catalog id; --input-format=models.dev resolves it through the ordinary lookup to its entity's line"
+      },
+      "mutation": {
+        "description": "the selector is a raw catalog id and the format says so, so only the id reading may fire"
+      }
     },
     {
       "name": "infer_falls_back_to_raw_id_last",
-      "input": { "selector": "claude-sonnet-4-5-20250929" },
-      "expected": { "series": ["claude-4.5"] },
+      "input": {
+        "selector": "claude-sonnet-4-5-20250929"
+      },
+      "expected": {
+        "series": [
+          "claude-4.5"
+        ]
+      },
       "classification": "must-pass",
-      "provenance": { "source": "requirement", "ref": "infer precedence: ladder and canonical readings are tried and unioned first; the raw-id reading is the FINAL fallback and fires only when they find nothing" },
-      "mutation": { "description": "the same raw id is given with no --input-format, so the fallback rung must reach it" }
+      "provenance": {
+        "source": "requirement",
+        "ref": "infer precedence: ladder and canonical readings are tried and unioned first; the raw-id reading is the FINAL fallback and fires only when they find nothing"
+      },
+      "mutation": {
+        "description": "the same raw id is given with no --input-format, so the fallback rung must reach it"
+      }
     },
     {
       "name": "input_format_canonical_rejects_a_raw_id",
-      "input": { "selector": "claude-sonnet-4-5-20250929", "input_format": "canonical" },
-      "expected": { "error_contains": ["names no line", "is in the compiled-in registry", "--input-format=models.dev"] },
+      "input": {
+        "selector": "claude-sonnet-4-5-20250929",
+        "input_format": "canonical"
+      },
+      "expected": {
+        "error_contains": [
+          "names no line",
+          "is in the compiled-in registry",
+          "--input-format=models.dev"
+        ]
+      },
       "classification": "must-fail",
-      "provenance": { "source": "requirement", "ref": "--input-format=canonical promises NO fallback, so a raw id must fail loudly and point at the format that would read it" },
-      "mutation": { "description": "the raw-id case above is re-run under the strict canonical format, which must refuse the fallback that made it pass" }
+      "provenance": {
+        "source": "requirement",
+        "ref": "--input-format=canonical promises NO fallback, so a raw id must fail loudly and point at the format that would read it"
+      },
+      "mutation": {
+        "description": "the raw-id case above is re-run under the strict canonical format, which must refuse the fallback that made it pass"
+      }
     },
     {
       "name": "input_format_models_dev_rejects_a_series_rendering",
-      "input": { "selector": "claude-4", "input_format": "models.dev" },
-      "expected": { "error_contains": ["model id", "not found", "claude-4"] },
+      "input": {
+        "selector": "claude-4",
+        "input_format": "models.dev"
+      },
+      "expected": {
+        "error_contains": [
+          "model id",
+          "not found",
+          "claude-4"
+        ]
+      },
       "classification": "must-fail",
-      "provenance": { "source": "requirement", "ref": "--input-format=models.dev reads ONLY raw ids, so a line rendering that resolves fine under infer must fail here" },
-      "mutation": { "description": "a selector that is a valid series rendering is re-run under the id-only format, which must not fall back to the ladder" }
+      "provenance": {
+        "source": "requirement",
+        "ref": "--input-format=models.dev reads ONLY raw ids, so a line rendering that resolves fine under infer must fail here"
+      },
+      "mutation": {
+        "description": "a selector that is a valid series rendering is re-run under the id-only format, which must not fall back to the ladder"
+      }
     },
     {
       "name": "input_format_unknown_value_rejected",
-      "input": { "selector": "claude", "input_format": "nope" },
-      "expected": { "error_contains": ["unsupported --input-format", "canonical", "models.dev", "infer"] },
+      "input": {
+        "selector": "claude",
+        "input_format": "nope"
+      },
+      "expected": {
+        "error_contains": [
+          "unsupported --input-format",
+          "canonical",
+          "models.dev",
+          "infer"
+        ]
+      },
       "classification": "must-fail",
-      "provenance": { "source": "boundary", "ref": "an unrecognized format value must name every member rather than silently defaulting to infer, which would give the caller the inference they were trying to avoid" },
-      "mutation": { "description": "the format value is misspelled, so the parse must reject rather than fall through to the default" }
+      "provenance": {
+        "source": "boundary",
+        "ref": "an unrecognized format value must name every member rather than silently defaulting to infer, which would give the caller the inference they were trying to avoid"
+      },
+      "mutation": {
+        "description": "the format value is misspelled, so the parse must reject rather than fall through to the default"
+      }
     },
     {
       "name": "version_flag_disagrees_with_selector_version",
-      "input": { "selector": "claude@4.5", "version": "4" },
-      "expected": { "error_contains": ["disagree", "already pins version", "4.5", "4"] },
+      "input": {
+        "selector": "claude@4.5",
+        "version": "4"
+      },
+      "expected": {
+        "error_contains": [
+          "disagree",
+          "already pins version",
+          "4.5",
+          "4"
+        ]
+      },
       "classification": "must-fail",
-      "provenance": { "source": "requirement", "ref": "ruled: a canonical selector plus a --version that disagrees on version is an actionable error, not a silent precedence win" },
-      "mutation": { "description": "--version is set to a different version than the selector's @version, creating a contradiction that must surface" }
+      "provenance": {
+        "source": "requirement",
+        "ref": "ruled: a canonical selector plus a --version that disagrees on version is an actionable error, not a silent precedence win"
+      },
+      "mutation": {
+        "description": "--version is set to a different version than the selector's @version, creating a contradiction that must surface"
+      }
     },
     {
       "name": "provider_flag_disagrees_with_selector_prefix",
-      "input": { "selector": "anthropic/claude@4", "provider": "openai" },
-      "expected": { "error_contains": ["disagree", "qualified to provider", "anthropic", "openai"] },
+      "input": {
+        "selector": "anthropic/claude@4",
+        "provider": "openai"
+      },
+      "expected": {
+        "error_contains": [
+          "disagree",
+          "qualified to provider",
+          "anthropic",
+          "openai"
+        ]
+      },
       "classification": "must-fail",
-      "provenance": { "source": "requirement", "ref": "ruled: an explicit --provider alongside a provider-qualified selector that disagrees is an actionable error" },
-      "mutation": { "description": "--provider names a different provider than the selector prefix, creating a contradiction that must surface" }
+      "provenance": {
+        "source": "requirement",
+        "ref": "ruled: an explicit --provider alongside a provider-qualified selector that disagrees is an actionable error"
+      },
+      "mutation": {
+        "description": "--provider names a different provider than the selector prefix, creating a contradiction that must surface"
+      }
     },
     {
       "name": "unknown_selector_is_a_normal_negative",
-      "input": { "selector": "definitely-not-a-family" },
-      "expected": { "error_contains": ["not found", "definitely-not-a-family"] },
+      "input": {
+        "selector": "definitely-not-a-family"
+      },
+      "expected": {
+        "error_contains": [
+          "not found",
+          "definitely-not-a-family"
+        ]
+      },
       "classification": "must-fail",
-      "provenance": { "source": "boundary", "ref": "a selector matching no reading at all stays the ordinary ErrNotFound, so adding readings never turned a miss into silence" },
-      "mutation": { "description": "the selector names nothing under any of the three readings, so every rung must miss and the generic not-found must be reported" }
+      "provenance": {
+        "source": "boundary",
+        "ref": "a selector matching no reading at all stays the ordinary ErrNotFound, so adding readings never turned a miss into silence"
+      },
+      "mutation": {
+        "description": "the selector names nothing under any of the three readings, so every rung must miss and the generic not-found must be reported"
+      }
     }
   ]
 }

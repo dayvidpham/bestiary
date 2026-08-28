@@ -45,6 +45,7 @@ package main
 
 import (
 	"bufio"
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -280,7 +281,7 @@ func loadBaseline() ([]decompRecord, error) {
 //	BESTIARY_CAPTURE_BASELINE=1 go test ./cmd/bestiary-gen -run TestCaptureDecompositionBaseline
 //
 // Run it only at a declared capture point, and commit the result in the commit that
-// declares it. There have been two such points.
+// declares it. There have been three such points.
 //
 //   - The ORIGINAL capture, pre-refactor, on the then-HEAD: the BEFORE side of the
 //     path-unification diff.
@@ -291,6 +292,16 @@ func loadBaseline() ([]decompRecord, error) {
 //     levers are measured against, not a state a lever had already moved. Refresh and
 //     re-capture landed in the SAME commit, with the resulting all-zero diff report
 //     committed and all 38 now-unmatchable justifiedExceptions entries deleted.
+//   - The 2026-08-28 CATALOG-REFRESH re-capture: the fixture was reground on the re-vendored
+//     catalog, taking the corpus from 5,765 to 7,430 records. Taken on the same terms as the
+//     precedent above — at the branch HEAD, with the gate ALREADY GREEN, and BEFORE any of
+//     this refresh's curation levers landed — so the levers are measured against the
+//     refreshed state rather than being absorbed into it. Refresh and re-capture landed in
+//     the SAME commit, and the 39 entries the previous baseline made unmatchable were
+//     deleted. What this re-capture CANNOT see is a decomposition change introduced by the
+//     refresh itself, which is frozen into the new baseline by construction; that gap is
+//     covered separately by the bake-identity gate (bake_identity_test.go in the root
+//     package), which compares the PREVIOUS release's baked tuples against this one.
 //
 // Anything else is the failure mode the honesty contract at the top of this file names:
 // re-capturing to turn a red gate green.
@@ -1238,83 +1249,77 @@ type exceptionKey struct {
 // reads to produce the variant/version, and it survives verbatim in the provider ids and
 // therefore in the nomina.
 var justifiedExceptions = map[exceptionKey]string{
-	{ID: "minimax-m3-free", Before: `(family="minimax-m3",variant="free",version="",modifier="")`, After: `(family="minimax",variant="m",version="3",modifier="free")`}: "the free demotion un-fuses the upstream raw family \"minimax-m3\": before, \"m3\" was glued into the family token and the pricing tier occupied the variant slot, so the record stranded on a phantom minimax-m3 family with no version; after, it decomposes to the real minimax family on the m series at version 3, with free carried as an attribute modifier. Family, variant and version all become MORE correct and the record joins minimax/m@3 instead of a one-instance junk line.",
+	// DECLARED CORPUS REFRESH, 2026-08-28. The baseline was re-captured against the
+	// refreshed models_api.json (5,765 -> 7,430 records) in this same commit, which reset
+	// every transition the previous ledger described: all 39 prior entries became
+	// unmatchable in one act and were DELETED, following the precedent this file records
+	// for the 4,979 -> 5,765 refresh. Deleting them is not a loss of review — the changes
+	// they justified are now the baseline itself, so there is no diff left for them to
+	// explain, and a row that can never match again is dead curation that would only mask
+	// a future re-orphan.
+	//
+	// The ELEVEN rows below are the curation that landed AFTER the re-capture, which is why
+	// they appear as a diff at all. They fall into three groups, in the order they appear:
+	// one dot-lost version repair, eight Fish Audio family restorations, and two
+	// serving-fact removals. Each group is documented immediately above its rows.
+	//
+	// The dot-lost repair on inferx's new "mimo-v25" spelling. The classifier flags a
+	// populated version changing value, which is the exact shape a real regression takes —
+	// but here the BEFORE value is a version the vendor never published. "25" is the dot
+	// lost out of "2.5"; MiMo has no v25, and the row sat alone on a phantom mimo@25 while
+	// roughly forty sibling rows serve mimo@2.5. Nothing is emptied and no token is dropped:
+	// the same digits are re-read with the separator restored.
+	{ID: "mimo-v25", Before: `(family="mimo",variant="",version="25",modifier="")`, After: `(family="mimo",variant="",version="2.5",modifier="")`}: "dot-lost repair: \"25\" is \"2.5\" with the separator lost, a version MiMo never published. The row joins the ~40 rows already on mimo@2.5 instead of holding a one-instance phantom line.",
 
-	{ID: "kling-v2-6", Before: `(family="kling-v2",variant="",version="6",modifier="")`, After: `(family="kling",variant="",version="2.6",modifier="")`}: "qiniu-ai ships this row with an EMPTY upstream family, so the whole BEFORE tuple is our own leading-token decomposition — and both of its populated fields are wrong. The id spells Kling 2.6 with the dot lost to a dash (kling-v2-6), so the pipeline glued the dash-spelled major onto the family token (\"kling-v2\") and read the orphaned minor as the entire version (\"6\"), stranding the record on a one-instance phantom family at a version the vendor never published. The exact-ID pin corrects both together: family kling, version 2.6. No field is emptied, the family becomes a real family that eight other rows already serve, and the record joins them under kling@2.6 instead of kling-v2@6. A version-only dot-lost repair would have fixed the 6 -> 2.6 half and left the phantom family standing, which is why the family override is the lever.",
+	// The eight Fish Audio rows. Every one is the same transition: vercel publishes Fish
+	// Audio's speech models under raw_family "o" — the OpenAI o-series bucket — and the
+	// classifier sees a populated family change value and flags category-(c). It is an
+	// improvement, not a regression: the BEFORE family is not a family at all but another
+	// lab's bucket, and the keys it produced (`o` and `o/pro`) held these eight rows and
+	// NOTHING else while creators.json maps family "o" to OpenAI, so the catalog credited
+	// OpenAI with Fish Audio's models. After the pin no field is emptied, the version and
+	// variant slots go from EMPTY to populated, and the modifier is preserved except where
+	// "free" is deliberately demoted per the free-demotion ruling (an access tier, never an
+	// identity), which is why the paid and free spellings converge on one tuple.
+	{ID: "fish-audio/s1", Before: `(family="o",variant="",version="",modifier="")`, After: `(family="fish-audio",variant="s",version="1",modifier="")`}: "vercel files Fish Audio S1 under OpenAI's o-series family bucket; the pin restores the lab's own identity. Family becomes real, variant and version go from EMPTY to populated, nothing is dropped.",
 
-	{ID: "XiaomiMiMo/MiMo-V2.5", Before: `(family="mimo",variant="v",version="2.5",modifier="")`, After: `(family="mimo",variant="",version="2.5",modifier="")`}: "the mimo series letter leaves the entity key: variant \"v\" becomes empty while version \"2.5\" and modifier \"\" are carried across byte-identical. \"v\" was never a product line — every mimo id spells it, so it partitioned nothing and merely prefixed the key. The classifier flags an emptied populated field, but no FACT is lost: the letter is still consumed to extract the version (which is why it is not simply deleted from the family record), it survives in the provider ids and therefore in this model's nomina, and the key it leaves behind names the same artifact. 3 record(s) on deepinfra, huggingface, pioneer carry this exact transition.",
+	{ID: "fish-audio/s1-free", Before: `(family="o",variant="",version="",modifier="free")`, After: `(family="fish-audio",variant="s",version="1",modifier="")`}: "as fish-audio/s1, and additionally the \"free\" modifier is demoted: free is an access tier, not an identity, so the free spelling converges on the same entity as the paid one rather than splitting the artifact in two.",
 
-	{ID: "XiaomiMiMo/MiMo-V2.5-Pro", Before: `(family="mimo",variant="v",version="2.5",modifier="pro")`, After: `(family="mimo",variant="",version="2.5",modifier="pro")`}: "the mimo series letter leaves the entity key: variant \"v\" becomes empty while version \"2.5\" and modifier \"pro\" are carried across byte-identical. \"v\" was never a product line — every mimo id spells it, so it partitioned nothing and merely prefixed the key. The classifier flags an emptied populated field, but no FACT is lost: the letter is still consumed to extract the version (which is why it is not simply deleted from the family record), it survives in the provider ids and therefore in this model's nomina, and the key it leaves behind names the same artifact. 4 record(s) on deepinfra, huggingface, pioneer, vultr carry this exact transition.",
+	{ID: "fish-audio/s2-pro", Before: `(family="o",variant="pro",version="",modifier="")`, After: `(family="fish-audio",variant="s",version="2",modifier="pro")`}: "vercel files Fish Audio S2 Pro under OpenAI's o-series bucket, with the product tier stranded in the variant slot and no version at all. The pin puts the lab's series in the variant, the published version in the version slot, and the tier in the modifier list where the mimo/gpt precedents put it. Every token is accounted for.",
 
-	{ID: "cline-pass/mimo-v2.5", Before: `(family="mimo",variant="v",version="2.5",modifier="")`, After: `(family="mimo",variant="",version="2.5",modifier="")`}: "the mimo series letter leaves the entity key: variant \"v\" becomes empty while version \"2.5\" and modifier \"\" are carried across byte-identical. \"v\" was never a product line — every mimo id spells it, so it partitioned nothing and merely prefixed the key. The classifier flags an emptied populated field, but no FACT is lost: the letter is still consumed to extract the version (which is why it is not simply deleted from the family record), it survives in the provider ids and therefore in this model's nomina, and the key it leaves behind names the same artifact. 1 record(s) on cline-pass carry this exact transition.",
+	{ID: "fish-audio/s2-pro-free", Before: `(family="o",variant="pro",version="",modifier="free")`, After: `(family="fish-audio",variant="s",version="2",modifier="pro")`}: "as fish-audio/s2-pro, with the \"free\" access tier demoted so the free spelling converges on the paid entity.",
 
-	{ID: "cline-pass/mimo-v2.5-pro", Before: `(family="mimo",variant="v",version="2.5",modifier="pro")`, After: `(family="mimo",variant="",version="2.5",modifier="pro")`}: "the mimo series letter leaves the entity key: variant \"v\" becomes empty while version \"2.5\" and modifier \"pro\" are carried across byte-identical. \"v\" was never a product line — every mimo id spells it, so it partitioned nothing and merely prefixed the key. The classifier flags an emptied populated field, but no FACT is lost: the letter is still consumed to extract the version (which is why it is not simply deleted from the family record), it survives in the provider ids and therefore in this model's nomina, and the key it leaves behind names the same artifact. 1 record(s) on cline-pass carry this exact transition.",
+	{ID: "fish-audio/s2.1-pro", Before: `(family="o",variant="pro",version="",modifier="")`, After: `(family="fish-audio",variant="s",version="2.1",modifier="pro")`}: "as fish-audio/s2-pro, on the 2.1 release. The dotted minor is recovered into the version slot it belongs in rather than being lost behind the o-series family bucket.",
 
-	{ID: "coding-xiaomi-mimo-v2.5", Before: `(family="mimo",variant="v",version="2.5",modifier="")`, After: `(family="mimo",variant="",version="2.5",modifier="")`}: "the mimo series letter leaves the entity key: variant \"v\" becomes empty while version \"2.5\" and modifier \"\" are carried across byte-identical. \"v\" was never a product line — every mimo id spells it, so it partitioned nothing and merely prefixed the key. The classifier flags an emptied populated field, but no FACT is lost: the letter is still consumed to extract the version (which is why it is not simply deleted from the family record), it survives in the provider ids and therefore in this model's nomina, and the key it leaves behind names the same artifact. 1 record(s) on aihubmix carry this exact transition.",
+	{ID: "fish-audio/s2.1-pro-free", Before: `(family="o",variant="pro",version="",modifier="free")`, After: `(family="fish-audio",variant="s",version="2.1",modifier="pro")`}: "as fish-audio/s2.1-pro, with the \"free\" access tier demoted so the free spelling converges on the paid entity.",
 
-	{ID: "coding-xiaomi-mimo-v2.5-pro", Before: `(family="mimo",variant="v",version="2.5",modifier="pro")`, After: `(family="mimo",variant="",version="2.5",modifier="pro")`}: "the mimo series letter leaves the entity key: variant \"v\" becomes empty while version \"2.5\" and modifier \"pro\" are carried across byte-identical. \"v\" was never a product line — every mimo id spells it, so it partitioned nothing and merely prefixed the key. The classifier flags an emptied populated field, but no FACT is lost: the letter is still consumed to extract the version (which is why it is not simply deleted from the family record), it survives in the provider ids and therefore in this model's nomina, and the key it leaves behind names the same artifact. 1 record(s) on aihubmix carry this exact transition.",
+	{ID: "fish-audio/transcribe-1", Before: `(family="o",variant="",version="",modifier="")`, After: `(family="fish-audio",variant="transcribe",version="1",modifier="")`}: "Fish Audio Transcribe-1 is a speech-to-text product, filed by vercel under OpenAI's o-series bucket. The pin gives it the lab's family and its own product line as the variant, populating two previously EMPTY fields.",
 
-	{ID: "mimo-v2-5", Before: `(family="mimo",variant="v",version="2.5",modifier="")`, After: `(family="mimo",variant="",version="2.5",modifier="")`}: "the mimo series letter leaves the entity key: variant \"v\" becomes empty while version \"2.5\" and modifier \"\" are carried across byte-identical. \"v\" was never a product line — every mimo id spells it, so it partitioned nothing and merely prefixed the key. The classifier flags an emptied populated field, but no FACT is lost: the letter is still consumed to extract the version (which is why it is not simply deleted from the family record), it survives in the provider ids and therefore in this model's nomina, and the key it leaves behind names the same artifact. 2 record(s) on empiriolabs, kenari carry this exact transition.",
+	{ID: "fish-audio/transcribe-1-free", Before: `(family="o",variant="",version="",modifier="free")`, After: `(family="fish-audio",variant="transcribe",version="1",modifier="")`}: "as fish-audio/transcribe-1, with the \"free\" access tier demoted so the free spelling converges on the paid entity.",
 
-	{ID: "mimo-v2-5-pro", Before: `(family="mimo",variant="v",version="2.5",modifier="pro")`, After: `(family="mimo",variant="",version="2.5",modifier="pro")`}: "the mimo series letter leaves the entity key: variant \"v\" becomes empty while version \"2.5\" and modifier \"pro\" are carried across byte-identical. \"v\" was never a product line — every mimo id spells it, so it partitioned nothing and merely prefixed the key. The classifier flags an emptied populated field, but no FACT is lost: the letter is still consumed to extract the version (which is why it is not simply deleted from the family record), it survives in the provider ids and therefore in this model's nomina, and the key it leaves behind names the same artifact. 2 record(s) on empiriolabs, kenari carry this exact transition.",
+	// The two SERVING-FACT removals. Both empty a populated field, which is the exact shape
+	// a real regression takes, so both need human review rather than a code rule — and in
+	// both the emptied value was never identity in the first place.
+	//
+	// requesty's "inkling-256k" put the SERVED CONTEXT LENGTH in the version slot, minting
+	// inkling@256k: a release Thinking Machines never published, and the only
+	// context-length-shaped version anywhere in the keyspace. The requesty row and llmtr's
+	// bare thinkingmachines/inkling carry an identical 262144 window at an identical
+	// 1.8700 / 4.6800 price, so they are the same artifact. This is the same ruling the
+	// ":peft:262144" pin in the same lever already applies: a context length is a serving
+	// fact. The version is not lost, it was never a version.
+	{ID: "inkling-256k", Before: `(family="inkling",variant="",version="256k",modifier="")`, After: `(family="inkling",variant="",version="",modifier="")`}: "serving-fact removal: \"256k\" is the served context length, not a release. Same fact as the :peft:262144 config pinned in the same lever, and the row joins the bare inkling entity its siblings occupy instead of holding the keyspace's only context-length-shaped version.",
 
-	{ID: "mimo-v2-5:free", Before: `(family="mimo",variant="v",version="2.5",modifier="")`, After: `(family="mimo",variant="",version="2.5",modifier="")`}: "the mimo series letter leaves the entity key: variant \"v\" becomes empty while version \"2.5\" and modifier \"\" are carried across byte-identical. \"v\" was never a product line — every mimo id spells it, so it partitioned nothing and merely prefixed the key. The classifier flags an emptied populated field, but no FACT is lost: the letter is still consumed to extract the version (which is why it is not simply deleted from the family record), it survives in the provider ids and therefore in this model's nomina, and the key it leaves behind names the same artifact. 1 record(s) on kenari carry this exact transition.",
-
-	{ID: "mimo-v2-flash-free", Before: `(family="mimo",variant="flash-free",version="",modifier="")`, After: `(family="mimo",variant="",version="2",modifier="flash,free")`}: "the fused variant \"flash-free\" is decomposed into its parts: version \"2\" comes out of the variant slot it had been hiding in (it was EMPTY before, so this populates a field rather than emptying one) and the trailing tokens become the modifier list \"flash,free\". The variant slot ends empty because the mimo series letter no longer keys the entity. Every token of the before-variant is accounted for after: the numeric part is the version and the tokens are \"flash\" and \"free\" in the modifier list, classified by curation rather than by position. 1 record(s) on opencode carry this exact transition.",
-
-	{ID: "mimo-v2-omni", Before: `(family="mimo",variant="v",version="2",modifier="omni")`, After: `(family="mimo",variant="",version="2",modifier="omni")`}: "the mimo series letter leaves the entity key: variant \"v\" becomes empty while version \"2\" and modifier \"omni\" are carried across byte-identical. \"v\" was never a product line — every mimo id spells it, so it partitioned nothing and merely prefixed the key. The classifier flags an emptied populated field, but no FACT is lost: the letter is still consumed to extract the version (which is why it is not simply deleted from the family record), it survives in the provider ids and therefore in this model's nomina, and the key it leaves behind names the same artifact. 2 record(s) on opencode-go, xiaomi carry this exact transition.",
-
-	{ID: "mimo-v2-omni-free", Before: `(family="mimo",variant="omni-free",version="",modifier="")`, After: `(family="mimo",variant="",version="2",modifier="omni,free")`}: "the fused variant \"omni-free\" is decomposed into its parts: version \"2\" comes out of the variant slot it had been hiding in (it was EMPTY before, so this populates a field rather than emptying one) and the trailing tokens become the modifier list \"omni,free\". The variant slot ends empty because the mimo series letter no longer keys the entity. Every token of the before-variant is accounted for after: the numeric part is the version and the tokens are \"omni\" and \"free\" in the modifier list, classified by curation rather than by position. 1 record(s) on opencode carry this exact transition.",
-
-	{ID: "mimo-v2-pro", Before: `(family="mimo",variant="v",version="2",modifier="pro")`, After: `(family="mimo",variant="",version="2",modifier="pro")`}: "the mimo series letter leaves the entity key: variant \"v\" becomes empty while version \"2\" and modifier \"pro\" are carried across byte-identical. \"v\" was never a product line — every mimo id spells it, so it partitioned nothing and merely prefixed the key. The classifier flags an emptied populated field, but no FACT is lost: the letter is still consumed to extract the version (which is why it is not simply deleted from the family record), it survives in the provider ids and therefore in this model's nomina, and the key it leaves behind names the same artifact. 6 record(s) on abacus, opencode-go, xiaomi, xiaomi-token-plan-ams, xiaomi-token-plan-cn, xiaomi-token-plan-sgp carry this exact transition.",
-
-	{ID: "mimo-v2-pro-free", Before: `(family="mimo",variant="pro-free",version="",modifier="")`, After: `(family="mimo",variant="",version="2",modifier="pro,free")`}: "the fused variant \"pro-free\" is decomposed into its parts: version \"2\" comes out of the variant slot it had been hiding in (it was EMPTY before, so this populates a field rather than emptying one) and the trailing tokens become the modifier list \"pro,free\". The variant slot ends empty because the mimo series letter no longer keys the entity. Every token of the before-variant is accounted for after: the numeric part is the version and the tokens are \"pro\" and \"free\" in the modifier list, classified by curation rather than by position. 1 record(s) on opencode carry this exact transition.",
-
-	{ID: "mimo-v2.5", Before: `(family="mimo",variant="v",version="2.5",modifier="")`, After: `(family="mimo",variant="",version="2.5",modifier="")`}: "the mimo series letter leaves the entity key: variant \"v\" becomes empty while version \"2.5\" and modifier \"\" are carried across byte-identical. \"v\" was never a product line — every mimo id spells it, so it partitioned nothing and merely prefixed the key. The classifier flags an emptied populated field, but no FACT is lost: the letter is still consumed to extract the version (which is why it is not simply deleted from the family record), it survives in the provider ids and therefore in this model's nomina, and the key it leaves behind names the same artifact. 6 record(s) on llmgateway, opencode-go, xiaomi, xiaomi-token-plan-ams, xiaomi-token-plan-cn, xiaomi-token-plan-sgp carry this exact transition.",
-
-	{ID: "mimo-v2.5-free", Before: `(family="mimo",variant="v2.5-free",version="",modifier="")`, After: `(family="mimo",variant="",version="2.5",modifier="free")`}: "the fused variant \"v2.5-free\" is decomposed into its parts: version \"2.5\" comes out of the variant slot it had been hiding in (it was EMPTY before, so this populates a field rather than emptying one) and the trailing tokens become the modifier list \"free\". The variant slot ends empty because the mimo series letter no longer keys the entity. Every token of the before-variant is accounted for after: the numeric part is the version and the token is \"free\" in the modifier list, classified by curation rather than by position. 1 record(s) on opencode carry this exact transition.",
-
-	{ID: "mimo-v2.5-pro", Before: `(family="mimo",variant="v",version="2.5",modifier="pro")`, After: `(family="mimo",variant="",version="2.5",modifier="pro")`}: "the mimo series letter leaves the entity key: variant \"v\" becomes empty while version \"2.5\" and modifier \"pro\" are carried across byte-identical. \"v\" was never a product line — every mimo id spells it, so it partitioned nothing and merely prefixed the key. The classifier flags an emptied populated field, but no FACT is lost: the letter is still consumed to extract the version (which is why it is not simply deleted from the family record), it survives in the provider ids and therefore in this model's nomina, and the key it leaves behind names the same artifact. 7 record(s) on crof, llmgateway, opencode-go, xiaomi, xiaomi-token-plan-ams, xiaomi-token-plan-cn, xiaomi-token-plan-sgp carry this exact transition.",
-
-	{ID: "mimo-v2.5-tts", Before: `(family="mimo",variant="v2.5-tts",version="",modifier="")`, After: `(family="mimo",variant="",version="2.5",modifier="tts")`}: "the fused variant \"v2.5-tts\" is decomposed into its parts: version \"2.5\" comes out of the variant slot it had been hiding in (it was EMPTY before, so this populates a field rather than emptying one) and the trailing tokens become the modifier list \"tts\". The variant slot ends empty because the mimo series letter no longer keys the entity. Every token of the before-variant is accounted for after: the numeric part is the version and the token is \"tts\" in the modifier list, classified by curation rather than by position. 3 record(s) on xiaomi-token-plan-ams, xiaomi-token-plan-cn, xiaomi-token-plan-sgp carry this exact transition.",
-
-	{ID: "mimo-v2.5-tts-voiceclone", Before: `(family="mimo",variant="v2.5-tts-voiceclone",version="",modifier="")`, After: `(family="mimo",variant="",version="2.5",modifier="tts,voiceclone")`}: "the fused variant \"v2.5-tts-voiceclone\" is decomposed into its parts: version \"2.5\" comes out of the variant slot it had been hiding in (it was EMPTY before, so this populates a field rather than emptying one) and the trailing tokens become the modifier list \"tts,voiceclone\". The variant slot ends empty because the mimo series letter no longer keys the entity. Every token of the before-variant is accounted for after: the numeric part is the version and the tokens are \"tts\" and \"voiceclone\" in the modifier list, classified by curation rather than by position. 3 record(s) on xiaomi-token-plan-ams, xiaomi-token-plan-cn, xiaomi-token-plan-sgp carry this exact transition.",
-
-	{ID: "mimo-v2.5-tts-voicedesign", Before: `(family="mimo",variant="v2.5-tts-voicedesign",version="",modifier="")`, After: `(family="mimo",variant="",version="2.5",modifier="tts,voicedesign")`}: "the fused variant \"v2.5-tts-voicedesign\" is decomposed into its parts: version \"2.5\" comes out of the variant slot it had been hiding in (it was EMPTY before, so this populates a field rather than emptying one) and the trailing tokens become the modifier list \"tts,voicedesign\". The variant slot ends empty because the mimo series letter no longer keys the entity. Every token of the before-variant is accounted for after: the numeric part is the version and the tokens are \"tts\" and \"voicedesign\" in the modifier list, classified by curation rather than by position. 3 record(s) on xiaomi-token-plan-ams, xiaomi-token-plan-cn, xiaomi-token-plan-sgp carry this exact transition.",
-
-	{ID: "xiaomi-mimo-v2-5", Before: `(family="mimo",variant="v",version="2.5",modifier="")`, After: `(family="mimo",variant="",version="2.5",modifier="")`}: "the mimo series letter leaves the entity key: variant \"v\" becomes empty while version \"2.5\" and modifier \"\" are carried across byte-identical. \"v\" was never a product line — every mimo id spells it, so it partitioned nothing and merely prefixed the key. The classifier flags an emptied populated field, but no FACT is lost: the letter is still consumed to extract the version (which is why it is not simply deleted from the family record), it survives in the provider ids and therefore in this model's nomina, and the key it leaves behind names the same artifact. 1 record(s) on venice carry this exact transition.",
-
-	{ID: "xiaomi-mimo-v2.5", Before: `(family="mimo",variant="v",version="2.5",modifier="")`, After: `(family="mimo",variant="",version="2.5",modifier="")`}: "the mimo series letter leaves the entity key: variant \"v\" becomes empty while version \"2.5\" and modifier \"\" are carried across byte-identical. \"v\" was never a product line — every mimo id spells it, so it partitioned nothing and merely prefixed the key. The classifier flags an emptied populated field, but no FACT is lost: the letter is still consumed to extract the version (which is why it is not simply deleted from the family record), it survives in the provider ids and therefore in this model's nomina, and the key it leaves behind names the same artifact. 1 record(s) on aihubmix carry this exact transition.",
-
-	{ID: "xiaomi-mimo-v2.5-pro", Before: `(family="mimo",variant="v",version="2.5",modifier="pro")`, After: `(family="mimo",variant="",version="2.5",modifier="pro")`}: "the mimo series letter leaves the entity key: variant \"v\" becomes empty while version \"2.5\" and modifier \"pro\" are carried across byte-identical. \"v\" was never a product line — every mimo id spells it, so it partitioned nothing and merely prefixed the key. The classifier flags an emptied populated field, but no FACT is lost: the letter is still consumed to extract the version (which is why it is not simply deleted from the family record), it survives in the provider ids and therefore in this model's nomina, and the key it leaves behind names the same artifact. 1 record(s) on aihubmix carry this exact transition.",
-
-	{ID: "xiaomi-mimo-v2.5-pro-free", Before: `(family="mimo",variant="v2.5-pro",version="",modifier="")`, After: `(family="mimo",variant="",version="2.5",modifier="pro,free")`}: "the fused variant \"v2.5-pro\" is decomposed into its parts: version \"2.5\" comes out of the variant slot it had been hiding in (it was EMPTY before, so this populates a field rather than emptying one) and the trailing tokens become the modifier list \"pro,free\". The variant slot ends empty because the mimo series letter no longer keys the entity. Every token of the before-variant is accounted for after: the numeric part is the version and the tokens are \"pro\" and \"free\" in the modifier list, classified by curation rather than by position. 1 record(s) on aihubmix carry this exact transition.",
-
-	{ID: "xiaomi/mimo-v2-omni", Before: `(family="mimo",variant="v",version="2",modifier="omni")`, After: `(family="mimo",variant="",version="2",modifier="omni")`}: "the mimo series letter leaves the entity key: variant \"v\" becomes empty while version \"2\" and modifier \"omni\" are carried across byte-identical. \"v\" was never a product line — every mimo id spells it, so it partitioned nothing and merely prefixed the key. The classifier flags an emptied populated field, but no FACT is lost: the letter is still consumed to extract the version (which is why it is not simply deleted from the family record), it survives in the provider ids and therefore in this model's nomina, and the key it leaves behind names the same artifact. 3 record(s) on kilo, nano-gpt, zenmux carry this exact transition.",
-
-	{ID: "xiaomi/mimo-v2-pro", Before: `(family="mimo",variant="v",version="2",modifier="pro")`, After: `(family="mimo",variant="",version="2",modifier="pro")`}: "the mimo series letter leaves the entity key: variant \"v\" becomes empty while version \"2\" and modifier \"pro\" are carried across byte-identical. \"v\" was never a product line — every mimo id spells it, so it partitioned nothing and merely prefixed the key. The classifier flags an emptied populated field, but no FACT is lost: the letter is still consumed to extract the version (which is why it is not simply deleted from the family record), it survives in the provider ids and therefore in this model's nomina, and the key it leaves behind names the same artifact. 3 record(s) on kilo, nano-gpt, zenmux carry this exact transition.",
-
-	{ID: "xiaomi/mimo-v2.5", Before: `(family="mimo",variant="v",version="2.5",modifier="")`, After: `(family="mimo",variant="",version="2.5",modifier="")`}: "the mimo series letter leaves the entity key: variant \"v\" becomes empty while version \"2.5\" and modifier \"\" are carried across byte-identical. \"v\" was never a product line — every mimo id spells it, so it partitioned nothing and merely prefixed the key. The classifier flags an emptied populated field, but no FACT is lost: the letter is still consumed to extract the version (which is why it is not simply deleted from the family record), it survives in the provider ids and therefore in this model's nomina, and the key it leaves behind names the same artifact. 7 record(s) on ambient, crossmodel, kilo, nano-gpt, openrouter, vercel, zenmux carry this exact transition.",
-
-	{ID: "xiaomi/mimo-v2.5-pro", Before: `(family="mimo",variant="v",version="2.5",modifier="pro")`, After: `(family="mimo",variant="",version="2.5",modifier="pro")`}: "the mimo series letter leaves the entity key: variant \"v\" becomes empty while version \"2.5\" and modifier \"pro\" are carried across byte-identical. \"v\" was never a product line — every mimo id spells it, so it partitioned nothing and merely prefixed the key. The classifier flags an emptied populated field, but no FACT is lost: the letter is still consumed to extract the version (which is why it is not simply deleted from the family record), it survives in the provider ids and therefore in this model's nomina, and the key it leaves behind names the same artifact. 6 record(s) on crossmodel, kilo, nano-gpt, openrouter, vercel, zenmux carry this exact transition.",
-
-	{ID: "xiaomimimo/mimo-v2-pro", Before: `(family="mimo",variant="v",version="2",modifier="pro")`, After: `(family="mimo",variant="",version="2",modifier="pro")`}: "the mimo series letter leaves the entity key: variant \"v\" becomes empty while version \"2\" and modifier \"pro\" are carried across byte-identical. \"v\" was never a product line — every mimo id spells it, so it partitioned nothing and merely prefixed the key. The classifier flags an emptied populated field, but no FACT is lost: the letter is still consumed to extract the version (which is why it is not simply deleted from the family record), it survives in the provider ids and therefore in this model's nomina, and the key it leaves behind names the same artifact. 1 record(s) on novita-ai carry this exact transition.",
-
-	{ID: "xiaomimimo/mimo-v2.5-pro", Before: `(family="mimo",variant="v",version="2.5",modifier="pro")`, After: `(family="mimo",variant="",version="2.5",modifier="pro")`}: "the mimo series letter leaves the entity key: variant \"v\" becomes empty while version \"2.5\" and modifier \"pro\" are carried across byte-identical. \"v\" was never a product line — every mimo id spells it, so it partitioned nothing and merely prefixed the key. The classifier flags an emptied populated field, but no FACT is lost: the letter is still consumed to extract the version (which is why it is not simply deleted from the family record), it survives in the provider ids and therefore in this model's nomina, and the key it leaves behind names the same artifact. 1 record(s) on novita-ai carry this exact transition.",
-
-	{ID: "deepcogito/cogito-v2.1-671b", Before: `(family="cogito",variant="v2.1-671b",version="",modifier="")`, After: `(family="cogito",variant="",version="2.1",modifier="")`}: "the cogito size-doubling repair splits a fused variant into its parts. BEFORE, the whole id remainder \"v2.1-671b\" sat in the variant slot with the version EMPTY, so the 671b parameter size was stated twice — once as an identity token inside the variant and once again as the mechanically recovered #size segment (key cogito/v2.1-671b#671b). AFTER, the dotted point release is the version \"2.1\" and the variant slot is EMPTY, so the key renders cogito@2.1#671b and carries the size exactly once. The \"v\" is a version PREFIX, not a variant: it introduces the number it is glued to and names no sibling line this release is distinguished from, which is the same reading the mimo normalization applies to its series letter. The classifier flags a populated variant changing value, but the transition POPULATES the empty version field and drops no fact: every token of the before-variant is accounted for after (v -> the version prefix it introduces, 2.1 -> version, 671b -> the #size segment it already occupied), and the v-carrying spelling survives verbatim in the provider ids and therefore in this model's nomina (MEASURED: `bestiary show deepcogito/cogito-v2.1-671b --format=raw` finds the entity; the org-less spelling resolved at neither the before nor the after tuple, so nothing regressed there). Evidence: Deep Cogito publishes the release as Cogito v2.1 671B (deepcogito.com), and both serving rows spell the id identically. 2 record(s) on kilo (raw=\"\") and openrouter (raw=\"cogito\") carry this exact transition.",
-
-	{ID: "deepcogito/cogito-v2-1-671b", Before: `(family="cogito",variant="",version="1",modifier="")`, After: `(family="cogito",variant="",version="2.1",modifier="")`}: "togetherai serves the SAME Cogito v2.1 671B artifact with the dot lost to a dash (cogito-v2-1-671b), so the leading-token pipeline read only the trailing integer as the version and minted a phantom \"Cogito v1\" line (cogito@1#671b) holding this one instance. AFTER, the row carries the pair its dotted siblings carry — variant \"\", version \"2.1\" — and merges onto cogito@2.1#671b. The classifier flags version \"1\" -> \"2.1\" as a populated field changing value, but \"1\" was never a version Deep Cogito published: it is the orphaned minor left behind when the dot was lost, and the id's own \"v2-1\" spelling names which dot that was. Only ONE field changes and it changes from a fiction to the published version; the merge is the point: one artifact stops being split across two keys. The exact-ID pin is still required rather than a version-only dotLostVersionOverrides entry, because the pin is what holds all three serving rows on ONE (variant, version) pair — the dotted rows reach ('', '2.1') through their own pin, and a row landing on any other pair would be a third key rather than a merge. 1 record(s) on togetherai (raw=\"cogito\") carries this exact transition.",
-
-	{ID: "databricks-kimi-k2-7-code", Before: `(family="kimi-k2",variant="",version="",modifier="code")`, After: `(family="kimi",variant="k",version="2.7",modifier="code")`}: "the redundant leading-token strip removes databricks' repetition of its OWN provider slug from the front of this id, and that is the whole transition: with \"databricks-\" gone the remainder is the plain \"kimi-k2-7-code\" that every other provider publishes, so the compound-family recovery reaches it and it decomposes exactly as its siblings do. The classifier flags a populated family changing value, but \"kimi-k2\" was never a family — it is the upstream raw_family with the series token fused into it, and it stranded this record on a one-instance phantom line with NO version at all while the real Kimi K2.7 Code sits on kimi/k@2.7{code}. AFTER, family, variant and version are ALL more correct and the modifier is carried across byte-identical: nothing is emptied, the empty version becomes populated, and the record joins the key its co-hosted siblings already occupy. The fact the strip removes is not lost — Provider still reads databricks, which is the only thing the prefix said. 1 record(s) on databricks carries this exact transition.",
-
-	{ID: "k3", Before: `(family="kimi-k3",variant="",version="",modifier="")`, After: `(family="kimi",variant="k",version="3",modifier="")`}: "kimi-for-coding publishes this model under the bare id \"k3\" and tags it with the raw family \"kimi-k3\", so the series token lived ONLY in the family field and nothing in the id could confirm it. BEFORE, the record stranded on a one-instance compound-family line \"kimi-k3\" with no variant and no version, invisible to the kimi series entirely. AFTER, the family recovers to kimi, which makes the id visible to the letter-prefix seam, and the seam reads k3 out of it: variant \"k\", version \"3\". Two empty fields become populated, nothing is emptied, and the record joins kimi/k@3 alongside moonshotai's own Kimi K3 rows instead of sitting on a line of its own. Evidence: the upstream row names the model \"Kimi K3\" with release_date 2026-07-16, the same release moonshotai/kimi-k3 carries. 1 record(s) on kimi-for-coding carries this exact transition.",
-
-	{ID: "moonshot-kimi-k2-instruct", Before: `(family="kimi-k2",variant="",version="",modifier="instruct")`, After: `(family="kimi",variant="k",version="2",modifier="instruct")`}: "alibaba-cn tags this row with the raw family \"kimi-k2\" and prefixes the id with the LAB name \"moonshot\", which is not a registered family, so the id-vs-raw reconcile could not confirm the reduction and kept the compound. BEFORE, the record sat on kimi-k2{instruct} with no version. AFTER, the family recovers to kimi and the seam reads k2 out of the id: variant \"k\", version \"2\", with the instruct modifier carried across byte-identical. The record joins the pre-existing kimi/k@2{instruct} key rather than duplicating it under a compound-family spelling. 1 record(s) on alibaba-cn carries this exact transition.",
-
-	{ID: "umans-kimi-k2.7", Before: `(family="kimi-k2",variant="",version="",modifier="")`, After: `(family="kimi",variant="k",version="2.7",modifier="")`}: "umans tags its Kimi K2.7 Code rows with the coarser raw family \"kimi-k2\" and prefixes the id with its own vendor name. BEFORE, the compound family stranded the record on kimi-k2 with no version. AFTER, the family recovers to kimi and the seam reads the DOTTED 2.7 out of the id — not the coarser 2 the raw family token spells — so the record joins the pre-existing kimi/k@2.7 key. This is the row that shows the recovery is family-only by design: had it seeded the version from the consumed family token it would have asserted 2 over the id's own 2.7. 2 record(s) on umans-ai, umans-ai-coding-plan carry this exact transition.",
-
-	{ID: "umans-coder", Before: `(family="kimi-k2",variant="",version="",modifier="")`, After: `(family="kimi",variant="coder",version="",modifier="")`}: "umans serves a Kimi-derived coding model under an id that names no series token at all, tagged with the raw family \"kimi-k2\". BEFORE, the record sat on the compound-family line kimi-k2. AFTER, the family recovers to kimi; the letter-prefix seam finds no series token in the id and correctly DECLINES, so the residual token \"coder\" is promoted to the variant and the record lands on kimi/coder — the one key this lever adds. The version stays empty, which is the honest state: the id states no version and the recovery deliberately refuses to assert the coarse k2 the raw family spells. The variant slot goes from empty to populated and nothing is emptied. 2 record(s) on umans-ai, umans-ai-coding-plan carry this exact transition.",
+	// nano-gpt's Gemma 4 31B distill. The 2026-08-28 catalog NEWLY stamps raw_family
+	// "claude" on a Google Gemma 4 31B model distilled FROM Claude Opus 4.6; at the
+	// v0.2.10 baseline the same row carried family=null. The classifier flags family and
+	// variant changing value, but the BEFORE tuple is upstream's mislabel: it credited
+	// Anthropic with a Gemma derivative on the flagship Opus line, at a 31B size Anthropic
+	// has never published. This is the SAME transition the eight fish-audio rows above
+	// document and the trendyol-asure-12b pin applies. The distillation TEACHER is not the
+	// artifact's family; that relationship belongs in lineage.json. The version slot also
+	// goes from EMPTY to populated, recovering the "4" the label had hidden.
+	{ID: "Gemma-4-31B-Claude-4.6-Opus-Reasoning-Distilled", Before: `(family="claude",variant="opus",version="",modifier="")`, After: `(family="gemma",variant="",version="4",modifier="")`}: "upstream misattribution repair: nano-gpt's new raw_family \"claude\" credited Anthropic with a Google Gemma 4 31B distill on the Opus line. Family becomes the artifact's own, the EMPTY version slot is populated with the 4 the label hid, and claude/opus#31b retires — it never held an Anthropic artifact.",
 }
 
 func TestPathUnification_ZeroUnexpectedRegression(t *testing.T) {
@@ -1360,19 +1365,50 @@ func TestPathUnification_ZeroUnexpectedRegression(t *testing.T) {
 		total, len(changes), fix, improve, regress, justified)
 	t.Logf("divergence: before=%d  after=%d", divBefore, divAfter)
 
-	// Only persist the committed artifact when the gate
-	// PASSES. A failing run must NOT leave a dirty/mismatched report in the working tree
-	// (which would pollute git status and could mask the failure under a re-commit).
+	// The committed diff report is a BASELINE ARTIFACT, not a scratch output, so an
+	// ordinary `go test` never writes it — it COMPARES.
+	//
+	// It used to re-emit itself on any run whose gate passed, and that is a real hazard
+	// while an engineer is iterating: dropping a curation pin leaves the (c) count at zero
+	// but moves the other figures, so the report was silently rewritten in the working
+	// tree beside a red test elsewhere and was easy to sweep into the commit that "fixed"
+	// it. A file that re-emits itself cannot falsify anything — it always agrees with
+	// whatever the code currently does.
+	//
+	// Refreshing it is now the same declared, env-gated act as re-capturing the baseline
+	// (TestCaptureDecompositionBaseline above), and for the same reason: it is committed
+	// evidence, and evidence that rewrites itself to stay green is not evidence.
 	reportPath := filepath.Join(snapshotDir(), "decomp_diff_report.json")
-	if regress == 0 {
-		reportBytes, err := json.MarshalIndent(report, "", "  ")
-		if err != nil {
-			t.Fatalf("marshal diff report: %v", err)
+	reportBytes, err := json.MarshalIndent(report, "", "  ")
+	if err != nil {
+		t.Fatalf("marshal diff report: %v", err)
+	}
+	reportBytes = append(reportBytes, '\n')
+
+	if os.Getenv("BESTIARY_CAPTURE_BASELINE") == "1" {
+		if regress != 0 {
+			t.Fatalf("refusing to re-emit %s while the gate is RED (%d category-(c) regressions) — "+
+				"capturing a report that records unjustified regressions freezes them into the "+
+				"committed evidence", reportPath, regress)
 		}
-		if err := os.WriteFile(reportPath, append(reportBytes, '\n'), 0o644); err != nil {
+		if err := os.WriteFile(reportPath, reportBytes, 0o644); err != nil {
 			t.Fatalf("write diff report: %v", err)
 		}
-		t.Logf("committed report → %s", reportPath)
+		t.Logf("captured report → %s", reportPath)
+	} else if committed, err := os.ReadFile(reportPath); err != nil {
+		t.Errorf("read the committed diff report %s: %v\n"+
+			"  How to fix: capture it with\n"+
+			"    BESTIARY_CAPTURE_BASELINE=1 go test ./cmd/bestiary-gen -run TestPathUnification_ZeroUnexpectedRegression",
+			reportPath, err)
+	} else if !bytes.Equal(committed, reportBytes) {
+		t.Errorf("the committed diff report %s no longer matches the measured diff\n"+
+			"  What: the before/after diff this run computes differs from the committed record\n"+
+			"  Why it matters: the report is committed EVIDENCE of what a curation lever moved. It is\n"+
+			"    deliberately not self-refreshing, so a change that moves the diff has to be declared\n"+
+			"  How to fix: confirm the change is intended and the (c) count is still zero, then\n"+
+			"    re-capture in the SAME commit as the change:\n"+
+			"    BESTIARY_CAPTURE_BASELINE=1 go test ./cmd/bestiary-gen -run TestPathUnification_ZeroUnexpectedRegression",
+			reportPath)
 	}
 
 	if regress != 0 {

@@ -1,7 +1,7 @@
 {
   "_comment": "Provenance sidecar for the committed models.dev catalog.json snapshot. Informational only — NEVER parsed into generated output. Rewritten alongside catalog.json on a live `go run ./cmd/bestiary-gen` fetch; untouched by --no-fetch regen. upstream_head_sha is best-effort (the catalog.json artifact does not carry the models.dev repo HEAD); leave empty when not determinable.",
   "artifact": "catalog.json",
-  "fetched_at": "2026-07-23T08:27:36Z",
-  "etag": "W/\"a4419a254050ec4d78ef61c1d57a39ea\"",
+  "fetched_at": "2026-08-28T07:54:37Z",
+  "etag": "W/\"cd4c3f129e5221534bd799eff950aad0\"",
   "upstream_head_sha": ""
 }

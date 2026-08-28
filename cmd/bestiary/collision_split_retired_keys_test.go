@@ -14,15 +14,34 @@ import (
 //go:embed testdata/retired/collision_split_retired_keys_corpus.json
 var collisionSplitRetiredKeysCorpusJSON []byte
 
-// collisionSplitSurvivingLingKeys is the inclusionAI ling keyspace, which the split must
-// leave BYTE-IDENTICAL. Each entry pairs the key with the instance count it carried
-// before the split, measured off the pre-lever generated catalog.
+// collisionSplitSurvivingLingKeys is the inclusionAI ling keyspace the split must not
+// touch. Each entry pairs a key with the instance count it holds, and the negative control
+// this map serves is UNCHANGED: no Inkling row and no klingai row may ever appear on any
+// of these keys, and none of inclusionAI's own rows may leave them.
+//
+// The counts were originally the pre-split census and are now RE-MEASURED at the
+// 2026-08-28 models.dev catalog refresh, which moved this family in two ways at once:
+//
+//   - `ling@2.6#1t` 4 -> 2 and `ling/flash@2.6` 4 -> 2. Upstream retired provider rows from
+//     the 2.6 line as it published 3.0; the rows were DELETED, not moved onto another ling
+//     key (the 3.0 keys below are all served by 3.0-spelled ids). Nothing about the split
+//     took them away.
+//   - two keys ADDED: `ling/flash@3.0` (8 rows) and `ling@3.0` (7 rows), from inclusionAI's
+//     new Ling 3.0 line. They are inclusionAI's own weights, so they belong in this control
+//     rather than beside it — a klingai or Inkling row landing on a ling 3.0 key would be
+//     the same defect the split repaired, and only a pinned count catches it.
+//
+// The count literals are therefore a re-measurement of a live family, not a claim about
+// what the lever did. What the lever did is asserted by the identity of the SET, which is
+// what the family-membership check below pins.
 var collisionSplitSurvivingLingKeys = map[string]int{
 	"ling#1t":             2,
-	"ling@2.6#1t":         4,
+	"ling@2.6#1t":         2,
 	"ling/flash@2.0":      2,
-	"ling/flash@2.6":      4,
+	"ling/flash@2.6":      2,
 	"ling/flash-free@2.6": 1,
+	"ling/flash@3.0":      8,
+	"ling@3.0":            7,
 }
 
 // TestRetiredKeys_CollisionSplit_MeasuredSeamSplit pins the retired-key policy for the
@@ -172,8 +191,21 @@ func TestRetiredKeys_CollisionSplit_InclusionAIKeyspaceUntouched(t *testing.T) {
 // says they do. Without it a successor set could name a live-looking key while the rows
 // themselves went somewhere else entirely.
 func TestRetiredKeys_CollisionSplit_SplitTargetsAreLive(t *testing.T) {
+	// `inkling` 6 -> 28 and the total 15 -> 37 with the 2026-08-28 models.dev catalog
+	// refresh. The lever is unchanged and still moves rows without creating any; what
+	// changed is the POPULATION it moved them into. Thinking Machines' Inkling went from a
+	// 6-row model to a widely rehosted one — 28 provider rows, including a new Inkling-Small
+	// sibling set and the org-prefixed rename of Thinking Machines' own endpoint — so the
+	// arithmetic in the conservation comment below no longer closes on the lever's 14 + 1.
+	//
+	// The honest statement is the one the assertions now make: the nine successor keys are
+	// live, the nine kling keys still hold exactly the one row each the split gave them
+	// (which is where a mis-split would show), and `inkling` holds every row the split sent
+	// it PLUS whatever upstream has since added. Conservation of the lever's own population
+	// is asserted by SET in the companion re-homing test, which is the check that can
+	// actually falsify it; these counts are a census.
 	want := map[string]int{
-		"inkling":                  6,
+		"inkling":                  29,
 		"kling@2.6":                1,
 		"kling/i2v@2.5{turbo}":     1,
 		"kling/t2v@2.5{turbo}":     1,
@@ -196,12 +228,25 @@ func TestRetiredKeys_CollisionSplit_SplitTargetsAreLive(t *testing.T) {
 		}
 		total += len(e.Instances)
 	}
-	// Instance conservation across the lever: the 14 rows bare `ling` held plus the one
-	// `kling-v2@6` row account for every instance on the new keys, and no more.
-	if total != 15 {
-		t.Errorf("the split's successor keys hold %d instances in total, want 15 — this lever moves "+
-			"instances between keys and creates none, so the two retired keys' 14 + 1 rows are the "+
-			"whole population", total)
+	// The successor-key census. This was pinned as instance CONSERVATION across the lever —
+	// bare `ling`'s 14 rows plus the one `kling-v2@6` row, 15 and no more — and that premise
+	// is no longer true of the live catalog: the 2026-08-28 refresh grew `inkling` from 6
+	// rows to 28 with rows that were never part of the lever's population, so 15 is now a
+	// count of a historical population rather than of these keys.
+	//
+	// 15 -> 37 (28 on `inkling` + 1 on each of the nine kling keys). 37 -> 38 at the round-2
+	// review pin on requesty's "inkling-256k": that row had minted the phantom inkling@256k out
+	// of a SERVED CONTEXT LENGTH, and pinning it to the bare family moves its one instance onto
+	// `inkling`, 28 -> 29. It is an ADDITION to this census, not a re-split — the nine kling
+	// keys are untouched. Read it as a census,
+	// not as conservation: the conservation claim survives intact in
+	// TestRetiredKeys_CollisionSplit_SuccessorSetsMatchMeasuredRehoming, which re-derives
+	// each retired key's rows against the live registry by SET and would fail if one had
+	// been dropped or duplicated.
+	if total != 38 {
+		t.Errorf("the split's successor keys hold %d instances in total, want 38 — 29 on `inkling` "+
+			"after the 2026-08-28 refresh and the inkling-256k pin, plus one on each of the nine "+
+			"kling keys; a kling key holding more or fewer than one row is a mis-split", total)
 	}
 }
 

@@ -37,6 +37,39 @@ func vendoredMetadataRowCount(t *testing.T) int {
 	return len(catalog.Models)
 }
 
+// unlinkedMetadataRowCount reads the codegen-emitted join-disagreement report and returns
+// how many models-view rows attach to NO entity. Those rows exist in the vendored catalog
+// but cannot reach the overlay base layer, because the base layer is assembled from
+// entities and an unlinked row has no entity to be assembled from.
+//
+// It is read from the report rather than pinned as a literal for the same reason
+// vendoredMetadataRowCount reads the catalog: both numbers move together at a snapshot
+// refresh, and a literal on either side would go stale silently and turn this guard into
+// an alarm about the snapshot instead of about the overlay.
+//
+// The report is a COUNT here, deliberately. What each unlinked row IS, and why aliasing it
+// would be dishonest, is a closed per-row ledger asserted by SET EQUALITY in the
+// root-package metadata_join_test.go (unlinkedJustifiedExceptions) — that is where an
+// unexplained orphan fails. This guard only needs to know how many rows the base layer
+// cannot contain.
+func unlinkedMetadataRowCount(t *testing.T) int {
+	t.Helper()
+	path := filepath.Join("..", "..", "parse", "data", "modelsdev_unlinked.json")
+	raw, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatalf("could not read the codegen-emitted unlinked report at %s: %v;\n"+
+			"  how to fix: it is written by `go generate ./...` alongside the *_gen.go files —"+
+			" restore it or regenerate per the snapshot-refresh workflow", path, err)
+	}
+	var report struct {
+		Unlinked []json.RawMessage `json:"unlinked"`
+	}
+	if err := json.Unmarshal(raw, &report); err != nil {
+		t.Fatalf("could not parse the unlinked report at %s: %v", path, err)
+	}
+	return len(report.Unlinked)
+}
+
 // TestOverlayBase_IsEveryBakedRow_NotOnePerEntity asserts the sync overlay's baked base
 // layer is the FULL set of baked metadata rows — every row of the vendored models view
 // — not one row per entity.
@@ -49,9 +82,28 @@ func TestOverlayBase_IsEveryBakedRow_NotOnePerEntity(t *testing.T) {
 	ents := bestiary.Entities()
 	base := bakedEntityMetadataFromEntities(ents)
 
-	want := vendoredMetadataRowCount(t)
+	// The base layer is every vendored models-view row THAT ATTACHES TO AN ENTITY.
+	//
+	// This used to be the whole models view, and the 2026-08-28 models.dev catalog refresh
+	// falsified that premise: the view grew to 361 rows, of which 12 attach to no entity at
+	// all. They are not a defect and they are not droppable — models.dev's models view is a
+	// LAB catalogue (what a lab published) while the provider rows are a SERVING catalogue
+	// (what someone will sell you today), so a lab model no provider serves has nothing to
+	// attach to. Each of the 12 is a deliberate NON-alias with its own recorded reason, held
+	// as a closed set-equality ledger in unlinkedJustifiedExceptions
+	// (metadata_join_test.go, root package): an unexplained orphan fails THERE, which is why
+	// subtracting them HERE weakens nothing.
+	//
+	// 361 - 12 = 349. Both terms are read from committed files rather than pinned, so the
+	// guard states the relationship — the base layer is the models view minus exactly the
+	// rows that cannot join — and survives the next snapshot refresh instead of going stale.
+	rows, unlinked := vendoredMetadataRowCount(t), unlinkedMetadataRowCount(t)
+	want := rows - unlinked
 	if len(base) != want {
-		t.Errorf("overlay base layer = %d metadata rows, want %d (every vendored models.dev row)", len(base), want)
+		t.Errorf("overlay base layer = %d metadata rows, want %d (every vendored models.dev row "+
+			"that attaches to an entity: %d rows in the models view less the %d unlinked rows "+
+			"recorded in parse/data/modelsdev_unlinked.json and justified per-row by "+
+			"unlinkedJustifiedExceptions in metadata_join_test.go)", len(base), want, rows, unlinked)
 	}
 
 	// Non-vacuity + the distinguishing arm: the base must exceed the number of

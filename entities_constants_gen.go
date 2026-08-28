@@ -13,993 +13,1055 @@ package bestiary
 // character becomes '_') keep the names injective. Provider access is via the API
 // (ProvidersOf / ProvidersOfModel), never the constant namespace.
 const (
-	Entity__Abliterated                                                   = "abliterated"
-	Entity__Active                                                        = "active"
-	Entity__Agent                                                         = "agent"
-	Entity__Agi__Mini                                                     = "agi/mini"
-	Entity__Agi__Pro                                                      = "agi/pro"
-	Entity__Agi__Version_01                                               = "agi@01"
-	Entity__Agnes__Lite__Version_1_5                                      = "agnes/lite@1.5"
-	Entity__Agnes__Pro__Version_1_5                                       = "agnes/pro@1.5"
-	Entity__Aion__Mini__Version_1_0                                       = "aion/mini@1.0"
-	Entity__Aion__Mini__Version_3_0                                       = "aion/mini@3.0"
-	Entity__Aion__Size_8b                                                 = "aion#8b"
-	Entity__Aion__Version_1_0                                             = "aion@1.0"
-	Entity__Aion__Version_2_0                                             = "aion@2.0"
-	Entity__Aion__Version_2_5                                             = "aion@2.5"
-	Entity__Aion__Version_3_0                                             = "aion@3.0"
-	Entity__Aion_labs_aion_3_0__Mini__Version_3_0                         = "aion-labs-aion-3-0/mini@3.0"
-	Entity__Aion_labs_aion__Version_3_0                                   = "aion-labs-aion@3.0"
-	Entity__Amazon                                                        = "amazon"
-	Entity__Anubis_70b__V1_1__Size_70b                                    = "anubis-70b/v1.1#70b"
-	Entity__Anubis__Size_70b                                              = "anubis#70b"
-	Entity__Arrow__Version_1_1                                            = "arrow@1.1"
-	Entity__Asi1__Mini                                                    = "asi1/mini"
-	Entity__Aura                                                          = "aura"
-	Entity__Aura__Version_2                                               = "aura@2"
-	Entity__Auto                                                          = "auto"
-	Entity__Auto__Code                                                    = "auto{code}"
-	Entity__Autoglm__Size_9b                                              = "autoglm#9b"
-	Entity__Baichuan                                                      = "baichuan"
-	Entity__Baichuan4                                                     = "baichuan4"
-	Entity__Baichuan4__Turbo                                              = "baichuan4{turbo}"
-	Entity__Baichuan__Size_32b                                            = "baichuan#32b"
-	Entity__Balanced                                                      = "balanced"
-	Entity__Bart__Large                                                   = "bart/large"
-	Entity__Bevformer                                                     = "bevformer"
-	Entity__Bge                                                           = "bge"
-	Entity__Bge__Base                                                     = "bge{base}"
-	Entity__Bge__Large                                                    = "bge/large"
-	Entity__Bge__Small                                                    = "bge/small"
-	Entity__Bielik_11b__V2_6_Instruct__Size_11b__Instruct                 = "bielik-11b/v2.6-Instruct#11b{instruct}"
-	Entity__Bielik_11b__V3_0_Instruct__Size_11b__Instruct                 = "bielik-11b/v3.0-Instruct#11b{instruct}"
-	Entity__Big_pickle                                                    = "big-pickle"
-	Entity__Bodybuilder                                                   = "bodybuilder"
-	Entity__Brave                                                         = "brave"
-	Entity__Brave__Pro                                                    = "brave/pro"
-	Entity__C4ai__Size_32b                                                = "c4ai#32b"
-	Entity__C4ai__Size_32b__Vision                                        = "c4ai#32b{vision}"
-	Entity__C4ai__Size_8b                                                 = "c4ai#8b"
-	Entity__C4ai__Size_8b__Vision                                         = "c4ai#8b{vision}"
-	Entity__Canopylabs                                                    = "canopylabs"
-	Entity__Cheap                                                         = "cheap"
-	Entity__Chutesai__Size_24b__Instruct                                  = "chutesai#24b{instruct}"
-	Entity__Claude__Code                                                  = "claude{code}"
-	Entity__Claude__Haiku                                                 = "claude/haiku"
-	Entity__Claude__Haiku__Version_3                                      = "claude/haiku@3"
-	Entity__Claude__Haiku__Version_3_5                                    = "claude/haiku@3.5"
-	Entity__Claude__Haiku__Version_4_5                                    = "claude/haiku@4.5"
-	Entity__Claude__Opus                                                  = "claude/opus"
-	Entity__Claude__Opus__Version_3                                       = "claude/opus@3"
-	Entity__Claude__Opus__Version_4_0                                     = "claude/opus@4.0"
-	Entity__Claude__Opus__Version_4_1                                     = "claude/opus@4.1"
-	Entity__Claude__Opus__Version_4_5                                     = "claude/opus@4.5"
-	Entity__Claude__Opus__Version_4_6                                     = "claude/opus@4.6"
-	Entity__Claude__Opus__Version_4_7                                     = "claude/opus@4.7"
-	Entity__Claude__Opus__Version_4_8                                     = "claude/opus@4.8"
-	Entity__Claude__Sonnet                                                = "claude/sonnet"
-	Entity__Claude__Sonnet__Version_3                                     = "claude/sonnet@3"
-	Entity__Claude__Sonnet__Version_3_5                                   = "claude/sonnet@3.5"
-	Entity__Claude__Sonnet__Version_3_7                                   = "claude/sonnet@3.7"
-	Entity__Claude__Sonnet__Version_4_0                                   = "claude/sonnet@4.0"
-	Entity__Claude__Sonnet__Version_4_5                                   = "claude/sonnet@4.5"
-	Entity__Claude__Sonnet__Version_4_6                                   = "claude/sonnet@4.6"
-	Entity__Claude__Sonnet__Version_5                                     = "claude/sonnet@5"
-	Entity__Claude_fable                                                  = "claude-fable"
-	Entity__Claude_fable__Version_5                                       = "claude-fable@5"
-	Entity__Claudinio                                                     = "claudinio"
-	Entity__Claudius                                                      = "claudius"
-	Entity__Claw                                                          = "claw"
-	Entity__Claw__Medium                                                  = "claw/medium"
-	Entity__Cobuddy_free                                                  = "cobuddy:free"
-	Entity__Code                                                          = "code"
-	Entity__Codellama__Size_7b__Instruct                                  = "codellama#7b{instruct}"
-	Entity__Coder__Large                                                  = "coder/large"
-	Entity__Codestral                                                     = "codestral"
-	Entity__Codestral__Embed                                              = "codestral/embed"
-	Entity__Coding                                                        = "coding"
-	Entity__Cogito__Version_2_1__Size_671b                                = "cogito@2.1#671b"
-	Entity__Cohere__Embed                                                 = "cohere/embed"
-	Entity__Command__A                                                    = "command/a"
-	Entity__Command__A__Reasoning                                         = "command/a{reasoning}"
-	Entity__Command__A__Translate                                         = "command/a{translate}"
-	Entity__Command__A__Vision                                            = "command/a{vision}"
-	Entity__Command__A_plus                                               = "command/a-plus"
-	Entity__Command__R                                                    = "command/r"
-	Entity__Command__R7b__Size_7b                                         = "command/r7b#7b"
-	Entity__Command__R_plus                                               = "command/r-plus"
-	Entity__Cosmos__Size_2b                                               = "cosmos#2b"
-	Entity__Cosmos__Size_5b                                               = "cosmos#5b"
-	Entity__Cosmos__Size_7b                                               = "cosmos#7b"
-	Entity__Cydonia_24b__V4_1__Size_24b                                   = "cydonia-24b/v4.1#24b"
-	Entity__Cydonia_24b__V4_3__Size_24b                                   = "cydonia-24b/v4.3#24b"
-	Entity__Cydonia__Size_24b                                             = "cydonia#24b"
-	Entity__Dall_e__Version_3                                             = "dall-e@3"
-	Entity__Deepclaude                                                    = "deepclaude"
-	Entity__Deephermes__Version_3__Size_24b                               = "deephermes@3#24b"
-	Entity__Deepseek                                                      = "deepseek"
-	Entity__Deepseek__Chat                                                = "deepseek/chat"
-	Entity__Deepseek__Chat__Version_3_1                                   = "deepseek/chat@3.1"
-	Entity__Deepseek__Flash                                               = "deepseek/flash"
-	Entity__Deepseek__Flash__Version_4                                    = "deepseek/flash@4"
-	Entity__Deepseek__Pro                                                 = "deepseek/pro"
-	Entity__Deepseek__Size_14b                                            = "deepseek#14b"
-	Entity__Deepseek__Size_32b                                            = "deepseek#32b"
-	Entity__Deepseek__Size_671b                                           = "deepseek#671b"
-	Entity__Deepseek__Size_70b                                            = "deepseek#70b"
-	Entity__Deepseek__Size_8b                                             = "deepseek#8b"
-	Entity__Deepseek__Turbo                                               = "deepseek{turbo}"
-	Entity__Deepseek__V3_1                                                = "deepseek/v3.1"
-	Entity__Deepseek__V3_1_maas                                           = "deepseek/v3.1-maas"
-	Entity__Deepseek__V3_1_nex_n1                                         = "deepseek/v3.1-nex-n1"
-	Entity__Deepseek__V3_1_terminus                                       = "deepseek/v3.1-terminus"
-	Entity__Deepseek__V3_2                                                = "deepseek/v3.2"
-	Entity__Deepseek__V3_2_251201                                         = "deepseek/v3.2-251201"
-	Entity__Deepseek__V3_2_exp                                            = "deepseek/v3.2-exp"
-	Entity__Deepseek__V3_2_maas                                           = "deepseek/v3.2-maas"
-	Entity__Deepseek__V3_2_speciale                                       = "deepseek/v3.2-speciale"
-	Entity__Deepseek__Version_3_2                                         = "deepseek@3.2"
-	Entity__Deepseek_ocr__Version_2                                       = "deepseek-ocr@2"
-	Entity__Devstral                                                      = "devstral"
-	Entity__Devstral__Medium                                              = "devstral/medium"
-	Entity__Devstral__Small                                               = "devstral/small"
-	Entity__Devstral__Small__Version_2                                    = "devstral/small@2"
-	Entity__Devstral__Version_2                                           = "devstral@2"
-	Entity__Devstral__Version_2__Size_123b                                = "devstral@2#123b"
-	Entity__Devstral__Version_2__Size_123b__Instruct                      = "devstral@2#123b{instruct}"
-	Entity__Diffusiongemma__Size_26b_a4b                                  = "diffusiongemma#26b-a4b"
-	Entity__Distilbert__Version_2                                         = "distilbert@2"
-	Entity__Doubao_1_5_thinking__Pro__Version_1_5                         = "doubao-1.5-thinking/pro@1.5"
-	Entity__Doubao_1_5_vision__Pro__Version_1_5                           = "doubao-1.5-vision/pro@1.5"
-	Entity__Doubao__Code                                                  = "doubao{code}"
-	Entity__Doubao__Mini__Version_2_0                                     = "doubao/mini@2.0"
-	Entity__Doubao__Pro__Version_1_5                                      = "doubao/pro@1.5"
-	Entity__Doubao__Pro__Version_1_5__Vision                              = "doubao/pro@1.5{vision}"
-	Entity__Doubao__Pro__Version_2_0                                      = "doubao/pro@2.0"
-	Entity__Doubao__Version_1_5                                           = "doubao@1.5"
-	Entity__Doubao__Version_1_6                                           = "doubao@1.6"
-	Entity__Doubao__Version_1_6__Vision                                   = "doubao@1.6{vision}"
-	Entity__Doubao__Version_2_0                                           = "doubao@2.0"
-	Entity__Doubao__Version_2_0__Code                                     = "doubao@2.0{code}"
-	Entity__Doubao_seed__Flash__Version_1_6                               = "doubao-seed/flash@1.6"
-	Entity__Doubao_seed__Lite__Version_2_0                                = "doubao-seed/lite@2.0"
-	Entity__Doubao_seed__Mini__Version_2_0                                = "doubao-seed/mini@2.0"
-	Entity__Doubao_seed__Pro__Version_2_0                                 = "doubao-seed/pro@2.0"
-	Entity__Doubao_seed__Version_1_6                                      = "doubao-seed@1.6"
-	Entity__Doubao_seed__Version_1_8                                      = "doubao-seed@1.8"
-	Entity__Doubao_seed__Version_2_0__Code                                = "doubao-seed@2.0{code}"
-	Entity__Doubao_seed_code_preview__Code                                = "doubao-seed-code-preview{code}"
-	Entity__Dracarys__Size_70b__Instruct                                  = "dracarys#70b{instruct}"
-	Entity__Dracarys__Size_72b                                            = "dracarys#72b"
-	Entity__E2e                                                           = "e2e"
-	Entity__Elevenlabs                                                    = "elevenlabs"
-	Entity__Elevenlabs__V2_5__Turbo                                       = "elevenlabs/v2.5{turbo}"
-	Entity__Ernie                                                         = "ernie"
-	Entity__Ernie__Turbo                                                  = "ernie{turbo}"
-	Entity__Ernie__Version_4_5                                            = "ernie@4.5"
-	Entity__Ernie__Version_4_5__Size_21b_a3b                              = "ernie@4.5#21b-a3b"
-	Entity__Ernie__Version_4_5__Size_28b_a3b                              = "ernie@4.5#28b-a3b"
-	Entity__Ernie__Version_4_5__Size_300b_a47b                            = "ernie@4.5#300b-a47b"
-	Entity__Ernie__Version_4_5__Size_424b_a47b                            = "ernie@4.5#424b-a47b"
-	Entity__Ernie__Version_4_5__Turbo                                     = "ernie@4.5{turbo}"
-	Entity__Ernie__Version_5_0                                            = "ernie@5.0"
-	Entity__Ernie__Version_5_1                                            = "ernie@5.1"
-	Entity__Esm2__Size_650m                                               = "esm2#650m"
-	Entity__Esmfold                                                       = "esmfold"
-	Entity__Eva__Version_0_2__Size_32b                                    = "eva@0.2#32b"
-	Entity__Exa                                                           = "exa"
-	Entity__Exa_research__Pro                                             = "exa-research/pro"
-	Entity__Fast__Fast                                                    = "fast{fast}"
-	Entity__Fastgpt                                                       = "fastgpt"
-	Entity__Flux                                                          = "flux"
-	Entity__Flux_1                                                        = "flux_1"
-	Entity__Flux__Pro                                                     = "flux/pro"
-	Entity__Flux__Pro__Version_1_1                                        = "flux/pro@1.1"
-	Entity__Flux__Pro__Version_2                                          = "flux/pro@2"
-	Entity__Flux__Size_4b                                                 = "flux#4b"
-	Entity__Flux__Version_2                                               = "flux@2"
-	Entity__Flux__Version_2__Size_4b                                      = "flux@2#4b"
-	Entity__Flux__Version_2__Size_9b                                      = "flux@2#9b"
-	Entity__Free                                                          = "free"
-	Entity__Frontier                                                      = "frontier"
-	Entity__Fugu                                                          = "fugu"
-	Entity__Fugu__Ultra                                                   = "fugu/ultra"
-	Entity__Fusion                                                        = "fusion"
-	Entity__Gelab__Size_4b                                                = "gelab#4b"
-	Entity__Gemini__Deep_research                                         = "gemini/deep-research"
-	Entity__Gemini__Embedding__Version_001                                = "gemini/embedding@001"
-	Entity__Gemini__Embedding__Version_2                                  = "gemini/embedding@2"
-	Entity__Gemini__Flash                                                 = "gemini/flash"
-	Entity__Gemini__Flash__Omni                                           = "gemini/flash{omni}"
-	Entity__Gemini__Flash__Version_1_5                                    = "gemini/flash@1.5"
-	Entity__Gemini__Flash__Version_2_0                                    = "gemini/flash@2.0"
-	Entity__Gemini__Flash__Version_2_5                                    = "gemini/flash@2.5"
-	Entity__Gemini__Flash__Version_3_0                                    = "gemini/flash@3.0"
-	Entity__Gemini__Flash__Version_3_1                                    = "gemini/flash@3.1"
-	Entity__Gemini__Flash__Version_3_5                                    = "gemini/flash@3.5"
-	Entity__Gemini__Flash__Version_3_6                                    = "gemini/flash@3.6"
-	Entity__Gemini__Flash_lite                                            = "gemini/flash-lite"
-	Entity__Gemini__Flash_lite__Version_2_0                               = "gemini/flash-lite@2.0"
-	Entity__Gemini__Flash_lite__Version_2_5                               = "gemini/flash-lite@2.5"
-	Entity__Gemini__Flash_lite__Version_3_1                               = "gemini/flash-lite@3.1"
-	Entity__Gemini__Flash_lite__Version_3_5                               = "gemini/flash-lite@3.5"
-	Entity__Gemini__Pro                                                   = "gemini/pro"
-	Entity__Gemini__Pro__Version_2_0                                      = "gemini/pro@2.0"
-	Entity__Gemini__Pro__Version_2_5                                      = "gemini/pro@2.5"
-	Entity__Gemini__Pro__Version_3_0                                      = "gemini/pro@3.0"
-	Entity__Gemini__Pro__Version_3_1                                      = "gemini/pro@3.1"
-	Entity__Gemini_exp                                                    = "gemini-exp"
-	Entity__Gemma                                                         = "gemma"
-	Entity__Gemma4__Size_31b                                              = "gemma4#31b"
-	Entity__Gemma_4_31b_larkspur__V0_5__Version_4__Size_31b               = "gemma-4-31b-larkspur/v0.5@4#31b"
-	Entity__Gemma__Size_26b                                               = "gemma#26b"
-	Entity__Gemma__Size_27b                                               = "gemma#27b"
-	Entity__Gemma__Size_31b                                               = "gemma#31b"
-	Entity__Gemma__Size_9b                                                = "gemma#9b"
-	Entity__Gemma__Version_2__Size_27b                                    = "gemma@2#27b"
-	Entity__Gemma__Version_2__Size_2b                                     = "gemma@2#2b"
-	Entity__Gemma__Version_3                                              = "gemma@3"
-	Entity__Gemma__Version_3__Size_12b                                    = "gemma@3#12b"
-	Entity__Gemma__Version_3__Size_27b                                    = "gemma@3#27b"
-	Entity__Gemma__Version_3__Size_4b                                     = "gemma@3#4b"
-	Entity__Gemma__Version_4                                              = "gemma@4"
-	Entity__Gemma__Version_4__Size_12b                                    = "gemma@4#12b"
-	Entity__Gemma__Version_4__Size_26b_a4b                                = "gemma@4#26b-a4b"
-	Entity__Gemma__Version_4__Size_31b                                    = "gemma@4#31b"
-	Entity__Gemma__Version_4__Size_31b__Turbo                             = "gemma@4#31b{turbo}"
-	Entity__Gliguard__Size_300m                                           = "gliguard#300m"
-	Entity__Gliner                                                        = "gliner"
-	Entity__Gliner2                                                       = "gliner2"
-	Entity__Gliner2__Base                                                 = "gliner2{base}"
-	Entity__Glm                                                           = "glm"
-	Entity__Glm_4_1v_thinking__Flash                                      = "glm-4.1v-thinking/flash"
-	Entity__Glm__Air                                                      = "glm/air"
-	Entity__Glm__Air__Version_4                                           = "glm/air@4"
-	Entity__Glm__Air__Version_4_5                                         = "glm/air@4.5"
-	Entity__Glm__Flash                                                    = "glm/flash"
-	Entity__Glm__Flash__Version_4                                         = "glm/flash@4"
-	Entity__Glm__Flash__Version_4_5                                       = "glm/flash@4.5"
-	Entity__Glm__Flash__Version_4_7                                       = "glm/flash@4.7"
-	Entity__Glm__Large                                                    = "glm/large"
-	Entity__Glm__V                                                        = "glm/v"
-	Entity__Glm__V__Version_4_1                                           = "glm/v@4.1"
-	Entity__Glm__V__Version_4_5                                           = "glm/v@4.5"
-	Entity__Glm__V__Version_4_6                                           = "glm/v@4.6"
-	Entity__Glm__V__Version_4_6__Flash                                    = "glm/v@4.6{flash}"
-	Entity__Glm__V__Version_5                                             = "glm/v@5"
-	Entity__Glm__V__Version_5__Z                                          = "glm/v@5{z}"
-	Entity__Glm__Version_4                                                = "glm@4"
-	Entity__Glm__Version_4_5                                              = "glm@4.5"
-	Entity__Glm__Version_4_6                                              = "glm@4.6"
-	Entity__Glm__Version_4_7                                              = "glm@4.7"
-	Entity__Glm__Version_4__Size_32b                                      = "glm@4#32b"
-	Entity__Glm__Version_4__Size_9b                                       = "glm@4#9b"
-	Entity__Glm__Version_5                                                = "glm@5"
-	Entity__Glm__Version_5_1                                              = "glm@5.1"
-	Entity__Glm__Version_5_2                                              = "glm@5.2"
-	Entity__Glm__Z                                                        = "glm/z"
-	Entity__Glm__Z__Size_32b                                              = "glm/z#32b"
-	Entity__Glm__Z__Size_9b                                               = "glm/z#9b"
-	Entity__Google                                                        = "google"
-	Entity__Gpt                                                           = "gpt"
-	Entity__Gpt__4o                                                       = "gpt/4o"
-	Entity__Gpt__4o__Mini                                                 = "gpt/4o{mini}"
-	Entity__Gpt__Audio                                                    = "gpt/audio"
-	Entity__Gpt__Audio__Mini                                              = "gpt/audio{mini}"
-	Entity__Gpt__Chat                                                     = "gpt{chat}"
-	Entity__Gpt__Codex                                                    = "gpt/codex"
-	Entity__Gpt__Codex__Version_5                                         = "gpt/codex@5"
-	Entity__Gpt__Codex__Version_5_1                                       = "gpt/codex@5.1"
-	Entity__Gpt__Codex__Version_5_2                                       = "gpt/codex@5.2"
-	Entity__Gpt__Codex__Version_5_3                                       = "gpt/codex@5.3"
-	Entity__Gpt__Codex_mini                                               = "gpt/codex-mini"
-	Entity__Gpt__Codex_mini__Version_5_1                                  = "gpt/codex-mini@5.1"
-	Entity__Gpt__Codex_spark__Version_5_3                                 = "gpt/codex-spark@5.3"
-	Entity__Gpt__Image                                                    = "gpt/image"
-	Entity__Gpt__Image__Version_1                                         = "gpt/image@1"
-	Entity__Gpt__Image__Version_1_5                                       = "gpt/image@1.5"
-	Entity__Gpt__Image__Version_2                                         = "gpt/image@2"
-	Entity__Gpt__Image__Version_5                                         = "gpt/image@5"
-	Entity__Gpt__Image__Version_5_4                                       = "gpt/image@5.4"
-	Entity__Gpt__Luna                                                     = "gpt/luna"
-	Entity__Gpt__Luna__Version_5_6                                        = "gpt/luna@5.6"
-	Entity__Gpt__Luna__Version_5_6__Pro                                   = "gpt/luna@5.6{pro}"
-	Entity__Gpt__Mini                                                     = "gpt/mini"
-	Entity__Gpt__Mini__Version_4_1                                        = "gpt/mini@4.1"
-	Entity__Gpt__Mini__Version_5                                          = "gpt/mini@5"
-	Entity__Gpt__Mini__Version_5_4                                        = "gpt/mini@5.4"
-	Entity__Gpt__Nano                                                     = "gpt/nano"
-	Entity__Gpt__Nano__Version_4_1                                        = "gpt/nano@4.1"
-	Entity__Gpt__Nano__Version_5                                          = "gpt/nano@5"
-	Entity__Gpt__Nano__Version_5_4                                        = "gpt/nano@5.4"
-	Entity__Gpt__O__Version_1                                             = "gpt/o@1"
-	Entity__Gpt__O__Version_1__Mini                                       = "gpt/o@1{mini}"
-	Entity__Gpt__O__Version_1__Pro                                        = "gpt/o@1{pro}"
-	Entity__Gpt__O__Version_3                                             = "gpt/o@3"
-	Entity__Gpt__O__Version_3__Deep_research                              = "gpt/o@3{deep-research}"
-	Entity__Gpt__O__Version_3__Mini                                       = "gpt/o@3{mini}"
-	Entity__Gpt__O__Version_3__Pro                                        = "gpt/o@3{pro}"
-	Entity__Gpt__O__Version_4__Mini                                       = "gpt/o@4{mini}"
-	Entity__Gpt__Oss__Size_120b                                           = "gpt/oss#120b"
-	Entity__Gpt__Oss__Size_120b__Fast                                     = "gpt/oss#120b{fast}"
-	Entity__Gpt__Oss__Size_20b                                            = "gpt/oss#20b"
-	Entity__Gpt__Pro__Version_5                                           = "gpt/pro@5"
-	Entity__Gpt__Pro__Version_5_2                                         = "gpt/pro@5.2"
-	Entity__Gpt__Pro__Version_5_4                                         = "gpt/pro@5.4"
-	Entity__Gpt__Pro__Version_5_5                                         = "gpt/pro@5.5"
-	Entity__Gpt__Sol                                                      = "gpt/sol"
-	Entity__Gpt__Sol__Version_5_6                                         = "gpt/sol@5.6"
-	Entity__Gpt__Sol__Version_5_6__Pro                                    = "gpt/sol@5.6{pro}"
-	Entity__Gpt__Terra                                                    = "gpt/terra"
-	Entity__Gpt__Terra__Version_5_6                                       = "gpt/terra@5.6"
-	Entity__Gpt__Terra__Version_5_6__Pro                                  = "gpt/terra@5.6{pro}"
-	Entity__Gpt__Version_1_5                                              = "gpt@1.5"
-	Entity__Gpt__Version_2                                                = "gpt@2"
-	Entity__Gpt__Version_2_1                                              = "gpt@2.1"
-	Entity__Gpt__Version_3_5__Instruct__Turbo                             = "gpt@3.5{turbo,instruct}"
-	Entity__Gpt__Version_3_5__Turbo                                       = "gpt@3.5{turbo}"
-	Entity__Gpt__Version_4                                                = "gpt@4"
-	Entity__Gpt__Version_4_1                                              = "gpt@4.1"
-	Entity__Gpt__Version_4__Turbo                                         = "gpt@4{turbo}"
-	Entity__Gpt__Version_4__Turbo__Vision                                 = "gpt@4{vision,turbo}"
-	Entity__Gpt__Version_5                                                = "gpt@5"
-	Entity__Gpt__Version_5_1                                              = "gpt@5.1"
-	Entity__Gpt__Version_5_1__Chat                                        = "gpt@5.1{chat}"
-	Entity__Gpt__Version_5_2                                              = "gpt@5.2"
-	Entity__Gpt__Version_5_2__Chat                                        = "gpt@5.2{chat}"
-	Entity__Gpt__Version_5_3                                              = "gpt@5.3"
-	Entity__Gpt__Version_5_3__Chat                                        = "gpt@5.3{chat}"
-	Entity__Gpt__Version_5_4                                              = "gpt@5.4"
-	Entity__Gpt__Version_5_5                                              = "gpt@5.5"
-	Entity__Gpt__Version_5__Chat                                          = "gpt@5{chat}"
-	Entity__Granite__Version_4_0                                          = "granite@4.0"
-	Entity__Granite__Version_4_1__Size_8b                                 = "granite@4.1#8b"
-	Entity__Greg                                                          = "greg"
-	Entity__Greg_1__Mini__Version_1                                       = "greg-1/mini@1"
-	Entity__Greg_2__Ultra__Version_2                                      = "greg-2/ultra@2"
-	Entity__Greg__Version_2                                               = "greg@2"
-	Entity__Grok                                                          = "grok"
-	Entity__Grok__Code                                                    = "grok{code}"
-	Entity__Grok__Code_fast__Version_1                                    = "grok/code-fast@1"
-	Entity__Grok__Image                                                   = "grok/image"
-	Entity__Grok__Mini__Version_3                                         = "grok/mini@3"
-	Entity__Grok__Version_3                                               = "grok@3"
-	Entity__Grok__Version_4                                               = "grok@4"
-	Entity__Grok__Version_4_1                                             = "grok@4.1"
-	Entity__Grok__Version_4_1__Fast                                       = "grok@4.1{fast}"
-	Entity__Grok__Version_4_1__Fast__Reasoning                            = "grok@4.1{reasoning,fast}"
-	Entity__Grok__Version_4_1__Non_reasoning                              = "grok@4.1{non-reasoning}"
-	Entity__Grok__Version_4_20                                            = "grok@4.20"
-	Entity__Grok__Version_4_20__Non_reasoning                             = "grok@4.20{non-reasoning}"
-	Entity__Grok__Version_4_20__Reasoning                                 = "grok@4.20{reasoning}"
-	Entity__Grok__Version_4_2__Fast                                       = "grok@4.2{fast}"
-	Entity__Grok__Version_4_2__Non_reasoning                              = "grok@4.2{non-reasoning}"
-	Entity__Grok__Version_4_3                                             = "grok@4.3"
-	Entity__Grok__Version_4_5                                             = "grok@4.5"
-	Entity__Grok__Version_4__Fast                                         = "grok@4{fast}"
-	Entity__Grok__Version_4__Fast__Reasoning                              = "grok@4{reasoning,fast}"
-	Entity__Grok__Version_4__Non_reasoning                                = "grok@4{non-reasoning}"
-	Entity__Grok_build__Version_0_1                                       = "grok-build@0.1"
-	Entity__Groq                                                          = "groq"
-	Entity__Groq__Mini                                                    = "groq/mini"
-	Entity__Hermes                                                        = "hermes"
-	Entity__Hermes__Medium                                                = "hermes/medium"
-	Entity__Hermes__Pro__Version_2__Size_8b                               = "hermes/pro@2#8b"
-	Entity__Hermes__Version_3__Size_405b                                  = "hermes@3#405b"
-	Entity__Hermes__Version_3__Size_70b                                   = "hermes@3#70b"
-	Entity__Hermes__Version_4__Size_405b                                  = "hermes@4#405b"
-	Entity__Hermes__Version_4__Size_70b                                   = "hermes@4#70b"
-	Entity__Holo3__Size_35b_a3b                                           = "holo3#35b-a3b"
-	Entity__Hunyuan                                                       = "hunyuan"
-	Entity__Hunyuan__Instruct                                             = "hunyuan{instruct}"
-	Entity__Hunyuan__Size_7b                                              = "hunyuan#7b"
-	Entity__Hunyuan__Version_2_0                                          = "hunyuan@2.0"
-	Entity__Hunyuan__Version_2_0__Instruct                                = "hunyuan@2.0{instruct}"
-	Entity__Hy__Version_3                                                 = "hy@3"
-	Entity__Ideogram                                                      = "ideogram"
-	Entity__Ideogram__Turbo                                               = "ideogram{turbo}"
-	Entity__Imagen__Ultra__Version_4_0                                    = "imagen/ultra@4.0"
-	Entity__Imagen__Version_3                                             = "imagen@3"
-	Entity__Imagen__Version_3__Fast                                       = "imagen@3{fast}"
-	Entity__Imagen__Version_4_0                                           = "imagen@4.0"
-	Entity__Imagen__Version_4_0__Fast                                     = "imagen@4.0{fast}"
-	Entity__Indictrans__Size_1b                                           = "indictrans#1b"
-	Entity__Inflection__Version_3                                         = "inflection@3"
-	Entity__Inkling                                                       = "inkling"
-	Entity__Intellect__Version_3                                          = "intellect@3"
-	Entity__Interfaze                                                     = "interfaze"
-	Entity__Jais__Size_30b__Chat                                          = "jais#30b{chat}"
-	Entity__Jamba__Large                                                  = "jamba/large"
-	Entity__Jamba__Large__Version_1_6                                     = "jamba/large@1.6"
-	Entity__Jamba__Large__Version_1_7                                     = "jamba/large@1.7"
-	Entity__Jamba__Mini                                                   = "jamba/mini"
-	Entity__Jamba__Mini__Version_1_6                                      = "jamba/mini@1.6"
-	Entity__Jamba__Mini__Version_1_7                                      = "jamba/mini@1.7"
-	Entity__Kat                                                           = "kat"
-	Entity__Kat__Coder                                                    = "kat/coder"
-	Entity__Kat__Size_72b                                                 = "kat#72b"
-	Entity__Kimi                                                          = "kimi"
-	Entity__Kimi__Coder                                                   = "kimi/coder"
-	Entity__Kimi__K__Version_2                                            = "kimi/k@2"
-	Entity__Kimi__K__Version_2_5                                          = "kimi/k@2.5"
-	Entity__Kimi__K__Version_2_6                                          = "kimi/k@2.6"
-	Entity__Kimi__K__Version_2_7                                          = "kimi/k@2.7"
-	Entity__Kimi__K__Version_2_7__Code                                    = "kimi/k@2.7{code}"
-	Entity__Kimi__K__Version_2_7__Size_1100b__Code                        = "kimi/k@2.7#1100b{code}"
-	Entity__Kimi__K__Version_2__Instruct                                  = "kimi/k@2{instruct}"
-	Entity__Kimi__K__Version_3                                            = "kimi/k@3"
-	Entity__Kling__I2v__Version_2_5__Turbo                                = "kling/i2v@2.5{turbo}"
-	Entity__Kling__I2v__Version_2_6                                       = "kling/i2v@2.6"
-	Entity__Kling__I2v__Version_3_0                                       = "kling/i2v@3.0"
-	Entity__Kling__Motion_control__Version_2_6                            = "kling/motion-control@2.6"
-	Entity__Kling__Motion_control__Version_3_0                            = "kling/motion-control@3.0"
-	Entity__Kling__T2v__Version_2_5__Turbo                                = "kling/t2v@2.5{turbo}"
-	Entity__Kling__T2v__Version_2_6                                       = "kling/t2v@2.6"
-	Entity__Kling__T2v__Version_3_0                                       = "kling/t2v@3.0"
-	Entity__Kling__Version_2_6                                            = "kling@2.6"
-	Entity__L31_70b_euryale__V2_2__Size_70b                               = "l31-70b-euryale/v2.2#70b"
-	Entity__L3_70b_euryale__V2_1__Size_70b                                = "l3-70b-euryale/v2.1#70b"
-	Entity__Laguna                                                        = "laguna"
-	Entity__Laguna__M__Version_1                                          = "laguna/m@1"
-	Entity__Laguna__Xs__Version_2                                         = "laguna/xs@2"
-	Entity__Laguna__Xs__Version_2_1                                       = "laguna/xs@2.1"
-	Entity__Laguna_s                                                      = "laguna-s"
-	Entity__Laguna_s__Version_2_1                                         = "laguna-s@2.1"
-	Entity__Learnlm__Pro__Version_1_5                                     = "learnlm/pro@1.5"
-	Entity__Lfm__Version_2__Size_24b_a2b                                  = "lfm@2#24b-a2b"
-	Entity__Ling__Flash__Version_2_0                                      = "ling/flash@2.0"
-	Entity__Ling__Flash__Version_2_6                                      = "ling/flash@2.6"
-	Entity__Ling__Flash_free__Version_2_6                                 = "ling/flash-free@2.6"
-	Entity__Ling__Size_1t                                                 = "ling#1t"
-	Entity__Ling__Version_2_6__Size_1t                                    = "ling@2.6#1t"
-	Entity__Liquid__Size_24b_a2b                                          = "liquid#24b-a2b"
-	Entity__Llama__Embed__Size_300m                                       = "llama/embed#300m"
-	Entity__Llama__Large__Size_70b                                        = "llama/large#70b"
-	Entity__Llama__Lite__Version_3__Size_8b                               = "llama/lite@3#8b"
-	Entity__Llama__Maverick__Version_4__Size_17b_128e                     = "llama/maverick@4#17b-128e"
-	Entity__Llama__Maverick__Version_4__Size_17b_128e__Instruct           = "llama/maverick@4#17b-128e{instruct}"
-	Entity__Llama__R__Version_2__Size_70b                                 = "llama/r@2#70b"
-	Entity__Llama__Scout__Version_4__Size_17b_16e                         = "llama/scout@4#17b-16e"
-	Entity__Llama__Scout__Version_4__Size_17b_16e__Instruct               = "llama/scout@4#17b-16e{instruct}"
-	Entity__Llama__Size_12b                                               = "llama#12b"
-	Entity__Llama__Size_24b                                               = "llama#24b"
-	Entity__Llama__Size_70b                                               = "llama#70b"
-	Entity__Llama__Size_70b__Instruct                                     = "llama#70b{instruct}"
-	Entity__Llama__Size_8b                                                = "llama#8b"
-	Entity__Llama__Size_8b__Instruct                                      = "llama#8b{instruct}"
-	Entity__Llama__Version_2__Size_22m                                    = "llama@2#22m"
-	Entity__Llama__Version_2__Size_7b__Chat                               = "llama@2#7b{chat}"
-	Entity__Llama__Version_2__Size_86m                                    = "llama@2#86m"
-	Entity__Llama__Version_3_05__Size_70b                                 = "llama@3.05#70b"
-	Entity__Llama__Version_3_1__Size_405b__Instruct                       = "llama@3.1#405b{instruct}"
-	Entity__Llama__Version_3_1__Size_405b__Instruct__Turbo                = "llama@3.1#405b{turbo,instruct}"
-	Entity__Llama__Version_3_1__Size_70b                                  = "llama@3.1#70b"
-	Entity__Llama__Version_3_1__Size_70b__Instruct                        = "llama@3.1#70b{instruct}"
-	Entity__Llama__Version_3_1__Size_8b                                   = "llama@3.1#8b"
-	Entity__Llama__Version_3_1__Size_8b__Instruct                         = "llama@3.1#8b{instruct}"
-	Entity__Llama__Version_3_1__Size_8b__Instruct__Turbo                  = "llama@3.1#8b{turbo,instruct}"
-	Entity__Llama__Version_3_2__Size_11b__Instruct                        = "llama@3.2#11b{instruct}"
-	Entity__Llama__Version_3_2__Size_11b__Instruct__Vision                = "llama@3.2#11b{vision,instruct}"
-	Entity__Llama__Version_3_2__Size_1b__Instruct                         = "llama@3.2#1b{instruct}"
-	Entity__Llama__Version_3_2__Size_3b                                   = "llama@3.2#3b"
-	Entity__Llama__Version_3_2__Size_3b__Instruct                         = "llama@3.2#3b{instruct}"
-	Entity__Llama__Version_3_2__Size_90b__Instruct__Vision                = "llama@3.2#90b{vision,instruct}"
-	Entity__Llama__Version_3_3__Size_70b                                  = "llama@3.3#70b"
-	Entity__Llama__Version_3_3__Size_70b__Fast__Instruct                  = "llama@3.3#70b{fast,instruct}"
-	Entity__Llama__Version_3_3__Size_70b__Instruct                        = "llama@3.3#70b{instruct}"
-	Entity__Llama__Version_3_3__Size_70b__Instruct__Turbo                 = "llama@3.3#70b{turbo,instruct}"
-	Entity__Llama__Version_3_3__Size_8b__Instruct                         = "llama@3.3#8b{instruct}"
-	Entity__Llama__Version_3__Size_70b__Instruct                          = "llama@3#70b{instruct}"
-	Entity__Llama__Version_3__Size_8b                                     = "llama@3#8b"
-	Entity__Llama__Version_3__Size_8b__Instruct                           = "llama@3#8b{instruct}"
-	Entity__Llama__Version_4                                              = "llama@4"
-	Entity__Llama__Version_4__Size_12b                                    = "llama@4#12b"
-	Entity__Longcat__Flash__Chat                                          = "longcat/flash{chat}"
-	Entity__Longcat__Flash_lite                                           = "longcat/flash-lite"
-	Entity__Longcat__Version_2_0                                          = "longcat@2.0"
-	Entity__Lucid                                                         = "lucid"
-	Entity__Lyria                                                         = "lyria"
-	Entity__Lyria__Pro__Version_3                                         = "lyria/pro@3"
-	Entity__Lyria__Version_3                                              = "lyria@3"
-	Entity__M2m__Size_1_2b                                                = "m2m#1.2b"
-	Entity__M__Size_14b                                                   = "m#14b"
-	Entity__Maestro__Reasoning                                            = "maestro{reasoning}"
-	Entity__Magibu__Size_11b                                              = "magibu#11b"
-	Entity__Magidonia_24b__V4_3__Size_24b                                 = "magidonia-24b/v4.3#24b"
-	Entity__Magistral__Medium                                             = "magistral/medium"
-	Entity__Magistral__Small                                              = "magistral/small"
-	Entity__Magnum__Size_72b                                              = "magnum#72b"
-	Entity__Magpie                                                        = "magpie"
-	Entity__Mai                                                           = "mai"
-	Entity__Mai__Version_1                                                = "mai@1"
-	Entity__Medgemma__Size_4b                                             = "medgemma#4b"
-	Entity__Mellum2__Size_12b__Instruct                                   = "mellum2#12b{instruct}"
-	Entity__Melotts                                                       = "melotts"
-	Entity__Mercury__Coder                                                = "mercury/coder"
-	Entity__Mercury__Version_2                                            = "mercury@2"
-	Entity__Mercury_edit__Version_2                                       = "mercury-edit@2"
-	Entity__Mimo__Version_2_5                                             = "mimo@2.5"
-	Entity__Mimo__Version_2_5__Pro                                        = "mimo@2.5{pro}"
-	Entity__Mimo__Version_2_5__Tts                                        = "mimo@2.5{tts}"
-	Entity__Mimo__Version_2_5__Tts__Voiceclone                            = "mimo@2.5{tts,voiceclone}"
-	Entity__Mimo__Version_2_5__Tts__Voicedesign                           = "mimo@2.5{tts,voicedesign}"
-	Entity__Mimo__Version_2__Flash                                        = "mimo@2{flash}"
-	Entity__Mimo__Version_2__Omni                                         = "mimo@2{omni}"
-	Entity__Mimo__Version_2__Pro                                          = "mimo@2{pro}"
-	Entity__Mimo__Version_2__Tts                                          = "mimo@2{tts}"
-	Entity__Minimax                                                       = "minimax"
-	Entity__Minimax__M__Version_1                                         = "minimax/m@1"
-	Entity__Minimax__M__Version_2                                         = "minimax/m@2"
-	Entity__Minimax__M__Version_2_1                                       = "minimax/m@2.1"
-	Entity__Minimax__M__Version_2_5                                       = "minimax/m@2.5"
-	Entity__Minimax__M__Version_2_5__Size_230b                            = "minimax/m@2.5#230b"
-	Entity__Minimax__M__Version_2_7                                       = "minimax/m@2.7"
-	Entity__Minimax__M__Version_3                                         = "minimax/m@3"
-	Entity__Minimax__Version_01                                           = "minimax@01"
-	Entity__Ministral__Size_14b                                           = "ministral#14b"
-	Entity__Ministral__Size_14b__Instruct                                 = "ministral#14b{instruct}"
-	Entity__Ministral__Size_3b                                            = "ministral#3b"
-	Entity__Ministral__Size_8b                                            = "ministral#8b"
-	Entity__Ministral__Version_3__Size_14b__Instruct                      = "ministral@3#14b{instruct}"
-	Entity__Ministral__Version_3__Size_14b__Reasoning                     = "ministral@3#14b{reasoning}"
-	Entity__Ministral__Version_3__Size_3b__Instruct                       = "ministral@3#3b{instruct}"
-	Entity__Ministral__Version_3__Size_3b__Reasoning                      = "ministral@3#3b{reasoning}"
-	Entity__Ministral__Version_3__Size_8b__Instruct                       = "ministral@3#8b{instruct}"
-	Entity__Mirothinker_1_7_deepresearch__Mini__Version_1_7               = "mirothinker-1-7-deepresearch/mini@1.7"
-	Entity__Mirothinker__Version_1_7                                      = "mirothinker@1.7"
-	Entity__Mistral                                                       = "mistral"
-	Entity__Mistral__Code                                                 = "mistral{code}"
-	Entity__Mistral__Embed                                                = "mistral/embed"
-	Entity__Mistral__Large                                                = "mistral/large"
-	Entity__Mistral__Large__Instruct                                      = "mistral/large{instruct}"
-	Entity__Mistral__Large__Size_675b                                     = "mistral/large#675b"
-	Entity__Mistral__Large__Version_3                                     = "mistral/large@3"
-	Entity__Mistral__Large__Version_3__Size_675b__Instruct                = "mistral/large@3#675b{instruct}"
-	Entity__Mistral__Medium                                               = "mistral/medium"
-	Entity__Mistral__Medium__Instruct                                     = "mistral/medium{instruct}"
-	Entity__Mistral__Medium__Version_3                                    = "mistral/medium@3"
-	Entity__Mistral__Medium__Version_3_1                                  = "mistral/medium@3.1"
-	Entity__Mistral__Medium__Version_3_5                                  = "mistral/medium@3.5"
-	Entity__Mistral__Medium__Version_3_5__Size_128b                       = "mistral/medium@3.5#128b"
-	Entity__Mistral__Medium__Version_3__Instruct                          = "mistral/medium@3{instruct}"
-	Entity__Mistral__Nemo                                                 = "mistral/nemo"
-	Entity__Mistral__Nemo__Instruct                                       = "mistral/nemo{instruct}"
-	Entity__Mistral__Nemo__Size_12b                                       = "mistral/nemo#12b"
-	Entity__Mistral__Nemo__Size_12b__Instruct                             = "mistral/nemo#12b{instruct}"
-	Entity__Mistral__Size_24b                                             = "mistral#24b"
-	Entity__Mistral__Size_7b                                              = "mistral#7b"
-	Entity__Mistral__Size_7b__Instruct                                    = "mistral#7b{instruct}"
-	Entity__Mistral__Small                                                = "mistral/small"
-	Entity__Mistral__Small__Size_119b                                     = "mistral/small#119b"
-	Entity__Mistral__Small__Size_24b__Instruct                            = "mistral/small#24b{instruct}"
-	Entity__Mistral__Small__Version_3_1__Size_24b__Instruct               = "mistral/small@3.1#24b{instruct}"
-	Entity__Mistral__Small__Version_3_2__Size_24b__Instruct               = "mistral/small@3.2#24b{instruct}"
-	Entity__Mistral__Small__Version_4                                     = "mistral/small@4"
-	Entity__Mistral__Small__Version_4__Size_119b                          = "mistral/small@4#119b"
-	Entity__Mistral__Version_0_1__Size_7b__Instruct                       = "mistral@0.1#7b{instruct}"
-	Entity__Mistral__Version_0_3__Size_7b__Instruct                       = "mistral@0.3#7b{instruct}"
-	Entity__Mixtral__Size_8x22b                                           = "mixtral#8x22b"
-	Entity__Mixtral__Size_8x22b__Instruct                                 = "mixtral#8x22b{instruct}"
-	Entity__Mixtral__Size_8x7b                                            = "mixtral#8x7b"
-	Entity__Mixtral__Size_8x7b__Instruct                                  = "mixtral#8x7b{instruct}"
-	Entity__Mixtral__Version_0_1__Size_8x22b__Instruct                    = "mixtral@0.1#8x22b{instruct}"
-	Entity__Mixtral__Version_0_1__Size_8x7b__Instruct                     = "mixtral@0.1#8x7b{instruct}"
-	Entity__Mm_poly__Size_8b                                              = "mm-poly#8b"
-	Entity__Model_router                                                  = "model-router"
-	Entity__Morph__Fast                                                   = "morph{fast}"
-	Entity__Morph__Large                                                  = "morph/large"
-	Entity__Muse__Spark__Version_1_1                                      = "muse/spark@1.1"
-	Entity__Mythomax__Size_13b                                            = "mythomax#13b"
-	Entity__Nano_banana                                                   = "nano-banana"
-	Entity__Nano_banana__Pro                                              = "nano-banana/pro"
-	Entity__Nemotron                                                      = "nemotron"
-	Entity__Nemotron__Embed__Size_1b                                      = "nemotron/embed#1b"
-	Entity__Nemotron__Mini__Size_4b__Instruct                             = "nemotron/mini#4b{instruct}"
-	Entity__Nemotron__Nano__Size_12b                                      = "nemotron/nano#12b"
-	Entity__Nemotron__Nano__Size_30b                                      = "nemotron/nano#30b"
-	Entity__Nemotron__Nano__Size_30b_a3b                                  = "nemotron/nano#30b-a3b"
-	Entity__Nemotron__Nano__Size_9b                                       = "nemotron/nano#9b"
-	Entity__Nemotron__Nano__Version_3__Omni                               = "nemotron/nano@3{omni}"
-	Entity__Nemotron__Nano__Version_3__Size_30b                           = "nemotron/nano@3#30b"
-	Entity__Nemotron__Nano__Version_3__Size_30b_a3b                       = "nemotron/nano@3#30b-a3b"
-	Entity__Nemotron__Nano__Version_3__Size_30b_a3b__Omni__Reasoning      = "nemotron/nano@3#30b-a3b{reasoning,omni}"
-	Entity__Nemotron__Size_120b_a12b                                      = "nemotron#120b-a12b"
-	Entity__Nemotron__Size_1b                                             = "nemotron#1b"
-	Entity__Nemotron__Size_32b                                            = "nemotron#32b"
-	Entity__Nemotron__Size_49b                                            = "nemotron#49b"
-	Entity__Nemotron__Size_4b__Reasoning                                  = "nemotron#4b{reasoning}"
-	Entity__Nemotron__Size_70b                                            = "nemotron#70b"
-	Entity__Nemotron__Size_70b__Instruct                                  = "nemotron#70b{instruct}"
-	Entity__Nemotron__Size_8b                                             = "nemotron#8b"
-	Entity__Nemotron__Ultra__Size_253b                                    = "nemotron/ultra#253b"
-	Entity__Nemotron__Ultra__Size_550b_a55b                               = "nemotron/ultra#550b-a55b"
-	Entity__Nemotron__Ultra__Version_3                                    = "nemotron/ultra@3"
-	Entity__Nemotron__Ultra__Version_3__Size_550b                         = "nemotron/ultra@3#550b"
-	Entity__Nemotron__Ultra__Version_3__Size_550b_a55b                    = "nemotron/ultra@3#550b-a55b"
-	Entity__Nemotron__V1_5__Version_3_3__Size_49b                         = "nemotron/v1.5@3.3#49b"
-	Entity__Nemotron__Version_2__Size_30b_a3b                             = "nemotron@2#30b-a3b"
-	Entity__Nemotron__Version_3                                           = "nemotron@3"
-	Entity__Nemotron__Version_3_5                                         = "nemotron@3.5"
-	Entity__Nemotron__Version_3__Size_120b                                = "nemotron@3#120b"
-	Entity__Nemotron__Version_3__Size_120b_a12b                           = "nemotron@3#120b-a12b"
-	Entity__Nemotron__Version_3__Size_30b                                 = "nemotron@3#30b"
-	Entity__Nomic                                                         = "nomic"
-	Entity__North__Mini                                                   = "north/mini"
-	Entity__North__Mini__Code                                             = "north/mini{code}"
-	Entity__Nova                                                          = "nova"
-	Entity__Nova__Flash                                                   = "nova/flash"
-	Entity__Nova__Lite                                                    = "nova/lite"
-	Entity__Nova__Lite__Version_2                                         = "nova/lite@2"
-	Entity__Nova__Micro                                                   = "nova/micro"
-	Entity__Nova__Mini                                                    = "nova/mini"
-	Entity__Nova__Pro                                                     = "nova/pro"
-	Entity__Nova__Pro__Version_2                                          = "nova/pro@2"
-	Entity__Nova__Size_100b                                               = "nova#100b"
-	Entity__Nova__Version_3                                               = "nova@3"
-	Entity__Nv                                                            = "nv"
-	Entity__Nv__Size_7b                                                   = "nv#7b"
-	Entity__Nvidia__Size_1b                                               = "nvidia#1b"
-	Entity__Olmo__Version_3__Size_32b                                     = "olmo@3#32b"
-	Entity__Ornith__Version_1_0__Size_31b                                 = "ornith@1.0#31b"
-	Entity__Ornith__Version_1_0__Size_35b                                 = "ornith@1.0#35b"
-	Entity__Ornith__Version_1_0__Size_397b                                = "ornith@1.0#397b"
-	Entity__Ornith__Version_1_0__Size_9b                                  = "ornith@1.0#9b"
-	Entity__Osmosis__Size_0_6b                                            = "osmosis#0.6b"
-	Entity__Owl                                                           = "owl"
-	Entity__Paddleocr                                                     = "paddleocr"
-	Entity__Paddleocr_vl__Version_1_5                                     = "paddleocr-vl@1.5"
-	Entity__Palmyra                                                       = "palmyra"
-	Entity__Pareto__Code                                                  = "pareto{code}"
-	Entity__Perceptron                                                    = "perceptron"
-	Entity__Phi__Medium__Version_3__Instruct                              = "phi/medium@3{instruct}"
-	Entity__Phi__Mini__Version_3_5__Instruct                              = "phi/mini@3.5{instruct}"
-	Entity__Phi__Mini__Version_3__Instruct                                = "phi/mini@3{instruct}"
-	Entity__Phi__Mini__Version_4                                          = "phi/mini@4"
-	Entity__Phi__Mini__Version_4__Instruct                                = "phi/mini@4{instruct}"
-	Entity__Phi__Mini__Version_4__Reasoning                               = "phi/mini@4{reasoning}"
-	Entity__Phi__Small__Version_3__Instruct                               = "phi/small@3{instruct}"
-	Entity__Phi__Version_3_5__Instruct                                    = "phi@3.5{instruct}"
-	Entity__Phi__Version_3_5__Instruct__Vision                            = "phi@3.5{vision,instruct}"
-	Entity__Phi__Version_4                                                = "phi@4"
-	Entity__Phi__Version_4__Instruct__Multimodal                          = "phi@4{multimodal,instruct}"
-	Entity__Phi__Version_4__Multimodal                                    = "phi@4{multimodal}"
-	Entity__Phi__Version_4__Reasoning                                     = "phi@4{reasoning}"
-	Entity__Pixtral__Large                                                = "pixtral/large"
-	Entity__Pixtral__Size_12b                                             = "pixtral#12b"
-	Entity__Plamo__Size_1b                                                = "plamo#1b"
-	Entity__Qianfan__Fast                                                 = "qianfan{fast}"
-	Entity__Qvq                                                           = "qvq"
-	Entity__Qwen                                                          = "qwen"
-	Entity__Qwen3_5_27b_omega_evolution__V2_0_Derestricted_Lite__Size_27b = "qwen3.5-27b-omega-evolution/v2.0-Derestricted-Lite#27b"
-	Entity__Qwen3_5_27b_omega_evolution__V2_0_Derestricted__Size_27b      = "qwen3.5-27b-omega-evolution/v2.0-Derestricted#27b"
-	Entity__Qwen3_5_27b_omega_evolution__V2_2_Derestricted_Lite__Size_27b = "qwen3.5-27b-omega-evolution/v2.2-Derestricted-Lite#27b"
-	Entity__Qwen3_5_27b_omega_evolution__V2_2_Derestricted__Size_27b      = "qwen3.5-27b-omega-evolution/v2.2-Derestricted#27b"
-	Entity__Qwen3guard__Size_0_6b                                         = "qwen3guard#0.6b"
-	Entity__Qwen3guard__Size_8b                                           = "qwen3guard#8b"
-	Entity__Qwen__Coder                                                   = "qwen/coder"
-	Entity__Qwen__Coder__Size_30b_a3b                                     = "qwen/coder#30b-a3b"
-	Entity__Qwen__Coder__Size_480b_a35b                                   = "qwen/coder#480b-a35b"
-	Entity__Qwen__Coder__Version_2_5__Size_32b                            = "qwen/coder@2.5#32b"
-	Entity__Qwen__Coder__Version_2_5__Size_32b__Instruct                  = "qwen/coder@2.5#32b{instruct}"
-	Entity__Qwen__Coder__Version_2_5__Size_7b__Fast                       = "qwen/coder@2.5#7b{fast}"
-	Entity__Qwen__Coder__Version_2_5__Size_7b__Instruct                   = "qwen/coder@2.5#7b{instruct}"
-	Entity__Qwen__Coder__Version_3                                        = "qwen/coder@3"
-	Entity__Qwen__Coder__Version_3__Size_30b                              = "qwen/coder@3#30b"
-	Entity__Qwen__Coder__Version_3__Size_30b_a3b                          = "qwen/coder@3#30b-a3b"
-	Entity__Qwen__Coder__Version_3__Size_30b_a3b__Instruct                = "qwen/coder@3#30b-a3b{instruct}"
-	Entity__Qwen__Coder__Version_3__Size_480b_a35b                        = "qwen/coder@3#480b-a35b"
-	Entity__Qwen__Coder__Version_3__Size_480b_a35b__Instruct              = "qwen/coder@3#480b-a35b{instruct}"
-	Entity__Qwen__Deep_research                                           = "qwen/deep-research"
-	Entity__Qwen__Embedding__Version_3__Size_0_6b                         = "qwen/embedding@3#0.6b"
-	Entity__Qwen__Embedding__Version_3__Size_4b                           = "qwen/embedding@3#4b"
-	Entity__Qwen__Embedding__Version_3__Size_8b                           = "qwen/embedding@3#8b"
-	Entity__Qwen__Flash                                                   = "qwen/flash"
-	Entity__Qwen__Flash__Version_3                                        = "qwen/flash@3"
-	Entity__Qwen__Flash__Version_3_5                                      = "qwen/flash@3.5"
-	Entity__Qwen__Flash__Version_3_5__Omni                                = "qwen/flash@3.5{omni}"
-	Entity__Qwen__Flash__Version_3_6                                      = "qwen/flash@3.6"
-	Entity__Qwen__Flash__Version_3__Livetranslate                         = "qwen/flash@3{livetranslate}"
-	Entity__Qwen__Flash__Version_3__Omni                                  = "qwen/flash@3{omni}"
-	Entity__Qwen__Image                                                   = "qwen/image"
-	Entity__Qwen__Image__Version_2_0                                      = "qwen/image@2.0"
-	Entity__Qwen__Lite__Version_3_5__Size_27b                             = "qwen/lite@3.5#27b"
-	Entity__Qwen__Max                                                     = "qwen/max"
-	Entity__Qwen__Max__Version_3                                          = "qwen/max@3"
-	Entity__Qwen__Max__Version_3_6                                        = "qwen/max@3.6"
-	Entity__Qwen__Max__Version_3_7                                        = "qwen/max@3.7"
-	Entity__Qwen__Max__Version_3_8                                        = "qwen/max@3.8"
-	Entity__Qwen__Next__Size_80b_a3b                                      = "qwen/next#80b-a3b"
-	Entity__Qwen__Next__Version_3__Size_80b                               = "qwen/next@3#80b"
-	Entity__Qwen__Next__Version_3__Size_80b_a3b                           = "qwen/next@3#80b-a3b"
-	Entity__Qwen__Next__Version_3__Size_80b_a3b__Fast                     = "qwen/next@3#80b-a3b{fast}"
-	Entity__Qwen__Next__Version_3__Size_80b_a3b__Instruct                 = "qwen/next@3#80b-a3b{instruct}"
-	Entity__Qwen__Plus                                                    = "qwen/plus"
-	Entity__Qwen__Plus__Version_3_5                                       = "qwen/plus@3.5"
-	Entity__Qwen__Plus__Version_3_5__Omni                                 = "qwen/plus@3.5{omni}"
-	Entity__Qwen__Plus__Version_3_6                                       = "qwen/plus@3.6"
-	Entity__Qwen__Plus__Version_3_7                                       = "qwen/plus@3.7"
-	Entity__Qwen__Size_14b                                                = "qwen#14b"
-	Entity__Qwen__Size_235b_a22b                                          = "qwen#235b-a22b"
-	Entity__Qwen__Size_32b                                                = "qwen#32b"
-	Entity__Qwen__Size_35b_a3b                                            = "qwen#35b-a3b"
-	Entity__Qwen__Size_397b                                               = "qwen#397b"
-	Entity__Qwen__Size_5b                                                 = "qwen#5b"
-	Entity__Qwen__Size_72b                                                = "qwen#72b"
-	Entity__Qwen__Size_7b                                                 = "qwen#7b"
-	Entity__Qwen__Size_8b                                                 = "qwen#8b"
-	Entity__Qwen__Size_9b                                                 = "qwen#9b"
-	Entity__Qwen__Turbo                                                   = "qwen/turbo"
-	Entity__Qwen__Turbo__Omni                                             = "qwen/turbo{omni}"
-	Entity__Qwen__Turbo__Version_2_5__Size_7b                             = "qwen/turbo@2.5#7b"
-	Entity__Qwen__Version_2_5__Size_14b__Instruct                         = "qwen@2.5#14b{instruct}"
-	Entity__Qwen__Version_2_5__Size_32b__Instruct                         = "qwen@2.5#32b{instruct}"
-	Entity__Qwen__Version_2_5__Size_72b__Instruct                         = "qwen@2.5#72b{instruct}"
-	Entity__Qwen__Version_2_5__Size_7b__Instruct                          = "qwen@2.5#7b{instruct}"
-	Entity__Qwen__Version_2_5__Size_7b__Instruct__Vision                  = "qwen@2.5#7b{vision,instruct}"
-	Entity__Qwen__Version_2_5__Size_7b__Omni                              = "qwen@2.5#7b{omni}"
-	Entity__Qwen__Version_3                                               = "qwen@3"
-	Entity__Qwen__Version_3_5                                             = "qwen@3.5"
-	Entity__Qwen__Version_3_5__Size_122b                                  = "qwen@3.5#122b"
-	Entity__Qwen__Version_3_5__Size_122b_a10b                             = "qwen@3.5#122b-a10b"
-	Entity__Qwen__Version_3_5__Size_27b                                   = "qwen@3.5#27b"
-	Entity__Qwen__Version_3_5__Size_35b_a3b                               = "qwen@3.5#35b-a3b"
-	Entity__Qwen__Version_3_5__Size_397b__Fast                            = "qwen@3.5#397b{fast}"
-	Entity__Qwen__Version_3_5__Size_397b_a17b                             = "qwen@3.5#397b-a17b"
-	Entity__Qwen__Version_3_5__Size_397b_a17b__Fast                       = "qwen@3.5#397b-a17b{fast}"
-	Entity__Qwen__Version_3_5__Size_4b                                    = "qwen@3.5#4b"
-	Entity__Qwen__Version_3_5__Size_9b                                    = "qwen@3.5#9b"
-	Entity__Qwen__Version_3_6__Size_27b                                   = "qwen@3.6#27b"
-	Entity__Qwen__Version_3_6__Size_35b                                   = "qwen@3.6#35b"
-	Entity__Qwen__Version_3_6__Size_35b__Fast                             = "qwen@3.6#35b{fast}"
-	Entity__Qwen__Version_3_6__Size_35b_a3b                               = "qwen@3.6#35b-a3b"
-	Entity__Qwen__Version_3_7                                             = "qwen@3.7"
-	Entity__Qwen__Version_3__Size_0_6b                                    = "qwen@3#0.6b"
-	Entity__Qwen__Version_3__Size_14b                                     = "qwen@3#14b"
-	Entity__Qwen__Version_3__Size_14b__Instruct                           = "qwen@3#14b{instruct}"
-	Entity__Qwen__Version_3__Size_1_7b__Base                              = "qwen@3#1.7b{base}"
-	Entity__Qwen__Version_3__Size_235b                                    = "qwen@3#235b"
-	Entity__Qwen__Version_3__Size_235b_a22b                               = "qwen@3#235b-a22b"
-	Entity__Qwen__Version_3__Size_235b_a22b__Fast                         = "qwen@3#235b-a22b{fast}"
-	Entity__Qwen__Version_3__Size_235b_a22b__Instruct                     = "qwen@3#235b-a22b{instruct}"
-	Entity__Qwen__Version_3__Size_30b                                     = "qwen@3#30b"
-	Entity__Qwen__Version_3__Size_30b_a3b                                 = "qwen@3#30b-a3b"
-	Entity__Qwen__Version_3__Size_30b_a3b__Instruct                       = "qwen@3#30b-a3b{instruct}"
-	Entity__Qwen__Version_3__Size_30b_a3b__Instruct__Omni                 = "qwen@3#30b-a3b{instruct,omni}"
-	Entity__Qwen__Version_3__Size_30b_a3b__Omni                           = "qwen@3#30b-a3b{omni}"
-	Entity__Qwen__Version_3__Size_32b                                     = "qwen@3#32b"
-	Entity__Qwen__Version_3__Size_35b_a3b                                 = "qwen@3#35b-a3b"
-	Entity__Qwen__Version_3__Size_4b                                      = "qwen@3#4b"
-	Entity__Qwen__Version_3__Size_4b__Base                                = "qwen@3#4b{base}"
-	Entity__Qwen__Version_3__Size_4b__Instruct                            = "qwen@3#4b{instruct}"
-	Entity__Qwen__Version_3__Size_8b                                      = "qwen@3#8b"
-	Entity__Qwen__Vl                                                      = "qwen/vl"
-	Entity__Qwen__Vl__Size_235b_a22b                                      = "qwen/vl#235b-a22b"
-	Entity__Qwen__Vl__Version_2_5__Size_32b__Instruct                     = "qwen/vl@2.5#32b{instruct}"
-	Entity__Qwen__Vl__Version_2_5__Size_72b__Instruct                     = "qwen/vl@2.5#72b{instruct}"
-	Entity__Qwen__Vl__Version_2_5__Size_7b__Instruct                      = "qwen/vl@2.5#7b{instruct}"
-	Entity__Qwen__Vl__Version_3                                           = "qwen/vl@3"
-	Entity__Qwen__Vl__Version_3__Instruct                                 = "qwen/vl@3{instruct}"
-	Entity__Qwen__Vl__Version_3__Size_235b_a22b                           = "qwen/vl@3#235b-a22b"
-	Entity__Qwen__Vl__Version_3__Size_235b_a22b__Instruct                 = "qwen/vl@3#235b-a22b{instruct}"
-	Entity__Qwen__Vl__Version_3__Size_30b_a3b                             = "qwen/vl@3#30b-a3b"
-	Entity__Qwen__Vl__Version_3__Size_30b_a3b__Instruct                   = "qwen/vl@3#30b-a3b{instruct}"
-	Entity__Qwen__Vl__Version_3__Size_32b                                 = "qwen/vl@3#32b"
-	Entity__Qwen__Vl__Version_3__Size_32b__Instruct                       = "qwen/vl@3#32b{instruct}"
-	Entity__Qwen__Vl__Version_3__Size_8b                                  = "qwen/vl@3#8b"
-	Entity__Qwen__Vl__Version_3__Size_8b__Instruct                        = "qwen/vl@3#8b{instruct}"
-	Entity__Qwerky__Size_72b                                              = "qwerky#72b"
-	Entity__Qwq__Plus                                                     = "qwq/plus"
-	Entity__Qwq__Size_32b                                                 = "qwq#32b"
-	Entity__Ray                                                           = "ray"
-	Entity__Recraft                                                       = "recraft"
-	Entity__Recraft__Pro                                                  = "recraft/pro"
-	Entity__Recraft__V4_1                                                 = "recraft/v4.1"
-	Entity__Recraft__V4_1_utility                                         = "recraft/v4.1-utility"
-	Entity__Reka                                                          = "reka"
-	Entity__Reka__Flash__Version_3                                        = "reka/flash@3"
-	Entity__Relace                                                        = "relace"
-	Entity__Relace_apply__Version_3                                       = "relace-apply@3"
-	Entity__Remm__Size_13b                                                = "remm#13b"
-	Entity__Rerank__Fast                                                  = "rerank{fast}"
-	Entity__Rerank__Lite__Version_2_5                                     = "rerank/lite@2.5"
-	Entity__Rerank__Pro                                                   = "rerank{pro}"
-	Entity__Rerank__Size_4b                                               = "rerank#4b"
-	Entity__Rerank__V3_5                                                  = "rerank/v3.5"
-	Entity__Rerank__Version_2_5                                           = "rerank@2.5"
-	Entity__Ring__Size_1t                                                 = "ring#1t"
-	Entity__Ring__Version_2_6__Size_1t                                    = "ring@2.6#1t"
-	Entity__Riva__Size_4b__Instruct                                       = "riva#4b{instruct}"
-	Entity__Rnj__Version_1__Instruct                                      = "rnj@1{instruct}"
-	Entity__Roc                                                           = "roc"
-	Entity__Rocinante_12b__V1_1__Size_12b                                 = "rocinante-12b/v1.1#12b"
-	Entity__Rocinante__Size_12b                                           = "rocinante#12b"
-	Entity__Router                                                        = "router"
-	Entity__Runway                                                        = "runway"
-	Entity__Runway__Version_4__Turbo                                      = "runway@4{turbo}"
-	Entity__Sap_abap__Version_1                                           = "sap-abap@1"
-	Entity__Sarvam                                                        = "sarvam"
-	Entity__Sarvam__Size_105b                                             = "sarvam#105b"
-	Entity__Sarvam__Size_30b                                              = "sarvam#30b"
-	Entity__Seed                                                          = "seed"
-	Entity__Seed__Code                                                    = "seed{code}"
-	Entity__Seed__Fast                                                    = "seed{fast}"
-	Entity__Seed__Flash__Version_1_6                                      = "seed/flash@1.6"
-	Entity__Seed__Lite                                                    = "seed/lite"
-	Entity__Seed__Lite__Version_2_0                                       = "seed/lite@2.0"
-	Entity__Seed__Mini                                                    = "seed/mini"
-	Entity__Seed__Mini__Version_2_0                                       = "seed/mini@2.0"
-	Entity__Seed__Oss__Size_36b__Instruct                                 = "seed/oss#36b{instruct}"
-	Entity__Seed__Pro                                                     = "seed/pro"
-	Entity__Seed__Pro__Fast                                               = "seed/pro{fast}"
-	Entity__Seed__Version_1_6                                             = "seed@1.6"
-	Entity__Seed__Version_1_8                                             = "seed@1.8"
-	Entity__Sincap                                                        = "sincap"
-	Entity__Skyfall_31b__V4_2__Size_31b                                   = "skyfall-31b/v4.2#31b"
-	Entity__Skyfall__Size_36b                                             = "skyfall#36b"
-	Entity__Small                                                         = "small"
-	Entity__Smart_turn                                                    = "smart-turn"
-	Entity__Smollm3__Size_3b__Base                                        = "smollm3#3b{base}"
-	Entity__Solar__Mini                                                   = "solar/mini"
-	Entity__Solar__Pro                                                    = "solar/pro"
-	Entity__Solar__Pro__Version_3                                         = "solar/pro@3"
-	Entity__Solar__Size_10_7b__Instruct                                   = "solar#10.7b{instruct}"
-	Entity__Sonar                                                         = "sonar"
-	Entity__Sonar__Deep_research                                          = "sonar/deep-research"
-	Entity__Sonar__Pro                                                    = "sonar/pro"
-	Entity__Sonar__Reasoning                                              = "sonar/reasoning"
-	Entity__Sora__Pro__Version_2                                          = "sora/pro@2"
-	Entity__Sora__Version_2                                               = "sora@2"
-	Entity__Sparsedrive                                                   = "sparsedrive"
-	Entity__Spotlight                                                     = "spotlight"
-	Entity__Stable_diffusion                                              = "stable-diffusion"
-	Entity__Stable_diffusion__Large__Version_3_5                          = "stable-diffusion/large@3.5"
-	Entity__Step                                                          = "step"
-	Entity__Step__Flash__Version_3_5                                      = "step/flash@3.5"
-	Entity__Step__Flash__Version_3_7                                      = "step/flash@3.7"
-	Entity__Step__Mini__Version_2                                         = "step/mini@2"
-	Entity__Step__Version_1                                               = "step@1"
-	Entity__Step__Version_2                                               = "step@2"
-	Entity__Step__Version_3                                               = "step@3"
-	Entity__Step__Version_3_5                                             = "step@3.5"
-	Entity__Step__Version_3_7                                             = "step@3.7"
-	Entity__Step_r1_v__Mini                                               = "step-r1-v/mini"
-	Entity__Streampetr                                                    = "streampetr"
-	Entity__Studiovoice                                                   = "studiovoice"
-	Entity__Synth                                                         = "synth"
-	Entity__Synth__Code                                                   = "synth{code}"
-	Entity__Synthetic                                                     = "synthetic"
-	Entity__Tako                                                          = "tako"
-	Entity__Text                                                          = "text"
-	Entity__Text_embedding                                                = "text-embedding"
-	Entity__Text_embedding_3__Large__Version_3                            = "text-embedding-3/large@3"
-	Entity__Text_embedding_3__Small__Version_3                            = "text-embedding-3/small@3"
-	Entity__Text_embedding__Embedding__Version_005                        = "text-embedding/embedding@005"
-	Entity__Text_embedding__Large                                         = "text-embedding/large"
-	Entity__Text_embedding__Large__Instruct                               = "text-embedding/large{instruct}"
-	Entity__Text_embedding__Large__Version_3                              = "text-embedding/large@3"
-	Entity__Text_embedding__Mini                                          = "text-embedding/mini"
-	Entity__Text_embedding__Small__Version_3                              = "text-embedding/small@3"
-	Entity__Text_embedding__Version_002                                   = "text-embedding@002"
-	Entity__Tim__Size_27b                                                 = "tim#27b"
-	Entity__Titan__Embed                                                  = "titan/embed"
-	Entity__Topazlabs                                                     = "topazlabs"
-	Entity__Trinity__Large                                                = "trinity/large"
-	Entity__Trinity__Mini                                                 = "trinity/mini"
-	Entity__Tts__Version_1                                                = "tts@1"
-	Entity__Tts__Version_1__Hd                                            = "tts@1{hd}"
-	Entity__Ui__Size_7b                                                   = "ui#7b"
-	Entity__Universal                                                     = "universal"
-	Entity__Unslopnemo_12b__V4_1__Size_12b                                = "unslopnemo-12b/v4.1#12b"
-	Entity__Unslopnemo__Size_12b                                          = "unslopnemo#12b"
-	Entity__Unsloth__Size_12b                                             = "unsloth#12b"
-	Entity__Unsloth__Size_27b                                             = "unsloth#27b"
-	Entity__Unsloth__Size_4b                                              = "unsloth#4b"
-	Entity__Usdcode                                                       = "usdcode"
-	Entity__Usdvalidate                                                   = "usdvalidate"
-	Entity__V0__Version_1_0                                               = "v0@1.0"
-	Entity__V0__Version_1_5                                               = "v0@1.5"
-	Entity__Venice                                                        = "venice"
-	Entity__Venice__Version_1_2                                           = "venice@1.2"
-	Entity__Veo                                                           = "veo"
-	Entity__Veo__Version_2                                                = "veo@2"
-	Entity__Veo__Version_3_0                                              = "veo@3.0"
-	Entity__Veo__Version_3_1                                              = "veo@3.1"
-	Entity__Veo__Version_3_1__Fast                                        = "veo@3.1{fast}"
-	Entity__Veo__Version_3__Fast                                          = "veo@3{fast}"
-	Entity__Virtuoso__Large                                               = "virtuoso/large"
-	Entity__Voxtral__Mini__Size_3b                                        = "voxtral/mini#3b"
-	Entity__Voxtral__Small__Size_24b                                      = "voxtral/small#24b"
-	Entity__Voyage__Large__Version_3                                      = "voyage/large@3"
-	Entity__Voyage__Large__Version_4                                      = "voyage/large@4"
-	Entity__Voyage__Lite__Version_3_5                                     = "voyage/lite@3.5"
-	Entity__Voyage__Lite__Version_4                                       = "voyage/lite@4"
-	Entity__Voyage__Version_2                                             = "voyage@2"
-	Entity__Voyage__Version_3                                             = "voyage@3"
-	Entity__Voyage__Version_3_5                                           = "voyage@3.5"
-	Entity__Voyage__Version_4                                             = "voyage@4"
-	Entity__Wan2_7__Image                                                 = "wan2.7/image"
-	Entity__Wan2_7_image__Pro                                             = "wan2.7-image/pro"
-	Entity__Wan2__Version_2                                               = "wan2@2"
-	Entity__Wan__V2_5_t2v                                                 = "wan/v2.5-t2v"
-	Entity__Wan__V2_6_i2v                                                 = "wan/v2.6-i2v"
-	Entity__Wan__V2_6_i2v_flash                                           = "wan/v2.6-i2v-flash"
-	Entity__Wan__V2_6_r2v                                                 = "wan/v2.6-r2v"
-	Entity__Wan__V2_6_r2v_flash                                           = "wan/v2.6-r2v-flash"
-	Entity__Wan__V2_6_t2v                                                 = "wan/v2.6-t2v"
-	Entity__Wan__V2_7_r2v                                                 = "wan/v2.7-r2v"
-	Entity__Wan__V2_7_t2v                                                 = "wan/v2.7-t2v"
-	Entity__Wan_v2__Version_6                                             = "wan-v2@6"
-	Entity__Weaver                                                        = "weaver"
-	Entity__Whisper                                                       = "whisper"
-	Entity__Whisper__Large                                                = "whisper/large"
-	Entity__Whisper__Large__Version_3                                     = "whisper/large@3"
-	Entity__Whisper__Large__Version_3__Turbo                              = "whisper/large@3{turbo}"
-	Entity__Whisper__Version_1                                            = "whisper@1"
-	Entity__Wizardlm__Version_2__Size_8x22b                               = "wizardlm@2#8x22b"
-	Entity__Xpersona_frieren__Coder                                       = "xpersona-frieren/coder"
-	Entity__Yi                                                            = "yi"
-	Entity__Yi__Large                                                     = "yi/large"
-	Entity__Yi__Size_30b_a3b                                              = "yi#30b-a3b"
-	Entity__Z__Code                                                       = "z{code}"
-	Entity__Zai_glm__Version_4_7                                          = "zai-glm@4.7"
-	Entity__Zdr                                                           = "zdr"
+	Entity__Abliterated                                                    = "abliterated"
+	Entity__Abliterated_model__Large                                       = "abliterated-model/large"
+	Entity__Active                                                         = "active"
+	Entity__Agent                                                          = "agent"
+	Entity__Agents                                                         = "agents"
+	Entity__Agi__Mini                                                      = "agi/mini"
+	Entity__Agi__Pro                                                       = "agi/pro"
+	Entity__Agi__Version_01                                                = "agi@01"
+	Entity__Agnes__Flash__Version_2_0                                      = "agnes/flash@2.0"
+	Entity__Agnes__Flash__Version_2_5                                      = "agnes/flash@2.5"
+	Entity__Agnes__Lite__Version_1_5                                       = "agnes/lite@1.5"
+	Entity__Agnes__Pro__Version_1_5                                        = "agnes/pro@1.5"
+	Entity__Agnes__Pro__Version_2_5                                        = "agnes/pro@2.5"
+	Entity__Aion__Mini__Version_3_0                                        = "aion/mini@3.0"
+	Entity__Aion__Size_8b                                                  = "aion#8b"
+	Entity__Aion__Version_2_0                                              = "aion@2.0"
+	Entity__Aion__Version_3_0                                              = "aion@3.0"
+	Entity__Aion_labs_aion_3_0__Mini__Version_3_0                          = "aion-labs-aion-3-0/mini@3.0"
+	Entity__Aion_labs_aion__Version_3_0                                    = "aion-labs-aion@3.0"
+	Entity__Allam__Version_2__Size_7b                                      = "allam@2#7b"
+	Entity__Amazon                                                         = "amazon"
+	Entity__Anubis_70b__V1_1__Size_70b                                     = "anubis-70b/v1.1#70b"
+	Entity__Anubis__Size_70b                                               = "anubis#70b"
+	Entity__Apertus__Size_70b                                              = "apertus#70b"
+	Entity__Apertus__Size_70b__Instruct                                    = "apertus#70b{instruct}"
+	Entity__Apertus__Size_8b__Instruct                                     = "apertus#8b{instruct}"
+	Entity__Apertus__V1_5_70B__Size_70b                                    = "apertus/v1.5-70B#70b"
+	Entity__Arrow__Version_1_1                                             = "arrow@1.1"
+	Entity__Asi1__Mini                                                     = "asi1/mini"
+	Entity__Asure__Size_12b                                                = "asure#12b"
+	Entity__Auto                                                           = "auto"
+	Entity__Auto__Code                                                     = "auto{code}"
+	Entity__Auto__Small                                                    = "auto/small"
+	Entity__Autoglm__Size_9b                                               = "autoglm#9b"
+	Entity__Baichuan                                                       = "baichuan"
+	Entity__Baichuan__Size_32b                                             = "baichuan#32b"
+	Entity__Baichuan__Turbo                                                = "baichuan{turbo}"
+	Entity__Bevformer                                                      = "bevformer"
+	Entity__Bge                                                            = "bge"
+	Entity__Bielik_11b__V2_6_Instruct__Size_11b__Instruct                  = "bielik-11b/v2.6-Instruct#11b{instruct}"
+	Entity__Bielik_11b__V3_0_Instruct__Size_11b__Instruct                  = "bielik-11b/v3.0-Instruct#11b{instruct}"
+	Entity__Big_pickle                                                     = "big-pickle"
+	Entity__Bodybuilder                                                    = "bodybuilder"
+	Entity__Brave                                                          = "brave"
+	Entity__Brave__Pro                                                     = "brave/pro"
+	Entity__Brick_complexity__Pro                                          = "brick-complexity/pro"
+	Entity__C4ai__Size_32b                                                 = "c4ai#32b"
+	Entity__C4ai__Size_32b__Vision                                         = "c4ai#32b{vision}"
+	Entity__C4ai__Size_8b                                                  = "c4ai#8b"
+	Entity__C4ai__Size_8b__Vision                                          = "c4ai#8b{vision}"
+	Entity__Canopylabs                                                     = "canopylabs"
+	Entity__Celeris__Version_1                                             = "celeris@1"
+	Entity__Cheap                                                          = "cheap"
+	Entity__Chutesai__Size_24b__Instruct                                   = "chutesai#24b{instruct}"
+	Entity__Claude__Code                                                   = "claude{code}"
+	Entity__Claude__Fable                                                  = "claude/fable"
+	Entity__Claude__Fable__Version_5                                       = "claude/fable@5"
+	Entity__Claude__Haiku                                                  = "claude/haiku"
+	Entity__Claude__Haiku__Version_3                                       = "claude/haiku@3"
+	Entity__Claude__Haiku__Version_3_5                                     = "claude/haiku@3.5"
+	Entity__Claude__Haiku__Version_4_5                                     = "claude/haiku@4.5"
+	Entity__Claude__Opus                                                   = "claude/opus"
+	Entity__Claude__Opus__Version_3                                        = "claude/opus@3"
+	Entity__Claude__Opus__Version_4_0                                      = "claude/opus@4.0"
+	Entity__Claude__Opus__Version_4_1                                      = "claude/opus@4.1"
+	Entity__Claude__Opus__Version_4_5                                      = "claude/opus@4.5"
+	Entity__Claude__Opus__Version_4_6                                      = "claude/opus@4.6"
+	Entity__Claude__Opus__Version_4_7                                      = "claude/opus@4.7"
+	Entity__Claude__Opus__Version_4_8                                      = "claude/opus@4.8"
+	Entity__Claude__Opus__Version_5                                        = "claude/opus@5"
+	Entity__Claude__Sonnet                                                 = "claude/sonnet"
+	Entity__Claude__Sonnet__Version_3_5                                    = "claude/sonnet@3.5"
+	Entity__Claude__Sonnet__Version_3_7                                    = "claude/sonnet@3.7"
+	Entity__Claude__Sonnet__Version_4_0                                    = "claude/sonnet@4.0"
+	Entity__Claude__Sonnet__Version_4_5                                    = "claude/sonnet@4.5"
+	Entity__Claude__Sonnet__Version_4_6                                    = "claude/sonnet@4.6"
+	Entity__Claude__Sonnet__Version_5                                      = "claude/sonnet@5"
+	Entity__Claude_mythos__Version_5                                       = "claude-mythos@5"
+	Entity__Claudinio                                                      = "claudinio"
+	Entity__Claudius                                                       = "claudius"
+	Entity__Claw                                                           = "claw"
+	Entity__Claw__Medium                                                   = "claw/medium"
+	Entity__Code                                                           = "code"
+	Entity__Codestral                                                      = "codestral"
+	Entity__Codestral__Embed                                               = "codestral/embed"
+	Entity__Codestral__Version_0_1__Size_22b                               = "codestral@0.1#22b"
+	Entity__Coding                                                         = "coding"
+	Entity__Cogito__Version_2_1__Size_671b                                 = "cogito@2.1#671b"
+	Entity__Cohere__Embed                                                  = "cohere/embed"
+	Entity__Command__A                                                     = "command/a"
+	Entity__Command__A__Reasoning                                          = "command/a{reasoning}"
+	Entity__Command__A__Translate                                          = "command/a{translate}"
+	Entity__Command__A__Vision                                             = "command/a{vision}"
+	Entity__Command__A_plus                                                = "command/a-plus"
+	Entity__Command__R                                                     = "command/r"
+	Entity__Command__R7b__Size_7b                                          = "command/r7b#7b"
+	Entity__Command__R_plus                                                = "command/r-plus"
+	Entity__Cosmos3                                                        = "cosmos3"
+	Entity__Cosmos__Size_2b                                                = "cosmos#2b"
+	Entity__Cosmos__Size_5b                                                = "cosmos#5b"
+	Entity__Cosmos__Size_7b                                                = "cosmos#7b"
+	Entity__Cosmos__Size_8b                                                = "cosmos#8b"
+	Entity__Cydonia_24b__V4_1__Size_24b                                    = "cydonia-24b/v4.1#24b"
+	Entity__Cydonia_24b__V4_3__Size_24b                                    = "cydonia-24b/v4.3#24b"
+	Entity__Cydonia__Size_24b                                              = "cydonia#24b"
+	Entity__Dall_e__Version_3                                              = "dall-e@3"
+	Entity__Deepclaude                                                     = "deepclaude"
+	Entity__Deepseek                                                       = "deepseek"
+	Entity__Deepseek__Chat                                                 = "deepseek/chat"
+	Entity__Deepseek__Chat__Version_3_1                                    = "deepseek/chat@3.1"
+	Entity__Deepseek__Flash                                                = "deepseek/flash"
+	Entity__Deepseek__Flash__Size_284b                                     = "deepseek/flash#284b"
+	Entity__Deepseek__Flash__Version_4                                     = "deepseek/flash@4"
+	Entity__Deepseek__Pro                                                  = "deepseek/pro"
+	Entity__Deepseek__Size_14b                                             = "deepseek#14b"
+	Entity__Deepseek__Size_32b                                             = "deepseek#32b"
+	Entity__Deepseek__Size_671b                                            = "deepseek#671b"
+	Entity__Deepseek__Size_70b                                             = "deepseek#70b"
+	Entity__Deepseek__Size_8b                                              = "deepseek#8b"
+	Entity__Deepseek__Turbo                                                = "deepseek{turbo}"
+	Entity__Deepseek__V3_1                                                 = "deepseek/v3.1"
+	Entity__Deepseek__V3_1_maas                                            = "deepseek/v3.1-maas"
+	Entity__Deepseek__V3_1_terminus                                        = "deepseek/v3.1-terminus"
+	Entity__Deepseek__V3_2                                                 = "deepseek/v3.2"
+	Entity__Deepseek__V3_2_251201                                          = "deepseek/v3.2-251201"
+	Entity__Deepseek__V3_2_exp                                             = "deepseek/v3.2-exp"
+	Entity__Deepseek__V3_2_maas                                            = "deepseek/v3.2-maas"
+	Entity__Deepseek__V3_2_speciale                                        = "deepseek/v3.2-speciale"
+	Entity__Deepseek__Version_2                                            = "deepseek@2"
+	Entity__Deepseek__Version_3_2                                          = "deepseek@3.2"
+	Entity__Deepseek_ocr__Version_2                                        = "deepseek-ocr@2"
+	Entity__Devstral                                                       = "devstral"
+	Entity__Devstral__Medium                                               = "devstral/medium"
+	Entity__Devstral__Small                                                = "devstral/small"
+	Entity__Devstral__Small__Version_2                                     = "devstral/small@2"
+	Entity__Devstral__Version_2                                            = "devstral@2"
+	Entity__Devstral__Version_2__Size_123b                                 = "devstral@2#123b"
+	Entity__Devstral__Version_2__Size_123b__Instruct                       = "devstral@2#123b{instruct}"
+	Entity__Diffusiongemma__Size_26b_a4b                                   = "diffusiongemma#26b-a4b"
+	Entity__Dots__Version_3                                                = "dots@3"
+	Entity__Doubao_1_5_thinking__Pro__Version_1_5                          = "doubao-1.5-thinking/pro@1.5"
+	Entity__Doubao_1_5_vision__Pro__Version_1_5                            = "doubao-1.5-vision/pro@1.5"
+	Entity__Doubao__Code                                                   = "doubao{code}"
+	Entity__Doubao__Version_1_5                                            = "doubao@1.5"
+	Entity__Doubao__Version_1_6                                            = "doubao@1.6"
+	Entity__Doubao__Version_1_6__Vision                                    = "doubao@1.6{vision}"
+	Entity__Doubao_seed__Flash__Version_1_6                                = "doubao-seed/flash@1.6"
+	Entity__Doubao_seed__Lite__Version_2_0                                 = "doubao-seed/lite@2.0"
+	Entity__Doubao_seed__Mini__Version_2_0                                 = "doubao-seed/mini@2.0"
+	Entity__Doubao_seed__Pro__Version_2_0                                  = "doubao-seed/pro@2.0"
+	Entity__Doubao_seed__Version_1_6                                       = "doubao-seed@1.6"
+	Entity__Doubao_seed__Version_1_8                                       = "doubao-seed@1.8"
+	Entity__Doubao_seed__Version_2_0__Code                                 = "doubao-seed@2.0{code}"
+	Entity__Doubao_seed_code_preview__Code                                 = "doubao-seed-code-preview{code}"
+	Entity__Dracarys__Size_70b__Instruct                                   = "dracarys#70b{instruct}"
+	Entity__Dracarys__Size_72b                                             = "dracarys#72b"
+	Entity__E2e                                                            = "e2e"
+	Entity__Echo                                                           = "echo"
+	Entity__Elevenlabs                                                     = "elevenlabs"
+	Entity__Elevenlabs__V2_5__Turbo                                        = "elevenlabs/v2.5{turbo}"
+	Entity__Ernie                                                          = "ernie"
+	Entity__Ernie__Version_4_5__Size_21b_a3b                               = "ernie@4.5#21b-a3b"
+	Entity__Ernie__Version_4_5__Size_28b_a3b                               = "ernie@4.5#28b-a3b"
+	Entity__Ernie__Version_4_5__Size_300b_a47b                             = "ernie@4.5#300b-a47b"
+	Entity__Ernie__Version_4_5__Size_424b_a47b                             = "ernie@4.5#424b-a47b"
+	Entity__Ernie__Version_5_0                                             = "ernie@5.0"
+	Entity__Ernie__Version_5_1                                             = "ernie@5.1"
+	Entity__Esm2__Size_650m                                                = "esm2#650m"
+	Entity__Esmfold                                                        = "esmfold"
+	Entity__Eva__Version_0_2__Size_32b                                     = "eva@0.2#32b"
+	Entity__Exa                                                            = "exa"
+	Entity__Fast__Fast                                                     = "fast{fast}"
+	Entity__Fastgpt                                                        = "fastgpt"
+	Entity__Fish_audio__S__Version_1                                       = "fish-audio/s@1"
+	Entity__Fish_audio__S__Version_2_1__Pro                                = "fish-audio/s@2.1{pro}"
+	Entity__Fish_audio__S__Version_2__Pro                                  = "fish-audio/s@2{pro}"
+	Entity__Fish_audio__Transcribe__Version_1                              = "fish-audio/transcribe@1"
+	Entity__Flux                                                           = "flux"
+	Entity__Flux_1                                                         = "flux_1"
+	Entity__Flux__Pro                                                      = "flux/pro"
+	Entity__Flux__Pro__Version_1_1                                         = "flux/pro@1.1"
+	Entity__Flux__Pro__Version_2                                           = "flux/pro@2"
+	Entity__Flux__Size_4b                                                  = "flux#4b"
+	Entity__Flux__Version_2                                                = "flux@2"
+	Entity__Flux__Version_2__Size_4b                                       = "flux@2#4b"
+	Entity__Flux__Version_2__Size_9b                                       = "flux@2#9b"
+	Entity__Flux__Version_3                                                = "flux@3"
+	Entity__Free                                                           = "free"
+	Entity__Fugu                                                           = "fugu"
+	Entity__Fugu__Ultra                                                    = "fugu/ultra"
+	Entity__Fugu__Ultra__Version_0                                         = "fugu/ultra@0"
+	Entity__Fugu__Ultra__Version_1                                         = "fugu/ultra@1"
+	Entity__Fugu__Ultra__Version_1_1                                       = "fugu/ultra@1.1"
+	Entity__Fusion                                                         = "fusion"
+	Entity__Gelab__Size_4b                                                 = "gelab#4b"
+	Entity__Gemini                                                         = "gemini"
+	Entity__Gemini__Deep_research                                          = "gemini/deep-research"
+	Entity__Gemini__Embedding                                              = "gemini/embedding"
+	Entity__Gemini__Embedding__Version_001                                 = "gemini/embedding@001"
+	Entity__Gemini__Embedding__Version_2                                   = "gemini/embedding@2"
+	Entity__Gemini__Flash                                                  = "gemini/flash"
+	Entity__Gemini__Flash__Omni                                            = "gemini/flash{omni}"
+	Entity__Gemini__Flash__Version_2_0                                     = "gemini/flash@2.0"
+	Entity__Gemini__Flash__Version_2_5                                     = "gemini/flash@2.5"
+	Entity__Gemini__Flash__Version_3_0                                     = "gemini/flash@3.0"
+	Entity__Gemini__Flash__Version_3_1                                     = "gemini/flash@3.1"
+	Entity__Gemini__Flash__Version_3_5                                     = "gemini/flash@3.5"
+	Entity__Gemini__Flash__Version_3_6                                     = "gemini/flash@3.6"
+	Entity__Gemini__Flash__Version_3_7                                     = "gemini/flash@3.7"
+	Entity__Gemini__Flash_lite                                             = "gemini/flash-lite"
+	Entity__Gemini__Flash_lite__Version_2_0                                = "gemini/flash-lite@2.0"
+	Entity__Gemini__Flash_lite__Version_2_5                                = "gemini/flash-lite@2.5"
+	Entity__Gemini__Flash_lite__Version_3_1                                = "gemini/flash-lite@3.1"
+	Entity__Gemini__Flash_lite__Version_3_5                                = "gemini/flash-lite@3.5"
+	Entity__Gemini__Pro                                                    = "gemini/pro"
+	Entity__Gemini__Pro__Version_2_0                                       = "gemini/pro@2.0"
+	Entity__Gemini__Pro__Version_2_5                                       = "gemini/pro@2.5"
+	Entity__Gemini__Pro__Version_3_0                                       = "gemini/pro@3.0"
+	Entity__Gemini__Pro__Version_3_1                                       = "gemini/pro@3.1"
+	Entity__Gemini__Pro__Version_3_5__Translate                            = "gemini/pro@3.5{translate}"
+	Entity__Gemini__Version_3_5                                            = "gemini@3.5"
+	Entity__Gemma                                                          = "gemma"
+	Entity__Gemma__Size_26b                                                = "gemma#26b"
+	Entity__Gemma__Size_27b                                                = "gemma#27b"
+	Entity__Gemma__Size_31b                                                = "gemma#31b"
+	Entity__Gemma__Size_9b                                                 = "gemma#9b"
+	Entity__Gemma__Version_2__Size_27b                                     = "gemma@2#27b"
+	Entity__Gemma__Version_2__Size_2b                                      = "gemma@2#2b"
+	Entity__Gemma__Version_3                                               = "gemma@3"
+	Entity__Gemma__Version_3__Size_12b                                     = "gemma@3#12b"
+	Entity__Gemma__Version_3__Size_27b                                     = "gemma@3#27b"
+	Entity__Gemma__Version_3__Size_4b                                      = "gemma@3#4b"
+	Entity__Gemma__Version_4                                               = "gemma@4"
+	Entity__Gemma__Version_4__Size_12b                                     = "gemma@4#12b"
+	Entity__Gemma__Version_4__Size_26b_a4b                                 = "gemma@4#26b-a4b"
+	Entity__Gemma__Version_4__Size_31b                                     = "gemma@4#31b"
+	Entity__Gemma__Version_4__Size_31b__Turbo                              = "gemma@4#31b{turbo}"
+	Entity__Gliguard__Size_300m                                            = "gliguard#300m"
+	Entity__Gliner                                                         = "gliner"
+	Entity__Gliner2                                                        = "gliner2"
+	Entity__Gliner2__Base                                                  = "gliner2{base}"
+	Entity__Glm                                                            = "glm"
+	Entity__Glm__Air                                                       = "glm/air"
+	Entity__Glm__Air__Version_4                                            = "glm/air@4"
+	Entity__Glm__Air__Version_4_5                                          = "glm/air@4.5"
+	Entity__Glm__Flash                                                     = "glm/flash"
+	Entity__Glm__Flash__Version_4                                          = "glm/flash@4"
+	Entity__Glm__Flash__Version_4_5                                        = "glm/flash@4.5"
+	Entity__Glm__Flash__Version_4_7                                        = "glm/flash@4.7"
+	Entity__Glm__Flash__Version_5_3                                        = "glm/flash@5.3"
+	Entity__Glm__Large                                                     = "glm/large"
+	Entity__Glm__Lite__Version_5_2                                         = "glm/lite@5.2"
+	Entity__Glm__Ultra__Version_5_2                                        = "glm/ultra@5.2"
+	Entity__Glm__V__Version_4_1                                            = "glm/v@4.1"
+	Entity__Glm__V__Version_4_1__Flash                                     = "glm/v@4.1{flash}"
+	Entity__Glm__V__Version_4_5                                            = "glm/v@4.5"
+	Entity__Glm__V__Version_4_6                                            = "glm/v@4.6"
+	Entity__Glm__V__Version_4_6__Flash                                     = "glm/v@4.6{flash}"
+	Entity__Glm__V__Version_5                                              = "glm/v@5"
+	Entity__Glm__V__Version_5__Z                                           = "glm/v@5{z}"
+	Entity__Glm__V__Version_6__Flash                                       = "glm/v@6{flash}"
+	Entity__Glm__Version_4                                                 = "glm@4"
+	Entity__Glm__Version_4_5                                               = "glm@4.5"
+	Entity__Glm__Version_4_6                                               = "glm@4.6"
+	Entity__Glm__Version_4_7                                               = "glm@4.7"
+	Entity__Glm__Version_4__Size_32b                                       = "glm@4#32b"
+	Entity__Glm__Version_4__Size_9b                                        = "glm@4#9b"
+	Entity__Glm__Version_5                                                 = "glm@5"
+	Entity__Glm__Version_5_1                                               = "glm@5.1"
+	Entity__Glm__Version_5_2                                               = "glm@5.2"
+	Entity__Glm__Version_5_3                                               = "glm@5.3"
+	Entity__Glm__Z                                                         = "glm/z"
+	Entity__Glm__Z__Size_9b                                                = "glm/z#9b"
+	Entity__Google                                                         = "google"
+	Entity__Gpt                                                            = "gpt"
+	Entity__Gpt__4o                                                        = "gpt/4o"
+	Entity__Gpt__4o__Fast                                                  = "gpt/4o{fast}"
+	Entity__Gpt__4o__Fast__Mini                                            = "gpt/4o{fast,mini}"
+	Entity__Gpt__4o__Mini                                                  = "gpt/4o{mini}"
+	Entity__Gpt__Audio                                                     = "gpt/audio"
+	Entity__Gpt__Audio__Mini                                               = "gpt/audio{mini}"
+	Entity__Gpt__Chat                                                      = "gpt{chat}"
+	Entity__Gpt__Codex                                                     = "gpt/codex"
+	Entity__Gpt__Codex__Version_5                                          = "gpt/codex@5"
+	Entity__Gpt__Codex__Version_5_1                                        = "gpt/codex@5.1"
+	Entity__Gpt__Codex__Version_5_2                                        = "gpt/codex@5.2"
+	Entity__Gpt__Codex__Version_5_3                                        = "gpt/codex@5.3"
+	Entity__Gpt__Codex__Version_5_3__Fast                                  = "gpt/codex@5.3{fast}"
+	Entity__Gpt__Codex_mini                                                = "gpt/codex-mini"
+	Entity__Gpt__Codex_mini__Version_5_1                                   = "gpt/codex-mini@5.1"
+	Entity__Gpt__Codex_spark__Version_5_3                                  = "gpt/codex-spark@5.3"
+	Entity__Gpt__Image                                                     = "gpt/image"
+	Entity__Gpt__Image__Version_1                                          = "gpt/image@1"
+	Entity__Gpt__Image__Version_1_5                                        = "gpt/image@1.5"
+	Entity__Gpt__Image__Version_2                                          = "gpt/image@2"
+	Entity__Gpt__Image__Version_5                                          = "gpt/image@5"
+	Entity__Gpt__Image__Version_5_4                                        = "gpt/image@5.4"
+	Entity__Gpt__Luna                                                      = "gpt/luna"
+	Entity__Gpt__Luna__Version_5_6                                         = "gpt/luna@5.6"
+	Entity__Gpt__Luna__Version_5_6__Fast                                   = "gpt/luna@5.6{fast}"
+	Entity__Gpt__Luna__Version_5_6__Pro                                    = "gpt/luna@5.6{pro}"
+	Entity__Gpt__Mini                                                      = "gpt/mini"
+	Entity__Gpt__Mini__Version_4_1                                         = "gpt/mini@4.1"
+	Entity__Gpt__Mini__Version_4_1__Fast                                   = "gpt/mini@4.1{fast}"
+	Entity__Gpt__Mini__Version_5                                           = "gpt/mini@5"
+	Entity__Gpt__Mini__Version_5_4                                         = "gpt/mini@5.4"
+	Entity__Gpt__Mini__Version_5_4__Fast                                   = "gpt/mini@5.4{fast}"
+	Entity__Gpt__Mini__Version_5__Fast                                     = "gpt/mini@5{fast}"
+	Entity__Gpt__Nano                                                      = "gpt/nano"
+	Entity__Gpt__Nano__Version_4_1                                         = "gpt/nano@4.1"
+	Entity__Gpt__Nano__Version_4_1__Fast                                   = "gpt/nano@4.1{fast}"
+	Entity__Gpt__Nano__Version_5                                           = "gpt/nano@5"
+	Entity__Gpt__Nano__Version_5_4                                         = "gpt/nano@5.4"
+	Entity__Gpt__O__Version_1                                              = "gpt/o@1"
+	Entity__Gpt__O__Version_1__Mini                                        = "gpt/o@1{mini}"
+	Entity__Gpt__O__Version_1__Pro                                         = "gpt/o@1{pro}"
+	Entity__Gpt__O__Version_3                                              = "gpt/o@3"
+	Entity__Gpt__O__Version_3__Deep_research                               = "gpt/o@3{deep-research}"
+	Entity__Gpt__O__Version_3__Fast                                        = "gpt/o@3{fast}"
+	Entity__Gpt__O__Version_3__Mini                                        = "gpt/o@3{mini}"
+	Entity__Gpt__O__Version_3__Pro                                         = "gpt/o@3{pro}"
+	Entity__Gpt__O__Version_4__Fast__Mini                                  = "gpt/o@4{fast,mini}"
+	Entity__Gpt__O__Version_4__Mini                                        = "gpt/o@4{mini}"
+	Entity__Gpt__Oss                                                       = "gpt/oss"
+	Entity__Gpt__Oss__Size_120b                                            = "gpt/oss#120b"
+	Entity__Gpt__Oss__Size_120b__Fast                                      = "gpt/oss#120b{fast}"
+	Entity__Gpt__Oss__Size_20b                                             = "gpt/oss#20b"
+	Entity__Gpt__Pro                                                       = "gpt/pro"
+	Entity__Gpt__Pro__Version_5                                            = "gpt/pro@5"
+	Entity__Gpt__Pro__Version_5_2                                          = "gpt/pro@5.2"
+	Entity__Gpt__Pro__Version_5_4                                          = "gpt/pro@5.4"
+	Entity__Gpt__Pro__Version_5_5                                          = "gpt/pro@5.5"
+	Entity__Gpt__Sol                                                       = "gpt/sol"
+	Entity__Gpt__Sol__Version_5_6                                          = "gpt/sol@5.6"
+	Entity__Gpt__Sol__Version_5_6__Fast                                    = "gpt/sol@5.6{fast}"
+	Entity__Gpt__Sol__Version_5_6__Pro                                     = "gpt/sol@5.6{pro}"
+	Entity__Gpt__Terra                                                     = "gpt/terra"
+	Entity__Gpt__Terra__Version_5_6                                        = "gpt/terra@5.6"
+	Entity__Gpt__Terra__Version_5_6__Fast                                  = "gpt/terra@5.6{fast}"
+	Entity__Gpt__Terra__Version_5_6__Pro                                   = "gpt/terra@5.6{pro}"
+	Entity__Gpt__Version_1_5                                               = "gpt@1.5"
+	Entity__Gpt__Version_2                                                 = "gpt@2"
+	Entity__Gpt__Version_2_1                                               = "gpt@2.1"
+	Entity__Gpt__Version_3_5__Instruct__Turbo                              = "gpt@3.5{turbo,instruct}"
+	Entity__Gpt__Version_3_5__Turbo                                        = "gpt@3.5{turbo}"
+	Entity__Gpt__Version_4                                                 = "gpt@4"
+	Entity__Gpt__Version_4_1                                               = "gpt@4.1"
+	Entity__Gpt__Version_4_1__Fast                                         = "gpt@4.1{fast}"
+	Entity__Gpt__Version_4__Turbo                                          = "gpt@4{turbo}"
+	Entity__Gpt__Version_4__Turbo__Vision                                  = "gpt@4{vision,turbo}"
+	Entity__Gpt__Version_5                                                 = "gpt@5"
+	Entity__Gpt__Version_5_1                                               = "gpt@5.1"
+	Entity__Gpt__Version_5_1__Chat                                         = "gpt@5.1{chat}"
+	Entity__Gpt__Version_5_1__Fast                                         = "gpt@5.1{fast}"
+	Entity__Gpt__Version_5_2                                               = "gpt@5.2"
+	Entity__Gpt__Version_5_2__Chat                                         = "gpt@5.2{chat}"
+	Entity__Gpt__Version_5_2__Fast                                         = "gpt@5.2{fast}"
+	Entity__Gpt__Version_5_3                                               = "gpt@5.3"
+	Entity__Gpt__Version_5_3__Chat                                         = "gpt@5.3{chat}"
+	Entity__Gpt__Version_5_4                                               = "gpt@5.4"
+	Entity__Gpt__Version_5_4__Fast                                         = "gpt@5.4{fast}"
+	Entity__Gpt__Version_5_5                                               = "gpt@5.5"
+	Entity__Gpt__Version_5_5__Fast                                         = "gpt@5.5{fast}"
+	Entity__Gpt__Version_5__Chat                                           = "gpt@5{chat}"
+	Entity__Gpt__Version_5__Fast                                           = "gpt@5{fast}"
+	Entity__Granite__Small__Version_4                                      = "granite/small@4"
+	Entity__Granite__Version_4_0                                           = "granite@4.0"
+	Entity__Granite__Version_4_1__Size_8b                                  = "granite@4.1#8b"
+	Entity__Granite__Version_4_2__Size_8b                                  = "granite@4.2#8b"
+	Entity__Green                                                          = "green"
+	Entity__Green_s__Pro                                                   = "green-s/pro"
+	Entity__Greg                                                           = "greg"
+	Entity__Greg_1__Mini__Version_1                                        = "greg-1/mini@1"
+	Entity__Greg_2__Ultra__Version_2                                       = "greg-2/ultra@2"
+	Entity__Greg__Version_2                                                = "greg@2"
+	Entity__Grok                                                           = "grok"
+	Entity__Grok__Code                                                     = "grok{code}"
+	Entity__Grok__Code_fast__Version_1                                     = "grok/code-fast@1"
+	Entity__Grok__Image                                                    = "grok/image"
+	Entity__Grok__Mini__Version_3                                          = "grok/mini@3"
+	Entity__Grok__Version_3                                                = "grok@3"
+	Entity__Grok__Version_4                                                = "grok@4"
+	Entity__Grok__Version_4_1                                              = "grok@4.1"
+	Entity__Grok__Version_4_1__Fast                                        = "grok@4.1{fast}"
+	Entity__Grok__Version_4_1__Fast__Reasoning                             = "grok@4.1{reasoning,fast}"
+	Entity__Grok__Version_4_1__Non_reasoning                               = "grok@4.1{non-reasoning}"
+	Entity__Grok__Version_4_2                                              = "grok@4.2"
+	Entity__Grok__Version_4_20                                             = "grok@4.20"
+	Entity__Grok__Version_4_20__Non_reasoning                              = "grok@4.20{non-reasoning}"
+	Entity__Grok__Version_4_20__Reasoning                                  = "grok@4.20{reasoning}"
+	Entity__Grok__Version_4_2__Fast                                        = "grok@4.2{fast}"
+	Entity__Grok__Version_4_2__Non_reasoning                               = "grok@4.2{non-reasoning}"
+	Entity__Grok__Version_4_3                                              = "grok@4.3"
+	Entity__Grok__Version_4_5                                              = "grok@4.5"
+	Entity__Grok__Version_4_6                                              = "grok@4.6"
+	Entity__Grok__Version_4__Fast                                          = "grok@4{fast}"
+	Entity__Grok__Version_4__Fast__Reasoning                               = "grok@4{reasoning,fast}"
+	Entity__Grok__Version_4__Non_reasoning                                 = "grok@4{non-reasoning}"
+	Entity__Grok_build__Version_0_1                                        = "grok-build@0.1"
+	Entity__Groq                                                           = "groq"
+	Entity__Groq__Mini                                                     = "groq/mini"
+	Entity__Happyhorse__Version_1_1                                        = "happyhorse@1.1"
+	Entity__Hermes                                                         = "hermes"
+	Entity__Hermes__Medium                                                 = "hermes/medium"
+	Entity__Hermes__Pro__Version_2__Size_8b                                = "hermes/pro@2#8b"
+	Entity__Hermes__Version_3__Size_405b                                   = "hermes@3#405b"
+	Entity__Hermes__Version_3__Size_70b                                    = "hermes@3#70b"
+	Entity__Hermes__Version_4__Size_405b                                   = "hermes@4#405b"
+	Entity__Hermes__Version_4__Size_70b                                    = "hermes@4#70b"
+	Entity__Holo2__Size_30b_a3b                                            = "holo2#30b-a3b"
+	Entity__Holo3__Size_35b_a3b                                            = "holo3#35b-a3b"
+	Entity__Hunyuan                                                        = "hunyuan"
+	Entity__Hunyuan__Instruct                                              = "hunyuan{instruct}"
+	Entity__Hunyuan__Size_7b                                               = "hunyuan#7b"
+	Entity__Hunyuan__Version_2_0                                           = "hunyuan@2.0"
+	Entity__Hunyuan__Version_2_0__Instruct                                 = "hunyuan@2.0{instruct}"
+	Entity__Hy                                                             = "hy"
+	Entity__Hy__Lite                                                       = "hy/lite"
+	Entity__Hy__Pro                                                        = "hy/pro"
+	Entity__Hy__Size_1_8b                                                  = "hy#1.8b"
+	Entity__Hy__Size_30b_a3b                                               = "hy#30b-a3b"
+	Entity__Hy__Size_7b                                                    = "hy#7b"
+	Entity__Hy__Version_3                                                  = "hy@3"
+	Entity__Ideogram                                                       = "ideogram"
+	Entity__Ideogram__Turbo                                                = "ideogram{turbo}"
+	Entity__Imagen__Ultra__Version_4_0                                     = "imagen/ultra@4.0"
+	Entity__Imagen__Version_3                                              = "imagen@3"
+	Entity__Imagen__Version_3__Fast                                        = "imagen@3{fast}"
+	Entity__Imagen__Version_4                                              = "imagen@4"
+	Entity__Imagen__Version_4_0__Fast                                      = "imagen@4.0{fast}"
+	Entity__Inflection__Version_3                                          = "inflection@3"
+	Entity__Inkling                                                        = "inkling"
+	Entity__Inkling__Small                                                 = "inkling/small"
+	Entity__Intellect__Version_3                                           = "intellect@3"
+	Entity__Interfaze                                                      = "interfaze"
+	Entity__Jamba__Large                                                   = "jamba/large"
+	Entity__Jamba__Large__Version_1_6                                      = "jamba/large@1.6"
+	Entity__Jamba__Large__Version_1_7                                      = "jamba/large@1.7"
+	Entity__Jamba__Mini                                                    = "jamba/mini"
+	Entity__Jamba__Mini__Version_1_6                                       = "jamba/mini@1.6"
+	Entity__Jamba__Mini__Version_1_7                                       = "jamba/mini@1.7"
+	Entity__Kat__Coder                                                     = "kat/coder"
+	Entity__Kimi                                                           = "kimi"
+	Entity__Kimi__Coder                                                    = "kimi/coder"
+	Entity__Kimi__K__Version_2                                             = "kimi/k@2"
+	Entity__Kimi__K__Version_2_5                                           = "kimi/k@2.5"
+	Entity__Kimi__K__Version_2_6                                           = "kimi/k@2.6"
+	Entity__Kimi__K__Version_2_7                                           = "kimi/k@2.7"
+	Entity__Kimi__K__Version_2_7__Code                                     = "kimi/k@2.7{code}"
+	Entity__Kimi__K__Version_2_7__Size_1100b__Code                         = "kimi/k@2.7#1100b{code}"
+	Entity__Kimi__K__Version_2__Instruct                                   = "kimi/k@2{instruct}"
+	Entity__Kimi__K__Version_3                                             = "kimi/k@3"
+	Entity__Kling__I2v__Version_2_5__Turbo                                 = "kling/i2v@2.5{turbo}"
+	Entity__Kling__I2v__Version_2_6                                        = "kling/i2v@2.6"
+	Entity__Kling__I2v__Version_3_0                                        = "kling/i2v@3.0"
+	Entity__Kling__Motion_control__Version_2_6                             = "kling/motion-control@2.6"
+	Entity__Kling__Motion_control__Version_3_0                             = "kling/motion-control@3.0"
+	Entity__Kling__T2v__Version_2_5__Turbo                                 = "kling/t2v@2.5{turbo}"
+	Entity__Kling__T2v__Version_2_6                                        = "kling/t2v@2.6"
+	Entity__Kling__T2v__Version_3_0                                        = "kling/t2v@3.0"
+	Entity__Kling__Version_2_6                                             = "kling@2.6"
+	Entity__L31_70b_euryale__V2_2__Size_70b                                = "l31-70b-euryale/v2.2#70b"
+	Entity__L3_70b_euryale__V2_1__Size_70b                                 = "l3-70b-euryale/v2.1#70b"
+	Entity__Laguna                                                         = "laguna"
+	Entity__Laguna__M__Version_1                                           = "laguna/m@1"
+	Entity__Laguna__Xs__Version_2                                          = "laguna/xs@2"
+	Entity__Laguna__Xs__Version_2_1                                        = "laguna/xs@2.1"
+	Entity__Laguna_s                                                       = "laguna-s"
+	Entity__Laguna_s__Version_2_1                                          = "laguna-s@2.1"
+	Entity__Leanstral__Version_1_5                                         = "leanstral@1.5"
+	Entity__Lfm__Version_2_5__Size_2_6b                                    = "lfm@2.5#2.6b"
+	Entity__Ling__Flash__Version_2_0                                       = "ling/flash@2.0"
+	Entity__Ling__Flash__Version_2_6                                       = "ling/flash@2.6"
+	Entity__Ling__Flash__Version_3_0                                       = "ling/flash@3.0"
+	Entity__Ling__Flash_free__Version_2_6                                  = "ling/flash-free@2.6"
+	Entity__Ling__Size_1t                                                  = "ling#1t"
+	Entity__Ling__Version_2_6__Size_1t                                     = "ling@2.6#1t"
+	Entity__Ling__Version_3_0                                              = "ling@3.0"
+	Entity__Liquid__Size_24b_a2b                                           = "liquid#24b-a2b"
+	Entity__Llama__Embed__Size_300m                                        = "llama/embed#300m"
+	Entity__Llama__Large__Size_70b                                         = "llama/large#70b"
+	Entity__Llama__Lite__Version_3__Size_8b                                = "llama/lite@3#8b"
+	Entity__Llama__Maverick__Version_4__Size_17b_128e                      = "llama/maverick@4#17b-128e"
+	Entity__Llama__Maverick__Version_4__Size_17b_128e__Instruct            = "llama/maverick@4#17b-128e{instruct}"
+	Entity__Llama__R__Version_2__Size_70b                                  = "llama/r@2#70b"
+	Entity__Llama__Scout__Version_4__Size_17b_16e                          = "llama/scout@4#17b-16e"
+	Entity__Llama__Scout__Version_4__Size_17b_16e__Instruct                = "llama/scout@4#17b-16e{instruct}"
+	Entity__Llama__Size_12b                                                = "llama#12b"
+	Entity__Llama__Size_24b                                                = "llama#24b"
+	Entity__Llama__Size_70b                                                = "llama#70b"
+	Entity__Llama__Size_70b__Instruct                                      = "llama#70b{instruct}"
+	Entity__Llama__Size_8b                                                 = "llama#8b"
+	Entity__Llama__Size_8b__Instruct                                       = "llama#8b{instruct}"
+	Entity__Llama__Ultra__Version_3_1__Size_253b                           = "llama/ultra@3.1#253b"
+	Entity__Llama__Version_2__Size_22m                                     = "llama@2#22m"
+	Entity__Llama__Version_2__Size_86m                                     = "llama@2#86m"
+	Entity__Llama__Version_3_05__Size_70b                                  = "llama@3.05#70b"
+	Entity__Llama__Version_3_1__Size_405b__Instruct                        = "llama@3.1#405b{instruct}"
+	Entity__Llama__Version_3_1__Size_405b__Instruct__Turbo                 = "llama@3.1#405b{turbo,instruct}"
+	Entity__Llama__Version_3_1__Size_70b                                   = "llama@3.1#70b"
+	Entity__Llama__Version_3_1__Size_70b__Instruct                         = "llama@3.1#70b{instruct}"
+	Entity__Llama__Version_3_1__Size_8b                                    = "llama@3.1#8b"
+	Entity__Llama__Version_3_1__Size_8b__Instruct                          = "llama@3.1#8b{instruct}"
+	Entity__Llama__Version_3_1__Size_8b__Instruct__Turbo                   = "llama@3.1#8b{turbo,instruct}"
+	Entity__Llama__Version_3_2__Size_11b__Instruct                         = "llama@3.2#11b{instruct}"
+	Entity__Llama__Version_3_2__Size_11b__Instruct__Vision                 = "llama@3.2#11b{vision,instruct}"
+	Entity__Llama__Version_3_2__Size_1b                                    = "llama@3.2#1b"
+	Entity__Llama__Version_3_2__Size_1b__Instruct                          = "llama@3.2#1b{instruct}"
+	Entity__Llama__Version_3_2__Size_3b                                    = "llama@3.2#3b"
+	Entity__Llama__Version_3_2__Size_3b__Instruct                          = "llama@3.2#3b{instruct}"
+	Entity__Llama__Version_3_2__Size_90b__Instruct__Vision                 = "llama@3.2#90b{vision,instruct}"
+	Entity__Llama__Version_3_3__Size_70b                                   = "llama@3.3#70b"
+	Entity__Llama__Version_3_3__Size_70b__Fast__Instruct                   = "llama@3.3#70b{fast,instruct}"
+	Entity__Llama__Version_3_3__Size_70b__Instruct                         = "llama@3.3#70b{instruct}"
+	Entity__Llama__Version_3_3__Size_70b__Instruct__Turbo                  = "llama@3.3#70b{turbo,instruct}"
+	Entity__Llama__Version_3_3__Size_8b__Instruct                          = "llama@3.3#8b{instruct}"
+	Entity__Llama__Version_3__Size_70b__Instruct                           = "llama@3#70b{instruct}"
+	Entity__Llama__Version_3__Size_8b                                      = "llama@3#8b"
+	Entity__Llama__Version_3__Size_8b__Instruct                            = "llama@3#8b{instruct}"
+	Entity__Llama__Version_4                                               = "llama@4"
+	Entity__Llama__Version_4__Size_12b                                     = "llama@4#12b"
+	Entity__Longcat                                                        = "longcat"
+	Entity__Longcat__Flash__Chat                                           = "longcat/flash{chat}"
+	Entity__Longcat__Flash_lite                                            = "longcat/flash-lite"
+	Entity__Longcat__Version_2_0                                           = "longcat@2.0"
+	Entity__Lucid                                                          = "lucid"
+	Entity__Lyria                                                          = "lyria"
+	Entity__Lyria__Pro__Version_3                                          = "lyria/pro@3"
+	Entity__Lyria__Version_3                                               = "lyria@3"
+	Entity__Magibu__Size_11b                                               = "magibu#11b"
+	Entity__Magidonia_24b__V4_3__Size_24b                                  = "magidonia-24b/v4.3#24b"
+	Entity__Magistral__Medium                                              = "magistral/medium"
+	Entity__Magistral__Small                                               = "magistral/small"
+	Entity__Magnum__Size_72b                                               = "magnum#72b"
+	Entity__Magpie                                                         = "magpie"
+	Entity__Mai                                                            = "mai"
+	Entity__Mai__Version_1                                                 = "mai@1"
+	Entity__Medgemma__Size_4b                                              = "medgemma#4b"
+	Entity__Mellum2__Size_12b__Instruct                                    = "mellum2#12b{instruct}"
+	Entity__Mercury__Coder                                                 = "mercury/coder"
+	Entity__Mercury__Version_2                                             = "mercury@2"
+	Entity__Mercury_edit__Version_2                                        = "mercury-edit@2"
+	Entity__Mimo__Version_2_5                                              = "mimo@2.5"
+	Entity__Mimo__Version_2_5__Pro                                         = "mimo@2.5{pro}"
+	Entity__Mimo__Version_2_5__Tts                                         = "mimo@2.5{tts}"
+	Entity__Mimo__Version_2_5__Tts__Voiceclone                             = "mimo@2.5{tts,voiceclone}"
+	Entity__Mimo__Version_2_5__Tts__Voicedesign                            = "mimo@2.5{tts,voicedesign}"
+	Entity__Mimo__Version_2__Flash                                         = "mimo@2{flash}"
+	Entity__Mimo__Version_2__Omni                                          = "mimo@2{omni}"
+	Entity__Mimo__Version_2__Pro                                           = "mimo@2{pro}"
+	Entity__Mimo__Version_2__Tts                                           = "mimo@2{tts}"
+	Entity__Minicpm_v__Version_4_5                                         = "minicpm-v@4.5"
+	Entity__Minimax                                                        = "minimax"
+	Entity__Minimax__M__Version_1                                          = "minimax/m@1"
+	Entity__Minimax__M__Version_2                                          = "minimax/m@2"
+	Entity__Minimax__M__Version_2_1                                        = "minimax/m@2.1"
+	Entity__Minimax__M__Version_2_5                                        = "minimax/m@2.5"
+	Entity__Minimax__M__Version_2_7                                        = "minimax/m@2.7"
+	Entity__Minimax__M__Version_3                                          = "minimax/m@3"
+	Entity__Minimax__Version_01                                            = "minimax@01"
+	Entity__Ministral__Size_14b                                            = "ministral#14b"
+	Entity__Ministral__Size_14b__Instruct                                  = "ministral#14b{instruct}"
+	Entity__Ministral__Size_3b                                             = "ministral#3b"
+	Entity__Ministral__Size_8b                                             = "ministral#8b"
+	Entity__Ministral__Size_8b__Instruct                                   = "ministral#8b{instruct}"
+	Entity__Ministral__Version_3__Size_14b__Instruct                       = "ministral@3#14b{instruct}"
+	Entity__Ministral__Version_3__Size_14b__Reasoning                      = "ministral@3#14b{reasoning}"
+	Entity__Ministral__Version_3__Size_3b__Instruct                        = "ministral@3#3b{instruct}"
+	Entity__Ministral__Version_3__Size_3b__Reasoning                       = "ministral@3#3b{reasoning}"
+	Entity__Ministral__Version_3__Size_8b__Instruct                        = "ministral@3#8b{instruct}"
+	Entity__Mistral                                                        = "mistral"
+	Entity__Mistral__Code                                                  = "mistral{code}"
+	Entity__Mistral__Embed                                                 = "mistral/embed"
+	Entity__Mistral__Large                                                 = "mistral/large"
+	Entity__Mistral__Large__Instruct                                       = "mistral/large{instruct}"
+	Entity__Mistral__Large__Size_675b                                      = "mistral/large#675b"
+	Entity__Mistral__Large__Version_3                                      = "mistral/large@3"
+	Entity__Mistral__Large__Version_3__Size_675b__Instruct                 = "mistral/large@3#675b{instruct}"
+	Entity__Mistral__Medium                                                = "mistral/medium"
+	Entity__Mistral__Medium__Instruct                                      = "mistral/medium{instruct}"
+	Entity__Mistral__Medium__Version_3                                     = "mistral/medium@3"
+	Entity__Mistral__Medium__Version_3_1                                   = "mistral/medium@3.1"
+	Entity__Mistral__Medium__Version_3_5                                   = "mistral/medium@3.5"
+	Entity__Mistral__Medium__Version_3_5__Size_128b                        = "mistral/medium@3.5#128b"
+	Entity__Mistral__Medium__Version_3__Instruct                           = "mistral/medium@3{instruct}"
+	Entity__Mistral__Nemo                                                  = "mistral/nemo"
+	Entity__Mistral__Nemo__Instruct                                        = "mistral/nemo{instruct}"
+	Entity__Mistral__Nemo__Size_12b                                        = "mistral/nemo#12b"
+	Entity__Mistral__Nemo__Size_12b__Instruct                              = "mistral/nemo#12b{instruct}"
+	Entity__Mistral__Size_24b                                              = "mistral#24b"
+	Entity__Mistral__Size_7b                                               = "mistral#7b"
+	Entity__Mistral__Size_7b__Instruct                                     = "mistral#7b{instruct}"
+	Entity__Mistral__Small                                                 = "mistral/small"
+	Entity__Mistral__Small__Size_119b                                      = "mistral/small#119b"
+	Entity__Mistral__Small__Size_24b__Instruct                             = "mistral/small#24b{instruct}"
+	Entity__Mistral__Small__Version_3_1__Size_24b__Instruct                = "mistral/small@3.1#24b{instruct}"
+	Entity__Mistral__Small__Version_3_2__Size_24b__Instruct                = "mistral/small@3.2#24b{instruct}"
+	Entity__Mistral__Small__Version_4                                      = "mistral/small@4"
+	Entity__Mistral__Small__Version_4__Size_119b                           = "mistral/small@4#119b"
+	Entity__Mistral__Version_0_2__Size_7b__Instruct                        = "mistral@0.2#7b{instruct}"
+	Entity__Mistral__Version_0_3__Size_7b__Instruct                        = "mistral@0.3#7b{instruct}"
+	Entity__Mixtral__Size_8x22b                                            = "mixtral#8x22b"
+	Entity__Mixtral__Size_8x22b__Instruct                                  = "mixtral#8x22b{instruct}"
+	Entity__Mixtral__Size_8x7b                                             = "mixtral#8x7b"
+	Entity__Mixtral__Size_8x7b__Instruct                                   = "mixtral#8x7b{instruct}"
+	Entity__Mixtral__Version_0_1__Size_8x22b__Instruct                     = "mixtral@0.1#8x22b{instruct}"
+	Entity__Mixtral__Version_0_1__Size_8x7b__Instruct                      = "mixtral@0.1#8x7b{instruct}"
+	Entity__Mm_poly__Size_8b                                               = "mm-poly#8b"
+	Entity__Model_router                                                   = "model-router"
+	Entity__Model_router__Mini                                             = "model-router/mini"
+	Entity__Morph__Fast                                                    = "morph{fast}"
+	Entity__Morph__Large                                                   = "morph/large"
+	Entity__Motif__Version_3                                               = "motif@3"
+	Entity__Muse                                                           = "muse"
+	Entity__Muse__Image__Version_1_0                                       = "muse/image@1.0"
+	Entity__Muse__Size_30b                                                 = "muse#30b"
+	Entity__Muse__Spark__Version_1_1                                       = "muse/spark@1.1"
+	Entity__Muse__Spark__Version_1_2                                       = "muse/spark@1.2"
+	Entity__Mythomax__Size_13b                                             = "mythomax#13b"
+	Entity__Namazu                                                         = "namazu"
+	Entity__Nano_banana                                                    = "nano-banana"
+	Entity__Nano_banana__Pro                                               = "nano-banana/pro"
+	Entity__Nemotron                                                       = "nemotron"
+	Entity__Nemotron__Embed__Size_1b                                       = "nemotron/embed#1b"
+	Entity__Nemotron__Mini__Size_4b__Instruct                              = "nemotron/mini#4b{instruct}"
+	Entity__Nemotron__Nano__Size_12b                                       = "nemotron/nano#12b"
+	Entity__Nemotron__Nano__Size_30b                                       = "nemotron/nano#30b"
+	Entity__Nemotron__Nano__Size_30b_a3b                                   = "nemotron/nano#30b-a3b"
+	Entity__Nemotron__Nano__Size_8b                                        = "nemotron/nano#8b"
+	Entity__Nemotron__Nano__Size_9b                                        = "nemotron/nano#9b"
+	Entity__Nemotron__Nano__Version_3__Omni                                = "nemotron/nano@3{omni}"
+	Entity__Nemotron__Nano__Version_3__Size_30b                            = "nemotron/nano@3#30b"
+	Entity__Nemotron__Nano__Version_3__Size_30b__Omni                      = "nemotron/nano@3#30b{omni}"
+	Entity__Nemotron__Nano__Version_3__Size_30b_a3b                        = "nemotron/nano@3#30b-a3b"
+	Entity__Nemotron__Nano__Version_3__Size_30b_a3b__Omni                  = "nemotron/nano@3#30b-a3b{omni}"
+	Entity__Nemotron__Nano__Version_3__Size_30b_a3b__Omni__Reasoning       = "nemotron/nano@3#30b-a3b{reasoning,omni}"
+	Entity__Nemotron__Size_120b_a12b                                       = "nemotron#120b-a12b"
+	Entity__Nemotron__Size_1b                                              = "nemotron#1b"
+	Entity__Nemotron__Size_32b                                             = "nemotron#32b"
+	Entity__Nemotron__Size_49b                                             = "nemotron#49b"
+	Entity__Nemotron__Size_4b__Reasoning                                   = "nemotron#4b{reasoning}"
+	Entity__Nemotron__Size_70b                                             = "nemotron#70b"
+	Entity__Nemotron__Size_70b__Instruct                                   = "nemotron#70b{instruct}"
+	Entity__Nemotron__Size_8b                                              = "nemotron#8b"
+	Entity__Nemotron__Ultra__Size_253b                                     = "nemotron/ultra#253b"
+	Entity__Nemotron__Ultra__Size_550b_a55b                                = "nemotron/ultra#550b-a55b"
+	Entity__Nemotron__Ultra__Version_3                                     = "nemotron/ultra@3"
+	Entity__Nemotron__Ultra__Version_3__Size_550b                          = "nemotron/ultra@3#550b"
+	Entity__Nemotron__Ultra__Version_3__Size_550b_a55b                     = "nemotron/ultra@3#550b-a55b"
+	Entity__Nemotron__V1_5__Version_3_3__Size_49b                          = "nemotron/v1.5@3.3#49b"
+	Entity__Nemotron__Version_2__Size_30b_a3b                              = "nemotron@2#30b-a3b"
+	Entity__Nemotron__Version_3                                            = "nemotron@3"
+	Entity__Nemotron__Version_3_5                                          = "nemotron@3.5"
+	Entity__Nemotron__Version_3_5__Size_30b_a3b                            = "nemotron@3.5#30b-a3b"
+	Entity__Nemotron__Version_3__Size_120b                                 = "nemotron@3#120b"
+	Entity__Nemotron__Version_3__Size_120b_a12b                            = "nemotron@3#120b-a12b"
+	Entity__Nemotron__Version_3__Size_30b                                  = "nemotron@3#30b"
+	Entity__Neosmith_intelligent                                           = "neosmith.intelligent"
+	Entity__Neosmith_intelligent__Pro                                      = "neosmith.intelligent/pro"
+	Entity__Neosmith_neolite                                               = "neosmith.neolite"
+	Entity__Nomic                                                          = "nomic"
+	Entity__North__Mini                                                    = "north/mini"
+	Entity__North__Mini__Code                                              = "north/mini{code}"
+	Entity__Nova                                                           = "nova"
+	Entity__Nova__Flash                                                    = "nova/flash"
+	Entity__Nova__Lite                                                     = "nova/lite"
+	Entity__Nova__Lite__Version_2                                          = "nova/lite@2"
+	Entity__Nova__Micro                                                    = "nova/micro"
+	Entity__Nova__Mini                                                     = "nova/mini"
+	Entity__Nova__Pro                                                      = "nova/pro"
+	Entity__Nova__Pro__Version_2                                           = "nova/pro@2"
+	Entity__Nova__Size_100b                                                = "nova#100b"
+	Entity__Nv                                                             = "nv"
+	Entity__Nv__Size_7b                                                    = "nv#7b"
+	Entity__Nvidia__Size_1b                                                = "nvidia#1b"
+	Entity__Olmo__Version_3__Size_32b                                      = "olmo@3#32b"
+	Entity__Ornith__Version_1_0__Size_35b                                  = "ornith@1.0#35b"
+	Entity__Ornith__Version_1_5__Size_35b_a3b                              = "ornith@1.5#35b-a3b"
+	Entity__Ornith__Version_1_5__Size_397b                                 = "ornith@1.5#397b"
+	Entity__Ornith__Version_1_5__Size_9b                                   = "ornith@1.5#9b"
+	Entity__Osmosis__Size_0_6b                                             = "osmosis#0.6b"
+	Entity__Ox_alpha                                                       = "ox-alpha"
+	Entity__Paddleocr                                                      = "paddleocr"
+	Entity__Paddleocr_vl__Version_1_5                                      = "paddleocr-vl@1.5"
+	Entity__Palmyra                                                        = "palmyra"
+	Entity__Pareto__Code                                                   = "pareto{code}"
+	Entity__Perceptron                                                     = "perceptron"
+	Entity__Perplexity                                                     = "perplexity"
+	Entity__Phi__Mini__Version_4                                           = "phi/mini@4"
+	Entity__Phi__Mini__Version_4__Instruct                                 = "phi/mini@4{instruct}"
+	Entity__Phi__Mini__Version_4__Reasoning                                = "phi/mini@4{reasoning}"
+	Entity__Phi__Version_4                                                 = "phi@4"
+	Entity__Phi__Version_4__Instruct__Multimodal                           = "phi@4{multimodal,instruct}"
+	Entity__Phi__Version_4__Multimodal                                     = "phi@4{multimodal}"
+	Entity__Phi__Version_4__Reasoning                                      = "phi@4{reasoning}"
+	Entity__Pixtral__Large                                                 = "pixtral/large"
+	Entity__Pixtral__Size_12b                                              = "pixtral#12b"
+	Entity__Pokee                                                          = "pokee"
+	Entity__Pplx__Size_4b                                                  = "pplx#4b"
+	Entity__Qvq                                                            = "qvq"
+	Entity__Qwen                                                           = "qwen"
+	Entity__Qwen3guard__Size_0_6b                                          = "qwen3guard#0.6b"
+	Entity__Qwen3guard__Size_8b                                            = "qwen3guard#8b"
+	Entity__Qwen__3_6                                                      = "qwen/3.6"
+	Entity__Qwen__3_6__Size_27b                                            = "qwen/3.6#27b"
+	Entity__Qwen__Coder                                                    = "qwen/coder"
+	Entity__Qwen__Coder__Size_30b_a3b                                      = "qwen/coder#30b-a3b"
+	Entity__Qwen__Coder__Size_480b_a35b                                    = "qwen/coder#480b-a35b"
+	Entity__Qwen__Coder__Version_2_5__Size_0_5b                            = "qwen/coder@2.5#0.5b"
+	Entity__Qwen__Coder__Version_2_5__Size_32b                             = "qwen/coder@2.5#32b"
+	Entity__Qwen__Coder__Version_2_5__Size_32b__Instruct                   = "qwen/coder@2.5#32b{instruct}"
+	Entity__Qwen__Coder__Version_2_5__Size_7b__Fast                        = "qwen/coder@2.5#7b{fast}"
+	Entity__Qwen__Coder__Version_2_5__Size_7b__Instruct                    = "qwen/coder@2.5#7b{instruct}"
+	Entity__Qwen__Coder__Version_3                                         = "qwen/coder@3"
+	Entity__Qwen__Coder__Version_3__Size_30b                               = "qwen/coder@3#30b"
+	Entity__Qwen__Coder__Version_3__Size_30b_a3b                           = "qwen/coder@3#30b-a3b"
+	Entity__Qwen__Coder__Version_3__Size_30b_a3b__Instruct                 = "qwen/coder@3#30b-a3b{instruct}"
+	Entity__Qwen__Coder__Version_3__Size_480b_a35b                         = "qwen/coder@3#480b-a35b"
+	Entity__Qwen__Coder__Version_3__Size_480b_a35b__Instruct               = "qwen/coder@3#480b-a35b{instruct}"
+	Entity__Qwen__Deep_research                                            = "qwen/deep-research"
+	Entity__Qwen__Embedding__Version_3__Size_0_6b                          = "qwen/embedding@3#0.6b"
+	Entity__Qwen__Embedding__Version_3__Size_4b                            = "qwen/embedding@3#4b"
+	Entity__Qwen__Embedding__Version_3__Size_8b                            = "qwen/embedding@3#8b"
+	Entity__Qwen__Flash                                                    = "qwen/flash"
+	Entity__Qwen__Flash__Version_3                                         = "qwen/flash@3"
+	Entity__Qwen__Flash__Version_3_5                                       = "qwen/flash@3.5"
+	Entity__Qwen__Flash__Version_3_5__Omni                                 = "qwen/flash@3.5{omni}"
+	Entity__Qwen__Flash__Version_3_6                                       = "qwen/flash@3.6"
+	Entity__Qwen__Flash__Version_3_7                                       = "qwen/flash@3.7"
+	Entity__Qwen__Flash__Version_3_8                                       = "qwen/flash@3.8"
+	Entity__Qwen__Flash__Version_3__Livetranslate                          = "qwen/flash@3{livetranslate}"
+	Entity__Qwen__Flash__Version_3__Omni                                   = "qwen/flash@3{omni}"
+	Entity__Qwen__Free__Version_3_8__Size_27b                              = "qwen/free@3.8#27b"
+	Entity__Qwen__Image                                                    = "qwen/image"
+	Entity__Qwen__Image__Version_2_0                                       = "qwen/image@2.0"
+	Entity__Qwen__Max                                                      = "qwen/max"
+	Entity__Qwen__Max__Version_3                                           = "qwen/max@3"
+	Entity__Qwen__Max__Version_3_6                                         = "qwen/max@3.6"
+	Entity__Qwen__Max__Version_3_7                                         = "qwen/max@3.7"
+	Entity__Qwen__Max__Version_3_8                                         = "qwen/max@3.8"
+	Entity__Qwen__Next__Size_80b_a3b                                       = "qwen/next#80b-a3b"
+	Entity__Qwen__Next__Version_3__Size_80b                                = "qwen/next@3#80b"
+	Entity__Qwen__Next__Version_3__Size_80b_a3b                            = "qwen/next@3#80b-a3b"
+	Entity__Qwen__Next__Version_3__Size_80b_a3b__Fast                      = "qwen/next@3#80b-a3b{fast}"
+	Entity__Qwen__Next__Version_3__Size_80b_a3b__Instruct                  = "qwen/next@3#80b-a3b{instruct}"
+	Entity__Qwen__Plus                                                     = "qwen/plus"
+	Entity__Qwen__Plus__Version_3_5                                        = "qwen/plus@3.5"
+	Entity__Qwen__Plus__Version_3_5__Omni                                  = "qwen/plus@3.5{omni}"
+	Entity__Qwen__Plus__Version_3_6                                        = "qwen/plus@3.6"
+	Entity__Qwen__Plus__Version_3_7                                        = "qwen/plus@3.7"
+	Entity__Qwen__Size_14b                                                 = "qwen#14b"
+	Entity__Qwen__Size_235b_a22b                                           = "qwen#235b-a22b"
+	Entity__Qwen__Size_27b                                                 = "qwen#27b"
+	Entity__Qwen__Size_32b                                                 = "qwen#32b"
+	Entity__Qwen__Size_35b_a3b                                             = "qwen#35b-a3b"
+	Entity__Qwen__Size_397b                                                = "qwen#397b"
+	Entity__Qwen__Size_5b                                                  = "qwen#5b"
+	Entity__Qwen__Size_72b                                                 = "qwen#72b"
+	Entity__Qwen__Size_7b                                                  = "qwen#7b"
+	Entity__Qwen__Size_8b                                                  = "qwen#8b"
+	Entity__Qwen__Size_9b                                                  = "qwen#9b"
+	Entity__Qwen__Turbo                                                    = "qwen/turbo"
+	Entity__Qwen__Turbo__Omni                                              = "qwen/turbo{omni}"
+	Entity__Qwen__Turbo__Version_2_5__Size_7b                              = "qwen/turbo@2.5#7b"
+	Entity__Qwen__Version_2_5__Size_14b__Instruct                          = "qwen@2.5#14b{instruct}"
+	Entity__Qwen__Version_2_5__Size_32b__Instruct                          = "qwen@2.5#32b{instruct}"
+	Entity__Qwen__Version_2_5__Size_72b__Instruct                          = "qwen@2.5#72b{instruct}"
+	Entity__Qwen__Version_2_5__Size_7b__Instruct                           = "qwen@2.5#7b{instruct}"
+	Entity__Qwen__Version_2_5__Size_7b__Instruct__Vision                   = "qwen@2.5#7b{vision,instruct}"
+	Entity__Qwen__Version_2_5__Size_7b__Omni                               = "qwen@2.5#7b{omni}"
+	Entity__Qwen__Version_3                                                = "qwen@3"
+	Entity__Qwen__Version_35__Size_397b_a17b                               = "qwen@35#397b-a17b"
+	Entity__Qwen__Version_3_5                                              = "qwen@3.5"
+	Entity__Qwen__Version_3_5__Size_0_8b                                   = "qwen@3.5#0.8b"
+	Entity__Qwen__Version_3_5__Size_122b                                   = "qwen@3.5#122b"
+	Entity__Qwen__Version_3_5__Size_122b_a10b                              = "qwen@3.5#122b-a10b"
+	Entity__Qwen__Version_3_5__Size_27b                                    = "qwen@3.5#27b"
+	Entity__Qwen__Version_3_5__Size_2b                                     = "qwen@3.5#2b"
+	Entity__Qwen__Version_3_5__Size_35b_a3b                                = "qwen@3.5#35b-a3b"
+	Entity__Qwen__Version_3_5__Size_397b_a17b                              = "qwen@3.5#397b-a17b"
+	Entity__Qwen__Version_3_5__Size_397b_a17b__Fast                        = "qwen@3.5#397b-a17b{fast}"
+	Entity__Qwen__Version_3_5__Size_4b                                     = "qwen@3.5#4b"
+	Entity__Qwen__Version_3_5__Size_9b                                     = "qwen@3.5#9b"
+	Entity__Qwen__Version_3_6__Size_27b                                    = "qwen@3.6#27b"
+	Entity__Qwen__Version_3_6__Size_35b                                    = "qwen@3.6#35b"
+	Entity__Qwen__Version_3_6__Size_35b__Fast                              = "qwen@3.6#35b{fast}"
+	Entity__Qwen__Version_3_6__Size_35b_a3b                                = "qwen@3.6#35b-a3b"
+	Entity__Qwen__Version_3_7                                              = "qwen@3.7"
+	Entity__Qwen__Version_3_8                                              = "qwen@3.8"
+	Entity__Qwen__Version_3_8_2__Size_4t                                   = "qwen@3.8.2#4t"
+	Entity__Qwen__Version_3_8__Size_27b                                    = "qwen@3.8#27b"
+	Entity__Qwen__Version_3_8__Size_2_4t                                   = "qwen@3.8#2.4t"
+	Entity__Qwen__Version_3__Size_0_6b                                     = "qwen@3#0.6b"
+	Entity__Qwen__Version_3__Size_14b                                      = "qwen@3#14b"
+	Entity__Qwen__Version_3__Size_14b__Instruct                            = "qwen@3#14b{instruct}"
+	Entity__Qwen__Version_3__Size_1_7b__Base                               = "qwen@3#1.7b{base}"
+	Entity__Qwen__Version_3__Size_235b                                     = "qwen@3#235b"
+	Entity__Qwen__Version_3__Size_235b_a22b                                = "qwen@3#235b-a22b"
+	Entity__Qwen__Version_3__Size_235b_a22b__Fast                          = "qwen@3#235b-a22b{fast}"
+	Entity__Qwen__Version_3__Size_235b_a22b__Instruct                      = "qwen@3#235b-a22b{instruct}"
+	Entity__Qwen__Version_3__Size_27b                                      = "qwen@3#27b"
+	Entity__Qwen__Version_3__Size_30b                                      = "qwen@3#30b"
+	Entity__Qwen__Version_3__Size_30b_a3b                                  = "qwen@3#30b-a3b"
+	Entity__Qwen__Version_3__Size_30b_a3b__Instruct                        = "qwen@3#30b-a3b{instruct}"
+	Entity__Qwen__Version_3__Size_30b_a3b__Instruct__Omni                  = "qwen@3#30b-a3b{instruct,omni}"
+	Entity__Qwen__Version_3__Size_30b_a3b__Omni                            = "qwen@3#30b-a3b{omni}"
+	Entity__Qwen__Version_3__Size_32b                                      = "qwen@3#32b"
+	Entity__Qwen__Version_3__Size_35b_a3b                                  = "qwen@3#35b-a3b"
+	Entity__Qwen__Version_3__Size_4b                                       = "qwen@3#4b"
+	Entity__Qwen__Version_3__Size_4b__Base                                 = "qwen@3#4b{base}"
+	Entity__Qwen__Version_3__Size_4b__Instruct                             = "qwen@3#4b{instruct}"
+	Entity__Qwen__Version_3__Size_8b                                       = "qwen@3#8b"
+	Entity__Qwen__Vl                                                       = "qwen/vl"
+	Entity__Qwen__Vl__Size_235b_a22b                                       = "qwen/vl#235b-a22b"
+	Entity__Qwen__Vl__Version_2_5__Size_32b__Instruct                      = "qwen/vl@2.5#32b{instruct}"
+	Entity__Qwen__Vl__Version_2_5__Size_72b__Instruct                      = "qwen/vl@2.5#72b{instruct}"
+	Entity__Qwen__Vl__Version_2_5__Size_7b__Instruct                       = "qwen/vl@2.5#7b{instruct}"
+	Entity__Qwen__Vl__Version_2__Size_72b__Instruct                        = "qwen/vl@2#72b{instruct}"
+	Entity__Qwen__Vl__Version_3                                            = "qwen/vl@3"
+	Entity__Qwen__Vl__Version_3__Instruct                                  = "qwen/vl@3{instruct}"
+	Entity__Qwen__Vl__Version_3__Size_235b_a22b                            = "qwen/vl@3#235b-a22b"
+	Entity__Qwen__Vl__Version_3__Size_235b_a22b__Instruct                  = "qwen/vl@3#235b-a22b{instruct}"
+	Entity__Qwen__Vl__Version_3__Size_30b_a3b                              = "qwen/vl@3#30b-a3b"
+	Entity__Qwen__Vl__Version_3__Size_30b_a3b__Instruct                    = "qwen/vl@3#30b-a3b{instruct}"
+	Entity__Qwen__Vl__Version_3__Size_32b                                  = "qwen/vl@3#32b"
+	Entity__Qwen__Vl__Version_3__Size_32b__Instruct                        = "qwen/vl@3#32b{instruct}"
+	Entity__Qwen__Vl__Version_3__Size_8b                                   = "qwen/vl@3#8b"
+	Entity__Qwen__Vl__Version_3__Size_8b__Instruct                         = "qwen/vl@3#8b{instruct}"
+	Entity__Qwerky__Size_72b                                               = "qwerky#72b"
+	Entity__Qwq__Plus                                                      = "qwq/plus"
+	Entity__Qwq__Size_32b                                                  = "qwq#32b"
+	Entity__Ray                                                            = "ray"
+	Entity__Recraft                                                        = "recraft"
+	Entity__Recraft__Pro                                                   = "recraft/pro"
+	Entity__Recraft__V4_1                                                  = "recraft/v4.1"
+	Entity__Recraft__V4_1_utility                                          = "recraft/v4.1-utility"
+	Entity__Reka                                                           = "reka"
+	Entity__Reka__Flash__Version_3                                         = "reka/flash@3"
+	Entity__Relace                                                         = "relace"
+	Entity__Relace_apply__Version_3                                        = "relace-apply@3"
+	Entity__Remm__Size_13b                                                 = "remm#13b"
+	Entity__Rerank__Fast                                                   = "rerank{fast}"
+	Entity__Rerank__Lite__Version_2_5                                      = "rerank/lite@2.5"
+	Entity__Rerank__Pro                                                    = "rerank{pro}"
+	Entity__Rerank__Size_4b                                                = "rerank#4b"
+	Entity__Rerank__V3_5                                                   = "rerank/v3.5"
+	Entity__Rerank__Version_2_5                                            = "rerank@2.5"
+	Entity__Ring__Size_1t                                                  = "ring#1t"
+	Entity__Ring__Version_2_6__Size_1t                                     = "ring@2.6#1t"
+	Entity__Riva_translate_4b_instruct__V1_1__Size_4b__Instruct__Translate = "riva-translate-4b-instruct/v1.1#4b{instruct,translate}"
+	Entity__Rnj__Version_1__Instruct                                       = "rnj@1{instruct}"
+	Entity__Roc                                                            = "roc"
+	Entity__Rocinante_12b__V1_1__Size_12b                                  = "rocinante-12b/v1.1#12b"
+	Entity__Runway                                                         = "runway"
+	Entity__Runway__Version_4__Turbo                                       = "runway@4{turbo}"
+	Entity__Sakana_namazu                                                  = "sakana-namazu"
+	Entity__Sap_abap__Version_1                                            = "sap-abap@1"
+	Entity__Sarvam                                                         = "sarvam"
+	Entity__Sarvam__Size_105b                                              = "sarvam#105b"
+	Entity__Sarvam__Size_30b                                               = "sarvam#30b"
+	Entity__Seed                                                           = "seed"
+	Entity__Seed__Code                                                     = "seed{code}"
+	Entity__Seed__Fast                                                     = "seed{fast}"
+	Entity__Seed__Flash                                                    = "seed/flash"
+	Entity__Seed__Flash__Version_1_6                                       = "seed/flash@1.6"
+	Entity__Seed__Lite                                                     = "seed/lite"
+	Entity__Seed__Lite__Version_2_0                                        = "seed/lite@2.0"
+	Entity__Seed__Mini                                                     = "seed/mini"
+	Entity__Seed__Mini__Version_2_0                                        = "seed/mini@2.0"
+	Entity__Seed__Oss__Size_36b__Instruct                                  = "seed/oss#36b{instruct}"
+	Entity__Seed__Pro                                                      = "seed/pro"
+	Entity__Seed__Pro__Fast                                                = "seed/pro{fast}"
+	Entity__Seed__Pro__Version_2_0                                         = "seed/pro@2.0"
+	Entity__Seed__Turbo                                                    = "seed{turbo}"
+	Entity__Seed__Version_1_6                                              = "seed@1.6"
+	Entity__Seed__Version_1_8                                              = "seed@1.8"
+	Entity__Seed__Version_2_0__Code                                        = "seed@2.0{code}"
+	Entity__Seed__Version_2_1__Turbo                                       = "seed@2.1{turbo}"
+	Entity__Seed__Vision                                                   = "seed{vision}"
+	Entity__Skyfall__Size_36b                                              = "skyfall#36b"
+	Entity__Smollm3__Size_3b__Base                                         = "smollm3#3b{base}"
+	Entity__Solar                                                          = "solar"
+	Entity__Solar__Mini                                                    = "solar/mini"
+	Entity__Solar__Pro                                                     = "solar/pro"
+	Entity__Solar__Pro__Version_3                                          = "solar/pro@3"
+	Entity__Solar__Size_10_7b__Instruct                                    = "solar#10.7b{instruct}"
+	Entity__Sonar                                                          = "sonar"
+	Entity__Sonar__Deep_research                                           = "sonar/deep-research"
+	Entity__Sonar__Pro                                                     = "sonar/pro"
+	Entity__Sonar__Reasoning                                               = "sonar/reasoning"
+	Entity__Sora__Pro__Version_2                                           = "sora/pro@2"
+	Entity__Sora__Version_2                                                = "sora@2"
+	Entity__Sparsedrive                                                    = "sparsedrive"
+	Entity__Stable_diffusion                                               = "stable-diffusion"
+	Entity__Stable_diffusion__Large__Version_3_5                           = "stable-diffusion/large@3.5"
+	Entity__Step                                                           = "step"
+	Entity__Step__Flash__Version_3_5                                       = "step/flash@3.5"
+	Entity__Step__Flash__Version_3_7                                       = "step/flash@3.7"
+	Entity__Step__Mini                                                     = "step/mini"
+	Entity__Step__Version_1                                                = "step@1"
+	Entity__Step__Version_2                                                = "step@2"
+	Entity__Step__Version_3                                                = "step@3"
+	Entity__Step__Version_3_5                                              = "step@3.5"
+	Entity__Step__Version_3_7                                              = "step@3.7"
+	Entity__Streampetr                                                     = "streampetr"
+	Entity__Studiovoice                                                    = "studiovoice"
+	Entity__Synth                                                          = "synth"
+	Entity__Synth__Code                                                    = "synth{code}"
+	Entity__Synthetic                                                      = "synthetic"
+	Entity__Tako                                                           = "tako"
+	Entity__Text                                                           = "text"
+	Entity__Text_embedding                                                 = "text-embedding"
+	Entity__Text_embedding_3__Large__Version_3                             = "text-embedding-3/large@3"
+	Entity__Text_embedding_3__Small__Version_3                             = "text-embedding-3/small@3"
+	Entity__Text_embedding__Embedding__Version_005                         = "text-embedding/embedding@005"
+	Entity__Text_embedding__Large                                          = "text-embedding/large"
+	Entity__Text_embedding__Large__Instruct                                = "text-embedding/large{instruct}"
+	Entity__Text_embedding__Large__Version_3                               = "text-embedding/large@3"
+	Entity__Text_embedding__Mini                                           = "text-embedding/mini"
+	Entity__Text_embedding__Small__Version_3                               = "text-embedding/small@3"
+	Entity__Text_embedding__Version_002                                    = "text-embedding@002"
+	Entity__Tim__Size_27b                                                  = "tim#27b"
+	Entity__Titan__Embed                                                   = "titan/embed"
+	Entity__Topazlabs                                                      = "topazlabs"
+	Entity__Trinity__Large                                                 = "trinity/large"
+	Entity__Trinity__Mini                                                  = "trinity/mini"
+	Entity__Tts__Version_1                                                 = "tts@1"
+	Entity__Tts__Version_1__Hd                                             = "tts@1{hd}"
+	Entity__Ui__Size_7b                                                    = "ui#7b"
+	Entity__Universal                                                      = "universal"
+	Entity__Unslopnemo_12b__V4_1__Size_12b                                 = "unslopnemo-12b/v4.1#12b"
+	Entity__Unslopnemo__Size_12b                                           = "unslopnemo#12b"
+	Entity__Unsloth__Size_12b                                              = "unsloth#12b"
+	Entity__Unsloth__Size_27b                                              = "unsloth#27b"
+	Entity__Unsloth__Size_4b                                               = "unsloth#4b"
+	Entity__Usdcode                                                        = "usdcode"
+	Entity__Usdvalidate                                                    = "usdvalidate"
+	Entity__V0__Size_0_6b                                                  = "v0#0.6b"
+	Entity__V0__Version_1_0                                                = "v0@1.0"
+	Entity__V0__Version_1_5                                                = "v0@1.5"
+	Entity__Venice                                                         = "venice"
+	Entity__Venice__Version_1_2                                            = "venice@1.2"
+	Entity__Veo                                                            = "veo"
+	Entity__Veo__Version_2                                                 = "veo@2"
+	Entity__Veo__Version_3_0                                               = "veo@3.0"
+	Entity__Veo__Version_3_1                                               = "veo@3.1"
+	Entity__Veo__Version_3_1__Fast                                         = "veo@3.1{fast}"
+	Entity__Veo__Version_3__Fast                                           = "veo@3{fast}"
+	Entity__Virtuoso__Large                                                = "virtuoso/large"
+	Entity__Voxtral__Mini                                                  = "voxtral/mini"
+	Entity__Voxtral__Mini__Size_3b                                         = "voxtral/mini#3b"
+	Entity__Voxtral__Small                                                 = "voxtral/small"
+	Entity__Voxtral__Small__Size_24b                                       = "voxtral/small#24b"
+	Entity__Voyage__Large__Version_3                                       = "voyage/large@3"
+	Entity__Voyage__Large__Version_4                                       = "voyage/large@4"
+	Entity__Voyage__Lite__Version_3_5                                      = "voyage/lite@3.5"
+	Entity__Voyage__Lite__Version_4                                        = "voyage/lite@4"
+	Entity__Voyage__Version_2                                              = "voyage@2"
+	Entity__Voyage__Version_3                                              = "voyage@3"
+	Entity__Voyage__Version_3_5                                            = "voyage@3.5"
+	Entity__Voyage__Version_4                                              = "voyage@4"
+	Entity__Wan2_7__Image                                                  = "wan2.7/image"
+	Entity__Wan2_7_image__Pro                                              = "wan2.7-image/pro"
+	Entity__Wan2__Version_2                                                = "wan2@2"
+	Entity__Wan__V2_5_t2v                                                  = "wan/v2.5-t2v"
+	Entity__Wan__V2_6_i2v                                                  = "wan/v2.6-i2v"
+	Entity__Wan__V2_6_i2v_flash                                            = "wan/v2.6-i2v-flash"
+	Entity__Wan__V2_6_r2v                                                  = "wan/v2.6-r2v"
+	Entity__Wan__V2_6_r2v_flash                                            = "wan/v2.6-r2v-flash"
+	Entity__Wan__V2_6_t2v                                                  = "wan/v2.6-t2v"
+	Entity__Wan__V2_7_r2v                                                  = "wan/v2.7-r2v"
+	Entity__Wan__V2_7_t2v                                                  = "wan/v2.7-t2v"
+	Entity__Wan__V3_0_video                                                = "wan/v3.0-video"
+	Entity__Wan_v2__Version_6                                              = "wan-v2@6"
+	Entity__Weaver                                                         = "weaver"
+	Entity__Whisper                                                        = "whisper"
+	Entity__Whisper__Large                                                 = "whisper/large"
+	Entity__Whisper__Large__Version_3                                      = "whisper/large@3"
+	Entity__Whisper__Large__Version_3__Turbo                               = "whisper/large@3{turbo}"
+	Entity__Whisper__Version_1                                             = "whisper@1"
+	Entity__Wizardlm__Version_2__Size_8x22b                                = "wizardlm@2#8x22b"
+	Entity__X_preview_f                                                    = "x-preview-f"
+	Entity__Xpersona_frieren__Coder                                        = "xpersona-frieren/coder"
+	Entity__Yi                                                             = "yi"
+	Entity__Yi__Large                                                      = "yi/large"
+	Entity__Zdev                                                           = "zdev"
+	Entity__Zdr                                                            = "zdr"
 )
 
 // allEntityConstants is the complete list of generated Entity__* constant values
 // (canonical entity keys), in the same ascending-name order as the const block.
 var allEntityConstants = [...]string{
 	Entity__Abliterated,
+	Entity__Abliterated_model__Large,
 	Entity__Active,
 	Entity__Agent,
+	Entity__Agents,
 	Entity__Agi__Mini,
 	Entity__Agi__Pro,
 	Entity__Agi__Version_01,
+	Entity__Agnes__Flash__Version_2_0,
+	Entity__Agnes__Flash__Version_2_5,
 	Entity__Agnes__Lite__Version_1_5,
 	Entity__Agnes__Pro__Version_1_5,
-	Entity__Aion__Mini__Version_1_0,
+	Entity__Agnes__Pro__Version_2_5,
 	Entity__Aion__Mini__Version_3_0,
 	Entity__Aion__Size_8b,
-	Entity__Aion__Version_1_0,
 	Entity__Aion__Version_2_0,
-	Entity__Aion__Version_2_5,
 	Entity__Aion__Version_3_0,
 	Entity__Aion_labs_aion_3_0__Mini__Version_3_0,
 	Entity__Aion_labs_aion__Version_3_0,
+	Entity__Allam__Version_2__Size_7b,
 	Entity__Amazon,
 	Entity__Anubis_70b__V1_1__Size_70b,
 	Entity__Anubis__Size_70b,
+	Entity__Apertus__Size_70b,
+	Entity__Apertus__Size_70b__Instruct,
+	Entity__Apertus__Size_8b__Instruct,
+	Entity__Apertus__V1_5_70B__Size_70b,
 	Entity__Arrow__Version_1_1,
 	Entity__Asi1__Mini,
-	Entity__Aura,
-	Entity__Aura__Version_2,
+	Entity__Asure__Size_12b,
 	Entity__Auto,
 	Entity__Auto__Code,
+	Entity__Auto__Small,
 	Entity__Autoglm__Size_9b,
 	Entity__Baichuan,
-	Entity__Baichuan4,
-	Entity__Baichuan4__Turbo,
 	Entity__Baichuan__Size_32b,
-	Entity__Balanced,
-	Entity__Bart__Large,
+	Entity__Baichuan__Turbo,
 	Entity__Bevformer,
 	Entity__Bge,
-	Entity__Bge__Base,
-	Entity__Bge__Large,
-	Entity__Bge__Small,
 	Entity__Bielik_11b__V2_6_Instruct__Size_11b__Instruct,
 	Entity__Bielik_11b__V3_0_Instruct__Size_11b__Instruct,
 	Entity__Big_pickle,
 	Entity__Bodybuilder,
 	Entity__Brave,
 	Entity__Brave__Pro,
+	Entity__Brick_complexity__Pro,
 	Entity__C4ai__Size_32b,
 	Entity__C4ai__Size_32b__Vision,
 	Entity__C4ai__Size_8b,
 	Entity__C4ai__Size_8b__Vision,
 	Entity__Canopylabs,
+	Entity__Celeris__Version_1,
 	Entity__Cheap,
 	Entity__Chutesai__Size_24b__Instruct,
 	Entity__Claude__Code,
+	Entity__Claude__Fable,
+	Entity__Claude__Fable__Version_5,
 	Entity__Claude__Haiku,
 	Entity__Claude__Haiku__Version_3,
 	Entity__Claude__Haiku__Version_3_5,
@@ -1012,26 +1074,23 @@ var allEntityConstants = [...]string{
 	Entity__Claude__Opus__Version_4_6,
 	Entity__Claude__Opus__Version_4_7,
 	Entity__Claude__Opus__Version_4_8,
+	Entity__Claude__Opus__Version_5,
 	Entity__Claude__Sonnet,
-	Entity__Claude__Sonnet__Version_3,
 	Entity__Claude__Sonnet__Version_3_5,
 	Entity__Claude__Sonnet__Version_3_7,
 	Entity__Claude__Sonnet__Version_4_0,
 	Entity__Claude__Sonnet__Version_4_5,
 	Entity__Claude__Sonnet__Version_4_6,
 	Entity__Claude__Sonnet__Version_5,
-	Entity__Claude_fable,
-	Entity__Claude_fable__Version_5,
+	Entity__Claude_mythos__Version_5,
 	Entity__Claudinio,
 	Entity__Claudius,
 	Entity__Claw,
 	Entity__Claw__Medium,
-	Entity__Cobuddy_free,
 	Entity__Code,
-	Entity__Codellama__Size_7b__Instruct,
-	Entity__Coder__Large,
 	Entity__Codestral,
 	Entity__Codestral__Embed,
+	Entity__Codestral__Version_0_1__Size_22b,
 	Entity__Coding,
 	Entity__Cogito__Version_2_1__Size_671b,
 	Entity__Cohere__Embed,
@@ -1043,19 +1102,21 @@ var allEntityConstants = [...]string{
 	Entity__Command__R,
 	Entity__Command__R7b__Size_7b,
 	Entity__Command__R_plus,
+	Entity__Cosmos3,
 	Entity__Cosmos__Size_2b,
 	Entity__Cosmos__Size_5b,
 	Entity__Cosmos__Size_7b,
+	Entity__Cosmos__Size_8b,
 	Entity__Cydonia_24b__V4_1__Size_24b,
 	Entity__Cydonia_24b__V4_3__Size_24b,
 	Entity__Cydonia__Size_24b,
 	Entity__Dall_e__Version_3,
 	Entity__Deepclaude,
-	Entity__Deephermes__Version_3__Size_24b,
 	Entity__Deepseek,
 	Entity__Deepseek__Chat,
 	Entity__Deepseek__Chat__Version_3_1,
 	Entity__Deepseek__Flash,
+	Entity__Deepseek__Flash__Size_284b,
 	Entity__Deepseek__Flash__Version_4,
 	Entity__Deepseek__Pro,
 	Entity__Deepseek__Size_14b,
@@ -1066,13 +1127,13 @@ var allEntityConstants = [...]string{
 	Entity__Deepseek__Turbo,
 	Entity__Deepseek__V3_1,
 	Entity__Deepseek__V3_1_maas,
-	Entity__Deepseek__V3_1_nex_n1,
 	Entity__Deepseek__V3_1_terminus,
 	Entity__Deepseek__V3_2,
 	Entity__Deepseek__V3_2_251201,
 	Entity__Deepseek__V3_2_exp,
 	Entity__Deepseek__V3_2_maas,
 	Entity__Deepseek__V3_2_speciale,
+	Entity__Deepseek__Version_2,
 	Entity__Deepseek__Version_3_2,
 	Entity__Deepseek_ocr__Version_2,
 	Entity__Devstral,
@@ -1083,19 +1144,13 @@ var allEntityConstants = [...]string{
 	Entity__Devstral__Version_2__Size_123b,
 	Entity__Devstral__Version_2__Size_123b__Instruct,
 	Entity__Diffusiongemma__Size_26b_a4b,
-	Entity__Distilbert__Version_2,
+	Entity__Dots__Version_3,
 	Entity__Doubao_1_5_thinking__Pro__Version_1_5,
 	Entity__Doubao_1_5_vision__Pro__Version_1_5,
 	Entity__Doubao__Code,
-	Entity__Doubao__Mini__Version_2_0,
-	Entity__Doubao__Pro__Version_1_5,
-	Entity__Doubao__Pro__Version_1_5__Vision,
-	Entity__Doubao__Pro__Version_2_0,
 	Entity__Doubao__Version_1_5,
 	Entity__Doubao__Version_1_6,
 	Entity__Doubao__Version_1_6__Vision,
-	Entity__Doubao__Version_2_0,
-	Entity__Doubao__Version_2_0__Code,
 	Entity__Doubao_seed__Flash__Version_1_6,
 	Entity__Doubao_seed__Lite__Version_2_0,
 	Entity__Doubao_seed__Mini__Version_2_0,
@@ -1107,25 +1162,26 @@ var allEntityConstants = [...]string{
 	Entity__Dracarys__Size_70b__Instruct,
 	Entity__Dracarys__Size_72b,
 	Entity__E2e,
+	Entity__Echo,
 	Entity__Elevenlabs,
 	Entity__Elevenlabs__V2_5__Turbo,
 	Entity__Ernie,
-	Entity__Ernie__Turbo,
-	Entity__Ernie__Version_4_5,
 	Entity__Ernie__Version_4_5__Size_21b_a3b,
 	Entity__Ernie__Version_4_5__Size_28b_a3b,
 	Entity__Ernie__Version_4_5__Size_300b_a47b,
 	Entity__Ernie__Version_4_5__Size_424b_a47b,
-	Entity__Ernie__Version_4_5__Turbo,
 	Entity__Ernie__Version_5_0,
 	Entity__Ernie__Version_5_1,
 	Entity__Esm2__Size_650m,
 	Entity__Esmfold,
 	Entity__Eva__Version_0_2__Size_32b,
 	Entity__Exa,
-	Entity__Exa_research__Pro,
 	Entity__Fast__Fast,
 	Entity__Fastgpt,
+	Entity__Fish_audio__S__Version_1,
+	Entity__Fish_audio__S__Version_2_1__Pro,
+	Entity__Fish_audio__S__Version_2__Pro,
+	Entity__Fish_audio__Transcribe__Version_1,
 	Entity__Flux,
 	Entity__Flux_1,
 	Entity__Flux__Pro,
@@ -1135,24 +1191,29 @@ var allEntityConstants = [...]string{
 	Entity__Flux__Version_2,
 	Entity__Flux__Version_2__Size_4b,
 	Entity__Flux__Version_2__Size_9b,
+	Entity__Flux__Version_3,
 	Entity__Free,
-	Entity__Frontier,
 	Entity__Fugu,
 	Entity__Fugu__Ultra,
+	Entity__Fugu__Ultra__Version_0,
+	Entity__Fugu__Ultra__Version_1,
+	Entity__Fugu__Ultra__Version_1_1,
 	Entity__Fusion,
 	Entity__Gelab__Size_4b,
+	Entity__Gemini,
 	Entity__Gemini__Deep_research,
+	Entity__Gemini__Embedding,
 	Entity__Gemini__Embedding__Version_001,
 	Entity__Gemini__Embedding__Version_2,
 	Entity__Gemini__Flash,
 	Entity__Gemini__Flash__Omni,
-	Entity__Gemini__Flash__Version_1_5,
 	Entity__Gemini__Flash__Version_2_0,
 	Entity__Gemini__Flash__Version_2_5,
 	Entity__Gemini__Flash__Version_3_0,
 	Entity__Gemini__Flash__Version_3_1,
 	Entity__Gemini__Flash__Version_3_5,
 	Entity__Gemini__Flash__Version_3_6,
+	Entity__Gemini__Flash__Version_3_7,
 	Entity__Gemini__Flash_lite,
 	Entity__Gemini__Flash_lite__Version_2_0,
 	Entity__Gemini__Flash_lite__Version_2_5,
@@ -1163,10 +1224,9 @@ var allEntityConstants = [...]string{
 	Entity__Gemini__Pro__Version_2_5,
 	Entity__Gemini__Pro__Version_3_0,
 	Entity__Gemini__Pro__Version_3_1,
-	Entity__Gemini_exp,
+	Entity__Gemini__Pro__Version_3_5__Translate,
+	Entity__Gemini__Version_3_5,
 	Entity__Gemma,
-	Entity__Gemma4__Size_31b,
-	Entity__Gemma_4_31b_larkspur__V0_5__Version_4__Size_31b,
 	Entity__Gemma__Size_26b,
 	Entity__Gemma__Size_27b,
 	Entity__Gemma__Size_31b,
@@ -1187,7 +1247,6 @@ var allEntityConstants = [...]string{
 	Entity__Gliner2,
 	Entity__Gliner2__Base,
 	Entity__Glm,
-	Entity__Glm_4_1v_thinking__Flash,
 	Entity__Glm__Air,
 	Entity__Glm__Air__Version_4,
 	Entity__Glm__Air__Version_4_5,
@@ -1195,14 +1254,18 @@ var allEntityConstants = [...]string{
 	Entity__Glm__Flash__Version_4,
 	Entity__Glm__Flash__Version_4_5,
 	Entity__Glm__Flash__Version_4_7,
+	Entity__Glm__Flash__Version_5_3,
 	Entity__Glm__Large,
-	Entity__Glm__V,
+	Entity__Glm__Lite__Version_5_2,
+	Entity__Glm__Ultra__Version_5_2,
 	Entity__Glm__V__Version_4_1,
+	Entity__Glm__V__Version_4_1__Flash,
 	Entity__Glm__V__Version_4_5,
 	Entity__Glm__V__Version_4_6,
 	Entity__Glm__V__Version_4_6__Flash,
 	Entity__Glm__V__Version_5,
 	Entity__Glm__V__Version_5__Z,
+	Entity__Glm__V__Version_6__Flash,
 	Entity__Glm__Version_4,
 	Entity__Glm__Version_4_5,
 	Entity__Glm__Version_4_6,
@@ -1212,12 +1275,14 @@ var allEntityConstants = [...]string{
 	Entity__Glm__Version_5,
 	Entity__Glm__Version_5_1,
 	Entity__Glm__Version_5_2,
+	Entity__Glm__Version_5_3,
 	Entity__Glm__Z,
-	Entity__Glm__Z__Size_32b,
 	Entity__Glm__Z__Size_9b,
 	Entity__Google,
 	Entity__Gpt,
 	Entity__Gpt__4o,
+	Entity__Gpt__4o__Fast,
+	Entity__Gpt__4o__Fast__Mini,
 	Entity__Gpt__4o__Mini,
 	Entity__Gpt__Audio,
 	Entity__Gpt__Audio__Mini,
@@ -1227,6 +1292,7 @@ var allEntityConstants = [...]string{
 	Entity__Gpt__Codex__Version_5_1,
 	Entity__Gpt__Codex__Version_5_2,
 	Entity__Gpt__Codex__Version_5_3,
+	Entity__Gpt__Codex__Version_5_3__Fast,
 	Entity__Gpt__Codex_mini,
 	Entity__Gpt__Codex_mini__Version_5_1,
 	Entity__Gpt__Codex_spark__Version_5_3,
@@ -1238,13 +1304,18 @@ var allEntityConstants = [...]string{
 	Entity__Gpt__Image__Version_5_4,
 	Entity__Gpt__Luna,
 	Entity__Gpt__Luna__Version_5_6,
+	Entity__Gpt__Luna__Version_5_6__Fast,
 	Entity__Gpt__Luna__Version_5_6__Pro,
 	Entity__Gpt__Mini,
 	Entity__Gpt__Mini__Version_4_1,
+	Entity__Gpt__Mini__Version_4_1__Fast,
 	Entity__Gpt__Mini__Version_5,
 	Entity__Gpt__Mini__Version_5_4,
+	Entity__Gpt__Mini__Version_5_4__Fast,
+	Entity__Gpt__Mini__Version_5__Fast,
 	Entity__Gpt__Nano,
 	Entity__Gpt__Nano__Version_4_1,
+	Entity__Gpt__Nano__Version_4_1__Fast,
 	Entity__Gpt__Nano__Version_5,
 	Entity__Gpt__Nano__Version_5_4,
 	Entity__Gpt__O__Version_1,
@@ -1252,21 +1323,27 @@ var allEntityConstants = [...]string{
 	Entity__Gpt__O__Version_1__Pro,
 	Entity__Gpt__O__Version_3,
 	Entity__Gpt__O__Version_3__Deep_research,
+	Entity__Gpt__O__Version_3__Fast,
 	Entity__Gpt__O__Version_3__Mini,
 	Entity__Gpt__O__Version_3__Pro,
+	Entity__Gpt__O__Version_4__Fast__Mini,
 	Entity__Gpt__O__Version_4__Mini,
+	Entity__Gpt__Oss,
 	Entity__Gpt__Oss__Size_120b,
 	Entity__Gpt__Oss__Size_120b__Fast,
 	Entity__Gpt__Oss__Size_20b,
+	Entity__Gpt__Pro,
 	Entity__Gpt__Pro__Version_5,
 	Entity__Gpt__Pro__Version_5_2,
 	Entity__Gpt__Pro__Version_5_4,
 	Entity__Gpt__Pro__Version_5_5,
 	Entity__Gpt__Sol,
 	Entity__Gpt__Sol__Version_5_6,
+	Entity__Gpt__Sol__Version_5_6__Fast,
 	Entity__Gpt__Sol__Version_5_6__Pro,
 	Entity__Gpt__Terra,
 	Entity__Gpt__Terra__Version_5_6,
+	Entity__Gpt__Terra__Version_5_6__Fast,
 	Entity__Gpt__Terra__Version_5_6__Pro,
 	Entity__Gpt__Version_1_5,
 	Entity__Gpt__Version_2,
@@ -1275,20 +1352,30 @@ var allEntityConstants = [...]string{
 	Entity__Gpt__Version_3_5__Turbo,
 	Entity__Gpt__Version_4,
 	Entity__Gpt__Version_4_1,
+	Entity__Gpt__Version_4_1__Fast,
 	Entity__Gpt__Version_4__Turbo,
 	Entity__Gpt__Version_4__Turbo__Vision,
 	Entity__Gpt__Version_5,
 	Entity__Gpt__Version_5_1,
 	Entity__Gpt__Version_5_1__Chat,
+	Entity__Gpt__Version_5_1__Fast,
 	Entity__Gpt__Version_5_2,
 	Entity__Gpt__Version_5_2__Chat,
+	Entity__Gpt__Version_5_2__Fast,
 	Entity__Gpt__Version_5_3,
 	Entity__Gpt__Version_5_3__Chat,
 	Entity__Gpt__Version_5_4,
+	Entity__Gpt__Version_5_4__Fast,
 	Entity__Gpt__Version_5_5,
+	Entity__Gpt__Version_5_5__Fast,
 	Entity__Gpt__Version_5__Chat,
+	Entity__Gpt__Version_5__Fast,
+	Entity__Granite__Small__Version_4,
 	Entity__Granite__Version_4_0,
 	Entity__Granite__Version_4_1__Size_8b,
+	Entity__Granite__Version_4_2__Size_8b,
+	Entity__Green,
+	Entity__Green_s__Pro,
 	Entity__Greg,
 	Entity__Greg_1__Mini__Version_1,
 	Entity__Greg_2__Ultra__Version_2,
@@ -1304,6 +1391,7 @@ var allEntityConstants = [...]string{
 	Entity__Grok__Version_4_1__Fast,
 	Entity__Grok__Version_4_1__Fast__Reasoning,
 	Entity__Grok__Version_4_1__Non_reasoning,
+	Entity__Grok__Version_4_2,
 	Entity__Grok__Version_4_20,
 	Entity__Grok__Version_4_20__Non_reasoning,
 	Entity__Grok__Version_4_20__Reasoning,
@@ -1311,12 +1399,14 @@ var allEntityConstants = [...]string{
 	Entity__Grok__Version_4_2__Non_reasoning,
 	Entity__Grok__Version_4_3,
 	Entity__Grok__Version_4_5,
+	Entity__Grok__Version_4_6,
 	Entity__Grok__Version_4__Fast,
 	Entity__Grok__Version_4__Fast__Reasoning,
 	Entity__Grok__Version_4__Non_reasoning,
 	Entity__Grok_build__Version_0_1,
 	Entity__Groq,
 	Entity__Groq__Mini,
+	Entity__Happyhorse__Version_1_1,
 	Entity__Hermes,
 	Entity__Hermes__Medium,
 	Entity__Hermes__Pro__Version_2__Size_8b,
@@ -1324,35 +1414,39 @@ var allEntityConstants = [...]string{
 	Entity__Hermes__Version_3__Size_70b,
 	Entity__Hermes__Version_4__Size_405b,
 	Entity__Hermes__Version_4__Size_70b,
+	Entity__Holo2__Size_30b_a3b,
 	Entity__Holo3__Size_35b_a3b,
 	Entity__Hunyuan,
 	Entity__Hunyuan__Instruct,
 	Entity__Hunyuan__Size_7b,
 	Entity__Hunyuan__Version_2_0,
 	Entity__Hunyuan__Version_2_0__Instruct,
+	Entity__Hy,
+	Entity__Hy__Lite,
+	Entity__Hy__Pro,
+	Entity__Hy__Size_1_8b,
+	Entity__Hy__Size_30b_a3b,
+	Entity__Hy__Size_7b,
 	Entity__Hy__Version_3,
 	Entity__Ideogram,
 	Entity__Ideogram__Turbo,
 	Entity__Imagen__Ultra__Version_4_0,
 	Entity__Imagen__Version_3,
 	Entity__Imagen__Version_3__Fast,
-	Entity__Imagen__Version_4_0,
+	Entity__Imagen__Version_4,
 	Entity__Imagen__Version_4_0__Fast,
-	Entity__Indictrans__Size_1b,
 	Entity__Inflection__Version_3,
 	Entity__Inkling,
+	Entity__Inkling__Small,
 	Entity__Intellect__Version_3,
 	Entity__Interfaze,
-	Entity__Jais__Size_30b__Chat,
 	Entity__Jamba__Large,
 	Entity__Jamba__Large__Version_1_6,
 	Entity__Jamba__Large__Version_1_7,
 	Entity__Jamba__Mini,
 	Entity__Jamba__Mini__Version_1_6,
 	Entity__Jamba__Mini__Version_1_7,
-	Entity__Kat,
 	Entity__Kat__Coder,
-	Entity__Kat__Size_72b,
 	Entity__Kimi,
 	Entity__Kimi__Coder,
 	Entity__Kimi__K__Version_2,
@@ -1380,13 +1474,15 @@ var allEntityConstants = [...]string{
 	Entity__Laguna__Xs__Version_2_1,
 	Entity__Laguna_s,
 	Entity__Laguna_s__Version_2_1,
-	Entity__Learnlm__Pro__Version_1_5,
-	Entity__Lfm__Version_2__Size_24b_a2b,
+	Entity__Leanstral__Version_1_5,
+	Entity__Lfm__Version_2_5__Size_2_6b,
 	Entity__Ling__Flash__Version_2_0,
 	Entity__Ling__Flash__Version_2_6,
+	Entity__Ling__Flash__Version_3_0,
 	Entity__Ling__Flash_free__Version_2_6,
 	Entity__Ling__Size_1t,
 	Entity__Ling__Version_2_6__Size_1t,
+	Entity__Ling__Version_3_0,
 	Entity__Liquid__Size_24b_a2b,
 	Entity__Llama__Embed__Size_300m,
 	Entity__Llama__Large__Size_70b,
@@ -1402,8 +1498,8 @@ var allEntityConstants = [...]string{
 	Entity__Llama__Size_70b__Instruct,
 	Entity__Llama__Size_8b,
 	Entity__Llama__Size_8b__Instruct,
+	Entity__Llama__Ultra__Version_3_1__Size_253b,
 	Entity__Llama__Version_2__Size_22m,
-	Entity__Llama__Version_2__Size_7b__Chat,
 	Entity__Llama__Version_2__Size_86m,
 	Entity__Llama__Version_3_05__Size_70b,
 	Entity__Llama__Version_3_1__Size_405b__Instruct,
@@ -1415,6 +1511,7 @@ var allEntityConstants = [...]string{
 	Entity__Llama__Version_3_1__Size_8b__Instruct__Turbo,
 	Entity__Llama__Version_3_2__Size_11b__Instruct,
 	Entity__Llama__Version_3_2__Size_11b__Instruct__Vision,
+	Entity__Llama__Version_3_2__Size_1b,
 	Entity__Llama__Version_3_2__Size_1b__Instruct,
 	Entity__Llama__Version_3_2__Size_3b,
 	Entity__Llama__Version_3_2__Size_3b__Instruct,
@@ -1429,6 +1526,7 @@ var allEntityConstants = [...]string{
 	Entity__Llama__Version_3__Size_8b__Instruct,
 	Entity__Llama__Version_4,
 	Entity__Llama__Version_4__Size_12b,
+	Entity__Longcat,
 	Entity__Longcat__Flash__Chat,
 	Entity__Longcat__Flash_lite,
 	Entity__Longcat__Version_2_0,
@@ -1436,9 +1534,6 @@ var allEntityConstants = [...]string{
 	Entity__Lyria,
 	Entity__Lyria__Pro__Version_3,
 	Entity__Lyria__Version_3,
-	Entity__M2m__Size_1_2b,
-	Entity__M__Size_14b,
-	Entity__Maestro__Reasoning,
 	Entity__Magibu__Size_11b,
 	Entity__Magidonia_24b__V4_3__Size_24b,
 	Entity__Magistral__Medium,
@@ -1449,7 +1544,6 @@ var allEntityConstants = [...]string{
 	Entity__Mai__Version_1,
 	Entity__Medgemma__Size_4b,
 	Entity__Mellum2__Size_12b__Instruct,
-	Entity__Melotts,
 	Entity__Mercury__Coder,
 	Entity__Mercury__Version_2,
 	Entity__Mercury_edit__Version_2,
@@ -1462,12 +1556,12 @@ var allEntityConstants = [...]string{
 	Entity__Mimo__Version_2__Omni,
 	Entity__Mimo__Version_2__Pro,
 	Entity__Mimo__Version_2__Tts,
+	Entity__Minicpm_v__Version_4_5,
 	Entity__Minimax,
 	Entity__Minimax__M__Version_1,
 	Entity__Minimax__M__Version_2,
 	Entity__Minimax__M__Version_2_1,
 	Entity__Minimax__M__Version_2_5,
-	Entity__Minimax__M__Version_2_5__Size_230b,
 	Entity__Minimax__M__Version_2_7,
 	Entity__Minimax__M__Version_3,
 	Entity__Minimax__Version_01,
@@ -1475,13 +1569,12 @@ var allEntityConstants = [...]string{
 	Entity__Ministral__Size_14b__Instruct,
 	Entity__Ministral__Size_3b,
 	Entity__Ministral__Size_8b,
+	Entity__Ministral__Size_8b__Instruct,
 	Entity__Ministral__Version_3__Size_14b__Instruct,
 	Entity__Ministral__Version_3__Size_14b__Reasoning,
 	Entity__Ministral__Version_3__Size_3b__Instruct,
 	Entity__Ministral__Version_3__Size_3b__Reasoning,
 	Entity__Ministral__Version_3__Size_8b__Instruct,
-	Entity__Mirothinker_1_7_deepresearch__Mini__Version_1_7,
-	Entity__Mirothinker__Version_1_7,
 	Entity__Mistral,
 	Entity__Mistral__Code,
 	Entity__Mistral__Embed,
@@ -1511,7 +1604,7 @@ var allEntityConstants = [...]string{
 	Entity__Mistral__Small__Version_3_2__Size_24b__Instruct,
 	Entity__Mistral__Small__Version_4,
 	Entity__Mistral__Small__Version_4__Size_119b,
-	Entity__Mistral__Version_0_1__Size_7b__Instruct,
+	Entity__Mistral__Version_0_2__Size_7b__Instruct,
 	Entity__Mistral__Version_0_3__Size_7b__Instruct,
 	Entity__Mixtral__Size_8x22b,
 	Entity__Mixtral__Size_8x22b__Instruct,
@@ -1521,10 +1614,17 @@ var allEntityConstants = [...]string{
 	Entity__Mixtral__Version_0_1__Size_8x7b__Instruct,
 	Entity__Mm_poly__Size_8b,
 	Entity__Model_router,
+	Entity__Model_router__Mini,
 	Entity__Morph__Fast,
 	Entity__Morph__Large,
+	Entity__Motif__Version_3,
+	Entity__Muse,
+	Entity__Muse__Image__Version_1_0,
+	Entity__Muse__Size_30b,
 	Entity__Muse__Spark__Version_1_1,
+	Entity__Muse__Spark__Version_1_2,
 	Entity__Mythomax__Size_13b,
+	Entity__Namazu,
 	Entity__Nano_banana,
 	Entity__Nano_banana__Pro,
 	Entity__Nemotron,
@@ -1533,10 +1633,13 @@ var allEntityConstants = [...]string{
 	Entity__Nemotron__Nano__Size_12b,
 	Entity__Nemotron__Nano__Size_30b,
 	Entity__Nemotron__Nano__Size_30b_a3b,
+	Entity__Nemotron__Nano__Size_8b,
 	Entity__Nemotron__Nano__Size_9b,
 	Entity__Nemotron__Nano__Version_3__Omni,
 	Entity__Nemotron__Nano__Version_3__Size_30b,
+	Entity__Nemotron__Nano__Version_3__Size_30b__Omni,
 	Entity__Nemotron__Nano__Version_3__Size_30b_a3b,
+	Entity__Nemotron__Nano__Version_3__Size_30b_a3b__Omni,
 	Entity__Nemotron__Nano__Version_3__Size_30b_a3b__Omni__Reasoning,
 	Entity__Nemotron__Size_120b_a12b,
 	Entity__Nemotron__Size_1b,
@@ -1555,9 +1658,13 @@ var allEntityConstants = [...]string{
 	Entity__Nemotron__Version_2__Size_30b_a3b,
 	Entity__Nemotron__Version_3,
 	Entity__Nemotron__Version_3_5,
+	Entity__Nemotron__Version_3_5__Size_30b_a3b,
 	Entity__Nemotron__Version_3__Size_120b,
 	Entity__Nemotron__Version_3__Size_120b_a12b,
 	Entity__Nemotron__Version_3__Size_30b,
+	Entity__Neosmith_intelligent,
+	Entity__Neosmith_intelligent__Pro,
+	Entity__Neosmith_neolite,
 	Entity__Nomic,
 	Entity__North__Mini,
 	Entity__North__Mini__Code,
@@ -1570,50 +1677,43 @@ var allEntityConstants = [...]string{
 	Entity__Nova__Pro,
 	Entity__Nova__Pro__Version_2,
 	Entity__Nova__Size_100b,
-	Entity__Nova__Version_3,
 	Entity__Nv,
 	Entity__Nv__Size_7b,
 	Entity__Nvidia__Size_1b,
 	Entity__Olmo__Version_3__Size_32b,
-	Entity__Ornith__Version_1_0__Size_31b,
 	Entity__Ornith__Version_1_0__Size_35b,
-	Entity__Ornith__Version_1_0__Size_397b,
-	Entity__Ornith__Version_1_0__Size_9b,
+	Entity__Ornith__Version_1_5__Size_35b_a3b,
+	Entity__Ornith__Version_1_5__Size_397b,
+	Entity__Ornith__Version_1_5__Size_9b,
 	Entity__Osmosis__Size_0_6b,
-	Entity__Owl,
+	Entity__Ox_alpha,
 	Entity__Paddleocr,
 	Entity__Paddleocr_vl__Version_1_5,
 	Entity__Palmyra,
 	Entity__Pareto__Code,
 	Entity__Perceptron,
-	Entity__Phi__Medium__Version_3__Instruct,
-	Entity__Phi__Mini__Version_3_5__Instruct,
-	Entity__Phi__Mini__Version_3__Instruct,
+	Entity__Perplexity,
 	Entity__Phi__Mini__Version_4,
 	Entity__Phi__Mini__Version_4__Instruct,
 	Entity__Phi__Mini__Version_4__Reasoning,
-	Entity__Phi__Small__Version_3__Instruct,
-	Entity__Phi__Version_3_5__Instruct,
-	Entity__Phi__Version_3_5__Instruct__Vision,
 	Entity__Phi__Version_4,
 	Entity__Phi__Version_4__Instruct__Multimodal,
 	Entity__Phi__Version_4__Multimodal,
 	Entity__Phi__Version_4__Reasoning,
 	Entity__Pixtral__Large,
 	Entity__Pixtral__Size_12b,
-	Entity__Plamo__Size_1b,
-	Entity__Qianfan__Fast,
+	Entity__Pokee,
+	Entity__Pplx__Size_4b,
 	Entity__Qvq,
 	Entity__Qwen,
-	Entity__Qwen3_5_27b_omega_evolution__V2_0_Derestricted_Lite__Size_27b,
-	Entity__Qwen3_5_27b_omega_evolution__V2_0_Derestricted__Size_27b,
-	Entity__Qwen3_5_27b_omega_evolution__V2_2_Derestricted_Lite__Size_27b,
-	Entity__Qwen3_5_27b_omega_evolution__V2_2_Derestricted__Size_27b,
 	Entity__Qwen3guard__Size_0_6b,
 	Entity__Qwen3guard__Size_8b,
+	Entity__Qwen__3_6,
+	Entity__Qwen__3_6__Size_27b,
 	Entity__Qwen__Coder,
 	Entity__Qwen__Coder__Size_30b_a3b,
 	Entity__Qwen__Coder__Size_480b_a35b,
+	Entity__Qwen__Coder__Version_2_5__Size_0_5b,
 	Entity__Qwen__Coder__Version_2_5__Size_32b,
 	Entity__Qwen__Coder__Version_2_5__Size_32b__Instruct,
 	Entity__Qwen__Coder__Version_2_5__Size_7b__Fast,
@@ -1633,11 +1733,13 @@ var allEntityConstants = [...]string{
 	Entity__Qwen__Flash__Version_3_5,
 	Entity__Qwen__Flash__Version_3_5__Omni,
 	Entity__Qwen__Flash__Version_3_6,
+	Entity__Qwen__Flash__Version_3_7,
+	Entity__Qwen__Flash__Version_3_8,
 	Entity__Qwen__Flash__Version_3__Livetranslate,
 	Entity__Qwen__Flash__Version_3__Omni,
+	Entity__Qwen__Free__Version_3_8__Size_27b,
 	Entity__Qwen__Image,
 	Entity__Qwen__Image__Version_2_0,
-	Entity__Qwen__Lite__Version_3_5__Size_27b,
 	Entity__Qwen__Max,
 	Entity__Qwen__Max__Version_3,
 	Entity__Qwen__Max__Version_3_6,
@@ -1655,6 +1757,7 @@ var allEntityConstants = [...]string{
 	Entity__Qwen__Plus__Version_3_7,
 	Entity__Qwen__Size_14b,
 	Entity__Qwen__Size_235b_a22b,
+	Entity__Qwen__Size_27b,
 	Entity__Qwen__Size_32b,
 	Entity__Qwen__Size_35b_a3b,
 	Entity__Qwen__Size_397b,
@@ -1673,12 +1776,14 @@ var allEntityConstants = [...]string{
 	Entity__Qwen__Version_2_5__Size_7b__Instruct__Vision,
 	Entity__Qwen__Version_2_5__Size_7b__Omni,
 	Entity__Qwen__Version_3,
+	Entity__Qwen__Version_35__Size_397b_a17b,
 	Entity__Qwen__Version_3_5,
+	Entity__Qwen__Version_3_5__Size_0_8b,
 	Entity__Qwen__Version_3_5__Size_122b,
 	Entity__Qwen__Version_3_5__Size_122b_a10b,
 	Entity__Qwen__Version_3_5__Size_27b,
+	Entity__Qwen__Version_3_5__Size_2b,
 	Entity__Qwen__Version_3_5__Size_35b_a3b,
-	Entity__Qwen__Version_3_5__Size_397b__Fast,
 	Entity__Qwen__Version_3_5__Size_397b_a17b,
 	Entity__Qwen__Version_3_5__Size_397b_a17b__Fast,
 	Entity__Qwen__Version_3_5__Size_4b,
@@ -1688,6 +1793,10 @@ var allEntityConstants = [...]string{
 	Entity__Qwen__Version_3_6__Size_35b__Fast,
 	Entity__Qwen__Version_3_6__Size_35b_a3b,
 	Entity__Qwen__Version_3_7,
+	Entity__Qwen__Version_3_8,
+	Entity__Qwen__Version_3_8_2__Size_4t,
+	Entity__Qwen__Version_3_8__Size_27b,
+	Entity__Qwen__Version_3_8__Size_2_4t,
 	Entity__Qwen__Version_3__Size_0_6b,
 	Entity__Qwen__Version_3__Size_14b,
 	Entity__Qwen__Version_3__Size_14b__Instruct,
@@ -1696,6 +1805,7 @@ var allEntityConstants = [...]string{
 	Entity__Qwen__Version_3__Size_235b_a22b,
 	Entity__Qwen__Version_3__Size_235b_a22b__Fast,
 	Entity__Qwen__Version_3__Size_235b_a22b__Instruct,
+	Entity__Qwen__Version_3__Size_27b,
 	Entity__Qwen__Version_3__Size_30b,
 	Entity__Qwen__Version_3__Size_30b_a3b,
 	Entity__Qwen__Version_3__Size_30b_a3b__Instruct,
@@ -1712,6 +1822,7 @@ var allEntityConstants = [...]string{
 	Entity__Qwen__Vl__Version_2_5__Size_32b__Instruct,
 	Entity__Qwen__Vl__Version_2_5__Size_72b__Instruct,
 	Entity__Qwen__Vl__Version_2_5__Size_7b__Instruct,
+	Entity__Qwen__Vl__Version_2__Size_72b__Instruct,
 	Entity__Qwen__Vl__Version_3,
 	Entity__Qwen__Vl__Version_3__Instruct,
 	Entity__Qwen__Vl__Version_3__Size_235b_a22b,
@@ -1743,14 +1854,13 @@ var allEntityConstants = [...]string{
 	Entity__Rerank__Version_2_5,
 	Entity__Ring__Size_1t,
 	Entity__Ring__Version_2_6__Size_1t,
-	Entity__Riva__Size_4b__Instruct,
+	Entity__Riva_translate_4b_instruct__V1_1__Size_4b__Instruct__Translate,
 	Entity__Rnj__Version_1__Instruct,
 	Entity__Roc,
 	Entity__Rocinante_12b__V1_1__Size_12b,
-	Entity__Rocinante__Size_12b,
-	Entity__Router,
 	Entity__Runway,
 	Entity__Runway__Version_4__Turbo,
+	Entity__Sakana_namazu,
 	Entity__Sap_abap__Version_1,
 	Entity__Sarvam,
 	Entity__Sarvam__Size_105b,
@@ -1758,6 +1868,7 @@ var allEntityConstants = [...]string{
 	Entity__Seed,
 	Entity__Seed__Code,
 	Entity__Seed__Fast,
+	Entity__Seed__Flash,
 	Entity__Seed__Flash__Version_1_6,
 	Entity__Seed__Lite,
 	Entity__Seed__Lite__Version_2_0,
@@ -1766,14 +1877,16 @@ var allEntityConstants = [...]string{
 	Entity__Seed__Oss__Size_36b__Instruct,
 	Entity__Seed__Pro,
 	Entity__Seed__Pro__Fast,
+	Entity__Seed__Pro__Version_2_0,
+	Entity__Seed__Turbo,
 	Entity__Seed__Version_1_6,
 	Entity__Seed__Version_1_8,
-	Entity__Sincap,
-	Entity__Skyfall_31b__V4_2__Size_31b,
+	Entity__Seed__Version_2_0__Code,
+	Entity__Seed__Version_2_1__Turbo,
+	Entity__Seed__Vision,
 	Entity__Skyfall__Size_36b,
-	Entity__Small,
-	Entity__Smart_turn,
 	Entity__Smollm3__Size_3b__Base,
+	Entity__Solar,
 	Entity__Solar__Mini,
 	Entity__Solar__Pro,
 	Entity__Solar__Pro__Version_3,
@@ -1785,19 +1898,17 @@ var allEntityConstants = [...]string{
 	Entity__Sora__Pro__Version_2,
 	Entity__Sora__Version_2,
 	Entity__Sparsedrive,
-	Entity__Spotlight,
 	Entity__Stable_diffusion,
 	Entity__Stable_diffusion__Large__Version_3_5,
 	Entity__Step,
 	Entity__Step__Flash__Version_3_5,
 	Entity__Step__Flash__Version_3_7,
-	Entity__Step__Mini__Version_2,
+	Entity__Step__Mini,
 	Entity__Step__Version_1,
 	Entity__Step__Version_2,
 	Entity__Step__Version_3,
 	Entity__Step__Version_3_5,
 	Entity__Step__Version_3_7,
-	Entity__Step_r1_v__Mini,
 	Entity__Streampetr,
 	Entity__Studiovoice,
 	Entity__Synth,
@@ -1831,6 +1942,7 @@ var allEntityConstants = [...]string{
 	Entity__Unsloth__Size_4b,
 	Entity__Usdcode,
 	Entity__Usdvalidate,
+	Entity__V0__Size_0_6b,
 	Entity__V0__Version_1_0,
 	Entity__V0__Version_1_5,
 	Entity__Venice,
@@ -1842,7 +1954,9 @@ var allEntityConstants = [...]string{
 	Entity__Veo__Version_3_1__Fast,
 	Entity__Veo__Version_3__Fast,
 	Entity__Virtuoso__Large,
+	Entity__Voxtral__Mini,
 	Entity__Voxtral__Mini__Size_3b,
+	Entity__Voxtral__Small,
 	Entity__Voxtral__Small__Size_24b,
 	Entity__Voyage__Large__Version_3,
 	Entity__Voyage__Large__Version_4,
@@ -1863,6 +1977,7 @@ var allEntityConstants = [...]string{
 	Entity__Wan__V2_6_t2v,
 	Entity__Wan__V2_7_r2v,
 	Entity__Wan__V2_7_t2v,
+	Entity__Wan__V3_0_video,
 	Entity__Wan_v2__Version_6,
 	Entity__Weaver,
 	Entity__Whisper,
@@ -1871,12 +1986,11 @@ var allEntityConstants = [...]string{
 	Entity__Whisper__Large__Version_3__Turbo,
 	Entity__Whisper__Version_1,
 	Entity__Wizardlm__Version_2__Size_8x22b,
+	Entity__X_preview_f,
 	Entity__Xpersona_frieren__Coder,
 	Entity__Yi,
 	Entity__Yi__Large,
-	Entity__Yi__Size_30b_a3b,
-	Entity__Z__Code,
-	Entity__Zai_glm__Version_4_7,
+	Entity__Zdev,
 	Entity__Zdr,
 }
 

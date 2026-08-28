@@ -27,32 +27,70 @@ var epochRetiredKeysCorpusJSON []byte
 // The plan projected 41. That projection was made before four of the levers were
 // measured and is superseded by this count, which is derived from the diff rather than
 // forecast.
-const epochRetiredKeyCount = 62
+//
+// 62 -> 60 with the 2026-08-28 models.dev catalog refresh. Retirement is measured
+// against a BASELINE, so it is not a one-way door: a refresh that makes upstream serve a
+// row which mints a retired tuple again UN-retires that key. Two did, both because a
+// genuinely UNDATED artifact appeared where the lever had previously left only dated
+// siblings:
+//
+//   - gpt/pro — edenai serves openai/gpt-pro-latest, a rolling alias carrying no version
+//     at all, so the undated tier key has an occupant again.
+//   - ministral#8b{instruct} — pioneer serves mistralai/Ministral-8B-Instruct-2410, the
+//     ORIGINAL Ministral 8B Instruct. Its 2410 is a date, not a version, so it belongs on
+//     the undated key rather than on the ministral@3 line.
+//
+// Both rows were deleted from this corpus and from the per-lever gpt-tier corpus in the
+// same commit as the refresh that un-retired them; a corpus row asserting a live key is a
+// hard 404 would be asserting a falsehood. Four OTHER keys came back in the same refresh
+// and were NOT accepted as un-retired — they returned through version LOSS on new
+// upstream spellings (bare `ling` re-collecting Inkling rows, `mimo/pro` via a "-crof"
+// backend label, `nemotron#30b-a3b` via tier-before-version spellings, `gemma#12b` via a
+// Trendyol row mislabelled gemma) and were repaired with curated pins instead, so they
+// stay retired and keep their rows here.
+const epochRetiredKeyCount = 60
 
 // epochRetiredKeyLibraryShowDisagreements and epochRetiredKeyAnySeamDisagreements pin
 // the two seam-disagreement figures the doc comments above publish, in KEYS out of the
-// 62-key cumulative retired set. They are asserted against the committed corpus by
+// 60-key cumulative retired set. They are asserted against the committed corpus by
 // TestEpochRetiredKeys_MeasuredPolicySplit rather than transcribed into prose alone, so
 // a corpus row changing its seam columns fails here instead of silently invalidating the
 // documentation.
 //
-// 14 = 3 (`gpt-luna`, `gpt-sol`, `gpt-terra`: AMBIGUOUS at the bare library call,
-// NOT-FOUND at `bestiary show`) + 8 (NOT-FOUND bare, AMBIGUOUS at `show`) + 3
-// (NOT-FOUND bare, RESOLVED at `show`: `ministral#3b{instruct}`,
-// `mistral/large#675b{instruct}`, `nemotron#120b`).
+// 14 -> 12 and 18 -> 16 with the 2026-08-28 models.dev catalog refresh. Both figures moved
+// for ONE reason and it is not a behaviour change: the two keys the refresh UN-retired
+// (`gpt/pro` and `ministral#8b{instruct}` — see epochRetiredKeyCount) were both members of
+// the NOT-FOUND-bare / AMBIGUOUS-at-`show` class, so deleting their rows removed one
+// disagreement apiece from each figure. No seam changed what it does for any key that
+// stayed.
 //
-// 18 = those same 14 + 4 keys that agree at library and `show` but diverge at
+// 12 = 3 (`gpt-luna`, `gpt-sol`, `gpt-terra`: AMBIGUOUS at the bare library call,
+// NOT-FOUND at `bestiary show`) + 7 (NOT-FOUND bare, AMBIGUOUS at `show`:
+// `devstral#123b`, `gemma#4b`, `gemma#12b`, `gemma#26b-a4b`,
+// `mistral/large#675b{instruct}`, `mistral/small#24b`, `nemotron#30b-a3b`) + 2
+// (NOT-FOUND bare, RESOLVED at `show`: `ministral#3b{instruct}`, `nemotron#120b`).
+//
+// That middle class was 8 before the refresh and reads 7 now for TWO offsetting reasons,
+// not one: `gpt/pro` and `ministral#8b{instruct}` left it by being un-retired, and
+// `mistral/large#675b{instruct}` JOINED it from the RESOLVED group (which is why that
+// group reads 2 rather than 3). Its successor `mistral/large@3#675b{instruct}` is still one
+// live entity and still the right successor; it gained two provider rows that group into
+// two date-differentiated candidates, so the short reference no longer names exactly one.
+// It was a library/`show` disagreement in either class, which is why the TOTAL moved by
+// exactly the two deleted rows.
+//
+// 16 = those same 12 + 4 keys that agree at library and `show` but diverge at
 // `show --by-entity` (`agi`, `ling`, `mimo`, `kimi{instruct}`: AMBIGUOUS at both of
 // those, NOT-FOUND by entity).
 const (
-	epochRetiredKeyLibraryShowDisagreements = 14
-	epochRetiredKeyAnySeamDisagreements     = 18
+	epochRetiredKeyLibraryShowDisagreements = 12
+	epochRetiredKeyAnySeamDisagreements     = 16
 )
 
 // epochRetiredKeySeams is the expected outcome for one cumulatively-retired key at each
 // of the three seams it is reachable through. They are pinned SEPARATELY because they
 // measurably disagree, in BOTH directions, and collapsing them into one "the retired key
-// does X" claim is false for 18 of the 62 keys (epochRetiredKeyAnySeamDisagreements,
+// does X" claim is false for 16 of the 60 keys (epochRetiredKeyAnySeamDisagreements,
 // asserted below against the corpus rather than transcribed).
 //
 // Library is the outcome of a BARE bestiary.Resolve(key) — zero ResolveOptions, so the
@@ -66,18 +104,17 @@ const (
 // the one a user actually reaches. cmd/bestiary/main.go passes
 // WithInputFormat(InputFormatPeasant) whenever --format/--scheme are unset (i.e. almost
 // always), which parses the input as a canonical tuple instead of auto-detecting it.
-// That reading differs from the bare Library call for 14 keys
+// That reading differs from the bare Library call for 12 keys
 // (epochRetiredKeyLibraryShowDisagreements), in both directions:
 //
 //   - `gpt-luna`, `gpt-sol`, `gpt-terra` are AMBIGUOUS bare and NOT-FOUND here. Bare
 //     Resolve takes the variant-aware bare-family fallback (`gpt` is a live Family,
 //     `luna` names a Variant in it); Peasant parses the whole string as a Family, which
 //     no longer exists after the gpt tier re-key.
-//   - 8 keys are NOT-FOUND bare and AMBIGUOUS here, and 3 more are NOT-FOUND bare and
-//     RESOLVE here (`ministral#3b{instruct}`, `mistral/large#675b{instruct}`,
-//     `nemotron#120b`). Their `#size` / `/variant` punctuation disqualifies the
-//     bare-identifier fallback, so auto-detect reads them as raw ids and misses; the
-//     Peasant canonical parse finds the live entities.
+//   - 7 keys are NOT-FOUND bare and AMBIGUOUS here, and 2 more are NOT-FOUND bare and
+//     RESOLVE here (`ministral#3b{instruct}`, `nemotron#120b`). Their `#size` / `/variant`
+//     punctuation disqualifies the bare-identifier fallback, so auto-detect reads them as
+//     raw ids and misses; the Peasant canonical parse finds the live entities.
 //
 // CLIByEntity is the outcome of `bestiary show <key> --by-entity`. It is pinned
 // SEPARATELY from the exact-key seam because the two are not the same lookup: the CLI
@@ -122,7 +159,7 @@ var epochOnlyRetiredKeys = map[string]string{
 //
 // So ONE invariant holds without exception, and it is the one the retired-key policy is
 // actually about: the EXACT-key lookup — bestiary.EntityByKey, and the web route
-// GET /entity/<key> that dereferences through it — is a hard 404 for all 62. No alias is
+// GET /entity/<key> that dereferences through it — is a hard 404 for all 60. No alias is
 // minted, no redirect is added, no successor is listed and no nomen claim resurrects a
 // retired key. The CHANGELOG migration tables are the only pointer a user gets.
 //
@@ -135,29 +172,38 @@ var epochOnlyRetiredKeys = map[string]string{
 // The looser seams are pinned PER KEY against the MEASURED split, not against a blanket
 // rule, because a blanket rule is false here in several directions at once. Each bullet
 // below is a measured class, and the seam a claim is about is always named, because the
-// bare library call and the shipped `bestiary show` DISAGREE for 14 keys (see the
+// bare library call and the shipped `bestiary show` DISAGREE for 12 keys (see the
 // epochRetiredKeySeams doc for the two mechanisms).
 //
 // At the seam a user actually reaches — `bestiary show <key>`, which defaults to
-// WithInputFormat(InputFormatPeasant) — the split is 45 not-found, 12 under-specified
-// and 5 resolved:
+// WithInputFormat(InputFormatPeasant) — the split is 45 not-found, 11 under-specified
+// and 4 resolved. It read 45 / 12 / 5 over 62 keys before the 2026-08-28 models.dev
+// catalog refresh, which deleted the two un-retired rows and moved
+// `mistral/large#675b{instruct}` between the last two classes:
 //
-//   - 12 keys return the under-specified reading from `bestiary show` rather than a 404.
-//     Ten of them are DISTINCT-ENTITY ambiguity: the string still names several live and
-//     genuinely different entities (`agi`, `ling`, `mimo`, `gpt/pro`, `devstral#123b`,
-//     `gemma#4b`, `gemma#12b`, `gemma#26b-a4b`, `ministral#8b{instruct}`,
-//     `mistral/small#24b`, `nemotron#30b-a3b` — eleven, less `kimi{instruct}` below).
-//     This is live-family behaviour — the same reading `show gpt` and `show claude` have
-//     always produced — and it must NEVER be "fixed" into a 404, which would 404 the
-//     live family itself. A test asserting not-found on every seam for all 62 would be
-//     RED, and making it green would break working lookups.
+//   - 11 keys return the under-specified reading from `bestiary show` rather than a 404.
+//     Nine of them are DISTINCT-ENTITY ambiguity: the string still names several live and
+//     genuinely different entities (`agi`, `ling`, `mimo`, `devstral#123b`, `gemma#4b`,
+//     `gemma#12b`, `gemma#26b-a4b`, `mistral/small#24b`, `nemotron#30b-a3b`). This is
+//     live-family behaviour — the same reading `show gpt` and `show claude` have always
+//     produced — and it must NEVER be "fixed" into a 404, which would 404 the live family
+//     itself. A test asserting not-found on every seam for all 60 would be RED, and making
+//     it green would break working lookups.
 //
-//   - `kimi{instruct}` is under-specified for a DIFFERENT reason, and is filed apart from
-//     the class above on purpose: it is NOT a surviving bare family. All nine candidates
-//     share one identical tuple (family=kimi, variant=k, version=2, modifier=[instruct])
-//     and differ ONLY by `date`, so the ambiguity is the ordinary single-entity
-//     date-fragmentation any multi-instance entity produces. The surviving bare family
-//     here is `kimi`; `kimi{instruct}` is a variant+modifier compound.
+//     `gpt/pro` and `ministral#8b{instruct}` were named in this list and are gone from it.
+//     They did not change seam behaviour: the refresh UN-retired both, so they are no
+//     longer retired keys at all — see epochRetiredKeyCount for the evidence.
+//
+//   - `kimi{instruct}` and `mistral/large#675b{instruct}` are under-specified for a
+//     DIFFERENT reason, and are filed apart from the class above on purpose: neither is a
+//     surviving bare family. `kimi{instruct}`'s nine candidates share one identical tuple
+//     (family=kimi, variant=k, version=2, modifier=[instruct]) and differ ONLY by `date`,
+//     so the ambiguity is the ordinary single-entity date-fragmentation any multi-instance
+//     entity produces; the surviving bare family here is `kimi`, and `kimi{instruct}` is a
+//     variant+modifier compound. `mistral/large#675b{instruct}` joined this class at the
+//     2026-08-28 refresh through exactly the same mechanism: its one successor entity
+//     `mistral/large@3#675b{instruct}` went from one provider row to three, and they group
+//     into two date-differentiated candidates.
 //
 //   - `gpt-luna`, `gpt-sol` and `gpt-terra` are under-specified ONLY at the bare library
 //     call and are a plain 404 at `bestiary show`. They are pinned that way in both
@@ -166,15 +212,16 @@ var epochOnlyRetiredKeys = map[string]string{
 //     through the variant-aware bare-family fallback, and no shipped code path calls
 //     Resolve without WithInputFormat.
 //
-//   - 5 keys RESOLVE at `bestiary show`. Two of them, `kimi-k2` and `kimi-k3`, also
+//   - 4 keys RESOLVE at `bestiary show`. Two of them, `kimi-k2` and `kimi-k3`, also
 //     answer on `show --by-entity`, which every other retired key 404s on. They are the
 //     upstream raw_family spellings, and both are still LIVE concrete model ids, so
 //     `--by-entity` finds them through its concrete-model-id arm — which is why these two
-//     are its only exceptions in the epoch. The other three (`ministral#3b{instruct}`,
-//     `mistral/large#675b{instruct}`, `nemotron#120b`) answer at `show` alone, as
-//     under-specified references the model resolver matches to one live entity;
-//     `--by-entity` has no short-reference path, so it 404s on them. The exact-key lookup
-//     above 404s on all five. Recorded as measured deviations, not repaired.
+//     are its only exceptions in the epoch. The other two (`ministral#3b{instruct}` and
+//     `nemotron#120b`) answer at `show` alone, as under-specified references the model
+//     resolver matches to one live entity; `--by-entity` has no short-reference path, so it
+//     404s on them. The exact-key lookup above 404s on all four. This class read FIVE
+//     before the 2026-08-28 refresh: `mistral/large#675b{instruct}` left it for the
+//     under-specified class above. Recorded as measured deviations, not repaired.
 func TestEpochRetiredKeys_MeasuredPolicySplit(t *testing.T) {
 	corpus := loadEpochRetiredKeyCorpus(t)
 
@@ -402,9 +449,14 @@ func perLeverRetiredCorpora(t *testing.T) []perLeverCorpus {
 		t.Fatalf("glob retired-key corpora: %v", err)
 	}
 	var out []perLeverCorpus
+	seenSkips := map[string]bool{}
 	for _, p := range paths {
 		name := filepath.Base(p)
 		if name == "epoch_retired_keys_corpus.json" {
+			continue
+		}
+		if _, skip := nonEpochBaselineCorpora[name]; skip {
+			seenSkips[name] = true
 			continue
 		}
 		data, err := os.ReadFile(p)
@@ -426,7 +478,36 @@ func perLeverRetiredCorpora(t *testing.T) []perLeverCorpus {
 	if len(out) == 0 {
 		t.Fatal("no per-lever retired-key corpora found; the reconciliation would pass vacuously")
 	}
+	// A declaration for a file that is not there is stale, and a stale skip silently
+	// removes a corpus from the reconciliation the day someone re-creates that filename.
+	for name, why := range nonEpochBaselineCorpora {
+		if !seenSkips[name] {
+			t.Errorf("nonEpochBaselineCorpora declares %q (%s), but no such file is in "+
+				"testdata/retired/; drop the stale declaration", name, why)
+		}
+	}
 	return out
+}
+
+// nonEpochBaselineCorpora names the retired-key corpora that are measured against a
+// baseline OTHER than the epoch baseline, and are therefore not reconcilable against
+// epoch_retired_keys_corpus.json.
+//
+// The reconciliation's premise is that a per-lever corpus and the epoch corpus describe
+// the SAME key diff at different granularities: the epoch corpus takes every key live at
+// the epoch baseline and absent at this tip, and each lever corpus takes the subset its
+// lever retired. A corpus whose baseline is a different point in history breaks that
+// premise in both directions — its keys are legitimately absent from the epoch set (they
+// were minted after the epoch baseline), and the epoch set's keys are legitimately absent
+// from it. Reconciling them would report both as defects.
+//
+// This is a declaration, not a silent exclusion: the entry states which baseline the file
+// uses, the file must exist, and its own runner enforces its own discipline.
+var nonEpochBaselineCorpora = map[string]string{
+	"refresh_2026_08_28_rekey_retired_keys_corpus.json": "measured against the PREVIOUS RELEASE bake " +
+		"(tag v0.2.10 @ 490814e), not the epoch baseline: it records the 19 keys the 2026-08-28 catalog " +
+		"refresh retired whose artifacts survive under a different key. Most of them were minted after " +
+		"the epoch baseline, so they are correctly absent from the cumulative epoch set",
 }
 
 // loadEpochRetiredKeyCorpus loads the epoch corpus under the three-guard discipline: an

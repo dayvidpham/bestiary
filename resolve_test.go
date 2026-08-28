@@ -8,21 +8,35 @@ import (
 	"github.com/dayvidpham/bestiary"
 )
 
+// Witness id: "claude-opus-4-5-20251101".
+//
+// This file's cross-provider / namespace / scheme fixtures all need ONE property from
+// their witness — a dated Anthropic id that anthropic hosts AND at least one rehost also
+// hosts. It was "claude-opus-4-1-20250805" until the 2026-08-28 models.dev catalog
+// refresh, when anthropic stopped publishing that id on its own provider row; it now
+// survives only at six rehosts (302ai, abacus, helicone, jiekou, llmgateway, nano-gpt),
+// so every assertion that anthropic appears in its result set became false in fact.
+//
+// claude-opus-4-5-20251101 is the current dated Opus id and has the identical shape:
+// anthropic plus six rehosts (302ai, abacus, jiekou, llmgateway, nano-gpt, qihang-ai).
+// No assertion is weakened by the swap — the multi-provider and anthropic-present
+// preconditions are re-measured, not relaxed.
+
 // TestResolve_ExactID_CrossProviderHosting verifies that an exact raw model ID
 // shared by multiple providers returns []ModelRef with err==nil (cross-provider hosting).
 func TestResolve_ExactID_CrossProviderHosting(t *testing.T) {
-	// claude-opus-4-1-20250805 is hosted by multiple providers in the static registry.
-	refs, err := bestiary.Resolve("claude-opus-4-1-20250805")
+	// claude-opus-4-5-20251101 is hosted by multiple providers in the static registry.
+	refs, err := bestiary.Resolve("claude-opus-4-5-20251101")
 	if err != nil {
-		t.Fatalf("Resolve(\"claude-opus-4-1-20250805\") returned error: %v", err)
+		t.Fatalf("Resolve(\"claude-opus-4-5-20251101\") returned error: %v", err)
 	}
 	if len(refs) == 0 {
-		t.Fatal("Resolve(\"claude-opus-4-1-20250805\") returned empty slice, want >=1")
+		t.Fatal("Resolve(\"claude-opus-4-5-20251101\") returned empty slice, want >=1")
 	}
 	// All returned refs must have the same model ID.
 	for _, r := range refs {
-		if r.ID != "claude-opus-4-1-20250805" {
-			t.Errorf("Resolve returned ref with ID=%q, want %q", r.ID, "claude-opus-4-1-20250805")
+		if r.ID != "claude-opus-4-5-20251101" {
+			t.Errorf("Resolve returned ref with ID=%q, want %q", r.ID, "claude-opus-4-5-20251101")
 		}
 	}
 	// Multiple providers should be present.
@@ -31,11 +45,11 @@ func TestResolve_ExactID_CrossProviderHosting(t *testing.T) {
 		providersSeen[r.Provider] = struct{}{}
 	}
 	if len(providersSeen) < 2 {
-		t.Errorf("Resolve(\"claude-opus-4-1-20250805\") returned only 1 provider, want cross-provider hosting (>=2)")
+		t.Errorf("Resolve(\"claude-opus-4-5-20251101\") returned only 1 provider, want cross-provider hosting (>=2)")
 	}
 	// Anthropic must be among them.
 	if _, ok := providersSeen[bestiary.ProviderAnthropic]; !ok {
-		t.Errorf("Resolve(\"claude-opus-4-1-20250805\"): ProviderAnthropic not in results; providers=%v", providersSeen)
+		t.Errorf("Resolve(\"claude-opus-4-5-20251101\"): ProviderAnthropic not in results; providers=%v", providersSeen)
 	}
 }
 
@@ -111,7 +125,7 @@ func TestResolve_NotFound(t *testing.T) {
 // TestResolve_WithSchemeRaw_ExactMatch verifies that WithScheme(SchemeRaw)
 // performs an exact model ID match.
 func TestResolve_WithSchemeRaw_ExactMatch(t *testing.T) {
-	refs, err := bestiary.Resolve("claude-opus-4-1-20250805", bestiary.WithScheme(bestiary.SchemeRaw))
+	refs, err := bestiary.Resolve("claude-opus-4-5-20251101", bestiary.WithScheme(bestiary.SchemeRaw))
 	if err != nil {
 		t.Fatalf("Resolve with SchemeRaw returned error: %v", err)
 	}
@@ -119,8 +133,8 @@ func TestResolve_WithSchemeRaw_ExactMatch(t *testing.T) {
 		t.Fatal("Resolve with SchemeRaw returned empty slice")
 	}
 	for _, r := range refs {
-		if r.ID != "claude-opus-4-1-20250805" {
-			t.Errorf("Resolve SchemeRaw: ref.ID = %q, want %q", r.ID, "claude-opus-4-1-20250805")
+		if r.ID != "claude-opus-4-5-20251101" {
+			t.Errorf("Resolve SchemeRaw: ref.ID = %q, want %q", r.ID, "claude-opus-4-5-20251101")
 		}
 	}
 }
@@ -199,8 +213,8 @@ func TestResolve_BareHyphenShorthandRestored(t *testing.T) {
 		}
 	}
 	// The full, exact ID must still resolve cleanly (no regression to full-ID lookup).
-	if _, err := bestiary.Resolve("claude-opus-4-1-20250805", bestiary.WithScheme(bestiary.SchemeRaw)); err != nil {
-		t.Errorf("full ID claude-opus-4-1-20250805 must still resolve, got: %v", err)
+	if _, err := bestiary.Resolve("claude-opus-4-5-20251101", bestiary.WithScheme(bestiary.SchemeRaw)); err != nil {
+		t.Errorf("full ID claude-opus-4-5-20251101 must still resolve, got: %v", err)
 	}
 }
 
@@ -245,7 +259,7 @@ func TestResolve_ShorthandRegressions(t *testing.T) {
 // TestResolve_AutoDetect_RawID verifies that auto-detection treats a plain model
 // ID without slashes as SchemeRaw.
 func TestResolve_AutoDetect_RawID(t *testing.T) {
-	refs, err := bestiary.Resolve("claude-opus-4-1-20250805")
+	refs, err := bestiary.Resolve("claude-opus-4-5-20251101")
 	if err != nil {
 		t.Fatalf("Resolve auto-detect returned error: %v", err)
 	}
@@ -257,7 +271,7 @@ func TestResolve_AutoDetect_RawID(t *testing.T) {
 // TestResolve_AutoDetect_HuggingFaceForm verifies that "provider/id" two-segment
 // form is treated as SchemeHuggingFace (strips provider prefix).
 func TestResolve_AutoDetect_HuggingFaceForm(t *testing.T) {
-	refs, err := bestiary.Resolve("anthropic/claude-opus-4-1-20250805")
+	refs, err := bestiary.Resolve("anthropic/claude-opus-4-5-20251101")
 	if err != nil {
 		t.Fatalf("Resolve auto-detect HuggingFace form returned error: %v", err)
 	}
@@ -267,20 +281,20 @@ func TestResolve_AutoDetect_HuggingFaceForm(t *testing.T) {
 	// At least Anthropic should be in results.
 	found := false
 	for _, r := range refs {
-		if r.ID == "claude-opus-4-1-20250805" {
+		if r.ID == "claude-opus-4-5-20251101" {
 			found = true
 			break
 		}
 	}
 	if !found {
-		t.Error("Resolve auto-detect HuggingFace form: claude-opus-4-1-20250805 not in results")
+		t.Error("Resolve auto-detect HuggingFace form: claude-opus-4-5-20251101 not in results")
 	}
 }
 
 // TestResolve_AutoDetect_PURLForm verifies that "pkg:huggingface/provider/id"
 // form is treated as SchemePURL (strips pkg:huggingface/ prefix).
 func TestResolve_AutoDetect_PURLForm(t *testing.T) {
-	refs, err := bestiary.Resolve("pkg:huggingface/anthropic/claude-opus-4-1-20250805")
+	refs, err := bestiary.Resolve("pkg:huggingface/anthropic/claude-opus-4-5-20251101")
 	if err != nil {
 		t.Fatalf("Resolve auto-detect PURL form returned error: %v", err)
 	}
@@ -289,13 +303,13 @@ func TestResolve_AutoDetect_PURLForm(t *testing.T) {
 	}
 	found := false
 	for _, r := range refs {
-		if r.ID == "claude-opus-4-1-20250805" {
+		if r.ID == "claude-opus-4-5-20251101" {
 			found = true
 			break
 		}
 	}
 	if !found {
-		t.Error("Resolve auto-detect PURL form: claude-opus-4-1-20250805 not in results")
+		t.Error("Resolve auto-detect PURL form: claude-opus-4-5-20251101 not in results")
 	}
 }
 
@@ -328,7 +342,7 @@ func TestResolve_WithSchemeHuggingFace(t *testing.T) {
 // TestResolve_WithSchemePURL verifies that WithScheme(SchemePURL) strips the
 // PURL prefix and matches by raw ID.
 func TestResolve_WithSchemePURL(t *testing.T) {
-	refs, err := bestiary.Resolve("pkg:huggingface/anthropic/claude-opus-4-1-20250805",
+	refs, err := bestiary.Resolve("pkg:huggingface/anthropic/claude-opus-4-5-20251101",
 		bestiary.WithScheme(bestiary.SchemePURL))
 	if err != nil {
 		t.Fatalf("Resolve SchemePURL returned error: %v", err)
@@ -338,13 +352,13 @@ func TestResolve_WithSchemePURL(t *testing.T) {
 	}
 	found := false
 	for _, r := range refs {
-		if r.ID == "claude-opus-4-1-20250805" {
+		if r.ID == "claude-opus-4-5-20251101" {
 			found = true
 			break
 		}
 	}
 	if !found {
-		t.Error("Resolve SchemePURL: claude-opus-4-1-20250805 not in results")
+		t.Error("Resolve SchemePURL: claude-opus-4-5-20251101 not in results")
 	}
 }
 
@@ -405,7 +419,7 @@ func TestResolve_CanonicalFamily_ReturnsErrAmbiguous(t *testing.T) {
 // with the multi-host precondition measured directly from the catalog, so a
 // future single-host catalog cannot make this test pass vacuously.
 func TestResolve_ExactIDInCanonicalMode_NotAmbiguous(t *testing.T) {
-	const id = "claude-opus-4-1-20250805"
+	const id = "claude-opus-4-5-20251101"
 
 	// Precondition, measured from the built catalog rather than from Resolve's
 	// output: the id really is hosted by several providers, so a clean resolution
@@ -421,7 +435,7 @@ func TestResolve_ExactIDInCanonicalMode_NotAmbiguous(t *testing.T) {
 			"this regression test needs a cross-provider id to be meaningful", id, len(hosts))
 	}
 
-	// claude-opus-4-1-20250805 is hosted across multiple providers. Even if some
+	// claude-opus-4-5-20251101 is hosted across multiple providers. Even if some
 	// providers omit the API family field (yielding a divergent Variant "" vs
 	// "opus" for the same model), resolving the EXACT id in canonical mode must NOT
 	// be treated as ambiguous — all matches share one raw id, so they group by id.
@@ -655,10 +669,10 @@ func TestResolve_PURL_LooseFallback_DiagnosticMessage(t *testing.T) {
 // the existing behavior when the namespace (provider) DOES have matching models.
 // The original provider-filter should still apply when there are matches.
 func TestResolve_PURL_ExistingNamespacePreserved(t *testing.T) {
-	// anthropic hosts claude-opus-4-1-20250805 — namespace filter must still work.
-	refs, err := bestiary.Resolve("pkg:huggingface/anthropic/claude-opus-4-1-20250805")
+	// anthropic hosts claude-opus-4-5-20251101 — namespace filter must still work.
+	refs, err := bestiary.Resolve("pkg:huggingface/anthropic/claude-opus-4-5-20251101")
 	if err != nil {
-		t.Skipf("claude-opus-4-1-20250805 not found under anthropic; skipping: %v", err)
+		t.Skipf("claude-opus-4-5-20251101 not found under anthropic; skipping: %v", err)
 	}
 	if len(refs) == 0 {
 		t.Fatal("Resolve PURL with matching namespace returned empty refs")
@@ -757,7 +771,7 @@ func TestResolve_CanonicalProvider_WithInputFormat_Peasant_Claude(t *testing.T) 
 func TestResolve_WithInputFormat_Peasant_RejectsPURL(t *testing.T) {
 	// PURL input given to peasant mode: should NOT resolve as PURL.
 	// The "pkg:huggingface/..." prefix is not a valid canonical form segment.
-	_, err := bestiary.Resolve("pkg:huggingface/anthropic/claude-opus-4-1-20250805",
+	_, err := bestiary.Resolve("pkg:huggingface/anthropic/claude-opus-4-5-20251101",
 		bestiary.WithInputFormat(bestiary.InputFormatPeasant))
 	if err == nil {
 		t.Fatal("Resolve peasant mode accepted PURL input without error; want ErrNotFound")
@@ -769,7 +783,7 @@ func TestResolve_WithInputFormat_Peasant_RejectsPURL(t *testing.T) {
 // TestResolve_WithInputFormat_PURL_Resolves verifies that InputFormatPURL
 // correctly resolves a PURL input string.
 func TestResolve_WithInputFormat_PURL_Resolves(t *testing.T) {
-	refs, err := bestiary.Resolve("pkg:huggingface/anthropic/claude-opus-4-1-20250805",
+	refs, err := bestiary.Resolve("pkg:huggingface/anthropic/claude-opus-4-5-20251101",
 		bestiary.WithInputFormat(bestiary.InputFormatPURL))
 	if err != nil {
 		t.Fatalf("Resolve WithInputFormat(PURL) returned error: %v", err)
@@ -779,20 +793,20 @@ func TestResolve_WithInputFormat_PURL_Resolves(t *testing.T) {
 	}
 	found := false
 	for _, r := range refs {
-		if r.ID == "claude-opus-4-1-20250805" {
+		if r.ID == "claude-opus-4-5-20251101" {
 			found = true
 			break
 		}
 	}
 	if !found {
-		t.Error("Resolve WithInputFormat(PURL): claude-opus-4-1-20250805 not in results")
+		t.Error("Resolve WithInputFormat(PURL): claude-opus-4-5-20251101 not in results")
 	}
 }
 
 // TestResolve_WithInputFormat_HuggingFace_Resolves verifies that InputFormatHuggingFace
 // correctly resolves a HuggingFace-form input.
 func TestResolve_WithInputFormat_HuggingFace_Resolves(t *testing.T) {
-	refs, err := bestiary.Resolve("anthropic/claude-opus-4-1-20250805",
+	refs, err := bestiary.Resolve("anthropic/claude-opus-4-5-20251101",
 		bestiary.WithInputFormat(bestiary.InputFormatHuggingFace))
 	if err != nil {
 		t.Fatalf("Resolve WithInputFormat(HuggingFace) returned error: %v", err)
@@ -802,20 +816,20 @@ func TestResolve_WithInputFormat_HuggingFace_Resolves(t *testing.T) {
 	}
 	found := false
 	for _, r := range refs {
-		if r.ID == "claude-opus-4-1-20250805" {
+		if r.ID == "claude-opus-4-5-20251101" {
 			found = true
 			break
 		}
 	}
 	if !found {
-		t.Error("Resolve WithInputFormat(HuggingFace): claude-opus-4-1-20250805 not in results")
+		t.Error("Resolve WithInputFormat(HuggingFace): claude-opus-4-5-20251101 not in results")
 	}
 }
 
 // TestResolve_WithInputFormat_Raw_Resolves verifies that InputFormatRaw
 // performs an exact model ID lookup.
 func TestResolve_WithInputFormat_Raw_Resolves(t *testing.T) {
-	refs, err := bestiary.Resolve("claude-opus-4-1-20250805",
+	refs, err := bestiary.Resolve("claude-opus-4-5-20251101",
 		bestiary.WithInputFormat(bestiary.InputFormatRaw))
 	if err != nil {
 		t.Fatalf("Resolve WithInputFormat(Raw) returned error: %v", err)
@@ -824,8 +838,8 @@ func TestResolve_WithInputFormat_Raw_Resolves(t *testing.T) {
 		t.Fatal("Resolve WithInputFormat(Raw) returned empty refs")
 	}
 	for _, r := range refs {
-		if r.ID != "claude-opus-4-1-20250805" {
-			t.Errorf("Resolve WithInputFormat(Raw): got ID=%q, want exact match %q", r.ID, "claude-opus-4-1-20250805")
+		if r.ID != "claude-opus-4-5-20251101" {
+			t.Errorf("Resolve WithInputFormat(Raw): got ID=%q, want exact match %q", r.ID, "claude-opus-4-5-20251101")
 		}
 	}
 }

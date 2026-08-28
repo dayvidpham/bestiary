@@ -8,7 +8,7 @@ package bestiary_test
 // that the old key is gone, the instances that landed on it, and the registry census
 // delta, which differs per correction and is accounted for in full below.
 //
-//   - Qwen2.5-32B-EVA-v0.2: "qwen2.5-32b-eva/v0.2#32b" → "eva@0.2#32b", with the base
+//   - EVA-Qwen2.5-32B-v0.2: "qwen2.5-32b-eva/v0.2#32b" → "eva@0.2#32b", with the base
 //     relationship promoted from a family token to a curated lineage edge.
 //   - command-a-plus-05-2026: "command-a-plus" → "command/a-plus", converging the two
 //     providers that previously disagreed about the model's identity.
@@ -18,6 +18,7 @@ package bestiary_test
 //     that moves the registry census.
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/dayvidpham/bestiary"
@@ -48,13 +49,17 @@ func TestEntityRekey_Eva(t *testing.T) {
 		t.Errorf("entity ref = %+v, want family eva / version 0.2 / size 32b / no variant", e.Ref)
 	}
 
-	// The one catalog row that must have landed here.
-	if len(e.Instances) != 1 || string(e.Instances[0].ID) != "Qwen2.5-32B-EVA-v0.2" {
+	// The one catalog row that must have landed here. The pinned id changed with the
+	// 2026-08-28 catalog refresh: nano-gpt used to serve BOTH the base-leading spelling
+	// "Qwen2.5-32B-EVA-v0.2" and the org-prefixed "EVA-UNIT-01/EVA-Qwen2.5-32B-v0.2";
+	// upstream dropped the base-leading one, so only the org-prefixed spelling survives.
+	// Same artifact, same entity, same key eva@0.2#32b — only the served id string moved.
+	if len(e.Instances) != 1 || string(e.Instances[0].ID) != "EVA-UNIT-01/EVA-Qwen2.5-32B-v0.2" {
 		var ids []string
 		for _, i := range e.Instances {
 			ids = append(ids, string(i.ID))
 		}
-		t.Errorf("entity instances = %v, want exactly [Qwen2.5-32B-EVA-v0.2]", ids)
+		t.Errorf("entity instances = %v, want exactly [EVA-UNIT-01/EVA-Qwen2.5-32B-v0.2]", ids)
 	}
 
 	// The compound family the override retired must be gone: if it comes back, the
@@ -126,15 +131,23 @@ func TestEntityRekey_CommandAPlus(t *testing.T) {
 
 	// The override pins family/variant only. Each provider's own release date must
 	// still come from the date pipeline, so the MM-YYYY month-leak guard is untouched:
-	// the two rows genuinely carry different dates upstream.
+	// the id spells "05-2026" and neither row may key off that month.
+	//
+	// nano-gpt 2026-05-22 -> 2026-05-20 with the 2026-08-28 catalog refresh: upstream
+	// corrected nano-gpt's release_date to cohere's. The half of this check that rested
+	// on the two providers DISAGREEING is therefore factually dead — the rows now agree
+	// upstream, so a passing equal-dates assertion no longer proves per-provider
+	// extraction. What survives, and is still worth pinning, is the month-leak guard:
+	// both dates must be the upstream release_date (2026-05-20) and NOT the "05-2026"
+	// the id spells, and the family override must not blank either of them.
 	dates := map[bestiary.Provider]string{}
 	for _, m := range bestiary.StaticModels() {
 		if string(m.ID) == "command-a-plus-05-2026" {
 			dates[m.Provider] = m.Date
 		}
 	}
-	if dates["cohere"] != "2026-05-20" || dates["nano-gpt"] != "2026-05-22" {
-		t.Errorf("per-provider dates = %v, want cohere 2026-05-20 / nano-gpt 2026-05-22 — "+
+	if dates["cohere"] != "2026-05-20" || dates["nano-gpt"] != "2026-05-20" {
+		t.Errorf("per-provider dates = %v, want cohere 2026-05-20 / nano-gpt 2026-05-20 — "+
 			"the family override must not disturb date extraction", dates)
 	}
 }
@@ -201,12 +214,33 @@ func TestEntityRekey_CortecsGluedVersion(t *testing.T) {
 }
 
 // TestEntityRekey_NoPhantomOpusEntities is the negative half of the cortecs fence: the
-// four phantom entities and the series lines that existed ONLY to hold them must be
-// gone. claude-5 is deliberately excluded — that line is real, populated by
-// claude/sonnet@5 — so this asserts the phantoms went without taking a real line with
-// them.
+// phantom entities and the series lines that existed ONLY to hold them must be gone.
+// claude-5 is deliberately excluded — that line is real, populated by claude/sonnet@5
+// and (since the 2026-08-28 refresh) by the released claude/opus@5 — so this asserts the
+// phantoms went without taking a real line with them.
 func TestEntityRekey_NoPhantomOpusEntities(t *testing.T) {
-	for _, key := range []string{"claude/opus@5", "claude/opus@6", "claude/opus@7", "claude/opus@8"} {
+	// "claude/opus@5" is NO LONGER a phantom and its guard is retired here.
+	// Premise change, not a weakened assertion: when this fence was written no Opus 5
+	// existed, so any claude/opus@5 entity could only have come from mis-reading the
+	// cortecs "claude-opus4-5" spelling. With the 2026-08-28 catalog refresh Anthropic
+	// has SHIPPED Claude Opus 5 — the models view carries a lab row
+	// "anthropic/claude-opus-5" named "Claude Opus 5" (released 2026-07-24) and the
+	// entity holds real rows from many providers. Asserting its absence would now assert
+	// that a real, released model must not exist.
+	//
+	// The cortecs half of the fence is what actually mattered and it is kept in force
+	// below: opus@5 must be populated only by genuine "claude-opus-5" spellings, never by
+	// a glued "opus4-N" one. @6/@7/@8 remain phantoms — Anthropic has shipped no Opus 6,
+	// 7 or 8 — so their absence guards stay exactly as they were.
+	if e, present := bestiary.EntityByKey("claude/opus@5"); present {
+		for _, i := range e.Instances {
+			if strings.Contains(string(i.ID), "opus4-") {
+				t.Errorf("entity \"claude/opus@5\" holds instance %s|%s — a glued cortecs version "+
+					"is being read as a whole major version", i.Provider, i.ID)
+			}
+		}
+	}
+	for _, key := range []string{"claude/opus@6", "claude/opus@7", "claude/opus@8"} {
 		if e, present := bestiary.EntityByKey(key); present {
 			t.Errorf("phantom entity %q is present again with %d instance(s) — a glued cortecs "+
 				"version is being read as a whole major version", key, len(e.Instances))
@@ -319,7 +353,37 @@ func TestEntityRekey_CensusAccounted(t *testing.T) {
 	// Two of the fourteen also change family (mistral/mini#3b and mistral/small#24b
 	// become voxtral, the line Mistral actually published them under) and one,
 	// gpt/pro, SPLITS across gpt/pro@5.4 and gpt/pro@5.5.
-	const wantEntities = 930
+	//
+	// 930 -> 989 with the 2026-08-28 models.dev catalog refresh: providers 170 -> 204,
+	// model rows 5,765 -> 7,430. 87 keys retire and 146 are minted (930 - 87 + 146 = 989).
+	// This link is upstream churn plus four curation pins that each re-retire a key the
+	// refresh had re-minted through a spelling the pipeline could not read: the inkling
+	// ':'-suffixed rows pin to family `inkling` (bare `ling` retires again), the xiaomi
+	// "-crof" backend-labelled rows to mimo@2.5{pro} (undated `mimo/pro` retires again),
+	// the four tier-before-version NVIDIA Nemotron 3.5 Lightning spellings to version 3.5
+	// (undated `nemotron#30b-a3b` retires again), trendyol-asure-12b to family `asure`
+	// (gemma#12b retires, asure#12b is minted), vercel's eight new fish-audio rows to
+	// family `fish-audio` (the junk-bucket keys `o` and `o/pro` retire; fish-audio/s@1,
+	// fish-audio/s@2{pro}, fish-audio/s@2.1{pro} and fish-audio/transcribe@1 are minted),
+	// kilo's openai/gpt-5.6-sol-discounted to (gpt, sol, 5.6) and inferx's mimo-v25 to
+	// version 2.5 — each of those last two had minted a one-instance phantom key
+	// (gpt@5.6, mimo@25) out of a spelling the pipeline could not read. Two previously retired keys are
+	// legitimately live again because upstream minted a real occupant for each: `gpt/pro`
+	// (edenai openai/gpt-pro-latest) and `ministral#8b{instruct}` (pioneer
+	// mistralai/Ministral-8B-Instruct-2410).
+	//
+	// 989 -> 987 with the two round-2 review pins that land after the refresh. requesty's
+	// "inkling-256k" is pinned to the bare `inkling` family: a served context length is a serving
+	// fact, never a release — the requesty row carries the same 262144 window at the same 1.8700 /
+	// 4.6800 price as llmtr's bare thinkingmachines/inkling — so inkling@256k, the keyspace's only
+	// context-length-shaped version, is never minted. nano-gpt's "Gemma-4-31B-Claude-4.6-Opus-
+	// Reasoning-Distilled" is pinned to (gemma, 4): the 2026-08-28 catalog newly stamps raw_family
+	// "claude" on a Google Gemma 4 31B distill, which credited Anthropic with it on the flagship
+	// Opus line, so the row rejoins gemma@4#31b and claude/opus#31b is never minted. Both keys
+	// were among the 146 the refresh minted and neither existed at the 930-key baseline, so the
+	// refresh link is restated as 930 - 87 + 144 = 987. No key retires that did not already
+	// retire.
+	const wantEntities = 987
 	if got := len(bestiary.Entities()); got != wantEntities {
 		t.Errorf("registry census = %d entities, want %d — this literal is the running total of "+
 			"every curated key retirement (see the arithmetic above it); update it in the same "+
@@ -331,13 +395,15 @@ func TestEntityRekey_CensusAccounted(t *testing.T) {
 // family that spells BOTH a bare integer version N and the dotted N.0 for the SAME
 // (variant, param-size, identity-modifiers) folds the bare entity onto the dotted one.
 //
-// It pins the EXACT set of 8 merge pairs (the whole authored table), asserts each fold is
+// It pins the EXACT set of merge pairs that the catalog still supports — 7 at this tip,
+// down from the 8 originally authored (see the imagen@4 note on the table) — asserts each fold is
 // a pure MERGE (the bare key is gone from Entities(), a bare EXPRESSION resolves through
 // the alias to the dotted entity, and the dotted entity's instance count EQUALS THE SUM of
 // both spellings' pre-fold instances — so a merge that silently DROPPED an instance is
 // caught, not just a mis-key), and guards the negative control: llama@4 has no 4.0 sibling
 // anywhere in the family, so it is NEVER touched — the fold is a merge, never a rename that
-// would mint a phantom @4.0 for it.
+// would mint a phantom @4.0 for it. imagen@4 is now in the same position and is guarded
+// beside it.
 func TestEntityMerge_NToN0_MergeOnly(t *testing.T) {
 	// The complete authored merge table: bare key -> (dotted key it folds into, the SUM of
 	// both spellings' pre-fold instance counts). The wantInst figures are the pre-merge
@@ -356,13 +422,38 @@ func TestEntityMerge_NToN0_MergeOnly(t *testing.T) {
 		dotted   string
 		wantInst int
 	}
+	//
+	// The 2026-08-28 catalog refresh moved four of the sums and removed one pair outright.
+	// Each figure below is re-measured against the refreshed catalog:
+	//
+	//   claude/opus@4.0   23 -> 20: three providers retired their "anthropic/claude-opus-4"
+	//                     row upstream (cloudflare-ai-gateway, orcarouter, requesty).
+	//   claude/sonnet@4.0 29 -> 26: four rows left (cloudflare-ai-gateway, neon, orcarouter
+	//                     and requesty's "anthropic/claude-sonnet-4") and one arrived
+	//                     (requesty "claude-sonnet-4@eu"). -4 +1 = -3.
+	//   gemini/flash@3.0  29 -> 34: seven rehosts arrived (edenai x2, the new
+	//                     llmgateway-providers x3, ofox, opper) and two left
+	//                     (github-copilot, requesty). +7 -2 = +5.
+	//   gemini/pro@3.0    27 -> 30: eight "gemini-3-pro-image" rows arrived (abacus,
+	//                     edenai x3, google, kilo, merge-gateway, requesty) and five
+	//                     "-pro-preview" rows left (google, neon, orcarouter, requesty,
+	//                     vercel). +8 -5 = +3.
+	//
+	// The imagen@4 -> imagen@4.0 PAIR IS RETIRED FROM THIS TABLE, not weakened. The fold is
+	// MERGE-only by construction: it fires only when a family spells BOTH the bare N and the
+	// dotted N.0. vercel dropped its three "google/imagen-4.0-*-generate-001" rows in this
+	// refresh, which were the only occupants of the plain dotted imagen@4.0, so that spelling
+	// no longer exists and there is nothing for the bare imagen@4 to merge into. imagen@4 is
+	// now in exactly the position llama@4 has always been in — a bare key with no dotted
+	// sibling — and the negative control below covers that case. imagen@4{fast} and
+	// imagen/ultra@4 still have dotted siblings (fastrouter's imagen-4.0-fast / -ultra), so
+	// those two pairs stay.
 	merges := map[string]merge{
-		"claude/opus@4":   {"claude/opus@4.0", 23},
-		"claude/sonnet@4": {"claude/sonnet@4.0", 29},
+		"claude/opus@4":   {"claude/opus@4.0", 20},
+		"claude/sonnet@4": {"claude/sonnet@4.0", 26},
 		// 29 -> 28: an upstream rehost row left at the 2026-07-23 refresh.
-		"gemini/flash@3": {"gemini/flash@3.0", 29},
-		"gemini/pro@3":   {"gemini/pro@3.0", 27},
-		"imagen@4":       {"imagen@4.0", 4},
+		"gemini/flash@3": {"gemini/flash@3.0", 34},
+		"gemini/pro@3":   {"gemini/pro@3.0", 30},
 		"imagen@4{fast}": {"imagen@4.0{fast}", 2},
 		"imagen/ultra@4": {"imagen/ultra@4.0", 2},
 		"veo@3":          {"veo@3.0", 3},
@@ -398,17 +489,25 @@ func TestEntityMerge_NToN0_MergeOnly(t *testing.T) {
 		}
 	}
 
-	// Negative control: llama@4 has no llama@4.0 sibling, so it stays exactly llama@4 —
-	// a pure merge never renames a lone bare-N line.
-	if _, ok := bestiary.EntityByKey("llama@4.0"); ok {
-		t.Error("llama@4.0 exists; the MERGE-only fold must not mint a dotted phantom for a lone bare-N line")
-	}
-	e, ok := bestiary.EntityByKey("llama@4")
-	if !ok {
-		t.Fatal("EntityByKey(llama@4) = false; the lone bare-N line must be untouched by the fold")
-	}
-	if got := e.Ref.String(); got != "llama@4" {
-		t.Errorf("llama@4 was moved to %q; a lone bare-N line must be untouched", got)
+	// Negative controls: a bare-N line with no N.0 sibling stays exactly as it is — a pure
+	// merge never renames a lone bare-N line. llama@4 has always been such a line; imagen@4
+	// JOINED it at the 2026-08-28 refresh, when vercel dropped the three
+	// "google/imagen-4.0-*-generate-001" rows that were the plain imagen@4.0's only
+	// occupants. Pinning imagen@4 here keeps the retired merge pair under test from the
+	// other side: if a dotted imagen@4.0 is ever minted with no upstream row behind it,
+	// this fires.
+	for _, bare := range []string{"llama@4", "imagen@4"} {
+		dotted := bare + ".0"
+		if _, ok := bestiary.EntityByKey(dotted); ok {
+			t.Errorf("%s exists; the MERGE-only fold must not mint a dotted phantom for a lone bare-N line", dotted)
+		}
+		e, ok := bestiary.EntityByKey(bare)
+		if !ok {
+			t.Fatalf("EntityByKey(%s) = false; the lone bare-N line must be untouched by the fold", bare)
+		}
+		if got := e.Ref.String(); got != bare {
+			t.Errorf("%s was moved to %q; a lone bare-N line must be untouched", bare, got)
+		}
 	}
 }
 
@@ -419,7 +518,7 @@ func TestEntityMerge_NToN0_MergeOnly(t *testing.T) {
 // version N while ANOTHER entity exists with the IDENTICAL (family, variant, param-size,
 // identity-modifiers) tuple and version exactly "N.0". If both survived, the MERGE-only
 // fold failed to collapse them — the exact failure a future catalog change (a new variant
-// that spells both N and N.0) could introduce that the 8 fixed pins would not cover.
+// that spells both N and N.0) could introduce that the fixed pins would not cover.
 func TestEntityMerge_NToN0_TupleInvariant(t *testing.T) {
 	ents := bestiary.Entities()
 	present := make(map[string]bool, len(ents))

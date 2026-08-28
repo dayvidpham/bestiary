@@ -1,10 +1,13 @@
 {
-  "_comment": "Provider-unqualified exact-ID lookups through Resolve (peasant/SchemeCanonical). Each input is a real catalog model ID hosted by two or more providers; each expected records WHICH provider heads the returned slice — the representative a single-model consumer such as `bestiary show` renders — and whether the canonical-provider preference collapsed the slice to that provider alone. sole=true means the family carries a curated CanonicalProvider() that hosts this exact ID, so the preference fires and the rehosts drop out. sole=false is a fall-through control: either the family has no curated canonical, or its canonical does not host this ID, so the FULL match set is returned and the head is simply the alphabetically-first provider (the static registry is sorted by (Provider, ID)) — that value is pinned as an observed catalog fact, not as a designed guarantee.",
+  "_comment": "Provider-unqualified exact-ID lookups through Resolve (peasant/SchemeCanonical). Each input is a real catalog model ID hosted by two or more providers; each expected records WHICH provider heads the returned slice \u2014 the representative a single-model consumer such as `bestiary show` renders \u2014 and whether the canonical-provider preference collapsed the slice to that provider alone. sole=true means the family carries a curated CanonicalProvider() that hosts this exact ID, so the preference fires and the rehosts drop out. sole=false is a fall-through control: either the family has no curated canonical, or its canonical does not host this ID, so the FULL match set is returned and the head is simply the alphabetically-first provider (the static registry is sorted by (Provider, ID)) \u2014 that value is pinned as an observed catalog fact, not as a designed guarantee.",
   "cases": [
     {
       "name": "claude-sonnet-exact-id-prefers-anthropic",
       "input": "claude-sonnet-4-5-20250929",
-      "expected": { "provider": "anthropic", "sole": true },
+      "expected": {
+        "provider": "anthropic",
+        "sole": true
+      },
       "classification": "must-pass",
       "provenance": {
         "source": "bug",
@@ -16,12 +19,15 @@
     },
     {
       "name": "claude-opus-exact-id-prefers-anthropic",
-      "input": "claude-opus-4-1-20250805",
-      "expected": { "provider": "anthropic", "sole": true },
+      "input": "claude-opus-4-5-20251101",
+      "expected": {
+        "provider": "anthropic",
+        "sole": true
+      },
       "classification": "must-pass",
       "provenance": {
         "source": "bug",
-        "ref": "the model pinned by the pre-existing exact-ID false-ambiguity regression test, whose provider set previously came back 302ai-first"
+        "ref": "the model pinned by the pre-existing exact-ID false-ambiguity regression test, whose provider set previously came back 302ai-first | 2026-08-28 models.dev catalog refresh: anthropic retired claude-opus-4-1-20250805 from its own provider row (the id survives only at six rehosts: 302ai, abacus, helicone, jiekou, llmgateway, nano-gpt), so it can no longer exercise a preference for a provider that does not host it. Re-pointed to claude-opus-4-5-20251101, the current dated Opus id, which anthropic serves alongside six rehosts \u2014 the identical multi-provider shape the case was authored for."
       },
       "mutation": {
         "description": "a second claude ID, dated and variant-bearing, guarding against a fix that special-cases one ID"
@@ -30,115 +36,142 @@
     {
       "name": "gemini-exact-id-prefers-google",
       "input": "gemini-2.5-pro",
-      "expected": { "provider": "google", "sole": true },
+      "expected": {
+        "provider": "google",
+        "sole": true
+      },
       "classification": "must-pass",
       "provenance": {
         "source": "manual",
         "ref": "catalog ID gemini-2.5-pro, hosted by google plus 14 rehosts"
       },
       "mutation": {
-        "description": "family gemini — the curated google mapping, on the widest rehost set in the catalog"
+        "description": "family gemini \u2014 the curated google mapping, on the widest rehost set in the catalog"
       }
     },
     {
       "name": "gemma-exact-id-prefers-google",
       "input": "gemma-4-31b-it",
-      "expected": { "provider": "google", "sole": true },
+      "expected": {
+        "provider": "google",
+        "sole": true
+      },
       "classification": "must-pass",
       "provenance": {
         "source": "manual",
         "ref": "catalog ID gemma-4-31b-it, hosted by google plus crof/kenari/llmgateway"
       },
       "mutation": {
-        "description": "family gemma — the second family sharing the google canonical mapping"
+        "description": "family gemma \u2014 the second family sharing the google canonical mapping"
       }
     },
     {
       "name": "gpt-exact-id-prefers-openai",
       "input": "gpt-4.1",
-      "expected": { "provider": "openai", "sole": true },
+      "expected": {
+        "provider": "openai",
+        "sole": true
+      },
       "classification": "must-pass",
       "provenance": {
         "source": "manual",
         "ref": "catalog ID gpt-4.1, hosted by openai plus 11 rehosts including azure"
       },
       "mutation": {
-        "description": "family gpt — the curated openai mapping, over a set whose alphabetical head (302ai) is a rehost"
+        "description": "family gpt \u2014 the curated openai mapping, over a set whose alphabetical head (302ai) is a rehost"
       }
     },
     {
       "name": "mistral-exact-id-prefers-mistral",
       "input": "mistral-large-2512",
-      "expected": { "provider": "mistral", "sole": true },
+      "expected": {
+        "provider": "mistral",
+        "sole": true
+      },
       "classification": "must-pass",
       "provenance": {
         "source": "manual",
         "ref": "catalog ID mistral-large-2512, hosted by mistral plus 302ai/cortecs/llmgateway"
       },
       "mutation": {
-        "description": "family mistral — the case where publisher and provider name coincide"
+        "description": "family mistral \u2014 the case where publisher and provider name coincide"
       }
     },
     {
       "name": "devstral-exact-id-prefers-mistral",
       "input": "devstral-2512",
-      "expected": { "provider": "mistral", "sole": true },
+      "expected": {
+        "provider": "mistral",
+        "sole": true
+      },
       "classification": "must-pass",
       "provenance": {
         "source": "manual",
         "ref": "catalog ID devstral-2512, hosted by mistral plus cortecs/llmgateway"
       },
       "mutation": {
-        "description": "family devstral — a family whose name does NOT match its curated canonical provider"
+        "description": "family devstral \u2014 a family whose name does NOT match its curated canonical provider"
       }
     },
     {
       "name": "deepseek-exact-id-prefers-deepseek",
-      "input": "deepseek-chat",
-      "expected": { "provider": "deepseek", "sole": true },
+      "input": "deepseek-v4-pro",
+      "expected": {
+        "provider": "deepseek",
+        "sole": true
+      },
       "classification": "must-pass",
       "provenance": {
         "source": "manual",
-        "ref": "catalog ID deepseek-chat, hosted by deepseek plus 302ai/nano-gpt"
+        "ref": "catalog ID deepseek-chat, hosted by deepseek plus 302ai/nano-gpt | 2026-08-28 models.dev catalog refresh: the deepseek provider no longer publishes deepseek-chat (it survives only at 302ai and nano-gpt), so the id cannot exercise a preference for deepseek. Re-pointed to deepseek-v4-pro, which deepseek serves alongside 24 other hosts."
       },
       "mutation": {
-        "description": "family deepseek — a bare, undated, unversioned ID"
+        "description": "family deepseek \u2014 a bare, undated, unversioned ID"
       }
     },
     {
       "name": "qwen-exact-id-prefers-alibaba",
       "input": "qwen-plus",
-      "expected": { "provider": "alibaba", "sole": true },
+      "expected": {
+        "provider": "alibaba",
+        "sole": true
+      },
       "classification": "must-pass",
       "provenance": {
         "source": "manual",
         "ref": "catalog ID qwen-plus, hosted by alibaba plus alibaba-cn/302ai/llmgateway/nano-gpt"
       },
       "mutation": {
-        "description": "family qwen — the canonical alibaba must win over the near-miss regional sibling alibaba-cn"
+        "description": "family qwen \u2014 the canonical alibaba must win over the near-miss regional sibling alibaba-cn"
       }
     },
     {
       "name": "command-exact-id-prefers-cohere",
       "input": "command-a-plus-05-2026",
-      "expected": { "provider": "cohere", "sole": true },
+      "expected": {
+        "provider": "cohere",
+        "sole": true
+      },
       "classification": "must-pass",
       "provenance": {
         "source": "manual",
         "ref": "catalog ID command-a-plus-05-2026, hosted by cohere and nano-gpt"
       },
       "mutation": {
-        "description": "family command — the curated cohere mapping. NOTE the discriminating assertion here is sole=true, not the head provider: cohere happens to sort first among this id's hosts, so the returned HEAD would read the same either way. What only the preference can produce is a slice of length 1 — without the cohere mapping the family's canonical would be empty and both hosts would come back. Every multi-provider command id cohere serves has cohere alphabetically first in the current catalog, so no stronger case exists to pin."
+        "description": "family command \u2014 the curated cohere mapping. NOTE the discriminating assertion here is sole=true, not the head provider: cohere happens to sort first among this id's hosts, so the returned HEAD would read the same either way. What only the preference can produce is a slice of length 1 \u2014 without the cohere mapping the family's canonical would be empty and both hosts would come back. Every multi-provider command id cohere serves has cohere alphabetically first in the current catalog, so no stronger case exists to pin."
       }
     },
     {
       "name": "codestral-canonical-absent-falls-through",
       "input": "codestral-2501",
-      "expected": { "provider": "azure", "sole": false },
+      "expected": {
+        "provider": "azure",
+        "sole": false
+      },
       "classification": "must-pass",
       "provenance": {
         "source": "boundary",
-        "ref": "catalog ID codestral-2501, hosted only by azure and azure-cognitive-services — mistral does not serve it"
+        "ref": "catalog ID codestral-2501, hosted only by azure and azure-cognitive-services \u2014 mistral does not serve it"
       },
       "mutation": {
         "description": "control: the family HAS a curated canonical (mistral) but it is absent from the match set, so the full set must be returned unchanged"
@@ -147,7 +180,10 @@
     {
       "name": "llama-canonical-absent-creator-surface-wins",
       "input": "llama-3.3-70b-instruct",
-      "expected": { "provider": "llama", "sole": true },
+      "expected": {
+        "provider": "llama",
+        "sole": true
+      },
       "classification": "must-pass",
       "provenance": {
         "source": "boundary",
@@ -160,20 +196,26 @@
     {
       "name": "qwen-hf-style-id-canonical-absent-falls-through",
       "input": "Qwen/Qwen3-32B",
-      "expected": { "provider": "abacus", "sole": false },
+      "expected": {
+        "provider": "abacus",
+        "sole": false
+      },
       "classification": "must-pass",
       "provenance": {
         "source": "boundary",
         "ref": "catalog ID Qwen/Qwen3-32B, hosted by 7 inference providers; alibaba does not serve the open-weights HF-style ID"
       },
       "mutation": {
-        "description": "control: same family as the qwen-plus positive case, but the canonical is absent for THIS id — the preference is per-match-set, not per-family"
+        "description": "control: same family as the qwen-plus positive case, but the canonical is absent for THIS id \u2014 the preference is per-match-set, not per-family"
       }
     },
     {
       "name": "minimax-no-curated-canonical-falls-through",
       "input": "MiniMax-M1",
-      "expected": { "provider": "302ai", "sole": false },
+      "expected": {
+        "provider": "302ai",
+        "sole": false
+      },
       "classification": "must-pass",
       "provenance": {
         "source": "boundary",

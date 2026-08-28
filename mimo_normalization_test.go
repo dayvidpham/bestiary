@@ -94,7 +94,10 @@ func TestMimo_OnlyTheCanonicalNomenLegMoves(t *testing.T) {
 		perScheme[n.Scheme]++
 	}
 
-	// Nine surviving mimo keys, one canonical nomen each.
+	// Nine surviving mimo keys, one canonical nomen each. (The 2026-08-28 catalog refresh
+	// briefly made this ten: inferx published "mimo-v25", a dot-lost spelling of MiMo v2.5
+	// that minted a one-instance phantom mimo@25. The row is now pinned to version 2.5 and
+	// joins the ~40 siblings on mimo@2.5, so the count is back to nine.)
 	if got := perScheme[bestiary.NomenSchemeCanonical]; got != 9 {
 		t.Errorf("mimo canonical nomina = %d, want 9 (one per surviving key)", got)
 	}
@@ -110,8 +113,14 @@ func TestMimo_OnlyTheCanonicalNomenLegMoves(t *testing.T) {
 	// 40 distinct served spellings across the 93 instances (nomina de-duplicate by value,
 	// so the same id offered by several providers is one nomen). Measured UNCHANGED across
 	// the re-key: 40 before, 40 after, while the canonical leg went 10 -> 9.
-	if got := perScheme[bestiary.NomenSchemeProviderID]; got != 40 {
-		t.Errorf("mimo provider-id nomina = %d, want 40 — a rename carries every served id spelling "+
+	//
+	// 40 -> 49 with the 2026-08-28 catalog refresh — upstream growth, not a rename effect.
+	// The mimo instance total goes 93 -> 102 as new hosts and new tier rows arrive, and
+	// nine of those instances carry id spellings no other row already spelled. The claim
+	// this test makes is unchanged: the count moves ONLY when the catalog adds or drops a
+	// served spelling, never as a side effect of a key rename.
+	if got := perScheme[bestiary.NomenSchemeProviderID]; got != 49 {
+		t.Errorf("mimo provider-id nomina = %d, want 49 — a rename carries every served id spelling "+
 			"across as an Admitted nomen; a change here means spellings were created or dropped", got)
 	}
 }

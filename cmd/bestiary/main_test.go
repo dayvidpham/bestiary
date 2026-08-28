@@ -190,21 +190,30 @@ func TestShow_SchemeHuggingFace(t *testing.T) {
 // with --format purl resolves the model by stripping both the "pkg:huggingface/"
 // prefix and the provider segment.
 //
-// "pkg:huggingface/anthropic/claude-opus-4-1" with --format purl should resolve
-// to "claude-opus-4-1".
+// "pkg:huggingface/anthropic/claude-opus-4-5-20251101" with --format purl should
+// resolve to "claude-opus-4-5-20251101".
+//
+// The witness was "…/claude-opus-4-1" until the 2026-08-28 catalog refresh, when
+// anthropic aged that id out of its OWN listing (seven providers still carry the exact
+// bare id: azure, azure-cognitive-services, helicone, neon, opencode, pioneer, requesty).
+// This case needs a purl whose NAMESPACE serves the id, because the namespace is exactly
+// what it exercises: with anthropic no longer serving 4-1 the provider hint missed, the
+// loose-match fallback fired, and the case was testing the missed-namespace diagnostic
+// instead of the resolving path. Re-pointed at an id anthropic does serve; every
+// assertion arm is unchanged.
 func TestShow_SchemePURL(t *testing.T) {
 	tmpDB := t.TempDir() + "/test.db"
 
 	var runErr error
 	out := captureStdout(t, func() {
-		runErr = run([]string{"show", "--format", "purl", "--db-path", tmpDB, "pkg:huggingface/anthropic/claude-opus-4-1"})
+		runErr = run([]string{"show", "--format", "purl", "--db-path", tmpDB, "pkg:huggingface/anthropic/claude-opus-4-5-20251101"})
 	})
 
 	if runErr != nil {
-		t.Fatalf("run show --format purl pkg:huggingface/anthropic/claude-opus-4-1 returned error: %v", runErr)
+		t.Fatalf("run show --format purl pkg:huggingface/anthropic/claude-opus-4-5-20251101 returned error: %v", runErr)
 	}
-	if !strings.Contains(out, "claude-opus-4-1") {
-		t.Errorf("show output does not contain model ID %q; got %q", "claude-opus-4-1", out)
+	if !strings.Contains(out, "claude-opus-4-5-20251101") {
+		t.Errorf("show output does not contain model ID %q; got %q", "claude-opus-4-5-20251101", out)
 	}
 }
 
@@ -305,7 +314,7 @@ func TestShow_FormatPeasant_Default_RejectsPURL(t *testing.T) {
 	tmpDB := t.TempDir() + "/test.db"
 
 	// Pass a PURL without --format purl — should NOT silently resolve.
-	err := run([]string{"show", "--db-path", tmpDB, "pkg:huggingface/anthropic/claude-opus-4-1"})
+	err := run([]string{"show", "--db-path", tmpDB, "pkg:huggingface/anthropic/claude-opus-4-5-20251101"})
 	if err == nil {
 		t.Fatal("run show (default peasant) accepted PURL input; want error (no auto-detect)")
 	}
@@ -373,9 +382,25 @@ func TestShow_OutputFlagTable(t *testing.T) {
 
 // TestShow_CanonicalPreference_Claude verifies that bestiary show (default peasant
 // mode) with a canonical claude input surfaces Anthropic as THE canonical provider,
-// never a rehost. It is pinned to claude-opus-4-1-20250805 (canonical
-// "claude/opus/4.1@2025-08-05"), which anthropic lists first-party in every shipped
+// never a rehost. It is pinned to claude-opus-4-5-20251101 (canonical
+// "claude/opus/4.5@2025-11-01"), which anthropic lists first-party in the shipped
 // catalog.
+//
+// It was pinned to claude-opus-4-1-20250805 until the 2026-08-28 models.dev catalog
+// refresh, and the re-target is a repair of a dead PREMISE, not a relaxation. The doc
+// below says "which anthropic lists first-party in every shipped catalog", and at that
+// refresh that stopped being true of 4.1: the `anthropic` provider aged the model out of
+// its own listing (its OLDEST first-party opus is now 4.5; it also serves 4.6, 4.7, 4.8 and
+// opus 5) while six OTHER providers kept carrying the dated id this case was pinned to,
+// claude-opus-4-1-20250805 — 302ai, abacus, helicone, jiekou, llmgateway, nano-gpt.
+// (Measured over the vendored catalog by PROVIDER on that EXACT id. Two other measures of the
+// same fact appear nearby and are different numbers for different questions: seven providers
+// serve the bare id claude-opus-4-1, and 26 rows across all providers carry some
+// claude-opus-4-1* spelling. `anthropic` is absent from every one of them.) The query
+// therefore had no first-party row left to mark, and the fence was asserting something the
+// data could no longer supply — it was reporting the catalog's shape, not the preference
+// logic. Re-pointing it at a model anthropic DOES serve restores the claim verbatim, with
+// every arm of the assertion unchanged.
 //
 // The vendored models.dev catalog carries many rehosts of each claude model (with
 // -thinking / @-date sibling IDs), so a claude canonical query is now AMBIGUOUS:
@@ -392,7 +417,7 @@ func TestShow_OutputFlagTable(t *testing.T) {
 // broke the preference) fails loudly instead of silently skipping.
 func TestShow_CanonicalPreference_Claude(t *testing.T) {
 	tmpDB := t.TempDir() + "/test.db"
-	const query = "claude/opus/4.1@2025-08-05"
+	const query = "claude/opus/4.5@2025-11-01"
 
 	var runErr error
 	var stderr string
@@ -515,6 +540,9 @@ func TestShow_LegacySchemeFlag_BackwardCompat(t *testing.T) {
 		if runErr != nil {
 			t.Fatalf("run show --scheme raw claude-opus-4-1 returned error: %v", runErr)
 		}
+		// NOT re-pointed with the purl cases below: --scheme raw matches the bare id and
+		// never consults a namespace, so anthropic ageing 4-1 out of its own listing does
+		// not reach this arm. Seven providers still serve the id.
 		if !strings.Contains(out, "claude-opus-4-1") {
 			t.Errorf("show with --scheme raw: expected model ID in output; got %q", out)
 		}
@@ -530,6 +558,10 @@ func TestShow_LegacySchemeFlag_BackwardCompat(t *testing.T) {
 		if runErr != nil {
 			t.Fatalf("run show --scheme huggingface anthropic/claude-opus-4-1 returned error: %v", runErr)
 		}
+		// NOT re-pointed with the purl cases below: --scheme huggingface STRIPS the
+		// provider segment and matches on the bare raw id, so it never consults the
+		// namespace and is unaffected by anthropic ageing 4-1 out of its own listing.
+		// Seven providers still serve the id, so this arm still exercises what it always did.
 		if !strings.Contains(out, "claude-opus-4-1") {
 			t.Errorf("show with --scheme huggingface: expected model ID in output; got %q", out)
 		}
@@ -539,13 +571,13 @@ func TestShow_LegacySchemeFlag_BackwardCompat(t *testing.T) {
 		// --scheme purl should treat input as pkg:huggingface/provider/raw-id.
 		var runErr error
 		out := captureStdout(t, func() {
-			runErr = run([]string{"show", "--scheme", "purl", "--db-path", tmpDB, "pkg:huggingface/anthropic/claude-opus-4-1"})
+			runErr = run([]string{"show", "--scheme", "purl", "--db-path", tmpDB, "pkg:huggingface/anthropic/claude-opus-4-5-20251101"})
 		})
 
 		if runErr != nil {
-			t.Fatalf("run show --scheme purl pkg:huggingface/anthropic/claude-opus-4-1 returned error: %v", runErr)
+			t.Fatalf("run show --scheme purl pkg:huggingface/anthropic/claude-opus-4-5-20251101 returned error: %v", runErr)
 		}
-		if !strings.Contains(out, "claude-opus-4-1") {
+		if !strings.Contains(out, "claude-opus-4-5-20251101") {
 			t.Errorf("show with --scheme purl: expected model ID in output; got %q", out)
 		}
 	})
@@ -555,13 +587,13 @@ func TestShow_LegacySchemeFlag_BackwardCompat(t *testing.T) {
 		// --scheme raw with --format purl should use purl, not raw.
 		var runErr error
 		out := captureStdout(t, func() {
-			runErr = run([]string{"show", "--format", "purl", "--scheme", "raw", "--db-path", tmpDB, "pkg:huggingface/anthropic/claude-opus-4-1"})
+			runErr = run([]string{"show", "--format", "purl", "--scheme", "raw", "--db-path", tmpDB, "pkg:huggingface/anthropic/claude-opus-4-5-20251101"})
 		})
 
 		if runErr != nil {
-			t.Fatalf("run show --format purl --scheme raw pkg:huggingface/anthropic/claude-opus-4-1 returned error: %v", runErr)
+			t.Fatalf("run show --format purl --scheme raw pkg:huggingface/anthropic/claude-opus-4-5-20251101 returned error: %v", runErr)
 		}
-		if !strings.Contains(out, "claude-opus-4-1") {
+		if !strings.Contains(out, "claude-opus-4-5-20251101") {
 			t.Errorf("show with --format and --scheme: expected model ID in output; got %q", out)
 		}
 	})

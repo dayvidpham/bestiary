@@ -170,7 +170,7 @@
           "vercel|poolside/laguna-s-2.1-free"
         ],
         "successors": [
-          "laguna-s@2.1"
+          "laguna"
         ]
       },
       "classification": "must-fail",
@@ -179,7 +179,7 @@
         "ref": "the epoch-wide retired-key policy: a retired entity key is a uniform hard 404 on both seams — no alias, no redirect, no successor listing. The CHANGELOG old->new table is the only pointer a user gets."
       },
       "mutation": {
-        "description": "folds onto laguna-s@2.1"
+        "description": "folds onto laguna-s@2.1. RE-MEASURED at the 2026-08-28 models.dev catalog refresh (providers 170 -> 204, provider model rows 5,765 -> 7,430): the successor MOVED. The pinned row `vercel|poolside/laguna-s-2.1-free` is still live and still spelled the same way, but it now decomposes onto the BARE `laguna` key instead of `laguna-s@2.1`, because upstream changed what it stamps on the vercel row. The record is corrected to the measured destination rather than to the destination the lever originally produced; the `laguna-s@2.1` key is still live but no longer holds this row"
       }
     },
     {

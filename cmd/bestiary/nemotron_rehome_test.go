@@ -75,8 +75,30 @@ func TestNemotronRehome_BothKeysHoldExactlyTheirMeasuredInstances(t *testing.T) 
 		t.Errorf("the corpus still records %s on %q; that instance is the one the lever moves, "+
 			"and leaving it here would describe the lever as a no-op", movedRow, bareKey)
 	}
-	if !slices.Contains(byKey[v15Key], movedRow) {
-		t.Errorf("the corpus does not record %s on %q; that arrival IS the lever", movedRow, v15Key)
+	// The arrival assertion used to be unconditional: movedRow HAD to be recorded on the
+	// v1.5 key, because that arrival IS the lever. Its premise died at the 2026-08-28
+	// models.dev catalog refresh — nano-gpt deleted the underscore-spelled row, and no
+	// provider in the catalog publishes an underscore-spelled Super-49B id any more, so
+	// there is no arrival left to record. Demanding one would demand a row that does not
+	// exist; recording one anyway would be inventing an instance.
+	//
+	// So the claim is restated CONDITIONALLY, over the live registry rather than over the
+	// corpus, and it still fails loudly the moment the spelling comes back: wherever
+	// movedRow lives, it must live on the v1.5 key. That is the exact-ID pin's whole job,
+	// and it is why the pin is kept even while it has nothing to act on.
+	home := instanceHomes(t)
+	if dest, live := home[movedRow]; live {
+		if dest != v15Key {
+			t.Errorf("%s is live and homes to %q, want %q — the exact-ID pin exists to keep the "+
+				"underscore spelling off the bare 49B key", movedRow, dest, v15Key)
+		}
+		if !slices.Contains(byKey[v15Key], movedRow) {
+			t.Errorf("%s is live again but the corpus does not record it on %q; that arrival IS "+
+				"the lever, so re-measure both membership rows", movedRow, v15Key)
+		}
+	} else if slices.Contains(byKey[v15Key], movedRow) {
+		t.Errorf("the corpus records %s on %q, but no provider serves that id any more; pin the "+
+			"membership that upstream actually publishes", movedRow, v15Key)
 	}
 
 	total := 0
@@ -107,6 +129,12 @@ func TestNemotronRehome_BothKeysHoldExactlyTheirMeasuredInstances(t *testing.T) 
 	// Conservation across the pair: four instances before the lever, four after. A re-home
 	// may not create or destroy a row, and counting the union rather than the two lists
 	// separately means a duplicated instance fails here too.
+	//
+	// The 2026-08-28 models.dev catalog refresh left the total at four by coincidence, not
+	// by conservation: two rows were deleted upstream (kilo's dotted v1.5, nano-gpt's
+	// underscore v1.5) and two were added (NVIDIA's own dotted v1 and v1.5). Read the 4
+	// below as a re-measured census of the pair; what conserves is the MEMBERSHIP asserted
+	// per key above, which is where a row moving too far or failing to move shows up.
 	union := map[string]bool{}
 	for _, c := range corpus.Cases {
 		for _, in := range c.Expected.Instances {

@@ -34,12 +34,7 @@
         "retired_instances": [
           "huggingface|XiaomiMiMo/MiMo-V2-Flash",
           "jiekou|xiaomimimo/mimo-v2-flash",
-          "kilo|xiaomi/mimo-v2-flash",
           "meganova|XiaomiMiMo/MiMo-V2-Flash",
-          "nano-gpt|xiaomi/mimo-v2-flash",
-          "nano-gpt|xiaomi/mimo-v2-flash-original",
-          "nano-gpt|xiaomi/mimo-v2-flash-thinking",
-          "nano-gpt|xiaomi/mimo-v2-flash-thinking-original",
           "novita-ai|xiaomimimo/mimo-v2-flash",
           "opencode|mimo-v2-flash-free",
           "qiniu-ai|mimo-v2-flash",
@@ -57,7 +52,7 @@
         "ref": "the epoch-wide retired-key policy: a retired entity key is a uniform hard 404 on both seams — no alias, no redirect, no successor listing. The CHANGELOG old->new table is the only pointer a user gets. The single exception in this set is the bare family token, which stays ambiguous because the family survives with live children."
       },
       "mutation": {
-        "description": "pure rename: flash becomes a per-family series tier, so the version the series token carried comes through and the key gains its generation"
+        "description": "pure rename: flash becomes a per-family series tier, so the version the series token carried comes through and the key gains its generation. RE-MEASURED at the 2026-08-28 models.dev catalog refresh (providers 170 -> 204, provider model rows 5,765 -> 7,430): 5 pinned row(s) were DELETED upstream, not re-spelled — `kilo|xiaomi/mimo-v2-flash`, `nano-gpt|xiaomi/mimo-v2-flash`, `nano-gpt|xiaomi/mimo-v2-flash-original`, `nano-gpt|xiaomi/mimo-v2-flash-thinking`, `nano-gpt|xiaomi/mimo-v2-flash-thinking-original`. kilo and nano-gpt are both still in the catalog but neither carries a `mimo-v2-*` id any more; both now serve the v2.5 line only, and no near-spelling of the dropped ids exists under either provider. The rows are removed rather than re-pointed. The successor is unchanged"
       }
     },
     {
@@ -252,8 +247,6 @@
         "by_entity": "not-found",
         "show": "not-found",
         "retired_instances": [
-          "kilo|xiaomi/mimo-v2-omni",
-          "nano-gpt|xiaomi/mimo-v2-omni",
           "opencode-go|mimo-v2-omni",
           "opencode|mimo-v2-omni-free",
           "xiaomi|mimo-v2-omni",
@@ -269,7 +262,7 @@
         "ref": "the epoch-wide retired-key policy: a retired entity key is a uniform hard 404 on both seams — no alias, no redirect, no successor listing. The CHANGELOG old->new table is the only pointer a user gets. The single exception in this set is the bare family token, which stays ambiguous because the family survives with live children."
       },
       "mutation": {
-        "description": "pure rename: the series letter leaves the variant slot; omni stays an identity modifier"
+        "description": "pure rename: the series letter leaves the variant slot; omni stays an identity modifier. RE-MEASURED at the 2026-08-28 models.dev catalog refresh (providers 170 -> 204, provider model rows 5,765 -> 7,430): 2 pinned row(s) were DELETED upstream, not re-spelled — `kilo|xiaomi/mimo-v2-omni`, `nano-gpt|xiaomi/mimo-v2-omni`. kilo and nano-gpt are both still in the catalog but neither carries a `mimo-v2-*` id any more; both now serve the v2.5 line only, and no near-spelling of the dropped ids exists under either provider. The rows are removed rather than re-pointed. The successor is unchanged"
       }
     },
     {
@@ -280,8 +273,6 @@
         "show": "not-found",
         "retired_instances": [
           "abacus|mimo-v2-pro",
-          "kilo|xiaomi/mimo-v2-pro",
-          "nano-gpt|xiaomi/mimo-v2-pro",
           "novita-ai|xiaomimimo/mimo-v2-pro",
           "opencode-go|mimo-v2-pro",
           "opencode|mimo-v2-pro-free",
@@ -301,7 +292,7 @@
         "ref": "the epoch-wide retired-key policy: a retired entity key is a uniform hard 404 on both seams — no alias, no redirect, no successor listing. The CHANGELOG old->new table is the only pointer a user gets. The single exception in this set is the bare family token, which stays ambiguous because the family survives with live children."
       },
       "mutation": {
-        "description": "pure rename: the series letter leaves the variant slot; pro stays an identity modifier"
+        "description": "pure rename: the series letter leaves the variant slot; pro stays an identity modifier. RE-MEASURED at the 2026-08-28 models.dev catalog refresh (providers 170 -> 204, provider model rows 5,765 -> 7,430): 2 pinned row(s) were DELETED upstream, not re-spelled — `kilo|xiaomi/mimo-v2-pro`, `nano-gpt|xiaomi/mimo-v2-pro`. kilo and nano-gpt are both still in the catalog but neither carries a `mimo-v2-*` id any more; both now serve the v2.5 line only, and no near-spelling of the dropped ids exists under either provider. The rows are removed rather than re-pointed. The successor is unchanged"
       }
     }
   ]

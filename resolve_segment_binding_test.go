@@ -150,17 +150,26 @@ func entityKeysAtFamilyVersion(family bestiary.Family, version string) []string 
 // NOTFOUND, so the pins would record NOTFOUND -> NOTFOUND and could not see a
 // widening at all.
 func TestResolve_SegmentBinding_Corpus(t *testing.T) {
-	corpus := loadParseCorpus[segmentBindingInput, segmentBindingExpected](t, resolveSegmentBindingCorpusJSON, 18)
+	corpus := loadParseCorpus[segmentBindingInput, segmentBindingExpected](t, resolveSegmentBindingCorpusJSON, 17)
 
 	requireInputCoverage(t, corpus, map[segmentBindingInput]segmentBindingExpected{
 		// the amended criterion's unique-resolution arm, both spellings, pinned by value
 		{Ref: "ling/2.6", Role: roleRepair}:     {Outcome: outcomeResolved, Entities: "ling@2.6#1t"},
 		{Ref: "ant/ling/2.6", Role: roleRepair}: {Outcome: outcomeResolved, Entities: "ling@2.6#1t"},
-		// the scoped-ambiguity arm: the provider-equality guard is what keeps this
-		// from listing every host of the family
+		// the provider-equality guard, pinned by value: it is what keeps this from
+		// listing every host of the family. At the 2026-08-28 catalog refresh openai
+		// retired gpt-5.1-chat-latest and its three gpt-5.1-codex ids, so openai serves
+		// exactly one 5.1 identity and the provider-scoped answer is now a RESOLVE.
+		// The scoped-AMBIGUITY arm is still pinned by value below.
 		{Ref: "openai/gpt@5.1", Role: roleRepair}: {
-			Outcome: outcomeAmbiguous, Entities: "gpt@5.1,gpt@5.1{chat}",
-			Refs: "openai|gpt-5.1,openai|gpt-5.1-chat-latest",
+			Outcome: outcomeResolved, Entities: "gpt@5.1",
+			Refs: "openai|gpt-5.1",
+		},
+		// the scoped-ambiguity arm, moved here from openai/gpt@5.1 when that id set
+		// collapsed to one: anthropic serves two 4.6 identities, so a provider-qualified
+		// ref that names no variant must come back ambiguous across exactly those two.
+		{Ref: "anthropic/claude/4.6", Role: roleRepair}: {
+			Outcome: outcomeAmbiguous, Entities: "claude/opus@4.6,claude/sonnet@4.6",
 		},
 		// one must-not-widen falsifier, with its ref set
 		{Ref: "mistral/codestral", Role: roleMustNotWiden}: {
@@ -172,9 +181,14 @@ func TestResolve_SegmentBinding_Corpus(t *testing.T) {
 		// the composition witness: green only when the tier re-key AND the binding
 		// repair have both landed, pinned by value so neither can regress silently
 		{Ref: "openai/gpt/5.6", Role: roleCompositionWitness}: {
-			Outcome:  outcomeAmbiguous,
-			Entities: "gpt/luna@5.6,gpt/luna@5.6{pro},gpt/sol@5.6,gpt/sol@5.6{pro},gpt/terra@5.6,gpt/terra@5.6{pro}",
-			Refs:     "openai|gpt-5.6,openai|gpt-5.6-luna,openai|gpt-5.6-terra,openrouter|openai/gpt-5.6-luna-pro,openrouter|openai/gpt-5.6-sol-pro,openrouter|openai/gpt-5.6-terra-pro",
+			Outcome: outcomeAmbiguous,
+			Entities: "gpt/luna@5.6,gpt/luna@5.6{fast},gpt/luna@5.6{pro}," +
+				"gpt/sol@5.6,gpt/sol@5.6{fast},gpt/sol@5.6{pro}," +
+				"gpt/terra@5.6,gpt/terra@5.6{fast},gpt/terra@5.6{pro}",
+			Refs: "kilo|openai/gpt-5.6-luna-pro,kilo|openai/gpt-5.6-sol-discounted," +
+				"kilo|openai/gpt-5.6-sol-pro,kilo|openai/gpt-5.6-terra-pro," +
+				"openai|gpt-5.6,openai|gpt-5.6-luna,openai|gpt-5.6-terra," +
+				"vercel|openai/gpt-5.6-luna-fast,vercel|openai/gpt-5.6-sol-fast,vercel|openai/gpt-5.6-terra-fast",
 		},
 	})
 

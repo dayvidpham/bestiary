@@ -33,7 +33,7 @@ func TestLineage_RealCatalogEdges(t *testing.T) {
 	}{
 		{
 			name:      "dracarys-llama-3.1-70b finetune of llama",
-			id:        "abacusai/dracarys-llama-3_1-70b-instruct",
+			id:        "abacusai/dracarys-llama-3.1-70b-instruct",
 			parentFam: bestiary.FamilyLlama,
 			parentVer: "3.1",
 			kind:      bestiary.DerivationFinetune,
@@ -256,7 +256,11 @@ func instanceIDs(e bestiary.Entity) map[bestiary.ModelID]bool {
 // would merge them and fail these assertions.
 func TestLineage_Dracarys_NoWrongMerge(t *testing.T) {
 	const id72 = bestiary.ModelID("abacusai/Dracarys-72B-Instruct")
-	const id70 = bestiary.ModelID("abacusai/dracarys-llama-3_1-70b-instruct")
+	// The nvidia id re-spelled at the 2026-08-28 models.dev catalog refresh: the
+	// underscore form "dracarys-llama-3_1-70b-instruct" became the dotted
+	// "dracarys-llama-3.1-70b-instruct". Same provider, same artifact, same entity key
+	// dracarys#70b{instruct} — only the served id string moved.
+	const id70 = bestiary.ModelID("abacusai/dracarys-llama-3.1-70b-instruct")
 
 	ent72, ok72 := bestiary.EntityByTuple(bestiary.Family("dracarys"), "", "", "72b")
 	if !ok72 {
@@ -339,7 +343,7 @@ func TestLineage_JSONRoundTrip(t *testing.T) {
 // injected cycle in the internal tests (TestLineageAncestors_CycleSafe).
 func TestLineage_Ancestors_RealCatalog(t *testing.T) {
 	// Construct the dracarys entity with its codegen-populated edges.
-	edges := bestiary.LineageFor("abacusai/dracarys-llama-3_1-70b-instruct")
+	edges := bestiary.LineageFor("abacusai/dracarys-llama-3.1-70b-instruct")
 	if len(edges) == 0 {
 		t.Fatal("LineageFor(dracarys) returned no edges")
 	}
@@ -376,7 +380,11 @@ func TestLineage_Ancestors_RealCatalog(t *testing.T) {
 // version:3.1} → forward-index key "llama/dracarys@3.1", which never matches the
 // real entity key "dracarys{instruct}", so the fallback seed finds no ancestors.
 func TestLineage_Dracarys70B_ChildRefAlignsToEntityKey(t *testing.T) {
-	const id70 = bestiary.ModelID("abacusai/dracarys-llama-3_1-70b-instruct")
+	// The nvidia id re-spelled at the 2026-08-28 models.dev catalog refresh: the
+	// underscore form "dracarys-llama-3_1-70b-instruct" became the dotted
+	// "dracarys-llama-3.1-70b-instruct". Same provider, same artifact, same entity key
+	// dracarys#70b{instruct} — only the served id string moved.
+	const id70 = bestiary.ModelID("abacusai/dracarys-llama-3.1-70b-instruct")
 
 	// The entity the registry actually indexes for the 70B record.
 	ent, ok := bestiary.EntityByTuple(bestiary.Family("dracarys"), "", "", "70b", "instruct")
