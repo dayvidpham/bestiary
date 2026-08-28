@@ -406,9 +406,15 @@ func assertChangelogTableMatchesCorpus(
 	}
 
 	if got, want := len(table), len(corpus.Cases); got != want {
+		// Only a correction with nil Successors changes the row count: the released table
+		// keeps a row the corpus no longer has. A correction with non-nil Successors names a
+		// row present in BOTH records that merely re-homed, so it contributes zero. Counting
+		// both kinds makes a MIXED map demand a size difference it cannot have.
 		diff := 0
-		for range corrections {
-			diff++
+		for _, c := range corrections {
+			if c.Successors == nil {
+				diff++
+			}
 		}
 		if got-want != diff {
 			t.Errorf("CHANGELOG migration table has %d row(s), corpus has %d case(s), and %d "+

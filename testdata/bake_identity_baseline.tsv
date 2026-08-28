@@ -25,6 +25,12 @@
 # REGENERATE ONLY WHEN A RELEASE IS TAGGED, in the commit that declares it, and re-cut
 # the ledger in bake_identity_test.go in the same commit. Regenerating this file to
 # turn a red gate green defeats the entire point of it.
+#
+# WHO MOVES IT AND WHEN: the release engineer cutting the release PR, as the numbered
+# bake-identity-baseline step of "CHANGELOG must be rolled BEFORE the release PR is
+# opened" in AGENTS.md. That step is the only documented writer; there is no capture
+# test for this file today, unlike decomp_baseline.tsv. AGENTS.md's file-ownership
+# table records the same rule.
 @cf/aisingapore/gemma-sea-lion-v4-27b-it	cloudflare-workers-ai	gemma		
 @cf/deepseek-ai/deepseek-r1-distill-qwen-32b	cloudflare-workers-ai	deepseek		
 @cf/google/gemma-4-26b-a4b-it	cloudflare-workers-ai	gemma		4

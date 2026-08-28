@@ -23,7 +23,11 @@ import (
 //
 // This file supplies the measurement that gap needs. testdata/bake_identity_baseline.tsv
 // is the PREVIOUS RELEASE's bake — (ID, Provider) -> (Family, Variant, Version) — and it
-// is deliberately NOT re-captured on a refresh. It moves only when a release is tagged.
+// is deliberately NOT re-captured on a refresh. It moves only when a release is tagged —
+// moved BY the release engineer, at the numbered bake-identity-baseline step of the release
+// checklist in AGENTS.md, which is its only documented writer. There is no capture test for
+// it today (decomp_baseline.tsv has one, env-gated); AGENTS.md's file-ownership table and the
+// header of the .tsv itself state the same rule.
 // Over the rows present in BOTH bakes, a populated Version going empty is a REGRESSION
 // unless it is enumerated in bakeIdentityVersionLosses with a reason.
 //
@@ -183,8 +187,8 @@ func TestBakeIdentity_NoUnjustifiedVersionLoss(t *testing.T) {
 	}
 	sort.Strings(unjustified)
 
-	t.Logf("bake identity: %d rows in both bakes; version LOST %d (all justified), GAINED %d, CHANGED %d",
-		both, justified+len(unjustified), gained, changed)
+	t.Logf("bake identity: %d rows in both bakes; version LOST %d (%d justified, %d NOT), GAINED %d, CHANGED %d",
+		both, justified+len(unjustified), justified, len(unjustified), gained, changed)
 
 	if len(unjustified) > 0 {
 		t.Errorf("%d row(s) LOST a populated Version with no ledger entry:\n%s\n"+

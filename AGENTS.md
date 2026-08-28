@@ -406,11 +406,32 @@ the release branch, as part of the release PR:
    registry operators whose logs carry it (the Ollama bot advertised `0.2.4` for three
    releases). It is a THIRD version axis — neither `BestiarySchemaVersion` nor the
    store schema number.
-4. **Update the link-ref block at the bottom of the file** — this is the step that gets forgotten,
+4. **Move the bake-identity baseline.** `testdata/bake_identity_baseline.tsv` is the PREVIOUS
+   RELEASE's bake and this is the ONLY moment it moves — a catalog refresh must never re-capture
+   it, because a baseline reground on the new catalog freezes in any version loss the refresh
+   itself introduced and `TestBakeIdentity_NoUnjustifiedVersionLoss` then measures nothing.
+   - **WHO:** the release engineer cutting the release PR, in that PR.
+   - **WHEN:** here, after the `ReleaseVersion` bump and before the PR is opened — never on a
+     refresh branch, and never to turn a red gate green.
+   - **WHAT:** re-capture the file from the tree being released, update its header comment to
+     name the new tag and commit, and RE-CUT `bakeIdentityVersionLosses` in
+     `bake_identity_test.go` in the SAME commit — every ledger row is stated relative to the old
+     baseline, so a moved baseline with an unmoved ledger fails as dead curation, which is the
+     ledger working as designed.
+   - **HOW, today:** by hand. Unlike `decomp_baseline.tsv`, which has
+     `TestCaptureDecompositionBaseline` env-gated behind `BESTIARY_CAPTURE_BASELINE=1`, this
+     baseline has NO writer in the tree — only a reader. TODO: add an env-gated capture test
+     beside the gate, modelled on that one and under its OWN variable, because the two artifacts
+     move at different moments (one on a re-vendor, one on a release) and a single flag makes it
+     easy to move both by accident.
+   - **WHY IT IS EASY TO MISS:** a stale baseline still PASSES. Nothing goes red to announce it;
+     the gate quietly keeps measuring against an ever-older release while the ledger grows a row
+     per relabel per epoch.
+5. **Update the link-ref block at the bottom of the file** — this is the step that gets forgotten,
    because nothing renders differently when it is wrong:
    - repoint `[Unreleased]` to `compare/vX.Y.Z...HEAD`
    - add `[X.Y.Z]: https://github.com/dayvidpham/bestiary/compare/v<previous>...vX.Y.Z`
-5. **Verify parity before opening the PR.** Every stanza needs a ref, every version ref needs a
+6. **Verify parity before opening the PR.** Every stanza needs a ref, every version ref needs a
    stanza, and each ref's left-hand side must be the next-older tag:
    ```
    grep -o '^## \[[^]]*\]' CHANGELOG.md | sed 's/^## //' | while read -r s; do
@@ -435,6 +456,10 @@ further versions shipped. Both were repaired retroactively, after the tags were 
 | `parse/data/modelsdev/catalog.json` + `SNAPSHOT.json` | `cmd/bestiary-gen` (fetch mode) | Vendored codegen input. Never edit by hand; refresh via "models.dev snapshot refresh" |
 | `parse/data/modelsdev_unlinked.json` | `cmd/bestiary-gen` | Codegen-emitted join-disagreement report. Never edit by hand |
 | `parse/data/modelsdev_field_census.json` | `cmd/bestiary-gen` | Codegen-emitted UPSTREAM FIELD-SHAPE census (every catalog field path + fill count). Never edit by hand; `TestModelsdevFieldCensus_NoDrift` names the added/removed paths when upstream changes shape |
+| `testdata/bake_identity_baseline.tsv` | Manual — RELEASE ONLY | The PREVIOUS RELEASE's bake, `(ID, Provider)` -> `(Family, Variant, Version)`. Deliberately NOT re-captured on a catalog refresh — that is exactly what lets it see a version loss the refresh itself introduced. It moves ONLY when a release is tagged, by the release engineer, as step 4 of "CHANGELOG must be rolled BEFORE the release PR is opened". Regenerating it to turn a red `TestBakeIdentity_NoUnjustifiedVersionLoss` green defeats the gate |
+| `testdata/hf_archived_url_survivors.txt` | Manual | The pinned survivor set for `TestHFArchivedURL_NoErasureAmongSurvivors`, so a repo that loses its snapshot fails BY NAME instead of hiding behind an addition. Edited only alongside a MEASURED harvest change, in the same commit, with the movement stated in the CHANGELOG |
+| `cmd/bestiary-gen/testdata/snapshot/decomp_diff_report.json` | Declared capture | Compared on an ordinary run; rewritten ONLY under `BESTIARY_CAPTURE_BASELINE=1`, in the commit that declares the capture. Never self-refreshing |
+| `cmd/bestiary-gen/testdata/snapshot/decomp_baseline.tsv` | Declared capture | The frozen BEFORE decomposition baseline. Written only by `BESTIARY_CAPTURE_BASELINE=1 go test ./cmd/bestiary-gen -run TestCaptureDecompositionBaseline`, at a declared capture point, committed in the commit that declares it |
 | `bestiary.schema.json` | Manual | Must stay in sync with Go types. Verified by `TestJSONOutput_ConformsToSchema` |
 | `version.go` | Manual | Update on public type changes or upstream schema updates; `ReleaseVersion` bumps on the release branch — see "Releases" |
 | `CHANGELOG.md` | Manual | Entries written as slices land; stanza cut + link refs updated on the release branch — see "Releases" |

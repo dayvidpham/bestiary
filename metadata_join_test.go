@@ -353,10 +353,14 @@ var unlinkedJustifiedExceptions = map[string]string{
 // entity out from under an alias orphans that alias's row, and splitting a family
 // without retargeting its alias orphans the alias itself.
 //
-// The assertion is SET EQUALITY against unlinkedJustifiedExceptions, which is strictly
-// stronger than the count it replaced: a NEW orphan fails (it is not in the ledger) and
-// so does a ledger row that started joining again (it is stale curation). Neither can
-// hide behind an unchanged total.
+// The assertion is SET EQUALITY against unlinkedJustifiedExceptions. It is NOT strictly
+// stronger than the drained-to-zero count it replaced: a zero gate rejects all twelve rows
+// this ledger admits, so on the admit-an-orphan axis the old gate was stricter, and the two
+// are otherwise incomparable. What is true, and is the reason for the change: given that a
+// non-empty justified set IS accepted, set equality is the strongest gate available over it,
+// and it adds a direction a count never had — a NEW orphan fails because it is not listed,
+// and a listed row that starts joining again fails as dead curation. Neither can hide behind
+// an unchanged total.
 //
 // Reading the count field AND the array length independently is deliberate: the count is
 // what a human skims and the array is what is true, and a hand-edit that disagrees with

@@ -390,13 +390,13 @@ func TestShow_OutputFlagTable(t *testing.T) {
 // refresh, and the re-target is a repair of a dead PREMISE, not a relaxation. The doc
 // below says "which anthropic lists first-party in every shipped catalog", and at that
 // refresh that stopped being true of 4.1: the `anthropic` provider aged the model out of
-// its own listing (it now stops at opus 4.5) while six OTHER providers kept carrying the
-// dated id this case was pinned to, claude-opus-4-1-20250805 — 302ai, abacus, helicone,
-// jiekou, llmgateway, nano-gpt. (Measured over the vendored catalog by PROVIDER on that
-// EXACT id. Two other measures of the same fact appear nearby and are different numbers
-// for different questions: seven providers serve the bare id claude-opus-4-1, and 26 rows
-// across all providers carry some claude-opus-4-1* spelling. `anthropic` is absent from
-// every one of them.) The query
+// its own listing (its OLDEST first-party opus is now 4.5; it also serves 4.6, 4.7, 4.8 and
+// opus 5) while six OTHER providers kept carrying the dated id this case was pinned to,
+// claude-opus-4-1-20250805 — 302ai, abacus, helicone, jiekou, llmgateway, nano-gpt.
+// (Measured over the vendored catalog by PROVIDER on that EXACT id. Two other measures of the
+// same fact appear nearby and are different numbers for different questions: seven providers
+// serve the bare id claude-opus-4-1, and 26 rows across all providers carry some
+// claude-opus-4-1* spelling. `anthropic` is absent from every one of them.) The query
 // therefore had no first-party row left to mark, and the fence was asserting something the
 // data could no longer supply — it was reporting the catalog's shape, not the preference
 // logic. Re-pointing it at a model anthropic DOES serve restores the claim verbatim, with

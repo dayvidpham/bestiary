@@ -92,6 +92,10 @@ for its **Go module tags** (`vX.Y.Z`).
   | OCI | 267 | 267 | unchanged (no Ollama refresh in this slice) |
   | **total** | **4,216** | **4,993** | |
 
+  Both starred cells are refresh figures and are corrected further down by the two round-2
+  review pins, exactly as the keyspace bullet above is: canonical **989 to 987** and the
+  total **4,993 to 4,991**.
+
 - **Ten harvested HuggingFace nomina removed, because upstream retired the entities they
   named.** The catalog now carries **zero** phi-3 rows and **zero** codellama rows, so
   `AlfredPros/CodeLlama-7b-Instruct-Solidity` and nine `microsoft/Phi-3*` repos resolved to
@@ -104,7 +108,8 @@ for its **Go module tags** (`vX.Y.Z`).
   unchanged in every field. The 6 lost snapshots belong to the retired repos alone.
 
   This deviates from the slice brief, which asked for `159+` `archived_url` values before
-  and after; the deviation was REVIEWED AND ACCEPTED, on the reasoning that a literal floor
+  and after; the deviation is PENDING A RULING and is flagged for one in the PR. The
+  reasoning OFFERED for it, which no authority has yet accepted, is that a literal floor
   over a corpus upstream has legitimately shrunk is the wrong rule. The invariant asserted
   in its place — ZERO ERASURES AMONG SURVIVORS — is no longer prose: it is enforced by
   `TestHFArchivedURL_CensusExact` (both counts with their arithmetic, 184→174 records and
@@ -217,7 +222,8 @@ for its **Go module tags** (`vX.Y.Z`).
 
 - **`modelsdev_unlinked.json` is 12, not 0, and the drained-to-zero gate is now a justified
   ledger.** This deviates from the slice brief, which asked for a drained-to-zero report,
-  and the deviation was REVIEWED AND ACCEPTED. `TestModelsdevUnlinked_MatchesJustifiedLedger`
+  and the deviation is PENDING A RULING and is flagged for one in the PR.
+  `TestModelsdevUnlinked_MatchesJustifiedLedger`
   replaces `TestModelsdevUnlinked_IsDrained` and asserts SET EQUALITY against
   `unlinkedJustifiedExceptions`. Set equality is not strictly stronger than the zero gate it
   replaces — a zero gate rejects all twelve rows this ledger admits, so on the admit-an-orphan
@@ -253,7 +259,12 @@ for its **Go module tags** (`vX.Y.Z`).
   are the same class the refresh already fixes twice, so the same lever applies. Keyspace
   **989 to 987**; both keys were minted BY the refresh and neither existed at the 930-key
   release baseline, so the refresh link restates as 930 − 87 + 144 = 987 and no key retires
-  that did not already retire.
+  that did not already retire. The canonical nomina leg tracks the keyspace exactly — one
+  canonical nomen per entity — so it moves 989 to 987 with it, and the nomina total moves
+  **4,993 to 4,991** (987 + 3,562 + 1 + 174 + 267 = 4,991). The other four legs are
+  re-measured UNCHANGED: neither pinned id is a harvested HuggingFace repo, and a re-keyed
+  instance carries its own id spelling across as an Admitted nomen. These are the figures
+  `TestNomina_CensusExact` and `TestEntityConstants_ExactCensus` pin at this tip.
   - `claude/opus#31b` **retires.** nano-gpt's `Gemma-4-31B-Claude-4.6-Opus-Reasoning-Distilled`
     is a Google Gemma 4 31B model DISTILLED FROM Claude Opus 4.6, and the new catalog stamps
     `raw_family: "claude"` on it where v0.2.10 carried `null`. The row keyed the flagship Opus
@@ -305,7 +316,6 @@ for its **Go module tags** (`vX.Y.Z`).
   is the falsifier: it injects a synthetic field into an in-memory copy of the catalog and
   asserts the census reports exactly that path and its nested subkey, so an emitter that
   returned a constant path set cannot pass.
-
 
 - **Behavioural regression tests for the 29 curated exact-id pins, the archived_url survivor
   invariant, the previous-release bake identity, and the re-keyed retirees.** Four guards,
@@ -360,7 +370,6 @@ for its **Go module tags** (`vX.Y.Z`).
   longer reproduces that target, so this run's join dropped it to the unlinked report while
   merge-on-refresh correctly preserved the curated entry. Consequence: it can never gain an
   `archived_url`, because the snapshot lookup enriches mechanically-linked repos only.
-
 
 ## [0.2.10] — 2026-08-28
 

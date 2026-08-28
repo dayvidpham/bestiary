@@ -127,7 +127,7 @@ func Test<Name>(t *testing.T) {
 
 ## The corpus census, and what is deliberately still inline
 
-At the close of the naming-layer epoch the repository carries **126 corpora**:
+At the close of the naming-layer epoch the repository carries **127 corpora**:
 
 | Area | Corpora | What lives there |
 |---|---|---|
@@ -145,6 +145,20 @@ At the close of the naming-layer epoch the repository carries **126 corpora**:
 | `cmd/bestiary/testdata/rehome/` | 1 | the instance-membership records for a curation lever that re-homes instances between keys that ALREADY EXIST, so no key is retired and no migration table applies. Each case names a live key and the exact set of provider instances it must hold, so a re-home stays distinguishable from a split and the instance total is checked as conserved |
 | `cmd/bestiary-gen/testdata/gen/` | 9 | the identifier builders (`slugToIdentifier`, `providerConstName`, `styleSegment`, `entityConstName`, `splitComma`) |
 | `cmd/bestiary-ollama/testdata/ollama/` | 1 | Ollama tag normalization |
+
+### Committed baselines, which are NOT corpora
+
+These are single committed artifacts, not case tables, so they are outside the count above.
+They are listed here because the corpus map is where a curator looks first, and because each
+one has an ownership rule that is easy to break by accident. `AGENTS.md`'s file-ownership
+table is the authority; this is the index.
+
+| File | Moves when | What breaks if it moves at the wrong time |
+|---|---|---|
+| `testdata/bake_identity_baseline.tsv` | ONLY when a release is tagged, moved by hand by the release engineer at the numbered bake-identity-baseline step of the release checklist in `AGENTS.md` | It is the PREVIOUS RELEASE's bake. Re-captured on a refresh, it freezes in any version loss the refresh itself introduced, and `TestBakeIdentity_NoUnjustifiedVersionLoss` then measures nothing. A stale one still PASSES, so nothing goes red to announce either mistake |
+| `testdata/hf_archived_url_survivors.txt` | With a MEASURED harvest change, in the same commit | It is the pinned survivor set for `TestHFArchivedURL_NoErasureAmongSurvivors`. Edited to match a run, it stops naming the repo that lost its snapshot |
+| `cmd/bestiary-gen/testdata/snapshot/decomp_baseline.tsv` | At a DECLARED capture point, via `BESTIARY_CAPTURE_BASELINE=1 go test ./cmd/bestiary-gen -run TestCaptureDecompositionBaseline` | It is the frozen BEFORE decomposition. Re-captured post-refactor, it masks the regressions it exists to catch |
+| `cmd/bestiary-gen/testdata/snapshot/decomp_diff_report.json` | Under the same declared capture, in the commit that declares it | An ordinary run COMPARES it. A self-refreshing report agrees with every tree it is run on |
 
 **Still inline, by the rule at the top of this document** — these are not stragglers,
 they are tests whose "cases" are computed rather than authored, and extracting them
