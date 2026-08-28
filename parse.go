@@ -4550,6 +4550,51 @@ var idFamilyOverrides = map[string]idFamilyOverrideEntry{
 	// "v2-1" spelling names which dot was lost.
 	"deepcogito/cogito-v2-1-671b": {family: "cogito", variant: "", version: "2.1"},
 
+	// Kling video-model variant shapes — the eight vercel rows. Vercel spells them
+	// klingai/kling-v<version>[-turbo]-<modality>, and the leading-token pipeline read the
+	// WHOLE remainder as one variant token, so the keys rendered kling/v2.5-turbo-i2v,
+	// kling/v3.0-motion-control and so on: a flattened string carrying three different
+	// KINDS of fact in one slot, sitting beside kling@2.6 (the qiniu-ai row), which spells
+	// the same version in the version slot. The two shapes could not both be right.
+	//
+	// Which axis carries which token, and why:
+	//
+	//   - the `v` is a VERSION PREFIX and leaves the key entirely. It introduces the number
+	//     it is glued to and names no sibling line. Same reading as the mimo series letter
+	//     and the cogito release letter above; the v-carrying spelling survives verbatim as
+	//     a provider-id nomen.
+	//   - `2.5` / `2.6` / `3.0` is the VERSION. This is the fact that makes the set
+	//     coherent with kling@2.6, which already keys its version this way.
+	//   - `i2v` / `t2v` / `motion-control` is the MODALITY, and it goes in the VARIANT slot.
+	//     Image-to-video and text-to-video are genuinely different artifacts with different
+	//     inputs, so they are identity, not a serving attribute. The variant slot is where
+	//     this epoch puts a named member of a line (the gpt tiers, the mimo speech members),
+	//     and a modality is exactly that. A typed modality AXIS would be the better home and
+	//     is the deferral this pull-in supersedes for kling only — it is deliberately NOT
+	//     minted here, because one vendor's three tokens are not enough evidence to design a
+	//     keyspace-wide axis, and the variant slot is reversible into one later.
+	//   - `turbo` is an IDENTITY modifier, `{turbo}`. The repo's fast/turbo rule is a global
+	//     identity fail-safe with per-family ATTRIBUTE demotions (claude/glm/kimi/deepseek/
+	//     minimax), each of which was curated against evidence that the token names a speed
+	//     tier of a base the catalog also serves. Kling has no such evidence: there is no
+	//     non-turbo 2.5 row anywhere in the catalog, so demoting it would key these two rows
+	//     onto a kling@2.5 base that nothing attests. The fail-safe holds and turbo stays
+	//     identity-class, which is also the shape the deferral priced.
+	//
+	// The family is already corrected to kling by family_enforce.json (upstream stamps
+	// "family": "ling" on all eight); these entries correct only the variant/version/modifier
+	// triple. Keyed to the exact (lowercase) ID, one row per artifact — an enumeration is
+	// right here because the set IS closed: it is one vendor's eight rows, and a general
+	// modality seam would have to be designed against far more evidence than this.
+	"klingai/kling-v2.5-turbo-i2v":      {family: "kling", variant: "i2v", version: "2.5", modifiers: []string{"turbo"}},
+	"klingai/kling-v2.5-turbo-t2v":      {family: "kling", variant: "t2v", version: "2.5", modifiers: []string{"turbo"}},
+	"klingai/kling-v2.6-i2v":            {family: "kling", variant: "i2v", version: "2.6"},
+	"klingai/kling-v2.6-motion-control": {family: "kling", variant: "motion-control", version: "2.6"},
+	"klingai/kling-v2.6-t2v":            {family: "kling", variant: "t2v", version: "2.6"},
+	"klingai/kling-v3.0-i2v":            {family: "kling", variant: "i2v", version: "3.0"},
+	"klingai/kling-v3.0-motion-control": {family: "kling", variant: "motion-control", version: "3.0"},
+	"klingai/kling-v3.0-t2v":            {family: "kling", variant: "t2v", version: "3.0"},
+
 	// gpt 5.6 tier pins. The curated family_overrides rows map upstream family
 	// gpt-<tier> to (family gpt, variant <tier>), which puts the tier token in the
 	// VARIANT slot and leaves the trailing "-pro" token with nowhere mechanical to go:

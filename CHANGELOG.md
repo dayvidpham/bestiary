@@ -16,6 +16,56 @@ for its **Go module tags** (`vX.Y.Z`).
 
 ### Changed
 
+- **Kling's eight video keys state their version in the version slot.** The klingai rows
+  are spelled `klingai/kling-v<version>[-turbo]-<modality>` upstream, and the leading-token
+  decomposition read the whole remainder as ONE variant token, so the keys rendered
+  `kling/v2.5-turbo-i2v`, `kling/v3.0-motion-control` and so on — a flattened string
+  carrying three different KINDS of fact in one slot, sitting directly beside `kling@2.6`,
+  which spells the same kind of version in the version slot. Both shapes could not be
+  right. This was deferred when the collision split landed; it is pulled in here.
+
+  **Which axis carries which token, and why.**
+
+  | token | axis | reason |
+  |---|---|---|
+  | `v` | none — it leaves the key | A version PREFIX: it introduces the number it is glued to and names no sibling line. Same reading this release gives the mimo series letter and the cogito release letter. The v-carrying spelling survives verbatim as a provider-id nomen. |
+  | `2.5` / `2.6` / `3.0` | **version** | This is what makes the set coherent with `kling@2.6`, which already keys its version this way. |
+  | `i2v` / `t2v` / `motion-control` | **variant** (identity) | Image-to-video and text-to-video are genuinely different artifacts taking different inputs, not a serving tier. The variant slot is where this release puts a named member of a line (the gpt tiers, the mimo speech members), and a modality is exactly that. |
+  | `turbo` | **identity modifier** `{turbo}` | The repo's fast/turbo rule is a global identity fail-safe with per-family ATTRIBUTE demotions, each curated against evidence that the token names a speed tier of a base the catalog also serves. Kling has no such evidence — there is **no** non-turbo 2.5 row anywhere in the catalog — so demoting would key these two rows onto a `kling@2.5` base nothing attests. |
+
+  **A typed modality axis is still the better long-term home, and is deliberately NOT minted
+  here.** One vendor's three tokens are not enough evidence to design a keyspace-wide axis,
+  and the variant slot is reversible into one later. What is fixed now is the incoherence
+  between `kling@2.6` and `kling/v2.6-i2v`.
+
+  **Measured key diff** (unit: entity keys; axis: the constant set in
+  `entities_constants_gen.go`; configuration: this lever alone, on the release tip). Eight
+  renames, nothing else moves — **census 930 → 930**:
+
+  | old spelling | new spelling |
+  |---|---|
+  | `kling/v2.5-turbo-i2v` | `kling/i2v@2.5{turbo}` |
+  | `kling/v2.5-turbo-t2v` | `kling/t2v@2.5{turbo}` |
+  | `kling/v2.6-i2v` | `kling/i2v@2.6` |
+  | `kling/v2.6-motion-control` | `kling/motion-control@2.6` |
+  | `kling/v2.6-t2v` | `kling/t2v@2.6` |
+  | `kling/v3.0-i2v` | `kling/i2v@3.0` |
+  | `kling/v3.0-motion-control` | `kling/motion-control@3.0` |
+  | `kling/v3.0-t2v` | `kling/t2v@3.0` |
+
+  **This table is not a migration table, and no key is retired by it.** Every one of the
+  eight old spellings was minted *inside this same unreleased release* by the collision
+  split and **never shipped**: measured against the release baseline, none of them appears
+  on either side of the cumulative key diff, which stays at **62 retired / 35 added**. There
+  is nothing for a released consumer to migrate from; the table is here so a reader of the
+  collision-split entry below is not left with the old spellings.
+
+  Series lines 409 → 410 (versioned 208 → 210, bare 201 → 200): the eight keys leave the
+  bare `kling` line — which held nothing else, so it empties — for generation lines, two of
+  which (`kling` gen-2.5 and gen-3.0) are new while gen-2.6 already existed. Releases,
+  instance totals and every nomen count are unmoved. The path-unification gate reports
+  **`(c)=0`** and needs **no new justified-exception row**, exactly as the deferral priced it.
+
 - **The entity view lists the lab's own providers first.** `bestiary show <ref>
   --by-entity` rendered `Providers (N):` as one flat, effectively alphabetical run, so
   the organisation that TRAINED the model sat wherever its name happened to fall —
@@ -857,9 +907,9 @@ for its **Go module tags** (`vX.Y.Z`).
   the instances it held before (2, 4, 2, 4 and 1), asserted by value in a committed test. The `ling`
   **family** survives with those five children; only the bare `ling` **key** retires.
 
-  The 8 klingai shape tokens (`v2.5-turbo-i2v` … `v3.0-t2v`) are **deliberately left unnormalized** in
-  the variant slot: they are `i2v`/`t2v`/`motion-control` pipeline modes, and normalizing them is a
-  separate, priced piece of work.
+  The 8 klingai shape tokens are **normalized** — this was deferred when the split landed and has since
+  been pulled in; see the dedicated entry at the top of this release for the axis-by-axis reasoning and
+  the measured diff. The successor column below therefore names the normalized keys.
 
   **Migration table (old → new).** Each row is DERIVED, not assumed: every retired key's pre-split
   instances are pinned in a companion corpus, the successor set is re-derived from them against the
@@ -868,7 +918,7 @@ for its **Go module tags** (`vX.Y.Z`).
   | retired collision key | instances re-home to |
   |---|---|
   | `kling-v2@6` | `kling@2.6` |
-  | `ling` | `inkling`, `kling/v2.5-turbo-i2v`, `kling/v2.5-turbo-t2v`, `kling/v2.6-i2v`, `kling/v2.6-motion-control`, `kling/v2.6-t2v`, `kling/v3.0-i2v`, `kling/v3.0-motion-control`, `kling/v3.0-t2v` |
+  | `ling` | `inkling`, `kling/i2v@2.5{turbo}`, `kling/t2v@2.5{turbo}`, `kling/i2v@2.6`, `kling/motion-control@2.6`, `kling/t2v@2.6`, `kling/i2v@3.0`, `kling/motion-control@3.0`, `kling/t2v@3.0` |
 
   **`ling` is this epoch's widest split — nine successors, and it does NOT fold onto its family line.**
   Looking for your model under bare `ling` will not find it: six of its rows are Inkling and eight are
@@ -885,7 +935,7 @@ for its **Go module tags** (`vX.Y.Z`).
 
   **Compile break for library consumers — 2 `Entity__` constants removed, 10 added**, counted from
   `entities_constants_gen.go`. Removed: `Entity__Ling`, `Entity__Kling_v2__Version_6`. Added:
-  `Entity__Inkling`, `Entity__Kling__V2_5_turbo_i2v`, `Entity__Kling__V2_5_turbo_t2v`, `Entity__Kling__V2_6_i2v`, `Entity__Kling__V2_6_motion_control`, `Entity__Kling__V2_6_t2v`, `Entity__Kling__V3_0_i2v`, `Entity__Kling__V3_0_motion_control`, `Entity__Kling__V3_0_t2v`, `Entity__Kling__Version_2_6`. The generated file holds
+  `Entity__Inkling`, `Entity__Kling__I2v__Version_2_5__Turbo`, `Entity__Kling__T2v__Version_2_5__Turbo`, `Entity__Kling__I2v__Version_2_6`, `Entity__Kling__Motion_control__Version_2_6`, `Entity__Kling__T2v__Version_2_6`, `Entity__Kling__I2v__Version_3_0`, `Entity__Kling__Motion_control__Version_3_0`, `Entity__Kling__T2v__Version_3_0`, `Entity__Kling__Version_2_6` (the eight video constants are named for the keys they carry at the RELEASE tip, after the variant-shape normalization below; the pre-normalization spellings never shipped). The generated file holds
   939 → 947 constant declarations over 939 → 947 distinct key values — a bijection, one declaration
   per key, so the constant break and the key diff are the same either way.
 

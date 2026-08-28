@@ -167,16 +167,16 @@ func TestRetiredKeys_CollisionSplit_InclusionAIKeyspaceUntouched(t *testing.T) {
 // themselves went somewhere else entirely.
 func TestRetiredKeys_CollisionSplit_SplitTargetsAreLive(t *testing.T) {
 	want := map[string]int{
-		"inkling":                   6,
-		"kling@2.6":                 1,
-		"kling/v2.5-turbo-i2v":      1,
-		"kling/v2.5-turbo-t2v":      1,
-		"kling/v2.6-i2v":            1,
-		"kling/v2.6-motion-control": 1,
-		"kling/v2.6-t2v":            1,
-		"kling/v3.0-i2v":            1,
-		"kling/v3.0-motion-control": 1,
-		"kling/v3.0-t2v":            1,
+		"inkling":                  6,
+		"kling@2.6":                1,
+		"kling/i2v@2.5{turbo}":     1,
+		"kling/t2v@2.5{turbo}":     1,
+		"kling/i2v@2.6":            1,
+		"kling/motion-control@2.6": 1,
+		"kling/t2v@2.6":            1,
+		"kling/i2v@3.0":            1,
+		"kling/motion-control@3.0": 1,
+		"kling/t2v@3.0":            1,
 	}
 	total := 0
 	for key, wantInstances := range want {

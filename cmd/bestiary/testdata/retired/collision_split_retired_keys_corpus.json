@@ -25,14 +25,14 @@
         ],
         "successors": [
           "inkling",
-          "kling/v2.5-turbo-i2v",
-          "kling/v2.5-turbo-t2v",
-          "kling/v2.6-i2v",
-          "kling/v2.6-motion-control",
-          "kling/v2.6-t2v",
-          "kling/v3.0-i2v",
-          "kling/v3.0-motion-control",
-          "kling/v3.0-t2v"
+          "kling/i2v@2.5{turbo}",
+          "kling/t2v@2.5{turbo}",
+          "kling/i2v@2.6",
+          "kling/motion-control@2.6",
+          "kling/t2v@2.6",
+          "kling/i2v@3.0",
+          "kling/motion-control@3.0",
+          "kling/t2v@3.0"
         ]
       },
       "classification": "must-fail",
