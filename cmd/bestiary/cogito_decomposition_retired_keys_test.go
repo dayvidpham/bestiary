@@ -2,9 +2,11 @@ package main
 
 import (
 	_ "embed"
+	"errors"
 	"os"
 	"slices"
 	"sort"
+	"strings"
 	"testing"
 
 	"github.com/dayvidpham/bestiary"
@@ -271,4 +273,74 @@ func countSubstring(s, sub string) int {
 		i++
 	}
 	return n
+}
+
+// TestCogitoNomen_OrgPrefixedRawIDResolves_OrgLessDoesNot turns a prose claim into an
+// executable guard. The decomposition's user-facing story is that the ONE raw API id the
+// providers actually publish — `deepcogito/cogito-v2.1-671b`, org prefix included — still
+// reaches the surviving entity through the raw input scheme, while the org-LESS spelling
+// `cogito-v2.1-671b` reaches nothing. Both halves were measured; only the prose recorded
+// them, so a change to the org-id nomen path could silently break admission for this
+// entity with every test still green.
+//
+// The negative half is the load-bearing one. `cogito-v2.1-671b` not resolving is the
+// UNCHANGED pre-existing behaviour, not a regression the decomposition introduced, and
+// pinning it here is what stops a later "fix" from quietly minting a nomen for a spelling
+// no provider publishes — which would re-open the fused-variant defect the lever closed.
+func TestCogitoNomen_OrgPrefixedRawIDResolves_OrgLessDoesNot(t *testing.T) {
+	const (
+		published = "deepcogito/cogito-v2.1-671b" // the raw id providers actually serve
+		orgLess   = "cogito-v2.1-671b"            // the same string with the org dropped
+		entityKey = "cogito@2.1#671b"             // the one surviving cogito key
+	)
+
+	// The published raw id must be a real instance of the surviving entity. Asserting this
+	// first means the CLI assertions below are anchored to the catalog, not to a literal
+	// that could drift out of the data while the command still happened to answer.
+	ent, ok := bestiary.EntityByKey(entityKey)
+	if !ok {
+		t.Fatalf("EntityByKey(%q) does not resolve; the surviving cogito key is the target this "+
+			"nomen claim is about", entityKey)
+	}
+	held := false
+	for _, in := range ent.Instances {
+		if string(in.ID) == published {
+			held = true
+			break
+		}
+	}
+	if !held {
+		t.Fatalf("entity %q holds no instance with raw id %q; either the provider id changed or the "+
+			"decomposition re-homed the row — re-measure before editing this pin", entityKey, published)
+	}
+
+	tmpDB := t.TempDir() + "/cache.db"
+
+	// Positive: the published raw id resolves through the raw input scheme and renders.
+	args := []string{"show", published, "--format=raw", "--db-path", tmpDB, "--output=table"}
+	var runErr error
+	out := captureStdout(t, func() { runErr = run(args) })
+	if runErr != nil {
+		t.Errorf("run %v returned %v, want a successful resolution — %q is the raw API id the "+
+			"providers publish for %s, and the raw input scheme is the seam that admits it",
+			args, runErr, published, entityKey)
+	} else if !strings.Contains(out, published) {
+		t.Errorf("run %v resolved but did not render %q\noutput:\n%s", args, published, out)
+	}
+
+	// Negative: the org-less spelling resolves under NEITHER scheme. This is unchanged
+	// behaviour, pinned so a future nomen change cannot mint a claim for it unnoticed.
+	for _, negArgs := range [][]string{
+		{"show", orgLess, "--format=raw", "--db-path", tmpDB, "--output=table"},
+		{"show", orgLess, "--db-path", tmpDB, "--output=table"},
+	} {
+		var negErr error
+		captureStdout(t, func() { negErr = run(negArgs) })
+		var notFound *bestiary.ErrNotFound
+		if !errors.As(negErr, &notFound) {
+			t.Errorf("run %v returned %v, want *bestiary.ErrNotFound — no provider publishes the "+
+				"org-less spelling %q, so nothing may admit it; if a nomen was deliberately added "+
+				"for it, record the measurement and update this pin together", negArgs, negErr, orgLess)
+		}
+	}
 }
