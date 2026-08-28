@@ -98,7 +98,7 @@ const (
 	Entity__Codestral                                                     = "codestral"
 	Entity__Codestral__Embed                                              = "codestral/embed"
 	Entity__Coding                                                        = "coding"
-	Entity__Cogito__V__Version_2_1__Size_671b                             = "cogito/v@2.1#671b"
+	Entity__Cogito__Version_2_1__Size_671b                                = "cogito@2.1#671b"
 	Entity__Cohere__Embed                                                 = "cohere/embed"
 	Entity__Command__A                                                    = "command/a"
 	Entity__Command__A__Reasoning                                         = "command/a{reasoning}"
@@ -1033,7 +1033,7 @@ var allEntityConstants = [...]string{
 	Entity__Codestral,
 	Entity__Codestral__Embed,
 	Entity__Coding,
-	Entity__Cogito__V__Version_2_1__Size_671b,
+	Entity__Cogito__Version_2_1__Size_671b,
 	Entity__Cohere__Embed,
 	Entity__Command__A,
 	Entity__Command__A__Reasoning,
